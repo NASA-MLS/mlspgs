@@ -28,6 +28,8 @@ program INIT_GEN
 
   character(len=30) :: CapName               ! Capitalized? name
   integer, parameter :: Decl_Wid = len("  integer, parameter :: ")
+  logical :: DoIdent = .true.                ! Do add_ident stuff, made false
+                                             ! if no file is supplied for it
   logical :: DoCap = .false.                 ! "Capitalize declaration"
   character(len=40) :: FirstName = '1', LastName = ' '
   integer :: I, J                            ! subscripts, loop inductors
@@ -135,16 +137,15 @@ program INIT_GEN
     stop
   end if
   call getarg ( i+1, out_add )
-  if ( out_add == ' ' ) then
-    print *, 'No file name given for references to add_ident.'
-    stop
+  doIdent = out_add /= ' '
+  if ( doIdent ) then
+    call getarg ( i+2, index_name )
+    if ( index_name == ' ' ) then
+      print *, 'No name given for the array to store references to add_ident.'
+      stop
+    end if
+    index_Wid = len_trim(index_name)
   end if
-  call getarg ( i+2, index_name )
-  if ( index_name == ' ' ) then
-    print *, 'No name given for the array to store references to add_ident.'
-    stop
-  end if
-  index_Wid = len_trim(index_name)
 
   if ( inFile /= ' ' ) then
     open ( 10, file=inFile, form='formatted', status='old', iostat=iostat )
@@ -154,10 +155,12 @@ program INIT_GEN
     end if
   end if
 
-  open ( 11, file=out_add, form='formatted', iostat=iostat )
-  if ( iostat /= 0 ) then
-    call io_error ( 'Opening file for results of add_ident', iostat, inFile )
-    stop
+  if ( doIdent ) then
+    open ( 11, file=out_add, form='formatted', iostat=iostat )
+    if ( iostat /= 0 ) then
+      call io_error ( 'Opening file for results of add_ident', iostat, inFile )
+      stop
+    end if
   end if
 
   open ( 12, file=out_parm, form='formatted', iostat=iostat )
@@ -188,12 +191,18 @@ program INIT_GEN
     end if
     if ( line == ' ' ) cycle
     line = adjustl(line)
-    if ( line(1:1) == '#' ) cycle
+    if ( line(1:1) == '#' .or. line(1:1) == '!' ) cycle
     numNames = numNames + 1
     if ( numNames > maxNames ) then
       print *, numNames, ' is too many names.  Use the "-n" option.'
       stop
     end if
+    ! Trim off comments
+    j = index(line,'#')
+    if ( j /= 0 ) line(j:) = ' '
+    j = index(line,'!')
+    if ( j /= 0 ) line(j:) = ' '
+    ! get p_name if any
     j = index(line,' ')
     p_names(numNames) = line(:j-1)
     line = adjustl(line(j+1:))
@@ -220,8 +229,8 @@ program INIT_GEN
     write ( 12, '(a, a)' ) '! File name: ', trim(Out_parm)
     do i = 1, size(HEADER)
       write ( 12, '(a, a)' ) '! ', HEADER(i)
-    enddo
-  endif
+    end do
+  end if
 
   do i = 1, numNames
     capName = capitalize(p_names(i))
@@ -248,26 +257,28 @@ program INIT_GEN
   end if
   close ( 12 )
 
-  ! Output the references to "add_ident"
-  ! Warn off users from editing Out_add
-  if ( WRITEHEADER ) then
-    write ( 11, '(a, a)' ) '! File name: ', trim(Out_add)
-    do i = 1, size(HEADER)
-      write ( 11, '(a, a)' ) '! ', HEADER(i)
-    enddo
-  endif
-
-  do i = 1, numNames
-    if ( margin /= 0 ) then
-      nspaces = margin - index_Wid - 10 - len_trim(p_names(i))
-    else
-      nspaces = maxwid - len_trim(p_names(i))
+  if ( doIdent ) then
+    ! Output the references to "add_ident"
+    ! Warn off users from editing Out_add
+    if ( WRITEHEADER ) then
+      write ( 11, '(a, a)' ) '! File name: ', trim(Out_add)
+      do i = 1, size(HEADER)
+        write ( 11, '(a, a)' ) '! ', HEADER(i)
+      end do
     end if
-    write ( 11, '(4x,a,"(",a,") = ", a, "add_ident ( ''",a,"'' )")' ) &
-      & index_name(:index_Wid), trim(p_names(i)), &
-      & line(:nspaces), trim(names(i))
-  end do
-  close ( 11 )
+
+    do i = 1, numNames
+      if ( margin /= 0 ) then
+        nspaces = margin - index_Wid - 10 - len_trim(p_names(i))
+      else
+        nspaces = maxwid - len_trim(p_names(i))
+      end if
+      write ( 11, '(4x,a,"(",a,") = ", a, "add_ident ( ''",a,"'' )")' ) &
+        & index_name(:index_Wid), trim(p_names(i)), &
+        & line(:nspaces), trim(names(i))
+    end do
+    close ( 11 )
+  end if
 
 contains
 
@@ -293,6 +304,9 @@ contains
 end program INIT_GEN
 
 ! $Log$
+! Revision 1.7  2001/10/04 19:54:43  pwagner
+! Now names file to be edited '<file_name_here>'
+!
 ! Revision 1.6  2001/10/03 17:18:20  pwagner
 ! Added header warning against editing out_add, out_parm
 !
