@@ -156,8 +156,7 @@ module INIT_TABLES_MODULE
   integer, public, parameter :: L_NCEP 	        = l_logarithmic + 1
   integer, public, parameter :: L_NEITHER       = l_ncep + 1
   integer, public, parameter :: L_NEWTONIAN     = l_neither + 1
-  integer, public, parameter :: L_NONE 	        = l_newtonian + 1
-  integer, public, parameter :: L_NORM          = l_none + 1
+  integer, public, parameter :: L_NORM          = l_newtonian + 1
   integer, public, parameter :: L_PLAIN         = l_norm + 1
   integer, public, parameter :: L_PRESSURE      = l_plain + 1
   integer, public, parameter :: L_R1A           = l_pressure + 1
@@ -315,7 +314,6 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_ncep) =                  add_ident ( 'NCEP' )
     lit_indices(l_neither) =               add_ident ( 'neither' )
     lit_indices(l_newtonian) =             add_ident ( 'newtonian' )
-    lit_indices(l_none) =                  add_ident ( 'none' )
     lit_indices(l_norm) =                  add_ident ( 'norm' )
     lit_indices(l_plain) =                 add_ident ( 'plain' )
     lit_indices(l_pressure) =              add_ident ( 'pressure' )
@@ -805,6 +803,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.16  2001/02/08 21:54:25  livesey
+! Remove L_None, now in intrinsic
+!
 ! Revision 2.15  2001/02/08 21:13:32  vsnyder
 ! Move "theta" from init_tables_module to intrinsic.
 !
