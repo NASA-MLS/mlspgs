@@ -1157,8 +1157,6 @@ contains ! =============== Subroutines and functions ==========================
     call deallocate_test ( A, 'A', ModuleName )
     call deallocate_test ( dHydrosGPHByDTemp, 'dHydrosGPHByDTemp', ModuleName )
 
-    if ( maf == noMAFs ) fmStat%finished = .true.
-
     if ( toggle ( gen ) ) call trace_end ( 'ScanForwardModel' )
 
   end subroutine ScanForwardModel
@@ -1166,6 +1164,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.25  2001/10/02 16:49:56  livesey
+! Removed fmStat%finished and change loop ordering in forward models
+!
 ! Revision 2.24  2001/06/29 23:03:28  livesey
 ! Whoops, bad parameter set.
 !
