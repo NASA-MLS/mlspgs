@@ -191,7 +191,7 @@
       DO 1100 I=NU/2+1,NU
          X2 = U(I)*U(I)
          UEFF = ABS(U(I))
-         DO 1100 K=L-1,1,-1
+         DO 1100 K=L,1,-1
             WK=0._r8
             WW0=0._r8
             DO ISPI=1,N
@@ -230,7 +230,7 @@
       DO 1200 I=1,NU/2
         X2 = U(I)*U(I)
         UEFF = ABS(U(I))
-        DO 1200 K=1,L-1
+        DO 1200 K=1,L
            WK=0._r8
            WW0=0._r8
            DO ISPI=1,N
@@ -313,9 +313,9 @@
 
          tsource=(((1-WW0)*TEMP(K1)+WK)+((1-www0)*TEMP(K1+1)+wwk))/2.
 
-         IF (ICON .eq. 0) THEN
-           tsource = ( TEMP(K1)+TEMP(K1+1) )/2.
-         ENDIF
+!         IF (ICON .eq. 0) THEN
+!           tsource = ( TEMP(K1)+TEMP(K1+1) )/2.
+!         ENDIF
 
          IF (ICON .eq. 3) THEN
             tsource=( TEMP(K1)+TEMP(K1+1) )/2. ! NO CLOUD AFTER TANGENT POINT
@@ -350,7 +350,7 @@
 !     NOW INTEGRATION TT FROM BOTTOM UP
 !-----------------------------------------
       DO 3000 ITT=1,NT
-      DO 3000 K=LMIN(ITT),L-1
+      DO 3000 K=LMIN(ITT),L
          UU=uave(ITT,K)
          CALL LOCATE(U1,NU/2,NU,UU,JM)      ! INTERPOLATE TSCAT ONTO UU
          WK=0._r8
