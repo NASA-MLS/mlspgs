@@ -14,7 +14,7 @@ module WriteMetadata ! Populate metadata and write it out
   use MLSPCF2, only: Mlspcf_mcf_l2gp_end, Mlspcf_mcf_l2gp_start, &
     & Mlspcf_mcf_l2log_start
   use MLSStrings, only: Reverse, LowerCase, GetStringHashElement
-  use Output_m, only: Output
+  use Output_m, only: Output, blanks
   use PCFHdr, only: WritePCF2Hdr
   use SDPToolkit, only: FileNameLen, PGSd_MET_GROUP_NAME_L, &
     & PGSd_MET_NUM_OF_GROUPS, PGSd_PC_FILE_PATH_MAX, PGS_PC_GetReference, &
@@ -23,6 +23,7 @@ module WriteMetadata ! Populate metadata and write it out
 !    & PGS_MET_init, PGS_MET_setattr_d, &
 !      &  PGS_MET_setAttr_s, PGS_MET_setattr_i, &
 !      &  PGS_MET_write, PGS_MET_remove
+  use TOGGLES, only: switches
   use TREE, only: DUMP_TREE_NODE, SOURCE_REF
 
   implicit none
@@ -783,6 +784,10 @@ contains
 
     if ( present(metadata_error)) metadata_error=module_error
 
+   if(index(switches, 'pro') /= 0) then
+       call proclaim(physical_filename, 'standard')
+   end if
+
   end subroutine Populate_metadata_std
 
   ! --------------------------------------  Populate_metadata_oth  -----
@@ -908,6 +913,10 @@ contains
     returnStatus = pgs_met_remove() 
 
     if ( present(metadata_error)) metadata_error=module_error
+
+   if(index(switches, 'pro') /= 0) then
+       call proclaim(physical_filename, 'others')
+   end if
 
   end subroutine Populate_metadata_oth
 
@@ -1260,6 +1269,10 @@ contains
 
     if ( present(metadata_error)) metadata_error=module_error
 
+   if(index(switches, 'pro') /= 0) then
+       call proclaim(physical_filename, 'Log')
+   end if
+
    end subroutine WriteMetaLog
 
   ! -----------------------------------------  ExpandFileTemplate  -----
@@ -1373,6 +1386,20 @@ contains
 
    end subroutine ExpandFileTemplate
 
+  ! ---------------------------------------------  proclaim  -----
+  subroutine proclaim ( Name, l2_type )
+    character(LEN=*), intent(in) :: Name
+    character(LEN=*), intent(in) :: l2_type
+
+    call output ( 'Level 2 output product metadata type : ' )
+    call output ( trim(l2_type), advance='yes')
+    call blanks(15)
+    call output ( 'name : ' )
+    call blanks(8)
+    call output ( trim(Name), advance='yes')
+
+  end subroutine proclaim
+
   ! ------------------------------------------------  Announce_Error  -----
   subroutine Announce_Error ( lcf_where, full_message, use_toolkit, &
     & error_number )
@@ -1431,6 +1458,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.18  2001/05/17 22:33:27  pwagner
+! Prints info if pro switch set
+!
 ! Revision 2.17  2001/05/08 23:28:46  pwagner
 ! Sorry-bad metadata functions in SDPToolkit
 !
