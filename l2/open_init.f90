@@ -136,17 +136,17 @@ contains ! =====     Public Procedures     =============================
 
         allocate ( l1bInfo%L1BRADIDs(10), stat=status )
         if ( status /= 0 ) then
-!		  	call MLSMessage ( MLSMSG_Error, ModuleName, &
-!          & MLSMSG_Allocate // "l1bInfo" )
-			call announce_error(0, 'Allocation failed for L1BRADIDs')
-			endif
+!         call MLSMessage ( MLSMSG_Error, ModuleName, &
+!            & MLSMSG_Allocate // "l1bInfo" )
+          call announce_error(0, 'Allocation failed for L1BRADIDs')
+        end if
 
         sd_id = sfstart(L1physicalFilename, DFACC_READ)
         if ( sd_id == -1 ) then
 !          call MLSMessage ( MLSMSG_Error, ModuleName, &
 !            & "Error opening L1RAD file "//L1physicalFilename )
-	  call announce_error(0, &
-	  & 'Error opening L1RAD file: ' //L1physicalFilename)
+          call announce_error(0, &
+            & 'Error opening L1RAD file: ' //L1physicalFilename)
         else
           ifl1 = ifl1 + 1
           l1bInfo%L1BRADIDs(ifl1) = sd_id
@@ -243,18 +243,18 @@ contains ! =====     Public Procedures     =============================
 
     returnStatus = Pgs_pc_getReference(mlspcf_log, version, name)
     if ( returnStatus /= PGS_S_SUCCESS ) then
-    ! call MLSMessage(MLSMSG_Error, &
-    !                  ModuleName, 'Error retrieving log file name from PCF.')
+    ! call MLSMessage ( MLSMSG_Error, &
+    !                  ModuleName, 'Error retrieving log file name from PCF.' )
       call announce_error(0, "Error retrieving log file name from PCF" )
     end if
 
     indx = INDEX(name, '/', .TRUE.)
     l2pcf%logGranID = name(indx+1:)
  
-    if ( ERROR/=0 ) then
-      call MLSMessage(MLSMSG_Error,ModuleName, &
-        & 'Problem with open_init section')
-    end if
+!   if ( ERROR/=0 ) then
+!     call MLSMessage ( MLSMSG_Error, ModuleName, &
+!       & 'Problem with open_init section' )
+!   end if
 
     if ( toggle(gen) ) then
       if ( levels(gen) > 0 .or. index(switches,'L') /= 0 ) &
@@ -396,6 +396,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.35  2001/04/11 00:47:25  vsnyder
+! Comment out an error test
+!
 ! Revision 2.34  2001/04/11 00:33:45  vsnyder
 ! use 'output' instead of 'print'
 !
