@@ -218,7 +218,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: L_L1B           = l_kronecker + 1
   integer, parameter :: L_L2AUX         = l_l1b + 1
   integer, parameter :: L_L2DGG         = l_l2aux + 1
-  integer, parameter :: L_L2GP 	        = l_l2dgg + 1
+  integer, parameter :: L_L2GP 	       = l_l2dgg + 1
   integer, parameter :: L_L2PC          = l_l2gp + 1
   integer, parameter :: L_LINEAR        = l_l2pc + 1
   integer, parameter :: L_LOGARITHMIC   = l_linear + 1
@@ -228,7 +228,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: L_NORM          = l_newtonian + 1
   integer, parameter :: L_PLAIN         = l_norm + 1
   integer, parameter :: L_PRESSURE      = l_plain + 1
-  integer, parameter :: L_SCAN          = l_pressure + 1
+  integer, parameter :: L_RECTANGLEFROMLOS      = l_pressure + 1
+  integer, parameter :: L_SCAN          = l_rectanglefromlos + 1
   integer, parameter :: L_SPD           = l_scan + 1
   integer, parameter :: L_SPECIAL       = l_spd + 1
   integer, parameter :: L_VECTOR        = l_special + 1
@@ -398,6 +399,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_norm) =                  add_ident ( 'norm' )
     lit_indices(l_plain) =                 add_ident ( 'plain' )
     lit_indices(l_pressure) =              add_ident ( 'pressure' )
+    lit_indices(l_rectanglefromlos) =      add_ident ( 'rectanglefromlos' )
     lit_indices(l_scan) =                  add_ident ( 'scan' )
     lit_indices(l_spaceRadiance) =         add_ident ( 'spaceRadiance' )
     lit_indices(l_spd) =                   add_ident ( 'spd' )
@@ -642,7 +644,7 @@ contains ! =====     Public procedures     =============================
       begin, t+t_fillMethod, l+l_gridded, l+l_estimatedNoise, l+l_explicit, &
              l+l_hydrostatic, &
              l+l_isotope, l+l_l1b, l+l_l2aux, l+l_l2gp, l+l_vector, l+l_special, &
-             l+l_vGrid, n+n_dt_def, &
+             l+l_rectanglefromlos,l+l_vGrid, n+n_dt_def, &
       begin, t+t_fwmType, l+l_linear, l+l_full, l+l_scan, l+l_cloudFull, n+n_dt_def, &
       begin, t+t_hGridType, l+l_explicit, l+l_fixed, l+l_fractional, &
              l+l_height, l+l_linear, l+l_l2gp, n+n_dt_def, &
@@ -1023,6 +1025,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.142  2001/07/19 00:09:31  dwu
+! add l_rectanglefromlos
+!
 ! Revision 2.141  2001/07/19 00:00:14  dwu
 ! make fewer continuous lines
 !
