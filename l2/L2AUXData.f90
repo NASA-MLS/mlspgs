@@ -561,7 +561,8 @@ contains ! =====     Public Procedures     =============================
   ! Optionally, write a bogus CounterMAF sd so the
   ! resulting file can masquerade as an l1BRad
   ! (Note that this bogus sd should only be written once for each file)
-  use MLSAuxData, only: BUILD_MLSAUXDATA, DATAPRODUCTS_T
+  use MLS_DataProducts, only: DATAPRODUCTS_T
+  use MLSAuxData, only: BUILD_MLSAUXDATA
 
     type (L2AUXData_T), intent(in) :: L2AUX
     integer, intent(in) :: L2FILEHANDLE                 ! From h5fopen
@@ -855,6 +856,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.32  2002/11/25 18:04:52  pwagner
+! Consistent with latest changes to MLSAuxData
+!
 ! Revision 2.31  2002/11/22 21:48:02  pwagner
 ! Fleshed out WriteL2AUXData_hdf5; untested yet
 !
