@@ -76,6 +76,7 @@ Subroutine Rad_Tran_WD(ForwardModelConfig, FwdModelExtra, FwdModelIn, &
 !
 !  Begin code:
 !
+    ier = 0
     Ngp1 = Ng + 1
     N_lvls = ForwardModelConfig%integrationGrid%noSurfs
 
@@ -183,6 +184,9 @@ Subroutine Rad_Tran_WD(ForwardModelConfig, FwdModelExtra, FwdModelIn, &
   End Subroutine RAD_TRAN_WD
 end module RAD_TRAN_WD_M
 ! $Log$
+! Revision 1.9  2001/04/09 20:52:07  zvi
+! Debugging Derivatives version
+!
 ! Revision 1.8  2001/03/31 23:40:55  zvi
 ! Eliminate l2pcdim (dimension parameters) move to allocatable ..
 !
