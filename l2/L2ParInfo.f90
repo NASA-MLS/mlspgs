@@ -5,7 +5,8 @@ module L2ParInfo
   ! This module provides definitions needed by L2Parallel and other modules to
   ! manage the parallel aspects of the L2 code.
 
-  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+  use Allocate_Deallocate, only: ALLOCATE_TEST
+  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_Allocate
   use PVM, only: PVMFMYTID, PVMFINITSEND, PVMF90PACK, PVMFSEND, &
     & PVMDATADEFAULT, PVMERRORMESSAGE, PVMF90UNPACK, NEXTPVMARG
   use PVMIDL, only: PVMIDLPACK
@@ -23,7 +24,7 @@ module L2ParInfo
   public :: SIG_DirectWriteFinished
   public :: NotifyTag, GetNiceTidString, SlaveArguments
   public :: AccumulateSlaveArguments, RequestDirectWritePermission
-  public :: FinishedDirectWrite
+  public :: FinishedDirectWrite, MachineNameLen, MAFTAG, GetMachineNames
   
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -38,6 +39,7 @@ module L2ParInfo
   integer, parameter :: CHUNKTAG   = 10
   integer, parameter :: INFOTAG    = ChunkTag + 1
   integer, parameter :: NOTIFYTAG  = InfoTag + 1
+  integer, parameter :: MAFTAG     = NotifyTag + 1
 
   integer, parameter :: SIG_TOJOIN = 1
   integer, parameter :: SIG_FINISHED = SIG_toJoin + 1
@@ -47,8 +49,12 @@ module L2ParInfo
   integer, parameter :: SIG_DIRECTWRITEGRANTED = SIG_RequestDirectWrite + 1
   integer, parameter :: SIG_DIRECTWRITEFINISHED = SIG_DirectWriteGranted + 1
 
+  integer, parameter :: MACHINENAMELEN = 64 ! Max length of name of machine
+
+
   ! This datatype defines configuration for the parallel code
   type L2ParallelInfo_T
+    logical :: fwmParallel = .false.    ! Set if we are in forward model parallel mode
     logical :: master = .false.         ! Set if this is a master task
     logical :: slave = .false.          ! Set if this is a slace task
     integer :: myTid                    ! My task ID in pvm
@@ -79,9 +85,10 @@ contains ! ==================================================================
   end subroutine AccumulateSlaveArguments
     
   ! ---------------------------------------------- InitParallel -------------
-  subroutine InitParallel ( chunkNo )
+  subroutine InitParallel ( chunkNo, MAFNo )
     ! This routine initialises the parallel code
     integer, intent(in) :: chunkNo      ! Chunk number asked to do.
+    integer, intent(in) :: MAFNo        ! MAF number asked to do in fwmParallel mode.
     ! Local variables
     integer :: BUFFERID                 ! From PVM
     integer :: INFO                     ! From PVM
@@ -101,6 +108,9 @@ contains ! ==================================================================
       call PVMF90Pack ( chunkNo, info )
       if ( info /= 0 ) &
         & call PVMErrorMessage ( info, 'packing chunkNumber' )
+      call PVMF90Pack ( MAFNo, info )
+      if ( info /= 0 ) &
+        & call PVMErrorMessage ( info, 'packing MAFNumber' )
       call PVMFSend ( parallel%masterTid, InfoTag, info )
       if ( info /= 0 ) &
         & call PVMErrorMessage ( info, 'sending finish packet' )
@@ -156,7 +166,129 @@ contains ! ==================================================================
     
     ! Executable code
   end subroutine FinishedDirectWrite
-    
+
+  ! ---------------------------------------- GetMachineNames ------------
+  subroutine GetMachineNames ( machineNames )
+    ! This reads the parallel slave name file and returns
+    ! an array of machine names
+    character(len=MachineNameLen), dimension(:), pointer :: MACHINENAMES
+
+    ! Local variables
+    character(len=MachineNameLen) :: LINE ! A line from the file
+    character(len=MachineNameLen) :: ORIGINAL ! A line from the file
+    character(len=MachineNameLen) :: ARCH ! A line from the file
+    logical :: EXIST                    ! Flag from inquire
+    logical :: GOTFIRSTLAST             ! Got a range
+    logical :: OPENED                   ! Flag from inquire
+
+    integer :: DTID                     ! From PVMFConfig
+    integer :: FIRST                    ! First machine in file to use
+    integer :: FIRSTCOLONPOS            ! Position in string
+    integer :: I                        ! Loop inductor
+    integer :: INFO                     ! From PVMFConfig
+    integer :: LAST                     ! Last machine in file to use
+    integer :: LUN                      ! Logical unit number
+    integer :: MACHINE                  ! Counter
+    integer :: NARCH                    ! From PVMFConfig
+    integer :: NOLINES                  ! Number of lines in file
+    integer :: NOMACHINES               ! Array size
+    integer :: SECONDCOLONPOS           ! Position in string
+    integer :: SPEED                    ! From PVMFConfig
+    integer :: STAT                     ! Status flag from read
+
+    ! Executable code
+    ! The slave filename may contain starting and ending line numbers
+
+    original = parallel%slaveFilename
+
+    if ( trim(original) == 'pvm' ) then
+      ! If the user specifies 'pvm' then just get the names of the machines
+      ! in the pvm system
+      machine = 1
+      hostLoop: do
+        call PVMFConfig ( noMachines, narch, dtid, line, arch, speed, info )
+        if ( info < 0 ) call PVMErrorMessage ( info, &
+          & 'Calling PVMFConfig' )
+        if ( machine == 1 ) then
+          call Allocate_test ( machineNames, noMachines, 'machineNames', moduleName )
+        end if
+        machineNames(machine) = trim(line)
+        machine = machine + 1
+        if ( machine == noMachines + 1 ) exit hostLoop
+      end do hostLoop
+    else
+      gotFirstLast = .false.
+      firstColonPos = index ( parallel%slaveFilename, ':' )
+      if ( firstColonPos /= 0 ) then
+        gotFirstLast = .true.
+        parallel%slaveFilename(firstColonPos:firstColonPos) = ' '
+        secondColonPos = index ( parallel%slaveFilename,':' )
+        if ( secondColonPos < firstColonPos ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Incorrect syntax for slave info:'//trim(original) )
+        parallel%slaveFilename(secondColonPos:secondColonPos) = ' '
+        read (parallel%slaveFilename(firstColonPos+1:),*,iostat=stat) first, last
+        if ( stat /= 0 ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Incorrect syntax for slave info:'//trim(original) )
+      else
+        firstColonPos = len_trim(parallel%slaveFilename)+1
+      end if
+
+      ! Find a free logical unit number
+      do lun = 20, 99
+        inquire ( unit=lun, exist=exist, opened=opened )
+        if ( exist .and. .not. opened ) exit
+      end do
+      if ( opened .or. .not. exist ) call MLSMessage ( MLSMSG_Error, moduleName, &
+        & "No logical unit numbers available" )
+      open ( unit=lun, file=parallel%slaveFilename(1:firstColonPos-1),&
+        & status='old', form='formatted', &
+        & access='sequential', iostat=stat )
+      if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+        & "Unable to open slave file " // parallel%slaveFilename(1:firstColonPos-1) )
+
+      ! Now read the file and count the lines
+      noMachines = 0
+      noLines = 0
+      firstTimeRound: do
+        read ( unit=lun, fmt=*, iostat=stat ) line
+        if ( stat < 0 ) exit firstTimeRound
+        noLines = noLines + 1
+        line = adjustl ( line )
+        if ( line(1:1) /= '#' ) noMachines = noMachines + 1
+      end do firstTimeRound
+
+      ! Now setup the result array
+      if ( .not. gotFirstLast ) then
+        first = 1
+        last = noMachines
+      else
+        first = min( max ( first, 1 ), noMachines )
+        last = max( 1, min ( last, noMachines ) )
+      end if
+      noMachines = last - first + 1
+
+      allocate ( machineNames(noMachines), stat=stat )
+      if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Allocate//' machineNames')
+
+      ! Now rewind the file and read the names
+      rewind ( lun )
+      machine = 1
+      do i = 1, noLines
+        read ( unit=lun, fmt=* ) line
+        line = adjustl ( line )
+        if ( line(1:1) /= '#' ) then
+          if ( (machine >= first) .and. (machine <= last) ) &
+            & machineNames(machine-first+1) = line
+          machine = machine + 1
+        endif
+      end do
+
+      close ( unit=lun )
+    end if
+  end subroutine GetMachineNames
 
   ! ---------------------------------------- RequestDirectWritePermission --
   subroutine RequestDirectWritePermission (filename, createFile )
@@ -250,6 +382,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.17  2002/10/05 00:43:20  livesey
+! Started work on the fwmParallel stuff
+!
 ! Revision 2.16  2002/07/19 06:07:32  livesey
 ! Cut down MaxFailuresPerChunk
 !
