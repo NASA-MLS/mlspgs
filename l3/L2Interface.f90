@@ -12,7 +12,7 @@ MODULE L2Interface
    USE MLSL3Common
    USE L2GPData
    USE Hdf
-   USE MLSPCF
+   USE MLSPCF3
    USE MLSStrings
    USE OpenInit
    IMPLICIT NONE
@@ -657,6 +657,9 @@ END MODULE L2Interface
 !=====================
 
 !# $Log$
+!# Revision 1.3  2000/12/29 20:40:04  nakamura
+!# Changed ReadL2GPProd to take start & end days as input; modified ResidualOutput for the one-product/all-days paradigm.
+!#
 !# Revision 1.2  2000/12/07 19:28:27  nakamura
 !# Updated for level becoming an expandable template field.
 !#
