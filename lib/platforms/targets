@@ -99,10 +99,13 @@ PVMwrappers.o: $(S)/PVMwrappers.c
 
 L1BData.o:
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L1BData.f90
-L2GPData.o:
-	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2GPData.f90
+#L2GPData.o:
+#	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2GPData.f90
 
 # $Log$
+# Revision 1.13  2001/01/23 19:05:53  pwagner
+# With optional PVM support
+#
 # Revision 1.12  2001/01/13 00:24:42  pwagner
 # uses lib/machines/MLSCONFG/machine.f90
 #
