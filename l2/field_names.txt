@@ -41,6 +41,7 @@ criteria
 decay
 destination
 destroyJacobian
+diagnostics
 diagonal
 do_baseline
 do_conv
@@ -187,6 +188,9 @@ vGrid
 vmrQuantity
 
 # $Log$
+# Revision 2.8  2001/10/02 23:40:37  vsnyder
+# Add F_Diagnostics
+#
 # Revision 2.7  2001/10/02 20:28:38  livesey
 # Added do_baseline
 #
