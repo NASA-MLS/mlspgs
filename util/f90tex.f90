@@ -173,7 +173,7 @@ program F90TEX
       read ( *, '(a)', iostat=iostat ) line
     end if
     if ( iostat /= 0 ) exit
-    i = fnb(line) ! fnb == first nonblank
+    i = max(fnb(line),1) ! fnb == first nonblank
     select case ( state )
     case ( 0 ) ! begin
       if ( line(i:i+1) /= '!{' ) then
@@ -257,7 +257,10 @@ contains
     if ( out_unit >= 0 ) then
       if ( present(tex) ) write ( out_unit, '(a)', advance='no' ) '\'
       do i = 1, len(text)
-        if ( under .and. text(i:i) == '_' ) &
+        ! Account for a bug in lstlisting, which requires \ some stuff
+        ! after !
+        if ( sx == 1 .and. text(i:i) == '!' ) under = .true.
+        if ( under .and. scan(text(i:i),'_^%&') /= 0 ) &
           write ( out_unit, '(a)', advance='no' ) '\'
         write ( out_unit, '(a)', advance='no' ) text(i:i)
       end do
@@ -277,6 +280,9 @@ contains
 end program F90TEX
 
 ! $Log$
+! Revision 1.5  2004/09/22 19:19:24  vsnyder
+! Repair minor bug in advancing
+!
 ! Revision 1.4  2001/06/14 23:06:48  pwagner
 ! Added GETARG to machine modules used
 !
