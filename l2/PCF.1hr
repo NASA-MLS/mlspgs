@@ -75,7 +75,7 @@
 # Next non-comment line is the default location for PRODUCT INPUT FILES
 # WARNING! DO NOT MODIFY THIS LINE unless you have relocated these 
 # data set files to the location specified by the new setting.
-!  ~/runtime
+!  /nas/bigdata/livesey/misc
 #
 #-----------------
 # Test input files
@@ -84,11 +84,10 @@
 21050|mls_l1b_radf_v0-01.2000-001|/nas/bigdata/livesey/misc/||||1
 21051|mls_l1b_radb_v0-01.2000-001|/nas/bigdata/livesey/misc/||||1
 22081|mls_l1b_eng_v0-01.2000-001|/nas/bigdata/livesey/misc/||||1
-901|test.l2cf|/user2/pwagner/mlspgs/l2/||||1
+901|sidstest.l2cf|/user5/zvi/mlspgs/l2/||||1
 20000|emls-signals.dat|/user1/livesey//mlspgs/tables||||1
-21000|test_ncep.data|/user2/pwagner||||1
-#21000|a_llk_01.tsyn3d_mis_p.t19991006|/nas/bigdata/livesey/misc||||1
-21020|GDASOZFH_Aug97.hdfeos|/nas/bigdata/livesey/misc||||1
+21600|a_llk_01.tsyn3d_mis_p.t19991006|/nas/bigdata/livesey/misc||||1
+21500|GDASOZFH_Aug97.hdfeos|/nas/bigdata/livesey/misc||||1
 21700|emls_clim_v0.1.dat|/nas/bigdata/livesey/misc||||1
 # -----------------------------------------------------------------------
 # These are actual ancillary data set files - supplied by ECS or the
@@ -234,32 +233,32 @@
 #########################################################################
 #
 # Next line is the default location for PRODUCT OUTPUT FILES
-!  ~/runtime
+!  /nas/bigdata/livesey/misc
 #
 #------------------
 # Test output files
 #------------------
 #100|temp_metawrite|/home/ahanzel/mlspgs/l2||||1
-30000|mls_l2gp_temp_v01_1hr.2000-001|/user2/pwagner/mlspgs/l2||||1
-30001|mls_l2gp_gph_v01_1hr.2000-001|/user2/pwagner/mlspgs/l2||||1
-30002|mls_l2gp_h2o_v01_1hr.2000-001|/user2/pwagner/mlspgs/l2||||1
-30003|mls_l2gp_hno3_v01_1hr.2000-001|/user2/pwagner/mlspgs/l2||||1
-30004|mls_l2gp_o3_v01_1hr.2000-001|/user2/pwagner/mlspgs/l2||||1
-30005|mls_l2gp_hcl_v01_1hr.2000-001|/user2/pwagner/mlspgs/l2||||1
-30006|mls_l2gp_clo_v01_1hr.2000-001|/user2/pwagner/mlspgs/l2||||1
-30007|mls_l2gp_n2o_v01_1hr.2000-001|/user2/pwagner/mlspgs/l2||||1
-30008|mls_l2gp_co_v01_1hr.2000-001|/user2/pwagner/mlspgs/l2||||1
-30009|mls_l2gp_oh_v01_1hr.2000-001|/user2/pwagner/mlspgs/l2||||1
-30010|mls_l2gp_rhi_v01_1hr.2000-001|/user2/pwagner/mlspgs/l2||||1
-30011|mls_l2gp_so2_v01_1hr.2000-001|/user2/pwagner/mlspgs/l2||||1
-30012|mls_l2gp_ho2_v01_1hr.2000-001|/user2/pwagner/mlspgs/l2||||1  
-30013|mls_l2gp_bro_v01_1hr.2000-001|/user2/pwagner/mlspgs/l2||||1
-30014|mls_l2gp_hocl_v01_1hr.2000-001|/user2/pwagner/mlspgs/l2||||1   
-30015|mls_l2gp_hcn_v01_1hr.2000-001|/user2/pwagner/mlspgs/l2||||1
-30016|mls_l2gp_cirrus-ice_v01_1hr.2000-001|/user2/pwagner/mlspgs/l2||||1  
-#22517|mls_l2gp_o3-strat-column_v01_1hr.2000-001|/user2/pwagner/mlspgs/l2||||1
-#22550|mls_l2gp_others_v01_1hr.2000-001|/user2/pwagner/mlspgs/l2||||1
-21440|mls_l2aux_v01_1hr.2000-001|/user2/pwagner/mlspgs/l2||||1
+30000|mls_l2gp_temp_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1
+30001|mls_l2gp_gph_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1
+30002|mls_l2gp_h2o_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1
+30003|mls_l2gp_hno3_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1
+30004|mls_l2gp_o3_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1
+30005|mls_l2gp_hcl_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1
+30006|mls_l2gp_clo_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1
+30007|mls_l2gp_n2o_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1
+30008|mls_l2gp_co_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1
+30009|mls_l2gp_oh_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1
+30010|mls_l2gp_rhi_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1
+30011|mls_l2gp_so2_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1
+30012|mls_l2gp_ho2_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1  
+30013|mls_l2gp_bro_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1
+30014|mls_l2gp_hocl_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1   
+30015|mls_l2gp_hcn_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1
+30016|mls_l2gp_cirrus-ice_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1  
+#22517|mls_l2gp_o3-strat-column_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1
+30017|mls_l2gp_others_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1
+30600|mls_l2aux_full_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1
 #
 #------------------------------------------------------------------------
 # This file is created when PGS_MET_Write is used with an intention
@@ -291,7 +290,7 @@
 #########################################################################
 #
 # Next line is the default location for SUPPORT INPUT FILES
-!  ~/runtime
+!  /nas/bigdata/livesey/misc
 #
 #  
 # -----------------------------------------------------------------------
@@ -428,7 +427,7 @@
 #########################################################################
 #
 # Next line is default location for SUPPORT OUTPUT FILES
-!  ~/runtime
+!  /nas/bigdata/livesey/misc
 #
 #
 # -----------------------------------------------------------------------
@@ -438,13 +437,13 @@
 # Remember: all executables within a PGE will contribute status data to 
 # the same batch of log files. (DO NOT REMOVE THESE ENTRIES)
 # -----------------------------------------------------------------------
-10100|LogStatus|/user2/pwagner/mlspgs/l2||||1
-10101|LogReport|/user2/pwagner/mlspgs/l2||||1
-10102|LogUser|/user2/pwagner/mlspgs/l2||||1
-10103|TmpStatus|/user2/pwagner/mlspgs/l2||||1
-10104|TmpReport|/user2/pwagner/mlspgs/l2||||1
-10105|TmpUser|/user2/pwagner/mlspgs/l2||||1
-10110|MailFile|/user2/pwagner/mlspgs/l2||||1
+10100|LogStatus|/user5/zvi/mlspgs/l2||||1
+10101|LogReport|/user5/zvi/mlspgs/l2||||1
+10102|LogUser|/user5/zvi/mlspgs/l2||||1
+10103|TmpStatus|/user5/zvi/mlspgs/l2||||1
+10104|TmpReport|/user5/zvi/mlspgs/l2||||1
+10105|TmpUser|/user5/zvi/mlspgs/l2||||1
+10110|MailFile|/user5/zvi/mlspgs/l2||||1
 #
 # -----------------------------------------------------------------------
 # ASCII file which stores pointers to runtime SMF files in lieu of 
@@ -569,7 +568,7 @@
 # are used by pgs_pc_getconfigdata to obtain the processing range.
 # -----------------------------------------------------------------------
 10411|Processing CCSDS Start Time|2000-01-01T00:00:00.000000Z
-10412|Processing CCSDS End Time|2000-01-01T00:59:59.000000Z
+10412|Processing CCSDS End Time|2000-01-01T01:59:59.000000Z
 
 ?   INTERMEDIATE INPUT
 #########################################################################
@@ -584,7 +583,7 @@
 #########################################################################
 #
 # Next line is default location for INTERMEDIATE INPUT FILES
-!  ~/runtime
+!  /nas/bigdata/livesey/misc
 #
 #
 ?   INTERMEDIATE OUTPUT
@@ -600,7 +599,7 @@
 #########################################################################
 #
 # Next line is default location for INTERMEDIATE OUTPUT FILES
-!  ~/runtime
+!  /nas/bigdata/livesey/misc
 #
 #
 ?   TEMPORARY I/O
@@ -615,11 +614,12 @@
 #########################################################################
 #
 # Next line is default location for TEMPORARY FILES
-!  ~/runtime
+!  /nas/bigdata/livesey/misc
 #
 #
 ?   END
 
 # 7/18/00-ahanzel- Directed output & log files to /nas/bigdata/livesey/misc
+=======
+# 7/18/00-ahanzel- Directed output & log files to /nas/bigdata/livesey/misc
 # 7/19/00-ahanzel- Directed files 10252 and 10254 (metadata output) 
-#			to /nas/bigdata/livesey/misc.	 
