@@ -882,10 +882,9 @@ contains ! =====     Public Procedures     =============================
     integer, dimension(L2AUXRank) :: data_dim_sizes
     integer                       :: status
     ! Executable
-    ! call MLSMessage ( MLSMSG_Error,ModuleName, &
-    !      & 'Sorry--unable to read hdf5-formatted l2aux files yet' )
     CALL ReadL1BData(sd_id, QuantityName, L1bData, NoMAFs, status, &
-    & FirstMAF=firstProf, LastMAF=lastProf, NEVERFAIL=NEVERFAIL, HDFVersion=HDFVERSION_5 )
+      & FirstMAF=firstProf, LastMAF=lastProf, NEVERFAIL=NEVERFAIL, &
+      & HDFVersion=HDFVERSION_5, dontPad=.true. )
     if ( status /= 0 ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to read ' &
@@ -993,9 +992,6 @@ contains ! =====     Public Procedures     =============================
      & myNoMAFS = l2aux%dimensions(3)%noValues
     if ( present(NoMAFS) ) myNoMAFS = NoMAFS
     
-	 !  call announce_error (0,&
-    !  & "hdf5 version of WriteL2AUXData_hdf5 not ready yet " )
-    !  returnStatus = 1
     if ( .not. associated ( l2aux%values ) ) then
 	   call announce_error (0,&
         & "l2aux values not associated yet " )
@@ -1758,6 +1754,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.66  2004/08/17 17:09:45  pwagner
+! L2AUX files shouldn't need padding when read as l1b
+!
 ! Revision 2.65  2004/08/16 23:43:22  livesey
 ! Added ability to output minor frame baselines
 !
