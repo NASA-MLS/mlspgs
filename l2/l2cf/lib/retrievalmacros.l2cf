@@ -52,11 +52,17 @@ end Fill})
 ;; This macro is called at the end of a retrieval phase to store the
 ;; results back.
 !define(completePhase,{!dnl
+;; Set default values for some parameters
+!undefine(completePhasetroph2o)
+!processparval({completePhase},!shift($@))
 begin Fill
   ;; Put state etc. back
   Transfer, source=x$1, destination=state
   Transfer, source=sdOut$1, destination=outputPrecision
-  ; FM output will be turned on again, sometime, for the PEs
+  !ifdef(completePhasetroph2o,{!dnl
+    ;; In this case copy TropH2O into H2O as requested
+    Fill, quantity=state.h2o, sourceQuantity=state.tropH2O, method=vector, /interpolate})
+  ;; FM output will be turned on again, sometime, for the PEs
   !ifdef(precisionEstimates,{},{Transfer, source=f$1, destination=fwm})
   ;; Clean up
   Destroy, matrix=myCovariance$1
@@ -67,11 +73,10 @@ begin Fill
   Fill, quantity=outputPrecision.gph, method=gphPrecision, $
     refGPHPrecisionquantity=outputPrecision.refGPH, $
     tempPrecisionQuantity=outputPrecision.temperature
-  ;; Compute rhi from h2o
+  ;; Compute RHI from H2O
   Fill, quantity=state.rhi, h2oQuantity=state.h2o, $
     temperatureQuantity=state.temperature, method=RHIFromH2O, /dontMask
-;   Fill, quantity=outputPrecision.rhi, h2oQuantity=outputPrecision.h2o, $
-;     temperatureQuantity=state.temperature, method=special, /dontMask
+  ;; And RHI precision
   Fill, quantity=outputPrecision.rhi, $
     h2oPrecisionQuantity=outputPrecision.h2o, $
     tempPrecisionQuantity=outputPrecision.temperature, $
@@ -296,6 +301,9 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
     /do_conv, /atmos_der, /do_baseline})
 
 ; $Log$
+; Revision 1.30  2002/10/17 18:24:40  livesey
+; Typo
+;
 ; Revision 1.29  2002/10/17 18:19:50  livesey
 ; Added low/high bound to retrieval
 ;
