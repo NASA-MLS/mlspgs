@@ -1719,6 +1719,7 @@ contains ! ============================ MODULE PROCEDURES ====================
          attr_id, atype_id, aspace_id, s_type_id
     integer :: i, rank, arank, h5error, status
 !-----------------------------------------------------------------------
+    nullify(attr_data)
     test_type: select case (trim(MLSAuxData%type_name))
     case ('real')
        if (associated(MLSAuxData%RealField)) then 
@@ -2010,6 +2011,7 @@ contains ! ============================ MODULE PROCEDURES ====================
     error = 0
     is_char = .false.
     atype_id = H5T_IEEE_F32LE
+    nullify(char_data, attr_data)
     do i = 2, 7
        adims(i) = 0
     end do
@@ -2180,6 +2182,7 @@ contains ! ============================ MODULE PROCEDURES ====================
     error = 0
     atype_id = H5T_IEEE_F32LE
     is_char = .false.
+    nullify(char_data, attr_data)
   ! Check that exactly 1 of the optional args is supplied
   ! The following will produce 0 if neither, 3 if both; else 1 or 2
     which_opt_arg = 0
@@ -2363,6 +2366,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 !
     error = 0
     myRead_attributes = .false.
+    nullify(character_buffer, real_buffer, double_buffer, integer_buffer)
     if ( present(read_attributes) ) myRead_attributes=read_attributes
 !-- assign name and type for dataset
 
@@ -2667,6 +2671,7 @@ contains ! ============================ MODULE PROCEDURES ====================
     myWrite_attributes = .false.
     if ( present(write_attributes) ) myWrite_attributes=write_attributes
 
+    nullify(char_data, attr_data)
     test_type: select case (trim(MLSAuxData%type_name))
     case ('real')
        if (associated(MLSAuxData%RealField)) then 
@@ -3033,6 +3038,9 @@ contains ! ============================ MODULE PROCEDURES ====================
 end module MLSAuxData
 
 ! $Log$
+! Revision 2.18  2002/12/06 23:38:12  pwagner
+! Helpful pre-nullifying of pointers
+!
 ! Revision 2.17  2002/11/25 05:35:35  jdone
 ! Added dimension names.
 !
