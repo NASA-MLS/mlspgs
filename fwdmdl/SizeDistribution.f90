@@ -3,6 +3,8 @@
 
 module SizeDistribution
 
+USE MLSSpecialFunctions, ONLY: gamma
+
 ! -------------------------------------------------------------------------  
 ! THIS MODULE CONTAINS VARIOUS PARTICLE SIZE DISTRIBUTIONS
 ! -------------------------------------------------------------------------
@@ -234,8 +236,9 @@ contains
 	      c1 = 6.
 	      c2 = 1.
 	   endif
+
 		b = c1/(c2*rc**c2)
-		A=1.e12*(3*CWC*c2*b*((c1+4)/c2)/(4*3.14*3.6e6))
+		A=1.e12*(3*CWC*c2*b**((c1+4)/c2))/((4*3.14*gamma((c1+4)/c2)*1.e6))
 
       dr0     = 0.1  !JJ
       sum     = 0.
@@ -291,6 +294,9 @@ contains
 end module SizeDistribution
 
 ! $Log$
+! Revision 2.4  2004/06/03 18:07:28  jonathan
+! add gama function to water size distribution
+!
 ! Revision 2.3  2004/04/15 23:11:56  jonathan
 ! fix a bug..Note make affect DTcir at 100mb by a factor of ~2
 !
