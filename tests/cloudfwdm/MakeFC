@@ -32,7 +32,7 @@ libmls_objs=$(libmls_sources)/$(MLSCONFG)
 srclib=../../srclib
 
 # where sources for the forward model are stored
-libfwdmdl_sources=../fwdmdl
+libfwdmdl_sources=../../fwdmdl
 
 # where forward model objects and libfwdmdl.a are stored
 libfwdmdl_objs=$(libfwdmdl_sources)/$(MLSCONFG)
@@ -156,4 +156,7 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude test
 
 # $Log$
+# Revision 1.1  2001/07/02 18:45:39  pwagner
+# First commit
+#
 
