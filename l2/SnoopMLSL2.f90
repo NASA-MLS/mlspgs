@@ -488,14 +488,13 @@ contains ! ========  Public Procedures =========================================
     do vector = 1, size(vectorDatabase)
       if ( vectorDatabase(vector)%name == vectorName) exit
     end do
-    if ( vectorDatabase(vector)%name /= vectorName ) return
+    if ( vector > size(vectorDatabase) ) return
 
     do quantity = 1, size(vectorDatabase(vector)%quantities)
       if ( vectorDatabase(vector)%quantities(quantity)%template%name == &
         & quantityName ) exit
     end do
-    if ( vectorDatabase(vector)%quantities(quantity)%template%name /= &
-      & quantityName ) return
+    if ( quantity > size(vectorDatabase(vector)%quantities ) ) return
 
     q => vectorDatabase(vector)%quantities(quantity)
 
@@ -513,6 +512,9 @@ contains ! ========  Public Procedures =========================================
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.19  2001/10/02 00:44:46  livesey
+! Bug fix
+!
 ! Revision 2.18  2001/09/28 23:39:09  livesey
 ! Now doesn't give error if unknown quantity/vector requested
 !
