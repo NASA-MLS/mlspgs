@@ -27,7 +27,7 @@ OBJLIB = $M/declaration_table.o $M/error_handler.o     $M/expr_m.o \
          $M/symbol_types.o      $M/table_dumper.o      $M/table_generator.o \
          $M/toggles_core.o      $M/trace_m.o           $M/tree.o \
          $M/tree_types.o        $M/units.o             $M/MLSStrings.o \
-         $M/MLSPCF.o            $M/dates_module.o
+         $M/MLSPCF.o            $M/dates_module.o      $M/L2GPData.o
 
 # These are used to make tar, which is from the parent of $(MLS):
 SRCLIB = lib/declaration_table.f90 lib/error_handler.f90     lib/expr_m.f90 \
@@ -38,16 +38,16 @@ SRCLIB = lib/declaration_table.f90 lib/error_handler.f90     lib/expr_m.f90 \
          lib/symbol_types.f90      lib/table_dumper.f90      lib/table_generator.f90 \
          lib/toggles_core.f90      lib/trace_m.f90           lib/tree.f90 \
          lib/tree_types.f90        lib/units.f90             lib/MLSStrings.f90 \
-         lib/MLSPCF.f90            lib/dates_module.f90
+         lib/MLSPCF.f90            lib/dates_module.f90      lib/L2GPData.f90
 
 # Files that must be compiled here from sources in the application:
  
-OBJ_L3 = init_tables_module.o L3CF.o L3DMData.o OpenInit.o OutputClose.o \
-         PCFModule.o 
+OBJ_L3 = init_tables_module.o L2Interface.o L3CF.o L3DMData.o OpenInit.o \
+         OutputClose.o PCFModule.o
 
 # These are used to make tar, which is from the parent of $(MLS):
-SRC_L3 = l3/init_tables_module.f90 l3/L3CF.f90 l3/L3DMData.f90 \
-         l3/OpenInit.f90 l3/OutputClose.f90 l3/PCFModule.f90
+SRC_L3 = l3/init_tables_module.f90 l3/L2Interface.f90 l3/L3CF.f90 \
+         l3/L3DMData.f90 l3/OpenInit.f90 l3/OutputClose.f90 l3/PCFModule.f90
 
 
 # Files that must be compiled here from sources in lib, because
@@ -95,6 +95,10 @@ OpenInit.o : $A/OpenInit.f90 $M/MLSPCF.o $M/MLSMessageModule.o L3DMData.o \
              $M/dates_module.o $M/MLSCF.o L3CF.o getCF_m.o
 	$(F90) -c $(FOPTS) $I$M $I$A $A/OpenInit.f90
 
+L2Interface.o : $M/Hdf.o $M/L2GPData.o $M/MLSCommon.o $M/MLSMessageModule.o \
+                $M/MLSStrings.o $M/SDPToolkit.o L3DMData.o MLSPCF.o OpenInit.o
+	$(F90) -c $(FOPTS) $(DUSTY) $I$M $A/L2Interface.f90
+
 OutputClose.o : $M/MLSCommon.o $M/MLSMessageModule.o L3DMData.o L3CF.o \
                 $M/MLSStrings.o $M/MLSPCF.o OpenInit.o $M/MLSCF.o PCFModule.o
 	$(F90) -c $(FOPTS) $I$M $I$A $A/OutputClose.f90
@@ -106,8 +110,8 @@ $M/libmls.a:
 
 OBJS = MLSL3.o $(OBJLIB) $(OBJ_L3) $(OBJ_SRC_LIB)
 
-MLSL3.o: $S/MLSL3.f90 OpenInit.o $M/MLSCF.o L3CF.o $M/MLSMessageModule.o \
-        L3DMData.o OutputClose.o
+MLSL3.o: $S/MLSL3.f90 $M/L2GPData.o $M/MLSCF.o $M/MLSMessageModule.o \
+        L2Interface.o L3CF.o L3DMData.o OpenInit.o OutputClose.o
 	$(F90) -c $(FOPTS) $I$S $I$M $I$A $S/MLSL3.f90
 
 MLSL3: $(OBJS) $M/libmls.a
@@ -130,9 +134,9 @@ tar:
           $(SRC_LIB) lib/test_cf_parser/*
 
 # $Log$
+# Revision 1.2  2000/11/15 01:04:15  vsnyder
+# Add MLSS symbol, use it to correct pathname for tree_checker.f90 and getCF.f90
+#
 # Revision 1.1  2000/10/24 19:27:32  nakamura
 # Makes l3, assuming lib already exists.
-#
-# Revision 1.1  2000/10/11 20:54:39  vsnyder
-# Initial addition
 #
