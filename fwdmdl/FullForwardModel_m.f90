@@ -44,7 +44,7 @@ module FullForwardModel_m
                         & GetNameOfSignal
   use String_table, only: GET_STRING, DISPLAY_STRING
   use SpectroscopyCatalog_m, only: CATALOG_T, LINE_T, LINES, CATALOG
-  use intrinsic, only: L_TEMPERATURE, L_RADIANCE, L_PTAN, L_ELEVOFFSET, &
+  use intrinsic, only: L_TEMPERATURE, L_RADIANCE, L_PHITAN, L_PTAN, L_ELEVOFFSET, &
     & L_ORBITINCLINATION, L_SPACERADIANCE, L_EARTHREFL, L_LOSVEL, &
     & L_SCGEOCALT, L_SIDEBANDRATIO, L_NONE, L_CHANNEL, L_VMR, L_REFGPH, &
     & LIT_INDICES, L_ISOTOPERATIO
@@ -312,6 +312,7 @@ contains ! ================================ FullForwardModel routine ======
     type (VectorValue_T), pointer :: LOSVEL ! Line of sight velocity
     type (VectorValue_T), pointer :: F             ! An arbitrary species
     type (VectorValue_T), pointer :: ORBINCLINE ! Orbital inclination
+    type (VectorValue_T), pointer :: PHITAN ! Tangent geodAngle component of state vector
     type (VectorValue_T), pointer :: PTAN ! Tangent pressure component of state vector
     type (VectorValue_T), pointer :: REFGPH ! Reference geopotential height
     type (VectorValue_T), pointer :: SCGEOCALT ! S/C geocentric altitude /m
@@ -426,6 +427,8 @@ contains ! ================================ FullForwardModel routine ======
       & quantityType=l_temperature )
     ptan => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_ptan, instrumentModule=firstSignal%instrumentModule )
+    phitan => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_phitan, instrumentModule=firstSignal%instrumentModule )
     elevOffset => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_elevOffset, radiometer=firstSignal%radiometer )
     orbIncline => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
@@ -464,6 +467,9 @@ contains ! ================================ FullForwardModel routine ======
     if ( .not. ValidateVectorQuantity(ptan, minorFrame=.TRUE., &
       & frequencyCoordinate=(/l_none/)) ) call MLSMessage ( MLSMSG_Error, &
       & ModuleName, InvalidQuantity//'ptan' )
+    if ( .not. ValidateVectorQuantity(phitan, minorFrame=.TRUE., &
+      & frequencyCoordinate=(/l_none/)) ) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, InvalidQuantity//'phitan' )
     if ( .not. ValidateVectorQuantity(elevOffset, verticalCoordinate=(/l_none/), &
       & frequencyCoordinate=(/l_none/), noInstances=(/1/)) ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1161,8 +1167,11 @@ contains ! ================================ FullForwardModel routine ======
         if ( toggle(emit) .and. levels(emit) > 4 ) &
           & call Trace_Begin ( 'ForwardModel.MetricsEtc' )
 
-! *** This is where we will interpolate Phi_tan
+        ! Phi tan values are:
+        ! phiTan%values ( mif, maf )
 
+! *** This is where we will interpolate Phi_tan
+        
         phi_tan = firstRadiance%template%phi(1,MAF)*Deg2Rad
 
         if (ptg_i < surfaceTangentIndex) then
@@ -2185,6 +2194,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.51  2002/06/04 10:27:59  zvi
+! Encorporate deriv. flag into convolution
+!
 ! Revision 2.50  2002/05/28 17:09:14  livesey
 ! Removed print statement
 !
