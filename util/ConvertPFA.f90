@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 program ConvertPFA
 
   ! Usage: ./convertPFA [options] infile outfile
@@ -182,7 +185,7 @@ contains
     integer, intent(out) :: Number
     integer :: I
     character(len=*), parameter :: NumSet = '0123456789.+-eE'
-      i = index(line,'tart=')
+    i = index(line,'tart=')
     line = line(i+5:)
     i=verify(line,numSet)
     read ( line(:i-1), * ) start
@@ -205,6 +208,9 @@ contains
 end program ConvertPFA
 
 ! $Log$
+! Revision 1.7  2004/10/05 23:05:51  vsnyder
+! Correct a comment
+!
 ! Revision 1.6  2004/10/05 23:03:24  vsnyder
 ! Convert -Inf in absorption to -Huge; Convert NaN in derivatives to zero.
 ! Write temperature and pressure grid start and step into output file.
