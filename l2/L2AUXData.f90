@@ -16,13 +16,14 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
     & MLSMSG_ERROR, MLSMSG_WARNING
   use MLSSignals_m, only: GETMODULENAME, MODULES
-  use MLSStrings, only: LINEARSEARCHSTRINGARRAY
+  use MLSStrings, only: GetStringElement
   use Output_M, only: OUTPUT
   use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
   use Tree, only: DUMP_TREE_NODE, SOURCE_REF
 
   implicit none
 
+! === (start of toc) ===
 !     c o n t e n t s
 !     - - - - - - - -
 
@@ -40,6 +41,30 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
 ! ReadL2AUXData                   Reads an l2aux quantity from a file
 ! SetupNewL2AUXRecord             Allocates the arrays for an l2aux quantity
 ! WriteL2AUXData                  Writes an l2aux quantity to a file
+! === (end of toc) ===
+
+! === (start of api) ===
+! int L2AUXRANK
+!     (user-defined types)
+! L2AUX_Dimension_T  ( int NoValues, int DIMENSIONFAMILY, *r8 values(:) )
+! L2AUXData_T  ( int name, int INSTRUMENTMODULE,
+!     log minorframe, log majorframe, L2AUX_Dimension_T dimensions(:),
+!     *r8 values(:,:,:) )
+
+!     (subroutines and functions)
+! SetupNewL2AUXRecord ( int dimensionFamilies(L2AUXRANK), 
+!    int dimSizes(L2AUXRANK), int dimStarts(L2AUXRANK), L2AUXData_T l2aux )
+! DestroyL2AUXContents ( L2AUXData_T l2aux )
+! ExpandL2AUXDataInPlace ( L2AUXData_T l2aux, int newSize )
+! int AddL2AUXToDatabase ( *L2AUXData_T DATABASE(:), L2AUXData_T ITEM )
+! DestroyL2AUXDatabase ( *L2AUXData_T DATABASE(:) )
+! Dump ( l2auxData_T L2aux(:), [char* Name], [int Details] )
+!    or Dump ( l2auxData_T L2aux, [int Details] )
+! ReadL2AUXData (int sd_id, char* quantityname, l2auxData_T l2aux, 
+!    [int firstProf], [int lastProf])
+! WriteL2AUXData(l2auxData_T l2aux, int l2FileHandle, int returnStatus, 
+!    [char* sdName], [int NoMAFS], [log WriteCounterMAF], [char* DimNames])
+! === (end of api) ===
 
   private
   public :: L2AUX_Dimension_T, L2AUXData_T, L2AUXRANK
@@ -491,7 +516,7 @@ contains ! =====     Public Procedures     =============================
   !----------------------------------------------------- WriteL2AUXData ------
 
   subroutine WriteL2AUXData(l2aux, l2FileHandle, returnStatus, sdName, &
-    & NoMAFS, WriteCounterMAF)
+    & NoMAFS, WriteCounterMAF, DimNames)
   ! Write l2aux to the file with l2FileHandle
   ! Optionally, write a bogus CounterMAF sd so the
   ! resulting file can masquerade as an l1BRad
@@ -499,6 +524,9 @@ contains ! =====     Public Procedures     =============================
     type (L2AUXData_T), intent(in) :: L2AUX
     integer, intent(in) :: L2FILEHANDLE
     character (len=*), optional, intent(in) :: SDNAME ! Defaults to l2aux%name
+    character (len=*), optional, intent(in) :: DimNames ! Comma-separated list
+                                                        ! Otherwise automatic
+                                                        ! (Requiring l2cf)
     integer, intent(in), optional :: NoMAFS
     logical, intent(in), optional :: WriteCounterMAF  ! Write bogus CounterMAF
     integer, intent(out) :: returnStatus           ! 0 unless error
@@ -553,15 +581,20 @@ contains ! =====     Public Procedures     =============================
         dimID=SFDIMID(sdId,dimensionInFile)
         ! Construct dimension name. For minor frame quantities MIF and MAF
         ! names are global, otherwise specific
-        if ( (dimensionInData > 1) .and. (l2aux%minorFrame) ) then
+        if ( present(DimNames) ) then
+          call GetStringElement(trim(DimNames), dimName, dimensionInData, &
+            & countEmpty=.TRUE.)
+        elseif ( (dimensionInData > 1) .and. (l2aux%minorFrame) ) then
           call GetModuleName( l2aux%instrumentModule, dimName)
           if (len_trim(dimName) < len(dimName)) dimName=TRIM(dimName)//'.'
+          call get_string (lit_indices(l2aux%dimensions(dimensionInData)%dimensionFamily), &
+            & dimName(LEN_TRIM(dimName)+1:))
         else
           call get_string (l2aux%name, dimName, strip=.true. )
           if (len_trim(dimName) < len(dimName)) dimName=TRIM(dimName)//'.'
+          call get_string (lit_indices(l2aux%dimensions(dimensionInData)%dimensionFamily), &
+            & dimName(LEN_TRIM(dimName)+1:))
         endif
-        call get_string (lit_indices(l2aux%dimensions(dimensionInData)%dimensionFamily), &
-          & dimName(LEN_TRIM(dimName)+1:))
         ! Write dimension name
         status=SFSDMName(dimID,TRIM(dimName))
         if ( status /= 0 ) then
@@ -678,6 +711,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.26  2002/11/06 00:18:37  pwagner
+! Can WriteL2AUXData w/o l2cf: useable by small utility programs
+!
 ! Revision 2.25  2002/10/08 17:36:21  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
