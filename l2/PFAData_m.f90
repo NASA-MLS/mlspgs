@@ -302,7 +302,8 @@ contains ! =====     Public Procedures     =============================
     double precision :: Values(2) ! of losVel
 
     ! Error codes
-    integer, parameter :: NoFilterShapes = 1
+    integer, parameter :: DuplicateMolecule = 1
+    integer, parameter :: NoFilterShapes = DuplicateMolecule + 1
     integer, parameter :: NoFolded = noFilterShapes + 1
     integer, parameter :: NoGroup = noFolded + 1
     integer, parameter :: NotVelocity = noGroup + 1
@@ -335,6 +336,8 @@ contains ! =====     Public Procedures     =============================
           k = subtree(j,son)
           if ( node_id(k) == n_array ) call announce_error ( son, noGroup )
           molecules(j-1) = decoration(k)
+          if ( any(molecules(:j-2) == molecules(j-1)) ) &
+            & call announce_error ( k, duplicateMolecule, stringIndex=sub_rosa(k) )
         end do
       case ( f_signals )
         nullify ( channels )
@@ -394,15 +397,20 @@ contains ! =====     Public Procedures     =============================
   contains
 
     ! ...........................................  Announce_Error  .....
-    subroutine Announce_Error ( Where, What, String )
+    subroutine Announce_Error ( Where, What, String, StringIndex )
       use MoreTree, only: StartErrorMessage
       use Output_m, only: Output
+      use String_Table, only: Display_String
       integer, intent(in) :: Where             ! Tree node index
       integer, intent(in) :: What              ! Error index
       character(len=*), intent(in), optional :: String
+      integer, intent(in), optional :: StringIndex
       error = 1
       call startErrorMessage ( where )
       select case ( what )
+      case ( DuplicateMolecule )
+        call output ( 'Duplicate molecule ' )
+        call display_string ( stringIndex, advance='yes' )
       case ( noFilterShapes )
         call output ( 'Filter shapes are required to compute PFA', advance='yes' )
       case ( noFolded )
@@ -604,6 +612,9 @@ contains ! =====     Public Procedures     =============================
 end module PFAData_m
 
 ! $Log$
+! Revision 2.18  2005/03/25 21:02:48  vsnyder
+! Add duplicate molecule detector to MakePFA
+!
 ! Revision 2.17  2005/03/16 23:59:42  vsnyder
 ! Add allLinesForRadiometer and allLinesInCatalog to makePFA
 !
