@@ -13,10 +13,15 @@ ALLOBJS = $(OBJS) $(srclib_objs)
 # ========================================================================
 mlsl2: $(ALLOBJS) $(libdir)/libmls.a
 	$(FC) -o mlsl2 $(ALLOBJS) \
-                      -L$(libdir) -lmls \
-	-L$(PGSTK) -lPGSTK -L$(HDFEOS) -lhdfeos \
-	-L$(HDF) -ldf -ljpeg -lmfhdf -lz \
-	-L$(GCTP) -lGctp \
+                      -L${libdir} -lmls \
+	-L${PGSTK} -lPGSTK \
+        -L${HDFEOS} -lhdfeos \
+	-L${HDF} -lmfhdf \
+        -ldf \
+        -lz \
+        -ljpeg \
+	-L${GCTP} -lGctp \
+        $(l_specials)
 
 # ========================================================================
 
@@ -29,6 +34,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.4  2000/11/06 23:28:54  pwagner
+# Calculates srclib dependency
+#
 # Revision 1.3  2000/11/06 17:39:30  pwagner
 # Adjust shared source dependencies
 #

@@ -84,7 +84,13 @@ INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)
 #HDF =/software/SRC/TOOLKIT-5.2.6v1.00.NAG/hdf/linux/HDF4.1r3/lib
 #GCTP =/software/SRC/TOOLKIT-5.2.6v1.00.NAG/hdfeos/lib/linux
 
+#Special load libraries
+l_specials = -lnsl
+
 # $Log$
+# Revision 1.4  2000/11/16 22:55:21  pwagner
+# Looks for %.f9h in srclib
+#
 # Revision 1.3  2000/11/03 18:18:41  pwagner
 # Shares sources in srclib
 #
