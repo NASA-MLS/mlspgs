@@ -281,6 +281,7 @@ CONTAINS
       integer :: grp_id
       integer :: status
       logical :: my_skip
+      logical, parameter :: WRITE_ORBIT = .false.
 
       ! Executable code
       my_skip = .false.
@@ -290,10 +291,12 @@ CONTAINS
           & return
       endif
       call h5gopen_f(fileID, '/', grp_id, status)
-      call MakeHDF5Attribute(grp_id, &
-       & 'OrbitNumber', GlobalAttributes%OrbNum, .true.)
-      call MakeHDF5Attribute(grp_id, &
-       & 'OrbitPeriod', GlobalAttributes%OrbPeriod, .true.)
+      if (WRITE_ORBIT) then
+          call MakeHDF5Attribute(grp_id, &
+             & 'OrbitNumber', GlobalAttributes%OrbNum, .true.)
+          call MakeHDF5Attribute(grp_id, &
+             & 'OrbitPeriod', GlobalAttributes%OrbPeriod, .true.)
+      end if
       call MakeHDF5Attribute(grp_id, &
        & 'InstrumentName', GlobalAttributes%InstrumentName, .true.)
       call MakeHDF5Attribute(grp_id, &
@@ -966,6 +969,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.26  2003/09/15 17:13:57  cvuu
+!# Optional writing Orbit info to global attribute for h5_writeglobal
+!#
 !# Revision 2.25  2003/09/12 16:39:05  cvuu
 !# Add attributes OrbitNumber and OrbitPeriod in the global attributes
 !#
