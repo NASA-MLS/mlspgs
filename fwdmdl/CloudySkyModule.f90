@@ -87,6 +87,7 @@ contains
 !---------------------------------------
 !     WORK SPACES
 !---------------------------------------
+
       INTEGER :: I,J,K
       REAL(r8) :: W1,SUM,DD,US
 
@@ -324,6 +325,9 @@ contains
 end module CloudySkyModule
 
 ! $Log$
+! Revision 2.4  2003/10/09 18:25:24  jonathan
+! some changes
+!
 ! Revision 2.3  2003/05/14 23:13:00  dwu
 ! fix a dimension problem and modify the structure
 !
