@@ -68,7 +68,8 @@ module ScanModelModule          ! Scan model and associated calculations
   
   real (r8), parameter :: REFRATERM = 0.0000776D0 ! First term
   real (r8), parameter :: REFRBTERM = 4810.0D0 ! Second term
-  real (r8), parameter :: MAXREFRACTION = 1e-2 ! Don't allow stupidly large n.
+  real (r8), parameter :: MAXREFRACTION = 10.0!1e-2 ! Don't allow stupidly large n.
+  real (r8), parameter :: MAXPRESSURE = 1400.0 ! /mb Don't allow very large pressures
   
   ! Now some terms to do with the gas 'constant'
   
@@ -238,6 +239,7 @@ contains ! =============== Subroutines and functions ==========================
     real (r8), dimension(:), pointer :: P2
     real (r8), dimension(:), pointer :: P4
     real (r8), dimension(:), pointer :: POINTINGH2O    ! t.p. h2o
+    real (r8), dimension(:), pointer :: POINTINGPRES ! t.p. press
     real (r8), dimension(:), pointer :: POINTINGTEMP   ! t.p. temp.
     real (r8), dimension(:), pointer :: PTANVALS       ! Points to part of ptan
     real (r8), dimension(:), pointer :: RATIO2         ! minor frame
@@ -265,8 +267,8 @@ contains ! =============== Subroutines and functions ==========================
     nullify ( aCoeff, basisGPH, basisLower, basisSpacing, basisUpper, &
       & bCoeff, cCoeff, closestH2OProfiles, closestTempProfiles, deltaRT, &
       & earthRadius, geocLat, geometricGPH, lower, n, &
-      & pointingH2O, pointingTemp, ratio2, ratio4, refractedGeocAlt, rt, &
-      & rtLower, rtUpper, upper, s2, p2, p4 )
+      & pointingH2O, pointingPres, pointingTemp, ratio2, ratio4, &
+      & refractedGeocAlt, rt, rtLower, rtUpper, upper, s2, p2, p4 )
 
     ! Check that we get the right kinds of quantities
     if ( ( .not. ValidateVectorQuantity( temp,&
@@ -310,6 +312,7 @@ contains ! =============== Subroutines and functions ==========================
       "geometricGPH",ModuleName)
     call Allocate_Test(n,ptan%template%noSurfs,"n",ModuleName)
     call Allocate_Test(pointingH2O,ptan%template%noSurfs,"pointingH2O",ModuleName)
+    call Allocate_Test(pointingpres,ptan%template%noSurfs,"pointingpres",ModuleName)
     call Allocate_Test(pointingTemp,ptan%template%noSurfs,"pointingTemp",ModuleName)
     call Allocate_Test(ratio2,ptan%template%noSurfs,"ratio2",ModuleName)
     call Allocate_Test(ratio4,ptan%template%noSurfs,"ratio4",ModuleName)
@@ -362,7 +365,6 @@ contains ! =============== Subroutines and functions ==========================
 
       ! Now we have an iteration loop where we try to fit the tangent pressure
       do iteration=1,maxIterations
-        print*,'Iteration:',iteration,maxval(ptanVals),minval(ptanVals)
         ! The first stage is to refract the tangent point altitudes, for this we
         ! need the refractive index, which is dependent on temperature, pressure
         ! and water vapor concentration for the given altitude.
@@ -376,7 +378,9 @@ contains ! =============== Subroutines and functions ==========================
         pointingH2O = max(pointingH2O, 0.0_r8)
         where(geocAlt%values(:,maf) /= geocAlt%template%badValue)
 
-          n=( (refrATerm*(10**(-ptanVals))) / pointingTemp ) * &
+          pointingpres = min(10**(-ptanVals), maxPressure)
+
+          n=( (refrATerm*pointingpres) / pointingTemp ) * &
             & (1.0 + refrBTerm*pointingH2O/pointingTemp)
 
           n=min(n,maxRefraction) ! Forbid stupidly large values of n           
@@ -456,6 +460,7 @@ contains ! =============== Subroutines and functions ==========================
     call Deallocate_Test(geometricGPH,"geometricGPH",ModuleName)
     call Deallocate_Test(n,"n",ModuleName)
     call Deallocate_Test(pointingH2O,"pointingH2O",ModuleName)
+    call Deallocate_Test(pointingpres,"pointingpres",ModuleName)
     call Deallocate_Test(pointingTemp,"pointingTemp",ModuleName)
     call Deallocate_Test(ratio2,"ratio2",ModuleName)
     call Deallocate_Test(ratio4,"ratio4",ModuleName)
@@ -834,7 +839,7 @@ contains ! =============== Subroutines and functions ==========================
       &           h2oVals(pointH2OLayer+1) * h2oUpperWeight
 
     ! Get pointing pressure in mb
-    pointingPres=10.0_r8**(-ptanVals)
+    pointingPres = min(10.0_r8**(-ptanVals), maxPressure)
 
     ! Now get the refractive index n
     n=refrATerm/(pointingTemp/pointingPres) * &
@@ -858,6 +863,11 @@ contains ! =============== Subroutines and functions ==========================
       dNByDTempLower = 0.0
       dNByDTempUpper = 0.0
       dNByDPtan = 0.0
+    end where
+
+    ! Do similar things for high pressure cases
+    where ( 10.0_r8**(-ptanVals) > maxPressure )
+      dNByDPtan=0.0
     end where
 
     ! Now from this calculate the refracted geocentric altitudes
@@ -947,7 +957,6 @@ contains ! =============== Subroutines and functions ==========================
         usePtan = refGPH%template%surfs(1,1)
         lower = belowRef
         upper = belowRef + 1
-        print*,'refGPH term:',usePtan,belowRef
       else
         usePtan = ptanVals(i)
         lower = pointTempLayer(i)
@@ -970,25 +979,30 @@ contains ! =============== Subroutines and functions ==========================
           else
             upperWeight = 1.0
           end if
-
           
           ! Consider the extremes (j==1, j==noTemps) cases first
-          if ( (j==1) .and. (usePtan < tempBasis(j)) ) then ! Below bottom of basis
+          
+          ! Below bottom of basis
+          if ( (j==1) .and. (usePtan < tempBasis(j)) ) then
             A(i,j) = 2*(usePtan-tempBasis(j))
 
-          else if ( (j==noTemps) .and. (usePtan > tempBasis(j)) ) then ! Above top
+            ! Above top
+          else if ( (j==noTemps) .and. (usePtan > tempBasis(j)) ) then
             A(i,j) = 2*(usePtan-tempBasis(j))
-            
-          else if ( j < lower ) then         ! Basis triangles completely below ptan
+
+            ! Basis triangles completely below ptan
+          else if ( j < lower ) then
             A(i,j) = basisPlus - basisMinus
 
-          else if ( j == lower  ) then  ! Basis triangles with ptan in the top half
+            ! Basis triangles with ptan in the top half (not when ptan above top)
+          else if ( j == lower .and. usePtan < tempBasis(noTemps) ) then
             A(i,j) = ( basis - basisMinus ) + &
               & ( usePtan - basis ) * &
               & ( 2 * basisPlus - basis - usePtan ) / &
               & (basisPlus - basis)
 
-          else if ( j == lower+1 ) then ! Basis triangles with ptan in the bottom half
+            ! Basis triangles with ptan in the bottom half (not when ptan below bottom)
+          else if ( j == lower+1 .and. usePtan >= tempBasis(1)) then
             A(i,j) = ( ( usePtan - basisMinus )**2 ) / &
               & (basis - basisMinus)
 
@@ -1156,6 +1170,10 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.19  2001/05/08 19:43:57  livesey
+! Pretty stable version.  Pressure now converges better.  Caught a few
+! more gremlins in d(residual)/dT.
+!
 ! Revision 2.18  2001/05/08 03:05:05  livesey
 ! Working version, pressure guesser a little unstable in extreme cases
 !
