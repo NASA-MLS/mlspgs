@@ -3,11 +3,28 @@
 ; This l2cf fragment defines macros we're going to use a lot
 ; in doing phased retrievals
 
+; ------------------------------------------------------- Derived flags
+
+;; Setup some flags based on other flags
+!ifdef(flagComputeAvks,{!define(flagDontDestroyVectors,1)})
+!ifdef(flagComputeSout,{!define(flagDontDestroyVectors,1)})
+
+; ------------------------------------------------------- Instrument information
+
 ; Define some macros we need for various quantities
 !define(allRadiometers,{R1A,R1B,R2,R3,R4,R5H,R5V})
 !define(allBands,{!forloop({i},1,33,{!i, })34}) ; 1,2,3..34
 !define(allBandLSBs,{!makelist({},{L},!allBands)})
 !define(allBandUSBs,{!forloop({i},2,20,{!i{}U,})23U,24U,25U,!forloop({i},27,31,{!i{}U,})33U})
+
+;; This macro is used in sids runs to get the band number part of a band
+;; specifier (i.e. strip off the sideband if it is present)
+!define(getBandNumber,{!regexp({$1},{[0-9]+},{\&})})
+;; Some other low level macros
+!define(systemp,{!systemp$1})
+!define(nbw,{!nbw$1})
+
+; ------------------------------------------------------- Product information
 
 ; These macros define the MLS standard products
 ; IWC is somewhat special
@@ -15,6 +32,8 @@
 !define(allStandardProductsWithoutColumns,{Temperature,GPH,RHI})
 !define(allStandardProducts,{!tidyList(!allStandardProductsWithColumns, $
   !allStandardProductsWithoutColumns)})
+
+; ------------------------------------------------------- File IO information
 
 ;; These macros define the format of our output files
 !ifdef(hdfVersion,{},{!define(hdfVersion,4)})
@@ -35,16 +54,12 @@
 {!ifdef(usingPCF,{L2AUX-DGM},!dnl
 {!outpathl2aux/MLS-Aura_L2AUX-Cloud_!l2version_!day.h!hdfVersion})})
 
-;; This macro is used in sids runs to get the band number part of a band
-;; specifier (i.e. strip off the sideband if it is present)
-!define(getBandNumber,{!regexp({$1},{[0-9]+},{\&})})
-;; Some other low level macros
-!define(systemp,{!systemp$1})
-!define(nbw,{!nbw$1})
+;; Filename for forward model radiance output
+!define(l2fwmFileName, !dnl
+{!ifdef(usingPCF,{$1},!dnl
+{!outpathl2gp/MLS-Aura_L2FWM-$1_!l2version_!day.h!hdfVersion})})
 
-;; Setup some flags based on other flags
-!ifdef(flagComputeAvks,{!define(flagDontDestroyVectors,1)})
-!ifdef(flagComputeSout,{!define(flagDontDestroyVectors,1)})
+; -------------------------------------------------------- Phase related macros
 
 ;; This macro is called at the start of each phase to setup its
 ;; vectors and matrices.
@@ -147,6 +162,8 @@ end Fill
 })})
 })
 
+; ------------------------------------------------------------- High resolution
+
 ;; This macro initialises the _HR species with interpolations of their
 ;; standard resolution equivalents
 !define(oneHiResTransfer,{Fill, quantity=state.$1, method=vector, $
@@ -157,6 +174,8 @@ end Fill
   !forall(oneHiResTransfer,!allHiResMolecules)
 end Fill})
 
+; ------------------------------------------------------------- Diversions
+
 ;; These macros define the various diverts we're going to get going
 !define(joinedDGGDivert,1)
 !define(joinedDGMDivert,2)
@@ -164,6 +183,8 @@ end Fill})
 !define(directDGGDivert,4)
 !define(directDGMDivert,5)
 !define(directCloudDivert,6)
+
+; ------------------------------------------------------------- Direct write
 
 ;; This macro is used to note a matrix to be output later
 !define(noteMatrix,{!ifdef(flagGotMatrices,{!divert(!matrixDivert),!divert})!dnl
@@ -192,7 +213,7 @@ end Fill})
 ;; are applied to the label command
 !define(directWriteDGG,{!dnl
 Label, quantity=state.$1, label='$2'!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
-!noteDirectDGG({source=state.$1,precision=outputPrecision.$1})})
+!noteDirectDGG({source=state.$1,precision=outputPrecision.$1,status=otherDiagnostics.status$1, quality=otherDiagnostics.quality$1})})
 ;; This macro is similar to the above except for the case where
 ;; the vector name should be included in $1
 !define(directWriteDGGNotState,{!dnl
@@ -243,10 +264,6 @@ DirectWrite, file='!CloudFilename', hdfVersion=!hdfVersion, $
 
 ;; These macros are associated with the direct write code.  It writes a
 ;; set of radiances $2... into the L2FWM-$1 file.
-!define(l2fwmFileName, !dnl
-{!ifdef(usingPCF,{$1},!dnl
-{!outpathl2gp/MLS-Aura_L2FWM-$1_!l2version_!day.h!hdfVersion})})
-
 !define(labelOneFwmRad,{label, quantity=fwm.band$1, /prefixSignal, label=' !phase'!nl})
 !define(oneFwmRadTerm,{source=fwm.band$1,})
 
@@ -257,6 +274,23 @@ DirectWrite, file='!CloudFilename', hdfVersion=!hdfVersion, $
   DirectWrite, !forall(oneFwmRadTerm,!tidyList(!shift($*))) type=l2fwm, $
   file='!l2fwmFileName($1)', $
   hdfVersion=!hdfVersion})})})
+
+;; This macro writes radiance diagnostics
+!define(directWriteRadianceDiagnostics,{!dnl
+ !directWriteDGMNotState(minorFrameDiagnostics.chisqMMAF$1,' chisqMMAF !phase', /prefixSignal)
+ !directWriteDGMNotState(minorFrameDiagnostics.chisqMMIF$1,' chisqMMIF !phase', /prefixSignal)
+ !directWriteDGMNotState(minorFrameDiagnostics.chisqChan$1,' chisqChan !phase', /prefixSignal)
+ !directWriteDGMNotState(minorFrameDiagnostics.noRadsPerMIF$1,' noRadsPerMIF !phase',/prefixSignal)
+
+ !directWriteDGGNotState(mappedChisqMean.chisqBinned$1,mappedChisqMax.chisqBinned$1,!dnl
+   ' chisqBinned !phase',/prefixSignal)
+ !directWriteDGGNoPrecisionNotState(otherDiagnostics.noRadsBinned$1,!dnl
+   ' noRadsBinned !phase',/prefixSignal)!nl})
+
+;; This macro writes the misc. diagnostics
+!define(directWriteOneDiagDGG,{!directWriteDGGNoPrecisionNotState(diag!phase.$1,'!translit($1,{_},{-})-!phase')!nl})
+
+; ------------------------------------------------------------- Join
 
 ;; These macros are used to note the joined DGM/DGGs
 !define(storeJoinedDGG,{!ifdef(flagAvoidDirectWrite,{},{!dnl
@@ -279,43 +313,6 @@ joinedDGG_$1_!phase: l2gp, source=state.$1, precision=outputPrecision.$1, swath=
 joinedDGM_$1_!phase: l2aux, source=state.$1, sdName='$2'
 joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 precision'
 })
-
-;; This macro is used to fill radiance chi squares
-!define(fillMinorFrameDiagnostics,{!dnl
-   Fill, quantity=minorFrameDiagnostics.chisqMMAF$1, method=special, $
-     measurements=y!phase.band$1, model=f!phase.band$1, $
-     noise=yNoise!phase.band$1, /ignoreZero, /ignoreNegative
-   Fill, quantity=minorFrameDiagnostics.chisqMMIF$1, method=special, $
-     measurements=y!phase.band$1, model=f!phase.band$1, $
-     noise=yNoise!phase.band$1, /ignoreZero, /ignoreNegative
-   Fill, quantity=minorFrameDiagnostics.chisqChan$1, method=special, $
-     measurements=y!phase.band$1, model=f!phase.band$1, $
-     noise=yNoise!phase.band$1, /ignoreZero, /ignoreNegative
-   Fill, quantity=minorFrameDiagnostics.noRadsPerMIF$1, method=special, $
-     measurements=y!phase.band$1!nl})
-
-!define(fillMappedDiagnostics,{!dnl
-   Fill, quantity=mappedChisqMean.chisqBinned$1, method=binmean, $
-     sourceQuantity=minorFrameDiagnostics.chisqMMIF$1, $
-     ptanQuantity=state.ptan!moduleForBand($1)
-   Fill, quantity=mappedChisqMax.chisqBinned$1, method=binmax, $
-     sourceQuantity=minorFrameDiagnostics.chisqMMIF$1, $
-     ptanQuantity=state.ptan!moduleForBand($1)
-   Fill, quantity=otherDiagnostics.noRadsBinned$1, method=binTotal, $
-     sourceQuantity=minorFrameDiagnostics.noRadsPerMIF$1, $
-     ptanQuantity=state.ptan!moduleForBand($1)!nl})
-
-;; This macro direct writes the above filled quantities
-!define(directWriteRadianceDiagnostics,{!dnl
- !directWriteDGMNotState(minorFrameDiagnostics.chisqMMAF$1,' chisqMMAF !phase', /prefixSignal)
- !directWriteDGMNotState(minorFrameDiagnostics.chisqMMIF$1,' chisqMMIF !phase', /prefixSignal)
- !directWriteDGMNotState(minorFrameDiagnostics.chisqChan$1,' chisqChan !phase', /prefixSignal)
- !directWriteDGMNotState(minorFrameDiagnostics.noRadsPerMIF$1,' noRadsPerMIF !phase',/prefixSignal)
-
- !directWriteDGGNotState(mappedChisqMean.chisqBinned$1,mappedChisqMax.chisqBinned$1,!dnl
-   ' chisqBinned !phase',/prefixSignal)
- !directWriteDGGNoPrecisionNotState(otherDiagnostics.noRadsBinned$1,!dnl
-   ' noRadsBinned !phase',/prefixSignal)!nl})
 
 ;; This macro joins the above filled quantities
 !define(joinRadianceDiagnostics,{!dnl
@@ -345,7 +342,40 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
    !storeJoinedDGG(joinedDGG_noRadsBinned$1_!phase)
 })
 
-;; This macro is the composite of the two above
+;; This macro uses the joinDGG (for the moment, will use DGM when we
+;; got to hdf5) to join the diagnostics stuff
+!define(joinOneDiagDGG,{!storeJoinedDGG(joinedDGG_$1_!phase)!dnl
+  joinedDGG_$1_!phase: l2gp, source=diag!phase.$1, $
+    swath='!translit($1,{_},{-})-!phase'!nl})
+
+; --------------------------------------------------------------- Filling diagnostics
+
+;; This macro is used to fill radiance chi squares
+!define(fillMinorFrameDiagnostics,{!dnl
+   Fill, quantity=minorFrameDiagnostics.chisqMMAF$1, method=special, $
+     measurements=y!phase.band$1, model=f!phase.band$1, $
+     noise=yNoise!phase.band$1, /ignoreZero, /ignoreNegative
+   Fill, quantity=minorFrameDiagnostics.chisqMMIF$1, method=special, $
+     measurements=y!phase.band$1, model=f!phase.band$1, $
+     noise=yNoise!phase.band$1, /ignoreZero, /ignoreNegative
+   Fill, quantity=minorFrameDiagnostics.chisqChan$1, method=special, $
+     measurements=y!phase.band$1, model=f!phase.band$1, $
+     noise=yNoise!phase.band$1, /ignoreZero, /ignoreNegative
+   Fill, quantity=minorFrameDiagnostics.noRadsPerMIF$1, method=special, $
+     measurements=y!phase.band$1!nl})
+
+!define(fillMappedDiagnostics,{!dnl
+   Fill, quantity=mappedChisqMean.chisqBinned$1, method=binmean, $
+     sourceQuantity=minorFrameDiagnostics.chisqMMIF$1, $
+     ptanQuantity=state.ptan!moduleForBand($1)
+   Fill, quantity=mappedChisqMax.chisqBinned$1, method=binmax, $
+     sourceQuantity=minorFrameDiagnostics.chisqMMIF$1, $
+     ptanQuantity=state.ptan!moduleForBand($1)
+   Fill, quantity=otherDiagnostics.noRadsBinned$1, method=binTotal, $
+     sourceQuantity=minorFrameDiagnostics.noRadsPerMIF$1, $
+     ptanQuantity=state.ptan!moduleForBand($1)!nl})
+
+;; This macro writes the above diagnostics
 !define(doRadianceDiagnostics,{!dnl
    begin Fill
      !forall(fillMinorFrameDiagnostics,$*)
@@ -357,12 +387,8 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
        {!forall(directWriteRadianceDiagnostics,$*)})
    end Join!nl})
 
-;; This macro uses the joinDGG (for the moment, will use DGM when we
-;; got to hdf5) to join the diagnostics stuff
-!define(joinOneDiagDGG,{!storeJoinedDGG(joinedDGG_$1_!phase)!dnl
-  joinedDGG_$1_!phase: l2gp, source=diag!phase.$1, $
-    swath='!translit($1,{_},{-})-!phase'!nl})
 
+; --------------------------------------------------------------- Offseting radiances
 
 ;; This macro is used to offset the forward model radiances
 ;; It is called inside a Fill statement.  Note it takes !phase as a
@@ -374,8 +400,7 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
    !forall(offsetRadiance,$*)
    end Fill})
 
-;; This macro writes the misc. diagnostics
-!define(directWriteOneDiagDGG,{!directWriteDGGNoPrecisionNotState(diag!phase.$1,'!translit($1,{_},{-})-!phase')!nl})
+; -------------------------------------------------------------- Retrievals
 
 ;; This macro puts all the boring stuff in the Retrieve command line
 ;; that we're used to seeing
@@ -398,13 +423,21 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
   !ifdef(flagComputeSout,{outputCovariance=Sout$1,!noteMatrix(Sout$1)})!dnl
   lowBound=lb$1, highBound=hb$1, diagnostics=diag$1})})
 
+; ---------------------------------------------------------------- Standard products
+
 ;; This macro is used to transfer a product into the 'standard products'
 ;; vector
 !define(makeStandardProduct,{!dnl
   Fill, quantity=standardProducts.$1, method=vector, sourceQuantity=state.$1
-  Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1!nl})
+  Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1
+  Fill, quantity=standardDiagnostics.status$1, method=vector, sourceQuantity=otherDiagnostics.status$1
+  Fill, quantity=standardDiagnostics.quality$1, method=vector, sourceQuantity=otherDiagnostics.quality$1
+})
 
 ; $Log$
+; Revision 1.78  2004/02/03 21:43:56  livesey
+; Updated handling of chisqBinned stuff
+;
 ; Revision 1.77  2004/01/24 03:23:19  livesey
 ; Now uses truth for edge of averaging kernels if available.
 ;
