@@ -19,6 +19,7 @@ module OutputAndClose ! outputs all data from the Join module to the
   use LEXER_CORE, only: PRINT_SOURCE
   use MatrixModule_1, only: MATRIX_DATABASE_T, MATRIX_T, GETFROMMATRIXDATABASE
   use MLSCommon, only: I4
+  use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
   use MLSFiles, only: GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
     & split_path_name
   use MLSL2Options, only: PENALTY_FOR_NO_METADATA, CREATEMETADATA, PCF, &
@@ -119,7 +120,7 @@ contains ! =====     Public Procedures     =============================
     logical :: TIMING
 
     ! Executable code
-    timing = .false.
+    timing = section_times
 
     if ( toggle(gen) ) call trace_begin ( "Output_Close", root)
 
@@ -582,6 +583,11 @@ contains ! =====     Public Procedures     =============================
   contains
     subroutine SayTime
       call cpu_time ( t2 )
+      if ( total_times ) then
+        call output ( "Total time = " )
+        call output ( dble(t2), advance = 'no' )
+        call blanks ( 4, advance = 'no' )
+      endif
       call output ( "Timing for Output_Close =" )
       call output ( DBLE(t2 - t1), advance = 'yes' )
       timing = .false.
@@ -649,6 +655,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.38  2001/09/28 17:50:30  pwagner
+! MLSL2Timings module keeps timing info
+!
 ! Revision 2.37  2001/06/04 23:57:40  pwagner
 ! Splits path from l2cf-defined file name before getPCfromRef
 !
