@@ -1,5 +1,5 @@
-! Copyright (c) 1999, California Institute of Technology. ALL RIGHTS RESERVED.
-! U.S. Government sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 !=============================================================================
 module VGridsDatabase
@@ -8,7 +8,8 @@ module VGridsDatabase
   use Allocate_Deallocate, only: Deallocate_Test
   use MLSCommon, only: RS => R8 ! Real kind for Surfs
   use MLSMessageModule, only: & ! Message logging
-    & MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Error
+    & MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Error, &
+    & PVMErrorMessage
 
   implicit NONE
   private
@@ -250,7 +251,6 @@ contains
   subroutine PVMPackVgrid ( VGRID )
     use PVMIDL, only: PVMIDLPack
     use MorePVM, only: PVMPackStringIndex, PVMPackLitIndex
-    use PVM, only: PVMErrorMessage
 
     ! Dummy argument
     type ( VGrid_T), intent(in) :: VGRID
@@ -281,7 +281,6 @@ contains
   subroutine PVMUnpackVgrid ( VGRID )
     use PVMIDL, only: PVMIDLUnpack
     use MorePVM, only: PVMUnpackStringIndex, PVMUnpackLitIndex
-    use PVM, only: PVMErrorMessage
     use Allocate_Deallocate, only: Allocate_test
 
     ! Dummy argument
@@ -323,6 +322,9 @@ contains
 end module VGridsDatabase
 
 ! $Log$
+! Revision 2.18  2005/03/15 23:48:55  pwagner
+! PVMERRORMESSAGE now part of MLSMessageModule
+!
 ! Revision 2.17  2005/01/12 03:06:08  vsnyder
 ! Added AddVGridIfNecessary and relative error test option to DoVGridsMatch.
 ! Don't try to dump VGrid's name if its string index is zero.

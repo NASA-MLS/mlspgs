@@ -6,6 +6,8 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
 !==============================================================================
 
   use Machine, only: CRASH_BURN, Exit_with_status
+  use PVM, only: InfoTag, &
+    & PVMDATADEFAULT, PVMFInitSend, PVMF90Pack, SIG_AboutToDie
   use SDPToolkit, only: PGS_SMF_GenerateStatusReport, UseSDPToolkit
 
   implicit none
@@ -81,6 +83,8 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
      & "There is already an entry with the name "
   character (len=*), public, parameter :: MLSMSG_DeAllocate = &
      & "Deallocation failed: "
+  character (len=*), public, parameter :: MLSMSG_PVM = &
+     & "PVM Error: "
   ! This datatype describes the configuration of the messaging suite
 
   integer, private, parameter :: MLSMSG_PrefixLen = 32
@@ -98,10 +102,12 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
     !  0: Suppress every one
     !  1: Print every one only once
     integer :: limitWarnings                   = 1000 ! Max number each warning
+    integer :: masterTID                       = -1 ! Where to send error msg
     character (len=MLSMSG_PrefixLen) :: prefix = ''   ! Prefix to every msg
     logical :: suppressDebugs                  = .false.
     logical :: useToolkit                      = .true.
     logical :: CrashOnAnyError                 = .false. ! See crash warning
+    logical :: SendErrMsgToMaster              = .false. ! Whether to send last
   end type MLSMessageConfig_T
 
   ! This variable describes the configuration
@@ -110,7 +116,7 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   
   ! Public procedures
   public :: MLSMessage, MLSMessageSetup, MLSMessageClose, MLSMessageExit, &
-    & MLSMessageReset
+    & MLSMessageReset, PVMErrorMessage
 
 contains
 
@@ -243,6 +249,8 @@ contains
     ! log file if any and quit
 
     if ( my_adv .and. severity >= MLSMSG_Severity_to_quit ) then
+      if ( MLSMessageConfig%SendErrMsgToMaster .and. &
+        & MLSMessageConfig%masterTID > 0 ) call LastGasp(ModulenameIn, Message)
       if ( MLSMessageConfig%logFileUnit > 0 ) &
         & close ( MLSMessageConfig%logFileUnit )
       if ( severity >= MLSMSG_Crash .or. MLSMessageConfig%CrashOnAnyError ) &
@@ -373,6 +381,41 @@ contains
     endif
   end subroutine MLSMessageReset
 
+  ! --------------------------------------------  PVMERRORMESSAGE  -----
+  subroutine PVMErrorMessage ( INFO, PLACE )
+    ! This routine is called to log a PVM error
+    integer, intent(in) :: INFO
+    character (LEN=*) :: PLACE
+
+    character (LEN=132) :: LINE
+
+    write (line, * ) info
+    call MLSMessage(MLSMSG_Error, Place, MLSMSG_PVM // &
+      & ' Info='//trim(adjustl(line)))
+  end subroutine PVMErrorMessage
+
+  ! Private procedures
+  ! -------------------- LastGasp -------------------
+  ! We're a slave and we're about to expire
+  ! Before we do, however, try to tell the master why
+  subroutine LastGasp(ModuleNameIn, Message)
+    character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
+    character (len=*), intent(in) :: Message ! Line of text
+    ! Local variables
+    integer :: BUFFERID                 ! ID for buffer to send
+    integer :: INFO                     ! Flag from PVM
+    ! Executable code
+    call PVMFInitSend ( PvmDataDefault, bufferID )
+    call PVMF90Pack ( SIG_AboutToDie, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'packing about-to-die signal' )
+    call PVMF90Pack ( ModuleNameIn // trim(message), info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'packing last gasp message' )
+    call PVMFSend ( MLSMessageConfig%masterTid, InfoTag, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'sending last gasp' )
+  end subroutine LastGasp
 !=======================================================================
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
@@ -383,6 +426,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.18  2005/03/15 23:47:52  pwagner
+! Slaves given last chance to send error message to master
+!
 ! Revision 2.17  2005/03/12 00:46:41  pwagner
 ! limits to warnings now work correctly
 !
