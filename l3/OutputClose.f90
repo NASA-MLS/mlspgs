@@ -10,6 +10,7 @@ MODULE OutputClose
    USE L2Interface
    USE L3CF
    USE L3DMData
+   USE L3DMDiag
    USE L3SPData
    USE MLSCF
    USE MLSCommon
@@ -53,6 +54,9 @@ MODULE OutputClose
 
      LOGICAL :: writel3rCom, writel3rAsc, writel3rDes
 	! L3Residual databases (for all output days)
+
+     LOGICAL :: writel3dgCom, writel3dgAsc, writel3dgDes
+	! diagnostic databases (for all output days)
 
      LOGICAL :: writel3sp
 	! L3SP database (for asc/des/com)
@@ -146,7 +150,7 @@ CONTAINS
 
 !--------------------------------------------------------------------------------
    SUBROUTINE OutputProd (pcf, l3cf, anText, l3sp, l3dm, dmA, dmD, l3r, residA, &
-                          residD, flags)
+                          residD, l3dg, dgA, dgD, flags)
 !--------------------------------------------------------------------------------
 
 ! Brief description of subroutine
@@ -163,6 +167,8 @@ CONTAINS
       TYPE( L2GPData_T ), POINTER :: l3r(:), residA(:), residD(:)
 
       TYPE( L3DMData_T ), POINTER :: l3dm(:), dmA(:), dmD(:)
+
+      TYPE( L3DMDiag_T ), POINTER :: l3dg(:), dgA(:), dgD(:)
 
       TYPE( L3SPData_T ), POINTER :: l3sp(:)
 
@@ -240,6 +246,35 @@ CONTAINS
                msr = TRIM(l3cf%l3prodNameD) // 'Descending' // NOOUT_ERR
                CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
             ENDIF
+         ENDIF
+
+! Diagnostics -- if any diagnostic data exist, append swaths to the l3dm files
+
+         IF (flags%writel3dgCom) THEN
+            CALL OutputDiags(type, l3dg)
+         ELSE
+            IF ( (l3cf%mode == 'all') .OR. (l3cf%mode == 'com') ) THEN
+               msr = TRIM(l3cf%l3prodNameD) // 'Diagnostics' // NOOUT_ERR
+               CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+            ENDIF
+         ENDIF
+
+         IF (flags%writel3dgAsc) THEN
+            CALL OutputDiags(type, dgA)
+         ELSE
+            IF ( (l3cf%mode == 'all') .OR. (l3cf%mode == 'asc') ) THEN
+              msr = TRIM(l3cf%l3prodNameD) // 'AscendingDiagnostics' // NOOUT_ERR
+              CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+            ENDIF
+         ENDIF
+
+         IF (flags%writel3dgDes) THEN
+           CALL OutputDiags(type, dgD)
+         ELSE
+           IF ( (l3cf%mode == 'all') .OR. (l3cf%mode == 'des') ) THEN
+             msr = TRIM(l3cf%l3prodNameD) // 'DescendingDiagnostics' // NOOUT_ERR
+             CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+           ENDIF
          ENDIF
 
 ! L3Residual -- if any residual data exist, append swaths to the l3dm files
@@ -337,6 +372,9 @@ END MODULE OutputClose
 !=====================
 
 !$Log$
+!Revision 1.13  2001/07/19 14:03:27  nakamura
+!Removed DZ stuff.
+!
 !Revision 1.12  2001/05/04 18:40:04  nakamura
 !Changed to generic OutputFiles_T, WriteMetaL3DZ.
 !
