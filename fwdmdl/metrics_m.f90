@@ -471,28 +471,30 @@ contains
       inds = abs(inds)
       ! compute the path temperature noting where the zeros are
       call get_eta_sparse ( z_basis, cvf_z_grid, eta_t, NOT_ZERO = not_zero_t )
-!
-! Initialize all ..
-!
-      do_calc_t = .false.
-      do_calc_hyd = .false.
-
-      eta_zxp = 0.0_rp
-      dhitdtlm = 0.0_rp
 
       sv_t = 0
       do sv_p = 1 , p_coeffs
         do sv_z = 1 , z_coeffs
           sv_t = sv_t + 1
-          if ( .not. t_deriv_flag(sv_t) ) cycle
-          where ( not_zero_t(:,sv_z) .and. not_zero_p(:,sv_p) )
-            do_calc_t(:,sv_t) = .true.
-            eta_zxp(:,sv_t) = eta_t(:,sv_z) * eta_p(:,sv_p)
-          end where
-          where ( not_zero_p(:,sv_p) .and. dhidtlm(inds(:),sv_z,sv_p) > 0.0_rp )
-            do_calc_hyd(:,sv_t) = .TRUE.
-            dhitdtlm(:,sv_t) = dhidtlm(inds(:),sv_z,sv_p) * eta_p(:,sv_p)
-          end where
+          if ( t_deriv_flag(sv_t) ) then
+            do_calc_t(:,sv_t) = not_zero_t(:,sv_z) .and. not_zero_p(:,sv_p)
+            where ( do_calc_t(:,sv_t) )
+              eta_zxp(:,sv_t) = eta_t(:,sv_z) * eta_p(:,sv_p)
+            elsewhere
+              eta_zxp(:,sv_t) = 0.0
+            end where
+            do_calc_hyd(:,sv_t) = not_zero_p(:,sv_p) .and. dhidtlm(inds(:),sv_z,sv_p) > 0.0_rp
+            where ( do_calc_hyd(:,sv_t) )
+              dhitdtlm(:,sv_t) = dhidtlm(inds(:),sv_z,sv_p) * eta_p(:,sv_p)
+            elsewhere
+              dhitdtlm(:,sv_t) = 0.0
+            end where
+          else
+            do_calc_t(:,sv_t) = .false.
+            eta_zxp(:,sv_t) = 0.0
+            do_calc_hyd(:,sv_t) = .false.
+            dhitdtlm(:,sv_t) = 0.0
+          end if
         end do
       end do
 
@@ -520,6 +522,9 @@ contains
 end module Metrics_m
 
 ! $Log$
+! Revision 2.17  2003/05/22 20:12:32  vsnyder
+! Get rid of some array temps
+!
 ! Revision 2.16  2002/10/25 22:24:08  livesey
 ! Made the warning output optional
 !

@@ -30,24 +30,24 @@ contains
 
 ! Input:
     type (Grids_T), intent(in) :: Grids_x  ! All the needed coordinates
-    real(r8), intent(in) :: LO            ! Local oscillator
-    integer, intent(in) :: Sideband       ! -1 or 1
+    real(r8), intent(in) :: LO             ! Local oscillator
+    integer, intent(in) :: Sideband        ! -1 or 1
 
 
-    real(rp), intent(in) :: Path_zeta(:) ! zeta values along path
-    real(rp), intent(in) :: Path_phi(:)  ! phi values along path
+    real(rp), intent(in) :: Path_zeta(:)   ! zeta values along path
+    real(rp), intent(in) :: Path_phi(:)    ! phi values along path
 
 ! Output:
 
-    logical, intent(out) :: Do_calc(:,:) !logical indicating whether there
+    logical, intent(out) :: Do_calc(:,:)   !logical indicating whether there
 !                         is a contribution for this state vector element
 !                         This is the same length as values.
-    real(rp), intent(out) :: Eta_fzp(:,:) ! Eta_z x Eta_phi x Eta_frq for 
+    real(rp), intent(out) :: Eta_fzp(:,:)  ! Eta_z x Eta_phi x Eta_frq for 
 !          each state vector element. This is the same length as values.
-! Internal declaritions
 
-    integer(ip) :: N_f, N_p, N_z, Nfzp
-    integer(ip) :: Sps_i, Sv_i, Sv_j, Sv_f, Sv_z, Sv_p
+! Internal declarations
+
+    integer(ip) :: Sps_i, Sv_f, Sv_p, Sv_z, Sv_v
     integer(ip) :: P_inda, Z_inda, V_inda, P_indb, Z_indb, V_indb, F_inda, F_indb
 
     real(rp) :: Frq      ! ** ZEBUG ** this will have to change later 
@@ -66,8 +66,6 @@ contains
 ! Begin executable code:
 
     frq = 0.0
-    eta_fzp = 0.0
-    do_calc = .false.
 
     f_inda = 0
     p_inda = 0
@@ -77,19 +75,14 @@ contains
     do sps_i = 1, ubound(grids_x%l_z,1)
 
       v_indb = grids_x%l_v(sps_i)
-      nfzp = v_indb - v_inda
-      if ( nfzp == 0 ) cycle
+      if ( v_indb == v_inda ) cycle
 
       f_indb = grids_x%l_f(sps_i)
       p_indb = grids_x%l_p(sps_i)
       z_indb = grids_x%l_z(sps_i)
 
-      n_f = f_indb - f_inda
-      n_p = p_indb - p_inda
-      n_z = z_indb - z_inda
-
 ! There are two ways to do this (slow and easy vs quick but difficult)
-! For ease lets do the slow and easy (and certainly more reliable)
+! For ease let's do the slow and easy (and certainly more reliable)
 
 ! Compute etas
 
@@ -100,15 +93,21 @@ contains
       call get_eta_sparse ( grids_x%phi_basis(p_inda+1:p_indb),  &
                          &  path_phi, eta_p, not_zero_p )
 
-      do sv_i = 1, nfzp
-        sv_j = v_inda + sv_i
-        call brkmod ( sv_i, n_f, n_z, n_p, sv_f, sv_z, sv_p )
-        if ( not_zero_f(1,sv_f) ) then
-          where ( not_zero_z(:,sv_z) .and. not_zero_p(:,sv_p) )
-            do_calc(:,sv_j) = .true.
-            eta_fzp(:,sv_j) = eta_f(1,sv_f) * eta_z(:,sv_z) * eta_p(:,sv_p)
-          end where
-        end if
+      sv_v = v_inda
+      do sv_p = p_inda+1, p_indb
+        do sv_z = z_inda+1, z_indb
+          do sv_f = f_inda+1, f_indb
+            sv_v = sv_v + 1
+            if ( not_zero_f(1,sv_f) ) then
+              do_calc(:,sv_v) = not_zero_z(:,sv_z) .and. not_zero_p(:,sv_p)
+              where ( do_calc(:,sv_v) )
+                eta_fzp(:,sv_v) = eta_f(1,sv_f) * eta_z(:,sv_z) * eta_p(:,sv_p)
+              elsewhere
+                eta_fzp(:,sv_v) = 0.0
+              end where
+            end if
+          end do
+        end do
       end do
 
       f_inda = f_indb
@@ -117,23 +116,6 @@ contains
       v_inda = v_indb
 
     end do
-
-  contains
-
-    subroutine BrkMod ( m, nf, nz, np, jf, jz, jp )
-
-     Integer, intent(in) :: m, nf, nz, np
-     Integer, intent(out) :: jf, jz, jp
-
-     Integer :: k
-
-      jf = 1 + MOD(m-1,nf)
-      k = (m-jf+nf-1)/nf
-      jz = 1 + MOD(k,nz)
-      k = (k-jz+nz-1)/nz
-      jp = 1 + MOD(k,np)
-
-    end subroutine BrkMod
 
   end subroutine Eval_Spect_Path
 
@@ -146,6 +128,9 @@ contains
 end module Eval_Spect_Path_m
 !
 ! $Log$
+! Revision 2.7  2003/05/05 23:00:25  livesey
+! Merged in feb03 newfwm branch
+!
 ! Revision 2.6.2.1  2003/03/20 01:42:26  vsnyder
 ! Revise Grids_T structure
 !
