@@ -1,0 +1,40 @@
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+! $Id$
+      ! ------------------- mlsmin -----------------------
+      ! function mlsmin(values, fillValue) result(rValue)
+      !  integer, parameter                             :: KINDVALUE = r4
+      !  integer, parameter                             :: FN = FN_MIN
+      !  ! Args
+      !  real(KINDVALUE), dimension(:), intent(in)      :: values
+      real(KINDVALUE)                                   :: rValue
+      real(KINDVALUE), optional                         :: FillValue
+      real(KINDVALUE)                                   :: min
+      real(KINDVALUE)                                   :: max
+      real(KINDVALUE)                                   :: mean
+      real(KINDVALUE)                                   :: stddev
+      real(KINDVALUE)                                   :: rms
+      ! Executable
+      call allstats(values, fillValue=fillValue, &
+        & min=min, max=max, mean=mean, stddev=stddev, rms=rms)
+      select case (FN)
+      case (FN_MIN)
+        rValue = min
+      case (FN_MAX)
+        rValue = max
+      case (FN_MEAN)
+        rValue = mean
+      case (FN_STDDEV)
+        rValue = stddev
+      case (FN_RMS)
+        rValue = rms
+      case default
+        ! We should never come here--coding error
+      end select
+      ! end function mlsmin
+!
+! $Log$
+! Revision 2.1  2004/09/13 20:40:38  pwagner
+! First commit
+!
