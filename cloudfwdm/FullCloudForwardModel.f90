@@ -51,11 +51,11 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     use MatrixModule_1,             only: MATRIX_T, FINDBLOCK
     use ManipulateVectorQuantities, only: FindClosestInstances
     use MLSNumerics,                only: InterpolateValues
-    use Molecules,                  only: L_H2O, L_O3, L_N2O, L_HNO3, L_N2, &
-                                        & L_O2, FIRST_MOLECULE, &
-                                        & L_H2O_18, L_O_18_O, &
+    use Molecules,                  only: FIRST_MOLECULE, &
+                                        & L_H2O, L_H2O_18, L_N2, L_N2O, &
+                                        & L_O2, L_O_18_O, L_O3, &
                                         & LAST_MOLECULE
-    use Output_m,                   only: OUTPUT
+!   use Output_m,                   only: OUTPUT
     use SpectroscopyCatalog_m,      only: CATALOG_T, LINE_T, LINES, CATALOG
     use String_table,               only: GET_STRING
     use Toggles,                    only: Emit, Levels, Toggle
@@ -80,7 +80,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
                        & L_GPH,                                                &
                        & L_IWC_HIGH_HEIGHT,                                    &
                        & L_IWC_LOW_HEIGHT,                                     &
-                       & L_IWP,                                                &
+                       & L_LIMBSIDEBANDFRACTION,                               &
                        & L_LOSTRANSFUNC,                                       &
                        & L_LOSVEL,                                             &
                        & L_MASSMEANDIAMETERICE,                                & 
@@ -89,14 +89,12 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
                        & L_PTAN,                                               &
                        & L_RADIANCE,                                           &
                        & L_SCGEOCALT,                                          &
-                       & L_LIMBSIDEBANDFRACTION,                               &
                        & L_SIZEDISTRIBUTION,                                   &
                        & L_SURFACETYPE,                                        &
                        & L_TEMPERATURE,                                        &
                        & L_TOTALEXTINCTION,                                    &
                        & L_VMR,                                                &
                        & LIT_INDICES
-
 
 
     ! Dummy arguments
@@ -117,7 +115,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     type (VectorValue_T), pointer :: CLOUDWATER                 ! Profiles
     type (VectorValue_T), pointer :: CLOUDEXTINCTION            ! Profiles
     type (VectorValue_T), pointer :: modelCLOUDRADIANCE         ! modelled cloud radiance
-    type (VectorValue_T), pointer :: constrainCldRad           ! observed cloud radiance
+    type (VectorValue_T), pointer :: constrainCldRad            ! observed cloud radiance
     type (VectorValue_T), pointer :: CLOUDRADSENSITIVITY        ! Like radiance
     type (VectorValue_T), pointer :: EFFECTIVEOPTICALDEPTH      ! Quantity
     type (VectorValue_T), pointer :: GPH                        ! Geop height
@@ -386,10 +384,11 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     !------------------------
     ! Assemble the vmr array
     !------------------------
-    if ( size(forwardModelConfig%molecules) .lt. 2 ) then
-!   make sure we have enough molecules
-      call MLSMessage ( MLSMSG_Error, ModuleName, 'Not enough molecules' )
-    endif
+    nspec = size(forwardModelConfig%molecules) - 1 ! Last one is a huge
+      ! sentinel used by Get_Species_Data, not a molecule
+    ! make sure we have enough molecules
+    if ( nspec < 2 ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, 'Not enough molecules' )
     
     !---------------------------------------------------------
     ! Work out the closest instances from temperature
@@ -457,11 +456,10 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
 ! now checking spectroscopy
     got = .false.
-    nspec = size(forwardModelConfig%molecules)
     call allocate_test ( vmrArray, nspec, noSurf, 'vmrArray', ModuleName )
     vmrarray = 0._r8
 
-    allocate ( My_Catalog(size(forwardModelConfig%molecules)), stat=ier )
+    allocate ( My_Catalog(nspec), stat=ier )
     if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
      & 'Unable to allocate my_catalog' )   
      
@@ -472,9 +470,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     if(forwardModelConfig%default_spectroscopy) then  !Bill's clear-sky spectroscopy
     
       ! Skip if the next molecule is negative (indicates that this one is a parent)
-      if ( (j < size(forwardModelConfig%molecules)) .and. (forwardModelConfig%molecules(j)>0)) then
+      if ( (j < nspec) .and. (forwardModelConfig%molecules(j)>0)) then
         if ( forwardModelConfig%molecules(j+1) < 0 ) then
-          nullify ( my_catalog(j)%lines ) ! Don't deallocate it by mistake
           Call Allocate_test ( my_catalog(j)%lines, 0, &
                             & 'my_catalog(?)%lines(0)', ModuleName )
           CYCLE
@@ -1114,6 +1111,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.128  2004/06/10 01:00:14  vsnyder
+! Move FindFirst, FindNext from MLSCommon to MLSSets
+!
 ! Revision 1.127  2004/02/07 00:45:49  livesey
 ! Minor typo
 !
