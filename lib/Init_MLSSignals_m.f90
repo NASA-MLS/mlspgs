@@ -18,8 +18,7 @@ module Init_MLSSignals_m
 !---------------------------------------------------------------------------
 
   ! Types used in signal specifications:
-  integer, parameter :: T_sideband = Last_molecule_type + 1
-  integer, parameter :: Last_signal_type = t_sideband
+  integer, parameter :: Last_signal_type = last_molecule_type
 
   ! Fields used in signal specifications:
   integer, parameter :: Field_First = 1
@@ -45,10 +44,7 @@ module Init_MLSSignals_m
   integer, parameter :: Last_Signal_Field   = f_width
 
   ! Literals used in signal specifications:
-  integer, parameter :: L_FOLDED            = last_molecule + 1
-  integer, parameter :: L_LOWER             = l_folded + 1
-  integer, parameter :: L_UPPER             = l_lower + 1
-  integer, parameter :: Last_Signal_Lit     = l_upper
+  integer, parameter :: Last_Signal_Lit     = last_molecule
 
   ! Signal specifications:
   integer, parameter :: Spec_First = 1
@@ -82,8 +78,6 @@ contains
     call init_molecules ( data_type_indices, field_indices, lit_indices, &
       & parm_indices, section_indices, spec_indices )
 
-    ! Put type names into the symbol table
-    data_type_indices(t_sideband) =        add_ident ( 'sideband' )
     ! Put field names into the symbol table
     field_indices(f_band) =                add_ident ( 'band' )
     field_indices(f_centerFrequency) =     add_ident ( 'centerFrequency' )
@@ -104,10 +98,6 @@ contains
     field_indices(f_suffix) =              add_ident ( 'suffix' )
     field_indices(f_switch) =              add_ident ( 'switch' )
     field_indices(f_width) =               add_ident ( 'width' )
-    ! Put literal names into the symbol table
-    lit_indices(l_folded) =                add_ident ( 'folded' )
-    lit_indices(l_lower) =                 add_ident ( 'lower' )
-    lit_indices(l_upper) =                 add_ident ( 'upper' )
     ! Put spec names into the symbol table
     spec_indices(s_band) =                 add_ident ( 'band' )
     spec_indices(s_module) =               add_ident ( 'module' )
@@ -129,14 +119,6 @@ contains
     ! "left" of the trees that represent the input.  The tree-walker
     ! stumbles upon them in its normal course of operation, never really
     ! realizing they're special (because by then they're not).
-
-  ! Start with the definitions of types. These are represented by trees of
-  ! the form  < n_dt_def t_type_name l_lit ... l_lit >
-    ! The intrinsic data types are defined in the intrinsic module
-    ! Define the nonintrinsic enumerated types
-
-    call make_tree ( (/ &
-      begin, t+t_sideband, l+l_folded, l+l_lower, l+l_upper, n+n_dt_def /) )
 
     ! Define the relations between specs and fields, and the field types
     ! or names of other specifications allowed.  These are represented by
@@ -199,6 +181,9 @@ contains
 end module Init_MLSSignals_m
 
 ! $Log$
+! Revision 2.10  2001/04/10 18:51:25  vsnyder
+! Finish removing sideband stuff
+!
 ! Revision 2.9  2001/04/10 17:59:53  vsnyder
 ! Remove sideband field from signal
 !
