@@ -1257,10 +1257,6 @@ contains
             if ( index(switches,'spa') /= 0 ) &
               & call dump_struct ( factored%m, &
                 & 'Sparseness structure of blocks of factor:', upper=.true. )
-            if ( nwt_flag == nf_getJ .and. index(switches,'sca') /= 0 ) then
-              call output ( ' | F | = ' )
-              call output ( sqrt ( aj%fnorm ), format='(1pe14.7)', advance='yes' )
-            end if
           if ( nwt_flag == nf_getJ ) exit ! taking a special iteration to get J
           aj%diag = minDiag ( factored ) ! element on diagonal with
           !       smallest absolute value, after triangularization
@@ -1298,8 +1294,8 @@ contains
           aj%fnorm = sqrt(aj%fnorm)
           aj%gradn = sqrt(v(gradient) .dot. v(gradient)) ! L2Norm(gradient)
             if ( index(switches,'sca') /= 0 ) then
-              call dump ( (/ aj%ajn, aj%diag, aj%fnmin, aj%gradn /), &
-                & ' L1| FAC |       aj%diag      aj%fnmin         | G |', &
+              call dump ( (/ aj%fnorm, aj%ajn, aj%diag, aj%fnmin, aj%gradn /), &
+                & '     | F |       L1| FAC |     aj%diag        aj%fnmin       | G |', &
                 & clean=.true. )
             end if
         case ( nf_solve ) ! ..............................  SOLVE  .....
@@ -2954,6 +2950,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.177  2002/09/13 23:55:01  livesey
+! Changed print statements
+!
 ! Revision 2.176  2002/09/13 20:05:06  vsnyder
 ! Subsume EVALF into EVALJ
 !
