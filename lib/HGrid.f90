@@ -127,6 +127,10 @@ MODULE HGrid                    ! Horizontal grid information
     INTEGER :: status,l1bFlag   ! Flags
 
     CHARACTER (LEN=NameLen) :: l1bItemName
+    CHARACTER (LEN=3),  DIMENSION(MLSInstrumentNoModules) :: &
+       & MLSInstrumentModuleNames= (/ &
+       & "GHz", &
+       & "THz"/)
 
     ! Executable code
 
@@ -347,34 +351,33 @@ MODULE HGrid                    ! Horizontal grid information
     !Local variables
     INTEGER:: status
     ! Executable code
-
     DEALLOCATE(hGrid%phi, stat=status)
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Warning,ModuleName, &
          & MLSMSG_DeAllocate//"hGrid%phi")
 
 
-    DEALLOCATE(hGrid%geodLat, stat=status)                              
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    DEALLOCATE(hGrid%geodLat, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Warning,ModuleName, &
          & MLSMSG_DeAllocate//"hGrid%geodLat")
 
-    DEALLOCATE(hGrid%lon,  stat=status)                              
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    DEALLOCATE(hGrid%lon,  stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Warning,ModuleName, &
          & MLSMSG_DeAllocate//"hGrid%lon")
 
-    DEALLOCATE(hGrid%time, stat=status)                              
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    DEALLOCATE(hGrid%time, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Warning,ModuleName, &
          & MLSMSG_DeAllocate//"hGrid%time")
 
-    DEALLOCATE(hGrid%solarTime, stat=status)                              
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    DEALLOCATE(hGrid%solarTime, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Warning,ModuleName, &
          & MLSMSG_DeAllocate//"hGrid%solarTime")
 
-    DEALLOCATE(hGrid%solarZenith, stat=status)                              
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    DEALLOCATE(hGrid%solarZenith, stat=status) 
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Warning,ModuleName, &
          & MLSMSG_DeAllocate//"hGrid%solarZenith")
 
-    DEALLOCATE(hGrid%losAngle, stat=status)                              
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    DEALLOCATE(hGrid%losAngle, stat=status)   
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Warning,ModuleName, &
          & MLSMSG_DeAllocate//"hGrid%losAngle")
 
 
@@ -435,7 +438,7 @@ MODULE HGrid                    ! Horizontal grid information
           CALL DestroyHGridContents(database(hGridIndex))
        ENDDO
        DEALLOCATE(database, stat=status)
-       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+       IF (status /= 0) CALL MLSMessage(MLSMSG_Warning,ModuleName, &
          & MLSMSG_DeAllocate//"database") 
     ENDIF
   END SUBROUTINE DestroyHGridDatabase
@@ -446,6 +449,9 @@ END MODULE HGrid
 
 !
 ! $Log$
+! Revision 1.10  2000/06/19 23:50:51  lungu
+! Added status check after each DEALLOCATE.
+!
 ! Revision 1.9  2000/05/17 23:33:51  lungu
 ! Added dots between MLSInstrumentModuleName and l1bItemName so that is consistent with L1BOA file.
 ! Added check "IF (ASSOCIATED(database))DEALLOCATE(database)" so it doesn't chrash trying to dealocate
