@@ -7,8 +7,9 @@ MODULE PCFModule
 !===============================================================================
 
    USE MLSCommon
+   USE MLSL3Common
    USE MLSMessageModule
-   USE MLSPCF
+   USE SDPToolkit
    IMPLICIT NONE
    PUBLIC
 
@@ -24,6 +25,8 @@ MODULE PCFModule
 
 ! Subroutines -- ExpandFileTemplate
 !                SearchPCFNames
+!                FindFileType
+!                FindFileDay
 
 ! Remarks:  This module contains subroutines related to getting file names from
 !           the PCF.
@@ -81,7 +84,7 @@ CONTAINS
     
          IF (field == '$lev') THEN
 
-            IF ( PRESENT(version) ) THEN
+            IF ( PRESENT(level) ) THEN
                fileName = fileName(:(indx-1)) // TRIM(level) // &
                           fileName((indx+6):)
             ELSE
@@ -134,9 +137,9 @@ CONTAINS
 
 ! Brief description of subroutine 
 ! This subroutine searches the PCF for an entry matching the input name.  If a
-! match is found, it returns the name (including the path) & number of the file
-! file in the PCF.  If no entry is found, outName is the original name
-! concatenated with an output path & a PCF number of -1.
+! match is found, it returns the file's name (including the path) & number from
+! the PCF.  If no entry is found, a PCF number of -1 is returned, along with
+! the original input name, with a path name concatenated to it.
 
 ! Arguments
 
@@ -158,6 +161,10 @@ CONTAINS
 
       INTEGER :: i, indx, returnStatus, version
 
+! Initializations
+
+      mlspcf = -1
+
 ! Loop through all the files in this range of PCF numbers
 
       DO i = mlspcf_start, mlspcf_end
@@ -170,24 +177,24 @@ CONTAINS
 
          IF (returnStatus == PGS_S_SUCCESS) THEN
 
-! Extract the pathname
+! If a file name was successfully retrieved from the PCF, extract its pathname
 
             indx = INDEX(pcfName, '/', .TRUE.)
             path = pcfName(:indx)
 
 ! Concatenate the path with the input name
 
-            path = TRIM(path) // inName
+            outName = TRIM(path) // inName
 
-! Check it against the given name
+! Check the path/input name string against the PCF entry
 
-            IF (path == pcfName) THEN
+            IF (outName == pcfName) THEN
+
+! If it matches, save the PCF number
+
                mlspcf = i
-               outName = pcfName
                EXIT
-            ELSE
-               mlspcf = -1
-               outName = path
+
             ENDIF
 
          ENDIF
@@ -198,11 +205,176 @@ CONTAINS
    END SUBROUTINE SearchPCFNames
 !-------------------------------
 
+!-----------------------------------------------------------------------
+   SUBROUTINE FindFileType (type, mlspcf_start, mlspcf_end, match, name)
+!-----------------------------------------------------------------------
+
+! Brief description of subroutine
+! This subroutine searches the PCF for a file of the proper level/species.  It
+! returns a matching PCF number & name, or a value of match = -1, if no match
+! was found.
+
+! Arguments
+
+      CHARACTER(LEN=*), INTENT(IN) :: type
+
+      INTEGER, INTENT(IN) :: mlspcf_start, mlspcf_end
+
+      CHARACTER(LEN=*), INTENT(OUT) :: name
+
+      INTEGER, INTENT(OUT) :: match
+
+! Parameters
+
+! Functions
+
+! Variables
+
+      CHARACTER (LEN=480) :: msr
+
+      INTEGER :: i, returnStatus, version
+
+! Initialize match to its unfound value
+
+      match = -1
+
+! Loop through all PCF entries in the range corresponding to this file type
+
+      DO i = mlspcf_start, mlspcf_end
+
+! Retrieve the name
+
+         version = 1
+         returnStatus = Pgs_pc_getReference(i, version, name)
+
+! If no name was returned for this number, go on to the next one
+
+         IF (returnStatus /= PGS_S_SUCCESS) CYCLE
+
+! Check whether the returned name contains the desired file substring
+
+         IF (INDEX(name, TRIM(type)) /= 0) THEN
+
+! If so, save the PCF number for the matching entry
+
+            match = i
+            EXIT
+
+         ENDIF
+
+      ENDDO
+
+! If no match was found, this is an error message
+
+      IF (match == -1) THEN
+         msr = 'No PCF entry for a file containing the substring ' // type
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+!-----------------------------
+   END SUBROUTINE FindFileType
+!-----------------------------
+
+!-----------------------------------------------------------------------------
+   SUBROUTINE FindFileDay(type, time, mlspcf_start, mlspcf_end, match, name, &
+                          date)
+!-----------------------------------------------------------------------------
+
+! Brief description of subroutine
+! This subroutine searches the PCF for a file of a desired level/species/day.
+! It returns a PCF number & name, the date, or match = -1 if no entry is found.
+
+! Arguments
+
+      CHARACTER (LEN=*), INTENT(IN) :: type
+
+      INTEGER, INTENT(IN) :: mlspcf_end, mlspcf_start
+
+      REAL(r8), INTENT(IN) :: time
+
+      CHARACTER (LEN=*), INTENT(OUT) :: name
+
+      CHARACTER (LEN=8), INTENT(OUT) :: date
+
+      INTEGER, INTENT(OUT) :: match
+
+! Parameters
+
+! Functions
+
+      INTEGER, EXTERNAL :: Pgs_td_asciiTime_aToB
+
+! Variables
+
+      CHARACTER (LEN=26) :: timeB
+      CHARACTER (LEN=CCSDS_LEN) :: timeA
+      CHARACTER (LEN=480) :: msr
+
+      INTEGER :: i, returnStatus, version
+
+! Convert input time to CCSDS A format
+
+      returnStatus = Pgs_td_taiToUTC(time, timeA)
+      IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, &
+                                                         ModuleName, TAI2A_ERR)
+
+! Convert from CCSDS A to B
+
+      returnStatus = Pgs_td_asciiTime_aToB(timeA, timeB)
+      IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, &
+                ModuleName,'Error converting data time from CCSDS A to B.')
+
+! Save only the date portion, for comparison to file names
+
+      date = timeB(1:8)
+
+! Loop through all the files in this range of PCF numbers
+
+      match = -1
+
+      DO i = mlspcf_start, mlspcf_end
+
+! Retrieve the name
+
+         version = 1
+         returnStatus = Pgs_pc_getReference(i, version, name)
+
+! If no name was returned for this number, go on to the next one
+
+         IF (returnStatus /= PGS_S_SUCCESS) CYCLE
+
+! Check whether the returned name contains the desired level/species/day
+
+         IF ((INDEX(name,TRIM(type)) /= 0) .AND. (INDEX(name,date) /= 0)) THEN
+
+! If so, save the PCF number for the matching entry
+
+            match = i
+            EXIT
+
+         ENDIF
+
+      ENDDO
+
+! If match was found, this is an error condition
+
+      IF (match == -1) THEN
+         msr = 'No PCF entry of the form ' // TRIM(type) // ' for day ' // date
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+!----------------------------
+   END SUBROUTINE FindFileDay
+!----------------------------
+
 !===================
 END MODULE PCFModule
 !===================
 
 ! $Log$
+! Revision 1.4  2000/12/07 21:23:04  nakamura
+! Changed SearchPCFNames so that input name is always returned with a path, negative PCF number means no file found.
+!
 ! Revision 1.3  2000/12/07 19:43:58  nakamura
 ! Added 'level' to expandable fields in file template; extract file path names from PCF, rather than cf.
 !
