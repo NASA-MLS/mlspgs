@@ -187,7 +187,7 @@ contains ! =====     Public Procedures     =============================
 
       case ( s_gridded )
 
-        call output('Hello paul, in read gridded data section.',advance='yes')
+!        call output('Hello paul, in read gridded data section.',advance='yes')
         call display_string(lit_indices(griddedOrigin),advance='yes')
         if ( fieldName == 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
           & 'Field name not specified in read a priori')
@@ -200,15 +200,16 @@ contains ! =====     Public Procedures     =============================
           
           l2Index = AddGridTemplateToDatabase( aprioriData, GriddedData )
           call decorate ( key, l2Index )
-          CALL ReadGriddedData(FileNameString, &
-            & aprioriData(l2Index), 'XDim,YDim,Height,TIME', 'Some_field_name')
+          CALL ReadGriddedData(FileNameString, son, &
+            & aprioriData(l2Index), &
+				& 'XDim,YDim,Height,TIME', TRIM(fieldNameString))
           
         case ( l_dao )
           
           l2Index = AddGridTemplateToDatabase( aprioriData, GriddedData )
           call decorate ( key, l2Index )
-          CALL ReadGriddedData(FileNameString, &
-            & aprioriData(l2Index), fieldName = 'Some_field_name')
+          CALL ReadGriddedData(FileNameString, son, &
+            & aprioriData(l2Index), fieldName = TRIM(fieldNameString))
           
         case ( l_climatology )
           
@@ -232,6 +233,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.6  2001/03/14 18:54:38  pwagner
+! Uses FieldNameString and son in call to ReadGriddedData
+!
 ! Revision 2.5  2001/03/08 01:08:08  pwagner
 ! Interfaces with ReadGriddedData
 !
