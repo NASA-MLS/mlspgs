@@ -247,12 +247,32 @@ CONTAINS
 
 !!      Initialize Daily Map Residues
 
+        DO j = 1, maxWindow
+        	mis_Days_temp(j) = ''
+        ENDDO
+
+        mis_l2Days_temp = 0
+
         CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, pcf%l3StartDay, & 
 !          pcf%l3EndDay, rDays, l3r)
           pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, l3r)
+
+        DO j = 1, maxWindow
+        	mis_Days_temp(j) = ''
+        ENDDO
+
+        mis_l2Days_temp = 0
+
         CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, pcf%l3StartDay, & 
 !          pcf%l3EndDay, rDays, residA)
           pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, residA)
+
+        DO j = 1, maxWindow
+        	mis_Days_temp(j) = ''
+        ENDDO
+
+        mis_l2Days_temp = 0
+
         CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, pcf%l3StartDay, & 
 !          pcf%l3EndDay, rDays, residD)
           pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, residD)
@@ -2727,6 +2747,9 @@ END MODULE Synoptic
 !===================
 
 ! $Log$
+! Revision 1.24  2002/04/10 21:30:33  jdone
+! associated statements before deallocate added
+!
 ! Revision 1.23  2002/04/01 21:57:13  jdone
 ! check division by zero
 !
