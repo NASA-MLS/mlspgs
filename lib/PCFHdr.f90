@@ -17,7 +17,7 @@ MODULE PCFHdr
    USE MLSFiles, only: GetPCFromRef, HDFVERSION_4, HDFVERSION_5, &
      & MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
    USE MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
-     & MLSMSG_Warning, MLSMSG_DeAllocate, MLSMSG_FILEOPEN
+     & MLSMSG_Warning, MLSMSG_DeAllocate, MLSMSG_FILEOPEN,MLSMSG_Info
    use MLSStrings, only: utc_to_yyyymmdd, lowerCase
    USE SDPToolkit, only: PGSD_PC_UREF_LENGTH_MAX, PGS_S_SUCCESS, &
      & PGSD_MET_GROUP_NAME_L, PGS_IO_GEN_CLOSEF, PGS_IO_GEN_OPENF, &
@@ -792,58 +792,42 @@ CONTAINS
 ! Unless the parameter USELENGTHONECHARS is true
 ! Arguments
 
+! If the PCF file if bigger than 40,000 characters, need to break it down into 
+! multiple attribute names such as PCF1, PCF2, etc... up to PCF9
+! Do this to solve the probem of L3 PCF files 
+
       CHARACTER (LEN=1), POINTER              :: anText(:)
       integer, intent(in)                     :: fileID
 
 ! Local variables
-      integer :: divisor
-      integer :: grp_id
-      integer :: i
-      integer :: remainder
+      integer :: firstChar, lastChar, blockNumber
       integer :: status
-      CHARACTER (LEN=40), POINTER             :: an40(:)
-      integer :: how_big
-      logical, parameter :: USELENGTHONECHARS = .true.
+      integer, parameter :: maxheadersize = 40000
+      CHARACTER (LEN=3) :: blockChar 
+
 ! Executable
-      if ( USELENGTHONECHARS ) then
-        status = he5_EHwrglatt(fileID, &
-         & PCFATTRIBUTENAME, HE5T_NATIVE_SCHAR, size(anText), anText)
-         ! & 'PCF', HE5T_NATIVE_SCHAR, size(anText), anText)
-        if ( status /= PGS_S_SUCCESS) &
-          & CALL MLSMessage(MLSMSG_Error, ModuleName, &
-          & 'Error annotating with PCF using length one chars' )
-        return
-      endif
-      ! Find how big an40 must be to hold anText
-      how_big = 1 + (size(anText)-1)/40
-      allocate(an40(how_big), stat=status)
-      if ( status /= 0 ) &
-        & CALL MLSMessage(MLSMSG_Error, ModuleName, &
-        & MLSMSG_Allocate // 'an40 for annotating hdfeos5 PCF' )
-      an40 = ' '
-      ! Do some nonsense here
-      ! (This is clever, but is it necessary?)
-      do i=1, size(anText)
-        divisor = (i-1) / 40
-        remainder = mod(i-1, 40)
-        an40(divisor+1)(remainder+1:remainder+1) = anText(i)
-      enddo
-      ! print *, 'size(anText) ', size(anText)
-      ! print *, 'how_big ', how_big
-      ! print *, 'an40 '
-      ! do i=1, how_big
-      !  print *, trim(an40(i))
-      ! enddo
-      status = he5_EHwrglatt(fileID, &
-       & PCFATTRIBUTENAME, HE5T_NATIVE_SCHAR, how_big, an40)
-       ! & 'PCF', HE5T_NATIVE_SCHAR, how_big, an40)
-      if ( status /= PGS_S_SUCCESS) &
-        & CALL MLSMessage(MLSMSG_Error, ModuleName, &
-        & 'Error annotating with PCF using length 40 chars' )
-      deallocate(an40, stat=status)
-      if ( status /= PGS_S_SUCCESS) &
-        & CALL MLSMessage(MLSMSG_Error, ModuleName, &
-        & MLSMSG_DeAllocate // 'an40 annotating hdfeos5 with PCF' )
+
+      blockNumber = 1
+      firstChar = 1
+
+      do
+	lastChar = min(firstChar-1+maxheadersize, size(anText))
+	! i1 is for PCF filesize < 400,000 
+	write( blockChar, '(i1)') blockNumber
+
+        status = he5_EHwrglatt(fileID, 'PCF'//TRIM(ADJUSTL(blockChar)), &
+		& HE5T_NATIVE_SCHAR, lastChar-firstChar+1, &
+		& anText(firstChar:lastChar))
+        if ( status /= PGS_S_SUCCESS) then
+           CALL MLSMessage(MLSMSG_Error, ModuleName, &
+                & 'Error annotating with PCF')
+	   return
+	end if
+	blockNumber = blockNumber + 1
+	firstChar = firstChar + maxheadersize
+	if ( firstChar > size(anText)) return
+      end do
+
 !-----------------------------
    END SUBROUTINE WritePCF2Hdr_hdfeos5
 !-----------------------------
@@ -944,6 +928,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.23  2003/08/11 17:40:42  cvuu
+!# Write anotating with multiple attributes PCF to handle big size of PCF file for hdfeos5
+!#
 !# Revision 2.22  2003/07/07 23:46:54  pwagner
 !# Changed in interfaces to make filetype a lit_name
 !#
