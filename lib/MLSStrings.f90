@@ -57,6 +57,7 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
 ! ReadCompleteLineWithoutComments     
 !                    Knits continuations, snips comments
 ! readIntsFromChars  Converts an array of strings to ints using Fortran read
+! RemoveElemFromList removes occurrence(s) of elem in a string list
 ! ReplaceSubString   replaces occurrence(s) of sub1 with sub2 in a string
 ! Reverse            Turns 'a string' -> 'gnirts a'
 ! ReverseList        Turns 'abc,def,ghi' -> 'ghi,def,abc'
@@ -144,8 +145,9 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
    & GetUniqueStrings, GetUniqueList, &
    & hhmmss_value, ints2Strings, LinearSearchStringArray, &
    & List2Array, LowerCase, NumStringElements, &
-   & ReadCompleteLineWithoutComments, readIntsFromChars, ReplaceSubString, &
-   & Reverse, ReverseList, SortArray, SortList, SplitWords, strings2Ints, &
+   & ReadCompleteLineWithoutComments, readIntsFromChars, &
+   & RemoveElemFromList, ReplaceSubString, Reverse, ReverseList, &
+   & SortArray, SortList, SplitWords, strings2Ints, &
    & StringElementNum, unquote, utc_to_yyyymmdd, yyyymmdd_to_dai
 
   interface switch
@@ -1394,6 +1396,41 @@ CONTAINS
 
   END SUBROUTINE readIntsFromChars
 
+  ! --------------------------------------------------  RemoveElemFromList  -----
+  SUBROUTINE RemoveElemFromList (inList, outList, elem, inDelim)
+    ! Takes a list and removes all occurrence(s) of elem
+	 ! E.g., given 'a,b,c,d,..,z' and asked to remove 'c' returns 'a,b,d,..z'
+    !--------Argument--------!
+    CHARACTER (LEN=*), INTENT(IN) :: inList
+    CHARACTER (LEN=*), INTENT(IN) :: elem
+    CHARACTER (LEN=*), INTENT(OUT)                :: outList
+    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)       :: inDelim
+    ! Method:
+    ! Prepend elem onto start of list, make it unique,
+    ! Then snip it back off
+    !----------Local vars----------!
+    character(len=len(inList)+len(elem)+1) :: temp_list, unique_list
+    CHARACTER (LEN=1)               :: Delim
+    CHARACTER (LEN=1), PARAMETER    :: BLANK = ' '   ! Returned for any element empty
+    CHARACTER (LEN=1), PARAMETER    :: COMMA = ','
+    integer :: numUnique
+    !----------Executable part----------!
+    IF(PRESENT(inDelim)) THEN
+      Delim = inDelim
+    ELSE
+      Delim = COMMA
+    END IF
+
+    outList = inList
+    IF (LEN_trim(elem) < 1 .or. len_trim(inList) < 1 &
+      & .or. StringElementNum(inList, elem, countEmpty=.true., &
+    & inDelim=inDelim) < 1 ) RETURN
+    temp_list = trim(elem) // Delim // trim(inList)
+    call GetUniqueList(temp_list, unique_list, numUnique, countEmpty=.true., &
+    & inDelim=inDelim, ignoreLeadingSpaces=.true.)
+    outList = unique_list(len(elem)+1:)
+  END SUBROUTINE RemoveElemFromList
+
   ! --------------------------------------------------  ReplaceSubString  -----
   SUBROUTINE ReplaceSubString (str, outstr, sub1, sub2, which, no_trim)
     ! Takes a string and replaces occurrence(s) of sub1 with sub2
@@ -1448,10 +1485,11 @@ CONTAINS
       case ('last')
         call Replace_me ( str, outstr, .true. )
       case ('all')
-        call Split_me
         outstr = ' '
         str_array = ' '
+        call Split_me
         do i=1, array_size
+          ! print *, i, ' ', trim(str_array(i))
           call Replace_me ( trim(str_array(i)), sub_str, .false. )
           outstr = adjustl( trim(outstr) // sub_str )
         enddo
@@ -1510,6 +1548,8 @@ CONTAINS
         if ( istrt2 < len_trim(the_orig)+1 ) then
           tail = the_orig(istrt2:)
         endif
+        ! print *, 'head: ', trim(head), '  ihead: ', ihead
+        ! print *, 'tail: ', trim(tail), ' sub2: ', sub2
         if ( sub2 /= ' ' ) then
           after_sub = adjustl(head(1:ihead) // trim(sub2) // trim(tail))
         else
@@ -1574,7 +1614,7 @@ CONTAINS
           istrt1 = istrt2 + index(str(istrt2+1:), trim(sub1))
           array_size = min(array_size+1, MAXREPLACEMENTS)
           str_array(array_size) = str(istrt2+1:istrt1 + len_trim(sub1) - 1)
-          istrt2 = istrt1 + len_trim(sub1)
+          istrt2 = istrt1 + len_trim(sub1) - 1
         enddo
       end subroutine Split_me
   END SUBROUTINE ReplaceSubString
@@ -2260,7 +2300,7 @@ CONTAINS
   END FUNCTION StringElementNum
 
   ! ------------------------------------------------  unquote  -----
-  Function unquote(str, quotes, cquotes, strict) result (outstr)
+  Function unquote(str, quotes, cquotes, strict, stripany) result (outstr)
     ! Function that removes a single pair of surrounding quotes from string
 
     ! E.g., given "Let me see." or 'Let me see.' returns
@@ -2274,6 +2314,9 @@ CONTAINS
     
     ! If given optional arg strict, options (1) and (2) above disregarded
     ! i.e., surrounding quotes must match, else returns string unchanged
+    
+    ! If given optional arg stripany, any quotes, surrounding or internal,
+    ! will be removed
     
     ! If given optional arg quotes, removes only surrounding pair:
     ! quotes[i:i] for each i=1..len[quotes]
@@ -2295,10 +2338,11 @@ CONTAINS
     ! e.g., braces, parentheses, extraneous delimiters
     !--------Argument--------!
     character(len=*),intent(in) :: str
-    character(len=len(str)) :: outstr
+    character(len=len(str)) :: outstr, tmpstr
     character(len=*),intent(in), optional :: quotes
     character(len=*),intent(in), optional :: cquotes
     logical,intent(in), optional :: strict
+    logical,intent(in), optional :: stripany
     !----------Local vars----------!
     character(len=1), parameter :: sq=''''
     character(len=1), parameter :: dq='"'
@@ -2306,10 +2350,12 @@ CONTAINS
     character(len=1) :: quote, cquote
     integer :: i
     logical :: mystrict
+    logical :: mystripany
     !----------Executable part----------!
 
    ult = len_trim(str)    ! Position of last non-blank char
    prim = ult - len_trim(adjustl(str)) + 1    ! Position of 1st non-blank char
+   outstr=str
       
    ! length of non-blank portion of string to be trimmed must be at least 2
    if(ult-prim+1 <= 1) then
@@ -2321,6 +2367,12 @@ CONTAINS
       mystrict=strict
    else
       mystrict=.false.
+   endif
+   
+   if(present(stripany)) then
+      mystripany=stripany
+   else
+      mystripany=.false.
    endif
    
    ! These are initialized so that if no matching quotes found
@@ -2340,6 +2392,15 @@ CONTAINS
       do i=1, len_trim(quotes)
       
          quote = quotes(i:i)
+         
+         ! Stripany option in force?
+         if ( mystripany ) then
+            ! print *, 'Replacing ', quote, ' in ', trim(outstr)
+            call ReplaceSubString(outstr, tmpstr, quote, '', 'all')
+            outstr = tmpstr
+            ! print *, trim(outstr)
+            cycle
+         endif
 
          ! Supplied with paired left and right quotes?
          if(present(cquotes)) then
@@ -2399,8 +2460,9 @@ CONTAINS
       endif
 
    endif
-
-   if(last >= first) then
+   if ( mystripany ) then
+       return
+   elseif(last >= first) then
        outstr=str(first:last)
    else
        outstr=str
@@ -2735,6 +2797,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.37  2003/12/07 23:10:42  pwagner
+! Added RemoveElemFromList; bug fixes in ReplaceSubString
+!
 ! Revision 2.36  2003/12/05 00:52:18  pwagner
 ! Added yyyymmdd_to_dai (though arguably this belongs in time_m)
 !
