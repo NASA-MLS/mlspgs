@@ -87,6 +87,8 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   logical            :: GARBAGE_COLLECTION_BY_CHUNK = .true.         
   ! Whether to skip doing the retrieval--a pre-flight checkout of paths, etc.
   logical            :: SKIPRETRIEVAL = .false.         
+  ! Whether to do only a pre-flight checkout of paths
+  logical            :: CHECKPATHS = .false.         
 
   logical            :: TOOLKIT =                SIPS_VERSION 
   ! --------------------------------------------------------------------------
@@ -102,6 +104,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.24  2003/11/07 00:46:51  pwagner
+! New quicker preflight option: --checkPaths
+!
 ! Revision 2.23  2003/10/09 23:58:34  pwagner
 ! Updated CURRENT_VERSION_ID to 1.4
 !
