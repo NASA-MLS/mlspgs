@@ -6,8 +6,8 @@
 \begin{cfFragment}
 Fill, quantity=<vector>.<quantity>, method=l2gp,
    sourceL2GP=<l2gp>
-   [, interpolate=<true|false>]
-   [, profile=<profile number>]
+   {, interpolate=<true|false> }
+   {, profile=<profile number> }
 \end{cfFragment}
 \cfField{sourceL2GP}
 \cfField{interpolate}
@@ -30,7 +30,7 @@ up `intelligent' l2pc files for example).  To do this, one can supply
 the \cf+profile+ argument.
 
 The program also checks that the vertical coordinates of the quantity
-match those in the l2pc file, and raises an error if they do not.  To
+match those in the l2gp file, and raises an error if they do not.  To
 bypass this check and to have the program vertically interpolate the
 data (in log pressure) from the l2gp surfaces to those in the vector,
 set the \cf+interpolate+ flag.  Note that for those quantities who's

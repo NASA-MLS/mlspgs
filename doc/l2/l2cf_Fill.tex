@@ -20,9 +20,15 @@ The rest of this section breaks down the various fill methods in detail.
 % methods please do so in a separate file as done below, and in the
 % right place.
 
+\newcommand{\fillMaskComment}{This command does obeys the \cf+fill+
+  mask, so the fill can be applied to a subset of the quantity (\eg a
+  restricted height range) by issuing a \cf+Subset+ command first.  The
+  \cf+dontMask+ flag instructs the program to ignore the mask.}
+
 \input{l2cf_Fill_Gridded.tex}
 \input{l2cf_Fill_L1B.tex}
 \input{l2cf_Fill_L2GP.tex}
+\input{l2cf_Fill_Profile.tex}
 \input{l2cf_Fill_ScaleOverlaps.tex}
 
 %%% Local Variables: 

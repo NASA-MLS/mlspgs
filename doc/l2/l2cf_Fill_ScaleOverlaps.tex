@@ -5,7 +5,7 @@
 \begin{cfFragment}
 Fill, quantity=<vector>.<quantity>, method=scaleOverlaps,
    multiplier= [ <numeric value> , ... ]
-   [, dontMask=<true|false>]
+   {, dontMask=<true|false> }
 \end{cfFragment}
 \cfField{multiplier}
 \cfField{dontMask}
@@ -34,9 +34,7 @@ profiles, then it ignores the later multipliers.  For example, if there
 were only two profiles of lower overlap and one of upper in the above
 example, the result would be 1\,K, 4\,K, 10\,K, \ldots\ 10\,K, 1\,K.
 
-This command does obey the fill mask, so it can be applied to restricted
-height ranges by issuing a \cf+Subset+ command first.  The dontMask flag
-on the Fill command instructs it ignore the mask.
+\fillMaskComment
 
 %%% Local Variables: 
 %%% mode: latex
