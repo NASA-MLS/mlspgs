@@ -25,7 +25,7 @@ MODULE L2GPData                 ! Data types for storing L2GP data internally
 
   ! This datatype is the main one, it simply defines one l2gp swath
 
-  TYPE L2GP_T
+  TYPE L2GPData_T
 
     CHARACTER (LEN=L2GPNameLen) :: Name ! Name for quantity to be output
 
@@ -59,7 +59,7 @@ MODULE L2GPData                 ! Data types for storing L2GP data internally
     REAL, POINTER, DIMENSION(:) :: quality
     ! Both the above dimensioned (noProfs)
 
-  END TYPE L2GP_T
+  END TYPE L2GPData_T
 
 CONTAINS
 
@@ -71,7 +71,7 @@ CONTAINS
 
     ! Dummy arguments
     INTEGER, INTENT(IN) :: noProfs,noSurfs,noFreqs ! Dimensions
-    TYPE (L2GP_T) :: l2gp
+    TYPE (L2GPData_T) :: l2gp
 
     ! Local variables
     INTEGER :: status
@@ -115,7 +115,7 @@ CONTAINS
   SUBROUTINE DestroyL2GPContents(l2gp)
 
     ! Dummy arguments
-    TYPE (L2GP_T) :: l2gp
+    TYPE (L2GPData_T) :: l2gp
 
     ! Executable code
 
@@ -139,11 +139,11 @@ CONTAINS
   SUBROUTINE AddL2GPToDatabase(database,l2gp)
 
     ! Dummy arguments
-    TYPE (L2GP_T), DIMENSION(:), POINTER :: database
-    TYPE (L2GP_T) :: l2gp
+    TYPE (L2GPData_T), DIMENSION(:), POINTER :: database
+    TYPE (L2GPData_T) :: l2gp
 
     ! Local variables
-    TYPE (L2GP_T), DIMENSION(:), POINTER :: tempDatabase
+    TYPE (L2GPData_T), DIMENSION(:), POINTER :: tempDatabase
     INTEGER :: newSize,status
 
     ! Executable code
@@ -171,7 +171,7 @@ CONTAINS
   SUBROUTINE DestroyL2GPDatabase(database)
 
     ! Dummy argument
-    TYPE (L2GP_T), DIMENSION(:), POINTER :: database
+    TYPE (L2GPData_T), DIMENSION(:), POINTER :: database
 
     ! Local variables
     INTEGER :: l2gpIndex
@@ -191,4 +191,7 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 1.1  1999/12/03 19:10:34  livesey
+! First version
+!
 !
