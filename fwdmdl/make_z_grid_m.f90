@@ -14,6 +14,7 @@ character (len=*), parameter :: IdParm = &
 character (len=len(idParm)) :: Id = IdParm
 character (len=*), parameter :: ModuleName = &
     & "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 contains
@@ -131,9 +132,16 @@ contains
 
   end subroutine Make_Z_Grid
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module Make_Z_Grid_m
 
 ! $Log$
+! Revision 2.5  2002/10/08 17:08:05  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.4  2002/10/07 19:27:50  vsnyder
 ! Use a simpler algorithm when not subgridding
 !

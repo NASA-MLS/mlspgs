@@ -15,6 +15,7 @@ module Comp_Eta_Docalc_No_Frq_m
   character (len=len(idParm)) :: Id = idParm
   character (len=*), parameter :: ModuleName= &
     & "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 contains
@@ -105,9 +106,16 @@ contains
 
   end subroutine Comp_Eta_Docalc_No_Frq
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module Comp_Eta_Docalc_No_Frq_m
 
 ! $Log$
+! Revision 2.5  2002/10/08 17:08:01  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.4  2002/09/06 18:18:03  vsnyder
 ! Cosmetic changes.  Move USEs from module scope to procedure scope.
 ! Convert some arrays from pointers to automatics.
