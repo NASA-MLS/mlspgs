@@ -85,7 +85,7 @@ contains ! ====     Public Procedures     ==============================
   end subroutine ANNOUNCE_ERROR
 
 ! --------------------------------------------------------  ARRAY  -----
-  recursive subroutine ARRAY ( HOW_MANY )
+  recursive subroutine ARRAY ( HOW_MANY ) ! [ <expr> ( , <expr> )* ]
     integer, intent(inout) :: HOW_MANY  ! Incremented once for each expr
     call get_token     ! Consume the left bracket
     do
@@ -151,7 +151,7 @@ contains ! ====     Public Procedures     ==============================
     end if
     if ( toggle(par) ) call output ( 'Exit  FACTOR', advance='yes' )
   end subroutine FACTOR 
-! ----------------------------------------------------  FIELD_LIST  -----
+! ---------------------------------------------------  FIELD_LIST  -----
   subroutine FIELD_LIST
     integer :: HOW_MANY       ! sons of the n_asg node
     if ( toggle(par) ) call where ( 'Enter FIELD_LIST', advance='yes' )
@@ -187,7 +187,7 @@ contains ! ====     Public Procedures     ==============================
     if ( next%pseudo ) call &
       push_pseudo_terminal ( next%string_index, next%source )
   end subroutine GET_TOKEN
-! --------------------------------------------------------  LFACTOR  -----
+! ------------------------------------------------------  LFACTOR  -----
   recursive subroutine LFACTOR ! lfactor -> term ( +|- term ) *
     if ( toggle(par) ) call where ( 'Enter LFACTOR', advance='yes' )
     call term
@@ -449,6 +449,9 @@ o:  do
 end module PARSER
 
 ! $Log$
+! Revision 2.13  2004/01/20 19:43:33  vsnyder
+! Cosmetic changes
+!
 ! Revision 2.12  2004/01/17 03:04:48  vsnyder
 ! Provide for functions in expressions
 !
