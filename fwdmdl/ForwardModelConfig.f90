@@ -12,7 +12,6 @@ module ForwardModelConfig
   use MLSCommon, only: R8
   use MLSSignals_M, only: Signal_T
   use VGridsDatabase, only: VGrid_T, DestroyVGridContents
-  use VectorsModule, only: VECTOR_T
 
   implicit NONE
   private
@@ -57,8 +56,6 @@ module ForwardModelConfig
     integer :: SurfaceTangentIndex    ! Index in Tangentgrid of Earth's surface
     integer :: WindowUnits            ! Either degrees or profiles
     integer :: Ntimes = 0	      ! Number of times calling FullForwardModel
-    integer :: xStar                  ! Index of specific vector to use for linearized model
-    integer :: yStar                  ! Index of specific vector to use for linearized model
     ! Now the logicals
     logical :: AllLinesForRadiometer  ! As opposed to just using lines designated for band.
     logical :: Atmos_der              ! Do atmospheric derivatives
@@ -587,12 +584,6 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
-! Revision 2.41  2003/07/22 22:43:39  michael
-! Added a Dump_ForwardModelConfig subroutine for a single configuration and made
-! Dump_ForwardModelConfigDatabase call Dump_ForwardModelConfig to dump an array
-! of configurations.  Either is called with the generic interface "dump".
-! Formerly, only pointers to arrays of forwardmodelconsigurations could be dumped.
-!
 ! Revision 2.40  2003/07/15 22:09:59  livesey
 ! Added forceSidebandFraction and linearSideband
 !

@@ -37,7 +37,7 @@ contains ! =====     Public Procedures     =============================
 
   ! -------------------------------------  LinearizedForwardModel  -----
   subroutine LinearizedForwardModel ( fmConf, FwdModelIn, FwdModelExtra,&
-    & FwdModelOut, Ifm, fmStat, Jacobian, vectors )
+    & FwdModelOut, Ifm, fmStat, Jacobian )
 
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use Dump_0, only: DUMP
@@ -71,8 +71,7 @@ contains ! =====     Public Procedures     =============================
       & CLONEVECTOR, CONSTRUCTVECTORTEMPLATE, COPYVECTOR, CREATEVECTOR,&
       & DESTROYVECTORINFO, GETVECTORQUANTITYBYTYPE, VECTOR_T, &
       & VECTORVALUE_T, VECTORTEMPLATE_T, DUMP, &
-      & VALIDATEVECTORQUANTITY, M_LINALG, GETVECTORQUANTITYINDEXBYNAME
-    use Sort_m, only: SORTP
+      & VALIDATEVECTORQUANTITY, M_LINALG
 
     ! Dummy arguments
     type(forwardModelConfig_T), intent(inout) :: FMCONF
@@ -82,7 +81,6 @@ contains ! =====     Public Procedures     =============================
     type(forwardModelIntermediate_T), intent(inout) :: IFM ! Workspace
     type(forwardModelStatus_t), intent(inout) :: FMSTAT ! Reverse comm. stuff
     type(matrix_T), intent(inout), optional :: JACOBIAN
-    type(vector_t), dimension(:), pointer, optional :: VECTORS ! Vectors database
 
     ! Local variables
     integer :: CENTER                   ! Center instance of l2pc
@@ -119,7 +117,6 @@ contains ! =====     Public Procedures     =============================
     integer, dimension(-1:1) :: L2PCBINS ! Which l2pc to use
     integer, dimension(:), pointer :: mifPointingsLower ! Result of a hunt
     integer, dimension(:), pointer :: mifPointingsUpper ! mifPointingsLower+1
-    integer, dimension(:), pointer :: ptanOrder ! Ordering for ptan
 
     logical, dimension(:), pointer :: doChannel ! Do this channel?
 
@@ -138,19 +135,12 @@ contains ! =====     Public Procedures     =============================
     real (r8), dimension(:), pointer :: upperWeight ! For interpolation
     real (r8), dimension(:), pointer :: tangentTemperature ! For optical depth
     real (r8), dimension(:), pointer :: thisFraction ! Sideband fraction values
-    real (r8), dimension(:), pointer :: deltaPtan ! Change of ptan between x and supplied xStar
-    real (r8), dimension(:), pointer :: sortedPtan ! supplied ptan in ascending order
 
     real (r8), dimension(:,:), pointer :: yPmapped ! Remapped values of yP
     real (r8), dimension(:,:), pointer :: resultMapped ! Remapped values of result
     real (r8), dimension(:,:), pointer :: dyByDX ! Raw dRad/dPtan
     real (rm), dimension(:,:), pointer :: dense  ! Densified matrix from l2pc
     real (rm), dimension(:,:), pointer :: kBit ! Remapped values of l2pc
-    real (r8), dimension(:,:), pointer :: dYStarByDPtan ! Remapped values of l2pc
-    real (r8), dimension(:,:), pointer :: sortedDYStarByDPtan ! Remapped values of l2pc
-    real (r8), dimension(:,:), pointer :: yStarMapped ! Remapped values of l2pc
-    real (r8), dimension(:,:), pointer :: sortedYStarMapped ! Remapped values of l2pc
-    real (r8), dimension(:,:), pointer :: dummy ! Workspace
 
     type(vector_T) :: XP                ! Same form as xStar, contents as x
     type(vector_T) :: YP                ! Same form as yStar,=kstar*(xp-xStar)
@@ -171,8 +161,6 @@ contains ! =====     Public Procedures     =============================
     type(VectorValue_T), pointer :: SIDEBANDFRACTION ! From the state vector
     type(VectorValue_T), pointer :: LOWERSIDEBANDFRACTION ! From the state vector
     type(VectorValue_T), pointer :: UPPERSIDEBANDFRACTION ! From the state vector
-    type(VectorValue_T), pointer :: THISXSTARQ ! Quantitiy from supplied XStar vector
-    type(VectorValue_T), pointer :: THISYSTARQ ! Quantitiy from supplied YStar vector
 
     ! Executable code
     if ( toggle(emit) ) call trace_begin ( 'LinearizedForwardModel' )
@@ -203,7 +191,7 @@ contains ! =====     Public Procedures     =============================
     ! radiance.
     if ( .not. associated ( radiance ) ) then
       radiance => GetVectorQuantityByType (fwdModelOut, quantityType=l_opticalDepth, &
-        & signal=signal%index, sideband=signal%sideband, noError=.true. )
+      & signal=signal%index, sideband=signal%sideband, noError=.true. )
     end if
 
     ! Now, some possible error messages
@@ -214,13 +202,6 @@ contains ! =====     Public Procedures     =============================
       & present(jacobian)  ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Not appropriate to ask for derivatives for optical depth' )
-    if ( radiance%template%quantityType == l_opticalDepth .and. &
-      & fmConf%xStar /= 0 ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Not appropriate to supply x/yStar for optical depth' )
-    if ( fmConf%xStar /= 0 .and. .not. present(vectors) ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'x/yStar supplied by vectors database argument not present' )
 
     ! Set some dimensions
     noChans = radiance%template%noChans
@@ -325,7 +306,7 @@ contains ! =====     Public Procedures     =============================
       if ( present(jacobian) ) then
         call Hunt ( xStarPtan%values(:,1), ptan%values(:,maf), mifPointingsLower )
         mifPointingsUpper = mifPointingsLower + 1
-
+        
         upperWeight = &
           & ( ptan%values(:,maf) - xStarPtan%values(mifPointingsLower,1) ) / &
           & ( xStarPtan%values(mifPointingsUpper,1) - &
@@ -337,7 +318,7 @@ contains ! =====     Public Procedures     =============================
 
       ! -------- Main loop over xStar quantities -------------------------------
       quantityLoop: do qtyInd = 1, size ( l2pc%col%vec%quantities )
-
+        
         ! Identify this quantity in xStar
         l2pcQ => l2pc%col%vec%quantities(qtyInd)
 
@@ -419,23 +400,13 @@ contains ! =====     Public Procedures     =============================
               end if
             end do phiWindowLoop
           end if
-
+          
           xInstance = closestInstance + deltaInstance
           xInstance = max ( 1, min ( xInstance, stateQ%template%noInstances ) )
 
-          ! Fill this part of xP, if we have been supplied an xStar fill xP with the delta
-          ! otherwise, xP is just the direct state
-          if ( fmConf%xStar /= 0 ) then
-            i = GetVectorQuantityIndexByName ( vectors(fmConf%xStar), stateQ%template%name )
-            if ( i == 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & 'Unable to find quantity in xStar vector supplied' )
-            thisXStarQ => vectors(fmConf%xStar)%quantities(i)
-            xP%quantities(qtyInd)%values(:,xStarInstance) = &
-              & stateQ%values(:,xInstance) - thisXStarQ%values(:,xInstance)
-          else
-            xP%quantities(qtyInd)%values(:,xStarInstance) = &
-              & stateQ%values(:,xInstance)
-          end if
+          ! Fill this part of xP
+          xP%quantities(qtyInd)%values(:,xStarInstance) = &
+            & stateQ%values(:,xInstance)
 
           ! Note that we've ignored the mask in stateQ here. We might
           ! in later versions want to apply one mask field?
@@ -481,7 +452,7 @@ contains ! =====     Public Procedures     =============================
               end select
 
               ! Now do the interpolation
-!$OMP PARALLEL DO private ( i, lower, upper, chan, doElement )
+              !$OMP PARALLEL DO private ( i, lower, upper, chan, doElement )
               do mif = 1, noMIFs
                 i = ( mif - 1 ) * noChans + 1
                 lower = (mifPointingsLower(mif)-1)*noChans + 1
@@ -502,7 +473,7 @@ contains ! =====     Public Procedures     =============================
                   upper = upper + 1
                 end do
               end do
-!$OMP END PARALLEL DO
+              !$OMP END PARALLEL DO
 
               if ( any ( l2pcBlock%kind == &
                 & (/ M_Column_Sparse, M_Banded /) ) ) &
@@ -512,15 +483,9 @@ contains ! =====     Public Procedures     =============================
         end do                            ! End loop over xStar Profiles
 
         ! Compute this instance of deltaX
-        if ( fmConf%xStar /= 0 ) then
-          ! The delta has already been done in the xStar supplied case
-          deltaX%quantities(qtyInd)%values = xP%quantities(qtyInd)%values
-        else
-          ! Otherwise, difference it from the l2pc state
-          deltaX%quantities(qtyInd)%values = &
-            & xP%quantities(qtyInd)%values - &
-            & l2pc%col%vec%quantities(qtyInd)%values
-        end if
+        deltaX%quantities(qtyInd)%values = &
+          & xP%quantities(qtyInd)%values - &
+          & l2pc%col%vec%quantities(qtyInd)%values
 
       end do quantityLoop               ! End loop over quantities
 
@@ -541,9 +506,7 @@ contains ! =====     Public Procedures     =============================
       if ( toggle(emit) .and. levels(emit) > 8 ) then
         call dump ( (/yp, l2pc%row%vec/) )
       end if
-
-      ! Now, if no yStar has been supplied add yP to the one in the l2pc file
-      if ( fmConf%yStar == 0 ) yP = yP + l2pc%row%vec
+      yP = yP + l2pc%row%vec
 
       ! Now we interpolate yP to ptan
       call allocate_test( ypMapped, radInL2PC%template%noSurfs, &
@@ -566,35 +529,40 @@ contains ! =====     Public Procedures     =============================
         & extrapolate='Constant', &     ! No extrapolation
         & dyByDx=dyByDx )
 
-      ! Either place or add, make decision outside loop!
-      if ( sideband == sidebandStart ) then
-        do chan = 1, noChans
-          if ( doChannel ( chan ) ) then
-            do mif = 1, noMIFs
-              radiance%values( chan + (mif-1)*noChans, maf ) = &
-                & thisFraction(chan)*resultMapped ( mif, chan )
-            end do
-          end if
-        end do
+      if ( sidebandStart == sidebandStop ) then
+        radiance%values(:,maf) = reshape(transpose(resultMapped),&
+          & (/radiance%template%instanceLen/))
       else
-        do chan = 1, noChans
-          if ( doChannel ( chan ) ) then
-            do mif = 1, noMIFs
-              radiance%values( chan + (mif-1)*noChans, maf ) = &
-                & radiance%values( chan + (mif-1)*noChans, maf ) + &
-                &   thisFraction(chan)*resultMapped ( mif, chan )
-            end do
-          end if
-        end do
-      end if
-
+        ! Either place or add, make decision outside loop!
+        if ( sideband == sidebandStart ) then
+          do chan = 1, noChans
+            if ( doChannel ( chan ) ) then
+              do mif = 1, noMIFs
+                radiance%values( chan + (mif-1)*noChans, maf ) = &
+                  & thisFraction(chan)*resultMapped ( mif, chan )
+              end do
+            end if
+          end do
+        else
+          do chan = 1, noChans
+            if ( doChannel ( chan ) ) then
+              do mif = 1, noMIFs
+                radiance%values( chan + (mif-1)*noChans, maf ) = &
+                  & radiance%values( chan + (mif-1)*noChans, maf ) + &
+                  &   thisFraction(chan)*resultMapped ( mif, chan )
+              end do
+            end if
+          end do
+        end if
+      end if                            ! Doing folded
+        
       ! Now deal with ptan derivatives
-      if ( present( jacobian ) .and. ptanInFirst ) then
-        colJBlock = FindBlock ( jacobian%col, ptan%index, maf )
-        jBlock => jacobian%block( rowJBlock, colJBlock )
+      if ( present( Jacobian ) .and. ptanInFirst ) then
+        colJBlock = FindBlock ( Jacobian%col, ptan%index, maf )
+        jBlock => Jacobian%block( rowJBlock, colJBlock )
         select case (jBlock%kind)
         case (m_absent)
-          call CreateBlock ( jacobian, rowJBlock, colJBlock, m_banded, &
+          call CreateBlock ( Jacobian, rowJBlock, colJBlock, m_banded, &
             & noMIFs*noChans, bandHeight=noChans )
           jBlock%values = 0.0_rm
         case (m_banded)
@@ -602,29 +570,42 @@ contains ! =====     Public Procedures     =============================
           call MLSMessage ( MLSMSG_Error, ModuleName,&
             & 'Wrong matrix type for ptan derivative')
         end select
-
-        ! Either place or add, make decision outside loop!
-        if ( sideband == sidebandStart ) then
+        
+        if ( sidebandStart == sidebandStop ) then
+          ! Change to this if statement later !????
+          ! if ( signal%sideband == 0 ) then
           do chan = 1, noChans
             if ( doChannel ( chan ) ) then
               do mif = 1, noMIFs
                 jBlock%values( chan + (mif-1)*noChans, 1 ) = &
                   & thisFraction(chan) * dyByDx ( mif, chan )
-              end do                    ! Minor frames
-            end if                      ! Doing this channel
-          end do                        ! Channels
-        else                            ! Must be doing second sideband
-          do chan = 1, noChans
-            if ( doChannel ( chan ) ) then
-              do mif = 1, noMIFs
-                jBlock%values( chan + (mif-1)*noChans, : ) = &
-                  & jBlock%values ( chan + (mif-1)*noChans, : ) + &
-                  &   thisFraction(chan) * dyByDx ( mif, chan )
-              end do                    ! Minor frames
-            end if                      ! Doing this channel
-          end do                        ! Channel
-        end if                          ! First/second sideband
-      end if                            ! Folding
+              end do                  ! Minor frames
+            end if                     ! Doing this channel
+          end do                       ! Channels
+        else
+          ! Either place or add, make decision outside loop!
+          if ( sideband == sidebandStart ) then
+            do chan = 1, noChans
+              if ( doChannel ( chan ) ) then
+                do mif = 1, noMIFs
+                  jBlock%values( chan + (mif-1)*noChans, 1 ) = &
+                    & thisFraction(chan) * dyByDx ( mif, chan )
+                end do                  ! Minor frames
+              end if                     ! Doing this channel
+            end do                       ! Channels
+          else                          ! Must be doing second sideband
+            do chan = 1, noChans
+              if ( doChannel ( chan ) ) then
+                do mif = 1, noMIFs
+                  jBlock%values( chan + (mif-1)*noChans, : ) = &
+                    & jBlock%values ( chan + (mif-1)*noChans, : ) + &
+                    &   thisFraction(chan) * dyByDx ( mif, chan )
+                end do                  ! Minor frames
+              end if                    ! Doing this channel
+            end do                      ! Channel
+          end if                        ! First/second sideband
+        end if                          ! Folding
+      end if                            ! Want ptan derivatives
 
       ! Now think about optical depth
       if ( radiance%template%quantityType == l_opticalDepth ) then
@@ -650,7 +631,7 @@ contains ! =====     Public Procedures     =============================
           radiance%values(:,maf) = 1.0e5 ! Choose a suitable large value
         end where
       end if
-
+      
       call DestroyVectorInfo ( xP )
       call DestroyVectorInfo ( deltaX )
       call DestroyVectorInfo ( yP )
@@ -659,97 +640,6 @@ contains ! =====     Public Procedures     =============================
       call Deallocate_test ( ypMapped, 'ypMapped', ModuleName )
 
     end do                                ! End of sideband loop
-
-    ! If a yStar has been supplied, we need to add that on.
-    ! We also need to add on the impact of any perturbation in tangent pressure
-    ! in the xStar/yStar supplied case too
-    if ( fmConf%yStar /= 0 ) then
-      ! Setup arrays etc.
-      nullify ( deltaPtan, dummy, dyStarByDPtan, ptanOrder, sortedPtan, sorteddYStarByDPtan, &
-        & sortedyStarMapped, yStarMapped )
-      call Allocate_test ( deltaPtan, noMIFs, 'deltaPtan', ModuleName )
-      call Allocate_test ( dummy, noMIFs, noChans, 'dummy', ModuleName )
-      call Allocate_test ( dyStarByDptan, noMIFs, noChans, 'dyStarByDPtan', ModuleName )
-      call Allocate_test ( ptanOrder, noMIFs, 'ptanOrder', ModuleName )
-      call Allocate_test ( sortedPtan, noMIFs, 'sortedPtan', ModuleName )
-      call Allocate_test ( sorteddyStarByDptan, noMIFs, noChans, 'sorteddyStarByDPtan', ModuleName )
-      call Allocate_test ( sortedyStarMapped, noMIFs, noChans, 'sortedyStarMapped', ModuleName )
-      call Allocate_test ( yStarMapped, noMIFs, noChans, 'yStarMapped', ModuleName )
-
-      ! Identify the radiance in the supplied yStar vector
-      thisYStarQ => GetVectorQuantityByType ( vectors(fmConf%yStar), quantityType=l_radiance, &
-        & signal=signal%index, sideband=signal%sideband )
-
-      ! We're going to interpolate this in ptan.  Extract it and make
-      ! sure ptan is in ascending order.
-      yStarMapped = transpose ( reshape ( thisYStarQ%values(:,maf), (/ noChans, noMIFs /) ) )
-      call SortP ( ptan%values(:,maf), 1, noMIFs, ptanOrder )
-      do i = 1, noMIFs
-        sortedPtan ( i ) = ptan%values ( ptanOrder(i), maf )
-        sortedyStarMapped ( i, : ) = yStarMapped ( ptanOrder(i), : )
-      end do
-
-      ! 'Interpolate' this to get the derivatives
-      call InterpolateValues ( &
-        & sortedPtan, &                 ! OldX
-        & sortedyStarMapped, &          ! OldY
-        & sortedPtan, &                 ! NewX (the same as oldX)
-        & dummy, &                      ! NewY (don't care about it)
-        & 'Spline', &                   ! Use spline
-        & extrapolate='Constant', &     ! No extrapolation
-        & dyByDx=sortedDyStarByDPtan, & ! This is what we're after
-        & skipNewY=.true. )
-
-      ! Now 'unsort' the result
-      do i = 1, noMIFs
-        dYStarByDptan ( ptanOrder(i), : ) = sortedDyStarByDPtan ( i, : )
-      end do
-
-      ! Now compute 'deltaPtan'
-      xStarPtan => GetVectorQuantityByType ( vectors ( fmConf%xStar ), quantityType = l_ptan, &
-        & instrumentModule = radiance%template%instrumentModule )
-      deltaPtan = ptan%values(:,maf) - xStarPtan%values(:,maf)
-
-      ! Add these impacts to our radiances
-      do chan = 1, noChans
-        if ( doChannel ( chan ) ) then
-          do mif = 1, noMIFs
-            i = chan + ( mif - 1 ) * noChans
-            radiance%values( i, maf ) = radiance%values( i, maf ) + &
-              & thisYStarQ%values ( i, maf ) + &
-              &   dYStarByDPtan ( mif, chan ) * deltaPtan(mif)
-          end do
-        end if
-      end do
-
-      ! Output the ptan derivatives if they're wanted
-      if ( present ( jacobian ) .and. ptanInFirst ) then
-        ! We know the block is already of the right type (banded) from our
-        ! work above.
-        colJBlock = FindBlock ( jacobian%col, ptan%index, maf )
-        jBlock => jacobian%block( rowJBlock, colJBlock )
-
-        do chan = 1, noChans
-          if ( doChannel ( chan ) ) then
-            do mif = 1, noMIFs
-              i = chan + (mif-1) * noChans
-              jBlock%values( i, 1 ) = jBlock%values( i, 1 ) + &
-                & dyStarByDPtan ( mif, chan )
-            end do                    ! Minor frames
-          end if                      ! Doing this channel
-        end do                        ! Channels
-      end if
-
-      ! Extra tidying up in the supplied xStar/yStar case
-      call Deallocate_test ( deltaPtan, 'deltaPtan', ModuleName )
-      call Deallocate_test ( dummy, 'dummy', ModuleName )
-      call Deallocate_test ( dyStarByDptan, 'dyStarByDPtan', ModuleName )
-      call Deallocate_test ( ptanOrder, 'ptanOrder', ModuleName )
-      call Deallocate_test ( sortedPtan, 'sortedPtan', ModuleName )
-      call Deallocate_test ( sorteddyStarByDptan, 'sorteddyStarByDPtan', ModuleName )
-      call Deallocate_test ( sortedyStarMapped, 'sortedyStarMapped', ModuleName )
-      call Deallocate_test ( yStarMapped, 'yStarMapped', ModuleName )
-    end if
 
     if ( present (jacobian) ) then         ! Destroy working arrays
       call deallocate_test ( mifPointingsLower, 'mifPointingsLower', ModuleName )
@@ -760,7 +650,7 @@ contains ! =====     Public Procedures     =============================
 
     if ( toggle(emit) ) call trace_end ( 'LinearizedForwardModel' )
 
-  contains
+    contains
     ! ======================================== Internal procudures =====
 
     ! ------------------------------------------ FindMatchForL2PCQ ---
@@ -782,9 +672,6 @@ contains ! =====     Public Procedures     =============================
 
       ! Executable code
       foundInFirst = .false.
-      ! We're going to be fairly picky about this.  I don't want to get into the
-      ! habit of blindly accepting quantities that might not be appropriate.
-      ! Therefore, I have a list of 'acceptable' quantity types.
       select case ( l2pcQ%template%quantityType )
       case ( l_temperature )
         stateQ => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
@@ -819,13 +706,9 @@ contains ! =====     Public Procedures     =============================
           end do searchLoop
           foundInFirst = ( vec == 1 )
         end if
-      case ( l_fieldStrength, l_fieldAzimuth, l_fieldElevation )
-        ! This is for quantities that are 'easy to get'
-        stateQ => GetQuantityForForwardModel ( FwdModelIn, FwdModelExtra,&
-          & quantityType = l2pcQ%template%quantityType, config=fmConf, &
-          & foundInFirst = foundInFirst, noError=.true. )
       case default
-        nullify ( stateQ )
+        ! For the moment, just ignore things we don't understand.
+        stateQ => NULL()
       end select
 
       ! Now check that these match.
@@ -1011,15 +894,10 @@ contains ! =====     Public Procedures     =============================
             ! If we've got both of them make sure they match
             if ( associated(stateQ) .and. associated(l2pcQ) ) then
               ! OK, identify height range
-              if ( all ( binSelectors(selector)%heightRange > 0.0 ) ) then
-                s1 = minloc ( abs ( stateQ%template%surfs(:,1) + &
-                  & log10(binSelectors(selector)%heightRange(1) ) ) )
-                s2 = minloc ( abs ( stateQ%template%surfs(:,1) + &
-                  & log10(binSelectors(selector)%heightRange(2) ) ) )
-              else
-                s1 = 1
-                s2 = stateQ%template%noSurfs
-              end if
+              s1 = minloc ( abs ( stateQ%template%surfs(:,1) + &
+                & log10(binSelectors(selector)%heightRange(1) ) ) )
+              s2 = minloc ( abs ( stateQ%template%surfs(:,1) + &
+                & log10(binSelectors(selector)%heightRange(2) ) ) )
               ! Here we'll just compare the central profile in the
               ! l2pc with the state profile closest to each maf.
               l2pcInstance = l2pcQ%template%noInstances/2 + 1
@@ -1117,15 +995,6 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
-! Revision 2.46  2003/09/11 23:10:32  livesey
-! Added option to linearize around pre-computed state/radiances instead of
-! those in the l2pc file.
-!
-! Revision 2.45  2003/08/20 20:07:22  livesey
-! Bug fix in ptan derivatives (not actually a problem yet but would have
-! become one).  Also, more commented out if statements for the single
-! sideband case, and some cosmetic changes.
-!
 ! Revision 2.44  2003/08/14 20:24:08  livesey
 ! Added the exact bin criterion
 !

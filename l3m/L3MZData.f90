@@ -958,11 +958,12 @@ CONTAINS
 !-----------------------------
 
 !----------------------------------------------------------
-   SUBROUTINE WriteMetaL3MZ (fileName, mcfNum, pcf, anText, hdfVersion)
+   SUBROUTINE WriteMetaL3MZ (fileName, mcfNum, pcf, anText, nFiles, hdfVersion)
 !----------------------------------------------------------
    USE PCFHdr, ONLY: WritePCF2Hdr, WriteInputPointer, he5_writeglobalattr, &
 	& GlobalAttributes
    USE HDFEOS5, ONLY: HE5F_ACC_RDWR, HE5_GDCLOSE, HE5_GDOPEN
+   USE output_m, only: output
 
 ! Brief description of subroutine
 ! This routine writes the metadata for an l3mz file, and annotates it with the
@@ -979,6 +980,8 @@ CONTAINS
       CHARACTER (LEN=1), POINTER :: anText(:)
 
       INTEGER, INTENT(IN) :: hdfVersion
+
+      INTEGER, INTENT(IN) :: nFiles
 
 ! Parameters
 
@@ -1005,7 +1008,14 @@ CONTAINS
 
       INTEGER :: dg, hdfReturn, i, indx, len, numSwaths, pNum, &
            & result, returnStatus, sdid, version
-      INTEGER :: l3StartDay, l3EndDay, daysNum
+      INTEGER :: daysNum = 1
+
+! calculate the daysNum
+     call output('start WriteL3MZData', advance='yes')
+
+     daysNum = nFiles + 1 
+     call output('daysNum = ', advance='no')
+     call output(daysNum, advance='yes')
 
 ! Check to see whether this is the Diagnostic files
 
@@ -1198,12 +1208,12 @@ CONTAINS
       attrName = 'StartOrbitNumber' // '.1'
       !result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, -1)
       !result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 99999)
-      IF (GlobalAttributes%OrbNumDays(1,i) == -1) THEN
+      IF (GlobalAttributes%OrbNumDays(1,daysNum) == -1) THEN
            result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), &
                 & attrName, 99999)
       ELSE
            result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), &
-                & attrName, GlobalAttributes%OrbNumDays(1,i))
+                & attrName, GlobalAttributes%OrbNumDays(1,daysNum))
       ENDIF
       IF (result /= PGS_S_SUCCESS) THEN
          msr = METAWR_ERR // attrName
@@ -1213,12 +1223,12 @@ CONTAINS
       attrName = 'StopOrbitNumber' // '.1'
       !result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, -1)
       !result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 99999)
-      IF (maxval(GlobalAttributes%OrbNumDays(:,i)) == -1) then
+      IF (maxval(GlobalAttributes%OrbNumDays(:,daysNum)) == -1) then
            result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), &
                 & attrName, 99999)
       ELSE 
            result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), &
-                & attrName, maxval(GlobalAttributes%OrbNumDays(:,i)))
+                & attrName, maxval(GlobalAttributes%OrbNumDays(:,daysNum)))
       END IF 
       IF (result /= PGS_S_SUCCESS) THEN
          msr = METAWR_ERR // attrName
@@ -1413,12 +1423,8 @@ CONTAINS
 
       ! Write global attributes
       if ( HDFVersion == HDFVERSION_5 ) then
+        print *, 'write global attributes'
         sdid = he5_gdopen (fileName, HE5F_ACC_RDWR)
-        write (l3StartDay, '(I5)') pcf%startDay
-        write (l3EndDay, '(I5)') pcf%endDay
-        daysNum = l3EndDay - l3StartDay + 2
-        print *, 'daysNum'
-        print *, daysNum
         call he5_writeglobalattr(sdid,daysNum)
         result = he5_gdclose (sdid)
       endif
@@ -1634,6 +1640,9 @@ END MODULE L3MZData
 !==================
 
 ! $Log$
+! Revision 1.13  2003/09/15 18:27:23  cvuu
+! Output OrbitNumber and OrbitPeriod in the global attribute
+!
 ! Revision 1.12  2003/08/11 23:26:37  cvuu
 ! brought closer to James Johnson want to
 !

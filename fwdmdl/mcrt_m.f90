@@ -87,19 +87,12 @@ contains
 ! Proceed with first segment integration
 
 ! We use 1:2 instead of : for the first two dimensions of the arrays of
-! 2x2 matrices, in the hope that some compiler someday may be able to use
-! the information for optimization.  Writing out the multiplies explicitly
-! probably helps, too.
+! 2x2 matrices, in the hope that some compiler someday may be able to
+! use the information for optimization.
 
     i_tan = n_path / 2
     do i = 2, min(i_tan,p_stop)
-    ! prod(1:2,1:2,i) = matmul ( prod(1:2,1:2,i-1), del_tau(1:2,1:2,i) )
-      prod(1:2,1:2,i) = reshape ( (/ &
-        & prod(1,1,i-1) * del_tau(1,1,i) + prod(1,2,i-1) * del_tau(2,1,i), &
-        & prod(2,1,i-1) * del_tau(1,1,i) + prod(2,2,i-1) * del_tau(2,1,i), &
-        & prod(1,1,i-1) * del_tau(1,2,i) + prod(1,2,i-1) * del_tau(2,2,i), &
-        & prod(2,1,i-1) * del_tau(1,2,i) + prod(2,2,i-1) * del_tau(2,2,i) /), &
-        & (/ 2,2 /) )
+      prod(1:2,1:2,i) = matmul ( prod(1:2,1:2,i-1), del_tau(1:2,1:2,i) )
       call updaterad ( radiance, t_script(i), prod(1:2,1:2,i), tau(1:2,1:2,i) )
     end do
 
@@ -115,13 +108,7 @@ contains
 ! space radiance contribution.
 
     do i = i_tan+2, min(n_path,p_stop)
-    ! prod(1:2,1:2,i) = matmul ( prod(1:2,1:2,i-1) , del_tau(1:2,1:2,i-1) )
-      prod(1:2,1:2,i) = reshape ( (/ &
-        & prod(1,1,i-1) * del_tau(1,1,i-1) + prod(1,2,i-1) * del_tau(2,1,i-1), &
-        & prod(2,1,i-1) * del_tau(1,1,i-1) + prod(2,2,i-1) * del_tau(2,1,i-1), &
-        & prod(1,1,i-1) * del_tau(1,2,i-1) + prod(1,2,i-1) * del_tau(2,2,i-1), &
-        & prod(2,1,i-1) * del_tau(1,2,i-1) + prod(2,2,i-1) * del_tau(2,2,i-1) /), &
-        & (/ 2,2 /) )
+      prod(1:2,1:2,i) = matmul ( prod(1:2,1:2,i-1) , del_tau(1:2,1:2,i-1) )
       call updaterad ( radiance, t_script(i), prod(1:2,1:2,i), tau(1:2,1:2,i) )  
     end do                                                       
 
@@ -235,12 +222,11 @@ contains
 
     i_tan = size(t_script) / 2
 
-    ! dTauDx is Hermitian, so We calculate the elements explicitly, saving
-    ! save eleven multiplies on each diagonal (where we know the imaginary
-    ! part is zero).  We save two more in updating D_radiance.  Although
-    ! this saves 20% of the multiplies in the inner loop, In the big scheme
-    ! of things, this doesn't save much because we don't spend much time
-    ! here, but it's all done so we might as well leave it.
+    ! dTauDx is Hermitian, so if we calculated the elements explicitly we
+    ! could save eight multiplies on the diagonals (where we know the imaginary
+    ! part is zero).  We also would only need to compute one off-diagonal.
+    ! BUT... the profiler says we're not spending any time here, so just keep
+    ! it simple.
 
     if ( present(d_t_script) ) then
       do i_sv = 1, size(d_radiance,3)      ! state vector elements
@@ -251,60 +237,16 @@ contains
         i_pp = 2
         dPdx = d_e(1:2,1:2,2,i_sv)         ! D (P_2) / D (x) = D (E_2) / D (x)
         do i_p = 2, p_stop                 ! path elements
-        ! dTauDx = matmul(dPdx,conjg(transpose(prod(1:2,1:2,i_p))))
-        ! dTauDx = dTauDx + conjg(transpose(dTauDx))
-          dTauDx(1,1) = 2.0_rk * (real(dPdx(1,1)) *  real(prod(1,1,i_p)) + &
-                      &          aimag(dPdx(1,1)) * aimag(prod(1,1,i_p)) + &
-                      &           real(dPdx(1,2)) *  real(prod(2,1,i_p)) + &
-                      &          aimag(dPdx(1,2)) * aimag(prod(2,1,i_p)) )
-          dTauDx(1,2) =   cmplx(  real(dPdx(1,1)) *  real(prod(1,2,i_p))  &
-                      &        + aimag(dPdx(1,1)) * aimag(prod(1,2,i_p))  &
-                      &        +  real(dPdx(1,2)) *  real(prod(2,2,i_p))  &
-                      &        + aimag(dPdx(1,2)) * aimag(prod(2,2,i_p))  &
-                      &        +  real(dPdx(2,1)) *  real(prod(1,1,i_p))  &
-                      &        + aimag(dPdx(2,1)) * aimag(prod(1,1,i_p))  &
-                      &        +  real(dPdx(2,2)) *  real(prod(2,1,i_p))  &
-                      &        + aimag(dPdx(2,2)) * aimag(prod(2,1,i_p)), &
-                      &        -  real(dPdx(1,1)) * aimag(prod(1,2,i_p))  &
-                      &        + aimag(dPdx(1,1)) *  real(prod(1,2,i_p))  &
-                      &        -  real(dPdx(1,2)) * aimag(prod(2,2,i_p))  &
-                      &        + aimag(dPdx(1,2)) *  real(prod(2,2,i_p))  &
-                      &        +  real(dPdx(2,1)) * aimag(prod(1,1,i_p))  &
-                      &        - aimag(dPdx(2,1)) *  real(prod(1,1,i_p))  &
-                      &        +  real(dPdx(2,2)) * aimag(prod(2,1,i_p))  &
-                      &        - aimag(dPdx(2,2)) *  real(prod(2,1,i_p)) )
-          dTauDx(2,2) = 2.0_rk * (real(dPdx(2,1)) *  real(prod(1,2,i_p)) + &
-                      &          aimag(dPdx(2,1)) * aimag(prod(1,2,i_p)) + &
-                      &           real(dPdx(2,2)) *  real(prod(2,2,i_p)) + &
-                      &          aimag(dPdx(2,2)) * aimag(prod(2,2,i_p)) )
-        ! d_radiance(1:2,1:2,i_sv) = d_radiance(1:2,1:2,i_sv) + &
-        !                          & dTauDx * t_script(i_p) + &
-        !                          & tau(1:2,1:2,i_p) * d_t_script(i_p,i_sv)
-          d_radiance(1,1,i_sv) = d_radiance(1,1,i_sv) + &
-                               & dTauDx(1,1) * t_script(i_p) + &
-                               & tau(1,1,i_p) * d_t_script(i_p,i_sv)
-          d_radiance(1,2,i_sv) = d_radiance(1,2,i_sv) + &
-                               & dTauDx(1,2) * t_script(i_p) + &
-                               & tau(1,2,i_p) * d_t_script(i_p,i_sv)
-          d_radiance(2,1,i_sv) = conjg(d_radiance(1,2,i_sv))
-          d_radiance(2,2,i_sv) = d_radiance(2,2,i_sv) + &
-                               & dTauDx(2,2) * t_script(i_p) + &
-                               & tau(2,2,i_p) * d_t_script(i_p,i_sv)
+          dTauDx = matmul(dPdx,conjg(transpose(prod(1:2,1:2,i_p))))
+          dTauDx = dTauDx + conjg(transpose(dTauDx))
+          d_radiance(1:2,1:2,i_sv) = d_radiance(1:2,1:2,i_sv) + &
+                                   & dTauDx * t_script(i_p) + &
+                                   & tau(1:2,1:2,i_p) * d_t_script(i_p,i_sv)
           if ( i_p < p_stop ) then
             if ( i_p /= i_tan + 1 ) then
+              dPdx = matmul(dPdx,e(1:2,1:2,i_pp+1)) + &
+                &    matmul(prod(1:2,1:2,i_p),d_e(1:2,1:2,i_pp+1,i_sv))
               i_pp = i_pp + 1
-            ! dPdx = matmul(dPdx,             e(1:2,1:2,i_pp)) + &
-            !   &    matmul(prod(1:2,1:2,i_p),d_e(1:2,1:2,i_pp,i_sv))
-              dPdx = reshape ( (/ &
-                & dPdx(1,1)    *e(1,1,i_pp)        + dPdx(1,2)    *e(2,1,i_pp) +       &
-                & prod(1,1,i_p)*d_e(1,1,i_pp,i_sv) + prod(1,2,i_p)*d_e(2,1,i_pp,i_sv), &
-                & dPdx(2,1)    *e(1,1,i_pp)        + dPdx(2,2)    *e(2,1,i_pp) +       &
-                & prod(2,1,i_p)*d_e(1,1,i_pp,i_sv) + prod(2,2,i_p)*d_e(2,1,i_pp,i_sv), &
-                & dPdx(1,1)    *e(1,2,i_pp)        + dPdx(1,2)    *e(2,2,i_pp) +       &
-                & prod(1,1,i_p)*d_e(1,2,i_pp,i_sv) + prod(1,2,i_p)*d_e(2,2,i_pp,i_sv), &
-                & dPdx(2,1)    *e(1,2,i_pp)        + dPdx(2,2)    *e(2,2,i_pp) +       &
-                & prod(2,1,i_p)*d_e(1,2,i_pp,i_sv) + prod(2,2,i_p)*d_e(2,2,i_pp,i_sv) /), &
-                & (/ 2,2 /) )
             else
               dPdx = sqrt_earth_ref * dPdx
             end if
@@ -317,56 +259,15 @@ contains
         i_pp = 2
         dPdx = d_e(1:2,1:2,2,i_sv)         ! D (P_2) / D (x) = D (E_2) / D (x)
         do i_p = 2, p_stop                 ! path elements
-        ! dTauDx = matmul(dPdx,conjg(transpose(prod(1:2,1:2,i_p))))
-        ! dTauDx = dTauDx + conjg(transpose(dTauDx))
-          dTauDx(1,1) = 2.0_rk * (real(dPdx(1,1)) *  real(prod(1,1,i_p)) + &
-                      &          aimag(dPdx(1,1)) * aimag(prod(1,1,i_p)) + &
-                      &           real(dPdx(1,2)) *  real(prod(2,1,i_p)) + &
-                      &          aimag(dPdx(1,2)) * aimag(prod(2,1,i_p)) )
-          dTauDx(1,2) =   cmplx(  real(dPdx(1,1)) *  real(prod(1,2,i_p))  &
-                      &        + aimag(dPdx(1,1)) * aimag(prod(1,2,i_p))  &
-                      &        +  real(dPdx(1,2)) *  real(prod(2,2,i_p))  &
-                      &        + aimag(dPdx(1,2)) * aimag(prod(2,2,i_p))  &
-                      &        +  real(dPdx(2,1)) *  real(prod(1,1,i_p))  &
-                      &        + aimag(dPdx(2,1)) * aimag(prod(1,1,i_p))  &
-                      &        +  real(dPdx(2,2)) *  real(prod(2,1,i_p))  &
-                      &        + aimag(dPdx(2,2)) * aimag(prod(2,1,i_p)), &
-                      &        -  real(dPdx(1,1)) * aimag(prod(1,2,i_p))  &
-                      &        + aimag(dPdx(1,1)) *  real(prod(1,2,i_p))  &
-                      &        -  real(dPdx(1,2)) * aimag(prod(2,2,i_p))  &
-                      &        + aimag(dPdx(1,2)) *  real(prod(2,2,i_p))  &
-                      &        +  real(dPdx(2,1)) * aimag(prod(1,1,i_p))  &
-                      &        - aimag(dPdx(2,1)) *  real(prod(1,1,i_p))  &
-                      &        +  real(dPdx(2,2)) * aimag(prod(2,1,i_p))  &
-                      &        - aimag(dPdx(2,2)) *  real(prod(2,1,i_p)) )
-          dTauDx(2,2) = 2.0_rk * (real(dPdx(2,1)) *  real(prod(1,2,i_p)) + &
-                      &          aimag(dPdx(2,1)) * aimag(prod(1,2,i_p)) + &
-                      &           real(dPdx(2,2)) *  real(prod(2,2,i_p)) + &
-                      &          aimag(dPdx(2,2)) * aimag(prod(2,2,i_p)) )
-        ! d_radiance(1:2,1:2,i_sv) = d_radiance(1:2,1:2,i_sv) + &
-        !                          & dTauDx * t_script(i_p)
-          d_radiance(1,1,i_sv) = d_radiance(1,1,i_sv) + &
-                               & dTauDx(1,1) * t_script(i_p)
-          d_radiance(1,2,i_sv) = d_radiance(1,2,i_sv) + &
-                               & dTauDx(1,2) * t_script(i_p)
-          d_radiance(2,1,i_sv) = conjg(d_radiance(1,2,i_sv))
-          d_radiance(2,2,i_sv) = d_radiance(2,2,i_sv) + &
-                               & dTauDx(2,2) * t_script(i_p)
+          dTauDx = matmul(dPdx,conjg(transpose(prod(1:2,1:2,i_p))))
+          dTauDx = dTauDx + conjg(transpose(dTauDx))
+          d_radiance(1:2,1:2,i_sv) = d_radiance(1:2,1:2,i_sv) + &
+                                   & dTauDx * t_script(i_p)
           if ( i_p < p_stop ) then
             if ( i_p /= i_tan + 1 ) then
+              dPdx = matmul(dPdx,e(1:2,1:2,i_pp+1)) + &
+                &    matmul(prod(1:2,1:2,i_p),d_e(1:2,1:2,i_pp+1,i_sv))
               i_pp = i_pp + 1
-            ! dPdx = matmul(dPdx,             e(1:2,1:2,i_pp)) + &
-            !   &    matmul(prod(1:2,1:2,i_p),d_e(1:2,1:2,i_pp,i_sv))
-              dPdx = reshape ( (/ &
-                & dPdx(1,1)    *e(1,1,i_pp)        + dPdx(1,2)    *e(2,1,i_pp) +       &
-                & prod(1,1,i_p)*d_e(1,1,i_pp,i_sv) + prod(1,2,i_p)*d_e(2,1,i_pp,i_sv), &
-                & dPdx(2,1)    *e(1,1,i_pp)        + dPdx(2,2)    *e(2,1,i_pp) +       &
-                & prod(2,1,i_p)*d_e(1,1,i_pp,i_sv) + prod(2,2,i_p)*d_e(2,1,i_pp,i_sv), &
-                & dPdx(1,1)    *e(1,2,i_pp)        + dPdx(1,2)    *e(2,2,i_pp) +       &
-                & prod(1,1,i_p)*d_e(1,2,i_pp,i_sv) + prod(1,2,i_p)*d_e(2,2,i_pp,i_sv), &
-                & dPdx(2,1)    *e(1,2,i_pp)        + dPdx(2,2)    *e(2,2,i_pp) +       &
-                & prod(2,1,i_p)*d_e(1,2,i_pp,i_sv) + prod(2,2,i_p)*d_e(2,2,i_pp,i_sv) /), &
-                & (/ 2,2 /) )
             else
               dPdx = sqrt_earth_ref * dPdx
             end if
@@ -384,12 +285,6 @@ contains
 end module MCRT_m
 
 ! $Log$
-! Revision 2.13  2003/09/10 22:35:24  vsnyder
-! Slight performance improvement
-!
-! Revision 2.12  2003/09/09 00:05:05  vsnyder
-! New method to compute derivatives
-!
 ! Revision 2.10  2003/08/15 20:29:26  vsnyder
 ! Implement polarized VMR derivatives
 !
