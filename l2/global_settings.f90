@@ -92,8 +92,8 @@ contains
 
     do i = 2, nsons(root)-1 ! Skip names at beginning and end of section
       son = subtree(i,root)
-      sub_rosa_index = sub_rosa(subtree(2,son))
       if ( node_id(son) == n_equal ) then
+        sub_rosa_index = sub_rosa(subtree(2,son))
         select case ( decoration(subtree(1,son)) )
         case ( p_allow_climatology_overloads )
           allow_climatology_overloads = decoration(subtree(2,son)) == l_true
@@ -356,6 +356,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.26  2001/05/11 00:09:05  pwagner
+! Gets p_.. from init_tables; unquotes strings
+!
 ! Revision 2.25  2001/05/10 18:26:22  pwagner
 ! Improved dump_global_settings
 !
