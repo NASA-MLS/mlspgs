@@ -13,7 +13,7 @@ module Fill                     ! Create vectors and fill them.
     & FIELD_FIRST, FIELD_LAST, L_EXPLICIT, L_GPH, L_HYDROSTATIC, L_L1B, L_L2GP, &
     & L_L2AUX, L_PRESSURE, L_PTAN, L_RADIANCE, L_REFGPH, L_SCGEOCALT, &
     & L_TEMPERATURE, L_TNGTGEODALT, L_TNGTGEOCALT, L_TRUE, L_VECTOR, L_VMR, &
-    & L_ZETA, S_TIME, S_VECTOR, S_FILL
+    & L_ZETA, S_TIME, S_VECTOR, S_FILL, S_SNOOP
   ! will be added
   use L1BData, only: DeallocateL1BData, FindL1BData, L1BData_T, ReadL1BData
   use L2GPData, only: L2GPData_T
@@ -37,6 +37,7 @@ module Fill                     ! Create vectors and fill them.
   use ScanModelModule, only: GetBasisGPH, GetHydrostaticTangentPressure
   use Intrinsic, only: L_CHANNEL, L_INTERMEDIATEFREQUENCY, L_USBFREQUENCY,&
     & L_LSBFREQUENCY, L_MIF, L_MAF, PHYQ_Dimensionless, PHYQ_Invalid
+  use SnoopMLSL2, only: SNOOP
 
   implicit none
   private
@@ -173,7 +174,6 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
     timing = .false.
-    got= .false.
 
     if ( toggle(gen) ) call trace_begin ( "MLSL2Fill", root )
 
@@ -201,6 +201,7 @@ contains ! =====     Public Procedures     =============================
         key = son
         vectorName = 0
       end if
+      got= .false.
 
       ! Node_id(key) is now n_spec_args.
 
@@ -344,6 +345,9 @@ contains ! =====     Public Procedures     =============================
           call cpu_time ( t1 )
           timing = .true.
         end if
+
+        case ( s_snoop )
+          call Snoop( key=key, vectorDatabase=vectors)
       case default ! Can't get here if tree_checker worked correctly
       end select
     end do
@@ -1220,6 +1224,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.28  2001/03/14 05:33:39  livesey
+! Added snoop option
+!
 ! Revision 2.27  2001/03/07 22:42:23  livesey
 ! Got pressure guesser to work
 !
