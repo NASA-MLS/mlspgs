@@ -549,41 +549,23 @@ CONTAINS
     outstr = ' '
     strlen = LEN_trim(instr)
     if (strlen < 1 .or. instr == ' ') return
-    ! print *, 'instr: ', trim(instr)
-    ! print *, 'strlen: ', strlen
     ! Which interpretation of sub2 occurring before sub1 do we make?
     isub1 = index(instr, trim(sub1))
     isub2 = index(instr, trim(sub2))
-    ! print *, 'sub1: ', trim(sub1)
-    ! print *, 'isub1: ', isub1
-    ! print *, 'sub2: ', trim(sub2)
-    ! print *, 'isub2: ', isub2
     if ( isub2 < isub1 ) then
       if ( isub2 == 0 ) then
         return
       elseif ( EARLYSUB2INTERPRETATION == 2 ) then
         ! zap every occurrence of sub2 up to position isub1
-        ! print *, 'zap every occurrence of sub2 up to position isub1'
-        ! print *, 'before zapping: ', instr(1:isub1-1)
-        ! print *, 'tail: ', instr(isub1:strlen)
         call ReplaceSubString (instr(1:isub1-1), tmpstr, sub2, '', &
           & which='all', no_trim=.false.)
-        ! print *, 'afterzapping: ', trim(tmpstr), '//', instr(isub1:strlen)
         tmpstrlen = len_trim(tmpstr)
-        ! print *, 'tmpstrlen: ', tmpstrlen
         tmpstrlen = len(trim(tmpstr))
-        ! print *, 'tmpstrlen(2): ', tmpstrlen
         str = ''
         if ( tmpstrlen < 1 ) then
           str = instr(isub1:strlen)
         else
           str = tmpstr(1:tmpstrlen) // instr(isub1:strlen)
-          ! str = tmpstr(1:tmpstrlen)
-          ! print *, tmpstr(1:tmpstrlen)
-          ! print *, str(1:tmpstrlen)
-          ! str(tmpstrlen+1:) = instr(isub1:strlen)
-          ! print *, instr(isub1:strlen)
-          ! print *, trim(str(tmpstrlen+1:))
         endif
       else
         str = instr
@@ -591,7 +573,6 @@ CONTAINS
     else
       str = instr
     endif
-    ! print *, 'str: ', trim(str)
     if ( trimming ) then
       if (len_trim(sub1) < 1 &
         & .or. &
@@ -608,7 +589,6 @@ CONTAINS
     enddo
     if ( i > len(separators) ) return   ! This means our method will fail
     separator = separators(i:i)
-    ! print *, 'separator: ', separator
     select case (trim(my_how))
     case ('greedy')
       if ( trimming ) then
@@ -635,15 +615,10 @@ CONTAINS
         call ReplaceSubString (tmpstr2, tmpstr, sub2, separator, no_trim=.true.)
       endif
     case default
-      ! print *, 'Replacing: ', sub1, ' with ', separator
-      ! print *, 'in: ', trim(str)
       call ReplaceSubString (str, tmpstr2, sub1, separator, &
         & which='first', no_trim=no_trim)
-      ! print *, 'results in: ', trim(tmpstr2)
-      ! print *, 'Replacing: ', sub2, ' with ', separator
       call ReplaceSubString (tmpstr2, tmpstr, sub2, separator, &
         & which='first', no_trim=no_trim)
-      ! print *, 'results in: ', trim(tmpstr)
     end select
     call GetStringElement (tmpstr, outstr, 2, .true., &
       & inseparator=separator )
@@ -1319,7 +1294,13 @@ CONTAINS
     temp_list = trim(elem) // separator // trim(inList)
     call GetUniqueList(temp_list, unique_list, numUnique, countEmpty=.true., &
     & inseparator=inseparator, ignoreLeadingSpaces=.true.)
-    outList = unique_list(len(elem)+1:)
+    ! outList = unique_list(len(elem)+1:)
+    ! The following is evidence of poor programming habits
+    if ( unique_list(len(elem)+1:len(elem)+1) == separator ) then
+      outList = unique_list(len(elem)+2:)
+    else
+      outList = unique_list(len(elem)+1:)
+    endif
   END SUBROUTINE RemoveElemFromList
 
   ! --------------------------------------------------  ReplaceSubString  -----
@@ -2023,8 +2004,6 @@ CONTAINS
 
     CHARACTER (LEN=MAXELEMENTLENGTH)           :: listElement
     logical ::                                    match
-!    CHARACTER (LEN=1)                          :: separator
-!    CHARACTER (LEN=1), PARAMETER               :: COMMA = ','
     ! Executable code
 
 	nElements = NumStringElements(inList, countEmpty, inseparator)
@@ -2052,7 +2031,8 @@ CONTAINS
   END FUNCTION StringElementNum
 
   ! ------------------------------------------------  unquote  -----
-  Function unquote(str, quotes, cquotes, strict, stripany) result (outstr)
+  Function unquote(str, quotes, cquotes, strict, stripany, extract) &
+    & result (outstr)
     ! Function that removes a single pair of surrounding quotes from string
 
     ! E.g., given "Let me see." or 'Let me see.' returns
@@ -2081,6 +2061,11 @@ CONTAINS
     !    a particle
     ! (For this case, strict matching is always on)
     
+    ! If given optional arg extract, returns first substring surrounded by
+    ! quotes; E.g., given ([a1 a2], [a3 a4]) with quotes='[' cquotes=']' returns
+    !   a1 a2
+    ! (This option supersedes stripany, and is automatically strict)
+    
     ! Useful because the parser will return quote-surrounded strings if that's
     ! how they appear in the lcf
     
@@ -2091,14 +2076,25 @@ CONTAINS
     
     ! (Aside from switches, we haven't found such a use so far;
     ! instead see more powerful ExtractSubString or ReplaceSubString)
+    
+    ! Note:
+    ! (1) By default, if no quotes found returns input string unchanged unless
+    !     extract=TRUE, in which case returns blank
+    ! (2) If len(quotes) > 1, processes them in order quotes(i:i), i=1 2 ..
+    !     unless extract=TRUE in which case returns after first one found
+    ! (3) Perhaps extract=TRUE should be moved from here to ExtractSubString
+    
+
     !--------Argument--------!
-    character(len=*),intent(in) :: str
-    character(len=len(str)) :: outstr, tmpstr
+    character(len=*), intent(in) :: str
+    character(len=len(str)) :: outstr
     character(len=*),intent(in), optional :: quotes
-    character(len=*),intent(in), optional :: cquotes
-    logical,intent(in), optional :: strict
-    logical,intent(in), optional :: stripany
+    character(len=*), intent(in), optional :: cquotes
+    logical, intent(in), optional :: strict
+    logical, intent(in), optional :: stripany
+    logical, intent(in), optional :: extract
     !----------Local vars----------!
+    character(len=len(str)) :: tmpstr
     character(len=1), parameter :: sq=''''
     character(len=1), parameter :: dq='"'
     integer :: first, last, ult, prim
@@ -2106,6 +2102,7 @@ CONTAINS
     integer :: i
     logical :: mystrict
     logical :: mystripany
+    logical :: myextract
     !----------Executable part----------!
 
    ult = len_trim(str)    ! Position of last non-blank char
@@ -2118,6 +2115,12 @@ CONTAINS
       return
    endif
 
+   if(present(extract)) then
+      myextract=extract
+   else
+      myextract=.false.
+   endif
+   
    if(present(strict)) then
       mystrict=strict
    else
@@ -2129,6 +2132,8 @@ CONTAINS
    else
       mystripany=.false.
    endif
+   
+   mystripany = mystripany .and. (.not. myextract)
    
    ! These are initialized so that if no matching quotes found
    ! we will return    outstr = adjustl(str)
@@ -2165,23 +2170,37 @@ CONTAINS
             cquote=quote
          endif
 
-         if(mystrict) then
-           if(str(prim:prim) == quote .and. str(ult:ult) == cquote) then
+        if(myextract) then
+          if ( index(str, quote) > 0 .and. index(str, cquote) > 0 ) then
+            call ExtractSubString (str, outstr, quote, cquote)
+            return
+          endif
+        elseif(mystrict) then
+          if(str(prim:prim) == quote .and. str(ult:ult) == cquote) then
                outstr=str(prim+1:ult-1)
                return
           endif
       
         else
-         if(str(prim:prim) == quote) then
+          if(str(prim:prim) == quote) then
            first=prim+1
           endif
 
           if(str(ult:ult) == cquote) then
              last=ult-1
-           endif
+          endif
         endif
 
       enddo
+
+   ! Extracting substring within quotes
+   elseif(myextract) then
+     if ( index(str, sq) > 0 ) then
+        call ExtractSubString (str, outstr, sq, sq)
+     elseif ( index(str, dq) > 0 ) then
+        call ExtractSubString (str, outstr, dq, dq)
+     endif
+     return
 
    ! insist surrounding marks match?
    elseif(present(strict)) then
@@ -2215,7 +2234,13 @@ CONTAINS
       endif
 
    endif
-   if ( mystripany ) then
+
+   ! Still here?
+   
+   if ( myextract ) then
+     outstr = ' '
+       return
+   elseif ( mystripany ) then
        return
    elseif(last >= first) then
        outstr=str(first:last)
@@ -2689,6 +2714,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.7  2005/03/26 00:06:54  pwagner
+! Repaired RemoveElemFromList; added extract option to unquote
+!
 ! Revision 2.6  2005/02/03 19:04:58  pwagner
 ! Added GetUniqueInts, utc_to_date, utc_to_time
 !
