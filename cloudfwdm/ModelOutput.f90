@@ -83,12 +83,13 @@ contains
           if(yzavg(i) > zt(k)) then
             sum = sum +  deltau100(i)*sqrt(re/2/(yzavg(i)-zt(k)))
             trans(i,k) = sum
+	    jm = i
           endif
-          where(trans(:,k) .ne. 0._r8) trans(:,k) = exp(-trans(:,k))
         ENDDO
+        trans(jm:nh-1,k) = exp(-trans(jm:nh-1,k))
 
-      CALL INTERPOLATEVALUES(yzavg,reshape(trans(:,k),(/nh-1/)),zs, &
-        & trans_out(:,k),method='Linear')
+      CALL INTERPOLATEVALUES(yzavg(jm:nh-1),reshape(trans(jm:nh-1,k),(/nh-jm/)), &
+	& zs, trans_out(:,k),method='Linear')
       enddo
 
 ! CONVERT DELTAU TO BETA
@@ -190,6 +191,9 @@ contains
 end module ModelOutput
 
 ! $Log$
+! Revision 1.4  2001/10/09 22:12:36  jonathan
+! fix trans func
+!
 ! Revision 1.3  2001/09/21 15:51:37  jonathan
 ! modified F95 version
 !
