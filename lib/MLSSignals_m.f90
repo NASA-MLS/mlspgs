@@ -1,5 +1,5 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 module MLSSignals_M
 
@@ -15,7 +15,7 @@ module MLSSignals_M
   use Lexer_Core, only: Print_Source
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
-    & MLSMSG_Error
+    & MLSMSG_Error, PVMErrorMessage
   use MLSStrings, only: LowerCase, Capitalize
   use MoreTree, only: Get_Boolean
   use Output_M, only: Output
@@ -1643,7 +1643,6 @@ oc:     do
   ! ------------------------------------------------ PVMPackSignal ---
   subroutine PVMPackSignal ( signal )
     use PVMIDL, only: PVMIDLpack
-    use PVM, only: PVMErrorMessage
     ! Dummy arguments
     type ( Signal_T ), intent(in) :: SIGNAL
 
@@ -1693,7 +1692,6 @@ oc:     do
   ! ------------------------------------------------ PVMUnpackSignal ---
   subroutine PVMUnpackSignal ( signal )
     use PVMIDL, only: PVMIDLunpack
-    use PVM, only: PVMErrorMessage
     ! Dummy arguments
     type ( Signal_T ), intent(out) :: SIGNAL
 
@@ -1761,6 +1759,9 @@ oc:     do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.78  2005/03/15 23:48:55  pwagner
+! PVMERRORMESSAGE now part of MLSMessageModule
+!
 ! Revision 2.77  2005/01/12 03:07:37  vsnyder
 ! Added CHANNEL argument to GetNameOfSignal and GetSignalName
 !
