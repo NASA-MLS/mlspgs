@@ -560,6 +560,7 @@ contains
                 ! Compute f(x)
                 
                 fmStat%newHydros = .true.
+                fmStat%newScanHydros = .true.
                 fmStat%maf = 0
                 fmStat%finished = .false.
 
@@ -1088,6 +1089,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.42  2001/06/20 22:21:22  vsnyder
+! Added initialization for fmStat%newScanHydros
+!
 ! Revision 2.41  2001/06/20 21:44:33  vsnyder
 ! Don't compute cosines between zero-length vectors
 !
