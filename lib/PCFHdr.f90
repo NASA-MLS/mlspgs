@@ -330,9 +330,9 @@ CONTAINS
    SUBROUTINE he5_writeglobalattr (fileID,dayNum)
 !------------------------------------------------------------
 
-      use HDFEOS5, only: HE5T_NATIVE_SCHAR, HE5T_NATIVE_INT, &
+    use HDFEOS5, only: HE5T_NATIVE_SCHAR, HE5T_NATIVE_INT, &
 	& HE5T_NATIVE_DOUBLE
-      use MLSHDFEOS, only: he5_EHwrglatt
+    use MLSHDFEOS, only: he5_EHwrglatt, mls_EHwrglatt
 ! Brief description of subroutine
 ! This subroutine writes the global attributes for an hdf-eos5 file
 
@@ -358,22 +358,22 @@ CONTAINS
             & 'OrbitPeriod', HE5T_NATIVE_DOUBLE, max_orbits, &
             &  GlobalAttributes%OrbPeriod)
       end if
-      status = he5_EHwrglatt(fileID, &
+      status = mls_EHwrglatt(fileID, &
        & 'InstrumentName', HE5T_NATIVE_SCHAR, 1, &
        &  GlobalAttributes%InstrumentName)
-      status = he5_EHwrglatt(fileID, &
+      status = mls_EHwrglatt(fileID, &
        & 'ProcessLevel', HE5T_NATIVE_SCHAR, 1, &
        &  GlobalAttributes%ProcessLevel)
 !     status = he5_EHwrglatt(fileID, &
 !      & 'InputVersion', HE5T_NATIVE_SCHAR, 1, &
 !      &  GlobalAttributes%InputVersion)
-      status = he5_EHwrglatt(fileID, &
+      status = mls_EHwrglatt(fileID, &
        & 'PGEVersion', HE5T_NATIVE_SCHAR, 1, &
        &  GlobalAttributes%PGEVersion)
-      status = he5_EHwrglatt(fileID, &
+      status = mls_EHwrglatt(fileID, &
        & 'StartUTC', HE5T_NATIVE_SCHAR, 1, &
        &  GlobalAttributes%StartUTC)
-      status = he5_EHwrglatt(fileID, &
+      status = mls_EHwrglatt(fileID, &
        & 'EndUTC', HE5T_NATIVE_SCHAR, 1, &
        &  GlobalAttributes%EndUTC)
       ! if ( GlobalAttributes%GranuleDay == ' ') return
@@ -824,7 +824,7 @@ CONTAINS
 !----------------------------------------
 
       use HDFEOS5, only: HE5T_NATIVE_SCHAR
-      use MLSHDFEOS, only: he5_EHwrglatt
+      use MLSHDFEOS, only: he5_EHwrglatt, mls_EHwrglatt
 ! Brief description of subroutine
 ! This subroutine writes the PCF into an HDF-EOS5 file as an attribute.
 ! It does so as file level attributes
@@ -969,6 +969,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.27  2003/10/28 00:39:00  pwagner
+!# Fixed bug where character-vlaued attributes were only 1 char long
+!#
 !# Revision 2.26  2003/09/15 17:13:57  cvuu
 !# Optional writing Orbit info to global attribute for h5_writeglobal
 !#
