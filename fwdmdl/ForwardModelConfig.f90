@@ -14,10 +14,10 @@ module ForwardModelConfig
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate,&
     & MLSMSG_Error
-  use MLSSignals_M, only: GetSignalName, MaxSigLen, Signal_T
+  use MLSSignals_M, only: DestroySignal, GetSignalName, MaxSigLen, Signal_T
   use Output_M, only: Output
   use String_Table, only: Display_String
-  use VGridsDatabase, only: VGrid_T
+  use VGridsDatabase, only: DestroyVGridContents, VGrid_T
 
   implicit NONE
   private
@@ -42,8 +42,8 @@ module ForwardModelConfig
     type (Signal_T), dimension(:), pointer :: signals=>NULL()
     logical :: Spect_Der      ! Do spectroscopy derivatives
     logical :: Temp_Der       ! Do temperature derivatives
-    type(vGrid_T), pointer :: integrationGrid ! Zeta grid for integration
-    type(vGrid_T), pointer :: tangentGrid     ! Zeta grid for integration
+    type(vGrid_T), pointer :: integrationGrid=>NULL() ! Zeta grid for integration
+    type(vGrid_T), pointer :: tangentGrid=>NULL()     ! Zeta grid for integration
     integer :: surfaceTangentIndex  ! Index in Tangentgrid of Earth's surface
     integer :: phiWindow            ! Window size for examining stuff
   end type ForwardModelConfig_T
@@ -88,18 +88,20 @@ contains
 
     if ( associated(database) ) then
       do config = 1, size(database)
-        do signal = 1, size(database(config)%signals)
-          deallocate ( database(config)%signals(signal)%channels, &
-            & stat=status )
+        if ( associated(database(config)%signals) ) then
+          do signal = 1, size(database(config)%signals)
+            call destroySignal ( database(config)%signals(signal) )
+          end do
+          deallocate ( database(config)%signals, stat=status )
           if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & MLSMSG_Deallocate // "database%signals%channelIncluded" )
-        end do
-        deallocate ( database(config)%signals, stat=status )
-        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & MLSMSG_Deallocate // "database%signals" )
-        deallocate ( database(config)%molecules, stat=status )
-        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & MLSMSG_Deallocate // "database%molecules" )
+            & MLSMSG_Deallocate // "database%signals" )
+        end if
+        ! Don't destroy integrationGrid and tangentGrid.  Assume they will
+        ! be (or already are) destroyed by destroyVGridDatabase.
+        call deallocate_test ( database(config)%molecules, &
+          & "database(config)%molecules", moduleName )
+        call deallocate_test ( database(config)%moleculeDerivatives, &
+          & "database(config)%moleculeDerivatives", moduleName )
       end do
 
       deallocate ( database, stat=status )
@@ -160,6 +162,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 1.3  2001/04/12 17:00:08  vsnyder
+! Comment out a line with an undefined variable on it
+!
 ! Revision 1.2  2001/04/10 22:17:05  livesey
 ! Renamed module
 !
