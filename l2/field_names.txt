@@ -62,6 +62,7 @@ do_baseline
 do_conv
 do_freq_avg
 do_1d
+incl_cld
 dontMask
 
 earthRadius
@@ -280,6 +281,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.72  2003/01/30 17:28:45  jonathan
+# add logical incl_cld
+#
 # Revision 2.71  2003/01/29 01:48:29  vsnyder
 # Add 'polarized' field to forwardModel
 #
