@@ -39,6 +39,9 @@ contains
     use Geometry, only: EarthRadA, EarthRadB
     use Get_Eta_Matrix_m, only: Get_Eta_Sparse
     use MLSCommon, only: RP, IP
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
+    use Output_m, only: OUTPUT
+    use Toggles, only: Emit, Toggle
     use Units, only: PI
 
     ! inputs:
@@ -384,9 +387,12 @@ contains
 
     if ( no_of_bad_fits > 0 ) then
 
-      print *,'Warning: full convergence not acheived on:'
-      print *,'implementing an improved approximation patch'
-      print *,'path index  tangent index  error'
+      if ( toggle(emit) ) then
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'Full convergence not, implementing an improved approximation patch' )
+        call output ( 'pth ind, tan ind, error', advance='yes' )
+
+      end if
 
       ! we are going to assume that the tangent value is good
       ! The following is an F90 specific design which is quite different
@@ -397,8 +403,13 @@ contains
       call Allocate_test ( tan_ind, no_of_bad_fits, 'tan_ind', ModuleName )
       path_ind = modulo(cvf_inds(jun)-1,2*n_vert) + 1
       tan_ind = 1 + (cvf_inds(jun)-1) / (2*n_vert)
-      print '(i9,i15,3x,f7.3)', (path_ind(i),tan_ind(i), &
-              & old_hts(jun(i))-h_grid(jun(i)), i = 1 , no_of_bad_fits )
+      if ( toggle(emit) ) then
+        do i = 1, no_of_bad_fits
+          call output ( path_ind(i) )
+          call output ( tan_ind(i) )
+          call output ( old_hts(jun(i))-h_grid(jun(i)), advance='yes' )
+        end do
+      end if
 
       if ( no_of_bad_fits == 1 ) then
         ! find which side of the tangent we are on
@@ -462,7 +473,6 @@ contains
         CALL DEALLOCATE_TEST(diff,'diff',modulename)
         CALL DEALLOCATE_TEST(ind_bp,'ind_bp',modulename)
       end if
-      print *,'completed re-estimation of bad points'
 
       call deallocate_test ( path_ind, 'path_ind', ModuleName )
       call deallocate_test ( tan_ind, 'tan_ind', ModuleName )
@@ -560,6 +570,9 @@ contains
 end module Metrics_m
 
 ! $Log$
+! Revision 2.15  2002/10/08 17:08:05  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.14  2002/10/08 14:42:57  bill
 ! fixed bug in non convergent estimator?
 !
