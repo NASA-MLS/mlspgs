@@ -91,6 +91,7 @@ contains
     Ier = 0
     ntr = size(antennaPattern%aaap)
 
+    rad=0.0
     Rad(1:no_tan_hts) = i_raw(1:no_tan_hts)
 
     j = ptan%template%noSurfs
@@ -98,7 +99,10 @@ contains
     ! Compute the convolution of the mixed radiances
 
     fft_pts = nint(log(real(size(AntennaPattern%aaap)))/log(2.0))
+
+    fft_angles=0.0
     fft_angles(1:size(tan_press)) = ptg_angles(1:size(tan_press))
+
     Call fov_convolve ( fft_angles, Rad,center_angle, 1, no_tan_hts, &
       &                 fft_pts, AntennaPattern, Ier )
     if ( Ier /= 0) Return
@@ -363,6 +367,9 @@ contains
 !
 end module CONVOLVE_ALL_M
 ! $Log$
+! Revision 1.27  2001/05/09 19:46:49  vsnyder
+! Use new bandHeight argument of createBlock
+!
 ! Revision 1.26  2001/05/03 02:03:16  vsnyder
 ! Insert copyright notice
 !
