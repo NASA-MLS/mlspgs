@@ -144,7 +144,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: L_L2PC                 = l_l2gp + 1
   integer, parameter :: L_LINEAR               = l_l2pc + 1
   integer, parameter :: L_LOGARITHMIC          = l_linear + 1
-  integer, parameter :: L_NCEP 	              = l_logarithmic + 1
+  integer, parameter :: L_LOWCLOUD             = l_logarithmic + 1
+  integer, parameter :: L_NCEP 	              = l_lowcloud+ 1
   integer, parameter :: L_NEITHER              = l_ncep + 1
   integer, parameter :: L_NEWTONIAN            = l_neither + 1
   integer, parameter :: L_NORM                 = l_newtonian + 1
@@ -326,6 +327,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_l2pc) =                  add_ident ( 'l2pc' )
     lit_indices(l_linear) =                add_ident ( 'linear' )
     lit_indices(l_logarithmic) =           add_ident ( 'logarithmic' )
+    lit_indices(l_lowcloud) =              add_ident ( 'lowcloud' )
     lit_indices(l_ncep) =                  add_ident ( 'ncep' )
     lit_indices(l_neither) =               add_ident ( 'neither' )
     lit_indices(l_newtonian) =             add_ident ( 'newtonian' )
@@ -875,6 +877,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.164  2001/09/28 18:21:56  dwu
+! add l_lowcloud
+!
 ! Revision 2.163  2001/09/20 20:54:25  pwagner
 ! Replaced ignoreMask with dontMask
 !
