@@ -51,6 +51,10 @@
 me="$0"
 my_name=which_fftw.sh
 DEEBUG=off
+
+# The following is echoed if we can't any fftw libraries in FFTW_ROOT
+nothing='-L${FFTW_ROOT} -ldrfftw -ldfftw'
+
 if [ $DEEBUG = "on" ]
 then
    echo "Called me as $0"
@@ -125,10 +129,23 @@ then
   exit
 fi
 
-# uh-oh, no qualified libraries found, so echo nothing
+# uh-oh, no qualified libraries found, so echo $nothing (unless debugging)
 if [ $DEEBUG = "on" ]
 then
    echo "uh-oh, no qualified libraries found, so echo nothing"
+   echo "No fftw libraries were found in $FFTW_ROOT"         
+   echo "(assuming your precision $FFTW_PREC)"               
+   echo "You probably have to reset FFTW_ROOT in .configure" 
+   echo "Do that by 'make configure_pvm'"                    
+else
+   echo $nothing
 fi
+echo "No fftw libraries were found in $FFTW_ROOT" > fftw_link_message           
+echo "(assuming your precision $FFTW_PREC)" >> fftw_link_message                 
+echo "You probably have to reset FFTW_ROOT in .configure" >> fftw_link_message   
+echo "Do that by 'make configure_pvm'" >> fftw_link_message                      
 exit
 # $Log$
+# Revision 1.1  2001/10/09 20:51:22  pwagner
+# First commit
+#
