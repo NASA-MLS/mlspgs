@@ -10,8 +10,24 @@ include $(srclib)/Makefile.dep
 # Add them to L3OBJS
 ALLOBJS = $(OBJS) $(srclib_objs)
 
+#                  PVM v. non-PVM options
+# If we implement an option to allow non-PVM-dependent installations
+# uncomment this next line; this will set our PVM objects
+# w/o complaining if it does not exist yet;
+# the latter case leaves PVM_OBJS empty
+-include ../PVM_OBJS.inc
+#-------------------- without the non-PVM option
+# The following lines hardwire PVM_OBJS and so *require* PVM
+# If we implement the non-PVM option, comment out all these
+#PVM_OBJS=
+
+PVM_PATH = ${PVM_ROOT}/lib/${PVM_ARCH}
+
 # ========================================================================
-mlsl3: $(ALLOBJS) $(libdir)/libmls.a
+mlsl3: $(ALLOBJS) $(libdir)/libmls.a $(PVM_OBJS)
+	case "$(PVM_ROOT)" in \
+		"") \
+		echo "Building mlsl3 without PVM support" ; \
 	$(FC) -o mlsl3 $(ALLOBJS) \
                       -L${libdir} -lmls \
 	-L${PGSTK} -lPGSTK \
@@ -21,8 +37,23 @@ mlsl3: $(ALLOBJS) $(libdir)/libmls.a
         -lz \
         -ljpeg \
 	-L${GCTP} -lGctp \
-        $(l_specials)
-
+        $(l_specials) ; \
+		;; \
+		*) \
+		echo "Building mlsl3 with PVM support" ; \
+	$(FC) -o mlsl3 $(ALLOBJS) $(PVM_OBJS) \
+                      -L${libdir} -lmls \
+	-L${PGSTK} -lPGSTK \
+        -L${HDFEOS} -lhdfeos \
+	-L${HDF} -lmfhdf \
+        -ldf \
+        -lz \
+        -ljpeg \
+	-L${GCTP} -lGctp \
+		-L${PVM_PATH} -lfpvm3 -lgpvm3 -lpvm3 \
+        $(l_specials) ; \
+		;; \
+	esac 
 # ========================================================================
 
 clean:
@@ -43,6 +74,9 @@ L2Interface.o:
 
 # ========================================================================
 # $Log$
+# Revision 1.3  2000/11/17 23:48:45  pwagner
+# Now links on sun (pencil)
+#
 # Revision 1.2  2000/11/16 18:29:00  pwagner
 # L2Interface.f90 needs dusty
 #
