@@ -1,22 +1,20 @@
 Program l2_numder
   use GL6P, only: NG
-  use MLSCommon, only: I4, R4, R8
+  use MLSCommon, only: I4, R8
+  use L2_TEST_STRUCTURES_M
   use STRINGS, only: STRLWR
-  use L2PC_FILE_PARAMETERS, only: mxco => MAX_NO_ELMNTS_PER_SV_COMPONENT, &
-                                  DEG2RAD
-  use L2PC_PFA_STRUCTURES, only: ATMOS_COMP, GEOM_PARAM, MAXFILTPTS, &
-                                 PFA_SLAB, SPECTRO_PARAM, MAXPFACH, &
-                                 MAXGEOM, LIMB_PRESS
-  use L2PCdim, only: Nlvl, N2lvl, NSPS, Nptg, NCH, MNP => max_no_phi, &
+  use L2PC_FILE_PARAMETERS, only: mxco => MAX_NO_ELMNTS_PER_SV_COMPONENT
+  use L2PC_PFA_STRUCTURES, only: LIMB_PRESS
+  use L2PCdim, only: Nlvl, N2lvl, NSPS, Nptg, MNP => max_no_phi, &
                      MNM => max_no_mmaf
   use ELLIPSE, only: PHI_TAN, ROC
+  use L2_LOAD_M, only: L2_LOAD
   use COMP_PATH_ENTITIES_M, only: COMP_PATH_ENTITIES
   use REFRACTION_M, only: REFRACTION_CORRECTION
   use PATH_ENTITIES_M, only: PATH_INDEX, PATH_VECTOR, PATH_BETA, &
                              PATH_DERIVATIVE
   use HYDROSTATIC_MODEL_M, only: HYDROSTATIC_MODEL
   use GET_CHI_ANGLES_M, only: GET_CHI_ANGLES
-  use GET_FILTERS_M, only: GET_FILTERS
   use GET_BETA_PATH_M, only: GET_BETA_PATH
   use GEOC_GEOD_CONV_M, only: GEOC_GEOD_CONV
   use RAD_TRAN_M, only: RAD_TRAN
@@ -30,108 +28,129 @@ Program l2_numder
 !
 Integer(i4), PARAMETER :: ngt = (Ng+1) * N2lvl
 
-Integer(i4), PARAMETER :: mnf = 75
+Type(fwd_mdl_info) :: FMI
+Type(fwd_mdl_config) :: FMC
+Type(temporary_fwd_mdl_info) :: T_FMI
 
-Integer(i4) :: p_indx(Nlvl), SPECT_ATMOS(Nsps), no_ptg_frq(Nptg), &
-               no_coeffs_f(Nsps), no_phi_f(Nsps), SPECT_INDEX(Nsps), &
-               no_spectro, pfa_ch(MAXPFACH), t_indx(Nptg)
+Integer(i4) :: SPECT_ATMOS(Nsps)
 
-Integer(i4) :: ma, line_no, Freq_Index, k1, k2, kz, ier, fft_pts
-Integer(i4) :: i, j, k, kk, jj, ht_i, no_t, mnz, no_geom, no_tan_hts, &
-               ld, ch, Spectag, no_freqs, no_pfa_ch, prev_npf, n_obs, &
-               no_atmos, ch1, ch2, n_lvls, si, mfi, jp, band, n_sps,  &
-               ptg_i, frq_i, io, l, brkpt, no_ele, nl, mid, m,ilo,    &
-               ihi, no_filt_pts, no_phi_t, no_mmaf, gl_count, mmaf
+Integer(i4) :: ma, line_no, kz, ier, ch1, ch2, no_pfa_ch, pfa_ch(2)
+Integer(i4) :: i, j, k, kk, jj, ht_i, no_t, no_tan_hts, ch, Spectag, &
+               prev_npf, n_obs, si, band, n_sps,  ptg_i, &
+               frq_i, io, l, brkpt, no_ele, mid, m, ilo, ihi, no_phi_t, &
+               gl_count, mmaf
 
 Type(path_index)  :: ndx_path(Nptg,mnm)
 Type(path_vector) :: z_path(Nptg,mnm),t_path(Nptg,mnm),h_path(Nptg,mnm),  &
                      dhdz_path(Nptg,mnm), spsfunc_path(Nsps,Nptg,mnm),    &
                      n_path(Nptg,mnm),phi_path(Nptg,mnm)
-Type(path_vector) :: ptg_frq_grid(Nptg)
 
 Type(path_derivative) :: dh_dt_path(Nptg,mnm)
 
-Real(r8) :: z_gnlv(400),thbs(10),phi_tan_mmaf(mnm),elev_offset
-Real(r8) :: href(Nlvl),zref(Nlvl),t_z_basis(mxco),t_script(N2lvl),  &
-            t_coeff(mxco,mnm),ref_corr(N2lvl,Nptg),tau(N2lvl),Qlog(3), &
-            tan_dh_dt(Nlvl,mnm,mxco),t_phi_basis(mnp),t_phi_basis_copy(mnp)
+Real(r8) :: thbs(10),elev_offset
+Real(r8) :: t_script(N2lvl),ref_corr(N2lvl,Nptg),tau(N2lvl), &
+            tan_dh_dt(Nlvl,mnm,mxco)
 
-Real(r8) :: dx,var,zco,daz,Zfrq
+Real(r8) :: dx,var,zco,daz
 Real(r8) :: dx_dt(Nptg,mxco), d2x_dxdt(Nptg,mxco)
 
 Real(r8) :: h_glgrid(ngt,mnm), t_glgrid(ngt,mnm), z_glgrid(ngt/2)
-Real(r8) :: z_grid(Nlvl),dh_dt_glgrid(ngt,mnm,mxco), dhdz_glgrid(ngt,mnp)
+Real(r8) :: dh_dt_glgrid(ngt,mnm,mxco), dhdz_glgrid(ngt,mnp)
 
 Real(r8) :: ptg_angles(Nptg,mnm), center_angle
-Real(r8) :: tan_press(Nptg), tan_hts(Nptg,mnm), tan_temp(Nptg,mnm)
+Real(r8) :: tan_hts(Nptg,mnm), tan_temp(Nptg,mnm)
 
-Logical :: IS_F_LOG(Nsps)
-Logical :: do_mol, do_spec, do_conv, do_frqavg
+Logical :: do_mol, do_spec
 
-real(r8) :: freq_grid(mnf),freqs(Nch)
+Real(r8) :: T_PHI_BASIS_COPY(mnp)
+Real(r8) :: F_PHI_BASIS_COPY(mnp,Nsps)
 
-real(r8) :: MR_F(mxco,mnp,Nsps), F_BASIS(mxco,Nsps)
-real(r8) :: F_PHI_BASIS(mnp,Nsps), F_PHI_BASIS_COPY(mnp,Nsps)
+Real(r8), DIMENSION(:), ALLOCATABLE :: RadV, F_grid
+Real(r8), DIMENSION(:,:), ALLOCATABLE :: S_PHI_BASIS_COPY
 
-real(r8) :: FILTER_FUNC(maxfiltpts,maxpfach)
-real(r8) :: F_GRID_FILTER(maxfiltpts,maxpfach)
-
-real(r8) :: I_STAR_ALL(Nptg)
+Real(r8) :: I_STAR_ALL(Nptg)
 !
-Type(path_beta) :: beta_path(Nsps,mnf)
+Type(path_beta), DIMENSION(:,:), POINTER :: beta_path    ! (sps_i,frq_i)
 
 Real(r8) :: Radiances(Nptg)
-Real(r8) :: RadV(mnf), f_grid(mnf)
-Real(r8) :: s_temp, h_obs, earth_ref, e_rad, zeta, Frq, h_tan, Rad, &
-            beta_inc, geoc_lat, q, r
-
-Real(r4) :: elev_183, elev_205
+Real(r8) :: e_rad, zeta, Frq, h_tan, Rad, geoc_lat, q, r
 !
-Character (LEN=01) :: Primag
-Character (LEN=08) :: Name
 Character (LEN=16) :: dName, Vname
-Character (LEN=80) :: InDir, Aaap, Fnd, Line
+Character (LEN=80) :: Line
 Character (LEN=40) :: Ax
 
-Type(limb_press)       :: PTG_PRESS
-Type (atmos_comp)      :: ATMOSPHERIC(Nsps)
-Type (geom_param)      :: GEOMETRIC(maxgeom)
-Type (pfa_slab)        :: PFA_SPECTRUM(Nsps)
-Type (spectro_param)   :: SPECTROSCOPIC(3*Nsps)
-
-Real(r8), DIMENSION(:,:), ALLOCATABLE :: s_phi_basis_copy
-
 !  ----------------------
-! Read convolution & freq. averaging data from file: tmp.dat
+
+  Line(1:) = ' '
+! Line = '/home/zvi/seez'      ! HOME PC, JPL PC
+  Line = '/user5/zvi/seez'     ! MLSGATE, SUN
+  FMC%Z = Line
 !
-  Line = 'tmp.dat'
-  CLOSE(13,iostat=io)
-  OPEN(13,file=Line,status='OLD',action='READ',iostat=io)
-  if(io /= 0) goto 99
+! Load all needed data via l2_load routine:
 !
-  Zfrq = -1.0
-  Freq_Index = -1
-  read(13,*,iostat=io) do_conv
-  if(io /= 0) goto 99
-  read(13,*,iostat=io) do_frqavg
-  if(io /= 0) goto 99
-  if(.not. do_frqavg) then
-    read(13,*,iostat=io) Zfrq
-    if(io /= 0) goto 99
+  Call L2_LOAD(FMC, FMI, T_FMI, Ier)
+  if(ier /= 0) goto 99
+
+  ch1 = FMC%Channels_range(1)
+  ch2 = FMC%Channels_range(2)
+  no_pfa_ch = min(2,ch2-ch1+1)
+  do i = 1, no_pfa_ch
+    pfa_ch(i) = ch1 + i - 1
+  end do
+
+  elev_offset = 0.0                         ! Zero elev_offset in any case
+  SPECT_ATMOS(1:Nsps) = -1
+!
+! Set n_obs to be: N_lvls always.
+!   (Changed, Aug/6/96 Z.Shippony & W.G.Read)
+
+  band = FMI%band
+  n_obs = FMC%n_lvls
+
+  no_t = T_FMI%no_t
+  no_phi_t = T_FMI%no_phi_t
+
+  T_PHI_BASIS_COPY(1:no_phi_t) = T_FMI%t_phi_basis(1:no_phi_t)
+!
+  n_sps = FMI%n_sps
+  DO m = 1, n_sps
+    kk = T_FMI%no_phi_f(m)
+    F_PHI_BASIS_COPY(1:kk,m) = T_FMI%f_phi_basis(1:kk,m)
+  END DO
+!
+! Create spect_atmos array:
+!
+  do k = 1, n_sps
+    Spectag = T_FMI%atmospheric(k)%Spectag
+    do i = 1, FMI%no_spectro
+      if(Spectag == FMI%spectroscopic(i)%Spectag) then
+        spect_atmos(k) = i
+        EXIT
+      endif
+    end do
+  end do
+!
+  kk = mxco
+  k = FMI%mfi + 2
+
+  DEALLOCATE(S_PHI_BASIS_COPY,STAT=i)
+  ALLOCATE(S_PHI_BASIS_COPY(k,FMI%no_spectro),STAT=io)
+  IF(io /= 0) then
+    Print *,'** ALLOCATE Error: S_PHI_BASIS_COPY, STAT =',io
+    goto 99
   endif
-  CLOSE(13,iostat=io)
-!  ----------------------
-! Read the rest of the inputs from a file...
-!
-  ier = 0
-  Fnd(1:) = ' '
-  Line(1:)= ' '
-! Fnd = '/home/zvi/mod_seez'      ! HOME PC
-  Fnd = '/user5/zvi/mod_seez'     ! MLSGATE, SUN
-  CLOSE(11,iostat=io)
-  OPEN(11,file=Fnd,status='OLD',action='READ',iostat=io)
-  if(io /= 0) goto 99
 
+  do j = 1, FMI%no_spectro
+    S_PHI_BASIS_COPY(1:k,j) = FMI%spectroscopic(j)%PHI_BASIS(1:k)
+  end do
+!
+! Convert GeoDetic Latitude to GeoCentric Latitude, and convert both to
+! Radians (instead of Degrees). Also compute the effective earth radius.
+!
+  mmaf = 3                     ! Do only this mmaf (middle phi)
+  phi_tan = FMC%phi_tan_mmaf(mmaf)
+  Call geoc_geod_conv(T_FMI%beta_inc,phi_tan,geoc_lat,E_rad)
+!
   ma = -1
   kz = -1
   dx = 0.0
@@ -181,461 +200,20 @@ Real(r8), DIMENSION(:,:), ALLOCATABLE :: s_phi_basis_copy
     Print *,Vname
   endif
 
-  p_indx(1:Nlvl) = 0
-  t_indx(1:Nptg) = 0
-  no_phi_f(1:Nsps) = 0
-  no_ptg_frq(1:Nptg) = 0
-  pfa_ch(1:MAXPFACH) = 0
-  no_coeffs_f(1:Nsps) = 0
-
-  SPECT_INDEX(1:Nsps) = -1
-  SPECT_ATMOS(1:Nsps) = -1
-
-  do
-    Ax(1:) = ' '
-    read(11,'(A)',iostat=io) Ax
-    if(io /= 0) goto 99
-    if (Index(Ax,'No_Mmaf') > 0) EXIT
-  end do
-
-  read(11,*,iostat=io) j
-  if(io /= 0) goto 99
-
-  Primag = 'p'
-  no_mmaf = min(j,mnm)
-
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
-
-  tau(1:no_mmaf) = 0.0
-  read(11,*,iostat=io) (tau(i),i=1,no_mmaf)
-  if(io /= 0) goto 99
-
-  phi_tan_mmaf(1:no_mmaf) = tau(1:no_mmaf) * deg2rad
-
-  do
-    Ax(1:) = ' '
-    read(11,'(A)',iostat=io) Ax
-    if(io /= 0) goto 99
-    if (Index(Ax,'Channels_Range') > 0) EXIT
-  end do
-
-  read(11,*,iostat=io) ch1, ch2
-  if(io /= 0) goto 99
-
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
-
-  read(11,*,iostat=io) no_pfa_ch
-  if(io /= 0) goto 99
-
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
-
-  read(11,*,iostat=io) (pfa_ch(i),i=1,no_pfa_ch)
-  if(io /= 0) goto 99
-!
-  primag = 'p'
-  freqs(1:Nch) = 0.0D0
-  DO i = ch1, ch2
-    CALL radiometry(i,q,r,zeta,kk)     ! DEBUG, Added Jan/23/2000, Z.S
-    IF(primag == 'p') freqs(i) = q     ! DEBUG, Added Jan/23/2000, Z.S
-    IF(primag == 'i') freqs(i) = r     ! DEBUG, Added Jan/23/2000, Z.S
-  END DO
-!
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
-
-  read(11,*,iostat=io) ptg_press%name, (ptg_press%der_calc(i),i=1,6)
-  if(io /= 0) goto 99
-
-  read(11,*,iostat=io) j
-  if(io /= 0) goto 99
-
-  ptg_press%no_lin_values = j
-  read(11,*,iostat=io) (ptg_press%lin_val(i),i=1,j)
-  if(io /= 0) goto 99
-
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
-
-  read(11,*,iostat=io) no_geom
-  if(io /= 0) goto 99
-
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
-
-  do i = 1, no_geom
-    read(11,*,iostat=io) geometric(i)
-    if(io /= 0) goto 99
-    r = geometric(i)%lin_val
-    IF(geometric(i)%name == 'ELEV_183') THEN
-      elev_183 = r
-    ELSE IF(geometric(i)%name == 'ELEV_205') THEN
-      elev_205 = r
-    ELSE IF(geometric(i)%name == 'EARTHREF') THEN
-      earth_ref = r
-    ELSE IF(geometric(i)%name == 'SPACE_T') THEN
-      s_temp = r
-    ELSE IF(geometric(i)%name == 'GEOCSRAD') THEN
-      h_obs = r
-    END IF
-  end do
-
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
-
-  read(11,*,iostat=io) no_atmos
-  if(io /= 0) goto 99
-
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
-
-! read(11,*,iostat=io) (atmos_index(i),i=1,no_atmos)
-  read(11,*,iostat=io) i                              ! ** DUMMY read
-  if(io /= 0) goto 99
-
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
-
-  kk = mxco
-  do j = 1, no_atmos
-    Ax(1:)=' '
-    read(11,'(A)',iostat=io) Ax
-    if(io /= 0) goto 99
-    atmospheric(j)%NAME = AdjustL(Ax)
-    read(11,*,iostat=io) Spectag, ht_i
-    if(io /= 0) goto 99
-    atmospheric(j)%SPECTAG = Spectag
-    atmospheric(j)%NO_LIN_VALUES = ht_i
-    read(11,*,iostat=io) (atmospheric(j)%FWD_CALC(i),i=1,6)
-    if(io /= 0) goto 99
-    read(11,*,iostat=io) (atmospheric(j)%DER_CALC(i),i=1,6)
-    if(io /= 0) goto 99
-    read(11,*,iostat=io) (atmospheric(j)%LIN_VAL(i),i=1,kk)
-    if(io /= 0) goto 99
-    read(11,*,iostat=io) (atmospheric(j)%BASIS_PEAKS(i),i=1,kk+2)
-    if(io /= 0) goto 99
-  end do
-
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
-
-  read(11,*,iostat=io) band, n_sps
-  if(io /= 0) goto 99
-
-  elev_offset = 0.0                         ! Zero elev_offset in any case
-! if (band >= 5) then                       ! 183
-!   elev_offset = elev_183 * deg2rad
-! else if (band >= 2) then                  ! 205
-!   elev_offset = elev_205 * deg2rad
-! else                                      ! 63 / pointing reference
-!   elev_offset = 0.0
-! end if
-
-  m = 0
-  do j = 1, no_atmos
-    IF(atmospheric(j)%FWD_CALC(band)) THEN
-      m = m + 1
-      atmospheric(m) = atmospheric(j)
-      if(ma < 1 .and. do_mol) then
-        Ax = atmospheric(m)%NAME
-        Call StrLwr(Ax)
-        if(Ax == Vname) ma = m
-      endif
-    ENDIF
-  end do
-  no_atmos = m
-
-  if(no_atmos /= n_sps) then
-    io = 3
-    Print *,'** Error: New code: n_sps should be equal to no_atmos !'
-    Print *,'          n_sps =',n_sps,' no_atmos:',no_atmos
-    goto 99
-  endif
-
-  m = 0
-  pfa_spectrum(1)%NO_SPS = n_sps     ! Make sure we have this
-
-  read(11,'(A)',iostat=io) Ax    ! pfa_spectrum(s)
-  if(io /= 0) goto 99
-
-  DO
-
-    if(m == n_sps) then
-      do
-        read(11,'(A)',iostat=io) Ax
-        if(io /= 0) goto 99
-        if(Index(Ax,'END_CAT') > 0) EXIT
-      end do
-      EXIT
-    endif
-
-    Line = ' '
-    Name = ' '
-    read(11,'(A)',iostat=io) Line
-    if(io /= 0) goto 99
-    if(Index(Line,'END_CAT').gt.0) EXIT
-    read(Line,*,iostat=io) Name, Spectag, nl, (Qlog(i),i=1,3)
-    if(io /= 0) goto 99
-
-    j = 0
-    DO i = 1, n_sps
-      if(Name == atmospheric(i)%NAME) then
-        j = i
-        EXIT
-      endif
-    END DO
-
-    if(j < 1) then
-      do i = 1, nl
-        read(11,'(A)',iostat=io) Ax
-        if(io /= 0) goto 99
-      end do
-    else
-      m = m + 1
-      pfa_spectrum(j)%SPS_NAME = Name
-      pfa_spectrum(j)%NO_SPS = n_sps
-      pfa_spectrum(j)%NO_LINES = nl
-      pfa_spectrum(j)%SPS_SPECTAG = Spectag
-      pfa_spectrum(j)%SPS_QLOG(1:3) = Qlog(1:3)
-      do i = 1, nl
-        read(11,*,iostat=io) (thbs(k),k=1,10)
-        if(io /= 0) goto 99
-        pfa_spectrum(j)%SPS_V0(i) = thbs(1)
-        pfa_spectrum(j)%SPS_EL(i) = thbs(2)
-        pfa_spectrum(j)%SPS_STR(i) = thbs(3)
-        pfa_spectrum(j)%SPS_W(i) = thbs(4)
-        pfa_spectrum(j)%SPS_PS(i) = 0.0    !   thbs(5)  ** DEBUG
-        pfa_spectrum(j)%SPS_N(i) = thbs(6)
-        pfa_spectrum(j)%SPS_DELTA(i) = thbs(7)
-        pfa_spectrum(j)%SPS_N1(i) = thbs(8)
-        pfa_spectrum(j)%SPS_GAMMA(i) = thbs(9)
-        pfa_spectrum(j)%SPS_N2(i) = thbs(10)
-      end do
-    endif
-!
-  END DO
-!
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
-
-  read(11,*,iostat=io) no_spectro, mfi
-  if(io /= 0) goto 99
-
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
-
-  read(11,*,iostat=io) (spect_index(i),i=1,no_spectro)
-  if(io /= 0) goto 99
-!
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
-
-  kk = mxco
-  k = mfi + 2
-
-  DEALLOCATE(s_phi_basis_copy,STAT=i)
-  ALLOCATE(s_phi_basis_copy(k,no_spectro),STAT=io)
-  IF(io /= 0) then
-    Print *,'** ALLOCATE Error: s_phi_basis_copy, STAT =',io
-    goto 99
-  endif
-
-  do j = 1, no_spectro
-    Ax(1:)=' '
-    read(11,'(A)',iostat=io) Ax
-    if(io /= 0) goto 99
-    spectroscopic(j)%TYPE = AdjustL(Ax)
-    Ax(1:)=' '
-    read(11,'(A)',iostat=io) Ax
-    if(io /= 0) goto 99
-    spectroscopic(j)%NAME = AdjustL(Ax)
-    read(11,*,iostat=io) Spectag
-    if(io /= 0) goto 99
-    spectroscopic(j)%SPECTAG = Spectag
-    read(11,*,iostat=io) ht_i
-    if(io /= 0) goto 99
-    spectroscopic(j)%NO_PHI_VALUES = ht_i
-    read(11,*,iostat=io) ht_i
-    if(io /= 0) goto 99
-    spectroscopic(j)%NO_ZETA_VALUES = ht_i
-    read(11,*,iostat=io) (spectroscopic(j)%DER_CALC(i),i=1,6)
-    if(io /= 0) goto 99
-    tau(1:k) = 0.0
-    read(11,*,iostat=io) (tau(i),i=1,k)
-    if(io /= 0) goto 99
-    spectroscopic(j)%PHI_BASIS(1:k) = tau(1:k) * deg2rad
-    s_phi_basis_copy(1:k,j) = spectroscopic(j)%PHI_BASIS(1:k)
-    read(11,*,iostat=io) (spectroscopic(j)%ZETA_BASIS(i),i=1,kk+2)
-    if(io /= 0) goto 99
-  end do
-!
-! Create spect_atmos array:
-!
-  do k = 1, no_atmos
-    Spectag = atmospheric(k)%Spectag
-    do i = 1, no_spectro
-      if(Spectag == spectroscopic(i)%Spectag) then
-        spect_atmos(k) = i
-        EXIT
-      endif
-    end do
-  end do
-!
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
-
-  InDir(1:)=' '
-  read(11,'(A)',iostat=io) InDir
-  if(io /= 0) goto 99
-  InDir = AdjustL(InDir)
-
-  Aaap(1:) = ' '
-  Aaap = 'aaap.umls'
-
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
-
-  Ax(1:)=' '
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
-  Ax = AdjustL(Ax)
-
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
-
-  read(11,*,iostat=io) si,n_lvls,no_tan_hts,mnz,no_filt_pts
-  if(io /= 0) goto 99
-!
-! Set n_obs to be: N_lvls always.
-!   (Changed, Aug/6/96 Z.Shippony & W.G.Read)
-
-  n_obs = n_lvls
-
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
-
-  read(11,*,iostat=io) q, r, beta_inc
-  if(io /= 0) goto 99
-
-  href(1:n_lvls) = q
-  zref(1:n_lvls) = r
-!
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
-
-  read(11,*,iostat=io) (p_indx(i),i=1,n_lvls)
-  if(io /= 0) goto 99
-
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
-
-  read(11,*,iostat=io) (t_indx(i),i=1,no_tan_hts)
-  if(io /= 0) goto 99
-
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
-
-  thbs(1:) = 0.0
-  read(11,*,iostat=io) (thbs(i),i=1,si-1)   ! tan_hts_below_surface
-  if(io /= 0) goto 99
-
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
-
-  read(11,*,iostat=io) (z_gnlv(i),i=1,mnz)
-  if(io /= 0) goto 99
-
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
-
-  read(11,*,iostat=io) no_t, no_phi_t
-  if(io /= 0) goto 99
-
-  if(no_mmaf < no_phi_t) then
-    io = -1
-    Print *,'** Error: no_mmaf < no_phi_t ...'
-    Print *,'   Please correct input file and re-run !'
-    goto 99
-  endif
-
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
-
-  read(11,*,iostat=io) (t_z_basis(i),i=1,no_t)
-  if(io /= 0) goto 99
-
   if(dName == 'dt') then
-    Call Hunt(daz,t_z_basis,no_t,kz,i)
-    IF(ABS(daz-t_z_basis(i)) < ABS(daz-t_z_basis(kz))) kz=i
-    zco = t_z_basis(kz)
+    Call Hunt(daz,T_FMI%t_zeta_basis,no_t,kz,i)
+    IF(ABS(daz-T_FMI%t_zeta_basis(i)) < ABS(daz-T_FMI%t_zeta_basis(kz))) kz=i
+    zco = T_FMI%t_zeta_basis(kz)
   endif
-
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
-
-  read(11,*,iostat=io) (t_phi_basis(i),i=1,no_phi_t)
-  if(io /= 0) goto 99
-
-  t_phi_basis(1:no_phi_t) = t_phi_basis(1:no_phi_t) * deg2rad
-  t_phi_basis_copy(1:no_phi_t) = t_phi_basis(1:no_phi_t)
-
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
-
-  read(11,*,iostat=io) ((t_coeff(i,j),j=1,no_mmaf),i=1,no_t)
-  if(io /= 0) goto 99
-!
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
-
-  read(11,*,iostat=io) (no_phi_f(i),i=1,no_atmos)
-  if(io /= 0) goto 99
-
-  do i = 1, no_atmos
-    if(no_mmaf < no_phi_f(i)) then
-      io = -1
-      Print *,'** Error: no_mmaf < no_phi_f(i), i =',i
-      Print *,'   Please correct input file and re-run !'
-      goto 99
-    endif
-  end do
-
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
-
-  read(11,*,iostat=io) (no_coeffs_f(i),i=1,no_atmos)
-  if(io /= 0) goto 99
-
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
-
-  read(11,*,iostat=io) (is_f_log(i),i=1,no_atmos)     ! ** A a new one !
-  if(io /= 0) goto 99
-!
-  tau(1:mnp) = 0.0
-  DO m = 1, no_atmos
-    kk = no_phi_f(m)
-    ht_i = no_coeffs_f(m)
-    read(11,*,iostat=io) (f_basis(i,m),i=1,ht_i)
-    if(io /= 0) goto 99
-    tau(1:kk) = 0.0
-    read(11,*,iostat=io) (tau(i),i=1,kk)
-    if(io /= 0) goto 99
-    f_phi_basis(1:kk,m) = tau(1:kk) * deg2rad
-    f_phi_basis_copy(1:kk,m) = f_phi_basis(1:kk,m)
-    read(11,*,iostat=io) ((mr_f(i,j,m),j=1,kk),i=1,ht_i)
-    if(io /= 0) goto 99
-  END DO
 
   if(do_mol) then
-    ht_i = no_coeffs_f(ma)
-    Call Hunt(daz,f_basis(1:,ma),ht_i,kz,i)
-    IF(ABS(daz-f_basis(i,ma)) < ABS(daz-f_basis(kz,ma))) kz=i
-    zco = f_basis(kz,ma)
-    k = (no_phi_f(ma)+1)/2
-    r = 0.05 * abs(mr_f(kz,k,ma))
+    ht_i = T_FMI%no_coeffs_f(ma)
+    Call Hunt(daz,T_FMI%f_zeta_basis(1:,ma),ht_i,kz,i)
+    IF(ABS(daz-T_FMI%f_zeta_basis(i,ma)) <  &
+   &   ABS(daz-T_FMI%f_zeta_basis(kz,ma))) kz=i
+    zco = T_FMI%f_zeta_basis(kz,ma)
+    k = (T_FMI%no_phi_f(ma)+1)/2
+    r = 0.05 * abs(T_FMI%mr_f(kz,k,ma))
     q = sign(1.0_r8,dx) * max(1.0d-8,r)
     dx = q
     Print *,'** Modified Step Size:',Sngl(dx)
@@ -644,47 +222,33 @@ Real(r8), DIMENSION(:,:), ALLOCATABLE :: s_phi_basis_copy
   if(do_spec) then
     line_no = 1
     DO j = 1, n_sps
-      Ax = atmospheric(j)%NAME
+      Ax = T_FMI%atmospheric(j)%NAME
       Call StrLwr(Ax)
       if(Ax == Vname) then
         if(dName == 'dw') then
-          var = pfa_spectrum(j)%SPS_W(line_no)
+          var = FMI%pfa_spectrum(j)%SPS_W(line_no)
           r = 0.1 * abs(var)
           q = sign(1.0_r8,dx) * max(1.0d-8,r)
           dx = q
           Print *,'** Modified Step Size:',Sngl(dx)
-          pfa_spectrum(j)%SPS_W(line_no) = var + dx
+          FMI%pfa_spectrum(j)%SPS_W(line_no) = var + dx
         else if(dName == 'dn') then
-          var = pfa_spectrum(j)%SPS_N(line_no)
+          var = FMI%pfa_spectrum(j)%SPS_N(line_no)
           r = 0.1 * abs(var)
           q = sign(1.0_r8,dx) * max(1.0d-8,r)
           dx = q
           Print *,'** Modified Step Size:',Sngl(dx)
-          pfa_spectrum(j)%SPS_N(line_no) = var + dx
+          FMI%pfa_spectrum(j)%SPS_N(line_no) = var + dx
         else if(dName == 'dnu') then
-          var = pfa_spectrum(j)%SPS_V0(line_no)
+          var = FMI%pfa_spectrum(j)%SPS_V0(line_no)
           Print *,'** Modified Step Size:',Sngl(dx)
-          pfa_spectrum(j)%SPS_V0(line_no) = var + dx
+          FMI%pfa_spectrum(j)%SPS_V0(line_no) = var + dx
         endif
         EXIT
       endif
     END DO
   endif
 !
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
-
-  read(11,*,iostat=io) no_freqs
-  if(io /= 0) goto 99
-
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
-
-  read(11,*,iostat=io) (freq_grid(i),i=1,no_freqs)
-  if(io /= 0) goto 99
-
-  CLOSE(11,iostat=i)
-
   Print *
   Print *, 'VarName: ',dName
   Print *, 'Molecule: ',Vname
@@ -693,194 +257,78 @@ Real(r8), DIMENSION(:,:), ALLOCATABLE :: s_phi_basis_copy
   Print *, 'Zeta of differentiated Coefficient:',Sngl(zco)
   Print *
 !
-  fft_pts = 10
-
-! Get all the filter's loaded & define:
-!
-  Call get_filters(no_pfa_ch,no_filt_pts,pfa_ch,f_grid_filter, &
- &                 freqs,filter_func,InDir,ld,primag,ier)
-  if(ier /= 0) goto 99
-!
-! Get the selected integration grid pressures. Also, define the GL
-! pressure grid:
-
-  z_grid(1:) = 0.0
-  DO i = 1, n_lvls
-    j = p_indx(i)
-    z_grid(i) = z_gnlv(j)
-  END DO
-  z_grid(n_lvls+1) = z_grid(n_lvls)
-!
 ! Perturbe the middle Phi coefficient for the 'zco' pressure level
 !
   if(dName == 'dt') then
-    k = (no_mmaf+1)/2
-    var = t_coeff(kz,k)
-    t_coeff(kz,k) = var + dx
+    k = (FMC%no_mmaf+1)/2
+    var = T_FMI%t_coeff(kz,k)
+    T_FMI%t_coeff(kz,k) = var + dx
   else if(dName == 'dmr') then
-    k = (no_phi_f(ma)+1)/2
-    var = mr_f(kz,k,ma)
-    mr_f(kz,k,ma) = var + dx
+    k = (T_FMI%no_phi_f(ma)+1)/2
+    var = T_FMI%mr_f(kz,k,ma)
+    T_FMI%mr_f(kz,k,ma) = var + dx
   endif
 !
 ! Convert GeoDetic Latitude to GeoCentric Latitude, and convert both to
 ! Radians (instead of Degrees). Also compute the effective earth radius.
 !
   mmaf = 3                       ! Do only this mmaf (The middle phi)
-  phi_tan = phi_tan_mmaf(mmaf)
-  Call geoc_geod_conv(beta_inc,phi_tan,geoc_lat,E_rad)
+  phi_tan = FMC%phi_tan_mmaf(mmaf)
+  Call geoc_geod_conv(T_FMI%beta_inc,phi_tan,geoc_lat,E_rad)
 !
 ! Compute the hydrostatic_model on the GL-Grid for all mmaf(s):
 !
-  Call hydrostatic_model(si,N_lvls,no_t,no_mmaf,t_indx,   &
-       no_tan_hts, geoc_lat, Href, Zref, z_grid, thbs, t_z_basis,  &
-       t_coeff, z_glgrid, h_glgrid, t_glgrid, dhdz_glgrid,         &
-       dh_dt_glgrid, tan_press, tan_hts, tan_temp, tan_dh_dt,      &
+  thbs(1:) = 0.0
+  si = FMI%Surface_index
+  thbs(1:si-1) = FMI%Tan_hts_below_surface(1:si-1)
+  Call hydrostatic_model(si,FMC%N_lvls,T_FMI%no_t,FMC%no_mmaf,FMC%t_indx, &
+       FMC%no_tan_hts,geoc_lat,T_FMI%Href,T_FMI%Zref,FMI%z_grid,thbs, &
+       T_FMI%t_zeta_basis, T_FMI%t_coeff, z_glgrid, h_glgrid, t_glgrid, &
+       dhdz_glgrid,dh_dt_glgrid,FMI%tan_press,tan_hts,tan_temp,tan_dh_dt, &
        gl_count, Ier)
   IF(ier /= 0) goto 99
 
   Zeta = zco
-  Call Hunt(Zeta,tan_press,no_tan_hts,jj,i)
-  IF(ABS(Zeta-tan_press(i)) < ABS(Zeta-tan_press(jj))) jj = i
-!
-! Load the pointing vs. frequencies database for the given band
-! (needed for frequency averaging)
-!
-  Fnd(1:) = ' '
-! Fnd = '/home/zvi/ptg_frq_grid_bxx.dat'     ! HOME PC
-  Fnd = '/user5/zvi/ptg_frq_grid_bxx.dat'    ! SUN, MLSGATE
-  i = index(Fnd,'_bxx.dat')
-  write(Fnd(i+2:i+3),'(i2.2)') band
-!
-  kk = -1
-  no_ptg_frq(1:Nptg) = 0
-!
-  Close(32,iostat=i)
-  Open(32,file=Fnd,action='READ',status='OLD',iostat=io)
-  if(io /= 0) goto 44
-!
-! First entry in the file is the 'Band' frequency. All the rest are
-! relative to this (center) frequency for this band
-!
-  Read(32,*,iostat=io) q
-  if(io /= 0) goto 44
-!
-  DO
-    Read(32,*,iostat=io) r, jp
-    if(io > 0) goto 44
-    if(io /= 0) EXIT
-    Call Hunt(r,tan_press,no_tan_hts,k,i)
-    IF(ABS(r-tan_press(i)) < ABS(r-tan_press(k))) k = i
-    if(ABS(r-tan_press(k)) > 0.001) &
-   &       Print *,'** Warning: Zeta:',r,' k:',k
-    no_ptg_frq(k) = jp
-    DEALLOCATE(ptg_frq_grid(k)%values,STAT=i)
-!   ALLOCATE(ptg_frq_grid(k)%values(jp),STAT=i)
-        j = max(53,jp)                                  ! ** DEBUG
-        ALLOCATE(ptg_frq_grid(k)%values(j),STAT=i)      ! ** DEBUG
-        no_ptg_frq(k) = j                               ! ** DEBUG
-    IF(i /= 0) THEN
-      ier = i
-      PRINT *,'** Error: ALLOCATION error for ptg_frq_grid ..'
-      PRINT *,'   tan_hts index:',k,' STAT =',ier
-      do l = 1, k
-        DEALLOCATE(ptg_frq_grid(l)%values,STAT=i)
-      end do
-      goto 99
-    ENDIF
-    Read(32,*,iostat=io) (ptg_frq_grid(k)%values(i),i=1,jp)
-    if(io /= 0) goto 44
-    if(kk < 0) kk = k
-!
-! Add 'band' frequency to ptg_frq_grid to convert to absolute grid
-!
-    ptg_frq_grid(k)%values(1:jp) = ptg_frq_grid(k)%values(1:jp) + q
-!
-  END DO
-!
-  if(kk > 1) then
-    jp = no_ptg_frq(kk)
-    do k = 1, kk-1
-      DEALLOCATE(ptg_frq_grid(k)%values,STAT=i)
-      ALLOCATE(ptg_frq_grid(k)%values(jp),STAT=i)
-      IF(i /= 0) THEN
-        ier = i
-        PRINT *,'** Error: ALLOCATION error for ptg_frq_grid ..'
-        PRINT *,'   tan_hts index:',k,' STAT =',ier
-        do l = 1, k
-          DEALLOCATE(ptg_frq_grid(l)%values,STAT=i)
-        end do
-        goto 99
-      ENDIF
-      no_ptg_frq(k) = jp
-      ptg_frq_grid(k)%values(1:jp) = ptg_frq_grid(kk)%values(1:jp)
-    end do
-  endif
-!
- 44 Close(32,iostat=i)
-    if(io > 0) then
-      ier = io
-      goto 99
-    else
-      io = 0
-    endif
-!
-    if(Zfrq > 0.0) then
-      kk = no_ptg_frq(jj)
-      Call Hunt(Zfrq,ptg_frq_grid(jj)%values,kk,i,j)
-      IF(ABS(Zfrq-ptg_frq_grid(jj)%values(j)) <    &
-         ABS(Zfrq-ptg_frq_grid(jj)%values(i))) i=j
-      ptg_frq_grid(jj)%values(i) = Zfrq
-      Freq_Index = i
-    endif
-!
-!  **** DEBUG
-!
-    jp = no_ptg_frq(jj)
-    do i = 1, no_tan_hts
-      if(i /= jj) then
-        no_ptg_frq(i)=no_ptg_frq(jj)
-        ptg_frq_grid(i)%values(1:jp)=ptg_frq_grid(jj)%values(1:jp)
-      endif
-    end do
-!
-!  **** END DEBUG
+  no_tan_hts = FMC%no_tan_hts
+  Call Hunt(Zeta,FMI%tan_press,no_tan_hts,jj,i)
+  IF(ABS(Zeta-FMI%tan_press(i)) < ABS(Zeta-FMI%tan_press(jj))) jj = i
 !
 ! Compute all path entities for all mmafs and tanget pointings
 !
-  Call comp_path_entities(n_lvls,no_t,gl_count,ndx_path,z_glgrid,  &
- &     t_glgrid,h_glgrid,dhdz_glgrid,dh_dt_glgrid,atmospheric,     &
- &     no_atmos,f_basis,mr_f,no_coeffs_f,tan_hts,no_tan_hts,n_sps, &
- &     no_phi_f,f_phi_basis,z_path,h_path,t_path,phi_path,n_path,  &
- &     dhdz_path,dh_dt_path,no_phi_t,t_phi_basis,spsfunc_path,     &
- &     is_f_log,no_mmaf,phi_tan_mmaf,Ier)
+  Call comp_path_entities(FMC%n_lvls,T_FMI%no_t,gl_count,ndx_path, &
+       z_glgrid,t_glgrid,h_glgrid,dhdz_glgrid,dh_dt_glgrid,        &
+       T_FMI%atmospheric,T_FMI%f_zeta_basis,T_FMI%mr_f,            &
+       T_FMI%no_coeffs_f,tan_hts,no_tan_hts,FMI%n_sps,             &
+       T_FMI%no_phi_f,T_FMI%f_phi_basis,z_path,h_path,t_path,phi_path,&
+       n_path,dhdz_path,dh_dt_path,T_FMI%no_phi_t,T_FMI%t_phi_basis,  &
+       spsfunc_path,T_FMI%is_f_log,FMC%no_mmaf,FMC%phi_tan_mmaf,Ier)
   IF(ier /= 0) goto 99
 !
 ! **********************  MAIN Mmaf Loop *******************
 
   l = mmaf                    ! ** Do this mmaf only
 !
-  phi_tan = phi_tan_mmaf(l)
+  phi_tan = FMC%phi_tan_mmaf(l)
 !
-  t_phi_basis(1:no_phi_t) = t_phi_basis_copy(1:no_phi_t) + phi_tan
+  T_FMI%t_phi_basis(1:no_phi_t) = t_phi_basis_copy(1:no_phi_t) + phi_tan
 
-  DO j = 1, no_atmos
-    k = no_phi_f(j)
-    f_phi_basis(1:k,j) = f_phi_basis_copy(1:k,j) + phi_tan
+  DO j = 1, n_sps
+    k = T_FMI%no_phi_f(j)
+    T_FMI%f_phi_basis(1:k,j) = f_phi_basis_copy(1:k,j) + phi_tan
   end do
 
-  k = mfi + 2
-  do j = 1, no_spectro
-    spectroscopic(j)%PHI_BASIS(1:k) = s_phi_basis_copy(1:k,j) + phi_tan
+  k = FMI%mfi + 2
+  do j = 1, FMI%no_spectro
+    FMI%spectroscopic(j)%PHI_BASIS(1:k) = s_phi_basis_copy(1:k,j) + phi_tan
   end do
 !
 ! Compute the ptg_angles (chi) for Antenna convolution, also the derivatives
 ! of chi w.r.t to T and other parameters
 !
-  Call get_chi_angles(ndx_path(1:,l),n_path(1:,l),tan_press,tan_hts(1:,l),&
- &     tan_temp(1:,l),phi_tan,RoC,h_obs,elev_offset,tan_dh_dt(1:,l,1:),   &
- &     no_tan_hts,no_t,t_z_basis,si,center_angle,ptg_angles(1:,l),dx_dt,  &
- &     d2x_dxdt,ier)
+  Call get_chi_angles(ndx_path(1:,l),n_path(1:,l),FMI%tan_press,         &
+ &     tan_hts(1:,l),tan_temp(1:,l),phi_tan,RoC,T_FMI%h_obs,elev_offset, &
+ &     tan_dh_dt(1:,l,1:),no_tan_hts,T_FMI%no_t,T_FMI%t_zeta_basis,si,   &
+ &     center_angle,ptg_angles(1:,l),dx_dt,d2x_dxdt,ier)
   IF(ier /= 0) goto 99
 
 ! Compute the refraction correction scaling matrix for this mmaf:
@@ -899,39 +347,36 @@ Real(r8), DIMENSION(:,:), ALLOCATABLE :: s_phi_basis_copy
 !
     k = ptg_i
     h_tan = tan_hts(k,l)
-    kk = no_ptg_frq(k)
+    kk = FMI%no_ptg_frq(k)
 !
     if(kk /= prev_npf) then
       prev_npf = kk
-      f_grid(1:mnf) = 0.0
+      DEALLOCATE(RadV,F_grid,STAT=i)
+      ALLOCATE(RadV(kk),F_grid(kk),STAT=ier)
+      IF(ier /= 0) then
+        Print *,'** ALLOCATE Error: RadV or F_grid arrays, STAT =',ier
+        goto 99
+      endif
     endif
 !
 ! Compute the beta's along the path, for this tanget hight and this mmaf:
 !
     no_ele = ndx_path(ptg_i,l)%total_number_of_elements
-    Call get_beta_path(ptg_i,pfa_spectrum,no_ele,no_ptg_frq, &
-   &     ptg_frq_grid,z_path(ptg_i,l),t_path(ptg_i,l),beta_path,ier)
+    Call get_beta_path(ptg_i,FMI%pfa_spectrum,no_ele,FMI%no_ptg_frq, &
+   &     FMI%ptg_frq_grid,z_path(ptg_i,l),t_path(ptg_i,l),beta_path,ier)
     IF(ier /= 0) goto 99
 !
-    RadV(1:mnf) = 0.0
-    f_grid(1:kk) = ptg_frq_grid(k)%values(1:kk)
+    RadV(1:kk) = 0.0
+    f_grid(1:kk) = FMI%ptg_frq_grid(k)%values(1:kk)
 !
-    k1 = 1
-    k2 = kk
-
-    if(Freq_Index > 0) then
-      k1 = Freq_Index
-      k2 = Freq_Index
-    endif
-!
-    do frq_i = k1, k2
+    do frq_i = 1, kk
 !
       Frq = f_grid(frq_i)
 !
-      Call Rad_Tran(Frq, N_lvls, h_tan, n_sps, ndx_path(k,l),  &
+      Call Rad_Tran(Frq, FMC%N_lvls, h_tan, FMI%n_sps, ndx_path(k,l),  &
      &    z_path(k,l), h_path(k,l), t_path(k,l), phi_path(k,l),&
-     &    dHdz_path(k,l), earth_ref, beta_path(1:,frq_i),      &
-     &    spsfunc_path(1:,k,l), ref_corr(1:,k), s_temp, brkpt, &
+     &    dHdz_path(k,l), T_FMI%earth_ref, beta_path(1:,frq_i),      &
+     &    spsfunc_path(1:,k,l), ref_corr(1:,k), T_FMI%s_temp, brkpt, &
      &    no_ele, mid, ilo, ihi, t_script, tau, Rad, Ier)
       IF(ier /= 0) goto 99
 !
@@ -943,12 +388,12 @@ Real(r8), DIMENSION(:,:), ALLOCATABLE :: s_phi_basis_copy
 !
     i = 1
     ch = pfa_ch(i)
-!
-    if(do_frqavg) then
-      Call Freq_Avg(f_grid,F_grid_filter(1:,i),Filter_func(1:,i), &
-   &                RadV,kk,no_filt_pts,Radiances(ptg_i))
+    if(FMC%do_frqavg) then
+      Call Freq_Avg(F_grid,FMI%F_grid_filter(1:,i),  &
+     &     FMI%Filter_func(1:,i),RadV,kk,FMI%no_filt_pts, &
+     &     Radiances(ptg_i))
     else
-      Radiances(ptg_i) = RadV(Freq_Index)
+      Radiances(ptg_i) = RadV(1)
     endif
 !
   END DO              ! Pointing Loop
@@ -958,33 +403,34 @@ Real(r8), DIMENSION(:,:), ALLOCATABLE :: s_phi_basis_copy
   kk = no_tan_hts
   Radiances(kk) = Radiances(kk-1)
 !
-  if(do_conv) then
+  if(FMC%do_conv) then
 !
 ! Here comes the Convolution code
 !
-    Call convolve_rad (ptg_press, tan_press, ptg_angles(1:,l), &
-         band, center_angle, fft_pts, Radiances, &
-         no_tan_hts, i_star_all, InDir, Aaap, Ier)
+    Call convolve_rad(T_FMI%ptg_press,FMI%tan_press,ptg_angles(1:,l), &
+   &     band,center_angle,FMI%fft_pts,Radiances,no_tan_hts,i_star_all, &
+   &     FMI%Xlamda,FMI%Aaap,FMI%D1Aaap,FMI%D2Aaap,FMI%Ias,ier)
     IF(ier /= 0) goto 99
 !
   else
 !
 ! Here comes the No_Convolution code
 !
-    Call no_convolve_rad (ptg_press,tan_press,Radiances,no_tan_hts,i_star_all)
+    Call no_convolve_rad (T_FMI%ptg_press,FMI%tan_press,Radiances, &
+   &                      no_tan_hts,i_star_all)
 !
   endif
 !
 ! *** DEBUG Print
 !
-  if(do_conv) then
+  if(FMC%do_conv) then
     Print *,'Convolution: ON'
   else
     Print *,'Convolution: OFF'
   endif
 !
-  if(Freq_Index > 0) then
-    Frq = ptg_frq_grid(jj)%values(Freq_Index)
+  Frq = FMC%Zfrq
+  if(Frq > 0.0) then
     write(*,901) Frq
 901 format(' Frequency Averaging: OFF',/,  &
          & ' (All computations done at Frq =',f12.4,')')
@@ -995,7 +441,7 @@ Real(r8), DIMENSION(:,:), ALLOCATABLE :: s_phi_basis_copy
 !
   i = 1
   ch = pfa_ch(i)
-  kk = ptg_press%no_lin_values
+  kk = T_FMI%ptg_press%no_lin_values
   write(*,903) ch,char(92),kk
   write(*,905) (i_star_all(k),k=1,kk)
 
@@ -1036,97 +482,23 @@ Subroutine Gti(Msg,Ti)
 End Subroutine Gti
 
 !---------------------------------------------------------------------------
-SUBROUTINE radiometry(ch, f_p, f_i, db_fi, lmt)
-
-! This subroutine calculates the center frequency of the primary and image
-! sideband by channel. It also Returns the bandwidth limits of integration
-! and the gain of the primary sideband relative to the image in db units.
-
-INTEGER(i4), INTENT(IN) :: ch
-INTEGER(i4), INTENT(OUT) :: lmt
-
-REAL(r8), INTENT(OUT) :: f_p
-REAL(r8), INTENT(OUT) :: f_i
-REAL(r8), INTENT(OUT) :: db_fi
-
-LOGICAL, SAVE :: sgn_fp(6) = (/                                    &
-                 .false., .true., .false., .true., .true., .false./)
-
-INTEGER(i4) :: band, sub_ch, j
-
-Real(r4), SAVE :: db_fi_data(90) =(/                   &
-     &    -0.5218,  0.0000,  0.5218,  0.8264,  0.9654, &
-     &     1.0332,  1.0668,  1.0890,  1.1111,  1.1440, &
-     &     1.2091,  1.3365,  1.5807,  0.3476, -3.6798, &
-     &    -1.7854, -1.6204, -1.5519, -1.5142, -1.4966, &
-     &    -1.4884, -1.4840, -1.4811, -1.4783, -1.4741, &
-     &    -1.4659, -1.4486, -1.4167, -1.3607, -1.2602, &
-     &    -1.0409, -1.1206, -1.1641, -1.1874, -1.1995, &
-     &    -1.2052, -1.2084, -1.2104, -1.2124, -1.2157, &
-     &    -1.2216, -1.2347, -1.2607, -1.3128, -1.4233, &
-     &    -1.0921, -1.2329, -1.2863, -1.3121, -1.3234, &
-     &    -1.3284, -1.3309, -1.3327, -1.3343, -1.3367, &
-     &    -1.3416, -1.3507, -1.3667, -1.3884, -1.4035, &
-     &     0.6661,  0.6480,  0.7759,  0.8029,  0.8741, &
-     &     0.8307,  0.9736,  0.9273,  0.5800,  0.8906, &
-     &     0.9772,  0.9596,  0.9426,  0.8669,  0.7433, &
-     &     0.3108,  1.0632,  0.7029,  0.4426,  0.2910, &
-     &     0.2261,  0.2396,  0.2244,  0.2237,  0.1811, &
-     &     0.1795,  0.1534,  0.1418,  0.3651,  0.5647 /)
-!
-
-REAL(r8), SAVE :: f_prime(6) = (/                          &
-    63568.418D0, 204352.161D0, 204574.627D0, 206132.067D0, &
-    183310.062D0, 184377.788D0/)
-
-REAL(r8), SAVE :: f_image(6) = (/                          &
-    62997.812D0, 202181.555D0, 201959.089D0, 200401.648D0, &
-    186245.513D0, 185177.788D0/)
-
-REAL(r8) :: ch_offset
-
-  band = (ch - 1) / 15 + 1
-  sub_ch = ch - 15 * (band - 1)
-!
-  IF(sub_ch == 8) THEN
-    j = 0
-    lmt = 1
-  ELSE                      ! Above and below the spectral center
-    lmt = 2**(ABS(sub_ch - 8) - 1)
-    j = SIGN(3*lmt - 1, sub_ch - 8)
-  END IF
-
-  ch_offset = float(j)
-  db_fi = db_fi_data(ch)
-
-  IF(sgn_fp(band)) THEN
-    f_p = f_prime(band) + ch_offset
-    f_i = f_image(band) - ch_offset
-  ELSE
-    f_p = f_prime(band) - ch_offset
-    f_i = f_image(band) + ch_offset
-  END IF
-
-  Return
-END SUBROUTINE radiometry
-
-!---------------------------------------------------------------------------
 ! This subroutine transfers the derivatives over from the internal
 ! convolution grid to the users specified points. This module uses
 ! cubic spline interpolation to do the job.
 !
 Subroutine convolve_rad (ptg_press,tan_press,ptg_angles, &
            band,center_angle, fft_pts, i_raw, no_tan_hts, i_star_all,&
-           InDir,Aaap,Ier)
+           Xlamda,Aaap,D1Aap,D2Aap,Ias,ier)
+
 !
-    integer(i4), intent(IN) :: no_tan_hts, band, fft_pts
+    integer(i4), intent(IN) :: IAS, no_tan_hts, band, fft_pts
 !
-    real(r8), intent(IN) :: CENTER_ANGLE
+    real(r8), intent(IN) :: CENTER_ANGLE, Xlamda
     real(r8), intent(IN) :: TAN_PRESS(*), PTG_ANGLES(*)
     real(r8), intent(IN) :: I_RAW(*)
 
-!
-    Character(LEN=*), intent(IN) :: InDir, Aaap
+    Real(r8), intent(in) :: AAAP(:,:),D1AAP(:,:),D2AAP(:,:)
+
 !
     type(limb_press), intent(IN) :: PTG_PRESS
 !
@@ -1157,7 +529,7 @@ Subroutine convolve_rad (ptg_press,tan_press,ptg_angles, &
 !
     fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
     Call fov_convolve(fft_angles,Rad,center_angle,1,no_tan_hts,band, &
-   &                  fft_pts,InDir,Aaap,Ier)
+   &                  fft_pts,XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
     if (Ier /= 0) Return
 !
 ! Interpolate the output values and store the radiances in: i_star_all

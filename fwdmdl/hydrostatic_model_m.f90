@@ -37,8 +37,7 @@ Integer(i4), INTENT(IN OUT) :: no_tan_hts
 
 Integer(i4), INTENT(OUT) :: Ier, gl_count
 
-Real(r8), INTENT(IN) :: geoc_lat, Href(*), Zref(*), z_grid(*), &
-                        thbs(*)
+Real(r8), INTENT(IN) :: geoc_lat, Zref, Href(*), z_grid(*), thbs(*)
 
 Real(r8), INTENT(IN) :: t_z_basis(:)
 
@@ -108,7 +107,7 @@ Real(r8) :: h_grid(Nlvl),t_grid(Nlvl),dhdt(mxco)
     z = z_glgrid(h_i)
     j = (h_i + Ng) / Ngp1
     DO l = 1, no_mmaf
-      CALL get_h_dhdt(t_coeff(1:,l),t_z_basis,z,Zref(j),Href(j), &
+      CALL get_h_dhdt(t_coeff(1:,l),t_z_basis,z,Zref,Href(l), &
            geoc_lat,Reff,G,const,no_t,h,dhdt)
       h_glgrid(h_i,l) = h
       q = h + Reff

@@ -35,13 +35,13 @@ Type(path_vector), INTENT(IN) :: z_path, t_path
 
 Type (pfa_slab), INTENT(IN) :: pfs(*)
 
-Type(path_beta), INTENT(OUT) :: beta_path(:,:)  ! (sps_i,frq_i)
+Type(path_beta), POINTER :: beta_path(:,:)  ! (sps_i,frq_i)
 
 !  ----------------
 !  Local variables:
 !  ----------------
 
-Integer(i4) :: nl, i, no_sps, spectag, h_i, frq_i
+Integer(i4) :: nl, i, no_sps, mnf, spectag, h_i, frq_i
 
 Real(r8) :: Qlog(3), mass, z, p, t, Frq
 Real(r8) :: values,t_power,dbeta_dw,dbeta_dn,dbeta_dnu
@@ -60,8 +60,12 @@ Real(r8) :: v0sm(MAXLINES), x1m(MAXLINES), ym(MAXLINES), yim(MAXLINES), &
 
   ier = 0
   no_sps = pfs(1)%no_sps
+  mnf =  no_ptg_frq(ptg_i)
 !
 ! Allocate all the needed space for beta..
+!
+  DEALLOCATE(beta_path,STAT=h_i)
+  ALLOCATE(beta_path(no_sps,mnf),STAT=h_i)
 !
   do i = 1, no_sps
     do frq_i = 1, no_ptg_frq(ptg_i)
@@ -75,7 +79,8 @@ Real(r8) :: v0sm(MAXLINES), x1m(MAXLINES), ym(MAXLINES), yim(MAXLINES), &
   &            beta_path(i,frq_i)%dbeta_dnu(no_ele), STAT = ier)
       if(ier /= 0) then
         PRINT *,'** Allocation error in routine: get_beta_path ..'
-        PRINT *,'   IER =',ier
+        PRINT *,'   no_ele,ptg_i,i,frq_i:',no_ele,ptg_i,i,frq_i
+        PRINT *,'   STAT =',ier
         goto 99
       endif
     end do
@@ -179,7 +184,5 @@ Real(r8) :: v0sm(MAXLINES), x1m(MAXLINES), ym(MAXLINES), yim(MAXLINES), &
  END SUBROUTINE get_beta_path
 end module GET_BETA_PATH_M
 ! $Log$
-! Revision 1.4  2001/02/19 22:14:21  zvi
-!
 ! Revision 1.1 2001/02/01 00:08:13  Z.Shippony
 ! Initial conversion to Fortran 90

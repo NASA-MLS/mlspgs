@@ -22,10 +22,10 @@ contains
 
 SUBROUTINE comp_path_entities(n_lvls,no_t,gl_count,ndx_path,z_glgrid,  &
            t_glgrid,h_glgrid,dhdz_glgrid,dh_dt_glgrid,atmospheric,     &
-           no_atmos,f_basis,mr_f,no_coeffs_f,tan_hts,no_tan_hts,n_sps, &
-           no_phi_f,f_phi_basis,z_path,h_path,t_path,phi_path,n_path,  &
-           dhdz_path,dh_dt_path,no_phi_t,t_phi_basis,spsfunc_path,     &
-           is_f_log,no_mmaf,phi_tan_mmaf, Ier)
+           f_basis,mr_f,no_coeffs_f,tan_hts,no_tan_hts,n_sps,no_phi_f, &
+           f_phi_basis,z_path,h_path,t_path,phi_path,n_path,dhdz_path, &
+           dh_dt_path,no_phi_t,t_phi_basis,spsfunc_path,is_f_log,      &
+           no_mmaf,phi_tan_mmaf, Ier)
 
 !  ===============================================================
 !  Declaration of variables for sub-program: comp_path_entities
@@ -36,7 +36,7 @@ Integer(i4), PARAMETER :: ngt = (Ng+1) * N2lvl
 !  ---------------------------
 !  Calling sequence variables:
 !  ---------------------------
-Integer(i4), INTENT(IN) :: no_atmos, no_t, n_sps, n_lvls, gl_count, &
+Integer(i4), INTENT(IN) :: no_t, n_sps, n_lvls, gl_count, &
              no_mmaf, no_phi_t, no_coeffs_f(*), no_phi_f(:)
 !
 Integer(i4), INTENT(IN OUT) :: no_tan_hts
@@ -96,7 +96,7 @@ type (atmos_comp), intent(inout) :: ATMOSPHERIC(*)
 
   DEALLOCATE(zpath,hpath,tpath,ppath,dhdzp,STAT=i)
   ALLOCATE(zpath(ngt),hpath(ngt),tpath(ngt),ppath(ngt),dhdzp(ngt), &
-  &         STAT=ier)
+ &         STAT=ier)
   IF(ier /= 0) THEN
     Print *,'** Allocation Error in comp_path_entities: ?path ...'
     PRINT *,'** Error: ALLOCATION error in MAIN ..'
@@ -197,7 +197,7 @@ type (atmos_comp), intent(inout) :: ATMOSPHERIC(*)
 ! Get the water mixing ratio function
 
   sps_i = 1
-  DO WHILE (atmospheric(sps_i)%name /= 'H2O' .AND. sps_i <= no_atmos)
+  DO WHILE (atmospheric(sps_i)%name /= 'H2O' .AND. sps_i <= n_sps)
     sps_i = sps_i + 1
   END DO
 
