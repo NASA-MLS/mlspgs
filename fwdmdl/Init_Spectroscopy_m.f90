@@ -93,7 +93,7 @@ contains
     field_indices(f_gamma)      = add_ident ( 'gamma' )
     field_indices(f_lines)      = add_ident ( 'lines' )
     field_indices(f_mass)       = add_ident ( 'mass' )
-    field_indices(f_mass)       = add_ident ( 'mls1Signals' )
+    field_indices(f_mls1Signals)       = add_ident ( 'mls1Signals' )
     field_indices(f_molecule)   = add_ident ( 'molecule' )
     field_indices(f_n1)         = add_ident ( 'n1' )
     field_indices(f_n2)         = add_ident ( 'n2' )
@@ -185,6 +185,9 @@ contains
 end module Init_Spectroscopy_m
 
 ! $Log$
+! Revision 2.10  2004/01/09 07:25:20  livesey
+! Added the fictitious instrument mls1
+!
 ! Revision 2.9  2003/05/16 23:51:05  livesey
 ! Added mass.
 !
