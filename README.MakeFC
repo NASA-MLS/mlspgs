@@ -346,20 +346,24 @@ build multiple versions of the mls software. For example, I built versions for
 both Sun and Linux platforms in my home directory. I can switch between versions
 by overwriting the current .configure with one saved for the other platform.
 
-Sometimes after doing a cvs update, especially if there has been a lot of
-active coding and cvs committing, the next "make -f MakeFC" command will cause
-make to exit complaining about an illegal separator. This is usually the result
-of cvs "merging" your copy of Makefile.dep with one it has archived. The
-solution is to do a "make -f MakeFC depends" to create a fresh, unmerged copy.
-Even better is to do a "make -f MakeFC update" from the top mlspgs level.
+Sometimes after doing a cvs update, especially if there has been a lot
+of active coding and cvs committing, the next "make -f MakeFC" command
+will cause make to exit complaining about an illegal separator.  This is
+usually the result of cvs "merging" your copy of Makefile.dep with one
+it has archived.  The solution is to do a "make -f MakeFC depends" to
+create a fresh, unmerged copy.  Even better is to do a "make -f MakeFC
+update" from the top mlspgs level.  It is also possible for MakeFC
+itself to get messed up in this way -- the above cures will not work 
+in this case. You may be able to fix the problem by deleting MakeFC and 
+doing a CVS update to fetch a new copy.
 
-The sources currently must reside directly under lib, srclib, or l[1-3], and
-this fact is "hard-wired" into the Makefiles. It may become desirable to
-segregate them into a /src subdirectory parallel to the /MLSCONFG and
-/platforms subdirectories, and thus the Makefiles would need to changed to
-accomplish this. In general, replacing "hard-wired" directory paths with
-variable ones, set in either .configure or set in a more permanent file, seems
-like a good idea.
+The sources currently must reside directly under lib, srclib, or l[1-3],
+and this fact is "hard-wired" into the Makefiles.  It may become
+desirable to segregate them into a /src subdirectory parallel to the
+/MLSCONFG and /platforms subdirectories, and thus the Makefiles would
+need to changed to accomplish this.  In general, replacing "hard-wired"
+directory paths with variable ones, set in either .configure or set in a
+more permanent file, seems like a good idea. 
 
 Under the lib directory is a lib/tests subdirectory containing five
 test programs. They were used to test libmls.a during development. It
@@ -417,6 +421,9 @@ FFTW_ROOT          Path to the FFTW library; required for mlsl3
 EOF
 exit
 # $Log$
+# Revision 1.12  2001/02/27 18:41:41  pwagner
+# Mentions configure_pvm, configure_fopts
+#
 # Revision 1.11  2001/02/10 00:14:41  pwagner
 # mentions make -f MakeFC update
 #
