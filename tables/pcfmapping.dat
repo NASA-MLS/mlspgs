@@ -74,6 +74,8 @@ l1b_eng: mls_l1b_eng_v${VERSION}_${CYCLE}.${DATE}  1
 ;
 baseIndex=21000                 ; Start a new base index here
 ;
+
+
 l2gp: mls_l2gp_temp_v${VERSION}_${CYCLE}.${DATE}   40
       mls_l2gp_gph_v${VERSION}_${CYCLE}.${DATE}    40
       mls_l2gp_h2o_v${VERSION}_${CYCLE}.${DATE}    40
@@ -101,6 +103,7 @@ l2aux: mls_l2aux_full_v${VERSION}_${CYCLE}.${DATE} 40
 ;
 l2fwm: mls_l2fwm_full_v${VERSION}_${CYCLE}.${DATE} 1
 l2log: mls_l2_log_v${VERSION}_${CYCLE}.${DATE}     1
+l2cf: mls_l2cf_v${VERSION}_${CYCLE}.${DATE}        1
 ;
 ; I won't consider Level 3 files for the moment, as that is somewhat
 ; less defined.
