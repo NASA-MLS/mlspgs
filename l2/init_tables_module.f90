@@ -370,7 +370,7 @@ contains ! =====     Public procedures     =============================
              l+l_isotope, l+l_iwcfromextinction, l+l_l1b, l+l_l2aux, l+l_l2gp, &
              l+l_manipulate, l+l_magneticModel, &
              l+l_negativePrecision, l+l_offsetRadiance, l+l_profile, &
-             l+l_reflectorTempModel, l+l_vector, &
+             l+l_reflectorTempModel, l+l_rotateField, l+l_vector, &
              l+l_scaleOverlaps, l+l_special, l+l_splitSideband, &
              l+l_RHIFromH2O, l+l_RHIPrecisionFromH2O, l+l_spreadChannel, &
              l+l_H2OFromRHI, l+l_fold, l+l_rectanglefromlos, l+l_vGrid, &
@@ -410,7 +410,9 @@ contains ! =====     Public procedures     =============================
              l+l_dnwt_fnorm, l+l_dnwt_gdx, l+l_dnwt_gfac, &
              l+l_dnwt_gradn, l+l_dnwt_sq, l+l_dnwt_sqt,&
              l+l_earthRefl, l+l_ECRtoFOV, l+l_effectiveOpticalDepth, &
-             l+l_elevOffset, l+l_extinction, l+l_gph, l+l_heightOffset, &
+             l+l_elevOffset, l+l_extinction, &
+             l+l_fieldAzimuth, l+l_fieldElevation, l+l_fieldStrength, &
+             l+l_gph, l+l_heightOffset, &
              l+l_isotopeRatio, l+l_jacobian_cols, l+l_jacobian_rows, &
              l+l_limbSidebandFraction, &
              l+l_losTransFunc, l+l_losVel, &
@@ -643,8 +645,12 @@ contains ! =====     Public procedures     =============================
              begin, f+f_dontMask, t+t_boolean, n+n_field_type, &
              begin, f+f_earthRadius, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
+             begin, f+f_ECRtoFOV, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
              begin, f+f_explicitValues, t+t_numeric, n+n_field_type, &
              begin, f+f_extinction, t+t_boolean, n+n_field_type, &
+             begin, f+f_fieldECR, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
              begin, f+f_force, t+t_boolean, n+n_field_type, &
              begin, f+f_geocAltitudeQuantity, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
@@ -804,6 +810,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_overlaps, s+s_l2aux, s+s_l2gp, n+n_field_spec, &
              begin, f+f_ascii, t+t_boolean, n+n_field_type, &
              begin, f+f_packed, t+t_boolean, n+n_field_type, &
+             begin, f+f_dontPack, s+s_quantity, n+n_field_spec, &
              begin, f+f_hdfVersion, t+t_numeric, n+n_field_type, &
              begin, f+f_metaName, t+t_string, n+n_field_type, &
              begin, f+f_writeCounterMAF, t+t_boolean, n+n_field_type, &
@@ -1069,6 +1076,10 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.326  2003/08/08 23:06:21  livesey
+! Added the fieldStrength etc. stuff, also dontPack option on saving l2pc
+! files.
+!
 ! Revision 2.325  2003/07/16 01:06:36  vsnyder
 ! Add DACS filter shapes
 !
