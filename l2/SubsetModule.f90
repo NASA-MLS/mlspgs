@@ -820,7 +820,7 @@ contains ! ========= Public Procedures ============================
     ! Preprocess the height stuff.
     heightUnit = phyq_dimensionless
     if ( got(f_height) ) then
-      if (nsons(cloudheightNode) .gt. 2) call AnnounceError ( key, &
+      if (nsons(heightNode) .gt. 2) call AnnounceError ( key, &
         & 'Only one height range allowed', f_height )
 
       call expr ( subtree(2,heightNode), units, value, type )
@@ -1149,6 +1149,9 @@ contains ! ========= Public Procedures ============================
 end module SubsetModule
  
 ! $Log$
+! Revision 2.10  2003/05/14 22:02:08  dwu
+! fix a bug in flagcloud
+!
 ! Revision 2.9  2003/05/12 18:55:01  dwu
 ! allow cloud flag for cloudinducedradiance
 !
