@@ -28,13 +28,14 @@ module OBTAIN_MLSCF
 contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------------  CLOSE_MLSCF  -----
-  subroutine CLOSE_MLSCF ( CF_Unit )
+  subroutine CLOSE_MLSCF ( CF_Unit, return_status )
 
     integer, intent(in) :: CF_Unit
+    integer, intent(out) :: return_status
 
     character (LEN=32) :: MNEMONIC
     character (LEN=256) :: MSG
-    integer :: RETURN_STATUS
+!    integer :: RETURN_STATUS
 
     error = 0
 !    return_Status = Pgs_io_gen_closeF ( CF_Unit )
@@ -42,7 +43,8 @@ contains ! =====     Public Procedures     =============================
     return_Status = Mls_io_gen_closeF ( 'pg', CF_Unit )
 
     if ( return_Status /= PGS_S_SUCCESS ) then
-		call announce_error(0, 'Error closing L2CF')
+		call announce_error(0, 'Error closing L2CF', &
+      & error_number=return_Status)
     end if
 
   end subroutine CLOSE_MLSCF
@@ -69,7 +71,8 @@ contains ! =====     Public Procedures     =============================
       & thePC=MLSPCF_Start)
 
     if ( return_Status /= PGS_S_SUCCESS ) then
-		call announce_error(0, "Error opening MLSCF")
+		call announce_error(0, "Error opening MLSCF", &
+      & error_number=return_Status)
     end if
 
   end subroutine OPEN_MLSCF
@@ -139,6 +142,9 @@ contains ! =====     Public Procedures     =============================
 end module OBTAIN_MLSCF
 
 ! $Log$
+! Revision 2.7  2001/05/02 23:33:48  pwagner
+! Replace pgs_io_gen.. routines with mls_..
+!
 ! Revision 2.6  2001/04/16 23:43:17  pwagner
 ! Returns returnStatus
 !
