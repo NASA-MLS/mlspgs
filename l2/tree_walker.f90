@@ -9,17 +9,21 @@ module TREE_WALKER
   use GLOBAL_SETTINGS, only: SET_GLOBAL_SETTINGS
   use GriddedData, only: DestroyGridTemplateDatabase, GriddedData_T
   use INIT_TABLES_MODULE, only: Z_CHUNKDIVIDE, Z_CONSTRUCT, Z_FILL, &
-    & Z_GLOBALSETTINGS, Z_JOIN, Z_MERGEAPRIORI, Z_OUTPUT, Z_READAPRIORI
+    & Z_GLOBALSETTINGS, Z_JOIN, Z_MERGEAPRIORI, Z_MLSSIGNALS, Z_OUTPUT, &
+    & Z_READAPRIORI, Z_RETRIEVE
   use JOIN, only: MLSL2Join
   use L2AUXData, only: DestroyL2AUXDatabase, L2AUXData_T
   use L2GPData, only: DestroyL2GPDatabase, L2GPData_T
+  use MatrixModule_1, only: Matrix_Database_T
   use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_RANGE_T
+  use MLSSignals_M, only: MLSSignals
   use ObtainClimatology, only: OBTAIN_CLIM
   use ObtainDAO, only: OBTAIN_DAO
   use ObtainNCEP, only: OBTAIN_NCEP
   use OPEN_INIT, only: DestroyL1BInfo, OpenAndInitialize, read_apriori
   use OutputAndClose, only: Output_Close
   use QuantityTemplates, only: QuantityTemplate_T
+  use RetrievalModule, only: Retrieve
   use ScanDivide, only: DestroyChunkDatabase, ScanAndDivide
   use TOGGLES, only: GEN, LEVELS, TOGGLE
   use TRACE_M, only: DEPTH, TRACE_BEGIN, TRACE_END
@@ -52,8 +56,9 @@ contains ! ====     Public Procedures     ==============================
     integer :: HOWMANY                  ! Nsons(Root)
     integer :: I, J                     ! Loop inductors
     type (L1BInfo_T) :: L1BInfo         ! File handles etc. for L1B dataset
-    type (L2AUXData_T), dimension(:), pointer :: l2auxDatabase
-    type (L2GPData_T), dimension(:), pointer  :: l2gpDatabase
+    type (L2AUXData_T), dimension(:), pointer :: l2auxDatabase => NULL()
+    type (L2GPData_T), dimension(:), pointer  :: l2gpDatabase => NULL()
+    type (Matrix_Database_T), dimension(:), pointer :: Matrices => NULL()
     type (TAI93_Range_T) :: ProcessingRange  ! Data processing range
     integer :: SON                      ! Son of Root
     type (Vector_T), dimension(:), pointer :: Vectors => NULL()
@@ -79,6 +84,8 @@ contains ! ====     Public Procedures     ==============================
       select case ( decoration(subtree(1,son)) ) ! section index
       case ( z_globalsettings )
         call set_global_settings ( son )
+      case ( z_mlsSignals )
+        call MLSSignals ( son )
       case ( z_readapriori )
         ! Read apriori here
       	CALL read_apriori ( son , l2gpDatabase, l2auxDatabase)
@@ -103,7 +110,8 @@ subtrees: do while ( j <= howmany )
             case ( z_join )
               call MLSL2Join ( son, vectors, l2gpDatabase, l2auxDatabase, &
                 & qtyTemplates, chunks, chunkNo )
-!           case ( z_retrieve )
+            case ( z_retrieve )
+              call retrieve ( son, vectors, matrices )
             case default
           exit subtrees
             end select
@@ -136,6 +144,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.6  2001/01/03 17:48:43  pwagner
+! added chunk args to call to Fill
+!
 ! Revision 2.5  2000/12/05 00:41:50  pwagner
 ! Added L2AUXDatabase arg in call to MLSL2Fill
 !
