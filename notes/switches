@@ -12,6 +12,7 @@ Switches (set by -S option in mlsl2's command line):
 
   apr[n] => apriori file info [higher the n, more the info]
   atb =>    Dump ATb vector
+  binsel => L2PC bin selection motivation
   cab =>    Column Abundance-containing l2gp swaths dumped
   chi =>    chi-related diagnostic quantities dumped; chi1 for 1st chunk only
   cho =>    How good was the Cholesky decomposition?
@@ -89,6 +90,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.32  2003/01/29 22:43:55  livesey
+ Added fnorm
+
  Revision 1.31  2003/01/16 04:09:17  vsnyder
  Add some output to DNWT
 
