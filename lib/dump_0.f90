@@ -1,24 +1,28 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module DUMP_0
 
 ! Low-level dump routines -- for some arrays of intrinsic type.
 
-use OUTPUT_M, only: OUTPUT
+  use OUTPUT_M, only: OUTPUT
 
-implicit NONE
-private
-public :: AfterSub, DUMP
+  implicit NONE
+  private
+  public :: AfterSub, DUMP
 
-interface DUMP
-  module procedure DUMP_1D_DOUBLE, DUMP_1D_INTEGER, DUMP_1D_LOGICAL
-  module procedure DUMP_2D_DOUBLE, DUMP_2D_INTEGER, DUMP_3D_DOUBLE
-end interface
+  interface DUMP
+    module procedure DUMP_1D_DOUBLE, DUMP_1D_INTEGER, DUMP_1D_LOGICAL
+    module procedure DUMP_2D_DOUBLE, DUMP_2D_INTEGER, DUMP_3D_DOUBLE
+  end interface
 
-!---------------------------- RCS Ident Info ---------------------------
-  character (len=256) :: Id = &
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
        "$Id$"
-  character (len=*), parameter :: ModuleName= &
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
-!-----------------------------------------------------------------------
+!---------------------------------------------------------------------------
 
   character, parameter :: AfterSub = '#'
 
@@ -228,6 +232,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.5  2001/05/03 02:12:34  vsnyder
+! Insert copyright notice, clean up CVS stuff, cosmetics
+!
 ! Revision 2.4  2001/03/10 03:39:58  vsnyder
 ! Improve handling of "name" if size==1 or size==0
 !
