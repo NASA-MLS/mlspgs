@@ -1266,14 +1266,6 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      attrName = 'ReprocessingActual'
-      result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-           & 'unknown')
-      IF (result /= PGS_S_SUCCESS) THEN
-         msr = METAWR_ERR // attrName
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
       attrName = 'LocalGranuleID'
       indx = INDEX(file, '/', .TRUE.)
       sval = file(indx+1:)
@@ -1790,6 +1782,9 @@ END MODULE L3MMData
 !==================
 
 !# $Log$
+!# Revision 1.19  2004/12/16 15:00:49  cvuu
+!# v1.5: Change value of ReprocessingActual to unknown in metadata file
+!#
 !# Revision 1.18  2004/12/13 17:41:26  cvuu
 !# remove writing QA flags to meta file, use the ones in MCF v1.5
 !#
