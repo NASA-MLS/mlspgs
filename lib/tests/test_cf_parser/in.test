@@ -304,7 +304,7 @@ BEGIN Construct
     ;; This gives us 60 pressure surfaces at 12 per decade from 1000mb up.
     ;;
     vGridStandard: vGrid, coordinate=Pressure,type=Logarithmic, $
-                   start = 1000mb, number = [25, 24], per_decade = [12, 6]
+                   start = 1000mb, number =[25, 24], per_decade =[12, 6]
     ;;
     ;; This one gives 12 per decade from 1000mb to 10mb, with 6 per
     ;; decade above that up to 0.001mb.
@@ -560,6 +560,9 @@ END Output
 ; ----------------------------------------------------------------------------
 ;
 ; $Log$
+; Revision 1.2  2000/11/30 00:23:35  vsnyder
+; Use [] syntax for arrays.
+;
 ; Revision 1.1  2000/10/20 23:36:54  pwagner
 ; moved to test directory
 ;
