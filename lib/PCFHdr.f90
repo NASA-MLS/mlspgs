@@ -10,6 +10,7 @@ MODULE PCFHdr
 ! It might have been better named PCFHdrAndGlobalAttributes
 ! or split off global attribute stuff into a separate module
    USE Hdf, only: DFACC_RDWR, DFACC_WRITE, AN_FILE_DESC
+   USE INTRINSIC, only: L_GRID, L_HDF, L_HDFEOS, L_SWATH
 !  USE Hdf, only: hOpen, afStart, afFCreate, afWriteAnn, afEndAccess, &
 !    & afEnd, hClose
    USE MLSCommon, only: i4, r4, r8, FileNameLen, NameLen
@@ -518,21 +519,23 @@ CONTAINS
     character (len = PGSd_MET_GROUP_NAME_L) :: Groups
     character (len=*), intent(in) :: Attrname
     CHARACTER (LEN=INPUTPTR_STRING_LENGTH), intent(in), optional  :: inpt(:)
-    character(len=*), intent(in), optional :: fileType   ! 'hdfeos', 'hdf', 'sw' or ..
+    ! character(len=*), intent(in), optional :: fileType   ! 'hdfeos', 'hdf', 'sw' or ..
+    integer, intent(in), optional :: fileType   ! l_swath, l_hdf, ...
 
     integer             :: WriteInputPointer
     integer, external   :: pgs_met_setAttr_s
-    character (len=6) :: the_type
+    ! character (len=6) :: the_type
+    integer :: the_type
 
 !   Executable statements
     if ( present(inpt) ) then
        WriteInputPointer = pgs_met_setAttr_s(groups, attrName, inpt)
        return
     endif
-    the_type = 'hdf'
-    if ( present(fileType) ) the_type = lowercase(fileType)
+    the_type = l_hdf
+    if ( present(fileType) ) the_type = fileType
     select case(the_type)
-    case ('hdf')
+    case (l_hdf)
       WriteInputPointer = pgs_met_setAttr_s (groups, attrName, &
         &  (/HDFINPTPTRVALUE/) )
     case default
@@ -559,7 +562,8 @@ CONTAINS
 
       CHARACTER (LEN=1), POINTER              :: anText(:)
       integer, intent(in), optional           :: hdfVersion
-      character(len=*), intent(in), optional  :: fileType ! 'sw', 'gd', 'hdf'
+      ! character(len=*), intent(in), optional  :: fileType ! 'sw', 'gd', 'hdf'
+      integer, intent(in), optional  :: fileType ! l_swath, l_hdf, ..
       character(len=*), intent(in), optional :: name
       ! logical, intent(in), optional         :: isHDFEOS
 
@@ -569,19 +573,20 @@ CONTAINS
       ! logical :: myisHDFEOS
       integer :: record_length
       integer :: status
-      character (len=2) :: the_type
+      ! character (len=2) :: the_type
+      integer :: the_type
 ! Executable
       my_hdfVersion = PCFHDR_DEFAULT_HDFVERSION
       if ( present(hdfVersion) ) my_hdfVersion = hdfVersion
       ! myisHDFEOS = .false.
       ! if ( present(isHDFEOS) ) myisHDFEOS = isHDFEOS
-      the_type = 'hd'
-      if ( present(fileType) ) the_type = lowercase(fileType)
+      the_type = l_hdf
+      if ( present(fileType) ) the_type = fileType
       select case(my_hdfVersion)
       case (HDFVERSION_4)
         call WritePCF2Hdr_hdf4 (file, anText)
       case (HDFVERSION_5)
-        if ( the_type == 'sw' ) then
+        if ( the_type == l_swath ) then
           fileID = mls_io_gen_openF('swopen', .TRUE., status, &
            & record_length, DFACC_RDWR, FileName=trim(file), &
            & hdfVersion=hdfVersion, debugOption=.false. )
@@ -594,7 +599,7 @@ CONTAINS
           if ( status /= PGS_S_SUCCESS) &
             & CALL MLSMessage(MLSMSG_Error, ModuleName, &
             & 'Error closing hdfeos5 swath file for annotating with PCF' )
-        elseif ( the_type == 'gd' ) then
+        elseif ( the_type == l_grid ) then
           fileID = mls_io_gen_openF('gdopen', .TRUE., status, &
            & record_length, DFACC_RDWR, FileName=trim(file), &
            & hdfVersion=hdfVersion, debugOption=.false. )
@@ -939,6 +944,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.22  2003/07/07 23:46:54  pwagner
+!# Changed in interfaces to make filetype a lit_name
+!#
 !# Revision 2.21  2003/06/11 19:33:33  pwagner
 !# No longer tries to write hdf5 pcf as both ds and attr
 !#
