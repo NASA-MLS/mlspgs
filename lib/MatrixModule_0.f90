@@ -213,7 +213,7 @@ contains ! =====     Public Procedures     =============================
       case ( M_Banded )                          ! X banded, Y banded
         call allocate_test ( zb%r1, size(x%r1), "zb%r1", ModuleName )
         zb%r1 = min(x%r1, y%r1)                  ! First nonzero row
-        call allocate_test ( zb%r2, size(x%r2), "zb%r2", ModuleName )
+        call allocate_test ( zb%r2, size(x%r2)+1, "zb%r2", ModuleName, lowBound=0 )
         zb%r2(0) = 0
         do k = 1, size(x%r1)                     ! Calculate size of Values
           zb%r2(k) = zb%r2(k-1) + &
@@ -588,7 +588,7 @@ contains ! =====     Public Procedures     =============================
       z = emptyBlock
     case ( M_Banded )
       call allocate_test ( z%r1, nCols, "z%r1", ModuleName )
-      call allocate_test ( z%r2, nCols, "z%r2", ModuleName, lowBound=0 )
+      call allocate_test ( z%r2, nCols+1, "z%r2", ModuleName, lowBound=0 )
       z%r2(0) = 0
       call allocate_test ( z%values, NumberNonzero, 1, "z%values", ModuleName )
     case ( M_Column_sparse )
@@ -1194,12 +1194,14 @@ contains ! =====     Public Procedures     =============================
     logical :: My_diag, My_update
     integer :: V1                  ! Subscripts and loop inductors
 
-    if ( b%nrows /= size(v) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    print*,'In MMVNOT:',b%nCols, size(v), b%nrows, size(p)
+    if ( b%ncols /= size(v) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & "Matrix block and vector not compatible in MultiplyMatrixVector_0" )
-    if ( b%ncols /= size(p) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    if ( b%nrows /= size(p) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & "Matrix block and result not compatible in MultiplyMatrixVector_0" )
-    if ( any(shape(v) /= shape(p)) ) call MLSMessage ( MLSMSG_Error, &
-      & ModuleName, "Vectors not compatible in MultiplyMatrixVector_0" )
+! Why is this here?
+!     if ( any(shape(v) /= shape(p)) ) call MLSMessage ( MLSMSG_Error, &
+!       & ModuleName, "Vectors not compatible in MultiplyMatrixVector_0" )
     my_update = .false.
     if ( present(update) ) my_update = update
     my_diag = .true.
@@ -1826,6 +1828,11 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.16  2001/04/28 04:40:17  livesey
+! Some tidying up, removing unnecessary(?) tests for square matrices
+! in multiplyMatrixVector and its relatives.  Also changing allocation
+! of r2 for m_banded, as it needs an extra element.
+!
 ! Revision 2.15  2001/04/28 01:33:02  livesey
 ! Now DestroyBlock doesn't destroy absent blocks as they all point to the same place.
 !
