@@ -46,7 +46,7 @@ BEGIN GlobalSettings
     ;; So here we state what version information we expect to see embedded in
     ;; the filenames.
     ;;
-    OutputVersionString="v01-41"
+    OutputVersionString="v01-40"
     ;;
     ;; HDF Output Version
     HDFOutputVersionString="hdfeos5"
@@ -289,6 +289,9 @@ END Output
 ; ----------------------------------------------------------------------------
 ;
 ; $Log$
+; Revision 1.2  2004/03/25 16:19:09  cvuu
+; Updated software version number
+;
 ; Revision 1.1  2004/01/09 16:06:58  cvuu
 ; version 1.4 commit
 ;
