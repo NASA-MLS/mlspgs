@@ -30,6 +30,11 @@
 #must precede the extra search directories on the command line
 # 
 # --------------- End ghostbuster.sh help
+# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+# "$Id$"
+
 # Function to prompt for user response
 #
 
@@ -93,11 +98,6 @@ DEBUG=0
 PRINT_TOO_MUCH=0
 #              ^  -- set this to 1 if willing to try patience
 #
-# Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
-# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
-
-# "$Id$"
-
 #
 #----------------------- Implementation -----------------------
 
@@ -245,6 +245,7 @@ done
    fi
 	the_ghosts=`$the_GHOSTFINDER "$@"`
 
+   from_here=`pwd`
 	if [ "$DEBUG" = "1" ]
 	then
    	if [ "$the_ghosts" != "" ]
@@ -255,6 +256,7 @@ done
 	        then
              echo	"rm -f *.a"
    	    fi
+          echo cd "$from_here"
       else
          	echo "Sorry, the ghosts are away--may I take a message?"
 	   fi
@@ -269,6 +271,7 @@ done
 	   then
         	rm -f *.a
    	fi
+      cd "$from_here"
 	fi
 #         clean up
 # renamed or hidden files
@@ -283,6 +286,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.5  2001/11/21 00:26:35  pwagner
+# Fixed bug in ignored files
+#
 # Revision 1.4  2001/11/14 19:42:08  pwagner
 # Added the stuff left out: extant_files code and -lib implementation
 #
