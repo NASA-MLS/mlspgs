@@ -10,12 +10,13 @@ module RetrievalModule
 !
 ! This module and ones it calls consume most of the cycles.
 
-use Dump_0, only: Dump
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use BitStuff, only: CountBits
+  use Dump_0, only: Dump
   use Expr_M, only: Expr
   use ForwardModelConfig, only: ForwardModelConfig_T
   use Init_Tables_Module, only: F_apriori, F_aprioriScale, F_channels, &
-    & F_columnScale, F_covariance, F_diagonal, F_forwardModel, &
+    & F_columnScale, F_covariance, F_diagnostics, F_diagonal, F_forwardModel, &
     & F_fuzz, F_fwdModelExtra, F_fwdModelOut, F_height, F_ignore, F_jacobian, &
     & F_lambda, F_maxF, F_maxJ, F_measurements, F_measurementSD, F_method, &
     & F_opticalDepth, F_outputCovariance, F_outputSD, F_ptanQuantity, &
@@ -26,7 +27,7 @@ use Dump_0, only: Dump
     & L_none, L_norm, L_pressure, L_zeta, &
     & S_dumpBlocks, S_forwardModel, S_sids, S_matrix, S_subset, S_retrieve, &
     & S_time
-  use Intrinsic, only: PHYQ_Dimensionless
+  use Intrinsic, only: L_DegreesOfFreedom, PHYQ_Dimensionless
   use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
     & DestroyMatrix, GetFromMatrixDatabase, Matrix_T, Matrix_Database_T, &
     & Matrix_SPD_T
@@ -43,7 +44,7 @@ use Dump_0, only: Dump
     & Subtree
   use Tree_Types, only: N_named
   use VectorsModule, only: CloneVector, CopyVector, DestroyVectorInfo, &
-    & Vector_T, DumpMask
+    & DumpMask, GetVectorQuantityByType, Vector_T, VectorValue_T
 
   implicit NONE
   private
@@ -89,11 +90,21 @@ contains
                                         ! l_none or l_norm
     integer, pointer, dimension(:) :: ConfigIndices    ! In ConfigDatabase
     type(matrix_SPD_T), pointer :: Covariance     ! covariance**(-1) of Apriori
+    integer :: DegreesOfFreedom         ! (Rows - Columns) of Jacobian
+                                        ! This includes all of the columns, but
+                                        ! excludes masked-out rows, because we
+                                        ! don't mask out columns of the apriori
+                                        ! or the regularization.  If we did, the
+                                        ! normal equations would be singular.
+    type(vector_T), pointer :: Diagnostics   ! Diagnostic stuff about the
+                                        ! retrieval -- e.g. degrees of freedom.
     logical :: Diagonal                 ! "Iterate with the diagonal of the
                                         ! a priori covariance matrix until
                                         ! convergence, then put in the whole
                                         ! thing and iterate until it converges
                                         ! again (hopefully only once).
+    type(vectorValue_T), pointer :: DOF_Qty  ! Degrees of freedom quantity in
+                                        ! Diagnostics vector
     integer :: Error
     type(vector_T) :: F                 ! Residual -- Model - Measurements
     integer :: Field                    ! Field index -- f_something
@@ -214,6 +225,8 @@ contains
               & covariance)
             if ( .not. associated(covariance) ) &
               & call announceError ( notSPD, field )
+          case ( f_diagnostics )
+            diagnostics => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_diagonal )
             diagonal = get_Boolean(son)
           case ( f_forwardModel )
@@ -342,6 +355,7 @@ contains
         end if
         if ( error == 0 ) then
           ! Do the retrieval
+          degreesOfFreedom = 0
           select case ( method )
           case ( l_newtonian )
         ! call add_to_retrieval_timing( 'newton_solver', t1 )
@@ -1138,6 +1152,25 @@ contains
       ! IF ( you want to return to a previous best X ) NWT_FLAG = 0
       end do ! Newton iteration
       if ( got(f_outputCovariance) .or. got(f_outputSD) ) then
+        ! Compute degrees of freedom = (Rows of Jacobian actually used) -
+        ! (Columns of Jacobian).  Don't count rows due to Levenberg-
+        ! Marquardt stabilization.  Do count rows due to a priori or
+        ! regularization.
+        if ( got(f_diagnostics) ) then
+          dof_qty => GetVectorQuantityByType ( diagnostics, &
+            & quantityType=l_degreesOfFreedom )
+          degreesOfFreedom = sum(normalEquations%m%row%nelts)
+          do j = 1, normalEquations%m%col%nb
+            if ( associated(normalEquations%m%col%vec%quantities(j)%mask) ) &
+              & degreesOfFreedom = degreesOfFreedom - &
+              & countBits(normalEquations%m%col%vec%quantities(j)%mask)
+          end do
+          if ( got(f_apriori) ) &
+            & degreesOfFreedom = degreesOfFreedom + sum(normalEquations%m%col%nelts)
+          if ( .not. got(f_regOrders) ) &
+            & degreesOfFreedom = degreesOfFreedom - sum(normalEquations%m%col%nelts)
+          dof_qty%values(1,1) = degreesOfFreedom
+        end if
         ! Subtract sum of Levenberg-Marquardt updates from normal
         ! equations
         call updateDiagonal ( normalEquations, -aj%sqt**2 )
@@ -1145,7 +1178,11 @@ contains
         ! call negate ( covariance%m )
         ! call addToMatrix ( normalEquations%m, covariance%m )
         ! call negate ( covariance%m )
-        ! Commented out, pending deep thought.!???
+        !??? Commented out, pending deep thought.!???
+        !??? If we remove a priori covariance from normal equations
+        !??? we should presumably also remove regularization.  Maybe we
+        !??? should remove regularization anyway.  On the other hand, if
+        !??? remove them, maybe the normal equations are singular?
         ! Re-factor normal equations
         call add_to_retrieval_timing( 'newton_solver', t1 )
         call cpu_time ( t1 )
@@ -1157,7 +1194,7 @@ contains
         call cpu_time ( t1 )
         !??? Don't forget to scale the covariance
         if ( associated(outputSD) ) then !???
-          call GetDiagonal ( outputCovariance%m, outputSD, SquareRoot = .true. )
+          call GetDiagonal ( outputCovariance%m, outputSD )
           if ( columnScaling /= l_none ) then
             call multiply ( outputSD, columnScaleVector )
           end if
@@ -1411,6 +1448,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.77  2001/10/02 23:41:11  vsnyder
+! Added computation of degrees of freedom, diagnostics vector
+!
 ! Revision 2.76  2001/10/02 16:49:56  livesey
 ! Removed fmStat%finished and change loop ordering in forward models
 !
