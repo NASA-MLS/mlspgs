@@ -33,8 +33,6 @@ begin Fill
   ;; Read this for all the relevant bands
   !forall( {readL1BMAFBaseline}, !relevantBands)
 
-  Snoop, comment='Before applying baseline', phaseName='None'
-
   ;; ------------------------------------------ Apply L1B Baselines -----
   ;; Now apply the baseline correction to all the radiances
   !define(applyL1BMAFBaseline,{!dnl
@@ -44,8 +42,6 @@ begin Fill
     baselineQuantity=correctionNoise.band$1L1BMAFBaseline, /quadrature!nl})
   ;; Apply to all relevant bands
   !forall( {applyL1BMAFBaseline}, !relevantBands)
-
-  Snoop, comment='After applying baseline', phaseName='None'
 
   })
   ;; ====================== End of possibly omitted section
@@ -73,6 +69,9 @@ begin Fill
 end Fill
 
 ; $Log$
+; Revision 1.9  2004/09/29 19:24:50  livesey
+; Bug fix in reading L1BMAFBaselines
+;
 ; Revision 1.8  2004/09/27 20:12:06  livesey
 ; Added the stuff to read and handle L1BMAFBaseline through the new
 ; corrections vector.
