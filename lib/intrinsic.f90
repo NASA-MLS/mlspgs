@@ -38,7 +38,8 @@ module INTRINSIC
 ! Enumeration types:
   integer, parameter :: T_BOOLEAN           = t_string + 1
   integer, parameter :: T_INSTRUMENT        = t_boolean + 1
-  integer, parameter :: LAST_INTRINSIC_TYPE = t_instrument
+  integer, parameter :: T_POLARIZATION      = t_instrument + 1
+  integer, parameter :: LAST_INTRINSIC_TYPE = t_polarization
 
 ! We don't define any fields here, but here's the first index:
   integer, parameter :: Field_First = 1
@@ -144,6 +145,7 @@ contains ! =====     Public procedures     =============================
     ! Put intrinsic enumeration type names into the symbol table
     data_type_indices(t_boolean) =         add_ident ( 'boolean' )
     data_type_indices(t_instrument) =      add_ident ( 'instrument' )
+    data_type_indices(t_polarization) =    add_ident ( 'polarization' )
     ! Put intrinsic enumeration literals into the symbol table:
 ! Don't edit the following file directly--it is generated automatically
 ! based on the file lit_names.txt
@@ -200,9 +202,9 @@ contains ! =====     Public procedures     =============================
       begin, t+t_string, n+n_dt_def /) )
     ! Define the enumerated types
     call make_tree ( (/ &
-      begin, t+t_boolean, l+l_true, l+l_false, n+n_dt_def /) )
-    call make_tree ( (/ &
-      begin, t+t_instrument, l+l_emls, l+l_umls, n+n_dt_def /) )
+      begin, t+t_boolean, l+l_true, l+l_false, n+n_dt_def,   &
+      begin, t+t_instrument, l+l_emls, l+l_umls, n+n_dt_def, &
+      begin, t+t_polarization, l+l_a, l+l_b, n+n_dt_def /) )
 
   contains
     ! ................................................  MAKE_TREE  .....
@@ -235,6 +237,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.49  2003/08/16 01:14:03  vsnyder
+! Add optional 'polarization' field to 'radiometer' spec
+!
 ! Revision 2.48  2003/07/08 00:16:08  livesey
 ! Added ndr
 !
