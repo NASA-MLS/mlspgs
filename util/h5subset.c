@@ -50,14 +50,15 @@ int main(int argc , char *argv[] ){
   /*--------Local vars--------------------------*/
   char infile[80], outfile[80];
   hid_t file_id,outfile_id,dset_id,dspace_id;
-  int error, nmembers,*idx,obj_type, stringlen, i;
+  int error, nmembers,*idx,*aidx,obj_type, stringlen, i;
   char obj_name[80],rootname[80];
   char *varstring, *dummy,*groupstring;
   char *invarstring,*ingroupstring;
   
   void *operator_data;
+  void *aopdata;
   opdat_t opdat; 
-  hid_t *newloc_idp,newloc_id;
+  hid_t *newloc_idp,newloc_id,rg_id,nrg_id,*nrg_idp;
   /* Stuff for getopt */
   char optstring[]="vd:g:a:";
   int optval;
@@ -174,7 +175,28 @@ int main(int argc , char *argv[] ){
   opdat.getall=0;
   error=H5Giterate(file_id, rootname, idx, 
 		   operator, (void *) &opdat ) ;
-  
+
+
+  /* Process attributes of root group. Yes, Veronica, it can have them. */
+
+  /* First arg needs to be group id of the root group. Second needs to be NULL
+     which forces all attributes to be processed. Third needs to be our
+     function (see below). Fourth needs to be a pointer to any data we 
+     want to pass to our function attr_op. For attr_op it is a pointer 
+     to the thing the new attributes are being copied to (the root group 
+     of the new file in this instance)  */
+  if(global_nattrs > 0){
+    aidx=NULL;
+    rg_id=H5Gopen(file_id, "/"  );
+    nrg_id=H5Gopen(outfile_id, "/"  );
+    nrg_idp=&nrg_id;
+    aopdata=(void *) nrg_idp;
+    if(verbose) printf("Calling H5Aiterate for root group\n");
+    error=H5Aiterate(rg_id, aidx, attr_op, aopdata ) ;
+    if(verbose) printf("Finished H5Aiterate for root group\n");
+    error=H5Gclose(rg_id);
+    error=H5Gclose(nrg_id);
+  }
   error=H5Fclose(file_id ) ;
   error=H5Fclose(outfile_id ) ;
   
@@ -246,6 +268,7 @@ herr_t operator(hid_t group_id, const char *member_name, void
 
       /*error=H5Gclose(oldsubgroup_id); */
       error=H5Gclose(newsubgroup.newloc_id); 
+      /* Should process attributes of group here. */
       if(verbose) printf("Finished with group %s\n",member_name);
     }
     else if(statbuf.type ==  H5G_DATASET){
