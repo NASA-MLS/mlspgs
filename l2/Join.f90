@@ -311,7 +311,7 @@ contains ! =====     Public Procedures     =============================
 
   subroutine JoinL2GPQuantities ( key, name, quantity, &
     & precision, l2gpDatabase, chunkNo, &
-    & firstInstance, lastInstance )
+    & firstInstance, lastInstance, nameString )
 
     ! Dummy arguments
     integer, intent(in) :: KEY          ! spec_args to Decorate with the L2GP index
@@ -321,6 +321,7 @@ contains ! =====     Public Procedures     =============================
     type (L2GPData_T), dimension(:), pointer :: L2GPDATABASE
     integer, intent(in) :: CHUNKNO
     integer, intent(in), optional :: FIRSTINSTANCE, LASTINSTANCE
+    character(len=*), intent(in), optional :: nameString
     ! The last two are set if only part (e.g. overlap regions) of the quantity
     ! is to be stored in the l2gp data.
 
@@ -407,7 +408,11 @@ contains ! =====     Public Procedures     =============================
 
     ! name is an integer, but L2GP%name is Character data
     thisL2GP%nameIndex = name
-    call Get_String( name, thisL2GP%name, strip=.true.)
+    if ( present(nameString) ) then
+      thisL2GP%name = nameString
+    else
+      call Get_String( name, thisL2GP%name, strip=.true.)
+    endif
     lastProfile=thisL2GP%nTimes
     firstProfile=lastProfile-noOutputInstances+1
 
@@ -710,6 +715,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.57  2002/04/08 20:49:17  pwagner
+! Swath name optionally passed to JoinL2GPQuantities
+!
 ! Revision 2.56  2002/04/06 00:35:21  pwagner
 ! Should accept actual case of swathname for l2gp
 !
