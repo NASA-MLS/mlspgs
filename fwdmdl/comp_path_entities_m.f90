@@ -10,6 +10,11 @@ module COMP_PATH_ENTITIES_M
   use REFRACTION_M, only: REFRACTIVE_INDEX
   use VERT_TO_PATH_M, only: VERT_TO_PATH
   use TWO_D_POLATE_M, only: TWO_D_POLATE
+  use Molecules, only: l_h2o
+  use Intrinsic, only: l_vmr
+  use VectorsModule, only: Vector_T, VectorValue_T, GetVectorQuantityByType
+  use output_m, only: output
+  use dump_0, only: dump
   implicit NONE
 !---------------------------- RCS Ident Info -------------------------------
   CHARACTER (LEN=256) :: Id = &
@@ -20,7 +25,8 @@ module COMP_PATH_ENTITIES_M
 contains
 !---------------------------------------------------------------------
 
-SUBROUTINE comp_path_entities(n_lvls,no_t,gl_count,ndx_path,z_glgrid,  &
+SUBROUTINE comp_path_entities(fwdModelIn, fwdModelExtra, molecules, &
+  & n_lvls,no_t,gl_count,ndx_path,z_glgrid,  &
            t_glgrid,h_glgrid,dhdz_glgrid,dh_dt_glgrid,atmospheric,     &
            f_basis,mr_f,no_coeffs_f,tan_hts,no_tan_hts,n_sps,no_phi_f, &
            f_phi_basis,z_path,h_path,t_path,phi_path,n_path,dhdz_path, &
@@ -30,6 +36,9 @@ SUBROUTINE comp_path_entities(n_lvls,no_t,gl_count,ndx_path,z_glgrid,  &
 !  ===============================================================
 !  Declaration of variables for sub-program: comp_path_entities
 !  ===============================================================
+
+type (Vector_T), intent(in) :: fwdModelIn, fwdModelExtra
+integer, dimension(:), intent(in) :: molecules
 
 Integer(i4), PARAMETER :: ngt = (Ng+1) * N2lvl
 
@@ -63,7 +72,6 @@ Logical, INTENT(IN) :: is_f_log(*)
 !  Local variables:
 !  ----------------
 
-Logical :: wet
 Integer(i4) :: i, j, k, l, jp, sps_i, jj, kk, ih2o, lmin, lmax, &
                klo, khi
 
@@ -72,6 +80,8 @@ Real(r4) :: dhdtp(ngt,mnp,mxco)
 Real(r8) :: h, q, r, zeta, phi
 
 Real(r8), DIMENSION(:)  , ALLOCATABLE :: zpath,tpath,hpath,ppath,dhdzp
+
+type (VectorValue_T), pointer :: f, h2o
 
 !  PFA variables:
 
@@ -135,12 +145,19 @@ type (atmos_comp), intent(inout) :: ATMOSPHERIC(*)
 
 ! Create the specie function along the path for all species
 !
-  DO l = 1, no_mmaf
-    DO k = 1, no_tan_hts
-      jj = ndx_path(k,l)%total_number_of_elements
-      do j = 1, n_sps
-        jp = no_phi_f(j)
-        kk = no_coeffs_f(j)
+  do j = 1, size(molecules)
+    f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_vmr, molecule=molecules(j))
+    print*,'For molecule ',j,' logBasis is:',f%template%logBasis
+    call output('mr_f is:')
+    call dump(mr_f)
+    call output('f%values is:')
+    call dump(f%values)
+    DO l = 1, no_mmaf
+      DO k = 1, no_tan_hts
+        jj = ndx_path(k,l)%total_number_of_elements
+        jp = f%template%noInstances
+        kk = f%template%noSurfs
         DEALLOCATE(spsfunc_path(j,k,l)%values,STAT=i)
         ALLOCATE(spsfunc_path(j,k,l)%values(jj),STAT=ier)
         IF(ier /= 0) THEN
@@ -151,13 +168,14 @@ type (atmos_comp), intent(inout) :: ATMOSPHERIC(*)
         do i = 1, jj
           zeta = z_path(k,l)%values(i)
           phi = phi_path(k,l)%values(i)
-          if (is_f_log(j)) then
-            Call TWO_D_POLATE(f_basis(1:,j), LOG(mr_f(1:kk,1:jp,j)), &
-           &           kk, f_phi_basis(1:,j), jp, zeta, phi, r)
+          if (f%template%logBasis) then
+            Call TWO_D_POLATE(f%template%surfs(:,1), &
+              & log(f%values), &
+           &           kk, f%template%phi(1,:), jp, zeta, phi, r)
             q = exp(r)
           else
-            Call TWO_D_POLATE(f_basis(1:,j), mr_f(1:kk,1:jp,j), kk,  &
-           &                  f_phi_basis(1:,j), jp, zeta, phi, q)
+            Call TWO_D_POLATE(f%template%surfs(:,1), &
+              & f%values, kk, f%template%phi(1,:), jp, zeta, phi, q)
           endif
           spsfunc_path(j,k,l)%values(i) = q
         end do
@@ -170,27 +188,22 @@ type (atmos_comp), intent(inout) :: ATMOSPHERIC(*)
 ! Compute the relative refractive index minus one.
 ! Get the water mixing ratio function
 
-  sps_i = 1
-  DO WHILE (atmospheric(sps_i)%name /= 'H2O' .AND. sps_i <= n_sps)
-    sps_i = sps_i + 1
-  END DO
-
-  IF (atmospheric(sps_i)%name == 'H2O') THEN
-    j = sps_i
-    ih2o = sps_i
-  ELSE             ! Ignore water contribution to refractive index (dry air)
-    j = 1
-    ih2o = 0
-  END IF
-
-  wet = (ih2o > 0)
-  jp = no_phi_f(j)
-  kk = no_coeffs_f(j)
+  h2o => GetVectorQuantityByType( fwdModelIn, fwdModelExtra, &
+    & quantityType=l_vmr, molecule=l_h2o, noError=.true.)
+  print*,'Wet would have been:',associated(h2o)
+  if (associated(h2o)) then
+    jp = h2o%template%noInstances
+    kk = h2o%template%noSurfs
+  else
+    jp = 0
+    kk = 0
+  endif
 
   DO l = 1, no_mmaf
-    CALL refractive_index(mr_f(1:,1:,j),f_basis(1:,j),f_phi_basis(1:,j), &
+    CALL refractive_index(h2o%values,h2o%template%surfs(:,1),&
+      &             h2o%template%phi(1,:), &
   &                 kk,jp,ndx_path(1:,l),z_path(1:,l),t_path(1:,l),    &
-  &                 phi_path(1:,l),n_path(1:,l),wet,no_tan_hts)
+  &                 phi_path(1:,l),n_path(1:,l),associated(h2o),no_tan_hts)
   END DO
 
  99  DEALLOCATE(zpath,hpath,tpath,ppath,dhdzp,STAT=i)
@@ -201,6 +214,9 @@ END SUBROUTINE comp_path_entities
 
 end module COMP_PATH_ENTITIES_M
 ! $Log$
+! Revision 1.5  2001/03/21 01:09:42  livesey
+! Commented out dh_dt_path to save memory
+!
 ! Revision 1.4  2001/03/20 11:03:15  zvi
 ! Fixing code for "real" data run, increase dim. etc.
 !
