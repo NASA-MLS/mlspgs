@@ -1364,7 +1364,7 @@ CONTAINS
    INTEGER FUNCTION FindIndexForNormGrid(cfDef, alat)
 !-------------------------------------------------------------------------
 
-	Real (r8) alat
+	Real (rgp) alat
 	TYPE( L3CFMDef_T ) :: cfDef
 
 	integer i, j
@@ -1401,7 +1401,7 @@ CONTAINS
    INTEGER FUNCTION FindLatIndexForL3Grid(cfProd, alat)
 !-------------------------------------------------------------------------
 
-	Real (r8) alat
+	Real (rgp) alat
         TYPE( L3CFMProd_T ) :: cfProd
 
 	integer i, j
@@ -1438,7 +1438,7 @@ CONTAINS
    INTEGER FUNCTION FindLonIndexForL3Grid(cfProd, alon)
 !-------------------------------------------------------------------------
 
-	Real (r8) alon
+	Real (rgp) alon
         TYPE( L3CFMProd_T ) :: cfProd
 
 	integer i, j
