@@ -68,7 +68,26 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   use SYMBOL_TYPES, only: T_IDENTIFIER
 
   implicit none
-  public
+  private
+  ! Generics
+  public :: Assignment (=), DUMP, Multiply, operator (+), operator (-)
+  public :: operator (*), operator ( .DOT. )
+  ! Specifics
+  public :: AddToVector, AddVectors, AddVectorTemplateToDatabase
+  public :: AddVectorToDatabase, AssignVector, AXPY, ClearMask
+  public :: ClearUnderMask, CloneVector, ConstantXVector
+  public :: ConstructVectorTemplate, CopyVector, CreateMaskArray
+  public :: CreateMask, CreateVector, DestroyVectorDatabase, DestroyVectorInfo
+  public :: DestroyVectorMask, DestroyVectorTemplateDatabase
+  public :: DestroyVectorTemplateInfo, DestroyVectorValue, DotVectors
+  public :: Dump_Vector, Dump_Vectors, Dump_Vector_Templates, GetVectorQuantity
+  public :: GetVectorQuantityByType, GetVectorQtyByTemplateIndex
+  public :: GetVectorQuantityIndexByName, GetVectorQuantityIndexByType
+  public :: IsVectorQtyMasked, MultiplyVectors
+  public :: RmVectorFromDatabase, ScaleVector, SetMask, SubtractFromVector
+  public :: SubtractVectors, ValidateVectorQuantity
+  ! Types
+  public :: VectorTemplate_T, VectorValue_T, Vector_T
 
 ! =====     Defined Operators and Generic Identifiers     ==============
 
@@ -110,7 +129,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 
   ! This type describes a vector template
 
-  type VectorTemplate_T
+  type :: VectorTemplate_T
      
     ! Administrative stuff
     integer :: Id = 0          ! Id code for vector (for checking purposes)
@@ -299,6 +318,47 @@ contains ! =====     Public Procedures     =============================
       mask = 0
     end if
   end subroutine ClearMask
+
+  !-----------------------------------------------  ClearUnderMask -----
+  subroutine ClearUnderMask ( Z, Inst, Quant )
+  ! Clear elements of Z that correspond to a nonzero bit in its mask.
+  ! If Inst is present, clear only elements of that instance.
+  ! If Quant is present, clear only elements of that quantity.
+    type(Vector_T),intent(inout) :: Z
+    integer, intent(in), optional :: Inst, Quant
+    integer :: I1, I2    ! Bounds for instances
+    integer :: II        ! Index/subscript for instances
+    integer :: MB        ! Mask bit index within word MW
+    integer :: MW        ! Mask word index
+    integer :: Q1, Q2    ! Bounds for quantities
+    integer :: QI        ! Index/subscript for quantities
+    integer :: VI        ! Index/subscript for values
+
+    q1 = 1
+    q2 = z%template%noQuantities
+    if ( present(quant) ) then
+      q1 = quant
+      q2 = quant
+    end if
+    do qi = q1, q2
+      if ( associated(z%quantities(qi)%mask) ) then
+        i1 = 1
+        i2 = z%quantities(qi)%template%noInstances
+        if ( present(inst) ) then
+          i1 = inst
+          i2 = inst
+        end if
+        do ii = i1, i2
+          do vi = 1, size(z%quantities(qi)%values,1)
+            mw = vi / b
+            mb = mod(vi, b)
+            if ( btest(z%quantities(qi)%mask(mw,ii), mb) ) &
+              z%quantities(qi)%values(vi,ii) = 0.0
+          end do ! vi
+        end do ! ii
+      end if
+    end do ! qi
+  end subroutine ClearUnderMask 
 
   !-------------------------------------------------  CloneVector  -----
   subroutine CloneVector ( Z, X, VectorNameText )
@@ -631,8 +691,8 @@ contains ! =====     Public Procedures     =============================
     end do
   end function DotVectors
 
-  ! ------------------------------------------------  DUMP_VECTOR  -----
-  subroutine DUMP_VECTOR ( VECTOR, DETAILS, NAME )
+  ! ------------------------------------------------  Dump_Vector  -----
+  subroutine Dump_Vector ( VECTOR, DETAILS, NAME )
     type(Vector_T), intent(in) :: VECTOR
     integer, intent(in), optional :: DETAILS ! <=0 => Don't dump quantity values
     !                                        ! >0 Do dump quantity values
@@ -681,10 +741,10 @@ contains ! =====     Public Procedures     =============================
         call output ( ' mask', advance='yes' )
       end if
     end do ! j
-  end subroutine DUMP_VECTOR
+  end subroutine Dump_Vector
 
-  ! -----------------------------------------------  DUMP_VECTORS  -----
-  subroutine DUMP_VECTORS ( VECTORS, DETAILS, NAME )
+  ! -----------------------------------------------  Dump_Vectors  -----
+  subroutine Dump_Vectors ( VECTORS, DETAILS, NAME )
     type(Vector_T), intent(in) :: VECTORS(:)
     integer, intent(in), optional :: DETAILS ! <=0 => Don't dump quantity values
     !                                        ! >0 Do dump quantity values
@@ -700,10 +760,10 @@ contains ! =====     Public Procedures     =============================
       call output ( ': ' )
       call dump_vector ( vectors(i), details, name )
     end do ! i
-  end subroutine DUMP_VECTORS
+  end subroutine Dump_Vectors
 
-  ! --------------------------------------  DUMP_VECTOR_TEMPLATES  -----
-  subroutine DUMP_VECTOR_TEMPLATES ( VECTOR_TEMPLATES, DETAILS )
+  ! --------------------------------------  Dump_Vector_Templates  -----
+  subroutine Dump_Vector_Templates ( VECTOR_TEMPLATES, DETAILS )
     type(VectorTemplate_T), intent(in) :: VECTOR_TEMPLATES(:)
     integer, intent(in), optional :: DETAILS ! <= 0 => Don't dump arrays
     !                                        ! > 0  => Do dump arrays
@@ -730,7 +790,7 @@ contains ! =====     Public Procedures     =============================
       if ( myDetails > 0 ) &
         & call dump ( vector_templates(i)%quantities, '      Quantities = ' )
     end do
-  end subroutine DUMP_VECTOR_TEMPLATES
+  end subroutine Dump_Vector_Templates
 
   ! ------------------------------------------  GetVectorQuantity  -----
   function GetVectorQuantity ( vector, quantity )
@@ -807,7 +867,7 @@ contains ! =====     Public Procedures     =============================
   end function GetVectorQuantityByType
 
   ! ------------------------------- GetVectorQtyByTemplateIndex --i
-  function GetVectorQtyByTemplateIndex(vector, quantityIndex, indexInVector )
+  function GetVectorQtyByTemplateIndex ( vector, quantityIndex, indexInVector )
     ! Given a vector and an index into the quantity templates, find quantity
     ! with matching template within vector.
 
@@ -934,8 +994,8 @@ contains ! =====     Public Procedures     =============================
 
   end function GetVectorQuantityIndexByType
 
-  ! -------------------------------  isVectorQtyMasked  -----
-  logical function isVectorQtyMasked ( vectorQty, Row, Column )
+  ! -------------------------------  IsVectorQtyMasked  -----
+  logical function IsVectorQtyMasked ( vectorQty, Row, Column )
 
   ! Is the mask for VectorQty set for address (Row, Column) ?
   ! If TRUE, don't use vectorQty%values(Row, Column)
@@ -957,7 +1017,7 @@ contains ! =====     Public Procedures     =============================
       isVectorQtyMasked = .true.
     endif
 
-  end function isVectorQtyMasked
+  end function IsVectorQtyMasked
 
   !---------------------------------------------  MultiplyVectors  -----
   subroutine MultiplyVectors ( X, Y, Z, Quant, Inst )
@@ -1001,8 +1061,8 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine MultiplyVectors
 
-  !-----------------------------------------  rmVectorFromDatabase  -----
-  integer function rmVectorFromDatabase ( DATABASE, ITEM )
+  !-----------------------------------------  RmVectorFromDatabase  -----
+  integer function RmVectorFromDatabase ( DATABASE, ITEM )
 
   ! This routine removes a vector from a database of such vectors, 
   ! deallocating the database if necessary.
@@ -1017,7 +1077,7 @@ contains ! =====     Public Procedures     =============================
     include "rmItemFromDatabase.f9h"
 
     rmVectorFromDatabase = newSize
-  end function rmVectorFromDatabase
+  end function RmVectorFromDatabase
 
   !-------------------------------------------------  ScaleVector  -----
   subroutine ScaleVector ( X, A, Y )
@@ -1122,9 +1182,9 @@ contains ! =====     Public Procedures     =============================
   ! This function performs a series of tests on a quantity to make sure it
   ! matches our requirements
   
-  function ValidateVectorQuantity(quantity, coherent, stacked, regular,&
+  function ValidateVectorQuantity ( quantity, coherent, stacked, regular,&
     & minorFrame, majorFrame, verticalCoordinate, frequencyCoordinate, &
-    & noInstances, noSurfs, quantityType, molecule, sayWhyNot)
+    & noInstances, noSurfs, quantityType, molecule, sayWhyNot )
 
     ! Dummy arguments
     type (VectorValue_T), intent(IN) :: QUANTITY ! Test quantity
@@ -1313,6 +1373,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.52  2001/09/20 20:56:34  pwagner
+! Added contents list; tweaked some things
+!
 ! Revision 2.51  2001/09/19 23:40:53  pwagner
 ! Added rmVectorFromDatabase, isVectorQtyMasked functions
 !
