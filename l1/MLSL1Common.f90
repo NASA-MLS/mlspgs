@@ -55,15 +55,6 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
      INTEGER WF(WFchans,WFnum)    ! wide filters
   END TYPE L0Sci_T
 
-  ! Information on the L1B data files in use
-
-  TYPE L1BInfo_T
-    INTEGER :: L1BOAId      ! The HDF ID (handle) for the L1BOA file
-    INTEGER :: L1BRADIds(2) ! Ids for the L1BRAD files (1=FB, 2=DAC)
-    CHARACTER (LEN=FileNameLen) :: L1BOAFileName  ! L1BOA file name
-    CHARACTER (LEN=FileNameLen) :: L1BRADFileNames(2)
-  END TYPE L1BInfo_T
-
   ! Maximum number of MIFs per MAF
 
   INTEGER, PARAMETER :: MaxMIFs = 150
@@ -84,6 +75,9 @@ END MODULE MLSL1Common
 
 !
 ! $Log$
+! Revision 2.1  2001/01/25 19:52:10  perun
+! Moved L1BInfo from MLSCommon
+!
 ! Revision 2.0  2000/09/05 18:55:14  ahanzel
 ! Changing file revision to 2.0.
 !
