@@ -14,7 +14,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
     & ColumnScale, Col_L1, CopyBlock, CreateBlock, DestroyBlock, Dump, &
     & GetDiagonal, GetMatrixElement, GetVectorFromColumn, M_Absent, &
     & M_Banded, M_Full, MatrixElement_T, MaxAbsVal, MinDiag, Multiply, &
-    & MultiplyMatrixVectorNoT, &
+    & MultiplyMatrix_XY, MultiplyMatrix_XY_T, MultiplyMatrixVectorNoT, &
     & operator(+), operator(.TX.), RowScale, ScaleBlock, SolveCholesky, &
     & UpdateDiagonal
   use MLSCommon, only: R8
@@ -35,12 +35,15 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   public :: Dump_Struct, FindBlock, GetDiagonal
   public :: GetDiagonal_1, GetFromMatrixDatabase, GetKindFromMatrixDatabase
   public :: GetMatrixElement, GetMatrixElement_1, GetVectorFromColumn
-  public :: GetVectorFromColumn_1, InvertCholesky
+  public :: GetVectorFromColumn_1, InvertCholesky, InvertCholesky_1
   public :: K_Cholesky, K_Empty, K_Kronecker, K_Plain, K_SPD
 ! public :: LevenbergUpdateCholesky
   public :: Matrix_T, Matrix_Cholesky_T, Matrix_Database_T, Matrix_Kronecker_T
   public :: Matrix_SPD_T, MaxAbsVal, MaxAbsVal_1, MaxL1
-  public :: MinDiag, MinDiag_Cholesky, MinDiag_SPD, Multiply, MultiplyMatrices
+  public :: MinDiag, MinDiag_Cholesky, MinDiag_SPD
+  public :: Multiply, MultiplyMatrix_XTY_1
+  public :: MultiplyMatrix_XY, MultiplyMatrix_XY_1
+  public :: MultiplyMatrix_XY_T, MultiplyMatrix_XY_T_1
   public :: MultiplyMatrixVector, MultiplyMatrixVector_1
   public :: MultiplyMatrixVectorNoT, MultiplyMatrixVectorNoT_1
   public :: MultiplyMatrixVectorSPD_1
@@ -115,8 +118,24 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
     module procedure GetMatrixElement_1
   end interface
 
+  interface InvertCholesky
+    module procedure InvertCholesky_1
+  end interface
+
   interface Multiply
     module procedure MultiplyMatrixVector_1, MultiplyMatrixVectorSPD_1
+  end interface
+
+  interface MultiplyMatrix_XTY
+    module procedure MultiplyMatrix_XTY_1
+  end interface
+
+  interface MultiplyMatrix_XY
+    module procedure MultiplyMatrix_XY_1
+  end interface
+
+  interface MultiplyMatrix_XY_T
+    module procedure MultiplyMatrix_XY_T_1
   end interface
 
   interface MultiplyMatrixVector   ! A^T V
@@ -136,7 +155,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   end interface
 
   interface operator ( .TX. )      ! A^T B
-    module procedure MultiplyMatrices, NewMultiplyMatrixVector
+    module procedure MultiplyMatrix_XTY_1, NewMultiplyMatrixVector
   end interface
 
   interface RowScale
@@ -905,8 +924,8 @@ contains ! =====     Public Procedures     =============================
       & of columns in "Matrix"')
   end subroutine GetVectorFromColumn_1
 
-  ! ---------------------------------------------  InvertCholesky  -----
-  subroutine InvertCholesky ( U, B )
+  ! -------------------------------------------  InvertCholesky_1  -----
+  subroutine InvertCholesky_1 ( U, B )
   ! Compute B = U^{-T} = L^{-1}, where U is the upper-triangular
   ! Cholesky factor of some matrix, i.e. A = U^T U.
     type(Matrix_Cholesky_T), intent(in) :: U
@@ -935,7 +954,7 @@ contains ! =====     Public Procedures     =============================
         call solveCholesky ( u%m%block(i,i), b%block(i,k), transpose=.true. )
       end do ! k = 1, i
     end do ! i = 1, u%m%row%nb
-  end subroutine InvertCholesky
+  end subroutine InvertCholesky_1
 
   ! ------------------------------------  LevenbergUpdateCholesky  -----
 ! subroutine LevenbergUpdateCholesky ( Z, LAMBDA )
@@ -994,8 +1013,58 @@ contains ! =====     Public Procedures     =============================
     minDiag_SPD = minDiag_1 ( a%m )
   end function MinDiag_SPD
 
-  ! -------------------------------------------  MultiplyMatrices  -----
-  function MultiplyMatrices ( X, Y ) result ( Z ) ! Z = X^T Y
+  ! ----------------------------------------  MultiplyMatrix_XY_1  -----
+  subroutine MultiplyMatrix_XY_1 ( X, Y, Z ) ! Z = X Y
+    type(Matrix_T), intent(in) :: X, Y
+    type(Matrix_T), intent(inout) :: Z
+
+    integer :: I, J, K             ! Subscripts for [XYZ]%Block
+
+    ! Check that matrices are compatible.  We don't need to check
+    ! Nelts or Nb, because these are deduced from Vec.
+    if ( (x%col%vec%template%id /= y%row%vec%template%id)  .or. &
+      & (x%col%instFirst .neqv. y%row%instFirst) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "Incompatible arrays in MultiplyMatrix_XY_1" )
+    call createEmptyMatrix ( z, 0, x%row%vec, y%col%vec )
+    do j = 1, y%col%nb
+      do i = 1, x%row%nb
+        call multiplyMatrix_XY ( x%block(i,1), y%block(1,j), z%block(i,j) )
+        do k = 2, x%col%nb
+          call multiplyMatrix_XY ( x%block(i,k), y%block(k,j), z%block(i,j), &
+            & update=.true. )
+        end do ! k = 2, x%col%nb
+      end do ! i = 1, x%row%nb
+    end do ! j = 1, y%col%nb
+  end subroutine MultiplyMatrix_XY_1
+
+  ! --------------------------------------  MultiplyMatrix_XY_T_1  -----
+  subroutine MultiplyMatrix_XY_T_1 ( X, Y, Z ) ! Z = X Y^T
+    type(Matrix_T), intent(in) :: X, Y
+    type(Matrix_T), intent(inout) :: Z
+
+    integer :: I, J, K             ! Subscripts for [XYZ]%Block
+
+    ! Check that matrices are compatible.  We don't need to check
+    ! Nelts or Nb, because these are deduced from Vec.
+    if ( (x%col%vec%template%id /= y%col%vec%template%id)  .or. &
+      & (x%col%instFirst .neqv. y%col%instFirst) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "Incompatible arrays in MultiplyMatrix_XY_T_1" )
+    call createEmptyMatrix ( z, 0, x%row%vec, y%row%vec )
+    do j = 1, y%row%nb
+      do i = 1, x%row%nb
+        call multiplyMatrix_XY_T ( x%block(i,1), y%block(j,1), z%block(i,j) )
+        do k = 2, x%col%nb
+          call multiplyMatrix_XY_T ( x%block(i,k), y%block(j,k), z%block(i,j), &
+            & update=.true. )
+        end do ! k = 2, x%col%nb
+      end do ! i = 1, x%row%nb
+    end do ! j = 1, y%row%nb
+  end subroutine MultiplyMatrix_XY_T_1
+
+  ! ---------------------------------------  MultiplyMatrix_XTY_1  -----
+  function MultiplyMatrix_XTY_1 ( X, Y ) result ( Z ) ! Z = X^T Y
     type(Matrix_T), intent(in) :: X, Y
     type(Matrix_T) :: Z
 
@@ -1012,7 +1081,7 @@ contains ! =====     Public Procedures     =============================
     if ( (x%row%vec%template%id /= y%row%vec%template%id)  .or. &
       & (x%row%instFirst .neqv. y%row%instFirst) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & "Incompatible arrays in MultiplyMatrices" )
+          & "Incompatible arrays in MultiplyMatrix_XTY_1" )
     call createEmptyMatrix ( z, 0, x%col%vec, y%col%vec )
     do j = 1, y%col%nb
       do i = 1, x%col%nb
@@ -1023,7 +1092,7 @@ contains ! =====     Public Procedures     =============================
         end do ! k = 2, x%row%nb
       end do ! i = 1, x%col%nb
     end do ! j = 1, y%col%nb
-  end function MultiplyMatrices
+  end function MultiplyMatrix_XTY_1
 
   ! -------------------------------------  MultiplyMatrixVector_1  -----
   subroutine MultiplyMatrixVector_1 ( A, V, Z, UPDATE, UseMask, Clone )
@@ -1710,6 +1779,10 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.63  2002/02/22 01:19:31  vsnyder
+! Added MultiplyMatrix_XY_0, MultiplyMatrix_XY_T_1.  Changed the name of
+! MultiplyMatrices to Multiply_Matrix_XTY_1.  Added generics.
+!
 ! Revision 2.62  2002/02/05 02:39:59  vsnyder
 ! Change mask from 1-bit per to 8-bits per (using character)
 !
