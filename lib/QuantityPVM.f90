@@ -10,6 +10,8 @@ module QuantityPVM                      ! Send and receive vector quantities usi
   use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMFSEND, PVMERRORMESSAGE, &
     & PVMFRECV
   use PVMIDL, only: PVMIDLPACK, PVMIDLUNPACK
+  use MorePVM, only: PVMPackLitIndex, PVMPackStringIndex, &
+    & PVMUnpackLitIndex, PVMUnpackStringIndex
   use String_Table, only: GET_STRING, DISPLAY_STRING
   use VectorsModule, only: VECTORVALUE_T
   use MLSCommon, only: R8
@@ -85,20 +87,13 @@ contains ! ================================== Module procedures ============
 
     ! Now pack some strings
 
-    call Get_String( lit_indices(q%template%quantityType), word, noError=.true. )
-    call PVMIDLPack ( trim(word), info )
+    call PVMPackLitIndex ( q%template%quantityType, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing quantityType" )
-
-    call Get_String( lit_indices(q%template%verticalCoordinate), word, noError=.true. )
-    call PVMIDLPack ( trim(word), info )
+    call PVMPackLitIndex ( q%template%verticalCoordinate, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing verticalCoordinate" )
-
-    call Get_String( lit_indices(q%template%unit), word, noError=.true. )
-    call PVMIDLPack ( trim(word), info )
+    call PVMPackLitIndex ( q%template%unit, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing unit" )
-
-    call Get_String( lit_indices(q%template%frequencyCoordinate), word, noError=.true. )
-    call PVMIDLPack ( trim(word), info )
+    call PVMPackLitIndex ( q%template%frequencyCoordinate, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing frequencyCoordinate" )
 
     ! Pack signal as a string
@@ -417,6 +412,9 @@ contains ! ================================== Module procedures ============
 end module QuantityPVM
 
 ! $Log$
+! Revision 2.11  2002/10/05 00:42:52  livesey
+! Modified to use stuff from MorePVM
+!
 ! Revision 2.10  2002/08/16 21:41:13  livesey
 ! Bug fix in frequency transmission
 !
