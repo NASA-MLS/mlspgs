@@ -20,6 +20,20 @@ MakeFName = MakeFC
 
 # "$Id$"
 
+# ------------------- Automatic internalcleanup
+# We use COPY_NUMBER to keep track of the number of times
+# the targets update or depends are built
+# every tenth time an internalcleanup is automatically performed
+
+# This is how big COPY_NUMBER may grow before being reset
+# ---> and triggering internalcleanup <---
+MAX_COPIES = 10
+ONE = 1
+
+# This keeps track of the number of times MakeFC -> Makefile
+COPY_NUMBER = 4
+NEXT_COPY := $(shell expr $(COPY_NUMBER) + 1)
+
 # ---------------------- Paths to special directories
 # where to store .configure; also where to install mls programs
 CONFDIR=.
@@ -168,6 +182,16 @@ EVERY_MLSCONFG = LF95.Linux  NAG.Linux  NAG.SGI  NAG.Sun  Unknown.None
 
 tests_sub_dirs := $(shell echo tests/*)
 
+# This determines the command by which MakeFC looks like Makefile
+# Choose either "link" or "copy"; warning--link once caused cvs probs
+LOOKS_LIKE_MakeFC = copy
+
+ifeq ($(LOOKS_LIKE_MakeFC),copy)
+	LOOKS_LIKE_line = cp MakeFC Makefile
+else
+	LOOKS_LIKE_line = ln -s MakeFC Makefile
+endif
+
 #----------------------- Build instructions
 
 # Automatic targets
@@ -193,20 +217,22 @@ $(CONFDIR)/.configure:
 #          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc; \
 #		cd .. ; \
 #	done
-	if [ -f Makefile ] ; then \
-		rm -f Makefile.old ;\
-		mv Makefile Makefile.old ;\
-	fi ; \
-	ln -s MakeFC Makefile
-	 @for dir in $(SUBDIRS); do \
-	  cd $$dir; \
-		if [ -f Makefile ] ; then \
-			rm -f Makefile.old ;\
-			mv Makefile Makefile.old ;\
-		fi ; \
-		ln -s MakeFC Makefile ;\
-	  cd ..; \
-	done
+#	@echo "Copying or linking MakeFC to Makefile in ./ $(SUBDIRS)"; \
+#	if [ -f Makefile ] ; then \
+#		rm -f Makefile.old ;\
+#		mv Makefile Makefile.old ;\
+#	fi ; \
+#	$(LOOKS_LIKE_line)
+#	 @for dir in $(SUBDIRS); do \
+#	  cd $$dir; \
+#		if [ -f Makefile ] ; then \
+#			rm -f Makefile.old ;\
+#			mv Makefile Makefile.old ;\
+#		fi ; \
+#		$(LOOKS_LIKE_line) ;\
+#	  cd ..; \
+#	done
+	$(MAKE) -f $(MakeFName) internalmakefile makefilesintests
 
 # Targets that must be named explicitly
 
@@ -231,12 +257,14 @@ mostlyclean:
 	 for dir in $(SUBDIRS); do \
 	  $(MAKE) -f $(MakeFName) -C $$dir mostlyclean; \
 	done
+	@$(MAKE) -f $(MakeFName) internalcleanup ; \
 
 clean:
 	@echo "Cleaning objects from $(SUBDIRS)"; \
 	 for dir in $(SUBDIRS); do \
 	  $(MAKE) -f $(MakeFName) -C $$dir clean; \
 	done
+	@$(MAKE) -f $(MakeFName) internalcleanup ; \
 
 configure:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
@@ -275,15 +303,13 @@ configure_subdirs:
 	done
 
 depends:
-	@echo "Making dependencies for $(SUBDIRS)"; \
-	 for dir in $(SUBDIRS); do \
-	  $(MAKE) -f $(MakeFName) -C $$dir depends; \
-	done; \
-	echo "Making dependencies for srclib"; \
-        cd srclib; \
-        ../$(MLSBIN)/makemakedep.sh ../lib ../l2; \
-        sed 's/OBJS =/srclib_objs =/' Makefile.dep > temp.dep; \
-        mv temp.dep Makefile.dep
+	@if [ $(COPY_NUMBER) -lt $(MAX_COPIES) ] ; then \
+		$(MAKE) -f $(MakeFName) internaladd_copy ; \
+	else  \
+		echo "Resetting copy number from  $(COPY_NUMBER) to 1"; \
+		$(MAKE) -f $(MakeFName) internalcleanup ; \
+	fi
+	@$(MAKE) -f $(MakeFName) internaldepends
 
 help:
 	@sed -n '/'$(MakeFName)' help/,/End '$(MakeFName)' help/ p' $(CONFDIR)/MakeFC \
@@ -299,45 +325,22 @@ install:
 	done
 
 makefile:
-	if [ -f Makefile ] ; then \
-		rm -f Makefile.old ;\
-		mv Makefile Makefile.old ;\
-	fi ; \
-	ln -s MakeFC Makefile
-	 @for dir in $(SUBDIRS); do \
-	  cd $$dir; \
-		if [ -f Makefile ] ; then \
-			rm -f Makefile.old ;\
-			mv Makefile Makefile.old ;\
-		fi ; \
-		ln -s MakeFC Makefile ;\
-	  cd ..; \
-	done
-
-makefilesintests:
-	 for dir in $(tests_sub_dirs); do \
-	 	if [ -d $$dir ] ; then \
-	  		cd $$dir; \
-			pwd ;\
-			if [ -f Makefile ] ; then \
-				rm -f Makefile.old ;\
-				mv Makefile Makefile.old ;\
-			fi ; \
-			if [ -f MakeFC ] ; then \
-				ln -s MakeFC Makefile ;\
-			fi ; \
-	 		cd ../..; \
-		fi; \
-	done
+	@if [ $(COPY_NUMBER) -lt $(MAX_COPIES) ] ; then \
+		$(MAKE) -f $(MakeFName) internaladd_copy ; \
+	else  \
+		echo "Resetting copy number from  $(COPY_NUMBER) to 1"; \
+		$(MAKE) -f $(MakeFName) internalcleanup ; \
+	fi
+	@$(MAKE) -f $(MakeFName) internalmakefile
 
 update:
-	@echo "Updating the Makefile in $(SUBDIRS)"; \
-	 for dir in $(SUBDIRS); do \
-		cd $$dir ; \
-		../$(MLSBIN)/mlsconfigure -dc "../$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -nc -nd; \
-		cd .. ; \
-	done
+	@if [ $(COPY_NUMBER) -lt $(MAX_COPIES) ] ; then \
+		$(MAKE) -f $(MakeFName) internaladd_copy ; \
+	else  \
+		echo "Resetting copy number from  $(COPY_NUMBER) to 1"; \
+		$(MAKE) -f $(MakeFName) internalcleanup ; \
+	fi
+	@$(MAKE) -f $(MakeFName) internalupdate
 
 # Useful for cleaning multiple configurations
 
@@ -353,6 +356,7 @@ distclean:
 	 for dir in $(EVERY_MLSCONFG); do \
 	  $(MAKE) -f $(MakeFName) clean_config MLSCONFG=$$dir; \
 	done
+	@$(MAKE) -f $(MakeFName) internalcleanup ; \
 
 #For preparing source distributions
 
@@ -420,6 +424,99 @@ substarg: substars
 	rm -f ../mlspgs_subs.tgz ;\
 	$(TAR) -cvzf ../mlspgs_subs.tgz *.tar
 	
+# For internal use
+
+# Automatically called to keep number of files Make.dep.nn under MAX_COPIES
+internalcleanup:
+	@echo "Automatic housekeeping in ./ $(SUBDIRS) srclib"; \
+	 for dir in $(SUBDIRS) srclib; do \
+	  cd $$dir; \
+		if [ -f Makefile.dep ] ; then \
+			rm -f Make.dep.* ;\
+		fi ; \
+	  cd ..; \
+	done
+	@echo "Automatic housekeeping in $(tests_sub_dirs)"; \
+	 for dir in $(tests_sub_dirs); do \
+	 	if [ -d $$dir ] ; then \
+	  		cd $$dir; \
+			if [ -f Makefile.dep ] ; then \
+			rm -f Make.dep.* ;\
+			fi ; \
+	 		cd ../..; \
+		fi; \
+	done
+	$(MAKE) -f $(MakeFName) internalreset_copy ; \
+
+internaldepends:
+	@echo "Making dependencies for $(SUBDIRS)"; \
+	 for dir in $(SUBDIRS); do \
+	  $(MAKE) -f $(MakeFName) -C $$dir depends; \
+	done; \
+	echo "Making dependencies for srclib"; \
+        cd srclib; \
+        ../$(MLSBIN)/makemakedep.sh ../lib ../l2; \
+        sed 's/OBJS =/srclib_objs =/' Makefile.dep > temp.dep; \
+        mv temp.dep Makefile.dep
+
+makefilesintests:
+	@echo "Copying or linking MakeFC to Makefile in $(tests_sub_dirs)"; \
+	 for dir in $(tests_sub_dirs); do \
+	 	if [ -d $$dir ] ; then \
+	  		cd $$dir; \
+			if [ -f Makefile ] ; then \
+				rm -f Makefile.old ;\
+				mv Makefile Makefile.old ;\
+			fi ; \
+			if [ -f MakeFC ] ; then \
+				$(LOOKS_LIKE_line) ;\
+			fi ; \
+	 		cd ../..; \
+		fi; \
+	done
+
+internalmakefile:
+	@echo "Copying or linking MakeFC to Makefile in ./ $(SUBDIRS)"; \
+	if [ -f Makefile ] ; then \
+		rm -f Makefile.old ;\
+		mv Makefile Makefile.old ;\
+	fi ; \
+	$(LOOKS_LIKE_line)
+	 @for dir in $(SUBDIRS); do \
+	  cd $$dir; \
+		if [ -f Makefile ] ; then \
+			rm -f Makefile.old ;\
+			mv Makefile Makefile.old ;\
+		fi ; \
+		$(LOOKS_LIKE_line) ;\
+	  cd ..; \
+	done
+
+internalupdate: internalmakefile makefilesintests
+	@echo "Updating the Makefile in $(SUBDIRS)"; \
+	 for dir in $(SUBDIRS); do \
+		cd $$dir ; \
+		../$(MLSBIN)/mlsconfigure -dc "../$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -nc -nd; \
+		cd .. ; \
+	done
+	@$(MAKE) -f $(MakeFName) internaldepends
+
+internalreset_copy:
+	@rm -f temp.Makefile
+	@sed 's/COPY_NUMBER = '$(COPY_NUMBER)'/COPY_NUMBER = '$(ONE)'/' \
+	 $(MakeFName) > temp.Makefile
+	@mv temp.Makefile $(MakeFName)
+
+internaladd_copy:
+	@rm -f temp.Makefile
+	@sed 's/COPY_NUMBER = '$(COPY_NUMBER)'/COPY_NUMBER = '$(NEXT_COPY)'/' \
+	 $(MakeFName) > temp.Makefile
+	@mv temp.Makefile $(MakeFName)
+
+show_copy:
+	@echo "MakeFC copy number $(COPY_NUMBER)"
+
 #----------------------- Bare target dependenciess
 
 $(LEVELS): lib
@@ -443,17 +540,22 @@ tar tar_subs tar_sips: clean_all
 
 install: all
 
-update: depends
+#update: depends
+update:
 
 .PHONY: configure depends subdirs clean mostlyclean clean_config distclean\
   tar substar disttar tarz substarz distarz targ substarg distarg substars\
   all install levels configure_subdirs makefile update\
   configure_pvm configure_fopts configure_full configure_help help disthelp\
-  makefilesintests \
+  internalcleanup internaldepends makefilesintests internalmakefile \
+  internalmakefile show_copy \
   $(SUBDIRS)
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.26  2001/03/17 00:56:25  pwagner
+# Added new help; makefilesintests
+#
 # Revision 1.25  2001/03/12 22:46:57  pwagner
 # Revised clean, tar; automatic symlink to Makefile
 #
