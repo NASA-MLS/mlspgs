@@ -60,12 +60,14 @@ contains ! =====     Public Procedures     =============================
     ! Now the literals:
     use INIT_TABLES_MODULE, only: L_ADDNOISE, L_BOUNDARYPRESSURE, L_CHISQCHAN, &
       & L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, L_COLUMNABUNDANCE, &
-      & L_ESTIMATEDNOISE, L_EXPLICIT, L_FOLD, L_GPH, L_GRIDDED, L_HEIGHT, &
+      & L_ESTIMATEDNOISE, L_EXPLICIT, L_FOLD, L_GPH, L_GRIDDED, L_H2OFROMRHI, &
+      & L_HEIGHT, &
       & L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, L_KRONECKER, L_L1B, L_L2GP, &
       & L_L2AUX, L_LOSVEL, L_NEGATIVEPRECISION, L_NOISEBANDWIDTH, L_NONE, &
       & L_OFFSETRADIANCE, L_ORBITINCLINATION, L_PHITAN, &
       & L_PLAIN, L_PRESSURE, L_PROFILE, L_PTAN, &
       & L_RADIANCE, L_RECTANGLEFROMLOS, L_REFGPH, L_REFRACT, L_RHI, &
+      & L_RHIFROMH2O, L_RHIPRECISIONFROMH2O, &
       & L_SCECI, L_SCGEOCALT, L_SCVEL, L_SCVELECI, L_SCVELECR, &
       & L_SIDEBANDRATIO, L_SPD, L_SPECIAL, L_SYSTEMTEMPERATURE, &
       & L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
@@ -880,6 +882,116 @@ contains ! =====     Public Procedures     =============================
             & ptanQuantity, earthRadiusQty, &
             & noFineGrid, extinction, errorCode )
 
+        case ( l_RHIfromH2O ) ! -------fill RHI from H2O quantity -------
+            if ( .not. any(got( &
+             & (/f_h2oquantity, f_temperatureQuantity/) &
+             & )) ) then
+              call Announce_error ( key, No_Error_code, &
+              & 'Missing a required field to fill rhi'  )
+            else ! value
+                h2oQuantity => GetVectorQtyByTemplateIndex( &
+                  & vectors(h2oVectorIndex), h2oQuantityIndex)
+                temperatureQuantity => GetVectorQtyByTemplateIndex( &
+                  & vectors(temperatureVectorIndex), temperatureQuantityIndex)
+                if ( .not. ValidateVectorQuantity(h2oQuantity, &
+                  & quantityType=(/l_vmr/), molecule=(/l_h2o/)) ) then
+                  call Announce_Error ( key, No_Error_code, &
+                    & 'The h2oQuantity is not a vmr for the H2O molecule'  )
+                else if ( .not. ValidateVectorQuantity(temperatureQuantity, &
+                  & quantityType=(/l_temperature/)) ) then
+                  call Announce_Error ( key, No_Error_code, &
+                    & 'The temperatureQuantity is not a temperature'  )
+                else
+                  call FillRHIFromH2O ( key, quantity, &
+                    & h2oQuantity, temperatureQuantity, &
+                    & dontMask, ignoreZero, ignoreNegative, interpolate, &
+                    & .true., &   ! Mark Undefined values?
+                    & invert )    ! invert rather than convert?
+                end if
+            end if
+        case ( l_H2OfromRHI ) ! -------fill H2O from RHI quantity -------
+            if ( .not. any(got( &
+             & (/f_rhiQuantity, f_temperatureQuantity/) &
+             & )) ) then
+              call Announce_error ( key, No_Error_code, &
+              & 'Missing a required field to fill h2o from rhi'  )
+            else
+              sourceQuantity => GetVectorQtyByTemplateIndex( &
+                & vectors(sourceVectorIndex), sourceQuantityIndex)
+              temperatureQuantity => GetVectorQtyByTemplateIndex( &
+                & vectors(temperatureVectorIndex), temperatureQuantityIndex)
+              if ( .not. ValidateVectorQuantity(sourceQuantity, &
+                & quantityType=(/l_rhi/)) ) then
+                call Announce_Error ( key, No_Error_code, &
+                & 'The rhiQuantity is not an rhi'  )
+              else if ( .not. ValidateVectorQuantity(Quantity, &
+                & quantityType=(/l_vmr/), molecule=(/l_h2o/)) ) then
+                call Announce_Error ( key, No_Error_code, &
+                & 'The Quantity is not a vmr for the H2O molecule'  )
+              else if ( .not. ValidateVectorQuantity(temperatureQuantity, &
+                & quantityType=(/l_temperature/)) ) then
+                call Announce_Error ( key, No_Error_code, &
+                & 'The temperatureQuantity is not a temperature'  )
+              else
+                invert = .true.
+                call FillRHIFromH2O ( key, quantity, &
+                & sourceQuantity, temperatureQuantity, &
+                & dontMask, ignoreZero, ignoreNegative, interpolate, &
+                & .true., &   ! Mark Undefined values?
+                & invert )    ! invert rather than convert?
+              end if
+            end if
+        case ( l_RHIPrecisionfromH2O ) ! --fill RHI prec. from H2O quantity --
+                if ( .not. any(got( &
+                  & (/f_h2oquantity, f_temperatureQuantity, &
+                  & f_h2oPrecisionquantity, f_temperaturePrecisionQuantity/) &
+                  & )) ) then
+                  call Announce_error ( key, No_Error_code, &
+                    & 'Missing a required field to fill rhi precision'  )
+                else
+                  h2oQuantity => GetVectorQtyByTemplateIndex( &
+                    & vectors(h2oVectorIndex), h2oQuantityIndex)
+                  temperatureQuantity => GetVectorQtyByTemplateIndex( &
+                    & vectors(temperatureVectorIndex), temperatureQuantityIndex)
+                  h2oPrecisionQuantity => GetVectorQtyByTemplateIndex( &
+                    & vectors(h2oPrecisionVectorIndex), h2oPrecisionQuantityIndex)
+                  temperaturePrecisionQuantity => GetVectorQtyByTemplateIndex( &
+                    & vectors(temperaturePrecisionVectorIndex), temperaturePrecisionQuantityIndex)
+                  if ( .not. ValidateVectorQuantity(h2oQuantity, &
+                    & quantityType=(/l_vmr/), molecule=(/l_h2o/)) ) then
+                    call Announce_Error ( key, No_Error_code, &
+                      & 'The h2oQuantity is not a vmr for the H2O molecule'  )
+                  else if ( .not. ValidateVectorQuantity(temperatureQuantity, &
+                    & quantityType=(/l_temperature/)) ) then
+                    call Announce_Error ( key, No_Error_code, &
+                      & 'The temperatureQuantity is not a temperature'  )
+                  else if ( .not. ValidateVectorQuantity(h2oPrecisionQuantity, &
+                    & quantityType=(/l_vmr/), molecule=(/l_h2o/)) ) then
+                    call Announce_Error ( key, No_Error_code, &
+                      & 'The h2oPrecisionQuantity is not a vmr for the H2O molecule'  )
+                  else if ( .not. ValidateVectorQuantity(temperaturePrecisionQuantity, &
+                    & quantityType=(/l_temperature/)) ) then
+                    call Announce_Error ( key, No_Error_code, &
+                      & 'The temperaturePrecisionQuantity is not a temperature'  )
+                    ! This is not the right way to do an invert fill
+                    ! The first quantity named on the fill line must
+                    ! _always_ be the one getting filled according to
+                    ! the pattern '[verb] [direct-object] [modifier(s)]'
+                    ! see case l_vmr below for how to do this
+                    !else if ( invert ) then
+                    !  call FillRHIFromH2O ( key, h2oquantity, &
+                    !  & Quantity, temperatureQuantity, &
+                    !  & dontMask, ignoreZero, ignoreNegative, interpolate, &
+                    !  & .true., &   ! Mark Undefined values?
+                    !  & invert )    ! invert rather than convert?
+                  else
+                    call FillRHIPrecisionFromH2O ( key, quantity, &
+                      & h2oPrecisionQuantity, temperaturePrecisionQuantity, h2oQuantity, temperatureQuantity, &
+                      & dontMask, ignoreZero, ignoreNegative, interpolate, &
+                      & .true., &   ! Mark Undefined values?
+                      & invert )    ! invert rather than convert?
+                  end if
+                end if
         case ( l_special ) ! -  Special fills for some quantities  -----
           ! Either multiplier = [a, b] or multiplier = b are possible
           if ( got(f_multiplier) ) then
@@ -968,134 +1080,6 @@ contains ! =====     Public Procedures     =============================
               call FillChiSqMMif ( key, quantity, &
                 & measQty, modelQty, noiseQty, &
                 & dontMask, ignoreZero, ignoreNegative, multiplier )
-            end if
-          case ( l_rhi )
-            ! Later may allow inverted fill specified by /invert field
-            ! which would fill h2o quantity form rhi
-            if ( .not. any(got( &
-             & (/f_h2oquantity, f_temperatureQuantity/) &
-             & )) ) then
-              call Announce_error ( key, No_Error_code, &
-              & 'Missing a required field to fill rhi'  )
-            else
-              if ( any(got( &
-                & (/f_h2oPrecisionquantity, f_temperaturePrecisionQuantity/) &
-                & )) ) then ! precision
-                if ( .not. any(got( &
-                  & (/f_h2oPrecisionquantity, f_temperaturePrecisionQuantity/) &
-                  & )) ) then
-                  call Announce_error ( key, No_Error_code, &
-                    & 'Missing a required field to fill rhi precision'  )
-                else
-                  h2oQuantity => GetVectorQtyByTemplateIndex( &
-                    & vectors(h2oVectorIndex), h2oQuantityIndex)
-                  temperatureQuantity => GetVectorQtyByTemplateIndex( &
-                    & vectors(temperatureVectorIndex), temperatureQuantityIndex)
-                  h2oPrecisionQuantity => GetVectorQtyByTemplateIndex( &
-                    & vectors(h2oPrecisionVectorIndex), h2oPrecisionQuantityIndex)
-                  temperaturePrecisionQuantity => GetVectorQtyByTemplateIndex( &
-                    & vectors(temperaturePrecisionVectorIndex), temperaturePrecisionQuantityIndex)
-                  if ( .not. ValidateVectorQuantity(h2oQuantity, &
-                    & quantityType=(/l_vmr/), molecule=(/l_h2o/)) ) then
-                    call Announce_Error ( key, No_Error_code, &
-                      & 'The h2oQuantity is not a vmr for the H2O molecule'  )
-                  else if ( .not. ValidateVectorQuantity(temperatureQuantity, &
-                    & quantityType=(/l_temperature/)) ) then
-                    call Announce_Error ( key, No_Error_code, &
-                      & 'The temperatureQuantity is not a temperature'  )
-                  else if ( .not. ValidateVectorQuantity(h2oPrecisionQuantity, &
-                    & quantityType=(/l_vmr/), molecule=(/l_h2o/)) ) then
-                    call Announce_Error ( key, No_Error_code, &
-                      & 'The h2oPrecisionQuantity is not a vmr for the H2O molecule'  )
-                  else if ( .not. ValidateVectorQuantity(temperaturePrecisionQuantity, &
-                    & quantityType=(/l_temperature/)) ) then
-                    call Announce_Error ( key, No_Error_code, &
-                      & 'The temperaturePrecisionQuantity is not a temperature'  )
-                    ! This is not the right way to do an invert fill
-                    ! The first quantity named on the fill line must
-                    ! _always_ be the one getting filled according to
-                    ! the pattern '[verb] [direct-object] [modifier(s)]'
-                    ! see case l_vmr below for how to do this
-                    !else if ( invert ) then
-                    !  call FillRHIFromH2O ( key, h2oquantity, &
-                    !  & Quantity, temperatureQuantity, &
-                    !  & dontMask, ignoreZero, ignoreNegative, interpolate, &
-                    !  & .true., &   ! Mark Undefined values?
-                    !  & invert )    ! invert rather than convert?
-                  else
-                    call FillRHIPrecisionFromH2O ( key, quantity, &
-                      & h2oPrecisionQuantity, temperaturePrecisionQuantity, h2oQuantity, temperatureQuantity, &
-                      & dontMask, ignoreZero, ignoreNegative, interpolate, &
-                      & .true., &   ! Mark Undefined values?
-                      & invert )    ! invert rather than convert?
-                  end if
-                end if
-              else ! value
-                h2oQuantity => GetVectorQtyByTemplateIndex( &
-                  & vectors(h2oVectorIndex), h2oQuantityIndex)
-                temperatureQuantity => GetVectorQtyByTemplateIndex( &
-                  & vectors(temperatureVectorIndex), temperatureQuantityIndex)
-                if ( .not. ValidateVectorQuantity(h2oQuantity, &
-                  & quantityType=(/l_vmr/), molecule=(/l_h2o/)) ) then
-                  call Announce_Error ( key, No_Error_code, &
-                    & 'The h2oQuantity is not a vmr for the H2O molecule'  )
-                else if ( .not. ValidateVectorQuantity(temperatureQuantity, &
-                  & quantityType=(/l_temperature/)) ) then
-                  call Announce_Error ( key, No_Error_code, &
-                    & 'The temperatureQuantity is not a temperature'  )
-                  ! This is not the right way to do an invert fill
-                  ! The first quantity named on the fill line must
-                  ! _always_ be the one getting filled according to
-                  ! the pattern '[verb] [direct-object] [modifier(s)]'
-                  ! see case l_vmr below for how to do this
-                  !else if ( invert ) then
-                  !  call FillRHIFromH2O ( key, h2oquantity, &
-                  !  & Quantity, temperatureQuantity, &
-                  !  & dontMask, ignoreZero, ignoreNegative, interpolate, &
-                  !  & .true., &   ! Mark Undefined values?
-                  !  & invert )    ! invert rather than convert?
-                else
-                  call FillRHIFromH2O ( key, quantity, &
-                    & h2oQuantity, temperatureQuantity, &
-                    & dontMask, ignoreZero, ignoreNegative, interpolate, &
-                    & .true., &   ! Mark Undefined values?
-                    & invert )    ! invert rather than convert?
-                end if
-              end if
-            end if
-          case ( l_vmr )
-            ! Later may allow other special fills of vmr quantities
-            ! For now only vmr from rhi
-            if ( .not. any(got( &
-             & (/f_rhiQuantity, f_temperatureQuantity/) &
-             & )) ) then
-              call Announce_error ( key, No_Error_code, &
-              & 'Missing a required field to fill h2o from rhi'  )
-            else
-              sourceQuantity => GetVectorQtyByTemplateIndex( &
-                & vectors(sourceVectorIndex), sourceQuantityIndex)
-              temperatureQuantity => GetVectorQtyByTemplateIndex( &
-                & vectors(temperatureVectorIndex), temperatureQuantityIndex)
-              if ( .not. ValidateVectorQuantity(sourceQuantity, &
-                & quantityType=(/l_rhi/)) ) then
-                call Announce_Error ( key, No_Error_code, &
-                & 'The rhiQuantity is not an rhi'  )
-              else if ( .not. ValidateVectorQuantity(Quantity, &
-                & quantityType=(/l_vmr/), molecule=(/l_h2o/)) ) then
-                call Announce_Error ( key, No_Error_code, &
-                & 'The Quantity is not a vmr for the H2O molecule'  )
-              else if ( .not. ValidateVectorQuantity(temperatureQuantity, &
-                & quantityType=(/l_temperature/)) ) then
-                call Announce_Error ( key, No_Error_code, &
-                & 'The temperatureQuantity is not a temperature'  )
-              else
-                invert = .true.
-                call FillRHIFromH2O ( key, quantity, &
-                & sourceQuantity, temperatureQuantity, &
-                & dontMask, ignoreZero, ignoreNegative, interpolate, &
-                & .true., &   ! Mark Undefined values?
-                & invert )    ! invert rather than convert?
-              end if
             end if
           case default
             call Announce_error ( key, noSpecialFill )
@@ -4384,6 +4368,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.151  2002/10/02 23:04:47  pwagner
+! RHI now separate fill methods
+!
 ! Revision 2.150  2002/10/01 18:28:04  mjf
 ! New Fill for RHi precision including T error.
 !
