@@ -52,6 +52,7 @@ module ForwardModelConfig
     real (r8) :: frqGap             ! Lines further than this are ignored (MHz)
     real (r8) :: tolerance          ! Accuracy desired when choosing approximations
     ! CloudForwardModel
+    logical :: DF_spectroscopy      !
     integer :: no_cloud_species     ! No of Cloud Species '2'
     integer :: no_model_surfs       ! No of Model surfaces '640'
     integer :: NUM_SCATTERING_ANGLES! No of scattering angles '16'
@@ -180,6 +181,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.1  2001/10/02 20:37:09  livesey
+! Added do_baseline
+!
 ! Revision 2.0  2001/09/17 20:26:25  livesey
 ! New forward model
 !
