@@ -215,22 +215,22 @@ DirectWrite, file=!CloudFilename, hdfVersion=!hdfVersion, $
   hdfVersion=!hdfVersion})})
 
 ;; These macros are used to note the joined DGM/DGGs
-!define(storeJoinedDGG,{!ifdef(flagGotJoinedDGGs,{!divert(!joinedDGGDivert),!divert})!dnl
+!define(storeJoinedDGG,{!ifdef(flagAvoidDirectWrite,{},{!dnl
+!M4Error({You should set flagAvoidDirectWrite to use joinDGG})})!dnl
+!ifdef(flagGotJoinedDGGs,{!divert(!joinedDGGDivert),!divert})!dnl
 !define(flagGotJoinedDGGs,{Yes})!divert(!joinedDGGDivert)$1!divert})
 
-!define(storeJoinedDGM,{!ifdef(flagGotJoinedDGMs,{!divert(!joinedDGMDivert),!divert})!dnl
+!define(storeJoinedDGM,{!ifdef(flagAvoidDirectWrite,{},{!dnl
+!M4Error({You should set flagAvoidDirectWrite to use joinDGM})})!dnl
+!ifdef(flagGotJoinedDGMs,{!divert(!joinedDGMDivert),!divert})!dnl
 !define(flagGotJoinedDGMs,{Yes})!divert(!joinedDGMDivert)$1!divert})
 
 !define(joinDGG,{!dnl
-!ifdef(flagAvoidDirectWrite,{},{!dnl
-  !M4Error({You should set flagAvoidDirectWrite to use joinDGG})})!dnl
 !storeJoinedDGG(joinedDGG_$1_!phase)!dnl
 joinedDGG_$1_!phase: l2gp, source=state.$1, precision=outputPrecision.$1, swath='$2'
 })
 
 !define(joinDGM,{!dnl
-!ifdef(flagAvoidDirectWrite,{},{!dnl
-  !M4Error({You should set flagAvoidDirectWrite to use joinDGM})})!dnl
 !storeJoinedDGM(joinedDGM_$1_!phase)!storeJoinedDGM(joinedDGM_$1_!phase_precision)!dnl
 joinedDGM_$1_!phase: l2aux, source=state.$1, sdName='$2'
 joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 precision'
@@ -346,6 +346,9 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
   Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1!nl})
 
 ; $Log$
+; Revision 1.65  2003/08/14 20:26:34  livesey
+; Removed tropH2O stuff
+;
 ; Revision 1.64  2003/08/06 17:49:31  livesey
 ; Changed output of matrices
 ;
