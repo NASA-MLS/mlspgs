@@ -39,7 +39,7 @@ module SpectroscopyCatalog_m
                                    ! Log(nm**2 MHz) at 300 K
     Real(r8) :: V0                 ! Line center frequency MHz
     Real(r8) :: W                  ! Collision broadening parameter
-    integer, dimension(:), pointer :: bands=>NULL() ! List of band indices for line
+    integer, dimension(:), pointer :: signals=>NULL() ! List of signal indices for line
     integer, dimension(:), pointer :: sidebands=>NULL() ! Sidebands for above bands (-1,0,1)
                                    ! MHz/mbar at 300 K
   end type Line_T
@@ -173,7 +173,7 @@ contains ! =====  Public Procedures  ===================================
           end do
 
           ! Compile list of all the bands/sidebands named
-          call Allocate_test ( oneLine%bands, noSignals, 'bands', ModuleName )
+          call Allocate_test ( oneLine%signals, noSignals, 'bands', ModuleName )
           call Allocate_test ( oneLine%sidebands, noSignals, 'sidebands', ModuleName )
           nullify ( sigInds )
           k = 1
@@ -181,7 +181,7 @@ contains ! =====  Public Procedures  ===================================
             call get_string ( sub_rosa ( subtree (j, bandsNode) ), &
               & sigName, strip=.true. )
             call Parse_Signal ( sigName, sigInds, bandsNode, sideband=sideband )
-            oneLine%bands ( k:k+size(sigInds)-1 ) = signals(sigInds)%band
+            oneLine%signals ( k:k+size(sigInds)-1 ) = sigInds
             oneLine%sidebands ( k:k+size(sigInds)-1 ) = sideband
             call Deallocate_test ( sigInds, 'sigInds', ModuleName )
           end do
@@ -432,6 +432,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.1  2001/09/18 00:08:25  livesey
+! Added the bands information stuff
+!
 ! Revision 2.0  2001/09/17 20:26:26  livesey
 ! New forward model
 !
