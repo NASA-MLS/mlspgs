@@ -84,7 +84,7 @@ MODULE MLSCommon                ! Common definitions for the MLS software
     integer :: I                        ! Loop counter
 
     ! Executable code
-    FindFirst = -1
+    FindFirst = 0
     do i = 1, size(condition)
       if ( condition(i) ) then
         FindFirst = i
@@ -100,6 +100,9 @@ END MODULE MLSCommon
 
 !
 ! $Log$
+! Revision 2.8  2001/11/14 18:03:32  livesey
+! Changed FindFirst to return 0 not -1 if not found
+!
 ! Revision 2.7  2001/09/09 02:47:58  livesey
 ! Moved FindFirst into MLSCommon
 !
