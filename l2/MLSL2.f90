@@ -6,10 +6,11 @@ program MLSL2
   use INIT_TABLES_MODULE, only: INIT_TABLES, LIT_INDICES
   use LEXER_CORE, only: INIT_LEXER
   use MACHINE ! At least HP for command lines, and maybe GETARG, too
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use OUTPUT_M, only: OUTPUT, PRUNIT
-! use Open_Init, only: CloseMLSCF, OpenMLSCF
+  use Open_Init, only: CloseMLSCF, OpenMLSCF
   use PARSER, only: CONFIGURATION
-  use STRING_TABLE, only: DO_LISTING
+  use STRING_TABLE, only: DO_LISTING, INUNIT
   use TOGGLES, only: CON, GEN, LEVELS, LEX, PAR, SYN, TAB, TOGGLE
   use TREE, only: ALLOCATE_TREE, PRINT_SUBTREE
   use TREE_CHECKER, only: CHECK_TREE
@@ -18,6 +19,8 @@ program MLSL2
 
   implicit NONE
 
+  integer, parameter :: L2CF_UNIT = 20  ! Unit # if L2CF is read by Fortran
+
   logical :: DO_DUMP = .false.     ! Dump declaration table
   logical :: DUMP_TREE = .false.   ! Dump tree after parsing
   integer :: ERROR                 ! Error flag from check_tree
@@ -25,7 +28,9 @@ program MLSL2
   integer :: I                     ! counter for command line arguments
   integer :: J                     ! index within option
   character(len=80) :: LINE        ! Into which is read the command args
+  logical :: PCF = .false.         ! Open L2CF using PCF
   integer :: ROOT                  ! of the abstract syntax tree
+  integer :: STATUS                ! From OPEN
 
   !------------------------------- RCS Ident Info ------------------------------
   CHARACTER(LEN=130) :: Id = & 
@@ -43,11 +48,23 @@ program MLSL2
   i = 1+hp
   do ! Process the command line options to set toggles
     call getarg ( i, line )
-    if ( line(1:1) == '-' ) then
+    if ( line(1:2) == '--' ) then       ! "word" options
+      if ( line(3:6) == 'pcf ' ) then
+        pcf = .true.
+      else if ( line(3:) == ' ' ) then  ! "--" means "no more options"
+        i = i + 1
+        call getarg ( i, line )
+  exit
+      else
+        print *, 'unrecognized option ', trim(line), ' ignored.'
+      end if
+    else if ( line(1:1) == '-' ) then   ! "letter" options
       j = 1
       do while ( j < len(line) )
         j = j + 1
         select case ( line(j:j) )
+        case ( ' ' )
+      exit
         case ( 'A' )
           dump_tree = .true.
         case ( 'a' )
@@ -66,7 +83,7 @@ program MLSL2
           end if
         case ( 'h', 'H', '?' )
           call getarg ( 0+hp, line )
-          print *, 'Usage: ', trim(line), ' [options]'
+          print *, 'Usage: ', trim(line), ' [options] [--] [L2CF-name]'
           print *, ' Options:'
           print *, '  -A: Dump the un-decorated abstract syntax tree.'
           print *, '  -a: Dump the decorated type-checked abstract syntax tree.'
@@ -79,6 +96,7 @@ program MLSL2
           print *, '  -p: Trace parsing.'
           print *, '  -t: Trace declaration table construction.'
           print *, '  -v: List the configuration file.'
+          print *, '  The above options can be concatenated after one hyphen.'
           print *, '  Options a, c, g1, l, p and t can be toggled in the ', &
           &          'configuration file by'
           print *, '  @A, @C, @G, @L, @P and @S respectively.  @T in the ', &
@@ -95,6 +113,8 @@ program MLSL2
           toggle(tab) = .true.
         case ( 'v' )
           do_listing = .true.
+        case default
+          print *, 'Unrecognized option -', line(j:j), ' ignored.'
         end select
       end do
     else    
@@ -104,9 +124,24 @@ program MLSL2
   end do
 
 ! Parse the L2CF, producing an abstract syntax tree
-! call openMLSCF
+  if ( pcf ) then
+    call openMLSCF
+  else if ( line /= ' ' ) then
+    open ( l2cf_unit, file=line, status='old', &
+      & form='formatted', access='sequential', iostat=status )
+    if ( status /= 0 ) then
+      call io_error ( "While opening L2CF", status, line )
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+        & "Unable to open L2CF file " // trim(line) )
+    end if
+    inunit = l2cf_unit
+  end if
   call configuration ( root )
-! call closeMLSCF
+  if ( pcf ) then
+    call closeMLSCF
+  else
+    close ( l2cf_unit )  ! Don't worry about the status
+  end if
   if ( root <= 0 ) then
     call output ( &
       'A syntax error occurred -- there is no abstract syntax tree', &
@@ -131,6 +166,9 @@ program MLSL2
 end program MLSL2
 
 ! $Log$
+! Revision 2.6  2001/02/23 02:38:34  vsnyder
+! Open L2CF either by PCF or by Fortran OPEN or expect it on stdin
+!
 ! Revision 2.5  2001/02/22 23:51:00  vsnyder
 ! Improved usage messages
 !
