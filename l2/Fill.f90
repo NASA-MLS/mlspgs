@@ -635,7 +635,7 @@ contains ! =====     Public Procedures     =============================
           if ( got(f_multiplier) ) then
             multiplier = UNDEFINED_VALUE
             do j=1, min(nsons(multiplierNode)-1, 2)
-              call expr(subtree(j+1,seedNode),unitAsArray,valueAsArray)
+              call expr(subtree(j+1,multiplierNode),unitAsArray,valueAsArray)
               multiplier(j) = valueAsArray(1)
             enddo
           else
@@ -708,6 +708,22 @@ contains ! =====     Public Procedures     =============================
             & noFineGrid, extinction, errorCode )
 
         case ( l_special ) ! -  Special fills for some quantities  -----
+          ! Either multiplier = [a, b] or multiplier = b are possible
+          if ( got(f_multiplier) ) then
+            multiplier = UNDEFINED_VALUE
+            do j=1, min(nsons(multiplierNode)-1, 2)
+              call expr(subtree(j+1,multiplierNode),unitAsArray,valueAsArray)
+              multiplier(j) = valueAsArray(1)
+            enddo
+          else
+            multiplier = 1.
+          endif
+
+          if (DEEBUG) then
+            call output('Using multipliers: ', advance='no')
+            call output(multiplier, advance='yes')
+          endif
+
           select case ( quantity%template%quantityType )
           case ( l_losVel )
             if ( .not. any(got( (/f_tngtECI, f_scECI, f_scVel/) )) ) then
@@ -747,7 +763,7 @@ contains ! =====     Public Procedures     =============================
                 & vectors(noiseVectorIndex), noiseQtyIndex)
               call FillChiSqChan ( key, quantity, &
                 & measQty, modelQty, noiseQty, &
-                & dontMask, ignoreZero, ignoreNegative )
+                & dontMask, ignoreZero, ignoreNegative, multiplier )
             endif
           case ( l_chiSQMMaf )
             if ( .not. any(got( (/f_measurements, f_model, f_noise/) )) ) then
@@ -762,7 +778,7 @@ contains ! =====     Public Procedures     =============================
                 & vectors(noiseVectorIndex), noiseQtyIndex)
               call FillChiSqMMaf ( key, quantity, &
                 & measQty, modelQty, noiseQty, &
-                & dontMask, ignoreZero, ignoreNegative )
+                & dontMask, ignoreZero, ignoreNegative, multiplier )
             endif
           case ( l_chiSQMMif )
             if ( .not. any(got( (/f_measurements, f_model, f_noise/) )) ) then
@@ -777,7 +793,7 @@ contains ! =====     Public Procedures     =============================
                 & vectors(noiseVectorIndex), noiseQtyIndex)
               call FillChiSqMMif ( key, quantity, &
                 & measQty, modelQty, noiseQty, &
-                & dontMask, ignoreZero, ignoreNegative )
+                & dontMask, ignoreZero, ignoreNegative, multiplier )
             endif
           case default
             call Announce_error ( key, noSpecialFill )
@@ -1530,7 +1546,8 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------- FillChiSqChan ---
   subroutine FillChiSqChan ( key, qty, measQty, modelQty, noiseQty, &
-  & dontMask, ignoreZero, ignoreNegative, firstInstance, lastInstance )
+  & dontMask, ignoreZero, ignoreNegative, multiplier, &
+  & firstInstance, lastInstance )
     ! A special fill of chi squared 
     ! broken out according to channels
     ! Formal arguments
@@ -1542,6 +1559,8 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in)           ::       dontMask    ! Use even masked values
     logical, intent(in)           ::       ignoreZero  ! Ignore 0 values of noiseQty
     logical, intent(in)           ::       ignoreNegative  ! Ignore <0 values of noiseQty
+    real, dimension(:), intent(in), optional :: multiplier
+
     integer, intent(in), optional ::       firstInstance, lastInstance
     ! The last two are set if only part (e.g. overlap regions) of the quantity
     ! is to be stored in qty
@@ -1557,8 +1576,28 @@ contains ! =====     Public Procedures     =============================
     integer ::                             NOCHANS
     integer ::                             N           ! Num. of summed values
     logical ::                             skipMe
+    real                             ::    a, b
 
     ! Executable code
+    
+   ! Either multiplier = [a, b] or multiplier = 1/a if a=b are possible
+    if ( .not. present(multiplier) ) then
+      a = 1.
+      b = 1.
+    elseif (&
+    & multiplier(1) == UNDEFINED_VALUE .and. multiplier(2) == UNDEFINED_VALUE &
+    & ) then
+      a = 1.
+      b = 1.
+    elseif ( multiplier(2) == UNDEFINED_VALUE ) then
+      a = 0.
+      if ( multiplier(1) /= 0. ) a = 1./multiplier(1)
+      b = a
+    else
+      a = multiplier(1)
+      b = multiplier(2)
+    endif
+
     ! First check that things are OK.
     if (.not. ValidateVectorQuantity ( qty, &
       & quantityType=(/l_chiSqChan/), majorFrame=.true.) ) then
@@ -1619,7 +1658,7 @@ contains ! =====     Public Procedures     =============================
           & .or. (ignoreZero .and. noiseQty%values(qIndex, i) == 0.0 )
           if ( .not. skipMe ) then
             values(s) = ( &
-            & (measQty%values(qIndex, i) - modelQty%values(qIndex, i)) &
+            & (a*measQty%values(qIndex, i) - b*modelQty%values(qIndex, i)) &
             & / &
             & noiseQty%values(qIndex, i) &
             &  ) ** 2
@@ -1639,7 +1678,8 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------- FillChiSqMMaf ---
   subroutine FillChiSqMMaf ( key, qty, measQty, modelQty, noiseQty, &
-  & dontMask, ignoreZero, ignoreNegative, firstInstance, lastInstance )
+  & dontMask, ignoreZero, ignoreNegative, multiplier, &
+  & firstInstance, lastInstance )
     ! A special fill of chi squared 
     ! broken out according to major frames
     ! Formal arguments
@@ -1651,6 +1691,8 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in)           ::       dontMask    ! Use even masked values
     logical, intent(in)           ::       ignoreZero  ! Ignore 0 values of noiseQty
     logical, intent(in)           ::       ignoreNegative  ! Ignore <0 values of noiseQty
+    real, dimension(:), intent(in), optional :: multiplier
+
     integer, intent(in), optional ::       firstInstance, lastInstance
     ! The last two are set if only part (e.g. overlap regions) of the quantity
     ! is to be stored in the qty
@@ -1666,6 +1708,28 @@ contains ! =====     Public Procedures     =============================
     logical ::                             skipMe
 
     ! Executable code
+    real                             ::    a, b
+
+    ! Executable code
+    
+   ! Either multiplier = [a, b] or multiplier = 1/a if a=b are possible
+    if ( .not. present(multiplier) ) then
+      a = 1.
+      b = 1.
+    elseif (&
+    & multiplier(1) == UNDEFINED_VALUE .and. multiplier(2) == UNDEFINED_VALUE &
+    & ) then
+      a = 1.
+      b = 1.
+    elseif ( multiplier(2) == UNDEFINED_VALUE ) then
+      a = 0.
+      if ( multiplier(1) /= 0. ) a = 1./multiplier(1)
+      b = a
+    else
+      a = multiplier(1)
+      b = multiplier(2)
+    endif
+
     ! First check that things are OK.
     if (.not. ValidateVectorQuantity ( qty, &
       & quantityType=(/l_chiSqMMaf/), majorFrame=.true.) ) then
@@ -1732,7 +1796,7 @@ contains ! =====     Public Procedures     =============================
           & .or. (ignoreZero .and. noiseQty%values(row, i) == 0.0 )
           if ( .not. skipMe ) then
             values(row) = ( &
-            & (measQty%values(row, i) - modelQty%values(row, i)) &
+            & (a*measQty%values(row, i) - b*modelQty%values(row, i)) &
             & / &
             & noiseQty%values(row, i) &
             &  ) ** 2
@@ -1752,7 +1816,8 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------- FillChiSqMMif ---
   subroutine FillChiSqMMif ( key, qty, measQty, modelQty, noiseQty, &
-  & dontMask, ignoreZero, ignoreNegative, firstInstance, lastInstance )
+  & dontMask, ignoreZero, ignoreNegative, multiplier, &
+  & firstInstance, lastInstance )
     ! A special fill of chi squared 
     ! broken out according to Mifs
     ! Formal arguments
@@ -1764,6 +1829,8 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in)           ::       dontMask    ! Use even masked values
     logical, intent(in)           ::       ignoreZero  ! Ignore 0 values of noiseQty
     logical, intent(in)           ::       ignoreNegative  ! Ignore <0 values of noiseQty
+    real, dimension(:), intent(in), optional :: multiplier
+
     integer, intent(in), optional ::       firstInstance, lastInstance
     ! The last two are set if only part (e.g. overlap regions) of the quantity
     ! is to be stored in the qty
@@ -1781,6 +1848,28 @@ contains ! =====     Public Procedures     =============================
     logical ::                             skipMe
 
     ! Executable code
+    real                             ::    a, b
+
+    ! Executable code
+    
+   ! Either multiplier = [a, b] or multiplier = 1/a if a=b are possible
+    if ( .not. present(multiplier) ) then
+      a = 1.
+      b = 1.
+    elseif (&
+    & multiplier(1) == UNDEFINED_VALUE .and. multiplier(2) == UNDEFINED_VALUE &
+    & ) then
+      a = 1.
+      b = 1.
+    elseif ( multiplier(2) == UNDEFINED_VALUE ) then
+      a = 0.
+      if ( multiplier(1) /= 0. ) a = 1./multiplier(1)
+      b = a
+    else
+      a = multiplier(1)
+      b = multiplier(2)
+    endif
+
     ! First check that things are OK.
     if (.not. ValidateVectorQuantity ( qty, &
       & quantityType=(/l_chiSqMMif/), minorFrame=.true.) ) then
@@ -1841,7 +1930,7 @@ contains ! =====     Public Procedures     =============================
           & .or. (ignoreZero .and. noiseQty%values(qIndex, i) == 0.0 )
           if ( .not. skipMe ) then
             values(c) = ( &
-            & (measQty%values(qIndex, i) - modelQty%values(qIndex, i)) &
+            & (a*measQty%values(qIndex, i) - b*modelQty%values(qIndex, i)) &
             & / &
             & noiseQty%values(qIndex, i) &
             &  ) ** 2
@@ -2698,6 +2787,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.93  2001/10/19 23:42:50  pwagner
+! Applies multipliers to chi^2 fills, too
+!
 ! Revision 2.92  2001/10/19 22:32:44  pwagner
 ! Can destroy a vector or a matrix; def. multiplier(s) in addNoise
 !
