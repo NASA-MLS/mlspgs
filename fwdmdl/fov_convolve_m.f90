@@ -19,7 +19,7 @@ MODULE fov_convolve_m
 !
   SUBROUTINE fov_convolve(AntennaPattern,chi_in,rad_in,chi_out,rad_out, &
            & req,rsc,earth_frac,surf_angle,di_dt,dx_dt,ddx_dxdt,dx_dt_out, &
-           & drad_dt_out,di_df,drad_df_out,drad_dx_out)
+           & drad_dt_out,di_df,di_df_flag,drad_df_out,drad_dx_out)
 !
 ! inputs
 !
@@ -51,6 +51,8 @@ MODULE fov_convolve_m
   REAL(rp), OPTIONAL, INTENT(in) :: di_df(:,:) ! mixing ratio derivatives or
 !                                   any parameter where a simple convolution
 !                                   will suffice
+  logical, optional, intent(in) :: di_df_flag(:) ! Flag to indicate which of the 
+!                                   above are to be calculated
 !
 ! outputs
 !
@@ -293,6 +295,7 @@ MODULE fov_convolve_m
     n_coeffs = SIZE(di_df,dim=2)
 !
     DO i = 1, n_coeffs
+      if ( .not. di_df_flag(i) ) cycle
       CALL interpolatevalues(chi_in-init_angle,di_df(:,i), &
       & angles(ffth:no_fft), rad_fft(ffth:no_fft),METHOD='S', &
       & EXTRAPOLATE='C')
@@ -1033,6 +1036,9 @@ MODULE fov_convolve_m
 !
 END MODULE fov_convolve_m
 ! $Log$
+! Revision 2.6  2002/08/02 00:12:19  bill
+! just testing
+!
 ! Revision 2.5  2002/07/08 17:45:40  zvi
 ! Replace local pointers by automatic arrays
 !
