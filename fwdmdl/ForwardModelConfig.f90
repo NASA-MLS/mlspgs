@@ -40,6 +40,7 @@ module ForwardModelConfig
     integer, dimension(:), pointer :: molecules=>NULL() ! Which molecules to consider
     logical, dimension(:), pointer :: moleculeDerivatives=>NULL() ! Want jacobians
     type (Signal_T), dimension(:), pointer :: signals=>NULL()
+    integer :: instrumentModule         ! Module for scan model
     logical :: Spect_Der      ! Do spectroscopy derivatives
     logical :: Temp_Der       ! Do temperature derivatives
     type(vGrid_T), pointer :: integrationGrid=>NULL() ! Zeta grid for integration
@@ -159,6 +160,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 1.6  2001/05/02 20:30:36  livesey
+! Removed frequency from config
+!
 ! Revision 1.5  2001/04/26 02:36:52  vsnyder
 ! Moved *_indices declarations from init_tables_module to intrinsic
 !

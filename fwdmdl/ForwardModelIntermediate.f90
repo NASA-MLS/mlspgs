@@ -46,10 +46,16 @@ module ForwardModelIntermediate
 
     integer, dimension(:),                 pointer :: closestInstances=>NULL()
 
+    ! These ones are for the scan model
+    real (r8), dimension(:,:),             pointer :: basisGph=>NULL()
+    real (r8), dimension(:,:),             pointer :: RT=>NULL()
+    real (r8), dimension(:),               pointer :: R=>NULL()
+
   end type ForwardModelIntermediate_T
 
   type, public :: ForwardModelStatus_T
     logical :: newHydros                ! Need to recompute hydrostatic
+    logical :: newScanHydros            ! Scan model needs to recompute hydrostatic
     integer :: maf                      ! The next maf to process
     logical :: finished                 ! Flag to calling code to indicate completion
     logical, dimension(:), pointer :: rows=>NULL() ! Flag to indicate this row has non zeros
@@ -153,6 +159,9 @@ contains
 end module ForwardModelIntermediate
 
 ! $Log$
+! Revision 1.8  2001/05/01 00:23:00  livesey
+! Nullified fmStat%rows by default
+!
 ! Revision 1.7  2001/04/28 07:05:54  livesey
 ! Tidy up destruction of ForwardModelIntermediate, for cases where
 ! forward model has not been run.
