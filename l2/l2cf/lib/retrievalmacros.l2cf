@@ -181,15 +181,16 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
      /prefixSignal, sdName=' chisqChan !phase'
    joinedDGM_noRadsPerMIF$1_!phase: l2aux, source=radianceDiagnostics.noRadsPerMIF$1, $
      /prefixSignal, sdName=' noRadsPerMIF !phase'
-   joinedDGG_chisqBinned$1_!phase: l2gp, $
-     source=radianceDiagnostics.chisqBinned$1, $
-     precision=radianceDiagnostics.noRadsBinned$1, $
+   joinedDGG_chisqBinned$1_!phase: l2gp, source=radianceDiagnostics.chisqBinned$1, $
      /prefixSignal, swath=' chisqBinned !phase'
+   joinedDGG_noRadsBinned$1_!phase: l2gp, source=radianceDiagnostics.noRadsBinned$1, $
+     /prefixSignal, swath=' noRadsBinned !phase'
    !storeDGM(joinedDGM_chisqMMAF$1_!phase)!dnl
    !storeDGM(joinedDGM_chisqMMIF$1_!phase)!dnl
    !storeDGM(joinedDGM_chisqChan$1_!phase)!dnl
    !storeDGM(joinedDGM_noRadsPerMIF$1_!phase)!dnl
-   !storeDGG(joinedDGG_chisqBinned$1_!phase)})
+   !storeDGG(joinedDGG_chisqBinned$1_!phase)
+   !storeDGG(joinedDGG_noRadsBinned$1_!phase)})
 
 !define(doRadianceDiagnostics,{!dnl
    begin Fill
