@@ -23,7 +23,7 @@ BEGIN Construct
   !constructColumn(o3)!dnl
   !constructColumn(oh)!dnl
   !constructColumn(so2)!dnl
- !define(AllColumns, 
+ !define(allColumns, 
   { column_bro,column_ch3cn,column_clo,column_co,column_h2o,column_hcl,$
 	column_hcn,column_hno3,column_ho2,column_hocl,column_n2,column_n2o,$
 	column_o2,column_o3,column_oh,column_so2 })
