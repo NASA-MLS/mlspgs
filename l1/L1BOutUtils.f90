@@ -26,7 +26,7 @@ CONTAINS
     USE MLSL1Common, ONLY: L1BFileInfo, MAFinfo, MaxMIFs
     USE Orbit, ONLY: altG, altT, ascTAI, dscTAI, numOrb
     USE TkL1B, ONLY: L1BOA_MAF
-    USE OutputL1B, ONLY: OutputL1B_rad
+    USE OutputL1B, ONLY: OutputL1B_rad, OutputL1B_diags
     USE MLSL1Rad, ONLY: L1Brad
     USE EngTbls, ONLY: Reflec
     USE MLSL1Config, ONLY: L1Config
@@ -34,7 +34,8 @@ CONTAINS
 
     INTEGER, SAVE :: MAFno = 0, counterMAF
     INTEGER :: i
-    REAL :: scAngleG(0:(MaxMIFs-1)), scAngleT(0:(MaxMIFs-1))
+    INTEGER, PARAMETER :: last_MIF_indx = MaxMIFs - 1
+    REAL :: scAngleG(0:last_MIF_indx), scAngleT(0:last_MIF_indx)
     TYPE (MAFdata_T), POINTER :: CurMAFdata
 
     CurMAFdata => CalWin%MAFdata(CalWin%central)
@@ -44,7 +45,7 @@ CONTAINS
 
     IF (L1Config%Globals%ProduceL1BOA) THEN
 
-       DO i = 0, (MaxMIFs - 1)
+       DO i = 0, last_MIF_indx
           scAngleG(i) = CurMAFdata%SciPkt(i)%scAngleG
           scAngleT(i) = CurMAFdata%SciPkt(i)%scAngleT
           IF (i > 0) THEN  ! use previous until further notice
@@ -61,6 +62,9 @@ CONTAINS
     CALL OutputL1B_rad (MAFno, L1BFileInfo, counterMAF, Reflec, &
          MAFinfo%startTAI, L1Brad)
 
+    CALL OutputL1B_diags (MAFno, L1BFileInfo%DiagId, counterMAF, &
+         MAFinfo%startTAI)
+
     PRINT *, "outputting l1b for MAF no ", MAFno
 
   END SUBROUTINE OutputL1Bdata
@@ -72,28 +76,23 @@ CONTAINS
     USE Intrinsic, ONLY: l_hdf
     USE OpenInit, ONLY: antextPCF, antextCF
     USE PCFHdr, ONLY: WritePCF2Hdr
-    USE MLSFiles, ONLY: HDFVERSION_4, HDFVERSION_5
 
     CHARACTER(LEN=*), INTENT(IN) :: Filename
     INTEGER, INTENT(IN) :: HDFversion
 
-    IF (HDFversion == HDFVERSION_4) THEN
-       CALL WritePCF2Hdr (FileName, anTextPCF, hdfVersion=HDFVERSION_4)
-       CALL WritePCF2Hdr (FileName, anTextCF, hdfVersion=HDFVERSION_4)
-    ELSE IF (HDFversion == HDFVERSION_5) THEN
-       CALL WritePCF2Hdr (FileName, anTextPCF, hdfVersion=HDFVERSION_5, &
+    CALL WritePCF2Hdr (FileName, anTextPCF, hdfVersion=HDFversion, &
          & fileType=l_hdf)
-       CALL WritePCF2Hdr (FileName, anTextCF, hdfVersion=HDFVERSION_5, &
+    CALL WritePCF2Hdr (FileName, anTextCF, hdfVersion=HDFversion, &
          & fileType=l_hdf, name='/LCF')
-    ELSE
-       PRINT *, 'Unknown HDF type!'
-    ENDIF
 
   END SUBROUTINE WriteHdrAnnots
 
 END MODULE L1BOutUtils
 
 ! $Log$
+! Revision 2.10  2004/01/09 17:46:22  perun
+! Version 1.4 commit
+!
 ! Revision 2.9  2003/08/15 14:25:04  perun
 ! Version 1.2 commit
 !
