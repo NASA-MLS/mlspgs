@@ -485,6 +485,24 @@ CONTAINS
 	  iDesArr(iT) = 0
         ENDDO
 
+!*** initialization 
+
+        DO iD = 1, l2Days
+	  iP = 0
+	  DO kP = pStartIndex, pEndIndex 
+	    iP = iP + 1
+	    l3dz(iD)%pressure(iP) = cfProd%l3presLvl(iP) 
+	    dzA(iD)%pressure(iP)  = cfProd%l3presLvl(iP) 
+	    dzD(iD)%pressure(iP)  = cfProd%l3presLvl(iP) 
+          ENDDO
+
+          DO J = 1, cfDef%nNom 
+	    l3dz(iD)%latitude(J) = cfDef%l2nomLats(J) 
+	    dzA(iD)%latitude(J)  = cfDef%l2nomLats(J) 
+	    dzD(iD)%latitude(J)  = cfDef%l2nomLats(J) 
+	  END DO
+        ENDDO
+
 !*** Re-arrange the data into longitude order for each pressure level 
 
         DO iD = 1, l2Days
@@ -592,6 +610,22 @@ CONTAINS
 	  iDesArr(iT) = 0
         ENDDO
 
+!*** initialization 
+
+	iP = 0
+	DO kP = pStartIndex, pEndIndex 
+	  iP = iP + 1
+	  l3mz%pressure(iP) = cfProd%l3presLvl(iP) 
+	  mzA%pressure(iP)  = cfProd%l3presLvl(iP) 
+	  mzD%pressure(iP)  = cfProd%l3presLvl(iP) 
+        ENDDO
+
+        DO J = 1, cfDef%nNom 
+	     l3mz%latitude(J) = cfDef%l2nomLats(J) 
+	     mzA%latitude(J)  = cfDef%l2nomLats(J) 
+	     mzD%latitude(J)  = cfDef%l2nomLats(J) 
+	END DO
+
 !*** Re-arrange the data into longitude order for each pressure level 
 
 	iP = 0
@@ -680,7 +714,28 @@ CONTAINS
 
 	Real slope, lonStart, newField
 
-        
+!*** initialization 
+
+        iP = 0
+        DO kP = pStartIndex, pStartIndex
+          iP = iP + 1
+	  l3mm%pressure(iP) = cfProd%l3presLvl(iP) 
+	  mmA%pressure(iP)  = cfProd%l3presLvl(iP) 
+	  mmD%pressure(iP)  = cfProd%l3presLvl(iP) 
+	END DO
+
+        DO J = 1, cfProd%nLats
+	     l3mm%latitude(J) = cfProd%latGridMap(J) 
+	     mmA%latitude(J)  = cfProd%latGridMap(J) 
+	     mmD%latitude(J)  = cfProd%latGridMap(J) 
+	END DO
+
+        DO K = 1, cfProd%nLons
+	     l3mm%longitude(K) = cfProd%longGrid(K) 
+	     mmA%longitude(K)  = cfProd%longGrid(K) 
+	     mmD%longitude(K)  = cfProd%longGrid(K) 
+	END DO
+
 !*** Start calculation 
 
         iP = 0
