@@ -7,7 +7,7 @@ module MLSSets
 
   implicit NONE
   private
-  public :: FindFirst, FindNext, FindAll, Intersection, Union
+  public :: FindFirst, FindNext, FindAll, Intersect, Intersection, Union
 
   interface FindFirst
     module procedure FindFirstInteger, FindFirstLogical!, FindFirstCharacter
@@ -30,6 +30,8 @@ module MLSSets
 !               first integer in the array equal to the probe
 ! FindNext      Find the next logical in the array that is true, or the
 !               next integer in the array equal to the probe
+! Intersect     Return true if two sets represented by arrays of integers have
+!               a common element
 ! Intersection  Compute intersection of two sets, represented as arrays of integers
 ! Union         Compute union of two sets, represented as arrays of integers
 ! === (end of toc) ===                                                   
@@ -38,7 +40,8 @@ module MLSSets
 ! int FindFirstInteger (int set(:), int probe)      
 ! int FindFirstLogical (log condition(:))      
 ! int FindNextInteger (int set(:), int probe, int current, {log wrap}, {log repeat})      
-! int FindNextLogical (log condition(:), int current, {log wrap}, {log repeat})      
+! int FindNextLogical (log condition(:), int current, {log wrap}, {log repeat})
+! logical Intersect ( int a(:), int b(:) )
 ! int *Intersection ( int a(:), int b(:) )
 ! int *Union ( int a(:), int b(:) )
 ! === (end of api) ===
@@ -53,6 +56,104 @@ module MLSSets
 !---------------------------------------------------------------------------
 
 contains ! =====     Public Procedures     =============================
+
+  ! ---------------------------------------------  FindAllInteger  -----
+  subroutine FindAllInteger ( SET, IT, WHICH, HOW_MANY, RE_MAINDER, WHICH_NOT )
+    ! Return which i of set[i] = it
+    ! optionally, may return also:
+    ! how many of them do
+    ! which_not of them (which don't)
+    ! and the re_mainder of the set != it
+    ! e.g. given set = /(4, 3, 1, 2, 1, 3 )/ and it = 1
+    ! produces which = /(3, 5)/, 
+    !      which_not = /(1, 2, 4, 6)/, 
+    !       how_many = 2,
+    !     re_mainder = /(4, 3, 2, 3)/
+    
+    ! Note that which and which_not are arrays of array indices
+    ! while re_mainder is an array of array elements
+    
+    ! This may be useful,
+    ! e.g. in dump for reshaping an array to suppress any dims 
+    ! that are identically 1
+    
+    ! Maybe this should be rewritten to use fraternal functions findfirst
+    ! or findnext
+
+    ! Formal arguments
+    integer, intent(in), dimension(:)  ::           set
+    integer, intent(in)                ::           it
+    integer, intent(out), dimension(:) ::           which
+    integer, intent(out), optional ::               how_many
+    integer, intent(out), dimension(:), optional :: re_mainder
+    integer, intent(out), dimension(:), optional :: which_not
+
+    ! local variables
+    integer :: i, i_which, i_re_mainder
+    
+    if ( size(set) < 1 .or. size(which) < 1 ) then
+      if ( present(how_many) ) how_many = 0
+      if ( present(re_mainder) ) re_mainder = 0
+      return
+    end if
+    i_which = 0
+    i_re_mainder = 0
+    do i=1, size(set)
+      if ( set(i) == it ) then
+        i_which = i_which+1
+        which(min(size(which), i_which)) = i
+      else
+        i_re_mainder = i_re_mainder+1
+        if ( present(which_not) ) &
+          & which_not(min(size(which_not), i_re_mainder)) = i
+        if ( present(re_mainder) ) &
+          & re_mainder(min(size(re_mainder), i_re_mainder)) = set(i)
+      end if
+    end do
+    if ( present(how_many) ) how_many = i_which
+
+  end subroutine FindAllInteger
+
+  ! ---------------------------------------------  FindAllLogical  -----
+  subroutine FindAllLogical ( set, WHICH, HOW_MANY, WHICH_NOT )
+    ! Return which i of set[i] = .true.
+    ! optionally, may return also:
+    ! how many of them do
+    ! which_not of them (which don't)
+    ! e.g. given set = /(F, F, T, F, T, F )/
+    ! produces which = /(3, 5)/, 
+    !      which_not = /(1, 2, 4, 6)/, 
+    !       how_many = 2,
+    
+    ! Note that which and which_not are arrays of array indices
+    ! Formal arguments
+    logical, intent(in), dimension(:)  ::           set
+    integer, intent(out), dimension(:) ::           which
+    integer, intent(out), optional ::               how_many
+    integer, intent(out), dimension(:), optional :: which_not
+
+    ! local variables
+    integer :: i, i_which, i_re_mainder
+    
+    if ( size(set) < 1 .or. size(which) < 1 ) then
+      if ( present(how_many) ) how_many = 0
+      return
+    end if
+    i_which = 0
+    i_re_mainder = 0
+    do i=1, size(set)
+      if ( set(i) ) then
+        i_which = i_which+1
+        which(min(size(which), i_which)) = i
+      else
+        i_re_mainder = i_re_mainder+1
+        if ( present(which_not) ) &
+          & which_not(min(size(which_not), i_re_mainder)) = i
+      end if
+    end do
+    if ( present(how_many) ) how_many = i_which
+
+  end subroutine FindAllLogical
 
   ! -------------------------------------------  FindFirstInteger  -----
   integer function FindFirstInteger ( Set, Probe )
@@ -167,6 +268,38 @@ contains ! =====     Public Procedures     =============================
     end if
   end function FindNextLogical
 
+  ! --------------------------------------------------  Intersect  -----
+  logical function Intersect ( A, B )
+  ! Return true if the integer arrays A and B have a common element
+
+    integer, intent(in) :: A(:), B(:)
+
+    integer :: I, J
+
+    ! Put the longer loop as the inner one
+    if ( size(a) < size(b) ) then
+      do i = 1, size(a)
+        do j = 1, size(b)
+          if ( a(i) == b(j) ) then
+            intersect = .true.
+            return
+          end if
+        end do
+      end do
+    else
+      do i = 1, size(b)
+        do j = 1, size(a)
+          if ( a(j) == b(i) ) then
+            intersect = .true.
+            return
+          end if
+        end do
+      end do
+    end if
+    intersect = .false.
+
+  end function Intersect
+
   ! -----------------------------------------------  Intersection  -----
   function Intersection ( A, B ) result ( C )
   ! Compute the intersection C of the sets A and B, each represented by
@@ -240,104 +373,6 @@ contains ! =====     Public Procedures     =============================
 
   end function Union
 
-  ! ------------------------------------------  FindAllInteger  -----
-  subroutine FindAllInteger ( SET, IT, WHICH, HOW_MANY, RE_MAINDER, WHICH_NOT )
-    ! Return which i of set[i] = it
-    ! optionally, may return also:
-    ! how many of them do
-    ! which_not of them (which don't)
-    ! and the re_mainder of the set != it
-    ! e.g. given set = /(4, 3, 1, 2, 1, 3 )/ and it = 1
-    ! produces which = /(3, 5)/, 
-    !      which_not = /(1, 2, 4, 6)/, 
-    !       how_many = 2,
-    !     re_mainder = /(4, 3, 2, 3)/
-    
-    ! Note that which and which_not are arrays of array indices
-    ! while re_mainder is an array of array elements
-    
-    ! This may be useful,
-    ! e.g. in dump for reshaping an array to suppress any dims 
-    ! that are identically 1
-    
-    ! Maybe this should be rewritten to use fraternal functions findfirst
-    ! or findnext
-
-    ! Formal arguments
-    integer, intent(in), dimension(:)  ::           set
-    integer, intent(in)                ::           it
-    integer, intent(out), dimension(:) ::           which
-    integer, intent(out), optional ::               how_many
-    integer, intent(out), dimension(:), optional :: re_mainder
-    integer, intent(out), dimension(:), optional :: which_not
-
-    ! local variables
-    integer :: i, i_which, i_re_mainder
-    
-    if ( size(set) < 1 .or. size(which) < 1 ) then
-      if ( present(how_many) ) how_many = 0
-      if ( present(re_mainder) ) re_mainder = 0
-      return
-    end if
-    i_which = 0
-    i_re_mainder = 0
-    do i=1, size(set)
-      if ( set(i) == it ) then
-        i_which = i_which+1
-        which(min(size(which), i_which)) = i
-      else
-        i_re_mainder = i_re_mainder+1
-        if ( present(which_not) ) &
-          & which_not(min(size(which_not), i_re_mainder)) = i
-        if ( present(re_mainder) ) &
-          & re_mainder(min(size(re_mainder), i_re_mainder)) = set(i)
-      end if
-    end do
-    if ( present(how_many) ) how_many = i_which
-
-  end subroutine FindAllInteger
-
-  ! ------------------------------------------  FindAllLogical  -----
-  subroutine FindAllLogical ( set, WHICH, HOW_MANY, WHICH_NOT )
-    ! Return which i of set[i] = .true.
-    ! optionally, may return also:
-    ! how many of them do
-    ! which_not of them (which don't)
-    ! e.g. given set = /(F, F, T, F, T, F )/
-    ! produces which = /(3, 5)/, 
-    !      which_not = /(1, 2, 4, 6)/, 
-    !       how_many = 2,
-    
-    ! Note that which and which_not are arrays of array indices
-    ! Formal arguments
-    logical, intent(in), dimension(:)  ::           set
-    integer, intent(out), dimension(:) ::           which
-    integer, intent(out), optional ::               how_many
-    integer, intent(out), dimension(:), optional :: which_not
-
-    ! local variables
-    integer :: i, i_which, i_re_mainder
-    
-    if ( size(set) < 1 .or. size(which) < 1 ) then
-      if ( present(how_many) ) how_many = 0
-      return
-    end if
-    i_which = 0
-    i_re_mainder = 0
-    do i=1, size(set)
-      if ( set(i) ) then
-        i_which = i_which+1
-        which(min(size(which), i_which)) = i
-      else
-        i_re_mainder = i_re_mainder+1
-        if ( present(which_not) ) &
-          & which_not(min(size(which_not), i_re_mainder)) = i
-      end if
-    end do
-    if ( present(how_many) ) how_many = i_which
-
-  end subroutine FindAllLogical
-
 ! =====     Private Procedures     =====================================
 
   logical function not_used_here()
@@ -347,6 +382,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSSets
 
 ! $Log$
+! Revision 2.4  2004/06/11 20:02:14  vsnyder
+! Add Intersect function
+!
 ! Revision 2.3  2004/06/11 19:03:35  pwagner
 ! Added FindAll
 !
