@@ -534,8 +534,10 @@ contains ! =====     Public Procedures     =============================
     else
       do i = 1, size(x%quantities)
         if ( doValues ) z%quantities(i)%values = x%quantities(i)%values
-        if ( doMask .and. associated (x%quantities(i)%mask ) ) &
-          & z%quantities(i)%mask = x%quantities(i)%mask
+        if ( doMask .and. associated (x%quantities(i)%mask ) ) then
+          call CreateMask ( z%quantities(i) )
+          z%quantities(i)%mask = x%quantities(i)%mask
+        end if
       end do
     end if
   end subroutine CopyVector
@@ -1662,6 +1664,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.72  2001/10/23 16:39:28  pwagner
+! Added MaskVectorQty
+!
 ! Revision 2.71  2001/10/18 23:49:46  livesey
 ! Tidied up a floating comma in dump_vector
 !
