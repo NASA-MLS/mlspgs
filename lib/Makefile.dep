@@ -1,24 +1,23 @@
 #Makefile.dep -- a file to be included by a Makefile
 #to compile a Fortran 9x program or library
 OBJS = \
-Allocate_Deallocate.o      VectorsModule.o  	    swapi_character_array.o  \
-GriddedData.o  		   dates_module.o  	    swapi_character_scalar.o  \
-HDF-EOS.o  		   declaration_table.o      swapi_double.o  \
-Hdf.o  			   dump_0.o  		    swapi_integer.o  \
-L1BData.o  		   error_handler.o  	    swapi_real.o  \
-L2GPData.o  		   expr_m.o  		    symbol_table.o  \
-MLSCF.o  		   gridded_data_module.o    symbol_types.o  \
-MLSCommon.o  		   hash.o  		    table_dumper.o  \
-MLSMessageModule.o  	   heights_module.o  	    table_generator.o  \
-MLSNumerics.o  		   intrinsic.o  	    test_cholesky.o  \
-MLSPCF.o  		   io_stuff.o  		    test_multiply.o  \
-MLSSignalNomenclature.o    lexer_core.o  	    test_multiply_vector.o  \
-MLSStrings.o  		   lexer_m.o  		    test_sparsify.o  \
-MatrixModule_0.o  	   machine.o  		    toggles_core.o  \
-MatrixModule_1.o  	   output_m.o  		    trace_m.o  \
-QuantityTemplates.o  	   parser.o  		    tree.o  \
-SDPToolkit.o  		   string_table.o  	    tree_types.o  \
-SDPToolkitSubstitute.o     swapi.o  		    units.o  \
+Allocate_Deallocate.o      SDPToolkitSubstitute.o    string_table.o  \
+GriddedData.o  		   VectorsModule.o  	     swapi.o  \
+HDF-EOS.o  		   dates_module.o  	     swapi_character_array.o  \
+Hdf.o  			   declaration_table.o       swapi_character_scalar.o  \
+L1BData.o  		   dump_0.o  		     swapi_double.o  \
+L2GPData.o  		   error_handler.o  	     swapi_integer.o  \
+MLSCF.o  		   expr_m.o  		     swapi_real.o  \
+MLSCommon.o  		   gridded_data_module.o     symbol_table.o  \
+MLSMessageModule.o  	   hash.o  		     symbol_types.o  \
+MLSNumerics.o  		   heights_module.o  	     table_dumper.o  \
+MLSPCF.o  		   intrinsic.o  	     table_generator.o  \
+MLSSignalNomenclature.o    io_stuff.o  		     toggles_core.o  \
+MLSStrings.o  		   lexer_core.o  	     trace_m.o  \
+MatrixModule_0.o  	   lexer_m.o  		     tree.o  \
+MatrixModule_1.o  	   machine.o  		     tree_types.o  \
+QuantityTemplates.o  	   output_m.o  		     units.o  \
+SDPToolkit.o  		   parser.o  \
  
 # using f90makedep.pl to calculate dependencies 
 Allocate_Deallocate.o: Allocate_Deallocate.f90 MLSMessageModule.o
@@ -45,8 +44,8 @@ lexer_m.o: lexer_m.f90 error_handler.o lexer_core.o output_m.o string_table.o \
 machine.o: machine.f90
 MatrixModule_0.o: MatrixModule_0.f90 Allocate_Deallocate.o MLSCommon.o \
 	MLSMessageModule.o dump_0.o output_m.o
-MatrixModule_1.o: MatrixModule_1.f90 MLSCommon.o MLSMessageModule.o \
-	MatrixModule_0.o VectorsModule.o
+MatrixModule_1.o: MatrixModule_1.f90 Allocate_Deallocate.o MLSCommon.o \
+	MLSMessageModule.o MatrixModule_0.o VectorsModule.o
 MLSMessageModule.o: MLSMessageModule.f90 SDPToolkit.o
 MLSNumerics.o: MLSNumerics.f90 MLSCommon.o MLSMessageModule.o MLSStrings.o
 MLSSignalNomenclature.o: MLSSignalNomenclature.f90 MLSCommon.o \
@@ -71,11 +70,6 @@ table_dumper.o: table_dumper.f90 MLSCF.o declaration_table.o intrinsic.o \
 table_generator.o: table_generator.f90 MLSCF.o declaration_table.o expr_m.o \
 	intrinsic.o lexer_core.o output_m.o string_table.o toggles_core.o \
 	trace_m.o tree.o tree_types.o
-test_cholesky.o: test_cholesky.f90 MLSCommon.o MatrixModule_0.o machine.o
-test_multiply.o: test_multiply.f90 MLSCommon.o MatrixModule_0.o machine.o
-test_multiply_vector.o: test_multiply_vector.f90 MLSCommon.o MatrixModule_0.o \
-	machine.o
-test_sparsify.o: test_sparsify.f90 MLSCommon.o MatrixModule_0.o
 trace_m.o: trace_m.f90 lexer_core.o output_m.o tree.o
 tree.o: tree.f90 error_handler.o machine.o output_m.o string_table.o \
 	symbol_table.o symbol_types.o toggles_core.o tree_types.o
