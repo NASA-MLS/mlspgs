@@ -48,7 +48,7 @@ contains ! =====     Public Procedures     =============================
       & L_SIDEBANDRATIO, L_ZETA, L_OPTICALDEPTH, L_LATITUDE
     use L2PC_m, only: L2PCDATABASE, BINSELECTORS, POPULATEL2PCBIN
     use ManipulateVectorQuantities, only: FINDONECLOSESTINSTANCE, &
-      & DOHGRIDSMATCH, DOVGRIDSMATCH
+      & DOHGRIDSMATCH, DOVGRIDSMATCH, DOFGRIDSMATCH
     use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
       & MATRIXELEMENT_T, CREATEBLOCK, DENSIFY
     use MatrixModule_1, only: MATRIX_T, MULTIPLYMATRIXVECTORNOT, DUMP, &
@@ -56,7 +56,7 @@ contains ! =====     Public Procedures     =============================
     use MLSCommon, only: r8, rm
     use MLSSignals_m, only: Signal_T, GetSidebandLoop
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
-      & MLSMSG_Allocate, MLSMSG_Deallocate
+      & MLSMSG_Allocate, MLSMSG_Deallocate, MLSMSG_WARNING
     use MLSNumerics, only: HUNT, INTERPOLATEVALUES
     use Molecules, only: L_EXTINCTION
     use Output_m, only: Output
@@ -117,6 +117,8 @@ contains ! =====     Public Procedures     =============================
 
     real (r8) :: BESTCOST               ! Output from SelectL2PCBin
     real (r8) :: DELTAPHI               ! Difference in geod Angle in l2pc
+
+    character (len=80) :: WORD          ! A word to output
 
     ! The `prime' quantities are important.
     ! - yPrime (yP) is contains one maf of the relevant radiances, but on the
@@ -325,9 +327,12 @@ contains ! =====     Public Procedures     =============================
         ! If it's not in the state vector, perhaps make a fuss
         if ( .not. associated(stateQ) ) then
           if ( any(l2pcQ%template%quantityType == &
-            & (/ l_temperature, l_vmr /))) &
-            &   call MLSMessage ( MLSMSG_Error, ModuleName, &
-            &  "Temperature or vmr quantity absent from state")
+            & (/ l_temperature, l_vmr /)) .and. &
+            & l2pcQ%template%molecule /= l_extinction ) then
+            call get_string ( l2pcQ%template%name, word, strip=.true. )
+            call MLSMessage ( MLSMSG_Warning, ModuleName, &
+              &  "No quantity in state vectors found to match "//trim(word) )
+          end if
           cycle                         ! Go to next l2pc quantity
         end if
 
@@ -625,13 +630,17 @@ contains ! =====     Public Procedures     =============================
     subroutine FindMatchForL2PCQ ( l2pcQ, FwdModelIn, FwdModelExtra, &
       & stateQ, foundInFirst )
       type (VectorValue_T), intent(in) :: L2PCQ ! Quantity to search for
-      type (Vector_T), intent(in) :: FWDMODELIN ! State vector
-      type (Vector_T), intent(in) :: FWDMODELEXTRA ! Extra state vector
+      type (Vector_T), intent(in), target :: FWDMODELIN ! State vector
+      type (Vector_T), intent(in), target :: FWDMODELEXTRA ! Extra state vector
       type (VectorValue_T), pointer :: STATEQ ! Result
       logical, intent(out) :: FOUNDINFIRST ! If set, found in first vector
       ! This routine looks through the supplied state vectors and finds a match
       ! for the supplied quantity from the l2pc state vector.  It then goes on to
       ! test that the HGrids and VGrids for the two quantities match appropriately.
+
+      ! Local variables
+      integer :: QTY, VEC
+      type (Vector_T), pointer :: V
 
       ! Executable code
       select case ( l2pcQ%template%quantityType )
@@ -640,22 +649,36 @@ contains ! =====     Public Procedures     =============================
           & quantityType = l_temperature, &
           & foundInFirst = foundInFirst, noError=.true. )
       case ( l_vmr )
-        stateQ => GetVectorQuantityByType ( FwdModelIn, FwdModelExtra,&
-          & quantityType = l_vmr, &
-          & molecule = l2pcQ%template%molecule, &
-          & foundInFirst = foundInFirst, noError=.true. )
-      case ( l_extinction )
-  !       stateQ => GetVectorQuantityByType ( FwdModelIn, FwdModelExtra,&
-  !         & quantityType = l_extinction, &
-  !         & radiometer = l2pcQ%template%radiometer, &
-  !         & foundInFirst = foundInFirst, noError=.true. )
-        stateQ => NULL() ! Temporary
+        ! Here we may need to be a little more intelligent
+        if ( l2pcQ%template%molecule /= l_extinction ) then
+          stateQ => GetVectorQuantityByType ( FwdModelIn, FwdModelExtra,&
+            & quantityType = l_vmr, &
+            & molecule = l2pcQ%template%molecule, &
+            & foundInFirst = foundInFirst, noError=.true. )
+        else
+          searchLoop: do vec = 1, 2
+            ! Point to appropraite vector
+            if ( vec == 1 ) then
+              v => FwdModelIn
+            else
+              v => FwdModelExtra
+            end if
+            ! Skip this vector if it doesn't exist
+            if ( .not. associated ( v ) ) cycle searchLoop
+            ! Loop over this vector
+            do qty = 1, size ( v%quantities )
+              stateQ => v%quantities(qty)
+              if ( stateQ%template%quantityType == l_vmr .and. &
+                &  stateQ%template%molecule == l_extinction .and. &
+                &  stateQ%template%radiometer == l2pcQ%template%radiometer ) then
+                if ( DoFGridsMatch ( l2pcQ, stateQ ) ) exit searchLoop
+              end if
+            end do
+          end do searchLoop
+        end if
       case default
         ! For the moment, just ignore things we don't understand.
         stateQ => NULL()
-  !       stateQ => GetVectorQuantityByType ( FwdModelIn, FwdModelExtra,&
-  !         & quantityType = l2pcQ%template%quantityType, &
-  !         & foundInFirst = foundInFirst, noError=.true. )
       end select
 
       ! Now check that these match.
@@ -843,6 +866,10 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.26  2002/09/13 22:53:22  vsnyder
+! Move USE statements from module scope to procedure scope.  Cosmetic changes.
+! Move some loop-invariant allocate/deallocates out of loops.
+!
 ! Revision 2.25  2002/09/13 18:09:09  pwagner
 ! May change matrix precision rm from r8
 !
