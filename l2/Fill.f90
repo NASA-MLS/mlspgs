@@ -5,14 +5,17 @@
 module Fill                     ! Create vectors and fill them.
 !=============================================================================
 
-  USE L2GPData
-  USE L2AUXData
   use GriddedData, only: GriddedData_T
   use INIT_TABLES_MODULE, only: F_SOURCE, S_TIME, S_VECTOR ! Later, s_Fill
                                                            ! will be added
+  USE L2GPData, only: L2GPData_T
+  USE L2AUXData, only: L2AUXData_T, L2AUXDim_None, L2AUXDim_Channel, &
+  & L2AUXDim_IntermediateFrequency, L2AUXDim_USBFrequency, L2AUXDim_LSBFrequency, &
+  & L2AUXDim_MIF, L2AUXDim_MAF, L2AUXDim_GeodAngle
   use LEXER_CORE, only: PRINT_SOURCE
-  use MLSCommon, only: L1BInfo_T, NameLen
-  use MLSStrings, only: lowercase
+  use MLSCommon, only: L1BInfo_T, NameLen, LineLen, R8
+  use MLSMessageModule, only: MLSMSG_Error, MLSMessage
+!  use MLSStrings, only: lowercase
   use OUTPUT_M, only: OUTPUT
   use QuantityTemplates, only: QuantityTemplate_T
   use string_table, only: get_string
@@ -197,7 +200,7 @@ contains ! =====     Public Procedures     =============================
                 l2Index = 1
                 DO WHILE (.NOT. is_l2aux .AND. l2Index.LE.SIZE(L2AUXDatabase))
                     IF(sourceName.EQ.L2AUXDatabase(l2Index)%Name) THEN
-                        is_l2gp = .TRUE.
+                        is_l2aux = .TRUE.
                         exit
                     ENDIF
                     l2Index = l2Index + 1
@@ -209,10 +212,13 @@ contains ! =====     Public Procedures     =============================
                 CALL FillOL2GPVector(L2GPDatabase(l2Index), qtyTemplates, &
                       & vectors(vectorIndex), quantityNameString, qtiesStart)
 
-         ELSE
+         ELSEIF(is_l2aux) THEN
                 CALL FillOL2AUXVector(L2AUXDatabase(l2Index), qtyTemplates, &
                       & vectors(vectorIndex), quantityNameString, qtiesStart)
 
+         ELSE
+                CALL MLSMessage(MLSMSG_Error, ModuleName, &
+                     & 'source file in neither l2gp nor l2aux databases')
          ENDIF
           ! This is *not* going to work if you have more than one vector
 
@@ -250,7 +256,7 @@ contains ! =====     Public Procedures     =============================
 
 !=============================== FillVector ==========================
 SUBROUTINE FillVector(inPointer, Vector, pointerType, vectorType, NumQtys, &
-     & numChans, numSurfs, numInstances, qtiesStart)
+     & numChans, numSurfs, numInstances, qtiesStart, dim_order)
 !=============================== FillVector ==========================
 
 ! Fill the vector Vector with values taken from the array pointed to by inPointer
@@ -273,9 +279,12 @@ REAL(r8), POINTER, DIMENSION(:,:,:) ::  inPointer
 TYPE(Vector_T), INTENT(OUT) ::          Vector
 INTEGER, INTENT(IN) ::                  NumQtys, qtiesStart
 INTEGER, INTENT(IN) ::                  numInstances, numSurfs, numChans
+INTEGER, INTENT(IN), OPTIONAL, DIMENSION(:) :: dim_order
 
 ! Private
+CHARACTER (LEN=LineLen) ::              msr
 INTEGER ::                              qty, IERR
+CHARACTER (LEN=4) ::                    qtyChar, IERRChar
 ! Error codes
 INTEGER ::                              numInstancesisZero=1
 INTEGER ::                              numSurfsisZero=2
@@ -299,6 +308,7 @@ Vector%template%NoQuantities = NumQtys
 SELECT CASE (PointerType(:4) // VectorType(:4))
 CASE ('l2gpl2gp')
    DO qty = qtiesStart, qtiesStart - 1 + NumQtys
+     WRITE(qtyChar, '(I4)') qty
      Vector%quantities(qty)%template%noChans = numChans
      Vector%quantities(qty)%template%noSurfs = numSurfs
      Vector%quantities(qty)%template%noInstances = numInstances    
@@ -318,7 +328,27 @@ CASE ('l2gpl2gp')
 !		call announce_error ( ErrorInFillVector, objIsFullRank3 )
 !       		RETURN
 !	ENDIF
-	CALL squeeze(inPointer, Vector%quantities(qty)%values, IERR)
+	CALL squeeze(IERR, inPointer, Vector%quantities(qty)%values)
+     WRITE(IERRChar, '(I4)') IERR
+     msr = 'Error #' // IERRChar // ' in squeezing l2gp into quantity ' // qtyChar
+     IF(IERR /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+        & msr)
+   ENDDO
+CASE ('l2aul2au')
+   DO qty = qtiesStart, qtiesStart - 1 + NumQtys
+     WRITE(qtyChar, '(I4)') qty
+     Vector%quantities(qty)%template%noChans = numChans
+     Vector%quantities(qty)%template%noSurfs = numSurfs
+     Vector%quantities(qty)%template%noInstances = numInstances
+     IF(PRESENT(dim_order)) THEN
+        CALL squeeze(IERR, inPointer, Vector%quantities(qty)%values, dim_order)
+     ELSE    
+        CALL squeeze(IERR, inPointer, Vector%quantities(qty)%values)
+     ENDIF
+     WRITE(IERRChar, '(I4)') IERR
+     msr = 'Error #' // IERRChar // ' in squeezing l2aux into quantity ' // qtyChar
+     IF(IERR /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+        & msr)
    ENDDO
 CASE default
    ! FillVector not yet written to handle these cases
@@ -421,7 +451,7 @@ IF(TheyMatch) THEN
         & qtiesStart)
 ELSE
    CALL MLSMessage(MLSMSG_Error, ModuleName, &
-        & 'Old and new L2GPData don''t match in times or geolocations')
+        & 'Vector and old L2GP do not match in times or geolocations')
 ENDIF
 !DEALLOCATE(l2gpData%pressures, &
 !     & l2gpData%latitude, l2gpData%longitude, l2gpData%time, &
@@ -450,7 +480,7 @@ SUBROUTINE FillOL2AUXVector(OldL2AUXData, qtyTemplates, &
 !=============================== FillOL2AUXVector ==========================
 
 ! If the times, pressures, and geolocations match,
-! fill the vector Output with values taken from the appropriate quantity in
+! fill the vector Output with values taken from the
 ! Old L2AUX vector OldL2AUXData
 ! 
 
@@ -461,23 +491,109 @@ TYPE(L2AUXData_T) ::                               OldL2AUXData
 TYPE(Vector_T), INTENT(INOUT) ::                  Output
 CHARACTER*(*), INTENT(IN) ::                      QuantityName
 
+! Local variables
+!::::::::::::::::::::::::: LOCALS :::::::::::::::::::::
+type (QuantityTemplate_T) ::                      OQTemplate	! Output Quantity Template
+INTEGER ::                                        OQType	! Ouptut quantity type
+INTEGER ::                                        OQNVals	! No. Ouptut quantity vals
+INTEGER ::                                        ChanDim	! which dim no. is channel
+INTEGER ::                                        IntFreqDim	! which dim no. is int. frq.
+INTEGER ::                                        USBDim	! which dim no. is USB
+INTEGER ::                                        LSBDim	! which dim no. is LSB
+INTEGER ::                                        MAFDim	! which dim no. is MAF
+INTEGER ::                                        MIFDim	! which dim no. is MIF
+INTEGER ::                                        L2NVals	! No. l2 aux vals
+INTEGER ::                                        i
+LOGICAL ::                                        TheyMatch
+! This will let us re-order the vector dimensions differently from the l2aux
+INTEGER, DIMENSION(3) ::                          dim_order
+
+! Properties of Output Vector
+OQTemplate = qtyTemplates(Output%TEMPLATE%QUANTITIES(qtiesStart))
+OQType = OQtemplate%quantityType
+OQNVals = OQtemplate%noInstances*OQtemplate%noSurfs*OQtemplate%noChans
+
+! Properties of l2 aux
+ChanDim = 0
+IntFreqDim = 0
+USBDim = 0
+LSBDim = 0
+MAFDim = 0
+MIFDim = 0
+L2NVals = 1
+DO i=1, OldL2AUXData%noDimensionsUsed
+    L2NVals = L2NVals*OldL2AUXData%dimensions(i)%noValues
+    SELECT CASE(OldL2AUXData%dimensions(i)%dimensionFamily)
+    CASE(L2AUXDim_Channel)
+        ChanDim = i
+        dim_order(1) = i
+    CASE(L2AUXDim_IntermediateFrequency)
+        IntFreqDim = i
+    CASE(L2AUXDim_USBFrequency)
+        USBDim = i
+    CASE(L2AUXDim_LSBFrequency)
+        LSBDim = i
+    CASE(L2AUXDim_MIF)
+        MIFDim = i
+    CASE(L2AUXDim_MAF)
+        MAFDim = i
+    CASE DEFAULT	! We are not yet interested in these dimensions
+    END SELECT
+    
+ENDDO
+
+! Check that the dimensions match up and are of the same family
+TheyMatch = OQNVals == L2NVals
+IF(OQTemplate%minorFrame) THEN
+	TheyMatch = TheyMatch .AND. MIFDim > 0
+ENDIF
+IF(OQTemplate%noChans > 0) THEN
+	TheyMatch = TheyMatch .AND. &
+        & (  ChanDim > 0   )
+ENDIF
+
+IF(TheyMatch) THEN
+   CALL FillVector(OldL2AUXData%values, Output, &
+        & 'l2aux', 'l2aux', 1, &
+        & MAX(OldL2AUXData%dimensions(1)%noValues, 1), &
+        & MAX(OldL2AUXData%dimensions(2)%noValues, 1), &
+        & MAX(OldL2AUXData%dimensions(3)%noValues, 1), &
+        & qtiesStart)
+ELSE
+   CALL MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Vector and old L2AUX do not match')
+ENDIF
+
 END SUBROUTINE FillOL2AUXVector
 
 !=============================== nearby ==========================
-FUNCTION nearby(x, y)
+FUNCTION nearby(x, y, inRelSmall, inOverallTol)
 !=============================== nearby ==========================
-! This functions returns TRUE if x and y are "nearby" compared
-! with their moduli (proportionally small) and an overall tolerance
+! This functions returns TRUE if x and y are "nearby" comparing either
+! their relative difference (proportionally small) 
+! or their differences with an overall tolerance
 REAL(r8), INTENT(IN) ::              x, y
+REAL(r8), INTENT(IN), OPTIONAL ::    inRelSmall
+REAL(r8), INTENT(IN), OPTIONAL ::    inOverallTol
 
 ! result
 LOGICAL ::                           nearby
 
 ! Private
 REAL(r8) ::                          small=1.D-32
-! REAL(r8) ::                          tolerance=1.D-32
+REAL(r8) ::                          tolerance=0.D0
 
-IF(x*y /= 0) THEN
+IF(PRESENT(inRelSmall)) THEN
+    small = inRelSmall
+ENDIF
+
+IF(PRESENT(inOverallTol)) THEN
+    tolerance = inOverallTol
+ENDIF
+
+IF(ABS(x-y) <= tolerance) THEN
+   nearby = .TRUE.
+ELSEIF(x*y /= 0) THEN
    nearby = ABS(x-y) .LT. small*SQRT(ABS(x))*SQRT(ABS(y))
 ELSEIF(x /= 0) THEN
    nearby = ABS(x-y) .LT. small*ABS(x)
@@ -488,7 +604,7 @@ ENDIF
 END FUNCTION nearby
 
 !=============================== squeeze ==========================
-SUBROUTINE squeeze(source, sink, IERR)
+SUBROUTINE squeeze(IERR, source, sink, source_order)
 !=============================== squeeze ==========================
     ! takes a rank 3 object source and returns a rank2 object sink
     ! source(1..n1, 1..n2, 1..n3) -> sink(1..n1*n2, 1..n3)
@@ -501,6 +617,12 @@ SUBROUTINE squeeze(source, sink, IERR)
     ! n1*n2 <= m1
     ! n3 <= m2
     !
+    ! if source_order is present, it is a permutation of (1 2 3)
+    ! such that before squeezing, the source is re-ordered:
+    ! temp(1, 2, 3) = source(order(1), order(2), order(3))
+    ! and then
+    ! temp(1..n1, 1..n2, 1..n3) -> sink(1..n1*n2, 1..n3)
+    !
     ! (A future improvement might take as optional arguments
     !  integer arrays source_shape, sink_shape, 
     !  or else shape-params n1, n2, m1)
@@ -508,6 +630,7 @@ SUBROUTINE squeeze(source, sink, IERR)
     REAL(r8), DIMENSION(:,:,:), INTENT(IN) :: source
     REAL(r8), DIMENSION(:,:), INTENT(OUT)  :: sink
     INTEGER, INTENT(OUT)                   :: IERR
+    INTEGER, INTENT(IN), OPTIONAL, DIMENSION(:) :: source_order
 
     !----------Local vars----------!
     ! Error codes
@@ -516,10 +639,15 @@ SUBROUTINE squeeze(source, sink, IERR)
     INTEGER               :: n3_is_zero = 3
     INTEGER               :: m1_too_small = 4
     INTEGER               :: m2_too_small = 5
+    INTEGER               :: not_permutation = 6
+    INTEGER               :: allocation_err = 7
+    INTEGER               :: deallocation_err = 8
     
     INTEGER, DIMENSION(4) :: source_shape
     INTEGER, DIMENSION(4) :: sink_shape
+    INTEGER, DIMENSION(4) :: temp_shape
     INTEGER::i,icode,offset
+    REAL(r8), DIMENSION(:,:,:), ALLOCATABLE :: temp
     !----------Executable part----------!
     source_shape(1:3) = shape(source)
     sink_shape(1:2) = shape(sink)
@@ -543,7 +671,35 @@ SUBROUTINE squeeze(source, sink, IERR)
     	IERR = 0
     ENDIF
 
-    sink = reshape(source, sink_shape(1:2))
+    IF(PRESENT(source_order)) THEN
+!        Check that source_order is a legal permutation of (1 2 3)
+!        using trick: sum and product must each equal 6
+        IF(source_order(1)+source_order(2)+source_order(3) /= 6 &
+        & .OR. &
+        & source_order(1)*source_order(2)*source_order(3) /= 6 ) THEN
+             IERR=6
+             RETURN
+        ENDIF
+        DO i=1, 3
+           temp_shape(i) = source_shape(source_order(i))
+        ENDDO
+        ALLOCATE(temp(temp_shape(1), temp_shape(2), temp_shape(3)), &
+        & STAT=IERR)
+        IF(IERR /= 0) THEN
+        	IERR=allocation_err
+                RETURN
+        ENDIF
+        temp = reshape(source, temp_shape(1:3), order=source_order(1:3))
+        sink = reshape(temp, sink_shape(1:2))
+        DEALLOCATE(temp, &
+        & STAT=IERR)
+        IF(IERR /= 0) THEN
+        	IERR=deallocation_err
+                RETURN
+        ENDIF
+    ELSE
+        sink = reshape(source, sink_shape(1:2))
+    ENDIF
     
 END SUBROUTINE squeeze
 
@@ -572,6 +728,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.8  2000/12/06 00:01:20  pwagner
+! Completed FillOL2AUXData; changed squeeze, nearby
+!
 ! Revision 2.7  2000/12/05 00:40:50  pwagner
 ! Added FillOL2AUXVector
 !
