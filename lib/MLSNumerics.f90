@@ -55,7 +55,8 @@ contains
   ! monotonically increasing or decreasing. There is no such requirements for
   ! values.
 
-  subroutine HuntArray ( list, values, indices, start, allowTopValue, allowBelowValue )
+  subroutine HuntArray ( list, values, indices, start, allowTopValue, allowBelowValue, &
+    & nearest )
 
     ! Dummy arguments
     real(r8), dimension(:), intent(in) :: list ! List to search
@@ -64,13 +65,16 @@ contains
     integer, optional, intent(in) :: start ! Optional start index
     logical, optional, intent(in) :: allowTopValue ! Can return N
     logical, optional, intent(in) :: allowBelowValue ! Can return 0
+    logical, optional, intent(in) :: nearest ! Choose nearest value not one below
 
     ! Local variables
-    integer :: listLen, valuesLen ! Array sizes
-    integer :: valueIndex       ! Loop counters
-    integer :: index            ! Temporary result
+    integer :: listLen, valuesLen       ! Array sizes
+    integer :: valueIndex               ! Loop counters
+    integer :: index                    ! Temporary result
+    integer :: alternativeIndex         ! Used in 'nearest' case
+    integer :: originalIndex            ! Used in 'nearest' case
 
-    logical :: useAllowTopValue, useAllowBelowValue
+    logical :: useAllowTopValue, useAllowBelowValue, useNearest
     integer :: useStart
     integer :: upperLimit       ! Highest value that can be returned
     integer :: stride           ! Value to step by
@@ -98,11 +102,20 @@ contains
       useAllowBelowValue = .false.
     end if
 
+    if ( present(nearest) ) then
+      useNearest = nearest
+    else
+      useNearest = .false.
+    end if
+
     if ( present(start) ) then
       useStart = start
     else
       useStart = 1
     end if
+
+    if ( useNearest .and. useAllowBelowValue ) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "Can't set nearest and allowBelowValue in Hunt" )
 
     listLen = size(list)
     valuesLen = size(values)
@@ -194,6 +207,23 @@ contains
         index = min(max(index,1),upperLimit)
       end do HuntLoop
 
+      ! If user asked for nearest then check to see if one above is closer
+      originalIndex = index
+      if ( useNearest ) then
+        alternativeIndex = index
+        ! Look for the next higher value
+        nearestLoop: do
+          if ( alternativeIndex >= upperLimit ) exit nearestLoop
+          alternativeIndex = alternativeIndex + 1
+          if ( list(alternativeIndex) > list(index) ) exit nearestLoop
+        end do nearestLoop
+        ! If this is higher, use it
+        if ( abs ( list(alternativeIndex) - thisValue ) < &
+          &  abs ( list(index) - thisValue ) ) then
+          index = alternativeIndex
+        end if
+      end if
+
       ! Final check for off the bottom of the list
 
       if ( useAllowBelowValue ) then
@@ -201,6 +231,10 @@ contains
       end if
 
       indices(valueIndex) = index
+
+      ! In the 'nearest' case it might make sense to check from the
+      ! originalIndex
+      index = originalIndex
     end do
   end subroutine HuntArray
 
@@ -208,7 +242,8 @@ contains
 
   ! This routine is a scalar wrapper for the above one
 
-  subroutine HuntScalar (list, value, index, start, allowTopValue, allowBelowValue )
+  subroutine HuntScalar (list, value, index, start, allowTopValue, &
+    & allowBelowValue, nearest )
 
     ! Dummy arguments
     real(r8), dimension(:), intent(in) :: list ! List to search
@@ -217,6 +252,7 @@ contains
     integer, intent(in), optional :: start ! Optional start index
     logical, optional, intent(in) :: allowTopValue ! Can return N
     logical, optional, intent(in) :: allowBelowValue ! Can return 0
+    logical, optional, intent(in) :: nearest ! Choose nearest value instead
 
     ! Local variables
 
@@ -224,7 +260,8 @@ contains
     integer, dimension(1) :: indices ! To pass to HuntScalar
 
     values(1) = value
-    call HuntArray ( list, values, indices, start, allowTopValue, allowBelowValue )
+    call HuntArray ( list, values, indices, start, &
+      & allowTopValue, allowBelowValue, nearest )
     index = indices(1)
   end subroutine HuntScalar
 
@@ -601,6 +638,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.17  2001/11/14 01:47:40  livesey
+! Added nearest option to Hunt
+!
 ! Revision 2.16  2001/10/19 23:41:43  livesey
 ! Fixed bug with dyByDx extrapolation
 !
