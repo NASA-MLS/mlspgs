@@ -96,7 +96,7 @@ contains ! ====================================== SwitchingMirrorModel =====
         & signal=signal%index, sideband=signal%sideband )
       ! Setup some work arrays
       noChans = size ( signal%frequencies )
-      call Allocate_Test ( aclProduct, noChans, noReflectors, 'aclProduct', ModuleName )
+      call Allocate_Test ( aclProduct, noChans, noReflectors+1, 'aclProduct', ModuleName )
       call Allocate_Test ( deltaTrans, noChans, noReflectors, 'deltaTrans', ModuleName )
       call Allocate_Test ( emission, noChans, 'emission', ModuleName )
       call Allocate_Test ( offset, noChans, 'offset', ModuleName )
@@ -106,13 +106,13 @@ contains ! ====================================== SwitchingMirrorModel =====
         & sidebandStart, sidebandStop, sidebandStep )
       do sideband = sidebandStart, sidebandStop, sidebandStep
         ! Setup an intermediate result
+        aclProduct ( :, noReflectors + 1 ) = 1.0
         do reflector = noReflectors, 1, -1
           reflRefl => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
             & quantityType=l_reflRefl, reflector=reflectors(reflector), &
             & signal=signal%index, sideband=sideband )
-          aclProduct ( :, reflector ) = reflRefl%values(:,1)
-          if ( reflector < noReflectors ) aclProduct ( :, reflector ) = &
-            & aclProduct ( :, reflector ) * aclProduct ( :, reflector+1 )
+          aclProduct ( :, reflector ) = &
+            & reflRefl%values(:,1) * aclProduct ( :, reflector+1 )
         end do
         ! Setup another intermediate quantity
         do reflector = 1, noReflectors
@@ -159,10 +159,10 @@ contains ! ====================================== SwitchingMirrorModel =====
             & quantityType=l_reflTrans, reflector=reflectors(reflector), &
             & signal=signal%index, sideband=sideband )
           ! Do the actual calculation
-          emission = stat_temp ( reflTemp%values(1,1), &
+          emission = stat_temp ( reflTemp%values(1,maf), &
             & signal%lo + sideband * &
             & ( signal%direction*signal%frequencies+signal%centerFrequency ) )
-          offset = offset + aclProduct (:,reflector) * &
+          offset = offset + aclProduct (:,reflector+1) * &
             & ( ( 1 - reflrefl%values(1,1) ) * reflTrans%values(:,1) * emission + &
             &   deltaTrans(:,reflector) * reflSpill%values(:,maf) )
         end do                          ! End loop over reflectors
@@ -193,6 +193,9 @@ contains ! ====================================== SwitchingMirrorModel =====
 end module SwitchingMirrorModel_m
 
 ! $Log$
+! Revision 2.3  2003/05/30 00:08:37  livesey
+! Bug fix
+!
 ! Revision 2.2  2003/05/29 18:18:15  livesey
 ! Changed to make reflrefl signal dependent
 !
