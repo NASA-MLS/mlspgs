@@ -5541,7 +5541,7 @@ contains ! =====     Public Procedures     =============================
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Quantity and rad. qty. in offsetRadiance fill different signal/sideband' )
       if ( .not. associated ( radianceQuantity%mask ) ) return
-      where ( iand ( ichar(radianceQuantity%mask), m_linAlg ) == 1 )
+      where ( iand ( ichar(radianceQuantity%mask), m_linAlg ) /= 0 )
         quantity%values = quantity%values + amount
       end where
     end subroutine OffsetRadianceQuantity
@@ -5824,6 +5824,10 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.231  2003/06/24 19:59:42  livesey
+! Fixed something in OffsetRadianceQuantity that might have become a bug
+! one day (assumed m_linAlg=1).
+!
 ! Revision 2.230  2003/06/20 19:37:06  pwagner
 ! Quanities now share grids stored separately in databses
 !
