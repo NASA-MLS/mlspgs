@@ -56,7 +56,7 @@ MODULE comp_sps_path_frq_m
 !
 ! Internal declaritions
 !
-  INTEGER(ip) :: n_zp, n_f, nfzp,iw
+  INTEGER(ip) :: n_zp, n_f, nfzp, f_len
   INTEGER(ip) :: sps_i,n_sps,sv_i,sv_zp,sv_f,sv_j
   INTEGER(ip) :: v_inda,v_indb,f_inda,f_indb,w_inda,w_indb
 
@@ -70,13 +70,14 @@ MODULE comp_sps_path_frq_m
   IF(Frq < 1.0) THEN
     eta_fzp = 0.0_rp
     sps_path = 0.0_rp
-    do_calc_fzp = .false.
+    do_calc_fzp = .FALSE.
   ELSE
     DO sps_i = 1, n_sps
       IF(.NOT. skip_eta_frq(sps_i)) sps_path(:,sps_i) = 0.0_rp
     END DO
   ENDIF
 !
+  f_len = 0
   f_inda = 1
   v_inda = 1
   w_inda = 1
@@ -95,6 +96,7 @@ MODULE comp_sps_path_frq_m
       f_inda = f_indb
       v_inda = v_indb
       w_inda = w_indb
+      f_len = f_len + nfzp
       CYCLE
     ENDIF
 !
@@ -110,19 +112,24 @@ MODULE comp_sps_path_frq_m
                     &   eta_f,not_zero_f)
 !
     DO sv_i = 0 , nfzp - 1
+      f_len = f_len + 1
       sv_j = v_inda + sv_i
       sv_f = 1 + MODULO(sv_i,n_f)
       sv_zp = w_inda + sv_i / n_f
       IF(not_zero_f(1,sv_f)) THEN
         WHERE(do_calc_zp(:,sv_zp))
-          do_calc_fzp(:,sv_j) = .true.
           eta_fzp(:,sv_j) = eta_f(1,sv_f) * eta_zp(:,sv_zp)
           sps_path(:,sps_i) = sps_path(:,sps_i) +  &
                            &  sps_values(sv_j) * eta_fzp(:,sv_j)
         ENDWHERE
+        IF(Grids_x%deriv_flags(f_len)) THEN
+          WHERE(do_calc_zp(:,sv_zp))
+            do_calc_fzp(:,sv_j) = .TRUE.
+          ENDWHERE
+        ENDIF
       ENDIF
     END DO
-
+!
     IF(lin_log(sps_i)) sps_path(:,sps_i) = EXP(sps_path(:,sps_i))
 !
     f_inda = f_indb
@@ -139,6 +146,9 @@ MODULE comp_sps_path_frq_m
 END MODULE comp_sps_path_frq_m
 !
 ! $Log$
+! Revision 2.6  2002/02/16 06:37:34  zvi
+! New code for derivative flags..
+!
 ! Revision 2.5  2002/01/09 00:30:48  zvi
 ! Fix a bug with skip_eta_frq
 !
