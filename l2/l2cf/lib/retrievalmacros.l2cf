@@ -155,13 +155,13 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 !define(fillRadianceDiagnostics,{!dnl
    Fill, quantity=radianceDiagnostics.chisqMMAF$1, method=special, $
      measurements=y!phase.band$1, model=f!phase.band$1, $
-     noise=yNoise!phase.band$1
+     noise=yNoise!phase.band$1, /ignoreZero, /ignoreNegative
    Fill, quantity=radianceDiagnostics.chisqMMIF$1, method=special, $
      measurements=y!phase.band$1, model=f!phase.band$1, $
-     noise=yNoise!phase.band$1
+     noise=yNoise!phase.band$1, /ignoreZero, /ignoreNegative
    Fill, quantity=radianceDiagnostics.chisqChan$1, method=special, $
      measurements=y!phase.band$1, model=f!phase.band$1, $
-     noise=yNoise!phase.band$1
+     noise=yNoise!phase.band$1, /ignoreZero, /ignoreNegative
    Fill, quantity=radianceDiagnostics.noRadsPerMIF$1, method=special, $
      measurements=y!phase.band$1
    Fill, quantity=radianceDiagnostics.chisqBinned$1, method=binmax, $
@@ -243,6 +243,9 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
   lowBound=lb$1, highBound=hb$1, diagnostics=diag$1})})
 
 ; $Log$
+; Revision 1.51  2003/05/11 22:35:54  livesey
+; Restored the binned quantities, worked out what was wrong with them.
+;
 ; Revision 1.50  2003/05/11 06:12:20  livesey
 ; Temporarily removed the binned stuff
 ;
