@@ -72,8 +72,10 @@ module ForwardModelConfig
     integer :: InstrumentModule       ! Module for scan model (actually a spec index)
     integer :: LinearSideband         ! For hybrid model, which SB is linear?
     ! Now the other integers
+    integer :: FirstPFA               ! Index of first PFA in Molecules
     integer :: No_cloud_species       ! No of Cloud Species '2'
     integer :: No_model_surfs         ! No of Model surfaces '640'
+    integer :: Ntimes = 0	      ! Number of times calling FullForwardModel
     integer :: Num_ab_terms           ! No of AB terms '50'
     integer :: Num_azimuth_angles     ! No of azmuth angles '8'
     integer :: Num_scattering_angles  ! No of scattering angles '16'
@@ -81,7 +83,6 @@ module ForwardModelConfig
     integer :: SidebandStart, SidebandStop ! Folded or SSB config?
     integer :: SurfaceTangentIndex    ! Index in Tangentgrid of Earth's surface
     integer :: WindowUnits            ! Either degrees or profiles
-    integer :: Ntimes = 0	      ! Number of times calling FullForwardModel
     integer :: xStar                  ! Index of specific vector to use for linearized model
     integer :: yStar                  ! Index of specific vector to use for linearized model
     ! Now the logicals
@@ -94,9 +95,9 @@ module ForwardModelConfig
     logical :: Do_baseline            ! Do a baseline computation
     logical :: Do_conv                ! Do convolution
     logical :: Do_freq_avg            ! Do Frequency averaging
-    logical :: GlobalConfig           ! If set is shared between all chunks
     logical :: ForceFoldedOutput      ! Output to folded sideband even if signal is other (linear only)
     logical :: ForceSidebandFraction  ! If set mult. by SBfrac even if single sideband
+    logical :: GlobalConfig           ! If set is shared between all chunks
     logical :: Incl_cld ! Include cloud extinction calculation in Bill's forward model
     logical :: LockBins               ! Use same l2pc bin for whole chunk
     logical :: Polarized              ! Use polarized model for Zeeman-split lines
@@ -112,10 +113,10 @@ module ForwardModelConfig
     ! Now the arrays
     integer, dimension(:), pointer :: BinSelectors=>NULL() ! List of relevant bin selectors
     integer, dimension(:), pointer :: Molecules=>NULL() ! Which molecules to consider
-    integer, dimension(:), pointer :: PFAMolecules=>NULL() ! Which molecules to PFA
+      ! >0 = beginning of a group or a lonesome molecule, <0 = member of a group
+    logical, dimension(:), pointer :: MoleculeDerivatives=>NULL() ! Want Jacobians
     integer, dimension(:), pointer :: SpecificQuantities=>NULL() ! Specific quantities to use
-    logical, dimension(:), pointer :: MoleculeDerivatives=>NULL() ! Want jacobians
-    ! Now the types
+    ! Now the derived types
     type (Signal_T), dimension(:), pointer :: Signals=>NULL()
     type (vGrid_T), pointer :: IntegrationGrid=>NULL() ! Zeta grid for integration
     type (vGrid_T), pointer :: TangentGrid=>NULL()     ! Zeta grid for integration
@@ -161,7 +162,7 @@ contains
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use FilterShapes_m, only: DACSFilterShapes
     use MLSMessageModule, only: MLSMessage,  MLSMSG_Allocate, MLSMSG_Error
-    use MLSSets, only: FindFirst, Intersect, Intersection, Union
+    use MLSSets, only: FindFirst, Intersection, Union
     use MLSSignals_M, only: MatchSignal
     use PFADataBase_m, only: PFAData
 
@@ -171,14 +172,14 @@ contains
     integer :: I, Ier, J
     integer :: LBoundDACs, UBoundDACs      ! How many channels in a DAC
     integer :: HowManyPFA                  ! How many PFA data records are for the
-                                           ! molecules in fwdModelConf%pfaMolecules?
+                                           ! molecules in fwdModelConf%Molecules?
     integer :: NoUsedChannels, NoUsedDACS
     integer :: NumPFA                      ! Like HowManyPFA, but for one channel
     integer :: SigInd
     logical :: signalFlag(size(fwdModelConf%signals))
     integer, pointer :: T1(:), T2(:)       ! Temps for set operations
     integer, pointer :: WhichPFA(:)        ! Which PFA data records are for the
-                                           ! molecules in fwdModelConf%pfaMolecules?
+                                           ! molecules in fwdModelConf%Molecules?
 
 
     ! Shorthand pointers into fwdModelConf%forwardModelDerived
@@ -245,21 +246,18 @@ contains
     end do
 
     if ( associated(pfaData) ) then
-      ! Work out which PFA data are germane to fwdModelConf%PFAMolecules
+      ! Work out which PFA data are germane to fwdModelConf%Molecules
       ! We do this because there are thousands of PFA data, but maybe only
       ! a few that are germane to this fwdModelConf
+      call allocate_test ( whichPFA, size(fwdModelConf%molecules) - fwdModelConf%firstPFA + 1, 'whichPFA', moduleName )
       howManyPFA = 0
       do i = 1, size(pfaData)
-        if ( intersect(fwdModelConf%PFAMolecules, PFAData(i)%molecules) ) &
-          & howManyPFA = howManyPFA + 1
-      end do
-      call allocate_test ( whichPFA, howManyPfa, 'HowManyPfa', moduleName )
-      howManyPFA = 0
-      do i = 1, size(pfaData)
-        if ( intersect(fwdModelConf%PFAMolecules, PFAData(i)%molecules) ) then
-          howManyPFA = howManyPFA + 1
-          whichPFA(howManyPFA) = i
-        end if
+        do j = fwdModelConf%firstPFA, size(fwdModelConf%molecules)
+          if ( any(fwdModelConf%molecules(j) == PFAData(i)%molecules) ) then
+            howManyPFA = howManyPFA + 1
+            whichPFA(howManyPFA) = i
+          end if
+        end do
       end do
 
       ! Work out PFA abstracts for each channel
@@ -273,7 +271,8 @@ contains
             & fwdModelConf%signals(channels(i)%signal:channels(i)%signal), &
             & PFAData(whichPFA(j))%theSignal ) /= 0 ) then
             numPFA = numPFA + 1
-            t2 = intersection(fwdModelConf%pfaMolecules,PFAData(whichPFA(j))%molecules)
+            t2 = intersection(fwdModelConf%molecules(fwdModelConf%firstPFA:),&
+              &               PFAData(whichPFA(j))%molecules)
             t1 = union(channels(i)%PFAMolecules,t2)
             call deallocate_test ( t2, 't2', moduleName )
             call deallocate_test ( channels(i)%PFAMolecules, &
@@ -364,15 +363,8 @@ contains
     ! Given a forward model config, nullify all the pointers associated with it
     type ( ForwardModelConfig_T ), intent(out) :: F
 
-    ! Executable code
-    nullify ( f%molecules )
-    nullify ( f%moleculeDerivatives )
-    nullify ( f%pfaMolecules )
-    nullify ( f%signals )
-    nullify ( f%integrationGrid )
-    nullify ( f%tangentGrid )
-    nullify ( f%specificQuantities )
-    nullify ( f%binSelectors )
+    ! Executable code not needed since => NULL() initializes pointer
+    ! components of intent(out) dummy arguments.
   end subroutine NullifyForwardModelConfig
 
   ! ------------------------------------------- PVMPackFwmConfig --------
@@ -444,6 +436,8 @@ contains
     if ( associated ( config%molecules ) ) then
       call PVMIDLPack ( size ( config%molecules ), info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "Packing number of molecules" )
+      call PVMIDLPack ( config%firstPFA, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "Packing index of first PFA molecule" )
       if ( size ( config%molecules ) > 0 ) then
         do i = 1, size(config%molecules)
           call PVMPackLitIndex ( abs ( config%molecules(i) ), info )
@@ -457,16 +451,6 @@ contains
     else
       call PVMIDLPack ( 0, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "Packing 0 molecules" )
-    end if
-
-    ! PFA Molecules -- field is always associated, even if with zero size.
-    call PVMIDLPack ( size ( config%pfaMolecules ), info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Packing number of PFA molecules" )
-    if ( size ( config%pfaMolecules ) > 0 ) then
-      do i = 1, size(config%pfaMolecules)
-        call PVMPackLitIndex ( config%molecules(i), info )
-        if ( info /= 0 ) call PVMErrorMessage ( info, "Packing a PFA molecule" )
-      end do
     end if
 
     ! Specific quantities
@@ -598,6 +582,8 @@ contains
     ! Molecules / derivatives
     call PVMIDLUnpack ( n, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking number of molecules" )
+    call PVMIDLUnpack ( config%firstPFA, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking index of PFA molecule" )
     if ( n > 0 ) then
       call Allocate_test ( config%molecules, n, 'config%molecules', ModuleName )
       call Allocate_test ( config%moleculeDerivatives, &
@@ -612,15 +598,6 @@ contains
       call PVMIDLUnpack ( config%moleculeDerivatives, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking moleculeDerivatives" )
     end if
-
-    ! PFA Molecules
-    call PVMIDLUnpack ( n, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking number of PFA molecules" )
-    call Allocate_test ( config%pfaMolecules, n, 'config%pfaMolecules', ModuleName )
-    do i = 1, n
-      call PVMUnpackLitIndex ( config%pfaMolecules(i), info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking a PFA molecule" )
-    end do
 
     ! Specific quantities
     call PVMIDLUnpack ( n, info )
@@ -738,8 +715,6 @@ contains
       & "config%molecules", moduleName )
     call deallocate_test ( config%moleculeDerivatives, &
       & "config%moleculeDerivatives", moduleName )
-    call deallocate_test ( config%pfaMolecules, &
-      & "config%pfaMolecules", moduleName )
     call Deallocate_test ( config%specificQuantities, &
       & "config%specificQuantities", ModuleName )
     call Deallocate_test ( config%binSelectors, &
@@ -813,19 +788,13 @@ contains
     if ( associated(Config%molecules) ) then
       do j = 1, size(Config%molecules)
         call output ( '    ' )
+        if ( j == config%firstPFA ) call output ( 'PFA: ' )
         call display_string(lit_indices(Config%molecules(j)))
         if (Config%moleculeDerivatives(j)) then
           call output (' compute derivatives', advance='yes')
         else
           call output (' no derivatives', advance='yes')
         end if
-      end do
-    end if
-    if ( associated(Config%pfaMolecules) ) then
-      call output ( '  PFA Molecules: ', advance='yes' )
-      do j = 1, size(Config%pfaMolecules)
-        call output ( '    ' )
-        call display_string ( lit_indices(Config%pfaMolecules(j)), advance='yes')
       end do
     end if
     call output ( '  Signals:', advance='yes')
@@ -871,6 +840,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.52  2004/06/23 02:14:06  vsnyder
+! Added PFA stuff, some cannonball polishing
+!
 ! Revision 2.51  2004/06/11 01:33:29  vsnyder
 ! Declare all pointer components to be initially NULL
 !
