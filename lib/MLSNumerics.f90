@@ -250,7 +250,8 @@ CONTAINS
     INTEGER, DIMENSION(:),    POINTER :: lowerInds=> NULL()
     INTEGER, DIMENSION(:),    POINTER :: upperInds=> NULL()
     REAL(R8), DIMENSION(:),   POINTER :: maskVector=> NULL()
-    REAL(R8), DIMENSION(:),   POINTER :: gap,gap2=> NULL()
+    REAL(R8), DIMENSION(:),   POINTER :: gap=>NULL()
+    REAL(R8), DIMENSION(:),   POINTER :: gap2=> NULL()
     REAL(R8), DIMENSION(:,:), POINTER :: spreadGap=> NULL()
     REAL(R8), DIMENSION(:,:), POINTER :: oldSecond=> NULL()
     REAL(R8), DIMENSION(:,:), POINTER :: oldYupper=> NULL()
@@ -528,6 +529,9 @@ END MODULE MLSNumerics
 
 !
 ! $Log$
+! Revision 2.4  2001/03/06 00:35:23  livesey
+! Missed one pointer nullification
+!
 ! Revision 2.3  2001/03/05 01:20:36  livesey
 ! Nullified pointers
 !
