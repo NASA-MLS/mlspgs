@@ -23,8 +23,8 @@ o:do
       line = adjustl(line)
       if ( line(1:1) == '!' .or. line(1:1) == ' ' .or. line(:i) == ')' ) &
   cycle o
-      i = scan(line,', )')
-      if ( line(:i) /= '&' ) write ( *, '(a)') line(:i-1)
+      i = scan(line,', )&')
+      if ( line(:i) /= '&' .and. i /= 1 ) write ( *, '(a)') line(:i-1)
       line(:i) = ''
     end do
   end do o
@@ -32,3 +32,6 @@ o:do
 end program WordSplit
 
 ! $Log$
+! Revision 1.1  2004/01/26 20:35:05  vsnyder
+! Initial commit
+!
