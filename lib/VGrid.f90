@@ -63,8 +63,8 @@ CONTAINS
     vGrid%name=""
     vGrid%verticalCoordinate=VC_Invalid
     vGrid%noSurfs=0
-!    IF (ASSOCIATED(vGrid%surfs)) CALL MLSMessage(MLSMSG_Error,ModuleName,&
-!         & "vGrid%surfs already associated")
+ !   IF (SIZE(vGrid%surfs)/=0) CALL  MLSMessage(MLSMSG_Error,ModuleName,&
+ !        & "vGrid%surfs already associated")
 
     DO keyNo=1,cfInfo%mlscfEntryNoKeys
        cell=cfInfo%cells(keyNo)
@@ -90,7 +90,7 @@ CONTAINS
     IF (vGrid%verticalCoordinate==VC_Invalid) CALL MLSMessage(MLSMSG_Error,&
          & ModuleName,"Invalid vertical coordinate for vGrid "//&
          & TRIM(vGrid%name))
-    IF (.NOT.(ASSOCIATED(vGrid%surfs))) CALL MLSMessage(MLSMSG_Error,&
+    IF (SIZE(vGrid%surfs) == 0) CALL MLSMessage(MLSMSG_Error,&
          & ModuleName,"Invalid/absent surfaces in vGrid "//TRIM(vGrid%name))
 
     ! Check that the given surfaces are in an appropriate unit
@@ -163,8 +163,10 @@ CONTAINS
     IF (ASSOCIATED(database)) THEN
        ! Check we don't already have one of this name
        IF (LinearSearchStringArray(database%name,vGrid%name, &
-            & caseInsensitive=.TRUE.)/=0) CALL MLSMessage(MLSMSG_Error,&
+            & caseInsensitive=.TRUE.)/=0)THEN
+          CALL MLSMessage(MLSMSG_Error,&
             & ModuleName,MLSMSG_Duplicate//vGrid%name)
+       END IF
        newSize=SIZE(database)+1
     ELSE
        newSize=1
@@ -207,6 +209,9 @@ END MODULE vGrid
 
 !
 ! $Log$
+! Revision 1.12  2000/06/19 23:59:29  lungu
+! Added status check after deallocate.
+!
 ! Revision 1.11  2000/05/18 00:02:10  lungu
 ! Commented out "IF (ASSOCIATED(vGrid%surfs))" so it works for the2nd, 3rd, etc calls.
 ! Capitalized TRIM(cell%keyword).
