@@ -43,8 +43,6 @@ module Join                     ! Join together chunk based data.
   !---------------------------------------------------------------------------
 
   ! Parameters for Announce_Error
-  integer, parameter :: duplicateField = 1
-  integer, parameter :: noSourceField = 2
 
   integer :: ERROR
 
@@ -112,7 +110,7 @@ contains ! =====     Public Procedures     =============================
 
       ! ??? Does this need to do anything somewhere ???
       select case( decoration(subtree(1,decoration(subtree(1,key)))) )
-      case( s_l2aux )
+      case ( s_l2aux )
       case ( s_l2gp )
       case ( s_time )
         if ( timing ) then
@@ -141,8 +139,6 @@ contains ! =====     Public Procedures     =============================
           value = decoration(subtree(2,gson))
         end if
         field_index = decoration(field)
-        if ( got_field(field_index) ) &
-          & call announce_error ( field, duplicateField )
         got_field(field_index) = .true.
         select case ( field_index )
         case ( f_source )
@@ -159,8 +155,6 @@ contains ! =====     Public Procedures     =============================
         end select
       end do
 
-      if ( .not. got_field(f_source) ) &
-        & call announce_error ( key, noSourceField )
       if ( error > 0 ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "Errors in configuration prevent proceeding" )
       quantity => qtyTemplates(quantityIndex)
@@ -218,10 +212,6 @@ contains ! =====     Public Procedures     =============================
     call print_source ( source_ref(where) )
     call output ( ': ' )
     select case ( code )
-    case ( duplicateField )
-      call output ( 'duplicate fields are not allowed.', advance='yes' )
-    case ( noSourceField )
-      call output ( 'A "source" field is required.', advance='yes' )
     end select
   end subroutine ANNOUNCE_ERROR
   ! -----------------------------------------  JoinL2GPQuantities  -----
@@ -689,6 +679,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.9  2001/02/09 19:30:16  vsnyder
+! Move checking for required and duplicate fields to init_tables_module
+!
 ! Revision 2.8  2001/02/09 18:01:46  livesey
 ! Various further updates, set default values for status and quality
 !
