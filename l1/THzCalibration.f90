@@ -6,7 +6,8 @@ MODULE THzCalibration ! Calibration data and routines for the THz module
 !=============================================================================
 
   USE MLSCommon, ONLY: r8
-  USE MLSL1Common, ONLY: MaxMIFs, THzChans, THzNum, LO1, L1BFileInfo
+  USE MLSL1Common, ONLY: MaxMIFs, THzChans, THzNum, LO1, L1BFileInfo, &
+       BrightObjects_T
   USE L0_sci_tbls, ONLY: THz_Sci_pkt_T
   USE EngTbls, ONLY : Eng_MAF_T
  
@@ -40,6 +41,7 @@ MODULE THzCalibration ! Calibration data and routines for the THz module
      TYPE (Chan_type_T) :: ChanType(0:(MaxMIFs-1))
      REAL :: CalTgtTemp       ! Average Calibration Target Temperature (C)
      REAL :: LimbCalTgtTemp   ! Average Limb Calibration Target Temperature (C)
+     TYPE (BrightObjects_T) :: LimbView ! Bright Objects in FOV flags
      INTEGER :: last_MIF
      INTEGER :: BandSwitch(5) ! band switch positions
   END TYPE MAFdata_T
@@ -374,7 +376,7 @@ CONTAINS
 
     INTEGER, PARAMETER :: MIFsPerMAF = 148   ! use for now
     INTEGER, PARAMETER :: mlimb = 122
-    LOGICAL :: last_fit
+    LOGICAL :: first_fit, last_fit
 
     print *, 'THzCal'
 
@@ -392,6 +394,7 @@ CONTAINS
     iBound = 1
     wend = -1
     mif0 = 0
+    first_fit = .TRUE.
     last_fit = .FALSE.
     DO
 
@@ -417,7 +420,7 @@ CONTAINS
        cFlag => CalFlag(ibgn:iend)
        ntotx = COUNT (cFlag == 1)
 
-       IF (ntotx > 1) THEN
+       IF (ntotx > 1 .AND. .NOT. first_fit) THEN
 
           DEALLOCATE (yval, stat=status)
           ALLOCATE (yval(THzChans,THzNum,ibgn:iend))
@@ -493,6 +496,7 @@ CONTAINS
           last_fit = .TRUE.
 
        ENDIF
+       first_fit = .FALSE.
 
        DO
           IF (CalMIF(mif0) <= mlimb .AND. mif0 < wend) THEN
@@ -613,6 +617,9 @@ END MODULE THzCalibration
 !=============================================================================
 
 ! $Log$
+! Revision 2.7  2004/11/10 15:38:36  perun
+! Add first_fit flag per HMP
+!
 ! Revision 2.6  2004/08/12 13:51:51  perun
 ! Version 1.44 commit
 !

@@ -6,7 +6,7 @@ MODULE THzRadiances ! Determine radiances for the THz module
 !=============================================================================
 
   USE MLSCommon, ONLY: r8
-  USE MLSL1Common, ONLY: THzNum, THzChans, Deflt_chi2
+  USE MLSL1Common, ONLY: THzNum, THzChans, Deflt_chi2, BandChanBad
   USE THzCalibration, ONLY : CalBuf, Chisq, dLlo, yTsys, nvBounds
   USE MLSL1Rad, ONLY : THzRad
 
@@ -32,11 +32,23 @@ CONTAINS
     INTEGER, INTENT (IN) :: nMAF
     INTEGER, INTENT (INOUT) :: ibgn
 
-    INTEGER :: i, iend, mindx, nBank, nChan, MIF_end, BandNo
+    INTEGER :: i, iend, calindx, mindx, nBank, nChan, MIF_end, BandNo
+    INTEGER :: limb_sw_err(MIFsTHz)
+    CHARACTER(LEN=1) :: SwMirPos(MIFsTHz)
     LOGICAL :: do_chi2_err
 
-    iend = ibgn + CalBuf%MAFdata(nMAF-CalBuf%Cal_start+1)%last_MIF
+    calindx = nMAF - CalBuf%Cal_start + 1
+    iend = ibgn + CalBuf%MAFdata(calindx)%last_MIF
     MIF_end = ibgn + MIFsTHz - 1
+
+! Mark non-limb data as "bad" with negative precisions
+
+    SwMirPos = CalBuf%MAFdata(calindx)%SciMIF(0:(MIFsTHz-1))%SwMirPos
+    WHERE (SwMirPos == "L")
+       limb_sw_err = 1
+    ELSEWHERE
+       limb_sw_err = -1
+    ENDWHERE
 
     DO nBank = 1, THzNum
 
@@ -48,14 +60,20 @@ CONTAINS
        IF (CalBuf%BankGood(nBank)) THEN   ! Have good data
 
           DO i = ibgn, MIF_end
+             mindx = i-ibgn+1        ! index from 1 to MIFsTHz
              DO nChan = 1, THzChans
-                mindx = i-ibgn+1
                 THzRad(nBank)%value(nChan,mindx) = Kelvins(nChan,nBank,i)
                 IF (THzRad(nBank)%value(nChan,mindx) > -100.0) THEN
-                   THzRad(nBank)%precision(nChan,mindx) = &
-                        VarK(nChan,nBank,i)
+                   IF (VarK(nChan,nBank,i) > 0.0) THEN
+                      THzRad(nBank)%precision(nChan,mindx) = &
+                           VarK(nChan,nBank,i) * MIN (limb_sw_err(mindx), &
+                           BandChanBad%Sign(Bandno, nChan))
+                   ELSE
+                      THzRad(nBank)%precision(nChan,mindx) = &
+                           VarK(nChan,nBank,i)
+                   ENDIF
                    IF (do_chi2_err) THzRad(nbank)%precision(nChan,mindx) = &
-                        deflt_chi2%FB(nchan,BandNo) * &
+                        SQRT (deflt_chi2%FB(nchan,BandNo)) * &
                         THzRad(nbank)%precision(nchan,mindx)
                 ENDIF
              ENDDO
@@ -69,14 +87,14 @@ CONTAINS
 
   SUBROUTINE ProcessLimbData
 
-    USE MLSL1Common, ONLY: L1BFileInfo
+    USE MLSL1Common, ONLY: L1BFileInfo, OA_counterMAF, OA_counterIndex
     USE OutputL1B, ONLY: OutputL1B_rad, OutputL1B_DiagsT
     USE EngTbls, ONLY: Reflec_T
 
     INTEGER :: MAFno, counterMAF, ibgn, nv
     REAL(r8) :: TAI
     TYPE (Reflec_T) :: Reflec
-    INTEGER, SAVE :: OrbNo = 1
+    INTEGER, SAVE :: OrbNo = 1, MAFindex = 1
 
     print *, 'ProcessLimbData'
 
@@ -89,12 +107,22 @@ CONTAINS
        counterMAF = CalBuf%MAFdata(MAFno)%EMAF%TotalMAF
        TAI = CalBuf%MAFdata(MAFno)%SciMIF(0)%secTAI
 
-print *, "Outputting rad for MAFno: ", MAFno
-       CALL OutputL1B_rad (MAFno, L1BFileInfo, counterMAF, Reflec, TAI, THzrad)
+       IF (OA_counterIndex == 0) THEN
+          MAFindex = MAFno
+       ELSE
+          DO
+             IF (counterMAF == OA_counterMAF(MAFindex)) EXIT
+             MAFindex = MAFindex + 1
+          ENDDO
+       ENDIF
+
+print *, "Outputting rad for MAFno: ", MAFindex
+       CALL OutputL1B_rad (MAFindex, L1BFileInfo, counterMAF, Reflec, TAI, &
+            THzrad)
 
 ! Write MAF dimensioned Diags
 
-       CALL OutputL1B_DiagsT (L1BFileInfo%DiagTid, MAFno=MAFno, &
+       CALL OutputL1B_DiagsT (L1BFileInfo%DiagTid, MAFno=MAFindex, &
             counterMAF=counterMAF, MAFStartTimeTAI=TAI, nvBounds=nvBounds(nv))
        nv = nv + 1
 
@@ -113,6 +141,9 @@ END MODULE THzRadiances
 !=============================================================================
 
 ! $Log$
+! Revision 2.7  2004/11/10 15:41:15  perun
+! Adjust precision based on bad chan/switch flags; line output records with L1BOA
+!
 ! Revision 2.6  2004/08/12 13:51:51  perun
 ! Version 1.44 commit
 !
