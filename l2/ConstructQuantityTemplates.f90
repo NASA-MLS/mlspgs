@@ -21,7 +21,7 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
     L_COLUMNABUNDANCE, L_EARTHREFL, L_EFFECTIVEOPTICALDEPTH, &
     L_EARTHRADIUS, L_ELEVOFFSET, L_EXTINCTION, L_GEODALTITUDE, L_GPH, &
     L_HEIGHTOFFSET, L_LOSTRANSFUNC, L_LOSVEL, &
-    L_NONE, L_ORBITINCLINATION, L_OPTICALDEPTH, &
+    L_NOISEBANDWIDTH, L_NONE, L_ORBITINCLINATION, L_OPTICALDEPTH, &
     L_PTAN, L_RADIANCE, L_RHI, &
     L_REFGPH, L_SCANRESIDUAL, L_SCECI, L_SCGEOCALT, L_SCVEL, &
     L_SCVELECI, L_SCVELECR, L_SIDEBANDRATIO, &
@@ -382,7 +382,7 @@ contains ! =====     Public Procedures     =============================
       
       ! Some special cases for certain quantities
       select case (quantityType)
-      case (l_sidebandRatio)
+      case ( l_SidebandRatio, l_NoiseBandwidth )
         frequencyCoordinate = l_channel
         signalInfo = GetSignal(signal)
         noChans = size ( signalInfo%frequencies ) 
@@ -863,6 +863,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.63  2002/05/07 20:02:54  livesey
+! Added noise bandwidth
+!
 ! Revision 2.62  2002/04/10 17:44:22  pwagner
 ! Added rhi quantity (but is this enough?)
 !
