@@ -290,11 +290,13 @@ contains ! =====     Public Procedures     =============================
         call deallocate_test ( z, "Z in Add_Matrix_Blocks", ModuleName )
       case ( M_Full )                            ! X col sparse, Y full
         call CopyBlock ( zb, y )                 ! Zb = y
-        do k = 1, size(x%r1)
-          zb%values(x%r2(x%r1(k-1)+1:x%r1(k)), k) = &
-            & zb%values(x%r2(x%r1(k-1)+1:x%r1(k)), k) + &
-              & x%values(x%r1(k-1)+1:x%r1(k),1)
-        end do
+
+! Commented-out on account of internal NAG v4.0 bug
+!        do k = 1, size(x%r1)
+!          zb%values(x%r2(x%r1(k-1)+1:x%r1(k)), k) = &
+!            & zb%values(x%r2(x%r1(k-1)+1:x%r1(k)), k) + &
+!              & x%values(x%r1(k-1)+1:x%r1(k),1)
+!        end do
       end select
     case ( M_Full )
       select case ( y%kind )
@@ -1680,6 +1682,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.11  2001/02/09 18:37:16  pwagner
+! Commented-out statements that offended NAG v4.0
+!
 ! Revision 2.10  2001/01/26 19:00:01  vsnyder
 ! Periodic commit
 !
