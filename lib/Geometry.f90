@@ -12,7 +12,8 @@ module Geometry
   implicit NONE
   private
 
-  public :: EarthRadA, EarthRadB, EarthSurfaceGPH, GM, G0, J2, J4, W
+  public :: Earth_Axis_Ratio_Squared, EarthRadA, EarthRadB, EarthSurfaceGPH
+  public :: GM, G0, J2, J4, W
 
   public :: GeodToGeocLat
 
@@ -72,6 +73,9 @@ contains ! ------------------------------- Subroutines and functions ----
 end module Geometry
 
 ! $Log$
+! Revision 2.7  2002/09/26 20:56:53  vsnyder
+! Move Earth_Axis_Ratio_Squared from heights_module to Geometry
+!
 ! Revision 2.6  2002/09/26 20:33:19  vsnyder
 ! Remove PI and LN10 -- they're in Units
 !
