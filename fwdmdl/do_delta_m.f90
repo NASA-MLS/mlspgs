@@ -50,9 +50,24 @@ contains
 
 ! Internals
 
-    integer(ip) a, aa, b, i
+    integer(ip) a, aa, i
 
 ! Start calculation
+
+    !{ Apply Gauss-Legendre quadrature to the panels indicated by
+    !  {\tt C\_inds}.  We remove a singularity (which actually only
+    !  occurs at the tangent point) by writing
+    !  $\int_{\zeta_i}^{\zeta_{i-1}} G(\zeta) \frac{\text{d}s}{\text{d}h}
+    !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta =
+    !  G(\zeta_i) \int_{\zeta_i}^{\zeta_{i-1}} \frac{\text{d}s}{\text{d}h}
+    !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta +
+    !  \int_{\zeta_i}^{\zeta_{i-1}} \left[ G(\zeta) - G(\zeta_i) \right]
+    !   \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
+    !   \text{d}\zeta$.  The first integral is easy -- it's just
+    !  $G(\zeta_i) (\zeta_{i-1}-\zeta_i)$.  We don't use it here.
+    !  In the second integral, $G(\zeta)$ is {\tt funct} -- which has
+    !  already been evaluated at the appropriate abscissae -- and
+    !  $G(\zeta_i)$ is {\tt singularity}.  The weights are {\tt gw}.
 
     a = 1
     do i = 1, size(c_inds)
@@ -97,11 +112,26 @@ contains
 
 ! Internals
 
-    integer(ip) a, aa, b, i, j
+    integer(ip) a, aa, i, j
     complex(rp) :: ds_dh_dh_dz_gw(ng) ! ds_dh_gl * dh_dz_gl * gw is the same
       !                                 for all j = -1..1
 
 ! Start calculation
+
+    !{ Apply Gauss-Legendre quadrature to the panels indicated by
+    !  {\tt C\_inds}.  We remove a singularity (which actually only
+    !  occurs at the tangent point) by writing
+    !  $\int_{\zeta_i}^{\zeta_{i-1}} G(\zeta) \frac{\text{d}s}{\text{d}h}
+    !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta =
+    !  G(\zeta_i) \int_{\zeta_i}^{\zeta_{i-1}} \frac{\text{d}s}{\text{d}h}
+    !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta +
+    !  \int_{\zeta_i}^{\zeta_{i-1}} \left[ G(\zeta) - G(\zeta_i) \right]
+    !   \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
+    !   \text{d}\zeta$.  The first integral is easy -- it's just
+    !  $G(\zeta_i) (\zeta_{i-1}-\zeta_i)$.  We don't use it here.
+    !  In the second integral, $G(\zeta)$ is {\tt funct} -- which has
+    !  already been evaluated at the appropriate abscissae -- and
+    !  $G(\zeta_i)$ is {\tt singularity}.  The weights are {\tt gw}.
 
     a = 1
     do i = 1, size(c_inds)
