@@ -85,7 +85,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   public :: AddToVector, AddVectors, AddVectorTemplateToDatabase
   public :: AddVectorToDatabase, AssignVector, AXPY, ClearMask
   public :: ClearUnderMask, ClearVector, CloneVector, ConstantXVector
-  public :: ConstructVectorTemplate, CopyVector, CreateMaskArray
+  public :: ConstructVectorTemplate, CopyVector, CopyVectorMask, CreateMaskArray
   public :: CreateMask, CreateVector, DestroyVectorDatabase, DestroyVectorInfo
   public :: DestroyVectorMask, DestroyVectorTemplateDatabase
   public :: DestroyVectorTemplateInfo, DestroyVectorValue, DotVectors
@@ -1719,6 +1719,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.76  2002/02/08 22:51:40  livesey
+! Added CopyVectorMask
+!
 ! Revision 2.75  2002/02/07 02:53:06  vsnyder
 ! Add parameter for FullDerivatives bit for mask
 !
