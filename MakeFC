@@ -352,11 +352,11 @@ help:
 disthelp:
 	$(CONFDIR)/README.MakeFC
 
+# install the mls software
 install:
-#prog in l3 now named mlsl3d
 	@echo "Installing programs from $(LEVELS) into $(INSTALLDIR)"; \
 	if [ ! -d $(INSTALLDIR) ] ; then \
-	   $(MLSBIN)/mkdir_cascade $(INSTALLDIR) ; \
+	   $(MLSBIN)/mkdir_cascade.sh $(INSTALLDIR) ; \
 	fi ; \
 	for dir in $(LEVELS); do \
 	case "$$dir" in \
@@ -382,9 +382,15 @@ install:
 		;; \
 	esac ; \
 	done
-#	 for dir in $(LEVELS); do \
-#	  mv $$dir/$(MLSCONFG)/mls$$dir $(CONFDIR) ; \
-#	done
+
+# build and install some of the executables out of util
+init_gen: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/init_gen.f90
+	$(MLSBIN)/build_f90_in_misc.sh -d ./bin/$(MLSCONFG)/ -t ./tests \
+   -c $(MLSCONFG) -p $@ $(MLSBIN)/$@.f90
+
+f90tex: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/f90tex.f90
+	$(MLSBIN)/build_f90_in_misc.sh -d ./bin/$(MLSCONFG)/ -t ./tests \
+   -c $(MLSCONFG) -p $@ $(MLSBIN)/$@.f90
 
 makefile:
 	@if [ $(COPY_NUMBER) -lt $(MAX_COPIES) ] ; then \
@@ -600,7 +606,7 @@ l2: fwdmdl cloudfwdm
 
 l3m: l3
 
-install: all
+install: $(LEVELS)
 
 update:
 
@@ -615,6 +621,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.43  2001/08/11 00:10:33  pwagner
+# More housekeeping
+#
 # Revision 1.42  2001/08/10 17:43:40  pwagner
 # Fixed -h(elp) option; general housekeeping
 #
