@@ -1,5 +1,5 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 module FullForwardModel_m
 
@@ -1832,6 +1832,7 @@ contains
   ! ................................................  Convolution  .....
     subroutine Convolution
 
+      logical, parameter :: OLDPATCHER = .false. ! Old one was buggy
       ! Convolution if needed, or interpolation to ptan ----------------------
 
       integer ChanInd, Channel, I, J, SigInd, Ptg_I
@@ -1866,7 +1867,7 @@ contains
       deltaPtg = 1e-3              ! Some starting value
       patchedAPtg = .false.
       do ptg_i = 2, no_tan_hts
-        if ( ptg_angles(ptg_i) <= ptg_angles(ptg_i-1) ) then
+        if ( ptg_angles(ptg_i) <= ptg_angles(ptg_i-1) .and. OLDPATCHER) then
           patchedAPtg = .true.
           ! This one is at or below its predecessor, find the next one above
           ptg_j = ptg_i + 2
@@ -1888,6 +1889,24 @@ contains
           end do
           ! Don't worry about missing the last one here, it will get caught by the
           ! next iteration of the outer loop
+        elseif ( ptg_angles(ptg_i) <= ptg_angles(ptg_i-1) ) then
+          patchedAPtg = .true.
+          ! This one is at or below its predecessor, find the next one above
+          ptg_j = ptg_i + 1
+          patchPtgInnerLoop2: do 
+            if ( ptg_j > no_tan_hts ) exit patchPtgInnerLoop2
+            if ( ptg_angles(ptg_j) > ptg_angles(ptg_i-1) ) exit patchPtgInnerLoop2
+            ptg_j = ptg_j + 1
+          end do patchPtgInnerLoop2
+          ! Work out the spacing to fill in with
+          if ( ptg_j > no_tan_hts ) then
+            ! Fell off the end of the list, just use previous spacing
+            ptg_j = no_tan_hts
+          else
+            ! Didn't fall off, so work out spacing
+            deltaPtg = ( ptg_angles(ptg_j) - ptg_angles(ptg_i-1) ) / ( ptg_j - ptg_i + 1 )
+          end if
+          ptg_angles(ptg_i) = ptg_angles(ptg_i-1) + deltaPtg
         else
           ! This value us above the previous one so compute a delta from it 
           ! to use if needed later
@@ -3191,6 +3210,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.232  2005/02/17 02:35:29  vsnyder
+! Do PFA on fine path if necessary
+!
 ! Revision 2.231  2005/02/16 23:16:49  vsnyder
 ! Revise data structures for split-sideband PFA
 !
