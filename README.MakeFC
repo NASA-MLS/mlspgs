@@ -1,0 +1,295 @@
+#!/bin/sh
+#    README.MakeFC        Instructions about building the mls software
+# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+# "$Id$"
+        more << EOF
+MakeFC--A configurable Makefile in mlspgs
+
+SUMMARY
+To build the mls software, on many different combinations of compiler/
+platform/OS, minimizing the changes most users will need to make. Therefore
+it is mostly self-configuring. You will need:
+  f95 compiler (either NAG or Lahey)
+  Installed SDP Toolkit (PGSTK, HDFEOS, HDF)
+  mls software (probably where you're reading this)
+Then, from the "top" level (where you see this file, as well as the l2,
+lib, and util directories) simply type
+  make -f MakeFC
+and you'll be asked to respond to some questions about your compiler,
+platform, and where the Toolkit is installed. Then the software will
+be made. You may quit out of this now and try it out, perhaps coming
+back later if you are curious or if something  goes wrong.
+
+INTRODUCTION
+An attempt has been made to minimize the amount of editing and
+configuring each user must perform in building the mls software.
+Specially named Makefiles and two new shell scripts are now available to
+guide the new user through an initial query driven configuration which
+creates a file named .configure. It contains information about the
+compiler, platform/OS, and paths to relevant libraries. Subsequent uses
+of make automatically make use of this configuration.
+
+The mls software should be buildable by different users at sites remote
+from each other, and using whatever compiler and platform/OS combination
+they prefer or already have. The limitation on the last is that they
+must have installed the SDP Toolkit, HDF and HDFEOS libraries, and have
+an f95 compiler. It is possible to simply supply the source code and
+leave it up to the user to figure out how to put it together, probably
+by reading parts of it, using an automated make utility or a Makefile
+that worked for someone else, and trial and error. An alternative is to
+create a configurable Makefile or series of such files that will work,
+at least most of the time.
+
+The configurable Makefile for the lib and l2 mls software is MakeFC. It
+is found in the mlspgs directory. The name MakeFC was chosen as unlikely
+to conflict with other Makefiles. An unfortunate consequence of this
+decision is that to use it to build the software, the "make" command
+must always be accompanied by the "-f MakeFC" arguments. E.g., the usual
+way to invoke it is
+         "make -f MakeFC".
+
+WHAT YOU NEED
+You may begin when you checkout a fresh copy of the mlspgs archive. If
+you already have an archive with some changes you wish to keep but not
+share yet, make sure you update the following files and directories:
+
+mlspgs/     mlspgs/util/       mlspgs/l2/        mlspgs/lib/
+------      ------------       ----------        -----------
+MakeFC      mlsconfigure         MakeFC            MakeFC
+            makemakedep.sh     Makefile.dep      Makefile.dep
+                                platforms/*       platforms/*
+
+BUILDING THE SOFTWARE
+Then to make the mls software, both the lib and mlsl2, from the top
+level of the mlspgs directory, enter the command "make -f MakeFC". This
+should launch util/mlsconfigure. It will first query you for your
+compiler (only two choices available: NAG or Lahey) and for your
+platform/OS (only three choices available: Sun, SGI, or Linux).
+
+Next it will prompt you to enter the paths to the SDP Toolkit includes
+directories and to the PGSTK, HDFEOS, HDF, and Gctp libraries. These may
+already be known if they were set as environmental variables  when the
+Toolkit was installed. If so, you will see the current non-blank paths
+and be asked to confirm that they are correct. Then you will be done
+with the configuring, and may skip down to the next section. If the
+current paths are blank, incorrect, or you simply wish to try changing
+them, be prepared to enter their full path names. Usually Gctp is
+installed alongside the HDFEOS so after setting the latter, the same
+will be offered as the default path setting for the former.
+
+To set these paths as environment variables, if they are not so set
+already, a first step is to find where your copy of the Toolkit was
+installed. You will find a file there which you may cp to your home
+directory and invoke at login. Or you may do it just before running
+make. For example, the following is from a session in which I hunted
+this file down, used it, and echoed the resulting settings.
+
+[pwagner@riverrun ~]$ ls /software/SRC/TOOLKIT-5.2.6v1.00.NAG/bin/sgi
+INSTALL-AAdata@           PGS_PC_GetTempReferenceCom*  pgs-dev-env.csh
+INSTALL-HDF@              PGS_PC_InitCom*              pgs-dev-env.ksh
+INSTALL-HDF4.0r1p1@       PGS_PC_Shell.sh*             pgs-env.csh
+INSTALL-HDF4.0r2@         PGS_PC_TempDeleteCom*        pgs-env.ksh
+
+[pwagner@riverrun ~]$ source /../bin/sgi/pgs-dev-env.csh
+
+#This where the path to the includes file
+[pwagner@riverrun ~]$ echo $PGSINC
+/software/SRC/TOOLKIT-5.2.6v1.00.NAG/include
+
+#Now in order appear paths to the following libraries
+#HDFEOS
+#HDF
+#PGSTK
+[pwagner@riverrun ~]$ setenv | grep -i lib
+HDFEOS_LIB=/software/SRC/TOOLKIT-5.2.6v1.00.NAG/hdfeos/lib/sgi
+HDFLIB=/software/SRC/TOOLKIT-5.2.6v1.00.NAG/hdf/sgi/HDF4.1r3/lib
+PGSLIB=/software/SRC/TOOLKIT-5.2.6v1.00.NAG/lib/sgi
+
+This explanation has been given with a great deal of detail (perhaps too
+much) because it is very important. It may seem overwhelming, and you
+may exclaim, "Wasn't this supposed to make things easier?" Fortunately,
+the configuration will have to done only once.
+
+BUILDING ONLY PARTS OF THE SOFTWARE
+If you wish to build only lib, for example, you may specify that target,
+i.e.
+        make -f MakeFC lib
+and similarly for l2. Alternatively, if you are in lib, perhaps changing
+some of its modules, then while there you may use the simple
+        make -f MakeFC
+and only libmls.a will be rebuilt. Again the same is true while in l2
+when only mlsl2 will be built.
+
+OTHER OPTIONS
+These are available either at the "top" level, mlspgs, or in parts at
+the level of lib and l2.
+make -f MakeFC the_option
+
+clean      removes all binaries created during compilation and linking
+depends    recalculates dependencies;
+           typically done only after adding new module, or adding a
+           "USE ..." line to an existing module;
+           currently requires makedepf90
+configure  change configuration: compiler, (less often) platform/OS,
+paths
+
+HOW IT WORKS
+Each time make is called, it finds mlspgs/.configure among the list of
+dependencies. If it doesn't exist yet, as with a fresh copy of the
+archive, it creates one, using mlspgs/util/mlsconfigure. This will cause
+the file to be created. The contents of the resulting file will be
+something like the following:
+#       .configure for mls
+MLSF95=NAG
+MLSPLAT=Linux
+MLSCONFG=NAG.Linux
+PGSINC=/nas/users/pwagner/TOOLKIT/include
+PGSTK=/nas/users/pwagner/TOOLKIT/NAG
+HDFEOS=/nas/users/pwagner/TOOLKIT
+HDF=/software/SRC/TOOLKIT-5.2.6v1.00.NAG/hdf/linux/HDF4.1r3/lib
+GCTP=/nas/users/pwagner/TOOLKIT
+PGSLIB=/nas/users/pwagner/TOOLKIT/NAG
+HDFEOS_LIB=/nas/users/pwagner/TOOLKIT
+HDFLIB=/software/SRC/TOOLKIT-5.2.6v1.00.NAG/hdf/linux/HDF4.1r3/lib
+export MLSF95
+export MLSPLAT
+export MLSCONFG
+export PGSINC
+export PGSLIB
+export HDFEOS_LIB
+export HDFLIB
+
+In addition, in lib and l2 a new directory will be created with a unique
+name given by the value of MLSCONFG. In the example above that name
+would be NAG.Linux. In this directory mlsconfigure places a Makefile
+which is the catenation of .configure with two files found in the
+directory platforms: e.g.,
+        cat .configure l2/platforms/NAG.Linux l2/platforms/targets > \
+                l2/NAG.Linux/Makefile
+Here platforms/NAG.Linux is mostly a file of compiler settings specific
+to the NAG compiler. platforms/targets is a list of makefile-like
+targets and the commands to build them, independent of any particular
+compiler or platform/OS.
+
+As make proceeds to build the prerequisites of the final program, the
+binaries, .o and .mod files, and end products, libmls.a and mlsl2, are
+all placed in MLSCONFG.
+
+In subsequent invocations, .configure already exists, so make simply
+executes any commands needed to build the end products if any
+prerequisites are newer.
+
+MLSCONFG/Makefile has the command near its start
+ include 'Makefile.dep'
+that causes the dependencies to be copied in in the form of the file
+Makefile.dep. This is how make learns which sources to compile to create
+the binaries, called OBJS. Makefile.dep contains only the dependencies,
+no explicit build commands, and lists among the dependent files only
+those it finds in the same directory.
+
+It would be desirable to list Makefile.dep among the prerequisites and
+force it to be updated on any change to the source files. Instead, the
+only way to change it is by the explicit command "make -f MakeFC
+depends". This is because currently the only way to create Makefile.dep
+is by the shell script utility/makemakedep.sh, and it in turn uses
+makedepf90. The latter is available from
+        http://www.helsinki.fi/~eedelman/makedepf90.html
+
+in binary form for linux, or as c++ sources that need to be compiled.
+
+CALL TO ACTION
+This is useable now. Please try it out and inform me of any bugs you
+find. And tell me their solutions if you can, of course. Also of any
+improvements you think of. The configuration is messy, especially
+changing the paths. If everyone could be relied upon to have executed
+pgs-dev-env.csh or pgs-env.csh as part of their login, then this could
+be better hidden.
+
+ACTUAL BUGS
+Unless the latest, "beta" copy of the NAG f95 is used, Matrix_Module.f90
+in lib and l2 won't compile. The solution is to upgrade to the latest
+NAG f95. Changing the Makefile alone won't help.
+
+The current NAG Linux HDFEOS, HDF, PGSTK, etc. libraries can not be made
+to link properly. Sun and SGI versions seem correct. The solution is to
+obtain correct ones. This will be moot when newer versions are made
+available.
+
+IMPERFECTIONS
+Among the current shortcomings is the reliance on makedepf90, as noted
+above. Using an alternate perl-based utility looks promising.
+
+The only combinations of compiler.platform/OS I provided for so far are
+Unknown.None
+NAG.(pc)Linux
+LF95.(pc)Linux
+NAG.Sun
+NAG.SGI
+The last assumes abi=32. To compile for a 64 bit kernel, we could
+(1) add platforms/NAG.SGI64 with altered flags
+(2) allow adding extra compiler settings (see below)
+To use these, 64 bit versions of the libraries HDFEOS, etc. would have
+to available, too.
+
+If you have a different combination, contact me. Even better, if you
+have a different combination and already get it to work, "cvs commit".
+
+A semi-bug results from the split of sources between lib and l2.
+Dependencies in l2/Makefile.dep do not include any of the lib sources,
+even if they are mentioned in "USE ..." statements. Therefore, when a
+source in lib is changed and recompiled, the l2 source that USEs it does
+not automatically get recompiled. This can be convenient if none of the
+interface elements were changed. But it can be misleading if any of the
+interface elements were changed, and in such a way as to break the l2
+source. Forcing the l2 source to be recompiled would disclose the broken
+interface, while in the current situation the problem could remain
+hidden until some other circumstance causes it emerge.
+
+The sources currently must reside directly under lib or l2, and this
+fact is "hard-wired" into the Makefiles. It may become desirable to
+segregate them into a /src subdirectory parallel to the /MLSCONFG and
+/platforms subdirectories, and thus the Makefiles would need to changed
+to accomplish this. In general, replacing "hard-wired" directory paths
+with variable ones, set in either .configure or set in a more permanent
+file, seems like a good idea.
+
+Adding a "make -f MakeFC tar" option would allow the l2 and lib parts of
+the archive to be conveniently bound up for distribution. A start has
+been made in this direction.
+
+Under the lib directory is a lib/tests subdirectory containing three
+test programs. Only test_cf_parser has been successfully adapted to use
+MakeFC so far. multiply and sparsify still lack MakeFC files and
+platforms directories.
+
+Another wrinkle in the lib directory is the versions of machine.f90
+which lurk under platforms with names like NAG.Linux.machine. They are
+intended to contain machine/OS/compiler specific information the
+software can obtain at runtime. As a start, I simply copied NAG.Linux
+into NAG.*, which is probably incorrect.
+
+Examining lib/targets reveals yet another wrinkle in lib: two of the
+sources required special compiler flags to compile successfully under
+NAG. You will see them mentioned explicitly at the end with their custom
+build instructions. In the extreme case where every source required a
+different, custom command, the idea of an automatic, self configuring
+Makefile would lose any meaning.
+
+Adding a "make -f MakeFC clean_objs" would allow more flexibility if it
+zapped only the .o and .mod files, keeping the libmls.a and mlsl2,
+perhaps moving them to a permanent, final location.
+
+At the cost of making configuration more complex, an option could be
+made that would allow extra settings, e.g. compiler flags could be set
+to suppress warning messages.
+
+If this ever seems to work well enough, similar MakeFC and platforms
+could be devised for the other levels of mls. By design it remains an
+optional way to build, and coexisting in parallel with other ways.
+
+-pw                           2000-Oct-24
+EOF
+exit
+# $Log$
