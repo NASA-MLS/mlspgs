@@ -355,7 +355,7 @@ contains
           else if ( i > 1 ) then
             call output ( ', ' )
           end if
-          display_string ( field_indices(moreFields(i)) )
+          CALL display_string ( field_indices(moreFields(i)) )
         end do ! i
         call output ( ' shall appear.', advance='yes' )
       case ( notRange )
