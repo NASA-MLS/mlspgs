@@ -66,6 +66,8 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
 ! strings2Ints       Converts an array of strings to ints using "ichar" ftn
 ! StringElementNum   Returns element number of test string in string list
 ! unquote            Removes surrounding [quotes]
+! utc_to_yyyymmdd    Parses yyyy-mm-ddThh:mm:ss.sss or yyyy-dddThh:mm:ss.sss
+! yyyymmdd_to_dai    Converts yyyymmdd to days after Jan 1, 2001
 ! === (end of toc) ===
 
 ! === (start of api) ===
@@ -144,7 +146,11 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
    & List2Array, LowerCase, NumStringElements, &
    & ReadCompleteLineWithoutComments, readIntsFromChars, ReplaceSubString, &
    & Reverse, ReverseList, SortArray, SortList, SplitWords, strings2Ints, &
-   & StringElementNum, unquote, utc_to_yyyymmdd
+   & StringElementNum, unquote, utc_to_yyyymmdd, yyyymmdd_to_dai
+
+  interface switch
+    module procedure switch_ints
+  end interface
 
   interface utc_to_yyyymmdd
     module procedure utc_to_yyyymmdd_strs, utc_to_yyyymmdd_ints
@@ -165,6 +171,14 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
   ! A limitation among string list operations
   integer, private, parameter :: MAXSTRELEMENTLENGTH = BareFNLen
 
+  ! The following arrys contains the maximum permissible day for each month
+  ! where month=-1 means the whole year, month=1..12 means Jan, .., Dec
+  integer, dimension(-1:12), parameter :: DAYMAXLY = (/ &
+    & 366, 0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 &
+    & /)
+  integer, dimension(-1:12), parameter :: DAYMAXNY = (/ &
+    & 365, 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 &
+    & /)
 CONTAINS
 
   ! ---------------------------------------------  Array2List  -----
@@ -2395,16 +2409,16 @@ CONTAINS
   end Function unquote
 
   ! ---------------------------------------------  utc_to_yyyymmdd_ints  -----
-  subroutine utc_to_yyyymmdd_ints(str, ErrTyp, year, month, day, strict)
+  subroutine utc_to_yyyymmdd_ints(str, ErrTyp, year, month, day, strict, nodash)
     ! Routine that returns the year, month, and day from a string of the form
     ! (A) yyyy-mm-ddThh:mm:ss.sss
     ! (B) yyyy-dddThh:mm:ss.sss
     ! where the field separator 'T' divides the string into two
     ! sub-strings encoding the date and time
     ! The date substring in subdivided by the separator '-'
-    ! into either two or three fileds
+    ! into either two or three fields
     ! In case (A), the 3 fields are year, month, and day of month
-    ! in case (B) the two fileds are year and day of year
+    ! in case (B) the two fields are year and day of year
     
     ! For case (A) returns year, month, and day=day of month
     ! For case (B) returns year, month=-1, and day=day of year
@@ -2417,7 +2431,8 @@ CONTAINS
     integer, intent(out) :: year
     integer, intent(out) :: month
     integer, intent(out) :: day
-    logical,intent(in), optional :: strict
+    logical, intent(in), optional :: strict
+    logical, intent(in), optional :: nodash   ! No dash separating date fields
     !----------Local vars----------!
     character(len=1), parameter :: dash='-'
     character(len=NameLen) :: date
@@ -2426,6 +2441,7 @@ CONTAINS
     character(len=NameLen) :: dd
     character(LEN=*), parameter :: time_conversion='(I4)'
     logical :: mystrict
+    logical :: mynodash
     character(len=1) :: utc_format        ! 'a' or 'b'
     integer, parameter :: YEARMAX = 4999  ! Conversion invalid after 4999 AD
     ! The following arrys contains the maximum permissible day for each month
@@ -2446,6 +2462,12 @@ CONTAINS
       mystrict=.false.
    endif
          
+   if(present(nodash)) then
+      mynodash=nodash
+   else
+      mynodash=.false.
+   endif
+         
    if(len_trim(str) <= 0) then
       if(mystrict) then
          ErrTyp=INVALIDUTCSTRING
@@ -2463,15 +2485,21 @@ CONTAINS
      if ( .not. mystrict) Errtyp = 0
      return
    endif
-   call GetStringElement(trim(date), yyyy, 1, countEmpty=.true., inDelim=dash)
-   if ( &
-     & NumStringElements(trim(date), countEmpty=.true., inDelim=dash) == 2) then
-     call GetStringElement(trim(date), dd, 2, countEmpty=.true., inDelim=dash)
-     utc_format = 'b'
+   if ( myNoDash ) then
+     yyyy = date(1:4)
+     mm = date(5:6)
+     dd = date(7:8)
    else
-     call GetStringElement(trim(date), mm, 2, countEmpty=.true., inDelim=dash)
-     call GetStringElement(trim(date), dd, 3, countEmpty=.true., inDelim=dash)
-     utc_format = 'a'
+     call GetStringElement(trim(date), yyyy, 1, countEmpty=.true., inDelim=dash)
+     if ( &
+       & NumStringElements(trim(date), countEmpty=.true., inDelim=dash) == 2) then
+       call GetStringElement(trim(date), dd, 2, countEmpty=.true., inDelim=dash)
+       utc_format = 'b'
+     else
+       call GetStringElement(trim(date), mm, 2, countEmpty=.true., inDelim=dash)
+       call GetStringElement(trim(date), dd, 3, countEmpty=.true., inDelim=dash)
+       utc_format = 'a'
+     endif
    endif
    
    ErrTyp=0
@@ -2596,7 +2624,109 @@ CONTAINS
    
   end subroutine utc_to_yyyymmdd_strs
 
+  ! ---------------------------------------------  yyyymmdd_to_dai  -----
+  subroutine yyyymmdd_to_dai(str, dai, startingDate)
+    ! Routine that returns the number of days after a starting date
+    ! from a string of the form yyyymmdd
+    !--------Argument--------!
+    character(len=*),intent(in) :: str
+    integer,intent(out) :: dai
+    character(len=*),intent(in),optional :: startingDate  ! If not Jan 1 2001
+    !----------Local vars----------!
+    character(len=8) :: mystartingDate
+    integer :: yyyy1, mm1, dd1, doy1
+    integer :: yyyy2, mm2, dd2, doy2
+    integer :: ErrTyp
+    logical :: daiNegative
+    integer :: y
+    !----------Executable part----------!
+   if(present(startingDate)) then
+      mystartingDate=startingDate
+   else
+      mystartingDate='20010101'
+   endif
+   call utc_to_yyyymmdd_ints(mystartingDate, ErrTyp, yyyy1, mm1, dd1, nodash=.true.)
+   call utc_to_yyyymmdd_ints(str, ErrTyp, yyyy2, mm2, dd2, nodash=.true.)
+   call yyymmdd_to_doy(mystartingDate, doy1)
+   call yyymmdd_to_doy(str, doy2)
+   daiNegative = yyyy1 > yyyy2
+   if ( daiNegative ) then
+     call switch(yyyy1, yyyy2)
+     call switch(doy1, doy2)
+   elseif ( yyyy1 == yyyy2 ) then
+     dai = doy2 - doy1
+     return
+   endif
+   dai = doy2 - doy1
+   do y = yyyy1, yyyy2 - 1
+     if ( leapyear(y) ) then
+       dai = dai + DAYMAXLY(-1)
+     else
+       dai = dai + DAYMAXNY(-1)
+     endif
+   enddo
+   if ( daiNegative ) dai = -dai
+  end subroutine yyyymmdd_to_dai
+
 !=============================================================================
+  ! ---------------------------------------------  switch_ints  -----
+  subroutine switch_ints(x1, x2)
+    ! Switch args x1 <=> x2
+    !--------Argument--------!
+    integer,intent(inout) :: x1
+    integer,intent(inout) :: x2
+    !----------Local vars----------!
+    integer :: x
+    x = x1
+    x1 = x2
+    x2 = x
+  end subroutine switch_ints
+
+  ! ---------------------------------------------  yyymmdd_to_doy  -----
+  subroutine yyymmdd_to_doy(str, doy)
+    ! Routine that returns the number of days after the year's start
+    ! for a string of the form yyyymmdd
+    !--------Argument--------!
+    character(len=*),intent(in) :: str
+    integer,intent(out) :: doy
+    !----------Local vars----------!
+    integer :: year, month, day
+    integer :: ErrTyp
+    integer :: m
+    integer, parameter :: YEARMAX = 4999  ! Conversion invalid after 4999 AD
+    integer, dimension(-1:12) :: DAYMAX
+    !----------Executable part----------!
+     call utc_to_yyyymmdd_ints(str, ErrTyp, year, month, day, nodash=.true.)
+     if ( year < 0 .or. year > YEARMAX ) then
+       doy = -1
+     endif
+     doy = day
+     if ( month <= 1 ) then
+       return
+     endif
+     if ( leapyear(year) ) then
+       DAYMAX = DAYMAXLY
+     else
+       DAYMAX = DAYMAXNY
+     endif
+     do m=1, month-1
+       doy = doy + DAYMAX(m)
+     enddo
+     
+  end subroutine yyymmdd_to_doy
+
+  logical function leapyear(year)
+    integer,intent(in) :: year
+     ! This is to capture rule that centuries are leap only
+     ! if divisible by 400
+     ! Otherwise, as prehaps you knew, leapyears are those years divisible by 4
+     if ( 100 * (year/100) >= year ) then
+       leapyear = ( 400 * (year/400) >= year )
+     else
+       leapyear = ( 4 * (year/4) >= year )
+     endif
+  end function leapyear
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -2605,6 +2735,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.36  2003/12/05 00:52:18  pwagner
+! Added yyyymmdd_to_dai (though arguably this belongs in time_m)
+!
 ! Revision 2.35  2003/10/28 19:28:32  vsnyder
 ! Make sure outStr always has a value
 !
