@@ -17,9 +17,6 @@ module TREE_WALKER
   use MatrixModule_1, only: Matrix_Database_T
   use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_RANGE_T
   use MLSSignals_M, only: MLSSignals
-  use ObtainClimatology, only: OBTAIN_CLIM
-  use ObtainDAO, only: OBTAIN_DAO
-  use ObtainNCEP, only: OBTAIN_NCEP
   use OPEN_INIT, only: DestroyL1BInfo, OpenAndInitialize, read_apriori
   use OutputAndClose, only: Output_Close
   use QuantityTemplates, only: QuantityTemplate_T
@@ -72,11 +69,6 @@ contains ! ====     Public Procedures     ==============================
     if ( toggle(gen) ) call trace_begin ( 'WALK_TREE_TO_DO_MLS_L2', &
       & subtree(first_section,root) )
     call OpenAndInitialize ( processingRange, l1bInfo )
-    ! For now, the next three are simply done.  Eventually, they should be
-    ! triggered by a command
-    call Obtain_NCEP ( aprioriData, root )
-    call Obtain_DAO ( aprioriData, root )
-    call Obtain_Clim ( aprioriData, root )
 
     i = first_section
     howmany = nsons(root)
@@ -144,6 +136,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.9  2001/02/27 17:38:07  livesey
+! Tidied up arguments to MLSL2Join
+!
 ! Revision 2.8  2001/02/23 02:51:44  vsnyder
 ! Improve progress messages triggered by -g option
 !
