@@ -22,9 +22,12 @@ module FilterShapes_m
   public :: Close_Filter_Shapes_File, Destroy_Filter_Shapes_Database
   public :: Dump_Filter_Shapes_Database
 
+  ! There is a separate FilterShape_T object for each COMPLETE signal
+  ! specification, including the channel number.  It isn't necessary
+  ! for all of the filter shapes to have the same size.
   type, public :: FilterShape_T
-    real(r8), dimension(:,:), pointer :: FilterGrid => NULL()      ! Abscissae
-    real(r8), dimension(:,:), pointer :: FilterShape => NULL()     ! Ordinates
+    real(r8), dimension(:), pointer :: FilterGrid => NULL()      ! Abscissae
+    real(r8), dimension(:), pointer :: FilterShape => NULL()     ! Ordinates
     type (Signal_T) :: Signal
   end type FilterShape_T
 
@@ -72,12 +75,11 @@ contains
 
     integer, intent(in) :: Lun          ! Logical unit number to read it
 
-    integer :: DataBaseSize             ! How many filter shapes?
     real(r8) :: DX                      ! To compute FilterGrid
     real(r8) :: LHS, RHS                ! For computing grid
-    integer :: I, J                     ! Loop inductors, subscripts
-    integer :: NumChannels              ! For the signal
-    integer :: NumFilterPts             ! How many points in each filter
+    integer :: I                        ! Loop inductor, subscript
+    character(80) :: Line               ! From the file
+    integer :: Number_in_shape          ! How many points in each filter
     integer :: Sideband                 ! From parse signal
     !                                          shape array -- all the same
     !                                          for each signal.
@@ -87,42 +89,49 @@ contains
     integer, pointer, dimension(:) :: Signal_Indices   ! From Parse_Signal, q.v.
     type(filterShape_T) :: thisShape
 
+    namelist /Filter/ lhs, rhs, number_in_shape
+
     if ( toggle(gen) ) call trace_begin ( "Read_Filter_Shapes_File" )
 
     nullify ( signal_indices )
     ! if ( associated(filterShapes) ) call destroy_filter_shapes_database
 
     do ! Loop over filter shapes
-      read ( lun, *, iostat=status ) numFilterPts, sigName
+      read ( lun, '(a)', iostat=status ) line
       if ( status > 0 ) go to 99
       if ( status < 0 ) exit
-      call parse_signal ( sigName, signal_indices, sideband=sideband )
+      if ( line == '' ) cycle           ! Skip blank lines
+      line = adjustl(line)
+      if ( line(1:1) == '!' ) cycle     ! Skip comments
+      sigName = line
+      nullify ( thisShape%signal%channels )
+      call parse_signal ( sigName, signal_indices, sideband=sideband, &
+        channels=thisShape%signal%channels )
       if ( .not. associated(signal_indices) ) &
         call MLSMessage ( MLSMSG_Error, moduleName, &
           & trim(sigName) // " is not a valid signal." )
       ! Just take the first one.
       thisShape%signal = signals(signal_indices(1))
       thisShape%signal%sideband = sideband
-      numChannels = size(thisShape%signal%frequencies)
       call deallocate_test ( signal_indices, "Signal_Indices", moduleName )
-      
-      ! Now need to nullify so this add doesn't hose any previous work
+
+      ! Read the lhs, rhs and num_in_filters
+      read ( lun, filter, iostat=status )
+      if ( status /= 0 ) go to 99
+
+      ! Need to nullify so this add doesn't hose any previous work
       nullify ( thisShape%filterShape, thisShape%filterGrid )
       call allocate_test ( thisShape%filterGrid,&
-        & numChannels, numFilterPts, &
-        & 'thisShape%filterGrid', ModuleName )
+        & number_in_shape, 'thisShape%filterGrid', ModuleName )
       call allocate_test ( thisShape%filterShape,&
-        & numChannels, numFilterPts, &
-        & 'thisShape%filterShape', ModuleName )
+        & number_in_shape, 'thisShape%filterShape', ModuleName )
 
-      do i = 1, numChannels
-        call read_one_filter ( lhs, rhs, thisShape%filterShape(i,:) )
-        if ( status < 0 ) go to 99
-        if ( status > 0 ) go to 98
-        dx = ( rhs - lhs ) / (numFilterPts - 1)
-        do j = 1, numFilterPts
-          thisShape%filterGrid(i,j) = lhs + (j-1) * dx
-        end do ! j
+      ! Read the shape array and calculate the associate abscissae
+      read ( lun, *, iostat=status ) thisShape%filterShape
+      if ( status /= 0 ) go to 99
+      dx = ( rhs - lhs ) / (number_in_shape - 1)
+      do i = 1, number_in_shape
+        thisShape%filterGrid(i) = lhs + (i-1) * dx
       end do ! i
 
       dummy = AddFilterShapeToDatabase ( filterShapes, thisShape )
@@ -140,18 +149,6 @@ contains
   99 call io_error ( "While reading the filter shape file", status )
      call MLSMessage ( MLSMSG_Error, moduleName, "Input error" )
 
-  contains
-    ! ..........................................  Read_One_Filter  .....
-    subroutine Read_One_Filter ( LHS, RHS, ArgFilterShape )
-      real(r8), intent(out) :: LHS, RHS, ArgFilterShape(:)
-      integer :: Channel           ! Only for its documentary value in the file
-      real(r8) :: FilterShape(255)
-      integer :: N
-      namelist / Filter / Channel, FilterShape, LHS, RHS
-      n = size(argFilterShape)
-      read ( lun, filter, iostat=status )
-      argFilterShape(:n) = filterShape(:n)
-    end subroutine Read_One_Filter
   end subroutine Read_Filter_Shapes_File
 
   ! -----------------------------------  Close_Filter_Shapes_File  -----
@@ -187,6 +184,8 @@ contains
         & "FilterShapes(?)%filterGrid", moduleName )
       call deallocate_test ( filterShapes(i)%filterShape, &
         & "FilterShapes(?)%filterShape", moduleName )
+      call deallocate_test ( filterShapes(i)%signal%channels, &
+        & "FilterShapes(?)%signal%channels", moduleName )
     end do ! i
     deallocate ( filterShapes, stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
@@ -215,6 +214,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 2.0  2001/09/17 20:26:25  livesey
+! New forward model
+!
 ! Revision 1.15  2001/05/17 01:00:22  livesey
 ! Odd bug, was allowing me to call AddFilterShapeToDatabase as a
 ! subroutine when it was in fact a function.
