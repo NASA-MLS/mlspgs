@@ -17,7 +17,7 @@ module Open_Init
   &                        PUNISH_FOR_NO_L1BOA, PENALTY_FOR_NO_METADATA, &
   &                        PCF, CREATEMETADATA
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
-  use MLSMessageModule, only: MLSMessage, &
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Warning, &
     &                         MLSMSG_Error!, MLSMSG_FileOpen, MLSMSG_Info
   use MLSPCF2, only: MLSPCF_L1B_OA_START, MLSPCF_L1B_RAD_END, &
     &                MLSPCF_L1B_RAD_START, &
@@ -291,6 +291,8 @@ contains ! =====     Public Procedures     =============================
     if ( returnstatus /= PGS_S_SUCCESS .and. &
       &  returnstatus /= PGSTD_E_NO_LEAP_SECS ) &
         & call announce_error ( 0, "Could not convert UTC Start time to TAI" )
+    if ( returnstatus == PGSTD_E_NO_LEAP_SECS ) &
+      & call MLSMessage ( MLSMSG_Warning, ModuleName, 'No leap second information' )
 
    returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_CCSDSEndId, &
                                           CCSDSEndTime)
@@ -594,6 +596,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.59  2001/12/16 00:57:46  livesey
+! Add warning about leap seconds
+!
 ! Revision 2.58  2001/11/09 23:17:22  vsnyder
 ! Use Time_Now instead of CPU_TIME
 !
