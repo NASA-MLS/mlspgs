@@ -6,9 +6,8 @@ module ChunkDivide_m
   ! This module replaces the old ScanDivide, and is a new approach to dividing
   ! the data into chunks.
 
-  use Intrinsic, only: L_NONE
+  use Intrinsic, only: L_NONE, PHYQ_INVALID
   use MLSCommon, only: RP
-  use Units, only: PHYQ_INVALID
 
   implicit none
   private
@@ -129,7 +128,8 @@ contains ! ===================================== Public Procedures =====
       & F_SCANLOWERLIMIT, F_SCANUPPERLIMIT, F_NOSLAVES, F_SKIPL1BCHECK, &
       & FIELD_FIRST, FIELD_LAST, L_EVEN, &
       & L_FIXED, F_MAXGAP, L_ORBITAL, L_PE, S_CHUNKDIVIDE, L_BOTH, L_EITHER
-    use Intrinsic, only: L_NONE, FIELD_INDICES, LIT_INDICES
+    use Intrinsic, only: L_NONE, FIELD_INDICES, LIT_INDICES, PHYQ_ANGLE, &
+      & PHYQ_DIMENSIONLESS, PHYQ_INVALID, PHYQ_LENGTH, PHYQ_MAFS, PHYQ_TIME
     use L1BData, only: DEALLOCATEL1BDATA, L1BDATA_T, NAME_LEN, READL1BDATA, &
       & AssembleL1BQtyName
     use Lexer_core, only: PRINT_SOURCE
@@ -151,8 +151,6 @@ contains ! ===================================== Public Procedures =====
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use Tree, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, SUBTREE, SUB_ROSA
     use Tree_types, only: N_EQUAL, N_NAMED
-    use Units, only: PHYQ_INVALID, PHYQ_LENGTH, PHYQ_MAFS, PHYQ_TIME, &
-      & PHYQ_ANGLE, PHYQ_LENGTH, PHYQ_DIMENSIONLESS
 
     integer, intent(in) :: ROOT    ! Root of the L2CF tree for ChunkDivide
     type( L1BInfo_T ), intent(in) :: L1BINFO
@@ -2038,6 +2036,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.38  2003/08/15 23:58:20  vsnyder
+! Get PHYQ_... directly from Intrinsic instead of indirectly via Units
+!
 ! Revision 2.37  2003/06/20 19:38:25  pwagner
 ! Allows direct writing of output products
 !
