@@ -125,6 +125,10 @@ ifndef WE_CAN
   CASCADE := yes
 endif
 endif
+
+ifdef WE_CAN
+NOHUNTING := yes
+endif
 #These modules require custom builds, so omit build commands from dependencies
 CUSTOM_BUILDS=OutputL1B.f90
 CUSTOM_PREFXD := $(shell ${REECHO} -prefix=-db $(CUSTOM_BUILDS))
@@ -259,6 +263,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
 
 # $Log$
+# Revision 2.36  2002/07/18 18:00:01  pwagner
+# NOHUNTING default when .mod-mediated dependency
+#
 # Revision 2.35  2002/07/16 17:18:31  pwagner
 # UNPREFXDPTHS adds hdf5 dirs for f95 to search
 #
