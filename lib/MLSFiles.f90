@@ -317,10 +317,11 @@ contains
   ! This function opens a generic file using either the toolbox
   ! or else a Fortran OPEN statement
   ! according to toolbox_mode:
-  ! 'sw' for swath files opened with swopen
   ! 'gd' for grid files opened with gdopen
+  ! 'hg' for hdf4/5 files opened with sfstart; e.g. l1brad
   ! 'pg' for generic files opened with pgs_io_gen_openF
   ! 'op' for l3ascii files opened with simple fortran 'open'
+  ! 'sw' for swath files opened with swopen
 
   ! It returns theFileHandle corresponding to the FileName or the PC
 
@@ -539,6 +540,27 @@ contains
           & hdf2hdf5_fileaccess(FileAccessType))
       elseif(myhdfVersion == HDFVERSION_4) then
         theFileHandle = gdopen(trim(myName), FileAccessType)
+      else
+        ErrType = NOSUCHHDFVERSION
+        return
+      endif
+      if(theFileHandle <= 0) then         
+        ErrType = min(theFileHandle, -1)  
+      else                                
+        ErrType = 0                       
+      endif                               
+
+    case('hg')
+      theFileHandle = -1   ! This is the error value expected by hdf4/5
+      if(returnStatus /= 0) then
+        ErrType = returnStatus
+        return
+      elseif(myhdfVersion == HDFVERSION_5) then
+      
+        call h5fopen_f(trim(myName), &
+          & hdf2hdf5_fileaccess(FileAccessType), theFileHandle, ErrType)
+      elseif(myhdfVersion == HDFVERSION_4) then
+        theFileHandle = sfstart(trim(myName), FileAccessType)
       else
         ErrType = NOSUCHHDFVERSION
         return
@@ -1226,6 +1248,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.36  2002/09/26 23:59:39  pwagner
+! added 'hg' toolbox_mode to mls_io_gen_openF
+!
 ! Revision 2.35  2002/08/08 22:40:42  jdone
 ! New routines to Open/Close HDF5 Files
 !
