@@ -82,8 +82,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_EARTHRADIUS         = f_do_freq_avg + 1
   integer, parameter :: F_EXPLICITVALUES      = f_earthradius + 1
   integer, parameter :: F_EXTINCTION          = f_explicitValues + 1
-  integer, parameter :: F_EXTRA               = f_extinction + 1
-  integer, parameter :: F_FIELD               = f_extra + 1
+  integer, parameter :: F_FIELD               = f_extinction + 1
   integer, parameter :: F_FILE                = f_field + 1
   integer, parameter :: F_FILTERSHAPES        = f_file + 1
   integer, parameter :: F_FORMULA             = f_filtershapes + 1
@@ -222,7 +221,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: L_L1B           = l_kronecker + 1
   integer, parameter :: L_L2AUX         = l_l1b + 1
   integer, parameter :: L_L2DGG         = l_l2aux + 1
-  integer, parameter :: L_L2GP 	       = l_l2dgg + 1
+  integer, parameter :: L_L2GP 	        = l_l2dgg + 1
   integer, parameter :: L_L2PC          = l_l2gp + 1
   integer, parameter :: L_LINEAR        = l_l2pc + 1
   integer, parameter :: L_LOGARITHMIC   = l_linear + 1
@@ -441,7 +440,6 @@ contains ! =====     Public procedures     =============================
     field_indices(f_earthRadius) =         add_ident ( 'earthRadius' )
     field_indices(f_explicitValues) =      add_ident ( 'explicitValues' )
     field_indices(f_extinction) =          add_ident ( 'extinction' )
-    field_indices(f_extra) =               add_ident ( 'extra' )
     field_indices(f_field) =               add_ident ( 'field' )
     field_indices(f_file) =                add_ident ( 'file' )
     field_indices(f_filtershapes) =        add_ident ( 'filterShapes' )
@@ -811,7 +809,6 @@ contains ! =====     Public procedures     =============================
       begin, s+s_matrix, &  ! Must be AFTER s_vector
              begin, f+f_rows, s+s_vector, n+n_field_spec, &
              begin, f+f_columns, s+s_vector, nr+n_field_spec, &
-             begin, f+f_extra, t+t_boolean, n+n_field_type, &
              begin, f+f_type, t+t_matrix, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
@@ -1033,6 +1030,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.148  2001/07/26 20:33:17  vsnyder
+! Eliminate the 'extra' field of the 'matrix' spec
+!
 ! Revision 2.147  2001/07/25 02:02:01  vsnyder
 ! Sort field names, remove 'lines' (it's defined in Init_Spectroscopy)
 !
