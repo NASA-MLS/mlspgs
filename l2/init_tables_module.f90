@@ -145,7 +145,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_NEGATIVEPRECISION  = s_merge + 1
   integer, parameter :: S_NORMALEQUATIONS    = s_negativePrecision + 1
   integer, parameter :: S_OUTPUT             = s_normalEquations + 1
-  integer, parameter :: S_PHASE              = s_output + 1
+  integer, parameter :: S_PFADATA            = s_output + 1
+  integer, parameter :: S_PHASE              = s_pfadata + 1
   integer, parameter :: S_POPULATEL2PCBIN    = s_phase + 1
   integer, parameter :: S_QUANTITY           = s_populateL2pcBin + 1
   integer, parameter :: S_REFLECT            = s_quantity + 1
@@ -345,6 +346,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_negativePrecision ) =   add_ident ( 'negativePrecision' )
     spec_indices(s_normalEquations ) =     add_ident ( 'normalEquations' )
     spec_indices(s_output) =               add_ident ( 'output' )
+    spec_indices(s_pfaData) =              add_ident ( 'pfaData' )
     spec_indices(s_phase) =                add_ident ( 'phase' )
     spec_indices(s_populateL2PCBin) =      add_ident ( 'populateL2PCBin' )
     spec_indices(s_quantity) =             add_ident ( 'quantity' )
@@ -610,6 +612,18 @@ contains ! =====     Public procedures     =============================
              begin, f+f_geodAngle, t+t_numeric, n+n_field_type, &
              begin, f+f_noMIFs, t+t_numeric, nr+n_field_type, &
              ndp+n_spec_def /) )
+    call make_tree ( (/ & ! Must be AFTER s_vGrid
+      begin, s+s_pfaData, &
+             begin, f+f_absorption, t+t_numeric, nr+n_field_type, &
+             begin, f+f_dAbsDnc, t+t_numeric, nr+n_field_type, &
+             begin, f+f_dAbsDnu, t+t_numeric, nr+n_field_type, &
+             begin, f+f_dAbsDwc, t+t_numeric, nr+n_field_type, &
+             begin, f+f_molecules, t+t_molecule, nr+n_field_type, &
+             begin, f+f_vGrid, s+s_vGrid, nr+n_field_spec, &
+             begin, f+f_signal, t+t_string, nr+n_field_type, &
+             begin, f+f_temperatures, t+t_numeric, nr+n_field_type, &
+             begin, f+f_velLin, t+t_numeric, nr+n_field_type, &
+             nadp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_phase, & ! Ignores rest of stuff
              begin, f+f_comment, t+t_string, n+n_field_type, &
@@ -1008,16 +1022,18 @@ contains ! =====     Public procedures     =============================
              begin, f+f_xStar, s+s_vector, n+n_field_spec, &
              begin, f+f_yStar, s+s_vector, n+n_field_spec, &
              ndp+n_spec_def /), continue=.true. )
-    call make_tree ( (/ & ! Must be AFTER s_forwardModel, s_hGrid, s_vector,
-                          ! and s_vectorTemplate
+    call make_tree ( (/ & ! Must be AFTER s_forwardModel, s_hGrid, s_pfaData,
+                          ! s_vector, and s_vectorTemplate
       begin, s+s_dump, &
              begin, f+f_details, t+t_numeric, n+n_field_type, &
              begin, f+f_forwardModel, s+s_forwardModel, n+n_field_spec, &
              begin, f+f_hGrid, s+s_hgrid, n+n_field_spec, &
+             begin, f+f_pfaData, s+s_pfaData, n+n_field_spec, &
              begin, f+f_quantity, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
              begin, f+f_template, s+s_vectorTemplate, s+s_quantity, n+n_field_spec, &
              begin, f+f_vector, s+s_vector, n+n_field_spec, &
+             begin, f+f_vGrid, s+s_vGrid, n+n_field_spec, &
              np+n_spec_def/) )
     call make_tree ( (/ &
       begin, s+s_forwardModelGlobal, &
@@ -1178,10 +1194,10 @@ contains ! =====     Public procedures     =============================
              begin, p+p_cycle, t+t_string, n+n_name_def, &
              begin, p+p_starttime, t+t_string, n+n_name_def, &
              begin, p+p_endtime, t+t_string, n+n_name_def, s+s_l1brad, &
-             s+s_l1boa, s+s_l2parsf, &
-             s+s_empiricalGeometry, s+s_forwardModel, s+s_forwardModelGlobal, &
-             s+s_time, s+s_vgrid, s+s_binSelector, s+s_directWriteFile, &
-             s+s_fGrid, s+s_l1brad, s+s_l1boa, n+n_section, &
+             s+s_binSelector, s+s_directWriteFile, s+s_dump, &
+             s+s_empiricalGeometry, s+s_fGrid, s+s_forwardModel, &
+             s+s_forwardModelGlobal, s+s_l1brad, s+s_l1boa, s+s_l2parsf, &
+             s+s_pfaData, s+s_time, s+s_vgrid, n+n_section, &
       begin, z+z_readapriori, s+s_time, s+s_gridded, s+s_l2gp, &
              s+s_l2aux, s+s_snoop, n+n_section, &
       begin, z+z_mergegrids, s+s_time, s+s_merge, s+s_concatenate, s+s_delete, &
@@ -1233,6 +1249,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.371  2004/05/22 02:29:30  vsnyder
+! Add PFAdata, more stuff for dump, allow dump in global_settings
+!
 ! Revision 2.370  2004/05/18 01:06:28  vsnyder
 ! Add HGrid field to DUMP command
 !
