@@ -374,11 +374,13 @@ contains ! =====     Public Procedures     =============================
   end subroutine ClearVector
 
   !-------------------------------------------------  CloneVector  -----
-  subroutine CloneVector ( Z, X, VectorNameText )
+  subroutine CloneVector ( Z, X, VectorNameText, Database )
   ! Destroy Z, except its name.
   ! Create the characteristics of a vector to be the same template as a
   ! given one (except it has no name).  Values are allocated, but not
   ! filled.  Z's mask is allocated if X's is allocated, but it is not filled.
+  ! If Database is present, add Z to it.  The position in the database
+  ! isn't returned.
 
   ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
   ! It is important to invoke DestroyVectorInfo using Z after it is no
@@ -390,6 +392,7 @@ contains ! =====     Public Procedures     =============================
     type(Vector_T), intent(inout) :: Z
     type(Vector_T), intent(in) :: X
     character(len=*), intent(in), optional :: VectorNameText
+    type(Vector_T), dimension(:), pointer, optional :: Database
     ! Local variables:
     integer :: I, Status
     ! Executable statements:
@@ -409,6 +412,7 @@ contains ! =====     Public Procedures     =============================
       if ( associated(x%quantities(i)%mask) ) &
         & call createMask ( z%quantities(i) )
     end do
+    if ( present(database) ) i = addVectorToDatabase ( database, z )
   end subroutine  CloneVector
 
   !---------------------------------------------  ConstantXVector  -----
@@ -476,11 +480,12 @@ contains ! =====     Public Procedures     =============================
 
   ! -------------------------------------------------  CopyVector  -----
   subroutine CopyVector ( Z, X, CLONE, Quant, Inst, NoValues, NoMask, &
-    & VectorNameText )
+    & VectorNameText, Database )
   ! If CLONE is present and .true., Destroy Z, deep Z = X, except the
   ! name of Z is not changed.  Otherwise, copy only the values and mask
   ! of X to Z.  If NoValues or NoMask is present and true, don't copy
-  ! that part of the vector.
+  ! that part of the vector.  VectorNameText and Database are passed
+  ! to CloneVector if Clone is present and true.
 
     type(Vector_T), intent(inout) :: Z
     type(Vector_T), intent(in) :: X
@@ -492,6 +497,7 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in), optional :: NoValues, NoMask  ! If present and true,
     !  don't copy the values/mask
     character(len=*), intent(in), optional :: VectorNameText
+    type(Vector_T), dimension(:), pointer, optional :: Database
     logical :: DoMask, DoValues
     integer :: I
     logical MyClone
@@ -502,7 +508,7 @@ contains ! =====     Public Procedures     =============================
     doValues = .true.
     if ( present(noValues) ) doValues = .not. noValues
     if ( myclone ) then
-      call cloneVector ( Z, X, vectorNameText=vectorNameText )
+      call cloneVector ( Z, X, vectorNameText=vectorNameText, database=database )
     else
       if ( x%template%id /= z%template%id ) call MLSMessage &
         & ( MLSMSG_Error, ModuleName, 'Incompatible vectors in CopyVector' )
@@ -617,7 +623,8 @@ contains ! =====     Public Procedures     =============================
     ! Executable code
 
     vector%name = 0
-    ! Let the destruction of the vector template take care of vector%template%quantities
+    ! Let the destruction of the vector template take care of
+    ! vector%template%quantities
     nullify ( vector%template%quantities )
     if ( .not. associated(vector%quantities) ) return
     call destroyVectorValue ( vector )
@@ -990,19 +997,21 @@ contains ! =====     Public Procedures     =============================
 
     ! Look in the first vector
     index = GetVectorQuantityIndexByType ( vector, &
-      & quantityType, molecule, instrumentModule, radiometer, signal, sideband, &
-      &   noError = present(otherVector) .or. myNoError)
+      & quantityType, molecule, instrumentModule, radiometer, signal, &
+      &   sideband, noError = present(otherVector) .or. myNoError)
     if ( index /= 0 ) then
       if ( present (foundInFirst) ) foundInFirst = .true.
       GetVectorQuantityByType => vector%quantities(index)
     else
-      ! Can only get here if not found in first vector and noError or other vector
+      ! Can only get here if not found in first vector and noError or other
+      ! vector
       if ( present (otherVector) ) then
         index = GetVectorQuantityIndexByType ( otherVector, &
-          &  quantityType, molecule, instrumentModule, radiometer, signal, sideband, &
-          &  noError=myNoError )
+          &  quantityType, molecule, instrumentModule, radiometer, signal, &
+          &  sideband, noError=myNoError )
         if ( present (foundInFirst) ) foundInFirst = .false.
-        if ( index /= 0 ) GetVectorQuantityByType => otherVector%quantities( index )
+        if ( index /= 0 ) &
+          & GetVectorQuantityByType => otherVector%quantities( index )
       end if
     end if
   end function GetVectorQuantityByType
@@ -1509,6 +1518,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.63  2001/10/03 23:05:42  vsnyder
+! Added 'VectorNameText' argument to CopyVector
+!
 ! Revision 2.62  2001/10/02 23:39:15  vsnyder
 ! Add quantity name to error message in GetVectorQuantityIndexByType
 !
