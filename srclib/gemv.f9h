@@ -1,0 +1,31 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+! subroutine *GEMV ( TRANS, M, N, ALPHA, A, LDA, X, INCX, &  
+!     &                BETA, Y, INCY )                       
+    real(rk)           ALPHA, BETA
+    integer            INCX, INCY, LDA, M, N  
+    character          TRANS                  
+    real(rk)           A( LDA, * ), X( * ), Y( * )
+
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile$"
+!---------------------------------------------------------------------------
+
+    if ( trans == 'N' .or. trans == 'n' ) then
+      y(1:(m-1)*abs(incy):incy) = beta * y(1:(m-1)*abs(incy):incy) + &
+        & alpha * matmul( a(:m,:n), x(1:(n-1)*abs(incx):incx) )
+    else if ( trans == 'T' .or. trans == 't' ) then
+      y(1:(n-1)*abs(incy):incy) = beta * y(1:(n-1)*abs(incy):incy) + &
+        & alpha * matmul( transpose(a(:m,:n)), x(1:(m-1)*abs(incx):incx) )
+    else
+      print *, 'In ', moduleName, ', TRANS is not one of [NnTn].'
+      stop
+    end if
+! end subroutine *GEMV
+
+! $Log$
