@@ -1378,7 +1378,7 @@ contains ! ===================================== Public Procedures =====
       use MLSSignals_m, only:GetModuleFromRadiometer, GetModuleFromSignal, &
         & GetRadiometerFromSignal, GetSignal, GetSignalName, &
         & Signal_T, SIGNALS, MODULES
-      use MLSStrings, only: NumStringElements, GetStringElement
+      use MLSStringLists, only: NumStringElements, GetStringElement
       use Parse_signal_m, only: Parse_signal
       ! This routine notes any lack of good data for one of the
       ! signals, and, depending on sensitivity,
@@ -2093,6 +2093,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.51  2004/08/04 23:19:57  pwagner
+! Much moved from MLSStrings to MLSStringLists
+!
 ! Revision 2.50  2004/08/02 23:40:29  livesey
 ! Bug fixes in the orbital case when chunk length is expressed in MAFs
 !
