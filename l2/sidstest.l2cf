@@ -9,6 +9,7 @@
 
 ; -----------------------------------------------------  MLSSignals  -----
 BEGIN MLSSignals
+time
 
   ;; Modules
   SC: Module,/spaceCraft
@@ -56,7 +57,7 @@ BEGIN MLSSignals
 
   ;; Wide filters are a special case, we defer the definition of their
   ;; frequencies until the specific signals.
-  WF4: spectrometerType, deferred=true
+  WF4: spectrometerType, /deferred
 
   ;; Bands
 
@@ -221,6 +222,7 @@ END MLSSignals
 
 ; ---------------------------------------------------  Spectroscopy  -----
 BEGIN Spectroscopy
+time
 
   oh_1: line, v0= 2509935.44 MHz, el= 1.8E-03, str= -0.8048, w= 2.652, $
           ps= 0, n= 0.74, delta= 0, n1= 0, gamma= 0, n2= 0
@@ -633,12 +635,29 @@ END Spectroscopy
 
 ; -------------------------------------------------  GlobalSettings  -----
 BEGIN GlobalSettings
+time
 
     ;; In reality we probably don't need any of these.
     VersionComment="L2CF Version 0-1-0 for version 0.1 of the MLS software"
     InputVersionString="v0-1-0-test"
     OutputVersionString="v0-1-0-test"
     AllowClimatologyOverloads=FALSE
+
+   ; these set the processing range start and end times
+   ; they are in the format "hh:mm:ss"
+    starttime="00:00:00"
+      endtime="00:01:00"
+    
+   ; List all the L1BRAD files you need, one after another
+   ; Note a file requires either a full path/name 
+   ; or else be located in the cwd if given without its path
+;   L1BRAD, file='/nas/bigdata/livesey/misc/mls_l1b_radf_v0-01.1996-051'
+;   L1BRAD, file='/nas/bigdata/livesey/misc/mls_l1b_radd_v0-01.1996-051'
+;   L1BRAD, file='/nas/bigdata/livesey/misc/mls_l1b_radf_v0-01.2000-001'
+;   L1BRAD, file='/nas/bigdata/livesey/misc/mls_l1b_radd_v0-01.2000-001'
+   ; Now the L1BOA file
+;   L1BOA,file='/nas/data/emls/l1boa/truth/1996/MLS-Aura_L1BOA_Full_s4-t_1996-051.dat'
+    L1BOA,file='/nas/bigdata/livesey/misc/mls_l1b_oa_v0-01.2000-001'
 
     ;; Construct vGrids
 
@@ -653,14 +672,23 @@ BEGIN GlobalSettings
     vGridRefGPH: vGrid, coordinate=Zeta, type=Explicit, values=100mb
 
     forwardModelGlobal, $
-      antennaPatterns='/user1/livesey/mlspgs/l2/aaap.emls', $
+      antennaPatterns='/user1/livesey/mlspgs/l2/aaap.zvi', $
       filterShapes='/user5/vsnyder/mlspgs/l2/normalized_filter_banks.dat', $
-      pointingGrids='/user1/livesey/mlspgs/l2/full_r2_b234_lsb'
+;     pointingGrids='/user1/livesey/mlspgs/l2/full_r2_b234_lsb', $
+      pointingGrids='/user5/zvi/full_r2_b234_lsb', $
+      l2pc='/bigdata/livesey/misc/fullb2.l2pc'
 
-    testFwm: forwardModel, type=full, signals = [sig_band2], $
-      molecules = [h2o], frequency=182610.091 MHz, channels = [1], $
+
+    testFwm: forwardModel, type=full, signals = 'R2:190.B2F:H2O.C1', $
+      molecules = [h2o], $
       integrationGrid=fwmIntegrationGrid, tangentGrid=fwmTangentGrid;, $
 ;     /do_conv, /do_freq_avg
+
+;   testRetrieve: forwardModel, type=full, signals = 'R2:190.B2F:H2O.C1', $
+    testRetrieve: forwardModel, type=linear, signals = 'R2:190.B2F:H2O.C1', $
+      molecules = [h2o], $
+      integrationGrid=fwmIntegrationGrid, tangentGrid=fwmTangentGrid, $
+      moleculeDerivatives = [h2o], /atmos_der, /temp_der
 
 END GlobalSettings
 
@@ -668,6 +696,7 @@ END GlobalSettings
 ; ----------------------------------------------------  ReadApriori  -----
 BEGIN ReadApriori
 
+time
     ;; Currently this reads apriori data from l2gp files, designed for
     ;; 1 January 2000.  Later we should use gridded data, or at least
     ;; stuff for 1996
@@ -681,7 +710,7 @@ BEGIN ReadApriori
 
 ;    gridTemp: gridded, file='/nas/bigdata/livesey/misc/temp_grid.dat', $
 ;      field='Temperature', origin=climatology
-    
+
 END ReadApriori
 
 
@@ -693,6 +722,8 @@ END MergeApriori
 
 ; ----------------------------------------------------  ChunkDivide  -----
 BEGIN ChunkDivide
+time
+
     ;; Just a pretty typical setup, except no overlaps to avoid bug
 
  ;; IdealLength =             0.00416666667  orbits
@@ -716,6 +747,7 @@ END ChunkDivide
 ; ------------------------------------------------------  Construct  -----
 BEGIN Construct
 
+time
     ;; First construct hGrids
     hGridStandard: hGrid, module=THz, type=height, height=15km
 
@@ -727,9 +759,9 @@ BEGIN Construct
     ptanGHz: Quantity, type=ptan, module=GHz
 
     ;; Now the more boring state stuff
-    b2elevOffset: Quantity, type = elevOffset, signal = sig_band2
+    b2elevOffset: Quantity, type = elevOffset, signal = 'R2.B2F'
     earthReflectivity: quantity, type = earthRefl
-    orbitIncline: Quantity, type = orbitIncline
+    orbitIncline: Quantity, type = orbitInclination
     scGeocAlt: Quantity, type = scGeocAlt, module= SC
     spaceRadiance: quantity, type = spaceRadiance
     scECI: quantity, type=scECI, module=SC
@@ -738,15 +770,20 @@ BEGIN Construct
     losVelGHz: quantity, type=losVel, module=GHz
 
     ;; Now some measurement quantities
-    band2: Quantity, signal=sig_band2, type=radiance
+    band2: Quantity, signal='R2.B2F', type=radiance
     tpGeocAltGHz: Quantity, type=tngtGeocAlt, module=GHz
 
-    ;; Now define a state vector in two parts main an extra
+    ;; Now define a state vector in two parts main and extra
+;    stateTemplate: VectorTemplate, quantities = $
+;      [temp, refGPH, ptanGHz, H2O]
+;    extraStateTemplate: VectorTemplate, quantities =  $
+;      [b2elevOffset, earthReflectivity, orbitIncline, scGeocAlt,  $
+;       spaceRadiance, scECI, scVel, losVelGHz, tpECIGHz]
     stateTemplate: VectorTemplate, quantities = $
-      [temp, refGPH, ptanGHz,H2O]
+      [temp, ptanGHz, H2O]
     extraStateTemplate: VectorTemplate, quantities =  $
       [b2elevOffset, earthReflectivity, orbitIncline, scGeocAlt,  $
-       spaceRadiance, scECI, scVel, losVelGHz, tpECIGHz]
+       spaceRadiance, scECI, scVel, losVelGHz, tpECIGHz, refGPH]
 
     ;; Now define templates for the measurement vectors.
     radianceTemplate: VectorTemplate, quantities = [band2]
@@ -759,6 +796,7 @@ END Construct
 ; ------------------------------------------------------------  Fill -----
 BEGIN Fill
 
+time
     ;; First create our vectors
     state:      Vector, template = stateTemplate
     extraState: Vector, template = extraStateTemplate
@@ -766,10 +804,18 @@ BEGIN Fill
     radiance: Vector, template = radianceTemplate
     miscMeas: Vector, template = miscMeasTemplate
 
+    myJacobian: matrix, rows=radiance, columns=state
+    myCovariance: matrix, columns=state, type=spd, /extra
+
     ;; Fill most of the state stuff from l2gp
-    Fill, quantity = state.temp, method=l2gp, sourcel2gp=l2gpTempInput
-    Fill, quantity = state.refGPH, method=l2gp, sourceL2GP=l2gpRefGPHInput
-    Fill, quantity = state.h2o, method=l2gp, sourceL2GP=l2gpH2OInput
+    Fill, quantity = state.temp, method=l2gp, sourcel2gp=l2gpTempInput, $
+     /interpolate
+;   Fill, quantity = state.refGPH, method=l2gp, sourceL2GP=l2gpRefGPHInput, $
+;    /interpolate
+    Fill, quantity = extraState.refGPH, method=l2gp, sourceL2GP=l2gpRefGPHInput, $
+     /interpolate
+    Fill, quantity = state.h2o, method=l2gp, sourceL2GP=l2gpH2OInput, $
+     /interpolate
 
     ;; Fill the miscMeas stuff from l1b, we need this to guess ptan
     Fill, quantity = miscMeas.tpGeocAltGHz, method = l1b
@@ -778,7 +824,8 @@ BEGIN Fill
     Fill, quantity=state.ptanGHz, method=hydrostatic, $
       h2oQuantity=state.h2o, $
       temperatureQuantity=state.temp, $
-      refGPHQuantity=state.refGPH, $
+;     refGPHQuantity=state.refGPH, $
+      refGPHQuantity=extraState.refGPH, $
       geocAltitudeQuantity=miscMeas.tpGeocAltGHz, $
       maxIterations=4
 
@@ -804,6 +851,7 @@ BEGIN Fill
     Fill, quantity = extraState.spaceRadiance, $
       method =explicit, explicitValues = 2.735 K
 
+    fillCovariance, matrix=myCovariance, diagonal=state, /invert
 ; Snoop, comment="At the end of fill"
     
 END Fill
@@ -814,18 +862,27 @@ END Fill
 BEGIN Retrieve
 
     time
+;   sids, fwdModelIn = state, fwdModelExtra = extraState, fwdModelOut = radiance, $
+;     forwardModel=testFwm; , jacobian=myJacobian
     sids, fwdModelIn = state, fwdModelExtra = extraState, fwdModelOut = radiance, $
-      forwardModel=testFwm
+      forwardModel=testRetrieve, jacobian=myJacobian
 
+    retrieve, state = state, fwdModelExtra = extraState, measurements = radiance, $
+      forwardModel=testRetrieve, $
+      covariance=myCovariance, apriori=state, $
+      columnScale=norm, $
+      maxF=30, maxJ=10, lambda=1.0, fuzz=1, aprioriScale=0.001;, /diagonal
 END Retrieve
 
 
 ; -----------------------------------------------------------  Join  -----
 BEGIN Join
 
+time
     tempL2gp: l2gp, source=state.temp, swath='Temperature'
     h2oL2gp: l2gp, source=state.h2o, swath='H2O'
-    refgphL2GP: l2gp, source=state.refgph, swath='refGPH'
+;   refgphL2GP: l2gp, source=state.refgph, swath='refGPH'
+    refgphL2GP: l2gp, source=extraState.refgph, swath='refGPH'
 
     ptanGHzl2aux: l2aux, source=state.ptanGHz, sdName='ptanGHz'
     tpECIl2aux: l2aux, source=extrastate.tpECIGHz, sdName='tpECIGHz'
@@ -838,6 +895,7 @@ END Join
 ; ---------------------------------------------------------  Output  -----
 BEGIN Output
 
+time
     output, file='l2gp_temp', quantities=tempL2gp,type=l2gp
     output, file='l2gp_gph', quantities=refgphL2gp,type=l2gp
     output, file='l2gp_h2o', quantities=h2oL2gp,type=l2gp
@@ -850,6 +908,9 @@ END Output
 ; ==========================================================================
 
 ; $Log$
+; Revision 2.20  2001/10/09 20:38:23  vsnyder
+; Corrections for regularization; output f, not f-measurementsRetrievalModule.f90
+;
 ; Revision 2.19  2001/04/10 17:59:19  vsnyder
 ; Remove sideband field from signal
 ;
