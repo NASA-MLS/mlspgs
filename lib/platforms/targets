@@ -20,11 +20,18 @@ include ../Makefile.dep
 # If it is desired to link the executable with PVM support,
 # the variables PVM_PATH, PVM_ARCH should be defined
 # e.g. in .configure
+# If this is done, i.e. if PVM is defined, then PVM_OBJS will
+# be defined and built and added to libmls.a
 
 # BLAS
 # If it is desired to link the executable with external BLAS support,
 # the variable BLAS should be defined
 # e.g. in the make statement: make -f MakeFC BLAS=/my_path/to_BLAS_library
+# If this is done, i.e., BLAS is defined, then blas_objs will
+# be blank
+# Otherwise, i.e. if BLAS is left undefined, then blas_objs will
+# be set to the compiled objects based on the routines in blaslib
+# currently sdot and ddot, which will be built and added to libmls.a
 
 # MATRIX_OBJS
 # This variable is defined only if MLSCONFG=LF95.Linux
@@ -65,24 +72,13 @@ TEST_ONLY=test_multiply.o test_sparsify.o \
 	test_cholesky.o test_multiply_vector.o
 
 #Dependency rules for MATRIX_OBJS (if we need them)
-MatrixModule_0.o: MatrixModule_0.f90 ${OBJS}
-MatrixModule_1.o: MatrixModule_1.f90 ${OBJS}
+#MatrixModule_0.o: MatrixModule_0.f90 ${OBJS}
+#MatrixModule_1.o: MatrixModule_1.f90 ${OBJS}
 
-#                  PVM v. non-PVM options
-# If we implement an option to allow non-PVM-dependent installations
-# uncomment this next line; this will set our PVM objects
-# w/o complaining if it does not exist yet;
-# the latter case leaves PVM_OBJS empty
-#-include ../PVM_OBJS.inc
-#-------------------- without the non-PVM option
-# The following lines hardwire PVM_OBJS and so *require* PVM
-# If we implement the non-PVM option, comment out all these
-#PVM_OBJS=PVMwrappers.o PVM.o PVMIDL.o
+#--------------------- dependency rules for PVM_OBJS
 
 PVM.o: PVM.f90 ${OBJS}
 PVMIDL.o: PVMIDL.f90 ${OBJS} PVM.o
-
-#--------------------- end of hardwired PVM_OBJS
 
 ifdef PVM_ROOT
    pvm_message=Building mlslib with PVM support
@@ -93,28 +89,21 @@ else
 endif
 
 ifdef BLAS
+   blas_message=Building mlslib without internal blas support
    blas_objs =
 else
+   blas_message=Building mlslib with internal blas support
    blas_objs = sdot.o ddot.o
 endif
 
 ${OBJS}: machine.o
 
-libmlsSub.a: ${OBJS} ${MATRIX_OBJS} machine.o ${PVM_OBJS} ${blas_objs}
+#libmlsSub.a: ${OBJS} ${MATRIX_OBJS} machine.o ${PVM_OBJS} ${blas_objs}
+libmlsSub.a: ${OBJS} machine.o ${PVM_OBJS} ${blas_objs}
+		@echo "$(pvm_message)"
+		@echo "$(blas_message)"
 	ar ru $@ $?
 	ar d $@ SDPToolkit.o $(TEST_ONLY)
-#libmlsSub.a: ${OBJS} ${MATRIX_OBJS} machine.o
-#	@case "$(PVM_ROOT)" in \
-#		"") \
-#		echo "Building mls library without PVM support" ; \
-#		ar ru $@ $? ; \
-#		;; \
-#		*) \
-#		echo "Building mls library with PVM support" ; \
-#		ar ru $@ $? ${PVM_OBJS} ; \
-#		;; \
-#	esac 
-#	ar d $@ SDPToolkit.o $(TEST_ONLY)
 
 libmls.a: libmlsSub.a
 	cp libmlsSub.a $@
@@ -148,6 +137,9 @@ L1BData.o:
 #	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2GPData.f90
 
 # $Log$
+# Revision 1.16  2001/02/08 23:22:14  pwagner
+# variable_linker_line tied to PVM and BLAS
+#
 # Revision 1.15  2001/02/08 00:31:54  pwagner
 # Conditionally links sdot and ddot unless BLAS defined
 #
