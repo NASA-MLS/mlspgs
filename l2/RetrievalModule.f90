@@ -18,19 +18,19 @@ module RetrievalModule
   use Init_Tables_Module, only: F_apriori, F_aprioriScale, F_channels, &
     & F_columnScale, F_Comment, F_covariance, F_diagnostics, F_diagonal, &
     & F_forwardModel, F_fuzz, F_fwdModelExtra, F_fwdModelOut, F_height, &
-    & F_ignore, F_jacobian, F_lambda, F_Level, F_maxF, F_maxJ, F_measurements, &
-    & F_measurementSD, F_method, F_opticalDepth, F_outputCovariance, &
-    & F_outputSD, F_phaseName, F_ptanQuantity, F_quantity, F_regOrders, F_regQuants, &
-    & F_regWeight, F_state, F_toleranceA, F_toleranceF, F_toleranceR, &
-    & Field_first, Field_last, &
+    & F_ignore, F_jacobian, F_lambda, F_Level, F_mask, F_maxF, F_maxJ, &
+    & F_measurements, F_measurementSD, F_method, F_opticalDepth, &
+    & F_outputCovariance, F_outputSD, F_phaseName, F_ptanQuantity, &
+    & F_quantity, F_regOrders, F_regQuants, F_regWeight, F_state, &
+    & F_toleranceA, F_toleranceF, F_toleranceR, Field_first, Field_last, &
     & L_apriori, L_covariance, &
-    & L_dnwt_ajn,  L_dnwt_axmax,  L_dnwt_cait, &
-    & L_dnwt_diag,  L_dnwt_dxdx,  L_dnwt_dxdxl, &
-    & L_dnwt_dxn,  L_dnwt_dxnl,  L_dnwt_flag, L_dnwt_fnmin, &
-    & L_dnwt_fnorm,  L_dnwt_gdx,  L_dnwt_gfac, &
-    & L_dnwt_gradn,  L_dnwt_sq,  L_dnwt_sq,  L_dnwt_sqt,&
-    & L_highcloud, L_Jacobian_Cols, L_Jacobian_Rows, L_lowcloud, &
-    & L_newtonian, L_none, L_norm, L_numF, L_numJ, L_pressure, L_zeta, &
+    & L_dnwt_ajn,  L_dnwt_axmax,  L_dnwt_cait, L_dnwt_diag,  L_dnwt_dxdx, &
+    & L_dnwt_dxdxl, L_dnwt_dxn,  L_dnwt_dxnl,  L_dnwt_flag, L_dnwt_fnmin, &
+    & L_dnwt_fnorm,  L_dnwt_gdx,  L_dnwt_gfac, L_dnwt_gradn,  L_dnwt_sq, &
+    & L_dnwt_sq,  L_dnwt_sqt, L_full_derivatives, &
+    & L_highcloud, L_Jacobian_Cols, L_Jacobian_Rows, &
+    & L_linalg, L_lowcloud, L_newtonian, L_none, L_norm, L_numF, &
+    & L_numJ, L_pressure, L_zeta, &
     & S_dumpBlocks, S_forwardModel, S_matrix, S_retrieve, S_sids, S_snoop, &
     & S_subset, S_time
   use Intrinsic, only: PHYQ_Dimensionless
@@ -56,6 +56,7 @@ module RetrievalModule
   use VectorsModule, only: AddToVector, AddVectorToDatabase, ClearVector, &
     & CloneVector, CopyVector, DestroyVectorInfo, DestroyVectorDatabase, &
     & DumpMask, GetVectorQuantityByType, IsVectorQtyMasked, &
+    & M_FullDerivatives, M_LinAlg, &
     & Vector_T, VectorValue_T
 
   implicit NONE
@@ -2251,20 +2252,22 @@ contains
       integer :: HEIGHTUNIT             ! Unit for heights command
       integer :: I, J                   ! Subscripts, loop inductors
       integer :: INSTANCE               ! Loop counter
+      integer :: MASK                   ! Which thing are we talking about?
+      integer :: MaskBit                ! Bits corresponding to Mask
       integer :: NROWS                  ! Loop limit dumping mask
       integer :: QUANTITYINDEX          ! Index
       integer :: RANGE_LOW, RANGE_HI    ! Bounds of a range
       integer :: RANGEID                ! nodeID of a range
       integer :: ROW                    ! Row index dumping mask
+      integer :: S1(1), S2(1)           ! Results of minloc intrinsic
       integer :: SON                    ! Tree node
       integer :: TYPE                   ! Type of value returned by expr
       integer :: UNITS(2)               ! Units returned by expr
       integer :: VECTORINDEX            ! Index
 
-      integer :: S1(1), S2(1)           ! Results of minloc intrinsic
-
-      real(r8) :: VALUE(2)              ! Value returned by expr
+      real(r8) :: HeightMin, HeightMax
       real(r8), dimension(:), pointer :: THESEHEIGHTS ! Subset of heights
+      real(r8) :: VALUE(2)              ! Value returned by expr
       type (VectorValue_T), pointer :: QTY ! The quantity to mask
       type (VectorValue_T), pointer :: PTAN ! The ptan quantity if needed
       logical :: Got(field_first:field_last)   ! "Got this field already"
@@ -2275,16 +2278,15 @@ contains
       integer, parameter ::                      MAXCOLUMNS = 127
       character(len=1), dimension(MAXCOLUMNS) :: maskedMan
       character(len=5) ::                        decades
-      real(r8)         ::                        heightMin, heightMax
 
       ! Executable code
       nullify ( channels, qty, ptan )
       got = .false.
       ignore = .false.
+      maskBit = m_linalg
       do j = 2, nsons(key) ! fields of the "subset" specification
         son = subtree(j, key)
         field = get_field_id(son)   ! tree_checker prevents duplicates
-        got(field) = .true.
         if (nsons(son) > 1 ) gson = subtree(2,son) ! Gson is value
         select case ( field )
         case ( f_quantity )
@@ -2299,6 +2301,17 @@ contains
           channelsNode = son
         case ( f_height )
           heightNode = son
+        case ( f_mask )
+          if ( .not. got(f_mask) ) maskBit = 0 ! clear default first time
+          do i = 2, nsons(son)
+            mask = decoration(subtree(i,son))
+            select case ( mask )
+            case ( l_full_derivatives )
+              maskBit = ior(maskBit, m_fullDerivatives)
+            case ( l_linAlg )
+              maskBit = ior(maskBit, m_linAlg)
+            end select
+          end do
         case ( f_opticalDepth )
           depthNode = son
         case ( f_ignore )
@@ -2306,6 +2319,7 @@ contains
         case default
           ! Shouldn't get here if the type checker worked
         end select
+        got(field) = .true.
       end do ! j = 2, nsons(key)
 
       ! Process the channels field.
@@ -2401,7 +2415,8 @@ contains
                 !??? Make sure mask bit numbers begin at 1, even when
                 !??? channel numbers don't.
                 call SetMask ( qty%mask(:,instance), &
-                  & (/ channel+qty%template%noChans*(height-1) /) )
+                  & (/ channel+qty%template%noChans*(height-1) /), &
+                  & what=maskBit )
               end do                    ! Height loop
             end if                      ! Do this channel
           end do                        ! Channel loop
@@ -2458,7 +2473,8 @@ contains
                     !??? Make sure mask bit numbers begin at 1, even when
                     !??? channel numbers don't.
                     call ClearMask ( qty%mask(:,instance), &
-                      & (/ channel+qty%template%noChans*(height-1) /) )
+                      & (/ channel+qty%template%noChans*(height-1) /), &
+                      & what=maskBit )
                   end do                ! Height loop
                 else
                   ! For Incoherent quantities check each height individually
@@ -2479,7 +2495,8 @@ contains
                       doThisHeight = doThisHeight .and. theseHeights(height) <= value(2)
                     end if
                     if ( doThisHeight ) call ClearMask ( qty%mask(:,instance), &
-                        & (/ channel+qty%template%noChans*(height-1) /) )
+                        & (/ channel+qty%template%noChans*(height-1) /), &
+                        & what=maskBit )
                   end do                ! Height loop
                 end if                  ! Coherent
               end if                    ! Do this channel
@@ -2566,6 +2583,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.130  2002/02/07 02:55:02  vsnyder
+! Add a 'mask' field to the 'setup' spec
+!
 ! Revision 2.129  2002/02/05 02:40:52  vsnyder
 ! Use 'dumpMask' instead of 'dump' to dump the mask, cosmetic changes
 !
