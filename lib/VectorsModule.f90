@@ -1209,6 +1209,7 @@ contains ! =====     Public Procedures     =============================
       call output ( ' Template_Name = ' )
       call display_string ( vector%template%name )
     end if
+    call newline
     if ( myDetails < -1 ) return
     do j = 1, size(vector%quantities)
       dumpThisQty = .true.
@@ -1229,9 +1230,7 @@ contains ! =====     Public Procedures     =============================
       if ( present (majorFrame) ) dumpThisQty = dumpThisQty .and. &
         & (vector%quantities(j)%template%majorFrame .eqv. majorFrame)
       if ( dumpThisQty ) then
-        call newline
-        call output ( j, 4 )
-        call output ( "~" )
+        call output ( j, 4, after="~" )
         call dump ( vector%quantities(j), details )
         if ( myditchafterdump ) return
       end if
@@ -1356,42 +1355,33 @@ contains ! =====     Public Procedures     =============================
     if ( myDetails < -1 ) return
     call newLine
     if ( myDetails < 0 ) return
-    call output ( ' noChans = ' )
-    call output ( qty%template%noChans, advance='no' )
-    call output ( ' noSurfs = ' )
-    call output ( qty%template%noSurfs, advance='no' )
-    call output ( ' noInstances = ' )
-    call output ( qty%template%noInstances, advance='no' )
-    call output ( ' instanceLen = ' )
-    call output ( qty%template%instanceLen, advance='yes' )
-    call output ( ' signal: ')
+    call output ( qty%template%noChans, before='    noChans = ' )
+    call output ( qty%template%noSurfs, before=' noSurfs = ' )
+    call output ( qty%template%noInstances, before=' noInstances = ')
+    call output ( qty%template%instanceLen, before=' instanceLen = ', advance='yse' )
+    call output ( '    signal: ')
     if ( qty%template%signal < 1 ) then
       call output ( '    (no database entry for this quantity) ', advance='yes')
-    elseif ( signals(qty%template%signal)%name < 1 ) then
+    else if ( signals(qty%template%signal)%name < 1 ) then
       call output ( '    (no name in the database for this quantity) ', advance='yes')
     else
       call display_string ( signals(qty%template%signal)%name, advance='yes' )
     end if
     call output ( '    instrumentmodule: ')
     if ( qty%template%instrumentModule < 1 ) then
-      call output ( '    (no database entry for this quantity) ', advance='yes')
-    elseif ( qty%template%instrumentModule < 1 ) then
-      call output ( '    (no name in the database for this quantity) ', advance='yes')
+      call output ( '    (no database entry for this quantity) ' )
     else
-      call display_string ( modules(qty%template%instrumentModule)%name, advance='yes' )
+      call display_string ( modules(qty%template%instrumentModule)%name )
     end if
-    call output ( '    (its index): ')
-    call output ( qty%template%instrumentmodule, advance='no')
-    call output ( ' ', advance='yes')
-    call output ( '  Minor Frame? (t/f): ')
-    call output ( qty%template%minorframe, advance='no')
-    call output ( '  Major Frame? (t/f): ')
-    call output ( qty%template%majorframe, advance='yes')
-    call output ( '  values array size is ')
-    call output ( size(qty%values(:,1)), advance='no')
-    call output ( 'x')
-    call output ( size(qty%values(1,:)), advance='yes')
+    call output ( qty%template%instrumentmodule, before=' = ', advance='yes')
+    call output ( '    Minor Frame? (t/f): ')
+    call output ( qty%template%minorframe )
+    call output ( ' Major Frame? (t/f): ')
+    call output ( qty%template%majorframe, advance='yes' )
+    call output ( size(qty%values(:,1)), before='    values array size is ' )
+    call output ( size(qty%values(1,:)), before='x' )
     if ( myDetails > 0 ) then
+      call newLine
       call dump ( qty%values, '  Elements = ', clean=clean )
       if ( associated(qty%mask) ) then
         call dump ( ichar(qty%mask), name='Mask=', &
@@ -2279,6 +2269,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.115  2005/01/07 00:36:51  vsnyder
+! Remove unused declarations
+!
 ! Revision 2.114  2004/10/19 02:21:20  livesey
 ! Logical flaw in radiometer/signal vector querying
 !
