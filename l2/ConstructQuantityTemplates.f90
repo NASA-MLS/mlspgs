@@ -18,7 +18,7 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
     FIRST_LIT, LAST_LIT, L_BASELINE, L_CHANNEL, L_CloudIce,  L_EARTHREFL, &
     L_ELEVOFFSET, L_EXTINCTION, L_GEODALTITUDE, L_GPH, &
     L_HEIGHTOFFSET, L_LOSTRANSFUNC, L_LOSVEL, L_NONE, L_ORBITINCLINATION, &
-    L_PTAN, L_RADIANCE, &
+    L_PTAN, L_RADIUSOFEARTH, L_RADIANCE, &
     L_REFGPH, L_SCANRESIDUAL, L_SCECI, L_SCGEOCALT, L_SCVEL, L_SIDEBANDRATIO, &
     L_SPACERADIANCE, &
     L_TEMPERATURE, L_TNGTECI, L_TNGTGEOCALT, L_TNGTGEODALT, L_TRUE,&
@@ -148,6 +148,7 @@ contains ! =====     Public Procedures     =============================
     natural_units(l_orbitInclination) =   PHYQ_Angle
     natural_units(l_ptan) =           PHYQ_Zeta
     natural_units(l_radiance) =       PHYQ_Temperature
+    natural_units(l_radiusofearth) =  PHYQ_Length
     natural_units(l_refGPH) =         PHYQ_Length
     natural_units(l_scGeocAlt ) =     PHYQ_Length
     natural_units(l_scVel) =          PHYQ_Velocity
@@ -701,6 +702,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.45  2001/07/18 18:42:19  dwu
+! add radiusofearth quantity type
+!
 ! Revision 2.44  2001/07/17 23:23:05  dwu
 ! make l_losTransFunc as non-minorframe but minorframe-like quantity
 !
