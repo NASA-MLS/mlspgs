@@ -79,7 +79,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_DIAGONAL            = f_destroyJacobian + 1
   integer, parameter :: F_DO_CONV             = f_diagonal + 1
   integer, parameter :: F_DO_FREQ_AVG         = f_do_conv + 1
-  integer, parameter :: F_EXPLICITVALUES      = f_do_freq_avg + 1
+  integer, parameter :: F_EARTHRADIUS         = f_do_freq_avg + 1
+  integer, parameter :: F_EXPLICITVALUES      = f_earthradius + 1
   integer, parameter :: F_EXTRA               = f_explicitValues + 1
   integer, parameter :: F_FIELD               = f_extra + 1
   integer, parameter :: F_FILE                = f_field + 1
@@ -109,7 +110,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_LAMBDA              = f_jacobian + 1
   integer, parameter :: F_LENGTH              = f_lambda + 1
   integer, parameter :: F_LOGBASIS            = f_length + 1
-  integer, parameter :: F_L2PC                = f_logBasis + 1
+  integer, parameter :: F_LOSQTY              = f_logbasis + 1
+  integer, parameter :: F_L2PC                = f_losqty + 1
   integer, parameter :: F_MAXF                = f_l2pc + 1
   integer, parameter :: F_MAXITERATIONS       = f_maxf + 1
   integer, parameter :: F_MAXJ                = f_maxIterations + 1
@@ -431,6 +433,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_diagonal) =            add_ident ( 'diagonal' )
     field_indices(f_do_conv) =             add_ident ( 'do_conv' )
     field_indices(f_do_freq_avg) =         add_ident ( 'do_freq_avg' )
+    field_indices(f_earthRadius) =         add_ident ( 'earthRadius' )
     field_indices(f_explicitValues) =      add_ident ( 'explicitValues' )
     field_indices(f_extra) =               add_ident ( 'extra' )
     field_indices(f_field) =               add_ident ( 'field' )
@@ -462,6 +465,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_length) =              add_ident ( 'length' )
     field_indices(f_lines) =               add_ident ( 'lines' )
     field_indices(f_logBasis) =            add_ident ( 'logBasis' )
+    field_indices(f_losqty) =              add_ident ( 'losqty' )
     field_indices(f_L2PC) =                add_ident ( 'l2pc' )
     field_indices(f_matrix) =              add_ident ( 'matrix' )
     field_indices(f_maxF) =                add_ident ( 'maxF' )
@@ -819,6 +823,11 @@ contains ! =====     Public procedures     =============================
                     n+n_dot, &
              begin, f+f_tngtECI, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
+             begin, f+f_losQty, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
+             begin, f+f_earthRadius, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
+             begin, f+f_ptanQuantity, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
              begin, f+f_temperatureQuantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
              begin, f+f_h2oQuantity, s+s_vector, f+f_template, f+f_quantities, &
@@ -1017,6 +1026,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.140  2001/07/18 23:42:15  dwu
+! add f_losQty f_earthradius
+!
 ! Revision 2.139  2001/07/18 23:10:52  dwu
 ! rename l_radiusofearth as l_earthradius
 !
