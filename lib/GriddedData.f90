@@ -233,6 +233,8 @@ contains
       if ( myDetails < -1 ) return
     call output('description ' // GriddedData%description, advance='yes')
     call output('units ' // GriddedData%units, advance='yes')
+    call output('missing value ', advance='no')
+    call output(GriddedData%missingValue, advance='yes')
 
     call output ( ' ************ Geometry ********** ' ,advance='yes')
 
@@ -388,6 +390,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.24  2003/03/01 00:22:30  pwagner
+! Dump also prints missing value for that grid
+!
 ! Revision 2.23  2003/02/28 02:26:42  livesey
 ! Added missingValue field
 !
