@@ -1,5 +1,5 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 module PFADataBase_m
 
@@ -132,8 +132,8 @@ contains ! =====     Public Procedures     =============================
     use Intrinsic, only: Lit_Indices
     use MLSSignals_m, only: DisplaySignalName
     use Physics, only: SpeedOfLight
-    use String_Table, only: Display_String, String_Length
-    use Output_m, only: Blanks, NewLine, Output
+    use String_Table, only: Display_String
+    use Output_m, only: NewLine, Output
 
     type(PFAData_t), intent(in) :: PFADatum
     integer, intent(in), optional :: Details ! >0 => Dump arrays, 0 => Don't
@@ -403,6 +403,8 @@ contains ! =====     Public Procedures     =============================
         PFAData(iPFA)%signalIndex = signalIndices(1)
         PFAData(iPFA)%theSignal = signals(PFAData(iPFA)%signalIndex)
         PFAData(iPFA)%theSignal%channels => channels
+        nullify ( channels ) ! so as not to clobber PFAData(iPFA)%theSignal%channels
+          ! in next iteration of the loop
         call getHDF5Attribute ( groupID, 'sideband', PFAData(iPFA)%theSignal%sideband )
         call getHDF5Attribute ( groupID, 'vel_rel', PFAData(iPFA)%vel_rel )
         tGrid%name = 0
@@ -549,7 +551,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------------  Write_PDADatum  -----
   subroutine Write_PFADatum ( PFADatum, FileName, FileType, &
-    & UseMolecule, Lun )
+    & Lun )
 
     ! Write the PFADatum on FileName using the format given by FileType
 
@@ -566,7 +568,6 @@ contains ! =====     Public Procedures     =============================
 
     type(PFAData_t), intent(in) :: PFADatum
     character(len=*), intent(in) :: FileName, FileType
-    logical, intent(in), optional :: UseMolecule
     integer, intent(in), optional :: Lun ! Don't open a new file if present
 
     character(len=1023) :: Attrib
@@ -651,6 +652,9 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.18  2005/03/03 21:12:36  vsnyder
+! Remove UseMolecule from WritePFAData, remove unreferenced symbols
+!
 ! Revision 2.17  2005/02/05 01:39:12  vsnyder
 ! Handle separate readPFA commands correctly
 !
