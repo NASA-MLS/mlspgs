@@ -514,7 +514,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Now from that we identify the radiance quantity we'll be outputting
     radiance => GetVectorQuantityByType (fwdModelOut, quantityType=l_radiance, &
-      & signal= signal%index )
+      & signal= signal%index, sideband=signal%sideband )
 
     ! Identify the appropriate state vector components, save vmrs for later
     temp => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
@@ -586,11 +586,11 @@ contains ! =====     Public Procedures     =============================
 !
     ! *** DEBUG
 !
-    ForwardModelConfig%temp_der = .true.
-    ForwardModelConfig%atmos_der = .true.
-    do j = 1, noSpecies
-      forwardModelConfig%moleculeDerivatives(j) = .true.
-    end do
+!    ForwardModelConfig%temp_der = .true.
+!    ForwardModelConfig%atmos_der = .true.
+!    do j = 1, noSpecies
+!      forwardModelConfig%moleculeDerivatives(j) = .true.
+!    end do
 !
     ! *** END DEBUG
 
@@ -626,6 +626,16 @@ contains ! =====     Public Procedures     =============================
     nlvl=size(ForwardModelConfig%integrationGrid%surfs)
     n2lvl=2*nlvl
     phiWindow = ForwardModelConfig%phiWindow
+    print*,'Dimensions:'
+    print*,'noMAFs:',noMAFs
+    print*,'no_tan_hts:',no_tan_hts
+    print*,'maxPath:',maxPath
+    print*,'nlvl:',nlvl
+    print*,'n2lvl:',n2lvl
+    print*,'phiWindow:',phiWindow
+    print*,'noSpecies:',noSpecies
+    print*,'maxNoFSurfs:',maxNoFSurfs
+    print*,'MAF:',fmStat%maf
 
     ! Work out which channels are used
     call allocate_test ( channelIndex, size(signal%frequencies), 'channelIndex', &
@@ -640,7 +650,7 @@ contains ! =====     Public Procedures     =============================
 
     if ( fmStat%newHydros ) then
 
-print*,'(re)computing hydrostatic stuff.'
+      print*,'(re)computing hydrostatic stuff.'
       ! Now we're going to create the many temporary arrays we need
       allocate (ifm%ndx_path(No_tan_hts,noMAFs), stat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
@@ -826,6 +836,7 @@ print*,'Doing maf:',maf
       frequencies = pack( signal%frequencies, &
         & forwardModelConfig%signals(1)%channels )
 !%%%%%%%%%%%%% DEBUG NJL
+      print*,'Signal sideband:',signal%sideband
 signal%sideband=-1
 !%%%%%%%%%%%%%%
       select case ( signal%sideband )
@@ -1311,6 +1322,9 @@ signal%sideband=-1
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.88  2001/04/12 21:41:59  livesey
+! Interim version.
+!
 ! Revision 2.87  2001/04/12 17:48:31  livesey
 ! Moved maf increment to calling code, left finished flag here though.
 !
