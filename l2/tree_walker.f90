@@ -98,7 +98,7 @@ subtrees: do while ( j <= howmany )
                 & qtyTemplates, vectorTemplates, mifGeolocation )
             case ( z_fill )
               call MLSL2Fill ( son, l1bInfo, aprioriData, vectorTemplates, &
-                & vectors, qtyTemplates, l2gpDatabase )
+                & vectors, qtyTemplates, l2gpDatabase , l2auxDatabase)
             case ( z_join )
               call MLSL2Join ( son, vectors, l2gpDatabase, l2auxDatabase, &
                 & qtyTemplates, chunks, chunkNo )
@@ -135,6 +135,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.4  2000/11/30 00:21:08  pwagner
+! passes l2*databses to read a priori
+!
 ! Revision 2.3  2000/11/29 00:27:54  pwagner
 ! Began changes to open old l2gp
 !
