@@ -27,11 +27,16 @@ module VGridsDatabase
   end type VGrid_T
 
   ! Public procedures:
+  interface DoVGridsMatch
+    module procedure DoVGridsMatch_VG
+  end interface
+
   interface Dump
     module procedure Dump_VGrids, Dump_a_VGrid
   end interface Dump
 
   public :: AddVGridToDatabase, DestroyVGridContents, DestroyVGridDatabase
+  public :: DoVGridsMatch, DoVGridsMatch_VG
   public :: Dump, Dump_a_VGrid, Dump_VGrids, GetUnitForVerticalCoordinate
   public :: NullifyVGrid
   public :: PVMPackVGrid, PVMUnpackVGrid
@@ -103,6 +108,22 @@ contains
         & MLSMSG_Deallocate // "database" )
     end if
   end subroutine DestroyVGridDatabase
+
+  ! -------------------------------------------  DoVGridsMatch_VG  -----
+  logical function DoVGridsMatch_VG ( A, B )
+    ! Returns true if A and B are essentially the same VGrid.
+    use MLSNumerics, only: EssentiallyEqual
+    type (vGrid_T), intent(in) :: A
+    type (vGrid_T), intent(in) :: B
+
+    ! Executable code
+    doVGridsMatch_VG = .false.
+    if ( a%verticalCoordinate /= b%verticalCoordinate ) return
+    if ( a%noSurfs /= b%noSurfs ) return
+    if ( any ( .not. essentiallyEqual ( a%surfs, b%surfs ) ) ) return
+    doVGridsMatch_VG = .true.
+
+  end function DoVGridsMatch_VG
 
   ! -----------------------------------------------  Dump_a_VGrid  -----
   subroutine Dump_a_VGrid ( VGrid, Details )
@@ -262,6 +283,9 @@ contains
 end module VGridsDatabase
 
 ! $Log$
+! Revision 2.15  2004/12/13 20:29:36  vsnyder
+! Added DoVGridsMatch generic with DoVGridsMatch_VG specific
+!
 ! Revision 2.14  2004/06/17 22:35:10  pwagner
 ! Added new integer type for vertical coordinate
 !
