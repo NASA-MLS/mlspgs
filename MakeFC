@@ -127,7 +127,7 @@ EVERY_MLSCONFG = LF95.Linux  NAG.Linux  NAG.SGI  NAG.Sun  Unknown.None
 # Automatic targets
 
 levels:
-	 @for dir in $(LEVELS); do \
+	 @for dir in lib $(LEVELS); do \
 	  $(MAKE) -f $(MakeFName) -C $$dir; \
 	done
 
@@ -303,6 +303,9 @@ update: depends
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.17  2001/02/27 18:13:37  pwagner
+# New help configure_help targets; tweaks to all, subdirs targets
+#
 # Revision 1.16  2001/02/26 00:28:09  pwagner
 # configure_pvm and configure_fopts targets added
 #
