@@ -200,7 +200,7 @@ contains
      &     *EXP(-1.e-4*(F/30)**2))*TT**1.7
 
 ! from ATBD N2-N2 continuum
-       ABSC = ABSC + B*0.65*(P/1013.)**2*TT**2*(F/30)**2*1.e5/1.8
+       ABSC = ABSC + B*0.65*(P/1013.)**2*TT**2*(F/30)**2*1.e5/1.8     !best fit to band2 and band6
 !      ABSC = ABSC + B*0.65*(P/1013.)**2*TT**2*(F/30)**2*1.e5
 
 !=====================================================================================
@@ -240,7 +240,7 @@ contains
 ! difference with Bill's FWM f15 Band2U~6K, B10L~1K
 
 !      CONT_1 = 7.53e-16     ! wu's version
-      CONT_1 = 7.53e-16/1.6
+      CONT_1 = 7.53e-16/1.36 ! best fit to band2 and band6
       CONT_2 = 4.20
       CONT_3 = 0.00
       SC_CONST = CONT_1 * FF**2 * EXP(-CONT_3 * FF**2)
@@ -311,6 +311,9 @@ contains
 end module GasAbsorption
 
 ! $Log$
+! Revision 1.12  2002/11/06 18:20:03  jonathan
+! add N2O
+!
 ! Revision 1.11  2002/10/08 17:08:07  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
