@@ -82,7 +82,7 @@ LOGFILE="$PVM_BIN/$temp_file_name"
 
 if [ ! -w "$LOGFILE" ]
 then
-  echo "#$LOGFILE mlsl2.log" > "$LOGFILE"
+  echo "#$LOGFILE mlsl2.log" 2>&1 | tee "$LOGFILE"
 fi
 
 SLVPROG=mlsl2.ssllaavvee
@@ -91,7 +91,7 @@ SLVPROG=mlsl2.ssllaavvee
 if [ "$1" = "$SLVPROG" ]
 then
   shift
-  echo "Need to shift because 1st arg is command name" >> "$LOGFILE"
+  echo "Need to shift because 1st arg is command name" 2>&1 | tee -a "$LOGFILE"
 fi
 
 otheropts="-g -S'slv,opt1,log,pro,time'"
@@ -124,29 +124,29 @@ while [ "$more_opts" = "yes" ] ; do
     esac
 done
 
-echo "PGS_PC_INFO_FILE: $PGS_PC_INFO_FILE" >> "$LOGFILE"
-echo "masterTid: $masterTid" >> "$LOGFILE"
-echo "executable: $PVM_BIN/mlsl2" >> "$LOGFILE"
+echo "PGS_PC_INFO_FILE: $PGS_PC_INFO_FILE" 2>&1 | tee -a "$LOGFILE"
+echo "masterTid: $masterTid" 2>&1 | tee -a "$LOGFILE"
+echo "executable: $PVM_BIN/mlsl2" 2>&1 | tee -a "$LOGFILE"
 
 export PGSMEM_USESHM
 export PGS_PC_INFO_FILE
 
 if [ "$masterTid" = "" ]
 then
-  echo "masterTid undefined" >> "$LOGFILE"
+  echo "masterTid undefined" 2>&1 | tee -a "$LOGFILE"
   exit 1
 elif [ "$PGS_PC_INFO_FILE" = "" ]
 then
-  echo "PCF undefined" >> "$LOGFILE"
+  echo "PCF undefined" 2>&1 | tee -a "$LOGFILE"
   exit 1
 elif [ ! -x "$PVM_BIN/mlsl2" ]
 then
-  echo "$PVM_BIN/mlsl2 not found/executable" >> "$LOGFILE"
+  echo "$PVM_BIN/mlsl2 not found/executable" 2>&1 | tee -a "$LOGFILE"
   exit 1
 fi
 
-$PVM_BIN/mlsl2 --tk -m --slave $masterTid $otheropts  >> "$LOGFILE"
-# $PVM_BIN/mlsl2 --tk -m --slave $masterTid -g -S'slv,opt1,log,pro,time'  >> "$LOGFILE"
+$PVM_BIN/mlsl2 --tk -m --slave $masterTid $otheropts  2>&1 | tee -a "$LOGFILE"
+# $PVM_BIN/mlsl2 --tk -m --slave $masterTid -g -S'slv,opt1,log,pro,time'  2>&1 | tee -a "$LOGFILE"
 
 }
       
@@ -168,6 +168,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.4  2003/10/15 20:56:27  pwagner
+# Each slave sends its stdout to a unique file
+#
 # Revision 1.3  2003/09/11 20:17:13  pwagner
 # Passes --skipRetr[] option to mlsl2
 #
