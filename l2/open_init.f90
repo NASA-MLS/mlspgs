@@ -8,29 +8,22 @@ module Open_Init
   ! Creates and destroys the L1BInfo database
 
   use Hdf, only: DFACC_READ, SFSTART
-  use Hdfeos, only: swopen, swclose
-  use INIT_TABLES_MODULE, only: F_FILE, F_SWATH, S_L2AUX, S_L2GP
-  use L2AUXData, only: AddL2AUXToDatabase, L2AUXData_T, ReadL2AUXData
-  use L2GPData, only: AddL2GPToDatabase, L2GPData_T, ReadL2GPData
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: FileNameLen, L1BInfo_T, TAI93_Range_T
-!  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
-!    &                         MLSMSG_Error, MLSMSG_FileOpen!, MLSMSG_Info
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
+    &                         MLSMSG_Error!, MLSMSG_FileOpen, MLSMSG_Info
   use MLSPCF2, only: MLSPCF_L1B_OA_START, MLSPCF_L1B_RAD_END, &
-    &                MLSPCF_L1B_RAD_START, MLSPCF_NOMEN_START, &
-    &                mlspcf_pcf_start
-  use MoreTree, only: Get_Spec_ID
+    &                MLSPCF_L1B_RAD_START, &
+    &                mlspcf_pcf_start, PENALTY_FOR_NO_METADATA
   USE output_m, only: output
   USE PCFHdr, only: CreatePCFAnnotation
-  use SDPToolkit, only: PGS_IO_Gen_closeF, PGS_IO_Gen_openF, &
+  use SDPToolkit, only: &
     &                   Pgs_pc_getReference, PGS_S_SUCCESS, &
-    &                   PGSd_IO_Gen_RSeqFrm, PGSTD_E_NO_LEAP_SECS
-  use String_Table, only: Get_String !, L2CFUnit => INUNIT
+    &                   PGSTD_E_NO_LEAP_SECS
   use Toggles, only: Gen, Levels, Switches, Toggle
   use Trace_M, only: Trace_begin, Trace_end
-  use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, &
-    &             SUB_ROSA, SUBTREE, DUMP_TREE_NODE, SOURCE_REF
-  use TREE_TYPES, only: N_NAMED!, N_DOT
+  use TREE, only: &
+    &             SUBTREE, DUMP_TREE_NODE, SOURCE_REF
   use WriteMetadata, only: PCFData_T
 
   implicit none
@@ -123,6 +116,7 @@ contains ! =====     Public Procedures     =============================
 			size = LEN(DEFAULTANTEXT) + 1
      		 ALLOCATE(anText(size), STAT=Status)
 			anText(1:size-1) = DEFAULTANTEXT(1:size-1)
+         error=PENALTY_FOR_NO_METADATA
 		endif
 
     ifl1 = 0
@@ -261,6 +255,11 @@ contains ! =====     Public Procedures     =============================
       indx = INDEX(name, '/', .TRUE.)
       l2pcf%logGranID = name(indx+1:)
  
+    if (ERROR/=0 ) then
+	 	call MLSMessage(MLSMSG_Error,ModuleName, &
+      & 'Problem with open_init section')
+	end if
+
     if ( toggle(gen) ) then
       if ( levels(gen) > 0 .or. index(switches,'C') /= 0 ) &
         & call dump_L1B_database(ifl1, l1binfo, l2pcf, &
@@ -403,6 +402,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.32  2001/04/10 23:00:29  pwagner
+! Keeps track of whether to quit if no metadata
+!
 ! Revision 2.31  2001/04/06 20:20:43  vsnyder
 ! Improve an error message
 !
