@@ -21,7 +21,7 @@ module ReadAPriori
   use MLSFiles, only: FILENOTFOUND, WILDCARDHDFVERSION, &
     & GetPCFromRef, MLS_HDF_VERSION, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
     & MLS_INQSWATH, MLS_SFEND, MLS_SFSTART, SPLIT_PATH_NAME
-  use MLSL2Options, only: DEFAULT_HDFVERSION_READ, PCF, PCFL2CFSAMECASE
+  use MLSL2Options, only: DEFAULT_HDFVERSION_READ, TOOLKIT
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSPCF2, only: mlspcf_l2apriori_start, mlspcf_l2apriori_end, &
@@ -231,11 +231,11 @@ contains ! =====     Public Procedures     =============================
           & call get_string ( swathName, swathNameString, strip=.true. )
 
         ! If we were given only a strand of the filename, expand it
-        if ( PCF ) then
+        if ( TOOLKIT ) then
           call split_path_name(FileNameString, path, SubString)
           LastClimPCF = GetPCFromRef(SubString, mlspcf_l2apriori_start, &
           & mlspcf_l2apriori_end, &                                     
-          & PCFL2CFSAMECASE, returnStatus, l2apriori_Version, DEBUG, &  
+          & TOOLKIT, returnStatus, l2apriori_Version, DEBUG, &  
           & exactName=FileNameString)                             
         endif
 
@@ -299,11 +299,11 @@ contains ! =====     Public Procedures     =============================
         ! copy.
       case ( s_l2aux )
 
-        if ( PCF ) then
+        if ( TOOLKIT ) then
           call split_path_name(FileNameString, path, SubString)
           LastClimPCF = GetPCFromRef(SubString, mlspcf_l2apriori_start, &
           & mlspcf_l2apriori_end, &                                     
-          & PCFL2CFSAMECASE, returnStatus, l2apriori_Version, DEBUG, &  
+          & TOOLKIT, returnStatus, l2apriori_Version, DEBUG, &  
           & exactName=FileNameString)                             
         endif
         if ( .not. all(got((/f_sdName, f_file, f_quantityType /)))) &
@@ -352,13 +352,13 @@ contains ! =====     Public Procedures     =============================
         
         select case ( griddedOrigin )
         case ( l_ncep ) ! --------------------------- NCEP Data
-          if ( PCF .and. got(f_file) ) then
+          if ( TOOLKIT .and. got(f_file) ) then
             call split_path_name(FileNameString, path, SubString)
             LastNCEPPCF = GetPCFromRef(SubString, mlspcf_l2ncep_start, &
             & mlspcf_l2ncep_end, &                                     
-            & PCFL2CFSAMECASE, returnStatus, l2apriori_Version, DEBUG, &  
+            & TOOLKIT, returnStatus, l2apriori_Version, DEBUG, &  
             & exactName=FileNameString)                             
-          elseif ( PCF ) then
+          elseif ( TOOLKIT ) then
             do pcf_indx = LastNCEPPCF+1, mlspcf_l2ncep_end
               returnStatus = Pgs_pc_getReference(pcf_indx, L2apriori_version, &
                 & fileNameString)
@@ -385,13 +385,13 @@ contains ! =====     Public Procedures     =============================
                & fieldNameString, hdfVersion=hdfVersion)
           endif
         case ( l_dao ) ! ---------------------------- DAO Data
-          if ( PCF .and. got(f_file) ) then
+          if ( TOOLKIT .and. got(f_file) ) then
             call split_path_name(FileNameString, path, SubString)
             LastDAOPCF = GetPCFromRef(SubString, mlspcf_l2dao_start, &
             & mlspcf_l2dao_end, &                                     
-            & PCFL2CFSAMECASE, returnStatus, l2apriori_Version, DEBUG, &  
+            & TOOLKIT, returnStatus, l2apriori_Version, DEBUG, &  
             & exactName=FileNameString)                             
-          elseif ( PCF ) then
+          elseif ( TOOLKIT ) then
             do pcf_indx = LastDAOPCF+1, mlspcf_l2dao_end
               returnStatus = Pgs_pc_getReference(pcf_indx, L2apriori_version, &
                 & fileNameString)
@@ -419,13 +419,13 @@ contains ! =====     Public Procedures     =============================
                & fieldNameString, hdfVersion=hdfVersion)
           endif
         case ( l_gloria ) ! ------------------------- Data in Gloria's UARS format
-          if ( PCF .and. got(f_file) ) then
+          if ( TOOLKIT .and. got(f_file) ) then
             call split_path_name(FileNameString, path, SubString)
             LastClimPCF = GetPCFromRef(SubString, mlspcf_l2clim_start, &
             & mlspcf_l2clim_end, &                                     
-            & PCFL2CFSAMECASE, returnStatus, l2apriori_Version, DEBUG, &  
+            & TOOLKIT, returnStatus, l2apriori_Version, DEBUG, &  
             & exactName=FileNameString)                             
-          elseif ( PCF ) then
+          elseif ( TOOLKIT ) then
             do pcf_indx = lastClimPCF+1, mlspcf_l2clim_end
               returnStatus = Pgs_pc_getReference(pcf_indx, L2apriori_version, &
                 & fileNameString)
@@ -447,13 +447,13 @@ contains ! =====     Public Procedures     =============================
           endif
         case ( l_climatology ) ! -------------------- Climatology data
           ! Identify file (maybe from PCF if no name given)
-          if ( PCF .and. got(f_file) ) then
+          if ( TOOLKIT .and. got(f_file) ) then
             call split_path_name(FileNameString, path, SubString)
             LastClimPCF = GetPCFromRef(SubString, mlspcf_l2clim_start, &
             & mlspcf_l2clim_end, &                                     
-            & PCFL2CFSAMECASE, returnStatus, l2apriori_Version, DEBUG, &  
+            & TOOLKIT, returnStatus, l2apriori_Version, DEBUG, &  
             & exactName=FileNameString)                             
-          elseif ( PCF ) then
+          elseif ( TOOLKIT ) then
             do pcf_indx = lastClimPCF+1, mlspcf_l2clim_end
               returnStatus = Pgs_pc_getReference(pcf_indx, L2apriori_version, &
                 & fileNameString)
@@ -637,6 +637,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.52  2003/06/09 22:49:34  pwagner
+! Reduced everything (PCF, PUNISH.., etc.) to TOOLKIT
+!
 ! Revision 2.51  2003/05/29 17:54:28  pwagner
 ! Able to read dao, ncep files w/o knowing name fragment
 !
