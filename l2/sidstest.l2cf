@@ -140,83 +140,82 @@ BEGIN MLSSignals
 
   ;; Now the list of the signals; first the nominal measurement set
   ;; 25 channel filter bands, by radiometer
-  sig_band1: signal,  band=B1F,  sideband=upper, switch=0, spectrometer=1;;  PT
+  sig_band1: signal,  band=B1F,  switch=0, spectrometer=1;;  PT
 
-  sig_band2: signal,  band=B2F,  sideband=lower, switch=0, spectrometer=2;;  H2O
-  sig_band3: signal,  band=B3F,  sideband=upper, switch=2, spectrometer=3;;  N2O
-  sig_band4: signal,  band=B4F,  sideband=lower, switch=0, spectrometer=4;;  HNO3
-  sig_band5: signal,  band=B5F,  sideband=upper, switch=0, spectrometer=5;;  CLO
-  sig_band6: signal,  band=B6F,  sideband=upper, switch=0, spectrometer=6;;  O3
+  sig_band2: signal,  band=B2F,  switch=0, spectrometer=2;;  H2O
+  sig_band3: signal,  band=B3F,  switch=2, spectrometer=3;;  N2O
+  sig_band4: signal,  band=B4F,  switch=0, spectrometer=4;;  HNO3
+  sig_band5: signal,  band=B5F,  switch=0, spectrometer=5;;  CLO
+  sig_band6: signal,  band=B6F,  switch=0, spectrometer=6;;  O3
   
-  sig_band7: signal,  band=B7F,  sideband=upper, switch=0, spectrometer=7;;  O3
-  sig_band8: signal,  band=B8F,  sideband=upper, switch=0, spectrometer=8;;  PT
-  sig_band9: signal,  band=B9F,  sideband=lower, switch=0, spectrometer=9;;  CO
+  sig_band7: signal,  band=B7F,  switch=0, spectrometer=7;;  O3
+  sig_band8: signal,  band=B8F,  switch=0, spectrometer=8;;  PT
+  sig_band9: signal,  band=B9F,  switch=0, spectrometer=9;;  CO
   
-  sig_band10: signal, band=B10F, sideband=upper, switch=0, spectrometer=10;; CLO
-  sig_band11: signal, band=B11F, sideband=upper, switch=0, spectrometer=11;; BRO
-  sig_band12: signal, band=B12F, sideband=upper, switch=4, spectrometer=12;; N2O
-  sig_band13: signal, band=B13F, sideband=lower, switch=0, spectrometer=13;; HCL
-  sig_band14: signal, band=B14F, sideband=upper, switch=0, spectrometer=14;; O3
+  sig_band10: signal, band=B10F, switch=0, spectrometer=10;; CLO
+  sig_band11: signal, band=B11F, switch=0, spectrometer=11;; BRO
+  sig_band12: signal, band=B12F, switch=4, spectrometer=12;; N2O
+  sig_band13: signal, band=B13F, switch=0, spectrometer=13;; HCL
+  sig_band14: signal, band=B14F, switch=0, spectrometer=14;; O3
   
-  sig_band15: signal, band=B15F, sideband=lower, switch=5, spectrometer=15;; OH
-  sig_band16: signal, band=B16F, sideband=lower, switch=0, spectrometer=16;; OH
-  sig_band17: signal, band=B17F, sideband=lower, switch=0, spectrometer=17;; PT
-  sig_band18: signal, band=B18F, sideband=lower, switch=0, spectrometer=18;; OH
-  sig_band19: signal, band=B19F, sideband=lower, switch=0, spectrometer=19;; OH
+  sig_band15: signal, band=B15F, switch=5, spectrometer=15;; OH
+  sig_band16: signal, band=B16F, switch=0, spectrometer=16;; OH
+  sig_band17: signal, band=B17F, switch=0, spectrometer=17;; PT
+  sig_band18: signal, band=B18F, switch=0, spectrometer=18;; OH
+  sig_band19: signal, band=B19F, switch=0, spectrometer=19;; OH
 
   ;; Digital autocorrelators (DACS), by radiometer
-  sig_band22: signal, band=B22D, sideband=upper, switch=0, spectrometer=4;;  PT
-  sig_band23: signal, band=B23D, sideband=lower, switch=0, spectrometer=2;;  H2O
-  sig_band24: signal, band=B24D, sideband=upper, switch=0, spectrometer=3;;  O3
-  sig_band25: signal, band=B25D, sideband=lower, switch=1, spectrometer=1;;  CO
+  sig_band22: signal, band=B22D, switch=0, spectrometer=4;;  PT
+  sig_band23: signal, band=B23D, switch=0, spectrometer=2;;  H2O
+  sig_band24: signal, band=B24D, switch=0, spectrometer=3;;  O3
+  sig_band25: signal, band=B25D, switch=1, spectrometer=1;;  CO
 
   ;; Mid band 11 spectrometer filter banks, by radiometer
-  sig_band27: signal, band=B27M, sideband=lower, switch=0, spectrometer=1;;  HCN
-  sig_band28: signal, band=B28M, sideband=upper, switch=0, spectrometer=2;;  HO2
-  sig_band29: signal, band=B29M, sideband=lower, switch=0, spectrometer=3;;  HOCL
-  sig_band30: signal, band=B30M, sideband=upper, switch=0, spectrometer=4;;  HO2
-  sig_band31: signal, band=B31M, sideband=lower, switch=0, spectrometer=5;;  BRO
+  sig_band27: signal, band=B27M, switch=0, spectrometer=1;;  HCN
+  sig_band28: signal, band=B28M, switch=0, spectrometer=2;;  HO2
+  sig_band29: signal, band=B29M, switch=0, spectrometer=3;;  HOCL
+  sig_band30: signal, band=B30M, switch=0, spectrometer=4;;  HO2
+  sig_band31: signal, band=B31M, switch=0, spectrometer=5;;  BRO
 
   ;; Wide filters for the tropospheric measurements
-  sig_band32: signal, band=B32W, sideband=upper, switch=0, spectrometer=1, $
+  sig_band32: signal, band=B32W, switch=0, spectrometer=1, $
     channels= [4.8 GHz:  0.5 GHz,  6.3 GHz:  0.5 GHz, $
                9.8 GHz:  0.5 GHz, 11.5 GHz:  0.5 GHz] ;;  PT
-  sig_band33: signal, band=B33W, sideband=lower, switch=0,  spectrometer=2, $
+  sig_band33: signal, band=B33W, switch=0,  spectrometer=2, $
     channels= [3.0 GHz:  0.5 GHz,  4.8 GHz:  0.5 GHz, $
                7.2 GHz:  0.5 GHz,  7.8 GHz:  0.5 GHz]
 
   ;; Now the paths that are not nominally active
   ;; 25 spectrometer filterbanks, by radiometer
-  sig_band1alt:  signal, band=B1F,  sideband=upper, switch=3, spectrometer=8;;  PT
-  sig_band21:    signal, band=B21F, sideband=upper, switch=4, spectrometer=12;; PT
-  sig_band21alt: signal, band=B21F, sideband=upper, switch=3, spectrometer=8;;  PT
+  sig_band1alt:  signal, band=B1F,  switch=3, spectrometer=8;;  PT
+  sig_band21:    signal, band=B21F, switch=4, spectrometer=12;; PT
+  sig_band21alt: signal, band=B21F, switch=3, spectrometer=8;;  PT
 
-  sig_band2alt: signal,  band=B2F,  sideband=lower, switch=2, spectrometer=3;;  H2O
-  sig_band4alt: signal,  band=B4F,  sideband=lower, switch=2, spectrometer=3;;  HNO3
-  sig_band5alt: signal,  band=B5F,  sideband=upper, switch=2, spectrometer=3;;  CLO
+  sig_band2alt: signal,  band=B2F,  switch=2, spectrometer=3;;  H2O
+  sig_band4alt: signal,  band=B4F,  switch=2, spectrometer=3;;  HNO3
+  sig_band5alt: signal,  band=B5F,  switch=2, spectrometer=3;;  CLO
 
-  sig_band7alt: signal,  band=B7F,  sideband=upper, switch=3, spectrometer=8;;  O3
-  sig_band8alt: signal,  band=B8F,  sideband=upper, switch=2, spectrometer=8;;  PT
-  sig_band9alt: signal,  band=B9F,  sideband=lower, switch=3, spectrometer=8;;  CO
+  sig_band7alt: signal,  band=B7F,  switch=3, spectrometer=8;;  O3
+  sig_band8alt: signal,  band=B8F,  switch=2, spectrometer=8;;  PT
+  sig_band9alt: signal,  band=B9F,  switch=3, spectrometer=8;;  CO
   
-  sig_band13alt: signal, band=B13F, sideband=lower, switch=4, spectrometer=12;; HCL
-  sig_band14alt: signal, band=B14F, sideband=upper, switch=4, spectrometer=12;; O3
+  sig_band13alt: signal, band=B13F, switch=4, spectrometer=12;; HCL
+  sig_band14alt: signal, band=B14F, switch=4, spectrometer=12;; O3
 
-  sig_band16alt: signal, band=B16F, sideband=lower, switch=5, spectrometer=15;; OH
-  sig_band17alt: signal, band=B17F, sideband=lower, switch=5, spectrometer=15;; PT
-  sig_band18alt: signal, band=B18F, sideband=lower, switch=5, spectrometer=15;; OH
-  sig_band19alt: signal, band=B19F, sideband=lower, switch=5, spectrometer=15;; OH
-  sig_band20:    signal, band=B20F, sideband=lower, switch=3, spectrometer=8;;  PT
-  sig_band20alt: signal, band=B20F, sideband=lower, switch=5, spectrometer=15;; PT
+  sig_band16alt: signal, band=B16F, switch=5, spectrometer=15;; OH
+  sig_band17alt: signal, band=B17F, switch=5, spectrometer=15;; PT
+  sig_band18alt: signal, band=B18F, switch=5, spectrometer=15;; OH
+  sig_band19alt: signal, band=B19F, switch=5, spectrometer=15;; OH
+  sig_band20:    signal, band=B20F, switch=3, spectrometer=8;;  PT
+  sig_band20alt: signal, band=B20F, switch=5, spectrometer=15;; PT
 
   ;; Digital autocorrelators (DACS)
-  sig_band26: signal, band=B26D, sideband=lower, switch=1, spectrometer=1;;  PT
+  sig_band26: signal, band=B26D, switch=1, spectrometer=1;;  PT
 
   ;; Wide filters for the tropospheric measurements
-  sig_band34: signal, band=B34W, sideband=upper, switch=0,  spectrometer=3, $
+  sig_band34: signal, band=B34W, switch=0,  spectrometer=3, $
     channels= [4.8 GHz:  0.5 GHz,  6.3 GHz:  0.5 GHz, $
                9.8 GHz:  0.5 GHz, 11.5 GHz:  0.5 GHz] ;;  PT
-
 
 END MLSSignals
 
@@ -653,20 +652,15 @@ BEGIN GlobalSettings
                    start=1000mb, formula=[25:12, 24:6]
     vGridRefGPH: vGrid, coordinate=Zeta, type=Explicit, values=100mb
 
-;; Stuff to start up the forward model from Zvi's and Bill's files
-    l2load,   zvi='/user5/zvi/n_seez'
-;; End of stuff to start up the forward model from Zvi's and Bill's
-;; files
-
     forwardModelGlobal, $
-      antennaPatterns='/user5/vsnyder/mlspgs/l2/aaap.umls', $
+      antennaPatterns='/user1/livesey/mlspgs/l2/aaap.emls', $
       filterShapes='/user5/vsnyder/mlspgs/l2/normalized_filter_banks.dat', $
       pointingGrids='/user1/livesey/mlspgs/l2/full_r2_b234_lsb'
 
     testFwm: forwardModel, type=full, signals = [sig_band2], $
       molecules = [h2o], frequency=182610.091 MHz, channels = [1], $
-      integrationGrid=fwmIntegrationGrid, tangentGrid=fwmTangentGrid, $
-      /do_conv, /do_freq_avg
+      integrationGrid=fwmIntegrationGrid, tangentGrid=fwmTangentGrid;, $
+;     /do_conv, /do_freq_avg
 
 END GlobalSettings
 
@@ -819,6 +813,7 @@ END Fill
 
 BEGIN Retrieve
 
+    time
     sids, fwdModelIn = state, fwdModelExtra = extraState, fwdModelOut = radiance, $
       forwardModel=testFwm
 
@@ -855,6 +850,9 @@ END Output
 ; ==========================================================================
 
 ; $Log$
+; Revision 2.19  2001/04/10 17:59:19  vsnyder
+; Remove sideband field from signal
+;
 ; Revision 2.18  2001/04/06 20:17:56  vsnyder
 ; Remove more conflicts from merge
 ;
