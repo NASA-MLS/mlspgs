@@ -381,12 +381,12 @@ contains
 
 !   Print *,'** Enter ForwardModel, MAF =',fmstat%maf   ! ** ZEBUG
 
-    temp_der = FwdModelConf%temp_der
-    atmos_der = FwdModelConf%atmos_der
+    temp_der = present ( jacobian ) .and. FwdModelConf%temp_der
+    atmos_der = present ( jacobian ) .and. FwdModelConf%atmos_der
 
 ! ** Re-instate when appropriate code is done
 !   spect_der = FwdModelConf%spect_der
-    spect_der = .FALSE.    ! ** ZEBUG
+    spect_der = present ( jacobian ) .and. .false.    ! ** ZEBUG
 
     if ( toggle(emit) ) &
       & Call trace_begin ( 'ForwardModel, MAF=', index=fmstat%maf )
@@ -2498,6 +2498,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.83  2002/08/22 23:13:03  livesey
+! New intermediate frequency based frq_bases
+!
 ! Revision 2.82  2002/08/20 23:33:23  livesey
 ! Fixed bug with handling of extinction
 !
