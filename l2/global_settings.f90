@@ -8,25 +8,34 @@ module GLOBAL_SETTINGS
     & DestroyHGridDatabase, HGrid_T
   use INIT_TABLES_MODULE, only: L_TRUE, P_ALLOW_CLIMATOLOGY_OVERLOADS, &
     & P_INPUT_VERSION_STRING, P_OUTPUT_VERSION_STRING, P_VERSION_COMMENT, &
-    & S_FORWARDMODEL, S_ForwardModelGlobal, S_TIME, S_VGRID
+    & S_FORWARDMODEL, S_ForwardModelGlobal, S_TIME, S_VGRID, F_FILE!, &
+!    & P_CYCLE, P_CCSDSSTARTTIME, P_CCSDSENDTIME, P_STARTTIME, P_ENDTIME, &
+!    & S_L1BRAD, S_L1BOA
+  use L1BData, only: l1bradSetup, l1boaSetup
   use L2GPData, only: L2GPDATA_T
-  use MLSCommon, only: R8
+  use MLSCommon, only: R8, NameLen, L1BInfo_T, TAI93_Range_T
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
+  use MLSPCF2, only: MLSPCF_L1B_RAD_END, MLSPCF_L1B_RAD_START
   use MoreTree, only: GET_FIELD_ID, GET_SPEC_ID
   use Output_m, only: Output
   use String_Table, only: Get_String
   use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE
+  use TREE_TYPES, only: N_EQUAL, N_NAMED
   use VGrid, only: CreateVGridFromMLSCFInfo
   use VGridsDatabase, only: AddVGridToDatabase, Dump, VGrid_T
-  use TREE_TYPES, only: N_EQUAL, N_NAMED
+  use WriteMetadata, only: PCFData_T
 
   implicit NONE
 
   private
 
   public :: SET_GLOBAL_SETTINGS
+
+  integer, public, parameter :: ILLEGALL1BRADID=-1      ! something sfstart should catch
+  integer, public, parameter :: MAXNUML1BRADIDS=&
+  & mlspcf_l1b_rad_end-mlspcf_l1b_rad_start+1   ! In case more than one
 
   logical, public :: ALLOW_CLIMATOLOGY_OVERLOADS = .false.
   integer, public :: INPUT_VERSION_STRING = 0     ! Sub_rosa index
@@ -44,19 +53,28 @@ module GLOBAL_SETTINGS
 contains
 
   subroutine SET_GLOBAL_SETTINGS ( ROOT, ForwardModelConfigDatabase, &
-    & VGrids, l2gpDatabase )
+    & VGrids, l2gpDatabase, l2pcf, processingRange, l1bInfo )
 
     integer, intent(in) :: ROOT    ! Index of N_CF node in abstract syntax tree
     type(ForwardModelConfig_T), dimension(:), pointer :: &
       & ForwardModelConfigDatabase
     type ( vGrid_T ), pointer, dimension(:) :: VGrids
     type ( l2gpData_T), dimension(:), pointer :: L2GPDATABASE
+    type (TAI93_Range_T) :: processingRange ! Data processing range
+    type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
+    type(PCFData_T) :: l2pcf
     
     integer :: I         ! Index of son of root
     integer :: NAME      ! Sub-rosa index of name of vGrid or hGrid
     integer :: SON       ! Son of root
     logical :: TIMING    ! For S_Time
     real :: T1, T2       ! For S_Time
+    character(LEN=NameLen) :: name_string
+! Just until init_tables_module is updated
+   integer, parameter :: P_CYCLE=-99, P_CCSDSSTARTTIME=-98, &
+   & P_CCSDSENDTIME=-97, &
+   & P_STARTTIME=-96, P_ENDTIME=-95, &
+    & S_L1BRAD=-94, S_L1BOA=-93
 
     timing = .false.
     
@@ -74,6 +92,18 @@ contains
           output_version_string = sub_rosa(subtree(2,son))
         case ( p_version_comment )
           version_comment = sub_rosa(subtree(2,son))
+        case ( p_cycle )
+          call get_string ( sub_rosa(subtree(2,son)), l2pcf%cycle )
+        case ( p_ccsdsstarttime )
+          call get_string ( sub_rosa(subtree(2,son)), l2pcf%startutc )
+        case ( p_ccsdsendtime )
+          call get_string ( sub_rosa(subtree(2,son)), l2pcf%endutc )
+        case ( p_starttime )
+          call get_string ( sub_rosa(subtree(2,son)), name_string )
+          read(name_string, '(A32)') processingrange%starttime
+        case ( p_endtime )
+          call get_string ( sub_rosa(subtree(2,son)), name_string )
+          read(name_string, '(A32)') processingrange%endtime
         end select
       else
         if ( node_id(son) == n_named ) then
@@ -91,6 +121,12 @@ contains
         case ( s_vgrid )
           call decorate ( son, AddVGridToDatabase ( vGrids, &
             & CreateVGridFromMLSCFInfo ( name, son, l2gpDatabase ) ) )
+        case ( s_l1brad )
+          call l1bradSetup ( son, l1bInfo, F_FILE, &
+          & MAXNUML1BRADIDS, ILLEGALL1BRADID )
+        case ( s_l1boa )
+          call l1boaSetup ( son, l1bInfo, F_FILE )
+
         case ( s_time )
           if ( timing ) then
             call sayTime
@@ -124,6 +160,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.22  2001/04/26 20:02:09  livesey
+! Made l2pc database a saved array in L2PC_m
+!
 ! Revision 2.21  2001/04/26 02:52:17  vsnyder
 ! Fix up CVS stuff
 !
