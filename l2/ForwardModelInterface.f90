@@ -1131,7 +1131,7 @@ contains ! =====     Public Procedures     =============================
               & fwdModelConf%signals(sigInd), sideband = thisSideband )
             if ( shapeInd == 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
               & "No matching channel shape information" )
-            if ( toggle(emit) .and. levels(emit) > 1 ) then
+            if ( toggle(emit) .and. levels(emit) > 2 ) then
               call output ( 'Using filter shape:' )
               call output ( shapeInd, advance='yes' )
             endif
@@ -1290,7 +1290,7 @@ contains ! =====     Public Procedures     =============================
           end where
           whichPatternAsArray = minloc ( superset )
           whichPattern = whichPatternAsArray(1)
-          if ( toggle(emit) .and. levels(emit) > 1 ) then
+          if ( toggle(emit) .and. levels(emit) > 2 ) then
             call output ( 'Using antenna pattern: ' )
             call output ( whichPattern, advance='yes' )
           end if
@@ -1477,6 +1477,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.135  2001/05/21 23:58:10  livesey
+! Moved some of the emits to higher numbers
+!
 ! Revision 2.134  2001/05/17 01:44:16  livesey
 ! Bug fix for non frequency avg. case
 !
