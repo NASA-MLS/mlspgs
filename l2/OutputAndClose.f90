@@ -33,7 +33,7 @@ module OutputAndClose ! outputs all data from the Join module to the
     & SUBTREE, SUB_ROSA
   use TREE_TYPES, only: N_NAMED
   use WriteMetadata, only: PCFData_T, populate_metadata_std, &
-  & populate_metadata_oth, WriteMetaLog
+  & populate_metadata_oth, WriteMetaLog, get_l2gp_mcf
 
   implicit none
   private
@@ -54,26 +54,47 @@ module OutputAndClose ! outputs all data from the Join module to the
 contains ! =====     Public Procedures     =============================
 
   ! -----------------------------------------------  Output_Close  -----
-  subroutine Output_Close ( root, l2gpDatabase, l2auxDatabase, l2pcf )
+  subroutine Output_Close ( root, l2gpDatabase, l2auxDatabase, l2pcf, anText )
 
 	! Hard-wired assumptions:
 	
 	! ----------------------- metadata ------------------------
+	
+	!   for the l2aux the mcf is mlspcf_mcf_l2dgm_start
+	!   for the log file the mcf is mlspcf_mcf_l2log_start
+	!   for the dgg file the mcf is mlspcf_mcf_l2dgg_start
+
+	! The correspondence between MCF and l2gp files is determined by
+	! the value of        MCFFORL2GPOPTION
+	! Either
+	!                          (1)
 	! The PCF numbers for the mcf corresponding to each
 	! of the l2gp files begin with mlspcf_mcf_l2gp_start
 	! and increase 1 by 1 with each succeeding species.
 	! Then, after the last single-species l2gp, the very next pcf number
 	! is for the one called 'other' ML2OTH.001.MCF
+	! This hateful inflexibility leads to possibility
 	
-	!   for the l2aux the mcf is mlspcf_mcf_l2dgm_start
-	!   for the log file the mcf is mlspcf_mcf_l2log_start
-	!   for the dgg file the mcf is mlspcf_mcf_l2dgg_start
+	!                          (2)
+	! Each l2gp file name, stripped of their paths, fits the pattern
+	!  *_l2gp_species_*
+	! and the corresponding MCF files fit the pattern
+	!  *SPECIES.*
+	! where species and SPECIES are case-nsensitive "species" name
+	! i.e., BrO, ClO, etc.
+	! Warning:
+	! You therefore must use exactly the same abbreviation for the l2gp and the
+	! corresponding MCF: if the MCF is ML2T.001.MCF, don't use "temp"
+	! in the l2gp name
+	! This inflexibility replaces the different kind in option (1)
 
   ! Arguments
     integer, intent(in) :: ROOT   ! Of the output section's AST
     type (L2GPData_T), dimension(:), pointer :: l2gpDatabase ! L2GP products
     type (L2AUXData_T), dimension(:), pointer :: l2auxDatabase ! L2AUX products
 	 type(PCFData_T) :: l2pcf
+      CHARACTER (LEN=1), POINTER :: anText(:)
+
 
   ! - - - External Procedures
 
@@ -99,11 +120,12 @@ contains ! =====     Public Procedures     =============================
     integer :: IN_FIELD_NO              ! Index of sons of assign vertex
     integer :: KEY                      ! Index of spec_args node
     integer :: l2auxFileHandle, l2aux_Version
-    integer :: l2gp_mcf, l2gp_oth_mcf, l2aux_mcf, l2dgg_mcf  ! mcf numbers for writing metadata
+    integer :: l2gp_mcf, l2aux_mcf, l2dgg_mcf  ! mcf numbers for writing metadata
     character (len=132) :: l2auxPhysicalFilename
     integer :: l2gpFileHandle, l2gp_Version
     character (len=132) :: l2gpPhysicalFilename
     integer, parameter:: MAXQUANTITIESPERFILE=64        
+    integer, parameter :: MCFFORL2GPOPTION=1		! Either 1 or 2
     character (len=32) :: mnemonic
     character (len=256) :: msg
     integer :: NAME                     ! string index of label on output
@@ -132,7 +154,6 @@ contains ! =====     Public Procedures     =============================
     l2gp_mcf = mlspcf_mcf_l2gp_start
     l2aux_mcf = mlspcf_mcf_l2dgm_start
     l2dgg_mcf = mlspcf_mcf_l2dgg_start
-	 l2gp_oth_mcf = l2gp_mcf+1	! We will always assume that 'OTH' comes last
 
     ! Loop over the lines in the l2cf
 
@@ -213,7 +234,13 @@ contains ! =====     Public Procedures     =============================
                 end if
 
 					! Write the metadata file
-					if(numquantitiesperfile <= 0) then
+					if(MCFFORL2GPOPTION == 2) then
+						l2gp_mcf = get_l2gp_mcf(swfid)
+					endif
+					if(l2gp_mcf <= 0) then
+						call announce_error(son, &
+						& 'No mcf numbers correspond to this l2gp file', l2gp_mcf)
+					elseif(numquantitiesperfile <= 0) then
 						call announce_error(son, &
 						& 'No quantities written for this l2gp file')
 					elseif(QuantityNames(numquantitiesperfile) &
@@ -221,16 +248,15 @@ contains ! =====     Public Procedures     =============================
 
 					! Typical homogeneous l2gp file: e.g., BrO is ML2BRO.001.MCF
 						call populate_metadata_std &
-						& (swfid, l2gp_mcf, l2pcf, QuantityNames(1))
+						& (swfid, l2gp_mcf, l2pcf, QuantityNames(1), anText)
 						l2gp_mcf = l2gp_mcf + 1
-						 l2gp_oth_mcf = l2gp_mcf+1	! We will always assume that 'OTH' comes last
 
 					else
 
 					! Type l2gp file 'other'
 						call populate_metadata_oth &
-						& (swfid, l2gp_oth_mcf, l2pcf, &
-						& numquantitiesperfile, QuantityNames)
+						& (swfid, l2gp_mcf, l2pcf, &
+						& numquantitiesperfile, QuantityNames, anText)
 
 					endif
 !              else                ! Found the right file
@@ -307,7 +333,7 @@ contains ! =====     Public Procedures     =============================
 					! We will need to think harder about this; until then reuse
 						call populate_metadata_oth &
 						& (swfid, l2aux_mcf, l2pcf, &
-						& numquantitiesperfile, QuantityNames)
+						& numquantitiesperfile, QuantityNames, anText)
 
 					endif
 !              else
@@ -385,6 +411,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.15  2001/04/03 23:51:28  pwagner
+! Many changes; some may be right
+!
 ! Revision 2.14  2001/04/02 23:43:46  pwagner
 ! Now makes metadata calls; it compiles, but does it bomb?
 !
