@@ -1,0 +1,60 @@
+! subroutine ?_LINTRP ( XIN, XOUT, YIN, YOUT, NIN, NOUT )
+!
+!  Given arrays XIN & YIN of lenght NIN containing a tabulated function,
+!  with XIN ordered, and given the (ordered) array: XOUT of length: NOUT,
+!  this subroutine Returns the array: YOUT which is a linear interpolation
+!  of (XIN,YIN) computed for each: XOUT.
+!
+    integer, intent(in) :: NIN, NOUT
+    real(rk),intent(in)  :: XIN(nin), XOUT(nout), YIN(nin)
+    real(rk),intent(out) :: YOUT(:)
+!
+    real(rk) :: DX, DY, DYDX
+    integer :: I, J, KHI, KLO, PKLO
+    real(rk), parameter :: TINY = epsilon(dx)
+    real(rk) :: X
+!
+    if (nin < 2) then
+      yout(1:nout) = yin(1)
+      return
+    end if
+!
+    if ( all(yin(2:) == yin(1)) ) then
+      yout(1:nout) = yin(1)
+      return
+    end if
+!
+    pklo = -1
+
+    do i = 1, nout
+      x = xout(i)
+      call hunt ( x, xin, nin, klo, khi )
+      if (klo == khi) then
+        if (klo < nin) then
+          khi = klo + 1
+        else
+          klo = khi - 1
+        end if
+      end if
+      if (klo /= pklo) then
+        pklo = klo
+        dx = xin(khi) - xin(klo)
+        dy = yin(khi) - yin(klo)
+        if (abs(dx) < tiny*abs(dy)) goto 20
+        dydx = dy / dx
+      end if
+      yout(i) = yin(klo) + dydx * (x - xin(klo))
+    end do
+!
+    return
+!
+20  print *, '** Error IN ZLINTRP subroutine !!'
+    print *, '   Bad XIN array !!'
+    print *, '   KLO=',klo,' KHI=',khi
+    print *, '   XIN(KLO)=',xin(klo)
+    print *, '   XIN(KHI)=',xin(khi)
+    print *, '   XIN ='
+    print *, (xin(j),j=1,nin)
+    stop
+!
+! end subroutine ?_LINTRP

@@ -1,0 +1,44 @@
+! subroutine ?_SOLVE_QUAD ( A, B, C, X1, X2 )
+!
+    real(rk), INTENT(IN)  :: A, B, C
+    real(rk), INTENT(OUT) :: X1, X2
+
+    real(rk) :: DIS, R, SA, SB, SC
+!
+!  Scale the coefficients (for better numerical stabiliy)
+!
+    r = max(abs(a),abs(b),abs(c))
+    sa = a / r
+    sb = b / r
+    sc = c / r
+!
+    x1 = 0.0
+    x2 = 0.0
+    dis = sb * sb - 4.0 * sa * sc
+    if(dis < 0.0) return
+!
+    if(sa == 0.0) then
+      if(sb == 0.0) return
+      x1 = -sc / sb
+      x2 = x1
+      return
+    endif
+!
+    if(sc == 0.0) then
+      r = -sb / sa
+      x1 = max(0.0_rk,r)
+      x2 = r - x1
+      return
+    endif
+!
+    dis = sqrt(dis)
+!
+    if(sb >= 0.0) then
+      x1 = (-sb - dis) / (sa + sa)
+    else
+      x1 = (-sb + dis) / (sa + sa)
+    endif
+!
+    x2 = (sc / sa) / x1
+!
+! end subroutine ?_SOLVE_QUAD
