@@ -53,13 +53,15 @@ module INIT_TABLES_MODULE
 ! Enumeration types:
   integer, parameter :: T_BINSELECTORTYPE = Last_spectroscopy_type+1
   integer, parameter :: T_CHUNKDIVIDEMETHOD = t_binSelectorType+1
-  integer, parameter :: T_CRITICALMODULE = t_chunkDivideMethod+1
+  integer, parameter :: T_CLOUD_DER      = t_chunkDivideMethod+1
+  integer, parameter :: T_CRITICALMODULE = t_cloud_der+1
   integer, parameter :: T_FGRIDCOORD     = t_criticalmodule+1
   integer, parameter :: T_FILLMETHOD     = t_fGridCoord+1
   integer, parameter :: T_FWMTYPE        = t_fillmethod+1
   integer, parameter :: T_GRIDDEDORIGIN  = t_fwmType+1
   integer, parameter :: T_HGRIDTYPE      = t_griddedOrigin+1
-  integer, parameter :: T_MASKS          = t_hgridtype+1
+  integer, parameter :: T_I_SATURATION   = t_hgridtype+1
+  integer, parameter :: T_MASKS          = t_i_saturation+1
   integer, parameter :: T_MASKUPDATES    = t_masks+1
   integer, parameter :: T_MATRIX         = t_maskUpdates+1
   integer, parameter :: T_METHOD         = t_matrix+1
@@ -209,12 +211,14 @@ contains ! =====     Public procedures     =============================
     ! Put enumeration type names into the symbol table
     data_type_indices(t_binSelectorType) = add_ident ( 'binSelectorType' )
     data_type_indices(t_chunkDivideMethod) = add_ident ( 'chunkDivideMethod' )
+    data_type_indices(t_cloud_der) =       add_ident ( 'cloud_Der' )
     data_type_indices(t_criticalmodule) =  add_ident ( 'criticalModule' )
     data_type_indices(t_fillmethod) =      add_ident ( 'fillMethod' )
     data_type_indices(t_fgridcoord) =      add_ident ( 'fGridCoord' )
     data_type_indices(t_fwmType) =         add_ident ( 'fwmType' )
     data_type_indices(t_griddedOrigin) =   add_ident ( 'griddedOrigin' )
     data_type_indices(t_hgridtype) =       add_ident ( 'hGridType' )
+    data_type_indices(t_i_saturation) =    add_ident ( 'i_saturation' )
     data_type_indices(t_masks) =           add_ident ( 'masks' )
     data_type_indices(t_maskUpdates) =     add_ident ( 'maskUpdates' )
     data_type_indices(t_matrix) =          add_ident ( 'matrixType' )
@@ -344,6 +348,8 @@ contains ! =====     Public procedures     =============================
       begin, t+t_griddedOrigin, l+l_climatology, l+l_dao, l+l_ncep, &
              l+l_gloria, n+n_dt_def, &
       begin, t+t_chunkDivideMethod, l+l_fixed, l+l_even, l+l_orbital, l+l_PE, n+n_dt_def, &
+      begin, t+t_cloud_der, l+l_iwc_low_height, l+l_iwc_high_height, l+l_iwp, &
+             n+n_dt_def, &
       begin, t+t_criticalModule, l+l_both, l+l_either, l+l_ghz, l+l_none, &
              l+l_thz, n+n_dt_def, &
       begin, t+t_fGridCoord, l+l_frequency, l+l_LSBFrequency, l+l_USBFrequency, &
@@ -358,6 +364,9 @@ contains ! =====     Public procedures     =============================
              l+l_H2OFromRHI, l+l_fold, l+l_rectanglefromlos, l+l_vGrid, n+n_dt_def, &
       begin, t+t_fwmType, l+l_linear, l+l_full, l+l_scan, l+l_scan2d, &
              l+l_cloudFull, n+n_dt_def, &
+      begin, t+t_i_saturation, l+l_clear, l+l_clear_110rh_below_top, &
+             l+l_clear_0rh, l+l_clear_lowest_0_110rh, l+l_cloudy_110rh_below_top, &
+             l+l_cloudy_110rh_in_cloud, l+l_cloudy_nearside_only, n+n_dt_def, &
       begin, t+t_hGridType, l+l_explicit, l+l_fixed, l+l_fractional, &
              l+l_height, l+l_regular, l+l_l2gp, n+n_dt_def, &
       begin, t+t_masks, l+l_cloud, l+l_fill, l+l_full_derivatives, l+l_linalg, &
@@ -834,8 +843,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_signals, t+t_string, n+n_field_type, &
              begin, f+f_skipOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_specificQuantities, s+s_quantity, n+n_field_spec, &
-             begin, f+f_cloud_der, t+t_numeric, n+n_field_type, &
-             begin, f+f_i_saturation, t+t_numeric, n+n_field_type,&
+             begin, f+f_cloud_der, t+t_cloud_der, n+n_field_type, &
+             begin, f+f_i_saturation, t+t_i_saturation, n+n_field_type,&
              begin, f+f_spect_der, t+t_boolean, n+n_field_type, &
              begin, f+f_tangentGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_temp_der, t+t_boolean, n+n_field_type, &
@@ -999,6 +1008,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.298  2003/04/09 00:10:30  livesey
+! New t_i_saturation and t_cloud_der for Dong and Jonathan
+!
 ! Revision 2.297  2003/04/04 23:54:04  livesey
 ! Added split sideband fill
 !
