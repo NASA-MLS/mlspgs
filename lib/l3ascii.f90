@@ -868,7 +868,7 @@ itemsloop:do
           foundcb = .true.
           exit charsloop
         end if
-        if ( rdchar = =" " ) then
+        if ( rdchar == " " ) then
            exit charsloop
         end if
         readitem(i:i) = rdchar
@@ -1019,6 +1019,9 @@ END MODULE L3ascii
 
 !
 ! $Log$
+! Revision 2.8  2001/04/13 02:08:23  vsnyder
+! Fix syntax error that Lahey let go by
+!
 ! Revision 2.7  2001/04/12 22:56:11  vsnyder
 ! Improve an error message, cosmetic changes
 !
