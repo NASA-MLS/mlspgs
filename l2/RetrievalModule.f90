@@ -35,7 +35,7 @@ module RetrievalModule
     & MultiplyMatrixVector, RowScale, ScaleMatrix, SolveCholesky, &
     & UpdateDiagonal
   use MLSCommon, only: R8
-  use MoreTree, only: Get_Boolean
+  use MoreTree, only: Get_Boolean, Get_Spec_ID
   use Output_M, only: Output
   use String_Table, only: Display_String
   use SidsModule, only: SIDS
@@ -206,7 +206,7 @@ contains
       ! parser users' guide" for pictures of the trees being analyzed.
 
       got = .false.
-      spec = decoration(subtree(1,decoration(subtree(1,key))))
+      spec = get_spec_id(key)
       select case ( spec )
       case ( s_forwardModel )
         ! ??? This a ForwardModelSetup for one chunk ???
@@ -690,6 +690,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.10  2001/03/15 21:18:57  vsnyder
+! Use Get_Spec_ID instead of decoration(subtree...
+!
 ! Revision 2.9  2001/03/09 03:05:05  vsnyder
 ! Correct identification for timing
 !
