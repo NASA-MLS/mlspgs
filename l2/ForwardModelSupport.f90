@@ -16,10 +16,9 @@ module ForwardModelSupport
     & F_FREQUENCY, F_FRQGAP, &
     & F_INTEGRATIONGRID, F_L2PC, F_MOLECULES, F_MOLECULEDERIVATIVES, F_PHIWINDOW, &
     & F_POINTINGGRIDS, F_SIGNALS, F_SPECT_DER, F_TANGENTGRID, F_TEMP_DER, F_TYPE, &
-    & F_MODULE, F_SKIPOVERLAPS, F_TOLERANCE, &
-    & S_FORWARDMODEL, &
+    & F_MODULE, F_SKIPOVERLAPS, F_TOLERANCE, S_FORWARDMODEL, &
     & F_NABTERMS, F_NAZIMUTHANGLES, F_NCLOUDSPECIES, F_NMODELSURFS, &
-    & F_NSCATTERINGANGLES, F_NSIZEBINS, F_CLOUD_WIDTH, F_CLOUD_FOV
+    & F_NSCATTERINGANGLES, F_NSIZEBINS, F_CLOUD_WIDTH, F_CLOUD_FOV, F_DF_spectroscopy
   use MLSFiles, only: GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
   use MLSCommon, only: R8
   use MLSL2Options, only: PCF, PCFL2CFSAMECASE, PUNISH_FOR_INVALID_PCF
@@ -250,6 +249,7 @@ contains ! =====     Public Procedures     =============================
     info%do_conv = .false.
     info%do_baseline = .false.
     info%do_freq_avg = .false.
+    info%DF_spectroscopy = .false.
     info%temp_der = .false.
     info%atmos_der = .false.
     info%spect_der = .false.
@@ -292,6 +292,8 @@ contains ! =====     Public Procedures     =============================
         info%do_baseline = get_boolean(son)
       case ( f_do_freq_avg )
         info%do_freq_avg = get_boolean(son)
+      case ( f_DF_spectroscopy )
+        info%DF_spectroscopy = get_boolean(son)
       case ( f_skipOverlaps )
         info%skipOverlaps = get_boolean(son)
       case ( f_frqGap )
@@ -491,6 +493,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.16  2001/11/15 20:55:55  jonathan
+! add df_spectroscopy
+!
 ! Revision 2.15  2001/11/08 00:12:52  livesey
 ! Removed an obsolete variable
 !
