@@ -28,7 +28,7 @@ module ChunkDivide_m
   use Output_M, only: BLANKS, OUTPUT
   use String_table, only: GET_STRING, DISPLAY_STRING
   use Time_M, only: Time_Now
-  use TOGGLES, only: GEN, TOGGLE
+  use TOGGLES, only: GEN, TOGGLE, SWITCHES
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
 
   ! This module replaces the old ScanDivide, and is a new approach to dividing
@@ -117,8 +117,8 @@ contains ! =================================== Public Procedures==============
     integer, dimension(2) :: MAFRANGE   ! Processing range in MAFs
 
     ! Executable code
-    
-    if ( toggle(gen) ) call trace_begin ("ScanDivide", root )
+
+    if ( toggle(gen) ) call trace_begin ( "ScanDivide", root )
 
     timing = section_times
     if ( timing ) call time_now ( t1 )
@@ -154,6 +154,8 @@ contains ! =================================== Public Procedures==============
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Deallocate//'obstructions' )
     end if
+
+    if ( index(switches, 'chu') /= 0 ) call dump ( chunks )
 
   end subroutine ChunkDivide
 
@@ -1092,7 +1094,7 @@ contains ! =================================== Public Procedures==============
         & 'L1B data starts after requested processing range' )
     if ( mafRange(1) == taiTime%noMAFs ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'L1B data ends before requested processing range' )
-    mafRange = mafRange - 1             ! Index from zero
+    mafRange = min ( noMAFsRead, max ( 0, mafRange - 1 ) )          ! Index from zero
     noMAFS = mafRange(2) - mafRange(1) + 1
 
     ! At this point we'd look through the L1B data for data gaps.
@@ -1152,6 +1154,9 @@ contains ! =================================== Public Procedures==============
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.17  2001/12/16 00:56:43  livesey
+! Added dump option
+!
 ! Revision 2.16  2001/11/20 00:10:29  livesey
 ! Another bug fix
 !
