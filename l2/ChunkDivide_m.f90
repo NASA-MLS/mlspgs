@@ -59,6 +59,7 @@ module ChunkDivide_m
     integer   :: criticalModules = l_none ! Which modules must be scanning
     real(rp)  :: maxGap = 0.0           ! Length of time/MAFs/orbits allowed for gap
     integer   :: maxGapFamily = PHYQ_Invalid ! PHYQ_MAF, PHYQ_Time etc.
+    logical   :: skipL1BCheck = .false. ! Don't check for l1b data probs
   end type ChunkDivideConfig_T
 
   ! The chunk divide methods are:
@@ -114,7 +115,7 @@ contains ! ===================================== Public Procedures =====
     use Init_Tables_Module, only: F_OVERLAP, F_LOWEROVERLAP, F_UPPEROVERLAP, &
       & F_MAXLENGTH, F_NOCHUNKS, &
       & F_METHOD, F_HOMEMODULE, F_CRITICALMODULES, F_HOMEGEODANGLE, &
-      & F_SCANLOWERLIMIT, F_SCANUPPERLIMIT, F_NOSLAVES, &
+      & F_SCANLOWERLIMIT, F_SCANUPPERLIMIT, F_NOSLAVES, F_SKIPL1BCHECK, &
       & FIELD_FIRST, FIELD_LAST, L_EVEN, &
       & L_FIXED, F_MAXGAP, L_ORBITAL, L_PE, S_CHUNKDIVIDE, L_BOTH, L_EITHER
     use Intrinsic, only: L_NONE, FIELD_INDICES, LIT_INDICES
@@ -131,7 +132,7 @@ contains ! ===================================== Public Procedures =====
       & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMSG_WARNING
     use MLSNumerics, only: Hunt
     use MLSSignals_m, only: MODULES, ISMODULESPACECRAFT
-    use MoreTree, only: GET_FIELD_ID, GET_SPEC_ID
+    use MoreTree, only: GET_BOOLEAN, GET_FIELD_ID, GET_SPEC_ID
     use Output_M, only: BLANKS, OUTPUT
     use String_table, only: GET_STRING, DISPLAY_STRING
     use Time_M, only: Time_Now
@@ -360,7 +361,6 @@ contains ! ===================================== Public Procedures =====
 
       character(len=10) :: MODNAMESTR     ! Home module name as string
 
-      integer :: CHUNK                    ! Loop counter
       integer :: FLAG                     ! From ReadL1B
       integer :: HOMEMAF                  ! first MAF after homeGeodAngle
       integer :: HOME                     ! Index of home MAF in array
@@ -372,21 +372,14 @@ contains ! ===================================== Public Procedures =====
       integer :: ORBIT                    ! Used to locate homeMAF
       integer :: STATUS                   ! From allocate etc.
       integer :: NOCHUNKS                 ! Number of chunks
-      integer :: OVERLAPS                 ! Overlaps as integer (MAFs)
       integer :: MAXLENGTH                ! Max length as integer (MAFs)
-
-      integer, dimension(:), pointer :: NEWFIRSTMAFS ! For thinking about overlaps
-      integer, dimension(:), pointer :: NEWLASTMAFS ! For thinking about overlaps
 
       real(r8) :: ANGLEINCREMENT          ! Increment in hunt for homeMAF
       real(r8) :: MAXANGLE                ! Of range in data
       real(r8) :: MAXTIME                 ! Time range in data
-      real(r8) :: MAXV                    ! Either minTime or minAngle
       real(r8) :: MINANGLE                ! Of range in data
       real(r8) :: MINTIME                 ! Time range in data
-      real(r8) :: MINV                    ! Either minTime or minAngle
       real(r8) :: TESTANGLE               ! Angle to check for
-      real(r8) :: HOMEV                   ! Value of angle/time at home
 
       real(r8), dimension(:), pointer :: BOUNDARIES ! Used in placing chunks
       real(r8), dimension(:), pointer :: FIELD ! Used in placing chunks
@@ -517,7 +510,6 @@ contains ! ===================================== Public Procedures =====
       integer :: STATUS                   ! From allocate etc.
       integer :: NOCHUNKS                 ! Number of chunks
       integer :: Nonovlp_1st_MAF          ! Non-overlapped 1st MAF
-      integer :: OVERLAPS                 ! Overlaps as integer (MAFs)
       integer :: MAXLENGTH                ! Max length as integer (MAFs)
       integer :: two                      ! Min(2, NoChunks)
 
@@ -910,6 +902,7 @@ contains ! ===================================== Public Procedures =====
 
       ! Local variables
       integer :: FIELDINDEX               ! Tree type
+      integer :: fieldValue               ! Node in the tree
       integer :: GSON                     ! A son of son the ChunkDivide section node
       integer :: I                        ! Loop inductor
       integer :: ROOT                     ! Root of ChunkDivide command
@@ -942,6 +935,9 @@ contains ! ===================================== Public Procedures =====
         if (nsons(son) > 1 ) then
           gson = subtree(2,son)
           call expr ( gson, units, value )
+          fieldValue = decoration(subtree(2,son)) ! The field's value
+        else
+          fieldValue = son
         end if
         ! Get value for this field if appropriate
         select case ( fieldIndex )
@@ -988,6 +984,13 @@ contains ! ===================================== Public Procedures =====
         case ( f_maxGap )
           config%maxGap = value(1)
           config%maxGapFamily = units(1)
+        case ( f_skipL1BCheck )
+          ! print *, 'Hey-trying new skipL1BCheck flag'
+          config%skipL1BCheck = get_boolean ( fieldValue )
+          ! print *, 'You tried to set it to: ', config%skipL1BCheck
+          if ( config%skipL1BCheck ) &
+            & call MLSMessage(MLSMSG_Warning, ModuleName, &
+            & 'You have elected to skip checking the l1b data for problems' )
         end select
       end do
 
@@ -1704,7 +1707,8 @@ contains ! ===================================== Public Procedures =====
 
       ! Here we look at radiances and switch changes.  For the
       ! moment I'm letting paw code this (not tested yet). NJL.
-      call notel1brad_changes ( obstructions, mafRange, l1bInfo ) 
+      if ( .not. config%skipL1BCheck) &
+        call notel1brad_changes ( obstructions, mafRange, l1bInfo ) 
 
       ! Sort the obstructions into order; prune them of repeats, overlaps etc.
       call PruneObstructions ( obstructions ) 
@@ -1814,6 +1818,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.32  2003/05/07 23:43:05  pwagner
+! Optionally may skipL1BCheck
+!
 ! Revision 2.31  2003/04/30 22:06:04  pwagner
 ! Shouldnt check for good signals if there arent any
 !
