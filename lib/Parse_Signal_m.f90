@@ -9,19 +9,21 @@ module Parse_Signal_M
 !     c o n t e n t s
 !     - - - - - - - -
 
-! Parse_Signal                   Return database indices matching signal string
+! Expand_Signal_List      Convert subtree to fully described signals
+! Get_Individual_Signals  Expand signal array to fully-qualified signals
+! Parse_Signal            Return database indices matching signal string
 ! === (end of toc) ===
 
 ! === (start of api) ===
-! Parse_Signal  ( char* Signal_String, *int Signal_Indices(:),
-!    [int Tree_Index], [int Sideband],[*log Channels(:)], [int OnlyCountEm] )
+! Expand_Signal_List ( int node, signal_t* theseSignals[], log* error )
+! Get_Individual_Signals ( char* inSignals[], char* outSignals[] )
+! Parse_Signal  ( char* Signal_String, int* Signal_Indices(:),
+!    [int Tree_Index], [int Sideband],[log* Channels(:)], [int OnlyCountEm] )
 ! === (end of api) ===
+
   public :: Parse_Signal, Expand_Signal_List, Get_Individual_Signals
 
   !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter, private :: IdParm = &
-    & "$Id$"
-  character (len=len(idParm)), private :: Id = idParm
   character (len=*), parameter, private :: ModuleName= &
     & "$RCSfile$"
   private :: not_used_here 
@@ -52,6 +54,7 @@ contains
     integer, dimension(:), pointer :: SIGNALINDS ! Array of signal indicies
     logical, dimension(:), pointer :: CHANNELS ! Which channels in signal
     integer :: SIDEBAND                 ! One sideband
+    integer :: Son                      ! of Node
     integer :: WANTED                   ! Which of the possible matches do we want
 
     ! Executable code
@@ -66,10 +69,10 @@ contains
 
     ! Loop over the strings
     do j = 1, nsons(node)-1
-      call get_string ( sub_rosa(subtree(j+1,node)), signalString, &
-        & strip=.true.)
+      son = subtree(j+1,node)
+      call get_string ( sub_rosa(son), signalString, strip=.true.)
       call parse_Signal ( signalString, signalInds, &
-        & tree_index=node, sideband=sideband, channels=channels )
+        & tree_index=son, sideband=sideband, channels=channels )
       if ( .not. associated(signalInds) ) then ! A parse error occurred
         error = .true.
         ! Could tidy up, but expect to crash anyway
@@ -78,19 +81,19 @@ contains
       ! parse_signal may have returned several signals (e.g. different
       ! switch settings). Later on choose the `right' one from the match
       ! For the moment choose the first !????
-      wanted=1
+      wanted = 1
       theseSignals(j) = signals(signalInds(wanted))
       theseSignals(j)%sideband = sideband
       ! Don't hose channels in database, though shouldn't be an issue
       nullify ( theseSignals(j)%channels ) 
       
       call allocate_Test ( theseSignals(j)%channels, &
-        & size(theseSignals(j)%frequencies), 'signals%channels', &
-        & ModuleName )
+        & ubound(theseSignals(j)%frequencies,1), 'signals%channels', &
+        & ModuleName, lowBound=lbound(theseSignals(j)%frequencies,1) )
       if ( associated(channels) ) then
-        ! The reason that this is so messy that channels has l/u bounds
+        ! The reason that this is so messy is that channels has l/u bounds
         ! of the highest and lowest channels asked for.
-        theseSignals(j)%channels(1:lbound(channels,1)-1) = .false.
+        theseSignals(j)%channels(:lbound(channels,1)-1) = .false.
         theseSignals(j)%channels(lbound(channels,1):ubound(channels,1)) = &
           channels
         theseSignals(j)%channels(ubound(channels,1)+1:) = .false.
@@ -113,6 +116,7 @@ contains
   ! There will be no duplicates in OutSignals.  Zero-size InSignals works.
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSSignals_m, only: GetSignalName, Signals
     use Sort_m, only: Sort
 
@@ -131,7 +135,15 @@ contains
     do i = 1, size(inSignals)
       call parse_signal ( inSignals(i), signalIndices, sideband=sideband, &
         & channels=channels )
-      k = count(channels)
+      if ( .not. associated(signalIndices) ) call MLSMessage ( MLSMSG_Error, &
+        & moduleName, 'Unable to parse signal ' // trim(inSignals(i)) )
+      if ( .not. associated(channels) ) then
+        ! All channels are desired.  Assume channels available in all
+        ! selected signals are the same.
+        k = size(signals(signalIndices(1))%frequencies)
+      else
+        k = count(channels)
+      end if
       l = l + k
       do j = 1, size(signalIndices)
         l = l + k
@@ -146,6 +158,15 @@ contains
       do i = 1, size(inSignals)
         call parse_signal ( inSignals(i), signalIndices, sideband=sideband, &
           & channels=channels )
+        if ( .not. associated(channels) ) then
+          ! All channels are desired.  Assume channels available in all
+          ! selected signals are the same.
+          call allocate_test ( channels, &
+            & ubound(signals(signalIndices(1))%frequencies,1), 'myChannels', &
+            & moduleName, &
+            & lowBound=lbound(signals(signalIndices(1))%frequencies,1) )
+          channels = .true.
+        end if
         do j = 1, size(signalIndices)
           do k = lbound(channels,1), ubound(channels,1)
             if ( channels(k) ) then
@@ -475,16 +496,11 @@ o:  do
 
     if ( present(sideband) ) sideband = mySideband
     if ( present(channels) ) then
-      if ( associated(channels) ) &
-        & call deallocate_test ( channels, "Channels", moduleName )
-      if ( associated(myChannels) ) then
-        call allocate_test ( channels, ubound(myChannels,1), "Channels", &
-          & moduleName, lowBound=lbound(myChannels,1) )
-        channels = myChannels
-      end if
+      call deallocate_test ( channels, "Channels", moduleName )
+      channels => myChannels
+      nullify ( myChannels )
     end if
-    if ( associated(myChannels) ) &
-      & call deallocate_test ( myChannels, "MyChannels", moduleName )
+    call deallocate_test ( myChannels, "MyChannels", moduleName )
 
   contains
 
@@ -620,12 +636,23 @@ o:  do
   end subroutine Parse_Signal
 
   logical function not_used_here()
+    !---------------------------- RCS Ident Info -------------------------------
+    character (len=*), parameter :: IdParm = &
+      & "$Id$"
+    character (len=len(idParm)) :: Id = idParm
+    !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
 
 end module Parse_Signal_M
 
 ! $Log$
+! Revision 2.20  2005/02/05 00:05:07  vsnyder
+! Correct the low bound for channels in Expand_signal_list.  Handle
+! disassociated channels argument from parse_signal correctly in
+! Get_Individual_Signals.  Move CVS Id into not_used_here.  Some
+! cannonball polishing.
+!
 ! Revision 2.19  2005/01/12 23:58:47  vsnyder
 ! All in Get_Individual_Sgnals: Detect DSB signals correctly.  Correct an
 ! indexing error.  Include the channel.
