@@ -3,66 +3,66 @@
 BEGIN Fill
 
     ;; Now the elevation offsets
-    Fill, quantity=_b.r1aElev, method=explicit, explicitValues= 0.0 degrees
-    Fill, quantity=_b.r1bElev, method=explicit, explicitValues= 0.0 degrees
-    Fill, quantity=_b.r2Elev,  method=explicit, explicitValues= 0.0 degrees
-    Fill, quantity=_b.r3Elev,  method=explicit, explicitValues= 0.0 degrees
-    Fill, quantity=_b.r4Elev,  method=explicit, explicitValues= 0.0 degrees
-    Fill, quantity=_b.r5hElev, method=explicit, explicitValues= 0.0 degrees
-    Fill, quantity=_b.r5vElev, method=explicit, explicitValues= 0.0 degrees
+    Fill, quantity=!b.r1aElev, method=explicit, explicitValues= 0.0 degrees
+    Fill, quantity=!b.r1bElev, method=explicit, explicitValues= 0.0 degrees
+    Fill, quantity=!b.r2Elev,  method=explicit, explicitValues= 0.0 degrees
+    Fill, quantity=!b.r3Elev,  method=explicit, explicitValues= 0.0 degrees
+    Fill, quantity=!b.r4Elev,  method=explicit, explicitValues= 0.0 degrees
+    Fill, quantity=!b.r5hElev, method=explicit, explicitValues= 0.0 degrees
+    Fill, quantity=!b.r5vElev, method=explicit, explicitValues= 0.0 degrees
 
     ;; Now the isotope ratios
     
-    Fill, quantity=_b.br_79_o_ratio,      method=explicit, explicitValues= 0.50418
-    Fill, quantity=_b.br_81_o_ratio,      method=explicit, explicitValues= 0.49341
-    Fill, quantity=_b.cl_35_o_ratio,      method=explicit, explicitValues= 0.75348
-    Fill, quantity=_b.cl_37_o_ratio,      method=explicit, explicitValues= 0.24411
-    Fill, quantity=_b.h2o_18_ratio,       method=explicit, explicitValues= 0.00204
-    Fill, quantity=_b.hocl_35_ratio,      method=explicit, explicitValues= 0.75337
-    Fill, quantity=_b.hocl_37_ratio,      method=explicit, explicitValues= 0.24407
-    Fill, quantity=_b.o2_v1_ratio,        method=explicit, explicitValues= 0.20950
-    Fill, quantity=_b.o3_asym_o_18_ratio, method=explicit, explicitValues= 0.00406
-    Fill, quantity=_b.o3_sym_o_18_ratio,  method=explicit, explicitValues= 0.00203
-    Fill, quantity=_b.o3_v1_3_ratio,      method=explicit, explicitValues= 0.99279
-    Fill, quantity=_b.o3_v2_ratio,        method=explicit, explicitValues= 0.99279
-    Fill, quantity=_b.o_18_o_ratio,       method=explicit, explicitValues= 0.00407
-;   Fill, quantity=_b.c_12_o_18_ratio,    method=explicit,
+    Fill, quantity=!b.br_79_o_ratio,      method=explicit, explicitValues= 0.50418
+    Fill, quantity=!b.br_81_o_ratio,      method=explicit, explicitValues= 0.49341
+    Fill, quantity=!b.cl_35_o_ratio,      method=explicit, explicitValues= 0.75348
+    Fill, quantity=!b.cl_37_o_ratio,      method=explicit, explicitValues= 0.24411
+    Fill, quantity=!b.h2o_18_ratio,       method=explicit, explicitValues= 0.00204
+    Fill, quantity=!b.hocl_35_ratio,      method=explicit, explicitValues= 0.75337
+    Fill, quantity=!b.hocl_37_ratio,      method=explicit, explicitValues= 0.24407
+    Fill, quantity=!b.o2_v1_ratio,        method=explicit, explicitValues= 0.20950
+    Fill, quantity=!b.o3_asym_o_18_ratio, method=explicit, explicitValues= 0.00406
+    Fill, quantity=!b.o3_sym_o_18_ratio,  method=explicit, explicitValues= 0.00203
+    Fill, quantity=!b.o3_v1_3_ratio,      method=explicit, explicitValues= 0.99279
+    Fill, quantity=!b.o3_v2_ratio,        method=explicit, explicitValues= 0.99279
+    Fill, quantity=!b.o_18_o_ratio,       method=explicit, explicitValues= 0.00407
+;   Fill, quantity=!b.c_12_o_18_ratio,    method=explicit,
 ;   explicitValues= 0.98652
-    Fill, quantity=_b.hcl_35_ratio,       method=explicit, explicitValues= 0.75519
-    Fill, quantity=_b.hcl_37_ratio,       method=explicit, explicitValues= 0.24466
+    Fill, quantity=!b.hcl_35_ratio,       method=explicit, explicitValues= 0.75519
+    Fill, quantity=!b.hcl_37_ratio,       method=explicit, explicitValues= 0.24466
 
     ;; Now the more minor stuff
-    Fill, quantity = _b.earthReflectivity, $
+    Fill, quantity = !b.earthReflectivity, $
       method = explicit, explicitValues = 0.05 ; CHECK THIS NUMBER !!!!!
-    Fill, quantity = _b.orbitInclination, $
+    Fill, quantity = !b.orbitInclination, $
       method = explicit, explicitValues = 98.145 degrees
-    Fill, quantity = _b.spaceRadiance, $
+    Fill, quantity = !b.spaceRadiance, $
       method =explicit, explicitValues = 2.735 K
 
-;     Fill, quantity=_b.scGeocAlt, method=l1b
-;     Fill, quantity=_b.tngtGeocAltGHz, method=l1b
-;     Fill, quantity=_b.tngtGeocAltTHz, method=l1b
+;     Fill, quantity=!b.scGeocAlt, method=l1b
+;     Fill, quantity=!b.tngtGeocAltGHz, method=l1b
+;     Fill, quantity=!b.tngtGeocAltTHz, method=l1b
 
-;     Fill, quantity=_b.scECI, method = l1b
-;     Fill, quantity=_b.tngtECIGHz, method = l1b
-;     Fill, quantity=_b.tngtECITHz, method = l1b
+;     Fill, quantity=!b.scECI, method = l1b
+;     Fill, quantity=!b.tngtECIGHz, method = l1b
+;     Fill, quantity=!b.tngtECITHz, method = l1b
 
-;     Fill, quantity=_b.scVel, method = l1b
-;     Fill, quantity = _b.losVelGHz, tngtECI=_b.tngtECIGHz, $
-;       scECI=_b.scECI, scVel=_b.scVel, method=special
-;     Fill, quantity = _b.losVelTHz, tngtECI=_b.tngtECITHz, $
-;       scECI=_b.scECI, scVel=_b.scVel, method=special
+;     Fill, quantity=!b.scVel, method = l1b
+;     Fill, quantity = !b.losVelGHz, tngtECI=!b.tngtECIGHz, $
+;       scECI=!b.scECI, scVel=!b.scVel, method=special
+;     Fill, quantity = !b.losVelTHz, tngtECI=!b.tngtECITHz, $
+;       scECI=!b.scECI, scVel=!b.scVel, method=special
 
-    Fill, quantity = _b.losVelGHz, method = explicit, $
+    Fill, quantity = !b.losVelGHz, method = explicit, $
       explicitValues = -6.8e3, /spread
-    Fill, quantity = _b.losVelTHz, method = explicit, $
+    Fill, quantity = !b.losVelTHz, method = explicit, $
       explicitValues = -6.8e3, /spread
-    Fill, quantity = _b.scGeocAlt, method = explicit, $
+    Fill, quantity = !b.scGeocAlt, method = explicit, $
       explicitValues = 7070 km, /spread
 
-    Fill, quantity = _x.o2, method = explicit,  $
+    Fill, quantity = !x.o2, method = explicit,  $
       explicitValues = 0.2095 vmr , /spread
-    Fill, quantity = _x.n2, method = explicit,  $
+    Fill, quantity = !x.n2, method = explicit,  $
       explicitValues = 0.805 vmr , /spread
 
 END Fill

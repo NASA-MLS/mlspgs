@@ -2,14 +2,14 @@
 
 BEGIN Fill
 
-    Fill, quantity=_x.temp, method=gridded, sourceGrid=gridTemperature
-    Fill, quantity=_x.h2o,  method=gridded, sourceGrid=gridH2O
-    Fill, quantity=_x.o3,   method=gridded, sourceGrid=gridO3
-    Fill, quantity=_x.n2o,  method=gridded, sourceGrid=gridN2O
-    Fill, quantity=_x.hno3, method=gridded, sourceGrid=gridHNO3
-    Fill, quantity=_x.hcl,  method=gridded, sourceGrid=gridHCl
-    Fill, quantity=_x.clo,  method=gridded, sourceGrid=gridClO
-    Fill, quantity=_x.ho2,  method=gridded, sourceGrid=gridHO2
-    Fill, quantity=_x.co,   method=gridded, sourceGrid=gridCO
+    Fill, quantity=!x.temp, method=gridded, sourceGrid=gridTemperature
+    Fill, quantity=!x.h2o,  method=gridded, sourceGrid=gridH2O
+    Fill, quantity=!x.o3,   method=gridded, sourceGrid=gridO3
+    Fill, quantity=!x.n2o,  method=gridded, sourceGrid=gridN2O
+    Fill, quantity=!x.hno3, method=gridded, sourceGrid=gridHNO3
+    Fill, quantity=!x.hcl,  method=gridded, sourceGrid=gridHCl
+    Fill, quantity=!x.clo,  method=gridded, sourceGrid=gridClO
+    Fill, quantity=!x.ho2,  method=gridded, sourceGrid=gridHO2
+    Fill, quantity=!x.co,   method=gridded, sourceGrid=gridCO
 
 END Fill

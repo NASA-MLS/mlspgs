@@ -3,7 +3,7 @@
 ; First some m4 directives.
 include(m4defs.l2cf)
 
-!ifdef(band, ,!define(band,{6U}))
+!ifdef(band, ,!define(band,{1L}))
 !define(outpath,/nas/bigdata/livesey/misc/)
 !define(ver,!test1)
 !define(signal,!sigBand$1)
@@ -37,6 +37,8 @@ BEGIN GlobalSettings
 ;    vGridStandard: vGrid, coordinate=Zeta, type=Logarithmic, $
 ;                   start=1000mb, formula=[25:12, 24:6]
     vGridStandard: vGrid, coordinate=Zeta, type=Logarithmic, $
+      start=1000mb, formula=[37:6]
+    vGridBaseline: vGrid, coordinate=Zeta, type=Logarithmic, $
       start=1000mb, formula=[37:6]
 
     vGridRefGPH: vGrid, coordinate=Zeta, type=Explicit, values=100mb
@@ -118,8 +120,8 @@ END Fill
 
 ; Define the names of the standard vectors for the canned fills used below
 
-!define(_x,x)
-!define(_b,b)
+!define(x,x)
+!define(b,b)
 !include(filllesserstate_l2pc.l2cf)
 !include(fillisotopes.l2cf)
 
@@ -158,7 +160,7 @@ END Join
 ; ---------------------------------------------------------  Output  -----
 BEGIN Output
     
-    output, file='!outpath/l2pc_band!band_v1.0-lowres.dat', quantities=K, $
+    output, file='!outpath/l2pc_band!band_v1.0-lowres-test.dat', quantities=K, $
       type=l2pc
 
 END Output
