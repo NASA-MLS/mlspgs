@@ -12,7 +12,6 @@ MODULE L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 
   use HDF5_params
   USE HDFEOS5
-
   USE HE5_SWAPI 
 
   USE OUTPUT_M, only: OUTPUT ! Added as HDF4 version uses it
@@ -511,8 +510,8 @@ CONTAINS ! =====     Public Procedures     =============================
        msr = MLSMSG_L2GPRead // GEO_FIELD4
        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
     ENDIF
-    l2gp%solarTime = DBLE(realProf)
 
+    l2gp%solarTime = DBLE(realProf)
     status = HE5_SWrdfld(swid, GEO_FIELD5, start(3:3), stride(3:3), edge(3:3), &
          realProf)
     IF (status == -1) THEN
@@ -976,12 +975,12 @@ CONTAINS ! =====     Public Procedures     =============================
 
     CHARACTER (len=*), PARAMETER :: WR_ERR = &
          & 'Failed to write geolocation field '
-
+    
     ! Variables
 
     CHARACTER (len=480) :: msr
     CHARACTER (len=132) :: name ! Either swathName or l2gp%name
-
+    
     INTEGER :: status, swid,myOffset
     INTEGER :: start(2), stride(2), edge(2)
 
@@ -1035,8 +1034,10 @@ CONTAINS ! =====     Public Procedures     =============================
        CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
     END IF
 
+    
     status = HE5_SWwrfld(swid, GEO_FIELD5, start, stride, edge, &
          REAL(l2gp%solarZenith))
+    print*,"just wrote ", REAL(l2gp%solarZenith)," as SZA"
     IF ( status == -1 ) THEN
        msr = WR_ERR // GEO_FIELD5
        CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -1340,6 +1341,10 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 1.4  2001/03/29 17:33:27  pumphrey
+! Huge changes to L2GPData to sync with the HDF4 version and add unlimited
+! dimension along the track
+!
 ! Revision 1.3  2001/03/20 14:00:30  pumphrey
 ! fixing inconsistencies -- nothing important
 !
