@@ -16,6 +16,7 @@ module ReadAPriori
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: FileNameLen
   use MLSFiles, only: SPLIT_PATH_NAME
+  use MLSL2Options, only: PCF
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     &                         MLSMSG_Error, MLSMSG_FileOpen
   use MLSPCF2, only: mlspcf_l2clim_start, mlspcf_l2clim_end
@@ -82,7 +83,7 @@ contains ! =====     Public Procedures     =============================
     type (L2GPData_T) :: L2GP
     integer :: L2Index             ! In the l2gp or l2aux database
     integer :: L2Name              ! Sub-rosa index of L2[aux/gp] label
-    integer :: Pcf                 ! loop index of climatology pcf numbers
+    integer :: pcf_indx            ! loop index of climatology pcf numbers
     integer :: ReturnStatus
     integer :: SON              ! Of root, an n_spec_args or a n_named
     integer :: SdName        ! sub-rosa index of name in sdName='name'
@@ -233,9 +234,9 @@ contains ! =====     Public Procedures     =============================
           
           ! Identify file (maybe from PCF if no name given)
 
-          if ( .NOT. got(f_file) ) then
+          if ( .NOT. got(f_file) .and. PCF) then
             
-            do pcf = lastClimPCF+1, mlspcf_l2clim_end
+            do pcf_indx = lastClimPCF+1, mlspcf_l2clim_end
               returnStatus = Pgs_pc_getReference(i, version, fileNameString)
               if ( returnStatus == PGS_S_SUCCESS) exit
             end do
@@ -355,6 +356,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.19  2001/05/07 18:03:56  pwagner
+! Checks for PCF before looping over pcf_indx
+!
 ! Revision 2.18  2001/05/03 20:34:08  vsnyder
 ! Cosmetic changes
 !
