@@ -86,14 +86,6 @@ module ForwardModelInterface
 
   integer :: Error            ! Error level -- 0 = OK
 
-  !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter, private :: IdParm = &
-    & "$Id$"
-  character (len=len(idParm)) :: Id = IdParm
-  character (len=*), parameter, private :: ModuleName= &
-    & "$RCSfile$"
-  !---------------------------------------------------------------------------
-
 contains
 
   ! ------------------------------------  ForwardModelGlobalSetup  -----
@@ -144,7 +136,7 @@ contains
     ! The ExtraHeights and PointingGrids fields are required, so we don't
     ! need to verify that they were provided.
     call open_pointing_grid_file ( pointingGridsFile, lun )
-    call read_pointing_grid_file ( lun, spec_indices )
+    !call read_pointing_grid_file ( lun, spec_indices )
     call close_pointing_grid_file ( lun )
 
     if ( toggle(gen) ) call trace_end ( "ForwardModelGlobalSetup" )
@@ -1051,6 +1043,10 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.20  2001/03/17 00:58:22  livesey
+! Fixed bug in previous commit, have had to comment out line 139 to
+! let it compile.
+!
 ! Revision 2.19  2001/03/17 00:50:57  livesey
 ! New forwardModelConfig stuff and merge from Van
 !
