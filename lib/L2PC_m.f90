@@ -11,8 +11,10 @@ module L2PC_m
 
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use Declaration_Table, only: DECLS, ENUM_VALUE, GET_DECL
-  use Intrinsic, only: Lit_Indices, L_NONE, L_RADIANCE, L_TEMPERATURE, &
-    & L_VMR, L_ZETA
+  use Intrinsic, only: Lit_Indices, l_zeta, l_none
+  use MLSCommon, only: R8
+  use VectorsModule, only: assignment(=), DESTROYVECTORINFO, VECTOR_T, VECTORVALUE_T
+  use MatrixModule_1, only: CREATEBLOCK, CREATEEMPTYMATRIX, DESTROYMATRIX, MATRIX_T
   use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
     & MATRIXELEMENT_T
   use MatrixModule_1, only: CREATEBLOCK, CREATEEMPTYMATRIX, DESTROYMATRIX, MATRIX_T
@@ -124,10 +126,10 @@ contains ! ============= Public Procedures ==========================
           &  'noChans, noSurfs, noInstances'
         write (unit,*) qt%coherent, qt%stacked, &
           &  'coherent, stacked'
-        if ( any (qt%verticalCoordinate /= (/ l_none, l_zeta /)) &
-          & .and. (vector==1) ) &
-          & call MLSMessage(MLSMSG_Error,ModuleName, &
-          & "Only zeta coordinates allowed (or none) for xStar.")
+        if ( all (qt%verticalCoordinate /= (/ l_none, l_zeta /)) &
+          & .and. (vector==1) .and. (qt%quantityType /= l_ptan) ) &
+          &   call MLSMessage(MLSMSG_Error,ModuleName, &
+          &     "Only zeta coordinates allowed (or none) for xStar.")
         write (unit,*) 'surfs'
         write (unit, rFmt) qt%surfs
         write (unit,*) 'phi'
@@ -407,8 +409,14 @@ contains ! ============= Public Procedures ==========================
     eof = .false.
     do while (.not. eof )
       call ReadOneL2PC ( l2pc, lun, eof )
-      dummy = AddL2PCToDatabase ( l2pcDatabase, l2pc )
+      if (.not. eof) then
+        dummy = AddL2PCToDatabase ( l2pcDatabase, l2pc )
+      end if
     end do
+    print*,'Testing after add:',&
+      & associated(l2pcDatabase(1)%xStar%template, l2pcDatabase(1)%kStar%col%vec%template), &
+      & associated(l2pcDatabase(1)%yStar%template, l2pcDatabase(1)%kStar%row%vec%template)
+
     if ( toggle (gen) ) call trace_end ( "Read_l2pc_file" )
   end subroutine Read_l2pc_file
 
@@ -486,6 +494,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.11  2001/04/26 23:55:17  livesey
+! Interim version
+!
 ! Revision 2.10  2001/04/26 22:32:04  vsnyder
 ! Alphabetize USEs and declarations
 !
