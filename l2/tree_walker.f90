@@ -178,7 +178,8 @@ subtrees:   do while ( j <= howmany )
                   & l2auxDatabase, chunkNo, chunks )
                 call add_to_section_timing ( 'join', t1)
               case ( z_retrieve )
-                call retrieve ( son, vectors, matrices, forwardModelConfigDatabase)
+                call retrieve ( son, vectors, matrices, forwardModelConfigDatabase, &
+                  & chunks(chunkNo) )
                 call add_to_section_timing ( 'retrieve', t1)
               case default
                 exit subtrees
@@ -257,6 +258,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.62  2001/09/29 00:01:00  pwagner
+! Fixed various timing problems
+!
 ! Revision 2.61  2001/09/28 17:50:30  pwagner
 ! MLSL2Timings module keeps timing info
 !
