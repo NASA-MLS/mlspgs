@@ -33,6 +33,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   public :: DestroyMatrixInDatabase, DestroyMatrixDatabase, Dump, FillExtraCol
   public :: FillExtraRow, FindBlock, GetDiagonal, GetDiagonal_1
   public :: GetFromMatrixDatabase, GetVectorFromColumn, GetVectorFromColumn_1
+  public :: InvertCholesky
 ! public :: LevenbergUpdateCholesky
   public :: Matrix_T, Matrix_Cholesky_T, Matrix_Database_T, Matrix_Kronecker_T
   public :: Matrix_SPD_T, MaxAbsVal, MaxAbsVal_1, MinDiag, MinDiag_Cholesky
@@ -1317,6 +1318,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.9  2001/02/22 02:09:36  vsnyder
+! OOPS -- Forgot to make InvertCholesky public
+!
 ! Revision 2.8  2001/02/22 01:55:06  vsnyder
 ! Add code to invert a Cholesky factor
 !
