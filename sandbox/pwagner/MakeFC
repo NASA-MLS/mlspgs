@@ -1,0 +1,80 @@
+# Makefile
+# testing a few ideas before incorporating them into mlspgs
+
+# where to store .configure
+CONFDIR=.
+
+# This will set our MLS platform, compiler. etc.
+# w/o complaining if it does nor exist yet
+-include $(CONFDIR)/.configure
+
+SHELL = /bin/sh
+
+# where a.sh is stored
+MLSBIN=.
+
+#
+FOPTS=-gline -gc
+
+# The program will be simply a file containing the value of a
+PROG=value
+
+.PHONY: configure depends clean tar clean_objs makefile
+
+ifdef a
+   a_is_defined = true
+else
+   a_is_defined = false
+endif
+
+$(PROG): $(CONFDIR)/.configure
+	rm -f $(PROG)
+	echo "$(a)" > $(PROG)
+	@case "$(a)" in \
+		"") \
+		echo "a is blank" ; \
+		;; \
+		*) \
+		echo "a is non-blank" ; \
+		;; \
+	esac 
+	@case "$(a_is_defined)" in \
+		"true") \
+		echo "a is defined" ; \
+		;; \
+		"false") \
+		echo "a is undefined" ; \
+		;; \
+		*) \
+		echo "a is neither" ; \
+		;; \
+	esac
+	@echo "FOPTS is ${FOPTS}"
+	@echo "Filtered becomes `echo ${FOPTS} | sed 's/-O[0-9]*//'`"
+
+configure:
+	echo "Currently, a is $$a"
+	$(MLSBIN)/a.sh
+	echo "However, a is still $(a)"
+	echo "and, buck-a is still $$a"
+
+$(CONFDIR)/.configure:
+	echo "Currently, a is $$a"
+	$(MLSBIN)/a.sh
+	echo "However, a is still $(a)"
+	echo "and, buck-a is still $$a"
+	if [ -f Makefile ] ; then \
+		mv Makefile Makefile.old ;\
+	fi ; \
+	ln -s MakeFC Makefile
+
+makefile:
+	if [ -f Makefile ] ; then \
+		mv Makefile Makefile.old ;\
+	fi ; \
+	ln -s MakeFC Makefile
+
+#
+	
+ 
+
