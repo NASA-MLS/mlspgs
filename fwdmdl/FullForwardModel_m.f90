@@ -51,7 +51,7 @@ contains
     use Get_Species_Data_M, only: Beta_Group_T, Get_Species_Data, &
       Destroy_Species_Data, Destroy_Beta_Group
     use GLnp, only: NG
-    use Intrinsic, only: L_CLOUDICE, L_CLOUDWATER, &      ! JJ
+    use Intrinsic, only: L_A, L_CLOUDICE, L_CLOUDWATER, &      ! JJ
       & L_DN, L_DV, L_DW, L_EARTHREFL, L_ECRtoFOV, &
       & L_ELEVOFFSET, L_LOSVEL, L_MAGNETICFIELD, L_ORBITINCLINATION,  &
       & L_PHITAN, L_PTAN, L_RADIANCE, L_REFGPH, L_SCGEOCALT, L_LIMBSIDEBANDFRACTION, &
@@ -68,9 +68,9 @@ contains
     use MLSCommon, only: R4, R8, RP, IP
     use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate,&
       & MLSMSG_Error
-    use MLSNumerics, ONLY: Hunt
-    use MLSSignals_m, only: Signal_t, MatchSignal, AreSignalsSuperset, &
-                          & GetNameOfSignal
+    use MLSNumerics, only: Hunt
+    use MLSSignals_m, only: AreSignalsSuperset, GetNameOfSignal, MatchSignal, &
+      & Radiometers, Signal_t
     use Molecules, only: L_Extinction ! Used in include dump_print_code.f9h
     use NO_CONV_AT_ALL_M, only: NO_CONV_AT_ALL
     use Opacity_m, only: Opacity
@@ -1707,7 +1707,7 @@ contains
             end if
 
             ! Assume antenna is only sensitive to the first linear polarization
-            if ( index(switches,'crosspol') == 0 ) then
+            if ( radiometers(firstSignal%radiometer)%polarization == l_a ) then
               RadV(frq_i) = real(rad_pol(1,1))
             else
               RadV(frq_i) = real(rad_pol(2,2))
@@ -1743,7 +1743,7 @@ contains
                 & prod_pol(:,:,1:npc), tau_pol(:,:,1:npc),               &
                 & p_stop, d_rad_pol_df )
 
-              if ( index(switches,'crosspol') == 0 ) then
+              if ( radiometers(firstSignal%radiometer)%polarization == l_a ) then
                 k_atmos_frq(frq_i,:) = real(d_rad_pol_df(1,1,:))
               else
                 k_atmos_frq(frq_i,:) = real(d_rad_pol_df(2,2,:))
@@ -1816,7 +1816,7 @@ contains
                 & prod_pol(:,:,1:npc), tau_pol(:,:,1:npc),               &
                 & p_stop, d_rad_pol_dt, d_t_scr_dt(1:npc,:) )
 
-              if ( index(switches,'crosspol') == 0 ) then
+              if ( radiometers(firstSignal%radiometer)%polarization == l_a ) then
                 k_temp_frq(frq_i,:) = real(d_rad_pol_dt(1,1,:))
               else
                 k_temp_frq(frq_i,:) = real(d_rad_pol_dt(2,2,:))
@@ -2662,6 +2662,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.168  2003/08/15 20:29:26  vsnyder
+! Implement polarized VMR derivatives
+!
 ! Revision 2.167  2003/08/15 18:50:21  vsnyder
 ! Preparing the way for polarized vmr derivatives
 !
