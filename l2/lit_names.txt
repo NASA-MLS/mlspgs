@@ -122,6 +122,7 @@ scan2d
 spare
 spd
 special
+splitSideband
 
 tikhonov
 
@@ -131,6 +132,9 @@ vGrid
 weighted
 
 # $Log$
+# Revision 2.29  2003/04/04 23:53:48  livesey
+# Added split sideband
+#
 # Revision 2.28  2003/04/04 22:01:03  livesey
 # Added the stuff for UpdateMask
 #
