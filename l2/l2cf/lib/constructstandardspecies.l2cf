@@ -130,13 +130,21 @@ begin Construct
   massMeanDiameterWater: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, $
     type=massMeanDiameterWater
 
-  ;; cldRad in l2gp format for quality flag uses
+  ;; cloudMax quantities in l2gp format for quality flag uses
   !define(constructCloudMinMax,{!dnl
-  cloudRadMin$1: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=temperature
-  cloudRadMax$1: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=temperature!nl})
+  cloudRadMin$1: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=cloudMinMax
+  cloudRadMax$1: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=cloudMinMax!nl})
   !forall(constructCloudMinMax,!allBands)
   !define(allCloudMinMax,{!makelist({cloudRadMin},{},!allBands), $
     !makelist({cloudRadMax},{},!allBands)})
+
+  ;; More quality flag precursors
+  !define(constructOneCloudSummary,{!dnl
+  lowCloudSummary$1:  Quantity, vGrid=vGridLowCloud$1, hGrid=hGridStandard, type=temperature
+  highCloudSummary$1: Quantity, vGrid=vGridLowCloud$1, hGrid=hGridStandard, type=temperature!nl})
+  !forall(constructOneCloudSummary,!allRadiometers)
+  !define(allCloudSummaries,{!makelist({lowCloudSummary},{},!allRadiometers), $
+    !makelist({highCloudSummary},{},!allRadiometers)})
 
   ;; ----------------------------------------- Baselines
   !define(constructBaselineFine,{baselineFine$1: Quantity, type=baseline, $
@@ -270,15 +278,29 @@ begin Construct
     chisqBinned$1: Quantity, type=chisqBinned, signal=!signal($1), $
       vGrid=vGridStandard, hGrid=hGridStandard
     noRadsBinned$1: Quantity, type=noRadsBinned, signal=!signal($1), $
-      vGrid=vGridStandard, hGrid=hGridStandard!nl})
+      vGrid=vGridStandard, hGrid=hGridStandard
+    chisqProfile$1: Quantity, type=chisqBinned, signal=!signal($1), $
+      vGrid=vGridGlobal, hGrid=hGridStandard
+    noRadsProfile$1: Quantity, type=noRadsBinned, signal=!signal($1), $
+      vGrid=vGridGlobal, hGrid=hGridStandard!nl})
   !forall(ConstructChisqStuff,!allBands)
 
   !define(allChisqMMAFs,{!makelist({chisqMMAF},{},!allBands)})
   !define(allChisqMMIFs,{!makelist({chisqMMIF},{},!allBands)})
   !define(allChisqChans,{!makelist({chisqChan},{},!allBands)})
   !define(allChisqBinned,{!makelist({chisqBinned},{},!allBands)})
+  !define(allChisqProfile,{!makelist({chisqProfile},{},!allBands)})
   !define(allNoRadsPerMIF,{!makelist({noRadsPerMIF},{},!allBands)})
   !define(allNoRadsBinned,{!makelist({noRadsBinned},{},!allBands)})
+  !define(allNoRadsProfile,{!makelist({noRadsProfile},{},!allBands)})
+  
+  ;; These special ones are for assembling composites when doing quality
+  ;; flags etc.
+  chisqTmp: Quantity, type=chisqBinned, signal=!signal(1), $
+    vGrid=vGridGlobal, hGrid=hGridStandard
+  noRadsTmp: Quantity, type=chisqBinned, signal=!signal(1), $
+    vGrid=vGridGlobal, hGrid=hGridStandard
+  diagTmp: VectorTemplate, quantities=[chisqTmp,noRadsTmp]
 
   ;; ----------------------------------------- Statuses for products ---
   !define(constructStatus,{status$1: Quantity, type=status, hGrid=hGridStandard!nl})
@@ -379,9 +401,12 @@ begin Construct
   minorFrameDiagnosticsTemplate: VectorTemplate, quantities = [ $
     !allChisqMMAFs, !allChisqMMIFs, !allChisqChans, $
     !allNoRadsPerMIF ]
+
   mappedChisqTemplate: VectorTemplate, quantities = [ !allChisqBinned ]
+
   otherDiagnosticsTemplate: VectorTemplate, quantities = [ !allNoRadsBinned, $
-    !allStatuses, !allQualities ]
+    !allChisqProfile, !allNoRadsProfile, !allStatuses, !allQualities, $
+    !allCloudSummaries ]
 
   cloudOutputTemplate: VectorTemplate, quantities = [ $
     !allFoldedRadiances, !allDTs, !allCloudMinMax ]
