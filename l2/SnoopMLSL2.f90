@@ -25,8 +25,8 @@ module SnoopMLSL2               ! Interface between MLSL2 and IDL snooper via pv
   use MLSCommon, only: R4, R8, I4
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
     MLSMSG_Info, MLSMSG_Allocate, MLSMSG_DeAllocate
-  use PVM, only: PVMFbcast, PVMDataDefault, PVMFinitsend, PVMFmyTid, PVMFgSize, &
-    & PVMErrorMessage, PVMF90Unpack, PVMTaskExit, PVMFNotify
+  use PVM, only: PVMDataDefault, PVMFinitsend, PVMFmyTid, PVMFgSize, &
+    & PVMErrorMessage, PVMF90Unpack, PVMTaskExit, PVMFNotify, PVMFSend
   use PVMIDL, only:  IDLMsgTag, PVMIDLPack, PVMIDLReceive, PVMIDLSend, PVMIDLUnpack
   use QuantityPVM, only: PVMSENDQUANTITY
   use TREE, only:  DUMP_TREE_NODE, SUB_ROSA, SUBTREE, SOURCE_REF
@@ -145,11 +145,11 @@ contains ! ========  Public Procedures =========================================
       end do
 
       ! Now send this buffer
-      call PVMFSend ( snooper%tid, IDLMsgTag, info )
+      call PVMFSend ( snooper%tid, SnoopTag, info )
       if (info /= 0) call PVMErrorMessage ( info, "sending vector information" )
 
     else                                ! No vectors to send
-      call PVMIDLSend ( "No Vectors", snooper%tid, info )
+      call PVMIDLSend ( "No Vectors", snooper%tid, info, msgTag=SnoopTag )
       if ( info /= 0 ) call PVMErrorMessage ( info, "sending 'No Vectors'" )
     endif
 
@@ -191,7 +191,7 @@ contains ! ========  Public Procedures =========================================
     ! Now if this is the first, let's have it controling us
     if ( size(snoopers) == 1 ) then
       snoopers(1)%mode = SnooperControling
-      call PVMIDLSend ( 'ControlAccept', snooperTid, info )
+      call PVMIDLSend ( 'ControlAccept', snooperTid, info, msgTag=SnoopTag )
       if ( info /= 0 ) call PVMErrorMessage ( info, &
         & "sending control information" )
     endif
@@ -224,11 +224,11 @@ contains ! ========  Public Procedures =========================================
   end subroutine ForgetSnooper
 
   ! ---------------------------------------- SendStatusToSnooper -------
-  subroutine SendStatusToSnooper ( SNOOPER, LOCATION, COMMENT, STATUS, CONTROLED )
+  subroutine SendStatusToSnooper ( SNOOPER, STATUS, LOCATION, COMMENT, CONTROLED )
     type (SnooperInfo_T), intent(INOUT) :: SNOOPER
+    character (len=*), intent(in) :: STATUS
     character (len=*), intent(in) :: LOCATION
     character (len=*), intent(in) :: COMMENT
-    character (len=*), intent(in) :: STATUS
     logical, intent(in) :: CONTROLED
 
     ! Local variables
@@ -237,16 +237,17 @@ contains ! ========  Public Procedures =========================================
 
     ! Executable code
     call PVMFInitSend ( PvmDataDefault, bufferID )
+    call PVMIDLPack ( status, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing status" )
     call PVMIDLPack ( location, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing location" )
     call PVMIDLPack ( comment, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing comment" )
-    call PVMIDLPack ( status, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing status" )
     call PVMIDLPack ( controled, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing controled" )
-    call PVMFSend ( snooper%tid, IDLMsgTag, info )
+    call PVMFSend ( snooper%tid, SnoopTag, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "sending status etc." )
+    print*,'Sent status to snooper'
   end subroutine SendStatusToSnooper
     
   ! ------------------------------------------------------  SNOOP  -----
@@ -294,10 +295,10 @@ contains ! ========  Public Procedures =========================================
 
     if ( present(key) ) then
       write ( location, * ) source_ref(key)/256
-      location='Line '//adjustl(trim(location))
+      location=adjustl(trim(location))
       call get_string ( sub_rosa(subtree(2,subtree(2,key))), comment, strip=.true. )
     else
-      location = 'Unknown'
+      location = '????'
       comment = 'Unknown'
     endif
 
@@ -319,8 +320,8 @@ contains ! ========  Public Procedures =========================================
 
     ! Tell all the snoopers we're ready to talk to them
     do snooper = 1, size(snoopers)
-      call SendStatusToSnooper ( snoopers(snooper), location, comment, &
-        & 'Ready', any ( snoopers%mode == SnooperControling ) )
+      call SendStatusToSnooper ( snoopers(snooper), 'Ready', location, comment, &
+        & any ( snoopers%mode == SnooperControling ) )
       call SendVectorsListToSnooper ( snoopers(snooper), vectorDatabase )
     end do
 
@@ -338,11 +339,17 @@ contains ! ========  Public Procedures =========================================
           & call PVMErrorMessage ( info, "calling PVMFBufInfo" )
         snooper = FindFirst ( snoopers%tid == snooperTid )
         call PVMIDLUnpack ( line, info )
-
+        print*,'Got: ',trim(line)
         select case ( trim(line) )
 
         case ( 'NewSnooper' )
           call RegisterNewSnooper ( snoopers, snooperTid )
+          snooper = FindFirst ( snoopers%tid == snooperTid )
+          ! Tell it where we are
+          call SendStatusToSnooper ( snoopers(snooper), 'Ready', location, comment, &
+            & any(snoopers%mode == SnooperControling ) )
+          ! Send it vectors
+          call SendVectorsListToSnooper ( snoopers(snooper), vectorDatabase )
           
         case ( 'Finishing' )
           call ForgetSnooper ( snoopers, snooper )
@@ -353,9 +360,9 @@ contains ! ========  Public Procedures =========================================
 
         case ( 'Control' )
           if ( any ( snoopers%mode == SnooperControling ) ) then
-            call PVMIDLSend ( 'ControlReject', snooperTid, info )
+            call PVMIDLSend ( 'ControlReject', snooperTid, info, msgTag=SnoopTag )
           else
-            call PVMIDLSend ( 'ControlAccept', snooperTid, info )
+            call PVMIDLSend ( 'ControlAccept', snooperTid, info, msgTag=SnoopTag )
             snoopers(snooper)%mode = SnooperControling
           end if
           if ( info /= 0 ) call PVMErrorMessage ( info, &
@@ -363,6 +370,9 @@ contains ! ========  Public Procedures =========================================
 
         case ( 'Relinquish' )
           snoopers(snooper)%mode = SnooperObserving
+          call PVMIDLSend ( 'Relinquished', snooperTid, info, msgTag=SnoopTag )
+          if ( info /= 0 ) call PVMErrorMessage ( info, &
+            & "sending relinquish response" )
 
         case ( 'Quantity' )
           call PVMIDLUnpack ( nextLine, info )
@@ -387,6 +397,7 @@ contains ! ========  Public Procedures =========================================
         if ( info < 0 ) then
           call PVMErrorMessage ( info, "unpacking dead snooper tid" )
         end if
+        print*,'Got died message'
         snooper = FindFirst ( snoopers%tid == snooperTid )
         if ( snooper /= 0 ) then
           call ForgetSnooper ( snoopers, snooper )
@@ -405,8 +416,8 @@ contains ! ========  Public Procedures =========================================
 
     ! Tell all the snoopers we're off and running again
     do snooper = 1, size(snoopers)
-      call SendStatusToSnooper ( snoopers(snooper), location, comment, &
-        &  'Running', any ( snoopers%mode == SnooperControling ) )
+      call SendStatusToSnooper ( snoopers(snooper), 'Running', location, comment, &
+        & any ( snoopers%mode == SnooperControling ) )
     end do
     
   end subroutine Snoop
@@ -487,13 +498,23 @@ contains ! ========  Public Procedures =========================================
 
     q => vectorDatabase(vector)%quantities(quantity)
 
-    call PVMSendQuantity( q, snooper%tid )
+    call PVMFInitSend ( PvmDataDefault, bufferID )
+    call PVMIDLPack ( 'Quantity', info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing "Quantity"' )
+    call PVMIDLPack ( trim(line), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing quantity name' )
+    call PVMSendQuantity( q, snooper%tid, justPack=.true., noMask=.true. )
+    call PVMFSend ( snooper%tid, SnoopTag, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'sending quantity' )
 
   end subroutine SnooperRequestedQuantity
   
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.14  2001/09/20 23:08:21  livesey
+! New version, minor tidy ups etc.
+!
 ! Revision 2.13  2001/09/20 00:27:21  livesey
 ! Minor changes
 !
