@@ -14,11 +14,12 @@ module UNITS
   public
 
   real(rp), parameter :: Boltz = 660.988_rp ! = kln10/m  m^2/(K sec^2)
-  real(r8), parameter :: Ln10 = 2.302585092994045684017991454684364207601
-  real(r8), parameter :: Pi = 3.141592653589793238462643383279502884197
+  real(r8), parameter :: Ln10 = 2.302585092994045684017991454684364207601_r8
+  real(r8), parameter :: Pi = 3.141592653589793238462643383279502884197_r8
   real(r8), parameter :: Deg2Rad = Pi/180.0_r8 ! Degrees-to-Radians
   real(r8), parameter :: Rad2Deg = 180.0_r8/Pi ! Radians-to-Degrees
-  real(r8), parameter :: SqrtPi = 1.772453850905516027298167483341145182798
+  real(rp), parameter :: SpeedOfLight = 299792458.3_rp ! Meters/Second
+  real(r8), parameter :: SqrtPi = 1.772453850905516027298167483341145182798_r8
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -122,6 +123,9 @@ contains ! =====     Public procedures     =============================
 end module UNITS
 
 ! $Log$
+! Revision 2.19  2003/01/10 21:54:50  vsnyder
+! Move SpeedOfLight from Geometry, put kinds on constants
+!
 ! Revision 2.18  2003/01/07 23:43:44  livesey
 ! Added Gauss
 !
