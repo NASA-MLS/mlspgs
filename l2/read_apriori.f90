@@ -7,7 +7,7 @@ module ReadAPriori
   use GriddedData, only: rgr, GriddedData_T, v_is_pressure, &
     & AddGriddedDataToDatabase, Dump, SetupNewGriddedData
   use Expr_M, only: Expr
-  use Hdf, only: DFACC_READ
+  use Hdf, only: DFACC_RDWR, DFACC_READ
   use INIT_TABLES_MODULE, only: F_AURAINSTRUMENT, F_DIMLIST, F_FIELD, F_FILE, &
     & F_HDFVERSION, F_missingValue, F_ORIGIN, F_SDNAME, F_SWATH, &
     & FIELD_FIRST, FIELD_LAST, L_CLIMATOLOGY, L_DAO, L_NCEP, S_GRIDDED, &
@@ -19,16 +19,17 @@ module ReadAPriori
     & AddL2GPToDatabase, ReadL2GPData, Dump
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: FileNameLen
-  use MLSFiles, only: FILENOTFOUND, WILDCARDHDFVERSION, &
-    & GetPCFromRef, MLS_HDF_VERSION, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
+  use MLSFiles, only: FILENOTFOUND, HDFVERSION_5, WILDCARDHDFVERSION, &
+    & GetPCFromRef, MLS_HDF_VERSION, mls_io_gen_closeF, mls_io_gen_openF, &
     & MLS_INQSWATH, MLS_SFEND, MLS_SFSTART, SPLIT_PATH_NAME
   use MLSL2Options, only: DEFAULT_HDFVERSION_READ, TOOLKIT
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use MLSPCF2, only: mlspcf_l2apriori_start, mlspcf_l2apriori_end, &
     & mlspcf_l2ncep_start, mlspcf_l2ncep_end, &
     & mlspcf_l2dao_start, mlspcf_l2dao_end, &
     & mlspcf_l2clim_start, mlspcf_l2clim_end
+  use MLSStringLists, only: catLists
   use MoreTree, only: Get_Spec_ID
   use ncep_dao, only: READ_CLIMATOLOGY, ReadGriddedData, ReadGloriaFile
   use OUTPUT_M, only: BLANKS, OUTPUT
@@ -43,10 +44,24 @@ module ReadAPriori
 
   implicit none
   private
-  public ::  read_apriori
+  public ::  read_apriori, writeAPrioriAttributes
   private ::  announce_error
   integer, private :: ERROR
+  integer, private, parameter :: MAXNUMFILES = 10
 
+   ! What a priori files did we read? 
+  type APrioriFiles_T
+    character (len=MAXNUMFILES*FileNameLen) :: l2gp = ''
+    character (len=MAXNUMFILES*FileNameLen) :: l2aux = ''
+    character (len=MAXNUMFILES*FileNameLen) :: ncep = ''
+    character (len=MAXNUMFILES*FileNameLen) :: dao = ''
+  end type APrioriFiles_T
+
+  type (APrioriFiles_T), private, save :: APrioriFiles
+  interface writeAPrioriAttributes
+    module procedure writeAPrioriAttributes_id, writeAPrioriAttributes_name
+  end interface
+  
   ! -----     Private declarations     ---------------------------------
 
 !---------------------------- RCS Ident Info -------------------------------
@@ -294,6 +309,7 @@ contains ! =====     Public Procedures     =============================
            call announce_success(FilenameString, 'l2gp', &                    
            & swathNameString, hdfVersion=hdfVersion)    
         end if
+        apriorifiles%l2gp = catlists(apriorifiles%l2gp, trim(FilenameString))
 
         ! Add this l2gp to the database, decorate this key with index
         call decorate ( key, AddL2GPToDatabase( L2GPDatabase, l2gp ) )
@@ -344,6 +360,7 @@ contains ! =====     Public Procedures     =============================
            call announce_success(FilenameString, 'l2aux', &                    
            & sdNameString, hdfVersion=hdfVersion)    
         end if
+        apriorifiles%l2aux = catlists(apriorifiles%l2aux, trim(FilenameString))
 
       case ( s_gridded )
 
@@ -396,6 +413,7 @@ contains ! =====     Public Procedures     =============================
             if(index(switches, 'pro') /= 0) &
               & call announce_success(FilenameString, 'ncep', &                    
                & fieldNameString, hdfVersion=hdfVersion)
+            apriorifiles%ncep = catlists(apriorifiles%ncep, trim(FilenameString))
           else
             call announce_success(FilenameString, 'ncep not found--carry on', &                    
                & fieldNameString, hdfVersion=hdfVersion)
@@ -439,6 +457,7 @@ contains ! =====     Public Procedures     =============================
             if(index(switches, 'pro') /= 0) &
               & call announce_success(FilenameString, 'dao', &                    
                & fieldNameString, hdfVersion=hdfVersion)    
+            apriorifiles%dao = catlists(apriorifiles%dao, trim(FilenameString))
           else
             call announce_success(FilenameString, 'dao not found--carry on', &                    
                & fieldNameString, hdfVersion=hdfVersion)
@@ -560,6 +579,67 @@ contains ! =====     Public Procedures     =============================
     end subroutine SayTime
   end subroutine read_apriori
 
+  ! ------------------------------------------  writeAPrioriAttributes_name  -----
+  subroutine writeAPrioriAttributes_name ( fileName, hdfVersion )
+    character(len=*), intent(in) :: fileName
+    integer, intent(in)          :: hdfVersion  ! Must be 5 to work properly
+    ! Internal variables
+    integer             :: fileID
+    integer             :: record_length
+    integer             :: status
+    ! Executable
+    fileID = mls_io_gen_openF('swopen', .TRUE., status, &
+      & record_length, DFACC_RDWR, FileName=Filename, &
+      & hdfVersion=hdfVersion, debugOption=.false. )  
+    call writeAPrioriAttributes_ID ( fileID, hdfVersion )
+    status = mls_io_gen_closeF('swclose', fileID, &
+      & hdfVersion=hdfVersion)
+  end subroutine writeAPrioriAttributes_name
+
+  ! ------------------------------------------  writeAPrioriAttributes_ID  -----
+  subroutine writeAPrioriAttributes_ID ( fileID, hdfVersion )
+    ! Write info about what apriori files were used
+    ! Storing them as hdfeos5 attributes
+    use HDFEOS5, only: HE5T_NATIVE_INT, &
+      & HE5T_NATIVE_DOUBLE, MLS_charType
+    use MLSHDFEOS, only: he5_EHwrglatt, mls_EHwrglatt
+    ! Args
+    integer, intent(in) :: fileID
+    integer, intent(in) :: hdfVersion  ! Must be 5 to work properly
+    ! Internal variables
+    integer             :: status
+    ! Executable
+    if ( hdfVersion /= HDFVERSION_5 ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'Wrong hdfVersion--can write apriori attributes for hdf5 only' )
+      return ! Can only do this for hdf5 files
+    endif
+    status = mls_EHwrglatt(fileID, &
+     & 'A Priori l2gp', MLS_CHARTYPE, 1, &
+     &  trim(APrioriFiles%l2gp))
+    if ( status /= 0 ) &
+      &  call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      & 'Problem writing APrioriFiles%l2gp' // trim(APrioriFiles%l2gp) )
+    status = mls_EHwrglatt(fileID, &
+     & 'A Priori l2aux', MLS_CHARTYPE, 1, &
+     &  trim(APrioriFiles%l2aux))
+    if ( status /= 0 ) &
+      &  call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      & 'Problem writing APrioriFiles%l2aux' // trim(APrioriFiles%l2aux) )
+    status = mls_EHwrglatt(fileID, &
+     & 'A Priori ncep', MLS_CHARTYPE, 1, &
+     &  trim(APrioriFiles%ncep))
+    if ( status /= 0 ) &
+      &  call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      & 'Problem writing APrioriFiles%ncep' // trim(APrioriFiles%ncep) )
+    status = mls_EHwrglatt(fileID, &
+     & 'A Priori gmao', MLS_CHARTYPE, 1, &
+     &  trim(APrioriFiles%dao))
+    if ( status /= 0 ) &
+      &  call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      & 'Problem writing APrioriFiles%dao' // trim(APrioriFiles%dao) )
+  end subroutine writeAPrioriAttributes_ID
+
 ! =====     Private Procedures     =====================================
 
   ! ---------------------------------------------  announce_success  -----
@@ -667,6 +747,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.57  2004/09/23 23:03:14  pwagner
+! Added writeAPrioriAttributes
+!
 ! Revision 2.56  2004/06/28 20:25:54  pwagner
 ! Handle dao, ncep missing from PCF with grace
 !
