@@ -66,7 +66,7 @@ contains ! =====     Public Procedures     =============================
           & section_timings(num_section_times+elem) + t2 - myLastTime
       endif
       myLastTime = t2
-      call time_now ( t1 )
+      if ( present(t1) ) call time_now ( t1 )
   end subroutine add_to_retrieval_timing
 
   ! -----------------------------------------------  add_to_section_timing  -----
@@ -219,6 +219,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.10  2002/09/19 19:07:05  vsnyder
+! Only update t1 if it's present!
+!
 ! Revision 2.9  2002/09/18 23:56:01  vsnyder
 ! Call time_now at end of add_to_retrieval_timing
 !
