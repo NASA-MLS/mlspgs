@@ -107,4 +107,4 @@ changesyntax({@!})
 !define(home,!TrimLastChar(!esyscmd({echo $HOME})))
 
 !define(comment,{!ifelse($1)})
-!define(M4Error,{!errprint({M4-Error:},$*)!m4exit(1)})
+!define(M4Error,{!errprint({M4-Error:},$*,!nl)!m4exit(1)})
