@@ -72,9 +72,10 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_EXPLICITVALUES      = f_do_freq_avg + 1
   integer, parameter :: F_FIELD               = f_explicitValues + 1
   integer, parameter :: F_FILE                = f_field + 1
-  integer, parameter :: F_FRACTION            = f_file + 1
-  integer, parameter :: F_FORWARDMODEL        = f_fraction + 1
-  integer, parameter :: F_FWDMODELEXTRA       = f_forwardModel + 1
+  integer, parameter :: F_FORMULA             = f_file + 1
+  integer, parameter :: F_FORWARDMODEL        = f_formula + 1
+  integer, parameter :: F_FRACTION            = f_forwardModel + 1
+  integer, parameter :: F_FWDMODELEXTRA       = f_fraction + 1
   integer, parameter :: F_FWDMODELIN          = f_fwdModelExtra + 1
   integer, parameter :: F_FWDMODELOUT         = f_fwdModelIn + 1
   integer, parameter :: F_GEOCALTITUDEQUANTITY= f_fwdModelOut + 1
@@ -99,8 +100,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_OUTPUTCOVARIANCE    = f_origin + 1
   integer, parameter :: F_OUTPUTOVERLAPS      = f_outputCovariance + 1
   integer, parameter :: F_OVERLAPS            = f_outputOverlaps + 1
-  integer, parameter :: F_PER_DECADE          = f_overlaps + 1
-  integer, parameter :: F_POINTINGGRIDS       = f_per_decade + 1
+  integer, parameter :: F_POINTINGGRIDS       = f_overlaps + 1
   integer, parameter :: F_QUANTITIES          = f_pointingGrids + 1
   integer, parameter :: F_QUANTITY            = f_quantities + 1
   integer, parameter :: F_RANGE               = f_quantity + 1
@@ -361,8 +361,9 @@ contains ! =====     Public procedures     =============================
     field_indices(f_explicitValues) =      add_ident ( 'explicitValues' )
     field_indices(f_field) =               add_ident ( 'field' )
     field_indices(f_file) =                add_ident ( 'file' )
-    field_indices(f_fraction) =            add_ident ( 'fraction' )
+    field_indices(f_formula) =             add_ident ( 'formula' )
     field_indices(f_forwardModel) =        add_ident ( 'forwardModel' )
+    field_indices(f_fraction) =            add_ident ( 'fraction' )
     field_indices(f_fwdModelExtra) =       add_ident ( 'fwdModelExtra' )
     field_indices(f_fwdModelIn) =          add_ident ( 'fwdModelIn' )
     field_indices(f_fwdModelOut) =         add_ident ( 'fwdModelOut' )
@@ -388,7 +389,6 @@ contains ! =====     Public procedures     =============================
     field_indices(f_outputCovariance) =    add_ident ( 'outputCovariance' )
     field_indices(f_outputOverlaps) =      add_ident ( 'outputOverlaps' )
     field_indices(f_overlaps) =            add_ident ( 'overlaps' )
-    field_indices(f_per_decade) =          add_ident ( 'per_decade' )
     field_indices(f_pointingGrids) =       add_ident ( 'pointingGrids' )
     field_indices(f_quantities) =          add_ident ( 'quantities' )
     field_indices(f_quantity) =            add_ident ( 'quantity' )
@@ -599,8 +599,8 @@ contains ! =====     Public procedures     =============================
       begin, s+s_vgrid, &
              begin, f+f_type, t+t_vGridType, nr+n_field_type, &
              begin, f+f_coordinate, t+t_vGridCoord, nr+n_field_type, &
+             begin, f+f_formula, t+t_numeric_range, n+n_field_type, &
              begin, f+f_number, t+t_numeric, n+n_field_type, &
-             begin, f+f_per_decade, t+t_numeric, n+n_field_type, &
              begin, f+f_start, t+t_numeric, n+n_field_type, &
              begin, f+f_stop, t+t_numeric, n+n_field_type, &
              begin, f+f_values, t+t_numeric, n+n_field_type, &
@@ -795,6 +795,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.57  2001/03/28 03:04:30  vsnyder
+! remove f_per_decade, add f_formula for s_vGrid
+!
 ! Revision 2.56  2001/03/28 01:24:55  vsnyder
 ! Move vGrid from construct section to global settings section
 !
