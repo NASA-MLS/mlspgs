@@ -28,6 +28,7 @@ module Hydrostatic_m
     use Geometry, only: EarthRadA, EarthRadB, GM, J2, J4, W
     use Get_eta_m, only: get_eta
     use Piq_int_m, only: piq_int
+    use Units, only: BoltzMeters => Boltz
 
 ! Inputs
 
@@ -52,16 +53,16 @@ module Hydrostatic_m
 ! Internal stuff
 
     real(rp), parameter :: ERadAsq = EarthRadA**2, ERadBsq = EarthRadB**2
-    real(rp), parameter :: Boltz = 0.000660988_rp ! = kln10/m km^2/(K sec^2)
+    real(rp), parameter :: Boltz = boltzMeters/1.0e6_rp ! = kln10/m km^2/(K sec^2)
 
     integer(ip) :: n_lvls,n_coeffs,iter
 
 !   real(rp) :: cl, sl ! for derivatives of Legendre polynomials dp2 and dp4
-    real(rp) :: Boltzg, Clsq, G_ref
+    real(rp) :: Clsq, G_ref, GHB
     real(rp) :: R_e, R_eisq, R_eisq_A, R_eff, Slsq, Z_surf
     real(rp) :: P2, P4    ! Legendre polynomials, for oblateness model
 !   real(rp) :: dp2, dp4  ! Derivatives of P2 and P4
-    real(rp) :: dh_dz_S, H_calc, Z_new
+    real(rp) :: dh_dz_S, H_calc, Z_old
     real(rp), dimension(size(z_grid),size(t_basis)) :: Eta, Piq
     real(rp), dimension(1,size(t_basis)) :: Piqa, Piqb
     real(rp), dimension(size(z_grid)) :: Mass_corr
@@ -120,8 +121,8 @@ module Hydrostatic_m
 
 ! find the surface pressure
 
-    boltzg = boltz / g_ref
-    z_surf = z_grid(1) ! This is a guess
+    ghb = g_ref * h_ref / boltz
+    z_old = z_grid(1) ! This is a guess
 
     iter = 0
     do
@@ -129,21 +130,20 @@ module Hydrostatic_m
 !  $z_{n+1} = z_n - (h_{\text{ref}} + h_{\text{calc}}) /
 !             \left . \frac{\text{d} h}{\text{d} z} \right |_{z=z_n}$
 
-      call piq_int ( (/z_surf/), t_basis, z_ref, piqa )
-      h_calc = boltzg * dot_product(piqa(1,:), t_coeffs)
+      call piq_int ( (/z_old/), t_basis, z_ref, piqa )
+      h_calc = dot_product(piqa(1,:), t_coeffs)
 
-      call piq_int ( (/z_surf+0.01_rp/), t_basis, z_ref, piqa )
-      call piq_int ( (/z_surf-0.01_rp/), t_basis, z_ref, piqb )
-      dh_dz_s = boltzg * dot_product((piqa(1,:) - piqb(1,:)), t_coeffs) * 50.0_rp
-      z_new = z_surf - (h_ref + h_calc) / dh_dz_s
+      call piq_int ( (/z_old+0.01_rp/), t_basis, z_ref, piqa )
+      call piq_int ( (/z_old-0.01_rp/), t_basis, z_ref, piqb )
+      dh_dz_s = dot_product((piqa(1,:) - piqb(1,:)), t_coeffs) * 50.0_rp
+      z_surf = z_old - (ghb + h_calc) / dh_dz_s
 
       iter = iter + 1
-      if ( abs(z_new - z_surf) < 0.0001_rp .or. iter == 10 ) exit
-      z_surf = z_new
+      if ( abs(z_surf - z_old) < 0.0001_rp .or. iter == 10 ) exit
+      z_old = z_surf
 
     end do
 
-    z_surf = z_new
     if (present(z_surface)) z_surface = z_surf
 
 ! compute the piq integrals relative to the surface
@@ -155,7 +155,7 @@ module Hydrostatic_m
 ! geopotential height * g_ref
     h_grid = boltz * mass_corr * matmul(piq,t_coeffs)
     h_grid = r_eff * h_grid / (r_eff * g_ref - h_grid)
-    dhidzi = (h_grid+r_eff)**2 * boltzg * mass_corr / r_eff**2
+    dhidzi = (h_grid+r_eff)**2 * boltz/g_ref * mass_corr / r_eff**2
     dhidtq = spread(dhidzi,2,n_coeffs) * piq
     dhidzi = dhidzi * t_grid
 
@@ -170,6 +170,13 @@ module Hydrostatic_m
 end module Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.3  2002/09/25 22:52:54  vsnyder
+! Move USE from module scope to procedure scope.  Convert allocatable arrays
+! to automatic arrays.  Replace sum(reshape(a...)*b) by dot_product.  Make
+! constants consistently kind(rp) -- which caused a 1.5 epsilon relative
+! change in output radiances.  Simplify Newton iteration.  Do some comments
+! with LaTeX.
+!
 ! Revision 2.2  2002/06/25 17:01:08  bill
 ! added more digits to J2 and added pressure dependent mass--wgr
 !
