@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -16,17 +16,25 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
     & F_SIGNAL, F_SGRID, F_TYPE, F_UNIT, F_VGRID, F_IRREGULAR
   use INIT_TABLES_MODULE, only: &
     FIRST_LIT, LAST_LIT, L_BASELINE, L_BOUNDARYPRESSURE, &
-    L_CHANNEL, L_CHISQCHAN, L_CHISQMMAF, L_CHISQMMIF, L_CLOUDICE, L_CLOUDEXTINCTION, &
+    L_CHANNEL, L_CHISQCHAN, L_CHISQMMAF, L_CHISQMMIF, L_CHUNK, L_CLOUDICE, &
+    L_CLOUDEXTINCTION, L_CLOUDWATER, &
     L_TOTALEXTINCTION, L_MASSMEANDIAMETERICE, &
     L_CLOUDINDUCEDRADIANCE, L_CLOUDRADSENSITIVITY, &
-    L_COLUMNABUNDANCE, L_EARTHREFL, L_EFFECTIVEOPTICALDEPTH, &
-    L_EARTHRADIUS, L_ELEVOFFSET, L_EXTINCTION, L_GEODALTITUDE, L_GPH, &
-    L_HEIGHTOFFSET, L_LOSTRANSFUNC, L_LOSVEL, L_MAGNETICFIELD, &
-    L_NOISEBANDWIDTH, L_NONE, L_ORBITINCLINATION, L_OPTICALDEPTH, &
+    L_COLUMNABUNDANCE, L_DNWT_AJN, L_DNWT_AXMAX, &
+    L_DNWT_CAIT, L_DNWT_CHISQMINNORM, L_DNWT_CHISQNORM, L_DNWT_DIAG, &
+    L_DNWT_DXDX, L_DNWT_DXDXL, L_DNWT_DXN, L_DNWT_DXNL, L_DNWT_FLAG, &
+    L_DNWT_FNMIN, L_DNWT_FNORM, L_DNWT_GDX, L_DNWT_GFAC, L_DNWT_GRADN, &
+    L_DNWT_SQ, L_DNWT_SQT, &
+    L_EARTHREFL, L_EARTHRADIUS, L_EFFECTIVEOPTICALDEPTH, &
+    L_ELEVOFFSET, L_EXTINCTION, L_FREQUENCY, L_GEODALTITUDE, L_GPH, &
+    L_HEIGHTOFFSET, L_ITERATION, L_JACOBIAN_COLS, L_JACOBIAN_ROWS, &
+    L_LOSTRANSFUNC, L_LOSVEL, L_MAGNETICFIELD, &
+    L_MAF, L_MASSMEANDIAMETERICE, L_MASSMEANDIAMETERWATER, L_MIF, &
+    L_NOISEBANDWIDTH, L_NONE, L_NUMJ, L_ORBITINCLINATION, L_OPTICALDEPTH, &
     L_PHITAN, L_PTAN, L_RADIANCE, L_RHI, &
     L_REFGPH, L_SCANRESIDUAL, L_SCECI, L_SCGEOCALT, L_SCVEL, &
-    L_SCVELECI, L_SCVELECR, L_SIDEBANDRATIO, &
-    L_SPACERADIANCE, L_SYSTEMTEMPERATURE, &
+    L_SCVELECI, L_SCVELECR, L_SIDEBANDRATIO, L_SIZEDISTRIBUTION, &
+    L_SPACERADIANCE, L_SURFACETYPE, L_SYSTEMTEMPERATURE, &
     L_TEMPERATURE, L_TNGTECI, L_TNGTGEOCALT, L_TNGTGEODALT, &
     L_TRUE,&
     L_VMR, L_XYZ, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_EXTINCTION, &
@@ -59,6 +67,7 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
   private
   public :: ConstructMinorFrameQuantity, CreateQtyTemplateFromMLSCFInfo
   public :: ForgeMinorFrames
+  public :: GetQuantityAttributes
 
 ! -----     Private declarations     -----------------------------------
 
@@ -948,6 +957,156 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine ForgeMinorFrames
 
+  ! ----------------------------------  GetQuantityAttributes  -----
+  subroutine GetQuantityAttributes ( quantityType, framing, dim_names)
+
+  ! Given a quantity type, e.g. l_vmr,
+  ! returns major/minor/neither framing disgnation
+  ! and the 3 dimension names, e.g. (/l_channel, l_MIF, l_MAF/)
+
+    ! Dummy arguments
+    integer, intent(in)                :: quantityType
+    character(len=*), intent(out)      :: framing
+    integer, dimension(3), intent(out) :: dim_names
+
+    ! Executable code
+    select case (quantityType)                                       
+    case ( l_chisqchan )  
+      framing = 'major'
+      dim_names = (/ l_channel, l_none, l_MAF /)                  
+    case ( l_chisqmmaf )  
+      framing = 'major'
+      dim_names = (/ l_none, l_none, l_MAF /)                  
+    case ( l_chisqmmif )  
+      framing = 'minor'
+      dim_names = (/ l_none, l_MIF, l_MAF /)                  
+    case ( l_cloudInducedRadiance )  
+      framing = 'minor'
+      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
+    case ( l_cloudExtinction )  
+      framing = 'neither'
+      dim_names = (/ l_channel, l_none, l_MAF /)                  
+    case ( l_cloudRadSensitivity )  
+      framing = 'minor'
+      dim_names = (/ l_channel, l_none, l_MAF /)                  
+    case ( l_cloudWater )  
+      framing = 'neither'
+      dim_names = (/ l_channel, l_none, l_MAF /)                  
+    case ( l_dnwt_ajn )  
+      framing = 'neither'
+      dim_names = (/ l_none, l_iteration, l_chunk /)                  
+    case ( l_dnwt_axmax )  
+      framing = 'neither'
+      dim_names = (/ l_none, l_iteration, l_chunk /)                  
+    case ( l_dnwt_cait, l_dnwt_chiSqMinNorm, l_dnwt_chiSqNorm, l_dnwt_diag, &
+      & l_dnwt_dxdx, l_dnwt_dxdxl, l_dnwt_dxn, l_dnwt_dxnl, l_dnwt_flag, &
+      & l_dnwt_fnmin, l_dnwt_fnorm, l_dnwt_gdx, l_dnwt_gfac, l_dnwt_gradn, &
+      & l_dnwt_sq, l_dnwt_sqt )  
+      framing = 'neither'
+      dim_names = (/ l_none, l_iteration, l_chunk /)                  
+    case ( l_effectiveOpticalDepth )  
+      framing = 'minor'
+      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
+    case ( l_elevOffset )  
+      framing = 'neither'
+      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
+    case ( l_heightOffset )  
+      framing = 'minor'
+      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
+    case ( l_jacobian_cols )  
+      framing = 'neither'
+      dim_names = (/ l_none, l_iteration, l_chunk /)                  
+    case ( l_jacobian_rows )  
+      framing = 'neither'
+      dim_names = (/ l_none, l_iteration, l_chunk /)                  
+    case ( l_losTransFunc )  
+      framing = 'neither'
+      dim_names = (/ l_frequency, l_MIF, l_MAF /)                  
+    case ( l_losVel )  
+      framing = 'minor'
+      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
+    case ( l_massMeanDiameterIce )  
+      framing = 'neither'
+      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
+    case ( l_massMeanDiameterWater )  
+      framing = 'neither'
+      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
+    case ( l_noiseBandwidth )  
+      framing = 'neither'
+      dim_names = (/ l_channel, l_none, l_none /)                  
+    case ( l_numJ )  
+      framing = 'neither'
+      dim_names = (/ l_none, l_iteration, l_chunk /)                  
+    case ( l_opticalDepth )  
+      framing = 'minor'
+      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
+    case ( l_orbitInclination )  
+      framing = 'minor'
+      dim_names = (/ l_none, l_none, l_none /)                  
+    case ( l_phiTan )  
+      framing = 'minor'
+      dim_names = (/ l_none, l_MIF, l_MAF /)                  
+    case ( l_ptan )  
+      framing = 'minor'
+      dim_names = (/ l_none, l_MIF, l_MAF /)                  
+    case ( l_radiance )  
+      framing = 'minor'
+      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
+    case ( l_sizedistribution )  
+      framing = 'neither'
+      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
+    case ( l_scanResidual )  
+      framing = 'minor'
+      dim_names = (/ l_none, l_MIF, l_MAF /)                  
+    case ( l_scECI )  
+      framing = 'minor'
+      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
+    case ( l_scVel )  
+      framing = 'minor'
+      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
+    case ( l_scVelECI )  
+      framing = 'minor'
+      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
+    case ( l_scVelECR )  
+      framing = 'minor'
+      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
+    case ( l_scGeocAlt )  
+      framing = 'minor'
+      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
+    case ( l_sidebandRatio )  
+      framing = 'neither'
+      dim_names = (/ l_channel, l_none, l_none /)                  
+    case ( l_spaceRadiance )  
+      framing = 'neither'
+      dim_names = (/ l_none, l_none, l_none /)                  
+    case ( l_surfacetype )  
+      framing = 'neither'
+      dim_names = (/ l_none, l_none, l_none /)                  
+    case ( l_systemTemperature )  
+      framing = 'neither'
+      dim_names = (/ l_channel, l_none, l_none /)                  
+    case ( l_tngtECI )  
+      framing = 'minor'
+      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
+    case ( l_tngtGeodAlt )  
+      framing = 'minor'
+      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
+    case ( l_tngtGeocAlt )  
+      framing = 'minor'
+      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
+    case ( l_totalExtinction )  
+      framing = 'neither'
+      dim_names = (/ l_channel, l_none, l_MAF /)                  
+    case ( l_vmr )  
+      framing = 'neither'
+      dim_names = (/ l_channel, l_none, l_MAF /)                  
+    case default                                                     
+      framing = 'neither'
+      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
+    end select                                                       
+
+  end subroutine GetQuantityAttributes
+
   ! ----------------------------------  CopyHGridInfoIntoQuantity  -----
   subroutine CopyHGridInfoIntoQuantity ( hGrid, qty )
 
@@ -1011,6 +1170,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.81  2003/01/09 00:09:15  pwagner
+! routine GetQuantityAttributes added
+!
 ! Revision 2.80  2003/01/08 23:50:44  livesey
 ! Added irregular argument
 !
