@@ -400,7 +400,7 @@ contains
     real(r8) :: h_glgrid(ngt,mnm), t_glgrid(ngt,mnm), z_glgrid(ngt/2)
     real(r8) :: dh_dt_glgrid(ngt,mnm,mxco), dhdz_glgrid(ngt,mnp)
 
-    real(r8) :: ptg_angles(Nptg,mnm), center_angle
+    real(r8) :: ptg_angles(Nptg), center_angle
     real(r8) :: tan_hts(Nptg,mnm), tan_temp(Nptg,mnm)
 
 
@@ -715,7 +715,7 @@ contains
         &     tan_dh_dt(:,maf,:),no_tan_hts,temp%template%noSurfs, &
         &     temp%template%surfs(:,1),&
         &     forwardModelConfig%SurfaceTangentIndex, &
-        &     center_angle,ptg_angles(:,maf),dx_dt,d2x_dxdt,ier)
+        &     center_angle,ptg_angles,dx_dt,d2x_dxdt,ier)
       if(ier /= 0) goto 99
 
       ! Compute the refraction correction scaling matrix for this mmaf:
@@ -1074,7 +1074,7 @@ contains
             &     ForwardModelConfig%temp_der,ForwardModelConfig%atmos_der,&
             &     ForwardModelConfig%spect_der,                   &
             &     ForwardModelConfig%tangentGrid%surfs,&
-            &     ptg_angles(:,maf),tan_temp(:,maf), &
+            &     ptg_angles,tan_temp(:,maf), &
             &     dx_dt, d2x_dxdt,FMI%band,si,center_angle,FMI%fft_pts,   &
             &     Radiances(:,ch),k_temp((1),:,:,:),k_atmos((1),:,:,:,:), &
             &     k_spect_dw((1),:,:,:,:),k_spect_dn((1),:,:,:,:),    &
@@ -1163,6 +1163,10 @@ contains
 905 format(4(2x,1pg15.8))
 
     call Deallocate_test(usedChannels, 'usedChannels', ModuleName)
+
+! ** DEBUG, Zvi
+!   if(i > -2) Stop
+! ** END DEBUG
 
     if(.not. any((/ForwardModelConfig%temp_der,&
       & ForwardModelConfig%atmos_der,ForwardModelConfig%spect_der/))) goto 99
@@ -1285,6 +1289,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.70  2001/04/07 23:59:32  zvi
+! Ellimination the second dimension from ptg_angles (not MAF dependant)
+!
 ! Revision 2.69  2001/04/07 23:49:54  zvi
 ! Code modified to do spsfunc & refraction inside the MAF loop
 !
