@@ -1461,6 +1461,7 @@ contains
           call fillDiagVec ( l_jacobian_cols, real(jacobian_rows,r8) )
         end if
         call time_now ( t1 )
+        call createEmptyMatrix ( temp, 0, state, state )
         call invertCholesky ( factored, temp ) ! U^{-1}
         call multiplyMatrix_XY_T ( temp, temp, outputCovariance%m ) ! U^{-1} U^{-T}
         call destroyMatrix ( temp )
@@ -2798,6 +2799,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.144  2002/06/07 01:34:26  vsnyder
+! Create temp matrix used in covariance calculation
+!
 ! Revision 2.143  2002/05/22 19:16:51  vsnyder
 ! Put the correct number of rows used for Tikhonov regularization into the
 ! diagnostics vector.
