@@ -366,6 +366,18 @@ contains ! ================================ Procedures ======================
     chunkFailures = 0
     chunkTids = 0
     chunkMachines = 0
+    ! Special switches to control which chunks to process
+    ! by pre-abandoning the others right off the bat
+    ! Note that this leaves output files possibly as big
+    ! as if you ran all the chunks anyway
+    if ( size(chunks) < 3 ) then
+    elseif ( index(switches,'runfirstlast') /=0 ) then
+      chunksAbandoned(2:size(chunks)-1) = .true.
+    elseif ( index(switches,'runfirst') /=0 ) then
+      chunksAbandoned(2:size(chunks)) = .true.
+    elseif ( index(switches,'runlast') /=0 ) then
+      chunksAbandoned(1:size(chunks)-1) = .true.
+    endif    
 
     masterLoop: do ! --------------------------- Master loop -----------------------
       skipDelay = .false.               ! Assume we're going to delay
@@ -1313,6 +1325,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.65  2004/08/03 23:14:56  pwagner
+! Unseemly switch to allow running first last, or first and last chunks only
+!
 ! Revision 2.64  2004/06/10 00:58:45  vsnyder
 ! Move FindFirst, FindNext from MLSCommon to MLSSets
 !
