@@ -28,7 +28,7 @@ contains ! =================================== Public procedures
 
     use Expr_m, only: EXPR
     use GriddedData, only: GRIDDEDDATA_T, SETUPNEWGRIDDEDDATA, &
-      & ADDGRIDDEDDATATODATABASE, V_IS_PRESSURE
+      & ADDGRIDDEDDATATODATABASE, V_IS_PRESSURE, NullifyGriddedData
     use Init_tables_module, only: F_CLIMATOLOGY, F_HEIGHT, F_OPERATIONAL, &
       & F_SCALE, S_MERGE
     use L3ASCII, only: L3ASCII_INTERP_FIELD
@@ -127,6 +127,7 @@ contains ! =================================== Public procedures
 
       ! Executable code
 
+      call nullifyGriddedData ( newGrid ) ! for Sun's still useless compiler
       if ( toggle(gen) ) call trace_begin ( "MergeOneGrid", root )
 
       ! Get the information from the l2cf    
@@ -256,6 +257,10 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.6  2002/11/22 12:21:14  mjf
+! Added nullify routine(s) to get round Sun's WS6 compiler not
+! initialising derived type function results.
+!
 ! Revision 2.5  2002/10/08 17:36:21  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
