@@ -32,14 +32,14 @@ contains
 ! Compute the Voigt function and its first derivatives with respect
 ! to spectral parameters: w, n & Nu0
 
-! NOTE: Before calling this routine, the user needs to call slabs_prep_wder()
+! NOTE: Before calling this routine, the user needs to call slabs_prep()
 !       routine to compute dslabs1_dNu0
 
 ! NOTE: In here and in all other routines in this module, 
 !       tanh1 = tanh(nu*expa / 2.0)
 
-    real(r8), intent(in) :: nu0
-    real(rp), intent(in) :: dnu, x1, yi, y, w, t, tanh1, slabs1             
+    real(r8), intent(in) :: dnu, nu0
+    real(rp), intent(in) :: x1, yi, y, w, t, tanh1, slabs1             
     real(rp), intent(in), optional :: dslabs1_dNu0                        
 
     real(rp), intent(out) :: SwI, dSwI_dw,dSwI_dn,dSwI_dNu0               
@@ -120,12 +120,103 @@ contains
 !  Modified code to include interference: June/3/1992 (Bill + Zvi)
 !  Modified code to correct a sign error (introduced in last change)
 !  (Bill + Zvi, July/7/92)
-!  >> 2004-03-18 WV Snyder Use Nu/v0 instead of Nu/v0s.
+
+!{ Let $V(a,y)$ be the Voigt function ({\tt u} above), $\delta = \nu-\nu_{0_s}$,
+!  $\sigma = \nu + \nu_{0_s}$, $a = x_1 \delta$, and
+!  $D = \frac1{\sigma^2 x_1^2 + y^2}$.
+!  Then {\tt Slabs = } $ S_1 \frac{\nu}{\nu_0}
+!   \tanh(\frac{h \nu}{2 k T}) \left( V(a,y) + \frac{y D}{\sqrt{\pi}} \right)$.
 
     Slabs = slabs1 * real(nu / v0, rp) * tanh1 * &
       & (u + OneOvSPi*y/((x1*(nu+v0s))**2 + y*y))
 
   end function Slabs
+
+  ! ----------------------------------------------------  Slabs_dT  -----
+  subroutine Slabs_dT ( Nu, v0, v0s, x1, tanh1, slabs1, y, &
+    &                           dv0s_dT, dx1_dT, dtanh_dT, dslabs1_dT, dy_dT, &
+    &                   Slabs, dSlabs_dT )
+
+  ! Compute single-line absorption and its derivative w.r.t. temperature.
+
+    real(r8), intent(in) :: Nu, v0, v0s, dv0s_dT
+    real(rp), intent(in) :: x1
+    real(rp), intent(in) :: tanh1      ! tanh(h nu / 2 k T), 
+    real(rp), intent(in) :: slabs1, y
+    real(rp), intent(in) :: dx1_dT     ! 1/x1 dx1 / dT
+    real(rp), intent(in) :: dtanh_dT   ! 1/tanh(...) d tanh(h nu / 2 k T) / dT
+      ! = h nu / ( 2 k t ) (tanh(...) - 1/tanh(...) )
+    real(rp), intent(in) :: dslabs1_dT ! 1/slabs1 dslabs1 / dT
+    real(rp), intent(in) :: dy_dT      ! 1/y dy / dT
+    real(rp), intent(out) :: Slabs, dSlabs_dT
+
+    real(rp) :: C       ! Terms common to the two parts of dSlabs_dT
+    real(rp) :: D       ! 1 / (SigmaX1**2 + y**2)
+    real(rp) :: Delta   ! Nu-v0s
+    real(rp) :: Du      ! du/dT
+    real(rp) :: Da      ! d(x1*delta)
+    real(rp) :: Sa, Sb  ! parts of Slabs
+    real(rp) :: Sigma   ! Nu+v0s
+    real(rp) :: SigmaX1 ! sigma * x1
+    real(rp) :: U       ! Voigt
+    real(rp) :: Y2      ! y**2
+
+    delta = Nu - v0s
+    da = x1 * ( delta * dx1_dT - dv0s_dT ) ! remember, dx1_dT = 1/x1 dx1 / dT
+    call D_Real_Simple_Voigt ( x1*delta, y, da, dy_dT, u, du )
+
+!{ Let $V(a,y)$ be the Voigt function ({\tt u} above), $\delta = \nu-\nu_{0_s}$,
+!  $\sigma = \nu + \nu_{0_s}$, $a = x_1 \delta$, and
+!  $D = \frac1{\sigma^2 x_1^2 + y^2}$.
+!  Then {\tt Slabs = } $ S_1 \frac{\nu}{\nu_0}
+!   \tanh(\frac{h \nu}{2 k T}) \left( V(a,y) + \frac{y D}{\sqrt{\pi}} \right)$.
+
+    sigma = nu + v0s
+    sigmaX1 = sigma * x1
+    y2 = y*y
+    d = 1.0_rp / ( sigmaX1**2 + y2 )
+    sb = slabs1 * real(nu / v0,rp) * tanh1
+    sa = sb * u
+    sb = sb * OneOvSPi * y * d
+    Slabs = sa + sb
+
+!{ The Fadeeva function $w(z)$, where $z = a + i y$, can be written as $V(a,y) +
+!  i L(a,y)$, where $V(a,y)$ is the Voigt function ({\tt u} above) and $L(a,y)$
+!  is the Lorentz function.  All we want for $S$ is its real part, so we don't
+!  need $L(a,y)$ for $S$.  For $\frac{\partial S}{\partial T}$ we want the real
+!  part of the derivative; this requires the real part of the derivative of
+!  $w(z)$, not just Voigt.
+!
+!  Write $S = S_a + S_b$ where
+!  $S_a = S_1 \frac{\nu}{\nu_0} \tanh(\frac{h \nu}{2 k T}) V(a,y)$ and
+!  $S_b = S_1 \frac{\nu}{\nu_0} \tanh(\frac{h \nu}{2 k T}) \frac{y D}{\sqrt{\pi}}$.\\
+!  Then
+!  $\frac{\partial S}{\partial T} = \frac{\partial S_a}{\partial T} +
+!   \frac{\partial S_b}{\partial T}$, where\\
+!  $\frac1{S_a}\frac{\partial S_a}{\partial T} =
+!   \frac1{S_1}\frac{\partial S_1}{\partial T} +
+!   \frac1{\tanh(\frac{h \nu}{2 k T})}\frac{\partial}{\partial T} \tanh(\frac{h \nu}{2 k T}) +
+!   \frac1{V(a,y)} \Re \frac{\partial w(z)}{\partial T}$ and\\
+!  $\frac1{S_b}\frac{\partial S_b}{\partial T} = 
+!   \frac1{S_1}\frac{\partial S_1}{\partial T} +
+!   \frac1{\tanh(\frac{h \nu}{2 k T})}\frac{\partial}{\partial T} \tanh(\frac{h \nu}{2 k T}) +
+!    \frac1y \frac{\partial y}{\partial T} - 
+!    2 D \left( x_1 \sigma \left( x_1 \frac{\partial \nu_{0_s}}{\partial T} +
+!     \sigma \frac{\partial x_1}{\partial T} \right) +
+!     y \frac{\partial y}{\partial T} \right)$.\\
+!    Notice that the first two terms of
+!    $\frac1{S_a}\frac{\partial S_a}{\partial T}$ and
+!    $\frac1{S_b}\frac{\partial S_b}{\partial T}$ are the same.\\
+!  For $\Re \frac{\partial w(z)}{\partial T}$ we need
+!  $\frac{\partial a}{\partial T} = -x_1 \frac{\partial \nu_{0_s}}{\partial T} +
+!   \delta \frac{\partial x_1}{\partial T}$ and $\frac{\partial y}{\partial T}$.
+
+    c = dSlabs1_dT + dtanh_dT
+    dSlabs_dT = sa * ( c + du / u ) + &
+      &         sb * ( c + dy_dT - 2.0_rp * D * &
+      &           ( sigmaX1 * ( x1 * dv0s_dT + sigmaX1 * dx1_dT ) + y2 * dy_dT ) )
+
+  end subroutine Slabs_dT
 
   ! --------------------------------------------------  Slabswint  -----
   real(rp) function Slabswint ( Nu, v0, v0s, x1, tanh1, slabs1, y, yi )
@@ -142,23 +233,164 @@ contains
 ! If the molecular transition and temperature have not changed but
 ! frequency has enter here.
 
-    real(rp) :: x, u, p, y2
+    real(rp) :: a, sigmaX1, u, y2
 
-    x = x1 * real(nu-v0s,rp)
-    call real_simple_voigt(x,y,u)
+    a = x1 * real(nu-v0s,rp)
+    call real_simple_voigt ( a, y, u )
 
 !  Van Vleck - Wieskopf line shape with Voigt, Added Mar/2/91, Bill
 !  Modified code to include interference: June/3/1992 (Bill + Zvi)
 !  Modified code to correct a sign error (introduced in last change)
 !  (Bill + Zvi, July/7/92)
-!  >> 2004-03-18 WV Snyder Use Nu/v0 instead of Nu/v0s.
 
-    p = x1 * (nu + v0s)
+!{ Let $V(a,y)$ be the Voigt function ({\tt u} above), $\delta = \nu-\nu_{0_s}$,
+!  $\sigma = \nu + \nu_{0_s}$, $a = x_1 \delta$,
+!  $D_1 = \frac1{\sigma^2 x_1^2 + y^2}$ and $D_2 = \frac1{a^2 + y^2}$.
+!  Then {\tt Slabswint = } $ S_1 \frac{\nu}{\nu_0} \tanh(\frac{h \nu}{2 k T})
+!   \left( V(a,y) + \frac{(y - \sigma x_1 y_i) D_1}{\sqrt{\pi}}
+!     + \frac{y_i a D_2}{\sqrt{\pi}} \right)$.
+
+    sigmaX1 = x1 * (nu + v0s)
     y2 = y*y
     Slabswint = slabs1 * real(Nu / v0, rp) * tanh1 * &
-      & (u + OneOvSPi*((y - p*yi)/(p*p + y2) + yi*x/(x*x+y2)))
+      & (u + OneOvSPi*((y - sigmaX1*yi)/(sigmaX1*sigmaX1 + y2) + yi*a/(a*a+y2)))
 
   end function Slabswint
+
+  ! -----------------------------------------------  Slabswint_dT  -----
+  subroutine Slabswint_dT ( Nu, v0, v0s, x1, tanh1, slabs1, y, yi, &
+    &                              dv0s_dT, dx1_dT, dtanh_dT, dslabs1_dT, &
+    &                              dy_dT, dyi_dT, &
+    &                              Slabswint, dSlabs_dT )
+
+    real(r8), intent(in) :: Nu, v0, v0s, dv0s_dT
+    real(rp), intent(in) :: x1
+    real(rp), intent(in) :: tanh1      ! tanh(h nu / 2 k T), 
+    real(rp), intent(in) :: slabs1, y, yi
+    real(rp), intent(in) :: dx1_dT     ! 1/x1 dx1 / dT
+    real(rp), intent(in) :: dtanh_dT   ! 1/tanh(...) d tanh(h nu / 2 k T) / dT
+      ! = h nu / ( 2 k t ) (tanh(...) - 1/tanh(...) )
+    real(rp), intent(in) :: dslabs1_dT ! 1/slabs1 dslabs1 / dT
+    real(rp), intent(in) :: dy_dT      ! 1/y dy / dT
+    real(rp), intent(in) :: dyi_dT     ! 1/yi dyi / dT
+
+    real(rp), intent(out) :: Slabswint, dSlabs_dT
+
+! If the molecular transition and temperature have not changed but
+! frequency has enter here.
+
+    real(rp) :: A               ! x1 * delta
+    real(rp) :: C               ! Terms common to the parts of dSlabs_dT
+    real(rp) :: D1              ! 1 / (SigmaX1**2 + y**2)
+    real(rp) :: D2              ! 1 / (a**2 + y**2)
+    real(rp) :: DD1, DD2        ! 1/D1 d(D1)/dT, 1/D2 d(D2)/dT, 
+    real(rp) :: Da              ! da / dT
+    real(rp) :: Delta           ! Nu-v0s
+    real(rp) :: DU              ! du/dT
+    real(rp) :: Sa, Sb, Sc, Sd  ! parts of SlabsWint
+    real(rp) :: Sigma           ! Nu+v0s
+    real(rp) :: SigmaX1         ! sigma * x1
+    real(rp) :: U               ! Voigt
+    real(rp) :: Y2              ! Y**2
+
+    delta = nu - v0s
+    a = x1 * delta
+    da = x1 * ( delta * dx1_dT - dv0s_dT ) ! remember, dx1_dT = 1/x1 dx1 / dT
+    call D_Real_Simple_Voigt ( a, y, da, dy_dT, u, du )
+
+!  Van Vleck - Wieskopf line shape with Voigt, Added Mar/2/91, Bill
+!  Modified code to include interference: June/3/1992 (Bill + Zvi)
+!  Modified code to correct a sign error (introduced in last change)
+!  (Bill + Zvi, July/7/92)
+
+!{ Let $V(a,y)$ be the Voigt function ({\tt u} above), $\delta = \nu-\nu_{0_s}$,
+!  $\sigma = \nu + \nu_{0_s}$, $a = x_1 \delta$,
+!  $D_1 = \frac1{\sigma^2 x_1^2 + y^2}$ and $D_2 = \frac1{a^2 + y^2}$.
+!  Then {\tt Slabswint = } $ S_1 \frac{\nu}{\nu_0} \tanh(\frac{h \nu}{2 k T})
+!   \left( V(a,y) + \frac{(y - \sigma x_1 y_i) D_1}{\sqrt{\pi}}
+!     + \frac{y_i a D_2}{\sqrt{\pi}} \right)$.
+
+    sigma = nu + v0s
+    sigmaX1 = sigma * x1
+    y2 = y * y
+    d1 = 1.0_rp / ( sigmaX1**2 + y2 )
+    d2 = 1.0_rp / ( a * a + y2 )
+    c = slabs1 * real(nu / v0,rp) * tanh1
+    sa = c * u
+    c = c * OneOvSPi
+    sb = c * y * d1
+    sc = c * sigmaX1 * yi * d1
+    sd = c * a * yi * d2
+    Slabswint = sa + sb - sc + sd
+
+!{ The Fadeeva function $w(z)$, where $z = a + i y$, can be written as $V(a,y) +
+!  i L(a,y)$, where $V(a,y)$ is the Voigt function ({\tt u} above) and $L(a,y)$
+!  is the Lorentz function.  All we want for $S$ is its real part, so we don't
+!  need $L(a,y)$ for $S$. For $\frac{\partial S}{\partial T}$ we want the real
+!  part of the derivative; this requires the real part of the derivative of
+!  $w(z)$, not just Voigt.
+!
+!  Write $S = S_a + S_b - S_c + S_d$ where
+!  $S_a = S_1 \frac{\nu}{\nu_0} \tanh(\frac{h \nu}{2 k T}) V(a,y)$,
+!  $S_b = S_1 \frac{\nu}{\nu_0} \tanh(\frac{h \nu}{2 k T}) \frac{y D_1}{\sqrt{\pi}}$,
+!  $S_c = S_1 \frac{\nu}{\nu_0} \tanh(\frac{h \nu}{2 k T}) \frac{\sigma x_1 y_i D_1}{\sqrt{\pi}}$, and
+!  $S_d = S_1 \frac{\nu}{\nu_0} \tanh(\frac{h \nu}{2 k T}) \frac{a y_i D_2}{\sqrt{\pi}}$.\\
+!  Then
+!  $\frac{\partial S}{\partial T} = \frac{\partial S_a}{\partial T} +
+!   \frac{\partial S_b}{\partial T} - \frac{\partial S_c}{\partial T} +
+!   \frac{\partial S_d}{\partial T}$, where\\
+!  $\frac1{S_a}\frac{\partial S_a}{\partial T} =
+!   \frac1{S_1}\frac{\partial S_1}{\partial T} +
+!   \frac1{\tanh(\frac{h \nu}{2 k T})}\frac{\partial}{\partial T} \tanh(\frac{h \nu}{2 k T}) +
+!   \frac1{V(a,y)} \Re \frac{\partial w(z)}{\partial T}$,\\
+!  $\frac1{S_b}\frac{\partial S_b}{\partial T} = 
+!   \frac1{S_1}\frac{\partial S_1}{\partial T} +
+!   \frac1{\tanh(\frac{h \nu}{2 k T})}\frac{\partial}{\partial T} \tanh(\frac{h \nu}{2 k T}) +
+!   \frac1{D_1}\frac{\partial D_1}{\partial T} +
+!   \frac1y \frac{\partial y}{\partial T}$,\\
+!  $\frac1{S_c}\frac{\partial S_c}{\partial T} = 
+!   \frac1{S_1}\frac{\partial S_1}{\partial T} +
+!   \frac1{\tanh(\frac{h \nu}{2 k T})}\frac{\partial}{\partial T} \tanh(\frac{h \nu}{2 k T}) +
+!   \frac1{D_1}\frac{\partial D_1}{\partial T} +
+!   \frac1{y_i}\frac{\partial y_i}{\partial T} +
+!   \frac1{x_1}\frac{\partial x_1}{\partial T} +
+!   \frac1{\sigma}\frac{\partial \nu_{0_s}}{\partial T}$, and\\
+!  $\frac1{S_d}\frac{\partial S_d}{\partial T} = 
+!   \frac1{S_1}\frac{\partial S_1}{\partial T} +
+!   \frac1{\tanh(\frac{h \nu}{2 k T})}\frac{\partial}{\partial T} \tanh(\frac{h \nu}{2 k T}) +
+!   \frac1{D_2}\frac{\partial D_2}{\partial T} +
+!   \frac1{y_i}\frac{\partial y_i}{\partial T} +
+!   \frac1{a}\frac{\partial a}{\partial T}$
+!   , where\\
+!  $\frac1{D_1}\frac{\partial D_1}{\partial T} = -2 D_1 \left( x_1 \sigma \left( x_1 \frac{\partial \nu_{0_s}}{\partial T} +
+!     \sigma \frac{\partial x_1}{\partial T} \right) +
+!     y \frac{\partial y}{\partial T} \right)$ and
+!  $\frac1{D_2}\frac{\partial D_2}{\partial T} = -2 D_2 \left( a \frac{\partial a}{\partial T} +
+!     y \frac{\partial y}{\partial T} \right)$.\\
+!  Notice that the first two terms of
+!    $\frac1{S_a}\frac{\partial S_a}{\partial T}$,
+!    $\frac1{S_b}\frac{\partial S_b}{\partial T}$,
+!    $\frac1{S_c}\frac{\partial S_c}{\partial T}$ and
+!    $\frac1{S_d}\frac{\partial S_d}{\partial T}$ are the same,
+!  the third terms of
+!    $\frac1{S_b}\frac{\partial S_b}{\partial T}$ and
+!    $\frac1{S_c}\frac{\partial S_c}{\partial T}$ are the same, and
+!  the fourth terms of
+!    $\frac1{S_c}\frac{\partial S_c}{\partial T}$ and
+!    $\frac1{S_d}\frac{\partial S_d}{\partial T}$ are the same.\\
+!  For $\Re \frac{\partial w(z)}{\partial T}$ we need
+!  $\frac{\partial a}{\partial T} = -x_1 \frac{\partial \nu_{0_s}}{\partial T} +
+!   \delta \frac{\partial x_1}{\partial T}$ and $\frac{\partial y}{\partial T}$.
+
+    c = dSlabs1_dT + dtanh_dT
+    dd1 = -2.0_rp * d1 * ( sigmaX1 * ( x1 * dv0s_dT + sigmaX1 * dx1_dT ) + y2 * dy_dT )
+    dd2 = -2.0_rp * d2 * ( a * da + y2 * dy_dT )
+    dSlabs_dT = sa * ( c + du / u ) + &
+      &         sb * ( c + dd1 + dy_dT ) - &
+      &         sc * ( c + dd1 + dyi_dT + dx1_dT + dv0s_dT / sigma ) + &
+      &         sd * ( c + dd2 + dyi_dT + da / a )
+
+  end subroutine Slabswint_dT
 
   ! ----------------------------------------------  Voigt_Lorentz  -----
 
@@ -171,8 +403,8 @@ contains
 ! NOTE: Before calling this routine, the user needs to call slabs_prep()
 !       routine to compute dslabs1_dNu0
 
-    real(r8), intent(in) :: nu0
-    real(rp), intent(in) :: dNu, x1, yi, y, w, t, tanh1, slabs1, dslabs1_dNu0
+    real(r8), intent(in) :: dNu, nu0
+    real(rp), intent(in) :: x1, yi, y, w, t, tanh1, slabs1, dslabs1_dNu0
 
     real(rp), intent(out) :: VL, dVL_dw, dVL_dn, dVL_dNu0
 
@@ -877,6 +1109,72 @@ contains
 
   end function CDrayson
 
+!{ \newpage
+
+  ! ----------------------------------------  D_Real_Simple_Voigt  -----
+  subroutine D_Real_Simple_Voigt ( x, y, dx, dy, u, du )
+  ! Compute the real part of Fadeeva = Voigt (without Lorentz) and
+  ! the real part of the derivative (which isn't just the derivative
+  ! of Voigt).
+
+!{ The Fadeeva function $w(z)$, where $z = a + i y$, can be written as
+!  $V(a,y) + i L(a,y)$, where $V(a,y)$ is the Voigt function and
+!  $L(a,y)$ is the Lorentz function. 
+!
+!  From 7.1.20 in {\bf Handbook of Mathematical Functions} by Abramowitz
+!  and Stegun (National Bureau of Standards Applied Math Series 55) we have
+!  $w^{\prime}(z) = \frac{2i}{\sqrt{\pi}} - 2 z w(z)$.\\
+!  $\Re \, \frac{\partial w(z(t))}{\partial t} =
+!   2 \left[ \left( -x V(x,y) + y L(x,y) \right) \frac{\partial x}{\partial t} +
+!            \left( x L(x,y) + y V(x,y) -\frac1{\sqrt{\pi}} \right)
+!             \frac{\partial y}{\partial t} \right]$.
+
+    real(rp), intent(in) :: x, y, dx, dy
+    real(rp), intent(out) :: u, du
+
+    real(rp) :: v ! Lorentz function
+
+    call simple_voigt ( x, y, u, v )
+    du = 2.0_rp * ( (-x * u + y * v) * dx + (x * v + y * u) * dy )
+
+  end subroutine D_Real_Simple_Voigt
+
+  ! ---------------------------------------------  D_Simple_Voigt  -----
+  subroutine D_Simple_Voigt ( x, y, dx, dy, u, v, du, dv )
+  ! Compute Fadeeva = Voigt and Lorentz its derivative
+
+!{ The Fadeeva function $w(z)$, where $z = a + i y$, can be written as
+!  $V(a,y) + i L(a,y)$, where $V(a,y)$ is the Voigt function and
+!  $L(a,y)$ is the Lorentz function. 
+!
+!  From 7.1.20 in {\bf Handbook of Mathematical Functions} by Abramowitz
+!  and Stegun (National Bureau of Standards Applied Math Series 55) we have
+!  $w^{\prime}(z) = \frac{2i}{\sqrt{\pi}} - 2 z w(z)$.\\
+!  \begin{equation*}\begin{split}
+!  \frac{\partial w(z(t))}{\partial t}
+!   =& 2 \left[ \left( -x V(x,y) + y L(x,y) \right) \frac{\partial x}{\partial t} +
+!            \left( x L(x,y) + y V(x,y) -\frac1{\sqrt{\pi}} \right)
+!             \frac{\partial y}{\partial t} \right]\\
+!   +& 2 i \left [ - \left( x L(x,y) + y V(x,y) -\frac1{\sqrt{\pi}} \right)
+!             \frac{\partial x}{\partial t} +
+!            \left( - x V(x,y) + y L(x,y) \right) \frac{\partial y}{\partial t} \right]\\
+!   =& a \frac{\partial x}{\partial t} + b \frac{\partial y}{\partial t}
+!    + i \left( -b \frac{\partial x}{\partial t} + a \frac{\partial y}{\partial t} \right).
+!  \end{split}\end{equation*}
+
+    real(rp), intent(in) :: x, y, dx, dy
+    real(rp), intent(out) :: u, v, du, dv
+
+    real :: a, b
+
+    call simple_voigt ( x, y, u, v )
+    a = -x * u + y * v
+    b = x * v + y * u
+    du = 2.0_rp * ( a * dx + b * dy )
+    dv = 2.0_rp * ( -b * dx + a * dy )
+
+  end subroutine D_Simple_Voigt
+
   ! -------------------------------------------------  Slabs_prep  -----
   subroutine Slabs_prep ( t, m, v0, el, w, ps, p, n, ns, i, q, delta, gamma, &
                       &   n1, n2, &
@@ -889,8 +1187,8 @@ contains
 ! >>2004-03-18 WV Snyder Use 1 - exp(-v0/300/Boltzmhz) in denominator instead
 !                        of 1 - exp(-v0s/300/Boltzmhz).
 
-    use Physics, only: H_OVER_K
-    use Units, only: Ln10, SpeedOfLight
+    use Physics, only: H_OVER_K, SpeedOfLight
+    use Units, only: Ln10
 
 ! inputs:
 
@@ -934,14 +1232,12 @@ contains
 !  boltzcm  - boltzmann constant cm-1/K
 !  boltzmhz - boltzmann constant MHz/K
 !  sqrtln2  - sqrt(ln(2))
-!  loge     - log10(e)
 
-    real(rp), parameter :: I2abs = 3.402136078e9_rp
-    real(rp), parameter :: Dc = 3.58117369e-7_rp
+    real(rp), parameter :: I2abs = 3.402136078e9_rp ! sqrt(ln(2)/pi)*1.0e-13/k
+    real(rp), parameter :: Dc = 3.58117369e-7_rp ! sqrt(1000 k ln 4 avogadro) / c
     real(rp), parameter :: BoltzMHz = 1.0_rp / H_over_k
     real(rp), parameter :: Boltzcm = boltzMHz / SpeedOfLight * 1.0e6 / 100.0
     real(rp), parameter :: Sqrtln2 = 8.32554611157698e-1_rp
-    real(rp), parameter :: Loge = 1.0_rp / ln10
     real(rp), parameter :: Oned300 = 1.0_rp/300.0_rp
 
     real(rp), parameter :: LT2 = 2.35218251811136_rp      ! Log10(225)
@@ -952,147 +1248,274 @@ contains
 
 ! Internal data:
 
-    real(rp) :: Wd, Q_Log, betae, betav, t3t, onedt, expn, expd
+    real(rp) :: betae, betav, expd, expn, log_T, onedt
+    real(rp) :: Q_Log_a, Q_Log_b, t3t, Wd, z1, z2
 
 ! The action begins here
 
     onedt = 1.0_rp / t
-    t3t = 300.0_rp * onedt
-    yi = p * (delta*(t3t**n1) + gamma*(t3t**n2))
+    log_T = log(t)
+    t3t = lt3 * ln10 - log_T ! log(300/T)
 
-    if ( t < 225.0_rp ) then
-      Q_Log = q(2)-q(1)+(q(2)-q(3))/tl1*(Log10(t)-lt2)
-    else
-      Q_Log =           (q(1)-q(2))/tl2*(Log10(t)-lt3)
-    end if
+!{ $y_i = p \left( \delta \left( \frac{300}T \right)^{n_1} +
+!                  \gamma \left( \frac{300}T \right)^{n_2} \right)$.
 
-    v0s = v0 + ps * p * (t3t**ns)
+    yi = p * (delta*exp(n1*t3t) + gamma*exp(n2*t3t))
+
+!{ $\nu_{0_s} = \nu_0 + p_s p \left( \frac{300}T \right) ^{n_s}$.
+
+    v0s = v0 + ps * p * exp(ns*t3t)
+
+!{ $\omega_d = \nu_0 d_c \sqrt{\frac{T}M}$.
+
+    Wd = v0 * Sqrt(t/m) * dc
+
+!{ $x_1 = \frac{\sqrt{\ln 2}}{\omega_d}$.
+
+    x1 = sqrtln2 / Wd
+
+!{ $y = x_1 w p \left( \frac{300}T \right) ^n$.
+
+    y = x1 * w * p * exp(n*t3t)
+
+!{ $\beta_e = 10^{-4} \frac{h}k c\, e_l$. $\beta_v = \frac{h}k \nu_{0_s}$.
 
     betae = el / boltzcm
     betav = v0s / boltzmhz
-    Wd = v0 * Sqrt(t/m) * dc
-    x1 = sqrtln2 / Wd
-    y = x1 * w * p * (t3t**n)
+
+    if ( t < 225.0_rp ) then
+      q_log_b = (q(2)-q(3)) / tl1
+      q_log_a = q(2) - q(1) - lt2 * q_log_b
+    else
+      q_log_b = (q(1)-q(2)) / tl2
+      q_log_a = -lt3 * q_log_b
+    end if
+    q_log_b = -1.0 - q_log_b ! This is more useful below
+
     expn = EXP(-betav*onedt)
+    z1 = 1.0 + expn
     expd = EXP(-v0*(oned300/boltzmhz))
-    slabs1 = i2abs * p * 10.0**(i - Q_Log + loge *  betae * (oned300 - onedt)) &
-         & * (1.0_rp + expn) / (t * Wd * (1.0_rp - expd))
-    dslabs1 = -slabs1 * (expn / (t * (1.0_rp + expn)) + expd / (300.0_rp &
-         &  * (1.0_rp - expd))) / boltzmhz
+    z2 = 1.0 - expd
+
+!{ $S = \frac{I_2 \, p \, 10^{i - a - b \log_{10} T
+!   + \frac{\beta_e}{\ln 10}\left(\frac1{300}-\frac1T\right)}
+!      (1+e^{-\frac{\beta_v}T})}
+!   {T \omega_d \left(1 - e^{-\frac{h \nu_0}{300 k}}\right)} =
+!  I_2 \, p \, e^{(i-a) \ln 10 -(b+1) \log T +
+!    \beta_e \left( \frac1{300} - \frac1T \right)}
+!  \frac{(1+G)} {\omega_d (1-H)}$, where
+!  $G = e^{-\frac{\beta_v}T}$, $H = e^{-\frac{h \nu_0}{300 k}}$ and
+!  $S =$ {\tt slabs1}.
+
+    slabs1 = i2abs * p * &
+      & exp((i - q_log_a)*ln10 + q_log_b * log_T + betae * (oned300 - onedt)) &
+      & * z1 / (Wd * z2)
+
+!{ $\frac{\partial S}{\partial \nu_0} =
+!   -S \left( \frac{G_1}T + \frac{H_1}{300} \right) \frac{h}k$ where
+!   $G_1 = 1 + G$ and $H_1 = 1 - H$.
+
+    dslabs1 = -slabs1 * (expn / (t * z1) + expd / (300.0_rp * z2)) / &
+      & boltzmhz
 
   end subroutine Slabs_prep
 
-  !  -------------------------------------------  Slabs_prep_wder  -----
-  subroutine Slabs_prep_wder ( t, m, v0, el, w, ps, p, n, ns, i, q, delta, &
-                            &  gamma, n1, n2,  &
-                            &  v0s, x1, y, yi, slabs1, &
-                            &  dx1_dv0, dy_dv0, dslabs1_dv0 )
-
-! Slabs_prep_wder: ** ORIGINALLY: Subroutine Slabs_prep()
+  ! ----------------------------------------------  Slabs_prep_DT  -----
+  subroutine Slabs_prep_dT ( t, m, v0, el, w, ps, p, n, ns, i, q, delta, gamma, &
+                         &   n1, n2, &
+                         &   v0s, x1, y, yi, slabs1, dslabs1_dv0, &
+                         &   dv0s_dT, dx1_dT, dy_dT, dyi_dT, dslabs1_dT )
 
 ! This function computes a single line type absorption coefficient
 ! WITH INTERFERENCE ! using predominantly data from the Pickett catalogue.
+! Compute the derivatives with respect to temperature, too.
 
 ! ** UPDATED: Jul/3/97  To include Hugh Pumphrey's Pressure Shift effects
-! ** CHANGED: Jan/5/00  To Include derivatives of x1,y & slabs w.r.t. Nu0
-! ** This routine is obselete and probably can be deleted.
 
-    use Physics, only: H_OVER_K
-    use Units, only: Ln10, SpeedOfLight
+    use Physics, only: H_OVER_K, SpeedOfLight
+    use Units, only: Ln10
 
 ! inputs:
 
-    real(rp), intent(in) :: T       ! Temperature K
-    real(rp), intent(in) :: M       ! Molecular mass amu
-    real(r8), intent(in) :: V0      ! Line center frequency MHz
-    real(rp), intent(in) :: El      ! Lower state energy cm-1
-    real(rp), intent(in) :: W       ! Collision broadening parameter
-                                    ! MHz/mbar at 300 K
-    real(rp), intent(in) :: Ps      ! Pressure shift parameter in MHz/mbar
-    real(rp), intent(in) :: P       ! Pressure mbar
-    real(rp), intent(in) :: N       ! Temperature power dependence of w
+    real(rp), intent(in) :: T        ! Temperature K
+    real(rp), intent(in) :: M        ! Molecular mass amu
+    real(r8), intent(in) :: V0       ! Line center frequency MHz
+    real(rp), intent(in) :: El       ! Lower state energy cm-1
+    real(rp), intent(in) :: W        ! Collision broadening parameter
+                                     ! MHz/mbar at 300 K
+    real(rp), intent(in) :: Ps       ! Pressure shift parameter in MHz/mbar
+    real(rp), intent(in) :: P        ! Pressure mbar
+    real(rp), intent(in) :: N        ! Temperature power dependence of w
     real(rp), intent(in) :: Ns       ! Temperature power dependence of ps
-    real(rp), intent(in) :: I       ! Integrated spectral intensity
-                                    ! Log(nm**2 MHz) at 300 K
-    real(rp), intent(in) :: Q(3)    ! Logarithm of the partition function
-                                    ! At 300 , 225 , and 150 K
-    real(rp), intent(in) :: Delta   ! Delta interference coefficient at 300K 1/mb
-    real(rp), intent(in) :: Gamma   ! Gamma               "
-    real(rp), intent(in) :: N1      ! Temperature dependency of delta
-    real(rp), intent(in) :: N2      ! Temperature dependency of gamma
+    real(rp), intent(in) :: I        ! Integrated spectral intensity
+                                     ! Log(nm**2 MHz) at 300 K
+    real(rp), intent(in) :: Q(3)     ! Logarithm of the partition function
+                                     ! At 300 , 225 , and 150 K
+    real(rp), intent(in) :: Delta    ! Delta interference coefficient at 300K 1/mb
+    real(rp), intent(in) :: Gamma    ! Gamma               "
+    real(rp), intent(in) :: N1       ! Temperature dependency of delta
+    real(rp), intent(in) :: N2       ! Temperature dependency of gamma
 
 ! outputs:
 
-    real(r8), intent(out) :: V0s       ! Pressure shifted line position
-    real(rp), intent(out) :: X1        ! Sqrt(Ln(2))/Doppler half width MHz
-    real(rp), intent(out) :: Y         ! Sqrt(Ln(2))*collision width /
-                                       !             doppler width
-    real(rp), intent(out) :: Yi        ! Interference contribution
-    real(rp), intent(out) :: Slabs1    ! Frequency independent piece of slabs
-
-    real(rp), intent(out) :: Dx1_dv0       ! Derivative of x1 w.r.t. v0
-    real(rp), intent(out) :: Dy_dv0        ! Derivative of y w.r.t. v0
-    real(rp), intent(out) :: Dslabs1_dv0   ! Derivative of slabs1 w.r.t. v0
+    real(r8), intent(out) :: V0s     ! Pressure shifted line position
+    real(rp), intent(out) :: X1      ! Sqrt(Ln(2))/Doppler half width MHz
+    real(rp), intent(out) :: Y       ! Sqrt(Ln(2))*collision width /
+                                     !             doppler width
+    real(rp), intent(out) :: Yi      ! Interference contribution
+    real(rp), intent(out) :: Slabs1  ! Frequency independent piece of slabs
+    real(rp), intent(out) :: Dslabs1_dv0 ! Derivative of slabs1 w.r.t. v0
 
 !  The above outputs along with frequency offset are used with routine
 !  SLABSWINT to compute a Single Line ABSorption in 1/Km units. With unit
 !  mixing ratio.
+
+! Derivatives with respect to temperature:
+
+    real(r8), intent(out) :: dv0s_dT    ! dv0s/dT
+    real(rp), intent(out) :: dx1_dT     ! 1/x1 dx1/dT
+    real(rp), intent(out) :: dy_dT      ! 1/y dy/dT
+    real(rp), intent(out) :: dyi_dT     ! 1/yi dyi/dT
+    real(rp), intent(out) :: dslabs1_dT ! 1/slabs1 dslabs1/dT
 
 ! Internal constants:
 
 !  i2abs    - converts intensity into absorption
 !  dc       - sqrt(amu/K) used to calculate doppler width
 !  boltzcm  - boltzmann constant cm-1/K
-!  boltzmhz - boltzmann constant MHz/K
+!  boltzmhz - boltzmann constant MHz/K = k/h
 !  sqrtln2  - sqrt(ln(2))
-!  loge     - log10(e)
 
-    real(r8), parameter :: I2abs = 3.402136078e9_r8
-    real(r8), parameter :: Dc = 3.58117369e-7_r8
+    real(rp), parameter :: I2abs = 3.402136078e9_rp ! sqrt(ln(2)/pi)*1.0e-13/k
+    real(rp), parameter :: Dc = 3.58117369e-7_rp
     real(rp), parameter :: BoltzMHz = 1.0_rp / H_over_k
     real(rp), parameter :: Boltzcm = boltzMHz / SpeedOfLight * 1.0e6 / 100.0
-    real(r8), parameter :: Sqrtln2 = 8.32554611157698e-1_r8
-    real(rp), parameter :: Loge = 1.0_rp / ln10
-    real(r8), parameter :: Oned300 = 1.0_r8/300.0_r8
+    real(rp), parameter :: Sqrtln2 = 8.32554611157698e-1_rp
+    real(rp), parameter :: Oned300 = 1.0_rp/300.0_rp
 
-    real(r8), parameter :: Tl1 = 1.76091259055681e-1_r8     ! Log10(225/150)
-    real(r8), parameter :: Tl2 = 1.24938736608300e-1_r8     ! Log10(300/225)
+    real(rp), parameter :: LT2 = 2.35218251811136_rp      ! Log10(225)
+    real(rp), parameter :: LT3 = 2.47712125471966_rp      ! Log10(300)
+
+    real(rp), parameter :: Tl1 = 0.176091259055681_rp     ! Log10(225/150)
+    real(rp), parameter :: Tl2 = 0.124938736608300_rp     ! Log10(300/225)
 
 ! Internal data:
 
-    real(r8) :: Wd, Q_Log, betae, betav, t3t, onedt, r, expn, expd
+    real(rp) :: Betae, Betav, dBetav_dT, onedt, expn, expd
+    real(rp) :: Q_Log_a, Q_Log_b ! Q_Log = a + b * log10(T)
+    real(rp) :: Log_T         ! log(t)
+    real(rp) :: t3t           ! log(300/t) = log(300) - log(t)
+    real(rp) :: Wd, DWd_dT    ! dWd_dT is actually -dWd_dT/Wd
+    real(rp) :: Z1, Z2 ! Temps
 
 ! The action begins here
 
-    onedt = 1.0_r8 / t
-    t3t = 300.0_r8 * onedt
-    yi = p * (delta*(t3t**n1) + gamma*(t3t**n2))
+    onedt = 1.0_rp / t
+    log_t = log(t)
+    t3t = lt3 * ln10 - log_t  ! log(300/T)
 
-    if ( t < 225.0_r8 ) then
-      r = (q(2)-q(3))/tl1
-      Q_Log = q(2)-q(1)+r*Log10(t/225.0_r8)
+!{ $y_i = p \left( \delta \left( \frac{300}T \right)^{n_1} +
+!                  \gamma \left( \frac{300}T \right)^{n_2} \right)$.
+!  $\frac{\partial y_i}{\partial T} = -\frac{p}T \left(
+!                    n_1 \delta \left( \frac{300}T \right)^{n_1} +
+!                    n_2 \gamma \left( \frac{300}T \right)^{n_2} \right)$.
+
+    z1 = delta*exp(n1*t3t)
+    z2 = gamma*exp(n2*t3t)
+    yi = ( z1 + z2 )
+    dyi_dT = -onedt * ( n1 * z1 + n2 * z2 ) / yi ! 1/yi dyi/dT
+    yi = p * yi
+
+!{ $\nu_{0_s} = \nu_0 + p_s p \left( \frac{300}T \right)^{n_s}$.
+!  $\frac{\partial \nu_{0_s}}{\partial T} = \frac{-n_s}T ( \nu_{0_s} - \nu_0 )$.
+
+    v0s = ps * p * exp(ns*t3t)
+    dv0s_dT = -ns * v0s * onedt
+    v0s = v0 + v0s
+
+!{ $\omega_d = \nu_0 d_c \sqrt{\frac{T}M}$.  The $\nu_0$ term should
+!  really be $\nu$.  We approximate $\nu$ by $\nu_0$ so that we can use
+!  this routine outside the frequency loop.  Thus
+!  $-\frac1{\omega_d}\frac{\partial \omega_d}{\partial T} = 
+!   - \frac1{2 T}$.
+!  $-\frac1{\omega_d}\frac{\partial \omega_d}{\partial T}$ is what's actually
+!  useful later.
+
+    Wd = v0 * dc * sqrt(t/m)
+    dWd_dT = - 0.5 * onedt ! Actually -dWd_dT/Wd
+
+!{ $x_1 = \frac{\sqrt{\ln 2}}{\omega_d}$.
+!  $\frac1{x_1}\frac{\partial x_1}{\partial T} =
+!   -\frac1{\omega_d} \frac{\partial \omega_d}{\partial T}
+!   = -\frac1{2T}$.
+
+    x1 = sqrtln2 / Wd
+    dx1_dT = dWd_dT ! 1/x1 dx1/dT
+
+!{ $y = x_1 w p \left( \frac{300}T \right)^n$.
+!  $\frac1y \frac{\partial y}{\partial T} =
+!    \left( \frac1{x_1} \frac{\partial x_1}{\partial T} - \frac{n}T \right)
+!    = -\frac1{2T}(1+2n)$.
+
+    y = x1 * w * p * exp(n*t3t)
+    dy_dT = ( dx1_dT - n * onedt ) ! 1/y dy/dT
+
+    if ( t < 225.0_rp ) then
+      q_log_b = (q(2)-q(3)) / tl1
+      q_log_a = q(2) - q(1) - lt2 * q_log_b
     else
-      r = (q(1)-q(2))/tl2
-      Q_Log = r*Log10(t/300.0_r8)
+      q_log_b = (q(1)-q(2)) / tl2
+      q_log_a = -lt3 * q_log_b
     end if
+    q_log_b = -q_log_b - 1.0 ! This is what's interesting later
 
-    v0s = v0 + ps * p * (t3t**ns)
+!{ $\beta_e = 10^{-4} \frac{h}k c\, e_l$. $\beta_v = \frac{h}k \nu_{0_s}$.
+!  $\frac{\partial \beta_v}{\partial T} =
+!    \frac{h}k \frac{\partial \nu_{0_s}}{\partial T}$.
 
     betae = el / boltzcm
     betav = v0s / boltzmhz
-    Wd = v0s * Dsqrt(t/m) * dc
-    x1 = sqrtln2 / Wd
-    y = x1 * w * p * (t3t**n)
-    expn = EXP(-betav*onedt)
-    expd = EXP(-betav*oned300)
-    slabs1 = i2abs * p * 10.0**(i - Q_Log + loge *  betae * (oned300-onedt)) &
-         & * (1.0_rp + expn) / (t * Wd * (1.0_rp - expd))
-    dx1_dv0 = 0.0_rp
-    dy_dv0 = 0.0_rp
-    dslabs1_dv0 = -slabs1 * (expn / (t * (1.0_rp + expn)) + expd / (300.0_rp &
-             &  * (1.0_rp - expd))) / boltzmhz
+    dBetav_dT = dv0s_dT / boltzmhz
 
-  end subroutine Slabs_prep_wder
+!{ Write {\tt slabs1} $= \frac{I_2 \, p \, 10^{i - a - b \log_{10} T
+!   + \frac{\beta_e}{\ln 10}\left(\frac1{300}-\frac1T\right)}
+!      (1+e^{-\frac{\beta_v}T})}
+!   {T \omega_d \left(1 - e^{\frac{\beta_v}{300}}\right)}$
+!  as $S = f \frac{T^{-b-1} e^{-\frac{\beta_e}T} (1+G)}
+!                                    {\omega_d (1-H)}$, where
+!  $f = I_2 \, p \, e^{(i-a) \ln 10 + \frac{\beta_e}{300}}$,
+!  $G = e^{-\frac{\beta_v}T}$ and $H = e^{-\frac{\beta_v}{300}}$.  Then
+!  $\frac1S \frac{\partial S}{\partial T} =
+!    \frac1T \left( -b -1 -G_1 \frac{\partial \beta_v}{\partial T} +
+!     \frac1T \left[ \beta_e + G_1 \beta_v \right ] \right )
+!    - \frac1{\omega_d}\frac{\partial \omega_d}{\partial T}
+!    - \frac{H_1}{300} \frac{\partial \beta_v}{\partial T}$, where
+!  $G_1 = \frac{G}{1+G}$ and $H_1 = \frac{H}{1-H}$.
+
+    expd = EXP(-betav*oned300) ! H
+    expn = EXP(-betav*onedt)   ! G
+    z1 = 1.0 + expn            ! 1 + G
+    z2 = 1.0 - expd            ! 1 - H
+
+    ! This is rearranged to reduce the number of references to "exp".
+    slabs1 = i2abs * p * z1 / ( wd * z2 ) * &
+      & exp((i-q_log_a)*ln10 + betae*(oned300 -onedt) + q_log_b * log_t )
+
+    z1 = expn / z1             ! G1
+    z2 = oned300 * expd / z2   ! H1 / 300
+    ! 1/slabs1 dslabs1/dT:
+    dslabs1_dT = onedt * ( q_log_b - z1 * dBetav_dT + &
+      & onedt * ( betae + z1 * betav ) ) + &
+      & dWd_dT - z2 * dbetav_dT ! Remember dWd_dT is really -dWd_dT/Wd
+
+!{ $\frac{\partial S}{\partial \nu_0} =
+!   -S \left( \frac{G_1}T + \frac{H_1}{300} \right) \frac{h}k$.
+
+    dslabs1_dv0 = -slabs1 * (z1 * onedt + z2) / boltzmhz
+
+  end subroutine Slabs_prep_dT
+
+!{ \newpage
 
   ! -----------------------------------------  Slabs_Prep_Arrays   -----
   subroutine Slabs_Prep_Arrays ( molecule, nl, t, p, mass, Qlog, Catalog, &
@@ -1133,7 +1556,7 @@ contains
   subroutine Get_GL_Slabs_Arrays ( Catalog, P_path, T_path, Vel_z, GL_slabs, &
                              &     Do_1D, t_der_flags )
 
-    use Units, only: SpeedOfLight
+    use Physics, only: SpeedOfLight
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
 
     type(Catalog_T), dimension(:), intent(in) :: Catalog
