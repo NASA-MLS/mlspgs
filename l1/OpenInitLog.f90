@@ -38,6 +38,7 @@ CONTAINS
     USE L0_sci_tbls, ONLY: InitSciPointers
     USE EngTbls, ONLY: Load_Eng_tbls, Eng_tbl, maxtlm
     USE MLSL1Common, ONLY: L1BFileInfo
+    USE THzUtils, ONLY: LLO_Label
 
     CHARACTER (LEN=132) :: PhysicalFilename
 
@@ -152,6 +153,8 @@ CONTAINS
 
     WRITE (L1BFileInfo%EngId) maxtlm
     WRITE (L1BFileInfo%EngId) eng_tbl%mnemonic
+
+    WRITE (L1BFileInfo%EngId) LLO_Label   ! Laser LO Labels
 
 !! Open L0 files:
 
@@ -275,6 +278,9 @@ END MODULE OpenInitLog
 !=============================================================================
 
 ! $Log$
+! Revision 2.3  2003/09/15 17:15:53  perun
+! Version 1.3 commit
+!
 ! Revision 2.2  2003/08/15 14:25:04  perun
 ! Version 1.2 commit
 !
