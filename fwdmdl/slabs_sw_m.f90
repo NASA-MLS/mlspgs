@@ -1378,12 +1378,14 @@ contains
 
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
-    print *, ModuleName(1:1)
   end function not_used_here
 
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.36  2004/08/05 20:59:32  vsnyder
+! Don't do any calculations for gl_slabs with no lines
+!
 ! Revision 2.35  2004/05/11 02:52:43  vsnyder
 ! Remove USE for Pi, which isn't referenced
 !
