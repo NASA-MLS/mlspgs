@@ -3,7 +3,7 @@ module TREE_WALKER
 ! Traverse the tree output by the parser and checked by the tree checker.
 ! Perform the actions of the MLS L2 processing in the order indicated.
 
-! use Test_Parse_Signals_m, only: Test_Parse_Signals ! Uncomment to test Parse_Signals
+  use Test_Parse_Signals_m, only: Test_Parse_Signals ! Uncomment to test Parse_Signals
   use Construct, only: MLSL2Construct, MLSL2DeConstruct
   use DUMPER, only: DUMP
   use FILL, only: MLSL2Fill
@@ -31,7 +31,7 @@ module TREE_WALKER
   use RetrievalModule, only: Retrieve
   use ScanDivide, only: DestroyChunkDatabase, ScanAndDivide
   use SpectroscopyCatalog_m, only: Spectroscopy
-  use TOGGLES, only: GEN, LEVELS, TOGGLE
+  use TOGGLES, only: EMIT, GEN, LEVELS, TOGGLE
   use TRACE_M, only: DEPTH, TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATION, NSONS, SUBTREE
   use TREE_TYPES ! Everything, especially everything beginning with N_
@@ -105,7 +105,7 @@ contains ! ====     Public Procedures     ==============================
           & fmc, fmi, tfmi ) !??? This line is temporary for l2load
       case ( z_mlsSignals )
         call MLSSignals ( son, field_indices )
-!       call test_parse_signals  ! Uncomment this to test Parse_Signals
+        if ( toggle(emit) ) call test_parse_signals
       case ( z_spectroscopy )
         call spectroscopy ( son, lit_indices )
       case ( z_readapriori )
@@ -168,6 +168,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.27  2001/04/04 02:15:12  vsnyder
+! Add Spectroscopy section
+!
 ! Revision 2.26  2001/04/03 20:50:45  pwagner
 ! Added anText to hold PCF file contents
 !
