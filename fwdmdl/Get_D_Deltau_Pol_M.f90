@@ -21,7 +21,7 @@ contains
   subroutine Get_D_Deltau_Pol_DF ( CT, STCP, STSP, indices_c, z_path_c, Grids_f, &
                &  beta_path_pol, eta_zxp_f, do_calc_f, sps_path, Del_S, &
                &  incoptdepth, ref_cor, &
-               &  t_script, d_delta_df, D_Deltau_Pol_DF  )
+               &  d_delta_df, D_Deltau_Pol_DF  )
 
     use DExdT_m, only: dExdT
     use LOAD_SPS_DATA_M, ONLY: GRIDS_T
@@ -41,7 +41,7 @@ contains
     integer(ip), intent(in) :: indices_c(:) ! coarse grid indicies
     real(rp), intent(in) :: z_path_c(:)      ! -log(P) on main grid.
     type (Grids_T), intent(in) :: Grids_f    ! All the coordinates
-    real(rp), intent(in) :: beta_path_pol(:,:,:) ! -1:1 x path x species.
+    complex(rp), intent(in) :: beta_path_pol(:,:,:) ! -1:1 x path x species.
 !                                              cross section for each species
 !                                              on coarse grid.
     real(rp), intent(in) :: eta_zxp_f(:,:)   ! fine path x sve
@@ -57,10 +57,9 @@ contains
       !                                       optical depth.  2 x 2 x path
     real(rp), intent(in) :: Ref_cor(:)      ! refracted to unrefracted path
     !                                         length ratios.
-    real(rp), intent(in) :: t_script(:)      ! differential temperatures (K).
     real(rp), intent(in) :: d_delta_df(:,:)  ! derivative of delta wrt
 !                                              mixing ratio state vector
-!                                              element. (K)
+!                                              element.
 
 ! Outputs
 
@@ -464,6 +463,9 @@ contains
 end module Get_D_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.11  2003/08/15 20:29:26  vsnyder
+! Implement polarized VMR derivatives
+!
 ! Revision 2.10  2003/08/15 18:50:22  vsnyder
 ! Preparing the way for polarized vmr derivatives
 !
