@@ -446,26 +446,28 @@ contains ! =====     Public Procedures     =============================
               end select
 
               ! Now do the interpolation
-              i = 1
+              !$OMP PARALLEL DO private ( i, lower, upper, chan, doElement )
               do mif = 1, noMIFs
+                i = ( mif - 1 ) * noChans + 1
                 lower = (mifPointingsLower(mif)-1)*noChans + 1
                 upper = (mifPointingsUpper(mif)-1)*noChans + 1
-                  do chan = 1, noChans
-                    doElement = doChannel(chan)
-                    if ( doElement .and. associated ( radiance%mask ) ) &
-                      & doElement = iand ( ichar ( radiance%mask(i,maf)), m_linAlg ) == 0
-                    if ( doElement ) then
-                      jBlock%values ( i , : ) = &
-                        & jBlock%values ( i , : ) + &
-                        &   thisRatio(chan) * ( &
-                        &     lowerWeight(mif) * kBit( lower, : ) + &
-                        &     upperWeight(mif) * kBit( upper, : ) )
-                    end if
-                    i = i + 1
-                    lower = lower + 1
-                    upper = upper + 1
-                  end do
+                do chan = 1, noChans
+                  doElement = doChannel(chan)
+                  if ( doElement .and. associated ( radiance%mask ) ) &
+                    & doElement = iand ( ichar ( radiance%mask(i,maf)), m_linAlg ) == 0
+                  if ( doElement ) then
+                    jBlock%values ( i , : ) = &
+                      & jBlock%values ( i , : ) + &
+                      &   thisRatio(chan) * ( &
+                      &     lowerWeight(mif) * kBit( lower, : ) + &
+                      &     upperWeight(mif) * kBit( upper, : ) )
+                  end if
+                  i = i + 1
+                  lower = lower + 1
+                  upper = upper + 1
+                end do
               end do
+              !$OMP END PARALLEL DO
 
               if ( any ( l2pcBlock%kind == &
                 & (/ M_Column_Sparse, M_Banded /) ) ) &
@@ -995,6 +997,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.38  2003/02/17 00:33:41  livesey
+! Added deallocation of possible/cost to fix memory leak.
+!
 ! Revision 2.37  2003/02/06 01:13:28  livesey
 ! Added the dump stuff
 !
