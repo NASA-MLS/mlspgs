@@ -104,8 +104,6 @@ contains ! =====     Public Procedures     =============================
     integer :: ifl1
     integer :: L1FileHandle, L1_Version
     character (LEN=132) :: L1physicalFilename
-    integer :: nomenUnit
-    integer :: Nomen_Version
     integer :: returnStatus
     integer :: sd_id
     integer :: STATUS ! From allocate
@@ -365,6 +363,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.24  2001/03/28 19:07:59  vsnyder
+! Finish removing use of MLSSignalNomenclature
+!
 ! Revision 2.23  2001/03/28 19:07:08  vsnyder
 ! Remove use of MLSSignalNomenclature
 !
