@@ -112,6 +112,7 @@ contains ! =====     Public Procedures     =============================
     ! Now we do the full forward model
     thisConfig = fmConf
     thisConfig%fwmType = l_full
+    thisConfig%forceFoldedOutput = .true.
     thisConfig%forceSidebandFraction = .true.
     thisConfig%signals%sideband = - fmConf%linearSideband
     thisConfig%sidebandStart = - fmConf%linearSideband
@@ -141,6 +142,9 @@ contains ! =====     Public Procedures     =============================
 end module HybridForwardModel_m
 
 ! $Log$
+! Revision 2.5  2003/10/29 00:44:09  livesey
+! Added forceFoldedOuptut to full forward model call.
+!
 ! Revision 2.4  2003/10/28 23:44:25  livesey
 ! Various deficiencies and bugs fixed.
 !
