@@ -1023,17 +1023,17 @@ CONTAINS
 !
  Real(rp), PARAMETER :: c = 299792.4583_rp     ! Speed of Light Km./Sec.
 !
- Integer :: nl,i,j,no_sps,spectag
+ Integer :: nl,i,j,n_sps,spectag
 !
  Real(rp) :: mass, Vel_z_correction, Qlog(3)
 !
 ! Begin code:
 !
-   no_sps = Size(Catalog)
+   n_sps = Size(Catalog)
 !
    Vel_z_correction = 1.0_rp - vel_z / c
 !
-   DO i = 1, no_sps
+   DO i = 1, n_sps
 !
      Spectag = Catalog(i)%spec_tag
      mass = Real(Spectag) / 1000.0_rp
@@ -1065,6 +1065,9 @@ CONTAINS
 
 End module SLABS_SW_M
 ! $Log$
+! Revision 2.3  2001/11/30 01:18:11  zvi
+! Correcting a minor bug
+!
 ! Revision 2.1  2001/10/17 22:01:00  zvi
 ! Eliminate computation of: ns
 !

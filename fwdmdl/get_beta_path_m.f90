@@ -7,20 +7,26 @@ Module GET_BETA_PATH_M
   private
   PUBLIC :: get_beta_path
 
+! *** Beta group type declaration:
+  type, public :: beta_group_T
+    integer :: n_elements
+    integer, pointer  :: cat_index(:)
+    real(rp), pointer :: ratio(:)
+  end type beta_group_T
+
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter, private :: IdParm = &
-  "$Id$"
-  character (len=len(idParm)) :: Id = IdParm
-  character (len=*), parameter, private :: ModuleName= &
-  "$RCSfile$"
+  CHARACTER (LEN=256) :: Id = &
+       "$Id$"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+       "$RCSfile$"
 !---------------------------------------------------------------------------
 contains
 ! This is a generic form of get coarse beta path. We really don't need
 ! separate versions of these.
 !
- SUBROUTINE get_beta_path(frq,p_path,t_path,Catalog,gl_slabs,path_inds,      &
-        &   beta_path,gl_slabs_m,t_path_m,gl_slabs_p,t_path_p,dbeta_dt_path, &
-        &   dbeta_dw_path,dbeta_dn_path,dbeta_dv_path)
+ SUBROUTINE get_beta_path(frq,p_path,t_path,Catalog,beta_group,gl_slabs, &
+        &   path_inds,beta_path,gl_slabs_m,t_path_m,gl_slabs_p,t_path_p, &
+        &   dbeta_dt_path,dbeta_dw_path,dbeta_dn_path,dbeta_dv_path)
 
 !  ===============================================================
 !  Declaration of variables for sub-program: get_coarse_beta_path
@@ -33,6 +39,8 @@ contains
   Type(Catalog_T), INTENT(IN) :: Catalog(:)
   Type (slabs_struct), DIMENSION(:,:), POINTER :: gl_slabs
   INTEGER(ip), INTENT(in) :: path_inds(:) ! indicies for reading gl_slabs
+
+  type (beta_group_T), dimension(:), pointer :: beta_group
 !
 ! Another clumsy feature of f90
 ! Optional inputs:
@@ -58,61 +66,88 @@ contains
 !
 ! Local varibles..
 !
-  Integer(ip) :: n_sps, n_path, i, j, k, m, nl, no_of_lines, Spectag
-  REAL(rp) :: bb, vp, v0, vm, vn2, t, tm, tp, bp, bm
+  Integer(ip) :: i, j, k, m, n, nl, ib, nbe, Spectag, no_of_lines, &
+            &    no_mol, n_path
+  REAL(rp) :: ratio, bb, vp, v0, vm, t, tm, tp, bp, bm
   REAL(rp), allocatable, dimension(:) :: LineWidth
 !
 ! begin the code
 !
-  n_sps = Size(Catalog)
+  no_mol = Size(beta_group)
   n_path = SIZE(path_inds)
 !
-! no derivative call
+  beta_path = 0.0
+  if(PRESENT(dbeta_dw_path)) dbeta_dw_path = 0.0
+  if(PRESENT(dbeta_dn_path)) dbeta_dn_path = 0.0
+  if(PRESENT(dbeta_dv_path)) dbeta_dv_path = 0.0
 !
-  DO i = 1, n_sps
-    Spectag = Catalog(i)%Spec_Tag
-    no_of_lines = gl_slabs(1,i)%no_lines
-    Allocate(LineWidth(no_of_lines))
-    do k = 1, no_of_lines
-      m = Catalog(i)%Lines(k)
-      LineWidth(k) = Lines(m)%W
-    end do
-    DO j = 1, n_path
-      k = path_inds(j)
-      CALL create_beta(Spectag,Catalog(i)%continuum,p_path(k),t_path(k), &
-        &  Frq,no_of_lines,LineWidth,gl_slabs(k,i)%v0s,gl_slabs(k,i)%x1, &
-        &  gl_slabs(k,i)%y,gl_slabs(k,i)%yi,gl_slabs(k,i)%slabs1,bb,     &
-        &  gl_slabs(k,i)%dslabs1_dv0,DBETA_DW=v0,DBETA_DN=vp,DBETA_DV=vm)
-      beta_path(j,i) = bb
-      if(PRESENT(dbeta_dw_path)) dbeta_dw_path(j,i) = v0
-      if(PRESENT(dbeta_dn_path)) dbeta_dn_path(j,i) = vp
-      if(PRESENT(dbeta_dv_path)) dbeta_dv_path(j,i) = vm
-    END DO
-    DEAllocate(LineWidth)
-  ENDDO
-!
-  IF(PRESENT(dbeta_dt_path)) THEN
-!
-    DO i = 1 , n_sps
-      Spectag = Catalog(i)%Spec_Tag
-      no_of_lines = gl_slabs_m(1,i)%no_lines
+  DO i = 1, no_mol
+    nbe = beta_group(i)%n_elements
+    do n = 1, nbe
+      ratio = beta_group(i)%ratio(n)
+      ib = beta_group(i)%cat_index(n)
+      Spectag = Catalog(ib)%Spec_Tag
+      no_of_lines = gl_slabs(1,ib)%no_lines
       Allocate(LineWidth(no_of_lines))
       do k = 1, no_of_lines
-        m = Catalog(i)%Lines(k)
+        m = Catalog(ib)%Lines(k)
         LineWidth(k) = Lines(m)%W
+      end do
+      DO j = 1, n_path
+        k = path_inds(j)
+        CALL create_beta(Spectag,Catalog(ib)%continuum,p_path(k),t_path(k), &
+          &  Frq,no_of_lines,LineWidth,gl_slabs(k,ib)%v0s,gl_slabs(k,ib)%x1,&
+          &  gl_slabs(k,ib)%y,gl_slabs(k,ib)%yi,gl_slabs(k,ib)%slabs1,bb,   &
+          &  gl_slabs(k,ib)%dslabs1_dv0,DBETA_DW=v0,DBETA_DN=vp,DBETA_DV=vm)
+        beta_path(j,i) = beta_path(j,i) + ratio * bb
+        if(PRESENT(dbeta_dw_path)) &
+          &  dbeta_dw_path(j,i) = dbeta_dw_path(j,i) + ratio * v0
+        if(PRESENT(dbeta_dn_path)) &
+          &  dbeta_dn_path(j,i) = dbeta_dn_path(j,i) + ratio * vp
+        if(PRESENT(dbeta_dv_path)) &
+          &  dbeta_dv_path(j,i) = dbeta_dv_path(j,i) + ratio * vm
+      END DO
+      DEAllocate(LineWidth)
+    end do
+  END DO
+!
+  IF(PRESENT(dbeta_dt_path)) THEN
+
+    dbeta_dt_path = 0.0
+!
+    DO i = 1, no_mol
+      bm = 0.0_rp
+      bp = 0.0_rp
+      nbe = beta_group(i)%n_elements
+      do n = 1, nbe
+        ratio = beta_group(i)%ratio(n)
+        ib = beta_group(i)%cat_index(n)
+        Spectag = Catalog(ib)%Spec_Tag
+        no_of_lines = gl_slabs_m(1,ib)%no_lines
+        Allocate(LineWidth(no_of_lines))
+        do k = 1, no_of_lines
+          m = Catalog(ib)%Lines(k)
+          LineWidth(k) = Lines(m)%W
+        end do
+        DO j = 1 , n_path
+          k = path_inds(j)
+          tm = t_path_m(k)
+          CALL create_beta(Spectag,Catalog(ib)%continuum,p_path(k),tm,Frq,    &
+          &    no_of_lines,LineWidth,gl_slabs_m(k,ib)%v0s,gl_slabs_m(k,ib)%x1,&
+          &    gl_slabs_m(k,ib)%y,gl_slabs_m(k,ib)%yi,gl_slabs_m(k,ib)%slabs1,&
+          &    vm,gl_slabs_m(k,ib)%dslabs1_dv0)
+          bm = bm + vm * ratio
+          tp = t_path_p(k)
+          CALL create_beta(Spectag,Catalog(ib)%continuum,p_path(k),tp,Frq,    &
+          &    no_of_lines,LineWidth,gl_slabs_m(k,ib)%v0s,gl_slabs_p(k,ib)%x1,&
+          &    gl_slabs_p(k,ib)%y,gl_slabs_p(k,ib)%yi,gl_slabs_p(k,ib)%slabs1,&
+          &    vp,gl_slabs_p(k,ib)%dslabs1_dv0)
+          bp = bp + vp * ratio
+        END DO
+        DeAllocate(LineWidth)
       end do
       DO j = 1 , n_path
         k = path_inds(j)
-        tm = t_path_m(k)
-        CALL create_beta(Spectag,Catalog(i)%continuum,p_path(k),tm,Frq,   &
-        &    no_of_lines,LineWidth,gl_slabs_m(k,i)%v0s,gl_slabs_m(k,i)%x1,&
-        &    gl_slabs_m(k,i)%y,gl_slabs_m(k,i)%yi,gl_slabs_m(k,i)%slabs1, &
-        &    bm,gl_slabs_m(k,i)%dslabs1_dv0)
-        tp = t_path_p(k)
-        CALL create_beta(Spectag,Catalog(i)%continuum,p_path(k),tp,Frq,   &
-        &    no_of_lines,LineWidth,gl_slabs_m(k,i)%v0s,gl_slabs_p(k,i)%x1,&
-        &    gl_slabs_p(k,i)%y,gl_slabs_p(k,i)%yi,gl_slabs_p(k,i)%slabs1, &
-        &    bp,gl_slabs_p(k,i)%dslabs1_dv0)
         t  = t_path(k)
         bb = beta_path(j,i)
         if ( bp > 0.0 .and. bb > 0.0 .and. bm > 0.0 ) then
@@ -137,8 +172,7 @@ contains
           vm = 0.0
         endif
         dbeta_dt_path(j,i) = (vp + 2.0 * v0 + vm) / 4.0  ! Weighted Average
-      ENDDO
-      DeAllocate(LineWidth)
+      END DO
     ENDDO
   ENDIF
 !
@@ -147,6 +181,9 @@ contains
 !----------------------------------------------------------------------
 End module GET_BETA_PATH_M
 ! $Log$
+! Revision 2.5  2001/11/15 01:22:01  zvi
+! Remove Extiction debug
+!
 ! Revision 2.4  2001/11/10 00:46:40  zvi
 ! Adding the EXTINCTION capabilitis
 !

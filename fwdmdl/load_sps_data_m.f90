@@ -40,12 +40,14 @@ contains
 !-------------------------------------------------------------------
 
   subroutine load_sps_data(fwdModelIn, fwdModelExtra, molecules, radiometer, &
-        &    p_len, f_len, h2o_ind, ext_ind, lin_log, sps_values, Grids_f,   &
-        &    Grids_dw, Grids_dn, Grids_dv, temp, MyCatalog)
+        &    mol_cat_index, p_len, f_len, h2o_ind, ext_ind, lin_log, &
+        &    sps_values, Grids_f, Grids_dw, Grids_dn, Grids_dv, temp, &
+        &    MyCatalog)
 
     type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
     integer, intent(in)  :: MOLECULES(:)
     integer, intent(in)  :: RADIOMETER
+    integer, intent(in)  :: MOL_CAT_INDEX(:)
     integer, intent(out) :: F_LEN
     integer, intent(out) :: P_LEN
     integer, intent(out) :: H2O_IND
@@ -72,45 +74,46 @@ contains
 
     Character(len=1) :: CA
     integer :: i,j,k,l,m,n,r,s,kz,kp,kf,mf,Spectag,j_dw,j_dn,l_dn,j_dv, &
-           &   l_dw,l_dv,n_f_phi,n_f_zet,n_f_frq,n_sps,s_dw,s_dn,s_dv
+           &   l_dw,l_dv,n_f_phi,n_f_zet,n_f_frq,no_mol,s_dw,s_dn,s_dv
 
     integer :: accum_z_dw,accum_p_dw,accum_z_dn,accum_p_dn,accum_z_dv, &
            &   accum_p_dv,accum_f_dw,accum_f_dn,accum_f_dv
 
     type (VectorValue_T), pointer :: F             ! An arbitrary species
 
-    Integer :: mp, mz, jj
-    Real(r8) :: Tmp, Frq, P
-
+    Integer :: mp, mz, ii, jj, kk
+    Real(r8) :: Tmp, Frq, P, w, v
 !
     !******************* LOAD SPECIES DATA ************
 
-    n_sps = size ( molecules )
+    no_mol = size( mol_cat_index )
 
-    allocate ( Grids_f%no_z(n_sps), stat=j )
+    allocate ( Grids_f%no_z(no_mol), stat=j )
     if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//'Grids_f%no_z' )
-    allocate ( Grids_f%no_p(n_sps), stat=j )
+    allocate ( Grids_f%no_p(no_mol), stat=j )
     if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//'Grids_f%no_p' )
-    allocate ( Grids_f%no_f(n_sps), stat=j )
+    allocate ( Grids_f%no_f(no_mol), stat=j )
     if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//'Grids_f%no_f' )
 
-    call Allocate_test ( lin_log, n_sps, 'lin_log', ModuleName )
+    call Allocate_test ( lin_log, no_mol, 'lin_log', ModuleName )
 
     f_len = 0
     p_len = 0
     h2o_ind = 0
     ext_ind = 0
-    do i = 1 , n_sps
-      if ( molecules(i) == l_extinction ) then
+    do ii = 1, no_mol
+      i = mol_cat_index(ii)
+      kk = abs(molecules(i))
+      if ( kk == l_extinction ) then
         f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
           & quantityType=l_extinction, radiometer=radiometer )
-        ext_ind = i
+        ext_ind = ii
       else
         f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-          & quantityType=l_vmr, molecule=molecules(i) )
+          & quantityType=l_vmr, molecule=kk )
       endif
       kz = f%template%noSurfs
       kp = f%template%noInstances
@@ -121,12 +124,12 @@ contains
         mf = 1
         kf = f%template%noChans
       endif
-      Grids_f%no_f(i) = kf * mf
-      Grids_f%no_z(i) = kz
-      Grids_f%no_p(i) = kp
+      Grids_f%no_f(ii) = kf * mf
+      Grids_f%no_z(ii) = kz
+      Grids_f%no_p(ii) = kp
       p_len = p_len + kz * kp
       f_len = f_len + kz * kp * kf
-      if(spec_tags(molecules(i)) == 18003) h2o_ind = i
+      if(spec_tags(kk) == 18003) h2o_ind = ii
     end do
 
     call Allocate_test ( sps_values, f_len, 'sps_values', ModuleName )
@@ -153,13 +156,15 @@ contains
     l = 1
     s = 1
     f_len = 1
-    do i = 1 , n_sps
-      if ( molecules(i) == l_extinction ) then
+    do ii = 1, no_mol
+      i = mol_cat_index(ii)
+      kk = abs(molecules(i))
+      if ( kk == l_extinction ) then
         f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
           & quantityType=l_extinction, radiometer=radiometer )
       else
         f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-          & quantityType=l_vmr, molecule=molecules(i) )
+          & quantityType=l_vmr, molecule=kk )
       endif
       kz = f%template%noSurfs
       kp = f%template%noInstances
@@ -189,7 +194,7 @@ contains
 !
 ! ** ZEBUG - Simulate f%values for EXTINCTION, using the N2 function
 !
-      if(ext_ind == i) then
+      if(ext_ind == ii) then
         do mp = 1, kp
           jj = 0
           do mz = 1, kz
@@ -198,8 +203,10 @@ contains
             do mf = 1, kf
               jj = jj + 1
               Frq = f%template%frequencies(mf)
-              f%values(jj,mp) = &
-             &  0.8061 * abs_cs_n2_cont(MyCatalog(i)%continuum,Tmp,P,Frq)
+              v = 0.8061 * abs_cs_n2_cont(MyCatalog(i)%continuum,Tmp,P,Frq)
+              w = 1.0
+!             w = 1.0+0.1*(2*mf-3)
+              f%values(jj,mp) = w * v
             end do
           end do
         end do
@@ -209,18 +216,21 @@ contains
 !
       sps_values(f_len:r-1)=RESHAPE(f%values(1:kz*kf,1:kp),(/kz*kf*kp/))
       if (f%template%logBasis) then
-        lin_log(i) = .true.
+        lin_log(ii) = .true.
         sps_values(f_len:r-1) = LOG(sps_values(f_len:r-1))
       else
-        lin_log(i) = .false.
+        lin_log(ii) = .false.
       endif
+!
       j = k
       l = n
       s = m
       f_len = r
+!
     end do
+!
     f_len = f_len - 1
-    
+
 !
     !******************* LOAD SPECTRAL SPECIES DATA ****************
 !
@@ -228,37 +238,37 @@ contains
     if(j > -10000) return
 !
     if(index(WNV,'W') > 0) then
-      allocate ( Grids_dw%no_z(n_sps), stat=j )
+      allocate ( Grids_dw%no_z(no_mol), stat=j )
       if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'Grids_dw%no_z' )
-      allocate ( Grids_dw%no_p(n_sps), stat=j )
+      allocate ( Grids_dw%no_p(no_mol), stat=j )
       if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'Grids_dw%no_p' )
-      allocate ( Grids_dw%no_f(n_sps), stat=j )
+      allocate ( Grids_dw%no_f(no_mol), stat=j )
       if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'Grids_dw%no_f' )
     endif
 !
     if(index(WNV,'N') > 0) then
-      allocate ( Grids_dn%no_z(n_sps), stat=j )
+      allocate ( Grids_dn%no_z(no_mol), stat=j )
       if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'Grids_dn%no_z' )
-      allocate ( Grids_dn%no_p(n_sps), stat=j )
+      allocate ( Grids_dn%no_p(no_mol), stat=j )
       if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'Grids_dn%no_p' )
-      allocate ( Grids_dn%no_f(n_sps), stat=j )
+      allocate ( Grids_dn%no_f(no_mol), stat=j )
       if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'Grids_dn%no_f' )
     endif
 !
     if(index(WNV,'V') > 0) then
-      allocate ( Grids_dv%no_z(n_sps), stat=j )
+      allocate ( Grids_dv%no_z(no_mol), stat=j )
       if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'Grids_dv%no_z' )
-      allocate ( Grids_dv%no_p(n_sps), stat=j )
+      allocate ( Grids_dv%no_p(no_mol), stat=j )
       if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'Grids_dv%no_p' )
-      allocate ( Grids_dv%no_f(n_sps), stat=j )
+      allocate ( Grids_dv%no_f(no_mol), stat=j )
       if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'Grids_dv%no_f' )
     endif
@@ -273,14 +283,16 @@ contains
     accum_p_dv = 0
     accum_f_dv = 0
 !
-    do i = 1, n_sps
+    do ii = 1, no_mol
       m = 0
-      Spectag = spec_tags(molecules(i))
+      i = mol_cat_index(ii)
+      kk = abs(molecules(i))
+      Spectag = spec_tags(kk)
       do
         m = m + 1
         !  *** if(Spect_Der(m)%Spectag == Spectag) exit
         if(m > -100) exit    ! ** ZEBUG
-        if(m == 3*n_sps) exit
+        if(m == 3*no_mol) exit
       end do
       !  *** if(Spect_Der(m)%Spectag /= Spectag) cycle
       CA = '@' ! *** Spect_Der(m)%type
@@ -289,23 +301,23 @@ contains
       kf = 0   ! Spect_Der(m)%no_frq_values
       select case ( CA )
         case ( 'W' )
-          Grids_dw%no_z(i) = kz
-          Grids_dw%no_p(i) = kp
-          Grids_dw%no_f(i) = kf
+          Grids_dw%no_z(ii) = kz
+          Grids_dw%no_p(ii) = kp
+          Grids_dw%no_f(ii) = kf
           accum_z_dw = accum_z_dw + kz
           accum_p_dw = accum_p_dw + kp
           accum_f_dw = accum_f_dw + kf
         case ( 'N' )
-          Grids_dn%no_z(i) = kz
-          Grids_dn%no_p(i) = kp
-          Grids_dn%no_f(i) = kf
+          Grids_dn%no_z(ii) = kz
+          Grids_dn%no_p(ii) = kp
+          Grids_dn%no_f(ii) = kf
           accum_z_dn = accum_z_dn + kz
           accum_p_dn = accum_p_dn + kp
           accum_f_dn = accum_f_dn + kf
         case ( 'V' )
-          Grids_dv%no_z(i) = kz
-          Grids_dv%no_p(i) = kp
-          Grids_dv%no_f(i) = kf
+          Grids_dv%no_z(ii) = kz
+          Grids_dv%no_p(ii) = kp
+          Grids_dv%no_f(ii) = kf
           accum_z_dv = accum_z_dv + kz
           accum_p_dv = accum_p_dv + kp
           accum_f_dv = accum_f_dv + kf
@@ -367,22 +379,24 @@ contains
     l_dv = 1
     s_dv = 1
 !
-    do i = 1, n_sps
+    do ii = 1, no_mol
       m = 0
-      Spectag = spec_tags(molecules(i))
+      i = mol_cat_index(ii)
+      kk = abs(molecules(i))
+      Spectag = spec_tags(kk)
       do
         m = m + 1
         !  *** if(Spect_Der(m)%Spectag == Spectag) exit
         if(m > -100) exit    ! ** ZEBUG
-        if(m == 3*n_sps) exit
+        if(m == 3*no_mol) exit
       end do
       !  *** if(Spect_Der(m)%Spectag /= Spectag) cycle
       CA = '@' ! *** Spect_Der(m)%type
       select case ( CA )
         case ( 'W' )
-          kz = Grids_dw%no_z(i)
-          kp = Grids_dw%no_p(i)
-          kf = Grids_dw%no_f(i)
+          kz = Grids_dw%no_z(ii)
+          kp = Grids_dw%no_p(ii)
+          kf = Grids_dw%no_f(ii)
           if(kp*kz*kf > 0) then
             k = j_dw + kp
             n = l_dw + kz
@@ -398,9 +412,9 @@ contains
             s_dw = j
           endif
         case ( 'N' )
-          kz = Grids_dn%no_z(i)
-          kp = Grids_dn%no_p(i)
-          kf = Grids_dn%no_f(i)
+          kz = Grids_dn%no_z(ii)
+          kp = Grids_dn%no_p(ii)
+          kf = Grids_dn%no_f(ii)
           if(kp*kz*kf > 0) then
             k = j_dn + kp
             n = l_dn + kz
@@ -416,9 +430,9 @@ contains
             s_dn = j
           endif
         case ( 'V' )
-          kz = Grids_dv%no_z(i)
-          kp = Grids_dv%no_p(i)
-          kf = Grids_dv%no_f(i)
+          kz = Grids_dv%no_z(ii)
+          kp = Grids_dv%no_p(ii)
+          kf = Grids_dv%no_f(ii)
           if(kp*kz*kf > 0) then
             k = j_dv + kp
             n = l_dv + kz
@@ -440,6 +454,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.5  2001/11/15 01:21:59  zvi
+! Extiction debug fix
+!
 ! Revision 2.4  2001/11/10 00:46:40  zvi
 ! Adding the EXTINCTION capabilitis
 !
