@@ -2596,7 +2596,58 @@ contains ! =====     Public Procedures     =============================
   end subroutine OutputL2GP_attributes_hdf5
   !-------------------------------------
 
-  ! --------------------------------------------------------------------------
+  !----------------------------------------  SetL2GP_aliases  -----
+  subroutine SetL2GP_aliases(l2gp, l2FileHandle, swathName)
+
+  use HDFEOS5, only: HE5_SWATTACH, HE5_SWSETALIAS, HE5_SWDETACH
+  use SDPToolkit, only: PGS_S_SUCCESS
+    ! Arguments
+    integer, intent(IN) :: l2FileHandle ! From swopen
+    type (L2GPData_T), intent(INOUT) :: l2gp
+    character (LEN=*), optional, intent(IN) ::swathName!default->l2gp%swathName
+    
+    ! Brief description of subroutine
+    ! This subroutine creates an alias for each of the two data fields
+    ! TYPE2FIELDNAME and TYPE2PRECISIONNAME
+    ! Local variables
+    character (len=132) :: name     ! Either swathName or l2gp%name
+    character(len=*), parameter :: TYPE2FIELDNAME = 'L2gpValue'
+    character(len=*), parameter :: TYPE2PRECISIONNAME = 'L2gpPrecision'
+    integer :: returnStatus
+    integer :: sw_id
+    ! Executable
+    if (present(swathName)) then
+       name=swathName
+    else
+       name=l2gp%name
+    endif
+    sw_id = he5_swattach(l2FileHandle, trim(name))
+    if ( sw_id < 1 ) then 
+      call MLSMessage ( MLSMSG_Error, ModuleName, & 
+        & "Error in attaching swath for setting alias." )
+    end if
+    returnStatus = he5_SWsetalias(sw_id, TYPE2FIELDNAME, trim(name))
+    if ( returnStatus /= PGS_S_SUCCESS ) then 
+      call MLSMessage ( MLSMSG_Error, ModuleName, & 
+        & "Error in setting alias from " // TYPE2FIELDNAME // &
+          & ' to ' // trim(name) )
+    end if
+    returnStatus = he5_SWsetalias(sw_id, TYPE2PRECISIONNAME, &
+     & trim(name) // ' Precision')
+    if ( returnStatus /= PGS_S_SUCCESS ) then 
+      call MLSMessage ( MLSMSG_Error, ModuleName, & 
+        & "Error in setting alias from " // TYPE2PRECISIONNAME // &
+          & ' to ' // trim(name) // ' Precision' )
+    end if
+    returnStatus = he5_SWdetach(sw_id)
+    if ( returnStatus /= PGS_S_SUCCESS ) then 
+      call MLSMessage ( MLSMSG_Error, ModuleName, & 
+        & "Error in detaching swath for setting alias." )
+    end if
+  !-------------------------------------
+  end subroutine SetL2GP_aliases
+  !-------------------------------------
+
 
   ! This subroutine is an amalgamation of the last three
   ! Should be renamed CreateAndWriteL2GPData
@@ -2636,6 +2687,7 @@ contains ! =====     Public Procedures     =============================
       call OutputL2GP_writeData_hdf5 (l2gp, l2FileHandle, swathName)
       ! print *, 'Writing attributes'
       call OutputL2GP_attributes_hdf5 (l2gp, l2FileHandle, swathName)
+      call SetL2GP_aliases (l2gp, l2FileHandle, swathName)
     endif
 
   end subroutine WriteL2GPData
@@ -3016,6 +3068,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.59  2003/04/02 23:53:56  pwagner
+! Checks for FILENOTFOUND
+!
 ! Revision 2.58  2003/03/07 00:40:23  pwagner
 ! Call HE5_SWsetfill; removed some spaces from attribute names
 !
