@@ -297,7 +297,7 @@ contains ! ================================ FullForwardModel routine ======
     INTEGER(ip) :: no_sv_p_t ! number of phi basis for temperature
     INTEGER(ip) :: beg_ind, end_ind, beg_ind_z, end_ind_z
     INTEGER(ip) :: beg_ind_p, end_ind_p
-    REAL(rp) :: cp2, sp2
+    REAL(rp) :: cp2, sp2, surf_angle(1)
     REAL(rp) :: earthradc ! minor axis of orbit plane projected Earth ellipse
 
     INTEGER(ip), DIMENSION(:), pointer :: rec_tan_inds ! recommended tangent
@@ -316,8 +316,15 @@ contains ! ================================ FullForwardModel routine ======
     REAL(rp), DIMENSION(:), POINTER :: tan
     REAL(rp), DIMENSION(:,:,:), POINTER :: dxdt_tan
     REAL(rp), DIMENSION(:,:,:), POINTER :: d2xdxdt_tan
+    REAL(rp), DIMENSION(:,:,:), POINTER :: dxdt_surface
+    REAL(rp), DIMENSION(:,:,:), POINTER :: d2xdxdt_surface
     REAL(rp), DIMENSION(:,:,:), POINTER :: ddhidhidtl0
     REAL(rp), DIMENSION(:,:,:), POINTER :: tan_d2h_dhdt
+! remove when debug is done    
+    REAL(rp), DIMENSION(:,:), POINTER :: drad_dt_out
+    REAL(rp), DIMENSION(:,:), POINTER :: test1
+    REAL(rp), DIMENSION(:,:), POINTER :: test2
+    REAL(rp), DIMENSION(:,:), POINTER :: test3
 ! bills debug
     integer(i4) :: lu_debug
 ! THIS VARIABLE REPLACES fwdModelConf%tangentGrid%surfs
@@ -417,7 +424,8 @@ contains ! ================================ FullForwardModel routine ======
       & k_temp_frq, ptg_angles, radiances, sps_path, tan_dh_dt, tan_temp, &
       & t_glgrid, dh_dt_glgrid, skip_eta_frq )
     NULLIFY(tan_press, tan_phi, est_scgeocalt, tan_chi_out, &
-      & dxdt_tan, d2xdxdt_tan, ddhidhidtl0, tan_d2h_dhdt) 
+      & dxdt_tan, d2xdxdt_tan, ddhidhidtl0, tan_d2h_dhdt, drad_dt_out, &
+      & dxdt_surface, d2xdxdt_surface, test1, test2, test3) 
     nullify ( lineFlag )
 
     ! Work out what we've been asked to do -----------------------------------
@@ -758,7 +766,7 @@ contains ! ================================ FullForwardModel routine ======
       &       * grids_f%no_f(1:h2o_ind))
       beg_ind = end_ind - grids_f%no_z(h2o_ind)*grids_f%no_p(h2o_ind) &
       &       * grids_f%no_f(h2o_ind) + 1
-      CALL get_chi_out(ptan%values(:,maf), phitan%values(:,maf), &
+      CALL get_chi_out(ptan%values(:,maf), deg2rad*phitan%values(:,maf), &
       & 0.001_rp*scGeocAlt%values(:,maf),temp%template%surfs(:,1), &
       & temp%template%phi(1,windowStart:windowFinish)*Deg2Rad, &
       & RESHAPE(temp%values(:,windowStart:windowFinish), &
@@ -771,7 +779,7 @@ contains ! ================================ FullForwardModel routine ======
       & h2o_phi_basis = grids_f%phi_basis(beg_ind_p:end_ind_p), &
       & h2o_coeffs = sps_values(beg_ind:end_ind), lin_log = lin_log(h2o_ind))
     ELSE IF (h2o_ind == 0 .and. .not. FwdModelConf%temp_der) THEN
-      CALL get_chi_out(ptan%values(:,maf), phitan%values(:,maf), &
+      CALL get_chi_out(ptan%values(:,maf), deg2rad*phitan%values(:,maf), &
       & 0.001_rp*scGeocAlt%values(:,maf),temp%template%surfs(:,1), &
       & temp%template%phi(1,windowStart:windowFinish)*Deg2Rad, &
       & RESHAPE(temp%values(:,windowStart:windowFinish), &
@@ -793,7 +801,7 @@ contains ! ================================ FullForwardModel routine ======
       &       * grids_f%no_f(1:h2o_ind))
       beg_ind = end_ind - grids_f%no_z(h2o_ind)*grids_f%no_p(h2o_ind) &
       &       * grids_f%no_f(h2o_ind) + 1
-      CALL get_chi_out(ptan%values(:,maf), phitan%values(:,maf), &
+      CALL get_chi_out(ptan%values(:,maf), deg2rad*phitan%values(:,maf), &
       & 0.001_rp*scGeocAlt%values(:,maf),temp%template%surfs(:,1), &
       & temp%template%phi(1,windowStart:windowFinish)*Deg2Rad, &
       & RESHAPE(temp%values(:,windowStart:windowFinish), &
@@ -811,7 +819,7 @@ contains ! ================================ FullForwardModel routine ======
       & no_sv_p_t,temp%template%nosurfs,'dxdt_tan',ModuleName ) 
       CALL ALLOCATE_TEST(d2xdxdt_tan,ptan%template%nosurfs, &
       & no_sv_p_t,temp%template%nosurfs,'d2xdxdt_tan',ModuleName ) 
-      CALL get_chi_out(ptan%values(:,maf), phitan%values(:,maf), &
+      CALL get_chi_out(ptan%values(:,maf), deg2rad*phitan%values(:,maf), &
       & 0.001_rp*scGeocAlt%values(:,maf),temp%template%surfs(:,1), &
       & temp%template%phi(1,windowStart:windowFinish)*Deg2Rad, &
       & RESHAPE(temp%values(:,windowStart:windowFinish), &
@@ -890,6 +898,7 @@ contains ! ================================ FullForwardModel routine ======
     CALL make_z_grid(z_all,z_psig,rec_tan_inds)
     CALL Deallocate_test(z_all,'z_all',ModuleName)
 !
+! note that z_psig(1) is the designated surface
     Nlvl = SIZE(z_psig)
     maxVert = (Nlvl-1) * Ng + Nlvl
 
@@ -976,6 +985,48 @@ contains ! ================================ FullForwardModel routine ======
     & tan_press(j+1:no_tan_hts), tan_phi(j+1:no_tan_hts),METHOD = 'L')
     CALL interpolatevalues(ptan%values(:,maf), scgeocalt%values(:,maf), &
     & tan_press(j+1:no_tan_hts), est_scgeocalt(j+1:no_tan_hts), METHOD = 'L')
+! This is a lazy way to get the surface angle
+    IF (FwdModelConf%temp_der) THEN
+      CALL allocate_test(dxdt_surface,1,no_sv_p_t,n_t_zeta, &
+      & 'dxdt_surface',modulename)
+      CALL allocate_test(d2xdxdt_surface,1,no_sv_p_t,n_t_zeta, &
+      & 'd2xdxdt_surface',modulename)
+      IF (h2o_ind > 0) THEN
+        end_ind_z = SUM(grids_f%no_z(1:h2o_ind))
+        beg_ind_z = end_ind_z - grids_f%no_z(h2o_ind) + 1
+        end_ind_p = SUM(grids_f%no_p(1:h2o_ind))
+        beg_ind_p = end_ind_p - grids_f%no_p(h2o_ind) + 1
+        end_ind = SUM(grids_f%no_z(1:h2o_ind)*grids_f%no_p(1:h2o_ind)  &
+        &       * grids_f%no_f(1:h2o_ind))
+        beg_ind = end_ind - grids_f%no_z(h2o_ind)*grids_f%no_p(h2o_ind) &
+        &       * grids_f%no_f(h2o_ind) + 1
+        CALL get_chi_out(tan_press(1:1),deg2rad*tan_phi(1:1), &
+        & 0.001_rp*est_scgeocalt(1:1), temp%template%surfs(:,1), &
+        & temp%template%phi(1,windowStart:windowFinish)*Deg2Rad, &
+        & RESHAPE(temp%values(:,windowStart:windowFinish), &
+        & (/temp%template%nosurfs * no_sv_p_t/)), &
+        & SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t), &
+        & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
+        & orbIncline%values(1,maf)*Deg2Rad, &
+        & elevoffset%values(1,1)*Deg2Rad,req,surf_angle, &
+        & h2o_zeta_basis = grids_f%zet_basis(beg_ind_z:end_ind_z), &
+        & h2o_phi_basis = grids_f%phi_basis(beg_ind_p:end_ind_p), &
+        & h2o_coeffs = sps_values(beg_ind:end_ind), lin_log=lin_log(h2o_ind), &
+        & dxdt_tan = dxdt_surface, d2xdxdt_tan = d2xdxdt_surface)
+        ELSE IF (h2o_ind == 0) THEN
+        CALL get_chi_out(tan_press(1:1),deg2rad*tan_phi(1:1), &
+        & 0.001_rp*est_scgeocalt(1:1), temp%template%surfs(:,1), &
+        & temp%template%phi(1,windowStart:windowFinish)*Deg2Rad, &
+        & RESHAPE(temp%values(:,windowStart:windowFinish), &
+        & (/temp%template%nosurfs * no_sv_p_t/)), &
+        & SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t), &
+        & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
+        & orbIncline%values(1,maf)*Deg2Rad, &
+        & elevoffset%values(1,1)*Deg2Rad,req,surf_angle, &
+        & dxdt_tan = dxdt_surface,d2xdxdt_tan = d2xdxdt_surface)
+      ENDIF
+      CALL deallocate_test(d2xdxdt_surface,'d2xdxdt_surface',modulename)
+    ENDIF
 
  ! Now, allocate other variables we're going to need later ----------------
 
@@ -2064,15 +2115,81 @@ contains ! ================================ FullForwardModel routine ======
           center_angle = ptg_angles(surfaceTangentIndex)
 ! bills debug
           if ( index(switches,'billsdebug') /= 0 ) then
-          CALL fov_convolve_v2(antennaPatterns(whichPattern)%aaap, &
+            CALL ALLOCATE_TEST(drad_dt_out,ptan%template%nosurfs, &
+            & n_t_zeta*no_sv_p_t,'drad_dt_out',ModuleName)
+            CALL ALLOCATE_TEST(test1,no_tan_hts,n_t_zeta*no_sv_p_t, &
+            & 'test1',Modulename)
+            CALL ALLOCATE_TEST(test2,no_tan_hts,n_t_zeta*no_sv_p_t, &
+            & 'test2',Modulename)
+            CALL ALLOCATE_TEST(test3,ptan%template%nosurfs,n_t_zeta*no_sv_p_t,&
+            & 'test3',Modulename)
+            DO j = 1, no_sv_p_t
+              DO k = 1, n_t_zeta
+                test1(:,k+n_t_zeta*(j-1)) = dx_dt(:,j,k)
+                test2(:,k+n_t_zeta*(j-1)) = d2x_dxdt(:,j,k)
+! This arithmatic makes a surface value adjustment
+                test3(:,k+n_t_zeta*(j-1)) = dxdt_tan(:,j,k) &
+                & - dxdt_surface(1,j,k)
+              ENDDO
+            ENDDO
+            k = 1
+            WRITE(*,'(a)') 'press_out, dx_dt 1, 2, 3, 4, 5 coeff 1'
+            DO  j = 1 , no_tan_hts
+              WRITE(*,'(f10.5,1x,5e11.2)') tan_press(j), &
+              & dx_dt(j,1,k), dx_dt(j,2,k), dx_dt(j,3,k), dx_dt(j,4,k), &
+              & dx_dt(j,5,k)
+            ENDDO
+            WRITE(*,'(a)') 'press_out, d2x_dxdt 1, 2, 3, 4, 5 coeff 1'
+            DO  j = 1 , no_tan_hts
+              WRITE(*,'(f10.5,1x,5e11.2)') tan_press(j), &
+              & d2x_dxdt(j,1,k), d2x_dxdt(j,2,k), d2x_dxdt(j,3,k), &
+              & d2x_dxdt(j,4,k), d2x_dxdt(j,5,k)
+            ENDDO
+            WRITE(*,'(a)') 'press_out, dxdt_tan 1, 2, 3, 4, 5 coeff 1'
+            DO  j = 1 , ptan%template%nosurfs
+              WRITE(*,'(f10.5,1x,5e11.2)') ptan%values(j,maf), &
+              & dxdt_tan(j,1,k) - dxdt_surface(1,1,k), &
+              & dxdt_tan(j,2,k) - dxdt_surface(1,2,k), &
+              & dxdt_tan(j,3,k) - dxdt_surface(1,3,k), &
+              & dxdt_tan(j,4,k) - dxdt_surface(1,4,k), &
+              & dxdt_tan(j,5,k) - dxdt_surface(1,5,k)
+            ENDDO
+            WRITE(*,'(a)') 'press_out, di_dt 1, 2, 3, 4, 5 coeff 1'
+            DO  j = 1 , no_tan_hts
+              WRITE(*,'(f10.5,1x,5f9.5)') ptan%values(j,maf), &
+              & k_temp(i,j,k,1), k_temp(i,j,k,2), k_temp(i,j,k,3), &
+              & k_temp(i,j,k,4), k_temp(i,j,k,5)
+            ENDDO
+            CALL fov_convolve_v2(antennaPatterns(whichPattern)%aaap, &
             & antennaPatterns(whichPattern)%lambda,ptg_angles, &
             & Radiances(:,i),tan_chi_out, &
-            & thisradiance%values(1:ptan%template%nosurfs,maf))
+            & thisradiance%values(1:ptan%template%nosurfs,maf), &
+            & SURF_ANGLE=surf_angle(1), DI_DT = DBLE(RESHAPE(k_temp(i,:,:,:), &
+            & (/no_tan_hts,n_t_zeta*no_sv_p_t/))),DX_DT = test1, &
+            & DDX_DXDT = test2, DX_DT_OUT = test3, DRAD_DT_OUT = drad_dt_out)
             WRITE(lu_debug,'(a)') 'angles_out, press_out, rad_out'
             DO  j = 1 , ptan%template%nosurfs
               WRITE(lu_debug,'(f11.8,1x,f10.5,1x,f9.4)') tan_chi_out(j), &
             ptan%values(j,maf),thisradiance%values(j,maf)
             ENDDO
+            WRITE(lu_debug,'(a)') 'press_out, drad_dt 1, 2, 3, 4, 5 coeff 1'
+            DO  j = 1 , ptan%template%nosurfs
+              WRITE(lu_debug,'(f10.5,1x,5f9.4)') ptan%values(j,maf), &
+              & drad_dt_out(j,1), drad_dt_out(j,1+n_t_zeta), &
+              & drad_dt_out(j,1+2*n_t_zeta), drad_dt_out(j,1+3*n_t_zeta), &
+              & drad_dt_out(j,1+4*n_t_zeta)
+            ENDDO
+            WRITE(lu_debug,'(a)') 'press_out, drad_dt 1, 2, 3, 4, 5 coeff 11'
+            DO  j = 1 , ptan%template%nosurfs
+              WRITE(lu_debug,'(f10.5,1x,5f9.4)') ptan%values(j,maf), &
+              & drad_dt_out(j,11), drad_dt_out(j,11+n_t_zeta), &
+              & drad_dt_out(j,11+2*n_t_zeta), drad_dt_out(j,11+3*n_t_zeta), &
+              & drad_dt_out(j,11+4*n_t_zeta)
+            ENDDO
+            CALL DEALLOCATE_TEST(drad_dt_out,'drad_dt_out',ModuleName)
+            CALL DEALLOCATE_TEST(test1,'test1',Modulename)
+            CALL DEALLOCATE_TEST(test2,'test2',Modulename)
+            CALL DEALLOCATE_TEST(test3,'test3',Modulename)
           endif
        WRITE(*,'(a)') 'WARNING Two d antenna code not properly implemented!'
        WRITE(*,'(a)') 'for general 2 d temperature coefficients'
@@ -2081,8 +2198,8 @@ contains ! ================================ FullForwardModel routine ======
             &  temp, ptan, thisRadiance, tan_press, ptg_angles,       &
             &  tan_temp, RESHAPE(dx_dt(:,3,:),(/no_tan_hts,n_t_zeta/)), &
             &  RESHAPE(d2x_dxdt(:,3,:),(/no_tan_hts,n_t_zeta/)),       &
-            &  surfaceTangentIndex,        &
-            &  center_angle, Radiances(:,i), k_temp(i,:,:,:),         &
+            &  surfaceTangentIndex, center_angle, Radiances(:,i), &
+            &  k_temp(i,:,:,:),         &
             &  k_atmos(i,:,:,:,:,:), thisRatio, t_deriv_flag, Grids_f,&
             &  Jacobian, fmStat%rows, antennaPatterns(whichPattern),  &
             &  mol_cat_index, ier, lu_debug )
@@ -2299,6 +2416,7 @@ contains ! ================================ FullForwardModel routine ======
       call Deallocate_test ( t_deriv_flag, 't_deriv_flag', ModuleName )
       CALL DEALLOCATE_TEST(dxdt_tan,'dxdt_tan',ModuleName ) 
       CALL DEALLOCATE_TEST(d2xdxdt_tan,'d2xdxdt_tan',ModuleName ) 
+      CALL deallocate_test(dxdt_surface,'dxdt_surface',modulename)
     endif
 
     if ( FwdModelConf%atmos_der ) then
@@ -2342,6 +2460,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.56  2002/06/07 23:22:58  bill
+! add debug switch--wgr
+!
 ! Revision 2.55  2002/06/07 23:01:25  bill
 ! work in progress
 !
