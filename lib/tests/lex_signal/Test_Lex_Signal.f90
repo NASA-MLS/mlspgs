@@ -5,6 +5,14 @@ program Test_Lex_Signal
   use Symbol_Types, only: T_End_of_input
   use Toggles, only: Lex, Toggle
 
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile$"
+!---------------------------------------------------------------------------
+
   character(len=80) :: Buf    ! Input buffer
   type(token) :: The_Token
   integer :: Where            ! Last examined character in the input buffer
