@@ -663,9 +663,17 @@ contains
     integer, optional, intent(out) :: STAT
 
     integer :: IOSTAT
-    character(file_name_len) :: MY_FILE
+    character(max(file_name_len,len(file_name))) :: MY_FILE
 
     call get_lun ( inunit )   ! get an unused I/O unit number
+    if ( inunit < 0 ) then    ! no LUNs available
+      if ( present(stat) ) then
+        stat = inunit
+        return
+      end if
+      call output ( 'STRING_TABLE%OPEN_INPUT-E- Unable to get LUN', advance='yes' )
+      stop
+    end if
     my_file = file_name
     do
       open ( inunit, file=my_file, status='OLD', access='SEQUENTIAL', &
@@ -815,6 +823,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.17  2004/05/20 23:53:10  vsnyder
+! Handle no-luns-available error condition
+!
 ! Revision 2.16  2003/05/14 01:39:30  vsnyder
 ! Add Dump_String_Table
 !
