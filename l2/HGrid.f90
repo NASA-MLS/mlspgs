@@ -94,7 +94,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: NAME               ! String index of name
     integer, intent(in) :: ROOT               ! Root of hGrid subtree
     type (L1BInfo_T), intent(in) :: L1BINFO   ! File handles for l1b data
-    type (L2GPData_T), intent(in), target, DIMENSION(:) :: L2GPDATABASE
+    type (L2GPData_T), pointer, dimension(:) :: L2GPDATABASE
     type (MLSChunk_T), intent(in) :: CHUNK    ! This chunk
 
     ! Local variables
@@ -187,6 +187,7 @@ contains ! =====     Public Procedures     =============================
       hGrid%noProfs = nsons(valuesNode)-1
       hGrid%noProfsLowerOverlap = 0
       hGrid%noProfsUpperOverlap = 0
+      call CreateEmptyHGrid(hGrid)
       hGrid%lon = 0.0_r8
       hGrid%time = 0.0_r8
       hGrid%solarTime = 0.0_r8
@@ -532,6 +533,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.11  2001/04/23 23:25:26  livesey
+! Changed l2gpDatabase to pointer
+!
 ! Revision 2.10  2001/04/21 01:24:55  livesey
 ! New version, tidied up, can create hGrid from L2GP now
 !
