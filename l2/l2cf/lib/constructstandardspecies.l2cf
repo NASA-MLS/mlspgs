@@ -112,19 +112,11 @@ begin Construct
 
   !define(constructRadiance,{DTband$1: Quantity, type=cloudInducedRadiance, signal=!signal($1)!nl})
   !forall(constructRadiance,!allBands)
-;  !define(constructRadiance,{SENSband$1: Quantity, type=cloudRADSensitivity, signal=!signal($1)!nl})
-;  !forall(constructRadiance,!allBands)
-;  !define(constructRadiance,{EODband$1: Quantity, type=effectiveOpticalDepth, signal=!signal($1)!nl})
-;  !forall(constructRadiance,!allBands)
-;  !define(constructRadiance,{CEXTband$1: Quantity, type=cloudExtinction, signal=!signal($1)!nl})
-;  !forall(constructRadiance,!allBands)
-;  !define(constructRadiance,{EXTband$1: Quantity, type=totalExtinction, signal=!signal($1)!nl})
-;  !forall(constructRadiance,!allBands)
+  !define(constructRadiance,{SENSband$1: Quantity, type=cloudRADSensitivity, signal=!signal($1)!nl})
+  !forall(constructRadiance,!allBands)
+  !define(constructRadiance,{EODband$1: Quantity, type=effectiveOpticalDepth, signal=!signal($1)!nl})
+  !forall(constructRadiance,!allBands)
 
-  cloudExtinction:       Quantity, vGrid=vGridStandard, hGrid=hGridStandard, $
-                                 type = cloudExtinction
-  totalExtinction:       Quantity, vGrid=vGridStandard, hGrid=hGridStandard, $
-                                 type = totalExtinction
   massMeanDiameterIce:   Quantity, vGrid=vGridStandard, hGrid=hGridStandard, $
                                  type = massMeanDiameterIce
   massMeanDiameterWater: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, $
