@@ -32,6 +32,7 @@ cholesky
 climatology
 cloud
 cloudFull
+combineChannels
 copy
 covariance
 
@@ -149,6 +150,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.47  2004/03/22 18:25:38  livesey
+# Added combineChannels
+#
 # Revision 2.46  2004/02/17 14:07:15  livesey
 # Added min, max and mean
 #
