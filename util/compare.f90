@@ -32,7 +32,9 @@ program COMPARE
   real :: AMAX               ! Maximum absolute difference for one R1, R2 pair
   real :: AMAXG = 0.0        ! Global maximum of all values of AMAX
   logical :: AnyNaN(2) = .false. ! R1 or R2 has a NaN
+  real :: AVG(2)
   logical :: CONT = .false.  ! Continue even if control lines differ
+  logical :: DoStats = .false. ! -s option specified
   logical :: END
   character(127) :: File1, File2
   integer :: I, J
@@ -46,6 +48,7 @@ program COMPARE
   real :: RMAXE = -huge(0.0) ! RMAX in units of epsilon
   real :: RMAXG = -huge(0.0) ! Global maximum of all values of RMAX
   integer :: Status
+  real :: STDEV(2)
   logical :: Zero = .false.  ! If ( all ), show zero differences, too.
 
   i = 1
@@ -64,6 +67,8 @@ program COMPARE
           cont = .true.
         else if ( line1(j:j) == 'q' ) then
           loud = .false.
+        else if ( line1(j:j) == 's' ) then
+          doStats = .true.
         else if ( line1(j:j) == 'z' ) then
           zero = .true.
         else
@@ -143,7 +148,7 @@ program COMPARE
     ad = abs(r1 - r2)
     lamax = maxloc(ad,1)
     amax = ad(lamax)
-    if ( amax > 0.0 .or. all .and. zero ) then
+    if ( amax > 0.0 .or. all .and. zero .or. doStats ) then
       rd = 2.0 * ad / abs(r1 + r2)
       lrmax = maxloc(rd,1)
       rmax = rd(lrmax)
@@ -153,6 +158,11 @@ program COMPARE
           & amax, lamax, rmax, lrmax, rmaxe, trim(line1)
 !       print *, 'After ', trim(line1), ', Maximum difference =', amax, ' at', lamax
 !       print *, 'Relative =', rmax, ' =', rmaxe, ' epsilons', ' at', lrmax
+      end if
+      if ( doStats ) then
+        call stats ( r1, avg(1), stdev(1) )
+        call stats ( r2, avg(2), stdev(2) )
+        print '(a,1p,2g14.8,a,2g14.8)', 'Averages =', avg, ' Std. Devs. =', stdev
       end if
     end if
     rmaxg = max(rmaxe,rmaxg)
@@ -172,12 +182,39 @@ program COMPARE
   if ( anyNaN(2) ) print *, trim(file2), ' has a NaN somewhere'
 
 contains
+
+  subroutine Stats ( A, Avg, Stdev )
+  ! Compute the average and standard deviation of the nonzero elements of A.
+    real, intent(in) :: A(:)
+    real, intent(out) :: Avg, Stdev
+    integer :: I, N
+    n = 0
+    avg = 0.0
+    stdev = 0.0
+    do i = 1, size(A)
+      if ( a(i) /= 0.0 ) then
+        avg = avg + a(i)
+        n = n + 1
+      end if
+    end do
+    if ( n > 1 ) then
+      avg = avg / n
+      do i = 1, size(A)
+        if ( a(i) /= 0.0 ) stdev = stdev + (a(i)-avg)**2
+      end do
+      stdev = sqrt(stdev/(n-1))
+    else
+      stdev = huge(0.0)
+    end if
+  end subroutine Stats
+
   subroutine USAGE
     call getarg ( 0, line1 )
     print *, 'Usage: ', trim(line1), ' [option] file1 file2'
     print *, ' Options: -a => Show nonzero difference for all quantities'
     print *, '          -c => Continue even if control lines differ'
     print *, '          -q => No messages about unequal file lengths etc.'
+    print *, '          -s => Compute average and standard deviation of nonzero elements.'
     print *, '          -z => Show zero difference summary at the end'
     print *, '                With -a, show zero individual differences too.'
     stop
@@ -186,6 +223,9 @@ contains
 end program
 
 ! $Log$
+! Revision 1.2  2003/09/26 19:07:23  vsnyder
+! Widen some formats
+!
 ! Revision 1.1  2003/07/03 18:08:34  vsnyder
 ! Initial commit
 !
