@@ -80,6 +80,7 @@ program MLSL2
   integer, parameter :: L2CF_UNIT = 20  ! Unit # if L2CF is opened by Fortran
 
   logical :: COPYARG               ! Copy this argument to parallel command line
+  logical :: COUNTCHUNKS = .false. ! Just count the chunks and quit
   logical :: DO_DUMP = .false.     ! Dump declaration table
   logical :: DUMP_TREE = .false.   ! Dump tree after parsing
   integer :: ERROR                 ! Error flag from check_tree
@@ -145,6 +146,8 @@ program MLSL2
         pcf_for_input = switch
       else if ( line(3+n:7+n) == 'ckbk ' ) then
         checkBlocks = switch
+      else if ( line(3+n:14+n) == 'countChunks ' ) then
+        countChunks = switch
       else if ( line(3+n:6+n) == 'kit ' ) then
         MLSMessageConfig%useToolkit = switch
       else if ( line(3+n:7+n) == 'meta ' ) then
@@ -369,7 +372,7 @@ program MLSL2
       ! Now do the L2 processing.
       call time_now ( t1 )
       if ( timing ) call output ( "-------- Processing Begun ------ ", advance='yes' )
-      call walk_tree_to_do_MLS_L2 ( root, error, first_section )
+      call walk_tree_to_do_MLS_L2 ( root, error, first_section, countChunks )
       if ( timing ) then
         call output ( "-------- Processing Ended ------ ", advance='yes' )
         call sayTime ( 'Processing' )
@@ -438,6 +441,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.62  2001/12/13 23:21:20  livesey
+! Added countChunks option
+!
 ! Revision 2.61  2001/11/09 23:17:22  vsnyder
 ! Use Time_Now instead of CPU_TIME
 !
