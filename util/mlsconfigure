@@ -1,15 +1,41 @@
-#/bin/sh
+#!/bin/sh
 #                 mlsconfigure    configures the mls for compiler, platform
 #
 #
 # Called for either or both of two purposes:
+#
 # (1) Query user for compiler and platform; these get written to .configure
-#     (not done if called with -nc option)
+#     ((1)not done if called with -nc option)
+#
 # (2) Create a new directory ./$MLSCONFG in parallel with ./platforms; then
 #     put Makefile in it created from appropriate 2 files in platforms;
-#     *.o, *.mod, etc. files will go in this new directory
-#     (not done if ./platforms directory fails to exist)
+#     e.g., say $MLSCONFG is NAG.Linux
+#     this Makefile will then contain the following lines:
+#        # 1st: lines from .configure file
+#        MLSF90=NAG
+#        MLSPLAT=Linux
+#        # 2nd: lines from platforms/NAG.Linux
+#        FC=f95
+#         (etc.)
+#        # Last: lines from platforms/targets
+#        PROG=mlsl2
+#        $(PROG): $(OBJS) $(libdir)/libmls.a
+#         (etc.)
 #
+#     *.o, *.mod, etc. files will go in this new directory
+#     ((2) not done if ./platforms directory fails to exist)
+#
+#        O p t i o n s
+#  -h[elp]              (if present) Help (not yet implemented)
+#  -c compiler_name     Name of Fortran compiler (NAG or LF95)
+#  -p platform_name     Name of computer or OS (Linux , sun, or sgi)
+#  -dc conf_dir         Directory where .configuration file is to be stored
+#  -pc plat_dir         Directory where platforms directory to be found
+#  -nc                  (if present) Don't query to change configuration
+#
+# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 # "$Id$"
 
 # Function to prompt for user response
@@ -47,7 +73,7 @@ you may wish to try one of the options anyway, or else contact:
 	David.T.Cuddy@jpl.nasa.gov
 	(818)354-2099
 
-and be prepared to give them the names of your compiler and platform.
+and give the names of the compiler and platform you use.
 
                     *        *        *
 
@@ -55,7 +81,7 @@ Note that you must have a Fortran 95 or later compiler, and that you
 must first have installed the SDP Toolkit for the ECS Project. The
 latter, as well as useful documentation, may be obtained from the
 management of the EOSDIS Core System Data Handling System. At the time
-this configuration was being written, the URL for them was
+this configuration was being written (17 Oct 2000), the URL for them was
 	http://edhs1.gsfc.nasa.gov/
 EOF
 
@@ -144,13 +170,16 @@ Help()
 conf_dir="./"
 plat_dir="./"
 get_confg="true"
+me="$0"
 
 while [ "$1" != "" ] ; do
 
     case "$1" in
 
 	-h | -help )
+            sed -n '2, 35 p' $me
 	    Help
+            exit
 	;;
 
 	-c )
@@ -231,7 +260,8 @@ if [ ! -f $plat_dir/platforms/targets ] ; then
 	exit
 fi
 
-cat $plat_dir/platforms/$MLSCONFG $plat_dir/platforms/targets > $plat_dir/$MLSCONFG/Makefile
+#cat $plat_dir/platforms/$MLSCONFG $plat_dir/platforms/targets > $plat_dir/$MLSCONFG/Makefile
+cat $conf_dir/.configure $plat_dir/platforms/$MLSCONFG $plat_dir/platforms/targets > $plat_dir/$MLSCONFG/Makefile
 
 echo "Configured mls to use $plat_dir/platforms/$MLSCONFG "
 echo "(This is where your object files, .mod files, libraries,"
@@ -243,4 +273,7 @@ echo "or platform, enter 'make configure'"
 
 exit
 # $Log$
+# Revision 1.1  2000/10/16 18:31:19  pwagner
+# first commit
+#
 
