@@ -59,7 +59,8 @@ module ForwardModelConfig
     integer :: NUM_AB_TERMS         ! No of AB terms '50'
     integer :: NUM_SIZE_BINS        ! No of size bins '40'
     integer :: cloud_der            ! Compute cloud sensitivity in cloud models.
-    integer :: cloud_width          ! Flag for cloud horizontal extend.
+!    integer :: cloud_width          ! Flag for cloud horizontal extend.
+    integer :: i_saturation         ! Flag to determine saturation status
     integer :: cloud_fov            ! Flag for cloud model field-of-view averaging.
     integer :: NameFragment         ! For e.g. restricting bins in l2pc
   end type ForwardModelConfig_T
@@ -181,7 +182,8 @@ contains
       & config%no_cloud_species, config%no_model_surfs, &
       & config%num_scattering_angles, config%num_azimuth_angles, &
       & config%num_ab_terms, config%num_size_bins, config%cloud_der, &
-      & config%cloud_width, config%cloud_fov /), info )
+      & config%i_saturation, config%cloud_fov /), info )
+!      & config%cloud_width, config%cloud_fov /), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig integers" )
     call PVMIDLPack ( (/ config%phiWindow, config%tolerance /), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig reals" )
@@ -292,7 +294,8 @@ contains
     config%num_ab_terms = i11(7)
     config%num_size_bins = i11(8)
     config%cloud_der = i11(9)
-    config%cloud_width = i11(10)
+!    config%cloud_width = i11(10)
+    config%i_saturation = i11(10)
     config%cloud_fov = i11(11)
     call PVMIDLUnpack ( r2, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig reals" )
@@ -493,6 +496,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.17  2002/12/04 21:55:22  livesey
+! Added the name fragment packing
+!
 ! Revision 2.16  2002/11/22 12:14:31  mjf
 ! Added nullify routine(s) to get round Sun's WS6 compiler not
 ! initialising derived type function results.
