@@ -1542,10 +1542,10 @@ contains
           j = -1
           k = SIZE(PointingGrids(whichPointingGrid)% &
                        & oneGrid(grids(ptg_i))%frequencies)
-          CALL Hunt ( min_ch_freq_grid, vel_cor &
+          call Hunt ( min_ch_freq_grid, vel_cor &
                        & * PointingGrids(whichPointingGrid)% &
                        & oneGrid(grids(ptg_i))%frequencies, k, j, frq_i )
-          CALL Hunt ( max_ch_freq_grid,vel_cor &
+          call Hunt ( max_ch_freq_grid,vel_cor &
                        & * PointingGrids(whichPointingGrid)% &
                        & oneGrid(grids(ptg_i))%frequencies, k, frq_i, m )
           noFreqs = m - j + 1
@@ -1678,8 +1678,9 @@ contains
                 do j = 1, npc
                   beta_path_polarized(-1:1,j,:) = beta_path_polarized(-1:1,j,:) * tanh1_c(j)
                   alpha_path_polarized(-1:1,j) = matmul( beta_path_polarized(-1:1,j,:), &
-                    & sps_path(c_inds(j),:) ) + &
-                    & (/ 0.25, 0.50, 0.25 /) * alpha_path_c(j)
+                    & sps_path(c_inds(j),:) ) + 0.25 * alpha_path_c(j)
+                  alpha_path_polarized(0,j) = alpha_path_polarized(0,j) + &
+                    & 0.25 * alpha_path_c(j)
                 end do
               else
                 ! Won't need beta_path_polarized * tanh1_c
@@ -1688,7 +1689,9 @@ contains
                 do j = 1, npc
                   alpha_path_polarized(-1:1,j) = matmul( beta_path_polarized(-1:1,j,:), &
                     & sps_path(c_inds(j),:) ) * tanh1_c(j) + &
-                    & (/ 0.25, 0.50, 0.25 /) * alpha_path_c(j)
+                    & 0.25 * alpha_path_c(j)
+                  alpha_path_polarized(0,j) = alpha_path_polarized(0,j) + &
+                    & 0.25 * alpha_path_c(j)
                 end do
               end if
 
@@ -1786,12 +1789,24 @@ contains
 
             ! The explicit -1:1 is written in the hope that a clever compiler
             ! can exploit it to optimize.
-            do j = 1, ngl
-              alpha_path_polarized_f(-1:1,j) = matmul( beta_path_polarized_f(-1:1,j,:), &
-                & sps_path(gl_inds(j),:) ) * tanh1_f(j) + 0.25 * alpha_path_f(j)
-              alpha_path_polarized_f(0,j) = alpha_path_polarized_f(0,j) + &
-                & 0.25 * alpha_path_f(j)
-            end do
+            if ( temp_der .or. atmos_der ) then
+              ! Will need beta_path_polarized_f * tanh1_f
+              do j = 1, ngl
+                beta_path_polarized_f(-1:1,j,:) = beta_path_polarized_f(-1:1,j,:) * tanh1_f(j)
+                alpha_path_polarized_f(-1:1,j) = matmul( beta_path_polarized_f(-1:1,j,:), &
+                  & sps_path(gl_inds(j),:) ) + 0.25 * alpha_path_f(j)
+                alpha_path_polarized_f(0,j) = alpha_path_polarized_f(0,j) + &
+                  & 0.25 * alpha_path_f(j)
+              end do
+            else
+              ! Won't need beta_path_polarized_f * tanh1_f
+              do j = 1, ngl
+                alpha_path_polarized_f(-1:1,j) = matmul( beta_path_polarized_f(-1:1,j,:), &
+                  & sps_path(gl_inds(j),:) ) * tanh1_f(j) + 0.25 * alpha_path_f(j)
+                alpha_path_polarized_f(0,j) = alpha_path_polarized_f(0,j) + &
+                  & 0.25 * alpha_path_f(j)
+              end do
+            end if
 
             call rad_tran_pol ( gl_inds(1:ngl), cg_inds(1:ncg), e_rflty,         &
               & del_zeta(1:npc), alpha_path_polarized(:,1:npc), ref_corr(1:npc), &
@@ -2368,7 +2383,6 @@ contains
       print "( /'ptan\ ',i3.3)", k
       Print "( 4(3x, f11.7) )", Ptan%values(1:k,maf)
 
-      Print *
       do i = 1, noUsedChannels
         channel = usedChannels(i) - channelOrigins(i) + 1
         print "(/, 'ch', i3.3, '_pfa_rad\ ', i3.3 )", usedChannels(i), k
@@ -2778,6 +2792,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.186  2003/11/20 17:33:50  pwagner
+! Nullify some things otherwise left unassociated
+!
 ! Revision 2.185  2003/11/19 22:21:34  jonathan
 ! interpolate scat_src to tscat_path
 !
