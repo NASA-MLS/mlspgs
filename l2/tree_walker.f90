@@ -145,7 +145,7 @@ subtrees: do while ( j <= howmany )
         end do ! on chunkNo
         i = j - 1 ! one gets added back in at the end of the outer loop
       case ( z_output ) ! Write out the data
-        call Output_Close ( son, l2gpDatabase, l2auxDatabase, l2pcf )
+        call Output_Close ( son, l2gpDatabase, l2auxDatabase, l2pcDatabase, l2pcf )
 
         ! Now tidy up any remaining `pointer' data.
         ! processingRange needs no deallocation
@@ -179,6 +179,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.41  2001/04/25 19:31:13  livesey
+! Fixed bug, now nullifies l2pcDatabase
+!
 ! Revision 2.40  2001/04/24 23:05:54  vsnyder
 ! Make 'test_parse_signals' depend on 'switches' containing 'tps'
 !
