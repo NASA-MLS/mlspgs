@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 !=============================================================================
 MODULE OutputL1B
@@ -6,8 +6,8 @@ MODULE OutputL1B
 
   USE MLSCommon
   USE MLSL1Common, ONLY: L1BFileInfo_T
-  USE MLSL1Config, ONLY: MIFsGHz, MIFsTHz, L1Config
-  USE MLSFiles, ONLY: HDFVERSION_4, HDFVERSION_5  
+  USE MLSL1Config, ONLY: L1Config
+  USE MLSFiles, ONLY: HDFVERSION_4
   USE MLSL1Rad, ONLY: Radiance_T
   USE OutputL1B_DataTypes
   USE OutputL1B_HDF5, ONLY: OUTPUTL1B_CREATE_HDF5, OUTPUTL1B_INDEX_HDF5, &
@@ -106,12 +106,16 @@ CONTAINS
 
   END SUBROUTINE OutputL1B_THz
   !-------------------------------------------------------- OutputL1B_rad
-  SUBROUTINE OutputL1B_rad (noMAF, sdId, counterMAF, MAFStartTimeTAI, rad)
+  SUBROUTINE OutputL1B_rad (noMAF, sdId, counterMAF, Reflec, MAFStartTimeTAI, &
+       rad)
     ! This subroutine writes an MAF's worth of data to the L1BRad D & F files
+
+    USE EngTbls, ONLY: Reflec_T
 
     ! Arguments
     TYPE (L1BFileInfo_T) :: sdId
     TYPE (Radiance_T) :: rad(:)
+    TYPE (Reflec_T) :: Reflec
     INTEGER, INTENT(IN) :: counterMAF, noMAF
     REAL(r8), INTENT (IN) :: MAFStartTimeTAI
     REAL(r8) :: MAFStartTimeGIRD
@@ -121,9 +125,11 @@ CONTAINS
     MAFStartTimeGIRD = MAFStartTimeTAI + 1104537627.0d00
 
     IF (L1Config%Output%HDFversion == HDFVERSION_4) THEN
-       CALL OutputL1B_rad_HDF4 (noMAF, sdId, counterMAF, MAFStartTimeGIRD, rad)
+       CALL OutputL1B_rad_HDF4 (noMAF, sdId, counterMAF, Reflec, &
+            MAFStartTimeGIRD, rad)
     ELSE
-       CALL OutputL1B_rad_HDF5 (noMAF, sdId, counterMAF, MAFStartTimeGIRD, rad)
+       CALL OutputL1B_rad_HDF5 (noMAF, sdId, counterMAF, Reflec, &
+            MAFStartTimeGIRD, rad)
     ENDIF
 
   END SUBROUTINE OutputL1B_rad
@@ -132,6 +138,9 @@ END MODULE OutputL1B
 !=============================================================================
 
 ! $Log$
+! Revision 2.10  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
 ! Revision 2.9  2003/01/31 18:13:34  perun
 ! Version 1.1 commit
 !
