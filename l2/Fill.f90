@@ -76,7 +76,7 @@ contains ! =====     Public Procedures     =============================
     ! Now the literals:
     use INIT_TABLES_MODULE, only: L_ADDNOISE, L_BINMAX, L_BINMIN, &
       & L_BOUNDARYPRESSURE, L_CHISQCHAN, &
-      & L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, L_COLUMNABUNDANCE, &
+      & L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, L_cloudInducedRADIANCE, L_COLUMNABUNDANCE, &
       & L_ESTIMATEDNOISE, L_EXPLICIT, L_FOLD, L_GEODALTITUDE, &
       & L_GPH, L_GPHPRECISION, L_GRIDDED, L_H2OFROMRHI, &
       & L_HEIGHT, &
@@ -1413,7 +1413,7 @@ contains ! =====     Public Procedures     =============================
           usbFraction => GetVectorQtyByTemplateIndex ( &
             & vectors(usbFractionVectorIndex), usbFractionQuantityIndex )
           call FillFromSplitSideband ( quantity, sourceQuantity, &
-            & lsbFraction, usbFraction, key )
+            & lsbFraction, usbFraction, spreadFlag, channel, key )
 
         case ( l_spreadChannel )
           if ( .not. got ( f_channel ) ) call Announce_Error ( key, &
@@ -4079,84 +4079,106 @@ contains ! =====     Public Procedures     =============================
 
     ! ------------------------------------- FillFromSplitSideband ----
     subroutine FillFromSplitSideband ( quantity, sourceQuantity, &
-      & lsbFraction, usbFraction, key )
+      & lsbFraction, usbFraction, spreadFlag, channel, key )
 
       type (VectorValue_T), intent(inout) :: QUANTITY
       type (VectorValue_T), intent(in) :: SOURCEQUANTITY
       type (VectorValue_T), intent(in) :: LSBFRACTION
       type (VectorValue_T), intent(in) :: USBFRACTION
+      logical, intent(in) :: SPREADFLAG   ! One instance given, spread to all
+      integer, intent(in) :: CHANNEL
       integer, intent(in) :: KEY
       ! Local variables
-      logical, dimension(:), pointer :: doChannel    ! Do this channel?
-      integer :: noFreqs, mif, maf
+      integer :: MYCHANNEL              ! Possibly offset channel
+      integer :: mif, maf
       type (Signal_T) :: signalIn, signalOut
-      real(r8), dimension(:), pointer :: freq, freqL, freqU
+      real(r8), dimension(:), pointer :: freq1, freqL1, freqU1
+      real(r8), dimension(:), pointer :: freq2, freqL2, freqU2
 
       ! Executable code
-      ! Do some checking first
-      if (.not. ValidateVectorQuantity ( quantity, quantityType=(/l_radiance/), &
+      if (.not. ValidateVectorQuantity ( quantity, quantityType=(/l_cloudInducedRadiance/), &
         & sideband=(/-1,1/), minorFrame=.true. )) &
         & call Announce_Error ( key, 0, 'Inappropriate radiance quantity to fill' )
-      if (.not. ValidateVectorQuantity ( sourceQuantity, quantityType=(/l_radiance/), &
-        & sideband=(/0/), signal=(/quantity%template%signal/), minorFrame=.true. )) &
-        & call Announce_Error ( key, 0, 'Inappropriate sourceQuantity radiance for fill' )
-      if (.not. ValidateVectorQuantity ( lsbFraction, quantityType=(/l_sidebandRatio/), &
-        & signal=(/quantity%template%signal/), sideband=(/-1/) ) ) &
-        & call Announce_Error ( key, 0, 'Inappropriate lsbFraction quantity for fill' )
-      if (.not. ValidateVectorQuantity ( usbFraction, quantityType=(/l_sidebandRatio/), &
-        & signal=(/quantity%template%signal/), sideband=(/1/) ) ) &
-        & call Announce_Error ( key, 0, 'Inappropriate usbFraction quantity for fill' )
 
       signalIn = GetSignal ( sourceQuantity%template%signal )
       signalOut = GetSignal ( Quantity%template%signal )
-
-      ! OK Dong, this is where you do your stuff
-      ! You're filling the lsb or usb radiance quantity 'quantity', using
-      ! the folded radiances in 'sourceQuantity' and the fractions in
-      ! 'usbFraction' and 'lsbFraction'.
-
-      ! NOTE, THINK ABOUT WHETHER YOU WANT THE FILL MASK TO BE OBEYED HERE.
       
       ! this method is only appliable to the cloud-induced radiances that have 
       ! similar penetration depth (usually close in frequency) and are 
       ! proportional to frequency^4. And this operation is only applied to
       ! maskbit = m_cloud
 
-      noFreqs = size(signalIn%frequencies)
+      myChannel = channel - lbound ( signalIn%frequencies, 1 ) + 1
 
-      call allocate_test ( doChannel, noFreqs, 'doChannel', ModuleName )
-      call allocate_test ( freq, noFreqs, 'frequencies', ModuleName )
-      call allocate_test ( freqL, noFreqs, 'LSBfrequencies', ModuleName )
-      call allocate_test ( freqU, noFreqs, 'USBfrequencies', ModuleName )
+      call allocate_test ( freq1, size(signalIn%frequencies), 'frequencies', ModuleName )
+      call allocate_test ( freqL1, size(signalIn%frequencies), 'LSBfrequencies', ModuleName )
+      call allocate_test ( freqU1, size(signalIn%frequencies), 'USBfrequencies', ModuleName )
+      call allocate_test ( freq2, size(signalOut%frequencies), 'frequencies', ModuleName )
+      call allocate_test ( freqL2, size(signalOut%frequencies), 'LSBfrequencies', ModuleName )
+      call allocate_test ( freqU2, size(signalOut%frequencies), 'USBfrequencies', ModuleName )
 
-      doChannel = signalIn%channels
-      freq = signalIn%centerFrequency + signalIn%direction*signalIn%frequencies 
-      freqL = signalIn%lo - freq    ! lower sideband freq
-      freqU = signalIn%lo + freq    ! upper sideband freq
-
-      ! redefine freq as output signal frequency
-      if(signalOut%sideband == -1) freq=freqL
-      if(signalOut%sideband == 1) freq=freqU
+      ! find input signal frequencies
+      freq1 = signalIn%centerFrequency + signalIn%direction*signalIn%frequencies 
+      freqL1 = signalIn%lo - freq1    ! lower sideband freq
+      freqU1 = signalIn%lo + freq1    ! upper sideband freq
+         if(signalIn%sideband == -1) freq1 = freqL1
+         if(signalIn%sideband == 1) freq1 = freqU1
+      ! find output signal frequencies
+      freq2 = signalOut%centerFrequency + signalOut%direction*signalOut%frequencies 
+      freqL2 = signalOut%lo - freq2    ! lower sideband freq
+      freqU2 = signalOut%lo + freq2    ! upper sideband freq
+         if(signalOut%sideband == -1) freq2 = freqL2
+         if(signalOut%sideband == 1) freq2 = freqU2
 
       quantity%values=0._r8
-      do i=1,noFreqs
-       if (doChannel(i)) then
-         do maf=1, size(quantity%values(1,:))
-         do mif=1, quantity%template%noSurfs
-      	if(iand(ichar(sourceQuantity%mask(i+(mif-1)*noFreqs, maf)), m_cloud) == 0) &
-	      & quantity%values(i+(mif-1)*noFreqs, maf) = &
-	      &   sourceQuantity%values(i+(mif-1)*noFreqs, maf) *freq(i)**4/ &
-	      &   (lsbFraction%values(i,1) * freqL(i)**4 + &
-	      &   usbFraction%values(i,1) * freqU(i)**4)
-   	   enddo
-	      enddo
-       endif
-      enddo
+      if (spreadFlag) then
+      ! spread a cloudy radiance to other bands according to the f^4 law
+      ! The source cloudy radiance must be from a single sideband signal
+        if (.not. ValidateVectorQuantity ( sourceQuantity, quantityType=(/l_cloudInducedRadiance/), &
+        & sideband=(/-1,1/), minorFrame=.true. )) &
+        & call Announce_Error ( key, 0, 'Inappropriate sourceQuantity radiance for fill' )
+        do i=1,size(signalOut%frequencies)
+           do maf=1, quantity%template%noInstances
+           do mif=1, quantity%template%noSurfs
+             if(iand(ichar(Quantity%mask(i+(mif-1)*size(signalOut%frequencies), maf)), m_cloud) == 1) &
+             & quantity%values(i+(mif-1)*size(signalOut%frequencies), maf) = &
+	          &    sourceQuantity%values(MyChannel+(mif-1)*size(signalIn%frequencies), maf) * &
+             &    freq2(i)**4/freq1(MyChannel)**4
+   	     enddo
+	        enddo
+        enddo
+              
+      else
+      ! split two sideband radiances according to the f^4 law
+      ! The source cloudy radiance must be from the same signal of double sideband 
+        if (.not. ValidateVectorQuantity ( sourceQuantity, quantityType=(/l_cloudInducedRadiance/), &
+        & sideband=(/0/), signal=(/quantity%template%signal/), minorFrame=.true. )) &
+        & call Announce_Error ( key, 0, 'Inappropriate sourceQuantity radiance for fill' )
+        if (.not. ValidateVectorQuantity ( lsbFraction, quantityType=(/l_sidebandRatio/), &
+        & signal=(/quantity%template%signal/), sideband=(/-1/) ) ) &
+        & call Announce_Error ( key, 0, 'Inappropriate lsbFraction quantity for fill' )
+        if (.not. ValidateVectorQuantity ( usbFraction, quantityType=(/l_sidebandRatio/), &
+        & signal=(/quantity%template%signal/), sideband=(/1/) ) ) &
+        & call Announce_Error ( key, 0, 'Inappropriate usbFraction quantity for fill' )
+        do i=1,size(signalOut%frequencies)
+           do maf=1, quantity%template%noInstances
+           do mif=1, quantity%template%noSurfs
+             if(iand(ichar(Quantity%mask(i+(mif-1)*size(signalOut%frequencies), maf)), m_cloud) == 1) &
+	          & quantity%values(i+(mif-1)*size(signalOut%frequencies), maf) = &
+	          &   sourceQuantity%values(MyChannel+(mif-1)*size(signalIn%frequencies), maf) *freq2(i)**4/ &
+	          &   (lsbFraction%values(MyChannel,1) * freqL1(MyChannel)**4 + &
+	          &   usbFraction%values(MyChannel,1) * freqU1(MyChannel)**4)
+   	     enddo
+	        enddo
+        enddo
+      endif
 
-      call deallocate_test ( doChannel, 'doChannel', ModuleName )
-      call deallocate_test ( freq, 'frequencies', ModuleName )
-      call deallocate_test ( freqL,'LSBfrequencies', ModuleName )
-      call deallocate_test ( freqU,'USBfrequencies', ModuleName )
+      call deallocate_test ( freq1, 'frequencies', ModuleName )
+      call deallocate_test ( freqL1,'LSBfrequencies', ModuleName )
+      call deallocate_test ( freqU1,'USBfrequencies', ModuleName )
+      call deallocate_test ( freq2, 'frequencies', ModuleName )
+      call deallocate_test ( freqL2,'LSBfrequencies', ModuleName )
+      call deallocate_test ( freqU2,'USBfrequencies', ModuleName )
     end subroutine FillFromSplitSideband
 
     ! ------------------------------------- FillVectorHydrostatically ----
@@ -5483,6 +5505,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.203  2003/04/24 00:29:45  dwu
+! modify splitSideband to allow the splitted sideband cloud radiances being spread to other bands assuming the f**4 law
+!
 ! Revision 2.202  2003/04/23 17:06:36  livesey
 ! Added binmax binmin fills
 !
