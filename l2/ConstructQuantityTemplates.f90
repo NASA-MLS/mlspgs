@@ -375,21 +375,17 @@ contains ! =====     Public Procedures     =============================
         noChans = size(signalInfo%frequencies)
         frequencyCoordinate = l_channel
       end if
-      
-
-      ! Construct an empty quantity
-      call ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModule, &
-        & qty, noChans=noChans, mifGeolocation=mifGeolocation )
 
       ! Make absolutely certain template's dimensions are what we want
-      qty%noSurfs = 1
-      qty%verticalCoordinate = l_none
-      if ( quantityType == l_chiSqMMAF ) then
-        qty%noChans = 1
-        qty%instanceLen = 1
-      elseif ( quantityType == l_chiSqCHAN ) then
-        qty%instanceLen = qty%noChans
-      endif
+      if ( quantityType == l_chisqMMAF .or. quantityType == l_chisqMMIF ) then
+        noChans = 1
+        frequencyCoordinate = l_none
+      end if
+
+      ! Construct an empty quantity
+      call ConstructMajorFrameQuantity ( chunk, instrumentModule, &
+        & qty, noChans, mifGeolocation )
+      qty%frequencyCoordinate = frequencyCoordinate
         
    ! for losTransFunc type of quantity 
    elseif (quantityType == l_losTransFunc) then
@@ -610,6 +606,41 @@ contains ! =====     Public Procedures     =============================
         answer = .false.
       endif
   end function ANY_GOOD_SIGNALDATA
+
+  ! --------------------------------  ConstructMajorFrameQuantity  -----
+  subroutine ConstructMajorFrameQuantity( chunk, instrumentModule, qty, noChans, &
+    & mifGeolocation )
+    ! Dummy arguments
+    type (MLSChunk_T), intent(in) :: CHUNK
+    integer, intent(in) :: INSTRUMENTMODULE
+    type (QuantityTemplate_T), intent(out) :: QTY
+    type (QuantityTemplate_T), dimension(:), target :: MIFGEOLOCATION
+    integer, intent(in) :: NOCHANS
+    ! Local variables
+    type (QuantityTemplate_T), pointer :: source
+    
+    ! Executable code
+    source => mifGeolocation(instrumentModule)
+    call SetupNewQuantityTemplate ( qty, noInstances=source%noInstances, &
+      & noSurfs=1, coherent=.true., stacked=.true., regular=.true., &
+      & noChans=noChans )
+    qty%phi => source%phi(1:1,:)
+    qty%geodLat => source%geodLat(1:1,:)
+    qty%lon => source%lon(1:1,:)
+    qty%time => source%time(1:1,:)
+    qty%solarTime => source%solarTime(1:1,:)
+    qty%solarZenith => source%solarZenith(1:1,:)
+    qty%losAngle => source%losAngle(1:1,:)
+    qty%mafIndex => source%mafIndex
+    qty%mafCounter => source%mafCounter
+
+    qty%verticalCoordinate = l_none
+    qty%majorFrame = .true.
+    qty%minorFrame = .false.
+
+    qty%noInstancesLowerOverlap = chunk%noMAFsLowerOverlap
+    qty%noInstancesUpperOverlap = chunk%noMAFsUpperOverlap
+  end subroutine ConstructMajorFrameQuantity
 
   ! --------------------------------  ConstructMinorFrameQuantity  -----
   subroutine ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModule, &
@@ -963,6 +994,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.77  2002/11/26 23:37:50  livesey
+! Better handling of major frame quantities
+!
 ! Revision 2.76  2002/11/22 12:16:08  mjf
 ! Added nullify routine(s) to get round Sun's WS6 compiler not
 ! initialising derived type function results.
