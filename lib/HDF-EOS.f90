@@ -70,6 +70,19 @@ module HDFEOS               ! F90 interface to HDF-EOS.
       integer, intent(out):: STRBUFSIZE
     end function SWINQSWATH
 
+    integer function SWINQDIMS (SWATHID,DIMNAME,DIMS)
+       integer,intent(in)::SWATHID
+       character(len=*),intent(out)::DIMNAME
+       integer,intent(out),dimension(*)::DIMS
+    
+    end function SWINQDIMS
+    
+    integer function SWDIMINFO (SWATHID,DIMNAME)
+       integer,intent(in)::SWATHID
+       character(len=*),intent(IN)::DIMNAME
+    end function SWDIMINFO
+      
+
   end interface
 
 !====================
@@ -78,6 +91,9 @@ end module HDFEOS
 
 !
 ! $Log$
+! Revision 2.2  2000/09/13 16:56:22  pumphrey
+! HCP added  swdiminfo and swinqdims -- more to do, though.
+!
 ! Revision 2.1  2000/09/13 16:28:49  pumphrey
 ! HCP added SWINQSWATH
 !
