@@ -70,7 +70,7 @@ module L2ParInfo
     character(len=132) :: executable    ! Executable filename
     character(len=132) :: submit=""     ! Submit comand for batch queue system
     integer :: maxFailuresPerMachine = 1 ! More than this then don't use it
-    integer :: maxFailuresPerChunk = 2 ! More than this then give up on getting it
+    integer :: maxFailuresPerChunk = 10 ! More than this then give up on getting it
   end type L2ParallelInfo_T
 
   ! Shared variables
@@ -400,6 +400,10 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.24  2002/11/23 00:13:18  livesey
+! Increased maxFailuresPerChunk to reflect nature of Raytheon cluster (at
+! least for the moment).
+!
 ! Revision 2.23  2002/10/17 18:19:13  livesey
 ! Added GiveupTag
 !
