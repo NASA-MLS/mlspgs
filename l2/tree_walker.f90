@@ -17,7 +17,7 @@ module TREE_WALKER
   use ObtainClimatology, only: OBTAIN_CLIM
   use ObtainDAO, only: OBTAIN_DAO
   use ObtainNCEP, only: OBTAIN_NCEP
-  use OPEN_INIT, only: DestroyL1BInfo, OpenAndInitialize
+  use OPEN_INIT, only: DestroyL1BInfo, OpenAndInitialize, read_apriori
   use OutputAndClose, only: Output_Close
   use QuantityTemplates, only: QuantityTemplate_T
   use ScanDivide, only: DestroyChunkDatabase, ScanAndDivide
@@ -81,6 +81,7 @@ contains ! ====     Public Procedures     ==============================
         call set_global_settings ( son )
       case ( z_readapriori )
         ! Read apriori here
+      	CALL read_apriori ( son )
       case ( z_mergeapriori )
         ! Merge apriori here
       case ( z_chunkdivide )
@@ -134,3 +135,6 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.2  2000/10/10 00:37:46  vsnyder
+! Added $Log for CVS at end.
+!
