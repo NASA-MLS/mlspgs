@@ -142,6 +142,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     integer :: novmrSurf                   ! Number of vmr levels
     integer :: noCldSurf                   ! Number of cloud ext levels
     integer :: NOFREQS                  ! Number of frequencies
+    integer :: NOFREQS0                  ! Number of frequencies of the last signal
 
     integer :: i                        ! Loop counter
     integer :: j                        ! Loop counter
@@ -250,10 +251,16 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     if(forwardModelConfig%cloud_der == 0) doHighZt = .true.
     if(forwardModelConfig%cloud_der == 1) doLowZt = .true.
 
-    !------------------------------------------------------------------------
-    ! Current version can only have one signal for FullCloudForwardModel
-    ! This will be updated soon
-    !------------------------------------------------------------------------
+    signal = forwardModelConfig%signals(size(forwardModelConfig%signals))
+
+    ! find the last cloudRadiance in fwdModelExtra for cloud top indicator
+    obsCloudRadiance => GetVectorQuantityByType ( fwdModelExtra,     &
+          & quantityType=l_cloudInducedRadiance, &
+          & signal=signal%index, sideband=signal%sideband )
+      noFreqs0 = size (signal%frequencies)
+      do i=1, noFreqs0
+        if (signal%channels(i)) whichChannel=i
+      end do
 
     do sigInd = 1, size(forwardModelConfig%signals)
 
@@ -302,9 +309,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
           & quantityType=l_temperature )
         gph => GetVectorQuantityByType ( fwdModelExtra,       &
           & quantityType=l_gph )
-        obsCloudRadiance => GetVectorQuantityByType ( fwdModelExtra,     &
-          & quantityType=l_cloudInducedRadiance, noerror=.true.,  &
-          & signal=signal%index, sideband=signal%sideband )
         cloudIce => GetVectorQuantityByType ( fwdModelExtra,   &
           & quantityType=l_cloudIce )
         cloudWater => GetVectorQuantityByType ( fwdModelExtra, &
@@ -590,18 +594,19 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       else
        iCloudHeight = 0
        if(doHighZt) then
-         do i = 1, noMifs
-            if(obsCloudRadiance%values(i,maf) .ne. 0.0_r8) iCloudHeight = i
+         do mif = 1, noMifs
+           if(obsCloudRadiance%values(whichchannel+(mif-1)*noFreqs0,maf) .ne. 0.0_r8) &
+                & iCloudHeight = mif
          enddo
        else
-         do i = 1, noMifs
-            if(obsCloudRadiance%values(i,maf) .ne. 0.0_r8) iCloudHeight = i
+         do mif = 1, noMifs
+           if(obsCloudRadiance%values(whichchannel+(mif-1)*noFreqs0,maf) .ne. 0.0_r8) & 
+                & iCloudHeight = mif
          enddo
        end if
-
-       ! if no cloud is found, cloud top is 18 km
-       CloudHeight = 18.e3_r8     ! meters
-       if(iCloudHeight .ne. 0) CloudHeight = zt(iCloudHeight)
+       ! if no cloud is found, cloud top is 20 km
+       CloudHeight = 20.e3_r8     ! meters
+       if(iCloudHeight .ne. 0) CloudHeight = min(zt(iCloudHeight),CloudHeight)
 
       ! set up artificial cloud profile for retrieval use only
        call CLOUD_MODEL (CloudType, CloudHeight, gph%values(:,instance), noSurf, WC)
@@ -655,6 +660,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     if (prt_log) print*, 'Successfully done with Full Cloud Foward Model ! '
 
     ! Output minor frame quantities if they are asked: check channel and type
+   
     do i =1 , noFreqs
     if (doChannel(i)) then
     do mif=1, noMIFs
@@ -680,6 +686,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
     ! To save disk space, we output one channel per band (first true doChannel)
     ! in the last signal (band) will over write all the previous signals (bands)
+    
     FOUNDINFIRST = .true.
     do i=1, noFreqs
     if( doChannel(i) .and. FOUNDINFIRST ) then 
@@ -713,9 +720,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
          print*,'only one frequency and one signal is allowed'
          stop
       end if
-      do i=1, noFreqs
-        if (doChannel(i)) whichChannel=i
-      end do
 
       colJBlock = FindBlock ( Jacobian%col, state_ext%index, maf)
       rowJBlock = FindBlock ( jacobian%row, radiance%index, maf)
@@ -786,8 +790,9 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         s_fine = (earthradius%values(1,maf)+ zt(mif)) * &
          & sin((phi_fine - radiance%template%phi(mif,maf))*Deg2Rad)
         ds_fine = 0._r8    ! initialize it
-        ds_fine(1:nfine*nNear-1) = s_fine(2:nfine*nNear) - &
-         & s_fine(1:nfine*nNear-1)
+        do i=1,nfine*nNear-1
+         ds_fine(i) = s_fine(i+1) - s_fine(i)
+        end do
 
          call InterpolateValues ( &
             & sLevl, &            ! Old X
@@ -898,6 +903,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.81  2001/11/07 05:22:06  dwu
+! fixed a bug in computing dphi
+!
 ! Revision 1.80  2001/11/06 21:54:47  dwu
 ! use phiWindow to save time
 !
