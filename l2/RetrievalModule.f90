@@ -743,7 +743,22 @@ contains
       real(rv), intent(in) :: MuMin
 
       integer :: IQ, IVX, IVY           ! Subscripts used during MU computation
+      real(rv) :: MuOrig                ! The original value of MU
 
+
+!     This is a set of debugging output it is helpful to sprinkle in when
+!     tracking down problems.
+!       call Output ( 'In Bound move (' // which // ')', advance='yes' )
+!       call output ( ' x = ' )
+!       call output ( x%quantities(iq)%values(ivx,ivy) )
+!       call output ( ' dx = ' )
+!       call output ( dx%quantities(iq)%values(ivx,ivy) )
+!       call output ( ' bound = ' )
+!       call output ( bound%quantities(iq)%values(ivx,ivy) )
+!       call output ( ' mu = ' )
+!       call output ( mu, advance='yes' )
+
+      muOrig = mu
       if ( which == 'low' ) then
         do iq = 1, size(x%quantities)
           if ( associated(x%quantities(iq)%mask) ) then
@@ -781,8 +796,8 @@ contains
                   if ( x%quantities(iq)%values(ivx,ivy) + &
                     &  mu * dx%quantities(iq)%values(ivx,ivy) > &
                     &  bound%quantities(iq)%values(ivx,ivy) ) &
-                      & mu = ( x%quantities(iq)%values(ivx,ivy) - &
-                      &        bound%quantities(iq)%values(ivx,ivy) ) &
+                      & mu = ( bound%quantities(iq)%values(ivx,ivy) - &
+                      &        x%quantities(iq)%values(ivx,ivy) ) &
                       &      / dx%quantities(iq)%values(ivx,ivy)
                 end if
               end do
@@ -793,8 +808,8 @@ contains
                 if ( x%quantities(iq)%values(ivx,ivy) + &
                   &  mu * dx%quantities(iq)%values(ivx,ivy) > &
                   &  bound%quantities(iq)%values(ivx,ivy) ) &
-                    & mu = ( x%quantities(iq)%values(ivx,ivy) - &
-                    &        bound%quantities(iq)%values(ivx,ivy) ) &
+                    & mu = ( bound%quantities(iq)%values(ivx,ivy) - &
+                    &        x%quantities(iq)%values(ivx,ivy) ) &
                     &      / dx%quantities(iq)%values(ivx,ivy)
               end do
             end do
@@ -807,8 +822,8 @@ contains
 
       ! Now if mu has goten really small, we'll change it back to one,
       ! and do an element by element modification of dx
-      if ( mu < muMin ) then
-        mu = 1.0_rv
+      if ( abs(mu) < muMin ) then
+        mu = muOrig
         if ( which == 'low' ) then
           do iq = 1, size(x%quantities)
             if ( associated(x%quantities(iq)%mask) ) then
@@ -816,11 +831,11 @@ contains
                 do ivx = 1, size(x%quantities(iq)%values,1)
                   if ( iand(ichar(x%quantities(iq)%mask(ivx,ivy)),m_linalg) == 0 ) then
                     if ( x%quantities(iq)%values(ivx,ivy) + &
-                      &  dx%quantities(iq)%values(ivx,ivy) < &
+                      &  mu * dx%quantities(iq)%values(ivx,ivy) < &
                       &  bound%quantities(iq)%values(ivx,ivy) ) &
                         &  dx%quantities(iq)%values(ivx,ivy) = &
-                        &    bound%quantities(iq)%values(ivx,ivy) - &
-                        &    x%quantities(iq)%values(ivx,ivy)
+                        &    ( bound%quantities(iq)%values(ivx,ivy) - &
+                        &    x%quantities(iq)%values(ivx,ivy) ) / mu
                   end if
                 end do
               end do
@@ -828,11 +843,11 @@ contains
               do ivy = 1, size(x%quantities(iq)%values,2)
                 do ivx = 1, size(x%quantities(iq)%values,1)
                   if ( x%quantities(iq)%values(ivx,ivy) + &
-                    &  dx%quantities(iq)%values(ivx,ivy) < &
+                    &  mu * dx%quantities(iq)%values(ivx,ivy) < &
                     &  bound%quantities(iq)%values(ivx,ivy) ) &
                       &  dx%quantities(iq)%values(ivx,ivy) = &
-                      &    bound%quantities(iq)%values(ivx,ivy) - &
-                      &    x%quantities(iq)%values(ivx,ivy)
+                      &    ( bound%quantities(iq)%values(ivx,ivy) - &
+                      &    x%quantities(iq)%values(ivx,ivy) ) / mu
                 end do
               end do
             end if
@@ -844,11 +859,11 @@ contains
                 do ivx = 1, size(x%quantities(iq)%values,1)
                   if ( iand(ichar(x%quantities(iq)%mask(ivx,ivy)),m_linalg) == 0 ) then
                     if ( x%quantities(iq)%values(ivx,ivy) + &
-                      &  dx%quantities(iq)%values(ivx,ivy) > &
+                      &  mu * dx%quantities(iq)%values(ivx,ivy) > &
                       &  bound%quantities(iq)%values(ivx,ivy) ) &
                         &  dx%quantities(iq)%values(ivx,ivy) = &
-                        &    bound%quantities(iq)%values(ivx,ivy) - &
-                        &    x%quantities(iq)%values(ivx,ivy)
+                        &    ( bound%quantities(iq)%values(ivx,ivy) - &
+                        &      x%quantities(iq)%values(ivx,ivy) ) / mu
                   end if
                 end do
               end do
@@ -856,11 +871,11 @@ contains
               do ivy = 1, size(x%quantities(iq)%values,2)
                 do ivx = 1, size(x%quantities(iq)%values,1)
                   if ( x%quantities(iq)%values(ivx,ivy) + &
-                    &  dx%quantities(iq)%values(ivx,ivy) > &
+                    &  mu * dx%quantities(iq)%values(ivx,ivy) > &
                     &  bound%quantities(iq)%values(ivx,ivy) ) &
                       &  dx%quantities(iq)%values(ivx,ivy) = &
-                      &    bound%quantities(iq)%values(ivx,ivy) - &
-                      &    x%quantities(iq)%values(ivx,ivy)
+                      &    ( bound%quantities(iq)%values(ivx,ivy) - &
+                      &      x%quantities(iq)%values(ivx,ivy) ) / mu
                 end do
               end do
             end if
@@ -2247,7 +2262,6 @@ contains
       timing = .false.
     end subroutine SayTime
 
-
   end subroutine Retrieve
 
   logical function NOT_USED_HERE()
@@ -2257,6 +2271,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.258  2004/06/16 00:01:36  livesey
+! Bug fixes to BoundMove
+!
 ! Revision 2.257  2004/05/19 19:16:12  vsnyder
 ! Move MLSChunk_t to Chunks_m
 !
