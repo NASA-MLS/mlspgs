@@ -107,12 +107,15 @@ contains
       dt_script_dtnp(i) = 0.5_r8 * (dt_dnp(i+1) - dt_dnp(i-1))
     end do
 !
-    dt_script_dtnp(m) = 0.5_r8 * (dt_dnp(m-1) + dt_dnp(m))
+    dt_script_dtnp(m) = -0.5_r8 * (dt_dnp(m-1) + dt_dnp(m))
 !
     Return
   End subroutine D_T_SCRIPT_DTNP
 end module D_T_SCRIPT_DTNP_M
 ! $Log$
+! Revision 1.6  2001/03/31 23:40:55  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
 ! Revision 1.5  2001/03/29 08:51:01  zvi
 ! Changing the (*) toi (:) everywhere
 !
