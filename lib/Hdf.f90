@@ -63,7 +63,17 @@ MODULE Hdf
       INTEGER FUNCTION sfend(sd_id)
         INTEGER, INTENT (IN) :: sd_id
       END FUNCTION sfend 
+
    END INTERFACE
+
+   ! For routines where one of the arguments can be any valid data type !
+   ! an interface block causes trouble. One either builds a generic
+   ! interface or plays fast-and-loose by declaring the routine to be
+   ! "external" in the old-fashioned Fortran-77 way. We do the latter for 
+   ! sfsfill
+   INTEGER::sfsfill
+   EXTERNAL::sfsfill
+
 !-------------------
 ! Error Return Codes 
 !-------------------
@@ -457,6 +467,9 @@ END MODULE Hdf
 !===============================================================================
 
 !# $Log$
+!# Revision 2.1  2000/11/29 19:33:18  pumphrey
+!# Added EXTERNAL reference for sfsfill
+!#
 !# Revision 2.0  2000/09/05 17:41:06  dcuddy
 !# Change revision to 2.0
 !#
