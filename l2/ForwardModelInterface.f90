@@ -45,7 +45,7 @@ module ForwardModelInterface
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate,&
     & MLSMSG_Error
   use MLSNumerics, only: Hunt
-  use MLSSignals_m, only: GetSignal, MaxSigLen, Signal_T, GetSignalName,&
+  use MLSSignals_m, only: ARESIGNALSSUPERSET, GetSignal, MaxSigLen, Signal_T, GetSignalName,&
     & MATCHSIGNAL, DUMP
   use Molecules, only: spec_tags
   use MoreTree, only: Get_Boolean, Get_Field_ID
@@ -343,7 +343,7 @@ contains ! =====     Public Procedures     =============================
   end function ConstructForwardModelConfig
 
   ! -----------------------------------------------  ForwardModel  -----
-  subroutine FullForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
+  subroutine FullForwardModel ( FwdModelConf, FwdModelIn, FwdModelExtra, &
     &                       FwdModelOut, Ifm, FmStat, Jacobian )
 
     use GL6P, only: NG
@@ -370,7 +370,7 @@ contains ! =====     Public Procedures     =============================
     ! Dummy arguments --------------------------------------------------------
 
     ! From ForwardModelSetup
-    type(forwardModelConfig_T), intent(inout) :: forwardModelConfig
+    type(forwardModelConfig_T), intent(inout) :: fwdModelConf
     type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
     type(vector_T), intent(inout) :: FwdModelOut  ! Radiances, etc.
     type(forwardModelIntermediate_T), intent(inout) :: Ifm ! Workspace
@@ -407,7 +407,8 @@ contains ! =====     Public Procedures     =============================
     type (VectorValue_T), pointer :: LOSVEL        ! Line of sight velocity
     type (VectorValue_T), pointer :: ORBINCLINE    ! Orbital inclination (beta)
     type (VectorValue_T), pointer :: PTAN          ! PTAN quantity
-    type (VectorValue_T), pointer :: RADIANCE      ! Radiance quantity to be filled
+    type (VectorValue_T), pointer :: FIRSTRADIANCE ! One radiance quantity to be filled
+    type (VectorValue_T), pointer :: THISRADIANCE ! One radiance quantity to be filled
     type (VectorValue_T), pointer :: REFGPH        ! Reference GPH, (zRef and hRef)
     type (VectorValue_T), pointer :: SCGEOCALT     ! Geocentric spacecraft altitude
     type (VectorValue_T), pointer :: SIDEBANDRATIO ! Sideband ratio for radiance
@@ -419,6 +420,7 @@ contains ! =====     Public Procedures     =============================
     integer :: MAFTINSTANCE             ! Temperature instance closest to this MAF
     integer :: MAXNOFREQS               ! Used for sizing arrays
     integer :: MAXNOFSURFS              ! Max. no. surfaces for any molecule
+    integer :: MAXSUPERSET              ! Max. value of superset
     integer :: MAXVERT                  ! Number of points in gl grid
     integer :: N2LVL                    ! Twice size of tangent grid
     integer :: NLVL                     ! Size of tangent grid
@@ -429,17 +431,18 @@ contains ! =====     Public Procedures     =============================
     integer :: NOUSEDCHANNELS           ! Number of channels to output
     integer :: NO_PHI_T                 ! No. of Temp. profiles in the chunk
     integer :: PHIWINDOW                ! Copy of forward model config%phiWindow
+    integer :: SHAPEIND                 ! Index into filter shapes
     integer :: SIDEBANDSTART            ! Loop limit
     integer :: SIDEBANDSTEP             ! Loop step
     integer :: SIDEBANDSTOP             ! Loop limit
-    integer :: SIG0                     ! Lower part of signal range
-    integer :: SIG1                     ! Upper part of signal range
+    integer :: SIGIND                   ! Loop counter
     integer :: SPECIE                   ! Loop counter
     integer :: STATUS                   ! From allocates etc.
     integer :: SURFACE                  ! Loop counter
     integer :: THISSIDEBAND             ! Loop counter
     integer :: TOTALSIGNALS             ! Used when hunting for pointing grids
-    integer :: WHICHPOINTINGGRID        ! Index of poiting grid
+    integer :: WHICHPATTERN             ! Index of antenna pattern
+    integer :: WHICHPOINTINGGRID        ! Index of pointing grid
     integer :: WINDOWFINISH             ! Range of window
     integer :: WINDOWSTART              ! Range of window
 
@@ -450,13 +453,12 @@ contains ! =====     Public Procedures     =============================
     real (r8) :: THISRATIO              ! A sideband ratio
 
     integer, dimension(:), pointer :: CHANNELINDEX ! E.g. 1..25
-    integer, dimension(:), pointer :: GRIDS            ! Frq grid for each tan_press
-    integer, dimension(:), pointer :: SIGNALSGRID ! Used in ptg grid hunt
+    integer, dimension(:), pointer :: GRIDS ! Frq grid for each tan_press
+    integer, dimension(:), pointer :: SUPERSET ! Result of AreSignalsSuperset
     integer, dimension(:), pointer :: USEDCHANNELS ! Array of indices used
+    integer, dimension(:), pointer :: USEDSIGNALS ! Array of indices used
 
-    logical, dimension(:), pointer :: ALLMATCH  ! Used in pointing grid hunt
     logical :: FOUNDINFIRST                     ! Flag to indicate derivatives
-    logical, dimension(:), pointer :: THISMATCH ! Used in pointing grid hunt
 
     real(r8), dimension(:,:),   pointer :: D2X_DXDT    ! (No_tan_hts, Tsurfs)
     real(r8), dimension(:,:,:), pointer :: DH_DT_PATH  ! (pathSize, Tsurfs, Tinstance)
@@ -470,19 +472,19 @@ contains ! =====     Public Procedures     =============================
     real(r8), dimension(:,:),   pointer :: RADIANCES     ! (Nptg,noChans)
     real(r8), dimension(:),     pointer :: RadV
     real(r8), dimension(:,:),   pointer :: REF_CORR    ! (n2lvl, no_tan_hts)
-!   real(r4), dimension(:), pointer :: TOAVG ! Stuff to be passed to frq.avg.
-    real(kind(k_temp_frq%values)), dimension(:), pointer :: TOAVG ! Stuff to be passed to frq.avg.
+    real(kind(k_temp_frq%values)), &
+      & dimension(:), pointer :: TOAVG ! Stuff to be passed to frq.avg.
     real(r8), dimension(:),     pointer :: T_SCRIPT    ! (n2lvl)
     real(r8), dimension(:),     pointer :: TAU         ! (n2lvl)
-
-
-    type(Signal_T), dimension(:), pointer :: ALLSIGNALS ! Used in ptg grid hunt
+    
+    integer, dimension(1) :: WHICHPOINTINGGRIDASARRAY ! Result of minloc
 
     type(path_vector), dimension(:), allocatable :: N_PATH    ! (No_tan_hts)
 
     ! dimensions of SPSFUNC_PATH are: (Nsps,No_tan_hts)
     type(path_vector), allocatable, dimension(:,:) :: SPSFUNC_PATH
-    type(signal_t) :: Signal
+    type(signal_t) :: FirstSignal
+    type(signal_t) :: ThisSignal
     type(catalog_T), dimension(:), pointer :: My_Catalog
 
     ! Executable code --------------------------------------------------------
@@ -493,30 +495,37 @@ contains ! =====     Public Procedures     =============================
     ! deallocate them.  We don't want them to be initialized NULL()
     ! because that makes them SAVEd.
 
-    nullify ( allMatch, beta_path, channelIndex, d2x_dxdt, dh_dt_path, dx_dt, &
+    nullify (beta_path, channelIndex, d2x_dxdt, dh_dt_path, dx_dt, &
       & frequencies, grids, i_star_all, k_atmos, k_temp, my_Catalog, &
-      & ptg_angles, radiances, radV, ref_corr, signalsGrid, t_script, &
-      & tau, thisMatch, usedChannels )
+      & ptg_angles, radiances, radV, ref_corr, superset, t_script, &
+      & tau, usedChannels, usedSignals )
 
     ! Identify the vector quantities we're going to need.
     ! The key is to identify the signal we'll be working with first
-    ! Deal with multiple signals in later versions !??? NJL
-    if ( size(forwardModelConfig%signals) > 1 ) call MLSMessage ( &
-      & MLSMSG_Error,ModuleName, &
-      & "Can't yet have multiple signals in forward model" )
-    signal = forwardModelConfig%signals(1)
+    firstSignal = fwdModelConf%signals(1)
+
+    ! Now make sure all the signals we're dealing with are same module,
+    ! radiometer and sideband.
+    if ( any( fwdModelConf%signals%sideband .ne. &
+      & firstSignal%sideband ) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      &  "Can't have mixed sidebands in forward model config")
+    if ( any( fwdModelConf%signals%radiometer .ne. &
+      & firstSignal%radiometer ) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      &  "Can't have mixed radiometers in forward model config")
 
     ! Now from that we identify the radiance quantity we'll be outputting
-    radiance => GetVectorQuantityByType (fwdModelOut, quantityType=l_radiance, &
-      & signal= signal%index, sideband=signal%sideband )
+    firstRadiance => GetVectorQuantityByType (fwdModelOut, quantityType=l_radiance, &
+      & signal=firstSignal%index, sideband=firstSignal%sideband )
 
     ! Identify the appropriate state vector components, save vmrs for later
     temp => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_temperature )
     ptan => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_ptan, instrumentModule=signal%instrumentModule )
+      & quantityType=l_ptan, instrumentModule=firstSignal%instrumentModule )
     elevOffset => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_elevOffset, radiometer=signal%radiometer )
+      & quantityType=l_elevOffset, radiometer=firstSignal%radiometer )
     orbIncline => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_orbitIncline )
     spaceRadiance => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
@@ -526,23 +535,20 @@ contains ! =====     Public Procedures     =============================
     refGPH => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_refGPH )
     losVel => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_losVel, instrumentModule=signal%instrumentModule )
+      & quantityType=l_losVel, instrumentModule=firstSignal%instrumentModule )
     scGeocAlt => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_scGeocAlt )
     sidebandRatio => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_sidebandRatio, signal= signal%index, noError=.true. )
+      & quantityType=l_sidebandRatio, signal= firstSignal%index, noError=.true. )
 
     ! We won't seek for molecules here as we can't have an array of pointers.
     ! When we do want molecule i we would do something like
     ! vmr => GetVectorQuantityBytype (fwdModelIn, fwdModelExtra, &
-    !   quantityType=l_vmr, molecule=forwardModelConfig.molecules(i))
+    !   quantityType=l_vmr, molecule=fwdModelConf.molecules(i))
 
     ! Now we're going to validate the quantities we've been given, don't forget
     ! we already know what their quantityType's are as that's how we found them
     !, so we don't need to check that.
-    if ( .not. ValidateVectorQuantity(radiance, minorFrame=.true.,&
-      & frequencyCoordinate=(/l_channel/)) ) call MLSMessage ( MLSMSG_Error, &
-      & ModuleName, InvalidQuantity//'radiance' )
     if ( .not. ValidateVectorQuantity(temp, stacked=.true., coherent=.true., &
       & frequencyCoordinate=(/l_none/)) ) call MLSMessage ( MLSMSG_Error, &
       & ModuleName, InvalidQuantity//'temperature' )
@@ -555,7 +561,7 @@ contains ! =====     Public Procedures     =============================
       & InvalidQuantity//'elevOffset' )
     ! There will be more to come here.
 
-    noSpecies = size(forwardModelConfig%molecules)
+    noSpecies = size(fwdModelConf%molecules)
 
     !  Create a subset of the catalog composed only of those molecules to be
     !  used for this run
@@ -563,7 +569,7 @@ contains ! =====     Public Procedures     =============================
     maxNoFSurfs = 0
     do specie = 1, noSpecies
       f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-        & quantityType=l_vmr, molecule=forwardModelConfig%molecules(specie) )
+        & quantityType=l_vmr, molecule=fwdModelConf%molecules(specie) )
       maxNoFSurfs = max(maxNoFSurfs, f%template%noSurfs)
     end do
 
@@ -572,7 +578,7 @@ contains ! =====     Public Procedures     =============================
       & MLSMSG_Allocate//'my_catalog' )
 
     do j = 1, noSpecies
-      Spectag = spec_tags(forwardModelConfig%molecules(j))
+      Spectag = spec_tags(fwdModelConf%molecules(j))
       do i = 1, Size(Catalog)
         if ( Catalog(i)%Spec_Tag == Spectag ) then
           My_Catalog(j) = Catalog(i)
@@ -585,16 +591,16 @@ contains ! =====     Public Procedures     =============================
     ! (To be used later in rad_tran_wd, for automatic arrays asignement)
     max_phi_dim = 1
     max_zeta_dim = 1
-    if ( ForwardModelConfig%temp_der ) then
+    if ( FwdModelConf%temp_der ) then
       max_zeta_dim = temp%template%noSurfs
       max_phi_dim = temp%template%noInstances
     end if
 
-    if ( forwardModelConfig%atmos_der ) then
+    if ( fwdModelConf%atmos_der ) then
       do k = 1, noSpecies
-        if ( forwardModelConfig%moleculeDerivatives(k) ) then
+        if ( fwdModelConf%moleculeDerivatives(k) ) then
           f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-            &     quantityType=l_vmr, molecule=forwardModelConfig%molecules(k))
+            &     quantityType=l_vmr, molecule=fwdModelConf%molecules(k))
           j = f%template%noInstances
           max_phi_dim = max(max_phi_dim,j)
           j = f%template%noSurfs
@@ -610,18 +616,15 @@ contains ! =====     Public Procedures     =============================
       fmStat%rows = .false.
     endif
 
-    ! Work out what signal we're after
-    signal = forwardModelConfig%signals(1)
-
     ! Get some dimensions that we'll use a lot
-    noMAFs = radiance%template%noInstances
-    noMIFs = radiance%template%noSurfs
+    noMAFs = firstRadiance%template%noInstances
+    noMIFs = firstRadiance%template%noSurfs
     no_phi_t = temp%template%noInstances
-    no_tan_hts = ForwardModelConfig%TangentGrid%nosurfs
-    maxVert = 2 * (NG+1) * size(ForwardModelConfig%integrationGrid%surfs)
-    nlvl=size(ForwardModelConfig%integrationGrid%surfs)
+    no_tan_hts = FwdModelConf%TangentGrid%nosurfs
+    maxVert = 2 * (NG+1) * size(FwdModelConf%integrationGrid%surfs)
+    nlvl=size(FwdModelConf%integrationGrid%surfs)
     n2lvl=2*nlvl
-    phiWindow = ForwardModelConfig%phiWindow
+    phiWindow = FwdModelConf%phiWindow
 
     if ( toggle(emit) ) then
       print*,'Dimensions:'
@@ -637,18 +640,33 @@ contains ! =====     Public Procedures     =============================
       print*,'MAF:',fmStat%maf
     end if
 
-    ! Work out which channels are used
-    call allocate_test ( channelIndex, size(signal%frequencies), &
-    &                   'channelIndex', ModuleName )
-    noUsedChannels = count ( signal%channels )
-    call allocate_test ( usedChannels, noUsedChannels, 'channelIndex', &
-                      &  ModuleName )
-    do channel = 1, size( signal%frequencies)
-      channelIndex(channel) = channel
+    ! Work out which channels are used, also check we have radiances for them.
+    noUsedChannels = 0
+    do sigInd = 1, size(fwdModelConf%signals)
+      thisRadiance => GetVectorQuantityByType (fwdModelOut, quantityType=l_radiance, &
+        & signal=fwdModelConf%signals(sigInd)%index, sideband=firstSignal%sideband )
+      if ( .not. ValidateVectorQuantity(thisRadiance, minorFrame=.true.,&
+        & frequencyCoordinate=(/l_channel/)) ) call MLSMessage ( MLSMSG_Error, &
+        & ModuleName, InvalidQuantity//'radiance' )
+      noUsedChannels = noUsedChannels + &
+        & count( fwdModelConf%signals(sigInd)%channels )
     end do
-    usedChannels = pack ( channelIndex, signal%channels )
-    call deallocate_test ( channelIndex,'channelIndex',ModuleName )
+    call allocate_test ( usedChannels, noUsedChannels, &
+      & 'usedChannels', ModuleName )
+    call allocate_test ( usedSignals, noUsedChannels, &
+      & 'usedSignals', ModuleName )
+    channel = 1
+    do sigInd = 1, size(fwdModelConf%signals)
+      do i = 1, size(fwdModelConf%signals(sigInd)%frequencies)
+        if (fwdModelConf%signals(sigInd)%channels(i)) then
+          usedChannels(channel) = i
+          usedSignals(channel) = sigInd
+          channel = channel + 1
+        end if
+      end do
+    end do
 
+    ! --------------- Hydrostatic stuff ---------------------------------
     if ( fmStat%newHydros ) then
 
       if ( toggle(emit) .and. levels(emit) > 0 ) &
@@ -703,7 +721,7 @@ contains ! =====     Public Procedures     =============================
       call Allocate_test( ifm%closestInstances, noMAFs, 'closestInstances', ModuleName)
 
       ! Setup for hydrostatic calculation
-      call FindClosestInstances ( temp, radiance, ifm%closestInstances )
+      call FindClosestInstances ( temp, firstRadiance, ifm%closestInstances )
 
       do i = 1, no_phi_t
         phi_tan = Deg2Rad*temp%template%phi(1,i)
@@ -714,21 +732,21 @@ contains ! =====     Public Procedures     =============================
 
       ! Now compute a hydrostatic grid given the temperature and refGPH
       ! information.
-      call hydrostatic_model ( ForwardModelConfig%SurfaceTangentIndex, &
+      call hydrostatic_model ( FwdModelConf%SurfaceTangentIndex, &
         &  no_phi_t, ifm%geoc_lat, 0.001*refGPH%values(1,:), &
         &  refGPH%template%surfs(1,1), &
-        &  ForwardModelConfig%integrationGrid%surfs, &
+        &  FwdModelConf%integrationGrid%surfs, &
         &  temp%template%surfs(:,1), temp%values, &
         &  ifm%z_glgrid, ifm%h_glgrid, ifm%t_glgrid, &
         &  ifm%dhdz_glgrid, ifm%dh_dt_glgrid, &
-        &  ForwardModelConfig%TangentGrid%surfs, &
+        &  FwdModelConf%TangentGrid%surfs, &
         &  ifm%tan_hts, ifm%tan_temp, ifm%tan_dh_dt, &
         &  ifm%gl_count, Ier )
       if ( ier /= 0 ) goto 99
 
       ! Now compute stuff along the path given this hydrostatic grid.
-      call comp_path_entities ( radiance, temp, ifm%closestInstances, &
-        &  ForwardModelConfig%integrationGrid%noSurfs, &
+      call comp_path_entities ( temp, ifm%closestInstances, &
+        &  FwdModelConf%integrationGrid%noSurfs, &
         &  temp%template%noSurfs, ifm%gl_count, ifm%ndx_path, ifm%z_glgrid, &
         &  ifm%t_glgrid, ifm%h_glgrid, ifm%dhdz_glgrid, ifm%tan_hts,        &
         &  no_tan_hts, ifm%z_path, ifm%h_path, ifm%t_path, ifm%phi_path,    &
@@ -771,21 +789,19 @@ contains ! =====     Public Procedures     =============================
     call allocate_test ( i_star_all, noUsedChannels, noMIFs, &
       & 'i_star_all', ModuleName )
 
-    ! Now work out what sideband(s) we're going to be doing
-    if ( any( forwardModelConfig%signals%sideband .ne. &
-      & forwardModelConfig%signals(1)%sideband ) ) &
-      &  call MLSMessage ( MLSMSG_Error, ModuleName, &
-      &  "Can't have mixed sidebands in forward model config")
-
     ! Now set radiances to zero, forward model just adds in terms
     do i = 1, noUsedChannels
+      thisRadiance = GetVectorQuantityByType (fwdModelOut, &
+        & quantityType=l_radiance, &
+        & signal=fwdModelConf%signals(usedSignals(i))%index, &
+        & sideband=firstSignal%sideband )
       ch = usedChannels(i)
-      do j = 1, radiance%template%noSurfs
-        radiance%values( ch + (j-1)*radiance%template%noChans, fmStat%maf) = 0.0
+      do j = 1, noMIFs
+        thisRadiance%values( ch + (j-1)*thisRadiance%template%noChans, fmStat%maf) = 0.0
       end do
     end do
 
-    if ( forwardModelConfig%signals(1)%sideband == 0 ) then
+    if ( fwdModelConf%signals(1)%sideband == 0 ) then
       if (.not. associated (sidebandRatio) ) &
         & call MLSMessage(MLSMSG_Error,ModuleName, &
         & "No sideband ratio supplied")
@@ -793,7 +809,7 @@ contains ! =====     Public Procedures     =============================
       sidebandStop = 1
       sidebandStep = 2
     else
-      sidebandStart = forwardModelConfig%signals(1)%sideband
+      sidebandStart = fwdModelConf%signals(1)%sideband
       sidebandStop = sideBandStart
       sidebandStep = 1
     endif
@@ -813,61 +829,33 @@ contains ! =====     Public Procedures     =============================
 
       ! Now code splits into two sections, one for when we're doing frequency
       ! averaging, and one when we're not.
-      if ( forwardModelConfig%do_freq_avg ) then ! --- Doing freq. avg. ---
+      if ( fwdModelConf%do_freq_avg ) then ! --- Doing freq. avg. ---
         if ( toggle(emit) .and. levels(emit) > 0 ) &
           & call trace_begin ( 'ForwardModel.FreqAvg' )
-        totalSignals = 0
+
+        call allocate_test ( superset, size(pointingGrids), &
+          & 'superset', ModuleName )
         do i = 1, size(pointingGrids)
-          totalSignals = totalSignals + size(pointingGrids(i)%signals)
+          superset(i) = AreSignalsSuperset ( pointingGrids(i)%signals, &
+            & fwdModelConf%signals )
         end do
+        if ( all( superset < 0 ) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "No matching pointing frequency grids." )
         
-        allocate ( allSignals(totalSignals), STAT=status)
-        call allocate_test ( signalsGrid,   totalSignals, 'signalsGrid',  &
-          & ModuleName)
-        
-        totalSignals = 0
-        do i = 1, size(pointingGrids)
-          sig0 = totalSignals + 1
-          sig1 = totalSignals + size(pointingGrids(i)%signals)
-          allSignals(sig0:sig1) = pointingGrids(i)%signals
-          signalsGrid(sig0:sig1) = i
-          totalSignals = sig1
-        end do
-        
-        call allocate_test ( allMatch, totalSignals, 'allMatch', ModuleName )
-        call allocate_test ( thisMatch, totalSignals, 'thisMatch', ModuleName )
-        
-        allMatch = .true.
-        do i = 1, size(forwardModelConfig%signals)
-          j = MatchSignal ( allSignals, forwardModelConfig%signals(i), &
-            & sideband=thisSideband, matchFlags=thisMatch )
-          allMatch = allMatch .and. thisMatch
-        end do
-        
-        if ( count (allMatch) == 0 ) call MLSMessage ( MLSMSG_Error,ModuleName,&
-          & 'No matching pointing frequency grids' )
-        
-        ! For the moment take the first match, later we'll be cleverer and choose
-        ! the smallest.  Or maybe we'll turn this whole section into another routine.
-        do i = 1, totalSignals
-          if ( allMatch(i) ) exit
-        end do
-        whichPointingGrid = signalsGrid(i)
-        
-        call deallocate_test ( thisMatch, 'thisMatch', ModuleName )
-        call deallocate_test ( allMatch, 'allMatch', ModuleName )
-        
-        deallocate ( allSignals, STAT=status)
-        if ( status /= 0) call MLSMessage(MLSMSG_Error,ModuleName,&
-          & MLSMSG_DeAllocate//'allSignals')
-        call deallocate_test ( signalsGrid, 'signalsGrid', ModuleName )
+        maxSuperset = maxval ( superset )
+        where ( superset < 0 )
+          superset = maxSuperset + 1
+        end where
+        whichPointingGridAsArray = minloc ( superset )
+        whichPointingGrid = whichPointingGridAsArray(1)
+        call deallocate_test ( superset, 'superset', ModuleName )
         
         ! Now we've identified the pointing grids.  Locate the tangent grid
         ! within it.
-        call allocate_test ( grids, ForwardModelConfig%TangentGrid%nosurfs, &
+        call allocate_test ( grids, FwdModelConf%TangentGrid%nosurfs, &
           "Grids", ModuleName )
         call Hunt ( PointingGrids(whichPointingGrid)%oneGrid%height, &
-          & ForwardModelConfig%TangentGrid%surfs, grids, allowTopValue=.true. )
+          & FwdModelConf%TangentGrid%surfs, grids, allowTopValue=.true. )
         if ( toggle(emit) .and. levels(emit) > 0 ) &
           & call trace_end ( 'ForwardModel.FreqAvg' )
 
@@ -875,15 +863,19 @@ contains ! =====     Public Procedures     =============================
         
         if ( toggle(emit) .and. levels(emit) > 0 ) &
           & call trace_begin ( 'ForwardModel.NotFreqAvg' )
-        noFreqs = count( forwardModelConfig%signals(1)%channels )
+
         call allocate_test ( frequencies,noFreqs, "frequencies", ModuleName )
-        frequencies = pack( signal%frequencies, &
-          & forwardModelConfig%signals(1)%channels )
+        do channel = 1, noUsedchannels
+          frequencies(channel) = &
+            & fwdModelConf%signals(usedSignals(channel))%centerFrequency + &
+            & fwdModelConf%signals(usedSignals(channel))% &
+            &  frequencies(usedChannels(channel))
+        end do
         select case ( thisSideband )
         case ( -1 )
-          frequencies = signal%lo - (signal%centerFrequency+frequencies)
+          frequencies = firstSignal%lo - frequencies
         case ( +1 )
-          frequencies = signal%lo + (signal%centerFrequency+frequencies)
+          frequencies = firstSignal%lo + frequencies
         case ( 0 )
           call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'Folded signal requested in forward model' )
@@ -891,7 +883,7 @@ contains ! =====     Public Procedures     =============================
           call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'Bad value of signal%sideband' )
         end select
-        noFreqs = size(frequencies)
+        noFreqs = noUsedChannels
         if ( toggle(emit) .and. levels(emit) > 0 ) &
           & call trace_end ( 'ForwardModel.NotFreqAvg' )
       end if
@@ -931,7 +923,7 @@ contains ! =====     Public Procedures     =============================
       if ( toggle(emit) .and. levels(emit) > 0 ) &
         & call trace_begin ( 'ForwardModel.get_path_spsfunc_ngrid' )
       Call get_path_spsfunc_ngrid ( fwdModelIn, fwdModelExtra, &
-        &  forwardModelConfig%molecules, ifm%ndx_path(:,maf), no_tan_hts, &
+        &  fwdModelConf%molecules, ifm%ndx_path(:,maf), no_tan_hts, &
         &  ifm%z_path(:,maf), ifm%t_path(:,maf), ifm%phi_path(:,maf), n_path, &
         &  spsfunc_path, Ier )
       if ( toggle(emit) .and. levels(emit) > 0 ) &
@@ -946,7 +938,7 @@ contains ! =====     Public Procedures     =============================
       if ( toggle(emit) .and. levels(emit) > 0 ) &
         & call trace_begin ( 'ForwardModel.get_chi_angles' )
       call get_chi_angles ( ifm%ndx_path(:,maf), n_path, &
-        &  forwardModelConfig%tangentGrid%surfs, &
+        &  fwdModelConf%tangentGrid%surfs, &
         &  ifm%tan_hts(:,mafTInstance),ifm%tan_temp(:,mafTInstance),&
         &  phi_tan,ifm%elvar(maf)%Roc,&
         &  0.001*scGeocAlt%values(1,1),  &
@@ -954,7 +946,7 @@ contains ! =====     Public Procedures     =============================
         &  ifm%tan_dh_dt(:,mafTInstance,:), no_tan_hts, &
         &  temp%template%noSurfs, &
         &  temp%template%surfs(:,1), &
-        &  forwardModelConfig%SurfaceTangentIndex, &
+        &  fwdModelConf%SurfaceTangentIndex, &
         &  center_angle, ptg_angles, dx_dt, d2x_dxdt, ier )
       if ( toggle(emit) .and. levels(emit) > 0 ) &
         & call trace_end ( 'ForwardModel.get_chi_angles' )
@@ -979,7 +971,7 @@ contains ! =====     Public Procedures     =============================
 
       ! First we have a mini loop over pointings to work out an upper limit
       ! for the number of frequencies we're going to be dealing with
-      if ( forwardModelConfig%do_freq_avg ) then
+      if ( fwdModelConf%do_freq_avg ) then
         maxNoFreqs = size(PointingGrids(whichPointingGrid)%OneGrid(grids(1))%Frequencies)
         do ptg_i = 2, no_tan_hts - 1
           maxNoFreqs = max ( maxNoFreqs, size(PointingGrids(whichPointingGrid) &
@@ -990,7 +982,7 @@ contains ! =====     Public Procedures     =============================
       end if
 
       ! Now allocate arrays this size
-      if ( forwardModelConfig%temp_der ) then
+      if ( fwdModelConf%temp_der ) then
         allocate ( k_temp_frq%values( maxNoFreqs, temp%template%noSurfs, &
           & windowStart:windowFinish), stat=status )
         if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName,&
@@ -1002,10 +994,10 @@ contains ! =====     Public Procedures     =============================
 
       do specie = 1, noSpecies
         f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-          & quantityType=l_vmr, molecule=forwardModelConfig%molecules(specie) )
+          & quantityType=l_vmr, molecule=fwdModelConf%molecules(specie) )
 
         ! Allocate intermediate space for vmr derivatives
-        if ( forwardModelConfig%moleculeDerivatives(specie) ) then
+        if ( fwdModelConf%moleculeDerivatives(specie) ) then
           allocate ( k_atmos_frq(specie)%values(maxNoFreqs,f%template%noSurfs,&
             & windowStart:windowFinish), stat=status )
           if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName,&
@@ -1025,13 +1017,13 @@ contains ! =====     Public Procedures     =============================
         h_tan = ifm%tan_hts(k,mafTInstance)
         lmax = ubound(ifm%eta_phi(ptg_i,maf)%values,2)
 
-   ! Compute the beta's along the path, for this tanget hight and this mmaf:
+        ! Compute the beta's along the path, for this tanget hight and this mmaf:
 
         no_ele = ifm%ndx_path(ptg_i,maf)%total_number_of_elements
 
         ! If we're doing frequency averaging, get the frequencies we need for
         ! this pointing.
-        if ( ForwardModelConfig%do_freq_avg ) then
+        if ( FwdModelConf%do_freq_avg ) then
           frequencies => PointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))%frequencies
           noFreqs = size(frequencies)
         end if ! If not, we dealt with this outside the loop
@@ -1039,9 +1031,9 @@ contains ! =====     Public Procedures     =============================
         call get_beta_path ( frequencies, my_Catalog, no_ele, &
           &                  ifm%z_path(ptg_i,maf), ifm%t_path(ptg_i,maf), &
           &                  beta_path, 0.001*losVel%values(1,maf), &
-          &                  forwardModelConfig%frqGap,             &
-          &                  forwardModelConfig%temp_der,           &
-          &                  forwardModelConfig%spect_der, Ier)
+          &                  fwdModelConf%frqGap,             &
+          &                  fwdModelConf%temp_der,           &
+          &                  fwdModelConf%spect_der, Ier)
         if ( ier /= 0 ) goto 99
 
         ! Define the dh_dt_path for this pointing and this MAF:
@@ -1051,7 +1043,7 @@ contains ! =====     Public Procedures     =============================
         call allocate_test ( dh_dt_path, no_ele, phiWindow, &
           & temp%template%noSurfs, "dh_dt_path", ModuleName )
 
-        if ( forwardModelConfig%temp_der ) then
+        if ( fwdModelConf%temp_der ) then
           allocate ( dum(no_ele), stat=ier )
           if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
             & MLSMSG_Allocate // 'dum' )
@@ -1079,7 +1071,7 @@ contains ! =====     Public Procedures     =============================
           end if
 
           Call Rad_Tran ( ifm%elvar(maf), Frq, &
-            & forwardModelConfig%integrationGrid%noSurfs, h_tan, &
+            & fwdModelConf%integrationGrid%noSurfs, h_tan, &
             & noSpecies, ifm%ndx_path(k,maf), ifm%z_path(k,maf), &
             & ifm%h_path(k,maf), ifm%t_path(k,maf), ifm%phi_path(k,maf), &
             & ifm%dHdz_path(k,maf), earthRefl%values(1,1), beta_path(:,frq_i), &
@@ -1092,7 +1084,7 @@ contains ! =====     Public Procedures     =============================
           ! Now, Compute the radiance derivatives:
 
 !??? Do we need to do this if there's no Jacobian or no derivatives requested ???
-          Call Rad_Tran_WD ( ForwardModelConfig, FwdModelExtra, FwdModelIn, &
+          Call Rad_Tran_WD ( FwdModelConf, FwdModelExtra, FwdModelIn, &
             &  ifm%elvar(maf), frq_i, Frq, noSpecies, ifm%z_path(k,maf), &
             &  ifm%h_path(k,maf), ifm%t_path(k,maf), ifm%phi_path(k,maf), &
             &  ifm%dHdz_path(k,maf), beta_path(:,frq_i), spsfunc_path(:, &
@@ -1114,14 +1106,21 @@ contains ! =====     Public Procedures     =============================
 
         if ( toggle(emit) .and. levels(emit) > 1 ) &
           & call trace_begin ( 'ForwardModel.FrequencyAvg' )
-        if ( forwardModelConfig%do_freq_avg ) then
-          centerFreq = signal%lo + thisSideband * signal%centerFrequency
+        if ( fwdModelConf%do_freq_avg ) then
           do i = 1, noUsedChannels
+            sigInd = usedSignals(i)
             ch = usedChannels(i)
-            call Freq_Avg ( frequencies,                           &
-              &       centerFreq+thisSideband*FilterShapes(ch)%FilterGrid, &
-              &       FilterShapes(ch)%FilterShape, RadV, noFreqs,  &
-              &       Size(FilterShapes(ch)%FilterGrid), Radiances(ptg_i,i) )
+            centerFreq = firstSignal%lo + &
+              & thisSideband * fwdModelConf%signals(sigInd)%centerFrequency
+            shapeInd = MatchSignal ( filterShapes%signal, &
+              & fwdModelConf%signals(sigInd), sideband = thisSideband )
+            if ( shapeInd == 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & "No matching channel shape information" )
+            call Freq_Avg ( frequencies, &
+              & centerFreq+thisSideband * &
+              & FilterShapes(shapeInd)%FilterGrid(ch,:), &
+              & FilterShapes(shapeInd)%FilterShape(ch,:), RadV, noFreqs,  &
+              & Size(FilterShapes(shapeInd)%FilterGrid(ch,:)), Radiances(ptg_i,i) )
           end do
         else
           Radiances(ptg_i,:) = RadV(1:noFreqs)
@@ -1130,18 +1129,26 @@ contains ! =====     Public Procedures     =============================
         ! Frequency Average the temperature derivatives with the appropriate
         ! filter shapes
 !??? Do we need to do this if there's no Jacobian ???
-        if ( forwardModelConfig%temp_der ) then
-          if ( forwardModelConfig%do_freq_avg ) then
+        if ( fwdModelConf%temp_der ) then
+          if ( fwdModelConf%do_freq_avg ) then
             do i = 1, noUsedChannels
+              sigInd = usedSignals(i)
               ch = usedChannels(i)
+              centerFreq = firstSignal%lo + &
+                & thisSideband * fwdModelConf%signals(sigInd)%centerFrequency
+              shapeInd = MatchSignal ( filterShapes%signal, &
+                & fwdModelConf%signals(sigInd), &
+                & sideband = thisSideband, channel=ch )
               do instance = lbound(k_temp_frq%values,3), &
                 & ubound(k_temp_frq%values,3)
                 do surface = 1, temp%template%noSurfs
                   ToAvg => k_temp_frq%values(1:noFreqs,surface,instance)
                   call Freq_Avg ( frequencies,                        &
-                    &  centerFreq+thisSideband*FilterShapes(ch)%FilterGrid, &
-                    &  FilterShapes(ch)%FilterShape, real(ToAvg,r8), &
-                    &  noFreqs, Size(FilterShapes(ch)%FilterGrid), r )
+                    & centerFreq+thisSideband* &
+                    & FilterShapes(shapeInd)%FilterGrid(ch,:), &
+                    & FilterShapes(shapeInd)%FilterShape(ch,:),&
+                    & real(ToAvg,r8), noFreqs, &
+                    & Size(FilterShapes(shapeInd)%FilterGrid(ch,:)), r )
                   k_temp(i,ptg_i,surface,instance) = r
                 end do                  ! Surface loop
               end do                    ! Instance loop
@@ -1158,20 +1165,28 @@ contains ! =====     Public Procedures     =============================
         ! filter shapes
 !??? Do we need to do this if there's no Jacobian ???
         do specie = 1, noSpecies
-          if ( forwardModelConfig%moleculeDerivatives(specie) ) then
+          if ( fwdModelConf%moleculeDerivatives(specie) ) then
             f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-              &  quantityType=l_vmr, molecule=forwardModelConfig%molecules(specie))
-            if ( forwardModelConfig%do_freq_avg ) then
+              &  quantityType=l_vmr, molecule=fwdModelConf%molecules(specie))
+            if ( fwdModelConf%do_freq_avg ) then
               do i = 1, noUsedChannels
-                ch = usedChannels(i)
-                do instance = lbound(k_atmos_frq(specie)%values,3),&
+              sigInd = usedSignals(i)
+              ch = usedChannels(i)
+              centerFreq = firstSignal%lo + &
+                & thisSideband * fwdModelConf%signals(sigInd)%centerFrequency
+              shapeInd = MatchSignal ( filterShapes%signal, &
+                & fwdModelConf%signals(sigInd), &
+                & sideband = thisSideband, channel=ch )
+              do instance = lbound(k_atmos_frq(specie)%values,3),&
                   & ubound(k_atmos_frq(specie)%values,3)
                   do surface = 1, f%template%noSurfs
                     ToAvg => k_atmos_frq(specie)%values(1:noFreqs,surface,instance)
                     call Freq_Avg ( frequencies,                      &
-                      &  centerFreq+thisSideband*FilterShapes(ch)%FilterGrid, &
-                      &  FilterShapes(ch)%FilterShape, real(ToAvg,r8),  &
-                      &  noFreqs, Size(FilterShapes(ch)%FilterGrid), r )
+                      & centerFreq+thisSideband * &
+                      & FilterShapes(shapeInd)%FilterGrid(ch,:), &
+                      & FilterShapes(shapeInd)%FilterShape(ch,:), &
+                      & real(ToAvg,r8),  &
+                      & noFreqs, Size(FilterShapes(shapeInd)%FilterGrid(ch,:)), r )
                       k_atmos(i,ptg_i,surface,instance,specie) = r
                   end do                ! Surface loop
                 end do                  ! Instance loop
@@ -1203,14 +1218,14 @@ contains ! =====     Public Procedures     =============================
       do i = 1, noUsedChannels
         ch = usedChannels(i)
         Radiances(no_tan_hts,i) = Radiances(no_tan_hts-1,i)
-        if ( ForwardModelConfig%temp_der ) then
+        if ( FwdModelConf%temp_der ) then
           n = temp%template%noSurfs
           k_temp(i,no_tan_hts,1:n,:) = k_temp(i,no_tan_hts-1,1:n,:)
         end if
-        if ( ForwardModelConfig%atmos_der ) then
+        if ( FwdModelConf%atmos_der ) then
           do m = 1, noSpecies
             f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-              & quantityType=l_vmr, molecule=forwardModelConfig%molecules(m),&
+              & quantityType=l_vmr, molecule=fwdModelConf%molecules(m),&
               & foundInFirst=foundInFirst )
             if ( foundInFirst ) then
               n = f%template%noSurfs
@@ -1226,6 +1241,11 @@ contains ! =====     Public Procedures     =============================
       do i = 1, noUsedChannels
 
         ch = usedChannels(i)
+        sigInd = usedSignals(i)
+        thisRadiance => GetVectorQuantityByType (fwdModelOut, quantityType=l_radiance, &
+          & signal=fwdModelConf%signals(sigInd)%index, &
+          & sideband=firstSignal%sideband )
+
         if ( sidebandStart /= sidebandStop ) then ! We're folding
           thisRatio = sidebandRatio%values(ch,1)
           if ( thisSideband == 1 ) thisRatio = 1.0 - thisRatio
@@ -1233,11 +1253,17 @@ contains ! =====     Public Procedures     =============================
           thisRatio = 1.0
         end if
 
-        if ( ForwardModelConfig%do_conv ) then
-          call convolve_all ( forwardModelConfig, fwdModelIn, maf, ch, &
+        if ( FwdModelConf%do_conv ) then
+
+!          whichPattern = MatchSignal ( antennaPatterns%signal, &
+!            & fwdModelConf%signals(sigInd), sideband=thisSideband, &
+!            & channel=ch )
+          whichPattern = 1
+
+          call convolve_all ( fwdModelConf, fwdModelIn, maf, ch, &
             &     windowStart, windowFinish, mafTInstance-windowStart+1, &
-            &     temp, ptan, radiance, &
-            &     ForwardModelConfig%tangentGrid%surfs, ptg_angles, &
+            &     temp, ptan, thisRadiance, &
+            &     FwdModelConf%tangentGrid%surfs, ptg_angles, &
             &     ifm%tan_temp(:,maf), dx_dt, d2x_dxdt, si, center_angle, &
             &     Radiances(:, i), k_temp(i,:,:,:), k_atmos(i,:,:,:,:), &
             &     thisRatio, Jacobian, fmStat%rows,  &
@@ -1245,9 +1271,9 @@ contains ! =====     Public Procedures     =============================
           !??? Need to choose some index other than 1 for AntennaPatterns ???
           if ( ier /= 0 ) goto 99
         else
-          call no_conv_at_all ( forwardModelConfig, fwdModelIn, maf, ch,  &
-            &     windowStart, windowFinish, temp, ptan, radiance, &
-            &     ForwardModelConfig%tangentGrid%surfs, &
+          call no_conv_at_all ( fwdModelConf, fwdModelIn, maf, ch,  &
+            &     windowStart, windowFinish, temp, ptan, thisRadiance, &
+            &     FwdModelConf%tangentGrid%surfs, &
             &     Radiances(:,i), k_temp(i,:,:,:), k_atmos(i,:,:,:,:), &
             &     thisRatio, Jacobian, fmStat%rows )
 
@@ -1277,9 +1303,9 @@ contains ! =====     Public Procedures     =============================
 
     deallocate ( beta_path, STAT=k )
 
-    if ( ForwardModelConfig%temp_der ) call deallocate_test &
+    if ( FwdModelConf%temp_der ) call deallocate_test &
       & ( k_temp_frq%values, "k_temp_frq%values", ModuleName )
-    if ( ForwardModelConfig%atmos_der ) then
+    if ( FwdModelConf%atmos_der ) then
       do j = 1, noSpecies
         call deallocate_test ( k_atmos_frq(j)%values, "k_atmos_frq(j)%values", &
           & ModuleName )
@@ -1288,13 +1314,13 @@ contains ! =====     Public Procedures     =============================
 
     if ( index(switches,'rad') /= 0 ) then
       ! *** DEBUG Print
-      if ( ForwardModelConfig%do_conv ) then
+      if ( FwdModelConf%do_conv ) then
         print *,'Convolution: ON'
       else
         print *,'Convolution: OFF'
       end if
 
-      if ( ForwardModelConfig%do_freq_avg ) then
+      if ( FwdModelConf%do_freq_avg ) then
         print *,'Frequency Averaging: ON'
       else
         print *,'Frequency Averaging: OFF'
@@ -1306,13 +1332,13 @@ contains ! =====     Public Procedures     =============================
         ch = usedChannels(i)
         print 903, ch, char(92), ptan%template%noSurfs
 903     format ( 'ch', i2.2, '_pfa_rad', a1, i3.3 )
-        print 905, ( radiance%values(ch+(k-1)*radiance%template%noChans,maf),&
+        print 905, ( firstRadiance%values(ch+(k-1)*firstRadiance%template%noChans,maf),&
           & k = 1, ptan%template%noSurfs )
 905     format ( 4(2x, 1pg15.8) )
       end do
     end if
 
-    if ( .not. forwardModelConfig%do_freq_avg ) call deallocate_test ( &
+    if ( .not. fwdModelConf%do_freq_avg ) call deallocate_test ( &
       & frequencies, "frequencies", ModuleName )
 
     call Deallocate_test ( usedChannels, 'usedChannels', ModuleName )
@@ -1415,6 +1441,10 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.131  2001/05/16 01:20:08  livesey
+! Interim version.  Does pointing grids and channel shapes right, not
+! yet antenna patterns.  Also can do forward model with multiple signals
+!
 ! Revision 2.130  2001/05/15 03:46:31  zvi
 ! Adding derivative flag to beta calculations
 !
@@ -1604,8 +1634,8 @@ end module ForwardModelInterface
 ! Code modified to do spsfunc & refraction inside the MAF loop
 !
 ! Revision 2.68  2001/04/07 01:50:48  vsnyder
-! Move some of VGrid to lib/VGridsDatabase.  Move ForwardModelConfig_T and
-! some related stuff to fwdmdl/ForwardModelConfig.
+! Move some of VGrid to lib/VGridsDatabase.  Move FwdModelConf_T and
+! some related stuff to fwdmdl/FwdModelConf.
 !
 ! Revision 2.67  2001/04/07 01:38:22  livesey
 ! Another interim working version
@@ -1743,7 +1773,7 @@ end module ForwardModelInterface
 ! Interim version
 !
 ! Revision 2.23  2001/03/17 21:08:01  livesey
-! Added forward model type stuff to ForwardModelConfig_T and parser thereof
+! Added forward model type stuff to FwdModelConf_T and parser thereof
 !
 ! Revision 2.22  2001/03/17 03:24:23  vsnyder
 ! Work on forwardModelGlobalSetup
@@ -1756,7 +1786,7 @@ end module ForwardModelInterface
 ! let it compile.
 !
 ! Revision 2.19  2001/03/17 00:50:57  livesey
-! New forwardModelConfig stuff and merge from Van
+! New fwdModelConf stuff and merge from Van
 !
 ! Revision 2.18  2001/03/16 21:05:22  vsnyder
 ! Move dumping of pointing grid database to PointingGrid_m
