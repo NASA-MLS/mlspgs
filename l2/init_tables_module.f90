@@ -97,7 +97,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_H2OQUANTITY         = f_gph + 1
   integer, parameter :: F_HEIGHT              = f_h2oquantity + 1
   integer, parameter :: F_HGRID               = f_height + 1
-  integer, parameter :: F_INCLINATION         = f_hgrid + 1
+  integer, parameter :: F_IGNORE              = f_hgrid + 1
+  integer, parameter :: F_INCLINATION         = f_ignore + 1
   integer, parameter :: F_INTEGRATIONGRID     = f_inclination + 1
   integer, parameter :: F_INTEGRATIONTIME     = f_integrationGrid + 1
   integer, parameter :: F_INTERPOLATE         = f_integrationTime + 1
@@ -120,7 +121,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_MOLECULES           = f_moleculeDerivatives + 1
   integer, parameter :: F_NOMIFS              = f_molecules + 1
   integer, parameter :: F_NUMBER              = f_nomifs + 1
-  integer, parameter :: F_ORIGIN              = f_number + 1
+  integer, parameter :: F_OPTICALDEPTH        = f_number + 1
+  integer, parameter :: F_ORIGIN              = f_opticalDepth + 1
   integer, parameter :: F_OUTPUTCOVARIANCE    = f_origin + 1
   integer, parameter :: F_OUTPUTOVERLAPS      = f_outputCovariance + 1
   integer, parameter :: F_OUTPUTSD            = f_outputOverlaps + 1
@@ -130,7 +132,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_POINTINGGRIDS       = f_phiWindow + 1
   integer, parameter :: F_PRECISION           = f_pointingGrids + 1
   integer, parameter :: F_PREFIXSIGNAL        = f_precision + 1
-  integer, parameter :: F_QUANTITIES          = f_prefixSignal + 1
+  integer, parameter :: F_PTANQUANTITY        = f_prefixSignal + 1
+  integer, parameter :: F_QUANTITIES          = f_ptanQuantity + 1
   integer, parameter :: F_QUANTITY            = f_quantities + 1
   integer, parameter :: F_RANGE               = f_quantity + 1
   integer, parameter :: F_RADIANCEQUANTITY    = f_range + 1
@@ -438,6 +441,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_h2oquantity) =         add_ident ( 'h2oquantity' )
     field_indices(f_height) =              add_ident ( 'height' )
     field_indices(f_hgrid) =               add_ident ( 'hgrid' )
+    field_indices(f_ignore) =              add_ident ( 'ignore' )
     field_indices(f_inclination) =         add_ident ( 'inclination' )
     field_indices(f_integrationGrid) =     add_ident ( 'integrationGrid' )
     field_indices(f_integrationTime) =     add_ident ( 'integrationTime' )
@@ -463,6 +467,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_noMIFs) =              add_ident ( 'noMIFs' )
     field_indices(f_number) =              add_ident ( 'number' )
     field_indices(f_origin) =              add_ident ( 'origin' )
+    field_indices(f_opticalDepth) =        add_ident ( 'opticalDepth' )
     field_indices(f_outputCovariance) =    add_ident ( 'outputCovariance' )
     field_indices(f_outputOverlaps) =      add_ident ( 'outputOverlaps' )
     field_indices(f_outputSD) =            add_ident ( 'outputSD' )
@@ -472,6 +477,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_pointingGrids) =       add_ident ( 'pointingGrids' )
     field_indices(f_precision) =           add_ident ( 'precision' )
     field_indices(f_prefixSignal) =        add_ident ( 'prefixSignal' )
+    field_indices(f_ptanQuantity) =        add_ident ( 'ptanQuantity' )
     field_indices(f_quantities) =          add_ident ( 'quantities' )
     field_indices(f_quantity) =            add_ident ( 'quantity' )
     field_indices(f_range) =               add_ident ( 'range' )
@@ -838,10 +844,12 @@ contains ! =====     Public procedures     =============================
       begin, s+s_subset, &  ! Must be AFTER s_vector
              begin, f+f_quantity, s+s_vector, f+f_template, f+f_quantities, &
                     nr+n_dot, &
-             begin, f+f_test, s+s_vector, f+f_template, f+f_quantities, &
-                    nr+n_dot, &
+             begin, f+f_ptanquantity, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
              begin, f+f_channels, t+t_numeric, n+n_field_type, &
-             begin, f+f_criteria, t+t_numeric, nr+n_field_type, &
+             begin, f+f_height, t+t_numeric, n+n_field_type, &
+             begin, f+f_ignore, t+t_boolean, n+n_field_type, &
+             begin, f+f_opticalDepth, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_forwardModel, & ! Must be AFTER s_vector and s_matrix
              begin, f+f_atmos_der, t+t_boolean, n+n_field_type, &
@@ -987,6 +995,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.122  2001/06/25 23:26:52  livesey
+! Added new stuff for subset command
+!
 ! Revision 2.121  2001/06/22 05:18:37  livesey
 ! Add `transfer' command in fill
 !
