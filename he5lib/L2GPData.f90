@@ -41,8 +41,8 @@ MODULE L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 
    CHARACTER (len=*), PARAMETER :: DATA_FIELD1 = 'L2gpValue'
    CHARACTER (len=*), PARAMETER :: DATA_FIELD2 = 'L2gpPrecision'
-   CHARACTER (len=*), PARAMETER :: DATA_FIELD3 = 'status'
-   CHARACTER (len=*), PARAMETER :: DATA_FIELD4 = 'quality'
+   CHARACTER (len=*), PARAMETER :: DATA_FIELD3 = 'Status'
+   CHARACTER (len=*), PARAMETER :: DATA_FIELD4 = 'Quality'
 
    CHARACTER (len=*), PARAMETER :: GEO_FIELD1 = 'Latitude'
    CHARACTER (len=*), PARAMETER :: GEO_FIELD2 = 'Longitude'
@@ -1351,6 +1351,10 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 1.6  2001/04/27 07:48:54  pumphrey
+! Many nested loops in l3ascii replaced with array ops. Small fixes
+! (e.g. spelling mistakes) in other modules.
+!
 ! Revision 1.5  2001/04/06 20:16:38  pumphrey
 ! Not much, just keeping in sync
 !
