@@ -35,14 +35,12 @@ contains
     ! p_coeffs so as to make it consistent with the radiative transfer program.
 
     use Allocate_deallocate, only: Allocate_test, Deallocate_test
-    use Dump_0, only: dump
     use Geometry, only: EarthRadA, EarthRadB
     use Get_Eta_Matrix_m, only: Get_Eta_Sparse
     use MLSCommon, only: RP, IP
     use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
     use Output_m, only: OUTPUT
     use Toggles, only: Emit, Toggle
-    use Units, only: PI
 
     ! inputs:
 
@@ -522,6 +520,9 @@ contains
 end module Metrics_m
 
 ! $Log$
+! Revision 2.18  2003/06/20 23:41:48  vsnyder
+! Revise how compound etas are computed -- hopefully a faster method
+!
 ! Revision 2.17  2003/05/22 20:12:32  vsnyder
 ! Get rid of some array temps
 !

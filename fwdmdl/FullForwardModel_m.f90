@@ -51,9 +51,9 @@ contains
     use Get_Species_Data_M, only: Beta_Group_T, Get_Species_Data, &
       Destroy_Species_Data, Destroy_Beta_Group
     use GLnp, only: NG
-    use Intrinsic, only: L_CHANNEL, L_CLOUDICE, L_CLOUDWATER, &      ! JJ
+    use Intrinsic, only: L_CLOUDICE, L_CLOUDWATER, &      ! JJ
       & L_DN, L_DV, L_DW, L_EARTHREFL, L_ECRtoFOV, &
-      & L_ELEVOFFSET, L_LOSVEL, L_MAGNETICFIELD, L_NONE, L_ORBITINCLINATION,  &
+      & L_ELEVOFFSET, L_LOSVEL, L_MAGNETICFIELD, L_ORBITINCLINATION,  &
       & L_PHITAN, L_PTAN, L_RADIANCE, L_REFGPH, L_SCGEOCALT, L_LIMBSIDEBANDFRACTION, &
       & L_SIZEDISTRIBUTION, L_SPACERADIANCE, L_TEMPERATURE, L_VMR, &
       & L_CLEAR, L_BOUNDARYPRESSURE
@@ -63,7 +63,7 @@ contains
                                 &  DESTROYCOMPLETESLABS
     use ManipulateVectorQuantities, only: DoHGridsMatch
     use MatrixModule_1, only: MATRIX_T
-    use Mcrt_m, only: Mcrt, Mcrt_der
+    use Mcrt_m, only: Mcrt_der
     use Metrics_m, only: Metrics
     use MLSCommon, only: R4, R8, RP, IP
     use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate,&
@@ -2620,6 +2620,9 @@ alpha_path_f = 0.0
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.153  2003/06/27 22:09:48  vsnyder
+! Check status from rad_tran_pol and report an error if overflow occurred
+!
 ! Revision 2.152  2003/06/27 00:59:53  vsnyder
 ! Simplify interface to Get_Species_Data
 !
