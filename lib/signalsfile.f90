@@ -273,7 +273,7 @@ CONTAINS
     database%noSwitches=SIZE(switchNames)
 
     DO radiometer=0,database%noRadiometers-1
-       PRINT*,radiometerNames(radiometer)
+       PRINT*,radiometer,validRadiometer(radiometer)
     ENDDO
 
     ! Now we'll go through the radiometers and fill up the radiometerInfo
@@ -320,6 +320,9 @@ END MODULE SignalsFile
 !=============================================================================
 
 ! $Log$
+! Revision 1.3  1999/11/04 00:06:43  livesey
+! Removed the irrelevant old history from the other day.
+!
 ! Revision 1.2  1999/11/03 23:56:26  livesey
 ! A trivial change to test out the cvs watch stuff.
 !
