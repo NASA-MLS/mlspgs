@@ -51,7 +51,8 @@
          VP=VMR_H2O*PB                 ! VP IS VAPOR PRESSURE, PB IS TOTAL
          P=PB-VP                       ! PRESSURE, P IS DRY-AIR PRESSURE
       ELSE IF (RH .EQ. 100._r8) THEN
-         CALL RHtoEV(PB,T,100._r8,VP)     ! RH HERE IS 100% RELATIVE HUMIDITY 
+!         CALL RHtoEV(PB,T,100._r8,VP)     ! RH HERE IS 100% RELATIVE HUMIDITY 
+         CALL RHtoEV(T,100._r8,VP)     ! RH HERE IS 100% RELATIVE HUMIDITY 
          P = PB-VP
          VMR_H2O = VP/(max(1.e-9_r8, P))
       END IF

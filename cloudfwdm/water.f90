@@ -34,16 +34,17 @@
           RETURN                                                          
           END 
 
-          SUBROUTINE TDtoQV(td,t,QV)
-          E=6.10779*EXP(17.28*(td-273.15)/(td-36.))
-          if (E.lt.0.) E=0
-          QV=622*E/(P-E)
-          RETURN
-          END 
+!          SUBROUTINE TDtoQV(td,t,QV)
+!          E=6.10779*EXP(17.28*(td-273.15)/(td-36.))
+!          if (E.lt.0.) E=0
+!          QV=622*E/(P-E)
+!          RETURN
+!          END 
 
-          SUBROUTINE RHtoEV(p,t,RH,EV)
+!          SUBROUTINE RHtoEV(p,t,RH,EV)
+          SUBROUTINE RHtoEV(t,RH,EV) 
           use MLSCommon, only: r8            
-          REAL(r8) :: es, t, RH, EV, p
+          REAL(r8) :: es, t, RH, EV
 !... relative to water
 !         ES=6.10779*EXP(17.28*(t-273.15)/(t-36.))
 !... relative to ice
