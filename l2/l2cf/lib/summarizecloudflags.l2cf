@@ -14,10 +14,10 @@ begin Fill
     Fill, quantity=cloudOutput.cloudRadMaxR$1, method=binMax, $
       ptanQuantity=state.ptan!moduleForBand(!cloudBandForRadNo($1)), $
       sourceQuantity=cloudOutput.dtBand!cloudBandForRadNo($1), channel=!cloudChannelForRadNo($1)
-    Fill, quantity=otherDiagnostics.lowCloudSummaryR$1, method=binMin, $
+    Fill, quantity=otherDiagnostics.lowCloudSummaryR$1, method=binMin, /excludeBelowBottom, $
       ptanQuantity=state.ptan!moduleForBand(!cloudBandForRadNo($1)), $
       sourceQuantity=cloudOutput.dtBand!cloudBandForRadNo($1), channel=!cloudChannelForRadNo($1)
-    Fill, quantity=otherDiagnostics.highCloudSummaryR$1, method=binMax, $
+    Fill, quantity=otherDiagnostics.highCloudSummaryR$1, method=binMax, /excludeBelowBottom, $
       ptanQuantity=state.ptan!moduleForBand(!cloudBandForRadNo($1)), $
       sourceQuantity=cloudOutput.dtBand!cloudBandForRadNo($1), channel=!cloudChannelForRadNo($1)!nl})
 
@@ -27,6 +27,9 @@ begin Fill
 end Fill
 
 ; $Log$
+; Revision 1.4  2004/04/16 00:45:25  livesey
+; New approach to cloud flagging.
+;
 ; Revision 1.3  2004/04/02 01:07:04  livesey
 ; Bug fixes
 ;
