@@ -41,7 +41,6 @@ module L2PC_m
   public :: AddL2PCToDatabase, DestroyL2PC, DestroyL2PCDatabase, WriteOneL2PC
   public :: Open_l2pc_file, read_l2pc_file, close_l2pc_file, binSelector_T
   public :: BinSelectors, DestroyBinSelectorDatabase,  AddBinSelectorToDatabase
-  public :: NullifyBinSelector
   public :: OutputHDF5L2PC, ReadCompleteHDF5L2PCFile, PopulateL2PCBin, FlushL2PCBins
 
   ! This is the third attempt to do this.  An l2pc is simply a Matrix_T.
@@ -62,8 +61,6 @@ module L2PC_m
   type BinSelector_T
     integer :: selectorType             ! What quantity type does this apply to
     integer :: molecule                 ! What molecule does it apply to
-    integer, dimension(:), pointer :: signals => NULL() ! What signals does this apply to
-    integer, dimension(:), pointer :: sidebands => NULL() ! What sidebands
     real(r8), dimension(2) :: heightRange ! The height range for this selector
     real(r8) :: cost                    ! The cost for that range
   end type BinSelector_T
@@ -132,12 +129,6 @@ contains ! ============= Public Procedures ==========================
     integer :: STATUS                   ! Flag from deallocate
     ! Executable code
     if ( .not. associated ( binSelectors ) ) return
-    do i = 1, size(binSelectors)
-      call Deallocate_test ( binSelectors(i)%signals, &
-        & 'binSelectors%signals', ModuleName )
-      call Deallocate_test ( binSelectors(i)%sidebands, &
-        & 'binSelectors%sidebands', ModuleName )
-    end do
     deallocate ( binSelectors, stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Deallocate//"bin selectors binSelectors" )
@@ -687,16 +678,6 @@ contains ! ============= Public Procedures ==========================
     end do
     
   end subroutine MakeMatrixPackMap
-
-  ! ----------------------------------------NullifyBinSelector -----
-  subroutine NullifyBinSelector ( B )
-    ! Given a bin selector, nullify all the pointers associated with it
-    type ( BinSelector_T ), intent(out) :: B
-
-    ! Executable code
-    nullify ( b%signals )
-    nullify ( b%sidebands )
-  end subroutine NullifyBinSelector
 
   ! --------------------------------------- Populate L2PCBin --------
   subroutine PopulateL2PCBin ( bin )
@@ -1550,6 +1531,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.57  2003/02/05 21:55:45  livesey
+! Bin selectors don't contain signal information anymore.
+!
 ! Revision 2.56  2003/01/28 02:41:10  livesey
 ! Bug fix in writing matrix, now gets right element from database in all
 ! cases.
