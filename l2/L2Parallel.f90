@@ -12,6 +12,7 @@ module L2Parallel
 
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use Dump_0, only: DUMP
+  use Dumper, only: DUMP
   use Join, only: JOINL2GPQUANTITIES, JOINL2AUXQUANTITIES
   use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMF90PACK, PVMFMYTID, &
     & PVMF90UNPACK, PVMERRORMESSAGE, PVMTASKHOST, PVMFSPAWN, &
@@ -43,7 +44,7 @@ module L2Parallel
   private
 
   public :: L2MasterTask
-  public :: GetChunkFromMaster
+  public :: GetChunkInfoFromMaster
   
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -71,50 +72,59 @@ module L2Parallel
 
 contains ! ================================ Procedures ======================
 
-  ! --------------------------------------------- SendChunkToSlave ----------
-  subroutine SendChunkToSlave ( chunk, chunkNo, slaveTid )
+  ! --------------------------------------------- SendChunkInfoToSlave ----------
+  subroutine SendChunkInfoToSlave ( chunks, chunkNo, slaveTid )
     ! This routine sends a chunk to a slave task
 
     ! Dummy arguments
-    type (MLSChunk_T), intent(in) :: CHUNK ! The chunk
+    type (MLSChunk_T), intent(in), dimension(:) :: CHUNKS ! The chunk
     integer, intent(in) :: CHUNKNO      ! Which one is it.
     integer, intent(in) :: SLAVETID     ! Who to send it to
 
     ! Local variables
     integer :: BUFFERID                 ! ID for buffer to send
     integer :: INFO                     ! Flag from PVM
+    integer :: CHUNK                    ! Loop counter
 
     ! Executable code
     call PVMFInitSend ( PvmDataDefault, bufferID )
-    call PVMF90Pack ( &
-      & (/ chunkNo, &
-      &    chunk%firstMAFIndex, &
-      &    chunk%lastMAFIndex, &
-      &    chunk%noMAFsLowerOverlap, &
-      &    chunk%noMAFsUpperOverlap, &
-      &    chunk%accumulatedMAFs /), info )
+    call PVMF90Pack ( (/ size(chunks), chunkNo /), info )
     if ( info /= 0 ) &
-      & call PVMErrorMessage ( info, 'packing chunk' )
+      & call PVMErrorMessage ( info, 'packing noChunks and chunkNo' )
+    do chunk = 1, size(chunks)
+      call PVMF90Pack ( &
+        & (/ chunks(chunk)%firstMAFIndex, &
+        &    chunks(chunk)%lastMAFIndex, &
+        &    chunks(chunk)%noMAFsLowerOverlap, &
+        &    chunks(chunk)%noMAFsUpperOverlap, &
+        &    chunks(chunk)%accumulatedMAFs /), info )
+      if ( info /= 0 ) &
+        & call PVMErrorMessage ( info, 'packing one chunk' )
+    end do
     call PVMFSend ( slaveTid, ChunkTag, info )
     if ( info /= 0 ) &
       & call PVMErrorMessage ( info, 'sending chunk' )
-  end subroutine SendChunkToSlave
+  end subroutine SendChunkInfoToSlave
 
-  ! ----------------------------------------------- GetChunkFromMaster ------
-  subroutine GetChunkFromMaster ( chunks )
+  ! ----------------------------------------------- GetChunkInfoFromMaster ------
+  subroutine GetChunkInfoFromMaster ( chunks, chunkNo )
     ! This function gets a chunk sent by SendChunkToSlave
 
     ! Dummy arguments and result
     type (MLSChunk_T), dimension(:), pointer :: CHUNKS
+    integer, intent(out) :: CHUNKNO
 
     ! Local parameters
     integer, parameter :: noChunkTerms = 5 ! Number of components in MLSChunk_T
 
     ! Local variables
     integer :: BUFFERID                 ! ID for buffer for receive
+    integer :: CHUNK                    ! Loop counter
     integer :: INFO                     ! Flag from PVM
     integer :: STATUS                   ! From allocate
-    integer, dimension(noChunkTerms+1) :: VALUES ! Chunk as integer array
+    integer :: NOCHUNKS                 ! Size.
+    integer, dimension(2) :: HEADER     ! No chunks, chunkNo
+    integer, dimension(noChunkTerms) :: VALUES ! Chunk as integer array
 
     ! Executable code
     if ( .not. parallel%slave ) &
@@ -123,20 +133,30 @@ contains ! ================================ Procedures ======================
 
     call PVMFrecv ( parallel%masterTid, ChunkTAG, bufferID )
     if ( bufferID <= 0 ) &
-      & call PVMErrorMessage ( info, 'receiving chunk' )
-    call PVMF90Unpack ( values, info )
+      & call PVMErrorMessage ( info, 'receiving chunkInfo' )
+
+    call PVMF90Unpack ( header, info )
     if ( info /= 0 ) &
-      & call PVMErrorMessage ( info, 'unpacking chunk')
+      & call PVMErrorMessage ( info, 'unpacking chunkInfo header')
+    noChunks = header(1)
+    chunkNo = header(2)
     
-    allocate ( chunks ( values(1):values(1) ), STAT=status)
+    allocate ( chunks ( noChunks ), STAT=status)
     if ( status /= 0 ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Failed to allocate one chunk' )
+      & 'Failed to allocate chunks' )
 
-    chunks(lbound(chunks)) = MLSChunk_T ( &
-      & values(2), values(3), values(4), values(5), values(6) )
+    do chunk = 1, noChunks
+      call PVMF90Unpack ( values, info )
+      if ( info /= 0 ) &
+        & call PVMErrorMessage ( info, 'unpacking one chunk')
+      chunks(chunkNo) = MLSChunk_T ( &
+        & values(1), values(2), values(3), values(4), values(5) )
+    end do
 
-  end subroutine GetChunkFromMaster
+    if ( index(switches,'chu') /=0 ) call dump ( chunks )
+
+  end subroutine GetChunkInfoFromMaster
 
   ! ---------------------------------------- GetMachineNames ------------
   subroutine GetMachineNames ( machineNames )
@@ -254,7 +274,6 @@ contains ! ================================ Procedures ======================
     ! Local variables
     character(len=MachineNameLen), dimension(:), pointer :: MACHINENAMES
     character(len=132) :: COMMANDLINE
-    character(len=132) :: WORD
 
     integer :: BUFFERID                 ! From PVM
     integer :: BYTES                    ! Dummy from PVMFBufInfo
@@ -264,7 +283,6 @@ contains ! ================================ Procedures ======================
     integer :: DEADTID                  ! A task that's died
     integer :: HDFNAMEINDEX             ! String index
     integer :: INFO                     ! From PVM
-    integer :: LUN                      ! File handle
     integer :: MACHINE                  ! Index
     integer :: MSGTAG                   ! Dummy from PVMFBufInfo
     integer :: NEXTCHUNK                ! A chunk number
@@ -363,7 +381,7 @@ contains ! ================================ Procedures ======================
             call output ( ' on slave ' // trim(machineNames(machine)) // &
               & ' ' // trim(GetNiceTidString(slaveTids(machine))), &
               & advance='yes' )
-            call SendChunkToSlave ( chunks(nextChunk), nextChunk, &
+            call SendChunkInfoToSlave ( chunks, nextChunk, &
               & slaveTids(machine) )
           end if
           ! Now ask to be notified when this task exits
@@ -829,6 +847,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.24  2002/01/09 22:55:57  livesey
+! Now sends slaves all the chunks as regular HGrids need them.
+!
 ! Revision 2.23  2001/11/14 18:03:45  livesey
 ! Changed for new FindFirst behavior
 !
