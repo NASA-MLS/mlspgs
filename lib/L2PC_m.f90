@@ -724,7 +724,7 @@ contains ! ============= Public Procedures ==========================
 !     if ( .not. CheckIntegrity ( l2pc ) ) then
 !       call MLSMessage ( MLSMSG_Error, ModuleName, &
 !         & 'L2PC failed integrity test' )
-    end if
+!     end if
 
   end subroutine PopulateL2PCBin
 
@@ -1454,6 +1454,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.39  2002/07/22 03:29:23  livesey
+! Bug fix
+!
 ! Revision 2.38  2002/07/22 03:25:23  livesey
 ! Bug fix and rework of loading vectors.
 !
