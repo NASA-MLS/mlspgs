@@ -12,6 +12,7 @@ PROGRAM L2GPtest ! tests L2GPData routines
    use MLSFiles, only: MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
     & HDFVERSION_4, HDFVERSION_5
    use MLSStrings, only: GetStringElement, readIntsFromChars
+   use PCFHdr, only: GlobalAttributes
    
    IMPLICIT NONE
 
@@ -47,6 +48,13 @@ PROGRAM L2GPtest ! tests L2GPData routines
    character(len=8), dimension(2) :: int_chars
    integer, dimension(2)        :: the_ints
    real(r8)                     :: diff
+   ! Some extra assigments
+   GlobalAttributes%InstrumentName = 'Totally bogus name'
+   GlobalAttributes%ProcessLevel = 'Level 9'
+   GlobalAttributes%InputVersion = 'v 2.001'
+   GlobalAttributes%PGEVersion = 'v 1.1'
+   GlobalAttributes%StartUTC = '01012999Z00:00:00.0'
+   GlobalAttributes%EndUTC = '01012999Z23:59:59.9'
    ! Executable
    call h5open_f(returnStatus)
 
@@ -140,6 +148,9 @@ END PROGRAM L2GPtest
 !==================
 
 ! $Log$
+! Revision 1.2  2003/01/16 01:05:02  pwagner
+! added h5open/close_f calls
+!
 ! Revision 1.1  2003/01/15 19:25:56  pwagner
 ! First commit
 !
