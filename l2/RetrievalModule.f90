@@ -732,9 +732,14 @@ contains
       call copyVector ( v(bestX), v(x) ) ! bestX := x to start things off
       do ! Newtonian iteration
         if ( nwt_flag /= nf_getJ ) then ! not taking a special iteration to get J
-          if ( nwt_flag /= nf_start .and. index(switches,'ndb') /= 0 ) &
-            & call nwtdb
           call nwta ( nwt_flag, aj )
+          if ( nwt_flag /= nf_start .and. index(switches,'ndb') /= 0 ) then
+            if ( index(switches,'nwt') /= 0 ) then
+              call nwtdb
+            else
+              call nwtdb ( aj )
+            end if
+          end if
         end if
           if ( index(switches,'nwt') /= 0 ) then
             call FlagName ( nwt_flag, theFlagName )
@@ -1009,14 +1014,6 @@ contains
             call time_now ( t1 )
           else
             tikhonovRows = 0
-          end if
-
-          !{ Add some early stabilization.  This consists of adding equations
-          ! of the form $\lambda {\bf I} \simeq {\bf 0}$.
-          if ( nwt_flag /= nf_getJ .and. got(f_lambda) ) then
-            call updateDiagonal ( normalEquations, initLambda )
-            update = .true.
-            ! The right-hand-side is zero -- no need to update ATb or aj%fnorm
           end if
 
           fmStat%maf = 0
@@ -2823,6 +2820,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.154  2002/07/26 01:20:22  vsnyder
+! Exploit added output from DNWTDB, get rid of bogus Levenberg at start
+!
 ! Revision 2.153  2002/07/24 01:08:40  vsnyder
 ! Don't compute FNMIN at NF_SOLVE time -- it should be the same as at NF_EVALJ
 !
