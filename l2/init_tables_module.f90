@@ -451,6 +451,7 @@ contains ! =====     Public procedures     =============================
              n+n_dt_def, &
       begin, t+t_mergeMethod, l+l_direct, l+l_weighted, n+n_dt_def, &
       begin, t+t_mergeSource, l+l_dao, l+l_ncep, n+n_dt_def, &
+      begin, t+t_method, l+l_lowcloud, l+l_newtonian, n+n_dt_def, &
       begin, t+t_module, l+l_ghz, l+l_thz, n+n_dt_def, &
       begin, t+t_outputType, l+l_l2aux, l+l_l2gp, l+l_l2dgg, l+l_l2pc, n+n_dt_def /) )
     call make_tree ( (/ &
@@ -870,15 +871,15 @@ contains ! =====     Public procedures     =============================
     
     id_next = id_last + size(ids)
 
-    if(size(ids) < 1) then
-            call MLSMessage ( MLSMSG_Error, ModuleName,&
-            &   'Illegal num of args to acorn' )
-    elseif(id_next > id_last_max) then
-            call MLSMessage ( MLSMSG_Error, ModuleName,&
-            &   'Accumulated too many ids in acorn;' // &
-            &   ' increase id_last_max in l2/init_tables_module.f90')
+    if ( size(ids) < 1 ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName,&
+      &   'Illegal num of args to acorn' )
+    else if ( id_next > id_last_max ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName,&
+      &   'Accumulated too many ids in acorn;' // &
+      &   ' increase id_last_max in l2/init_tables_module.f90')
     else
-            id_cum(id_last+1:id_next) = ids
+      id_cum(id_last+1:id_next) = ids
     endif
     id_last = id_next
       
@@ -887,6 +888,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.168  2001/10/03 23:33:48  vsnyder
+! Create t_method type with l_newtonian and l_lowcloud lits
+!
 ! Revision 2.167  2001/10/03 17:57:21  vsnyder
 ! Delete l_DegreesOfFreedom, add l-DNWT_...
 !
