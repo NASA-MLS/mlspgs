@@ -87,8 +87,8 @@ contains ! ====     Public Procedures     ==============================
     type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
     type (VectorTemplate_T), dimension(:), pointer :: vectorTemplates
 
-    nullify ( griddedData, chunks, l2auxDatabase, l2gpDatabase, matrices, &
-      & vectors, vGrids, forwardModelConfigDatabase, qtyTemplates, &
+    nullify ( griddedData, chunks, l2auxDatabase, l2gpDatabase, l2pcDatabase, &
+      & matrices, vectors, vGrids, forwardModelConfigDatabase, qtyTemplates, &
       & mifGeolocation, vectorTemplates )
 
     depth = 0
@@ -179,6 +179,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.40  2001/04/24 23:05:54  vsnyder
+! Make 'test_parse_signals' depend on 'switches' containing 'tps'
+!
 ! Revision 2.39  2001/04/24 20:20:02  livesey
 ! L2PC moved to lib, and renamed
 !
