@@ -19,8 +19,8 @@ MakeFName = MakeFC
 # then to make mls with this file you must instead  of bare "make" use
 #     make -f $(MakeFName)
 
-# This is how big COPY_NUMBER may grow before being reset
-MAX_COPIES = 10
+# This is how big COPY_NUMBER may grow before being reset; it was 10
+MAX_COPIES = 1
 ONE = 1
 
 .SUFFIXES:
@@ -62,7 +62,6 @@ endif
 NEXT_COPY := $(shell expr $(COPY_NUMBER) + 1)
 LAST_COPY := $(shell expr $(COPY_NUMBER) - 1)
 
-
 # This determines the command by which MakeFC looks like Makefile
 # Choose either "link" or "copy"; warning--link once caused cvs probs
 LOOKS_LIKE_MakeFC = copy
@@ -76,6 +75,10 @@ endif
 REECHO=../../util/reecho.sh
 REWHAT=$(shell ${REECHO} `cat what.reecho`)
 WHAT=$(shell echo `cat what.reecho`)
+
+EVERY_MLSCONFG = $(shell ${REECHO} -d -dirn ../../lib/machines -excl CVS)
+#EVERY_MLSCONFG = LF95.Linux  NAG.Linux  NAG.SGI  NAG.Sun  Unknown.None  Sun.Sun
+
 #
 FOPTS=-gline -gc
 
@@ -192,8 +195,14 @@ testreecho:
 	@echo "filtered: ${REWHAT}"
 	@echo "INC_PATHS: $(INC_PATHS)"
 
+testeverything:
+	@echo "unfiltered: ${EVERY_MLSCONFG}"
+
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.5  2001/09/26 21:11:41  pwagner
+# Testing suffix and implicit rule-free ops
+#
 # Revision 1.4  2001/09/07 23:08:22  pwagner
 # Whatever change I made, this is the latest
 #
