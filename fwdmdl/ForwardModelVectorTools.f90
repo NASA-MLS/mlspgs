@@ -6,11 +6,18 @@ module ForwardModelVectorTools          ! Tools for vectors in forward models
   ! This module contains routines needed to help a forward model get
   ! hold of the quantities it needs.
 
+  use VectorsModule, only: VectorValue_T
+
   implicit NONE
 
   private
 
   public :: GetQuantityForForwardModel
+
+  type, public :: QtyStuff_T ! So we can have an array of pointers to QTY's
+    type (VectorValue_T), pointer :: QTY
+    logical :: FoundInFirst
+  end type QtyStuff_T
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -33,17 +40,17 @@ contains
     ! config, and possibly an index into the molecules array, it can
     ! use the specificQuantities stuff in config to identify exactly
     ! the right quantity.
-    use Intrinsic, only: L_VMR
-    use Molecules, only: L_EXTINCTION
+    use Allocate_Deallocate, only: Allocate_test, Deallocate_test
     use ForwardModelConfig, only: ForwardModelConfig_T
+    use Intrinsic, only: Lit_Indices
+    use Intrinsic, only: L_VMR
+    use MLSCommon, only: FindFirst
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use VectorsModule, only: GetVectorQuantityByType, Vector_T, VectorValue_T
+    use MLSSignals_m, only: GetSignalName
+    use Molecules, only: L_EXTINCTION
     use QuantityTemplates, only: QuantityTemplate_T
     use String_table, only: Get_String
-    use MLSSignals_m, only: GetSignalName
-    use MLSCommon, only: FindFirst
-    use Intrinsic, only: Lit_Indices
-    use Allocate_Deallocate, only: Allocate_test, Deallocate_test
+    use VectorsModule, only: GetVectorQuantityByType, Vector_T, VectorValue_T
 
     ! Dummy arguments
     type (Vector_T), target :: VECTOR ! First vector to look in
@@ -271,6 +278,12 @@ contains
 end module ForwardModelVectorTools
 
 ! $Log$
+! Revision 2.8  2003/05/05 23:00:24  livesey
+! Merged in feb03 newfwm branch
+!
+! Revision 2.7.2.1  2003/03/21 02:47:38  vsnyder
+! Add a type with a pointer to a quantity, to make arrays of pointers
+!
 ! Revision 2.7  2002/10/08 17:08:03  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
