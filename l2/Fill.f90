@@ -48,7 +48,7 @@ contains ! =====     Public Procedures     =============================
       & F_PROFILEVALUES, F_PTANQUANTITY, &
       & F_QUANTITY, F_RADIANCEQUANTITY, F_RATIOQUANTITY, &
       & F_REFRACT, F_REFGPHQUANTITY, F_RESETSEED, F_RHIQUANTITY, F_Rows, &
-      & F_SCECI, F_SCVEL, F_SCVELECI, F_SCVELECR, F_SEED, &
+      & F_SCECI, F_SCVEL, F_SCVELECI, F_SCVELECR, F_SEED, F_SKIPMASK, &
       & F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, F_SOURCEL2GP, &
       & F_SOURCEQUANTITY, F_SOURCEVGRID, F_SPREAD, F_SUPERDIAGONAL, &
       & F_SYSTEMTEMPERATURE, F_TEMPERATUREQUANTITY, F_TEMPLATE, F_TNGTECI, &
@@ -325,6 +325,7 @@ contains ! =====     Public Procedures     =============================
     integer :: SCVELVECTORINDEX         ! In the vector database
     integer, dimension(2) :: SEED       ! integers used by random_numbers
     integer :: SEEDNODE                 ! For the parser
+    logical :: SKIPMASK                 ! Flag for transfer
     integer :: SON                      ! Of root, an n_spec_args or a n_named
     integer :: SOURCEQUANTITYINDEX      ! in the quantities database
     integer :: SOURCEVECTORINDEX        ! In the vector database
@@ -1266,21 +1267,29 @@ contains ! =====     Public Procedures     =============================
       case ( s_transfer ) ! ===============================  Transfer ==
         ! Here we're on a transfer instruction
         ! Loop over the instructions
+        skipMask = .false.
         do j = 2, nsons(key)
           gson = subtree(j,key)  ! The argument
           fieldIndex = get_field_id(gson)
           gson = subtree(2,gson) ! Now the value of said argument
+          if ( nsons(son) > 1 ) then
+            fieldValue = decoration(subtree(2,son)) ! The field's value
+          else
+            fieldValue = son
+          end if
           select case ( fieldIndex )
           case ( f_source )
             sourceVectorIndex = decoration(decoration(gson))
           case ( f_destination )
             destinationVectorIndex = decoration(decoration(gson))
+          case ( f_skipMask )
+            skipMask = get_boolean ( fieldValue )
           case default ! Can't get here if type checker worked
           end select
         end do
 
         call TransferVectors ( vectors(sourceVectorIndex), &
-          & vectors(destinationVectorIndex) )
+          & vectors(destinationVectorIndex), skipMask )
 
       case ( s_time ) ! ===================================  Time  =====
         if ( timing ) then
@@ -3594,10 +3603,11 @@ contains ! =====     Public Procedures     =============================
     end subroutine OffsetRadianceQuantity
 
     ! ---------------------------------------------- TRANSFERVECTORS -----
-    subroutine TransferVectors ( source, dest )
+    subroutine TransferVectors ( source, dest, skipMask )
       ! Copy common items in source to those in dest
       type (Vector_T), intent(in) :: SOURCE
       type (Vector_T), intent(inout) :: DEST
+      logical, intent(in) :: SKIPMASK
 
       ! Local variables
       integer :: Dummy                   ! Dummy integer
@@ -3615,12 +3625,14 @@ contains ! =====     Public Procedures     =============================
         dq => GetVectorQtyByTemplateIndex ( dest, source%template%quantities(sqi), dummy )
         if ( associated ( dq ) ) then
           dq%values = sq%values
-          if (associated(sq%mask)) then
-            if (.not. associated(dq%mask)) call CreateMask ( dq )
-            dq%mask = sq%mask
-          else
-            if ( associated(dq%mask) ) &
-              & call Deallocate_test ( dq%mask, 'dq%mask', ModuleName )
+          if ( .not. skipMask ) then
+            if (associated(sq%mask)) then
+              if (.not. associated(dq%mask)) call CreateMask ( dq )
+              dq%mask = sq%mask
+            else
+              if ( associated(dq%mask) ) &
+                & call Deallocate_test ( dq%mask, 'dq%mask', ModuleName )
+            end if
           end if
         end if
       end do
@@ -3773,6 +3785,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.141  2002/09/05 20:49:38  livesey
+! Added skipMask to transfer
+!
 ! Revision 2.140  2002/08/28 01:13:52  livesey
 ! Added OffsetRadianceQuantity
 !
