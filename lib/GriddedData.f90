@@ -46,8 +46,10 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
   integer, parameter :: V_is_GPH = v_is_altitude+1
   integer, parameter :: V_is_theta = v_is_gph+1
   
-  ! If dumping gridded data, always give full details of any matching these
+  ! If dumping gridded data, always give some details of any matching these
   character(len=*), parameter :: ALWAYSDUMPTHESE = 'dao,ncep' ! -> ' '
+  ! and for these automatically dumped ones, this level of detail for multi-dim
+  integer, parameter :: AUTOMATICDETAILS = 1 ! 1 menas dump, 0 menas no
 
   ! This type reflects the format of the Level 3 ASCII files, though note that
   ! these files can store multiple quantities such as these.
@@ -222,9 +224,10 @@ contains
     myDetails = 0
     if ( present(details) ) myDetails = details
     fieldvaluesdetails = myDetails
-    if ( index(ALWAYSDUMPTHESE, trim(GriddedData%description)) > 0 ) &
-      & myDetails = 1
-
+    if ( index(ALWAYSDUMPTHESE, trim(GriddedData%description)) > 0 ) then
+      myDetails = 1
+      fieldvaluesdetails = max(fieldvaluesdetails, AUTOMATICDETAILS)
+    endif
     call output('Gridded quantity name ' // GriddedData%quantityName, advance='yes')
       if ( myDetails < -1 ) return
     call output('description ' // GriddedData%description, advance='yes')
@@ -275,6 +278,15 @@ contains
         & .and. GriddedData%noLsts == 1 ) then
         call dump ( GriddedData%field(:,:,:,1,1,1), &
           & '    gridded field values =' )
+      elseif ( GriddedData%noDates == 1 .and. GriddedData%noSzas == 1 ) then
+        call dump ( GriddedData%field(:,:,:,1,1,1), &
+          & '    gridded field values (1st solar time) =' )
+        call dump ( GriddedData%field(:,:,1,:,1,1), &
+          & '    gridded field values (1st longitude) =' )
+        call dump ( GriddedData%field(:,1,:,:,1,1), &
+          & '    gridded field values (1st latitude) =' )
+        call dump ( GriddedData%field(1,:,:,:,1,1), &
+          & '    gridded field values (1st height) =' )
       else
         ! No dump for 6-dimensional double arrays yet, anyway
         !     call dump ( GriddedData%field, &
@@ -371,6 +383,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.21  2003/02/21 20:59:53  pwagner
+! Tweaked dump settings
+!
 ! Revision 2.20  2003/02/20 21:22:20  pwagner
 ! Changed default dump details to no for multidim arrays
 !
