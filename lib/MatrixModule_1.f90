@@ -508,11 +508,8 @@ contains ! =====     Public Procedures     =============================
     integer :: STATUS    ! From ALLOCATE
 
     z%name = name
-print *, 'Row%template%totalinstances =', row%template%totalinstances
-print *, 'Col%template%totalinstances =', col%template%totalinstances
     call defineInfo ( z%row, row, row_Quan_First, extra_Row )
     call defineInfo ( z%col, col, col_Quan_First, extra_Col )
-print *, 'Size(z%block) =', z%row%nb,z%col%nb
     allocate ( z%block(z%row%nb,z%col%nb), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // "Z%Block in CreateEmptyMatrix" )
@@ -1377,6 +1374,9 @@ print *, 'Size(z%block) =', z%row%nb,z%col%nb
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.14  2001/04/11 00:40:25  vsnyder
+! Remove some inadventently-left-in debugging print
+!
 ! Revision 2.13  2001/04/11 00:03:42  vsnyder
 ! Repair matrix creation, improve 'dump'
 !
