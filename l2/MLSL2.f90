@@ -167,7 +167,7 @@ program MLSL2
       call output ( 'Begin un-type-checked abstract syntax tree:', &
         & advance='yes' )
       call print_subtree ( root, 0 )
-      call output ( 'End un-type-checked abstract syntax tree:', &
+      call output ( 'End un-type-checked abstract syntax tree', &
         & advance='yes' )
     end if
 
@@ -188,6 +188,9 @@ program MLSL2
 end program MLSL2
 
 ! $Log$
+! Revision 2.13  2001/03/08 00:39:37  vsnyder
+! Improve some debugging output
+!
 ! Revision 2.12  2001/03/02 02:38:17  vsnyder
 ! Expand LINE, alphabetize USEs
 !
