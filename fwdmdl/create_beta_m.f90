@@ -21,7 +21,7 @@ contains
   Subroutine Create_beta (Spectag, pressure, Temp, Fgr, nl, Catalog,     &
          &   v0s, x1,y, yi, slabs1, dx1_dv0, dy_dv0, dslabs1_dv0, v0sp,  &
          &   x1p, yp, yip, slabs1p, v0sm, x1m, ym,yim,slabs1m,beta_value,&
-         &   t_power, dbeta_dw, dbeta_dn, dbeta_dnu0, Ier)
+         &   t_power, dbeta_dw, dbeta_dn, dbeta_dnu0, Frq_Gap, Ier)
 !
 !  For a given channel, frequency and height, compute beta_value function.
 !  This routine should be called for primary and image seperately.
@@ -39,7 +39,7 @@ contains
 
     Integer(i4), intent(out) :: Ier
     Real(r8), intent(out) :: BETA_VALUE, T_POWER, DBETA_DW
-    Real(r8), intent(out) :: DBETA_DN, DBETA_DNU0
+    Real(r8), intent(out) :: DBETA_DN, DBETA_DNU0, Frq_Gap
 !
 ! -----  Parameters Declaration ----------------------------------------
 !
@@ -125,9 +125,12 @@ contains
 ! Prepare the temperature weighted coefficients:
 !
       dNu = Fgr - v0s(ln_i)
+
+      if(Frq_Gap > 0.0  .and. abs(dNu) >= Frq_Gap) CYCLE
+
       Call dvoigt_spectral(dNu,v0s(ln_i),x1(ln_i),yi(ln_i),y(ln_i), &
-     &     w,temp,slabs1(ln_i),dx1_dv0(ln_i),dy_dv0(ln_i),          &
-     &     dslabs1_dv0(ln_i),bb,dw,dn,ds)
+     &       w,temp,slabs1(ln_i),dx1_dv0(ln_i),dy_dv0(ln_i),          &
+     &       dslabs1_dv0(ln_i),bb,dw,dn,ds)
 !
       beta_value = beta_value + bb
       dbeta_dw = dbeta_dw + dw
@@ -160,6 +163,9 @@ contains
   End Subroutine Create_beta
 end module CREATE_BETA_M
 ! $Log$
+! Revision 1.8  2001/04/05 21:58:47  zvi
+! Implementing l2cf inputs for FilterShape & Spectroscopy instead of FMI
+!
 ! Revision 1.7  2001/04/03 07:32:45  zvi
 ! Modify the spectral structure - eliminating sps_ from the names
 !
