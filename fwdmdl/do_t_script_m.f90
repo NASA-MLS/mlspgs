@@ -42,7 +42,7 @@ contains
     tb(1:) = 0.0_rp
     t_script(1:) = 0.0_rp
 
-! 'brkpt' is the index of the path break-point (when it change from
+! 'brkpt' is the index of the path break-point (when it changes from
 !         incoming ray to outgoing ray)
 ! 'no_ele' is the total number of entries in t_path(1...no_ele)
 
@@ -96,8 +96,9 @@ contains
 ! Inputs:
 
     real(rp), intent(in) :: t_grid(:) ! path temperatures
-    real(r8), intent(in) :: nu ! Frequency
-    real(rp), intent(in) :: t_space    ! space temperature
+    real(r8), intent(in) :: nu        ! Frequency
+    real(rp), intent(in) :: t_space   ! farside boundary temperature
+    !                                   usually cosmic space (2.7K).
 
 ! Outputs:
 
@@ -127,6 +128,9 @@ contains
 end module DO_T_SCRIPT_M
 
 ! $Log$
+! Revision 2.2  2002/10/08 17:08:02  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.1  2002/09/27 00:04:15  vsnyder
 ! Insert copyright notice, cosmetic changes
 !
