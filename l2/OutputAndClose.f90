@@ -78,7 +78,7 @@ contains ! =====     Public Procedures     =============================
       & Mlspcf_mcf_l2gp_start, Mlspcf_mcf_l2dgm_start, &
       & Mlspcf_mcf_l2dgg_start
     use MLSSets, only: FindFirst, FindNext
-    use MLSStrings, only: Array2List
+    use MLSStringLists, only: Array2List
     use MoreTree, only: Get_Spec_ID, GET_BOOLEAN
     use SDPToolkit, only: PGS_S_SUCCESS, PGSD_IO_GEN_WSEQFRM, Pgs_smf_getMsg
     use Time_M, only: Time_Now
@@ -970,6 +970,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.99  2004/08/04 23:19:58  pwagner
+! Much moved from MLSStrings to MLSStringLists
+!
 ! Revision 2.98  2004/06/10 00:58:45  vsnyder
 ! Move FindFirst, FindNext from MLSCommon to MLSSets
 !
