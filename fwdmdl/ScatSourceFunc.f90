@@ -22,7 +22,7 @@ module ScatSourceFunc
       
 contains
 
-   subroutine T_SCAT ( TEMP_AIR, FREQ, Z, Pres, VMRin, NS, NU, NUA, NAB, NR, NC, TB_SCAT )  
+   subroutine T_SCAT ( TEMP_AIR, FREQ, Z, Pres, VMRin, NS, NU, NUA, NAB, NR, NC, TB_SCAT, Scat_alb )  
 
       use Cloud_extinction,    only: Get_beta_cloud
       use CRREXP_m,            only: RREXP    ! ( exp(x)-1 ) / x, for Planck fn.
@@ -46,7 +46,8 @@ contains
       integer, intent(in) :: NS           ! Number of chemical species
       real(rk), intent(in) :: VMRin(NS, size(Z) )        ! VMR
       
-      real(rk), intent(inout) :: TB_scat(:,:) ! TB FROM SCATTERING PHASE FUNCTION
+      real(rk), intent(inout) :: TB_scat(:,:)  ! TB FROM SCATTERING PHASE FUNCTION
+      real(rk), intent(inout) :: Scat_alb(:,:) ! Single Scattering albedo 
 
     ! Local variables
       real(rk), parameter :: COLD = 2.7_rk   ! kelvins
@@ -152,8 +153,9 @@ contains
      &                 NC, NU, NUA, NAB, NR, cld_ext, W0(K), PHH(:,K) )      
         
         if (K .ge. 2 .and. K .le. L-1) then
-            dtau(k)= D_mid_Z(K-1) * (cld_ext + ext_air(K))
+            dtau(k)= D_mid_Z(K-1) * (cld_ext + ext_air(K))            
         endif
+        W0(K) = (W0(K)*cld_ext)/(cld_ext + ext_air(K))
       end do
       dtau(1)=dtau(2) 
       dtau(L)=dtau(L-1)
@@ -290,10 +292,11 @@ contains
 !     AFTER TB CONVERGENCE IS FOUND, OUTPUT THE SCATERING SOURCE FUNCTION
 !-------------------------------------------------------------------------
 
-     do IP=1,NU
-         do K=1,L
+     do K=1,L
+         do IP=1,NU
            TB_scat(K, IP) = Tscat(IP, K)
          enddo
+         Scat_alb(K,1)=W0(K)
      enddo
 
   end subroutine T_SCAT
@@ -305,6 +308,9 @@ contains
 end module ScatSourceFunc
 
 ! $Log$
+! Revision 2.6  2003/11/19 22:22:03  jonathan
+! some update
+!
 ! Revision 2.5  2003/11/17 18:04:45  jonathan
 ! correct working version
 !
