@@ -56,12 +56,14 @@ module MLSFiles               ! Utility file routines
 
    ! Assume hdf files w/o explicit hdfVersion field are this
    ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc.
-   integer, parameter :: DEFAULT_HDFVERSION = 5
+   integer, parameter :: HDFVERSION_4 = 4
+   integer, parameter :: HDFVERSION_5 = 5
+   integer, parameter :: DEFAULT_HDFVERSION = HDFVERSION_5
    
   ! Given this hdfVersion, try to autorecognize hdfversion
   ! then perform appropriate version of open/close; i.e., forgiving
   ! (must *not* be 4 or 5)
-  integer, parameter, public :: WILDCARDHDFVERSION=9
+  integer, parameter, public :: WILDCARDHDFVERSION=HDFVERSION_4+HDFVERSION_5
 
   ! This isn't NameLen because it may have a path prefixed
   integer, parameter :: MAXFILENAMELENGTH=PGSd_PC_FILE_PATH_MAX
@@ -419,10 +421,10 @@ contains
       if(returnStatus /= 0) then
         ErrType = returnStatus
         return
-      elseif(myhdfVersion == 5) then
+      elseif(myhdfVersion == HDFVERSION_5) then
         theFileHandle = he5_swopen(trim(myName), &
           & hdf2hdf5_fileaccess(FileAccessType))
-      elseif(myhdfVersion == 4) then
+      elseif(myhdfVersion == HDFVERSION_4) then
         theFileHandle = swopen(trim(myName), FileAccessType)
       else
         ErrType = NOSUCHHDFVERSION
@@ -451,10 +453,10 @@ contains
       if(returnStatus /= 0) then
         ErrType = returnStatus
         return
-      elseif(myhdfVersion == 5) then
+      elseif(myhdfVersion == HDFVERSION_5) then
         theFileHandle = he5_gdopen(trim(myName), &
           & hdf2hdf5_fileaccess(FileAccessType))
-      elseif(myhdfVersion == 4) then
+      elseif(myhdfVersion == HDFVERSION_4) then
         theFileHandle = gdopen(trim(myName), FileAccessType)
       else
         ErrType = NOSUCHHDFVERSION
@@ -697,18 +699,18 @@ contains
       ErrType = PGS_IO_Gen_CLoseF(theFileHandle)
 
     case('sw')
-      if(myhdfVersion == 5) then
+      if(myhdfVersion == HDFVERSION_5) then
         ErrType = he5_swclose(theFileHandle)
-      elseif(myhdfVersion == 4) then
+      elseif(myhdfVersion == HDFVERSION_4) then
         ErrType = swclose(theFileHandle)
       else
         ErrType = NOSUCHHDFVERSION
       endif
 
     case('gd')
-      if(myhdfVersion == 5) then
+      if(myhdfVersion == HDFVERSION_5) then
         ErrType = he5_gdclose(theFileHandle)
-      elseif(myhdfVersion == 4) then
+      elseif(myhdfVersion == HDFVERSION_4) then
         ErrType = gdclose(theFileHandle)
       else
         ErrType = NOSUCHHDFVERSION
@@ -854,9 +856,9 @@ contains
     endif
 
     ! begin
-    if(myhdfVersion == 5) then
+    if(myhdfVersion == HDFVERSION_5) then
       mls_inqswath = he5_swinqswath(trim(FileName), swathList, strBufSize)
-    elseif(myhdfVersion == 4) then
+    elseif(myhdfVersion == HDFVERSION_4) then
       mls_inqswath = swinqswath(FileName, swathList, strBufSize)
     else                          
       mls_inqswath = NOSUCHHDFVERSION  
@@ -890,7 +892,7 @@ contains
    else
      myhdfVersion = DEFAULT_HDFVERSION
    endif
-   if ( myhdfVersion == 4) then
+   if ( myhdfVersion == HDFVERSION_4) then
      mls_sfstart = sfstart (FileName, FileAccess)
      return
    endif
@@ -937,7 +939,7 @@ contains
    else
      myhdfVersion = DEFAULT_HDFVERSION
    endif
-   if ( myhdfVersion == 4) then
+   if ( myhdfVersion == HDFVERSION_4) then
      mls_sfend = sfend (sdid)
      return
    endif
@@ -1027,6 +1029,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 1.6  2002/01/29 00:48:43  pwagner
+! Now should handle both hdfVersions; not tested yet
+!
 ! Revision 1.5  2002/01/26 00:14:47  pwagner
 ! Accepts hdfVersion optional arg; restored hdf5 module use
 !
