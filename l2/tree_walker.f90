@@ -182,7 +182,7 @@ subtrees:   do while ( j <= howmany )
               select case ( decoration(subtree(1,son)) ) ! section index
               case ( z_construct )
                 call MLSL2Construct ( son, l1bInfo, processingRange, &
-                  & chunks(chunkNo), qtyTemplates, vectorTemplates, &
+                  & chunks, chunkNo, qtyTemplates, vectorTemplates, &
                   & fGrids, vGrids, hGrids, l2gpDatabase, mifGeolocation )
                 call add_to_section_timing ( 'construct', t1)
               case ( z_fill )
@@ -293,6 +293,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.74  2001/12/14 01:43:20  livesey
+! Passes processingRange to HGrid via Construct
+!
 ! Revision 2.73  2001/12/13 23:21:26  livesey
 ! Added countChunks option
 !
