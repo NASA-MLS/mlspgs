@@ -1266,7 +1266,13 @@ contains
       ! Now the channels in Probe all have to be present in Signals(i)
       if (present(channel)) then        ! User asked for a specific channel
         if ( associated(signals(i)%channels) ) then
-          match = signals(i)%channels(channel)
+          if ( channel < lbound(signals(i)%channels,1) ) then
+            match = .false.
+          else if ( channel > ubound(signals(i)%channels,1) ) then
+            match = .false.
+          else
+            match = signals(i)%channels(channel)
+          end if
         else
           match = .true.
         endif
@@ -1352,6 +1358,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.48  2002/05/15 17:29:48  livesey
+! Fixed channels related bug in MatchSignal
+!
 ! Revision 2.47  2002/05/14 22:31:59  livesey
 ! Added singleSideband
 !
