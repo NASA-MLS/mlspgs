@@ -632,6 +632,7 @@ contains ! =====     Public Procedures     =============================
     ! ..........................................  ValidateSignals  .....
     subroutine ValidateSignals
       use MLSSignals_m, only: Signal_t
+      use MLSNumerics, only: EssentiallyEqual
       type (Signal_T), pointer :: FirstSignal
 
       firstSignal => info%signals(1)
@@ -641,7 +642,7 @@ contains ! =====     Public Procedures     =============================
       if ( any( info%signals%sideband /= firstSignal%sideband ) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
         &  "Can't have mixed sidebands in forward model config" )
-      if ( any( info%signals%radiometer /= firstSignal%radiometer ) ) &
+      if ( .not. all ( EssentiallyEqual ( info%signals%lo, firstSignal%lo ) ) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
         &  "Can't have mixed radiometers in forward model config" )
 
@@ -803,6 +804,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.74  2003/08/11 22:35:34  livesey
+! Now more forgiving of running e.g. R5H and R5V together.
+!
 ! Revision 2.73  2003/07/21 18:13:44  pwagner
 ! Looks farther than just 1st l2pc file in pcf
 !
