@@ -39,11 +39,11 @@ MODULE BandTbls   ! Tables for all bands
   END TYPE RadiometerLoss_T
 
   TYPE (RadiometerLoss_T), PARAMETER :: RadiometerLoss(0:4) = (/ &
-       RadiometerLoss_T ("R1A", 0.9982**3, 0.9987, 150.0), &  ! Index '0'
-       RadiometerLoss_T ("R1B", 0.9982**3, 0.9964, 150.0), &
-       RadiometerLoss_T ("R2 ", 0.99736**3, 0.9992, 150.0), &
-       RadiometerLoss_T ("R3 ", 0.99449**3, 0.9987, 150.0), &
-       RadiometerLoss_T ("R4 ", 0.99400**3, 0.9916, 150.0)  /)  ! WGR 10/13/04
+       RadiometerLoss_T ("R1A", 0.9938, 0.9987, 150.0), &  ! Index '0'
+       RadiometerLoss_T ("R1B", 0.9795, 0.9964, 150.0), &
+       RadiometerLoss_T ("R2 ", 0.9914, 0.9992, 150.0), &
+       RadiometerLoss_T ("R3 ", 0.9746, 0.9987, 150.0), &
+       RadiometerLoss_T ("R4 ", 0.9802, 0.9916, 150.0)  /)
 
 CONTAINS
 
@@ -338,6 +338,9 @@ CONTAINS
 END MODULE BandTbls
 
 ! $Log$
+! Revision 2.5  2004/12/01 17:08:17  perun
+! Update ohmic loss values
+!
 ! Revision 2.4  2004/11/10 15:41:58  perun
 ! Change radiometer ohmic loss value for R4 (per WGR); correct indexes to read MB
 !  and WF default chi2
