@@ -315,22 +315,6 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
       ENDIF
 
-! Deallocate the databases
-
-!     CALL DestroyL2GPDatabase(l3r)
-!     CALL DestroyL2GPDatabase(residA)
-!     CALL DestroyL2GPDatabase(residD)
-
-!     CALL DestroyL3DMDatabase(l3dm)
-!     CALL DestroyL3DMDatabase(dmA)
-!     CALL DestroyL3DMDatabase(dmD)
-
-!     CALL DestroyL3SPDatabase(l3sp)
-
-!     CALL DestroyL3DZDatabase(dzs)
-!     CALL DestroyL3DZDatabase(dza)
-!     CALL DestroyL3DZDatabase(dzd)
-
 !---------------------------
    END SUBROUTINE OutputProd
 !---------------------------
@@ -411,6 +395,9 @@ END MODULE OutputClose
 !=====================
 
 !$Log$
+!Revision 1.9  2001/03/27 19:36:43  nakamura
+!Moved a parameter to MLSL3Common; updated metadata.
+!
 !Revision 1.8  2001/03/07 21:28:41  nakamura
 !Commented out database deallocations.
 !
