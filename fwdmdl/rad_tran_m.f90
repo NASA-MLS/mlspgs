@@ -1,7 +1,7 @@
 module RAD_TRAN_M
 !
   use MLSCommon, only: R8, RP, IP
-  USE GLNP, ONLY: NG
+  USE GLNP, ONLY: Ng
   USE DO_T_SCRIPT_M, ONLY: TWO_D_T_SCRIPT
   USE D_T_SCRIPT_DTNP_M, ONLY: DT_SCRIPT_DT
   USE DO_DELTA_M, ONLY: PATH_OPACITY,HYD_OPACITY
@@ -71,9 +71,9 @@ SUBROUTINE path_contrib(alpha_path,del_s,e_rflty,tol,dtaudn, &
 !
 ! find the indicies
 !
-  do_gl = .false.
+  do_gl = .FALSE.
 !
-  WHERE(dtaudn < -tol/temp) do_gl = .true.
+  WHERE(dtaudn < -tol/temp) do_gl = .TRUE.
 !
 ! The first and last index must be false
 !
@@ -150,7 +150,7 @@ SUBROUTINE rad_tran(frq,s_temp,e_rflty,z_path_c,t_path_c,alpha_path_c, &
           del_zeta(i) = z_path_c(p_i-1) - z_path_c(p_i)
         ENDIF
         i = i + 1
-        j = j + ng
+        j = j + Ng
       ENDIF
     ENDDO
 !
@@ -259,8 +259,8 @@ SUBROUTINE drad_tran_df(z_path_c,Grids_f,lin_log,sps_values,            &
       do_calc = do_calc_f_c(:,sv_i)
       DO p_i = 1 , n_path
         IF(do_gl(p_i)) THEN
-          IF(ANY(do_calc_f_f(i:i+ng-1,sv_i))) do_calc(p_i) = .true.
-          i = i + ng
+          IF(ANY(do_calc_f_f(i:i+ng-1,sv_i))) do_calc(p_i) = .TRUE.
+          i = i + Ng
         ENDIF
       ENDDO
 !
@@ -310,9 +310,9 @@ SUBROUTINE drad_tran_df(z_path_c,Grids_f,lin_log,sps_values,            &
                     del_zeta(i) = z_path_c(p_i-1) - z_path_c(p_i)
                   ENDIF
                   i = i + 1
-                  j = j + ng
+                  j = j + Ng
                 ENDIF
-                l = l + ng
+                l = l + Ng
               ENDIF
             ENDDO
 
@@ -364,9 +364,9 @@ SUBROUTINE drad_tran_df(z_path_c,Grids_f,lin_log,sps_values,            &
                     del_zeta(i) = z_path_c(p_i-1) - z_path_c(p_i)
                   ENDIF
                   i = i + 1
-                  j = j + ng
+                  j = j + Ng
                 ENDIF
-                l = l + ng
+                l = l + Ng
               ENDIF
             ENDDO
 
@@ -489,7 +489,7 @@ SUBROUTINE drad_tran_dx(z_path_c,Grids_f,dbeta_path_c,eta_zxp_f_c, &
       i = 1
       DO p_i = 1 , n_path
         IF(do_gl(p_i)) THEN
-          IF(ANY(do_calc_f_f(i:i+Ng-1,sv_i))) do_calc(p_i) = .true.
+          IF(ANY(do_calc_f_f(i:i+Ng-1,sv_i))) do_calc(p_i) = .TRUE.
           i = i + Ng
         ENDIF
       ENDDO
@@ -689,8 +689,8 @@ SUBROUTINE drad_tran_dt(z_path_c,h_path_c,t_path_c,dh_dt_path_c, &
     i = 1
     DO p_i = 1 , n_path
       IF(do_gl(p_i)) THEN
-        IF(ANY(do_calc_t_f(i:i+ng-1,sv_i))) do_calc(p_i) = .true.
-        i = i + ng
+        IF(ANY(do_calc_t_f(i:i+ng-1,sv_i))) do_calc(p_i) = .TRUE.
+        i = i + Ng
       ENDIF
     ENDDO
 !
@@ -736,9 +736,9 @@ SUBROUTINE drad_tran_dt(z_path_c,h_path_c,t_path_c,dh_dt_path_c, &
                  del_zeta(i) = z_path_c(p_i-1) - z_path_c(p_i)
                ENDIF
                i = i + 1
-               j = j + ng
+               j = j + Ng
              ENDIF
-             l = l + ng
+             l = l + Ng
            ENDIF
          ENDDO
 !
@@ -768,23 +768,23 @@ SUBROUTINE drad_tran_dt(z_path_c,h_path_c,t_path_c,dh_dt_path_c, &
 !
     do_calc = do_calc_hyd_c(:,sv_i)
     IF(do_calc_hyd_c(mid,sv_i)) THEN
-      do_calc(2:mid) = .true.
+      do_calc(2:mid) = .TRUE.
     ELSE
       DO p_i = 2 , mid
-        IF(do_calc_hyd_c(p_i-1,sv_i)) do_calc(p_i) = .true.
+        IF(do_calc_hyd_c(p_i-1,sv_i)) do_calc(p_i) = .TRUE.
       ENDDO
     ENDIF
     IF(do_calc_hyd_c(mid+1,sv_i)) THEN
-      do_calc(mid+1:n_path-1) = .true.
+      do_calc(mid+1:n_path-1) = .TRUE.
     ELSE
       DO p_i = mid + 1 , n_path - 1
-        IF(do_calc_hyd_c(p_i+1,sv_i)) do_calc(p_i) = .true.
+        IF(do_calc_hyd_c(p_i+1,sv_i)) do_calc(p_i) = .TRUE.
       ENDDO
     ENDIF
 !
 ! since this is a layer boundary calculation we must require
 !
-    do_calc((/1,n_path/)) = .false.
+    do_calc((/1,n_path/)) = .FALSE.
 !
 ! find where the non zeros are along the path
 !
@@ -866,9 +866,9 @@ SUBROUTINE drad_tran_dt(z_path_c,h_path_c,t_path_c,dh_dt_path_c, &
                  del_zeta(i) = z_path_c(p_i-1) - z_path_c(p_i)
                ENDIF
                i = i + 1
-               j = j + ng
+               j = j + Ng
              ENDIF
-             l = l + ng
+             l = l + Ng
            ENDIF
          ENDDO
 !
@@ -912,6 +912,9 @@ END SUBROUTINE drad_tran_dt
 !----------------------------------------------------------------------
 End module RAD_TRAN_M
 ! $Log$
+! Revision 2.2  2002/01/30 01:11:22  zvi
+! Fix bug in user selectable coeff. code
+!
 ! Revision 2.1  2002/01/27 08:37:51  zvi
 ! Adding Users selected coefficients for derivatives
 !
