@@ -84,10 +84,9 @@
 # 
 # --------------- End makemakedep.sh help
 # Bugs and limitations
-#(1) No one will ever use the DEPMAKER=1; so why not drop it?
-#(2) Not tested with Sun's own f95 compiler
-#(3) Still too specialized--works well only with NAG-like compilers
-# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+#(1) Tested only with NAG, Lahey, Intel, Sun, and Absoft f95 compilers
+#(2) Still too specialized--works well only with NAG-like compilers
+# Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 # "$Id$"
@@ -189,28 +188,12 @@ extant_files()
 #****************************************************************
 #this version uses either of the two depmakers
 #to trace dependencies based on USEs and INCLUDEs (or none at all):
-#(1)  makedepf90 (a compiled program)
-#(2)  f90makedep.pl (a perl script)
-#(3)  none (skips tracing dependencies)
+#(1)  f90makedep.pl (a perl script)
+#(0)  none (skips tracing dependencies)
 #
-#which of (1) or (2) to use is set by the following line
-DEPMAKER=2
-#        ^  -- set this to 1 for makedepf90, 2 for f90makedep.pl
-# (option (3) is selected by 
-#
-#unless you have obtained and compiled makedepf90, you will almost
-#certainly need to set DEPMAKER to 2 in the above line
-#If you prefer to use makedepf90 (perhaps because you lack perl)
-#it is available from
-#        http://www.helsinki.fi/~eedelman/makedepf90.html
-#as a compiled binary for Linux and as sources for other platforms
-#After compiling makedepf90, you will need to place it in your PATH,
-#perhaps by moving a copy to $(HOME)/bin if it exists,
-#or else replace the line
-# 	makedepf90 | sed ...
-# below with
-# 	/dir1/dir2/../dirn/makedepf90 | sed ...
-#where /dir1.. is directory where you created makedepf90 (use 'pwd')
+#which of (1) or (0) to use is set by the following line
+DEPMAKER=1
+#        ^  -- set this to 0 for none, 1 for f90makedep.pl
 #
 #if you use f90makedep.pl, you may have a problem if the path where you keep
 #your copy of perl is different from the one in its 1st line
@@ -392,6 +375,7 @@ then
    echo " TRY_CLEANUP: $TRY_CLEANUP "  
    echo " DEPMAKER: $DEPMAKER "  
    echo " EDIT_GB_PERL_PATH: $EDIT_GB_PERL_PATH "  
+   echo " dsuffix: $dsuffix "  
 fi                                                      
 
 #   Rename or remove older Makefile.dep if one already exists
@@ -475,21 +459,6 @@ if [ $DEPMAKER = "0" ]
 then
   echo "#(Not tracing dependencies)" >> $dep_file
   echo "#End of simplified Makefile.dep" >> $dep_file
-elif [ $DEPMAKER = "1" ]
-then
-	#
-	# use makedepf90 to calculate dependencies
-	# this assumes makedepf90 both exists && is in PATH
-	if [ $PRINT_TOO_MUCH = "1" ]
-	then
-		echo " using makedepf90 to calculate dependencies "
-	fi
-	echo "# using makedepf90 to calculate dependencies "  >> $dep_file
-	#
-	#makedepf90 *.f90 | sed 's/^makedepf90/#makedepf90/' >> $dep_file
-	#
-	#Pipe through sed to overcome an apparent bug in makedepf90
-	makedepf90 *.f90 | sed 's/\.f90\.o/\.o/g' >> $dep_file
 else
 	#
 	# use f90makedep.pl to calculate dependencies
@@ -500,7 +469,7 @@ else
 	echo "# using f90makedep.pl to calculate dependencies "  >> $dep_file
 	#
 	# Prefix f90makedep.pl with the path to util
-        # this assumes f90makedep.pl is in same dir as this script
+   # this assumes f90makedep.pl is in same dir as this script
 	the_DEPMAKER="`echo $0 | sed 's/makemakedep.sh/f90makedep.pl/'`"
 	if [ $PRINT_TOO_MUCH = "1" ]
 	then
@@ -613,6 +582,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.23  2003/06/21 00:34:17  pwagner
+# Added fail-safe measures and MAY_EDIT_PERL flag
+#
 # Revision 1.22  2003/01/31 23:54:56  pwagner
 # Now may exclude certain files from OBJS list; e.g. drivers
 #
