@@ -23,6 +23,7 @@ module MLSNumerics              ! Some low level numerical stuff
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
   ! This module contains some low level numerical stuff, hunting, interpolating
@@ -237,11 +238,18 @@ contains
   end subroutine InterpolateScalar_r8
 
 !=============================================================================
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module MLSNumerics
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.25  2002/10/08 00:09:12  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.24  2002/10/04 16:40:30  pwagner
 ! Fixed missing close quotes on include lines
 !
