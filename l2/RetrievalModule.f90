@@ -641,6 +641,63 @@ contains
       end select
     end subroutine AnnounceError
 
+    ! ------------------------------------------------  BoundMove  -----
+    subroutine BoundMove ( Mu, Bound, X, Dx, Which )
+      ! Compute a scalar multiple Mu such that X + Mu*DX does not go
+      ! beyond Bound.  "Which" specifies either "low" or "high"
+
+      !{ Let $D$ be $|\delta \mathbf{x}|$, where $\delta \mathbf{x}$ is
+      ! given by Dx, let $b_i$ and $x_i$ be components of Bound and X. 
+      ! Let $d_i$ be such that $x_i + \frac{d_i}D \delta x_i$ is not beyond
+      ! a bound.  That is, $d_i$ is such that $d_i \cos \theta_i = x_i -
+      ! b_i$, where $\theta_i$ is the angle between $\delta \mathbf{x}$
+      ! and the normal to the $i^{th}$ constraint surface.  Since the
+      ! constraints are bounds, we have $\cos \theta_i = \frac{\delta
+      ! x_i}D$.  $\mu$ is the smallest value of $\frac{d_i}D = \frac{x_i-b_i}
+      ! {\delta x_i}$.  If we check the components one at a time, each one
+      ! using the most recently computed $\mu$, we don't need a divide for
+      ! each check, and we don't need a {\tt min} operation.
+
+      real(rv), intent(inout) :: Mu
+      type(vector_T), intent(in) :: Bound, X, Dx
+      character(len=*), intent(in) :: Which
+
+      integer :: IQ, IVX, IVY           ! Subscripts used during MU computation
+
+      if ( which == 'low' ) then
+        do iq = 1, size(x%quantities)
+          do ivx = 1, size(x%quantities(iq)%values,1)
+            do ivy = 1, size(x%quantities(iq)%values,2)
+              if ( x%quantities(iq)%values(ivx,ivy) + &
+                &  mu * dx%quantities(iq)%values(ivx,ivy) < &
+                &  bound%quantities(iq)%values(ivx,ivy) ) &
+                  & mu = ( bound%quantities(iq)%values(ivx,ivy) - &
+                  &        x%quantities(iq)%values(ivx,ivy) ) &
+                  &      / dx%quantities(iq)%values(ivx,ivy)
+            end do
+          end do
+        end do
+      else if ( which == 'high' ) then
+        do iq = 1, size(x%quantities)
+          do ivx = 1, size(x%quantities(iq)%values,1)
+            do ivy = 1, size(x%quantities(iq)%values,2)
+              if ( x%quantities(iq)%values(ivx,ivy) + &
+                &  mu * dx%quantities(iq)%values(ivx,ivy) > &
+                &  bound%quantities(iq)%values(ivx,ivy) ) &
+                  & mu = ( x%quantities(iq)%values(ivx,ivy) - &
+                  &        bound%quantities(iq)%values(ivx,ivy) ) &
+                  &      / dx%quantities(iq)%values(ivx,ivy)
+            end do
+          end do
+        end do
+      else
+        call MLSMessage ( MLSMSG_Error, moduleName, &
+          & 'Come on! It has to be a low bound or a high bound!' )
+      end if
+      if ( mu < 0.0_rv ) call MLSMessage ( MLSMSG_Error, moduleName, &
+        &  'How did mu get to be negative?' )
+    end subroutine BoundMove
+
     ! ----------------------------------------------  FillDiagVec  -----
     subroutine FillDiagVec ( QuantityIndex, Value )
       ! Put Value into the first element of the values field of the
@@ -692,7 +749,6 @@ contains
       type (ForwardModelStatus_T) :: FmStat ! Status for forward model
       type (ForwardModelIntermediate_T) :: Fmw ! Work space for forward model
       type(vector_T) :: FuzzState       ! Random numbers to fuzz the state
-      integer :: IQ, IVX, IVY           ! Subscripts used during MU computation
       integer :: J, K                   ! Loop inductors and subscripts
       type(matrix_SPD_T), pointer :: KTK ! The Jacobian-derived part of the
                                         ! normal equations.  NormalEquations
@@ -1416,42 +1472,15 @@ contains
           aj%fnmin = sqrt(aj%fnmin)
           ! v(candidateDX) := factored^{-1} v(candidateDX)
           call solveCholesky ( factored, v(candidateDX) )
-          ! Shorten candidateDX if necessary to stay within the bounds
+          ! Shorten candidateDX if necessary to stay within the bounds.
+          ! We aren't ready to take the move, but NWTA needs an accurate
+          ! value for the norm of candidateDX.
           mu = 1.0_rv
-          if ( got(f_lowBound) ) then
-            do iq = 1, size(v(x)%quantities)
-              do ivx = 1, size(v(x)%quantities(iq)%values,1)
-                do ivy = 1, size(v(x)%quantities(iq)%values,2)
-                  if ( v(x)%quantities(iq)%values(ivx,ivy) + &
-                    &  mu * v(candidateDX)%quantities(iq)%values(ivx,ivy) < &
-                    &  lowBound%quantities(iq)%values(ivx,ivy) ) &
-                      & mu = ( lowBound%quantities(iq)%values(ivx,ivy) - &
-                      &        v(x)%quantities(iq)%values(ivx,ivy) ) &
-                      &      / v(candidateDX)%quantities(iq)%values(ivx,ivy)
-                end do
-              end do
-            end do
-          end if
-          if ( got(f_highBound) ) then
-            do iq = 1, size(v(x)%quantities)
-              do ivx = 1, size(v(x)%quantities(iq)%values,1)
-                do ivy = 1, size(v(x)%quantities(iq)%values,2)
-                  if ( v(x)%quantities(iq)%values(ivx,ivy) + &
-                    &  mu * v(candidateDX)%quantities(iq)%values(ivx,ivy) > &
-                    &  highBound%quantities(iq)%values(ivx,ivy) ) &
-                      & mu = ( v(x)%quantities(iq)%values(ivx,ivy) - &
-                      &        highBound%quantities(iq)%values(ivx,ivy) ) &
-                      &      / v(candidateDX)%quantities(iq)%values(ivx,ivy)
-                end do
-              end do
-            end do
-          end if
-          if ( mu <= 1.0_rv ) then
-            do iq = 1, size(v(candidateDX)%quantities)
-              v(candidateDX)%quantities(iq)%values = &
-                & mu * v(candidateDX)%quantities(iq)%values
-            end do
-          end if
+          if ( got(f_lowBound) ) &
+            & call boundMove ( mu, lowBound, v(x), v(candidateDx), 'low' )
+          if ( got(f_highBound) ) &
+            & call boundMove ( mu, highBound, v(x), v(candidateDx), 'high' )
+          if ( mu < 1.0_rv ) call scaleVector ( v(candidateDX), mu )
           aj%dxn = sqrt(v(candidateDX) .dot. v(candidateDX)) ! L2Norm(dx)
           aj%gdx = v(gradient) .dot. v(candidateDX)
           if ( .not. aj%starting ) aj%dxdxl = v(dx) .dot. v(candidateDX)
@@ -1485,15 +1514,21 @@ contains
         ! Set X = X + DX
         !     AJ%AXMAX = MAXVAL(ABS(X)),
         !     AJ%BIG = ANY ( DX > 10.0 * epsilon(X) * X )
-          if ( .not. aj%starting ) aj%dxdxl = v(dx) .dot. v(candidateDX)
           !{Account for column scaling.  We solved for $\mathbf{\Sigma^{-1}
           ! \delta x}$ above, so multiply by $\Sigma$ (which is our
           ! variable {\tt columnScaleVector}):
-          call copyVector ( v(dxUnScaled), v(dx) )
+          call copyVector ( v(dxUnScaled), v(dx) ) ! dxUnscaled = dx
           if ( columnScaling /= l_none ) then
             ! dxUnScaled = dxUnScaled # columnScaleVector:
             call multiply ( v(dxUnScaled), v(columnScaleVector) )
           end if
+          ! Shorten dxUnscaled if necessary to stay within the bounds
+          mu = 1.0
+          if ( got(f_lowBound) ) &
+            & call boundMove ( mu, lowBound, v(x), v(dxUnscaled), 'low' )
+          if ( got(f_highBound) ) &
+            & call boundMove ( mu, highBound, v(x), v(dxUnscaled), 'high' )
+          if ( mu < 1.0_rv ) call scaleVector ( v(dxUnscaled), mu )
           call addToVector ( v(x), v(dxUnScaled) ) ! x = x + dxUnScaled
             if ( index(switches,'dvec') /= 0 ) &
               & call dump ( v(dxUnScaled), name='dX Unscaled' )
@@ -1527,6 +1562,7 @@ contains
         !     DX = AJ%GFAC * "Best Gradient"
           call copyVector ( v(x), v(bestX) ) ! x = bestX
           ! dx = aj%gfac * "Best Gradient":
+          if ( .not. aj%starting ) aj%dxdxl = v(dx) .dot. v(bestGradient)
           call scaleVector ( v(bestGradient), aj%gfac, v(dx) )
             if ( index(switches,'dvec') /= 0 ) &
               & call dump ( v(dx), name='Gradient move from best X' )
@@ -1558,6 +1594,7 @@ contains
               call output ( cosine, format='(1pe14.7)', advance='yes' )
             end if
         case ( nf_dx ) ! ....................................  DX  .....
+          if ( .not. aj%starting ) aj%dxdxl = v(dx) .dot. v(candidateDX)
           call copyVector ( v(dx), v(candidateDX) ) ! dx = candidateDX
         case ( nf_dx_aitken ) ! ......................  DX_AITKEN  .....
           ! dx = aj%cait * candidateDX:
@@ -1668,7 +1705,7 @@ contains
           if ( got(f_hRegOrders) ) &
             & jacobian_rows = jacobian_rows + tikhonovRows
           call fillDiagVec ( l_jacobian_cols, real(jacobian_cols,r8) )
-          call fillDiagVec ( l_jacobian_cols, real(jacobian_rows,r8) )
+          call fillDiagVec ( l_jacobian_rows, real(jacobian_rows,r8) )
             if ( index(switches,'cov') /= 0 ) then
               call output ( 'Counted ' )
               call output ( jacobian_rows )
@@ -3036,6 +3073,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.191  2002/10/17 23:12:51  vsnyder
+! Apply bounds to gradient and Aitken moves
+!
 ! Revision 2.190  2002/10/17 00:16:40  vsnyder
 ! Add lowBound and highBound fields for the Retrieve spec
 !
