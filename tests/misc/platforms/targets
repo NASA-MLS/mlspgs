@@ -28,7 +28,9 @@ include ../Makefile.dep
 # e.g. in the make staement: make -f MakeFC BLAS=/my_path/to_BLAS_library
 
 # ========================================================================
-ALLOBJS = $(OBJS)
+${OBJS}: machine.o
+
+ALLOBJS = $(OBJS) machine.o
 
 PVM_PATH = ${PVM_ROOT}/lib/${PVM_ARCH}
 
@@ -91,3 +93,6 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.1  2001/06/14 22:36:31  pwagner
+# First commit
+#

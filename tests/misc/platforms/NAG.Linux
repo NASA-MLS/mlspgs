@@ -35,7 +35,7 @@ dir2 = $(itmdir)/
 # Set paths for finding source files (different from .o and .mod)
 
 vpath %.o ./
-vpath %.f90 ../
+vpath %.f90 ../ ../../../lib/machines/$(MLSCONFG)
 vpath %.f9h ../
 
 FC = f95
@@ -63,3 +63,6 @@ INC_PATHS = -I $(PGSINC) -I $S
 l_specials =
 
 # $Log$
+# Revision 1.1  2001/06/14 22:36:31  pwagner
+# First commit
+#
