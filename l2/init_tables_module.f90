@@ -187,12 +187,12 @@ module INIT_TABLES_MODULE
 !     | mlsSignals        readApriori       construct          join                |
 !     |       spectroscopy      mergeGrids         fill             algebra        |
 ! ====|============================================================================|== From: ==
-        (/OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,    0,    0,  & ! Start
-          OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,    0,    0,  & ! mlsSignals
-          OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,    0,    0,  & ! spectroscopy
-          OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,    0,    0,  & ! globalSettings
-          OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,    0,    0,  & ! readApriori
-          OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,    0,    0,  & ! mergeGrids
+        (/OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,   OK,    0,  & ! Start
+          OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,   OK,    0,  & ! mlsSignals
+          OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,   OK,    0,  & ! spectroscopy
+          OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,   OK,    0,  & ! globalSettings
+          OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,   OK,    0,  & ! readApriori
+          OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,   OK,    0,  & ! mergeGrids
            0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,   OK,  & ! chunkDivide
            0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,   OK,  & ! Construct
            0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,   OK,  & ! Fill
@@ -1111,6 +1111,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.346  2004/01/17 00:28:09  vsnyder
+! Provide for Algebra section
+!
 ! Revision 2.345  2004/01/14 18:49:58  vsnyder
 ! Stuff to support the Algebra section
 !
