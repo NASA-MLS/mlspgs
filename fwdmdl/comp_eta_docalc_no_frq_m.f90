@@ -23,7 +23,7 @@ contains
 ! ---------------------------------------  Comp_Eta_Docalc_No_Frq  -----
 
   subroutine Comp_Eta_Docalc_No_Frq ( Grids_x, path_zeta, path_phi, &
-                                  &   do_calc_zp, eta_zp )
+                                  &   eta_zp, do_calc_zp )
 
     use MLSCommon, only: RP, IP
     use Get_Eta_Matrix_m, only: Get_Eta_Sparse
@@ -39,68 +39,71 @@ contains
 !                           species vmr is needed.
 ! output:
 
-    logical, intent(out) :: do_calc_zp(:,:) ! Indicates whether there is a
-!                           contribution for this state vector element. This
-!                           is the same length as values.
     real(rp), intent(out) :: eta_zp(:,:) ! Eta_z * Eta_phi for each state
 !                           vector element. This is the same length as values.
+    logical, intent(out), optional :: do_calc_zp(:,:) ! Indicates whether there
+!                           is a contribution for this state vector element.
+!                           This is the same length as values.
 ! Notes:
 ! units of z_basis must be same as zeta_path (usually -log(P)) and units of
 ! phi_basis must be the same as phi_path (either radians or degrees).
 
 ! Internal declarations:
 
-    integer(ip) :: N_p, N_z, Npz
-    integer(ip) :: Sps_i, Sv_i, Sv_z, Sv_p, Sv_j
-    integer(ip) :: P_inda, Z_inda, V_inda, P_indb, Z_indb, V_indb
+    integer(ip) :: N_p, N_z
+    integer(ip) :: Sps_i, Sv_z, Sv_p
+    integer(ip) :: P_inda, Z_inda, V_inda, P_indb, Z_indb
 
-    real(rp) :: Eta_p(1:size(path_zeta),1:maxval(Grids_x%no_p))
-    real(rp) :: Eta_z(1:size(path_zeta),1:maxval(Grids_x%no_z))
-    logical :: Not_zero_p(1:size(path_zeta),1:maxval(Grids_x%no_p))
-    logical :: Not_zero_z(1:size(path_zeta),1:maxval(Grids_x%no_z))
+    real(rp) :: Eta_p(1:size(path_zeta),1:Grids_x%l_p(ubound(Grids_x%l_p,1)))
+    real(rp) :: Eta_z(1:size(path_zeta),1:Grids_x%l_z(ubound(Grids_x%l_z,1)))
+    logical :: Not_zero_p(1:size(path_zeta),1:Grids_x%l_p(ubound(Grids_x%l_p,1)))
+    logical :: Not_zero_z(1:size(path_zeta),1:Grids_x%l_z(ubound(Grids_x%l_z,1)))
 
 ! Begin executable code:
 
     eta_zp = 0.0
-    do_calc_zp = .false.
 
-    p_inda = 1
-    z_inda = 1
-    v_inda = 1
+    p_inda = 0
+    v_inda = 0
+    z_inda = 0
 
-    do sps_i = 1 , size(Grids_x%no_z) ! Number of molecules
+    do sps_i = 1 , ubound(Grids_x%l_z,1) ! Number of molecules
 
-      n_z = Grids_x%no_z(sps_i)
-      n_p = Grids_x%no_p(sps_i)
-      npz = n_z * n_p
+      p_indb = Grids_x%l_p(sps_i)
+      z_indb = Grids_x%l_z(sps_i)
 
-      z_indb = z_inda + n_z
-      p_indb = p_inda + n_p
-      v_indb = v_inda + npz
+      n_z = z_indb - z_inda
+      n_p = p_indb - p_inda
 
 ! There are two ways to do this (slow and easy vs quick but difficult)
-! For ease lets do the slow and easy (and certainly more reliable)
+! For ease let's do the slow and easy (and certainly more reliable)
 
 ! Compute etas
 
-      call get_eta_sparse ( Grids_x%zet_basis(z_inda:z_indb-1), path_zeta, &
-                       &    eta_z, not_zero_z )
-      call get_eta_sparse ( Grids_x%phi_basis(p_inda:p_indb-1), path_phi,  &
-                       &    eta_p, not_zero_p )
+      if ( present(do_calc_zp) ) then
+        call get_eta_sparse ( Grids_x%zet_basis(z_inda+1:z_indb), path_zeta, &
+                         &    eta_z, not_zero_z )
+        call get_eta_sparse ( Grids_x%phi_basis(p_inda+1:p_indb), path_phi,  &
+                         &    eta_p, not_zero_p )
+      else
+        call get_eta_sparse ( Grids_x%zet_basis(z_inda+1:z_indb), path_zeta, &
+                         &    eta_z )
+        call get_eta_sparse ( Grids_x%phi_basis(p_inda+1:p_indb), path_phi,  &
+                         &    eta_p )
+      end if
 
-      do sv_i = 0 , npz - 1
-        sv_j = v_inda + sv_i
-        sv_z = 1 + modulo(sv_i,n_z)
-        sv_p = 1 + sv_i / n_z
-        where ( not_zero_z(:,sv_z) .and. not_zero_p(:,sv_p) )
-          do_calc_zp(:,sv_j) = .true.
-          eta_zp(:,sv_j) = eta_z(:,sv_z) * eta_p(:,sv_p)
-        end where
+      do sv_p = 0, n_p - 1
+        do sv_z = 0, n_z - 1
+          v_inda = v_inda + 1
+          if ( present(do_calc_zp) ) &
+          & do_calc_zp(:,v_inda) = not_zero_z(:,sv_z+1) .and. not_zero_p(:,sv_p+1)
+          ! removed "where ( do_calc_zp(:,v_inda) )" because a multiply is cheaper
+          eta_zp(:,v_inda) = eta_z(:,sv_z+1) * eta_p(:,sv_p+1)
+        end do
       end do
 
       z_inda = z_indb
       p_inda = p_indb
-      v_inda = v_indb
 
     end do
 
@@ -113,6 +116,18 @@ contains
 end module Comp_Eta_Docalc_No_Frq_m
 
 ! $Log$
+! Revision 2.6  2003/05/05 23:00:25  livesey
+! Merged in feb03 newfwm branch
+!
+! Revision 2.5.2.3  2003/03/22 02:38:01  vsnyder
+! Make do_calc_zp optional, don't compute stuff not needed if it's not present
+!
+! Revision 2.5.2.2  2003/03/22 02:31:20  vsnyder
+! Remove a WHERE that didn't save anything, cosmetic changes
+!
+! Revision 2.5.2.1  2003/03/20 01:42:26  vsnyder
+! Revise Grids_T structure
+!
 ! Revision 2.5  2002/10/08 17:08:01  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
