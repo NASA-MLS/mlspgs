@@ -5,8 +5,9 @@
 
 program TEST_MULTIPLY
 
-  use MatrixModule_0, only: Densify, Dump, MatrixElement_T, R8, &
+  use MatrixModule_0, only: Densify, Dump, MatrixElement_T, &
     & operator(.XT.), Sparsify
+  use MLSCommon, only: R8
 
   implicit NONE
 
@@ -58,8 +59,6 @@ program TEST_MULTIPLY
   zb = ab .xt. bb
   allocate ( z(zb%nrows,zb%ncols), zt(zb%nrows,zb%ncols) )
   call densify ( z, zb )
-  print *, 'Shape(a) =', shape(a), ", Shape(b) =", shape(b), &
-           'Shape(zt) =', shape(zt)
   zt = matmul(transpose(a),b)
   ndiff = count(z-zt > 0.0)
   if ( dump_it .or. ndiff > 0 ) then
@@ -78,6 +77,9 @@ program TEST_MULTIPLY
 end program TEST_MULTIPLY
 
 ! $Log$
+! Revision 2.2  2000/10/12 20:10:36  vsnyder
+! Get R8 from MLSCommon instead of MatrixMultiply_0
+!
 ! Revision 2.1  2000/10/11 19:10:33  vsnyder
 ! Initial entry
 !
