@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -47,17 +47,6 @@ MODULE MLSCommon                ! Common definitions for the MLS software
        & MLSInstrumentModuleNamesUC=(/"GHZ","THZ"/)
 
   ! --------------------------------------------------------------------------
-  
-  ! The next datatype describes the information on the L1B data files in use
-
-  TYPE L1BInfo_T
-    INTEGER :: L1BOAId     ! The HDF ID (handle) for the L1BOA file
-    INTEGER, DIMENSION(:), POINTER :: L1BRADIds ! Id(s) for the L1BRAD file(s)
-    CHARACTER (LEN=FileNameLen) :: L1BOAFileName  ! L1BOA file name
-    CHARACTER (LEN=FileNameLen), DIMENSION(:), POINTER :: L1BRADFileNames
-  END TYPE L1BInfo_T
-
-  ! --------------------------------------------------------------------------
 
   ! This datatype defines the `chunks' into which the input dataset is split
 
@@ -85,6 +74,9 @@ END MODULE MLSCommon
 
 !
 ! $Log$
+! Revision 2.1  2001/01/25 19:52:51  perun
+! Moved L1BInfo to MLSL1Common
+!
 ! Revision 2.0  2000/09/05 17:41:06  dcuddy
 ! Change revision to 2.0
 !
