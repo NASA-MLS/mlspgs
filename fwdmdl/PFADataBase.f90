@@ -298,7 +298,6 @@ contains ! =====     Public Procedures     =============================
           do k = 1, size(groupsTest)
             if ( capitalize(allSignals(i)) == capitalize(mySignalStrings(k)) ) then
               nPFA = nPFA + 1
-              exit
             end if
           end do
         end do
@@ -309,7 +308,6 @@ contains ! =====     Public Procedures     =============================
             if ( capitalize(allSignals(i)) == capitalize(mySignalStrings(k)) ) then
               nPFA = nPFA + 1
               groups(nPFA) = groupsTest(k)
-              exit
             end if
           end do
         end do
@@ -318,7 +316,6 @@ contains ! =====     Public Procedures     =============================
           do k = 1, size(groupsTest)
             if ( theMolecules(i) == myMolecules(k) ) then
               nPFA = nPFA + 1
-              exit
             end if
           end do
         end do
@@ -329,7 +326,6 @@ contains ! =====     Public Procedures     =============================
             if ( theMolecules(i) == myMolecules(k) ) then
               nPFA = nPFA + 1
               groups(nPFA) = groupsTest(k)
-              exit
             end if
           end do
         end do
@@ -341,7 +337,6 @@ contains ! =====     Public Procedures     =============================
             do k = 1, size(groupsTest)
               if ( capitalize(groupsTest(k)) == capitalize(groupTrial) ) then
                 nPFA = nPFA + 1
-                exit
               end if
             end do
           end do
@@ -355,7 +350,6 @@ contains ! =====     Public Procedures     =============================
               if ( capitalize(groupsTest(k)) == capitalize(groupTrial) ) then
                 nPFA = nPFA + 1
                 groups(nPFA) = groupTrial
-                exit
               end if
             end do
           end do
@@ -657,6 +651,9 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.16  2005/02/05 00:02:12  vsnyder
+! Read all of the specified tables
+!
 ! Revision 2.15  2005/01/27 21:19:44  vsnyder
 ! Remove unformatted, nonscalar molecule
 !
