@@ -475,24 +475,24 @@ contains
 
           ! Verify the consistency of various matrices and vectors
           if ( got(f_apriori) ) then
-            if ( apriori%template%id /= state%template%id ) &
+            if ( apriori%template%name /= state%template%name ) &
               & call announceError ( inconsistent, f_apriori, f_state )
           end if
           if ( got(f_highBound) ) then
-            if ( highBound%template%id /= state%template%id ) &
+            if ( highBound%template%name /= state%template%name ) &
               & call announceError ( inconsistent, f_highBound, f_state )
           end if
           if ( got(f_lowBound) ) then
-            if ( lowBound%template%id /= state%template%id ) &
+            if ( lowBound%template%name /= state%template%name ) &
               & call announceError ( inconsistent, f_lowBound, f_state )
           end if
           if ( associated(covariance) ) then
-            if ( covariance%m%row%vec%template%id /= state%template%id .or. &
-              &  covariance%m%col%vec%template%id /= state%template%id ) &
+            if ( covariance%m%row%vec%template%name /= state%template%name .or. &
+              &  covariance%m%col%vec%template%name /= state%template%name ) &
               &  call announceError ( inconsistent, f_covariance, f_state )
           end if
           if ( got(f_measurementSD) ) then
-            if ( measurementSD%template%id /= measurements%template%id ) &
+            if ( measurementSD%template%name /= measurements%template%name ) &
               & call announceError ( inconsistent, f_measurementSD, f_measurements )
           end if
         end if
@@ -508,9 +508,9 @@ contains
               call decorate ( ixJacobian, k )
             end if
             call getFromMatrixDatabase ( matrixDatabase(k), jacobian )
-            if ( jacobian%row%vec%template%id /= measurements%template%id ) &
+            if ( jacobian%row%vec%template%name /= measurements%template%name ) &
               & call announceError ( inconsistent, f_jacobian, f_measurements )
-            if ( jacobian%col%vec%template%id /= state%template%id ) &
+            if ( jacobian%col%vec%template%name /= state%template%name ) &
               & call announceError ( inconsistent, f_jacobian, f_state )
           else
             jacobian => myJacobian
@@ -530,9 +530,9 @@ contains
             if ( .not. associated(outputCovariance) ) then
               call announceError ( notSPD, f_outputCovariance )
             else
-              if ( outputCovariance%m%row%vec%template%id /= state%template%id &
+              if ( outputCovariance%m%row%vec%template%name /= state%template%name &
                 & .or. &
-                &  outputCovariance%m%col%vec%template%id /= state%template%id ) &
+                &  outputCovariance%m%col%vec%template%name /= state%template%name ) &
                 & call announceError ( inconsistent, f_outputCovariance, f_state )
             end if
           else
@@ -554,9 +554,9 @@ contains
             if ( .not. associated(outputAverage) ) then
               call announceError ( notGeneral, f_average )
             else
-              if ( outputAverage%row%vec%template%id /= state%template%id &
+              if ( outputAverage%row%vec%template%name /= state%template%name &
                 & .or. &
-                &  outputAverage%col%vec%template%id /= state%template%id ) &
+                &  outputAverage%col%vec%template%name /= state%template%name ) &
                 & call announceError ( inconsistent, f_average, f_state )
             end if
           end if
@@ -2243,6 +2243,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.248  2003/06/20 19:38:26  pwagner
+! Allows direct writing of output products
+!
 ! Revision 2.247  2003/06/03 19:24:19  livesey
 ! Added the abandoned stuff to make the chunk processing more robust.
 !
