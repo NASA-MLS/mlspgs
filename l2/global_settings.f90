@@ -13,7 +13,8 @@ module GLOBAL_SETTINGS
     & P_INPUT_VERSION_STRING, P_OUTPUT_VERSION_STRING, P_VERSION_COMMENT, &
     & S_FGRID, S_FORWARDMODEL, S_ForwardModelGlobal, S_TIME, S_VGRID, F_FILE, &
     & P_CYCLE, P_STARTTIME, P_ENDTIME, &
-    & S_L1BRAD, S_L1BOA, P_INSTRUMENT, S_EMPIRICALGEOMETRY, S_BINSELECTOR
+    & S_L1BRAD, S_L1BOA, S_LEAPSECFILE, P_INSTRUMENT, S_EMPIRICALGEOMETRY, &
+    & S_BINSELECTOR
   use L1BData, only: l1bradSetup, l1boaSetup, ReadL1BData, L1BData_T, &
     & DeallocateL1BData, Dump, NAME_LEN, PRECISIONSUFFIX
   use L2GPData, only: L2GPDATA_T
@@ -28,6 +29,7 @@ module GLOBAL_SETTINGS
   use MLSSignals_m, only: INSTRUMENT
   use MoreTree, only: GET_SPEC_ID
   use OUTPUT_M, only: BLANKS, OUTPUT
+  use SDPTOOLKIT, only: mls_utctotai
   use String_Table, only: Get_String
   use Time_M, only: Time_Now
   use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
@@ -100,7 +102,8 @@ contains
 
 
     character(LEN=NameLen) :: name_string
-    character(LEN=FileNameLen) :: FilenameString
+    character(LEN=NameLen) :: end_time_string, start_time_string
+    character(LEN=FileNameLen) :: FilenameString, LeapSecFileName
     character (len=name_len) :: QUANTITY
     character(LEN=*), parameter :: time_conversion='(F32.0)'
 
@@ -110,6 +113,7 @@ contains
     error = 0
     startTimeIsAbsolute = .false.
     stopTimeIsAbsolute = .false.
+    LeapSecFileName = ''
 
     if ( toggle(gen) ) call trace_begin ( 'SET_GLOBAL_SETTINGS', root )
 
@@ -151,6 +155,7 @@ contains
         case ( p_starttime )
           got(1) = .true.
           call get_string ( sub_rosa_index, name_string, strip=.true. )
+          start_time_string = name_string
           if ( index(name_string, ':') > 0 ) then
             start_time_from_1stMAF = hhmmss_value(name_string, error)
             startTimeIsAbsolute = .false.
@@ -167,6 +172,7 @@ contains
         case ( p_endtime )
           got(2) = .true.
           call get_string ( sub_rosa_index, name_string, strip=.true. )
+          end_time_string = name_string
           if ( index(name_string, ':') > 0 ) then
             end_time_from_1stMAF = hhmmss_value(name_string, error)
             stopTimeIsAbsolute = .false.
@@ -235,6 +241,17 @@ contains
             & call announce_error(0, &
             & '*** l2cf overrides pcf for L1BOA file ***', &
             & just_a_warning = .true.)
+        case ( s_leapsecfile )
+          if ( .not. pcf ) then  
+            sub_rosa_index = sub_rosa(subtree(2,subtree(2, son)))
+            call get_string ( sub_rosa_index, LeapSecFileName, strip=.true. )
+            if(index(switches, 'pro') /= 0) &  
+            & call proclaim(LeapSecFileName, 'leapsecfile')
+          else
+            call announce_error(0, &
+            & '*** Leap Second File in global settings despite pcf ***', &
+            & just_a_warning = .true.)
+          endif
         case ( s_empiricalGeometry )
           call InitEmpiricalGeometry ( son )
         case ( s_time )
@@ -278,7 +295,15 @@ contains
     if ( startTimeIsAbsolute ) then
       processingRange%startTime = start_time_from_1stMAF
     else
-      if(got(1)) then
+      if ( LeapSecFileName /= '' ) then
+        returnStatus = mls_utctotai(trim(LeapSecFileName), start_time_string, &
+        & processingrange%starttime)
+        if ( returnStatus /= 0 ) then
+          call announce_error(0, &
+          & 'Error converting start time in mls_utctotai; code number: ')
+          call output(returnStatus, advance='yes')
+        endif
+      elseif(got(1)) then
         processingrange%starttime = minTime + start_time_from_1stMAF
       elseif(.not. PCF) then
         processingrange%starttime = minTime
@@ -288,7 +313,15 @@ contains
     if ( stopTimeIsAbsolute ) then
       processingRange%endTime = end_time_from_1stMAF
     else
-      if(got(2)) then
+      if ( LeapSecFileName /= '' ) then
+        returnStatus = mls_utctotai(trim(LeapSecFileName), end_time_string, &
+        & processingrange%endtime)
+        if ( returnStatus /= 0 ) then
+          call announce_error(0, &
+          & 'Error converting end time in mls_utctotai; code number: ')
+          call output(returnStatus, advance='yes')
+        endif
+      elseif(got(2)) then
         processingrange%endtime = minTime + end_time_from_1stMAF
       elseif(.not. PCF) then
         processingrange%endtime = maxTime + 1.0
@@ -594,6 +627,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.52  2002/02/08 22:52:56  livesey
+! Hooked up bin selectors
+!
 ! Revision 2.51  2002/01/24 00:14:26  pwagner
 ! Proclaims level 1 files as input; comments concerning hdf5 conversion
 !
