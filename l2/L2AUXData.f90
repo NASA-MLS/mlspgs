@@ -42,7 +42,8 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
     & MLSMSG_ERROR, MLSMSG_WARNING
   use MLSSignals_m, only: GETMODULENAME, MODULES
-  use MLSStrings, only: Array2List, GetStringElement, NumStringElements
+  use MLSStrings, only: Array2List, GetStringElement, List2Array, &
+    & NumStringElements
   use Output_M, only: OUTPUT
   use QuantityTemplates, only: QuantityTemplate_T
   use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
@@ -131,7 +132,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
   ! This datatype describes a dimension for an L2AUX quantity
 
   type L2AUX_Dimension_T
-     integer :: NOVALUES        ! Length of this dimension
+     integer :: NOVALUES = 0    ! Length of this dimension
      integer :: DIMENSIONFAMILY ! What is this dimension
      real(r8), dimension(:), pointer :: VALUES=>NULL() ! (noValues)
   end type L2AUX_Dimension_T
@@ -142,14 +143,15 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
 
   type L2AUXData_T
     integer :: NAME                     ! String index of name to be output
-    integer :: INSTRUMENTMODULE         ! From source vector
+    integer :: INSTRUMENTMODULE = 0     ! From source vector
+    integer :: QUANTITYTYPE = 0         ! From source vector
     logical :: MINORFRAME               ! Is this a minor frame quantity
     logical :: MAJORFRAME               ! Is this a major frame quantity
     ! The dimensions for the quantity
     type (L2AUX_Dimension_T), dimension(L2AUXRank) :: DIMENSIONS
     character(len=48)                              :: DIM_Names ! ','-separated
     character(len=48)                              :: DIM_Units ! ','-separated
-    ! The values of the quantitiy
+    ! The values of the quantity
     real(r8), pointer, dimension(:,:,:) :: VALUES=>NULL()
     character(len=24)                              :: VALUE_Units
   end type L2AUXData_T
@@ -781,6 +783,7 @@ contains ! =====     Public Procedures     =============================
   use MLS_DataProducts, only: DATAPRODUCTS_T
   use MLSAuxData, only: BUILD_MLSAUXDATA
   use MLSHDF5, only: SaveAsHDF5DS
+  use PCFHdr, only: h5_writeglobalattr
 
     type (L2AUXData_T), intent(in) :: L2AUX
     integer, intent(in) :: L2FILEHANDLE                 ! From h5fopen
@@ -839,6 +842,7 @@ contains ! =====     Public Procedures     =============================
         ! call Build_MLSAuxData(l2FileHandle, dataProduct, real(l2aux%values, r4))
         call SaveAsHDF5DS (l2FileHandle, trim(dataProduct%name), &
          & real(l2aux%values, r4))
+        call WriteL2AUXAttributes(l2FileHandle, l2aux, trim(dataProduct%name))
       else
         ! call Build_MLSAuxData(l2FileHandle, dataProduct, l2aux%values)
         ! call SaveAsHDF5DS (l2FileHandle, trim(dataProduct%name), l2aux%values)
@@ -866,7 +870,7 @@ contains ! =====     Public Procedures     =============================
       call Build_MLSAuxData(l2FileHandle, dataProduct, counterMAF, &
       & myNoMAFS )
       call Deallocate_Test(CounterMAF,"CounterMAF",ModuleName)
-    
+      call h5_writeglobalattr(l2FileHandle)
     endif
   end subroutine WriteL2AUXData_hdf5
 
@@ -1048,6 +1052,64 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine WriteL2AUXData_hdf4
 
+  ! ----------------------------------  WriteL2AUXAttributes  -----
+  subroutine WriteL2AUXAttributes ( L2FileHandle, l2aux, name)
+  use MLSHDF5, only: MakeHDF5Attribute
+  ! Writes the pertinent attributes for an l2aux
+  ! Arguments
+  integer, intent(in) :: L2FileHandle
+  type (L2AUXData_T), intent(in) :: L2AUX
+  character(len=*) :: name
+  ! Internal variables
+  integer :: dim
+  integer :: ndims
+  character(len=16), dimension(L2AUXRank) :: dim_name
+  character(len=16), dimension(L2AUXRank) :: dim_unit
+  character(len=16) :: dim_of_i
+  character(len=16) :: framing
+  character(len=2) :: i_char
+  character(len=*), parameter :: ottff = '1,2,3,4,5'
+  ! Executable
+  call MakeHDF5Attribute(L2FileHandle, name, 'name', name)
+  call MakeHDF5Attribute(L2FileHandle, name, 'units', &
+    & trim(l2aux%VALUE_Units))
+  call MakeHDF5Attribute(L2FileHandle, name, 'dimension names', &
+    & trim(l2aux%DIM_Names))
+  if ( l2aux%majorframe) then
+    framing = 'major'
+  elseif ( l2aux%minorframe) then
+    framing = 'minor'
+  else
+    framing = 'neither'
+  endif
+  call MakeHDF5Attribute(L2FileHandle, name, 'framing', trim(framing))
+  call MakeHDF5Attribute(L2FileHandle, name, 'instrument module', &
+    & l2aux%instrumentmodule)
+  call MakeHDF5Attribute(L2FileHandle, name, 'quantity type', &
+    & l2aux%quantitytype)
+  dim_name = ' '
+  dim_unit = ' '
+  ndims = min( NumStringElements(trim(l2aux%DIM_Names), .true.), L2AUXRank )
+  if ( ndims < 1 ) return
+  call List2Array(trim(l2aux%DIM_Names), dim_name, .true.)
+  call List2Array(trim(l2aux%DIM_Units), dim_unit, .true.)
+  ! loop of dimensions
+  do dim=1, ndims
+    call GetStringElement (ottff, i_char, dim, .true.)
+    dim_of_i = 'dim ' // trim(i_char)
+    call MakeHDF5Attribute(L2FileHandle, name, trim(dim_of_i), &
+      & trim(dim_name(dim)))
+    call MakeHDF5Attribute(L2FileHandle, name, trim(dim_of_i) // ' units', &
+      & trim(dim_unit(dim)))
+    if ( l2aux%dimensions(dim)%noValues > 0 ) then
+      if ( AreDimValuesNonTrivial(l2aux%dimensions(dim)%DimensionFamily) ) then
+        call MakeHDF5Attribute(L2FileHandle, name, trim(dim_of_i)// ' values', &
+        & real(l2aux%dimensions(dim)%values))
+      endif
+    endif
+  enddo
+  end subroutine WriteL2AUXAttributes
+
   ! ----------------------------------  GetDimSize  -----
   subroutine GetDimSize ( nameType, quantityTemplate, noMAFs, dim_size)
 
@@ -1144,8 +1206,25 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine GetDimString
 
+  ! ----------------------------------  AreDimValuesNonTrivial  -----
+  function AreDimValuesNonTrivial ( nameType )
+
+  ! Given a dim name type, e.g. l_channel,
+  ! tell whether the corresponding values are non-trivial
+  ! Trivial means, e.g. {1 2 3 4} or {0 0 0 0}
+    integer, intent(in)                   :: nameType
+    logical                               :: AreDimValuesNonTrivial
+    AreDimValuesNonTrivial = any( &
+      & nameType == (/ &
+      & l_frequency, &
+      & L_IntermediateFrequency, l_USBFrequency, L_LSBFrequency, &
+      & l_geodAngle, l_height, l_pressure &
+      & /) &
+      & )
+  end function AreDimValuesNonTrivial
+
   ! ----------------------------------  GetDimValues  -----
-  subroutine GetDimValues ( nameType, quantityTemplate, dim_values)
+  subroutine GetDimValues ( nameType, quantityTemplate, dim_values )
 
   ! Given a dim name type, e.g. l_channel,
   ! fills dimension with appropriate values, e.g. channels
@@ -1173,7 +1252,7 @@ contains ! =====     Public Procedures     =============================
     case ( l_height, l_pressure )  
       dim_values = quantityTemplate%surfs(:,1) ! If incoherent, surfs(:, inst)
 
-    end select                                                       
+    end select
 
   end subroutine GetDimValues
 
@@ -1420,6 +1499,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.46  2003/01/30 01:02:28  pwagner
+! Writing attributes for hdf5 files; global and data set
+!
 ! Revision 2.45  2003/01/18 02:37:03  livesey
 ! Made the readl2aux data stuff work from the l2cf by adding the
 ! quantityType argument.
