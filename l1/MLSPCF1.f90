@@ -56,10 +56,10 @@ MODULE MLSPCF1
    !
    INTEGER, PARAMETER :: mlspcf_defltzeros_start = 906
    INTEGER, PARAMETER :: mlspcf_defltzeros_end = 906
-    !
+   !
    INTEGER, PARAMETER :: mlspcf_dacsconst_start = 907
    INTEGER, PARAMETER :: mlspcf_dacsconst_end = 907
-  !
+   !
    INTEGER, PARAMETER :: mlspcf_l1b_radf_start = 30000
    INTEGER, PARAMETER :: mlspcf_l1b_radf_end = 30000
    !
@@ -77,6 +77,9 @@ MODULE MLSPCF1
    !
    INTEGER, PARAMETER :: mlspcf_l1b_radt_start = 30005
    INTEGER, PARAMETER :: mlspcf_l1b_radt_end = 30005
+   !
+   INTEGER, PARAMETER :: mlspcf_l1b_log_start = 30006
+   INTEGER, PARAMETER :: mlspcf_l1b_log_end = 30006
    !
    INTEGER, PARAMETER :: mlspcf_mcf_l1log_start = 4000
    INTEGER, PARAMETER :: mlspcf_mcf_l1log_end = 4000

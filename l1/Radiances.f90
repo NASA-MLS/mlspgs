@@ -2,20 +2,24 @@
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
-MODULE Radiances ! Determine radiances
+MODULE Radiances ! Determine radiances for the GHz module
 !=============================================================================
 
   USE MLSCommon, ONLY: r8
-  USE MLSL1Common, ONLY: FBnum, FBchans, MBnum, MBchans, WFnum, WFchans, &
+  USE MLSL1Common, ONLY: GHzNum, FBchans, MBnum, MBchans, WFnum, WFchans, &
        DACSnum, DACSchans, Chan_R_T, deflt_gain, deflt_zero, MaxMIFs, &
        absZero_C, BandWidth, tau, LO1
   USE MLSL1Utils, ONLY : GetIndexedAvg, Finite
   USE EngTbls, ONLY : Eng_MAF_T, CalTgtIndx
   USE Calibration, ONLY : CalWin, limb_time, limb_counts, space_interp, &
        target_interp, space_err, target_err, space_weight, target_weight
-  USE MLSL1Rad, ONLY : FBrad, MBrad, WFrad, DACSrad
+  USE MLSL1Rad, ONLY : FBrad, MBrad, WFrad, DACSrad, RadPwr
 
   IMPLICIT NONE
+
+  PRIVATE
+
+  PUBLIC :: CalcLimbRads
 
   !------------------------------- RCS Ident Info ------------------------------
   CHARACTER(LEN=130) :: id = &
@@ -27,19 +31,78 @@ MODULE Radiances ! Determine radiances
 
 CONTAINS
 
-  FUNCTION RadPwr (Hz, T) RESULT (P)
+  SUBROUTINE BlueSkyGains (T1, T2, MIF0_offset)
 
-    USE MLSL1Common, ONLY: boltz, planck
+    USE Calibration, ONLY : target_counts
 
-!! Calculate radiant power per unit bandwidth
+!! Overwrite default gains for Blue Sky test
 
-    REAL :: Hz    !! frequency in Hz
-    REAL :: T     !! temperature in Kelvin
-    REAL :: P     !! radiant power
+    INTEGER :: MIF0_offset
+    REAL :: T1, T2
 
-    P = (planck * Hz) / (boltz * (exp ((planck * Hz) / (boltz * T)) - 1.0))
+    INTEGER :: bank, chan, radNum
+    REAL :: space_P, target_P
 
-  END FUNCTION RadPwr
+! MIFs for doing gains (edit for blue sky test!!!)
+
+    INTEGER, PARAMETER :: T1_MIF(2) = (/ 136, 147 /), T2_MIF(2) = (/ 122, 133 /)
+    INTEGER :: n_target, n_space
+    INTEGER :: target_MIF(2), space_MIF(2)
+
+    n_space = T1_MIF(2) - T1_MIF(1) + 1
+    n_target = T2_MIF(2) - T2_MIF(1) + 1
+    space_MIF = T1_MIF + MIF0_offset
+    target_MIF = T2_MIF + MIF0_offset
+
+    DO bank = 1, GHzNum
+
+       radNum = FBrad(bank)%signal%radiometerNumber
+       space_P = radPwr (LO1(radNum), T1)
+       target_P = radPwr (LO1(radNum), T2)
+
+       DO chan = 1, FBchans
+          deflt_gain%FB(chan,bank) = &
+           (SUM(target_counts(target_MIF(1):target_MIF(2))%FB(chan,bank)) / &
+           n_target  - &
+           SUM(target_counts(space_MIF(1):space_MIF(2))%FB(chan,bank)) / &
+           n_space) / (target_P - space_P)
+       ENDDO
+
+    ENDDO
+
+    DO bank = 1, MBnum
+
+       radNum = MBrad(bank)%signal%radiometerNumber
+       space_P = radPwr (LO1(radNum), T1)
+       target_P = radPwr (LO1(radNum), T2)
+
+       DO chan = 1, MBchans
+          deflt_gain%MB(chan,bank) = &
+           (SUM(target_counts(target_MIF(1):target_MIF(2))%MB(chan,bank)) / &
+           n_target  - &
+           SUM(target_counts(space_MIF(1):space_MIF(2))%MB(chan,bank)) / &
+           n_space) / (target_P - space_P)
+       ENDDO
+
+    ENDDO
+
+    DO bank = 1, WFnum
+
+       radNum = WFrad(bank)%signal%radiometerNumber
+       space_P = radPwr (LO1(radNum), T1)
+       target_P = radPwr (LO1(radNum), T2)
+
+       DO chan = 1, WFchans
+          deflt_gain%WF(chan,bank) = &
+           (SUM(target_counts(target_MIF(1):target_MIF(2))%WF(chan,bank)) / &
+           n_target  - &
+           SUM(target_counts(space_MIF(1):space_MIF(2))%WF(chan,bank)) / &
+           n_space) / (target_P - space_P)
+       ENDDO
+
+    ENDDO
+
+  END SUBROUTINE BlueSkyGains
 
   SUBROUTINE CalcRadiance (limb_counts, space_counts, target_counts, &
        zero_counts, sum_w2, sum_wg2, space_P, target_P, bandwidth, &
@@ -94,7 +157,7 @@ CONTAINS
 
   SUBROUTINE CalcLimbRads
 
-    USE MLSL1Config, ONLY: MIFsGHz, MIFsTHz, L1Config
+    USE MLSL1Config, ONLY: MIFsGHz, L1Config
     USE MLSL1Common, ONLY: L1BFileInfo
 
     TYPE (Eng_MAF_T) :: EMAF
@@ -103,7 +166,7 @@ CONTAINS
        REAL :: precision
     END TYPE ValPrec_T
     TYPE Rad_T
-       TYPE (ValPrec_T) :: FB(FBchans,FBnum)          ! standard filter banks
+       TYPE (ValPrec_T) :: FB(FBchans,GHzNum)          ! standard filter banks
        TYPE (ValPrec_T) :: MB(MBchans,MBnum)          ! mid-band filter banks
        TYPE (ValPrec_T) :: WF(WFchans,WFnum)          ! wide filters
        TYPE (ValPrec_T) :: DACS(DACSchans,DACSnum)    ! DACS filters
@@ -113,7 +176,8 @@ CONTAINS
     CHARACTER(LEN=1) :: GHz_Cal_Type
     INTEGER :: i, j, bank, chan, MIF_index, MIF_index_MAX, radNum
     INTEGER :: time_index, start_index, end_index, windex, CalWin_end
-    REAL :: GHz_T1, GHz_T2, THz_T1, space_T, target_T, GHz_target_T, gain, temp
+    REAL :: GHz_T1, GHz_T2, space_T, target_T, GHz_target_T, gain, temp
+    REAL :: Scf, Tcf
     REAL :: space_P, target_P ! Power per unit bandwidth
     REAL(r8) :: C_zero
     LOGICAL :: use_deflt_gains
@@ -122,6 +186,9 @@ CONTAINS
     use_deflt_gains = L1Config%Calib%UseDefaultGains
 
     windex = CalWin%central
+    start_index = CalWin%MAFdata(windex)%start_index  ! MIF 0
+    end_index = CalWin%MAFdata(windex)%end_index      ! MIF max
+    CalWin_end = CalWin%MAFdata(CalWin%size)%end_index
     EMAF = CalWin%MAFdata(windex)%EMAF
 
     IF (ANY (INDEX (CalWin%MAFdata(windex)%scipkt(0:147)%GHz_sw_pos, "T") == &
@@ -135,46 +202,56 @@ CONTAINS
     ENDIF
 
     GHz_T1 = GetIndexedAvg (EMAF%eng%value, CalTgtIndx%GHzAmb) - absZero_C
-!    print *, "GHzAmb avg: ", GHz_T1
+!    if (finite (GHz_T1)) print *, "GHzAmb avg: ", GHz_T1
     GHz_T2 = GetIndexedAvg (EMAF%eng%value, CalTgtIndx%GHzCntl) - absZero_C
-!    print *, "GHzCntl avg: ", GHz_T2
-    THz_T1 = GetIndexedAvg (EMAF%eng%value, CalTgtIndx%THzAmb) - absZero_C
+!    if (finite (GHZ_T2)) print *, "GHzCntl avg: ", GHz_T2
 
-    IF (L1Config%Calib%GHzTargetTemp > 0.0) THEN  ! Use the config input
-       GHz_target_T = L1Config%Calib%GHzTargetTemp
-    ELSE
-       IF (GHz_Cal_Type == "P") THEN
-          GHz_target_T = GHz_T1
-       ELSE IF (GHz_Cal_Type == "S") THEN
-          GHz_target_T = GHz_T2
-       ELSE
-          print *, "NO CAL TARGET TEMP!"
-          stop   !what else can I do?
-       ENDIF
-    ENDIF
+    ! CALL BlueSkyGains (GHz_T1, GHz_T2, start_index)
 
-    space_T = L1Config%Calib%GHzSpaceTemp
+!  Temperature combinations for S and T from cf file:
+!
+!    Note: no input T is same as "-"  and all final temps will be absolutes.
+!
+!   Scf   Tcf   S   T
+!--------------------
+!    +     -    S   A
+!    +     0    S   C
+!    +     +    S   T
+!    -     -    A   S
+!    -     0    C   S
+!    0     0    A   C
+!    0     -    C   A
 
-!! Special test config
+    Scf = L1Config%Calib%GHzSpaceTemp
+    Tcf = L1Config%Calib%GHzTargetTemp
 
-    IF (space_T < 0.0 .AND. L1Config%Calib%GHzTargetTemp <= 0.0) THEN
-       GHz_target_T = GetIndexedAvg (EMAF%eng%value, CalTgtIndx%GHzCntl) - &
-            absZero_C
-       space_T = GetIndexedAvg (EMAF%eng%value, CalTgtIndx%GHzAmb) - absZero_C
-    ENDIF
-
-!! Case for linearity (switch T and S):
-
-    IF (space_T < 0.0) THEN
-       temp = GHz_target_T
-       GHz_target_T = -space_T
-       space_T = temp
+    IF (Scf > 0.0 .AND. Tcf < 0.0) THEN
+       space_T = Scf
+       GHz_target_T = GHz_T1
+    ELSE IF (Scf > 0.0 .AND. NINT (Tcf) == 0) THEN
+       space_T = Scf
+       GHz_target_T = GHz_T2
+    ELSE IF (Scf > 0.0 .AND. Tcf > 0.0) THEN
+       space_T = Scf
+       GHz_target_T = Tcf
+    ELSE IF (Scf < 0.0 .AND. Tcf < 0.0) THEN
+       space_T = GHz_T1
+       GHz_target_T = ABS (Scf)
+    ELSE IF (Scf < 0.0 .AND. NINT (Tcf) == 0) THEN
+       space_T = GHz_T2
+       GHz_target_T = ABS (Scf)
+    ELSE IF (NINT (Scf) == 0 .AND. NINT (Tcf) == 0) THEN
+       space_T = GHz_T1
+       GHz_target_T = GHz_T2
+    ELSE IF (NINT (Scf) == 0 .AND. Tcf < 0.0) THEN
+       space_T = GHz_T2
+       GHz_target_T = GHz_T1
     ENDIF
 
 ! Check if Temperatures are good
 
     IF (.NOT. Finite (space_T) .OR. .NOT. Finite (GHz_target_T) ) THEN
-       DO bank = 1, FBnum
+       DO bank = 1, GHzNum
           FBrad(bank)%value = 0.0
           FBrad(bank)%precision = -1.0
        ENDDO
@@ -192,22 +269,20 @@ CONTAINS
        ENDDO
        RETURN
     ENDIF
-!print *, 'S/T temp: ', space_T, GHz_target_T
-    start_index = CalWin%MAFdata(windex)%start_index  ! MIF 0
-    end_index = CalWin%MAFdata(windex)%end_index      ! MIF max
-    CalWin_end = CalWin%MAFdata(CalWin%size)%end_index
+print *, 'S/T temp: ', space_T, GHz_target_T
     Tsys%FB = 0.0
     Tsys%MB = 0.0
     Tsys%WF = 0.0
     Cgain%FB = 0.0
     Cgain%MB = 0.0
     Cgain%WF = 0.0
+    MIF_index_MAX = MIFsGHz - 1
 
     DO time_index = start_index, end_index   ! for every MIF in the MAF
 
        MIF_index = time_index - start_index  ! MIF # within the central MAF
 
-       DO bank = 1, FBnum
+       DO bank = 1, GHzNum
 
 ! Determine which Target temp to use!!
 
@@ -218,15 +293,7 @@ CONTAINS
           space_P = radPwr (LO1(radNum), space_T)
           target_P = radPwr (LO1(radNum), target_T)
 
-! Determine MAX allowable MIF index
-
-          IF (bank < 15) THEN
-             MIF_index_MAX = MIFsGHz - 1
-          ELSE
-             MIF_index_MAX = MIFsTHz - 1
-          ENDIF
-
-          IF (MIF_index <= MIF_index_MAX) THEN
+          IF (MIF_index <= MIF_index_MAX .AND. radNum < 5) THEN
              DO chan = 1, FBchans
                 C_zero = deflt_zero%FB(chan,bank)
                 CALL CalcRadiance (limb_counts(time_index)%FB(chan,bank), &
@@ -246,8 +313,6 @@ CONTAINS
           ENDIF
 
        ENDDO
-
-       MIF_index_MAX = MIFsGHz - 1
 
        IF (MIF_index <= MIF_index_MAX) THEN
           DO bank = 1, MBnum
@@ -342,8 +407,8 @@ END MODULE Radiances
 !=============================================================================
 
 ! $Log$
-! Revision 2.4  2002/11/15 15:12:45  perun
-! Change space & target temps to GHz space & target temps
+! Revision 2.5  2003/01/31 18:13:34  perun
+! Version 1.1 commit
 !
 ! Revision 2.3  2002/03/29 20:18:34  perun
 ! Version 1.0 commit
