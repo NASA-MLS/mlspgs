@@ -1,0 +1,83 @@
+#	Makefile
+#	targets: configure, clean, depends, and subdirs
+#	true targets: the same make commands in $(SUBDIRS)
+#
+#special case:
+#the 1st time through, before .configure exists yet,
+#execute $(MLSBIN)/configure to create .configure
+
+#This file name is usu. Makefile but may be different;
+#the same file names must be used in $(SUBDIRS)
+#i.e., if you call are building this mls
+#by calling make with a different Makefile name,
+#say: make -f MakeFC
+#then rename the Makefiles in /l2 and /lib also MakeFC
+
+# "$Id$"
+
+MakeFName = MakeFC
+#
+#To make mls with this file you must then use
+#make -f $(MakeFName)
+
+# where to store .configure
+CONFDIR=.
+
+# where configure and makemakedep.sh are stored
+MLSBIN=util
+
+# where the platforms directory is
+PLATFORMS = .
+
+# This will set our MLS platfor, compiler. etc.
+# w/o complaining if it does nor exist yet
+-include $(CONFDIR)/.configure
+
+SHELL = /bin/sh
+
+# l3 not yet configurable
+#SUBDIRS = lib l2 l3
+
+SUBDIRS = lib l2
+
+subdirs: $(SUBDIRS)
+#	echo "Making $(SUBDIRS)"
+#	 for dir in $(SUBDIRS); do \
+#	  $(MAKE) -C $$dir; \
+#	done
+
+$(SUBDIRS):
+	echo "Making $@ (Note: l3 must be made separately)"
+	$(MAKE) -f $(MakeFName) -C $@
+
+l2: lib
+#l3: lib
+
+.PHONY: configure depends subdirs $(SUBDIRS)
+
+configure:
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)"
+
+$(CONFDIR)/.configure: $(MakeFName)
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)"
+
+#$(MLSCONFG):  $(MakeFName)
+#	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+#          -c "$(MLSF95)" -p "$(MLSPLAT)"
+
+depends:
+	@echo "Making dependencies for $(SUBDIRS)"; \
+	echo "(l3 dependencies must be made separately)" ; \
+	 for dir in $(SUBDIRS); do \
+	  $(MAKE) -f $(MakeFName) -C $$dir depends; \
+	done
+
+clean:
+	@echo "Cleaning $(SUBDIRS)"; \
+	echo "(l3 must be cleaned separately)" ; \
+	 for dir in $(SUBDIRS); do \
+	  $(MAKE) -f $(MakeFName) -C $$dir clean; \
+	done
+# $Log$
