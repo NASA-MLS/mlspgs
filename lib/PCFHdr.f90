@@ -213,7 +213,7 @@ CONTAINS
    SUBROUTINE gd_writeglobalattr (gridID)
 !------------------------------------------------------------
 
-      use HDFEOS5, only: HE5T_NATIVE_SCHAR, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE
+      use HDFEOS5, only: HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE, MLS_charType
       use MLSHDFEOS, only: mls_GDwrattr
 ! Brief description of subroutine
 ! This subroutine writes the global attributes for an hdf-eos5 grid
@@ -232,23 +232,23 @@ CONTAINS
       ! & 'OrbitPeriod', HE5T_NATIVE_DOUBLE, max_orbits, &
       ! &  GlobalAttributes%OrbPeriod)
       status = mls_GDwrattr(gridID, &
-       & 'InstrumentName', HE5T_NATIVE_SCHAR, 1, &
+       & 'InstrumentName', MLS_CHARTYPE, 1, &
        &  GlobalAttributes%InstrumentName)
       ProcessLevel = ProcessLevelFun()
       status = mls_GDwrattr(gridID, &
-       & 'ProcessLevel', HE5T_NATIVE_SCHAR, 1, &
+       & 'ProcessLevel', MLS_CHARTYPE, 1, &
        &  ProcessLevel)
 !     status = he5_GDwrattr(gridID, &
-!      & 'InputVersion', HE5T_NATIVE_SCHAR, 1, &
+!      & 'InputVersion', MLS_CHARTYPE, 1, &
 !      &  GlobalAttributes%InputVersion)
       status = mls_GDwrattr(gridID, &
-       & 'PGEVersion', HE5T_NATIVE_SCHAR, 1, &
+       & 'PGEVersion', MLS_CHARTYPE, 1, &
        &  GlobalAttributes%PGEVersion)
       status = mls_GDwrattr(gridID, &
-       & 'StartUTC', HE5T_NATIVE_SCHAR, 1, &
+       & 'StartUTC', MLS_CHARTYPE, 1, &
        &  GlobalAttributes%StartUTC)
       status = mls_GDwrattr(gridID, &
-       & 'EndUTC', HE5T_NATIVE_SCHAR, 1, &
+       & 'EndUTC', MLS_CHARTYPE, 1, &
        &  GlobalAttributes%EndUTC)
 ! >       status = he5_GDwrattr(gridID, &
 ! >        & 'GranuleMonth', HE5T_NATIVE_INT, 1, &
@@ -335,8 +335,8 @@ CONTAINS
    SUBROUTINE he5_writeglobalattr (fileID,dayNum)
 !------------------------------------------------------------
 
-    use HDFEOS5, only: HE5T_NATIVE_SCHAR, HE5T_NATIVE_INT, &
-	& HE5T_NATIVE_DOUBLE
+    use HDFEOS5, only: HE5T_NATIVE_INT, &
+	& HE5T_NATIVE_DOUBLE, MLS_charType
     use MLSHDFEOS, only: he5_EHwrglatt, mls_EHwrglatt
 ! Brief description of subroutine
 ! This subroutine writes the global attributes for an hdf-eos5 file
@@ -365,23 +365,23 @@ CONTAINS
             &  GlobalAttributes%OrbPeriod)
       end if
       status = mls_EHwrglatt(fileID, &
-       & 'InstrumentName', HE5T_NATIVE_SCHAR, 1, &
+       & 'InstrumentName', MLS_CHARTYPE, 1, &
        &  GlobalAttributes%InstrumentName)
       ProcessLevel = ProcessLevelFun()
       status = mls_EHwrglatt(fileID, &
-       & 'ProcessLevel', HE5T_NATIVE_SCHAR, 1, &
+       & 'ProcessLevel', MLS_CHARTYPE, 1, &
        &  ProcessLevel)
 !     status = he5_EHwrglatt(fileID, &
-!      & 'InputVersion', HE5T_NATIVE_SCHAR, 1, &
+!      & 'InputVersion', MLS_CHARTYPE, 1, &
 !      &  GlobalAttributes%InputVersion)
       status = mls_EHwrglatt(fileID, &
-       & 'PGEVersion', HE5T_NATIVE_SCHAR, 1, &
+       & 'PGEVersion', MLS_CHARTYPE, 1, &
        &  GlobalAttributes%PGEVersion)
       status = mls_EHwrglatt(fileID, &
-       & 'StartUTC', HE5T_NATIVE_SCHAR, 1, &
+       & 'StartUTC', MLS_CHARTYPE, 1, &
        &  GlobalAttributes%StartUTC)
       status = mls_EHwrglatt(fileID, &
-       & 'EndUTC', HE5T_NATIVE_SCHAR, 1, &
+       & 'EndUTC', MLS_CHARTYPE, 1, &
        &  GlobalAttributes%EndUTC)
       ! if ( GlobalAttributes%GranuleDay == ' ') return
       ! if ( GlobalAttributes%GranuleMonth == ' ') &
@@ -579,7 +579,7 @@ CONTAINS
    SUBROUTINE sw_writeglobalattr (swathID)
 !------------------------------------------------------------
 
-      use HDFEOS5, only: HE5T_NATIVE_SCHAR, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE
+      use HDFEOS5, only: HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE, MLS_charType
       use HE5_SWAPI, only: he5_SWwrattr
       use MLSHDFEOS, only: mls_SWwrattr
 ! Brief description of subroutine
@@ -600,23 +600,23 @@ CONTAINS
        & 'OrbitPeriod', HE5T_NATIVE_DOUBLE, max_orbits, &
        &  GlobalAttributes%OrbPeriod)
       status = he5_SWwrattr(swathID, &
-       & 'InstrumentName', HE5T_NATIVE_SCHAR, 1, &
+       & 'InstrumentName', MLS_CHARTYPE, 1, &
        &  GlobalAttributes%InstrumentName)
       ProcessLevel = ProcessLevelFun()
       status = mls_SWwrattr(swathID, &
-       & 'ProcessLevel', HE5T_NATIVE_SCHAR, 1, &
+       & 'ProcessLevel', MLS_CHARTYPE, 1, &
        &  ProcessLevel)
 !     status = he5_SWwrattr(swathID, &
-!      & 'InputVersion', HE5T_NATIVE_SCHAR, 1, &
+!      & 'InputVersion', MLS_CHARTYPE, 1, &
 !      &  GlobalAttributes%InputVersion)
       status = mls_SWwrattr(swathID, &
-       & 'PGEVersion', HE5T_NATIVE_SCHAR, 1, &
+       & 'PGEVersion', MLS_CHARTYPE, 1, &
        &  GlobalAttributes%PGEVersion)
       status = mls_SWwrattr(swathID, &
-       & 'StartUTC', HE5T_NATIVE_SCHAR, 1, &
+       & 'StartUTC', MLS_CHARTYPE, 1, &
        &  GlobalAttributes%StartUTC)
       status = mls_SWwrattr(swathID, &
-       & 'EndUTC', HE5T_NATIVE_SCHAR, 1, &
+       & 'EndUTC', MLS_CHARTYPE, 1, &
        &  GlobalAttributes%EndUTC)
       if ( GlobalAttributes%GranuleDay < 1 ) return
       if ( GlobalAttributes%GranuleMonth > 0 ) then
@@ -915,7 +915,7 @@ CONTAINS
    SUBROUTINE WritePCF2Hdr_hdfeos5 (fileID, anText)
 !----------------------------------------
 
-      use HDFEOS5, only: HE5T_NATIVE_SCHAR
+      use HDFEOS5, only: MLS_charType
       use MLSHDFEOS, only: he5_EHwrglatt, mls_EHwrglatt
 ! Brief description of subroutine
 ! This subroutine writes the PCF into an HDF-EOS5 file as an attribute.
@@ -949,7 +949,7 @@ CONTAINS
 	write( blockChar, '(i1)') blockNumber
 
         status = he5_EHwrglatt(fileID, 'PCF'//TRIM(ADJUSTL(blockChar)), &
-		& HE5T_NATIVE_SCHAR, lastChar-firstChar+1, &
+		& MLS_CHARTYPE, lastChar-firstChar+1, &
 		& anText(firstChar:lastChar))
         if ( status /= PGS_S_SUCCESS) then
            CALL MLSMessage(MLSMSG_Error, ModuleName, &
@@ -1076,6 +1076,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.31  2004/03/24 23:53:02  pwagner
+!# Switched from HE5T_NATIVE_SCHAR to MLS_CHARTYPE
+!#
 !# Revision 2.30  2004/02/26 22:01:04  pwagner
 !# Acts more gracefully if l2gp file lacks global attributes
 !#
