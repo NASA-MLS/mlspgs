@@ -8,8 +8,10 @@ module HGridsDatabase                   ! Horizontal grid information
   implicit none
   private
 
-  public :: HGrid_T, AddHGridToDatabase, CreateEmptyHGrid, TrimHGrid, &
-    & DestroyHGridContents, DestroyHGridDatabase, NullifyHGrid, FindClosestMatch
+  public :: HGrid_T
+  public :: AddHGridToDatabase, CreateEmptyHGrid, DestroyHGridContents, &
+    & DestroyHGridDatabase, Dump, FindClosestMatch, NullifyHGrid, &
+    & TrimHGrid
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -41,6 +43,11 @@ module HGridsDatabase                   ! Horizontal grid information
     real(r8), dimension(:,:), pointer :: solarZenith => NULL()
     real(r8), dimension(:,:), pointer :: losAngle => NULL()
   end type HGrid_T
+
+  interface DUMP
+    module procedure DUMP_a_HGRID
+    module procedure DUMP_HGRIDS
+  end interface
 
 contains ! =========== Public procedures ===================================
 
@@ -196,6 +203,44 @@ contains ! =========== Public procedures ===================================
     end if
   end subroutine DestroyHGridDatabase
 
+  ! ------------------------------------------------  DUMP_A_HGRID  -----
+  subroutine DUMP_a_HGRID ( aHGRID )
+    use OUTPUT_M, only: OUTPUT
+    use STRING_TABLE, only: DISPLAY_STRING
+    type(hGrid_T), intent(in) :: aHGRID
+    integer :: J
+      call output ( 'Name = ' )
+      call display_string ( aHgrid%name )
+      call output ( aHgrid%noProfs, before=' noProfs = ' )
+      call output ( aHgrid%noProfsLowerOverlap, before=' lowerOverlap = ' )
+      call output ( aHgrid%noProfsUpperOverlap, before=' upperOverlap = ', advance='yes' )
+      call output ( ' prof       phi       geodLat           lon' )
+      call output ( '          time     solarTime   solarZenith' )
+      call output ( '      losAngle', advance='yes' )
+      do j = 1, aHgrid%noProfs
+        call output ( j, places=5 )
+        call output ( aHgrid%phi(1,j), '(1x,1pg13.6)' )
+        call output ( aHgrid%geodLat(1,j), '(1x,1pg13.6)' )
+        call output ( aHgrid%lon(1,j), '(1x,1pg13.6)' )
+        call output ( aHgrid%time(1,j), '(1x,1pg13.6)' )
+        call output ( aHgrid%solarTime(1,j), '(1x,1pg13.6)' )
+        call output ( aHgrid%solarZenith(1,j), '(1x,1pg13.6)' )
+        call output ( aHgrid%losAngle(1,j), '(1x,1pg13.6)', advance='yes' )
+      end do
+  end subroutine DUMP_a_HGRID
+
+  ! ------------------------------------------------  DUMP_HGRIDS  -----
+  subroutine DUMP_HGRIDS ( HGRIDS )
+    use OUTPUT_M, only: OUTPUT
+    type(hGrid_T), intent(in) :: HGRIDS(:)
+    integer :: I
+    call output ( size(hgrids), before='HGRIDS: SIZE = ', advance='yes' )
+    do i = 1, size(hgrids)
+      call output ( i, 4, after=': ' )
+      call dump ( hgrids(i) )
+    end do
+  end subroutine DUMP_HGRIDS
+
   ! ---------------------------------------- FindClosestMatch ---
   integer function FindClosestMatch ( reference, sought, instance )
     use MLSNumerics, only: HUNT
@@ -255,6 +300,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.4  2004/05/20 19:48:25  vsnyder
+! Move Dump*HGrid here from dumper
+!
 ! Revision 2.3  2004/05/18 01:05:06  vsnyder
 ! Delete unused MAFIndex and MAFCounter fields from HGrid_T
 !

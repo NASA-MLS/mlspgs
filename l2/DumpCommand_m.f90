@@ -32,10 +32,9 @@ contains
   ! the level of detail for subsequent dumps.
 
     use Declaration_table, only: Num_Value
-    use Dumper, only: Dump ! HGrid, Quantity templates
     use Expr_m, only: Expr
     use ForwardModelConfig, only: Dump, ForwardModelConfig_T
-    use HGridsDatabase, only: HGRID_T
+    use HGridsDatabase, only: Dump, HGRID_T
     use Init_Tables_Module, only: F_Details, F_ForwardModel, F_HGrid, &
       & F_Quantity, F_Template, F_Vector, &
       & S_Quantity, S_VectorTemplate
@@ -163,6 +162,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.4  2004/05/20 19:47:36  vsnyder
+! Move Dump*Hgrid from Dumper to HgridsDatabse
+!
 ! Revision 2.3  2004/05/18 01:18:51  vsnyder
 ! Add dump for HGrid
 !
