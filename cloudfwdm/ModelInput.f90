@@ -80,6 +80,7 @@ contains
 !----------------------------------------------------------
       REAL(r8) :: HTOP,DH,ZH(NH),ZA(NH), zvmr(nh)
       REAL(r8) :: eta                          ! Interpolating fraction;
+      INTEGER :: NcloudType		! number of cloud types
       INTEGER :: I,JM,J, K                     !  0 < eta < 1
 !--------------------------------------------------------------------------
 
@@ -103,6 +104,7 @@ contains
 !     PRODUCE MODEL ATMOSPHERIC PROFILES
 !==========================================
 
+      NcloudType = size(WCin(:,1))
          DO J=1,NH
 
             CALL LOCATE (HEIGHT,NZ,NH,ZH(J),JM)              
@@ -127,7 +129,7 @@ contains
 
 ! ICE QUANTITIES
 
-            DO K=1,2
+            DO K=1,NcloudType
 !           WC(K,J)=((HEIGHT(JM+1)-ZH(J))*WCin(K,JM)+(ZH(J)-HEIGHT(JM))*  &
 !     &            WCin(K,JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
               WC(K,J) = eta*WCin(K,JM) + (1-eta)*WCin(K,JM+1)
@@ -162,6 +164,9 @@ contains
 end module ModelInput
 
 ! $Log$
+! Revision 1.11  2003/01/23 00:19:09  pwagner
+! Some cosmetic only (or so I hope) changes
+!
 ! Revision 1.10  2002/12/18 16:10:21  jonathan
 ! minor changes
 !
