@@ -94,6 +94,7 @@ plain
 pressure
 
 rectanglefromlos
+regular
 
 scan
 # spaceRadiance -- in lib/lit_names
@@ -106,6 +107,9 @@ vGrid
 weighted
 
 # $Log$
+# Revision 2.7  2001/12/12 01:00:33  livesey
+# Added stuff for regular hGrids
+#
 # Revision 2.6  2001/11/17 02:29:47  vsnyder
 # Add L_numF and L_numJ
 #
