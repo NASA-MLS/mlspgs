@@ -3429,7 +3429,8 @@ contains ! =====     Public Procedures     =============================
 
       ! Local variables
       real (r8), dimension(:), pointer :: oldSurfs, newSurfs
-      logical :: mySurfs
+      real (r8), dimension(:,:), pointer :: newValues
+      logical :: mySurfs, myNewValues
 
       ! Executable code
       if ( .not. DoQtysDescribeSameThing ( qty, source ) ) then
@@ -3474,20 +3475,39 @@ contains ! =====     Public Procedures     =============================
         newSurfs => qty%template%surfs ( :, 1 )
         mySurfs = .false.
       end if
+
+      ! Work out if we have to obey the mask
+      myNewValues = .false.
+      if ( associated ( qty%mask ) ) &
+        & myNewValues = any ( iand ( ichar(qty%mask(:,:)), m_fill ) /= 0 )
+      if ( myNewValues ) then
+        nullify ( newValues )
+        call Allocate_test ( newValues, qty%template%instanceLen, &
+          & qty%template%noInstances, 'myNewValues', ModuleName )
+      else
+        newValues => qty%values
+      end if
       
       ! OK, do the work
       if ( qty%template%logBasis ) then
         call InterpolateValues ( &
           & oldSurfs, log ( max ( source%values, sqrt(tiny(0.0_r8)) ) ), &
-          & newSurfs, qty%values, &
+          & newSurfs, newValues, &
           & method='Linear', extrapolate='Constant' )
-        qty%values = exp ( qty%values )
+        newValues = exp ( newValues )
       else
         call InterpolateValues ( &
           & oldSurfs, source%values, &
-          & newSurfs, qty%values, &
+          & newSurfs, newValues, &
           & method='Linear', extrapolate='Constant' )
       end if
+
+      if ( myNewValues ) then
+        where ( iand ( ichar(qty%mask(:,:)),m_fill) == 0 )
+          qty%values = newValues
+        end where
+        call Deallocate_test ( newValues, 'myNewValues', ModuleName )
+      endif
 
       ! Tidy up
       if ( mySurfs ) then
@@ -3870,6 +3890,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.146  2002/09/12 22:07:05  livesey
+! Added masking to interpolated vector fill
+!
 ! Revision 2.145  2002/09/10 20:50:33  livesey
 ! Added interpolated vector fill
 !
