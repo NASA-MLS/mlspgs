@@ -1,181 +1,178 @@
-MODULE hydrostatic_m
-!
-! This computes a hydrostatic function per L2PC method and returns 
-! geometric heights reference height is now an input
-! This is for EOS prototyping
-!
-  use MLSCommon, only: RP, IP
-  USE Geometry, ONLY: earthrada,earthradb
-  USE get_eta_m, only: get_eta
-  USE piq_int_m, only: piq_int
-!
-  IMPLICIT NONE
-!
-  Private
-  Public :: hydrostatic
+! Copyright (c) 1999, California Institute of Technology. ALL RIGHTS RESERVED.
+! U.S. Government sponsorship under NASA Contract NAS7407 is acknowledged.
+
+module Hydrostatic_m
+
+  implicit none
+
+  private
+  public :: Hydrostatic
+
 !---------------------------- RCS Ident Info -------------------------------
-  CHARACTER (LEN=256) :: Id = &
-   "$Id$"
-  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
-   "$RCSfile$"
+  character (len=*), parameter :: IdParm = &
+    & "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName = &
+    & "$RCSfile$"
 !---------------------------------------------------------------------------
-  CONTAINS
+  contains
 !---------------------------------------------------------------------------
-  SUBROUTINE hydrostatic(lat,t_basis,t_coeffs,z_grid,z_ref,h_ref,t_grid, &
-                      &  h_grid,dhidtq,dhidzi,ddhdhdtq,z_surface)
-!
+  subroutine Hydrostatic ( lat, t_basis, t_coeffs, z_grid, z_ref, h_ref, &
+                      &    t_grid, h_grid, dhidtq, dhidzi, ddhdhdtq, z_surface )
+
+! Compute a hydrostatic function per L2PC method and return
+! geometric heights. Reference height is now an input
+! This is for EOS prototyping
+
+    use MLSCommon, only: RP, IP
+    use Geometry, only: EarthRadA, EarthRadB, GM, J2, J4, W
+    use Get_eta_m, only: get_eta
+    use Piq_int_m, only: piq_int
+
 ! Inputs
-!
-  REAL(rp), INTENT(in) :: lat ! geocentric latitude in radians
-  REAL(rp), INTENT(in) :: z_ref ! reference pressure in -log10(P)
-  REAL(rp), INTENT(in) :: h_ref ! reference geopotential height in km
-  REAL(rp), INTENT(in) :: t_basis(:) ! vertical temperature basis
-  REAL(rp), INTENT(in) :: t_coeffs(:) ! temperature values
-  REAL(rp), INTENT(in) :: z_grid(:) ! -log10(P) pressures for which heights
+
+    real(rp), intent(in) :: lat ! geocentric latitude in radians
+    real(rp), intent(in) :: z_ref ! reference pressure in -log10(P)
+    real(rp), intent(in) :: h_ref ! reference geopotential height in km
+    real(rp), intent(in) :: t_basis(:) ! vertical temperature basis
+    real(rp), intent(in) :: t_coeffs(:) ! temperature values
+    real(rp), intent(in) :: z_grid(:) ! -log10(P) pressures for which heights
 !                                  are needed
 ! Outputs
-!
-  REAL(rp), INTENT(out) :: h_grid(:) ! heights on z_grid
-  REAL(rp), INTENT(out) :: t_grid(:) ! temperatures on z_grid
-  REAL(rp), INTENT(out) :: dhidzi(:) ! dh/dz on z_grid
-  REAL(rp), INTENT(out) :: dhidtq(:,:) ! dh/dt on z_grid assuming dh/dt = 0.0
+
+    real(rp), intent(out) :: h_grid(:) ! heights on z_grid
+    real(rp), intent(out) :: t_grid(:) ! temperatures on z_grid
+    real(rp), intent(out) :: dhidzi(:) ! dh/dz on z_grid
+    real(rp), intent(out) :: dhidtq(:,:) ! dh/dt on z_grid assuming dh/dt = 0.0
 !                 at the reference ellipse surface  equivalent to h_ref = 0.0
 
-  REAL(rp), OPTIONAL, INTENT(out) :: ddhdhdtq(:,:) !ddh/dhdt on z_grid
-  REAL(rp), OPTIONAL :: z_surface
-!
+    real(rp), optional, intent(out) :: ddhdhdtq(:,:) !ddh/dhdt on z_grid
+    real(rp), optional :: z_surface
+
 ! Internal stuff
-! These are the 1980 reference geoid values these should be later
-! moved to a separate module (preferably Geometry.f90)
-!
-  REAL(rp), PARAMETER :: gm = 3.986005e14_rp ! m^3/sec^2
-  REAL(rp), PARAMETER :: j2 = 0.0010826256_rp
-  REAL(rp), PARAMETER :: j4 = -.0000023709122_rp
-!
-! earth rotational velocity
-!
-  REAL(rp), PARAMETER :: w = 7.292115e-05_rp ! rad/sec
-!
-  INTEGER(ip) :: n_lvls,n_coeffs,iter
-!
-  REAL(rp) :: sl,cl,p2,p4,dp2,dp4,g_ref,r_eff,boltz,r_e,z_surf
-  REAL(rp) :: z_new,h_calc,dh_dz_s
-  REAL(rp), ALLOCATABLE :: eta(:,:),piq(:,:),piqa(:,:),piqb(:,:),mass_corr(:)
+
+    real(rp), parameter :: ERadAsq = EarthRadA**2, ERadBsq = EarthRadB**2
+    real(rp), parameter :: Boltz = 0.000660988_rp ! = kln10/m km^2/(K sec^2)
+
+    integer(ip) :: n_lvls,n_coeffs,iter
+
+!   real(rp) :: cl, sl ! for derivatives of Legendre polynomials dp2 and dp4
+    real(rp) :: Boltzg, Clsq, G_ref
+    real(rp) :: R_e, R_eisq, R_eisq_A, R_eff, Slsq, Z_surf
+    real(rp) :: P2, P4    ! Legendre polynomials, for oblateness model
+!   real(rp) :: dp2, dp4  ! Derivatives of P2 and P4
+    real(rp) :: dh_dz_S, H_calc, Z_new
+    real(rp), dimension(size(z_grid),size(t_basis)) :: Eta, Piq
+    real(rp), dimension(1,size(t_basis)) :: Piqa, Piqb
+    real(rp), dimension(size(z_grid)) :: Mass_corr
 !
 ! begin the code
 !
-  n_lvls = SIZE(z_grid)
-  n_coeffs = SIZE(t_basis)
-  ALLOCATE(eta(1:n_lvls,1:n_coeffs))
-  ALLOCATE(piq(1:n_lvls,1:n_coeffs))
-  ALLOCATE(mass_corr(1:n_lvls))
-  mass_corr = 1.0_rp
-  WHERE(z_grid > 2.5) mass_corr = 1.0_rp &
-  & / (0.875_rp + 0.1_rp*z_grid - 0.02_rp*z_grid**2)
-!
+    n_lvls = size(z_grid)
+    n_coeffs = size(t_basis)
+
+    where ( z_grid > 2.5_rp )
+      mass_corr = 1.0_rp / (0.875_rp + 0.1_rp*z_grid - 0.02_rp*z_grid**2)
+    elsewhere
+      mass_corr = 1.0_rp
+    end where
+
 ! compute t_grid
-!
-  CALL get_eta(z_grid,t_basis,n_lvls,n_coeffs,eta)
-  t_grid = MATMUL(eta,t_coeffs)
+
+    call get_eta ( z_grid, t_basis, n_lvls, n_coeffs, eta )
+    t_grid = matmul(eta,t_coeffs)
 !
 ! compute surface acceleration and effective earth radius
 !
-  sl = SIN(lat)
-  cl = COS(lat)
-  p2 = (3.0_rp * sl**2 - 1.0_rp) / 2.0_rp
-  p4 = (35.0_rp * sl**4 - 30.0_rp * sl**2 + 3.0_rp) / 8.0_rp
-  dp2 = 3.0_rp * sl * cl
-  dp4 = 5.0_rp * (7.0_rp * sl**3 * cl - 3.0_rp * sl * cl) / 2.0_rp
-!
-! compute earth radius having potential = 62636858.0 m/sec^2
-!
-  r_e = earthrada*earthradb &
-      / SQRT((earthrada*sl)**2+(earthradb*cl)**2) !in meters
-!
-! radial surface acceleration, km/sec^2
-!
-  g_ref = 0.001 * (gm * (1.0_rp - 3.0_rp*j2*p2*(earthrada/r_e)**2 &
-        - 5.0_rp*j4*p4*(earthrada/r_e)**4)/r_e**2 - (w*cl)**2 * r_e)
-!
-! better effective Earth radius compute -d g_ref / d r, kilometers
-!
-  r_eff = 2.0_rp * g_ref / (2.0_rp * gm * (1.0_rp-6.0_rp*j2*p2 &
-        * (earthrada/r_e)**2 - 15.0_rp*j4*p4*(earthrada/r_e)**4) &
-        / r_e**3 + (w*cl)**2)
-!
+    slsq = sin(lat) ** 2
+    clsq = 1.0_rp - slsq
+    p2 = (3.0_rp * slsq - 1.0_rp) * 0.5_rp
+    p4 = (35.0_rp * slsq**2 - 30.0_rp * slsq + 3.0_rp) * 0.125_rp
+!   dp2 = 3.0_rp * sl * cl
+!   dp4 = 2.5_rp * sl * cl * ( 7.0_rp * slsq - 3.0_rp )
+
+!{ compute earth radius having potential = 62636858.0 $m/s^2$:
+!  $r_e^2 = \frac{a^2 b^2}{a^2 \sin^2 \beta + b^2 \cos^2 \beta}$
+
+    r_eisq_a = (eRadAsq*slsq + eRadBsq*clsq) / eRadBsq ! m^{-1}
+
+    r_eisq = r_eisq_a / eRadAsq ! (r_e)^{-2} in m^{-2}
+
+    r_e = sqrt(1.0_rp / r_eisq) ! in meters
+
+!{ radial surface acceleration, k$m/s^2$:\\
+!  $g_{\text{ref}} = 0.001 \left ( G m ( 1 - 3 J_2 P_2(\sin \beta)
+!                       (a/r_e)^2 - 5 J_4 P_4(\sin \beta) (a/r_e)^4 ) /r_e^2
+!                       - \omega^2 \cos^2 \beta \, r_e \right )$
+
+    g_ref = 0.001_rp * (gm * (1.0_rp - 3.0_rp*j2*p2*eRadAsq*r_eisq &
+        & - 5.0_rp*j4*p4*(eRadAsq*r_eisq)**2)*r_eisq - w**2 * clsq * r_e)
+
+!{ better effective Earth radius: compute $-d g_{\text{ref}} / d r$, kilometers:\\
+!  $r_{\text{eff}} = 2 g_{\text{ref}} / \left ( 2 G m (
+!                      ( 1 - 6 J_2 P_2 (\sin \beta) (a/r_e)^2
+!                          - 15 J_4 P_4 (\sin \beta) (a/r_e)^4 ) / r_e^3
+!                          + \omega^2 \cos^2 \beta \right )$
+
+    r_eff = 2.0_rp * g_ref / (2.0_rp * gm * (1.0_rp-6.0_rp*j2*p2 &
+        & * eRadAsq*r_eisq - 15.0_rp*j4*p4*(eRadAsq*r_eisq)**2) &
+        & / r_e**3 + w**2 * clsq)
+
 ! find the surface pressure
-!
-  boltz = 0.000660988_rp ! = kln10/m km^2/(K sec^2)
-  z_surf = z_grid(1) ! This is a guess
 
-  ALLOCATE(piqa(1:1,1:n_coeffs))
-  ALLOCATE(piqb(1:1,1:n_coeffs))
+    boltzg = boltz / g_ref
+    z_surf = z_grid(1) ! This is a guess
 
-  CALL piq_int((/z_surf/),t_basis,z_ref,piqa)
-  h_calc = boltz*SUM(RESHAPE(piqa,(/n_coeffs/)) * t_coeffs) / g_ref
-!
-! correct
-!
-  CALL piq_int((/z_surf+0.01_rp/),t_basis,z_ref,piqa)
-  CALL piq_int((/z_surf-0.01_rp/),t_basis,z_ref,piqb)
+    iter = 0
+    do
+!{ Newton iteration for $z_{\text{surf}}$ at $h_{\text{calc}} = -h_{\text{ref}}$:
+!  $z_{n+1} = z_n - (h_{\text{ref}} + h_{\text{calc}}) /
+!             \left . \frac{\text{d} h}{\text{d} z} \right |_{z=z_n}$
 
-  dh_dz_s = boltz*SUM((RESHAPE(piqa,(/n_coeffs/))-RESHAPE(piqb,(/n_coeffs/))) &
-          * t_coeffs) / (0.02_rp*g_ref)
-  z_new = z_surf - (h_ref + h_calc) / dh_dz_s
+      call piq_int ( (/z_surf/), t_basis, z_ref, piqa )
+      h_calc = boltzg * dot_product(piqa(1,:), t_coeffs)
 
-  iter = 0
-  DO
+      call piq_int ( (/z_surf+0.01_rp/), t_basis, z_ref, piqa )
+      call piq_int ( (/z_surf-0.01_rp/), t_basis, z_ref, piqb )
+      dh_dz_s = boltzg * dot_product((piqa(1,:) - piqb(1,:)), t_coeffs) * 50.0_rp
+      z_new = z_surf - (h_ref + h_calc) / dh_dz_s
 
-    iter = iter + 1
-    IF(ABS(z_new - z_surf) < 0.0001_rp .OR. iter == 10) EXIT
+      iter = iter + 1
+      if ( abs(z_new - z_surf) < 0.0001_rp .or. iter == 10 ) exit
+      z_surf = z_new
+
+    end do
+
     z_surf = z_new
-    CALL piq_int((/z_surf/),t_basis,z_ref,piqa)
-    h_calc = boltz*SUM(RESHAPE(piqa,(/n_coeffs/)) * t_coeffs) / g_ref
-!
-! correct
-!
-    CALL piq_int((/z_surf+0.01_rp/),t_basis,z_ref,piqa)
-    CALL piq_int((/z_surf-0.01_rp/),t_basis,z_ref,piqb)
-    dh_dz_s = boltz*SUM((RESHAPE(piqa,(/n_coeffs/)) &
-            - RESHAPE(piqb,(/n_coeffs/))) * t_coeffs) / (0.02_rp*g_ref)
-    z_new = z_surf - (h_ref + h_calc) / dh_dz_s
+    if (present(z_surface)) z_surface = z_surf
 
-  END DO
-!
-  DEALLOCATE(piqb)
-  DEALLOCATE(piqa)
-
-  z_surf = z_new
-  IF (PRESENT(z_surface)) z_surface = z_surf
-!
 ! compute the piq integrals relative to the surface
-!
-  CALL piq_int(z_grid,t_basis,z_surf,piq)
-!
-! compute the height vector
-!
-! geopotential height * g_ref
-  h_grid = boltz * mass_corr * MATMUL(piq,t_coeffs)
-  h_grid = r_eff * h_grid / (r_eff * g_ref - h_grid)
-  dhidzi = (h_grid+r_eff)**2 * boltz * mass_corr / (g_ref * r_eff**2)
-  dhidtq = SPREAD(dhidzi,2,n_coeffs) * piq
-  dhidzi = dhidzi * t_grid
-!
-! this derivative is useful for antenna derivatives
-!
-  IF(PRESENT(ddhdhdtq)) &
-  ddhdhdtq = (2.0_rp/(SPREAD(h_grid,2,n_coeffs)+r_eff)) * dhidtq &
-           + eta / SPREAD(t_grid,2,n_coeffs)
 
-  DEALLOCATE(piq)
-  DEALLOCATE(eta)
-  DEALLOCATE(mass_corr)
-!
- END SUBROUTINE hydrostatic
-!
-END MODULE hydrostatic_m
+    call piq_int ( z_grid, t_basis, z_surf, piq )
+
+! compute the height vector
+
+! geopotential height * g_ref
+    h_grid = boltz * mass_corr * matmul(piq,t_coeffs)
+    h_grid = r_eff * h_grid / (r_eff * g_ref - h_grid)
+    dhidzi = (h_grid+r_eff)**2 * boltzg * mass_corr / r_eff**2
+    dhidtq = spread(dhidzi,2,n_coeffs) * piq
+    dhidzi = dhidzi * t_grid
+
+! this derivative is useful for antenna derivatives
+
+    if ( present(ddhdhdtq) ) &
+      & ddhdhdtq = (2.0_rp/(spread(h_grid,2,n_coeffs)+r_eff)) * dhidtq &
+               & + eta / spread(t_grid,2,n_coeffs)
+
+ end subroutine Hydrostatic
+
+end module Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.2  2002/06/25 17:01:08  bill
+! added more digits to J2 and added pressure dependent mass--wgr
+!
 ! Revision 2.1  2002/02/02 11:20:08  zvi
 ! Some cosmetic changes
 !
