@@ -785,6 +785,10 @@ show_copy:
 
 $(LEVELS): lib
 
+ifdef HDFVERSION
+   $(LEVELS): he5lib
+endif
+
 $(OTHER_SUBDIRS): lib
 
 lib: blas
@@ -815,6 +819,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.61  2002/01/22 21:44:26  pwagner
+# Added commands to build heconvert
+#
 # Revision 1.60  2002/01/10 01:25:08  pwagner
 # Added he5lib to OTHER_SUBDIRS
 #

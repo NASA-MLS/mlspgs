@@ -34,11 +34,17 @@ srclib=../srclib
 # where sources (but not OBJS) shared with l3, etc. are stored
 blaslib=../blas
 
-# where sources for the forward model are stored
+# where sources for level3 daily are stored
 libmlsl3_sources=../l3
 
-# where forward model objects and libfwdmdl.a are stored
+# where l3 daily objects and libmlsl3.a are stored
 libmlsl3_objs=$(libmlsl3_sources)/$(MLSCONFG)
+
+# where sources (but not OBJS) used for hdf5 file versions are stored
+he5lib=../he5lib
+
+# where he5 objects and libhe5.a are stored
+he5lib_objs=$(he5lib)/$(MLSCONFG)
 
 # where the platforms directory is
 PLATFORMS = .
@@ -87,12 +93,21 @@ SHELL = /bin/sh
 libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.f90 $(libmls_sources)/*.c $(libmls_sources)/lit_names.txt)
 libmlsl3_f90 := $(shell ${REECHO} $(libmlsl3_sources)/*.c $(libmlsl3_sources)/*.f $(libmlsl3_sources)/*.f90)
 blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90)
+he5lib_f := $(shell ${REECHO} $(he5lib)/*.c $(he5lib)/*.f $(he5lib)/*.f90)
 
 depends_where:=$(libmls_sources) $(srclib) \
    $(libmlsl3_sources)
-PROG_prereqs=$(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
+PROG_prereqs := $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
 	  $(libmls_objs)/libmls.a \
 	  $(libmlsl3_objs)/libmlsl3.a  $(REECHO)   
+
+libmlsl3_prereqs := $(libmlsl3_f90) $(libmls_objs)/libmls.a \
+               $(CONFDIR)/$(MLSCFILE) $(libmlsl3_objs)
+
+ifdef HDFVERSIONS
+   libmlsl3_prereqs := $(libmlsl3_prereqs) $(he5lib_objs)/libhe5.a
+   PROG_prereqs := $(PROG_prereqs) $(he5lib_objs)/libhe5.a
+endif
 
 ifdef BLAS
    LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
@@ -152,12 +167,17 @@ $(libmls_objs)/libmls.a: $(LIB_prereqs)
 	fi ; \
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
-$(libmlsl3_objs)/libmlsl3.a: $(libmlsl3_f90) $(libmls_objs)/libmls.a \
-               $(CONFDIR)/$(MLSCFILE) $(libmlsl3_objs)
+$(libmlsl3_objs)/libmlsl3.a: $(libmlsl3_prereqs)
 	@if [ "$(NOHUNTING)" != "" ] ; then \
 	   rm -f $(libmlsl3_objs)/libmlsl3.a ; \
 	fi ; \
 	$(MAKE) -f $(MakeFName) mlsl3d -C $(libmlsl3_sources)
+
+$(he5lib_objs)/libhe5.a: $(libmls_objs)/libmls.a $(he5lib_f)
+	@if [ "$(NOHUNTING)" != "" ] ; then \
+	   rm -f $(he5lib_objs)/libhe5.a ; \
+	fi ; \
+	$(MAKE) -f $(MakeFName) libhe5.a -C $(he5lib)
 
 .PHONY: configure depends clean tar mostlyclean tarz targ mlsl3m ghostbuster
 
@@ -222,6 +242,9 @@ targ:
    --exclude \*.mod --exclude $(PROG)
 
 # $Log$
+# Revision 1.10  2002/01/15 00:40:18  pwagner
+# Now uses user-settable OMIT and internal OMIT_SRCS and OMIT_PREFIXD variables
+#
 # Revision 1.9  2001/11/08 00:40:51  pwagner
 # NOCLEANING avoids massive recompiles on changes to .configure
 #
