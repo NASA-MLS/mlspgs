@@ -533,16 +533,18 @@ contains ! ================================ FullForwardModel routine ======
     maxNoFFreqs = 0
     maxNoFSurfs = 0
     do specie = 1, noSpecies
-      l = abs(fwdModelConf%molecules(specie))
-      if ( l == l_extinction ) then
-        f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-          & quantityType=l_extinction, radiometer=firstSignal%radiometer )
-      else
-        f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-          & quantityType=l_vmr, molecule=l )
-      endif
-      maxNoFFreqs = max(maxNoFFreqs, f%template%noChans)
-      maxNoFSurfs = max(maxNoFSurfs, f%template%noSurfs)
+      l = fwdModelConf%molecules(specie)
+      if ( l > 0 ) then
+        if ( l == l_extinction ) then
+          f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+            & quantityType=l_extinction, radiometer=firstSignal%radiometer )
+        else
+          f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+            & quantityType=l_vmr, molecule=l )
+        endif
+        maxNoFFreqs = max(maxNoFFreqs, f%template%noChans)
+        maxNoFSurfs = max(maxNoFSurfs, f%template%noSurfs)
+      end if
     end do
 !
     allocate ( mol_cat_index(no_mol), stat=ier )
@@ -694,7 +696,7 @@ contains ! ================================ FullForwardModel routine ======
     z_all = (/-3.000_rp,RESHAPE(temp%template%surfs(:,1), &
          &  (/temp%template%nosurfs/)),4.0_rp/)
 !
-    DO sps_i = 1 , noSpecies
+    DO sps_i = 1 , no_mol
 !
       IF(abs(fwdModelConf%molecules(mol_cat_index(sps_i))) == &
           &  l_extinction ) THEN
@@ -2140,6 +2142,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.41  2002/05/10 16:18:45  livesey
+! Code for dealing with new channel shape information
+!
 ! Revision 2.40  2002/05/08 08:53:42  zvi
 ! All radiometers grid concept implemented
 !
