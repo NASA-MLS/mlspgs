@@ -20,7 +20,7 @@ module OutputAndClose ! outputs all data from the Join module to the
   use MatrixModule_1, only: MATRIX_DATABASE_T, MATRIX_T, GETFROMMATRIXDATABASE
   use MLSCommon, only: I4
   use MLSFiles, only: GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
-  use MLSL2Options, only: PENALTY_FOR_NO_METADATA
+  use MLSL2Options, only: PENALTY_FOR_NO_METADATA, CREATEMETADATA, PCF
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
     & MLSPCF_L2GP_START, mlspcf_l2dgg_start, mlspcf_l2dgg_end, &
@@ -28,7 +28,7 @@ module OutputAndClose ! outputs all data from the Join module to the
     & Mlspcf_mcf_l2dgg_start
   use MoreTree, only: Get_Spec_ID
   use OUTPUT_M, only: OUTPUT
-  use SDPToolkit, only: PGS_S_SUCCESS, PGS_SMF_GETMSG, PGSD_IO_GEN_WSEQFRM
+  use SDPToolkit, only: PGS_S_SUCCESS, PGSD_IO_GEN_WSEQFRM, Pgs_smf_getMsg
   use STRING_TABLE, only: GET_STRING
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TOGGLES, only: GEN, TOGGLE
@@ -179,10 +179,15 @@ contains ! =====     Public Procedures     =============================
           if ( DEBUG ) call output('output file type l2gp', advance='yes')
           ! Get the l2gp file name from the PCF
 
-          l2gpFileHandle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
+          if ( PCF ) then
+            l2gpFileHandle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
             & mlspcf_l2gp_end, &
             & PCFL2FCSAMECASE, returnStatus, l2gp_Version, DEBUG, &
             & exactName=l2gpPhysicalFilename)
+          else
+            l2gpPhysicalFilename = file_base
+            returnStatus = 0
+          endif
 
           if ( returnStatus == 0 ) then
             if ( DEBUG ) call output(&
@@ -218,6 +223,8 @@ contains ! =====     Public Procedures     =============================
                 &  "Error closing  l2gp file:  "//mnemonic//" "//msg )
             end if
 
+            if ( .not. CREATEMETADATA ) cycle
+
             ! Write the metadata file
 
             call get_l2gp_mcf ( file_base, l2gp_mcf, l2pcf )
@@ -250,8 +257,8 @@ contains ! =====     Public Procedures     =============================
                 call output(swfid , advance='yes')
               end if
 
-              call populate_metadata_std ( &
-                & l2gpFileHandle, l2gp_mcf, l2pcf, QuantityNames(1), &
+              call populate_metadata_std &
+                & (l2gpFileHandle, l2gp_mcf, l2pcf, QuantityNames(1), &
                 & metadata_error )
               error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
 
@@ -268,8 +275,8 @@ contains ! =====     Public Procedures     =============================
                 call output ( swfid , advance='yes' )
               end if
 
-              call populate_metadata_oth ( &
-                & l2gpFileHandle, l2gp_mcf, l2pcf, &
+              call populate_metadata_oth &
+                & ( l2gpFileHandle, l2gp_mcf, l2pcf, &
                 & numquantitiesperfile, QuantityNames, metadata_error )
               error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
             end if
@@ -284,10 +291,15 @@ contains ! =====     Public Procedures     =============================
           if ( DEBUG ) call output ( 'output file type l2aux', advance='yes' )
           ! Get the l2aux file name from the PCF
 
-          l2auxFileHandle = GetPCFromRef(file_base, mlspcf_l2dgm_start, &
+          if ( PCF ) then
+            l2auxFileHandle = GetPCFromRef(file_base, mlspcf_l2dgm_start, &
             & mlspcf_l2dgm_end, &
             & PCFL2FCSAMECASE, returnStatus, l2aux_Version, DEBUG, &
             & exactName=l2auxPhysicalFilename)
+          else
+            l2auxPhysicalFilename = file_base
+            returnStatus = 0
+          endif
 
           if ( returnStatus == 0 ) then
 
@@ -342,6 +354,8 @@ contains ! =====     Public Procedures     =============================
                 &  "Error closing l2aux file:  "//l2auxPhysicalFilename, returnStatus)
             end if
 
+            if ( .not. CREATEMETADATA ) cycle
+
             ! Write the metadata file
             if ( numquantitiesperfile <= 0 ) then
 	      call announce_error ( son, &
@@ -366,8 +380,8 @@ contains ! =====     Public Procedures     =============================
                   call output ( trim(QuantityNames(field_no)) , advance='yes' )
                 end do
               end if
-              call populate_metadata_oth ( &
-                & l2auxFileHandle, l2aux_mcf, l2pcf, &
+              call populate_metadata_oth &
+                & ( l2auxFileHandle, l2aux_mcf, l2pcf, &
                 & numquantitiesperfile, QuantityNames, metadata_error )
               error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
             end if
@@ -410,10 +424,15 @@ contains ! =====     Public Procedures     =============================
           if ( DEBUG ) call output('output file type l2dgg', advance='yes')
           ! Get the l2gp file name from the PCF
 
-          l2gpFileHandle = GetPCFromRef(file_base, mlspcf_l2dgg_start, &
+          if ( PCF ) then
+            l2gpFileHandle = GetPCFromRef(file_base, mlspcf_l2dgg_start, &
             & mlspcf_l2dgg_end, &
             & PCFL2FCSAMECASE, returnStatus, l2gp_Version, DEBUG, &
             & exactName=l2gpPhysicalFilename)
+          else
+            l2gpPhysicalFilename = file_base
+            returnStatus = 0
+          endif
 
           if ( returnStatus == 0 ) then
             if ( DEBUG ) call output(&
@@ -449,6 +468,8 @@ contains ! =====     Public Procedures     =============================
                 &  "Error closing  l2dgg file:  "//mnemonic//" "//msg )
             end if
 
+            if ( .not. CREATEMETADATA ) cycle
+
             ! Write the metadata file
 
             if ( numquantitiesperfile <= 0 ) then
@@ -470,8 +491,8 @@ contains ! =====     Public Procedures     =============================
                 call output ( swfid , advance='yes' )
               end if
 
-              call populate_metadata_oth ( &
-                & l2gpFileHandle, mlspcf_mcf_l2dgg_start, l2pcf, &
+              call populate_metadata_oth &
+                & ( l2gpFileHandle, mlspcf_mcf_l2dgg_start, l2pcf, &
                 & numquantitiesperfile, QuantityNames, metadata_error )
               error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
             end if
@@ -571,6 +592,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.33  2001/05/04 23:19:55  pwagner
+! Detachable from Toolkit; created metafiles conditionally
+!
 ! Revision 2.32  2001/05/03 20:32:33  vsnyder
 ! Add a nullify and some cosmetic changes
 !
