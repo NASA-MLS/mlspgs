@@ -1,10 +1,10 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module OUTPUT_M
 
   use MLSMessageModule, only: MLSMessage, MLSMSG_Info, MLSMSG_Error
-  use MLSStrings, only: ExtractSubString, lowercase 
+  use MLSStrings, only: ExtractSubString, lowercase , ReplaceSubString
   implicit NONE
   private
 
@@ -176,7 +176,7 @@ contains
     integer :: I, J, K
     character(len=30) :: LINE, LOG_CHARS
     character(len=3) :: MY_ADV
-    character(len=20) :: kChar
+    character(len=20) :: kChar, myFormat
     logical :: char_by_char               ! Build line char by char?
 
     my_adv = 'no'
@@ -228,13 +228,13 @@ contains
       line = ' '
       write ( line, Format ) value
       k = len_trim(Format)
-      call ExtractSubString(TRIM(lowercase(Format)), kChar(1:k), 'f', '.')
+      myFormat = lowerCase(Format)
+      call ReplaceSubString(myFormat, kChar, 'e', 'f')
+      call ReplaceSubString(kChar, myFormat, 'd', 'f')
+      call ExtractSubString(TRIM(myFormat), kChar(1:k), 'f', '.')
       read (kChar, '(i2)') k
       if (k < 1) then
-        k = len_trim(Format)
-        call ExtractSubString(TRIM(lowercase(Format)), kChar(1:k), 'd', '.')
-        read (kChar, '(i2)') k
-        if (k < 1) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
 		  & 'Bad conversion to k in OUTPUT_DOUBLE (format neither "d" or "f"' )
       end if
     end if
@@ -372,7 +372,7 @@ contains
     integer :: I, J, K
     character(len=30) :: LINE, LOG_CHARS
     character(len=3) :: MY_ADV
-    character(len=20) :: kChar
+    character(len=20) :: kChar, myFormat
     logical :: char_by_char               ! Build line char by char?
 
     my_adv = 'no'
@@ -421,7 +421,10 @@ contains
       line = ' '
       write ( line, Format ) value
       k = len_trim(Format)
-      call ExtractSubString(TRIM(lowercase(Format)), kChar(1:k), 'f', '.')
+      myFormat = lowerCase(Format)
+      call ReplaceSubString(myFormat, kChar, 'e', 'f')
+      call ReplaceSubString(kChar, myFormat, 'd', 'f')
+      call ExtractSubString(TRIM(myFormat), kChar(1:k), 'f', '.')
       read (kChar, '(i2)') k
       if (k < 1) then
         call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -480,6 +483,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.23  2003/08/25 17:06:50  pwagner
+! Remembered that formats may use ex.y as well as [fd]x.y
+!
 ! Revision 2.22  2003/08/23 00:11:46  pwagner
 ! Tried to fix prob with fix to output_single; also output_double
 !
