@@ -114,8 +114,8 @@ contains ! ======================= Public Procedures =========================
 
   ! ------------------------------------------ DirectWrite_L2GP --------
   subroutine DirectWrite_L2GP ( L2gpFileHandle, &
-    & quantity, quantity_precision, sdName, chunkNo, &
-    & hdfVersion, fileName, createSwath )
+    & quantity, precision, quality, status, &
+    & sdName, chunkNo, hdfVersion, fileName, createSwath )
 
     ! Purpose:
     ! Write standard hdfeos-formatted files ala l2gp for datasets that
@@ -126,7 +126,9 @@ contains ! ======================= Public Procedures =========================
 
     integer, intent(in) :: L2gpFileHandle
     type (VectorValue_T), intent(in) :: QUANTITY
-    type (VectorValue_T), pointer :: QUANTITY_PRECISION
+    type (VectorValue_T), pointer :: precision
+    type (VectorValue_T), pointer :: quality
+    type (VectorValue_T), pointer :: status
     ! integer, intent(in) :: SDNAME       ! Name of sd in output file
     character(len=*), intent(in) :: SDNAME       ! Name of sd in output file
     integer, intent(in) :: HDFVERSION   ! Version of HDF file to write out
@@ -160,7 +162,7 @@ contains ! ======================= Public Procedures =========================
       'last profile > grandTotalInstances for ' // trim(sdName) )
 
     ! Convert vector quantity to l2gp
-    call vectorValue_to_l2gp(quantity, Quantity_precision, l2gp, &
+    call vectorValue_to_l2gp(quantity, precision, quality, status, l2gp, &
       & sdname, chunkNo, offset=0, &
       & firstInstance=firstInstance, lastInstance=lastInstance)
     ! Output the l2gp into the file
@@ -694,15 +696,16 @@ contains ! ======================= Public Procedures =========================
 
 ! =====     Private Procedures     =====================================
   ! ---------------------------------------------  vectorValue_to_l2gp  -----
-  subroutine vectorValue_to_l2gp (QUANTITY, Quantity_precision, l2gp, &
-    & name, chunkNo, &
-    & offset, firstInstance, lastInstance)
+  subroutine vectorValue_to_l2gp (QUANTITY, precision, quality, status, l2gp, &
+    & name, chunkNo, offset, firstInstance, lastInstance)
     use Intrinsic, only: L_None
     use L2GPData, only: L2GPData_T, RGP, &
       & SetupNewl2gpRecord, &
       & ExpandL2GPDataInPlace
     type (VectorValue_T), intent(in) :: QUANTITY
-    type (VectorValue_T), pointer :: QUANTITY_PRECISION
+    type (VectorValue_T), pointer :: precision
+    type (VectorValue_T), pointer :: quality
+    type (VectorValue_T), pointer :: status
     type (L2GPData_T)                :: l2gp
     character(len=*), intent(in)     :: name
     ! integer, intent(in)            :: nameIndex
@@ -807,16 +810,27 @@ contains ! ======================= Public Procedures =========================
       & reshape ( max ( -hugeRgp, min ( hugeRgp, &
       &   quantity%values(:,useFirstInstance:useLastInstance) ) ), &
       &  (/max(l2gp%nFreqs,1),max(l2gp%nLevels,1),lastProfile-firstProfile+1/))
-    if (associated(quantity_precision)) then
+    if (associated(precision)) then
       l2gp%l2gpPrecision(:,:,firstProfile:lastProfile) = &
         & reshape ( max ( -hugeRgp, min ( hugeRgp, &
-        &   quantity_precision%values(:,useFirstInstance:useLastInstance) ) ), &
+        &   precision%values(:,useFirstInstance:useLastInstance) ) ), &
         &  (/max(l2gp%nFreqs,1),max(l2gp%nLevels,1),lastProfile-firstProfile+1/))
     else
       l2gp%l2gpPrecision(:,:,firstProfile:lastProfile) = 0.0
     end if
-    l2gp%status(firstProfile:lastProfile) = 'G'
-    l2gp%quality(firstProfile:lastProfile) = 0.0
+    if (associated(quality)) then
+      l2gp%quality(firstProfile:lastProfile) = &
+        & quality%values(1,useFirstInstance:useLastInstance)
+    else
+      l2gp%quality(firstProfile:lastProfile) = 0.0
+    endif
+    if (associated(status)) then
+      l2gp%status(firstProfile:lastProfile) = &
+        & status%values(1,useFirstInstance:useLastInstance)
+    else
+      l2gp%status(firstProfile:lastProfile) = 0
+    endif
+    ! l2gp%status(firstProfile:lastProfile) = 'G'
   end subroutine vectorValue_to_l2gp
 
   ! ---------------------------------------------  ANNOUNCE_ERROR  -----
@@ -858,6 +872,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.20  2004/02/11 17:23:25  pwagner
+! l2gp status an integer, not a char
+!
 ! Revision 2.19  2004/02/10 19:30:55  pwagner
 ! Cures serial directWrites from writing more than one chunk at a time
 !
