@@ -36,8 +36,6 @@ module PointingGrid_m
     type(oneGrid_t), pointer, dimension(:) :: OneGrid => NULL()
   end type PointingGrid_T
 
-  integer, public :: ExtraHeights = 0   ! How many extra spaces in each
-    !                                     frequency grid?
   type(pointingGrid_t), public, pointer, dimension(:) :: &
     & PointingGrids => NULL()
 
@@ -181,19 +179,13 @@ outer2: do
           & pointingGrids(howManyRadiometers)%oneGrid(n)%height, numHeights
         call allocate_test ( &
           & pointingGrids(howManyRadiometers)%oneGrid(n)%frequencies, &
-          & numHeights + extraHeights, &
-          & "PointingGrids(?)%oneGrid(?)%frequencies", moduleName )
-          pointingGrids(howManyRadiometers)%oneGrid(n)% &
-            & frequencies(:extraHeights) = -huge(1.0_r8)
+          & numHeights, "PointingGrids(?)%oneGrid(?)%frequencies", moduleName )
         read ( lun, *, iostat=status, err=99, end=98 ) &
-          & pointingGrids(howManyRadiometers)%oneGrid(n)% &
-            & frequencies(extraHeights+1:)
+          & pointingGrids(howManyRadiometers)%oneGrid(n)%frequencies
         ! The frequencies are relative to the band center.  Make them
         ! absolute
-        pointingGrids(howManyRadiometers)%oneGrid(n)% &
-          & frequencies(extraHeights+1:) = &
-            & pointingGrids(howManyRadiometers)%oneGrid(n)% &
-              & frequencies(extraHeights+1:) + &
+        pointingGrids(howManyRadiometers)%oneGrid(n)%frequencies = &
+            & pointingGrids(howManyRadiometers)%oneGrid(n)%frequencies + &
                 & pointingGrids(howManyRadiometers)%centerFrequency
       end do
     end do outer2
@@ -321,6 +313,9 @@ outer2: do
 end module PointingGrid_m
 
 ! $Log$
+! Revision 1.3  2001/03/17 01:22:23  vsnyder
+! Add Get_Grids_Near_Tan_Pressures
+!
 ! Revision 1.2  2001/03/17 00:24:56  vsnyder
 ! Add Get_Nearest_Tan_Pressure
 !
