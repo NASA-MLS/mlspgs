@@ -55,6 +55,7 @@ module L2Parallel
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
     "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
   ! Parameters
@@ -989,10 +990,17 @@ contains ! ================================ Procedures ======================
     end do
   end subroutine CleanUpDeadChunksOutput
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.39  2002/10/08 17:36:21  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.38  2002/10/05 00:43:34  livesey
 ! Started work on the FwmParallel stuff
 !
