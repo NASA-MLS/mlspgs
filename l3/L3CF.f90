@@ -37,8 +37,6 @@ MODULE L3CF
 
 ! Parameters
 
-   INTEGER, PARAMETER :: maxGridPoints = 500
-
 ! This data type is used to store global definitions read from the l3cf.
 
    TYPE L3CFDef_T
@@ -497,6 +495,9 @@ END MODULE L3CF
 !==============
 
 ! $Log$
+! Revision 1.9  2001/02/21 20:43:43  nakamura
+! Changed MLSPCF to MLSPCF3; removed InputVersion & check; added L3DZ stuff.
+!
 ! Revision 1.8  2001/01/18 16:51:07  nakamura
 ! Added type L3CFDef_T; moved minDays from PCF to cf.
 !
