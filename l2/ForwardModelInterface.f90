@@ -48,6 +48,7 @@ module ForwardModelInterface
   use Trace_M, only: Trace_begin, Trace_end
   use Tree, only: Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, Subtree
   use Tree_Types, only: N_named
+  use Units, only: DegToRad => Deg2Rad
   use VectorsModule, only: GetVectorQuantityByType, ValidateVectorQuantity, &
     & Vector_T, VectorValue_T
 
@@ -103,8 +104,6 @@ module ForwardModelInterface
   integer, parameter :: IrrelevantFwmParameter = IncompleteLinearFwm + 1
 
   integer :: Error            ! Error level -- 0 = OK
-
-  real (r8), parameter :: DegToRad=1.745329252e-2
 
 contains
 
@@ -1234,6 +1233,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.44  2001/03/28 21:22:22  vsnyder
+! Use Deg2Rad from Units
+!
 ! Revision 2.43  2001/03/28 01:31:39  livesey
 ! Got rid of a dump statement
 !
