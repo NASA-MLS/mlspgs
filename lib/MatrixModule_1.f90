@@ -10,15 +10,14 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use DUMP_0, only: DUMP
-  use MatrixModule_0, only: Assignment(=), CheckIntegrity, CholeskyFactor, ClearRows, &
-    & ColumnScale, Col_L1, CopyBlock, CreateBlock, DestroyBlock, Dump, &
-    & GetDiagonal, GetMatrixElement, GetVectorFromColumn, InvertCholesky, &
-    & M_Absent, M_Column_Sparse, M_Banded, M_Full, MatrixElement_T, MaxAbsVal, MinDiag, &
-    & Multiply, MultiplyMatrix_XY, MultiplyMatrix_XY_T, &
-    & MultiplyMatrixVectorNoT, &
-    & operator(+), &
-    & operator(.TX.), ReflectMatrix, RowScale, ScaleBlock, SolveCholesky, Spill, &
-    & TransposeMatrix, UpdateDiagonal
+  use MatrixModule_0, only: Add_Matrix_Blocks, Assignment(=), CheckIntegrity, &
+    & CholeskyFactor, ClearRows, ColumnScale, Col_L1, CopyBlock, CreateBlock, &
+    & DestroyBlock, Dump, GetDiagonal, GetMatrixElement, GetVectorFromColumn, &
+    & InvertCholesky, M_Absent, M_Column_Sparse, M_Banded, M_Full, &
+    & MatrixElement_T, MaxAbsVal, MinDiag, Multiply, MultiplyMatrix_XY, &
+    & MultiplyMatrix_XY_T, MultiplyMatrixVectorNoT, operator(+), &
+    & operator(.TX.), ReflectMatrix, RowScale, ScaleBlock, SolveCholesky, &
+    & Spill, TransposeMatrix, UpdateDiagonal
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
@@ -349,7 +348,7 @@ contains ! =====     Public Procedures     =============================
     if ( present(scale) ) then
       do j = 1, x%col%nb
         do i = 1, x%row%nb
-          x%block(i,j) = x%block(i,j) + y%block(i,j) ! Defined =, +
+          x%block(i,j) = add_Matrix_Blocks ( x%block(i,j), y%block(i,j), scale ) ! Defined =
         end do ! i = 1, x%row%nb
       end do ! j = 1, x%col%nb
     else
@@ -2085,6 +2084,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.76  2002/08/19 20:51:26  vsnyder
+! Make AddToMatrix respect it's Scale argument
+!
 ! Revision 2.75  2002/08/15 22:13:33  livesey
 ! Bug fix in ColumnScale
 !
