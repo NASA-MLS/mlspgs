@@ -12,6 +12,8 @@ module ForwardModelIntermediate
   use MLSCommon, only: R8
   use Path_entities_m, only: PATH_VECTOR, PATH_VECTOR_2D, PATH_INDEX
   use Ellipse_m, only: ELLIPSE
+  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_Deallocate, MLSMSG_ERROR
+  use Allocate_Deallocate, only: DEALLOCATE_TEST
 
   implicit none
   private
@@ -50,6 +52,8 @@ module ForwardModelIntermediate
     logical :: finished                 ! Flag to calling code to indicate completion
   end type ForwardModelStatus_T
 
+  public :: DestroyForwardModelIntermediate
+
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter, private :: IdParm = &
     & "$Id$"
@@ -58,9 +62,92 @@ module ForwardModelIntermediate
     & "$RCSfile$"
   !---------------------------------------------------------------------------
 
+contains
+
+  ! ------------------------------------------ DestroyForwardModelIntemediate ---
+  subroutine DestroyForwardModelIntermediate ( ifm )
+    type (ForwardModelIntermediate_T), intent(inout) :: ifm
+
+    ! Local variables
+    integer :: i,j                      ! Loop counters
+    integer :: noMAFs, no_tan_hts       ! Dimensions
+    integer :: status                   ! Flag
+
+    ! Exectuable code
+
+    noMAFs = size ( ifm%z_path, 1)
+    no_tan_hts = size ( ifm%z_path, 2)
+
+    deallocate (ifm%ndx_path, stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+      & MLSMSG_Deallocate//'ndx_path' )
+
+    do j = 1, noMAFs
+      do i = 1, No_tan_hts
+        deallocate (ifm%z_path(i,j)%values, stat=status )
+        if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+          & MLSMSG_Deallocate//'z_path%values' )
+        deallocate (ifm%h_path(i,j)%values, stat=status )
+        if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+          & MLSMSG_Deallocate//'h_path%values' )
+        deallocate (ifm%t_path(i,j)%values, stat=status )
+        if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+          & MLSMSG_Deallocate//'t_path%values' )
+        deallocate (ifm%phi_path(i,j)%values, stat=status )
+        if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+          & MLSMSG_Deallocate//'phi_path%values' )
+        deallocate (ifm%dhdz_path(i,j)%values, stat=status )
+        if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+          & MLSMSG_Deallocate//'dhdz_path%values' )
+        deallocate (ifm%eta_phi(i,j)%values, stat=status )
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+          & MLSMSG_Deallocate//'eta_phi%values' )
+      end do
+    end do
+
+    deallocate (ifm%z_path, stat=status )
+    if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+      & MLSMSG_Deallocate//'z_path' )
+    deallocate (ifm%h_path, stat=status )
+    if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+      & MLSMSG_Deallocate//'h_path' )
+    deallocate (ifm%t_path, stat=status )
+    if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+      & MLSMSG_Deallocate//'t_path' )
+    deallocate (ifm%phi_path, stat=status )
+    if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+      & MLSMSG_Deallocate//'phi_path' )
+    deallocate (ifm%dhdz_path, stat=status )
+    if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+      & MLSMSG_Deallocate//'dhdz_path' )
+    deallocate (ifm%eta_phi, stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+      & MLSMSG_Deallocate//'eta_phi' )
+
+    deallocate ( ifm%elvar, stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+      & MLSMSG_Deallocate//'elvar' )
+
+    call deallocate_test ( ifm%geoc_lat, 'geoc_lat', ModuleName )
+    call deallocate_test ( ifm%e_rad, 'e_rad', ModuleName )
+
+    call deallocate_test ( ifm%h_glgrid, 'h_glgrid', ModuleName )
+    call deallocate_test ( ifm%t_glgrid, 't_glgrid', ModuleName )
+    call deallocate_test ( ifm%z_glgrid, 'z_glgrid', ModuleName )
+    call deallocate_test ( ifm%dh_dt_glgrid, 'dh_dt_glgrid', ModuleName )
+    call deallocate_test ( ifm%dhdz_glgrid, 'dhdz_glgrid', ModuleName )
+    call deallocate_test ( ifm%tan_hts,'tan_hts', ModuleName )
+    call deallocate_test ( ifm%tan_temp,'tan_temp', ModuleName )
+    call deallocate_test ( ifm%tan_dh_dt, 'tan_dh_dt', ModuleName )
+    
+  end subroutine DestroyForwardModelIntermediate
+
 end module ForwardModelIntermediate
 
 ! $Log$
+! Revision 1.2  2001/04/10 23:16:14  livesey
+! Working version.
+!
 ! Revision 1.1  2001/04/10 22:17:05  livesey
 ! Renamed module
 !
