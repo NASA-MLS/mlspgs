@@ -83,10 +83,10 @@ contains
 
     do i=1, n_path-1
        t_tmp(i) = (1.0_rp-w0(i))*t_grid(i) + w0(i)*t_scat(i)
-        print*, t_tmp(i), t_grid(i), grid(i), w0(i), t_scat(i)
-!       t_grid(i) = t_tmp(i)  !will add in later soon
+!        print*, t_tmp(i), t_grid(i), grid(i), w0(i), t_scat(i)
+!       t_grid(i) = t_tmp(i)  !will be added in later soon
     enddo
-    stop
+!    stop
 
     V1 = stat_temp(t_grid,nu)
     b = -stat_temp(t_grid(1),nu)
@@ -103,6 +103,9 @@ contains
 end module DO_T_SCRIPT_M
 
 ! $Log$
+! Revision 2.5  2004/03/20 01:15:10  jonathan
+! add in scattering correction term in two t_script
+!
 ! Revision 2.4  2003/06/06 22:17:26  vsnyder
 ! Simplify do_t_script (which isn't used anywhere)
 !
