@@ -70,7 +70,8 @@ module INTRINSIC
   integer, parameter :: L_DL            = l_dimless + 1
   integer, parameter :: L_EXTINCTION    = l_dl + 1
   integer, parameter :: L_FALSE         = l_extinction + 1
-  integer, parameter :: L_GEODALTITUDE  = l_false + 1
+  integer, parameter :: L_FREQUENCY     = l_false + 1
+  integer, parameter :: L_GEODALTITUDE  = l_frequency + 1
   integer, parameter :: L_GEODANGLE     = l_geodaltitude + 1
   integer, parameter :: L_GHZ           = l_geodangle + 1
   integer, parameter :: L_GPH           = l_ghz + 1
@@ -171,6 +172,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_dl) =                    add_ident ( 'dl' )
     lit_indices(l_extinction) =            add_ident ( 'extinction' )
     lit_indices(l_false) =                 add_ident ( 'false' )
+    lit_indices(l_frequency) =             add_ident ( 'frequency' )
     lit_indices(l_geodaltitude) =          add_ident ( 'geodAltitude' )
     lit_indices(l_geodangle) =             add_ident ( 'geodAngle' )
     lit_indices(l_ghz) =                   add_ident ( 'GHz' )
@@ -349,6 +351,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.13  2001/03/15 07:37:35  livesey
+! Added l_frequency
+!
 ! Revision 2.12  2001/03/14 02:05:52  vsnyder
 ! Moved MLSSignals_m to mlspgs/lib.
 !
