@@ -59,6 +59,7 @@ contains ! ============= Public procedures ===================================
     & Name, Root, FGrids, VGrids, HGrids, L1bInfo, Chunk, MifGeolocation ) &
     & result ( QTY )
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use Chunks_m, only: MLSChunk_T
     use EXPR_M, only: EXPR
     use FGrid, only: fGrid_T
     use HGridsDatabase, only: hGrid_T
@@ -67,7 +68,7 @@ contains ! ============= Public procedures ===================================
       & F_SIGNAL, F_TYPE, F_UNIT, F_VGRID, F_REFLECTOR, FIELD_FIRST, FIELD_LAST, &
       & L_TRUE, L_ZETA, L_XYZ, L_MATRIX3X3, L_CHANNEL, L_LOSTRANSFUNC, L_NONE
     use Intrinsic, only: LIT_INDICES
-    use MLSCommon, only: L1BInfo_T, MLSChunk_T, RK => R8
+    use MLSCommon, only: L1BInfo_T, RK => R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSSignals_m, only:GetModuleFromRadiometer, GetModuleFromSignal, &
       & GetRadiometerFromSignal, GetSignal, Signal_T, SIGNALS, MODULES, IsModuleSpacecraft
@@ -433,10 +434,11 @@ contains ! ============= Public procedures ===================================
   subroutine ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModule, &
     & qty, noChans, regular, instanceLen, mifGeolocation )
 
+    use Chunks_m, only: MLSChunk_T
     use INIT_TABLES_MODULE, only: L_GEODALTITUDE, L_NONE
     use L1BData, only: L1BData_T, READL1BDATA, DEALLOCATEL1BDATA, &
       & AssembleL1BQtyName
-    use MLSCommon, only: L1BInfo_T, MLSChunk_T, NameLen, RK => R8
+    use MLSCommon, only: L1BInfo_T, NameLen, RK => R8
     use MLSFiles, only: MLS_HDF_Version
     use MLSL2Options, only: LEVEL1_HDFVERSION
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_L1BRead
@@ -640,12 +642,13 @@ contains ! ============= Public procedures ===================================
     ! and we want to invent a set of minor frame quantities with no
     ! reference to the l1 files
 
+    use Chunks_m, only: MLSChunk_T
     use EXPR_M, only: EXPR
     use INIT_TABLES_MODULE, only: F_FGRID, F_GEODANGLE, F_MODULE, F_NOMIFS, &
       & F_SOLARTIME, F_SOLARZENITH
     use INIT_TABLES_MODULE, only: L_NONE, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, &
       & PHYQ_TIME
-    use MLSCommon, only: MLSChunk_T, RK => R8
+    use MLSCommon, only: RK => R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use QuantityTemplates, only: QuantityTemplate_T, SetupNewQuantityTemplate
     use TREE, only: DECORATION, NSONS, SUBTREE
@@ -811,10 +814,11 @@ contains ! ============= Public procedures ===================================
   ! otherwise return true
   ! Arguments
 
+    use Chunks_m, only: MLSChunk_T
     use Allocate_Deallocate, only: Deallocate_Test
     use L1BData, only: L1BData_T, READL1BDATA, &
       & FindL1BData, AssembleL1BQtyName, PRECISIONSUFFIX
-    use MLSCommon, only: L1BInfo_T, MLSChunk_T, RK => R8
+    use MLSCommon, only: L1BInfo_T, RK => R8
     use MLSFiles, only: MLS_HDF_Version
     use MLSL2Options, only: LEVEL1_HDFVERSION
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
@@ -897,8 +901,9 @@ contains ! ============= Public procedures ===================================
   subroutine ConstructMajorFrameQuantity( chunk, instrumentModule, qty, noChans, &
     & mifGeolocation )
     ! Dummy arguments
+    use Chunks_m, only: MLSChunk_T
     use INIT_TABLES_MODULE, only: L_NONE
-    use MLSCommon, only: MLSChunk_T, RK => R8
+    use MLSCommon, only: RK => R8
     use QuantityTemplates, only: QuantityTemplate_T, SetupNewQuantityTemplate
 
     type (MLSChunk_T), intent(in) :: CHUNK
@@ -1193,6 +1198,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.110  2004/05/19 19:16:09  vsnyder
+! Move MLSChunk_t to Chunks_m
+!
 ! Revision 2.109  2004/04/16 00:48:52  livesey
 ! Added singleChannelRadiance type
 !
