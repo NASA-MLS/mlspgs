@@ -6,6 +6,7 @@ module CONVOLVE_ALL_M
   use L2PC_FILE_PARAMETERS, only: MXCO => max_no_elmnts_per_sv_component
   use L2PC_PFA_STRUCTURES, only: ATMOS_COMP, LIMB_PRESS, SPECTRO_PARAM, &
                                  K_MATRIX_INFO
+  use DUMP_0, only: DUMP
   use D_LINTRP_M, only: LINTRP
   use D_CSPLINE_M, only: CSPLINE
   use DCSPLINE_DER_M, only: CSPLINE_DER
@@ -406,6 +407,9 @@ Subroutine convolve_all (Ptan,atmospheric,n_sps,temp_der,atmos_der, &
 !
 end module CONVOLVE_ALL_M
 ! $Log$
+! Revision 1.8  2001/03/28 00:40:01  zvi
+! Fixing up convolution code, some minor changes in geoc_geod
+!
 ! Revision 1.7  2001/03/26 17:56:14  zvi
 ! New codes to deal with dh_dt_path issue.. now being computed on the fly
 !
