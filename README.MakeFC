@@ -3,7 +3,7 @@
 #  Lost? Type 'make -f MakeFC help' from the directory where you see this file
 #
 #    README.MakeFC        Instructions about building the mls software
-# Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 # "$Id$"
@@ -194,12 +194,28 @@ mlslevels when only the software in that level will be built.
 MULTIPLE PLATFORMS/CONFIGURATION NAMES
 Using multiple platforms or simply having multiple named configurations on a
 single platform is easy. You must take precautions to ensure that 
-  (1) each configuration's name is unique
+  (1) each configuration's name is unique and "legal"
   (2) when you type "make" you know which named configuration is in force
 Because each named configuration "owns" the uniquely-named sub-directory where
 it puts binary objects, named in fact after the configuration, two different
 configurations with the same name would step on each other's binaries.
 
+A legal configuration name is a character string that is a legal name for a
+directory to have on your file system, and one that is not illegal from the
+point of view of mlspgs. That means you should not choose any of the following:
+.configure
+.(anything else)
+CVS
+machines
+(any file name already in lib l1 or ..)
+.
+..
+""
+
+Don't confuse the configuration name with the name of the .configure file. The
+default configuration name when using the NAG compiler on a Linux platform is
+NAG.Linux. The default name for the .configure file is .configure.
+ 
 If you wish to build the software on more than one platform, or use more than
 one combination of compiler/linker/library options, one reliable method is to
 keep multiple copies of the .configure file and alternately rename or hide them
@@ -451,6 +467,9 @@ up in this way -- the above cures will not work  in this case. You may be able
 to fix the problem by deleting MakeFC and doing a CVS update to fetch a new
 copy.
 
+Another cause of a hotly complaining make is using a make that is not gnu
+compliant.
+
 Compiling one changed module may have the effect of triggering recompilation of
 many other unchanged modules due to dependencies. This is the "cascade effect".
 Sometimes it may be obvious that some or all of the cascade is unnecessary. A
@@ -538,6 +557,8 @@ FAFTER             Appears at the end of each line invoking the compiler
 FC                 Overrides the name by which the Fortran compiler is called
                    e.g., Hugh Pumphrey renamed NAG to nagf95 to avoid conflict
                    with Sun's own f95; then used "make FC=nagf95"
+HDFVERSIONS        Build in support for both hdf4 and hdf5 versions of files
+                    if non-blank
 INSTALLDIR         Destination where install moves mlsl1, etc.
 LAFTER             Appears at the end of the very long link statement
                    e.g., for additional libraries required to link successfully
@@ -576,7 +597,10 @@ Another wrinkle in the lib directory is the versions of machine.f90 which lurk
 under machines with names like machines/NAG.Linux/machine.f90 They are intended
 to contain machine/OS/compiler specific information the software can obtain at
 runtime. As a start, I simply copied NAG.Linux into NAG.*, which has worked so
-far.
+far. The ones under the NAG rubric are processed by sed into sub-versions
+depending on the presence or absence of the string "-gc" in LDOPTS. You may
+encounter a link error if you set LDOPTS=-gc while configuring, but then build
+with the statement "make LDOPTS=" effectively erasing "-gc" from the link.
 
 Any of the variables assigned in the file .configure can be treated as an
 advanced setting. In other words, you may override any of these on the command
@@ -629,10 +653,13 @@ export FFTW_ROOT
 export FOPTS
 export LDOPTS
 
--pw                           2000-Oct-24 to 2001-Nov-15
+-pw                           2000-Oct-24 to 2002-Feb-12
 EOF
 exit
 # $Log$
+# Revision 1.27  2001/11/15 19:44:26  pwagner
+# Adds blas to hierarchy of make
+#
 # Revision 1.26  2001/11/09 21:48:34  pwagner
 # Some explanations added for custom-named configurations
 #
