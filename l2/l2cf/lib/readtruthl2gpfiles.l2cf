@@ -7,7 +7,7 @@ begin ReadApriori
     file='!inpath/l2gp/s5--t/!year(!day)/MLS-Aura_L2GP-$1_s5$2--t_!day.he4'!nl})
   },{
   !define(readTruthL2GP,{l2gpTruth$1Input: l2gp, $
-    file='/data/emls/l2gp/s5--t/!year(!day)/MLS-Aura_L2GP-$1_s5$2--t_!day.he4'!nl})
+    file='!inpathtruthl2gp/MLS-Aura_L2GP-$1_s5$2--t_!day.he4'!nl})
   })
 
   ;; Use forall to do the ones that are just s5--t
