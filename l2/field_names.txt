@@ -244,6 +244,7 @@ regAfter
 regApriori               ! Regularization is to apriori, not zero
 reset
 resetSeed
+resolution
 rhiQuantity
 rowChannels
 rowInstances
@@ -329,6 +330,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.116  2004/03/10 22:19:05  livesey
+# Added resolution
+#
 # Revision 2.115  2004/02/17 23:25:59  pwagner
 # Added boxcarMethod
 #
