@@ -310,12 +310,6 @@ contains ! =====     Public Procedures     =============================
       ! -------- Main loop over xStar quantities -------------------------------
       do qtyInd = 1, size ( l2pc%col%vec%quantities )
 
-        if ( toggle(emit) .and. levels(emit) > 1 ) then
-          call output ( 'Dealing with xStar Quantity named ' )
-          call display_string ( l2pc%col%vec%quantities(qtyInd)%template%name, &
-            & advance='yes' )
-        end if
-
         ! Identify this quantity in xStar
         l2pcQ => l2pc%col%vec%quantities(qtyInd)
 
@@ -338,6 +332,12 @@ contains ! =====     Public Procedures     =============================
             &   call MLSMessage ( MLSMSG_Error, ModuleName, &
             &  "Temperature or vmr quantity absent from state")
           cycle                         ! Go to next l2pc quantity
+        end if
+
+        if ( toggle(emit) .and. levels(emit) > 1 ) then
+          call output ( 'Dealing with xStar Quantity named ' )
+          call display_string ( l2pc%col%vec%quantities(qtyInd)%template%name, &
+            & advance='yes' )
         end if
 
         ! OK, we're legit, lets get going.
@@ -850,6 +850,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.22  2002/07/22 03:25:50  livesey
+! Minor bug fix
+!
 ! Revision 2.21  2002/07/17 06:02:01  livesey
 ! Got HDF5 l2pcs working
 !
