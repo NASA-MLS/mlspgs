@@ -50,6 +50,7 @@ E.g., mlsl2 -m -p --nmeta -S"glo jac"
       (In case the default value, 10000, is too small for some l2cfs)
   --slaveMAF <number>: Set the MAF for a slave in fwmParallel mode.  This option
     is set by the master task, and is not recommended for manual invocations.
+  --stgmem: Tell parallel master task to stage in memory, as opposed to a file.
   --subblock <number>: Set the number of reals to consider when subblocking the
     matrix multiply
   --[n]tk: [Do not] Use the panoply of the PGS_toolkit (--ntk sets --npcf)
@@ -94,6 +95,9 @@ by the equal-signs--stuff outside that space, like these
 comments, will not be printed in response to mlsl2 -?)
 
  $Log$
+ Revision 1.19  2002/12/07 22:24:46  livesey
+ Added the snoopname option
+
  Revision 1.18  2002/10/05 00:47:16  livesey
  Added slaveMAF and fwmParallel
 
