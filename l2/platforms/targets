@@ -170,22 +170,24 @@ $(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
 $(S)/field_parm.f9h $(S)/field_add.f9h: $(S)/field_names.txt $(INSTALLDIR)/init_gen
 	sort -f $(S)/field_names.txt | $(INSTALLDIR)/init_gen \
           -f"last_Spectroscopy_Field + 1" -l field_last -pF_ \
+          -j field_names.txt \
           $(S)/field_parm.f9h $(S)/field_add.f9h field_indices
-	rm -f temp
-	sed 's/<file_name_here>/field_names.txt/' $(S)/field_add.f9h > temp
-	mv temp $(S)/field_add.f9h
-	sed 's/<file_name_here>/field_names.txt/' $(S)/field_parm.f9h > temp
-	mv temp $(S)/field_parm.f9h
+#	rm -f temp
+#	sed 's/<file_name_here>/field_names.txt/' $(S)/field_add.f9h > temp
+#	mv temp $(S)/field_add.f9h
+#	sed 's/<file_name_here>/field_names.txt/' $(S)/field_parm.f9h > temp
+#	mv temp $(S)/field_parm.f9h
 
 $(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
 	sort -f $(S)/lit_names.txt | $(INSTALLDIR)/init_gen \
           -f"last_Spectroscopy_Lit + 1" -l last_lit -pl_ \
+          -j lit_names.txt \
           $(S)/lit_parm.f9h $(S)/lit_add.f9h lit_indices
-	rm -f temp
-	sed 's/<file_name_here>/lit_names.txt/' $(S)/lit_add.f9h > temp
-	mv temp $(S)/lit_add.f9h
-	sed 's/<file_name_here>/lit_names.txt/' $(S)/lit_parm.f9h > temp
-	mv temp $(S)/lit_parm.f9h
+#	rm -f temp
+#	sed 's/<file_name_here>/lit_names.txt/' $(S)/lit_add.f9h > temp
+#	mv temp $(S)/lit_add.f9h
+#	sed 's/<file_name_here>/lit_names.txt/' $(S)/lit_parm.f9h > temp
+#	mv temp $(S)/lit_parm.f9h
 
 init_tables_module.o: $(S)/field_parm.f9h $(S)/field_add.f9h \
    $(S)/lit_parm.f9h $(S)/lit_add.f9h
@@ -216,6 +218,9 @@ MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options
 
 
 # $Log$
+# Revision 1.31  2001/10/05 17:28:29  pwagner
+# With new lit_... in custom build of init_tables_module
+#
 # Revision 1.30  2001/10/04 19:57:33  pwagner
 # New custom build command for init_tables_module
 #
