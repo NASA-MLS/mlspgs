@@ -8,9 +8,9 @@
 !define(mol2U,  { [ n2o, n2] })
 !define(mol2,   { [ h2o, hno3, o3, n2, n2o ] })
 
-!define(mol3L,  { [ h2o, hno3,o3, n2 ] })
-!define(mol3U,  { [ n2o, n2 ] })
-!define(mol3,   { [ h2o, hno3, o3, n2, n2o ] })
+!define(mol3L,  { [ h2o, hno3,o3, ch3cn, n2 ] })
+!define(mol3U,  { [ n2o, ch3cn, n2 ] })
+!define(mol3,   { [ h2o, hno3, o3, ch3cn, n2, n2o ] })
 
 !define(mol4L,  { [ h2o, hno3, o3, n2 ] })
 !define(mol4U,  { [ n2o, n2 ] })
@@ -52,17 +52,17 @@
 !define(mol12U, { [ h2o, n2o, o3_v2, n2 ] })
 !define(mol12,  { [ h2o, o3, o3_v1_3, o3_v2, n2o, n2 ] })
 
-!define(mol13L, { [ h2o, hcl_35, hcl_37, br_81_o, ho2, o3, o3_v2, n2 ] })
+!define(mol13L, { [ h2o, hcl_35, hcl_37, br_81_o, ho2, o3, o3_v2, ch3cn, n2 ] })
 !define(mol13U, { [ h2o, ho2, o3, o3_v1_3, o3_v2, o3_sym_o_18,  $
                               o3_asym_o_18, hno3, n2 ] })
-!define(mol13,  { [ h2o, hcl_35, hcl_37, br_81_o, ho2, o3, o3_v2, n2, $
+!define(mol13,  { [ h2o, hcl_35, hcl_37, br_81_o, ho2, o3, o3_v2, ch3cn, n2, $
                               o3_v1_3, o3_sym_o_18, o3_asym_o_18, hno3 ] })
 
-!define(mol14L, { [ h2o, hcl_35, hcl_37, br_81_o, ho2, o3, o3_v2, n2 ] })
+!define(mol14L, { [ h2o, hcl_35, hcl_37, br_81_o, ho2, o3, o3_v2, ch3cn, n2 ] })
 !define(mol14U, { [ h2o, ho2, o3, o3_v1_3, o3_v2, o3_sym_o_18, $
                               o3_asym_o_18, hno3, n2 ] })
 !define(mol14,  { [ h2o, hcl_35, hcl_37, br_81_o, ho2, o3, o3_v2, n2,  $
-                              o3_v1_3, o3_sym_o_18, o3_asym_o_18, hno3 ] })
+                              o3_v1_3, o3_sym_o_18, o3_asym_o_18, ch3cn, hno3 ] })
 
 !define(mol15L, { [ oh, o3_asym_o_18, hocl_37, h2o ] })
 !define(mol15U, { [ o2_v1, o3_asym_o_18, h2o ] })
@@ -87,7 +87,3 @@
 !define(mol20L, { [ o2, o3, o3_v2, h2o ] })
 !define(mol20U, { [ o3, o3_v1_3, o3_v2, h2o ] })
 !define(mol20,  { [ o2, o3, o3_v1_3, o3_v2, h2o ] })
-
-
-
-
