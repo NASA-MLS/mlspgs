@@ -21,7 +21,8 @@ module WriteMetadata ! Populate metadata and write it out
   use MLSStrings, only: LowerCase, GetStringHashElement, ExtractSubString
   use Output_m, only: Output, blanks
   use PCFHdr, only: INPUTPTR_STRING_LENGTH, &
-    & InputInputPointer, WriteInputPointer, WritePCF2Hdr
+    & InputInputPointer, WriteInputPointer, WritePCF2Hdr, &
+    & GlobalAttributes
   use SDPToolkit, only: PGSd_MET_GROUP_NAME_L, &
     & PGSd_MET_NUM_OF_GROUPS, PGSd_PC_FILE_PATH_MAX, PGS_PC_GetReference, &
     & PGSPC_W_NO_REFERENCE_FOUND, PGS_S_SUCCESS, PGSMET_W_METADATA_NOT_SET, &
@@ -466,6 +467,7 @@ contains
     integer :: inptptr_filetype
     character (len=*), parameter :: METAWR_ERR = &
       & 'Error writing metadata attribute '
+    integer :: startOrbit, stopOrbit
 
 
     ! Externals
@@ -501,21 +503,36 @@ contains
     ! Start, Stop orbit numbers: level one has actual calculated numbers
     ! but, for now at least, we'll not trouble
     ! For now, use 99999 for invalid value
+    ! Write start, stop orbit numbers from l1 to l2
 
     attrName = 'StartOrbitNumber' // '.1'
-    returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, 99999)
+    if (GlobalAttributes%OrbNum(1) == -1) then
+        startOrbit = 99999
+    else
+        startOrbit = GlobalAttributes%OrbNum(1)
+    end if
+    returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, &
+        & startOrbit)
+    !returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, 99999)
     !returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, -1)
     if ( returnStatus /= PGS_S_SUCCESS ) then
       call announce_error ( 0, &
-      & "Error in writing StartOrbitNumber attribute.") 
+      & "Error in writing StartOrbitNumber attribute.")
     end if
 
     attrName = 'StopOrbitNumber' // '.1'
-    returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, 99999)
+    if (maxval(GlobalAttributes%OrbNum) == -1) then
+        stopOrbit = 99999
+    else
+        stopOrbit = maxval(GlobalAttributes%OrbNum)
+    end if
+    returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, &
+        & stopOrbit)
+    !returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, 99999)
     !returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, -1)
     if ( returnStatus /= PGS_S_SUCCESS ) then
       call announce_error ( 0, &
-      & "Error in writing StopOrbitNumber attribute.") 
+      & "Error in writing StopOrbitNumber attribute.")
     end if
 
     attrName = 'EquatorCrossingLongitude' // '.1'
@@ -1556,6 +1573,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.51  2003/09/12 16:32:00  cvuu
+! Output the right orbit numbers for StartOrbitNumber and StopOrbitNumber
+!
 ! Revision 2.50  2003/09/04 22:41:09  pwagner
 ! Added some extra printing if metadata write fails in third_grouping
 !
