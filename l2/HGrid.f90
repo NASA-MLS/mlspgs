@@ -508,7 +508,7 @@ contains ! =====     Public Procedures     =============================
       call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField, noMAFs, &
         & l1bFlag, firstMAF=chunk%firstMafIndex, lastMAF=chunk%lastMafIndex, &
         & hdfVersion=hdfVersion, &
-        & dontPad=DONTPAD )
+        & dontPad=.true. )
       if ( l1bFlag==-1) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_L1BRead//l1bItemName )
     else
@@ -585,7 +585,7 @@ contains ! =====     Public Procedures     =============================
       call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField,noMAFs, &
         & l1bFlag, firstMAF=chunk%firstMafIndex, lastMAF=chunk%lastMafIndex, &
         & hdfVersion=hdfVersion, &
-        & dontPad=DONTPAD )
+        & dontPad=.true. )
       if ( l1bFlag==-1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_L1BRead//l1bItemName )
       if ( deebug .and. index(l1bItemName, 'MAFStartTimeTAI') > 0 ) then
@@ -771,8 +771,7 @@ contains ! =====     Public Procedures     =============================
     call ReadL1BData ( l1bInfo%l1bOAID, l1bItemName, &
       & l1bField, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, &
-      & lastMAF=chunk%lastMAFIndex+1, hdfVersion=hdfVersion, &
-        & dontPad=DONTPAD )
+      & lastMAF=chunk%lastMAFIndex+1, hdfVersion=hdfVersion, dontPad=.true. )
     noMAFs = chunk%lastMAFIndex - chunk%firstMAFIndex + 1
     minAngle = minval ( l1bField%dpField(1,:,1) )
     maxAngleFirstMAF = maxval ( l1bField%dpField(1,:,1) )
@@ -878,7 +877,7 @@ contains ! =====     Public Procedures     =============================
       & l1bField, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, &
       & lastMAF=chunk%lastMAFIndex, hdfVersion=hdfVersion, &
-      & dontPad=DONTPAD )
+      & dontPad=.true. )
       if ( deebug ) then
         call dump(l1bField%DpField(1,1,:), l1bItemName)
       end if
@@ -898,7 +897,7 @@ contains ! =====     Public Procedures     =============================
       & l1bField, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
       & hdfVersion=hdfVersion, &
-      & dontPad=DONTPAD )
+      & dontPad=.true. )
     if ( deebug ) then
       call dump(l1bField%DpField(1,1,:), trim(l1bItemName) // ' (before interpolating)')
     end if
@@ -933,7 +932,7 @@ contains ! =====     Public Procedures     =============================
       & l1bField, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
       & hdfVersion=hdfVersion, &
-      & dontPad=DONTPAD )
+      & dontPad=.true. )
     if ( deebug ) then
       call dump(l1bField%DpField(1,1,:), trim(l1bItemName) // ' (before interpolating)')
     end if
@@ -953,7 +952,7 @@ contains ! =====     Public Procedures     =============================
       & l1bField, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
       & hdfVersion=hdfVersion, &
-      & dontPad=DONTPAD )
+      & dontPad=.true. )
     if ( deebug ) then
       call dump(l1bField%DpField(1,1,:), trim(l1bItemName) // ' (before interpolating)')
     end if
@@ -1172,7 +1171,7 @@ contains ! =====     Public Procedures     =============================
       & l1bField, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, &
       & lastMAF=chunk%lastMAFIndex, hdfVersion=hdfVersion, &
-      & dontPad=DONTPAD )
+      & dontPad=.true. )
     mifPhi => l1bField%dpField(1,:,:)
 
     phiMin = minval ( mifPhi )
@@ -1468,6 +1467,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.66  2004/08/20 17:58:42  livesey
+! Made dontpad=true on most calls.
+!
 ! Revision 2.65  2004/08/16 17:10:26  pwagner
 ! Passes dontPad option to readL1BData
 !
