@@ -235,7 +235,6 @@ contains ! =====     Public Procedures     =============================
 
     include "addItemToDatabase.f9h"
 
-    database(newSize) = item
     AddL2AUXToDatabase = newSize
   end function AddL2AUXToDatabase
 
@@ -407,6 +406,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.3  2000/12/04 23:34:38  vsnyder
+! Move more of addItemToDatabase into the include.
+!
 ! Revision 2.2  2000/12/04 21:48:29  pwagner
 ! ReadL2AUXData completed
 !
