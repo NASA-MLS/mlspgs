@@ -193,7 +193,7 @@ contains ! ================================ FullForwardModel routine ======
 
     Integer :: no_midval_ndx, no_gl_ndx, max_nl, max_num_frq
     Integer, DIMENSION(:,:), ALLOCATABLE :: gl_ndx, midval_ndx
-    real(r8), dimension(:,:),  pointer :: midval_delta   ! (N2lvl,Nsps)
+    real(r8), dimension(:,:), pointer :: midval_delta   ! (N2lvl,Nsps)
 
     Type (slabs_struct), DIMENSION(:,:), POINTER :: gl_slabs
 
@@ -291,7 +291,7 @@ contains ! ================================ FullForwardModel routine ======
     if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//'my_catalog' )
 
-    max_nl = 1 
+    max_nl = 1
     do j = 1, noSpecies
       Spectag = spec_tags(fwdModelConf%molecules(j))
       do i = 1, Size(Catalog)
@@ -535,7 +535,8 @@ contains ! ================================ FullForwardModel routine ======
           & sideband=firstSignal%sideband )
         ch = usedChannels(i)
         do j = 1, noMIFs
-          thisRadiance%values( ch + (j-1)*thisRadiance%template%noChans, fmStat%maf) = 0.0
+          k = ch + (j-1)*thisRadiance%template%noChans
+          thisRadiance%values(k, fmStat%maf) = 0.0
         end do
       end do
 
@@ -554,7 +555,6 @@ contains ! ================================ FullForwardModel routine ======
 
       ! ----------------- Begin loop over sidebands -----------------------
       do thisSideband = sidebandStart, sidebandStop, sidebandStep
-
 
         if ( toggle(emit) .and. levels(emit) > 0 ) then
           call trace_begin ( 'ForwardModel.sideband' )
@@ -846,8 +846,8 @@ contains ! ================================ FullForwardModel routine ======
           ! ------------------------------- Begin loop over frequencies ------
           do frq_i = 1, noFreqs
 !
-            Call path_contrib(tau, brkpt, no_ele, fwdModelConf%tolerance, mid, midval_ndx, &
-              &  no_midval_ndx, gl_ndx, no_gl_ndx, Ier)
+            Call path_contrib(tau, brkpt, no_ele, fwdModelConf%tolerance, &
+              &  mid, midval_ndx, no_midval_ndx, gl_ndx, no_gl_ndx, Ier)
             if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
               & 'Path_contrib failed' )
 !
@@ -1036,7 +1036,45 @@ contains ! ================================ FullForwardModel routine ======
 
         end do                            ! Pointing Loop
         ! ---------------------------------- End of Pointing Loop ---------------
+!
+! ========= Pointings dependance deallocation section:
+! (De-Allocate some of the arrays connected with pointing)
+!
+        deallocate(midval_ndx,gl_ndx,stat=status)
+        if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+          & MLSMSG_DeAllocate // 'midval_ndx/gl_ndx' )
 
+        do j = 1, size(gl_slabs,1)
+          do i = 1, size(gl_slabs,2)
+            deallocate(gl_slabs(j,i)%v0s, gl_slabs(j,i)%v0sm,     &
+            &    gl_slabs(j,i)%v0sp, gl_slabs(j,i)%x1,            &
+            &    gl_slabs(j,i)%y, gl_slabs(j,i)%yi,               &
+            &    gl_slabs(j,i)%slabs1, gl_slabs(j,i)%dx1_dv0,     &
+            &    gl_slabs(j,i)%dy_dv0, gl_slabs(j,i)%dslabs1_dv0, &
+            &    gl_slabs(j,i)%v0sm, gl_slabs(j,i)%x1m,           &
+            &    gl_slabs(j,i)%ym, gl_slabs(j,i)%yim,             &
+            &    gl_slabs(j,i)%slabs1m, gl_slabs(j,i)%v0sp,       &
+            &    gl_slabs(j,i)%x1p, gl_slabs(j,i)%yp,             &
+            &    gl_slabs(j,i)%yip, gl_slabs(j,i)%slabs1p, STAT=k)
+          end do
+        end do
+
+        deallocate ( gl_slabs, STAT=k )
+
+        if ( associated(beta_path) ) then
+          do i = 1, size(beta_path,1)
+            do j = 1, size(beta_path,2)
+              deallocate ( beta_path(i,j)%values, beta_path(i,j)%t_power, &
+                & beta_path(i,j)%dbeta_dw, beta_path(i,j)%dbeta_dn, &
+                & beta_path(i,j)%dbeta_dnu, STAT=k )
+            end do
+          end do
+        end if
+
+        deallocate ( beta_path, STAT=k )
+!
+! ========= End of pointing dependence De-Allocate section
+!
         ! Complete the radiance's last location; also complete k_temp last
         ! location.
 
@@ -1121,6 +1159,7 @@ contains ! ================================ FullForwardModel routine ======
           end if
 
         end do                            ! Channel loop
+
         call deallocate_test ( superset, 'superset', ModuleName )
         if ( toggle(emit) .and. levels(emit) > 0 ) &
           & call trace_end ( 'ForwardModel.Convolution' )
@@ -1131,18 +1170,6 @@ contains ! ================================ FullForwardModel routine ======
       ! ---------------------------- End of loop over sideband ------------------
 
       ! ------------------------------ End of Major Frame Specific stuff --------
-
-      if ( associated(beta_path) ) then
-        do i = 1, size(beta_path,1)
-          do j = 1, size(beta_path,2)
-            deallocate ( beta_path(i,j)%values, beta_path(i,j)%t_power, &
-              & beta_path(i,j)%dbeta_dw, beta_path(i,j)%dbeta_dn, &
-              & beta_path(i,j)%dbeta_dnu, STAT=k )
-          end do
-        end do
-      end if
-
-      deallocate ( beta_path, STAT=k )
 
       if ( FwdModelConf%temp_der ) call deallocate_test &
         & ( k_temp_frq%values, "k_temp_frq%values", ModuleName )
@@ -1226,6 +1253,7 @@ contains ! ================================ FullForwardModel routine ======
       call deallocate_test ( ref_corr, 'ref_corr', ModuleName )
       call deallocate_test ( tau, 'tau', ModuleName )
       call deallocate_test ( ptg_angles, 'ptg_angles', ModuleName )
+      call deallocate_test ( midval_delta, 'midval_delta', ModuleName )
 
       deallocate ( k_atmos_frq, stat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1265,9 +1293,11 @@ contains ! ================================ FullForwardModel routine ======
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 1.3  2001/06/21 15:05:42  livesey
+! Gets tolerance from fwdModelConf
+!
 ! Revision 1.2  2001/06/21 13:07:08  zvi
 ! Speed enhancement MAJOR update
 !
 ! Revision 1.1  2001/05/29 22:53:51  livesey
 ! First version, taken from old ForwardModelInterface.f90
-!
