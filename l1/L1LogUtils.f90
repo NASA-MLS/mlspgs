@@ -55,6 +55,7 @@ CONTAINS
 
     LOGICAL :: first = .TRUE.
     LOGICAL :: more_data = .TRUE.
+    INTEGER :: counterMAF = 0
 
     PRINT *, 'Examining eng data...'
     WRITE (unit, *) ''
@@ -82,6 +83,7 @@ CONTAINS
           BeginEnd%EngMAFno(1) = EngMAF%MAFno
           BeginEnd%EngTAI(1) = EngMAF%secTAI
           BeginEnd%TotalMAFcount(1) = EngMAF%TotalMAF
+          counterMAF = EngMAF%TotalMAF - 1   ! previous count for comparisons
           last_TAI = EngMAF%secTAI
           first = .FALSE.
        ENDIF
@@ -105,6 +107,18 @@ CONTAINS
           WRITE (unit, *) ''
        ENDIF
        last_TAI = EngMAF%secTAI
+
+! Check counter MAF
+
+       IF (counterMAF /= (EngMAF%TotalMAF - 1)) THEN
+          Eng_Warns = Eng_Warns + 1
+          WRITE (unit, *) '##### WARNING! Counter MAF incorrect:'
+          WRITE (unit, *) 'Counter MAFs: ', counterMAF, EngMAF%TotalMAF
+          PGS_stat = PGS_TD_TAItoUTC (EngMAF%secTAI, asciiUTC(1))
+          WRITE (unit, *) 'UTC: ', asciiUTC(1)
+          WRITE (unit, *) ''
+       ENDIF
+       counterMAF = EngMAF%TotalMAF
 
        EngMAFs = EngMAFs + 1
        BeginEnd%EngMAFno(2) = EngMAF%MAFno
@@ -520,6 +534,9 @@ END MODULE L1LogUtils
 !=============================================================================
 
 ! $Log$
+! Revision 2.7  2004/08/12 13:51:50  perun
+! Version 1.44 commit
+!
 ! Revision 2.6  2004/05/14 15:59:11  perun
 ! Version 1.43 commit
 !
