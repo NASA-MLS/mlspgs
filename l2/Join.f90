@@ -24,11 +24,12 @@ module Join                     ! Join together chunk based data.
   use LEXER_CORE, only: PRINT_SOURCE
   use ManipulateVectorQuantities, only: DOHGRIDSMATCH
   use MLSCommon, only: MLSChunk_T, R8
+  use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
     & MLSMSG_Allocate, MLSMSG_Deallocate
   use MLSSignals_M, only: GETSIGNALNAME
   use MoreTree, only: Get_Spec_ID
-  use OUTPUT_M, only: OUTPUT
+  use OUTPUT_M, only: BLANKS, OUTPUT
   use QuantityTemplates, only: QuantityTemplate_T
   use String_Table, only: DISPLAY_STRING, GET_STRING
   use Symbol_Table, only: ENTER_TERMINAL
@@ -112,7 +113,7 @@ contains ! =====     Public Procedures     =============================
     type (VectorValue_T), pointer :: BPQuantity
 
     ! Executable code
-    timing = .false.
+    timing = section_times
 
     if ( toggle(gen) ) call trace_begin ( "MLSL2Join", root )
 
@@ -284,6 +285,11 @@ contains ! =====     Public Procedures     =============================
   contains
     subroutine SayTime
       call cpu_time ( t2 )
+      if ( total_times ) then
+        call output ( "Total time = " )
+        call output ( dble(t2), advance = 'no' )
+        call blanks ( 4, advance = 'no' )
+      endif
       call output ( "Timing for MLSL2Join =" )
       call output ( DBLE(t2 - t1), advance = 'yes' )
       timing = .false.
@@ -701,6 +707,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.49  2001/09/28 17:50:30  pwagner
+! MLSL2Timings module keeps timing info
+!
 ! Revision 2.48  2001/09/08 00:21:44  pwagner
 ! Revised to work for new column Abundance in lone swaths
 !
