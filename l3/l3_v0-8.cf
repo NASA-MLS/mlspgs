@@ -280,13 +280,17 @@ BEGIN Output
     N2OL3DM: out, mcf = "ML3DN2O.001.MCF", file="MLS-Aura_$level_N2O_"
     O3L3DM: out, mcf = "ML3DO3.001.MCF", file="MLS-Aura_$level_O3_"
     OHL3DM: out, mcf = "ML3DOH.001.MCF", file="MLS-Aura_$level_OH_"
-    TL3DM: out, mcf = "ML3DT.001.MCF", file="MLS-Aura_$level_T_"
+;;    TL3DM: out, mcf = "ML3DT.001.MCF", file="MLS-Aura_$level_T_"
+    TL3DM: out, mcf = "ML3DT.001.MCF", file="MLS-Aura_$level_Temperature_"
     ;;
 END Output
 ;
 ; ----------------------------------------------------------------------------
 ;
 ; $Log$
+; Revision 1.3  2002/03/29 00:28:26  ahanzel
+; Changed Z to GPH in references to Geopotential Height
+;
 ; Revision 1.2  2001/12/10 18:31:22  nakamura
 ; Reduced number of dg products to 38.
 ;
