@@ -168,6 +168,9 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   ! Do you want to write file and swath attributes when you append values
   logical, parameter :: APPENDSWRITEATTRIBUTES = .true.  
 
+  ! Do you want to pre-fill arrays with MissingValue by default?
+  logical, parameter :: ALWAYSFILLWITHMISSINGVALUE = .true.  
+
   ! This datatype is the main one, it simply defines one l2gp swath
   ! It is used for 
   ! (1) normal swaths, which have geolocations along nTimes
@@ -258,6 +261,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Local variables
     integer :: useNFreqs, useNLevels, useNTimes, useNTimesTotal
+    logical :: myFillIn
 
     if ( present(nFreqs) ) then
        useNFreqs=nFreqs
@@ -282,6 +286,12 @@ contains ! =====     Public Procedures     =============================
     else
        useNTimesTotal=0              ! Default to empty l2gp
     end if
+
+    if ( present(FillIn) ) then
+      myFillIn = FillIn
+    else
+      myFillIn = ALWAYSFILLWITHMISSINGVALUE
+    endif
 
     ! Sanity
     useNTimesTotal = max(useNTimesTotal, useNTimes)
@@ -329,8 +339,7 @@ contains ! =====     Public Procedures     =============================
 
     call allocate_test(l2gp%status, useNTimes,"l2gp%status", ModuleName)
     call allocate_test(l2gp%quality,useNTimes,"l2gp%quality",ModuleName)
-    if ( .not. present(FillIn) ) return
-    if ( .not. FillIn ) return
+    if ( .not. myFillIn ) return
     l2gp%pressures = l2gp%MissingValue
     l2gp%frequency = l2gp%MissingValue
     l2gp%latitude = l2gp%MissingValue
@@ -1015,6 +1024,8 @@ contains ! =====     Public Procedures     =============================
     integer :: SWID, STATUS
     logical :: myNotUnlimited
     logical :: mycompressTimes
+    integer, external :: he5_SWgetfill
+    real :: fillValue
     ! integer, external :: he5_swsetfill
 
     if (present(swathName)) then
@@ -1250,6 +1261,11 @@ contains ! =====     Public Procedures     =============================
         if ( status == -1 ) &
           & call MLSMessage ( MLSMSG_Error, ModuleName, &
              & 'Cant set fill for ' // 'Frequency' )
+      endif
+      ! Get fill value
+      if ( DEEBUG ) then
+        status = HE5_SWgetfill(swID, 'L2gpValue', fillValue)
+        print *, 'status, fillValue: ', status, fillValue
       endif
     endif
 
@@ -2016,7 +2032,7 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------- cpL2GPData_fileID  ---------------------------
 
   subroutine cpL2GPData_fileID(file1, file2, swathList, &
-    & hdfVersion1, hdfVersion2, notUnlimited, ReadStatus)
+    & hdfVersion1, hdfVersion2, notUnlimited, swathList2, ReadStatus)
     !------------------------------------------------------------------------
 
     ! Given file names file1 and file2,
@@ -2024,13 +2040,14 @@ contains ! =====     Public Procedures     =============================
 
     ! Arguments
 
-    integer, intent(in) :: file1 ! handle of file 1
-    integer, intent(in) :: file2 ! handle of file 1
+    integer, intent(in)           :: file1 ! handle of file 1
+    integer, intent(in)           :: file2 ! handle of file 2
     character (len=*), intent(in) :: swathList
-    integer, intent(in) :: hdfVersion1
-    integer, intent(in) :: hdfVersion2
+    integer, intent(in)           :: hdfVersion1
+    integer, intent(in)           :: hdfVersion2
     logical, optional, intent(in) :: notUnlimited
     logical, optional, intent(in) :: ReadStatus
+    character (len=*), optional, intent(in) :: swathList2
 
     ! Local variables
     logical, parameter            :: countEmpty = .true.
@@ -2038,6 +2055,7 @@ contains ! =====     Public Procedures     =============================
     integer :: i
     integer :: noSwaths
     character (len=L2GPNameLen) :: swath
+    character (len=L2GPNameLen) :: swath2
     
     ! Executable code
     noSwaths = NumStringElements(trim(swathList), countEmpty)
@@ -2045,9 +2063,20 @@ contains ! =====     Public Procedures     =============================
        call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & 'No swaths cp to file--unable to count swaths in ' // trim(swathList) )
     endif
+    if ( present(swathList2) ) &
+      & noSwaths = min(noSwaths, NumStringElements(trim(swathList2), countEmpty))
+    if ( noSwaths < 1 ) then
+       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'No swaths cp to file--unable to count swaths in ' // trim(swathList2) )
+    endif
     ! Loop over swaths in file 1
     do i = 1, noSwaths
       call GetStringElement (trim(swathList), swath, i, countEmpty )
+      if ( present(swathList2) ) then
+        call GetStringElement (trim(swathList2), swath2, i, countEmpty )
+      else
+        swath2 = swath
+      endif
       ! Allocate and fill l2gp
       if ( DEEBUG ) print *, 'Reading swath from file: ', trim(swath)
       call ReadL2GPData ( file1, trim(swath), l2gp, &
@@ -2060,7 +2089,7 @@ contains ! =====     Public Procedures     =============================
         print *, 'shape(l2gp%l2gpvalue):  ', shape(l2gp%l2gpvalue)
       endif
       ! Write the filled l2gp to file2
-      call WriteL2GPData(l2gp, file2, trim(swath), hdfVersion=hdfVersion2, &
+      call WriteL2GPData(l2gp, file2, trim(swath2), hdfVersion=hdfVersion2, &
         & notUnlimited=notUnlimited)
       call DestroyL2GPContents ( l2gp )
     enddo
@@ -2070,7 +2099,7 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------- cpL2GPData_fileName  ---------------------------
 
   subroutine cpL2GPData_fileName(file1, file2, &
-    & create2, hdfVersion1,  hdfVersion2, swathList, &
+    & create2, hdfVersion1,  hdfVersion2, swathList, swathList2, &
     & notUnlimited, andGlAttributes, ReadStatus)
     !------------------------------------------------------------------------
 
@@ -2088,6 +2117,7 @@ contains ! =====     Public Procedures     =============================
     integer, optional, intent(in) :: hdfVersion1
     integer, optional, intent(in) :: hdfVersion2
     character (len=*), optional, intent(in) :: swathList
+    character (len=*), optional, intent(in) :: swathList2
     logical, optional, intent(in) :: notUnlimited
     logical, optional, intent(in) :: ReadStatus
 
@@ -2200,7 +2230,8 @@ contains ! =====     Public Procedures     =============================
     endif
     call cpL2GPData_fileID(File1Handle, File2Handle, &
       & mySwathList, the_hdfVersion1, the_hdfVersion2, &
-      & notUnlimited=notUnlimited, ReadStatus=ReadStatus )
+      & notUnlimited=notUnlimited, swathList2=swathList2, &
+      & ReadStatus=ReadStatus )
     if ( DEEBUG ) print *, 'About to close File1Handle: ', File1Handle
     status = mls_io_gen_closeF('swclose', File1Handle, FileName=File1, &
       & hdfVersion=the_hdfVersion1, debugOption=.false.)
@@ -2629,6 +2660,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.101  2004/04/23 01:43:34  livesey
+! Added Paul's fix for reading status
+!
 ! Revision 2.100  2004/04/06 01:17:43  livesey
 ! Changed some allocatables to pointers.
 !
