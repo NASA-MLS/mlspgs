@@ -30,17 +30,14 @@ module ForwardModelConfig
   type, public :: ForwardModelConfig_T
     logical :: globalConfig   ! If set is shared between all chunks
     integer :: fwmType        ! l_linear, l_full or l_scan
-    logical :: Atmos_Der      ! Do atmospheric derivatives
-    logical :: do_Baseline    ! Do a baseline computation
-    logical :: Do_Conv        ! Do convolution
-    logical :: Do_Freq_Avg    ! Do Frequency averaging
-    logical :: Do_1D          ! Do 1D forward model calculation
+    logical :: atmos_der      ! Do atmospheric derivatives
+    logical :: do_baseline    ! Do a baseline computation
+    logical :: do_conv        ! Do convolution
+    logical :: do_freq_avg    ! Do Frequency averaging
+    logical :: do_1d          ! Do 1D forward model calculation
     integer, dimension(:), pointer :: molecules=>NULL() ! Which molecules to consider
     logical, dimension(:), pointer :: moleculeDerivatives=>NULL() ! Want jacobians
     type (Signal_T), dimension(:), pointer :: signals=>NULL()
-    integer :: instrumentModule         ! Module for scan model
-    logical :: differentialScan         ! Differential scan model
-    logical :: LockBins                 ! Use same l2pc bin for whole chunk
     logical :: Polarized      ! Do polarized radiative transfer
     logical :: Spect_Der      ! Do spectroscopy derivatives
     logical :: Temp_Der       ! Do temperature derivatives
@@ -49,24 +46,28 @@ module ForwardModelConfig
     type(vGrid_T), pointer :: integrationGrid=>NULL() ! Zeta grid for integration
     type(vGrid_T), pointer :: tangentGrid=>NULL()     ! Zeta grid for integration
     integer, dimension(:), pointer :: specificQuantities=>NULL() ! Specific quantities to use
-    integer :: surfaceTangentIndex  ! Index in Tangentgrid of Earth's surface
-    real (r8) :: phiWindow            ! Window size for examining stuff
-    integer :: windowUnits          ! Either degrees or profiles
-    real (r8) :: tolerance          ! Accuracy desired when choosing approximations
-    ! CloudForwardModel
-    logical :: Default_spectroscopy ! Using Bill's spectroscopy data
-    logical :: Incl_Cld             ! Include cloud extinction calculation in Bill's forward model
-    integer :: no_cloud_species     ! No of Cloud Species '2'
-    integer :: no_model_surfs       ! No of Model surfaces '640'
-    integer :: NUM_SCATTERING_ANGLES! No of scattering angles '16'
-    integer :: NUM_AZIMUTH_ANGLES   ! No of azmuth angles '8'
-    integer :: NUM_AB_TERMS         ! No of AB terms '50'
-    integer :: NUM_SIZE_BINS        ! No of size bins '40'
-    integer :: cloud_der            ! Compute cloud sensitivity in cloud models.
-!    integer :: cloud_width          ! Flag for cloud horizontal extend.
-    integer :: i_saturation         ! Flag to determine saturation status
-    integer :: cloud_fov            ! Flag for cloud model field-of-view averaging.
-    integer :: NameFragment         ! For e.g. restricting bins in l2pc
+    integer :: surfaceTangentIndex ! Index in Tangentgrid of Earth's surface
+    real (r8) :: phiWindow             ! Window size for examining stuff
+    integer :: windowUnits              ! Either degrees or profiles
+    real (r8) :: tolerance ! Accuracy desired when choosing approximations
+    ! Specifics for CloudForwardModel
+    logical :: Default_spectroscopy     ! Using Bill's spectroscopy data
+    logical :: incl_cld ! Include cloud extinction calculation in Bill's forward model
+    integer :: no_cloud_species         ! No of Cloud Species '2'
+    integer :: no_model_surfs           ! No of Model surfaces '640'
+    integer :: num_scattering_angles    ! No of scattering angles '16'
+    integer :: num_azimuth_angles       ! No of azmuth angles '8'
+    integer :: num_ab_terms             ! No of AB terms '50'
+    integer :: num_size_bins            ! No of size bins '40'
+    integer :: cloud_der    ! Compute cloud sensitivity in cloud models.
+    integer :: i_saturation        ! Flag to determine saturation status
+    integer :: cloud_fov ! Flag for cloud model field-of-view averaging.
+    ! Specifics for linearised forward model
+    logical :: LockBins              ! Use same l2pc bin for whole chunk
+    integer, dimension(:), pointer :: binSelectors=>NULL() ! List of relevant bin selectors
+    ! Specifics for scan forward model
+    integer :: instrumentModule         ! Module for scan model
+    logical :: differentialScan         ! Differential scan model
   end type ForwardModelConfig_T
 
   !---------------------------- RCS Ident Info -------------------------------
@@ -221,6 +222,16 @@ contains
       call PVMIDLPack ( 0, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "Packing 0 specificQuantities" )
     end if
+    ! Bin selectors
+    if ( associated ( config%binSelectors ) ) then
+      call PVMIDLPack ( size ( config%binSelectors ), info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "Packing number of binSelectors" )
+      call PVMIDLPack ( config%binSelectors, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "Packing binSelectors" )
+    else
+      call PVMIDLPack ( 0, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "Packing 0 binSelectors" )
+    end if
 
     ! Pack the other structures - signals
     if ( associated ( config%signals ) ) then
@@ -242,10 +253,6 @@ contains
       & call PVMPackVGrid ( config%integrationGrid )
     if ( associated ( config%tangentGrid ) ) &
       & call PVMPackVGrid ( config%tangentGrid )
-
-    ! Name fragment
-    call PVMPackStringIndex ( config%nameFragment, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Packing nameFragment" )
 
   end subroutine PVMPackFWMConfig
 
@@ -327,6 +334,7 @@ contains
       call PVMIDLUnpack ( config%moleculeDerivatives, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking moleculeDerivatives" )
     end if
+
     ! Specific quantiites
     call PVMIDLUnpack ( n, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking number of specific quantities" )
@@ -334,7 +342,17 @@ contains
       call Allocate_test ( config%specificQuantities, n, &
         & 'config%specificQuantities', ModuleName )
       call PVMIDLUnpack ( config%specificQuantities, info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking specificQuantities" )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking specific quantities" )
+    end if
+
+    ! Specific quantiites
+    call PVMIDLUnpack ( n, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking number of specific quantities" )
+    if ( n > 0 ) then
+      call Allocate_test ( config%binSelectors, n, &
+        & 'config%binSelectors', ModuleName )
+      call PVMIDLUnpack ( config%binSelectors, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking binSelectors" )
     end if
 
     ! Unpack other structures - signals
@@ -364,10 +382,6 @@ contains
       call PVMUnpackVGrid ( config%tangentGrid )
     end if
 
-    ! Name fragment
-    call PVMUnpackStringIndex ( config%nameFragment, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking name fragment" )
-
   end subroutine PVMUnpackFWMConfig
 
   ! ------------------------------------ NullifyForwardModelConfig -----
@@ -382,6 +396,7 @@ contains
     nullify ( f%integrationGrid )
     nullify ( f%tangentGrid )
     nullify ( f%specificQuantities )
+    nullify ( f%binSelectors )
   end subroutine NullifyForwardModelConfig
 
   ! =====     Private Procedures     =====================================
@@ -435,6 +450,8 @@ contains
       & "config%moleculeDerivatives", moduleName )
     call Deallocate_test ( config%specificQuantities, &
       & "config%specificQuantities", ModuleName )
+    call Deallocate_test ( config%binSelectors, &
+      & "config%binSelectors", ModuleName )
   end subroutine DestroyOneForwardModelConfig
 
   ! ------------------------------------  Dump_FowardModelConfigs  -----
@@ -508,6 +525,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.27  2003/01/30 22:01:30  livesey
+! Tidy up of the logical array packing.
+!
 ! Revision 2.26  2003/01/30 18:29:40  jonathan
 ! change dimension l13 to 14
 !
