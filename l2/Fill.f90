@@ -331,6 +331,7 @@ contains ! =====     Public Procedures     =============================
     integer :: NBWQUANTITYINDEX         ! In vector database
     integer :: NOFINEGRID               ! no of fine grids for cloud extinction calculation
     integer :: NOSNOOPEDMATRICES        ! No matrices to snoop
+    real(rv) :: OFFSETAMOUNT            ! For offsetRadiance
     integer :: ORBITINCLINATIONVECTORINDEX ! In the vector database
     integer :: ORBITINCLINATIONQUANTITYINDEX ! In the quantities database
     integer :: PHITANVECTORINDEX        ! In the vector database
@@ -436,6 +437,7 @@ contains ! =====     Public Procedures     =============================
       seed = 0
       noFineGrid = 1
       precisionFactor = 0.5
+      offsetAmount = 1000.0             ! Default to 1000K
 
       ! Node_id(key) is now n_spec_args.
 
@@ -634,6 +636,12 @@ contains ! =====     Public Procedures     =============================
           case ( f_noiseBandwidth )
             nbwVectorIndex = decoration(decoration(subtree(1,gson)))
             nbwQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_offsetAmount )    ! For marking unused radiances
+            call expr ( subtree(2,subtree(j,key)), unitAsArray, valueAsArray )
+            if ( unitAsArray(1) /= PHYQ_Temperature ) &
+              & call Announce_error ( key, No_Error_code, &
+              & 'Bad units for offsetAmount' )
+            offsetAmount = valueAsArray(1)
           case ( f_orbitInclination ) ! For hydrostatic fill
             orbitinclInationVectorIndex = &
               & decoration(decoration(subtree(1,gson)))
@@ -891,7 +899,7 @@ contains ! =====     Public Procedures     =============================
             & call Announce_error ( key, 0, 'radianceQuantity not supplied' )
           radianceQuantity => GetVectorQtyByTemplateIndex( &
             & vectors(radianceVectorIndex), radianceQuantityIndex )
-          call OffsetRadianceQuantity ( quantity, radianceQuantity )
+          call OffsetRadianceQuantity ( quantity, radianceQuantity, offsetAmount )
 
         case ( l_profile ) ! ------------------------ Profile fill -------
           if ( .not. got ( f_profileValues ) ) &
@@ -4299,9 +4307,10 @@ contains ! =====     Public Procedures     =============================
     end subroutine FillQuantityFromLosGrid
 
     ! ----------------------------------------------- OffsetRadianceQuantity ---
-    subroutine OffsetRadianceQuantity ( quantity, radianceQuantity )
+    subroutine OffsetRadianceQuantity ( quantity, radianceQuantity, amount )
       type (VectorValue_T), intent(inout) :: QUANTITY
-      type (VectorValue_T), intent(inout) :: RADIANCEQUANTITY
+      type (VectorValue_T), intent(in) :: RADIANCEQUANTITY
+      real (rv), intent(in) :: AMOUNT
 
       ! Executable code
       if ( .not. ValidateVectorQuantity ( quantity, &
@@ -4317,7 +4326,7 @@ contains ! =====     Public Procedures     =============================
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Quantity and rad. qty. in offsetRadiance fill different signal/sideband' )
       where ( iand ( ichar(radianceQuantity%mask), m_linAlg ) == 1 )
-        quantity%values = quantity%values + 1000.0
+        quantity%values = quantity%values + amount
       end where
     end subroutine OffsetRadianceQuantity
 
@@ -4507,6 +4516,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.157  2002/10/25 23:56:14  livesey
+! Added the offsetAmount argument default 1000K
+!
 ! Revision 2.156  2002/10/17 18:18:50  livesey
 ! Added low/high bound to vector creation
 !
