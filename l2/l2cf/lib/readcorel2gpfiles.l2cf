@@ -21,4 +21,11 @@ begin ReadApriori
     file='!inpathcore/MLS-Aura_L2AUX-DGM_!coreversion_!day.h!CoreHDFVersion', $
     sdName='GHz.ptan-Core', quantityType=ptan, hdfVersion=!CoreHDFVersion
 
+  b1CoreInput: l2aux, $
+    file='!inpathcore/MLS-Aura_L2FWM-GHz_!coreversion_!day.h!CoreHDFVersion', $
+    sdName='R1A:118.B1F:PT.S0.FB25-1 UpdatePtan', quantityType=radiance, hdfVersion=!CoreHDFVersion
+  b32CoreInput: l2aux, $
+    file='!inpathcore/MLS-Aura_L2FWM-GHz_!coreversion_!day.h!CoreHDFVersion', $
+    sdName='R1A:118.B32W:PT.S0.WF4-1 UpdatePtan', quantityType=radiance, hdfVersion=!CoreHDFVersion
+
 end ReadApriori
