@@ -6,15 +6,15 @@
 MODULE L2Interface
 !===============================================================================
 
-   USE SDPToolkit
-   USE MLSMessageModule
+   USE Hdf
+   USE L2GPData, ONLY: L2GPData_T
    USE MLSCommon
    USE MLSL3Common
-   USE L2GPData, ONLY: L2GPData_T, ReadL2GPData
-   USE Hdf
+   USE MLSMessageModule
    USE MLSPCF3
    USE MLSStrings
    USE OpenInit
+   USE SDPToolkit
    IMPLICIT NONE
    PUBLIC
 
@@ -29,10 +29,12 @@ MODULE L2Interface
 ! Contents:
 
 ! Subroutines -- GetL2GPfromPCF
+!                ReadL2GP
 !                ReadL2GPProd
 !                ResidualCreate
 !                ResidualWrite
 !                ResidualOutput
+!                ReadL2DGData
 
 ! Remarks:  This module contains subroutines involving the interface between
 !           Level 3 and L2.
@@ -48,7 +50,8 @@ MODULE L2Interface
 CONTAINS
 
 !----------------------------------------------------------------------------
-   SUBROUTINE GetL2GPfromPCF (template, startDOY, endDOY, numFiles, pcfNames)
+   SUBROUTINE GetL2GPfromPCF (mlspcf_start, mlspcf_end, template, startDOY, &
+                              endDOY, numFiles, pcfNames)
 !----------------------------------------------------------------------------
 
 ! Brief description of subroutine
@@ -60,6 +63,8 @@ CONTAINS
       CHARACTER (LEN=8), INTENT(IN) :: endDOY, startDOY
 
       CHARACTER (LEN=*), INTENT(IN) :: template
+
+      INTEGER, INTENT(IN) :: mlspcf_end, mlspcf_start
 
       INTEGER, INTENT(OUT) :: numFiles
 
@@ -84,7 +89,7 @@ CONTAINS
 
 ! Loop through all the PCF numbers for L2GP files
 
-      DO i = mlspcf_l2gp_start, mlspcf_l2gp_end
+      DO i = mlspcf_start, mlspcf_end
 
          version = 1
          returnStatus = Pgs_pc_getReference(i, version, physicalFilename)
@@ -121,9 +126,303 @@ CONTAINS
    END SUBROUTINE GetL2GPfromPCF
 !-------------------------------
 
-!-----------------------------------------------------------------------
-   SUBROUTINE ReadL2GPProd (cfProd, startDOY, endDOY, numDays, prodL2GP)
-!-----------------------------------------------------------------------
+!--------------------------------------------------------
+   SUBROUTINE ReadL2GP(L2FileHandle, swathname, l2gpData)
+!--------------------------------------------------------
+
+! Brief description of subroutine
+! This routine reads an L2GP file, returning a filled data structure.
+
+! Arguments
+
+      CHARACTER (LEN=*), INTENT(IN) :: swathname
+
+      INTEGER, INTENT(IN) :: L2FileHandle
+
+      TYPE( L2GPData_T ), INTENT(OUT) :: l2gpData
+
+! Parameters
+
+      CHARACTER (LEN=*), PARAMETER :: MLSMSG_L2GPRead = 'Unable to read L2GP field:'
+
+! Functions
+
+      INTEGER, EXTERNAL :: swattach, swdetach, swdiminfo, swinqdims, swrdfld
+
+! Variables
+
+      CHARACTER (LEN=80) :: list
+      CHARACTER (LEN=480) :: msr
+
+      INTEGER :: alloc_err, freq, lev, nDims, numFreq, numLev, numProfs, size, swid
+      INTEGER :: status
+      INTEGER :: start(3), stride(3), edge(3), dims(3)
+
+      REAL, ALLOCATABLE :: realFreq(:), realSurf(:), realProf(:), real3(:,:,:)
+
+! Attach to the swath for reading
+
+      l2gpData%name = swathname
+
+      swid = swattach(L2FileHandle, l2gpData%name)
+      IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+                                     &attach to swath interface for reading.')
+
+! Get dimension information
+
+      lev = 0
+      freq = 0
+
+      nDims = swinqdims(swid, list, dims)
+      IF (nDims == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+                                               &get dimension information.')
+      IF ( INDEX(list,'nLevels') /= 0 ) lev = 1
+      IF ( INDEX(list,'nFreqs') /= 0 ) freq = 1
+
+      size = swdiminfo(swid, DIM_NAME1)
+      IF (size == -1) THEN
+         msr = SZ_ERR // DIM_NAME1
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      l2gpData%nTimes = size
+      numProfs = size
+
+      IF (lev == 0) THEN
+         l2gpData%nLevels = 0
+         numLev = 1
+      ELSE
+         size = swdiminfo(swid, DIM_NAME2)
+         IF (size == -1) THEN
+            msr = SZ_ERR // DIM_NAME2
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+         l2gpData%nLevels = size
+         numLev = size
+      ENDIF
+
+      IF (freq == 1) THEN
+         size = swdiminfo(swid, DIM_NAME3)
+         IF (size == -1) THEN
+            msr = SZ_ERR // DIM_NAME3
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+         l2gpData%nFreqs = size
+         numFreq = size
+      ELSE
+         l2gpData%nFreqs = 0
+         numFreq = 1
+      ENDIF
+
+! Allocate output pointers for fields that are always present
+
+      ALLOCATE (l2gpData%latitude(numProfs), l2gpData%longitude(numProfs), &
+                l2gpData%time(numProfs), l2gpData%solarTime(numProfs), &
+                l2gpData%solarZenith(numProfs), l2gpData%losAngle(numProfs), &
+                l2gpData%geodAngle(numProfs), l2gpData%chunkNumber(numProfs), &
+                l2gpData%l2gpValue(numFreq,numLev,numProfs), &
+                l2gpData%l2gpPrecision(numFreq,numLev,numProfs), &
+                l2gpData%status(numProfs), l2gpData%quality(numProfs), &
+                realProf(numProfs), realSurf(numLev), realFreq(numFreq), &
+                real3(numFreq,numLev,numProfs), STAT=alloc_err)
+      IF ( alloc_err /= 0 ) THEN
+         msr = MLSMSG_Allocate // '  output pointers.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Read the horizontal geolocation fields
+
+      start = 0
+      stride = 1
+      edge(1) = numFreq
+      edge(2) = numLev
+      edge(3) = numProfs
+
+      status = swrdfld(swid, GEO_FIELD1, start(3), stride(3), edge(3), realProf)
+      IF (status == -1) THEN
+         msr = MLSMSG_L2GPRead // GEO_FIELD1
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      l2gpData%latitude = DBLE(realProf)
+
+      status = swrdfld(swid, GEO_FIELD2, start(3), stride(3), edge(3), realProf)
+      IF (status == -1) THEN
+         msr = MLSMSG_L2GPRead // GEO_FIELD2
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      l2gpData%longitude = DBLE(realProf)
+
+      status = swrdfld(swid, GEO_FIELD3, start(3), stride(3), edge(3), &
+                       l2gpData%time)
+      IF (status == -1) THEN
+         msr = MLSMSG_L2GPRead // GEO_FIELD3
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      status = swrdfld(swid, GEO_FIELD4, start(3), stride(3), edge(3), realProf)
+      IF (status == -1) THEN
+         msr = MLSMSG_L2GPRead // GEO_FIELD4
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      l2gpData%solarTime = DBLE(realProf)
+
+      status = swrdfld(swid, GEO_FIELD5, start(3), stride(3), edge(3), realProf)
+      IF (status == -1) THEN
+         msr = MLSMSG_L2GPRead // GEO_FIELD5
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      l2gpData%solarZenith = DBLE(realProf)
+
+      status = swrdfld(swid, GEO_FIELD6, start(3), stride(3), edge(3), realProf)
+      IF (status == -1) THEN
+         msr = MLSMSG_L2GPRead // GEO_FIELD6
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      l2gpData%losAngle = DBLE(realProf)
+
+      status = swrdfld(swid, GEO_FIELD7, start(3), stride(3), edge(3), realProf)
+      IF (status == -1) THEN
+         msr = MLSMSG_L2GPRead // GEO_FIELD7
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      l2gpData%geodAngle = DBLE(realProf)
+
+      status = swrdfld(swid, GEO_FIELD8, start(3), stride(3), edge(3), &
+                       l2gpData%chunkNumber)
+      IF (status == -1) THEN
+         msr = MLSMSG_L2GPRead // GEO_FIELD8
+         CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+      ENDIF
+
+! Read the pressures vertical geolocation field, if it exists
+
+      IF (lev /= 0) THEN
+
+         ALLOCATE (l2gpData%pressures(l2gpData%nLevels), STAT=alloc_err)
+         IF ( alloc_err /= 0 ) THEN
+            msr = MLSMSG_Allocate // '  l2gp pressure pointer.'
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+         status = swrdfld(swid, GEO_FIELD9, start(2), stride(2), edge(2), realSurf)
+         IF (status == -1) THEN
+            msr = MLSMSG_L2GPRead // GEO_FIELD9
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+         l2gpData%pressures = DBLE(realSurf)
+     ENDIF
+
+! Read the frequency geolocation field, if it exists
+
+      IF (freq == 1) THEN
+
+         ALLOCATE (l2gpData%frequency(l2gpData%nFreqs), STAT=alloc_err)
+         IF ( alloc_err /= 0 ) THEN
+            msr = MLSMSG_Allocate // '  l2gp frequency pointer.'
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+         edge(1) = l2gpData%nFreqs
+
+         status = swrdfld(swid, GEO_FIELD10, start(1), stride(1), edge(1), realFreq)
+         IF (status == -1) THEN
+             msr = MLSMSG_L2GPRead // GEO_FIELD10
+             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+         l2gpData%frequency = DBLE(realFreq)
+
+      ENDIF
+
+! Read the data fields that may have 1-3 dimensions
+
+      IF ( freq == 1) THEN
+
+         status = swrdfld(swid, DATA_FIELD1, start, stride, edge, real3)
+         IF (status == -1) THEN
+            msr = MLSMSG_L2GPRead // DATA_FIELD1
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+         l2gpData%l2gpValue = DBLE(real3)
+
+         status = swrdfld(swid, DATA_FIELD2, start, stride, edge, real3)
+         IF (status == -1) THEN
+            msr = MLSMSG_L2GPRead // DATA_FIELD2
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+         l2gpData%l2gpPrecision = DBLE(real3)
+
+      ELSE IF ( lev == 1) THEN
+
+         status = swrdfld( swid, DATA_FIELD1, start(2:3), stride(2:3), &
+                           edge(2:3), real3(1,:,:) )
+         IF (status == -1) THEN
+            msr = MLSMSG_L2GPRead // DATA_FIELD1
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+         l2gpData%l2gpValue = DBLE(real3)
+
+         status = swrdfld( swid, DATA_FIELD2, start(2:3), stride(2:3), &
+                           edge(2:3), real3(1,:,:) )
+         IF (status == -1) THEN
+            msr = MLSMSG_L2GPRead // DATA_FIELD2
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+         l2gpData%l2gpPrecision = DBLE(real3)
+
+      ELSE
+
+         status = swrdfld( swid, DATA_FIELD1, start(3), stride(3), edge(3), &
+                           real3(1,1,:) )
+         IF (status == -1) THEN
+            msr = MLSMSG_L2GPRead // DATA_FIELD1
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+         l2gpData%l2gpValue = DBLE(real3)
+
+         status = swrdfld( swid, DATA_FIELD2, start(3), stride(3), edge(3), &
+                           real3(1,1,:) )
+         IF (status == -1) THEN
+            msr = MLSMSG_L2GPRead // DATA_FIELD2
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+         l2gpData%l2gpPrecision = DBLE(real3)
+
+      ENDIF
+
+! Read the data fields that are 1-dimensional
+
+      status = swrdfld(swid, DATA_FIELD3, start(3), stride(3), edge(3), &
+                       l2gpData%status)
+      IF (status == -1) THEN
+         msr = MLSMSG_L2GPRead // DATA_FIELD3
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      status = swrdfld(swid, DATA_FIELD4, start(3), stride(3), edge(3), realProf)
+      IF (status == -1) THEN
+         msr = MLSMSG_L2GPRead // DATA_FIELD4
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      l2gpData%quality = DBLE(realProf)
+
+! Deallocate local variables
+
+      DEALLOCATE(realFreq, realSurf, realProf, real3, STAT=alloc_err)
+      IF ( alloc_err /= 0 ) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+                                'Failed deallocation of local real variables.')
+
+!  After reading, detach from swath interface
+
+      status = swdetach(swid)
+      IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+                                 &detach from swath interface after reading.')
+
+!-------------------------
+   END SUBROUTINE ReadL2GP
+!-------------------------
+
+!----------------------------------------------------------------------------------
+   SUBROUTINE ReadL2GPProd (product, template, startDOY, endDOY, numDays, prodL2GP)
+!----------------------------------------------------------------------------------
 
 ! Brief description of subroutine
 ! This subroutine reads l2gp files for a quantity over a range of days.  It
@@ -131,7 +430,7 @@ CONTAINS
 
 ! Arguments
 
-      TYPE( L3CFProd_T ), INTENT(IN) :: cfProd
+      CHARACTER (LEN=*), INTENT(IN) :: product, template
 
       CHARACTER (LEN=8), INTENT(IN) :: endDOY, startDOY
 
@@ -150,12 +449,12 @@ CONTAINS
       CHARACTER (LEN=480) :: msr
       CHARACTER (LEN=FileNameLen) :: pcfNames(40)
 
-      INTEGER :: err, i, l2id, numProfs, status
+      INTEGER :: err, i, l2id, status
 
 ! Search the PCF for L2GP files for this species
 
-      CALL GetL2GPfromPCF(cfProd%fileTemplate, startDOY, endDOY, numDays, &
-                          pcfNames)
+      CALL GetL2GPfromPCF(mlspcf_l2gp_start, mlspcf_l2gp_end, template, startDOY, &
+                          endDOY, numDays, pcfNames)
 
 ! Check that numDays is at least 1, so pointer allocation is possible
 
@@ -163,7 +462,7 @@ CONTAINS
 
 ! If not, issue a warning
 
-         msr = 'No L2GP data found for ' // cfProd%l3prodNameD
+         msr = 'No L2GP data found for ' // product
          CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
          NULLIFY(prodL2GP)
 
@@ -173,7 +472,7 @@ CONTAINS
 
          ALLOCATE( prodL2GP(numDays), STAT=err )
          IF ( err /= 0 ) THEN
-            msr = MLSMSG_Allocate // ' l2gp array for ' // cfProd%l3prodNameD
+            msr = MLSMSG_Allocate // ' l2gp array for ' // product
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
@@ -187,7 +486,7 @@ CONTAINS
 
 ! Read information from the L2GP file
 
-            CALL ReadL2GPData(l2id, cfProd%l3prodNameD, prodL2GP(i), numProfs)
+            CALL ReadL2GP( l2id, product, prodL2GP(i) )
 
 ! Close the L2GP file
 
@@ -656,11 +955,131 @@ CONTAINS
    END SUBROUTINE ResidualOutput
 !-------------------------------
 
+!-----------------------------------------------------------------------
+   SUBROUTINE ReadL2DGData (product, numFiles, files, numDays, prodL2GP)
+!-----------------------------------------------------------------------
+
+! Brief description of subroutine
+! This subroutine reads l2gp dg files for a quantity over a range of days.  It
+! returns an array of L2GPData_T structures, with one structure per day.
+
+! Arguments
+
+      CHARACTER (LEN=*), INTENT(IN) :: product
+
+      CHARACTER (LEN=FileNameLen), INTENT(IN) :: files(:)
+
+      INTEGER, INTENT(IN) :: numFiles
+
+      INTEGER, INTENT(OUT) :: numDays
+
+      TYPE( L2GPData_T ), POINTER :: prodL2GP(:)
+
+! Parameters
+
+! Functions
+
+      INTEGER, EXTERNAL :: swclose, swinqswath, swopen
+
+! Variables
+
+      CHARACTER (LEN=480) :: msr
+      CHARACTER (LEN=6000) :: list
+      CHARACTER (LEN=GridNameLen) :: swath
+      CHARACTER (LEN=FileNameLen) :: prodFiles(numFiles)
+
+      INTEGER :: err, i, indx, j, l2id, len, ns, status
+
+! Check for the product in the input files
+
+      numDays = 0
+
+      DO i = 1, numFiles
+
+         ns = swinqswath(files(i), list, len)
+         IF (ns == -1) THEN
+            msr = 'Failed to read swath list from ' // files(i)
+            CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+            CYCLE
+         ENDIF
+
+         DO j = 1, ns
+
+            indx = INDEX(list, ',')
+
+            IF (indx == 0) THEN
+               swath = list
+            ELSE
+               swath = list(:indx-1)
+               list = list(indx+1:)
+            ENDIF
+
+            IF ( TRIM(swath) == TRIM(product) ) THEN
+               numDays = numDays + 1
+               prodFiles(numDays) = files(i)
+               EXIT
+            ENDIF
+
+         ENDDO
+
+      ENDDO
+
+! Check that numDays is at least 1, so pointer allocation is possible
+
+      IF (numDays == 0) THEN
+
+! If not, issue a warning
+
+         msr = 'No L2GP data found for ' // product
+         CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+         NULLIFY(prodL2GP)
+
+! If so, open, read, & close the files for this quantity
+
+      ELSE
+
+         ALLOCATE( prodL2GP(numDays), STAT=err )
+         IF ( err /= 0 ) THEN
+            msr = MLSMSG_Allocate // ' l2gp array for ' // product
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+         DO i = 1, numDays
+
+            l2id = swopen(prodFiles(i), DFACC_READ)
+            IF (l2id == -1) THEN
+               msr = MLSMSG_Fileopen // prodFiles(i)
+               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+            ENDIF
+
+! Read information from the L2GP file
+
+            CALL ReadL2GP( l2id, product, prodL2GP(i) )
+
+! Close the L2GP file
+
+            status = swclose(l2id)
+            IF (status == -1) THEN
+               msr = 'Failed to close file ' // prodFiles(i)
+               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+            ENDIF
+
+         ENDDO
+
+      ENDIF
+
+!-----------------------------
+   END SUBROUTINE ReadL2DGData
+!-----------------------------
+
 !=====================
 END MODULE L2Interface
 !=====================
 
 !# $Log$
+!# Revision 1.5  2001/04/24 19:37:30  nakamura
+!# Changes for privatization of L2GPData.
+!#
 !# Revision 1.4  2001/02/21 20:37:18  nakamura
 !# Changed MLSPCF to MLSPCF3.
 !#
