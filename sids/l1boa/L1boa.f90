@@ -46,7 +46,7 @@ contains
     character (LEN=480) :: msr
     integer :: alloc_err, dealloc_err, nV
     real(r8) :: mafTAI
-    real(r8) :: initRay(3), q(3)
+    real(r8) :: initRay(3), q(3,size(offsets))
 
     ! Executable code
 
@@ -73,9 +73,9 @@ contains
     call TkL1B_sc(nV, offsets(1:nV), mafTime, sc)
 
     ! Get s/c master coordinate
-    call Mc_aux(mafTime, sc%scECI(:,1), q)
+    call Mc_aux(mafTime, offsets(1:nV), sc%scECR(1:3,1:nV), q(:,1:nV) )
 
-    call TkL1B_mc(ascTAI, dscTAI, sc%scECI, nV, numOrb, &
+    call TkL1B_mc(ascTAI, dscTAI, sc%scECR, nV, numOrb, &
       & orbIncline, orbitNumber, q, mafTAI, offsets(1:nV), sc%scGeodAngle, &
       & sc%scOrbIncl)
 
@@ -104,7 +104,7 @@ contains
       sc%scECR(:,1:mifG), scRate, tp%scAngle(1), tp)
 
     ! Compute GHz master coordinate
-    call TkL1B_mc(ascTAI, dscTAI, tp%tpECI, mifG, numOrb, &
+    call TkL1B_mc(ascTAI, dscTAI, tp%tpECR, mifG, numOrb, &
       & orbIncline, orbitNumber, q, mafTAI, offsets(1:mifG), tp%tpGeodAngle, &
       & sc%scOrbIncl)
 
@@ -137,7 +137,7 @@ contains
       sc%scECR(:,1:mifT), scRateT, tp%scAngle(1), tp)
 
     ! Compute THz master coordinate
-    call TkL1B_mc(ascTAI, dscTAI, tp%tpECI, mifT, numOrb, &
+    call TkL1B_mc(ascTAI, dscTAI, tp%tpECR, mifT, numOrb, &
       & orbIncline, orbitNumber, q, mafTAI, offsets(1:mifT), tp%tpGeodAngle, &
       & sc%scOrbIncl)
 
@@ -185,7 +185,7 @@ contains
     character (LEN=480) :: msr
     integer :: alloc_err, dealloc_err, nV
     real(r8) :: mafTAI
-    real(r8) :: initRay(3), q(3)
+    real(r8) :: initRay(3), q(3,size(offsets))
 
     ! Executable code
 
@@ -210,8 +210,9 @@ contains
     call TkL1B_sc(nV, offsets(1:nV), mafTime, sc)
 
     ! Get s/c master coordinate
-    call Mc_aux(mafTime, sc%scECI(:,1), q)
-    call TkL1B_mc(ascTAI, dscTAI, sc%scECI, nV, numOrb, &
+    call Mc_aux(mafTime, offsets(1:nV), sc%scECR(:,1:nV), q(:,1:nV) )
+
+    call TkL1B_mc(ascTAI, dscTAI, sc%scECR, nV, numOrb, &
       & orbIncline, orbitNumber, q, mafTAI, offsets(1:nV), sc%scGeodAngle, &
       & sc%scOrbIncl)
 
@@ -240,7 +241,7 @@ contains
       sc%scECR(:,1:mifG), scRate, tp%scAngle(1), tp)
 
     ! Compute GHz master coordinate
-    call TkL1B_mc(ascTAI, dscTAI, tp%tpECI, mifG, numOrb, &
+    call TkL1B_mc(ascTAI, dscTAI, tp%tpECR, mifG, numOrb, &
       & orbIncline, orbitNumber, q, mafTAI, offsets(1:mifG), tp%tpGeodAngle, &
       & sc%scOrbIncl)
 
@@ -273,7 +274,7 @@ contains
       sc%scECR(:,1:mifT), scRateT, tp%scAngle(1), tp)
 
     ! Compute THz master coordinate
-    call TkL1B_mc(ascTAI, dscTAI, tp%tpECI, mifT, numOrb, &
+    call TkL1B_mc(ascTAI, dscTAI, tp%tpECR, mifT, numOrb, &
       & orbIncline, orbitNumber, q, mafTAI, offsets(1:mifT), tp%tpGeodAngle, &
       & sc%scOrbIncl)
 
@@ -302,6 +303,9 @@ contains
 end module L1boa
 
 ! $Log$
+! Revision 1.7  2001/12/12 20:31:20  livesey
+! Arguments changed for new version of TkL1B_mc etc.
+!
 ! Revision 1.6  2001/12/06 01:02:30  pwagner
 ! Now writes orbit incline angle in ECR
 !
