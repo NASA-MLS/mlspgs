@@ -99,7 +99,10 @@ Subroutine comp_refcor(h_path,n_path,ht,del_s,ref_corr)
 !
     h2 = h_path(1)
     n2 = n_path(1)-1.0_rp
-    x2 = Sqrt((h_path(1)*n_path(1))**2-Nt2Ht2)
+!
+    q = (h_path(1)*n_path(1))**2-Nt2Ht2
+    if(q < 1.0e-9_rp) q = 0.0_rp
+    x2 = Sqrt(q)
 
     do j = 2, mid
 !
@@ -108,7 +111,11 @@ Subroutine comp_refcor(h_path,n_path,ht,del_s,ref_corr)
       n1 = n2
       h2 = h_path(j)
       n2 = n_path(j)-1.0_rp
-      x2 = Sqrt(abs((h_path(j)*n_path(j))**2-Nt2Ht2))
+
+      q = (h_path(j)*n_path(j))**2 - Nt2Ht2
+      if(q < 1.0e-9_rp) q = 0.0_rp
+      x2 = Sqrt(q)
+
       eps = Log(n2/n1)/(h2-h1)
       xm = 0.5_rp *(x1 + x2)
       ym = 0.5_rp *(x1 - x2)
@@ -132,7 +139,10 @@ Subroutine comp_refcor(h_path,n_path,ht,del_s,ref_corr)
     j = mid+1
     h2 = h_path(j)
     n2 = n_path(j)-1.0_rp
-    x2 = Sqrt(abs((h_path(j)*n_path(j))**2-Nt2Ht2))
+
+    q = (h_path(j)*n_path(j))**2 - Nt2Ht2
+    if(q < 1.0e-9_rp) q = 0.0_rp
+    x2 = Sqrt(q)
 
     do j = mid+1, no_ele-1
 !
@@ -141,7 +151,11 @@ Subroutine comp_refcor(h_path,n_path,ht,del_s,ref_corr)
       n1 = n2
       h2 = h_path(j+1)
       n2 = n_path(j+1)-1.0_rp
-      x2 = Sqrt((h_path(j+1)*n_path(j+1))**2-Nt2Ht2)
+
+      q = (h_path(j+1)*n_path(j+1))**2 - Nt2Ht2
+      if(q < 1.0e-9_rp) q = 0.0_rp
+      x2 = Sqrt(q)
+
       eps = Log(n2/n1)/(h2-h1)
       xm = 0.5_rp *(x2 + x1)
       ym = 0.5_rp *(x2 - x1)
@@ -230,6 +244,9 @@ End Subroutine comp_refcor
 
 END module REFRACTION_M
 ! $Log$
+! Revision 2.1  2001/12/01 01:35:22  zvi
+! Clerifying code.. easier to follow..
+!
 ! Revision 2.0  2001/09/17 20:26:27  livesey
 ! New forward model
 !
