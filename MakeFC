@@ -630,18 +630,7 @@ install:
            echo "Installing level 2 parallel executables into $(INSTALLDIR)"; \
            cp -a $(MLSBIN)/mlsl2p.sh $(MLSBIN)/slavetmplt.sh $(INSTALLDIR); \
            chmod a+x "$(INSTALLDIR)/mlsl2p.sh"; \
-           if [ "$$PVM_EP" = "" ] ; then \
-             PVM_EP=$$HOME/pvm3/bin/LINUX ;\
-           fi; \
-			  if [ ! -d "$$PVM_EP" ] ; then \
-             echo "Unable to install parallel executables; $$PVM_EP not found";\
-             exit 0; \
-           else \
-             echo "Installing level 2 parallel executables into $$PVM_EP"; \
-             cp -a $(INSTALLDIR)/mls$$dir "$$PVM_EP"; \
-             cp -a $(MLSBIN)/mlsl2p.sh $(MLSBIN)/slavetmplt.sh "$$PVM_EP"; \
-             chmod a+x "$$PVM_EP/mlsl2p.sh"; \
-           fi; \
+           echo "(Don't forget to scp them to your cluster)"; \
          fi; \
 		;; \
 	"l3") \
@@ -1119,6 +1108,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.88  2004/04/30 18:56:57  pwagner
+# Can build l2gpcat for knitting split dgg files
+#
 # Revision 1.87  2004/01/29 23:36:39  pwagner
 # Added make commands for WordSplit, killmaster, machineok
 #
