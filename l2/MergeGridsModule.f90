@@ -121,6 +121,9 @@ contains ! =================================== Public procedures
       real (r8) :: ZTRANS                 ! Transition 'height'
       real (r8) :: Z                      ! One 'height'
       real (r8) :: Z1, Z2                 ! Range of transition region
+      
+      type (griddedData_T), pointer :: OPERATIONAL
+      type (griddedData_T), pointer :: CLIMATOLOGY
 
       ! Executable code
 
@@ -267,6 +270,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.9  2003/02/28 02:33:28  livesey
+! Bug fix, careless with the old emacs.
+!
 ! Revision 2.8  2003/02/28 02:25:50  livesey
 ! First working version.
 !
