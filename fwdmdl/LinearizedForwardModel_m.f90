@@ -416,7 +416,7 @@ contains ! =====     Public Procedures     =============================
         end if
 
         ! Loop over profiles
-        center = l2pcQ%template%noInstances/2 - 1
+        center = l2pcQ%template%noInstances/2 + 1
         do xStarInstance = 1, l2pcQ%template%noInstances
           ! Identify this instance in state
           if ( forwardModelConfig%phiWindow == 0.0 ) then
@@ -852,6 +852,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.18  2002/06/12 17:46:21  livesey
+! Better treatment of real phiWindow
+!
 ! Revision 2.17  2002/06/12 17:02:25  livesey
 ! Very TEMPORARY! change to LinearizedForwardModel to skip round real
 ! value of phiWindow.  Fix it properly later.
