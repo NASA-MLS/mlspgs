@@ -10,6 +10,7 @@ module STRINGS
        "$Id$"
   CHARACTER (LEN=*), PARAMETER :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 contains
   subroutine LEFTJ ( S )
@@ -60,8 +61,15 @@ contains
     end do
   end subroutine STRUPR
 !---------------------------------------------------------------------------
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module STRINGS
 ! $Log$
+! Revision 2.0  2001/09/17 20:26:28  livesey
+! New forward model
+!
 ! Revision 1.6  2001/06/07 23:39:32  pwagner
 ! Added Copyright statement
 !

@@ -13,6 +13,7 @@ module Convolve_All_m
   character (len=len(idParm)) :: Id
   character (len=*), parameter :: ModuleName = &
     & "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
  contains
 ! ============================================  convolve_all =====
@@ -356,9 +357,16 @@ module Convolve_All_m
 
  end subroutine Convolve_All
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module Convolve_All_m
 
 ! $Log$
+! Revision 2.23  2002/09/26 18:01:52  livesey
+! Now uses GetQuantityForForwardModel.
+!
 ! Revision 2.22  2002/09/11 17:43:39  pwagner
 ! Began changes needed to conform with matrix%values type move to rm from r8
 !

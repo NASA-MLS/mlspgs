@@ -10,6 +10,7 @@ module D_SOLVE_QUAD_M
   CHARACTER (LEN=256) :: Id = &
        "$Id$"
   CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
   integer, parameter :: RK = kind(0.0d0)
 contains
@@ -18,8 +19,15 @@ contains
   subroutine D_SOLVE_QUAD ( A, B, C, X1, X2 )
     include 'solve_quad.f9h'
   end subroutine D_SOLVE_QUAD
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module D_SOLVE_QUAD_M
 ! $Log$
+! Revision 2.0  2001/09/17 20:26:26  livesey
+! New forward model
+!
 ! Revision 1.5  2001/06/07 23:30:34  pwagner
 ! Added Copyright statement
 !

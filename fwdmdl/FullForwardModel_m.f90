@@ -15,6 +15,7 @@ module FullForwardModel_m
   character (len=len(idParm)) :: Id = IdParm
   character (len=*), parameter, private :: ModuleName= &
     & "$RCSfile$"
+  private :: not_used_here 
 !-----------------------------------------------------------------------
 contains
 
@@ -2451,9 +2452,16 @@ contains
 
  end subroutine FullForwardModel
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.92  2002/10/04 23:49:50  vsnyder
+! More cosmetic changes
+!
 ! Revision 2.91  2002/10/02 23:06:42  vsnyder
 ! Add 'seez' switch, instead of uncommenting include, to get Zvi's debug print.
 ! Get SpeedOfLight from Geometry.  Cosmetic changes.

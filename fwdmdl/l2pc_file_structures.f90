@@ -23,6 +23,7 @@ module L2PC_FILE_STRUCTURES
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), parameter, private :: ModuleName = &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 ! Header structures
   type L2PC_HEADER_ONE
@@ -101,8 +102,16 @@ module L2PC_FILE_STRUCTURES
     Integer(i4) :: REC_NO
   end type L2PC_KEYS
 !**********  Size of(l2pc_keys) = 36 bytes (9 words)
+contains 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module L2PC_FILE_STRUCTURES
 ! $Log$
+! Revision 2.1  2002/10/03 21:56:14  vsnyder
+! Get R8 from MLSCommon instead of l2pc_file_parameters
+!
 ! Revision 2.0  2001/09/17 20:26:27  livesey
 ! New forward model
 !

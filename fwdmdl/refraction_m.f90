@@ -22,6 +22,7 @@ module REFRACTION_M
     & "$Id$"
   character (len=len(idParm)) :: Id = idParm
   character (len=*), parameter :: ModuleName= "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 contains
 
@@ -334,8 +335,15 @@ o2: do j = mid+1, no_ele-1
 
 !------------------------------------------------------------------
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 END module REFRACTION_M
 ! $Log$
+! Revision 2.12  2002/09/26 21:03:02  vsnyder
+! Publish two constants, make Refractive_Index generic
+!
 ! Revision 2.11  2002/09/26 18:02:36  livesey
 ! Bug fix (wouldn't compile)
 !

@@ -13,6 +13,7 @@ module NO_CONV_AT_ALL_M
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 contains
   !-------------------------------------------------------------------------
@@ -299,8 +300,15 @@ contains
 
   end subroutine NO_CONV_AT_ALL
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 2.17  2002/10/04 23:46:21  vsnyder
+! Cosmetic changes
+!
 ! Revision 2.16  2002/09/26 18:02:03  livesey
 ! Now uses GetQuantityForForwardModel.
 !

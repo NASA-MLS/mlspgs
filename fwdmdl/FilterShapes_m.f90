@@ -39,6 +39,7 @@ module FilterShapes_m
   character (len=len(idParm)) :: Id = idParm
   character (len=*), parameter, private :: ModuleName = &
     & "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
 contains
@@ -214,9 +215,16 @@ contains
     end do ! i
   end subroutine Dump_Filter_Shapes_Database
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module FilterShapes_m
 
 ! $Log$
+! Revision 2.4  2002/09/13 22:06:22  vsnyder
+! Move a few USEs from module scope to procedure scope
+!
 ! Revision 2.3  2002/05/14 20:02:12  livesey
 ! Bug fix in handling of channels field in signal part of filter shape.
 !

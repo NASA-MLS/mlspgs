@@ -12,6 +12,7 @@ module Piq_int_m
     & "$Id$"
   character ( len=len(idParm)) :: Id = idParm
   character (len=*), parameter :: ModuleName = "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
   contains
 !---------------------------------------------------------------------------
@@ -123,9 +124,17 @@ module Piq_int_m
 
   end subroutine Piq_int
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module Piq_int_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.1  2002/09/25 20:35:30  vsnyder
+! Move USE from module scope to procedure scope.  Change allocatable arrays
+! to automatic arrays.  Insert the copyright notice.  Cosmetic changes.
+!
 ! Revision 2.0  2001/09/17 20:26:27  livesey
 ! New forward model
 !

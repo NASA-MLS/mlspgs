@@ -15,6 +15,7 @@ module L2PC_PFA_STRUCTURES
        "$Id$"
   character (LEN=*), parameter :: ModuleName = &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 !_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 ! Parameter declarations
@@ -196,8 +197,15 @@ contains
       & MLSMSG_Deallocate//'slabs' )
   end subroutine DestroyCompleteSlabs
   
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module L2PC_PFA_STRUCTURES
 ! $Log$
+! Revision 2.3  2002/10/03 22:16:50  vsnyder
+! Move a USE from module scope to procedure scope
+!
 ! Revision 2.2  2002/09/26 23:58:35  livesey
 ! Clear arrays in zero lines case (think about whether we need to do the
 ! max(nl,1) stuff later

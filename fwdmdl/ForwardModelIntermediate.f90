@@ -38,6 +38,7 @@ module ForwardModelIntermediate
   character (len=len(idParm)) :: Id = IdParm
   character (len=*), parameter, private :: ModuleName= &
     & "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
 contains
@@ -62,9 +63,16 @@ contains
 
   end subroutine DestroyForwardModelIntermediate
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module ForwardModelIntermediate
 
 ! $Log$
+! Revision 2.2  2002/08/22 00:05:42  vsnyder
+! Move USE statements from module scope to procedure scope
+!
 ! Revision 2.1  2001/10/02 16:51:41  livesey
 ! Removed fmStat%finished and reordered loops in forward models
 !

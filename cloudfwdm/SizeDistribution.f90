@@ -18,6 +18,7 @@ module SizeDistribution
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName=                       &
     "$RCSfile$"
+  private :: not_used_here 
  !---------------------------------------------------------------------------
       
 contains
@@ -272,9 +273,16 @@ contains
 
       END SUBROUTINE DRP_SIZE
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module SizeDistribution
 
 ! $Log$
+! Revision 1.8  2002/04/16 03:42:39  jonathan
+! fix a bug
+!
 ! Revision 1.7  2001/11/19 19:27:17  jonathan
 ! fix error in MH distribution
 !

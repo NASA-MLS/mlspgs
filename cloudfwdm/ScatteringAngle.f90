@@ -13,6 +13,7 @@ module ScatteringAngle
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName=                       &
     "$RCSfile$"
+  private :: not_used_here 
  !---------------------------------------------------------------------------
       
 contains
@@ -78,6 +79,13 @@ contains
 
       END SUBROUTINE ANGLE
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module ScatteringAngle
 
 ! $Log$
+! Revision 1.2  2001/09/21 15:51:37  jonathan
+! modified F95 version
+!

@@ -12,6 +12,7 @@ module SCRT_DN_M
     & "$Id$"
   character (len=len(idParm)) :: Id = idParm
   character (len=*), parameter :: ModuleName= "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 contains
 
@@ -159,8 +160,15 @@ contains
 
   end subroutine GET_DSCRT_DN
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module SCRT_DN_M
 ! $Log$
+! Revision 2.2  2002/10/02 20:08:16  vsnyder
+! Insert copyright notice, other cosmetic changes
+!
 ! Revision 2.1  2002/05/13 05:15:40  zvi
 ! Adding missing intent on dummy variables
 !

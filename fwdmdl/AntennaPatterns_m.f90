@@ -39,6 +39,7 @@ module AntennaPatterns_m
   character (len=len(idParm)) :: Id = idParm
   character (len=*), parameter, private :: ModuleName = &
     & "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
 contains
@@ -282,9 +283,16 @@ outer1: do
     end do ! i
   end subroutine Dump_Antenna_Patterns_Database
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module AntennaPatterns_m
 
 ! $Log$
+! Revision 2.3  2002/09/06 22:31:06  vsnyder
+! Cosmetic changes
+!
 ! Revision 2.2  2002/02/22 00:50:08  bill
 ! forced ntr=4096--wgr
 !

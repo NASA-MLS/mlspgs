@@ -34,6 +34,7 @@ module CloudySkyRadianceModel
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName=                       &
     "$RCSfile$"
+  private :: not_used_here 
  !---------------------------------------------------------------------------
 
 contains 
@@ -757,9 +758,16 @@ contains
 
       END SUBROUTINE CloudForwardModel
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.38  2002/10/03 22:02:33  vsnyder
+! Get Deg2Rad from Units instead of l2pc_file_parameters
+!
 ! Revision 1.37  2002/09/27 22:41:09  jonathan
 ! change old FOV to new FOV routine
 !

@@ -13,6 +13,7 @@ module Metrics_m
   character (len=len(idParm)) :: Id = IdParm
   character (len=*), parameter, private :: ModuleName= &
     & "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
   integer, save :: CalledTimes = 0
@@ -552,9 +553,16 @@ contains
 
   end subroutine Metrics
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module Metrics_m
 
 ! $Log$
+! Revision 2.14  2002/10/08 14:42:57  bill
+! fixed bug in non convergent estimator?
+!
 ! Revision 2.13  2002/10/01 02:27:49  vsnyder
 ! Reduce number of array temps, move allocation for some out of loops.  Fix
 ! a bug (junk could be accessed after being deallocated).  Cosmetic changes.

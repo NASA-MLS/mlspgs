@@ -19,6 +19,7 @@ Module Bill_GasAbsorption
   character (len=len(idParm)) :: Id = IdParm
   character (len=*), parameter, private :: ModuleName= &
   "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 contains
 
@@ -174,9 +175,16 @@ contains
 
   END SUBROUTINE get_beta_bill 
  
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 End Module Bill_GasAbsorption
 
 ! $Log$
+! Revision 1.7  2002/08/22 00:13:01  jonathan
+! upgrade to include more molecules
+!
 ! Revision 1.6  2002/08/08 22:45:37  jonathan
 ! newly improved version
 !

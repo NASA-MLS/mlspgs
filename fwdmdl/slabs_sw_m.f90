@@ -20,6 +20,7 @@ module SLABS_SW_M
   character ( len=len(idParm)) :: Id = idParm
   character (len=*), parameter :: ModuleName= &
     & "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 contains
 !---------------------------------------------------------------------------
@@ -1058,9 +1059,16 @@ contains
 !
 !=====================================================================
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.7  2002/10/02 21:06:03  vsnyder
+! Get SpeedOfLight from Geometry module
+!
 ! Revision 2.6  2002/09/12 23:00:04  vsnyder
 ! Cosmetic changes, move USEs from module scope to procedure scope
 !

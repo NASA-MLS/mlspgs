@@ -19,6 +19,7 @@ module GasAbsorption
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName=                       &
     "$RCSfile$"
+  private :: not_used_here 
  !---------------------------------------------------------------------------
       
 contains
@@ -294,9 +295,16 @@ contains
        return
        end function myshape
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module GasAbsorption
 
 ! $Log$
+! Revision 1.10  2002/08/22 00:14:42  jonathan
+! upgrade to include more molecules
+!
 ! Revision 1.9  2002/08/19 22:22:03  jonathan
 ! debug stuff
 !

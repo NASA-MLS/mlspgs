@@ -73,6 +73,7 @@ module SpectroscopyCatalog_m
   character (len=len(idParm)) :: Id = idParm
   character (len=*), parameter, private :: ModuleName = &
     & "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
 contains ! =====  Public Procedures  ===================================
@@ -469,9 +470,16 @@ contains ! =====  Public Procedures  ===================================
     end do ! i
   end subroutine Dump_SpectCat_Database
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.9  2002/01/08 01:02:03  livesey
+! Nullify lines by default
+!
 ! Revision 2.8  2001/11/09 23:20:17  vsnyder
 ! Use Time_Now instead of CPU_TIME
 !

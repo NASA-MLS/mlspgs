@@ -28,11 +28,20 @@ module GLNP
     & "$id: glnp.f90,v 2.0 2001/09/17 20:26:27 livesey Exp $"
   character (len=len(idParm)) :: Id = idParm
   character (len=*), parameter :: ModuleName= "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
+
+contains 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
 
 end module GLNP
 
 ! $Log$
+! Revision 2.1  2002/09/06 18:18:43  vsnyder
+! Cosmetic changes
+!
 ! Revision 2.0  2001/09/17 20:26:27  livesey
 ! New forward model
 !

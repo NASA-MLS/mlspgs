@@ -13,6 +13,7 @@ module HYDROSTATIC_INTRP
        "$Id$"
   CHARACTER (LEN=*), PARAMETER :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 contains
 !---------------------------------------------     GET_HEIGHTS     -----
@@ -215,8 +216,15 @@ contains
 
   end subroutine COMPUTE_COEFF
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module HYDROSTATIC_INTRP
 ! $Log$
+! Revision 2.2  2002/02/16 06:50:00  zvi
+! Some cosmetic code changes..get rid of unused varaibles
+!
 ! Revision 2.1  2002/02/16 00:04:39  bill
 ! tweaked the calc a bit--wgr
 !

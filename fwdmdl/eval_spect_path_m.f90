@@ -14,6 +14,7 @@ module Eval_Spect_Path_m
   character (len=len(idParm)) :: Id = idParm
   character (LEN=*), parameter :: ModuleName= &
     & "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 contains
 !-----------------------------------------------------------------
@@ -137,9 +138,17 @@ contains
 
 !---------------------------------------------------------------------
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module Eval_Spect_Path_m
 !
 ! $Log$
+! Revision 2.5  2002/09/07 02:17:52  vsnyder
+! Move USEs from module scope to procedure scope.
+! Convert some allocatable arrays to automatics.  Cosmetic changes.
+!
 ! Revision 2.4  2002/08/22 23:13:33  livesey
 ! New frq_Basis based on intermediate frequency
 !

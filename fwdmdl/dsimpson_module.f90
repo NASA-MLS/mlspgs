@@ -14,14 +14,22 @@ module DSIMPSON_MODULE
        "$Id$"
   CHARACTER (LEN=*), PARAMETER :: ModuleName = &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 contains
   Subroutine DSimps (F,DX,N,R)
 !  Simpson's Integration of discrete equal spacing
     include 'simpson.f9h'
   End Subroutine DSimps
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module DSIMPSON_MODULE
 ! $Log$
+! Revision 2.0  2001/09/17 20:26:26  livesey
+! New forward model
+!
 ! Revision 1.5  2001/06/07 23:30:34  pwagner
 ! Added Copyright statement
 !

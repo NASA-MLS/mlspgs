@@ -15,6 +15,7 @@ module DCSPLINE_DER_M
   character (len=len(idParm)) :: Id = idParm
   character (len=*), parameter :: ModuleName = &
     & "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 contains
@@ -24,9 +25,16 @@ contains
     integer, parameter :: RK = kind(0.0d0)
     include 'cspline_der.f9h'
   end subroutine DCSPLINE_DER
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module DCSPLINE_DER_M
 
 ! $Log$
+! Revision 2.2  2002/10/04 17:43:58  vsnyder
+! Move USE statements to procedure scope
+!
 ! Revision 2.1  2002/04/18 10:46:25  zvi
 ! Adding optional limits
 !

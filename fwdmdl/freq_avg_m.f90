@@ -13,6 +13,7 @@ module Freq_Avg_m
   character (len=len(idParm)) :: Id = idParm
   character (len=*), parameter :: ModuleName= &
     &  "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 contains
@@ -61,9 +62,16 @@ contains
 
   end subroutine Freq_Avg
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module Freq_Avg_m
 
 ! $Log$
+! Revision 2.4  2002/09/07 02:20:27  vsnyder
+! Fix a type
+!
 ! Revision 2.3  2002/09/07 02:18:37  vsnyder
 ! Move USEs from module scope to procedure scope, cosmetic changes
 !

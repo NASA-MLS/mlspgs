@@ -11,6 +11,7 @@ module L2PC_FILE_PARAMETERS
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), parameter, private :: ModuleName = &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 ! * * * * * * * * * * *  L2PC_FILE_PARAMETERS V51 * * * * * * * * * * * * *
 !
@@ -68,8 +69,16 @@ module L2PC_FILE_PARAMETERS
   integer(i4), parameter :: J2D=max_no_sv_components,                   &
  &                          MAX_TABLE_2D=(j2d*(j2d+1))/2
 !
+contains 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module L2PC_FILE_PARAMETERS
 ! $Log$
+! Revision 2.1  2002/10/03 22:11:35  vsnyder
+! Remove Deg2Rad and Rad2Deg parameters -- they're properly in Units
+!
 ! Revision 2.0  2001/09/17 20:26:27  livesey
 ! New forward model
 !

@@ -12,6 +12,7 @@ module DO_DELTA_M
     & "$Id$"
   character (len=len(idParm)) :: Id = idParm
   character (len=*), parameter :: ModuleName= "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 contains
 !--------------------------------------------------  PATH_OPACITY  -----
@@ -105,9 +106,16 @@ contains
 
   end subroutine HYD_OPACITY
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module DO_DELTA_M
 !---------------------------------------------------
 ! $Log$
+! Revision 2.1  2002/10/02 20:08:16  vsnyder
+! Insert copyright notice, other cosmetic changes
+!
 ! Revision 2.0  2001/09/17 20:26:26  livesey
 ! New forward model
 !

@@ -24,6 +24,7 @@ module RefractiveIndex
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName=                       &
     "$RCSfile$"
+  private :: not_used_here 
  !---------------------------------------------------------------------------
       
 contains
@@ -117,9 +118,16 @@ contains
 
         END subroutine comx
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module RefractiveIndex
 
 ! $Log$
+! Revision 1.5  2002/04/16 03:42:25  jonathan
+! fix a bug
+!
 ! Revision 1.4  2002/04/15 22:22:32  jonathan
 ! check bug
 !

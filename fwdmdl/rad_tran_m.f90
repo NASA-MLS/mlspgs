@@ -18,6 +18,7 @@ module RAD_TRAN_M
     & "$Id$"
   character (len=len(idParm)) :: Id = idParm
   character (len=*), parameter :: ModuleName = "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 contains
 !---------------------------------------------------------------------------
@@ -882,8 +883,16 @@ contains
   end subroutine drad_tran_dt
 
 !----------------------------------------------------------------------
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module RAD_TRAN_M
 ! $Log$
+! Revision 2.7  2002/10/02 20:09:48  vsnyder
+! Use automatic arrays to move allocate/deallocate out of loops.  Numerous
+! cosmetic changes.
+!
 ! Revision 2.6  2002/07/05 07:52:52  zvi
 ! Some cosmetic changes
 !

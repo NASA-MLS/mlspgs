@@ -14,6 +14,7 @@ module Hydrostatic_m
   character (len=len(idParm)) :: Id = idParm
   character (len=*), parameter :: ModuleName = &
     & "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
   contains
 !---------------------------------------------------------------------------
@@ -167,9 +168,16 @@ module Hydrostatic_m
 
  end subroutine Hydrostatic
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.4  2002/09/27 01:48:36  vsnyder
+! Simplify iteration for z_surf
+!
 ! Revision 2.3  2002/09/25 22:52:54  vsnyder
 ! Move USE from module scope to procedure scope.  Convert allocatable arrays
 ! to automatic arrays.  Replace sum(reshape(a...)*b) by dot_product.  Make

@@ -25,6 +25,7 @@ module ClearSkyModule
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName=                       &
     "$RCSfile$"
+  private :: not_used_here 
  !---------------------------------------------------------------------------
       
 contains
@@ -152,9 +153,16 @@ contains
 
       END SUBROUTINE CLEAR_SKY
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module ClearSkyModule
 
 ! $Log$
+! Revision 1.17  2002/08/22 00:13:29  jonathan
+! upgrade to include more molecules
+!
 ! Revision 1.16  2002/08/08 22:45:57  jonathan
 ! newly improved version
 !

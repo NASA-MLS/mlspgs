@@ -68,6 +68,7 @@ module ForwardModelConfig
   character (len=len(idParm)) :: Id = IdParm
   character (len=*), parameter, private :: ModuleName= &
     & "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
 contains
@@ -442,9 +443,16 @@ contains
     end if
   end subroutine Dump_ForwardModelConfigs
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.12  2002/10/06 01:09:22  livesey
+! Made the pvm routines public
+!
 ! Revision 2.11  2002/10/05 00:41:01  livesey
 ! Added pvm pack and unpack config and deep option on destroy
 !

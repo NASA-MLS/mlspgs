@@ -21,6 +21,7 @@ module ModelOutput
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName=                       &
     "$RCSfile$"
+  private :: not_used_here 
  !---------------------------------------------------------------------------
 
 contains 
@@ -206,9 +207,16 @@ contains
 
       END SUBROUTINE SENSITIVITY
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module ModelOutput
 
 ! $Log$
+! Revision 1.15  2002/05/08 17:00:15  jonathan
+! fix tangent height bug
+!
 ! Revision 1.14  2001/10/30 20:57:38  dwu
 ! minor on transmission function
 !

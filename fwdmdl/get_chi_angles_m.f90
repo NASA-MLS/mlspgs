@@ -14,6 +14,7 @@ module Get_Chi_Angles_m
   character (len=len(idParm)) :: Id = idParm
   character (len=*), parameter :: ModuleName = &
     & "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 contains
 !---------------------------------------------------------------------------
@@ -125,8 +126,16 @@ contains
 
   end subroutine Get_Chi_Angles
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module Get_Chi_Angles_m
 ! $Log$
+! Revision 2.12  2002/10/03 22:23:03  vsnyder
+! Fix a bug in derivative calculation.  Get Deg2Rad from Units.  Cosmetic
+! changes, including LaTeX equations.
+!
 ! Revision 2.11  2002/09/26 20:15:26  vsnyder
 ! Get Ln10 from Units module
 !

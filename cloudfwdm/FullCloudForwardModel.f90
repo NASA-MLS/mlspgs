@@ -22,6 +22,7 @@ module FullCloudForwardModel
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName=                       &
     "$RCSfile$"
+  private :: not_used_here 
  !---------------------------------------------------------------------------
 
          ! ---------------------------------------------------------------------
@@ -1054,10 +1055,17 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
   end subroutine FullCloudForwardModelWrapper
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.98  2002/10/04 00:02:15  vsnyder
+! Change handling of GOT variable, some cosmetic changes
+!
 ! Revision 1.97  2002/10/03 23:25:52  vsnyder
 ! Move USE statements from module scope to procedure scope
 !

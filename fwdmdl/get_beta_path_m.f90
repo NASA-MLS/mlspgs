@@ -22,6 +22,7 @@ module GET_BETA_PATH_M
   character (len=len(idParm)) :: Id = idParm
   character (len=*), parameter :: ModuleName= &
     &  "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 contains
 ! This is a generic form of get coarse beta path. We really don't need
@@ -186,9 +187,16 @@ contains
   end subroutine Get_Beta_Path
 
 !----------------------------------------------------------------------
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.8  2002/09/12 23:00:04  vsnyder
+! Cosmetic changes, move USEs from module scope to procedure scope
+!
 ! Revision 2.7  2001/12/23 23:30:42  zvi
 ! Fixing a bug in the dbeta_dt computations
 !

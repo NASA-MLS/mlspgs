@@ -16,6 +16,7 @@ module Get_Eta_Matrix_m
   character (len=len(idParm)) :: Id = idParm
   character (len=*), parameter :: ModuleName= &
     & "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 contains
 !---------------------------------------------------
@@ -100,9 +101,16 @@ contains
 
   end subroutine Get_Eta_Sparse
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module Get_Eta_Matrix_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.2  2002/09/06 20:50:28  vsnyder
+! Insert copyright notice, bound some array assignments
+!
 ! Revision 2.1  2002/09/06 18:17:19  vsnyder
 ! Cosmetic changes, move USEs from module scope to procedure scope
 !

@@ -12,6 +12,7 @@ module GET_DRAD_NOTDER_M
   "$Id$"
   CHARACTER (LEN=*), PARAMETER :: ModuleName = &
   "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 contains
 ! This subroutine computes the scalarized condensed radiative transfer
@@ -58,8 +59,15 @@ contains
 !
     Return
   End Subroutine GET_DRAD_NOTDER
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module GET_DRAD_NOTDER_M
 ! $Log$
+! Revision 2.0  2001/09/17 20:26:27  livesey
+! New forward model
+!
 ! Revision 1.2  2001/06/07 23:30:34  pwagner
 ! Added Copyright statement
 !

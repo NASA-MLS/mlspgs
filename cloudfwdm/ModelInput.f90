@@ -20,6 +20,7 @@ module ModelInput
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName=                       &
     "$RCSfile$"
+  private :: not_used_here 
  !---------------------------------------------------------------------------
       
 contains
@@ -143,9 +144,16 @@ contains
 
       END SUBROUTINE MODEL_ATMOS
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module ModelInput
 
 ! $Log$
+! Revision 1.6  2002/08/22 00:15:31  jonathan
+! change NS to NS-1 for VMR1
+!
 ! Revision 1.5  2002/08/19 22:22:04  jonathan
 ! debug stuff
 !

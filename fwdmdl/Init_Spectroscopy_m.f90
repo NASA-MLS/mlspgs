@@ -22,6 +22,7 @@ module Init_Spectroscopy_m
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
   ! Types used in spectroscopy specifications (there aren't any):
@@ -166,9 +167,16 @@ contains
     include "make_tree.f9h"
 
   end subroutine Init_Spectroscopy
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module Init_Spectroscopy_m
 
 ! $Log$
+! Revision 2.4  2001/10/15 18:10:51  livesey
+! Added continuum
+!
 ! Revision 2.3  2001/10/09 22:38:23  livesey
 ! Added stuff for ns
 !

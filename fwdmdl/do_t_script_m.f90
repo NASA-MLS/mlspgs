@@ -12,6 +12,7 @@ module DO_T_SCRIPT_M
     & "$Id$"
   character (len=len(idParm)) :: Id = idParm
   character (len=*), parameter :: ModuleName = "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 contains
 !----------------------------------------------------  DO_T_SCRIPT  -----
@@ -119,9 +120,16 @@ contains
 
   end subroutine Two_D_T_Script
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module DO_T_SCRIPT_M
 
 ! $Log$
+! Revision 2.1  2002/09/27 00:04:15  vsnyder
+! Insert copyright notice, cosmetic changes
+!
 ! Revision 2.0  2001/09/17 20:26:26  livesey
 ! New forward model
 !

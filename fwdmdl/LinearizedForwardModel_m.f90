@@ -19,6 +19,7 @@ module LinearizedForwardModel_m
   character(len=len(idParm)) :: Id = idParm
   character(len=*), parameter :: ModuleName = &
     & "$RCSfile$"
+  private :: not_used_here 
   !-----------------------------------------------------------------------------
 
 contains ! =====     Public Procedures     =============================
@@ -869,9 +870,16 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine LinearizedForwardModel
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.28  2002/10/02 23:19:51  livesey
+! Various bug fixes associated with extinction
+!
 ! Revision 2.27  2002/10/02 02:42:55  livesey
 ! Changes to allow the new mixed extinction stuff
 !

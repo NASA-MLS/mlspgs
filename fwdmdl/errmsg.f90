@@ -16,6 +16,7 @@ module ERRMSG_M               ! F95 nonsense
     & "$Id$"
   character(len=*), parameter, private :: ModuleName= &
     & "$RCSfile$"
+  private :: not_used_here 
   !----------------------------------------------------------
 
 contains ! =====     Public Procedures     =============================
@@ -262,9 +263,16 @@ RETURN
 END SUBROUTINE errmsg
  
   !=============================================================================
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module ERRMSG_M
 !=============================================================================
 ! $Log$
+! Revision 2.2  2002/10/01 22:06:54  pwagner
+! Now a module in its own right
+!
 ! Revision 2.1  2002/10/01 20:12:45  bwknosp
 ! Added Id, RCS, and Log info
 !

@@ -36,6 +36,7 @@ module LOAD_SPS_DATA_M
   character (len=len(idParm)) :: Id = idParm
   character (LEN=*), parameter :: ModuleName= &
     & "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 contains
 !-------------------------------------------------------------------
@@ -313,8 +314,15 @@ contains
 
   end subroutine Destroygrids_t
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.28  2002/10/03 05:37:53  livesey
+! Minor efficiency improvement in derivative selection
+!
 ! Revision 2.27  2002/10/02 22:42:39  vsnyder
 ! Move USE statements from module scope to procedure scope.  Make Load_One_Grid
 ! an internal subroutine of Load_SPS_Data.  Cosmetic changes.

@@ -13,6 +13,7 @@ module Fov_Convolve_m
   character(len=len(idParm)) :: Id = idParm
   character (len=*), parameter :: ModuleName = &
     & "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
  contains
 ! =================================================  Fov_Convolve  =====
@@ -503,8 +504,15 @@ module Fov_Convolve_m
     end subroutine FTGRID
   end subroutine FOV_CONVOLVE_OLD
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module Fov_Convolve_m
 ! $Log$
+! Revision 2.9  2002/10/02 21:07:00  vsnyder
+! Use subscript section notation to get rid of a few array constructors
+!
 ! Revision 2.8  2002/09/07 00:53:25  vsnyder
 ! Move FFT code to dfft_m.  Move convolve and ftgrid inside of fov_convolve_old.
 ! Move USEs from module scope to procedure scope.  Cosmetic changes.

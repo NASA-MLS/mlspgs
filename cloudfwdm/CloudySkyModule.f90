@@ -21,6 +21,7 @@ module CloudySkyModule
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName=                       &
     "$RCSfile$"
+  private :: not_used_here 
  !---------------------------------------------------------------------------
       
 contains
@@ -318,9 +319,16 @@ contains
       END SUBROUTINE CLOUD_MODEL
 
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module CloudySkyModule
 
 ! $Log$
+! Revision 1.10  2002/04/17 20:08:47  jonathan
+! add freq dependent to water cloud size bin
+!
 ! Revision 1.9  2002/04/16 03:42:06  jonathan
 ! adjust size bin
 !

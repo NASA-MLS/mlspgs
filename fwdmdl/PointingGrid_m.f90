@@ -42,6 +42,7 @@ module PointingGrid_m
   character (len=len(idParm)) :: Id = idParm
   character (len=*), parameter, private :: ModuleName = &
     & "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
 contains
@@ -288,9 +289,16 @@ outer2: do
     end do ! i
   end subroutine Dump_Pointing_Grid_Database
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module PointingGrid_m
 
 ! $Log$
+! Revision 2.2  2002/09/13 22:58:22  vsnyder
+! Cosmetic changes
+!
 ! Revision 2.1  2002/05/08 08:53:43  zvi
 ! All radiometers grid concept implementation
 !
