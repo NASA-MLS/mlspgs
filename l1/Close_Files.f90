@@ -121,10 +121,10 @@ CONTAINS
 
     ! Write Hdr Annotations and Close L1RAD F file
 
-    CALL WriteHdrAnnots (L1BFileInfo%RADFFileName, HDFversion)
-    CALL MLS_closeFile (L1BFileInfo%RADFid, HDFversion=HDFversion)
+    CALL WriteHdrAnnots (L1BFileInfo%RADGFileName, HDFversion)
+    CALL MLS_closeFile (L1BFileInfo%RADGid, HDFversion=HDFversion)
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
-         & 'Closed L1BRAD F file: '//L1BFileInfo%RADFFileName)
+         & 'Closed L1BRAD G file: '//L1BFileInfo%RADGFileName)
 
     ! Write Hdr Annotations and Close L1BOA file
 
@@ -170,6 +170,9 @@ CONTAINS
 END MODULE Close_files
 !=============================================================================
 ! $Log$
+! Revision 2.12  2003/09/15 17:15:53  perun
+! Version 1.3 commit
+!
 ! Revision 2.11  2003/08/15 14:25:04  perun
 ! Version 1.2 commit
 !
