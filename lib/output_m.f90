@@ -292,6 +292,7 @@ contains
       line = ' '
       write ( line, Format ) value
       k = nCharsinFormat(Format)
+      if ( k==0 ) k = len_trim(line)
     end if
 
     log_chars = line
@@ -464,6 +465,7 @@ contains
       line = ' '
       write ( line, Format ) value
       k = nCharsinFormat(Format)
+      if ( k==0 ) k = len_trim(line)
     end if
 
     log_chars = line
@@ -528,38 +530,45 @@ contains
   end subroutine OUTPUT_STRING
 
   function nCharsinFormat(Format) result(nplusm)
-     ! Utility to calculated how many characters in a format spec:
-     ! [n{xX}][,]{DEFGdefg}m.b
-     ! where n, m, and b are digits (we care only about n and m)
-     ! return (n+m)
-     ! Args
-     character(len=*), intent(in) ::  Format
-     integer :: nplusm
-     ! Local variables
-     character(len=20) :: kChar, myFormat
-     integer :: n, m
-     ! Executable
-      kChar=lowerCase(Format)
-      call ourReplaceSubString(kChar, myFormat, 'g', 'f')
-      call ourReplaceSubString(myFormat, kChar, 'e', 'f')
-      call ourReplaceSubString(kChar, myFormat, 'd', 'f')
-      call ourExtractSubString(TRIM(myFormat), kChar, 'f', '.')
-      read (kChar, '(i2)') m
-      if (m < 1) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Bad conversion to m in OUTPUT_xxxLE (format not "{defg}"' )
-      if ( index(TRIM(myFormat), 'x' ) == 0 ) then
-        n = 0
-      else
-        call ourExtractSubString(TRIM(myFormat), kChar, '(', 'x')
-        read (kChar, '(i2)') n
-        if (n < 1) then
-          print *, trim(kChar)
-          print *, trim(myFormat)
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'Bad conversion to n in OUTPUT_xxxLE (format not "{defg}"' )
-        end if
-      endif
-      nplusm = n + m
+    ! Utility to calculated how many characters in a format spec:         
+    ! [n{xX}][,]{DEFGdefg}m.b                                             
+    ! where n, m, and b are digits (we care only about n and m)           
+    ! return (n+m)
+    ! Tested for specs: sci. format esm.b and eng. format enm.b
+    ! Also for min. width spec: 'f0.b' it will silently return 0
+    ! (It's up to you to handle that correctly)
+    ! Args                                                                
+    character(len=*), intent(in) ::  Format                               
+    integer :: nplusm                                                     
+    ! Local variables                                                     
+    character(len=20) :: kChar, myFormat                                  
+    integer :: n, m
+    ! Executable                                                          
+    nplusm = 0                                                            
+    kChar=lowerCase(Format)
+    call ourReplaceSubString(kChar, myFormat, 'es', 'f')                   
+    call ourReplaceSubString(myFormat, kChar, 'en', 'f')                   
+    call ourReplaceSubString(kChar, myFormat, 'g', 'f')                   
+    call ourReplaceSubString(myFormat, kChar, 'e', 'f')                   
+    call ourReplaceSubString(kChar, myFormat, 'd', 'f')                   
+    call ourExtractSubString(TRIM(myFormat), kChar, 'f', '.')             
+    if ( kChar == '0' ) return ! Special case of e.g. 'f0.3'
+    read (kChar, '(i2)') m                                                
+    if (m < 1) call MLSMessage ( MLSMSG_Error, ModuleName, &              
+      & 'Bad conversion to m in OUTPUT_xxxLE (format not "{defg}"' )      
+    if ( index(TRIM(myFormat), 'x' ) == 0 ) then                          
+      n = 0                                                               
+    else                                                                  
+      call ourExtractSubString(TRIM(myFormat), kChar, '(', 'x')           
+      read (kChar, '(i2)') n                                              
+      if (n < 1) then                                                     
+        print *, trim(kChar)                                              
+        print *, trim(myFormat)                                           
+        call MLSMessage ( MLSMSG_Error, ModuleName, &                     
+          & 'Bad conversion to n in OUTPUT_xxxLE (format not "{defg}"' )  
+      end if                                                              
+    endif                                                                 
+    nplusm = n + m                                                        
   end function nCharsinFormat
 
   subroutine ourExtractSubString(instr, outstr, sub1, sub2)
@@ -586,15 +595,34 @@ contains
     ! Args
     character (len=*), intent(in) :: instr
     character (len=*), intent(out) :: outstr
-    character (len=1), intent(in) :: sub1
-    character (len=1), intent(in) :: sub2
+    character (len=*), intent(in) :: sub1
+    character (len=*), intent(in) :: sub2
     ! Internal variables
+    integer :: d
     integer :: pos
+    integer :: pos1
+    integer :: pos2
+    integer :: pose
     ! Begin executable
     outstr = instr
     pos =index(instr, sub1) 
     if ( pos < 1 .or. pos > len_trim(outstr)) return
-    outstr(pos:pos) = sub2
+    pos1 = pos
+    if ( len(sub1) == len(sub2) ) then
+      pos2 = pos1 + len(sub1) - 1
+      outstr(pos1:pos2) = sub2
+    elseif ( len(sub1) > len(sub2) ) then
+      d = len(sub1) - len(sub2)
+      pos2 = pos1 + len(sub2) - 1
+      outstr(pos1:pos2) = sub2
+      pose = min(len(instr), len(outstr))
+      if ( pos2 == pose ) return
+      outstr(pos2+1:) = ' '   ! To fill to the end with blanks
+      outstr(pos2+1:pose) = instr(pos2+1+d:pose+d)
+    else
+      call MLSMessage ( MLSMSG_Error, ModuleName, &              
+      & 'Not yet able to replace shorter substring with longer' ) 
+    endif
   end subroutine ourReplaceSubString
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
@@ -603,6 +631,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.35  2004/12/28 19:29:57  pwagner
+! Changes to handle formats like f0.3, en10.2, es8.2
+!
 ! Revision 2.34  2004/12/14 00:00:50  pwagner
 ! Optional arg insteadofblank added to char outputs
 !
