@@ -1,8 +1,8 @@
-! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !============================================================================
-  PROGRAM MLSL1       ! MLS Level 1 software
+PROGRAM MLSL1       ! MLS Level 1 software
 !============================================================================
 
   USE OpenInit, ONLY : OpenAndInitialize
@@ -11,7 +11,8 @@
   USE Radiances, ONLY : CalcLimbRads
   USE L1BOutUtils, ONLY : OutputL1Bdata
   USE Close_Files, ONLY: CloseFiles
-  USE MLSMessageModule, ONLY: MLSMSG_Info, MLSMessage, MLSMessageExit
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Info, MLSMessageExit
+
   IMPLICIT NONE
 
   !------------------------------- RCS Ident Info ------------------------------
@@ -19,8 +20,9 @@
        "$Id$"
   CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
-  integer, parameter :: NORMAL_EXIT_STATUS = 2
-  logical :: more_data, do_calib
+
+  INTEGER, PARAMETER :: NORMAL_EXIT_STATUS = 2
+  LOGICAL :: more_data, do_calib
 
   CALL MLSMessage (MLSMSG_Info, ModuleName, &
        & "Start EOS MLS Level 1 data processing.")
@@ -28,6 +30,7 @@
   CALL OpenAndInitialize
 
   DO
+
      CALL SortAndQualify (more_data, do_calib)
 
      IF (do_calib) THEN
@@ -48,12 +51,17 @@
 
   CALL MLSMessage (MLSMSG_Info, ModuleName, &
        & "EOS MLS Level 1 data processing successfully completed!")
-  call MLSMessageExit(NORMAL_EXIT_STATUS)
+
+  CALL MLSMessageExit (NORMAL_EXIT_STATUS)
+
 !=============================================================================
- END PROGRAM MLSL1
+END PROGRAM MLSL1
 !=============================================================================
 
 ! $Log$
+! Revision 2.5  2002/11/13 15:26:42  perun
+! Restore consistent coding style
+!
 ! Revision 2.4  2002/11/12 21:50:03  jdone
 ! Remove obsolete variables from previous.
 !
