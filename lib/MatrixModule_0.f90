@@ -25,9 +25,9 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   public :: Add_Matrix_Blocks, CheckBlocks, CheckIntegrity, CheckForSimpleBandedLayout
   public :: Assignment(=), CholeskyFactor
   public :: CholeskyFactor_0, ClearRows, ClearRows_0, CloneBlock, ColumnScale
-  public :: Col_L1, CopyBlock, CreateBlock, CreateBlock_0
-  public :: DenseCholesky, Densify, DestroyBlock, DestroyBlock_0, Dump
-  public :: GetDiagonal, GetMatrixElement, GetMatrixElement_0
+  public :: Col_L1, CopyBlock, CreateBlock, CreateBlock_0, CyclicJacobi
+  public :: DenseCholesky, DenseCyclicJacobi, Densify, DestroyBlock, DestroyBlock_0, Dump
+  public :: FrobeniusNorm, GetDiagonal, GetMatrixElement, GetMatrixElement_0
   public :: GetVectorFromColumn
   public :: InvertCholesky, InvertCholesky_0
   public :: InvertDenseCholesky, InvertDenseCholesky_0
@@ -36,7 +36,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   public :: MaxAbsVal, MaxAbsVal_0, MinDiag, MinDiag_0
   public :: Multiply, MultiplyMatrix_XY, MultiplyMatrix_XY_0
   public :: MultiplyMatrix_XY_T, MultiplyMatrix_XY_T_0
-  public :: MultiplyMatrix_XTY_0
+  public :: MultiplyMatrix_XTY, MultiplyMatrix_XTY_0
   public :: MultiplyMatrixVector
   public :: MultiplyMatrixVectorNoT
   public :: NullifyMatrix, NullifyMatrix_0
@@ -57,6 +57,10 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
 
   interface CholeskyFactor
     module procedure CholeskyFactor_0
+  end interface
+
+  interface CyclicJacobi
+    module procedure CyclicJacobi_0
   end interface
 
   interface ClearRows
@@ -81,6 +85,10 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
 
   interface DUMP
     module procedure DUMP_MATRIX_BLOCK
+  end interface
+
+  interface FrobeniusNorm
+    module procedure FrobeniusNorm_0
   end interface
 
   interface GetDiagonal
@@ -1079,6 +1087,56 @@ contains ! =====     Public Procedures     =============================
     z%kind = kind
   end subroutine CreateBlock_0
 
+  ! ----------------------------------------------  CyclicJacobi_0 -----
+  subroutine CyclicJacobi_0 ( MPP, MQP, MPQ, MQQ, VPP, VQP, VPQ, VQQ, V, EPS, TOL )
+    ! This rather complicated routine does a 2x2 Block Cyclic Jacobi
+    ! This implements part of the algorithm outlined in section 8.4.8 of 
+    ! Golub and Van Loan (3rd Edition).
+    ! 
+    ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
+    ! This does rather underhand things with pointers, so be very careful when
+    ! using it.  The key is that the Vxx's return pointing to parts of V
+    ! it is V that should be deallocated not the Vxxs
+    ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
+    type(MatrixElement_T), intent(in) :: MPP, MQP, MPQ, MQQ ! Input matrices
+    type(MatrixElement_T), intent(out) :: VPP, VQP, VPQ, VQQ ! Eigen vector matrices
+    real(rm), dimension(:,:), pointer :: V ! The real array that has the V's information.
+    real(rm), intent(in), optional :: EPS ! Convergence tolerance passed to dense routine
+    real(rm), intent(in), optional :: TOL ! Convergence tolerance passed to dense routine
+    ! Local variables
+    real(rm), dimension(:,:), pointer :: M
+    integer :: N,N1,N2                  ! Size of matrix and of blocks
+
+    ! Executable code
+    n1 = mpp%nRows
+    n2 = mqq%nRows
+    n = n1 + n2
+    ! Could do lots of checking here, that it's square etc, however the calls
+    ! to densify below should catch it.
+    nullify ( M, V )
+    call Allocate_test ( M, n, n, 'M in CyclicJacobi_1', ModuleName )
+    call Allocate_test ( V, n, n, 'V in CyclicJacobi_1', ModuleName )
+    ! Densify the blocks into M this involves a copy, but I see no way round it.
+    call Densify ( M ( :n1,   :n1  ), MPP )
+    call Densify ( M ( n1+1:, :n1  ), MQP )
+    call Densify ( M ( :n1,   n1+1: ), MPQ )
+    call Densify ( M ( n1+1:, n1+1: ), MQQ )
+    ! Now call the dense cyclic jacobi routine
+    call DenseCyclicJacobi ( M, V, eps=eps, tol=tol )
+    ! Now do nasty things with pointers to make the V's point to the right things
+    ! Set up the blocks
+    vpp%nRows = n1 ; vpp%nCols = n1
+    vqp%nRows = n2 ; vqp%nCols = n1
+    vpq%nRows = n1 ; vpq%nCols = n2
+    vqq%nRows = n2 ; vqq%nCols = n2
+    vpp%kind = m_full ; vqp%kind = m_full ; vpq%kind = m_full ; vqq%kind = m_full
+    ! Do the pointer assignments
+    vpp%values => V ( :n1   , :n1   )
+    vqp%values => V ( n1+1: , :n1   )
+    vpq%values => V ( :n1   , n1+1: )
+    vqq%values => V ( n1+1: , n1+1: )
+  end subroutine CyclicJacobi_0
+
   ! ----------------------------------------------  DenseCholesky  -----
   subroutine DenseCholesky ( ZT, XIN, Status )
   ! Do the Cholesky decomposition of XIN giving ZT.
@@ -1119,8 +1177,8 @@ contains ! =====     Public Procedures     =============================
   ! ----------------------------------------------  DenseCyclicJacobi --
   subroutine DenseCyclicJacobi ( A, V, eps, tol )
     ! Implements the cyclic Jacobi algoritm (Golub and VanLoan 3rd ed.
-    ! Section 8.4.3).  Note that as we only store the lower triangle of A
-    ! some of the indices have been reversed from the above reference
+    ! Section 8.4.3).  Note that while the matrix is expected to be
+    ! symmetric, we do need to have both halves stored.
     real(rm), dimension(:,:), intent(inout) :: A ! Matrix to diagonalize, 
               ! returned with eigen values on diagonal, ~0 off diagonal.
     real(rm), dimension(:,:), intent(out) :: V ! Eigen vector matrix output
@@ -1132,6 +1190,7 @@ contains ! =====     Public Procedures     =============================
     real(rm) :: C, S, T                 ! Sine, Cosine and Tangent terms.
     real(rm) :: myEps, myTol            ! Potential copies of eps and tol
     real(rm) :: norm                    ! Norm to compute
+    real(rm), dimension(size(a,1)) :: TMP1, TMP2 ! Workspaces
     ! Executable code
     ! Do some setup
     if ( present ( eps ) ) then
@@ -1149,31 +1208,46 @@ contains ! =====     Public Procedures     =============================
     end do
     ! Now loop through the `sweeps'
     do
+      ! call output ( '    Dense pass ' )
       norm = 0.0
-      do q = 2, n
-        norm = norm + sum ( a ( q, 1:q-1 ) ** 2 )
+      do q = 1, n
+        norm = norm + &
+          & sum ( A ( q, :q-1 ) ** 2 ) + &
+          & sum ( A ( q, q+1: ) ** 2 )
       end do
+      ! call output ( norm )
+      ! call output ( ' / ' )
+      ! call output ( myEps, advance='yes' )
       ! Get out if sufficiently diagonal
       if ( norm <= myEps ) exit
       ! Otherwise walk through matrix
-      do q = 2, n
-        do p = 1, q-1
+      do p = 1, n-1
+        do q = p+1, n
           ! We're going to construct a notional J matrix
           ! which is the identity except that it has
           !   c s
           !  -s c
           ! embedded in it a rows/cols p and q
-          ! We then rotate A to A = J^T A J which makes Aqp=0 and
-          ! updates the diagonal of A.  Also change V to VJ
+          ! We then rotate A to A = J^T A J, also change V to VJ
+          ! Note that this only affects rows and columns p and q of A and V
+          ! So code specially to take advantage of that.
           call SymSchur2 ( A, p, q, c, s, t )
-          ! Update A
-          t = t * A(q,p)
-          A(p,p) = A(p,p) - t
-          A(q,q) = A(q,q) + t
-          A(q,p) = 0.0_rm
-          ! Update V
-          V(p,:) =  V(p,:) * c + V(q,:) * s
-          V(q,:) = -V(p,:) * s + V(q,:) * c
+          ! Update A with J^T A J
+          ! First do A -> J^T A
+          tmp1 = A(p,:)
+          tmp2 = A(q,:)
+          A(p,:) = c * tmp1 - s * tmp2
+          A(q,:) = s * tmp1 + c * tmp2
+          ! Now do A -> A J
+          tmp1 = A(:,p)
+          tmp2 = A(:,q)
+          A(:,p) = c * tmp1 - s * tmp2
+          A(:,q) = s * tmp1 + c * tmp2
+          ! Now do V -> V J
+          tmp1 = V(:,p)
+          tmp2 = V(:,q)
+          V(:,p) = c * tmp1 - s * tmp2
+          V(:,q) = s * tmp1 + c * tmp2
         end do
       end do
     end do
@@ -1242,6 +1316,53 @@ contains ! =====     Public Procedures     =============================
       b%kind = m_absent
     end if
   end subroutine DestroyBlock_0
+
+  ! ----------------------------------------------  FrobeniusNorm_0 -------
+  real(rm) function FrobeniusNorm_0 ( B, lowerOff )
+    ! Compute the Frobenius Norm of a matrix (sum of square of elements
+    ! possibly only consider the elements below the diagonal )
+    type(MatrixElement_T), intent(in) :: B
+    logical, optional, intent(in) :: LOWEROFF
+    ! Local variables
+    logical :: MYLOWEROFF
+    integer :: I, J, R, C               ! Indicies etc.
+    ! Executable code
+    myLowerOff = .false.
+    if ( present ( lowerOff ) ) myLowerOff = lowerOff
+    ! LowerOff case is more complex
+    if ( myLowerOff ) then
+      FrobeniusNorm_0 = 0.0
+      select case ( b%kind )
+      case ( m_absent )
+      case ( m_full )
+        do c = 1, b%nCols - 1
+          FrobeniusNorm_0 = FrobeniusNorm_0 + sum ( b%values ( c+1:b%nRows, c ) ** 2 )
+        end do
+      case ( m_banded )
+        do c = 1, b%nCols - 1
+          r = b%r1(c)
+          i = b%r2(c-1) + 1
+          j = b%r2(c)
+          ! Now skip points at and above the diagonal
+          if ( r <= c ) i = i + c - r + 1
+          FrobeniusNorm_0 = FrobeniusNorm_0 + sum ( b%values ( i:j, 1 ) ** 2 )
+        end do
+      case ( m_column_sparse )
+        do c = 1, b%nCols - 1
+          do i = b%r1(c-1) + 1, b%r1(c)
+            if ( b%r2(i) > c ) FrobeniusNorm_0 = FrobeniusNorm_0 + b%values(i,1) ** 2
+          end do
+        end do
+      end select
+    else
+      if ( b%kind == m_absent ) then
+        FrobeniusNorm_0 = 0.0
+      else
+        FrobeniusNorm_0 = sum ( b%values ** 2 )
+      end if
+    end if
+      
+  end function FrobeniusNorm_0
 
   ! ----------------------------------------------  GetDiagonal_0_r4  -----
   subroutine GetDiagonal_0_r4 ( B, X, SquareRoot, Invert, ZeroOK )
@@ -2917,15 +3038,34 @@ contains ! =====     Public Procedures     =============================
     real(rm), intent(out) :: T          ! Tangent term
     ! Local variables
     real(rm) :: TAU                     ! Workspace
+    real(rm) :: TNY                     ! sqrt(tiny)
     ! Executable code
     ! Note that we only store the lower triangle of A, so sometimes Golub and VanLoan's
     ! indices have been reversed
-    if ( A ( q, p ) /= 0.0_rm ) then 
-      tau =  ( A(q,q) - A(p,p)) / ( 2.0_rm * A(q,p) )
+    tau =  A(q,q) - A(p,p) 
+    tny = tiny ( 0.0_rm ) * 10.0
+    if ( tny * abs ( tau ) < abs ( A(q,p) ) ) then
+!       call output ( 'A terms: ' )
+!       call output ( A(q,q) )
+!       call output ( ', ' )
+!       call output ( A(p,p) )
+!       call output ( ', ' )
+!       call output ( A(q,p), advance='yes' )
+!       call output ( 'Numerator = ' )
+!       call output ( tau )
+!       call output ( 'Times tiny = ' )
+!       call output ( tny * abs(tau), advance='yes' )
+      tau = tau / ( 2.0_rm * A(q,p) )
+!       call output ( 'tau = ' )
+!       call output ( tau, advance='yes' )
       if ( tau >= 0.0_rm ) then
         t =  1.0_rm / (  tau + sqrt ( 1.0_rm + tau**2 ) )
+!         call output ( 't = ' )
+!         call output ( t, advance='yes' )
       else
         t = -1.0_rm / ( -tau + sqrt ( 1.0_rm + tau**2 ) )
+!         call output ( 't = ' )
+!         call output ( t, advance='yes' )
       end if
       c = 1.0_rm / sqrt ( 1.0_rm + t**2 )
       s = t * c
@@ -3247,6 +3387,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.100  2004/01/29 03:31:18  livesey
+! Got a working DenseCyclicJacobi and added FrobeniusNorm
+!
 ! Revision 2.99  2004/01/28 01:56:48  livesey
 ! Added the Cyclic Jacobi code.
 !
