@@ -186,7 +186,7 @@ Contains
     Real(rp), intent(in) :: NH
 
     Integer :: iter
-    Real(rp) :: v1,v2,f1,f2,df
+    Real(rp) :: v1,v2,f1,f2,df,pdf
 
      f1 = h1 * (1.0 + n1) - NH
      f2 = h2 * (1.0 + n2) - NH
@@ -210,7 +210,14 @@ Contains
        iter = iter + 1
        if(Iter > 10) EXIT
 
+       pdf = df
        df = (f2 - f1) / (v2 - v1)
+
+! If the derivative became too small relative to previous one, keep 
+! the previous derivative value (Otherwise the next step-size will be 
+! too large ..)
+
+       if(abs(df/pdf).lt.0.1) df = pdf
 
      END DO
 
@@ -244,6 +251,9 @@ End Subroutine comp_refcor
 
 END module REFRACTION_M
 ! $Log$
+! Revision 2.2  2002/02/14 21:36:13  zvi
+! Fix Sqrt() problem..
+!
 ! Revision 2.1  2001/12/01 01:35:22  zvi
 ! Clerifying code.. easier to follow..
 !
