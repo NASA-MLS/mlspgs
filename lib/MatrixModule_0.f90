@@ -30,7 +30,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   public :: GetVectorFromColumn, GetVectorFromColumn_0
   public :: InvertCholesky, InvertCholesky_0
   public :: InvertDenseCholesky, InvertDenseCholesky_0
-  public :: M_Absent, M_Banded, M_Column_Sparse, M_Full
+  public :: M_Absent, M_Banded, M_Column_Sparse, M_Full, M_Unknown
   public :: MatrixInversion, MatrixInversion_0, MatrixElement_T
   public :: MaxAbsVal, MaxAbsVal_0, MinDiag, MinDiag_0
   public :: Multiply, MultiplyMatrix_XY, MultiplyMatrix_XY_0
@@ -173,6 +173,10 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
     ! rows of the nonzero values are R2(R1(I-1)+1:R1(I)), and their values are
     ! VALUES(R1(I-1)+1:R1(I)).  R1(0) = 0.
   integer, parameter :: M_Full = 3           ! A non-sparse block
+  integer, parameter :: M_Unknown = 4        ! We don't know yet
+    ! This is used for reading l2pc files where we don't want to load the block
+    ! into memory until we know we need it.  The MatrixModule_0 code doesn't
+    ! understand such blocks, so use them with care.
 
   type MatrixElement_T
     integer :: KIND = M_Absent               ! Kind of block -- one of the
@@ -684,7 +688,7 @@ contains ! =====     Public Procedures     =============================
     if ( present(noValues) ) values = .not. noValues
     call destroyBlock ( z )
     select case ( kind )
-    case ( M_Absent )
+    case ( M_Absent, M_Unknown )
       call CreateEmptyBlock ( z )
     case ( M_Banded )
       call allocate_test ( z%r1, nCols, "z%r1", ModuleName )
@@ -2825,6 +2829,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.73  2002/07/17 06:00:55  livesey
+! Added M_Unknown
+!
 ! Revision 2.72  2002/07/01 23:49:47  vsnyder
 ! Plug memory leaks
 !
