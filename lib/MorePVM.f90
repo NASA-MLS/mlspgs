@@ -54,6 +54,7 @@ contains
   ! ------------------------------------------ PVMUnpackLitIndex ---
   subroutine PVMUnpackLitIndex ( index, info )
     use PVMIDL, only: PVMIDLUnpack
+    use PVM, only: PVMErrorMessage
     use MoreTree, only: GetLitIndexFromString
     ! Dummy arguments
     integer, intent(out) :: INDEX        ! String index
@@ -62,7 +63,7 @@ contains
     character (len=80) :: WORD
     ! Executable code
     call PVMIDLUnpack ( word, info )
-    if ( info /= 0 ) then
+    if ( info == 0 ) then
       if ( len_trim ( word ) > 0 ) then
         index = GetLitIndexFromString ( trim(word) )
       else
@@ -92,6 +93,9 @@ contains
 end module MorePVM
 
 ! $Log$
+! Revision 2.3  2002/10/08 17:42:46  livesey
+! Bug fix
+!
 ! Revision 2.2  2002/10/08 00:09:12  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
