@@ -368,7 +368,7 @@ contains
     use L2PC_PFA_STRUCTURES, only: K_MATRIX_INFO
     use L2PCdim, only: Nlvl, N2lvl, NSPS, Nptg, NCH, MNP => max_no_phi, &
       MNM => max_no_mmaf
-    use ELLIPSE, only: PHI_TAN, ROC
+    use ELLIPSE_M, only: ELLIPSE
     use COMP_PATH_ENTITIES_M, only: COMP_PATH_ENTITIES
     use REFRACTION_M, only: REFRACTION_CORRECTION
     use PATH_ENTITIES_M, only: PATH_INDEX, PATH_VECTOR, PATH_BETA, &
@@ -454,7 +454,7 @@ contains
     type(path_beta), dimension(:,:), pointer :: beta_path => null()
 
     real(r8) :: Radiances(Nptg,Nch)
-    real(r8) :: Zeta, Frq, h_tan, Rad, geod_lat, r
+    real(r8) :: Zeta, Frq, h_tan, Rad, geod_lat, phi_tan, r
 
     Real(r8), DIMENSION(:), ALLOCATABLE :: dum
 
@@ -519,15 +519,19 @@ contains
     type(path_vector), allocatable, dimension(:,:) :: T_PATH    ! (Nptg,mnm)
     type(path_vector), allocatable, dimension(:,:) :: Z_PATH    ! (Nptg,mnm)
     
-    type(path_vector), allocatable, dimension(:,:,:) :: SPSFUNC_PATH ! (Nsps,Nptg,mnm)
+! dimensions of SPSFUNC_PATH are: (Nsps,Nptg,mnm)
+    type(path_vector), allocatable, dimension(:,:,:) :: SPSFUNC_PATH 
+
     Type(path_vector_2d), allocatable, dimension(:,:) :: ETA_PHI ! (Nptg,mnm)
+
+    Type(ELLIPSE), allocatable, dimension(:)  :: ELVAR    ! mnm
 
     type(signal_t) :: Signal
 
     ! Executable code --------------------------------------------------------
 
-    ! First we identify the vector quantities we're going to need.  The key is to
-    ! identify the signal we'll be working with first
+    ! First we identify the vector quantities we're going to need.  
+    ! The key is to identify the signal we'll be working with first
     ! Deal with multiple signals in later versions !??? NJL
     if (size(forwardModelConfig%sigInfo) > 1) call MLSMessage ( &
       & MLSMSG_Error,ModuleName, &
@@ -634,6 +638,10 @@ contains
     if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
       & MLSMSG_Allocate//'eta_phi')
 
+    allocate(elvar(noMAFs), STAT=status)
+    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+      & MLSMSG_Allocate//'elvar')
+
     call allocate_test(dx_dt, Nptg, temp%template%noSurfs, &
       & 'dx_dt', ModuleName)
     call allocate_test(d2x_dxdt, Nptg, temp%template%noSurfs, &
@@ -646,19 +654,13 @@ contains
     if (temp%template%noInstances /= radiance%template%noInstances) &
       & call MLSMessage(MLSMSG_Error,ModuleName,'no temperature profiles /= no maf')
     do maf = 1, radiance%template%noInstances
-      phi_tan = degToRad*temp%template%phi(1,maf) ! ??? For the moment, change this soon.
+      phi_tan = degToRad*temp%template%phi(1,maf) 
+         ! ??? For the moment, change this soon.
       print*,'MAF ',maf,' phi_tan ',phi_tan
       geod_lat= degToRad*temp%template%geodLat(1,maf)
-      call geoc_geod_conv(orbIncline%values(1,1),phi_tan,geod_lat, &
-        & geoc_lat(maf),E_rad(maf))
+      call geoc_geod_conv(elvar(maf),orbIncline%values(1,1), &
+        &  phi_tan,geod_lat, geoc_lat(maf),E_rad(maf))
     end do
-
-    maf = 3                             ! Zvi will sort this out later!!!!
-    phi_tan = degToRad*temp%template%phi(1,maf)
-    geod_lat= degToRad*temp%template%geodLat(1,maf)
-    call geoc_geod_conv(orbIncline%values(1,1),phi_tan,geod_lat, &
-      & geoc_lat(maf),E_rad(maf))
-    ! End of Zvi'ism
 
     ! Compute the hydrostatic_model on the GL-Grid for all maf(s):
     ! First extend the grid below the surface.
@@ -695,11 +697,10 @@ contains
     call comp_path_entities(fwdModelIn, fwdModelExtra, &
       &  forwardModelConfig%molecules, &
       &  ForwardModelConfig%integrationGrid%noSurfs,temp%template%noSurfs,&
-      &  gl_count,ndx_path, &
-      &     z_glgrid,t_glgrid,h_glgrid,dhdz_glgrid,                    &
-      &     tan_hts,no_tan_hts, z_path,h_path,t_path,       &
-      &     phi_path,n_path,dhdz_path,eta_phi,temp%template%noInstances,        &
-      &     temp%template%phi(1,:)*degToRad,spsfunc_path,noMAFs,Ier)
+      &  gl_count,ndx_path,z_glgrid,t_glgrid,h_glgrid,dhdz_glgrid, &
+      &  tan_hts,no_tan_hts, z_path,h_path,t_path, phi_path,n_path,&
+      &  dhdz_path,eta_phi,temp%template%noInstances, &
+      &  temp%template%phi(1,:)*degToRad,spsfunc_path,noMAFs,elvar,Ier)
     if(ier /= 0) goto 99
 
     ! The first part of the forward model dealt with the chunks as a whole. 
@@ -714,11 +715,12 @@ contains
 
       phi_tan = degtorad*temp%template%phi(1,maf) !??? Choose better value later
 
-      ! Compute the ptg_angles (chi) for Antenna convolution, also the derivatives
-      ! of chi w.r.t to T and other parameters
+      ! Compute the ptg_angles (chi) for Antenna convolution, also the 
+      ! derivatives of chi w.r.t to T and other parameters
       call get_chi_angles(ndx_path(:,maf),n_path(:,maf),&
         &     forwardModelConfig%tangentGrid%surfs,        &
-        &     tan_hts(:,maf),tan_temp(:,maf),phi_tan,RoC,1e-3*scGeocAlt%values(1,1),  &
+        &     tan_hts(:,maf),tan_temp(:,maf),phi_tan,elvar(maf)%Roc,&
+        &     1.0e-3*scGeocAlt%values(1,1),  &
         &     elevOffset%values(1,1), &
         &     tan_dh_dt(:,maf,:),no_tan_hts,temp%template%noSurfs,temp%template%surfs(:,1),&
         &     forwardModelConfig%SurfaceTangentIndex, &
@@ -756,8 +758,8 @@ contains
             & 'Bad value of signal%sideband')
         end select
         noFreqs = size(frequencies)
-        print*,'Doing frequencies'
-        print*,frequencies
+!       print*,'Doing frequencies'
+!       print*,frequencies
       endif
 
       ! First we have a mini loop over pointings to work out an upper limit
@@ -806,7 +808,7 @@ contains
       ! Now we can go ahead and loop over pointings
       ! ------------------------------ Begin loop over pointings --------
       do ptg_i = 1, no_tan_hts - 1
-        print*,'  Doing pointing:',ptg_i
+!       print*,'  Doing pointing:',ptg_i
         k = ptg_i
         h_tan = tan_hts(k,maf)
 
@@ -831,8 +833,7 @@ contains
 
         call get_beta_path(frequencies,&
           & FMI%pfa_spectrum,no_ele, z_path(ptg_i,maf),t_path(ptg_i,maf), &
-          & beta_path, 1e-3*losVel%values(1,maf),ier) !??? Note only using MIF 1 for losvel
-
+          & beta_path, 1.0e-3*losVel%values(1,maf),ier)
         if(ier /= 0) goto 99
 !
 !  Define the dh_dt_path for this pointing and this MAF:
@@ -862,7 +863,8 @@ contains
 
           Frq = frequencies(frq_i)
 
-          call Rad_Tran(Frq, forwardModelConfig%integrationGrid%noSurfs, &
+          call Rad_Tran(elvar(maf), Frq, &
+            &    forwardModelConfig%integrationGrid%noSurfs, &
             &    h_tan, noSpecies, ndx_path(k,maf),  &
             &    z_path(k,maf), h_path(k,maf), t_path(k,maf), phi_path(k,maf),&
             &    dHdz_path(k,maf), earthRefl%values(1,1), beta_path(:,frq_i),      &
@@ -873,7 +875,7 @@ contains
           RadV(frq_i) = Rad
 
           ! Now, Compute the radiance derivatives:
-          !         CALL Rad_Tran_WD(frq_i,FMI%band,Frq, &
+          !         CALL Rad_Tran_WD(elvar(maf),frq_i,FMI%band,Frq, &
           !        &     ForwardModelConfig%integrationGrid%noSrfs,FMI%n_sps, &
           !        &     ForwardModelConfig%temp_der,forwardModelConfig%atmos_der, &
           !        &     ForwardModelConfig%spect_der,            &
@@ -1135,7 +1137,9 @@ contains
     endif
 
     if(.not. ForwardModelConfig%do_freq_avg) then
+      Frq = Frequencies(1)
       print *,'Frequency Averaging: OFF'
+      write(6,'(A,f12.4,a1)') ' (All computations done at Frq =',Frq,')'
     else
       print *,'Frequency Averaging: ON'
     endif
@@ -1229,6 +1233,9 @@ contains
     deallocate (eta_phi, STAT=status)
     if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
       & MLSMSG_Deallocate//'eta_phi')
+    deallocate (elvar, STAT=status)
+    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+      & MLSMSG_Deallocate//'elvar')
 
     call deallocate_test(dx_dt, 'dx_dt', ModuleName)
     call deallocate_test(d2x_dxdt, 'd2x_dxdt', ModuleName)
@@ -1373,6 +1380,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.61  2001/03/30 20:55:25  zvi
+! Remove the need for COMMON BLOCK..(ELLIPSE)
+!
 ! Revision 2.60  2001/03/30 03:05:49  vsnyder
 ! Add 'antennaPatterns' field to 'forwardModelGlobal'
 !
