@@ -28,6 +28,7 @@ cloudIce
 cloudInducedRadiance
 cloudRadSensitivity
 cloudWater
+columnabundance
 
 days
 deg
@@ -153,6 +154,9 @@ xyz
 zeta
 
 # $Log$
+# Revision 2.19  2003/03/06 19:46:49  pwagner
+# columnAbundance moved to lib from l2
+#
 # Revision 2.18  2003/02/06 00:44:55  livesey
 # Added nameFragment and sza for binSelector
 #
