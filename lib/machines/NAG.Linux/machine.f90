@@ -349,12 +349,6 @@ contains
 
     integer :: MyError, MyStatus
 
-    interface
-      integer function system ( CH )
-        character(len=*), intent(in) :: CH
-      end function system
-    end interface
-
     call system ( command, myStatus, myError)
     if ( present(error) ) error = myError
     if ( present(status) ) status = myStatus
@@ -363,6 +357,9 @@ contains
 end module MACHINE
 
 ! $Log$
+! Revision 1.5  2002/01/30 19:50:30  vsnyder
+! Added Shell_Command subroutine
+!
 ! Revision 1.4  2001/05/15 20:34:37  pwagner
 ! Compatible with NAG f95-V4.1
 !
