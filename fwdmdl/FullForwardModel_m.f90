@@ -1830,8 +1830,18 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.10  2001/11/07 21:16:56  livesey
+! Now defaults to *not* using a line if no bands listed.
+!
 ! Revision 2.9  2001/11/07 09:58:41  zvi
 ! More effective code for sps_path calculations
+!
+! Revision 2.8  2001/11/03 01:33:35  livesey
+! Add more informative message if no spectroscopy information available
+! for a molecule
+! 
+! Revision 2.7  2001/11/02 10:47:57  zvi
+! Implementing frequecy grid
 !
 ! Revision 2.6  2001/10/12 20:40:25  livesey
 ! Moved sideband ratio check
