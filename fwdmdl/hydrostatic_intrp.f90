@@ -188,35 +188,38 @@ contains
 ! *****     Private procedure     **************************************
 ! ------------------------------------------     COMPUTE_COEFF     -----
   subroutine COMPUTE_COEFF ( ch, n_i, v_grid, z_grid, t_grid, coeff )
-    character, intent(in) :: CH         ! ch='h' if v_grid=h_grid
+
+    Character, intent(in) :: CH         ! ch='h' if v_grid=h_grid
                                         ! ch='a' if v_grid=ptg_angles
-    integer(i4), intent(in) :: N_I      ! Number of input points
-    real(r8), intent(in) :: V_GRID(:)   ! Input grid Angles or Heights
-    real(r8), intent(in) :: T_GRID(:)   ! Input grid temperatures
-    real(r8), intent(in) :: Z_GRID(:)   ! Input grid Log pressures
-    real(r8), intent(out) :: COEFF(N_I)
-    real(r8) :: DZ
-    integer :: I
-    real(r8) :: SAI, SAIP1, VL, W
+    Integer(i4), intent(in) :: N_I      ! Number of input points
+    Real(r8), intent(in) :: V_GRID(:)   ! Input grid Angles or Heights
+    Real(r8), intent(in) :: T_GRID(:)   ! Input grid temperatures
+    Real(r8), intent(in) :: Z_GRID(:)   ! Input grid Log pressures
+    Real(r8), intent(out) :: COEFF(N_I)
+
+    Integer :: I
+    Real(r8) :: SAI, SAIP1
 !
 ! Computes the coefficients (C) for each sub-interval
 !
     saip1 = v_grid(1)
     if (ch == 'a') saip1 = Sin(saip1)
+
     do i = 1, n_i - 1
       sai = saip1
       saip1 = v_grid(i+1)
       if (ch == 'a') saip1 = Sin(saip1)
-      coeff(i) = 0.5 * (z_grid(i+1) - z_grid(i))*(t_grid(i+1) + t_grid(i)) &
-               / (saip1 - sai)
-!      dz = z_grid(i+1) - z_grid(i)
-!      w =  (t_grid(i+1) - t_grid(i)) / dz  ! ??? Do we really want to divide
-!      vl = dz * (t_grid(i) + 0.5 * w * dz) ! ??? by DZ, and then multiply?
-!      coeff(i) = vl / (saip1 - sai)
+      coeff(i) = 0.5 * (z_grid(i+1) - z_grid(i))*(t_grid(i+1) + t_grid(i)) / &
+                     & (saip1 - sai)
     end do
+
   end subroutine COMPUTE_COEFF
+
 end module HYDROSTATIC_INTRP
 ! $Log$
+! Revision 2.1  2002/02/16 00:04:39  bill
+! tweaked the calc a bit--wgr
+!
 ! Revision 2.0  2001/09/17 20:26:27  livesey
 ! New forward model
 !
