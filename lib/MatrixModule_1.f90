@@ -1,4 +1,3 @@
-
 ! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
@@ -781,7 +780,7 @@ contains ! =====     Public Procedures     =============================
 
     integer :: I, N
 
-    call cloneVector ( x, a%m%row%vec )
+    call cloneVector ( x, a%m%row%vec, vectorNameText='_x' )
     n = max(a%m%row%nb,a%m%col%nb)
     if ( a%m%row%extra .or. a%m%col%extra ) n = n - 1
     do i = 1, n
@@ -986,7 +985,7 @@ contains ! =====     Public Procedures     =============================
     my_update = .false.
     if ( present(update) ) my_update = update
     ! Copy characteristics, allocate values:
-    if ( .not. update ) call cloneVector ( z, v ) 
+    if ( .not. update ) call cloneVector ( z, v, vectorNameText='_z' ) 
     do j = 1, a%col%nb
       k = a%col%quant(j)
       l = a%col%inst(j)
@@ -1027,7 +1026,7 @@ contains ! =====     Public Procedures     =============================
     my_update = .false.
     if ( present(update) ) my_update = update
     ! Copy characteristics, allocate values:
-    if ( .not. my_update ) call cloneVector ( z, a%row%vec )
+    if ( .not. my_update ) call cloneVector ( z, a%row%vec, vectorNameText='_z' )
     do i = 1, a%row%nb
       m = a%row%quant(i)
       n = a%row%inst(i)
@@ -1382,13 +1381,21 @@ contains ! =====     Public Procedures     =============================
         call output ( ' and column ' )
         call output ( j )
         call output ( ' ( ' )
-        call display_string ( &
-          & matrix%row%vec%quantities(matrix%row%quant(i))%template%name )
+        if ( matrix%row%extra .and. i == matrix%row%nb ) then
+          call output ( '_extra_' )
+        else
+          call display_string ( &
+            & matrix%row%vec%quantities(matrix%row%quant(i))%template%name )
+        end if
         call output ( ':' )
         call output ( matrix%row%Inst(i) )
         call output (' , ')
-        call display_string ( &
-          & matrix%col%vec%quantities(matrix%col%quant(j))%template%name )
+        if ( matrix%col%extra .and. j == matrix%col%nb ) then
+          call output ( '_extra_' )
+        else
+          call display_string ( &
+            & matrix%col%vec%quantities(matrix%col%quant(j))%template%name )
+        end if
         call output ( ':' )
         call output ( matrix%col%Inst(j) )
         call output ( ' )', advance='yes' )
@@ -1449,15 +1456,21 @@ contains ! =====     Public Procedures     =============================
     if ( details ) then
       call output ( 'Numbers of ' )
       call output ( r_or_c )
-      call output ( 's in each block: ', advance='yes' )
+      call output ( 's in each block' )
+      if ( rc%extra ) call output ( ' (including extra)' )
+      call output ( ':', advance='yes' )
       call dump ( rc%nelts )
       call output ( 'Instance indices for blocks in the ' )
       call output ( r_or_c )
-      call output ( 's:', advance='yes' )
+      call output ( 's' )
+      if ( rc%extra ) call output ( ' (including extra)' )
+      call output ( ':', advance='yes' )
       call dump ( rc%inst )
       call output ( 'Quantity indices for blocks in the ' )
       call output ( r_or_c )
-      call output ( 's:', advance='yes' )
+      call output ( 's' )
+      if ( rc%extra ) call output ( ' (including extra)' )
+      call output ( ':', advance='yes' )
       call dump ( rc%quant )
     end if
   end subroutine Dump_RC
@@ -1478,6 +1491,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.28  2001/05/03 02:11:23  vsnyder
+! Spiffify dump, add names to cloned vectors
+!
 ! Revision 2.27  2001/05/01 23:54:13  vsnyder
 ! Create a block for the extra column
 !
