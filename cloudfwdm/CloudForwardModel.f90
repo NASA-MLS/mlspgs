@@ -1,7 +1,7 @@
       SUBROUTINE CloudForwardModel (doChannel, NF, NZ, NT, NS, N, &
              &   NZmodel,                                         &
              &   FREQUENCY, PRESSURE, HEIGHT, TEMPERATURE, VMRin, &
-             &   WCin, IPSDin, ZT, RE, ISURF, ISWI, ICON,         &
+             &   WCin, IPSDin, ZT, RE, ISURF, ISWI, ICON, IFOV,   &
              &   phi_tan, h_obs, elev_offset, AntennaPattern,     &
              &   TB0, DTcir, Trans, BETA, BETAc, Dm, TAUeff, SS,  &
              &   NU, NUA, NAB, NR)
@@ -156,6 +156,10 @@
                                                ! 1 = 100% R.H. BELOW CLOUD
                                                ! 2 = DEFAULT
                                                ! 3 = NEAR SIDE CLOUD ONLY
+
+      INTEGER :: IFOV                          ! FIELD OF VIEW AVERAGING SWITCH
+                                               ! 0 = OFF
+                                               ! 1 = ON
 
       REAL(r8) :: FREQUENCY(NF)                ! FREQUENCIES (GHz)
       REAL(r8) :: PRESSURE(NZ)                 ! PRESSURE LEVEL
@@ -399,8 +403,8 @@
 !     CONTINUMA AND LINE EMISSIONS.   
 !=========================================================================
 
-       DO 2000 IFR=1, NF
-       IF ( doChannel(IFR) ) then
+      DO 2000 IFR=1, NF
+      IF ( doChannel(IFR) ) then
 
          CALL CLEAR_SKY(NZmodel-1,NU,TS,S,LORS,SWIND,           &
               &         YZ,YP,YT,YQ,VMR,NS,                     &
@@ -535,6 +539,8 @@
 
          ENDIF
 
+
+         IF (IFOV .EQ. 1) THEN       ! BEGIN FOV AVERAGING
 ! ==========================================================================
 !    >>>>>> ADDS THE EFFECTS OF ANTENNA SMEARING TO THE RADIANCE <<<<<<
 ! ==========================================================================
@@ -640,6 +646,8 @@
 
          Call Cspline_der ( fft_press, -log10(ZT), RAD0, TB0(:,IFR), dTB0_dZT(:,IFR), Ktr, NT )
          Call Cspline_der ( fft_press, -log10(ZT), RAD-RAD0, DTcir(:,IFR), dDTcir_dZT(:,IFR), Ktr, NT )
+
+         END IF     ! END FOV AVERAGING
 
 !====================================
 !    >>>>>>> MODEL-OUTPUT <<<<<<<<<
