@@ -41,7 +41,7 @@ module MLSHDF5
     & H5TCLOSE_F, H5TCOPY_F, H5TEQUAL_F, H5TGET_SIZE_F, H5TSET_SIZE_F
   use MLSCommon, only: r4, r8
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
-  use MLSStrings, only: catLists
+  use MLSStringLists, only: catLists
 
   implicit NONE
   private
@@ -3577,6 +3577,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.44  2004/08/04 23:19:01  pwagner
+! Much moved from MLSStrings to MLSStringLists
+!
 ! Revision 2.43  2004/08/03 18:00:28  pwagner
 ! Optionally sets fill value for some datasets
 !
