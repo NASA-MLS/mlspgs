@@ -62,7 +62,7 @@ while [ -n "$(echo $1)" ]; do
 	case $MACHINE in
 	    soundbarrier )
 		echo "/research1/$MYUSER/";;
-	    scramket )
+	    scramjet )
 		echo "/state/partition1/livesey/";;
 	    lightspeed )
 		echo "$HOME/$VERSION";;
@@ -147,6 +147,9 @@ while [ -n "$(echo $1)" ]; do
 done
 
 # $Log$
+# Revision 1.29  2004/04/17 05:50:03  livesey
+# Moved the l2pcs on scramjet
+#
 # Revision 1.28  2004/04/08 17:15:17  livesey
 # Bug fix
 #
