@@ -126,7 +126,11 @@ contains ! ========  Public Procedures =========================================
       if ( info /= 0 ) call PVMErrorMessage ( info, "packing number of matrices" )
 
       do matrix = 1, size(matrixDatabase)
-        call get_string ( matrixDatabase(matrix)%name, line )
+        if ( matrixDatabase(matrix)%name /= 0 ) then
+          call get_string ( matrixDatabase(matrix)%name, line )
+        else
+          line = '<unknown>'
+        end if
         call PVMIDLPack ( trim(line), info )
         if (info /= 0) call PVMErrorMessage ( info, "packing matrix name:" &
           & // trim(line) )
@@ -769,6 +773,9 @@ contains ! ========  Public Procedures =========================================
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.31  2002/08/21 23:05:59  livesey
+! Handles unknown matrices better
+!
 ! Revision 2.30  2002/08/03 20:41:27  livesey
 ! Added snoop toggle
 !
