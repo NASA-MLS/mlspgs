@@ -264,5 +264,4 @@ contains
 
 end module SizeDistribution
 
-! $Log: SizeDistribution.f90,v      
-
+! $Log$

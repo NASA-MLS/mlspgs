@@ -159,5 +159,5 @@ contains
 
 end module CloudySkyModule
 
-! $Log: CloudySkyModule.f90,v      
+! $Log$
 

@@ -78,22 +78,4 @@ contains
 
 end module Tmp
 
-! $Log: Tmp.f90,v      
-
-      
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+! $Log$

@@ -115,4 +115,4 @@ contains
 
 end module RefractiveIndex
 
-! $Log: RefractiveIndex.f90,v      
+! $Log$

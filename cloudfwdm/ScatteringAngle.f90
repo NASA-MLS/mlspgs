@@ -80,8 +80,4 @@ contains
 
 end module ScatteringAngle
 
-! $Log: ScatteringAngle.f90,v      
-
-
-
-
+! $Log$

@@ -199,5 +199,4 @@ contains
 
 end module SpectraLines
 
-! $Log: SpectraLines.f90,v      
-
+! $Log$

@@ -7,6 +7,7 @@ module ModelInput
 ! SET ALL PARAMETERS ONTO INTERNAL MODEL GRIDS
 ! -------------------------------------------------------------------------
 
+      use Interpack, only: LOCATE
       use MLSCommon, only: r8
 
       IMPLICIT NONE
@@ -187,10 +188,4 @@ contains
 
 end module ModelInput
 
-! $Log: ModelInput.f90,v      
-
-
-
-
-
-
+! $Log$

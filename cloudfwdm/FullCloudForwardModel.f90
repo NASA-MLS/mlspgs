@@ -821,6 +821,9 @@ subroutine FindTransForSgrid ( PT, Re, NT, NZ, NS, Zlevel, TRANSonZ, Slevel, TRA
 end subroutine FindTransForSgrid
 
 ! $Log$
+! Revision 1.27  2001/09/19 16:46:22  dwu
+! some minor
+!
 ! Revision 1.26  2001/09/19 00:25:59  dwu
 ! add M_banded to Jacobian
 !
@@ -854,7 +857,3 @@ end subroutine FindTransForSgrid
 ! Revision 1.15  2001/07/27 15:17:58  jonathan
 ! First Successful f90 runs
 !
-
-
-
-

@@ -36,4 +36,4 @@ contains
 
 end module Blackbody
 
-! $Log: Blackbody.f90,v      
+! $Log$

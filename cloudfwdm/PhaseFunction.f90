@@ -54,4 +54,4 @@ contains
 
 end module PhaseFunction
 
-! $Log: PhaseFunction.f90,v      
+! $Log$

@@ -369,12 +369,4 @@ contains
 
 end module RadiativeTransferModule
 
-! $Log: RadiativeTransferModule.f90,v      
-
-
-
-
-
-
-
-
+! $Log$

@@ -51,9 +51,4 @@ contains
 
 end module Interpack
 
-! $Log: Interpack.f90,v      
-
-
-
-
-
+! $Log$

@@ -764,5 +764,5 @@ contains
 
 end module CloudySkyRadianceModel
 
-! $Log: CloudySkyRadianceModel.f90,v      
+! $Log$
 

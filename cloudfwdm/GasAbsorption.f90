@@ -242,11 +242,4 @@ contains
 
 end module GasAbsorption
 
-! $Log: GasAbsorption.f90,v      
-
-
-
-
-
-
-
+! $Log$

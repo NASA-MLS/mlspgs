@@ -128,4 +128,4 @@ contains
 
 end module MieTheory
 
-! $Log: MieTheory.f90,v      
+! $Log$

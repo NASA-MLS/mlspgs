@@ -238,14 +238,4 @@ contains
 
 end module SurfaceModel
 
-! $Log: SurfaceModel.f90,v      
-
-
-
-
-
-
-
-
-
-
+! $Log$

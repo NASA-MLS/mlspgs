@@ -52,4 +52,4 @@ contains
 
 end module PrtMsg
 
-! $Log: PrtMsg.f,v      
+! $Log$

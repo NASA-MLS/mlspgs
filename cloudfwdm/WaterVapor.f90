@@ -38,8 +38,4 @@ contains
           END SUBROUTINE RHtoEV
 end module WaterVapor
 
-! $Log: WaterVapor.f90,v      
-
-
-
-
+! $Log$

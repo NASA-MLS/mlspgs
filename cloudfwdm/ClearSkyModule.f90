@@ -112,5 +112,5 @@ contains
 
 end module ClearSkyModule
 
-! $Log: ClearSkyModule.f90,v      
+! $Log$
 
