@@ -1612,10 +1612,6 @@ contains
       ! Compute the averaging kernel
       if ( got(f_average) ) then
         preserveMatrixName = outputAverage%name
-        if ( columnScaling /= l_none ) then
-          call columnScale ( kTk%m, v(columnScaleVector) )
-          call rowScale ( v(columnScaleVector), kTk%m )
-        end if
         outputAverage = outputCovariance%m .tx. kTk%m
         outputAverage%name = preserveMatrixName
           if ( index(switches,'cov') /= 0 ) call output ( &
@@ -2944,6 +2940,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.159  2002/08/05 19:40:11  vsnyder
+! Undo scaling of kTk -- it's prepared unscaled
+!
 ! Revision 2.158  2002/08/03 20:40:58  livesey
 ! Added matrix name preseveration.  Changed averaging kernel calculation.  Still
 ! not right though!
