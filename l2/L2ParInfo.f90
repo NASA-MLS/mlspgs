@@ -45,8 +45,8 @@ module L2ParInfo
     integer :: myTid                    ! My task ID in pvm
     integer :: masterTid                ! task ID in pvm
     character(len=132) :: slaveFilename ! Filename with list of slaves
-    integer :: maxFailuresPerMachine = 8 ! More than this then don't use it
-    integer :: maxFailuresPerChunk = 3 ! More than this then give up on getting it
+    integer :: maxFailuresPerMachine = 1 ! More than this then don't use it
+    integer :: maxFailuresPerChunk = 4 ! More than this then give up on getting it
   end type L2ParallelInfo_T
 
   ! Shared variables
@@ -145,6 +145,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.10  2002/03/21 01:23:36  livesey
+! Changed thresholds
+!
 ! Revision 2.9  2001/10/30 01:45:21  livesey
 ! Some modifications/fixes to parallel join
 !
