@@ -161,6 +161,7 @@ module INIT_TABLES_MODULE
   integer, public, parameter :: L_PRESSURE      = l_plain + 1
   integer, public, parameter :: L_PTAN 	        = l_pressure + 1
   integer, public, parameter :: L_RADIANCE      = l_ptan  + 1
+  integer, public, parameter :: L_REFGPH        = l_radiance + 1
   integer, public, parameter :: L_R1A           = l_radiance + 1
   integer, public, parameter :: L_R1B           = l_r1a + 1
   integer, public, parameter :: L_R2            = l_r1b + 1
@@ -756,6 +757,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.9  2001/01/30 00:25:54  livesey
+! Added L_REFGPH
+!
 ! Revision 2.8  2001/01/26 19:02:24  vsnyder
 ! Changes for "retrieve" section.
 !
