@@ -144,7 +144,7 @@ outer1: do
         k = 2 * j - 1
         antennaPatterns(i)%aaap(k:k+1,1) = v(1:2)
         antennaPatterns(i)%aaap(k:k+1,2) = v(3:4)
-        antennaPatterns(i)%aaap(k:k+1,2) = v(5:6)
+        antennaPatterns(i)%aaap(k:k+1,3) = v(5:6)
 
         ! First derivative field:     i*Q * F(S), i = Sqrt(-1)
 
@@ -227,6 +227,9 @@ outer1: do
 end module AntennaPatterns_m
 
 ! $Log$
+! Revision 1.5  2001/04/05 22:54:12  vsnyder
+! Make array components of AntennaPatterns_T 2-D
+!
 ! Revision 1.4  2001/04/05 00:07:57  vsnyder
 ! Correct spelling of 'Antenna Pattern'
 !
