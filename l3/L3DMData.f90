@@ -1408,10 +1408,12 @@ CONTAINS
   USE Intrinsic, ONLY: l_grid, l_hdfeos
   USE MLSFiles, ONLY: HDFVERSION_5, HDFVERSION_4, mls_sfstart, mls_sfend
   USE OpenInit, ONLY: PCFData_T
-  USE PCFHdr, ONLY: WritePCF2Hdr, WriteInputPointer, he5_writeglobalattr
+  USE PCFHdr, ONLY: WritePCF2Hdr, WriteInputPointer, he5_writeglobalattr, &
+     & GlobalAttributes
   USE PCFModule, ONLY: ExpandFileTemplate, FindFileDay 
   USE SDPToolkit, ONLY: PGSd_MET_NUM_OF_GROUPS, PGSd_MET_GROUP_NAME_L, & 
-     & PGS_S_SUCCESS, PGSMET_E_MAND_NOT_SET, WARNIFCANTPGSMETREMOVE
+     & PGS_S_SUCCESS, PGSMET_E_MAND_NOT_SET, WARNIFCANTPGSMETREMOVE, &
+     & max_orbits
 
       ! Brief description of subroutine
       ! This routine writes the metadata for an l3dm file, 
@@ -1637,10 +1639,18 @@ CONTAINS
          !  msr = METAWR_ERR // attrName
          !   CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          !ENDIF
-         
+        
          attrName = 'StartOrbitNumber' // '.1'
          !result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, -1)
-         result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 99999)
+         !result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 99999)
+         IF (GlobalAttributes%OrbNumDays(1,i) == -1) THEN
+           result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), &
+		& attrName, 99999)
+	 ELSE 
+           result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), &
+		& attrName, GlobalAttributes%OrbNumDays(1,i))
+         ENDIF 
+
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -1648,7 +1658,14 @@ CONTAINS
          
          attrName = 'StopOrbitNumber' // '.1'
          !result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, -1)
-         result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 99999)
+         !result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 99999)
+         if (maxval(GlobalAttributes%OrbNumDays(:,i)) == -1) then
+           result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), &
+		& attrName, 99999)
+	 else
+           result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), &
+		& attrName, maxval(GlobalAttributes%OrbNumDays(:,i)))
+         end if
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -1836,7 +1853,7 @@ CONTAINS
         ! Write global attributes
         if ( MyHDFVersion == HDFVERSION_5 ) then
           sdid = he5_gdopen (files%name(i), HE5F_ACC_RDWR)
-          call he5_writeglobalattr(sdid)
+          call he5_writeglobalattr(sdid,i)
           result = he5_gdclose (sdid)
         endif
       ENDDO
@@ -2189,6 +2206,9 @@ CONTAINS
 !==================
 
 !# $Log$
+!# Revision 1.31  2003/08/21 20:22:46  cvuu
+!# Remove testing print statements
+!#
 !# Revision 1.30  2003/08/18 17:03:59  cvuu
 !# Add close and open in outputDiags_he5
 !#
