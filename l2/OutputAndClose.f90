@@ -107,7 +107,7 @@ contains ! =====     Public Procedures     =============================
     integer :: L2gpFileHandle, L2gp_Version
     character (len=132) :: L2gpPhysicalFilename
     integer :: L2PCUNIT
-    integer, parameter:: MAXQUANTITIESPERFILE=64        
+    integer, parameter:: MAXQUANTITIESPERFILE=10000
     integer :: Metadata_error
     character (len=32) :: meta_name    ! From the metaName= field
     character (len=32) :: Mnemonic
@@ -904,6 +904,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.62  2002/11/22 19:10:30  pwagner
+! Upped MAXQUANTITIESPERFILE to 10k
+!
 ! Revision 2.61  2002/11/13 01:10:09  pwagner
 ! Beginnings of attempt to write hdf5 L2AUX; incomplete
 !
