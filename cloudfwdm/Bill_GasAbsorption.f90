@@ -26,7 +26,7 @@ contains
     use Get_Beta_Path_m, only: CREATE_BETA
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT, ALLOCATESLABS, &
       & DESTROYCOMPLETESLABS
-    use MLSCommon, only: R8, RP, IP
+    use MLSCommon, only: RK => R8, RP, IP
     use Molecules, only: L_H2O, L_H2O_18, L_HNO3, L_N2, L_N2O, L_O_18_O, &
       & L_O2, L_O3
     use Physics, only: H_OVER_K
@@ -39,11 +39,11 @@ contains
     !-----------------
 
     INTEGER, INTENT(IN) :: NS
-    REAL(r8), INTENT(IN) :: F               ! FREQUENCY IN GHz
-    REAL(r8), INTENT(IN) :: T               ! TEMPERATURE (K)
-    REAL(r8), INTENT(IN) :: PB              ! TOTAL AIR PRESSURE (hPa)
-    REAL(r8), INTENT(IN) :: VMR_in(NS-1)    ! VMR OF SPECIES 
-    REAL(r8), INTENT(IN) :: RH              ! H2O VOLUME MIXING RATIO
+    REAL(rk), INTENT(IN) :: F               ! FREQUENCY IN GHz
+    REAL(rk), INTENT(IN) :: T               ! TEMPERATURE (K)
+    REAL(rk), INTENT(IN) :: PB              ! TOTAL AIR PRESSURE (hPa)
+    REAL(rk), INTENT(IN) :: VMR_in(NS-1)    ! VMR OF SPECIES 
+    REAL(rk), INTENT(IN) :: RH              ! H2O VOLUME MIXING RATIO
     REAL(rp), INTENT(IN) :: LosVel          !     OR RELATIVE HUMIDITY
     
     Type(Catalog_T), INTENT(IN) :: Catalog(:)
@@ -52,56 +52,56 @@ contains
     !------------------
     ! OUTPUTS
     !------------------
-    REAL(r8), INTENT(out) :: ABSC           ! ABSORPTION COEFFICIENT (1/m)
+    REAL(rk), INTENT(out) :: ABSC           ! ABSORPTION COEFFICIENT (1/m)
 
     !------------------
     ! LOCAL VARIABLES
     !-----------------
 
-    REAL(r8) :: B                           ! BETA (1/m/ppv)                 
-    REAL(r8) :: FF                          ! FREQUENCY IN MHz               
+    REAL(rk) :: B                           ! BETA (1/m/ppv)                 
+    REAL(rk) :: FF                          ! FREQUENCY IN MHz               
     REAL(rp) :: myLosVel
-    REAL(r8) :: P                           ! DRY AIR PARTIAL PRESSURE (hPa) 
-    REAL(r8) :: VMR                         ! VOLUME MIXING RATIO            
-    REAL(r8) :: VMR_H2O                     ! H2O VOLUME MIXING RATIO        
-    REAL(r8) :: VMR_O3                      ! H2O VOLUME MIXING RATIO        
-    REAL(r8) :: VMR_O2                      ! O2    VOLUME MIXING RATIO      
-    REAL(r8) :: VMR_O_18_O                  ! O18O  VOLUME MIXING RATIO      
-    REAL(r8) :: VMR_H2O_18                  ! H2O18 VOLUME MIXING RATIO      
-    REAL(r8) :: VMR_N2                      ! N2 VOLUME MIXING RATIO         
-    REAL(r8) :: VMR_N2O                     ! N2O VOLUME MIXING RATIO        
-    REAL(r8) :: VMR_HNO3                    ! HNO3 VOLUME MIXING RATIO       
-    REAL(r8) :: VP                          ! VAPOR PARTIAL PRESSURE (hPa)
+    REAL(rk) :: P                           ! DRY AIR PARTIAL PRESSURE (hPa) 
+    REAL(rk) :: VMR                         ! VOLUME MIXING RATIO            
+    REAL(rk) :: VMR_H2O                     ! H2O VOLUME MIXING RATIO        
+    REAL(rk) :: VMR_O3                      ! H2O VOLUME MIXING RATIO        
+    REAL(rk) :: VMR_O2                      ! O2    VOLUME MIXING RATIO      
+    REAL(rk) :: VMR_O_18_O                  ! O18O  VOLUME MIXING RATIO      
+    REAL(rk) :: VMR_H2O_18                  ! H2O18 VOLUME MIXING RATIO      
+    REAL(rk) :: VMR_N2                      ! N2 VOLUME MIXING RATIO         
+    REAL(rk) :: VMR_N2O                     ! N2O VOLUME MIXING RATIO        
+    REAL(rk) :: VMR_HNO3                    ! HNO3 VOLUME MIXING RATIO       
+    REAL(rk) :: VP                          ! VAPOR PARTIAL PRESSURE (hPa)
 
     Integer(ip) :: n_sps, i
     real(rp) :: bb, tanh1
-    real(r8), parameter :: Boltzmhz2 = 0.5 / h_over_k
+    real(rk), parameter :: Boltzmhz2 = 0.5 / h_over_k
     logical :: Do_1D
 
 !-----------------------------------------------------------------------------
-    if ( rh == 0.0_r8 ) then
+    if ( rh == 0.0_rk ) then
       p = pb
-      vmr_h2o = vp / max(1.e-19_r8, p)
-    else if ( rh == 110.0_r8 ) then
-       call RHtoEV ( T, rh, VP )
-       P = PB - VP
-       vmr_h2o = vp / max(1.e-19_r8, p)
+      vmr_h2o = vp / max(1.e-19_rk, p)
+    else if ( rh == 110.0_rk ) then
+      call RHtoEV ( T, rh, VP )
+      P = PB - VP
+      vmr_h2o = vp / max(1.e-19_rk, p)
     else
-       vmr_h2o = rh                     ! RH HERE IS WATER VAPOR MIXING RATIO
-       vp = vmr_h2o*pb                  ! VP IS VAPOR PRESSURE, PB IS TOTAL
-       p = pb - vp                      ! PRESSURE, P IS DRY-AIR PRESSURE
+      vmr_h2o = rh                     ! RH HERE IS WATER VAPOR MIXING RATIO
+      vp = vmr_h2o*pb                  ! VP IS VAPOR PRESSURE, PB IS TOTAL
+      p = pb - vp                      ! PRESSURE, P IS DRY-AIR PRESSURE
     end if
 
-    VMR_O2     = 0.2095_r8
-    VMR_N2     = 0.805_r8
-    VMR_O_18_O = VMR_O2*0.00409524_r8 
-    VMR_H2O_18 = VMR_H2O*0.00204_r8
+    VMR_O2     = 0.2095_rk
+    VMR_N2     = 0.805_rk
+    VMR_O_18_O = VMR_O2*0.00409524_rk 
+    VMR_H2O_18 = VMR_H2O*0.00204_rk
     VMR_O3     = VMR_in(1)
     VMR_N2O    = VMR_in(2)
     VMR_HNO3   = VMR_in(3)
 
-    B = 0.0_r8
-    FF = F*1000.0_r8
+    B = 0.0_rk
+    FF = F*1000.0_rk
 
     n_sps = Size(Catalog)
 
@@ -139,14 +139,14 @@ contains
       case (L_HNO3)
         VMR = VMR_HNO3
       case default
-        VMR=0.0_r8
+        VMR=0.0_rk
       end select
 
       B = B + VMR*bb
 
     end do
 
-    ABSC = B/1000.0_r8     ! convert km-1 to m-1
+    ABSC = B/1000.0_rk     ! convert km-1 to m-1
 
     call DestroyCompleteSlabs ( gl_slabs )
 
@@ -159,6 +159,9 @@ contains
 end module Bill_GasAbsorption
 
 ! $Log$
+! Revision 1.24  2003/07/09 23:30:16  vsnyder
+! Interpret RH correctly, remove some old unused stuff
+!
 ! Revision 1.23  2003/07/09 00:39:51  vsnyder
 ! Remove three unused variables
 !
