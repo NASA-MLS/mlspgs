@@ -287,9 +287,10 @@ the command-line variable MLSCFILE above is INSTALLDIR. Thus you may specify
 the destination via
            make INSTALLDIR=/usr/local/bin install
 
-It is possible for two different .configure files to name the same configuration,
-i.e. to have the same MLSCONFG setting. As stated above, be aware that objects
-made when either is in force will then be placed in the same sub-directory.
+It is possible for two different .configure files to name the same
+configuration, i.e. to have the same MLSCONFG setting. As stated above, be
+aware that objects made when either is in force will then be placed in the same
+sub-directory.
 
 OTHER OPTIONS
 These are available either at the "top" level, mlspgs, or in parts at lib or
@@ -331,8 +332,8 @@ install      moves the built programs from the mlslevels to INSTALLDIR
 makefile     makes a new symbolic link from MakeFC to Makefile
              at the top level as well as each of the subdirectories;
              useful for older archives before the link became automatic
-update       replaces Makefiles in subdirectories with latest versions after
-             recalculating dependencies; useful after a cvs update; also deletes
+update       replaces Makefiles in subdirectories with latest versions;
+             recalculates dependencies; useful after a cvs update; also deletes
              orphaned .o and .mod files left behind after sources removed;
              also useful after minor configuration changes to prevent 
              unnecessary recompilation
@@ -597,6 +598,13 @@ encounter a link error if you set LDOPTS=-gc while configuring, but then build
 with the statement "make LDOPTS=" effectively erasing "-gc" from the link. (So
 say what the solution to this problem is!)
 
+Because of the need of even the toolkit-free version of l2 to convert
+date-and-time info from utc to tai93, bleeding chunks were extracted and hacked
+into an "concealed library" utctotai. It is automatically built behind the
+scenes and then installed in INSTALLDIR. It may in time be moved out from
+behind the scenes into daylight where it may be generally examined and, if
+needed, improved.
+
 Any of the variables assigned in the file .configure can be treated as an
 advanced setting. In other words, you may override any of these on the command
 line. E.g., "make PGSTK=/some/other/path MLSCONFG=some.other.name".
@@ -619,10 +627,10 @@ TAR                Overrides name of tar command; e.g. path to GNU tar
                    in case your tar won't gzip for targets *targ
 
 The following are environmental settings
-HOSTMLSCFILE       Get all the mls settings from this file instead of .configure 
-                   (may be overridden by MLSCFILE)
-MLSINSTALLDIR      install puts all the executables here instead of bin/MLSCONFG
-                   (may be overridden by INSTALLDIR)
+HOSTMLSCFILE       Get all the mls settings from this file instead of 
+                    .configure (may be overridden by MLSCFILE)
+MLSINSTALLDIR      install puts all the executables here instead of
+                    bin/MLSCONFG (may be overridden by INSTALLDIR)
 
 EXAMPLE OF A .configure FILE
 #	.configure for mls
@@ -675,6 +683,9 @@ export LDOPTS
 EOF
 exit
 # $Log$
+# Revision 1.30  2002/04/18 20:18:21  pwagner
+# Level 1 needs fftw; new paths in sample .configure
+#
 # Revision 1.29  2002/02/21 21:57:05  pwagner
 # Separates .configure-able settings from command-line ones
 #
