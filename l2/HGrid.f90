@@ -602,7 +602,8 @@ contains ! =====     Public Procedures     =============================
     ! First we're going to work out the geodetic angle range
     ! Read an extra MAF if possible, as we may use it later
     ! when computing the overlaps.
-    l1bItemName = AssembleL1BQtyName ( instrumentModuleName//".tpGeodAngle", hdfVersion, .false. )
+    l1bItemName = AssembleL1BQtyName ( instrumentModuleName//".tpGeodAngle", &
+      & hdfVersion, .false. )
     call ReadL1BData ( l1bInfo%l1bOAID, l1bItemName, &
       & l1bField, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, &
@@ -738,7 +739,8 @@ contains ! =====     Public Procedures     =============================
 
     ! Solar zenith
     ! This we'll have to do with straight interpolation
-    l1bItemName = AssembleL1BQtyName ( instrumentModuleName//".tpSolarZenith", hdfVersion, .false. )
+    l1bItemName = AssembleL1BQtyName ( instrumentModuleName//".tpSolarZenith", &
+      & hdfVersion, .false. )
     call ReadL1BData ( l1bInfo%l1bOAID, l1bItemName, &
       & l1bField, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
@@ -750,7 +752,8 @@ contains ! =====     Public Procedures     =============================
 
     ! Line of sight angle
     ! This we'll have to do with straight interpolation
-    l1bItemName = AssembleL1BQtyName ( instrumentModuleName//".tpLosAngle", hdfVersion, .false. )
+    l1bItemName = AssembleL1BQtyName ( instrumentModuleName//".tpLosAngle", &
+      & hdfVersion, .false. )
     call ReadL1BData ( l1bInfo%l1bOAID, l1bItemName, &
       & l1bField, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
@@ -1167,6 +1170,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.41  2002/12/05 02:21:08  livesey
+! Cosmetic changes
+!
 ! Revision 2.40  2002/11/22 12:20:42  mjf
 ! Added nullify routine(s) to get round Sun's WS6 compiler not
 ! initialising derived type function results.
