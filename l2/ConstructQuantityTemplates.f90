@@ -16,7 +16,7 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
     & F_SIGNAL, F_SGRID, F_TYPE, F_UNIT, F_VGRID
   use INIT_TABLES_MODULE, only: FIELD_FIRST, FIELD_LAST, &
     FIRST_LIT, LAST_LIT, L_BASELINE, L_BOUNDARYPRESSURE, &
-    L_CHANNEL, L_CloudIce,  L_CLOUDWATER,&
+    L_CHANNEL, L_CHISQCHAN, L_CHISQMMAF, L_CHISQMMIF, L_CLOUDICE,  L_CLOUDWATER,&
     L_CLOUDEXTINCTION, L_CLOUDINDUCEDRADIANCE, L_CLOUDRADSENSITIVITY, &
     L_COLUMNABUNDANCE, L_EARTHREFL, L_EFFECTIVEOPTICALDEPTH, &
     L_EARTHRADIUS, L_ELEVOFFSET, L_EXTINCTION, L_GEODALTITUDE, L_GPH, &
@@ -112,6 +112,7 @@ contains ! =====     Public Procedures     =============================
     integer :: NoInstances
     integer :: NoSurfs
     logical :: MinorFrame               ! Is a minor frame quantity
+    logical :: MajorFrame               ! Is a major frame quantity
     integer :: NoChans
     integer :: QuantityType
     integer :: Radiometer               ! Database index
@@ -145,6 +146,9 @@ contains ! =====     Public Procedures     =============================
     natural_units = 0
     natural_units(l_baseline) =                PHYQ_Temperature
     natural_units(l_boundaryPressure) =        PHYQ_Pressure
+    natural_units(l_chisqchan) =               PHYQ_Dimensionless
+    natural_units(l_chisqmmaf) =               PHYQ_Dimensionless
+    natural_units(l_chisqmmif) =               PHYQ_Dimensionless
     natural_units(l_columnAbundance) =         PHYQ_DobsonUnits
     natural_units(l_cloudice) =                PHYQ_IceDensity
     natural_units(l_earthRefl) =               PHYQ_Dimensionless
@@ -241,7 +245,9 @@ contains ! =====     Public Procedures     =============================
     minorFrame = any(quantityType == (/ l_Baseline, l_Ptan, l_Radiance, &
       & l_cloudInducedRadiance, l_cloudRADSensitivity, l_effectiveOpticalDepth, &
       & l_tngtECI, l_tngtGeodAlt, l_tngtGeocAlt, l_scECI, l_scGeocAlt,&
-      & l_scVel, l_losVel, l_heightOffset, l_scanResidual/) )
+      & l_scVel, l_losVel, l_heightOffset, l_scanResidual, l_chisqmmif /) )
+
+    majorFrame = any(quantityType == (/ l_chisqchan, l_chisqmmaf /) )
 
     ! Set defaults for other parameters
     frequencyCoordinate = L_None
@@ -279,8 +285,41 @@ contains ! =====     Public Procedures     =============================
       call ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModule, &
         & qty, noChans=noChans, mifGeolocation=mifGeolocation )
         
+    elseif ( majorFrame ) then
+
+      ! This is a major frame type quantity.
+      if ( vGridIndex/=0 ) then
+        call announce_error ( root, No_Error_Code, &
+        &  'No vGrid should be specified for a major frame quantity' )
+      endif
+
+      ! Work out the channel information
+      if ( signal == 0 ) then
+        call announce_error ( root, No_Error_Code, &
+        &  'A signal is required for every major frame quantity' )
+      elseif ( instrumentModule == 0 ) then 
+        call announce_error ( root, noModule )
+      else
+        signalInfo = GetSignal(signal)
+        noChans = size(signalInfo%frequencies)
+        frequencyCoordinate = l_channel
+      end if
+      
+      ! For some cases we know the quantity is an xyz vector
+      if ( any(quantityType == (/ l_tngtECI, l_scECI, l_scVel /)) ) then
+        noChans = 3
+        frequencyCoordinate = l_xyz
+      end if
+
+
+      ! Construct an empty quantity
+      call ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModule, &
+        & qty, noChans=noChans, mifGeolocation=mifGeolocation )
+      qty%noSurfs = 1
+      qty%verticalCoordinate = l_none
+        
    ! for losTransFunc type of quantity 
-   else if (quantityType == l_losTransFunc) then
+   elseif (quantityType == l_losTransFunc) then
       ! replace noChans with no of grid along path which is specified from sGrid
         noChans = VGrids(sGridIndex)%noSurfs
         frequencyCoordinate = l_losTransFunc
@@ -740,6 +779,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.52  2001/09/14 23:30:33  pwagner
+! Now constructs major frame quantity templates
+!
 ! Revision 2.51  2001/08/01 00:04:29  dwu
 ! add qty%frequencies = VGrids(sGridIndex)%surfs for quantity l_losTransFunc
 !
