@@ -483,6 +483,7 @@ contains
       do_calc(1) = .false.
       s_del_s = sum(del_s(2:mid)) ! Yes, this goes to the midpoint of the coarse path
       needFA = .true.
+      fa = 0.0_rp ! In case n_path <= 4
       do p_i = 2 , h_stop
         if ( do_calc(p_i) ) then
           if ( needFA ) then
@@ -597,6 +598,9 @@ contains
 end module Get_D_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.18  2003/11/04 02:01:19  vsnyder
+! Add 'FA = 0.0' in case n_path <= 4
+!
 ! Revision 2.17  2003/11/04 01:56:19  vsnyder
 ! Cosmetic changes
 !
