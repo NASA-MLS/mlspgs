@@ -118,7 +118,7 @@ contains
     if ( present(lowBound) ) my_low = lowBound
     allocate ( To_Allocate(my_low:dim1), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name // bounds(1,dim1) )
+      & MLSMSG_Allocate // Its_Name // trim(bounds(1,dim1)) )
     if ( status == 0 .and. clearOnAllocate ) to_allocate = ' '
     if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, dim1/4+1 )
   end subroutine Allocate_Test_Character_1d
@@ -133,7 +133,7 @@ contains
     call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
     allocate ( To_Allocate(dim1,dim2), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name // bounds(1,dim1,1,dim2) )
+      & MLSMSG_Allocate // Its_Name // trim(bounds(1,dim1,1,dim2)) )
     if ( status == 0 .and. clearOnAllocate ) to_allocate = ' '
     if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, (dim1*dim2)/4+1 )
   end subroutine Allocate_Test_Character_2d
@@ -149,7 +149,7 @@ contains
     call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
     allocate ( To_Allocate(dim1,dim2,dim3), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name // bounds(1,dim1,1,dim2,1,dim3) )
+      & MLSMSG_Allocate // Its_Name // trim(bounds(1,dim1,1,dim2,1,dim3)) )
     if ( status == 0 .and. clearOnAllocate ) to_allocate = ' '
     if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, (dim1*dim2*dim3)/4+1 )
   end subroutine Allocate_Test_Character_3d
@@ -166,7 +166,7 @@ contains
     if ( present(lowBound) ) my_low = lowBound
     allocate ( To_Allocate(my_low:dim1), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name // bounds(my_low,dim1) )
+      & MLSMSG_Allocate // Its_Name // trim(bounds(my_low,dim1)) )
     if ( status == 0 .and. clearOnAllocate ) to_allocate = 0.0_r8
     if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, 2*dim1 )
   end subroutine Allocate_Test_RealR8_1d
@@ -186,7 +186,7 @@ contains
     if ( present(low2) ) myLow2 = low2
     allocate ( To_Allocate(myLow1:dim1,myLow2:dim2), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name // bounds(myLow1,dim1,myLow2,dim2) )
+      & MLSMSG_Allocate // Its_Name // trim(bounds(myLow1,dim1,myLow2,dim2)) )
     if ( status == 0 .and. clearOnAllocate ) to_allocate = 0.0_r8
     if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, 2*dim1*dim2 )
   end subroutine Allocate_Test_RealR8_2d
@@ -208,7 +208,7 @@ contains
     if ( present(low3) ) myLow3 = low3
     allocate ( To_Allocate(myLow1:dim1,myLow2:dim2,myLow3:dim3), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name // bounds(myLow1,dim1,myLow2,dim2,myLow3,dim3) )
+      & MLSMSG_Allocate // Its_Name // trim(bounds(myLow1,dim1,myLow2,dim2,myLow3,dim3)) )
     if ( status == 0 .and. clearOnAllocate ) to_allocate = 0.0_r8
     if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, 2*dim1*dim2*dim3 )
   end subroutine Allocate_Test_RealR8_3d
@@ -225,22 +225,27 @@ contains
     if ( present(lowBound) ) my_low = lowBound
     allocate ( To_Allocate(my_low:dim1), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name // bounds(lowBound,dim1) )
+      & MLSMSG_Allocate // Its_Name // trim(bounds(lowBound,dim1)) )
     if ( status == 0 .and. clearOnAllocate ) to_allocate = 0
     if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, dim1 )
   end subroutine Allocate_Test_Integer_1d
   ! -----------------------------------  Allocate_Test_Integer_2d  -----
   subroutine Allocate_Test_Integer_2d ( To_Allocate, Dim1, Dim2, Its_Name, &
-    & ModuleName )
+    & ModuleName, LowBound_1, LowBound_2 )
     integer, pointer, dimension(:,:) :: To_Allocate
     integer, intent(in) :: Dim1    ! First dimension of To_Allocate
     integer, intent(in) :: Dim2    ! Second dimension of To_Allocate
     character(len=*), intent(in) :: Its_Name, ModuleName
-    integer :: STATUS
+    integer, intent(in), optional :: LowBound_1, LowBound_2 ! default 1
+    integer :: MY_LOW_1, MY_LOW_2, STATUS
     call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
-    allocate ( To_Allocate(dim1,dim2), stat=status )
+    my_low_1 = 1
+    if ( present(lowBound_1) ) my_low_1 = lowBound_1
+    my_low_2 = 1
+    if ( present(lowBound_2) ) my_low_2 = lowBound_2
+    allocate ( To_Allocate(my_low_1:dim1,my_low_2:dim2), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name // bounds(1,dim1,1,dim2) )
+      & MLSMSG_Allocate // Its_Name // trim(bounds(my_low_1,dim1,my_low_2,dim2)) )
     if ( status == 0 .and. clearOnAllocate ) to_allocate = 0
     if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, dim1*dim2 )
   end subroutine Allocate_Test_Integer_2d
@@ -256,7 +261,7 @@ contains
     call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
     allocate ( To_Allocate(dim1,dim2,dim3), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name // bounds(1,dim1,1,dim2,1,dim3) )
+      & MLSMSG_Allocate // Its_Name // trim(bounds(1,dim1,1,dim2,1,dim3)) )
     if ( status == 0 .and. clearOnAllocate ) to_allocate = 0
     if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, dim1*dim2*dim3 )
   end subroutine Allocate_Test_Integer_3d
@@ -273,7 +278,7 @@ contains
     if ( present(lowBound) ) my_low = lowBound
     allocate ( To_Allocate(my_low:dim1), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name // bounds(lowBound,dim1) )
+      & MLSMSG_Allocate // Its_Name // trim(bounds(lowBound,dim1)) )
     if ( status == 0 .and. clearOnAllocate ) to_allocate = .false.
     if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, dim1/4+1 )
   end subroutine Allocate_Test_Logical_1d
@@ -293,7 +298,7 @@ contains
     if ( present(low2) ) myLow2 = low2
     allocate ( To_Allocate(myLow1:dim1,myLow2:dim2), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name // bounds(myLow1,dim1,myLow2,dim2) )
+      & MLSMSG_Allocate // Its_Name // trim(bounds(myLow1,dim1,myLow2,dim2)) )
     if ( status == 0 .and. clearOnAllocate ) to_allocate = .false.
     if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, (dim1*dim2)/4+1 )
   end subroutine Allocate_Test_Logical_2d
@@ -310,7 +315,7 @@ contains
     if ( present(lowBound) ) my_low = lowBound
     allocate ( To_Allocate(my_low:dim1), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name // bounds(lowBound,dim1) )
+      & MLSMSG_Allocate // Its_Name // trim(bounds(lowBound,dim1)) )
     if ( status == 0 .and. clearOnAllocate ) to_allocate = 0.0_r4
     if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, dim1 )
   end subroutine Allocate_Test_RealR4_1d
@@ -330,7 +335,7 @@ contains
     if ( present(low2) ) myLow2 = low2
     allocate ( To_Allocate(myLow1:dim1,myLow2:dim2), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name // bounds(myLow1,dim1,myLow2,dim2) )
+      & MLSMSG_Allocate // Its_Name // trim(bounds(myLow1,dim1,myLow2,dim2)) )
     if ( status == 0 .and. clearOnAllocate ) to_allocate = 0.0_r4
     if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, dim1*dim2 )
   end subroutine Allocate_Test_RealR4_2d
@@ -352,7 +357,7 @@ contains
     if ( present(low3) ) myLow3 = low3
     allocate ( To_Allocate(myLow1:dim1,myLow2:dim2,myLow3:dim3), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name // bounds(myLow1,dim1,myLow2,dim2,myLow3,dim3) )
+      & MLSMSG_Allocate // Its_Name // trim(bounds(myLow1,dim1,myLow2,dim2,myLow3,dim3)) )
     if ( status == 0 .and. clearOnAllocate ) to_allocate = 0.0_r4
     if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, dim1*dim2*dim3 )
   end subroutine Allocate_Test_RealR4_3d
@@ -710,6 +715,9 @@ contains
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.17  2004/10/02 02:42:35  vsnyder
+! Add low bounds to Allocate_Test_Integer_2D
+!
 ! Revision 2.16  2004/04/06 23:49:59  livesey
 ! Added ClearOnAllocate stuff
 !
