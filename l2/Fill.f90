@@ -71,11 +71,11 @@ contains ! =====     Public Procedures     =============================
       & F_SOURCEQUANTITY, F_SOURCEVGRID, F_SPREAD, F_SUPERDIAGONAL, &
       & F_SYSTEMTEMPERATURE, F_TEMPERATUREQUANTITY, F_TEMPPRECISIONQUANTITY, &
       & F_TEMPLATE, F_TNGTECI, F_TERMS, &
-      & F_TYPE, F_USB, F_USBFRACTION, F_VECTOR, F_VMRQUANTITY, &
+      & F_TYPE, F_USB, F_USBFRACTION, F_VECTOR, F_VMRQUANTITY, F_WIDTH, &
       & FIELD_FIRST, FIELD_LAST
     ! Now the literals:
     use INIT_TABLES_MODULE, only: L_ADDNOISE, L_BINMAX, L_BINMEAN, L_BINMIN, L_BINTOTAL, &
-      & L_BOUNDARYPRESSURE, L_CHISQCHAN, &
+      & L_BOUNDARYPRESSURE, L_BOXCAR, L_CHISQCHAN, &
       & L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, &
       & L_cloudice, L_cloudextinction, L_cloudInducedRADIANCE, L_COLUMNABUNDANCE, &
       & L_ECRTOFOV, L_ESTIMATEDNOISE, L_EXPLICIT, L_FOLD, L_GEODALTITUDE, &
@@ -205,7 +205,8 @@ contains ! =====     Public Procedures     =============================
     integer, parameter :: BadUnitsForExplicit= invalidExplicitFill + 1
     integer, parameter :: BadUnitsForIntegrationTime = badUnitsForExplicit + 1
     integer, parameter :: BadUnitsForSystemTemperature = badUnitsForIntegrationTime + 1
-    integer, parameter :: BadIsotopeFill = badUnitsForSystemTemperature + 1
+    integer, parameter :: BadUnitsForWidth = badUnitsForSystemTemperature + 1
+    integer, parameter :: BadIsotopeFill = badUnitsForWidth + 1
     integer, parameter :: BadlosGridFill = badIsotopeFill + 1
     integer, parameter :: CantInterpolate3d = badlosGridFill + 1
 
@@ -442,15 +443,16 @@ contains ! =====     Public Procedures     =============================
     integer :: VECTORINDEX              ! In the vector database
     integer :: VECTORNAME               ! Name of vector to create
     integer :: VGRIDINDEX               ! Index of sourceVGrid
-    integer :: vmrQtyIndex
-    integer :: vmrQtyVctrIndex
-    integer :: measQtyIndex
-    integer :: measVectorIndex
-    integer :: modelQtyIndex
-    integer :: modelVectorIndex
-    integer :: noiseQtyIndex
-    integer :: noiseVectorIndex
-    logical :: old_math77_ran_pack      ! To restore math77_ran_pack
+    integer :: VMRQTYINDEX
+    integer :: VMRQTYVCTRINDEX
+    integer :: WIDTH                    ! Width of boxcar
+    integer :: MEASQTYINDEX
+    integer :: MEASVECTORINDEX
+    integer :: MODELQTYINDEX
+    integer :: MODELVECTORINDEX
+    integer :: NOISEQTYINDEX
+    integer :: NOISEVECTORINDEX
+    logical :: OLD_MATH77_RAN_PACK      ! To restore math77_ran_pack
 
     ! Executable code
     timing = section_times
@@ -944,6 +946,11 @@ contains ! =====     Public Procedures     =============================
           case ( f_vmrQuantity )     ! For special fill of columnAbundance
             vmrQtyVctrIndex = decoration(decoration(subtree(1,gson)))
             vmrQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_width )
+            call expr ( gson , unitAsArray, valueAsArray )
+            if ( unitAsArray(1) /= PHYQ_Dimensionless ) &
+              call Announce_error ( key, badUnitsForWidth )
+            width = valueAsArray(1)
           end select
         end do                  ! Loop over arguments to fill instruction
 
@@ -1050,6 +1057,16 @@ contains ! =====     Public Procedures     =============================
 
           call FillWithBinResults ( key, quantity, sourceQuantity, ptanQuantity, &
             & channel, fillMethod )
+
+        case ( l_boxcar )
+          if ( .not. got ( f_sourceQuantity ) ) &
+            & call Announce_Error ( key, 0, &
+            & 'Need source quantity for bin max/min fill' )
+          sourceQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(sourceVectorIndex), sourceQuantityIndex )
+          if ( .not. got ( f_width ) ) call Announce_Error ( key, 0, &
+            & 'Must supply width for boxcar fill' )
+          call FillWithBoxcarAverage ( key, quantity, sourceQuantity, width )
 
         case ( l_estimatedNoise ) ! ----------- Fill with estimated noise ---
           if (.not. all(got( (/ f_radianceQuantity, &
@@ -5834,6 +5851,34 @@ contains ! =====     Public Procedures     =============================
         & call Deallocate_test ( sourceHeights, 'sourceHeights', ModuleName )
     end subroutine FillWithBinResults
 
+    ! --------------------------------------------- FillWithBoxcarAvergage  ----
+    subroutine FillWithBoxcarAverage ( key, quantity, sourceQuantity, width )
+      integer, intent(in) :: KEY        ! Key for tree node
+      type (VectorValue_T), intent(inout) :: QUANTITY
+      type (VectorValue_T), intent(in) :: SOURCEQUANTITY
+      integer, intent(in) :: WIDTH
+      ! Local variables
+      integer :: I, I1, I2              ! Instance indices
+      integer :: HALFWIDTH
+      ! Executable code
+      if ( quantity%template%name /= sourceQuantity%template%name ) then
+        call Announce_Error ( key, 0, 'Quantity and source quantity do not match' )
+        return
+      end if
+      if ( width <= 1 .or. mod ( width, 2 ) == 0 ) then
+        call Announce_Error ( key, 0, 'width must be greater than 1 and odd' )
+        return
+      end if
+
+      halfWidth = width/2
+      do i = 1, quantity%template%noInstances
+        i1 = max ( i - halfWidth, 1 )
+        i2 = min ( i + halfWidth, quantity%template%noInstances )
+        quantity%values(:,i) = sum ( quantity%values(:,i1:i2), dim=2 ) / (i2-i1+1)
+      end do
+        
+    end subroutine FillWithBoxcarAverage
+
     ! ----------------------------------------------- OffsetRadianceQuantity ---
     subroutine OffsetRadianceQuantity ( quantity, radianceQuantity, amount )
       type (VectorValue_T), intent(inout) :: QUANTITY
@@ -6052,6 +6097,8 @@ contains ! =====     Public Procedures     =============================
         call output ( " has inappropriate units for system temperature.", advance='yes' )
       case ( badUnitsForMaxIterations )
         call output ( " maxIterations should be dimensionless", advance='yes' )
+      case ( badUnitsForWidth )
+        call output ( " width should be dimensionless", advance='yes' )
       case ( bothFractionAndLength )
         call output ( " specified both fraction and lengthScale", advance='yes' )
       case ( cantFillFromL1B )
@@ -6168,6 +6215,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.254  2004/02/06 01:01:40  livesey
+! Added boxcar fill method
+!
 ! Revision 2.253  2004/01/30 23:28:33  livesey
 ! Insist on loading a plain matrix
 !
