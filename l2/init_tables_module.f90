@@ -354,7 +354,7 @@ contains ! =====     Public procedures     =============================
              l+l_thz, n+n_dt_def, &
       begin, t+t_fGridCoord, l+l_frequency, l+l_LSBFrequency, l+l_USBFrequency, &
              l+l_IntermediateFrequency, n+n_dt_def, &
-      begin, t+t_fillMethod, l+l_binMax, l+l_binMin, &
+      begin, t+t_fillMethod, l+l_binMax, l+l_binMin, l+l_binTotal, &
              l+l_gridded, l+l_estimatedNoise, l+l_explicit, &
              l+l_gphPrecision, l+l_hydrostatic, l+l_addnoise, l+l_refract, &
              l+l_isotope, l+l_l1b, l+l_l2aux, l+l_l2gp, l+l_manipulate, &
@@ -399,7 +399,8 @@ contains ! =====     Public procedures     =============================
              l+l_isotopeRatio, l+l_jacobian_cols, l+l_jacobian_rows, &
              l+l_losTransFunc, l+l_losVel, &
              l+l_massMeanDiameterIce, l+l_massMeanDiameterWater, l+l_magneticField, &
-             l+l_noiseBandwidth, l+l_numJ, l+l_opticalDepth, &
+             l+l_noiseBandwidth, l+l_noRadsPerMIF, l+l_noRadsBinned, &
+             l+l_numJ, l+l_opticalDepth, &
              l+l_orbitInclination, l+l_phiTan, l+l_ptan, l+l_radiance, l+l_earthradius,&
              l+l_refGPH, l+l_rhi, l+l_sizedistribution, &
              l+l_scanResidual, l+l_scECI, l+l_scVel, l+l_scVelECI, &
@@ -1021,6 +1022,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.309  2003/05/10 01:05:51  livesey
+! Added binTotal as allowed vector quantity
+!
 ! Revision 2.308  2003/05/07 22:50:29  pwagner
 ! Optionally may skipL1BCheck in ChunkDivide
 !
