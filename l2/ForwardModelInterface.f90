@@ -732,7 +732,8 @@ contains ! =====     Public Procedures     =============================
       if ( ier /= 0 ) goto 99
 
       ! Now compute stuff along the path given this hydrostatic grid.
-      call comp_path_entities ( ForwardModelConfig%integrationGrid%noSurfs, &
+      call comp_path_entities ( radiance, temp, &
+        &  ForwardModelConfig%integrationGrid%noSurfs, &
         &  temp%template%noSurfs, ifm%gl_count, ifm%ndx_path, ifm%z_glgrid, &
         &  ifm%t_glgrid, ifm%h_glgrid, ifm%dhdz_glgrid, ifm%tan_hts,        &
         &  no_tan_hts, ifm%z_path, ifm%h_path, ifm%t_path, ifm%phi_path,    &
@@ -1426,6 +1427,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.98  2001/04/19 22:09:32  livesey
+! New calling sequence for comp_path_entities
+!
 ! Revision 2.97  2001/04/19 20:59:50  livesey
 ! Reordered a loop
 !
