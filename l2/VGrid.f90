@@ -8,7 +8,7 @@ module vGrid                    ! Definitions for vGrids in vector quantities
   use Allocate_Deallocate, only: Allocate_Test
   use EXPR_M, only: EXPR
   use INIT_TABLES_MODULE, only: F_COORDINATE, F_FORMULA, F_NUMBER, &
-    & F_SOURCEL2GP, F_START, F_STOP, F_TYPE, F_VALUES, FIELD_FIRST, &
+    & F_RESOLUTION, F_SOURCEL2GP, F_START, F_STOP, F_TYPE, F_VALUES, FIELD_FIRST, &
     & FIELD_LAST, L_ANGLE, L_EXPLICIT, L_GEODALTITUDE, L_GPH, L_L2GP, &
     & L_LINEAR, L_LOGARITHMIC, L_NONE, L_PRESSURE, L_THETA, L_ZETA, &
     & PHYQ_Angle, PHYQ_Dimensionless, PHYQ_Length, PHYQ_Pressure, &
@@ -47,7 +47,8 @@ module vGrid                    ! Definitions for vGrids in vector quantities
   integer, private, parameter :: ExtraIf = 1
   integer, private, parameter :: InconsistentUnits = ExtraIf + 1
   integer, private, parameter :: NotPositive = InconsistentUnits + 1
-  integer, private, parameter :: RequiredIf = NotPositive + 1
+  integer, private, parameter :: ResolutionZetaOnly = NotPositive + 1
+  integer, private, parameter :: RequiredIf = ResolutionZetaOnly + 1
   integer, private, parameter :: RequireExplicit = RequiredIf + 1
   integer, private, parameter :: StartStopUnits = RequireExplicit + 1
   integer, private, parameter :: TooFew = StartStopUnits + 1
@@ -83,6 +84,7 @@ contains ! =====     Public Procedures     =============================
     integer :: L2GPINDEX           ! Index into database
     integer :: NUMBER              ! Index in tree of Number field
     integer :: PREV_UNITS          ! Units of previous element of Value field
+    integer :: RESOLUTION          ! Index in tree of resolution field
     integer :: SON                 ! Son of Root
     integer :: START               ! Index in tree of start field
     double precision :: STEP       ! Step for linear grid
@@ -102,6 +104,7 @@ contains ! =====     Public Procedures     =============================
     error = 0
     got_field = .false.
     number = 0
+    resolution = 0
     vGrid%name = name
     vGrid%noSurfs = 0
     vGrid%verticalCoordinate = L_None
@@ -121,6 +124,8 @@ contains ! =====     Public Procedures     =============================
         number = son
       case ( f_start )
         start = son
+      case ( f_resolution )
+        resolution = son
       case ( f_stop )
         call expr ( value, stop_units, stop )
       case ( f_sourceL2GP )
@@ -145,6 +150,14 @@ contains ! =====     Public Procedures     =============================
         & ModuleName )
       if ( got_field(f_values) ) &
         & prev_units = check_units ( value_field, f_values, vgrid%surfs(:,1) )
+      if ( got_field(f_resolution) ) then
+        call expr ( subtree(2,resolution), units, values )
+        if ( units(1) /= phyq_dimensionless ) &
+          & call announce_error ( subtree(1,resolution), unitless )
+        if ( coordType /= l_zeta ) &
+          & call announce_error ( root, resolutionZetaOnly )
+        vGrid%surfs = nint ( vGrid%surfs * values(1) ) / values(1)
+      end if
     case ( l_l2gp )
       if (.not. associated(l2gpDatabase) ) &
         & call MLSMessage(MLSMSG_Error,ModuleName,&
@@ -304,6 +317,10 @@ contains ! =====     Public Procedures     =============================
       call output ( &
         & "The 'start' and 'stop' fields do not have the same units.", &
         & advance='yes' )
+    case ( resolutionZetaOnly )
+      call output ( &
+        & "Resolution is only appropriate for zeta based vGrids", &
+        & advance='yes' )
     case ( tooFew )
       call output ( "If 'type' is linear 'number' >= 2 is required.", &
         & advance='yes' )
@@ -382,6 +399,9 @@ end module vGrid
 
 !
 ! $Log$
+! Revision 2.16  2004/03/10 22:20:10  livesey
+! Added resolution to the explicit type.
+!
 ! Revision 2.15  2003/06/20 19:37:06  pwagner
 ! Quanities now share grids stored separately in databses
 !
