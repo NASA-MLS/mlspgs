@@ -35,7 +35,6 @@ boundarypressure
 climatology
 cloud_der
 i_saturation
-cloud_fov
 cloudChannels
 cloudHeight
 cloudRadiance
@@ -296,6 +295,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.86  2003/04/02 21:47:52  jonathan
+# remove cloud_fov
+#
 # Revision 2.85  2003/03/27 20:44:05  livesey
 # Added logSpace
 #
