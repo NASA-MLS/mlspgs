@@ -22,15 +22,16 @@ module TREE_WALKER
 
 contains ! ====     Public Procedures     ==============================
   ! -------------------------------------  WALK_TREE_TO_DO_MLS_L2  -----
-  subroutine WALK_TREE_TO_DO_MLS_L2 ( ROOT, ERROR_FLAG, FIRST_SECTION, COUNTCHUNKS, &
-    & SINGLECHUNK )
+  subroutine WALK_TREE_TO_DO_MLS_L2 ( ROOT, ERROR_FLAG, FIRST_SECTION, &
+    & COUNTCHUNKS, SINGLECHUNK )
 
     use AntennaPatterns_m, only: Destroy_Ant_Patterns_Database
+    use ChunkDivide_m, only: ChunkDivide, DestroyChunkDatabase
     use Construct, only: MLSL2Construct, MLSL2DeConstruct
     use Dumper, only: Dump
     use EmpiricalGeometry, only: ForgetOptimumLon0
-    use Fill, only: MLSL2Fill
     use FGrid, only: FGrid_T, DestroyFGridDatabase
+    use Fill, only: MLSL2Fill
     use FilterShapes_m, only: Destroy_Filter_Shapes_Database
     use ForwardModelConfig, only: ForwardModelConfig_T, DestroyFWMConfigDatabase
     use Global_Settings, only: Set_Global_Settings
@@ -44,8 +45,8 @@ contains ! ====     Public Procedures     ==============================
     use JOIN, only: MLSL2Join
     use L2AUXData, only: DestroyL2AUXDatabase, L2AUXData_T, Dump
     use L2GPData, only: DestroyL2GPDatabase, L2GPData_T, Dump
-    use L2ParInfo, only: PARALLEL, CLOSEPARALLEL
     use L2Parallel, only: GETCHUNKINFOFROMMASTER, L2MASTERTASK
+    use L2ParInfo, only: PARALLEL, CLOSEPARALLEL
     use L2PC_m, only: DestroyL2PCDatabase, DestroyBinSelectorDatabase
     use MACHINE, only: MLS_GC_NOW, MLS_HOWMANY_GC
     use MatrixModule_1, only: DestroyMatrixDatabase, Matrix_Database_T
@@ -59,13 +60,12 @@ contains ! ====     Public Procedures     ==============================
       & Signals, SpectrometerTypes, GetSignalIndex
     use MLSL2Timings, only: add_to_section_timing, TOTAL_TIMES
     use Open_Init, only: DestroyL1BInfo, OpenAndInitialize
-    use Output_m, only: BLANKS, Output
     use OutputAndClose, only: Output_Close
+    use Output_m, only: BLANKS, Output
     use PointingGrid_m, only: Destroy_Pointing_Grid_Database
     use QuantityTemplates, only: QuantityTemplate_T
     use ReadAPriori, only: read_apriori
     use RetrievalModule, only: Retrieve
-    use ChunkDivide_m, only: ChunkDivide, DestroyChunkDatabase
     use SpectroscopyCatalog_m, only: Destroy_Line_Database, &
       & Destroy_SpectCat_Database, Spectroscopy
     use Test_Parse_Signals_m, only: Test_Parse_Signals
@@ -355,6 +355,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.87  2002/08/21 19:05:04  livesey
+! Removed calls to H5Open/close as they are now done in MLSL2.
+!
 ! Revision 2.86  2002/08/21 00:55:35  livesey
 ! Changed error to warning when fail to close hdf5 (at least for the
 ! moment).
