@@ -178,7 +178,7 @@ begin Fill
   ;; 1 ppbv is too small for OH.  Better with a profile?
   Fill, quantity=aprioriPrecision.oh,   method=explicit, /spread, explicitValues= 10 ppbv
   ;; 100pptv is far too small for so2
-  Fill, quantity=aprioriPrecision.so2,  method=explicit, /spread, explicitValues= 100 ppbv
+  Fill, quantity=aprioriPrecision.so2,  method=explicit, /spread, explicitValues= 2 ppbv
 
   Fill, quantity=aprioriPrecision.temperature, method=profile, $
     profileValues= [ 1000mb:5K, 220mb:10K, 68mb:20K ]
