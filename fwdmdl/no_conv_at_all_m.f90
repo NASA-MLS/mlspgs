@@ -37,7 +37,6 @@ contains
     use MLSCommon, only: I4, R4, R8, RM
     use MLSMessageModule, only: MLSMSG_Error, MLSMessage
     use MLSNumerics, ONLY: INTERPOLATEVALUES
-    use Molecules, only: spec_tags, L_EXTINCTION
     use String_Table, only: GET_STRING
     use VectorsModule, only: Vector_T, VectorValue_T
 
@@ -297,6 +296,9 @@ contains
 
 end module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 2.20  2003/05/05 23:00:26  livesey
+! Merged in feb03 newfwm branch
+!
 ! Revision 2.19.2.2  2003/03/21 02:47:03  vsnyder
 ! Use an array of pointers to quantities instead of GetQuantityForForwardModel
 !
