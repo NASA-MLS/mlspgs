@@ -1,6 +1,5 @@
 MODULE fov_convolve_m
  
-  USE Allocate_Deallocate, only: allocate_test, deallocate_test
   USE AntennaPatterns_m, only: AntennaPattern_T
   USE D_CSPLINE_M, only: CSPLINE
   USE MLSNumerics, ONLY: interpolatevalues, hunt
@@ -69,18 +68,15 @@ MODULE fov_convolve_m
 !
   REAL(r8) :: r_eq, r_sc, e_frac, init_angle, aaap_step, ang_step
 !
-  REAL(r8), POINTER :: p(:)
-  REAL(r8), POINTER :: dp(:)
-  REAL(r8), POINTER :: drad_dt_temp(:)
-  REAL(r8), POINTER :: angles(:)
-  REAL(r8), POINTER :: rad_fft(:)
-  REAL(r8), POINTER :: rad_fft1(:)
-!
 ! some clunky stuff
 !
   INTEGER, PARAMETER :: pwr=12, no_fft=2**pwr
   INTEGER(i4), SAVE :: INIT = 0, MS = 0
   REAL(r8), SAVE :: S(no_fft)
+
+  REAL(r8), DIMENSION(no_fft) :: p, dp, angles, rad_fft, rad_fft1
+
+  REAL(r8) :: drad_dt_temp(SIZE(chi_out))
 !
   r_eq = 6371.0_rp
   r_sc = r_eq + 705.0_rp
@@ -89,14 +85,7 @@ MODULE fov_convolve_m
   IF (PRESENT(rsc)) r_sc = rsc
   IF (PRESENT(earth_frac)) e_frac = earth_frac / 2.0
 !
-! nullify stuff
-!
-  NULLIFY(p,dp,drad_dt_temp,angles,rad_fft,rad_fft1)
-!
 ! load up the antenna pattern
-!
-  CALL allocate_test(p,no_fft,'p',modulename)
-  CALL allocate_test(dp,no_fft,'dp',modulename)
 !
   p = 0.0_r8
   dp = 0.0_r8
@@ -111,15 +100,12 @@ MODULE fov_convolve_m
 ! construct the angles
 !
   ffth = no_fft / 2
-  CALL allocate_test(angles,no_fft,'angles',modulename)
   angles = (/(i*ang_step,i=1,no_fft)/)
   angles = angles - angles(ffth+1)
   init_angle = ASIN((r_eq - e_frac*SQRT(r_sc**2-r_eq**2)/aaap_step)/r_sc)
 !
 ! set up the radiance array
 !
-  CALL allocate_test(rad_fft,no_fft,'rad_fft',modulename)
-  CALL allocate_test(rad_fft1,no_fft,'rad_fft1',modulename)
   CALL interpolatevalues(chi_in-init_angle,rad_in,angles(ffth:no_fft), &
      & rad_fft(ffth:no_fft),METHOD='S',EXTRAPOLATE='C')
 !
@@ -179,8 +165,6 @@ MODULE fov_convolve_m
 ! find the surface dimension
 !
     CALL hunt(angles(ffth:no_fft),surf_angle-init_angle,zero_out)
-!
-    CALL allocate_test(drad_dt_temp,SIZE(chi_out),'drad_dt_temp',modulename)
 !
 ! third term first (its fft is coefficient independent)
 ! apply convolution theorem
@@ -298,8 +282,6 @@ MODULE fov_convolve_m
 !
     end do               ! On i = 1, n_coeffs
 !
-    CALL deallocate_test(drad_dt_temp,'drad_dt_temp',modulename)
-!
   ENDIF
 !
   IF (PRESENT(drad_df_out)) THEN
@@ -349,12 +331,6 @@ MODULE fov_convolve_m
 !
   init = no_fft
  
-  CALL deallocate_test(p,'p',modulename)
-  CALL deallocate_test(dp,'dp',modulename)
-  CALL deallocate_test(angles,'angles',modulename)
-  CALL deallocate_test(rad_fft,'rad_fft',modulename)
-  CALL deallocate_test(rad_fft1,'rad_fft1',modulename)
-!
  END SUBROUTINE fov_convolve
 
 ! ===========================================     FOV_CONVOLVE_OLD  =====
@@ -1056,6 +1032,9 @@ MODULE fov_convolve_m
 !
 END MODULE fov_convolve_m
 ! $Log$
+! Revision 2.4  2002/06/28 11:06:48  zvi
+! Add computing of dI/d(Chi) on output grid
+!
 ! Revision 2.3  2002/06/19 11:00:32  zvi
 ! Some cosmetic corrections
 !
