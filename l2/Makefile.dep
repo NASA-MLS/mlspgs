@@ -35,7 +35,7 @@ Fill.o: Fill.f90 $(dir1)GriddedData.o $(dir1)L2GPData.o $(dir1)MLSCommon.o \
 	$(dir1)MLSStrings.o $(dir1)QuantityTemplates.o $(dir1)VectorsModule.o \
 	$(dir1)lexer_core.o $(dir1)output_m.o $(dir1)string_table.o \
 	$(dir1)toggles_core.o $(dir1)trace_m.o $(dir1)tree.o \
-	$(dir1)tree_types.o init_tables_module.o
+	$(dir1)tree_types.o L2AUXData.o init_tables_module.o
 global_settings.o: global_settings.f90 $(dir1)toggles_core.o $(dir1)trace_m.o \
 	$(dir1)tree.o init_tables_module.o
 HGrid.o: HGrid.f90 $(dir1)L1BData.o $(dir1)MLSCommon.o \
@@ -52,7 +52,8 @@ Join.o: Join.f90 $(dir1)L2GPData.o $(dir1)MLSCommon.o \
 	$(dir1)output_m.o $(dir1)toggles_core.o $(dir1)trace_m.o \
 	$(dir1)tree.o $(dir1)tree_types.o L2AUXData.o init_tables_module.o
 L2AUXData.o: L2AUXData.f90 $(dir1)Allocate_Deallocate.o $(dir1)Hdf.o \
-	$(dir1)MLSCommon.o $(dir1)MLSMessageModule.o addItemToDatabase.f9h
+	$(dir1)MLSCommon.o $(dir1)MLSMessageModule.o $(dir1)MLSStrings.o \
+	addItemToDatabase.f9h
 MLSL2Common.o: MLSL2Common.f90 $(dir1)MLSCommon.o $(dir1)MLSMessageModule.o
 MLSL2.o: MLSL2.f90 $(dir1)declaration_table.o $(dir1)lexer_core.o \
 	$(dir1)output_m.o $(dir1)parser.o $(dir1)string_table.o \
