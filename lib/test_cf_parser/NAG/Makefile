@@ -4,7 +4,7 @@
 # $Id$
 
 # End of path to this Makefile:
-ME = NAG
+ME = pclinuxNAG
 
 # Fortran compiler:
 F90 = f95
@@ -44,3 +44,6 @@ include $S/Makefile.inc
 
 #
 # $Log$
+# Revision 1.1  2000/10/11 20:57:45  vsnyder
+# Initial entry
+#
