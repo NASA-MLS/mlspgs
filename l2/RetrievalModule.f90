@@ -30,7 +30,7 @@ module RetrievalModule
     & L_dnwt_fnorm,  L_dnwt_gdx,  L_dnwt_gfac, &
     & L_dnwt_gradn,  L_dnwt_sq,  L_dnwt_sq,  L_dnwt_sqt,&
     & L_highcloud, L_Jacobian_Cols, L_Jacobian_Rows, L_lowcloud, &
-    & L_newtonian, L_none, L_norm, L_pressure, L_zeta, &
+    & L_newtonian, L_none, L_norm, L_numF, L_numJ, L_pressure, L_zeta, &
     & S_dumpBlocks, S_forwardModel, S_matrix, S_retrieve, S_sids, S_snoop, &
     & S_subset, S_time
   use Intrinsic, only: PHYQ_Dimensionless
@@ -697,6 +697,9 @@ contains
                 call output ( maxFunctions )
                 call output ( ')', advance='yes' )
               end if
+!??? At this point we should restore BestX, run the forward model again
+!??? to get a new Jacobian, and form normal equations -- the last two so
+!??? that the a posteriori covariance is consistent with BestX.
             exit
           end if
 
@@ -1268,6 +1271,8 @@ contains
           call fillDiagVec ( l_dnwt_gradn, aj%gradn )
           call fillDiagVec ( l_dnwt_sq, aj%sq )
           call fillDiagVec ( l_dnwt_sqt, aj%sqt )
+          call fillDiagVec ( l_numF, real(numF, r8))
+          call fillDiagVec ( l_numJ, real(numJ, r8))
         end if
         if ( snoopKey /= 0 .and. snoopLevel >= snoopLevels(nwt_flag) ) then
           call FlagName ( nwt_flag, theFlagName )
@@ -2494,6 +2499,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.118  2001/11/17 02:30:44  vsnyder
+! Add L_numF and L_numJ to 'diagnostics' vector
+!
 ! Revision 2.117  2001/11/13 23:35:12  vsnyder
 ! Keep f and f_rowScaled separate in EVALF case
 !
