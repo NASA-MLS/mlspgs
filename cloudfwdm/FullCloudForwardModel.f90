@@ -502,22 +502,22 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       select case (forwardModelConfig%molecules(i))
         case ( L_H2O ) 
             ispec = 1
-            got(i) = .true.
+            got(L_H2O) = .true.
         case ( L_O3 )
             ispec = 2
-            got(i) = .true.
+            got(L_O3) = .true.
         case ( L_N2O )
             ispec = 3
-            got(i) = .true.
+            got(L_N2O) = .true.
         case ( L_HNO3 )
             ispec = 4
-            got(i) = .true.
+            got(L_HNO3) = .true.
         case ( L_N2 )
             ispec = 5
-            got(i) = .true.
+            got(L_N2) = .true.
         case ( L_O2 )
             ispec = 6
-            got(i) = .true.
+            got(L_O2) = .true.
         case default
             print*,'cloud fwd model does not allow this molecule:', forwardModelConfig%molecules(i)
           stop
@@ -1080,6 +1080,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.110  2003/04/03 01:15:51  dwu
+! allow molecules in random order
+!
 ! Revision 1.109  2003/04/02 20:00:12  dwu
 ! some clearup and replace ifov with do_conv
 !
