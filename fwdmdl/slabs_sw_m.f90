@@ -36,7 +36,7 @@ CONTAINS
 
   Real(rp), INTENT(OUT) :: SwI, dSwI_dw,dSwI_dn,dSwI_dNu0
 !
-  REAL(rp) :: x, u, v, du_dx, du_dy, dv_dx, dv_dy, q, q2, b, g, z, r
+  REAL(rp) :: x, u, v, du_dx, du_dy, dv_dx, dv_dy, q, q2, b, g, z, r, Temp
 !
   Real(rp) :: dq_dv0, dx_dv0, du_dv0, dv_dv0, db_dv0, dg_dv0, dz_dv0, &
               dr_dv0, dvvw_dv0, vvw
@@ -69,7 +69,8 @@ CONTAINS
 !
 ! Compute the derivative of SwI w.r.t. n
 !
-  dSwI_dn = q2 * slabs1 * y * Log(3.0d2/t) * (du_dy + yi * dv_dy)
+  Temp = max(50.0_rp,t)
+  dSwI_dn = q2 * slabs1 * y * Log(3.0d2/Temp) * (du_dy + yi * dv_dy)
 !
 ! Finaly, compute the derivative of SwI w.r.t. Nu0
 !
@@ -168,7 +169,7 @@ CONTAINS
 !
   Real(rp) :: xj, zj, q, y2, q2, u, v, Sum, up1, up2, dn1, dn2, dup1, &
    &          dup2, ddn1, ddn2, dy_dw, dy_dn, dq_dNu0, dSum_dw, dSum_dn, &
-   &          dSum_dNu0
+   &          dSum_dNu0, Temp
 !
   q = 1.0_rp + dNu / Nu0
   q2 = q * q
@@ -201,7 +202,8 @@ CONTAINS
 !
   dVL_dw = OneOvSPi * slabs1 * q2 * dSum_dw
 !
-  dy_dn = y * Log(300.0/t)
+  Temp = max(50.0_rp,t)
+  dy_dn = y * Log(300.0/Temp)
   dup1 = dy_dn
   ddn1 = 2.0 * y * dy_dn
   dup2 = dy_dn
@@ -810,31 +812,32 @@ CONTAINS
 ! Internal data:
 !
   Real(rp) :: Wd, Q_Log, betae, betav, t3t, onedt, r, e1, e2, de1, &
-              de2, g, s, ds
+              de2, g, s, ds, Temp
 !
 ! The action begins here
 !
-  onedt = 1.0_rp / t
+  Temp = max(50.0_rp,t)
+  onedt = 1.0_rp / Temp
   t3t = 300.0_rp * onedt
   yi = p * (delta*(t3t**n1) + gamma*(t3t**n2))
 !
-  if (t < 225.0_rp) then
+  if (Temp < 225.0_rp) then
     r = (q(2)-q(3))/tl1
-    Q_Log = q(2)-q(1)+r*Log10(t/225.0_rp)
+    Q_Log = q(2)-q(1)+r*Log10(Temp/225.0_rp)
   else
     r = (q(1)-q(2))/tl2
-    Q_Log = r*Log10(t/300.0_rp)
+    Q_Log = r*Log10(Temp/300.0_rp)
   endif
 !
   v0s = v0 + ps * p * (t3t**ns)
 !
   betae = el / boltzcm
   betav = v0s / boltzmhz
-  Wd = v0s * Sqrt(t/m) * dc
+  Wd = v0s * Sqrt(Temp/m) * dc
   x1 = sqrtln2 / Wd
   y = x1 * w * p * (t3t**n)
   g = i - Q_Log + loge *  betae * (oned300 - onedt)
-  r = (i2abs * p * (10.0**g)) / (t * Wd)
+  r = (i2abs * p * (10.0**g)) / (Temp * Wd)
   e1 = exp(-betav*onedt)
   e2 = exp(-betav*oned300)
   de1 = -e1*onedt/boltzmhz
@@ -920,32 +923,33 @@ CONTAINS
 !
 ! Internal data:
 !
-  Real(r8) Wd, Q_Log, betae, betav, t3t, onedt, r, e1, e2, &
+  Real(r8) Wd, Q_Log, betae, betav, t3t, onedt, r, e1, e2, Temp, &
      &     de1, de2, g, s, dWd_dv0, dr_dv0, ds_dv0
 !
 ! The action begins here
 !
-  onedt = 1.0_r8 / t
+  Temp = max(50.0_rp,t)
+  onedt = 1.0_r8 / Temp
   t3t = 300.0_r8 * onedt
   yi = p * (delta*(t3t**n1) + gamma*(t3t**n2))
 !
-  if (t < 225.0_r8) then
+  if (Temp < 225.0_r8) then
     r = (q(2)-q(3))/tl1
-    Q_Log = q(2)-q(1)+r*Log10(t/225.0_r8)
+    Q_Log = q(2)-q(1)+r*Log10(Temp/225.0_r8)
   else
     r = (q(1)-q(2))/tl2
-    Q_Log = r*Log10(t/300.0_r8)
+    Q_Log = r*Log10(Temp/300.0_r8)
   endif
 !
   v0s = v0 + ps * p * (t3t**ns)
 !
   betae = el / boltzcm
   betav = v0s / boltzmhz
-  Wd = v0s * Dsqrt(t/m) * dc
+  Wd = v0s * Dsqrt(Temp/m) * dc
   x1 = sqrtln2 / Wd
   y = x1 * w * p * (t3t**n)
   g = i - Q_Log + loge *  betae * (oned300 - onedt)
-  r = (i2abs * p * (10.0**g)) / (t * Wd)
+  r = (i2abs * p * (10.0**g)) / (Temp * Wd)
   e1 = exp(-betav*onedt)
   e2 = exp(-betav*oned300)
   de1 = -e1*onedt/boltzmhz
@@ -1065,6 +1069,9 @@ CONTAINS
 
 End module SLABS_SW_M
 ! $Log$
+! Revision 2.1  2001/10/17 22:01:00  zvi
+! Eliminate computation of: ns
+!
 ! Revision 2.0  2001/09/17 20:26:27  livesey
 ! New forward model
 !
