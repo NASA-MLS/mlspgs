@@ -89,8 +89,6 @@ contains
                                         ! convergence, then put in the whole
                                         ! thing and iterate until it converges
                                         ! again (hopefully only once).
-    logical :: DiagonalOut              ! "We only want the diagonal of the
-                                        ! a posteriori covariance matrix"
     integer :: Error
     type(vector_T) :: F                 ! Residual -- Model - Measurements
     integer :: Field                    ! Field index -- f_something
@@ -137,7 +135,6 @@ contains
     integer :: Units(2)                 ! Units of value returned by EXPR
     logical :: Update                   ! "We are updating normal equations"
     double precision :: Value(2)        ! Value returned by EXPR
-    type(vector_T) :: Weight            ! Scaling vector for rows, 1/measurementSD
 
     ! Error message codes
     integer, parameter :: BothOrNeither = 1       ! Only one of two required
@@ -290,15 +287,6 @@ contains
           if ( got(f_measurementSD) ) then
             if ( measurementSD%template%id /= measurements%template%id ) &
               & call announceError ( inconsistent, f_measurementSD, f_measurements )
-            call cloneVector ( weight, measurementSD )
-            do j = 1, measurementSD%template%noQuantities
-              where ( measurementSD%quantities(j)%values <= 0.0 )
-                weight%quantities(j)%values = 1.0
-              elsewhere
-                weight%quantities(j)%values = 1.0 / &
-                  & measurementSD%quantities(j)%values
-              end where
-            end do
           end if
         end if
         if ( error == 0 ) then
@@ -503,6 +491,7 @@ contains
       integer :: RowBlock               ! Which block of rows is the forward
                                         ! model filling?
       character(len=10) :: TheFlagName  ! Name of NWTA's flag argument
+      type(vector_T) :: Weight          ! Scaling vector for rows, 1/measurementSD
       type(vector_T) :: X               ! for NWT
       type(vector_T) :: XminusApriori   ! X - Apriori
 
@@ -528,6 +517,17 @@ contains
       call cloneVector ( dx, x, vectorNameText='_DX' )
       call cloneVector ( dxUnScaled, x, vectorNameText='_DX Unscaled' )
       call cloneVector ( gradient, x, vectorNameText='_gradient' )
+      if ( got(f_measurementSD) ) then
+        call cloneVector ( weight, measurementSD )
+        do j = 1, measurementSD%template%noQuantities
+          where ( measurementSD%quantities(j)%values <= 0.0 )
+            weight%quantities(j)%values = 1.0
+          elsewhere
+            weight%quantities(j)%values = 1.0 / &
+              & measurementSD%quantities(j)%values
+          end where
+        end do
+      end if
       if ( columnScaling /= l_none ) &
         call cloneVector ( columnScaleVector, x, vectorNameText='_ColumnScale' )
       if ( got(f_fuzz) ) then
@@ -806,14 +806,18 @@ contains
                   & jacobian%row%inst(rowBlock) )
               end if
             end do
-            aj%fnorm = aj%fnorm + ( f .dot. f )
+            call scaleVector ( f, -1.0_r8 )
             !{Let ${\bf J}$ be the Jacobian matrix and ${\bf f}$ be the
             ! residual of the least-squares problem.  Let $W$ be the
             ! inverse of the measurement covariance (which in our case
             ! is diagonal). Row scale the part of the least-squares
             ! problem that arises from the measurements, i.e. the
             ! least-squares problem becomes $\mathbf{W J = W f}$.
-            if ( got(f_measurementSD) ) call rowScale ( weight, jacobian )
+            if ( got(f_measurementSD) ) then
+              call rowScale ( weight, jacobian )
+              call multiply ( f, weight )
+            end if
+            aj%fnorm = aj%fnorm + ( f .dot. f )
             !{Form normal equations: $\mathbf{J^T W^T W J \delta \hat x =
             ! J^T W^T f}$:
             call formNormalEquations ( jacobian, normalEquations, &
@@ -894,7 +898,7 @@ contains
           !       smallest absolute value, after triangularization
           aj%ajn = maxL1 ( factored%m ) ! maximum L1 norm of
           !       column in upper triangle after triangularization
-          call solveCholesky ( factored, atb, candidateDX, &
+          call solveCholesky ( factored, candidateDX, atb, &
             & transpose=.true. )
           ! AJ%FNMIN = L2 norm of residual, ||F + J * "Candidate DX"||
           ! This can be gotten without saving J as F^T F - (U^{-T} F)^T
@@ -945,7 +949,7 @@ contains
           ! = $\mathbf{y}$. Meanwhile, set AJ\%FNMIN as for NWT\_FLAG =
           ! NF\_EVALJ, but taking account of Levenberg-Marquardt
           ! stabilization
-          call solveCholesky ( factored, atb, candidateDX, &
+          call solveCholesky ( factored, candidateDX, atb, &
             & transpose=.true. )
           aj%fnmin = sqrt(aj%fnorm**2 - (candidateDX .dot. candidateDX) )
           call solveCholesky ( factored, candidateDX )
@@ -1105,16 +1109,21 @@ contains
         if ( index(switches,'svec') /= 0 ) &
           & call dump ( state, name='Final state' )
       ! Clean up the temporaries, so we don't have a memory leak
+      call destroyVectorInfo ( atb )
       call destroyVectorInfo ( bestGradient )
       call destroyVectorInfo ( bestX )
       call destroyVectorInfo ( candidateDX )
       if ( columnScaling /= l_none ) &
         & call destroyVectorInfo ( columnScaleVector )
+      if ( diagonal ) call destroyVectorInfo ( covarianceDiag )
+      if ( got(f_apriori) ) call destroyVectorInfo ( covarianceXApriori )
       call destroyVectorInfo ( dx )
       call destroyVectorInfo ( dxUnscaled )
       if ( got(f_fuzz) ) call destroyVectorInfo ( fuzzState )
       call destroyVectorInfo ( gradient )
+      if ( got(f_measurementSD) ) call destroyVectorInfo ( weight )
       call destroyVectorInfo ( x )
+      call destroyVectorInfo ( xMinusApriori )
       call destroyMatrix ( normalEquations%m )
       call destroyMatrix ( factored%m )
       call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
@@ -1335,6 +1344,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.55  2001/07/11 22:06:31  vsnyder
+! Interim commit -- still appears to be broken
+!
 ! Revision 2.54  2001/07/02 17:21:48  livesey
 ! Fixed memory leak with channels.
 !
