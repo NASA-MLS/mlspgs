@@ -160,6 +160,7 @@ contains
     integer :: Spec                     ! s_matrix, s_subset or s_retrieve
     type(vector_T), pointer :: State    ! The state vector
     real :: T0, T1, T2, T3              ! for timing
+    type(matrix_T) :: Tikhonov          ! Matrix for Tikhonov regularization
     logical :: TikhonovBefore           ! "Do Tikhonov before column scaling"
     logical :: Timing
     double precision :: ToleranceA      ! convergence tolerance for NWT,
@@ -459,6 +460,13 @@ contains
                 & call announceError ( inconsistent, f_average, f_state )
             end if
           end if
+
+          ! Create the matrix for adding the Tikhonov regularization to the
+          ! normal equations
+          if ( got(f_regOrders) ) then
+            call createEmptyMatrix ( tikhonov, 0, state, state )
+            k = addToMatrixDatabase( matrixDatabase, tikhonov )
+          end if
         end if
         if ( error == 0 ) then
           ! Do the retrieval
@@ -699,7 +707,7 @@ contains
       call cloneVector ( v(dxUnScaled), v(x), vectorNameText='_DxUnscaled' )
       call cloneVector ( v(f_rowScaled), measurements, vectorNameText='_f_rowScaled' )
       call cloneVector ( v(gradient), v(x), vectorNameText='_gradient' )
-      call cloneVector ( v(reg_X_x), measurements, vectorNameText='_reg_X_x' )
+      call cloneVector ( v(reg_X_x), state, vectorNameText='_reg_X_x' )
       if ( got(f_measurementSD) ) then
         call cloneVector ( v(weight), measurementSD, vectorNameText='_weight' )
         do j = 1, measurementSD%template%noQuantities
@@ -1007,18 +1015,18 @@ contains
             !  ${\bf\delta x}$, we subtract ${\bf R x}_{n-1}$ from both sides to
             !  get ${\bf R \delta x} \simeq -{\bf R x}_{n-1}$.
 
-            ! We need a matrix with the same column space as the "jacobian".
-            ! The "jacobian" matrix is handily unused, so we used it here.
-            call regularize ( jacobian, regOrders, regQuants, regWeights, &
+            call regularize ( tikhonov, regOrders, regQuants, regWeights, &
               & RegWeightVec, tikhonovRows )
-            call multiplyMatrixVectorNoT ( jacobian, v(x), v(reg_X_x) ) ! regularization * x_n
+            call multiplyMatrixVectorNoT ( tikhonov, v(x), v(reg_X_x) ) ! regularization * x_n
             call scaleVector ( v(reg_X_x), -1.0_r8 )   ! -R x_n
-              if ( index(switches,'reg') /= 0 ) &
-                & call dump ( jacobian, name='Tikhonov', details=2 )
-            call formNormalEquations ( jacobian, normalEquations, &
+              if ( index(switches,'reg') /= 0 ) then
+                call dump_struct ( tikhonov, 'Tikhonov' )
+                call dump ( tikhonov, name='Tikhonov', details=2 )
+              end if
+            call formNormalEquations ( tikhonov, normalEquations, &
               & v(reg_X_x), v(aTb), update=update, useMask=.false. )
             update = .true.
-            call clearMatrix ( jacobian )           ! free the space
+            call clearMatrix ( tikhonov )           ! free the space
             ! aj%fnorm is still the square of the norm of f
             aj%fnorm = aj%fnorm + ( v(reg_X_x) .dot. v(reg_X_x) )
             ! call destroyVectorValue ( v(reg_X_x) )  ! free the space
@@ -1137,11 +1145,9 @@ contains
             !  ${\bf\delta x}$, we subtract ${\bf R x}_{n-1}$ from both sides to
             !  get ${\bf R \delta x} \simeq -{\bf R x}_{n-1}$.
 
-            ! We need a matrix with the same column space as the "jacobian".
-            ! The "jacobian" matrix is handily unused, so we used it here.
-            call regularize ( jacobian, regOrders, regQuants, regWeights, &
+            call regularize ( tikhonov, regOrders, regQuants, regWeights, &
               & regWeightVec, tikhonovRows )
-            call multiplyMatrixVectorNoT ( jacobian, v(x), v(reg_X_x) ) ! regularization * x_n
+            call multiplyMatrixVectorNoT ( tikhonov, v(x), v(reg_X_x) ) ! regularization * x_n
             call scaleVector ( v(reg_X_x), -1.0_r8 )   ! -R x_n
 
             if ( columnScaling /= l_none ) then ! Compute $\Sigma$
@@ -1153,15 +1159,17 @@ contains
                     & sqrt( v(columnScaleVector)%quantities(j)%values )
                 end where
               end forall
-              call columnScale ( jacobian, v(columnScaleVector) )
+              call columnScale ( tikhonov, v(columnScaleVector) )
             end if
 
-              if ( index(switches,'reg') /= 0 ) &
-                & call dump ( jacobian, name='Tikhonov', details=2 )
-            call formNormalEquations ( jacobian, normalEquations, &
+              if ( index(switches,'reg') /= 0 ) then
+                call dump_struct ( tikhonov, 'Tikhonov' )
+                call dump ( tikhonov, name='Tikhonov', details=2 )
+              end if
+            call formNormalEquations ( tikhonov, normalEquations, &
               & v(reg_X_x), v(aTb), update=update, useMask=.false. )
             update = .true.
-            call clearMatrix ( jacobian )           ! free the space
+            call clearMatrix ( tikhonov )           ! free the space
             ! aj%fnorm is still the square of the norm of f
             aj%fnorm = aj%fnorm + ( v(reg_X_x) .dot. v(reg_X_x) )
             ! call destroyVectorValue ( v(reg_X_x) )  ! free the space
@@ -2952,6 +2960,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.162  2002/08/20 19:55:02  vsnyder
+! Use matrix with same row and column templates for Tikhonov
+!
 ! Revision 2.161  2002/08/08 22:02:52  vsnyder
 ! Add regWeightVec and Tikhonov mask
 !
