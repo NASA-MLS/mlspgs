@@ -503,11 +503,6 @@ contains
     firstSignal => fwdModelConf%signals(1) ! Config has verified that signals
       ! are all for same radiometer, module and sideband
 
-    ! Check that RefGPH and Temp have the same hGrid.  This is not checked in
-    ! Construct or when the config is created.
-    if ( .not. doHGridsMatch ( refGPH, temp ) ) call MLSMessage ( MLSMSG_Error, &
-      & ModuleName, 'Different horizontal grids for refGPH and temperature' )
-
     ! Create the data structures for the species
 
     call get_species_data ( fwdModelConf%molecules, fwdModelConf, &
@@ -572,6 +567,11 @@ contains
       boundaryPressure => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
         & quantityType=l_boundaryPressure, config=fwdModelConf )
     end if
+
+    ! Check that RefGPH and Temp have the same hGrid.  This is not checked in
+    ! Construct or when the config is created.
+    if ( .not. doHGridsMatch ( refGPH, temp ) ) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, 'Different horizontal grids for refGPH and temperature' )
 
     MAF = fmStat%maf
 
@@ -703,8 +703,8 @@ contains
                          & 'd2xdxdt_tan',moduleName )
     end if
 
-    ! Temperature's windowStart:windowFinish are correct here.  There is an
-    ! assumption that refGPH and temperature have the same horizontal basis.
+    ! Temperature's windowStart:windowFinish are correct here.
+    ! RefGPH and Temperature have the same horizontal basis.
     call get_chi_out ( ptan%values(:,maf), phitan%values(:,maf)*deg2rad, &
        & 0.001_rp*scGeocAlt%values(:,maf), Grids_tmp, &
        & (/ (refGPH%template%surfs(1,1), j=1,no_sv_p_t) /), &
@@ -2606,6 +2606,9 @@ alpha_path_f = 0.0
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.149  2003/06/18 19:29:30  vsnyder
+! Replace a check inadvertently deleted in rev 2.146
+!
 ! Revision 2.148  2003/06/18 17:23:16  bill
 ! fixed NAG associated bug
 !
