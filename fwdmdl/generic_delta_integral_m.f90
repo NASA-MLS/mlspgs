@@ -118,6 +118,7 @@ contains
 !
       if (ds < 0.05) EXIT
 !
+      k = j
       rc = ref_corr(h_i+1)
 !
       call define_gl_grid_entities
@@ -144,14 +145,13 @@ contains
 !
       integrand_GL(1:Ng) = integrand(mp+1:mp+Ng)
 !
-      k = j
       Call gauss_legendre
 !
     end do
 
     if(k == no_gl_ndx) Return
 !
-    j = k
+    j = max(1,k)
     l = gl_ndx(j,2)
     do
       j = j + 1
@@ -289,6 +289,9 @@ contains
   End Subroutine generic_delta_integral
 End module GENERIC_DELTA_INTEGRAL_M
 ! $Log$
+! Revision 1.6  2001/06/21 13:07:08  zvi
+! Speed enhancement MAJOR update
+!
 ! Revision 1.5  2001/06/07 23:30:34  pwagner
 ! Added Copyright statement
 !

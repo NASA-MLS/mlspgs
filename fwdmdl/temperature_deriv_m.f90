@@ -52,12 +52,15 @@ contains
 ! Begin sweep through elements to see if user wants derivatives for this
 ! channel at this frequency
 !
-    j = lbound(k_temp%values,3) + 1
-
-    do in = 1, no_t              ! Loop over the Temp. zeta coeffs.
+    j = lbound(k_temp%values,3) - 1
+!
+! Loop over the Temp. zeta coeffs.
+!
+    do in = 1, no_t
+!
+! Loop over the Temp. phi's coeffs.
 !
       do ip = lbound(k_temp%values,3), ubound(k_temp%values,3)
-        ! Loop over the Temp. phi's coeffs.
 !
 ! Compute the temperature derivative of delta:
 !
@@ -81,6 +84,9 @@ contains
   End Subroutine TEMPERATURE_DERIV
 end module TEMPERATURE_DERIV_M
 ! $Log$
+! Revision 1.13  2001/06/21 13:07:09  zvi
+! Speed enhancement MAJOR update
+!
 ! Revision 1.12  2001/06/07 23:39:32  pwagner
 ! Added Copyright statement
 !
