@@ -31,6 +31,9 @@ libmls_objs=$(libmls_sources)/$(MLSCONFG)
 # where sources (but not OBJS) shared with l3, etc. are stored
 srclib=../../srclib
 
+# where sources for the forward model are stored
+libfwdmdl_sources=../../fwdmdl
+
 # where the platforms directory is
 PLATFORMS = .
 
@@ -145,6 +148,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude test
 
 # $Log$
+# Revision 1.5  2001/05/31 20:19:31  pwagner
+# Added ghostbuster to .PHONY list
+#
 # Revision 1.4  2001/05/24 23:23:24  pwagner
 # Fixed prob with LIB_prereqs being undefined
 #

@@ -37,6 +37,9 @@ libfwdmdl_sources=../../fwdmdl
 # where forward model objects and libfwdmdl.a are stored
 libfwdmdl_objs=$(libfwdmdl_sources)/$(MLSCONFG)
 
+# where sources for libmls.a are stored
+libcloud_sources=../../cloudfwdm
+
 # where the platforms directory is
 PLATFORMS = .
 
@@ -156,6 +159,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude test
 
 # $Log$
+# Revision 1.2  2001/07/02 22:39:55  pwagner
+# Fixed erroneous path to fwdmdl
+#
 # Revision 1.1  2001/07/02 18:45:39  pwagner
 # First commit
 #
