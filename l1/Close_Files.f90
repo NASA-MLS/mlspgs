@@ -31,7 +31,7 @@ CONTAINS
     USE SDPToolkit, ONLY: PGS_IO_Gen_closeF
     USE MLSFiles, ONLY: MLS_closeFile
     USE L1BOutUtils, ONLY: WriteHdrAnnots
-    USE OutputL1B, ONLY: OutputL1B_diags
+    USE OutputL1B, ONLY: OutputL1B_diags, OutputL1B_Chi2
     USE HDF5, ONLY: H5gClose_f, H5gOpen_f
     USE MLSHDF5, ONLY: MakeHDF5Attribute, MLS_h5close
     USE Orbit, ONLY: OrbitNumber, OrbPeriod
@@ -114,6 +114,8 @@ CONTAINS
 
     IF (L1ProgType == THzType) THEN
 
+       CALL OutputL1B_Chi2 (L1BFileInfo%RADTid)   ! Write default Chi2
+
        ! Write Hdr Annotations and Close L1RAD T file
 
        CALL WriteHdrAnnots (L1BFileInfo%RADTFileName, HDFversion)
@@ -136,6 +138,9 @@ CONTAINS
 
     ENDIF
 
+
+    CALL OutputL1B_Chi2 (L1BFileInfo%RADDid)   ! Write default Chi2
+
     ! Write Hdr Annotations and Close L1RAD D file
 
     CALL WriteHdrAnnots (L1BFileInfo%RADDFileName, HDFversion)
@@ -143,7 +148,9 @@ CONTAINS
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & 'Closed L1BRAD D file: '//L1BFileInfo%RADDFileName)
 
-    ! Write Hdr Annotations and Close L1RAD F file
+    CALL OutputL1B_Chi2 (L1BFileInfo%RADGid)   ! Write default Chi2
+
+    ! Write Hdr Annotations and Close L1RAD G file
 
     CALL WriteHdrAnnots (L1BFileInfo%RADGFileName, HDFversion)
     CALL MLS_closeFile (L1BFileInfo%RADGid, HDFversion=HDFversion)
@@ -196,6 +203,9 @@ CONTAINS
 END MODULE Close_files
 !=============================================================================
 ! $Log$
+! Revision 2.17  2004/11/10 15:37:51  perun
+! Output and close default Chi2 file
+!
 ! Revision 2.16  2004/08/12 13:51:49  perun
 ! Version 1.44 commit
 !
