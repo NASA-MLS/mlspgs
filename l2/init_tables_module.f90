@@ -142,7 +142,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_MATRIX             = s_load + 1
   integer, parameter :: S_MERGE              = s_matrix + 1
   integer, parameter :: S_NEGATIVEPRECISION  = s_merge + 1
-  integer, parameter :: S_OUTPUT             = s_negativePrecision + 1
+  integer, parameter :: S_NORMALEQUATIONS    = s_negativePrecision + 1
+  integer, parameter :: S_OUTPUT             = s_normalEquations + 1
   integer, parameter :: S_PHASE              = s_output + 1
   integer, parameter :: S_POPULATEL2PCBIN    = s_phase + 1
   integer, parameter :: S_QUANTITY           = s_populateL2pcBin + 1
@@ -339,6 +340,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_matrix) =               add_ident ( 'matrix' )
     spec_indices(s_merge) =                add_ident ( 'merge' )
     spec_indices(s_negativePrecision ) =   add_ident ( 'negativePrecision' )
+    spec_indices(s_normalEquations ) =     add_ident ( 'normalEquations' )
     spec_indices(s_output) =               add_ident ( 'output' )
     spec_indices(s_phase) =                add_ident ( 'phase' )
     spec_indices(s_populateL2PCBin) =      add_ident ( 'populateL2PCBin' )
@@ -1080,6 +1082,17 @@ contains ! =====     Public procedures     =============================
              begin, f+f_singleMAF, t+t_numeric, n+n_field_type, &
              begin, f+f_jacobian, s+s_matrix, n+n_field_spec, &
              ndp+n_spec_def /) )
+    call make_tree( (/ &
+      begin, s+s_normalEquations, & ! Must be AFTER s_matrix
+             begin, f+f_forwardModel, s+s_forwardModel, nr+n_field_spec, &
+             begin, f+f_fwdModelExtra, s+s_vector, n+n_field_spec, &
+             begin, f+f_fwdModelIn, s+s_vector, nr+n_field_spec, &
+             begin, f+f_fwdModelOut, s+s_vector, nr+n_field_spec, &
+             begin, f+f_matrix, s+s_matrix, nr+n_field_spec, &
+             begin, f+f_measurements, s+s_vector, nr+n_field_spec, &
+             begin, f+f_measurementSD, s+s_vector, n+n_field_spec, &
+             begin, f+f_rhsOut, s+s_vector, nr+n_field_spec, &
+             ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_frequencyGrid, & ! Must be AFTER s_vector
              begin, f+f_atmos, s+s_vector, nr+n_field_spec, &
@@ -1169,8 +1182,8 @@ contains ! =====     Public procedures     =============================
                            s+s_restrictRange, s+s_updateMask, n+n_section, &
       begin, z+z_join, s+s_time, s+s_label, s+s_l2gp, s+s_l2aux, &
                        s+s_directWrite, n+n_section, &
-      begin, z+z_algebra, s+s_columnScale, s+s_cyclicJacobi, s+s_reflect, &
-             s+s_rowScale, n+n_section+d*no_check_eq, &
+      begin, z+z_algebra, s+s_columnScale, s+s_cyclicJacobi, s+s_normalEquations, &
+             s+s_reflect, s+s_rowScale, n+n_section+d*no_check_eq, &
       begin, z+z_output, s+s_time, s+s_output, n+n_section /) )
 
   contains
@@ -1187,6 +1200,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.365  2004/04/28 23:07:34  livesey
+! More stuff for algebra
+!
 ! Revision 2.364  2004/04/16 00:48:40  livesey
 ! Added singleChannelRadiance type and extractChannel fill method
 !
