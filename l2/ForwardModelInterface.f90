@@ -37,6 +37,7 @@ module ForwardModelInterface
     & L_VMR
   ! That's it for Init_Tables_Module
   use Lexer_Core, only: Print_Source
+  use ManipulateVectorQuantities, only: FindClosestInstances
   use MatrixModule_1, only: Matrix_Database_T, Matrix_T
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate,&
@@ -477,6 +478,7 @@ contains ! =====     Public Procedures     =============================
     real (r8) :: SENSE                  ! Multiplier (+/-1)
 
     integer, dimension(:), pointer :: CHANNELINDEX ! E.g. 1..25
+    integer, dimension(:), pointer :: CLOSESTINSTANCES ! To each maf
     integer, dimension(:), pointer :: SIGNALSGRID ! Used in ptg grid hunt
     integer, dimension(:), pointer :: USEDCHANNELS ! Array of indices used
 
@@ -877,9 +879,14 @@ contains ! =====     Public Procedures     =============================
       print*,'Doing maf:',maf
 
       ! Now work out what `window' we're inside.  This will need to be changed
-      ! a bit in later versions to avoid the noMAFS==noTemp/f instances assertion
-      windowStart = max(1,maf-phiWindow/2)
-      windowFinish = min(maf+phiWindow/2, temp%template%noInstances)
+      ! a bit in later versions to avoid the noMAFS==noTemp/f instances
+      ! assertion
+      nullify(closestInstances)
+      call Allocate_test(closestInstances, noMAFs, 'closestInstances', ModuleName)
+      call FindClosestInstances( temp, radiance, closestInstances )
+      windowStart = max(1,closestInstances(maf)-phiWindow/2)
+      windowFinish = min(closestInstances(maf)+phiWindow/2, temp%template%noInstances)
+      call Deallocate_test(closestInstances, 'closestInstances', ModuleName)
 
       allocate ( k_temp(noUsedChannels, no_tan_hts, temp%template%noSurfs, &
         & windowStart:windowFinish), stat=status )
@@ -1427,6 +1434,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.99  2001/04/19 22:24:09  livesey
+! More moving window stuff sorted out, now uses FindClosestInstance
+!
 ! Revision 2.98  2001/04/19 22:09:32  livesey
 ! New calling sequence for comp_path_entities
 !
