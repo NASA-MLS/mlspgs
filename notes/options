@@ -1,7 +1,8 @@
 Command line options:
    mlsl2 -slo1 -slo2 .. --mlo1 --mlo2 ..
 where slon are single-letter options and mlon are multiletter options
-E.g., mlsl2 -m -p --nmeta -S"glo jac"
+E.g., mlsl2 -m -p --nmeta -S"glo,jac"
+Note: use "-T2" and not "--T2" because T2 has one letter
 ========================= mlsl2 =========================
   -A: Dump the un-decorated abstract syntax tree.
   -a: Dump the decorated type-checked abstract syntax tree.
@@ -20,7 +21,7 @@ E.g., mlsl2 -m -p --nmeta -S"glo jac"
   -p: Trace parsing.
   -Sstring: Set "switches" = "string".  Characters in
             "string" may control individual outputs.  If -S is
-            specified several times, the strings are concatenated.
+            specified several times, the strings are combined.
      (For specific strings and their effects, use -S"?")
   -T[digit]: Time some processes depending on digit
      0: Time parsing, type checking and processing separately.
@@ -98,6 +99,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will not be printed in response to mlsl2 -?)
 
  $Log$
+ Revision 1.25  2003/09/05 23:25:17  pwagner
+ Adds --skipRetrieval
+
  Revision 1.24  2003/08/01 20:02:52  pwagner
  Added --pge 'commandname'
 
