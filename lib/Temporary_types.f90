@@ -8,6 +8,7 @@ MODULE Temporary_types
 
 !   USE L1BData
 !   USE L2GP
+   USE MLSCommon
    IMPLICIT NONE
    PUBLIC
 
@@ -61,98 +62,101 @@ MODULE Temporary_types
 
 ! This datatype defines the l2cf and its sections
 
-   TYPE L2cf
+!    TYPE L2cf
 
-! For each section:
+! ! For each section:
 
-      INTEGER :: NoGlobalSettingsEntries
-		! Number of entries within section
+!       INTEGER :: NoGlobalSettingsEntries
+! 		! Number of entries within section
 
-      TYPE (L2cfEntry), DIMENSION(:), POINTER :: GlobalSettings
-		! The actual entries, dimensioned (NoGlobalSettingsEntries)
+!       TYPE (L2cfEntry), DIMENSION(:), POINTER :: GlobalSettings
+! 		! The actual entries, dimensioned (NoGlobalSettingsEntries)
 
-      INTEGER :: NoReadAprioriEntries
-      TYPE (L2cfEntry), DIMENSION(:), POINTER :: ReadApriori
+!       INTEGER :: NoReadAprioriEntries
+!       TYPE (L2cfEntry), DIMENSION(:), POINTER :: ReadApriori
 
-      INTEGER :: NoMergeAprioriEntries
-      TYPE (L2cfEntry), DIMENSION(:), POINTER :: MergeApriori
+!       INTEGER :: NoMergeAprioriEntries
+!       TYPE (L2cfEntry), DIMENSION(:), POINTER :: MergeApriori
 
-      INTEGER :: NoChunkDivideEntries
-      TYPE (L2cfEntry), DIMENSION(:), POINTER :: ChunkDivide
+!       INTEGER :: NoChunkDivideEntries
+!       TYPE (L2cfEntry), DIMENSION(:), POINTER :: ChunkDivide
 
-      INTEGER :: NoProfileLayoutEntries
-      TYPE (L2cfEntry), DIMENSION(:), POINTER :: ProfileLayout
+!       INTEGER :: NoProfileLayoutEntries
+!       TYPE (L2cfEntry), DIMENSION(:), POINTER :: ProfileLayout
 
-      INTEGER :: NoConstructEntries
-      TYPE (L2cfEntry), DIMENSION(:), POINTER :: Construct
+!       INTEGER :: NoConstructEntries
+!       TYPE (L2cfEntry), DIMENSION(:), POINTER :: Construct
 
-      INTEGER :: NoFillEntries
-      TYPE (L2cfEntry), DIMENSION(:), POINTER :: Fill
+!       INTEGER :: NoFillEntries
+!       TYPE (L2cfEntry), DIMENSION(:), POINTER :: Fill
 
-      INTEGER :: NoJoinEntries
-      TYPE (L2cfEntry), DIMENSION(:), POINTER :: Join
+!       INTEGER :: NoJoinEntries
+!       TYPE (L2cfEntry), DIMENSION(:), POINTER :: Join
 
-      INTEGER :: NoOutputEntries
-      TYPE (L2cfEntry), DIMENSION(:), POINTER :: Output
+!       INTEGER :: NoOutputEntries
+!       TYPE (L2cfEntry), DIMENSION(:), POINTER :: Output
 
-   END TYPE l2cf
+!    END TYPE l2cf
 
-! This datatype defines an L2cf entry, i.e. a name followed by a list of 
-! "keyword=value" cells
+! ! This datatype defines an L2cf entry, i.e. a name followed by a list of 
+! ! "keyword=value" cells
 
-   TYPE L2cfEntry
+!    TYPE L2cfEntry
 
-! Entry name, e.g. aprioriTemp
+! ! Entry name, e.g. aprioriTemp
 
-      CHARACTER (len=L2cfEntryLen) :: L2cfEntryName
+!       CHARACTER (len=L2cfEntryLen) :: L2cfEntryName
 
-! Number of "keyword=value" cells
+! ! Number of "keyword=value" cells
 
-      INTEGER :: L2cfEntryNoKeys
+!       INTEGER :: L2cfEntryNoKeys
 
-! Cell holder, dimensioned (L2cfEntryNoKeys)
+! ! Cell holder, dimensioned (L2cfEntryNoKeys)
 
-      TYPE (L2cfCell), DIMENSION(:), POINTER :: Cells
+!       TYPE (L2cfCell), DIMENSION(:), POINTER :: Cells
 
-   END TYPE L2cfEntry
+!    END TYPE L2cfEntry
 
-! This datatype defines a L2cf "cell", i.e. a contruction of type:
-! "keyword=value" or "keyword=LowerBound..UpperBound[units]"
+! ! This datatype defines a L2cf "cell", i.e. a contruction of type:
+! ! "keyword=value" or "keyword=LowerBound..UpperBound[units]"
 
-   TYPE L2cfCell
+!    TYPE L2cfCell
 
-! First the "keyword" holder:
+! ! First the "keyword" holder:
 
-      CHARACTER (len=MaxKeyLen) :: Keyword
+!       CHARACTER (len=MaxKeyLen) :: Keyword
 
-! Value holder for "real" type
+! ! Value holder for "real" type
 
-      REAL(r8) :: RealValue
+!       REAL(r8) :: RealValue
 
-! Value holder for integer type
+! ! Value holder for integer type
 
-      INTEGER :: IntValue
+!       INTEGER :: IntValue
 
-! Value holder for "character" type
+! ! Value holder for "character" type
 
-      CHARACTER (len= MaxCharValueLen) :: CharValue
+!       CHARACTER (len= MaxCharValueLen) :: CharValue
 
-! Value holder for "units" field
+! ! Value holder for "units" field
 
-      CHARACTER (len=UnitsLen) :: Units
+!       CHARACTER (len=UnitsLen) :: Units
 
-! Value holder for upper and lower bounds fields
+! ! Value holder for upper and lower bounds fields
 
-      REAL(r8) :: RangeLowerBound
-      REAL(r8) :: RangeUpperBound
+!       REAL(r8) :: RangeLowerBound
+!       REAL(r8) :: RangeUpperBound
 
-   END TYPE L2cfCell
+!    END TYPE L2cfCell
 
 !=========================
 END MODULE Temporary_types
 !=========================
 
 !# $Log$
+!# Revision 1.2  1999/12/28 21:34:22  nakamura
+!# Changed DOUBLE PRECISION to REAL(r8).
+!#
 !# Revision 1.1  1999/12/17 18:21:08  livesey
 !# Moved from l2
 !#
