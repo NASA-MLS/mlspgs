@@ -14,8 +14,9 @@ module Molecules
   public
 
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=256), private :: Id = &
+  character (len=*), parameter, private :: IdParm = &
        "$Id$"
+  character (len=len(idParm)) :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
 !---------------------------------------------------------------------------
@@ -214,4 +215,8 @@ contains ! =====     Public procedures     =============================
 
 end module MOLECULES
 
-! 
+! $Log$
+! Revision 2.3  2001/04/03 00:32:25  vsnyder
+! Correct CVS stuff
+!
+
