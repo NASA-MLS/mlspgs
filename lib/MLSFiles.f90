@@ -73,7 +73,8 @@ contains
   ! optionally returns the exact name of the matching file
 
   function GetPCFromRef(FileName, PCBottom, PCTop, &
-    & caseSensitive, ErrType, versionNum, debug, ExactName) result (thePC)
+    & caseSensitive, ErrType, versionNum, debugOption, ExactName) &
+    & result (thePC)
 
     ! Dummy arguments
     character (LEN=*), intent(IN)   :: FileName
@@ -82,15 +83,22 @@ contains
     integer(i4),  intent(OUT)  :: ErrType
     logical,  intent(IN)       :: caseSensitive
     integer(i4),  optional     :: versionNum
-    logical,  optional, intent(IN)       :: debug
+    logical,  optional, intent(IN)       :: debugOption
     character (LEN=*), optional, intent(out) :: ExactName
 
     ! Local variables
 
     character (LEN=MAXFILENAMELENGTH) :: MatchName, TryName, PhysicalName
-    integer                       :: version, returnStatus
+    integer                       ::     version, returnStatus
+   logical ::                            debug
 
-    if(present(debug)) then
+    if(present(debugOption)) then
+      debug = debugOption
+   else
+      debug = .false.
+   endif
+   
+    if(debug) then
       call output('get pc from ref', advance='yes')
       call output('FileName: ' // trim(FileName), advance='yes')
       call output('lower PCF limit: ' )
@@ -117,13 +125,13 @@ contains
 
     ErrType = NAMENOTFOUND
 
-    if(present(debug)) then
+    if(debug) then
       call output('getting ref from pc:', advance='no')
     endif
 
     do thePC = PCBottom, PCTop
 
-      !		if(present(debug)) then
+      !		if(debug) then
       !			call output('pc: ' )
       !			call output(thePC, advance='no')
       !			call output('              version: ' )
@@ -552,6 +560,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.11  2001/04/13 00:18:10  pwagner
+! Prints only if debug present AND .TRUE.
+!
 ! Revision 2.10  2001/04/10 20:05:07  livesey
 ! Tidied up
 !
