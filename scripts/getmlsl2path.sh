@@ -55,7 +55,7 @@ while [ -n "$(echo $1)" ]; do
 	    lightspeed )
 		echo "$HOME/$VERSION";;
 	    desktop )
-		echo "/bigdata/$MYUSER/$VERSION"
+		echo "/testing/workspace/$MYUSER/$VERSION"
 	esac
     fi
     if [ $1 == "--l2pc" ]; then
@@ -67,7 +67,7 @@ while [ -n "$(echo $1)" ]; do
 	    lightspeed )
 		echo "/science/l2cal/";;
 	    desktop )
-		echo "/bigdata/$MYUSER/$VERSION";;
+		echo "/testing/workspace/$MYUSER/l2pc/";;
 	esac
     fi
     if [ $1 == "--truthl2gp" ]; then
@@ -87,7 +87,7 @@ while [ -n "$(echo $1)" ]; do
 	    lightspeed )
 		echo "$HOME/$VERSION";;
 	    desktop )
-	    echo "/bigdata/$MYUSER/$VERSION";;
+	    echo "/testing/workspace/$MYUSER/$VERSION";;
 	esac
     fi
     if [ $1 == "--l1boa" ]; then
@@ -130,7 +130,7 @@ while [ -n "$(echo $1)" ]; do
 	    lightspeed )
 		echo "$HOME/$VERSION";;
 	    desktop )
-		echo "/bigdata/$MYUSER/$VERSION";;
+		echo "/testing/workspace/$MYUSER/$VERSION";;
 	esac
     fi
     if [ $1 == "--sidsrad" ]; then
@@ -140,13 +140,16 @@ while [ -n "$(echo $1)" ]; do
 	    lightspeed )
 		echo "$HOME/$VERSION";;
 	    desktop )
-		echo "/bigdata/$MYUSER/$VERSION";;
+		echo "/testing/workspace/$MYUSER/$VERSION";;
 	esac
     fi
     shift
 done
 
 # $Log$
+# Revision 1.34  2004/06/18 00:02:31  livesey
+# Moved research1 to data1
+#
 # Revision 1.33  2004/06/11 19:56:45  livesey
 # DAO data moved on SCF, now also recognizes --gmao as well as --dao.
 #
