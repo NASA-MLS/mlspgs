@@ -26,9 +26,9 @@ module RetrievalModule
     & F_forwardModel, F_fuzz, F_fwdModelExtra, F_fwdModelOut, F_height, F_ignore, &
     & F_jacobian, &
     & F_lambda, F_maxF, F_maxJ, F_measurements, F_measurementSD, F_method, &
-    & F_opticalDepth, &
-    & F_outputCovariance, F_ptanQuantity, F_outputSD, F_quantity, F_regOrders, F_regWeight, &
-    & F_state, F_test, F_toleranceA, F_toleranceF, F_toleranceR, &
+    & F_opticalDepth, F_outputCovariance, F_outputSD, F_ptanQuantity, &
+    & F_quantity, F_regOrders, f_regQuants, &
+    & F_regWeight, F_state, F_test, F_toleranceA, F_toleranceF, F_toleranceR, &
     & Field_first, Field_last, &
     & L_apriori, L_covariance, L_newtonian, L_none, L_norm, L_pressure, &
     & S_dumpBlocks, S_forwardModel, S_sids, S_matrix, S_subset, S_retrieve, &
@@ -49,7 +49,7 @@ module RetrievalModule
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
   use Output_M, only: Output
-  use Regularization, only: MaxRegOrd, Regularize
+  use Regularization, only: Regularize
   use String_Table, only: Display_String
   use SidsModule, only: SIDS
   use Toggles, only: Gen, Switches, Toggle
@@ -137,7 +137,6 @@ contains
     real(r8) :: Fuzz                    ! For testing only.  Amount of "fuzz"
                                         ! to add to state vector before
                                         ! starting a retrieval.
-    type(vector_T) :: FuzzMeasurements  ! Random numbers to fuzz the measurements
     type(vector_T) :: FuzzState         ! Random numbers to fuzz the state
     type(vector_T), pointer :: FwdModelExtra
     type(vector_T), pointer :: FwdModelOut
@@ -165,7 +164,6 @@ contains
                                         ! n_named, subtree(1,son)
     type(matrix_SPD_T) :: NormalEquations         ! Jacobian**T * Jacobian
     integer :: NumF, NumJ               ! Number of Function, Jacobian evaluations
-    integer :: NumRegOrds               ! Number of regularization orders
     integer :: NWT_Flag                 ! Signal from NWT, q.v., indicating
                                         ! the action to take.
     integer :: NWT_Opt(20)              ! Options for NWT, q.v.
@@ -175,7 +173,9 @@ contains
     integer :: Quantity                 ! Index in tree of "quantity" field
                                         ! of subset specification, or zero
     integer :: QuantityIndex            ! Index within vector of a quantity
-    integer, dimension(:), pointer :: RegOrds    ! Regularization orders
+    integer :: RegOrders                ! Regularization orders
+    integer :: RegQuants                ! Regularization quantities
+    type(vector_T) :: Reg_X_X           ! Regularization * X_n
     real(r8) :: RegWeight               ! Weight of regularization conditions
     integer :: RowBlock                 ! Which block of rows is the forward
                                         ! model filling?
@@ -207,14 +207,16 @@ contains
     ! Error message codes
     integer, parameter :: BothOrNeither = 1       ! Only one of two required
                                                   !    fields supplied
-    integer, parameter :: Inconsistent = BothOrNeither + 1 ! Inconsistent fields
+    integer, parameter :: IfAThenB = BothOrNeither + 1
+    integer, parameter :: Inconsistent = IfAThenB + 1  ! Inconsistent fields
     integer, parameter :: NoFields = Inconsistent + 1  ! No fields are allowed
     integer, parameter :: NotExtra = noFields + 1 ! No "extra" row and/or column
     integer, parameter :: NotSPD = notExtra + 1   ! Not symmetric pos. definite
     integer, parameter :: OrderAndWeight = notSPD + 1  ! Need both or neither
+    integer, parameter :: Unitless = OrderAndWeight + 1
 
     error = 0
-    nullify ( apriori, configIndices, covariance, fwdModelOut, regOrds )
+    nullify ( apriori, configIndices, covariance, fwdModelOut )
     nullify ( measurements, measurementSD, state, outputSD )
     timing = .false.
 
@@ -256,7 +258,7 @@ contains
         maxFunctions = defaultMaxF
         maxJacobians = defaultMaxJ
         method = defaultMethod
-        numRegOrds = 0
+        regQuants = 0
         toleranceA = defaultToleranceA
         toleranceF = defaultToleranceF
         toleranceR = defaultToleranceR
@@ -301,16 +303,9 @@ contains
           case ( f_method )
             method = decoration(subtree(2,son))
           case ( f_regOrders )
-            call allocate_test ( regOrds, nsons(son)-1, &
-              & "Regularization orders", moduleName )
-            numRegOrds = nsons(son) - 1
-            do k = 2, nsons(son)
-              call expr(subtree(k,son), units, value, type )
-              if ( units(1) /= phyq_dimensionless ) call MLSMessage ( &
-                & MLSMSG_Error, moduleName, &
-                & "Regularization orders must be dimensionless" )
-              regOrds(k-1) = value(1)
-            end do
+            regOrders = son
+          case ( f_regQuants )
+            regQuants = son
           case ( f_outputCovariance )
             ixCovariance = decoration(subtree(2,son)) ! outCov: matrix vertex
           case ( f_outputSD )
@@ -320,6 +315,8 @@ contains
           case ( f_aprioriScale, f_fuzz, f_lambda, f_maxF, f_maxJ, &
             &    f_regWeight, f_toleranceA, f_toleranceF, f_toleranceR )
             call expr ( subtree(2,son), units, value, type )
+            if ( units(1) /= phyq_dimensionless ) &
+              & call announceError ( unitless, field )
             select case ( field )
             case ( f_aprioriScale )
               aprioriScale = value(1)
@@ -349,6 +346,8 @@ contains
           & call announceError ( bothOrNeither, f_apriori, f_covariance )
         if ( got(f_regOrders) .neqv. got(f_regWeight) ) &
           & call announceError ( bothOrNeither, f_regOrders, f_regWeight )
+        if ( got(f_regQuants) .and. .not. got(f_regOrders) ) &
+          & call announceError ( ifAThenB, f_regQuants, f_regOrders )
         if ( error == 0 ) then
 
           ! Verify the consistency of various matrices and vectors
@@ -474,14 +473,7 @@ contains
             end do
 
               if ( index(switches,'sca') /= 0 ) then
-                if ( got(f_regOrders) ) then
-                  if ( numRegOrds == 1 ) then
-                    call output ( ' regOrder = ' )
-                    call output ( regOrds(1) )
-                  else
-                    call dump ( regOrds, &
-                    & "Regularization orders:", clean=.true., format='(i3)' )
-                  end if
+                if ( got(f_regWeight) ) then
                   call output ( ' regWeight = ' )
                   call output ( regWeight )
                 end if
@@ -652,6 +644,18 @@ contains
                 else
                   call clearMatrix ( normalEquations%m ) ! start with zero
                   aprioriNorm = 0.0_r8
+                end if
+
+                ! Add Tikhonov regularization if requested
+                if ( got(f_regOrders) ) then
+                  call regularize ( jacobian, regOrders, regQuants, regWeight )
+                  call cloneVector ( reg_X_x, x )
+                  call multiply ( jacobian, x, reg_X_x )
+!                 call scaleVector ( reg_X_x, -1.0_r8 )
+                  call formNormalEquations ( jacobian, normalEquations, &
+                    & update=update )
+                  call clearMatrix ( jacobian )        ! free the space
+                  call destroyVectorValue ( reg_X_x )  ! free the space
                 end if
 
                 ! Add some early stabilization
@@ -1024,7 +1028,6 @@ contains
         call destroyVectorInfo ( f )
         call deallocate_test ( configIndices, "ConfigIndices", moduleName )
         ! Clear the masks of every vector
-        call deallocate_test ( regOrds, "Regularization orders", moduleName )
         do j = 1, size(vectorDatabase)
           call destroyVectorMask ( vectorDatabase(i) )
         end do
@@ -1060,7 +1063,13 @@ contains
         call display_string ( field_indices(fieldIndex) )
         call output ( ' or ' )
         call display_string ( field_indices(anotherFieldIndex) )
-        call output ( ' is supplied, but the other is not.', advance='yes' )
+        call output ( ' appears, but the other is not.', advance='yes' )
+      case ( ifAThenB )
+        call output ( 'If the ' )
+        call display_string ( field_indices(fieldIndex) )
+        call output ( ' field appears then the field ' )
+        call display_string ( field_indices(anotherFieldIndex) )
+        call output ( ' shall also appear.', advance='yes' )
       case ( noFields )
         call output ( 'No fields are allowed for a ' )
         call display_string ( spec_indices(fieldIndex) )
@@ -1080,6 +1089,10 @@ contains
           call output ( ' is not a symmetric positive-definite matrix.', &
             & advance='yes' )
         end select
+      case ( unitless )
+        call output ( 'The value of the ' )
+        call display_string ( field_indices(fieldIndex) )
+        call output ( ' field shall be unitless' )
       end select
     end subroutine AnnounceError
 
@@ -1282,6 +1295,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.47  2001/06/26 19:01:00  vsnyder
+! Specify regularization orders according to quantities
+!
 ! Revision 2.46  2001/06/26 18:18:14  livesey
 ! Another (working?) version.
 !
