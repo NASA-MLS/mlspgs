@@ -377,8 +377,10 @@ begin Construct
 
   ;; ----------------------------------------- Other minor stuff
 
-  magneticField: quantity, type=magneticField, $
-    vGrid=vGridStandard, hGrid=hGridStandard
+  magneticField: quantity, type=magneticField, vGrid=vGridStandard, hGrid=hGridStandard
+  fieldAzimuth: quantity, type=fieldAzimuth, vGrid=vGridStandard, hGrid=hGridStandard
+  fieldElevation: quantity, type=fieldElevation, vGrid=vGridStandard, hGrid=hGridStandard
+  fieldStrength: quantity, type=fieldStrength, vGrid=vGridStandard, hGrid=hGridStandard
 
   earthReflectivity: quantity, type=earthRefl
   orbitInclination: Quantity, type=orbitInclination, module=SC
@@ -398,7 +400,8 @@ begin Construct
   losVelTHz: quantity, type=losVel, module=THz
   ECRtoFOV: quantity, type=ECRtoFOV, module=GHz
 
-  !define(lesserState, {magneticField, earthReflectivity, orbitInclination, spaceRadiance, $
+  !define(lesserState, {magneticField, fieldAzimuth, fieldElevation, fieldStrength, $
+    earthReflectivity, orbitInclination, spaceRadiance, $
     scGeocAlt, tngtGeocAltGHz, tngtGeocAltTHz, scECI, tngtECIGHz, tngtECITHz, $
     scVelECR, scVelECI, losVelGHz, losVelTHz, ECRtoFOV})
 
