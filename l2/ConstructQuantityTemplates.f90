@@ -33,14 +33,15 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
     PHYQ_FREQUENCY, PHYQ_DOBSONUNITS, PHYQ_IceDensity, PHYQ_LENGTH, PHYQ_PCTRHI, &
     PHYQ_PRESSURE, PHYQ_TEMPERATURE, PHYQ_VELOCITY, PHYQ_VMR, &
     PHYQ_ZETA
-  use L1BData, only: L1BData_T, READL1BDATA, DEALLOCATEL1BDATA
+  use L1BData, only: L1BData_T, READL1BDATA, DEALLOCATEL1BDATA, &
+    & FindL1BData, PRECISIONSUFFIX
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: L1BInfo_T, MLSChunk_T, NameLen, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_L1BRead
   use MLSSignals_m, only:  IsModuleSpacecraft, &
     & GetModuleFromRadiometer, GetModuleFromSignal, GetModuleName, &
     & GetRadiometerFromSignal, GetSignal,&
-    & Signal_T, SIGNALS, MODULES
+    & GetSignalName, Signal_T, SIGNALS, MODULES
   use OUTPUT_M, only: OUTPUT
   use Parse_Signal_m, only: PARSE_SIGNAL
   use QuantityTemplates, only: QuantityTemplate_T,SetupNewQuantityTemplate, &
@@ -60,7 +61,9 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
 ! -----     Private declarations     -----------------------------------
 
   integer :: ERROR
-  logical, parameter :: DEEBUG = .FALSE.      ! Normally FALSE
+  logical, parameter :: DEEBUG = .FALSE.                 ! Normally FALSE
+  logical, parameter :: ALWAYSFIRSTSIGNAL = .FALSE.      ! Normally FALSE
+  integer, parameter :: HOWSEVEREISNOGOODSIGNAL = 0      ! Normally 0
 
 ! Error codes for "announce_error"
   integer, parameter :: No_Error_Code = 0
@@ -83,7 +86,8 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
 contains ! =====     Public Procedures     =============================
   ! -----------------------------  CreateQtyTemplateFromMLSCFInfo  -----
   type (QuantityTemplate_T) function CreateQtyTemplateFromMLSCFInfo ( &
-    & Name, Root, FGrids, VGrids, HGrids, L1bInfo, Chunk, MifGeolocation ) &
+    & Name, Root, FGrids, VGrids, HGrids, L1bInfo, Chunk, MifGeolocation, &
+    & returnStatus ) &
     result ( QTY )
 
   ! This routine constructs a vector quantity template based on instructions
@@ -99,6 +103,7 @@ contains ! =====     Public Procedures     =============================
     type (MLSChunk_T), intent(in) :: Chunk
     type (QuantityTemplate_T), dimension(:), intent(in), optional :: &
       & MifGeolocation
+    integer, intent(out) :: returnStatus      ! 0 unless trouble
 
     ! Local variables
 
@@ -125,6 +130,7 @@ contains ! =====     Public Procedures     =============================
     real(r8) :: ScaleFactor
     integer :: Sideband
     integer :: Signal                   ! Database index
+    integer :: s_index
     integer, dimension(:), pointer :: SignalInds ! From parse signal
     type (signal_T) :: SignalInfo       ! Details of the appropriate signal
     integer :: Son                      ! A Son of Root -- an n_assign node
@@ -245,7 +251,25 @@ contains ! =====     Public Procedures     =============================
           call MLSMessage ( MLSMSG_Error, ModuleName,&
             & 'Unable to parse signal string' )
         end if
-        signal = signalInds(1)
+        ! print *, 'Parsed ', trim(signalString), ' for ', size(signalInds), &
+        !  & ' bands'
+        if ( size(signalInds) == 1 .or. ALWAYSFIRSTSIGNAL ) then
+          signal = signalInds(1)
+        else
+          ! Seek a signal with any precision values !< 0
+          do s_index=1, size(signalInds)
+            if ( any_good_signaldata ( signalInds(s_index), sideband, &
+              & l1bInfo, Chunk) ) exit
+          enddo
+          if ( s_index > size(signalInds) ) then
+            call announce_error (root, No_Error_Code, &
+              & 'Warning: no good signal data found for ' &
+              & // trim(signalString), HOWSEVEREISNOGOODSIGNAL)
+            signal = signalInds(1)
+          else
+            signal = signalInds(s_index)
+          endif
+        endif
         call deallocate_test ( signalInds, 'signalInds', ModuleName )
         instrumentModule = GetModuleFromSignal(signal)
         radiometer = GetRadiometerFromSignal(signal)
@@ -498,18 +522,24 @@ contains ! =====     Public Procedures     =============================
       call output ( qty%instanceLen, advance='yes' )
     endif
     if ( toggle(gen) ) call trace_end ( "CreateQtyTemplateFromMLSCFInfo" )
+    returnStatus = error
 
   end function CreateQtyTemplateFromMLSCFInfo
 
 ! =====     Private Procedures     =====================================
 
 ! -----------------------------------------------  ANNOUNCE_ERROR  -----
-  subroutine ANNOUNCE_ERROR ( WHERE, CODE, ExtraMessage )
+  subroutine ANNOUNCE_ERROR ( WHERE, CODE, ExtraMessage, severity )
     integer, intent(in) :: WHERE   ! Tree node where error was noticed
     integer, intent(in) :: CODE    ! Code for error message
     character (LEN=*), intent(in), optional :: ExtraMessage
+    integer, intent(in), optional :: severity
 
-    error = max(error,1)
+    if (present(severity)) then
+      error = max(error,severity)
+    else
+      error = max(error,1)
+    endif
     call output ( '***** At ' )
     if ( where > 0 ) then
       call print_source ( source_ref(where) )
@@ -541,6 +571,40 @@ contains ! =====     Public Procedures     =============================
       call output(ExtraMessage, advance='yes')
     end if
   end subroutine ANNOUNCE_ERROR
+
+! -----------------------------------------------  ANY_GOOD_SIGNALDATA  -----
+  function ANY_GOOD_SIGNALDATA ( signal, sideband, l1bInfo, Chunk )  result (answer)
+  ! Read precision of signal
+  ! if all values < 0.0, return FALSE
+  ! else return true
+  ! Arguments
+    integer, intent(in) :: signal
+    integer, intent(in) :: sideband
+    logical             :: answer
+    type (MLSChunk_T), intent(in) :: Chunk
+    type (l1bInfo_T), intent(in) :: L1bInfo
+  ! Private
+    integer :: FileID, flag, noMAFs
+    character(len=127)  :: namestring
+    type (l1bData_T) :: L1BDATA
+
+  ! Executable
+    call GetSignalName ( signal, nameString, &                   
+    & sideband=sideband, noChannels=.TRUE. )                     
+    fileID = FindL1BData (l1bInfo%l1bRadIDs, nameString )
+    nameString = trim(nameString) // PRECISIONSUFFIX
+    ! print *, 'About to read ', trim(nameString)
+    ! print *, 'From Fileid ', fileID
+      call ReadL1BData ( fileID , nameString, l1bData, noMAFs, flag, &
+        & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+        & NeverFail= .true. )
+      if (flag == 0) then
+        answer = .not. all (l1bData%DpField < 0._r8)
+        call deallocate_test(l1bData%DpField, trim(nameString), ModuleName)
+      else
+        answer = .false.
+      endif
+  end function ANY_GOOD_SIGNALDATA
 
   ! --------------------------------  ConstructMinorFrameQuantity  -----
   subroutine ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModule, &
@@ -873,6 +937,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.69  2002/09/18 22:48:32  pwagner
+! Chooses signals first band with any good data
+!
 ! Revision 2.68  2002/08/04 16:01:19  mjf
 ! Added some nullify statements for Sun's rubbish compiler.
 !
