@@ -115,6 +115,7 @@ PROG_prereqs := $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
 
 ifdef HDFVERSIONS
    PROG_prereqs := $(PROG_prereqs) $(he5lib_objs)/libhe5.a
+   ADD2PATHS := $(ADD2PATHS) $(he5lib)
 endif
 
 #ifdef BLAS
@@ -165,7 +166,8 @@ $(PROG): $(PROG_prereqs)
 		exit 2 ; \
 		;; \
 	*) \
-		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) ; \
+		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
+        UNPREFXDPTHS="$(ADD2PATHS)" \
 		;; \
 	esac 
 
@@ -177,7 +179,8 @@ $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
 		exit 2 ; \
 		;; \
 	*) \
-		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) ; \
+		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
+        UNPREFXDPTHS="$(ADD2PATHS)" \
 		;; \
 	esac 
 
@@ -276,6 +279,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.44  2002/01/31 00:34:33  pwagner
+# Tries to get .mod files from he5lib
+#
 # Revision 2.43  2002/01/29 00:46:47  pwagner
 # Builds he5lib when HDFVERSIONS defined
 #
