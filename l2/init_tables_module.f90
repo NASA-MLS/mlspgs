@@ -395,7 +395,7 @@ contains ! =====     Public procedures     =============================
              l+l_dnwt_diag, l+l_dnwt_dxdx, l+l_dnwt_dxdxl, &
              l+l_dnwt_dxn, l+l_dnwt_dxnl, l+l_dnwt_flag, l+l_dnwt_fnmin, &
              l+l_dnwt_fnorm, l+l_dnwt_gdx, l+l_dnwt_gfac, &
-             l+l_dnwt_gradn, l+l_dnwt_sq, l+l_dnwt_sq, l+l_dnwt_sqt,&
+             l+l_dnwt_gradn, l+l_dnwt_sq, l+l_dnwt_sqt,&
              l+l_earthRefl, l+l_ECRtoFOV, l+l_effectiveOpticalDepth, &
              l+l_elevOffset, l+l_extinction, l+l_gph, l+l_heightOffset, &
              l+l_isotopeRatio, l+l_jacobian_cols, l+l_jacobian_rows, &
@@ -1026,6 +1026,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.313  2003/05/26 06:33:12  livesey
+! Removed duplicate quantity template
+!
 ! Revision 2.312  2003/05/20 23:30:12  dwu
 ! add iwcfromextinction
 !
