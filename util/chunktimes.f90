@@ -12,14 +12,16 @@ program chunktimes ! Reads chunk times from l2aux file(s)
    use MLSCommon, only: R4, R8
    use MLSFiles, only: mls_exists, MLS_SFSTART, MLS_SFEND, &
      & HDFVERSION_4, HDFVERSION_5
-   use MLSHDF5, only: GetHDF5Attribute, GetHDF5DSDims, LoadFromHDF5DS, &
-    &  IsHDF5AttributePresent, mls_h5open, mls_h5close
+   use MLSHDF5, only: CpHDF5Attribute, GetHDF5Attribute, GetHDF5DSDims, &
+     & IsHDF5AttributePresent, LoadFromHDF5DS, mls_h5open, mls_h5close
    use MLSMessageModule, only: MLSMessageConfig
+   use MLSSets, only: FindAll
    use MLSStats1, only: STAT_T, &
      & ALLSTATS, DUMPSTAT=>DUMP, MLSMIN, MLSMAX, MLSMEAN, MLSSTDDEV, MLSRMS, STATISTICS
-   use MLSStringLists, only: GetStringElement, NumStringElements
+   use MLSStringLists, only: catLists, GetStringElement, GetUniqueList, &
+     & NumStringElements
    use MLSStrings, only: lowercase
-   use output_m, only: blanks, newline, output
+   use output_m, only: blanks, newline, output, output_date_and_time
    use PCFHdr, only: GlobalAttributes
    use Time_M, only: Time_Now, USE_WALL_CLOCK
    
@@ -46,25 +48,36 @@ program chunktimes ! Reads chunk times from l2aux file(s)
     logical            :: merge = .false.           ! Merge data from files
     logical            :: tabulate = .false.        ! tabulate
     logical            :: showFailed = .false.      ! show howmany, which failed
+    logical            :: showStats = .true.        ! show max, min, mean, etc.
     character(len=255) :: DSName= 'phase timing'    ! Dataset name
     character(len=255) :: binopts= ' '              ! 'nbins,X1,X2'
-    character(len=3)   :: convert= 's2h'            ! 's2h', 'h2s', ''
+    character(len=3)   :: convert= ' '              ! 's2h', 'h2s', ''
     integer            :: hdfVersion = HDFVERSION_5
     integer            :: finalPhase = 10           ! phase number ~ total
+    real(r4)           :: longChunks = 0._r4
   end type options_T
   
   type ( options_T ) :: options
   type(STAT_T)       :: statistic
 
+  logical, parameter ::          COUNTEMPTY = .true.
+  logical, parameter ::          MODIFYPHASENAMES = .false.
   integer, parameter ::          MAXFILES = 100
   integer, parameter ::          MAXPHASES = 100
   integer, parameter ::          MAXCHUNKS = 360
+  character(len=*), parameter :: NEWPHASENAMES = &
+    & 'initptan,updateptan,inituth,core,coreplusr2,highcloud,coreplusr3,' // &
+    & 'coreplusr4,coreplusr5'
   character(len=255) :: filename          ! input filename
+  character(len=4096):: longChunkList = ''
+  character(len=4096):: tempChunkList = ''
   character(len=255), dimension(MAXFILES) :: filenames
   integer            :: n_filenames
-  integer     ::  i, count, status, error ! Counting indices & Error flags
+  integer     ::  how_many, i, count, status, error ! Counting indices & Error flags
   integer(kind=hSize_t), dimension(3) :: dims, maxDims
-  integer     ::  fileID
+  integer     ::  fileID, oldfileID
+  integer     ::  togrpID, fromgrpID
+  integer     ::  fileAccess
   real(r4), dimension(:,:,:), pointer   :: l2auxValue => NULL()
   real(r4), dimension(:), pointer     :: timings => NULL()
   logical     :: is_hdf5
@@ -73,10 +86,13 @@ program chunktimes ! Reads chunk times from l2aux file(s)
   real        :: t2
   real        :: tFile
   real(r4), parameter :: UNDEFINEDVALUE = -999.99
+  integer, dimension(MAXCHUNKS) :: which
   ! 
   MLSMessageConfig%useToolkit = .false.
   MLSMessageConfig%logFileUnit = -1
   USE_WALL_CLOCK = .true.
+  call output_date_and_time(msg='starting chunktimes', &
+    & dateFormat='yyyydoy', timeFormat='HH:mm:ss')
   CALL mls_h5open(error)
   if ( status /= 0 ) then
     print *, 'Sorry--unable to allocate timings'
@@ -135,7 +151,12 @@ program chunktimes ! Reads chunk times from l2aux file(s)
           print *, 'Reading from: ', trim(filenames(i))
         endif
       endif
-      fileID = mls_sfstart ( trim(filenames(i)), DFACC_RDONLY, &
+      if ( MODIFYPHASENAMES .and. i == n_filenames ) then
+        fileAccess = DFACC_RDWR
+      else
+        fileAccess = DFACC_RDONLY
+      endif
+      fileID = mls_sfstart ( trim(filenames(i)), fileAccess, &
            &                               hdfVersion=options%hdfVersion )
       call GetHDF5DSDims(fileID, trim(options%DSname), dims, maxDims)
       ! print *, 'dims ', dims
@@ -168,17 +189,48 @@ program chunktimes ! Reads chunk times from l2aux file(s)
         & call tabulate(l2auxValue(1, 1:options%finalPhase, :))
       if ( .not. options%merge ) statistic%count=0
       call statistics(real(timings, r8), statistic, real(UNDEFINEDVALUE, r8))
-      if ( .not. options%merge ) call dumpstat(statistic)
+      if ( options%longChunks > 0._r4 ) then
+        call FindAll((timings > options%longChunks), which, how_many=how_many)
+        if ( how_many > 0 ) then
+          tempChunkList = catLists(longChunkList, which(1:how_many))
+          call GetUniqueList(tempChunkList, longChunkList, how_many, COUNTEMPTY)
+        endif
+      endif
+      if ( .not. options%merge ) then
+        if ( options%showStats) call dumpstat(statistic)
+        if ( options%longChunks > 0._r4 ) &
+          & call dump(longChunkList, 'list of long chunks')
+        longChunkList = ' '
+      endif
       if ( options%showFailed ) then
         call dumpFailedChunks(fileID)
+      endif
+      ! The following is just to test whether we can copy phase names
+      ! from one file to another
+      ! Remove it after testing, please
+      if ( MODIFYPHASENAMES  .and. i == n_filenames ) then
+        oldfileID = mls_sfstart ( trim(filenames(1)), fileAccess, &
+           &                               hdfVersion=options%hdfVersion )
+        call h5gopen_f(fileID, '/', togrpid, status)
+        call h5gopen_f(oldfileID, '/', fromgrpid, status)
+        call CpHDF5Attribute(fromgrpID, togrpID, 'Phase Names')
+        call h5gclose_f(togrpid, status)
+        call h5gclose_f(fromgrpid, status)
+        status = mls_sfend( oldfileID,hdfVersion=options%hdfVersion )
       endif
       status = mls_sfend( fileID,hdfVersion=options%hdfVersion )
       deallocate(l2auxValue, timings, stat=status)
       if ( options%verbose )  call sayTime('reading this file', tFile)
     enddo
-    if ( options%merge ) call dumpstat(statistic)
+    if ( options%merge ) then
+      if ( options%showStats) call dumpstat(statistic)
+      if ( options%longChunks > 0._r4 ) &
+        & call dump(longChunkList, 'list of long chunks')
+    endif
     if ( options%verbose ) call sayTime('reading all files')
   endif
+  call output_date_and_time(msg='ending chunktimes', &
+    & dateFormat='yyyydoy', timeFormat='HH:mm:ss')
   call mls_h5close(error)
 contains
 
@@ -205,20 +257,24 @@ contains
       elseif ( filename(1:3) == '-d ' ) then
         call getarg ( i+1+hp, options%DSName )
         i = i + 1
-        exit
       elseif ( filename(1:2) == '-b' ) then
         call getarg ( i+1+hp, options%binopts )
         i = i + 1
-        exit
+        ! exit
       elseif ( filename(1:5) == '-hdf ' ) then
         call getarg ( i+1+hp, filename )
         read(filename, *) options%hdfVersion
         i = i + 1
-        exit
+      elseif ( filename(1:3) == '-l ' ) then
+        call getarg ( i+1+hp, filename )
+        read(filename, *) options%longChunks
+        i = i + 1
       elseif ( filename(1:3) == '-n ' ) then
         call getarg ( i+1+hp, filename )
         read(filename, *) options%finalPhase
         i = i + 1
+      elseif ( filename(1:6) == '-nstat' ) then
+        options%showStats = .false.
         exit
       elseif ( filename(1:5) == '-s2h ' ) then
         options%convert = 's2h'
@@ -257,6 +313,25 @@ contains
     
   end subroutine get_filename
 
+!------------------------- deduceFailedChunks ---------------------
+  subroutine deduceFailedChunks(number, failedChunks)
+    ! Deduce chunks that failed
+    ! Based on timings == UNDEFINEDVALUE
+    ! Args
+    integer, intent(out) :: number
+    character(len=*), intent(out) :: failedChunks
+    ! Internal variables
+    ! Executable
+    number = 0
+    failedChunks = ' '
+    if ( .not. any(timings == UNDEFINEDVALUE) ) return
+    call FindAll((timings == UNDEFINEDVALUE), which, how_many=number)
+    if ( number > 0 ) then
+      tempChunkList = catLists(failedChunks, which(1:number))
+      failedChunks = tempChunkList
+    endif
+  end subroutine deduceFailedChunks
+
 !------------------------- dumpFailedChunks ---------------------
   subroutine dumpFailedChunks(fileID)
   ! Print info on chunks that failed
@@ -272,6 +347,7 @@ contains
   character(len=*), parameter :: FAILATTRIBUTENAME = 'FailedChunks'
   character(len=*), parameter :: MACHATTRIBUTENAME = 'FailedMachines'
   ! Executable
+  number = -1
   call h5gopen_f(fileId, '/', grp_id, returnStatus)
   call output(NUMCOMPLETEATTRIBUTENAME, advance='no')
   if ( IsHDF5AttributePresent(grp_id, NUMCOMPLETEATTRIBUTENAME) ) then
@@ -308,6 +384,12 @@ contains
   endif
 
   call h5gclose_f(grp_id, returnStatus)
+  if ( number > -1 ) return
+  call deduceFailedChunks(number, FailedChunks)
+  call output(NUMFAILATTRIBUTENAME, advance='no')
+  call blanks(4)
+  call output(number, advance='yes')
+  call dump(trim(failedChunks), FAILATTRIBUTENAME)
   end subroutine dumpFailedChunks
 
 !------------------------- print_help ---------------------
@@ -328,9 +410,11 @@ contains
       write (*,*) '                         the first bin will contain chunks < X1'
       write (*,*) '                         the last bin will contain chunks > X2'
       write (*,*) '          -hdf m      => hdfVersion is m (5)'
+      write (*,*) '          -l t        => show chunks that took longer than t'
       write (*,*) '          -n n        => use phase number n (10)'
+      write (*,*) '          -nstat      => skip showing statistics'
       write (*,*) '          -s2h        => convert from sec to hours; or'
-      write (*,*) '          -h2s        => convert from hours to sec (-s2h)'
+      write (*,*) '          -h2s        => convert from hours to sec'
       write (*,*) '          -v          => switch on verbose mode (off)'
       write (*,*) '          -m[erge]    => merge data from all files (dont)'
       write (*,*) '          -fail       => show failed chunks (dont)'
@@ -396,6 +480,9 @@ end program chunktimes
 !==================
 
 ! $Log$
+! Revision 1.3  2004/09/16 23:58:46  pwagner
+! Reports machine names of failed chunks
+!
 ! Revision 1.2  2004/09/16 00:20:56  pwagner
 ! May show failed chunks
 !
