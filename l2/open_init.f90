@@ -18,7 +18,7 @@ module Open_Init
   use MLSCommon, only: FileNameLen, L1BInfo_T, TAI93_Range_T
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_FileOpen
-  use MLSPCF, only: MLSPCF_L1B_OA_START, MLSPCF_L1B_RAD_END, &
+  use MLSPCF2, only: MLSPCF_L1B_OA_START, MLSPCF_L1B_RAD_END, &
     &               MLSPCF_L1B_RAD_START, MLSPCF_NOMEN_START, &
     &               MLSPCF_L2CF_START
   use MLSSignalNomenclature, only: ReadSignalsDatabase
@@ -389,6 +389,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.14  2001/02/13 22:59:36  pwagner
+! l2 modules can only use MLSPCF2
+!
 ! Revision 2.13  2001/02/09 00:38:22  livesey
 ! Various updates
 !
