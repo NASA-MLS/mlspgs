@@ -246,12 +246,16 @@ program MLSL2
     root = -1
   endif
   if ( timing ) call sayTime ( 'Parsing the L2CF' )
-  if ( PCF_FOR_INPUT ) then
-    call close_MLSCF ( inunit )
+  if ( PCF_FOR_INPUT .and. error==0) then
+    call close_MLSCF ( inunit, error )
   else
     if ( inunit >= 0 ) close ( inunit )  ! Don't worry about the status
   end if
-  if ( root <= 0 ) then
+  if ( error /= 0) then
+    call output ( &
+      'An io error occurred with the l2cf -- there is no abstract syntax tree', &
+      advance='yes' )
+  elseif ( root <= 0 ) then
     call output ( &
       'A syntax error occurred -- there is no abstract syntax tree', &
       advance='yes' )
@@ -331,6 +335,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.51  2001/07/18 23:56:24  pwagner
+! Gets error from close_mlscf
+!
 ! Revision 2.50  2001/07/18 00:16:54  pwagner
 ! Better control over when to exit with status
 !
