@@ -2,7 +2,7 @@
 #include "/usr/share/pvm3/include/pvm3.h"
 
 /* Compile me with:
-cc -o checkpvmup checkpvmup.c -L/usr/share/pvm3/lib/$PVM_ARCH -lpvm3
+cc -o checkpvmup checkpvmup.c -L$PVM_ROOT/lib/$PVM_ARCH -lpvm3
 */
 
 main ( int argc, void *argv[] )
