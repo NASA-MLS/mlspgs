@@ -18,6 +18,11 @@
 
 # usage: see (1) above
 
+CHECKPATHS="yes"
+#           ^^^---- "yes" if extra prefilght non-retrieval run to check paths
+
+otheropts="$OTHEROPTS -g -S'slv,mas,chu,opt1,log,pro,time'"
+
 # Check that assumptions are valid
 if [ "$PGS_PC_INFO_FILE" = "" ]
 then
@@ -59,9 +64,22 @@ chmod a+x $PVM_EP/mlsl2.$SLV_SUF
 
 NORMAL_STATUS=2
 
+# First a pre-flight run to check paths
+# If a problem, disclosed by exit status, exit before starting big run
+if [ "$CHECKPATHS" = "yes" ]
+then
+  $PVM_EP/mlsl2 --checkPaths --tk $otheropts
+  return_status=`expr $?`
+  if [ $return_status != $NORMAL_STATUS ]
+  then
+     echo "Preflight checkPaths run ended badly"
+     echo "Possibly an error in pathnames; please check your PCF"
+     exit 1
+  fi
+fi
+
 # Now we launch the master task itself to set everything in motion
 #$PVM_EP/mlsl2 --pge mlsl2.$SLV_SUF --tk --master $PVM_HOSTS_INFO -g -S'mas,chu,pro,log,opt1,pcf,time'
-otheropts="$OTHEROPTS -g -S'slv,mas,chu,opt1,log,pro,time'"
 $PVM_EP/mlsl2 --pge mlsl2.$SLV_SUF --tk --master $PVM_HOSTS_INFO $otheropts
 
 # Save return status
@@ -73,6 +91,8 @@ if [ ! -w "$LOGFILE"  ]
 then
   echo "catenating slave logs in $LOGFILE"
   echo "catenating slave logs in $LOGFILE" > "$LOGFILE".1
+  # This sleep is to give slave tasks extra time to complete stdout
+  sleep 20
   cat $PVM_EP/*.log >> "$LOGFILE".1
   rm -f $PVM_EP/*.log
   mv "$LOGFILE".1 "$LOGFILE"
@@ -85,6 +105,9 @@ else
 fi
 
 # $Log$
+# Revision 1.4  2003/10/22 23:00:17  pwagner
+# Catenates each slaves log file to mlsl2.log at end
+#
 # Revision 1.3  2003/10/15 17:01:18  pwagner
 # Added slv option
 #
