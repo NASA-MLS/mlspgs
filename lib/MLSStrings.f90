@@ -920,15 +920,17 @@ CONTAINS
 
   ! See also GetStringElement
 
-  FUNCTION NumStringElements(inList, countEmpty, inDelim) RESULT (nElements)
+  FUNCTION NumStringElements(inList, countEmpty, &
+   & inDelim, LongestLen) RESULT (nElements)
     ! Dummy arguments
     CHARACTER (LEN=*), INTENT(IN)             :: inList
     LOGICAL, INTENT(IN)                       :: countEmpty
 	 INTEGER                                   :: nElements
     CHARACTER (LEN=1), OPTIONAL, INTENT(IN)   :: inDelim
+    INTEGER, OPTIONAL, INTENT(OUT)            :: LongestLen  ! Length of longest
 
     ! Local variables
-    INTEGER :: i           ! Loop counters
+    INTEGER :: i, sinceLastDelim           ! Loop counters
 	 LOGICAL :: lastWasNotDelim
 
     CHARACTER (LEN=1)               :: Delim
@@ -945,21 +947,29 @@ CONTAINS
 	! nElements-1 = number of delimiters
 	IF(LEN_TRIM(inList) <= 0) THEN
 		nElements=0
+      if ( present(LongestLen) ) LongestLen = 0
 		RETURN
 	ENDIF
 	
 	lastWasNotDelim = .FALSE.
-	nElements=1
+	nElements = 1
+   sinceLastDelim = 0
 	DO i=1, LEN_TRIM(inList)
 		IF(inList(i:i) == Delim) THEN
 			IF(countEmpty .OR. lastWasNotDelim) THEN
 				nElements = nElements+1
+            if ( present(LongestLen) ) &
+             & LongestLen = max(LongestLen, sinceLastDelim)
 			ENDIF
 			lastWasNotDelim = .FALSE.
+         sinceLastDelim = 0
 		ELSE
 			lastWasNotDelim = .TRUE.
+         sinceLastDelim = sinceLastDelim + 1
 		ENDIF
 	ENDDO
+   if ( present(LongestLen) ) &
+     & LongestLen = max(LongestLen, sinceLastDelim)
 
   END FUNCTION NumStringElements
 
@@ -1505,7 +1515,7 @@ CONTAINS
 
     ! Local variables
     integer, parameter              :: MAXELEM = BareFNLen
-    INTEGER(i4) :: nElems, status
+    INTEGER(i4) :: nElems, status, LongestLen
 
     CHARACTER (LEN=1)               :: Delim
     CHARACTER (LEN=1), PARAMETER    :: COMMA = ','
@@ -1534,13 +1544,17 @@ CONTAINS
     endif
     if ( size(outArray) <= 0 ) return
     outArray = 0
-    nElems = NumStringElements(inList, countEmpty, inDelim)
+    nElems = NumStringElements(inList, countEmpty, inDelim, LongestLen)
     if ( nElems <= 0 ) then
       return
-    elseif ( nElems > MAXELEM ) then
+    elseif ( LongestLen > BareFNLen ) then
       call MLSMessage(MLSMSG_Error, ModuleName, &
-         & "Too many elements needed in SortList")
+         & "Element length too long in SortList")
       return
+!    elseif ( nElems > MAXELEM ) then
+!      call MLSMessage(MLSMSG_Error, ModuleName, &
+!         & "Too many elements needed in SortList")
+!      return
     endif
     ALLOCATE (stringArray(nElems), STAT=status)
     IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
@@ -1895,6 +1909,9 @@ END MODULE MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.21  2002/02/22 23:35:42  pwagner
+! SortList checks on lax elem length, not number of elems
+!
 ! Revision 2.20  2002/02/22 01:19:57  pwagner
 ! SortArray not limited to array sizes lt MAXELEM
 !
