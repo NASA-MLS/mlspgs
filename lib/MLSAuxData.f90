@@ -7,6 +7,7 @@ module MLSAuxData
 
   use HDF5, only: hid_t, hsize_t, H5T_NATIVE_CHARACTER, H5T_NATIVE_DOUBLE, &
        H5T_NATIVE_INTEGER, H5T_IEEE_F32LE, H5S_UNLIMITED_F, &
+       H5T_STD_I32LE, H5T_NATIVE_REAL, H5T_IEEE_F64LE, &
        H5P_DATASET_CREATE_F, H5S_SELECT_SET_F, &
        h5dopen_f, h5dclose_f, h5screate_simple_f, h5pcreate_f, h5dcreate_f, &
        h5pset_chunk_f, h5sclose_f, h5dget_space_f, h5pclose_f, & 
@@ -15,6 +16,8 @@ module MLSAuxData
        h5sselect_hyperslab_f, h5dread_f, h5dwrite_f, h5dextend_f, &
        h5acreate_f, h5awrite_f, h5aread_f, h5aclose_f, h5tcopy_f, &
        h5tset_size_f, h5aopen_name_f, h5aget_type_f, h5aget_space_f
+  use MLSCommon, only: r4, r8
+  use MLSStrings, only: Lowercase
 
   implicit NONE
 
@@ -29,8 +32,12 @@ module MLSAuxData
 !
 ! Allocate_MLSAuxData          Allocates a MLSAuxData data structure. 
 ! Create_MLSAuxData            Creates MLSAuxData in a file. 
+! Read_MLSAuxAttributes        Reads an attribute of a MLSAuxData quantity
+!                              from a file.
 ! Read_MLSAuxData              Reads all info concerning a MLSAuxData quantity
 !                              from a file.
+! Write_MLSAuxAttributes       Writes an attribute of a MLSAuxData quantity
+!                              to a file.
 ! Write_MLSAuxData             Writes all info concerning a MLSAuxData quantity
 !                              to a file.
 ! Deallocate_MLSAuxData        Called when an MLSAuxData is finished.
@@ -38,8 +45,9 @@ module MLSAuxData
   private
 
   public :: MLSAuxData_T, Create_MLSAuxData, Read_MLSAuxData, &
-      Write_MLSAuxData, Deallocate_MLSAuxData,&
-      NAME_LEN
+      & Write_MLSAuxData, Deallocate_MLSAuxData, &
+      & Read_MLSAuxAttributes, Write_MLSAuxAttributes, &
+      & NAME_LEN
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -60,14 +68,14 @@ module MLSAuxData
     integer :: VerticalDimension           ! Enumerated type  
     integer :: HorizontalDimension         ! Enumerated type
 
-    integer, dimension(:), pointer :: FrequencyCoordinates
-    integer, dimension(:), pointer :: VerticalCoordinates
-    integer, dimension(:), pointer :: HorizontalCoordinates
+    real(r8), dimension(:), pointer :: FrequencyCoordinates  => NULL()
+    real(r8), dimension(:), pointer :: VerticalCoordinates   => NULL()
+    real(r8), dimension(:), pointer :: HorizontalCoordinates => NULL()
 
-    character, dimension(:,:,:), pointer :: CharField => NULL()
-    real,  dimension(:,:,:), pointer :: DpField => NULL()
-    real,  dimension(:,:,:), pointer :: RealField => NULL()
-    integer,   dimension(:,:,:), pointer :: IntField => NULL()
+    character, dimension(:,:,:), pointer :: CharField        => NULL()
+    real(r8),  dimension(:,:,:), pointer :: DpField          => NULL()   
+    real(r4),  dimension(:,:,:), pointer :: RealField        => NULL()   
+    integer,   dimension(:,:,:), pointer :: IntField         => NULL()
 
     ! all the above dimensioned (noAuxInds,maxMIFs,noMAFs)
   end type MLSAuxData_T
@@ -206,13 +214,14 @@ contains ! ============================ MODULE PROCEDURES ====================
 ! Internal variables
 !
     character(len=name_len) :: aname
-    real, dimension(3) :: attr_data
+    real, dimension(:), pointer :: attr_data
     integer(hsize_t), dimension(3) :: chunk_dims, dims, maxdims
     integer(hsize_t), dimension(7) :: adims
     integer(hsize_t), dimension(1) :: adims_create
    integer(hid_t) :: cparms,dspace_id,dset_id,type_id, &
          attr_id, atype_id, aspace_id
     integer :: i, rank_MAF, rank, arank, h5error
+    logical, parameter ::  ATTRIBUTE = .FALSE.
 !-----------------------------------------------------------------------
 
     test_type: select case (trim(MLSAuxData%type_name))
@@ -276,65 +285,77 @@ contains ! ============================ MODULE PROCEDURES ====================
 !    if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
 !       H5_ERROR_DSET_CREATE // QuantityName ) 
 
+!    A question:
+! Is it better to do this here in a routine that creates the
+! MLSAuxData, or to do it in Write_MLSAuxData ?
+! For now we leave it here
+! ( Might even break it out into its own separate routines:
+!   Read_MLSAuxAttributes and Write_MLSAuxAttributes? )
 !---------------- write the attributes -----------------------------
 
     do i = 2, 7
        adims(i) = 0
     end do
 
-    if (associated(MLSAuxData%HorizontalCoordinates)) then 
+    if (associated(MLSAuxData%HorizontalCoordinates) .and. ATTRIBUTE) then 
 
        arank = size(shape(MLSAuxData%HorizontalCoordinates))
        atype_id = H5T_IEEE_F32LE
        adims(1) = size(MLSAuxData%HorizontalCoordinates)
        adims_create(1) = adims(1)
+       allocate(attr_data(adims(1)))
        do i=1, adims(1)
           attr_data(i) = MLSAuxData%HorizontalCoordinates(i)
        end do
 
-    call h5screate_simple_f(arank, adims_create, aspace_id, h5error)
-    aname = "HorizontalCoordinates"  
-    call h5acreate_f(dset_id, trim(aname), atype_id, aspace_id, attr_id, &
-       h5error)
-    call h5awrite_f(attr_id, atype_id, attr_data, adims, h5error)
-    call h5aclose_f(attr_id, h5error)
-    call h5sclose_f(aspace_id, h5error) 
+       call h5screate_simple_f(arank, adims_create, aspace_id, h5error)
+       aname = "HorizontalCoordinates"  
+       call h5acreate_f(dset_id, trim(aname), atype_id, aspace_id, attr_id, &
+          h5error)
+       call h5awrite_f(attr_id, atype_id, attr_data, adims, h5error)
+       call h5aclose_f(attr_id, h5error)
+       call h5sclose_f(aspace_id, h5error)
+       deallocate(attr_data)
     endif
 
-    if (associated(MLSAuxData%VerticalCoordinates)) then 
+    if (associated(MLSAuxData%VerticalCoordinates) .and. ATTRIBUTE) then 
        arank = size(shape(MLSAuxData%VerticalCoordinates))
        atype_id = H5T_IEEE_F32LE
        adims(1) = size(MLSAuxData%VerticalCoordinates)
        adims_create(1) = adims(1)
+       allocate(attr_data(adims(1)))
        do i=1,adims(1)
           attr_data(i) = MLSAuxData%VerticalCoordinates(i)
        end do
 
-    call h5screate_simple_f(arank, adims_create, aspace_id, h5error)
-    aname = "VerticalCoordinates"   
-    call h5acreate_f(dset_id, trim(aname), atype_id, aspace_id, attr_id, &
-       h5error)
-    call h5awrite_f(attr_id, atype_id, attr_data, adims, h5error)
-    call h5aclose_f(attr_id, h5error)
-    call h5sclose_f(aspace_id, h5error) 
+       call h5screate_simple_f(arank, adims_create, aspace_id, h5error)
+       aname = "VerticalCoordinates"   
+       call h5acreate_f(dset_id, trim(aname), atype_id, aspace_id, attr_id, &
+          h5error)
+       call h5awrite_f(attr_id, atype_id, attr_data, adims, h5error)
+       call h5aclose_f(attr_id, h5error)
+       call h5sclose_f(aspace_id, h5error) 
+       deallocate(attr_data)
     endif
 
-    if (associated(MLSAuxData%FrequencyCoordinates)) then 
+    if (associated(MLSAuxData%FrequencyCoordinates) .and. ATTRIBUTE) then 
        arank = size(shape(MLSAuxData%FrequencyCoordinates))
        atype_id = H5T_IEEE_F32LE
        adims(1) = size(MLSAuxData%FrequencyCoordinates)
        adims_create(1) = adims(1)
+       allocate(attr_data(adims(1)))
        do i=1,adims(1)
           attr_data(i) = MLSAuxData%FrequencyCoordinates(i)
        end do
 
-    call h5screate_simple_f(arank, adims_create, aspace_id, h5error)
-    aname = "FrequencyCoordinates"
-    call h5acreate_f(dset_id, trim(aname), atype_id, aspace_id, attr_id, &
-       h5error)
-    call h5awrite_f(attr_id, atype_id, attr_data, adims, h5error)
-    call h5aclose_f(attr_id, h5error)
-    call h5sclose_f(aspace_id, h5error) 
+       call h5screate_simple_f(arank, adims_create, aspace_id, h5error)
+       aname = "FrequencyCoordinates"
+       call h5acreate_f(dset_id, trim(aname), atype_id, aspace_id, attr_id, &
+          h5error)
+       call h5awrite_f(attr_id, atype_id, attr_data, adims, h5error)
+       call h5aclose_f(attr_id, h5error)
+       call h5sclose_f(aspace_id, h5error) 
+       deallocate(attr_data)
     endif
 !---------------- close all structures----------------------------------
 !
@@ -351,17 +372,206 @@ contains ! ============================ MODULE PROCEDURES ====================
 !       H5_ERROR_PROPERTY_CLOSE // QuantityName )
 
   end subroutine Create_MLSAuxData
+!-------------------------------------------------Read_MLSAuxAttributes ----
+  subroutine Read_MLSAuxAttributes(dset_id, QuantityName, AttributeName, & 
+       error, MLSAuxData, AttributeData)
+  !
+  ! This subroutine reads attributes from the HDF5 file;
+  ! e.g., FrequencyCoordinates
+  ! They are returned either as:
+  ! components of MLSAuxData (if supplied); or
+  ! in the array AttributeData
+  ! It is an error unless exactly one of the two is supplied
+    character(len=*), intent(in)                  :: QuantityName
+    character(len=*), intent(in)                  :: AttributeName
+    integer(hid_t), intent(in)                    :: dset_id ! From h5dopen_f
+    integer, intent(out)                          :: error   ! 0 unless trouble
+    type( MLSAuxData_T ), intent(inout), optional :: MLSAuxData
+    real, dimension(:), intent(out), optional     :: AttributeData
+
+  ! Private
+    integer, parameter :: OPTARGISMAD = 1
+    integer, parameter :: OPTARGISARR = 2
+    integer :: which_opt_arg
+    real, dimension(:), pointer :: attr_data
+    integer(hsize_t), dimension(7) :: adims
+    integer(hsize_t), dimension(1) :: adims_create
+    integer(hid_t) :: cparms,dspace_id,type_id, &
+         attr_id, atype_id, aspace_id
+    integer :: i, rank_MAF, rank, arank, h5error
+  ! Executable
+    error = 0
+    atype_id = H5T_IEEE_F32LE
+    do i = 2, 7
+       adims(i) = 0
+    end do
+  ! Check that exactly 1 of the optional args is supplied
+    which_opt_arg = 0
+    if ( present(MLSAuxData) ) which_opt_arg = which_opt_arg + OPTARGISMAD
+    if ( present(AttributeData) ) which_opt_arg = which_opt_arg + OPTARGISARR
+    select case (which_opt_arg)
+    case (OPTARGISMAD)
+      select case (trim(AttributeName))
+      case ('FrequencyCoordinates')
+        if ( associated ( MLSAuxData%FrequencyCoordinates ) ) then
+          adims(1) = size(MLSAuxData%FrequencyCoordinates)
+        else
+          error = 1
+          return
+        endif
+      case ('HorizontalCoordinates')
+        if ( associated ( MLSAuxData%HorizontalCoordinates ) ) then
+          adims(1) = size(MLSAuxData%HorizontalCoordinates)
+        else
+          error = 1
+          return
+        endif
+      case ('VerticalCoordinates')
+        if ( associated ( MLSAuxData%VerticalCoordinates ) ) then
+          adims(1) = size(MLSAuxData%VerticalCoordinates)
+        else
+          error = 1
+          return
+        endif
+      case default
+        error = 1
+        return
+      end select
+    case (OPTARGISARR)
+      adims(1) = size(AttributeData)
+    case default
+      error = 1
+      return
+    end select
+    call h5aopen_name_f(dset_id, trim(AttributeName), attr_id, h5error)
+    call h5aget_space_f(attr_id, aspace_id, h5error)
+    arank = 1
+    allocate(attr_data(adims(1)))
+    call h5aread_f(attr_id, atype_id, attr_data, adims, h5error)
+  ! > >     print *, 'reading attribute ' // trim(AttributeName)
+  ! > >     print *, 'adims(1) ', adims(1)
+  ! > >     print *, 'attr_data ', attr_data
+  ! > >     print *, 'h5error ', h5error
+    select case (which_opt_arg)
+    case (OPTARGISMAD)
+      select case (trim(AttributeName))
+      case ('FrequencyCoordinates')
+        MLSAuxData%FrequencyCoordinates = attr_data(:adims(1))
+      case ('HorizontalCoordinates')
+        MLSAuxData%HorizontalCoordinates = attr_data(:adims(1))
+      case ('VerticalCoordinates')
+        MLSAuxData%VerticalCoordinates = attr_data(:adims(1))
+      end select
+    case (OPTARGISARR)
+      AttributeData = attr_data(:adims(1))
+    end select
+    call h5aclose_f(attr_id, h5error)                                  
+    call h5sclose_f(aspace_id, h5error)                                
+    deallocate(attr_data)
+    error = h5error                                              
+  end subroutine Read_MLSAuxAttributes
+!-------------------------------------------------Write_MLSAuxAttributes ----
+  subroutine Write_MLSAuxAttributes(dset_id, QuantityName, AttributeName, & 
+       error, MLSAuxData, AttributeData)
+  !
+  ! This subroutine writes attributes to the HDF5 file;
+  ! e.g., FrequencyCoordinates
+  ! They are supplied either as:
+  ! components of MLSAuxData (if supplied); or
+  ! in the array AttributeData
+  ! It is an error unless exactly one of the two is supplied
+    character(len=*), intent(in)                  :: QuantityName
+    character(len=*), intent(in)                  :: AttributeName
+    integer(hid_t), intent(in)                    :: dset_id ! From h5dcreate_f
+    integer, intent(out)                          :: error
+    type( MLSAuxData_T ), intent(in), optional :: MLSAuxData
+    real, dimension(:), intent(in), optional      :: AttributeData
+
+  ! Private
+    integer, parameter :: OPTARGISMAD = 1
+    integer, parameter :: OPTARGISARR = 2
+    integer :: which_opt_arg
+    real, dimension(:), pointer :: attr_data
+    integer(hsize_t), dimension(7) :: adims
+    integer(hsize_t), dimension(1) :: adims_create
+    integer(hid_t) :: cparms,dspace_id,type_id, &
+         attr_id, atype_id, aspace_id
+    integer :: i, rank_MAF, rank, arank, h5error
+  ! Executable
+    error = 0
+    atype_id = H5T_IEEE_F32LE
+  ! Check that exactly 1 of the optional args is supplied
+  ! The following will produce 0 if neither, 3 if both; else 1 or 2
+    which_opt_arg = 0
+    if ( present(MLSAuxData) ) which_opt_arg = which_opt_arg + OPTARGISMAD
+    if ( present(AttributeData) ) which_opt_arg = which_opt_arg + OPTARGISARR
+    select case (which_opt_arg)
+    case (OPTARGISMAD)
+      select case (trim(AttributeName))
+      case ('FrequencyCoordinates')
+        arank = size(shape(MLSAuxData%FrequencyCoordinates))
+        adims(1) = size(MLSAuxData%FrequencyCoordinates)
+        allocate(attr_data(adims(1)))
+        do i=1,adims(1)
+           attr_data(i) = MLSAuxData%FrequencyCoordinates(i)
+        end do
+      case ('HorizontalCoordinates')
+        arank = size(shape(MLSAuxData%HorizontalCoordinates))
+        adims(1) = size(MLSAuxData%HorizontalCoordinates)
+        allocate(attr_data(adims(1)))
+        do i=1,adims(1)
+           attr_data(i) = MLSAuxData%HorizontalCoordinates(i)
+        end do
+      case ('VerticalCoordinates')
+        arank = size(shape(MLSAuxData%VerticalCoordinates))
+        adims(1) = size(MLSAuxData%VerticalCoordinates)
+        allocate(attr_data(adims(1)))
+        do i=1,adims(1)
+           attr_data(i) = MLSAuxData%VerticalCoordinates(i)
+        end do
+      case default
+        error = 1
+        return
+      end select
+    case (OPTARGISARR)
+        arank = size(shape(AttributeData))
+        adims(1) = size(AttributeData)
+        allocate(attr_data(adims(1)))
+        do i=1,adims(1)
+           attr_data(i) = AttributeData(i)
+        end do
+    case default
+      error = 1
+      return
+    end select
+    adims_create(1) = adims(1)                                         
+    call h5screate_simple_f(arank, adims_create, aspace_id, h5error)   
+    call h5acreate_f(dset_id, trim(AttributeName), atype_id, &         
+      & aspace_id, attr_id, h5error)                                   
+    call h5awrite_f(attr_id, atype_id, attr_data, adims, h5error)      
+  ! > >     print *, 'writing attribute ' // trim(AttributeName)
+  ! > >     print *, 'adims(1) ', adims(1)
+  ! > >     print *, 'attr_data ', attr_data
+  ! > >     print *, 'h5error ', h5error
+    call h5aclose_f(attr_id, h5error)                                  
+    call h5sclose_f(aspace_id, h5error)                                
+    deallocate(attr_data)
+    error = h5error                                              
+  end subroutine Write_MLSAuxAttributes
 !-------------------------------------------------Read_MLSAuxData ----
   subroutine Read_MLSAuxData(file_id, QuantityName, QuantityType, & 
-       MLSAuxData, FirstMAF, LastMAF)
+       MLSAuxData, error, FirstMAF, LastMAF, read_attributes)
 !
 ! This subroutine reads an entry from the HDF5 file.
 !
     type( MLSAuxData_T ), intent(inout) :: MLSAuxData
-    character(len=*), intent(in)   :: QuantityName, QuantityType
+    character(len=*), intent(in)   :: QuantityName
+    character(len=*), intent(in)   :: QuantityType ! if 'unknown' will derive
     integer(hid_t), intent(in)     :: file_id ! From HDF
+    integer, intent(out)                          :: error   ! 0 unless trouble
     integer, intent(in), optional  :: FirstMAF ! First to read (default 0)
     integer, intent(in), optional  :: LastMAF  ! Last to read 
+    logical, intent(in), optional  :: read_attributes  ! read freqCoords, etc 
 !
 !-------------------------------------------------------------------------
 !
@@ -374,7 +584,12 @@ contains ! ============================ MODULE PROCEDURES ====================
     integer(hid_t) :: cparms, dset_id, dspace_id, type_id, memspace, & 
          attr_id, atype_id, aspace_id
     integer        :: rank, h5error, i, j, k, status
+    logical :: myRead_attributes
+    character(len=16) :: myQuantityType
 
+    error = 0
+    myRead_attributes = .false.
+    if ( present(read_attributes) ) myRead_attributes=read_attributes
 !-- assign name and type for dataset
 
     MLSAuxData%name = trim(QuantityName)
@@ -414,6 +629,33 @@ contains ! ============================ MODULE PROCEDURES ====================
 !    if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
 !       H5_ERROR_DSET_TYPE // trim(QuantityName) )
 
+    if ( lowercase(trim(QuantityType)) /= 'unknown' ) then
+      myQuantityType = QuantityType
+    else
+  ! While case select seemed most natural here, these H5T_..
+  ! unfortunately are not initialization expressions; therefore
+  ! must use clunky old if elseif blocks
+  !    select case (type_id)
+  !    case (H5T_STD_I32LE, H5T_NATIVE_INTEGER)
+      if ( type_id == H5T_STD_I32LE .or. type_id == H5T_STD_I32LE ) then
+        myQuantityType = 'integer'
+  !    case (H5T_NATIVE_CHARACTER)
+      elseif ( type_id == H5T_NATIVE_CHARACTER ) then
+        myQuantityType = 'character'
+  !    case (H5T_NATIVE_REAL, H5T_IEEE_F32LE)
+      elseif ( type_id == H5T_NATIVE_CHARACTER ) then
+        myQuantityType = 'real'
+  !    case (H5T_NATIVE_DOUBLE, H5T_IEEE_F64LE)
+      elseif ( type_id == H5T_NATIVE_CHARACTER ) then
+        myQuantityType = 'double'
+  !    case default
+      else
+        error = 1
+        return
+  !    end select
+      endif
+    endif
+
     do i = 1, 7
        if (i .le. rank) then 
            dims(i) = dims_create(i) 
@@ -433,7 +675,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     if ( .NOT.(PRESENT(FirstMAF) ) ) then 
 
-    test_type: select case (trim(QuantityType))
+    test_type: select case (trim(myQuantityType))
     case ('real')
     call h5dread_f(dset_id,type_id,MLSAuxData%RealField,dims,& 
          h5error, memspace, dspace_id)
@@ -449,7 +691,7 @@ contains ! ============================ MODULE PROCEDURES ====================
     end select test_type
     else
      
-    test_type_dims: select case (trim(QuantityType))
+    test_type_dims: select case (trim(myQuantityType))
     case ('real')
     allocate( real_buffer(dims(1),dims(2),dims(3)),stat=status)
     call h5dread_f(dset_id,type_id,& 
@@ -526,6 +768,16 @@ contains ! ============================ MODULE PROCEDURES ====================
 !    if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
 !       H5_ERROR_DSET_READ // trim(QuantityName) )
 
+! Do we also read the attributes
+   if ( myRead_attributes ) then
+     call Read_MLSAuxAttributes(dset_id, trim(QuantityName), & 
+       & 'FrequencyCoordinates', h5error, MLSAuxData)
+     call Read_MLSAuxAttributes(dset_id, trim(QuantityName), & 
+       & 'HorizontalCoordinates', h5error, MLSAuxData)
+     call Read_MLSAuxAttributes(dset_id, trim(QuantityName), & 
+       & 'VerticalCoordinates', h5error, MLSAuxData)
+   endif
+
 !
 ! Close all identifiers.
 !
@@ -547,14 +799,17 @@ contains ! ============================ MODULE PROCEDURES ====================
 
   end subroutine Read_MLSAuxData
   ! -------------------------------------------------  Write_MLSAuxData ----
-  subroutine Write_MLSAuxData(file_id, MLSAuxData, startMAF)
+  subroutine Write_MLSAuxData(file_id, MLSAuxData, error, &
+    & startMAF, write_attributes)
 !
 ! This routine assumes that the MLSAuxData dataset is created.
 ! This subroutine writes an entry to the HDF5 file.
 !
     type( MLSAuxData_T ), intent(in) :: MLSAuxData
     integer(hid_t), intent(in)     :: file_id ! From HDF
+    integer, intent(out)           :: error   ! 0 unless trouble
     integer, intent(in), optional  :: startMAF ! First to write (default 0)
+    logical, intent(in), optional  :: write_attributes  ! write freqCoords, etc 
 !-------------------------------------------------------------------------
 ! Internal variables.
 !
@@ -568,6 +823,11 @@ contains ! ============================ MODULE PROCEDURES ====================
 
 !--------------------------------------------------------------------------
 
+    logical :: myWrite_attributes
+
+    error = 0
+    myWrite_attributes = .false.
+    if ( present(write_attributes) ) myWrite_attributes=write_attributes
     call h5dopen_f(file_id, trim(MLSAuxData%name), dset_id, h5error)
 !    if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
 !       H5_ERROR_DSET_OPEN // trim(QuantityName) )
@@ -675,6 +935,16 @@ contains ! ============================ MODULE PROCEDURES ====================
 
 !    if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
 !       H5_ERROR_DSET_WRITE // trim(QuantityName) )
+! Do we also write the attributes
+   if ( myWrite_attributes ) then
+     call Write_MLSAuxAttributes(dset_id, trim(MLSAuxData%name), & 
+       & 'FrequencyCoordinates', h5error, MLSAuxData)
+     call Write_MLSAuxAttributes(dset_id, trim(MLSAuxData%name), & 
+       & 'HorizontalCoordinates', h5error, MLSAuxData)
+     call Write_MLSAuxAttributes(dset_id, trim(MLSAuxData%name), & 
+       & 'VerticalCoordinates', h5error, MLSAuxData)
+   endif
+
 !
 ! Close all identifiers.
 !
@@ -695,6 +965,9 @@ contains ! ============================ MODULE PROCEDURES ====================
 end module MLSAuxData
 
 ! $Log$
+! Revision 2.4  2002/09/26 23:58:04  pwagner
+! Moved attributes out of create function; standalone attribute io, too
+!
 ! Revision 2.3  2002/09/09 05:43:39  jdone
 ! deallocate statements added for read buffers.
 !
