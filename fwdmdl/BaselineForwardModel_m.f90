@@ -9,8 +9,8 @@ module BaselineForwardModel_m
   use MLSSignals_m, only: SIGNALS, SIGNAL_T
   use VectorsModule, only: VECTOR_T, VECTORVALUE_T, GETVECTORQUANTITYBYTYPE, &
     & VALIDATEVECTORQUANTITY
-  use MatrixModule_1, only: MATRIX_T, FINDBLOCK
-  use MatrixModule_0, only: SPARSIFY
+  use MatrixModule_1, only: MATRIX_T, FINDBLOCK, CREATEBLOCK
+  use MatrixModule_0, only: SPARSIFY, MATRIXELEMENT_T, M_ABSENT, M_BANDED
   use Intrinsic, only: L_BASELINE, L_PTAN, L_NONE, L_RADIANCE, L_INTERMEDIATEFREQUENCY
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
     & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE
@@ -51,7 +51,7 @@ contains ! ======================================== BaselineForwardModel ======
     ! Local variables
 
     logical :: BSLINFIRST               ! Set if baseline in FwdModelIn
-    logical :: DODERIVATIVES            ! Set if derivatives required
+    logical :: PTANINFIRST              ! Set if ptan in FwdModelIn
 
     integer :: SIGINDEX                 ! Index into fwdModelConf%signals
     integer :: MAF                      ! Major frame index
@@ -70,6 +70,7 @@ contains ! ======================================== BaselineForwardModel ======
     integer :: STATUS                   ! From allocates etc.
 
     real(rp) :: RAD                     ! One radiance
+    real(rp) :: GRADIENT                ! A gradient
 
     integer, dimension(:), pointer :: CHAN0 ! Index into bsl freqs.
     integer, dimension(:), pointer :: CHAN1 ! Index into bsl freqs.
@@ -77,6 +78,8 @@ contains ! ======================================== BaselineForwardModel ======
     integer, dimension(:), pointer :: INST1 ! Instance index into baseline
     integer, dimension(:), pointer :: SURF0 ! Surface index into baseline
     integer, dimension(:), pointer :: SURF1 ! Surface index into baseline
+    integer, dimension(:), pointer :: SURF0m ! surf0 - 1
+    integer, dimension(:), pointer :: SURF1m ! surf1 - 1
 
     real (rp), dimension(:), pointer :: CHANWT0 ! Weight for lower point
     real (rp), dimension(:), pointer :: CHANWT1 ! Weight for upper point
@@ -84,12 +87,16 @@ contains ! ======================================== BaselineForwardModel ======
     real (rp), dimension(:), pointer :: INSTWT1 ! Weight for upper point
     real (rp), dimension(:), pointer :: SURFWT0 ! Weight for lower point
     real (rp), dimension(:), pointer :: SURFWT1 ! Weight for upper point
+    real (rp), dimension(:), pointer :: SURFWT0PRIME ! d[SurfWt0]/d[ptan]
+    real (rp), dimension(:), pointer :: SURFWT1PRIME ! d[SurfWt1]/d[ptan]
     real (rp), dimension(:,:), pointer :: KBIT2 ! Part of derivatives
     real (rp), dimension(:,:,:), pointer :: KBIT ! Part of derivatives
 
     type (VectorValue_T), pointer :: RADIANCE ! The radiance quantity
     type (VectorValue_T), pointer :: BASELINE ! The baseline quantity
     type (VectorValue_T), pointer :: PTAN ! The tangent pressure quantity
+
+    type (MatrixElement_T), pointer :: JBLOCK     ! A block from the jacobian
 
     type (Signal_T), pointer :: SIGNAL ! The current signal being handled
 
@@ -98,6 +105,7 @@ contains ! ======================================== BaselineForwardModel ======
     if (.not. fwdModelConf%do_Baseline ) return
     nullify ( chan0, chan1, inst0, inst1, surf0, surf1 )
     nullify ( chanWt0, chanWt1, instWt0, instWt1, surfWt0, surfWt1 )
+    nullify ( surf0m, surf1m, surfWt0Prime, surfWt1Prime )
     nullify ( kBit )
 
     maf = fmStat%maf
@@ -125,8 +133,7 @@ contains ! ======================================== BaselineForwardModel ======
         & quantityType=l_baseline, radiometer=signal%radiometer, foundInFirst=bslInFirst )
 
       noBslChans = baseline%template%noChans
-      doDerivatives = present(jacobian) .and. bslInFirst
-      if (doDerivatives) then
+      if (present(jacobian) .and. bslInFirst) then
         rowBlock = FindBlock ( jacobian%row, radiance%index, maf )
         fmStat%rows(rowBlock) = .true.
       endif
@@ -134,7 +141,8 @@ contains ! ======================================== BaselineForwardModel ======
       ! Get ptans, we'll need these for interpolation
       ptan => GetVectorQuantityByType ( FwdModelIn, FwdModelExtra, &
         & quantityType = l_ptan, &
-        & instrumentModule = radiance%template%instrumentModule )
+        & instrumentModule = radiance%template%instrumentModule,&
+        & foundInFirst=ptanInFirst )
 
       ! Now check the validity of the quantities we've been given
       if ( .not. ValidateVectorQuantity(baseline, stacked=.true., coherent=.true., &
@@ -170,6 +178,8 @@ contains ! ======================================== BaselineForwardModel ======
       ! Vertical coordinate ---------------------
       call Allocate_test ( surf0, noMIFs, 'surf0', ModuleName )
       call Allocate_test ( surf1, noMIFs, 'surf1', ModuleName )
+      call Allocate_test ( surf0m, noMIFs, 'surf0m', ModuleName )
+      call Allocate_test ( surf1m, noMIFs, 'surf1m', ModuleName )
       call Allocate_test ( surfWt0, noMIFs, 'surfWt0', ModuleName )
       call Allocate_test ( surfWt1, noMIFs, 'surfWt1', ModuleName )
       
@@ -184,8 +194,8 @@ contains ! ======================================== BaselineForwardModel ======
       surfWt0 = 1 - surfWt1
       surfWt1 = max(min(surfWt1,1.0_rp),0.0_rp)
       surfWt0 = max(min(surfWt0,1.0_rp),0.0_rp)
-      surf0 = surf0 - 1                 ! This is to save calculations later ****
-      surf1 = surf1 - 1                 ! This is to save calculations later ****
+      surf0m = surf0 - 1
+      surf1m = surf1 - 1
 
       ! Frequency coordinate -------------------
       call Allocate_test ( chan0, noChans, 'chan0', ModuleName )
@@ -216,34 +226,34 @@ contains ! ======================================== BaselineForwardModel ======
       chanWt1 = max(min(chanWt1,1.0_rp),0.0_rp)
       chanWt0 = max(min(chanWt0,1.0_rp),0.0_rp)
 
+      ! -------------------------------------------------------------------
       ! Do this in a loop to avoid large array temps
       do mif = 1, noMIFs
         do chan = 1, noChans
           rad = radiance%values ( chan + noChans*(mif-1), maf )
-          ! Do all eight corners of the cube
-          ! Note that SURF0/1 *ALREADY* contiains a minus 1!!
           rad = rad + chanWt0(chan) * surfWt0(mif) * instWt0(mif) * &
-            & baseline%values(chan0(chan)+noBslChans*surf0(mif),inst0(mif))
-          rad = rad + chanWt0(chan) * surfWt0(mif) * instWt1(mif) * &         
-            & baseline%values(chan0(chan)+noBslChans*surf0(mif),inst1(mif))
-          rad = rad + chanWt0(chan) * surfWt1(mif) * instWt0(mif) * &         
-            & baseline%values(chan0(chan)+noBslChans*surf1(mif),inst0(mif))
-          rad = rad + chanWt0(chan) * surfWt1(mif) * instWt1(mif) * &         
-            & baseline%values(chan0(chan)+noBslChans*surf1(mif),inst1(mif))
-          rad = rad + chanWt1(chan) * surfWt0(mif) * instWt0(mif) * &         
-            & baseline%values(chan1(chan)+noBslChans*surf0(mif),inst0(mif))
-          rad = rad + chanWt1(chan) * surfWt0(mif) * instWt1(mif) * &         
-            & baseline%values(chan1(chan)+noBslChans*surf0(mif),inst1(mif))
-          rad = rad + chanWt1(chan) * surfWt1(mif) * instWt0(mif) * &         
-            & baseline%values(chan1(chan)+noBslChans*surf1(mif),inst0(mif))
-          rad = rad + chanWt1(chan) * surfWt1(mif) * instWt1(mif) * &         
-            & baseline%values(chan1(chan)+noBslChans*surf1(mif),inst1(mif))
+            & baseline%values(chan0(chan)+noBslChans*surf0m(mif),inst0(mif))
+          rad = rad + chanWt0(chan) * surfWt0(mif) * instWt1(mif) * &
+            & baseline%values(chan0(chan)+noBslChans*surf0m(mif),inst1(mif))
+          rad = rad + chanWt0(chan) * surfWt1(mif) * instWt0(mif) * &
+            & baseline%values(chan0(chan)+noBslChans*surf1m(mif),inst0(mif))
+          rad = rad + chanWt0(chan) * surfWt1(mif) * instWt1(mif) * &
+            & baseline%values(chan0(chan)+noBslChans*surf1m(mif),inst1(mif))
+          rad = rad + chanWt1(chan) * surfWt0(mif) * instWt0(mif) * &
+            & baseline%values(chan1(chan)+noBslChans*surf0m(mif),inst0(mif))
+          rad = rad + chanWt1(chan) * surfWt0(mif) * instWt1(mif) * &
+            & baseline%values(chan1(chan)+noBslChans*surf0m(mif),inst1(mif))
+          rad = rad + chanWt1(chan) * surfWt1(mif) * instWt0(mif) * &
+            & baseline%values(chan1(chan)+noBslChans*surf1m(mif),inst0(mif))
+          rad = rad + chanWt1(chan) * surfWt1(mif) * instWt1(mif) * &
+            & baseline%values(chan1(chan)+noBslChans*surf1m(mif),inst1(mif))
           radiance%values ( chan + noChans*(mif-1), maf ) = rad
         end do
       end do
 
-      ! If we need a jacobian create one
-      if ( doDerivatives ) then
+      ! --------------------------------------------------------------------
+      ! Now compute d[Radiance]/d[Baseline]
+      if (present(jacobian) .and. bslInFirst ) then
         instLow = minval(inst0)
         instHi = maxval(inst1)
         allocate ( kBit(radiance%template%instanceLen, &
@@ -257,29 +267,29 @@ contains ! ======================================== BaselineForwardModel ======
           mm1 = mif - 1
           do chan = 1, noChans
             row = chan+noChans*mm1
-            kBit( row, chan0(chan)+noBslChans*surf0(mif), inst0(mif) ) = &
-              & kBit( row, chan0(chan)+noBslChans*surf0(mif), inst0(mif) ) + &
+            kBit( row, chan0(chan)+noBslChans*surf0m(mif), inst0(mif) ) = &
+              & kBit( row, chan0(chan)+noBslChans*surf0m(mif), inst0(mif) ) + &
               & chanWt0(chan) * surfWt0(mif) * instWt0(mif)
-            kBit( row, chan0(chan)+noBslChans*surf0(mif), inst1(mif) ) = &
-              & kBit( row, chan0(chan)+noBslChans*surf0(mif), inst1(mif) ) + &
+            kBit( row, chan0(chan)+noBslChans*surf0m(mif), inst1(mif) ) = &
+              & kBit( row, chan0(chan)+noBslChans*surf0m(mif), inst1(mif) ) + &
               & chanWt0(chan) * surfWt0(mif) * instWt1(mif)
-            kBit( row, chan0(chan)+noBslChans*surf1(mif), inst0(mif) ) = &
-              & kBit( row, chan0(chan)+noBslChans*surf1(mif), inst0(mif) ) + &
+            kBit( row, chan0(chan)+noBslChans*surf1m(mif), inst0(mif) ) = &
+              & kBit( row, chan0(chan)+noBslChans*surf1m(mif), inst0(mif) ) + &
               & chanWt0(chan) * surfWt1(mif) * instWt0(mif)
-            kBit( row, chan0(chan)+noBslChans*surf1(mif), inst1(mif) ) = &
-              & kBit( row, chan0(chan)+noBslChans*surf1(mif), inst1(mif) ) + &
+            kBit( row, chan0(chan)+noBslChans*surf1m(mif), inst1(mif) ) = &
+              & kBit( row, chan0(chan)+noBslChans*surf1m(mif), inst1(mif) ) + &
               & chanWt0(chan) * surfWt1(mif) * instWt1(mif)
-            kBit( row, chan1(chan)+noBslChans*surf0(mif), inst0(mif) ) = &
-              & kBit( row, chan1(chan)+noBslChans*surf0(mif), inst0(mif) ) + &
+            kBit( row, chan1(chan)+noBslChans*surf0m(mif), inst0(mif) ) = &
+              & kBit( row, chan1(chan)+noBslChans*surf0m(mif), inst0(mif) ) + &
               & chanWt1(chan) * surfWt0(mif) * instWt0(mif)
-            kBit( row, chan1(chan)+noBslChans*surf0(mif), inst1(mif) ) = &
-              & kBit( row, chan1(chan)+noBslChans*surf0(mif), inst1(mif) ) + &
+            kBit( row, chan1(chan)+noBslChans*surf0m(mif), inst1(mif) ) = &
+              & kBit( row, chan1(chan)+noBslChans*surf0m(mif), inst1(mif) ) + &
               & chanWt1(chan) * surfWt0(mif) * instWt1(mif)
-            kBit( row, chan1(chan)+noBslChans*surf1(mif), inst0(mif) ) = &
-              & kBit( row, chan1(chan)+noBslChans*surf1(mif), inst0(mif) ) + &
+            kBit( row, chan1(chan)+noBslChans*surf1m(mif), inst0(mif) ) = &
+              & kBit( row, chan1(chan)+noBslChans*surf1m(mif), inst0(mif) ) + &
               & chanWt1(chan) * surfWt1(mif) * instWt0(mif)
-            kBit( row, chan1(chan)+noBslChans*surf1(mif), inst1(mif) ) = &
-              & kBit( row, chan1(chan)+noBslChans*surf1(mif), inst1(mif) ) + &
+            kBit( row, chan1(chan)+noBslChans*surf1m(mif), inst1(mif) ) = &
+              & kBit( row, chan1(chan)+noBslChans*surf1m(mif), inst1(mif) ) + &
               & chanWt1(chan) * surfWt1(mif) * instWt1(mif)
           end do
         end do
@@ -295,6 +305,71 @@ contains ! ======================================== BaselineForwardModel ======
         if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & MLSMSG_Deallocate//'kBit' )
       end if
+
+      ! ---------------------------------------------------------------
+      ! Now add some more terms to d[Radiance]/d[ptan] if appropriate
+      if (present(jacobian) .and. ptanInFirst) then
+        ! Compute the derivative of surfWt[0/1] wrt. ptan
+        call Allocate_test ( surfWt0Prime, noMIFs, 'surfWt0Prime', ModuleName )
+        call Allocate_test ( surfWt1Prime, noMIFs, 'surfWt1Prime', ModuleName )
+      
+        where ( surf1 /= surf0 .and. &
+          & (ptan%values(:,maf) > baseline%template%surfs(1,1)) .and. &
+          & (ptan%values(:,maf) < baseline%template%surfs(baseline%template%noSurfs,1)) )
+          surfWt1Prime = 1.0 / &
+            & ( baseline%template%surfs(surf1,1) - baseline%template%surfs(surf0,1) ) 
+          surfWt0Prime = -1.0 / &
+            & ( baseline%template%surfs(surf1,1) - baseline%template%surfs(surf0,1) ) 
+        elsewhere
+          surfWt1Prime = 0.0
+          surfWt0Prime = 0.0
+        end where
+
+        if ( any (surfWt0Prime /= 0.0 .or. surfWt1Prime /= 0.0 ) ) then
+          colBlock = FindBlock ( jacobian%col, ptan%index, maf )
+          jBlock => jacobian%block( rowBlock, colBlock )
+          
+          ! Create the block as banded if not already done so
+          select case (jBlock%kind)
+          case (m_absent)
+            call CreateBlock ( Jacobian, rowBlock, colBlock, m_banded, &
+              & noMIFs*noChans, bandHeight=noChans )
+            jBlock%values = 0.0_rp
+          case (m_banded)
+          case default
+            call MLSMessage ( MLSMSG_Error, ModuleName,&
+              & 'Wrong matrix type for ptan derivative')
+          end select
+
+          ! Now fill in this jacobian block
+          do mif = 1, noMIFs
+            mm1 = mif - 1
+            do chan = 1, noChans
+              gradient = 0.0
+              gradient = gradient + chanWt0(chan) * surfWt0Prime(mif) * instWt0(mif) * &
+                & baseline%values(chan0(chan)+noBslChans*surf0m(mif),inst0(mif))
+              gradient = gradient + chanWt0(chan) * surfWt0Prime(mif) * instWt1(mif) * &
+                & baseline%values(chan0(chan)+noBslChans*surf0m(mif),inst1(mif))
+              gradient = gradient + chanWt0(chan) * surfWt1Prime(mif) * instWt0(mif) * &
+                & baseline%values(chan0(chan)+noBslChans*surf1m(mif),inst0(mif))
+              gradient = gradient + chanWt0(chan) * surfWt1Prime(mif) * instWt1(mif) * &
+                & baseline%values(chan0(chan)+noBslChans*surf1m(mif),inst1(mif))
+              gradient = gradient + chanWt1(chan) * surfWt0Prime(mif) * instWt0(mif) * &
+                & baseline%values(chan1(chan)+noBslChans*surf0m(mif),inst0(mif))
+              gradient = gradient + chanWt1(chan) * surfWt0Prime(mif) * instWt1(mif) * &
+                & baseline%values(chan1(chan)+noBslChans*surf0m(mif),inst1(mif))
+              gradient = gradient + chanWt1(chan) * surfWt1Prime(mif) * instWt0(mif) * &
+                & baseline%values(chan1(chan)+noBslChans*surf1m(mif),inst0(mif))
+              gradient = gradient + chanWt1(chan) * surfWt1Prime(mif) * instWt1(mif) * &
+                & baseline%values(chan1(chan)+noBslChans*surf1m(mif),inst1(mif))
+              jBlock%values ( chan + noChans*mm1, 1 ) = &
+                & jBlock%values ( chan + noChans*mm1, 1 ) + gradient
+            end do
+          end do
+        end if                          ! Any nonzero weights
+        call Deallocate_test ( surfWt0Prime, 'surfWt0Prime', ModuleName )
+        call Deallocate_test ( surfWt1Prime, 'surfWt1Prime', ModuleName )
+      end if                             ! Do ptan derivatives
 
       call Deallocate_test ( inst0, 'inst0', ModuleName )
       call Deallocate_test ( inst1, 'inst1', ModuleName )
@@ -315,6 +390,9 @@ contains ! ======================================== BaselineForwardModel ======
 end module BaselineForwardModel_m
   
 ! $Log$
+! Revision 2.6  2001/10/03 17:46:37  livesey
+! Added correction to ptan derivatives
+!
 ! Revision 2.5  2001/10/02 22:22:53  livesey
 ! Working version
 !
