@@ -31,6 +31,7 @@
 ; The first are l2cfs for an include, so unquoted
 !define(signalsL2cf,{!calpath/MLS-Aura_L2Cal-Signals_v1-2-2_0000d000.l2cf})
 !define(spectroscopyL2cf,{!calpath/MLS-Aura_L2Cal-Spectroscopy_v1-2-0_0000d000.l2cf})
+!define(spectroscopyRtvlL2cf,{!calpath/MLS-Aura_L2Cal-Spectroscopy-rtvl_v1-2-0_0000d000.l2cf})
 !define(sidebandL2cf,{!calpath/MLS-Aura_L2Cal-SBFraction_v1-2-0_0000d000.l2cf})
 !define(systempL2cf,{!calpath/MLS-Aura_L2Cal-Tsys_v1-0-0_0000d000.l2cf})
 !define(nbwL2cf,{!calpath/MLS-Aura_L2Cal-NBW_v1-0-0_0000d000.l2cf})
@@ -40,3 +41,4 @@
 !define(climatologyFile,{'!inpathcli/MLS-Aura_L2Cal-Climatologies_v1-2-0_0000d000.txt'})
 !define(filterFile,{'!calpath/MLS-Aura_L2Cal-Filters_v1-2-0_0000d000.txt'})
 !define(pfgFile,{'!calpath/MLS-Aura_L2Cal-PFG_v1-2-1_0000d000.txt'})
+!define(pfgRtvlFile,{'!calpath/MLS-Aura_L2Cal-PFG-rtvl_v1-2-0_0000d000.txt'})
