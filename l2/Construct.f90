@@ -156,7 +156,8 @@ contains ! =====     Public Procedures     =============================
       select case( get_spec_id(key) )
       case ( s_dump )
         call dumpCommand ( key, quantityTemplatesBase, &
-          & vectorTemplates, forwardModelConfigs=forwardModelConfigDatabase )
+          & vectorTemplates, forwardModelConfigs=forwardModelConfigDatabase, &
+          & hGrids=hGrids )
       case ( s_forge )
         call ForgeMinorFrames ( key, chunk, mifGeolocation )
       case ( s_forwardModel )
@@ -248,6 +249,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.46  2004/05/18 01:24:31  vsnyder
+! Add HGrids argument to DumpCommand
+!
 ! Revision 2.45  2004/05/11 02:54:36  vsnyder
 ! Remove USEs and declarations for unreferenced symbols
 !
