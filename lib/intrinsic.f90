@@ -83,7 +83,8 @@ module INTRINSIC
   integer, parameter :: L_HPA           = l_hours + 1
   integer, parameter :: L_HZ            = l_hpa + 1
   integer, parameter :: L_INTERMEDIATEFREQUENCY= l_hz + 1
-  integer, parameter :: L_K             = l_intermediatefrequency + 1
+  integer, parameter :: L_ISOTOPERATIO  = l_intermediatefrequency + 1
+  integer, parameter :: L_K             = l_isotopeRatio + 1
   integer, parameter :: L_KHZ           = l_k  + 1
   integer, parameter :: L_KM            = l_khz + 1
   integer, parameter :: L_LINEWIDTH     = l_km + 1
@@ -225,6 +226,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_hpa) =                   add_ident ( 'hPa' )
     lit_indices(l_hz) =                    add_ident ( 'Hz' )
     lit_indices(l_intermediatefrequency) = add_ident ( 'intermediatefrequency' )
+    lit_indices(l_isotopeRatio) =          add_ident ( 'isotopeRatio' )
     lit_indices(l_k) =                     add_ident ( 'K' )
     lit_indices(l_khz) =                   add_ident ( 'KHz' )
     lit_indices(l_km) =                    add_ident ( 'km' )
@@ -348,6 +350,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.25  2001/05/10 23:26:45  livesey
+! Added isotope ratio vector quantity type.
+!
 ! Revision 2.24  2001/05/03 22:27:04  livesey
 ! Added l_heightoffset
 !
