@@ -13,10 +13,10 @@ module MergeGridsModule
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
-       "$Id$"
+    "$Id$"
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
-       "$RCSfile$"
+    "$RCSfile$"
   private :: not_used_here 
   !---------------------------------------------------------------------------
 
@@ -26,12 +26,10 @@ contains ! =================================== Public procedures
 
   subroutine MergeGrids ( root, griddedDataBase )
 
-    use Expr_m, only: EXPR
-    use GriddedData, only: GRIDDEDDATA_T, rgr, SETUPNEWGRIDDEDDATA, &
-      & ADDGRIDDEDDATATODATABASE, V_IS_PRESSURE, NullifyGriddedData
-    use Init_tables_module, only: F_CLIMATOLOGY, F_HEIGHT, F_OPERATIONAL, &
-      & F_SCALE, S_MERGE
-    use L3ASCII, only: L3ASCII_INTERP_FIELD
+    use GriddedData, only: GRIDDEDDATA_T, RGR, SETUPNEWGRIDDEDDATA, &
+      & ADDGRIDDEDDATATODATABASE, NULLIFYGRIDDEDDATA, &
+      & WRAPGRIDDEDDATA, CONCATENATEGRIDDEDDATA, COPYGRID
+    use Init_tables_module, only: S_MERGE, S_CONCATENATE
     use MLSCommon, only: R8
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
     use MoreTree, only: GET_SPEC_ID
@@ -39,11 +37,10 @@ contains ! =================================== Public procedures
     use Tree, only: NSONS, SUBTREE, DECORATE, DECORATION, NODE_ID, SUB_ROSA
     use Tree_Types, only: N_NAMED
     use Toggles, only: GEN, TOGGLE
-    use Units, only: PHYQ_Length, PHYQ_Pressure
 
     integer, intent(in) :: ROOT         ! Tree root
     type (griddedData_T), dimension(:), pointer :: griddedDataBase ! Database
-    
+
     ! Local variables
     integer :: I                        ! Loop counter
     integer :: SON                      ! Tree node
@@ -63,205 +60,298 @@ contains ! =================================== Public procedures
           & 'Expecting only named specifiers in MergeGrids section' )
       end if
 
-      if ( get_spec_id(key) == s_merge ) then
+      select case ( get_spec_id(key) )
+      case ( s_merge )
         call decorate ( key, AddgriddedDataToDatabase ( griddedDataBase, &
           & MergeOneGrid ( key, griddedDataBase ) ) )
-      else
+      case ( s_concatenate )
+        call decorate ( key, AddgriddedDataToDatabase ( griddedDataBase, &
+          & Concatenate ( key, griddedDataBase ) ) )
+      case default
         ! Shouldn't get here is parser worked?
         call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Only merge commands allowed in MergeGrids section' )
-      end if
+          & 'Only merge and concatenate commands allowed in MergeGrids section' )
+      end select
     end do
-    if ( toggle(gen) ) call trace_end ( "MergeGrids", root )
-  contains
+    if ( toggle(gen) ) call trace_end ( "MergeGrids" )
 
-    ! ----------------------------------------- MergeOneGrid
-    type (griddedData_T) function MergeOneGrid ( root, griddedDataBase ) &
-      & result ( newGrid )
-      integer, intent(in) :: ROOT         ! Tree node
-      type (griddedData_T), dimension(:), pointer :: griddedDataBase ! Database
+  end subroutine MergeGrids
 
-      ! This routine creates a new grid being a merge of two others.
-      ! The operational grid forms the bottom of the dataset
-      ! The climatology grid the top.  The result has the horizontal
-      ! coordinates to operational and the vertical coordiantes of climatology
+  ! ---------------------------------------- Concatenate --
+  type (griddedData_T) function Concatenate ( root, griddedDataBase ) &
+    & result ( newGrid )
+    use Tree, only: NSONS, SUBTREE, DECORATION
+    use GriddedData, only: GRIDDEDDATA_T, NULLIFYGRIDDEDDATA, &
+      & CONCATENATEGRIDDEDDATA, COPYGRID
+    use Trace_M, only: TRACE_BEGIN, TRACE_END
+    use Init_tables_module, only: F_A, F_B
+    use Toggles, only: GEN, TOGGLE
+    
+    integer, intent(in) :: ROOT         ! Tree node
+    type (griddedData_T), dimension(:), pointer :: griddedDataBase ! Database
+    ! This routine parses the l2cf instructions that request
+    ! a grid concatenation, and then performs the concatenation
 
-      ! Note! This routine is far from efficient. Not least because it
-      ! uses l3atascii_interp_field which isn't terribly efficient either.
-      ! But hey, this isn't a key part of the software when it comes
-      ! to a desire for speed (or at least it shouldn't be)
+    ! Local variables
+    integer :: SON                    ! Tree node
+    integer :: FIELD                  ! Another tree node
+    integer :: FIELD_INDEX            ! Type of tree node
+    integer :: VALUE                  ! Tree node
+    integer :: I                      ! Loop counter
 
-      ! I'll need to think about missing data at some point.
+    type (griddedData_T), pointer :: A
+    type (griddedData_T), pointer :: B
 
-      ! Local parameters
-      real (r8), parameter :: SCALEHEIGHT = 16.0e3_r8 ! Approximate scale height / m
+    ! Executable code
+    call nullifyGriddedData ( newGrid ) ! for Sun's still useless compiler
+    if ( toggle(gen) ) call trace_begin ( "Concatenate", root )
 
-      ! Local variables
-      integer :: DAY                      ! Loop counter
-      integer :: FIELD                    ! Another tree node
-      integer :: FIELD_INDEX              ! Type of tree node
-      integer :: I                        ! Loop inductor
-      integer :: LAT                      ! Loop counter
-      integer :: LON                      ! Loop counter
-      integer :: LST                      ! Loop counter
-      integer :: SON                      ! Tree node
-      integer :: SURF                     ! Loop counter
-      integer :: SZA                      ! Loop counter
-      integer :: UNITS(2)                 ! Units for expr
-      integer :: VALUE                    ! Value of tree node
+    ! Get the information from the l2cf    
+    ! Note that init_tables_module has insisted that we have all
+    ! arguments so we don't need a 'got' type arrangement
+    do i = 2, nsons(root)
+      son = subtree(i,root)
+      field = subtree(1,son)
+      value = subtree(2,son)
+      field_index = decoration(field)
+      select case ( field_index )
+      case ( f_a ) 
+        a => griddedDataBase ( decoration ( decoration ( value ) ) )
+      case ( f_b )
+        b => griddedDataBase ( decoration ( decoration ( value ) ) )
+      end select
+    end do
 
-      real (rgr) :: CLIVAL                 ! Value from climatological grid
-      real (r8) :: CLIWEIGHT              ! Climatological 'weight'
-      real (r8) :: HEIGHT                 ! Transition height
-      real (rgr) :: OPVAL                  ! Value from operational grid
-      real (r8) :: OPWEIGHT               ! Operational 'weight'
-      real (r8) :: SCALE                  ! Transition scale
-      real (r8) :: TOTALWEIGHT            ! Total weight
-      real (r8) :: VALUES(2)              ! Value of expr
-      real (r8) :: ZTRANS                 ! Transition 'height'
-      real (r8) :: Z                      ! One 'height'
-      real (r8) :: Z1, Z2                 ! Range of transition region
-      
-      type (griddedData_T), pointer :: OPERATIONAL
-      type (griddedData_T), pointer :: CLIMATOLOGY
+    ! Do the concatenation unless one or other is empty
+    if ( .not. a%empty .and. .not. b%empty ) then
+      call ConcatenateGriddedData ( A, B, newGrid )
+    else if ( a%empty ) then
+      ! Copy B into the result, of course, that may be empty too
+      ! in which case the result is empty, no problem!
+      call CopyGrid ( newGrid, b )
+    else
+      ! Otherwise a must be full, b empty
+      call CopyGrid ( newGrid, a )
+    end if
 
-      ! Executable code
+    if ( toggle(gen) ) call trace_end ( "Concatenate" )
+  end function Concatenate
 
-      call nullifyGriddedData ( newGrid ) ! for Sun's still useless compiler
-      if ( toggle(gen) ) call trace_begin ( "MergeOneGrid", root )
+  ! ----------------------------------------- MergeOneGrid
+  type (griddedData_T) function MergeOneGrid ( root, griddedDataBase ) &
+    & result ( newGrid )
+    use Tree, only: NSONS, SUBTREE, DECORATION
+    use Units, only: PHYQ_Length, PHYQ_Pressure
+    use GriddedData, only: GRIDDEDDATA_T, NULLIFYGRIDDEDDATA, COPYGRID, &
+      & WRAPGRIDDEDDATA, SETUPNEWGRIDDEDDATA, RGR, V_IS_PRESSURE
+    use L3ASCII, only: L3ASCII_INTERP_FIELD
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+    use Trace_M, only: TRACE_BEGIN, TRACE_END
+    use Init_tables_module, only: F_CLIMATOLOGY, F_HEIGHT, F_OPERATIONAL, &
+      & F_SCALE
+    use MLSCommon, only: R8
+    use Toggles, only: GEN, TOGGLE
+    use Expr_m, only: EXPR
 
-      ! Get the information from the l2cf    
-      ! Note that init_tables_module has insisted that we have all
-      ! arguments so we don't need a 'got' type arrangement
-      do i = 2, nsons(root)
-        son = subtree(i,root)
-        field = subtree(1,son)
-        value = subtree(2,son)
-        field_index = decoration(field)
-        select case ( field_index )
-        case ( f_operational ) 
-          operational => griddedDataBase ( decoration ( decoration ( value ) ) )
-        case ( f_climatology )
-          climatology => griddedDataBase ( decoration ( decoration ( value ) ) )
-        case ( f_height )
-          call expr ( value, units, values )
-          if ( units(1) /= phyq_pressure ) call MLSMessage ( &
-            & MLSMSG_Error, ModuleName, &
-            & 'Only pressure is allowed for the height field' )
-          height = values(1)
-        case ( f_scale )
-          call expr ( value, units, values )
-          if ( units(1) /= phyq_length ) call MLSMessage ( &
-            & MLSMSG_Error, ModuleName, &
-            & 'Only altitude is allowed for the scale field' )
-          scale = values(1)
-        end select
-      end do
-      ! Do some final sanity checks
-      if ( operational%verticalCoordinate /= v_is_pressure ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Operational grid not on pressure surfaces' )
-      if ( climatology%verticalCoordinate /= v_is_pressure ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Climatology grid not on pressure surfaces' )
-  !     if ( climatology%units /= operational%units ) &
-  !       & call MLSMessage ( MLSMSG_Error, ModuleName, &
-  !       & 'The climatology and operational data describe different physical quantities' )
-      if ( climatology%equivalentLatitude .neqv. operational%equivalentLatitude ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'The climatology and operational data are mixed latitude/equivalent latitude.' )
+    integer, intent(in) :: ROOT         ! Tree node
+    type (griddedData_T), dimension(:), pointer :: griddedDataBase ! Database
 
-      ! OK, now we're ready to go.
-      ! Create the result.  It has the same vertical coordinates as climatology
-      ! But the same horizontal coordinates as operational.
-      call SetupNewGriddedData ( newGrid, source=operational, &
-        & noHeights=climatology%noHeights )
-      ! Setup the rest of the quantity
-      newGrid%sourceFileName = 'Result of merge'
-      newGrid%quantityName   = 'Result of merge'
-      newGrid%description    = 'Result of merge'
-      newGrid%units          = climatology%units
-      newGrid%verticalCoordinate = v_is_pressure
-      newGrid%equivalentLatitude = climatology%equivalentLatitude
-      newGrid%heights = climatology%heights
-      newGrid%lats = operational%lats
-      newGrid%lons = operational%lons
-      newGrid%lsts = operational%lsts
-      newGrid%szas = operational%szas
-      newGrid%dateStarts = operational%dateStarts
-      newGrid%dateEnds = operational%dateEnds
+    ! This routine creates a new grid being a merge of two others.
+    ! The operational grid forms the bottom of the dataset
+    ! The climatology grid the top.  The result has the horizontal
+    ! coordinates to operational and the vertical coordiantes of climatology
 
-      zTrans = scaleHeight * ( 3.0 - log10 ( height ) )
-      z1 = zTrans - scale/2.0
-      z2 = zTrans + scale/2.0
+    ! Note! This routine is far from efficient. Not least because it
+    ! uses l3atascii_interp_field which isn't terribly efficient either.
+    ! But hey, this isn't a key part of the software when it comes
+    ! to a desire for speed (or at least it shouldn't be)
 
-      
+    ! I'll need to think about missing data at some point.
 
-      ! Now we're going to fill in the rest of the field
-      do day = 1, newGrid%noDates
-        do sza = 1, newGrid%noSzas
-          do lst = 1, newGrid%noLsts
-            do lon = 1, newGrid%noLons
-              do lat = 1, newGrid%noLats
-                do surf = 1, newGrid%noHeights
-                  call l3ascii_interp_field ( &
-                    & climatology, &
-                    & cliVal, &
-                    & newGrid%heights(surf), &
-                    & newGrid%lats(lat), &
-                    & newGrid%lons(lon), &
-                    & newGrid%lsts(lst), &
-                    & newGrid%szas(sza), &
-                    & 0.5 * ( newGrid%dateStarts(day)+newGrid%dateEnds(day) ) )
-                  call l3ascii_interp_field ( &
-                    & operational, &
-                    & opVal, &
-                    & newGrid%heights(surf), &
-                    & newGrid%lats(lat), &
-                    & newGrid%lons(lon), &
-                    & newGrid%lsts(lst), &
-                    & newGrid%szas(sza), &
-                    & 0.5 * ( newGrid%dateStarts(day)+newGrid%dateEnds(day) ) )
+    ! Local parameters
+    real (r8), parameter :: SCALEHEIGHT = 16.0e3_r8 ! Approximate scale height / m
 
-                  ! Weight them by height
-                  z = scaleHeight * ( 3.0 - log10 ( newGrid%heights(surf) ) )
-                  if ( scale /= 0.0 ) then
-                    cliWeight = ( z - z1 ) / ( z2-z1 )
-                    opWeight = 1.0 - cliWeight
-                  end if
+    ! Local variables
+    integer :: DAY                      ! Loop counter
+    integer :: FIELD                    ! Another tree node
+    integer :: FIELD_INDEX              ! Type of tree node
+    integer :: I                        ! Loop inductor
+    integer :: LAT                      ! Loop counter
+    integer :: LON                      ! Loop counter
+    integer :: LST                      ! Loop counter
+    integer :: SON                      ! Tree node
+    integer :: SURF                     ! Loop counter
+    integer :: SZA                      ! Loop counter
+    integer :: EXPRUNITS(2)             ! Units for expr
+    integer :: VALUE                    ! Value of tree node
 
-                  ! Check for bad data in operational dataset
-                  if ( opVal >= nearest ( operational%missingValue, -1.0 ) .and. &
-                    &  opVal <= nearest ( operational%missingValue,  1.0 ) ) then
-                    opWeight = 0.0
-                  endif
-                  ! Check for bad data in the climatology
-                  if ( cliVal >= nearest ( climatology%missingValue, -1.0 ) .and. &
-                    &  cliVal <= nearest ( climatology%missingValue,  1.0 ) ) then
-                    cliWeight = 0.0
-                  end if
+    real (rgr) :: CLIVAL                 ! Value from climatological grid
+    real (r8) :: CLIWEIGHT              ! Climatological 'weight'
+    real (r8) :: HEIGHT                 ! Transition height
+    real (rgr) :: OPVAL                  ! Value from operational grid
+    real (r8) :: OPWEIGHT               ! Operational 'weight'
+    real (r8) :: SCALE                  ! Transition scale
+    real (r8) :: TOTALWEIGHT            ! Total weight
+    real (r8) :: EXPRVALUES(2)          ! Value of expr
+    real (r8) :: ZTRANS                 ! Transition 'height'
+    real (r8) :: Z                      ! One 'height'
+    real (r8) :: Z1, Z2                 ! Range of transition region
 
-                  cliWeight = min ( max ( cliWeight, 0.0_r8 ), 1.0_r8 )
-                  opWeight = min ( max ( opWeight, 0.0_r8 ), 1.0_r8 )
-                  totalWeight = cliWeight + opWeight
+    type (griddedData_T), pointer :: OPERATIONAL
+    type (griddedData_T), pointer :: CLIMATOLOGY
 
-                  ! OK, store this value
-                  if ( totalWeight > 0.0_r8 ) then
-                    newGrid%field ( surf, lat, lon, lst, sza, day ) = &
-                      & ( cliWeight*cliVal + opWeight*opVal ) / totalWeight
-                  else
-                    newGrid%field ( surf, lat, lon, lst, sza, day ) = &
-                      & newGrid%missingValue
-                  end if
-                end do
+    ! Executable code
+
+    call nullifyGriddedData ( newGrid ) ! for Sun's still useless compiler
+    if ( toggle(gen) ) call trace_begin ( "MergeOneGrid", root )
+
+    ! Get the information from the l2cf    
+    ! Note that init_tables_module has insisted that we have all
+    ! arguments so we don't need a 'got' type arrangement
+    do i = 2, nsons(root)
+      son = subtree(i,root)
+      field = subtree(1,son)
+      value = subtree(2,son)
+      field_index = decoration(field)
+      select case ( field_index )
+      case ( f_operational ) 
+        operational => griddedDataBase ( decoration ( decoration ( value ) ) )
+      case ( f_climatology )
+        climatology => griddedDataBase ( decoration ( decoration ( value ) ) )
+      case ( f_height )
+        call expr ( value, exprUnits, exprValues )
+        if ( exprUnits(1) /= phyq_pressure ) call MLSMessage ( &
+          & MLSMSG_Error, ModuleName, &
+          & 'Only pressure is allowed for the height field' )
+        height = exprValues(1)
+      case ( f_scale )
+        call expr ( value, exprUnits, exprValues )
+        if ( exprUnits(1) /= phyq_length ) call MLSMessage ( &
+          & MLSMSG_Error, ModuleName, &
+          & 'Only altitude is allowed for the scale field' )
+        scale = exprValues(1)
+      end select
+    end do
+
+    ! Think about cases where one or other grid is empty
+    if ( climatology%empty ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'The climatology grid for the merge is empty' )
+    if ( operational%empty ) then
+      ! If no operational data, then just use climatology
+      call CopyGrid ( newGrid, climatology )
+      return
+    end if
+
+    ! Do some final sanity checks
+    if ( operational%verticalCoordinate /= v_is_pressure ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Operational grid not on pressure surfaces' )
+    if ( climatology%verticalCoordinate /= v_is_pressure ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Climatology grid not on pressure surfaces' )
+    !     if ( climatology%units /= operational%units ) &
+    !       & call MLSMessage ( MLSMSG_Error, ModuleName, &
+    !       & 'The climatology and operational data describe different physical quantities' )
+    if ( climatology%equivalentLatitude .neqv. operational%equivalentLatitude ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'The climatology and operational data are mixed latitude/equivalent latitude.' )
+
+    ! OK, now we're ready to go.
+    ! First we're going to 'wrap' the climatology to be sure that we can
+    ! interpolate it in longitude.  The chances are that it has no longitudinal
+    ! variation anyway, so this won't actually do anything
+    call WrapGriddedData ( climatology )
+    ! Create the result.  It has the same vertical coordinates as climatology
+    ! But the same horizontal coordinates as operational.
+    call SetupNewGriddedData ( newGrid, source=operational, &
+      & noHeights=climatology%noHeights )
+    ! Setup the rest of the quantity
+    newGrid%sourceFileName = 'Result of merge'
+    newGrid%quantityName   = 'Result of merge'
+    newGrid%description    = 'Result of merge'
+    newGrid%units          = climatology%units
+    newGrid%verticalCoordinate = v_is_pressure
+    newGrid%equivalentLatitude = climatology%equivalentLatitude
+    newGrid%heights = climatology%heights
+    newGrid%lats = operational%lats
+    newGrid%lons = operational%lons
+    newGrid%lsts = operational%lsts
+    newGrid%szas = operational%szas
+    newGrid%dateStarts = operational%dateStarts
+    newGrid%dateEnds = operational%dateEnds
+
+    zTrans = scaleHeight * ( 3.0 - log10 ( height ) )
+    z1 = zTrans - scale/2.0
+    z2 = zTrans + scale/2.0
+
+    ! Now we're going to fill in the rest of the field
+    do day = 1, newGrid%noDates
+      do sza = 1, newGrid%noSzas
+        do lst = 1, newGrid%noLsts
+          do lon = 1, newGrid%noLons
+            do lat = 1, newGrid%noLats
+              do surf = 1, newGrid%noHeights
+                call l3ascii_interp_field ( &
+                  & climatology, &
+                  & cliVal, &
+                  & newGrid%heights(surf), &
+                  & newGrid%lats(lat), &
+                  & newGrid%lons(lon), &
+                  & newGrid%lsts(lst), &
+                  & newGrid%szas(sza), &
+                  & 0.5 * ( newGrid%dateStarts(day)+newGrid%dateEnds(day) ) )
+                call l3ascii_interp_field ( &
+                  & operational, &
+                  & opVal, &
+                  & newGrid%heights(surf), &
+                  & newGrid%lats(lat), &
+                  & newGrid%lons(lon), &
+                  & newGrid%lsts(lst), &
+                  & newGrid%szas(sza), &
+                  & 0.5 * ( newGrid%dateStarts(day)+newGrid%dateEnds(day) ) )
+
+                ! Weight them by height
+                z = scaleHeight * ( 3.0 - log10 ( newGrid%heights(surf) ) )
+                if ( scale /= 0.0 ) then
+                  cliWeight = ( z - z1 ) / ( z2-z1 )
+                  opWeight = 1.0 - cliWeight
+                end if
+
+                cliWeight = min ( max ( cliWeight, 0.0_r8 ), 1.0_r8 )
+                opWeight = min ( max ( opWeight, 0.0_r8 ), 1.0_r8 )
+
+                ! Check for bad data in operational dataset
+                if ( opVal >= nearest ( operational%missingValue, -1.0 ) .and. &
+                  &  opVal <= nearest ( operational%missingValue,  1.0 ) ) then
+                  opWeight = 0.0
+                endif
+
+                ! Check for bad data in the climatology
+                if ( cliVal >= nearest ( climatology%missingValue, -1.0 ) .and. &
+                  &  cliVal <= nearest ( climatology%missingValue,  1.0 ) ) then
+                  call MLSMessage ( MLSMSG_Error, ModuleName, &
+                    & 'There is a bad data point in the climatology field' )
+                end if
+
+                totalWeight = cliWeight + opWeight
+                if ( totalWeight == 0.0 ) then
+                  ! Presumably was in the region where operational was supposed
+                  ! to dominate, but it's bad, so switch to a priori
+                  cliWeight = 1.0
+                  totalWeight = 1.0
+                end if
+
+                ! OK, store this value
+                newGrid%field ( surf, lat, lon, lst, sza, day ) = &
+                  & ( cliWeight*cliVal + opWeight*opVal ) / totalWeight
               end do
             end do
           end do
         end do
       end do
-      if ( toggle(gen) ) call trace_end ( "MergeOneGrid", root )
-    end function MergeOneGrid
-  end subroutine MergeGrids
+    end do
+    if ( toggle(gen) ) call trace_end ( "MergeOneGrid" )
+  end function MergeOneGrid
 
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
@@ -270,6 +360,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.10  2003/04/04 00:08:26  livesey
+! Added Concatenate capability, various reorganizations.
+!
 ! Revision 2.9  2003/02/28 02:33:28  livesey
 ! Bug fix, careless with the old emacs.
 !
