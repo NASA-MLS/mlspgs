@@ -6,17 +6,7 @@
 !=============================================================================
 module Expr_Eval_M
 
-! Evaluate a real scalar expression, given as an array of characters.
-
-! No continuation mark is necessary (or indeed recognized) to proceed from
-! one array element to the next.  Otherwise, the syntax is the same as
-! free-form Fortran 95.  The numeric intrinsic functions abs, aint, anint,
-! ceiling, dim, floor, max, min, mod, modulo and sign are provided, except
-! that min and max can only take exactly two arguments.  All of the
-! mathematical intrinsic functions are provided; atan can also take two
-! arguments. All of the floating-point manipulation functions are
-! provided; for scale and set_exponent, nint is applied to the second
-! argument.  The numeric inquiry functions are not provided.
+! See subroutine Help (the first one) for usage.
 
 ! LL(1) Action grammar for expressions parsed by Expr_Eval (actions in {}):
 
@@ -43,7 +33,7 @@ module Expr_Eval_M
 
   private
 
-  public :: Expr_Eval
+  public :: Expr_Eval, Help
 
   logical, public :: Error ! True means an error occurred
 
@@ -81,14 +71,28 @@ module Expr_Eval_M
   type(token) :: The_Token    ! Last token examined
 
   !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter, private :: IdParm = &
+  character (len=*), parameter :: IdParm = &
     & "$Id$"
   character (len=len(idParm)) :: Id = IdParm
-  character (len=*), parameter, private :: ModuleName= &
+  character (len=*), parameter :: ModuleName= &
     & "$RCSfile$"
   !---------------------------------------------------------------------------
 
 contains
+
+  subroutine Help
+    write ( *, '(a)' ) 'Evaluate a real scalar expression, given as an array of characters.'
+
+    write ( *, '(a)' ) 'No continuation mark is necessary (or indeed recognized) to proceed from'
+    write ( *, '(a)' ) 'one array element to the next.  Otherwise, the syntax is the same as'
+    write ( *, '(a)' ) 'free-form Fortran 95.  The numeric intrinsic functions abs, aint, anint,'
+    write ( *, '(a)' ) 'ceiling, dim, floor, max, min, mod, modulo and sign are provided, except'
+    write ( *, '(a)' ) 'that min and max can only take exactly two arguments.  All of the'
+    write ( *, '(a)' ) 'mathematical intrinsic functions are provided; atan can also take two'
+    write ( *, '(a)' ) 'arguments.  All of the floating-point manipulation functions are'
+    write ( *, '(a)' ) 'provided; for scale and set_exponent, nint is applied to the second'
+    write ( *, '(a)' ) 'argument.  The numeric inquiry functions are not provided.'
+  end subroutine Help
 
   double precision function Expr_Eval ( The_Expr, C, L )
     character(len=*), intent(in) :: The_Expr(:)
@@ -499,6 +503,9 @@ contains
 end module Expr_Eval_M
 
 ! $Log$
+! Revision 2.2  2001/12/17 23:55:11  vsnyder
+! Added 'help' subroutine
+!
 ! Revision 2.1  2001/12/17 23:39:55  vsnyder
 ! Initial commit
 !
