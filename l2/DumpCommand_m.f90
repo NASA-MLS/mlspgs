@@ -276,6 +276,7 @@ contains
 
     subroutine AnnounceError ( where, what )
       use MoreTree, only: StartErrorMessage
+      use Output_m, only: NewLine
 
       integer, intent(in) :: What, Where
 
@@ -307,6 +308,7 @@ contains
       case ( unknown )
         call output ( "Can't figure out what kind of template it is." )
       end select
+      call newLine
     end subroutine AnnounceError
 
   end subroutine DumpCommand
@@ -320,6 +322,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.19  2005/03/15 01:36:08  vsnyder
+! Add newline after error messages
+!
 ! Revision 2.18  2005/01/12 03:18:51  vsnyder
 ! Add item number to PFA dump
 !
