@@ -81,15 +81,16 @@ blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90)
 #Where else to look for USEd and INCLUDED files to add to dependency list
 depends_where:=$(libmls_sources) $(srclib)
 PROG_prereqs=$(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
-	  $(libmls_objs)/libmls.a
+	  $(libmls_objs)/libmls.a $(REECHO)
 
 ifdef BLAS
    LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
-   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90
+   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90 \
+   $(REECHO)
 else
    LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
    $(libmls_sources)/machines/$(MLSCONFG)/machine.f90 \
-   $(blaslib_f)
+   $(blaslib_f) $(REECHO)
 endif
 
 #Any sources to explicitly exclude from dependency list?
@@ -176,6 +177,9 @@ targ:
    --exclude \*.mod --exclude $(PROG)
 
 # $Log$
+# Revision 1.25  2001/08/15 21:01:04  pwagner
+# Now excludes OMIT_SRCS from dependencies
+#
 # Revision 1.24  2001/08/13 18:09:08  pwagner
 # replaced shell echo -> shell {REECHO}
 #
