@@ -80,8 +80,7 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
 
 ! For each Standard product requested in the cf,
 
-   !DO i = 1, SIZE(cfStd)
-      DO i = 1, 1 
+   DO i = 1, SIZE(cfStd)
 	print *, i,  SIZE(cfStd)
 
 ! Read all available data in the input window
@@ -104,8 +103,6 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
 
 ! Core processing for Standard products
 
-	print *, 'Before MonthlyCoreProcessing'
- 
       CALL MonthlyCoreProcessing(cfStd(i), pcf, cfDef, l2Days, l2gp, mm, mmA, mmD, &
                                  mzA, mzD, dzA, dzD, mis_l2Days, mis_Days)
 
@@ -113,7 +110,6 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
             // '; starting Output task ...'
       CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
 
-	print *, 'After MonthlyCoreProcessing'
 ! Deallocate the L2GP database
 
       CALL DestroyL2GPDatabase(l2gp)
@@ -146,16 +142,12 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
 
 ! For each product in the Diagnostic section of the cf,
 
-	print *, ''
-
-      DO i = 6, SIZE(cfDg)
+      DO i = 1, SIZE(cfDg)
 	print *, 'Diagnostic=', i,  SIZE(cfDg)
 
 ! Read all the l2gp data which exist in the input window for that product
 
-	print *, 'ReadL2DGData 1'
          CALL ReadL2DGData(cfDg(i)%l3prodName, numFiles, pcfNames, l2Days, l2gp)
-	print *, 'ReadL2DGData 2'
 
 ! If insufficient data found, go on to the next product
 
@@ -210,6 +202,9 @@ END PROGRAM MLSL3M
 !=================
 
 ! $Log$
+! Revision 1.9  2002/03/27 23:27:14  ybj
+! MonthlyProcessModule.f90
+!
 ! Revision 1.8  2001/12/12 17:48:03  nakamura
 ! Removed unused dz & mz arguments.
 !
