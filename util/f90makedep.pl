@@ -2,7 +2,9 @@
 #
 # Usage: f90makedep.pl
 #
-# Generate a Makefile-ready dependency listing from the f90 sources 
+# It has become a multipurpose tool, exploiting some of perl's
+# text-handling prowess. In its main usage,
+# generate a Makefile-ready dependency listing from the f90 sources 
 # in the current directory. If there are any command line arguments,
 # and   $ARG_DEPENDS   is set (which see)
 # they will be interpreted as additional directories in which to
@@ -14,13 +16,13 @@
 # In addition, if  $SELF_DEPENDS  is set (which see) the source file
 # will itself be included among the list of dependencies
 #
-# Usage:
-# 	f90makedep.pl [arg1 arg2 ..]
+# Main Usage:
+# 	(1) f90makedep.pl [arg1 arg2 ..]
 # Output:
 # (printed to stdout)
-# source1.o: source1.f90 source2.f90 .. $(d1)s1.f90 $(d1)s2.f90 .. $(d2)t1.f90 ..
-# source2.o: source2.f90 source3.f90 .. $(d1)s1.f90 $(d1)s2.f90 .. $(d2)t1.f90 ..
-# source3.o: source3.f90 .. $(d1)s1.f90 $(d1)s2.f90 .. $(d2)t1.f90 ..
+# source1.o: source1.f90 source2.o .. $(d1)s1.o $(d1)s2.o .. $(d2)t1.o ..
+# source2.o: source2.f90 source3.o .. $(d1)s1.o $(d1)s2.o .. $(d2)t1.o ..
+# source3.o: source3.f90 .. $(d1)s1.o $(d1)s2.o .. $(d2)t1.o ..
 # ...
 # where the contents of the current directory (cwd), arg1, arg2 are
 #    cwd         arg1       arg2
@@ -36,10 +38,44 @@
 # To run this, it will be necessary to modify the first line of this script
 # to point to the actual location of Perl on your system.
 #
-# P.A. Wagner (October 31 2000)
-# (see mlsconfigure.sh for copyright statement)
+# -----------------------------------------------------------------------
+# Alternate Usages:
+# 	(2) f90makedep.pl -s pattern1 -o pattern2
+# Output:
+# (printed to stdout) (assume that pattern1 is "tex" and pattern2 is "dvi"
+# source1.dvi: source1.tex source2.tex .. $(d1)s1.tex $(d1)s2.tex .. $(d2)t1.tex ..
+# source2.dvi: source2.tex .. $(d1)s1.tex $(d1)s2.tex .. $(d2)t1.tex ..
+# ...
+# (currently this alternative only works for m4 files;
+#  a clever programmer could fix it to work for tex, too)
+# (also, this usage ignores any subsequent command line args: thus
+#   no additional directories)
 #
-# Based on f90mkmf from H. Pumphrey (check that this is true in fact)
+# 	(3) f90makedep.pl -p very_long_line -d delimiter -t term_char
+# Output: splits the very_long_line into 72-column long lines
+# (printed to stdout)
+#  
+# 	(4) f90makedep.pl -f file_name -d delimiter -t term_char -c comment_char
+#      reads each line of file_name
+# Output: splits any of its long lines into 72-column long lines
+# (except for comments)
+# (printed to stdout)
+#  
+# -----------------------------------------------------------------------
+#      Options
+# -s pattern        suffix to be matched by source files
+# -o pattern        suffix to be matched by object files
+# -p text           text to be split among several lines
+# -d char           delimiter between words of text
+# -t char           line termination at split
+# -f file_name      file containing text to be split
+# -c char           comment character
+#
+# P.A. Wagner (March 27 2002)
+# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+# however ..
+# based on f90mkmf from H. Pumphrey (check that this is true in fact)
 #
 # Based on Michael Wester <wester@math.unm.edu> February 16, 1995
 # Cotopaxi (Consulting), Albuquerque, New Mexico
@@ -48,11 +84,15 @@
 
 #         Settings which affect how the script operates
 #         * * * * * * * * * * * * * * * * * * * * * * * 
+# if TRUE, don't split long lines containing a quote mark "'"
+$DONT_SPLIT_QUOTES = TRUE;
+
 # if TRUE, include source file in list of dependencies
 $SELF_DEPENDS = TRUE;
 
 # if TRUE, include source files in directories named in arg list
 # in list of dependencies (if arguments not empty)
+# (only for usage (1) currently)
 $ARG_DEPENDS = TRUE;
 
 # if TRUE, for source files in directories named in arg list
@@ -60,17 +100,67 @@ $ARG_DEPENDS = TRUE;
 $dir1_PREPENDS = TRUE;
 
 #         * * * * * * * * * * * * * * * * * * * * * * * 
+# Check command-line args for options -s etc.
+$more_opts = TRUE;
+$source_ext = '';
+$obj_ext = '';
+$long_line = '';
+$long_file = '';
+$delimiter = ' ';
+$term_char = "\\";
+$comment_char = "#";
+while ($more_opts) {
+   if ($ARGV[0] =~ /^-s/) {
+      $source_ext = $ARGV[1];
+      shift;
+      shift;
+   } elsif ($ARGV[0] =~ /^-o/) {
+      $obj_ext = $ARGV[1];
+      shift;
+      shift;
+   } elsif ($ARGV[0] =~ /^-p/) {
+      $long_line = $ARGV[1];
+      shift;
+      shift;
+   } elsif ($ARGV[0] =~ /^-d/) {
+      $delimiter = $ARGV[1];
+      shift;
+      shift;
+   } elsif ($ARGV[0] =~ /^-f/) {
+      $long_file = $ARGV[1];
+      shift;
+      shift;
+   } elsif ($ARGV[0] =~ /^-c/) {
+      $comment_char = $ARGV[1];
+      shift;
+      shift;
+   } elsif ($ARGV[0] =~ /^-t/) {
+      $term_char = $ARGV[1];
+      shift;
+      shift;
+   } else {
+      $more_opts = 0;
+   }
+}
 # Fool the script into writing to stdout instead of an actual file
 open(MAKEFILE, ">-");
 # Dependency listings
 #
-&MakeDependsf90($ARGV[1]);
-# &MakeDepends("*.f *.F", '^\s*include\s+["\']([^"\']+)["\']');
-# &MakeDepends("*.c",     '^\s*#\s*include\s+["\']([^"\']+)["\']');
-
+if ($source_ext ne '') {
+#  note: the final argument in the subroutine call below works for m4 files only
+  &MakeDependsGeneral("*.$source_ext", "$obj_ext", '\!include\(([^)]+)');
+} elsif ($long_file ne '') {
+  &ReadAndSplit("$long_file", "$delimiter", "$term_char", "$comment_char");
+} elsif ($long_line ne '') {
+  &SplitAndPrint("$long_line", "$delimiter", "$term_char");
+} else {
+  &MakeDependsf90($ARGV[1]);
+  # &MakeDepends("*.f *.F", '^\s*include\s+["\']([^"\']+)["\']');
+  # &MakeDepends("*.c",     '^\s*#\s*include\s+["\']([^"\']+)["\']');
+}
 #
-# &PrintWords(current output column, extra tab?, word list); --- print words
-#    nicely
+# &PrintWords(current output column, extra tab?, word list);
+# --- print space-separated words nicely
 #
 sub PrintWords {
    local($columns) = 78 - shift(@_);
@@ -98,6 +188,34 @@ sub PrintWords {
             $columns = 70 - $wordlength;
             }
          }
+      }
+   }
+
+#
+# &PrintElements(current output column, delimiter, line term, element list);
+# --- print delimiter-separated words nicely, with line term at end of each line
+#
+sub PrintElements {
+   local($columns) = 78 - shift(@_);
+   local($delimiter) = shift(@_);
+   local($line_term) = shift(@_);
+   local($wordlength);
+   #
+   print MAKEFILE @_[0];
+   $columns -= length(shift(@_));
+   foreach $word (@_) {
+      $wordlength = length($word);
+      if ($wordlength + 1 < $columns) {
+         print MAKEFILE "$delimiter" . "$word";
+         $columns -= $wordlength + 1;
+         }
+      else {
+         #
+         # Continue onto a new line
+         #
+         print MAKEFILE "$delimiter" . "$line_term" . "\n\t$word";   
+         $columns = 70 - $wordlength;     
+         }                                
       }
    }
 
@@ -173,6 +291,78 @@ sub MakeDepends {
          undef @incs;
          }
       }
+   }
+
+#
+# &MakeDependsGeneral(source language pattern, object extension,
+#   include file sed pattern); --- dependency maker
+#
+sub MakeDependsGeneral {
+   local(@incs);
+   local($lang) = @_[0];
+   local($obj_ext) = @_[1];
+   local($pattern) = @_[2];
+   #
+   foreach $file (<${lang}>) {
+      open(FILE, $file) || warn "Cannot open $file: $!\n";
+      while (<FILE>) {
+         /$pattern/i && push(@incs, $1);
+         }
+      if (defined @incs || $SELF_DEPENDS) {
+         if ($SELF_DEPENDS) {
+		     @incs = reverse(@incs);
+           push(@incs, $file);
+		     @incs = reverse(@incs);
+         }
+         $file =~ s/\.[^.]+$/.$obj_ext/;
+         print MAKEFILE "$file: ";
+         &PrintWords(length($file) + 2, 0, @incs);
+         print MAKEFILE "\n";
+         undef @incs;
+         }
+      }
+   }
+
+#
+# &ReadAndSplit(file to print, delimiter, term char, comment char
+#
+sub ReadAndSplit {
+   local(@incs);
+   local($line);
+   local($file_name) = @_[0];
+   local($delimiter) = @_[1];
+   local($term_char) = @_[2];
+   local($comment_char) = @_[3];
+   #
+   open(LONGFILE, "$file_name");
+   while (<LONGFILE>) {
+      $line = $_;
+      if ($line =~ /^\s*$comment_char/) {
+         print MAKEFILE $line;
+      } elsif ($DONT_SPLIT_QUOTES && $line =~ /'/) {
+         print MAKEFILE $line;
+      } else {
+        chomp($line);
+        @incs = split("$delimiter","$line");
+        &PrintElements(0, "$delimiter", "$term_char", @incs); 
+        print MAKEFILE "\n";                                 
+      }
+   }
+   close LONGFILE;
+}
+
+#
+# &SplitAndPrint(line to print, delimiter, term char at end of each line
+#
+sub SplitAndPrint {
+   local(@incs);
+   local($line) = @_[0];
+   local($delimiter) = @_[1];
+   local($term_char) = @_[2];
+   #
+   @incs = split("$delimiter","$line");
+   &PrintElements(0, "$delimiter", "$term_char", @incs);      
+   print MAKEFILE "\n";                                      
    }
 
 #
@@ -255,10 +445,10 @@ sub MakeDependsf90 {
             }
          @dependencies = &uniq(sort(@dependencies));
          if ($SELF_DEPENDS) {
-#		@dependencies = reverse(push(reverse(@dependencies), $file));
-		@dependencies = reverse(@dependencies);
-               push(@dependencies, $file);
-		@dependencies = reverse(@dependencies);
+#		     @dependencies = reverse(push(reverse(@dependencies), $file));
+		     @dependencies = reverse(@dependencies);
+                    push(@dependencies, $file);
+		     @dependencies = reverse(@dependencies);
          }
          &PrintWords(length($objfile) + 2, 0,
                      @dependencies, &uniq(sort(@incs)));
@@ -269,6 +459,9 @@ sub MakeDependsf90 {
       }
    }
 # $Log$
+# Revision 1.2  2000/11/02 23:22:38  pwagner
+# Dependencies may cross directories
+#
 # Revision 1.1  2000/10/27 23:21:26  pwagner
 # First commit
 #
