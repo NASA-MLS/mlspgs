@@ -30,7 +30,7 @@ module RetrievalModule
     & F_quantity, F_regOrders, f_regQuants, &
     & F_regWeight, F_state, F_test, F_toleranceA, F_toleranceF, F_toleranceR, &
     & Field_first, Field_last, &
-    & L_apriori, L_covariance, L_newtonian, L_none, L_norm, L_pressure, &
+    & L_apriori, L_covariance, L_newtonian, L_none, L_norm, L_pressure, L_zeta, &
     & S_dumpBlocks, S_forwardModel, S_sids, S_matrix, S_subset, S_retrieve, &
     & S_time
   use Intrinsic, only: Field_indices, PHYQ_Dimensionless, &
@@ -1139,6 +1139,7 @@ contains
 
       ! Executable code
       nullify ( channels, qty, ptan )
+      got = .false.
       ignore = .false.
       do j = 2, nsons(key) ! fields of the "subset" specification
         son = subtree(j, key)
@@ -1214,15 +1215,15 @@ contains
               & 'Conflicting units for height' )
           endif
         end do
-      end if
-      if ( .not. any ( heightUnit == (/ phyq_pressure, phyq_length /) ) ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Height must be either length or pressure.' )
+        if ( .not. any ( heightUnit == (/ phyq_pressure, phyq_length /) ) ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Height must be either length or pressure.' )
 
-      ! Now one final check over all the things we've been asked to do.
-      if ( heightUnit == phyq_pressure .and. qty%template%minorFrame .and. &
-        & .not. got(f_ptanQuantity) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        ! Now one final check over all the things we've been asked to do.
+        if ( heightUnit == phyq_pressure .and. qty%template%minorFrame .and. &
+          & .not. got(f_ptanQuantity) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'must supply ptan for this subset if using pressure' )
+      end if
 
       if ( got(f_height) .and. ignore ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1238,7 +1239,7 @@ contains
           coordinate = qty%template%verticalCoordinate
         else if ( qty%template%minorFrame .and. heightUnit == phyq_pressure ) then
           theseHeights => ptan%values(:,instance)
-          coordinate = phyq_zeta
+          coordinate = l_zeta
         else
           theseHeights => qty%template%surfs(:,instance)
           coordinate = qty%template%verticalCoordinate
@@ -1264,12 +1265,12 @@ contains
           do j = 2, nsons(heightNode)
             call expr ( subtree(j,heightNode), units, value, type )
             ! Now maybe do something nasty to value to get in right units
-            if ( qty%template%verticalCoordinate == phyq_zeta &
-              & .and. coordinate == phyq_pressure ) then
+            if ( coordinate == l_zeta &
+              & .and. heightUnit == phyq_pressure ) then
               value = -log10(value)
-            else if ( coordinate /= qty%template%verticalCoordinate ) then
-              call MLSMessage ( MLSMSG_Error, ModuleName, &
-                & 'Inappropriate units for height in subset' )
+!             else if ( coordinate /= qty%template%verticalCoordinate ) then
+!               call MLSMessage ( MLSMSG_Error, ModuleName, &
+!                 & 'Inappropriate units for height in subset' )
             end if
             if ( qty%template%verticalCoordinate == l_pressure ) then
               s1 = minloc ( abs ( -log10(theseHeights) + log10(value(1)) ) )
@@ -1320,6 +1321,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.50  2001/06/27 04:31:29  livesey
+! Subset is getting closer bit by bit.
+!
 ! Revision 2.49  2001/06/27 04:05:32  livesey
 ! Interim version with known problems in subset
 !
