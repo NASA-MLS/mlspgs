@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -285,14 +285,12 @@ CONTAINS
 
     USE EngTbls, ONLY: EngPkt, EngMAF, Eng_tbl
     USE L0Utils, ONLY: ReadL0Eng
-    USE MLSL1Common, ONLY: L1BFileInfo
 
     !! Get the next MAF's engineering data
 
     LOGICAL, INTENT (OUT) :: more_data
 
     LOGICAL :: OK, GMAB_ON(4)
-    INTEGER :: ios
     INTEGER :: maskbit3, maskbit7
     DATA maskbit3 / z'8' /
     DATA maskbit7 / z'80' /
@@ -337,8 +335,8 @@ CONTAINS
 
        !! Write eng data to file:
 
-       WRITE (L1BFileInfo%EngId, iostat=ios) EngMAF%MAFno
-       WRITE (L1BFileInfo%EngId, iostat=ios) eng_tbl%value
+!!$       WRITE (L1BFileInfo%EngId, iostat=ios) EngPkt
+!!$       WRITE (L1BFileInfo%EngId, iostat=ios) eng_tbl%value
 
        !! Save the required data for later use:
 
@@ -363,6 +361,9 @@ END MODULE EngUtils
 !=============================================================================
 
 ! $Log$
+! Revision 2.6  2003/09/15 17:15:53  perun
+! Version 1.3 commit
+!
 ! Revision 2.5  2003/08/15 14:25:04  perun
 ! Version 1.2 commit
 !

@@ -12,7 +12,6 @@ MODULE OutputL1B_HDF5
   USE MLSCommon
   USE MLSL1Common, ONLY: L1BFileInfo_T
   USE MLSL1Config, ONLY: MIFsGHz, MIFsTHz
-  USE MLSL1Rad, ONLY: Radiance_T
   USE MLSSignalNomenclature, ONLY:GetFullMLSSignalName
 
   IMPLICIT NONE
@@ -69,7 +68,7 @@ CONTAINS
          lastIndex=noMAF)
     dataset%name      = 'noMIFs            '
     dataset%data_type = 'integer           '
-    CALL Build_MLSAuxData (sd_id,dataset, index%noMIFs,lastIndex=noMAF)
+    CALL Build_MLSAuxData (sd_id,dataset, index%noMIFs, lastIndex=noMAF)
     dataset%name      = 'counterMAF        '
     CALL Build_MLSAuxData (sd_id,dataset, index%counterMAF, lastIndex=noMAF)
 
@@ -271,7 +270,7 @@ CONTAINS
     dataset%data_type = 'real              '
     CALL Build_MLSAuxData (sd_id, dataset, tp%tpGeocLat, lastIndex=noMAF)
     dataset%name      = 'THz/GeocAltRate   '
-    CALL Build_MLSAuxData (sd_id, dataset, tp%tpGeocAltRate,lastIndex=noMAF)
+    CALL Build_MLSAuxData (sd_id, dataset, tp%tpGeocAltRate, lastIndex=noMAF)
     dataset%name      = 'THz/GeodAlt       '
     dataset%data_type = 'double            '
     CALL Build_MLSAuxData (sd_id, dataset, tp%tpGeodAlt, lastIndex=noMAF)
@@ -320,19 +319,37 @@ CONTAINS
     ! Arguments
 
     USE EngTbls, ONLY: Reflec_T
+    USE MLSL1Rad, ONLY: Radiance_T, Rad_Name
 
     TYPE (L1BFileInfo_T) :: sdId
     TYPE (Radiance_T) :: rad(:)
     TYPE (Reflec_T) :: Reflec
     INTEGER, INTENT(IN) :: counterMAF, noMAF
     REAL(r8), INTENT(IN) :: MAFStartTimeGIRD
+
     ! Variables
     TYPE( DataProducts_T ) :: dataset    
     CHARACTER (LEN=64) :: dim_chan, dim_mif, name, prec
     INTEGER, DIMENSION(3) :: dims
     INTEGER(HID_T) :: sd_id
     INTEGER :: i, status
-! Find the sds_id number for counterMAF in the file RADF, write the data to it,
+
+! For use in determining filling missing radiance records
+
+    INTEGER, PARAMETER :: max_rad_nos = SIZE (Rad_Name)
+    INTEGER, SAVE :: rad_sdid(max_rad_nos) = -999
+    INTEGER, SAVE :: rad_dim1(max_rad_nos) = 0
+    INTEGER, SAVE :: rad_dim2(max_rad_nos) = 0
+    LOGICAL, SAVE :: rad_out(max_rad_nos) = .FALSE. ! whether rad has output
+    LOGICAL, SAVE :: fill_last(max_rad_nos)   ! whether to fill last record
+    CHARACTER(len=10), SAVE :: rad_chan(max_rad_nos) = " "
+    CHARACTER(len=10), SAVE :: rad_mif(max_rad_nos) = " "
+
+    REAL, PARAMETER :: RAD_FILL = -999.9, RAD_ERR_FILL = -1.0
+    REAL, PARAMETER :: RAD_FILL_ARR(129,148) = RAD_FILL
+    REAL, PARAMETER :: RAD_ERR_FILL_ARR(129,148) = RAD_ERR_FILL
+
+! Find the sds_id number for counterMAF in the file RADG, write the data to it,
 ! terminate access to the data set
 !------------------------------------------------------------------------------
     CALL Deallocate_DataProducts (dataset)
@@ -342,13 +359,10 @@ CONTAINS
     dataset%data_type = 'integer           '
     dataset%Dimensions(1) = 'MAF'
     IF (sdId%RADDID /= 0) THEN
-       CALL Build_MLSAuxData (sdId%RADDID, dataset, counterMAF, &
-            lastIndex=noMAF)
-       CALL Build_MLSAuxData (sdId%RADFID, dataset, counterMAF, &
-            lastIndex=noMAF)
+       CALL Build_MLSAuxData (sdId%RADDID, dataset, counterMAF, lastIndex=noMAF)
+       CALL Build_MLSAuxData (sdId%RADGID, dataset, counterMAF, lastIndex=noMAF)
     ELSE
-       CALL Build_MLSAuxData (sdId%RADTID, dataset, counterMAF, &
-            lastIndex=noMAF)
+       CALL Build_MLSAuxData (sdId%RADTID, dataset, counterMAF, lastIndex=noMAF)
     ENDIF
 
 !------------------------------------------------------------------------------
@@ -359,7 +373,7 @@ CONTAINS
     IF (sdId%RADDID /= 0) THEN
        CALL Build_MLSAuxData (sdId%RADDID, dataset, MAFStartTimeGIRD, &
             lastIndex=noMAF)
-       CALL Build_MLSAuxData (sdId%RADFID, dataset, MAFStartTimeGIRD, &
+       CALL Build_MLSAuxData (sdId%RADGID, dataset, MAFStartTimeGIRD, &
             lastIndex=noMAF)
     ELSE
        CALL Build_MLSAuxData (sdId%RADTID, dataset, MAFStartTimeGIRD, &
@@ -372,59 +386,62 @@ CONTAINS
     dataset%name      = 'Pri_Reflec        '
     IF (sdId%RADDID /= 0) THEN
        CALL Build_MLSAuxData (sdId%RADDID, dataset, Reflec%Pri, lastIndex=noMAF)
-       CALL Build_MLSAuxData (sdId%RADFID, dataset, Reflec%Pri, lastIndex=noMAF)
+       CALL Build_MLSAuxData (sdId%RADGID, dataset, Reflec%Pri, lastIndex=noMAF)
     ENDIF
     dataset%name      = 'Sec_Reflec        '
     IF (sdId%RADDID /= 0) THEN
        CALL Build_MLSAuxData (sdId%RADDID, dataset, Reflec%Sec, lastIndex=noMAF)
-       CALL Build_MLSAuxData (sdId%RADFID, dataset, Reflec%Sec, lastIndex=noMAF)
+       CALL Build_MLSAuxData (sdId%RADGID, dataset, Reflec%Sec, lastIndex=noMAF)
     ENDIF
     dataset%name      = 'Ter_Reflec        '
     IF (sdId%RADDID /= 0) THEN
        CALL Build_MLSAuxData (sdId%RADDID, dataset, Reflec%Ter, lastIndex=noMAF)
-       CALL Build_MLSAuxData (sdId%RADFID, dataset, Reflec%Ter, lastIndex=noMAF)
+       CALL Build_MLSAuxData (sdId%RADGID, dataset, Reflec%Ter, lastIndex=noMAF)
     ENDIF
 
     DEALLOCATE (dataset%Dimensions, stat=status)
 
 ! Prepare for radiance output
 
+    fill_last = .TRUE.   ! will fill last record unless good data
+
     ALLOCATE (dataset%Dimensions(3), stat=status)
     dataset%data_type = 'real'
     dataset%Dimensions(3) = 'MAF                 '
 
 !------------------------------------------------------------------------------
-    DO i = 1, SIZE(rad) ! Loop on number of SDs per MAF
+    DO i = 1, SIZE (rad) ! Loop on number of SDs per MAF
 
        CALL GetFullMLSSignalName(rad(i)%signal, name) ! Concatenate SD names
        prec = TRIM(name) // ' precision'
        ! Set parameters based on input data dimensions
        ! Based on the SD name, set dim name for channel, get Id of output file
-       IF (INDEX(name,'FB') /= 0 ) THEN
+       IF (INDEX(name, 'FB') /= 0 ) THEN
           dim_chan = 'chanFB              '
-          IF (sdId%RADFID /= 0) THEN
-             sd_id = sdId%RADFID
+          IF (sdId%RADGID /= 0) THEN
+             sd_id = sdId%RADGID
           ELSE
              sd_id = sdId%RADTID
           ENDIF
-       ELSE IF (INDEX(name,'MB') /= 0 ) THEN
+       ELSE IF (INDEX(name, 'MB') /= 0 ) THEN
           dim_chan = 'chanMB              '
-          sd_id = sdId%RADFID
-       ELSE IF (INDEX(name,'WF') /= 0 ) THEN
+          sd_id = sdId%RADGID
+       ELSE IF (INDEX(name, 'WF') /= 0 ) THEN
           dim_chan = 'chanWF              '
-          sd_id = sdId%RADFID
-       ELSE IF (INDEX(name,'DACS') /= 0 ) THEN
+          sd_id = sdId%RADGID
+       ELSE IF (INDEX(name, 'DACS') /= 0 ) THEN
           dim_chan = 'chanDACS            '
           sd_id = sdId%RADDID
        ELSE
           dim_chan = ''
           sd_id = -999
        ENDIF
+
        IF ((ANY(rad(i)%value /= 0.0)) .AND. (sd_id /= -999)) THEN   
           ! if good radiance data exists 
           ! Create/Open the value SDs
-          dims(1) = SIZE(rad(i)%value,1)
-          dims(2) = SIZE(rad(i)%value,2)
+          dims(1) = SIZE (rad(i)%value,1)
+          dims(2) = SIZE (rad(i)%value,2)
           dims(3) = 1
           IF (INDEX(name,'R5') /= 0 ) THEN
              dim_mif = 'THz.MIF              '
@@ -434,18 +451,50 @@ CONTAINS
              dims(2) = MIFsGHz      !! lenG
           ENDIF
 !------------------------------------------------Create/Open the value datasets
-          dataset%name = TRIM(name)
           dataset%Dimensions(1) = dim_chan
           dataset%Dimensions(2) = dim_mif
+          dataset%name = TRIM(name)
           CALL Build_MLSAuxData (sd_id, dataset, rad(i)%value, &
-               lastIndex=noMAF, dims=dims)
+               lastIndex=noMAF, dims=dims, fill_value=RAD_FILL)
 
 !------------------------------------------ Create/Open the precision datasets
 
           dataset%name = TRIM(prec)
           CALL Build_MLSAuxData (sd_id, dataset, rad(i)%precision, &
-               lastIndex=noMAF, dims=dims)
+               lastIndex=noMAF, dims=dims, fill_value=RAD_ERR_FILL)
 !-----------------------------------------------------------------------------
+
+
+! Save matching table entries
+
+          WHERE (name == Rad_Name)
+             rad_out = .TRUE.
+             fill_last = .FALSE.
+             rad_dim1 = dims(1)
+             rad_dim2 = dims(2)
+             rad_chan = dim_chan
+             rad_mif = dim_mif
+             rad_sdid = sd_id
+          ENDWHERE
+
+       ENDIF
+    ENDDO
+
+! Determine filling the radiance file record:
+
+    DO i = 1, max_rad_nos
+       IF (rad_out(i) .AND. fill_last(i)) THEN
+          dataset%Dimensions(1) = rad_chan(i)
+          dataset%Dimensions(2) = rad_mif(i)
+          dataset%name = TRIM(Rad_Name(i))
+          dims(1) = rad_dim1(i)
+          dims(2) = rad_dim2(i)
+          dims(3) = 1
+          CALL Build_MLSAuxData (rad_sdid(i), dataset, RAD_FILL_ARR, &
+               lastIndex=noMAF, dims=dims, fill_value=RAD_FILL)
+          dataset%name = TRIM(Rad_Name(i))// ' precision'
+          CALL Build_MLSAuxData (rad_sdid(i), dataset, RAD_ERR_FILL_ARR, &
+               lastIndex=noMAF, dims=dims, fill_value=RAD_ERR_FILL)
        ENDIF
     ENDDO
 
@@ -456,6 +505,9 @@ CONTAINS
 END MODULE OutputL1B_HDF5
 
 ! $Log$
+! Revision 2.6  2003/09/15 17:15:54  perun
+! Version 1.3 commit
+!
 ! Revision 2.5  2003/08/15 14:25:04  perun
 ! Version 1.2 commit
 !

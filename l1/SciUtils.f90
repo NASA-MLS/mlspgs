@@ -34,6 +34,7 @@ MODULE SciUtils ! L0 science utilities
 !=============================================================================
 
     USE ERMSG_M, ONLY: ermset
+    USE THzUtils, ONLY: ConvertLLO
 
     LOGICAL OK
 
@@ -108,27 +109,28 @@ MODULE SciUtils ! L0 science utilities
     DN = sci_cptr(tindex)%THz_sw
     IF (DN(1:1) /= sw_good) DN = DN(4:)   ! shift and try
     IF (DN(1:1) == sw_good) THEN
-       Sci_pkt%TSE_pos(1)  = deg24 * BigEndianStr (DN(3:5))
-       Sci_pkt%TSE_pos(2)  = deg24 * BigEndianStr (DN(6:8))
+       Sci_pkt%TSSA_pos(1)  = deg24 * BigEndianStr (DN(3:5))
+       Sci_pkt%TSSA_pos(2)  = deg24 * BigEndianStr (DN(6:8))
     ELSE
-       Sci_pkt%TSE_pos(:) = QNan()
+       Sci_pkt%TSSA_pos(:) = QNan()
     ENDIF
-    Sci_pkt%THz_sw_pos = SwMirPos ("T", Sci_pkt%TSE_pos)
+    Sci_pkt%THz_sw_pos = SwMirPos ("T", Sci_pkt%TSSA_pos)
 
     DN = sci_cptr(tindex)%GHz_sw
     IF (DN(1:1) == sw_good) THEN
-       Sci_pkt%GME_pos(1)  = deg24 * BigEndianStr (DN(3:5))
-       Sci_pkt%GME_pos(2)  = deg24 * BigEndianStr (DN(6:8))
+       Sci_pkt%GSA_pos(1)  = deg24 * BigEndianStr (DN(3:5))
+       Sci_pkt%GSA_pos(2)  = deg24 * BigEndianStr (DN(6:8))
     ELSE
-       Sci_pkt%GME_pos(:) = QNan()
+       Sci_pkt%GSA_pos(:) = QNan()
     ENDIF
-    Sci_pkt%GHz_sw_pos = SwMirPos ("G", Sci_pkt%GME_pos)
+    Sci_pkt%GHz_sw_pos = SwMirPos ("G", Sci_pkt%GSA_pos)
 
 !! Get GHz scanning angles
 
     Sci_pkt%APE_pos(:) = QNan()
+    Sci_pkt%ASA_pos(:) = QNan()
     DN = sci_cptr(tindex)%GHz_ant_scan
-    CALL GetAPE_pos (DN, Sci_pkt%APE_pos)
+    CALL Get_APE_ASA_pos (DN, Sci_pkt%APE_pos, Sci_pkt%ASA_pos)
 
 !! Filter bank switches
 
@@ -161,7 +163,14 @@ MODULE SciUtils ! L0 science utilities
 !! LLO data
 
     Sci_pkt%LLO_DN = sci_cptr(tindex)%LLO_DN
-!print '(16(1x,Z2.2))', ICHAR(Sci_pkt%LLO_data(1:16))
+
+    CALL ConvertLLO (Sci_pkt%LLO_DN, Sci_pkt%LLO_EU)
+
+!! PLL data
+
+    CALL Get_PLL_DN (scipkt, sci_type, Sci_pkt%PLL_DN)
+
+!! FB data
 
     DO i = 1, FBnum
        CALL ExtractBigEndians (sci_cptr(tindex)%FB(i)%ptr, FBcnts)
@@ -294,26 +303,26 @@ MODULE SciUtils ! L0 science utilities
 ! Shift mechanism encoder readings to corresponding MIF
 
           IF (Sci_pkt%MIFno > 0) THEN
-             SciMAF(Sci_pkt%MIFno-1)%GME_pos = &
-                  SciMAF(Sci_pkt%MIFno)%GME_pos
-             SciMAF(Sci_pkt%MIFno)%GME_pos = 0.0
+             SciMAF(Sci_pkt%MIFno-1)%GSA_pos = &
+                  SciMAF(Sci_pkt%MIFno)%GSA_pos
+             SciMAF(Sci_pkt%MIFno)%GSA_pos = QNan()
              SciMAF(Sci_pkt%MIFno-1)%APE_pos(2) = &
                   SciMAF(Sci_pkt%MIFno)%APE_pos(2)
-             SciMAF(Sci_pkt%MIFno)%APE_pos(2) = 0.0
-             SciMAF(Sci_pkt%MIFno-1)%ASE_pos(2) = &
-                  SciMAF(Sci_pkt%MIFno)%ASE_pos(2)
-             SciMAF(Sci_pkt%MIFno)%ASE_pos(2) = 0.0
+             SciMAF(Sci_pkt%MIFno)%APE_pos(2) = QNan()
+             SciMAF(Sci_pkt%MIFno-1)%ASA_pos(2) = &
+                  SciMAF(Sci_pkt%MIFno)%ASA_pos(2)
+             SciMAF(Sci_pkt%MIFno)%ASA_pos(2) = QNan()
              SciMAF(Sci_pkt%MIFno-1)%GHz_sw_pos = &
                   SciMAF(Sci_pkt%MIFno)%GHz_sw_pos
              SciMAF(Sci_pkt%MIFno)%GHz_sw_pos = "D"
-             SciMAF(Sci_pkt%MIFno-1)%TSE_pos = &
-                  SciMAF(Sci_pkt%MIFno)%TSE_pos
-             SciMAF(Sci_pkt%MIFno)%TSE_pos = 0.0
+             SciMAF(Sci_pkt%MIFno-1)%TSSA_pos = &
+                  SciMAF(Sci_pkt%MIFno)%TSSA_pos
+             SciMAF(Sci_pkt%MIFno)%TSSA_pos = QNan()
 
              IF (L1ProgType == THzType) THEN            ! THz if needed
-                THzSciMAF(Sci_pkt%MIFno-1)%TSE_pos = &
-                     THzSciMAF(Sci_pkt%MIFno)%TSE_pos
-                THzSciMAF(Sci_pkt%MIFno)%TSE_pos = 0.0
+                THzSciMAF(Sci_pkt%MIFno-1)%TSSA_pos = &
+                     THzSciMAF(Sci_pkt%MIFno)%TSSA_pos
+                THzSciMAF(Sci_pkt%MIFno)%TSSA_pos = QNan()
                 THzSciMAF(Sci_pkt%MIFno-1)%SwMirPos = &
                      THzSciMAF(Sci_pkt%MIFno)%SwMirPos
                 THzSciMAF(Sci_pkt%MIFno)%SwMirPos = "D"
@@ -324,9 +333,11 @@ MODULE SciUtils ! L0 science utilities
           IF (Sci_pkt%MIFno > 1) THEN
              SciMAF(Sci_pkt%MIFno-2)%APE_pos(1) = &
                   SciMAF(Sci_pkt%MIFno)%APE_pos(1)
-             SciMAF(Sci_pkt%MIFno-2)%ASE_pos(1) = &
-                  SciMAF(Sci_pkt%MIFno)%ASE_pos(1)
-          ENDIF
+             SciMAF(Sci_pkt%MIFno)%APE_pos(1) = QNan()
+             SciMAF(Sci_pkt%MIFno-2)%ASA_pos(1) = &
+                  SciMAF(Sci_pkt%MIFno)%ASA_pos(1)
+             SciMAF(Sci_pkt%MIFno)%ASA_pos(1) = QNan()
+           ENDIF
 
           prev_MAF = Sci_pkt%MAFno
 
@@ -345,7 +356,7 @@ MODULE SciUtils ! L0 science utilities
     IF (L1ProgType == THzType) THEN
        DO i = 1, (MaxMIFs - 1)
           IF (THzSciMAF(i)%SwMirPos /= "D") THEN
-             pos1(1) = THzSciMAF(i-1)%TSE_pos(1)  ! previous pos1
+             pos1(1) = THzSciMAF(i-1)%TSSA_pos(1)  ! previous pos1
              pos1(2) = pos1(1)   ! need 2 angles to figure sw mir pos
              IF (Finite (pos1(1))) THEN
                 mir_pos = SwMirPos ("T", pos1)
@@ -429,7 +440,7 @@ MODULE SciUtils ! L0 science utilities
        ELSE
           APE = SciMAF(i)%APE_pos(2)
           IF (EngMAF%ASE_Side == "B") APE = APE - APE_B_A  ! Adjust for "B" side
-          TSE = SciMAF(i)%TSE_pos(2)
+          TSE = SciMAF(i)%TSSA_pos(2)
        ENDIF
        IF (APE >= 0.0) THEN
           SciMAF(i)%scAngleG = MOD ((APE + APE_eps), 360.0)
@@ -446,15 +457,14 @@ MODULE SciUtils ! L0 science utilities
   END SUBROUTINE GetScAngles
 
 !=============================================================================
-  SUBROUTINE GetAPE_pos (DN, pos)
+  SUBROUTINE Get_APE_ASA_pos (DN, APE_pos, ASA_pos)
 !=============================================================================
 
     CHARACTER (LEN=24) :: DN
-    REAL :: pos(2)
+    REAL :: APE_pos(2), ASA_pos(2)
 
-    INTEGER :: iape
-
-    iape = 0   ! indicate not yet available
+    INTEGER :: iape, iasa
+    REAL, PARAMETER :: aaa_frac = 3706880.0
 
 ! Check for leading commands:
 
@@ -467,7 +477,9 @@ MODULE SciUtils ! L0 science utilities
 
     END SELECT
 
-    IF (DN(1:1) /= CHAR(7) .AND. DN(1:1) /= CHAR(9)) DN = DN(4:)
+    IF (DN(1:1) /= CHAR(7) .AND. DN(1:1) /= CHAR(9)) DN = DN(4:)  ! shift
+
+    iape = 0   ! indicate not yet available
 
     IF (DN(1:1) == CHAR(9)) THEN
        iape = 3
@@ -476,11 +488,62 @@ MODULE SciUtils ! L0 science utilities
     ENDIF
 
     IF (iape > 0) THEN
-       pos(1)  = deg24 * BigEndianStr (DN(iape:iape+2))
-       pos(2)  = deg24 * BigEndianStr (DN(iape+3:iape+5))
+       APE_pos(1)  = deg24 * BigEndianStr (DN(iape:iape+2))
+       APE_pos(2)  = deg24 * BigEndianStr (DN(iape+3:iape+5))
     ENDIF
 
-  END SUBROUTINE GetAPE_pos
+    iasa = 0   ! indicate not yet available
+
+    IF (DN(1:1) == CHAR(7)) THEN
+       iasa = 3
+    ELSE IF (DN(10:10) == CHAR(7)) THEN
+       iasa = 12
+    ENDIF
+
+    IF (iasa > 0) THEN
+       ASA_pos(1)  = BigEndianStr (DN(iasa:iasa+2)) / aaa_frac
+       ASA_pos(2)  = BigEndianStr (DN(iasa+3:iasa+5)) / aaa_frac
+    ENDIF
+
+  END SUBROUTINE Get_APE_ASA_pos
+
+!=============================================================================
+  SUBROUTINE Get_PLL_DN (scipkt, sci_type, DN)
+!=============================================================================
+
+    CHARACTER (LEN=*), DIMENSION(:) :: scipkt
+    CHARACTER (LEN=*) :: DN
+    INTEGER :: sci_type
+
+    IF (sci_type == 1) THEN
+       DN(1:54) = scipkt(1)(601:654)
+       DN(55:56) = scipkt(2)(941:942)
+       DN(57:58) = scipkt(1)(123:124)       ! SM01
+       DN(59:60) = scipkt(1)(225:226)       ! SM02
+       DN(61:62) = scipkt(1)(499:500)       ! SM05
+       DN(63:64) = scipkt(2)(95:96)         ! SM07
+       DN(65:66) = scipkt(2)(169:170)       ! SM08
+       DN(67:68) = scipkt(2)(315:316)       ! SM10
+       DN(69:69)    = scipkt(1)(973:973)    ! DAC1
+       DN(70:70)    = scipkt(2)(835:835)    ! DAC2
+    ELSE
+       DN(1:54) = scipkt(1)(527:580)
+       DN(55:56) = scipkt(2)(956:957)
+       DN(57:58) = scipkt(1)(123:124)       ! SM01
+       DN(59:60) = scipkt(1)(225:226)       ! SM02
+       DN(61:62) = scipkt(2)(95:96)         ! SM05
+       DN(63:64) = scipkt(2)(169:170)       ! SM07
+       DN(65:66) = scipkt(2)(243:244)       ! SM08
+       DN(67:68) = scipkt(2)(389:390)       ! SM10
+       DN(69:70) = CHAR(0)//CHAR(0)         ! clear DACs
+       IF (sci_type == 3) THEN
+          DN(69:69)    = scipkt(1)(983:983) ! DAC1
+       ELSE
+          DN(70:70)    = scipkt(1)(983:983) ! DAC2
+       ENDIF
+    ENDIF
+
+  END SUBROUTINE Get_PLL_DN
 
 !=============================================================================
   SUBROUTINE Band_switch (switch, sw_val, band)
@@ -509,7 +572,7 @@ MODULE SciUtils ! L0 science utilities
 
     IF (sw_val == FF) THEN  ! in process of changing
        band = -1
-       print *, 'switching bands for switch ', switch
+       PRINT *, 'switching bands for switch ', switch
        RETURN
     ENDIF
 
@@ -550,7 +613,7 @@ MODULE SciUtils ! L0 science utilities
     THz_Sci_pkt%FB(:,6) = Sci_pkt%FB(:,12)
     IF (ANY (THz_Sci_pkt%FB(:,6) > 0)) THz_Sci_pkt%FB(:,6) = &
          THz_Sci_pkt%FB(:,6) - Deflt_zero%FB(:,12)
-    THz_Sci_pkt%TSE_pos = Sci_pkt%TSE_pos
+    THz_Sci_pkt%TSSA_pos = Sci_pkt%TSSA_pos
     THz_Sci_pkt%SwMirPos = Sci_pkt%THz_sw_pos
     THz_Sci_pkt%LLO_bias = LLO_Bias (Sci_pkt%LLO_DN, Sci_pkt%MIFno)
     THz_Sci_pkt%BandSwitch = Sci_pkt%BandSwitch(4:5)  !Only need sw #4 & #5
@@ -561,6 +624,9 @@ MODULE SciUtils ! L0 science utilities
 END MODULE SciUtils
 
 ! $Log$
+! Revision 2.6  2003/09/15 17:15:54  perun
+! Version 1.3 commit
+!
 ! Revision 2.5  2003/08/15 14:25:04  perun
 ! Version 1.2 commit
 !
@@ -571,6 +637,9 @@ END MODULE SciUtils
 ! moved parameter statement to data statement for LF/NAG compatitibility
 !
 ! $Log$
+! Revision 2.6  2003/09/15 17:15:54  perun
+! Version 1.3 commit
+!
 ! Revision 2.5  2003/08/15 14:25:04  perun
 ! Version 1.2 commit
 !
