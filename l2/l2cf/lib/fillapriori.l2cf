@@ -237,6 +237,11 @@ begin Fill
     explicitValues=5K, /spread !nl})
   !forall({fillBaselineMIFApriori},!allRadiometers)
 
+  !define(fillBaselineGroupApriori,{
+  Fill, quantity=aprioriPrecision.baselineR4Group$1, method=explicit, $
+    explicitValues=5K, /spread !nl})
+  !forall({fillBaselineGroupApriori},1,2,3)
+
   ;; --------------------------------------- Bounds for species
 
   Fill, quantity=lowBound.ptanGHz, method=explicit, explicitValues= -20, /spread
