@@ -201,14 +201,14 @@ contains ! =====     Public Procedures     =============================
           l2Index = AddGridTemplateToDatabase( aprioriData, GriddedData )
           call decorate ( key, l2Index )
           CALL ReadGriddedData(FileNameString, &
-            & aprioriData(l2Index), 'Some_field_name')
+            & aprioriData(l2Index), 'XDim,YDim,Height,TIME', 'Some_field_name')
           
         case ( l_dao )
           
           l2Index = AddGridTemplateToDatabase( aprioriData, GriddedData )
           call decorate ( key, l2Index )
           CALL ReadGriddedData(FileNameString, &
-            & aprioriData(l2Index), 'Some_field_name')
+            & aprioriData(l2Index), fieldName = 'Some_field_name')
           
         case ( l_climatology )
           
@@ -232,6 +232,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.5  2001/03/08 01:08:08  pwagner
+! Interfaces with ReadGriddedData
+!
 ! Revision 2.4  2001/03/07 22:41:44  livesey
 ! Reworked the l2cf aspects
 !
