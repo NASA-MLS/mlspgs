@@ -390,20 +390,16 @@ contains
       mid, ilo, ihi, k_info_count, ld, &
       max_phi_dim, max_zeta_dim
 
-    real(r4) :: K_TEMP(25,Nptg,mxco,mnp)
-    real(r4) :: K_ATMOS(25,Nptg,mxco,mnp,Nsps)
-
     real(r8) :: I_STAR_ALL(25,Nptg)
-
     real(r4) :: K_STAR_ALL(25,20,mxco,mnp,Nptg)
     type(k_matrix_info) :: k_star_info(20)
+
 
     type(path_derivative) :: k_temp_frq
     type(path_derivative), allocatable, dimension(:) :: k_atmos_frq
 
     type(path_beta), dimension(:,:), pointer :: beta_path => null()
 
-    real(r8) :: Radiances(Nptg,25)
     real(r8) :: Zeta, Frq, h_tan, Rad, geod_lat, phi_tan, r
 
     Real(r8), DIMENSION(:), ALLOCATABLE :: dum
@@ -434,6 +430,7 @@ contains
     integer :: MIF                      ! Loop counter
     integer :: CHANNEL                  ! Loop counter
     integer :: MAXNOFREQS               ! Used for sizing arrays
+    integer :: MAXNOFSURFS              ! Max. no. surfaces for any molecule
     integer :: MAXPATH                  ! Number of points on longest path
     integer :: NLVL                     ! Size of tangent grid
     integer :: N2LVL                    ! Twice size of tangent grid
@@ -442,10 +439,13 @@ contains
     integer :: NOMAFS                   ! Number of major frames
     integer :: NOSPECIES                ! Number of molecules we're considering
     integer :: NAMELEN                  ! Length of string
+    integer :: PHIWINDOW                ! Copy of forward model config%phiWindow
     integer :: SPECIE                   ! Loop counter
     integer :: SURFACE                  ! Loop counter
     integer :: STATUS                   ! From allocates etc.
     integer :: INSTANCE                 ! Loop counter
+    integer :: WINDOWFINISH             ! Range of window
+    integer :: WINDOWSTART              ! Range of window
 
     real (r8) :: CENTERFREQ             ! Of band
     real (r8) :: CENTER_ANGLE            ! For angles
@@ -463,6 +463,10 @@ contains
     real(r8), dimension(:,:),   pointer :: REF_CORR=>NULL() ! (n2lvl, no_tan_hts)
     real(r8), dimension(:),     pointer :: TAU=>NULL() ! (n2lvl)
     real(r8), dimension(:),     pointer :: PTG_ANGLES=>NULL() ! (no_tan_hts)
+    
+    real(r4), dimension(:,:,:,:), pointer :: K_TEMP=>NULL() ! (channel,Nptg,mxco,mnp)
+    real(r4), dimension(:,:,:,:,:), pointer :: K_ATMOS=>NULL() ! (channel,Nptg,mxco,mnp,Nsps)
+    real(r8), dimension(:,:), pointer :: Radiances=>NULL() ! (Nptg,25)
 
     integer, pointer, dimension(:) :: GRIDS=>NULL()    ! Frq grid for each tan_press
 
@@ -535,6 +539,13 @@ contains
     noSpecies = size(forwardModelConfig%molecules)
     !  Create a subset of the catalog composed only of those molecules to be
     !  used for this run
+    
+    maxNoFSurfs = 0
+    do specie = 1, noSpecies
+      f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+        &     quantityType=l_vmr, molecule=forwardModelConfig%molecules(specie))
+      maxNoFSurfs = max(maxNoFSurfs, f%template%noSurfs)
+    end do
 
     ALLOCATE(My_Catalog(noSpecies),STAT=ier)
     if (ier /= 0) call MLSMessage(MLSMSG_Error, ModuleName, &
@@ -587,6 +598,11 @@ contains
 
     ! Get some dimensions which we'll use a lot
     noMAFs = radiance%template%noInstances
+    no_tan_hts = ForwardModelConfig%TangentGrid%nosurfs
+    maxPath = 2 * (NG+1) * size(ForwardModelConfig%integrationGrid%surfs)
+    nlvl=size(ForwardModelConfig%integrationGrid%surfs)
+    n2lvl=2*nlvl
+    phiWindow = ForwardModelConfig%phiWindow
 
     ! Work out which channels are used
     call allocate_test (channelIndex, size(signal%frequencies), 'channelIndex', ModuleName)
@@ -597,12 +613,6 @@ contains
     end do
     usedChannels = pack ( channelIndex, signal%channels )
     call deallocate_test(channelIndex,'channelIndex',ModuleName)
-
-    ! Setup various array dimensions
-    no_tan_hts = ForwardModelConfig%TangentGrid%nosurfs
-    maxPath = 2 * (NG+1) * size(ForwardModelConfig%integrationGrid%surfs)
-    nlvl=size(ForwardModelConfig%integrationGrid%surfs)
-    n2lvl=2*nlvl
 
     if (fmStat%newHydros) then
 
@@ -677,8 +687,6 @@ contains
         &  ifm%gl_count, Ier)
       if(ier /= 0) goto 99
 
-      ! phi_window = ForwardModelConfig%phiWindow
-
       ! Now compute stuff along the path given this hydrostatic grid.
       call comp_path_entities(ForwardModelConfig%integrationGrid%noSurfs, &
         &  temp%template%noSurfs,ifm%gl_count,ifm%ndx_path,ifm%z_glgrid,ifm%t_glgrid,&
@@ -712,6 +720,9 @@ contains
     call allocate_test(d2x_dxdt, No_tan_hts, temp%template%noSurfs, &
       & 'd2x_dxdt', ModuleName)
 
+    call allocate_test(radiances, no_tan_hts, noUsedChannels, &
+      & 'Radiances', ModuleName)
+
     ! The first part of the forward model dealt with the chunks as a whole.
     ! This next part is more complex, and is performed within a global outer
     ! loop over major frame (maf)
@@ -731,6 +742,20 @@ contains
 
     maf=fmStat%maf
     print*,'Doing maf:',maf
+
+    ! Now work out what `window' we're inside.  This will need to be changed
+    ! a bit in later versions to avoid the noMAFS==noTemp/f instances assertion
+    windowStart = max(1,maf-phiWindow/2)
+    windowFinish = min(maf+phiWindow/2, temp%template%noInstances)
+
+    allocate (k_temp(noUsedChannels, no_tan_hts, temp%template%noSurfs, &
+      & windowStart:windowFinish), STAT=status)
+    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+      & MLSMSG_Allocate//'k_temp')
+    allocate (k_atmos(noUsedChannels, no_tan_hts, maxNoFSurfs, &
+      & windowStart:windowFinish, noSpecies), STAT=status)
+    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+      & MLSMSG_Allocate//'k_atmos')
 
     ! Compute the specie function (spsfunc) and the refraction along
     ! all the paths for the current maf
@@ -801,11 +826,11 @@ contains
     end do
 
     ! Now allocate arrays this size
-
-    if ( forwardModelConfig%temp_der ) then
-      call Allocate_Test(k_temp_frq%values, maxNoFreqs, &
-        &   temp%template%noSurfs, temp%template%noInstances, &
-        &   'k_temp_frq', ModuleName)
+    if ( forwardModelConfig%temp_der ) then 
+      allocate ( k_temp_frq%values( maxNoFreqs, temp%template%noSurfs, &
+        & windowStart:windowFinish), STAT=status)
+      if (status/=0) call MLSMessage(MLSMSG_Error,ModuleName,&
+        & MLSMSG_Allocate//'k_temp_frq')
     end if
 
     call Allocate_Test(radV,maxNoFreqs, 'radV', ModuleName)
@@ -816,11 +841,12 @@ contains
 
       ! Allocate intermediate space for vmr derivatives
       if ( forwardModelConfig%moleculeDerivatives(specie) ) then
-        call Allocate_Test( k_atmos_frq(specie)%values, &
-          & maxNoFreqs, f%template%noSurfs, f%template%noInstances, &
-          & 'k_atmos_frq(..)', ModuleName )
+        allocate ( k_atmos_frq(specie)%values( maxNoFreqs, f%template%noSurfs, &
+          & windowStart:windowFinish), STAT=status)
+        if (status/=0) call MLSMessage(MLSMSG_Error,ModuleName,&
+          & MLSMSG_Allocate//'k_atmos_frq')
       end if
-
+      
     end do ! End loop over speices
 
     ! Now we can go ahead and loop over pointings
@@ -929,7 +955,8 @@ contains
         if ( forwardModelConfig%do_freq_avg) then
           do i = 1, noUsedChannels
             ch = usedChannels(i)
-            do instance = 1, temp%template%noInstances
+            do instance = lbound(k_temp_frq%values,3), &
+              & ubound(k_temp_frq%values,3)
               do surface = 1, temp%template%noSurfs
                 ToAvg => k_temp_frq%values(1:noFreqs,surface,instance)
                 call Freq_Avg(frequencies,                        &
@@ -942,8 +969,8 @@ contains
           end do                      ! Channel loop
         else
           do i = 1, noUsedChannels
-            k_temp(i,ptg_i,1:temp%template%noSurfs,1:temp%template%noInstances) = &
-              &  k_temp_frq%values(1,1:temp%template%noSurfs,1:temp%template%noInstances)
+            k_temp(i,ptg_i,1:temp%template%noSurfs,:) = &
+              &  k_temp_frq%values(1,1:temp%template%noSurfs,:)
           end do
         endif
       endif
@@ -957,7 +984,8 @@ contains
           if ( forwardModelConfig%do_freq_avg) then
             do i = 1, noUsedChannels
               ch = usedChannels(i)
-              do instance = 1, f%template%noInstances
+              do instance = lbound(k_atmos_frq(specie)%values,3),&
+                & ubound(k_atmos_frq(specie)%values,3)
                 do surface = 1, f%template%noSurfs
                   ToAvg =>   &
                     &        k_atmos_frq(specie)%values(1:noFreqs,surface,instance)
@@ -971,10 +999,9 @@ contains
             end do                    ! Channel loop
           else                        ! Else not frequency averaging
             surface = f%template%noSurfs
-            instance = f%template%noInstances
             do i = 1, noUsedChannels
-              k_atmos(i,ptg_i,1:surface,1:instance,specie) = &
-                &  k_atmos_frq(specie)%values(1,1:surface,1:instance)
+              k_atmos(i,ptg_i,1:surface,:,specie) = &
+                &  k_atmos_frq(specie)%values(1,1:surface,:)
             end do
           end if                      ! Frequency averaging or not
         end if                        ! Want derivatives for this
@@ -996,8 +1023,7 @@ contains
       Radiances(no_tan_hts,ch) = Radiances(no_tan_hts-1,ch)
       if(ForwardModelConfig%temp_der) then
         n = temp%template%noSurfs
-        k = temp%template%noInstances
-        k_temp(i,no_tan_hts,1:n,1:k)=k_temp(i,no_tan_hts-1,1:n,1:k)
+        k_temp(i,no_tan_hts,1:n,1:phiWindow)=k_temp(i,no_tan_hts-1,1:n,1:phiWindow)
       endif
       if(ForwardModelConfig%atmos_der) then
         do m = 1, noSpecies
@@ -1007,7 +1033,8 @@ contains
           if ( foundInFirst ) then
             k = f%template%noInstances
             n = f%template%noSurfs
-            k_atmos(i,no_tan_hts,1:n,1:k,m)=k_atmos(i,no_tan_hts-1,1:n,1:k,m)
+            k_atmos(i,no_tan_hts,1:n,1:phiWindow,m)= &
+              & k_atmos(i,no_tan_hts-1,1:n,1:phiWindow,m)
           endif
         end do
       endif
@@ -1194,6 +1221,13 @@ contains
     if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
       & MLSMSG_Deallocate//'k_atmos_frq')
 
+    deallocate (k_temp, STAT=status)
+    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+      & MLSMSG_Allocate//'k_temp')
+    deallocate (k_atmos, STAT=status)
+    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+      & MLSMSG_Allocate//'k_atmos')
+    call deallocate_test(radiances, 'Radiances', ModuleName)
 
     ! ** DEBUG, Zvi
     !    if(i > -22) Stop
@@ -1245,6 +1279,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.82  2001/04/11 00:50:06  livesey
+! Another interim version, the `moving window' is better implemented
+!
 ! Revision 2.81  2001/04/10 23:51:18  livesey
 ! Another working version.  More temporary arrays now alloctable/pointer
 !
