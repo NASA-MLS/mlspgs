@@ -96,13 +96,21 @@ contains ! ===================================== Public Procedures =====
 
   !----------------------------------------  DestroyChunkDatabase  -----
   subroutine DestroyChunkDatabase ( chunks )
-
+    use Allocate_Deallocate, only: DEALLOCATE_TEST
     use MLSCommon, only: MLSCHUNK_T
     use MLSMessageModule, only: MLSMessage, MLSMSG_Deallocate, MLSMSG_Warning
 
     type( MLSChunk_T ), dimension(:), pointer  :: CHUNKS
-    integer :: STATUS ! From deallocate
+    integer :: STATUS                   ! From deallocate
+    integer :: CHUNK                    ! Index
 
+    if ( .not. associated ( chunks ) ) return
+    do chunk = 1, size ( chunks )
+      call Deallocate_test ( chunks(chunk)%hGridOffsets, &
+        & 'chunks(?)%hGridOffsets', ModuleName )
+      call Deallocate_test ( chunks(chunk)%hGridTotals, &
+        & 'chunks(?)%hGridTotals', ModuleName )
+    end do
     deallocate ( chunks, stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
       & MLSMSG_DeAllocate // "Chunks" )
@@ -159,6 +167,7 @@ contains ! ===================================== Public Procedures =====
 
     ! For announce_error:
     integer :: ERROR                    ! Error level
+    integer :: CHUNK                    ! Loop counter
 
     integer, parameter :: BadUnits = 1
     integer, parameter :: NotSpecified = BadUnits + 1
@@ -196,7 +205,6 @@ contains ! ===================================== Public Procedures =====
         call output ( ' ', advance='yes' )    
       endif
     endif
-
 
     ! Now go place the chunks.
     select case ( config%method )
@@ -242,8 +250,12 @@ contains ! ===================================== Public Procedures =====
         & 'ChunkDivide failed to produce any chunks' )     
     endif
 
-    if ( toggle(gen) ) call trace_end ( "ChunkDivide" )
+    ! Now go through and number the chunks
+    do chunk = 1, size ( chunks )
+      chunks(chunk)%chunkNumber = chunk
+    end do
 
+    if ( toggle(gen) ) call trace_end ( "ChunkDivide" )
     if ( index(switches, 'chu') /= 0 ) call dump ( chunks )
 
   contains
@@ -348,7 +360,6 @@ contains ! ===================================== Public Procedures =====
         else
           chunks(i)%noMAFsLowerOverlap = 0
         end if
-        chunks(i)%accumulatedMAFs = chunks(i)%firstMAFIndex
       end do
 
     end subroutine ChunkDivide_Fixed
@@ -482,7 +493,6 @@ contains ! ===================================== Public Procedures =====
 
       chunks(1)%noMAFsUpperOverlap = 0
       chunks(1)%noMAFsLowerOverlap = 0
-      chunks(1)%accumulatedMAFs = chunks(1)%firstMAFIndex
 
       call DeallocateL1BData ( tpGeodAngle )
       call DeallocateL1BData ( taiTime )
@@ -827,7 +837,6 @@ contains ! ===================================== Public Procedures =====
       ! Now think about the obstructions
 
       call DealWithObstructions ( chunks, obstructions )
-      chunks%accumulatedMAFs = chunks%firstMAFIndex
        ! Forcibly zero out number of lower (upper) overlaps on 1st (last) chunks
        chunks(1)%noMAFsLowerOverlap = 0
        chunks(size(chunks))%noMAFsUpperOverlap = 0
@@ -2029,6 +2038,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.37  2003/06/20 19:38:25  pwagner
+! Allows direct writing of output products
+!
 ! Revision 2.36  2003/06/09 22:55:23  pwagner
 ! Improved criticalSignals; some bug fixes
 !
