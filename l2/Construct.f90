@@ -70,7 +70,8 @@ contains ! =====     Public Procedures     =============================
     integer :: NAME             ! Sub-rosa index of name
     integer :: SON              ! Son or grandson of Root
     integer :: STATUS           ! Flag
-    double precision :: T1, T2  ! for timing
+!    double precision :: T1, T2  ! for timing
+    REAL :: T1, T2  ! for timing
     logical :: TIMING
 
     ! Executable code
@@ -150,7 +151,7 @@ contains ! =====     Public Procedures     =============================
     subroutine SayTime
       call cpu_time ( t2 )
       call output ( "Timing for MLSL2Construct =" )
-      call output ( t2 - t1, advance = 'yes' )
+      call output ( DBLE(t2 - t1), advance = 'yes' )
       timing = .false.
     end subroutine SayTime
   end subroutine MLSL2Construct
@@ -176,6 +177,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.5  2001/01/03 17:51:05  pwagner
+! Changed types of t1, t2 to real
+!
 ! Revision 2.4  2000/11/16 02:15:14  vsnyder
 ! More work on timing.
 !
