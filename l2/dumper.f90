@@ -2,15 +2,14 @@ module DUMPER
 
 ! Dump various stuff so we can look at it.
 
-  use DUMP_0, only: AfterSub, DUMP
+  use DUMP_0, only: DUMP
   use HGRID, only: HGRID_T
   use INIT_TABLES_MODULE, only: LIT_INDICES, PHYQ_INDICES
   use MLSCommon, only: MLSCHUNK_T
-  use MLSSignals_m, only: radiometers, signals, DUMP, GetRadiometerName, GetModuleName
+  use MLSSignals_m, only: signals, DUMP, GetRadiometerName, GetModuleName
   use OUTPUT_M, only: OUTPUT
   use QuantityTemplates, only: QuantityTemplate_T
   use STRING_TABLE, only: DISPLAY_STRING
-  use VGRID, only: VGRID_T
   implicit NONE
   private
 
@@ -183,3 +182,6 @@ contains ! =====     Private Procedures     ============================
 end module DUMPER
 
 ! $Log$
+! Revision 2.7  2001/03/28 01:25:38  vsnyder
+! Move DUMP_VGRIDS from dumper.f90 to VGrid.f90
+!
