@@ -14,7 +14,7 @@ module HGrid                    ! Horizontal grid information
   use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData
   use MLSCommon, only: L1BInfo_T, MLSChunk_T, NameLen, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_allocate, &
-    & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_L1BRead
+    & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Info, MLSMSG_L1BRead
   use MLSNumerics, only: HUNT
   use OUTPUT_M, only: OUTPUT
   use STRING_TABLE, only: GET_STRING
@@ -91,20 +91,19 @@ contains ! =====     Public Procedures     =============================
     ! Local parameters
     real(r8), parameter :: SIXTH = 1.0_r8 / 6.0_r8
 
-    ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    ! IF MODIFYING THIS SECTION PLEASE TAKE CARE, SEE BELOW!
-    integer, parameter :: NoL1BItemsToRead=7
-    character (len=15), dimension(NoL1BItemsToRead), &
-         &   parameter :: L1bItemsToRead = &
-         & (/"MAFStartTimeTAI","tpGeodLat      ","tpLon          ",&
-         &   "tpGeodAngle    ","tpSolarZenith  ","tpSolarTime    ",&
-         &   "tpLosAngle     "/)
-    integer, parameter :: TransitionToModularItems = 2
-    ! Entries in the above array below TransitionToModularItems are prefixed
-    ! with either GHz or THz.  The layout of the above array is critically
-    ! bound to the "select case ( l1bItem )" code below.  So TAKE CARE! when
-    ! modifing it.
-    ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    integer, parameter :: L1B_MAFSTARTTIMETAI = 1
+    integer, parameter :: L1B_TPGEODLAT       = l1b_MAFStartTimeTAI + 1
+    integer, parameter :: L1B_TPLON           = l1b_tpGeodLat + 1
+    integer, parameter :: L1B_TPGEODANGLE     = l1b_tpLon + 1
+    integer, parameter :: L1B_TPSOLARZENITH   = l1b_tpGeodAngle + 1
+    integer, parameter :: L1B_TPSOLARTIME     = l1b_tpSolarZenith + 1
+    integer, parameter :: L1B_TPLOSANGLE      = l1b_tpSolarTime + 1
+    integer, parameter :: NOL1BITEMSTOREAD=l1b_tpLosAngle
+    integer, parameter :: FIRSTMODULARITEM=l1b_tpGeodLat
+    
+    character (len=15), DIMENSION(noL1BItemsToRead) :: l1bItemNames
+    ! Entries in the above array follwing FirstModularItem are prefixed
+    ! with either GHz or THz. 
 
     ! Local variables
     integer :: EXPR_UNITS(2)            ! Output from Expr subroutine
@@ -138,6 +137,13 @@ contains ! =====     Public Procedures     =============================
     real(r8), dimension(:), allocatable :: defaultField, interpolatedField
 
     ! Executable code
+    l1bItemNames(l1b_mafstarttimetai ) = 'MAFStartTimeTAI'
+    l1bItemNames(l1b_tpgeodlat       ) = 'tpGeodLat'
+    l1bItemNames(l1b_tplon           ) = 'tpLon'
+    l1bItemNames(l1b_tpgeodangle     ) = 'tpGeodAngle'
+    l1bItemNames(l1b_tpsolarzenith   ) = 'tpSolarZenith'
+    l1bItemNames(l1b_tpsolartime     ) = 'tpSolarTime'
+    l1bItemNames(l1b_tplosangle      ) = 'tpLosAngle'
 
     if ( toggle(gen) ) call trace_begin ( "CreateHGridFromMLSCFInfo", root )
 
@@ -265,8 +271,8 @@ contains ! =====     Public Procedures     =============================
 
     do l1bItem = 1, NoL1BItemsToRead
       ! Get the name of the item to read
-      l1bItemName = l1bItemsToRead(l1bItem)
-      if ( l1bItem >= TransitionToModularItems ) l1bItemName = &
+      l1bItemName = l1bItemNames(l1bItem)
+      if ( l1bItem >= firstModularItem ) l1bItemName = &
         & trim(instrumentModuleName)//"."//l1bItemName
 
       ! Read it from the l1boa file
@@ -302,25 +308,20 @@ contains ! =====     Public Procedures     =============================
              & "Sorry -- interpolation of hGrids is not yet supported" )
       end if
 
-      ! Now we have to save this field in the hGrid data.  This is rather a
-      ! kludgy way of doing it but this worked out the least boring way to
-      ! write the code.  See the definition of L1BItemsToRead above for
-      ! reference.
-
       select case ( l1bItem )
-      case ( 1 )
+      case ( l1b_MAFStartTimeTAI )
         hGrid%time = interpolatedField
-      case ( 2 )
+      case ( l1b_tpGeodLat )
         hGrid%geodLat = interpolatedField
-      case ( 3 )
+      case ( l1b_tpLon )
         hGrid%lon = interpolatedField
-      case ( 4 )
+      case ( l1b_tpGeodAngle )
         hGrid%phi = interpolatedField
-      case ( 5 )
+      case ( l1b_tpSolarZenith )
         hGrid%solarZenith = interpolatedField
-      case ( 6 )
+      case ( l1b_tpSolarTime )
         hGrid%solarTime = interpolatedField
-      case ( 7 )
+      case ( l1b_tpLosAngle )
         hGrid%losAngle = interpolatedField
       end select
     end do
@@ -438,6 +439,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.5  2001/02/21 01:09:24  livesey
+! Tidied stuff up a bit
+!
 ! Revision 2.4  2001/02/09 19:30:16  vsnyder
 ! Move checking for required and duplicate fields to init_tables_module
 !
