@@ -257,7 +257,7 @@ opportunity to (re)set them momentarily.
 
 EOF_3
 
- UserPrompt "Are all of these paths correct and non-blank?[Y[es] or N[o]]"
+ UserPrompt "Are all of these paths correct?[Y[es] or N[o][default]]"
    if [ "$user_response" != "" ] ; then
 	case  "$user_response" in
 	    n* | N* )
@@ -277,7 +277,7 @@ fi
 
 if [ $change_paths = "true" ] ; then
 #Change Includes path
- UserPrompt "include files path [$current_PGSINC]"
+ UserPrompt "include files path (must be non-blank) [$current_PGSINC]"
    if [ "$user_response" != "" ] ; then
 	 PGSINC=$user_response
    elif [ "$current_PGSINC" != "" ] ; then
@@ -291,7 +291,7 @@ if [ $change_paths = "true" ] ; then
    fi
 
 #Change Toolkit path
- UserPrompt "Toolkit path [$current_PGSTK]"
+ UserPrompt "Toolkit path (must be non-blank) [$current_PGSTK]"
    if [ "$user_response" != "" ] ; then
 	 PGSTK=$user_response
    elif [ "$current_PGSTK" != "" ] ; then
@@ -305,7 +305,7 @@ if [ $change_paths = "true" ] ; then
    fi
 
 #Change hdfeos(1) path
- UserPrompt "HDFEOS(1) path [$current_HDFEOS]"
+ UserPrompt "HDFEOS(1) path (must be non-blank) [$current_HDFEOS]"
    if [ "$user_response" != "" ] ; then
 	 HDFEOS=$user_response
 	 current_GCTP=$user_response
@@ -321,7 +321,7 @@ if [ $change_paths = "true" ] ; then
    fi
 
 #Change hdfeos(5) path
- UserPrompt "HDFEOS(5) path (enter <b> to force back to blank) [$current_HDFEOS5]"
+ UserPrompt "HDFEOS(5) path (may be blank) [$current_HDFEOS5]"
    if [ "$user_response" = "<b>" ] ; then
 	 HDFEOS5=""
 	 echo "You will attempt build a mls software version without HDFEOS(5)"
@@ -338,7 +338,7 @@ if [ $change_paths = "true" ] ; then
    fi
 
 #Change hdf(4) path
- UserPrompt "HDF(4) path [$current_HDF]"
+ UserPrompt "HDF(4) path (must be non-blank) [$current_HDF]"
    if [ "$user_response" != "" ] ; then
 	 HDF=$user_response
    elif [ "$current_HDF" != "" ] ; then
@@ -352,7 +352,7 @@ if [ $change_paths = "true" ] ; then
    fi
 
 #Change hdf(5) path
- UserPrompt "HDF(5) path (enter <b> to force back to blank) [$current_HDF5]"
+ UserPrompt "HDF(5) path (may be blank) [$current_HDF5]"
    if [ "$user_response" = "<b>" ] ; then
 	 HDF5=""
 	 echo "You will attempt build a mls software version without HDF(5)"
@@ -423,11 +423,11 @@ multiple installations at your site, you will be given an opportunity to
 Note that if you wish to "unset" any, that is to give them blank values, you
 cannot simply hit enter when asked to supply the new value because that means
 "continue using the existing value" which is what you want only if the existing
-value is already blank. Instead, to unset a non-blank exisiting value, enter
+value is already blank. Instead, to unset a non-blank existing value, enter
 "<b>" (w/o the " marks).
 EOF_4
 
- UserPrompt "Are these paths correct [Y[es] or N[o]]"
+ UserPrompt "Are these paths correct [Y[es][default] or N[o]]"
    if [ "$user_response" != "" ] ; then
 	case  "$user_response" in
 	    n* | N* )
@@ -888,6 +888,9 @@ if [ $write_confg = "true" ] ; then
 	
 	echo "#	.configure for mls" > $conf_dir/$MLSCFILE
    # duplicate some settings (shouldn't you find a cleaner fix?)
+   MLSF95=$compiler
+   MLSPLAT=$platform
+   MLSCONFG=$compiler.$platform
    PGSLIB=$PGSTK
    HDFEOS_LIB=$HDFEOS
    HDFLIB=$HDF
@@ -904,11 +907,11 @@ else
 #	just re-use current settings
 	compiler=$current_compiler
 	platform=$current_platform
+   MLSF95=$compiler
+   MLSPLAT=$platform
+   MLSCONFG=$compiler.$platform
 fi
 
-MLSF95=$compiler
-MLSPLAT=$platform
-MLSCONFG=$compiler.$platform
 export MLSF95
 export MLSPLAT
 export MLSCONFG
@@ -976,6 +979,9 @@ fi
 
 exit
 # $Log$
+# Revision 1.19  2001/07/27 19:57:07  pwagner
+# Added mega_buck function; exports BLAS and LIB_BLAS
+#
 # Revision 1.18  2001/07/12 22:39:24  pwagner
 # Now exports HDFEOS5
 #
