@@ -377,6 +377,7 @@ contains ! =====     Public Procedures     =============================
     info%NUM_AB_TERMS=50
     info%NUM_SIZE_BINS=40
     info%phiwindow = 5
+    info%windowUnits = phyq_profiles
     info%i_saturation = 2
 !    info%cloud_width = 2
     info%cloud_fov = 1
@@ -685,6 +686,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.46  2003/01/27 16:51:08  livesey
+! Added initialisation for windowUnits
+!
 ! Revision 2.45  2003/01/26 04:42:55  livesey
 ! Added units for phiWindow
 !
