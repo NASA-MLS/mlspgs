@@ -7,8 +7,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
   USE MLSCommon, ONLY: TAI93_Range_T
   USE MLSL1Common, ONLY: MaxMIFs, BandSwitch
-  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Info, &
-       MLSMSG_Warning
+  USE MLSMessageModule, ONLY:MLSMessage,MLSMSG_Error,MLSMSG_Info,MLSMSG_Warning
 
   IMPLICIT NONE
 
@@ -21,18 +20,18 @@ MODULE MLSL1Config  ! Level 1 Configuration
        "$Id$"
   CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
-
   TYPE Globals_T
-     CHARACTER(LEN=80) :: OutputVersionString
-     CHARACTER(LEN=80) :: VersionComment
+     CHARACTER(LEN=80) :: OutputVersionString, VersionComment
      LOGICAL :: ProduceL1BOA = .TRUE.
   END TYPE Globals_T
 
+  TYPE Output_T
+     CHARACTER(LEN=80) :: HDFVersionString = 'hdf4'
+  END TYPE Output_T
+
   TYPE Calib_T
-     INTEGER :: CalWindow
-     INTEGER :: MIFsPerMAF
-     REAL :: SpaceTemp, TargetTemp
-     REAL :: MIF_duration, MIF_DeadTime
+     INTEGER :: CalWindow, MIFsPerMAF
+     REAL :: SpaceTemp, TargetTemp, MIF_duration, MIF_DeadTime
      LOGICAL :: UseDefaultGains = .FALSE.
      LOGICAL :: CalibDACS = .TRUE.
      CHARACTER(LEN=1) :: GHz_seq(0:MaxMIFs-1), THz_seq(0:MaxMIFs-1)
@@ -40,10 +39,10 @@ MODULE MLSL1Config  ! Level 1 Configuration
   END TYPE Calib_T
 
   TYPE L1Config_T
-     TYPE (TAI93_Range_T) :: Input_TAI 
-     TYPE (TAI93_Range_T) :: Expanded_TAI
+     TYPE (TAI93_Range_T) :: Input_TAI, Expanded_TAI
      TYPE (Globals_T) :: Globals
      TYPE (Calib_T) :: Calib
+     TYPE (Output_T) :: Output
   END TYPE L1Config_T
 
   TYPE (L1Config_T), SAVE, TARGET :: L1Config
@@ -57,7 +56,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
       USE Declaration_Table, ONLY: Allocate_Decl
       USE Init_tables_module, ONLY: Init_tables, lit_indices, &
-           z_globalsettings, z_calibration
+           z_globalsettings, z_calibration, z_output
       USE Lexer_Core, ONLY: Init_Lexer
       USE MLSPCF1, ONLY: mlspcf_l1cf_start
       USE Output_m, ONLY: prunit
@@ -150,6 +149,10 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
             CALL Set_calibration (son)
 
+         CASE (z_output)
+
+            CALL Set_output (son)
+
          CASE DEFAULT
 
             CALL MLSMessage (MLSMSG_Error, ModuleName, 'Unknown section')
@@ -173,11 +176,8 @@ MODULE MLSL1Config  ! Level 1 Configuration
       USE TREE, ONLY: Decoration, Nsons, Subtree, Sub_rosa
       USE MoreTree, ONLY: Get_Boolean
 
-      INTEGER :: root
-
-      INTEGER :: i, son
-
       CHARACTER(LEN=80) :: line
+      INTEGER :: root, i, son
 
       DO i = 2, Nsons (root) - 1
 
@@ -205,6 +205,32 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
     END SUBROUTINE Set_globalsettings
 
+    SUBROUTINE Set_output (root)
+
+      USE INIT_TABLES_MODULE, ONLY: p_hdf_version_string
+      USE STRING_TABLE, ONLY: Get_string
+      USE TREE, ONLY: Decoration, Nsons, Subtree, Sub_rosa
+
+      CHARACTER(LEN=80) :: line
+      INTEGER :: root, i, son
+
+      DO i = 2, Nsons (root) - 1
+
+         son = Subtree (i, root)
+
+         SELECT CASE (Decoration (Subtree (1,son)))
+
+         CASE (p_hdf_version_string)
+
+            CALL Get_string (Sub_rosa (Subtree(2,son)), &
+                 L1Config%Output%HDFVersionString, strip=.TRUE.)
+
+         END SELECT
+
+      ENDDO
+
+    END SUBROUTINE Set_output
+
     SUBROUTINE Set_calibration (root)
 
       USE EXPR_M, ONLY: Expr
@@ -220,16 +246,6 @@ MODULE MLSL1Config  ! Level 1 Configuration
       USE MoreTree, ONLY: Get_Boolean
       USE STRING_TABLE, ONLY: Get_string
 
-      INTEGER :: root
-
-      CHARACTER(LEN=1), POINTER, DIMENSION(:) :: scan_seq
-      CHARACTER(LEN=1), POINTER :: scan_use
-      CHARACTER(LEN=80) :: identifier
-      INTEGER :: i, j, k, son, key, spec, swno, bandno
-      INTEGER :: expr_units(2)
-      DOUBLE PRECISION :: expr_value(2)
-      LOGICAL :: GHz_mod, sec_tgt
-
       TYPE Scan_T
          CHARACTER(LEN=1) :: Use    ! M or O
          CHARACTER(LEN=1) :: Type   ! L, S, T, or D
@@ -239,6 +255,12 @@ MODULE MLSL1Config  ! Level 1 Configuration
       TYPE (Scan_T) :: scan
 
       CHARACTER(LEN=1), PARAMETER :: ignore = "I", unknown = "U", overlap = "O"
+      CHARACTER(LEN=1), POINTER, DIMENSION(:) :: scan_seq
+      CHARACTER(LEN=1), POINTER :: scan_use
+      CHARACTER(LEN=80) :: identifier
+      DOUBLE PRECISION :: expr_value(2)
+      INTEGER :: i, j, k, son, key, spec, swno, bandno, expr_units(2), root
+      LOGICAL :: GHz_mod, sec_tgt
 
 ! Initialize desired scan sequences
 
@@ -507,6 +529,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
 END MODULE MLSL1Config
 
 ! $Log$
+! Revision 2.6  2002/11/07 21:35:03  jdone
+! Added HDF4/HDF5 switch.
+!
 ! Revision 2.5  2002/04/04 19:30:49  perun
 ! Check for correct input MIFs
 !
