@@ -3435,7 +3435,7 @@ contains
     subroutine FlagCloud ( key, vectors )
 
       use Declaration_table, only: NUM_VALUE
-      use Intrinsic, only: PHYQ_PRESSURE, PHYQ_TEMPERATURE
+      use Intrinsic, only: PHYQ_PRESSURE, PHYQ_TEMPERATURE, L_CLOUDINDUCEDRADIANCE
       use VectorsModule, only: ClearMask, CreateMask, &
         & GetVectorQtyByTemplateIndex, SetMask, VectorValue_T
 
@@ -3527,6 +3527,7 @@ contains
          & call AnnounceError ( cannotFlagCloud, key )
       ! Quantity must be radiance
       if ( qty%template%quantityType /= l_radiance &
+         & .or. cloudRadiance%template%quantityType /= l_cloudInducedRadiance &
          & .or. cloudRadiance%template%quantityType /= l_radiance) &
          & call AnnounceError ( badQuantities, key )
 
@@ -3644,6 +3645,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.221  2003/01/17 16:55:19  dwu
+! a minor change in FlagCloud
+!
 ! Revision 2.220  2003/01/16 21:48:22  vsnyder
 ! More stuff on getting NWTA internal output
 !
