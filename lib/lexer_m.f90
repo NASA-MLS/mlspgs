@@ -364,7 +364,7 @@ contains
         select case ( class )
         case ( cmt )
           call new_line
-          state = start
+          state = contin2
           need = .true.
         case ( eol_in );           state = contin2; need = .true.
         case ( spaces );           need = .true.
@@ -382,7 +382,7 @@ contains
         select case ( class )
         case ( cmt )
           call new_line
-          state = start
+!         state = start
           need = .true.
         case ( eol_in, spaces );   need = .true.
         case default;              state = start
@@ -603,6 +603,9 @@ contains
 end module LEXER_M
 
 ! $Log$
+! Revision 2.14  2001/06/21 18:46:57  vsnyder
+! Allow multiple comments and blank lines between continuations
+!
 ! Revision 2.13  2001/03/15 18:40:39  vsnyder
 ! Don't generate numeric tokens in lex_signal; call them identifiers.
 !
