@@ -654,7 +654,8 @@ contains ! =====     Public procedures     =============================
              l+l_extinction, l+l_gph, l+l_heightOffset, l+l_isotopeRatio, &
              l+l_losTransFunc,l+l_losVel, &
              l+l_massMeanDiameterIce, l+l_massMeanDiameterWater, &
-             l+l_orbitInclination, l+l_ptan, l+l_radiance, l+l_refGPH, &
+             l+l_orbitInclination, l+l_ptan, l+l_radiance, l+l_radiusofearth,&
+             l+l_refGPH, &
              l+l_scanResidual, l+l_scECI, l+l_scVel, l+l_scGeocAlt, &
              l+l_sidebandRatio, l+l_spaceRadiance, l+l_temperature,&
              l+l_tngtECI, l+l_tngtGeodAlt, l+l_tngtGeocAlt, &
@@ -883,7 +884,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_frqGap, t+t_numeric, n+n_field_type, &
              begin, f+f_signals, t+t_string, n+n_field_type, &
              begin, f+f_skipOverlaps, t+t_boolean, n+n_field_type, &
-             begin, f+f_cloud_der, t+t_boolean, n+n_field_type, &
+             begin, f+f_cloud_der, t+t_numeric, n+n_field_type, &
              begin, f+f_spect_der, t+t_boolean, n+n_field_type, &
              begin, f+f_tangentGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_temp_der, t+t_boolean, n+n_field_type, &
@@ -1014,6 +1015,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.134  2001/07/17 19:01:44  jonathan
+! add radiusofearth as in instrinsic, jonathan
+!
 ! Revision 2.133  2001/07/13 20:24:48  jonathan
 ! added cloudRadSensitivity as it is in intrinsic. -Jonathan
 !
