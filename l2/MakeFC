@@ -127,9 +127,7 @@ PROG=mlsl2
 
 #----------------------- Build instructions
 
-$(PROG): $(PLATFORMS)/$(MLSCONFG)/$(PROG)
-
-$(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG_prereqs)
+$(PROG): $(PROG_prereqs)
 	@case "$(PVM_ROOT)" in \
 	"") \
 		echo "Sorry--PVM_ROOT must be defined to build mlsl2" ; \
@@ -141,23 +139,34 @@ $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG_prereqs)
 		;; \
 	esac 
 
+$(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
+	@case "$(PVM_ROOT)" in \
+	"") \
+		echo "Sorry--PVM_ROOT must be defined to build mlsl2" ; \
+		echo "Try make -f MakeFC configure_pvm" ; \
+		exit 2 ; \
+		;; \
+	*) \
+		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) ; \
+		;; \
+	esac 
 
 $(libmls_objs)/libmls.a: $(LIB_prereqs) $(libmls_objs)
-	@if [ "$(SIMPLIFYMAKE)" != "" ] ; then \
+	@if [ "$(NOHUNTING)" != "" ] ; then \
 	   rm -f $(libmls_objs)/libmls.a ; \
 	fi ; \
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
 $(libfwdmdl_objs)/libfwdmdl.a: $(libfwdmdl_f90) $(LIB_prereqs) \
    $(libfwdmdl_objs)
-	@if [ "$(SIMPLIFYMAKE)" != "" ] ; then \
+	@if [ "$(NOHUNTING)" != "" ] ; then \
 	   rm -f $(libfwdmdl_objs)/libfwdmdl.a ; \
 	fi ; \
 	$(MAKE) -f $(MakeFName) libfwdmdl.a -C $(libfwdmdl_sources)
 
 $(libcloud_objs)/libcloud.a: $(libcloud_f90) $(libfwdmdl_f90) \
                $(LIB_prereqs) $(libcloud_objs)
-	@if [ "$(SIMPLIFYMAKE)" != "" ] ; then \
+	@if [ "$(NOHUNTING)" != "" ] ; then \
 	   rm -f $(libcloud_objs)/libcloud.a ; \
 	fi ; \
 	$(MAKE) -f $(MakeFName) libcloud.a -C $(libcloud_sources)
@@ -220,6 +229,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.38  2001/09/26 17:24:59  pwagner
+# Removed errors introduced with last changes; SIMPLIFYMAKE renamed NOHUNTING
+#
 # Revision 2.37  2001/09/25 20:27:15  pwagner
 # New SIMPLIFYMAKE setting; other changes
 #
