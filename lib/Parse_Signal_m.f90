@@ -61,7 +61,7 @@ contains
     type(decls) :: Decl       ! Declaration of an identifier
     integer :: Error          ! >0 indicates an error
     integer :: I              ! Temporary, loop inductor, subscript
-    integer, dimension(len(signal_string),2) :: MyChannelNumbers
+    integer, dimension(len(signal_string)/2,2) :: MyChannelNumbers
     logical, pointer, dimension(:) :: MyChannels
     integer :: MySideBand     ! Index of [UuLl] in band, then 0 or +/- 1.
     integer :: Next           ! One of Saw... parameters below, to indicate
@@ -435,6 +435,9 @@ o:  do
 end module Parse_Signal_M
 
 ! $Log$
+! Revision 2.5  2001/04/09 20:15:53  vsnyder
+! Tighter bound on myChannelNumbers
+!
 ! Revision 2.4  2001/04/06 20:15:36  vsnyder
 ! Implement syntax for specifying several channels
 !
