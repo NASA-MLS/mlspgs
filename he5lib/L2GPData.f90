@@ -15,7 +15,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use MLSCommon, only: R8
   use MLSFiles, only: HDFVERSION_4, HDFVERSION_5
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
-       & MLSMSG_Error, MLSMSG_Warning
+       & MLSMSG_Error, MLSMSG_Warning, MLSMSG_Debug
   use MLSStrings, only: ints2Strings, strings2Ints
   use OUTPUT_M, only: OUTPUT
   use STRING_TABLE, only: DISPLAY_STRING
@@ -1137,7 +1137,8 @@ contains ! =====     Public Procedures     =============================
        end if
        call ints2Strings(string_buffer, l2gp%status)
     else
-      print*,"Warning: reading of status field disabled"
+      call MLSMessage(MLSMSG_Debug, ModuleName, &
+        "reading of status field disabled")
       status=0
     end if
 
@@ -2244,7 +2245,9 @@ contains ! =====     Public Procedures     =============================
       !    status = HE5_SWwrfld(swid, DATA_FIELD3, start(3:3), stride(3:3),&
       !        edge(3:3), l2gp%status) ! 
       status=0
-      print*,"Warning. Writing of status field disabled"
+      call MLSMessage(MLSMSG_Debug, ModuleName, &
+        "writing of status field disabled")
+
       if ( status == -1 ) then
          msr = WR_ERR // DATA_FIELD3
          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -2469,6 +2472,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 1.17  2002/05/01 09:28:10  hcp
+! Some print statements commented
+!
 ! Revision 1.16  2002/03/15 23:02:29  pwagner
 ! Gets HDFVERSION_4 and 5 from MLSFiles; checks for illegal hdfversions
 !
