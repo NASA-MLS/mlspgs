@@ -814,17 +814,23 @@ contains
   !    hdf5                 hdf5
   !  unknown                ????
 
-  function mls_hdf_version(FileName)  result (hdf_version)
+  function mls_hdf_version(FileName, preferred_version, AccessType) &
+   & result (hdf_version)
+!  function mls_hdf_version(FileName)  result (hdf_version)
 
     ! Arguments
 
       character (len=*), intent(in) :: FILENAME
-      character (len=4)             :: hdf_version
+   !   character (len=4)             :: hdf_version
+      integer(i4), optional, intent(in)  :: PREFERRED_VERSION
+      integer(i4), optional, intent(in)  :: ACCESSTYPE
+      integer(i4)                        :: HDF_VERSION
 
       integer :: returnStatus
       logical :: is_hdf5
     ! begin
-      hdf_version = 'hdf4'
+!      hdf_version = 'hdf4'
+      hdf_version = 4
 
   end function mls_hdf_version
 
@@ -834,6 +840,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.27  2002/01/29 00:47:41  pwagner
+! Converted mls_hdf_version to integer function
+!
 ! Revision 2.26  2002/01/23 21:47:31  pwagner
 ! Begun to make hdf5-capable; not yet, though
 !
