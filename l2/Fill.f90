@@ -56,7 +56,7 @@ contains ! =====     Public Procedures     =============================
       & F_H2OPRECISIONQUANTITY, &
       & F_IGNORENEGATIVE, F_IGNOREZERO, F_INSTANCES, F_INTEGRATIONTIME, &
       & F_INTERPOLATE, F_INVERT, F_INTRINSIC, F_ISPRECISION, &
-      & F_LENGTHSCALE, F_LOSQTY, F_LOWBOUND, F_LSB, F_LSBFRACTION, &
+      & F_LENGTHSCALE, F_LOGSPACE, F_LOSQTY, F_LOWBOUND, F_LSB, F_LSBFRACTION, &
       & F_MANIPULATION, F_MATRIX, F_MAXITERATIONS, F_MEASUREMENTS, F_METHOD, &
       & F_MODEL, F_MULTIPLIER, F_NOFINEGRID, F_NOISE, F_NOISEBANDWIDTH, &
       & F_OFFSETAMOUNT, F_ORBITINCLINATION, F_PHITAN, &
@@ -327,6 +327,7 @@ contains ! =====     Public Procedures     =============================
     integer :: L2AUXINDEX               ! Index into L2AUXDatabase
     integer :: L2GPINDEX                ! Index into L2GPDatabase
     integer :: LENGTHSCALE              ! Index of lengthscale vector in database
+    logical :: LOGSPACE                 ! Interpolate in log space?
     integer :: LOSVECTORINDEX           ! index in vector database
     integer :: LOSQTYINDEX              ! index in QUANTITY database
     logical :: LOWBOUND                 ! Flag
@@ -452,6 +453,7 @@ contains ! =====     Public Procedures     =============================
       interpolate = .false.
       invert = .false.
       isPrecision = .false.
+      logSpace = .false.
       resetSeed = .false.
       refract = .false.
       spreadFlag = .false.
@@ -661,6 +663,8 @@ contains ! =====     Public Procedures     =============================
 !           invert = get_boolean ( gson )
           case ( f_isPrecision )
             isPrecision = get_boolean ( gson )
+          case ( f_logSpace )
+            logSpace = get_boolean ( gson )
           case ( f_losQty ) ! For losGrid fill
             losVectorIndex = decoration(decoration(subtree(1,gson)))
             losQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -1001,8 +1005,13 @@ contains ! =====     Public Procedures     =============================
           if ( .not. got ( f_profileValues ) ) &
             call Announce_error ( key, 0, 'profileValues not supplied' )
           if ( .not. got ( f_instances ) ) instancesNode = 0
-          call FillVectorQtyFromProfile ( key, quantity, valuesNode, &
-            & instancesNode, vectors(vectorIndex)%globalUnit, dontMask )
+          if ( got ( f_logSpace ) ) then
+            call FillVectorQtyFromProfile ( key, quantity, valuesNode, &
+              & instancesNode, vectors(vectorIndex)%globalUnit, dontMask, logSpace=logSpace )
+          else
+            call FillVectorQtyFromProfile ( key, quantity, valuesNode, &
+              & instancesNode, vectors(vectorIndex)%globalUnit, dontMask )
+          endif
 
         case ( l_refract )              ! --------- refraction for phiTan -----
           if ( refract ) then 
@@ -2037,7 +2046,7 @@ contains ! =====     Public Procedures     =============================
 
     ! -------------------------------------- FillVectorQuantityFromProfile --
     subroutine FillVectorQtyFromProfile ( key, quantity, valuesNode, &
-      & instancesNode, globalUnit, dontMask )
+      & instancesNode, globalUnit, dontMask, logSpace )
       use MLSNumerics, only: HUNT
       ! This fill is slightly complicated.  Given a values array along
       ! the lines of [ 1000mb : 1.0K, 100mb : 1.0K,  10mb : 2.0K] etc. it
@@ -2048,6 +2057,7 @@ contains ! =====     Public Procedures     =============================
       integer, intent(in) :: INSTANCESNODE ! Tree node for instances
       integer, intent(in) :: GLOBALUNIT   ! Possible global unit
       logical, intent(in) :: DONTMASK     ! If set don't follow the fill mask
+      logical, intent(in), optional :: LOGSPACE ! Interpolate in logspace
 
       ! Local variables
       integer :: C                      ! Channel loop counter
@@ -2057,6 +2067,7 @@ contains ! =====     Public Procedures     =============================
       integer :: S                      ! Surface loop counter
       integer :: STATUS                 ! Flag
       integer :: TESTUNIT               ! Unit for value
+      logical :: MYLOGSPACE             ! Interpolate in log space?
       logical :: LOCALOUTHEIGHTS ! Set if out heights is our own variable
       real (r8), dimension(:), pointer :: HEIGHTS ! Heights for the points
       real (r8), dimension(:), pointer :: VALUES ! Values for the points
@@ -2080,6 +2091,8 @@ contains ! =====     Public Procedures     =============================
       if ( globalUnit /= phyq_Invalid ) testUnit = globalUnit
 
       ! Set some stuff up
+      myLogSpace = quantity%template%logBasis
+      if ( present ( logSpace ) ) myLogSpace = logSpace
       noPoints = nsons ( valuesNode ) - 1
       nullify ( heights, values, outHeights, outValues, instances )
       call Allocate_test ( heights, noPoints, 'heights', ModuleName )
@@ -2112,6 +2125,13 @@ contains ! =====     Public Procedures     =============================
         values ( i ) = exprValue(2)
       end do
 
+      if ( myLogSpace .and. any ( values < 0.0 ) ) then
+        call Announce_Error ( valuesNode, 0, &
+          & 'Negative input data in log profile fill' )
+        return
+      end if
+      if ( myLogSpace ) values = log ( values )
+
       ! Get the appropriate height coordinate for output, for pressure take log.
       if ( quantity%template%verticalCoordinate == l_pressure ) then
         localOutHeights = .true.
@@ -2138,6 +2158,8 @@ contains ! =====     Public Procedures     =============================
       call InterpolateValues ( heights, values, outHeights, &
         & outValues, 'Linear', extrapolate='Constant' )
 
+      if ( myLogSpace ) outValues = exp ( outValues )
+
       ! Work out what instances we're going to spread this to
       instances = .true.
       if ( instancesNode /= 0 ) then
@@ -2154,7 +2176,7 @@ contains ! =====     Public Procedures     =============================
           j = 1
           do s = 1, quantity%template%noSurfs
             do c = 1, quantity%template%noChans
-              if ( associated(quantity%mask) ) then
+              if ( associated(quantity%mask) .and. .not. dontMask ) then
                 if ( iand ( ichar(quantity%mask(j,i)), m_fill ) == 0 ) &
                   & quantity%values(j,i) = outValues(s)
               else
@@ -4939,6 +4961,10 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.192  2003/03/27 20:45:02  livesey
+! Added logSpace argument to profile fill, and made it obey the dontMask
+! flag
+!
 ! Revision 2.191  2003/03/26 21:23:47  livesey
 ! Added ScaleOverlaps stuff
 !
