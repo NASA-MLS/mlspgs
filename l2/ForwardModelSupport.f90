@@ -19,7 +19,7 @@ module ForwardModelSupport
     & L_TEMPERATURE, L_VMR
   use Init_Tables_Module, only: F_ANTENNAPATTERNS, F_ATMOS_DER, F_CHANNELS, &
     & F_CLOUD_DER, F_COST, F_DO_BASELINE, F_DO_CONV, F_DO_FREQ_AVG, F_FILTERSHAPES, &
-    & F_FREQUENCY, F_FRQGAP, F_HEIGHT, F_DIFFERENTIALSCAN, &
+    & F_FREQUENCY, F_HEIGHT, F_DIFFERENTIALSCAN, &
     & F_INTEGRATIONGRID, F_L2PC, F_MOLECULE, F_MOLECULES, F_MOLECULEDERIVATIVES, &
     & F_PHIWINDOW, F_POINTINGGRIDS, F_SIGNALS, F_SPECT_DER, F_TANGENTGRID, &
     & F_TEMP_DER, F_TYPE, F_MODULE, F_SKIPOVERLAPS, F_TOLERANCE, S_FORWARDMODEL, &
@@ -76,8 +76,7 @@ module ForwardModelSupport
   integer, parameter :: IrrelevantFwmParameter = IncompleteLinearFwm + 1
   integer, parameter :: TangentNotSubset     =  IrrelevantFwmParameter + 1
   integer, parameter :: PhiWindowMustBeOdd   = TangentNotSubset + 1
-  integer, parameter :: FrqGapNotFrq         = PhiWindowMustBeOdd + 1
-  integer, parameter :: ToleranceNotK        = FrqGapNotFrq + 1
+  integer, parameter :: ToleranceNotK        = PhiWindowMustBeOdd + 1
   integer, parameter :: TooManyHeights       = ToleranceNotK + 1
   integer, parameter :: TooManyCosts         = TooManyHeights + 1
   integer, parameter :: BadHeightUnit        = TooManyCosts + 1
@@ -366,7 +365,6 @@ contains ! =====     Public Procedures     =============================
     info%phiwindow = 5
     info%cloud_width = 2
     info%cloud_fov = 1
-    info%frqGap = 0.0                   ! Default to everything
 
     noChannelsSpecs=0
 
@@ -396,11 +394,6 @@ contains ! =====     Public Procedures     =============================
         info%DEFAULT_spectroscopy = get_boolean(son)
       case ( f_skipOverlaps )
         info%skipOverlaps = get_boolean(son)
-      case ( f_frqGap )
-        call expr ( subtree(2,son), units, value, type )
-        info%frqGap = value(1)
-        if ( units(1) /= phyq_frequency ) &
-          & call AnnounceError ( frqGapNotFrq, key )
       case ( f_tolerance )
         call expr ( subtree(2,son), units, value, type )
         info%tolerance = value(1)
@@ -623,8 +616,6 @@ contains ! =====     Public Procedures     =============================
         & grid', advance='yes' )
     case ( PhiWindowMustBeOdd )
       call output ( 'phiWindow is not odd', advance='yes' ) 
-    case ( FrqGapNotFrq )
-      call output ( 'frqGap does not have dimensions of frequency', advance='yes' )
     case ( ToleranceNotK )
       call output ( 'tolerance does not have dimensions of temperature/radiance',&
         & advance='yes' )
@@ -652,6 +643,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.26  2002/03/07 17:17:57  livesey
+! Removed frqGap
+!
 ! Revision 2.25  2002/02/14 23:02:43  livesey
 ! Added a safety net to guard against deallocating channels in signals
 ! database (shouldn't occur in current version, though may be relevant
