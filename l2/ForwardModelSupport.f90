@@ -34,7 +34,7 @@ module ForwardModelSupport
   use Toggles, only: Emit, Gen, Levels, Switches, Toggle
   use Trace_M, only: Trace_begin, Trace_end
   use Tree, only: Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, Subtree
-  use Tree_Types, only: N_named
+  use Tree_Types, only: N_Array, N_named
   use Units, only: Deg2Rad, PHYQ_FREQUENCY, PHYQ_TEMPERATURE
   use VGridsDatabase, only: VGrid_T
   use L2PC_m, only: OPEN_L2PC_FILE, CLOSE_L2PC_FILE, READ_L2PC_FILE
@@ -209,6 +209,7 @@ contains ! =====     Public Procedures     =============================
 
     logical, dimension(:), pointer :: Channels   ! From Parse_Signal
     integer :: COMMONSIZE               ! Dimension
+    integer :: Depth                    ! in an array tree
     integer :: Field                    ! Field index -- f_something
     logical :: Got(field_first:field_last)   ! "Got this field already"
     integer :: I                        ! Subscript and loop inductor.
@@ -216,6 +217,7 @@ contains ! =====     Public Procedures     =============================
     integer :: Key                      ! Indexes the spec_args vertex.
     integer :: Name                     ! sub_rosa of label of specification,
     ! if any, else zero.
+    integer :: NELTS                    ! Number of elements of an array tree
     integer :: NoChannelsSpecs          ! Number of channel specs we've had
     integer :: SIDEBAND                 ! Returned from Parse_Signal
     integer, dimension(:), pointer :: SIGNALINDS ! From Parse_Signal
@@ -306,14 +308,20 @@ contains ! =====     Public Procedures     =============================
       case ( f_module )
         info%instrumentModule = decoration(decoration(subtree(2,son)))
       case ( f_molecules )
-        call allocate_test ( info%molecules, nsons(son)-1, "info%molecules", &
+        nelts = 0
+        do j = 2, nsons(son)
+          call countElements ( subtree(j,son), nelts )
+        end do
+        call allocate_test ( info%molecules, nelts, "info%molecules", &
           & ModuleName )
-        call allocate_test ( info%moleculeDerivatives, nsons(son)-1, &
+        call allocate_test ( info%moleculeDerivatives, nelts, &
           & "info%moleculeDerivatives", ModuleName )
         info%moleculeDerivatives = .false.
-        do j = 1, nsons(son)-1
-          info%molecules(j) = decoration( subtree( j+1, son ) )
-        end do                          ! End loop over listed signals
+        depth = 0
+        nelts = 0
+        do j = 2, nsons(son)
+          call fillElements ( subtree(j,son), nelts, depth, info%molecules )
+        end do
       case ( f_moleculeDerivatives )
         if ( .not. associated(info%molecules) ) then
           call announceError( DefineMoleculesFirst, key)
@@ -443,6 +451,40 @@ contains ! =====     Public Procedures     =============================
       & 'An error occured' )
     if ( toggle(gen) ) call trace_end ( "ConstructForwardModelConfig" )
 
+  contains
+    recursive subroutine CountElements ( root, count )
+      integer, intent(in) :: ROOT       ! of a subtree
+      integer, intent(inout) :: COUNT   ! Number of array elements
+      integer :: I                      ! Subtree index, loop inductor
+      integer :: SON                    ! of ROOT
+      if ( node_id(root) == n_array ) then
+        do i = 1, nsons(root)
+          son = subtree(i,root)
+          call countElements ( son, count )
+        end do
+      else
+        count = count + 1
+      end if
+    end subroutine CountElements
+
+    recursive subroutine FillElements ( root, count, depth, molecules )
+      integer, intent(in) :: ROOT       ! of a subtree
+      integer, intent(inout) :: COUNT   ! of array elements processed
+      integer, intent(inout) :: DEPTH   ! in the array tree
+      integer, intent(inout) :: MOLECULES(:)      ! The array to be filled
+      if ( node_id(root) == n_array ) then
+        depth = depth + 1
+        do i = 1, nsons(root)
+          son = subtree(i,root)
+          call fillElements ( son, count, depth, molecules )
+        end do
+        depth = depth - 1
+      else
+        count = count + 1
+        molecules(count) = decoration(root)
+        if ( depth > 0 ) molecules(count) = -molecules(count)
+      end if
+    end subroutine FillElements
   end function ConstructForwardModelConfig
 
   ! =====     Private Procedures     =====================================
@@ -495,6 +537,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.18  2001/11/28 03:50:07  vsnyder
+! Allow array of arrays for 'molecules' field
+!
 ! Revision 2.17  2001/11/15 23:49:40  jonathan
 ! rename DF_spectroscopy to default_spectroscopy
 !
