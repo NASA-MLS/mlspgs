@@ -4598,6 +4598,20 @@ contains ! =====     Public Procedures     =============================
       if ( quantity%template%noInstances /= size ( l1bData%dpField, 3 ) .or. &
         &  quantity%template%instanceLen /= &
         &   size ( l1bData%dpField, 1 ) * size ( l1bData%dpField, 2 ) ) then
+        call output ( 'Quantity shape:' )
+        call output ( quantity%template%instanceLen )
+        call output ( ' ( ' )
+        call output ( quantity%template%noChans )
+        call output ( ', ' )
+        call output ( quantity%template%noSurfs )
+        call output ( ' ), ' )
+        call output ( quantity%template%noInstances, advance='yes' )
+        call output ( 'L1B shape:' )
+        call output ( size ( l1bData%dpField, 1 ) )
+        call output ( ', ' )
+        call output ( size ( l1bData%dpField, 2 ) )
+        call output ( ', ' )
+        call output ( size ( l1bData%dpField, 3 ), advance='yes' )
         call Announce_Error ( root, no_error_code, 'L1B data is wrong shape' )
         if ( toggle(gen) .and. levels(gen) > 0 ) &
           & call trace_end ( "FillVectorQuantityFromL1B")
@@ -5652,6 +5666,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.213  2003/05/11 00:05:06  livesey
+! Informative error message when L1B data wrong size
+!
 ! Revision 2.212  2003/05/10 23:40:27  livesey
 ! Bug fixes in bining, other general tidyups.
 !
