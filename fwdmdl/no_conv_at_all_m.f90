@@ -21,7 +21,7 @@ CONTAINS
   ! cubic spline interpolation to do the job.
 
   Subroutine no_conv_at_all ( FwmConf, ForwardModelIn, maf, &
-           & Channel, WindowStart, WindowFinish, Temp, Ptan, Radiance, &
+           & Channel, WindowStart, WindowFinish, Temp, Ptan, Radiance, update, &
            & t_deriv_flag,ptg_angles,chi_out,dhdz_out,dx_dh_out,Grids_f,&
            & I_raw,sbRatio,mol_cat_indx, rowFlags, Jacobian, di_dt, di_df, &
            & ptan_Der )
@@ -69,6 +69,7 @@ CONTAINS
     Type (Matrix_T), INTENT(INOUT), OPTIONAL :: Jacobian
 !
     Logical, DIMENSION(:), pointer :: t_deriv_flag
+    logical, intent(in) :: Update       ! If set just add to radiacnes/derivatives
 
     Logical, DIMENSION(:), INTENT(INOUT) :: rowFlags ! Flag to calling code
 
@@ -131,12 +132,18 @@ CONTAINS
             & 'Wrong matrix type for ptan derivative' )
       end select
 
-      do ptg_i = 1, noPtan
-        ind = channel + noChans*(ptg_i-1)
-        q = Jacobian%block(row,col)%values(ind,1)
-        Jacobian%block(row,col)%values(ind,1) = q + sbRatio * SRad(ptg_i)
-      end do
-
+      if ( update ) then
+        do ptg_i = 1, noPtan
+          ind = channel + noChans*(ptg_i-1)
+          q = Jacobian%block(row,col)%values(ind,1)
+          Jacobian%block(row,col)%values(ind,1) = q + sbRatio * SRad(ptg_i)
+        end do
+      else
+        do ptg_i = 1, noPtan
+          ind = channel + noChans*(ptg_i-1)
+          Jacobian%block(row,col)%values(ind,1) = sbRatio * SRad(ptg_i)
+        end do
+      end if
     else
 
       CALL InterpolateValues(ptg_angles,i_raw,chi_out,i_star_all,METHOD='S', &
@@ -144,11 +151,18 @@ CONTAINS
 
     endif
 
-    do ptg_i = 1, noPtan
-      ind = channel + noChans*(ptg_i-1)
-      radiance%values( ind, maf ) = &
-             & radiance%values(ind,maf) + sbRatio * i_star_all(ptg_i)
-    end do
+    if ( update ) then
+      do ptg_i = 1, noPtan
+        ind = channel + noChans*(ptg_i-1)
+        radiance%values( ind, maf ) = &
+          & radiance%values(ind,maf) + sbRatio * i_star_all(ptg_i)
+      end do
+    else
+      do ptg_i = 1, noPtan
+        ind = channel + noChans*(ptg_i-1)
+        radiance%values( ind, maf ) = sbRatio * i_star_all(ptg_i)
+      end do
+    end if
 
     if ( .not. PRESENT(Jacobian) ) Return
 
@@ -195,11 +209,18 @@ CONTAINS
           Rad(1:k) = di_dt(1:k,sv_t_len)
           CALL InterpolateValues ( ptg_angles, Rad, chi_out, Srad, 'S', &
           & extrapolate = 'C')
-          do ptg_i = 1, noPtan
-            ind = channel + noChans*(ptg_i-1)
-            q = Jacobian%block(row,col)%values(ind,jz)
-            Jacobian%block(row,col)%values(ind,jz) = q + sbRatio*Srad(ptg_i)
-          end do
+          if ( update ) then
+            do ptg_i = 1, noPtan
+              ind = channel + noChans*(ptg_i-1)
+              q = Jacobian%block(row,col)%values(ind,jz)
+              Jacobian%block(row,col)%values(ind,jz) = q + sbRatio*Srad(ptg_i)
+            end do
+          else
+            do ptg_i = 1, noPtan
+              ind = channel + noChans*(ptg_i-1)
+              Jacobian%block(row,col)%values(ind,jz) = sbRatio*Srad(ptg_i)
+            end do
+          end if
         end do
 
       end do
@@ -256,12 +277,18 @@ CONTAINS
             Rad(1:no_tan_hts) = di_df(1:no_tan_hts,sv_f)
             CALL InterpolateValues (ptg_angles, Rad, chi_out, Srad, 'L', &
             & extrapolate = 'C')
-            do ptg_i = 1, noPtan
-              ind = channel + noChans*(ptg_i-1)
-              q = Jacobian%block(row,col)%values(ind,k)
-              Jacobian%block(row,col)%values(ind,k) = &
-                                               &  q + sbRatio*Srad(ptg_i)
-            end do
+            if ( update ) then
+              do ptg_i = 1, noPtan
+                ind = channel + noChans*(ptg_i-1)
+                q = Jacobian%block(row,col)%values(ind,k)
+                Jacobian%block(row,col)%values(ind,k) = q + sbRatio*Srad(ptg_i)
+              end do
+            else
+              do ptg_i = 1, noPtan
+                ind = channel + noChans*(ptg_i-1)
+                Jacobian%block(row,col)%values(ind,k) = sbRatio*Srad(ptg_i)
+              end do
+            end if
 
           end do
 !
@@ -277,6 +304,9 @@ CONTAINS
 
 END module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 2.13  2002/08/21 23:38:56  bill
+!  added no extrapolate to interpolation calls
+!
 ! Revision 2.12  2002/08/20 22:36:47  livesey
 ! Moved uses inside routine
 !

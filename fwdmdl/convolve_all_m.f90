@@ -19,7 +19,7 @@ module Convolve_All_m
 ! This subprogram adds the effects of antenna smearing to the radiance.
 
   subroutine Convolve_All ( FwdMdlConfig, FwdMdlIn, FwdMdlExtra, maf, channel, &
-           & winStart, winFinish, mol_cat_index, temp, ptan, radiance, chi_in, &
+           & winStart, winFinish, mol_cat_index, temp, ptan, radiance, update, chi_in, &
            & rad_in, chi_out, dhdz_out, dx_dh_out, sbRatio, AntennaPattern,    &
            & t_deriv_flag, Grids_f, Jacobian, rowFlags, req, rsc, earth_frac,  &
            & surf_angle, di_dt, dx_dt, d2x_dxdt, dxdt_tan, dxdt_surface, di_df,&
@@ -74,6 +74,7 @@ module Convolve_All_m
     real(rp), optional, intent(in) :: Earth_frac ! fraction of earth in total
 !                                   filled out pattern
     logical, intent(in), optional :: Ptan_der ! Flag
+    logical, intent(in) :: Update       ! If set, just add to radiance don't overwrite
 
 ! note req, rsc and earth_frac are non critical parameters and don't
 ! really need to be supplied externally. They are used to partition the
@@ -141,11 +142,18 @@ module Convolve_All_m
     call fov_convolve ( antennaPattern, chi_in, rad_in, chi_out, SRad,  &
                      &  drad_dx_out=di_dx )
 
-    do ptg_i = 1, noPtan
-      ind = channel + noChans * (ptg_i - 1)
-      Radiance%values(ind,maf) = Radiance%values(ind,maf) + &
-                                       &  sbRatio * SRad(ptg_i)
-    end do
+    if ( update ) then
+      do ptg_i = 1, noPtan
+        ind = channel + noChans * (ptg_i - 1)
+        Radiance%values(ind,maf) = Radiance%values(ind,maf) + &
+          &  sbRatio * SRad(ptg_i)
+      end do
+    else
+      do ptg_i = 1, noPtan
+        ind = channel + noChans * (ptg_i - 1)
+        Radiance%values(ind,maf) = sbRatio * SRad(ptg_i)
+      end do
+    end if
 
     if ( .not. present(Jacobian) ) return
 
@@ -175,12 +183,18 @@ module Convolve_All_m
                           & 'Wrong matrix type for ptan derivative' )
       end select
 
-      do ptg_i = 1, noPtan
-        ind = channel + noChans * (ptg_i-1)
-        r = jacobian%block(row,col)%values(ind,1)
-        Jacobian%block(row,col)%values(ind, 1) = r + SRad(ptg_i)
-      end do
-
+      if ( update ) then 
+        do ptg_i = 1, noPtan
+          ind = channel + noChans * (ptg_i-1)
+          r = jacobian%block(row,col)%values(ind,1)
+          Jacobian%block(row,col)%values(ind, 1) = r + SRad(ptg_i)
+        end do
+      else
+        do ptg_i = 1, noPtan
+          ind = channel + noChans * (ptg_i-1)
+          Jacobian%block(row,col)%values(ind, 1) = SRad(ptg_i)
+        end do
+      end if
     end if
 
     if ( .not. ANY( (/FwdMdlConfig%temp_der, FwdMdlConfig%atmos_der, &
@@ -250,13 +264,20 @@ module Convolve_All_m
 
 ! run through representation basis coefficients
         
-          do ptg_i = 1, noPtan
-            r = drad_dt_out(ptg_i,sv_t_len)
-            ind = channel + noChans * (ptg_i-1)
-            jacobian%block(row,col)%values(ind,k) =  &
-                 & jacobian%block(row,col)%values(ind,k) + sbRatio * r
-          end do
-
+          if ( update ) then
+            do ptg_i = 1, noPtan
+              r = drad_dt_out(ptg_i,sv_t_len)
+              ind = channel + noChans * (ptg_i-1)
+              jacobian%block(row,col)%values(ind,k) =  &
+                & jacobian%block(row,col)%values(ind,k) + sbRatio * r
+            end do
+          else
+            do ptg_i = 1, noPtan
+              r = drad_dt_out(ptg_i,sv_t_len)
+              ind = channel + noChans * (ptg_i-1)
+              jacobian%block(row,col)%values(ind,k) = sbRatio * r
+            end do
+          end if
         end do
 
       end do
@@ -315,13 +336,20 @@ module Convolve_All_m
 
 ! run through representation basis coefficients
 
-          do ptg_i = 1, noPtan
-            r = drad_df_out(ptg_i,sv_f)
-            ind = channel + noChans * (ptg_i-1)
-            jacobian%block(row,col)%values(ind,k) = &
+          if ( update ) then 
+            do ptg_i = 1, noPtan
+              r = drad_df_out(ptg_i,sv_f)
+              ind = channel + noChans * (ptg_i-1)
+              jacobian%block(row,col)%values(ind,k) = &
                 & jacobian%block(row,col)%values(ind,k) + sbRatio * r
-          end do
-
+            end do
+          else
+            do ptg_i = 1, noPtan
+              r = drad_df_out(ptg_i,sv_f)
+              ind = channel + noChans * (ptg_i-1)
+              jacobian%block(row,col)%values(ind,k) = sbRatio * r
+            end do
+          end if
         end do
 
       end do
@@ -335,6 +363,9 @@ module Convolve_All_m
 end module Convolve_All_m
 
 ! $Log$
+! Revision 2.20  2002/09/07 00:52:24  vsnyder
+! Cosmetic changes, copyright notice
+!
 ! Revision 2.19  2002/09/05 20:48:13  livesey
 ! Fixed handling of vmr derivative flags.
 !
