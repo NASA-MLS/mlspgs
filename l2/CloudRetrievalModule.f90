@@ -26,23 +26,24 @@ contains
       & jacobian, chunk,maxJacobians,initlambda)
 
       use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-      use MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
-                                        & MLSMSG_Warning, MLSMSG_Deallocate
-      use MLSCommon, only: MLSCHUNK_T, R8, RM, RV
-      use Intrinsic, only: L_CLOUDINDUCEDRADIANCE, L_CLOUDEXTINCTION,&
-                     & L_CLOUDRADSENSITIVITY, L_PTAN, L_RADIANCE
+      use Chunks_m, only: MLSCHUNK_T
+      use ForwardModelConfig, only: ForwardModelConfig_T
+      use ForwardModelWrappers, only: ForwardModel
+      use ForwardModelIntermediate, only: ForwardModelIntermediate_T, &
+        & ForwardModelStatus_T
       use Init_Tables_Module, only: L_highcloud, L_lowcloud, l_lostransfunc, &
          & l_clear, l_cloudy_110RH_below_top, l_earthradius
+      use Intrinsic, only: L_CLOUDINDUCEDRADIANCE, L_CLOUDEXTINCTION,&
+                     & L_CLOUDRADSENSITIVITY, L_PTAN, L_RADIANCE
       use MatrixModule_0, only: MatrixInversion, MATRIXELEMENT_T
       use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, ClearMatrix,&
       & DestroyMatrix, FINDBLOCK, GetDiagonal, GetFromMatrixDatabase, Matrix_T, &
       & Matrix_Database_T, Matrix_SPD_T, MultiplyMatrixVectorNoT, &
       & Sparsify, MultiplyMatrix_XTY, UpdateDiagonal
+      use MLSCommon, only: R8, RM, RV
+      use MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
+                                        & MLSMSG_Warning, MLSMSG_Deallocate
       use MLSSignals_m, only: SIGNAL_T
-      use ForwardModelConfig, only: ForwardModelConfig_T
-      use ForwardModelWrappers, only: ForwardModel
-      use ForwardModelIntermediate, only: ForwardModelIntermediate_T, &
-        & ForwardModelStatus_T
       use VectorsModule, only: ClearMask, ClearUnderMask, &
        & ClearVector, CloneVector, CopyVector, CopyVectorMask, CreateMask, &
        & DestroyVectorInfo, DumpMask, GetVectorQuantityByType, &
@@ -933,6 +934,9 @@ contains
  end subroutine CloudRetrieval
 end module CloudRetrievalModule
 ! $Log$
+! Revision 2.8  2004/05/19 19:16:09  vsnyder
+! Move MLSChunk_t to Chunks_m
+!
 ! Revision 2.7  2003/08/16 00:27:03  vsnyder
 ! Get L_Pressure directly from Intrinsic instead of indirectly via Units
 !
