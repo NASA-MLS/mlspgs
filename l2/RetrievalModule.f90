@@ -140,11 +140,13 @@ contains
     integer, parameter :: BothOrNeither = 1       ! Only one of two required
                                                   !    fields supplied
     integer, parameter :: IfAThenB = BothOrNeither + 1
-    integer, parameter :: Inconsistent = IfAThenB + 1  ! Inconsistent fields
+    integer, parameter :: IfUnitsAThenB = IfAThenB + 1
+    integer, parameter :: Inconsistent = IfUnitsAThenB + 1  ! Inconsistent fields
     integer, parameter :: NoFields = Inconsistent + 1  ! No fields are allowed
     integer, parameter :: NotSPD = noFields + 1   ! Not symmetric pos. definite
     integer, parameter :: OrderAndWeight = notSPD + 1  ! Need both or neither
     integer, parameter :: Unitless = OrderAndWeight + 1
+    integer, parameter :: WrongUnits = Unitless + 1
 
     error = 0
     nullify ( apriori, configIndices, covariance, fwdModelOut )
@@ -366,7 +368,7 @@ contains
 
   contains
     ! --------------------------------------------  AnnounceError  -----
-    subroutine AnnounceError ( Code, FieldIndex, AnotherFieldIndex )
+    subroutine AnnounceError ( Code, FieldIndex, AnotherFieldIndex, String )
 
       use Intrinsic, only: Field_indices, Spec_indices
       use Lexer_Core, only: Print_Source
@@ -374,6 +376,7 @@ contains
 
       integer, intent(in) :: Code       ! Index of error message
       integer, intent(in), optional :: FieldIndex, AnotherFieldIndex ! f_...
+      character(len=*), optional :: String
 
       error = max(error,1)
       call output ( '***** At ' )
@@ -389,13 +392,17 @@ contains
       case ( ifAThenB )
         call output ( 'If the ' )
         call display_string ( field_indices(fieldIndex) )
-        call output ( ' field appears then the field ' )
+        call output ( ' field appears then the ' )
         call display_string ( field_indices(anotherFieldIndex) )
-        call output ( ' shall also appear.', advance='yes' )
-      case ( noFields )
-        call output ( 'No fields are allowed for a ' )
-        call display_string ( spec_indices(fieldIndex) )
-        call output ( ' specification.', advance='yes' )
+        call output ( ' field shall also appear.', advance='yes' )
+      case ( ifUnitsAThenB )
+        call output ( 'If the units of the ' )
+        call display_string ( field_indices(fieldIndex) )
+        call output ( ' field are ' )
+        call output ( trim(string) )
+        call output ( ' the ' )
+        call display_string ( field_indices(anotherFieldIndex) )
+        call output ( ' field shall also appear.', advance='yes' )
       case ( inconsistent, notSPD )
         call output ( 'the field ' )
         call display_string ( field_indices(fieldIndex) )
@@ -408,10 +415,19 @@ contains
           call output ( ' is not a symmetric positive-definite matrix.', &
             & advance='yes' )
         end select
+      case ( noFields )
+        call output ( 'No fields are allowed for a ' )
+        call display_string ( spec_indices(fieldIndex) )
+        call output ( ' specification.', advance='yes' )
       case ( unitless )
         call output ( 'The value of the ' )
         call display_string ( field_indices(fieldIndex) )
-        call output ( ' field shall be unitless' )
+        call output ( ' field shall be unitless', advance='yes' )
+      case ( wrongUnits )
+        call output ( 'The units of the ' )
+        call display_string ( field_indices(fieldIndex) )
+        call output ( ' field shall be ' )
+        call output ( trim(string), advance='yes' )
       end select
     end subroutine AnnounceError
 
@@ -1150,6 +1166,7 @@ contains
       integer :: HEIGHT                 ! Loop counter
       integer :: HEIGHTNODE             ! Tree node for height values
       integer :: HEIGHTUNIT             ! Unit for heights command
+      integer :: I, J                   ! Subscripts, loop inductors
       integer :: INSTANCE               ! Loop counter
       integer :: QUANTITYINDEX          ! Index
       integer :: SON                    ! Tree node
@@ -1210,15 +1227,14 @@ contains
             select case ( type )
             case ( num_value )
               if ( units(1) /= phyq_dimensionless ) &
-                & call MLSMessage ( MLSMSG_Error, ModuleName, &
-                & 'Invalid unit for channel' )
+                & call announceError ( unitless, f_channels )
               channels ( nint(value(1)) ) = .true.
             case ( range )
               if ( any ( units /= phyq_dimensionless ) ) &
-                & call MLSMessage ( MLSMSG_Error, ModuleName, &
-                & 'Invalid unit for channel range' )
+                & call announceError ( unitless, f_channels )
               channels ( nint(value(1)):nint(value(2)) ) = .true.
             case default
+              ! Shouldn't get here if the type checker worked.
               call MLSMessage ( MLSMSG_Error, ModuleName, &
                 & 'Unrecognised type for channels' )
             end select
@@ -1228,37 +1244,26 @@ contains
         end if
       end if
 
-      ! Now deal with the height stuff, at least preprocess it.
+      ! Now preprocess the height stuff.  The type checker verifies the
+      ! consistency of units of ranges.
       if ( got(f_height) ) then
+        if ( ignore ) call announceError ( inconsistent, f_height, f_ignore )
         heightUnit = phyq_dimensionless
         do j = 2, nsons(heightNode)
           call expr ( subtree(j,heightNode), units, value, type )
-          if ( type /= range ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & 'Only allow range for height' )
-          if ( units(1) /= units(2) .and. .not. any(units == phyq_dimensionless) ) &
-            & call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'Conflicting units for height' )
-          if ( heightUnit == phyq_dimensionless ) then
-            heightUnit = units(1)
-          else 
-            if ( heightUnit /= units(1) ) &
-              & call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & 'Conflicting units for height' )
-          end if
+          do i = 1, 2
+            if ( heightUnit == phyq_dimensionless ) heightUnit = units(i)
+          end do
         end do
         if ( .not. any ( heightUnit == (/ phyq_pressure, phyq_length /) ) ) &
-          & call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Height must be either length or pressure.' )
+          & call announceError ( wrongUnits, f_height, &
+            & string = 'length or pressure.' )
 
         ! Now one final check over all the things we've been asked to do.
         if ( heightUnit == phyq_pressure .and. qty%template%minorFrame .and. &
-          & .not. got(f_ptanQuantity) ) call MLSMessage ( MLSMSG_Error, &
-          & ModuleName, 'must supply ptan for this subset if using pressure' )
+          & .not. got(f_ptanQuantity) ) call announceError ( ifUnitsAThenB, &
+            & f_height, f_ptanQuantity, 'pressure' )
       end if
-
-      if ( got(f_height) .and. ignore ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & "Can't set both height and ignore fields" )
 
       ! Create the mask if it doesn't exist
       if ( .not. associated( qty%mask ) ) call CreateMask ( qty )
@@ -1333,6 +1338,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.64  2001/09/25 20:42:55  vsnyder
+! Spiffify error processing for Subset
+!
 ! Revision 2.63  2001/09/25 17:49:59  livesey
 ! More updates, and fixes to subset
 !
