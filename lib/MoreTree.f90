@@ -5,17 +5,11 @@ module MoreTree
 
 ! Some routines for tree analysis that don't quite fit anywhere else.
 
-  use Intrinsic, only: L_true
-  use Tree, only: Decoration, Node_ID, Subtree, nsons
-  use Tree_Types, only: N_Set_one
-  use MLSCommon, only: R8
-  use Units, only: PHYQ_DIMENSIONLESS
-  use Tree_Types, only: N_colon, N_colon_less, N_less_colon, &
-    & N_less_colon_less
-  use Expr_m, only: EXPR
   use Declaration_table, only: NUM_VALUE
+  use Tree, only: Decoration, Node_ID, Subtree, nsons
+  use Tree_Types, only: N_colon, N_colon_less, N_less_colon, &
+    & N_less_colon_less, N_Set_one
   
-
   implicit NONE
   public
 
@@ -34,6 +28,7 @@ contains ! ====     Public Procedures     ==============================
   ! Get the value of a field that is required to have type t_boolean.
   ! Return true if node_id(root) is n_set_one.  Otherwise return decoration of
   ! root, or of child of root if children
+    use Intrinsic, only: L_true
     integer, intent(in) :: Root
     if ( node_id(root) == n_set_one ) then
       get_boolean = .true.
@@ -78,6 +73,9 @@ contains ! ====     Public Procedures     ==============================
   subroutine GetIndexFlagsFromList ( root, flags, status, lower, noError )
     ! Given the root of a numeric/numeric range array
     ! Set the flags array appropriately
+    use Expr_m, only: EXPR
+    use Intrinsic, only: PHYQ_DIMENSIONLESS
+    use MLSCommon, only: R8
     integer, intent(in) :: ROOT         ! Tree node
     logical, dimension(:), intent(inout) :: FLAGS ! Result
     integer, intent(out) :: STATUS      ! Error flag, 0=success
@@ -166,6 +164,9 @@ contains ! ====     Public Procedures     ==============================
 end module MoreTree
 
 ! $Log$
+! Revision 2.6  2003/08/16 00:32:13  vsnyder
+! Push uses down to procedure scope, futzing
+!
 ! Revision 2.5  2002/10/08 00:09:12  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
