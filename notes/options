@@ -44,8 +44,6 @@ E.g., mlsl2 -m -p --nmeta -S"glo jac"
   --l1b=n:   Assume hdfn when reading l1b files
   --l2gpr=n: Assume hdfeosn when reading l2gp files
   --l2gpw=n: Assume hdfeosn when writing l2gp files
-  --[n]pcf: [Do not] Use the PCF for file names, parameters, etc.
-    (--npcf means no metadata and the l2cf name must on the command line)
   --recl <number>: set the max record length size for l2cf to <number>
       (In case the default value, 10000, is too small for some l2cfs)
   --slaveMAF <number>: Set the MAF for a slave in fwmParallel mode.  This option
@@ -53,7 +51,7 @@ E.g., mlsl2 -m -p --nmeta -S"glo jac"
   --stgmem: Tell parallel master task to stage in memory, as opposed to a file.
   --subblock <number>: Set the number of reals to consider when subblocking the
     matrix multiply
-  --[n]tk: [Do not] Use the panoply of the PGS_toolkit (--ntk sets --npcf)
+  --[n]tk: [Do not] Use the panoply of the PGS_toolkit (pcf, metadata, etc.)
   --version: Print current version number
   --[n]wall: Use wall clock instead of CPU_TIME
   --master <filename>[:a:b]: This is the master task in a PVM setup
@@ -95,6 +93,9 @@ by the equal-signs--stuff outside that space, like these
 comments, will not be printed in response to mlsl2 -?)
 
  $Log$
+ Revision 1.20  2003/05/13 04:48:32  livesey
+ Added stgmem
+
  Revision 1.19  2002/12/07 22:24:46  livesey
  Added the snoopname option
 
