@@ -50,7 +50,7 @@ HGrid.o: $S/HGrid.f90 $S/addItemToDatabase.f9h $C/expr_m.o \
 
 init_tables_module.o: $S/init_tables_module.f90 $C/symbol_table.o \
           $C/symbol_types.o $C/tree.o $C/tree_types.o
-	$(FC) -c $(FOPTS) $I$C $I$S $S/init_tables_module.f90
+	$(FC) -c $(FOPTS) $I$C $I$S $I$M $S/init_tables_module.f90
 
 Join.o: $S/Join.f90 init_tables_module.o L2AUXData.o L2GPData.o \
           $C/lexer_core.o $M/MLSMessageModule.o $C/output_m.o \
@@ -135,14 +135,15 @@ VGrid.o: $S/VGrid.f90 $S/addItemToDatabase.f9h $C/expr_m.o \
 # ========================================================================
 # Temporary until the toolkit gets installed:
 pgs_smf_generatestatusreport.o: $S/pgs_smf_generatestatusreport.f
-	$(FC) -c $(FOPTS) $I$C $I$S $S/pgs_smf_generatestatusreport.f
+	$(FC) -c $(FOPTS) $I$C $I$S $I$M $S/pgs_smf_generatestatusreport.f
 PG =
 #PG = pgs_smf_generatestatusreport.o
 #PG = pgs_smf_generatestatusreport.o \
 #     $(HOME)/mlspgs/SDPToolkit/src/IO/GEN/PGS_IO_Gen_OpenF.o \
 #     $(HOME)/mlspgs/SDPToolkit/src/IO/GEN/PGS_IO_Gen_CloseF.o
 #SDP = $M/SDPToolkit.o
-SDP =
+#SDP = $M/
+SDP =SDPToolkitSubstitute.o
 
 GDapi.o: $L/hdfeos/src/GDapi.c
 	cc -c -DNAGf90Fortran -I/van1/vsnyder/mlspgs/SDPToolkit/include/ \
@@ -159,13 +160,13 @@ mlsl2: $(L2OBJS) $(GD) $(PG) $(SDP) $C/libCF.a $M/libmls.a
                       -L$M -lmls \
                       -L$(HOME)/mlspgs/SDPToolkit -lPGSTK \
 		      -L$E/hdfeos/lib/$P -lhdfeos \
-                      -L$(HOME)/mlspgs/l2new/GCT -lGCT \
+                      -L$(HOME)/mlspgs/l2/GCT -lGCT \
                       -L$L/hdf/$P/HDF4.1r3/lib -lmfhdf -ldf -ljpeg -lz
 
 # ========================================================================
 
 clean:
-	rm -f *.o *.mod test
+	rm -f *.o *.mod mlsl2
 
 tar:
 	rm -f parser.tgz
