@@ -133,7 +133,7 @@ contains ! ================ Public procedures ================================
     ! First go through the parsed information.
     do node = 2, nsons(key)                ! Skip the DumpBlock son
       son = subtree(node,key)              ! This argument
-      fieldIndex = get_field_id(son)    ! ID for this field
+      fieldIndex = get_field_id(son)       ! ID for this field
       if (nsons(son) > 1 ) gson = subtree(2,son)
       select case ( fieldIndex )
       case ( f_matrix )
@@ -178,17 +178,17 @@ contains ! ================ Public procedures ================================
       & 'col quantity was not found.' )
 
     ! Now setup flag arrays
-    call allocate_test (rowChannels, rowQ%template%noChans, &
-      &'rowChannels', ModuleName )
-    call allocate_test (colChannels, colQ%template%noChans, &
+    call allocate_test ( rowChannels, rowQ%template%noChans, &
+      & 'rowChannels', ModuleName )
+    call allocate_test ( colChannels, colQ%template%noChans, &
       & 'colChannels', ModuleName )
-    call allocate_test (rowSurfaces, rowQ%template%noSurfs, &
+    call allocate_test ( rowSurfaces, rowQ%template%noSurfs, &
       & 'rowSurfaces', ModuleName )
-    call allocate_test (colSurfaces, colQ%template%noSurfs, &
+    call allocate_test ( colSurfaces, colQ%template%noSurfs, &
       & 'colSurfaces', ModuleName )
-    call allocate_test (rowInstances, rowQ%template%noInstances, &
+    call allocate_test ( rowInstances, rowQ%template%noInstances, &
       & 'rowInstances', ModuleName )
-    call allocate_test (colInstances, colQ%template%noInstances, &
+    call allocate_test ( colInstances, colQ%template%noInstances, &
       & 'colInstances', ModuleName )
 
     ! Now fill these arrays
@@ -211,7 +211,7 @@ contains ! ================ Public procedures ================================
     if ( colChannelsNode /= 0 ) then
       colChannels = .false.
       do node = 2, nsons(colChannelsNode)
-        call expr (subtree(node,colChannelsNode), units, value, type)
+        call expr ( subtree(node,colChannelsNode), units, value, type )
         select case (type)
         case (num_value)
           colChannels(int(value(1))) = .true.
@@ -227,7 +227,7 @@ contains ! ================ Public procedures ================================
     if ( rowSurfacesNode /= 0 ) then
       rowSurfaces = .false.
       do node = 2, nsons(rowSurfacesNode)
-        call expr (subtree(node,rowSurfacesNode), units, value, type)
+        call expr ( subtree(node,rowSurfacesNode), units, value, type )
         select case (type)
         case (num_value)
           rowSurfaces(int(value(1))) = .true.
@@ -243,7 +243,7 @@ contains ! ================ Public procedures ================================
     if ( colSurfacesNode /= 0 ) then
       colSurfaces = .false.
       do node = 2, nsons(colSurfacesNode)
-        call expr (subtree(node,colSurfacesNode), units, value, type)
+        call expr ( subtree(node,colSurfacesNode), units, value, type )
         select case (type)
         case (num_value)
           colSurfaces(int(value(1))) = .true.
@@ -259,7 +259,7 @@ contains ! ================ Public procedures ================================
     if ( rowInstancesNode /= 0 ) then
       rowInstances = .false.
       do node = 2, nsons(rowInstancesNode)
-        call expr (subtree(node,rowInstancesNode), units, value, type)
+        call expr ( subtree(node,rowInstancesNode), units, value, type )
         select case (type)
         case (num_value)
           rowInstances(int(value(1))) = .true.
@@ -275,7 +275,7 @@ contains ! ================ Public procedures ================================
     if ( colInstancesNode /= 0 ) then
       colInstances = .false.
       do node = 2, nsons(colInstancesNode)
-        call expr (subtree(node,colInstancesNode), units, value, type)
+        call expr ( subtree(node,colInstancesNode), units, value, type )
         select case (type)
         case (num_value)
           colInstances(int(value(1))) = .true.
@@ -323,14 +323,10 @@ contains ! ================ Public procedures ================================
     ! Now loop over the row and column instances
     call output ( 'Dump of ' )
     call display_string ( matrix%name, advance='yes' )
-    call output ( 'Row channels:', advance='yes' )
-    call dump ( rowChanInds )
-    call output ( 'Row surfaces:', advance='yes' )
-    call dump ( rowSurfInds )
-    call output ( 'Column channels:', advance='yes' )
-    call dump ( colChanInds )
-    call output ( 'Column surfaces:', advance='yes' )
-    call dump ( colSurfInds )
+    call dump ( rowChanInds, name='Row channels:' )
+    call dump ( rowSurfInds, name='Row surfaces:' )
+    call dump ( colChanInds, name='Column channels:' )
+    call dump ( colSurfInds, name='Column surfaces:' )
     do colInstance = 1, colQ%template%noInstances
       if ( colInstances(colInstance) ) then
         do rowInstance = 1, rowQ%template%noInstances
@@ -352,21 +348,26 @@ contains ! ================ Public procedures ================================
             nullify ( val )
             select case ( mb%kind )
             case ( m_absent )
-              call output ( ' is absent.', advance='yes' )
+              call output ( ' is absent,', advance='yes' )
             case ( m_column_sparse, m_banded )
               if ( mb%kind == m_column_sparse ) then
-                call output ( ' is column sparse.', advance='yes' )
+                call output ( ' is column sparse,', advance='yes' )
               else
-                call output ( ' is banded.', advance='yes' )
+                call output ( ' is banded,', advance='yes' )
               end if
               call allocate_test ( val, mb%nRows, mb%nCols, &
                 & 'val', ModuleName )
               call densify ( val , mb )
             case ( m_full )
-              call output ( ' is full.', advance='yes' )
+              call output ( ' is full,', advance='yes' )
               val => mb%values
             case default
             end select
+            call output ( 'with ' )
+            call output ( mb%nRows )
+            call output ( ' rows and ' )
+            call output ( mb%nCols )
+            call output ( ' columns.  ' )
 
             if ( associated(val) ) then
               do cs = 1, noColSurfaces
@@ -385,22 +386,29 @@ contains ! ================ Public procedures ================================
               end do
               if ( mb%kind /= m_full ) &
                 & call deallocate_test ( val, 'val', ModuleName )
-            endif
-
-            if ( mb%kind /= m_absent ) then
-              call output ( 'Number of elements dumped:\ ' )
-              call output ( size(toDump), advance='yes' )
-              call dump ( toDump, clean=.true. )
             end if
+
+            if ( mb%kind /= m_absent ) &
+              & call dump ( toDump, name='Number of elements dumped:', clean=.true. )
 
           end if
         end do
       end if
     end do
 
-    call deallocate_test ( toDump, 'toDump', ModuleName )
-    call deallocate_test ( indgen, 'indgen', ModuleName )
-    
+    call deallocate_test ( toDump,       'toDump',       ModuleName )
+    call deallocate_test ( indgen,       'indgen',       ModuleName )
+    call deallocate_test ( rowChanInds,  'rowChanInds',  ModuleName )
+    call deallocate_test ( colChanInds,  'colChanInds',  ModuleName )
+    call deallocate_test ( rowSurfInds,  'rowSurfInds',  ModuleName )
+    call deallocate_test ( colSurfInds,  'colSurfInds',  ModuleName )
+    call deallocate_test ( rowChannels,  'rowChannels',  ModuleName )
+    call deallocate_test ( colChannels,  'colChannels',  ModuleName )
+    call deallocate_test ( rowSurfaces,  'rowSurfaces',  ModuleName )
+    call deallocate_test ( colSurfaces,  'colSurfaces',  ModuleName )
+    call deallocate_test ( rowInstances, 'rowInstances', ModuleName )
+    call deallocate_test ( colInstances, 'colInstances', ModuleName )
+
   end subroutine DumpBlock
 
   ! ----------------------------------------- PVMSendBlock
@@ -409,7 +417,6 @@ contains ! ================ Public procedures ================================
     type (MatrixElement_T), intent(in) :: BLOCK ! The block of the matrix
 
     ! Local variables
-    integer :: BUFFERID                 ! From pvm
     integer :: INFO                     ! Flag
     real(r8), dimension(:,:), pointer :: values
     integer :: n_rows, n_cols
@@ -418,7 +425,7 @@ contains ! ================ Public procedures ================================
 
     call PVMIDLPack ( (/ block%kind, block%nRows, block%nCols /), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing block info" )
-    
+
     if ( any (block%kind == (/M_Banded, M_Column_Sparse /) ) ) then
       call PVMIDLPack ( (/ size(block%values) /), info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "packing number of values" )
@@ -447,7 +454,6 @@ contains ! ================ Public procedures ================================
     type ( RC_Info ), intent(in) :: RC  ! the rcinfo to send
 
     ! Local variables
-    integer :: BUFFERID                 ! From pvm
     integer :: INFO                     ! Flag
     integer :: QTY                      ! Loop counter
 
@@ -455,7 +461,7 @@ contains ! ================ Public procedures ================================
     ! Pack the number of blocks
     call PVMIDLPack ( (/ rc%nelts /), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing NB' )
-    
+
     ! Pack the indices
     call PVMIDLPack ( rc%nelts, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing Nelts' )
@@ -494,7 +500,7 @@ contains ! ================ Public procedures ================================
     if (.not. myJustPack) call PVMFInitSend ( PvmDataDefault, bufferID )
     call PVMPackRC ( matrix%col )
     call PVMPackRC ( matrix%row )
-    
+
     do j = 1, size(matrix%block,2)
       do i = 1, size(matrix%block,1)
         call PVMPackBlock ( matrix%block(i,j) )
@@ -515,6 +521,9 @@ contains ! ================ Public procedures ================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.8  2002/10/08 17:36:21  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 1.7  2002/09/13 18:10:10  pwagner
 ! May change matrix precision rm from r8
 !
