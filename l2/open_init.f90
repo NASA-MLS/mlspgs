@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -9,6 +9,8 @@ module Open_Init
 
   use global_settings, only: MAXNUML1BRADIDS, ILLEGALL1BRADID
   use Hdf, only: DFACC_READ, SFSTART, SFEND
+  use L1BData, only: ReadL1BData, L1BData_T, &
+    & DeallocateL1BData, Dump
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: FileNameLen, L1BInfo_T, TAI93_Range_T
   use MLSL2Options, only: PUNISH_FOR_INVALID_PCF, PUNISH_FOR_NO_L1BRAD, &
@@ -122,6 +124,7 @@ contains ! =====     Public Procedures     =============================
 
     character(len=CCSDSlen) CCSDSEndTime
     character(len=CCSDSlen) CCSDSStartTime
+    integer :: Details   ! How much info about l1b files to dump
     integer :: Ifl1
     integer :: L1FileHandle, L1_Version
     character (len=fileNameLen) :: L1physicalFilename
@@ -165,7 +168,8 @@ contains ! =====     Public Procedures     =============================
       error = PENALTY_FOR_NO_METADATA
     end if
 
-! Initialize run parameters: unless reset, these dtermine how to run
+   ! Initialize run parameters: unless reset, either by pcf or l2cf,
+   ! these determine how to run
    CCSDSStartTime = '(undefined)'
    CCSDSEndTime = '(undefined)'
    l2pcf%startutc = '(undefined)'
@@ -178,13 +182,13 @@ contains ! =====     Public Procedures     =============================
    l2pcf%spec_hash = '(not applicable)'      ! will not create metadata
 
    if( .not. PCF ) then
-    if ( toggle(gen) ) then
-      if ( levels(gen) > 0 .or. index(switches,'O') /= 0 ) &
+      if ( levels(gen) > 0 .or. index(switches,'pcf') /= 0 ) &
 !        & call dump_L1B_database &
 !        & ( mlspcf_l1b_rad_end-mlspcf_l1b_rad_start+1, l1binfo, l2pcf, &
 !          & CCSDSEndTime, CCSDSStartTime, processingrange )
       call output('======== No parameters or radiances read :: no pcf ========', advance='yes')
       call output('========   (These must supplied through the l2cf)  ========', advance='yes')
+    if ( toggle(gen) ) then
       call trace_end ( "OpenAndInit" )
     end if
     if ( timing ) call sayTime
@@ -370,10 +374,19 @@ contains ! =====     Public Procedures     =============================
       & call MLSMessage(MLSMSG_Error,ModuleName, &
         & 'Problem with open_init section')
 
+   if ( index(switches, 'pcf3') /= 0 ) then
+     Details = 1
+   elseif ( index(switches, 'pcf2') /= 0 ) then
+     Details = 0
+   elseif ( index(switches, 'pcf1') /= 0 ) then
+     Details = -1
+   else
+     Details = -2
+   endif
+   if ( levels(gen) > 0 .or. index(switches,'pcf') /= 0 ) &
+        & call Dump_open_init ( ifl1, l1binfo, l2pcf, &
+          & CCSDSEndTime, CCSDSStartTime, processingrange, details )
     if ( toggle(gen) ) then
-      if ( levels(gen) > 0 .or. index(switches,'O') /= 0 ) &
-        & call dump_L1B_database ( ifl1, l1binfo, l2pcf, &
-          & CCSDSEndTime, CCSDSStartTime, processingrange )
       call trace_end ( "OpenAndInit" )
     end if
     if ( timing ) call sayTime
@@ -393,9 +406,9 @@ contains ! =====     Public Procedures     =============================
     end subroutine SayTime
   end subroutine OpenAndInitialize
 
-  ! ------------------------------------------  Dump_L1B_database  -----
-  subroutine Dump_L1B_database ( Num_l1b_files, L1binfo, L2pcf, &
-    & CCSDSEndTime, CCSDSStartTime, processingrange )
+  ! ------------------------------------------  Dump_open_init  -----
+  subroutine Dump_open_init ( Num_l1b_files, L1binfo, L2pcf, &
+    & CCSDSEndTime, CCSDSStartTime, processingrange, Details )
   
     ! Dump info obtained during OpenAndInitialize:
     ! L1B databse
@@ -413,24 +426,43 @@ contains ! =====     Public Procedures     =============================
     character(len=CCSDSlen) CCSDSEndTime
     character(len=CCSDSlen) CCSDSStartTime
     type (TAI93_Range_T) :: processingRange ! Data processing range
+    integer, intent(in) :: Details
 	
     ! Local
 
-    integer :: i
+    integer :: i, NoMAFs, IERR
     character (len=*), parameter :: time_format='(1pD18.12)'
+    character (len=*), parameter :: l1b_quant_name='R1A:118.B1F:PT.S0.FB25-1'
+    type (L1BData_T) :: l1bData   ! L1B dataset
 
     ! Begin
+    call output ( '============ Open Initialize ============', advance='yes' )
+    call output ( '        (Data entered via pcf)', advance='yes' )
+    call output ( ' ', advance='yes' )
     call output ( 'L1B database:', advance='yes' )
   
    if(associated(l1bInfo%L1BRADIDs)) then
     if ( num_l1b_files > 0 ) then
       do i = 1, num_l1b_files
-      if(l1bInfo%L1BRADIDs(i) /= ILLEGALL1BRADID) then
-  	    call output ( 'fileid:   ' )
-	    call output ( l1bInfo%L1BRADIDs(i), advance='yes' )
-      	call output ( 'name:   ' )
+        if(l1bInfo%L1BRADIDs(i) /= ILLEGALL1BRADID) then
+  	      call output ( 'fileid:   ' )
+	      call output ( l1bInfo%L1BRADIDs(i), advance='yes' )
+         call output ( 'name:   ' )                                       
     	   call output ( TRIM(l1bInfo%L1BRADFileNames(i)), advance='yes' )
-      endif
+         if ( Details > -2 ) then
+           call ReadL1BData ( l1bInfo%L1BRADIDs(i), l1b_quant_name, L1bData, &
+            & NoMAFs, IERR, NeverFail=.true. )
+           if ( IERR == 0 ) then
+             call Dump(l1bData, Details )
+             call DeallocateL1BData ( l1bData )
+           else
+             call output ( 'Error number  ' )
+             call output ( IERR )
+             call output ( ' while reading quantity named  ' )
+             call output ( trim(l1b_quant_name) )
+           endif
+         endif
+        endif
       end do
 
     else
@@ -486,7 +518,7 @@ contains ! =====     Public Procedures     =============================
     call output ( 'corresponding mcf hash:   ' )
     call output ( TRIM(l2pcf%spec_hash), advance='yes' )
 
-  end subroutine dump_L1B_database
+  end subroutine Dump_open_init
 
   ! ---------------------------------------------  Announce_Error  -----
   subroutine Announce_Error ( Lcf_where, Full_message, Use_toolkit, &
@@ -551,6 +583,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.56  2001/10/30 00:33:24  pwagner
+! Renamed Dump_L1B_database Dump_open_init; switches now checked for pcf[n]
+!
 ! Revision 2.55  2001/10/25 23:33:59  pwagner
 ! Initializes InputVersion, PGEVersion to blank
 !
