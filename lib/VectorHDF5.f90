@@ -62,6 +62,8 @@ contains ! ========================================= Module procedures =======
     call MakeHDF5Attribute ( qID, 'minValue', qt%minValue )
     call MakeHDF5Attribute ( qID, 'noInstancesLowerOverlap', qt%noInstancesLowerOverlap )
     call MakeHDF5Attribute ( qID, 'noInstancesUpperOverlap', qt%noInstancesUpperOverlap )
+    call MakeHDF5Attribute ( qID, 'instanceOffset', qt%instanceOffset )
+    call MakeHDF5Attribute ( qID, 'grandTotalInstances', qt%grandTotalInstances )
     call WriteLitIndexAsHDF5Attribute ( qID, 'verticalCoordinate', qt%verticalCoordinate )
     call MakeHDF5Attribute ( qID, 'badValue', qt%badValue )
     call WriteLitIndexAsHDF5Attribute ( qID, 'unit', qt%unit )
@@ -71,6 +73,7 @@ contains ! ========================================= Module procedures =======
     call MakeHDF5Attribute ( qID, 'signal', qt%signal )
     call MakeHDF5Attribute ( qID, 'sideband', qt%sideband )
     call MakeHDF5Attribute ( qID, 'instrumentModule', qt%instrumentModule )
+    call MakeHDF5Attribute ( qID, 'reflector', qt%reflector )
     call MakeHDF5Attribute ( qID, 'radiometer', qt%radiometer )
     call MakeHDF5Attribute ( qID, 'molecule', qt%molecule )
 
@@ -244,6 +247,8 @@ contains ! ========================================= Module procedures =======
     call GetHDF5Attribute ( qID, 'majorFrame', qt%majorFrame )
     call GetHDF5Attribute ( qID, 'logBasis', qt%logBasis )
     call GetHDF5Attribute ( qID, 'minValue', qt%minValue )
+    call GetHDF5Attribute ( qID, 'instanceOffset', qt%instanceOffset )
+    call GetHDF5Attribute ( qID, 'grandTotalInstances', qt%grandTotalInstances )
     call GetHDF5Attribute ( qID, 'noInstancesLowerOverlap', qt%noInstancesLowerOverlap )
     call GetHDF5Attribute ( qID, 'noInstancesUpperOverlap', qt%noInstancesUpperOverlap )
     call ReadLitIndexFromHDF5Attr ( qID, 'verticalCoordinate', qt%verticalCoordinate )
@@ -254,6 +259,7 @@ contains ! ========================================= Module procedures =======
     call GetHDF5Attribute ( qID, 'signal', qt%signal )
     call GetHDF5Attribute ( qID, 'sideband', qt%sideband )
     call GetHDF5Attribute ( qID, 'instrumentModule', qt%instrumentModule )
+    call GetHDF5Attribute ( qID, 'reflector', qt%reflector )
     call GetHDF5Attribute ( qID, 'radiometer', qt%radiometer )
     call GetHDF5Attribute ( qID, 'molecule', qt%molecule )
 
@@ -446,6 +452,9 @@ contains ! ========================================= Module procedures =======
 end module VectorHDF5
 
 ! $Log$
+! Revision 2.4  2003/07/07 20:21:45  livesey
+! New stuff in quantity templates written
+!
 ! Revision 2.3  2003/06/20 19:33:53  pwagner
 ! Quanities now share grids stored separately in databses
 !
