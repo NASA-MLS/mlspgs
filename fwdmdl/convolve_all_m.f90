@@ -3,6 +3,7 @@
 
 module CONVOLVE_ALL_M
   use AntennaPatterns_m, only: AntennaPattern_T
+  use Load_sps_data_m, only: Grids_T
   use DCSPLINE_DER_M, only: CSPLINE_DER
   use DUMP_0, only: DUMP
   use D_LINTRP_M, only: LINTRP
@@ -37,9 +38,10 @@ contains
   ! cubic spline interpolation to do the job.
 
   Subroutine convolve_all (ForwardModelConfig, ForwardModelIn, maf, channel, &
-    windowStart, windowFinish, mafTInstance, temp, ptan, radiance, tan_press,&
-    ptg_angles,tan_temp,dx_dt,d2x_dxdt, si,center_angle,i_raw, k_temp,       &
-    k_atmos, sbRatio, Jacobian, rowFlags, AntennaPattern, mol_cat_indx, Ier)
+  & windowStart, windowFinish, mafTInstance, temp, ptan, radiance, tan_press,&
+  & ptg_angles,tan_temp,dx_dt,d2x_dxdt, si,center_angle,i_raw, k_temp,       &
+  & k_atmos, sbRatio, t_deriv_flag, Grids_f, Jacobian, rowFlags,             &
+  & AntennaPattern, mol_cat_indx, Ier)
 
     ! Dummy arguments
     type (ForwardModelConfig_T), intent(in) :: FORWARDMODELCONFIG
@@ -61,6 +63,8 @@ contains
     Real(r4), intent(in) :: k_temp(:,:,WindowStart:)
     Real(r4), intent(in) :: k_atmos(:,:,:,WindowStart:,:)
     real(r8), intent(in) :: SBRATIO
+    logical, dimension(:), pointer :: t_deriv_flag
+    type (Grids_T), intent(in) :: Grids_f
     type (Matrix_T), intent(inout), optional :: Jacobian
     logical, dimension(:), intent(inout) :: rowFlags ! Flag to calling code
     type(antennaPattern_T), intent(in) :: AntennaPattern
@@ -71,10 +75,10 @@ contains
     type (VectorValue_t), pointer :: f
 
     integer :: FFT_INDEX(size(antennaPattern%aaap))
-    integer :: Ind, ht_ind(1)           ! Indecies
+    integer :: Ind, ht_ind(1),kp,kz,kf  ! Indecies and various sizes
     integer :: Row, Col                 ! Matrix entries
     integer :: FFT_pts, Is, J, Ktr, Nf, Ntr, Ptg_i, Sv_i
-    integer :: No_tan_hts, Lk, Uk, no_mol, jf, jz, l
+    integer :: No_tan_hts, Lk, Uk, no_mol, jf, jz, l, sv_t, sv_f
 
     logical :: Want_Deriv
 
@@ -120,6 +124,7 @@ contains
     ! Make sure the fft_press array is MONOTONICALY increasing:
 
     is = 1
+    fft_index = 0
     do while (is < Ntr-1  .and.  fft_press(is) >= fft_press(is+1))
       is = is + 1
     end do
@@ -138,6 +143,8 @@ contains
         fft_index(Ktr) = ptg_i
       end if
     end do
+
+    if(Ktr == Ntr) fft_index(1) = -2
 
 ! Interpolate the output values
 ! (Store the radiances derivative with respect to pointing pressures in: Term)
@@ -197,8 +204,9 @@ contains
 
     if ( forwardModelConfig%temp_der) then
 
-      ! Derivatives needed continue to process
+    ! Derivatives needed continue to process
 
+      sv_t = 0
       ht_ind = 0
 
       do nf = windowStart, windowFinish
@@ -215,6 +223,11 @@ contains
         end select
 
         do jz = 1, temp%template%noSurfs
+
+! Check if derivatives are needed for this (zeta & phi) :
+
+          sv_t = sv_t + 1
+          if(.NOT. t_deriv_flag(sv_t)) CYCLE
 
           ! run through representation basis coefficients
           ! Integrand over temperature derivative plus pointing differential
@@ -344,16 +357,23 @@ contains
 
     if ( forwardModelConfig%atmos_der) then
 
-      lk = lbound(k_atmos,4)   ! The lower Phi dimension
-      uk = ubound(k_atmos,4)   ! The upper Phi dimension
+      sv_f = 0
       no_mol = size(mol_cat_indx)
 
+      lk = lbound(k_atmos,4)   ! The lower Phi dimension
+      uk = ubound(k_atmos,4)   ! The upper Phi dimension
+
       do is = 1, no_mol
+
+        kp = Grids_f%no_p(is)
+        kz = Grids_f%no_z(is)
+        kf = Grids_f%no_f(is)
 
         jz = mol_cat_indx(is)
         l = forwardModelConfig%molecules(jz)
         if ( l == l_extinction ) then
-          f => GetVectorQuantityByType(forwardModelIn,quantityType=l_extinction, &
+          f => GetVectorQuantityByType(forwardModelIn, &
+            &                          quantityType=l_extinction, &
             &  radiometer=radiance%template%radiometer, noError=.true. )
         else
           f => GetVectorQuantityByType ( forwardModelIn, quantityType=l_vmr, &
@@ -362,13 +382,15 @@ contains
 
         if ( associated(f)) then
 
-          ! Derivatives needed continue to process
-
-          do nf = 1, f%template%noInstances
+          do nf = 1, kp
 
           ! run through phi representation basis coefficients
 
-            if ( nf+lk-1 > uk) EXIT
+            if ( nf+lk-1 > uk) then
+              sv_f = sv_f + kf * kz * (kp-nf+1)
+              EXIT
+            endif
+
             col = FindBlock ( Jacobian%col, f%index, nf+windowStart-1 )
             select case ( Jacobian%block(row,col)%kind )
             case ( m_absent )
@@ -381,11 +403,16 @@ contains
             end select
 
             sv_i = 0
-            do jz = 1, f%template%noSurfs
+            do jz = 1, kz
 
             ! run through zeta representation basis coefficients
 
-              do jf = 1, f%template%noChans
+              do jf = 1, kf
+
+! Check if derivatives are needed for this molecule (zeta, phi & channel) :
+
+                sv_f = sv_f + 1
+                IF(.NOT. Grids_f%deriv_flags(sv_f)) CYCLE
 
                 ! run through Frequencies basis coefficients
 
@@ -415,11 +442,21 @@ contains
                   jacobian%block(row,col)%values( ind, sv_i ) = &
                                             &    q + sbRatio*Srad(ptg_i)
                 end do                  ! Pointing
+!
               end do                    ! F channels (Frequencies)
+!
             end do                      ! F surfs
+!
           end do                        ! F instances
+!
+        else                            ! On: if ( associated(f)) ...
+!
+          sv_f = sv_f + kp * kz * kf
+!
         end if                          ! Want derivatives for this species
+!
       end do                            ! Loop over species
+!
     end if                              ! Any derivatives
 !
 10  CONTINUE
@@ -430,6 +467,9 @@ contains
 !
 end module CONVOLVE_ALL_M
 ! $Log$
+! Revision 2.6  2002/05/22 19:42:44  zvi
+! Fix a bug in the mol. index loop
+!
 ! Revision 2.5  2002/02/15 22:52:16  livesey
 ! Bug fix for case where no ptan derivative
 !
