@@ -22,6 +22,7 @@ module Open_Init
     &                mlspcf_l2_param_spec_keys, &
     &                mlspcf_l2_param_spec_hash, &
     &                mlspcf_pcf_start, PENALTY_FOR_NO_METADATA
+  USE MLSStrings, only: LowerCase
   USE output_m, only: output
   USE PCFHdr, only: CreatePCFAnnotation
   use SDPToolkit, only: &
@@ -31,7 +32,7 @@ module Open_Init
   use Trace_M, only: Trace_begin, Trace_end
   use TREE, only: &
     &             DUMP_TREE_NODE, SOURCE_REF
-  use WriteMetadata, only: PCFData_T
+  use WriteMetadata, only: PCFData_T, MCFCASESENSITIVE
 
   implicit none
   private
@@ -99,9 +100,9 @@ contains ! =====     Public Procedures     =============================
     character(len=*), parameter :: DEFAULTANTEXT= &
 	 & 'PCF file number missing from PCF--add this line'
     character(len=*), parameter :: DEFAULT_SPEC_KEYS= &
-	 & 'temp,gph,h2o,hno3,o3,hcl,clo,n2o,oh,rhi,so2,ho2,bro,hocl,hcn,cirrus-ice,others'
+	 & 'temp,gph,h2o,hno3,o3,hcl,clo,co,n2o,oh,rhi,so2,ho2,bro,hocl,hcn,cirrus-ice,others'
     character(len=*), parameter :: DEFAULT_SPEC_HASH= &
-	 & 't,z,h2o,hno3,o3,hcl,clo,n2o,oh,rhi,so2,ho2,bro,hocl,hcn,ice,oth'
+	 & 't,z,h2o,hno3,o3,hcl,clo,co,n2o,oh,rhi,so2,ho2,bro,hocl,hcn,ice,oth'
 
     character(len=CCSDSlen) CCSDSEndTime
     character(len=CCSDSlen) CCSDSStartTime
@@ -283,6 +284,11 @@ contains ! =====     Public Procedures     =============================
    	l2pcf%spec_hash = DEFAULT_SPEC_HASH
    endif
 	
+   if(.NOT. MCFCASESENSITIVE) then
+   	l2pcf%spec_hash = LowerCase(l2pcf%spec_hash)
+   	l2pcf%spec_keys = LowerCase(l2pcf%spec_keys)
+   endif
+
 ! Get the name of the log file from the PCF
 
       version = 1
@@ -458,6 +464,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.38  2001/04/16 17:45:54  pwagner
+! Makes l2pcf hash, keys lowercase if not MCFCASESENSITIVE
+!
 ! Revision 2.37  2001/04/12 00:20:44  pwagner
 ! With new PCF params
 !
