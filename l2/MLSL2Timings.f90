@@ -10,7 +10,8 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
   use L2PARINFO, only: PARALLEL
   USE MLSL2Options, only: SECTIONTIMINGUNITS
   USE MLSMessageModule, only: MLSMessage, MLSMSG_Error
-  USE MLSStrings, only: catLists, GetStringElement, LowerCase, &
+  USE MLSStrings, only: LowerCase 
+  USE MLSStringLists, only: catLists, GetStringElement, &
     & NumStringElements, StringElementNum 
   use OUTPUT_M, only: BLANKS, OUTPUT, PRUNIT
   use Time_M, only: Time_Now, Use_Wall_Clock
@@ -741,6 +742,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.24  2004/08/04 23:19:58  pwagner
+! Much moved from MLSStrings to MLSStringLists
+!
 ! Revision 2.23  2004/06/29 00:08:41  pwagner
 ! Now can fill timings
 !
