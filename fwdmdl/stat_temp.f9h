@@ -29,6 +29,7 @@
       stat_temp = temp / a
 !   else
 !{ Apply L'Hospital's rule: $B = T ~ \exp(- \frac{h \nu}{k T})$
+
 !     Don't do this.  FREQ has to be really dinky (<0.1 mHz to get < 1.0e-6
 !     absolute accuracy), and the middle branch works much better in this
 !     region anyway.
@@ -43,6 +44,9 @@
 ! End function ?_STAT_TEMP
 
 ! $Log$
+! Revision 2.4  2002/10/12 01:36:17  vsnyder
+! Better comments, more RCS comments, cosmetic changes
+!
 ! Revision 2.3  2002/10/02 16:53:48  pwagner
 ! Removed RCS Ident Block
 !
