@@ -181,6 +181,8 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
           $(RECFG)
 
 depends:
+	$(MLSBIN)/makemakedep.sh -nodep $(OMIT_PREFXD) ; \
+     mv Makefile.dep Makefile.nodep
 	$(MLSBIN)/makemakedep.sh $(OMIT_PREFXD) \
            ./machines/$(MLSCONFG) $(srclib)
 #   Unfortunately, we are unable to use this currently because we can't yet
@@ -245,6 +247,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.37  2002/05/02 00:16:32  pwagner
+# depends now creates Makefile.nodep, too
+#
 # Revision 2.36  2002/01/29 00:46:47  pwagner
 # Builds he5lib when HDFVERSIONS defined
 #
