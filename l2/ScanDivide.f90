@@ -200,7 +200,7 @@ contains ! =====     Public Procedures     =============================
     time = data%dpField(1,1,:)
     counterMAF = data%counterMAF
 
-    call DeallocateL1BData(data, flag)
+    call DeallocateL1BData(data)
     if (flag /= 0) call MLSMessage(MLSMSG_Error, ModuleName, &
       MLSMSG_DeallocateL1b)
 
@@ -225,7 +225,7 @@ contains ! =====     Public Procedures     =============================
 
     phi = data%dpField(1,1,:)
 
-    call DeallocateL1BData(data, flag)
+    call DeallocateL1BData(data)
     if (flag /= 0) call MLSMessage(MLSMSG_Error, ModuleName, &
       MLSMSG_DeallocateL1b)
 
@@ -336,7 +336,7 @@ contains ! =====     Public Procedures     =============================
 
     end do
 
-    call DeallocateL1BData(data, flag)
+    call DeallocateL1BData(data)
     if (flag /= 0) call MLSMessage(MLSMSG_Error, ModuleName, &
       MLSMSG_DeallocateL1b)
 
@@ -374,7 +374,7 @@ contains ! =====     Public Procedures     =============================
           end if
         end do
 
-        call DeallocateL1BData(data, flag)
+        call DeallocateL1BData(data)
         if (flag /= 0) call MLSMessage(MLSMSG_Error, ModuleName, &
           MLSMSG_DeallocateL1b)
       end if
@@ -420,7 +420,7 @@ contains ! =====     Public Procedures     =============================
             end if
           end do
         end if
-        call DeallocateL1BData ( data, flag )
+        call DeallocateL1BData ( data )
         if (flag /= 0) call MLSMessage(MLSMSG_Warning, ModuleName, &
           MLSMSG_DeallocateL1b)
       end if
@@ -1401,6 +1401,9 @@ end module ScanDivide
 !====================
 
 !# $Log$
+!# Revision 2.14  2001/05/30 23:55:46  livesey
+!# Changed for new L1BData
+!#
 !# Revision 2.13  2001/05/03 21:47:30  vsnyder
 !# Get R8 from MLSCommon instead of MLSNumerics
 !#
