@@ -485,7 +485,7 @@ contains ! =====     Public Procedures     =============================
 
       ! Now compute yP
 
-      if ( toggle(emit) .and. levels(emit) > 2 ) then
+      if ( toggle(emit) .and. levels(emit) > 8 ) then
         call dump ( (/deltaX/) )
 
         call dump ( l2pc%col%inst, 'l2pc%col%inst' )
@@ -498,7 +498,7 @@ contains ! =====     Public Procedures     =============================
       call cloneVector( yp, l2pc%row%vec, vectorNameText='_yP' )
       call MultiplyMatrixVectorNoT ( l2pc, deltaX, yP, update = .false. )
 
-      if ( toggle(emit) .and. levels(emit) > 2 ) then
+      if ( toggle(emit) .and. levels(emit) > 8 ) then
         call dump ( (/yp, l2pc%row%vec/) )
       end if
       yP = yP + l2pc%row%vec
@@ -761,6 +761,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.11  2002/02/12 21:48:21  livesey
+! Fixed minor bug for case when no bin selectors
+!
 ! Revision 2.10  2002/02/09 21:35:22  livesey
 ! Minor bug fixes
 !
