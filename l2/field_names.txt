@@ -16,6 +16,10 @@
 
 a
 additional
+adopt
+adoptBoth
+adoptColumns
+adoptRows
 allLinesForRadiometer
 allowMissing
 antennaPatterns
@@ -31,6 +35,7 @@ average
 
 b
 basisFraction
+bin
 binSelectors
 boundarypressure
 
@@ -323,6 +328,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.111  2004/01/23 05:47:38  livesey
+# Added the adoption stuff
+#
 # Revision 2.110  2003/12/04 22:19:32  livesey
 # Added ability to fill from l2gpPrecision field
 #
