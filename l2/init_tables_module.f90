@@ -127,7 +127,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_NEGATIVEPRECISION  = s_merge + 1
   integer, parameter :: S_OUTPUT             = s_negativePrecision + 1
   integer, parameter :: S_QUANTITY           = s_output + 1
-  integer, parameter :: S_RETRIEVE           = s_quantity + 1
+  integer, parameter :: S_RESTRICTRANGE      = s_quantity + 1
+  integer, parameter :: S_RETRIEVE           = s_restrictRange + 1
   integer, parameter :: S_SIDS               = s_retrieve + 1
   integer, parameter :: S_SNOOP              = s_sids + 1
   integer, parameter :: S_SUBSET             = s_snoop + 1
@@ -296,6 +297,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_negativePrecision ) =   add_ident ( 'negativePrecision' )
     spec_indices(s_output) =               add_ident ( 'output' )
     spec_indices(s_quantity) =             add_ident ( 'quantity' )
+    spec_indices(s_restrictRange) =        add_ident ( 'restrictRange' )
     spec_indices(s_retrieve) =             add_ident ( 'retrieve' )
     spec_indices(s_snoop) =                add_ident ( 'snoop' )
     spec_indices(s_subset) =               add_ident ( 'subset' )
@@ -751,6 +753,18 @@ contains ! =====     Public procedures     =============================
              begin, f+f_opticalDepthCutoff, t+t_numeric, n+n_field_type, &
              begin, f+f_reset, t+t_boolean, n+n_field_type, ndp+n_spec_def /) )
     call make_tree ( (/ &
+      begin, s+s_restrictRange, &
+             begin, f+f_quantity, s+s_vector, f+f_template, f+f_quantities, &
+                    nr+n_dot, &
+             begin, f+f_ptanquantity, s+s_vector, f+f_template, f+f_quantities, &
+                    nr+n_dot, &
+             begin, f+f_mask, t+t_masks, n+n_field_type, &
+             begin, f+f_measurements, s+s_vector, nr+n_field_spec, &
+             begin, f+f_signals, t+t_string, nr+n_field_type, &
+             begin, f+f_basisFraction, t+t_numeric, n+n_field_type, &
+             begin, f+f_minChannels, t+t_numeric, n+n_field_type, &
+             ndp+n_spec_def /) )
+    call make_tree ( (/ &
       begin, s+s_flagcloud, &  ! Must be AFTER s_vector
              begin, f+f_quantity, s+s_vector, f+f_template, f+f_quantities, &
                     nr+n_dot, &
@@ -938,10 +952,10 @@ contains ! =====     Public procedures     =============================
       begin, z+z_fill, s+s_dump, s+s_fill, s+s_fillCovariance, s+s_fillDiagonal, &
                        s+s_negativePrecision, s+s_matrix, s+s_destroy, &
                        s+s_snoop, s+s_time, s+s_vector, s+s_transfer, &
-                       s+s_subset, s+s_flagcloud, n+n_section, &
+                       s+s_subset, s+s_flagcloud, s+s_restrictRange, n+n_section, &
       begin, z+z_retrieve, s+s_dumpBlocks, s+s_matrix, s+s_retrieve, &
                            s+s_sids, s+s_snoop, s+s_subset, s+s_flagCloud, s+s_time, &
-                           n+n_section, &
+                           s+s_restrictRange, n+n_section, &
       begin, z+z_join, s+s_time, s+s_l2gp, s+s_l2aux, s+s_directWrite, n+n_section, &
       begin, z+z_output, s+s_time, s+s_output, n+n_section /) )
 
@@ -959,6 +973,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.291  2003/03/07 03:18:13  livesey
+! Added RestrictRange command
+!
 ! Revision 2.290  2003/03/06 00:46:18  livesey
 ! Added subset and flagcloud to fill and minor tidyups.
 !
