@@ -8,11 +8,13 @@ module LinearizedForwardModel_m
 
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use Dump_0, only: DUMP
-  use Intrinsic, only: LIT_INDICES
-  use L2PC_m, only: L2PCDATABASE
   use ForwardModelConfig, only: FORWARDMODELCONFIG_T
   use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T, &
     & FORWARDMODELINTERMEDIATE_T
+  use Intrinsic, only: LIT_INDICES
+  use Intrinsic, only: L_RADIANCE, L_TEMPERATURE, L_PTAN, L_VMR, &
+    & L_SIDEBANDRATIO
+  use L2PC_m, only: L2PCDATABASE
   use ManipulateVectorQuantities, only: FINDCLOSESTINSTANCES
   use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
     & MATRIXELEMENT_T, CREATEBLOCK, DENSIFY
@@ -22,14 +24,15 @@ module LinearizedForwardModel_m
   use MLSSignals_m, only: Signal_T
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
   use MLSNumerics, only: HUNT, INTERPOLATEVALUES
+  use Output_m, only: Output
+  use QuantityTemplates, only: QuantityTemplate_T
+  use String_Table, only: Display_String
+  use Toggles, only: Emit, Levels, Toggle
+  use Trace_m, only: Trace_begin, Trace_end
   use VectorsModule, only: assignment(=), OPERATOR(-), OPERATOR(+), &
     & CLONEVECTOR, CONSTRUCTVECTORTEMPLATE, COPYVECTOR, CREATEVECTOR,&
     & DESTROYVECTORINFO, GETVECTORQUANTITYBYTYPE, VECTOR_T, &
     & VECTORVALUE_T, VECTORTEMPLATE_T, DUMP
-  use QuantityTemplates, only: QuantityTemplate_T
-  use String_Table, only: Display_String
-  use Intrinsic, only: L_RADIANCE, L_TEMPERATURE, L_PTAN, L_VMR, &
-    & L_SIDEBANDRATIO
 
   implicit none
   private
@@ -123,7 +126,9 @@ contains ! =====     Public Procedures     =============================
     type(VectorValue_T), pointer :: XSTARPTAN ! Tangent pressure in l2pc
     type(VectorValue_T), pointer :: L2PCQ ! A quantity in the l2pc
     type(VectorValue_T), pointer :: SIDEBANDRATIO ! From the state vector
+
     ! Executable code
+    if ( toggle(emit) ) call trace_begin ( 'LinearizedForwardModel' )
 
     nullify ( yPmapped, resultMapped, dyByDX, closestInstances )
     nullify ( dense, mifPointingsLower, mifPointingsUpper )
@@ -134,7 +139,10 @@ contains ! =====     Public Procedures     =============================
 
     maf = fmStat%maf
 
-    print*,'Linear model doing maf:',maf
+    if ( toggle(emit) .and. levels(emit) > 0 ) then
+      call output ( 'Linear model doing maf: ' )
+      call output ( maf, advance='yes' )
+    end if
     if ( size ( forwardModelConfig%signals ) /= 1 ) call MLSMessage ( &
       & MLSMSG_Error, ModuleName, &
       & 'Can only have one signal for linearized models')
@@ -214,8 +222,8 @@ contains ! =====     Public Procedures     =============================
 
       ! Now we loop over the quantities in the l2pc file and construct an xPrime
       ! for them
-      call cloneVector ( xP, l2pc%col%vec )
-      call cloneVector ( deltaX, xP )     ! Note sets values to 0.0
+      call cloneVector ( xP, l2pc%col%vec, vectorNameText='_xP' )
+      call cloneVector ( deltaX, xP, vectorNameText='_deltaX' ) ! sets values to 0.0
 
       ! Set up some other stuff before main loop
       call Allocate_test ( closestInstances, radiance%template%noInstances, &
@@ -469,7 +477,7 @@ contains ! =====     Public Procedures     =============================
       print*,'l2pc%row%quant'
       call dump(l2pc%row%quant)
 
-      call cloneVector( yp, l2pc%row%vec )
+      call cloneVector( yp, l2pc%row%vec, vectorNameText='_yP' )
       call MultiplyMatrixVectorNoT ( l2pc, deltaX, yP, update = .false. )
       call dump ( (/yp, l2pc%row%vec/) )
       yP = yP + l2pc%row%vec
@@ -581,10 +589,15 @@ contains ! =====     Public Procedures     =============================
 
     if ( maf == radiance%template%noInstances ) fmStat%finished = .true.
 
+    if ( toggle(emit) ) call trace_end ( 'LinearizedForwardModel' )
+
   end subroutine LinearizedForwardModel
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 1.12  2001/05/02 20:22:13  livesey
+! Removed some unused variables.
+!
 ! Revision 1.11  2001/05/01 06:55:07  livesey
 ! Intermediate bug avoiding version.
 !
