@@ -3,6 +3,8 @@
 
 module REFRACTION_M
 
+  use MLSCommon, only: RP  ! Need to use it here to define result of later function
+    
   implicit none
 
   private
@@ -18,8 +20,6 @@ contains
 !----------------------------------------------  Refractive_index  -----
 
   subroutine Refractive_index ( p_path, t_path, n_path, h2o_path )
-
-    use MLSCommon, only: RP
 
   ! This routine computes the refractive index as a function of altitude
   ! and phi. The returned value has one subtracted from it
@@ -285,8 +285,6 @@ o2: do j = mid+1, no_ele-1
 ! ---------------------------------------------------  Path_ds_dh  -----
   elemental real(rp) function Path_ds_dh ( r_path, r_tan )
 
-    use MLSCommon, only: RP
-
   ! inputs:
 
     real(rp), intent(in) :: r_path ! heights + req (km).
@@ -305,6 +303,10 @@ o2: do j = mid+1, no_ele-1
 
 END module REFRACTION_M
 ! $Log$
+! Revision 2.10  2002/09/26 00:27:55  vsnyder
+! Insert copyright notice, move USEs from module scope to procedure scope,
+! cosmetic changes.
+!
 ! Revision 2.9  2002/03/15 06:53:02  zvi
 ! Some cosmetic changes
 !
