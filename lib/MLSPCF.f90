@@ -56,6 +56,9 @@ MODULE MLSPCF
    INTEGER, PARAMETER :: mlspcf_l3dm_start = 30100
    INTEGER, PARAMETER :: mlspcf_l3dm_end = 30199 
    !
+   INTEGER, PARAMETER :: mlspcf_l3sp_start = 31000
+   INTEGER, PARAMETER :: mlspcf_l3sp_end = 31009
+   !
    INTEGER, PARAMETER :: mlspcf_mcf_l3log_start = 50001
    INTEGER, PARAMETER :: mlspcf_mcf_l3log_end = 50001
    !
