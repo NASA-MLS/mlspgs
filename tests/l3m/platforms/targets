@@ -1,0 +1,131 @@
+include ../Makefile.dep
+
+# "$Id$"
+
+# ========================================================================
+# An automatically constructed Makefile
+# This file was built by mlsconfigure
+# by catenating three files:
+# (1) .configure -- a file of mls settings: compiler, platform, etc.
+# (2) MLSCONFG   -- a file of macros specific for the compiler.platform combo
+#                   e.g., NAG.Sun
+#                   these might be compiler switches, 
+# (3) targets    -- a file of targets with instructions how to build them
+#                    (except for .f90.o rules which are still in MLSCONFG)
+
+# Other files referred to by means of "include" statements:
+#   ../Makefile.dep -- dependencies among the primary Fortran modules
+
+# Special areas:
+# PVM
+# If it is desired to link the executable with PVM support,
+# the variables PVM_PATH, PVM_ARCH should be defined
+# e.g. in .configure
+
+# BLAS
+# If it is desired to link the executable with external BLAS support,
+# the variable BLAS should be defined
+# e.g. in the make staement: make -f MakeFC BLAS=/my_path/to_BLAS_library
+
+# ========================================================================
+ALLOBJS = $(OBJS)
+
+PVM_PATH = ${PVM_ROOT}/lib/${PVM_ARCH}
+
+libl3m_sources = ../../../$(own_dir)/
+
+libl3m_f90 := $(shell echo $(libl3m_sources)/*.f90)
+
+libl3m_objs := $(shell echo $(owndir)/*.o)
+
+l3_driver = MLSL3M.o
+
+# "yes" is safer--
+# in case modules have been deleted or excluded since the last build
+# Nope--will need to think harder about what to do about excluded modules
+delete_lib_first = no
+
+ifdef PVM_ROOT
+   pvm_linker_line=-L${PVM_PATH} -lfpvm3 -lgpvm3 -lpvm3
+   pvm_message=Building mlsl3 test with PVM support
+   PVM_OBJS=
+else
+   pvm_linker_line=
+   pvm_message=Building mlsl3 test without PVM support
+   PVM_OBJS=
+endif
+
+ifdef BLAS
+ifdef LIB_BLAS
+   blas_linker_line=-L${BLAS} -l${LIB_BLAS}
+else
+   blas_linker_line=-L${BLAS} -lblas
+endif
+   blas_message=Building mlsl3 test with externally-supplied BLAS
+else
+   blas_linker_line=
+   blas_message=Building mlsl3 test with internally-supplied BLAS
+endif
+
+ifdef HDF5
+ifeq ($(MLSPLAT),Sun)
+   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 -R${HDF5}
+else
+#   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 -Xlinker -rpath=${HDF5} \
+#    -lssl -lz
+   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 
+   l_specials := $(l_specials) -lz
+endif
+ifdef HDFEOS5
+   hdfeos5_linker_line=-L${HDFEOS5} -lhe5_hdfeos
+else
+   hdfeos5_linker_line=
+endif
+   hdf5_message=Building test of mlsl3 with hdf5
+else
+   hdf5_linker_line=
+   hdfeos5_linker_line=
+   hdf5_message=Building test of mlsl3 without hdf5
+endif
+
+# ========================================================================
+libl3m.a: $(libl3m_objs)
+ifeq ($(delete_lib_first),yes)
+		rm -f $@
+endif
+	ar ru $@ $?
+	ar d $@ $(owndir)/$(l3_driver)
+
+#test: $(ALLOBJS) $(PVM_OBJS) $(itmdir)/libmlsl3.a  $(libdir)/libmls.a
+test: $(ALLOBJS) libl3m.a $(itmdir)/libmlsl3.a $(libdir)/libmls.a
+		@echo "$(pvm_message)"
+		@echo "$(blas_message)"
+		@echo "$(hdf5_message)"
+		$(FC) $(LDOPTS) -o test $(ALLOBJS) $(PVM_OBJS)  \
+                      -L./ -ll3m \
+                      -L$(itmdir)/ -lmlsl3 \
+                      -L${libdir} -lmls \
+		-L${PGSTK} -lPGSTK \
+        -L${HDFEOS} -lhdfeos \
+		-L${HDF} -lmfhdf \
+        -ldf \
+        -lz \
+        -ljpeg \
+		-L${GCTP} -lGctp \
+        $(pvm_linker_line) \
+        $(blas_linker_line) \
+	-L${FFTW_ROOT} -lrfftw -lfftw \
+        $(hdf5_linker_line) \
+        $(l_specials) $(LAFTER) \
+		  
+# ========================================================================
+
+clean:
+	rm -f *.o *.mod test
+
+tar:
+	rm -f l3test.tgz
+	tar hcvzf l3test.tgz * --exclude \*.o --exclude \*.mod --exclude test
+
+# ========================================================================
+# $Log$
