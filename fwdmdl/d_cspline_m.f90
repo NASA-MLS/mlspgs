@@ -16,11 +16,14 @@ module D_CSPLINE_M
   integer, private, parameter :: RK = kind(0.0d0)
 contains
 !
-  subroutine D_CSPLINE (XIN, XOUT, YIN, YOUT, NIN, NOUT)
+  subroutine D_CSPLINE (XIN, XOUT, YIN, YOUT, NIN, NOUT, YMIN, YMAX)
     include 'cspline.f9h'
   end subroutine D_CSPLINE
 end module D_CSPLINE_M
 ! $Log$
+! Revision 2.0  2001/09/17 20:26:26  livesey
+! New forward model
+!
 ! Revision 1.6  2001/06/07 23:30:34  pwagner
 ! Added Copyright statement
 !

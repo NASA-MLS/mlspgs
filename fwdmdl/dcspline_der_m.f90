@@ -17,11 +17,14 @@ module DCSPLINE_DER_M
   integer, parameter :: RK = kind(0.0d0)
 !
 contains
-  subroutine DCSPLINE_DER ( XIN, XOUT, YIN, YOUT, DYOUT, NIN, NOUT )
+  subroutine DCSPLINE_DER ( XIN, XOUT, YIN, YOUT, DYOUT, NIN, NOUT, YMIN, YMAX)
     include 'cspline_der.f9h'
   end subroutine DCSPLINE_DER
 end module DCSPLINE_DER_M
 ! $Log$
+! Revision 2.0  2001/09/17 20:26:26  livesey
+! New forward model
+!
 ! Revision 1.5  2001/06/07 23:30:34  pwagner
 ! Added Copyright statement
 !

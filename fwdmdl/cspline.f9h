@@ -1,7 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
-
-! subroutine ?_CSPLINE ( XIN, XOUT, YIN, YOUT, NIN, NOUT )
+! subroutine ?_CSPLINE ( XIN, XOUT, YIN, YOUT, NIN, NOUT, YMIN, YMAX)
 !
 !  Given arrays XIN & YIN of lenght NIN containing a tabulated function,
 !  with XIN ordered, and given the (ordered) array: XOUT of length: NOUT,
@@ -10,12 +7,13 @@
 !
     integer, intent(in) :: NIN, NOUT
     real(rk), intent(in) :: XIN(abs(nin)), XOUT(nout), YIN(abs(nin))
+    real(rk), OPTIONAL, intent(in) :: YMIN, YMAX
     real(rk), intent(out) :: YOUT(:)
 !
 !   logical, intrinsic :: ALL
     integer :: I, JIN, KHI, KLO, KPL
     real(rk) :: COEFF(4, abs(nin)), X_IN(abs(nin))
-    real(rk) :: X, XL, XH, YL, YH, YLIN, YSPL, DYDX, DP, H
+    real(rk) :: X, XL, XH, YL, YH, YLIN, YSPL, DYDX, DP, H, TOL
 !
     if ( all(yin(2:) == yin(1)) ) then
       yout = yin(1)
@@ -54,20 +52,18 @@
 !
       h = x - xl
       ylin = yl + dydx * h
-      yspl = yl + h * (coeff(2,klo) + h * (coeff(3,klo) +     &
-   &         h * coeff(4,klo) / 3.0) / 2.0)
+      yspl = yl + h * (coeff(2,klo) + h * (coeff(3,klo) +  &
+          &  h * coeff(4,klo) / 3.0) / 2.0)
 !
-      h = max(abs(ylin),abs(yspl))
-      dp = 100.0*abs(ylin-yspl)/(h+epsilon(ylin))
+      h = MAX(abs(yspl),abs(ylin))
+      dp = 100.0 * abs(yspl-ylin) / (h + epsilon(ylin))
+      if(dp > 25.0) then
+        yspl = ylin
+      else if (PRESENT(YMIN) .AND. PRESENT(YMAX) ) then
+        if(yspl < YMIN  .OR. yspl > YMAX) yspl = ylin
+      endif
 !
-! If the spline is more than 25% different from linear, revert to
-! linear interpolation
-!
-      if (dp < 25.0) then            ! spline ok
-        yout(i) = yspl
-      else                           ! revert to linear
-        yout(i) = ylin
-      end if
+      yout(i) = yspl
 !
     end do
 !
