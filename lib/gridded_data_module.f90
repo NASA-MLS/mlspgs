@@ -760,9 +760,8 @@ contains
        deallocate(axis)
     endif
     ! readitem needs to be initialised or there is a point where it 
-    ! can be used before being set. The string should be more than ri_len
-    ! spaces. 
-    readitem="                                              "
+    ! can be used before being set.
+    readitem=""
     ! An explicit axis is supplied as a parenthesised list, spread 
     ! over several lines. This is a Royal PIA.
     ! Read chars till we get to the (
@@ -863,3 +862,5 @@ contains
   end function l3ascii_get_multiplier
 
 end module gridded_data_module
+
+! $Log$
