@@ -148,11 +148,6 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   real, parameter, private :: COL_SPARSITY = 0.5  ! If more than this
     ! fraction of the elements between the first and last nonzero in a
     ! column are nonzero, use M_Banded, otherwise use M_Column_Sparse.
-  type(MatrixElement_T), save, private :: EmptyBlock     ! To fill the blocks.
-    ! It will have zero-size arrays instead of nullified ones, so that we
-    ! can copy the components without looking at the block kind if one
-    ! operand is absent during an operation.
-  logical, save, private :: FIRST = .true.        ! to create EmptyBlock
   real, parameter, private :: SPARSITY = 0.33     ! If a full matrix has
     ! a greater fraction of nonzeroes than specified by this number, there's
     ! no point in making it sparse.
@@ -316,9 +311,10 @@ contains ! =====     Public Procedures     =============================
   ! ------------------------------------------------  AssignBlock  -----
   subroutine AssignBlock ( Z, X )
   ! Destroy Z, then copy X to it, using pointer assignment for pointer
-  ! components.  Notice that CopyBlock does a deep copy.  If one has
-  ! Z = X in a loop, it is therefore necessary only to destroy Z after
-  ! the loop.
+  ! components.  Other than the "Destroy Z" part, the semantics are the
+  ! same as for intrinsic assignment.  Notice that CopyBlock does a deep
+  ! copy.  If one has Z = X in a loop, it is therefore necessary only to
+  ! destroy Z after the loop.
     type(MatrixElement_T), intent(inout) :: Z
     type(MatrixElement_T), intent(in) :: X
     call destroyBlock ( z )
@@ -424,7 +420,7 @@ contains ! =====     Public Procedures     =============================
       call deallocate_test ( r1, "R1 in CholeskyFactor", ModuleName )
       call deallocate_test ( zt, "ZT in CholeskyFactor", ModuleName )
     case ( M_Full )
-      if ( present(xopt) ) then
+      if ( .not. associated(x,z) ) then
         call createBlock ( z, nc, nc, M_Full )
       end if
       call denseCholesky ( z%values, x%values )
@@ -495,10 +491,9 @@ contains ! =====     Public Procedures     =============================
   ! descriptive information, but not its values.
     type(MatrixElement_T), intent(out) :: Z
     type(MatrixElement_T), intent(in) :: X
-    if ( first ) call CreateEmptyBlock
     call destroyBlock ( z )
     if ( x%kind == M_absent ) then
-      z = emptyBlock
+      call CreateEmptyBlock ( z )
     else
       z%kind = x%kind
       call allocate_test ( z%r1, ubound(x%r1,1), "z%r1", ModuleName, &
@@ -600,8 +595,7 @@ contains ! =====     Public Procedures     =============================
     call destroyBlock ( z )
     select case ( kind )
     case ( M_Absent )
-      if ( first ) call CreateEmptyBlock
-      z = emptyBlock
+      call CreateEmptyBlock ( z )
     case ( M_Banded )
       call allocate_test ( z%r1, nCols, "z%r1", ModuleName )
       call allocate_test ( z%r2, nCols, "z%r2", ModuleName, lowBound=0 )
@@ -1188,16 +1182,19 @@ contains ! =====     Public Procedures     =============================
   end subroutine MultiplyMatrixBlocks
 
   ! -------------------------------------  MultiplyMatrixVector_0  -----
-  subroutine MultiplyMatrixVector_0 ( B, V, P, UPDATE )
+  subroutine MultiplyMatrixVector_0 ( B, V, P, UPDATE, SUBTRACT )
   ! P = B^T V if UPDATE is absent or false.
-  ! P = P + B^T V if UPDATE is present and true.
+  ! P = P + B^T V if UPDATE is present and true and SUBTRACT is absent or false.
+  ! P = P - B^T V if UPDATE is present and true and SUBTRACT is present and true.
     type(MatrixElement_T), intent(in) :: B
     real(r8), dimension(:), intent(in) :: V
     real(r8), dimension(:), intent(inout) :: P
     logical, optional, intent(in) :: UPDATE
+    logical, optional, intent(in) :: SUBTRACT
 
     integer :: I, M, N             ! Subscripts and loop inductors
-    logical :: My_update
+    logical :: My_Sub, My_update
+    real(r8) :: SUM                ! Dot product in the column-sparse case
     integer :: V1                  ! Subscripts and loop inductors
 
     if ( b%nrows /= size(v) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1206,6 +1203,8 @@ contains ! =====     Public Procedures     =============================
       & "Matrix block and result not compatible in MultiplyMatrixVector_0" )
     my_update = .false.
     if ( present(update) ) my_update = update
+    my_sub = .false.
+    if ( present(subtract) ) my_sub = subtract
     if ( .not. my_update ) p = 0.0_r8
     select case ( b%kind )
     case ( M_Absent )
@@ -1214,34 +1213,50 @@ contains ! =====     Public Procedures     =============================
         v1 = b%r2(i-1)             ! starting position in B%VALUES - 1
         n = b%r2(i) - v1           ! how many values
         m = b%r1(i)                ! starting position in V
-        p(i) = p(i) + dot(n, b%values(v1+1,1), 1, v(m), 1)
+        if ( my_sub ) then
+          p(i) = p(i) - dot(n, b%values(v1+1,1), 1, v(m), 1)
+        else
+          p(i) = p(i) + dot(n, b%values(v1+1,1), 1, v(m), 1)
+        end if
       end do ! i
      case ( M_Column_Sparse )
       do i = 1, size(p)
+        sum = 0.0_r8
         do n = b%r1(i-1)+1, b%r1(i)
-          p(i) = p(i) + b%values(n,1) * v(b%r2(n))
+          sum = sum + b%values(n,1) * v(b%r2(n))
         end do ! n
+        if ( my_sub ) then
+          p(i) = p(i) - sum
+        else
+          p(i) = p(i) + sum
+        end if
       end do ! i
     case ( M_Full )
       do i = 1, size(p)
-        p(i) = p(i) + dot(size(v), b%values(1,i), 1, v(1), 1)
+        if ( my_sub ) then
+          p(i) = p(i) - dot(size(v), b%values(1,i), 1, v(1), 1)
+        else
+          p(i) = p(i) + dot(size(v), b%values(1,i), 1, v(1), 1)
+        end if
       end do ! i
     end select
   end subroutine MultiplyMatrixVector_0
 
   ! ----------------------------------  MultiplyMatrixVectorNoT_0  -----
-  subroutine MultiplyMatrixVectorNoT_0 ( B, V, P, UPDATE, DoDiag )
+  subroutine MultiplyMatrixVectorNoT_0 ( B, V, P, UPDATE, DoDiag, SUBTRACT )
   ! P = B V if UPDATE is absent or false.
-  ! P = P + B V if UPDATE is present and true.
+  ! P = P + B V if UPDATE is present and true and SUBTRACT is absent or false
+  ! P = P - B V if UPDATE is present and true and SUBTRACT is present and true
   ! Don't multiply by the diagonal element if doDiag (default true) is
   ! present and false.
     type(MatrixElement_T), intent(in) :: B
     real(r8), dimension(:), intent(in) :: V
     real(r8), dimension(:), intent(inout) :: P
-    logical, optional, intent(in) :: UPDATE, DoDiag
+    logical, optional, intent(in) :: UPDATE, DoDiag, SUBTRACT
 
     integer :: I, J, M, N          ! Subscripts and loop inductors
-    logical :: My_diag, My_update
+    logical :: My_diag, My_sub, My_update
+    real(r8) :: SIGN               ! Multiplying by sign is faster than testing
     integer :: V1                  ! Subscripts and loop inductors
 
     if ( b%ncols /= size(v) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1252,6 +1267,10 @@ contains ! =====     Public Procedures     =============================
     if ( present(update) ) my_update = update
     my_diag = .true.
     if ( present(doDiag) ) my_diag = doDiag
+    my_sub = .false.
+    if ( present(subtract) ) my_sub = subtract
+    sign = 1.0_r8
+    if ( my_sub ) sign = -1.0_r8
     if ( .not. my_update ) p = 0.0_r8
     select case ( b%kind )
     case ( M_Absent )
@@ -1262,14 +1281,14 @@ contains ! =====     Public Procedures     =============================
         m = b%r1(j)                ! starting row subscript in B%VALUES
         if ( my_diag ) then        ! do the whole matrix
           do i = m, m+n-1          ! rows
-            p(i) = p(i) + b%values(v1+i-m+1,1) * v(j)
+            p(i) = p(i) + sign * b%values(v1+i-m+1,1) * v(j)
           end do ! i = 1, n
         else                       ! skip the diagonal
           do i = m, min(m+n-1,j-1) ! rows
-            p(i) = p(i) + b%values(v1+i-m+1,1) * v(j)
+            p(i) = p(i) + sign * b%values(v1+i-m+1,1) * v(j)
           end do ! i = m, min(m+n-1,j-1)
           do i = max(m,j+1), m+n-1 ! rows
-            p(i) = p(i) + b%values(v1+i-m+1,1) * v(j)
+            p(i) = p(i) + sign * b%values(v1+i-m+1,1) * v(j)
           end do ! i = m, min(m,n-1,j-1)
         end if
       end do ! j
@@ -1278,22 +1297,22 @@ contains ! =====     Public Procedures     =============================
         do n = b%r1(j-1)+1, b%r1(j)! rows
           i = b%r2(n)              ! row number
           if ( i/=j .or. my_diag ) &
-            & p(i) = p(i) + b%values(n,1) * v(j)
+            & p(i) = p(i) + sign * b%values(n,1) * v(j)
         end do ! n
       end do ! j
     case ( M_Full )
       if ( my_diag ) then          ! do the whole matrix
         do i = 1, size(p)
 !           p(i) = p(i) + dot(size(v), b%values(i,1), size(b%values,1), v(1), 1)
-          p(i) = p(i) + dot_product ( b%values(i,:), v )
+          p(i) = p(i) + sign * dot_product ( b%values(i,:), v )
         end do ! i
       else                         ! skip the diagonal
         do i = 1, size(p)
 !           p(i) = p(i) + dot(i-1, b%values(i,1), size(b%values,1), v(1), 1)
 !           p(i) = p(i) + &
 !             & dot(size(v)-i, b%values(i,i+1), size(b%values,1), v(i+1), 1)
-          p(i) = p(i) + dot_product ( b%values(i, 1:i-1), v(1:i-1) ) + &
-            & dot_product ( b%values( i, i+1:), v(i+1:) )
+          p(i) = p(i) + sign * dot_product ( b%values(i, 1:i-1), v(1:i-1) ) + &
+            & sign * dot_product ( b%values( i, i+1:), v(i+1:) )
         end do ! i
       end if
     end select
@@ -1830,13 +1849,9 @@ contains ! =====     Public Procedures     =============================
 ! =====     Private Procedures     =====================================
 
   ! -------------------------------------------  CreateEmptyBlock  -----
-  subroutine CreateEmptyBlock
-  ! Create the empty block if necessary
-    if ( .not. first ) return
-    first = .false.
-    emptyBlock%kind = M_absent
-    emptyBlock%nRows = 0; emptyBlock%nCols = 0 ! just so they're defined
-  ! allocate ( emptyBlock%r1(0), emptyBlock%r2(0), emptyBlock%values(0,0) )
+  subroutine CreateEmptyBlock ( EmptyBlock )
+    type(MatrixElement_T), intent(out) :: EmptyBlock
+    ! Default initialization does the rest, because of intent(out)
   end subroutine CreateEmptyBlock
 
   ! ------------------------------------------  DUMP_MATRIX_BLOCK  -----
@@ -1892,6 +1907,10 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.26  2001/05/10 22:53:36  vsnyder
+! Handle empty block creation differently.  Add Update and Subtact to
+! MultiplyMatrixVector* where it wasn't before.  Get CholeskyFactor_1 to work.
+!
 ! Revision 2.25  2001/05/10 02:14:11  vsnyder
 ! Repair CloneBlock, MaxAbsVal, MultiplyMatrixBlocks
 !
