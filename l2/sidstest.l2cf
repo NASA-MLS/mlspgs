@@ -235,11 +235,13 @@ BEGIN GlobalSettings
     vGridRefGPH: vGrid, coordinate=Zeta, type=Explicit, values=100mb
 
 ;; Stuff to start up the forward model from Zvi's and Bill's files
-    l2load,   zvi='n_seez'
+    l2load,   zvi='/user5/zvi/n_seez'
 ;; End of stuff to start up the forward model from Zvi's and Bill's
 ;; files
 
-    forwardModelGlobal, pointingGrids='/user1/livesey/mlspgs/l2/full_r2_b234_lsb'
+    forwardModelGlobal, $
+      pointingGrids='/user1/livesey/mlspgs/l2/full_r2_b234_lsb', $
+      filterShapes='/van1/vsnyder/mlspgs/l2/normalized_filter_banks.dat'
 
     testFwm: forwardModel, type=full, signals = [sig_band2], molecules = [h2o], $
        frequency=182610.091 MHz, channels = [1], /do_conv
@@ -431,6 +433,9 @@ END Output
 ; ==========================================================================
 
 ; $Log$
+; Revision 2.10  2001/03/29 23:43:53  vsnyder
+; Add 'filterShapes' field to forwardModelGlobal
+;
 ; Revision 2.9  2001/03/28 19:48:57  vsnyder
 ; Put units on 'start' field of 'spectrometerType
 ;
