@@ -37,7 +37,7 @@ while [ -n "$(echo $1)" ]; do
     fi
     if [ $1 == "--dao" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "$HOME/$VERSION"
+	    echo "/work3/livesey"
 	else
 	    echo "/data/dao/tsyn3d_mis_p/geos4/1996"
 	fi
@@ -94,17 +94,13 @@ while [ -n "$(echo $1)" ]; do
     if [ $1 == "--leapsec" ]; then
 	echo "$HOME/emls/$VERSION"
     fi
-    if [ $1 == "--dao" ]; then
-	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "/work3/livesey"
-	else
-	    echo "/data/dao/tsyn3d_mis_p/geos4/1996"
-	fi
-    fi
     shift
 done
 
 # $Log$
+# Revision 1.11  2003/05/10 20:35:41  livesey
+# Added DAO path.
+#
 # Revision 1.10  2003/05/09 23:17:10  livesey
 # Bug fix.
 #
