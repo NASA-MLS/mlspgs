@@ -71,7 +71,7 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
 
 ! If no data , go on to the next product
 
-      IF (l2Days .le. cfDef%minDays ) THEN
+      IF (l2Days < cfDef%minDays ) THEN
          msr = 'Insufficient data found for ' // TRIM(cfProd(i)%l3prodNameD) // &
                '.  Skipping CORE processing and moving on to the next product.'
          CALL MLSMessage (MLSMSG_Warning, ModuleName, msr)
@@ -94,9 +94,7 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
             // '; starting Output task ...'
       CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
 
-
       CALL OutputProd(pcf, cfProd(i), anText, l3sp, l3dm, dmA, dmD, l3r, residA, residD, flags)
-
 
 ! Deallocate the databases passed between CORE & the I/O shell
 
