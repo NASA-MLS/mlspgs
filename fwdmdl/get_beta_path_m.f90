@@ -116,7 +116,11 @@ contains
           call create_beta ( Spectag, Catalog(ib)%continuum, p_path(k), t_path(k), &
             &  Frq, Lines(Catalog(ib)%Lines)%W, gl_slabs(k,ib), bb,  Incl_Cld, cld_ext, &
             &  DBETA_DW=v0, DBETA_DN=vp, DBETA_DV=vm )
-          beta_path(j,i) = beta_path(j,i) + ratio * bb + cld_ext   ! cld_ext = 0. for now 1/31
+          IF ( .not. Incl_Cld ) THEN
+             beta_path(j,i) = beta_path(j,i) + ratio * bb 
+          ELSE
+             beta_path(j,i) = beta_path(j,i) + ratio * bb + cld_ext   ! cld_ext = 0. for now 1/31
+          ENDIF
           if ( associated(dbeta_dw_path)) &
             &  dbeta_dw_path(j,i) = dbeta_dw_path(j,i) + ratio * v0
           if ( associated(dbeta_dn_path)) &
@@ -200,6 +204,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.16  2003/01/31 17:53:48  jonathan
+! change z_path to z_path_c in passing to get_beta_path
+!
 ! Revision 2.15  2003/01/31 17:16:08  jonathan
 ! add Inc_Cld, and cld_ext
 !
