@@ -9,43 +9,27 @@
 !     LATEST UPDATE, J.JIANG, MAY 18, 2001
 !======================================================
 
+      use MLSCommon, only: r8
+      INCLUDE 'spectra.f9h' 
+
 !-------------------------------------------------
 !     ATMOSPHERIC PROFILE PARAMETERS
 !-------------------------------------------------
 
-!      INCLUDE 'spectra.h' !---------------------------------------------
-!... spectral header file 
-	integer no_line		! max no. of lines for all species
-	integer no_mol		! max no. of molecules
-	parameter (no_line= 1000, no_mol = 20)
-	real*8 v0(no_line)
-	real*4 gse(no_line)
-	real*4 ist(no_line)
-	real*4 wth(no_line)
-	real*4 nth(no_line)
-	real*4 qlg(3,no_line)
-	real*4 delta(no_line)
-	real*4 n1(no_line)
-	real*4 gamma(no_line)
-	real*4 n2(no_line)
-	integer mol		! molecule mass number
-
-	integer nmol		! no. of molecules
-	integer ncnt(no_mol)	! no. of lines used for each molecule
-! -----------------------------------------------------------------
-      INTEGER L,NU,NP,I
-      REAL RS(NU/2),T(L),TAU(L),U(NU),Z(L),TAU100(L)
-      REAL XZ(L+1),XP(L+1),XT(L+1),XQ(L+1)
-      REAL VMR(2,L+1),VMR1(5)
+      INTEGER :: L, NU, NP, I
+      REAL(r8) :: RS(NU/2),T(L),TAU(L),U(NU),Z(L),TAU100(L)
+      REAL(r8) :: XZ(L+1),XP(L+1),XT(L+1),XQ(L+1)
+      REAL(r8) :: VMR(2,L+1),VMR1(5)
+      REAL(r8) :: DQ, P, DR
 
 !-------------------------------------------------
 !     SURFACE REFLECTIVITY
 !-------------------------------------------------
 
       PARAMETER(NP=800)                   ! DEMENSION OF WORKING ARRAYS
-      REAL RH(NP)                         ! HORIZONTAL
-      REAL RV(NP)                         ! VERTICAL
-      REAL X(NP)                          ! SCATTERING ANGLES
+      REAL(r8):: RH(NP)                   ! HORIZONTAL
+      REAL(r8):: RV(NP)                   ! VERTICAL
+      REAL(r8):: X(NP)                    ! SCATTERING ANGLES
 
 !------------------------------------------------------------------------
       CALL HEADER(2)
@@ -82,7 +66,7 @@
          TAU(I)=DR*Z(I)
 
          CALL GET_BETA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,GAMMA,N2,  &
-              &        MOL,NMOL,NCNT,T(I),P,F,100.,VMR1,DR) 
+              &        MOL,NMOL,NCNT,T(I),P,F,100._r8,VMR1,DR) 
                                              ! HERE DQ IS RELATIVE HUMIDITY!
          TAU100(I)=DR*Z(I)
 
@@ -91,7 +75,7 @@
       RETURN
       END
 
-! $Log: Clear_sky.f,v      
+! $Log: Clear_sky.f90,v      
 
 
 

@@ -1,19 +1,20 @@
 !... spectral header file 
-	integer no_line		! max no. of lines for all species
-	integer no_mol		! max no. of molecules
-	parameter (no_line= 907, no_mol = 20)
-	real v0(no_line)
-	real gse(no_line)
-	real ist(no_line)
-	real wth(no_line)
-	real nth(no_line)
-	real qlg(3,no_line)
-	real delta(no_line)
-	real n1(no_line)
-	real gamma(no_line)
-	real n2(no_line)
-	integer mol		! molecule mass number
 
-	integer nmol		! no. of molecules
-	integer ncnt(no_mol)	! no. of lines used for each molecule
+	integer :: no_line		! max no. of lines for all species
+	integer :: no_mol		! max no. of molecules
+	parameter (no_line= 907, no_mol = 20)
+	real(r8) :: v0(no_line)
+	real(r8) :: gse(no_line)
+	real(r8) :: ist(no_line)
+	real(r8) :: wth(no_line)
+	real(r8) :: nth(no_line)
+	real(r8) :: qlg(3,no_line)
+	real(r8) :: delta(no_line)
+	real(r8) :: n1(no_line)
+	real(r8) :: gamma(no_line)
+	real(r8) :: n2(no_line)
+	integer :: mol		! molecule mass number
+
+	integer :: nmol		! no. of molecules
+	integer :: ncnt(no_mol)	! no. of lines used for each molecule
 

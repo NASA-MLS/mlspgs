@@ -15,48 +15,48 @@
 !     J. JIANG, MAY 18, 2001                                             C
 !========================================================================C
 
+     use MLSCommon, only: r8
 !----------------------------------------------
 !     INPUT PARAMETERS
 !----------------------------------------------
 
-      INTEGER NZ                               ! NO. OF L2 ATMOSPHERIC LEVELS
-      REAL PRESSURE(NZ)                        ! PRESSURE LEVEL
-      REAL HEIGHT(NZ)                          ! PRESSURE HEIGHT
-      REAL TEMPERATURE(NZ)                     ! ATMOSPHERIC TEMPERATURE
-      REAL VMR(NS,NZ)                          ! 1=H2O VOLUME MIXING RATIO
+      INTEGER :: NZ                            ! NO. OF L2 ATMOSPHERIC LEVELS
+      REAL(r8) :: PRESSURE(NZ)                 ! PRESSURE LEVEL
+      REAL(r8) :: HEIGHT(NZ)                   ! PRESSURE HEIGHT
+      REAL(r8) :: TEMPERATURE(NZ)              ! ATMOSPHERIC TEMPERATURE
+      REAL(r8) :: VMR(NS,NZ)                   ! 1=H2O VOLUME MIXING RATIO
                                                ! 2=O3
 
-      REAL WCin(N,NZ)                         
-      INTEGER IPSDin(NZ)
-      INTEGER NT                               ! NO. OF TANGENT PRESSURE LEVSLS
-      REAL ZT(NT)                              ! TANGENT PRESSURE
+      REAL(r8) :: WCin(N,NZ)                         
+      INTEGER :: IPSDin(NZ)
+      INTEGER :: NT                            ! NO. OF TANGENT PRESSURE LEVSLS
+      REAL(r8) :: ZT(NT)                       ! TANGENT PRESSURE
       
 !----------------------------------------------
 !     OUTPUT PARAMETERS
 !----------------------------------------------
-      INTEGER NH                               ! MODEL ATMOSPHERIC LEVELS
-      INTEGER NH0
+      INTEGER :: NH                            ! MODEL ATMOSPHERIC LEVELS
 
-      REAL YZ(NH)                              ! PRESSURE HEIGHT (m)
-      REAL YP(NH)                              ! PRESSURE (hPa)
-      REAL YT(NH)                              ! TEMPERATURE PROFILE
-      REAL YQ(NH)                              ! RELATIVE HUMIDITY (%)
-      REAL VMR1(NS,NH)                          ! 1=O3 VOLUME MIXING RATIO
-      REAL WC(N,NH)
-      INTEGER IPSD(NH)
-      REAL CHK_CLD(NH)  ! CLOUD CHECKER      
+      REAL(r8) :: YZ(NH)                       ! PRESSURE HEIGHT (m)
+      REAL(r8) :: YP(NH)                       ! PRESSURE (hPa)
+      REAL(r8) :: YT(NH)                       ! TEMPERATURE PROFILE
+      REAL(r8) :: YQ(NH)                       ! RELATIVE HUMIDITY (%)
+      REAL(r8) :: VMR1(NS,NH)                  ! 1=O3 VOLUME MIXING RATIO
+      REAL(r8) :: WC(N,NH)
+      INTEGER :: IPSD(NH)
+      REAL(r8) :: CHK_CLD(NH)                  ! CLOUD CHECKER      
 
-      REAL ZZT(NT)                             ! TANGENT HEIGHT
+      REAL(r8) :: ZZT(NT)                      ! TANGENT HEIGHT
 
-!----------------------------------------------------
+!----------------------------------------------------------
 !     WORK SPACE
-!----------------------------------------------------
-      REAL PTOP,PBOTTOM,DP,ZH(NH),ZA(NH),ZZ(NH),WK
-      INTEGER I,JM,J
+!----------------------------------------------------------
+      REAL(r8) :: PTOP,PBOTTOM,DP,ZH(NH),ZA(NH),ZZ(NH),WK
+      INTEGER :: I,JM,J
 !--------------------------------------------------------------------------
 
-      PTOP = 80./16.-3.            ! TOP OF THE MODEL
-      PBOTTOM=-ALOG10(PRESSURE(1)) ! BOTTOM OF THE MODEL
+      PTOP = (80./16.-3.)*1._r8    ! TOP OF THE MODEL
+      PBOTTOM=-LOG10(PRESSURE(1)) ! BOTTOM OF THE MODEL
       DP=(PTOP-PBOTTOM)/NH         ! LAYER THICKNESS
 
       DO I=1,NH
@@ -64,8 +64,8 @@
       END DO
 
       DO I=1,NZ
-         ZA(I)=-ALOG10(PRESSURE(I))
-         HEIGHT(I)= MAX ( 0., HEIGHT(I) )
+         ZA(I)=-LOG10(PRESSURE(I))
+         HEIGHT(I)= MAX ( 0._r8, HEIGHT(I) )
       END DO
 
       IF (NZ .NE. NH) THEN
@@ -129,7 +129,7 @@
 !==========================================
 
       DO I=1,NT
-         ZZ(I)=-ALOG10(ZT(I))
+         ZZ(I)=-LOG10(ZT(I))
       END DO
 
       DO J=1,NT      
@@ -143,7 +143,7 @@
       RETURN
       END
 
-! $Log: Model_atmos.f,v      
+! $Log: Model_atmos.f90,v      
 
 
 

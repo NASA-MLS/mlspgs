@@ -108,21 +108,22 @@
 !     FAX:   (818) 393-5065                                                  C
 !============================================================================C
 
+      use MLSCommon, only: r8
       IMPLICIT NONE
 
 !---------------------------------------
 !     INPUT PARAMETERS (INPUTS FROM L2)        ! -- INTERFACE AEA -- ! 
 !---------------------------------------
 
-      INTEGER NF                               ! NUMBER OF FREQUENCIES
-      INTEGER NZ                               ! NUMBER OF PRESSURE LEVELS
-      INTEGER NT                               ! NUMBER OF TANGENT HEIGHTS
-      INTEGER NS                               ! NUMBER OF CHEMICAL SPECIES
-      INTEGER N                                ! NUMBER OF CLOUD SPECIES
-      INTEGER NZmodel                          ! NUMBER OF INTERNAL MODEL LEVELS
+      INTEGER :: NF                            ! NUMBER OF FREQUENCIES
+      INTEGER :: NZ                            ! NUMBER OF PRESSURE LEVELS
+      INTEGER :: NT                            ! NUMBER OF TANGENT HEIGHTS
+      INTEGER :: NS                            ! NUMBER OF CHEMICAL SPECIES
+      INTEGER :: N                             ! NUMBER OF CLOUD SPECIES
+      INTEGER :: NZmodel                       ! NUMBER OF INTERNAL MODEL LEVELS
 
 
-      INTEGER IPSDin(NZ)                       ! SIZE-DISTRIBUTION FLAG
+      INTEGER :: IPSDin(NZ)                    ! SIZE-DISTRIBUTION FLAG
                                                ! IILL     (I=ICE, L=LIQUID)
                                                ! 1000:     I->MH, L->GAMMA 
                                                ! 1100:     I->LIU-CURRY
@@ -133,49 +134,49 @@
                                                !              VARIOUS b1
                                                ! 6000:     I->PSD FOR PSC
 
-      INTEGER ISURF                            ! SURFACE TYPE
+      INTEGER :: ISURF                         ! SURFACE TYPE
                                                ! 0 = SIMPLE MODEL
                                                ! 1 = LAND
                                                ! 2 = SEA 
   
-      INTEGER ISWI                             ! SENSITIVITY SWITCH
+      INTEGER :: ISWI                          ! SENSITIVITY SWITCH
                                                ! 0 = OFF
                                                ! 1 = ON
 
-      INTEGER ICON                             ! CONTROL SWITCH
+      INTEGER :: ICON                          ! CONTROL SWITCH
                                                ! 0 = CLEAR-SKY
                                                ! 1 = CLEAR-SKY, 100% R.H. 
                                                !     BELOW 100hPa
                                                ! 2 = DEFAULT
                                                ! 3 = NEAR SIDE CLOUD ONLY
 
-      REAL FREQUENCY(NF)                       ! FREQUENCIES (GHz)
-      REAL PRESSURE(NZ)                        ! PRESSURE LEVEL
-      REAL HEIGHT(NZ)                          ! PRESSURE HEIGHT
-      REAL TEMPERATURE(NZ)                     ! ATMOSPHERIC TEMPERATURE
-      REAL VMRin(NS,NZ)                        ! 1=H2O VOLUME MIXING RATIO
+      REAL(r8) :: FREQUENCY(NF)                ! FREQUENCIES (GHz)
+      REAL(r8) :: PRESSURE(NZ)                 ! PRESSURE LEVEL
+      REAL(r8) :: HEIGHT(NZ)                   ! PRESSURE HEIGHT
+      REAL(r8) :: TEMPERATURE(NZ)              ! ATMOSPHERIC TEMPERATURE
+      REAL(r8) :: VMRin(NS,NZ)                 ! 1=H2O VOLUME MIXING RATIO
                                                ! 2=O3 VOLUME MIXING RATIO
 
-      REAL WCin(N,NZ)                            ! CLOUD WATER CONTENT
+      REAL(r8) :: WCin(N,NZ)                   ! CLOUD WATER CONTENT
                                                ! N=1: ICE; N=2: LIQUID
-      REAL ZT(NT)                              ! TANGENT PRESSURE
-      REAL*8 RE                                ! EARTH RADIUS
+      REAL(r8) :: ZT(NT)                       ! TANGENT PRESSURE
+      REAL(r8) :: RE                           ! EARTH RADIUS
 
 !--------------------------------------
 !     OUTPUT PARAMETERS (OUTPUT TO L2)        
 !--------------------------------------
 
-      REAL TB0(NT,NF)                          ! CLEAR-SKY TB AT ZT
-      REAL DTcir(NT,NF)                        ! CLOUD-INDUCED RADIANCE
+      REAL(r8) :: TB0(NT,NF)                   ! CLEAR-SKY TB AT ZT
+      REAL(r8) :: DTcir(NT,NF)                 ! CLOUD-INDUCED RADIANCE
 
-      REAL TAUeff(NT,NF)                       ! CLOUD EFFECTIVE OPTICAL DEPTH
-      REAL SS(NT,NF)                           ! CLOUD RADIANCE SENSITIVITY
+      REAL(r8) :: TAUeff(NT,NF)                ! CLOUD EFFECTIVE OPTICAL DEPTH
+      REAL(r8) :: SS(NT,NF)                    ! CLOUD RADIANCE SENSITIVITY
                                                ! (NT+1) FOR ZENITH LOOKING) 
 
-      REAL BETA(NZ-1,NF)                       ! TOTAL OPTICAL DEPTH
-      REAL BETAc(NZ-1,NF)                      ! CLOUDY OPTICAL DEPTH
+      REAL(r8) :: BETA(NZ-1,NF)                ! TOTAL OPTICAL DEPTH
+      REAL(r8) :: BETAc(NZ-1,NF)               ! CLOUDY OPTICAL DEPTH
 
-      REAL Dm(N,NZ-1)                          ! MASS-MEAN-DIAMETER
+      REAL(r8) :: Dm(N,NZ-1)                   ! MASS-MEAN-DIAMETER
 
                                                ! -- END OF INTERFACE AREA -- !
 
@@ -185,101 +186,115 @@
 !     INTERNAL MODEL PARAMETERS                ! -- INTERNAL AREA -- !
 !-------------------------------
 
-      REAL PI
+      REAL :: PI
       PARAMETER (PI=3.1415926)
       
-      INTEGER NU                               ! NO. OF SCATTERING ANGLES
-      INTEGER NUA                              ! NO. OF SCAT. AZIMUTH ANGLES
-      INTEGER NIWC                             ! NO. OF ICE WATER CONTENTS
+      INTEGER :: NU                            ! NO. OF SCATTERING ANGLES
+      INTEGER :: NUA                           ! NO. OF SCAT. AZIMUTH ANGLES
+      INTEGER :: NIWC                          ! NO. OF ICE WATER CONTENTS
 
-      INTEGER NAB                              ! MAX. NO. OF 
-      INTEGER NR                               ! NUMBER OF SIZE BINS
-      INTEGER NABR(NR)                         ! TRUNCATION FOR A, B
+      INTEGER :: NAB                           ! MAX. NO. OF 
+      INTEGER :: NR                            ! NUMBER OF SIZE BINS
+      INTEGER :: NABR(NR)                      ! TRUNCATION FOR A, B
 
-      INTEGER LORS                             ! SURFACE TYPE: LAND OR SEA
+      INTEGER :: LORS                          ! SURFACE TYPE: LAND OR SEA
 
-      REAL U(NU)                               ! COSINE OF SCATTERING ANGLES
-      REAL DU(NU)                              ! DELTA U
-      REAL UA(NUA)                             ! COSINE OF SCAT AZIMUTH ANGLES
-      REAL THETA(NU)                           ! SCATTERING ANGLES
-      REAL PHI(NUA)                            ! SCATTERING AZIMUTH ANGLES
-      REAL UI(NU,NU,NUA)                       ! COSINE OF INCIDENT TB ANGLES
-      REAL THETAI(NU,NU,NUA)                   ! ANGLES FOR INCIDENT TB
-      REAL PHH(N,NU,NZmodel-1)                      ! PHASE FUNCTION 
-      REAL TAU(NZmodel-1)                           ! TOTAL OPTICAL DEPTH
-      REAL TAU100(NZmodel-1)                        ! TOTAL OPTICAL DEPTH AT 100%RH
-      REAL W0(N,NZmodel-1)                          ! SINGLE SCATTERING ALBEDO
+      REAL(r8) :: U(NU)                        ! COSINE OF SCATTERING ANGLES
+      REAL(r8) :: DU(NU)                       ! DELTA U
+      REAL(r8) :: UA(NUA)                      ! COSINE OF SCAT AZIMUTH ANGLES
+      REAL(r8) :: THETA(NU)                    ! SCATTERING ANGLES
+      REAL(r8) :: PHI(NUA)                     ! SCATTERING AZIMUTH ANGLES
+      REAL(r8) :: UI(NU,NU,NUA)                ! COSINE OF INCIDENT TB ANGLES
+      REAL(r8) :: THETAI(NU,NU,NUA)            ! ANGLES FOR INCIDENT TB
+      REAL(r8) :: PHH(N,NU,NZmodel-1)          ! PHASE FUNCTION 
+      REAL(r8) :: TAU(NZmodel-1)               ! TOTAL OPTICAL DEPTH
+      REAL(r8) :: TAU100(NZmodel-1)            ! TOTAL OPTICAL DEPTH AT 100%RH
+      REAL(r8) :: W0(N,NZmodel-1)              ! SINGLE SCATTERING ALBEDO
       
-      REAL S                                   ! SALINITY
-      REAL SWIND                               ! SEA SURFACE WIND
-      REAL TS                                  ! SURFACE TEMPERATURE (K)
-      REAL RS(NU/2)                            ! SURFACE REFLECTIVITY
-      REAL RC0(3)                              ! GAS ABS.SCAT.EXT COEFFS.
-      REAL RC(N,3)                             ! CLOUD ABS.SCAT.EXT COEFFS.
-      REAL RC_TOT(3)                           ! TOTAL ABS.SCAT.EXT COEFFS.
-      REAL Z(NZmodel-1)                        ! MODEL LAYER THICKNESS (m)
-      REAL TAU0(NZmodel-1)                     ! CLEAR-SKY OPTICAL DEPTH
-      REAL TEMP(NZmodel-1)                     ! MEAN LAYER TEMPERATURE (K)
+      REAL(r8) :: S                            ! SALINITY
+      REAL(r8) :: SWIND                        ! SEA SURFACE WIND
+      REAL(r8) :: TS                           ! SURFACE TEMPERATURE (K)
+      REAL(r8) :: RS(NU/2)                     ! SURFACE REFLECTIVITY
+      REAL(r8) :: RC0(3)                       ! GAS ABS.SCAT.EXT COEFFS.
+      REAL(r8) :: RC(N,3)                      ! CLOUD ABS.SCAT.EXT COEFFS.
+      REAL(r8) :: RC_TOT(3)                    ! TOTAL ABS.SCAT.EXT COEFFS.
+      REAL(r8) :: Z(NZmodel-1)                 ! MODEL LAYER THICKNESS (m)
+      REAL(r8) :: TAU0(NZmodel-1)              ! CLEAR-SKY OPTICAL DEPTH
+      REAL(r8) :: TEMP(NZmodel-1)              ! MEAN LAYER TEMPERATURE (K)
 
-      REAL TT(NT+1,NZmodel)                         ! CLOUDY-SKY TB AT TANGENT 
+      REAL(r8) :: TT(NT+1,NZmodel)             ! CLOUDY-SKY TB AT TANGENT 
                                                ! HEIGHT ZT (LAST INDEX FOR 
                                                ! ZENITH LOOKING)
-      REAL TT0(NT+1,NZmodel)                        ! CLEAR-SKY TB AT TANGENT
+      REAL(r8) :: TT0(NT+1,NZmodel)            ! CLEAR-SKY TB AT TANGENT
                                                ! HEIGHT ZT
 
 !---------------------------------------------
 !     INTERNAL ATMOSPHERIC PROFILE PARAMETERS
 !---------------------------------------------
 
-      INTEGER IPSD (NZmodel)
+      INTEGER :: IPSD (NZmodel)
 
-      REAL WC (N,NZmodel)
-      REAL YP (NZmodel)
-      REAL YZ (NZmodel)
-      REAL YT (NZmodel)
-      REAL YQ (NZmodel)                             ! H2O VOLUME MIXING RATIO
-      REAL VMR(NS,NZmodel)                          ! 1=O3 VOLUME MIXING RATIO
-      REAL DDm(N,NZmodel)                         
+      REAL(r8) :: WC (N,NZmodel)
+      REAL(r8) :: YP (NZmodel)
+      REAL(r8) :: YZ (NZmodel)
+      REAL(r8) :: YT (NZmodel)
+      REAL(r8) :: YQ (NZmodel)                 ! H2O VOLUME MIXING RATIO
+      REAL(r8) :: VMR(NS,NZmodel)              ! 1=O3 VOLUME MIXING RATIO
+      REAL(r8) :: DDm(N,NZmodel)                         
 
 !----------------------------
 !     CLOUD MODEL PARAMETERS
 !----------------------------
 
-      REAL CWC                                 ! CLOUD WATER CONTENT (g/m3)
-      REAL CDEPTH(N)                           ! CLOUD OPTICAL DEPTH
-      REAL DEPTH                               ! TOTAL OPTICAL DEPTH
+      REAL(r8) :: CWC                          ! CLOUD WATER CONTENT (g/m3)
+      REAL(r8) :: CDEPTH(N)                    ! CLOUD OPTICAL DEPTH
+      REAL(r8) :: DEPTH                        ! TOTAL OPTICAL DEPTH
                                                ! (CLEAR+CLOUD)
 
-      REAL delTAU(NZmodel-1)                   ! TOTAL EXTINCTION
-      REAL delTAUc(NZmodel-1)                  ! CLOUDY-SKY EXTINCTION
+      REAL(r8) :: delTAU(NZmodel-1)            ! TOTAL EXTINCTION
+      REAL(r8) :: delTAUc(NZmodel-1)           ! CLOUDY-SKY EXTINCTION
       
 !---------------------------
 !     WORK SPACE PARAMETERS
 !---------------------------
 
-      INTEGER I, J, K, IFR, ILYR, IL,ISPI,IIWC, ICLD_TOP,MY_NIWC,L
+      INTEGER :: I
+      INTEGER :: J
+      INTEGER :: K
+      INTEGER :: IFR 
+      INTEGER :: ILYR
+      INTEGER :: IL
+      INTEGER :: ISPI
+      INTEGER :: IIWC
+      INTEGER :: ICLD_TOP
+      INTEGER :: MY_NIWC
+      INTEGER :: L
 
-      REAL HT,DMA,RATIO
-      REAL PH0(N,NU,NZmodel-1),W00(N,NZmodel-1)  
-      REAL P11(NU), RC11(3),RC_TMP(N,3)
-      REAL CHK_CLD(NZmodel)                        
-      REAL ZZT(NT)
-      REAL PH1(NU)                             ! SINGLE PARTICLE PHASE FUNCTION
-      REAL P(NAB,NU)                           ! LEGENDRE POLYNOMIALS l=1
-      REAL DP(NAB,NU)                          ! Delt LEGENDRE POLYNOMIALS l=1
+      REAL(r8) :: DMA
+      REAL(r8) :: RATIO
+      REAL(r8) :: PH0(N,NU,NZmodel-1)
+      REAL(r8) :: W00(N,NZmodel-1)  
+      REAL(r8) :: P11(NU)
+      REAL(r8) :: RC11(3)
+      REAL(r8) :: RC_TMP(N,3)
+      REAL(r8) :: CHK_CLD(NZmodel)                        
+      REAL(r8) :: ZZT(NT)
+      REAL(r8) :: PH1(NU)                      ! SINGLE PARTICLE PHASE FUNCTION
+      REAL(r8) :: P(NAB,NU)                    ! LEGENDRE POLYNOMIALS l=1
+      REAL(r8) :: DP(NAB,NU)                   ! Delt LEGENDRE POLYNOMIALS l=1
       
-      REAL R(NR)                               ! PARTICLE RADIUS
-      REAL RN(NR)                              ! NUMBER OF PARTICLES IN EACH BIN
-      REAL BC(3,NR)                            ! SINGLE PARTICLE ABS/SCAT/EXT 
+      REAL(r8) :: R(NR)                        ! PARTICLE RADIUS
+      REAL(r8) :: RN(NR)                       ! NUMBER OF PARTICLES IN EACH BIN
+      REAL(r8) :: BC(3,NR)                     ! SINGLE PARTICLE ABS/SCAT/EXT 
                                                ! COEFFS
 
-      REAL DZ(NZ-1)
-      COMPLEX A(NR,NAB),B(NR,NAB)              ! MIE COEFFICIENCIES
+      REAL(r8) :: DZ(NZ-1)
+      COMPLEX(r8) A(NR,NAB),B(NR,NAB)          ! MIE COEFFICIENCIES
 
 !---------------<<<<<<<<<<<<< START EXCUTION >>>>>>>>>>>>-------------------C
 
       CALL HEADER(1)
-      RE = 6370.D3
+      RE = 6370000._r8
 
 !=========================================================================
 !                    >>>>>> CHECK MODEL-INPUT <<<<<<< 
@@ -289,9 +304,10 @@
 !=========================================================================
 
       CALL MODEL_ATMOS(PRESSURE,HEIGHT,TEMPERATURE,VMRin,NZ,NS,N,   &
-           &                WCin,IPSDin,                            &
+           &           WCin,IPSDin,                                 &
            &           YP,YZ,YT,YQ,VMR,WC,NZmodel,CHK_CLD,IPSD,     &
            &           ZT,ZZT,NT) 
+
 !-----------------------------------------------
 !     INITIALIZE SCATTERING AND INCIDENT ANGLES 
 !-----------------------------------------------
@@ -389,13 +405,13 @@
             ENDDO
 
             DEPTH  = 0.
-            CWC = 1.E-9
+            CWC = 1.E-9_r8
 
             IF(CHK_CLD(ILYR) .NE. 0.) THEN 
 
                DO ISPI=1,N
                   CWC = RATIO*WC(ISPI,ILYR) 
-                  CWC = MAX(1.E-9,CWC)
+                  CWC = MAX(1.E-9_r8,CWC)
               
 !=================================================
 !    >>>>>>>>> CLOUDY-SKY MODULE <<<<<<<<<<<

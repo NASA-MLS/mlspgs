@@ -1,6 +1,6 @@
-	real pi
+	real :: pi
 	parameter (pi=3.1415926)
-	real re		! earth radius
+	real(r8) :: re		! earth radius
 	parameter (re=6370000.)
-	integer nu0		! max dimension for u
+	integer :: nu0		! max dimension for u
 	parameter (nu0=128)

@@ -1,68 +1,67 @@
 
-      INTEGER N_O2_LINES
-      INTEGER N_H2O_LINES
-      INTEGER N_O18O_LINES
-      INTEGER N_H2O18_LINES
-      INTEGER N_O3_LINES
+      INTEGER :: N_O2_LINES
+      INTEGER :: N_H2O_LINES
+      INTEGER :: N_O18O_LINES
+      INTEGER :: N_H2O18_LINES
+      INTEGER :: N_O3_LINES
 
       PARAMETER (N_O2_LINES=44, N_H2O_LINES=31, N_O18O_LINES=93, &
       &           N_H2O18_LINES=17, N_O3_LINES=722 )
 
-      REAL QQ_O2(3),QQ_H2O(3),QQ_O_18_O(3),QQ_H2O_18(3),QQ_O3(3) 
+      REAL(r8) :: QQ_O2(3),QQ_H2O(3),QQ_O_18_O(3),QQ_H2O_18(3),QQ_O3(3) 
 
-      integer nl, nll
+      integer :: nl, nll
       parameter (nl=95, nll=57)
       
+      real(r8) :: v0_o2   (44), v0_h2o   (31), v0_o_18_o   (93)
+      real(r8) :: gse_o2  (44), gse_h2o  (31), gse_o_18_o  (93)
+      real(r8) :: ist_o2  (44), ist_h2o  (31), ist_o_18_o  (93)
+      real(r8) :: wth_o2  (44), wth_h2o  (31), wth_o_18_o  (93)
+      real(r8) :: nth_o2  (44), nth_h2o  (31), nth_o_18_o  (93)
+      real(r8) :: delta_o2(44), delta_h2o(31), delta_o_18_o(93)
+      real(r8) :: n1_o2   (44), n1_h2o   (31), n1_o_18_o   (93)
+      real(r8) :: gamma_o2(44), gamma_h2o(31), gamma_o_18_o(93)
+      real(r8) :: n2_o2   (44), n2_h2o   (31), n2_o_18_o   (93)
 
-      real v0_o2   (44), v0_h2o   (31), v0_o_18_o   (93)
-      real gse_o2  (44), gse_h2o  (31), gse_o_18_o  (93)
-      real ist_o2  (44), ist_h2o  (31), ist_o_18_o  (93)
-      real wth_o2  (44), wth_h2o  (31), wth_o_18_o  (93)
-      real nth_o2  (44), nth_h2o  (31), nth_o_18_o  (93)
-      real delta_o2(44), delta_h2o(31), delta_o_18_o(93)
-      real n1_o2   (44), n1_h2o   (31), n1_o_18_o   (93)
-      real gamma_o2(44), gamma_h2o(31), gamma_o_18_o(93)
-      real n2_o2   (44), n2_h2o   (31), n2_o_18_o   (93)
+      real(r8) :: v0_h2o_18   (17), v0_O3_pt1   (nl), v0_O3_pt2   (nl)
+      real(r8) :: gse_h2o_18  (17), gse_O3_pt1  (nl), gse_O3_pt2  (nl)
+      real(r8) :: ist_h2o_18  (17), ist_O3_pt1  (nl), ist_O3_pt2  (nl)
+      real(r8) :: wth_h2o_18  (17), wth_O3_pt1  (nl), wth_O3_pt2  (nl)
+      real(r8) :: nth_h2o_18  (17), nth_O3_pt1  (nl), nth_O3_pt2  (nl)
+      real(r8) :: delta_h2o_18(17), delta_O3_pt1(nl), delta_O3_pt2(nl)
+      real(r8) :: n1_h2o_18   (17), n1_O3_pt1   (nl), n1_O3_pt2   (nl)
+      real(r8) :: gamma_h2o_18(17), gamma_O3_pt1(nl), gamma_O3_pt2(nl)
+      real(r8) :: n2_h2o_18   (17), n2_O3_pt1   (nl), n2_O3_pt2   (nl)
 
-      real v0_h2o_18   (17), v0_O3_pt1   (nl), v0_O3_pt2   (nl)
-      real gse_h2o_18  (17), gse_O3_pt1  (nl), gse_O3_pt2  (nl)
-      real ist_h2o_18  (17), ist_O3_pt1  (nl), ist_O3_pt2  (nl)
-      real wth_h2o_18  (17), wth_O3_pt1  (nl), wth_O3_pt2  (nl)
-      real nth_h2o_18  (17), nth_O3_pt1  (nl), nth_O3_pt2  (nl)
-      real delta_h2o_18(17), delta_O3_pt1(nl), delta_O3_pt2(nl)
-      real n1_h2o_18   (17), n1_O3_pt1   (nl), n1_O3_pt2   (nl)
-      real gamma_h2o_18(17), gamma_O3_pt1(nl), gamma_O3_pt2(nl)
-      real n2_h2o_18   (17), n2_O3_pt1   (nl), n2_O3_pt2   (nl)
+      real(r8) ::  v0_O3_pt3   (nl), v0_O3_pt4   (nl)
+      real(r8) ::  gse_O3_pt3  (nl), gse_O3_pt4  (nl)
+      real(r8) ::  ist_O3_pt3  (nl), ist_O3_pt4  (nl)
+      real(r8) ::  wth_O3_pt3  (nl), wth_O3_pt4  (nl)
+      real(r8) ::  nth_O3_pt3  (nl), nth_O3_pt4  (nl)
+      real(r8) ::  delta_O3_pt3(nl), delta_O3_pt4(nl)
+      real(r8) ::  n1_O3_pt3   (nl), n1_O3_pt4   (nl)
+      real(r8) ::  gamma_O3_pt3(nl), gamma_O3_pt4(nl)
+      real(r8) ::  n2_O3_pt3   (nl), n2_O3_pt4   (nl)
 
-      real v0_O3_pt3   (nl), v0_O3_pt4   (nl)
-      real gse_O3_pt3  (nl), gse_O3_pt4  (nl)
-      real ist_O3_pt3  (nl), ist_O3_pt4  (nl)
-      real wth_O3_pt3  (nl), wth_O3_pt4  (nl)
-      real nth_O3_pt3  (nl), nth_O3_pt4  (nl)
-      real delta_O3_pt3(nl), delta_O3_pt4(nl)
-      real n1_O3_pt3   (nl), n1_O3_pt4   (nl)
-      real gamma_O3_pt3(nl), gamma_O3_pt4(nl)
-      real n2_O3_pt3   (nl), n2_O3_pt4   (nl)
+      real(r8) ::  v0_O3_pt5   (nl), v0_O3_pt6   (nl)
+      real(r8) ::  gse_O3_pt5  (nl), gse_O3_pt6  (nl)
+      real(r8) ::  ist_O3_pt5  (nl), ist_O3_pt6  (nl)
+      real(r8) ::  wth_O3_pt5  (nl), wth_O3_pt6  (nl)
+      real(r8) ::  nth_O3_pt5  (nl), nth_O3_pt6  (nl)
+      real(r8) ::  delta_O3_pt5(nl), delta_O3_pt6(nl)
+      real(r8) ::  n1_O3_pt5   (nl), n1_O3_pt6   (nl)
+      real(r8) ::  gamma_O3_pt5(nl), gamma_O3_pt6(nl)
+      real(r8) ::  n2_O3_pt5   (nl), n2_O3_pt6   (nl)
 
-      real v0_O3_pt5   (nl), v0_O3_pt6   (nl)
-      real gse_O3_pt5  (nl), gse_O3_pt6  (nl)
-      real ist_O3_pt5  (nl), ist_O3_pt6  (nl)
-      real wth_O3_pt5  (nl), wth_O3_pt6  (nl)
-      real nth_O3_pt5  (nl), nth_O3_pt6  (nl)
-      real delta_O3_pt5(nl), delta_O3_pt6(nl)
-      real n1_O3_pt5   (nl), n1_O3_pt6   (nl)
-      real gamma_O3_pt5(nl), gamma_O3_pt6(nl)
-      real n2_O3_pt5   (nl), n2_O3_pt6   (nl)
-
-      real v0_O3_pt7   (nl), v0_O3_pt8   (nll)
-      real gse_O3_pt7  (nl), gse_O3_pt8  (nll)
-      real ist_O3_pt7  (nl), ist_O3_pt8  (nll)
-      real wth_O3_pt7  (nl), wth_O3_pt8  (nll)
-      real nth_O3_pt7  (nl), nth_O3_pt8  (nll)
-      real delta_O3_pt7(nl), delta_O3_pt8(nll)
-      real n1_O3_pt7   (nl), n1_O3_pt8   (nll)
-      real gamma_O3_pt7(nl), gamma_O3_pt8(nll)
-      real n2_O3_pt7   (nl), n2_O3_pt8   (nll)
+      real(r8) ::  v0_O3_pt7   (nl), v0_O3_pt8   (nll)
+      real(r8) ::  gse_O3_pt7  (nl), gse_O3_pt8  (nll)
+      real(r8) ::  ist_O3_pt7  (nl), ist_O3_pt8  (nll)
+      real(r8) ::  wth_O3_pt7  (nl), wth_O3_pt8  (nll)
+      real(r8) ::  nth_O3_pt7  (nl), nth_O3_pt8  (nll)
+      real(r8) ::  delta_O3_pt7(nl), delta_O3_pt8(nll)
+      real(r8) ::  n1_O3_pt7   (nl), n1_O3_pt8   (nll)
+      real(r8) ::  gamma_O3_pt7(nl), gamma_O3_pt8(nll)
+      real(r8) ::  n2_O3_pt7   (nl), n2_O3_pt8   (nll)
 
 ! ------------------------------- O2 -------------------------------
 

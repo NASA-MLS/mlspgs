@@ -1,11 +1,13 @@
 	subroutine pfsetup(n,p,dp,u,nu)
+
+        use MLSCommon, only: r8
 	implicit none
 	
-	integer i,j,n,nu
-	real u(nu)
-	real p(n,nu)
-	real dp(n,nu)
-	real w1, w2, v1, v2, us
+	integer :: i,j,n,nu
+	real(r8) :: u(nu)
+	real(r8) :: p(n,nu)
+	real(r8) :: dp(n,nu)
+	real(r8) :: w1, w2, v1, v2, us
 
 	do 100 i=1,nu
 	us = sqrt(1-u(i)*u(i))

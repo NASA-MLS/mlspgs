@@ -1,5 +1,6 @@
 ! SUBROUTINES FOR CALCULATIONS OF SURFACE EMISSIVITY
-       SUBROUTINE SURFACE(F,TS,IS,S,W,X,N,NP,RH,RV)
+      SUBROUTINE SURFACE(F,TS,IS,S,W,X,N,NP,RH,RV)
+      use MLSCommon, only: r8
 ! IS --- surface type:
 !        0 - Ocean
 !        1 - Land
@@ -14,9 +15,9 @@
 !  W --- Wind Speed in m/s, if ocean
 !        Not used, else
 
-	real X(NP)	! scattering angles
-	real RH(NP)	! reflectivity for horizontal polarization
-	real RV(NP)	! reflectivity for vertical polarization
+	real(r8) :: X(NP)	! scattering angles
+	real(r8) :: RH(NP)	! reflectivity for horizontal polarization
+	real(r8) :: RV(NP)	! reflectivity for vertical polarization
 
        if (IS.eq.0) then
 !         call ASSEA1(F,TS,S,W,X,N,NP,RH,RV)
@@ -35,10 +36,11 @@
        end
     
        SUBROUTINE ASSEA(F,TS,S,X,N,NP,RH,RV)
+       use MLSCommon, only: r8       
 !      X ----  COS(SITA)
 !      S ---- SALINTY PER MILI
-       REAL X(NP),RH(NP),RV(NP)
-       COMPLEX E,P1,P2
+       REAL (r8) :: X(NP),RH(NP),RV(NP)
+       COMPLEX(r8) :: E,P1,P2
 
        T=TS-273.16
        D=25.-T
@@ -67,16 +69,17 @@
        DO I=1,N
         CS=X(I)
         SS2=1.-CS*CS
-        RH(I)=(CABS((CS-CSQRT(E-SS2))/      &
-     &        (CS+CSQRT(E-SS2))))**2
-        RV(I)=(CABS((E*CS-CSQRT(E-SS2))/    &
-     &        (E*CS+CSQRT(E-SS2))))**2
+        RH(I)=(ABS((CS-SQRT(E-SS2))/      &
+     &        (CS+SQRT(E-SS2))))**2
+        RV(I)=(ABS((E*CS-SQRT(E-SS2))/    &
+     &        (E*CS+SQRT(E-SS2))))**2
        END DO
        RETURN
        END
 !CF
        SUBROUTINE ASSEA1(F,TS,S,W,X,N,NP,RH,RV)
-       REAL X(NP),RH(NP),RV(NP)
+       use MLSCommon, only: r8
+       REAL(r8) :: X(NP),RH(NP),RV(NP)
        DATA a,b,c,d,e/0.117,-2.09e-3,7.32e-2,0.115,    &
      &                3.8e-5/
 
@@ -103,7 +106,8 @@
 !CF
        SUBROUTINE ASSEA3(F,TS,S,W,X,N,NP,RH,RV)
 !     good only for ssm/i channels
-       REAL X(NP),RH(NP),RV(NP),C(8,4),DES(8),CG(4)
+       use MLSCommon, only: r8
+       REAL(r8) :: X(NP),RH(NP),RV(NP),C(8,4),DES(8),CG(4)
        DATA CF,W0,CA0,TS0/8.E-3,7.,53.,273./
        DATA C/-0.556,0.406,-0.670,0.479,      &
      & -0.811,0.473,-0.723,0.358,             &
@@ -160,8 +164,8 @@
 ! IS -- 1 = land, w=emissivity of it,0.9 if negative given
 !       2 = ice, S---0: New, 1: Second Year, 2: Multiyear
 !       3 = snow,S---0: Wet, 1: Dry, 2: Refrozen
-
-       REAL X(NP),RH(NP),RV(NP),CICE(4,3),CSNOW(4,3)
+       use MLSCommon, only: r8
+       REAL(r8) :: X(NP),RH(NP),RV(NP),CICE(4,3),CSNOW(4,3)
        save CICE,CSNOW
        DATA CICE/0.95,0.95,99,0,   &
      &           0.93,0.83,31,2,   &

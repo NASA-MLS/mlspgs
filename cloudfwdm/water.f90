@@ -42,12 +42,14 @@
           END 
 
           SUBROUTINE RHtoEV(p,t,RH,EV)
+          use MLSCommon, only: r8            
+          REAL(r8) :: es, t, RH, EV
 !... relative to water
 !         ES=6.10779*EXP(17.28*(t-273.15)/(t-36.))
 !... relative to ice
 
 	  es=10**(-2667./t+10.555)
-          if (ES.lt.0.) ES=0
+          if (ES.lt.0._r8) ES=0._r8
           EV=ES*0.01*RH
           RETURN
           END

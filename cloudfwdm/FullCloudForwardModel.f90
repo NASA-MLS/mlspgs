@@ -118,6 +118,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     integer :: NOLAYERS                 ! temp.noSurfs - 1
     integer :: NOFREQS                  ! Number of frequencies
     integer :: NOsurf                   ! Number of pressure levels
+    character :: reply
     integer :: status                   ! allocation status 
     
     integer :: quantity_type, L_quantity_type       ! added on Jul 13
@@ -380,60 +381,79 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & noFreqs,                                                             &
       & noSurf,                                                              & 
       & radiance%template%noSurfs,                                           &
-      & size( ForwardModelConfig%molecules),                                 &
+      & size(ForwardModelConfig%molecules),                                  &
       & ForwardModelConfig%no_cloud_species,                                 &
       & ForwardModelConfig%no_model_surfs,                                   &
-      & real(frequencies/1e3_r8),                                            &
-      & real(10.0**(-temp%template%surfs)),                                  &
-      & real(gph%values(:, instance)),                                       &
-      & real(temp%values(:,instance)),                                       &
-      & real(vmrArray),                                                      &
-      & real(WC),                                                            &
-      & int(sizeDistribution%values(1,instance)),                            &
-      & real(10.0**(-ptan%values(:,maf))),                                   &
+      & frequencies/1e3_r8,                                                  &
+      & 10.0**(-temp%template%surfs),                                        &
+      & gph%values(:, instance),                                             &
+      & temp%values(:,instance),                                             &
+      & vmrArray,                                                            &
+      & WC,                                                                  &
+      & sizeDistribution%values(:,instance),                                 &
+      & 10.0**(-ptan%values(:,maf)),                                         &
       & earthradius%values(1,1),                                             &
-      & int(surfaceType%values(1, instance)),                                &
+      & surfaceType%values(1, instance),                                     &
       & forwardModelConfig%cloud_der,                                        &
       & forwardModelConfig%cloud_width,                                      &
-      & real(a_clearSkyRadiance),                                            &
-      & real(a_cloudInducedRadiance),                                        &
-      & real(a_totalExtinction),                                             &
-      & real(a_cloudExtinction),                                             &
-      & real(a_massMeanDiameter),                                            &
-      & real(a_effectiveOpticalDepth),                                       &
-      & real(a_cloudRADSensitivity),                                         &
+      & a_clearSkyRadiance,                                                  &
+      & a_cloudInducedRadiance,                                              &
+      & a_totalExtinction,                                                   &
+      & a_cloudExtinction,                                                   &
+      & a_massMeanDiameter,                                                  &
+      & a_effectiveOpticalDepth,                                             &
+      & a_cloudRADSensitivity,                                               &
       & forwardModelConfig%NUM_SCATTERING_ANGLES,                            &  
       & forwardModelConfig%NUM_AZIMUTH_ANGLES,                               &
       & forwardModelConfig%NUM_AB_TERMS,                                     &
       & forwardModelConfig%NUM_SIZE_BINS )
 
-    stop
+!    stop
+    print*, 'done with call to cloudfwm'
+!    read *, reply
+!    if (reply(1:1) /= 'o') stop
+    print*, 'about to deallocate'
 
     deallocate (WC, stat=status)
-
+     
     ! Now store results in relevant vectors
     ! Vectors are stored (noChannels*noSurfaces, noInstances), so transpose
     ! and reshape temporary variables to be in the right form.
     ! First the minor frame stuff
+
+    print*, 'about to assign radiance value'
+!!    print*, 'radiance instance length: ', radiance%template%instanceLen
     radiance%values ( :, maf) =                                              &
       & reshape ( transpose(a_clearSkyRadiance),                             &
       & (/radiance%template%instanceLen/) )
+!    stop
+    print*, 'about to assign radiance values'
+!!    print*, 'cloudinducedradiance instance length: ', cloudInducedRadiance%template%instanceLen
+!    stop
     cloudInducedRadiance%values ( :, maf ) =                                 &
       & reshape ( transpose(a_cloudInducedRadiance),                         &
-      & (/cloudInducedRadiance%template%instanceLen/) )
+      & (/radiance%template%instanceLen/) )
+    stop
+
     effectiveOpticalDepth%values ( :, maf ) =                                &
       & reshape ( transpose(a_effectiveOpticalDepth),                        &
-      & (/effectiveOpticalDepth%template%instanceLen/) )
+      & (/radiance%template%instanceLen/) )
     cloudRADSensitivity%values ( :, maf ) =                                  &
       & reshape ( transpose(a_cloudRADSensitivity),                          &
-      & (/cloudRADSensitivity%template%instanceLen/) )
+      & (/radiance%template%instanceLen/) )
+
+!     print*, 'about to zero cloud extinction'   
+!     stop
 
  ! For layer(noTempSurfs-1) stuff make sure all are zero to start, then do rest
     cloudExtinction%values(:,instance) =       0.0_r8
     massMeanDiameterIce%values(:,instance) =   0.0_r8
     massMeanDiameterWater%values(:,instance) = 0.0_r8
     totalExtinction%values(:,instance) =       0.0_r8
-    
+
+!     print*, 'about to assign cloud extinction values'   
+!     stop
+
     cloudExtinction%values ( 1:noLayers, instance ) =                        &
       & reshape ( transpose(a_cloudExtinction), (/noLayers*noFreqs/) )
     massMeanDiameterIce%values (1:noLayers,instance)=                        &
@@ -465,7 +485,9 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
                           'vmrArray',                     ModuleName )
     call Deallocate_test ( closestInstances,                                 &
                           'closestInstances',             ModuleName )
-
+   
+    print*, 'done with full cloud forward wapper'
+!    stop
   end subroutine FullCloudForwardModelWrapper
 
 end module FullCloudForwardModel

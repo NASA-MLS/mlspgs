@@ -1,28 +1,29 @@
 	subroutine Miecoeff(ISPI,f,t,nr,r,a,b,nab,nabr,bc)
+        use MLSCommon, only: r8   
 	implicit none
 	include 'constants.f9h'
-        integer ISPI	! cloud type (1=ICE, 2=WATER)
-	real f 		! frequency in GHz
-	real t 		! Temperature in K 
-	real wl 	! wavelength in meters
-        integer nr	! no of particle size
-	integer nab	! no of a/b terms
-	real r(nr)	! particle radius
-	integer nabr(nr)	! truncation number for a and b
-				! 10um ---> 5; 2000 um ---> 20.
-	complex a(nr,nab),b(nr,nab)	! Mie coefficients
-	complex m		! refrative index
-        complex*16 a0,a1,w9,w0,w1,p1,p2,mx,mx1
-        real  x,x1
-	real ab_err	! relative error in Mie efficiency
+        integer :: ISPI	                        ! cloud type (1=ICE, 2=WATER)
+	real(r8) :: f 		                ! frequency in GHz
+	real(r8) :: t 		                ! Temperature in K 
+	real(r8) :: wl 	                        ! wavelength in meters
+        integer(r8) :: nr	                ! no of particle size
+	integer :: nab	                        ! no of a/b terms
+	real (r8) :: r(nr)	                ! particle radius
+	integer :: nabr(nr)	                ! truncation number for a and b
+				                ! 10um ---> 5; 2000 um ---> 20.
+	complex(r8) :: a(nr,nab),b(nr,nab)	! Mie coefficients
+	complex(r8) :: m		        ! refrative index
+        complex(r8) :: a0,a1,w9,w0,w1,p1,p2,mx,mx1
+        real(r8) :: x, x1
+	real(r8) :: ab_err	                ! relative error in Mie efficiency
 	parameter(ab_err = 1.e-3)
-	real bc(3,nr)	! single particle Mie efficiencies (abs,scat,ext)
-	real dab1, dab2	! a/b contribution to bc at i term
+	real(r8) :: bc(3,nr)	! single particle Mie efficiencies (abs,scat,ext)
+	real(r8) :: dab1, dab2	! a/b contribution to bc at i term
 !... working space
-	integer i,j
+	integer :: i,j
 
 !... initialization
-       wl=0.3/f
+       wl=0.3_r8/f
        do i=1,nr
        do j=1,nab
         a(i,j)=cmplx(0.0)
@@ -73,10 +74,9 @@
         a(j,i) = cmplx( (p1*real(w1)-real(w0))/(p1*w1-w0) )
         b(j,i) = cmplx( (p2*real(w1)-real(w0))/(p2*w1-w0) )
 
-
 ! ... the factor of 2./x^2 is left out in dab since nabr is usually
 !	important for large x. For x<0.1, usually, nabr=2 is enough.
-	dab1=(2.*i+1.)*((cabs(a(j,i)))**2+(cabs(b(j,i)))**2)
+	dab1=(2.*i+1.)*((abs(a(j,i)))**2+(abs(b(j,i)))**2)
 	dab2=(2.*i+1.)*real(a(j,i)+b(j,i))
 	bc(2,j)=bc(2,j)+dab1
 	bc(3,j)=bc(3,j)+dab2
@@ -102,7 +102,4 @@
        RETURN
        END
 
-! $Log: miecoeff.f,v      
-
-
-
+! $Log: miecoeff.f90,v      

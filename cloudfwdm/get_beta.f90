@@ -7,76 +7,58 @@
 !      LATEST UPDATE: J.JIANG, MAY 18, 2001
 !==============================================================
 
+      use MLSCommon, only: r8
       IMPLICIT NONE
-!      INCLUDE 'spectra.h' !-----------------------------------
-!... spectral header file 
-	integer no_line		! max no. of lines for all species
-	integer no_mol		! max no. of molecules
-	parameter (no_line= 907, no_mol = 20)
-	real v0(no_line)
-	real gse(no_line)
-	real ist(no_line)
-	real wth(no_line)
-	real nth(no_line)
-	real qlg(3,no_line)
-	real delta(no_line)
-	real n1(no_line)
-	real gamma(no_line)
-	real n2(no_line)
-	integer mol		! molecule mass number
+      INCLUDE 'spectra.f9h' 
 
-	integer nmol		! no. of molecules
-	integer ncnt(no_mol)	! no. of lines used for each molecule
-! -----------------------------------------------------------------
-
-      REAL QTP(3)                      ! TEMPERATURE ON WHICH QLG ARE GIVEN
+      REAL(r8) :: QTP(3)                      ! TEMPERATURE ON WHICH QLG ARE GIVEN
       DATA QTP /300.0,225.0,150.0/
 
-      REAL QRAT                        ! INTERPOLATED QLG RATIO AT A GIVEN TEMP
-      REAL F                           ! FREQUENCY IN GHz
-      REAL T                           ! TEMPERATURE (K)
-      REAL P                           ! DRY AIR PARTIAL PRESSURE (hPa)
-      REAL PB                          ! TOTAL AIR PRESSURE (hPa)
-      REAL VP                          ! VAPOR PARTIAL PRESSURE (hPa)
-      REAL VMR(5)                      ! MINOR SPECIES 1-O3
-      REAL VMR_H2O                     ! H2O VOLUME MIXING RATIO
-      REAL VMR_O2                      ! O2 VOLUME MIXING RATIO
-      REAL B                           ! BETA (1/m/ppv)
-      REAL RH                          ! Relative Humidity
-      REAL ABSC                        ! ABSORPTION COEFFICIENT (1/m)
-                                       ! 1-O2
-                                       ! 2-H2O
-                                       ! 3-O_18_O
-                                       ! 4-H2O_18
+      REAL(r8) :: QRAT                        ! INTERPOLATED QLG RATIO AT A GIVEN TEMP
+      REAL(r8) :: F                           ! FREQUENCY IN GHz
+      REAL(r8) :: T                           ! TEMPERATURE (K)
+      REAL(r8) :: P                           ! DRY AIR PARTIAL PRESSURE (hPa)
+      REAL(r8) :: PB                          ! TOTAL AIR PRESSURE (hPa)
+      REAL(r8) :: VP                          ! VAPOR PARTIAL PRESSURE (hPa)
+      REAL(r8) :: VMR(5)                      ! MINOR SPECIES 1-O3
+      REAL(r8) :: VMR_H2O                     ! H2O VOLUME MIXING RATIO
+      REAL(r8) :: VMR_O2                      ! O2 VOLUME MIXING RATIO
+      REAL(r8) :: B                           ! BETA (1/m/ppv)
+      REAL(r8) :: RH                          ! Relative Humidity
+      REAL(r8) :: ABSC                        ! ABSORPTION COEFFICIENT (1/m)
+                                              ! 1-O2
+                                              ! 2-H2O
+                                              ! 3-O_18_O
+                                              ! 4-H2O_18
 
-      REAL CONT_1,CONT_2,CONT_3        ! CONTINUUM ABSORPTION COEFFICIENTS
-      REAL SC_CONST
-      REAL SD,G0                       ! DEBY CONTRIBUTION (LIEBE 1989)
+      REAL(r8) :: CONT_1,CONT_2,CONT_3        ! CONTINUUM ABSORPTION COEFFICIENTS
+      REAL(r8) :: SC_CONST
+      REAL(r8) :: SD,G0                       ! DEBY CONTRIBUTION (LIEBE 1989)
 
-      REAL PI
+      REAL :: PI
       PARAMETER (PI=3.1415926)
-      REAL ZP,YY,TT,TWTH0,DWTH0        ! WORKING SPACE
-      INTEGER I,J,IMOL                
+      REAL(r8) :: ZP,YY,TT,TWTH0,DWTH0        ! WORKING SPACE
+      INTEGER :: I, J, IMOL                
 
-      REAL MYSHAPE,FF
+      REAL(r8) :: MYSHAPE, FF
       EXTERNAL MYSHAPE
 
 !------------------------------------------------------------------------
 
-      IF(RH .NE. 100.) THEN
+      IF(RH .NE. 100._r8) THEN
          VMR_H2O = RH                  ! PH IS WATER VAPOR MIXING RATIO
          VP=VMR_H2O*PB                 ! VP IS VAPOR PRESSURE, PB IS TOTAL
          P=PB-VP                       ! PRESSURE, P IS DRY-AIR PRESSURE
-      ELSE IF (RH .EQ. 100.) THEN
-         CALL RHtoEV(PB,T,100.,VP)     ! RH HERE IS 100% RELATIVE HUMIDITY 
+      ELSE IF (RH .EQ. 100._r8) THEN
+         CALL RHtoEV(PB,T,100._r8,VP)     ! RH HERE IS 100% RELATIVE HUMIDITY 
          P = PB-VP
-         VMR_H2O = VP/(max(1.e-9, P))
+         VMR_H2O = VP/(max(1.e-9_r8, P))
       END IF
 
-      VMR_O2 = 0.209476
+      VMR_O2 = 0.209476_r8
       FF     = F*1000.                 ! CONVERT F TO MHz
-      ZP     = -ALOG10( max(1.e-9,P) ) ! CONVERT P(hPa) TO ZP
-      TT     = 300./T
+      ZP     = -LOG10( max(1.e-9_r8,P) ) ! CONVERT P(hPa) TO ZP
+      TT     = 300._r8/T
 
       ABSC=0.
       I=0
@@ -130,17 +112,17 @@
 !            print*,IST(I),GSE(I),V0(I), FF, YY, TWTH0, T
 !            print*,ZP, MYSHAPE(V0(i),FF,YY,TWTH0)   
 
-            B = B+2.30549e09*10.0**(IST(I)-QRAT+GSE(I)*   &
-     &		(1./300-1./T)/1.600386 - ZP) * PI *       &
+            B = B+2.30549e09_r8*10.0**(IST(I)-QRAT+GSE(I)*   &
+     &		(1._r8/300._r8 - 1._r8/T)/1.600386_r8 - ZP) * PI * &
      &		 MYSHAPE(V0(i),FF,YY,TWTH0) * FF/V0(I) *  &
-     &		(1. - EXP(-V0(i)/(20836.7*T)))/           &
-     &		(1. - EXP(-V0(i)/(20836.7*300.0)))/T 
+     &		(1._r8 - EXP(-V0(i)/(20836.7_r8*T)))/           &
+     &		(1._r8 - EXP(-V0(i)/(20836.7_r8*300.0_r8)))/T 
 
  100     CONTINUE
 
          ENDDO   
 
-         B=AMAX1(0.,B)                 ! AVOID NEGATIVE LINE SHAPE     
+         B=MAX(0._r8,B)                 ! AVOID NEGATIVE LINE SHAPE     
 
          IF(IMOL .EQ. 1) ABSC = ABSC + B*VMR_O2                   ! O2      
          IF(IMOL .EQ. 2) ABSC = ABSC + B*VMR_H2O                  ! H2O
@@ -196,17 +178,18 @@
 !--------------------------------------------------------------
 !     DEFINE LINE-SHAPE FUNCTIONS
 !--------------------------------------------------------------
-	real function myshape(v0,ff,yy,twth0)
+	real(r8) function myshape(v0,ff,yy,twth0)
+        use MLSCommon, only: r8        
 	implicit none
-        real pi
+        real :: pi
         parameter (pi=3.1415926)
-	real voffm		! frequency difference
-	real voffp		! frequency difference
-	real ff		! frequency in MHz
-	real v0		! line frequency in MHz
-	real twth0		! line width in MHz/mb
-	real yy 		! interference coeff.
-	real twthm, twthp
+	real(r8) ::  voffm		! frequency difference
+	real(r8) ::  voffp		! frequency difference
+	real(r8) ::  ff		        ! frequency in MHz
+	real(r8) ::  v0		        ! line frequency in MHz
+	real(r8) ::  twth0		! line width in MHz/mb
+	real(r8) ::  yy 		! interference coeff.
+	real(r8) ::  twthm, twthp
 !
 	  voffm = v0 - ff
 	  voffp = v0 + ff
@@ -224,15 +207,4 @@
 	return
 	end
 
-! $Log: get_beta.f,v      
-
-
-
-
-
-
-
-
-
-
-
+! $Log: get_beta.f90,v      

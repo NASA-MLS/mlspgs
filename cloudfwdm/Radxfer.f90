@@ -16,53 +16,54 @@
 ! LAST UPDATE: 18/05/2001, J.JIANG
 !===================================================================
 
+      use MLSCommon, only: r8
       IMPLICIT NONE
-      REAL PI
-      REAL RE
+      REAL :: PI
+      REAL(r8) :: RE
       PARAMETER (PI=3.1415926)
 
-      INTEGER L,NT,NU,NU0,NUA,N0,N,MNT
-      INTEGER NZ                       ! MAXIMUM NO. OF INTEGRAL LAYERS
-      REAL FIRST                       ! FIRST GUESS OF UPWELLING TB
+      INTEGER :: L,NT,NU,NU0,NUA,N0,N,MNT
+      INTEGER :: NZ                       ! MAXIMUM NO. OF INTEGRAL LAYERS
+      REAL(r8) :: FIRST                   ! FIRST GUESS OF UPWELLING TB
       PARAMETER (NZ=1600,FIRST=250.,NU0=256,N0=2)
 
-      REAL U(NU),DU(NU),THETA(NU),PHI(NUA),      &
+      REAL(r8) :: U(NU),DU(NU),THETA(NU),PHI(NUA),      &
       &     THETAI(NU,NU,NUA),UI(NU,NU,NUA),UA(NUA) 
-      REAL PHH(N,NU,L),RS(NU/2),W0(N,L),TAU(L)
+      REAL(r8) :: PHH(N,NU,L),RS(NU/2),W0(N,L),TAU(L)
 
-      REAL TEMP_AIR(L)                 ! MEAN AIR TEMPERATURE AT L
-      REAL YZ(L+1)                     ! PRESSURE HEIGHT (km)
-      REAL ZT(NT)                      ! TANGENT HEIGHT (m)
-      REAL TT(MNT+1,L+1)                ! TB AT ZT, LAST INDEX IS ZENITH LOOKING
-      REAL FREQ                        ! FREQUENCY (GHz)
-      REAL TSPACE                      ! COSMIC BACKGROUND RADIANCE
-      REAL TS                          ! SURFACE TEMPERATURE (K)
-      REAL TEMP(NZ)                    ! BRIGHTNESS TEMPERATURE FROM TEMP_AIR
-      REAL TB0(NU0)                    ! TB AT THE SURFACE
-      REAL TAVG                        ! TB AVERAGED OVER PHI AT A GIVEN U
-      REAL TB(NU0,NZ)                  ! TB IN FLAT PLANE GEOMETRY
-                                       ! 1->NU/2 UPWELLING, NU/2->NU DOWNWELLING
-      REAL TSCAT(N0,NU0,NZ)            ! TB FROM SCATTERING PHASE FUNCTION
+      REAL(r8) :: TEMP_AIR(L)             ! MEAN AIR TEMPERATURE AT L
+      REAL(r8) :: YZ(L+1)                 ! PRESSURE HEIGHT (km)
+      REAL(r8) :: ZT(NT)                  ! TANGENT HEIGHT (m)
+      REAL(r8) :: TT(MNT+1,L+1)           ! TB AT ZT, LAST INDEX IS ZENITH LOOKING
+      REAL(r8) :: FREQ                    ! FREQUENCY (GHz)
+      REAL(r8) :: TSPACE                  ! COSMIC BACKGROUND RADIANCE
+      REAL(r8) :: TS                      ! SURFACE TEMPERATURE (K)
+      REAL(r8) :: TEMP(NZ)                ! BRIGHTNESS TEMPERATURE FROM TEMP_AIR
+      REAL(r8) :: TB0(NU0)                ! TB AT THE SURFACE
+      REAL(r8) :: TAVG                    ! TB AVERAGED OVER PHI AT A GIVEN U
+      REAL(r8) :: TB(NU0,NZ)              ! TB IN FLAT PLANE GEOMETRY
+                                          ! 1->NU/2 UPWELLING, NU/2->NU DOWNWELLING
+      REAL(r8) :: TSCAT(N0,NU0,NZ)        ! TB FROM SCATTERING PHASE FUNCTION
 
-      INTEGER LMIN(NZ)                 ! LOWEST LAYER REACHED BY A TANGENT HT
+      INTEGER :: LMIN(NZ)                 ! LOWEST LAYER REACHED BY A TANGENT HT
 
-      INTEGER ICON                             ! CONTROL SWITCH
-                                               ! 0 = CLEAR-SKY
-                                               ! 1 = CLEAR-SKY, 100% R.H. 
-                                               !     BELOW 100hPa
-                                               ! 2 = DEFAULT
-                                               ! 3 = NEAR SIDE CLOUD ONLY
+      INTEGER :: ICON                     ! CONTROL SWITCH
+                                          ! 0 = CLEAR-SKY
+                                          ! 1 = CLEAR-SKY, 100% R.H. 
+                                          !     BELOW 100hPa
+                                          ! 2 = DEFAULT
+                                          ! 3 = NEAR SIDE CLOUD ONLY
 
-      REAL UAVE(NZ,NZ)                 ! INCIDENT ANGLES FOR EACH TANGENT HT
-      REAL UEFF                        ! EFFECTIVE U BETWEEN K AND K+1
+      REAL(r8) :: UAVE(NZ,NZ)             ! INCIDENT ANGLES FOR EACH TANGENT HT
+      REAL(r8) :: UEFF                    ! EFFECTIVE U BETWEEN K AND K+1
 
-      REAL ITS0                        ! NO. OF MAXIMUM ITERATIONS
-      REAL DELTA                       ! DELTA TB FOR CONVERGENCE CHECK
+      REAL(r8) :: ITS0                    ! NO. OF MAXIMUM ITERATIONS
+      REAL(r8) :: DELTA                   ! DELTA TB FOR CONVERGENCE CHECK
 
-      INTEGER I,J,K,K1,ITS,ITT,IH,IP,JM,IND,ISPI
-      REAL D1,D2,DY,TGT, jj0
-      REAL WK,WK1,U1(NU0),UU(NZ),X2,RSAVG,XTB(NZ),WW0,CHK(NZ)
-      REAL tsource, wwk, wwk1,www0
+      INTEGER :: I,J,K,K1,ITS,ITT,IH,IP,JM,IND,ISPI
+      REAL(r8) :: D1,D2,DY,TGT, jj0
+      REAL(r8) :: WK,WK1,U1(NU0),UU(NZ),X2,RSAVG,XTB(NZ),WW0,CHK(NZ)
+      REAL(r8) :: tsource, wwk, wwk1,www0
 
 !------------------------------------------------
 !     FIND BRIGHTNESS TEMPERATURE AT EACH LAYER
@@ -71,7 +72,7 @@
       DO K=1,L
          CALL PLANCK(TEMP_AIR(K),FREQ,TEMP(K))
       ENDDO
-      CALL PLANCK(2.7,FREQ,TSPACE)
+      CALL PLANCK(2.7_r8,FREQ,TSPACE)
 
 !------------------------------------------------
 !     DETERMINE NO. OF ITERATIONS

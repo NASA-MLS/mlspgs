@@ -8,71 +8,71 @@
 !     CALCULATE CLOUD SCATTERING AND EXTINCTION
 !     LATEST UPDATE: J.JIANG, MAY 20, 2001
 !=======================================================
-      
+
+      use MLSCommon, only: r8      
       IMPLICIT NONE
-      REAL PI
+      REAL :: PI
       PARAMETER (PI=3.1415926)
-      REAL F                                ! FREQUENCY IN GHz
-      REAL WL                               ! WAVELENGTH IN METERS
+      REAL(r8) :: F                            ! FREQUENCY IN GHz
+      REAL(r8) :: WL                           ! WAVELENGTH IN METERS
 
 !---------------------------------------
 !     CLOUD PARAMETERS
 !---------------------------------------
 
-      INTEGER ISPI                          ! CLOUD TYPE (1:ICE,2:WATER)
+      INTEGER :: ISPI                          ! CLOUD TYPE (1:ICE,2:WATER)
 
-      INTEGER IPSD                          ! SIZE-DISTRIBUTION FLAG
-                                            ! IILL     (I=ICE, L=LIQUID)
-                                            ! 1000:     I->MH, L->GAMMA 
-                                            ! 1100:     I->LIU-CURRY
-                                            ! 2000-3900:I->MODIFIED GAMMA
-                                            !              WITH VARIOUS De,
-                                            !              alpha
-                                            ! 4000-5900:I->KNOLLENBERG WITH 
-                                            !              VARIOUS b1
-                                            ! 6000:     I->PSD FOR PSC
+      INTEGER :: IPSD                          ! SIZE-DISTRIBUTION FLAG
+                                               ! IILL     (I=ICE, L=LIQUID)
+                                               ! 1000:     I->MH, L->GAMMA 
+                                               ! 1100:     I->LIU-CURRY
+                                               ! 2000-3900:I->MODIFIED GAMMA
+                                               !              WITH VARIOUS De,
+                                               !              alpha
+                                               ! 4000-5900:I->KNOLLENBERG WITH 
+                                               !              VARIOUS b1
+                                               ! 6000:     I->PSD FOR PSC
       
-      INTEGER NR                            ! NO OF PARTICLE SIZE BINS
-      INTEGER NAB                           ! MAXIMUM NO OF A, B TERMS
-      INTEGER NU                            ! DIMENSION FOR U
+      INTEGER :: NR                            ! NO OF PARTICLE SIZE BINS
+      INTEGER :: NAB                           ! MAXIMUM NO OF A, B TERMS
+      INTEGER :: NU                            ! DIMENSION FOR U
 
-      INTEGER NABR(NR)                      ! TRUNCATION FOR A, B AT R
+      INTEGER :: NABR(NR)                      ! TRUNCATION FOR A, B AT R
 
-      REAL U(NU)                            ! COSINE OF SCATTERING ANGLES
-      REAL DU(NU)                           ! DELTA U
-      REAL CWC                              ! ICE WATER CONTENT
-      REAL R(NR)                            ! PARTICLE RADIUS
-      REAL RN(NR)                           ! NUMBER OF PARTICLES IN EACH BIN
-      REAL TEMP                             ! TEMPERATURE (K)
-      REAL BC(3,NR)                         ! SINGLE PARTICLE ABS,SCAT,EXT COEFFS
-      REAL RC(3)                            ! VOLUME ABS,SCAT,EXT COEFFS
-      REAL Dm                               ! MASS-MEAN-DIAMETER
+      REAL(r8) :: U(NU)                        ! COSINE OF SCATTERING ANGLES
+      REAL(r8) :: DU(NU)                       ! DELTA U
+      REAL(r8) :: CWC                          ! ICE WATER CONTENT
+      REAL(r8) :: R(NR)                        ! PARTICLE RADIUS
+      REAL(r8) :: RN(NR)                       ! NUMBER OF PARTICLES IN EACH BIN
+      REAL(r8) :: TEMP                         ! TEMPERATURE (K)
+      REAL(r8) :: BC(3,NR)                     ! SINGLE PARTICLE ABS,SCAT,EXT COEFFS
+      REAL(r8) :: RC(3)                        ! VOLUME ABS,SCAT,EXT COEFFS
+      REAL(r8) :: Dm                           ! MASS-MEAN-DIAMETER
 
-      COMPLEX A(NR,NAB),B(NR,NAB)           ! MIE COEFFICIENCIES
+      COMPLEX(r8) :: A(NR,NAB),B(NR,NAB)       ! MIE COEFFICIENCIES
 
-      REAL PH(NU)                           ! INTERGRATED PHASE FUNCTION
-      REAL PH1(NU)                         ! SINGLE PARTICLE PHASE FUNCTION
+      REAL(r8) :: PH(NU)                       ! INTERGRATED PHASE FUNCTION
+      REAL(r8) :: PH1(NU)                      ! SINGLE PARTICLE PHASE FUNCTION
 
-      COMPLEX S1,S2                         ! SINGLE PARTICLE AMPLITUDE FUNCTION
+      COMPLEX(r8) :: S1,S2                     ! SINGLE PARTICLE AMPLITUDE FUNCTION
 
-      REAL P(NAB,NU)                       ! LEGENDRE POLYNOMIALS l=1
-      REAL DP(NAB,NU)                      ! Delt LEGENDRE POLYNOMIALS l=1
+      REAL(r8) :: P(NAB,NU)                    ! LEGENDRE POLYNOMIALS l=1
+      REAL(r8) :: DP(NAB,NU)                   ! Delt LEGENDRE POLYNOMIALS l=1
       
-
 !---------------------------------------
 !     WORK SPACES
 !---------------------------------------
-      INTEGER I,J,K
-      REAL W1,SUM,DD,US
+      INTEGER :: I,J,K
+      REAL(r8) :: W1,SUM,DD,US
 
 !-----------------------------------------------------------------------------
 
       WL=0.3/F
       
       IF (ISPI .EQ. 1) THEN
-         DD=2000./NR**2                     ! DEFINE SIZE BINS FOR ICE CLOUD
+         DD=2000._r8/NR**2                     ! DEFINE SIZE BINS FOR ICE CLOUD
       ELSE IF (ISPI .EQ. 2) THEN
-         DD=200./NR**2                      ! DEFINE SIZE BINS FOR WATER CLOUD
+         DD=200._r8/NR**2                      ! DEFINE SIZE BINS FOR WATER CLOUD
       ENDIF
 
       DO I=1,NR
@@ -117,7 +117,7 @@
                   S2=S2+(2*J+1.)/J/(J+1.)*(A(I,J)*P(J,K)/US    &
      &               +B(I,J)*DP(J,K))
                ENDDO
-               PH1(K)=CABS(S1)**2+CABS(S2)**2
+               PH1(K)=ABS(S1)**2+ABS(S2)**2
                SUM=SUM+PH1(K)*DU(K)
 
  100        ENDDO
@@ -135,6 +135,3 @@
       END
 
 ! $Log: Cloudy_sky.f90,v      
-
-
-

@@ -9,8 +9,11 @@
 !******************************************************************
 !                                                                        
           subroutine comx(wi,t,f,e) 
-          complex e
+          use MLSCommon, only: r8
+          complex(r8) :: e
           character*1 wi
+          real(r8) :: t, f, th, fp, fs, e0, e1, e2, x, y
+          real(r8) :: a, b
 		  
           th=300./t
 !          wl=30./f
@@ -26,9 +29,9 @@
            t = 233.15
         endif
 
-        fp=20.09-142.4*(th-1)+294*(th-1.)**2
-	fs=590.-1500.*(th-1)
-	e0=77.66+103.3*(th-1)
+        fp=20.09-142.4*(th-1.)+294*(th-1.)**2
+	fs=590.-1500.*(th-1.)
+	e0=77.66+103.3*(th-1.)
 	e1=5.48
 	e2=3.51
 	x=(e0-e1)/(1+(f/fp)**2)+(e1-e2)/(1+(f/fs)**2)+e2
@@ -73,17 +76,21 @@
         END
 !...
          SUBROUTINE UKSUB(F,T,M)
-         COMPLEX E,M
+         use MLSCommon, only: r8
+         real(r8) :: F, T
+         COMPLEX(r8) :: E,M
          CALL COMX('W',T,F,E)
-         M=CSQRT(E)
+         M=SQRT(E)
 !         write(33,*)m,f
 	 RETURN
 	 END
 !...
          SUBROUTINE UKISUB(F,T,M)
-         COMPLEX E, M
+         use MLSCommon, only: r8
+         real(r8) :: F, T
+         COMPLEX(r8) :: E, M
          CALL COMX('I',T,F,E)
-         M=CSQRT(E)
+         M=SQRT(E)
 !         write(43,*)m,f
 	 RETURN
 	 END

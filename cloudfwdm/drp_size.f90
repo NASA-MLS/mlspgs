@@ -6,43 +6,44 @@
 !     J.JIANG, MAY 1, 2001
 !========================================================================C
 
+      use MLSCommon, only: r8
       IMPLICIT NONE
-      INTEGER ISPI,ITP
+      INTEGER :: ISPI,ITP
 
-      INTEGER NR                          ! NUMBER OF SIZE BINS
+      INTEGER :: NR                          ! NUMBER OF SIZE BINS
 
-      INTEGER IPSD                        ! SIZE-DISTRIBUTION TYPE
-                                          ! 0 = USER DEFINED
-                                          ! 1 = MH
-                                          ! 2 = GAMMA
-                                          ! 3 = LIU-CURRY 
-                                          ! 4 = KNOLLENGBERG
+      INTEGER :: IPSD                        ! SIZE-DISTRIBUTION TYPE
+                                             ! 0 = USER DEFINED
+                                             ! 1 = MH
+                                             ! 2 = GAMMA
+                                             ! 3 = LIU-CURRY 
+                                             ! 4 = KNOLLENGBERG
 
-      REAL DR0                            ! INTEGRATION STEP FOR SIZE BINS
-      REAL RN0                            ! INTEGRATION NUMBER DENSITY
-      REAL RN(NR)                         ! INTEGRATED NUMBER DENSITY OF EACH 
-                                          ! SIZE BIN
-      REAL R(NR)                          ! PARTICLE RADIUS (micron)
-      REAL DIAM                           ! PARTICLE DIAMETER (micron)
-      REAL TEMPC                          ! TEMPERATURE (C)
-      REAL T                              ! TEMPERATURE (K)
-      REAL CWC                            ! WATER CONTENT (g/m3)
-      REAL IWC0                           ! IWC OF SIZE < 100 microns
-      REAL IWC1                           ! IWC OF SIZE > 100 microns
+      REAL(r8) :: DR0                        ! INTEGRATION STEP FOR SIZE BINS
+      REAL(r8) :: RN0                        ! INTEGRATION NUMBER DENSITY
+      REAL(r8) :: RN(NR)                     ! INTEGRATED NUMBER DENSITY OF EACH 
+                                             ! SIZE BIN
+      REAL(r8) :: R(NR)                      ! PARTICLE RADIUS (micron)
+      REAL(r8) :: DIAM                       ! PARTICLE DIAMETER (micron)
+      REAL(r8) :: TEMPC                      ! TEMPERATURE (C)
+      REAL(r8) :: T                          ! TEMPERATURE (K)
+      REAL(r8) :: CWC                        ! WATER CONTENT (g/m3)
+      REAL(r8) :: IWC0                       ! IWC OF SIZE < 100 microns
+      REAL(r8) :: IWC1                       ! IWC OF SIZE > 100 microns
+ 
+      REAL(r8) :: RAOI                       ! ICE DENSITY (g/m3)
+      PARAMETER (RAOI=0.91_r8)
 
-      REAL RAOI                           ! ICE DENSITY (g/m3)
-      PARAMETER (RAOI=0.91)
+      REAL(r8) :: IWC00                      ! NORMALIZATION IWC (g/m3)
+      REAL(r8) :: DIAM0                      ! NORMALIZATION DIAMETER (microns)
+      REAL(r8) :: Dm                         ! MASS-MEAN-DIAMETER
 
-      REAL IWC00                          ! NORMALIZATION IWC (g/m3)
-      REAL DIAM0                          ! NORMALIZATION DIAMETER (microns)
-      REAL Dm                             ! MASS-MEAN-DIAMETER
+      REAL(r8) :: ALPHA0,MU1,AMU,BMU,RAO1,ARAO,BRAO,RC,C1,C2,A,B
+      REAL(r8) :: SUM,sum1,sum2,JJ,JJ1,JJ2,ddr0,al,dme,dmm
 
-      REAL ALPHA0,MU1,AMU,BMU,RAO1,ARAO,BRAO,RC,C1,C2,A,B
-      REAL SUM,sum1,sum2,JJ,JJ1,JJ2,ddr0,al,dme,dmm
+      INTEGER :: J, I, J1, J2
 
-      INTEGER J,I,J1,J2
-
-      REAL V1,B1
+      REAL(r8) :: V1, B1
 
 !------------------------------------------------------------------------
 
@@ -57,6 +58,7 @@
         end if
 
  1000   CONTINUE
+
 !========================
 !     ICE PARTICLES
 !========================
@@ -242,7 +244,4 @@
       END
 
 ! $Log: drp_size.f90,v      
-
-
-
 

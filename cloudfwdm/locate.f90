@@ -1,8 +1,9 @@
 !--------------------------------------------------------------------
 !
       SUBROUTINE LOCATE(XX,N,NP,X,J)
-	integer jl,ju,n,np,jm,j
-      real*4 XX(NP),x
+      use MLSCommon, only: r8
+      integer :: jl,ju,n,np,jm,j
+      real(r8) :: XX(NP),x
 
 	if(x .lt. xx(1)) then
 	j = 1
@@ -29,4 +30,9 @@
       RETURN
       END
 
-! $Log: interp_pack.f,v      
+! $Log: interp_pack.f90,v      
+
+
+
+
+

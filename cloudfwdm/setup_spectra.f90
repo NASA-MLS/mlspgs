@@ -1,11 +1,12 @@
       SUBROUTINE SETUP_SPECTRA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1, &
       &                         GAMMA,N2,MOL,NMOL,NCNT)
 
+      use MLSCommon, only: r8
       IMPLICIT NONE
       INCLUDE 'spectra.f9h'
       INCLUDE 'data.f9h'
-      REAL QQ(3)
-      INTEGER I, J
+      REAL(r8) ::  QQ(3)
+      INTEGER :: I, J
 
 ! -------------------------------------------------------------
 
@@ -175,6 +176,7 @@
       RETURN
       END
 
+! $Log: setup_spectra.f90,v      
 
 
 

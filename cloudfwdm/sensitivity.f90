@@ -5,30 +5,31 @@
         &                       N,NF,IRF,ISWI,RE)
 !----------------------------------------------------------------
 
-      INTEGER NH,NZ
+      use MLSCommon, only: r8
+      INTEGER :: NH,NZ
 
-      REAL ZT(NT)                              ! TANGENT HEIGHT
-      REAL YP(NH)                              ! MODEL PRESSURE LEVEL
-      REAL YZ(NH)                              ! MODEL PRESSURE HEIGHT
-      REAL PRESSURE(NZ)                        ! L2 PRESSURE LEVEL
-      REAL DTcir(NT,NF)                      ! CLOUD-INDUCED RADIANCE
-      REAL SS(NT,NF)                         ! CLOUD RADIANCE SENSITIVITY
-      REAL TAUeff(NT,NF)                     ! CLOUD EFFECTIVE OPTICAL DEPTH
+      REAL(r8) :: ZT(NT)                            ! TANGENT HEIGHT
+      REAL(r8) :: YP(NH)                            ! MODEL PRESSURE LEVEL
+      REAL(r8) :: YZ(NH)                            ! MODEL PRESSURE HEIGHT
+      REAL(r8) :: PRESSURE(NZ)                      ! L2 PRESSURE LEVEL
+      REAL(r8) :: DTcir(NT,NF)                      ! CLOUD-INDUCED RADIANCE
+      REAL(r8) :: SS(NT,NF)                         ! CLOUD RADIANCE SENSITIVITY
+      REAL(r8) :: TAUeff(NT,NF)                     ! CLOUD EFFECTIVE OPTICAL DEPTH
 
-      REAL delTAU(NH-1)                        ! TOTAL EXTINCTION 
-      REAL delTAUc(NH-1)                       ! CLOUDY-SKY EXTINCTION
+      REAL(r8) :: delTAU(NH-1)                      ! TOTAL EXTINCTION 
+      REAL(r8) :: delTAUc(NH-1)                     ! CLOUDY-SKY EXTINCTION
 
-      REAL BETA(NZ,NF)                         ! TOTAL EXTINCTION
-      REAL BETAc(NZ,NF)                        ! CLOUDY-SKY EXTINCTION
-      REAL DDm(N,NH-1)                         ! MASS-MEAN-DIAMETER
-      REAL Dm(N,NZ-1)                          ! MASS-MEAN-DIAMETER
-      REAL DDZ(NH-1)                           ! MODEL LEYER THICKNESS
-      REAL DZ(NZ-1)                            ! L2 LAYER THICKNESS
+      REAL(r8) :: BETA(NZ,NF)                       ! TOTAL EXTINCTION
+      REAL(r8) :: BETAc(NZ,NF)                      ! CLOUDY-SKY EXTINCTION
+      REAL(r8) :: DDm(N,NH-1)                       ! MASS-MEAN-DIAMETER
+      REAL(r8) :: Dm(N,NZ-1)                        ! MASS-MEAN-DIAMETER
+      REAL(r8) :: DDZ(NH-1)                         ! MODEL LEYER THICKNESS
+      REAL(r8) :: DZ(NZ-1)                          ! L2 LAYER THICKNESS
 
-      REAL RE
-      REAL HT,C_EXT,A_EXT,TGT,DS,DTAU,A_COL
-      REAL ZH(NH),ZA(NZ)
-      INTEGER I,K,J,iflag
+      REAL(r8) :: RE
+      REAL(r8) :: HT,C_EXT,A_EXT,TGT,DS,DTAU,A_COL
+      REAL(r8) :: ZH(NH),ZA(NZ)
+      INTEGER :: I,K,J,iflag
 !-----------------------------------------------------------------------------
 
 !===============================================================
@@ -36,11 +37,11 @@
 !===============================================================
 
       DO I=1,NH-1
-         ZH(I)=-ALOG10( (YP(I+1)+YP(I))/2. )
+         ZH(I)=-LOG10( (YP(I+1)+YP(I))/2. )
       END DO
 
       DO I=1,NZ-1
-         ZA(I)=-ALOG10( (PRESSURE(I+1)+PRESSURE(I))/2. )
+         ZA(I)=-LOG10( (PRESSURE(I+1)+PRESSURE(I))/2. )
       END DO
 
       DO J=1,NZ-1

@@ -6,17 +6,18 @@
 !     -J.JIANG, JAN 1, 2001
 !==========================================================
 
-      INTEGER NU                         ! NO. OF SCATTERING ANGLES
-      INTEGER NUA                        ! NO. OF SCATTERING AZIMUTH ANGLES
-      REAL U(NU)                         ! COSINE OF SCATTERING ANGLES
-      REAL DU(NU)                        ! DELTA U
-      REAL UA(NUA)                       ! COSINE OF SCATTERING AZIMUTH ANGLES
-      REAL THETA(NU)                     ! SCATTERING ANGLES
-      REAL PHI(NUA)                      ! SCATTERING AZIMUTH ANGLES
-      REAL UI(NU,NU,NUA)                 ! COSINE OF ANGLES FOR INCIDENT TB
-      REAL THETAI(NU,NU,NUA)             ! ANGLES FOR INCIDENT TB
+      use MLSCommon, only: r8
+      INTEGER :: NU                         ! NO. OF SCATTERING ANGLES
+      INTEGER :: NUA                        ! NO. OF SCATTERING AZIMUTH ANGLES
+      REAL(r8) :: U(NU)                     ! COSINE OF SCATTERING ANGLES
+      REAL(r8) :: DU(NU)                    ! DELTA U
+      REAL(r8) :: UA(NUA)                   ! COSINE OF SCATTERING AZIMUTH ANGLES
+      REAL(r8) :: THETA(NU)                 ! SCATTERING ANGLES
+      REAL(r8) :: PHI(NUA)                  ! SCATTERING AZIMUTH ANGLES
+      REAL(r8) :: UI(NU,NU,NUA)             ! COSINE OF ANGLES FOR INCIDENT TB
+      REAL(r8) :: THETAI(NU,NU,NUA)         ! ANGLES FOR INCIDENT TB
 
-      INTEGER I,J,K
+      INTEGER :: I, J, K
 !--------------------------------------------------------------
 
       PI=3.1415926
