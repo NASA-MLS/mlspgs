@@ -141,7 +141,10 @@ contains ! =====     Public Procedures     =============================
       case ( s_quantity )
         call decorate ( key, AddQuantityTemplateToDatabase ( &
           & quantityTemplatesBase, CreateQtyTemplateFromMLSCfInfo ( name, key, &
-            & fGrids, vGrids, hGrids, l1bInfo, chunks(chunkNo), mifGeolocation ) ) )
+            & fGrids, vGrids, hGrids, l1bInfo, chunks(chunkNo), mifGeolocation,&
+            & status ) ) )
+          if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Failed to create quantity template from MLSCF info' )
       case ( s_vectortemplate )
         call decorate ( key, AddVectorTemplateToDatabase ( vectorTemplates, &
           & CreateVecTemplateFromMLSCfInfo ( name, key, quantityTemplatesBase ) ) )
@@ -213,6 +216,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.34  2002/09/18 22:49:42  pwagner
+! Receives returnStatus from CreateQtyTemplateFromMLSCFInfo
+!
 ! Revision 2.33  2002/08/20 22:43:37  vsnyder
 ! Move USE statements from module scope to procedure scope
 !
