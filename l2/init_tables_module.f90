@@ -120,7 +120,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_SOURCEL2AUX         = f_sourceApriori + 1
   integer, parameter :: F_SOURCEL2GP          = f_sourcel2aux + 1
   integer, parameter :: F_SOURCEQUANTITY      = f_sourcel2gp + 1
-  integer, parameter :: F_SPECIES             = f_sourcequantity + 1
+  integer, parameter :: F_SPACECRAFT          = f_sourcequantity + 1
+  integer, parameter :: F_SPECIES             = f_spacecraft + 1
   integer, parameter :: F_SPECTROMETER        = f_species + 1
   integer, parameter :: F_SPECTROMETERTYPE    = f_spectrometer + 1
   integer, parameter :: F_SPREAD              = f_spectrometerType + 1
@@ -158,7 +159,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: L_COVARIANCE    = l_climatology + 1
   integer, parameter :: L_DAO 	        = l_covariance + 1
   integer, parameter :: L_DIRECT        = l_dao + 1
-  integer, parameter :: L_EITHER        = l_direct + 1
+  integer, parameter :: L_EARTHREFL     = l_direct + 1
+  integer, parameter :: L_EITHER        = l_earthRefl + 1
   integer, parameter :: L_EXPLICIT      = l_either + 1
   integer, parameter :: L_FIXED         = l_explicit + 1
   integer, parameter :: L_FRACTIONAL    = l_fixed + 1
@@ -174,7 +176,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: L_NEITHER       = l_ncep + 1
   integer, parameter :: L_NEWTONIAN     = l_neither + 1
   integer, parameter :: L_NORM          = l_newtonian + 1
-  integer, parameter :: L_PLAIN         = l_norm + 1
+  integer, parameter :: L_ORBITINCLINE  = l_norm + 1
+  integer, parameter :: L_PLAIN         = l_orbitIncline + 1
   integer, parameter :: L_PRESSURE      = l_plain + 1
   integer, parameter :: L_R1A           = l_pressure + 1
   integer, parameter :: L_R1B           = l_r1a + 1
@@ -183,7 +186,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: L_R4            = l_r3 + 1
   integer, parameter :: L_R5H           = l_r4 + 1
   integer, parameter :: L_R5V           = l_r5h + 1
-  integer, parameter :: L_SPD           = l_r5v + 1
+  integer, parameter :: L_SPACERADIANCE = l_r5v + 1
+  integer, parameter :: L_SPD           = l_spaceRadiance + 1
   integer, parameter :: L_VECTOR        = l_spd + 1
   integer, parameter :: L_WEIGHTED      = l_vector + 1
   integer, parameter :: LAST_LIT        = l_weighted
@@ -324,6 +328,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_covariance) =            add_ident ( 'covariance' )
     lit_indices(l_dao) =                   add_ident ( 'DAO' )
     lit_indices(l_direct) =                add_ident ( 'direct' )
+    lit_indices(l_earthRefl) =             add_ident ( 'earthRefl' )
     lit_indices(l_either) =                add_ident ( 'either' )
     lit_indices(l_explicit) =              add_ident ( 'explicit' )
     lit_indices(l_fixed) =                 add_ident ( 'fixed' )
@@ -340,6 +345,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_neither) =               add_ident ( 'neither' )
     lit_indices(l_newtonian) =             add_ident ( 'newtonian' )
     lit_indices(l_norm) =                  add_ident ( 'norm' )
+    lit_indices(l_orbitIncline) =          add_ident ( 'orbitIncline' )
     lit_indices(l_plain) =                 add_ident ( 'plain' )
     lit_indices(l_pressure) =              add_ident ( 'pressure' )
     lit_indices(l_r1a) =                   add_ident ( 'r1a' )
@@ -349,6 +355,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_r4) =                    add_ident ( 'r4' )
     lit_indices(l_r5h) =                   add_ident ( 'r5h' )
     lit_indices(l_r5v) =                   add_ident ( 'r5v' )
+    lit_indices(l_spaceRadiance) =         add_ident ( 'spaceRadiance' )
     lit_indices(l_spd) =                   add_ident ( 'spd' )
     lit_indices(l_vector) =                add_ident ( 'vector' )
     lit_indices(l_weighted) =              add_ident ( 'weighted' )
@@ -415,6 +422,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_sourcel2aux) =         add_ident ( 'sourceL2AUX' )
     field_indices(f_sourcel2gp) =          add_ident ( 'sourceL2GP' )
     field_indices(f_sourcequantity) =      add_ident ( 'sourceQuantity' )
+    field_indices(f_spacecraft) =          add_ident ( 'spacecraft' )
     field_indices(f_species) =             add_ident ( 'species' )
     field_indices(f_spectrometer) =        add_ident ( 'spectrometer' )
     field_indices(f_spectrometerType) =    add_ident ( 'spectrometerType' )
@@ -540,9 +548,13 @@ contains ! =====     Public procedures     =============================
       begin, t+t_module, l+l_ghz, l+l_thz, n+n_dt_def, &
       begin, t+t_molecule, l+(/ (i,i=first_molecule, last_molecule) /), &
              n+n_dt_def, &
-      begin, t+t_outputType, l+l_l2aux, l+l_l2gp, n+n_dt_def, &
-      begin, t+t_quantityType, l+l_baseline, l+l_extinction, l+l_gph, &
-             l+l_ptan, l+l_radiance, l+l_temperature, l+l_vmr, n+n_dt_def, &
+      begin, t+t_outputType, l+l_l2aux, l+l_l2gp, n+n_dt_def /) )
+    call make_tree ( (/ &
+      begin, t+t_quantityType, l+l_baseline, l+l_earthRefl,&
+             l+l_extinction, l+l_gph, l+l_orbitIncline, l+l_ptan,&
+             l+l_radiance, l+l_refGPH, l+l_scVel, l+l_spaceRadiance,&
+             l+l_temperature, l+l_tngtGeodAlt, l+l_tngtGeocAlt, &
+             l+l_vmr, n+n_dt_def, &
       begin, t+t_radiometer, l+l_r1a, l+l_r1b, l+l_r2, l+l_r3, l+l_r4, &
              l+l_r5h, l+l_r5v, n+n_dt_def, &
       begin, t+t_scale, l+l_apriori, & ! l+l_covariance, & !??? Later !???
@@ -581,7 +593,9 @@ contains ! =====     Public procedures     =============================
     ! required to be in a specification named by the next-to-last
     ! f_field_name ... of the specification named by the spec_name.
     call make_tree ( (/ &
-      begin, s+s_module, np+n_spec_def, &
+      begin, s+s_module, &
+             f+f_spacecraft, t+t_boolean, n+n_field_type, &
+             np+n_spec_def, &
       begin, s+s_radiometer, &          ! Must be after module
              begin, f+f_lo, t+t_numeric, n+n_field_type, &
              begin, f+f_suffix, t+t_string, n+n_field_type, &
@@ -625,7 +639,7 @@ contains ! =====     Public procedures     =============================
              np+n_spec_def, &
       begin, s+s_hGrid, &
              begin, f+f_type, t+t_hGridType, nr+n_field_type, &
-             begin, f+f_module, t+t_module, nr+n_field_type, &
+             begin, f+f_module, s+s_module, nr+n_field_spec, &
              begin, f+f_fraction, t+t_numeric, n+n_field_type, &
              begin, f+f_height, t+t_numeric, n+n_field_type, &
              begin, f+f_mif, t+t_numeric, n+n_field_type, &
@@ -871,6 +885,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.31  2001/03/02 01:27:24  livesey
+! Added more vector quantity types
+!
 ! Revision 2.30  2001/02/28 21:36:14  livesey
 ! More changes in the signals section
 !
