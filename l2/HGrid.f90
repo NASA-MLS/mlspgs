@@ -1025,7 +1025,7 @@ contains ! =====     Public Procedures     =============================
       windowSize = width
       start = ( window-1 ) * width + 1
       if ( window == noWindows ) windowSize = mod ( noBins, width )
-      do line = 1, noLines
+      do line = noLines, 1, -1
         do char = start, start+windowSize-2
           call output ( text ( char, line ) )
         end do
@@ -1092,6 +1092,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.34  2002/08/01 17:19:56  livesey
+! Flipped geometry dump over the right way.
+!
 ! Revision 2.33  2002/07/17 06:02:50  livesey
 ! More conservative settings
 !
