@@ -246,6 +246,7 @@ contains
       case ( s_band ) ! ...................................  BAND  .....
         band%prefix = name
         band%centerFrequency = 0.0_r8 ! "The 'frequency' field is absent"
+        band%radiometer = 0             ! No radiometer defined at first.
         do j = 2, nsons(key)
           son = subtree(j,key)
           field = decoration(subtree(1,son))
@@ -459,9 +460,9 @@ contains
           & (/ f_last, f_step, f_width /) )
           if ( error == 0 ) then
             k = last - first 
-            call allocate_Test ( spectrometerType%frequencies, k-first, &
+            call allocate_Test ( spectrometerType%frequencies, last, &
               & 'spectrometerType%frequencies', moduleName, lowBound = first )
-            call allocate_Test ( spectrometerType%widths, k-first, &
+            call allocate_Test ( spectrometerType%widths, last, &
               & 'spectrometerType%widths', moduleName, lowBound = first )
             spectrometerType%widths = width
             spectrometerType%frequencies(first) = start
@@ -782,9 +783,13 @@ contains
       call output ( ':' )
       call display_string (bands(i)%suffix, strip=.true. )
       call output ( '   Radiometer: ')
-      call output ( bands(i)%radiometer )
-      call output ( ' - ' )
-      call display_string ( radiometers(bands(i)%radiometer)%prefix )
+      if ( bands(i)%radiometer /= 0 ) then
+        call output ( bands(i)%radiometer )
+        call output ( ' - ' )
+        call display_string ( radiometers(bands(i)%radiometer)%prefix )
+      else
+        call output ( ' deferred' )
+      end if
       call output ( '   SpectrometerType: ' )
       call output ( bands(i)%spectrometerType )
       call output ( ' - ' )
@@ -1571,6 +1576,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.66  2004/03/22 18:22:59  livesey
+! Bug fixes, only relevant for smls
+!
 ! Revision 2.65  2004/02/11 02:24:18  livesey
 ! Added (probably unnecessary) initialization for DACS in
 ! SpectromterType_T
