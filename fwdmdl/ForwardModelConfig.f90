@@ -44,6 +44,7 @@ module ForwardModelConfig
     logical :: Spect_Der      ! Do spectroscopy derivatives
     logical :: Temp_Der       ! Do temperature derivatives
     logical :: skipOverlaps   ! Don't calculate for MAFs in overlap regions
+    logical :: cloud_der      ! Compute cloud sensitivity in cloud models.
     type(vGrid_T), pointer :: integrationGrid=>NULL() ! Zeta grid for integration
     type(vGrid_T), pointer :: tangentGrid=>NULL()     ! Zeta grid for integration
     integer :: surfaceTangentIndex  ! Index in Tangentgrid of Earth's surface
@@ -166,6 +167,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 1.9  2001/05/25 20:26:09  livesey
+! Added skipOverlaps option
+!
 ! Revision 1.8  2001/05/14 23:17:35  livesey
 ! Added frqGap parameter
 !
