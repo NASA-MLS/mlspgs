@@ -201,6 +201,7 @@ CONTAINS
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
+
 ! Check whether the name is distinct; if so, save it in l3dmFiles
 
          IF (LinearSearchStringArray(l3dmFiles%name,physicalFilename) == 0) THEN
@@ -216,6 +217,7 @@ CONTAINS
             msr = MLSMSG_Fileopen // physicalFilename
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
+
 
 ! Set up the grid.  The region is bounded by 180.0W to 176.0E longitude &
 ! varying latitude.  Grid into 90 bins along the x-axis, by nLats bins along
@@ -239,6 +241,7 @@ CONTAINS
 
 ! Create the grid
 
+
          gdId = gdcreate(gdfID, l3dmData(i)%name, l3dmData(i)%nLons, &
                          l3dmData(i)%nLats, uplft, lowrgt)
          IF (gdId == -1) THEN
@@ -248,11 +251,13 @@ CONTAINS
 
 ! Define the dimensions
 
+
          status = gddefdim(gdId, DIMX_NAME, l3dmData(i)%nLons)
          IF (status /= 0) THEN
             msr = DIM_ERR // DIMX_NAME
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
+
 
          status = gddefdim(gdId, DIMY_NAME, l3dmData(i)%nLats)
          IF (status /= 0) THEN
@@ -260,11 +265,13 @@ CONTAINS
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
+
          status = gddefdim(gdId, DIMZ_NAME, l3dmData(i)%nLevels)
          IF (status /= 0) THEN
             msr = DIM_ERR // DIMZ_NAME
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
+
 
          status = gddefdim(gdId, DIMT_NAME, 1)
          IF (status /= 0) THEN
@@ -272,7 +279,9 @@ CONTAINS
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
+
 ! Define a "Geographic projection," using defaults in all unneeded fields
+
 
          status = gddefproj(gdId, GCTP_GEO, 0, 0, projparm)
          IF (status /= 0) THEN
@@ -310,6 +319,7 @@ CONTAINS
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
+
 ! Define the "data" fields
 
          status = gddeffld(gdId, DATA_FIELDV, DIMXYZ_NAME, DFNT_FLOAT32, &
@@ -343,6 +353,7 @@ CONTAINS
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
+
 ! Re-open the file for writing
 
          gdfID = gdopen(physicalFilename, DFACC_RDWR)
@@ -363,17 +374,22 @@ CONTAINS
 
          start = 0
          stride = 1
-         edge(1) = l3dmData(i)%nLevels
-         edge(2) = l3dmData(i)%nLats
-         edge(3) = l3dmData(i)%nLons
+         edge = 1
 
-         status = gdwrfld(gdId, GEO_FIELD3, start(1), stride(1), stride(1), &
+
+         status = gdwrfld(gdId, GEO_FIELD3, start(1), stride(1), edge(1), &
                           l3dmData(i)%time)
+
          IF (status /=0) THEN
             msr = 'Failed to write field ' //  GEO_FIELD3 // ' to grid ' &
                    // l3dmData(i)%name
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
+
+
+         edge(1) = l3dmData(i)%nLevels
+         edge(2) = l3dmData(i)%nLats
+         edge(3) = l3dmData(i)%nLons
 
          if (l3dmData(i)%nLevels.gt.0) then
 
@@ -410,6 +426,7 @@ CONTAINS
 
          endif
 
+
          if ((l3dmData(i)%nLons.gt.0).and.(l3dmData(i)%nLats.gt.0).and.(l3dmData(i)%nLevels.gt.0)) then
 
          status = gdwrfld( gdId, DATA_FIELDV, start, stride, edge, &
@@ -419,7 +436,7 @@ CONTAINS
                   // l3dmData(i)%name
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
- 
+
          status = gdwrfld( gdId, DATA_FIELDP, start, stride, edge, &
                            REAL(l3dmData(i)%l3dmPrecision) )
          IF (status /= 0) THEN
@@ -447,13 +464,16 @@ CONTAINS
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
+
          msr = 'Grid ' // TRIM(l3dmData(i)%name) // ' successfully written to &
                &file ' // physicalFilename
          CALL MLSMessage(MLSMSG_Info, ModuleName, msr)
 
 ! Create & write to diagnostic swath
 
+
          CALL OutputDiags( physicalFilename, l3dmData(i) )
+
 
       ENDDO
 
@@ -563,6 +583,7 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
+
       status = swdefdfld(swId, DG_FIELD1, DIMLL_NAME, DFNT_FLOAT32, HDFE_NOMERGE)
       IF (status /= 0) THEN
          msr = DAT_ERR // DG_FIELD1
@@ -608,17 +629,19 @@ CONTAINS
 
       start = 0
       stride = 1
-      edge(1) = dg%nLevels
-      edge(2) = dg%nLats
+      edge = 1
 
 ! Geolocation
 
-        
-      status = swwrfld(swId, GEO_FIELD3, start(1), stride(1), stride(1), dg%time)
+
+       status = swwrfld(swId, GEO_FIELD3, start(1), stride(1), edge(1), dg%time)
       IF (status /=0) THEN
          msr = WR_ERR //  GEO_FIELD3 // ' to swath ' // dgName
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
+
+      edge(1) = dg%nLevels
+      edge(2) = dg%nLats
 
       if (dg%nLevels.gt.0) then
 
@@ -646,6 +669,7 @@ CONTAINS
 
       if (dg%nLevels.gt.0) then
 
+
       status = swwrfld( swId, DG_FIELD, start(1), stride(1), edge(1), &
                         REAL(dg%gRss) )
       IF (status /= 0) THEN
@@ -659,7 +683,6 @@ CONTAINS
          msr = WR_ERR //  DG_FIELD2 // ' to swath ' // dgName
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
-
       endif
 
 ! Two-dimensional data fields
@@ -686,7 +709,7 @@ CONTAINS
       ENDIF
 
       status = swwrfld( swId, MDT_FIELD, start, stride, edge, real(dg%maxDiffTime) )
-!
+
       IF (status /= 0) THEN
          msr = WR_ERR //  MDT_FIELD // ' to swath ' // dgName
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -1153,11 +1176,17 @@ CONTAINS
 
 ! Horizontal geolocation fields
 
+      if (l3dm%nLats .gt. 0) then
+
       ALLOCATE(l3dm%latitude(l3dm%nLats), STAT=err)
       IF ( err /= 0 ) THEN
          msr = MLSMSG_Allocate // ' latitude pointer.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
+
+      endif
+
+      if (l3dm%nLons .gt. 0) then
 
       ALLOCATE(l3dm%longitude(l3dm%nLons), STAT=err)
       IF ( err /= 0 ) THEN
@@ -1165,7 +1194,11 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
+      endif
+
 ! Vertical geolocation field
+
+      if (l3dm%nLevels .gt. 0) then
 
       ALLOCATE(l3dm%pressure(l3dm%nLevels), STAT=err)
       IF ( err /= 0 ) THEN
@@ -1173,7 +1206,11 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
+      endif
+
 ! Data fields
+
+      if ((l3dm%nLevels.gt.0).and.(l3dm%nLats.gt.0).and.(l3dm%nLons.gt.0)) then 
 
       ALLOCATE(l3dm%l3dmValue(l3dm%nLevels,l3dm%nLats,l3dm%nLons), STAT=err)
       IF ( err /= 0 ) THEN
@@ -1187,7 +1224,11 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
+      endif
+
 ! Diagnostic fields
+
+      if (l3dm%nLevels.gt.0) then 
 
       ALLOCATE(l3dm%gRss(l3dm%nLevels), STAT=err)
       IF ( err /= 0 ) THEN
@@ -1195,11 +1236,19 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
+      endif
+
+      if ((l3dm%nLevels.gt.0).and.(l3dm%nLats.gt.0)) then
+ 
       ALLOCATE(l3dm%latRss(l3dm%nLevels,l3dm%nLats),STAT=err)
       IF ( err /= 0 ) THEN
          msr = MLSMSG_Allocate // ' latRss pointer.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
+
+      endif
+
+      if ((l3dm%nLevels.gt.0).and.(l3dm%N.gt.0)) then
 
       ALLOCATE(l3dm%maxDiff(l3dm%N,l3dm%nLevels),STAT=err)
       IF ( err /= 0 ) THEN
@@ -1213,11 +1262,17 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
+      endif
+
+      if (l3dm%nLevels .gt. 0) then 
+
       ALLOCATE(l3dm%perMisPoints(l3dm%nLevels), STAT=err)
       IF ( err /= 0 ) THEN
          msr = MLSMSG_Allocate // ' perMisPoints pointer.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
+
+      endif
 
 !-----------------------------
    END SUBROUTINE AllocateL3DM
@@ -1247,6 +1302,8 @@ CONTAINS
 
 ! Horizontal geolocation fields
 
+      if (l3dm%nLats .gt. 0) then
+
       IF ( ASSOCIATED(l3dm%latitude) ) THEN
          DEALLOCATE (l3dm%latitude, STAT=err)
          IF ( err /= 0 ) THEN
@@ -1254,6 +1311,10 @@ CONTAINS
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
       ENDIF
+
+      endif
+
+      if (l3dm%nLons .gt. 0) then
 
       IF ( ASSOCIATED(l3dm%longitude) ) THEN
          DEALLOCATE (l3dm%longitude, STAT=err)
@@ -1263,7 +1324,11 @@ CONTAINS
          ENDIF
       ENDIF
 
+      endif
+
 ! Vertical geolocation field
+
+      if (l3dm%nLevels .gt. 0) then
 
       IF ( ASSOCIATED(l3dm%pressure) ) THEN
          DEALLOCATE (l3dm%pressure, STAT=err)
@@ -1273,7 +1338,11 @@ CONTAINS
          ENDIF
       ENDIF
 
+      endif
+
 ! Data fields
+
+      if ((l3dm%nLevels.gt.0).and.(l3dm%nLats.gt.0).and.(l3dm%nLons.gt.0)) then 
 
       IF ( ASSOCIATED(l3dm%l3dmValue) ) THEN
          DEALLOCATE (l3dm%l3dmValue, STAT=err)
@@ -1291,7 +1360,11 @@ CONTAINS
          ENDIF
       ENDIF
 
+      endif
+
 ! Diagnostic fields
+
+      if (l3dm%nLevels.gt.0) then 
 
       IF ( ASSOCIATED(l3dm%gRss) ) THEN
          DEALLOCATE (l3dm%gRss, STAT=err)
@@ -1301,6 +1374,10 @@ CONTAINS
          ENDIF
       ENDIF
 
+      endif
+
+      if ((l3dm%nLevels.gt.0).and.(l3dm%nLats.gt.0)) then
+
       IF ( ASSOCIATED(l3dm%latRss) ) THEN
          DEALLOCATE (l3dm%latRss, STAT=err)
          IF ( err /= 0 ) THEN
@@ -1308,6 +1385,10 @@ CONTAINS
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
       ENDIF
+
+      endif
+
+      if ((l3dm%nLevels.gt.0).and.(l3dm%N.gt.0)) then
 
       IF ( ASSOCIATED(l3dm%maxDiff) ) THEN
          DEALLOCATE (l3dm%maxDiff, STAT=err)
@@ -1325,6 +1406,10 @@ CONTAINS
          ENDIF
       ENDIF
 
+      endif
+
+      if (l3dm%nLevels .gt. 0) then 
+
       IF ( ASSOCIATED(l3dm%perMisPoints) ) THEN
          DEALLOCATE (l3dm%perMisPoints, STAT=err)
          IF ( err /= 0 ) THEN
@@ -1332,6 +1417,8 @@ CONTAINS
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
       ENDIF
+
+      endif
 
 !-------------------------------
    END SUBROUTINE DeallocateL3DM
@@ -1389,6 +1476,9 @@ END MODULE L3DMData
 !==================
 
 !# $Log$
+!# Revision 1.19  2002/04/01 21:58:49  jdone
+!# check if array sizes are larger than 0
+!#
 !# Revision 1.18  2002/03/27 21:33:32  jdone
 !# allocate statements checked and maxDiff is initialized
 !#
