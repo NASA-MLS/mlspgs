@@ -9,7 +9,7 @@ module CloudRetrievalModule
 
   implicit NONE
   private
-  public :: HighCloudRetrieval, LowCloudRetrieval
+  public :: CloudRetrieval
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -17,11 +17,11 @@ module CloudRetrievalModule
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
-!---------------------------------------------------------------------------
-
+       
 contains
-! ------------------------------------------  HighCloudRetrieval  -----
-    subroutine HighCloudRetrieval(ConfigDatabase,configIndices,fwdModelExtra,&
+
+! ------------------------------------------  CloudRetrieval  -----
+  subroutine CloudRetrieval(Method, ConfigDatabase,configIndices,fwdModelExtra,&
       & measurements,MeasurementSD, state, OutputSD, Covariance, &
       & jacobian, chunk,maxJacobians,initlambda)
 
@@ -33,6 +33,8 @@ contains
                      & L_CLOUDINDUCEDRADIANCE,                           &
                      & L_CLOUDEXTINCTION,                                &
                      & L_CLOUDRADSENSITIVITY
+      use Init_Tables_Module, only: L_highcloud, L_lowcloud, l_lostransfunc, &
+         & l_clear, l_earthradius
       use MatrixModule_0, only: MatrixInversion, MATRIXELEMENT_T
       use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, ClearMatrix,&
       & DestroyMatrix, FINDBLOCK, GetDiagonal, GetFromMatrixDatabase, Matrix_T, &
@@ -64,16 +66,42 @@ contains
       real(r8) :: InitLambda              ! Initial Levenberg-Marquardt parameter
       integer :: MaxJacobians             ! Maximum number of Jacobian
                                           ! evaluations of Newtonian method
+      integer :: Method                   ! Method to use for inversion
       type(vector_T), pointer :: Measurements  ! The measurements vector
       type(vector_T), pointer :: MeasurementSD ! The measurements vector's Std. Dev.
       type(vector_T), pointer :: OutputSD ! Vector containing SD of result
       type(vector_T), pointer :: State    ! The state vector
-      
-      ! Local Variables
+      type(matrix_T), pointer :: Jacobian ! The Jacobian matrix
+
+      ! Local variables
       type (ForwardModelStatus_T) :: FmStat        ! Status for forward model
-      type (ForwardModelIntermediate_T) :: Fmw     ! Work space for forward model
       type (vector_T) :: FwdModelOut1               ! Forward outputs
       type (Signal_T) :: signal                    ! signal info in each model
+
+      type(MatrixElement_T), pointer :: JBLOCK       ! A block from the jacobian
+      type(vector_T) :: CovarianceDiag  ! Diagonal of apriori Covariance  
+      
+      integer :: coljBlock     ! Column index for jacobian
+      integer :: rowjBlock     ! Row index for jacobian
+      integer :: nMAFs                    ! number of mafs
+      integer :: nFreqs      ! number of frequencies in each block
+      real(r8) :: badValue
+
+      ! ------------------------------------------      
+      select case (method)
+         case (l_lowcloud)
+            call LowCloudRetrieval
+         case (l_highcloud)
+            call HighCloudRetrieval
+      end select
+
+
+  contains      
+  ! ------------------------------------------  HighCloudRetrieval  -----
+    subroutine HighCloudRetrieval
+      
+      ! Local Variables
+      type (ForwardModelIntermediate_T) :: Fmw     ! Work space for forward model
       type (VectorValue_T), pointer :: xExtPtr        ! pointer of l_cloudExtinction quantity
       type (VectorValue_T), pointer :: xExtVar        ! variance of apriori
       type (VectorValue_T), pointer :: outExtSD        ! SD of output
@@ -87,20 +115,11 @@ contains
                                                    ! radiance to optical depth
                                           
       integer :: i,j,k,i1,j1,ich,maf,mif          ! Loop subscripts
-      integer :: coljBlock     ! Column index for jacobian
-      integer :: rowjBlock     ! Row index for jacobian
-      integer :: nMAFs                    ! number of mafs
-      integer :: nFreqs      ! number of frequencies in each block
       integer :: nz        ! number of retrieval levels
       integer :: nInst     ! number of retrieval instances in the chunk
       integer :: cloudysky   ! cloudysky index from Model Configuration
       real(r8) :: pcut    ! ptan threshold for high tangent heights
-      real(r8) :: badValue
                                         
-      type(matrix_T), pointer :: Jacobian ! The Jacobian matrix
-      type(MatrixElement_T), pointer :: JBLOCK       ! A block from the jacobian
-      type(vector_T) :: CovarianceDiag  ! Diagonal of apriori Covariance  
-      
       ! retrieval work arrays
       real(r8) :: sensitivity                         ! sensitivity with slope and correction
       real(r8) :: teff                                ! effective optical depth
@@ -355,58 +374,10 @@ contains
     end subroutine HighCloudRetrieval
 
 ! ------------------------------------------  LowCloudRetrieval  -----
-    subroutine LowCloudRetrieval(ConfigDatabase,configIndices,fwdModelExtra,&
-      & measurements,MeasurementSD, state, OutputSD, Covariance, &
-      & jacobian, chunk,maxJacobians,initlambda)
-
-      use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-      use MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
-                                        & MLSMSG_Warning, MLSMSG_Deallocate
-      use MLSCommon, only: MLSCHUNK_T, R8, RM, RV
-      use Intrinsic, only: L_CLEAR, L_CLOUDINDUCEDRADIANCE, L_CLOUDEXTINCTION, &
-                     & L_CLOUDRADSENSITIVITY, L_EARTHRADIUS, L_LOSTRANSFUNC, & 
-                     & L_NONE, L_PTAN, L_RADIANCE
-      use MatrixModule_0, only: MatrixInversion, MATRIXELEMENT_T
-      use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, ClearMatrix,&
-      & DestroyMatrix, FINDBLOCK, GetDiagonal, GetFromMatrixDatabase, Matrix_T, &
-      & Matrix_Database_T, Matrix_SPD_T, MultiplyMatrixVectorNoT, &
-      & Sparsify, MultiplyMatrix_XTY, UpdateDiagonal
-      use MLSSignals_m, only: SIGNAL_T
-      use ForwardModelConfig, only: ForwardModelConfig_T
-      use ForwardModelWrappers, only: ForwardModel
-      use ForwardModelIntermediate, only: ForwardModelIntermediate_T, &
-        & ForwardModelStatus_T
-      use VectorsModule, only: ClearMask, ClearUnderMask, &
-       & ClearVector, CloneVector, CopyVector, CopyVectorMask, CreateMask, &
-       & DestroyVectorInfo, DumpMask, GetVectorQuantityByType, &
-       & IsVectorQtyMasked, M_Fill, M_FullDerivatives, M_LinAlg, M_Cloud, &
-       & M_Tikhonov, Vector_T, VectorValue_T
-
-      ! IO variables
-      type(vector_T), pointer :: Apriori  ! A priori estimate of state
-      integer, pointer, dimension(:) :: ConfigIndices    ! In ConfigDatabase
-      type(forwardModelConfig_T), dimension(:), pointer :: ConfigDatabase
-      type(matrix_SPD_T), pointer :: Covariance     ! covariance**(-1) of Apriori
-      logical :: Diagonal                 ! "Iterate with the diagonal of the
-                                       ! a priori covariance matrix until
-                                       ! convergence, then put in the whole
-                                       ! thing and iterate until it converges
-                                       ! again (hopefully only once).
-      type(vector_T), pointer :: FwdModelExtra
-      type(MLSChunk_T) :: CHUNK
-      real(r8) :: InitLambda              ! Initial Levenberg-Marquardt parameter
-      integer :: MaxJacobians             ! Maximum number of Jacobian
-                                          ! evaluations of Newtonian method
-      type(vector_T), pointer :: Measurements  ! The measurements vector
-      type(vector_T), pointer :: MeasurementSD ! The measurements vector's Std. Dev.
-      type(vector_T), pointer :: OutputSD ! Vector containing SD of result
-      type(vector_T), pointer :: State    ! The state vector
+    subroutine LowCloudRetrieval
       
       ! Local Variables
-      type (ForwardModelStatus_T) :: FmStat        ! Status for forward model
       type (ForwardModelIntermediate_T) :: Fmw     ! Work space for forward model
-      type (vector_T) :: FwdModelOut1               ! Forward outputs
-      type (Signal_T) :: signal                    ! signal info in each model
       type (VectorValue_T), pointer :: xLosPtr        ! pointer of l_lostransfunc quantity
       type (VectorValue_T), pointer :: xExtPtr        ! pointer of l_cloudExtinction quantity
       type (VectorValue_T), pointer :: xLosVar        ! variance of apriori
@@ -425,10 +396,7 @@ contains
       integer :: i,j,k,imodel,mif,maf,isignal          ! Loop subscripts
       integer :: ich, ich0          ! channel used
       integer :: cloudysky(size(configIndices))   ! cloudysky index from Model Configuration
-      integer :: coljBlock     ! Column index for jacobian
-      integer :: rowjBlock     ! Row index for jacobian
-      integer :: nMAFs                    ! number of mafs
-      integer :: nFreqs      ! number of frequencies in each block
+
       integer :: nFreqs0      ! number of frequencies in the signal for cloud top estimation
       integer :: nSignal      ! number of signals in a band  
       integer :: nSgrid      ! number of S grids  
@@ -437,12 +405,7 @@ contains
       integer :: ndoMifs       ! number of used mifs
       real(r8) :: p_lowcut    ! ptan threshold for low tangent heights
       real(r8) :: scale
-      real(r8) :: badValue
                                         
-      type(matrix_T), pointer :: Jacobian ! The Jacobian matrix
-      type(MatrixElement_T), pointer :: JBLOCK       ! A block from the jacobian
-      type(vector_T) :: CovarianceDiag  ! Diagonal of apriori Covariance  
-      
       ! retrieval work arrays
       real(r8) :: sensitivity                         ! sensitivity with slope and correction
       real(r8) :: teff                                ! effective optical depth
@@ -950,8 +913,12 @@ contains
 
   end subroutine LOS2Grid    
 
+ end subroutine CloudRetrieval
 end module CloudRetrievalModule
 ! $Log$
+! Revision 2.4  2003/05/14 03:55:25  dwu
+! tidy up
+!
 ! Revision 2.3  2003/05/13 22:25:52  dwu
 ! changes in lowcloudretrieval
 !
