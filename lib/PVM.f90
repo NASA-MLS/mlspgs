@@ -306,6 +306,21 @@ module PVM ! Interface to the f77 pvm library.
        integer, intent(out) :: info
      end subroutine pvmfnotify
 
+     subroutine pvmftidtohost(tid,dtid)
+       integer, intent(in) :: tid
+       integer, intent(out) :: dtid
+     end subroutine pvmftidtohost
+
+     subroutine pvmfconfig(nhost, narch, dtid, name, arch, speed, info)
+       integer, intent(out) :: nhost
+       integer, intent(out) :: narch
+       integer, intent(out) :: dtid
+       character(len=*), intent(out) :: name
+       character(len=*), intent(out) :: arch
+       integer, intent(out) :: SPEED
+       integer, intent(out) :: INFO
+     end subroutine pvmfconfig
+
      ! These ones are to get around the irritating inability of pvmfspawn
      ! to pass arguments
 
@@ -509,7 +524,7 @@ contains
   end subroutine pvmf90unpackRealarr3
 
   ! --------------------------------------------  PVMERRORMESSAGE  -----
-  subroutine PVMErrorMessage ( inFO, PLACE )
+  subroutine PVMErrorMessage ( INFO, PLACE )
     ! This routine is called to log a PVM error
     integer, intent(in) :: INFO
     character (LEN=*) :: PLACE
@@ -521,9 +536,42 @@ contains
       ' Info='//trim(adjustl(line)))
   end subroutine PVMErrorMessage
 
+  ! --------------------------------------------- GetMachineNameFromTid --
+  subroutine GetMachineNameFromTid ( tid, rightname )
+    integer, intent(in) :: TID
+    character (len=*), intent(out) :: RIGHTNAME
+
+    ! Local variables
+    integer :: RIGHTDTID
+    integer :: NHOST
+    integer :: NARCH
+    integer :: DTID
+    character (len=32) :: NAME
+    character (len=32) :: ARCH
+    integer :: SPEED
+    integer :: INFO
+    integer :: I
+
+    ! Executable code
+    call PVMFTidToHost ( tid, rightDtid )
+    i = 1
+    rightName = ''
+    hostLoop: do
+      call PVMFConfig ( nhost, narch, dtid, name, arch, speed, info )
+      if ( info < 0 ) call PVMErrorMessage ( info, &
+        & 'Calling PVMFConfig' )
+      if ( dtid == rightDtid ) rightName = trim(name)
+      i = i + 1
+      if ( i > nhost ) exit hostLoop
+    end do hostLoop
+  end subroutine GetMachineNameFromTid
+
 end module PVM
 
 ! $Log$
+! Revision 2.10  2002/04/24 20:20:23  livesey
+! Added PVMFTidToHost and PVMFConfig and GetMachineNameFromTID
+!
 ! Revision 2.9  2002/02/05 02:39:59  vsnyder
 ! Change mask from 1-bit per to 8-bits per (using character)
 !
