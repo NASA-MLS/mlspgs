@@ -109,11 +109,12 @@ contains ! ========  Public Procedures =========================================
     type (Vector_T), dimension(:), optional, pointer :: AnotherVectorDatabase
 
     ! Local variables
-    logical :: AnyMoreVectors, AnyVectors    ! Flags
-    integer :: BUFFERID                      ! For PVM
-    integer :: INFO                          ! Flag
-    character (len=132) :: LINE              ! A line of text
-    integer :: VECTOR, QUANTITY              ! Loop counters
+    logical :: AnyMoreVectors, AnyVectors ! Flags
+    integer :: BUFFERID                 ! For PVM
+    integer :: INFO                     ! Flag
+    character (len=132) :: LINE         ! A line of text
+    integer :: TOTALVECTORS             ! In both databases
+    integer :: VECTOR, QUANTITY         ! Loop counters
     
     anyVectors = present(vectorDatabase)
     if ( anyVectors ) anyVectors = associated(vectorDatabase)
@@ -121,14 +122,18 @@ contains ! ========  Public Procedures =========================================
     anyMoreVectors = present(anotherVectorDatabase)
     if ( anyMoreVectors ) anyMoreVectors = associated(anotherVectorDatabase)
     if ( anyMoreVectors ) anyMoreVectors = size(anotherVectorDatabase) > 0
+    totalVectors = 0
+    if ( anyVectors ) totalVectors = totalVectors + size(vectorDatabase)
+    if ( anyMoreVectors ) totalVectors = totalVectors + size(anotherVectorDatabase)
+
     if ( anyVectors .or. anyMoreVectors) then
       call PVMFInitSend ( PvmDataDefault, bufferID )
 
       call PVMIDLPack ( "Vectors", info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "packing 'Vectors'" )
 
-      call PVMIDLPack ( size(vectorDatabase), info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "packing size(vectorDatabase)" )
+      call PVMIDLPack ( totalVectors, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing totalVectors" )
 
       ! Send vector names and quantity names
       do vector = 1, size(vectorDatabase)
@@ -553,6 +558,9 @@ contains ! ========  Public Procedures =========================================
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.23  2001/10/06 23:52:01  livesey
+! Bug fix with vector count
+!
 ! Revision 2.22  2001/10/06 23:49:16  livesey
 ! Decreased delay in the hope it makes it faster
 !
