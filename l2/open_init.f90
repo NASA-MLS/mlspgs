@@ -53,14 +53,14 @@ module Open_Init
 contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------------  DestroyL1BInfo  -----
-  subroutine DestroyL1BInfo ( L1BInfo, L2pcf )
+  subroutine DestroyL1BInfo ( L1BInfo )
 
     use MLSL2Options, only: ILLEGALL1BRADID
     use MLSFiles, only: mls_io_gen_closeF
-    use WriteMetadata, only: PCFData_T
+    use WriteMetadata, only: L2PCF
 
     type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
-    type (PCFData_T) ::                          L2pcf
+    ! type (PCFData_T) ::                          L2pcf
     integer :: STATUS ! from deallocate
     integer :: id
     error = 0
@@ -109,7 +109,7 @@ contains ! =====     Public Procedures     =============================
 
 
   ! ------------------------------------------  OpenAndInitialize  -----
-  subroutine OpenAndInitialize ( processingRange, l1bInfo, l2pcf )
+  subroutine OpenAndInitialize ( processingRange, l1bInfo )
 
     ! Opens L1 RAD files
     ! Opens L1OA file
@@ -139,13 +139,13 @@ contains ! =====     Public Procedures     =============================
       &    pgs_pc_getconfigdata, Pgs_pc_getReference, PGS_S_SUCCESS, &
       &    PGSTD_E_NO_LEAP_SECS
     use Time_M, only: Time_Now
-    use WriteMetadata, only: PCFData_T, MCFCASESENSITIVE
+    use WriteMetadata, only: L2PCF, MCFCASESENSITIVE
 
     ! Arguments
 
     type (TAI93_Range_T) :: processingRange ! Data processing range
     type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
-    type(PCFData_T) :: l2pcf
+    ! type(PCFData_T) :: l2pcf
 
     !Local Variables
     logical, parameter :: DEBUG = .FALSE.
@@ -477,7 +477,7 @@ contains ! =====     Public Procedures     =============================
      Details = -2
    end if
    if ( levels(gen) > 0 .or. index(switches,'pcf') /= 0 ) &
-        & call Dump_open_init ( ifl1, l1binfo, l2pcf, &
+        & call Dump_open_init ( ifl1, l1binfo, &
           & CCSDSEndTime, CCSDSStartTime, processingrange, details )
    if ( toggle(gen) ) then            
      call trace_end ( "OpenAndInit" ) 
@@ -523,7 +523,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine announce_success
 
   ! ------------------------------------------  Dump_open_init  -----
-  subroutine Dump_open_init ( Num_l1b_files, L1binfo, L2pcf, &
+  subroutine Dump_open_init ( Num_l1b_files, L1binfo, &
     & CCSDSEndTime, CCSDSStartTime, processingrange, Details )
   
     ! Dump info obtained during OpenAndInitialize:
@@ -538,12 +538,12 @@ contains ! =====     Public Procedures     =============================
       & AssembleL1BQtyName
     use MLSFiles, only: mls_hdf_version       
     use MLSL2Options, only: ILLEGALL1BRADID, LEVEL1_HDFVERSION
-    use WriteMetadata, only: PCFData_T
+    use WriteMetadata, only: L2PCF
 
     ! Arguments
     integer, intent(in) :: num_l1b_files
     type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
-    type(PCFData_T) :: l2pcf
+    ! type(PCFData_T) :: l2pcf
     character(len=CCSDSlen) CCSDSEndTime
     character(len=CCSDSlen) CCSDSStartTime
     type (TAI93_Range_T) :: processingRange ! Data processing range
@@ -724,6 +724,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.73  2003/07/07 23:50:05  pwagner
+! Now uses saved variable L2pcf from writeMetaData
+!
 ! Revision 2.72  2003/06/09 22:49:34  pwagner
 ! Reduced everything (PCF, PUNISH.., etc.) to TOOLKIT
 !
