@@ -459,11 +459,7 @@ CONTAINS ! --------------- Subroutines and functions --------------------------
 
 END MODULE ScanModelModule
 
-
-
-
-
-
-
-
-
+! $Log$
+! Revision 2.3  2001/02/28 17:35:36  livesey
+! Added RCS log stuff
+!
