@@ -157,6 +157,7 @@ $(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
 intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
 
 BUGGY := $(shell echo ${FOPTS} | sed 's/-O[0-9]*//')
+NOUNASS := $(shell echo ${FOPTS} | sed 's/\(--chk [aesx,]*\),u\([aesx,]*\)/\1\2/')
 
 DUSTY_NO_OPT := $(shell echo ${DUSTY} | sed 's/-O[0-9]*//')
 
@@ -165,7 +166,15 @@ Hdf.o:
 string_table.o:
 	$(FC) -c $(BUGGY) $(INC_PATHS) $(S)/string_table.f90 $(FAFTER)
 
+# ncep_dao module doesn't play well with the lf95 undefined variable
+# runtime checker because of endian swapping
+ncep_dao.o:
+	$(FC) -c $(NOUNASS) $(INC_PATHS) $(S)/ncep_dao.f90 $(FAFTER)
+
 # $Log$
+# Revision 1.40  2001/11/15 00:07:57  pwagner
+# Now works with new libmlspack.a and .mod files in blas
+#
 # Revision 1.39  2001/11/14 17:30:23  pwagner
 # Added ..gemv.. stuff
 #
