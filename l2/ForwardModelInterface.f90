@@ -637,6 +637,7 @@ contains
 
     do maf = 1, radiance%template%noInstances
       phi_tan = degToRad*radiance%template%phi(1,maf) ! ??? For the moment, change this soon.
+      print*,'MAF ',maf,' phi_tan ',phi_tan
       geod_lat= degToRad*radiance%template%geodLat(1,maf)
       call geoc_geod_conv(orbIncline%values(1,1),phi_tan,geod_lat, &
         & geoc_lat(maf),E_rad(maf))
@@ -701,7 +702,8 @@ contains
     ! ---------------------------- Begin main Major Frame loop --------
 
     do maf = 3, 3
-    !do maf = 1, noMAFs
+      !do maf = 1, noMAFs
+      print*,'Doing maf:',maf
 
       phi_tan = radiance%template%phi(1,maf) !??? Choose better value later
 
@@ -794,7 +796,7 @@ contains
       ! Now we can go ahead and loop over pointings
       ! ------------------------------ Begin loop over pointings --------
       do ptg_i = 1, no_tan_hts - 1
-
+        print*,'  Doing pointing:',ptg_i
         k = ptg_i
         h_tan = tan_hts(k,maf)
 
@@ -817,9 +819,10 @@ contains
           noFreqs = size(frequencies)
         endif ! If not, we dealt with this outside the loop
 
+        print*,'Using velocity:',1e-3*losVel%values(1,maf)
         call get_beta_path(frequencies,&
           & FMI%pfa_spectrum,no_ele, z_path(ptg_i,maf),t_path(ptg_i,maf), &
-          & beta_path, losVel%values(1,maf),ier) !??? Note only using MIF 1 for losvel
+          & beta_path, 1e-3*losVel%values(1,maf),ier) !??? Note only using MIF 1 for losvel
         if(ier /= 0) goto 99
 !
 !  Define the dh_dt_path for this pointing and this MAF:
@@ -1357,6 +1360,10 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.57  2001/03/30 00:36:57  livesey
+! Interim version, doesn't quite get the same numbers as Zvi, but we
+! think we know why.
+!
 ! Revision 2.56  2001/03/30 00:07:36  livesey
 ! Removed more FMC/TFMI stuff
 !
