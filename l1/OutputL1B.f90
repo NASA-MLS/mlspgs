@@ -30,82 +30,82 @@ module OutputL1B
 
   ! Parameters
 
-  character (len=*), parameter :: SDS1_NAME = 'MAFStartTimeUTC'
-  character (len=*), parameter :: SDS2_NAME = 'MAFStartTimeTAI'
-  character (len=*), parameter :: SDS3_NAME = 'noMIFs'
+  character(len=*), public, parameter :: SDS1_NAME = 'MAFStartTimeUTC'
+  character(len=*), public, parameter :: SDS2_NAME = 'MAFStartTimeTAI'
+  character(len=*), public, parameter :: SDS3_NAME = 'noMIFs'
 
-  character (len=*), parameter :: SDS4_NAME = 'scECI'
-  character (len=*), parameter :: SDS5_NAME = 'scECR'
-  character (len=*), parameter :: SDS6_NAME = 'scGeocAlt'
-  character (len=*), parameter :: SDS7_NAME = 'scGeocLat'
-  character (len=*), parameter :: SDS8_NAME = 'scGeodAlt'
-  character (len=*), parameter :: SDS9_NAME = 'scGeodLat'
-  character (len=*), parameter :: SDS10_NAME = 'scLon'
-  character (len=*), parameter :: SDS11_NAME = 'scGeodAngle'
-  character (len=*), parameter :: SDS12_NAME = 'scVel'
-  character (len=*), parameter :: SDS13_NAME = 'ypr'
-  character (len=*), parameter :: SDS14_NAME = 'yprRate'
+  character(len=*), public, parameter :: SDS4_NAME = 'scECI'
+  character(len=*), public, parameter :: SDS5_NAME = 'scECR'
+  character(len=*), public, parameter :: SDS6_NAME = 'scGeocAlt'
+  character(len=*), public, parameter :: SDS7_NAME = 'scGeocLat'
+  character(len=*), public, parameter :: SDS8_NAME = 'scGeodAlt'
+  character(len=*), public, parameter :: SDS9_NAME = 'scGeodLat'
+  character(len=*), public, parameter :: SDS10_NAME = 'scLon'
+  character(len=*), public, parameter :: SDS11_NAME = 'scGeodAngle'
+  character(len=*), public, parameter :: SDS12_NAME = 'scVel'
+  character(len=*), public, parameter :: SDS13_NAME = 'ypr'
+  character(len=*), public, parameter :: SDS14_NAME = 'yprRate'
 
-  character (len=*), parameter :: SDS15_NAME = 'GHz.encoderAngle'
+  character(len=*), public, parameter :: SDS15_NAME = 'GHz.encoderAngle'
 
-  character (len=*), parameter :: SDS16_NAME = 'GHz.scAngle'
-  character (len=*), parameter :: SDS17_NAME = 'GHz.scanAngle'
-  character (len=*), parameter :: SDS18_NAME = 'GHz.scanRate'
-  character (len=*), parameter :: SDS19_NAME = 'GHz.tpECI'
-  character (len=*), parameter :: SDS20_NAME = 'GHz.tpECR'
-  character (len=*), parameter :: SDS21_NAME = 'GHz.tpOrbY'
-  character (len=*), parameter :: SDS22_NAME = 'GHz.tpGeocAlt'
-  character (len=*), parameter :: SDS23_NAME = 'GHz.tpGeocLat'
-  character (len=*), parameter :: SDS24_NAME = 'GHz.tpGeocAltRate'
-  character (len=*), parameter :: SDS25_NAME = 'GHz.tpGeodAlt'
-  character (len=*), parameter :: SDS26_NAME = 'GHz.tpGeodLat'
-  character (len=*), parameter :: SDS27_NAME = 'GHz.tpGeodAltRate'
-  character (len=*), parameter :: SDS28_NAME = 'GHz.tpLon'
-  character (len=*), parameter :: SDS29_NAME = 'GHz.tpGeodAngle'
-  character (len=*), parameter :: SDS30_NAME = 'GHz.tpSolarTime'
-  character (len=*), parameter :: SDS31_NAME = 'GHz.tpSolarZenith'
-  character (len=*), parameter :: SDS32_NAME = 'GHz.tpLosAngle'
+  character(len=*), public, parameter :: SDS16_NAME = 'GHz.scAngle'
+  character(len=*), public, parameter :: SDS17_NAME = 'GHz.scanAngle'
+  character(len=*), public, parameter :: SDS18_NAME = 'GHz.scanRate'
+  character(len=*), public, parameter :: SDS19_NAME = 'GHz.tpECI'
+  character(len=*), public, parameter :: SDS20_NAME = 'GHz.tpECR'
+  character(len=*), public, parameter :: SDS21_NAME = 'GHz.tpOrbY'
+  character(len=*), public, parameter :: SDS22_NAME = 'GHz.tpGeocAlt'
+  character(len=*), public, parameter :: SDS23_NAME = 'GHz.tpGeocLat'
+  character(len=*), public, parameter :: SDS24_NAME = 'GHz.tpGeocAltRate'
+  character(len=*), public, parameter :: SDS25_NAME = 'GHz.tpGeodAlt'
+  character(len=*), public, parameter :: SDS26_NAME = 'GHz.tpGeodLat'
+  character(len=*), public, parameter :: SDS27_NAME = 'GHz.tpGeodAltRate'
+  character(len=*), public, parameter :: SDS28_NAME = 'GHz.tpLon'
+  character(len=*), public, parameter :: SDS29_NAME = 'GHz.tpGeodAngle'
+  character(len=*), public, parameter :: SDS30_NAME = 'GHz.tpSolarTime'
+  character(len=*), public, parameter :: SDS31_NAME = 'GHz.tpSolarZenith'
+  character(len=*), public, parameter :: SDS32_NAME = 'GHz.tpLosAngle'
 
-  character (len=*), parameter :: SDS33_NAME = 'THz.encoderAngle'
+  character(len=*), public, parameter :: SDS33_NAME = 'THz.encoderAngle'
 
-  character (len=*), parameter :: SDS34_NAME = 'THz.scAngle'
-  character (len=*), parameter :: SDS35_NAME = 'THz.scanAngle'
-  character (len=*), parameter :: SDS36_NAME = 'THz.scanRate'
-  character (len=*), parameter :: SDS37_NAME = 'THz.tpECI'
-  character (len=*), parameter :: SDS38_NAME = 'THz.tpECR'
-  character (len=*), parameter :: SDS39_NAME = 'THz.tpOrbY'
-  character (len=*), parameter :: SDS40_NAME = 'THz.tpGeocAlt'
-  character (len=*), parameter :: SDS41_NAME = 'THz.tpGeocLat'
-  character (len=*), parameter :: SDS42_NAME = 'THz.tpGeocAltRate'
-  character (len=*), parameter :: SDS43_NAME = 'THz.tpGeodAlt'
-  character (len=*), parameter :: SDS44_NAME = 'THz.tpGeodLat'
-  character (len=*), parameter :: SDS45_NAME = 'THz.tpGeodAltRate'
-  character (len=*), parameter :: SDS46_NAME = 'THz.tpLon'
-  character (len=*), parameter :: SDS47_NAME = 'THz.tpGeodAngle'
-  character (len=*), parameter :: SDS48_NAME = 'THz.tpSolarTime'
-  character (len=*), parameter :: SDS49_NAME = 'THz.tpSolarZenith'
-  character (len=*), parameter :: SDS50_NAME = 'THz.tpLosAngle'
+  character(len=*), public, parameter :: SDS34_NAME = 'THz.scAngle'
+  character(len=*), public, parameter :: SDS35_NAME = 'THz.scanAngle'
+  character(len=*), public, parameter :: SDS36_NAME = 'THz.scanRate'
+  character(len=*), public, parameter :: SDS37_NAME = 'THz.tpECI'
+  character(len=*), public, parameter :: SDS38_NAME = 'THz.tpECR'
+  character(len=*), public, parameter :: SDS39_NAME = 'THz.tpOrbY'
+  character(len=*), public, parameter :: SDS40_NAME = 'THz.tpGeocAlt'
+  character(len=*), public, parameter :: SDS41_NAME = 'THz.tpGeocLat'
+  character(len=*), public, parameter :: SDS42_NAME = 'THz.tpGeocAltRate'
+  character(len=*), public, parameter :: SDS43_NAME = 'THz.tpGeodAlt'
+  character(len=*), public, parameter :: SDS44_NAME = 'THz.tpGeodLat'
+  character(len=*), public, parameter :: SDS45_NAME = 'THz.tpGeodAltRate'
+  character(len=*), public, parameter :: SDS46_NAME = 'THz.tpLon'
+  character(len=*), public, parameter :: SDS47_NAME = 'THz.tpGeodAngle'
+  character(len=*), public, parameter :: SDS48_NAME = 'THz.tpSolarTime'
+  character(len=*), public, parameter :: SDS49_NAME = 'THz.tpSolarZenith'
+  character(len=*), public, parameter :: SDS50_NAME = 'THz.tpLosAngle'
 
-  character (len=*), parameter :: SDS51_NAME = 'counterMAF'
+  character(len=*), public, parameter :: SDS51_NAME = 'counterMAF'
 
-  character (len=*), parameter :: DIM1_NAME = 'MAF'
-  character (len=*), parameter :: DIM2_NAME = 'MIF'
-  character (len=*), parameter :: DIM3_NAME = 'GHz.MIF'
-  character (len=*), parameter :: DIM4_NAME = 'THz.MIF'
-  character (len=*), parameter :: DIM5_NAME = 'xyz'
-  character (len=*), parameter :: DIM6_NAME = 'charUTC'
-  character (len=*), parameter :: DIM7_NAME = 'chanFB'
-  character (len=*), parameter :: DIM8_NAME = 'chanMB'
-  character (len=*), parameter :: DIM9_NAME = 'chanWF'
-  character (len=*), parameter :: DIM10_NAME = 'chanDACS'
+  character(len=*), public, parameter :: DIM1_NAME = 'MAF'
+  character(len=*), public, parameter :: DIM2_NAME = 'MIF'
+  character(len=*), public, parameter :: DIM3_NAME = 'GHz.MIF'
+  character(len=*), public, parameter :: DIM4_NAME = 'THz.MIF'
+  character(len=*), public, parameter :: DIM5_NAME = 'xyz'
+  character(len=*), public, parameter :: DIM6_NAME = 'charUTC'
+  character(len=*), public, parameter :: DIM7_NAME = 'chanFB'
+  character(len=*), public, parameter :: DIM8_NAME = 'chanMB'
+  character(len=*), public, parameter :: DIM9_NAME = 'chanWF'
+  character(len=*), public, parameter :: DIM10_NAME = 'chanDACS'
 
   integer, parameter :: lenCoord = 3
-  integer, parameter :: lenUTC = 27
+  integer, public, parameter :: lenUTC = 27
   integer, parameter :: lenG = 120
   integer, parameter :: lenT = 114
 
-  real, parameter :: FILL_REAL = -999.9
-  real(r8), parameter :: FILL_DP = -999.9
+  real, public, parameter :: FILL_REAL = -999.9
+  real(r8), public, parameter :: FILL_DP = -999.9
 
   ! This data type contains index information for the L1BOA data file.
   type L1BOAindex_T
@@ -1318,6 +1318,9 @@ contains
 end module OutputL1B
 
 ! $Log$
+! Revision 2.3  2001/12/04 00:29:16  pwagner
+! Made public things needed by sids
+!
 ! Revision 2.2  2001/10/12 22:11:05  livesey
 ! Tidied things up a bit, added scVelECR, but not filled yet
 !
