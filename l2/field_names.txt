@@ -213,6 +213,7 @@ sourcevGrid
 spacing
 species
 spect_der
+specificQuantities
 spread
 state
 stop
@@ -250,6 +251,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.51  2002/09/25 20:06:59  livesey
+# Added specificQuantities
+#
 # Revision 2.50  2002/09/24 21:37:37  livesey
 # Added minValue
 #
