@@ -65,8 +65,11 @@ CONTAINS
                 THzRad(nBank)%value(nChan,mindx) = Kelvins(nChan,nBank,i)
                 IF (THzRad(nBank)%value(nChan,mindx) > -100.0) THEN
                    IF (VarK(nChan,nBank,i) > 0.0) THEN
+                      ! All args to intrinsic min must have same
+                      ! type and kind type parameter
                       THzRad(nBank)%precision(nChan,mindx) = &
-                           VarK(nChan,nBank,i) * MIN (limb_sw_err(mindx), &
+                           VarK(nChan,nBank,i) * MIN ( &
+                           REAL(limb_sw_err(mindx)), &
                            BandChanBad%Sign(Bandno, nChan))
                    ELSE
                       THzRad(nBank)%precision(nChan,mindx) = &
@@ -141,6 +144,9 @@ END MODULE THzRadiances
 !=============================================================================
 
 ! $Log$
+! Revision 2.8  2004/12/07 21:24:17  pwagner
+! type converted in min intrinsic to appease NAG
+!
 ! Revision 2.7  2004/11/10 15:41:15  perun
 ! Adjust precision based on bad chan/switch flags; line output records with L1BOA
 !
