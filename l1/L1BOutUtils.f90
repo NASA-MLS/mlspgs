@@ -31,19 +31,23 @@ CONTAINS
 
     TYPE (MAFdata_T) :: CurMAFdata
     INTEGER, SAVE :: MAFno = 0, counterMAF
-    INTEGER :: i
+    INTEGER :: i, MIFsPerMAF
     INTEGER, PARAMETER :: last_MIF_indx = MaxMIFs - 1
     REAL :: scAngleG(0:last_MIF_indx), scAngleT(0:last_MIF_indx)
+    REAL :: encAngleG(0:last_MIF_indx), encAngleT(0:last_MIF_indx)
 
     IF (.NOT. L1Config%Globals%ProduceL1BOA) RETURN
 
     counterMAF = CurMAFdata%EMAF%TotalMAF
+    MIFsPerMAF = CurMAFdata%EMAF%MIFsPerMAF
 
     MAFno = MAFno + 1
 
     DO i = 0, last_MIF_indx
        scAngleG(i) = CurMAFdata%SciPkt(i)%scAngleG
        scAngleT(i) = CurMAFdata%SciPkt(i)%scAngleT
+       encAngleG(i) = CurMAFdata%SciPkt(i)%APE_theta
+       encAngleT(i) = CurMAFdata%SciPkt(i)%TSSM_theta
        IF (i > 0) THEN  ! use previous until further notice
           IF (scAngleG(i) < 0.0) scAngleG(i) = scAngleG(i-1)
           IF (scAngleT(i) < 0.0) scAngleT(i) = scAngleT(i-1)
@@ -51,7 +55,8 @@ CONTAINS
     ENDDO
 
     CALL L1BOA_MAF (altG, altT, ascTAI, counterMAF, dscTAI, &
-         l1bFileInfo%OAId, MAFinfo, MAFno, numOrb, scAngleG, scAngleT)
+         l1bFileInfo%OAId, MAFinfo, MAFno, MIFsPerMAF, numOrb, scAngleG, &
+         scAngleT, encAngleG, encAngleT)
 
   END SUBROUTINE OutputL1BOA
 
@@ -59,21 +64,28 @@ CONTAINS
   SUBROUTINE OutputL1Bdata
 !=============================================================================
 
-    USE MLSL1Common, ONLY: L1BFileInfo, MAFinfo
+    USE MLSL1Common, ONLY: L1BFileInfo, MAFinfo, OA_counterMAF, &
+         OA_counterIndex
     USE OutputL1B, ONLY: OutputL1B_rad, OutputL1B_diags
     USE MLSL1Rad, ONLY: L1Brad
     USE EngTbls, ONLY: Reflec
     USE Calibration, ONLY: CalWin, MAFdata_T
 
-    INTEGER, SAVE :: MAFno = 0, counterMAF
+    INTEGER, SAVE :: MAFno = 0, counterMAF, MAFindex = 1
     TYPE (MAFdata_T), POINTER :: CurMAFdata
 
     CurMAFdata => CalWin%MAFdata(CalWin%central)
     counterMAF = CurMAFdata%EMAF%TotalMAF
 
-    MAFno = MAFno + 1
-
-!    CALL OutputL1BOA (CurMAFdata)
+    IF (OA_counterIndex == 0) THEN   ! No OA data available
+       MAFno = MAFno + 1
+    ELSE
+       DO
+          IF (counterMAF == OA_counterMAF(MAFindex)) EXIT
+          MAFindex = MAFindex + 1
+       ENDDO
+       MAFno = MAFindex
+    ENDIF
 
     CALL OutputL1B_rad (MAFno, L1BFileInfo, counterMAF, Reflec, &
          MAFinfo%startTAI, L1Brad)
@@ -106,6 +118,9 @@ CONTAINS
 END MODULE L1BOutUtils
 
 ! $Log$
+! Revision 2.12  2004/11/10 15:32:44  perun
+! Output encoder values; deal with gaps compared to L1BOA records
+!
 ! Revision 2.11  2004/08/12 13:51:49  perun
 ! Version 1.44 commit
 !
