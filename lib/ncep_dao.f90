@@ -8,6 +8,7 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   !=============================================================================
 
 
+  use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use GriddedData, only: GriddedData_T, v_is_pressure, v_is_altitude, &
     & v_is_gph, v_is_theta
   use HDFEOS, only: HDFE_NENTDIM, HDFE_NENTDFLD, &
@@ -121,45 +122,24 @@ contains
     if (present(noLsts)) qty%noLsts=noLsts
     if (present(noSzas)) qty%noSzas=noSzas
     if (present(noDates)) qty%noDates=noDates
-    ! First the vertical coordinates
 
-    allocate (qty%heights(qty%noHeights),STAT=status)
-    if (status /= 0) call announce_error(0,  &
-      & MLSMSG_Allocate//"heights")
+    ! First the vertical/horizontal coordinates
+    call Allocate_test ( qty%heights, qty%noHeights, "qty%heights", ModuleName )
+    call Allocate_test ( qty%lats, qty%noLats, "qty%lats", ModuleName )
+    call Allocate_test ( qty%lons, qty%noLons, "qty%lons", ModuleName )
+    call Allocate_test ( qty%lsts, qty%noLsts, "qty%lsts", ModuleName )
+    call Allocate_test ( qty%szas, qty%noSzas, "qty%szas", ModuleName )
 
-    ! Now the geolocation coordinates
-    allocate (qty%lats(qty%noLats),STAT=status)
-    if (status /= 0) call announce_error(0,  &
-      & MLSMSG_Allocate//"lats")
+    ! Now the temporal coordinates
+    call Allocate_test ( qty%dateStarts, qty%noDates, "qty%dateStarts", ModuleName )
+    call Allocate_test ( qty%dateEnds, qty%noDates, "qty%dateEnds", ModuleName )
 
-    allocate (qty%lons(qty%noLons),STAT=status)
-    if (status /= 0) call announce_error(0,  &
-      & MLSMSG_Allocate//"lons")
-
-    allocate (qty%lsts(qty%noLsts),STAT=status)
-    if (status /= 0) call announce_error(0,  &
-      & MLSMSG_Allocate//"lsts")
-
-    allocate (qty%szas(qty%noSzas),STAT=status)
-    if (status /= 0) call announce_error(0,  &
-      & MLSMSG_Allocate//"szas")
-
-    !Now the temporal coordinates
-    allocate (qty%DateStarts(qty%noDates),STAT=status)
-    if (status /= 0) call announce_error(0,  &
-      & MLSMSG_Allocate//"DateStarts")
-
-    allocate (qty%DateEnds(qty%noDates),STAT=status)
-    if (status /= 0) call announce_error(0,  &
-      & MLSMSG_Allocate//"DateEnds")
-
-    !Now the data itself
+    ! Now the data itself
     allocate(qty%field(qty%noHeights, qty%noLats, qty%noLons,  &
       qty%noLsts, qty%noSzas, qty%noDates), STAT=status)
 
     if (status /= 0) call announce_error(0,  &
       & MLSMSG_Allocate//"field")
-
 
   end subroutine SetupNewGridTemplate
 
@@ -171,51 +151,26 @@ contains
 
     ! Dummy argument
     type (GriddedData_T), intent(INOUT) :: qty
+
     ! Local variables
-    integer status
+    integer :: STATUS
 
     ! Executable code
+    call Deallocate_test ( qty%heights, "qty%heights", ModuleName )
+    call Deallocate_test ( qty%lats, "qty%lats", ModuleName )
+    call Deallocate_test ( qty%lons, "qty%lons", ModuleName )
+    call Deallocate_test ( qty%lsts, "qty%lsts", ModuleName )
+    call Deallocate_test ( qty%szas, "qty%szas", ModuleName )
 
-    deallocate (qty%heights, STAT=status)
+    ! Now the temporal coordinates
+    call Deallocate_test ( qty%dateStarts, "qty%dateStarts", ModuleName )
+    call Deallocate_test ( qty%dateEnds, "qty%dateEnds", ModuleName )
 
-    if (status /= 0) call announce_error(0,  &
-      & MLSMSG_DeAllocate//"heights")
-
-    deallocate (qty%lats, STAT=status)
-
-    if (status /= 0) call announce_error(0,  &
-      & MLSMSG_DeAllocate//"lats")
-
-    deallocate (qty%lons, STAT=status)
-
-    if (status /= 0) call announce_error(0,  &
-      & MLSMSG_DeAllocate//"lons")
-
-    deallocate (qty%lsts, STAT=status)
+    ! Now the data itself
+    deallocate(qty%field, STAT=status)
 
     if (status /= 0) call announce_error(0,  &
-      & MLSMSG_DeAllocate//"lsts")
-
-    deallocate (qty%szas, STAT=status)
-
-    if (status /= 0) call announce_error(0,  &
-      & MLSMSG_DeAllocate//"szas")
-
-    deallocate (qty%DateStarts, STAT=status)
-
-    if (status /= 0) call announce_error(0,  &
-      & MLSMSG_DeAllocate//"DateStarts")
-
-    deallocate (qty%DateEnds, STAT=status)
-
-    if (status /= 0) call announce_error(0,  &
-      & MLSMSG_DeAllocate//"DateEnds")
-
-    deallocate (qty%field, STAT=status)
-
-    if (status /= 0) call announce_error(0,  &
-      & MLSMSG_DeAllocate//"field")    
-
+      & MLSMSG_Allocate//"field")
 
   end subroutine DestroyGridTemplateContents
 
@@ -230,35 +185,11 @@ contains
     ! Dummy arguments
     type (GriddedData_T), dimension(:), pointer :: database
     type (GriddedData_T), intent(IN) :: item
-    !    TYPE (GriddedData_T), INTENT(IN) :: qty
 
     ! Local variables
     type (GriddedData_T), dimension(:), pointer :: tempDatabase
-    !    INTEGER :: newSize,status
 
     ! Executable code
-
-    !    IF (ASSOCIATED(database)) THEN
-    ! Check we don't already have one of this name
-    !       IF (LinearSearchStringArray(database%quantityName, qty%quantityName, &
-    !            & caseInsensitive=.TRUE.)/=0) CALL MLSMessage(MLSMSG_Error,&
-    !            & ModuleName,MLSMSG_Duplicate//qty%quantityName)
-    !       newSize=SIZE(database)+1
-    !    ELSE
-    !       newSize=1
-    !    ENDIF
-    !    ALLOCATE(tempDatabase(newSize),STAT=status)
-    !    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
-    !         & "Allocation failed for tempDatabase")
-
-    !    IF (newSize>1) tempDatabase(1:newSize-1)=database
-    !    tempDatabase(newSize)=qty
-    !    IF (ASSOCIATED(database)) THEN
-    !       DEALLOCATE(database, STAT=status)
-    !       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
-    !         & MLSMSG_DeAllocate//"database")
-    !    end if
-    !    database=>tempDatabase
 
     include "addItemToDatabase.f9h"
     AddGridTemplateToDatabase = newSize
@@ -597,9 +528,9 @@ contains
       dump = DUMP_GRIDDED_QUANTITIES
     endif
 
-  use_PCF = present(mlspcf_l2clim_start) &
-  & .and. present(mlspcf_l2clim_end) &
-  & .and. UseSDPToolkit
+    use_PCF = present(mlspcf_l2clim_start) &
+      & .and. present(mlspcf_l2clim_end) &
+      & .and. UseSDPToolkit
 
     ! use PCF
 
@@ -666,6 +597,7 @@ contains
 
           ErrType = AddGridTemplateToDatabase(aprioriData, gddata)
 
+          nullify (gddata%heights)
           nullify (gddata%lats)
           nullify (gddata%lons)
           nullify (gddata%lsts)
@@ -673,7 +605,6 @@ contains
           nullify (gddata%dateStarts)
           nullify (gddata%dateEnds)
           nullify (gddata%field)
-
 
           if(debug) call output('Destroying our grid template', advance='yes')
 
@@ -1054,6 +985,9 @@ end module ncep_dao
 
 !
 ! $Log$
+! Revision 2.14  2001/07/12 22:03:55  livesey
+! Some minor ish changes.  Needs an overhaul at some point.
+!
 ! Revision 2.13  2001/06/04 23:57:40  pwagner
 ! Splits path from l2cf-defined file name before getPCfromRef
 !
