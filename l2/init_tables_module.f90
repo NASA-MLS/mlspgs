@@ -162,8 +162,10 @@ module INIT_TABLES_MODULE
   integer, parameter :: P_ENDTIME                     = p_starttime + 1
   integer, parameter :: P_LEAPSECFILE                 = p_endtime + 1
   integer, parameter :: P_INSTRUMENT                  = p_leapsecfile + 1
+  integer, parameter :: P_MAXFAILURESPERMACHINE       = p_instrument + 1
+  integer, parameter :: P_MAXFAILURESPERCHUNK         = P_maxFailuresPerMachine + 1
   ! In ChunkDivide section:
-  integer, parameter :: P_CRITICAL_BANDS              = p_instrument + 1
+  integer, parameter :: P_CRITICAL_BANDS              = p_maxfailuresperchunk + 1
   integer, parameter :: P_CRITICAL_SCANNING_MODULES   = p_critical_bands + 1
   integer, parameter :: P_HOME_GEOD_ANGLE             = p_critical_scanning_modules + 1
   integer, parameter :: P_HOME_MODULE                 = p_home_geod_angle + 1
@@ -1079,6 +1081,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.332  2003/09/02 18:03:23  pwagner
+! Now can reset maxfailuresper chunk, machine from global settings
+!
 ! Revision 2.331  2003/08/16 01:18:55  livesey
 ! Added baseline forward model in its own right.
 !
