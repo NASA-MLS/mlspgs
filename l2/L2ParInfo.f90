@@ -8,9 +8,10 @@ module L2ParInfo
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use dump_0, only: DUMP
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_Allocate, &
-    & MLSMSG_Deallocate, MLSMSG_INFO
-  use PVM, only: PVMFMYTID, PVMFINITSEND, PVMF90PACK, PVMFSEND, &
-    & PVMDATADEFAULT, PVMERRORMESSAGE, PVMF90UNPACK, NEXTPVMARG, PVMTASKEXIT
+    & MLSMSG_Deallocate, MLSMSG_INFO, PVMERRORMESSAGE
+  use PVM, only: INFOTag, &
+    & PVMFMYTID, PVMFINITSEND, PVMF90PACK, PVMFSEND, &
+    & PVMDATADEFAULT, PVMF90UNPACK, NEXTPVMARG, PVMTASKEXIT, SIG_ABOUTTODIE
   use PVMIDL, only: PVMIDLPACK
   use MorePVM, only: PVMPACKSTRINGINDEX, PVMUNPACKSTRINGINDEX
   use VectorsModule, only: VECTORVALUE_T
@@ -27,7 +28,7 @@ module L2ParInfo
   public :: AddMachineNameToDataBase, AddMachineToDataBase
   public :: InitParallel, CloseParallel
   public :: SIG_ToJoin, SIG_Finished, SIG_Register
-  public :: ChunkTag, GRANTEDTAG, InfoTag, SlaveJoin
+  public :: ChunkTag, GRANTEDTAG, SlaveJoin
   public :: SIG_AckFinish, SIG_RequestDirectWrite, SIG_DirectWriteGranted
   public :: SIG_DirectWriteFinished
   public :: SIG_NewSetup, SIG_RunMAF, SIG_SendResults
@@ -54,15 +55,14 @@ module L2ParInfo
 
   integer, parameter :: DELAYFOREACHSLAVESTDOUTBUFFER   = 500
   integer, parameter :: FIXDELAYFORSLAVESTDOUTBUFFER   = 500000
-  integer, parameter :: CHUNKTAG   = 10  ! Master => slave: chunkinfo
-  integer, parameter :: INFOTAG    = ChunkTag + 1 ! Slave <=> master
-  integer, parameter :: NOTIFYTAG  = InfoTag + 1  ! pvm => master: Slave exited
+  integer, parameter :: CHUNKTAG   = InfoTag + 1  ! Master => slave: chunkinfo
+  integer, parameter :: NOTIFYTAG  = ChunkTag + 1  ! pvm => master: Slave exited
   integer, parameter :: PETITIONTAG  = NotifyTag + 1 ! master => l2q
   integer, parameter :: GRANTEDTAG  = PetitionTag + 1 ! l2q => master
   integer, parameter :: MACHINEFIXEDTAG = 800
   integer, parameter :: GIVEUPTAG  = 999
 
-  integer, parameter :: SIG_TOJOIN = 1
+  integer, parameter :: SIG_TOJOIN = SIG_AboutToDie + 1
   integer, parameter :: SIG_FINISHED = SIG_toJoin + 1
   integer, parameter :: SIG_ACKFINISH = SIG_finished + 1
   integer, parameter :: SIG_REGISTER = SIG_AckFinish + 1
@@ -107,6 +107,8 @@ module L2ParInfo
     character(len=4096) :: failedChunks='' ! if blank, no chunks failed
     ! Machs are string list; e.g. 'c0-1,c0-66,c0-66'
     character(len=4096) :: failedMachs='' ! blank if usingSubmit
+    ! Msgs are string list; e.g. 'msg 1\msg 2\..\msg n'
+    character(len=8192) :: failedMsgs='' ! in same order (hopefully)
     integer :: maxFailuresPerMachine = 1 ! More than this then don't use it | staging
     integer :: maxFailuresPerChunk = 10 ! More than this then give up on getting it
     integer :: numFailedChunks = 0
@@ -765,6 +767,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.44  2005/03/15 23:53:03  pwagner
+! PVMERRORMESSAGE now part of MLSMessageModule; INFOTag, SIG_ABOUTTODIE from lib/PVM
+!
 ! Revision 2.43  2005/02/03 19:07:35  pwagner
 ! master_name and master_date fields added to machine type
 !
