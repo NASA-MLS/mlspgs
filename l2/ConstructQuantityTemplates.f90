@@ -23,7 +23,8 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
     L_HEIGHTOFFSET, L_LOSTRANSFUNC, L_LOSVEL, &
     L_NONE, L_ORBITINCLINATION, L_OPTICALDEPTH, &
     L_PTAN, L_RADIANCE, &
-    L_REFGPH, L_SCANRESIDUAL, L_SCECI, L_SCGEOCALT, L_SCVEL, L_SIDEBANDRATIO, &
+    L_REFGPH, L_SCANRESIDUAL, L_SCECI, L_SCGEOCALT, L_SCVEL, &
+    L_SCVELECI, L_SCVELECR, L_SIDEBANDRATIO, &
     L_SPACERADIANCE, &
     L_TEMPERATURE, L_TNGTECI, L_TNGTGEOCALT, L_TNGTGEODALT, &
     L_TRUE,&
@@ -170,6 +171,8 @@ contains ! =====     Public Procedures     =============================
     natural_units(l_refGPH) =                  PHYQ_Length
     natural_units(l_scGeocAlt ) =              PHYQ_Length
     natural_units(l_scVel) =                   PHYQ_Velocity
+    natural_units(l_scVelECI) =                PHYQ_Velocity   
+    natural_units(l_scVelECR) =                PHYQ_Velocity   
     natural_units(l_scanResidual ) =           PHYQ_Length
     natural_units(l_spaceRadiance) =           PHYQ_Temperature
     natural_units(l_temperature) =             PHYQ_Temperature
@@ -266,8 +269,8 @@ contains ! =====     Public Procedures     =============================
     minorFrame = any(quantityType == (/ l_Ptan, l_Radiance, &
       & l_cloudInducedRadiance, l_cloudRADSensitivity, l_effectiveOpticalDepth, &
       & l_tngtECI, l_tngtGeodAlt, l_tngtGeocAlt, l_scECI, l_scGeocAlt,&
-      & l_scVel, l_losVel, l_heightOffset, l_scanResidual, l_chisqmmif, &
-      & l_opticalDepth /) )
+      & l_scVel, l_scVelECI, l_scVelECR, l_losVel, l_heightOffset, &
+      & l_scanResidual, l_chisqmmif, l_opticalDepth /) )
 
     majorFrame = any(quantityType == (/ l_chisqchan, l_chisqmmaf /) )
  
@@ -293,7 +296,9 @@ contains ! =====     Public Procedures     =============================
       end if
     
       ! For some cases we know the quantity is an xyz vector
-      if ( any(quantityType == (/ l_tngtECI, l_scECI, l_scVel /)) ) then
+      if ( any(quantityType == &
+       & (/ l_tngtECI, l_scECI, l_scVel, l_scVelECI, l_scVelECR /)) &
+       &  ) then
         noChans = 3
         frequencyCoordinate = l_xyz
       end if
@@ -856,6 +861,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.61  2002/03/19 00:51:32  pwagner
+! Added new scVel quantity types
+!
 ! Revision 2.60  2002/02/09 21:35:52  livesey
 ! Added optical depth stuff
 !
