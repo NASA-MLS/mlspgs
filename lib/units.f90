@@ -90,6 +90,11 @@ contains ! =====     Public procedures     =============================
 
     call declare_unit ( l_zeta, 1.0d0, phyq_zeta )
     call declare_unit ( l_logp, 1.0d0, phyq_zeta )
+!   this is = 1/meters 
+    call declare_unit ( l_extinction, 1.0d0, phyq_extinction )
+!   this is = 1Pa*1000*1sec^2/1meter^4
+    call declare_unit ( l_icedensity, 1.0d1, phyq_icedensity )
+
   contains
     subroutine DECLARE_UNIT ( NAME, VALUE, PHYS_UNIT )
       integer, intent(in) :: NAME
@@ -104,6 +109,9 @@ contains ! =====     Public procedures     =============================
 end module UNITS
 
 ! $Log$
+! Revision 2.9  2001/07/10 23:47:01  jonathan
+! added phyq_icedensity, paul/jonathan
+!
 ! Revision 2.8  2001/04/26 02:35:38  vsnyder
 ! Fix up CVS stuff
 !
