@@ -1786,8 +1786,11 @@ print*,'start inversion'
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.90  2001/10/09 20:39:36  vsnyder
+! Left out a blank on the CVS command line, botched the last comment
+!
 ! Revision 2.89  2001/10/09 20:38:23  vsnyder
-! Corrections for regularization; output f, not f-measurementsRetrievalModule.f90
+! Corrections for regularization; output f, not f-measurements
 !
 ! Revision 2.88  2001/10/05 20:50:16  vsnyder
 ! Concatenate Snoop comment and DNWT flag; clear F before EVAL[FJ]
