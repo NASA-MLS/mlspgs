@@ -245,9 +245,7 @@ contains ! =====     Public Procedures     =============================
 
     ! If we're doing a split calculation then get the relevant
     ! sideband information
-    if ( sidebandStart /= sidebandStop .or. fmConf%forceSidebandFraction ) then 
-      ! Change to this if statement later !????
-      ! if ( signal%sideband == 0 .or. fmConf%forceSidebandFraction ) then
+    if ( signal%sideband == 0 .or. fmConf%forceSidebandFraction ) then
       sidebandFraction => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
         & quantityType = l_limbSidebandFraction, signal=signal%index, noError=.true. )
       lowerSidebandFraction => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
@@ -281,9 +279,7 @@ contains ! =====     Public Procedures     =============================
       call PopulateL2PCBin ( l2pcBins(sideband) )
 
       ! Setup a sideband fraction array
-      if ( sidebandStart /= sidebandStop .or. fmConf%forceSidebandFraction ) then   ! We're folding
-        ! Change to this if statement later
-        ! if ( signal%sideband == 0 .and. .not. fmConf%forceSidebandFraction ) then !????
+      if ( signal%sideband == 0 .and. .not. fmConf%forceSidebandFraction ) then !????
         if ( associated ( sidebandFraction ) ) then
           thisFraction = sidebandFraction%values(:,1)
           if ( sideband == 1 ) thisFraction = 1.0 - thisFraction
@@ -1137,6 +1133,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.51  2003/11/01 18:44:39  livesey
+! Bug fixes in bin selection
+!
 ! Revision 2.50  2003/10/29 00:44:53  livesey
 ! Bug fix in forceSidebandFraction handling
 !
