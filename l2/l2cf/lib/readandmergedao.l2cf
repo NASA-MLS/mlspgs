@@ -7,15 +7,19 @@
 
 ; This L2CF fragment reads and merges the dao data.
 begin ReadApriori
-  !ifdef(daoVersion,{},{!define(daoVersion,{GEOS401})})
-  !define(daoDay1,!ccsdsbtodao(!day))
-  !define(daoDay2,!ccsdsbtodao(!ccsdsbadd(!day,1)))
+  !ifdef(flagUsingPCF,
+    {!define(daoFile1,{})!define(daoFile2,{})},
+    {
+    !ifdef(daoVersion,{},{!define(daoVersion,{GEOS401})})
+    !define(daoDay1,!ccsdsbtodao(!day))
+    !define(daoDay2,!ccsdsbtodao(!ccsdsbadd(!day,1)))
+    !define(daoFile1,{, file='!inpathdao/DAS.flk.asm.tsyn3d_mis_p.!daoVersion.!daoDay1{}00.!daoDay1{}18.V01'})
+    !define(daoFile2,{, file='!inpathdao/DAS.flk.asm.tsyn3d_mis_p.!daoVersion.!daoDay2{}00.!daoDay2{}18.V01'})})
+
   daoTemperatureInputThis: gridded, origin=dao, field='TMPU', $
-    dimList='XDim,YDim,Height,Time', $
-    file='!inpathdao/DAS.flk.asm.tsyn3d_mis_p.!daoVersion.!daoDay1{}00.!daoDay1{}18.V01'
+    dimList='XDim,YDim,Height,Time' !daoFile1
   daoTemperatureInputNext: gridded, origin=dao, field='TMPU', $
-    dimList='XDim,YDim,Height,Time', $
-    file='!inpathdao/DAS.flk.asm.tsyn3d_mis_p.!daoVersion.!daoDay2{}00.!daoDay2{}18.V01'
+    dimList='XDim,YDim,Height,Time' !daoFile2
 end ReadApriori
 
 begin MergeGrids
