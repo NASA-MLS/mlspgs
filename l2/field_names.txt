@@ -151,7 +151,9 @@ model
 mif
 minValue
 moleculeDerivatives
+moleculeDerivativesPol # want derivatives w.r.t. moleculesPol
 molecules
+moleculesPol           # That have Zeeman-split lines
 multiplier
 muMin
 
@@ -188,7 +190,6 @@ phaseName
 phiWindow
 phiTan
 pointingGrids
-polarized
 precision
 precisionFactor
 prefixSignal
@@ -283,6 +284,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.75  2003/02/06 22:04:48  vsnyder
+# Add f_moleculesPol, f_moleculeDerivativesPol, delete f_polarized
+#
 # Revision 2.74  2003/02/05 21:55:57  livesey
 # Added binSelectors
 #
