@@ -750,9 +750,10 @@ contains ! =====     Public Procedures     =============================
 
     integer ::  hdfVersion
     character(len=NameLen) :: l1bItemName
-    logical, parameter     :: DEEBUG = .FALSE.
+    logical     :: DEEBUG = .FALSE.
 
     ! Executable code
+    DEEBUG = DEEBUG .or. ( index ( switches, 'hgrid' ) /= 0 )
 
     hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
     if ( hdfversion <= 0 ) &                                            
@@ -856,6 +857,10 @@ contains ! =====     Public Procedures     =============================
       call output ( first, format='(F7.2)' )
       call output ( ' last: ' )
       call output ( last, format='(F7.2)', advance='yes' )
+      call output ( ' firstMAFIndex: ' )
+      call output ( chunk%firstMAFIndex )
+      call output ( ' lastMAFIndex: ' )
+      call output ( chunk%lastMAFIndex, advance='yes' )
     end if
 
     ! Now fill the other geolocation information, first latitude
@@ -1403,6 +1408,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.48  2003/03/07 00:41:24  pwagner
+! DeeBug is turned on by switch
+!
 ! Revision 2.47  2003/02/13 19:05:39  vsnyder
 ! Move USEs from module to procedure scope, cosmetic changes
 !
