@@ -99,7 +99,7 @@ else
 fi
 
 # Initialize settings to defaults
-DEEBUG=on
+DEEBUG=off
 prog_name=test
 test_dir_name=misc
 hidden_dir_name=hideme
@@ -278,6 +278,9 @@ fi
 exit 0
 
 # $Log$
+# Revision 1.4  2001/08/13 23:25:25  pwagner
+# Added rules for compiling .c files, too
+#
 # Revision 1.3  2001/08/10 23:51:17  pwagner
 # Cosmetic changes only
 #
