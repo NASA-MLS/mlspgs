@@ -83,7 +83,8 @@ contains
       & mlspcf_l2dgm_start, mlspcf_l2dgm_end, mlspcf_l2fwm_full_start, &
       & mlspcf_l2fwm_full_end, &
       & mlspcf_l2dgg_start, mlspcf_l2dgg_end
-    use MLSStringLists, only: hhmmss_value, utc_to_yyyymmdd
+    use MLSStrings, only: hhmmss_value
+    use MLSStringLists, only: utc_to_yyyymmdd
     use MLSSignals_m, only: INSTRUMENT
     use MoreTree, only: GET_FIELD_ID, GET_SPEC_ID
     use OUTPUT_M, only: BLANKS, OUTPUT
@@ -113,7 +114,7 @@ contains
     type (L1BData_T) :: l1bField   ! L1B data
     ! type (PCFData_T) :: l2pcf
 
-    integer :: Details   ! How much info about l1b files to dump
+    integer :: Details             ! How much info about l1b files to dump
     logical :: GOT(2) = .false.
     integer :: I                   ! Index of son of root
     integer :: L1BFLAG
@@ -847,6 +848,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.89  2004/08/17 23:49:36  pwagner
+! Dont pad when getting MAFStartTime
+!
 ! Revision 2.88  2004/08/16 17:14:42  pwagner
 ! Obtains First,LastMAFCtr global attributes from l1boa file
 !
