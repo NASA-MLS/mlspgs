@@ -8,7 +8,7 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
   ! This module has various functionality for constructing quantity templates.
 
   use HGrid, only: hGrid_T
-  use INIT_TABLES_MODULE, only: F_BAND, F_FIRSTINDEXCHANNEL, F_HGRID, &
+  use INIT_TABLES_MODULE, only: F_BAND, F_HGRID, &
     F_MOLECULE, F_RADIOMETER, F_TYPE, F_UNIT, F_VGRID, FIRST_LIT, LAST_LIT, &
     L_BASELINE, L_EXTINCTION, L_GEODALTITUDE, L_GPH, L_PTAN, L_RADIANCE, &
     L_TEMPERATURE, L_TRUE, L_VMR, PHYQ_LENGTH, PHYQ_TEMPERATURE, PHYQ_VMR, &
@@ -103,7 +103,6 @@ contains ! =====     Public Procedures     =============================
 
     error = 0
     family = 0
-    firstindexchannel = .FALSE.
     hGridIndex = 0
     vGridIndex = 0
     molecule = 0
@@ -145,7 +144,6 @@ contains ! =====     Public Procedures     =============================
       case ( f_radiometer );        radiometer = sub_rosa(subtree(2,son))
       case ( f_instrumentmodule);   instrumentModule = sub_rosa(subtree(2,son))
       case ( f_band );              band = sub_rosa(subtree(2,son))
-      case ( f_firstindexchannel ); firstIndexChannel = value == l_true
       end select
     end do
 
@@ -230,8 +228,7 @@ contains ! =====     Public Procedures     =============================
       ! Construct an empty quantity
 
       call ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModule, &
-        & qty, noChans=noChans, firstIndexChannel=firstIndexChannel,    &
-        & mifGeolocation=mifGeolocation )
+        & qty, noChans=noChans, mifGeolocation=mifGeolocation )
 
       ! Fill what information we can
 
@@ -284,7 +281,7 @@ contains ! =====     Public Procedures     =============================
 
   ! --------------------------------  ConstructMinorFrameQuantity  -----
   subroutine ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModule, &
-    & qty, noChans, regular, instanceLen, firstIndexChannel, mifGeolocation )
+    & qty, noChans, regular, instanceLen, mifGeolocation )
 
   ! This routine constructs a minor frame based quantity.
 
@@ -296,7 +293,6 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in), optional :: noChans
     logical, intent(in), optional :: regular
     integer, intent(in), optional :: instanceLen
-    logical, intent(in), optional :: firstIndexChannel
     type (QuantityTemplate_T), intent(in), dimension(:), optional :: &
          & mifGeolocation
 
@@ -515,6 +511,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.3  2001/02/20 18:43:50  livesey
+! Removed all references to firstIndexChannel
+!
 ! Revision 2.2  2001/02/14 00:12:45  livesey
 ! Removed firstIndexChannel
 !
