@@ -765,7 +765,11 @@ contains ! =====     Public Procedures     =============================
     ! Now we have the full information about the number of tangent heights,
     ! including the subsrufaces ones.
 
-    whichPointingGrid = signal%pointingGrid
+print *, 'Need to get the correct pointing grid by matching signals'
+print *, 'associated with each pointing grid against the desired signal,'
+print *, 'instead of by getting a pointing grid index from the signals database'
+stop
+!   whichPointingGrid = signal%pointingGrid
     if ( whichPointingGrid <= 0 ) &
       call MLSMessage ( MLSMSG_Error, moduleName, &
       & "There is no pointing grid for the desired signal" )
@@ -1322,6 +1326,9 @@ signal%sideband=-1
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.89  2001/04/13 21:40:22  vsnyder
+! Replace pointing-grid stuff by STOP -- Nathaniel will fix it.
+!
 ! Revision 2.88  2001/04/12 21:41:59  livesey
 ! Interim version.
 !
