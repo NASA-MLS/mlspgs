@@ -570,12 +570,12 @@ contains ! =====     Public Procedures     =============================
         &           (/radInL2PC%template%noChans, radInL2PC%template%noSurfs/) ) )
 
       call InterpolateValues ( &
-        & xStarPtan%values(:,1), &        ! OldX
-        & yPmapped, &                     ! OldY
-        & ptan%values(:,maf), &           ! NewX
-        & resultMapped, &                 ! NewY
-        & 'Spline', &                     ! use spline
-        & extrapolate='Allow', &          ! Allow extrapolation in radiance
+        & xStarPtan%values(:,1), &      ! OldX
+        & yPmapped, &                   ! OldY
+        & ptan%values(:,maf), &         ! NewX
+        & resultMapped, &               ! NewY
+        & 'Spline', &                   ! use spline
+        & extrapolate='Constant', &     ! No extrapolation
         & dyByDx=dyByDx )
 
       if ( sidebandStart == sidebandStop ) then
@@ -667,7 +667,7 @@ contains ! =====     Public Procedures     =============================
           & temp%values(:,closestInstance), &
           & ptan%values(:,maf), &
           & tangentTemperature, &
-          & 'Spline', extrapolate='Allow' )
+          & 'Spline', extrapolate='Constant' )
         ! Now convert radiance to optical depth
         radiance%values(:,maf) = 1.0 - &
           & radiance%values(:,maf) / reshape ( spread ( &
@@ -852,6 +852,10 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.19  2002/07/02 19:51:21  livesey
+! Embarassing bug, was choosing 'center' wrong, lead to lag
+! and all sorts of messyness
+!
 ! Revision 2.18  2002/06/12 17:46:21  livesey
 ! Better treatment of real phiWindow
 !
