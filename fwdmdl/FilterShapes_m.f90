@@ -182,6 +182,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 1.3  2001/03/29 21:27:05  vsnyder
+! This one may actually work...
+!
 ! Revision 1.2  2001/03/29 19:49:18  vsnyder
 ! At least it compiles...
 !
