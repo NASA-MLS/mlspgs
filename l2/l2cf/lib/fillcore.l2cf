@@ -1,0 +1,27 @@
+; $Id$
+
+;; This L2CF fragment sets the contents of parts of stateCore to the results
+;; of the `core' retrievals.
+
+begin Fill
+  ;; Define our stateCore and outputPrecisionCore vectors
+  stateCore: Vector, template=stateTemplate
+  outputPrecisionCore: Vector, template=stateTemplate
+
+  !define(fillFromOneCoreL2GP,{!dnl
+    Fill, quantity=stateCore.$1, method=l2gp, $
+      sourceL2GP=l2gpCore$1Input!nl})
+  !forall(fillFromOneCoreL2GP,!coreL2GPSpecies)
+
+  ;; Also do GPH
+  Fill, quantity=stateCore.GPH, method=hydrostatic, refGPHQuantity=stateCore.refGPH, $
+    temperatureQuantity=stateCore.temperature
+  ;; Also do ptan
+  Fill, quantity=stateCore.ptanGHz, method=l2aux, sourceL2AUX=l2auxCorePtanInput
+
+  ;; Put the apriori back in the stratospheric h2o
+  Subset, quantity=stateCore.h2o, height=[1000mb:680mb, 68.0mb:0.00001mb], mask=fill
+  Fill, quantity=stateCore.h2o, method=vector, sourceQuantity=apriori.h2o
+  Subset, quantity=stateCore.h2o, mask=fill, /reset
+
+end Fill
