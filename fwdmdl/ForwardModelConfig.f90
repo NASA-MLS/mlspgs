@@ -42,6 +42,7 @@ module ForwardModelConfig
     logical :: Spect_Der      ! Do spectroscopy derivatives
     logical :: Temp_Der       ! Do temperature derivatives
     logical :: skipOverlaps   ! Don't calculate for MAFs in overlap regions
+    logical :: AllLinesForRadiometer ! As opposed to just using lines designated for band.
     type(vGrid_T), pointer :: integrationGrid=>NULL() ! Zeta grid for integration
     type(vGrid_T), pointer :: tangentGrid=>NULL()     ! Zeta grid for integration
     integer, dimension(:), pointer :: specificQuantities=>NULL() ! Specific quantities to use
@@ -469,6 +470,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.14  2002/10/08 17:40:01  livesey
+! Various bug fixes in the pack/unpack routines
+!
 ! Revision 2.13  2002/10/08 17:08:03  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
