@@ -159,7 +159,7 @@ contains
   ! Where is the derivative of that product large?
 
     do i = 2, n_path-1
-      dtaudn = tau(:,:,n_path+1) - tau(:,:,n_path-1)
+      dtaudn = tau(:,:,i+1) - tau(:,:,i-1)
       if ( any(abs(real(dtaudn))  >= myTol ) .or. &
            any(abs(aimag(dtaudn)) >= myTol ) ) do_gl(i) = .true.
     end do
@@ -213,6 +213,9 @@ contains
 end module Path_Contrib_M
 
 ! $Log$
+! Revision 2.11  2003/08/12 19:34:53  michael
+! Some futzing by Van.
+!
 ! Revision 2.10  2003/05/19 19:58:07  vsnyder
 ! Remove USEs for unreferenced symbols, remove unused local variables
 !
