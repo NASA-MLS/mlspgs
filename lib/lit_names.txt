@@ -23,11 +23,18 @@ baseline
 C
 channel
 chunk
+clear
+clear_110RH_below_top
+clear_0RH
+clear_lowest_0_110RH
 cloudExtinction
 cloudIce
 cloudInducedRadiance
 cloudRadSensitivity
 cloudWater
+cloudy_110RH_below_top
+cloudy_110RH_in_cloud
+cloudy_nearside_only
 columnabundance
 
 days
@@ -68,6 +75,9 @@ invkm
 invm
 iteration
 isotopeRatio
+iwc_low_height
+iwc_high_height
+iwp
 
 K
 KHz
@@ -154,6 +164,9 @@ xyz
 zeta
 
 # $Log$
+# Revision 2.20  2003/04/09 00:10:19  livesey
+# Added literals for Dong and Jonathan
+#
 # Revision 2.19  2003/03/06 19:46:49  pwagner
 # columnAbundance moved to lib from l2
 #
