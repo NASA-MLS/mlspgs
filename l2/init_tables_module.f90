@@ -160,7 +160,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_SCECI               = f_scale + 1
   integer, parameter :: F_SCVEL               = f_scECI + 1
   integer, parameter :: F_SDNAME              = f_scVEL + 1
-  integer, parameter :: F_SIGNAL              = f_sdname + 1
+  integer, parameter :: F_SGRID               = f_sdname + 1
+  integer, parameter :: F_SIGNAL              = f_sgrid + 1
   integer, parameter :: F_SIGNALS             = f_signal + 1
   integer, parameter :: F_SKIPOVERLAPS        = f_signals + 1
   integer, parameter :: F_SOURCE              = f_skipOverlaps + 1
@@ -517,6 +518,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_scECI) =               add_ident ( 'scECI' )
     field_indices(f_scVel) =               add_ident ( 'scVel' )
     field_indices(f_sdname) =              add_ident ( 'sdname' )
+    field_indices(f_sgrid) =               add_ident ( 'sgrid' )
     field_indices(f_signal) =              add_ident ( 'signal' )
     field_indices(f_signals) =             add_ident ( 'signals' )
     field_indices(f_skipOverlaps) =        add_ident ( 'skipOverlaps' )
@@ -760,9 +762,11 @@ contains ! =====     Public procedures     =============================
              begin, f+f_geodAngle, t+t_numeric, n+n_field_type, &
              begin, f+f_noMIFs, t+t_numeric, n+n_field_type, &
              begin, f+f_inclination, t+t_numeric, n+n_field_type, &
-             nadp+n_spec_def, &
+             nadp+n_spec_def /) )
+    call make_tree ( (/ &
       begin, s+s_quantity, & ! Must be AFTER s_hgrid and s_vgrid
              begin, f+f_hGrid, s+s_hgrid, n+n_field_spec, &
+             begin, f+f_sGrid, s+s_vgrid, n+n_field_spec, &
              begin, f+f_vGrid, s+s_vgrid, n+n_field_spec, &
              begin, f+f_logBasis, t+t_boolean, n+n_field_type, &
              begin, f+f_molecule, t+t_molecule, n+n_field_type, &
@@ -1025,6 +1029,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.143  2001/07/19 17:42:48  dwu
+! add f_sGrid field
+!
 ! Revision 2.142  2001/07/19 00:09:31  dwu
 ! add l_rectanglefromlos
 !
