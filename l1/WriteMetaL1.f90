@@ -8,6 +8,7 @@ MODULE WriteMetaL1 ! Populate metadata and write it out
   USE Hdf, ONLY: DFACC_RDWR
   USE MLSCommon, ONLY: R8
   USE MLSMessageModule, ONLY: MLSMSG_Error, MLSMSG_Warning, MLSMessage
+  USE PCFHdr, ONLY: WriteInputPointer
   USE SDPToolkit, only: PGSD_PC_FILE_PATH_MAX, PGSD_MET_GROUP_NAME_L, &
     & PGSD_MET_NUM_OF_GROUPS, PGS_S_SUCCESS, PGSMET_W_METADATA_NOT_SET, &
     & PGS_PC_GETREFERENCE, &
@@ -259,8 +260,10 @@ CONTAINS
     ! InputPointer
     
     attrName = 'InputPointer'
-    returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
-         'See the PCF annotation to this file.')
+    ! returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
+    !     'See the PCF annotation to this file.')
+    returnStatus = WriteInputPointer(groups(INVENTORY), attrName, &
+      & fileType='hdf')
     IF (returnStatus /= PGS_S_SUCCESS) THEN
        errmsg = METAWR_ERR // attrName
        CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
@@ -446,6 +449,9 @@ CONTAINS
 END MODULE WriteMetaL1 
 
 ! $Log$
+! Revision 2.9  2003/05/30 23:48:34  pwagner
+! Uses WriteInputPointer from lib/PCFHdr
+!
 ! Revision 2.8  2003/03/15 00:15:10  pwagner
 ! Wont quit if pgs_met_remove returns non-zero value
 !
