@@ -1,6 +1,8 @@
 module MACHINE
   use F90_UNIX_ENV, only: IARGC, NAG_GETARG => GETARG
   use F90_iostat				! everything; see iostat_msg_NAG
+  ! Exit and return an integer status to the invoking process
+  use F90_UNIX_PROC, only: EXIT_WITH_STATUS => EXIT
   implicit none
 
   character(LEN=2) :: END_LINE = ' ' // char(10)
@@ -334,6 +336,9 @@ end select
 end module MACHINE
 
 ! $Log$
+! Revision 1.2  2001/03/21 00:42:35  pwagner
+! Added print_iostat_msg_NAG
+!
 ! Revision 1.1  2001/01/13 00:29:44  pwagner
 ! moved to lib/machines/MLSCONFG/machine.f90
 !
