@@ -218,6 +218,7 @@ range
 ratioQuantity
 refGPHquantity
 refGPHPrecisionquantity
+reflector
 refract
 regAfter
 regApriori               ! Regularization is to apriori, not zero
@@ -267,6 +268,7 @@ state
 stop
 superDiagonal
 swath
+switchingMirror
 systemTemperature
 
 tangentGrid
@@ -301,6 +303,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.94  2003/05/29 16:44:06  livesey
+# Added reflector and switchingMirror
+#
 # Revision 2.93  2003/05/07 22:50:29  pwagner
 # Optionally may skipL1BCheck in ChunkDivide
 #
