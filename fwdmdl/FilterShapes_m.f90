@@ -1,15 +1,12 @@
 module FilterShapes_m
 
-  ! Read the filter shapes file.  Attach each array of filter shapes to
-  ! the database for the specified signal from the Signals database in
-  ! MLSSignals_m
+  ! Read the filter shapes file.
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error
   use MLSSignals_m, only: MaxSigLen, Signals
-  use Output_m, only: Output
 
   ! More USEs below in each procedure, if they're only used therein.
 
@@ -70,7 +67,7 @@ contains
     integer, intent(in) :: Spec_Indices(:)   ! Needed by Parse_Signal, q.v.
 
     integer :: DataBaseSize                  ! How many filter shapes?
-    integer :: I                             ! Loop inductors, subscripts
+    integer :: I                             ! Loop inductor, subscript
     integer :: NumChannels                   ! For the signal
     integer :: NumFilterPts                  ! How many points in each filter
     !                                          shape array -- all the same
@@ -167,6 +164,7 @@ contains
   ! --------------------------------  Dump_Filter_Shapes_Database  -----
   subroutine Dump_Filter_Shapes_Database
     use Dump_0, only: Dump
+    use Output_m, only: Output
 
     integer :: I                   ! Subscripts, loop inductors
     call output ( 'Filter Shapes: SIZE = ' )
@@ -186,6 +184,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 1.4  2001/03/30 00:02:06  livesey
+! Nullified another pointer
+!
 ! Revision 1.3  2001/03/29 23:53:06  vsnyder
 ! This one seems to work (not just compile)
 !
