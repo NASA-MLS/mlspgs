@@ -1,7 +1,7 @@
 
       SUBROUTINE CloudForwardModel (NF, NZ, NT, NS, N, NZmodel,
      1           FREQUENCY, PRESSURE, HEIGHT, TEMPERATURE, VMRin,
-     2           WCin, IPSD, 
+     2           WCin, IPSDin, 
      3           ZT, RE, ISURF, ISWI, ICON,
      4           TB0, DTcir, BETA, BETAc, Dm, TAUeff, SS, 
      5           NU, NUA, NAB, NR)
@@ -57,9 +57,9 @@ C                        NS=2: O3 Volumn Mixing Ratio (ppm).                 C
 C                                                                            C
 C     2. CLOUD PARAMETERS:                                                   C
 C     --------------------                                                   C
-C     WC       (N,NZ) -> N=1: Cloud Ice Water Content (g/m3).                C
+C     WCin     (N,NZ) -> N=1: Cloud Ice Water Content (g/m3).                C
 C                        N=2: Cloud Liquid Water Content (g/m3).             C
-C     IPSD       (NZ) -> Particle Size Distribution Flag.                    C
+C     IPSDin     (NZ) -> Particle Size Distribution Flag.                    C
 C                                                                            C
 C     3. OTHER PARAMETERS:                                                   C
 C     --------------------                                                   C
@@ -123,7 +123,7 @@ C---------------------------------------
       INTEGER NZmodel                          ! NUMBER OF INTERNAL MODEL LEVELS
 
 
-      INTEGER IPSD(NZ)                         ! SIZE-DISTRIBUTION FLAG
+      INTEGER IPSDin(NZ)                       ! SIZE-DISTRIBUTION FLAG
                                                ! IILL     (I=ICE, L=LIQUID)
                                                ! 1000:     I->MH, L->GAMMA 
                                                ! 1100:     I->LIU-CURRY
@@ -157,7 +157,7 @@ C---------------------------------------
       REAL VMRin(NS,NZ)                        ! 1=H2O VOLUME MIXING RATIO
                                                ! 2=O3 VOLUME MIXING RATIO
 
-      REAL WCin(N,NZ)                          ! CLOUD WATER CONTENT
+      REAL WCin(N,NZ)                            ! CLOUD WATER CONTENT
                                                ! N=1: ICE; N=2: LIQUID
       REAL ZT(NT)                              ! TANGENT PRESSURE
       REAL*8 RE                                ! EARTH RADIUS
@@ -232,6 +232,8 @@ C---------------------------------------------
 C     INTERNAL ATMOSPHERIC PROFILE PARAMETERS
 C---------------------------------------------
 
+      INTEGER IPSD (NZmodel)
+
       REAL WC (N,NZmodel)
       REAL YP (NZmodel)
       REAL YZ (NZmodel)
@@ -261,7 +263,7 @@ C---------------------------
       REAL PH0(N,NU,NZ-1),W00(N,NZ-1)  
       REAL P11(NU), RC11(3),RC_TMP(N,3)
       REAL CHK_CLD(NZmodel)                        
-      REAL ZZT(NT)                             ! TANGENT HEIGHT (km)
+      REAL ZZT(NT)
       REAL PH1(NU)                             ! SINGLE PARTICLE PHASE FUNCTION
       REAL P(NAB,NU)                           ! LEGENDRE POLYNOMIALS l=1
       REAL DP(NAB,NU)                          ! Delt LEGENDRE POLYNOMIALS l=1
@@ -273,26 +275,27 @@ C---------------------------
 
       COMPLEX A(NR,NAB),B(NR,NAB)              ! MIE COEFFICIENCIES
 
-C-----------------<<<<<<<<<<<<< START EXCUTION >>>>>>>>>>>>---------------------C
+C---------------<<<<<<<<<<<<< START EXCUTION >>>>>>>>>>>>-------------------C
 
       CALL HEADER(1)
-      RE= 6370.D3                          !USE CONSTANT RADIUS AT PRESENT
 
 C=========================================================================
 C                    >>>>>> CHECK MODEL-INPUT <<<<<<< 
 C-------------------------------------------------------------------------
-C     INTERPOLATE THE INPUT PROFILES TO THE MODEL INTERNAL GRID; 
+C     CHECK IF THE INPUT PROFILE MATCHS THE MODEL INTERNAL GRID; 
 C     SET TANGENT PRESSURE (hPa) TO TANGENT HEIGHT (km)
 C=========================================================================
 
-      CALL MODEL_ATMOS(PRESSURE,HEIGHT,TEMPERATURE,VMRin,NZ,NS,N,WCin,  
-     >                  YP,YZ,YT,YQ,VMR,WC,NZmodel,CHK_CLD,ZT,ZZT,NT) 
+      CALL MODEL_ATMOS(PRESSURE,HEIGHT,TEMPERATURE,VMRin,NZ,NS,N,
+     >                WCin,IPSDin,  
+     >                YP,YZ,YT,YQ,VMR,WC,NZmodel,CHK_CLD,IPSD,
+     >                ZT,ZZT,NT) 
 
-c      DO I=1,NZmodel
-c         WRITE(21,*) YZ(I),YP(I),YT(I),WC(1,I),CHK_CLD(I)
-c      ENDDO
+      DO I=1,NZmodel
+         WRITE(21,*) YZ(I),YP(I),YT(I),WC(1,I),CHK_CLD(I),IPSD(I)
+      ENDDO
 
-c         WRITE(21,*)(ZZT(I),I=1,NT)
+         WRITE(21,*)(ZZT(I),I=1,NT)
 
 C-----------------------------------------------
 C     INITIALIZE SCATTERING AND INCIDENT ANGLES 
@@ -444,7 +447,7 @@ C=================================================
                BETAc(ILYR,IFR)=0.
             ENDIF
 
-c            WRITE(21,*)delTAUc(ILYR),delTAU(ILYR),W0(1,ILYR)
+            WRITE(21,*)delTAUc(ILYR),delTAU(ILYR),W0(1,ILYR)
 
 c           WRITE(21,*) BETAc(ILYR,IFR),BETA(ILYR,IFR),W0(1,ILYR)  
 

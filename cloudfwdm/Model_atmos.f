@@ -1,7 +1,7 @@
 
       SUBROUTINE MODEL_ATMOS(PRESSURE,HEIGHT,TEMPERATURE,VMR,NZ,NS,
-     >                       N, WCin,
-     >                       YP,YZ,YT,YQ,VMR1,WC,NH,CHK_CLD,
+     >                       N, WCin, IPSDin,
+     >                       YP,YZ,YT,YQ,VMR1,WC,NH,CHK_CLD,IPSD,
      >                       ZT,ZZT,NT)
 
 C========================================================================C
@@ -27,6 +27,7 @@ C----------------------------------------------
                                                ! 2=O3
 
       REAL WCin(N,NZ)                         
+      INTEGER IPSDin(NZ)
       INTEGER NT                               ! NO. OF TANGENT PRESSURE LEVSLS
       REAL ZT(NT)                              ! TANGENT PRESSURE
       
@@ -36,14 +37,13 @@ C----------------------------------------------
       INTEGER NH                               ! MODEL ATMOSPHERIC LEVELS
       INTEGER NH0
 
-      PARAMETER(NH0=2000)
-
       REAL YZ(NH)                              ! PRESSURE HEIGHT (m)
       REAL YP(NH)                              ! PRESSURE (hPa)
       REAL YT(NH)                              ! TEMPERATURE PROFILE
       REAL YQ(NH)                              ! RELATIVE HUMIDITY (%)
       REAL VMR1(NS,NH)                          ! 1=O3 VOLUME MIXING RATIO
       REAL WC(N,NH)
+      INTEGER IPSD(NH)
       REAL CHK_CLD(NH)  ! CLOUD CHECKER      
 
       REAL ZZT(NT)                             ! TANGENT HEIGHT
@@ -98,6 +98,9 @@ C==========================================
             VMR1(1,J)=((ZA(JM+1)-ZH(J))*VMR(2,JM)+(ZH(J)-ZA(JM))*
      >                VMR(2,JM+1))/(ZA(JM+1)-ZA(JM))
          
+            IPSD(J)=((ZA(JM+1)-ZH(J))*IPSDin(JM)+(ZH(J)-ZA(JM))*
+     >            IPSDin(JM+1))/(ZA(JM+1)-ZA(JM))
+
             CHK_CLD(J) = WC(1,J) + WC(2,J)
 
          ENDDO
@@ -112,6 +115,7 @@ C==========================================
             WC(2,J)   = WCin(2,J)
             YQ(J)     = VMR(1,J)     
             VMR1(1,J) = VMR(2,J)    
+            IPSD(J)   = IPSDin(J)
             CHK_CLD(J) = WC(1,J) + WC(2,J)
          ENDDO
 
@@ -139,5 +143,9 @@ C----------------------------------------------------------------------
       END
 
 ! $Log: Model_atmos.f,v      
+
+
+
+
 
 
