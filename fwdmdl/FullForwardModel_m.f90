@@ -1498,12 +1498,11 @@ contains ! ================================ FullForwardModel routine ======
           call allocate_test ( frequencies,noFreqs, "frequencies", ModuleName )
           frequencies(1:noFreqs) = PointingGrids(whichPointingGrid)%&
                                    &oneGrid(grids(ptg_i))%frequencies(j:m)
+          frequencies =  Vel_Cor * frequencies
         endif
 !
 ! VELOCITY shift correction to frequency grid
 !
-        frequencies =  Vel_Cor * frequencies
-
         ! Loop over frequencies ----------------------------------------------
         if ( toggle(emit) .and. levels(emit) > 4 ) &
           & call Trace_End ( 'ForwardModel.MetricsEtc' )
@@ -1854,16 +1853,14 @@ contains ! ================================ FullForwardModel routine ======
                   shapeInd = MatchSignal ( filterShapes%signal, &
                     & fwdModelConf%signals(sigInd), &
                     & sideband = thisSideband, channel=channel )
-                  do instance = WindowStart, WindowFinish
-                    do surface = 1, Grids_f%no_z(k)
-                      do jf = 1, Grids_f%no_f(k)
-                        call Freq_Avg ( frequencies, &
-                          & FilterShapes(shapeInd)%FilterGrid, &
-                          & FilterShapes(shapeInd)%FilterShape, &
-                          & k_atmos_frq(1:noFreqs,sv_i), noFreqs, j, r )
-                        k_atmos(i,ptg_i,sv_i) = r
-                        sv_i = sv_i + 1
-                      end do              ! Frequencies loop
+                  do instance = grids_f%WindowStart(k), grids_f%WindowFinish(k)
+                    DO surface = 1, Grids_f%no_f(k)*Grids_f%no_z(k)
+                      call Freq_Avg ( frequencies, &
+                        & FilterShapes(shapeInd)%FilterGrid, &
+                        & FilterShapes(shapeInd)%FilterShape, &
+                        & k_atmos_frq(1:noFreqs,sv_i), noFreqs, j, r )
+                      k_atmos(i,ptg_i,sv_i) = r
+                      sv_i = sv_i + 1
                     end do                ! Surface loop
                   end do                  ! Instance loop
                 end do                    ! Channel loop
@@ -1871,12 +1868,10 @@ contains ! ================================ FullForwardModel routine ======
                 sv_start = sv_i
                 do i = 1, noUsedChannels
                   sv_i = sv_start
-                  do instance = WindowStart, WindowFinish
-                    do surface = 1, Grids_f%no_z(k)
-                      do jf = 1, Grids_f%no_f(k)
-                        k_atmos(i,ptg_i,sv_i) = k_atmos_frq(i,sv_i)
-                        sv_i = sv_i + 1
-                      end do
+                  do instance = grids_f%WindowStart(k), grids_f%WindowFinish(k)
+                    DO surface = 1, Grids_f%no_f(k)*Grids_f%no_z(k)
+                      k_atmos(i,ptg_i,sv_i) = k_atmos_frq(i,sv_i)
+                      sv_i = sv_i + 1
                     end do
                   end do
                 end do
@@ -2055,7 +2050,7 @@ contains ! ================================ FullForwardModel routine ======
         & 'superset', ModuleName )
 
       k = ptan%template%nosurfs
-      Allocate(PrtRad(k),STAT=i)
+      Allocate(PrtRad(ptan%template%nosurfs),STAT=i)
 
       do i = 1, noUsedChannels
 
@@ -2109,17 +2104,18 @@ contains ! ================================ FullForwardModel routine ======
           IF (.not. FwdModelConf%temp_der .and. .not. FwdModelConf%atmos_der) &
           & then
             CALL fov_convolve_v2(antennaPatterns(whichPattern), &
-            & ptg_angles,Radiances(:,i),tan_chi_out,PrtRad(1:L))
+            & ptg_angles,Radiances(:,i),tan_chi_out,PrtRad)
             j = thisradiance%template%noChans
-            do ptg_i = 1, L
-              beg_ind = channel + j * (ptg_i - 1)
+            do ptg_i = 1, ptan%template%nosurfs
+              beg_ind = channel + thisradiance%template%noChans * (ptg_i - 1)
               thisRadiance%values(beg_ind,maf) = PrtRad(ptg_i)
             end do
           ELSE IF (FwdModelConf%atmos_der .and. .not. FwdModelConf%temp_der) &
           & then
-            CALL ALLOCATE_TEST(drad_df_out,L,f_len,'drad_df_out',ModuleName)
+            CALL ALLOCATE_TEST(drad_df_out,ptan%template%nosurfs,f_len, &
+            & 'drad_df_out',ModuleName)
             CALL fov_convolve_v2(antennaPatterns(whichPattern), &
-            & ptg_angles,Radiances(:,i),tan_chi_out,PrtRad(1:L), &
+            & ptg_angles,Radiances(:,i),tan_chi_out,PrtRad, &
             & DI_DF = DBLE(RESHAPE(k_atmos(i,:,:),(/no_tan_hts,f_len/))), &
             & DRAD_DF_OUT = drad_df_out)
 ! load into jacobian
@@ -2172,11 +2168,12 @@ contains ! ================================ FullForwardModel routine ======
           ELSE IF (FwdModelConf%temp_der) then
 
             M = sv_t_len
-            L = ptan%template%nosurfs
             CALL ALLOCATE_TEST(test1,no_tan_hts,M,'test1',Modulename)
             CALL ALLOCATE_TEST(test2,no_tan_hts,M,'test2',Modulename)
-            CALL ALLOCATE_TEST(test3,      L   ,M,'test3',Modulename)
-            CALL ALLOCATE_TEST(drad_dt_out,L,   M,'drad_dt_out',ModuleName)
+            CALL ALLOCATE_TEST(test3,ptan%template%noSurfs,M,'test3',&
+            & Modulename)
+            CALL ALLOCATE_TEST(drad_dt_out,ptan%template%noSurfs,  &
+            & M,'drad_dt_out',ModuleName)
 !
             DO j = 1, no_sv_p_t
               DO k = 1, n_t_zeta
@@ -2188,9 +2185,10 @@ contains ! ================================ FullForwardModel routine ======
               ENDDO
             ENDDO
             IF (FwdModelConf%atmos_der) then
-              CALL ALLOCATE_TEST(drad_df_out,L,f_len,'drad_df_out',ModuleName)
+              CALL ALLOCATE_TEST(drad_df_out,ptan%template%nosurfs,f_len, &
+              & 'drad_df_out',ModuleName)
               CALL fov_convolve_v2(antennaPatterns(whichPattern), &
-              & ptg_angles,Radiances(:,i),tan_chi_out,PrtRad(1:L), &
+              & ptg_angles,Radiances(:,i),tan_chi_out,PrtRad, &
               & SURF_ANGLE=surf_angle(1),DI_DT=DBLE(RESHAPE(k_temp(i,:,:,:),&
               & (/no_tan_hts,M/))),DX_DT=test1,DDX_DXDT=test2, &
               & DX_DT_OUT=test3,DRAD_DT_OUT=drad_dt_out, &
@@ -2244,7 +2242,7 @@ contains ! ================================ FullForwardModel routine ======
               call Deallocate_test ( drad_df_out, 'drad_df_out', ModuleName )
             ELSE
               CALL fov_convolve_v2(antennaPatterns(whichPattern), &
-              & ptg_angles,Radiances(:,i),tan_chi_out,PrtRad(1:L), &
+              & ptg_angles,Radiances(:,i),tan_chi_out,PrtRad, &
               & SURF_ANGLE=surf_angle(1),DI_DT=DBLE(RESHAPE(k_temp(i,:,:,:),&
               & (/no_tan_hts,M/))),DX_DT=test1,DDX_DXDT=test2, &
               & DX_DT_OUT=test3,DRAD_DT_OUT=drad_dt_out)
@@ -2253,8 +2251,8 @@ contains ! ================================ FullForwardModel routine ======
 ! Load the Radiance values into the Radiance structure:
 !
             j = thisradiance%template%noChans
-            do ptg_i = 1, L
-              beg_ind = channel + j * (ptg_i - 1)
+            do ptg_i = 1, ptan%template%noSurfs
+              beg_ind = channel + thisradiance%template%noChans * (ptg_i - 1)
               thisRadiance%values(beg_ind,maf) = PrtRad(ptg_i)
             end do
 !
@@ -2288,7 +2286,7 @@ contains ! ================================ FullForwardModel routine ======
 
                 do ptg_i = 1, ptan%template%noSurfs
                   r1 = drad_dt_out(ptg_i,sv_t_len)
-                  beg_ind = channel + j * (ptg_i-1)
+                  beg_ind = channel + thisradiance%template%noChans * (ptg_i-1)
                   jacobian%block(row,col)%values(beg_ind,k) = r1
                 end do
 
@@ -2567,6 +2565,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.58  2002/06/13 22:40:38  bill
+! some variable name changes--wgr
+!
 ! Revision 2.57  2002/06/11 22:20:10  bill
 ! work in progress--wgr
 !

@@ -195,7 +195,8 @@ contains
       m = s + kf
       k = j + kp
       Grids_f%zet_basis(l:n-1) = f%template%surfs(:,1)
-      Grids_f%phi_basis(j:k-1) = f%template%phi(1,:) * Deg2Rad
+      Grids_f%phi_basis(j:k-1) = f%template%phi(1, &
+      & grids_f%windowstart(ii):grids_f%windowfinish(ii)) * Deg2Rad
       IF (grids_f%no_f(ii) > 1) THEN
         grids_f%frq_basis(s:m-1) = f%template%frequencies
       ELSE
@@ -477,6 +478,9 @@ contains
   end subroutine destroygrids_t
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.17  2002/06/13 22:39:12  bill
+! fixed phi window selection--wgr
+!
 ! Revision 2.16  2002/06/04 10:28:03  zvi
 ! Adding comments, fixing a bug with species ruuning index
 !
