@@ -132,9 +132,38 @@ contains ! ====     Public Procedures     ==============================
     end do
   end subroutine GetIndexFlagsFromList
 
+  ! ------------------------------------------ GetStringIndexFromString ---
+  integer function GetStringIndexFromString ( line )
+    use Symbol_Types, only: T_IDENTIFIER
+    use Symbol_Table, only: ENTER_TERMINAL
+
+    character (len=*), intent(in) :: LINE
+    ! Executable code
+    GetStringIndexFromString = enter_terminal ( trim(line), t_identifier )
+  end function GetStringIndexFromString
+
+  ! ------------------------------------------ GetLitIndexFromString ---
+  integer function GetLitIndexFromString ( line, stringIndex )
+    use Declaration_Table, only: GET_DECL, DECLS, ENUM_VALUE
+
+    character (len=*), intent(in) :: LINE
+    integer, optional, intent(out) :: STRINGINDEX
+    ! Local variable
+    type (Decls) :: DECL
+    integer :: SI
+    ! Executable code
+    si = GetStringIndexFromString(line)
+    if ( present ( stringIndex ) ) stringIndex = si
+    decl = get_decl ( si, type=enum_value )
+    GetLitIndexFromString = decl%units
+  end function GetLitIndexFromString
+
 end module MoreTree
 
 ! $Log$
+! Revision 2.4  2002/10/05 00:41:50  livesey
+! Added GetStringIndexFromString and GetLitIndexFromString
+!
 ! Revision 2.3  2002/08/26 20:01:22  livesey
 ! Added GetIndexFlagsFromList
 !
