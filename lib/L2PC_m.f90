@@ -124,6 +124,10 @@ contains ! ============= Public Procedures ==========================
           &  'noChans, noSurfs, noInstances'
         write (unit,*) qt%coherent, qt%stacked, &
           &  'coherent, stacked'
+        if ( any (qt%verticalCoordinate /= (/ l_none, l_zeta /)) &
+          & .and. (vector==1) ) &
+          & call MLSMessage(MLSMSG_Error,ModuleName, &
+          & "Only zeta coordinates allowed (or none) for xStar.")
         write (unit,*) 'surfs'
         write (unit, rFmt) qt%surfs
         write (unit,*) 'phi'
@@ -482,6 +486,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.8  2001/04/26 22:08:39  livesey
+! Add check on vertical coordinates
+!
 ! Revision 2.7  2001/04/26 20:02:26  livesey
 ! Made l2pc database a saved array in L2PC_m
 !
