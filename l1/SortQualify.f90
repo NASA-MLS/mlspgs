@@ -364,11 +364,15 @@ print *, 'switch MAF: ', CurMAFdata%SciPkt(0)%MAFno
     central = CalWin%central
 
     DO bank = 1, FBnum
+
        wallindx = 0
+
        WHERE (CalWin%MAFdata%BankWall%FB(bank))
-          wallindx = indx
+          wallindx(1:current) = indx(1:current)
        END WHERE
+
        IF (ANY (wallindx(1:current) /= 0)) THEN
+
           minwall = minval (wallindx(1:current), &
                CalWin%MAFdata%BankWall%FB(bank))
           maxwall = maxval (wallindx(1:current), &
@@ -401,7 +405,7 @@ print *, 'bank, wall: ', bank, CalWin%MAFdata%BankWall%FB(bank)
     DO bank = 1, MBnum
        wallindx = 0
        WHERE (CalWin%MAFdata%BankWall%MB(bank))
-          wallindx = indx
+          wallindx(1:current) = indx(1:current)
        END WHERE
        IF (ANY (wallindx(1:current) /= 0)) THEN
           minwall = minval (wallindx(1:current), &
@@ -435,7 +439,7 @@ print *, 'bank, wall: ', bank, CalWin%MAFdata%BankWall%FB(bank)
     DO bank = 1, WFnum
        wallindx = 0
        WHERE (CalWin%MAFdata%BankWall%WF(bank))
-          wallindx = indx
+          wallindx(1:current) = indx(1:current)
        END WHERE
        IF (ANY (wallindx(1:current) /= 0)) THEN
           minwall = minval (wallindx(1:current), &
@@ -469,7 +473,7 @@ print *, 'bank, wall: ', bank, CalWin%MAFdata%BankWall%FB(bank)
     DO bank = 1, DACSnum
        wallindx = 0
        WHERE (CalWin%MAFdata%BankWall%DACS(bank))
-          wallindx = indx
+          wallindx(1:current) = indx(1:current)
        END WHERE
        IF (ANY (wallindx(1:current) /= 0)) THEN
           minwall = minval (wallindx(1:current), &
@@ -532,6 +536,9 @@ END MODULE SortQualify
 !=============================================================================
 
 ! $Log$
+! Revision 2.5  2002/04/04 20:39:15  perun
+! Corrected wallindx test.
+!
 ! Revision 2.4  2002/03/29 20:18:34  perun
 ! Version 1.0 commit
 !
