@@ -118,9 +118,7 @@ contains
     if ( present(dont_log) ) my_dont_log = dont_log
     my_adv = Advance_is_yes_or_no(my_adv)
     my_chars = chars // ' '
-    if (present(log_chars)) then
-	my_chars = trim(log_chars) // ' '
-    end if
+    if (present(log_chars)) my_chars = trim(log_chars) // ' '
     n_chars = max(len(chars), 1)
     if ( my_adv == 'no' ) n_chars = len(chars)+1
     if ( prunit == -1 .or. prunit < -2 ) &
@@ -505,8 +503,8 @@ contains
     n_chars = min(len(string), lenstring)
     if ( len(string) < 1 ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
-		& 'Bad string arg in OUTPUT_STRING' )
-    elseif( len_trim(string) < 1 .or. LENSTRING < 1 ) then
+        & 'Bad string arg in OUTPUT_STRING' )
+    else if( len_trim(string) < 1 .or. LENSTRING < 1 ) then
       call blanks(0, advance)
     else
       call output_char(string(:n_chars), advance, from_where, dont_log, log_chars )
@@ -531,10 +529,8 @@ contains
       call ourReplaceSubString(kChar, myFormat, 'd', 'f')
       call ourExtractSubString(TRIM(myFormat), kChar, 'f', '.')
       read (kChar, '(i2)') m
-      if (m < 1) then
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-		  & 'Bad conversion to m in OUTPUT_xxxLE (format not "{defg}"' )
-      end if
+      if (m < 1) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Bad conversion to m in OUTPUT_xxxLE (format not "{defg}"' )
       if ( index(TRIM(myFormat), 'x' ) == 0 ) then
         n = 0
       else
@@ -544,7 +540,7 @@ contains
           print *, trim(kChar)
           print *, trim(myFormat)
           call MLSMessage ( MLSMSG_Error, ModuleName, &
-		    & 'Bad conversion to n in OUTPUT_xxxLE (format not "{defg}"' )
+            & 'Bad conversion to n in OUTPUT_xxxLE (format not "{defg}"' )
         end if
       endif
       nplusm = n + m
@@ -591,6 +587,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.33  2004/12/13 20:30:19  vsnyder
+! Cosmetic cannonball polishing
+!
 ! Revision 2.32  2004/09/23 22:57:36  pwagner
 ! Added output_date_and_time
 !
