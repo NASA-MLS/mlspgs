@@ -3,19 +3,14 @@
 
 module GLOBAL_SETTINGS
 
-  use MLSPCF2, only: MLSPCF_L1B_RAD_END, MLSPCF_L1B_RAD_START
+  use MLSL2Options, only: PCF, MAXNUML1BRADIDS, ILLEGALL1BRADID, &
+    & LEVEL1_HDFVERSION
 
   implicit NONE
 
   private
 
   public :: SET_GLOBAL_SETTINGS
-
-  integer, parameter :: LEVEL1_HDFVERSION = 4  ! Until we convert level 1 to hdf5
-
-  integer, public, parameter :: ILLEGALL1BRADID=-1      ! something sfstart should catch
-  integer, public, parameter :: MAXNUML1BRADIDS=&
-  & mlspcf_l1b_rad_end-mlspcf_l1b_rad_start+1   ! In case more than one
 
   logical, public :: ALLOW_CLIMATOLOGY_OVERLOADS = .false.
   integer, public :: INPUT_VERSION_STRING = 0     ! Sub_rosa index
@@ -53,7 +48,6 @@ contains
     use L2GPData, only: L2GPDATA_T
     use L2PC_M, only: AddBinSelectorToDatabase, BinSelectors
     use MLSCommon, only: R8, FileNameLen, NameLen, L1BInfo_T, TAI93_Range_T
-    use MLSL2Options, only: PCF
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSStrings, only: hhmmss_value
@@ -653,6 +647,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.56  2002/08/20 23:02:17  vsnyder
+! Move USE statements from module scope to procedure scope
+!
 ! Revision 2.55  2002/05/01 22:03:50  pwagner
 ! If leapsecfile parameter set, will convert start, end times
 !
