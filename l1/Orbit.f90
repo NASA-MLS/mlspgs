@@ -22,7 +22,7 @@ MODULE Orbit
 !----------------------------------------------------------
 
    INTEGER :: numOrb, orbitNumber(max_orbits)
-   REAL :: scanRage(lenG), scanRateT(lenT)
+   REAL :: scanRate(lenG), scanRateT(lenT)
    REAL(r8) :: altG, altT, orbIncline, ascTAI(max_orbits), dscTAI(max_orbits)
 
 ! Contents:
@@ -176,6 +176,9 @@ END MODULE Orbit
 !===============
 
 ! $Log$
+! Revision 2.2  2001/02/01 18:28:04  perun
+! Fixed typo
+!
 ! Revision 2.1  2001/02/01 18:20:13  perun
 ! Added data declarations outside routines
 !
