@@ -5,8 +5,9 @@
 
 
   !---------------------------- RCS Ident Info -------------------------------
-    character(len=130) :: Id = &
+    character(len=*), parameter :: IdParm = &
       & "$Id$"
+    character(len=len(idParm)) :: Id = idParm
   !---------------------------------------------------------------------------
     integer :: newSize, status
 
@@ -30,6 +31,9 @@
     database(newSize) = item
 
 ! $Log$
+! Revision 1.2  2000/12/04 23:31:58  vsnyder
+! Move more common code into include; add Id variable.
+!
 ! Revision 1.1  2000/11/17 20:50:54  pwagner
 ! Moved here from lib & l2
 !
