@@ -84,18 +84,21 @@ contains
     Return
   end if
 
+
   do maf = 1, NoMAFs
     l = closestInstances(maf)
     lmin = max(1,l-phiWindow/2)
     lmax = min(no_phi_t,l+phiWindow/2)
     WinSize = lmax-lmin+1
     MidWin = l - lmin + 1
+    print*,'Hello there',l,lmin,lmax,winSize,midwin
     allocate ( phi_eta(ngt,lmin:lmax), stat=ier )
     if ( ier /= 0 ) then
       print *,'** Error Allocating phi_eta in routine: comp_path_entities..'
       print *,'   STAT =',ier
       return
     endif
+    print*,'Elvar:',elvar(l)%phi_tan,elvar(maf)%rr
     do k = 1, no_tan_hts
       h = tan_hts(k,l)
       call vert_to_path ( elvar(l), n_lvls, Ng, ngt, gl_count, WinSize, &
@@ -104,9 +107,6 @@ contains
         & t_phi_basis(lmin:lmax), zpath, hpath, &
         & tpath, ppath, dhdzp, phi_eta, klo, khi, ier )
       if(ier /= 0) return
-      deallocate ( z_path(k,maf)%values, h_path(k,maf)%values,   &
-        &          t_path(k,maf)%values, phi_path(k,maf)%values, &
-        &          dhdz_path(k,maf)%values, eta_phi(k,maf)%values, stat=i )
       allocate ( z_path(k,maf)%values(khi), h_path(k,maf)%values(khi),   &
         &        t_path(k,maf)%values(khi), phi_path(k,maf)%values(khi), &
         &        dhdz_path(k,maf)%values(khi), stat=ier )
@@ -127,7 +127,7 @@ contains
       eta_phi(k,maf)%values(1:khi,lmin:lmax) = phi_eta(1:khi,lmin:lmax)
     end do ! k = 1, no_tan_hts
     deallocate ( phi_eta, stat=i )
-  end do ! l = 1, NoMAFs
+  end do ! maf = 1, NoMAFs
 
  99  deallocate ( zpath, hpath, tpath, ppath, dhdzp, stat=i )
 
@@ -137,6 +137,9 @@ end subroutine Comp_Path_Entities
 
 end module Comp_Path_Entities_M
 ! $Log$
+! Revision 1.31  2001/04/25 00:38:48  zvi
+! Fix bug in elvar..
+!
 ! Revision 1.30  2001/04/23 22:12:08  livesey
 ! Whoops, bug fix.
 !
