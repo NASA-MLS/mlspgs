@@ -210,7 +210,6 @@ contains ! =====     Public Procedures     =============================
     logical, dimension(:), pointer :: Channels   ! From Parse_Signal
     integer :: COMMONSIZE               ! Dimension
     integer :: Field                    ! Field index -- f_something
-    integer :: fwdmdlFlvr               ! Which flavor of forward model are we
     logical :: Got(field_first:field_last)   ! "Got this field already"
     integer :: I                        ! Subscript and loop inductor.
     integer :: J                        ! Subscript and loop inductor.
@@ -238,7 +237,6 @@ contains ! =====     Public Procedures     =============================
     nullify ( channels, signalInds )
 
     error = 0
-    fwdmdlFlvr = get_spec_id(ROOT)
     if ( toggle(gen) ) call trace_begin ( "ConstructForwardModelConfig", root )
     if ( node_id(root) == n_named ) then
       name = subtree(1, root)
@@ -493,6 +491,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.15  2001/11/08 00:12:52  livesey
+! Removed an obsolete variable
+!
 ! Revision 2.14  2001/10/31 15:26:59  livesey
 ! Allowed filename arguments to forward model global stuff to be arrays
 !
