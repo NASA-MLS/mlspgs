@@ -547,7 +547,7 @@ contains ! =====     Public Procedures     =============================
           & GetVectorQtyByTemplateIndex ( vectors(qualityVectors(source)), &
           & qualityQuantities(source) )
         ! Check that value and quality share same HGrid
-        if ( DoHgridsMatch( qty, qualityQty ) ) &
+        if ( .not. DoHgridsMatch( qty, qualityQty ) ) &
         & call Announce_Error ( son, no_error_code, &
         & "Source and quality not on matching HGrids" )
       else
@@ -558,7 +558,7 @@ contains ! =====     Public Procedures     =============================
           & GetVectorQtyByTemplateIndex ( vectors(statusVectors(source)), &
           & statusQuantities(source) )
         ! Check that value and quality share same HGrid
-        if ( DoHgridsMatch( qty, statusQty ) ) &
+        if ( .not. DoHgridsMatch( qty, statusQty ) ) &
         & call Announce_Error ( son, no_error_code, &
         & "Source and status not on matching HGrids" )
       else
@@ -854,7 +854,7 @@ contains ! =====     Public Procedures     =============================
             & GetVectorQtyByTemplateIndex ( vectors(qualityVectors(source)), &
             & qualityQuantities(source) )
           ! Check that value and quality share same HGrid
-          if ( DoHgridsMatch( qty, qualityQty ) ) &
+          if ( .not. DoHgridsMatch( qty, qualityQty ) ) &
           & call Announce_Error ( son, no_error_code, &
           & "Source and quality not on matching HGrids" )
         else
@@ -865,7 +865,7 @@ contains ! =====     Public Procedures     =============================
             & GetVectorQtyByTemplateIndex ( vectors(statusVectors(source)), &
             & statusQuantities(source) )
           ! Check that value and quality share same HGrid
-          if ( DoHgridsMatch( qty, statusQty ) ) &
+          if ( .not. DoHgridsMatch( qty, statusQty ) ) &
           & call Announce_Error ( son, no_error_code, &
           & "Source and status not on matching HGrids" )
         else
@@ -1498,7 +1498,7 @@ contains ! =====     Public Procedures     =============================
     else
       thisL2GP%l2gpPrecision(:,:,firstProfile:lastProfile) = 0.0
     end if
-    thisL2GP%status(firstProfile:lastProfile)='G'
+    thisL2GP%status(firstProfile:lastProfile)=0
     thisL2GP%quality(firstProfile:lastProfile)=0.0
 
     if ( toggle(gen) .and. levels(gen) > 0 ) call trace_end ( "JoinL2GPQuantities" )
@@ -1801,6 +1801,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.106  2004/02/11 23:11:38  livesey
+! Logic wrong in calls to DoHGridsMatch
+!
 ! Revision 2.105  2004/02/11 17:21:51  pwagner
 ! May DirectWrite l2gp status and quality quantities
 !
