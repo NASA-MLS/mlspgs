@@ -31,6 +31,29 @@ module OUTPUT_M
 
 contains
 
+  FUNCTION Advance_is_yes_or_no (str) RESULT (outstr)
+    ! takes '[Yy]...' or '[Nn..] and returns 'yes' or 'no' respectively
+    ! also does the same with '[Tt]..' and '[Ff]..'
+    ! leaves all other patterns unchanged
+    !--------Argument--------!
+    CHARACTER (LEN=*), INTENT(IN) :: str
+    CHARACTER (LEN=LEN(str)) :: outstr
+
+    !----------Local vars----------!
+    CHARACTER (LEN=*), parameter :: yeses = 'YyTt'
+    CHARACTER (LEN=*), parameter :: nose = 'NnFf'
+
+    outstr = adjustl(str)
+    if ( index( yeses, outstr(:1)) > 0 ) then
+      outstr = 'yes'
+    elseif ( index( nose, outstr(:1)) > 0 ) then
+      outstr = 'no'
+    else
+      outstr = str
+    endif
+    return
+  end function Advance_is_yes_or_no
+
   subroutine BLANKS ( N_BLANKS, ADVANCE )
   ! Output N_BLANKS blanks to PRUNIT.
     integer, intent(in) :: N_BLANKS
@@ -43,6 +66,7 @@ contains
     character(len=3) :: MY_ADV
     my_adv = 'no'
     if ( present(advance) ) then; my_adv = advance; end if
+    my_adv = Advance_is_yes_or_no(my_adv)
     n = n_blanks
     adv = 'no'
     do
@@ -63,6 +87,7 @@ contains
     character(len=3) :: MY_ADV
     my_adv = 'no'
     if ( present(advance) ) then; my_adv = advance; end if
+    my_adv = Advance_is_yes_or_no(my_adv)
     if ( prunit == -1 .or. prunit < -2 ) &
       & write ( *, '(a)', advance=my_adv ) chars
     if ( prunit < -1 ) then
@@ -81,11 +106,15 @@ contains
     character(len=*), intent(in) :: CHARS(:)
     character(len=*), intent(in), optional :: ADVANCE
     integer :: I ! loop inductor
+    character(len=3) :: MY_ADV
+    my_adv = 'no'
+    if ( present(advance) ) then; my_adv = advance; end if
+    my_adv = Advance_is_yes_or_no(my_adv)
     do i = 1, size(chars)
       call output ( chars(i) )
     end do
     if ( present(advance) ) then
-      call output ( '', advance=advance )
+      call output ( '', advance=my_adv )
     end if
   end subroutine OUTPUT_CHAR_ARRAY
 
@@ -103,6 +132,7 @@ contains
 
     my_adv = 'no'
     if ( present(advance) ) then; my_adv = advance; end if
+    my_adv = Advance_is_yes_or_no(my_adv)
     char_by_char = .not. (present(Format) .and. present(LogFormat))
 
    ! No optional formats: use default char-by-char accretion
@@ -173,6 +203,10 @@ contains
     integer :: I, J
     character(len=12) :: LINE
     integer :: MY_PLACES
+    character(len=3) :: MY_ADV
+    my_adv = 'no'
+    if ( present(advance) ) then; my_adv = advance; end if
+    my_adv = Advance_is_yes_or_no(my_adv)
     my_places = 0
     if ( present(places) ) then; my_places = places; end if
     my_fill = .false.
@@ -191,7 +225,7 @@ contains
       i = max( 1, min(len(line)+1-my_places, index(line,' ',back=.true.)+1) )
       j = len(line)
     end if
-    call output ( line(i:j), advance=advance )
+    call output ( line(i:j), advance=my_adv )
     return
   end subroutine OUTPUT_INTEGER
 
@@ -201,17 +235,21 @@ contains
     character(len=*), intent(in), optional :: ADVANCE
     character(len=*), intent(in), optional :: FORMAT
     integer :: I ! loop inductor
+    character(len=3) :: MY_ADV
+    my_adv = 'no'
+    if ( present(advance) ) then; my_adv = advance; end if
+    my_adv = Advance_is_yes_or_no(my_adv)
     do i = 1, size(integers)
       call output ( integers(i), advance='no', format=format )
       call blanks ( 3, advance='no' )
     end do
     if ( present(advance) ) then
       if ( prunit == -1 .or. prunit < -2 ) &
-        & write ( *, '(a)', advance=advance )
+        & write ( *, '(a)', advance=my_adv )
       if ( prunit < -1 ) &
-        & call MLSMessage ( MLSMSG_Level, ModuleName, '', advance=advance )
+        & call MLSMessage ( MLSMSG_Level, ModuleName, '', advance=my_adv )
       if ( prunit >= 0 ) &
-        & write ( prunit, '(a)', advance=advance )
+        & write ( prunit, '(a)', advance=my_adv )
     end if
   end subroutine OUTPUT_INTEGER_ARRAY
 
@@ -220,12 +258,16 @@ contains
     logical, intent(in) :: LOG
     character(len=*), intent(in), optional :: ADVANCE
     character(len=2) :: LINE
+    character(len=3) :: MY_ADV
+    my_adv = 'no'
+    if ( present(advance) ) then; my_adv = advance; end if
+    my_adv = Advance_is_yes_or_no(my_adv)
     if (log) then
       line=' T'
     else
       line=' F'
     end if
-    call output ( line, advance=advance )
+    call output ( line, advance=my_adv )
   end subroutine OUTPUT_LOGICAL
 
   subroutine OUTPUT_SINGLE ( VALUE, FORMAT, LogFormat, ADVANCE )
@@ -242,6 +284,7 @@ contains
 
     my_adv = 'no'
     if ( present(advance) ) then; my_adv = advance; end if
+    my_adv = Advance_is_yes_or_no(my_adv)
     char_by_char = .not. (present(Format) .and. present(LogFormat))
 
    ! No optional formats: use default char-by-char accretion
@@ -283,7 +326,7 @@ contains
         write ( prunit, Format, advance=my_adv ) value
       end if
     else
-      call output ( line(:k), advance=advance )
+      call output ( line(:k), advance=my_adv )
     end if
 
     if ( prunit >= -1 ) return
@@ -300,6 +343,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.15  2001/10/08 23:43:28  pwagner
+! Allows wider range of advance(s); my_adv implemented uniforml
+!
 ! Revision 2.14  2001/09/26 02:16:22  vsnyder
 ! Simplify by using output_char internally
 !
