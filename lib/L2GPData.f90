@@ -928,7 +928,7 @@ contains ! =====     Public Procedures     =============================
 
   ! --------------------------------------  OutputL2GP_createFile_hdf  -----
   subroutine OutputL2GP_createFile_hdf (l2gp, L2FileHandle, hdfVersion, &
-    & swathName, fileName, nLevels)
+    & swathName, fileName, nLevels, notUnlimited)
 
   use HDFEOS5, only: HE5_SWdetach, &
     & HE5S_UNLIMITED_F, &
@@ -945,7 +945,8 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: hdfVersion
     character (LEN=*), optional, intent(IN) :: swathName ! Defaults to l2gp%swathName
     character (LEN=*), optional, intent(IN) :: fileName
-    integer,optional::nLevels
+    integer, optional, intent(in) :: nLevels
+    logical, optional, intent(in) :: notUnlimited
     ! Parameters
 
     character (len=*), parameter :: DIM_ERR = 'Failed to define dimension '
@@ -957,6 +958,7 @@ contains ! =====     Public Procedures     =============================
 
     character (len=480) :: MSR
     character (len=132) :: NAME   ! From l2gp%name
+    character (len=32) :: MYDIM1, MYDIM12, MYDIM123
 
     ! THESE ARE HDF5 CHUNKS, _NOT_ MLS ALONG-TRACK PROCESSING CHUNKS 
     integer,dimension(7)::CHUNK_DIMS
@@ -964,6 +966,7 @@ contains ! =====     Public Procedures     =============================
     integer::CHUNKTIMES,CHUNKFREQS,CHUNKLEVELS
 
     integer :: SWID, STATUS
+    logical :: myNotUnlimited
     ! integer, external :: he5_swsetfill
 
     if (present(swathName)) then
@@ -971,13 +974,21 @@ contains ! =====     Public Procedures     =============================
     else
        name=l2gp%name
     endif
-    chunktimes=120      ! was 1
-    chunkfreqs=1 ! better as nFreqs, but I have yet to see a case with nfreqs>1
+    myNotUnlimited = .false.
+    if ( present ( notUnlimited ) ) myNotUnlimited = notUnlimited
+    
+    ! Work out the chunking
+    if ( myNotUnlimited ) then
+      chunkTimes = max ( min ( 120, l2gp%nTimes ), 1 )
+    else
+      chunktimes = 120      ! was 1
+    endif
+    chunkfreqs = max ( l2gp%nFreqs, 1)
     if(present(nLevels))then
        chunklevels = nLevels
     else
-       chunklevels = min(l2gp%nLevels, 500)     ! was .., 5)
-       chunklevels = max(chunklevels, 1)
+      chunklevels = min(l2gp%nLevels, 500)     ! was .., 5)
+      chunklevels = max(chunklevels, 1)
     endif
     
     ! Create the swath within the file
@@ -995,12 +1006,22 @@ contains ! =====     Public Procedures     =============================
 
     ! Define dimensions
 
-    if ( hdfVersion == HDFVERSION_5 ) then
+    if ( hdfVersion == HDFVERSION_5 .and. .not. myNotUnlimited ) then
       ! Defining special "unlimited dimension called UNLIM
       ! print*,"Defined Unlim with size", HE5S_UNLIMITED_f
       ! status = HE5_SWdefdim(swid, UNLIM, HE5S_UNLIMITED_F)
       status = mls_swdefdim(swid, UNLIM, HE5S_UNLIMITED_F, &
         & hdfVersion=hdfVersion)
+    endif
+
+    if ( myNotUnlimited ) then
+      myDim1 = DIM_NAME1
+      myDim12 = DIM_NAME12
+      myDim123 = DIM_NAME123
+    else
+      myDim1 = MAX_DIML1
+      myDim12 = MAX_DIML12
+      myDim123 = MAX_DIML123
     endif
 
     status = mls_swdefdim(swid, 'nTimes', max(l2gp%nTimes,1), &
@@ -1021,35 +1042,35 @@ contains ! =====     Public Procedures     =============================
     chunk_rank=1
     chunk_dims=1
     chunk_dims(1)=CHUNKTIMES
-    status = mls_gfldsetup(swid, 'Latitude', 'nTimes', MAX_DIML1, &
+    status = mls_gfldsetup(swid, 'Latitude', 'nTimes', MYDIM1, &
       & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
       & hdfVersion=hdfVersion)
 
-    status = mls_gfldsetup(swid, 'Longitude', 'nTimes', MAX_DIML1, &
+    status = mls_gfldsetup(swid, 'Longitude', 'nTimes', MYDIM1, &
       & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
       & hdfVersion=hdfVersion)
 
-    status = mls_gfldsetup(swid, 'Time', 'nTimes', MAX_DIML1, &
+    status = mls_gfldsetup(swid, 'Time', 'nTimes', MYDIM1, &
       & DFNT_FLOAT64, HDFE_NOMERGE, chunk_rank, chunk_dims, &
       & hdfVersion=hdfVersion)
 
-    status = mls_gfldsetup(swid, 'LocalSolarTime', 'nTimes', MAX_DIML1, &
+    status = mls_gfldsetup(swid, 'LocalSolarTime', 'nTimes', MYDIM1, &
       & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
       & hdfVersion=hdfVersion)
 
-    status = mls_gfldsetup(swid, 'SolarZenithAngle', 'nTimes', MAX_DIML1, &
+    status = mls_gfldsetup(swid, 'SolarZenithAngle', 'nTimes', MYDIM1, &
       & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
       & hdfVersion=hdfVersion)
 
-    status = mls_gfldsetup(swid, 'LineOfSightAngle', 'nTimes', MAX_DIML1, &
+    status = mls_gfldsetup(swid, 'LineOfSightAngle', 'nTimes', MYDIM1, &
       & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
       & hdfVersion=hdfVersion)
 
-    status = mls_gfldsetup(swid, 'OrbitGeodeticAngle', 'nTimes', MAX_DIML1, &
+    status = mls_gfldsetup(swid, 'OrbitGeodeticAngle', 'nTimes', MYDIM1, &
       & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
       & hdfVersion=hdfVersion)
 
-    status = mls_gfldsetup(swid, 'ChunkNumber', 'nTimes', MAX_DIML1, &
+    status = mls_gfldsetup(swid, 'ChunkNumber', 'nTimes', MYDIM1, &
       & DFNT_INT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
       & hdfVersion=hdfVersion)
 
@@ -1074,12 +1095,12 @@ contains ! =====     Public Procedures     =============================
        chunk_dims(1:3)=(/ CHUNKFREQS,CHUNKLEVELS,CHUNKTIMES /)
 
       status = mls_dfldsetup(swid, 'L2gpValue', 'nFreqs,nLevels,nTimes', &
-      & MAX_DIML123, &
+      & MYDIM123, &
       & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
       & hdfVersion=hdfVersion)
 
       status = mls_dfldsetup(swid, 'L2gpPrecision', 'nFreqs,nLevels,nTimes', &
-      & MAX_DIML123, &
+      & MYDIM123, &
       & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
       & hdfVersion=hdfVersion)
 
@@ -1088,12 +1109,12 @@ contains ! =====     Public Procedures     =============================
        chunk_dims(1:7)=(/ CHUNKLEVELS,CHUNKTIMES,37,38,39,47,49/)
 
       status = mls_dfldsetup(swid, 'L2gpValue', 'nLevels,nTimes', &
-      & MAX_DIML12, &
+      & MYDIM12, &
       & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
       & hdfVersion=hdfVersion)
 
       status = mls_dfldsetup(swid, 'L2gpPrecision', 'nLevels,nTimes', &
-      & MAX_DIML12, &
+      & MYDIM12, &
       & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
       & hdfVersion=hdfVersion)
 
@@ -1102,12 +1123,12 @@ contains ! =====     Public Procedures     =============================
        chunk_dims(1)=CHUNKTIMES
 
       status = mls_dfldsetup(swid, 'L2gpValue', 'nTimes', &
-      & MAX_DIML1, &
+      & MYDIM1, &
       & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
       & hdfVersion=hdfVersion)
 
       status = mls_dfldsetup(swid, 'L2gpPrecision', 'nTimes', &
-      & MAX_DIML1, &
+      & MYDIM1, &
       & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
       & hdfVersion=hdfVersion)
 
@@ -1116,14 +1137,14 @@ contains ! =====     Public Procedures     =============================
     chunk_rank=1
     chunk_dims(1)=CHUNKTIMES
     status = mls_dfldsetup(swid, 'Status', 'nTimes', &
-    & MAX_DIML1, &
+    & MYDIM1, &
     & DFNT_CHAR8, HDFE_NOMERGE, chunk_rank, chunk_dims, &
     & hdfVersion=hdfVersion)
 
     chunk_rank=1
     chunk_dims(1)=CHUNKTIMES
     status = mls_dfldsetup(swid, 'Quality', 'nTimes', &
-    & MAX_DIML1, &
+    & MYDIM1, &
     & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
     & hdfVersion=hdfVersion)
 
@@ -1782,13 +1803,16 @@ contains ! =====     Public Procedures     =============================
       ! if ( present(TotNumProfs) ) l2gp%nTimes = TotNumProfs
       select case (myhdfVersion)
       case (HDFVERSION_4)
+        ! Currently force unlimited, remove the .false. .and. to allow limited
         if ( present(TotNumProfs) ) l2gp%nTimes = TotNumProfs
         call OutputL2GP_createFile_hdf (l2gp, L2FileHandle, myhdfVersion, &
-          & myswathName, filename)
+          & myswathName, filename, notUnlimited=.false. .and. present(totNumProfs))
         l2gp%nTimes = actual_ntimes
       case (HDFVERSION_5)
+        ! Currently force unlimited, remove the .false. .and. to allow limited
+        ! if ( present(TotNumProfs) ) l2gp%nTimes = TotNumProfs
         call OutputL2GP_createFile_hdf (l2gp, L2FileHandle, myhdfVersion, &
-          & myswathName, filename)
+          & myswathName, filename, notUnlimited=.false. .and. present(totNumProfs))
       case default
         call MLSMessage ( MLSMSG_Error, ModuleName, &
          & 'Illegal hdf version in AppendL2GPData_fileName')
@@ -1888,7 +1912,7 @@ contains ! =====     Public Procedures     =============================
       call MLSMessage ( MLSMSG_Error, ModuleName, &
        & "Unable to open L2gp file: " // trim(FileName) // ' for appending')
     call AppendL2GPData_fileID(l2gp, L2FileHandle, swathname, &
-      & FileName, offset, hdfVersion=the_hdfVersion)
+      & FileName, offset, totNumProfs=totNumProfs, hdfVersion=the_hdfVersion)
     status = mls_io_gen_closeF('swclose', L2FileHandle, FileName=FileName, &
       & hdfVersion=the_hdfVersion)
     if ( status /= 0 ) &
@@ -2066,6 +2090,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.84  2003/11/05 21:44:38  pwagner
+! Skips trying to read 4 mls-specific fields from non-mls files
+!
 ! Revision 2.83  2003/10/31 12:35:57  hcp
 ! HCP made some small fixes to AppendL2GPData_fileID so that it doesn't
 ! crash if optional arg TotNumProfs is not present
