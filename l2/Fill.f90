@@ -646,8 +646,7 @@ contains ! =====     Public Procedures     =============================
 
     do instance = 1, quantity%template%noInstances
       if (.not. quantity%template%stacked) instIndex=instance
-      print*,'Doing instance:',instance,instIndex
-      
+
       do surf = 1, quantity%template%noSurfs
         if (.not. quantity%template%coherent) surfIndex=surf
         call l3ascii_interp_field(grid, quantity%values(surf,instance), &
@@ -857,11 +856,9 @@ contains ! =====     Public Procedures     =============================
       end if
       call GetBasisGPH(temperatureQuantity, refGPHQuantity, quantity%values)
     case (l_ptan)
-      if ( (quantity%template%noInstances /= &
-        &   temperatureQuantity%template%noInstances) .or. &
-        &  (quantity%template%noInstances /= &
+      if ( (temperatureQuantity%template%noInstances /= &
         &   refGPHquantity%template%noInstances) .or. &
-        &  (quantity%template%noInstances /= &
+        &  (temperatureQuantity%template%noInstances /= &
         &   h2oQuantity%template%noInstances) ) then
         call Announce_Error ( key, nonConformingHydrostatic, &
         & "case l_ptan failed first test")
@@ -1536,6 +1533,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.41  2001/04/23 23:26:05  livesey
+! Removed some unnecessary logic
+!
 ! Revision 2.40  2001/04/20 17:12:24  livesey
 ! Add fill from l2gp
 !
