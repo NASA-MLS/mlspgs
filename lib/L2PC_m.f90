@@ -14,7 +14,8 @@ module L2PC_m
   use Intrinsic, only: Lit_Indices, L_ZETA, L_NONE, L_VMR, L_RADIANCE, L_PTAN
   use MLSCommon, only: R8
   use VectorsModule, only: assignment(=), DESTROYVECTORINFO, &
-    & VECTORTEMPLATE_T, VECTOR_T, VECTORVALUE_T
+    & VECTORTEMPLATE_T, VECTOR_T, VECTORVALUE_T, CREATEVECTOR, ADDVECTORTODATABASE,&
+    & ADDVECTORTEMPLATETODATABASE, CONSTRUCTVECTORTEMPLATE
   use MatrixModule_1, only: CREATEBLOCK, CREATEEMPTYMATRIX, &
     & DESTROYMATRIX, MATRIX_T, DUMP
   use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
@@ -23,8 +24,8 @@ module L2PC_m
     & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE
   use MLSSignals_m, only: GETSIGNALNAME
   use Parse_Signal_m, only: Parse_Signal
-  use QuantityTemplates, only: QUANTITYTEMPLATE_T
-  use String_Table, only: GET_STRING, DISPLAY_STRING
+  use QuantityTemplates, only: ADDQUANTITYTEMPLATETODATABASE, QUANTITYTEMPLATE_T
+  use String_Table, only: GET_STRING
   use Symbol_Table, only: ENTER_TERMINAL
   use Symbol_Types, only: T_IDENTIFIER
   use Tree, only: DECORATION
@@ -35,20 +36,16 @@ module L2PC_m
   public :: AddL2PCToDatabase, DestroyL2PC, DestroyL2PCDatabase, WriteOneL2PC
   public :: Open_l2pc_file, read_l2pc_file, close_l2pc_file
 
-  ! Public types
-  type, public :: l2pc_T
-    logical :: readFromFile=.false.     ! See below
-    type (Vector_T) :: xStar            ! The linearisation x
-    type (Vector_T) :: yStar            ! The corresponding y
-    type (Matrix_T) :: kStar            ! The jacobian matrix
-  end type l2pc_T
-  ! The read from file stuff is needed, because if it was created by hand the
-  ! software will deallocate all the arrays associated with xStar, yStar and
-  ! kStar when destory vectors etc. are called.  If on the other hand it was
-  ! read from a file, we'll have to destroy these ourselves
+  ! This is the third attempt to do this.  An l2pc is simply a Matrix_T.
+  ! As this contains pointers to vector_T's and so on, I maintain a private
+  ! set of databases of these in this module.  We can't use the main databases,
+  ! as these would get destroyed at the end of each chunk.
 
-  ! The l2pc database
-  type(l2pc_T), dimension(:), pointer, public :: L2PCDatabase => NULL()
+  ! The l2pc database and supporting databases
+  type(QuantityTemplate_T), dimension(:), pointer, save :: L2PCQTS => NULL()
+  type(VectorTemplate_T), dimension(:), pointer, save :: L2PCVTS => NULL()
+  type(Vector_T), dimension(:), pointer, save :: L2PCVS => NULL()
+  type(Matrix_T), dimension(:), pointer, public, save :: L2PCDatabase => NULL()
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -67,7 +64,7 @@ contains ! ============= Public Procedures ==========================
     ! some kind of HDF file
 
     ! Dummy arguments
-    type (l2pc_T), intent(in), target :: L2pc
+    type (matrix_T), intent(in), target :: L2pc
     integer, intent(in) :: Unit
 
     ! Local parameters
@@ -95,10 +92,10 @@ contains ! ============= Public Procedures ==========================
       ! Identify vector
       if ( vector == 1 ) then
         write (unit,*) 'xStar'
-        v => l2pc%xStar
+        v => l2pc%col%vec
       else
         write (unit,*) 'yStar'
-        v => l2pc%yStar
+        v => l2pc%row%vec
       end if
 
       write (unit,*) size(v%quantities)
@@ -134,30 +131,33 @@ contains ! ============= Public Procedures ==========================
         write (unit,*) 'phi'
         write (unit, rFmt) qt%phi
 
-        ! Write the values
-        write (unit,*) 'values'
-        write (unit,rFmt) v%quantities(quantity)%values
+      end do                            ! First loop over quantities
 
-      end do                            ! Loop over quantities
+      ! Now do a second loop and write the values
+      do quantity = 1, size(v%quantities)
+        write (unit,*) 'values', quantity
+        write (unit,rFmt) v%quantities(quantity)%values
+      end do                            ! Second loop over quantities
+
     end do                              ! Loop over xStar/yStar
 
     ! Now dump kStar
     write (unit,*) 'kStar'
-    write (unit,*) l2pc%kStar%row%instFirst, l2pc%kStar%col%instFirst, 'Instances first'
-    do blockRow = 1, l2pc%kStar%row%NB
-      do blockCol = 1, l2pc%kStar%col%NB
+    write (unit,*) l2pc%row%instFirst, l2pc%col%instFirst, 'Instances first'
+    do blockRow = 1, l2pc%row%NB
+      do blockCol = 1, l2pc%col%NB
         ! Print the type of the matrix
-        m0 => l2pc%kStar%block(blockRow, blockCol)
+        m0 => l2pc%block(blockRow, blockCol)
         write (unit,*) blockRow, blockCol, m0%kind,&
           & 'row, col, kind'
         call get_string ( &
-          & l2pc%kStar%row%vec%quantities(&
-          &    l2pc%kStar%row%quant(blockRow))%template%name, word1 )
+          & l2pc%row%vec%quantities(&
+          &    l2pc%row%quant(blockRow))%template%name, word1 )
         call get_string ( &
-          & l2pc%kStar%col%vec%quantities(&
-          &    l2pc%kStar%col%quant(blockCol))%template%name, word2 )
-        write (unit,*) trim(word1), l2pc%kStar%row%inst(blockRow), ' , ',&
-          &            trim(word2), l2pc%kStar%col%inst(blockCol)
+          & l2pc%col%vec%quantities(&
+          &    l2pc%col%quant(blockCol))%template%name, word2 )
+        write (unit,*) trim(word1), l2pc%row%inst(blockRow), ' , ',&
+          &            trim(word2), l2pc%col%inst(blockCol)
         select case (m0%kind)
         case (M_Absent)
         case (M_Banded, M_Column_sparse)
@@ -183,7 +183,7 @@ contains ! ============= Public Procedures ==========================
     ! some kind of HDF file
 
     ! Dummy arguments
-    type (l2pc_T), intent(out), target :: L2pc
+    type (Matrix_T), intent(out), target :: L2pc
     integer, intent(in) :: Unit
     logical, intent(inout) :: Eof
 
@@ -191,152 +191,42 @@ contains ! ============= Public Procedures ==========================
     integer :: BLOCKCOL                 ! Index
     integer :: BLOCKKIND                ! Kind of matrix block
     integer :: BLOCKROW                 ! Index
-    integer :: INSTANCE                 ! Loop counter
-    integer :: NOINSTANCESOR1           ! For allocates
-    integer :: NOSURFSOR1               ! For allocates
-    integer :: NOQUANTITIES             ! Number of quantities in a vector
     integer :: NOVALUES                 ! For banded/sparse matrices
-    integer :: QUANTITY                 ! Loop counter
-    integer :: SIDEBAND                 ! From parse signal
-    integer :: STATUS                   ! Flag
-    integer :: STRINGINDEX              ! Index of string
     integer :: TESTBLOCKROW             ! Test index
     integer :: TESTBLOCKCOL             ! Test index
-    integer :: VECTOR                   ! Loop counter
 
-    integer, dimension(:), pointer :: SIGINDS ! Result of parse signal
+    integer :: I                        ! Test inex
 
     logical :: COLINSTFIRST             ! Matrix order
     logical :: ROWINSTFIRST             ! Matrix order
 
     character (len=132) :: Line         ! Line of text
 
-    type (Decls) :: Decl                ! From the declaration table
     type (MatrixElement_T), pointer :: M0 ! A Matrix0 within kStar
-    type (QuantityTemplate_T), pointer :: Qt  ! Temporary pointers
-    type (VectorValue_T), pointer :: Vv ! Temporary pointer
-    type (Vector_T), pointer :: V       ! Temporary pointer
+    integer :: XSTAR                    ! Linearisation state vector index
+    integer :: YSTAR                    ! Radiances for xStar vector index
+
+    type (QuantityTemplate_T), pointer :: TMP
 
     ! executable code
 
-    nullify ( sigInds )
-    l2pc%readFromFile = .true.
-
     ! First read the xStar and yStar
-    do vector = 1, 2
-      ! Identify vector
-      if ( vector == 1 ) then
-        read (unit,*, IOSTAT=status) line              ! Comment line
-        if (status == -1 ) then
-          eof = .true.
-          return
-        end if
-        v => l2pc%xStar
-      else
-        read (unit,*) line              ! Comment line
-        v => l2pc%yStar
-      end if
+    call ReadOneVector ( unit, xStar, eof )
+    if ( eof ) return
 
-      ! Note we fill this later
-
-      read (unit,*) noQuantities
-      allocate (v%quantities(noQuantities), STAT=status)
-      if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName,&
-        & MLSMSG_Allocate//"v%quantities")
-
-      ! Loop over quantities
-      do quantity = 1, noQuantities
-
-        ! Create a template for this quantity
-        allocate (v%quantities(quantity)%template, STAT=status)
-        if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName,&
-          & MLSMSG_Allocate//"v%quantities(:)%template")
-        vv => v%quantities(quantity)
-        qt => vv%template
-
-        ! Read quantity type
-        read (unit,*) line
-        stringIndex = enter_terminal ( trim(line), t_identifier )
-        decl = get_decl ( stringIndex, type=enum_value )
-        qt%quantityType = decl%units
-        qt%name = decl%units
-
-        ! Write other info associated with type
-        select case ( qt%quantityType )
-        case (l_vmr)
-          read (unit,*) line
-          stringIndex = enter_terminal ( trim(line), t_identifier )
-          decl = get_decl ( stringIndex, type=enum_value )
-          qt%molecule = decl%units
-          qt%name = decl%units
-        case (l_radiance)
-          read (unit,*) line
-          call Parse_Signal (line, sigInds, sideband=sideband)
-          qt%signal = sigInds(1)
-          qt%sideband = sideband
-          call deallocate_test(sigInds,'sigInds',ModuleName)
-        case default
-        end select
-
-        ! Next read the dimensions for the quantity
-        read (unit,*) qt%noChans, qt%noSurfs, qt%noInstances
-        qt%instanceLen = qt%noChans* qt%noSurfs
-        read (unit,*) qt%coherent, qt%stacked
-
-        if (qt%coherent) then
-          noInstancesOr1 = 1
-        else
-          noInstancesOr1 = qt%noInstances
-        endif
-        if (qt%stacked) then
-          noSurfsOr1 = 1
-        else
-          noSurfsOr1 = qt%noSurfs
-        endif
-
-        call Allocate_test( qt%surfs, qt%noSurfs, noInstancesOr1, 'qt%surfs', ModuleName)
-        call Allocate_test( qt%phi, noSurfsOr1, qt%noInstances, 'qt%phi', ModuleName)
-        call Allocate_test( vv%values, qt%instanceLen, qt%noInstances,&
-          & 'vv%values', ModuleName )
-
-        read (unit,*) line              ! Line saying surfs
-        read (unit,*) qt%surfs
-        read (unit,*) line              ! Line saying phi
-        read (unit,*) qt%phi
-
-        ! Read the values
-        read (unit,*) line              ! Line saying values
-        read (unit,*) vv%values
-
-      end do                            ! Loop over quantities
-
-      ! Create a dummy template for this vector
-      allocate (v%template, STAT=status)
-      if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName,&
-        & MLSMSG_Allocate//"v%template")
-      v%template%noQuantities = noQuantities
-      v%template%totalInstances = 0
-      v%template%totalElements = 0
-      do quantity = 1, noQuantities
-        v%template%totalInstances = v%template%totalInstances + &
-          & v%quantities(quantity)%template%noInstances
-        v%template%totalElements = v%template%totalElements + &
-          & v%quantities(quantity)%template%noInstances * &
-          & v%quantities(quantity)%template%instanceLen
-      end do
-      ! Ignore the quantities stuff for the moment.
-      ! If later versions need it we'll put something here
-    end do                              ! Loop over xStar/yStar
+    call ReadOneVector ( unit, yStar, eof )
+    if ( eof ) return
 
     ! Now read kStar
     read (unit,*) line                  ! Line saying kStar
     read (unit,*) rowInstFirst, colInstFirst ! Flags
-    call CreateEmptyMatrix ( l2pc%kStar, 0, l2pc%yStar, l2pc%xStar,&
+    call CreateEmptyMatrix ( l2pc, 0, l2pcVs(yStar), l2pcVs(xStar), &
       & row_quan_first = .not. rowInstFirst,&
       & col_quan_first = .not. colInstFirst )
+
     ! Loop over blocks and read them
-    do blockRow = 1, l2pc%kStar%row%NB
-      do blockCol = 1, l2pc%kStar%col%NB
+    do blockRow = 1, l2pc%row%NB
+      do blockCol = 1, l2pc%col%NB
         ! Read the type of the matrix and a set of test indices
         read (unit,*) testBlockRow, testBlockCol, blockKind
         if (testBlockRow /= blockRow) call MLSMessage(MLSMSG_Error,ModuleName,&
@@ -346,10 +236,11 @@ contains ! ============= Public Procedures ==========================
         read (unit,*) line              ! String giving info, we can ignore.
         select case (blockKind)
         case (M_Absent)
+          call CreateBlock ( l2pc, blockRow, blockCol, blockKind )
         case (M_Banded, M_Column_sparse)
           read (unit,*) noValues
-          call CreateBlock ( l2pc%kStar, blockRow, blockCol, blockKind, noValues )
-          m0 => l2pc%kStar%block ( blockRow, blockCol )
+          call CreateBlock ( l2pc, blockRow, blockCol, blockKind, noValues )
+          m0 => l2pc%block ( blockRow, blockCol )
           read (unit,*) line ! 'R1'
           read (unit,*) m0%R1
           read (unit,*) line ! 'R2'
@@ -357,14 +248,135 @@ contains ! ============= Public Procedures ==========================
           read (unit,*) line ! 'values'
           read (unit,*) m0%values
         case (M_Full)
-          call CreateBlock ( l2pc%kStar, blockRow, blockCol, blockKind )
-          m0 => l2pc%kStar%block ( blockRow, blockCol )
+          call CreateBlock ( l2pc, blockRow, blockCol, blockKind )
+          m0 => l2pc%block ( blockRow, blockCol )
           read (unit,*) m0%values
         end select
       end do
     end do
-!    call dump ( l2pc%kStar, details = 2)
   end subroutine ReadOneL2PC
+
+  ! ------------------------------------------ ReadOneVector ----------------
+  subroutine ReadOneVector ( unit, vector, eof )
+    ! Reads a vector from l2pc file and adds it to internal databases. This
+    ! is internal as having it inside the above routine screws up databases.
+    
+    ! Dummy arguments
+    integer, intent(in) :: UNIT         ! File unit
+    integer, intent(out) :: VECTOR      ! Index of Vector read in L2PCVs
+    logical, intent(out) :: EOF         ! Flag
+    
+    ! Local variables
+    integer :: QUANTITY                 ! Loop counter
+    integer :: SIDEBAND                 ! From parse signal
+    integer :: STATUS                   ! Flag
+    integer :: STRINGINDEX              ! Index of string
+    integer :: NOQUANTITIES             ! Number of quantities in a vector
+    integer :: INSTANCE                 ! Loop counter
+    integer :: NOINSTANCESOR1           ! For allocates
+    integer :: NOSURFSOR1               ! For allocates
+    integer :: VTINDEX                  ! Index for this vector template
+    
+    integer, dimension(:), pointer :: SIGINDS ! Result of parse signal
+    integer, dimension(:), pointer :: QTINDS  ! Quantity indices
+    
+    character (len=132) :: Line       ! Line of text
+    
+    type (QuantityTemplate_T) :: QT     ! Temporary quantity template
+    type (VectorTemplate_T) :: VT       ! Temporary template for vector
+    type (Vector_T) :: V                ! Temporary vector
+    type (Decls) :: Decl                ! From tree
+    
+    ! Executable code
+    
+    eof = .false. 
+    nullify ( sigInds, qtInds )
+    
+    read (unit,*, IOSTAT=status) line
+    if (status == -1 ) then
+      eof = .true.
+      return
+    end if
+    
+    ! Note we fill this later
+    read (unit,*) noQuantities
+    call allocate_test ( qtInds, noQuantities, 'qtInds', ModuleName )
+    
+    ! Loop over quantities
+    do quantity = 1, noQuantities
+      
+      ! Nullify stuff so we don't clobber arrays now in databases
+      nullify ( qt%surfs, qt%phi )
+      
+      ! Read quantity type
+      read (unit,*) line
+      stringIndex = enter_terminal ( trim(line), t_identifier )
+      decl = get_decl ( stringIndex, type=enum_value )
+      qt%quantityType = decl%units
+      qt%name = stringIndex
+
+      ! Read other info associated with type
+      select case ( qt%quantityType )
+      case (l_vmr)
+        read (unit,*) line
+        stringIndex = enter_terminal ( trim(line), t_identifier )
+        decl = get_decl ( stringIndex, type=enum_value )
+        qt%molecule = decl%units
+        qt%name = stringIndex
+      case (l_radiance)
+        read (unit,*) line
+        call Parse_Signal (line, sigInds, sideband=sideband)
+        qt%signal = sigInds(1)
+        qt%sideband = sideband
+        call deallocate_test(sigInds,'sigInds',ModuleName)
+      case default
+      end select
+      
+      ! Next read the dimensions for the quantity
+      read (unit,*) qt%noChans, qt%noSurfs, qt%noInstances
+      qt%instanceLen = qt%noChans* qt%noSurfs
+      read (unit,*) qt%coherent, qt%stacked
+      
+      if (qt%coherent) then
+        noInstancesOr1 = 1
+      else
+        noInstancesOr1 = qt%noInstances
+      endif
+      if (qt%stacked) then
+        noSurfsOr1 = 1
+      else
+        noSurfsOr1 = qt%noSurfs
+      endif
+      
+      call Allocate_test( qt%surfs, qt%noSurfs, noInstancesOr1, 'qt%surfs', ModuleName)
+      call Allocate_test( qt%phi, noSurfsOr1, qt%noInstances, 'qt%phi', ModuleName)
+      
+      read (unit,*) line              ! Line saying surfs
+      read (unit,*) qt%surfs
+      read (unit,*) line              ! Line saying phi
+      read (unit,*) qt%phi
+      
+      ! Now add this template to our private database
+      qtInds(quantity) = AddQuantityTemplateToDatabase ( l2pcQTs, qt )
+      
+    end do                            ! First Loop over quantities
+    
+    ! Now create a vector template with these quantities
+    call ConstructVectorTemplate ( 0, l2pcQTs, qtInds, vt )
+    vtIndex = AddVectorTemplateToDatabase ( l2pcVTs, vt )
+    
+    call deallocate_test ( qtInds, 'qtInds', ModuleName )
+    
+    ! Now create a vector for this vector template
+    v = CreateVector ( 0, l2pcVTs(vtIndex), l2pcQTs )
+    vector = AddVectorToDatabase ( l2pcVs, v )
+    
+    ! Now go through the quantities again and read the values
+    do quantity = 1, noQuantities
+      read (unit,*) line              ! Just a comment line
+      read (unit,*) l2pcVs(vector)%quantities(quantity)%values
+    end do
+  end subroutine ReadOneVector
 
   ! ------------------------------------ open_l2pc_file ------------
   subroutine Open_L2PC_File ( Filename, Lun )
@@ -401,40 +413,17 @@ contains ! ============= Public Procedures ==========================
     integer, intent(in) :: lun
 
     ! Local variables
-    type (l2pc_T) :: L2pc
+    type (Matrix_T) :: L2pc
     integer :: Dummy
     logical :: Eof
-
-    type (VectorTemplate_T), pointer :: tmpX, tmpY
 
     ! Executable code
     if ( toggle (gen) ) call trace_begin ( "Read_l2pc_file" )
     eof = .false.
     do while (.not. eof )
       call ReadOneL2PC ( l2pc, lun, eof )
-      if (.not. eof) then
-        tmpX => l2pc%xStar%template
-        tmpY => l2pc%yStar%template
-        print*,'Testing after read:',&
-          & associated(l2pc%xStar%template, l2pc%kStar%col%vec%template), &
-          & associated(l2pc%yStar%template, l2pc%kStar%row%vec%template)
-        dummy = AddL2PCToDatabase ( l2pcDatabase, l2pc )
-      end if
+      if (.not. eof) dummy = AddL2PCToDatabase ( l2pcDatabase, l2pc )
     end do
-    print*,'Testing after add:',size(l2pcDatabase), &
-      & associated(l2pcDatabase(1)%xStar%template, l2pcDatabase(1)%kStar%col%vec%template), &
-      & associated(l2pcDatabase(1)%yStar%template, l2pcDatabase(1)%kStar%row%vec%template)
-    print*,'Also:', &
-      & associated(l2pcDatabase(1)%xStar%template, tmpX), &
-      & associated(l2pcDatabase(1)%yStar%template, tmpY)
-    print*,'And further more:', &
-      & associated(l2pcDatabase(1)%kStar%col%vec%template), &
-      & associated(l2pcDatabase(1)%kStar%row%vec%template)
-    l2pcDatabase(1)%kStar%col%vec%template => tmpX
-    l2pcDatabase(1)%kStar%row%vec%template => tmpY
-    print*,'But having fixed it:',size(l2pcDatabase), &
-      & associated(l2pcDatabase(1)%xStar%template, l2pcDatabase(1)%kStar%col%vec%template), &
-      & associated(l2pcDatabase(1)%yStar%template, l2pcDatabase(1)%kStar%row%vec%template)
 
     if ( toggle (gen) ) call trace_end ( "Read_l2pc_file" )
   end subroutine Read_l2pc_file
@@ -444,11 +433,11 @@ contains ! ============= Public Procedures ==========================
     
     ! This function simply adds an l2pc  to a database of said l2pc s.
     
-    type(l2pc_T), dimension(:), pointer :: Database
-    type(l2pc_T) :: Item
+    type(Matrix_T), dimension(:), pointer :: Database
+    type(Matrix_T) :: Item
     
-    type(l2pc_T), dimension(:), pointer :: TempDatabase
-    
+    type(Matrix_T), dimension(:), pointer :: TempDatabase
+
     include "addItemToDatabase.f9h"
 
     AddL2PCToDatabase = newSize
@@ -457,7 +446,7 @@ contains ! ============= Public Procedures ==========================
   ! ----------------------------------------------- DestroyL2PC ----
   subroutine DestroyL2PC ( l2pc )
     ! Dummy arguments
-    type (l2pc_T), intent(inout), target :: L2PC
+    type (Matrix_T), intent(inout), target :: L2PC
 
     integer :: QUANTITY                 ! Loop index
     integer :: VECTOR                   ! Loop index
@@ -466,32 +455,26 @@ contains ! ============= Public Procedures ==========================
     type (Vector_T), pointer :: V       ! Temporary pointer
 
     ! Exectuable code
-    ! If this wasn't created from a file we don't have to do anything,
-    ! as the main program will call destroy vector info etc.
-    ! if we did read it from a file, we need to do a bit of work but not much
-    if ( l2pc%readFromFile ) then
-      do vector = 1, 2
-        if ( vector == 1 ) then
-          v => l2pc%xStar
-        else
-          v => l2pc%yStar
-        end if
-        
-        do quantity = 1, size(v%quantities)
-          qt => v%quantities(quantity)%template
-          call deallocate_test (qt%surfs, 'qt%surfs', ModuleName)
-          call deallocate_test (qt%phi, 'qt%phi', ModuleName)
-          call deallocate_test (v%quantities(quantity)%values, 'q%values',&
-            & ModuleName)
-        end do
-        deallocate (v%template)
-        deallocate (v%quantities)
-      end do
+    do vector = 1, 2
+      if ( vector == 1 ) then
+        v => l2pc%col%vec
+      else
+        v => l2pc%row%vec
+      end if
       
-      ! Destory kStar
-      call DestroyMatrix ( l2pc%kStar)
-
-    end if
+      do quantity = 1, size(v%quantities)
+        qt => v%quantities(quantity)%template
+        call deallocate_test (qt%surfs, 'qt%surfs', ModuleName)
+        call deallocate_test (qt%phi, 'qt%phi', ModuleName)
+        call deallocate_test (v%quantities(quantity)%values, 'q%values',&
+          & ModuleName)
+      end do
+      deallocate (v%quantities)
+    end do
+    
+    ! Destory kStar
+    call DestroyMatrix ( l2pc )
+    
   end subroutine DestroyL2PC
 
   ! ------------------------------------------- DestroyL2PCDatabase ---
@@ -513,6 +496,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.15  2001/04/28 01:26:50  livesey
+! This one seems to work!
+!
 ! Revision 2.14  2001/04/27 17:36:33  livesey
 ! An interim version
 !
