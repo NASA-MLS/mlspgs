@@ -22,6 +22,7 @@ module ForwardModelConfig
   end interface Dump
 
   public :: AddForwardModelConfigToDatabase, DestroyFWMConfigDatabase, Dump
+  public :: NullifyForwardModelConfig
   public :: StripForwardModelConfigDatabase, PVMPackFWMConfig, PVMUnpackFWMConfig
 
   ! Public Types:
@@ -352,6 +353,20 @@ contains
 
   end subroutine PVMUnpackFWMConfig
 
+  ! ------------------------------------ NullifyForwardModelConfig -----
+  subroutine NullifyForwardModelConfig ( F )
+    ! Given a forward model config, nullify all the pointers associated with it
+    type ( ForwardModelConfig_T ), intent(out) :: F
+
+    ! Executable code
+    nullify ( f%molecules )
+    nullify ( f%moleculeDerivatives )
+    nullify ( f%signals )
+    nullify ( f%integrationGrid )
+    nullify ( f%tangentGrid )
+    nullify ( f%specificQuantities )
+  end subroutine NullifyForwardModelConfig
+
   ! =====     Private Procedures     =====================================
 
   ! ------------------------------------ DestroyOneForwardModelConfig --
@@ -470,6 +485,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.15  2002/11/15 01:32:53  livesey
+! Added allLinesForRadiometer
+!
 ! Revision 2.14  2002/10/08 17:40:01  livesey
 ! Various bug fixes in the pack/unpack routines
 !
