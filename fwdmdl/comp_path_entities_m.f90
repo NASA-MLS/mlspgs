@@ -31,7 +31,7 @@ contains
   !  ---------------------------
   !  Calling sequence variables:
   !  ---------------------------
-  integer, intent(in) :: No_t, N_lvls, Gl_count, PhiWindow, No_mmaf, No_phi_t
+  integer, intent(in) :: no_t, no_phi_t, N_lvls, gl_count, PhiWindow, No_mmaf
   !
   integer, intent(in out) :: No_tan_hts
 
@@ -55,7 +55,7 @@ contains
   !  Local variables:
   !  ----------------
 
-  Integer :: i, k, l, jj, kk, lmin, lmax, klo, khi, ngt, stat
+  Integer :: i, k, l, jj, kk, lmin, lmax, klo, khi, ngt
 
   Real(r8) :: h, q, r, zeta, phi
 
@@ -68,49 +68,37 @@ contains
 ! Compute all the various integration paths according to tangent heights.
 ! Get the z, t, h, phi, dhdz & dh_dt arrays on these paths.
 
-!??? The following isn't needed so long as the entities are allocatable --
-!??? Allocatable entities spring into existence unallocated.
-! deallocate ( zpath, hpath, tpath, ppath, dhdzp, phi_eta, stat=i )
   allocate ( zpath(ngt), hpath(ngt), tpath(ngt), ppath(ngt), dhdzp(ngt), &
-    & stat=ier )
+             & stat=ier )
   if(ier /= 0) then
     print *,'** Allocation Error in comp_path_entities: ?path ...'
     print *,'** Error: ALLOCATION error in MAIN ..'
     print *,'   STAT =',ier
-    return
+    Return
   end if
 
   do l = 1, no_mmaf
+    k = min(no_phi_t,no_mmaf)
     lmin = max(1,l-phiWindow/2)
-    lmax = min(l+phiWindow/2,no_mmaf)
+    lmax = min(l+phiWindow/2,k)
     allocate ( phi_eta(ngt,lmin:lmax), stat=ier )
     print*,'Window:', lmin, lmax
     do k = 1, no_tan_hts
       h = tan_hts(k,l)
-! Zvi's original version
-!       call vert_to_path ( elvar(l), n_lvls, Ng, ngt, gl_count, no_phi_t, &
-!         &  no_t, h, z_glgrid, t_glgrid(1:, lmin:lmax), h_glgrid(1:, lmin:lmax), &
-!         &  dhdz_glgrid(1:, lmin:lmax), t_phi_basis, zpath, hpath, &
-!         &  tpath, ppath, dhdzp, phi_eta, klo, khi, ier )
-! Nathaniels attempt to fix...
       call vert_to_path ( elvar(l), n_lvls, Ng, ngt, gl_count, lmax-lmin+1, &
         & no_t, h, z_glgrid, t_glgrid(1:,lmin:lmax), h_glgrid(1:,lmin:lmax), &
         & dhdz_glgrid(1:,lmin:lmax), t_phi_basis(lmin:lmax), zpath, hpath, &
         & tpath, ppath, dhdzp, phi_eta, klo, khi, ier )
-! OK, what I'm not sure about Zvi is why phi_eta is dimensioned noTanHts,noMAFs
-! and yet needs the lmin:lmax for the second dimension 
-! (it crashes on line 224 of vert_to_path if it doesn't have the
-! same size as h_a). Is phi_eta really dimensioned no_phi_t?
       if(ier /= 0) return
       deallocate ( z_path(k,l)%values, h_path(k,l)%values,   &
         &          t_path(k,l)%values, phi_path(k,l)%values, &
         &          dhdz_path(k,l)%values, eta_phi(k,l)%values, stat=i )
       allocate ( z_path(k,l)%values(khi), h_path(k,l)%values(khi),   &
         &        t_path(k,l)%values(khi), phi_path(k,l)%values(khi), &
-        &        dhdz_path(k,l)%values(khi), stat=stat )
-      if ( stat == 0 ) allocate ( eta_phi(k,l)%values(khi,no_phi_t), stat=stat )
-      if ( stat /= 0 ) then
-        ier = stat
+        &        dhdz_path(k,l)%values(khi), stat=ier )
+      if ( ier == 0 ) allocate ( eta_phi(k,l)%values(khi,lmin:lmax),&
+                                & stat=ier )
+      if ( ier /= 0 ) then
         print *,'** Error: ALLOCATION error in routine: comp_path_entities ..'
         print *,'   STAT =',ier
         return
@@ -122,14 +110,9 @@ contains
       h_path(k,l)%values(1:khi) = hpath(1:khi)
       phi_path(k,l)%values(1:khi) = ppath(1:khi)
       dhdz_path(k,l)%values(1:khi) = dhdzp(1:khi)
-!??? Zvi: At this point, phi_eta(:,lmin:lmax) has been computed by
-!??? vert_to_path.  When lmin>1 or lmax<no_phi_t, the following assignent
-!??? has undefined elements.
-!     eta_phi(k,l)%values(1:khi,1:no_phi_t) = phi_eta(1:khi,1:no_phi_t)
-!??? Van's attempt to repair:
       eta_phi(k,l)%values(1:khi,lmin:lmax) = phi_eta(1:khi,lmin:lmax)
     end do ! k = 1, no_tan_hts
-    deallocate ( phi_eta, stat=stat )
+    deallocate ( phi_eta, stat=i )
   end do ! l = 1, no_mmaf
 
  99  deallocate ( zpath, hpath, tpath, ppath, dhdzp, stat=i )
@@ -140,6 +123,9 @@ end subroutine Comp_Path_Entities
 
 end module Comp_Path_Entities_M
 ! $Log$
+! Revision 1.24  2001/04/13 02:00:55  vsnyder
+! Finish changing phi_eta back to allocatable
+!
 ! Revision 1.23  2001/04/13 02:00:10  vsnyder
 ! Change phi_eta back to allocatable
 !

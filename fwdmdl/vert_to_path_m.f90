@@ -28,7 +28,7 @@ contains
 
 ! *** NOTE: This routine is using The Equivalent Circle concept
 
-  subroutine Vert_To_Path ( Elvar, N_lvls, Ng, Ngt, Gl_count, No_phi_t, No_t, &
+  subroutine Vert_To_Path ( Elvar, N_lvls, Ng, Ngt, gl_count, WinSize, No_t, &
     &  Htan, Z_glgrid, T_glgrid, H_glgrid, Dhdz_glgrid, T_phi_basis, Z_path, &
     &  H_path, T_path, Phi_path, Dhdz_path, Phi_eta, Brkpt, Totnp, Ier )
 
@@ -38,7 +38,7 @@ contains
     !  ---------------------------
     !  calling sequence variables:
     !  ---------------------------
-    integer, intent(in) :: N_lvls, Ng, Gl_count, No_phi_t, No_t, Ngt
+    integer, intent(in) :: N_lvls, Ng, gl_count, WinSize, No_t, Ngt
 
     integer, intent(out) :: Totnp, Brkpt, Ier
 
@@ -61,7 +61,8 @@ contains
 
     integer, pointer, dimension(:) :: cndx=>NULL()
 
-    real(r8), pointer, dimension(:) :: dum_z=>NULL(), dum_h=>NULL(), dum_phi=>NULL()
+    real(r8), pointer, dimension(:) :: dum_z=>NULL(), dum_h=>NULL(),&
+                                       dum_phi=>NULL()
 
     real(r8), pointer, dimension(:,:) :: h_a=>NULL()
 
@@ -76,32 +77,16 @@ contains
     call Allocate_test ( dum_z, ngt, 'dum_z', ModuleName )
     call Allocate_test ( dum_h, ngt, 'dum_h', ModuleName )
     call Allocate_test ( dum_phi, ngt, 'dum_phi', ModuleName )
-    call Allocate_test ( h_a, ngt, no_phi_t, 'h_a', ModuleName )
-!?? print*,'no_phi_t is:',no_phi_t
-
-!     DEALLOCATE(cndx, dum_z, dum_h, dum_phi, STAT=i)
-!      ALLOCATE(cndx(ngt), dum_z(ngt), dum_h(ngt), dum_phi(ngt), &
-!     &         STAT = ier)
-!      if ( ier /= 0 ) then
-!        Ier = 1
-!        Print *,'** Error: ALLOCATION error in VERT_TO_PATH routine ..'
-!        GOTO 99
-!      end if
-!     DEALLOCATE(h_a, STAT=i)
-!      ALLOCATE(h_a(ngt,no_phi_t),STAT=ier)
-!      if ( ier /= 0 ) then
-!        Ier = 1
-!        Print *,'** Error: ALLOCATION error in VERT_TO_PATH routine ..'
-!        GOTO 99
-!      end if
+    call Allocate_test ( h_a, ngt, WinSize, 'h_a', ModuleName )
+!?? print*,'WinSize is:',WinSize
 
 !   Initialize all arrays:
 
     cndx = 0
+    h_a = 0.0
     dum_z = 0.0
     dum_h = 0.0
     dum_phi = 0.0
-    h_a = 0.0
     phi_eta = 0.0
 
     r = -999.99
@@ -135,7 +120,7 @@ contains
 
     npp = 0
     l = gl_count + 1
-    jp = (no_phi_t + 1) / 2
+    jp = (WinSize + 1) / 2
 
     do
       do n = 1, Ngp1
@@ -173,8 +158,8 @@ contains
 
 !    Cast the h_glgrid onto the path (using liner interpolation)
 
-    do m = 1, no_phi_t
-      call lintrp ( z_glgrid, dum_z, h_glgrid(1:,m), h_a(1:,m), gl_count, npp )
+    do m = 1, WinSize
+      call lintrp (z_glgrid, dum_z, h_glgrid(1:,m), h_a(1:,m), gl_count, npp)
     end do
 
     n_d = ngt
@@ -222,8 +207,8 @@ contains
 
       do i = 1, npp
         r = dum_phi(i)
-        do m = 1, no_phi_t
-          call get_one_eta ( r, t_phi_basis, no_phi_t, m, phi_eta(i,m) )
+        do m = 1, WinSize
+          call get_one_eta ( r, t_phi_basis, WinSize, m, phi_eta(i,m) )
         end do
       end do
 
@@ -264,8 +249,8 @@ contains
         if ( j >= ibrk) elvar%ps = 1.0D0
         call H_TO_S_PHI ( elvar, h, s, phi )
         dum_phi(j) = phi
-        do m = 1, no_phi_t
-          call get_one_eta ( dum_phi(j), t_phi_basis, no_phi_t, m, phi_eta(j,m) )
+        do m = 1, WinSize
+          call get_one_eta ( dum_phi(j), t_phi_basis, WinSize, m, phi_eta(j,m) )
         end do
       end do
     end if
@@ -276,7 +261,7 @@ contains
 !   First, compute the path Temperature:
 !   Cast the t_glgrid onto the path (using liner interpolation)
 
-    do m = 1, no_phi_t
+    do m = 1, WinSize
       call lintrp ( z_glgrid, dum_z, t_glgrid(1:,m), h_a(1:,m), gl_count, npp )
     end do
 
@@ -301,28 +286,28 @@ contains
 !   Second, compute the path dh_dz:
 !   Cast the dhdz_glgrid onto the path (using liner interpolation)
 
-    do m = 1, no_phi_t
-      call lintrp ( z_glgrid, dum_z, dhdz_glgrid(1:,m), h_a(1:,m), gl_count, npp )
+    do m = 1, WinSize
+      call lintrp (z_glgrid,dum_z,dhdz_glgrid(1:,m),h_a(1:,m),gl_count,npp)
     end do
 
     do i = 1, npp
       dhdz_path(i) = SUM(h_a(i,:)*phi_eta(i,:))
     end do
  
-!?? print*,'Hello Im deallocating!'
     call deallocate_test ( h_a, 'h_a', ModuleName )
     call deallocate_test ( dum_phi, 'dump_phi', ModuleName )
     call deallocate_test ( dum_h, 'dum_h', ModuleName )
     call deallocate_test ( dum_z, 'dum_z', ModuleName )
     call deallocate_test ( cndx, 'cndx', ModuleName )
 
-!    99 DEALLOCATE(h_a, STAT=i)
-!       DEALLOCATE(cndx, dum_z, dum_h, dum_phi, STAT=i)
+    Return
 
-    return
   end subroutine Vert_To_Path
 end module Vert_To_Path_M
 ! $Log$
+! Revision 1.12  2001/04/13 02:00:25  vsnyder
+! Undo all of the lmin:lmax nonsense
+!
 ! Revision 1.11  2001/04/13 01:44:36  vsnyder
 ! Work on moving window
 !
