@@ -404,17 +404,25 @@ contains ! =====     Public Procedures     =============================
               do mif = 1, noMIFs
                 lower = (mifPointingsLower(mif)-1)*noChans + 1
                 upper = (mifPointingsUpper(mif)-1)*noChans + 1
-                do chan = 1, noChans
-                  if ( doChannel(chan) ) then
-                    jBlock%values ( i , : ) = &
-                      & thisRatio(chan) * ( &
-                      &   lowerWeight(mif) * kBit( lower , : ) + &
-                      &   upperWeight(mif) * kBit( upper, : ) )
-                  endif
-                  i = i + 1
-                  lower = lower + 1
-                  upper = upper
-                end do
+                  do chan = 1, noChans
+                    if ( doChannel(chan) ) then
+                      if ( sideband == sidebandStart ) then
+                        jBlock%values ( i , : ) = &
+                          &   thisRatio(chan) * ( &
+                          &     lowerWeight(mif) * kBit( lower , : ) + &
+                          &     upperWeight(mif) * kBit( upper, : ) )
+                      else
+                        jBlock%values ( i , : ) = &
+                          & jBlock%values ( i , : ) + &
+                          &   thisRatio(chan) * ( &
+                          &     lowerWeight(mif) * kBit( lower , : ) + &
+                          &     upperWeight(mif) * kBit( upper, : ) )
+                      endif
+                    endif
+                    i = i + 1
+                    lower = lower + 1
+                    upper = upper
+                  end do
               end do
 
               if ( any ( l2pcBlock%kind == &
@@ -576,6 +584,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 1.17  2001/05/09 19:46:49  vsnyder
+! Use new bandHeight argument of createBlock
+!
 ! Revision 1.16  2001/05/08 23:26:36  livesey
 ! Embarassing typo/bug fixed
 !
