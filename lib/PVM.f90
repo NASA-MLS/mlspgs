@@ -194,22 +194,22 @@ module PVM ! Interface to the f77 pvm library.
 
      subroutine pvmfcatchout ( onoff, info )
        integer, intent(in) :: ONOFF
-       integer, intent(out) :: INFO
+       integer, intent(out) :: inFO
      end subroutine pvmfcatchout
 
      subroutine pvmfmytid(tid)
-       integer, intent(OUT) :: tid
+       integer, intent(out) :: tid
      end subroutine pvmfmytid
 
      subroutine pvmfinitsend(encoding, bufid)
-       integer, intent(IN) :: encoding
-       integer, intent(OUT) :: bufid
+       integer, intent(in) :: encoding
+       integer, intent(out) :: bufid
      end subroutine pvmfinitsend
 
      subroutine pvmfbcast(group, msgtag, info)
-       character (LEN=*), intent(IN) :: group
-       integer, intent(IN) :: msgtag
-       integer, intent(OUT) :: info
+       character (LEN=*), intent(in) :: group
+       integer, intent(in) :: msgtag
+       integer, intent(out) :: info
      end subroutine pvmfbcast
 
      subroutine pvmfbufinfo(bufid, bytes, msgtag, tid, info)
@@ -221,63 +221,63 @@ module PVM ! Interface to the f77 pvm library.
      end subroutine pvmfbufinfo
 
      subroutine pvmfsend(tid, msgtag, info)
-       integer, intent(IN) :: tid
-       integer, intent(IN) :: msgtag
-       integer, intent(OUT) :: info
+       integer, intent(in) :: tid
+       integer, intent(in) :: msgtag
+       integer, intent(out) :: info
      end subroutine pvmfsend
 
      subroutine pvmfnrecv(tid, msgtag, bufid)
-       integer, intent(IN) :: tid
-       integer, intent(IN) :: msgtag
-       integer, intent(OUT) :: bufid
+       integer, intent(in) :: tid
+       integer, intent(in) :: msgtag
+       integer, intent(out) :: bufid
      end subroutine pvmfnrecv
      
      subroutine pvmfrecv(tid, msgtag, bufid)
-       integer, intent(IN) :: tid
-       integer, intent(IN) :: msgtag
-       integer, intent(OUT) :: bufid
+       integer, intent(in) :: tid
+       integer, intent(in) :: msgtag
+       integer, intent(out) :: bufid
      end subroutine pvmfrecv
      
      integer function pvm_pkstr(line)
-       character (LEN=*) :: line
+       character(len=*), intent(in) :: line
      end function pvm_pkstr
 
      integer function pvm_pkint(values,num,stride)
-       integer :: values(*)
-       integer :: num
-       integer :: stride
+       integer, intent(in) :: values(*)
+       integer, intent(in) :: num
+       integer, intent(in) :: stride
      end function pvm_pkint
 
      integer function pvm_pkdouble(values,num,stride)
-       double precision :: values(*)
-       integer :: num
-       integer :: stride
+       double precision, intent(in) :: values(*)
+       integer, intent(in) :: num
+       integer, intent(in) :: stride
      end function pvm_pkdouble
 
      integer function pvm_upkstr(line)
-       character (LEN=*) :: line
+       character(len=*), intent(out) :: line
      end function pvm_upkstr
 
      integer function pvm_upkint(values,num,stride)
-       integer :: values(*)
-       integer :: num
-       integer :: stride
+       integer, intent(out) :: values(*)
+       integer, intent(in) :: num
+       integer, intent(in) :: stride
      end function pvm_upkint
 
      integer function pvm_upkdouble(values,num,stride)
-       double precision :: values(*)
-       integer :: num
-       integer :: stride
+       double precision, intent(out) :: values(*)
+       integer, intent(in) :: num
+       integer, intent(in)  :: stride
      end function pvm_upkdouble
 
      subroutine pvmfgsize(group, gsize)
-       character (LEN=*), intent(IN) :: group
-       integer, intent(OUT) :: gsize
+       character (LEN=*), intent(in) :: group
+       integer, intent(out) :: gsize
      end subroutine pvmfgsize
 
      subroutine pvmfjoingroup(group, inum)
-       character (LEN=*), intent(IN) :: group
-       integer, intent(OUT) :: inum
+       character (LEN=*), intent(in) :: group
+       integer, intent(out) :: inum
      end subroutine pvmfjoingroup
 
      ! These ones are to get around the irritating inability of pvmfspawn
@@ -318,71 +318,71 @@ module PVM ! Interface to the f77 pvm library.
 contains
 
   subroutine pvmf90packString(line,info)
-    character (LEN=*), intent(IN) :: line
-    integer, intent(OUT) :: info
+    character (LEN=*), intent(in) :: line
+    integer, intent(out) :: info
     info=pvm_pkstr(line)
   end subroutine pvmf90packString
 
   subroutine pvmf90packInteger(value,info)
-    integer, intent(IN) :: value
-    integer, intent(OUT) :: info
+    integer, intent(in) :: value
+    integer, intent(out) :: info
     info=pvm_pkint( (/value/) ,1,1)
   end subroutine pvmf90packInteger
 
   subroutine pvmf90packIntarr1(values,info)
-    integer, dimension(:), intent(IN) :: values
-    integer, intent(OUT) :: info
+    integer, dimension(:), intent(in) :: values
+    integer, intent(out) :: info
     
     info=pvm_pkint(values,size(values),1)
   end subroutine pvmf90packIntarr1
 
   subroutine pvmf90packIntarr2(values,info)
-    integer, dimension(:,:), intent(IN) :: values
-    integer, intent(OUT) :: info
+    integer, dimension(:,:), intent(in) :: values
+    integer, intent(out) :: info
     info=pvm_pkint(reshape(values,(/size(values)/)),size(values),1)
   end subroutine pvmf90packIntarr2
 
   subroutine pvmf90packIntarr3(values,info)
-    integer, dimension(:,:,:), intent(IN) :: values
-    integer, intent(OUT) :: info
+    integer, dimension(:,:,:), intent(in) :: values
+    integer, intent(out) :: info
     info=pvm_pkint(reshape(values,(/size(values)/)),size(values),1)
   end subroutine pvmf90packIntarr3
 
   subroutine pvmf90packReal(value,info)
-    real (r8), intent(IN) :: value
-    integer, intent(OUT) :: info
+    real (r8), intent(in) :: value
+    integer, intent(out) :: info
     info=pvm_pkdouble((/value/),1,1)
   end subroutine pvmf90packReal
 
   subroutine pvmf90packRealarr1(values,info)
-    real (r8), dimension(:), intent(IN) :: values
-    integer, intent(OUT) :: info
+    real (r8), dimension(:), intent(in) :: values
+    integer, intent(out) :: info
     info=pvm_pkdouble(values,size(values),1)
   end subroutine pvmf90packRealarr1
 
   subroutine pvmf90packRealarr2(values,info)
-    real (r8), dimension(:,:), intent(IN) :: values
-    integer, intent(OUT) :: info
+    real (r8), dimension(:,:), intent(in) :: values
+    integer, intent(out) :: info
     info=pvm_pkdouble(reshape(values,(/size(values)/)),size(values),1)
   end subroutine pvmf90packRealarr2
 
   subroutine pvmf90packRealarr3(values,info)
-    real (r8), dimension(:,:,:), intent(IN) :: values
-    integer, intent(OUT) :: info
+    real (r8), dimension(:,:,:), intent(in) :: values
+    integer, intent(out) :: info
     info=pvm_pkdouble(reshape(values,(/size(values)/)),size(values),1)
   end subroutine pvmf90packRealarr3
 
   ! ---------------------------------------------------------------------------
 
   subroutine pvmf90unpackString(line,info)
-    character (LEN=*), intent(OUT) :: line
-    integer, intent(OUT) :: info
+    character (LEN=*), intent(out) :: line
+    integer, intent(out) :: info
     info=pvm_upkstr(line)
   end subroutine pvmf90unpackString
 
   subroutine pvmf90unpackInteger(value,info)
-    integer, intent(OUT) :: value
-    integer, intent(OUT) :: info
+    integer, intent(out) :: value
+    integer, intent(out) :: info
 
     integer, dimension(1) :: tempValue
     info=pvm_upkint( tempValue ,1,1)
@@ -390,27 +390,35 @@ contains
   end subroutine pvmf90unpackInteger
 
   subroutine pvmf90unpackIntarr1(values,info)
-    integer, dimension(:), intent(OUT) :: values
-    integer, intent(OUT) :: info
+    integer, dimension(:), intent(out) :: values
+    integer, intent(out) :: info
     
     info=pvm_upkint(values,size(values),1)
   end subroutine pvmf90unpackIntarr1
 
   subroutine pvmf90unpackIntarr2(values,info)
-    integer, dimension(:,:), intent(OUT) :: values
-    integer, intent(OUT) :: info
-    info=pvm_upkint(reshape(values,(/size(values)/)),size(values),1)
+    integer, dimension(:,:), intent(out) :: values
+    integer, intent(out) :: info
+
+    integer, dimension(size(values)) :: tmpVal
+
+    info=pvm_upkint( tmpVal, size(values), 1)
+    values=reshape(tmpVal,shape(values))
   end subroutine pvmf90unpackIntarr2
 
   subroutine pvmf90unpackIntarr3(values,info)
-    integer, dimension(:,:,:), intent(OUT) :: values
-    integer, intent(OUT) :: info
-    info=pvm_upkint(reshape(values,(/size(values)/)),size(values),1)
+    integer, dimension(:,:,:), intent(out) :: values
+    integer, intent(out) :: info
+
+    integer, dimension(size(values)) :: tmpVal
+
+    info=pvm_upkint( tmpVal, size(values), 1)
+    values=reshape(tmpVal,shape(values))
   end subroutine pvmf90unpackIntarr3
 
   subroutine pvmf90unpackReal(value,info)
-    real (r8), intent(OUT) :: value
-    integer, intent(OUT) :: info
+    real (r8), intent(out) :: value
+    integer, intent(out) :: info
 
     real (r8), dimension(1) :: tempValue
     info=pvm_upkdouble(tempValue,1,1)
@@ -418,27 +426,36 @@ contains
   end subroutine pvmf90unpackReal
 
   subroutine pvmf90unpackRealarr1(values,info)
-    real (r8), dimension(:), intent(OUT) :: values
-    integer, intent(OUT) :: info
-    info=pvm_upkdouble(values,size(values),1)
+    real (r8), dimension(:), intent(out) :: values
+    integer, intent(out) :: info
+
+    info=pvm_upkdouble( values, size(values), 1)
   end subroutine pvmf90unpackRealarr1
 
   subroutine pvmf90unpackRealarr2(values,info)
-    real (r8), dimension(:,:), intent(OUT) :: values
-    integer, intent(OUT) :: info
-    info=pvm_upkdouble(reshape(values,(/size(values)/)),size(values),1)
+    real (r8), dimension(:,:), intent(out) :: values
+    integer, intent(out) :: info
+
+    double precision, dimension(size(values)) :: tmpVal
+
+    info=pvm_upkdouble( tmpVal, size(values), 1)
+    values=reshape(tmpVal,shape(values))
   end subroutine pvmf90unpackRealarr2
 
   subroutine pvmf90unpackRealarr3(values,info)
-    real (r8), dimension(:,:,:), intent(OUT) :: values
-    integer, intent(OUT) :: info
-    info=pvm_upkdouble(reshape(values,(/size(values)/)),size(values),1)
+    real (r8), dimension(:,:,:), intent(out) :: values
+    integer, intent(out) :: info
+
+    double precision, dimension(size(values)) :: tmpVal
+
+    info=pvm_upkdouble( tmpVal, size(values), 1)
+    values=reshape(tmpVal,shape(values))
   end subroutine pvmf90unpackRealarr3
 
   ! --------------------------------------------  PVMERRORMESSAGE  -----
-  subroutine PVMErrorMessage ( INFO, PLACE )
+  subroutine PVMErrorMessage ( inFO, PLACE )
     ! This routine is called to log a PVM error
-    integer, intent(IN) :: INFO
+    integer, intent(in) :: INFO
     character (LEN=*) :: PLACE
 
     character (LEN=132) :: LINE
@@ -451,6 +468,9 @@ contains
 end module PVM
 
 ! $Log$
+! Revision 2.5  2001/05/24 19:37:47  livesey
+! Embarassing bug fix in unpack arrays!
+!
 ! Revision 2.4  2001/05/23 01:42:54  livesey
 ! Various new changes, wrappers etc.
 !
