@@ -6,58 +6,6 @@ module TREE_WALKER
 ! Traverse the tree output by the parser and checked by the tree checker.
 ! Perform the actions of the MLS L2 processing in the order indicated.
 
-  use AntennaPatterns_m, only: Destroy_Ant_Patterns_Database
-  use Construct, only: MLSL2Construct, MLSL2DeConstruct
-  use Dumper, only: Dump
-  use EmpiricalGeometry, only: ForgetOptimumLon0
-  use Fill, only: MLSL2Fill
-  use FGrid, only: FGrid_T, DestroyFGridDatabase
-  use FilterShapes_m, only: Destroy_Filter_Shapes_Database
-  use ForwardModelConfig, only: ForwardModelConfig_T, DestroyFWMConfigDatabase
-  use Global_Settings, only: Set_Global_Settings
-  use GriddedData, only: GriddedData_T, DestroyGriddedDataDatabase, Dump
-  use HGrid, only: HGrid_T
-  use Init_Tables_Module, only: L_CHISQCHAN, &
-    & L_CHISQMMAF, L_CHISQMMIF, L_RADIANCE, L_PTAN, &
-    & Z_CHUNKDIVIDE,  Z_CONSTRUCT, Z_FILL, &
-    & Z_GLOBALSETTINGS, Z_JOIN, Z_MERGEGRIDS, Z_MLSSIGNALS, Z_OUTPUT, &
-    & Z_READAPRIORI, Z_RETRIEVE, Z_SPECTROSCOPY
-  use JOIN, only: MLSL2Join
-  use L2AUXData, only: DestroyL2AUXDatabase, L2AUXData_T, Dump
-  use L2GPData, only: DestroyL2GPDatabase, L2GPData_T, Dump
-  use L2ParInfo, only: PARALLEL, CLOSEPARALLEL
-  use L2Parallel, only: GETCHUNKINFOFROMMASTER, L2MASTERTASK
-  use L2PC_m, only: DestroyL2PCDatabase, DestroyBinSelectorDatabase
-  use MACHINE, only: MLS_GC_NOW, MLS_HOWMANY_GC
-  use MatrixModule_1, only: DestroyMatrixDatabase, Matrix_Database_T
-  use MergeGridsModule, only: MergeGrids
-  use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_RANGE_T
-  use MLSL2Options, only: GARBAGE_COLLECTION_BY_CHUNK
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-  use MLSSignals_M, only: Bands, DestroyBandDatabase, DestroyModuleDatabase, &
-    & DestroyRadiometerDatabase, DestroySignalDatabase, &
-    & DestroySpectrometerTypeDatabase, MLSSignals, Modules, Radiometers, &
-    & Signals, SpectrometerTypes, GetSignalIndex
-  use MLSL2Timings, only: add_to_section_timing, TOTAL_TIMES
-  use Open_Init, only: DestroyL1BInfo, OpenAndInitialize
-  use Output_m, only: BLANKS, Output
-  use OutputAndClose, only: Output_Close
-  use PointingGrid_m, only: Destroy_Pointing_Grid_Database
-  use QuantityTemplates, only: QuantityTemplate_T
-  use ReadAPriori, only: read_apriori
-  use RetrievalModule, only: Retrieve
-  use ChunkDivide_m, only: ChunkDivide, DestroyChunkDatabase
-  use SpectroscopyCatalog_m, only: Destroy_Line_Database, &
-    & Destroy_SpectCat_Database, Spectroscopy
-  use Test_Parse_Signals_m, only: Test_Parse_Signals
-  use Time_M, only: Time_Now
-  use Toggles, only: GEN, LEVELS, SWITCHES, TOGGLE
-  use Trace_m, only: DEPTH, TRACE_BEGIN, TRACE_END
-  use Tree, only: DECORATION, NSONS, SUBTREE
-  use VectorsModule, only: DestroyVectorDatabase, DUMP_VECTORS, &
-    & Vector_T, VectorTemplate_T
-  use VGridsDatabase, only: DestroyVGridDatabase, VGrid_T
-  use WriteMetadata, only: PCFData_T
 
   implicit NONE
   private
@@ -76,6 +24,60 @@ contains ! ====     Public Procedures     ==============================
   ! -------------------------------------  WALK_TREE_TO_DO_MLS_L2  -----
   subroutine WALK_TREE_TO_DO_MLS_L2 ( ROOT, ERROR_FLAG, FIRST_SECTION, COUNTCHUNKS, &
     & SINGLECHUNK )
+
+    use AntennaPatterns_m, only: Destroy_Ant_Patterns_Database
+    use Construct, only: MLSL2Construct, MLSL2DeConstruct
+    use Dumper, only: Dump
+    use EmpiricalGeometry, only: ForgetOptimumLon0
+    use Fill, only: MLSL2Fill
+    use FGrid, only: FGrid_T, DestroyFGridDatabase
+    use FilterShapes_m, only: Destroy_Filter_Shapes_Database
+    use ForwardModelConfig, only: ForwardModelConfig_T, DestroyFWMConfigDatabase
+    use Global_Settings, only: Set_Global_Settings
+    use GriddedData, only: GriddedData_T, DestroyGriddedDataDatabase, Dump
+    use HGrid, only: HGrid_T
+    use Init_Tables_Module, only: L_CHISQCHAN, &
+      & L_CHISQMMAF, L_CHISQMMIF, L_RADIANCE, L_PTAN, &
+      & Z_CHUNKDIVIDE,  Z_CONSTRUCT, Z_FILL, &
+      & Z_GLOBALSETTINGS, Z_JOIN, Z_MERGEGRIDS, Z_MLSSIGNALS, Z_OUTPUT, &
+      & Z_READAPRIORI, Z_RETRIEVE, Z_SPECTROSCOPY
+    use JOIN, only: MLSL2Join
+    use L2AUXData, only: DestroyL2AUXDatabase, L2AUXData_T, Dump
+    use L2GPData, only: DestroyL2GPDatabase, L2GPData_T, Dump
+    use L2ParInfo, only: PARALLEL, CLOSEPARALLEL
+    use L2Parallel, only: GETCHUNKINFOFROMMASTER, L2MASTERTASK
+    use L2PC_m, only: DestroyL2PCDatabase, DestroyBinSelectorDatabase
+    use MACHINE, only: MLS_GC_NOW, MLS_HOWMANY_GC
+    use MatrixModule_1, only: DestroyMatrixDatabase, Matrix_Database_T
+    use MergeGridsModule, only: MergeGrids
+    use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_RANGE_T
+    use MLSL2Options, only: GARBAGE_COLLECTION_BY_CHUNK
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSSignals_M, only: Bands, DestroyBandDatabase, DestroyModuleDatabase, &
+      & DestroyRadiometerDatabase, DestroySignalDatabase, &
+      & DestroySpectrometerTypeDatabase, MLSSignals, Modules, Radiometers, &
+      & Signals, SpectrometerTypes, GetSignalIndex
+    use MLSL2Timings, only: add_to_section_timing, TOTAL_TIMES
+    use Open_Init, only: DestroyL1BInfo, OpenAndInitialize
+    use Output_m, only: BLANKS, Output
+    use OutputAndClose, only: Output_Close
+    use PointingGrid_m, only: Destroy_Pointing_Grid_Database
+    use QuantityTemplates, only: QuantityTemplate_T
+    use ReadAPriori, only: read_apriori
+    use RetrievalModule, only: Retrieve
+    use ChunkDivide_m, only: ChunkDivide, DestroyChunkDatabase
+    use SpectroscopyCatalog_m, only: Destroy_Line_Database, &
+      & Destroy_SpectCat_Database, Spectroscopy
+    use Test_Parse_Signals_m, only: Test_Parse_Signals
+    use Time_M, only: Time_Now
+    use Toggles, only: GEN, LEVELS, SWITCHES, TOGGLE
+    use Trace_m, only: DEPTH, TRACE_BEGIN, TRACE_END
+    use Tree, only: DECORATION, NSONS, SUBTREE
+    use VectorsModule, only: DestroyVectorDatabase, DUMP_VECTORS, &
+      & Vector_T, VectorTemplate_T
+    use VGridsDatabase, only: DestroyVGridDatabase, VGrid_T
+    use WriteMetadata, only: PCFData_T
+
     integer, intent(in) ::     ROOT         ! Root of the abstract syntax tree
     integer, intent(out) ::    ERROR_FLAG  ! Nonzero means failure
     integer, intent(in) ::     FIRST_SECTION! Index of son of root of first n_cf
@@ -90,7 +92,7 @@ contains ! ====     Public Procedures     ==============================
     type (ForwardModelConfig_T), dimension(:), &
       & pointer ::                               ForwardModelConfigDatabase
     type (GriddedData_T), dimension(:), &
-      & pointer ::                               GriddedData
+      & pointer ::                               GriddedDataBase
     type (HGrid_T), dimension(:), pointer ::     HGrids
     integer ::                                   HOWMANY  ! Nsons(Root)
     integer ::                                   I, J     ! Loop inductors
@@ -116,7 +118,7 @@ contains ! ====     Public Procedures     ==============================
     type (QuantityTemplate_T), dimension(:), pointer :: QtyTemplates
     type (VectorTemplate_T), dimension(:), pointer :: VectorTemplates
 
-    nullify ( chunks, forwardModelConfigDatabase, griddedData, &
+    nullify ( chunks, forwardModelConfigDatabase, griddedDataBase, &
       & hGrids, l2auxDatabase, l2gpDatabase, matrices, mifGeolocation, &
       & qtyTemplates, vectors, vectorTemplates, fGrids, vGrids )
 
@@ -151,10 +153,10 @@ contains ! ====     Public Procedures     ==============================
         call spectroscopy ( son )
         call add_to_section_timing ( 'spectroscopy', t1)
       case ( z_readapriori )
-        call read_apriori ( son , l2gpDatabase, l2auxDatabase, griddedData)
+        call read_apriori ( son , l2gpDatabase, l2auxDatabase, griddedDataBase )
         call add_to_section_timing ( 'read_apriori', t1)
       case ( z_mergeGrids )
-        call mergeGrids ( son, griddedData )
+        call mergeGrids ( son, griddedDataBase )
       case ( z_chunkdivide )
         if ( .not. parallel%slave ) then
           ! This is the old routine, which will be going away shortly
@@ -166,7 +168,7 @@ contains ! ====     Public Procedures     ==============================
           else
             firstChunk = 1
             lastChunk = size(chunks)
-          endif
+          end if
           if ( countChunks ) then
             error_flag = 0
             call output ( size(chunks) )
@@ -176,7 +178,7 @@ contains ! ====     Public Procedures     ==============================
           call GetChunkInfoFromMaster ( chunks, chunkNo )
           firstChunk = chunkNo
           lastChunk = chunkNo
-        endif
+        end if
         if ( toggle(gen) .and. levels(gen) > 0 ) call dump ( chunks )
         call add_to_section_timing ( 'scan_divide', t1)
       case ( z_construct, z_fill, z_join, z_retrieve )
@@ -200,7 +202,7 @@ contains ! ====     Public Procedures     ==============================
               call output ( " ================ Starting processing for chunk " )
               call output ( chunkNo )
               call output ( " ================ ", advance='yes' )
-            endif
+            end if
             j = i
 subtrees:   do while ( j <= howmany )
               call time_now ( t1 )
@@ -212,9 +214,9 @@ subtrees:   do while ( j <= howmany )
                   & fGrids, vGrids, hGrids, l2gpDatabase, mifGeolocation )
                 call add_to_section_timing ( 'construct', t1)
               case ( z_fill )
-                call MLSL2Fill ( son, l1bInfo, griddedData, vectorTemplates, &
-                  & vectors, qtyTemplates, matrices, vGrids, l2gpDatabase , &
-                  & l2auxDatabase, chunks, chunkNo)
+                call MLSL2Fill ( son, l1bInfo, griddedDataBase, &
+                  & vectorTemplates, vectors, qtyTemplates, matrices, vGrids, &
+                  & l2gpDatabase, l2auxDatabase, chunks, chunkNo)
                 call add_to_section_timing ( 'fill', t1)
               case ( z_join )
                 call MLSL2Join ( son, vectors, l2gpDatabase, &
@@ -250,7 +252,7 @@ subtrees:   do while ( j <= howmany )
               call output(chunkNo, advance='yes')
               call dump_vectors( vectors, details=1, &
               & quantityTypes = (/l_chisqchan, l_chisqmmaf, l_chisqmmif/) )
-            endif
+            end if
             ! Now, if we're dealing with more than one chunk destroy stuff
             ! Otherwise, we'll save them as we may need to output them as l2pc files.
             if ( size(chunks) > 1) then
@@ -270,7 +272,7 @@ subtrees:   do while ( j <= howmany )
         if ( .not. parallel%slave ) then
           call Output_Close ( son, l2gpDatabase, l2auxDatabase, matrices, l2pcf,&
             & size(chunks)==1 )
-        endif
+        end if
 
         ! For case where there was one chunk, destroy vectors etc.
         ! This is to guard against destroying stuff needed by l2pc writing
@@ -285,20 +287,20 @@ subtrees:   do while ( j <= howmany )
         ! processingRange needs no deallocation
         call DestroyL1BInfo ( l1bInfo )
         if ( index(switches,'grid') /= 0 .and. .not. parallel%slave &
-         & .and. associated(griddedData) ) then
-          call Dump(griddedData)
-        endif
-        call DestroyGriddedDataDatabase ( griddedData )
+         & .and. associated(griddedDataBase) ) then
+          call Dump(griddedDataBase)
+        end if
+        call DestroyGriddedDataDatabase ( griddedDataBase )
         call DestroyChunkDatabase (chunks )
         if ( index(switches,'l2gp') /= 0 .and. .not. parallel%slave) then
           call Dump(l2gpDatabase)
         elseif ( index(switches,'cab') /= 0 .and. .not. parallel%slave) then
           call Dump(l2gpDatabase, ColumnsOnly=.true.)
-        endif
+        end if
         call DestroyL2GPDatabase ( l2gpDatabase )
         if ( index(switches,'l2aux') /= 0 .and. .not. parallel%slave) then
           call Dump(l2auxDatabase)
-        endif
+        end if
         call DestroyL2AUXDatabase ( l2auxDatabase )
         ! vectors, vectorTemplates and qtyTemplates destroyed at the
         ! end of each chunk
@@ -339,7 +341,7 @@ subtrees:   do while ( j <= howmany )
         call output ( "Total time = " )
         call output ( dble(t2), advance = 'no' )
         call blanks ( 4, advance = 'no' )
-      endif
+      end if
       call output ( "Timing for " // what // " = " )
       call output ( dble(t2 - t1), advance = 'yes' )
     end subroutine SayTime
@@ -350,7 +352,7 @@ subtrees:   do while ( j <= howmany )
         call output ( "Total = " )
         call output ( Say_num_gcs, advance = 'no' )
         call blanks ( 4, advance = 'no' )
-      endif
+      end if
       call output ( "garbage collections for chunk ")
       call blanks ( 2, advance = 'no' )
       call output ( chunkNo )
@@ -363,6 +365,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.84  2002/08/07 00:05:27  livesey
+! Added calls to H5Open_F and H5Close_F
+!
 ! Revision 2.83  2002/08/04 16:10:43  mjf
 ! Added some nullify statements for Sun's rubbish compiler.
 !
