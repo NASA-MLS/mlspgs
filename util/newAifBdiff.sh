@@ -7,6 +7,7 @@
 # else deletes old A and B, replacing with new
 # (works even if A and B name the same files
 #   meaning keep old A, and its date, unless new A different)
+# leaves record file that names A and tells whether it is new or old
 #Usage:
 #newAifBdiff.sh [options] old_A old_B command [arg1] [arg2] ..
 #
@@ -15,6 +16,7 @@
 #                 meaning keep old A (and its date) unless new A different
 # -k            if keeping old A, keep old B, too
 #                (as no diff betw. old and new B, means keep date of old B)
+# -nr           leave no record file
 # -h[elp]       print brief help message; exit
 # old_A         the file to be conditionally replaced
 # old_B         the file to be compared with new_B
@@ -25,11 +27,20 @@
 #must precede the command and args on the command line
 #Result:
 #file(s) named the same as old_A and old_B
+#record file named newAifBdiff.out
 #and anything else done by command as a side-effect
 #Useful as an adjunct to Makefile for conditionally
 #compiling according to whether .mod file of prerequisite has changed;
 #this reduces the cascade of massive recompilations that results
 #when the prerequisite changes
+#
+#Record file
+#file name: newAifBdiff.out
+#format: ascii text, two columns, 1st is file names, 2nd new/old
+#  file_name_of_1st_A   new
+#  file_name_of_2nd_A   old
+#      .  .  .
+#  file_name_of_this_A  new
 # --------------- End newAifBdiff.sh help
 #Bugs and limitations:
 #(1) Why have two ways to essentially the same thing: newAifAdiff.sh?
@@ -81,12 +92,16 @@ extant_files()
 # old A exists                 yes 
 # old B exists                 yes 
 # keeping old unchanged B      no
+# keeping records of A         yes
 ASameAsB="no"
 oldAExists="yes"
 oldBExists="yes"
 keepUnchangedB="no"
+keepRecords="yes"
 me="$0"
 my_name=newAifBdiff.sh
+record_file=newAifBdiff.out
+the_status="undefined"
 DEEBUG="no"
 
 wrong_list=""
@@ -105,6 +120,10 @@ while [ "$more_opts" = "yes" ] ; do
 	;;
     -k )
        keepUnchangedB="yes"
+       shift
+	;;
+    -nr )
+       keepRecords="no"
        shift
 	;;
     * )
@@ -142,10 +161,14 @@ if [ "$DEEBUG" = "yes" ]; then
   echo "oldBExists: $oldBExists"
 fi
 
+if [ "$keepRecords" = "yes" -a ! -f "$record_file" ]; then    
+  echo "#filename   status" > "$record_file"
+fi
 if [ "$oldBExists" = "no" ]; then
 # There's no old B => automatically new and old B differ, so need new A
     message="There is no old B => automatically need new A"
   "$the_command" "$@"
+  the_status="new"
 elif [ "$ASameAsB" = "yes" ]; then
 # A and B the same, so check if new A diff from old
   mv "$old_A" "$old_A.1"
@@ -154,14 +177,17 @@ elif [ "$ASameAsB" = "yes" ]; then
   if [ "$the_diff" -gt 0 ] ; then
     rm -f "$old_A.1"
       message="($the_diff) A, B same; old A, new A differ =>need new A"
+      the_status="new"
   else
     mv "$old_A.1" "$old_A"
       message="($the_diff) A, B same; old A, new A same =>keep old A"
+      the_status="old"
   fi
 elif [ "$oldAExists" = "no" ]; then
 # There's no old A so need new A
   "$the_command" "$@"
     message="There is no old A => automatically need new A"
+    the_status="new"
 else
 # Most general case
   mv "$old_A" "$old_A.1"
@@ -171,9 +197,11 @@ else
   if [ "$the_diff" -gt 0 ] ; then
     rm -f "$old_A.1" "$old_B.1"
       message="($the_diff) old B, new B differ =>need new A"
+     the_status="new"
   else
     mv "$old_A.1" "$old_A"
       message="($the_diff) old B, new B same =>keep old A"
+      the_status="old"
     if [ "$keepUnchangedB" = "yes" ] ; then
       mv "$old_B.1" "$old_B"
     else
@@ -184,5 +212,11 @@ fi
 if [ "$DEEBUG" = "yes" ]; then    
   echo "$message"                 
 fi                                
+if [ "$keepRecords" = "yes" ]; then    
+  echo "$old_A   $the_status" >> "$record_file"
+fi
 exit
 # $Log$
+# Revision 1.1  2002/05/22 00:36:28  pwagner
+# First commit
+#
