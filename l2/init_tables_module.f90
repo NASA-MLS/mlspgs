@@ -144,7 +144,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_SDNAME              = f_scVEL + 1
   integer, parameter :: F_SIGNAL              = f_sdname + 1
   integer, parameter :: F_SIGNALS             = f_signal + 1
-  integer, parameter :: F_SOURCE              = f_signals + 1
+  integer, parameter :: F_SKIPOVERLAPS        = f_signals + 1
+  integer, parameter :: F_SOURCE              = f_skipOverlaps + 1
   integer, parameter :: F_SOURCEAPRIORI       = f_source + 1
   integer, parameter :: F_SOURCEGRID          = f_sourceApriori + 1
   integer, parameter :: F_SOURCEL2AUX         = f_sourceGrid + 1
@@ -484,6 +485,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_sdname) =              add_ident ( 'sdname' )
     field_indices(f_signal) =              add_ident ( 'signal' )
     field_indices(f_signals) =             add_ident ( 'signals' )
+    field_indices(f_skipOverlaps) =        add_ident ( 'skipOverlaps' )
     field_indices(f_source) =              add_ident ( 'source' )
     field_indices(f_sourceapriori) =       add_ident ( 'sourceApriori' )
     field_indices(f_sourcegrid) =          add_ident ( 'sourceGrid' )
@@ -832,6 +834,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_phiWindow, t+t_numeric, n+n_field_type, &
              begin, f+f_frqGap, t+t_numeric, n+n_field_type, &
              begin, f+f_signals, t+t_string, n+n_field_type, &
+             begin, f+f_skipOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_spect_der, t+t_boolean, n+n_field_type, &
              begin, f+f_tangentGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_temp_der, t+t_boolean, n+n_field_type, &
@@ -959,6 +962,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.110  2001/05/25 20:26:31  livesey
+! Added skipOverlaps option to ForwardModel
+!
 ! Revision 2.109  2001/05/24 20:54:26  pwagner
 ! Deleted p_ccs..times
 !
