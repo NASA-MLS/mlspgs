@@ -486,7 +486,8 @@ contains ! =====     Public Procedures     =============================
     start = 0
     stride = 1
     nullify ( tmpValues )
-    call Allocate_test ( tmpValues, dim_sizes(1), dim_sizes(2), dim_sizes(3), &
+    call Allocate_test ( tmpValues, max ( dim_sizes(1), 1), &
+      & max(dim_sizes(2),1), max(dim_sizes(3),1), &
       & 'tmpValues', ModuleName )
 
     status = sfrdata_f90(sds_id, start, stride, dim_sizes, tmpValues )
@@ -507,9 +508,9 @@ contains ! =====     Public Procedures     =============================
 
     !  After reading, detach from hdf interface
 
-    status = sfend(sd_id)
-    if (status == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
-         &detach from SD file after reading.')
+!     status = sfend(sd_id)
+!     if (status == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+!          &detach from SD file after reading.')
 
   end subroutine ReadL2AUXData
 
@@ -711,6 +712,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.27  2002/11/06 02:01:06  livesey
+! Changes to fill from l2aux
+!
 ! Revision 2.26  2002/11/06 00:18:37  pwagner
 ! Can WriteL2AUXData w/o l2cf: useable by small utility programs
 !
