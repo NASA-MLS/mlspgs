@@ -595,7 +595,8 @@ CONTAINS ! =====     Public Procedures     =============================
     ELSE IF ( lev == 1) THEN
 
        status = HE5_SWrdfld( swid, DATA_FIELD1, start(2:3), stride(2:3), &
-            edge(2:3), real3(1,:,:) )
+            edge(2:3), real3 )
+!            edge(2:3), real3(1,:,:) )
        IF (status == -1) THEN
           msr = MLSMSG_L2GPRead // DATA_FIELD1
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -955,8 +956,8 @@ CONTAINS ! =====     Public Procedures     =============================
 
     ! Detach from the HE5_SWath interface.This stores the swath info within the
     ! file and must be done before writing or reading data to or from the
-    ! swath. (May be un-necessary for HDF5 -- someone check sometime.)
-
+    ! swath. (May be un-necessary for HDF5 -- test program works OK without.)
+    ! 
     status = HE5_SWdetach(swid)
     IF ( status == -1 ) THEN
        CALL MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1012,7 +1013,8 @@ CONTAINS ! =====     Public Procedures     =============================
     stride = 1
     start = myOffset
     edge(1) = l2gp%nTimes
-    print*,"About to write latitude"
+    print*,"writeGeo Attached swath ",name," with SW ID=",swid
+    print*,"About to write latitude with offset=",myoffset
     status = HE5_SWwrfld(swid, GEO_FIELD1, start, stride, edge, &
          REAL(l2gp%latitude))
     print*,"wrote latitude, maybe"
@@ -1036,10 +1038,10 @@ CONTAINS ! =====     Public Procedures     =============================
     END IF
 
 
-    print*,"writing ", REAL(l2gp%solarZenith)," as SZA"
+    !print*,"writing ", REAL(l2gp%solarZenith)," as SZA"
     status = HE5_SWwrfld(swid, GEO_FIELD5, start, stride, edge, &
          REAL(l2gp%solarZenith))
-    print*,"just wrote ", REAL(l2gp%solarZenith)," as SZA"
+    !print*,"just wrote ", REAL(l2gp%solarZenith)," as SZA"
     IF ( status == -1 ) THEN
        msr = WR_ERR // GEO_FIELD5
        CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -1100,7 +1102,7 @@ CONTAINS ! =====     Public Procedures     =============================
     ! Detach from the swath interface.  
 
     status = HE5_SWdetach(swid)
-
+    print*,"Detatched from swath -- error=",status
     IF ( status == -1 ) THEN
        CALL MLSMessage ( MLSMSG_Warning, ModuleName, &
             & 'Failed to detach from swath interface' )
@@ -1162,7 +1164,6 @@ CONTAINS ! =====     Public Procedures     =============================
     IF ( l2gp%nFreqs > 0 ) THEN
        !print*,"Writing 3D field"
        ! Value and Precision are 3-D fields
-
        status = HE5_SWwrfld(swid, DATA_FIELD1, start, stride, edge, &
             & RESHAPE(l2gp%l2gpValue, (/SIZE(l2gp%l2gpValue)/)) )
        IF ( status == -1 ) THEN
@@ -1179,7 +1180,8 @@ CONTAINS ! =====     Public Procedures     =============================
     ELSE IF ( l2gp%nLevels > 0 ) THEN
        !Print*,"Writing 2-d field"
        ! Value and Precision are 2-D fields
-
+      print*,"About to write data with offset=",myOffset
+      
        status = HE5_SWwrfld( swid, DATA_FIELD1, start(2:3), stride(2:3), &
             edge(2:3), REAL(l2gp%l2gpValue(1,:,:) ))
        !print*,"Status of write was ",status
@@ -1233,6 +1235,7 @@ CONTAINS ! =====     Public Procedures     =============================
     !     Detach from the swath interface.
 
     status = HE5_SWdetach(swid)
+    print*,"Detatched from swath -- error=",status
     IF ( status == -1 ) THEN
        CALL MLSMessage ( MLSMSG_Warning, ModuleName, &
             & 'Failed to detach  from swath interface' )
@@ -1351,6 +1354,10 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 1.8  2001/07/31 11:26:19  archie
+! Corrected case for ChunkNumber
+! .
+!
 ! Revision 1.7  2001/07/11 19:01:16  pumphrey
 ! quality->Quality, status->Status.
 !
