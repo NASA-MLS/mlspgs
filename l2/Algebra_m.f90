@@ -9,7 +9,7 @@ module ALGEBRA_M
   private
   public :: Algebra
 
-!--------------------------------- RCS Ident Info -------------------------------
+!--------------------------------- RCS Ident Info --------------------------
   character (len=*), parameter :: IdParm = &
     & "$Id$"
   character (len=len(idParm)) :: Id = idParm
@@ -20,6 +20,7 @@ module ALGEBRA_M
 
 contains
 
+  ! ----------------------------------------------------  Algebra  -----
   subroutine Algebra ( ROOT, VectorDatabase, MatrixDatabase )
     ! The root of the Algebra section's subtree is ROOT.  All of the
     ! input and output "variables" are found in the symbol table.
@@ -93,11 +94,6 @@ contains
     integer, parameter :: W_Matrix_K = w_matrix_C + 1 ! Result is a Kronecker matrix
     integer, parameter :: W_Matrix_S = w_matrix_K + 1 ! Result is an SPD matrix
 
-    integer, save :: Whats(k_empty:k_spd)
-    data whats(k_empty) / w_nothing /, whats(k_cholesky) / w_matrix_c /
-    data whats(k_kronecker) / w_matrix_k /, whats(k_plain) / w_matrix /
-    data whats(k_spd) / w_matrix_s /
-
     error = 0
 
     if ( toggle(gen) ) call trace_begin ( 'Algebra', root )
@@ -140,7 +136,7 @@ contains
             type = exprn_m
             value = addToMatrixDatabase ( matrixDatabase, matrix_s )
           end select
-          call declare ( string, dvalue, exprn, value, son )
+          call declare ( string, dvalue, type, value, son )
         else ! ------------------- Update the declaration for an existing name
           select case ( what )
           case ( w_number )
@@ -275,18 +271,19 @@ contains
       integer, intent(in) :: Root  ! Index in tree of root of expression subtree
       integer, intent(out) :: What  ! What is result (see its parameters above)
       ! Results, depending on WHAT:
-      real(r8), intent(out) :: DValue
-      integer :: SPEC              ! Index of spec of label, e.g. S_Matrix
-      type(vector_t), intent(out) :: Vector
-      type(matrix_t), intent(out) :: Matrix
-      type(matrix_cholesky_t), intent(out) :: Matrix_C
-      type(matrix_kronecker_t), intent(out) :: Matrix_K
-      type(matrix_SPD_t), intent(out) :: Matrix_S
+      real(r8), intent(out) :: DValue                   ! What == w_number
+      type(vector_t), intent(out) :: Vector             ! What == w_vector
+      type(matrix_t), intent(out) :: Matrix             ! What == w_matrix
+      type(matrix_cholesky_t), intent(out) :: Matrix_C  ! What == w_matrix_c
+      type(matrix_kronecker_t), intent(out) :: Matrix_K ! What == w_matrix_k
+      type(matrix_SPD_t), intent(out) :: Matrix_S       ! What == w_matrix_s
+                                                 ! else   What == w_nothing
 
       type(decls) :: DECL          ! Declaration of a name
       real(r8) :: DValue2          ! Value of RH operand if Value2 == 0
       integer :: ME                ! Node ID for root
       integer :: Son1, Son2        ! Sons of Root
+      integer :: SPEC              ! Index of spec of label, e.g. S_Matrix
       integer :: String            ! String table index
       integer :: What2             ! WHAT for second subexpression
       type(vector_t), save :: EmptyVector
@@ -301,7 +298,12 @@ contains
       type(matrix_SPD_t) :: Matrix_S2
       type(matrix_SPD_t), pointer :: Matrix_SP
 
-      if ( toggle(gen) ) call trace_begin ( 'Algebra Expr', root )
+      integer, save :: Whats(k_empty:k_spd)
+      data whats(k_empty) / w_nothing /, whats(k_cholesky) / w_matrix_c /
+      data whats(k_kronecker) / w_matrix_k /, whats(k_plain) / w_matrix /
+      data whats(k_spd) / w_matrix_s /
+
+      if ( toggle(gen) ) call trace_begin ( 'Algebra.Expr', root )
       dvalue = 0.0_r8
       me = node_id(root)
       select case ( me )
@@ -368,7 +370,7 @@ contains
           if ( nsons(root) /= 2 ) then
             call announce_error ( son1, wrongNumArgs )
           else
-            if ( what2 /= w_matrix ) then
+            if ( what2 /= w_matrix_s ) then
               call announce_error ( son2, incompatible )
             else
             end if
@@ -380,6 +382,11 @@ contains
             if ( what2 /= w_matrix ) then
               call announce_error ( son2, incompatible )
             else
+              ! Optimization?  Instead of actually doing the transpose here,
+              ! consider returning a flag that the result needs transposing.
+              ! Then one could use multiply routines that are aware of the
+              ! transpose, at the expense of needing to remember that the
+              ! transpose needs to be done in other situations, e.g in "Add".
             end if
           end if
         end select
@@ -654,7 +661,7 @@ contains
         call destroyStuff ( what2, vector2, matrix2, matrix_c2, matrix_k2, &
           & matrix_s2 )
       end select
-      if ( toggle(gen) ) call trace_end ( 'Algebra Expr' )
+      if ( toggle(gen) ) call trace_end ( 'Algebra.Expr' )
     end subroutine Expr
 
     ! .............................................  DestroyStuff  .....
@@ -683,22 +690,27 @@ contains
     ! ..............................................  Get_My_Decl  .....
     type(decls) function Get_My_Decl ( Root )
       integer, intent(in) :: Root      ! Tree index of declaration to get
-      type(decls) :: DECL1,DECL2       ! Declarations
-      integer :: String
+      type(decls) :: DECL              ! Declaration
+      integer :: I
+      integer :: String                ! String index for Root
+      integer, parameter :: Try(5) = (/ exprn, exprn_m, exprn_v, label, &
+        &                               num_value /) ! Decl types to try
+      get_my_decl%type = empty
       string = sub_rosa(root)
-      decl1 = get_decl(string,label)
-      decl2 = get_decl(string,exprn)
-      if ( decl1%type /= empty .and. decl2%type /= empty ) then
-        call announce_error ( root, ambiguous )
-      end if
-      if ( decl1%type == empty ) decl1 = decl2
-      get_my_decl = decl1
+      do i = 1, size(try)
+        decl = get_decl(string,try(i))
+        if ( decl%type /= empty ) then
+          if ( get_my_decl%type /= empty ) call announce_error ( root, ambiguous )
+          get_my_decl%type = decl%type
+        end if
+      end do
+      get_my_decl = decl
     end function Get_My_Decl
 
     ! .................................................  Get_Spec  .....
     integer function Get_Spec ( Root )
     ! "Root" is the index of a spec_args node for which we have the label.
-    ! Get the name of the specification, e.g. Matrix or Vector.
+    ! Get the index of the specification, e.g. S_Matrix or S_Vector.
       use Declaration_Table, only: SPEC
       integer, intent(in) :: Root
       type(decls) :: DECL               ! Declaration 
@@ -719,6 +731,9 @@ contains
 end module ALGEBRA_M
 
 ! $Log$
+! Revision 2.5  2004/01/21 00:30:25  vsnyder
+! Move some stuff to more logical places, fix get_my_decl, cosmetics
+!
 ! Revision 2.4  2004/01/20 23:19:41  vsnyder
 ! Better error handling, plug some memory leaks
 !
