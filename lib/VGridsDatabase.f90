@@ -133,10 +133,9 @@ contains
 
   ! ------------------------------------------------  GetUnitForVGrid  -----
   integer function GetUnitForVerticalCoordinate ( coordinate )
-    use units, only: PHYQ_Pressure, PHYQ_Zeta, PHYQ_Temperature, &
-      & PHYQ_Length, PHYQ_Angle, PHYQ_Dimensionless, PHYQ_Invalid
     use intrinsic, only: L_ANGLE, L_GEODALTITUDE, L_GPH, L_NONE, &
-      & L_PRESSURE, L_THETA, L_ZETA
+      & L_PRESSURE, L_THETA, L_ZETA, PHYQ_Pressure, PHYQ_Zeta, PHYQ_Temperature, &
+      & PHYQ_Length, PHYQ_Angle, PHYQ_Dimensionless, PHYQ_Invalid
     integer, intent(in) :: coordinate
     ! Excutable code
     select case ( coordinate )
@@ -240,6 +239,9 @@ contains
 end module VGridsDatabase
 
 ! $Log$
+! Revision 2.9  2003/08/16 00:32:50  vsnyder
+! Get PHYQ_... directly from Intrinsic instead of indirectly via Units
+!
 ! Revision 2.8  2003/06/20 19:33:53  pwagner
 ! Quanities now share grids stored separately in databses
 !
