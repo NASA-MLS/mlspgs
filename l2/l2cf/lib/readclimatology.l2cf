@@ -9,7 +9,7 @@ begin ReadApriori
 ; meso/thermosphere
   !define(allClimatologicalSpecies,{BrO,CH3CN,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2,N2O,O2,O3,OH,refGPH,SO2,Temperature})
 },{
-  !define(allClimatologicalSpecies,{Temperature,H2O,O3,N2O,HNO3,HCl,ClO,HO2,CO})
+  !define(allClimatologicalSpecies,{Temperature,H2O,O3,N2O,HNO3,HCl,ClO,HO2,CO,HCN,CH3CN})
 })
 
 ;; This macro reads one entry from grid format file into the gridded
