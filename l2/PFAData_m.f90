@@ -543,7 +543,7 @@ contains ! =====     Public Procedures     =============================
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSSignals_m, only: MaxSigLen
     use MLSStrings, only: Capitalize
-    use MoreTree, only: Get_Boolean, Get_Field_ID
+    use MoreTree, only: Get_Field_ID
     use String_Table, only: Get_String
     use Tree, only: Node_Id, NSons, Sub_Rosa, Subtree
     use Tree_Types, only: N_String
@@ -724,6 +724,9 @@ contains ! =====     Public Procedures     =============================
 end module PFAData_m
 
 ! $Log$
+! Revision 2.14  2005/01/13 00:00:13  vsnyder
+! Delete an unreferenced use name
+!
 ! Revision 2.13  2005/01/12 03:18:22  vsnyder
 ! Read and write PFAData in HDF5
 !

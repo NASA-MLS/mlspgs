@@ -148,7 +148,7 @@ contains ! =====     Public Procedures     =============================
     myDetails = 1
     if ( present(details) ) myDetails = details
 
-    call output ( 'PDA Datum ' )
+    call output ( 'PFA Datum ' )
     if ( present(index) ) call output ( index )
     if ( pfaDatum%name /= 0 ) then
       if ( present(index) ) call output ( ': ' )
@@ -183,7 +183,7 @@ contains ! =====     Public Procedures     =============================
       & call display_string ( pfaDatum%filterFile, before=' Filter file: ', &
       & advance='yes' )
 
-    call output ( pfaDatum%vel_rel*c, before=' Velocity linearization: ', &
+    call output ( real(pfaDatum%vel_rel*c,rk), before=' Velocity linearization: ', &
       & after='kms', advance='yes' )
 
     if ( pfaDatum%tGrid%name /= 0 ) &
@@ -253,7 +253,8 @@ contains ! =====     Public Procedures     =============================
     use MLSHDF5, only: GetHDF5Attribute, LoadPtrFromHDF5DS
     use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
       & MLSMSG_Error
-    use MLSSignals_m, only: GetSignalName, MaxSigLen, Signal_T, Signals
+    use MLSSignals_m, only: MaxSigLen, Signals
+    use MLSStrings, only: Capitalize
     use Molecules, only: First_Molecule, Last_Molecule
     use MoreTree, only: GetLitIndexFromString, GetStringIndexFromString
     use Parse_Signal_m, only: Get_Individual_Signals, Parse_Signal
@@ -317,7 +318,7 @@ contains ! =====     Public Procedures     =============================
       else if ( size(theMolecules) == 0 ) then
         do i = 1, size(allSignals)
           do k = 1, size(groupsTest)
-            if ( allSignals(i) == mySignalStrings(k) ) then
+            if ( capitalize(allSignals(i)) == capitalize(mySignalStrings(k)) ) then
               nPFA = nPFA + 1
               exit
             end if
@@ -327,7 +328,7 @@ contains ! =====     Public Procedures     =============================
         nPFA = 0
         do i = 1, size(allSignals)
           do k = 1, size(groupsTest)
-            if ( allSignals(i) == mySignalStrings(k) ) then
+            if ( capitalize(allSignals(i)) == capitalize(mySignalStrings(k)) ) then
               nPFA = nPFA + 1
               groups(nPFA) = groupsTest(k)
               exit
@@ -337,7 +338,7 @@ contains ! =====     Public Procedures     =============================
       else if ( size(allSignals) == 0 ) then
         do i = 1, size(theMolecules)
           do k = 1, size(groupsTest)
-            if ( theMolecules(i) == myMolecules(k) ) then
+            if ( capitalize(theMolecules(i)) == capitalize(myMolecules(k)) ) then
               nPFA = nPFA + 1
               exit
             end if
@@ -347,7 +348,7 @@ contains ! =====     Public Procedures     =============================
         nPFA = 0
         do i = 1, size(theMolecules)
           do k = 1, size(groupsTest)
-            if ( theMolecules(i) == myMolecules(k) ) then
+            if ( capitalize(theMolecules(i)) == capitalize(myMolecules(k)) ) then
               nPFA = nPFA + 1
               groups(nPFA) = groupsTest(k)
               exit
@@ -360,7 +361,7 @@ contains ! =====     Public Procedures     =============================
           do j = 1, size(allSignals)
             groupTrial = trim(theMolecules(i)) // '_' // trim(allSignals(j))
             do k = 1, size(groupsTest)
-              if ( groupsTest(k) == groupTrial ) then
+              if ( capitalize(groupsTest(k)) == capitalize(groupTrial) ) then
                 nPFA = nPFA + 1
                 exit
               end if
@@ -373,7 +374,7 @@ contains ! =====     Public Procedures     =============================
           do j = 1, size(allSignals)
             groupTrial = trim(theMolecules(i)) // '_' // trim(allSignals(j))
             do k = 1, size(groupsTest)
-              if ( groupsTest(k) == groupTrial ) then
+              if ( capitalize(groupsTest(k)) == capitalize(groupTrial) ) then
                 nPFA = nPFA + 1
                 groups(nPFA) = groupTrial
                 exit
@@ -759,6 +760,9 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.14  2005/01/12 23:59:44  vsnyder
+! Use CAPITALIZE to test requested PFA tables
+!
 ! Revision 2.13  2005/01/12 03:17:41  vsnyder
 ! Read and write PFA data in HDF5
 !
