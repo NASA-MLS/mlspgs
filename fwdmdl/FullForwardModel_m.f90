@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module FullForwardModel_m
@@ -1545,10 +1545,10 @@ contains
 
           if ( index(switches,'mag') /= 0 ) then
             clean = index(switches,'clean') /= 0
-            call dump ( h, 'H', clean )
-            call dump ( ct, 'Cos(theta)', clean )
-            call dump ( stcp, 'Sin(theta) Cos(phi)', clean )
-            call dump ( stsp, 'Sin(theta) Sin(phi)', clean )
+            call dump ( h, 'H', clean=clean )
+            call dump ( ct, 'Cos(theta)', clean=clean )
+            call dump ( stcp, 'Sin(theta) Cos(phi)', clean=clean )
+            call dump ( stsp, 'Sin(theta) Sin(phi)', clean=clean )
           end if
 
         end if
@@ -3059,6 +3059,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.209  2004/05/17 22:05:11  livesey
+! A change to refraction and to k_atmos handling to avoid explosions.
+!
 ! Revision 2.208  2004/04/24 02:27:05  vsnyder
 ! Cosmetic changes
 !
