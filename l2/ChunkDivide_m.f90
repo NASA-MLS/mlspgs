@@ -57,6 +57,7 @@ module ChunkDivide_m
     real(rp), dimension(2) :: scanLowerLimit ! Range for bottom of scan
     real(rp), dimension(2) :: scanUpperLimit ! Range for top of scan
     integer   :: criticalModules = l_none ! Which modules must be scanning
+    character(len=160) :: criticalSignals = '' ! Which signals must be on
     real(rp)  :: maxGap = 0.0           ! Length of time/MAFs/orbits allowed for gap
     integer   :: maxGapFamily = PHYQ_Invalid ! PHYQ_MAF, PHYQ_Time etc.
     logical   :: skipL1BCheck = .false. ! Don't check for l1b data probs
@@ -113,8 +114,8 @@ contains ! ===================================== Public Procedures =====
     use Dump_0, only: DUMP
     use EXPR_M, only: EXPR
     use Init_Tables_Module, only: F_OVERLAP, F_LOWEROVERLAP, F_UPPEROVERLAP, &
-      & F_MAXLENGTH, F_NOCHUNKS, &
-      & F_METHOD, F_HOMEMODULE, F_CRITICALMODULES, F_HOMEGEODANGLE, &
+      & F_MAXLENGTH, F_METHOD, F_NOCHUNKS, &
+      & F_HOMEMODULE, F_CRITICALMODULES, F_CRITICALSIGNALS, F_HOMEGEODANGLE, &
       & F_SCANLOWERLIMIT, F_SCANUPPERLIMIT, F_NOSLAVES, F_SKIPL1BCHECK, &
       & FIELD_FIRST, FIELD_LAST, L_EVEN, &
       & L_FIXED, F_MAXGAP, L_ORBITAL, L_PE, S_CHUNKDIVIDE, L_BOTH, L_EITHER
@@ -138,7 +139,7 @@ contains ! ===================================== Public Procedures =====
     use Time_M, only: Time_Now
     use TOGGLES, only: GEN, TOGGLE, SWITCHES
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use Tree, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, SUBTREE
+    use Tree, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, SUBTREE, SUB_ROSA
     use Tree_types, only: N_EQUAL, N_NAMED
     use Units, only: PHYQ_INVALID, PHYQ_LENGTH, PHYQ_MAFS, PHYQ_TIME, &
       & PHYQ_ANGLE, PHYQ_LENGTH, PHYQ_DIMENSIONLESS
@@ -907,6 +908,7 @@ contains ! ===================================== Public Procedures =====
       integer :: I                        ! Loop inductor
       integer :: ROOT                     ! Root of ChunkDivide command
       integer :: SON                      ! A son of the ChunkDivide section node
+      integer :: sub_rosa_index
       integer :: UNITS(2)                 ! Units of expression
       integer, dimension(:), pointer :: NEEDED ! Which fields are needed
       integer, dimension(:), pointer :: NOTWANTED ! Which fields are not wanted
@@ -981,13 +983,15 @@ contains ! ===================================== Public Procedures =====
           config%scanULSet = .true.
         case ( f_criticalModules )
           config%criticalModules = decoration ( gson )
+        case ( f_criticalSignals )
+          sub_rosa_index = sub_rosa(gson)
+          call get_string ( sub_rosa_index, config%criticalSignals, &
+            & strip=.true. )
         case ( f_maxGap )
           config%maxGap = value(1)
           config%maxGapFamily = units(1)
         case ( f_skipL1BCheck )
-          ! print *, 'Hey-trying new skipL1BCheck flag'
           config%skipL1BCheck = get_boolean ( fieldValue )
-          ! print *, 'You tried to set it to: ', config%skipL1BCheck
           if ( config%skipL1BCheck ) &
             & call MLSMessage(MLSMSG_Warning, ModuleName, &
             & 'You have elected to skip checking the l1b data for problems' )
@@ -1313,7 +1317,10 @@ contains ! ===================================== Public Procedures =====
     ! ----------------------------------------- notel1brad_changes -----
     subroutine notel1brad_changes ( obstructions, mafRange, l1bInfo )
     use MLSSignals_m, only:GetModuleFromRadiometer, GetModuleFromSignal, &
-      & GetRadiometerFromSignal, GetSignal, Signal_T, SIGNALS, MODULES
+      & GetRadiometerFromSignal, GetSignal, GetSignalName, &
+      & Signal_T, SIGNALS, MODULES
+    use MLSStrings, only: NumStringElements, GetStringElement
+    use Parse_signal_m, only: Parse_signal
       ! This routine notes any lack of good data for one of the
       ! signals, and, depending on sensitivity,
       ! augments the database of obstructions
@@ -1330,19 +1337,32 @@ contains ! ===================================== Public Procedures =====
       ! duration of config%maxGap before we declare it an obstruction
       ! and add it to the database
       logical, parameter :: ANYCHANGEISOBSTRUCTION = .false.
-      integer :: Signal_index
-      type(Signal_T) :: Signal
+      integer :: critical_index
       integer, dimension(size(SIGNALS)) :: goods_after_gap
       integer, dimension(size(SIGNALS)) :: goodness_changes
-      integer, dimension(size(SIGNALS)) :: howlong_nogood
       logical, dimension(size(SIGNALS)) :: good_after_maxgap
       logical, dimension(size(SIGNALS)) :: good_signals_now
       logical, dimension(size(SIGNALS)) :: good_signals_last
-      logical, dimension(:,:), pointer  :: signals_buffer
+      integer, dimension(size(SIGNALS)) :: howlong_nogood
+      integer :: i
       integer :: maf
       integer :: mafset
+      integer :: mafset_end
+      integer :: mafset_start
+      integer, parameter :: MAXMAFSINSET = 250
+      integer :: nmafsets
       integer :: num_goods_after_gap
       integer :: num_goodness_changes
+      type(Signal_T) :: Signal
+      integer :: Signal_index
+      integer :: signal_end
+      integer :: signal_start
+      character(len=40) :: signal_full
+      character(len=40) :: signal_str
+      integer, pointer :: Signal_Indices(:)         ! Indices in the signals
+      logical, dimension(:,:), pointer  :: signals_buffer
+      logical :: this_maf_valid
+      logical, dimension(:), pointer  :: valids_buffer
       ! Won't check if there are no radiances
       if ( .not. associated(l1bInfo%l1bRadIDs) ) return
       ! Here we will loop over the signals database
@@ -1363,10 +1383,25 @@ contains ! ===================================== Public Procedures =====
       good_signals_now = .false.   ! Initializing
       do Signal_index=1, size(SIGNALS)
         if ( Signal%sideband == 0 ) then
-          good_signals_now(Signal_index) = &
-            & any_good_signaldata ( Signal_index, Signal%sideband, &
-            & l1bInfo, mafRange(1), mafRange(2), &
-            & signals_buffer(:,Signal_index) )
+          if ( mafRange(2) - mafRange(1) + 1 <= MAXMAFSINSET ) then
+            good_signals_now(Signal_index) = &
+              & any_good_signaldata ( Signal_index, Signal%sideband, &
+              & l1bInfo, mafRange(1), mafRange(2), &
+              & signals_buffer(:,Signal_index) )
+          else
+            nmafsets = (mafRange(2) - mafRange(1))/MAXMAFSINSET + 1
+            mafset_end = mafRange(1) - 1   ! A trick--mafset_start is mafRange(1)
+            do mafset=1, nmafsets
+              mafset_start = mafset_end + 1
+              mafset_end = MIN(mafRange(2), mafset_end + MAXMAFSINSET)
+              signal_start = mafset_start + 1 - mafRange(1)
+              signal_end = mafset_end + 1 - mafRange(1)
+              good_signals_now(Signal_index) = &
+              & any_good_signaldata ( Signal_index, Signal%sideband, &
+              & l1bInfo, mafset_start, mafset_end, &
+              & signals_buffer(:,Signal_index) )
+            enddo
+          endif
         endif
       enddo
 
@@ -1406,6 +1441,52 @@ contains ! ===================================== Public Procedures =====
         good_signals_last = good_signals_now
       enddo
       
+      ! Task (2): Find regions where there is no signal among at least one
+      ! of the critical signals
+      if (config%criticalSignals /= '' ) then
+        nullify ( valids_buffer )
+        call allocate_test( &
+          & valids_buffer, mafRange(2) - mafRange(1) + 1 , &
+          & 'valids_buffer', ModuleName)
+        valids_buffer = .true.
+        if ( index(switches, 'chu') /= 0 ) then    
+          call output ( 'Checking for critical signals: ')
+          call output ( trim(config%criticalSignals), advance='yes')
+          call output ( &
+            & 'Which signals match the incomplete signal string weve been given', &
+            &  advance='yes')
+        endif
+        do critical_index=1, NumStringElements(trim(config%criticalSignals), &
+          & .FALSE.)
+          call GetStringElement( trim(config%criticalSignals), signal_str, &
+            & critical_index, .FALSE. )
+          ! Which signals match the incomplete signal string we've been given?
+          nullify(Signal_Indices)
+          call Parse_signal(signal_str, signal_indices)
+          if ( .not. associated(Signal_Indices) ) exit
+          if ( index(switches, 'chu') /= 0 ) then    
+            call output ( 'Signal_Indices: ')
+            call output ( Signal_Indices, advance='yes')
+            do i=1, size(Signal_Indices)
+              call GetSignalName(Signal_Indices(i), signal_full)
+              call output ( 'Full Signal Name: ')
+              call output ( trim(signal_full), advance='yes')
+            enddo
+          endif
+          do maf = mafRange(1), mafRange(2)
+            this_maf_valid = .false.   ! not valid unless at least one signal
+            do i=1, size(Signal_Indices)
+              Signal_index = Signal_Indices(i)
+              this_maf_valid = this_maf_valid .or. signals_buffer(maf+1, Signal_index)
+            enddo
+            valids_buffer(maf+1) = valids_buffer(maf+1) .and. this_maf_valid
+          enddo
+          call deallocate_test(Signal_Indices, 'Signal_Indices', ModuleName)
+        enddo
+        call ConvertFlagsToObstructions ( valids_buffer, mafRange, obstructions )
+        call deallocate_test(valids_buffer, 'valids_buffer', ModuleName)
+      endif
+
       ! Depending on sensitivity, add these to Obstructions database
       if ( ANYCHANGEISOBSTRUCTION .and. num_goodness_changes > 0 ) then
         do mafset = 1, num_goodness_changes
@@ -1843,8 +1924,9 @@ contains ! ===================================== Public Procedures =====
       answer = .true.    ! This value should be ignored by the caller
       do the_maf = maf, mymaf2
         good_buffer(the_maf+1) = .not. &
-          & all (my_l1bData%DpField(:,:, the_maf+1) < 0._rk)
+          & all (my_l1bData%DpField(:,:, the_maf+1-maf) < 0._rk)
       enddo
+      call deallocate_test(my_l1bData%DpField, trim(nameString), ModuleName)
     else
       answer = .not. all (my_l1bData%DpField < 0._rk)
       call deallocate_test(my_l1bData%DpField, trim(nameString), ModuleName)
@@ -1858,6 +1940,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.35  2003/06/05 23:37:14  pwagner
+! 1st version of criticalSignals in Chunk Divide Orbital
+!
 ! Revision 2.34  2003/05/17 00:06:06  pwagner
 ! Wont check sidebands for missing radiances
 !
