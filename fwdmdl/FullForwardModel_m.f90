@@ -1348,7 +1348,7 @@ contains ! ================================ FullForwardModel routine ======
                 & fwdModelConf%signals(sigInd), &
                 & sideband = thisSideband, channel=channel )
               sv_i = 1
-              do instance = 1, n_t_phi
+              do instance = WindowStart, WindowFinish
                 do surface = 1, n_t_zeta
                   call Freq_Avg ( frequencies,                        &
                     & centerFreq+thisSideband* &
@@ -1395,7 +1395,7 @@ contains ! ================================ FullForwardModel routine ======
                   shapeInd = MatchSignal ( filterShapes%signal, &
                     & fwdModelConf%signals(sigInd), &
                     & sideband = thisSideband, channel=channel )
-                  do instance = 1, Grids_f%no_p(specie)
+                  do instance = WindowStart, WindowFinish
                     do surface = 1, Grids_f%no_z(specie)
                       call Freq_Avg ( frequencies,                      &
                         & centerFreq+thisSideband * &
@@ -1411,7 +1411,7 @@ contains ! ================================ FullForwardModel routine ======
                 sv_start = sv_i
                 do i = 1, noUsedChannels
                   sv_i = sv_start
-                  do instance = 1, Grids_f%no_p(specie)
+                  do instance = WindowStart, WindowFinish
                     do surface = 1, Grids_f%no_z(specie)
                       k_atmos(i,ptg_i,surface,instance,specie) = &
                         k_atmos_frq(1,sv_i)
@@ -1447,7 +1447,7 @@ contains ! ================================ FullForwardModel routine ======
                     & fwdModelConf%signals(sigInd), &
                     & sideband = thisSideband, channel=channel )
                   if(specie == 1) sv_i = 1
-                  do instance = 1, Grids_dw%no_p(specie)
+                  do instance = WindowStart, WindowFinish
                     do surface = 1, Grids_dw%no_z(specie)
                       call Freq_Avg ( frequencies,                      &
                         & centerFreq+thisSideband * &
@@ -1462,7 +1462,7 @@ contains ! ================================ FullForwardModel routine ======
               else                        ! Else not frequency averaging
                 do i = 1, noUsedChannels
                   if(specie == 1) sv_i = 1
-                  do instance = 1, Grids_dw%no_p(specie)
+                  do instance = WindowStart, WindowFinish
                     do surface = 1, Grids_dw%no_z(specie)
                       k_spect_dw(i,ptg_i,surface,instance,specie) = &
                         k_spect_dw_frq(1,sv_i)
@@ -1490,7 +1490,7 @@ contains ! ================================ FullForwardModel routine ======
                     & fwdModelConf%signals(sigInd), &
                     & sideband = thisSideband, channel=channel )
                   if(specie == 1) sv_i = 1
-                  do instance = 1, Grids_dn%no_p(specie)
+                  do instance = WindowStart, WindowFinish
                     do surface = 1, Grids_dn%no_z(specie)
                       call Freq_Avg ( frequencies,                      &
                         & centerFreq+thisSideband * &
@@ -1505,7 +1505,7 @@ contains ! ================================ FullForwardModel routine ======
               else                        ! Else not frequency averaging
                 do i = 1, noUsedChannels
                   if(specie == 1) sv_i = 1
-                  do instance = 1, Grids_dn%no_p(specie)
+                  do instance = WindowStart, WindowFinish
                     do surface = 1, Grids_dn%no_z(specie)
                       k_spect_dn(i,ptg_i,surface,instance,specie) = &
                         k_spect_dn_frq(1,sv_i)
@@ -1533,7 +1533,7 @@ contains ! ================================ FullForwardModel routine ======
                     & fwdModelConf%signals(sigInd), &
                     & sideband = thisSideband, channel=channel )
                   if(specie == 1) sv_i = 1
-                  do instance = 1, Grids_dv%no_p(specie)
+                  do instance = WindowStart, WindowFinish
                     do surface = 1, Grids_dv%no_z(specie)
                       call Freq_Avg ( frequencies,                      &
                         & centerFreq+thisSideband * &
@@ -1548,7 +1548,7 @@ contains ! ================================ FullForwardModel routine ======
               else                        ! Else not frequency averaging
                 do i = 1, noUsedChannels
                   if(specie == 1) sv_i = 1
-                  do instance = 1, Grids_dv%no_p(specie)
+                  do instance = WindowStart, WindowFinish
                     do surface = 1, Grids_dv%no_z(specie)
                       k_spect_dv(i,ptg_i,surface,instance,specie) = &
                         k_spect_dv_frq(1,sv_i)
@@ -1852,6 +1852,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.18  2001/11/20 10:23:27  zvi
+! Fixing window bug & diemsion
+!
 ! Revision 2.17  2001/11/20 01:18:59  zvi
 ! Fixing Shifting Window bug
 !
