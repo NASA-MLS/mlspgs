@@ -18,7 +18,7 @@ module ReadAPriori
   use L2GPData, only: L2GPData_T, AddL2GPToDatabase, ReadL2GPData, Dump
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: FileNameLen
-  use MLSFiles, only: WILDCARDHDFVERSION, &
+  use MLSFiles, only: FILENOTFOUND, WILDCARDHDFVERSION, &
     & GetPCFromRef, MLS_HDF_VERSION, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
     & MLS_INQSWATH, MLS_SFEND, MLS_SFSTART, SPLIT_PATH_NAME
   use MLSL2Options, only: DEFAULT_HDFVERSION_READ, PCF, PCFL2CFSAMECASE
@@ -227,11 +227,14 @@ contains ! =====     Public Procedures     =============================
 
         ! If we didn't get a name get the first swath name in the file
         if ( len_trim(swathNameString) == 0 ) then
-!          noSwaths = SWInqSwath ( fileNameString, allSwathNames, listSize )
           allSwathNames = ''
           noSwaths = mls_InqSwath ( fileNameString, allSwathNames, listSize, &
            & hdfVersion=hdfVersion)
-          if ( listSize < 1 ) then
+          if ( listSize == FILENOTFOUND ) then
+            call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'File not found; make sure the name and path are correct' &
+              & // trim(fileNameString) )
+          elseif ( listSize < 1 ) then
             call MLSMessage ( MLSMSG_Error, ModuleName, &
               & 'Failed to determine swath names, perhaps none in file ' &
               & // trim(fileNameString) )
@@ -582,6 +585,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.45  2003/04/02 23:54:53  pwagner
+! Checks for FILENOTFOUND
+!
 ! Revision 2.44  2003/04/01 21:44:38  dwu
 ! Fixed bad error with multiple swaths in file (pwagner)
 !
