@@ -160,7 +160,7 @@ contains ! ====     Public Procedures     ==============================
     case ( not_field_of )
       call display_string ( sub_rosa(where) )
       call output ( ' is not a field of ' )
-      call display_string ( sub_rosa(fields(1)), advance='yes' )
+      call display_string ( sub_rosa(subtree(1,fields(1))), advance='yes' )
     case ( not_name )
       call output ( 'is not a name.', advance = 'yes' )
     case ( not_name_or_string )
@@ -240,7 +240,7 @@ contains ! ====     Public Procedures     ==============================
       field = check_field(son1,spec_decl)   ! Is field a field of spec?
       if ( field == 0 ) then
         call announce_error ( son1, not_field_of, &
-          & fields=(/ subtree(1,spec_decl) /) )
+          & fields=(/ spec_decl /) )
       else
         if ( node_id(field) == n_field_type ) then
           look_for = enum_value
@@ -762,7 +762,7 @@ m:              do j = 3, nsons(field)
     spec_decl = decoration(root)
     field = check_field(son,spec_decl)
     if ( field == 0 ) then
-      call announce_error ( son, not_field_of, (/ spec_decl /) )
+      call announce_error ( son, not_field_of, fields=(/ spec_decl /) )
       call dump_1_decl ( son )
     else
       if ( check_field_type(field,t_boolean) ) then
@@ -850,6 +850,9 @@ m:              do j = 3, nsons(field)
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.5  2001/03/05 23:20:09  vsnyder
+! Correct obscure problem that only occurs if you have erroneous input
+!
 ! Revision 1.4  2001/02/22 19:43:04  vsnyder
 ! Improve some messages
 !
