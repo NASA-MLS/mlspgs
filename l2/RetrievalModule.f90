@@ -44,9 +44,9 @@ contains
       & F_maxJ, F_measurements, F_measurementSD, F_method, F_opticalDepth, &
       & F_opticalDepthCutoff, &
       & F_outputCovariance, F_outputSD, F_phaseName, F_ptanQuantity, &
-      & F_quantity, F_regAfter, F_regOrders, F_regQuants, F_regWeights, &
-      & F_regWeightVec, F_state, F_toleranceA, F_toleranceF, F_toleranceR, &
-      & Field_first, Field_last, &
+      & F_quantity, F_regAfter, F_regApriori, F_regOrders, F_regQuants, &
+      & F_regWeights, F_regWeightVec, F_state, F_toleranceA, F_toleranceF, &
+      & F_toleranceR, Field_first, Field_last, &
       & L_apriori, L_covariance, &
       & L_dnwt_ajn,  L_dnwt_axmax,  L_dnwt_cait, L_dnwt_diag,  L_dnwt_dxdx, &
       & L_dnwt_dxdxl, L_dnwt_dxn,  L_dnwt_dxnl,  L_dnwt_flag, L_dnwt_fnmin, &
@@ -69,7 +69,7 @@ contains
     use Output_m, only: BLANKS, OUTPUT
     use SidsModule, only: SIDS
     use SnoopMLSL2, only: SNOOP
-    use String_Table, only: DISPLAY_STRING, Get_String
+    use String_Table, only: Display_String, Get_String
     use Time_M, only: Time_Now
     use Toggles, only: Gen, Switches, Toggle
     use Trace_M, only: Trace_begin, Trace_end
@@ -161,6 +161,8 @@ contains
     type(vector_T), pointer :: State    ! The state vector
     real :: T0, T1, T2, T3              ! for timing
     type(matrix_T) :: Tikhonov          ! Matrix for Tikhonov regularization
+    logical :: TikhonovApriori          ! Regularization is to aproiri, not
+                                        ! zero -- default false
     logical :: TikhonovBefore           ! "Do Tikhonov before column scaling"
     logical :: Timing
     double precision :: ToleranceA      ! convergence tolerance for NWT,
@@ -190,7 +192,8 @@ contains
     integer, parameter :: F_rowScaled = f + 1      ! Either a copy of f, or f row-scaled
     integer, parameter :: Gradient = f_rowScaled + 1   ! for NWT
     integer, parameter :: Reg_X_x = gradient + 1   ! Regularization * X_n
-    integer, parameter :: Weight = reg_X_x + 1     ! Scaling vector for rows, 1/measurementSD
+    integer, parameter :: Reg_RHS = reg_X_x + 1    ! RHS for Tikhonov if regApriori
+    integer, parameter :: Weight = reg_RHS + 1     ! Scaling vector for rows, 1/measurementSD
     integer, parameter :: X = weight + 1           ! for NWT
     integer, parameter :: LastVec = X
 
@@ -219,6 +222,7 @@ contains
     snoopComment = ' '           ! Ditto
     snoopKey = 0
     snoopLevel = 1               ! Ditto
+    tikhonovApriori = .false.
     tikhonovBefore = .true.
     timing = section_times
     do j = firstVec, lastVec ! Make the vectors in the database initially empty
@@ -328,6 +332,8 @@ contains
             method = decoration(subtree(2,son))
           case ( f_regAfter )
             tikhonovBefore = .not. get_Boolean(son)
+          case ( f_regApriori )
+            tikhonovApriori = get_Boolean(son)
           case ( f_regOrders )
             regOrders = son
           case ( f_regQuants )
@@ -372,6 +378,8 @@ contains
 
         if ( got(f_apriori) .neqv. got(f_covariance) ) &
           & call announceError ( bothOrNeither, f_apriori, f_covariance )
+        if ( got(f_regApriori) .and. .not. got(f_apriori) ) &
+          & call announceError ( ifAThenB, f_regApriori, f_apriori )
         if ( got(f_regOrders) .neqv. &
           & (got(f_regWeights) .or. got(f_regWeightVec)) ) then
           call announceError ( bothOrNeither, f_regOrders, f_regWeights )
@@ -464,7 +472,7 @@ contains
           ! Create the matrix for adding the Tikhonov regularization to the
           ! normal equations
           if ( got(f_regOrders) ) then
-            call createEmptyMatrix ( tikhonov, 0, state, state )
+            call createEmptyMatrix ( tikhonov, 0, state, state, text='_Tikhonov' )
             k = addToMatrixDatabase( matrixDatabase, tikhonov )
           end if
         end if
@@ -666,7 +674,7 @@ contains
                                         ! the action to take.
       integer :: NWT_Opt(20)            ! Options for NWT, q.v.
       real(rk) :: NWT_Xopt(20)          ! Real parameters for NWT options, q.v.
-      integer :: PreserveMatrixName    ! Temporary name store
+      integer :: PreserveMatrixName     ! Temporary name store
       integer :: RowBlock               ! Which block of rows is the forward
                                         ! model filling?
       integer, parameter :: SnoopLevels(NF_DX_AITKEN:NF_FANDJ) = (/ &
@@ -809,6 +817,9 @@ contains
               & vectorNameText='_aprioriMinusX' )
 !           v(aprioriMinusX) = apriori - v(x)
             call subtractFromVector ( v(aprioriMinusX), v(x) )
+            if ( got(f_regApriori) ) &
+              & call copyVector ( v(reg_RHS), v(aprioriMinusX), clone=.true., &
+              & vectorNameText='_regRHS' )
             if ( got(f_aprioriScale) ) &
               & call scaleVector ( v(aprioriMinusX), aprioriScale )
             !{Let the covariance of the apriori be $\mathbf{S_a}$, let
@@ -1011,14 +1022,20 @@ contains
             call time_now ( t1 )
 
             !{ Tikhonov regularization is of the form ${\bf R x}_n \simeq {\bf
-            !  0}$. So that all of the parts of the problem are solving for
-            !  ${\bf\delta x}$, we subtract ${\bf R x}_{n-1}$ from both sides to
-            !  get ${\bf R \delta x} \simeq -{\bf R x}_{n-1}$.
+            !  0}$ or ${\bf R x}_n \simeq {\bf a}$, where {\bf a} is the
+            !  apriori. So that all of the parts of the problem are solving for
+            !  ${\bf\delta x}$, we subtract ${\bf R x}_{n-1}$ from both sides
+            !  to get ${\bf R \delta x} \simeq -{\bf R x}_{n-1}$ or ${\bf
+            !  R \delta x} \simeq {\bf R} ( {\bf a - x}_{n-1})$.
 
             call regularize ( tikhonov, regOrders, regQuants, regWeights, &
               & RegWeightVec, tikhonovRows )
-            call multiplyMatrixVectorNoT ( tikhonov, v(x), v(reg_X_x) ) ! regularization * x_n
-            call scaleVector ( v(reg_X_x), -1.0_r8 )   ! -R x_n
+            if ( got(f_regApriori) ) then
+              call multiplyMatrixVectorNoT ( tikhonov, v(reg_RHS), v(reg_X_x) )
+            else
+              call multiplyMatrixVectorNoT ( tikhonov, v(x), v(reg_X_x) )
+              call scaleVector ( v(reg_X_x), -1.0_r8 )   ! -R x_n
+            end if
               if ( index(switches,'reg') /= 0 ) then
                 call dump_struct ( tikhonov, 'Tikhonov' )
                 call dump ( tikhonov, name='Tikhonov', details=2 )
@@ -1147,7 +1164,12 @@ contains
 
             call regularize ( tikhonov, regOrders, regQuants, regWeights, &
               & regWeightVec, tikhonovRows )
-            call multiplyMatrixVectorNoT ( tikhonov, v(x), v(reg_X_x) ) ! regularization * x_n
+            if ( got(f_regApriori) ) then
+              call multiplyMatrixVectorNoT ( tikhonov, v(reg_RHS), v(reg_X_x) )
+            else
+              call multiplyMatrixVectorNoT ( tikhonov, v(x), v(reg_X_x) )
+              call scaleVector ( v(reg_X_x), -1.0_r8 )   ! -R x_n
+            end if
             call scaleVector ( v(reg_X_x), -1.0_r8 )   ! -R x_n
 
             if ( columnScaling /= l_none ) then ! Compute $\Sigma$
@@ -2960,6 +2982,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.164  2002/08/22 00:06:50  vsnyder
+! Implement regularize-to-apriori
+!
 ! Revision 2.163  2002/08/21 19:55:31  vsnyder
 ! Move USE statements from module scope to procedure scope
 !
