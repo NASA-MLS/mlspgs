@@ -15,13 +15,16 @@ module RetrievalModule
     & NF_TOLX_BEST, NF_TOLF, NF_TOO_SMALL, NF_FANDJ, NWT, NWT_T, NWTA, RK
   use Expr_M, only: Expr
   use Declaration_Table, only: Num_Value
+  use ForwardModelInterface, only: ForwardModel, ForwardModelInfo_T, &
+    & ForwardModelSetup
   use Init_Tables_Module, only: f_apriori, f_aprioriScale, f_channels, &
     & f_criteria, f_columnScale, f_covariance, f_diagonal, f_fwdModelIn, &
     & f_fwdModelOut, f_jacobian, f_maxIterations, f_measurements, f_method, &
     & f_outputCovariance, f_quantity, f_state, f_test, f_toleranceA, &
     & f_toleranceF, f_toleranceR, f_weight, field_first, field_indices, &
     & field_last, l_apriori, l_covariance, l_newtonian, l_none, l_norm, &
-    & l_true, s_matrix, s_subset, s_retrieve
+    & l_true, s_forwardModel, s_matrix, s_subset, s_retrieve, &
+    & spec_indices
   use MatrixModule_1, only: AddToMatrixDatabase, CholeskyFactor, ClearMatrix, &
     & ColumnScale, CopyMatrixValue, CreateEmptyMatrix, DestroyMatrix, &
     & FillExtraCol, FillExtraRow, FormNormalEquations => NormalEquations, &
@@ -32,6 +35,8 @@ module RetrievalModule
   use MLSCommon, only: R8
   use Output_M, only: Output
   use String_Table, only: Display_String
+  use Toggles, only: Gen, Toggle
+  use Trace_M, only: Trace_begin, Trace_end
   use Tree, only: Decorate, Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, &
     & Subtree
   use Tree_Types, only: N_named, N_set_one
@@ -94,7 +99,9 @@ contains
     type(vector_T) :: F                 ! for NWT -- Model - Measurements
     type(matrix_Cholesky_T) :: Factored ! Cholesky-factored normal equations
     integer :: Field                    ! Field index -- f_something
-    type(vector_T), pointer :: FwdModelIn, FwdModelOut
+    type(vector_T), pointer :: FwdModelIn
+    type(forwardModelInfo_T) :: FwdModelInfo
+    type(vector_T), pointer :: FwdModelOut
     logical :: Got(field_first:field_last)   ! "Got this field already"
     type(vector_T) :: Gradient          ! for NWT
     integer :: I, J, K                  ! Subscripts and loop inductors
@@ -159,6 +166,7 @@ contains
     nullify ( apriori, covariance, fwdModelIn, fwdModelOut )
     nullify ( measurements, state, weight, x )
 
+    if ( toggle(gen) ) call trace_begin ( "Retrieve", root )
     do i = 2, nsons(root) - 1           ! skip names at begin/end of section
       son = subtree(i, root)
       if ( node_id(son) == n_named ) then
@@ -175,25 +183,31 @@ contains
       got = .false.
       spec = decoration(subtree(1,decoration(subtree(1,key))))
       select case ( spec )
+      case ( s_forwardModel )
+        call forwardModelSetup ( key, vectorDatabase, matrixDatabase, &
+          & fwdModelInfo )
       case ( s_matrix )
-        if ( nsons(key) /= 1 ) call announceError ( noFields )
+        if ( toggle(gen) ) call trace_begin ( "Retrieve.matrix/vector", root )
+        if ( nsons(key) /= 1 ) call announceError ( noFields, spec )
         call destroyMatrix( matrixDatabase(decoration(key)) ) ! avoids a memory leak
         call decorate ( key, 0 )
+        if ( toggle(gen) ) call trace_end ( "Retrieve.matrix/vector" )
       case ( s_subset )
+        if ( toggle(gen) ) call trace_begin ( "Retrieve.subset", root )
         do j = 2, nsons(key) ! fields of the "subset" specification
           son = subtree(j, key)
-          field = decoration(subtree(1,decoration(subtree(1,son))))
+          field = decoration(subtree(1,son))
           if ( got(field) ) call announceError ( twice, field )
           got(field) = .true.
           select case ( field )
           case ( f_channels )
-            channels = son
+            channels = subtree(2,son)
           case ( f_criteria )
-            criteria = son
+            criteria = subtree(2,son)
           case ( f_quantity )
-            quantity = son
+            quantity = subtree(2,son) ! vector.quantity
           case ( f_test )
-            test = son
+            test = subtree(2,son)
           case default
             ! Shouldn't get here if the type checker worked
           end select
@@ -221,7 +235,9 @@ contains
           end if ! mask exists
           !??? Fill the mask according to the specified criteria ???
         end if ! error == 0
+        if ( toggle(gen) ) call trace_end ( "Retrieve.subset" )
       case ( s_retrieve )
+        if ( toggle(gen) ) call trace_begin ( "Retrieve.retrieve", root )
         aprioriScale = 1.0
         columnScaling = l_none
         maxIterations = defaultMaxIterations
@@ -231,7 +247,7 @@ contains
         toleranceR = defaultToleranceR
         do j = 2, nsons(key) ! fields of the "retrieve" specification
           son = subtree(j, key)
-          field = decoration(subtree(1,decoration(subtree(1,son))))
+          field = decoration(subtree(1,son))
           if ( got(field) ) call announceError ( twice, field )
           got(field) = .true.
           select case ( field )
@@ -416,7 +432,7 @@ contains
               case ( nf_evalf )
                 if ( iter > maxIterations ) exit
                 ! Compute f(x)
-                call forwardModelRadiances ( fwdModelIn, f )
+                call forwardModel ( fwdModelInfo, fwdModelIn, f=f )
                 call subtractFromVector ( f, measurements )
                 aj%fnorm = sqrt(f .dot. f)
                 call destroyVectorValue ( f )  ! free the space
@@ -438,8 +454,8 @@ contains
                   call clearMatrix ( normalEquations%m ) ! start with zero
                 end if
                 do rowBlock = 1, jacobian%row%nb
-                  call forwardModel ( fwdModelIn, jacobian, f, rowBlock, &
-                    & fwdModelOut )
+                  call forwardModel ( fwdModelInfo, fwdModelIn, jacobian, f, &
+                    & rowBlock, fwdModelOut )
                   call subtractFromVector ( f, measurements, &
                     & jacobian%row%quant(rowBlock), &
                     & jacobian%row%inst(rowBlock) )
@@ -554,6 +570,11 @@ contains
             ! IF ( you want to return to a previous best X ) NWT_FLAG = 0
               iter = iter + 1
             end do ! Newton iteration
+            if ( got(f_outputCovariance) ) then
+              ! ??? Compute the covariance matrix
+              if ( diagonal ) then
+              end if
+            end if
             ! Clean up the temporaries, so we don't have a memory leak
             call destroyVectorInfo ( bestGradient )
             call destroyVectorInfo ( bestX )
@@ -562,6 +583,7 @@ contains
             call destroyVectorInfo ( f )
             call destroyVectorInfo ( gradient )
             call destroyMatrix ( normalEquations%m )
+            call destroyMatrix ( factored%m )
           end select ! method
           !??? Make sure the jacobian and outputCovariance get destroyed
           !??? after ?what? happens?  Can we destroy the entire matrix
@@ -574,20 +596,20 @@ contains
         do j = 1, size(vectorDatabase)
           call destroyVectorMask ( vectorDatabase(i) )
         end do
+        if ( toggle(gen) ) call trace_end ( "Retrieve.retrieve" )
       end select
 
     end do ! i = 2, nsons(root) - 1
+    if ( toggle(gen) ) call trace_end ( "Retrieve" )
 
   contains
     ! --------------------------------------------  AnnounceError  -----
     subroutine AnnounceError ( Code, FieldIndex, AnotherFieldIndex )
       integer, intent(in) :: Code       ! Index of error message
       integer, intent(in), optional :: FieldIndex, AnotherFieldIndex ! f_...
-      integer :: MyField, Source
+      integer :: Source
 
       error = max(error,1)
-      myField = field
-      if ( present(fieldIndex) ) myField = fieldIndex
       source = source_ref ( son )
       call output ( 'At line '  )
       call output ( mod(source,256) )
@@ -601,10 +623,12 @@ contains
         call display_string ( field_indices(f_covariance) )
         call output ( ' is supplied, but the other is not.', advance='yes' )
       case ( noFields )
-        call output ( ': No fields are allowed.' )
+        call output ( ': No fields are allowed for a ' )
+        call display_string ( spec_indices(fieldIndex) )
+        call output ( ' specification.', advance='yes' )
       case ( inconsistent, noField, notExtra, notRange, notSPD, twice )
         call output ( ': the field ' )
-        call display_string ( field_indices(myField) )
+        call display_string ( field_indices(fieldIndex) )
         select case ( code )
         case ( inconsistent )
           call output ( ' is not consistent with the ' )
@@ -630,6 +654,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.3  2001/02/08 00:56:55  vsnyder
+! Periodic commit.  Still needs work.
+!
 ! Revision 2.2  2001/01/26 19:01:47  vsnyder
 ! More nearly complete, except for forward model interface and minor things
 ! having to do with creating subset masks.  Look for ??? in comments.
