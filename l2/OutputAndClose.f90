@@ -17,6 +17,7 @@ module OutputAndClose ! outputs all data from the Join module to the
   use L2GPData, only: L2GPData_T, WriteL2GPData
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: I4
+  use MLSFiles, only: GetPCFromRef
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
 !  use MLSPCF, only: MLSPCF_L2AUX_END, MLSPCF_L2AUX_START, MLSPCF_L2GP_END, &
 !    & MLSPCF_L2GP_START
@@ -144,19 +145,25 @@ contains ! =====     Public Procedures     =============================
 
           ! Get the l2gp file name from the PCF
 
-          l2gpFileHandle = mlspcf_l2gp_start
-          found = .FALSE.
-          do while ((.NOT. found) .AND. (l2gpFileHandle <=  mlspcf_l2gp_end))
-            l2gp_Version=1
-            returnStatus = Pgs_pc_getReference(l2gpFileHandle, l2gp_Version, &
-              & l2gpPhysicalFilename)
-            
-            if ( returnStatus == PGS_S_SUCCESS ) then
-              if ( INDEX(l2gpPhysicalFilename, TRIM(file_base)) /= 0 ) then
-                found = .true.
+ !         l2gpFileHandle = mlspcf_l2gp_start
+ !         found = .FALSE.
+ !         do while ((.NOT. found) .AND. (l2gpFileHandle <=  mlspcf_l2gp_end))
+ !           l2gp_Version=1
+ !           returnStatus = Pgs_pc_getReference(l2gpFileHandle, l2gp_Version, &
+ !             & l2gpPhysicalFilename)
+ !           
+ !           if ( returnStatus == PGS_S_SUCCESS ) then
+ !             if ( INDEX(l2gpPhysicalFilename, TRIM(file_base)) /= 0 ) then
+ !               found = .true.
+ 
+  				l2gpFileHandle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
+				& mlspcf_l2gp_end, &
+  & .TRUE., returnStatus, l2gp_Version)
+ 
+            if ( returnStatus == 0 ) then
                 ! Open the HDF-EOS file and write swath data
                 
-                swfid = swopen(l2gpPhysicalFilename, DFACC_CREATE)
+                swfid = swopen(file_base, DFACC_CREATE)
 
                 ! Loop over the segments of the l2cf line
                 
@@ -172,40 +179,49 @@ contains ! =====     Public Procedures     =============================
                     ! ??? More work needed here
                   end select
                 end do ! field_no = 2, nsons(key)
+
                 returnStatus = swclose(swfid)
                 if (returnStatus /= PGS_S_SUCCESS) then
                   call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
                   call MLSMessage ( MLSMSG_Error, ModuleName, &
                     &  "Error closing  l2gp file:  "//mnemonic//" "//msg )
                 end if
-              else                ! Found the right file
-                l2gpFileHandle = l2gpFileHandle + 1
-              end if
+!              else                ! Found the right file
+!                l2gpFileHandle = l2gpFileHandle + 1
+!              end if
+
             else
               call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
               call MLSMessage ( MLSMSG_Error, ModuleName, &
                 &  "Error finding l2gp file:  "//mnemonic//" "//msg )
+
             end if
             
-          end do !(.not. found) .and. (l2gpFileHandle <=  mlspcf_l2gp_end)
-          IF (.NOT. found) CALL MLSMessage(MLSMSG_Error,ModuleName,&
-            'Unable to find filename containing '//TRIM(file_base))
+!          end do !(.not. found) .and. (l2gpFileHandle <=  mlspcf_l2gp_end)
+!          IF (.NOT. found) CALL MLSMessage(MLSMSG_Error,ModuleName,&
+!            'Unable to find filename containing '//TRIM(file_base))
           
         case ( l_l2aux )
           
           ! Get the l2aux file name from the PCF
           
-          l2auxFileHandle = mlspcf_l2dgm_start
-          found = .FALSE.
-          do while ((.NOT. found) .AND. (l2auxFileHandle <=  mlspcf_l2dgm_end))
-            l2aux_Version=1
-            returnStatus = Pgs_pc_getReference(l2auxFileHandle, l2aux_Version, &
-              & l2auxPhysicalFilename)
+!          l2auxFileHandle = mlspcf_l2dgm_start
+!          found = .FALSE.
+!          do while ((.NOT. found) .AND. (l2auxFileHandle <=  mlspcf_l2dgm_end))
+!            l2aux_Version=1
+!            returnStatus = Pgs_pc_getReference(l2auxFileHandle, l2aux_Version, &
+!              & l2auxPhysicalFilename)
             
-            if ( returnStatus == PGS_S_SUCCESS ) then
-              if ( INDEX(l2auxPhysicalFilename, TRIM(file_base)) /= 0 )then
-                found = .TRUE.
+!            if ( returnStatus == PGS_S_SUCCESS ) then
+!              if ( INDEX(l2auxPhysicalFilename, TRIM(file_base)) /= 0 )then
+!                found = .TRUE.
                 
+  				l2auxFileHandle = GetPCFromRef(file_base, mlspcf_l2dgm_start, &
+				& mlspcf_l2dgm_end, &
+  & .TRUE., returnStatus, l2aux_Version)
+ 
+            if ( returnStatus == 0 ) then
+				
                 ! Create the HDF file and initialize the SD interface
                 sdfId = sfstart(l2auxPhysicalFilename, DFACC_CREATE)
                 
@@ -229,16 +245,18 @@ contains ! =====     Public Procedures     =============================
                   call MLSMessage ( MLSMSG_Error, ModuleName, &
                     &  "Error closing l2aux file:  "//mnemonic//" "//msg )
                 end if
-              else
-                l2auxFileHandle =  l2auxFileHandle + 1
-              end if
+!              else
+!                l2auxFileHandle =  l2auxFileHandle + 1
+!              end if
+
             else
               call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
               call MLSMessage ( MLSMSG_Error, ModuleName, &
                 &  "Error finding l2aux file:  "//mnemonic//" "//msg )
             end if
             
-          end do ! (.not. found) .and. (l2auxFileHandle <=  mlspcf_l2aux_end)
+!          end do ! (.not. found) .and. (l2auxFileHandle <=  mlspcf_l2aux_end)
+
         end select
       case ( s_time )
         if ( timing ) then
@@ -281,6 +299,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.12  2001/03/20 18:35:02  pwagner
+! Using GetPCFromRef to get file handles
+!
 ! Revision 2.11  2001/03/15 21:18:57  vsnyder
 ! Use Get_Spec_ID instead of decoration(subtree...
 !
