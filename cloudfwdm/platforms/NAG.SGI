@@ -62,7 +62,7 @@ INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) -I $(libfwdmdl)
 # Define some suffix rules
 
 .SUFFIXES:
-.SUFFIXES: .o .dbg.o .f90
+.SUFFIXES: .o .dbg.o .f90 .f
 .f90.o:
 	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
 
@@ -98,3 +98,6 @@ INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) -I $(libfwdmdl)
 l_specials = -lnsl
 
 # $Log$
+# Revision 1.1  2001/05/30 16:46:50  pwagner
+# First commit
+#
