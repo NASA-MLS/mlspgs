@@ -32,7 +32,7 @@ contains
 
   ! ------------------------------ GetQuantityForForwardModel ----------------
   function GetQuantityForForwardModel ( vector, otherVector, quantityType, &
-    & molecule, instrumentModule, radiometer, signal, sideband, &
+    & molecule, instrumentModule, radiometer, reflector, signal, sideband, &
     & molIndex, config, foundInFirst, noError )
 
     ! This function is in many senses like GetVectorQuantityByType, (to
@@ -59,6 +59,7 @@ contains
     integer, intent(in),  optional :: MOLECULE     ! Molecule index (l_...)
     integer, intent(in),  optional :: INSTRUMENTMODULE ! Instrument module index
     integer, intent(in),  optional :: RADIOMETER   ! Radiometer index
+    integer, intent(in),  optional :: REFLECTOR   ! Reflector literal
     integer, intent(in),  optional :: SIGNAL       ! Signal index
     integer, intent(in),  optional :: SIDEBAND ! -1, 0, +1
     type (ForwardModelConfig_T), intent(in), optional :: CONFIG ! fwmConfig
@@ -104,7 +105,7 @@ contains
     ! If we can revert to the simpler GetVectorQuantityByType then do so.
     if ( useGetQuantityByType ) then
       GetQuantityForForwardModel => GetVectorQuantityByType ( vector, otherVector, &
-        & quantityType, molecule, instrumentModule, radiometer, signal, sideband, &
+        & quantityType, molecule, instrumentModule, radiometer, reflector, signal, sideband, &
         & foundInFirst, noError )
       return
     end if
@@ -157,6 +158,9 @@ contains
           else
             if ( radiometer /= qt%radiometer ) cycle
           end if
+        end if
+        if ( present(reflector) ) then
+          if ( reflector /= qt%reflector ) cycle
         end if
         if ( present(sideband) ) then
           if ( sideband /= qt%sideband ) cycle
@@ -253,6 +257,11 @@ contains
         call get_string ( lit_indices(radiometer), msg(len_trim(msg)+2:))
       end if
 
+      if ( present ( reflector ) ) then
+        msg = trim(msg) // ' for reflector'
+        call get_string ( lit_indices(reflector), msg(len_trim(msg)+2:))
+      end if
+
       if ( present ( instrumentModule ) ) then
         msg = trim(msg) // ' for instrument module'
         call get_string ( lit_indices(instrumentModule), msg(len_trim(msg)+2:))
@@ -278,6 +287,9 @@ contains
 end module ForwardModelVectorTools
 
 ! $Log$
+! Revision 2.9  2003/05/29 16:37:21  livesey
+! New reflector argument to GetQuantityForForwardModel
+!
 ! Revision 2.8  2003/05/05 23:00:24  livesey
 ! Merged in feb03 newfwm branch
 !
