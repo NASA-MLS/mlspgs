@@ -275,8 +275,10 @@ begin Fill
 
   Fill, quantity=vReg.h2o, method=profile, profileValues= $
     [ 1000mb:20ppmv, 300:2ppmv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.068mb:0ppmv ], logSpace=false
+;   Fill, quantity=vReg.h2o_hr, method=profile, profileValues= $
+;    [ 178mb:0ppmv, 146mb: 5.0ppmv, 121mb: 2.5ppmv, 100mb:1.5ppmv ], logSpace=false
   Fill, quantity=vReg.h2o_hr, method=profile, profileValues= $
-   [ 178mb:0ppmv, 146mb: 5.0ppmv, 121mb: 2.5ppmv, 100mb:1.5ppmv ], logSpace=false
+   [ 178mb:0ppmv, 146mb: 2.0ppmv, 121mb: 1ppmv, 100mb:0.5ppmv ], logSpace=false
 
   Fill, quantity=vReg.hcl, method=profile, $
     profileValues= [ 0.1mb:0.3ppbv, 0.068mb:0ppbv ]
@@ -304,7 +306,7 @@ begin Fill
   Fill, quantity=vReg.temperature, method=profile, $
     profileValues=[ 1mb:1K ]
   Fill, quantity=vReg.temperature_hr, method=profile, $
-    profileValues=[ 1mb:3K ]
+    profileValues=[ 1mb:1K ]
 
   ;; Horizontal
   Fill, quantity=hReg.baselineR1A, method=profile, profileValues=[146mb:0K, 100mb:5K ]
@@ -334,8 +336,10 @@ begin Fill
 
   Fill, quantity=hReg.h2o, method=profile, $
     profileValues=[ 146mb:0ppmv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.068mb:0ppmv ], logSpace=false
+;   Fill, quantity=hReg.h2o_HR, method=profile, $
+;     profileValues=[ 146mb:0ppmv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.068mb:0ppmv ], logSpace=false
   Fill, quantity=hReg.h2o_HR, method=profile, $
-    profileValues=[ 146mb:0ppmv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.068mb:0ppmv ], logSpace=false
+    profileValues=[ 146mb:0ppmv, 100mb:1.0ppmv, 0.1mb:1.0ppmv, 0.068mb:0ppmv ], logSpace=false
 
   Fill, quantity=hReg.hcl, method=profile, $
     profileValues= [ 0.1mb:0.3ppbv, 0.068mb:0ppbv ]
@@ -363,7 +367,7 @@ begin Fill
   Fill, quantity=hReg.temperature, method=profile, $
     profileValues=[ 1mb:1K ]
   Fill, quantity=hReg.temperature_hr, method=profile, $
-    profileValues=[ 1mb:3K ]
+    profileValues=[ 1mb:1K ]
 
   Fill, quantity=hReg.refGPH, method=explicit, explicitValues=10m, /spread
 
