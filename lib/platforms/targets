@@ -23,9 +23,17 @@ all: libmlsSub.a libmls.a libmlsSDPTK.a
 #
 #libmlsSub.a: libmlsTemp.a
 #	mv libmlsTemp.a $@
+#
+#If any of the routines from tests still are back in OBJS
+#we don't want them compiled into libmls.a
+#(I deleted them before creating Makefile.dep, but a new make depends
+#will probably re-insert them)
+
+TEST_ONLY=getCF_m.o table_dumper.o table_generator.o test_multiply.o test_sparsify.o
+
 libmlsSub.a: ${OBJS}
 	ar ru $@ $?
-	ar d $@ SDPToolkit.o
+	ar d $@ SDPToolkit.o $(TEST_ONLY)
 
 libmls.a: libmlsSub.a
 	cp libmlsSub.a $@
@@ -54,6 +62,9 @@ L2GPData.o:
 	$(FC) -c $(DUSTY) -I $(PGSINC) -I $S $(S)/L2GPData.f90
 
 # $Log$
+# Revision 1.2  2000/10/19 17:39:20  pwagner
+# fixed bug maybe added by cvs
+#
 # Revision 1.1  2000/10/18 22:09:54  pwagner
 # First commit
 #
