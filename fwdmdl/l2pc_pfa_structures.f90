@@ -130,7 +130,7 @@ module L2PC_PFA_STRUCTURES
   end type SLABS_STRUCT
 
 contains
-  
+
   ! -------------------------------------------- AllocateOneSlabs ---------
   subroutine AllocateOneSlabs ( slabs, nl )
     ! Allocates the commonly used items in a slabs, or all if the optional
@@ -138,7 +138,7 @@ contains
     use Allocate_Deallocate, only: ALLOCATE_TEST
     type (slabs_struct), intent(inout) :: slabs ! Slabs to allocate
     integer, intent(in) :: nl         ! Number of lines
-    
+
     ! Local variables
     integer :: myl
 
@@ -164,40 +164,50 @@ contains
       slabs%dslabs1_dv0 = 0.0_r8
     end if
   end subroutine AllocateOneSlabs
-  
-  ! ------------------------------------------ DeallocateOneSlabs ---------
-  subroutine DeallocateOneSlabs ( slabs, inName )
-    ! Allocates the commonly used items in a slabs, or all if the optional
-    ! Full parameter is set
-    use Allocate_Deallocate, only: DEALLOCATE_TEST
-    type (slabs_struct), intent(inout) :: slabs ! Slabs to allocate
-    character (len=*), intent(in) :: inName ! ModuleName of caller
-    
-    ! Executable code
-    call Deallocate_test ( slabs%v0s,         'v0s',         ModuleName )
-    call Deallocate_test ( slabs%x1,          'x1',          ModuleName )
-    call Deallocate_test ( slabs%y,           'y',           ModuleName )
-    call Deallocate_test ( slabs%yi,          'yi',          ModuleName )
-    call Deallocate_test ( slabs%slabs1,      'slabs1',      ModuleName )
-    call Deallocate_test ( slabs%dx1_dv0,     'dx1_dv0',     ModuleName )
-    call Deallocate_test ( slabs%dy_dv0,      'dy_dv0',      ModuleName )
-    call Deallocate_test ( slabs%dslabs1_dv0, 'dslabs1_dv0', ModuleName )
-  end subroutine DeallocateOneSlabs
- 
-  ! ------------------------------------------- DestroyCompleteSlabs -----
-  subroutine DestroyCompleteSlabs ( slabs )
-    ! Destroys all the components of a slabs
-    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_DEALLOCATE
-    type (slabs_struct), dimension(:,:), pointer :: slabs
+
+  ! ------------------------------------------ DeallocateAllSlabs ---------
+  subroutine DeallocateAllSlabs ( Slabs, inName )
+    ! Allocates the items in a slabs
+    type (slabs_struct), intent(inout), dimension(:,:) :: Slabs
+    character(len=*), intent(in) :: InName
 
     integer :: I
     integer :: J
     ! Executable code
     do i = 1, size(slabs,2)
       do j = 1, size(slabs,1)
-        call DeallocateOneSlabs ( slabs(j,i), ModuleName )
+        call DeallocateOneSlabs ( slabs(j,i), inName )
       end do
     end do
+  end subroutine DeallocateAllSlabs
+
+  ! ------------------------------------------ DeallocateOneSlabs ---------
+  subroutine DeallocateOneSlabs ( slabs, inName )
+    ! Allocates the items in a slabs
+    use Allocate_Deallocate, only: DEALLOCATE_TEST
+    type (slabs_struct), intent(inout) :: slabs ! Slabs to deallocate
+    character (len=*), intent(in) :: inName ! ModuleName of caller
+
+    ! Executable code
+    call Deallocate_test ( slabs%v0s,         'v0s',         inName )
+    call Deallocate_test ( slabs%x1,          'x1',          inName )
+    call Deallocate_test ( slabs%y,           'y',           inName )
+    call Deallocate_test ( slabs%yi,          'yi',          inName )
+    call Deallocate_test ( slabs%slabs1,      'slabs1',      inName )
+    call Deallocate_test ( slabs%dx1_dv0,     'dx1_dv0',     inName )
+    call Deallocate_test ( slabs%dy_dv0,      'dy_dv0',      inName )
+    call Deallocate_test ( slabs%dslabs1_dv0, 'dslabs1_dv0', inName )
+  end subroutine DeallocateOneSlabs
+
+  ! ------------------------------------------- DestroyCompleteSlabs -----
+  subroutine DestroyCompleteSlabs ( Slabs )
+    ! Destroys all the components of a slabs
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Deallocate
+    type (slabs_struct), dimension(:,:), pointer :: Slabs
+
+    integer :: I
+    ! Executable code
+    call deallocateAllSlabs ( slabs, moduleName )
     deallocate ( slabs, stat=i )
     if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Deallocate//'slabs' )
@@ -269,6 +279,9 @@ contains
 
 end module L2PC_PFA_STRUCTURES
 ! $Log$
+! Revision 2.7  2003/05/17 01:20:52  vsnyder
+! Futzing
+!
 ! Revision 2.6  2003/05/16 23:52:08  livesey
 ! Removed reference to spectags.  What does this module do now anyway?
 !
