@@ -223,7 +223,7 @@ contains ! ============================ MODULE PROCEDURES ====================
     type (MLSAuxData_T), intent(in) :: item
 
     ! Local variables
-    type (MLSAuxData_T), dimension(:), pointer :: tempDatabase
+    type (MLSAuxData_T), dimension(:), pointer :: tempDatabase => NULL()
 
     include "addItemToDatabase.f9h"
 
@@ -438,6 +438,7 @@ contains ! ============================ MODULE PROCEDURES ====================
     dims(3) = 1
 
      call deallocate_mlsauxdata(MLSData)
+
      call Allocate_MLSAuxData(trim(dataset%name),& 
           trim(dataset%data_type),dims,MLSData)
 
@@ -447,26 +448,28 @@ contains ! ============================ MODULE PROCEDURES ====================
       allocate(MLSData%Dimensions(1), stat=status)
       call CopyFromDataProducts(dataset, MLSData)
 
-     if ( present (lastIndex)) then 
-        if (lastIndex .eq. 1) then 
-        call Write_MLSAuxData(file_id, MLSData, error, &
-          write_attributes=.true., &  
-             index=lastIndex)
-        else
-        call Write_MLSAuxData(file_id, MLSData, error, &
-          write_attributes=.false., &  
-             index=lastIndex)
-        endif
-     else
+      if ( present (lastIndex)) then
 
-        call Write_MLSAuxData(file_id, MLSData, error, &
-          write_attributes=.true.)
+         if (lastIndex .eq. 1) then
+            call Write_MLSAuxData(file_id, MLSData, error, &
+                 write_attributes=.true., &  
+                 index=lastIndex)
+         else
+            call Write_MLSAuxData(file_id, MLSData, error, &
+                 write_attributes=.false., &  
+                 index=lastIndex)
+         endif
+      else
 
-     endif
+         call Write_MLSAuxData(file_id, MLSData, error, &
+              write_attributes=.true.)
+
+      endif
 
     if (error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
-       'Error Writing MLSAuxData for '// trim(dataset%name) ) 
+       'Error Writing MLSAuxData for '// trim(dataset%name) )
      call deallocate_mlsauxdata(MLSData)
+
  end subroutine Build_MLSAuxData_Integer
 !------------------------------------------------------------------------------
  subroutine Build_MLSAuxData_Real( file_id, dataset, real_data, lastIndex)
@@ -1711,7 +1714,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 !
     character(len=480) :: msr
     character(len=name_len) :: aname
-    real, dimension(:), pointer :: attr_data
+    real, dimension(:), pointer :: attr_data => NULL()
     integer(hsize_t), dimension(7) :: adims
     integer(hsize_t), dimension(3) :: chunk_dims, dims, maxdims
     integer(hsize_t), dimension(1) :: adims_create
@@ -1998,8 +2001,8 @@ contains ! ============================ MODULE PROCEDURES ====================
     real, dimension(:), intent(out), optional     :: AttributeData
   ! Private
     character(len=480) :: msr
-    character, dimension(:), pointer :: char_data
-    real, dimension(:), pointer :: attr_data
+    character, dimension(:), pointer :: char_data => NULL()
+    real, dimension(:), pointer :: attr_data => NULL()
     integer(hsize_t), dimension(7) :: adims    
     integer(hid_t) :: attr_id, atype_id, aspace_id
     integer, parameter :: OPTARGISMAD = 1
@@ -2168,8 +2171,8 @@ contains ! ============================ MODULE PROCEDURES ====================
     real, dimension(:), intent(in), optional      :: AttributeData
   ! Private
     character(len=480) :: msr
-    character(len=20), dimension(:), pointer :: char_data
-    real, dimension(:), pointer :: attr_data
+    character(len=20), dimension(:), pointer :: char_data => NULL()
+    real, dimension(:), pointer :: attr_data => NULL()
     integer(hsize_t), dimension(7) :: adims
     integer(hsize_t), dimension(1) :: adims_create
     integer(hid_t) :: atype_id, aspace_id, attr_id
@@ -2349,13 +2352,13 @@ contains ! ============================ MODULE PROCEDURES ====================
 !
 !-------------------------------------------------------------------------
 !
-    character, dimension(:,:,:), pointer :: character_buffer
+    character, dimension(:,:,:), pointer :: character_buffer => NULL()
     character(len=480) :: msr
     character(len=16) :: myQuantityType
 !
     real, dimension(:,:,:), pointer :: real_buffer, double_buffer
 !
-    integer, dimension(:,:,:), pointer :: integer_buffer
+    integer, dimension(:,:,:), pointer :: integer_buffer => NULL()
     integer(hsize_t), dimension(7) :: dims
     integer(hsize_t), dimension(3) :: chunk_dims, dims_create, maxdims, start
     integer(hid_t) :: cparms, dset_id, dspace_id, type_id, memspace
@@ -2366,7 +2369,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 !
     error = 0
     myRead_attributes = .false.
-    nullify(character_buffer, real_buffer, double_buffer, integer_buffer)
+    nullify (character_buffer, real_buffer, double_buffer, integer_buffer)
     if ( present(read_attributes) ) myRead_attributes=read_attributes
 !-- assign name and type for dataset
 
@@ -2497,16 +2500,15 @@ contains ! ============================ MODULE PROCEDURES ====================
     call h5dread_f(dset_id,type_id,& 
          real_buffer,dims,h5error, memspace, dspace_id)
 
-         do k = FirstIndex, LastIndex
-            do j = 1, dims(2)
-               do i = 1, dims(1)
-                  MLSAuxData%RealField(i,j,k) = real_buffer(i,j,k)
-               end do 
-            end do
-         end do
-
+    do k = FirstIndex, LastIndex
+       do j = 1, dims(2)
+          do i = 1, dims(1)
+             MLSAuxData%RealField(i,j,k) = real_buffer(i,j,k)
+          end do
+       end do
+    end do
+         
     if (associated(real_buffer)) then 
-        nullify(real_buffer)
         deallocate(real_buffer, stat=status)
 
     if ( status /= 0 ) then
@@ -2535,7 +2537,6 @@ contains ! ============================ MODULE PROCEDURES ====================
          end do    
 
     if (associated(double_buffer)) then 
-        nullify(double_buffer)
         deallocate(double_buffer, stat=status)
 
     if ( status /= 0 ) then
@@ -2563,7 +2564,6 @@ contains ! ============================ MODULE PROCEDURES ====================
          end do
 
     if (associated(integer_buffer)) then 
-        nullify(integer_buffer)
         deallocate(integer_buffer, stat=status)
     if ( status /= 0 ) then
       msr = MLSMSG_deallocate // ' integer_buffer.' 
@@ -2590,7 +2590,6 @@ contains ! ============================ MODULE PROCEDURES ====================
          end do
 
     if (associated(character_buffer)) then 
-        nullify(character_buffer)
         deallocate(character_buffer, stat=status)
 
     if ( status /= 0 ) then
@@ -2656,8 +2655,8 @@ contains ! ============================ MODULE PROCEDURES ====================
 !
     character(len=480) :: msr
     character(len=name_len) :: aname
-    character(len=1), dimension(:), pointer :: char_data
-    real, dimension(:), pointer :: attr_data
+    character(len=1), dimension(:), pointer :: char_data => NULL()
+    real, dimension(:), pointer :: attr_data => NULL()
     integer(hsize_t), dimension(7) :: adims, dims
     integer(hsize_t), dimension(3) :: chunk_dims, dims_create, maxdims, start
     integer(hsize_t), dimension(1) :: adims_create
@@ -2722,6 +2721,7 @@ contains ! ============================ MODULE PROCEDURES ====================
        endif
        endif
     case ('integer')
+
        if (associated(MLSAuxData%IntField)) then 
        rank = MLSAuxData%rank
        type_id = H5T_NATIVE_INTEGER
@@ -2745,6 +2745,7 @@ contains ! ============================ MODULE PROCEDURES ====================
        enddo
        endif
        endif
+
     case ('character')
        if (associated(MLSAuxData%CharField)) then 
        rank = MLSAuxData%rank
@@ -3038,6 +3039,9 @@ contains ! ============================ MODULE PROCEDURES ====================
 end module MLSAuxData
 
 ! $Log$
+! Revision 2.19  2002/12/18 16:24:43  perun
+! Remove memory leaks due to nullify
+!
 ! Revision 2.18  2002/12/06 23:38:12  pwagner
 ! Helpful pre-nullifying of pointers
 !
