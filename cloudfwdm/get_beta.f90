@@ -129,7 +129,7 @@
          IF(IMOL .EQ. 2) ABSC = ABSC + B*VMR_H2O                  ! H2O
          IF(IMOL .EQ. 3) ABSC = ABSC + B*VMR_O2*0.00409524        ! O_18_O
          IF(IMOL .EQ. 4) ABSC = ABSC + B*VMR_H2O*0.00204          ! H2O_18
-         IF(IMOL .EQ. 5) ABSC = ABSC + B*VMR(1)*1e-6              ! O3
+         IF(IMOL .EQ. 5) ABSC = ABSC + B*VMR(1)                   ! O3
 
       ENDDO  
 
