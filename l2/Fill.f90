@@ -48,8 +48,8 @@ contains ! =====     Public Procedures     =============================
     use Expr_M, only: EXPR
     use GriddedData, only: GriddedData_T, WrapGriddedData
     ! We need many things from Init_Tables_Module.  First the fields:
-    use INIT_TABLES_MODULE, only: F_A, F_ALLOWMISSING, &
-      & F_APRIORIPRECISION, F_B, F_BIN, F_BOUNDARYPRESSURE, &
+    use INIT_TABLES_MODULE, only: F_A, F_ADDITIONAL, F_ALLOWMISSING, &
+      & F_APRIORIPRECISION, F_B, F_BIN, F_BOUNDARYPRESSURE, F_BOXCARMETHOD, &
       & F_CHANNEL, F_COLUMNS, F_DESTINATION, F_DIAGONAL, F_dontMask,&
       & F_ECRTOFOV, F_EARTHRADIUS, F_EXPLICITVALUES, F_EXTINCTION, F_FIELDECR, F_FORCE, &
       & F_FRACTION, F_FROMPRECISION, F_GEOCALTITUDEQUANTITY, F_GPHQUANTITY, &
@@ -83,7 +83,8 @@ contains ! =====     Public Procedures     =============================
       & L_HEIGHT, L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, &
       & L_IWCFROMEXTINCTION, L_KRONECKER, L_L1B, L_L2GP, &
       & L_L2AUX, L_LOSVEL, L_MAGAZEL, L_MAGNETICFIELD, L_MAGNETICMODEL, &
-      & L_MANIPULATE, L_NEGATIVEPRECISION, L_NOISEBANDWIDTH, L_NONE, &
+      & L_MANIPULATE, L_MAX, L_MEAN, L_MIN, L_NEGATIVEPRECISION, &
+      & L_NOISEBANDWIDTH, L_NONE, &
       & L_NORADSPERMIF, L_OFFSETRADIANCE, L_ORBITINCLINATION, L_PHITAN, &
       & L_PLAIN, L_PRESSURE, L_PROFILE, L_PTAN, &
       & L_RADIANCE, L_RECTANGLEFROMLOS, L_REFGPH, L_REFRACT, L_REFLECTORTEMPMODEL, &
@@ -293,6 +294,7 @@ contains ! =====     Public Procedures     =============================
     type (Matrix_T), dimension(:), pointer :: SNOOPMATRICES
     type (Matrix_T), pointer :: ONEMATRIX
 
+    logical :: ADDITIONAL               ! Flag for binMax/binMin
     logical :: ALLOWMISSING             ! Flag from l2cf
     integer :: APRPRECQTYINDEX          ! Index of apriori precision quantity    
     integer :: APRPRECVCTRINDEX         ! Index of apriori precision vector
@@ -303,6 +305,7 @@ contains ! =====     Public Procedures     =============================
     integer :: BNDPRESSVCTRINDEX
     integer :: BQTYINDEX                ! Index of a quantity in vector
     integer :: BVECINDEX                ! Index of a vector
+    integer :: BOXCARMETHOD             ! l_min, l_max, l_mean
     integer :: CHANNEL                  ! For spreadChannels fill
     integer :: COLVECTOR                ! Vector defining columns of Matrix
     type(matrix_SPD_T), pointer :: Covariance
@@ -477,7 +480,9 @@ contains ! =====     Public Procedures     =============================
         key = son
         vectorName = 0
       end if
+      additional = .false.
       allowMissing = .false.
+      boxCarMethod = l_mean
       channel = 0
       dontMask = .false.
       extinction = .false.
@@ -720,6 +725,8 @@ contains ! =====     Public Procedures     =============================
           case ( f_a )
             aVecIndex = decoration(decoration(subtree(1,gson)))
             aQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_additional )
+            additional = get_boolean ( gson )
           case ( f_allowMissing )
             allowMissing = get_boolean ( gson )
           case ( f_aprioriPrecision )
@@ -728,6 +735,8 @@ contains ! =====     Public Procedures     =============================
           case ( f_b )
             bVecIndex = decoration(decoration(subtree(1,gson)))
             bQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_boxCarMethod )
+            boxCarMethod = decoration(gson)
           case ( f_boundaryPressure )     ! For special fill of columnAbundance
             bndPressVctrIndex = decoration(decoration(subtree(1,gson)))
             bndPressQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -1056,7 +1065,7 @@ contains ! =====     Public Procedures     =============================
           end if
 
           call FillWithBinResults ( key, quantity, sourceQuantity, ptanQuantity, &
-            & channel, fillMethod )
+            & channel, fillMethod, additional )
 
         case ( l_boxcar )
           if ( .not. got ( f_sourceQuantity ) ) &
@@ -1066,7 +1075,8 @@ contains ! =====     Public Procedures     =============================
             & vectors(sourceVectorIndex), sourceQuantityIndex )
           if ( .not. got ( f_width ) ) call Announce_Error ( key, 0, &
             & 'Must supply width for boxcar fill' )
-          call FillWithBoxcarAverage ( key, quantity, sourceQuantity, width )
+          call FillWithBoxcarFunction ( key, quantity, sourceQuantity, width, &
+            & boxCarMethod )
 
         case ( l_estimatedNoise ) ! ----------- Fill with estimated noise ---
           if (.not. all(got( (/ f_radianceQuantity, &
@@ -5704,7 +5714,7 @@ contains ! =====     Public Procedures     =============================
 
     ! -------------------------------------------- FillWithBinResults -----
     subroutine FillWithBinResults ( key, quantity, sourceQuantity, ptanQuantity, &
-      & channel, method )
+      & channel, method, additional )
       ! This fills a coherent quantity with the max/min binned value of 
       ! a typically incoherent one.  The bins are centered horizontally
       ! on the profiles in quantity, but vertically the bins run between one
@@ -5715,10 +5725,12 @@ contains ! =====     Public Procedures     =============================
       type (VectorValue_T), pointer :: PTANQUANTITY
       integer, intent(in) :: CHANNEL
       integer, intent(in) :: METHOD
+      logical, intent(in) :: ADDITIONAL
 
       ! Local variables
       real(r8), dimension(:,:), pointer :: SOURCEHEIGHTS ! might be ptan.
       real(r8), dimension(:), pointer :: PHIBOUNDARIES
+      real(r8) :: V                     ! A value
       integer, dimension(:,:), pointer :: SURFS ! Surface mapping source->quantity
       integer, dimension(:,:), pointer :: INSTS ! Instance mapping source->quantity
       integer :: QS, QI, SS, SI                   ! Loop counters
@@ -5814,29 +5826,49 @@ contains ! =====     Public Procedures     =============================
             select case ( method )
             case  ( l_binMax )
               ! Compute the maximum value in the bin
-              quantity%values(qs,qi) = maxval ( pack ( sourceQuantity%values ( &
+              v = maxval ( pack ( sourceQuantity%values ( &
                 & myChannel : sourceQuantity%template%instanceLen : &
                 &   sourceQuantity%template%noChans, : ), &
                 & surfs == qs .and. insts == qi ) )
+              if ( additional ) then
+                quantity%values(qs,qi) = max ( quantity%values(qs,qi), v )
+              else
+                quantity%values(qs,qi) = v
+              end if
             case ( l_binMean )
               ! Compute the average in the bin, be careful about dividing by zero
-              quantity%values(qs,qi) = sum ( pack ( sourceQuantity%values ( &
+              v = sum ( pack ( sourceQuantity%values ( &
                 & myChannel : sourceQuantity%template%instanceLen : &
                 &   sourceQuantity%template%noChans, : ), &
                 & surfs == qs .and. insts == qi ) ) / &
                 & max ( count ( surfs == qs .and. insts == qi ), 1 )
+              if ( additional ) then
+                quantity%values(qs,qi) = 0.5 * ( quantity%values(qs,qi) + v )
+              else
+                quantity%values(qs,qi) = v
+              end if
             case ( l_binMin )
               ! Compute the minimum value in the bin
-              quantity%values(qs,qi) = minval ( pack ( sourceQuantity%values ( &
+              v = minval ( pack ( sourceQuantity%values ( &
                 & myChannel : sourceQuantity%template%instanceLen : &
                 &   sourceQuantity%template%noChans, : ), &
                 & surfs == qs .and. insts == qi ) )
+              if ( additional ) then
+                quantity%values(qs,qi) = min ( quantity%values(qs,qi), v )
+              else
+                quantity%values(qs,qi) = v
+              end if
             case ( l_binTotal )
               ! Compute the total in the bin
-              quantity%values(qs,qi) = sum ( pack ( sourceQuantity%values ( &
+              v = sum ( pack ( sourceQuantity%values ( &
                 & myChannel : sourceQuantity%template%instanceLen : &
                 &   sourceQuantity%template%noChans, : ), &
                 & surfs == qs .and. insts == qi ) )
+              if ( additional ) then
+                quantity%values(qs,qi) = quantity%values(qs,qi) + v
+              else
+                quantity%values(qs,qi) = v
+              end if
             end select
           else
             quantity%values(qs,qi) = 0.0
@@ -5852,11 +5884,12 @@ contains ! =====     Public Procedures     =============================
     end subroutine FillWithBinResults
 
     ! --------------------------------------------- FillWithBoxcarAvergage  ----
-    subroutine FillWithBoxcarAverage ( key, quantity, sourceQuantity, width )
+    subroutine FillWithBoxcarFunction ( key, quantity, sourceQuantity, width, method )
       integer, intent(in) :: KEY        ! Key for tree node
       type (VectorValue_T), intent(inout) :: QUANTITY
       type (VectorValue_T), intent(in) :: SOURCEQUANTITY
       integer, intent(in) :: WIDTH
+      integer, intent(in) :: METHOD     ! L_MEAN, L_MAX, L_MIN
       ! Local variables
       integer :: I, I1, I2              ! Instance indices
       integer :: HALFWIDTH
@@ -5871,13 +5904,28 @@ contains ! =====     Public Procedures     =============================
       end if
 
       halfWidth = width/2
-      do i = 1, quantity%template%noInstances
-        i1 = max ( i - halfWidth, 1 )
-        i2 = min ( i + halfWidth, quantity%template%noInstances )
-        quantity%values(:,i) = sum ( quantity%values(:,i1:i2), dim=2 ) / (i2-i1+1)
-      end do
-        
-    end subroutine FillWithBoxcarAverage
+      select case ( method )
+      case ( l_mean )
+        do i = 1, quantity%template%noInstances
+          i1 = max ( i - halfWidth, 1 )
+          i2 = min ( i + halfWidth, quantity%template%noInstances )
+          quantity%values(:,i) = sum ( quantity%values(:,i1:i2), dim=2 ) / (i2-i1+1)
+        end do
+      case ( l_min )
+        do i = 1, quantity%template%noInstances
+          i1 = max ( i - halfWidth, 1 )
+          i2 = min ( i + halfWidth, quantity%template%noInstances )
+          quantity%values(:,i) = minval ( quantity%values(:,i1:i2), dim=2 )
+        end do
+      case ( l_max )
+        do i = 1, quantity%template%noInstances
+          i1 = max ( i - halfWidth, 1 )
+          i2 = min ( i + halfWidth, quantity%template%noInstances )
+          quantity%values(:,i) = maxval ( quantity%values(:,i1:i2), dim=2 )
+        end do
+      end select
+
+    end subroutine FillWithBoxcarFunction
 
     ! ----------------------------------------------- OffsetRadianceQuantity ---
     subroutine OffsetRadianceQuantity ( quantity, radianceQuantity, amount )
@@ -6215,6 +6263,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.255  2004/02/17 14:08:27  livesey
+! Added functionality to the box car and binning fills
+!
 ! Revision 2.254  2004/02/06 01:01:40  livesey
 ! Added boxcar fill method
 !
