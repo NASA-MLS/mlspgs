@@ -21,7 +21,7 @@ module Comp_Sps_Path_Frq_m
 
 ! --------------------------------------------  Comp_Sps_Path_Frq  -----
   subroutine Comp_Sps_Path_Frq ( Grids_x, lo, sideband, Frq, eta_zp, &
-    & do_calc_zp, sps_path, do_calc_fzp, eta_fzp )
+    & do_calc_zp, sps_path, do_calc_fzp, eta_fzp, DoPFA )
 
 ! Compute the SPS path
 
@@ -45,11 +45,16 @@ module Comp_Sps_Path_Frq_m
 
     real(rp), intent(inout) :: Sps_Path(:,:) ! Path X Species.  vmr values
 !                         along the path by species number
-    real(rp), intent(inout) :: Eta_Fzp(:,:)  ! Path X (Eta_f x Eta_z x Eta_phi)
-!                         First dimension is same as sps_values.
     logical, intent(inout) :: Do_Calc_Fzp(:,:) ! indicates whether there
 !                         is a contribution for this state vector element.
 !                         Same shape as Eta_Fzp.
+    real(rp), intent(inout) :: Eta_Fzp(:,:)  ! Path X (Eta_f x Eta_z x Eta_phi)
+!                         First dimension is same as sps_values.
+
+! Optional:
+
+    logical, intent(in), optional :: DoPFA ! Doing PFA, default false.
+
 ! Notes:
 ! units of z_basis must be same as zeta_path (usually -log(P)) and units of
 ! phi_basis must be the same as phi_path (either radians or degrees).
@@ -57,7 +62,8 @@ module Comp_Sps_Path_Frq_m
 
 ! Internal declarations
 
-    integer(ip) :: n_zp, n_f
+    logical :: MyPFA
+    integer(ip) :: n_f
     integer(ip) :: sps_i, no_mol, sv_zp, sv_f
     integer(ip) :: v_inda, f_inda, f_indb, w_inda, w_indb
 
@@ -66,7 +72,10 @@ module Comp_Sps_Path_Frq_m
 
 ! Begin executable code:
 
-    no_mol = ubound(Grids_x%l_z,1)
+    myPFA = .false.
+    if ( present(doPFA) ) myPFA = doPFA
+
+    no_mol = grids_x%lastNonPFA
 
     if ( frq <= 1.0_r8 ) then
       do_calc_fzp = .FALSE.
@@ -88,12 +97,13 @@ module Comp_Sps_Path_Frq_m
       f_indb = grids_x%l_f(sps_i)
       n_f = f_indb - f_inda
 
-      n_zp = (Grids_x%l_z(sps_i) - Grids_x%l_z(sps_i-1)) * &
-             (Grids_x%l_p(sps_i) - Grids_x%l_p(sps_i-1))
+      w_indb = w_inda + (Grids_x%l_z(sps_i) - Grids_x%l_z(sps_i-1)) * &
+                        (Grids_x%l_p(sps_i) - Grids_x%l_p(sps_i-1))
 
-      w_indb = w_inda + n_zp
-
-      if ( (frq <= 1.0) .or. n_f /= 1 ) then
+      ! n_f == 1 means qty%template%frequencyCoordinate == l_none, i.e.,
+      ! sps_path is not frequency dependent.
+      if ( (frq <= 1.0 .or. n_f /= 1) .and. &
+        &  ( (sps_i > grids_x%lastNonPFA) .eqv. myPFA) ) then
 
 ! There are two ways to do this (slow and easy vs quick but difficult)
 ! For ease lets do the slow and easy (and certainly more reliable)
@@ -194,6 +204,9 @@ module Comp_Sps_Path_Frq_m
 end module Comp_Sps_Path_Frq_m
 !
 ! $Log$
+! Revision 2.17  2004/07/08 21:00:23  vsnyder
+! Inching toward PFA
+!
 ! Revision 2.16  2003/07/08 02:01:31  vsnyder
 ! Speed up a tad by storing zero in ELSE instead of everywhere
 !
