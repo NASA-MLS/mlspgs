@@ -62,8 +62,8 @@ module FullCloudForwardModel
                      & L_CLOUDICE,                                           &
                      & L_CLOUDWATER,                                         &
                      & L_LOSTRANSFUNC,                                       &
-   		            & L_SCGEOCALT,                                          &
-		               & L_ELEVOFFSET
+   		     & L_SCGEOCALT,                                          &
+		     & L_ELEVOFFSET
 
   implicit none
   private
@@ -276,7 +276,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
           & signal=signal%index, sideband=signal%sideband )
           qgot(2) = .true.
         case (l_cloudExtinction)
-          cloudExtinction => GetVectorQuantityByType ( fwdModelOut,          &             
+          cloudExtinction => GetVectorQuantityByType ( fwdModelOut,          & 
             & quantityType=l_cloudExtinction )
           qgot(3) = .true.
         case (l_cloudRADSensitivity)
@@ -802,7 +802,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
                       &     temp%template%noSurfs,                   &
                       &     noSgrid,                                 &
                       &     gph%template%Surfs,                      &
-                      &     a_trans(:,chan),               &
+                      &     a_trans(:,chan),                         &
                       &     stateQ%template%frequencies,             &
                       &     TRANSonS )                
 
@@ -838,7 +838,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
                           'a_massMeanDiameter',           ModuleName )
     call Deallocate_test ( a_cloudExtinction,                                &
                           'a_cloudExtinction',            ModuleName )
-    call Deallocate_test ( a_trans,                                &
+    call Deallocate_test ( a_trans,                                          &
                           'a_trans',            ModuleName )
     call Deallocate_test ( a_totalExtinction,                                &
                           'a_totalExtinction',            ModuleName )
@@ -904,6 +904,9 @@ subroutine FindTransForSgrid ( PT, Re, NT, NZ, NS, Zlevel, TRANSonZ, Slevel, TRA
 end subroutine FindTransForSgrid
 
 ! $Log$
+! Revision 1.31  2001/09/26 19:17:02  dwu
+! normalize weights for high tangent retrieval
+!
 ! Revision 1.30  2001/09/24 23:16:40  dwu
 ! add derivatives for high tangent height retrievals
 !
