@@ -34,7 +34,7 @@ while [ -n "$(echo $1)" ]; do
     if [ -z "${1##--fwmVersion=*}" ]; then
 	FWMVERSION=${1#--fwmVersion=}
     fi
-    if [ $1 == "--dao" ]; then
+    if [ $1 == "--dao" ] || [ $1 == "--gmao" ]; then
 	case $MACHINE in
 	    soundbarrier | scramjet )
 		echo "/research1/$MYUSER";;
@@ -42,9 +42,9 @@ while [ -n "$(echo $1)" ]; do
 		echo "$HOME/$VERSION";;
 	    desktop )
 		if [ $YEAR == "1996" ]; then
-		    echo "/data/dao/tsyn3d_mis_p/geos4/$YEAR"
+		    echo "/data/gmao/tsyn3d_mis_p/geos4/$YEAR"
 		else
-		    echo "/data/dao/D4FAPMIS/$YEAR"
+		    echo "/data/gmao/D4FAPMIS/$YEAR"
 		fi
 	esac
     fi
@@ -147,6 +147,9 @@ while [ -n "$(echo $1)" ]; do
 done
 
 # $Log$
+# Revision 1.32  2004/05/27 18:58:11  livesey
+# Changed some paths to /testing
+#
 # Revision 1.31  2004/05/01 00:22:48  livesey
 # Moved l2pcfiles on lightspeed
 #
