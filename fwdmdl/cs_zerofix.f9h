@@ -3,20 +3,22 @@
 
 ! $Id$
 
-! function CS_ZeroFix_* ( W )
-    real(rk)    :: R(2)
+! function CS_ZeroFix_* ( W ) result ( V )
+    real(rk)    :: R, I
     complex(rk) :: Z
     real(rk), parameter :: Dinky = epsilon(r) ** 2
 
-    equivalence (Z,R(1))
-
-    z = w
-    if ( abs(r(1)) < dinky ) r(1) = 0.0_rk
-    if ( abs(r(2)) < dinky ) r(2) = 0.0_rk
-    v = z
+    r = real(w)
+    i = aimag(w)
+    if ( abs(r) < dinky ) r = 0.0_rk
+    if ( abs(i) < dinky ) i = 0.0_rk
+    v = cmplx(r,i)
 ! end function CS_ZeroFix_*
 
 ! $Log$
+! Revision 2.2  2003/02/04 18:47:37  vsnyder
+! Get rid of nonstandard equivalence
+!
 ! Revision 2.1  2003/02/04 01:41:06  vsnyder
 ! Initial commit
 !
