@@ -1,74 +1,180 @@
-! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
-module TkL1B
+MODULE TkL1B
 
-!!!!!! THIS LINE DOESN'T SEEM TO WORK!!!!!  use MLSNumerics, only: Hunt
-  use Dump_0, only: DUMP
-  use Geometry, only: Omega => W
-  use MLSCommon, only: R8
-  use MLSL1Common
-  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_Error
-  use OUTPUT_M, only: BLANKS, OUTPUT
-  use OutputL1B_DataTypes, only: L1BOAsc_T, L1BOATP_T, L1BOAINDEX_T, LENCOORD, LENG, LENT
-  use OutputL1B, only: OUTPUTL1B_THZ, OUTPUTL1B_SC, OUTPUTL1B_INDEX, OUTPUTL1B_GHZ
-  use Scan
-  use SDPToolkit
+  USE Geometry, ONLY: Omega => W
+  USE MLSCommon, ONLY: R8
+  USE MLSL1Common
+  USE MLSMessageModule, ONLY: MLSMESSAGE, MLSMSG_Error, MLSMSG_Warning, &
+       MLSMSG_Allocate
+  USE OUTPUT_M, ONLY: BLANKS, OUTPUT
+  USE OutputL1B_DataTypes, ONLY: L1BOAsc_T, L1BOATP_T, L1BOAINDEX_T, LENCOORD, &
+       LENG, LENT
+  USE OutputL1B, ONLY: OUTPUTL1B_THZ, OUTPUTL1B_SC, OUTPUTL1B_INDEX, &
+       OUTPUTL1B_GHZ
+  USE Scan, ONLY : Scan_guess, Scan_start
+  USE SDPToolkit
 
-  implicit none
-  private
+  IMPLICIT NONE
 
-  public :: TKL1B_SC, TKL1B_TP, L1BOA_MAF, MC_AUX, TKL1B_MC
-  logical, public, parameter :: ORBINCLINE_IS_CONSTANT = .FALSE.
-  real, parameter ::    UNDEFINED_VALUE = -999.99
+  PRIVATE
+
+  PUBLIC :: L1BOA_MAF, Flag_Bright_Objects, LOG_ARR1_PTR_T
+
+  TYPE LOG_ARR1_PTR_T
+     LOGICAL, DIMENSION(:), POINTER :: ptr
+  END TYPE LOG_ARR1_PTR_T
+
+  LOGICAL, PARAMETER :: ORBINCLINE_IS_CONSTANT = .FALSE.
+  REAL, PARAMETER ::    UNDEFINED_VALUE = -999.99
+  REAL, PARAMETER ::    HUGE_F = HUGE (1.0)
 
   !------------------- RCS Ident Info -----------------------
-  character(len=*), parameter :: IdParm = &
+  CHARACTER(len=*), PARAMETER :: IdParm = &
     & "$Id$"
-  character(len=len(idParm)) :: Id = idParm
-  character (LEN=*), parameter :: ModuleName="$RCSfile$"
+  CHARACTER(len=LEN(idParm)) :: Id = idParm
+  CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile$"
   !----------------------------------------------------------
 
   ! This module contains subroutines for producing the L1BOA records on
   ! a MAF by MAF basis.
 
-contains
+CONTAINS
+
+!=============================================================================
+  SUBROUTINE Init_L1BOAsc (sc)
+!=============================================================================
+
+    TYPE (L1BOAsc_T) :: sc
+
+    sc%scECI = HUGE_F
+    sc%scECR = HUGE_F
+    sc%scGeocAlt = HUGE_F
+    sc%scGeodAlt = HUGE_F
+    sc%scGeocLat = HUGE_F
+    sc%scGeodLat = HUGE_F
+    sc%scLon = HUGE_F
+    sc%scGeodAngle = HUGE_F
+    sc%scOrbIncl = HUGE_F
+    sc%scVelECI = HUGE_F
+    sc%scVelECR = HUGE_F
+    sc%ypr = HUGE_F
+    sc%yprRate = HUGE_F
+
+  END  SUBROUTINE Init_L1BOAsc
+
+!=============================================================================
+  SUBROUTINE Init_L1BOAtp (tp)
+!=============================================================================
+
+    TYPE (L1BOAtp_T) :: tp
+
+    tp%encoderAngle = HUGE_F
+    tp%scAngle = HUGE_F
+    tp%scanAngle = HUGE_F
+    tp%scanRate = HUGE_F
+    tp%tpECI = HUGE_F
+    tp%tpECR = HUGE_F
+    tp%tpECRtoFOV = HUGE_F
+    tp%tpGeodAlt = HUGE_F
+    tp%tpGeocAlt = HUGE_F
+    tp%tpOrbY = HUGE_F
+    tp%tpGeocLat = HUGE_F
+    tp%tpGeocAltRate = HUGE_F
+    tp%tpGeodLat = HUGE_F
+    tp%tpGeodAltRate = HUGE_F
+    tp%tpLon = HUGE_F
+    tp%tpGeodAngle = HUGE_F
+    tp%tpSolarTime = HUGE_F
+    tp%tpSolarZenith = HUGE_F
+    tp%tpLosAngle = HUGE_F
+    tp%tpLosVel = HUGE_F
+
+  END SUBROUTINE Init_L1BOAtp
 
   !------------------------------------------ TkL1B_sc ---------
-  subroutine TkL1B_sc(numValues, offsets, asciiUTC, sc)
-    ! This subroutine contains prototype code for creating the desired s/c record
-    ! from the EPHEMATTIT output.
+  SUBROUTINE TkL1B_sc (numValues, offsets, asciiUTC, mafTAI, sc, ecrtosc)
+    ! This subroutine contains prototype code for creating the desired s/c
+    ! record from the EPHEMATTIT output.
 
     ! Arguments
-    type( L1BOAsc_T ) :: sc
-    character (LEN=27), intent(IN) :: asciiUTC
-    integer, intent(IN) :: numValues
-    real(r8), intent(IN) :: offsets(numValues)
+    TYPE (L1BOAsc_T) :: sc
+    CHARACTER (LEN=27), INTENT(IN) :: asciiUTC
+    INTEGER, INTENT(IN) :: numValues
+    REAL(r8), INTENT(IN) :: offsets(numValues), mafTAI
+    REAL, INTENT(OUT) :: ecrtosc(3,3,numValues)
 
     ! Functions
-    integer :: Pgs_csc_eciToECR, Pgs_csc_ecrToGEO, Pgs_eph_ephemAttit
+    INTEGER :: Pgs_csc_eciToECR, Pgs_csc_ecrToGEO, Pgs_eph_ephemAttit
 
     ! Variables
-    character (LEN=32) :: mnemonic
-    character (LEN=480) :: msg, msr
-    integer :: i, returnStatus
-    integer :: qualityFlags(2, numValues)
-    real(r8) :: ecrVec(3)
-    real(r8) :: radC(numValues), radD(numValues), radL(numValues)
-    real(r8) :: attitQuat(4,numValues)
-    real(r8) :: eciV(6,numValues), ecrV(6,numValues)
+    CHARACTER (LEN=32) :: mnemonic
+    CHARACTER (LEN=480) :: msg, msr
+    INTEGER :: i, returnStatus
+    INTEGER :: qualityFlags(2, numValues)
+    REAL(r8) :: ecrVec(3)
+    REAL(r8) :: radC(numValues), radD(numValues), radL(numValues)
+    REAL(r8), TARGET :: attitQuat(4,numValues)
+    REAL(r8) :: eciV(6,numValues), ecrV(6,numValues)
+    REAL(r8) :: sctoeci(6,3*numValues), sctoecr(6,3*numValues) 
+    REAL(r8) , POINTER :: w(:), x(:), y(:), z(:)
+    REAL(r8), PARAMETER :: SCtoGHz(3,3) = RESHAPE ((/ &
+         -0.0000086, -0.4260405, 0.9047041, &
+          1.0000000,  0.0000000, 0.0000095, &
+         -0.0000041,  0.9047041, 0.4260405 /), (/ 3, 3 /))
 
     ! Executable code
 
     ! Read oa data
+
     returnStatus = Pgs_eph_ephemAttit (spacecraftId, numValues, asciiUTC,  &
-      offsets, pgs_true, pgs_true, qualityFlags, &
-      sc%scECI, sc%scVelECI, sc%ypr, sc%yprRate, attitQuat)
-    if (returnStatus /= PGS_S_SUCCESS) then
-      call Pgs_smf_getMsg(returnStatus, mnemonic, msg)
-      msr = 'Routine ephemAttit, ' // mnemonic // ':  ' // msg
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+         offsets, pgs_true, pgs_true, qualityFlags, sc%scECI, sc%scVelECI, &
+         sc%ypr, sc%yprRate, attitQuat)
+    IF (returnStatus /= PGS_S_SUCCESS) THEN
+       CALL Pgs_smf_getMsg (returnStatus, mnemonic, msg)
+       msr = 'Routine ephemAttit, ' // mnemonic // ':  ' // msg
+       CALL MLSMessage (MLSMSG_Warning, ModuleName, msr)
+       ! Initial out values:
+
+       CALL Init_L1BOAsc (sc)
+       ecrtosc = HUGE_F
+
+       RETURN
+    ENDIF
+
+    ! attitQuat is spacecraft to eci rotation quaternion
+    w => attitquat(1,:)
+    x => attitquat(2,:)
+    y => attitquat(3,:)
+    z => attitquat(4,:)
+
+    sctoeci = 0.0
+
+    ! Convert quaternion to matrix (optimized for readability)
+
+    sctoeci(1, 1::3) = w**2 + x**2 - y**2 -z**2
+    sctoeci(2, 2::3) = w**2 - x**2 + y**2 -z**2
+    sctoeci(3, 3::3) = w**2 - x**2 - y**2 +z**2
+    sctoeci(1, 2::3) = 2*x*y - 2*w*z
+    sctoeci(2, 1::3) = 2*x*y + 2*w*z
+    sctoeci(1, 3::3) = 2*x*z + 2*w*y
+    sctoeci(3, 1::3) = 2*x*z - 2*w*y
+    sctoeci(2, 3::3) = 2*y*z - 2*w*x
+    sctoeci(3, 2::3) = 2*y*z + 2*w*x
+
+    ! rotate the columns of the sctoeci matrix to form ecrtosc matrix columns
+
+    returnStatus = PGS_CSC_ECItoECR (3*numValues, asciiUTC, &
+         PACK(SPREAD(offsets,1,3), .TRUE.), sctoeci, sctoecr)
+
+    ! we really prefer the other index to be exposed for matrix multiplication
+    ! now we have [ECR x (SC*numValues)] which requires a loop for rotation
+    ! SC-->GHz reference (R3,B8)
+    
+    DO i = 1, numValues    
+       ecrtosc(:,:,i) = TRANSPOSE (sctoecr(1:3,3*i-2:3*i))
+    ENDDO 
 
     ! Convert scECI to scECR
     eciV(1:3,:) = sc%scECI
@@ -78,168 +184,194 @@ contains
     sc%scVelECR = ecrV(4:6,:)
 
     ! Calculate geocentric/geodetic altitude, latitude & longitude from scECR
-    do i = 1, numValues
-      sc%scGeocAlt(i) = sqrt( ecrV(1,i)**2 + ecrV(2,i)**2 + ecrV(3,i)**2 )
-      radC(i) = atan( ecrV(3,i) / sqrt(ecrV(1,i)**2 + ecrV(2,i)**2) )
-      sc%scGeocLat(i) = Rad2Deg * radC(i)
-      ecrVec = ecrV(1:3, i)
-      returnStatus = Pgs_csc_ecrToGEO (ecrVec, earthModel, radL(i), &
-        radD(i), sc%scGeodAlt(i))
-      sc%scGeodLat(i) = Rad2Deg * radD(i)
-      sc%scLon(i) = Rad2Deg * radL(i)
-      if ( ORBINCLINE_IS_CONSTANT ) then
-        sc%scOrbIncl(i) = orbInclineCrossProd(sc%scECI(:,i), sc%scVelECI(:,i))
-      else
-        sc%scOrbIncl(i) = orbInclineCalculated(sc%scECR(:,i), sc%scVelECR(:,i), &
-        & sc%scGeocLat(i), sc%scLon(i) )
-      endif
-    enddo
+    DO i = 1, numValues
+       sc%scGeocAlt(i) = SQRT( ecrV(1,i)**2 + ecrV(2,i)**2 + ecrV(3,i)**2 )
+       radC(i) = ATAN( ecrV(3,i) / SQRT(ecrV(1,i)**2 + ecrV(2,i)**2) )
+       sc%scGeocLat(i) = Rad2Deg * radC(i)
+       ecrVec = ecrV(1:3,i)
+       returnStatus = Pgs_csc_ecrToGEO (ecrVec, earthModel, radL(i), &
+            radD(i), sc%scGeodAlt(i))
+       sc%scGeodLat(i) = Rad2Deg * radD(i)
+       sc%scLon(i) = Rad2Deg * radL(i)
+       IF (ORBINCLINE_IS_CONSTANT) THEN
+          sc%scOrbIncl(i) = orbInclineCrossProd (sc%scECI(:,i), &
+               sc%scVelECI(:,i))
+       ELSE
+          sc%scOrbIncl(i) = orbInclineCalculated (sc%scECR(:,i), &
+               sc%scVelECR(:,i), sc%scGeocLat(i), sc%scLon(i))
+       ENDIF
+       sc%MIF_TAI(i) = mafTAI + offsets(i)
+    ENDDO
 
-
-  end subroutine TkL1B_sc
+  END SUBROUTINE TkL1B_sc
 
   !------------------------------------------------------TkL1B_tp ----
-  subroutine TkL1B_tp(asciiTAI, asciiUTC, lenG, numValues, offsets, posECR, &
-    scRate, startAngle, tp)
+  SUBROUTINE TkL1B_tp (asciiTAI, asciiUTC, lenG, numValues, offsets, posECR, &
+    posECI, velECI, scAngle, tp, ecrtosc)
     ! This subroutine fills the tangent point record.
 
+    USE FOV, ONLY: CalcMountsToFOV
+
     ! Arguments
-    type( L1BOAtp_T ) :: tp
-    character (LEN=27), intent(IN) :: asciiUTC
-    integer, intent(IN) :: lenG, numValues
-    real, intent(IN) :: scRate(lenG)
-    real(r8), intent(IN) :: asciiTAI, startAngle
-    real(r8), intent(IN) :: offsets(numValues)
-    real(r8), intent(IN) :: posECR(3,lenG)
+    TYPE (L1BOAtp_T) :: tp
+    CHARACTER (LEN=27), INTENT(IN) :: asciiUTC
+    INTEGER, INTENT(IN) :: lenG, numValues
+    REAL, INTENT(IN) :: scAngle(numValues)
+    REAL(r8), INTENT(IN) :: asciiTAI
+    REAL(r8), INTENT(IN) :: offsets(numValues)
+    REAL(r8), INTENT(IN) :: posECR(3,lenG), posECI(3,lenG), velECI(3,lenG)
+    REAL, INTENT(IN), OPTIONAL :: ecrtosc(3,3,numValues)
 
     ! Functions
-    integer :: Pgs_cbp_sat_cb_vector, Pgs_cbp_solarTimeCoords
-    integer :: Pgs_csc_scToOrb, Pgs_csc_scToECI, Pgs_csc_eciToECR
-    integer :: Pgs_csc_grazingRay, Pgs_csc_ecrToECI, Pgs_csc_eciToOrb
-    integer :: Pgs_td_taiToUTC
+    INTEGER :: Pgs_cbp_sat_cb_vector, Pgs_cbp_solarTimeCoords
+    INTEGER :: Pgs_csc_scToOrb, Pgs_csc_scToECI, Pgs_csc_eciToECR
+    INTEGER :: Pgs_csc_grazingRay, Pgs_csc_ecrToECI, Pgs_csc_eciToOrb
+    INTEGER :: Pgs_td_taiToUTC
 
     ! Variables
-    character (LEN=27) :: time
-    integer :: flag, flagQ, i, returnStatus
-    real(r8) :: declination, delAngle, delTime, deltaAlt, deltaLat, deltaLon
-    real(r8) :: greenwich, localApparent, rightAscension, tai
-    real(r8) :: dot(lenG), latD(lenG), localMean(lenG), lon(lenG), los(lenG)
-    real(r8) :: sign(lenG), slantRange(lenG)
-    real(r8) :: angleRad(numValues)
-    real(r8) :: eci(3,lenG), ecr(3,lenG), hECR(3,lenG), nts(3,lenG)
-    real(r8) :: posSurf(3,lenG), sc_frame_vector(3,lenG), sc_sun(3,lenG)
-    real(r8) :: sc_tp(3,lenG), tp_sun(3,lenG), tpOrb(3,lenG), unitAlt(3,lenG)
-    real(r8) :: unitLat(3,lenG), unitLon(3,lenG), vECR(3,lenG)
-    real(r8) :: angleSc(3,numValues), angleOrb(3,numValues)
-    real(r8) :: eciV(6,lenG), ecrV(6,lenG)
+    CHARACTER (LEN=27) :: time
+    INTEGER :: flag, flagQ, i, returnStatus
+    REAL(r8) :: declination, deltaAlt, deltaLat, deltaLon
+    REAL(r8) :: greenwich, localApparent, rightAscension, tai
+    REAL(r8) :: dot(lenG), latD(lenG), localMean(lenG), lon(lenG), los(lenG)
+    REAL(r8) :: ecr_sign(lenG), slantRange(lenG)
+    REAL(r8) :: angleRad(numValues)
+    REAL(r8) :: eci(3,lenG), ecr(3,lenG), hECR(3,lenG), nts(3,lenG)
+    REAL(r8) :: posSurf(3,lenG), sc_frame_vector(3,lenG), sc_sun(3,lenG)
+    REAL(r8) :: sc_tp(3,lenG), tp_sun(3,lenG), tpOrb(3,lenG), unitAlt(3,lenG)
+    REAL(r8) :: unitLat(3,lenG), unitLon(3,lenG), vECR(3,lenG)
+    REAL(r8) :: angleSc(3,numValues), angleOrb(3,numValues)
+    REAL(r8) :: eciV(6,lenG), ecrV(6,lenG)
+    REAL(r8) :: tngtVel(3), los_vec(3)
+    REAL(r8) :: MountsToFOV(3,3), ECRtoFOV(3,3)
+    CHARACTER (LEN=32) :: mnemonic
+    CHARACTER (LEN=480) :: msg, msr
+
     ! Executable code
 
     deltaLat = 0.1
     deltaLon = 0.1
     deltaAlt = 1000.0
 
-    ! Calculate MIF scan angles (in DEGREES)
-    tp%scAngle(1) = startAngle
-    do i = 2, lenG
-      tp%scAngle(i) = tp%scAngle(i-1) - scRate(i)*offsets(2)
-    enddo
+    ! Put sc angle
 
-    ! Calculate retrace angle, rate
-    delAngle = tp%scAngle(lenG) - tp%scAngle(1)
-    delTime = (numValues - lenG)*offsets(2)
-    tp%scanRate(1:lenG) = scRate
-    tp%scanRate( (lenG+1):numValues ) = delAngle/delTime
-    do i = lenG+1, numvalues
-      tp%scAngle(i) = tp%scAngle(i-1) - tp%scanRate(i)*offsets(2)
-    enddo
+    DO i = 1, numvalues
+       tp%scAngle(i) = scAngle(i)
+    ENDDO
 
     ! Put angle in s/c coordinates
     angleRad = Deg2Rad * tp%scAngle
-    angleSc(1,:) = cos(angleRad)
+    angleSc(1,:) = COS(angleRad)
     angleSc(2,:) = 0.0
-    angleSc(3,:) = sin(angleRad)
+    angleSc(3,:) = SIN(angleRad)
 
     ! Convert s/c vector to Orb vector/angle/degrees
-    returnStatus = Pgs_csc_scToOrb(spacecraftId, numValues, asciiUTC, &
+    returnStatus = Pgs_csc_scToOrb (spacecraftId, numValues, asciiUTC, &
       offsets, angleSc, angleOrb)
+    IF (returnStatus /= PGS_S_SUCCESS) THEN
+       CALL Pgs_smf_getMsg (returnStatus, mnemonic, msg)
+       msr = 'Routine scToOrb, ' // mnemonic // ':  ' // msg
+       CALL MLSMessage (MLSMSG_Warning, ModuleName, msr)
+ 
+       ! Initial out values:
 
-    tp%scanAngle = Rad2Deg * acos( angleOrb(1,:) )
+       CALL Init_L1BOAtp (tp)
+       RETURN
+    ENDIF
+
+    tp%scanAngle = Rad2Deg * ACOS (angleOrb(1,:))
 
     ! Convert s/c vector to ECR
-    returnStatus = Pgs_csc_scToECI(spacecraftId, lenG, asciiUTC, &
+    returnStatus = Pgs_csc_scToECI (spacecraftId, lenG, asciiUTC, &
       offsets(1:lenG), angleSc(:,1:lenG), eci)
     eciV(1:3,:) = eci
     eciV(4:6,:) = 0.0
-    returnStatus = Pgs_csc_eciToECR(lenG, asciiUTC, offsets(1:lenG), eciV, &
-      ecrV)
+    returnStatus = Pgs_csc_eciToECR (lenG, asciiUTC, offsets(1:lenG), eciV, &
+         ecrV)
     ecr = ecrV(1:3,:)
 
-    ! For each scanning MIF,
-    do i = 1, lenG
+    ! Determine ECR to FOV, if requested
+
+    IF (PRESENT (ecrtosc)) THEN
+       DO i = 1, lenG
+
+          CALL CalcMountsToFOV (scAngle(i), MountsToFOV)
+
+          ECRtoFOV = MATMUL (MountsToFOV, ecrtosc(:,:,i))
+          tp%tpECRtoFOV(:,i) = RESHAPE (ECRtoFOV, (/ 9 /))
+
+       ENDDO
+
+    ENDIF
+
+    ! For each scanning MIF
+    DO i = 1, lenG
 
       ! Calculate tangent point (geodetic & ECR)
-      returnStatus = Pgs_csc_grazingRay(earthModel, posECR(:,i), ecr(:,i), &
+      returnStatus = Pgs_csc_grazingRay (earthModel, posECR(:,i), ecr(:,i), &
         latD(i), lon(i), tp%tpGeodAlt(i), &
-        slantRange(i), tp%tpECR(:,i), posSurf(:,i) )
+        slantRange(i), tp%tpECR(:,i), posSurf(:,i))
 
       ! Create ECR unit vector quantities -- lat=1, lon=2, alt=3
       flagQ = 2
-      call Tp_unit(flagQ, lon(i), latD(i), tp%tpGeodAlt(i), deltaLon, &
+      CALL Tp_unit (flagQ, lon(i), latD(i), tp%tpGeodAlt(i), deltaLon, &
         unitLon(:,i), flag)
       flagQ = 1
-      call Tp_unit(flagQ, lon(i), latD(i), tp%tpGeodAlt(i), deltaLat, &
+      CALL Tp_unit (flagQ, lon(i), latD(i), tp%tpGeodAlt(i), deltaLat, &
         unitLat(:,i), flag)
       flagQ = 3
-      call Tp_unit(flagQ, lon(i), latD(i), tp%tpGeodAlt(i), deltaAlt, &
+      CALL Tp_unit (flagQ, lon(i), latD(i), tp%tpGeodAlt(i), deltaAlt, &
         unitAlt(:,i), flag)
 
       ! Get local mean solar time from Toolkit
       tai = asciiTAI + (i-1)*offsets(2)
-      returnStatus = Pgs_td_taiToUTC(tai, time)
-      returnStatus = Pgs_cbp_solarTimeCoords(time, lon(i), greenwich, &
+      returnStatus = Pgs_td_taiToUTC (tai, time)
+      returnStatus = Pgs_cbp_solarTimeCoords (time, lon(i), greenwich, &
         localMean(i), localApparent, rightAscension, declination)
-    enddo
+    ENDDO
 
     tp%tpGeodLat = Rad2Deg * latD
     tp%tpLon = Rad2Deg * lon
-    tp%tpSolarTime = localMean/3600.0
+    tp%tpSolarTime = localMean / 3600.0
 
     ! Calculate solarZenith
-    returnStatus = Pgs_cbp_sat_cb_vector(spacecraftId, lenG, asciiUTC, &
-      offsets(1:lenG), PGSd_SUN, sc_frame_vector)
-    returnStatus = Pgs_csc_scToECI(spacecraftId, lenG, asciiUTC, &
-      offsets(1:lenG), sc_frame_vector, eci)
+
+    returnStatus = Pgs_cbp_sat_cb_vector (spacecraftId, lenG, asciiUTC, &
+         offsets(1:lenG), PGSd_SUN, sc_frame_vector)
+    returnStatus = Pgs_csc_scToECI (spacecraftId, lenG, asciiUTC, &
+         offsets(1:lenG), sc_frame_vector, eci)
     eciV(1:3,:) = eci
     eciV(4:6,:) = 0.0
-    returnStatus = Pgs_csc_eciToECR(lenG, asciiUTC, offsets(1:lenG), eciV, &
-      ecrV)
+    returnStatus = Pgs_csc_eciToECR (lenG, asciiUTC, offsets(1:lenG), eciV, &
+         ecrV)
+
     sc_sun = ecrV(1:3,:)
-    do i = 1, lenG
-      sc_tp(:,i) = ecr(:,i) * slantRange(i)
-    enddo
+    DO i = 1, lenG
+       sc_tp(:,i) = ecr(:,i) * slantRange(i)
+    ENDDO
     tp_sun = sc_sun - sc_tp
-    do i = 1, lenG
-      nts(:,i) = tp_sun(:,i) / sqrt( tp_sun(1,i)**2 + tp_sun(2,i)**2 + &
-        &tp_sun(3,i)**2 )
-    enddo
+    DO i = 1, lenG
+       nts(:,i) = tp_sun(:,i) / SQRT( tp_sun(1,i)**2 + tp_sun(2,i)**2 + &
+            tp_sun(3,i)**2 )
+    ENDDO
     dot = nts(1,:)*unitAlt(1,:) + nts(2,:)*unitAlt(2,:) + &
-      nts(3,:)*unitAlt(3,:)
-    tp%tpSolarZenith = acos(dot) * Rad2Deg
+         nts(3,:)*unitAlt(3,:)
+    tp%tpSolarZenith = ACOS(dot) * Rad2Deg
 
     ! Calculate losAngle
-    do i = 1, lenG
-      vECR(:,i) = ecr(:,i) - ( ecr(1,i)*unitAlt(1,i) + &
-        &ecr(2,i)*unitAlt(2,i) + ecr(3,i)*unitAlt(3,i) )
-      hECR(:,i) = vECR(:,i) / sqrt(vECR(1,i)**2 + vECR(2,i)**2 + &
-        &vECR(3,i)**2)
-    enddo
-    los = acos( hECR(1,:)*unitLat(1,:) + hECR(2,:)*unitLat(2,:) + &
-      &hECR(3,:)*unitLat(3,:) )
-    sign = ecr(1,:)*unitLon(1,:) + ecr(2,:)*unitLon(2,:) + &
+    DO i = 1, lenG
+       vECR(:,i) = ecr(:,i) - (ecr(1,i)*unitAlt(1,i) + &
+            ecr(2,i)*unitAlt(2,i) + ecr(3,i)*unitAlt(3,i))
+       hECR(:,i) = vECR(:,i) / SQRT(vECR(1,i)**2 + vECR(2,i)**2 + &
+            vECR(3,i)**2)
+    ENDDO
+    los = ACOS(hECR(1,:)*unitLat(1,:) + hECR(2,:)*unitLat(2,:) + &
+         hECR(3,:)*unitLat(3,:))
+    ecr_sign = ecr(1,:)*unitLon(1,:) + ecr(2,:)*unitLon(2,:) + &
       ecr(3,:)*unitLon(3,:)
-    do i = 1, lenG
-      if (sign(i) < 0 ) los(i) = 2*PI - los(i)
-    enddo
+    DO i = 1, lenG
+       IF (ecr_sign(i) < 0 ) los(i) = 2*PI - los(i)
+    ENDDO
     tp%tpLosAngle = los * Rad2Deg
 
     ! Convert tpECR to tpECI
@@ -249,685 +381,549 @@ contains
       eciV)
     tp%tpECI = eciV(1:3,:)
 
+    ! Calculate losVel
+    DO i = 1, lenG
+      tngtVel = omega * (/ -tp%tpECI(2,i), tp%tpECI(1,i), 0.0_r8 /)
+      los_vec = tp%tpECI(:,i) - posECI(:,i)
+      los_vec = los_vec / SQRT (SUM (los_vec**2))
+      tp%tpLosVel(i) = DOT_PRODUCT (tngtVel, los_vec) - &
+           DOT_PRODUCT (velECI(:,i), los_vec)
+    ENDDO
+
     ! Convert tpECI to tpOrb
-    returnStatus = Pgs_csc_eciToOrb(spacecraftId, lenG, asciiUTC, &
+    returnStatus = Pgs_csc_eciToOrb (spacecraftId, lenG, asciiUTC, &
       offsets(1:lenG), tp%tpECI, tpOrb)
     tp%tpOrbY = tpOrb(2,:)
 
     ! Calculate tp geocentric coordinates
-    do i = 1, lenG
-      tp%tpGeocAlt(i) = sqrt( tp%tpECR(1,i)**2 + tp%tpECR(2,i)**2 + &
+    DO i = 1, lenG
+      tp%tpGeocAlt(i) = SQRT( tp%tpECR(1,i)**2 + tp%tpECR(2,i)**2 + &
         &tp%tpECR(3,i)**2 )
-      tp%tpGeocLat(i) = Rad2Deg * atan( tp%tpECR(3,i) &
-        &/ sqrt( tp%tpECR(1,i)**2 + tp%tpECR(2,i)**2 ) )
-    enddo
+      tp%tpGeocLat(i) = Rad2Deg * ATAN( tp%tpECR(3,i) &
+        &/ SQRT( tp%tpECR(1,i)**2 + tp%tpECR(2,i)**2 ) )
+    ENDDO
 
     ! Calculate dummy values
     tp%encoderAngle = tp%scAngle
-    do i = 2, lenG
+    DO i = 2, lenG
       tp%tpGeocAltRate(i-1) = ( tp%tpGeocAlt(i) - tp%tpGeocAlt(i-1) )&
         &/offsets(2)
       tp%tpGeodAltRate(i-1) = ( tp%tpGeodAlt(i) - tp%tpGeodAlt(i-1) )&
         &/offsets(2)
-    enddo
+    ENDDO
     tp%tpGeocAltRate(lenG) = tp%tpGeocAltRate(lenG-1)
     tp%tpGeodAltRate(lenG) = tp%tpGeodAltRate(lenG-1)
 
-  end subroutine TkL1B_tp
+  END SUBROUTINE TkL1B_tp
 
   !------------------------------------------------- Tp_unit ---------
-  subroutine Tp_unit (flagQ, lon, lat, alt, delta, unitQ, flag)
+  SUBROUTINE Tp_unit (flagQ, lon, lat, alt, delta, unitQ, flag)
     ! This subroutine creates unit ECR vector quantities used by TkL1B_tp to
     ! calculate solarZenith and losAngle.
     ! Arguments
-    integer, intent(IN) :: flagQ
-    real(r8), intent(IN) :: alt, delta, lat, lon
-    integer, intent(OUT) :: flag
-    real(r8), intent(OUT) :: unitQ(3)
+    INTEGER, INTENT(IN) :: flagQ
+    REAL(r8), INTENT(IN) :: alt, delta, lat, lon
+    INTEGER, INTENT(OUT) :: flag
+    REAL(r8), INTENT(OUT) :: unitQ(3)
 
     ! Functions
-    integer :: Pgs_csc_geoToECR
+    INTEGER :: Pgs_csc_geoToECR
 
     ! Variables
-    character (LEN=32) :: mnemonic
-    character (LEN=480) :: msg, msr
-    integer :: returnStatus
-    real(r8) :: del, geoMinus, geoPlus
-    real(r8) :: ecrMinus(3), ecrPlus(3), vec(3)
+    CHARACTER (LEN=32) :: mnemonic
+    CHARACTER (LEN=480) :: msg, msr
+    INTEGER :: returnStatus
+    REAL(r8) :: del, geoMinus, geoPlus
+    REAL(r8) :: ecrMinus(3), ecrPlus(3), vec(3)
 
     ! Exectuable code
 
     flag = 0
 
     ! Create unit vector
-    if (flagQ == 2) then
+    IF (flagQ == 2) THEN
       ! longitude
       del = delta * Deg2Rad
       geoPlus  = (lon + del/2)
       geoMinus = (lon - del/2)
-      if (geoPlus  >  PI) geoPlus  = geoPlus  - 2*PI
-      if (geoMinus < -PI) geoMinus = geoMinus + 2*PI
-      returnStatus = Pgs_csc_geoToECR(geoPlus, lat, alt, earthModel, &
+      IF (geoPlus  >  PI) geoPlus  = geoPlus  - 2*PI
+      IF (geoMinus < -PI) geoMinus = geoMinus + 2*PI
+      returnStatus = Pgs_csc_geoToECR (geoPlus, lat, alt, earthModel, &
         ecrPlus)
-      returnStatus = Pgs_csc_geoToECR(geoMinus, lat, alt, earthModel, &
+      returnStatus = Pgs_csc_geoToECR (geoMinus, lat, alt, earthModel, &
         ecrMinus)
-    else if (flagQ == 1) then
+    ELSE IF (flagQ == 1) THEN
       ! latitude
       del = delta * Deg2Rad
       geoPlus  = (lat + del/2)
       geoMinus = (lat - del/2)
-      returnStatus = Pgs_csc_geoToECR(lon, geoPlus, alt, earthModel, &
+      returnStatus = Pgs_csc_geoToECR (lon, geoPlus, alt, earthModel, &
         ecrPlus)
-      returnStatus = Pgs_csc_geoToECR(lon, geoMinus, alt, earthModel, &
+      returnStatus = Pgs_csc_geoToECR (lon, geoMinus, alt, earthModel, &
         ecrMinus)
-    else
+    ELSE
       geoPlus  = (alt + delta/2)
       geoMinus = (alt - delta/2)
-      returnStatus = Pgs_csc_geoToECR(lon, lat, geoPlus, earthModel, &
+      returnStatus = Pgs_csc_geoToECR (lon, lat, geoPlus, earthModel, &
         ecrPlus)
-      returnStatus = Pgs_csc_geoToECR(lon, lat, geoMinus, earthModel, &
+      returnStatus = Pgs_csc_geoToECR (lon, lat, geoMinus, earthModel, &
         ecrMinus)
-    endif
+    ENDIF
 
-    if (returnStatus /= PGS_S_SUCCESS) then
-      call Pgs_smf_getMsg(returnStatus, mnemonic, msg)
+    IF (returnStatus /= PGS_S_SUCCESS) THEN
+      CALL Pgs_smf_getMsg (returnStatus, mnemonic, msg)
       msr = mnemonic // ':  ' // msg
-      call MLSMessage(MLSMSG_Warning, ModuleName, msr)
+      CALL MLSMessage (MLSMSG_Warning, ModuleName, msr)
       flag = -1
-    endif
+    ENDIF
 
     vec = ecrPlus - ecrMinus
-    unitQ = vec / sqrt( vec(1)**2 + vec(2)**2 + vec(3)**2 )
+    IF (SUM (vec) > 0.0) THEN
+       unitQ = vec / SQRT( vec(1)**2 + vec(2)**2 + vec(3)**2 )
+    ELSE
+       unitQ = 0.0
+    ENDIF
 
-  end subroutine Tp_unit
+  END SUBROUTINE Tp_unit
 
-  !--------------------------------------------------- L1BOA_MAF ----------------
-  subroutine L1boa_MAF(altG, altT, ascTAI, counterMAF, dscTAI, L1FileHandle, &
-    MAFinfo, noMAF, numOrb, orbIncline, orbitNumber, &
-    scRate, scRateT, L1BFileInfo)
+  !-------------------------------------------------- L1BOA_MAF ----------------
+  SUBROUTINE L1BOA_MAF (altG, altT, ascTAI, counterMAF, dscTAI, L1FileHandle, &
+       MAFinfo, noMAF, numOrb, scAngleG, scAngleT)
+
     ! This subroutine creates the SIDS L1BOA MAF records, and writes them to an
     ! HDF output file.
 
+    USE MLSL1Config, ONLY: L1Config
+
     ! Arguments
-    type (MAFinfo_T) :: MAFinfo
-    TYPE (L1BFileInfo_T), intent(inout) :: L1BFileInfo
-    integer, intent(IN) :: L1FileHandle, counterMAF, noMAF, numOrb
-    integer, intent(IN) :: orbitNumber(:)
-    real, intent(IN) :: scRate(:)
-    real, intent(IN) :: scRateT(:)
-    real(r8), intent(IN) :: altG, altT, orbIncline
-    real(r8), intent(IN) :: ascTAI(:), dscTAI(:)
+    TYPE (MAFinfo_T) :: MAFinfo
+    INTEGER, INTENT(IN) :: L1FileHandle, counterMAF, noMAF, numOrb
+    REAL, INTENT(INOUT) :: scAngleG(:), scAngleT(:)
+    REAL(r8), INTENT(IN) :: altG, altT
+    REAL(r8), INTENT(IN) :: ascTAI(:), dscTAI(:)
 
     ! Functions
-    integer :: Pgs_td_taiToUTC
+    INTEGER :: Pgs_td_taiToUTC
 
     ! Variables
-    type( L1BOAindex_T ) :: index
-    type( L1BOAsc_T ) :: sc
-    type( L1BOAtp_T ) :: tp
-    character (LEN=27) :: mafTime
-    character (LEN=480) :: msr
-    integer :: error, i, nV, returnStatus
-    real(r8) :: mafTAI
-    real(r8) :: initRay(3), q(3,MAFinfo%MIFsPerMAF)
-    real(r8) :: offsets(MAFinfo%MIFsPerMAF)
+    TYPE( L1BOAindex_T ) :: index
+    TYPE( L1BOAsc_T ) :: sc
+    TYPE( L1BOAtp_T ) :: tp
+    CHARACTER (LEN=27) :: mafTime
+    CHARACTER (LEN=480) :: msr
+    INTEGER :: error, i, nV, returnStatus
+    REAL(r8) :: mafTAI
+    REAL(r8) :: initRay(3), q(3,MAFinfo%MIFsPerMAF)
+    REAL(r8) :: offsets(MAFinfo%MIFsPerMAF)
+    REAL :: angle_del
+    REAL :: ecrtosc(3,3,MAFinfo%MIFsPerMAF)
 
-    ! Calculate offsets array
+    ! Calculate time (secs) offsets array
+
     mafTAI = MAFinfo%startTAI
     nV = MAFinfo%MIFsPerMAF
-    do i = 1, nV 
-      offsets(i) = (i-1)*MAFinfo%integTime
-    enddo
+    DO i = 1, nV 
+      offsets(i) = (i-1)*MAFinfo%MIF_dur
+    ENDDO
 
     ! Write "index" information
-    returnStatus = Pgs_td_taiToUTC(mafTAI, mafTime)
+
+    returnStatus = Pgs_td_taiToUTC (mafTAI, mafTime)
     index%MAFStartTimeUTC = mafTime
     index%MAFStartTimeTAI = mafTAI
     index%noMIFs = nV
     index%counterMAF = counterMAF
 
-    call OutputL1B_index(noMAF, L1FileHandle, index)
-!    call OutputL1B_index(L1BFileInfo, noMAF, L1FileHandle, index)
+    CALL OutputL1B_index (noMAF, L1FileHandle, index)
 
     ! Allocate the MIF variables in the output structures
 
-    allocate(sc%scGeocAlt(nV), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  s/c  GeocAlt quantities.'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    IF (.NOT. ASSOCIATED(sc%MIF_TAI)) THEN
+       ALLOCATE (sc%MIF_TAI(nV), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  MIF_TAI quantities.'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
 
-    allocate(sc%scGeocLat(nV), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  s/c  GeocLat quantities.'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    IF (.NOT. ASSOCIATED(sc%scGeocAlt)) THEN
+       ALLOCATE (sc%scGeocAlt(nV), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  s/c  GeocAlt quantities.'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
 
-    allocate(sc%scGeodAlt(nV), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  s/c  GeodAlt quantities.'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    IF (.NOT. ASSOCIATED(sc%scGeocLat)) THEN
+       ALLOCATE (sc%scGeocLat(nV), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  s/c  GeocLat quantities.'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
 
-    allocate( sc%scGeodLat(nV), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  s/c GeodLat  quantities.'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    IF (.NOT. ASSOCIATED(sc%scGeodAlt)) THEN
+       ALLOCATE (sc%scGeodAlt(nV), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  s/c  GeodAlt quantities.'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
 
-    allocate( sc%scLon(nV), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  s/c Lon quantities.'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    IF (.NOT. ASSOCIATED(sc%scGeodLat)) THEN
+       ALLOCATE (sc%scGeodLat(nV), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  s/c GeodLat  quantities.'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
 
-    allocate(sc%scGeodAngle(nV), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  s/c GeodAngle quantities.'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    IF (.NOT. ASSOCIATED(sc%scLon)) THEN
+       ALLOCATE (sc%scLon(nV), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  s/c Lon quantities.'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
 
-    allocate(sc%scOrbIncl(nV), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  s/c OrbIncl quantities.'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    IF (.NOT. ASSOCIATED(sc%scGeodAngle)) THEN
+       ALLOCATE (sc%scGeodAngle(nV), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  s/c GeodAngle quantities.'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
 
-    allocate(tp%encoderAngle(nV), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  s/c encoder angle quantities.'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    IF (.NOT. ASSOCIATED(sc%scOrbIncl)) THEN
+       ALLOCATE (sc%scOrbIncl(nV), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  s/c OrbIncl quantities.'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
 
-    allocate(tp%scAngle(nV), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  s/c angle quantities.'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    IF (.NOT. ASSOCIATED(tp%encoderAngle)) THEN
+       ALLOCATE (tp%encoderAngle(nV), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  s/c encoder angle quantities.'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
 
-    allocate(tp%scanAngle(nV), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  s/c scan angle quantities.'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    IF (.NOT. ASSOCIATED(tp%scAngle)) THEN
+       ALLOCATE (tp%scAngle(nV), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  s/c angle quantities.'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
 
-    allocate(tp%scanRate(nV), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  s/c scan rate quantities.'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    IF (.NOT. ASSOCIATED(tp%scanAngle)) THEN
+       ALLOCATE (tp%scanAngle(nV), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  s/c scan angle quantities.'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
 
-    allocate(sc%scECI(lenCoord,nV), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  s/c ECI quantities.'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    IF (.NOT. ASSOCIATED(tp%scanRate)) THEN
+       ALLOCATE (tp%scanRate(nV), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  s/c scan rate quantities.'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
 
-    allocate(sc%scECR(lenCoord,nV), STAT=error) 
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  s/c ECR quantities.'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    IF (.NOT. ASSOCIATED(sc%scECI)) THEN
+       ALLOCATE (sc%scECI(lenCoord,nV), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  s/c ECI quantities.'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
 
-    allocate(sc%scVelECI(lenCoord,nV), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  s/c VelECI quantities.'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    IF (.NOT. ASSOCIATED(sc%scECR)) THEN
+       ALLOCATE (sc%scECR(lenCoord,nV), STAT=error) 
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  s/c ECR quantities.'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
 
-    allocate(sc%scVelECR(lenCoord,nV), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  s/c VelECR quantities.'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    IF (.NOT. ASSOCIATED(sc%scVelECI)) THEN
+       ALLOCATE (sc%scVelECI(lenCoord,nV), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  s/c VelECI quantities.'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
 
-    allocate(sc%ypr(lenCoord,nV), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  s/c ypr quantities.'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    IF (.NOT. ASSOCIATED(sc%scVelECR)) THEN
+       ALLOCATE (sc%scVelECR(lenCoord,nV), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  s/c VelECR quantities.'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
 
-    allocate(sc%yprRate(lenCoord,nV), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  s/c ypr rate quantities.'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    IF (.NOT. ASSOCIATED(sc%ypr)) THEN
+       ALLOCATE (sc%ypr(lenCoord,nV), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  s/c ypr quantities.'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
+
+    IF (.NOT. ASSOCIATED(sc%yprRate)) THEN
+       ALLOCATE (sc%yprRate(lenCoord,nV), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  s/c ypr rate quantities.'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
 
     ! Get oa data
-    call TkL1B_sc(nV, offsets, mafTime, sc)
+
+    CALL TkL1B_sc (nV, offsets, mafTime, mafTAI, sc, ecrtosc)
 
     ! Get s/c master coordinate
-    call Mc_aux(mafTime, offsets, sc%scECR, q )
 
-    call TkL1B_mc(ascTAI, dscTAI, sc%scECR, nV, numOrb, &
-      & orbIncline, orbitNumber, q, mafTAI, offsets, sc%scGeodAngle, &
-      & sc%scOrbIncl)
+    CALL Mc_aux (mafTime, offsets, sc%scECR, q )
+
+    CALL TkL1B_mc (ascTAI, dscTAI, sc%scECR, nV, numOrb, &
+      & q, mafTAI, offsets, sc%scGeodAngle, sc%scOrbIncl)
 
     ! Write s/c information
-!    call OutputL1B_sc(L1BFileInfo, noMAF, L1FileHandle, sc)
-    call OutputL1B_sc(noMAF, L1FileHandle, sc)
+
+    CALL OutputL1B_sc (noMAF, L1FileHandle, sc)
 
     ! Calculate initial guess for look vector in ECR
-    call Scan_guess(mafTime, initRay)
+    CALL Scan_guess (mafTime, initRay)
 
     ! Allocate the output structure
 
-    allocate(tp%tpECI(lenCoord,lenG), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  GHz tp quantities: ECI'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    IF (.NOT. ASSOCIATED(tp%tpECI)) THEN
+       ALLOCATE (tp%tpECI(lenCoord,lenG), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  GHz tp quantities: ECI'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
 
-    allocate(tp%tpECR(lenCoord,lenG), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  GHz tp quantities: ECR'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    IF (.NOT. ASSOCIATED(tp%tpECR)) THEN
+       ALLOCATE (tp%tpECR(lenCoord,lenG), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  GHz tp quantities: ECR'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
 
-    allocate(tp%tpOrbY(lenG), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  GHz tp quantities: OrbY'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    IF (.NOT. ASSOCIATED(tp%tpECRtoFOV)) THEN
+       ALLOCATE (tp%tpECRtoFOV(lenCoord*lenCoord,lenG), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  GHz tp quantities: ECRtoFOV'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
 
-    allocate(tp%tpGeocAlt(lenG), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  GHz tp quantities: GeocAlt'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    IF (.NOT. ASSOCIATED(tp%tpOrbY)) THEN
+       ALLOCATE (tp%tpOrbY(lenG), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  GHz tp quantities: OrbY'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
 
-    allocate(tp%tpGeocLat(lenG), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  GHz tp quantities: GeocLat'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    IF (.NOT. ASSOCIATED(tp%tpGeocAlt)) THEN
+       ALLOCATE (tp%tpGeocAlt(lenG), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  GHz tp quantities: GeocAlt'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
 
-    allocate(tp%tpGeocAltRate(lenG), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  GHz tp quantities: GeocAltRate'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    IF (.NOT. ASSOCIATED(tp%tpGeocLat)) THEN
+       ALLOCATE (tp%tpGeocLat(lenG), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  GHz tp quantities: GeocLat'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
 
-    allocate(tp%tpGeodAlt(lenG), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  GHz tp quantities: GeodAlt'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    IF (.NOT. ASSOCIATED(tp%tpGeocAltRate)) THEN
+       ALLOCATE (tp%tpGeocAltRate(lenG), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  GHz tp quantities: GeocAltRate'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
 
-    allocate(tp%tpGeodLat(lenG), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  GHz tp quantities: GeodLat'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    IF (.NOT. ASSOCIATED(tp%tpGeodAlt)) THEN
+       ALLOCATE (tp%tpGeodAlt(lenG), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  GHz tp quantities: GeodAlt'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
 
-    allocate(tp%tpGeodAltRate(lenG), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  GHz tp quantities: GeodAltRate'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    IF (.NOT. ASSOCIATED(tp%tpGeodLat)) THEN
+       ALLOCATE (tp%tpGeodLat(lenG), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  GHz tp quantities: GeodLat'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
 
-    allocate(tp%tpLon(lenG), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  GHz tp quantities: Lon'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    IF (.NOT. ASSOCIATED(tp%tpGeodAltRate)) THEN
+       ALLOCATE (tp%tpGeodAltRate(lenG), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  GHz tp quantities: GeodAltRate'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
 
-    allocate(tp%tpGeodAngle(lenG), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  GHz tp quantities: GeodAngle'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    IF (.NOT. ASSOCIATED(tp%tpLon)) THEN
+       ALLOCATE (tp%tpLon(lenG), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  GHz tp quantities: Lon'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
 
-    allocate(tp%tpSolarTime(lenG), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  GHz tp quantities: SolarTime'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    IF (.NOT. ASSOCIATED(tp%tpGeodAngle)) THEN
+       ALLOCATE (tp%tpGeodAngle(lenG), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  GHz tp quantities: GeodAngle'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
 
-    allocate(tp%tpSolarZenith(lenG), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  GHz tp quantities: SolarZenith'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    IF (.NOT. ASSOCIATED(tp%tpSolarTime)) THEN
+       ALLOCATE (tp%tpSolarTime(lenG), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  GHz tp quantities: SolarTime'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
 
-    allocate(tp%tpLosAngle(lenG), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  GHz tp quantities: LosAngle'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    IF (.NOT. ASSOCIATED(tp%tpSolarZenith)) THEN
+       ALLOCATE (tp%tpSolarZenith(lenG), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  GHz tp quantities: SolarZenith'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
+
+    IF (.NOT. ASSOCIATED(tp%tpLosAngle)) THEN
+       ALLOCATE (tp%tpLosAngle(lenG), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  GHz tp quantities: LosAngle'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
+
+    IF (.NOT. ASSOCIATED(tp%tpLosVel)) THEN
+       ALLOCATE (tp%tpLosVel(lenG), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  GHz tp quantities: LosVel'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
 
     ! Find angle, tan pt for start of GHZ scan
-    call Scan_start( altG, sc%scECR(:,1), mafTime, initRay, tp%scAngle(1) )
+
+    CALL Scan_start (altG, sc%scECR(:,1), mafTime, initRay, tp%scAngle(1) )
 
     ! Calculate GHZ tan pt record
-    call TkL1B_tp(mafTAI, mafTime, lenG, nV, offsets, sc%scECR(:,1:lenG), &
-      scRate, tp%scAngle(1), tp)
+
+    CALL TkL1B_tp (mafTAI, mafTime, lenG, nV, offsets, sc%scECR(:,1:lenG), &
+      sc%scECI(:,1:lenG), sc%scVelECI(:,1:lenG), scAngleG, tp) !, ecrtosc)
+    IF (L1Config%Globals%SimOA) THEN   ! correct nominal scan angles for sim
+       angle_del = tp%tpGeodAlt(1) / 5200.0 * 0.1
+       scAngleG = scAngleG + angle_del
+       CALL TkL1B_tp (mafTAI, mafTime, lenG, nV, offsets, sc%scECR(:,1:lenG), &
+            sc%scECI(:,1:lenG), sc%scVelECI(:,1:lenG), scAngleG, tp) !, ecrtosc)
+       angle_del = tp%tpGeodAlt(1) / 5200.0 * 0.1
+       scAngleG = scAngleG + angle_del
+       CALL TkL1B_tp (mafTAI, mafTime, lenG, nV, offsets, sc%scECR(:,1:lenG), &
+            sc%scECI(:,1:lenG), sc%scVelECI(:,1:lenG), scAngleG, tp, ecrtosc)
+    ENDIF
 
     ! Compute GHz master coordinate
-    call TkL1B_mc(ascTAI, dscTAI, tp%tpECR, lenG, numOrb, &
-      & orbIncline, orbitNumber, q, mafTAI, offsets(1:lenG), tp%tpGeodAngle, &
-      & sc%scOrbIncl)
+
+    CALL TkL1B_mc (ascTAI, dscTAI, tp%tpECR, lenG, numOrb, &
+      & q, mafTAI, offsets(1:lenG), tp%tpGeodAngle, sc%scOrbIncl)
 
     ! Write GHz information
 
-!    call OutputL1B_GHz(L1BFileInfo, noMAF, L1FileHandle, tp)
-    call OutputL1B_GHz(noMAF, L1FileHandle, tp)
-
-    deallocate(tp%tpECI, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed &
-      &deallocation of GHz quantities: ECI')
-
-    deallocate(tp%tpECR, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed &
-      &deallocation of GHz quantities: ECR')
-
-    deallocate(tp%tpOrbY, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed &
-      &deallocation of GHz quantities: OrbY')
-
-    deallocate(tp%tpGeocAlt, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed &
-      &deallocation of GHz quantities: GeocAlt')
-
-    deallocate(tp%tpGeocLat, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed &
-      &deallocation of GHz quantities: GeocLat')
-
-    deallocate(tp%tpGeocAltRate, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed &
-      &deallocation of GHz quantities: GeocAltRate')
-
-    deallocate(tp%tpGeodAltRate, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed &
-      &deallocation of GHz quantities: GeodAltRate')
-
-    deallocate(tp%tpLon, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed &
-      &deallocation of GHz quantities: Lon')
-
-    deallocate(tp%tpGeodAngle, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed &
-      &deallocation of GHz quantities: GeodAngle')
-
-    deallocate(tp%tpSolarTime, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed &
-      &deallocation of GHz quantities: SolarTime')
-
-    deallocate(tp%tpSolarZenith, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed &
-      &deallocation of GHz quantities: SolarZenith')
-
-    deallocate(tp%tpLosAngle, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed &
-      &deallocation of GHz quantities: LosAngle')
+    CALL OutputL1B_GHz (noMAF, L1FileHandle, tp)
 
     ! Find angle, tan pt for start of THz scan
 
-    allocate(tp%tpECI(lenCoord,lenT), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  THz tp quantities: ECI'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
-
-    allocate(tp%tpECR(lenCoord,lenT), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  THz tp quantities: ECR'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
-
-    allocate(tp%tpOrbY(lenT), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  THz tp quantities: OrbY'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
-
-    allocate(tp%tpGeocAlt(lenT), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  THz tp quantities: GeocAlt'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
-
-    allocate(tp%tpGeocLat(lenT), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  THz tp quantities: GeocLat'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
-
-    allocate(tp%tpGeocAltRate(lenT), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  THz tp quantities: GeocAltRate'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
-
-    allocate(tp%tpGeodAlt(lenT), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  THz tp quantities: GeodAlt'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
-
-    allocate(tp%tpGeodLat(lenT), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  THz tp quantities: GeodLat'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
-
-    allocate(tp%tpGeodAltRate(lenT), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  THz tp quantities: GeodAltRate'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
-
-    allocate(tp%tpLon(lenT), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  THz tp quantities: Lon'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
-
-    allocate(tp%tpGeodAngle(lenT), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  THz tp quantities: GeodAngle'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
-
-    allocate(tp%tpSolarTime(lenT), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  THz tp quantities: SolarTime'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
-
-    allocate(tp%tpSolarZenith(lenT), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  THz tp quantities: SolarZenith'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
-
-    allocate(tp%tpLosAngle(lenT), STAT=error)
-    if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  THz tp quantities: LosAngle'
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
-
-    ! Find angle, tan pt for start of THz scan
-    call Scan_start(altT, sc%scECR(:,1), mafTime, initRay, tp%scAngle(1))
+    CALL Scan_start (altT, sc%scECR(:,1), mafTime, initRay, tp%scAngle(1))
 
     ! Calculate THz tan pt record
-    call TkL1B_tp(mafTAI, mafTime, lenT, nV, offsets, sc%scECR(:,1:lenT), &
-      scRateT, tp%scAngle(1), tp)
+
+    CALL TkL1B_tp (mafTAI, mafTime, lenT, nV, offsets, sc%scECR(:,1:lenT), &
+      sc%scECI(:,1:lenG), sc%scVelECI(:,1:lenG), scAngleT, tp)
+    IF (L1Config%Globals%SimOA) THEN   ! correct nominal scan angles for sim
+       angle_del = tp%tpGeodAlt(1) / 5200.0 * 0.1
+       scAngleT = scAngleT + angle_del
+       CALL TkL1B_tp (mafTAI, mafTime, lenT, nV, offsets, sc%scECR(:,1:lenT), &
+            sc%scECI(:,1:lenG), sc%scVelECI(:,1:lenG), scAngleT, tp)
+        angle_del = tp%tpGeodAlt(1) / 5200.0 * 0.1
+       scAngleT = scAngleT + angle_del
+       CALL TkL1B_tp (mafTAI, mafTime, lenG, nV, offsets, sc%scECR(:,1:lenT), &
+            sc%scECI(:,1:lenT), sc%scVelECI(:,1:lenT), scAngleT, tp)
+    ENDIF
 
     ! Compute THz master coordinate
-    call TkL1B_mc(ascTAI, dscTAI, tp%tpECR, lenT, numOrb, &
-      & orbIncline, orbitNumber, q, mafTAI, offsets(1:lenT), tp%tpGeodAngle, &
-      & sc%scOrbIncl)
+
+    CALL TkL1B_mc (ascTAI, dscTAI, tp%tpECR, lenT, numOrb, &
+      & q, mafTAI, offsets(1:lenT), tp%tpGeodAngle, sc%scOrbIncl)
 
     ! Write THZ information
 
-!    call OutputL1B_THz(L1BFileInfo, noMAF, L1FileHandle, tp)
-    call OutputL1B_THz(noMAF, L1FileHandle, tp)
+    CALL OutputL1B_THz (noMAF, L1FileHandle, tp)
 
-    deallocate(tp%tpECI, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'Failed deallocation of THz quantities.')
-
-    deallocate(tp%tpECR, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'Failed deallocation of THz quantities.')
-
-    deallocate(tp%tpOrbY, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'Failed deallocation of THz quantities.')
-
-    deallocate(tp%tpGeocAlt, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'Failed deallocation of THz quantities.')
-
-    deallocate(tp%tpGeocLat, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'Failed deallocation of THz quantities.')
-
-    deallocate(tp%tpGeocAltRate, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'Failed deallocation of THz quantities.')
-
-    deallocate(tp%tpGeodAltRate, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'Failed deallocation of THz quantities.')
-
-    deallocate(tp%tpGeodAlt, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'Failed deallocation of THz quantities.')
-
-    deallocate(tp%tpGeodLat, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'Failed deallocation of THz quantities.')
-
-    deallocate(tp%tpLon, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'Failed deallocation of THz quantities.')
-
-    deallocate(tp%tpGeodAngle, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'Failed deallocation of THz quantities.')
-
-    deallocate(tp%tpSolarTime, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'Failed deallocation of THz quantities.')
-
-    deallocate(tp%tpSolarZenith, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'Failed deallocation of THz quantities.')
-
-    deallocate(tp%tpLosAngle, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'Failed deallocation of THz quantities.')
-
-    ! Deallocate the MIF quantities
-
-    deallocate(sc%scECI, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'Failed deallocation of MIF quantities: scECI')
-
-    deallocate(sc%scECR, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'Failed deallocation of MIF quantities: scECR')
-
-    deallocate(sc%scGeocAlt, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'Failed deallocation of MIF quantities: scGeocAlt')
-
-    deallocate(sc%scGeocLat, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'Failed deallocation of MIF quantities: scGeocLat')
-
-    deallocate(sc%scGeodAlt, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'Failed deallocation of MIF quantities: scGeodAlt')
-
-    deallocate(sc%scGeodLat, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'Failed deallocation of MIF quantities: scGeodLat')
-
-    deallocate(sc%scLon, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'Failed deallocation of MIF quantities: scLon')
-
-    deallocate(sc%scGeodAngle, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'Failed deallocation of MIF quantities: scGeodAngle')
-
-    deallocate(sc%scVelECI, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'Failed deallocation of MIF quantities: scVelECI')
-
-    deallocate(sc%scVelECR, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'Failed deallocation of MIF quantities: scVelECR')
-
-    deallocate(sc%scOrbIncl, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'Failed deallocation of MIF quantities: scOrbIncl')
-
-    deallocate(sc%ypr, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'Failed deallocation of MIF quantities: ypr')
-
-    deallocate(sc%yprRate, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'Failed deallocation of MIF quantities: yprRate')
-
-    deallocate(tp%encoderAngle, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'Failed deallocation of MIF quantities: encoderAngle')
-
-    deallocate(tp%scAngle, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'Failed deallocation of MIF quantities: scAngle')
-
-    deallocate(tp%scanAngle, STAT=error)
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'Failed deallocation of MIF quantities: scanAngle')
-
-    deallocate(tp%scanRate, STAT=error)   
-    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'Failed deallocation of MIF quantities: scanRate')
-
-  end subroutine L1boa_MAF
+  END SUBROUTINE L1boa_MAF
 
   !------------------------------------------- Mc_Aux --------
-  subroutine Mc_aux (asciiUTC, offsets, scECR, q)
-    ! This subroutine computes q, an auxilliary vector used in the calculation of
-    ! the master coordinate.  Q is a vector that points from the center of the Earth
-    ! to the ascending node of the orbit in ECI coordinates.  Thus any point
-    ! dotted with q can give you the master coordinate.
+  SUBROUTINE Mc_aux (asciiUTC, offsets, scECR, q)
+    ! This subroutine computes q, an auxilliary vector used in the calculation
+    ! of the master coordinate.  Q is a vector that points from the center of
+    ! the Earth to the ascending node of the orbit in ECI coordinates.  Thus any
+    ! point dotted with q can give you the master coordinate.
     ! Arguments
-    character (LEN=27), intent(IN) :: asciiUTC
-    real(r8), intent(in) :: OFFSETS(:)
-    real(r8), intent(IN) :: scECR(:,:)
-    real(r8), intent(OUT) :: q(:,:)
+    CHARACTER (LEN=27), INTENT(IN) :: asciiUTC
+    REAL(r8), INTENT(in) :: OFFSETS(:)
+    REAL(r8), INTENT(IN) :: scECR(:,:)
+    REAL(r8), INTENT(OUT) :: q(:,:)
 
     ! Parameters
 
     ! Functions
-    integer :: Pgs_csc_orbToECI, PGS_CSC_ECItoECR
+    INTEGER :: Pgs_csc_orbToECI, PGS_CSC_ECItoECR
 
     ! Variables
-    integer :: returnStatus
-    integer :: nV
-    real(r8), dimension(size(offsets)) :: l
-    real(r8), dimension(size(offsets)) :: DIST1
-    real(r8), dimension(size(offsets)) :: DIST2
-    real(r8), dimension(3,size(offsets)) :: AECR
-    real(r8), dimension(3,size(offsets)) :: AUX1
-    real(r8), dimension(3,size(offsets)) :: AUX2
-    real(r8), dimension(6,size(offsets)) :: AUX1ECI
-    real(r8), dimension(6,size(offsets)) :: AUX2ECI
-    real(r8), dimension(6,size(offsets)) :: AUX1ECR
-    real(r8), dimension(6,size(offsets)) :: AUX2ECR
-    real(r8), dimension(size(offsets)) :: QSIZE
-    logical, dimension(size(offsets)) :: SMALL1
-    logical, dimension(size(offsets)) :: SMALL2
+    INTEGER :: returnStatus
+    INTEGER :: nV
+    REAL(r8), DIMENSION(SIZE(offsets)) :: l
+    REAL(r8), DIMENSION(SIZE(offsets)) :: DIST1
+    REAL(r8), DIMENSION(SIZE(offsets)) :: DIST2
+    REAL(r8), DIMENSION(3,SIZE(offsets)) :: AECR
+    REAL(r8), DIMENSION(3,SIZE(offsets)) :: AUX1
+    REAL(r8), DIMENSION(3,SIZE(offsets)) :: AUX2
+    REAL(r8), DIMENSION(6,SIZE(offsets)) :: AUX1ECI
+    REAL(r8), DIMENSION(6,SIZE(offsets)) :: AUX2ECI
+    REAL(r8), DIMENSION(6,SIZE(offsets)) :: AUX1ECR
+    REAL(r8), DIMENSION(6,SIZE(offsets)) :: AUX2ECR
+    REAL(r8), DIMENSION(SIZE(offsets)) :: QSIZE
+    LOGICAL, DIMENSION(SIZE(offsets)) :: SMALL1
+    LOGICAL, DIMENSION(SIZE(offsets)) :: SMALL2
 
     ! Executable code
-    nV = size(offsets)
+    nV = SIZE(offsets)
 
     ! Construct two auxilliary vectors -- the first pointing directly ahead 
     ! along the s/c orbit, and the second pointing 45 degrees downward.
@@ -939,59 +935,60 @@ contains
     aux2(3,:) = 1.0
 
     ! Transform the auxilliary vectors from orbital to ECI coordinates
-    returnStatus = Pgs_csc_orbToECI(spacecraftId, nV, asciiUTC, &
+    returnStatus = Pgs_csc_orbToECI (spacecraftId, nV, asciiUTC, &
       offsets, aux1, aux1ECI(1:3,:) )
-    returnStatus = Pgs_csc_orbToECI(spacecraftId, nV, asciiUTC, &
+    returnStatus = Pgs_csc_orbToECI (spacecraftId, nV, asciiUTC, &
       offsets, aux2, aux2ECI(1:3,:) )
 
     ! Transform again to ECI coordinates
     aux1ECI(4:6,:) = 0.0_r8
     aux2ECI(4:6,:) = 0.0_r8
-    returnStatus = Pgs_csc_ECItoECR(nV, asciiUTC, offsets, &
+    returnStatus = Pgs_csc_ECItoECR (nV, asciiUTC, offsets, &
       & aux1ECI, aux1ECR )
-    returnStatus = Pgs_csc_ECItoECR(nV, asciiUTC, offsets, &
+    returnStatus = Pgs_csc_ECItoECR (nV, asciiUTC, offsets, &
       & aux2ECI, aux2ECR )
 
-    ! Define l & a, where l is the distance to the equator along the direction of
-    ! one of the auxilliary vectors from the s/c, and a is the auxilliary vector
-    ! for which l was defined.
+    ! Define l & a, where l is the distance to the equator along the direction
+    ! of one of the auxilliary vectors from the s/c, and a is the auxilliary
+    ! vector for which l was defined.
 
-    small1 = abs(aux1ECR(3,:)) < sqrt( tiny(0.0_r8) )
-    small2 = abs(aux2ECR(3,:)) < sqrt( tiny(0.0_r8) )
-    if ( any ( small1 .and. small2 ) ) then
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
+    small1 = ABS(aux1ECR(3,:)) < SQRT( TINY(0.0_r8) )
+    small2 = ABS(aux2ECR(3,:)) < SQRT( TINY(0.0_r8) )
+    IF (ANY ( small1 .AND. small2 )) THEN
+      CALL MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Problem computing auxilliary vector for master coordinate' )
-    end if
+    END IF
 
-    where ( small1 )
-      ! If aux1 has a zero z-component, set l & a for aux2, if its z-component /= 0
+    WHERE ( small1 )
+      ! If aux1 has a zero z-component, set l & a for aux2, if its z-component
+      !  /= 0
       l = -scECR(3,:)/aux2ECR(3,:)
       aECR(1,:) = aux2ECR(1,:)
       aECR(2,:) = aux2ECR(2,:)
       aECR(3,:) = aux2ECR(3,:)
-    elsewhere ( small2 )
+    ELSEWHERE ( small2 )
       ! If aux1(3) is not zero, but aux2(3) is, then set l & a for aux1
       l = -scECR(3,:)/aux1ECR(3,:)
       aECR(1,:) = aux1ECR(1,:)
       aECR(2,:) = aux1ECR(2,:)
       aECR(3,:) = aux1ECR(3,:)
-    elsewhere
+    ELSEWHERE
       ! If both aux1(3) and aux2(3) are non-zero, choose the one which gives the
       ! minimum absolute value of l.
       dist1 = -scECR(3,:)/aux1ECR(3,:)
       dist2 = -scECR(3,:)/aux2ECR(3,:)
-      where ( abs(dist1) < abs(dist2) )
+      WHERE ( ABS(dist1) < ABS(dist2) )
         l = dist1
         aECR(1,:) = aux1ECR(1,:)
         aECR(2,:) = aux1ECR(2,:)
         aECR(3,:) = aux1ECR(3,:)
-      elsewhere
+      ELSEWHERE
         l = dist2
         aECR(1,:) = aux2ECR(1,:)
         aECR(2,:) = aux2ECR(2,:)
         aECR(3,:) = aux2ECR(3,:)
-      end where
-    end where
+      END WHERE
+    END WHERE
 
     ! Define the vector q = scECR + la, such that its z-component = 0
     q(1,:) = scECR(1,:) + l(:)*aECR(1,:)
@@ -999,22 +996,22 @@ contains
     q(3,:) = 0.0
 
     ! Modify q, depending on which hemisphere the s/c is in, and the sign of l
-    where ( ( (scECR(3,:) < 0.0) .and. (l < 0.0) ) .or. &
-      &     ( (scECR(3,:) >= 0.0) .and. (l >= 0.0) ) )
+    WHERE ( ( (scECR(3,:) < 0.0) .AND. (l < 0.0) ) .OR. &
+      &     ( (scECR(3,:) >= 0.0) .AND. (l >= 0.0) ) )
       q(1,:) = -q(1,:)
       q(2,:) = -q(2,:)
-    end where 
+    END WHERE 
 
     ! Normalize q
-    qSize = sqrt( q(1,:)**2 + q(2,:)**2 ) 
+    qSize = SQRT( q(1,:)**2 + q(2,:)**2 ) 
 
     q(1,:) = q(1,:) / qSize(:)
     q(2,:) = q(2,:) / qSize(:)
 
-  end subroutine Mc_aux
+  END SUBROUTINE Mc_aux
 
-  !----------------------------------------------------orbInclineCalculated -----------------
-  function orbInclineCalculated( scECR, scVelECR , lambda, mu)
+  !---------------------------------------orbInclineCalculated -----------------
+  FUNCTION orbInclineCalculated (scECR, scVelECR , lambda, mu)
     ! This function computes the orbital inclination angle beta' in degrees
     ! where 90 would mean a perfectly polar orbit in ECR coordinates
     ! Method: let [r] be the vector of the s/c position (in ECR coords)
@@ -1026,74 +1023,71 @@ contains
     ! then sin_beta' = cos[lambda] ------------------------
     !                                         |v|
     ! Arguments
-    real(r8), intent(IN) :: scECR(3)             ! s/c pos.
-    real(r8), intent(IN) :: scVelECR(3)          ! s/c vel.
-    real, intent(IN) ::     lambda               ! s/c geocentric latitude
-    real, intent(IN) ::     mu                   ! s/c longitude
-    real(r8) ::             orbInclineCalculated
+    REAL(r8), INTENT(IN) :: scECR(3)             ! s/c pos.
+    REAL(r8), INTENT(IN) :: scVelECR(3)          ! s/c vel.
+    REAL, INTENT(IN) ::     lambda               ! s/c geocentric latitude
+    REAL, INTENT(IN) ::     mu                   ! s/c longitude
+    REAL(r8) ::             orbInclineCalculated
 
     ! Variables
-    logical, parameter :: DEBUG = .FALSE.
-    integer, save :: HOWMANYSOFAR=0
-    real(r8) :: vUnrotated(3)          ! s/c vel.
-    real(r8) :: v
-    real :: muRad, lamRad
+    LOGICAL, PARAMETER :: DEBUG = .FALSE.
+    INTEGER, SAVE :: HOWMANYSOFAR=0
+    REAL(r8) :: vUnrotated(3)          ! s/c vel.
+    REAL(r8) :: v
+    REAL :: muRad, lamRad
 
     ! Executable code
     HOWMANYSOFAR = HOWMANYSOFAR + 1
     vUnrotated(1) = scVelECR(1) - Omega*scECR(2)
     vUnrotated(2) = scVelECR(2) + Omega*scECR(1)
     vUnrotated(3) = scVelECR(3)
-    v = sqrt( vUnrotated(1)**2 + vUnrotated(2)**2 + vUnrotated(3)**2 )
+    v = SQRT( vUnrotated(1)**2 + vUnrotated(2)**2 + vUnrotated(3)**2 )
     lamRad = (Pi/180)*lambda
     muRad = (Pi/180)*mu
-    if ( v == 0.d0 ) then
+    IF (v == 0.d0) THEN
       orbInclineCalculated = UNDEFINED_VALUE
-      return
-    endif
-    orbInclineCalculated = (180/Pi) * asin( &
-    & cos(lamRad) * (vUnrotated(2)*cos(muRad) - vUnrotated(1)*sin(muRad)) &
-    & / &
-    & v &
-    & )
+      RETURN
+    ENDIF
+    orbInclineCalculated = (180/Pi) * ASIN( &
+        COS(lamRad) * (vUnrotated(2)*COS(muRad) - vUnrotated(1)*SIN(muRad)) / v)
 !    sc_velv = [sc_vel(i,j)       - 7.27221d-08*datascecr(1,i,j), $
 !               sc_vel(i+mmifs,j) + 7.27221d-08*datascecr(0,i,j), $
 !               sc_vel(i+2*mmifs,j)]
     ! Now added contraints: 90 < beta < 180
-    orbInclineCalculated = abs(orbInclineCalculated) + 90
-    if ( orbInclineCalculated < 90.d0 ) then
+    orbInclineCalculated = ABS(orbInclineCalculated) + 90
+    IF (orbInclineCalculated < 90.d0) THEN
       orbInclineCalculated = 180. - orbInclineCalculated
-    elseif (orbInclineCalculated > 180.d0 ) then
+    ELSEIF (orbInclineCalculated > 180.d0) THEN
       orbInclineCalculated = 360. - orbInclineCalculated
-    endif
+    ENDIF
     
-    if ( DEBUG ) then
-      call output('vx, vy, vz ', advance='no')
-      call blanks(3, advance='no')
-      call output(scVelECR, advance='yes')
-      call output('lambda ', advance='no')
-      call blanks(3, advance='no')
-      call output(lambda, advance='no')
-      call blanks(3, advance='no')
-      call output('mu ', advance='no')
-      call blanks(3, advance='no')
-      call output(mu, advance='yes')
-      call output('orbital inclination ', advance='no')
-      call blanks(3, advance='no')
-      call output((180/Pi) * asin( &
-       & cos(lamRad) * (vUnrotated(2)*cos(muRad) - vUnrotated(1)*sin(muRad)) &
+    IF (DEBUG) THEN
+      CALL output ('vx, vy, vz ', advance='no')
+      CALL blanks (3, advance='no')
+      CALL output (scVelECR, advance='yes')
+      CALL output ('lambda ', advance='no')
+      CALL blanks (3, advance='no')
+      CALL output (lambda, advance='no')
+      CALL blanks (3, advance='no')
+      CALL output ('mu ', advance='no')
+      CALL blanks (3, advance='no')
+      CALL output (mu, advance='yes')
+      CALL output ('orbital inclination ', advance='no')
+      CALL blanks (3, advance='no')
+      CALL output ((180/Pi) * ASIN( &
+       & COS(lamRad) * (vUnrotated(2)*COS(muRad) - vUnrotated(1)*SIN(muRad)) &
        & / &
        & v &
        & ), advance='no')
-      call blanks(3, advance='no')
-      call output(orbInclineCalculated, advance='yes')
-      if ( HOWMANYSOFAR > 40 ) stop
-    endif
+      CALL blanks (3, advance='no')
+      CALL output (orbInclineCalculated, advance='yes')
+      IF (HOWMANYSOFAR > 40 ) STOP
+    ENDIF
 
-  end function orbInclineCalculated
+  END FUNCTION orbInclineCalculated
 
-  !----------------------------------------------------orbInclineCrossProd -----------------
-  function orbInclineCrossProd( scECI, scVelECI )
+  !----------------------------------------orbInclineCrossProd -----------------
+  FUNCTION orbInclineCrossProd  (scECI, scVelECI)
     ! This function computes the orbital inclination angle beta in degrees
     ! where 90 would mean a perfectly polar orbit
     ! Method: let [r] be the vector of the s/c position (in ECI coords)
@@ -1103,134 +1097,135 @@ contains
     ! Then [v] = [omega] x [r]
     ! [p] = [r] x [v] = [omega] r^2 - [r] [omega] . [r]
     ! and if [r] . [omega] = 0
-    ! [omega] = [p] / r^2 = omega (sin_beta cos_alfa, sin_beta sin_alfa, cos_beta)
+    ! [omega] = [p] / r^2 = omega (sin_beta cos_alfa, sin_beta sin_alfa, 
+    ! cos_beta)
     ! Arguments
-    real(r8), intent(IN) :: scECI(3)             ! s/c pos.
-    real(r8), intent(IN) :: scVelECI(3)          ! s/c vel.
-    real(r8) :: orbInclineCrossProd
+    REAL(r8), INTENT(IN) :: scECI(3)             ! s/c pos.
+    REAL(r8), INTENT(IN) :: scVelECI(3)          ! s/c vel.
+    REAL(r8) :: orbInclineCrossProd
 
     ! Variables
-    logical, parameter :: DEBUG = .FALSE.
-    integer, save :: HOWMANYSOFAR=0
-    real(r8) :: orbMoment(3), OMagnitude
+    LOGICAL, PARAMETER :: DEBUG = .FALSE.
+    INTEGER, SAVE :: HOWMANYSOFAR=0
+    REAL(r8) :: orbMoment(3), OMagnitude
 
     ! Executable code
     HOWMANYSOFAR = HOWMANYSOFAR + 1
     orbMoment(1) = scECI(2)*scVelECI(3) - scECI(3)*scVelECI(2)
     orbMoment(2) = scECI(3)*scVelECI(1) - scECI(1)*scVelECI(3)
     orbMoment(3) = scECI(1)*scVelECI(2) - scECI(2)*scVelECI(1)
-    OMagnitude = sqrt( orbMoment(1)**2 + orbMoment(2)**2 + orbMoment(3)**2 )
-    if ( OMagnitude == 0.d0 ) then
+    OMagnitude = SQRT( orbMoment(1)**2 + orbMoment(2)**2 + orbMoment(3)**2 )
+    IF (OMagnitude == 0.d0) THEN
       orbInclineCrossProd = UNDEFINED_VALUE
-      return
-    endif
-    orbInclineCrossProd = (180/Pi) * acos( orbMoment(3) / OMagnitude )
+      RETURN
+    ENDIF
+    orbInclineCrossProd = (180/Pi) * ACOS( orbMoment(3) / OMagnitude )
 
     ! Now added contraints: 90 < beta < 180
-    orbInclineCrossProd = abs(orbInclineCrossProd)
-    if ( orbInclineCrossProd < 90.d0 ) then
+    orbInclineCrossProd = ABS(orbInclineCrossProd)
+    IF (orbInclineCrossProd < 90.d0) THEN
       orbInclineCrossProd = 180. - orbInclineCrossProd
-    elseif (orbInclineCrossProd > 180.d0 ) then
+    ELSEIF (orbInclineCrossProd > 180.d0) THEN
       orbInclineCrossProd = 360. - orbInclineCrossProd
-    endif
+    ENDIF
     
-    if ( DEBUG ) then
-      call output('rx, ry, rz ', advance='no')
-      call blanks(3, advance='no')
-      call output(scECI, advance='yes')
-      call output('vx, vy, vz ', advance='no')
-      call blanks(3, advance='no')
-      call output(scVelECI, advance='yes')
-      call output('px, py, pz ', advance='no')
-      call blanks(3, advance='no')
-      call output(orbMoment, advance='yes')
-      call output('orbital inclination ', advance='no')
-      call blanks(3, advance='no')
-      call output((180/Pi) * acos( orbMoment(3) / OMagnitude ), advance='no')
-      call blanks(3, advance='no')
-      call output(orbInclineCrossProd, advance='yes')
-      if ( HOWMANYSOFAR > 40 ) stop
-    endif
-  end function orbInclineCrossProd
+    IF (DEBUG) THEN
+      CALL output ('rx, ry, rz ', advance='no')
+      CALL blanks (3, advance='no')
+      CALL output (scECI, advance='yes')
+      CALL output ('vx, vy, vz ', advance='no')
+      CALL blanks (3, advance='no')
+      CALL output (scVelECI, advance='yes')
+      CALL output ('px, py, pz ', advance='no')
+      CALL blanks (3, advance='no')
+      CALL output (orbMoment, advance='yes')
+      CALL output ('orbital inclination ', advance='no')
+      CALL blanks (3, advance='no')
+      CALL output ((180/Pi) * ACOS( orbMoment(3) / OMagnitude ), advance='no')
+      CALL blanks (3, advance='no')
+      CALL output (orbInclineCrossProd, advance='yes')
+      IF (HOWMANYSOFAR > 40 ) STOP
+    ENDIF
+  END FUNCTION orbInclineCrossProd
 
-  !----------------------------------------------------TkL1B_mc -----------------
-  subroutine TkL1B_mc(ascTAI, dscTAI, dotVec, nV, numOrb, &
-    orbIncline, orbitNumber, q, timeTAI, time_offset, geodAngle, &
-    & scOrbIncl)
+  !---------------------------------------------------TkL1B_mc -----------------
+  SUBROUTINE TkL1B_mc (ascTAI, dscTAI, dotVec, nV, numOrb, &
+    q, timeTAI, time_offset, geodAngle, scOrbIncl)
     ! This subroutine computes phi, the master coordinate for the spacecraft and
     ! tangent point records.
     ! Arguments
-    integer, intent(IN) :: nV, numOrb
-    integer, intent(IN) :: orbitNumber(:)
-    real(r8), intent(IN) :: orbIncline, timeTAI
-    real(r8), intent(IN) :: q(3,nV)
-    real(r8), intent(IN) :: time_offset(nV)
-    real(r8), intent(IN) :: ascTAI(:), dscTAI(:)
-    real(r8), intent(IN) :: dotVec(3,nV)
-    real, intent(OUT) ::    geodAngle(nV)
-    real, intent(in) ::     scOrbIncl(nV)
+    INTEGER, INTENT(IN) :: nV, numOrb
+    REAL(r8), INTENT(IN) :: timeTAI
+    REAL(r8), INTENT(IN) :: q(3,nV)
+    REAL(r8), INTENT(IN) :: time_offset(nV)
+    REAL(r8), INTENT(IN) :: ascTAI(:), dscTAI(:)
+    REAL(r8), INTENT(IN) :: dotVec(3,nV)
+    REAL, INTENT(OUT) ::    geodAngle(nV)
+    REAL, INTENT(in) ::     scOrbIncl(nV)
 !    real(r8), intent(IN) :: scECR(3,nV)             ! s/c pos.
 !    real(r8), intent(IN) :: scVelECR(3,nV)          ! s/c vel.
 
     ! Functions
-    integer :: Pgs_csc_getEarthFigure
+    INTEGER :: Pgs_csc_getEarthFigure
 
     ! Variables
-    integer :: i, j, returnStatus, scOrb
+    INTEGER :: i, j, returnStatus, scOrb
 
-    real(r8) :: a, asciiTAI, b, cSq, equatRad_a, orbRad, phiMin, polarRad_c
-    real(r8) :: cosPhi(nV), gamma(nV), phi(nV), sinPhi(nV)
-    real(r8) :: s(3,nV)
-    real(r8) :: orbInclineNow
+    REAL(r8) :: a, asciiTAI, b, cSq, equatRad_a, orbRad, polarRad_c
+    REAL(r8) :: cosPhi(nV), gamma(nV), phi(nV), sinPhi(nV)
+    REAL(r8) :: s(3,nV)
+    REAL(r8) :: orbInclineNow
 
     ! Executable code
 
     ! Read a & b from earthfigure.dat
-    returnStatus = Pgs_csc_getEarthFigure(earthModel, equatRad_a, polarRad_c)
+    returnStatus = Pgs_csc_getEarthFigure (earthModel, equatRad_a, polarRad_c)
     a = equatRad_a/1000
     b = polarRad_c/1000
 
     ! Set s = normalized dotVec
-    do i = 1, nV
+    DO i = 1, nV
 
       orbInclineNow = scOrbIncl(i)
-      if ( orbInclineNow == UNDEFINED_VALUE ) then
-        call MLSMessage(MLSMSG_Error, ModuleName, &
+      IF (orbInclineNow == UNDEFINED_VALUE) THEN
+        CALL MLSMessage (MLSMSG_Error, ModuleName, &
           & 'Error in calculating orbital inclination angle')
-      endif
+      ENDIF
 
       ! Get a unit ECR vector to the point.
-      s(:,i) = dotVec(:,i) / sqrt(dotVec(1,i)**2 + dotVec(2,i)**2 + &
+      s(:,i) = dotVec(:,i) / SQRT(dotVec(1,i)**2 + dotVec(2,i)**2 + &
         & dotVec(3,i)**2)
       
       ! Calculate the geocentric angle as a number of radians between 0 and PI
-      gamma(i) = acos( q(1,i)*s(1,i) + q(2,i)*s(2,i) )
+      gamma(i) = ACOS( q(1,i)*s(1,i) + q(2,i)*s(2,i) )
       
       ! Place angle between PI and 2*PI, if in Southern Hemisphere
-      if ( dotVec(3,i) < 0.0 ) gamma(i) = 2*PI - gamma(i)
+      IF (dotVec(3,i) < 0.0 ) gamma(i) = 2*PI - gamma(i)
 
       ! Going to convert this to geodetic, calculate som parameters.
       orbRad= Deg2Rad * (orbInclineNow - 90)
-      cSq = (1 + (tan(orbRad)**2)) * (a**2)*(b**2) / &
-        & ( a**2 + (b**2)*(tan(orbRad)**2) )
+      cSq = (1 + (TAN(orbRad)**2)) * (a**2)*(b**2) / &
+        & ( a**2 + (b**2)*(TAN(orbRad)**2) )
 
-      ! If |gamma| <= 45 deg of the equator, calculate phi using the SIN equation
-      if ( (gamma(i) <= PI/4 ) .or. ( (gamma(i) >= 3*PI/4) .and. &
-        & (gamma(i) <= 5*PI/4) ) .or. (gamma(i) >= 7*PI/4) ) then
-        sinPhi(i) = sqrt( (a**4)*(sin(gamma(i))**2)/( (cSq**2)*&
-          &(cos(gamma(i))**2) + (a**4)*(sin(gamma(i))**2) ) )
-        phi(i) = asin(sinPhi(i))
-      else
-        ! If gamma is within 45 deg of a pole, calculate phi using the COS equation
-        cosPhi(i) = sqrt( (cSq**2)*(cos(gamma(i))**2)/( (cSq**2)*&
-          &cos(gamma(i))**2 + (a**4)*(sin(gamma(i))**2) ) )
-        phi(i) = acos(cosPhi(i))
-      endif
+      ! If |gamma| <= 45 deg of the equator, calculate phi using the SIN !
+      ! equation
+      IF ((gamma(i) <= PI/4 ) .OR. ( (gamma(i) >= 3*PI/4) .AND. &
+        & (gamma(i) <= 5*PI/4) ) .OR. (gamma(i) >= 7*PI/4)) THEN
+        sinPhi(i) = SQRT( (a**4)*(SIN(gamma(i))**2)/( (cSq**2)*&
+          &(COS(gamma(i))**2) + (a**4)*(SIN(gamma(i))**2) ) )
+        phi(i) = ASIN(sinPhi(i))
+      ELSE
+        ! If gamma is within 45 deg of a pole, calculate phi using the COS 
+        ! equation
+        cosPhi(i) = SQRT( (cSq**2)*(COS(gamma(i))**2)/( (cSq**2)*&
+          &COS(gamma(i))**2 + (a**4)*(SIN(gamma(i))**2) ) )
+        phi(i) = ACOS(cosPhi(i))
+      ENDIF
 
       ! Place phi in same quadrant as gamma
-      if ( (gamma(i) > PI/2) .and. (gamma(i) <= PI) ) phi(i) = PI - phi(i)
-      if ( (gamma(i) > PI) .and. (gamma(i) <= 3*PI/2) ) phi(i) = phi(i) + PI
-      if ( gamma(i) > 3*PI/2 ) phi(i) = 2*PI - phi(i)
+      IF ((gamma(i) > PI/2) .AND. (gamma(i) <= PI) ) phi(i) = PI - phi(i)
+      IF ((gamma(i) > PI) .AND. (gamma(i) <= 3*PI/2) ) phi(i) = phi(i) + PI
+      IF (gamma(i) > 3*PI/2 ) phi(i) = 2*PI - phi(i)
 
       ! Make phi cumulative over orbits
       ! First what is the time?
@@ -1239,35 +1234,73 @@ contains
 
       ! Now always make our calculation based on some threshold way back in
       ! time, to avoid any ambiguity
-      if ( ( phi(i) < pi/2 ) .or. ( phi(i) >= 3*pi/2 ) ) then
+      IF (( phi(i) < pi/2 ) .OR. ( phi(i) >= 3*pi/2 )) THEN
         ! If in the ascending part of the orbit, base correction
         ! on time of last descending node
         ! MAKE THIS USE HUNT LATER!
-        do j = 1, numOrb
-          if ( asciiTAI > dscTAI(j) ) scOrb = j
-        enddo
+        DO j = 1, numOrb
+          IF (asciiTAI > dscTAI(j) ) scOrb = j
+        ENDDO
+
         ! If we're in the NH we've begun a new orbit, so add one
-        if ( phi(i) < pi ) scOrb = scOrb + 1
-      else
+        IF (phi(i) < pi ) scOrb = scOrb + 1
+      ELSE
         ! If in descending part of the orbit, base it on the time
         ! of the last ascending node
         ! MAKE THIS USE HUNT LATER!
-        do j = 1, numOrb
-          if ( asciiTAI > ascTAI(j) ) scOrb = j
-        enddo
-      end if
+        DO j = 1, numOrb
+          IF (asciiTAI > ascTAI(j) ) scOrb = j
+        ENDDO
+
+      END IF
       phi(i) = (scOrb-2)*2*PI + phi(i)
 
-    enddo
+    ENDDO
 
     ! Convert to degrees for output
     geodAngle = Rad2Deg * phi
 
-  end subroutine TkL1B_mc
+  END SUBROUTINE TkL1B_mc
 
-end module TkL1B
+!=============================================================================
+  SUBROUTINE Flag_Bright_Objects (TAI, SpaceView, LimbView)
+!=============================================================================
+
+    REAL(r8) :: TAI(:)
+    TYPE (LOG_ARR1_PTR_T) :: SpaceView(:), LimbView(:)
+
+    CHARACTER (LEN=27) :: asciiUTC
+    INTEGER :: i, returnStatus
+    REAL(r8) :: offset (SIZE(TAI))
+    REAL(r8) :: sc_frame_vector(3,0:(lenG-1))  ! start at MIF 0
+
+    INTEGER, PARAMETER :: BO_defs(3) = (/ PGSd_Sun, PGSd_Moon, PGSd_Venus /)
+
+    ! Functions
+
+    INTEGER, EXTERNAL :: PGS_TD_taiToUTC, PGS_CBP_Sat_CB_Vector
+
+    returnStatus = PGS_TD_taiToUTC (TAI(1), asciiUTC)
+    offset = TAI - TAI(1)   ! offset (secs) from start TAI
+
+    DO i = 1, 3
+       SpaceView(i)%ptr = .FALSE.
+       LimbView(i)%ptr = .FALSE.
+       returnStatus = PGS_CBP_Sat_CB_Vector (spacecraftId, lenG, asciiUTC, &
+            offset(1:lenG), BO_defs(i), sc_frame_vector)
+
+! Will need to add figuring out the angles to the limb scan and space port
+
+    ENDDO
+
+  END SUBROUTINE Flag_Bright_Objects
+
+END MODULE TkL1B
 
 ! $Log$
+! Revision 2.12  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
 ! Revision 2.11  2002/11/07 21:56:20  jdone
 ! Added Level 1 output datatypes.
 !
@@ -1311,4 +1344,3 @@ end module TkL1B
 ! Revision 1.2  2000/02/15 18:48:37  nakamura
 ! Absorbed module Mc; moved _init subroutine to Orbit; account for parametrization of lenG & lenT.
 !
-

@@ -6,9 +6,8 @@ MODULE OpenInit ! Opens input L0 files and output L1 files
 !=============================================================================
 
   USE SDPToolkit, ONLY: PGS_PC_GetReference, PGS_S_SUCCESS, PGSd_EOS_AURA, &
-       PGSd_IO_Gen_RSeqFrm, PGS_IO_Gen_openF, PGS_IO_Gen_closeF, &
-       PGSd_IO_Gen_WSeqUnf, PGSd_IO_Gen_USeqUnf
-  USE MLSCommon, ONLY: r8, TAI93_Range_T
+       PGSd_IO_Gen_RSeqFrm, PGS_IO_Gen_openF, PGS_IO_Gen_closeF
+  USE MLSCommon, ONLY: TAI93_Range_T
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Info, &
        MLSMSG_Warning
 
@@ -37,39 +36,48 @@ CONTAINS
     USE MLSPCF1, ONLY: mlspcf_engtbl_start, mlspcf_bwtbl_start, &
          mlspcf_nomen_start, mlspcf_pcf_start, mlspcf_l1cf_start, &
          mlspcf_defltgains_start, mlspcf_defltzeros_start, &
-         mlspcf_dacsconst_start
+         mlspcf_dacsconst_start, mlspcf_MAF_data_start, &
+         mlspcf_sidebandfrac_start, mlspcf_spilloverloss_start
     USE PCFHdr, ONLY: CreatePCFAnnotation, GlobalAttributes, FillTAI93Attribute
-    use MLSStrings, only: utc_to_yyyymmdd
+    USE MLSStrings, ONLY: utc_to_yyyymmdd
     USE L0_sci_tbls, ONLY: InitSciPointers
     USE MLSL1Common, ONLY: L1BFileInfo, deflt_gain, deflt_zero, L1ProgType, &
          THzType
     USE Orbit, ONLY: Orbit_init, altG, altT, ascTAI, dscTAI, numOrb, &
          orbIncline, orbitNumber, scanRate, scanRateT
-    USE Calibration, ONLY: InitCalibWindow
+    USE Calibration !, ONLY: InitCalibWindow
     USE EngTbls, ONLY: Load_Eng_tbls
     USE MLSL1Rad, ONLY: InitRad
     USE MLSSignalNomenclature, ONLY: ReadSignalsDatabase
     USE OutputL1B, ONLY: OutputL1B_create
     USE DACSUtils, ONLY: InitDACS_FFT
+    USE FOV, ONLY: InitFOVconsts
 
     CHARACTER (LEN=132) :: PhysicalFilename
 
-    INTEGER :: bw_tbl_unit
-    INTEGER :: dacs_tbl_unit
-    INTEGER :: eng_tbl_unit
-    INTEGER :: gains_tbl_unit
-    INTEGER :: nomen_unit
-    INTEGER :: zeros_tbl_unit
-    INTEGER :: errno, ios, lenarg, lenval
-    INTEGER :: returnStatus, version
+    INTEGER :: ios, returnStatus, version, tbl_unit
 
     LOGICAL :: THz
 
-    INTEGER, EXTERNAL :: PGS_TD_UTCtoTAI
+    REAL :: MAF_dur
+
+    INTEGER, EXTERNAL :: PGS_TD_UTCtoTAI, PGS_IO_Gen_Track_LUN
 
     TYPE (TAI93_Range_T) :: procRange
 
     THz = L1ProgType .EQ. THzType
+
+!! Get PCF and CF filenames:
+
+    version = 1
+    returnStatus = PGS_PC_getReference (mlspcf_pcf_start, version, &
+          & PhysicalFilename)
+    L1PCF%PCF_filename = physicalfilename
+
+    version = 1
+    returnStatus = PGS_PC_getReference (mlspcf_l1cf_start, version, &
+          & PhysicalFilename)
+    L1PCF%L1CF_filename = physicalfilename
 
 !! Get user parameters from the PCF file
 
@@ -99,15 +107,17 @@ CONTAINS
 
     L1Config%Input_TAI = procRange
 
-    ! Store appropriate user input as global attributes
+!! Store appropriate user input as global attributes
+
     GlobalAttributes%InputVersion = L1PCF%OutputVersion
     GlobalAttributes%StartUTC = L1PCF%StartUTC
     GlobalAttributes%EndUTC = L1PCF%EndUTC
+    GlobalAttributes%ProcessLevel = '1'
     GlobalAttributes%PGEVersion = 'v1.2'  ! L1PCF%PGEVersion
-    call utc_to_yyyymmdd(GlobalAttributes%StartUTC, returnStatus, &
+    CALL utc_to_yyyymmdd (GlobalAttributes%StartUTC, returnStatus, &
       & GlobalAttributes%GranuleYear, GlobalAttributes%GranuleMonth, &
       & GlobalAttributes%GranuleDay) 
-    call FillTAI93Attribute
+    CALL FillTAI93Attribute
 
 !! Will determine the expanded time later!!!
 
@@ -119,6 +129,8 @@ CONTAINS
        L1Config%Expanded_TAI%startTime = L1Config%Expanded_TAI%startTime - 120.0
        L1Config%Expanded_TAI%endTime = L1Config%Expanded_TAI%endTime + 120.0
     ENDIF
+
+    MAF_dur = L1Config%Calib%MIF_duration * L1Config%Calib%MIFsPerMAF
 
 !! Init orbit data:
 
@@ -139,7 +151,7 @@ CONTAINS
 
     version = 1
     returnStatus = PGS_IO_Gen_openF (mlspcf_engtbl_start, PGSd_IO_Gen_RSeqFrm, &
-         0, eng_tbl_unit, version)
+         0, tbl_unit, version)
     IF (returnstatus /= PGS_S_SUCCESS) THEN
        CALL MLSMessage (MLSMSG_Error, ModuleName, &
             & "Could not open engineering table file: " // PhysicalFilename)
@@ -148,9 +160,9 @@ CONTAINS
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & "Opened engineering table file: " // PhysicalFilename)
 
-    CALL Load_Eng_tbls (eng_tbl_unit, ios)
+    CALL Load_Eng_tbls (tbl_unit, ios)
 
-    returnStatus = PGS_IO_Gen_CloseF (eng_tbl_unit)
+    returnStatus = PGS_IO_Gen_CloseF (tbl_unit)
 
     IF (ios /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName, &
          & "Error reading engineering table file")
@@ -171,7 +183,7 @@ CONTAINS
 
     version = 1
     returnStatus = PGS_IO_Gen_openF (mlspcf_bwtbl_start, PGSd_IO_Gen_RSeqFrm, &
-         0, bw_tbl_unit, version)
+         0, tbl_unit, version)
     IF (returnstatus /= PGS_S_SUCCESS) THEN
        CALL MLSMessage (MLSMSG_Error, ModuleName, &
             & "Could not open bandwidths table file: " // PhysicalFilename)
@@ -180,9 +192,9 @@ CONTAINS
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & "Opened bandwidths table file: " // PhysicalFilename)
 
-    CALL GetBandwidths (bw_tbl_unit, ios)
+    CALL LoadBandwidths (tbl_unit, ios)
 
-    returnStatus = PGS_IO_Gen_CloseF (bw_tbl_unit)
+    returnStatus = PGS_IO_Gen_CloseF (tbl_unit)
 
     IF (ios /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName, &
          & "Error reading bandwidth table file")
@@ -203,7 +215,7 @@ CONTAINS
 
     version = 1
     returnStatus = PGS_IO_Gen_openF (mlspcf_defltgains_start, &
-         PGSd_IO_Gen_RSeqFrm, 0, gains_tbl_unit, version)
+         PGSd_IO_Gen_RSeqFrm, 0, tbl_unit, version)
     IF (returnstatus /= PGS_S_SUCCESS) THEN
        CALL MLSMessage (MLSMSG_Error, ModuleName, &
             & "Could not open default gains table file: " // PhysicalFilename)
@@ -212,9 +224,9 @@ CONTAINS
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & "Opened default gains table file: " // PhysicalFilename)
 
-    CALL GetChanDefaults (gains_tbl_unit, deflt_gain, ios)
+    CALL LoadChanDefaults (tbl_unit, deflt_gain, ios)
 
-    returnStatus = PGS_IO_Gen_CloseF (gains_tbl_unit)
+    returnStatus = PGS_IO_Gen_CloseF (tbl_unit)
 
     IF (ios /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName, &
          & "Error reading default gains table file")
@@ -235,7 +247,7 @@ CONTAINS
 
     version = 1
     returnStatus = PGS_IO_Gen_openF (mlspcf_defltzeros_start, &
-         PGSd_IO_Gen_RSeqFrm, 0, zeros_tbl_unit, version)
+         PGSd_IO_Gen_RSeqFrm, 0, tbl_unit, version)
     IF (returnstatus /= PGS_S_SUCCESS) THEN
        CALL MLSMessage (MLSMSG_Error, ModuleName, &
             & "Could not open default zeros table file: " // PhysicalFilename)
@@ -244,9 +256,9 @@ CONTAINS
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & "Opened default zeros table file: " // PhysicalFilename)
 
-    CALL GetChanDefaults (zeros_tbl_unit, deflt_zero, ios)
+    CALL LoadChanDefaults (tbl_unit, deflt_zero, ios)
 
-    returnStatus = PGS_IO_Gen_CloseF (zeros_tbl_unit)
+    returnStatus = PGS_IO_Gen_CloseF (tbl_unit)
 
     IF (ios /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName, &
          & "Error reading default zeros table file")
@@ -267,7 +279,7 @@ CONTAINS
 
     version = 1
     returnStatus = PGS_IO_Gen_openF (mlspcf_dacsconst_start, &
-         PGSd_IO_Gen_RSeqFrm, 0, dacs_tbl_unit, version)
+         PGSd_IO_Gen_RSeqFrm, 0, tbl_unit, version)
     IF (returnstatus /= PGS_S_SUCCESS) THEN
        CALL MLSMessage (MLSMSG_Error, ModuleName, &
             & "Could not open DACS constants table file: " // PhysicalFilename)
@@ -276,9 +288,9 @@ CONTAINS
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & "Opened DACS constants table file: " // PhysicalFilename)
 
-    CALL GetDACSconsts (dacs_tbl_unit, ios)
+    CALL LoadDACSconsts (tbl_unit, ios)
 
-    returnStatus = PGS_IO_Gen_CloseF (dacs_tbl_unit)
+    returnStatus = PGS_IO_Gen_CloseF (tbl_unit)
 
     IF (ios /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName, &
          & "Error reading DACS constants table file")
@@ -295,15 +307,15 @@ CONTAINS
 
     version = 1
     returnStatus = PGS_IO_Gen_openF (mlspcf_nomen_start, PGSd_IO_Gen_RSeqFrm, &
-         0, nomen_unit, version)
+         0, tbl_unit, version)
     IF (returnstatus /= PGS_S_SUCCESS) THEN
        CALL MLSMessage (MLSMSG_Error, ModuleName, &
             & "Could not open nomenclature file")
     ENDIF
 
-    CALL ReadSignalsDatabase (nomen_unit)
+    CALL ReadSignalsDatabase (tbl_unit)
 
-    returnStatus = PGS_IO_Gen_closeF (nomen_unit)  ! close unit
+    returnStatus = PGS_IO_Gen_closeF (tbl_unit)  ! close unit
     IF (returnstatus /= PGS_S_SUCCESS) THEN
        CALL MLSMessage (MLSMSG_Error, ModuleName, &
             & "Could not close nomenclature file")
@@ -312,6 +324,47 @@ CONTAINS
 !! Open L0 files:
 
     CALL OpenL0Files
+
+!! New L0 open for merged/filtered L0 data:
+
+    WRITE (PhysicalFilename, "(I3.3)") mlspcf_MAF_data_start
+    version = 1
+    returnStatus = PGS_PC_getReference (mlspcf_MAF_data_start, version, &
+          & PhysicalFilename)
+    IF (returnstatus /= PGS_S_SUCCESS) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not find file entry for pcf_MAF_data_start: " // &
+            PhysicalFilename)
+    ENDIF
+
+    returnStatus = PGS_IO_Gen_Track_LUN (L1BFileInfo%MAF_data_unit, 0)
+
+    OPEN (unit=L1BFileInfo%MAF_data_unit, file=PhysicalFilename, &
+         status="OLD", FORM="UNFORMATTED", ACCESS="SEQUENTIAL", &
+         ACTION="READ", iostat=ios)
+
+    IF (ios /= 0) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not open MAF_data file: " // PhysicalFilename)
+    ENDIF
+
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & "Opened MAF_data file: " // PhysicalFilename)
+
+!! Read and compare some header info:
+
+    READ (L1BFileInfo%MAF_data_unit) PhysicalFilename
+
+    IF (PhysicalFilename /= L1PCF%PCF_filename) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "PCF_filenames do not match: " // PhysicalFilename)
+    ENDIF
+
+    READ (L1BFileInfo%MAF_data_unit) PhysicalFilename
+    IF (PhysicalFilename /= L1PCF%L1CF_filename) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "L1CF_filenames do not match: " // PhysicalFilename)
+    ENDIF
 
 !! Open L1B output files
 
@@ -332,10 +385,80 @@ CONTAINS
 !! Initialize DACS FFT
 
     IF (.NOT. THz) CALL InitDACS_FFT
+
+!! Initialize FOV constants
+
+    IF (.NOT. THz) CALL InitFOVconsts
           
 !! Define the SD structures in the output files
 
     CALL OutputL1B_create (L1BFileInfo, THz)
+
+!! Open and initialize SideBand fractions table:
+
+    version = 1
+    returnStatus = PGS_PC_getReference (mlspcf_sidebandfrac_start, version, &
+          & PhysicalFilename)
+
+    version = 1
+    returnStatus = PGS_IO_Gen_openF (mlspcf_sidebandfrac_start, &
+         PGSd_IO_Gen_RSeqFrm, 0, tbl_unit, version)
+    IF (returnstatus /= PGS_S_SUCCESS) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not open Sideband fractions table file: " // &
+            PhysicalFilename)
+    ENDIF
+
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & "Opened Sideband Fractions table file: " // PhysicalFilename)
+
+    CALL LoadSidebandFracs (tbl_unit)
+
+    returnStatus = PGS_IO_Gen_CloseF (tbl_unit)
+
+    IF (ios /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName, &
+         & "Error reading Sideband Fractions table file")
+
+    IF (returnstatus /= PGS_S_SUCCESS) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not close Sideband Fractions table file")
+    ENDIF
+
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & "Closed Sideband Fractions table file")
+
+!! Open and initialize Spillover Loss table:
+
+    version = 1
+    returnStatus = PGS_PC_getReference (mlspcf_spilloverloss_start, version, &
+          & PhysicalFilename)
+
+    version = 1
+    returnStatus = PGS_IO_Gen_openF (mlspcf_spilloverloss_start, &
+         PGSd_IO_Gen_RSeqFrm, 0, tbl_unit, version)
+    IF (returnstatus /= PGS_S_SUCCESS) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not open Spillover Loss table file: " // &
+            PhysicalFilename)
+    ENDIF
+
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & "Opened Spillover Loss table file: " // PhysicalFilename)
+
+    CALL LoadSpilloverLoss (tbl_unit)
+
+    returnStatus = PGS_IO_Gen_CloseF (tbl_unit)
+
+    IF (ios /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName, &
+         & "Error reading Spillover Loss table file")
+
+    IF (returnstatus /= PGS_S_SUCCESS) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not close Spillover Loss table file")
+    ENDIF
+
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & "Closed Spillover Loss table file")
 
   END SUBROUTINE OpenAndInitialize
 
@@ -511,17 +634,16 @@ CONTAINS
 !=============================================================================
 
     USE MLSPCF1, ONLY: mlspcf_l1b_radf_start, mlspcf_l1b_radd_start, &
-         mlspcf_l1b_oa_start, mlspcf_l1b_eng_start, mlspcf_l1b_diag_start, &
-         mlspcf_l1b_radt_start
+         mlspcf_l1b_oa_start, mlspcf_l1b_diag_start, mlspcf_l1b_radt_start
     USE MLSL1Common, ONLY: L1BFileInfo
-    USE EngTbls, ONLY: Eng_tbl, maxtlm
     USE MLSFiles, ONLY: MLS_openFile, HDFVERSION_5
     USE MLSL1Config, ONLY: L1Config
 
     LOGICAL :: THz
 
     CHARACTER (LEN=132) :: PhysicalFilename
-    INTEGER :: error, returnStatus, sd_id, version, hdfVersion
+    INTEGER :: ios, error, returnStatus, sd_id, version, hdfVersion
+    INTEGER, EXTERNAL :: PGS_IO_Gen_Track_LUN
 
     hdfVersion = L1Config%Output%HDFversion
 
@@ -540,8 +662,8 @@ CONTAINS
     L1BFileInfo%RADDID = 0
     L1BFileInfo%RADTID = 0
     L1BFileInfo%OAID = 0
-    L1BFileInfo%ENGID = 0
-    L1BFileInfo%DIAGID = 0
+    L1BFileInfo%ENGID = -1    ! Non-HDF unit
+    L1BFileInfo%DIAGID = -1   ! Non-HDF unit
 
     ! Open L1BRADT File
 
@@ -641,45 +763,9 @@ CONTAINS
 
     ENDIF
 
-    ! Open L1BENG File
-
-    version = 1
-    returnStatus = PGS_PC_getReference (mlspcf_l1b_eng_start, version, &
-     PhysicalFilename)
-
-    IF (returnStatus == PGS_S_SUCCESS) THEN
-       version = 1
-
-       returnStatus = PGS_IO_Gen_openF (mlspcf_l1b_eng_start, &
-            PGSd_IO_Gen_WSeqUnf, 0, sd_id, version)
-       IF (returnstatus /= PGS_S_SUCCESS) THEN
-          returnStatus = PGS_IO_Gen_openF (mlspcf_l1b_eng_start, &
-               PGSd_IO_Gen_USeqUnf, 0, sd_id, version)
-          IF (returnstatus /= PGS_S_SUCCESS) THEN
-             CALL MLSMessage (MLSMSG_Error, ModuleName, &
-                  & "Could not open L1B engineering file: " // PhysicalFilename)
-          ENDIF
-       ENDIF
-    
-       CALL MLSMessage (MLSMSG_Info, ModuleName, &
-            & "Opened L1B engineering file: " // PhysicalFilename)
-       L1BFileInfo%EngId = sd_id
-       L1BFileInfo%EngFileName = PhysicalFilename
-
-! write header info
-
-       WRITE (sd_id) maxtlm
-       WRITE (sd_id) eng_tbl%mnemonic
-
-    ELSE
-
-       CALL MLSMessage (MLSMSG_Error, ModuleName, &
-            & "Could not find L1BENG file entry")
-
-    ENDIF
-
     ! Open L1BDIAG File
 
+    WRITE (PhysicalFilename, "(I5.5)") mlspcf_l1b_diag_start
     version = 1
     returnStatus = PGS_PC_getReference (mlspcf_l1b_diag_start, version, &
      PhysicalFilename)
@@ -689,20 +775,20 @@ CONTAINS
 
 !! This file is NOT an HDF file.
 
-       returnStatus = PGS_IO_Gen_openF (mlspcf_l1b_diag_start, &
-            PGSd_IO_Gen_WSeqUnf, 0, sd_id, version)
-       IF (returnstatus /= PGS_S_SUCCESS) THEN
-          returnStatus = PGS_IO_Gen_openF (mlspcf_l1b_diag_start, &
-               PGSd_IO_Gen_USeqUnf, 0, sd_id, version)
-          IF (returnstatus /= PGS_S_SUCCESS) THEN
-             CALL MLSMessage (MLSMSG_Error, ModuleName, &
-                  & "Could not open L1B diagnostics file: " // PhysicalFilename)
-          ENDIF
+       returnStatus = PGS_IO_Gen_Track_LUN (L1BFileInfo%DiagId, 0)
+
+       OPEN (unit=L1BFileInfo%DiagId, file=PhysicalFilename, &
+            status="REPLACE", FORM="UNFORMATTED", ACCESS="SEQUENTIAL", &
+            iostat=ios)
+
+       IF (ios /= 0) THEN
+          CALL MLSMessage (MLSMSG_Error, ModuleName, &
+               & "Could not open L1B diagnostics file: " // PhysicalFilename)
        ENDIF
-    
+
        CALL MLSMessage (MLSMSG_Info, ModuleName, &
             & "Opened L1B diagnostics file: " // PhysicalFilename)
-       L1BFileInfo%DiagId = sd_id
+
        L1BFileInfo%DiagFileName = PhysicalFilename
 
     ELSE
@@ -715,7 +801,7 @@ CONTAINS
   END SUBROUTINE OpenL1BFiles
 
 !=============================================================================
-  SUBROUTINE GetBandwidths (bw_tbl_unit, ios)
+  SUBROUTINE LoadBandwidths (bw_tbl_unit, ios)
 !=============================================================================
 
     USE MLSL1Common, ONLY: FBnum, MBnum, WFnum, BandWidth
@@ -754,9 +840,11 @@ CONTAINS
             & ModuleName, "Error reading bandwidths file!")
     ENDIF
 
-  END SUBROUTINE GetBandwidths
+  END SUBROUTINE LoadBandwidths
 
-  SUBROUTINE GetChanDefaults (unit, deflt_dat, stat)
+!=============================================================================
+  SUBROUTINE LoadChanDefaults (unit, deflt_dat, stat)
+!=============================================================================
 
     USE MLSL1Common, ONLY: Chan_R_T, WFNum
 
@@ -815,17 +903,16 @@ CONTAINS
 
     IF (chan_type /= "WF" .AND. i <= WFNum) stat = -1  ! Error!!!
 
-  END SUBROUTINE GetChanDefaults
+  END SUBROUTINE LoadChanDefaults
 
 !=============================================================================
-  SUBROUTINE GetDACSconsts (unit, ios)
+  SUBROUTINE LoadDACSconsts (unit, ios)
 !=============================================================================
 
     USE MLSL1Common, ONLY: DACS_const
 
     INTEGER :: unit, ios
     CHARACTER (len=80) :: line
-    INTEGER ::  i
 
 ! Read comments until start of data
 
@@ -857,13 +944,73 @@ CONTAINS
             & ModuleName, "Error reading DACS constants file!")
     ENDIF
 
-   END SUBROUTINE GetDACSconsts
+   END SUBROUTINE LoadDACSconsts
+
+!=============================================================================
+  SUBROUTINE LoadSidebandFracs (unit)
+!=============================================================================
+
+    USE MLSL1Rad, ONLY: SideBandFrac
+
+    INTEGER :: unit
+
+    CHARACTER (len=80) :: line
+    INTEGER :: i
+
+! Read comments until start of data
+
+    DO
+       READ (unit, '(A)') line
+       IF (line(1:1) /= ";") EXIT
+    ENDDO
+
+    DO i = 1, 34
+       READ (unit, '(A)') line
+       READ (unit, *) SideBandFrac(i)%lower
+       READ (unit, '(A)') line
+       READ (unit, *) SideBandFrac(i)%upper
+    ENDDO
+
+  END SUBROUTINE LoadSidebandFracs
+
+!=============================================================================
+  SUBROUTINE LoadSpilloverLoss (unit)
+!=============================================================================
+
+    USE MLSL1Rad, ONLY: SpilloverLoss
+
+    INTEGER :: unit
+
+    CHARACTER (len=80) :: line
+    INTEGER :: bandno, chan, ios
+    REAL :: h(3)
+
+    READ (unit, '(A)') line
+
+    DO
+       READ (unit, '(A)', iostat=ios) line
+       IF (ios /= 0) EXIT
+       chan = 1
+       READ (line(1:2), *) bandno
+       READ (line(4:4), *, iostat=ios) chan
+       READ (line(25:), *) h
+       IF (INDEX (line, "L") /= 0) THEN
+          SpilloverLoss(bandno)%lower(:,chan) = h
+       ELSE
+          SpilloverLoss(bandno)%upper(:,chan) = h
+       ENDIF
+    ENDDO
+
+  END SUBROUTINE LoadSpilloverLoss
 
 !=============================================================================
 END MODULE OpenInit
 !=============================================================================
 
 ! $Log$
+! Revision 2.12  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
 ! Revision 2.11  2003/06/03 20:43:54  pwagner
 ! Fills global attributes
 !
