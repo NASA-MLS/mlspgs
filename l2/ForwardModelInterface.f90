@@ -51,7 +51,7 @@ module ForwardModelInterface
   use Units, only: DegToRad => Deg2Rad
   use VectorsModule, only: GetVectorQuantityByType, ValidateVectorQuantity, &
     & Vector_T, VectorValue_T
-  use VGrid, only: VGRID_T
+  use VGrid, only: VGRID_T, DUMP
 
   !??? The next USE statement is Temporary for l2load:
   use L2_TEST_STRUCTURES_M, only: FWD_MDL_CONFIG, FWD_MDL_INFO, &
@@ -170,6 +170,7 @@ contains
     integer :: STATUS                   ! From allocates etc.
     integer :: THISMOLECULE             ! Tree index.
     integer :: type                     ! Type of value returned by EXPR
+    integer :: TANGENT                  ! Loop counter
     integer :: Units(2)                 ! Units of value returned by EXPR
     real (r8) :: Value(2)               ! Value returned by EXPR
 
@@ -297,8 +298,19 @@ contains
     case (l_full)
       if (.not. all(got( (/f_molecules, f_signals/) ))) &
         & call AnnounceError (IncompleteFullFwm, root)
-      ! Ensure that points in tangentGrid above surface are a subset
-      ! of integration grid !????
+
+      ! Now identify the Earth's surface in the tangent grid
+      call Hunt(info%tangentGrid%surfs, info%integrationGrid%surfs(1), &
+        &  info%surfaceTangentIndex)
+      
+      ! Ensure that points in tangentGrid at and above the surface are a subset
+      ! of integration grid
+      do tangent = info%surfaceTangentIndex, info%tangentGrid%noSurfs
+        if (.not. any ( abs(info%tangentGrid%surfs(tangent) - &
+          & info%integrationGrid%surfs) < 1e-4) ) &
+          & call MLSMessage(MLSMSG_Error, ModuleName, &
+          & "tagnent grid is not a subset of integration grid")
+      end do
 
       ! Check parameters needed only for linear/scan are not included
       !????
@@ -1307,6 +1319,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.48  2001/03/29 00:33:21  livesey
+! Added some error checking for tangentGrid
+!
 ! Revision 2.47  2001/03/28 23:51:15  zvi
 ! Tanget below surface are in Zeta units
 !
