@@ -11,7 +11,7 @@ module HGrid                    ! Horizontal grid information
   use Dump_0, only: DUMP
   use INIT_TABLES_MODULE, only: F_FRACTION, F_HEIGHT, F_INCLINATION, &
     & F_INTERPOLATIONFACTOR, F_MIF, F_MODULE, F_TYPE, F_VALUES, FIELD_FIRST,&
-    & F_SPACING, F_ORIGIN, &
+    & F_SPACING, F_ORIGIN, F_FORBIDOVERSPILL, &
     & F_SOURCEL2GP, FIELD_LAST, L_EXPLICIT, L_FIXED, L_FRACTIONAL, L_HEIGHT, L_L2GP,&
     & L_MIF, L_REGULAR, PHYQ_DIMENSIONLESS, PHYQ_LENGTH, PHYQ_ANGLE
   use LEXER_CORE, only: PRINT_SOURCE
@@ -21,6 +21,7 @@ module HGrid                    ! Horizontal grid information
   use MLSMessageModule, only: MLSMessage, MLSMSG_allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Info, MLSMSG_L1BRead
   use MLSNumerics, only: HUNT, InterpolateValues
+  use MoreTree, only: GET_BOOLEAN
   use OUTPUT_M, only: OUTPUT
   use STRING_TABLE, only: GET_STRING
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -138,6 +139,7 @@ contains ! =====     Public Procedures     =============================
     integer :: SON                      ! Son of Root
     integer :: STATUS                   ! From Allocate, ReadL1B... etc.
     integer :: VALUESNODE               ! Node of tree for explicit
+    logical :: FORBIDOVERSPILL          ! If set don't allow overlaps beyond L1B
 
     character (len=NameLen) :: InstrumentModuleName
 
@@ -148,6 +150,7 @@ contains ! =====     Public Procedures     =============================
 
     got_field = .false.
     interpolationFactor = 1.0
+    forbidOverspill = .false.
 
     do keyNo = 2, nsons(root)
       son = subtree(keyNo,root)
@@ -161,6 +164,8 @@ contains ! =====     Public Procedures     =============================
       case ( f_module )
         instrumentModule = sub_rosa(subtree(2,son))
         call get_string ( instrumentModule , instrumentModuleName )
+      case  ( f_forbidOverspill )
+        forbidOverspill = get_boolean ( field )
       case ( f_height )
         call expr ( subtree(2,son), expr_units, expr_value )
         height = expr_value(1)
@@ -238,7 +243,7 @@ contains ! =====     Public Procedures     =============================
         call announce_error ( root, NoSpacingOrigin )
       else
         call CreateRegularHGrid ( l1bInfo, processingRange, chunks, chunkNo, &
-          & spacing, origin, trim(instrumentModuleName), hGrid )
+          & spacing, origin, trim(instrumentModuleName), forbidOverspill, hGrid )
       end if
 
     case ( l_l2gp) ! -------------------- L2GP ------------------------
@@ -513,7 +518,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ----------------------------------- CreateRegularHGrid ------------
   subroutine CreateRegularHGrid ( l1bInfo, processingRange, chunks, chunkNo, &
-    & spacing, origin, instrumentModuleName, hGrid )
+    & spacing, origin, instrumentModuleName, forbidOverspill, hGrid )
     type (L1BInfo_T), intent(in) :: L1BINFO
     type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
     type (MLSChunk_T), intent(in), dimension(:) :: CHUNKS
@@ -521,6 +526,7 @@ contains ! =====     Public Procedures     =============================
     real(r8), intent(in) :: SPACING
     real(r8), intent(in) :: ORIGIN
     character (len=*), intent(in) :: INSTRUMENTMODULENAME
+    logical, intent(in) :: FORBIDOVERSPILL
     type (HGrid_T), intent(inout) :: HGRID ! Needs inout as name set by caller
 
     ! Local variables/parameters
@@ -685,14 +691,18 @@ contains ! =====     Public Procedures     =============================
     end if
 
     ! Now, we want to ensure we don't spill beyond the processing time range
-    if ( hGrid%time(hGrid%noProfsLowerOverlap+1) < processingRange%startTime ) &
-      & call Hunt ( hGrid%time, processingRange%startTime, &
-      &   hGrid%noProfsLowerOverlap, allowTopValue=.true., allowBelowValue=.true. )
+    if ( hGrid%time(hGrid%noProfsLowerOverlap+1) < processingRange%startTime ) then
+      call Hunt ( hGrid%time, processingRange%startTime, &
+        &   hGrid%noProfsLowerOverlap, allowTopValue=.true., allowBelowValue=.true. )
+      if ( forbidOverspill ) call DeleteHGridOverlap ( hGrid, -1 )
+    end if
+
     if ( hGrid%time(hGrid%noProfs-hGrid%noProfsUpperOverlap) > &
       & processingRange%endTime ) then
       call Hunt ( hGrid%time, processingRange%endTime, &
         & hGrid%noProfsUpperOverlap, allowTopValue=.true., allowBelowValue=.true. )
       hGrid%noProfsUpperOverlap = hGrid%noProfs - hGrid%noProfsUpperOverlap
+      if ( forbidOverspill ) call DeleteHGridOverlap ( hGrid, 1 )
     end if
 
     ! That's it
@@ -716,6 +726,61 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine CreateEmptyHGrid
 
+  ! ---------------------------------------  DeleteHGridOverlap ---
+  subroutine DeleteHGridOverlap ( hGrid, side )
+    type (HGrid_T), intent(inout) :: HGrid
+    integer, intent(in) :: SIDE         ! -1 = lower, 1 = upper
+    ! Local variables
+    integer :: newNoProfs
+    real, dimension(:), pointer :: temp
+    integer :: first, last
+
+    ! Executable code
+    select case ( side )
+    case ( -1 )
+      newNoProfs = hGrid%noProfs - hGrid%noProfsLowerOverlap
+      first = hGrid%noProfsLowerOverlap + 1
+      last = hGrid%noProfs
+      hGrid%noProfsLowerOverlap = 0
+    case ( 1 )
+      newNoProfs = hGrid%noProfs - hGrid%noProfsUpperOverlap
+      first = 1
+      last = newNoProfs
+      hGrid%noProfsUpperOverlap = 0
+    case default
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Invalid side argument to DeleteOverlaps' )
+    end select
+
+    call allocate_test ( temp, hGrid%noProfs, 'temp', ModuleName )
+    hGrid%noProfs = newNoProfs
+
+    ! Now allocate each entry and trim it
+    temp = hGrid%phi                    ! ------------------------- Phi
+    call Allocate_Test ( hGrid%phi, newNoProfs, 'hGrid%phi', ModuleName)
+    hGrid%phi = temp ( first : last )
+    temp = hGrid%geodLat                ! ------------------------- GeodLat
+    call Allocate_Test ( hGrid%geodLat, newNoProfs, 'hGrid%geodLat', ModuleName)
+    hGrid%geodLat = temp ( first : last )
+    temp = hGrid%lon                    ! ------------------------- Lon
+    call Allocate_Test ( hGrid%lon, newNoProfs, 'hGrid%lon', ModuleName)
+    hGrid%lon = temp ( first : last )
+    temp = hGrid%time                   ! ------------------------- Time
+    call Allocate_Test ( hGrid%time, newNoProfs, 'hGrid%time', ModuleName)
+    hGrid%time = temp ( first : last )
+    temp = hGrid%solarTime              ! ------------------------- SolarTime
+    call Allocate_Test ( hGrid%solarTime, newNoProfs, 'hGrid%solarTime', ModuleName)
+    hGrid%solarTime = temp ( first : last )
+    temp = hGrid%solarZenith            ! ------------------------- SolarZenith
+    call Allocate_Test ( hGrid%solarZenith, newNoProfs, 'hGrid%solarZenith', ModuleName)
+    hGrid%solarZenith = temp ( first : last )
+    temp = hGrid%losAngle               ! ------------------------- LosAngle
+    call Allocate_Test ( hGrid%losAngle, newNoProfs, 'hGrid%losAngle', ModuleName)
+    hGrid%losAngle = temp ( first : last )
+
+    call Deallocate_test ( temp, 'temp', ModuleName )
+  end subroutine DeleteHGridOverlap
+    
   ! ---------------------------------------  DestroyHGridContents  -----
   subroutine DestroyHGridContents ( hGrid )
 
@@ -806,6 +871,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.23  2002/05/06 21:37:40  livesey
+! Added forbidOverspill option
+!
 ! Revision 2.22  2001/12/16 00:58:24  livesey
 ! Working version. Deals with first and last chunks in day properly.
 !
