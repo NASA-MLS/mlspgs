@@ -128,9 +128,9 @@ begin Fill
 
   ;; Get an approximate line of sight velocity
   Fill, quantity = apriori.losVelGHz, method = explicit, $
-    explicitValues = -6.8e3, /spread
+    explicitValues = -6.865e3, /spread
   Fill, quantity = apriori.losVelTHz, method = explicit, $
-    explicitValues = -6.8e3, /spread
+    explicitValues = -6.865e3, /spread
 
   ;; Get an approximate spacecraft geocentric altitude
   Fill, quantity = apriori.scGeocAlt, method = explicit, $
