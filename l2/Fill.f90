@@ -270,7 +270,9 @@ contains ! =====     Public Procedures     =============================
         ! Now call various routines to do the filling
         quantity=>GetVectorQtyByTemplateIndex(vectors(vectorIndex),quantityIndex)
         select case (fillMethod)
-        case (l_hydrostatic)
+
+
+        case (l_hydrostatic) ! -------------------------- Hydrostatic fills ------
           ! Need a temperature and a refgph quantity
           if (.not.all(got( (/ f_refGPHQuantity, f_temperatureQuantity /)))) &
             call Announce_Error(key,needTempREFGPH)
@@ -305,20 +307,30 @@ contains ! =====     Public Procedures     =============================
           endif
           call FillVectorQtyHydrostatically(key, quantity, temperatureQuantity, &
             & refGPHQuantity, h2oQuantity, geocAltitudeQuantity, maxIterations)          
-        case (l_l2gp)
+
+
+        case (l_l2gp) ! ---------------------- Fill from L2GP quantity ---
           if (.NOT. got(f_sourceL2GP)) call Announce_Error(key,noSourceL2GPGiven)
           call FillVectorQuantityFromL2GP(quantity,l2gpDatabase(l2gpIndex),errorCode)
           if (errorCode/=0) call Announce_error(key,errorCode)
-        case (l_l2aux)
+
+
+        case (l_l2aux) ! --------------------- Fill from L2AUX quantity --
           if (.NOT. got(f_sourceL2AUX)) call Announce_Error(key,noSourceL2AUXGiven)
 !          call FillVectorQuantityFromL2AUX(quantity,l2auxDatabase(l2auxIndex),errorCode)
           if (errorCode/=0) call Announce_error(key,errorCode)
-        case (l_explicit)       ! An explicit fill
+
+
+        case (l_explicit) ! -------------------- Explicity fill from l2cf -
           if (.not. got(f_explicitValues)) call Announce_Error(key, &
             & noExplicitValuesGiven)
           call ExplicitFillVectorQuantity ( quantity, valuesNode, spread )
+
+
         case (l_l1b)                    ! Fill from L1B data
           call FillVectorQuantityFromL1B ( key, quantity, chunks(chunkNo), l1bInfo )
+
+
         case default
           call MLSMessage(MLSMSG_Error,ModuleName,'This fill method not yet implemented')
         end select
@@ -548,9 +560,11 @@ contains ! =====     Public Procedures     =============================
     type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
     type (VectorValue_T), intent(in) :: TEMPERATUREQUANTITY
     type (VectorValue_T), intent(in) :: REFGPHQUANTITY
-    type (VectorValue_T), intent(in) :: H2OQUANTITY
-    type (VectorValue_T), intent(in) :: GEOCALTITUDEQUANTITY
+    type (VectorValue_T), pointer :: H2OQUANTITY
+    type (VectorValue_T), pointer :: GEOCALTITUDEQUANTITY
     integer, intent(in) :: MAXITERATIONS
+    ! H2OQuantity and GeocAltitudeQuantity have to be pointers
+    ! as they may be absent.
 
     ! Local variables
 
@@ -1206,6 +1220,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.27  2001/03/07 22:42:23  livesey
+! Got pressure guesser to work
+!
 ! Revision 2.26  2001/03/06 22:41:07  livesey
 ! New L2AUX stuff
 !
