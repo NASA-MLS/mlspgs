@@ -42,6 +42,10 @@
 !define(systemp,{!systemp$1})
 !define(nbw,{!nbw$1})
 
+;; Setup some flags based on other flags
+!ifdef(flagComputeAvks,{!define(flagDontDestroyVectors,1)})
+!ifdef(flagComputeSout,{!define(flagDontDestroyVectors,1)})
+
 ;; This macro is called at the start of each phase to setup its
 ;; vectors and matrices.
 !define(setupPhase,{!dnl
@@ -380,6 +384,10 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
   Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1!nl})
 
 ; $Log$
+; Revision 1.74  2003/11/14 00:12:39  livesey
+; Added ability to automatically produce averaging kernels and output
+; covariances on request.  Also support for flagSuppressRegularOutput
+;
 ; Revision 1.73  2003/10/15 23:33:24  pwagner
 ; Made l2fwm file name sensitive to usingPCF
 ;
