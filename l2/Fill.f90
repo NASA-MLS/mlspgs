@@ -81,7 +81,8 @@ contains ! =====     Public Procedures     =============================
     use L2AUXData, only: L2AUXData_T
     use L3ASCII, only: L3ASCII_INTERP_FIELD
     use LEXER_CORE, only: PRINT_SOURCE
-    use ManipulateVectorQuantities, only: DOHGRIDSMATCH, DOVGRIDSMATCH
+    use ManipulateVectorQuantities, only: DOFGRIDSMATCH, DOHGRIDSMATCH, &
+      & DOVGRIDSMATCH, DOQTYSDESCRIBESAMETHING
     use MatrixModule_0, only: Sparsify, MatrixInversion
     use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
       & DestroyMatrix, Dump, GetActualMatrixFromDatabase, GetDiagonal, &
@@ -1103,17 +1104,23 @@ contains ! =====     Public Procedures     =============================
             & vectors(VectorIndex), QuantityIndex )
           sourceQuantity => GetVectorQtyByTemplateIndex( &
             & vectors(sourceVectorIndex), sourceQuantityIndex )
-          if ( quantity%template%name /= sourceQuantity%template%name ) &
-            & call Announce_Error ( key, No_Error_Code, &
-            & 'Quantity and sourceQuantity do not have the same template' )
-
-          ! If we have a mask and we're going to obey it then do so
-          if ( associated(quantity%mask) .and. .not. dontMask ) then
-            where ( iand ( ichar(quantity%mask(:,:)), m_Fill ) == 0 )
-              quantity%values(:,:) = sourceQuantity%values(:,:)
-            end where
-          else ! Otherwise, just blindly copy
-            quantity%values = sourceQuantity%values
+          if ( quantity%template%name /= sourceQuantity%template%name ) then
+            if ( .not. interpolate) then
+              call Announce_Error ( key, No_Error_Code, &
+                & 'Quantity and sourceQuantity do not have the same template' )
+            else
+              call FillQtyFromInterpolatedQty ( quantity, sourceQuantity, key )
+            end if
+          else
+            ! Just a straight copy
+            ! If we have a mask and we're going to obey it then do so
+            if ( associated(quantity%mask) .and. .not. dontMask ) then
+              where ( iand ( ichar(quantity%mask(:,:)), m_Fill ) == 0 )
+                quantity%values(:,:) = sourceQuantity%values(:,:)
+              end where
+            else ! Otherwise, just blindly copy
+              quantity%values = sourceQuantity%values
+            end if
           end if
 
         case ( l_estimatedNoise ) ! ----------- Fill with estimated noise ---
@@ -3414,6 +3421,82 @@ contains ! =====     Public Procedures     =============================
       if (toggle(gen) ) call trace_end( "FillVectorQuantityFromL1B" )
     end subroutine FillVectorQuantityFromL1B
 
+    ! ------------------------------------------- FillQtyFromInterpolatedQty
+    subroutine FillQtyFromInterpolatedQty ( qty, source, key )
+      type (VectorValue_T), intent(inout) :: QTY
+      type (VectorValue_T), intent(in) :: SOURCE
+      integer, intent(in) :: KEY
+
+      ! Local variables
+      real (r8), dimension(:), pointer :: oldSurfs, newSurfs
+      logical :: mySurfs
+
+      ! Executable code
+      if ( .not. DoQtysDescribeSameThing ( qty, source ) ) then
+        call Announce_error ( key, no_error_code, &
+          & 'Mismatch in quantities' )
+        return
+      end if
+      if ( .not. doHGridsMatch ( qty, source ) ) then
+        call Announce_error ( key, no_error_code, &
+          & 'Mismatch in horizontal grid' )
+        return
+      end if
+      if ( .not. doFGridsMatch ( qty, source ) ) then
+        call Announce_error ( key, no_error_code, &
+          & 'Mismatch in frequency grid' )
+        return
+      end if
+
+      ! These checks are for cases the code can't (yet) handle, 
+      ! may add this functionality later. 
+      if ( qty%template%noChans /= 1 ) then
+        call Announce_error ( key, no_error_code, &
+          & 'Code cannot (yet?) interpolate multi channel quantities' )
+        return
+      end if
+      if ( .not. all ( (/ qty%template%coherent, source%template%coherent /) ) ) then
+        call Announce_error ( key, no_error_code, &
+          & 'Code cannot (yet?) interpolate incoherent quantities' )
+        return
+      end if
+
+      ! Work out vertical coordinate issues
+      if ( qty%template%verticalCoordinate == l_pressure ) then
+        nullify ( oldSurfs, newSurfs )
+        call Allocate_test ( oldSurfs, source%template%noSurfs, 'oldSurfs', ModuleName )
+        call Allocate_test ( newSurfs, qty%template%noSurfs, 'newSurfs', ModuleName )
+        oldSurfs = -log10 ( source%template%surfs(:,1) )
+        newSurfs = -log10 ( qty%template%surfs(:,1) )
+        mySurfs = .true.
+      else
+        oldSurfs => source%template%surfs ( :, 1 )
+        newSurfs => qty%template%surfs ( :, 1 )
+        mySurfs = .false.
+      end if
+      
+      ! OK, do the work
+      if ( qty%template%logBasis ) then
+        call InterpolateValues ( &
+          & oldSurfs, log ( max ( source%values, sqrt(tiny(0.0_r8)) ) ), &
+          & newSurfs, qty%values, &
+          & method='Linear', extrapolate='Constant' )
+        qty%values = exp ( qty%values )
+      else
+        call InterpolateValues ( &
+          & oldSurfs, source%values, &
+          & newSurfs, qty%values, &
+          & method='Linear', extrapolate='Constant' )
+      end if
+
+      ! Tidy up
+      if ( mySurfs ) then
+        call Deallocate_test ( oldSurfs, 'oldSurfs', ModuleName )
+        call Deallocate_test ( newSurfs, 'newSurfs', ModuleName )
+      end if
+
+    end subroutine FillQtyFromInterpolatedQty
+
     !=============================== FillQuantityFromLosGrid ====
     subroutine FillQuantityFromLosGrid ( key, Qty, LOS, &
       & Ptan, Re, noFineGrid, extinction, errorCode )
@@ -3787,6 +3870,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.145  2002/09/10 20:50:33  livesey
+! Added interpolated vector fill
+!
 ! Revision 2.144  2002/09/10 01:00:32  livesey
 ! Added calls to NullifyMatrix
 !
