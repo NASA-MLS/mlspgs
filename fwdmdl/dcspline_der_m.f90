@@ -2,26 +2,34 @@
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module DCSPLINE_DER_M
-  use D_HUNT_M, only: HUNT
-  use D_PCSPL_M, only: PCSPL
+
   implicit NONE
   private
   public :: DCSPLINE_DER, CSPLINE_DER
+
   interface CSPLINE_DER; module procedure DCSPLINE_DER; end interface
+
 !---------------------------- RCS Ident Info -------------------------------
-  CHARACTER (LEN=256) :: Id = &
-       "$Id$"
-  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
-       "$RCSfile$"
+  character (len=*), parameter :: IdParm = &
+    &  "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName = &
+    & "$RCSfile$"
 !---------------------------------------------------------------------------
-  integer, parameter :: RK = kind(0.0d0)
-!
+
 contains
   subroutine DCSPLINE_DER ( XIN, XOUT, YIN, YOUT, DYOUT, NIN, NOUT, YMIN, YMAX)
+    use D_HUNT_M, only: HUNT
+    use D_PCSPL_M, only: PCSPL
+    integer, parameter :: RK = kind(0.0d0)
     include 'cspline_der.f9h'
   end subroutine DCSPLINE_DER
 end module DCSPLINE_DER_M
+
 ! $Log$
+! Revision 2.1  2002/04/18 10:46:25  zvi
+! Adding optional limits
+!
 ! Revision 2.0  2001/09/17 20:26:26  livesey
 ! New forward model
 !
