@@ -1,0 +1,139 @@
+
+; Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+; U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+;------------------- RCS Ident Info -----------------------
+;  CHARACTER(LEN=130) :: Id = &
+;  "$Id$"
+;----------------------------------------------------------
+
+; This is the Level 3 Configuration file for version 0.5 of the Daily
+; subprogram of the Level 3 software for the EOS Microwave Limb Sounder (MLS).
+;
+; The task of the Level 3 software is to construct daily and monthly synoptic
+; maps from the Level 2 data using Fourier Transform Synoptic Mapping.
+;
+; For more details on the software see:
+;    EOS MLS Level 3 Algorithm Theoretical Basis
+;      JPL D-xxxxx
+;    EOS MLS Level 3 File Description with Data Dictionary
+;      JPL D-xxxxx
+;    EOS MLS Level 3 software users' guide
+;      JPL D-xxxxx
+;    EOS MLS Level 3 Software Design
+;      JPL D-xxxxx
+;
+; In the case of version 0.5 the goal of the Level 3 software is
+; simply to test the interfaces between the SDP software and the toolkit
+; and between the software and the Level 2 software, and to produce daily maps.
+;
+; -----------------------------------------------------------------------------
+;
+; This section of the l3cf gives parameters that are global settings to the
+; software, output file comments, file versions etc.  Note that while this
+; section must occur first in the l3cf, the ordering of the options within the
+; section is not critical.
+;
+BEGIN GlobalSettings
+    ;;
+    ;; This comment string is placed in the `header' for all the
+    ;; output files.
+    ;;
+    VersionComment="L3CF Version 0-5 for version 0.5 of the MLS software"
+    ;;
+    ;; The way the SDP toolkit works, the software cannot control
+    ;; filenames; it is given them through the PCF.  This means that
+    ;; all the software can do is ensure that it is being asked to
+    ;; produce an appropriately named file.
+    ;;
+    ;; So here we state what version information we expect to see embedded in
+    ;; the filenames.  If these strings are blank then no limitation
+    ;; is applied.  Also the user can override this checking by
+    ;; setting the option "IgnoreVersion" to .TRUE. (the default is .FALSE.)
+    ;; (Note that this will generate a warning message.)
+    ;;
+    OutputVersionString="V0-5"
+    ;;
+    ;; Template for the fixed, "collection" portion of the Log file name
+    ;; (without version, cycle, date, or ".dat")
+    ;;
+    LogType="MLS-Aura_L3LOG_Daily_"
+    ;;
+    ;; Minimum number of days of input needed for L3 processing to proceed.  If
+    ;; fewer than this are found/read in the input window, CORE processing is
+    ;; skipped for the product.
+    ;;
+    MinDays=15
+    ;;
+    ;; Max Size of Level 2 Data Gap Allowed --
+    ;; We can specify this in minutes, MAFs or orbits (the output of the parser
+    ;; will be in the time default of seconds).
+    ;;
+    MaxGap=3 minutes
+    ;;
+    ;; Number for "largest differences" diagnostics
+    ;;
+    N=10
+    ;;
+END GlobalSettings
+;
+; ----------------------------------------------------------------------------
+;
+; This section of the l3cf gives input parameters for the daily maps.
+;
+; NOTE: in assigning negative numbers, maintain a space between the "=" and the
+;       "-" (the parser will see "=-" as a type of "compound operator.")
+;
+BEGIN DailyMap
+    ;;
+    ;; l3prodNameD -- daily level 3 product name
+    ;; timeD -- synoptic time (HH:MM:SS)
+    ;; intpMethod -- method of interpolation:
+    ;;               lin = linear
+    ;;               csp = cubic spline
+    ;; latGridMap -- starting & maximum values of Latitude Grid for Maps
+    ;; dLat -- increment between points of Latitude Grid
+    ;; longGrid -- starting & max values of Longitude Grid for the output data
+    ;; dLon -- increment between points of Longitude Grid
+    ;; rangFrequency -- starting:max values of Range of frequencies to be used
+    ;; dF -- increment between frequencies in range
+    ;; l3presLvl -- daily product pressure levels (min:max of L2 values to use)
+    ;; rangWavenumber -- range of wavenumbers to be used (min:max of range)
+    ;; mode -- asc = ascending
+    ;;         des = descending
+    ;;         com = combined
+    ;;         all = ascending, descending, and combined
+    ;; label -- mapping to a label of a specification in the Output section
+    ;;
+    mapSpec,l3prodNameD="ClO",timeD="12:00:00",intpMethod=lin, $
+            latGridMap= -82.0:82.0,dLat=2.0, $
+            longGrid= -180.0:176.0,dLon=4.0, $
+            rangFrequency=0.1:1.0,dF=0.25,  $
+            l3presLvl=1.0:100.0,rangWavenumber=1:20, mode=all, label="CLOL3DM"
+    ;;
+END DailyMap
+;
+; -----------------------------------------------------------------------------
+;
+; In this last section of the l3cf, we detail how the output data
+; created in the core module are sent to the various output files.
+;
+BEGIN Output
+    ;;
+    ;; Each output Level 3 product is described on a separate line, with the
+    ;; name of the corresponding MCF file, and an expandable file name template
+    ;; containing fields not related to granule-level identification.
+    ;;
+    CLOL3DM: output, mcf = "ML3DCLO.001.MCF", file="MLS-Aura_$level_ClO_"
+    L3DZS: output, mcf = "ML3DZMS.001.MCF", file="MLS-Aura_L3DZ_Standard_"
+    L3DZD: output, mcf = "ML3DZMD.001.MCF", file="MLS-Aura_L3DZ_Diagnostic_"
+    ;;
+END Output
+;
+; ----------------------------------------------------------------------------
+;
+; $Log$
+; Revision 1.1  2001/03/01 19:48:58  nakamura
+; Initial revision
+;
+;
