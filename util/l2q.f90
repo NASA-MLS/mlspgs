@@ -19,13 +19,14 @@ program L2Q
   use MLSSETS, only: FINDFIRST, FINDALL
   use MLSSTRINGLISTS, only: CATLISTS
   use MLSSTRINGS, only: LOWERCASE
-  use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, PRUNIT
+  use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUT_DATE_AND_TIME, PRUNIT
   use PVM, only: PVMOK, &
     & ClearPVMArgs, FreePVMArgs, GETMACHINENAMEFROMTID, &
     & PVMDATADEFAULT, PVMFINITSEND, PVMF90PACK, PVMFKILL, PVMFMYTID, &
     & PVMF90UNPACK, PVMERRORMESSAGE, PVMFPSTAT, &
     & PVMFCATCHOUT, PVMFSEND, PVMFNOTIFY, PVMTASKEXIT, &
     & PVMFFREEBUF
+  use Sort_M, only: SORT
   use Time_M, only: Time_Now, Use_Wall_Clock
   use TOGGLES, only: CON, GEN, LEVELS, PAR, SYN, TAB, &
     & TOGGLE
@@ -58,7 +59,7 @@ program L2Q
   integer :: RECORD_LENGTH
   integer :: STATUS                ! From OPEN
   logical :: SWITCH                ! "First letter after -- was not n"
-  real :: T0, T1, T2               ! For timing
+  real :: T0, T1, T2, T_CONVERSION ! For timing
   integer :: TAG
   integer :: TID
   character(len=2048) :: WORD       ! Some text
@@ -66,7 +67,8 @@ program L2Q
   character(len=*), parameter :: GROUPNAME = "mlsl2"
   character(len=*), parameter :: LISTNAMEEXTENSION = ".txt"
   integer, parameter          :: CHECKREVIVEDHOSTSTAG = GIVEUPTAG - 1
-  integer, parameter          :: DUMPDBTAG = CHECKREVIVEDHOSTSTAG - 1
+  integer, parameter          :: CLEANMASTERDBTAG = CHECKREVIVEDHOSTSTAG - 1
+  integer, parameter          :: DUMPDBTAG = CLEANMASTERDBTAG - 1
   integer, parameter          :: DUMPMASTERSDBTAG = DUMPDBTAG - 1
   integer, parameter          :: DUMPHOSTSDBTAG = DUMPMASTERSDBTAG - 1
   integer, parameter          :: SWITCHDUMPFILETAG = DUMPHOSTSDBTAG - 1
@@ -74,7 +76,11 @@ program L2Q
   integer, parameter          :: TURNREVIVALSOFFTAG = TURNREVIVALSONTAG - 1
   integer, parameter          :: DUMPUNIT = LIST_UNIT + 1
   integer, parameter          :: TEMPUNIT = DUMPUNIT + 1
-
+  ! integer, parameter          :: DELAYBETWEENASSIGNMENTS = 20  ! GMasters r slow
+  ! Wait until the oldest master has all the hosts he'll need before assigning
+  ! hosts to any of the young whippersnappers?
+  ! logical, parameter          :: ALWAYSDEFERTOELDERS = .true.
+  ! (moved to options%deferToElders)
   !------------------------------- RCS Ident Info ------------------------------
   character(len=*), parameter :: IdParm = & 
      "$Id$"
@@ -106,6 +112,7 @@ program L2Q
     integer                       :: tid = 0
     integer                       :: numChunks = 0
     integer                       :: numHosts = 0
+    integer                       :: numFreed = 0
     integer, dimension(:), pointer:: hosts => null() ! hosts assigned to this master
     logical                       :: needs_host = .false.
     logical                       :: owes_thanks = .false.
@@ -122,17 +129,20 @@ program L2Q
 
   type options_T
     logical            :: checkList = .false.
+    logical            :: cleanMasterDB = .false. ! Regularly clean db of done
+    logical            :: deferToElders = .true.  ! New masters defer to old
     logical            :: dumpEachNewMaster = .false.
     logical            :: verbose = .false.
     logical            :: reviveHosts = .true.    ! Regularly check for revivals
     character(len=8)   :: command = 'run'         ! {run, kill, dumphdb, dumpmdb
-    logical            :: debug = .false.         !   dump, checkh}
+    logical            :: debug = .false.         !   dump, checkh, clean}
     character(len=FILENAMELEN) &
       &                :: LIST_file               ! name of hosts file
     character(len=FILENAMELEN) &
       &                :: dump_file = '<STDIN>'   ! name of dump file
     logical :: Timing = .false.                   ! -T option is set
-    logical :: total_times = .false.
+    logical :: date_and_times = .false.
+    character(len=1) :: timingUnits = 's'         ! l_s, l_m, l_h
   end type options_T
   
   type ( options_T ) :: options
@@ -141,23 +151,36 @@ program L2Q
   !
   MLSMessageConfig%useToolkit = .false.
   MLSMessageConfig%logFileUnit = -1
+  MLSMessageConfig%CrashOnAnyError = .true.
+  use_wall_clock = .true.
   parallel%master = .true.  ! not merely master, but master of masters
   parallel%slaveFilename = 'pvm' ! for later cures only
   !---------------- Task (0) ------------------
   call get_options
   options%verbose = options%verbose .or. options%debug
+  select case (options%timingUnits)
+  case ('m')
+    t_conversion = 1./60
+  case ('h')
+    t_conversion = 1./3600
+  case default
+    t_conversion = 1.
+  end select
   !---------------- Task (1) ------------------
   ! Make sure no l2q is already alive and running
   call pvmfgettid(GROUPNAME, 0, tid)
   if ( tid > 0 ) then
+    ! Have we been ordered to communicate with an already-running task?
     if ( options%command /= 'run' ) then
-      ! Our target will be listening for:
+      ! Our target will be listening for something like:
       ! call PVMFNRecv ( -1, GiveUpTag, bufferIDRcv )
       call PVMFInitSend ( PvmDataDefault, bufferID )
       call PVMF90Pack ( GROUPNAME, info )
       select case( trim(options%command) )
       case ( 'checkh' )
         tag = checkRevivedHostsTag
+      case ( 'clean' )
+        tag = cleanMasterDBTag
       case ( 'dumpdb' )
         tag = dumpDBTag
       case ( 'dumphdb' )
@@ -178,6 +201,7 @@ program L2Q
       end select
       call PVMF90Pack ( trim(options%dump_file), info )
       call PVMFSend ( tid, Tag, info )
+      if ( options%timing ) call sayTime
       call output('Already-running l2q tid: ', advance='no')
       call output(tid, advance='yes')
       call output(' commanded: '//trim(options%command), advance='yes')
@@ -232,6 +256,7 @@ program L2Q
   end if
   error = status
   
+  call output_date_and_time(msg='starting l2q')
   call time_now ( t1 )
 
   if( options%verbose ) then
@@ -239,11 +264,13 @@ program L2Q
   end if
 
   call read_list
-  call cure_host_database(hosts)
+  call cure_host_database(hosts, silent=.true.)
   if ( options%checkList ) then
     call dump(hosts)
   !---------------- Task (4) ------------------
   elseif (error == 0) then
+    call dump(hosts, details=0)
+    if( options%verbose ) call output('Entering event loop', advance='yes')
     call event_loop
   else
     call MLSMessage( MLSMSG_Error, ModuleName, &
@@ -253,6 +280,7 @@ program L2Q
   call time_now ( t0 )
   t1 = t0
   if ( options%timing ) call sayTime ( 'Closing and deallocating' )
+  call output_date_and_time(msg='ending l2q')
   if ( options%dump_file /= '<STDIN>' ) close(prunit)
 
 contains
@@ -274,21 +302,25 @@ contains
 !     AddHostToDatabase = newSize
 !   end function  addHostToDatabase
 
-  subroutine cure_host_database(hosts)
+  subroutine cure_host_database(hosts, silent)
     ! cure any recovered hosts in database--declare them fit for action
     type(Machine_T), intent(inout), dimension(:) :: hosts
+    logical, optional, intent(in) :: silent
     ! Internal variables
     character(len=MachineNameLen), dimension(:), pointer :: MACHINENAMES
+    logical :: mySilent
     integer :: i
     integer :: status
     ! Executable
+    mySilent = .not. options%verbose
+    if ( present(silent) ) mySilent = silent .or. mySilent
     ! No need to cure if none have died
     if ( all(hosts%OK) ) return
     call GetMachineNames ( machineNames )
     do i=1, size(hosts)
       if ( hosts(i)%OK ) cycle
       hosts(i)%OK = any( hosts(i)%name == machineNames )
-      if ( hosts(i)%OK .and. options%verbose ) &
+      if ( hosts(i)%OK .and. .not. mySilent ) &
         & call proclaim('Host Cured', hosts(i)%Name)
     enddo
     call deAllocate_test(machineNames, 'machineNames', moduleName )
@@ -336,26 +368,40 @@ contains
     ! Internal variables
     integer :: i
     ! Executable
+    ! call output('Trying to clean master db of finished tasks')
     do i=1, size(Masters)
       if (Masters(i)%finished) then
         call deallocate_test(Masters(i)%hosts, 'hosts', ModuleName)
-        call rmMasterFromDatabase(Masters, Masters(i))
+        ! We can't delete the db entry because
+        ! everybody knows masters by their db index
+        ! All we can do is reclaim the little bit of the memory allocated
+        ! for their hosts component
+        ! call rmMasterFromDatabase(Masters, Masters(i))
       endif
     enddo
   end subroutine clean_master_database
 
-  subroutine dump_master_database(Masters)
+  subroutine dump_master_database(Masters, Details)
     ! dump data type
     type(Master_T), dimension(:), pointer :: Masters
+    integer, intent(in), optional :: DETAILS  ! 1: dump each master, too
     ! Internal variables
     integer :: i
+    integer :: myDetails
     ! Executable
     if ( .not. associated(Masters) ) then
       call output('Master database not associated', advance='yes')
       return
     endif
+    myDetails = 1
+    if ( present(details) ) myDetails = details
     call output ('Size of Master database: ', advance='no')
     call output (size(Masters), advance='yes')
+    call output ('Number of Masters active: ', advance='no')
+    call output (count(.not. Masters%finished), advance='yes')
+    call output ('Number of Masters waiting for hosts: ', advance='no')
+    call output (count(Masters%needs_host), advance='yes')
+    if ( myDetails < 1 ) return
     do i = 1, size(Masters)
       call dump_Master(Masters(i))
     enddo
@@ -400,8 +446,12 @@ contains
           switch = .false.
           n = 1
         end if
-        if ( line(3+n:7+n) == 'check ' ) then
+        if ( line(3+n:7+n) == 'clean ' ) then
+          options%cleanMasterDB = switch
+        elseif ( line(3+n:7+n) == 'check ' ) then
           options%checklist = switch
+        elseif ( line(3+n:6+n) == 'defer' ) then
+          options%deferToElders = switch
         elseif ( lowerCase(line(3+n:10+n)) == 'dumpnewm' ) then
           options%dumpEachNewMaster = switch
         else if ( line(3+n:10+n) == 'version ' ) then
@@ -440,6 +490,19 @@ contains
           call option_usage
         case ( 'T' )
           options%timing = .true.
+          do
+            if ( j >= len(line) ) exit
+            if ( line(j+1:j+1) > '0' .and. line(j+1:j+1) <= '9' ) then
+              options%date_and_times = .true.
+            elseif ( lowercase(line(j+1:j+1)) == 's' ) then
+              options%timingUnits = 's'  ! l_seconds
+            elseif ( lowercase(line(j+1:j+1)) == 'm' ) then
+              options%timingUnits = 'm'
+            elseif ( lowercase(line(j+1:j+1)) == 'h' ) then
+              options%timingUnits = 'h'
+            end if
+            j = j + 1
+          enddo
         case ( 'v' ); options%verbose = .true.
         case ( 'd' ); options%debug = .true.
         case ( 'k' ); options%command = 'kill' ! options%killer = .true.
@@ -461,7 +524,7 @@ contains
           call option_usage
         end select
       else    
-        exit ! This must be the l2cf filename
+        exit ! This must be the hosts filename
       end if
       i = i + 1
     end do
@@ -473,10 +536,13 @@ contains
     ! l2q spends eternity circling endlessly, responding
     ! to the occasional promptings from master tasks via pvm
     ! or else initiating a contact with one
+    ! or responding to commands sent by a fraternal l2q launched with
+    ! "-c command" option
     integer :: bufferIDRcv
     integer :: BUFFERIDSND              ! From PVM
     integer :: BYTES                    ! Dummy from PVMFBufInfo
     logical :: CHECKREVIVEDHOSTS
+    logical :: CLEANMASTERDB
     logical :: DUMPDB
     integer :: grandMastersID           ! index into database of an older master
     integer :: host
@@ -484,7 +550,6 @@ contains
     integer :: INFO                     ! From PVM
     character(len=MachineNameLen)  :: MACHINENAME
     integer :: mastersID                ! index into database of a master
-    ! character(len=MachineNameLen)  :: MASTERNAME
     integer :: masterTid                ! TID of a master
     logical :: mayAssignAHost
     integer :: MSGTAG                   ! Dummy from PVMFBufInfo
@@ -495,13 +560,15 @@ contains
     integer :: oldPrUnit
     integer :: SIGNAL                   ! From a master
     logical :: SIGNIFICANTEVENT
-    logical :: SKIPDELAY                ! Don't wait before doing the next go round
+    ! integer :: sinceLastAssignment
+    logical :: SKIPDELAY            ! Don't wait before doing the next go round
     character(len=FileNameLen)  :: tempfile
     integer :: TID
     integer, dimension(MAXNUMMULTIPROCS) :: TIDS
     type(master_t) :: aMaster
     ! Executable
     numMasters = 0
+    ! sinceLastAssignment = 0
     do
       checkrevivedhosts = .false.
       dumpdb = .false.
@@ -547,7 +614,7 @@ contains
           if ( options%verbose ) then
             ! call proclaim('New Master', aMaster%Name, signal=MasterTid, advance='no')
             call proclaim('New Master', masterNameFun(masterTid), advance='no')
-            call output('(', advance='no')
+            call output(' (', advance='no')
             call output(count(.not. masters%finished), advance='no')
             call output(' active ', advance='no')
             call output(numMasters, advance='no')
@@ -559,6 +626,9 @@ contains
           mastersID = FindFirst(masters%tid, masterTid)
           grandMastersID = FindFirst(masters%needs_host .and. &
             & .not. masters%owes_thanks)
+          if ( options%deferToElders ) &
+            grandMastersID = FindFirst(.not. masters%finished .and. &
+              & masters%numChunks > (masters%numHosts+masters%numFreed) )
           if ( grandMastersID < 1 ) grandMastersID = size(masters) + 100
           if ( options%debug ) &
             & call proclaim('Master requested host', masterNameFun(masterTid))
@@ -573,6 +643,7 @@ contains
           elseif ( nextFree == 0 ) then
             ! No hosts free; master put into needs_host state
             masters(mastersID)%needs_host = .true.
+          ! elseif ( grandMastersID < mastersID .or. sinceLastAssignment > 0 ) then
           elseif ( grandMastersID < mastersID ) then
             ! An older master has priority; master put into needs_host state
             masters(mastersID)%needs_host = .true.
@@ -580,6 +651,7 @@ contains
             ! Assign free host to master
             call assignHostToMaster( hosts(nextFree), masters(mastersID), nextFree )
             mayAssignAHost = .false. ! Already did one this cycle
+            ! sinceLastAssignment = DELAYBETWEENASSIGNMENTS
           endif
         case ( sig_releaseHost ) ! ----------------- Done with this host ------
           ! Find master's index into masters array
@@ -591,9 +663,11 @@ contains
             if ( options%debug ) then
               call proclaim('Master ' // trim(masterNameFun(masterTid)) // &
                 & ' freed host', hosts(hostsID)%name, advance='no')
-              call output('(Still has ', advance='no')
+              call output(' (Still has ', advance='no')
               call output(masters(mastersID)%numHosts, advance='no')
               call output(' remaining)', advance='yes')
+              call output ('Number of machines free: ', advance='no')
+              call output (count(hosts%free), advance='yes')
             endif
             mayAssignAHost = .false. ! Don't assign to a later master
           endif
@@ -616,7 +690,7 @@ contains
           if ( options%verbose ) then
             call proclaim('Master ' // trim(masterNameFun(masterTID)) // &
             & ' thanks for host', hosts(hostsID)%Name, advance='no')
-            call output('(Now has ', advance='no')
+            call output(' (Now has ', advance='no')
             call output(masters(mastersID)%numHosts, advance='no')
             call output(' )', advance='yes')
           endif
@@ -625,7 +699,7 @@ contains
           mastersID = FindFirst(masters%tid, masterTid)
           if ( options%debug ) &
             & call proclaim('Master ' // trim(masterNameFun(masterTID)) // &
-            & 'reports host died', advance='no')
+            & ' reports host died', advance='no')
           call IDHostFromMaster(sig_HostDied, tid, mastersID, hostsID)
           if ( hostsID > 0 ) then
             call releaseHostFromMaster( hosts(hostsID), masters(mastersID), &
@@ -633,8 +707,8 @@ contains
             hosts(hostsID)%OK = .false.
             significantEvent = .true.
             if ( options%debug ) then
-              call output( 'Host ' // trim(hosts(hostsID)%Name), advance='no')
-              call output('(Now has ', advance='no')
+              call output( ' Host ' // trim(hosts(hostsID)%Name), advance='no')
+              call output(' (Now has ', advance='no')
               call output(masters(mastersID)%numHosts, advance='no')
               call output(' )', advance='yes')
             elseif ( options%verbose ) then
@@ -659,7 +733,7 @@ contains
           if ( numHosts > 0 ) then
             do host = 1, numHosts
               hostsID = masters(mastersID)%hosts(host)
-              if ( hostsID > 0 ) &
+              if ( hostsID > 0 .and. hostsID <= size(hosts) ) &
                 & call releaseHostFromMaster( &
                 & hosts(hostsID), masters(mastersID), hostsID )
             enddo
@@ -667,11 +741,12 @@ contains
           masters(mastersID)%finished = .true.
           masters(mastersID)%needs_host = .false.
           masters(mastersID)%owes_thanks = .false.
+          ! call deAllocate_test(masters(mastersID)%hosts, 'hosts', moduleName )
           significantEvent = .true.
           if ( options%verbose ) then
             call proclaim('Master ' // trim(masterNameFun(masterTid)) // &
               & ' Finished', advance='no')
-            call output('(', advance='no')
+            call output(' (', advance='no')
             call output(count(.not. masters%finished), advance='no')
             call output(' active ', advance='no')
             call output(numMasters, advance='no')
@@ -690,7 +765,7 @@ contains
           & call PVMErrorMessage ( info, 'freeing receive buffer' )
       endif
       ! ----------------------------------------------------- Master Task Died?
-      ! Listen out for any message telling us to quit now
+      ! Listen out for any message telling us one of our masters died
       ! if ( options%debug ) call output('Listening for giveuptag', advance='yes')
       call PVMFNRecv ( -1, NotifyTag, bufferIDRcv )
       if ( bufferIDRcv > 0 ) then
@@ -708,7 +783,7 @@ contains
           if ( numHosts > 0 ) then
             do host = 1, numHosts
               hostsID = masters(mastersID)%hosts(host)
-              if ( hostsID > 0 ) &
+              if ( hostsID > 0 .and. hostsID <= size(hosts) ) &
                 & call releaseHostFromMaster( &
                 & hosts(hostsID), masters(mastersID), hostsID )
             enddo
@@ -719,7 +794,7 @@ contains
           significantEvent = .true.
           if ( options%verbose ) then
             call proclaim('Master Died', masterNameFun(masterTid))
-            call output('(', advance='no')
+            call output(' (', advance='no')
             call output(count(.not. masters%finished), advance='no')
             call output(' active ', advance='no')
             call output(numMasters, advance='no')
@@ -732,6 +807,7 @@ contains
       ! if ( options%debug ) call output('Listening for giveuptag', advance='yes')
       call PVMFNRecv ( -1, GiveUpTag, bufferIDRcv )
       if ( bufferIDRcv > 0 ) then
+        if ( options%timing ) call sayTime
         call output ( 'Received an external message to give up, so finishing now', &
           & advance='yes' )
         exit ! event_loop
@@ -742,11 +818,20 @@ contains
       if ( bufferIDRcv > 0 ) then
         options%reviveHosts = .false.
       end if
-      ! Listen out for any message telling us to stop regular revivals
+      ! Listen out for any message telling us to resume regular revivals
       call PVMFNRecv ( -1, turnRevivalsOnTag, bufferIDRcv )
       if ( bufferIDRcv > 0 ) then
         options%reviveHosts = .true.
       end if
+
+      cleanMasterDB = significantEvent .and. options%cleanMasterDB
+      ! Listen out for any message telling us to clean master database
+      call PVMFNRecv ( -1, CleanMasterDBTag, bufferIDRcv )
+      if ( bufferIDRcv > 0 .or. cleanMasterDB ) then
+        if ( options%debug ) &
+          & call output('Cleaning database of finished masters', advance='yes')
+        call clean_master_database(Masters)
+      endif
 
       checkrevivedhosts = significantEvent .and. options%reviveHosts
       ! Listen out for any message telling us to dump databases
@@ -818,6 +903,7 @@ contains
         call PVMF90Unpack ( machineName, info )
         if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking GROUPNAME' )
         if ( prunit == DUMPUNIT ) then
+          if ( options%timing ) call sayTime
           call output('Switching dump file from '//trim(options%dump_file))
           call output(' to ')
           call PVMF90Unpack ( options%dump_file, info )
@@ -834,16 +920,23 @@ contains
       end if
       ! Unless there's a good reason not to do so,
       ! check if any hosts are currently free and any masters need hosts
+      ! if ( mayAssignAHost .and. sinceLastAssignment < 1 ) then
       if ( mayAssignAHost ) then
         ! Find oldest master needing a host and grateful for the ones he has
         mastersID = FindFirst( masters%needs_host .and. &
           & .not. masters%owes_thanks )
-        if ( mastersID > 0 ) then
+        grandMastersID = mastersID
+        if ( options%deferToElders ) &
+          grandMastersID = FindFirst(.not. masters%finished .and. &
+            & masters%numChunks > (masters%numHosts+masters%numFreed) )
+        if ( grandMastersID < 1 ) grandMastersID = size(masters) + 100
+        if ( mastersID > 0 .and. mastersID == grandMastersID ) then
           ! Find first free host
           nextFree = FindFirst( hosts%free .and. hosts%OK )
           if ( nextFree > 0 ) then
             call assignHostToMaster( hosts(nextFree), masters(mastersID), &
               & nextFree )
+            ! sinceLastAssignment = delaybetweenAssignments
             skipDelay = .true.
           endif
         endif
@@ -851,8 +944,10 @@ contains
       ! Now perform any other housekeeping, administration, etc. tasks
       ! Now, rather than chew up cpu time on this machine, we'll wait a
       ! bit here.
-      if ( .not. skipDelay .and. parallel%delay > 0 ) &
-        & call usleep ( parallel%delay )
+      if ( .not. skipDelay .and. parallel%delay > 0 ) then
+        call usleep ( parallel%delay )
+        ! sinceLastAssignment = max(0, sinceLastAssignment - 1)
+      endif
       ! if ( any(masters%owes_thanks) ) &
       !   & call usleep ( 2*parallel%delay )
     enddo
@@ -881,6 +976,10 @@ contains
     host%master_tid = master%tid
     host%free = .false.
     host%tid = 0
+    if ( options%debug) then
+       call output ('Number of machines free: ', advance='no')
+       call output (count(hosts%free), advance='yes')
+    endif
     hcid = 1
     if ( .not. associated(master%hosts) ) then
       nullify(master%hosts)
@@ -944,6 +1043,7 @@ contains
     if ( hostsID < 1 ) then
       ! Oops--the tid doesn't match any of the ones we've had so far
       if ( options%verbose ) then
+        if ( options%timing ) call sayTime
         if ( signal == sig_HostDied ) then
           call output('Warning--unknown tid freed', advance='no')
         else
@@ -990,17 +1090,23 @@ contains
       call MLSMessage( MLSMSG_Error, ModuleName, &
         & 'Programming error--hostsID>size(hosts) in releaseHostFromMaster' )
     elseif ( .not. associated(master%hosts) ) then
-      call MLSMessage( MLSMSG_Warning, ModuleName, &
-        & 'master lacks any hosts' )
+      ! call MLSMessage( MLSMSG_Warning, ModuleName, &
+      !  & 'master lacks any hosts' )
+      call output('master lacks any hosts', advance='yes' )
+      return
+    elseif ( host%master_tid /= master%tid ) then
+      call output('Host not assigned to that master', advance='yes' )
       return
     elseif ( .not. any(master%hosts == hostsID) ) then
       call output('hostsID ', advance='no')
       call output(hostsID, advance='no')
       call output('   name ', advance='no')
       call output(trim(host%name) // '   ', advance='no')
-      ! call dump(master%hosts)
-      call MLSMessage( MLSMSG_Warning, ModuleName, &
-        & 'master lacks that host' )
+      call newline
+      call dump_his_hosts(master%hosts, sortUs=.true.)
+      ! call MLSMessage( MLSMSG_Warning, ModuleName, &
+      !  & 'master lacks that host' )
+      call output( '; master lacks that host', advance='yes' )
       return
     endif
     if ( host%tid > 0 ) then
@@ -1035,6 +1141,7 @@ contains
       master%hosts => tempHosts
     endif
     master%numHosts = master%numHosts - 1
+    master%numFreed = master%numFreed + 1
   end subroutine releaseHostFromMaster
   
   subroutine read_list
@@ -1068,15 +1175,21 @@ contains
   end subroutine read_list
 
   subroutine SayTime ( What )
-    character(len=*), intent(in) :: What
+    character(len=*), intent(in), optional :: What
+    ! Internal variables
+    ! real :: t_conversion
+    ! Executable
     call time_now ( t2 )
-    if ( options%total_times ) then
-      call output ( "Total time = " )
-      call output ( dble(t2), advance = 'no' )
-      call blanks ( 4, advance = 'no' )
+    if ( options%date_and_times ) then
+      call output_date_and_time(advance='no')
+    else
+      call output ( "time (now) " )
+      call output ( dble(t_conversion*t2), advance = 'no' )
     endif
-    call output ( "Timing for " // what // " = " )
-    call output ( dble(t2 - t1), advance = 'yes' )
+    call blanks ( 4, advance = 'no' )
+    ! call output ( "time (elapsed) " // what // " = " )
+    ! call output ( dble(t2 - t1), advance = 'yes' )
+    if ( present(What) ) call output ( trim(what), advance = 'yes' )
   end subroutine SayTime
 
   ! The following offer some information on the options
@@ -1091,6 +1204,8 @@ contains
     print *, 'Usage: ', trim(line), ' [options] [--] [LIST-name]'
     print *, ' Options:'
     print *, ' --check:     check LIST of hosts'
+    print *, ' --[n]clean:  do [not] regularly clean db of finished masters'
+    print *, ' --defer:     new masters defer to oldest (has enough hosts)'
     print *, ' --dumpnewm:  dump each new master'
     print *, ' --[n]revive: do [not] regularly check for revived hosts'
     print *, ' --version:   print version string; stop'
@@ -1101,15 +1216,18 @@ contains
     print *, ' -o dumpfile: direct most output to dumpfile'
     print *, '               (if modifying an already-running l2q, direct only'
     print *, '               the requested output to dumpfile)'
-    print *, ' -s newfile:  flush current dumpfile; all later output to newfile'
-    print *, '               ( same as -o newfile -c switch )'
+    print *, ' -s newfile:  flush current dumpfile; direct later output'
+    print *, '                to newfile ( same as -o newfile -c switch )'
     print *, ' -v:          verbose'
     print *, ' -h:          show help; stop'
-    print *, ' -T:          show timing'
+    print *, ' -T[0][smh]:  show timing [in s, m, h]'
+    print *, ' -T1:         show dates with timing'
     print *, ' -c command:  issue command to currently-running l2q'
     print *, '        command may be one of'
     print *, ' revive=on:   begin regularly checking for revived hosts'
     print *, ' revive=off:  cease regularly checking for revived hosts'
+    print *, ' checkh:      check for revived hosts'
+    print *, ' clean:       clean the db of finished master tasks'
     print *, ' kill:        kill currently-running l2q'
     print *, ' switch:      flush current dumpfile'
     print *, '              ( switch to one specified by -o newfile )'
@@ -1120,7 +1238,8 @@ contains
     print *, ' dumpdb:      dump host and master databases'
     print *, ' N o t e :'
     print *, ' only the options:'
-    print *, ' -g, -o, -v, -T, --check, --dumpnewm, --[n]revive, --wall'
+    print *, ' -g, -o, -v, -T, --check, --clean, --defer, '
+    print *, ' --dumpnewm, --[n]revive, --wall'
     print *, ' are appropriate for l2q when first launched'
     print *, ' all other options will modify an already-running l2q'
     print *, ' (and will generate an error if l2q not already running)'
@@ -1142,21 +1261,60 @@ contains
     call output(' Debug               :                           ', advance='no')
     call blanks(4, advance='no')
     call output(options%debug, advance='yes')
+    call output(' Verbose             :                           ', advance='no')
+    call blanks(4, advance='no')
+    call output(options%verbose, advance='yes')
     call output(' Dump each new master:                           ', advance='no')
     call blanks(4, advance='no')
     call output(options%dumpEachNewMaster, advance='yes')
-    call output(' Time each master:                               ', advance='no')
+    call output(' Regularly check for revived hosts:              ', advance='no')
+    call blanks(4, advance='no')
+    call output(options%reviveHosts, advance='yes')
+    call output(' Regularly clean db of finished masters:         ', advance='no')
+    call blanks(4, advance='no')
+    call output(options%cleanMasterDB, advance='yes')
+    call output(' New masters defer to old:                       ', advance='no')
+    call blanks(4, advance='no')
+    call output(options%deferToElders, advance='yes')
+    call output(' Time stamp each report:                         ', advance='no')
     call blanks(4, advance='no')
     call output(options%Timing, advance='yes')
-    call output(' Show total times:                               ', advance='no')
+    call output(' Show date and times:                            ', advance='no')
     call blanks(4, advance='no')
-    call output(options%total_times, advance='yes')
+    call output(options%date_and_times, advance='yes')
+    call output(' Stamp time in what units?:                       ', advance='no')
+    call blanks(4, advance='no')
+    call output(options%timingUnits, advance='yes' )
     call output(' Using wall clock instead of cpu time?:          ', advance='no')
     call blanks(4, advance='no')
     call output(use_wall_clock, advance='yes')
     call output(' ----------------------------------------------------------', &
       & advance='yes')
   end subroutine Dump_settings
+
+  ! ---------------------------------------------  dump_his_hosts  -----
+  subroutine dump_his_hosts( hostIDs, sortUs )
+    integer, dimension(:), intent(in)   :: hostIDs
+    logical, intent(in), optional   :: sortUs
+    ! Internal variables
+    integer :: i
+    integer, dimension(size(hostIDs)) :: myHostIDs
+    character(len=MACHINENAMELEN), dimension(size(hostIDs)) :: myHostNames
+    logical :: mySort
+    integer :: maxNameLength
+    ! Executable
+    mySort = .false.
+    if ( present(sortUs) ) mySort=sortUs
+    myHostIDs = hostIDs
+    if ( mySort ) call sort(myHostIDs, 1, size(hostIDs))
+    maxNameLength = 1
+    do i=1, size(hostIDs)
+      myHostNames(i) = hosts(myHostIDs(i))%name
+      maxNameLength = max(maxNameLength, len_trim(myHostNames(i)) + 1)
+    enddo
+    maxNameLength = min(maxNameLength, MACHINENAMELEN)
+    call dump( myHostNames(:)(1:maxNameLength) )
+  end subroutine dump_his_hosts
 
   ! ---------------------------------------------  proclaim  -----
   subroutine proclaim( Event, Name, Signal, advance )
@@ -1169,6 +1327,7 @@ contains
     ! Executable
     myadvance = 'yes'
     if ( present(advance) ) myAdvance=advance
+    if ( options%timing ) call sayTime
     call output(trim(event), advance='no')
     if ( present(name) ) then
       call output(' associated with ', advance='no')
@@ -1210,6 +1369,9 @@ contains
 end program L2Q
 
 ! $Log$
+! Revision 1.2  2004/12/23 00:19:30  pwagner
+! New options; more convenient dumping to a file
+!
 ! Revision 1.1  2004/12/09 00:42:46  pwagner
 ! First commit
 !
