@@ -110,6 +110,7 @@ contains ! ================================ FullForwardModel routine ======
     integer :: J                        ! Loop index and other uses ..
     integer :: K                        ! Loop index and other uses ..
     integer :: L                        ! Loop index and other uses ..
+    integer :: M                        ! Loop index and other uses ..
     integer :: JF                       ! Loop index and other uses ..
     integer :: MAF                      ! MAF under consideration
     integer :: MAFTINSTANCE             ! Temperature instance closest to 
@@ -124,7 +125,6 @@ contains ! ================================ FullForwardModel routine ======
     integer :: Nlvl                     ! Size of integration grid
     integer :: NOFREQS                  ! Number of frequencies for a pointing
     integer :: NOMAFS                   ! Number of major frames
-    integer :: NOMIFS                   ! Number of minor frames
     integer :: NOSPECIES                ! No. of molecules under consideration
     integer :: NO_MOL                   ! Number of major molecules (NO iso/vib)
     integer :: NOUSEDCHANNELS           ! How many channels are we considering
@@ -162,8 +162,6 @@ contains ! ================================ FullForwardModel routine ======
     character (len=32) :: molName       ! Name of a molecule
 
     logical :: dummy(2) = (/.FALSE.,.FALSE./)  ! dummy Flag array
-
-    character (len=78) :: ErrMsg        ! Error Message
 
     integer, dimension(1) :: WHICHPOINTINGGRIDASARRAY ! Result of minloc
     integer, dimension(1) :: WHICHPATTERNASARRAY      ! Result of minloc
@@ -207,16 +205,18 @@ contains ! ================================ FullForwardModel routine ======
     real(rp) :: NEG_TAN_HT              ! GP Height (in KM.) of tan. press. 
                                         ! below surface
     real(rp) :: PHI_TAN                 ! Phi at tanget point for given pointing
-    real(rp) :: R                       ! real variable for various uses
+    real(rp) :: R,R1,R2                 ! real variables for various uses
     real(rp) :: RAD                     ! Radiance
     real(rp) :: REQ                     ! Equivalent Earth Radius
+    real(rp) :: Vel_Cor                 ! Velocity correction due to Vel_z
     real(rp) :: THISRATIO               ! A sideband ratio
     real(rp) :: ORB_INC                 ! orbital incline angle, Radians
 
     real(rp), dimension(1) :: ONE_TAN_HT ! ***
     real(rp), dimension(1) :: ONE_TAN_TEMP ! ***
 
-    real(r8), dimension(:), pointer :: FREQUENCIES ! What frequencies to compute for
+    real(r8), dimension(:), pointer :: FREQUENCIES ! Frequencies to compute for
+
     real(rp), dimension(:), pointer :: ALPHA_PATH_C ! coarse grid Sing.
     real(rp), dimension(:), pointer :: DEL_S ! Integration lengths along path
     real(rp), dimension(:), pointer :: DHDZ_PATH ! dH/dZ on path
@@ -348,6 +348,10 @@ contains ! ================================ FullForwardModel routine ======
     real(r4), dimension(:,:,:,:,:,:), pointer :: K_SPECT_DN
     real(r4), dimension(:,:,:,:,:,:), pointer :: K_SPECT_DV
 
+!  The 'all_radiometers grid file' approach variables declaration:
+
+    real(rp) :: max_ch_freq_grid, min_ch_freq_grid
+
 ! *** Beta & Molecules grouping variables:
     real(rp) :: beta_ratio
     integer, dimension(:), pointer :: mol_cat_index
@@ -378,7 +382,7 @@ contains ! ================================ FullForwardModel routine ======
     nullify ( alpha_path_c, del_s, dhdz_path, drad_df, drad_dn, &
       & drad_dt, drad_dv, drad_dw, h_path, incoptdepth, n_path, &
       & path_dsdh, phi_basis, phi_basis_dn, &
-      & phi_basis_dv, phi_basis_dw, phi_path, p_glgrid, p_path, radv, &
+      & phi_basis_dv, phi_basis_dw, phi_path, p_glgrid, p_path, RadV, &
       & ref_corr, sps_values, tau, t_path, t_script, xm, ym, zgx,&
       & z_basis, z_basis_dn, z_basis_dv, z_basis_dw, z_glgrid, z_path, &
       & z_all, z_tmp )
@@ -489,7 +493,8 @@ contains ! ================================ FullForwardModel routine ======
 
     MAF = fmStat%maf
     noMAFs = firstRadiance%template%noInstances
-    noMIFs = firstRadiance%template%noSurfs
+
+    Vel_Cor = 1.0_rp - losvel%values(1,maf)/299792458.3_rp
 
   !  Get some dimensions that we'll use a lot
 
@@ -628,8 +633,8 @@ contains ! ================================ FullForwardModel routine ======
       thisCatalogEntry => Catalog(FindFirst(catalog%spec_tag == spectag ) )
       if ( associated ( thisCatalogEntry%lines ) ) then
         ! Now subset the lines according to the signal we're using
-        call Allocate_test ( lineFlag, size(thisCatalogEntry%lines), 'lineFlag', &
-                         &   ModuleName )
+        call Allocate_test ( lineFlag, size(thisCatalogEntry%lines), &
+                         &  'lineFlag', ModuleName )
         lineFlag = .FALSE.
         do k = 1, size ( thisCatalogEntry%lines )
           thisLine => lines(thisCatalogEntry%lines(k))
@@ -637,7 +642,7 @@ contains ! ================================ FullForwardModel routine ======
             do sigInd = 1, size(fwdModelConf%signals)
               doThis = any ( thisLine%signals == &
                 & fwdModelConf%signals(sigInd)%index )
-              ! If we're only doing one sideband, maybe we can remove some more lines
+  ! If we're only doing one sideband, maybe we can remove some more lines
               if ( sidebandStart==sidebandStop ) doThis = doThis .and. &
                 & any( ( thisLine%sidebands == sidebandStart ) .or. &
                 & ( thisLine%sidebands == 0 ) )
@@ -1025,8 +1030,32 @@ contains ! ================================ FullForwardModel routine ======
         ! Work out the maximum number of frequencies
         maxNoPtgFreqs = 0
         do ptg_i = 1, no_tan_hts
-          maxNoPtgFreqs = max ( maxNoPtgFreqs, &
-            & Size(pointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))%frequencies) )
+          k = Size(pointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))%&
+                  &frequencies)
+          maxNoPtgFreqs = MAX ( maxNoPtgFreqs, k)
+        end do
+
+        min_ch_freq_grid =  1.0e+12_rp
+        max_ch_freq_grid = -1.0e+12_rp
+        do i = 1, noUsedChannels
+          sigInd = usedSignals(i)
+          channel = usedChannels(i)
+          shapeInd = MatchSignal ( filterShapes%signal, &
+            & fwdModelConf%signals(sigInd), sideband = thisSideband )
+          if ( shapeInd == 0 ) &
+            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+            &    "No matching channel shape information" )
+          k = Size(FilterShapes(shapeInd)%FilterGrid(channel,:))
+          centerFreq = firstSignal%lo + &
+            & thisSideband * fwdModelConf%signals(sigInd)%centerFrequency
+          direction = fwdModelConf%signals(sigInd)%direction
+!         direction = 1     ! *** ZEBUG
+          r1 = centerFreq+thisSideband * direction * &
+            &   FilterShapes(shapeInd)%FilterGrid(channel,1)
+          r2 = centerFreq+thisSideband * direction * &
+              &   FilterShapes(shapeInd)%FilterGrid(channel,k)
+          min_ch_freq_grid = MIN(r1, r2, min_ch_freq_grid)
+          max_ch_freq_grid = MAX(r1, r2, max_ch_freq_grid)
         end do
 
       else ! ------------------------- Not frequency averaging ---------
@@ -1034,10 +1063,11 @@ contains ! ================================ FullForwardModel routine ======
         call allocate_test ( frequencies,noUsedChannels, "frequencies", &
           &   ModuleName )
         do channel = 1, noUsedchannels
+          direction = fwdModelConf%signals(usedSignals(channel))%direction
+!         direction = 1     ! *** ZEBUG
           frequencies(channel) = &
             & fwdModelConf%signals(usedSignals(channel))%centerFrequency + &
-            & fwdModelConf%signals(usedSignals(channel))%direction * &
-            &   fwdModelConf%signals(usedSignals(channel))% &
+            & direction * fwdModelConf%signals(usedSignals(channel))% &
             &     frequencies(usedChannels(channel))
         end do
         select case ( thisSideband )
@@ -1056,7 +1086,7 @@ contains ! ================================ FullForwardModel routine ======
         maxNoPtgFreqs = noUsedChannels
       end if
 
-      call Allocate_test ( radv, maxNoPtgFreqs, 'radV', ModuleName )
+      call Allocate_test ( RadV, maxNoPtgFreqs, 'RadV', ModuleName )
 
       if (fwdModelConf%temp_der) &
         & call Allocate_test (k_temp_frq,maxNoPtgFreqs,sv_t_len,'k_temp_frq', &
@@ -1143,7 +1173,8 @@ contains ! ================================ FullForwardModel routine ======
               &  NEG_H_TAN = (/neg_tan_ht/))
           endif
 
-          ! Tan heights for a negative tan height from metrics is not correctly working.
+! Tan heights for negative tan height from metrics is not correctly working.
+
         else
           e_rflty = 1.0_rp
           if(FwdModelConf%temp_der) then
@@ -1225,8 +1256,8 @@ contains ! ================================ FullForwardModel routine ======
         call comp_refcor(Req+h_path(indecies_c(1:npc)), 1.0_rp+n_path(1:npc), &
                       &  Req+one_tan_ht(1), del_s(1:npc), ref_corr(1:npc))
 
-        ! This only needs to be computed on the gl (not coarse) grid thus there is
-        ! some duplication here.
+! This only needs to be computed on the gl (not coarse) grid thus there is
+! some duplication here.
         path_dsdh(2:brkpt-1) = path_ds_dh(Req+h_path(2:brkpt-1), &
           &   Req+one_tan_ht(1))
         path_dsdh(brkpt+2:no_ele-1)=path_ds_dh(Req+h_path(brkpt+2:no_ele-1), &
@@ -1257,19 +1288,22 @@ contains ! ================================ FullForwardModel routine ======
         ! this pointing.
 
         if ( FwdModelConf%do_freq_avg ) then
-! ** BILLs DEBUG
-          nofreqs = SIZE(PointingGrids(whichPointingGrid)%oneGrid( &
+          j = -1
+          k = SIZE(PointingGrids(whichPointingGrid)%oneGrid( &
                        & grids(ptg_i))%frequencies)
-          call allocate_test ( frequencies,nofreqs, "frequencies", ModuleName )
+          Call Hunt_zvi(min_ch_freq_grid,PointingGrids(whichPointingGrid)%&
+                        &oneGrid(grids(ptg_i))%frequencies,k,j,frq_i)
+          Call Hunt_zvi(max_ch_freq_grid,PointingGrids(whichPointingGrid)%&
+                        &oneGrid(grids(ptg_i))%frequencies,k,frq_i,m)
+          noFreqs = m - j + 1
+          call allocate_test ( frequencies,noFreqs, "frequencies", ModuleName )
+          frequencies(1:noFreqs) = PointingGrids(whichPointingGrid)%&
+                                   &oneGrid(grids(ptg_i))%frequencies(j:m)
+        endif
+!
 ! VELOCITY shift correction to frequency grid
-          frequencies =  &
-       & (PointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))%frequencies) &
-                      *(1.0_rp - losvel%values(1,maf) / 299792458.3_rp)
-!          frequencies =>  &
-!         & PointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))%frequencies
-!          noFreqs = size(frequencies)
-
-        end if ! If not, we dealt with this outside the loop
+!
+        frequencies =  Vel_Cor * frequencies
 
         ! Loop over frequencies ----------------------------------------------
         if ( toggle(emit) .and. levels(emit) > 4 ) &
@@ -1525,7 +1559,9 @@ contains ! ================================ FullForwardModel routine ======
 
           if ( toggle(emit) .and. levels(emit) > 5 ) &
             & call Trace_End ('ForwardModel.Frequency ',index=frq_i)
+
         end do            ! End freq. loop
+
         if ( toggle(emit) .and. levels(emit) > 4 ) &
           & call Trace_End ( 'ForwardModel.FrequencyLoop' )
 
@@ -1538,6 +1574,7 @@ contains ! ================================ FullForwardModel routine ======
 
         if ( toggle(emit) .and. levels(emit) > 4 ) &
           & call trace_begin ( 'ForwardModel.FrequencyAvg' )
+
         if ( fwdModelConf%do_freq_avg ) then
           do i = 1, noUsedChannels
             sigInd = usedSignals(i)
@@ -1545,18 +1582,18 @@ contains ! ================================ FullForwardModel routine ======
             centerFreq = firstSignal%lo + &
               & thisSideband * fwdModelConf%signals(sigInd)%centerFrequency
             direction = fwdModelConf%signals(sigInd)%direction
+!           direction = 1     ! *** ZEBUG
             shapeInd = MatchSignal ( filterShapes%signal, &
               & fwdModelConf%signals(sigInd), sideband = thisSideband )
             if ( shapeInd == 0 ) &
               & call MLSMessage ( MLSMSG_Error, ModuleName, &
               &    "No matching channel shape information" )
+            k = size(FilterShapes(shapeInd)%FilterGrid(channel,:))
             call Freq_Avg ( frequencies, &
-              & centerFreq+thisSideband * direction * &
+              & CenterFreq+thisSideband * direction * &
               &   FilterShapes(shapeInd)%FilterGrid(channel,:), &
               &   FilterShapes(shapeInd)%FilterShape(channel,:),&
-              & RadV, noFreqs,  &
-              & size(FilterShapes(shapeInd)%FilterGrid(channel,:)), &
-              & Radiances(ptg_i,i) )
+              & RadV, noFreqs, k, Radiances(ptg_i,i) )
           end do
         else
           Radiances(ptg_i,1:noUsedChannels) = RadV(1:)
@@ -1576,6 +1613,7 @@ contains ! ================================ FullForwardModel routine ======
               centerFreq = firstSignal%lo + thisSideband * &
                 & fwdModelConf%signals(sigInd)%centerFrequency
               direction = fwdModelConf%signals(sigInd)%direction
+!             direction = 1     ! *** ZEBUG
               shapeInd = MatchSignal ( filterShapes%signal, &
                 & fwdModelConf%signals(sigInd), &
                 & sideband = thisSideband, channel=channel )
@@ -1626,6 +1664,7 @@ contains ! ================================ FullForwardModel routine ======
                   centerFreq = firstSignal%lo + thisSideband * &
                     & fwdModelConf%signals(sigInd)%centerFrequency
                   direction = fwdModelConf%signals(sigInd)%direction
+!                 direction = 1     ! *** ZEBUG
                   shapeInd = MatchSignal ( filterShapes%signal, &
                     & fwdModelConf%signals(sigInd), &
                     & sideband = thisSideband, channel=channel )
@@ -1673,7 +1712,7 @@ contains ! ================================ FullForwardModel routine ======
 
           do k = 1, NO_MOL
             specie = mol_cat_index(k)
-            ! ** ZEBUG     if ( fwdModelConf%moleculeSpectDerivatives(specie) ) then
+! ** ZEBUG     if ( fwdModelConf%moleculeSpectDerivatives(specie) ) then
             if ( fwdModelConf%moleculeDerivatives(specie) ) then
               if ( fwdModelConf%do_freq_avg ) then
                 do i = 1, noUsedChannels
@@ -1683,6 +1722,7 @@ contains ! ================================ FullForwardModel routine ======
                   centerFreq = firstSignal%lo + thisSideband * &
                     & fwdModelConf%signals(sigInd)%centerFrequency
                   direction = fwdModelConf%signals(sigInd)%direction
+!                 direction = 1     ! *** ZEBUG
                   shapeInd = MatchSignal ( filterShapes%signal, &
                     & fwdModelConf%signals(sigInd), &
                     & sideband = thisSideband, channel=channel )
@@ -1722,7 +1762,7 @@ contains ! ================================ FullForwardModel routine ======
 
           do k = 1, NO_MOL
             specie = mol_cat_index(k)
-            ! ** ZEBUG     if ( fwdModelConf%moleculeSpectDerivatives(specie) ) then
+! ** ZEBUG     if ( fwdModelConf%moleculeSpectDerivatives(specie) ) then
             if ( fwdModelConf%moleculeDerivatives(specie) ) then
               if ( fwdModelConf%do_freq_avg ) then
                 do i = 1, noUsedChannels
@@ -1732,6 +1772,7 @@ contains ! ================================ FullForwardModel routine ======
                   centerFreq = firstSignal%lo + thisSideband * &
                     & fwdModelConf%signals(sigInd)%centerFrequency
                   direction = fwdModelConf%signals(sigInd)%direction
+!                 direction = 1     ! *** ZEBUG
                   shapeInd = MatchSignal ( filterShapes%signal, &
                     & fwdModelConf%signals(sigInd), &
                     & sideband = thisSideband, channel=channel )
@@ -1771,7 +1812,7 @@ contains ! ================================ FullForwardModel routine ======
 
           do k = 1, NO_MOL
             specie = mol_cat_index(k)
-            ! ** ZEBUG     if ( fwdModelConf%moleculeSpectDerivatives(specie) ) then
+! ** ZEBUG     if ( fwdModelConf%moleculeSpectDerivatives(specie) ) then
             if ( fwdModelConf%moleculeDerivatives(specie) ) then
               if ( fwdModelConf%do_freq_avg ) then
                 do i = 1, noUsedChannels
@@ -1781,6 +1822,7 @@ contains ! ================================ FullForwardModel routine ======
                   centerFreq = firstSignal%lo + thisSideband * &
                     & fwdModelConf%signals(sigInd)%centerFrequency
                   direction = fwdModelConf%signals(sigInd)%direction
+!                 direction = 1     ! *** ZEBUG
                   shapeInd = MatchSignal ( filterShapes%signal, &
                     & fwdModelConf%signals(sigInd), &
                     & sideband = thisSideband, channel=channel )
@@ -1965,7 +2007,7 @@ contains ! ================================ FullForwardModel routine ======
       end if
 
       print *
-      k=ptan%template%noSurfs
+      k = ptan%template%noSurfs
       print 901, k
       Print 902,Ptan%values(1:k,maf)
 
@@ -1987,7 +2029,7 @@ contains ! ================================ FullForwardModel routine ======
       end do
       Print *
 
-903   format ( 'ch', i2.2, '_pfa_rad', a1, i3.3 )
+903   format (/, 'ch', i2.2, '_pfa_rad', a1, i3.3 )
 905   format ( 4(2x, 1pg15.8) )
 
       Deallocate(PrtRad, STAT=i)
@@ -2134,6 +2176,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.39  2002/05/03 23:29:18  livesey
+! Added direction and split sideband ratio stuff
+!
 ! Revision 2.38  2002/02/22 00:52:06  bill
 ! fixed units error for light speed--wgr
 !
