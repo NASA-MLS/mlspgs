@@ -48,9 +48,9 @@ contains ! =====     Public procedures     =============================
     & N_LIT_INDICES, FIRST_PARM_INDEX, LAST_PARM_INDEX, N_SECTION_INDICES, &
     & N_SPEC_INDICES )
 
-    ! This really belongs in make_tree, but "make depends" can't see it there
+    ! This is here because "make depends" can't see it in make_tree
     ! (because of the "include"):
-    use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
+    use TREE, only:
     use TREE_TYPES, only: N_DT_DEF
 
     integer, intent(in) :: N_DATA_TYPE_INDICES
@@ -104,6 +104,9 @@ contains ! =====     Public procedures     =============================
 end module MOLECULES
 
 ! $Log$
+! Revision 2.20  2003/05/19 19:37:41  vsnyder
+! Remove USE's for unreferenced names
+!
 ! Revision 2.19  2003/05/17 00:03:15  pwagner
 ! Made to work with mol_... files created by init_gen
 !
