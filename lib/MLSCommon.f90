@@ -41,6 +41,7 @@ MODULE MLSCommon                ! Common definitions for the MLS software
 
 ! Shouldn't this be PGSd_PC_FILE_PATH_MAX ?
   INTEGER, PARAMETER :: FileNameLen=max(PGSd_PC_FILE_PATH_MAX, 132) ! was 132
+  INTEGER, PARAMETER :: BareFNLen=64      ! Bare file name length (w/o path)
 
   ! --------------------------------------------------------------------------
   
@@ -104,6 +105,9 @@ END MODULE MLSCommon
 
 !
 ! $Log$
+! Revision 2.10  2002/02/19 23:10:54  pwagner
+! Added BareFNLen
+!
 ! Revision 2.9  2002/01/09 23:51:27  pwagner
 ! Connected FileNameLen with PGSd_PC_FILE_PATH_MAX
 !
