@@ -35,5 +35,10 @@ begin Fill
   !define(flaggingBands,{2,3,4,5})
   !makeFlagsForOneProduct(product=CH3CN,radiometer=R2,chisqScale=500.0,minRads=4500,cloudMax=5K)
 
+  ;; ------------------------------------- Temperature-CorePlusR2
+  !define(flaggingBands,{1,22,32})
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R2,chisqScale=10.0,minRads=1500,cloudMax=2K)
+
+
 end Fill
 
