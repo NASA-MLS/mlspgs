@@ -109,7 +109,6 @@ contains ! =================================== Public Procedures==============
     type (Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
     integer :: STATUS                   ! From deallocate
     integer, dimension(2) :: MAFRANGE   ! Processing range in MAFs
-    integer :: TOTALMAFS                ! Total number of MAFs in file
 
     ! Executable code
     
@@ -126,17 +125,17 @@ contains ! =================================== Public Procedures==============
     nullify ( obstructions )
     if ( config%method /= l_fixed ) &
       & call SurveyL1BData ( processingRange, l1bInfo, config, mafRange,&
-      & totalMAFS, obstructions )
+      & obstructions )
 
     ! Now go place the chunks.
     select case ( config%method )
     case ( l_fixed )
       call ChunkDivide_Fixed ( config, chunks )
     case ( l_orbital )
-      call ChunkDivide_Orbital ( config, mafRange, totalMAFs, l1bInfo, &
+      call ChunkDivide_Orbital ( config, mafRange, l1bInfo, &
         & obstructions, chunks )
     case ( l_even )
-      call ChunkDivide_Even ( config, mafRange, totalMAFs, l1bInfo, &
+      call ChunkDivide_Even ( config, mafRange, l1bInfo, &
         & obstructions, chunks )
     end select
 
@@ -166,11 +165,10 @@ contains ! =================================== Public Procedures==============
   end subroutine AddObstructionToDatabase
 
   !----------------------------------------- ChunkDivide_Even --------
-  subroutine ChunkDivide_Even ( config, mafRange, totalMAFs, l1bInfo, &
+  subroutine ChunkDivide_Even ( config, mafRange, l1bInfo, &
     & obstructions, chunks )
     type (ChunkDivideConfig_T), intent(in) :: CONFIG
     integer, dimension(2), intent(in) :: MAFRANGE
-    integer :: TOTALMAFS
     type (L1BInfo_T), intent(in) :: L1BINFO
     type (Obstruction_T), dimension(:), intent(in) :: OBSTRUCTIONS
     type (MLSChunk_T), dimension(:), pointer :: CHUNKS
@@ -217,11 +215,10 @@ contains ! =================================== Public Procedures==============
   end subroutine ChunkDivide_Fixed
 
   !----------------------------------------- ChunkDivide_Orbital --------
-  subroutine ChunkDivide_Orbital ( config, mafRange, totalMAFs, l1bInfo, &
+  subroutine ChunkDivide_Orbital ( config, mafRange, l1bInfo, &
     & obstructions, chunks )
     type (ChunkDivideConfig_T), intent(in) :: CONFIG
     integer, dimension(2), intent(in) :: MAFRANGE
-    integer, intent(in) :: TOTALMAFS
     type (L1BInfo_T), intent(in) :: L1BINFO
     type (Obstruction_T), dimension(:), intent(in) :: OBSTRUCTIONS
     type (MLSChunk_T), dimension(:), pointer :: CHUNKS
@@ -253,26 +250,29 @@ contains ! =================================== Public Procedures==============
     real(r8) :: MINV                  ! Either minTime or minAngle
     integer, dimension(:), pointer :: NEWFIRSTMAFS ! For thinking about overlaps
     integer, dimension(:), pointer :: NEWLASTMAFS ! For thinking about overlaps
+    integer :: M1, M2                   ! MafRange + 1
 
     ! Exectuable code
     
     ! Read in the data we're going to need
     call get_string ( lit_indices(config%homeModule), modNameStr, strip=.true. )
     call ReadL1BData ( l1bInfo%l1bOAId, trim(modNameStr)//'.tpGeodAngle', &
-      & tpGeodAngle, noMAFsRead, flag, firstMAF=mafRange(1), lastMAF=mafRange(2) )
+      & tpGeodAngle, noMAFsRead, flag )
     call ReadL1BData ( l1bInfo%l1bOAId, 'MAFStartTimeTAI', &
-      & taiTime, noMAFsRead, flag, firstMAF=mafRange(1), lastMAF=mafRange(2) )
+      & taiTime, noMAFsRead, flag )
     noMAFs = mafRange(2) - mafRange(1) + 1
+    m1 = mafRange(1) + 1
+    m2 = mafRange(2) + 1
 
-    minAngle = minval ( tpGeodAngle%dpField(1,1,:) )
-    maxAngle = maxval ( tpGeodAngle%dpField(1,1,:) )
-    minTime = minval ( taiTime%dpField(1,1,:) )
-    maxTime = maxval ( taiTime%dpField(1,1,:) )
+    minAngle = minval ( tpGeodAngle%dpField(1,1,m1:m2) )
+    maxAngle = maxval ( tpGeodAngle%dpField(1,1,m1:m2) )
+    minTime = minval ( taiTime%dpField(1,1,m1:m2) )
+    maxTime = maxval ( taiTime%dpField(1,1,m1:m2) )
 
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     ! First try to locate the last MAF before the homeGeodAngle
-    orbit = int ( tpGeodAngle%dpField(1,1,1)/360.0 )
-    if ( tpGeodAngle%dpField(1,1,1) < 0.0 ) orbit = orbit - 1
+    orbit = int ( tpGeodAngle%dpField(1,1,m1)/360.0 )
+    if ( tpGeodAngle%dpField(1,1,mafRange(1)) < 0.0 ) orbit = orbit - 1
     testAngle = config%homeGeodAngle + orbit*360.0
     if ( config%maxLengthFamily == PHYQ_Angle ) then
       angleIncrement = config%maxLength
@@ -288,11 +288,12 @@ contains ! =================================== Public Procedures==============
       if ( testAngle > maxAngle ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Unable to establish a home major frame, using the first' )
-        homeMAF = 1
+        homeMAF = mafRange(1)
         exit homeHuntLoop
       end if
       ! Find MAF which starts before this test angle
-      call Hunt ( tpGeodAngle%dpField(1,1,:), testAngle, homeMAF )
+      call Hunt ( tpGeodAngle%dpField(1,1,m1:m2), testAngle, homeMAF )
+      homeMAF = homeMAF + m1 - 1
       ! Now if this is close enough, accept it
       if ( abs ( tpGeodAngle%dpField(1,1,homeMAF) - &
         & testAngle ) < HomeAccuracy ) exit homeHuntLoop
@@ -331,10 +332,10 @@ contains ! =================================== Public Procedures==============
       ! with pointers to allow us to use common code to sort them out
       select case ( config%maxLengthFamily )
       case ( PHYQ_Angle )
-        field => tpGeodAngle%dpField(1,1,:)
+        field => tpGeodAngle%dpField(1,1,m1:m2)
         minV = minAngle
       case ( PHYQ_Time )
-        field => taiTime%dpField(1,1,:)
+        field => taiTime%dpField(1,1,m1:m2)
         minV = minTime
       case ( PHYQ_MAFs)
       end select
@@ -361,7 +362,7 @@ contains ! =================================== Public Procedures==============
     
     ! Now offset these to the index in the file not the array
     chunks%firstMAFIndex = chunks%firstMAFIndex + mafRange(1) - 1
-    chunks%lastMAFIndex = chunks%lastMAFIndex + mafRange(1) - 1
+    chunks%lastMAFIndex = chunks%lastMAFIndex + mafRange(1) - 1 
 
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     ! Think about overlaps
@@ -373,6 +374,9 @@ contains ! =================================== Public Procedures==============
     else
       ! For angle and time, they are similar enough we'll just do some stuff
       ! with pointers to allow us to use common code to sort them out
+      ! Note that before we search only over the range in mafRange, here we
+      ! search over the whole file as we can spill over the processing range
+      ! for overlaps.
       select case ( config%maxLengthFamily )
       case ( PHYQ_Angle )
         field => tpGeodAngle%dpField(1,1,:)
@@ -382,13 +386,13 @@ contains ! =================================== Public Procedures==============
         minV = minTime
       case ( PHYQ_MAFs)
       end select
-      call Hunt ( field, field(chunks%firstMAFIndex-mafRange(1)+1) + &
+      call Hunt ( field, field(chunks%firstMAFIndex-1) + &
         & config%overlap, newFirstMAFs, allowTopValue=.true. )
-      call Hunt ( field, field(chunks%firstMAFIndex-mafRange(1)+1) - &
+      call Hunt ( field, field(chunks%firstMAFIndex-1) - &
         & config%overlap, newLastMAFs, allowTopValue=.true. )
-      ! Correct this again, so they are in the file not the array
-      newFirstMAFs = newFirstMAFs + mafRange(1) - 1
-      newLastMAFs = newLastMAFs + mafRange(1) - 1
+      ! Correct this to be real MAF indicies (starting from zero)
+      newFirstMAFs = newFirstMAFs - 1
+      newLastMAFs = newLastMAFs - 1
     end if
     chunks%noMAFsUpperOverlap = newFirstMAFs - chunks%firstMAFIndex 
     chunks%lastMAFIndex = newFirstMAFs
@@ -759,14 +763,13 @@ contains ! =================================== Public Procedures==============
 
   ! ------------------------------------------ SurveyL1BData -----------
   subroutine SurveyL1BData ( processingRange, l1bInfo, config, mafRange,&
-    & totalMAFs, obstructions )
+    & obstructions )
     ! This goes through the L1B data files and trys to spot possible
     ! obstructions.
     type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
     type (L1BInfo_T), intent(in) :: L1BINFO
     type (ChunkDivideConfig_T), intent(in) :: CONFIG
     integer, dimension(2), intent(out) :: MAFRANGE   ! Processing range in MAFs
-    integer, intent(out) :: TOTALMAFS   ! Total in file
     type (Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
 
     ! Local variables
@@ -788,7 +791,7 @@ contains ! =================================== Public Procedures==============
     ! Executable code
     
     ! Read time from the L1BOA file
-    call ReadL1BData ( l1bInfo%l1boaId, 'MAFStartTimeTAI', taiTime, totalMAFs, flag )
+    call ReadL1BData ( l1bInfo%l1boaId, 'MAFStartTimeTAI', taiTime, noMAFsRead, flag )
 
     ! Deduce the first and last MAFs to consider
     call Hunt ( taiTime%dpField(1,1,:), &
@@ -859,6 +862,9 @@ contains ! =================================== Public Procedures==============
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.5  2001/11/10 00:56:24  livesey
+! OK, this is getting close to being ready for testing.
+!
 ! Revision 2.4  2001/11/10 00:03:44  livesey
 ! More work, still got issues!
 !
