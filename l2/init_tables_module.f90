@@ -740,9 +740,11 @@ contains ! =====     Public procedures     =============================
              begin, f+f_do_conv, t+t_boolean, n+n_field_type, &
              begin, f+f_do_freq_avg, t+t_boolean, n+n_field_type, &
              begin, f+f_integrationGrid, s+s_vGrid, n+n_field_spec, &
+             begin, f+f_lockBins, t+t_boolean, n+n_field_type, &
              begin, f+f_module, s+s_module, n+n_field_spec, &
              begin, f+f_moleculeDerivatives, t+t_molecule, n+n_field_type, &
              begin, f+f_molecules, t+t_molecule, n+n_field_type, &
+             begin, f+f_nameFragment, t+t_string, n+n_field_type, &
              begin, f+f_nabterms, t+t_numeric, n+n_field_type, &
              begin, f+f_nazimuthangles, t+t_numeric, n+n_field_type, &
              begin, f+f_ncloudspecies, t+t_numeric, n+n_field_type, &
@@ -922,6 +924,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.228  2002/07/17 06:02:36  livesey
+! New HDF5 l2pc stuff
+!
 ! Revision 2.227  2002/07/05 17:47:19  livesey
 ! Allow join to be within the chunk processing
 !
