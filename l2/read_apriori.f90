@@ -221,7 +221,16 @@ contains ! =====     Public Procedures     =============================
             & aprioriData(l2Index), fieldName = TRIM(fieldNameString))
           
         case ( l_climatology )
+         
+          ! Identify file (maybe from PCF if no name given)
+
+          ! Have we read this already?
+
+          ! No, well read it then, add its entire contents to the database
           
+          ! Locate requested grid by name, store index in gridIndex
+          ! call decorate ( key, gridIndex )
+
           CALL READ_CLIMATOLOGY(FileNameString, son, &
             & aprioriData, mlspcf_l2clim_start, mlspcf_l2clim_end)
           
@@ -242,6 +251,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.13  2001/03/29 19:13:41  livesey
+! Added some comment guidelines for read climatology
+!
 ! Revision 2.12  2001/03/21 00:46:08  pwagner
 ! Passes son to READ_CLIMATOLOGY
 !
