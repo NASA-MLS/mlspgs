@@ -5,12 +5,11 @@ module Parse_Signal_M
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use Declaration_Table, only: Decls, Get_Decl, Label
-  use Init_MLSSignals_m, only: S_Band, S_Module, S_Radiometer, S_Signal, &
-    & S_SpectrometerType, Spec_First
+  use Init_MLSSignals_m, only: S_Band, S_Radiometer, S_SpectrometerType
   use Intrinsic, only: Spec_Indices
   use Lexer_Core, only: Print_Source, Token
   use Lexer_m, only: Lex_Signal
-  use MLSSignals_m, only: Bands, Radiometers, Signals, SpectrometerTypes
+  use MLSSignals_m, only: Bands, Radiometers, Signals
   use MoreTree, only: Get_Spec_ID
   use Output_m, only: Output
   use String_table, only: Display_string, Get_String
@@ -463,6 +462,9 @@ o:  do
 end module Parse_Signal_M
 
 ! $Log$
+! Revision 2.14  2003/01/25 04:14:13  vsnyder
+! Get rid of USEs for stuff not actually used
+!
 ! Revision 2.13  2002/11/06 00:13:32  pwagner
 ! Should not dump core if parse_signal called with tree_index 0
 !
