@@ -5,7 +5,7 @@
 
 ; First some m4 directives.
 include(m4defs.l2cf)
-!ifdef(band, ,!define(band,2L))
+!ifdef(band, ,!define(band,3))
 !define(outpath,{/bigdata/livesey/misc/})
 !define(ver,test4)
 !define(day,1996-051)
@@ -33,7 +33,7 @@ BEGIN GlobalSettings
 
     l1Boa, file='/data/emls/l1boa/truth/!year(!day)/MLS-Aura_L1BOA_Full_s4-t_!day.dat'
     startTime = "00:00:00"
-    endTime = "23:59:59"
+    endTime = "02:00:00"
 
     vGridStandard: vGrid, coordinate=Zeta, type=Logarithmic, $
                    start=1000mb, formula=[72:12]
@@ -169,7 +169,7 @@ END Join
 ; ---------------------------------------------------------  Output  -----
 BEGIN Output
 
-    output, file='!outpath/rad_band_!band_!ver_!day.dat',  $
+    output, file='!outpath/MLS-Aura_L1BRAD_!band-clean_!ver_!day.dat', $
       quantities=  $
       [ ptanGHzL2AUX, ptanTHzL2AUX, radL2AUX, noiseL2AUX ], type=l2aux
 
