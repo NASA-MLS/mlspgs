@@ -270,7 +270,7 @@ contains ! =====     Public Procedures     =============================
     integer :: I, Status
     ! Executable statements:
     call destroyVectorInfo ( z )
-    z%template = x%template
+    z%template => x%template
     allocate ( z%quantities(size(x%quantities)), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // "z%quantities" )
@@ -1241,6 +1241,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.26  2001/04/25 01:24:54  vsnyder
+! Give initial values to 'name' fields
+!
 ! Revision 2.25  2001/04/24 21:33:53  livesey
 ! Added insulate vector
 !
