@@ -65,11 +65,12 @@ contains
   ! quantity type that is not represented in the {\tt regQuants} field, no
   ! regularization is applied to that block.
   !
-  ! It is necessary that the total number of rows in the first row block of
-  ! A be large enough to accomodate the regularization~-- roughly at least
-  ! (number of columns of a)~- min(order)).  The number of columns of each
-  ! block shall be at least one more than the regularization order for that
-  ! block.
+  ! It is necessary that the number of rows in the row block of A that has
+  ! the most rows be large enough to accomodate the regularization~--
+  ! roughly at least (number of columns of a)~- min(order)).  If the
+  ! regularization order for a block is less than one less than the number of
+  ! columns of that block, the regularization order is set to one less than
+  ! the number of columns for that block, and a warning message is emitted.
 
     type(Matrix_T), intent(inout) :: A
     integer, intent(in) :: Orders
@@ -251,6 +252,9 @@ contains
 end module Regularization
 
 ! $Log$
+! Revision 2.15  2002/08/03 01:15:36  vsnyder
+! Fixed the comment about row sizes
+!
 ! Revision 2.14  2002/07/30 23:20:20  vsnyder
 ! Use order ncol-1 instead of zero for narrow blocks, Warn if ord < ncol-1.
 ! Use the weight (duh!). Use the row block with the most rows.
