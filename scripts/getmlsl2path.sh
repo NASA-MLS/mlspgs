@@ -25,13 +25,9 @@ while [ -n "$(echo $1)" ]; do
 	fi
     fi
     if [ $1 == "--l2pc" ]; then
-	if [ $SUMS == 1 ]; then
-	    echo "/scratch/livesey"
-	fi
 	if [ $SOUNDBARRIER == 1 ]; then
 	    echo "$HOME/v1.0.1"
-	fi
-	if [ $DESKTOP == 1 ]; then
+	else
 	    echo "/bigdata/livesey/v1.0.1"
 	fi
     fi
@@ -77,3 +73,6 @@ while [ -n "$(echo $1)" ]; do
 done
 
 # $Log$
+# Revision 1.1  2002/11/21 17:30:53  livesey
+# First version
+#
