@@ -4,7 +4,7 @@
 !=============================================================================
 module ReadAPriori
 
-  use GriddedData, only: GriddedData_T
+  use GriddedData, only: GriddedData_T, v_is_pressure
   use Hdf, only: DFACC_READ, SFSTART
   use Hdfeos, only: swopen, swclose
   use INIT_TABLES_MODULE, only: F_FIELD, F_FILE, F_ORIGIN, F_SDNAME, F_SWATH, &
@@ -22,7 +22,7 @@ module ReadAPriori
   use MLSPCF2, only: mlspcf_l2clim_start, mlspcf_l2clim_end
   use MoreTree, only: Get_Spec_ID
   use ncep_dao, only: AddGridTemplateToDatabase, &
-  & READ_CLIMATOLOGY, ReadGriddedData, v_is_pressure
+  & READ_CLIMATOLOGY, ReadGriddedData
   use String_Table, only: GET_STRING, DISPLAY_STRING
   use TOGGLES, only: GEN, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -242,6 +242,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.11  2001/03/15 21:38:00  pwagner
+! Gets v_is_pressure from GriddedData
+!
 ! Revision 2.10  2001/03/15 21:25:16  pwagner
 ! Split between GriddedData and ncep_dao modules
 !
