@@ -1,28 +1,52 @@
-SUBROUTINE SENSITIVITY(DTcir,ZT,NT,YP,YZ,NH,PRESSURE,NZ,  &
-        &                    delTAU,delTAUc,delTAU100,TAUeff,SS, &
-        &                    Trans_out,BETA,BETAc,DDm,Dm,DDZ,DZ, &
-        &                       N,ISWI,RE)
-!----------------------------------------------------------------
+
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+ 
+module ModelOutput
+
+! ---------------------------------------------------------------------------  
+! OUTPUT CLOUD EXTINCTION, EFFECTIVE OPTICAL DEPTH, AND RADIANCE SENSITIVITY
+! ---------------------------------------------------------------------------
 
       use MLSCommon, only: r8
-      INTEGER :: NH,NZ
+      IMPLICIT NONE
+      private
+      public :: SENSITIVITY
+
+ !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm =                          &
+    "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName=                       &
+    "$RCSfile$"
+ !---------------------------------------------------------------------------
+
+contains 
+
+      SUBROUTINE SENSITIVITY(DTcir,ZT,NT,YP,YZ,NH,PRESSURE,NZ,   &
+        &                    delTAU,delTAUc,delTAU100,TAUeff,SS, &
+        &                    Trans_out,BETA,BETAc,DDm,Dm,DDZ,DZ, &
+        &                    N,ISWI,RE)
+!----------------------------------------------------------------
+
+      INTEGER :: NH, NZ, NT, N
 
       REAL(r8) :: ZT(NT)                            ! TANGENT HEIGHT
       REAL(r8) :: YP(NH)                            ! MODEL PRESSURE LEVEL
       REAL(r8) :: YZ(NH)                            ! MODEL PRESSURE HEIGHT
       REAL(r8) :: PRESSURE(NZ)                      ! L2 PRESSURE LEVEL
-      REAL(r8) :: DTcir(NT)                      ! CLOUD-INDUCED RADIANCE
-      REAL(r8) :: SS(NT)                         ! CLOUD RADIANCE SENSITIVITY
-      REAL(r8) :: TAUeff(NT)                     ! CLOUD EFFECTIVE OPTICAL DEPTH
+      REAL(r8) :: DTcir(NT)                         ! CLOUD-INDUCED RADIANCE
+      REAL(r8) :: SS(NT)                            ! CLOUD RADIANCE SENSITIVITY
+      REAL(r8) :: TAUeff(NT)                        ! CLOUD EFFECTIVE OPTICAL DEPTH
 
-      REAL(r8) :: Trans(NH-1)                      ! Clear Transmission Func 
+      REAL(r8) :: Trans(NH-1)                       ! Clear Transmission Func 
       REAL(r8) :: delTAU100(NH-1)                   ! 100% AIR EXTINCTION 
       REAL(r8) :: delTAU(NH-1)                      ! TOTAL EXTINCTION 
       REAL(r8) :: delTAUc(NH-1)                     ! CLOUDY-SKY EXTINCTION
 
-      REAL(r8) :: Trans_out(NZ-1)            ! TOTAL Clear Trans Func
-      REAL(r8) :: BETA(NZ-1)                     ! TOTAL EXTINCTION
-      REAL(r8) :: BETAc(NZ-1)                    ! CLOUDY-SKY EXTINCTION
+      REAL(r8) :: Trans_out(NZ-1)                   ! TOTAL Clear Trans Func
+      REAL(r8) :: BETA(NZ-1)                        ! TOTAL EXTINCTION
+      REAL(r8) :: BETAc(NZ-1)                       ! CLOUDY-SKY EXTINCTION
       REAL(r8) :: DDm(N,NH-1)                       ! MASS-MEAN-DIAMETER
       REAL(r8) :: Dm(N,NZ-1)                        ! MASS-MEAN-DIAMETER
       REAL(r8) :: DDZ(NH-1)                         ! MODEL LEYER THICKNESS
@@ -31,7 +55,7 @@ SUBROUTINE SENSITIVITY(DTcir,ZT,NT,YP,YZ,NH,PRESSURE,NZ,  &
       REAL(r8) :: RE
       REAL(r8) :: HT,C_EXT,A_EXT,TGT,DS,DTAU,A_COL
       REAL(r8) :: ZH(NH-1),ZA(NH-1)
-      INTEGER :: I,K,J,iflag
+      INTEGER :: I,K,J,iflag, JM, ISWI
 !-----------------------------------------------------------------------------
 
 !===============================================================
@@ -159,16 +183,9 @@ SUBROUTINE SENSITIVITY(DTcir,ZT,NT,YP,YZ,NH,PRESSURE,NZ,  &
       ENDIF
 
 !--------------------------------------------------------------------------
-      RETURN
-      END
 
-! $Log: sensitivity.f90,v      
+      END SUBROUTINE SENSITIVITY
 
+end module ModelOutput
 
-
-
-
-
-
-
-
+! $Log: ModelOutput.f90,v      

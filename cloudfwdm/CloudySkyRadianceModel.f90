@@ -15,6 +15,7 @@ module CloudySkyRadianceModel
       use HYDROSTATIC_INTRP, only: GET_PRESSURES
       use L2PC_FILE_PARAMETERS, only: DEG2RAD
       use ModelInput, only: MODEL_ATMOS
+      use ModelOutput, only: SENSITIVITY
       use MLSCommon, only: r8
       use MLSNumerics, only: INTERPOLATEVALUES
       use RadiativeTransferModule, only: RADXFER
