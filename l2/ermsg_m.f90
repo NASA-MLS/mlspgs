@@ -26,7 +26,7 @@ module ERMSG_M
   integer, save, private :: IALPHA  ! = IDELTA + LEVEL; used to determine
                                     ! whether to print
 
-  character(LEN=80), private :: output_line
+  character(LEN=256), private :: output_line
 
 !---------------------------- RCS Ident Info -------------------------------
   CHARACTER (LEN=256) :: Id = &
@@ -428,6 +428,9 @@ contains
 end module ERMSG_M
 
 ! $Log$
+! Revision 2.3  2002/01/17 17:32:53  livesey
+! Made output_line a lot bigger
+!
 ! Revision 2.2  2002/01/09 00:00:04  pwagner
 ! Replaced write or print statements with calls to output
 !
