@@ -4,7 +4,7 @@
 module GET_BETA_PATH_M
 
   use MLSCommon, only: RP, R8
-  use RHIFromH2O, only: RHIFromH2O_Factor
+
   implicit NONE
   private
   public :: Get_Beta_Path, Get_Beta_Path_Scalar, Get_Beta_Path_Polarized
@@ -270,6 +270,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.23  2003/02/07 01:08:34  jonathan
+! remove ICON option for compute super saturation
+!
 ! Revision 2.22  2003/02/06 22:12:49  jonathan
 ! fix bug
 !
