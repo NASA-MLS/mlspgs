@@ -48,7 +48,7 @@ E.g., mlsl2 -m -p --nmeta -S"glo jac"
     filename contains simply ascii list of slave host names
     can list a machine more than once (e.g. for SMP slaves)
     One can also append, after a colon, a colon separated range
-    of slaves with in that file to use.
+    of slaves within that file to use.
   --recl[ ]<number>: set the max record length size for l2cf to <number>
       (In case the default value, 20000, is too small for some l2cfs).
       This has effect only if the l2cf is not coming from standard input.
@@ -95,6 +95,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will not be printed in response to mlsl2 -?)
 
  $Log$
+ Revision 1.22  2003/06/13 20:02:23  vsnyder
+ Futzing
+
  Revision 1.21  2003/06/12 20:50:38  pwagner
  Removed [n]pcf
 
