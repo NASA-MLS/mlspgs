@@ -177,7 +177,7 @@ contains
     call PVMIDLPack ( (/ config%globalConfig, config%atmos_der, config%do_baseline, &
       & config%do_conv, config%do_freq_avg, config%do_1d, config%differentialScan, &
       & config%lockBins, config%spect_der, config%temp_der, config%skipOverlaps, &
-      & config%default_spectroscopy /), info )
+      & config%default_spectroscopy, config%do_1d /), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig logicals" )
     call PVMIDLPack ( (/ config%instrumentModule, config%surfaceTangentIndex, &
       & config%no_cloud_species, config%no_model_surfs, &
@@ -262,7 +262,7 @@ contains
     ! Local variables
     integer :: INFO                     ! Flag from PVM
     logical :: FLAG                     ! A flag from the sender
-    logical, dimension(11) :: l11       ! Temporary array
+    logical, dimension(12) :: l12       ! Temporary array
     logical, dimension(2) :: l2         ! Temporary array
     integer, dimension(11) :: i11       ! Temporary array
     real(r8), dimension(2) :: r2        ! Temporary array
@@ -271,20 +271,20 @@ contains
 
     ! Executable code
     ! First the scalars
-    call PVMIDLUnpack ( l11, info )
+    call PVMIDLUnpack ( l12, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig logicals" )
-    config%globalConfig = l11(1)
-    config%atmos_der = l11(2)
-    config%do_baseline = l11(3)
-    config%do_conv = l11(4)
-    config%do_freq_avg = l11(5)
-    config%differentialScan = l11(6)
-    config%lockBins = l11(7)
-    config%spect_der = l11(8)
-    config%temp_der = l11(9)
-    config%skipOverlaps = l11(10)
-    config%default_spectroscopy = l11(11)
-    config%do_1d = l11(12)
+    config%globalConfig = l12(1)
+    config%atmos_der = l12(2)
+    config%do_baseline = l12(3)
+    config%do_conv = l12(4)
+    config%do_freq_avg = l12(5)
+    config%differentialScan = l12(6)
+    config%lockBins = l12(7)
+    config%spect_der = l12(8)
+    config%temp_der = l12(9)
+    config%skipOverlaps = l12(10)
+    config%default_spectroscopy = l12(11)
+    config%do_1d = l12(12)
     call PVMIDLUnpack ( i11, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig integers" )
     config%instrumentModule = i11(1)
@@ -500,6 +500,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.19  2003/01/16 00:55:27  jonathan
+! add do_1d, also fix bug of reversed  do_freq_avg do_baseline order
+!
 ! Revision 2.18  2003/01/13 17:16:23  jonathan
 ! chane cloud_width to i_saturation
 !
