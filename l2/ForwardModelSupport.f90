@@ -13,7 +13,7 @@ module ForwardModelSupport
   use Init_Tables_Module, only: F_ALLLINESFORRADIOMETER, &
     & F_ANTENNAPATTERNS, F_ATMOS_DER, F_CHANNELS, &
     & F_CLOUD_DER, F_COST, F_DO_BASELINE, F_DO_CONV, F_DO_FREQ_AVG, F_FILTERSHAPES, &
-    & F_FREQUENCY, F_HEIGHT, F_DIFFERENTIALSCAN, F_DO_1D, &
+    & F_FREQUENCY, F_HEIGHT, F_DIFFERENTIALSCAN, F_DO_1D, F_INCL_CLD, &
     & F_INTEGRATIONGRID, F_LOCKBINS, F_L2PC, F_MOLECULE, F_MOLECULES, &
     & F_MOLECULEDERIVATIVES, &
     & F_PHIWINDOW, F_POINTINGGRIDS, F_POLARIZED, F_SIGNALS, F_SPECT_DER, &
@@ -362,6 +362,7 @@ contains ! =====     Public Procedures     =============================
     info%do_freq_avg = .false.
     info%do_1d = .false.
     info%DEFAULT_spectroscopy = .false.
+    info%incl_cld = .false.
     info%lockBins = .false.
     info%polarized = .false.
     info%temp_der = .false.
@@ -411,6 +412,8 @@ contains ! =====     Public Procedures     =============================
         info%do_freq_avg = get_boolean(son)
       case ( f_do_1d )
         info%do_1d = get_boolean(son)
+      case ( f_incl_cld )
+        info%incl_cld = get_boolean(son)
       case ( f_lockBins )
         info%lockBins = get_boolean(son)
       case ( f_polarized )
@@ -569,14 +572,14 @@ contains ! =====     Public Procedures     =============================
 
     case ( l_scan )
       ! Add 1d/2d method later probably !??? NJL
-      if ( any(got( (/f_atmos_der, f_channels, f_do_conv, f_do_baseline, &
-        & f_do_freq_avg, f_do_1d, f_frequency, f_molecules, f_moleculeDerivatives, &
+      if ( any(got( (/f_atmos_der,f_channels,f_do_conv,f_do_baseline,f_do_freq_avg,&
+        & f_do_1d, f_incl_cld, f_frequency, f_molecules, f_moleculeDerivatives, &
         & f_signals, f_spect_der, f_temp_der /) )) ) &
         & call AnnounceError ( IrrelevantFwmParameter, root )
     case ( l_linear)
       if ( .not. all(got( (/f_signals/) )) ) & ! Maybe others later
         & call AnnounceError ( IncompleteLinearFwm, root )
-      if ( any(got( (/f_do_conv, f_do_freq_avg, f_do_1d, f_frequency /) )) ) &
+      if ( any(got( (/f_do_conv,f_do_freq_avg,f_do_1d,f_incl_cld,f_frequency /) )) ) &
         & call AnnounceError ( IrrelevantFwmParameter, root )
     end select
 
@@ -689,6 +692,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.48  2003/01/30 17:28:21  jonathan
+! add logical incl_cld
+!
 ! Revision 2.47  2003/01/29 01:48:29  vsnyder
 ! Add 'polarized' field to forwardModel
 !
