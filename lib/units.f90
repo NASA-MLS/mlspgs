@@ -32,6 +32,11 @@ contains ! =====     Public procedures     =============================
 ! ---------------------------------------------------  INIT_UNITS  -----
   subroutine INIT_UNITS ( LIT_INDICES )
     ! Put scale factors for units into the declaration table.
+
+    ! If the scale factor is negative, it is subtracted instead of
+    ! multiplied.  So far, this is used only to convert Celsius to
+    ! Kelvin
+
     ! Call this procedure AFTER "init_tables_module%init_tables"
     ! We can't call it from there because there would be a circular
     ! dependence.  We can't put it there because a circular dependence
@@ -58,6 +63,7 @@ contains ! =====     Public procedures     =============================
     call declare_unit ( l_pa, 1.0d-2, phyq_pressure )
 
     call declare_unit ( l_k, 1.0d0, phyq_temperature )
+    call declare_unit ( l_c, -273.15d0, phyq_temperature )
 
     call declare_unit ( l_vmr, 1.0d0, phyq_vmr )
     call declare_unit ( l_ppmv, 1.0d-6, phyq_vmr )
@@ -98,6 +104,9 @@ contains ! =====     Public procedures     =============================
 end module UNITS
 
 ! $Log$
+! Revision 2.6  2001/04/09 20:59:35  vsnyder
+! Add C (for Celsius) unit and l_c name for it
+!
 ! Revision 2.5  2001/03/27 18:42:08  vsnyder
 ! Insert mathematical constants
 !
