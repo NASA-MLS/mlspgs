@@ -276,7 +276,7 @@ $(INSTALLDIR)/libutctotai.a:
 
 .PHONY: clean configure depends depends--mod ghostbuster install \
   internalsaymake internalupdate mostlyclean \
-  tar targ tarz
+  tar targ tarz update
 
 
 tar:
@@ -312,6 +312,10 @@ depends--mod:
 ghostbuster:
 	$(MLSBIN)/ghostbuster.sh $(OMIT_PREFXD) \
        $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
+
+update:
+	@cd .. ; \
+   $(MAKE) update SUBDIRS="blas lib fwdmdl cloudfwdm l2" tests_sub_dirs=
 
 mostlyclean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
@@ -375,6 +379,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.57  2003/04/30 23:04:55  pwagner
+# Now lets you make update in each subdirectory
+#
 # Revision 2.56  2003/02/24 21:16:01  pwagner
 # Fixed bug where changes to .f9h were not triggering recompiles
 #
