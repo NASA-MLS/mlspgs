@@ -41,9 +41,10 @@ module ForwardModelConfig
     integer :: instrumentModule         ! Module for scan model
     logical :: differentialScan         ! Differential scan model
     logical :: LockBins                 ! Use same l2pc bin for whole chunk
+    logical :: Polarized      ! Do polarized radiative transfer
     logical :: Spect_Der      ! Do spectroscopy derivatives
     logical :: Temp_Der       ! Do temperature derivatives
-    logical :: skipOverlaps   ! Don't calculate for MAFs in overlap regions
+    logical :: SkipOverlaps   ! Don't calculate for MAFs in overlap regions
     logical :: AllLinesForRadiometer ! As opposed to just using lines designated for band.
     type(vGrid_T), pointer :: integrationGrid=>NULL() ! Zeta grid for integration
     type(vGrid_T), pointer :: tangentGrid=>NULL()     ! Zeta grid for integration
@@ -146,7 +147,6 @@ contains
 
     ! Local variables
     integer :: Config                   ! Loop counter
-    integer :: Signal                   ! Loop counter
     integer :: Status                   ! Flag
 
     if ( associated(database) ) then
@@ -177,7 +177,7 @@ contains
     ! First pack the scalars
     call PVMIDLPack ( (/ config%globalConfig, config%atmos_der, config%do_baseline, &
       & config%do_conv, config%do_freq_avg, config%do_1d, config%differentialScan, &
-      & config%lockBins, config%spect_der, config%temp_der, config%skipOverlaps, &
+      & config%lockBins, config%polarized, config%spect_der, config%temp_der, config%skipOverlaps, &
       & config%default_spectroscopy /), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig logicals" )
     call PVMIDLPack ( (/ config%instrumentModule, config%surfaceTangentIndex, &
@@ -262,7 +262,7 @@ contains
     ! Local variables
     integer :: INFO                     ! Flag from PVM
     logical :: FLAG                     ! A flag from the sender
-    logical, dimension(12) :: l12       ! Temporary array
+    logical, dimension(13) :: l13       ! Temporary array
     logical, dimension(2) :: l2         ! Temporary array
     integer, dimension(12) :: i12       ! Temporary array
     real(r8), dimension(2) :: r2        ! Temporary array
@@ -271,20 +271,21 @@ contains
 
     ! Executable code
     ! First the scalars
-    call PVMIDLUnpack ( l12, info )
+    call PVMIDLUnpack ( l13, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig logicals" )
-    config%globalConfig = l12(1)
-    config%atmos_der = l12(2)
-    config%do_baseline = l12(3)
-    config%do_conv = l12(4)
-    config%do_freq_avg = l12(5)
-    config%do_1d = l12(6)
-    config%differentialScan = l12(7)
-    config%lockBins = l12(8)
-    config%spect_der = l12(9)
-    config%temp_der = l12(10)
-    config%skipOverlaps = l12(11)
-    config%default_spectroscopy = l12(12)
+    config%globalConfig = l13(1)
+    config%atmos_der = l13(2)
+    config%do_baseline = l13(3)
+    config%do_conv = l13(4)
+    config%do_freq_avg = l13(5)
+    config%do_1d = l13(6)
+    config%differentialScan = l13(7)
+    config%lockBins = l13(8)
+    config%polarized = l13(9)
+    config%spect_der = l13(10)
+    config%temp_der = l13(11)
+    config%skipOverlaps = l13(12)
+    config%default_spectroscopy = l13(13)
     call PVMIDLUnpack ( i12, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig integers" )
     config%instrumentModule = i12(1)
@@ -465,12 +466,14 @@ contains
         call output ( database(i)%do_freq_avg, advance='yes' )
         call output ( '  Do_1D:' )
         call output ( database(i)%do_1d, advance='yes' )
+        call output ( '  Polarized:' )
+        call output ( database(i)%polarized, advance='yes' )
+        call output ( '  SkipOverlaps:' )
+        call output ( database(i)%skipOverlaps, advance='yes' )
         call output ( '  Spect_der:' )
         call output ( database(i)%spect_der, advance='yes' )
         call output ( '  Temp_der:' )
         call output ( database(i)%temp_der, advance='yes' )
-        call output ( '  SkipOverlaps:' )
-        call output ( database(i)%skipOverlaps, advance='yes' )
         call output ( '  Molecules: ', advance='yes' )
         do j = 1, size(database(i)%molecules)
           call output ( '    ' )
@@ -500,6 +503,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.23  2003/01/26 04:42:42  livesey
+! Added profiles/angle options for phiWindow
+!
 ! Revision 2.22  2003/01/17 00:01:44  livesey
 ! Another bug fix in the packing/unpacking
 !
