@@ -136,7 +136,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_MERGE              = s_matrix + 1
   integer, parameter :: S_NEGATIVEPRECISION  = s_merge + 1
   integer, parameter :: S_OUTPUT             = s_negativePrecision + 1
-  integer, parameter :: S_QUANTITY           = s_output + 1
+  integer, parameter :: S_PHASE              = s_output + 1
+  integer, parameter :: S_QUANTITY           = s_phase + 1
   integer, parameter :: S_RESTRICTRANGE      = s_quantity + 1
   integer, parameter :: S_RETRIEVE           = s_restrictRange + 1
   integer, parameter :: S_SIDS               = s_retrieve + 1
@@ -322,6 +323,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_merge) =                add_ident ( 'merge' )
     spec_indices(s_negativePrecision ) =   add_ident ( 'negativePrecision' )
     spec_indices(s_output) =               add_ident ( 'output' )
+    spec_indices(s_phase) =                add_ident ( 'phase' )
     spec_indices(s_quantity) =             add_ident ( 'quantity' )
     spec_indices(s_restrictRange) =        add_ident ( 'restrictRange' )
     spec_indices(s_retrieve) =             add_ident ( 'retrieve' )
@@ -578,6 +580,11 @@ contains ! =====     Public procedures     =============================
              begin, f+f_noMIFs, t+t_numeric, nr+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
+      begin, s+s_phase, & ! Ignores rest of stuff
+             begin, f+f_comment, t+t_string, n+n_field_type, &
+             begin, f+f_phaseName, t+t_string, n+n_field_type, &
+             begin, f+f_level, t+t_numeric, n+n_field_type, &
+             ndp+n_spec_def, &
       begin, s+s_quantity, & ! Must be AFTER s_hgrid and s_vgrid
              begin, f+f_irregular, t+t_boolean, n+n_field_type, &
              begin, f+f_hGrid, s+s_hgrid, n+n_field_spec, &
@@ -1003,6 +1010,11 @@ contains ! =====     Public procedures     =============================
              begin, f+f_phaseName, t+t_string, n+n_field_type, &
              begin, f+f_level, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def, &
+      begin, s+s_phase, & ! Ignores rest of stuff
+             begin, f+f_comment, t+t_string, n+n_field_type, &
+             begin, f+f_phaseName, t+t_string, n+n_field_type, &
+             begin, f+f_level, t+t_numeric, n+n_field_type, &
+             ndp+n_spec_def, &
       begin, s+s_dumpblocks, &
              begin, f+f_matrix, s+s_matrix, nr+n_field_spec, &
              begin, f+f_rowQuantity, s+s_quantity, n+n_field_spec, &
@@ -1066,10 +1078,10 @@ contains ! =====     Public procedures     =============================
              begin, p+p_scan_upper_limit, t+t_numeric_range, n+n_name_def, &
              s+s_time, s+s_chunkDivide, n+n_section, &
       begin, z+z_construct, s+s_hgrid, s+s_forge, s+s_forwardModel, s+s_quantity, &
-             s+s_snoop, s+s_time, s+s_vectortemplate, n+n_section, &
+             s+s_snoop, s+s_time, s+s_vectortemplate, s+s_phase, n+n_section, &
       begin, z+z_fill, s+s_dump, s+s_fill, s+s_fillCovariance, s+s_fillDiagonal, &
                        s+s_flushL2PCBins, s+s_negativePrecision, s+s_matrix, s+s_destroy, &
-                       s+s_snoop, s+s_time, s+s_vector, s+s_transfer, &
+                       s+s_snoop, s+s_time, s+s_vector, s+s_transfer, s+s_phase, &
                        s+s_subset, s+s_flagcloud, s+s_restrictRange, s+s_updateMask, &
                        n+n_section, &
       begin, z+z_retrieve, s+s_dumpBlocks, s+s_matrix, s+s_retrieve, &
@@ -1093,6 +1105,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.339  2003/10/22 21:17:05  pwagner
+! aPhaseName: Phase added to Fill, Construct sections to time phases
+!
 ! Revision 2.338  2003/10/16 23:45:03  pwagner
 ! Completed maxfailures per machine, chunk
 !
