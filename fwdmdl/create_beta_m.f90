@@ -23,10 +23,6 @@ contains
 !  For a given frequency and height, compute beta_value function.
 !  This routine should be called for primary and image seperately.
 
-    use ABS_CS_CONT_M,    only: ABS_CS_CONT
-    use ABS_CS_LIQ_H2O_M, only: ABS_CS_LIQ_H2O
-    use ABS_CS_N2_CONT_M, only: ABS_CS_N2_CONT
-    use ABS_CS_O2_CONT_M, only: ABS_CS_O2_CONT
     use MLSCommon, only: R8, RP, IP
     use Molecules, only: L_Air_Cont, L_Extinction, L_Liq_H2O, L_O2, Spec_tags
     use SLABS_SW_M, only: DVOIGT_SPECTRAL, VOIGT_LORENTZ, SLABSWINT, SLABS
@@ -108,7 +104,7 @@ contains
 
       beta_value = 1.0_rp
       if ( present(t_power)) t_power = 0.0_rp
-      Return
+      return
 
     else if ( spectag == spec_tags(l_o2) ) then ! O2
 
@@ -131,9 +127,9 @@ contains
     beta_value = bv
     if ( nl < 1 ) then
       if ( present(t_power) ) then
-        ds = Log(bp/bv)/Log(tp/Temp)     ! Estimate over [temp+10,temp]
-        ra = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
-        dw = Log(bv/bm)/Log(Temp/tm)     ! Estimate over [temp,temp-10]
+        ds = log(bp/bv)/log(tp/temp)     ! Estimate over [temp+10,temp]
+        ra = log(bp/bm)/log(tp/tm)       ! Estimate over [temp+10,temp-10]
+        dw = log(bv/bm)/log(temp/tm)     ! Estimate over [temp,temp-10]
         t_power = (ds + 2.0 * ra + dw) / 4.0  ! Weighted Average
       end if
       return
@@ -217,10 +213,97 @@ contains
 
     end if
 
+  contains ! ===============================  Internal procedures  =====
+
+    ! ----------------------------------------------  Abs_CS_Cont  -----
+
+    ! Compute the general continuum contribution
+    pure real(rp) function Abs_CS_Cont ( Cont, Temperature, Pressure, Frequency )
+    ! real(rp) function Abs_CS_Cont ( Cont, Temperature, Pressure, Frequency )
+
+      real(rp), intent(in) :: CONT(:)     ! continuum parameters
+      real(rp), intent(in) :: TEMPERATURE ! in Kelvin
+      real(rp), intent(in) :: PRESSURE    ! in mbar
+      real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
+
+      abs_cs_cont = cont(1) * pressure * pressure * frequency * frequency * &
+        & ( (300.0_rp / temperature)**cont(2) )
+
+    end function Abs_CS_Cont
+
+    ! -------------------------------------------  Abs_CS_Liq_H2O  -----
+
+    ! Compute the liquid water correction
+    pure real(rp) function Abs_CS_Liq_H2O ( Frequency, Temperature )
+    ! real(rp) function ABS_CS_LIQ_H2O ( Frequency, Temperature )
+
+      real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
+      real(rp), intent(in) :: TEMPERATURE ! in Kelvin
+
+    ! This function when multiplied by mass density (gm/m^3) of liquid droplet
+    ! water gives absorption in Km^-1. Function comes from Liebe 1985 radio
+    ! science paper and others.
+
+      real(rp) :: TAU, EPSILON, THETA
+
+      theta = 300.0_rp / temperature
+      tau = 4.17e-8_rp * frequency * theta * exp(7.13_rp * theta)
+      epsilon = (185.0_rp - 113.0_rp/theta) / (1.0_rp + tau * tau)
+      abs_cs_liq_h2o = 1.886e-4_rp * frequency * tau * epsilon &
+                     / ((6.9_rp + epsilon)**2 + (tau*epsilon)**2)
+
+    end function Abs_CS_Liq_H2O
+
+    ! -------------------------------------------  Abs_CS_N2_Cont  -----
+
+    ! Compute the N2 continuum contribution
+    pure real(rp) function Abs_CS_N2_Cont ( Cont, Temperature, Pressure, Frequency )
+    ! real(rp) Function Abs_CS_N2_cont ( Cont, Temperature, Pressure, Frequency )
+
+      real(rp), intent(in) :: CONT(:)     ! continuum parameters
+      real(rp), intent(in) :: TEMPERATURE ! in Kelvin
+      real(rp), intent(in) :: PRESSURE    ! in mbar
+      real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
+
+      real(rp) :: THETA, FSQR, FSXT
+
+      theta = 300.0_rp / temperature
+      fsqr = frequency * frequency
+      fsxt = fsqr * theta
+      abs_cs_n2_cont = pressure * pressure * fsqr * (theta**cont(2)) * &
+                     & ( cont(1) * exp(-cont(3) * fsxt * theta) + &
+                     &   cont(4) * exp(-cont(5) * fsxt * theta) * &
+                     & (cont(6)**2 + fsqr))
+
+    end function Abs_CS_N2_Cont
+
+    ! -------------------------------------------  Abs_CS_O2_Cont  -----
+
+    ! Compute the O2 continuum contribution
+    pure real(rp) function Abs_CS_O2_Cont ( Cont, Temperature, Pressure, Frequency )
+    ! real(rp) Function ABS_CS_O2_CONT ( Cont, Temperature, Pressure, Frequency )
+
+      real(rp), intent(in) :: CONT(:)     ! continuum parameters
+      real(rp), intent(in) :: TEMPERATURE ! in Kelvin
+      real(rp), intent(in) :: PRESSURE    ! in mbar
+      real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
+
+      real(rp) :: THETA, FSQR
+
+      theta = 300.0_rp / temperature
+      fsqr = frequency * frequency
+      abs_cs_o2_cont = cont(1) * pressure * pressure * fsqr * (theta**cont(2)) &
+                     & / (fsqr + (cont(3) * pressure * (theta**cont(4)) )**2 )
+
+    end function Abs_CS_O2_Cont
+
   end Subroutine Create_beta
 end module CREATE_BETA_M
 
 ! $Log$
+! Revision 2.12  2002/09/12 23:00:04  vsnyder
+! Cosmetic changes, move USEs from module scope to procedure scope
+!
 ! Revision 2.11  2002/07/29 21:41:48  bill
 ! no changes, just debugging
 !
