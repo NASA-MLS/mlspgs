@@ -1074,7 +1074,7 @@ contains ! ============= Public procedures ===================================
       l_noRadsPerMIF, phyq_dimensionless, p_minorFrame, p_signal, &
                       p_suppressChannels, next, &
       l_noiseBandwidth, phyq_frequency, p_signal, next, &
-      l_numJ, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
+      l_numJ, phyq_dimensionless, p_vGrid, next, &
       l_opticalDepth, phyq_dimensionless, p_minorFrame, p_signal, next, &
       l_orbitInclination, phyq_angle, p_minorFrame, p_scModule, next, &
       l_phiTan, phyq_angle, p_minorFrame, p_module, next, & 
@@ -1213,6 +1213,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.112  2004/06/21 23:58:40  pwagner
+! numJ also mad e diagnostic qty that may be written to dgm file
+!
 ! Revision 2.111  2004/06/17 23:17:00  pwagner
 ! Retrieval diagnostics freed from need to be l2gp
 !
