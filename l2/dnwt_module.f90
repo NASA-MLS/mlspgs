@@ -304,8 +304,8 @@ contains
 
 !****************** END OF INITIAL COMMENTS ****************
 
-    nflag = nf_start
-    ifl = 0
+    ifl = nf_start
+    nflag = ifl
     if ( present(nopt) ) call nwtop ( nopt, xopt )
     call nwtop ( ) ! default initialization
     return
@@ -472,7 +472,7 @@ contains
         &        750,      770,  770), -ifl
 
 ! Initialization
-   10 if (ifl /= 0) go to 222 ! retreat to best X
+   10 if (ifl /= nf_start) go to 222 ! retreat to best X
       ajn = c0
       condai = c0
       dxnl = c1
@@ -1023,6 +1023,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.19  2001/06/13 23:57:12  vsnyder
+! Use NF_START instead of zero to start IFL
+!
 ! Revision 2.18  2001/06/13 23:50:57  vsnyder
 ! Correct not-restarting-correctly in DNWT
 !
