@@ -7,14 +7,15 @@
 
 ; This L2CF fragment reads and merges the dao data.
 begin ReadApriori
+  !ifdef(daoVersion,{},{!define(daoVersion,{GEOS401})})
   !define(daoDay1,!ccsdsbtodao(!day))
   !define(daoDay2,!ccsdsbtodao(!ccsdsbadd(!day,1)))
   daoTemperatureInputThis: gridded, origin=dao, field='TMPU', $
     dimList='XDim,YDim,Height,Time', $
-    file='!inpathdao/DAS.flk.asm.tsyn3d_mis_p.GEOS401.!daoDay1{}00.!daoDay1{}18.V01'
+    file='!inpathdao/DAS.flk.asm.tsyn3d_mis_p.!daoVersion.!daoDay1{}00.!daoDay1{}18.V01'
   daoTemperatureInputNext: gridded, origin=dao, field='TMPU', $
     dimList='XDim,YDim,Height,Time', $
-    file='!inpathdao/DAS.flk.asm.tsyn3d_mis_p.GEOS401.!daoDay2{}00.!daoDay2{}18.V01'
+    file='!inpathdao/DAS.flk.asm.tsyn3d_mis_p.!daoVersion.!daoDay2{}00.!daoDay2{}18.V01'
 end ReadApriori
 
 begin MergeGrids
