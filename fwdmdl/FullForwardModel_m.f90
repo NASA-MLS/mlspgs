@@ -1748,7 +1748,8 @@ contains
             &  gl_slabs_m, t_path(1:no_ele)-del_temp,                 &     
             &  gl_slabs_p, t_path(1:no_ele)+del_temp,                 &     
             &  dbeta_dt_path_c, dbeta_dw_path_c,                      &     
-            &  dbeta_dn_path_c, dbeta_dv_path_c, ICON )                    
+            &  dbeta_dn_path_c, dbeta_dv_path_c, ICON,                &
+            &  fwdModelConf%Incl_Cld )                    
 
           alpha_path_c(1:npc) = SUM(sps_path_c(1:npc,:) *  &
                                   & beta_path_c(1:npc,:), DIM=2)
@@ -1781,7 +1782,8 @@ contains
             & gl_slabs_m, t_path(1:no_ele)-del_temp,                  &  
             & gl_slabs_p, t_path(1:no_ele)+del_temp,                  &  
             & dbeta_dt_path_f, dbeta_dw_path_f,                       &  
-            & dbeta_dn_path_f, dbeta_dv_path_f, ICON )
+            & dbeta_dn_path_f, dbeta_dv_path_f, ICON,                 &
+            & fwdModelConf%Incl_Cld )
 
           alpha_path_f(1:ngl) = SUM(sps_path_f(1:ngl,:) *  &
                                   & beta_path_f(1:ngl,:), DIM=2)
@@ -2605,6 +2607,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.112  2003/01/31 01:53:01  vsnyder
+! Move array temps to arrays explicitly allocated outside the loop
+!
 ! Revision 2.111  2003/01/30 00:16:35  jonathan
 ! add z_path to get_beta_path
 !
