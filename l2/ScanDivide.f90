@@ -23,6 +23,7 @@ module ScanDivide
   use OUTPUT_M, only: BLANKS, OUTPUT
   use SDPToolkit, only: MAX_ORBITS
   use STRING_TABLE, only: DISPLAY_STRING
+  use Time_M, only: Time_Now
   use TOGGLES, only: GEN, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, SUBTREE
@@ -134,7 +135,7 @@ contains ! =====     Public Procedures     =============================
     if ( toggle(gen) ) call trace_begin ("ScanDivide", root )
 
     timing = section_times
-    if ( timing ) call cpu_time ( t1 )
+    if ( timing ) call time_now ( t1 )
 
     ! Get MLSCF values for configuration of this bit
     call ScanDivide_mlscf ( root, config )
@@ -1098,7 +1099,7 @@ contains ! =====     Public Procedures     =============================
           if ( timing ) then
             call sayTime
           else
-            call cpu_time ( t1 )
+            call time_now ( t1 )
             timing = .true.
           end if
         case default
@@ -1171,7 +1172,7 @@ contains ! =====     Public Procedures     =============================
   ! ....................................................  SayTime  .....
   subroutine SayTime
     real :: T2
-    call cpu_time ( t2 )
+    call time_now ( t2 )
     if ( total_times ) then
       call output ( "Total time = " )
       call output ( dble(t2), advance = 'no' )
@@ -1185,6 +1186,9 @@ contains ! =====     Public Procedures     =============================
 end module ScanDivide
 
 ! $Log$
+! Revision 2.19  2001/11/09 23:17:22  vsnyder
+! Use Time_Now instead of CPU_TIME
+!
 ! Revision 2.18  2001/11/09 00:03:55  livesey
 ! Let it work with new l2cfs.  Will be replacing this with ChunkDivide_m later.
 !
