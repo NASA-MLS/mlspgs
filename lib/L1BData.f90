@@ -862,6 +862,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     integer(kind=hSize_t), dimension(:), pointer :: MAXDIMS
 
     real(r4), pointer, dimension(:,:,:) :: tmpR4Field
+    logical, parameter           :: DEEBUG = .FALSE.
 
     ! Executable code
     call deallocateL1BData ( l1bData ) ! Avoid memory leaks
@@ -879,16 +880,16 @@ contains ! ============================ MODULE PROCEDURES ======================
     end if
     
     ! Find Qtype, rank and dimensions of QuantityName
-    print*, ' Find Qtype, rank and dimensions of QuantityName ', trim(QuantityName)
+    ! print*, ' Find Qtype, rank and dimensions of QuantityName ', trim(QuantityName)
     call GetHDF5DSRank(L1FileHandle, QuantityName, rank)
     l1bData%TrueRank = rank
     allocate(dims(rank), maxDims(rank))
     call GetHDF5DSDims(L1FileHandle, QuantityName, dims, maxDims)
     call GetHDF5DSQType ( L1FileHandle, QuantityName, Qtype )
-    print *, 'rank ', rank
-    print *, 'maxDims ', maxDims
-    print *, 'dims ', dims
-    print *, 'Qtype ', Qtype
+    if ( DEEBUG) print *, 'rank ', rank
+    if ( DEEBUG) print *, 'maxDims ', maxDims
+    if ( DEEBUG) print *, 'dims ', dims
+    if ( DEEBUG) print *, 'Qtype ', Qtype
 ! > >     nullify(MLSAuxData%RealField, MLSAuxData%DpField, &
 ! > >       & MLSAuxData%IntField, MLSAuxData%CharField)
 ! > >     select case (trim(Qtype))
@@ -938,11 +939,11 @@ contains ! ============================ MODULE PROCEDURES ======================
       l1bData%noMAFs = numMAFs - l1bData%firstMAF
     end if
 
-    print *, 'l1bData%noMAFs ', l1bData%noMAFs
+    if ( DEEBUG) print *, 'l1bData%noMAFs ', l1bData%noMAFs
     l1bData%L1BName = quantityName
 
     noMAFs = l1bData%noMAFs
-    print *, 'noMAFs ', noMAFs
+    if ( DEEBUG)  print *, 'noMAFs ', noMAFs
 
     if ( rank < 2 ) then
       l1bData%maxMIFs = 1
@@ -951,7 +952,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     else
       l1bData%maxMIFs = dims(1)
     end if
-    print *, 'l1bData%maxMIFs ', l1bData%maxMIFs
+    if ( DEEBUG) print *, 'l1bData%maxMIFs ', l1bData%maxMIFs
 
     if ( rank > 2 ) then
       l1bData%noAuxInds = dims(1)
@@ -998,9 +999,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 !    print *, 'About to use Read_MLSAuxData to read ', trim(QuantityName)
 !    call Read_MLSAuxData(L1FileHandle, QuantityName, 'unknown', & 
 !      & MLSAuxData, error, FirstMAF, LastMAF, read_attributes=.false.)
-    print *, 'About to use LoadFromHDF5DS to read ', trim(QuantityName)
-    print *, 'dims ', dims
-    print *, 'noMAFs ', l1bData%noMAFs
+    ! print *, 'About to use LoadFromHDF5DS to read ', trim(QuantityName)
+    ! print *, 'dims ', dims
+    ! print *, 'noMAFs ', l1bData%noMAFs
     write(Char_rank, '(i1)') rank
     select case (trim(Qtype) // Char_rank)
     case ('real1')
@@ -1089,7 +1090,7 @@ contains ! ============================ MODULE PROCEDURES ======================
         & // trim(Qtype) // Char_rank)
       l1bdata%data_type = 'unknown'
     end select
-    call dump(l1bData, 0)
+    if ( DEEBUG ) call dump(l1bData, 0)
     
     ! Avoid memory leaks
     deallocate(dims, maxDims)
@@ -1293,6 +1294,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.34  2002/12/10 00:42:15  pwagner
+! Stopped printing debugging stuff
+!
 ! Revision 2.33  2002/12/06 01:10:08  pwagner
 ! No longer transposes hdf5-formatted 2d arrays
 !
