@@ -191,7 +191,7 @@ contains
 
  ! ---------------------------------------------  DUMP_1D_DOUBLE  -----
   subroutine DUMP_1D_DOUBLE ( ARRAY, NAME, &
-    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS )
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
     double precision, intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
     double precision, intent(in), optional :: FILLVALUE
@@ -201,10 +201,12 @@ contains
     logical, intent(in), optional :: WHOLEARRAY
     logical, intent(in), optional :: STATS
     logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND ! Low bound for Array
 
-    logical :: MyClean
-    integer :: J, K, MyWidth
+    integer :: Base
     integer, parameter :: DefaultWidth = 5
+    integer :: J, K, MyWidth
+    logical :: MyClean
     double precision :: myFillValue
     character(len=64) :: MyFormat
     integer :: NumZeroRows
@@ -219,11 +221,13 @@ contains
     if ( present(width) ) myWidth = width
     myFormat = myFormatDefault
     if ( present(format) ) myFormat = format
+    base = 0
+    if ( present(lbound) ) base = lbound - 1
 
     numZeroRows = 0
     if ( size(array) == 0 ) then
       call empty ( name )
-    else if ( size(array) == 1 ) then
+    else if ( size(array) == 1 .and. base == 0 ) then
       call name_and_size ( name, myClean, 1 )
       call output ( array(1), myFormat, advance='yes' )
     else
@@ -239,7 +243,7 @@ contains
 !         end do
         if (.not. myClean) then
           if ( any(array(j:min(j+myWidth-1, size(array))) /= myFillValue) ) then
-            call say_fill ( (/ j-1, size(array) /), numZeroRows, myFillValue, inc=1 )
+            call say_fill ( (/ j-1+base, size(array) /), numZeroRows, myFillValue, inc=1 )
           else
             numZeroRows = numZeroRows + 1
           end if
@@ -257,7 +261,7 @@ contains
 
   ! --------------------------------------------  DUMP_1D_INTEGER  -----
   subroutine DUMP_1D_INTEGER ( ARRAY, NAME, &
-    & FILLVALUE, CLEAN, FORMAT, WIDTH, WHOLEARRAY, STATS, RMS )
+    & FILLVALUE, CLEAN, FORMAT, WIDTH, WHOLEARRAY, STATS, RMS, LBOUND )
     integer, intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
     integer, intent(in), optional :: FILLVALUE
@@ -267,8 +271,9 @@ contains
     logical, intent(in), optional :: WHOLEARRAY
     logical, intent(in), optional :: STATS
     logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND ! Low bound for Array
 
-    integer :: J, K
+    integer :: Base, J, K
     logical :: MyClean
     integer :: MyWidth
     integer :: NumZeroRows
@@ -282,11 +287,13 @@ contains
     if ( present(clean) ) myClean = clean
     myWidth = 10
     if ( present(width) ) myWidth = width
+    base = 0
+    if ( present(lbound) ) base = lbound - 1
 
     numZeroRows = 0
     if ( size(array) == 0 ) then
       call empty ( name )
-    else if ( size(array) == 1 ) then
+    else if ( size(array) == 1 .and. base == 0 ) then
       call name_and_size ( name, myClean, 1 )
       call output ( array(1), advance='yes' )
     else
@@ -295,7 +302,7 @@ contains
       do j = 1, size(array), myWidth
         if (.not. myClean) then
           if ( any(array(j:min(j+myWidth-1, size(array))) /= myFillValue) ) then
-            call say_fill ( (/ j-1, size(array) /), numZeroRows, myFillValue, inc=1 )
+            call say_fill ( (/ j-1+base, size(array) /), numZeroRows, myFillValue, inc=1 )
           else
             numZeroRows = numZeroRows + 1
           end if
@@ -354,7 +361,7 @@ contains
 
   ! -----------------------------------------------  DUMP_1D_REAL  -----
   subroutine DUMP_1D_REAL ( ARRAY, NAME, &
-    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS )
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
     real, intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
     real, intent(in), optional :: FILLVALUE
@@ -364,10 +371,12 @@ contains
     logical, intent(in), optional :: WHOLEARRAY
     logical, optional, intent(in) :: STATS
     logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND ! Low bound for Array
 
-    logical :: myClean
-    integer :: J, K, MyWidth
+    integer :: Base
     integer, parameter :: DefaultWidth = 5
+    integer :: J, K, MyWidth
+    logical :: myClean
     character(len=64) :: MyFormat
     integer :: NumZeroRows
 
@@ -383,11 +392,13 @@ contains
     if ( present(width) ) myWidth = width
     myFormat = myFormatDefault
     if ( present(format) ) myFormat = format
+    base = 0
+    if ( present(lbound) ) base = lbound - 1
 
     numZeroRows = 0
     if ( size(array) == 0 ) then
       call empty ( name )
-    else if ( size(array) == 1 ) then
+    else if ( size(array) == 1 .and. base == 0 ) then
       call name_and_size ( name, myClean, 1 )
       call output ( array(1), myFormat, advance='yes' )
     else
@@ -396,7 +407,7 @@ contains
       do j = 1, size(array), myWidth
         if (.not. myClean) then
           if ( any(array(j:min(j+myWidth-1, size(array))) /= myFillValue) ) then
-            call say_fill ( (/ j-1, size(array) /), numZeroRows, myFillValue, inc=1 )
+            call say_fill ( (/ j-1+base, size(array) /), numZeroRows, myFillValue, inc=1 )
           else
             numZeroRows = numZeroRows + 1
           end if
@@ -1441,6 +1452,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.40  2004/07/23 19:47:20  vsnyder
+! Add LBOUND to dump_1d_[double,integer,real]
+!
 ! Revision 2.39  2004/07/23 18:34:59  vsnyder
 ! Add LBOUND argument to Dump_1d_logical
 !
