@@ -9,7 +9,7 @@ module ManipulateVectorQuantities ! Various routines for manipulating vectors
   use MLSCommon, only: r8, rv
   use MLSNumerics, only: Hunt
   use VectorsModule, only: VectorValue_T
-  use Intrinsic, only: L_PHITAN, L_CHANNEL, L_NONE
+  use Intrinsic, only: L_PHITAN, L_CHANNEL, L_NONE, PHYQ_ANGLE, PHYQ_PROFILES
 
   implicit none
 
@@ -131,13 +131,14 @@ contains
 
   ! --------------------------------------- FindInstanceWindow ---------
   subroutine FindInstanceWindow ( quantity, phiTan, maf, phiWindow, &
-    & windowStart, windowFinish )
+    & windowUnits, windowStart, windowFinish )
     ! This returns the start end end of a window into a quantity such as
     ! temperature for a given instance of a minor frame quantity
     type (VectorValue_T), intent(in) :: QUANTITY ! Quantity e.g. temperature
     type (VectorValue_T), intent(in) :: PHITAN ! Phitan information
     integer, intent(in) :: MAF          ! Major frame sought
     real (r8), intent(in) :: PHIWINDOW  ! Window size input
+    integer, intent(in) :: WINDOWUNITS
     integer, intent(out) :: WINDOWSTART ! Output window start
     integer, intent(out) :: WINDOWFINISH ! Output window finish
 
@@ -152,7 +153,14 @@ contains
         & useValue=.true. )
       windowStart = closestInstance
       windowFinish = closestInstance
-    else
+    else if ( windowUnits == PHYQ_Profiles ) then
+      ! Return n profiles either side of the closest instance
+      closestInstance = FindOneClosestInstance ( quantity, phiTan, maf, &
+        & useValue=.true. )
+      windowStart = max ( 1, closestInstance - nint ( (phiWindow-1)/2 ) )
+      windowFinish = min ( quantity%template%noInstances, &
+        & closestInstance + nint ( (phiWindow-1)/2 ) )
+    else if ( windowUnits == PHYQ_Angle ) then
       phiMin = minval ( phiTan%values(:,maf) ) - phiWindow/2.0
       phiMax = maxval ( phiTan%values(:,maf) ) + phiWindow/2.0
       call Hunt ( quantity%template%phi(1,:), phiMin, windowStart, &
@@ -161,6 +169,9 @@ contains
         & allowTopValue=.true. )
       windowStart = max ( 1, windowStart - 1 )
       windowFinish = min ( quantity%template%noInstances, windowFinish + 1 )
+    else
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Invalid units for window specification' )
     end if
   end subroutine FindInstanceWindow
 
@@ -298,6 +309,9 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.22  2003/01/26 04:42:20  livesey
+! Added handling of profiles/angle units for phiWindow
+!
 ! Revision 2.21  2002/11/22 01:07:13  vsnyder
 ! Delete USE'd but unreferenced symbols
 !
