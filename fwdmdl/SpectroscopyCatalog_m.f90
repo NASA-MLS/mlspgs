@@ -6,7 +6,7 @@ module SpectroscopyCatalog_m
 ! Process the Spectroscopy section.  Read the "old format" spectroscopy catalog
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-  use String_Table, only: Display_String
+  use String_Table, only: Display_String, Get_string
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error
@@ -14,8 +14,10 @@ module SpectroscopyCatalog_m
   use Output_m, only: Blanks, Output
   use Toggles, only: Gen, Levels, Switches, Toggle
   use Trace_M, only: Trace_begin, Trace_end
+  use Parse_Signal_m, only: PARSE_SIGNAL
 
   ! More USEs below in each procedure, if they're only used therein.
+  implicit none
 
   private
   ! Public procedures:
@@ -37,6 +39,8 @@ module SpectroscopyCatalog_m
                                    ! Log(nm**2 MHz) at 300 K
     Real(r8) :: V0                 ! Line center frequency MHz
     Real(r8) :: W                  ! Collision broadening parameter
+    integer, dimension(:), pointer :: bands=>NULL() ! List of band indices for line
+    integer, dimension(:), pointer :: sidebands=>NULL() ! Sidebands for above bands (-1,0,1)
                                    ! MHz/mbar at 300 K
   end type Line_T
 
@@ -74,13 +78,15 @@ contains ! =====  Public Procedures  ===================================
     use Init_Spectroscopy_M, only: S_Line, S_Spectra
     ! Now the Fields:
     use Init_Spectroscopy_M, only: F_Delta, F_El, F_Gamma, F_Lines, &
-      & F_Molecule, F_N, F_N1, F_N2, F_Ps, F_Qlog, F_Str, F_V0, F_W
+      & F_Molecule, F_N, F_N1, F_N2, F_Ps, F_Qlog, F_Str, F_V0, F_W, &
+      & F_EMLSBANDS, F_UMLSBANDS
     use Intrinsic, only: Phyq_Dimless => Phyq_Dimensionless, Phyq_Frequency, &
-      & S_Time
+      & S_Time, L_EMLS, L_UMLS
     use Molecules, only: Spec_Tags
     use MoreTree, only: Get_Field_Id, Get_Spec_Id
     use Tree, only: Decorate, Decoration, Node_ID, NSons, Sub_Rosa, Subtree
     use Tree_Types, only: N_Named
+    use MLSSignals_m, only: Instrument
 
     ! Dummy argument
     integer, intent(in) :: Root         ! Of the AST for the section
@@ -93,8 +99,14 @@ contains ! =====  Public Procedures  ===================================
     integer :: Son                      ! Of root or key
     integer :: Key                      ! Index of spec_arg
     integer :: Name                     ! Index of name in string table
+    integer :: BandsNode                ! Tree node for emls/umls bands
     logical :: TIMING                   ! For S_Time
     real :: T1, T2                      ! For S_Time
+    integer :: NOSIGNALS                ! For the bands part
+    integer :: THISMANY                 ! Conted up to noSignals
+    integer :: SIDEBAND                 ! A single sideband
+    integer, dimension(:), pointer :: SIGINDS ! From Parse_signal
+    character ( len=80 ) :: SIGNAME     ! The signal
 
     ! Error message codes
     integer, parameter :: WrongSize = 1                ! Wrong number of elements
@@ -117,6 +129,7 @@ contains ! =====  Public Procedures  ===================================
       select case ( get_spec_id(key) )
       case ( s_line ) ! ...................................  LINE  .....
         oneLine%line_Name = name
+        bandsNode = 0
         do j = 2, nsons(key)
           son = subtree(j,key)
           select case ( get_field_id(son) )
@@ -140,10 +153,39 @@ contains ! =====  Public Procedures  ===================================
             call expr_check ( subtree(2,son), oneLine%v0, phyq_frequency )
           case ( f_w )
             call expr_check ( subtree(2,son), oneLine%w, phyq_dimless )
+          case ( f_emlsBands )
+            if ( instrument == l_emls ) bandsNode = son
+          case ( f_umlsBands )
+            if ( instrument == l_umls ) bandsNode = son
           case default
             ! Can't get here if the type checker worked
           end select
         end do
+        if ( bandsNode /= 0 ) then
+          ! First work out how many signals we're dealing with
+          noSignals = 0
+          nullify ( sigInds )
+          do j = 2, nsons(bandsNode)    ! Skip name
+            call get_string ( sub_rosa ( subtree (j, bandsNode) ), &
+              & sigName, strip=.true. )
+            call Parse_Signal ( sigName, sigInds, bandsNode, onlyCountEm=thisMany )
+            noSignals = noSignals + thisMany
+          end do
+
+          ! Compile list of all the bands/sidebands named
+          call Allocate_test ( oneLine%bands, noSignals, 'bands', ModuleName )
+          call Allocate_test ( oneLine%sidebands, noSignals, 'sidebands', ModuleName )
+          nullify ( sigInds )
+          k = 1
+          do j = 2, nsons(bandsNode)    ! Skip name
+            call get_string ( sub_rosa ( subtree (j, bandsNode) ), &
+              & sigName, strip=.true. )
+            call Parse_Signal ( sigName, sigInds, bandsNode, sideband=sideband )
+            oneLine%bands ( k:k+size(sigInds)-1 ) = signals(sigInds)%band
+            oneLine%sidebands ( k:k+size(sigInds)-1 ) = sideband
+            call Deallocate_test ( sigInds, 'sigInds', ModuleName )
+          end do
+        endif
         call decorate ( key, addLineToDatabase ( lines, oneLine ) )
       case ( s_spectra ) ! .............................  SPECTRA  .....
         nullify(oneSpecies%lines) ! So that Allocate_Test doesn't deallocate
@@ -390,6 +432,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.0  2001/09/17 20:26:26  livesey
+! New forward model
+!
 ! Revision 1.8  2001/05/26 00:22:19  livesey
 ! Made destroy stuff return if nothing to do.
 !

@@ -3,7 +3,8 @@
 
 module Init_Spectroscopy_m
 
-  use INTRINSIC, only: Add_Ident, Begin, F, L, N, NADP, P, S, T, T_Numeric, Z
+  use INTRINSIC, only: Add_Ident, Begin, F, L, N, NR, NDP, NADP, P, S, T, &
+    & T_Numeric, Z, T_String
   use Init_MLSSignals_m, only: Field_First, Init_MLSSignals, &
     & Last_Signal_Field, Last_Signal_Lit, Last_Signal_Spec, Last_Signal_Type, &
     & Spec_First
@@ -30,20 +31,22 @@ module Init_Spectroscopy_m
   integer, parameter :: Last_Spectroscopy_Lit = last_Signal_Lit
 
   ! Fields used in spectroscopy specifications:
-  integer, parameter :: F_delta    = last_signal_field + 1
-  integer, parameter :: F_el       = f_delta + 1
-  integer, parameter :: F_gamma    = f_el + 1
-  integer, parameter :: F_lines    = f_gamma + 1
-  integer, parameter :: F_molecule = f_lines + 1
-  integer, parameter :: F_n        = f_molecule + 1
-  integer, parameter :: F_n1       = f_n + 1
-  integer, parameter :: F_n2       = f_n1 + 1
-  integer, parameter :: F_ps       = f_n2 + 1
-  integer, parameter :: F_qlog     = f_ps + 1
-  integer, parameter :: F_str      = f_qlog + 1
-  integer, parameter :: F_v0       = f_str + 1
-  integer, parameter :: F_w        = f_v0 + 1
-  integer, parameter :: Last_Spectroscopy_Field = f_w
+  integer, parameter :: F_delta      = last_signal_field + 1
+  integer, parameter :: F_el         = f_delta + 1
+  integer, parameter :: F_gamma      = f_el + 1
+  integer, parameter :: F_lines      = f_gamma + 1
+  integer, parameter :: F_molecule   = f_lines + 1
+  integer, parameter :: F_n          = f_molecule + 1
+  integer, parameter :: F_n1         = f_n + 1
+  integer, parameter :: F_n2         = f_n1 + 1
+  integer, parameter :: F_ps         = f_n2 + 1
+  integer, parameter :: F_qlog       = f_ps + 1
+  integer, parameter :: F_str        = f_qlog + 1
+  integer, parameter :: F_v0         = f_str + 1
+  integer, parameter :: F_w          = f_v0 + 1
+  integer, parameter :: F_emlsBands  = f_w + 1
+  integer, parameter :: F_umlsBands  = f_emlsBands + 1
+  integer, parameter :: Last_Spectroscopy_Field = f_umlsBands
 
   ! Spectroscopy specifications:
   integer, parameter :: S_Line     = last_signal_spec + 1
@@ -75,19 +78,21 @@ contains
       & first_parm_index, last_parm_index, n_section_indices, n_spec_indices )
 
     ! Put field names into the symbol table
-    field_indices(f_delta)    = add_ident ( 'delta' )
-    field_indices(f_el)       = add_ident ( 'el' )
-    field_indices(f_gamma)    = add_ident ( 'gamma' )
-    field_indices(f_lines)    = add_ident ( 'lines' )
-    field_indices(f_molecule) = add_ident ( 'molecule' )
-    field_indices(f_n)        = add_ident ( 'n' )
-    field_indices(f_n1)       = add_ident ( 'n1' )
-    field_indices(f_n2)       = add_ident ( 'n2' )
-    field_indices(f_ps)       = add_ident ( 'ps' )
-    field_indices(f_qlog)     = add_ident ( 'qlog' )
-    field_indices(f_str)      = add_ident ( 'str' )
-    field_indices(f_v0)       = add_ident ( 'v0' )
-    field_indices(f_w)        = add_ident ( 'w' )
+    field_indices(f_delta)      = add_ident ( 'delta' )
+    field_indices(f_el)         = add_ident ( 'el' )
+    field_indices(f_gamma)      = add_ident ( 'gamma' )
+    field_indices(f_lines)      = add_ident ( 'lines' )
+    field_indices(f_molecule)   = add_ident ( 'molecule' )
+    field_indices(f_n)          = add_ident ( 'n' )
+    field_indices(f_n1)         = add_ident ( 'n1' )
+    field_indices(f_n2)         = add_ident ( 'n2' )
+    field_indices(f_ps)         = add_ident ( 'ps' )
+    field_indices(f_qlog)       = add_ident ( 'qlog' )
+    field_indices(f_str)        = add_ident ( 'str' )
+    field_indices(f_v0)         = add_ident ( 'v0' )
+    field_indices(f_w)          = add_ident ( 'w' )
+    field_indices(f_emlsBands)  = add_ident ( 'emlsBands' )
+    field_indices(f_umlsBands)  = add_ident ( 'umlsBands' )
 
     ! Put spec names into the symbol table
     spec_indices(s_line)    = add_ident ( 'line' )
@@ -131,17 +136,19 @@ contains
 
     call make_tree ( (/ &
       begin, s+s_line, &
-             begin, f+f_delta, t+t_numeric, n+n_field_type, &
-             begin, f+f_el, t+t_numeric, n+n_field_type, &
-             begin, f+f_gamma, t+t_numeric, n+n_field_type, &
-             begin, f+f_n, t+t_numeric, n+n_field_type, &
-             begin, f+f_n1, t+t_numeric, n+n_field_type, &
-             begin, f+f_n2, t+t_numeric, n+n_field_type, &
-             begin, f+f_ps, t+t_numeric, n+n_field_type, &
-             begin, f+f_str, t+t_numeric, n+n_field_type, &
-             begin, f+f_v0, t+t_numeric, n+n_field_type, &
-             begin, f+f_w, t+t_numeric, n+n_field_type, &
-             nadp+n_spec_def, &
+             begin, f+f_delta, t+t_numeric, nr+n_field_type, &
+             begin, f+f_el, t+t_numeric, nr+n_field_type, &
+             begin, f+f_gamma, t+t_numeric, nr+n_field_type, &
+             begin, f+f_n, t+t_numeric, nr+n_field_type, &
+             begin, f+f_n1, t+t_numeric, nr+n_field_type, &
+             begin, f+f_n2, t+t_numeric, nr+n_field_type, &
+             begin, f+f_ps, t+t_numeric, nr+n_field_type, &
+             begin, f+f_str, t+t_numeric, nr+n_field_type, &
+             begin, f+f_v0, t+t_numeric, nr+n_field_type, &
+             begin, f+f_w, t+t_numeric, nr+n_field_type, &
+             begin, f+f_emlsBands, t+t_string, n+n_field_type, &
+             begin, f+f_umlsBands, t+t_string, n+n_field_type, &
+             ndp+n_spec_def, &
       begin, s+s_spectra, & ! Must be AFTER S_Line
              begin, f+f_lines, s+s_line, n+n_field_spec, &
              begin, f+f_molecule, t+t_molecule, n+n_field_type, &
@@ -156,6 +163,9 @@ contains
 end module Init_Spectroscopy_m
 
 ! $Log$
+! Revision 2.0  2001/09/17 20:26:26  livesey
+! New forward model
+!
 ! Revision 1.5  2001/06/07 23:30:33  pwagner
 ! Added Copyright statement
 !
