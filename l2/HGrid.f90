@@ -7,6 +7,7 @@ module HGrid                    ! Horizontal grid information
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use EXPR_M, only: EXPR
+  use Dump_0, only: DUMP
   use INIT_TABLES_MODULE, only: F_FRACTION, F_HEIGHT, F_INCLINATION, &
     & F_INTERPOLATIONFACTOR, F_MODULE, F_TYPE, F_VALUES, FIELD_FIRST,&
     & F_SOURCEL2GP, FIELD_LAST, L_EXPLICIT, L_FRACTIONAL, L_HEIGHT, L_L2GP,&
@@ -23,7 +24,7 @@ module HGrid                    ! Horizontal grid information
   use TOGGLES, only: GEN, TOGGLE
   use TREE, only: DECORATION, DUMP_TREE_NODE, NSONS, NULL_TREE, SOURCE_REF, &
                   SUB_ROSA, SUBTREE
-  use UNITS, only: DEG2RAD
+  use UNITS, only: DEG2RAD, RAD2DEG
   use L2GPData, only: L2GPDATA_T
 
   implicit none
@@ -197,8 +198,7 @@ contains ! =====     Public Procedures     =============================
       do prof = 1, hGrid%noProfs
         call expr ( subtree ( prof+1, valuesNode), expr_units, expr_value )
         hGrid%phi(prof) = expr_value(1)
-        hGrid%geodLat(prof) = asin( sin(deg2rad*hGrid%phi(prof)) * &
-          &                         sin(deg2rad*incline) )/deg2rad
+        hGrid%geodLat(prof) = hGrid%phi(prof) !???? Sort this out later!
       end do
 
     case ( l_l2gp) ! -------------------- L2GP ------------------------
@@ -533,6 +533,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.12  2001/04/24 22:21:05  livesey
+! Gave up on latitude stuff
+!
 ! Revision 2.11  2001/04/23 23:25:26  livesey
 ! Changed l2gpDatabase to pointer
 !
