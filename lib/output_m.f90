@@ -3,7 +3,8 @@
 
 module OUTPUT_M
 
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Info
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Info, MLSMSG_Error
+  use MLSStrings, only: ExtractSubString, lowercase 
   implicit NONE
   private
 
@@ -81,12 +82,13 @@ contains
     return
   end subroutine BLANKS
 
-  subroutine OUTPUT_CHAR ( CHARS, ADVANCE, FROM_WHERE, DONT_LOG )
+  subroutine OUTPUT_CHAR ( CHARS, ADVANCE, FROM_WHERE, DONT_LOG, lOG_CHARS )
   ! Output CHARS to PRUNIT.
     character(len=*), intent(in) :: CHARS
     character(len=*), intent(in), optional :: ADVANCE
     character(len=*), intent(in), optional :: FROM_WHERE
     logical, intent(in), optional          :: DONT_LOG ! Prevent double-logging
+    character(len=*), intent(in), optional :: LOG_CHARS
     character(len=3) :: MY_ADV
     character(len=len(chars)+1) :: my_chars
     integer :: n_chars
@@ -98,6 +100,9 @@ contains
     if ( present(dont_log) ) my_dont_log = dont_log
     my_adv = Advance_is_yes_or_no(my_adv)
     my_chars = chars // ' '
+    if (present(log_chars)) then
+	my_chars = trim(log_chars) // ' '
+    end if
     n_chars = max(len(chars), 1)
     if ( my_adv == 'no' ) n_chars = len(chars)+1
     if ( prunit == -1 .or. prunit < -2 ) &
@@ -169,8 +174,9 @@ contains
     character(len=*), intent(in), optional :: LogFormat ! How to post to Log
     character(len=*), intent(in), optional :: ADVANCE
     integer :: I, J, K
-    character(len=30) :: LINE
+    character(len=30) :: LINE, LOG_CHARS
     character(len=3) :: MY_ADV
+    character(len=20) :: kChar
     logical :: char_by_char               ! Build line char by char?
 
     my_adv = 'no'
@@ -211,28 +217,43 @@ contains
 
     ! Use one or both optional formats
     if ( present(Format) ) then
-      if ( prunit == -1 .or. prunit < -2 ) then
-        write ( *, Format, advance=my_adv ) value
-      else if ( prunit >= 0 ) then
-        write ( prunit, Format, advance=my_adv ) value
-      end if
-    else
-      call output ( line(:k), advance=my_adv, dont_log = .true. )
+      !if ( prunit == -1 .or. prunit < -2 ) then
+      !  write ( *, Format, advance=my_adv ) value
+      !else if ( prunit >= 0 ) then
+      !  write ( prunit, Format, advance=my_adv ) value
+      !end if
+    !else
+      !call output ( line(:k), advance=my_adv, dont_log = .true. )
       ! return   ! But this prevented use of LogFormat
+      line = ' '
+      write ( line, Format ) value
+      k = len_trim(Format)
+      call ExtractSubString(TRIM(lowercase(Format)), kChar(1:k), 'f', '.')
+      read (kChar, '(i2)') k
+      if (k < 1) then
+        k = len_trim(Format)
+        call ExtractSubString(TRIM(lowercase(Format)), kChar(1:k), 'd', '.')
+        read (kChar, '(i2)') k
+        if (k < 1) call MLSMessage ( MLSMSG_Error, ModuleName, &
+		  & 'Bad conversion to k in OUTPUT_DOUBLE (format neither "d" or "f"' )
+      end if
     end if
 
-    if ( prunit >= -1 ) return
+    !if ( prunit >= -1 ) return
 
+    log_chars = line
     if ( present(LogFormat) ) then
-      write ( line, LogFormat ) value
+      ! write ( line, LogFormat ) value
+      write ( log_chars, LogFormat ) value
     end if
-    if ( my_adv == 'yes' ) then
-      call MLSMessage ( MLSMSG_Level, ModuleName, trim(adjustl(line)), &
-        & advance=my_adv )
-    else
-      call MLSMessage ( MLSMSG_Level, ModuleName, trim(adjustl(line)) // ' ', &
-        & advance=my_adv )
-    endif
+    !if ( my_adv == 'yes' ) then
+    !  call MLSMessage ( MLSMSG_Level, ModuleName, trim(adjustl(line)), &
+    !    & advance=my_adv )
+    !else
+    !  call MLSMessage ( MLSMSG_Level, ModuleName, trim(adjustl(line)) // ' ', &
+    !    & advance=my_adv )
+    !endif
+    call output ( line(:k), advance=my_adv, log_chars=log_chars )
 
   end subroutine OUTPUT_DOUBLE
 
@@ -349,8 +370,9 @@ contains
     character(len=*), intent(in), optional :: LogFormat     ! How to post to Log
     character(len=*), intent(in), optional :: ADVANCE
     integer :: I, J, K
-    character(len=30) :: LINE
+    character(len=30) :: LINE, LOG_CHARS
     character(len=3) :: MY_ADV
+    character(len=20) :: kChar
     logical :: char_by_char               ! Build line char by char?
 
     my_adv = 'no'
@@ -398,23 +420,32 @@ contains
       !end if
       line = ' '
       write ( line, Format ) value
-    else
-      call output ( line(:k), advance=my_adv )
+      k = len_trim(Format)
+      call ExtractSubString(TRIM(lowercase(Format)), kChar(1:k), 'f', '.')
+      read (kChar, '(i2)') k
+      if (k < 1) then
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+		& 'Bad conversion to k in OUTPUT_SINGLE' )
+      end if
     end if
     !call output ( line(:k), advance=my_adv )
 
-    if ( prunit >= -1 ) return
+    !if ( prunit >= -1 ) return
 
+    log_chars = line
     if ( present(LogFormat) ) then
-      write ( line, LogFormat ) value
+      !write ( line, LogFormat ) value
+      write ( log_chars, LogFormat ) value
     end if
-    if ( my_adv == 'yes' ) then
-      call MLSMessage ( MLSMSG_Level, ModuleName, trim(adjustl(line)), &
-        & advance=my_adv )
-    else
-      call MLSMessage ( MLSMSG_Level, ModuleName, trim(adjustl(line)) // ' ', &
-        & advance=my_adv )
-    endif
+    !if ( my_adv == 'yes' ) then
+    !  call MLSMessage ( MLSMSG_Level, ModuleName, trim(adjustl(line)), &
+    !    & advance=my_adv )
+    !else
+    !  call MLSMessage ( MLSMSG_Level, ModuleName, trim(adjustl(line)) // ' ', &
+    !    & advance=my_adv )
+    !endif
+    call output ( line(:k), advance=my_adv, log_chars=log_chars )
+
   end subroutine OUTPUT_SINGLE
 
   subroutine OUTPUT_SINGLE_ARRAY ( values, FORMAT, LogFormat, ADVANCE )
@@ -449,6 +480,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.22  2003/08/23 00:11:46  pwagner
+! Tried to fix prob with fix to output_single; also output_double
+!
 ! Revision 2.21  2003/08/21 21:20:35  cvuu
 ! Change output of format in OUTPUT_SINGLE
 !
