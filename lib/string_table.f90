@@ -16,6 +16,7 @@ module STRING_TABLE
   ! Public procedures
   public :: ADD_CHAR, ALLOCATE_CHAR_TABLE, ALLOCATE_HASH_TABLE
   public :: ALLOCATE_STRING_TABLE, CLEAR_STRING, COMPARE_STRINGS
+  public :: DESTROY_CHAR_TABLE, DESTROY_HASH_TABLE, DESTROY_STRING_TABLE
   public :: DISPLAY_STRING, ENTER_STRING, FLOAT_VALUE, GET_CHAR, GET_STRING
   public :: HOW_MANY_STRINGS, LOOKUP_AND_INSERT, NEW_LINE, NUMERICAL_VALUE
   public :: OPEN_INPUT, STRING_LENGTH, STRING_TABLE_SIZE, UNGET_CHAR
@@ -209,6 +210,38 @@ contains
 !   print *, 'COMPARE_STRINGS = ', compare_strings
     return
   end function COMPARE_STRINGS
+  ! ===================================     DESTROY_CHAR_TABLE     =====
+  subroutine DESTROY_CHAR_TABLE ( STATUS )
+    if ( allocated(char_table) ) then
+      if ( present(status) ) then
+        deallocate ( char_table, stat=status )
+      else
+        deallocate ( char_table )
+      end if
+    end if
+  end subroutine DESTROY_CHAR_TABLE
+  ! ===================================     DESTROY_HASH_TABLE     =====
+  subroutine DESTROY_HASH_TABLE ( STATUS )
+    integer, intent(out), optional :: STATUS ! From deallocate
+    if ( allocated(hash_table) ) then
+      if ( present(status) ) then
+        deallocate ( hash_table, stat=status )
+      else
+        deallocate ( hash_table )
+      end if
+    end if
+  end subroutine DESTROY_HASH_TABLE
+  ! =================================     DESTROY_STRING_TABLE     =====
+  subroutine DESTROY_STRING_TABLE ( STATUS )
+    integer, intent(out), optional :: STATUS ! From deallocate
+    if ( allocated(string_table) ) then
+      if ( present(status) ) then
+        deallocate ( string_table, stat=status )
+      else
+        deallocate ( string_table )
+      end if
+    end if
+  end subroutine DESTROY_STRING_TABLE
   ! =======================================     DISPLAY_STRING     =====
   subroutine DISPLAY_STRING ( STRING, ADVANCE, STRIP )
   ! Write the string indexed by STRING.
@@ -612,6 +645,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.6  2001/04/20 17:40:49  vsnyder
+! Add 'Destroy...' subroutines
+!
 ! Revision 2.5  2001/04/11 21:54:26  vsnyder
 ! Put in more bounds checking
 !
