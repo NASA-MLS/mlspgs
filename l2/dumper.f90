@@ -5,14 +5,7 @@ module DUMPER
 
 ! Dump various stuff so we can look at it.
 
-  use DUMP_0, only: DUMP
-  use HGRID, only: HGRID_T
-  use Intrinsic, only: LIT_INDICES, PHYQ_INDICES
-  use MLSCommon, only: MLSCHUNK_T
-  use MLSSignals_m, only: signals, DUMP, GetRadiometerName, GetModuleName
   use OUTPUT_M, only: OUTPUT
-  use QuantityTemplates, only: QuantityTemplate_T
-  use STRING_TABLE, only: DISPLAY_STRING
   implicit NONE
   private
 
@@ -27,7 +20,7 @@ module DUMPER
 
   interface DUMP
     module procedure DUMP_CHUNKS
-    module procedure DUMP_aHGRID
+    module procedure DUMP_a_HGRID
     module procedure DUMP_HGRIDS
     module procedure DUMP_QUANTITY_TEMPLATES
   end interface
@@ -35,6 +28,9 @@ module DUMPER
 contains ! =====     Private Procedures     ============================
   ! ------------------------------------------------  DUMP_CHUNKS  -----
   subroutine DUMP_CHUNKS ( CHUNKS )
+
+    use MLSCommon, only: MLSCHUNK_T
+
     type(MLSChunk_t), intent(in) :: CHUNKS(:)
     integer :: I
     call output ( 'CHUNKS: SIZE = ' )
@@ -55,7 +51,8 @@ contains ! =====     Private Procedures     ============================
   end subroutine DUMP_CHUNKS
 
   ! ------------------------------------------------  DUMP_A_HGRID  -----
-  subroutine DUMP_aHGRID ( aHGRID )
+  subroutine DUMP_a_HGRID ( aHGRID )
+    use HGRID, only: HGRID_T
     type(hGrid_T), intent(in) :: aHGRID
     integer :: J
       do j = 1, ahgrid%noProfs
@@ -67,10 +64,12 @@ contains ! =====     Private Procedures     ============================
         call output ( ahgrid%solarZenith(j), '(1x,1pg13.6)' )
         call output ( ahgrid%losAngle(j), '(1x,1pg13.6)', advance='yes' )
       end do
-  end subroutine DUMP_aHGRID
+  end subroutine DUMP_a_HGRID
 
   ! ------------------------------------------------  DUMP_HGRIDS  -----
   subroutine DUMP_HGRIDS ( HGRIDS )
+    use HGRID, only: HGRID_T
+    use STRING_TABLE, only: DISPLAY_STRING
     type(hGrid_T), intent(in) :: HGRIDS(:)
     integer :: I, J
     call output ( 'HGRIDS: SIZE = ' )
@@ -103,6 +102,13 @@ contains ! =====     Private Procedures     ============================
 
   ! ------------------------------------  DUMP_QUANTITY_TEMPLATES  -----
   subroutine DUMP_QUANTITY_TEMPLATES ( QUANTITY_TEMPLATES, DETAILS )
+
+    use DUMP_0, only: DUMP
+    use Intrinsic, only: LIT_INDICES, PHYQ_INDICES
+    use MLSSignals_m, only: signals, DUMP, GetRadiometerName, GetModuleName
+    use QuantityTemplates, only: QuantityTemplate_T
+    use STRING_TABLE, only: DISPLAY_STRING
+
     type(QuantityTemplate_T), intent(in) :: QUANTITY_TEMPLATES(:)
     integer, intent(in), optional :: DETAILS ! <= 0 => Don't dump arrays
     !                                        ! >0   => Do dump arrays
@@ -211,6 +217,9 @@ contains ! =====     Private Procedures     ============================
 end module DUMPER
 
 ! $Log$
+! Revision 2.12  2001/10/17 20:50:30  dwu
+! a fix of cloud retrieval
+!
 ! Revision 2.11  2001/08/06 18:37:36  pwagner
 ! Added Copyright statement
 !
