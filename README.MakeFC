@@ -18,7 +18,7 @@ it is mostly self-configuring. You will need:
      the first line of f90makedep.pl before recalculating dependencies;
      do this only if you plan to modify the software)
 Then, from the "top" level (where you see this file, as well as the l2,
-lib, and util directories) simply type
+lib, srclib, and util directories) simply type
   make -f MakeFC
 and you'll be asked to respond to some questions about your compiler,
 platform, and where the Toolkit is installed. Then the software will
@@ -59,11 +59,11 @@ You may begin when you checkout a fresh copy of the mlspgs archive. If
 you already have an archive with some changes you wish to keep but not
 share yet, make sure you update the following files and directories:
 
-   mlspgs/     mlspgs/util/       mlspgs/l2/        mlspgs/lib/
-   ------      ------------       ----------        -----------
-   MakeFC      mlsconfigure         MakeFC            MakeFC
-README.MakeFC  makemakedep.sh     Makefile.dep      Makefile.dep
-               f90makedep.pl      platforms/*       platforms/*
+   mlspgs/     mlspgs/util/       mlspgs/l2/       mlspgs/lib/    mlspgs/srclib
+   ------      ------------       ----------       -----------      ---------
+   MakeFC      mlsconfigure         MakeFC           MakeFC       (shared
+README.MakeFC  makemakedep.sh     Makefile.dep     Makefile.dep      source
+               f90makedep.pl      platforms/*      platforms/*         files)
 
 BUILDING THE SOFTWARE
 Then to make the mls software, both the lib and mlsl2, from the top
@@ -131,11 +131,14 @@ These are available either at the "top" level, mlspgs, or in parts at
 the level of lib and l2.
 make -f MakeFC the_option
 
-clean      removes all binaries created during compilation and linking
+clean      removes all binaries created during compilation and linking;
+           then deletes the subdirectory containing them
+clean_objs removes only the .o and .mod files from the subdirectory; 
+           any library or program files remain
 depends    recalculates dependencies;
-           typically done only after adding new module, or adding a
+           typically done only after adding/removing a module or adding a
            "USE ..." line to an existing module;
-           may require editing first line of f90makedep.pl
+           may require editing first line of f90makedep.pl (see below)
 configure  change configuration: compiler, (less often) platform/OS,
            paths
 tar        bind up the current directory (or lib and l2 if at top) for
@@ -200,22 +203,23 @@ force it to be updated on any change to the source files. Instead, the
 only way to change it is by the explicit command 
 	"make -f MakeFC depends". 
 To create Makefile.dep the shell script util/makemakedep.sh is launched,
-and it in turn uses  one of the following:
+and it in turn uses one of the following:
  f90makedep.pl   the default; found in util; assumes perl or an alias
                  is at /usr/bin/perl
- makedepf90      a c++ program; not supplied with mls;
+ makedepf90      a c++ program; not supplied with mls; not recommended;
                  may need to be compiled
 
 The latter is available from
         http://www.helsinki.fi/~eedelman/makedepf90.html
 in binary form for linux, or as c++ sources that need to be compiled.
 
-If for some reason you do not wish to rely on a perl script, or lack
-perl, the shell script makemakedep.sh in util may be edited to switch it
-to launching makedepf90. The line
+If for some reason you do not wish to rely on a perl script, or lack perl, the
+shell script makemakedep.sh in util may be edited to switch it to launching
+makedepf90. The line
         DEP_MAKER=2
-is clearly marked. Change the "2" to a "1". Of course you will need to
-obtain makedepf90, too.
+is clearly marked. Change the "2" to a "1". Of course you will need to obtain
+makedepf90, too. A drawback of doing this is that future dependency lists will
+fail to show any dependency on modules in files outside the source directory.
 
 The perl script f90makedep.pl assumes your perl, or an alias to it, is
 /usr/bin/perl. This assumption is embodied in line 1 of the script. If
@@ -242,31 +246,7 @@ to link properly. Sun and SGI versions seem correct. The solution is to
 obtain correct ones. This will be moot when newer versions are made
 available.
 
-IMPERFECTIONS
-The dependencies calculated by f90makedep.pl currently check only among files
-in the same directory as the source files. A consequence of this is that it
-does not show dependencies of files in l2 on files in lib. A consequence of
-this is that after changes to source files in lib, files in l2 may not be
-recompiled, even when they should be. 
-
-Dependencies in l2/Makefile.dep do not include any of the lib sources, even if
-they are mentioned in "USE ..." statements. Therefore, when a source in lib is
-changed and recompiled, the l2 source that USEs it does not automatically get
-recompiled.  This can be  convenient if none of the interface elements were
-changed. But it can be misleading if any of the interface elements were
-changed, and in such a way as to break the l2 source. Forcing the l2 source to
-be recompiled would disclose the broken interface, while in the current
-situation the problem could remain hidden until some other circumstance causes
-it emerge.
-
-One easy fix would be to add a dependency line to each file in l2
-claiming it depends on all the files in lib. This "worst-case" scenario
-will work, but at the cost of frequent, unnecessary recompilations.
-
-The smart fix is to f90makedep.pl, perhaps giving it a list of
-directories as arguments. Then in lib, it could know to check only in
-lib, but in l2 it could check both in lib and l2.
-
+IMPERFECTIONS AND COMPLICATIONS
 The only combinations of compiler.platform/OS provided for so far are
   Unknown.None
   NAG.(pc)Linux
@@ -283,7 +263,11 @@ If you have a different combination, contact me. Even better, if you
 have a different combination and already get it to work, send it to me,
 or "cvs commit".
 
-The sources currently must reside directly under lib or l2, and this
+Do not 'cvs add/commit' your .configure. Instead, if you want to keep a copy of
+your configuration handy, copy it someplace, like ~/mls.configure, then copy it
+back whenever needed.
+
+The sources currently must reside directly under lib, srclib, or l2, and this
 fact is "hard-wired" into the Makefiles. It may become desirable to
 segregate them into a /src subdirectory parallel to the /MLSCONFG and
 /platforms subdirectories, and thus the Makefiles would need to changed
@@ -301,20 +285,25 @@ intended to contain machine/OS/compiler specific information the
 software can obtain at runtime. As a start, I simply copied NAG.Linux
 into NAG.*, which is probably incorrect.
 
-Examining lib/targets reveals yet another wrinkle in lib: two of the
+Examining lib/platform/targets reveals yet another wrinkle in lib: two of the
 sources required special compiler flags to compile successfully under
 NAG. You will see them mentioned explicitly at the end with their custom
 build instructions. In the extreme case where every source required a
 different, custom command, the idea of an automatic, self configuring
 Makefile would lose any meaning.
 
-Adding a "make -f MakeFC clean_objs" would allow more flexibility if it
-zapped only the .o and .mod files, keeping the libmls.a and mlsl2,
-perhaps moving them to a permanent, final location.
+Adding a "make -f MakeFC install" would, like clean_objs, zap the .o and .mod
+files, but also moving the libmls.a and mlsl2, to a permanent, final location.
 
 At the cost of making configuration more complex, an option could be
 made that would allow extra settings, e.g. compiler flags could be set
 to suppress warning messages.
+
+The dependencies calculated by makedepf90 check only among files in the same
+directory as the source files. A consequence of this is that it does not show
+dependencies of files in l2 on files in lib. A consequence of this is that
+after changes to source files in lib, files in l2 may not be recompiled, even
+when they should be. This is a good reason to use f90makedep.pl, the default.
 
 If this ever seems to work well enough, similar MakeFC and platforms
 could be devised for the other levels of mls. By design it remains an
@@ -324,6 +313,9 @@ optional way to build, coexisting in parallel with other ways.
 EOF
 exit
 # $Log$
+# Revision 1.2  2000/10/30 19:35:47  pwagner
+# Reflects change to f90makedep.pl
+#
 # Revision 1.1  2000/10/24 21:50:02  pwagner
 # first commit
 #
