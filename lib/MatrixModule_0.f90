@@ -371,16 +371,6 @@ contains ! =====     Public Procedures     =============================
     case ( M_Absent )
       call MLSMessage ( MLSMSG_Error, ModuleName, &
       & "Cannot CholeskyFactor an empty block" )
-    case ( M_Column_Sparse )
-      call allocate_test ( zt, nc, nc, "ZT for CholeskyFactor", ModuleName )
-      call allocate_test ( xin, nc, nc, "XIN for CholeskyFactor", ModuleName )
-      ! ??? Densify and then compute Cholesky decomposition of dense block.
-      ! ??? If necessary, improve this in level 1.0 by working directly
-      ! ??? with sparse input.
-      call densify ( xin, x )
-      call denseCholesky ( zt, xin )
-      call sparsify ( zt, z, "ZT in CholeskyFactor", ModuleName ) ! Z := Zt
-      call deallocate_test ( xin, "XIN in CholeskyFactor", ModuleName )
     case ( M_Banded )
       call allocate_test ( zt, nc, nc, "ZT in CholeskyFactor", &
         & ModuleName )
@@ -431,6 +421,16 @@ contains ! =====     Public Procedures     =============================
       end do ! i
       call deallocate_test ( r1, "R1 in CholeskyFactor", ModuleName )
       call deallocate_test ( zt, "ZT in CholeskyFactor", ModuleName )
+    case ( M_Column_Sparse )
+      call allocate_test ( zt, nc, nc, "ZT for CholeskyFactor", ModuleName )
+      call allocate_test ( xin, nc, nc, "XIN for CholeskyFactor", ModuleName )
+      ! ??? Densify and then compute Cholesky decomposition of dense block.
+      ! ??? If necessary, improve this in level 1.0 by working directly
+      ! ??? with sparse input.
+      call densify ( xin, x )
+      call denseCholesky ( zt, xin )
+      call sparsify ( zt, z, "ZT in CholeskyFactor", ModuleName ) ! Z := Zt
+      call deallocate_test ( xin, "XIN in CholeskyFactor", ModuleName )
     case ( M_Full )
       if ( .not. associated(x,z) ) then
         call createBlock ( z, nc, nc, M_Full )
@@ -901,9 +901,11 @@ contains ! =====     Public Procedures     =============================
 
     integer :: I, J, K, L, M, MZ, N
     integer :: XI_1, XI_N, XR_1, XR_N, YI_1, YI_N, YR_1, YR_N, CR_1, CR_N, C_N
-    integer :: XD, YD
     logical :: MY_SUB, MY_UPD, MY_UPPER
+    real(r8) :: S                            ! Sign, subtract => -1 else +1
+    integer :: XD, YD
     integer, pointer, dimension(:) :: XM, YM
+    real(r8) :: XY                           ! Product of columns of X and Y
     real(r8), pointer, dimension(:,:) :: Z   ! Temp for sparse * sparse
 
     nullify ( xm, ym, z )
@@ -911,6 +913,8 @@ contains ! =====     Public Procedures     =============================
     if ( present(update) ) my_upd = update
     my_sub = .false.
     if ( present(subtract) ) my_sub = subtract
+    s = 1.0_r8
+    if ( my_sub ) s = -1.0_r8
     if ( present(xmask) ) xm => xmask
     if ( present(ymask) ) ym => ymask
     my_upper = .false.
@@ -966,7 +970,7 @@ contains ! =====     Public Procedures     =============================
             xi_1 = xb%r2(i-1)+1  ! index of 1st /=0 el. in this col of xb
             xi_n = xb%r2(i)      ! index of last /=0 el. in this col of xb
             xr_1 = xb%r1(i)      ! first row index of xb
-            xr_n = xr_1 + xi_n - yi_n   ! last row index of xb
+            xr_n = xr_1 + xi_n - xi_1   ! last row index of xb
 
             ! Now work out what they have in common
             cr_1 = max ( xr_1, yr_1 )
@@ -974,23 +978,14 @@ contains ! =====     Public Procedures     =============================
             c_n = cr_n - cr_1 + 1
             if ( c_n <= 0 ) cycle
 
-            ! Now modify xi_1 and yi_1 to point to the start of the common part
-            xd = cr_1 - xr_1
-            yd = cr_1 - yr_1
+            ! Now make xd and yd point to the starts of the common parts
+            xd = xi_1 + cr_1 - xr_1
+            yd = yi_1 + cr_1 - yr_1
 
-            if ( .not. my_sub ) then
-!             z(i,j) = z(i,j) + &
-!                      & dot_product ( xb%values(xi_1+xd:xi_1+xd+c_n-1,1), &
-!                      &   yb%values(yi_1+yd:yi_1+yd+c_n-1,1) )
-              z(i,j) = z(i,j) + &
-                       & dot( c_n, xb%values(xi_1+xd,1), 1, yb%values(yi_1+yd,1), 1 )
-            else
-!             z(i,j) = z(i,j) - &
-!                      & dot_product ( xb%values(xi_1:xi_1+c_n-1,1), &
-!                      &   yb%values(yi_1:yi_1+c_n-1,1) )
-              z(i,j) = z(i,j) - &
-                       & dot( c_n, xb%values(xi_1,1), 1, yb%values(yi_1,1), 1 )
-            end if
+!           xy = dot_product ( xb%values(xd:xd+c_n-1,1), &
+!                          &   yb%values(yd:yd+c_n-1,1) )
+            xy = dot( c_n, xb%values(xd,1), 1, yb%values(yd,1), 1 )
+            z(i,j) = z(i,j) + s * xy
           end do ! i
         end do ! j
         call sparsify ( z, zb, & ! Zb := Z
@@ -1028,11 +1023,8 @@ contains ! =====     Public Procedures     =============================
                 if ( n > yb%r1(j) ) exit
                 m = yb%r2(n)
               else
-                if ( .not. my_sub ) then
-                  z(i,j) = z(i,j) + xb%values(l,1) * yb%values(n,1)
-                else
-                  z(i,j) = z(i,j) - xb%values(l,1) * yb%values(n,1)
-                end if
+                ! Multiplying by S is faster than testing my_sub
+                z(i,j) = z(i,j) + s * xb%values(l,1) * yb%values(n,1)
                 l = l + 1
                 k = k + 1
                 n = n + 1
@@ -1068,17 +1060,9 @@ contains ! =====     Public Procedures     =============================
               if ( btest(ym(j/b+1),mod(j,b)) ) cycle
             end if
             ! Inner product of column I of XB with column J of YB
-            if ( .not. my_sub ) then
-!             zb%values(i,j) = zb%values(i,j) + dot_product( &
-!               & xb%values(k:l,1), yb%values(m:m+l-k,j) )
-              zb%values(i,j) = zb%values(i,j) + dot( l-k+1, &
-                & xb%values(k,1), 1, yb%values(m,j), 1 )
-            else
-!             zb%values(i,j) = zb%values(i,j) - dot_product( &
-!               & xb%values(k:l,1), yb%values(m:m+l-k,j) )
-              zb%values(i,j) = zb%values(i,j) - dot( l-k+1, &
-                & xb%values(k,1), 1, yb%values(m,j), 1 )
-            end if
+!           xy = dot_product( xb%values(k:l,1), yb%values(m:m+l-k,j) )
+            xy = dot( l-k+1, xb%values(k,1), 1, yb%values(m,j), 1 )
+            zb%values(i,j) = zb%values(i,j) + s * xy
           end do ! j
         end do ! i
       end select
@@ -1117,11 +1101,8 @@ contains ! =====     Public Procedures     =============================
                 n = n + 1
                 m = m + 1
               else
-                if ( .not. my_sub ) then
-                  z(i,j) = z(i,j) + xb%values(l,1) * yb%values(n,1)
-                else
-                  z(i,j) = z(i,j) - xb%values(l,1) * yb%values(n,1)
-                end if
+                ! Multiplying by S is faster than testing my_sub
+                z(i,j) = z(i,j) + s * xb%values(l,1) * yb%values(n,1)
                 l = l + 1
                 if ( l > xb%r1(i) ) exit
                 k = xb%r2(l)
@@ -1168,11 +1149,8 @@ contains ! =====     Public Procedures     =============================
                 if ( n > yb%r1(j) ) exit
                 m = yb%r2(n)
               else
-                if ( .not. my_sub ) then
-                  z(i,j) = z(i,j) + xb%values(l,1) * yb%values(n,1)
-                else
-                  z(i,j) = z(i,j) - xb%values(l,1) * yb%values(n,1)
-                end if
+                ! Multiplying by S is faster than testing my_sub
+                z(i,j) = z(i,j) + s * xb%values(l,1) * yb%values(n,1)
                 l = l + 1
                 if ( l > xb%r1(i) ) exit
                 k = xb%r2(l)
@@ -1207,17 +1185,9 @@ contains ! =====     Public Procedures     =============================
             k = xb%r1(i-1)+1
             l = xb%r1(i)
             ! Inner product of column I of XB with column J of YB
-            if ( .not. my_sub ) then
-!             zb%values(i,j) = zb%values(i,j) + dot_product( &
-!               & xb%values(k:l,1), yb%values(xb%r2(k:l),j) )
-              zb%values(i,j) = zb%values(i,j) + dot( l-k+1, &
-                & xb%values(k,1), 1, yb%values(xb%r2(k),j), 1 )
-            else
-!             zb%values(i,j) = zb%values(i,j) - dot_product( &
-!               & xb%values(k:l,1), yb%values(xb%r2(k:l),j) )
-              zb%values(i,j) = zb%values(i,j) - dot( l-k+1, &
-                & xb%values(k,1), 1, yb%values(xb%r2(k),j), 1 )
-            end if
+!           xy = dot_product( xb%values(k:l,1), yb%values(xb%r2(k:l),j) )
+            xy = dot( l-k+1, xb%values(k,1), 1, yb%values(xb%r2(k),j), 1 )
+            zb%values(i,j) = zb%values(i,j) + s * xy
           end do ! i
         end do ! j
       end select
@@ -1246,17 +1216,9 @@ contains ! =====     Public Procedures     =============================
               if ( btest(xm(i/b+1),mod(i,b)) ) cycle
             end if
             ! Inner product of column I of XB with column J of YB
-            if ( .not. my_sub ) then
-!             zb%values(i,j) = zb%values(i,j) + dot_product( &
-!               & xb%values(m:m+l-k,i), yb%values(k:l,1))
-              zb%values(i,j) = zb%values(i,j) + dot( l-k+1, &
-                & xb%values(m,i), 1, yb%values(k,1), 1 )
-            else
-!             zb%values(i,j) = zb%values(i,j) - dot_product( &
-!               & xb%values(m:m+l-k,i), yb%values(k:l,1))
-              zb%values(i,j) = zb%values(i,j) - dot( l-k+1, &
-                & xb%values(m,i), 1, yb%values(k,1), 1 )
-            end if
+!           xy = dot_product( xb%values(m:m+l-k,i), yb%values(k:l,1))
+            xy = dot( l-k+1, xb%values(m,i), 1, yb%values(k,1), 1 )
+            zb%values(i,j) = zb%values(i,j) + s * xy
           end do ! i
         end do ! j
       case ( M_Column_sparse ) ! XB full, YB column-sparse
@@ -1273,13 +1235,8 @@ contains ! =====     Public Procedures     =============================
               if ( btest(xm(i/b+1),mod(i,b)) ) cycle
             end if
             ! Inner product of column I of XB with column J of YB
-            if ( .not. my_sub ) then
-              zb%values(i,j) = zb%values(i,j) + dot_product( &
-                & xb%values(yb%r2(k:l),i), yb%values(k:l,1) )
-            else
-              zb%values(i,j) = zb%values(i,j) - dot_product( &
-                & xb%values(yb%r2(k:l),i), yb%values(k:l,1) )
-            end if
+            xy = dot_product( xb%values(yb%r2(k:l),i), yb%values(k:l,1) )
+            zb%values(i,j) = zb%values(i,j) + s * xy
           end do ! i
         end do ! j
       case ( M_Full )         ! XB full, YB full
@@ -1294,33 +1251,21 @@ contains ! =====     Public Procedures     =============================
               if ( associated(xm) ) then
                 if ( btest(xm(i/b+1),mod(i,b)) ) cycle
               end if
-              if ( .not. my_sub ) then
-                zb%values(i,j) = zb%values(i,j) + dot( xb%nrows, &
-                                 & xb%values(1,i), 1, yb%values(1,j), 1 )
-              else
-                zb%values(i,j) = zb%values(i,j) - dot( xb%nrows, &
-                                 & xb%values(1,i), 1, yb%values(1,j), 1 )
-              end if
+!             xy = dot_product(xb%values(1:xb%nrows,i), yb%values(1:xb%nrows,j))
+              xy = dot( xb%nrows, xb%values(1,i), 1, yb%values(1,j), 1 )
+              zb%values(i,j) = zb%values(i,j) + s * xy
             end do ! i = 1, xb%ncols
           end do ! j = 1, yb%ncols
         else if ( my_upper ) then
           do j = 1, zb%ncols  ! Columns of ZB
             do i = 1, j       ! Rows of Z = columns of XB
-              if ( .not. my_sub ) then
-                zb%values(i,j) = zb%values(i,j) + dot(xb%nrows, &
-                                 & xb%values(1,i), 1, yb%values(1,j), 1 )
-              else
-                zb%values(i,j) = zb%values(i,j) - dot( xb%nrows, &
-                                 & xb%values(1,i), 1, yb%values(1,j), 1 )
-              end if
+!             xy = dot_product(xb%values(1:xb%nrows,i), yb%values(1:xb%nrows,j))
+              xy = dot(xb%nrows, xb%values(1,i), 1, yb%values(1,j), 1 )
+              zb%values(i,j) = zb%values(i,j) + s * xy
             end do
           end do
         else
-          if ( .not. my_sub ) then
-            zb%values = zb%values + matmul(transpose(xb%values),yb%values)
-          else
-            zb%values = zb%values - matmul(transpose(xb%values),yb%values)
-          end if
+          zb%values = zb%values + s * matmul(transpose(xb%values),yb%values)
         end if
       end select
     end select
@@ -1337,9 +1282,10 @@ contains ! =====     Public Procedures     =============================
     logical, optional, intent(in) :: UPDATE
     logical, optional, intent(in) :: SUBTRACT
 
+    real(r8) :: BV                 ! Product of a column of B and the vector V
     integer :: I, M, N             ! Subscripts and loop inductors
     logical :: My_Sub, My_update
-    real(r8) :: SUM                ! Dot product in the column-sparse case
+    real(r8) :: S                  ! SUBTRACT => -1 else +1
     integer :: V1                  ! Subscripts and loop inductors
 
     if ( b%nrows /= size(v) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1350,6 +1296,8 @@ contains ! =====     Public Procedures     =============================
     if ( present(update) ) my_update = update
     my_sub = .false.
     if ( present(subtract) ) my_sub = subtract
+    s = 1.0_r8
+    if ( my_sub ) s = -1.0_r8
     if ( .not. my_update ) p = 0.0_r8
     select case ( b%kind )
     case ( M_Absent )
@@ -1357,33 +1305,26 @@ contains ! =====     Public Procedures     =============================
       do i = 1, size(p)
         v1 = b%r2(i-1)             ! starting position in B%VALUES - 1
         n = b%r2(i) - v1           ! how many values
-        m = b%r1(i)                ! starting position in V
-        if (n == 0) cycle
-        if ( my_sub ) then
-          p(i) = p(i) - dot(n, b%values(v1+1,1), 1, v(m), 1)
-        else
-          p(i) = p(i) + dot(n, b%values(v1+1,1), 1, v(m), 1)
+        if ( n > 0 ) then          ! Because v1+1 will be out-of-range if
+                                   ! there is a final zero-size column
+          m = b%r1(i)              ! starting position in V
+!         bv = dot_product(b%values(v1+1:v1+n,1), v(m:m+n-1))
+          bv = dot(n, b%values(v1+1,1), 1, v(m), 1)
+          p(i) = p(i) + s * bv
         end if
       end do ! i
      case ( M_Column_Sparse )
       do i = 1, size(p)
-        sum = 0.0_r8
+        bv = 0.0_r8
         do n = b%r1(i-1)+1, b%r1(i)
-          sum = sum + b%values(n,1) * v(b%r2(n))
+          bv = bv + b%values(n,1) * v(b%r2(n))
         end do ! n
-        if ( my_sub ) then
-          p(i) = p(i) - sum
-        else
-          p(i) = p(i) + sum
-        end if
+        p(i) = p(i) + s * bv
       end do ! i
     case ( M_Full )
       do i = 1, size(p)
-        if ( my_sub ) then
-          p(i) = p(i) - dot(size(v), b%values(1,i), 1, v(1), 1)
-        else
-          p(i) = p(i) + dot(size(v), b%values(1,i), 1, v(1), 1)
-        end if
+        bv = dot(size(v), b%values(1,i), 1, v(1), 1)
+        p(i) = p(i) + s * bv
       end do ! i
     end select
   end subroutine MultiplyMatrixVector_0
@@ -1693,7 +1634,7 @@ contains ! =====     Public Procedures     =============================
               & "U matrix in SolveCholeskyV_0 is singular" )
           ! dot_product( u%values(u%r2(i-1)+1:u%r2(i)-1,1), &
           ! &            b(u%r1(i):u%r1(i)+u%r2(i)-u%r2(i-1)-1) )
-          x(i) = ( my_b(i) - dot(u%r2(i)-u%r2(i-1), &
+          x(i) = ( my_b(i) - dot(u%r2(i)-u%r2(i-1)-1, &
             &      u%values(u%r2(i-1)+1,1), 1, my_b(u%r1(i)), 1) ) / d
         end do ! i = 1, n
       case ( M_Column_Sparse )
@@ -2095,6 +2036,10 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.44  2001/07/19 17:54:59  vsnyder
+! Correct blunders in banded matrix*matrix and matrix*vector.
+! Handle "subtract" argument differently.
+!
 ! Revision 2.43  2001/07/16 20:36:49  livesey
 ! Added fix for empty columns in banded MatrixVector multiply
 !
