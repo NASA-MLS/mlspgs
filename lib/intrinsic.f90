@@ -25,7 +25,8 @@ module INTRINSIC
   integer, parameter :: NO_POSITIONAL = 4 ! Positional fields prohibited
 ! A "field_type", "field_spec" or "dot" vertex may be decorated with the
 ! following flag:
-  integer, parameter :: REQ_FLD = 1       ! Required field
+  integer, parameter :: NO_ARRAY = 1      ! Field must be scalar
+  integer, parameter :: REQ_FLD = 2       ! Required field
 ! A "section" vertex may be decorated with the following flag:
   integer, parameter :: NO_CHECK_EQ = 1   ! Don't check whether the section's
                                           ! A=B contents are allowed.
@@ -91,6 +92,8 @@ module INTRINSIC
   integer, parameter :: NDR = n+d*(no_dup+req_fld)
   integer, parameter :: NP = n+d*no_positional
   integer, parameter :: NR = n+d*req_fld
+  integer, parameter :: NRS = n+d*(no_array+req_fld)
+  integer, parameter :: NS = n+d*no_array
   integer, parameter :: P = 4000         ! Parameter index
   integer, parameter :: S = 5000         ! Spec index
   integer, parameter :: T = 6000         ! Type index
@@ -245,6 +248,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.55  2004/11/17 20:23:09  vsnyder
+! Add NRS and NS (scalar required) tags for fields
+!
 ! Revision 2.54  2004/05/29 02:42:59  vsnyder
 ! Rearrange function definition stuff
 !
