@@ -177,12 +177,14 @@ contains
                                                ! 0 = OFF
                                                ! 1 = ON
 
-      INTEGER :: ICON                          ! CONTROL SWITCH
+      INTEGER :: ICON                          ! CONTROL SWITCH 
+                                               ! (<=0 clear sky)
+                                               ! -1 = 100% RHi BELOW 100hPa
                                                ! 0 = CLEAR-SKY
+                                               ! (>0 cloudy sky)
                                                ! 1 = 100% R.H. BELOW CLOUD
-                                               ! 2 = DEFAULT
+                                               ! 2 = DEFAULT for cloudy cases
                                                ! 3 = NEAR SIDE CLOUD ONLY
-                                               ! 4 = 100% RHi BELOW 100hPa
 
       INTEGER :: IFOV                          ! FIELD OF VIEW AVERAGING SWITCH
                                                ! 0 = OFF
@@ -516,12 +518,12 @@ contains
 !         CALL HEADER(3)
 
 !-----------------------------------------------------------------------------
-!        ASSUME 100% SATURATION IN CLOUD LAYER
-! 	 N.B.	ICON0 is Clear-Sky only 
+! Different clear and cloudy sky combinations:
+!		ICON=-1 is for clear-sky radiance limit at 1000-100hPa assuming 100%RHi
+! 	   ICON=0 is Clear-Sky only 
 !		ICON=1 is for 100%RH inside and below Cloud
 !		ICON=2 is default for 100%RH inside cloud ONLY
 !		ICON=3 is for near-side cloud only
-!		ICON=4 is for clear-sky radiance limit at 1000-100hPa assuming 100%RHi
 !-----------------------------------------------------------------------------
 
          ICLD_TOP = 0
@@ -554,7 +556,7 @@ contains
             ENDDO
          ENDIF
          
-         IF (ICON .EQ. 4) THEN
+         IF (ICON .EQ. -1) THEN
             DO IL=1,I100_TOP               
                TAU0(IL)=TAU100(IL)            ! 100% SATURATION BELOW 100hPa
             ENDDO
@@ -583,7 +585,7 @@ contains
  
             DO ISPI=1,N
             CWC = RATIO*WC(ISPI,ILYR)
-            IF(CWC .ne. 0._r8 .and. ICON .ne. 0) then           
+            IF(CWC .ne. 0._r8 .and. ICON .gt. 0) then           
             CWC = MAX(1.E-9_r8,abs(CWC))
               
 !=================================================
@@ -682,10 +684,10 @@ contains
          RT = 0.0_r8
          ptg_angle = 0.0_r8
 
-  	 DO I = 1, Multi
+  	      DO I = 1, Multi
             
             If (ZZT1(I) .LT. 0._r8) then
-!               RT= MIN( (ZZT1(I)+RE), RE)
+         !    RT= MIN( (ZZT1(I)+RE), RE)
                RT= ( ZZT1(I) + RE )
                schi = (1+znt1(I)) * ( RT/RE ) * (ZZT1(I) + RE) / Rs_eq    
             else if (ZZT1(I) .GE. 0._r8) then
@@ -696,10 +698,10 @@ contains
       	       PRINT *,'*** ERROR IN COMPUTING POINTING ANGLES'
                PRINT *,'    arg > 1.0 in ArcSin(arg) ..'
                STOP
-            END IF
+          END IF
     	    ptg_angle(i) = Asin(schi) + elev_offset
 
-  	 END DO
+  	      END DO
 
 ! ----------------------------------------------------------------
 ! 	 THEN DO THE FIELD OF VIEW AVERAGING
@@ -726,7 +728,7 @@ contains
          CALL INTERPOLATEVALUES(ZZT1,SRad(:)-SRad0(:),ZZT,DTcir(:,IFR), &
               &                 method='Linear')
 
-         END IF     
+         END IF      ! do FOV  
 
 ! **** END OF FOV AVERAGING ****
 
@@ -777,6 +779,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.44  2003/01/12 03:52:22  dwu
+! add ICON=4 for calculating clear-sky radiance limits assuming 100% RHi below 100hPa
+!
 ! Revision 1.43  2003/01/09 21:08:23  dwu
 ! drop orbI
 !
