@@ -61,6 +61,7 @@ module L2PC_m
   type BinSelector_T
     integer :: selectorType             ! What quantity type does this apply to
     integer :: molecule                 ! What molecule does it apply to
+    integer :: nameFragment             ! A possible name fragment
     real(r8), dimension(2) :: heightRange ! The height range for this selector
     real(r8) :: cost                    ! The cost for that range
   end type BinSelector_T
@@ -1531,6 +1532,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.58  2003/02/06 00:45:37  livesey
+! Added name fragment to binSelector_t
+!
 ! Revision 2.57  2003/02/05 21:55:45  livesey
 ! Bin selectors don't contain signal information anymore.
 !
