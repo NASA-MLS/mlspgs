@@ -58,10 +58,10 @@ module ForwardModelSupport
     & CreateBinSelectorFromMLSCFInfo
 
   !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter, private :: IdParm = &
+  character (len=*), parameter :: IdParm = &
     & "$Id$"
-  character (len=len(idParm)) :: Id = IdParm
-  character (len=*), parameter, private :: ModuleName= &
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= &
     & "$RCSfile$"
   !---------------------------------------------------------------------------
 
@@ -643,6 +643,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.27  2002/03/12 23:44:12  vsnyder
+! Removed private attribute from CVS stuff because private is module's default
+!
 ! Revision 2.26  2002/03/07 17:17:57  livesey
 ! Removed frqGap
 !
