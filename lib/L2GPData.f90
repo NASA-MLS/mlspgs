@@ -251,6 +251,11 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
      ! These are the fill/missing values for all arrays except status
      real (rgp)                        :: MissingValue = UNDEFINED_VALUE
      integer(i4)                       :: MissingStatus = 513 ! 512 + 1
+    ! Vertical coordinate
+    character(len=8) :: verticalCoordinate ! E.g. 'Pressure', or 'Theta'
+    ! integer :: verticalCoordinate ! The vertical coordinate used.  These
+                                  ! are l_lits of the type t_VGridCoord
+                                  ! defined in Init_Tables_Module.
   end type L2GPData_T
 
   ! Print debugging stuff?
@@ -326,7 +331,7 @@ contains ! =====     Public Procedures     =============================
     useNFreqs=MAX(useNFreqs,1)    
 
     ! Allocate the vertical coordinate
-
+    l2gp%verticalCoordinate = 'Pressure'
     call allocate_test ( l2gp%pressures, useNLevels, "l2gp%pressures", &
          & ModuleName )
 
@@ -454,6 +459,7 @@ contains ! =====     Public Procedures     =============================
     ! Don't forget the `global' stuff
     l2gp%pressures=templ2gp%pressures
     l2gp%frequency=templ2gp%frequency
+    l2gp%verticalCoordinate = templ2gp%verticalCoordinate
 
     ! Now go through the parameters one by one, and copy the previous contents
     l2gp%latitude(1:templ2gp%nTimes) = templ2gp%latitude(1:templ2gp%nTimes)
@@ -1561,9 +1567,10 @@ contains ! =====     Public Procedures     =============================
     swid = mls_SWattach (l2FileHandle, name, hdfVersion=HDFVERSION_5)
     
     !   - -   S w a t h   A t t r i b u t e s   - -
-    status = he5_swwrattr(swid, 'Pressure', rgp_type, size(l2gp%pressures), &
+    status = he5_swwrattr(swid, trim(l2gp%verticalCoordinate), &
+      & rgp_type, size(l2gp%pressures), &
       & l2gp%pressures)
-    field_name = 'Pressure'
+    field_name = l2gp%verticalCoordinate ! 'Pressure'
     status = mls_swwrattr(swid, 'VerticalCoordinate', MLS_CHARTYPE, 1, &
       & field_name)
     if ( SWATHLEVELMISSINGVALUE ) &
@@ -1580,6 +1587,9 @@ contains ! =====     Public Procedures     =============================
         & .and. l2gp%nLevels < 1 ) then
         field_name = ''
       else
+        field_name = theTitles(field)
+        if ( trim(theTitles(field)) == 'Pressure' ) &
+          & field_name = l2gp%verticalCoordinate
         call GetStringHashElement (GeolocationTitles, &
           & GeoUniqueFieldDefinition, trim(theTitles(field)), &
           & abbr_uniq_fdef, .false.)
@@ -2723,7 +2733,7 @@ contains ! =====     Public Procedures     =============================
     
      ! if ( myDetails < 0 ) return
     if ( showMe(myDetails > -1, myFields, 'pressure') ) &
-      & call dump ( l2gp%pressures, 'Pressures:' )
+      & call dump ( l2gp%pressures, trim(l2gp%verticalCoordinate) // 's:' )
       
     if ( showMe(myDetails > -1, myFields, 'latitude') ) &
       & call dump ( l2gp%latitude, 'Latitude:' )
@@ -3073,6 +3083,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.111  2004/10/27 00:32:35  pwagner
+! Missing/Fill value for l2gp%status changed to 513
+!
 ! Revision 2.110  2004/08/04 23:19:01  pwagner
 ! Much moved from MLSStrings to MLSStringLists
 !
