@@ -13,7 +13,7 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
   use HGrid, only: hGrid_T
   use INIT_TABLES_MODULE, only: F_BAND, F_GEODANGLE, F_HGRID, F_INCLINATION, &
     & F_LOGBASIS, F_MODULE, F_MOLECULE, F_NOMIFS, F_RADIOMETER, &
-    & F_SIGNAL, F_TYPE, F_UNIT, F_VGRID
+    & F_SIGNAL, F_SGRID, F_TYPE, F_UNIT, F_VGRID
   use INIT_TABLES_MODULE, only: FIELD_FIRST, FIELD_LAST, &
     FIRST_LIT, LAST_LIT, L_BASELINE, L_CHANNEL, L_CloudIce,  L_EARTHREFL, &
     L_ELEVOFFSET, L_EXTINCTION, L_GEODALTITUDE, L_GPH, &
@@ -119,6 +119,7 @@ contains ! =====     Public Procedures     =============================
     integer :: Type_Field               ! Index in subtree of "type"
     integer :: Value                    ! Node index of value of field of spec
     integer :: VGridIndex
+    integer :: SGridIndex
 
     ! Executable code
 
@@ -166,6 +167,7 @@ contains ! =====     Public Procedures     =============================
     sideband = 0
     signal = 0
     vGridIndex = 0
+    sGridIndex = 0
 
     ! First we'll loop over the MLSCF keys.
 
@@ -205,6 +207,8 @@ contains ! =====     Public Procedures     =============================
         call deallocate_test ( signalInds, 'signalInds', ModuleName )
         instrumentModule = GetModuleFromSignal(signal)
         radiometer = GetRadiometerFromSignal(signal)
+      case ( f_sgrid )
+        sGridIndex = decoration(value) ! node_id(value) == n_spec_args
       case ( f_type )
         quantityType = value
         type_field = son
@@ -263,10 +267,10 @@ contains ! =====     Public Procedures     =============================
       call ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModule, &
         & qty, noChans=noChans, mifGeolocation=mifGeolocation )
         
-   ! for losTransFunc type of quantity
+   ! for losTransFunc type of quantity 
    else if (quantityType == l_losTransFunc) then
-
-        noChans = vGrids(vGridIndex)%noSurfs
+      ! replace noChans with no of grid along path which is specified from sGrid
+        noChans = VGrids(sGridIndex)%noSurfs
         frequencyCoordinate = l_losTransFunc
 
        ! Construct an empty quantity
@@ -702,6 +706,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.47  2001/07/19 17:42:31  dwu
+! add sGrid field
+!
 ! Revision 2.46  2001/07/18 23:17:30  dwu
 ! rename l_radiusofearth as l_earthradius
 !
