@@ -140,6 +140,9 @@ contains ! =====     Public Procedures     =============================
 
 ! ??? Do we need a GOT_FIELD check like in VGrid, e.g. ???
 
+    nullify ( qty%surfs, qty%phi, qty%geodLat, qty%lon, qty%time, &
+      & qty%solarTime, qty%solarZenith, qty%losAngle, qty%mafIndex, &
+      & qty%mafCounter, qty%frequencies, qty%surfIndex, qty%chanIndex ) ! for Sun's rubbish compiler
     nullify ( signalInds )
     error = 0
     family = 0
@@ -870,6 +873,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.68  2002/08/04 16:01:19  mjf
+! Added some nullify statements for Sun's rubbish compiler.
+!
 ! Revision 2.67  2002/06/14 16:39:49  livesey
 ! Orbital inclination now minor frame
 !
