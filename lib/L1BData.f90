@@ -6,9 +6,15 @@
 MODULE L1BData
 !===============================================================================
 
-   USE MLSCommon, only: R8
+  use Hdf, only: DFACC_READ, SFSTART
+   USE MLSCommon, only: R8, L1BInfo_T, FileNameLen
    USE MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
      & MLSMSG_L1Bread, MLSMSG_Warning
+  use MoreTree, only: Get_Boolean, Get_Field_ID
+  use Output_M, only: Output
+  use String_Table, only: Get_String
+  use TREE, only: NSONS, &
+    &             SUB_ROSA, SUBTREE, DUMP_TREE_NODE, SOURCE_REF
    IMPLICIT NONE
    PUBLIC
 
@@ -51,7 +57,137 @@ MODULE L1BData
 			! dimensioned (noAuxInds,maxMIFs,noMAFs)
    END TYPE L1BData_T
 
+  private ::  announce_error
+  integer, private :: Error            ! Error level -- 0 = OK
+
 CONTAINS
+
+!------------------------------------------------------------------------------
+   SUBROUTINE l1bradSetup ( root, l1bInfo, F_FILE, &
+   & MAXNUML1BRADIDS, ILLEGALL1BRADID )
+!------------------------------------------------------------------------------
+
+! Brief description of subroutine
+! Take file name from l2cf, open, and store unit no. in l1bInfo
+
+! Arguments
+    type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
+    integer, intent(in) :: Root         ! of the l1brad file specification.
+    !                                     Indexes a "spec_args" vertex.
+    integer, intent(in) :: F_FILE
+    integer, intent(in) :: MAXNUML1BRADIDS
+    integer, intent(in) :: ILLEGALL1BRADID
+
+    integer :: I                        ! Loop inductor, subscript
+    character(len=FileNameLen) :: FileName      ! Duh
+    integer :: Son                      ! Some subtree of root.
+    integer :: status, sd_id
+    integer, save :: ifl1=0             ! num. of L1brad files opened so far
+
+    ! Error message codes
+
+    error = 0
+
+    ! Collect data from the fields. (only one legal field: file='...')
+
+    do i = 2, nsons(root)
+
+      son = subtree(i,root)
+!      select case ( get_field_id(son) )
+
+!      case ( f_file )
+      if(get_field_id(son) == f_file) then
+      
+        call get_string ( sub_rosa(subtree(2,son)), fileName, strip=.true. )
+        if(.NOT. associated(l1bInfo%L1BRADIDs)) then
+          allocate ( l1bInfo%L1BRADIDs(MAXNUML1BRADIDS), stat=status )
+          l1bInfo%L1BRADIDs = ILLEGALL1BRADID
+          if ( status /= 0 ) &
+          & call announce_error ( son, 'Allocation failed for L1BRADIDs' )
+        endif
+        sd_id = sfstart(Filename, DFACC_READ)
+        if ( sd_id == -1 ) then
+          call announce_error ( son, &
+            & 'Error opening L1BRAD file: ' //Filename)
+        elseif(ifl1 == MAXNUML1BRADIDS) then
+          call announce_error ( son, "Cannot open any more L1BRAD files" )
+          exit
+        else
+          ifl1 = ifl1 + 1
+          l1bInfo%L1BRADIDs(ifl1) = sd_id
+        end if
+
+!      case default
+      else
+          call announce_error ( son, &
+            & 'Unknown field specified in read l1brad' )
+        ! Can't get here if the type checker worked
+
+!      end select
+      endif
+
+    end do
+
+!----------------------------
+   END SUBROUTINE l1bradSetup
+!----------------------------
+
+!------------------------------------------------------------------------------
+   SUBROUTINE l1boaSetup ( root, l1bInfo, F_FILE )
+!------------------------------------------------------------------------------
+
+! Brief description of subroutine
+! Take file name from l2cf, open, and store unit no. in l1bInfo
+
+! Arguments
+    type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
+    integer, intent(in) :: Root         ! of the l1brad file specification.
+    !                                     Indexes a "spec_args" vertex.
+    integer, intent(in) :: F_FILE
+
+    integer :: I                        ! Loop inductor, subscript
+    character(len=FileNameLen) :: FileName      ! Duh
+    integer :: Son                      ! Some subtree of root.
+    integer :: status, sd_id
+
+    ! Error message codes
+
+    error = 0
+
+    ! Collect data from the fields. (only one legal field: file='...')
+
+    do i = 2, nsons(root)
+
+      son = subtree(i,root)
+!      select case ( get_field_id(son) )
+
+!      case ( f_file )
+      if(get_field_id(son) == f_file) then
+
+!      case ( f_file )
+        call get_string ( sub_rosa(subtree(2,son)), fileName, strip=.true. )
+        sd_id = sfstart(Filename, DFACC_READ)
+        if ( sd_id == -1 ) then
+          call announce_error ( son, &
+            & 'Error opening L1BOA file: ' //Filename)
+        else
+          l1bInfo%L1BOAID = sd_id
+        end if
+
+!      case default
+      else
+          call announce_error ( son, &
+            & 'Unknown field specified in read l1boa' )
+        ! Can't get here if the type checker worked
+
+      endif
+!      end select
+
+    end do
+
+!----------------------------
+   END SUBROUTINE l1boaSetup
+!----------------------------
 
 !------------------------------------------------------------------------------
    SUBROUTINE ReadL1BData (L1FileHandle, quantityName, l1bData, noMAFs, flag, &
@@ -418,11 +554,77 @@ CONTAINS
      end do
    end function FindL1BData
 
+
+  ! ------------------------------------------------  announce_error  -----
+  subroutine announce_error ( lcf_where, full_message, use_toolkit, &
+  & error_number )
+  
+   ! Arguments
+  
+    integer, intent(in)    :: lcf_where
+    character(LEN=*), intent(in)    :: full_message
+    logical, intent(in), optional :: use_toolkit
+    integer, intent(in), optional    :: error_number
+    ! Local
+!    character (len=80) :: msg, mnemonic
+!    integer :: status
+    logical :: just_print_it
+    logical, parameter :: default_output_by_toolkit = .true.
+ 
+    if ( present(use_toolkit) ) then
+      just_print_it = .not. use_toolkit
+    else if ( default_output_by_toolkit ) then
+      just_print_it = .false.
+    else
+      just_print_it = .true.
+    end if
+ 
+    if ( .not. just_print_it ) then
+      error = max(error,1)
+      call output ( '***** At ' )
+
+      if ( lcf_where > 0 ) then
+          call print_source ( source_ref(lcf_where) )
+      else
+        call output ( '(no lcf node available)' )
+      end if
+
+      call output ( ': ' )
+      call output ( "The " );
+      if ( lcf_where > 0 ) then
+        call dump_tree_node ( lcf_where, 0 )
+      else
+        call output ( '(no lcf tree available)' )
+      end if
+
+      call output ( " Caused the following error: ", advance='yes', &
+        & from_where=ModuleName )
+      call output ( trim(full_message), advance='yes', &
+        & from_where=ModuleName )
+      if ( present(error_number) ) then
+        call output ( 'error number ', advance='no' )
+        call output ( error_number, places=9, advance='yes' )
+      end if
+    else
+      print*, '***Error in module ', ModuleName
+      print*, trim(full_message)
+      if ( present(error_number) ) then
+        print*, 'error number ', error_number
+      end if
+    end if
+
+!===========================
+  end subroutine announce_error
+!===========================
+
 !=================
 END MODULE L1BData
 !=================
 
 ! $Log$
+! Revision 2.3  2001/05/03 22:32:25  pwagner
+! Added L1B..Setup for Rad and OA
+!
 ! Revision 2.2  2001/03/03 00:06:23  livesey
 ! Added FindL1BData
 !
