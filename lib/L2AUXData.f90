@@ -139,6 +139,10 @@ CONTAINS
     ! Executable code
 
     IF (ASSOCIATED(database)) THEN
+       ! Check we don't already have one of this name
+       IF (LinearSearchStringArray(database%name,l2aux%name, &
+            & caseInsensitive=.TRUE.)/=0) CALL MLSMessage(MLSMSG_Error,&
+            & ModuleName,MLSMSG_Duplicate//l2aux%name)
        newSize=SIZE(database)+1
     ELSE
        newSize=1
@@ -181,6 +185,9 @@ END MODULE L2AUXData
 
 !
 ! $Log$
+! Revision 1.4  1999/12/14 00:53:17  livesey
+! Changed DOUBLE PRECISION to REAL(r8)
+!
 ! Revision 1.3  1999/12/03 22:25:57  livesey
 ! Tidied up some of the INTENT stuff
 !

@@ -146,6 +146,10 @@ CONTAINS
     ! Executable code
 
     IF (ASSOCIATED(database)) THEN
+       ! Check we don't already have one of this name
+       IF (LinearSearchStringArray(database%name,vectorTemplate%name, &
+            & caseInsensitive=.TRUE.)/=0) CALL MLSMessage(MLSMSG_Error,&
+            & ModuleName,MLSMSG_Duplicate//vectorTemplate%name)
        newSize=SIZE(database)+1
     ELSE
        newSize=1
@@ -237,6 +241,10 @@ CONTAINS
     ! Executable code
 
     IF (ASSOCIATED(database)) THEN
+       ! Check we don't already have one of this name
+       IF (LinearSearchStringArray(database%name,vector%name, &
+            & caseInsensitive=.TRUE.)/=0) CALL MLSMessage(MLSMSG_Error,&
+            & ModuleName,MLSMSG_Duplicate//vector%name)
        newSize=SIZE(database)+1
     ELSE
        newSize=1
@@ -278,6 +286,9 @@ END MODULE VectorsModule
 
 !
 ! $Log$
+! Revision 1.3  1999/12/16 18:32:26  livesey
+! Changed do to name change from VectorQuantities to QuantityTemplates
+!
 ! Revision 1.2  1999/12/14 01:01:52  livesey
 ! Changed DOUBLE PRECISION to REAL(r8)
 !

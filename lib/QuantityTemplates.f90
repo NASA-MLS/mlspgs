@@ -352,6 +352,10 @@ MODULE QuantityTemplates         ! Quantities within vectors
     ! Executable code
 
     IF (ASSOCIATED(database)) THEN
+       ! Check we don't already have one of this name
+       IF (LinearSearchStringArray(database%name,qty%name, &
+            & caseInsensitive=.TRUE.)/=0) CALL MLSMessage(MLSMSG_Error,&
+            & ModuleName,MLSMSG_Duplicate//qty%name)
        newSize=SIZE(database)+1
     ELSE
        newSize=1
@@ -387,20 +391,15 @@ MODULE QuantityTemplates         ! Quantities within vectors
     ENDIF
   END SUBROUTINE DestroyQuantityTemplateDatabase
 
-  ! --------------------------------------------------------------------------
-
-  ! This subroutine creates a new quantity template from the l2cf information
-
-!   SUBROUTINE CreateQtyTemplateFromMLSCFInfo(qty,cfInfo,&
-!        & vGridDatabase,hGridDatabase)
-!   END SUBROUTINE CreateQtyTemplateFromMLSCFInfo
-
 !=============================================================================
 END MODULE QuantityTemplates
 !=============================================================================
 
 !
 ! $Log$
+! Revision 1.3  1999/12/16 23:46:35  livesey
+! Added the unit field and fixed a couple of compile glitches
+!
 ! Revision 1.2  1999/12/16 23:12:09  livesey
 ! Added quantityType and other support entries
 !

@@ -150,6 +150,10 @@ CONTAINS
     ! Executable code
 
     IF (ASSOCIATED(database)) THEN
+       ! Check we don't already have one of this name
+       IF (LinearSearchStringArray(database%name,l2gp%name, &
+            & caseInsensitive=.TRUE.)/=0) CALL MLSMessage(MLSMSG_Error,&
+            & ModuleName,MLSMSG_Duplicate//l2gp%name)
        newSize=SIZE(database)+1
     ELSE
        newSize=1
@@ -192,6 +196,9 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 1.4  1999/12/14 00:53:50  livesey
+! Changed DOUBLE PRECISION to REAL(r8)
+!
 ! Revision 1.3  1999/12/03 22:24:50  livesey
 ! Tidied up some of the INTENT stuff
 !
