@@ -432,6 +432,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_module, s+s_module, n+n_field_spec, &
              begin, f+f_fraction, t+t_numeric, n+n_field_type, &
              begin, f+f_forbidOverspill, t+t_boolean, n+n_field_type, &
+             begin, f+f_geodAngle, t+t_numeric, n+n_field_type, &
              begin, f+f_height, t+t_numeric, n+n_field_type, &
              begin, f+f_insetOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_maxLowerOverlap, t+t_numeric, n+n_field_type, &
@@ -439,10 +440,11 @@ contains ! =====     Public procedures     =============================
              begin, f+f_mif, t+t_numeric, n+n_field_type, &
              begin, f+f_interpolationfactor, t+t_numeric, n+n_field_type, &
              begin, f+f_inclination, t+t_numeric, n+n_field_type, &
+             begin, f+f_solarTime, t+t_numeric, n+n_field_type, &
+             begin, f+f_solarZenith, t+t_numeric, n+n_field_type, &
              begin, f+f_spacing, t+t_numeric, n+n_field_type, &
              begin, f+f_origin, t+t_numeric, n+n_field_type, &
              begin, f+f_sourceL2GP, s+s_l2gp, n+n_field_spec, &
-             begin, f+f_values, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_binSelector, &
@@ -501,11 +503,12 @@ contains ! =====     Public procedures     =============================
              begin, f+f_sourceL2GP, s+s_l2gp, n+n_field_spec, &
              ndp+n_spec_def, &
       begin, s+s_forge, &
-             begin, f+f_module, s+s_module, n+n_field_spec, &
+             begin, f+f_module, s+s_module, nr+n_field_spec, &
+             begin, f+f_solarTime, t+t_numeric, n+n_field_type, &
+             begin, f+f_solarZenith, t+t_numeric, n+n_field_type, &
              begin, f+f_geodAngle, t+t_numeric, n+n_field_type, &
-             begin, f+f_noMIFs, t+t_numeric, n+n_field_type, &
-             begin, f+f_inclination, t+t_numeric, n+n_field_type, &
-             nadp+n_spec_def /) )
+             begin, f+f_noMIFs, t+t_numeric, nr+n_field_type, &
+             ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_quantity, & ! Must be AFTER s_hgrid and s_vgrid
              begin, f+f_irregular, t+t_boolean, n+n_field_type, &
@@ -945,6 +948,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.281  2003/02/06 23:30:36  livesey
+! New approach for Forge and explicit hGrids
+!
 ! Revision 2.280  2003/02/06 22:04:48  vsnyder
 ! Add f_moleculesPol, f_moleculeDerivativesPol, delete f_polarized
 !
