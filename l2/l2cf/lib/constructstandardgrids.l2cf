@@ -5,8 +5,12 @@
 
 vGridStandard: vGrid, type=Logarithmic, coordinate=Zeta, $
   start=1000mb, formula=[25:6,9:3]
+vGridTemperature: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1000mb, formula=[25:6,12:3]
 vGridHiRes: vGrid, type=Logarithmic, coordinate=Zeta, $
   start=1000mb, formula=[21:12,14:6,9:3]
+vGridTemperatureHiRes: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1000mb, formula=[21:12,14:6,12:3]
 vGridBaseline: vGrid, type=Explicit, coordinate=Zeta, values=100mb
 vGridTropH2O: vGrid, type=Logarithmic, coordinate=Zeta, $
   start= 1000mb, formula=[2:3,5:6]
@@ -36,6 +40,9 @@ vGridWMO: VGrid, type=Logarithmic, coordinate=Zeta, $
   start=1000mb, formula=[97:48]
 
 ; $Log$
+; Revision 1.9  2003/05/20 18:25:46  dwu
+; change sGridStandard
+;
 ; Revision 1.8  2003/05/16 19:55:09  dwu
 ; del hGridFine
 ;

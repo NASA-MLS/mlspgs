@@ -33,8 +33,9 @@ begin Construct
 
   ;; ----------------------------------------- Temperature / refgph
   
-  temperature: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=temperature
-  temperature_HR: Quantity, vGrid=vGridHiRes, hGrid=hGridStandard, type=temperature
+  temperature: Quantity, vGrid=vGridTemperature, hGrid=hGridStandard, type=temperature
+  temperature_HR: Quantity, vGrid=vGridTemperatureHiRes, hGrid=hGridStandard, $
+    type=temperature
   refGPH: Quantity, vGrid=vGridRefGPH, hGrid=hGridStandard, type=refGPH
   GPH: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=GPH
   GPH_HR: Quantity, vGrid=vGridHiRes, hGrid=hGridStandard, type=GPH
