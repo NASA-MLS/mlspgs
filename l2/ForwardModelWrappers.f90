@@ -18,6 +18,7 @@ module ForwardModelWrappers
   use FullForwardModel_m, only: FULLFORWARDMODEL
   use LinearizedForwardModel_m, only: LINEARIZEDFORWARDMODEL
   use ScanModelModule, only: SCANFORWARDMODEL
+  use BaselineForwardModel_m, only: BASELINEFORWARDMODEL
 
   implicit none
   private
@@ -71,6 +72,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.8  2001/10/02 16:55:10  livesey
+! Bug fix, forgot use statement
+!
 ! Revision 2.7  2001/10/02 16:53:18  livesey
 ! Added call to BaselineForwardModel for Full and Linearized forward models.
 !
