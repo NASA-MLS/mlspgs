@@ -30,7 +30,8 @@ module ClearSkyModule
 contains
 
       SUBROUTINE CLEAR_SKY(L,NU,TS,S,LORS,WIND,XZ,XP,XT,XQ,VMR, NS, &
-                 &         F,RS,U,T,TAU,Z,TAU100, Catalog, Bill_Spectra,LosVel )
+                 &         F,RS,U,T,Z,TAU,tau_wet, tau_dry, Catalog, &
+                 &         Bill_Spectra,LosVel, ICON )
 
 !======================================================
 !     >>>>>>>>CLEAR-SKY RADIATION SCHEME<<<<<<<<<<
@@ -61,10 +62,12 @@ contains
       REAL(r8), intent(in) :: XQ(L+1)
       REAL(r8), intent(in) :: VMR(NS-1,L+1)
       REAL(r8), intent(out) :: RS(NU/2)        ! Surface reflectivity
-      REAL(r8), intent(out) :: TAU100(L)
+      REAL(r8), intent(out) :: tau_wet(L)
+      REAL(r8), intent(out) :: tau_dry(L)
       REAL(r8), intent(out) :: TAU(L)
       REAL(r8), intent(out) :: T(L)
       REAL(r8), intent(out) :: Z(L)
+      INTEGER, intent(in) :: ICON              ! CONTROL SWITCH
 
 !-----------------------------------------------------
 ! Spectra Catalog 
@@ -106,6 +109,9 @@ contains
       N1    = 0.0_r8
       GAMMA = 0.0_r8
       N2    = 0.0_r8
+      tau   = 0.0_r8
+      tau_wet = 0.0_r8
+      tau_dry = 0.0_r8
 
       If ( .not. Bill_Spectra ) then
 
@@ -147,32 +153,45 @@ contains
            !---------------------------------
            ! Using default spectroscopy data
            ! --------------------------------
+           IF (ICON .eq. 0) then             ! save time for clear sky
            CALL GET_BETA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,GAMMA,N2,  &
                 &        NMOL,NCNT,T(I),P,F,DQ,VMR1,DR,NS )   
 !               &        MOL,NMOL,NCNT,T(I),P,F,DQ,VMR1,DR,NS )   
                                              ! HERE DQ IS H2O MIXING RATIO
            TAU(I)=DR*Z(I)
 
+           Else
            CALL GET_BETA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,GAMMA,N2,  &
-                &        NMOL,NCNT,T(I),P,F,100._r8,VMR1,DR,NS ) 
-!               &        MOL,NMOL,NCNT,T(I),P,F,100._r8,VMR1,DR,NS ) 
+                &        NMOL,NCNT,T(I),P,F,110._r8,VMR1,DR,NS ) 
+!               &        MOL,NMOL,NCNT,T(I),P,F,110._r8,VMR1,DR,NS ) 
                                              ! HERE DQ IS RELATIVE HUMIDITY!
-           TAU100(I)=DR*Z(I)
+           tau_wet(I)=DR*Z(I)
+         
+           CALL GET_BETA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,GAMMA,N2,  &
+                &        NMOL,NCNT,T(I),P,F,1.e-3_r8,VMR1,DR,NS ) 
+!               &        MOL,NMOL,NCNT,T(I),P,F,1.e-3_r8,VMR1,DR,NS ) 
+                                             ! HERE DQ IS RELATIVE HUMIDITY!
+           tau_dry(I)=DR*Z(I)
+           Endif
          
          else
            !--------------------------------
            ! Using bill's spectroscopy data
            !--------------------------------
+           IF (ICON .eq. 0) then            ! save time for clear sky
            call get_beta_bill (T(I), P, F, DQ, VMR1, &
-            & NS, DR, Catalog, LosVel)
-           
+            & NS, DR, Catalog, LosVel)           
            TAU(I)=DR*Z(I)
-
-           call get_beta_bill (T(I), P, F, 100._r8, VMR1, &
+           
+           Else
+           call get_beta_bill (T(I), P, F, 110._r8, VMR1, &
             & NS, DR, Catalog, LosVel)
+           tau_wet(I)=DR*Z(I)
 
-           TAU100(I)=DR*Z(I)
-
+           call get_beta_bill (T(I), P, F, 1.e-3_r8, VMR1, &
+            & NS, DR, Catalog, LosVel)
+           tau_dry(I)=DR*Z(I)
+           Endif
          endif
 
       ENDDO
@@ -186,6 +205,9 @@ contains
 end module ClearSkyModule
 
 ! $Log$
+! Revision 1.20  2003/01/23 00:19:09  pwagner
+! Some cosmetic only (or so I hope) changes
+!
 ! Revision 1.19  2002/12/18 16:08:58  jonathan
 ! minor changes
 !

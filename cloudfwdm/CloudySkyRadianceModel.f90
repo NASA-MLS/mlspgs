@@ -24,9 +24,6 @@ module CloudySkyRadianceModel
       private
       public :: CloudForwardModel
 
-      ! For production, the following should be TRUE
-      logical, private, parameter :: ALWAYSSKIPSENSITIVITY = .true.
-
  !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm =                          &
     "$Id$"
@@ -177,13 +174,17 @@ contains
                                                ! 1 = ON
 
       INTEGER, intent(in) :: ICON              ! CONTROL SWITCH 
-                                               ! (<=0 clear sky)
-                                               ! -1 = 100% RHi BELOW 100hPa
-                                               ! 0 = CLEAR-SKY
-                                               ! (>0 cloudy sky)
-                                               ! 1 = 100% R.H. BELOW CLOUD
-                                               ! 2 = DEFAULT for cloudy cases
-                                               ! 3 = NEAR SIDE CLOUD ONLY
+
+!-----------------------------------------------------------------------------
+! Different clear and cloudy sky combinations:
+!		ICON=-1 is for clear-sky radiance limit assuming 110%RHi
+!		ICON=-2 is for clear-sky radiance limit assuming 0%RHi
+!		ICON=-3 is for clear-sky radiance lower limit from 110% and 0%RHi
+! 	   ICON=0 is Clear-Sky only 
+!		ICON=1 is for 100%RH below the cloud top or below 100mb
+!		ICON=2 is default for 100%RH inside cloud ONLY
+!		ICON=3 is for near-side cloud only
+!-----------------------------------------------------------------------------
 
       INTEGER, intent(in) :: IFOV              ! FIELD OF VIEW AVERAGING SWITCH
                                                ! 0 = OFF
@@ -250,8 +251,8 @@ contains
       REAL(r8) :: UI(NU,NU,NUA)                ! COSINE OF INCIDENT TB ANGLES
       REAL(r8) :: THETAI(NU,NU,NUA)            ! ANGLES FOR INCIDENT TB
       REAL(r8) :: PHH(N,NU,NZmodel-1)          ! PHASE FUNCTION 
-      REAL(r8) :: TAU(NZmodel-1)               ! TOTAL OPTICAL DEPTH
-      REAL(r8) :: TAU100(NZmodel-1)            ! TOTAL OPTICAL DEPTH AT 100%RH
+      REAL(r8) :: tau_wet(NZmodel-1)            ! TOTAL OPTICAL DEPTH for 100%RH
+      REAL(r8) :: tau_dry(NZmodel-1)            ! TOTAL OPTICAL DEPTH for 0%RH
       REAL(r8) :: W0(N,NZmodel-1)              ! SINGLE SCATTERING ALBEDO
       
       REAL(r8) :: S                            ! SALINITY
@@ -261,7 +262,7 @@ contains
       REAL(r8) :: RC0(3)                       ! GAS ABS.SCAT.EXT COEFFS.
       REAL(r8) :: RC_TOT(3)                    ! TOTAL ABS.SCAT.EXT COEFFS.
       REAL(r8) :: Z(NZmodel-1)                 ! MODEL LAYER THICKNESS (m)
-      REAL(r8) :: TAU0(NZmodel-1)              ! CLEAR-SKY OPTICAL DEPTH
+      REAL(r8) :: TAU0(NZmodel-1)              ! CLEAR-SKY DEPTH
       REAL(r8) :: TEMP(NZmodel-1)              ! MEAN LAYER TEMPERATURE (K)
 
       REAL(r8) :: TT(NZmodel/8+Nsub,NZmodel)   ! CLOUDY-SKY TB AT TANGENT 
@@ -292,11 +293,16 @@ contains
       REAL(r8) :: CWC                          ! CLOUD WATER CONTENT (g/m3)
       REAL(r8) :: CDEPTH(N)                    ! CLOUD OPTICAL DEPTH
       REAL(r8) :: DEPTH                        ! TOTAL OPTICAL DEPTH
+      REAL(r8) :: tau(NZmodel-1)            ! TOTAL EXTINCTION
                                                ! (CLEAR+CLOUD)
-                                               !                      | 100%RHi
-      REAL(r8) :: delTAU100(NZmodel-1)         ! TOTAL AIR EXTINCTION for 
-      REAL(r8) :: delTAU(NZmodel-1)            ! TOTAL EXTINCTION
-      REAL(r8) :: delTAUc(NZmodel-1)           ! CLOUDY-SKY EXTINCTION
+      REAL(r8) :: tau_clear(NZmodel-1)      ! EXTINCTION (clear part)
+      REAL(r8) :: tau_wetCld(NZmodel-1)     ! EXTINCTION (clear part)
+                                               ! assuming 110%RHi
+                                               ! below 100mb or cloud top
+      REAL(r8) :: tau_fewCld(NZmodel-1)     ! EXTINCTION (clear part)
+                                               ! assuming 110%RHi
+                                               ! only inside cloud
+      REAL(r8) :: tauc(NZmodel-1)           ! EXTINCTION (cloud part)
       
 !---------------------------
 !     WORK SPACE PARAMETERS
@@ -371,7 +377,6 @@ contains
       REAL(r8), PARAMETER :: CONST2 = 4810.0_r8
 
       Logical :: Bill_data
-      logical :: skip_sensitivity
 
       COMPLEX(r8) A(NR,NAB),B(NR,NAB)          ! MIE COEFFICIENCIES
 
@@ -381,7 +386,6 @@ contains
 !---------------<<<<<<<<<<<<< START EXCUTION >>>>>>>>>>>>-----------------
 
 !      CALL HEADER(1)
-      skip_sensitivity = ALWAYSSKIPSENSITIVITY .or. (ISWI == 0)
 
 ! initialization of TB0, DTcir, Trans, BETA, BETAc, Dm, TAUeff, SS
 
@@ -390,7 +394,7 @@ contains
       Tb0 = 0._r8
       TAU0 = 0.0_r8
       TAU=0.0_r8
-      TAU100=0.0_r8
+      tau_wet=0.0_r8
       DTcir = 0._r8
       trans = 0._r8
       Betac = 0._r8
@@ -403,7 +407,8 @@ contains
       RC0=0.0_r8
       RC_TMP=0.0_r8
       RC_tot=0.0_r8
-
+      chk_cld = 0._r8
+         
 !=========================================================================
 !                    >>>>>> CHECK MODEL-INPUT <<<<<<< 
 !-------------------------------------------------------------------------
@@ -442,7 +447,7 @@ contains
       enddo
       n2=n2*2/(multi-nsub)
      
-! ---------------The following sets first 5 tangent heights below zero
+! --The following sets first 5 tangent heights below the surface
 
       DO I=1, Multi
          if (i .le. Nsub) zzt1(i) = -20000.0_r8 + i*2000.0_r8 
@@ -459,8 +464,8 @@ contains
       ENDDO
 
       IF (IFOV .EQ. 1) THEN         
-               CALL GET_TAN_PRESS ( YP, YZ, YT, YQ, NZmodel,        &
-                    &               ZPT1, ZZT1, ZTT1, ZVT1, Multi )
+         CALL GET_TAN_PRESS ( YP, YZ, YT, YQ, NZmodel,        &
+                ZPT1, ZZT1, ZTT1, ZVT1, Multi )
 
       ENDIF
 
@@ -482,8 +487,7 @@ contains
       SWIND = 0._r8
       NIWC  = 10
 
-!      IF (ISWI .EQ. 0) THEN                  
-       if ( skip_sensitivity ) THEN
+       IF (ISWI .EQ. 0) THEN                  
          RATIO=1._r8
          MY_NIWC=1                ! SKIP FULL SENSITIVITY CALCULATION
        ELSE
@@ -495,9 +499,7 @@ contains
 !------------------------------------------
 
     iwc_loop: do IIWC=1, MY_NIWC
-!      DO 3000 IIWC=1, MY_NIWC    ! START OF IWC LOOP
-!         IF (ISWI .EQ. 0) THEN
-         if ( skip_sensitivity ) THEN
+         IF (ISWI .EQ. 0) THEN
             RATIO=1._r8
          ELSE
             RATIO = 10.*(IIWC-1)**2*0.004+1.0E-9_r8
@@ -512,93 +514,60 @@ contains
 
 !
       frequency_loop: do IFR=1, NF
-!      DO 2000 IFR=1, NF
 
       IF ( doChannel(IFR) ) then
                
          CALL CLEAR_SKY(NZmodel-1,NU,TS,S,LORS,SWIND,           &
               &         YZ,YP,YT,YQ,VMR,NS,                     &
-              &         FREQUENCY(IFR),RS,U,TEMP,TAU0,Z,TAU100, &
-              &         Catalog, Bill_data, LosVel ) 
+              &         FREQUENCY(IFR),RS,U,TEMP,Z,TAU0,tau_wet, &
+              &         tau_dry,Catalog, Bill_data, LosVel, ICON ) 
 
 !         CALL HEADER(3)
 
-!-----------------------------------------------------------------------------
-! Different clear and cloudy sky combinations:
-!		ICON=-1 is for clear-sky radiance limit at 1000-100hPa assuming 100%RHi
-! 	   ICON=0 is Clear-Sky only 
-!		ICON=1 is for 100%RH inside and below Cloud
-!		ICON=2 is default for 100%RH inside cloud ONLY
-!		ICON=3 is for near-side cloud only
-!-----------------------------------------------------------------------------
-
+! find various layer indices         
          ICLD_TOP = 0
          I100_TOP = 0
-         
+         tau_wetCld=TAU0                       ! Initialize to TAU0
+         tau_fewCld = tau0
+
          DO IL=1, NZmodel-1
-            IF (ICON .eq. 0) then
-               CHK_CLD(IL) =0.                ! test clear sky
-            ENDIF
             IF(CHK_CLD(IL) .NE. 0.)THEN
                ICLD_TOP=IL                    ! FIND INDEX FOR CLOUD-TOP 
-               TAU0(IL)=TAU100(IL)            ! 100% SATURATION INSIDE CLOUD 
+               tau_fewCld(IL)=tau_wet(IL)     ! 100% SATURATION INSIDE CLOUD 
             ENDIF
             IF(YP(IL) .GE. 100._r8) THEN      ! IF BELOW 100MB
                I100_TOP=IL                    ! FIND INDEX FOR 100MB
             ENDIF
          ENDDO
 
-!        delTAU100 will be used for transmission function calculation
-         delTAU100=TAU0                       ! Initialize to TAU0
-         if (ICON .ne. 0) then                ! only for cloudy retrieval cases
-           DO IL=1,MAX(ICLD_TOP,I100_TOP)        
-              delTAU100(IL)=TAU100(IL)        ! MASK 100% SATURATION BELOW
-           ENDDO                              ! 100MB or cloud top
-         endif
+         DO IL=1,MAX(ICLD_TOP,I100_TOP)        
+              tau_wetCld(IL)=tau_wet(IL)    ! 110%rhi BELOW cloud top or 100mb
+         ENDDO                              
+         ! tau_wetCld will be used for transmission function calculation
 
-         IF (ICON .EQ. 1) THEN
-            DO IL=1, ICLD_TOP                 
-               TAU0(IL)=TAU100(IL)            ! 100% SATURATION BELOW CLOUD
-            ENDDO
-         ENDIF
-         
-         IF (ICON .EQ. -1) THEN
-            DO IL=1,I100_TOP               
-               TAU0(IL)=TAU100(IL)            ! 100% SATURATION BELOW 100hPa
-            ENDDO
-         ENDIF
-!----------------------------------------------------------------------------
-
+! the following stuffs are only used in cloudy cases icon > 0
+      IF (ICON .gt. 0) then  
             PHH      = 0._r8     ! phase function
             DDm      = 0._r8     ! mass-mean diameter
             W0       = 0._r8     ! single scattering albedo
-
             PH0      = 0._r8 
-            W00      = 0._r8 
+            W00      = 0._r8
+            
+            tau_clear = 0._r8
+            if(icon .eq. 1) tau_clear = tau_fewCld
+            if(icon .eq. 2) tau_clear = tau_wetCld
 
-          model_layer_loop: do ILYR=1, NZmodel-1
-!         DO 1000 ILYR=1, NZmodel-1        ! START OF MODEL LAYER LOOP:   
+         model_layer_loop: do ILYR=1, NZmodel-1
  
-            RC0(1)=TAU0(ILYR)/Z(ILYR)     ! GAS ABSORPTION COEFFICIENT
+            RC0(1)=tau_clear(ILYR)/Z(ILYR)     ! GAS ABSORPTION COEFFICIENT
             RC0(2)=0._r8
             RC0(3)=RC0(1)                 ! CLEAR-SKY EXTINCTION COEFFICIENT
 
-            RC_TOT   = 0._r8     ! total extinction
-            RC11     = 0._r8     ! cloud abs. scat. ext. coefficients
-            RC_TMP   = 0._r8     ! (ditto) (for ice/water)
-            CDEPTH   = 0._r8     ! cloud optical depth
-
-            DEPTH  = 0._r8
- 
             DO ISPI=1,N
             CWC = RATIO*WC(ISPI,ILYR)
             IF(CWC .ne. 0._r8 .and. ICON .gt. 0) then           
             CWC = MAX(1.E-9_r8,abs(CWC))
               
-!=================================================
-!    >>>>>>>>> CLOUDY-SKY MODULE <<<<<<<<<<<
-!=================================================
-
                CALL CLOUDY_SKY ( ISPI,CWC,TEMP(ILYR),FREQUENCY(IFR),  &
                        &          NU,U,DU,P11,RC11,IPSD(ILYR),DMA,    &
                        &          PH1,NAB,P,DP,NR,R,RN,BC,A,B,NABR)
@@ -615,45 +584,52 @@ contains
             ENDDO
 
             DO ISPI=1,N
-               ! The following
-               ! SINGLE SCATTERING ALBEDO   
-               !W0(ISPI,ILYR)=RC_TMP(ISPI,2)/RC_TOT(3) 
-               !IF(W0(ISPI,ILYR) .GT. 1.) THEN         
-               !   W0(ISPI,ILYR)=1.
-               !ENDIF
-               !  are equiavalent to
                W0(ISPI,ILYR) = min( 1._r8, RC_TMP(ISPI,2)/RC_TOT(3) )
             ENDDO
 
-            TAU(ILYR)=RC_TOT(3)*Z(ILYR)
             DEPTH=RC_TOT(3)*Z(ILYR)
 
-            delTAU(ILYR) = max(0._r8, DEPTH )
-            delTAUc(ILYR)= max(0._r8, CDEPTH(1) )
+            tau(ILYR) = max(0._r8, DEPTH )
+            tauc(ILYR)= max(0._r8, CDEPTH(1) )
 
-! 1000    CONTINUE                         ! END OF MODEL LAYER LOOP
          enddo model_layer_loop
-!==================================================
-!    >>>>>>> RADIATIVE TRANSFER MODULE <<<<<<<<<<
-!==================================================
-
-!         CALL HEADER(4)
-
+      Endif
+! call radiative transfer calculations
+      
+       select case ( ICON )
+       case ( 0 )
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,TAU0,RS,TS,&
               &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
               &     UI,UA,TT0,0,RE)                          !CLEAR-SKY
-
          TT  = TT0	   ! so that dTcir=0
-          
-         IF(ICON .GE. 1) THEN                               
-
-           CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PHH,MULTI,ZZT1,W0,TAU,RS,TS,&
-                &  FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,         &
-                &  UI,UA,TT,ICON,RE)                            !CLOUDY-SKY
+       case ( -1 )
+         CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,tau_wet,RS,TS,&
+              &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
+              &     UI,UA,TT0,0,RE)                          !CLEAR-SKY
+         TT  = TT0	   ! so that dTcir=0
+       case ( -2 )
+         CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,tau_dry,RS,TS,&
+              &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
+              &     UI,UA,TT0,0,RE)                          !CLEAR-SKY
+         TT  = TT0	   ! so that dTcir=0
+       case ( -3 )
+         CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,tau_dry,RS,TS,&
+              &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
+              &     UI,UA,TT0,0,RE)                          !CLEAR-SKY
+         CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,tau_wet,RS,TS,&
+              &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
+              &     UI,UA,TT,0,RE)                          !CLEAR-SKY
+         TT0 = min(TT, TT0)
+         TT  = TT0	   ! so that dTcir=0
+       case default
+         CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,tau_clear,&
+              &   RS,TS,FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
+              &   UI,UA,TT0,0,RE)                          !CLEAR-SKY
+         CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PHH,MULTI,ZZT1,W0,TAU,RS,TS,&
+              &  FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,         &
+              &  UI,UA,TT,ICON,RE)                            !CLOUDY-SKY
+       end select 
  
-         ENDIF
-
-
          IF (IFOV .EQ. 1) THEN       ! **** BEGIN FOV AVERAGING ****
 
 ! ==========================================================================
@@ -766,18 +742,15 @@ contains
 
          ENDIF
 
-
          CALL SENSITIVITY (DTcir(:,IFR),ZZT,NT,YP,YZ,NZmodel,PRESSURE,NZ, &
-              &            delTAU,delTAUc,delTAU100,TAUeff(:,IFR),SS(:,IFR), &
+              &            tau,tauc,tau_wetCld,TAUeff(:,IFR),SS(:,IFR), &
               &            Trans(:,:,IFR), BETA(:,IFR), BETAc(:,IFR), DDm, Dm, &
               & Z, DZ, N,RE, noS, Slevl)     ! COMPUTE SENSITIVITY
 
       END IF                                 ! END OF DO CHANNEL
 
-! 2000 CONTINUE                               ! END OF FREQUENCY LOOP   
       enddo frequency_loop
 
-! 3000 CONTINUE                               ! END OF IWC LOOP
       enddo iwc_loop
 
 !      CALL HEADER(5)
@@ -796,6 +769,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.47  2003/01/23 00:19:09  pwagner
+! Some cosmetic only (or so I hope) changes
+!
 ! Revision 1.46  2003/01/16 18:39:41  pwagner
 ! Removed some unused variables
 !
