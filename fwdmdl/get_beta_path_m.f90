@@ -125,16 +125,16 @@ contains
           k = path_inds(j)
 
           ! do the following only if ICON not equal to 0
-          if ( Spectag == SP_H2O .and. p_path(k) >= 100. .and. ICON .ne. 0) then
-            select case ( ICON )
-            case ( -1 )
-              RHI=110.0_r8
-            case ( -2 )
-              RHI=1.0e-9_r8
-            end select  
-            ratio = RHIFromH2O_Factor (t_path(k), z_path_c(k), 0, .true.)*RHI
+!          if ( Spectag == SP_H2O .and. p_path(k) >= 100. .and. ICON .ne. 0) then
+!            select case ( ICON )
+!            case ( -1 )
+!              RHI=110.0_r8
+!            case ( -2 )
+!              RHI=1.0e-9_r8
+!            end select  
+!            ratio = RHIFromH2O_Factor (t_path(k), z_path_c(k), 0, .true.)*RHI
             ! optional 0 will return ratio as parts per 1, as Bill uses here.
-          end if                                 
+!          end if                                 
 
           call create_beta ( Spectag, Catalog(ib)%continuum, p_path(k), t_path(k), &
             &  Frq, Lines(Catalog(ib)%Lines)%W, gl_slabs(k,ib), bb,                &
@@ -288,6 +288,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.21  2003/02/06 00:20:16  jonathan
+! Add in many stuff to deal with clouds CloudIce, iwc_path, etc
+!
 ! Revision 2.20  2003/02/04 22:03:33  jonathan
 ! ICON now equal to 0 as default
 !
