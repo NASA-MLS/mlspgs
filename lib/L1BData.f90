@@ -5,6 +5,7 @@ module L1BData
 
   ! Reading and interacting with Level 1B data (HDF4)
 
+  use dump_0, only: DUMP
   use Hdf, only: DFACC_READ, SFSTART, SFGINFO, SFN2INDEX, SFSELECT, SFRDATA_f90, &
     & SFRCDATA, SFENDACC, DFNT_CHAR8, DFNT_INT32, DFNT_FLOAT64, &
     & DFNT_FLOAT32
@@ -22,7 +23,7 @@ module L1BData
   private
 
   public :: L1BData_T, L1BRadSetup, L1BOASetup, ReadL1BData, DeallocateL1BData, &
-    & FINDL1BDATA, NAME_LEN, PRECISIONSUFFIX
+    & FINDL1BDATA, NAME_LEN, PRECISIONSUFFIX, DumpL1BData
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -387,6 +388,66 @@ contains ! ============================ MODULE PROCEDURES ======================
       & 'l1bData%dpField', ModuleName )
   end subroutine DeallocateL1BData
 
+  !---------------------------------------------------- DumpL1BData ----
+  subroutine DumpL1BData ( l1bData, details )
+    ! Disclose pertinent, perhaps damning facts about an l1brad quantity
+    type( L1BData_T ), intent(inout) :: L1bData
+    integer, intent(in), optional :: DETAILS ! <=0 => Don't dump multidim arrays
+    !                                        ! -1 Skip even counterMAF
+    !                                        ! -2 Skip all but name
+    !                                        ! >0 Dump even multi-dim arrays
+    !                                        ! Default 1
+
+    ! Local variables
+    integer :: MYDETAILS
+
+    ! Executable code
+    myDetails = 1
+    if ( present(details) ) myDetails = details
+    
+    if ( myDetails < -1 ) return
+    call output('L1B rad quantity Name = ', advance='no')
+    call output(L1bData%L1BName, advance='yes')
+    call output('  First major frame read = ', advance='no')
+    call output(L1bData%FirstMAF, advance='yes')
+    call output('  Num of MAFs read = ', advance='no')
+    call output(L1bData%NoMAFs, advance='yes')
+    call output('  Max # of MIFs/MAF in SD array = ', advance='no')
+    call output(L1bData%MaxMIFs, advance='yes')
+    call output('  Num of auxilliary indices = ', advance='no')
+    call output(L1bData%NoAuxInds, advance='yes')
+
+    if ( myDetails < 0 ) return
+    if ( associated(l1bData%counterMAF) ) then
+      call dump ( l1bData%counterMAF,&
+      & 'l1bData%counterMAF' )
+    else
+      call output('(CounterMAF array unassociated)', advance='yes')
+    endif
+
+    if ( myDetails < 1 ) return
+    if ( associated(l1bData%charField) ) then
+      call dump ( l1bData%CharField,&
+      & 'l1bData%CharField' )
+    else
+      call output('(CharField array unassociated)', advance='yes')
+    endif
+
+    if ( associated(l1bData%intField) ) then
+      call dump ( l1bData%intField,&
+      & 'l1bData%intField' )
+    else
+      call output('(intField array unassociated)', advance='yes')
+    endif
+
+    if ( associated(l1bData%dpField) ) then
+      call dump ( l1bData%dpField,&
+      & 'l1bData%dpField' )
+    else
+      call output('(dpField array unassociated)', advance='yes')
+    endif
+  end subroutine DumpL1BData
+
   ! ------------------------------------------- FindL1BData ----
   integer function FindL1BData ( files, fieldName )
     integer, dimension(:), intent(in) :: files ! File handles
@@ -471,6 +532,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.12  2001/10/23 22:44:15  pwagner
+! Added DumpL1BData
+!
 ! Revision 2.11  2001/10/23 17:09:04  pwagner
 ! Added PRECISIONSUFFIX as parameter
 !
