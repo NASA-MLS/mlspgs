@@ -69,7 +69,11 @@ program L2Q
   integer, parameter          :: DUMPDBTAG = CHECKREVIVEDHOSTSTAG - 1
   integer, parameter          :: DUMPMASTERSDBTAG = DUMPDBTAG - 1
   integer, parameter          :: DUMPHOSTSDBTAG = DUMPMASTERSDBTAG - 1
+  integer, parameter          :: SWITCHDUMPFILETAG = DUMPHOSTSDBTAG - 1
+  integer, parameter          :: TURNREVIVALSONTAG = SWITCHDUMPFILETAG - 1
+  integer, parameter          :: TURNREVIVALSOFFTAG = TURNREVIVALSONTAG - 1
   integer, parameter          :: DUMPUNIT = LIST_UNIT + 1
+  integer, parameter          :: TEMPUNIT = DUMPUNIT + 1
 
   !------------------------------- RCS Ident Info ------------------------------
   character(len=*), parameter :: IdParm = & 
@@ -120,7 +124,7 @@ program L2Q
     logical            :: checkList = .false.
     logical            :: dumpEachNewMaster = .false.
     logical            :: verbose = .false.
-    ! logical            :: killer = .false.      ! Kill currently-running l2q
+    logical            :: reviveHosts = .true.    ! Regularly check for revivals
     character(len=8)   :: command = 'run'         ! {run, kill, dumphdb, dumpmdb
     logical            :: debug = .false.         !   dump, checkh}
     character(len=FILENAMELEN) &
@@ -152,20 +156,27 @@ program L2Q
       call PVMFInitSend ( PvmDataDefault, bufferID )
       call PVMF90Pack ( GROUPNAME, info )
       select case( trim(options%command) )
-      case ( 'kill' )
-        tag = GiveUpTag
+      case ( 'checkh' )
+        tag = checkRevivedHostsTag
       case ( 'dumpdb' )
         tag = dumpDBTag
       case ( 'dumphdb' )
         tag = dumpHostsDBTag
       case ( 'dumpmdb' )
         tag = dumpMastersDBTag
-      case ( 'checkh' )
-        tag = checkRevivedHostsTag
+      case ( 'kill' )
+        tag = GiveUpTag
+      case ( 'revive=on' )
+        tag = turnRevivalsOnTag
+      case ( 'revive=off' )
+        tag = turnRevivalsOffTag
+      case ( 'switch' )
+        tag = switchDumpFileTag
       case default
         call MLSMessage( MLSMSG_Error, ModuleName, &
           & 'l2q would not recognize unknown command '//trim(options%command) )
       end select
+      call PVMF90Pack ( trim(options%dump_file), info )
       call PVMFSend ( tid, Tag, info )
       call output('Already-running l2q tid: ', advance='no')
       call output(tid, advance='yes')
@@ -398,6 +409,8 @@ contains
             print*, current_version_id(j)
           enddo
           stop
+        else if ( line(3+n:7+n) == 'reviv' ) then
+          options%reviveHosts = switch
         else if ( line(3+n:7+n) == 'wall ' ) then
           use_wall_clock = switch
         else if ( line(3:) == ' ' ) then  ! "--" means "no more options"
@@ -438,6 +451,11 @@ contains
           i = i + 1
           call getarg ( i, line )
           options%dump_file = line
+        case ( 's' )
+          options%command = 'switch'
+          i = i + 1
+          call getarg ( i, line )
+          options%dump_file = line
         case default
           print *, 'Unrecognized option -', line(j:j), ' ignored.'
           call option_usage
@@ -474,9 +492,11 @@ contains
     integer :: NTIDS
     integer :: numHosts
     integer :: numMasters
+    integer :: oldPrUnit
     integer :: SIGNAL                   ! From a master
     logical :: SIGNIFICANTEVENT
     logical :: SKIPDELAY                ! Don't wait before doing the next go round
+    character(len=FileNameLen)  :: tempfile
     integer :: TID
     integer, dimension(MAXNUMMULTIPROCS) :: TIDS
     type(master_t) :: aMaster
@@ -716,42 +736,114 @@ contains
           & advance='yes' )
         exit ! event_loop
       end if
-      checkrevivedhosts = significantEvent
-      ! dumpdb = (significantEvent .and. options%dumpEachNewMaster) .and. .false.
-      ! Listen out for any message telling us to dump databases
-      ! if ( options%debug ) call output('Listening for dumpdbtag', advance='yes')
-      call PVMFNRecv ( -1, DumpDBTag, bufferIDRcv )
-      ! if ( bufferIDRcv > 0 .or. dumpdb ) then
+
+      ! Listen out for any message telling us to stop regular revivals
+      call PVMFNRecv ( -1, turnRevivalsOffTag, bufferIDRcv )
       if ( bufferIDRcv > 0 ) then
+        options%reviveHosts = .false.
+      end if
+      ! Listen out for any message telling us to stop regular revivals
+      call PVMFNRecv ( -1, turnRevivalsOnTag, bufferIDRcv )
+      if ( bufferIDRcv > 0 ) then
+        options%reviveHosts = .true.
+      end if
+
+      checkrevivedhosts = significantEvent .and. options%reviveHosts
+      ! Listen out for any message telling us to dump databases
+      call PVMFNRecv ( -1, DumpDBTag, bufferIDRcv )
+      if ( bufferIDRcv > 0 ) then
+        call PVMF90Unpack ( machineName, info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking GROUPNAME' )
+        call PVMF90Unpack ( tempfile, info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking dumpfile' )
+        if ( tempfile /= '<STDIN>' ) then
+          oldPrUnit = prunit
+          prUnit = tempUnit
+          open(prunit, file=trim(tempfile), &
+            & status='replace', form='formatted')
+        endif
         call dump_master_database(masters)
         call dump(hosts)
+        if ( tempfile /= '<STDIN>' ) then
+          close(prunit)
+          prunit = oldPrUnit
+        endif
       end if
       call PVMFNRecv ( -1, DumpHostsDBTag, bufferIDRcv )
-      ! if ( bufferIDRcv > 0 .or. dumpdb ) then
       if ( bufferIDRcv > 0 ) then
+        call PVMF90Unpack ( machineName, info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking GROUPNAME' )
+        call PVMF90Unpack ( tempfile, info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking dumpfile' )
+        if ( tempfile /= '<STDIN>' ) then
+          oldPrUnit = prunit
+          prUnit = tempUnit
+          open(prunit, file=trim(tempfile), &
+            & status='replace', form='formatted')
+        endif
         call dump(hosts)
+        if ( tempfile /= '<STDIN>' ) then
+          close(prunit)
+          prunit = oldPrUnit
+        endif
       end if
       call PVMFNRecv ( -1, DumpMastersDBTag, bufferIDRcv )
-      ! if ( bufferIDRcv > 0 .or. dumpdb ) then
       if ( bufferIDRcv > 0 ) then
+        call PVMF90Unpack ( machineName, info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking GROUPNAME' )
+        call PVMF90Unpack ( tempfile, info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking dumpfile' )
+        if ( tempfile /= '<STDIN>' ) then
+          oldPrUnit = prunit
+          prUnit = tempUnit
+          open(prunit, file=trim(tempfile), &
+            & status='replace', form='formatted')
+        endif
         call dump_master_database(masters)
+        if ( tempfile /= '<STDIN>' ) then
+          close(prunit)
+          prunit = oldPrUnit
+        endif
       end if
       ! Listen out for any message telling us to check for revived hosts
-      ! if ( options%debug ) call output('Listening for checkrevivedhosttagtag', advance='yes')
       call PVMFNRecv ( -1, checkRevivedHostsTag, bufferIDRcv )
+      ! Do it if so commanded, or if part of regular drill
       if ( bufferIDRcv > 0 .or. checkrevivedhosts ) then
         call cure_host_database(hosts)
+      end if
+      ! Listen out for any message telling us to flush current dumpfile
+      ! and switch future output to new one
+      call PVMFNRecv ( -1, switchDumpFileTag, bufferIDRcv )
+      if ( bufferIDRcv > 0 ) then
+        call PVMF90Unpack ( machineName, info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking GROUPNAME' )
+        if ( prunit == DUMPUNIT ) then
+          call output('Switching dump file from '//trim(options%dump_file))
+          call output(' to ')
+          call PVMF90Unpack ( options%dump_file, info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking newdumpfile' )
+          call output(trim(options%dump_file), advance='yes')
+          close(DUMPUNIT)
+          open(prunit, file=trim(options%dump_file), &
+            & status='replace', form='formatted')
+          call output('(new dump file opened)', advance='yes')
+        else
+          call output('(switchDumpFileTag ignored--dumping to <STDIN>)', &
+            & advance='yes')
+        end if
       end if
       ! Unless there's a good reason not to do so,
       ! check if any hosts are currently free and any masters need hosts
       if ( mayAssignAHost ) then
         ! Find oldest master needing a host and grateful for the ones he has
-        mastersID = FindFirst( masters%needs_host .and. .not. masters%owes_thanks )
+        mastersID = FindFirst( masters%needs_host .and. &
+          & .not. masters%owes_thanks )
         if ( mastersID > 0 ) then
           ! Find first free host
           nextFree = FindFirst( hosts%free .and. hosts%OK )
           if ( nextFree > 0 ) then
-            call assignHostToMaster( hosts(nextFree), masters(mastersID), nextFree )
+            call assignHostToMaster( hosts(nextFree), masters(mastersID), &
+              & nextFree )
             skipDelay = .true.
           endif
         endif
@@ -761,8 +853,8 @@ contains
       ! bit here.
       if ( .not. skipDelay .and. parallel%delay > 0 ) &
         & call usleep ( parallel%delay )
-      if ( any(masters%owes_thanks) ) &
-        & call usleep ( 2*parallel%delay )
+      ! if ( any(masters%owes_thanks) ) &
+      !   & call usleep ( 2*parallel%delay )
     enddo
   end subroutine event_loop
   
@@ -998,21 +1090,40 @@ contains
     call getarg ( 0+hp, line )
     print *, 'Usage: ', trim(line), ' [options] [--] [LIST-name]'
     print *, ' Options:'
-    print *, ' -g:          turn tracing on'
-    print *, ' -k:          kill currently-running l2q'
-    print *, ' -c command:  issue command to currently-running l2q'
-    print *, ' -o dumpfile: direct supplemental dumps to dumpfile'
-    print *, ' -v:          verbose'
-    print *, ' -h:          show help'
-    print *, ' -T:          show timing'
     print *, ' --check:     check LIST of hosts'
     print *, ' --dumpnewm:  dump each new master'
-    print *, ' --version:   print version string'
+    print *, ' --[n]revive: do [not] regularly check for revived hosts'
+    print *, ' --version:   print version string; stop'
     print *, ' --wall:      show times according to wall clock'
-    print *, '     command may be one of'
+    print *, ' -g:          turn tracing on'
+    print *, ' -k:          kill currently-running l2q'
+    print *, '               ( same as -c kill )'
+    print *, ' -o dumpfile: direct most output to dumpfile'
+    print *, '               (if modifying an already-running l2q, direct only'
+    print *, '               the requested output to dumpfile)'
+    print *, ' -s newfile:  flush current dumpfile; all later output to newfile'
+    print *, '               ( same as -o newfile -c switch )'
+    print *, ' -v:          verbose'
+    print *, ' -h:          show help; stop'
+    print *, ' -T:          show timing'
+    print *, ' -c command:  issue command to currently-running l2q'
+    print *, '        command may be one of'
+    print *, ' revive=on:   begin regularly checking for revived hosts'
+    print *, ' revive=off:  cease regularly checking for revived hosts'
     print *, ' kill:        kill currently-running l2q'
+    print *, ' switch:      flush current dumpfile'
+    print *, '              ( switch to one specified by -o newfile )'
+    print *, '  ( if the following commands are accompanied by the option'
+    print *, '    -o newfile, the output requested will be dumped to newfile )'
     print *, ' dumphdb:     dump host database'
     print *, ' dumpmdb:     dump master database'
+    print *, ' dumpdb:      dump host and master databases'
+    print *, ' N o t e :'
+    print *, ' only the options:'
+    print *, ' -g, -o, -v, -T, --check, --dumpnewm, --[n]revive, --wall'
+    print *, ' are appropriate for l2q when first launched'
+    print *, ' all other options will modify an already-running l2q'
+    print *, ' (and will generate an error if l2q not already running)'
     stop
   end subroutine Option_usage
 
@@ -1099,3 +1210,6 @@ contains
 end program L2Q
 
 ! $Log$
+! Revision 1.1  2004/12/09 00:42:46  pwagner
+! First commit
+!
