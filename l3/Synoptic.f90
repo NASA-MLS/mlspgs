@@ -44,7 +44,6 @@ CONTAINS
 
 !-------------------------------------------------------------------------
    SUBROUTINE DailyCoreProcessing(cfDef, cfProd, pcf, l2Days, l2gp, avgPeriod, l3sp, &
-!     l3dm, dmA, dmD, l3r, residA, residD, flags)
      l3dm, dmA, dmD, l3r, residA, residD, mis_l2Days, mis_Days, flags)
 !-------------------------------------------------------------------------
 
@@ -120,6 +119,7 @@ CONTAINS
 		nlev_temp = -1
 	END IF
 
+
 !*** Initilize POINTERS
 
         IF (cfProd%mode == 'all' .or. cfProd%mode == 'ado') THEN
@@ -149,7 +149,12 @@ CONTAINS
         ENDIF
 
         l3sp%startTime = l2gp(1)%time(1)
-        l3sp%endTime = l2gp(l2Days)%time(l2gp(l2Days)%nTimes)
+
+        if (l2Days .GT. 0) then 
+          l3sp%endTime = l2gp(l2Days)%time(l2gp(l2Days)%nTimes)
+        else
+          l3sp%endTime = l3sp%startTime
+        endif
 
         DO j = 1, numSwaths
 
@@ -254,7 +259,6 @@ CONTAINS
         mis_l2Days_temp = 0
 
         CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, pcf%l3StartDay, & 
-!          pcf%l3EndDay, rDays, l3r)
           pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, l3r)
 
         DO j = 1, maxWindow
@@ -264,7 +268,6 @@ CONTAINS
         mis_l2Days_temp = 0
 
         CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, pcf%l3StartDay, & 
-!          pcf%l3EndDay, rDays, residA)
           pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, residA)
 
         DO j = 1, maxWindow
@@ -274,7 +277,6 @@ CONTAINS
         mis_l2Days_temp = 0
 
         CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, pcf%l3StartDay, & 
-!          pcf%l3EndDay, rDays, residD)
           pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, residD)
 
         l3r%name    = TRIM(cfProd%l3prodNameD) // 'Residuals'
@@ -348,7 +350,7 @@ CONTAINS
 	IF (nlev_temp == 1) THEN 
 	   RETURN
 	END IF
-
+!
 !*** Calculate average orbital period (day)
 
 	tau0 = 0.0
@@ -465,16 +467,20 @@ CONTAINS
 
                    DO iD = 1, rDays
                       DO iL = 1, anlats(J, iP)
-		IF(atimes(J, iL, iP)*86400.0+l2gp(1)%time(1) >= startTime(iD) .AND. &
-                   atimes(J, iL, iP)*86400.0+l2gp(1)%time(1) <= endTime(iD)) THEN
+
+		IF(((atimes(J, iL, iP)*86400.+l2gp(1)%time(1)) .ge. startTime(iD)) .AND. &
+                   ((atimes(J, iL, iP)*86400.+l2gp(1)%time(1)) .le. endTime(iD))) THEN
 			   nc(iD) = nc(iD) + 1
-		   CALL Diagnostics(cfProd%mode, atimes(J, iL, iP), alons(J, iL, iP), l3ret) 
+		   CALL Diagnostics(cfProd%mode, atimes(J, iL, iP), alons(J, iL, iP), l3ret)
+                   
 		   l3r(iD)%time(nc(iD))  = atimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
 	           l3r(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
 	           l3r(iD)%longitude(nc(iD)) = FindRealLon(real(alons(J, iL, iP)))*180.0/PI
 		   l3r(iD)%l2gpValue(1, iP, nc(iD)) = afields(J, iL, iP)-l3ret 
 	           l3r(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0 
+
 			END IF
+
 		      ENDDO
                       DO iL = 1, dnlats(J, iP)
 			IF(dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1) >= startTime(iD) .AND. &
@@ -671,17 +677,18 @@ CONTAINS
 
                    DO iD = 1, rDays
                       DO iL = 1, anlats(J, iP)
+
                         IF(atimes(J, iL, iP)*86400.0+l2gp(1)%time(1) >= startTime(iD) .AND. &
                            atimes(J, iL, iP)*86400.0+l2gp(1)%time(1) <= endTime(iD)) THEN
                            nca(iD) = nca(iD) + 1
                           CALL Diagnostics('asc', atimes(J, iL, iP), alons(J, iL, iP), l3ret)
-                           residA(iD)%time(nc(iD))     = atimes(J, iL, iP)*86400.0+ & 
-                             l2gp(1)%time(1)
+                          
+                           residA(iD)%time(nca(iD)) = atimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
+                           residA(iD)%longitude(nca(iD))=FindRealLon(real(alons(J,iL,iP)))*180./PI
                            residA(iD)%latitude(nca(iD)) = cfProd%latGridMap(J)  
-                           residA(iD)%longitude(nc(iD)) = &
-                             FindRealLon(real(alons(J, iL, iP)))*180.0/PI
                            residA(iD)%l2gpValue(1, iP, nca(iD)) = afields(J, iL, iP)-l3ret
                            residA(iD)%l2gpPrecision(1, iP, nca(iD)) = 0.0
+
                         END IF
                       ENDDO
                    ENDDO
@@ -739,11 +746,13 @@ CONTAINS
                            dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1) <= endTime(iD)) THEN
                            ncd(iD) = ncd(iD) + 1
                           CALL Diagnostics('des', dtimes(J, iL, iP), dlons(J, iL, iP), l3ret)
+
+                  residD(iD)%longitude(ncd(iD)) = FindRealLon(real(dlons(J, iL, iP)))*180./PI
                   residD(iD)%time(ncd(iD))     = dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
                   residD(iD)%latitude(ncd(iD)) = cfProd%latGridMap(J)  
-                  residD(iD)%longitude(nc(iD)) = FindRealLon(real(dlons(J, iL, iP)))*180.0/PI
                   residD(iD)%l2gpValue(1, iP, ncd(iD)) = dfields(J, iL, iP)-l3ret
                   residD(iD)%l2gpPrecision(1, iP, ncd(iD)) = 0.0
+
                         END IF
                       ENDDO
                    ENDDO
@@ -878,9 +887,9 @@ CONTAINS
 			   atimes(J, iL, iP)*86400.0+l2gp(1)%time(1) <= endTime(iD)) THEN
 			   nca(iD) = nca(iD) + 1
 	           CALL Diagnostics('asc', atimes(J, iL, iP), alons(J, iL, iP), l3ret) 
-		  residA(iD)%time(nc(iD))     = atimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
+		  residA(iD)%time(nca(iD))     = atimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
 		  residA(iD)%latitude(nca(iD)) = cfProd%latGridMap(J) 
-		  residA(iD)%longitude(nc(iD)) = FindRealLon(real(alons(J, iL, iP)))*180.0/PI
+		  residA(iD)%longitude(nca(iD)) = FindRealLon(real(alons(J, iL, iP)))*180.0/PI
                   residA(iD)%l2gpValue(1, iP, nca(iD)) = afields(J, iL, iP)-l3ret 
                   residA(iD)%l2gpPrecision(1, iP, nca(iD)) = 0.0 
 			END IF
@@ -939,9 +948,10 @@ CONTAINS
 			   dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1) <= endTime(iD)) THEN
 			   ncd(iD) = ncd(iD) + 1
 		         CALL Diagnostics('des', dtimes(J, iL, iP), dlons(J, iL, iP), l3ret) 
+
 		  residD(iD)%time(ncd(iD))     = dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
                   residD(iD)%latitude(ncd(iD)) = cfProd%latGridMap(J) 
-                  residD(iD)%longitude(nc(iD)) = FindRealLon(real(dlons(J, iL, iP)))*180.0/PI
+                  residD(iD)%longitude(ncd(iD)) = FindRealLon(real(dlons(J, iL, iP)))*180.0/PI
                   residD(iD)%l2gpValue(1, iP, ncd(iD)) = dfields(J, iL, iP)-l3ret 
                   residD(iD)%l2gpPrecision(1, iP, ncd(iD)) = 0.0 
 			END IF
@@ -2747,6 +2757,9 @@ END MODULE Synoptic
 !===================
 
 ! $Log$
+! Revision 1.25  2002/04/11 00:53:57  jdone
+! initialization added
+!
 ! Revision 1.24  2002/04/10 21:30:33  jdone
 ! associated statements before deallocate added
 !
