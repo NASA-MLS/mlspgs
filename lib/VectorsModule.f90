@@ -606,7 +606,7 @@ contains ! =====     Public Procedures     =============================
 
   end function GetVectorQuantity
 
-  ! ------------------------------------  GetVectorQuantityByName  -----
+  ! ------------------------------------  GetVectorQuantityByType  -----
   function GetVectorQuantityByType ( vector, quantityType, &
     & molecule, radiometer )
 
@@ -820,6 +820,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.7  2001/01/10 21:03:14  vsnyder
+! Periodic commit
+!
 ! Revision 2.6  2001/01/03 02:01:30  vsnyder
 ! Add molecule/radiometer functionality to GetVectorQuantityIndexByType
 !
