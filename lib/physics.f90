@@ -11,17 +11,17 @@ module PHYSICS
   ! NIST as of 2004-04-01: http://physics.nist.gov/cuu/Constants/index.html
   real(r8), parameter :: Avogadro = 6.0221415e23_r8  ! #/mol ± 10e16 NIST 2004
   real(r8), parameter :: Bohr = 1.39962458_r8        ! MHz/Gauss, ± 12e-8 NIST 2004
-  real(r8), parameter :: G_E = 2.0023193043718_r8    ! ± 75e-13 NIST 2004
+  real(r8), parameter :: G_E = 2.0023193043718_r8    ! Unitless, ± 75e-13 NIST 2004
   real(rp), parameter :: MMM = 0.028964_rp           ! Kg/mol, Mean molecular mass of atmosphere kg/mol
   real(r8), parameter :: H = 6.62606931e-34_r8       ! J s, ± 11e-41 NIST 2004
-  real(r8), parameter :: K = 1.3806505e-23_r8        ! J/K ± 24e-20, NIST 2004
+  real(r8), parameter :: K = 1.3806505e-23_r8        ! J/K, ± 24e-20 NIST 2004
   real(r8), parameter :: H_OVER_K = H / K * 1.0e6_r8 ! \nu in MHz
-! real(r8), parameter :: H_OVER_K = 4.7992377e-5_r8  ! using H and K above
+! real(r8), parameter :: H_OVER_K = 4.79923752e-5_r8 ! using H and K above
 ! real(r8), parameter :: H_OVER_K = 4.7992157e-5_r8  ! Zvi's original
   real(rp), parameter :: Boltz = Avogadro * k * ln10 / mmm ! m^2/(K s^2),
-! real(rp), parameter :: Boltz = 660.9852945_rp      ! Using above values
+! real(rp), parameter :: Boltz = 660.9853899_rp      ! Using above values
 ! real(rp), parameter :: Boltz = 660.988_rp          ! Zvi's original
-  real(r8), parameter :: SpeedOfLight = 299792458.0_r8 ! M/s, NIST 2004
+  real(r8), parameter :: SpeedOfLight = 299792458.0_r8 ! M/s, exact NIST 2004
 
 !---------------------------- RCS Ident Info -------------------------------
   private :: Id, IdParm, ModuleName
@@ -37,6 +37,9 @@ contains
 
 end module PHYSICS
 ! $Log$
+! Revision 2.3  2004/04/01 23:59:37  vsnyder
+! Get latest values from NIST, add Bohr and G_e
+!
 ! Revision 2.2  2004/03/20 04:05:02  vsnyder
 ! Add Avogadro and MMM.  Move SpeedOfLight from units.  Define Boltz in terms
 ! of Avogadro, MMM, k and ln10 (instead of just typing it in).
