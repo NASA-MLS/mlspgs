@@ -11,8 +11,8 @@ program MLSL2
   use MLSL2Options, only: PCF_FOR_INPUT, PCF, OUTPUT_PRINT_UNIT, &
   & QUIT_ERROR_THRESHOLD, TOOLKIT, CREATEMETADATA, &
   & PENALTY_FOR_NO_METADATA, PUNISH_FOR_INVALID_PCF
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Debug, &
-  & MLSMSG_Severity_to_quit
+  use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMSG_Debug, &
+    & MLSMSG_Error, MLSMSG_Severity_to_quit
   use MLSPCF2, only: MLSPCF_L2CF_START
   use OBTAIN_MLSCF, only: Close_MLSCF, Open_MLSCF
   use OUTPUT_M, only: OUTPUT, PRUNIT
@@ -67,8 +67,22 @@ program MLSL2
   cycle
     end if
     if ( line(1:2) == '--' ) then       ! "word" options
-      if ( line(3:6) == 'pcf ' ) then
-        PCF_FOR_INPUT = .true.
+      if ( line(3:6) == 'kit ' ) then
+        MLSMessageConfig%useToolkit = .true.
+      else if ( line(3:6) == 'nkit ' ) then
+        MLSMessageConfig%useToolkit = .false.
+      else if ( line(3:7) == 'meta ' ) then
+        createMetadata = .true.
+      else if ( line(3:8) == 'nmeta ' ) then
+        createMetadata = .false.
+      else if ( line(3:6) == 'pcf ' ) then
+        pcf = .true.
+      else if ( line(3:7) == 'npcf ' ) then
+        pcf = .false.
+      else if ( line(3:5) == 'tk ' ) then
+        toolkit = .true.
+      else if ( line(3:6) == 'ntk ' ) then
+        toolkit = .false.
       else if ( line(3:9) == 'master ' ) then
         parallel%master = .true.
       else if ( line(3:7) == 'slave' ) then
@@ -84,16 +98,6 @@ program MLSL2
           call io_error ( "After --slave option", status, line )
           stop
         end if
-      else if ( line(3:7) == 'npcf ' ) then
-        PCF_FOR_INPUT = .false.
-      else if ( line(3:5) == 'tk ' ) then
-        TOOLKIT = .true.
-      else if ( line(3:6) == 'ntk ' ) then
-        TOOLKIT = .false.
-      else if ( line(3:7) == 'meta ' ) then
-        CREATEMETADATA = .true.
-      else if ( line(3:8) == 'nmeta ' ) then
-        CREATEMETADATA = .false.
       else if ( line(3:) == ' ' ) then  ! "--" means "no more options"
         i = i + 1
         call getarg ( i, line )
@@ -139,7 +143,7 @@ program MLSL2
           print *, '  -c: Trace expression evaluation and tree decoration.'
           print *, '  -d: Dump the declaration table after type checking'
           print *, '  -f[digit]: Trace Forward model.  Bigger digit means ', &
-            &                    'more output.  @E in the CF does -f0.'
+            &                    'more output.'
           print *, '  -g[digit]: Trace "generation".  Bigger digit means ', &
             &                    'more output.'
           print *, '  -l: Trace lexical analysis.'
@@ -155,15 +159,10 @@ program MLSL2
           print *, '  The above options can be concatenated after one hyphen,'
           print *, '  except that -S takes the rest of the option as its ', &
             &         '"string".'
-          print *, '  --master: This is the master task in a pvm setup'
-          print *, '  --slave[ ]<master-tid>: This is a slave, <master-tid>'
-          print *, '    is the id of the master.  This option is set by a master'
-          print *, '    task and is not recommneded for manual invocations.'
+          print *, '  --[n]kit: Output error messages [not] using the SDP Toolkit'
+          print *, '  --[n]meta: [Do not] Create metadata files.'
           print *, '  --[n]pcf: Open the L2CF [without] using the Toolkit ', &
             &        'and the PCF.'
-          print *, '  --[n]meta: [Do not]Create metadata files.'
-          print *, '  --[n]tk: [Do not]Use the panoply of the PGS_ toolkit.  ', &
-            &        '(ntk automatically sets npcf and nmeta)'
           if ( pcf ) then
             print *, '    --npcf assumed if L2CF-name is present.  ', &
               &      'Default: --pcf'
@@ -171,9 +170,15 @@ program MLSL2
             print *, '    --npcf assumed if L2CF-name is present.  ', &
               &      'Default: --npcf'
           end if
-          print *, '  Options a, c, g1, l, p and t can be toggled in the ', &
+          print *, '  --[n]tk: [Do not] Use the panoply of the PGS_toolkit'
+          print *, '    (--ntk automatically sets --npcf and --nmeta).'
+          print *, '  --master: This is the master task in a PVM setup'
+          print *, '  --slave[ ]<master-tid>: This is a slave; <master-tid>'
+          print *, '    is the id of the master.  This option is set by a master'
+          print *, '    task and is not recommneded for manual invocations.'
+          print *, '  Options a, c, f0, g0, l, p and t can be toggled in the ', &
             &        'configuration file'
-          print *, '  by @A, @C, @G, @L, @P and @S respectively.  @L and ', &
+          print *, '  by @A, @C, @E, @G, @L, @P and @S respectively.  @L and ', &
             &        '@P are processed'
           print *, '  synchronously with the input.  The others are ', &
             &         'examined later.'
@@ -203,16 +208,16 @@ program MLSL2
 
 ! Done with command-line parameters; enforce cascading negative options
 ! (waited til here in case any were (re)set on command line)
-   if ( .not. TOOLKIT) then
-      PCF = .false.
-   endif
 
-   if ( .not. PCF) then
-      PCF_FOR_INPUT = .false.
-      PUNISH_FOR_INVALID_PCF = .false.
-      CREATEMETADATA = .false.
-      PENALTY_FOR_NO_METADATA = 0
-   endif
+   if ( .not. toolkit ) pcf = .false.
+
+   if ( .not. pcf ) then
+      pcf_for_input = .false.
+      punish_for_invalid_pcf = .false.
+      createMetadata = .false.
+      penalty_for_no_metadata = 0
+   end if
+
 ! Parse the L2CF, producing an abstract syntax tree
   if ( line /= ' ' ) then
     open ( l2cf_unit, file=line, status='old', &
@@ -290,6 +295,10 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.33  2001/05/07 18:16:11  vsnyder
+! Added "do [not] output MLSMessage messages through the toolkit" option.
+! Resolved conflicts on merge.
+!
 ! Revision 2.32  2001/05/07 17:17:31  pwagner
 ! Calls MLSMessage to exit with error if check_tree fails
 !
