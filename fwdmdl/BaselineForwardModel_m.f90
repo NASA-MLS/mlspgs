@@ -141,7 +141,7 @@ contains ! ======================================== BaselineForwardModel ======
       radCandidate => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
         & quantityType=l_baseline, radiometer=signal%radiometer, &
         & noError=.true., config=fwdModelConf, &
-        & foundInFirst=bslInFirst, wasSpecific=radBslWasSpecific )
+        & foundInFirst=radBslInFirst, wasSpecific=radBslWasSpecific )
       ! Now the complicated bit of working out which to pick
       ! First go by those listed in the 'specific quantities' field
       if ( bandBslWasSpecific .or. radBslWasSpecific ) then
@@ -491,6 +491,9 @@ contains ! ======================================== BaselineForwardModel ======
 end module BaselineForwardModel_m
   
 ! $Log$
+! Revision 2.23  2004/10/16 17:30:23  livesey
+! Bug fix
+!
 ! Revision 2.22  2004/10/16 17:28:42  livesey
 ! Better handling of band dependent baselines
 !
