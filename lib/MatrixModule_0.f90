@@ -424,6 +424,7 @@ contains ! =====     Public Procedures     =============================
         end if
         d = sqrt(g)
         zt(i,i) = d
+!$OMP PARALLEL DO
         do j = i+1, nc
           ij = i - x%r1(j)    ! Offset in VALUES of (I,J) element
           rz = max(r1(i),r1(j))
@@ -434,6 +435,7 @@ contains ! =====     Public Procedures     =============================
           zt(i,j) = g / d
           if ( abs(zt(i,j)) >= tiny(0.0_r8) ) r1(j) = min( r1(j), i )
         end do ! j
+!$OMP END PARALLEL DO
       end do ! i
       ! Sparsify the result.  We do it here because Sparsify is slow, and
       ! we know something about the structure: the first and last nonzero
@@ -714,10 +716,12 @@ contains ! =====     Public Procedures     =============================
       end if
       d = sqrt(d)
       zt(i,i) = d
+!$OMP PARALLEL DO
       do j = i+1, nc
 !       zt(i,j) = ( xin(i,j) - dot_product(zt(1:i-1,i),zt(1:i-1,j)) ) / d
         zt(i,j) = ( xin(i,j) - dot( i-1, zt(1,i), 1, zt(1,j), 1 ) ) / d
       end do ! j
+!$OMP END PARALLEL DO
     end do ! i
     if ( present(status) ) status = 0
   end subroutine DenseCholesky
@@ -1043,8 +1047,8 @@ contains ! =====     Public Procedures     =============================
       if ( my_upper ) then
         call Allocate_test ( zDns2, xb%nCols, yb%nCols, 'zDns2', ModuleName )
         zDns2=zDns            ! Save lower triangle
-      endif
-    endif
+      end if
+    end if
 
     select case ( xb%kind )
     case ( M_Banded )
@@ -1069,6 +1073,7 @@ contains ! =====     Public Procedures     =============================
           yr_n = yr_1 + yi_n - yi_1 ! last row index of yb
           mz = zb%nrows
           if ( my_upper ) mz = j
+!$OMP PARALLEL DO
           do i = 1, mz  ! Rows of Z = columns of XB
             ! Inner product of column I of XB with column J of YB
             if ( associated(xm) ) then
@@ -1094,6 +1099,7 @@ contains ! =====     Public Procedures     =============================
             xy = dot( c_n, xb%values(xd,1), 1, yb%values(yd,1), 1 )
             z(i,j) = z(i,j) + s * xy
           end do ! i
+!$OMP END PARALLEL DO
         end do ! j
         call sparsify ( z, zb, & ! Zb := Z
           & "Z for banded X banded in Multiply_Matrix_Blocks", ModuleName )
@@ -1113,6 +1119,7 @@ contains ! =====     Public Procedures     =============================
           end if
           mz = zb%nrows
           if ( my_upper ) mz = j
+!$OMP PARALLEL DO
           do i = 1, mz  ! Rows of Z = columns of XB
             if ( associated(xm) ) then
               if ( btest(xm((i-1)/b+1),mod(i-1,b)) ) cycle
@@ -1140,6 +1147,7 @@ contains ! =====     Public Procedures     =============================
               end if
             end do
           end do ! i
+!$OMP END PARALLEL DO
         end do ! j
         call sparsify ( z, zb, & ! Zb := Z
           & "Z for banded X banded in Multiply_Matrix_Blocks", ModuleName )
@@ -1162,6 +1170,7 @@ contains ! =====     Public Procedures     =============================
           if ( l < k ) cycle  ! Empty column in XB
           mz = 1
           if ( my_upper ) mz = i
+!$OMP PARALLEL DO
           do j = mz, yb%ncols  ! Columns of ZB
             if ( associated(ym) ) then
               if ( btest(ym((j-1)/b+1),mod(j-1,b)) ) cycle
@@ -1171,6 +1180,7 @@ contains ! =====     Public Procedures     =============================
             xy = dot( l-k+1, xb%values(k,1), 1, yb%values(m,j), 1 )
             zb%values(i,j) = zb%values(i,j) + s * xy
           end do ! j
+!$OMP END PARALLEL DO
         end do ! i
       end select
     case ( M_Column_sparse )
@@ -1191,6 +1201,7 @@ contains ! =====     Public Procedures     =============================
           end if
           mz = zb%nrows
           if ( my_upper ) mz = j
+!$OMP PARALLEL DO
           do i = 1, mz  ! Rows of Z = columns of XB
             if ( associated(xm) ) then
               if ( btest(xm((i-1)/b+1),mod(i-1,b)) ) cycle
@@ -1218,6 +1229,7 @@ contains ! =====     Public Procedures     =============================
               end if
             end do
           end do ! i
+!$OMP END PARALLEL DO
         end do ! j
         call sparsify ( z, zb, & ! Zb := Z
           & "Z for banded X banded in Multiply_Matrix_Blocks", ModuleName )
@@ -1237,6 +1249,7 @@ contains ! =====     Public Procedures     =============================
           end if
           mz = zb%nrows
           if ( my_upper ) mz = j
+!$OMP PARALLEL DO
           do i = 1, mz  ! Rows of Z = columns of XB
             if ( associated(xm) ) then
               if ( btest(xm((i-1)/b+1),mod(i-1,b)) ) cycle
@@ -1269,6 +1282,7 @@ contains ! =====     Public Procedures     =============================
               end if
             end do
           end do ! i
+!$OMP END PARALLEL DO
         end do ! j
         call sparsify ( z, zb, & ! Zb := Z
           & "Z for banded X banded in Multiply_Matrix_Blocks", ModuleName )
@@ -1287,6 +1301,7 @@ contains ! =====     Public Procedures     =============================
           end if
           mz = zb%nrows
           if ( my_upper ) mz = j
+!$OMP PARALLEL DO
           do i = 1, mz  ! Rows of Z = columns of XB
             if ( associated(xm) ) then
               if ( btest(xm((i-1)/b+1),mod(i-1,b)) ) cycle
@@ -1298,6 +1313,7 @@ contains ! =====     Public Procedures     =============================
             xy = dot( l-k+1, xb%values(k,1), 1, yb%values(xb%r2(k),j), 1 )
             zb%values(i,j) = zb%values(i,j) + s * xy
           end do ! i
+!$OMP END PARALLEL DO
         end do ! j
       end select
     case ( M_Full )
@@ -1320,6 +1336,7 @@ contains ! =====     Public Procedures     =============================
           l = yb%r2(j)
           mz = zb%nrows
           if ( my_upper ) mz = j
+!$OMP PARALLEL DO
           do i = 1, mz  ! Rows of Z = columns of XB
             if ( associated(xm) ) then
               if ( btest(xm((i-1)/b+1),mod(i-1,b)) ) cycle
@@ -1331,6 +1348,7 @@ contains ! =====     Public Procedures     =============================
               zb%values(i,j) = zb%values(i,j) + s * xy
             endif
           end do ! i
+!$OMP END PARALLEL DO
         end do ! j
       case ( M_Column_sparse ) ! XB full, YB column-sparse
         do j = 1, zb%ncols    ! Columns of ZB
@@ -1341,6 +1359,7 @@ contains ! =====     Public Procedures     =============================
           l = yb%r1(j)
           mz = zb%nrows
           if ( my_upper ) mz = j
+!$OMP PARALLEL DO
           do i = 1, mz  ! Rows of Z = columns of XB
             if ( associated(xm) ) then
               if ( btest(xm((i-1)/b+1),mod(i-1,b)) ) cycle
@@ -1349,6 +1368,7 @@ contains ! =====     Public Procedures     =============================
             xy = dot_product( xb%values(yb%r2(k:l),i), yb%values(k:l,1) )
             zb%values(i,j) = zb%values(i,j) + s * xy
           end do ! i
+!$OMP END PARALLEL DO
         end do ! j
       case ( M_Full )         ! XB full, YB full
         if ( associated(xm) .or. associated(ym) ) then
@@ -1360,6 +1380,7 @@ contains ! =====     Public Procedures     =============================
             end if
             mz = zb%nrows
             if ( my_upper ) mz = j
+!$OMP PARALLEL DO
             do i = 1, mz      ! Rows of Z = columns of XB
               if ( associated(xm) ) then
                 if ( btest(xm((i-1)/b+1),mod(i-1,b)) ) then
@@ -1370,15 +1391,18 @@ contains ! =====     Public Procedures     =============================
               xy = dot( xb%nrows, xb%values(1,i), 1, yb%values(1,j), 1 )
               zb%values(i,j) = zb%values(i,j) + s * xy
             end do ! i = 1, xb%ncols
+!$OMP END PARALLEL DO
           end do ! j = 1, yb%ncols
         else if ( my_upper ) then
           do j = 1, zb%ncols  ! Columns of ZB
+!$OMP PARALLEL DO
             do i = 1, j       ! Rows of Z = columns of XB
 !             xy = dot_product(xb%values(1:xb%nrows,i), yb%values(1:xb%nrows,j))
               xy = dot(xb%nrows, xb%values(1,i), 1, yb%values(1,j), 1 )
               zb%values(i,j) = zb%values(i,j) + s * xy
-            end do
-          end do
+            end do ! i
+!$OMP END PARALLEL DO
+          end do ! j
         else
           zb%values = zb%values + s * matmul(transpose(xb%values),yb%values)
         end if
@@ -1399,20 +1423,20 @@ contains ! =====     Public Procedures     =============================
         line = trim(line) // ' xMasked'
         do i = 1, xb%nCols
           if ( btest(xm((i-1)/b+1),mod(i-1,b))) xDns(:,i)=0.0
-        enddo
-      endif
+        end do
+      end if
       if ( associated(ym) ) then
         line = trim(line) // ' yMasked'
         do i = 1, yb%nCols
           if ( btest(ym((i-1)/b+1),mod(i-1,b))) yDns(:,i)=0.0
-        enddo
-      endif
+        end do
+      end if
       if ( my_sub ) then
         zDns = zDns - matmul(transpose(xDns), yDns)
         line = trim(line) // ' Subtract'
       else
         zDns = zDns + matmul(transpose(xDns), yDns)
-      endif
+      end if
       if ( my_upper ) then
         line = trim(line) // ' Upper'
         do j = 1, zb%nCols
@@ -1420,7 +1444,7 @@ contains ! =====     Public Procedures     =============================
             zDns(i,j) = zDns2(i,j)
           end do
         end do
-      endif
+      end if
       call TestBlock ( zb, zDns, ok, line, xb%kind, yb%kind )
       if ( .not. ok ) then
         call dump ( xb, name='xb', details=2 )
@@ -1431,8 +1455,8 @@ contains ! =====     Public Procedures     =============================
       call Deallocate_test ( zDns, 'zDns', ModuleName )
       if ( my_upper ) then
         call Deallocate_test ( zDns2, 'zDns2', ModuleName )
-      endif
-    endif
+      end if
+    end if
   end subroutine MultiplyMatrixBlocks
 
   ! -------------------------------------  MultiplyMatrixVector_0  -----
@@ -2309,6 +2333,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.54  2001/10/20 01:21:02  vsnyder
+! Inserted OpenMP comments in MultiplyMatrixBlocks_0, CholeskyFactor_0 and DenseCholesky
+!
 ! Revision 2.53  2001/10/16 19:28:31  vsnyder
 ! Repair comment about 'details' argument of 'Dump_Matrix_Block'
 !
