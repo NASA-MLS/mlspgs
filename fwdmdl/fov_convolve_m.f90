@@ -38,16 +38,13 @@ contains
       radiance(i) = radiance(ntr-i+2)
     end do
 !
-    x = mband - 1
-    ind = 1 + sqrt(x)
-!
     i = itype - 1
     if (i  ==  0) then                               ! Straight data
-      call convolve(Radiance, AntennaPattern%AAAP(:,1),M,Ias,ind,ier)
+      call convolve(Radiance,AntennaPattern%AAAP,M,Ias,ier)
     else if (i  ==  1) then                          ! First derivative
-      call convolve(Radiance,AntennaPattern%D1AAP(:,1),M,Ias,ind,ier)
+      call convolve(Radiance,AntennaPattern%D1AAP,M,Ias,ier)
     else if (i  ==  2) then                          ! Second derivative
-      call convolve(Radiance,AntennaPattern%D2AAP(:,1),M,Ias,ind,ier)
+      call convolve(Radiance,AntennaPattern%D2AAP,M,Ias,ier)
     end if
 !
     Return
@@ -57,21 +54,22 @@ contains
 ! -----------------------------------------------     CONVOLVE     -----
 ! This subroutine applies the convolution theorem
 !
-  Subroutine CONVOLVE ( RADIANCE, AAAP, M, IAS, IND, IERR )
+  Subroutine CONVOLVE ( RADIANCE, AAAP, M, IAS, IERR )
     real(r8), intent(inout) :: RADIANCE(:)
     real(r8), intent(in) :: AAAP(*)
-    integer(i4), intent(in) :: M, IAS, IND
+    integer(i4), intent(in) :: M, IAS
     integer(i4), intent(out) :: IERR
     Integer, parameter :: MAXP=12, MAX2P=2**MAXP
 !
     Integer(i4), save :: INIT = 0, MS = 0
-    Integer(i4) :: ISTOP, M4, NTR, NTRH, I, J, K
+    Integer(i4) :: ISTOP, M4, NTR, NTRH, I, J
     Real(r8) :: CR, CI, DBLRAD(MAX2P)
     Real(r8), save :: S(MAX2P)
 !
     ierr = 2
     if(maxp < m) return
 !
+
     m4 = m
     ierr = 0
     ntr = 2**m
@@ -86,9 +84,8 @@ contains
       istop = min(ntrh,ias)
       do i = 2, istop
         j = 2*i-1
-        k = 2*ias*(ind-1)+j
-        cr = dblrad(j)*aaap(k)-dblrad(j+1)*aaap(k+1)
-        ci = dblrad(j)*aaap(k+1)+dblrad(j+1)*aaap(k)
+        cr = dblrad(j)*aaap(j) -   dblrad(j+1)*aaap(j+1)
+        ci = dblrad(j)*aaap(j+1) + dblrad(j+1)*aaap(j)
         dblrad(j) = cr
         dblrad(j+1) = ci
       end do
@@ -99,9 +96,8 @@ contains
           dblrad(j+1) = 0.0d0
         end do
       endif
-      k = 2*ias*(ind-1)+1
-      dblrad(1) = dblrad(1)*aaap(k)
-      dblrad(2) = dblrad(2)*aaap(k+1)
+      dblrad(1) = dblrad(1)*aaap(1)
+      dblrad(2) = dblrad(2)*aaap(2)
       call drft1 ( dblrad, 's', m4, ms, s )
       if(ms == -2) then
         init=0
@@ -112,7 +108,8 @@ contains
       endif
     endif
 !
-    return
+    Return
+
   End subroutine CONVOLVE
 !
 ! -------------------------------------------------     FTGRID     -----
@@ -709,6 +706,9 @@ contains
 
 end module FOV_CONVOLVE_M
 ! $Log$
+! Revision 1.9  2001/04/06 01:37:58  zvi
+! Put (*) (Assume size) status on CONVOLVE & DFFT arrays..
+!
 ! Revision 1.8  2001/04/05 22:54:39  vsnyder
 ! Use AntennaPatterns_M
 !
