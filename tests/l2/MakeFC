@@ -113,7 +113,7 @@ $(libfwdmdl_objs)/libfwdmdl.a: $(libfwdmdl_f90) $(libmls_objs)/libmls.a \
                $(CONFDIR)/$(MLSCFILE)
 	$(MAKE) -f $(MakeFName) libfwdmdl.a -C $(libfwdmdl_sources)
 
-.PHONY: configure depends clean tar mostlyclean tarz targ test
+.PHONY: configure depends clean tar mostlyclean tarz targ test ghostbuster
 
 tar:
 
@@ -142,7 +142,7 @@ depends:
 endif
 
 ghostbuster:
-	$(MLSBIN)/ghostbuster.sh $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
+	$(MLSBIN)/ghostbuster.sh -lib $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
 
 mostlyclean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
@@ -180,6 +180,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude test
 
 # $Log$
+# Revision 1.5  2001/05/24 23:23:24  pwagner
+# Fixed prob with LIB_prereqs being undefined
+#
 # Revision 1.4  2001/05/24 18:02:01  pwagner
 # Expanded LIB_prereqs
 #

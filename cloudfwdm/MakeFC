@@ -109,7 +109,7 @@ $(libfwdmdl_objs)/libfwdmdl.a: $(libfwdmdl_f90) $(libmls_objs)/libmls.a \
                $(CONFDIR)/$(MLSCFILE)
 	$(MAKE) -f $(MakeFName) libfwdmdl.a -C $(libfwdmdl_sources)
 
-.PHONY: configure depends clean tar mostlyclean tarz targ mlsl2
+.PHONY: configure depends clean tar mostlyclean tarz targ ghostbuster
 
 tar:
 
@@ -130,7 +130,7 @@ depends:
 	$(depends_where) 
 
 ghostbuster:
-	$(MLSBIN)/ghostbuster.sh $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
+	$(MLSBIN)/ghostbuster.sh -lib $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
 
 mostlyclean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
@@ -168,6 +168,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 1.1  2001/05/30 16:42:53  pwagner
+# First commit
+#
 #
 
 

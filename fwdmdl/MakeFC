@@ -93,7 +93,8 @@ l2_test: libfwdmdl.a
 $(libmls_objs)/libmls.a: $(LIB_prereqs)
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
-.PHONY: configure depends clean tar mostlyclean targ tarz libfwdmdl.a l2_test
+.PHONY: configure depends clean tar mostlyclean targ tarz libfwdmdl.a \
+ l2_test ghostbuster
 
 tar:
 
@@ -114,7 +115,7 @@ depends:
 		   $(libmls_sources) $(srclib)
 
 ghostbuster:
-	$(MLSBIN)/ghostbuster.sh $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
+	$(MLSBIN)/ghostbuster.sh -lib $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
 
 mostlyclean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
@@ -152,6 +153,9 @@ targ:
 	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 1.17  2001/05/24 17:56:39  pwagner
+# Expanded LIB_prereqs
+#
 # Revision 1.16  2001/05/17 20:02:59  pwagner
 # Automatically rebuilds lib on change to machine.f90
 #
