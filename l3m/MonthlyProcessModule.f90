@@ -44,7 +44,7 @@ MODULE MonthlyProcessModule
 CONTAINS
 
 !-------------------------------------------------------------------------
-   SUBROUTINE MonthlyCoreProcessing(cfProd, pcf, l2Days, l2gp, l3mm, mmA, mmD, &
+   SUBROUTINE MonthlyCoreProcessing(cfProd, pcf, cfDef, l2Days, l2gp, l3mm, mmA, mmD, &
 					l3mz, mzA, mzD, l3dz, dzA, dzD)
 !-------------------------------------------------------------------------
 
@@ -57,6 +57,7 @@ CONTAINS
 
         TYPE( PCFMData_T ) :: pcf
         TYPE( L3CFMProd_T ) :: cfProd
+	TYPE( L3CFMDef_T ) :: cfDef
         TYPE( L2GPData_T ), POINTER :: l2gp(:)
 	TYPE( L3DZData_T ), POINTER :: l3dz(:), dzA(:), dzD(:)
 
@@ -104,11 +105,11 @@ CONTAINS
         dzA%name = TRIM(cfProd%l3prodName) // 'Ascending'
         dzD%name = TRIM(cfProd%l3prodName) // 'Descending'
 
-        DO j = 1, numDays
+        DO j = 1, l2Days
 
-           CALL AllocateL3DZ( nlev, cfProd%nLats, l3dz(j) )
-           CALL AllocateL3DZ( nlev, cfProd%nLats, dzA(j) )
-           CALL AllocateL3DZ( nlev, cfProd%nLats, dzD(j) )
+           CALL AllocateL3DZ( nlev, cfDef%nNom, l3dz(j) )
+           CALL AllocateL3DZ( nlev, cfDef%nNom, dzA(j) )
+           CALL AllocateL3DZ( nlev, cfDef%nNom, dzD(j) )
 
         ENDDO
 
@@ -118,9 +119,9 @@ CONTAINS
         mzA%name = TRIM(cfProd%l3prodName) // 'Ascending'
         mzD%name = TRIM(cfProd%l3prodName) // 'Descending'
 
-        CALL AllocateL3MZ( nlev, cfProd%nLats, l3mz )
-        CALL AllocateL3MZ( nlev, cfProd%nLats, mzA )
-        CALL AllocateL3MZ( nlev, cfProd%nLats, mzD )
+        CALL AllocateL3MZ( nlev, cfDef%nNom, l3mz )
+        CALL AllocateL3MZ( nlev, cfDef%nNom, mzA )
+        CALL AllocateL3MZ( nlev, cfDef%nNom, mzD )
 
 !!      Initialize Monthly Map 
 
@@ -132,9 +133,6 @@ CONTAINS
         CALL AllocateL3MM( nlev, cfProd%nLats, cfProd%nLons, mmA )
         CALL AllocateL3MM( nlev, cfProd%nLats, cfProd%nLons, mmD )
 
-
-	print *, 'Test1'
-
 !*** Sort & Prepare the Data 
 
 	Call SortDataMonthly(cfProd, l2Days, l2gp, 		&
@@ -145,26 +143,16 @@ CONTAINS
 			alons, dlons, 				&
 			atimes, dtimes, 			&
 			afields, dfields )
-
-	print *, 'Test2'
-
-        open(12, file='l3_newresult.dat', status='replace')
-	do j = 60, 60
-                  do i = 1, anlats(J, 1)
-                        write(12, *)  i, atimes(J, i, 1), alons(J, i, 1), alats(J, i, 1), afields(J, i, 1)
-                  end do
-        end do
-	close(12)
                 
 !*** Calculate Daily Zonal Means  
 
-        Call DailyZonalMeanFromL2(cfProd, l2gp, l2Days,        	&
+        Call DailyZonalMeanFromL2(cfProd, cfDef, l2gp, l2Days,        	&
                                     pStartIndex, pEndIndex,     &
                                     l3dz, dzA, dzD )
 
 !*** Calculate Monthly Zonal Means  
 
-        Call MonthlyZonalMeanFromL2(cfProd, l2gp, l2Days,      	&
+        Call MonthlyZonalMeanFromL2(cfProd, cfDef, l2gp, l2Days,      	&
                                     pStartIndex, pEndIndex,     &
                                     l3mz, mzA, mzD )
 
@@ -179,12 +167,9 @@ CONTAINS
 			    afields, dfields, 		&
 			    l3mm, mmA, mmD )
 
-!*** Main Loop 
-
+!*** Allocate space for all the arrays
 
 	DeAllocate(alats, dlats, alons, dlons, atimes, dtimes, afields, dfields)
-
-	close(12)
 
 !-----------------------------------
    END SUBROUTINE MonthlyCoreProcessing
@@ -400,7 +385,7 @@ CONTAINS
 
 
 !-------------------------------------------------------------------------
-   SUBROUTINE DailyZonalMeanFromL2(cfProd, l2gp, l2Days, pStartIndex, pEndIndex,  	&
+   SUBROUTINE DailyZonalMeanFromL2(cfProd, cfDef, l2gp, l2Days, pStartIndex, pEndIndex,  	&
 			     l3dz, dzA, dzD )
 !-------------------------------------------------------------------------
 
@@ -408,6 +393,7 @@ CONTAINS
 	INTEGER ::  iCom, iAasc, iDes, nloop, aindex
 
         TYPE( L3CFMProd_T ) :: cfProd
+	TYPE( L3CFMDef_T ) :: cfDef
         TYPE( L2GPData_T ), POINTER :: l2gp(:)
 	TYPE( L3DZData_T ), POINTER :: l3dz(:), dzA(:), dzD(:)
 
@@ -419,16 +405,16 @@ CONTAINS
 
 !*** Allocate space for all the arrays
 
-        ALLOCATE(iComArr(l3dz(1)%nLats), STAT=error)
-        ALLOCATE(iAscArr(l3dz(1)%nLats), STAT=error)
-        ALLOCATE(iDesArr(l3dz(1)%nLats), STAT=error)
+        ALLOCATE(iComArr(cfDef%nNom), STAT=error)
+        ALLOCATE(iAscArr(cfDef%nNom), STAT=error)
+        ALLOCATE(iDesArr(cfDef%nNom), STAT=error)
 
 	IF(error /= 0 ) THEN
           print *, "Allocation Error"
 	  STOP
 	END IF
 
-	DO iT = 1, l3dz(1)%nLats 
+	DO iT = 1, cfDef%nNom 
 	  iComArr(iT) = 0
 	  iAscArr(iT) = 0
 	  iDesArr(iT) = 0
@@ -440,13 +426,18 @@ CONTAINS
 	  iP = 0
 	  DO kP = pStartIndex, pEndIndex 
 	    iP = iP + 1
-	    DO iT = 1, l3dz(1)%nLats 
+	    DO iT = 1, cfDef%nNom 
 	      iComArr(iT) = 0
 	      iAscArr(iT) = 0
 	      iDesArr(iT) = 0
+
+	      l3dz(iD)%l3dzValue(iP, iT) = 0.0 
+	      dzA(iD)%l3dzValue(iP, iT) = 0.0 
+	      dzD(iD)%l3dzValue(iP, iT) = 0.0 
             ENDDO
 	    DO iT = 1, l2gp(iD)%nTimes
-	      iCom = real(l2gp(iD)%latitude(iT)-l3dz(1)%latitude(1))/real(l3dz(1)%latitude(2)-l3dz(1)%latitude(1))+1.5
+	      !iCom = real(l2gp(iD)%latitude(iT)-cfDef%l2nomLats(1))/real(cfDef%l2nomLats(2)-cfDef%l2nomLats(1))+1.5
+   	      iCom = FindIndexForNormGrid(cfDef, l2gp(iD)%latitude(iT))
 	      l3dz(iD)%l3dzValue(iP, iCom) = l3dz(iD)%l3dzValue(iP, iCom) + l2gp(iD)%l2gpValue(1, kP, iT)
 	      iComArr(iCom) = iComArr(iCom) + 1 
 	      IF( l2gp(iD)%longitude(iT) >= -PI .AND. &
@@ -468,11 +459,27 @@ CONTAINS
 	        iDesArr(iCom) = iDesArr(iCom) + 1 
 	      END IF	
 	    ENDDO
-	    DO iT = 1, l3dz(1)%nLats 
-	      l3dz(iD)%l3dzValue(iP, iT) = l3dz(iD)%l3dzValue(iP, iT)/real(iComArr(iT))
-	      dzA(iD)%l3dzValue(iP, iT) = dzA(iD)%l3dzValue(iP, iT)/real(iAscArr(iT))
-	      dzD(iD)%l3dzValue(iP, iT) = dzD(iD)%l3dzValue(iP, iT)/real(iDesArr(iT))
+
+	    DO iT = 1, cfDef%nNom 
+	      IF(iComArr(iT) == 0) THEN
+	      	l3dz(iD)%l3dzValue(iP, iT) = 0.0 
+	      	dzA(iD)%l3dzValue(iP, iT) = 0.0 
+	      	dzD(iD)%l3dzValue(iP, iT) = 0.0 
+	      ELSE
+	      	l3dz(iD)%l3dzValue(iP, iT) = l3dz(iD)%l3dzValue(iP, iT)/real(iComArr(iT))
+		IF(iAscArr(iT) > 0) THEN
+	      		dzA(iD)%l3dzValue(iP, iT) = dzA(iD)%l3dzValue(iP, iT)/real(iAscArr(iT))
+		ELSE
+	      		dzA(iD)%l3dzValue(iP, iT) = 0.0 
+		END IF
+		IF(iDesArr(iT) > 0) THEN
+	      		dzD(iD)%l3dzValue(iP, iT) = dzD(iD)%l3dzValue(iP, iT)/real(iDesArr(iT))
+		ELSE
+	      		dzD(iD)%l3dzValue(iP, iT) = 0.0 
+		END IF
+	      END IF
 	    ENDDO
+
 	  ENDDO
 	ENDDO
 
@@ -485,7 +492,7 @@ CONTAINS
 !-----------------------------------
 
 !-------------------------------------------------------------------------
-   SUBROUTINE MonthlyZonalMeanFromL2(cfProd, l2gp, l2Days, pStartIndex, pEndIndex,  	&
+   SUBROUTINE MonthlyZonalMeanFromL2(cfProd, cfDef, l2gp, l2Days, pStartIndex, pEndIndex,  	&
 			     	l3mz, mzA, mzD )
 !-------------------------------------------------------------------------
 
@@ -493,6 +500,7 @@ CONTAINS
 	INTEGER ::  iCom, iAasc, iDes, nloop, aindex
 
         TYPE( L3CFMProd_T ) :: cfProd
+	TYPE( L3CFMDef_T ) :: cfDef
         TYPE( L2GPData_T ), POINTER :: l2gp(:)
 	TYPE( L3MZData_T ) :: l3mz, mzA, mzD
 
@@ -504,16 +512,16 @@ CONTAINS
 
 !*** Allocate space for all the arrays
 
-        ALLOCATE(iComArr(l3mz%nLats), STAT=error)
-        ALLOCATE(iAscArr(l3mz%nLats), STAT=error)
-        ALLOCATE(iDesArr(l3mz%nLats), STAT=error)
+        ALLOCATE(iComArr(cfDef%nNom), STAT=error)
+        ALLOCATE(iAscArr(cfDef%nNom), STAT=error)
+        ALLOCATE(iDesArr(cfDef%nNom), STAT=error)
 
 	IF(error /= 0 ) THEN
           print *, "Allocation Error"
 	  STOP
 	END IF
 
-	DO iT = 1, l3mz%nLats 
+	DO iT = 1, cfDef%nNom 
 	  iComArr(iT) = 0
 	  iAscArr(iT) = 0
 	  iDesArr(iT) = 0
@@ -526,7 +534,8 @@ CONTAINS
 	  iP = iP + 1
           DO iD = 1, l2Days
 	    DO iT = 1, l2gp(iD)%nTimes
-	      iCom = real(l2gp(iD)%latitude(iT)-l3mz%latitude(1))/real(l3mz%latitude(2)-l3mz%latitude(1))+1.5
+	      !iCom = real(l2gp(iD)%latitude(iT)-l3mz%latitude(1))/real(l3mz%latitude(2)-l3mz%latitude(1))+1.5
+   	      iCom = FindIndexForNormGrid(cfDef, l2gp(iD)%latitude(iT))
 	      l3mz%l3mzValue(iP, iCom) = l3mz%l3mzValue(iP, iCom) + l2gp(iD)%l2gpValue(1, kP, iT)
 	      iComArr(iCom) = iComArr(iCom) + 1 
 	      IF( l2gp(iD)%longitude(iT) >= -PI .AND. &
@@ -550,10 +559,24 @@ CONTAINS
 	    ENDDO
 	  ENDDO
 
-	  DO iT = 1, l3mz%nLats 
-	    l3mz%l3mzValue(iP, iT) = l3mz%l3mzValue(iP, iT)/real(iComArr(iT))
-	    mzA%l3mzValue(iP, iT) = mzA%l3mzValue(iP, iT)/real(iAscArr(iT))
-	    mzD%l3mzValue(iP, iT) = mzD%l3mzValue(iP, iT)/real(iDesArr(iT))
+	  DO iT = 1, cfDef%nNom 
+	    IF(iComArr(iT) == 0) THEN
+	      	l3mz%l3mzValue(iP, iT) = 0.0 
+	      	mzA%l3mzValue(iP, iT) = 0.0 
+	      	mzD%l3mzValue(iP, iT) = 0.0 
+	    ELSE
+	        l3mz%l3mzValue(iP, iT) = l3mz%l3mzValue(iP, iT)/real(iComArr(iT))
+		IF(iAscArr(iT) > 0) THEN
+	    		mzA%l3mzValue(iP, iT) = mzA%l3mzValue(iP, iT)/real(iAscArr(iT))
+		ELSE
+	    		mzA%l3mzValue(iP, iT) = 0.0 
+		END IF
+		IF(iDesArr(iT) > 0) THEN
+	    		mzD%l3mzValue(iP, iT) = mzD%l3mzValue(iP, iT)/real(iDesArr(iT))
+		ELSE
+	    		mzD%l3mzValue(iP, iT) = 0.0 
+		END IF
+	    END IF
 	  ENDDO
 
 	ENDDO
@@ -592,10 +615,6 @@ CONTAINS
 
 	Real slope, lonStart, newField
 
-!*** Allocate space for all the arrays
-
-        ALLOCATE(lons_rev(31), STAT=error)
-        ALLOCATE(fields_rev(31), STAT=error)
         
 !*** Start calculation 
 
@@ -608,6 +627,11 @@ CONTAINS
 	     ! Ascending Mode
 
              IF( anlats(J, iP) > 0 ) THEN
+
+!*** Allocate space for all the arrays
+        	ALLOCATE(lons_rev(anlats(J, iP)), STAT=error)
+        	ALLOCATE(fields_rev(anlats(J, iP)), STAT=error)
+
                 DO i = 1, anlats(J, iP)
                     alons(J, i, iP) = alons(J, i, iP) + (i-1)*2.0*PI
                     lons_rev(i) = alons(J, anlats(J, iP)+1-i, iP)
@@ -630,11 +654,18 @@ CONTAINS
 		     lonStart = lonStart - 2.0*PI
 		     IF( lonStart < lons_rev(anlats(J, iP)) ) EXIT
 		  ENDDO
-		  mmA%l3mmValue(iP, J, K) = mmA%l3mmValue(iP, J, K)/nc
-		  mmA%l3mmPrecision(iP, J, K) = 0.0 
+		  IF( nc > 0) THEN
+		     mmA%l3mmValue(iP, J, K) = mmA%l3mmValue(iP, J, K)/nc
+		     mmA%l3mmPrecision(iP, J, K) = 0.0 
+		  ELSE
+		     mmA%l3mmValue(iP, J, K) = 0.0 
+		     mmA%l3mmPrecision(iP, J, K) = 0.0 
+		  END IF
 		ENDDO
 
+!*** Deallocate intermidiate arrays
                 DEALLOCATE(Y2)
+        	DEALLOCATE(lons_rev, fields_rev)
 
 	     ELSE
 
@@ -648,6 +679,11 @@ CONTAINS
 	     ! Descending Mode
 
              IF( dnlats(J, iP) > 0 ) THEN
+
+!*** Allocate space for all the arrays
+        	ALLOCATE(lons_rev(dnlats(J, iP)), STAT=error)
+        	ALLOCATE(fields_rev(dnlats(J, iP)), STAT=error)
+
                 DO i = 1, dnlats(J, iP)
                     dlons(J, i, iP) = dlons(J, i, iP) + (i-1)*2.0*PI
                     lons_rev(i) = dlons(J, dnlats(J, iP)+1-i, iP)
@@ -670,11 +706,18 @@ CONTAINS
 		     lonStart = lonStart - 2.0*PI
 		     IF( lonStart < lons_rev(dnlats(J, iP)) ) EXIT
 		  ENDDO
-		  mmD%l3mmValue(iP, J, K) = mmD%l3mmValue(iP, J, K)/nc
-		  mmD%l3mmPrecision(iP, J, K) = 0.0 
+		  IF( nc > 0) THEN
+		     mmD%l3mmValue(iP, J, K) = mmD%l3mmValue(iP, J, K)/nc
+		     mmD%l3mmPrecision(iP, J, K) = 0.0 
+		  ELSE
+		     mmD%l3mmValue(iP, J, K) = 0.0 
+		     mmD%l3mmPrecision(iP, J, K) = 0.0 
+		  END IF
 		ENDDO
 
+!*** Deallocate intermidiate arrays
                 DEALLOCATE(Y2)
+        	DEALLOCATE(lons_rev, fields_rev)
 
 	     ELSE
 
@@ -715,14 +758,42 @@ CONTAINS
 
 	ENDDO
 
-!*** Deallocate intermidiate arrays
-
-        DEALLOCATE(lons_rev, fields_rev)
 
 !-----------------------------------
    END SUBROUTINE MonthlyMapFromL2
 !-----------------------------------
 
+
+!-------------------------------------------------------------------------
+   INTEGER FUNCTION FindIndexForNormGrid(cfDef, alat)
+!-------------------------------------------------------------------------
+
+	Real (r8) alat
+	TYPE( L3CFMDef_T ) :: cfDef
+
+	integer i, j
+
+	DO i = 1, cfDef%nNom 
+	  IF(alat <= cfDef%l2nomLats(1)) THEN
+		 FindIndexForNormGrid = 1
+		 EXIT
+	  ELSE IF(alat >= cfDef%l2nomLats(cfDef%nNom)) THEN
+		 FindIndexForNormGrid = cfDef%nNom
+		 EXIT
+	  ELSE
+		IF( i == cfDef%nNom ) THEN
+			FindIndexForNormGrid = i
+		 	EXIT
+		ELSE IF( alat > cfDef%l2nomLats(i) .and. alat < cfDef%l2nomLats(i+1) ) THEN
+			FindIndexForNormGrid = i
+		 	EXIT
+		END IF
+	  END IF	
+	END DO
+
+!-----------------------------------
+   END FUNCTION FindIndexForNormGrid
+!-----------------------------------
 
 !-------------------------------------------------------------------------
    REAL FUNCTION FindRealLon(alon)
