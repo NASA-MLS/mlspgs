@@ -16,12 +16,12 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
     ! or simply take too much time doing i/o
     ! so instead write them out chunk-by-chunk
 
-  use Allocate_Deallocate, only: Allocate_test, Deallocate_test
+  use Allocate_Deallocate, only: Allocate_test
   use INIT_TABLES_MODULE, only: L_PRESSURE, L_ZETA
   use MLSCommon, only: RV
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
-    & MLSMSG_Error, MLSMSG_Warning, MLSMSG_Debug
-  use OUTPUT_M, only: blanks, OUTPUT
+    & MLSMSG_Error
+  use OUTPUT_M, only: OUTPUT
   use STRING_TABLE, only: GET_STRING
   use VectorsModule, only: VectorValue_T
 
@@ -114,7 +114,7 @@ contains ! ======================= Public Procedures =========================
     ! are too big to keep all chunks stored in memory
     ! so instead write them out profile-by-profile
     use Hdf, only: DFACC_CREATE, DFACC_RDWR
-    use L2GPData, only: L2GPData_T, L2GPNameLen
+    use L2GPData, only: L2GPNameLen
     use MLSFiles, only:  &
       & GetPCFromRef, split_path_name, mls_exists, &
       & mls_io_gen_openF, mls_io_gen_closeF
@@ -135,8 +135,6 @@ contains ! ======================= Public Procedures =========================
     character (len=1024) :: FILENAME    ! The actual filename
     integer :: L2gpFileHandle, L2gp_Version
     integer, parameter :: MAXFILES = 100             ! Set for an internal array
-    integer, save :: NOCREATEDFILES=0   ! Number of files created
-
     character (len=132) :: path
     character (len=L2GPNameLen) :: swathname    ! From the FILE location in string table
     integer :: fileaccess               ! DFACC_CREATE or DFACC_RDWR
@@ -192,13 +190,8 @@ contains ! ======================= Public Procedures =========================
     ! Write standard hdfeos-formatted files ala l2gp for datasets that
     ! are too big to keep all chunks stored in memory
     ! so instead write them out profile-by-profile
-    use L2GPData, only: L2GPData_T, L2GPNameLen, RGP, &
-      & AppendL2GPData, DestroyL2GPContents, SetupNewl2gpRecord
-    use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, &
-      & GetPCFromRef, split_path_name
-    use MLSL2Options, only: PENALTY_FOR_NO_METADATA, TOOLKIT, &
-      & DEFAULT_HDFVERSION_WRITE
-    use MLSPCF2, only: mlspcf_l2gp_start, mlspcf_l2gp_end
+    use L2GPData, only: L2GPData_T, L2GPNameLen, &
+      & AppendL2GPData, DestroyL2GPContents
 
     integer, intent(in) :: L2gpFileHandle
     type (VectorValue_T), intent(in) :: QUANTITY
@@ -211,13 +204,6 @@ contains ! ======================= Public Procedures =========================
     ! Local parameters
     type (L2GPData_T) :: l2gp
     logical, parameter :: DEBUG = .FALSE.
-    character (len=132) :: FILE_BASE    ! From the FILE location in string table
-    character (len=1024) :: FILENAME    ! The actual filename
-    integer :: L2gp_Version
-    integer, parameter :: MAXFILES = 100             ! Set for an internal array
-    integer, save :: NOCREATEDFILES=0   ! Number of files created
-
-    character (len=132) :: path
     character (len=L2GPNameLen) :: swathname    ! From the FILE location in string table
     integer :: offset
     integer :: myFirstProf
@@ -225,8 +211,6 @@ contains ! ======================= Public Procedures =========================
     integer :: FirstInstance
     integer :: LastInstance
     integer :: TotNumProfs
-    ! Saved variable - used to work out file information.
-    integer, dimension(maxFiles), save :: CREATEDFILENAMES = 0
     ! executable code qty%template%instanceOffset + 1
     
     ! Non-overlapped portion of quantity:
@@ -241,8 +225,10 @@ contains ! ======================= Public Procedures =========================
 
     TotNumProfs = myLastProf
     offset = myFirstProf - 1
-    call vectorValue_to_l2gp(QUANTITY, Quantity_precision, l2gp, &
-      & sdname, myFirstProf, myLastProf, chunkNo, firstInstance, lastInstance)
+    if ( .not. present(firstprof) ) offset=quantity%template%instanceOffset
+    call vectorValue_to_l2gp(quantity, Quantity_precision, l2gp, &
+      & sdname, chunkNo, offset=0, &
+      & firstInstance=firstInstance, lastInstance=lastInstance)
     call AppendL2GPData(l2gp, l2gpFileHandle, &
       & swathname, offset, TotNumProfs, hdfVersion)
     call DestroyL2GPContents(l2gp)
@@ -261,10 +247,9 @@ contains ! ======================= Public Procedures =========================
     use L2ParInfo, only: PARALLEL, REQUESTDIRECTWRITEPERMISSION, &
       & FINISHEDDIRECTWRITE
     use MLSCommon, only: MLSCHUNK_T
-    use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, &
+    use MLSFiles, only: &
       & GetPCFromRef, split_path_name, mls_sfstart, mls_sfend
-    use MLSL2Options, only: PENALTY_FOR_NO_METADATA, TOOLKIT, &
-      & DEFAULT_HDFVERSION_WRITE
+    use MLSL2Options, only: TOOLKIT
     use MLSPCF2, only: mlspcf_l2fwm_full_start, mlspcf_l2fwm_full_end
     use VectorsModule, only: VectorValue_T
 
@@ -354,11 +339,7 @@ contains ! ======================= Public Procedures =========================
     ! are too big to keep all chunks stored in memory
     ! so instead write them out chunk-by-chunk
     use MLSCommon, only: MLSCHUNK_T
-    use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, &
-      & GetPCFromRef, split_path_name
-    use MLSL2Options, only: PENALTY_FOR_NO_METADATA, TOOLKIT, &
-      & DEFAULT_HDFVERSION_WRITE
-    use MLSPCF2, only: mlspcf_l2fwm_full_start, mlspcf_l2fwm_full_end
+    use MLSFiles, only: HDFVERSION_4, HDFVERSION_5
     use VectorsModule, only: VectorValue_T
 
     type (VectorValue_T), intent(in) :: QUANTITY
@@ -371,16 +352,7 @@ contains ! ======================= Public Procedures =========================
     type (MLSChunk_T), dimension(:), intent(in) :: CHUNKS
     ! Local parameters
     logical, parameter :: DEBUG = .FALSE.
-    character (len=132) :: FILE_BASE    ! From the FILE location in string table
-    character (len=1024) :: FILENAME    ! The actual filename
-    integer :: L2fwmFileHandle, L2fwm_Version
     integer, parameter :: MAXFILES = 100             ! Set for an internal array
-    integer, save :: NOCREATEDFILES=0   ! Number of files created
-
-    character (len=132) :: path
-    integer :: ReturnStatus
-    ! Saved variable - used to work out file information.
-    integer, dimension(maxFiles), save :: CREATEDFILENAMES = 0
     ! executable code
 
     select case (hdfversion)
@@ -406,13 +378,11 @@ contains ! ======================= Public Procedures =========================
   subroutine DirectWrite_L2Aux_hdf4 ( quantity, sdName, fileID, &
     & chunkNo, chunks )
 
-    use Hdf, only: DFACC_CREATE, DFACC_RDWR, SFN2INDEX, SFSELECT, SFCREATE, &
+    use Hdf, only: SFN2INDEX, SFSELECT, SFCREATE, &
       & SFENDACC, DFNT_FLOAT32, SFWDATA_F90
     use Intrinsic, only: L_None
-    use L2ParInfo, only: PARALLEL, REQUESTDIRECTWRITEPERMISSION, &
-      & FINISHEDDIRECTWRITE
     use MLSCommon, only: MLSCHUNK_T, R4, R8
-    use MLSFiles, only: HDFVERSION_4, MLS_SFSTART, MLS_SFEND
+    use MLSFiles, only: HDFVERSION_4
     use VectorsModule, only: VectorValue_T
 
     type (VectorValue_T), intent(in) :: QUANTITY
@@ -427,7 +397,6 @@ contains ! ======================= Public Procedures =========================
     integer, parameter :: HDFVERSION = HDFVERSION_4
 
     ! Local variables
-    logical :: CREATEFILE               ! Set if file needs to be created
     integer :: SDINDEX                  ! Index of sd
     integer :: SDID                     ! Handle for sd
     integer :: STATUS                   ! Status flag
@@ -501,12 +470,9 @@ contains ! ======================= Public Procedures =========================
   subroutine DirectWrite_L2Aux_hdf5 ( quantity, sdName, fileID, &
     & chunkNo, chunks )
 
-    use HDF5, only: h5dopen_f
     use Intrinsic, only: L_None
-    use L2ParInfo, only: PARALLEL, REQUESTDIRECTWRITEPERMISSION, &
-     &  FINISHEDDIRECTWRITE
     use MLSCommon, only: MLSCHUNK_T
-    use MLSFiles, only: HDFVERSION_5, MLS_SFSTART, MLS_SFEND
+    use MLSFiles, only: HDFVERSION_5
     use MLSHDF5, only: ISHDF5DSPRESENT, SaveAsHDF5DS
     use PCFHdr, only: h5_writeglobalattr
     use VectorsModule, only: VectorValue_T
@@ -524,17 +490,13 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     logical :: already_there
-    logical :: CREATEFILE               ! Set if file needs to be created
     logical, parameter :: DEEBUG = .false.
     integer :: first_maf
     integer :: last_maf
     type ( MLSChunk_T ) :: LASTCHUNK    ! The last chunk in the file
     integer :: NODIMS                   ! Also index of maf dimension
     integer :: Num_qty_values
-    integer :: SDID                     ! Handle for sd
-    integer :: SDINDEX                  ! Index of sd
     integer :: SIZES(3)                 ! HDF array sizes
-    integer :: STATUS                   ! Status flag
     integer :: START(3)                 ! HDF array starting position
     integer :: STRIDE(3)                ! HDF array stride
     integer :: total_DS_size
@@ -642,20 +604,19 @@ contains ! ======================= Public Procedures =========================
 ! =====     Private Procedures     =====================================
   ! ---------------------------------------------  vectorValue_to_l2gp  -----
   subroutine vectorValue_to_l2gp (QUANTITY, Quantity_precision, l2gp, &
-    & name, chunkNo, firstProfile, lastProfile, &
-    & firstInstance, lastInstance)
+    & name, chunkNo, &
+    & offset, firstInstance, lastInstance)
     use Intrinsic, only: L_None
-    use L2GPData, only: L2GPData_T, L2GPNameLen, RGP, &
-      & AppendL2GPData, DestroyL2GPContents, SetupNewl2gpRecord, &
+    use L2GPData, only: L2GPData_T, RGP, &
+      & SetupNewl2gpRecord, &
       & ExpandL2GPDataInPlace
     type (VectorValue_T), intent(in) :: QUANTITY
     type (VectorValue_T), pointer :: QUANTITY_PRECISION
     type (L2GPData_T)                :: l2gp
     character(len=*), intent(in)     :: name
     ! integer, intent(in)            :: nameIndex
-    integer, intent(in)              :: firstProfile
-    integer, intent(in)              :: lastProfile
     integer, intent(in)              :: chunkNo
+    integer, intent(in), optional    :: offset
     integer, intent(in), optional    :: firstInstance
     integer, intent(in), optional    :: lastInstance
     ! Local variables
@@ -663,6 +624,9 @@ contains ! ======================= Public Procedures =========================
     integer :: noFreqsInL2GP
     integer :: useFirstInstance
     integer :: useLastInstance
+    integer :: firstProfile
+    integer :: lastProfile
+    integer :: nProfiles
 
     real(rv) :: HUGERGP
     
@@ -697,7 +661,14 @@ contains ! ======================= Public Procedures =========================
     else
        noFreqsInL2GP=quantity%template%noChans
     end if
-    call SetupNewl2gpRecord ( l2gp, noFreqsInL2GP, noSurfsInL2GP )
+    
+    if ( present(offset) ) then
+      firstProfile=offset+1
+    else
+      firstProfile=1
+    endif
+    lastProfile = firstProfile - 1 + nProfiles
+    call SetupNewl2gpRecord ( l2gp, noFreqsInL2GP, noSurfsInL2GP, lastProfile )
     ! Setup the standard stuff, only pressure as it turns out.
     if ( quantity%template%verticalCoordinate == l_Pressure ) &
       & l2gp%pressures = quantity%template%surfs(:,1)
@@ -711,17 +682,14 @@ contains ! ======================= Public Procedures =========================
     else
       l2gp%frequency = 0.0
     end if
-    call ExpandL2GPDataInPlace ( l2gp, &
-      & lastProfile-firstProfile+1 )
+    ! call ExpandL2GPDataInPlace ( l2gp, &
+    !  & lastProfile-firstProfile+1 )
 
     ! Now copy the information from the quantity to the l2gpData
 
     ! name is an integer, but L2GP%name is Character data
     l2gp%nameIndex = 0
-    ! call Get_String( nameIndex, l2gp%name, strip=.true.)
     l2gp%name = name
-    ! lastProfile=l2gp%nTimes
-    ! firstProfile=lastProfile-noOutputInstances+1
 
     ! Now fill the data, first the geolocation
     l2gp%latitude(firstProfile:lastProfile) = &
@@ -797,6 +765,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.4  2003/06/25 18:24:57  pwagner
+! A fix to vectorValue_to_l2gp
+!
 ! Revision 2.3  2003/06/24 23:53:27  pwagner
 ! Allows unassociated precisions as args to direct write
 !
