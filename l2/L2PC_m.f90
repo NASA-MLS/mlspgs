@@ -732,11 +732,15 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 
-! -----------------------------------------------------------------
-! All versions below refer to when this module was in lib.
 ! $Log$
+! Revision 2.5  2002/01/21 20:28:46  livesey
+! Corrected problem with log comments
+!
 ! Revision 2.4  2002/01/21 20:28:19  livesey
 ! Moved in from lib
+
+! -----------------------------------------------------------------
+! All versions below refer to when this module was in lib.
 !
 ! Revision 2.22  2002/01/18 00:34:23  livesey
 ! Added packed option to writeonel2pc, with supporting code.
