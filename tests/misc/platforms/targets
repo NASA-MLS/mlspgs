@@ -118,6 +118,9 @@ else
 endif
 ifdef HDFEOS5
    hdfeos5_linker_line=-L${HDFEOS5} -lhe5_hdfeos
+ifeq ($(MLSF95),LF95)
+   l_specials=-L/usr/lib/gcc-lib/i386-redhat-linux/2.96 -lgcc
+endif
 else
    hdfeos5_linker_line=
 endif
@@ -138,6 +141,7 @@ $(PROG_NAME): $(ALLOBJS) $(CONFDIR)/$(MLSCFILE)
 		$(tk_linker_line) \
         -L${HDFEOS} -lhdfeos \
         $(hdfeos5_linker_line) \
+        $(hdf5_linker_line) \
 		-L${HDF} -lmfhdf \
         -ldf \
         -lz \
@@ -146,7 +150,6 @@ $(PROG_NAME): $(ALLOBJS) $(CONFDIR)/$(MLSCFILE)
         $(pvm_linker_line) \
         $(blas_linker_line) \
         $(lapack_linker_line) \
-        $(hdf5_linker_line) \
         $(l_specials) $(LAFTER) \
 
 libmisc.a: $(ALLOBJS)
@@ -174,6 +177,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.11  2002/06/06 22:02:50  pwagner
+# Attempts to link w/o toolkit if PGSTK not defined
+#
 # Revision 1.10  2002/04/26 23:37:47  pwagner
 # Changes to allow building libs, too
 #
