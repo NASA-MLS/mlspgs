@@ -262,7 +262,6 @@ contains ! =====     Public Procedures     =============================
           call ExplicitFillVectorQuantity ( quantity, valuesNode, spread )
         case (l_l1b)                    ! Fill from L1B data
           call FillVectorQuantityFromL1B ( key, quantity, chunks(chunkNo), l1bInfo )
-          call dump(quantity%values)
         case default
           call MLSMessage(MLSMSG_Error,ModuleName,'This fill method not yet implemented')
         end select
@@ -1065,6 +1064,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.22  2001/03/03 00:10:14  livesey
+! Removed debuging dump.
+!
 ! Revision 2.21  2001/03/03 00:07:40  livesey
 ! Added fill from l1b
 !
