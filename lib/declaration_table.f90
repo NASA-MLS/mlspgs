@@ -21,8 +21,9 @@ module DECLARATION_TABLE
 
   public :: ALLOCATE_DECL, DEALLOCATE_DECL, DECLARATION, DECLARE
   public :: DECLARED, DECLS, DUMP_DECL, DUMP_1_DECL, EMPTY
-  public :: ENUM_VALUE, EXPRN, FIELD, GET_DECL, INIT_DECL, LABEL, LOG_VALUE
-  public :: NAMED_VALUE, NULL_DECL, NUM_VALUE, PRIOR_DECL, RANGE, REDECLARE
+  public :: ENUM_VALUE, EXPRN, EXPRN_M, EXPRN_V, FIELD, GET_DECL, INIT_DECL
+  public :: LABEL, LOG_VALUE, NAMED_VALUE, NULL_DECL, NUM_VALUE
+  public :: PRIOR_DECL, RANGE, REDECLARE
   public :: SECTION, SECTION_NODE, STR_RANGE, STR_VALUE, SPEC, TREE_NODE
   public :: TYPE_MAP, TYPE_NAME, TYPE_NAMES, UNDECLARED, UNITS_NAME
 
@@ -32,9 +33,12 @@ module DECLARATION_TABLE
     integer :: UNITS          ! Depends on "type" field:
                               ! "units_name" => Index of "units" of name,
                               !            e.g. km = length, ...
-                              ! "spec" => Index of specification
+                              ! "exprn" => Index < offset in matrix database
+                              !            Index > offset in vector database
+                              !            0 = double-precision value only
                               ! "field" => Index of field
                               ! "section" => Index of section
+                              ! "spec" => Index of specification
     integer :: TREE           ! Index of declaration in the tree
     integer :: PRIOR          ! Index of previous declaration
   end type DECLS
@@ -45,38 +49,44 @@ module DECLARATION_TABLE
 ! Values of the "type" field of "decls":
   integer, parameter :: EMPTY = 0       ! The "type" field of the sentinel
   integer, parameter :: ENUM_VALUE = 1  ! An enumerator
-  integer, parameter :: EXPRN = 2       ! The "tree" field points to an
-                                        ! unevaluated expression
-  integer, parameter :: FIELD = 3       ! Field of a structure definition
-  integer, parameter :: LABEL = 4       ! A "name:" label for a stru
-  integer, parameter :: LOG_VALUE = 5   ! Entity is a logical value, value is
+  integer, parameter :: EXPRN = 2       ! The "tree" field points to a
+                                        ! scalar expression
+  integer, parameter :: EXPRN_M = 3     ! The "tree" field points to a
+                                        ! matrix expression
+  integer, parameter :: EXPRN_V = 4     ! The "tree" field points to a
+                                        ! vector expression
+  integer, parameter :: FIELD = 5       ! Field of a structure definition
+  integer, parameter :: LABEL = 6       ! A "name:" label for a stru
+  integer, parameter :: LOG_VALUE = 7   ! Entity is a logical value, value is
                                         ! .false. if the "value" field is zero.
-  integer, parameter :: NAMED_VALUE = 6 ! X = expr
-  integer, parameter :: NUM_VALUE = 7   ! Entity is a numeric value, value is
+  integer, parameter :: NAMED_VALUE = 8 ! X = expr
+  integer, parameter :: NUM_VALUE = 9   ! Entity is a numeric value, value is
                                         ! in the "value" field"
-  integer, parameter :: RANGE = 8       ! A range -- not used in decl table
-  integer, parameter :: SECTION = 9     ! Name of a section
-  integer, parameter :: SECTION_NODE = 10 ! Tree node of a section
-  integer, parameter :: STR_RANGE = 11  ! String range -- for dates
-  integer, parameter :: STR_VALUE = 12  ! The string is the value
-  integer, parameter :: SPEC = 13       ! Name of a specification, e.g. vGrid
-  integer, parameter :: TREE_NODE = 14  ! Name of a tree node, e.g. n_plus
-  integer, parameter :: TYPE_NAME = 15  ! Name of a data type
-  integer, parameter :: UNDECLARED = 16 ! Entity is undeclared
-  integer, parameter :: UNITS_NAME = 17 ! Name is a units name, e.g. km, hPa
+  integer, parameter :: RANGE = 10      ! A range -- not used in decl table
+  integer, parameter :: SECTION = 11    ! Name of a section
+  integer, parameter :: SECTION_NODE = 12 ! Tree node of a section
+  integer, parameter :: STR_RANGE = 13  ! String range -- for dates
+  integer, parameter :: STR_VALUE = 14  ! The string is the value
+  integer, parameter :: SPEC = 15       ! Name of a specification, e.g. vGrid
+  integer, parameter :: TREE_NODE = 16  ! Name of a tree node, e.g. n_plus
+  integer, parameter :: TYPE_NAME = 17  ! Name of a data type
+  integer, parameter :: UNDECLARED = 18 ! Entity is undeclared
+  integer, parameter :: UNITS_NAME = 19 ! Name is a units name, e.g. km, hPa
                                         ! Scale to "canonical" units of the
                                         ! name is in "value", e.g. km = 1000.0
 
   character(len=*), parameter :: TYPE_NAMES(empty:units_name) = &
-  (/ 'empty     ', 'enum_value', 'exprn     ', 'field     ', 'label     ', &
-     'log_value ', 'nam_value ', 'num_value ', 'range     ', 'section   ', &
-     'section_n ', 'str_range ', 'str_value ', 'spec      ', 'tree      ', &
-     'type_name ', 'undeclared', 'units     ' /)
+  (/ 'empty     ', 'enum_value', 'exprn     ', 'exprn_m   ', 'exprn_v   ', &
+     'field     ', 'label     ', 'log_value ', 'nam_value ', 'num_value ', &
+     'range     ', 'section   ', 'section_n ', 'str_range ', 'str_value ', &
+     'spec      ', 'tree      ', 'type_name ', 'undeclared', 'units     ' /)
 
 ! Mapping from declaration table types to data types:
   integer, parameter :: TYPE_MAP(empty:units_name) = &
-  (/ 0, 0, 0, 0, 0, t_boolean, 0, t_numeric, t_numeric_range, 0, 0, 0, &
-     t_string, 0, 0, 0, 0, 0 /)
+  (/ 0,               0, 0,         0, 0, &
+     0,               0, t_boolean, 0, t_numeric, &
+     t_numeric_range, 0, 0,         0, t_string, &
+     0,               0, 0,         0, 0 /)
 
 ! -----     Private declarations     -----------------------------------
   type(decls), save, allocatable :: DECL_TABLE(:)
@@ -356,6 +366,9 @@ contains ! =====     Public Procedures     =============================
 end module DECLARATION_TABLE
 
 ! $Log$
+! Revision 2.6  2004/01/16 23:51:23  vsnyder
+! Add more declaration table types for Algebra
+!
 ! Revision 2.5  2002/10/08 00:09:08  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
