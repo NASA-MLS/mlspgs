@@ -153,7 +153,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_PHASE              = s_pfadata + 1
   integer, parameter :: S_POPULATEL2PCBIN    = s_phase + 1
   integer, parameter :: S_QUANTITY           = s_populateL2pcBin + 1
-  integer, parameter :: S_REFLECT            = s_quantity + 1
+  integer, parameter :: S_READPFA            = s_quantity + 1
+  integer, parameter :: S_REFLECT            = s_readPFA + 1
   integer, parameter :: S_REGULARIZATION     = s_reflect + 1
   integer, parameter :: S_RESTRICTRANGE      = s_regularization + 1
   integer, parameter :: S_RETRIEVE           = s_restrictRange + 1
@@ -357,6 +358,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_phase) =                add_ident ( 'phase' )
     spec_indices(s_populateL2PCBin) =      add_ident ( 'populateL2PCBin' )
     spec_indices(s_quantity) =             add_ident ( 'quantity' )
+    spec_indices(s_readPFA) =              add_ident ( 'readPFA' )
     spec_indices(s_reflect) =              add_ident ( 'reflect' )
     spec_indices(s_regularization) =       add_ident ( 'regularization' )
     spec_indices(s_restrictRange) =        add_ident ( 'restrictRange' )
@@ -655,6 +657,12 @@ contains ! =====     Public procedures     =============================
              begin, f+f_temperatures, s+s_tGrid, nr+n_field_spec, &
              begin, f+f_velLin, t+t_numeric, n+n_field_type, &
              begin, f+f_vGrid, s+s_vGrid, nr+n_field_spec, &
+             ndp+n_spec_def, &
+      begin, s+s_readPFA, &
+             begin, f+f_allPFA, t+t_boolean, n+n_field_type, &
+             begin, f+f_file, t+t_string, nr+n_field_type, &
+             begin, f+f_molecules, t+t_molecule, n+n_field_type, &
+             begin, f+f_signals, t+t_string, n+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_writePFA, &
              begin, f+f_allPFA, t+t_boolean, n+n_field_type, &
@@ -1251,7 +1259,8 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ &
       begin, z+z_mlsSignals, s+s_module, s+s_band, s+s_radiometer, &
                              s+s_signal, s+s_spectrometerType, s+s_time, n+n_section, &
-      begin, z+z_spectroscopy, s+s_line, s+s_spectra, s+s_time, n+n_section, &
+      begin, z+z_spectroscopy, s+s_line, s+s_readSpectroscopy, s+s_spectra, &
+                             s+s_time, s+s_writeSpectroscopy, n+n_section, &
       begin, z+z_globalsettings, &
              begin, p+p_version_comment, t+t_string, n+n_name_def, &
              begin, p+p_input_version_string, t+t_string, n+n_name_def, &
@@ -1265,8 +1274,8 @@ contains ! =====     Public procedures     =============================
              s+s_binSelector, s+s_directWriteFile, s+s_dump, &
              s+s_empiricalGeometry, s+s_fGrid, s+s_forwardModel, &
              s+s_forwardModelGlobal, s+s_l1brad, s+s_l1boa, s+s_l2parsf, &
-             s+s_makePFA, s+s_pfaData, s+s_tGrid, s+s_time, s+s_vGrid, &
-             s+s_writePFA, n+n_section, &
+             s+s_makePFA, s+s_pfaData, s+s_readPFA, s+s_tGrid, s+s_time, &
+             s+s_vGrid, s+s_writePFA, n+n_section, &
       begin, z+z_readapriori, s+s_time, s+s_gridded, s+s_l2gp, &
              s+s_l2aux, s+s_snoop, n+n_section, &
       begin, z+z_mergegrids, s+s_time, s+s_merge, s+s_concatenate, s+s_delete, &
@@ -1318,6 +1327,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.392  2004/12/31 02:41:56  vsnyder
+! Working on read/write PFA database
+!
 ! Revision 2.391  2004/12/13 20:23:00  vsnyder
 ! Added MakePFA and WritePFA commands.  Put S_Sids into alphabetical order.
 ! Added AllLines, AllSignals, AllSpectra, Lines, Signals, Spectroscopy and
