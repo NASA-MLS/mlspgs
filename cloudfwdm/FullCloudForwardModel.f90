@@ -797,7 +797,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         ! find the total length for this tangent height
         !-----------------------------------------------
         ds_tot = 2._r8*sqrt((earthradius%values(1,maf)+ & 
-            & gph%template%surfs(noCldSurf,instance))**2 - &
+            & gph%values(noCldSurf,instance))**2 - &
             & (earthradius%values(1,maf)+zt(mif))**2)
 
         !----------------------------------------------------------
@@ -910,6 +910,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.69  2001/11/02 00:45:33  dwu
+! correction in high cloud Jacobian
+!
 ! Revision 1.68  2001/11/02 00:42:05  dwu
 ! correction in high cloud Jacobian
 !
