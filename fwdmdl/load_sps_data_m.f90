@@ -8,7 +8,7 @@ module LOAD_SPS_DATA_M
   implicit NONE
 
   private
-  public :: Load_SPS_Data, Destroygrids_t
+  public :: Load_SPS_Data, Load_One_Grid, Destroygrids_t
 
   type, public :: Grids_T             ! Fit all Gridding categories
     integer,  pointer :: no_f(:) => null()! No. of entries in frq. grid per sps
@@ -39,23 +39,19 @@ module LOAD_SPS_DATA_M
   private :: NOT_USED_HERE 
 !---------------------------------------------------------------------------
 contains
-!-------------------------------------------------------------------
+!---------------------------------------------------------------------------
 
- subroutine Load_SPS_Data ( FwdModelConf, fwdModelIn, fwdModelExtra, FmStat, &
-       &    radiometer, mol_cat_index, p_len, f_len, h2o_ind, ext_ind,       &
-       &    Grids_f, f_len_dw, Grids_dw, f_len_dn, Grids_dn, f_len_dv,       &
+  ! ----------------------------------------------  Load_SPS_Data  -----
+
+  subroutine Load_SPS_Data ( FwdModelConf, fwdModelIn, fwdModelExtra, FmStat, &
+       &    radiometer, mol_cat_index, p_len, f_len, h2o_ind, ext_ind,        &
+       &    Grids_f, f_len_dw, Grids_dw, f_len_dn, Grids_dn, f_len_dv,        &
        &    Grids_dv )
 
-    use Allocate_Deallocate, only: Allocate_test
     use ForwardModelConfig, only: ForwardModelConfig_t
     use ForwardModelIntermediate, only: ForwardModelStatus_t
-    use ForwardModelVectorTools, only: GetQuantityForForwardModel
-    use intrinsic, only: L_VMR, L_NONE, L_PHITAN, L_IntermediateFrequency
-    use ManipulateVectorQuantities, only: FindInstanceWindow
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use Molecules, only: Spec_tags
-    use Units, only: Deg2Rad
-    use VectorsModule, only: Vector_T, VectorValue_T, M_FullDerivatives
+    use Intrinsic, only: L_DN, L_DV, L_DW, L_VMR
+    use VectorsModule, only: Vector_T
 
     type(forwardModelConfig_T), intent(in) :: fwdModelConf
     type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
@@ -85,7 +81,7 @@ contains
 ! Begin code:
 
     call load_one_grid ( FwdModelConf, fwdModelIn, fwdModelExtra, FmStat, &
-       & radiometer, mol_cat_index, f_len, 'f', Grids_f, p_len, h2o_ind,&
+       & radiometer, mol_cat_index, f_len, l_vmr, Grids_f, p_len, h2o_ind,&
        & ext_ind )
 
 ! ** When the spectroscopy flags are properly introduced into the database,
@@ -93,205 +89,204 @@ contains
 
 !   if ( PRESENT ( Grids_dw ) ) &
 !   & Call load_one_grid(FwdModelConf, fwdModelIn, fwdModelExtra, FmStat, &
-!        & radiometer, mol_cat_index, f_len_dw, 'w', Grids_dw)
+!        & radiometer, mol_cat_index, f_len_dw, l_dw, Grids_dw)
 
 !   if ( PRESENT ( Grids_dn ) ) &
 !   & Call load_one_grid(FwdModelConf, fwdModelIn, fwdModelExtra, FmStat, &
-!        & radiometer, mol_cat_index, f_len_dn, 'n', Grids_dn)
+!        & radiometer, mol_cat_index, f_len_dn, l_dn, Grids_dn)
 
 !   if ( PRESENT ( Grids_dv ) ) &
 !   & Call load_one_grid(FwdModelConf, fwdModelIn, fwdModelExtra, FmStat, &
-!        & radiometer, mol_cat_index, f_len_dv, 'v', Grids_dv)
+!        & radiometer, mol_cat_index, f_len_dv, l_dv, Grids_dv)
 
-  contains
-    !  ...........................................  Load_One_Grid  .....
-
-    subroutine Load_One_Grid ( FwdModelConf, fwdModelIn, fwdModelExtra, FmStat, &
-         &    radiometer, mol_cat_index, f_len, Grid_type, Grids_x, p_len,      &
-         &    h2o_ind, ext_ind )
-
-      type(forwardModelConfig_T), intent(in) :: fwdModelConf
-      type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
-      type(forwardModelStatus_t), intent(in) :: FmStat ! Reverse comm. stuff
-
-      integer, intent(in) :: RADIOMETER       
-      integer, intent(in) :: MOL_CAT_INDEX(:) 
-
-      integer, intent(out) :: F_LEN
-
-      character(len=1), intent(in) :: Grid_type
-
-      type (Grids_T), intent(out) :: Grids_x   ! All the coordinates
-
-      integer, optional, intent(out) :: P_LEN
-      integer, optional, intent(out) :: H2O_IND
-      integer, optional, intent(out) :: EXT_IND
-
-  !** ZEBUG: When Intrinsic has (l_dw, l_dn & l_dv), get rid of the following 
-  !   4 lines of code
-
-      integer, parameter :: l_dw = 1
-      integer, parameter :: l_dn = 2
-      integer, parameter :: l_dv = 3
-
-  ! Local variables:
-
-      integer :: i, j, k, l, m, n, r, s, kz, kp, kf
-      integer :: n_f_phi, n_f_zet, n_f_frq, no_mol, l_x
-      integer :: ii, kk, wf1, wf2
-
-      type (VectorValue_T), pointer :: F             ! An arbitrary species
-      type (VectorValue_T), pointer :: PHITAN ! Tangent geodAngle component of
-
-      logical :: FoundInFirst           ! Flag
-
-
-      !******************* LOAD SPECIES DATA ************
-
-      no_mol = size( mol_cat_index )
-
-      call allocate_test ( Grids_x%no_z,no_mol,'Grids_x%no_z',ModuleName )
-      call allocate_test ( Grids_x%no_p,no_mol,'Grids_x%no_p',ModuleName )
-      call allocate_test ( Grids_x%no_f,no_mol,'Grids_x%no_f',ModuleName )
-      call allocate_test ( Grids_x%windowstart,no_mol,'Grids_x%windowstart', &
-                         & ModuleName )
-      call allocate_test ( Grids_x%windowfinish,no_mol,'Grids_x%windowfinish',&
-                         & ModuleName )
-      call Allocate_test ( Grids_x%lin_log, no_mol, 'lin_log', ModuleName )
-      call Allocate_test ( Grids_x%min_val, no_mol, 'min_val', ModuleName )
-
-      Grids_x%no_z = 0
-      Grids_x%no_p = 0
-      Grids_x%no_f = 0
-      grids_x%min_val = -huge(0.0_r8)
-
-      f_len = 0
-
-      if ( present(p_len) ) p_len=0
-      if ( present(ext_ind) ) ext_ind = 0
-      if ( present(h2o_ind) ) h2o_ind = 0
-
-      phitan => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
-        & quantityType=l_phitan, config=fwdModelConf, &
-        & instrumentModule=FwdModelConf%signals(1)%instrumentModule )
-
-      l_x = l_vmr
-      if ( Grid_type == 'W' .or. Grid_type == 'w' ) l_x = l_dw
-      if ( Grid_type == 'N' .or. Grid_type == 'n' ) l_x = l_dn
-      if ( Grid_type == 'V' .or. Grid_type == 'v' ) l_x = l_dv
-
-      do ii = 1, no_mol
-        kk = FwdModelConf%molecules(mol_cat_index(ii))
-        if ( present(h2o_ind) .and. spec_tags(kk) == 18003 ) h2o_ind = ii
-        f => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
-          & quantityType=l_x, molIndex=mol_cat_index(ii), &
-          & radiometer=radiometer, config=fwdModelConf )
-        kz = f%template%noSurfs
-        if ( f%template%frequencyCoordinate == l_none ) then
-          kf = 1
-        else
-          kf = f%template%noChans
-        end if
-        call FindInstanceWindow ( f, phitan, fmStat%maf, FwdModelConf%phiWindow, &
-          & FwdModelConf%windowUnits, wf1, wf2 )
-        Grids_x%windowStart(ii) = wf1
-        Grids_x%windowFinish(ii) = wf2
-        kp = wf2 - wf1 + 1
-        Grids_x%no_f(ii) = kf
-        Grids_x%no_z(ii) = kz
-        Grids_x%no_p(ii) = kp
-        if ( present(p_len) ) p_len = p_len + kz * kp
-        f_len = f_len + kz * kp * kf
-        if ( f%template%logBasis ) then
-          Grids_x%lin_log(ii) = .true.
-          Grids_x%min_val(ii) = f%template%minValue
-        else
-          Grids_x%lin_log(ii) = .false.
-        end if
-      end do
-
-      n_f_zet = sum(Grids_x%no_z)
-      n_f_phi = sum(Grids_x%no_p)
-      n_f_frq = sum(Grids_x%no_f)
-
-  ! Allocate space for the zeta, phi & freq. basis componenets
-
-      call allocate_test ( Grids_x%zet_basis,n_f_zet,'Grids_x%zet_basis', &
-                         & ModuleName )
-      call allocate_test ( Grids_x%phi_basis,n_f_phi,'Grids_x%phi_basis', &
-                         & ModuleName )
-      call allocate_test ( Grids_x%frq_basis,n_f_frq,'Grids_x%frq_basis', &
-                         & ModuleName )
-      call allocate_test ( Grids_x%values,f_len,'Grids_x%values', &
-                         & ModuleName )
-      call allocate_test ( Grids_x%deriv_flags,f_len,'Grids_x%deriv_flags',&
-                         & ModuleName )
-
-      j = 1
-      l = 1
-      s = 1
-      f_len = 1
-      do ii = 1, no_mol
-        i = mol_cat_index(ii)
-        f => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
-          & quantityType=l_x, molIndex=i, radiometer=radiometer, config=fwdModelConf, &
-          & foundInFirst=foundInFirst )
-        kz = Grids_x%no_z(ii)
-        kp = Grids_x%no_p(ii)
-        kf = Grids_x%no_f(ii)
-        n = l + kz
-        m = s + kf
-        k = j + kp
-        wf1 = Grids_x%windowStart(ii)
-        wf2 = Grids_x%windowFinish(ii)
-        Grids_x%zet_basis(l:n-1) = f%template%surfs(1:kz,1)
-        Grids_x%phi_basis(j:k-1) = f%template%phi(1,wf1:wf2)*Deg2Rad
-        if ( associated ( f%template%frequencies ) ) then
-          if ( f%template%frequencyCoordinate /= l_intermediateFrequency ) &
-            & call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'Unexpected frequency coordinate for quantity' )
-          Grids_x%frq_basis(s:m-1) = f%template%frequencies
-        else
-          Grids_x%frq_basis(s:m-1) = 0.0
-        end if
-
-  ! ** ZEBUG - Simulate f%values for EXTINCTION, using the N2 function
-  !  (Some code here ...)
-  ! ** END ZEBUG
-
-        r = f_len + kf * kz * kp
-        Grids_x%values(f_len:r-1) = reshape(f%values(1:kf*kz,wf1:wf2), &
-                                        & (/kf*kz*kp/))
-        if ( Grids_x%lin_log(ii) ) then
-          where ( Grids_x%values(f_len:r-1) <= grids_x%min_val(ii) ) &
-               & Grids_x%values(f_len:r-1) = grids_x%min_val(ii)
-          Grids_x%values(f_len:r-1) = log(Grids_x%values(f_len:r-1))
-        end if
-
-  ! set 'do derivative' flags
-
-        if ( fwdModelConf%moleculeDerivatives(i) .and. foundInFirst ) then
-          if ( associated(f%mask) ) then
-            Grids_x%deriv_flags(f_len:r-1) = reshape(( iand (M_FullDerivatives,&
-              & ichar(f%mask)) == 0),(/kf*kz*kp/))
-          else
-            Grids_x%deriv_flags(f_len:r-1) = .true.
-          end if
-        else
-          grids_x%deriv_flags(f_len:r-1) = .false.
-        end if
-
-        j = k
-        l = n
-        s = m
-        f_len = r
-
-      end do
-
-      f_len = f_len - 1
-
-    end subroutine Load_One_Grid
   end subroutine Load_Sps_Data
+
+  !  ---------------------------------------------  Load_One_Grid  -----
+
+  subroutine Load_One_Grid ( FwdModelConf, fwdModelIn, fwdModelExtra, FmStat, &
+       &    radiometer, mol_cat_index, f_len, QuantityType, Grids_x, p_len,      &
+       &    h2o_ind, ext_ind )
+
+    use Allocate_Deallocate, only: Allocate_test
+    use ForwardModelConfig, only: ForwardModelConfig_t
+    use ForwardModelIntermediate, only: ForwardModelStatus_t
+    use ForwardModelVectorTools, only: GetQuantityForForwardModel
+    use Intrinsic, only: L_IntermediateFrequency, L_None, L_Phitan
+    use ManipulateVectorQuantities, only: FindInstanceWindow
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use Molecules, only: Spec_tags, SP_H2O
+    use Units, only: Deg2Rad
+    use VectorsModule, only: Vector_T, VectorValue_T, M_FullDerivatives
+
+    type(forwardModelConfig_T), intent(in) :: fwdModelConf
+    type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
+    type(forwardModelStatus_t), intent(in) :: FmStat ! Reverse comm. stuff
+
+    integer, intent(in) :: RADIOMETER       
+    integer, intent(in) :: MOL_CAT_INDEX(:) 
+
+    integer, intent(out) :: F_LEN
+
+    integer, intent(in) :: QuantityType      ! L_vmr, L_dv, etc.
+
+    type (Grids_T), intent(out) :: Grids_x   ! All the coordinates
+
+    integer, optional, intent(out) :: P_LEN
+    integer, optional, intent(out) :: H2O_IND
+    integer, optional, intent(out) :: EXT_IND
+
+! Local variables:
+
+    integer :: i, j, k, l, m, n, r, s, kz, kp, kf
+    integer :: n_f_phi, n_f_zet, n_f_frq, no_mol
+    integer :: ii, kk, wf1, wf2
+
+    type (VectorValue_T), pointer :: F       ! An arbitrary species
+    type (VectorValue_T), pointer :: PHITAN  ! Tangent geodAngle component of
+
+    logical :: FoundInFirst                  ! Flag
+
+
+    !******************* LOAD SPECIES DATA ************
+
+    no_mol = size( mol_cat_index )
+
+    call allocate_test ( Grids_x%no_z,no_mol,'Grids_x%no_z',ModuleName )
+    call allocate_test ( Grids_x%no_p,no_mol,'Grids_x%no_p',ModuleName )
+    call allocate_test ( Grids_x%no_f,no_mol,'Grids_x%no_f',ModuleName )
+    call allocate_test ( Grids_x%windowstart,no_mol,'Grids_x%windowstart', &
+                       & ModuleName )
+    call allocate_test ( Grids_x%windowfinish,no_mol,'Grids_x%windowfinish',&
+                       & ModuleName )
+    call Allocate_test ( Grids_x%lin_log, no_mol, 'lin_log', ModuleName )
+    call Allocate_test ( Grids_x%min_val, no_mol, 'min_val', ModuleName )
+
+    Grids_x%no_z = 0
+    Grids_x%no_p = 0
+    Grids_x%no_f = 0
+    grids_x%min_val = -huge(0.0_r8)
+
+    f_len = 0
+
+    if ( present(p_len) ) p_len=0
+    if ( present(ext_ind) ) ext_ind = 0
+    if ( present(h2o_ind) ) h2o_ind = 0
+
+    phitan => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_phitan, config=fwdModelConf, &
+      & instrumentModule=FwdModelConf%signals(1)%instrumentModule )
+
+    do ii = 1, no_mol
+      kk = FwdModelConf%molecules(mol_cat_index(ii))
+      if ( present(h2o_ind) .and. spec_tags(kk) == sp_h2o ) h2o_ind = ii
+      f => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
+        & quantityType=quantityType, molIndex=mol_cat_index(ii), &
+        & radiometer=radiometer, config=fwdModelConf )
+      kz = f%template%noSurfs
+      if ( f%template%frequencyCoordinate == l_none ) then
+        kf = 1
+      else
+        kf = f%template%noChans
+      end if
+      call FindInstanceWindow ( f, phitan, fmStat%maf, FwdModelConf%phiWindow, &
+        & FwdModelConf%windowUnits, wf1, wf2 )
+      Grids_x%windowStart(ii) = wf1
+      Grids_x%windowFinish(ii) = wf2
+      kp = wf2 - wf1 + 1
+      Grids_x%no_f(ii) = kf
+      Grids_x%no_z(ii) = kz
+      Grids_x%no_p(ii) = kp
+      if ( present(p_len) ) p_len = p_len + kz * kp
+      f_len = f_len + kz * kp * kf
+      if ( f%template%logBasis ) then
+        Grids_x%lin_log(ii) = .true.
+        Grids_x%min_val(ii) = f%template%minValue
+      else
+        Grids_x%lin_log(ii) = .false.
+      end if
+    end do
+
+    n_f_zet = sum(Grids_x%no_z)
+    n_f_phi = sum(Grids_x%no_p)
+    n_f_frq = sum(Grids_x%no_f)
+
+! Allocate space for the zeta, phi & freq. basis componenets
+
+    call allocate_test ( Grids_x%zet_basis,n_f_zet,'Grids_x%zet_basis', &
+                       & ModuleName )
+    call allocate_test ( Grids_x%phi_basis,n_f_phi,'Grids_x%phi_basis', &
+                       & ModuleName )
+    call allocate_test ( Grids_x%frq_basis,n_f_frq,'Grids_x%frq_basis', &
+                       & ModuleName )
+    call allocate_test ( Grids_x%values,f_len,'Grids_x%values', &
+                       & ModuleName )
+    call allocate_test ( Grids_x%deriv_flags,f_len,'Grids_x%deriv_flags',&
+                       & ModuleName )
+
+    j = 1
+    l = 1
+    s = 1
+    f_len = 1
+    do ii = 1, no_mol
+      i = mol_cat_index(ii)
+      f => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
+        & quantityType=quantityType, molIndex=i, radiometer=radiometer, &
+        & config=fwdModelConf, foundInFirst=foundInFirst )
+      kz = Grids_x%no_z(ii)
+      kp = Grids_x%no_p(ii)
+      kf = Grids_x%no_f(ii)
+      n = l + kz
+      m = s + kf
+      k = j + kp
+      wf1 = Grids_x%windowStart(ii)
+      wf2 = Grids_x%windowFinish(ii)
+      Grids_x%zet_basis(l:n-1) = f%template%surfs(1:kz,1)
+      Grids_x%phi_basis(j:k-1) = f%template%phi(1,wf1:wf2)*Deg2Rad
+      if ( associated ( f%template%frequencies ) ) then
+        if ( f%template%frequencyCoordinate /= l_intermediateFrequency ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Unexpected frequency coordinate for quantity' )
+        Grids_x%frq_basis(s:m-1) = f%template%frequencies
+      else
+        Grids_x%frq_basis(s:m-1) = 0.0
+      end if
+
+! ** ZEBUG - Simulate f%values for EXTINCTION, using the N2 function
+!  (Some code here ...)
+! ** END ZEBUG
+
+      r = f_len + kf * kz * kp
+      Grids_x%values(f_len:r-1) = reshape(f%values(1:kf*kz,wf1:wf2), &
+                                      & (/kf*kz*kp/))
+      if ( Grids_x%lin_log(ii) ) then
+        where ( Grids_x%values(f_len:r-1) <= grids_x%min_val(ii) ) &
+             & Grids_x%values(f_len:r-1) = grids_x%min_val(ii)
+        Grids_x%values(f_len:r-1) = log(Grids_x%values(f_len:r-1))
+      end if
+
+! set 'do derivative' flags
+
+      if ( fwdModelConf%moleculeDerivatives(i) .and. foundInFirst ) then
+        if ( associated(f%mask) ) then
+          Grids_x%deriv_flags(f_len:r-1) = reshape(( iand (M_FullDerivatives,&
+            & ichar(f%mask)) == 0),(/kf*kz*kp/))
+        else
+          Grids_x%deriv_flags(f_len:r-1) = .true.
+        end if
+      else
+        grids_x%deriv_flags(f_len:r-1) = .false.
+      end if
+
+      j = k
+      l = n
+      s = m
+      f_len = r
+
+    end do
+
+    f_len = f_len - 1
+
+  end subroutine Load_One_Grid
 
 !----------------------------------------------------------------
   subroutine DestroyGrids_t( grids_x )
@@ -320,6 +315,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.31  2003/01/26 04:42:42  livesey
+! Added profiles/angle options for phiWindow
+!
 ! Revision 2.30  2002/11/23 02:49:33  vsnyder
 ! Cosmetic changes
 !
