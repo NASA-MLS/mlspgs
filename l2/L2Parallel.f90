@@ -850,7 +850,8 @@ contains ! ================================ Procedures ======================
         call PVMF90Pack ( SIG_DirectWriteGranted, info )
         if ( info /= 0 ) &
           & call PVMErrorMessage ( info, 'packing direct write granted flag' )
-        call PVMF90Pack ( (/ request%node, request%ticket, createFile /), info )
+        call PVMF90Pack ( (/ request%node, request%ticket, createFile, request%fileIndex /),&
+          &  info )
         if ( info /= 0 ) &
           & call PVMErrorMessage ( info, 'packing direct write granted info' )
         
@@ -1291,6 +1292,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.60  2004/01/02 23:36:00  pwagner
+! DirectWrites may choose files automatically from db
+!
 ! Revision 2.59  2003/11/15 00:34:38  pwagner
 ! Now stops after exactly maxNumFailures
 !
