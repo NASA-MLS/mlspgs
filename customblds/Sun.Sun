@@ -144,13 +144,13 @@ $(S)/mol_parm.f9h $(S)/mol_add.f9h: $(TABLES_DIR)/sps_cross_ref_table.txt $(INST
           -j sps_cross_ref_table.txt \
           $(S)/mol_parm.f9h $(S)/mol_add.f9h lit_indices
 
-machine.mod:
+machine.mod: $(MACH_DIR)/machine.f90
 	rm -f machine.f90 ; \
 	sed '/Start $(BAD_MATCH)/,/End $(BAD_MATCH)/ d' $(MACH_DIR)/machine.f90 \
      > machine.f90
 	$(UTILDIR)/newAifBdiff.sh -a machine.mod $(FC) -c $(FOPTS) $(INC_PATHS) machine.f90 $(FAFTER)
 	rm -f machine.f90
-machine.o: machine.mod
+machine.o: machine.mod $(MACH_DIR)/machine.f90
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
    -T machine.o machine.mod 
 
@@ -325,6 +325,9 @@ ncep_dao.o:
 
 endif
 # $Log$
+# Revision 1.13  2004/05/21 18:03:01  pwagner
+# Moved ieee build rules to correct (we hope) place
+#
 # Revision 1.12  2004/05/20 22:58:55  pwagner
 # Added build rules for ieee-arithmetic module for mod-variant depends
 #
