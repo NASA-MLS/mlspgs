@@ -83,7 +83,7 @@ module Hydrostatic_m
 
 ! compute t_grid
 
-    call get_eta ( z_grid, t_basis, n_lvls, n_coeffs, eta )
+    call get_eta ( z_grid, t_basis, eta )
     t_grid = matmul(eta,t_coeffs)
 !
 ! compute surface acceleration and effective earth radius
@@ -178,6 +178,9 @@ module Hydrostatic_m
 end module Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.9  2003/02/12 20:52:38  bill
+! fixed serious bug in mass correction polynomial
+!
 ! Revision 2.8  2003/02/10 23:41:27  bill
 ! got rid of a spread statement
 !
