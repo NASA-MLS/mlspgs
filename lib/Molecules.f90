@@ -128,13 +128,13 @@ module Molecules
   data spec_tags(l_h2co)         / 00030004 /
   data spec_tags(l_h2co_18)      / 00032004 /
   data spec_tags(l_h2o)          / 00018003 /
-  data spec_tags(l_h2o_r1a)      / 00018003 /
-  data spec_tags(l_h2o_r1b)      / 00018003 /
-  data spec_tags(l_h2o_r2)       / 00018003 /
-  data spec_tags(l_h2o_r3)       / 00018003 /
-  data spec_tags(l_h2o_r4)       / 00018003 /
-  data spec_tags(l_h2o_r5h)      / 00018003 /
-  data spec_tags(l_h2o_r5v)      / 00018003 /
+  data spec_tags(l_h2o_r1a)      / 00018997 /
+  data spec_tags(l_h2o_r1b)      / 00018997 /
+  data spec_tags(l_h2o_r2)       / 00018997 /
+  data spec_tags(l_h2o_r3)       / 00018997 /
+  data spec_tags(l_h2o_r4)       / 00018997 /
+  data spec_tags(l_h2o_r5h)      / 00018997 /
+  data spec_tags(l_h2o_r5v)      / 00018997 /
   data spec_tags(l_h2o2)         / 00034004 /
   data spec_tags(l_h2o_18)       / 00020003 /
   data spec_tags(l_h2o_v2)       / 00018005 /
@@ -304,6 +304,9 @@ contains ! =====     Public procedures     =============================
 end module MOLECULES
 
 ! $Log$
+! Revision 2.16  2002/07/30 20:12:13  livesey
+! Changed the radiometer specific h2os to 18997 spectag
+!
 ! Revision 2.15  2002/07/24 22:26:45  livesey
 ! Added the radiometer specific H2O's and a definitive CH3Cl
 !
