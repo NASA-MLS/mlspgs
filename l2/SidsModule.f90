@@ -20,6 +20,8 @@ module SidsModule
   use Trace_M, only: Trace_begin, Trace_end
   use Tree, only: Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, Subtree
   use VectorsModule, only: Vector_T
+  use l2_load_m, only: l2_load
+  use Dump_0, only: dump
 
   !??? The next USE statement is Temporary for l2load:
   use L2_TEST_STRUCTURES_M, only: FWD_MDL_CONFIG, FWD_MDL_INFO, &
@@ -88,6 +90,8 @@ contains
       end select
     end do ! i = 2, nsons(root)
 
+    allocate(tfmi(1),fmi(1))
+    call l2_load(fmc, fmi(1), tfmi(1), i)
     if ( ixJacobian > 0 ) then
       i = decoration(ixJacobian)
       call getFromMatrixDatabase ( matrixDatabase(i), jacobian )
@@ -95,7 +99,7 @@ contains
         &                   Jacobian, FwdModelOut=FwdModelOut, &
         &                   FMC=FMC, FMI=FMI(1), TFMI=TFMI(1)) !???  temporary
       !     &                   FMC=FMC,FMI=FMI,TFMI=TFMI) !??? Last line temporary
-    else if ( fmc%atmos_Der .or. fmc%spect_Der .or. fmc%temp_der ) then
+    else if ( config%atmos_Der .or. config%spect_Der .or. config%temp_der ) then
       call announceError ( needJacobian )
     else
       call forwardModel ( config, FwdModelExtra, FwdModelIn, &
@@ -103,7 +107,9 @@ contains
         &                   FMC=FMC, FMI=FMI(1), TFMI=TFMI(1)) !??? temporary
       !     &                   FMC=FMC,FMI=FMI,TFMI=TFMI) !??? Last line temporary
     end if
-
+    print*,'Done the forward model!!!'
+    stop
+    deallocate(fmi,tfmi)
     if ( toggle(gen) ) call trace_end ( "SIDS" )
 
   contains
@@ -127,6 +133,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.8  2001/03/20 02:30:15  livesey
+! Interim version, gets same numbers as Zvi
+!
 ! Revision 2.7  2001/03/17 00:45:28  livesey
 ! Moved to new ForwardModelConfig_T
 !
