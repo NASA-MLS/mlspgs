@@ -1041,6 +1041,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_dump, &
              begin, f+f_allForwardModels, t+t_boolean, n+n_field_type, &
              begin, f+f_allHGrids, t+t_boolean, n+n_field_type, &
+             begin, f+f_allPFA, t+t_boolean, n+n_field_type, &
              begin, f+f_allQuantityTemplates, t+t_boolean, n+n_field_type, &
              begin, f+f_allVectors, t+t_boolean, n+n_field_type, &
              begin, f+f_allVectorTemplates, t+t_boolean, n+n_field_type, &
@@ -1274,6 +1275,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.379  2004/07/17 02:28:19  vsnyder
+! Add dump for entire PFA database
+!
 ! Revision 2.378  2004/06/29 00:08:41  pwagner
 ! Now can fill timings
 !
