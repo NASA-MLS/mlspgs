@@ -687,13 +687,11 @@ contains ! =====     Public Procedures     =============================
         & temp%template%noSurfs,'dh_dt_glgrid', ModuleName )
       call allocate_test ( ifm%dhdz_glgrid, maxVert, no_phi_t, &
                         &  'dhdz_glgrid', ModuleName )
-      call allocate_test ( ifm%tan_hts, &
-        & size(ForwardModelConfig%tangentGrid%surfs), no_phi_t, 'tan_hts', &
+      call allocate_test ( ifm%tan_hts, no_tan_hts, no_phi_t, 'tan_hts', &
                         &  ModuleName )
-      call allocate_test ( ifm%tan_temp, &
-        & size(ForwardModelConfig%tangentGrid%surfs), no_phi_t, 'tan_hts', &
+      call allocate_test ( ifm%tan_temp, no_tan_hts, no_phi_t, 'tan_hts', &
                         &  ModuleName )
-      call allocate_test ( ifm%tan_dh_dt, nlvl, no_phi_t, &
+      call allocate_test ( ifm%tan_dh_dt, no_tan_hts, no_phi_t, &
                         & temp%template%noSurfs, 'tan_dh_dt', ModuleName )
       call Allocate_test( ifm%closestInstances, noMAFs, 'closestInstances', ModuleName)
 
@@ -1405,6 +1403,10 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.128  2001/05/11 22:18:56  livesey
+! Changed first dimension of ifm%tan_dh_dt from nlvl to no_tan_hts.
+! Also tidied up allocates of ifm stuff.
+!
 ! Revision 2.127  2001/05/03 23:34:44  livesey
 ! More stuff to support scan model
 !
