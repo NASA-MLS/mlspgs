@@ -68,23 +68,12 @@ else
    blas_message=Building mlsl2 with internally-supplied BLAS
 endif
 
-# In the long run just evict the stuff that assumes l2_NEEDS_fwdmdl is undefined
-l2_NEEDS_fwdmdl = true
-
-ifdef l2_NEEDS_fwdmdl
-   fwdmdl_linker_line=-L${fwdmdldir} -lfwdmdl
-   fwdmdl_message=Building mlsl2 with forward model
-   cloud_linker_line=-L${clouddir} -lcloud
-   cloud_message=Building mlsl2 with cloud forward model
-   mlsl2_prereqs=$(ALLOBJS) $(PVM_OBJS) $(libdir)/libmls.a \
+fwdmdl_linker_line=-L${fwdmdldir} -lfwdmdl
+fwdmdl_message=Building mlsl2 with forward model
+cloud_linker_line=-L${clouddir} -lcloud
+cloud_message=Building mlsl2 with cloud forward model
+mlsl2_prereqs=$(ALLOBJS) $(PVM_OBJS) $(libdir)/libmls.a \
 	 $(fwdmdldir)/libfwdmdl.a $(clouddir)/libcloud.a
-else
-   fwdmdl_linker_line=
-   fwdmdl_message=Building mlsl2 without forward model
-   cloud_linker_line=
-   cloud_message=Building mlsl2 without cloud forward model
-   mlsl2_prereqs=$(ALLOBJS) $(PVM_OBJS) $(libdir)/libmls.a
-endif
 
 ifdef PGSTK
    tk_message=Building mlslib with toolkit
@@ -178,6 +167,9 @@ MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options
 
 
 # $Log$
+# Revision 1.24  2001/07/16 18:00:21  pwagner
+# Builds correctly with hdf5 on new and older Linux
+#
 # Revision 1.23  2001/06/04 22:00:28  pwagner
 # Extra shared-object instructions on hdf5 linker line
 #
