@@ -57,6 +57,8 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
   logical, parameter :: DEEBUG = .false.
   ! For Announce_Error
   integer :: ERROR
+  integer, save :: lastProfTooBigWarns = 0
+  integer, parameter :: MAXNUMWARNS = 40
 
 contains ! ======================= Public Procedures =========================
 
@@ -275,11 +277,14 @@ contains ! ======================= Public Procedures =========================
     integer, parameter :: MAXFILES = 100             ! Set for an internal array
     ! executable code
 
-    if ( (quantity%template%instanceOffset+quantity%template%noInstances - &
+    if ( (lastProfTooBigWarns <= MAXNUMWARNS) &
+      & .and. &
+      & (quantity%template%instanceOffset+quantity%template%noInstances - &
       & quantity%template%noInstancesLowerOverlap - &
       & quantity%template%noInstancesUpperOverlap) &
       & > &
       & quantity%template%grandTotalInstances) then
+      lastProfTooBigWarns = lastProfTooBigWarns + 1
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'last profile > grandTotalInstances for ' // trim(sdName))
       call output('instanceOffset: ', advance='no')
@@ -296,6 +301,9 @@ contains ! ======================= Public Procedures =========================
         & quantity%template%noInstancesUpperOverlap), advance='yes')
       call output('grandTotalInstances: ', advance='no')
       call output(quantity%template%grandTotalInstances, advance='yes')
+      if ( lastProfTooBigWarns > MAXNUMWARNS ) &
+          & call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'Max no. of warnings reached--suppressing further ones')
     endif
     select case (hdfversion)
     case (HDFVERSION_4)
@@ -525,7 +533,7 @@ contains ! ======================= Public Procedures =========================
       call SaveAsHDF5DS( fileID, trim(sdName), &
         & real( &
         &   reshape(quantity%values(:,first_maf:last_maf), sizes(1:3)) &
-        & ), start, sizes, may_add_to=.true., adding_to=already_there)
+        & ), start, sizes, may_add_to=.true., adding_to=already_there )
     else
       total_DS_size = sizes(1)*sizes(2)
       if ( DEEBUG ) then
@@ -733,6 +741,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.10  2003/07/18 16:05:26  pwagner
+! Stops printing warnings after 40 times
+!
 ! Revision 2.9  2003/07/15 23:41:47  pwagner
 ! l2aux always rank 3 unless MAYCOLLAPSEDIMS; disabled most printing
 !
