@@ -41,6 +41,7 @@ our_dir = cloudfwdm
 ourdir=../../../$(our_dir)/$(MLSCONFG)
 
 dir2 = $(itmdir)/
+dir3 = $(fwddir)/
 
 # Set paths for finding source files (different from .o and .mod)
 
@@ -56,7 +57,8 @@ DUSTY = $(FOPTS) -dusty
 
 # All the paths to supply .mod and INCLUDE files used in compiling %.f90
 # Precede each path by "-I "
-INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) -I $(itmdir)
+INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)\
+ -I $(itmdir) -I $(fwddir) -I $(ourdir)
 
 # Define some suffix rules
 
@@ -78,6 +80,9 @@ INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) -I $(itm
 l_specials = -lnsl
 
 # $Log$
+# Revision 1.3  2001/08/15 23:12:09  pwagner
+# Default rules for .f and .c; EXTRA_PATHS added to INC_PATHS
+#
 # Revision 1.2  2001/07/02 23:30:12  pwagner
 # no _name; correctly set dir2
 #
