@@ -8,7 +8,8 @@ MODULE Synoptic
 
   Use DailyMapModule, ONLY: Init, ClearMemory, CordTransform, & 
        & FFSM, FFSMA, FFSMD, &
-       & Reconstruct, Diagnostics, DataGenerate
+       & Reconstruct, Diagnostics, DataGenerate, DataGeneratePrec, &
+       & CopyPrec2Data
   USE L3CF, ONLY: L3CFDef_T, L3CFProd_T
   USE L2GPData, ONLY: L2GPData_T, DestroyL2GPDatabase
   USE MLSCommon, ONLY: r8, r4
@@ -96,14 +97,13 @@ CONTAINS
 
     INTEGER, POINTER, DIMENSION(:) :: pt(:), nc(:), nca(:), ncd(:)
 
-    INTEGER ::  error, l2Days, nlev, nlev_temp, nf, nwv, numDays, & 
+    INTEGER ::  error, l2Days, nlev, nlev_temp, nwv, numDays, & 
          & numSwaths, rDays, pEndIndex, pStartIndex, &
          & mis_l2Days_temp, i, j, iP, kP, iD, iL, n,m
 
      !*** Initilize variables
  
-    nwv = cfProd%rangWavenumber(2) - cfProd%rangWavenumber(1) + 1
-    nf = 60 
+    nwv = cfProd%nWave
 
     nlev = 0
     DO j = 1, l2gp(1)%nLevels
@@ -163,8 +163,8 @@ CONTAINS
      
     DO j = 1, numSwaths
         
-       CALL AllocateL3SP( nlev, cfProd%nLats, nwv, nf, l3sp(j) )
-       CALL AllocateL3SP( nlev, cfProd%nLats, nwv, nf, l3spPrec(j) )
+       CALL AllocateL3SP( nlev, cfProd%nLats, nwv, l3sp(j) )
+       CALL AllocateL3SP( nlev, cfProd%nLats, nwv, l3spPrec(j) )
        l3sp(j)%pressure = l2gp(1)%pressures(pStartIndex:pEndIndex)
        l3sp(j)%latitude = cfProd%latGridMap(:l3sp(j)%nLats)
        l3sp(j)%waveNumber = 0.0
@@ -528,11 +528,12 @@ CONTAINS
     DO I = 1, size(avgPeriod)
        tau0 = tau0 + avgPeriod(i)
     ENDDO
-       
+        
     IF (size(avgPeriod) .ne. 0) tau0 = tau0/86400.0/float(size(avgPeriod))
         
     !*** Sort & Prepare the Data 
     
+
     Call SortData(cfProd, l2Days, l2gp, 	&
          & pStartIndex, pEndIndex,		&
          & tau0, 				&
@@ -578,6 +579,7 @@ CONTAINS
                      & tA0_i    = atimes(J, 1, iP), 		&
                      & lat_i    = alats(J, 1, iP) )
                 CALL DataGenerate(afields(J, :, iP), dfields(J, :, iP) )
+                CALL DataGeneratePrec(aprec(J, :, iP), dprec(J, :, iP) )
              ELSE
                     
                 lonD0_in = FindRealLon(real(dlons(J, 2, iP)))
@@ -595,6 +597,7 @@ CONTAINS
                      & tA0_i    = atimes(J, 1, iP), 		        &
                      & lat_i    = alats(J, 1, iP) )
                 CALL DataGenerate(afields(J, :, iP), dfields(J, 2:, iP) )
+                CALL DataGeneratePrec(aprec(J, :, iP), dprec(J, 2:, iP) )
              END IF
                  
              IF (cfProd%mode == 'com') THEN
@@ -638,6 +641,20 @@ CONTAINS
                       ENDIF
                           
                    ENDDO
+                  
+                   !*** Calculate Precision     
+                   Call CopyPrec2Data()
+                   CALL FFSM(l3spPrec(1), iP, J)
+                   DO iD = 1, cfProd%nDays
+                      CALL Reconstruct(cfProd%mode, &
+                           & real(l3dm(iD)%time-l2gp(1)%time(1))/86400.0, &
+                           & l3dm(iD)%nLons, l3dm(iD)%longitude, l3Result)
+                      DO I = 1, l3dm(iD)%nLons
+                         l3dm(iD)%l3dmPrecision(iP, J, I) = l3Result(I) 
+                      ENDDO
+                   ENDDO
+		   l3sp(1)%l3spRelPrecision = l3spPrec(1)%l3spRelValue
+		   l3sp(1)%l3spImgPrecision = l3spPrec(1)%l3spImgValue
                        
                    DO iD = 1, rDays
                       DO iL = 1, anlats(J, iP)
@@ -745,6 +762,20 @@ CONTAINS
                               & dmA(iD)%latRss(iP, J)/real(dmA(iD)%nLons)
                       ENDIF
                    ENDDO
+                  
+                   !*** Calculate Precision     
+                   Call CopyPrec2Data()
+                   CALL FFSM(l3spPrec(1), iP, J)
+                   DO iD = 1, cfProd%nDays
+                      CALL Reconstruct(cfProd%mode, &
+                           & real(dmA(iD)%time-l2gp(1)%time(1))/86400.0, &
+                           & dmA(iD)%nLons, dmA(iD)%longitude, l3Result)
+                      DO I = 1, dmA(iD)%nLons
+                         dmA(iD)%l3dmPrecision(iP, J, I) = l3Result(I) 
+                      ENDDO
+                   ENDDO
+		   l3sp(1)%l3spRelPrecision = l3spPrec(1)%l3spRelValue
+		   l3sp(1)%l3spImgPrecision = l3spPrec(1)%l3spImgValue
                        
                    DO iD = 1, rDays
                       DO iL = 1, anlats(J, iP)
@@ -826,6 +857,20 @@ CONTAINS
                               & dmD(iD)%latRss(iP, J)/real(dmD(iD)%nLons)
                       ENDIF
                    ENDDO
+                  
+                   !*** Calculate Precision     
+                   Call CopyPrec2Data()
+                   CALL FFSM(l3spPrec(1), iP, J)
+                   DO iD = 1, cfProd%nDays
+                      CALL Reconstruct(cfProd%mode, &
+                           & real(dmD(iD)%time-l2gp(1)%time(1))/86400.0, &
+                           & dmD(iD)%nLons, dmD(iD)%longitude, l3Result)
+                      DO I = 1, dmD(iD)%nLons
+                         dmD(iD)%l3dmPrecision(iP, J, I) = l3Result(I) 
+                      ENDDO
+                   ENDDO
+		   l3sp(1)%l3spRelPrecision = l3spPrec(1)%l3spRelValue
+		   l3sp(1)%l3spImgPrecision = l3spPrec(1)%l3spImgValue
                        
                    DO iD = 1, rDays
                       DO iL = 1, dnlats(J, iP)
@@ -904,6 +949,20 @@ CONTAINS
                               & dmA(iD)%latRss(iP, J)/real(dmA(iD)%nLons)
                       ENDIF
                    ENDDO
+                  
+                   !*** Calculate Precision     
+                   Call CopyPrec2Data()
+                   CALL FFSM(l3spPrec(2), iP, J)
+                   DO iD = 1, cfProd%nDays
+                      CALL Reconstruct(cfProd%mode, &
+                           & real(dmA(iD)%time-l2gp(1)%time(1))/86400.0, &
+                           & dmA(iD)%nLons, dmA(iD)%longitude, l3Result)
+                      DO I = 1, dmA(iD)%nLons
+                         dmA(iD)%l3dmPrecision(iP, J, I) = l3Result(I) 
+                      ENDDO
+                   ENDDO
+		   l3sp(2)%l3spRelPrecision = l3spPrec(2)%l3spRelValue
+		   l3sp(2)%l3spImgPrecision = l3spPrec(2)%l3spImgValue
                        
                    DO iD = 1, rDays
                       DO iL = 1, anlats(J, iP)
@@ -983,6 +1042,20 @@ CONTAINS
                               & real(dmD(iD)%nLons)
                       ENDIF
                    ENDDO
+                  
+                   !*** Calculate Precision     
+                   Call CopyPrec2Data()
+                   CALL FFSM(l3spPrec(3), iP, J)
+                   DO iD = 1, cfProd%nDays
+                      CALL Reconstruct(cfProd%mode, &
+                           & real(dmD(iD)%time-l2gp(1)%time(1))/86400.0, &
+                           & dmD(iD)%nLons, dmD(iD)%longitude, l3Result)
+                      DO I = 1, dmD(iD)%nLons
+                         dmD(iD)%l3dmPrecision(iP, J, I) = l3Result(I) 
+                      ENDDO
+                   ENDDO
+		   l3sp(3)%l3spRelPrecision = l3spPrec(3)%l3spRelValue
+		   l3sp(3)%l3spImgPrecision = l3spPrec(3)%l3spImgValue
                        
                    DO iD = 1, rDays
                       DO iL = 1, dnlats(J, iP)
@@ -1067,6 +1140,20 @@ CONTAINS
                               & real(l3dm(iD)%nLons)
                       ENDIF
                    ENDDO
+                  
+                   !*** Calculate Precision     
+                   Call CopyPrec2Data()
+                   CALL FFSM(l3spPrec(1), iP, J)
+                   DO iD = 1, cfProd%nDays
+                      CALL Reconstruct(cfProd%mode, &
+                           & real(l3dm(iD)%time-l2gp(1)%time(1))/86400.0, &
+                           & l3dm(iD)%nLons, l3dm(iD)%longitude, l3Result)
+                      DO I = 1, l3dm(iD)%nLons
+                         l3dm(iD)%l3dmPrecision(iP, J, I) = l3Result(I) 
+                      ENDDO
+                   ENDDO
+		   l3sp(1)%l3spRelPrecision = l3spPrec(1)%l3spRelValue
+		   l3sp(1)%l3spImgPrecision = l3spPrec(1)%l3spImgValue
                        
                    DO iD = 1, rDays
                       DO iL = 1, anlats(J, iP)
@@ -1167,6 +1254,20 @@ CONTAINS
                               & dmA(iD)%latRss(iP, J)/real(dmA(iD)%nLons)
                       ENDIF
                    ENDDO
+                  
+                   !*** Calculate Precision     
+                   Call CopyPrec2Data()
+                   CALL FFSM(l3spPrec(2), iP, J)
+                   DO iD = 1, cfProd%nDays
+                      CALL Reconstruct(cfProd%mode, &
+                           & real(dmA(iD)%time-l2gp(1)%time(1))/86400.0, &
+                           & dmA(iD)%nLons, dmA(iD)%longitude, l3Result)
+                      DO I = 1, dmA(iD)%nLons
+                         dmA(iD)%l3dmPrecision(iP, J, I) = l3Result(I) 
+                      ENDDO
+                   ENDDO
+		   l3sp(2)%l3spRelPrecision = l3spPrec(2)%l3spRelValue
+		   l3sp(2)%l3spImgPrecision = l3spPrec(2)%l3spImgValue
                    
                    DO iD = 1, rDays
                       DO iL = 1, anlats(J, iP)
@@ -1246,6 +1347,20 @@ CONTAINS
                               & dmD(iD)%latRss(iP, J)/real(dmD(iD)%nLons)
                       ENDIF
 		   ENDDO
+                  
+                   !*** Calculate Precision     
+                   Call CopyPrec2Data()
+                   CALL FFSM(l3spPrec(3), iP, J)
+                   DO iD = 1, cfProd%nDays
+                      CALL Reconstruct(cfProd%mode, &
+                           & real(dmD(iD)%time-l2gp(1)%time(1))/86400.0, &
+                           & dmD(iD)%nLons, dmD(iD)%longitude, l3Result)
+                      DO I = 1, dmD(iD)%nLons
+                         dmD(iD)%l3dmPrecision(iP, J, I) = l3Result(I) 
+                      ENDDO
+                   ENDDO
+		   l3sp(3)%l3spRelPrecision = l3spPrec(3)%l3spRelValue
+		   l3sp(3)%l3spImgPrecision = l3spPrec(3)%l3spImgValue
                    
                    DO iD = 1, rDays
                       DO iL = 1, dnlats(J, iP)
@@ -2714,6 +2829,9 @@ CONTAINS
             & nterms, nstart, nr, lindex, lindex_prev, l2Days, nloop, aindex,& 
             & aindex_prev, dindex_prev
        
+       REAL (r8), DIMENSION(37, 3496) :: read_prec 
+       REAL (r8), DIMENSION(37) :: read_pressure 
+
        !*** Calculate the number of points in each pressure level 
        
        nPd = 15
@@ -2862,6 +2980,28 @@ CONTAINS
           perMisPoints(kP+1-pStartIndex) = 0
           numData(kP+1-pStartIndex) = 0
        ENDDO
+
+!***********************************************************************
+!       open(1, file="prec.dat", status="old")
+!       DO iD = 1, 37
+!          DO iT = 1, 3496
+!            read(1, *) read_pressure(iD), read_prec(iD, iT)
+!	  ENDDO
+!       ENDDO
+!       close(1)
+!        
+!
+!       DO iD = 1, l2Days
+!          DO kP = pStartIndex, pEndIndex 
+!	     DO iT = 1, l2gp(iD)%nTimes
+!                DO i = 1, 37
+!                 IF( abs(l2gp(iD)%Pressures(kp)-read_pressure(i)) < 0.01) & 
+!		   l2gp(iD)%l2gpPrecision(1, kP, iT) = read_prec(i, iT)
+!	        ENDDO
+!             ENDDO
+!	  ENDDO
+!       ENDDO
+!***********************************************************************
        
        nstart = 1
        DO iD = 1, l2Days
@@ -3223,6 +3363,9 @@ CONTAINS
 !===================
 
 ! $Log$
+! Revision 1.33  2004/05/06 13:16:46  cvuu
+! remove print statements
+!
 ! Revision 1.32  2004/05/04 15:33:15  cvuu
 ! v1.4.3: Use int array for Date in Data Field
 !
