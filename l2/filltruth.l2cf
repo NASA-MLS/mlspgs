@@ -13,8 +13,8 @@ begin Fill
 end fill
 
 ;; Now fill it with l2gp information
-!define(x, truth)
 !include(fillfroml2gp.l2cf)
+!define(vec,truth)
 !include(fillisotopes.l2cf)
 
 begin Fill

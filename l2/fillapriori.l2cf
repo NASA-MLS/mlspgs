@@ -12,23 +12,23 @@ begin Fill
 
 end Fill
 
-;; These two m4 variables are used in the later include files
-!define(x, apriori)
-!define(b, apriori)
-
 ;; Fill the standard species
 !include(fillfromclimatology.l2cf)
 
+;; Fill the sideband ratios
+!include(fillsidebandratios.l2cf)
+
 ;; Fill the lesser stuff
-!include(filllesserstate.l2cf)
+!ifdef(l2pcrun,{!include(filllesserstate_l2pc.l2cf)},{!include(filllesserstate.l2cf)})
 
 ;; Fill the minor isotopes
+!define(vec,{apriori})
 !include(fillisotopes.l2cf)
 
 begin Fill
 
   ;; Now fill some remaining stuff
-  Fill, quantity=apriori.refGPH, method=explicit, explicitvalues=16km,/spread
+  Fill, quantity=apriori.refGPH, method=explicit, explicitvalues=16 km,/spread
 
   ;; Now compute the tangent presssures for apriori
   Fill, quantity=apriori.ptanGHz, method=hydrostatic, $
@@ -60,35 +60,36 @@ begin Fill
   Fill, quantity=aprioriPrecision.oh,   method=explicit, /spread, explicitValues= 1 ppbv
   Fill, quantity=aprioriPrecision.so2,  method=explicit, /spread, explicitValues= 100 pptv
 
-  Fill, quantity=aprioriPrecision.temp,  method=explicit, /spread, explicitValues= 20 K
+  Fill, quantity=aprioriPrecision.temp,   method=explicit, /spread, explicitValues= 20 K
+  Fill, quantity=aprioriPrecision.refGPH, method=explicit, /spread, explicitValues= 5 km
 
   ;; Now we're going to fill the a priori length scales up
-  !define(standardLength, 5 km)
-  Fill, quantity=length.bro,  method=explicit, /spread, explicitValues= !standardLength
-  Fill, quantity=length.br_79_o,  method=explicit, /spread, explicitValues= !standardLength
-  Fill, quantity=length.br_81_o,  method=explicit, /spread, explicitValues= !standardLength
-  Fill, quantity=length.ch3cn,method=explicit, /spread, explicitValues= !standardLength
-  Fill, quantity=length.cl_35_o,  method=explicit, /spread, explicitValues= !standardLength
-  Fill, quantity=length.clo,  method=explicit, /spread, explicitValues= !standardLength
-  Fill, quantity=length.co,   method=explicit, /spread, explicitValues= !standardLength
-  Fill, quantity=length.h2o,  method=explicit, /spread, explicitValues= !standardLength
+  !ifdef(standardLength,{},{!define(standardLength, 5 km)})
+  Fill, quantity=length.bro,     method=explicit, /spread, explicitValues= !standardLength
+  Fill, quantity=length.br_79_o, method=explicit, /spread, explicitValues= !standardLength
+  Fill, quantity=length.br_81_o, method=explicit, /spread, explicitValues= !standardLength
+  Fill, quantity=length.ch3cn,   method=explicit, /spread, explicitValues= !standardLength
+  Fill, quantity=length.cl_35_o, method=explicit, /spread, explicitValues= !standardLength
+  Fill, quantity=length.clo,     method=explicit, /spread, explicitValues= !standardLength
+  Fill, quantity=length.co,      method=explicit, /spread, explicitValues= !standardLength
+  Fill, quantity=length.h2o,     method=explicit, /spread, explicitValues= !standardLength
   Fill, quantity=length.h2o_18,  method=explicit, /spread, explicitValues= !standardLength
   Fill, quantity=length.hcl_35,  method=explicit, /spread, explicitValues= !standardLength
-  Fill, quantity=length.hcl,  method=explicit, /spread, explicitValues= !standardLength
-  Fill, quantity=length.hcn,  method=explicit, /spread, explicitValues= !standardLength
-  Fill, quantity=length.hno3, method=explicit, /spread, explicitValues= !standardLength
-  Fill, quantity=length.ho2,  method=explicit, /spread, explicitValues= !standardLength
-  Fill, quantity=length.hocl, method=explicit, /spread, explicitValues= !standardLength
+  Fill, quantity=length.hcl,     method=explicit, /spread, explicitValues= !standardLength
+  Fill, quantity=length.hcn,     method=explicit, /spread, explicitValues= !standardLength
+  Fill, quantity=length.hno3,    method=explicit, /spread, explicitValues= !standardLength
+  Fill, quantity=length.ho2,     method=explicit, /spread, explicitValues= !standardLength
+  Fill, quantity=length.hocl,    method=explicit, /spread, explicitValues= !standardLength
   Fill, quantity=length.hocl_35, method=explicit, /spread, explicitValues= !standardLength
-  Fill, quantity=length.n2o,  method=explicit, /spread, explicitValues= !standardLength
-  Fill, quantity=length.o3,   method=explicit, /spread, explicitValues= !standardLength
-  Fill, quantity=length.oh,   method=explicit, /spread, explicitValues= !standardLength
-  Fill, quantity=length.so2,  method=explicit, /spread, explicitValues= !standardLength
+  Fill, quantity=length.n2o,     method=explicit, /spread, explicitValues= !standardLength
+  Fill, quantity=length.o3,      method=explicit, /spread, explicitValues= !standardLength
+  Fill, quantity=length.oh,      method=explicit, /spread, explicitValues= !standardLength
+  Fill, quantity=length.so2,     method=explicit, /spread, explicitValues= !standardLength
 
-  Fill, quantity=length.temp, method=explicit, /spread, explicitValues= !standardLength
+  Fill, quantity=length.temp,    method=explicit, /spread, explicitValues= !standardLength
 
   ;; Now do the same for baseline
-  !define(baselinePrecision, 5K )
+  !define(baselinePrecision, 5 K )
   Fill, quantity=aprioriPrecision.baselineR1A, method=explicit, /spread, $
     explicitValues= !baselinePrecision
   Fill, quantity=aprioriPrecision.baselineR1B, method=explicit, /spread, $
@@ -106,6 +107,6 @@ begin Fill
 
 end Fill
 
-!define(x, aprioriPrecision)
+;; Now also scale the apriori precisions into isotope space
+!define(vec,{aprioriPrecision})
 !include(fillisotopes.l2cf)
-!define(x, state)
