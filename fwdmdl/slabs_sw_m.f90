@@ -1035,6 +1035,8 @@ contains
 
       Qlog(1:3) = Catalog(i)%QLOG(1:3)
 
+      IF ( .not. Do_1D ) THEN
+
       do j = 1, no_ele
 
         call Slabs_Prep_Arrays ( Spectag, nl, t_path(j)+dt, p_path(j), mass, Qlog, &
@@ -1045,8 +1047,31 @@ contains
 
         gl_slabs(j,i)%v0s = gl_slabs(j,i)%v0s * Vel_z_correction
 
-
       end do
+
+      ELSE
+
+        ! compute first element along the LOS path
+        call Slabs_Prep_Arrays ( Spectag, nl, t_path(1)+dt, p_path(1), mass, Qlog, &
+          &  Catalog(i), gl_slabs(1,i)%v0s, gl_slabs(1,i)%x1, gl_slabs(1,i)%y, &
+          &  gl_slabs(1,i)%yi, gl_slabs(1,i)%slabs1, gl_slabs(1,i)%dslabs1_dv0 )
+
+        gl_slabs(1,i)%v0s = gl_slabs(1,i)%v0s * Vel_z_correction
+        
+        ! fill other grid points with value of the first grid point
+        do j = 2, no_ele
+
+          gl_slabs(j,i)%v0s         = gl_slabs(1,i)%v0s
+          gl_slabs(j,i)%x1          = gl_slabs(1,i)%x1
+          gl_slabs(j,i)%y           = gl_slabs(1,i)%y
+          gl_slabs(j,i)%yi          = gl_slabs(1,i)%yi 
+          gl_slabs(j,i)%slabs1      = gl_slabs(1,i)%slabs1 
+          gl_slabs(j,i)%dslabs1_dv0 = gl_slabs(1,i)%dslabs1_dv0
+        
+        enddo
+
+        
+      ENDIF
 
     end do              ! On i
 
@@ -1061,6 +1086,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.12  2003/01/16 18:04:12  jonathan
+! add Do_1D option to get_gl_slabs_arrays
+!
 ! Revision 2.11  2003/01/10 21:55:26  vsnyder
 ! Move SpeedOfLight from Geometry ot Units
 !
