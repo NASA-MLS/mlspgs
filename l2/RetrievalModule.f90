@@ -31,7 +31,8 @@ module RetrievalModule
   use Lexer_Core, only: Print_Source
   use MatrixModule_1, only: AddToMatrix, AddToMatrixDatabase, CholeskyFactor, &
     & ClearMatrix, ColumnScale, CopyMatrixValue, CreateEmptyMatrix, &
-    & DestroyMatrix, &
+    & DestroyMatrix, dump_l1, dump_struct, &
+dump, &
     & FillExtraCol, FillExtraRow, FormNormalEquations => NormalEquations, &
     & GetDiagonal, GetFromMatrixDatabase, GetVectorFromColumn, InvertCholesky, &
     & Matrix_T, &
@@ -44,13 +45,14 @@ module RetrievalModule
   use Output_M, only: Output
   use String_Table, only: Display_String
   use SidsModule, only: SIDS
-  use Toggles, only: Gen, Toggle
+  use Toggles, only: Gen, Switches, Toggle
   use Trace_M, only: Trace_begin, Trace_end
   use Tree, only: Decorate, Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, &
     & Subtree
   use Tree_Types, only: N_named
   use VectorsModule, only: AddToVector, CloneVector, CopyVector, CreateMask, &
     & DestroyVectorInfo, DestroyVectorMask, DestroyVectorValue, &
+dump, &
     & GetVectorQuantityIndexByName, MultiplyVectors, operator(.DOT.), &
     & ScaleVector, SetMask, SubtractFromVector, Vector_T
 
@@ -91,9 +93,9 @@ contains
     ! Local variables:
     type(nwt_T) :: AJ                   ! "About the Jacobian", see NWT.
     type(vector_T), pointer :: Apriori  ! A priori estimate of state
-    real(r8) :: aprioriNorm             ! apriori .dot. apriori, for n+1, n+1
+    real(r8) :: AprioriNorm             ! apriori .dot. apriori, for n+1, n+1
                                         ! element of augmented normal equations
-    real(r8) :: aprioriScale            ! Weight for apriori, default 1.0
+    real(r8) :: AprioriScale            ! Weight for apriori, default 1.0
     type(vector_T) :: BestGradient      ! for NWT
     type(vector_T) :: BestX             ! for NWT
     type(vector_T) :: CandidateDX       ! for NWT
@@ -254,6 +256,7 @@ contains
         if ( toggle(gen) ) call trace_begin ( "Retrieve.retrieve", root )
         aprioriScale = 1.0
         columnScaling = l_none
+        diagonal = .false.
         maxIterations = defaultMaxIterations
         method = defaultMethod
         toleranceA = defaultToleranceA
@@ -423,9 +426,11 @@ contains
             call cloneVector ( DX, x, vectorNameText='_DX' )
             call cloneVector ( gradient, x, vectorNameText='_gradient' )
             if ( got(f_apriori) ) then
-              aprioriNorm = apriori .dot. apriori ! norm**2
+              call cloneVector ( covarianceXApriori, apriori, &
+                & vectorNameText='_covarianceXApriori' )
               call multiplyMatrixVector ( covariance, apriori, &
                 & covarianceXApriori ) ! covarianceXApriori := covariance X apriori
+              aprioriNorm = covarianceXapriori .dot. covarianceXapriori ! norm**2
             end if
             iter = 0
             aj%axmax = 0.0
@@ -455,9 +460,15 @@ contains
                   end do ! k
                   call subtractFromVector ( f, measurements )
                   aj%fnorm = aj%fnorm + ( f .dot. f )
+                  if ( index(switches,'vec') /= 0 ) &
+                    & call dump ( f, name='Residual' )
 !                 call destroyVectorValue ( f )  ! free the space
                 end do ! mafs
                 aj%fnorm = sqrt(aj%fnorm)
+                if ( index(switches,'sca') /= 0 ) then
+                    call output ( 'Residual norm = ' )
+                    call output ( aj%fnorm, advance='yes' )
+                  end if
                 if ( aj%fnorm < toleranceF ) exit
               case ( nf_evalj )
                 ! Compute the Jacobian matrix J if you didn't do it when
@@ -476,7 +487,6 @@ contains
                     call copyMatrixValue ( normalEquations%m, covariance%m )
                   end if
                   call fillExtraCol ( normalEquations%m, covarianceXApriori )
-                  call fillExtraRow ( normalEquations%m, covarianceXApriori )
                   k = normalEquations%m%row%nb
                   normalEquations%m%block(k,k)%values(1,1) = aprioriNorm
                   if ( got(f_aprioriScale) ) &
@@ -485,15 +495,17 @@ contains
                   call clearMatrix ( normalEquations%m ) ! start with zero
                 end if
 
-                fmStat%newHydros = .true.
                 fmStat%maf = 0
                 fmStat%finished = .false.
+                fmStat%newHydros = .true.
+                fmStat%newScanHydros = .true.
 
-                ! Loop over mafs
+                ! Loop over MAFs
                 do while ( .not. fmStat%finished )
                   ! What if one config set finished but others still had more
                   ! to do? Ermmm, think of this next time.
                   fmStat%maf = fmStat%maf + 1
+                  fmstat%rows = .false.
                   do k = 1, size(configIndices)
                     call forwardModel ( configDatabase(configIndices(k)), &
                       & x, fwdModelExtra, f, fmw, fmStat, jacobian )
@@ -510,13 +522,21 @@ contains
                   call formNormalEquations ( jacobian, normalEquations, &
                     & update=update )
                   update = .true.
-!                 call clearMatrix ( jacobian )  ! free the space
+                  if ( index(switches,'jac') /= 0 ) then
+                    call dump_l1 ( jacobian, 'L1 norms of Jacobian blocks:' )
+                    if ( index(switches,'spa') /= 0 ) &
+                      & call dump_struct ( jacobian, &
+                        & 'Sparseness structure of Jacobian blocks:' )
+                  end if
+                  call clearMatrix ( jacobian )  ! free the space
 !                 call destroyVectorValue ( f )  ! free the space
                 end do ! mafs
                 ! Compute (negative of the) gradient = -(Jacobian)**T * F.
                 ! This is the RHS of the normal equations 
                 ! J**T * J * "Candidate DX" = -J**T * F:
                 call getVectorFromColumn ( normalEquations%m, n, gradient )
+                if ( index(switches,'vec') /= 0 ) &
+                  & call dump ( gradient, name='gradient' )
                 ! Column Scale J (row and column scale J^T J):
                 select case ( columnScaling )
                 case ( l_apriori )
@@ -534,8 +554,26 @@ contains
                   call rowScale ( columnScaleVector, normalEquations%m )
                 end select
                 ! Factor J^T J:
-                factored%m%block => normalEquations%m%block ! to save space
-                call choleskyFactor ( normalEquations, factored )
+!???            factored%m%block => normalEquations%m%block ! to save space
+!???            Can't do this because we need to keep the normal equations
+!???            around, in order to subtract Levenberg-Marquardt and
+!???            apriori covariance, in order to compute a posteriori covariance
+                if ( index(switches,'neq') /= 0 ) then
+                  call dump_l1 ( normalEquations%m, &
+                    & 'L1 norms of Normal Equations blocks:', upper=.true. )
+                  if ( index(switches,'spa') /= 0 ) &
+                    & call dump_struct ( normalEquations%m, &
+                      & 'Sparseness structure of Normal equations blocks:', &
+                      & upper=.true. )
+                end if
+                call choleskyFactor ( factored, normalEquations )
+                if ( index(switches,'fac') /= 0 ) then
+                  call dump_l1 ( factored%m, 'L1 norms of blocks of factor:', &
+                    & upper=.true. )
+                  if ( index(switches,'spa') /= 0 ) &
+                    & call dump_struct ( factored%m, &
+                      & 'Sparseness structure of blocks of factor:', upper=.true. )
+                end if
                 aj%diag = minDiag ( factored ) ! element on diagonal with
                 !       smallest absolute value, after triangularization
                 aj%ajn = maxAbsVal ( factored%m ) ! maximum L1 norm of
@@ -550,14 +588,40 @@ contains
                 !       block is 1x1:
                 aj%fnmin = factored%m%block(k,k)%values(1,1)
                 aj%gradn = sqrt(gradient .dot. gradient) ! L2Norm(gradient)
+                if ( index(switches,'sca') /= 0 ) then
+                  call output ( 'aj%diag = ' ); call output ( aj%diag, advance='yes' )
+                  call output ( 'aj%ajn = ' ); call output ( aj%ajn, advance='yes' )
+                  call output ( 'aj%fnmin = ' ); call output ( aj%fnmin, advance='yes' )
+                  call output ( 'aj%gradn = ' ); call output ( aj%gradn, advance='yes' )
+                end if
               case ( nf_solve )
+                if ( index(switches,'sca') /= 0 ) then
+                  call output ( 'aj%sq = ' ); call output ( aj%sq, advance='yes' )
+                end if
                 ! Apply Marquardt stabilization with parameter = AJ%SQ:
                 call updateDiagonal ( normalEquations, aj%sq**2 )
 !???            factored%m%block => normalEquations%m%block ! to save space
 !???            Can't do this because we need to keep the normal equations
 !???            around, in order to subtract Levenberg-Marquardt and
 !???            apriori covariance, in order to compute a posteriori covariance
-                call choleskyFactor ( normalEquations, factored )
+                if ( index(switches,'neq') /= 0 ) then
+                  call dump_l1 ( normalEquations%m, &
+                    & 'L1 norms of Normal Equations blocks after Marquardt:', &
+                    & upper=.true. )
+                  if ( index(switches,'spa') /= 0 ) &
+                    & call dump_struct ( normalEquations%m, &
+                      & 'Sparseness structure of Normal equations blocks:', &
+                      & upper=.true. )
+                end if
+                call choleskyFactor ( factored, normalEquations )
+                if ( index(switches,'fac') /= 0 ) then
+                  call dump_l1 ( factored%m, &
+                    & 'L1 norms of blocks of factor after Marquardt:', &
+                    & upper=.true. )
+                  if ( index(switches,'spa') /= 0 ) &
+                    & call dump_struct ( factored%m, &
+                      & 'Sparseness structure of blocks of factor:', upper=.true. )
+                end if
                 ! Solve for "candidate DX" = -(Jacobian)**(-1) * F
                 call getVectorFromColumn ( factored%m, n, candidateDX )
                 call solveCholesky ( factored, candidateDX )
@@ -578,6 +642,7 @@ contains
                 aj%gdx = gradient .dot. candidateDX
               case ( nf_newx )
                 call addToVector ( x, dx ) ! x = x + dx
+                if ( index(switches,'vec') /= 0 ) call dump ( x, name='X' )
                 aj%axmax = 0.0
                 aj%big = .false.
                 do j = 1, size(x%quantities)
@@ -586,10 +651,20 @@ contains
                     & 10.0 * epsilon(aj%axmax) * abs(x%quantities(j)%values) )
                 end do
                 if ( .not. aj%starting ) aj%dxdxl = dx .dot. candidateDX
+                if ( index(switches,'sca') /= 0 ) then
+                  call output ( 'aj%axmax' ); call output ( aj%axmax, advance='yes' )
+                  call output ( 'aj%big' ); call output ( aj%big, advance='yes' )
+                  call output ( 'aj%dxdxl' ); call output ( aj%dxdxl, advance='yes' )
+                end if
               case ( nf_gmove )
                 call copyVector ( x, bestX ) ! x = bestX
                 ! dx = aj%gfac * "Best Gradient":
                 call scaleVector ( bestGradient, aj%gfac, dx )
+                if ( index(switches,'vec') /= 0 ) &
+                  & call dump ( dx, name='Back to bestX' )
+                if ( index(switches,'sca') /= 0 ) then
+                  call output ( 'aj%gfac' ); call output ( aj%gfac, advance='yes' )
+                end if
               case ( nf_best )
                 call copyVector ( bestX, x ) ! bestX = x
                 call copyVector ( bestGradient, gradient ) ! bestGradient = gradient
@@ -597,11 +672,21 @@ contains
                 call subtractFromVector ( dx, candidateDX ) ! dx = dx - candidateDX
                 aj%dxdx = dx .dot. dx
                 if ( aj%dxdx > 0.0 ) aj%dxdxl = dx .dot. candidateDX
+                if ( index(switches,'vec') /= 0 ) &
+                  & call dump ( dx, name='dx after Aitken' )
+                if ( index(switches,'sca') /= 0 ) then
+                  call output ( 'aj%dxdx' ); call output ( aj%dxdx, advance='yes' )
+                end if
               case ( nf_dx )
                 call copyVector ( dx, candidateDX ) ! dx = candidateDX
               case ( nf_dx_aitken )
                 ! dx = aj%cait * candidateDX:
                 call scaleVector ( candidateDX, aj%cait, dx )
+                if ( index(switches,'vec') /= 0 ) &
+                  & call dump ( dx, name='dx after dx Aitken' )
+                if ( index(switches,'sca') /= 0 ) then
+                  call output ( 'aj%cait' ); call output ( aj%cait, advance='yes' )
+                end if
               case ( nf_tolx, nf_tolx_best, nf_tolf, nf_too_small )
                 ! IF ( NWT_FLAG == NF_TOO_SMALL ) THEN
                 !   Take special action if requested accuracy is critical
@@ -629,7 +714,7 @@ contains
               call addToMatrix ( normalEquations%m, covariance%m )
               call negate ( covariance%m )
               ! Re-factor normal equations
-              call choleskyFactor ( normalEquations, factored )
+              call choleskyFactor ( factored, normalEquations )
               call invertCholesky ( factored, outputCovariance%m )
               !??? Don't forget to scale the covariance
               if ( diagonalOut ) then
@@ -727,6 +812,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.27  2001/05/10 22:50:45  vsnyder
+! Added switches to print stuff during Newton iteration
+!
 ! Revision 2.26  2001/05/03 02:00:15  vsnyder
 ! Put names on cloned vectors
 !
