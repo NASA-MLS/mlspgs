@@ -1413,7 +1413,7 @@ contains ! =====     Public Procedures     =============================
           call multiply ( z%m%block(j,i), x%quantities(qr)%values(:,ir), &
             & my_rhs%quantities(qc)%values(:,ic), update=.true., subtract=.true. )
         end do ! j = 1, i-1
-        call solveCholesky ( z%m%block(i,i), &
+        call solveCholesky ( z%m%block(i,i), x%quantities(qc)%values(:,ic), &
           & my_rhs%quantities(qc)%values(:,ic), transpose=.true. )
       end do ! i = 1, n
     else                           ! Solve Z X = RHS for X
@@ -1428,7 +1428,7 @@ contains ! =====     Public Procedures     =============================
             & x%quantities(qr)%values(:,ir), my_rhs%quantities(qc)%values(:,ic), &
             & update=.true., subtract=.true. )
         end do ! j = 1, i-1
-        call solveCholesky ( z%m%block(i,i), &
+        call solveCholesky ( z%m%block(i,i), x%quantities(qc)%values(:,ic), &
           & my_rhs%quantities(qc)%values(:,ic), transpose=.false. )
       end do ! i = n, 1, -1
     end if
@@ -1781,6 +1781,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.46  2001/07/11 22:07:57  vsnyder
+! Interim commit -- may still be broken
+!
 ! Revision 2.45  2001/06/28 01:06:42  vsnyder
 ! Use generic 'multiply' more ubiquitously
 !
