@@ -26,7 +26,8 @@ program MLSL2
   use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMSG_Debug, &
     & MLSMSG_Error, MLSMSG_Severity_to_quit, MLSMessageExit
   use MLSPCF2, only: MLSPCF_L2CF_START
-  use MLSStrings, only: catLists, GetUniqueList, lowerCase, &
+  use MLSStrings, only: lowerCase
+  use MLSStringLists, only: catLists, GetUniqueList, &
     & RemoveElemFromList, unquote
   use OBTAIN_MLSCF, only: Close_MLSCF, Open_MLSCF
   use OUTPUT_M, only: BLANKS, OUTPUT, PRUNIT
@@ -919,6 +920,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.122  2004/08/04 23:19:57  pwagner
+! Much moved from MLSStrings to MLSStringLists
+!
 ! Revision 2.121  2004/07/08 22:48:44  pwagner
 ! Made SIPS_VERSION public
 !
