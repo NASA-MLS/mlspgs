@@ -12,11 +12,11 @@ module ForwardModelWrappers
   use FullCloudForwardModel, only: FULLCLOUDFORWARDMODELWRAPPER
   use FullForwardModel_m, only: FULLFORWARDMODEL
   use ForwardModelConfig, only: FORWARDMODELCONFIG_T
-  use Init_tables_module, only: L_LINEAR, L_SCAN, L_FULL, L_CLOUDFULL
+  use Init_tables_module, only: L_LINEAR, L_SCAN, L_SCAN2D, L_FULL, L_CLOUDFULL
   use LinearizedForwardModel_m, only: LINEARIZEDFORWARDMODEL
   use MatrixModule_1, only: MATRIX_T
   use MLSL2Timings, only: add_to_retrieval_timing
-  use ScanModelModule, only: SCANFORWARDMODEL
+  use ScanModelModule, only: SCANFORWARDMODEL, TWODSCANFORWARDMODEL
   use VectorsModule, only: VECTOR_T
 
   implicit none
@@ -64,6 +64,10 @@ contains ! ============= Public Procedures ==========================
       call ScanForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
       call add_to_retrieval_timing( 'scan_fwm' )
+    case ( l_scan2d )
+      call TwoDScanForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
+        FwdModelOut, Ifm, fmStat, Jacobian )
+      call add_to_retrieval_timing( 'twoDscan_fwm' )
     case ( l_cloudFull )
       call FullCloudForwardModelWrapper ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
@@ -75,6 +79,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.10  2002/06/24 18:27:09  livesey
+! New 2D scan model
+!
 ! Revision 2.9  2001/11/27 23:34:49  pwagner
 ! Split forward model timings into four types
 !
