@@ -139,7 +139,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_DESTROY            = s_chunkDivide + 1
   integer, parameter :: S_DUMP               = s_destroy + 1
   integer, parameter :: S_DUMPBLOCKS         = s_dump + 1
-  integer, parameter :: S_FGRID              = s_dumpblocks + 1
+  integer, parameter :: S_EMPIRICALGEOMETRY  = s_dumpblocks + 1
+  integer, parameter :: S_FGRID              = s_empiricalGeometry + 1
   integer, parameter :: S_FILL               = s_fGrid + 1
   integer, parameter :: S_FILLCOVARIANCE     = s_fill + 1
   integer, parameter :: S_FILLDIAGONAL       = s_fillcovariance + 1
@@ -301,6 +302,7 @@ contains ! =====     Public procedures     =============================
     ! put in by init_MLSSignals.
     spec_indices(s_apriori) =              add_ident ( 'apriori' )
     spec_indices(s_chunkDivide) =          add_ident ( 'chunkDivide' )
+    spec_indices(s_empiricalGeometry) =    add_ident ( 'EmpiricalGeometry' )
     spec_indices(s_destroy) =              add_ident ( 'destroy' )
     spec_indices(s_dump) =                 add_ident ( 'dump' )
     spec_indices(s_dumpblocks) =           add_ident ( 'dumpblocks' )
@@ -368,7 +370,7 @@ contains ! =====     Public procedures     =============================
              l+l_rectanglefromlos,l+l_vGrid, n+n_dt_def, &
       begin, t+t_fwmType, l+l_linear, l+l_full, l+l_scan, l+l_cloudFull, n+n_dt_def, &
       begin, t+t_hGridType, l+l_explicit, l+l_fixed, l+l_fractional, &
-             l+l_height, l+l_linear, l+l_l2gp, n+n_dt_def, &
+             l+l_height, l+l_regular, l+l_l2gp, n+n_dt_def, &
       begin, t+t_matrix, l+l_plain, l+l_cholesky, l+l_kronecker, l+l_spd, &
              n+n_dt_def, &
       begin, t+t_mergeMethod, l+l_direct, l+l_weighted, n+n_dt_def, &
@@ -451,8 +453,15 @@ contains ! =====     Public procedures     =============================
              begin, f+f_mif, t+t_numeric, n+n_field_type, &
              begin, f+f_interpolationfactor, t+t_numeric, n+n_field_type, &
              begin, f+f_inclination, t+t_numeric, n+n_field_type, &
+             begin, f+f_spacing, t+t_numeric, n+n_field_type, &
+             begin, f+f_origin, t+t_numeric, n+n_field_type, &
              begin, f+f_sourceL2GP, s+s_l2gp, n+n_field_spec, &
              begin, f+f_values, t+t_numeric, n+n_field_type, &
+             ndp+n_spec_def /) )
+    call make_tree ( (/ &
+      begin, s+s_empiricalGeometry, &
+             begin, f+f_terms, t+t_numeric, nr+n_field_type, &
+             begin, f+f_iterations, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_merge, &  ! Must be AFTER S_Gridded
@@ -780,7 +789,8 @@ contains ! =====     Public procedures     =============================
              begin, p+p_cycle, t+t_string, n+n_name_def, &
              begin, p+p_starttime, t+t_string, n+n_name_def, &
              begin, p+p_endtime, t+t_string, n+n_name_def, s+s_l1brad, s+s_l1boa, &
-             s+s_forwardModel, s+s_forwardModelGlobal, s+s_time, s+s_vgrid, &
+             s+s_empiricalGeometry, s+s_forwardModel, s+s_forwardModelGlobal, &
+             s+s_time, s+s_vgrid, &
              s+s_fGrid, s+s_l1brad, s+s_l1boa, n+n_section, &
       begin, z+z_readapriori, s+s_time, s+s_gridded, s+s_l2gp, &
              s+s_l2aux, s+s_snoop, n+n_section, &
@@ -845,6 +855,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.190  2001/12/10 20:21:47  livesey
+! Added code for regular hGrids
+!
 ! Revision 2.189  2001/11/17 02:30:16  vsnyder
 ! Add L_numF and L_numJ
 !
