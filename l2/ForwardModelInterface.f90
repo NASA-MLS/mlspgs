@@ -788,6 +788,14 @@ contains ! =====     Public Procedures     =============================
       &  call MLSMessage ( MLSMSG_Error, ModuleName, &
       &  "Can't have mixed sidebands in forward model config")
 
+    ! Now set radiances to zero, forward model just adds in terms
+    do i = 1, noUsedChannels
+      ch = usedChannels(i)
+      do j = 1, radiance%template%noSurfs
+        radiance%values( ch + (j-1)*radiance%template%noChans, fmStat%maf) = 0.0
+      end do
+    end do
+
     if ( forwardModelConfig%signals(1)%sideband == 0 ) then
       if (.not. associated (sidebandRatio) ) &
         & call MLSMessage(MLSMSG_Error,ModuleName, &
@@ -963,6 +971,7 @@ contains ! =====     Public Procedures     =============================
           & windowStart:windowFinish), stat=status )
         if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName,&
           & MLSMSG_Allocate//'k_temp_frq' )
+        k_temp_frq%values = 0.0_r8
       end if
 
       call allocate_test ( radV,maxNoFreqs, 'radV', ModuleName )
@@ -1045,7 +1054,6 @@ contains ! =====     Public Procedures     =============================
 
           ! Now, Compute the radiance derivatives:
 
-          if ( ForwardModelConfig%temp_der ) k_temp_frq%values = 0.0_r8
           Call Rad_Tran_WD ( ForwardModelConfig, FwdModelExtra, FwdModelIn, &
             &  ifm%elvar(maf), frq_i, Frq, noSpecies, ifm%z_path(k, maf), &
             &  ifm%h_path(k, maf), ifm%t_path(k, maf), ifm%phi_path(k, maf), &
@@ -1077,10 +1085,10 @@ contains ! =====     Public Procedures     =============================
             call Freq_Avg ( frequencies,                           &
               &       centerFreq+sense*FilterShapes(ch)%FilterGrid, &
               &       FilterShapes(ch)%FilterShape, RadV, noFreqs,  &
-              &       Size(FilterShapes(ch)%FilterGrid), Radiances(ptg_i,ch) )
+              &       Size(FilterShapes(ch)%FilterGrid), Radiances(ptg_i,i) )
           end do
         else
-          Radiances(ptg_i,usedChannels) = RadV(1:noFreqs)
+          Radiances(ptg_i,:) = RadV(1:noFreqs)
         end if
 
         ! Frequency Average the temperature derivatives with the appropriate
@@ -1097,14 +1105,14 @@ contains ! =====     Public Procedures     =============================
                     &        centerFreq+sense*FilterShapes(ch)%FilterGrid, &
                     &        FilterShapes(ch)%FilterShape, real(ToAvg,r8), &
                     &        noFreqs, Size(FilterShapes(ch)%FilterGrid), r )
-                  k_temp(ch,ptg_i,surface,instance) = r
+                  k_temp(i,ptg_i,surface,instance) = r
                 end do                  ! Surface loop
               end do                    ! Instance loop
             end do                      ! Channel loop
           else
             do i = 1, noUsedChannels
               k_temp(i,ptg_i,1:temp%template%noSurfs,:) = &
-                &  k_temp_frq%values(1,1:temp%template%noSurfs,:)
+                &  k_temp_frq%values(i,1:temp%template%noSurfs,:)
             end do
           end if
         end if
@@ -1126,7 +1134,7 @@ contains ! =====     Public Procedures     =============================
                       &          centerFreq+sense*FilterShapes(ch)%FilterGrid, &
                       &          FilterShapes(ch)%FilterShape, real(ToAvg,r8),  &
                       &          noFreqs, Size(FilterShapes(ch)%FilterGrid), r )
-                    k_atmos(ch,ptg_i,surface,instance,specie) = r
+                    k_atmos(i,ptg_i,surface,instance,specie) = r
                   end do                ! Surface loop
                 end do                  ! Instance loop
               end do                    ! Channel loop
@@ -1134,7 +1142,7 @@ contains ! =====     Public Procedures     =============================
               surface = f%template%noSurfs
               do i = 1, noUsedChannels
                 k_atmos(i,ptg_i,1:surface,:,specie) = &
-                  &  k_atmos_frq(specie)%values(1,1:surface,:)
+                  &  k_atmos_frq(specie)%values(i,1:surface,:)
               end do
             end if                      ! Frequency averaging or not
           end if                        ! Want derivatives for this
@@ -1150,7 +1158,7 @@ contains ! =====     Public Procedures     =============================
 
       do i = 1, noUsedChannels
         ch = usedChannels(i)
-        Radiances(no_tan_hts,ch) = Radiances(no_tan_hts-1,ch)
+        Radiances(no_tan_hts,i) = Radiances(no_tan_hts-1,i)
         if ( ForwardModelConfig%temp_der ) then
           n = temp%template%noSurfs
           k_temp(i,no_tan_hts,1:n,1:phiWindow) = &
@@ -1175,56 +1183,34 @@ contains ! =====     Public Procedures     =============================
       do i = 1, noUsedChannels
 
         ch = usedChannels(i)
-
-        if ( ForwardModelConfig%do_conv ) then
-
-          ! Note I am replacing the i's in the k's with 1's (enclosed in
-          ! brackets to make it clear.)  We're not wanting derivatives anyway
-          ! so it shouldn't matter
-          call convolve_all ( forwardModelConfig, fwdModelIn, maf, ch, &
-            &     windowStart, windowFinish, mafTInstance-windowStart+1, &
-            &     temp, ptan, radiance, &
-            &     ForwardModelConfig%tangentGrid%surfs, ptg_angles, &
-            &     ifm%tan_temp(:,maf), dx_dt, d2x_dxdt,si, center_angle, &
-            &     Radiances(:,ch), k_temp(i,:,:,:), k_atmos(i,:,:,:,:), &
-            &     i_star_all(i,:),Jacobian, &
-            &     antennaPatterns(1), ier )
-          !??? Need to choose some index other than 1 for AntennaPatterns ???
-          if ( ier /= 0 ) goto 99
-        else
-
-          call no_conv_at_all ( forwardModelConfig, fwdModelIn, maf, ch,  &
-            &     windowStart, windowFinish, temp, ptan, radiance, &
-            &     ForwardModelConfig%tangentGrid%surfs, &
-            &     Radiances(:,ch), k_temp(i,:,:,:), k_atmos(i,:,:,:,:), &
-            &     i_star_all(i,:),Jacobian )
-
-        end if
-
-      end do                            ! Channel loop
-
-      do channel = 1, noUsedChannels
-        ! Work out factor to multiply by
         if ( sidebandStart /= sidebandStop ) then ! We're folding
-          thisRatio = sidebandRatio%values(usedChannels(Channel),1)
+          thisRatio = sidebandRatio%values(ch,1)
           if ( thisSideband == 1 ) thisRatio = 1.0 - thisRatio
         else ! Otherwise, want just unfolded signal
           thisRatio = 1.0
         end if
 
-        do mif = 1, radiance%template%noSurfs
-          ! Work out index
-          k = usedChannels(channel)+(mif-1)*radiance%template%noChans
+        if ( ForwardModelConfig%do_conv ) then
+          call convolve_all ( forwardModelConfig, fwdModelIn, maf, ch, &
+            &     windowStart, windowFinish, mafTInstance-windowStart+1, &
+            &     temp, ptan, radiance, &
+            &     ForwardModelConfig%tangentGrid%surfs, ptg_angles, &
+            &     ifm%tan_temp(:,maf), dx_dt, d2x_dxdt,si, center_angle, &
+            &     Radiances(:,i), k_temp(i,:,:,:), k_atmos(i,:,:,:,:), &
+            &     thisRatio,Jacobian, &
+            &     antennaPatterns(1), ier )
+          !??? Need to choose some index other than 1 for AntennaPatterns ???
+          if ( ier /= 0 ) goto 99
+        else
+          call no_conv_at_all ( forwardModelConfig, fwdModelIn, maf, ch,  &
+            &     windowStart, windowFinish, temp, ptan, radiance, &
+            &     ForwardModelConfig%tangentGrid%surfs, &
+            &     Radiances(:,i), k_temp(i,:,:,:), k_atmos(i,:,:,:,:), &
+            &     thisRatio,Jacobian )
 
-          ! If first sideband, place answer in else add to result
-          if ( thisSideband == sidebandStart ) then
-            radiance%values(k,maf) = thisRatio*i_star_all(channel,mif)
-          else
-            radiance%values(k,maf) = radiance%values(k,maf) + &
-              & thisRatio*i_star_all(channel,mif)
-          end if
-        end do
-      end do
+        end if
+
+      end do                            ! Channel loop
 
     end do
     ! ---------------------------- End of loop over sideband --------------------
@@ -1441,6 +1427,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.103  2001/04/20 23:08:55  livesey
+! Cleaned up confusion in multi-channel cases
+!
 ! Revision 2.102  2001/04/20 02:59:40  livesey
 ! Whoops typo!
 !
