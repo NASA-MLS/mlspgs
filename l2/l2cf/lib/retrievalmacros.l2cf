@@ -28,8 +28,10 @@ begin Fill
   y$1: Vector, template=y$1Template
   yNoise$1: Vector, template=y$1Template
   f$1: Vector, template=y$1Template
-  ; Optical depth may be turned on again, sometime, for the PEs
+  ;; Optical depth may be turned on again, sometime, for the PEs
   !ifdef(precisionEstimates,{},{od$1: Vector, template=od$1Template})
+  ;; Define retrieval diagnostics vector
+  diag$1: Vector, template=retrievalDiagnosticsTemplate
   ;; Fill state related vectors
   Transfer, source=state, destination=x$1
   Transfer, source=apriori, destination=a$1
@@ -82,7 +84,10 @@ begin Fill
     tempPrecisionQuantity=outputPrecision.temperature, $
     h2oQuantity=state.h2o, temperatureQuantity=state.temperature, $
     method=RHIPrecisionFromH2O, /dontMask
-end Fill})
+end Fill
+begin Join
+!forall(joinOneDiagDGG,!allRetrievalDiagnostics)
+end Join})
 
 ;; This macro deals with the state subsetting for quantity $1
 !define(subsetSpecies,{!dnl
@@ -141,6 +146,19 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 {;} --ConfigInfo-- FWM: !TrimQ(!signal($1)) model $2
 })
 
+;; This macro uses the joinDGG (for the moment, will use DGM when we
+;; got to hdf5) to join the diagnostics stuff
+!define(joinOneDiagDGG,{
+   joinedDGG_$1_!phase: l2gp, source=diag!phase.$1, precision=diag!phase.$1, swath='$1-!phase'
+!ifdef(gotDGGs,{!dnl
+  !divert(!DGGDivert), joinedDGG_$1_!phase!divert},{!dnl
+  !divert(!DGGDivert)joinedDGG_$1_!phase!divert})!dnl
+!define(gotDGGs,{Yes})!dnl
+{
+; --ConfigInfo-- DGG: $1-!phase
+}
+})
+
 ;; This macro puts all the boring stuff in the Retrieve command line
 ;; that we're used to seeing
 ;  will add FM output to PEs later
@@ -155,7 +173,7 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
     apriori=a$1, covariance=myCovariance$1, $
     outputSD=sdOut$1, fwdModelOut=f$1, $
     vRegWeightVec=vr$1, hRegWeightVec=hr$1, $
-    lowBound=lb$1, highBound=hb$1})})
+    lowBound=lb$1, highBound=hb$1, diagnostics=diag$1})})
 
 ;; This macro is used in sids runs to get the band number part of a band
 ;; specifier (i.e. strip off the sideband if it is present)
@@ -301,6 +319,9 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
     /do_conv, /atmos_der, /do_baseline})
 
 ; $Log$
+; Revision 1.31  2002/10/25 01:10:33  livesey
+; Added the tropH2O option to completephase
+;
 ; Revision 1.30  2002/10/17 18:24:40  livesey
 ; Typo
 ;

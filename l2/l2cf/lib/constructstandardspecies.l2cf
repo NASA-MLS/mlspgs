@@ -262,6 +262,14 @@ begin Construct
   !forall(constructElev,!allRadiometers)
   !define(allElevs, {!makelist({elev},{},!allRadiometers)})
 
+  ;; ----------------------------------------- Retrieval diagnostics
+  ;; Note no continuation lines allowed here, sorry!
+  !define(allRetrievalDiagnostics,{dnwt_ajn, dnwt_axmax, dnwt_cait, dnwt_chiSqMinNorm, dnwt_chiSqNorm, dnwt_diag, dnwt_dxdx, dnwt_dxdxl, dnwt_dxn, dnwt_dxnl, dnwt_fnmin, dnwt_fnorm, dnwt_gdx, dnwt_gfac, dnwt_gradn, dnwt_sq, dnwt_sqt, numJ, dnwt_flag, jacobian_rows, jacobian_cols})
+  hGridDiag: hGrid, type=explicit, module=GHz, values= [ 0degrees ]
+  !define(constructRetrievalDiagnostic,{$1: Quantity, type=$1, $
+    vGrid=vGridDiag, hGrid=hGridDiag!nl})
+  !forall(constructRetrievalDiagnostic,!allRetrievalDiagnostics)
+
   ;; ----------------------------------------- Other minor stuff
 
   earthReflectivity: quantity, type = earthRefl
@@ -310,5 +318,7 @@ begin Construct
     !allFoldedRadiances, scanResidualGHz, scanResidualTHz ]
 
   depthTemplate: VectorTemplate, quantities = [ !allFoldedDepths ]
+
+  retrievalDiagnosticsTemplate: VectorTemplate, quantities = [ !allRetrievalDiagnostics ]
 
 end Construct
