@@ -1918,7 +1918,13 @@ contains ! =====     Public Procedures     =============================
       do i = 1, n
         a%r1(i) = i
         a%r2(i) = i
-        a%values(i,1) = s*x(i)
+        if ( myInvert ) then
+          if ( x(i) == 0.0_r8 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+            & "Cannot update with inverse of zero in UpdateDiagonalVec_0" )
+          a%values(i,1) = s / x(i)
+        else
+          a%values(i,1) = s * x(i)
+        end if
       end do
     case ( m_banded )
       do i = 1, n
@@ -2051,6 +2057,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.35  2001/05/30 21:53:16  vsnyder
+! Finish? 'invert' argument in 'UpdateDiagonalVec_0'
+!
 ! Revision 2.34  2001/05/30 20:18:01  vsnyder
 ! Add 'invert' argument to 'UpdateDiagonal'
 !
