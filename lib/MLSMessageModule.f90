@@ -2,18 +2,19 @@
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !==============================================================================
-MODULE MLSMessageModule         ! Basic messaging for the MLSPGS suite
+module MLSMessageModule         ! Basic messaging for the MLSPGS suite
 !==============================================================================
 
-  USE SDPToolkit
+  use SDPToolkit
 
-  IMPLICIT NONE
+  implicit none
   
-  PRIVATE :: Id,ModuleName
+  private :: Id,ModuleName
 ! ------------------------------- RCS Ident Info ------------------------------
-CHARACTER (LEN=130) :: Id = &
+  character (len=130) :: Id = &
      & "$Id$"
-CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
+  character (len=*), parameter :: ModuleName = &
+     & "$RCSfile$"
 ! -----------------------------------------------------------------------------
 
 ! This module provides low level messaging for the MLSPGS suite.  The main
@@ -33,67 +34,66 @@ CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
 ! Define some low level parameters.  These are used by the calling code to
 ! indicate the severity or otherwise of the messages.
 
-INTEGER, PARAMETER :: MLSMSG_Debug=1
-INTEGER, PARAMETER :: MLSMSG_Info=2
-INTEGER, PARAMETER :: MLSMSG_Warning=3
-INTEGER, PARAMETER :: MLSMSG_Error=4
+  integer, parameter :: MLSMSG_Debug=1
+  integer, parameter :: MLSMSG_Info=2
+  integer, parameter :: MLSMSG_Warning=3
+  integer, parameter :: MLSMSG_Error=4
 
-PRIVATE :: SeverityNames
-CHARACTER (LEN=*), DIMENSION(4), PARAMETER :: SeverityNames = &
+  private :: SeverityNames
+  character (len=*), dimension(4), parameter :: SeverityNames = &
      & (/"Debug  ","Info   ","Warning","Error  "/)
 
-! This set of parameters are simple prefixes for common messages
+  ! This set of parameters are simple prefixes for common messages
 
-CHARACTER (LEN=*), PARAMETER :: MLSMSG_Allocate = &
+  character (len=*), parameter :: MLSMSG_Allocate = &
      & "Allocation failed: "
-CHARACTER (LEN=*), PARAMETER :: MLSMSG_Fileopen = &
+  character (len=*), parameter :: MLSMSG_Fileopen = &
      & "Failed to open file: "
-CHARACTER (LEN=*), PARAMETER :: MLSMSG_Keyword = &
+  character (len=*), parameter :: MLSMSG_Keyword = &
      & "Unrecognized configuration file keyword: "
-CHARACTER (LEN=*), PARAMETER :: MLSMSG_L1BRead = &
+  character (len=*), parameter :: MLSMSG_L1BRead = &
      & "Unable to read L1B data item: "
-CHARACTER (LEN=*), PARAMETER :: MLSMSG_Duplicate = &
+  character (len=*), parameter :: MLSMSG_Duplicate = &
      & "There is already an entry with the name "
-CHARACTER (LEN=*), PARAMETER :: MLSMSG_DeAllocate = &
+  character (len=*), parameter :: MLSMSG_DeAllocate = &
      & "Deallocation failed: "
-! This datatype describes the configuration of the messaging suite
+  ! This datatype describes the configuration of the messaging suite
 
-PRIVATE MLSMSG_PrefixLen
-INTEGER, PARAMETER :: MLSMSG_PrefixLen=32
+  integer, private, parameter :: MLSMSG_PrefixLen=32
 
-TYPE MLSMessageConfig_T
-   LOGICAL :: suppressDebugs
-   INTEGER :: logFileUnit
-   CHARACTER (LEN=MLSMSG_PrefixLen) :: prefix
-END TYPE MLSMessageConfig_T
+  type MLSMessageConfig_T
+    logical :: suppressDebugs
+    integer :: logFileUnit
+    character (len=MLSMSG_PrefixLen) :: prefix
+  end type MLSMessageConfig_T
 
-! This private variable describes this configuration
+  ! This private variable describes this configuration
 
-PRIVATE MLSMessageConfig
-TYPE (MLSMessageConfig_T) :: MLSMessageConfig=MLSMessageConfig_T(.FALSE.,-1,"")
+  type (MLSMessageConfig_T), private :: MLSMessageConfig = &
+    & MLSMessageConfig_T(.FALSE.,-1,"")
 
-CONTAINS
+contains
 
   ! -------------------------------------------------------------------------
 
   ! This first routine is the main `messaging' code.
 
-  SUBROUTINE MLSMessage(severity,moduleNameIn,message,advance)
+  subroutine MLSMessage ( Severity, ModuleNameIn, Message, Advance )
 
     ! Dummy arguments
-    INTEGER, INTENT(IN) :: severity ! e.g. MLSMSG_Error
-    CHARACTER (LEN=*), INTENT(IN) :: moduleNameIn ! Name of module (see below)
-    CHARACTER (LEN=*), INTENT(IN) :: message ! Line of text
-    CHARACTER (LEN=*), INTENT(IN), optional :: advance ! Do not advance
+    integer, intent(in) :: Severity ! e.g. MLSMSG_Error
+    character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
+    character (len=*), intent(in) :: Message ! Line of text
+    character (len=*), intent(in), optional :: Advance ! Do not advance
     !                                 if present and the first character is 'N'
     !                                 or 'n'
 
     ! Local variables
-    INTEGER :: dummy
-    CHARACTER (LEN=512) :: line ! Line to output, should be long enough
-    INTEGER, SAVE :: line_len=0 ! Number of saved characters in line.
-    !                             If nonzero, do not insert prefix.
-    LOGICAL :: MY_ADV
+    integer :: Dummy
+    character (len=512), save :: Line   ! Line to output, should be long enough
+    integer, save :: Line_len=0         ! Number of saved characters in line.
+    !                                     If nonzero, do not insert prefix.
+    logical :: My_adv
 
     ! Executable code
 
@@ -103,91 +103,94 @@ CONTAINS
 
     ! The moduleNameIn is <dollar>RCSFile: <filename>,v <dollar>
 
-    IF ( (.NOT. MLSMessageConfig%suppressDebugs).OR. &
-         & (severity /= MLSMSG_Debug) ) THEN
+    if ( (.not. MLSMessageConfig%suppressDebugs).OR. &
+         & (severity /= MLSMSG_Debug) ) then
        
        ! Assemble a full message line
 
-       IF ( line_len == 0 ) THEN
+       if ( line_len == 0 ) then
          line=TRIM(SeverityNames(severity))// &
               & " ("//moduleNameIn(11:(LEN_TRIM(moduleNameIn)-8)) &
-              &  //"): "//message
-       ELSE
-         line(line_len+1:) = message
-         line_len = line_len + len(message) ! Not len-trim, so we can get
-         ! trailing blanks into a part of a message.  If there are trailing
-         ! blanks remaining when my_adv is true, they'll be trimmed off.
-       END IF
+              &  //"): "
+         line_len = len_trim(line) + 1 ! to keep the last blank
+       end if
+       line(line_len+1:) = message
+       line_len = line_len + len(message) ! Not len-trim, so we can get
+       ! trailing blanks into a part of a message.  If there are trailing
+       ! blanks remaining when my_adv is true, they'll be trimmed off.
 
        ! Log the message using the toolkit routine
 
-       IF ( my_adv ) THEN
+       if ( my_adv ) then
          dummy=PGS_SMF_GenerateStatusReport(TRIM(MLSMessageConfig%prefix)// &
               & TRIM(line))
 
          ! Now, if we're also logging to a file then write to that too.
 
-         IF (MLSMessageConfig%logFileUnit /= -1) &
-              & WRITE (UNIT=MLSMessageConfig%logFileUnit,FMT=*) TRIM(line)
+         if (MLSMessageConfig%logFileUnit /= -1) &
+              & write (UNIT=MLSMessageConfig%logFileUnit,FMT=*) TRIM(line)
 
          line_len = 0
-       END IF
+       end if
 
-    END IF
+    end if
 
     ! Now if it's an error, then try to close log file if any and quit
 
-    IF ( severity == MLSMSG_Error ) THEN
-       IF ( MLSMessageConfig%logFileUnit /= -1 ) &
-            & CLOSE ( MLSMessageConfig%logFileUnit )
-       STOP
-    END IF
-  END SUBROUTINE MLSMessage
+    if ( severity == MLSMSG_Error ) then
+       if ( MLSMessageConfig%logFileUnit /= -1 ) &
+            & close ( MLSMessageConfig%logFileUnit )
+       stop
+    end if
+  end subroutine MLSMessage
 
   ! ----------------------------------------------------------------------
 
   ! This routine sets up the MLSMessage suite.  The defaults are of course
   ! sensible, but the user may wish to change things.
 
-  SUBROUTINE MLSMessageSetup ( suppressDebugs, logFileUnit, prefix )
+  subroutine MLSMessageSetup ( SuppressDebugs, LogFileUnit, Prefix )
 
     ! Dummy arguments
-    LOGICAL, OPTIONAL, INTENT(IN) :: suppressDebugs
-    INTEGER, OPTIONAL, INTENT(IN) :: logFileUnit
-    CHARACTER (LEN=*), OPTIONAL, INTENT(IN) :: prefix
+    logical, optional, intent(in) :: SuppressDebugs
+    integer, optional, intent(in) :: LogFileUnit
+    character (len=*), optional, intent(in) :: Prefix
 
     ! Local variables
 
     ! Executable code
 
-    IF ( PRESENT(suppressDebugs) ) &
+    if ( present(suppressDebugs) ) &
       & MLSMessageConfig%suppressDebugs=suppressDebugs
 
-    IF ( PRESENT(prefix) ) &
+    if ( present(prefix) ) &
       & MLSMessageConfig%prefix=prefix
 
-    IF ( PRESENT(logFileUnit) ) THEN
-      IF ( MLSMessageConfig%logFileUnit /= -1 ) CALL MLSMessage ( &
+    if ( present(logFileUnit) ) then
+      if ( MLSMessageConfig%logFileUnit /= -1 ) call MLSMessage ( &
         & MLSMSG_Error, ModuleName,"Already writing to a log file")
       MLSMessageConfig%logFileUnit = logFileUnit
-    END IF
-  END SUBROUTINE MLSMessageSetup
+    end if
+  end subroutine MLSMessageSetup
 
   ! ----------------------------------------------------------------------
 
   ! This routine simply closes the MLSMessage log file if there is one.
 
-  SUBROUTINE MLSMessageClose
+  subroutine MLSMessageClose
     ! Executable code
     MLSMessageConfig%logFileUnit=-1
-  END SUBROUTINE MLSMessageClose
+  end subroutine MLSMessageClose
 
 !===========================================================================
-END MODULE MLSMessageModule
+end module MLSMessageModule
 !===========================================================================
 
 !
 ! $Log$
+! Revision 2.3  2001/02/22 23:27:16  vsnyder
+! Correct routing of output through MLSMessage
+!
 ! Revision 2.2  2000/10/04 18:06:39  vsnyder
 ! Added an optional "advance" argument to MLSMessage
 !
