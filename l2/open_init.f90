@@ -7,7 +7,7 @@ module Open_Init
   ! Opens and closes several files
   ! Creates and destroys the L1BInfo database
 
-  use MLSCommon, only: FileNameLen, L1BInfo_T, TAI93_Range_T, i4
+  use MLSCommon, only: FileNameLen, L1BInfo_T, TAI93_Range_T, i4, NameLen
   use MLSL2Options, only: LEVEL1_HDFVERSION
   use MLSMessageModule, only: MLSMessage, MLSMSG_Warning, &
     &                         MLSMSG_Error!, MLSMSG_FileOpen, MLSMSG_Info
@@ -512,8 +512,10 @@ contains ! =====     Public Procedures     =============================
     ! cycle number
     ! logfile name
   
-    use MLSL2Options, only: ILLEGALL1BRADID
-    use L1BData, only: ReadL1BData, L1BData_T, DeallocateL1BData, Dump
+    use L1BData, only: ReadL1BData, L1BData_T, DeallocateL1BData, Dump, &
+      & AssembleL1BQtyName
+    use MLSFiles, only: mls_hdf_version       
+    use MLSL2Options, only: ILLEGALL1BRADID, LEVEL1_HDFVERSION
     use WriteMetadata, only: PCFData_T
 
     ! Arguments
@@ -532,7 +534,11 @@ contains ! =====     Public Procedures     =============================
     character (len=*), parameter :: l1b_quant_name='R1A:118.B1F:PT.S0.FB25-1'
     type (L1BData_T) :: l1bDataSet   ! L1B dataset
 
-    ! Begin
+    integer ::  hdfVersion                                                        
+    character(len=NameLen) :: l1bItemName                                        
+
+    ! Begin                                                                       
+    hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)  
     call output ( '============ Open Initialize ============', advance='yes' )
     call output ( '        (Data entered via pcf)', advance='yes' )
     call output ( ' ', advance='yes' )
@@ -551,8 +557,9 @@ contains ! =====     Public Procedures     =============================
          call output ( 'name:   ' )                                       
     	   call output ( TRIM(l1bInfo%L1BRADFileNames(i)), advance='yes' )
          if ( Details > -2 ) then
-           call ReadL1BData ( l1bInfo%L1BRADIDs(i), l1b_quant_name, L1bDataSet, &
-            & NoMAFs, IERR, NeverFail=.true. )
+           l1bItemName = AssembleL1BQtyName ( l1b_quant_name, hdfVersion, .false. )
+           call ReadL1BData ( l1bInfo%L1BRADIDs(i), l1bItemname, L1bDataSet, &
+            & NoMAFs, IERR, NeverFail=.true., hdfVersion=hdfVersion )
            if ( IERR == 0 ) then
              call Dump ( l1bDataSet, Details )
              call DeallocateL1BData ( l1bDataSet )
@@ -693,6 +700,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.67  2002/11/13 01:10:40  pwagner
+! Actually reads hdf5 radiances
+!
 ! Revision 2.66  2002/10/08 17:36:22  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
