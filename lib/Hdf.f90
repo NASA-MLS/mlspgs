@@ -34,6 +34,7 @@ module Hdf
 
   private :: sfrdata
   integer, external :: sfrdata
+  integer, external :: sfwdata
 
   interface
 
@@ -64,11 +65,11 @@ module Hdf
       double precision, intent(IN), dimension(*) :: data
     end function sfsdscale
 
-    integer function sfwdata(sds_id, start, stride, edges , data)      
-      integer, intent (IN) :: sds_id
-      integer, intent (IN), dimension (*) :: start, stride, edges
-      double precision, intent (IN), dimension (*) :: data
-    end function sfwdata
+!    integer function sfwdata(sds_id, start, stride, edges , data)      
+!      integer, intent (IN) :: sds_id
+!      integer, intent (IN), dimension (*) :: start, stride, edges
+!      double precision, intent (IN), dimension (*) :: data
+!    end function sfwdata
 
     integer function sfendacc(sds_id)
       integer, intent (IN) :: sds_id
@@ -115,6 +116,11 @@ module Hdf
     module procedure sfrdata_i1, sfrdata_i2, sfrdata_i3, &
       & sfrdata_r1, sfrdata_r2, sfrdata_r3, &
       & sfrdata_dp1, sfrdata_dp2, sfrdata_dp3
+  end interface
+
+  interface sfwdata_f90
+    module procedure sfwdata_i1, sfwdata_dp1, sfwdata_r1
+    module procedure sfwdata_r3, sfwdata_dp3
   end interface
 
 
@@ -597,9 +603,52 @@ contains ! ============================= Local wrappers ======================
     data = reshape ( tmp, shape(data) )
   end function sfrdata_dp3
 
+  integer function sfwdata_i1 (sds_id, start, stride, edges, data)      
+    integer, intent (in) :: sds_id
+    integer, intent (in), dimension (:) :: start, stride, edges
+    integer, intent (in), dimension (:) :: data
+    
+    sfwdata_i1 = sfwdata ( sds_id, start, stride, edges, data )
+  end function sfwdata_i1
+
+  integer function sfwdata_r1 (sds_id, start, stride, edges, data)      
+    integer, intent (in) :: sds_id
+    integer, intent (in), dimension (:) :: start, stride, edges
+    real, intent (in), dimension (:) :: data
+    
+    sfwdata_r1 = sfwdata ( sds_id, start, stride, edges, data )
+  end function sfwdata_r1
+
+  integer function sfwdata_dp1 (sds_id, start, stride, edges, data)      
+    integer, intent (in) :: sds_id
+    integer, intent (in), dimension (:) :: start, stride, edges
+    double precision, intent (in), dimension (:) :: data
+    
+    sfwdata_dp1 = sfwdata ( sds_id, start, stride, edges, data )
+  end function sfwdata_dp1
+
+  integer function sfwdata_dp3 (sds_id, start, stride, edges, data)      
+    integer, intent (in) :: sds_id
+    integer, intent (in), dimension (:) :: start, stride, edges
+    double precision, intent (in), dimension (:,:,:) :: data
+    
+    sfwdata_dp3 = sfwdata ( sds_id, start, stride, edges, data )
+  end function sfwdata_dp3
+
+  integer function sfwdata_r3 (sds_id, start, stride, edges, data)      
+    integer, intent (in) :: sds_id
+    integer, intent (in), dimension (:) :: start, stride, edges
+    real, intent (in), dimension (:,:,:) :: data
+    
+    sfwdata_r3 = sfwdata ( sds_id, start, stride, edges, data )
+  end function sfwdata_r3
+
 end module Hdf
 
 ! $Log$
+! Revision 2.7  2001/11/01 21:00:25  pwagner
+! Replaced sfwdata generic with sfwdata_f90
+!
 ! Revision 2.6  2001/05/30 23:51:35  livesey
 ! New version tidied up an some wrappers written.
 !
