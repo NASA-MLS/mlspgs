@@ -128,6 +128,7 @@ ncloudspecies
 nmodelsurfs
 noChunks
 noFineGrid
+noiseBandwidth
 noise
 noMIFs
 noSlaves
@@ -228,6 +229,9 @@ vmrQuantity
 writeCounterMAF
 
 # $Log$
+# Revision 2.36  2002/05/14 00:28:44  livesey
+# Added noise bandwidth
+#
 # Revision 2.35  2002/05/07 20:26:27  livesey
 # Added WriteCounterMAF
 #
