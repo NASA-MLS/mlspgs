@@ -74,8 +74,8 @@ contains ! =====     Public procedures     =============================
     call declare_unit ( l_khz, 1.0d-3, phyq_frequency )
     call declare_unit ( l_hz, 1.0d-6, phyq_frequency )
 
-    call declare_unit ( l_zeta, 1.0d-3, phyq_zeta )
-    call declare_unit ( l_logp, 1.0d-6, phyq_zeta )
+    call declare_unit ( l_zeta, 1.0d0, phyq_zeta )
+    call declare_unit ( l_logp, 1.0d0, phyq_zeta )
   contains
     subroutine DECLARE_UNIT ( NAME, VALUE, PHYS_UNIT )
       integer, intent(in) :: NAME
@@ -90,6 +90,9 @@ contains ! =====     Public procedures     =============================
 end module UNITS
 
 ! $Log$
+! Revision 2.4  2001/03/21 23:28:43  livesey
+! Fixed bug in l_zeta and l_logp, had inappropriate scaling factors
+!
 ! Revision 2.3  2000/10/27 21:55:12  pwagner
 ! Never should have left lib
 !
