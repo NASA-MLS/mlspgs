@@ -50,16 +50,12 @@ contains
                                               ! as Slabs%catalog%polarized.
 
     real(rk) :: F_o_v0, Z, Denomm
-    real(rk) :: Slabs_nonres                  ! Nonresonant absorption
     real(r8) :: V0                            ! zero field line center frequency
-    real(rk) :: Y_nonres                      ! Nonresonant ratio
 
     complex(rk) :: Wing
 
     no_lines = size(slabs%catalog%lines)
     polarized => slabs%catalog%polarized
-    slabs_nonres = slabs%catalog%continuum(1)
-    y_nonres = slabs%catalog%continuum(3)
 
     sigma_p = 0.0_rk
     pi = 0.0_rk
@@ -141,9 +137,7 @@ contains
     logical, pointer :: Polarized(:)          ! Which lines to use.  Same
                                               ! as Slabs%catalog%polarized.
 
-    real(rk) :: Slabs_nonres                  ! Nonresonant absorption
     real(r8) :: V0                            ! zero field line center frequency
-    real(rk) :: Y_nonres                      ! Nonresonant ratio
 
     real(rk) ::  D,  I1,  I2,  I3,  I4,  R1,  R2,  S, S1, SIGMA, Y2, Z
     real(rk) :: dD, dI1, dI2, dI3, dI4, dR1, dR2,         dZ ! 1/p dp/dT
@@ -153,8 +147,6 @@ contains
 
     no_lines = size(slabs%catalog%lines)
     polarized => slabs%catalog%polarized
-    slabs_nonres = slabs%catalog%continuum(1)
-    y_nonres = slabs%catalog%continuum(3)
 
     sigma_p = 0.0_rk
     pi = 0.0_rk
@@ -914,6 +906,9 @@ contains
 end module O2_Abs_CS_M
 
 ! $Log$
+! Revision 2.13  2005/01/20 02:51:28  vsnyder
+! Delete unused stuff
+!
 ! Revision 2.12  2004/04/24 02:26:54  vsnyder
 ! Move Voigt stuff to its own module
 !
