@@ -503,16 +503,18 @@ internalupdate: internalmakefile makefilesintests
 	@$(MAKE) -f $(MakeFName) internaldepends
 
 internalreset_copy:
-	@rm -f temp.Makefile
-	@sed 's/COPY_NUMBER = '$(COPY_NUMBER)'/COPY_NUMBER = '$(ONE)'/' \
-	 $(MakeFName) > temp.Makefile
-	@mv temp.Makefile $(MakeFName)
+#	@rm -f temp.Makefile
+#	@sed 's/COPY_NUMBER = '$(COPY_NUMBER)'/COPY_NUMBER = '$(ONE)'/' \
+#	 $(MakeFName) > temp.Makefile
+#	@mv temp.Makefile $(MakeFName)
+	@echo "MakeFC copy number $(COPY_NUMBER)"
 
 internaladd_copy:
-	@rm -f temp.Makefile
-	@sed 's/COPY_NUMBER = '$(COPY_NUMBER)'/COPY_NUMBER = '$(NEXT_COPY)'/' \
-	 $(MakeFName) > temp.Makefile
-	@mv temp.Makefile $(MakeFName)
+#	@rm -f temp.Makefile
+#	@sed 's/COPY_NUMBER = '$(COPY_NUMBER)'/COPY_NUMBER = '$(NEXT_COPY)'/' \
+#	 $(MakeFName) > temp.Makefile
+#	@mv temp.Makefile $(MakeFName)
+	@echo "MakeFC copy number $(COPY_NUMBER)"
 
 show_copy:
 	@echo "MakeFC copy number $(COPY_NUMBER)"
@@ -553,6 +555,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.27  2001/03/23 00:39:49  pwagner
+# Added internal targets, copy number, etc.
+#
 # Revision 1.26  2001/03/17 00:56:25  pwagner
 # Added new help; makefilesintests
 #
