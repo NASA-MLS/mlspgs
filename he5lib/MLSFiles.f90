@@ -44,7 +44,6 @@ module MLSFiles               ! Utility file routines
 ! mls_inqswath       A wrapper for doing swingswath for versions 4 and 5
 ! mls_io_gen_openF   Opens a generic file using either the toolbox or else a Fortran OPEN statement
 ! mls_io_gen_closeF  Closes a generic file using either the toolbox or else a Fortran OPEN statement
-! mls_inqswath       A wrapper for doing swingswath for versions 4 and 5
 ! mls_sfstart        Opens an hdf file for writing metadata
 ! mls_sfend          Closes a file opened by mls_sfstart
 ! split_path_name    splits the input full_file_name into its components path and name
@@ -239,7 +238,8 @@ contains
 
   function mls_io_gen_openF(toolbox_mode, caseSensitive, ErrType, &
     & record_length, FileAccessType, &
-    & FileName, PCBottom, PCTop, versionNum, unknown, thePC, debugOption) &
+    & FileName, PCBottom, PCTop, versionNum, unknown, thePC, &
+    & hdfVersion, debugOption) &
     &  result (theFileHandle)
 
     ! Dummy arguments
@@ -255,6 +255,8 @@ contains
     integer(i4),  optional     :: versionNum
     logical, optional, intent(in) :: unknown
     logical, optional, intent(in) :: debugOption
+
+    integer, optional, intent(in) :: hdfVersion
 
     ! Local variables
 
@@ -603,7 +605,7 @@ contains
 
   ! If must be given a FileHandle as an arg
   ! (A later version may allow choice between file handle and file name)
-  function mls_io_gen_closeF(toolbox_mode, theFileHandle) &
+  function mls_io_gen_closeF(toolbox_mode, theFileHandle, hdfVersion) &
     &  result (ErrType)
 
     ! Dummy arguments
@@ -611,6 +613,7 @@ contains
     integer(i4), intent(IN)  :: theFileHandle
     character (LEN=*), intent(IN)   :: toolbox_mode
 
+    integer, optional, intent(in) :: hdfVersion
     ! Local variables
 
     logical, parameter :: PRINT_EVERY_CLOSE=.false.
@@ -755,7 +758,7 @@ contains
 
   ! This function acts as a wrapper to allow hdf5 or hdf4 routines to be called
 
-  function mls_inqswath(FileName, swathList, strBufSize)
+  function mls_inqswath(FileName, swathList, strBufSize, hdfVersion)
 
     ! Arguments
 
@@ -763,6 +766,7 @@ contains
       character (len=*), intent(out) :: SWATHLIST
       integer, intent(out):: STRBUFSIZE
       integer :: mls_inqswath
+    integer, optional, intent(in) :: hdfVersion
 
     ! begin
     mls_inqswath = he5_swinqswath(trim(FileName), swathList, strBufSize)
@@ -773,12 +777,13 @@ contains
 
   ! This function acts as a wrapper to allow hdf5 or hdf4 routines to be called
 
-  function mls_sfstart(FileName, FileAccess)
+  function mls_sfstart(FileName, FileAccess, hdfVersion)
 
     ! Arguments
 
       character (len=*), intent(in) :: FILENAME
     integer(i4), intent(IN)       :: FileAccess
+    integer, optional, intent(in) :: hdfVersion
     integer                       :: mls_sfstart
     integer                       :: returnStatus
     integer                       :: nameLength
@@ -814,12 +819,13 @@ contains
 
   ! This function acts as a wrapper to allow hdf5 or hdf4 routines to be called
 
-  function mls_sfend(sdid)
+  function mls_sfend(sdid, hdfVersion)
 
     ! Arguments
 
     integer, intent(IN)       :: sdid  
     integer :: mls_sfend            
+    integer, optional, intent(in) :: hdfVersion
 
     integer, external :: PGS_MET_SFend
 
@@ -874,6 +880,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 1.3  2002/01/23 00:54:10  pwagner
+! Added mls_hdf_version function
+!
 ! Revision 1.2  2002/01/18 23:55:49  pwagner
 ! Various strategems to try writing metadata; all fail
 !
