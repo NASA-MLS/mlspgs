@@ -63,6 +63,13 @@ module HDFEOS               ! F90 interface to HDF-EOS.
       character (len=*), intent(in) :: FILENAME
       integer, intent(in) :: ACCESS_MODE
     end function SWOPEN
+
+    integer function SWINQSWATH (FILENAME,SWATHLIST,STRBUFSIZE)
+      character (len=*), intent(in) :: FILENAME
+      character (len=*), intent(out) :: SWATHLIST
+      integer, intent(out):: STRBUFSIZE
+    end function SWINQSWATH
+
   end interface
 
 !====================
@@ -71,6 +78,9 @@ end module HDFEOS
 
 !
 ! $Log$
+! Revision 2.1  2000/09/13 16:28:49  pumphrey
+! HCP added SWINQSWATH
+!
 ! Revision 2.0  2000/09/05 17:41:06  dcuddy
 ! Change revision to 2.0
 !
