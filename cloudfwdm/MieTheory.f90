@@ -7,7 +7,8 @@ module MieTheory
 ! MODULE TO COMPUTE MIE EFFICIENCIES
 ! -------------------------------------------------------------------------
 
-        use MLSCommon, only: r8   
+        use MLSCommon, only: r8
+        use RefractiveIndex, only: UKSUB, UKISUB
 	implicit none
 
         Private

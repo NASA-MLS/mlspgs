@@ -1,15 +1,53 @@
-!******************************************************************
-!* COMPLEX REFRACTIVE INDEX OF WATER DROPS AND ICE-PARTICLES      * 
-!*  valid for freq=1-1000 GHz
-!	taken from Liebe (1989) formulation
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+module RefractiveIndex
+
+!==================================================================
+! COMPUTE COMPLEX REFRACTIVE INDEX OF WATER DROPS AND ICE-PARTICLES       
+!
 !* WI ---- 'W' OR 'I' ( WATER CASE OR ICE CASE )      ++ INPUT    *  
 !* T  ---- TEMPERATURE IN  K                          ++ INPUT    *  
 !* F  ---- FREQUENCY  IN  GHZ                         ++ INPUT    *
 !* E  ---- REFRACTIVE INDEX (E=M**2)  ++ OUTPUT                   *  
-!******************************************************************
-!                                                                        
+!==================================================================
+
+         use MLSCommon, only: r8
+ 	 implicit none
+
+         Private :: COMX
+         Public :: UKSUB, UKISUB
+
+ !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm =                          &
+    "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName=                       &
+    "$RCSfile$"
+ !---------------------------------------------------------------------------
+      
+contains
+
+         SUBROUTINE UKSUB(F,T,M)
+         !-----------------------
+         real(r8) :: F, T
+         COMPLEX(r8) :: E,M
+         CALL COMX('W',T,F,E)
+         M=SQRT(E)
+	 
+	 END SUBROUTINE UKSUB
+
+         SUBROUTINE UKISUB(F,T,M)
+         ! ----------------------
+         real(r8) :: F, T
+         COMPLEX(r8) :: E, M
+         CALL COMX('I',T,F,E)
+         M=SQRT(E)
+
+	 END SUBROUTINE UKISUB
+
           subroutine comx(wi,t,f,e) 
-          use MLSCommon, only: r8
+
           complex(r8) :: e
           character*1 wi
           real(r8) :: t, f, th, fp, fs, e0, e1, e2, x, y
@@ -73,26 +111,8 @@
         e=x*(1.0,0.0)+y*(0.0,-1.0)
         return
 
-        END
-!...
-         SUBROUTINE UKSUB(F,T,M)
-         use MLSCommon, only: r8
-         real(r8) :: F, T
-         COMPLEX(r8) :: E,M
-         CALL COMX('W',T,F,E)
-         M=SQRT(E)
-!         write(33,*)m,f
-	 RETURN
-	 END
-!...
-         SUBROUTINE UKISUB(F,T,M)
-         use MLSCommon, only: r8
-         real(r8) :: F, T
-         COMPLEX(r8) :: E, M
-         CALL COMX('I',T,F,E)
-         M=SQRT(E)
-!         write(43,*)m,f
-	 RETURN
-	 END
+        END subroutine comx
 
-! $Log: refractive.f90,v      
+end module RefractiveIndex
+
+! $Log: RefractiveIndex.f90,v      
