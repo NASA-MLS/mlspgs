@@ -467,6 +467,9 @@ contains
           if ( .not. got(f_jacobian) ) call destroyMatrix ( jacobian )
           if ( .not. got(f_outputCovariance) ) &
             & call destroyMatrix ( outputCovariance%m )
+        else
+          call MLSMessage ( MLSMSG_Error, moduleName, &
+            & "No retrieval done -- error in configuration" )
         end if
         if ( got(f_fwdModelOut) ) then
           call copyVector ( fwdModelOut, v(f) )
@@ -2807,6 +2810,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.148  2002/07/02 01:38:06  vsnyder
+! Quit if a a retrieve can't be done due to L2CF errors
+!
 ! Revision 2.147  2002/07/01 23:43:17  vsnyder
 ! Plug some memory leaks
 !
