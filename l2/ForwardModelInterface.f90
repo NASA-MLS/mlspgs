@@ -352,7 +352,7 @@ contains
   ! subroutine ForwardModel ( ForwardModelConfig, FwdModelExtra, FwdModelIn, &
   !   &                       Jacobian, RowBlock, FwdModelOut )
   subroutine ForwardModel ( ForwardModelConfig, FwdModelExtra, FwdModelIn, &
-    &                       Jacobian, RowBlock, FwdModelOut, FMI, TFMI )
+    &                       Jacobian, RowBlock, FwdModelOut, FMI, TFMI)
 
     use GL6P, only: NG
     use MLSCommon, only: I4, R4, R8
@@ -691,7 +691,7 @@ contains
       &     tan_hts,no_tan_hts,FMI%n_sps,             &
       &     z_path,h_path,t_path,       &
       &     phi_path,n_path,dhdz_path,eta_phi,temp%template%noInstances,        &
-      &     temp%template%phi(1,:)*degToRad,spsfunc_path,TFMI%is_f_log,noMAFs,Ier)
+      &     temp%template%phi(1,:)*degToRad,spsfunc_path,noMAFs,Ier)
     if(ier /= 0) goto 99
 
     ! The first part of the forward model dealt with the chunks as a whole. 
@@ -938,8 +938,8 @@ contains
             if ( forwardModelConfig%do_freq_avg) then
               do i = 1, noUsedChannels
                 ch = usedChannels(i)
-                do instance = 1, TFMI%no_phi_f(j)
-                  do surface = 1, TFMI%no_coeffs_f(j)
+                do instance = 1, f%template%noInstances
+                  do surface = 1, f%template%noSurfs
                     toAverage => k_atmos_frq(specie)%values(1:noFreqs,surface,instance)
                     call Freq_Avg(frequencies,centerFreq+sense*FMI%F_grid_filter(:,i), &
                       & FMI%Filter_func(:,i), real(toAverage, r8), &
@@ -1017,9 +1017,12 @@ contains
         endif
         if(ForwardModelConfig%atmos_der) then
           do m = 1, FMI%n_sps
+            f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+              & quantityType=l_vmr, molecule=forwardModelConfig%molecules(specie))
+
             if(TFMI%atmospheric(m)%der_calc(FMI%band)) then
-              k = TFMI%no_phi_f(m)
-              n = TFMI%no_coeffs_f(m)
+              k = f%template%noInstances
+              n = f%template%noSurfs
               k_atmos(i,no_tan_hts,1:n,1:k,m)=k_atmos(i,no_tan_hts-1,1:n,1:k,m)
             endif
           end do
@@ -1354,6 +1357,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.56  2001/03/30 00:07:36  livesey
+! Removed more FMC/TFMI stuff
+!
 ! Revision 2.55  2001/03/29 23:56:49  livesey
 ! Added phi Window
 !
