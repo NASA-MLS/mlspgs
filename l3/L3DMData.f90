@@ -39,9 +39,18 @@ MODULE L3DMData
 
 ! Parameters
 
+   CHARACTER (LEN=*), PARAMETER :: TAI2A_ERR = 'Error converting time from &
+                                               &TAI to UTC.'
+
+   INTEGER, PARAMETER :: CCSDS_LEN = 27
+   INTEGER, PARAMETER :: CCSDSB_LEN = 25
+   INTEGER, PARAMETER :: INVENTORYMETADATA = 2
+   INTEGER, PARAMETER :: maxNumGrids = 100
+   INTEGER, PARAMETER :: maxWindow = 30
+
 ! This data type is used to store the l3 daily map data.
 
-  TYPE L3DMData_T
+   TYPE L3DMData_T
 
      CHARACTER (LEN=L2GPNameLen) :: name	! name for the output quantity
 
@@ -420,44 +429,46 @@ CONTAINS
    END SUBROUTINE OutputGrids
 !----------------------------
 
-!---------------------------------------------------------------------
-   SUBROUTINE WriteMetaL3DM (l3File, gridName, mlspcf_mcf, l3dm, date)
-!---------------------------------------------------------------------
+!----------------------------------------------------------------------------
+   SUBROUTINE WriteMetaL3DM (l3File, mlspcf_mcf, numGrids, indx, l3dm, timeA)
+!----------------------------------------------------------------------------
 
 ! Brief description of subroutine
 ! This routine writes the metadata for an l3dm file.
 
 ! Arguments
 
-      CHARACTER (LEN=*), INTENT(IN) :: gridName, l3File
+      CHARACTER (LEN=*), INTENT(IN) :: l3File
 
       INTEGER, INTENT(IN) :: mlspcf_mcf
 
+      INTEGER, INTENT(IN) :: numGrids
+
+      INTEGER, INTENT(IN) :: indx(:)
+
       TYPE (L3DMData_T), INTENT(IN) :: l3dm(:)
 
-      CHARACTER (LEN=*), INTENT(OUT) :: date
+      CHARACTER (LEN=CCSDS_LEN), INTENT(IN) :: timeA 
 
 ! Parameters
 
-      INTEGER, PARAMETER :: INVENTORYMETADATA = 2
-
 ! Functions
 
-      INTEGER :: pgs_met_init, pgs_met_remove, pgs_met_setAttr_d
-      INTEGER :: pgs_met_setAttr_s, pgs_met_write
+      INTEGER, EXTERNAL :: pgs_met_init, pgs_met_remove, pgs_met_setAttr_d
+      INTEGER, EXTERNAL :: pgs_met_setAttr_s, pgs_met_write
 
 ! Variables
 
-      CHARACTER (LEN=25) :: time
+      CHARACTER (LEN=10) :: date
+      CHARACTER (LEN=15) :: time
       CHARACTER (LEN=21) :: sval
-      CHARACTER (LEN=27) :: timeUTC
       CHARACTER (LEN=32) :: mnemonic
       CHARACTER (LEN=480) :: msg, msr
       CHARACTER (LEN=PGSd_MET_GROUP_NAME_L) :: groups(PGSd_MET_NUM_OF_GROUPS)
 
-      INTEGER :: allGrids, hdfReturn, i, result, returnStatus, sdid
+      INTEGER :: allGrids, hdfReturn, i, result, sdid
 
-      REAL(r8) :: dval, maxGrid, maxLat, minGrid, minLat, timeTAI
+      REAL(r8) :: dval, maxGrid, maxLat, minGrid, minLat
 
 ! Initialize the MCF file
 
@@ -478,24 +489,15 @@ CONTAINS
       maxLat = 0.0
       minLat = 0.0
 
-      DO i = 1, allGrids
-         IF ( INDEX(l3dm(i)%name,TRIM(gridName)) == 1 ) THEN
-            timeTAI = l3dm(i)%time
-            maxGrid = MAXVAL(l3dm(i)%latitude)
-            minGrid = MINVAL(l3dm(i)%latitude)
-            maxLat = MAX(maxGrid,maxLat)
-            minLat = MIN(minGrid,minLat)
-         ENDIF
+      DO i = 1, numGrids
+         maxGrid = MAXVAL(l3dm(indx(i))%latitude)
+         minGrid = MINVAL(l3dm(indx(i))%latitude)
+         maxLat = MAX(maxGrid,maxLat)
+         minLat = MIN(minGrid,minLat)
       ENDDO
 
-! Convert date/time to CCSDS format
-
-      returnStatus = Pgs_td_taiToUTC(timeTAI, timeUTC)
-      IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, &
-                      ModuleName,'Error converting file time from TAI to UTC.')
-
-      date = timeUTC(1:10)
-      time = timeUTC(12:26)
+      date = timeA(1:10)
+      time = timeA(12:26)
 
 ! Set PGE values
 
@@ -747,3 +749,6 @@ END MODULE L3DMData
 !==================
 
 !# $Log$
+!# Revision 1.1  2000/10/05 19:11:07  nakamura
+!# Module for the L3DM data type.
+!#
