@@ -54,7 +54,8 @@ module INIT_TABLES_MODULE
 ! Field indices:
   integer, parameter :: F_APRIORI             = last_Signal_Field + 1
   integer, parameter :: F_APRIORISCALE        = f_apriori + 1
-  integer, parameter :: F_AUTOFILL            = f_aprioriScale + 1
+  integer, parameter :: F_ATMOS_DER           = f_aprioriScale + 1
+  integer, parameter :: F_AUTOFILL            = f_atmos_der + 1
   integer, parameter :: F_COLUMNS             = f_autofill + 1
   integer, parameter :: F_COLUMNSCALE         = f_columns + 1
   integer, parameter :: F_COMMENT             = f_columnscale + 1
@@ -65,9 +66,10 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_CRITERIA            = f_covariance + 1
   integer, parameter :: F_DIAGONAL            = f_criteria + 1
   integer, parameter :: F_DIAGONALOUT         = f_diagonal + 1
-  integer, parameter :: F_EXPLICITVALUES      = f_diagonalOut + 1
-  integer, parameter :: F_EXTRAHEIGHTS        = f_explicitValues + 1
-  integer, parameter :: F_FIELD               = f_extraHeights + 1
+  integer, parameter :: F_DO_CONV             = f_diagonalOut + 1
+  integer, parameter :: F_DO_FREQ_AVG         = f_do_conv + 1
+  integer, parameter :: F_EXPLICITVALUES      = f_do_freq_avg + 1
+  integer, parameter :: F_FIELD               = f_explicitValues + 1
   integer, parameter :: F_FILE                = f_field + 1
   integer, parameter :: F_FRACTION            = f_file + 1
   integer, parameter :: F_FORWARDMODEL        = f_fraction + 1
@@ -115,11 +117,13 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_SOURCEL2GP          = f_sourcel2aux + 1
   integer, parameter :: F_SOURCEQUANTITY      = f_sourcel2gp + 1
   integer, parameter :: F_SPECIES             = f_sourcequantity + 1
-  integer, parameter :: F_SPREAD              = f_species + 1
+  integer, parameter :: F_SPECT_DER           = f_species + 1
+  integer, parameter :: F_SPREAD              = f_spect_der + 1
   integer, parameter :: F_STATE               = f_spread + 1
   integer, parameter :: F_STOP                = f_state + 1
   integer, parameter :: F_SWATH               = f_stop + 1
-  integer, parameter :: F_TEMPERATUREQUANTITY = f_swath + 1
+  integer, parameter :: F_TEMP_DER            = f_swath + 1
+  integer, parameter :: F_TEMPERATUREQUANTITY = f_temp_der + 1
   integer, parameter :: F_TEMPLATE            = f_temperaturequantity + 1
   integer, parameter :: F_TEST                = f_template + 1
   integer, parameter :: F_TNGTECI             = f_test + 1
@@ -134,13 +138,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_WEIGHT              = f_vGrid + 1
 ! integer, parameter :: FIELD_LAST = f_weight
   !??? Fields from here may be temporary for driving the forward model
-  integer, parameter :: F_BILL                = f_weight + 1  !???
-  integer, parameter :: F_ATMOS_DER           = f_bill + 1    !???
-  integer, parameter :: F_DO_CONV             = f_atmos_der+1 !???
-  integer, parameter :: F_DO_FREQ_AVG         = f_do_conv + 1 !???
-  integer, parameter :: F_SPECT_DER           = f_do_freq_avg+1 !???
-  integer, parameter :: F_TEMP_DER            = f_spect_der + 1 !???
-  integer, parameter :: F_ZVI                 = f_temp_der+1  !???
+  integer, parameter :: F_ZVI                 = f_weight + 1   !???
   integer, parameter :: FIELD_LAST = f_zvi
   integer :: FIELD_INDICES(field_first:field_last)
 ! Enumeration literals (there are more in INTRINSIC and MOLECULES):
@@ -340,6 +338,7 @@ contains ! =====     Public procedures     =============================
     ! put in by init_MLSSignals.
     field_indices(f_apriori) =             add_ident ( 'apriori' )
     field_indices(f_aprioriscale) =        add_ident ( 'aprioriScale' )
+    field_indices(f_atmos_der) =           add_ident ( 'atmos_der' )
     field_indices(f_autofill) =            add_ident ( 'autofill' )
     field_indices(f_columns) =             add_ident ( 'columns' )
     field_indices(f_columnscale) =         add_ident ( 'columnScale' )
@@ -351,8 +350,9 @@ contains ! =====     Public procedures     =============================
     field_indices(f_criteria) =            add_ident ( 'criteria' )
     field_indices(f_diagonal) =            add_ident ( 'diagonal' )
     field_indices(f_diagonalOut) =         add_ident ( 'diagonalOut' )
+    field_indices(f_do_conv) =             add_ident ( 'do_conv' )
+    field_indices(f_do_freq_avg) =         add_ident ( 'do_freq_avg' )
     field_indices(f_explicitValues) =      add_ident ( 'explicitValues' )
-    field_indices(f_extraHeights) =        add_ident ( 'extraHeights' )
     field_indices(f_field) =               add_ident ( 'field' )
     field_indices(f_file) =                add_ident ( 'file' )
     field_indices(f_fraction) =            add_ident ( 'fraction' )
@@ -401,10 +401,12 @@ contains ! =====     Public procedures     =============================
     field_indices(f_sourcel2gp) =          add_ident ( 'sourceL2GP' )
     field_indices(f_sourcequantity) =      add_ident ( 'sourceQuantity' )
     field_indices(f_species) =             add_ident ( 'species' )
+    field_indices(f_spect_der) =           add_ident ( 'spect_der' )
     field_indices(f_spread) =              add_ident ( 'spread' )
     field_indices(f_state) =               add_ident ( 'state' )
     field_indices(f_stop) =                add_ident ( 'stop' )
     field_indices(f_swath) =               add_ident ( 'swath' )
+    field_indices(f_temp_der) =            add_ident ( 'temp_der' )
     field_indices(f_temperaturequantity) = add_ident ( 'temperatureQuantity' )
     field_indices(f_tngtECI) =             add_ident ( 'tngtECI' )
     field_indices(f_tolerancea) =          add_ident ( 'Atolerance' )
@@ -418,12 +420,6 @@ contains ! =====     Public procedures     =============================
     field_indices(f_values) =              add_ident ( 'values' )
     field_indices(f_vGrid) =               add_ident ( 'vgrid' )
     field_indices(f_weight) =              add_ident ( 'weight' )
-    field_indices(f_bill) =                add_ident ( 'bill' )        !???
-    field_indices(f_atmos_der) =           add_ident ( 'atmos_der' )   !???
-    field_indices(f_do_conv) =             add_ident ( 'conv' )        !???
-    field_indices(f_do_freq_avg) =         add_ident ( 'freq_avg' )    !???
-    field_indices(f_spect_der) =           add_ident ( 'spect_der' )   !???
-    field_indices(f_temp_der) =            add_ident ( 'temp_der' )    !???
     field_indices(f_zvi) =                 add_ident ( 'zvi' )         !???
     ! Put parameter names into the symbol table:
     parm_indices(p_allow_climatology_overloads) = &
@@ -699,8 +695,9 @@ contains ! =====     Public procedures     =============================
              begin, f+f_spect_der, t+t_boolean, n+n_field_type, &
              begin, f+f_temp_der, t+t_boolean, n+n_field_type, &
              np+n_spec_def, &      
-      begin, s+s_forwardModelGlobal, &                                !???
-             ndp+n_spec_def /) )                                      !???
+      begin, s+s_forwardModelGlobal, &                                 !???
+             begin, f+f_pointingGrids, t+t_string, n+n_field_type, &
+             nadp+n_spec_def /) )                                      !???
     call make_tree ( (/ &
       begin, s+s_retrieve, & ! Must be AFTER s_vector and s_matrix
              begin, f+f_apriori, s+s_vector, n+n_field_spec, &
@@ -737,7 +734,6 @@ contains ! =====     Public procedures     =============================
              nd+n_spec_def /) )
     call make_tree ( (/ &                                    !???
       begin, s+s_l2load, &                                   !???
-             begin, f+f_bill, t+t_string, n+n_field_type, &  !???
              begin, f+f_zvi, t+t_string, n+n_field_type, &   !???
              nadp+n_spec_def /) )                            !???
     ! Define the relations between sections and specs.  These are
@@ -790,6 +786,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.54  2001/03/17 03:24:23  vsnyder
+! Work on forwardModelGlobalSetup
+!
 ! Revision 2.53  2001/03/17 02:24:45  livesey
 ! Added logBasis
 !
