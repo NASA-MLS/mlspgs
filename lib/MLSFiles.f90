@@ -870,7 +870,6 @@ contains
     integer, parameter :: FH_ON_ERROR=-99
     integer, parameter :: DEFAULTRECLEN=0
     integer, parameter :: KEYWORDLEN=12			! Max length of keywords in OPEN(...)
-    character (LEN=MAXFILENAMELENGTH) :: myName
     integer(i4) :: myPC
     integer                       :: version, returnStatus
     logical       :: tiedup
@@ -1019,11 +1018,11 @@ contains
         call output( 'form ' // form, advance='yes')
         call output( 'position ' // position, advance='yes')
         call output( 'status ' // status, advance='yes')
-        call output( 'file ' // trim(myName), advance='yes')
+        call output( 'file ' // trim(MLSFile%Name), advance='yes')
         call output( 'iostat ', advance='no')
         call output(  ErrType, advance='yes')
         call io_error('io error in MLSFiles: mls_io_gen_openF' // &
-          & ' Fortran open', ErrType, trim(myName))
+          & ' Fortran open', ErrType, trim(MLSFile%Name))
       else
         MLSFile%File_Id = unit
       endif
@@ -1427,13 +1426,13 @@ contains
     ! Arguments
 
     integer(i4), intent(IN)       :: FileAccesshdf4
-    integer(i4)                   :: FileAccesshdf5
+    integer(kind(H5F_ACC_EXCL_F)) :: FileAccesshdf5
     
     ! begin
     select case (FileAccesshdf4)
 
     case(DFACC_CREATE)
-      FileAccesshdf5 = H5F_ACC_TRUNC_F
+      FileAccesshdf5 = H5F_ACC_EXCL_F  ! H5F_ACC_TRUNC_F
 
     case(DFACC_READ)    ! also , DFACC_RDONLY
       FileAccesshdf5 = H5F_ACC_RDONLY_F
@@ -1490,26 +1489,30 @@ contains
   ! implemented this will probably need to take an added arg:
   ! the logical addingMetadata
 
-! function mls_sfstart(FileName, FileAccess, addingMetadata, hdfVersion)
-  function mls_sfstart(FileName, FileAccess, hdfVersion)
+  function mls_sfstart(FileName, FileAccess, hdfVersion, addingmetadata)
 
     ! Arguments
 
     character (len=*), intent(in) :: FILENAME
     integer(i4), intent(IN)       :: FileAccess ! (one of the hdf4 types)
-!   logical, intent(IN)           :: addingMetadata
     integer, optional, intent(in) :: hdfVersion
+    logical, optional, intent(in) :: addingmetadata
+    ! Local variables
     integer                       :: mls_sfstart
     integer                       :: returnStatus
     integer                       :: access_prp_default
     integer                       :: myhdfVersion
     integer                       :: myAccess
+    logical                       :: myaddingmetadata
     
     integer, parameter :: h5p_default_f = 0
     integer, external :: PGS_MET_SFstart
     logical, parameter :: DEBUG = .false.
 
     ! begin
+   returnStatus = 0
+   myaddingmetadata = .false.
+   if ( present (addingmetadata) ) myaddingmetadata = addingmetadata
    if ( DEBUG ) then
      call output ('Entering mls_sfstart with args ', advance='no')
      call output ('File name: ', advance='no')
@@ -1517,9 +1520,14 @@ contains
      call blanks (2)
      call output ('FileAccess: ', advance='no')
      call output (FileAccess, advance='no')
+     if ( present(hdfVersion) ) then
+       call blanks (2)
+       call output ('hdfVersion: ', advance='no')
+       call output (hdfVersion, advance='no')
+     endif
      call blanks (2)
-     call output ('hdfVersion: ', advance='no')
-     call output (hdfVersion, advance='yes')
+     call output ('adding meta data?: ', advance='no')
+     call output (myaddingmetadata, advance='yes')
    endif
    if ( present(hdfVersion) ) then
      myhdfVersion = hdfVersion
@@ -1533,7 +1541,8 @@ contains
      mls_sfstart = WRONGHDFVERSION
      return
    endif
-   if ( PGS_MET4MLS_SF ) then
+!   if ( PGS_MET4MLS_SF ) then
+   if ( myaddingmetadata ) then
      if ( .not. HDF5_ACC_TYPES_TO_MET ) then
        myAccess = he2he5_fileaccess(FileAccess)
      elseif ( FileAccess == DFACC_RDWR ) then
@@ -1547,15 +1556,44 @@ contains
      endif
      returnStatus = PGS_MET_SFstart(trim(FileName), myAccess, mls_sfstart)
    else
-     access_prp_default = h5p_default_f
-     call h5fopen_f(trim(FileName), he2he5_fileaccess(FileAccess), &
-      & mls_sfstart, returnStatus, access_prp_default)
+     access_prp_default = h5p_default_f    ! Can't figure out what this means
+! >      print *, 'About to call h5fopen_f'
+! >      print *, 'FileAccess: ', FileAccess
+! >      print *, 'DFACC_CREATE: ', DFACC_CREATE
+! >      print *, 'DFACC_RDWR: ', DFACC_RDWR
+! >      print *, 'DFACC_RDONLY: ', DFACC_RDONLY
+! >      print *, 'hdf2hdf5_fileaccess(FileAccess): ', hdf2hdf5_fileaccess(FileAccess)
+! >      print *, 'H5F_ACC_RDWR_F: ', H5F_ACC_RDWR_F
+! >      print *, 'H5F_ACC_EXCL_F: ', H5F_ACC_EXCL_F
+! >      print *, 'H5F_ACC_RDONLY_F: ', H5F_ACC_RDONLY_F
+! >      print *, 'H5F_ACC_TRUNC_F: ', H5F_ACC_TRUNC_F
+     ! call h5fopen_f(trim(FileName), hdf2hdf5_fileaccess(FileAccess), &
+     ! & mls_sfstart, returnStatus)
+!      & mls_sfstart, returnStatus, access_prp_default)  ! so abandoning it
+     select case (FileAccess)
+     case (DFACC_CREATE)
+       call h5fcreate_f(trim(filename), H5F_ACC_EXCL_F, mls_sfstart, returnStatus)
+       ! call mls_openFile(filename, 'create', mls_sfstart, HDFVERSION_5)
+     case (DFACC_RDWR)
+       call h5fopen_f(trim(filename), H5F_ACC_RDWR_F, mls_sfstart, returnStatus)
+       ! call mls_openFile(filename, 'update', mls_sfstart, HDFVERSION_5)
+     case (DFACC_RDONLY)
+       call h5fopen_f(trim(filename), H5F_ACC_RDONLY_F, mls_sfstart, returnStatus)
+       ! call mls_openFile(filename, 'readonly', mls_sfstart, HDFVERSION_5)
+     case default
+       call h5fopen_f(trim(filename), H5F_ACC_RDONLY_F, mls_sfstart, returnStatus)
+       ! call mls_openFile(filename, 'readonly', mls_sfstart, HDFVERSION_5)
+     end select
    endif
-     if (returnStatus /= 0 ) then
-       call output ('Try again--PGS_MET_SFstart still unhappy; returns ')
-       call output (returnStatus, advance='yes')
-       mls_sfstart = -1
-      endif
+   if ( returnStatus /= 0 .and. myAddingMetaData) then                                            
+     call output ('Try again--PGS_MET_SFstart still unhappy; returns ')    
+     call output (returnStatus, advance='yes')                             
+     mls_sfstart = -1                                                      
+   elseif ( returnStatus /= 0) then                                            
+     call output ('Try again--h5fopen_f still unhappy; returns ')    
+     call output (returnStatus, advance='yes')                             
+     mls_sfstart = -1                                                      
+   endif                                                                  
    if ( DEBUG ) then
      call output ('Returning from mls_sfstart an sdid: ', advance='no')
      call output (mls_sfstart, advance='yes')
@@ -1573,25 +1611,30 @@ contains
   ! implemented this will probably need to take an added arg:
   ! the logical addingMetadata
 
-  function mls_sfend(sdid, hdfVersion)
-! function mls_sfend(sdid, addingMetadata, hdfVersion)
+  function mls_sfend(sdid, hdfVersion, addingMetadata)
 
     ! Arguments
 
     integer, intent(IN)       :: sdid  
     integer :: mls_sfend            
-!   logical, intent(IN)           :: addingMetadata
     integer, optional, intent(in) :: hdfVersion
-
+    logical, optional, intent(in) :: addingmetadata
+    ! Local variables
+    logical                       :: myaddingmetadata
     integer                       :: myhdfVersion
     integer, external :: PGS_MET_SFend
     logical, parameter :: DEBUG = .false.
 
     ! begin
+   myaddingmetadata = .false.
+   if ( present (addingmetadata) ) myaddingmetadata = addingmetadata
    if ( DEBUG ) then
      call output ('Entering mls_sfend with args ', advance='no')
      call output ('sdid: ', advance='no')
-     call output (sdid, advance='yes')
+     call output (sdid, advance='no')
+     call blanks (2)
+     call output ('adding meta data?: ', advance='no')
+     call output (myaddingmetadata, advance='yes')
    endif
    if ( present(hdfVersion) ) then
      myhdfVersion = hdfVersion
@@ -1606,7 +1649,8 @@ contains
      return
    endif
 !    mls_sfend = h5fclose_c(sdid)
-   if ( PGS_MET4MLS_SF ) then
+!   if ( PGS_MET4MLS_SF ) then
+   if ( myaddingmetadata ) then
      mls_sfend = PGS_MET_SFend(sdid)
    else
      call h5fclose_f(sdid, mls_sfend)
@@ -1729,16 +1773,22 @@ contains
        if (is_hdf5) then 
           call h5fopen_f(trim(filename), H5F_ACC_RDONLY_F, file_id, error)
        endif
+      else           ! same as 'update'
+          is_hdf5 = (DEFAULT_HDFVERSION == HDFVERSION_5) 
+          call h5fis_hdf5_f(trim(filename), is_hdf5, error)
+       if (is_hdf5) then 
+          call h5fopen_f(trim(filename), H5F_ACC_RDWR_F, file_id, error)
+       endif
       endif
     case default
-     if (lowercase(trim(access)) == 'create') then 
-       file_id = mls_sfstart(trim(filename),DFACC_CREATE,hdfVersion)
-     elseif (lowercase(trim(access)) == 'update') then
-       file_id = mls_sfstart(trim(filename),DFACC_RDWR,hdfVersion)
-     elseif (lowercase(trim(access)) == 'readonly') then
-       file_id = mls_sfstart(trim(filename),DFACC_RDONLY,hdfVersion)
-     endif
-     if (file_id .eq. -1) error = file_id 
+! >      if (lowercase(trim(access)) == 'create') then 
+! >        file_id = mls_sfstart(trim(filename),DFACC_CREATE,hdfVersion)
+! >      elseif (lowercase(trim(access)) == 'update') then
+! >        file_id = mls_sfstart(trim(filename),DFACC_RDWR,hdfVersion)
+! >      elseif (lowercase(trim(access)) == 'readonly') then
+! >        file_id = mls_sfstart(trim(filename),DFACC_RDONLY,hdfVersion)
+! >      endif
+! >      if (file_id .eq. -1) error = file_id 
     end select 
 
    if (error /= 0) then 
@@ -1786,6 +1836,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.45  2002/12/06 23:38:57  pwagner
+! mls_sfstart improved with addingMetaData optional arg
+!
 ! Revision 2.44  2002/12/05 19:44:24  pwagner
 ! Moved MLSFile_T from MLSFiles to MLSCommon
 !
