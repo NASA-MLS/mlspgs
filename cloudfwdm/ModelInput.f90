@@ -100,7 +100,7 @@ contains
 
          DO J=1,NH
 
-            CALL LOCATE (HEIGHT,NZ,NH,ZH(J),JM)              
+            CALL LOCATE (HEIGHT,NZ,NZ,ZH(J),JM)              
 
             ! Now we will interpolate things to our new heights
             ! To do this we use the fraction eta : 0 <= eta <= 1
@@ -145,6 +145,9 @@ contains
 end module ModelInput
 
 ! $Log$
+! Revision 1.14  2003/05/14 23:25:36  dwu
+! fix a dimension problem with WC
+!
 ! Revision 1.13  2003/05/07 23:18:40  jonathan
 ! some clean-ups
 !
