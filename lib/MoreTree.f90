@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module MoreTree
@@ -132,13 +132,15 @@ contains ! ====     Public Procedures     ==============================
   end subroutine GetIndexFlagsFromList
 
   ! ------------------------------------------ GetStringIndexFromString ---
-  integer function GetStringIndexFromString ( line )
+  integer function GetStringIndexFromString ( line, caseSensitive )
     use Symbol_Types, only: T_IDENTIFIER
     use Symbol_Table, only: ENTER_TERMINAL
 
     character (len=*), intent(in) :: LINE
+    logical, optional, intent(in) :: CASESENSITIVE
     ! Executable code
-    GetStringIndexFromString = enter_terminal ( trim(line), t_identifier )
+    GetStringIndexFromString = enter_terminal ( trim(line), t_identifier, &
+      & caseSensitive=caseSensitive )
   end function GetStringIndexFromString
 
   ! ------------------------------------------ GetLitIndexFromString ---
@@ -164,6 +166,9 @@ contains ! ====     Public Procedures     ==============================
 end module MoreTree
 
 ! $Log$
+! Revision 2.7  2004/01/22 00:41:40  pwagner
+! GetStringIndexFromString takes optional arg caseSensitive
+!
 ! Revision 2.6  2003/08/16 00:32:13  vsnyder
 ! Push uses down to procedure scope, futzing
 !

@@ -1,4 +1,4 @@
-! Copyright (c 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module MorePVM                          ! Additional PVM stuff
@@ -76,19 +76,22 @@ contains
   end subroutine PVMUnpackLitIndex
 
   ! ------------------------------------------ PVMUnpackStringIndex ---
-  subroutine PVMUnpackStringIndex ( index, info )
+  subroutine PVMUnpackStringIndex ( index, info, outWord )
     use PVMIDL, only: PVMIDLUnpack
     use MoreTree, only: GetStringIndexFromString
     ! Dummy arguments
     integer, intent(out) :: INDEX        ! String index
     integer, intent(out) :: INFO        ! Flag from pvm
+    character (len=*), intent(out), optional :: OUTWORD
     ! Local variables
     character (len=4096) :: WORD
     ! Executable code
     call PVMIDLUnpack ( word, info )
+    ! print *, 'word in PVMUnpackStringIndex: ', trim(word)
+    if ( present(outWord) ) outWord=word
     if ( info == 0 ) then
       if ( len_trim ( word ) > 0 ) then
-        index = GetStringIndexFromString ( trim(word) )
+        index = GetStringIndexFromString ( trim(word), caseSensitive=.true. )
       else
         index = 0
       end if
@@ -102,6 +105,9 @@ contains
 end module MorePVM
 
 ! $Log$
+! Revision 2.7  2004/01/22 00:46:35  pwagner
+! Enforces case sensitivity in PVMUnpackStringIndex; optional outWord from PVMUnpackStringIndex
+!
 ! Revision 2.6  2003/09/15 23:15:28  vsnyder
 ! Remove unused USE for PVMErrorMessage
 !
