@@ -37,8 +37,13 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
      s: seconds (default)
   -t: Trace declaration table construction.
   -v: List the configuration file.
-  The above options can be concatenated after one hyphen,
-  except that -S takes the rest of the option as its "string"
+  -w[p][integer]: Suppress printing identical warnings after integer (e.g. 100)
+        (if p present, don't restart count at each phase) (Missing integer=1)
+     -1: Print every warning without suppression
+      0: Suppress every warning
+      1: Print every warning only once
+  The above options cannot be concatenated after one hyphen,
+  because -S , -R, and -w take the rest of the option as its "string"
   --[n]cat: Do [not] cat the split dgg/dgm directwrite files after run completes
   --check: Just check l2cf and quit
   --chunk <chunk index> Run just the <chunk index> chunk
@@ -128,6 +133,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will not be printed in response to mlsl2 -?)
 
  $Log$
+ Revision 1.38  2005/03/03 00:24:32  pwagner
+ Added -Rs1,s2,.. Removeswitches option
+
  Revision 1.37  2004/08/19 00:09:02  pwagner
  Added crashing options, defaults
 
