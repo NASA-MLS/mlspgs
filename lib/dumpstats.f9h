@@ -12,9 +12,15 @@
       numFill = size(array) - numNonFill
       pctNonFill = numNonFill / ( 0.01 * (numNonFill+numFill) )
       pctFill = 100.0 - pctNonFill
-      if ( present(name) ) call output(trim(name) // ' ', advance='no')
-      call output('Statistics on elements = or != ', advance='no')
-      call output(myFillValue, advance='yes')
+      if ( STATSONONELINE ) then
+        if ( present(name) ) call output(trim(name) // ' ', advance='no')
+        call output('compared to ', advance='no')
+        call output(myFillValue, advance='no')
+      else
+        if ( present(name) ) call output(trim(name) // ' ', advance='no')
+        call output('Statistics on elements = or != ', advance='no')
+        call output(myFillValue, advance='yes')
+      endif
       call output('"!=" ', advance='no')
       call output(numNonFill, advance='no')
       call output('( ', advance='no')
@@ -28,6 +34,9 @@
       return
     endif
 ! $Log$
+! Revision 2.2  2004/06/11 19:05:39  pwagner
+! defaults to dumping statsononeline
+!
 ! Revision 2.1  2004/06/11 00:14:29  pwagner
 ! First commit
 !
