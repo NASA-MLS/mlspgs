@@ -32,7 +32,7 @@ Integer(i4), INTENT(IN) :: si,no_mmaf
 
 Integer(i4), INTENT(OUT) :: Ier, gl_count
 
-Real(r8), INTENT(IN) :: geoc_lat, Zref, Href(:), z_grid(:)
+Real(r8), INTENT(IN) :: geoc_lat(:), Zref, Href(:), z_grid(:)
 
 Real(r8), INTENT(IN) :: t_z_basis(:)
 
@@ -121,7 +121,7 @@ Real(r8) :: h_grid(Size(z_grid)),t_grid(Size(z_grid)),dhdt(Size(t_z_basis))
     j = (h_i + Ng) / Ngp1
     DO l = 1, no_mmaf
       CALL get_h_dhdt(t_coeff(1:,l),t_z_basis,z,Zref,Href(l), &
-           geoc_lat,Reff,G,const,no_t,h,dhdt)
+           geoc_lat(l),Reff,G,const,no_t,h,dhdt)
       h_glgrid(h_i,l) = h
       q = h + Reff
       dhdz_glgrid(h_i,l) = q * q * const * t_glgrid(h_i,l)
@@ -380,6 +380,9 @@ END SUBROUTINE pq_ana
 
 end module HYDROSTATIC_MODEL_M
 ! $Log$
+! Revision 1.11  2001/03/29 02:27:04  zvi
+! *** empty log message ***
+!
 ! Revision 1.10  2001/03/29 02:09:28  zvi
 ! Fix an error
 !
