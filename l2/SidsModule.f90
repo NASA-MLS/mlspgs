@@ -41,6 +41,7 @@ module SidsModule
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 contains
@@ -328,9 +329,16 @@ contains
 
   end subroutine SIDS
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module SidsModule
 
 ! $Log$
+! Revision 2.42  2002/10/08 17:36:23  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.41  2002/09/23 18:04:47  livesey
 ! Got rid of unnecessary timing
 !
