@@ -285,6 +285,7 @@ outer2: do
         grids(pointingGrids(which_pointing_grid)%oneGrid(i)%whichTanPress) = i
       end if
     end do ! i = 1, size(pointingGrids(which_pointing_grid))
+    grids = max( grids , 1)             ! Always return lowest at least
   end subroutine Get_Grids_Near_Tan_Pressures
   
   ! -----------------------------------  Get_Nearest_Tan_Pressure  -----
@@ -315,6 +316,9 @@ outer2: do
 end module PointingGrid_m
 
 ! $Log$
+! Revision 1.5  2001/03/17 19:17:57  vsnyder
+! Destroy database if it exists before reading a new one
+!
 ! Revision 1.4  2001/03/17 02:34:03  vsnyder
 ! Get rid of "ExtraHeights" -- That's related to tan_press, not frq_grid
 !
