@@ -75,7 +75,11 @@ contains ! ====     Public Procedures     ==============================
       if ( me == n_unit ) then
         decl = get_decl(sub_rosa(subtree(2,root)), units_name)
         units = decl%units
-        value(1) = value(1) * decl%value
+        if ( decl%value > 0.0 ) then
+          value(1) = value(1) * decl%value
+        else
+          value(1) = value(1) - decl%value
+        end if
       else
         if ( nsons(root) > 1 ) &
           call expr ( subtree(2,root), units2, value2, type )
@@ -110,6 +114,9 @@ contains ! ====     Public Procedures     ==============================
 end module EXPR_M
 
 ! $Log$
+! Revision 2.2  2001/04/09 20:59:57  vsnyder
+! Subtract negative scale factors instead of multiplying
+!
 ! Revision 2.1  2000/10/11 18:57:28  vsnyder
 ! Move from lib/cf_parser to lib; insert copyright notice
 !
