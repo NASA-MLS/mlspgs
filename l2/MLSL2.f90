@@ -137,7 +137,7 @@ program MLSL2
 
 ! Initialize the lexer, symbol table, and tree checker's tables:
 !  ( Under some circumstances, you may need to increase these )
-  call init_lexer ( n_chars=80000, n_symbols=4000, hash_table_size=7841 )
+  call init_lexer ( n_chars=80000, n_symbols=4000, hash_table_size=50207 )
   call allocate_decl ( ndecls=8000 )
   call allocate_tree ( n_tree=120000 )
   call init_tables
@@ -666,6 +666,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.85  2002/10/30 00:56:51  livesey
+! Increased size of hash table
+!
 ! Revision 2.84  2002/10/08 17:41:20  livesey
 ! Now passes chunk argument to slaves if present.  Needed for
 ! fwmParallel mode.
