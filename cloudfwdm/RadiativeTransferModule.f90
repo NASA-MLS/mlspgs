@@ -9,7 +9,8 @@ module RadiativeTransferModule
 
       use Blackbody, only: planck
       use Interpack, only: LOCATE
-      use MLSCommon, only: r8      
+      use MLSCommon, only: r8 
+      use Units     
       IMPLICIT NONE
       Private
       Public :: RADXFER
@@ -43,9 +44,7 @@ contains
 
       use MLSCommon, only: r8
       IMPLICIT NONE
-      REAL :: PI
       REAL(r8) :: RE
-      PARAMETER (PI=3.1415926)
 
       INTEGER :: L,NT,NU,NUA,N
       
@@ -103,8 +102,8 @@ contains
 !     DETERMINE NO. OF ITERATIONS
 !------------------------------------------------
       ITS0=1
-      DELTA=0.01
-      jj0=1.e-9
+      DELTA=0.01_r8
+      jj0=1.e-9_r8
 
       DO K=1,L
          CHK(K)=0._r8
@@ -118,10 +117,6 @@ contains
 !     CALCULATE EQUIVALENT U FOR EACH TANGENT HEIGHT
 !----------------------------------------------------
 
-
-!      PRINT*,(ZT(I),I=1,NT)
-!      print*,L
-!      stop
 
       DO I=1,NT
          LMIN(I)=1
@@ -139,11 +134,8 @@ contains
                D1=SQRT((TGT+RE)**2-(ZT(I)+RE)**2)
                UAVE(I,K)=(YZ(K+1)-YZ(K))/(D2-D1)          !
             ELSE
-!              print*,'YZ(K+1), K+1', YZ(K+1), K+1
-!              print*,'ZT(I), I', ZT(I),I
                DY=SQRT(YZ(K+1)-ZT(I))-SQRT(TGT-ZT(I))
                UAVE(I,K)=(YZ(K+1)-YZ(K))/SQRT(2*RE+TGT+ZT(I))/DY
-
             ENDIF
 
          ENDDO
@@ -193,15 +185,16 @@ contains
                      DO J=1,NUA
                         K1=K
                         IF(THETAI(IP,IH,J).LT.PI/2) K1=K-1
+                          IF(K1 .EQ. 0) K1 = 1
                         IF(THETAI(IP,IH,J).GT.PI/2) K1=K+1
                         CALL LOCATE(THETA,NU,NU,THETAI(IP,IH,J),JM)
                         WK=(TB(JM+1,K1)*(THETAI(IP,IH,J)-THETA(JM))+  &
      &                     TB(JM,K1)*(THETA(JM+1)-THETAI(IP,IH,J)))/  &
      &                     (THETA(JM+1)-THETA(JM))
-                        TAVG = TAVG + WK*(PHI(2)-PHI(1))/2./PI
+                        TAVG = TAVG + WK*(PHI(2)-PHI(1))/2._r8/PI
                      ENDDO
                      TSCAT(ISPI,IP,K)=TSCAT(ISPI,IP,K)+               &
-     &                                2.*PHH(ISPI,IH,K)*TAVG*DU(IH)
+     &                                2._r8*PHH(ISPI,IH,K)*TAVG*DU(IH)
                   ENDDO
                ELSE
                  TSCAT(ISPI,IP,K)=0._r8         !CLEAR SKY
@@ -305,10 +298,10 @@ contains
             WW0=WW0+W0(ISPI,K1)
          END DO
 
-         tsource=(1-WW0)*TEMP(K1)+WK 
+         tsource=(1._r8-WW0)*TEMP(K1)+WK 
 
          IF (ICON .eq. 3) THEN
-            tsource=( TEMP(K1)+TEMP(K1+1) )/2. ! NO CLOUD AFTER TANGENT POINT
+            tsource=( TEMP(K1)+TEMP(K1+1) )/2._r8 ! NO CLOUD AFTER TANGENT POINT
          ENDIF
 
          TT(ITT,K1)=TT(ITT,K1+1)*EXP(-TAU(K1)/UU)+  &
@@ -348,7 +341,7 @@ contains
             WW0=WW0+W0(ISPI,K)
          END DO
 
-         tsource= (1-WW0)*TEMP(K)+WK
+         tsource= (1._r8-WW0)*TEMP(K)+WK
 
          TT(ITT,K+1)=TT(ITT,K)*EXP(-TAU(K)/UU)+          &
      &                (1._r8-EXP(-TAU(K)/UU))*tsource
@@ -357,7 +350,7 @@ contains
   
 !---------------------------------------------------------------------
       DO K=1,L
-	TT(NT+1,K)=TB(NU,K)              ! OUTPUT ZENITH LOOKING TB 
+   	TT(NT+1,K)=TB(NU,K)              ! OUTPUT ZENITH LOOKING TB 
       ENDDO
 
       do i=1,nt+1
@@ -370,6 +363,9 @@ contains
 end module RadiativeTransferModule
 
 ! $Log$
+! Revision 1.5  2001/10/05 16:03:02  dwu
+! *** empty log message ***
+!
 ! Revision 1.4  2001/09/21 15:51:37  jonathan
 ! modified F95 version
 !
