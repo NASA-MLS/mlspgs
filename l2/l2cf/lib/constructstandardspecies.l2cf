@@ -100,12 +100,17 @@ begin Construct
   !define(constructDT,{DTband$1: Quantity, $
     type=cloudInducedRadiance, signal=!signal($1)!nl})
   !forall(constructDT,!allBands)
-  !define(constructSENS,{SENSband$1: Quantity, $
+  !define(allDTs,{!makelist({DTBand},{},!allBands)})
+
+  !define(constructSens,{sensBand$1: Quantity, $
     type=cloudRADSensitivity, signal=!signal($1)!nl})
-  !forall(constructSENS,!allBands)
+  !forall(constructSens,!allBands)
+  !define(allSens,{!makelist({sensBand},{},!allBands)})
+
   !define(constructEOD,{EODband$1: Quantity, $
     type=effectiveOpticalDepth, signal=!signal($1)!nl})
   !forall(constructEOD,!allBands)
+  !define(allEODS,{!makelist({EODband},{},!allBands)})
 
   massMeanDiameterIce: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, $
     type = massMeanDiameterIce
@@ -116,7 +121,9 @@ begin Construct
   !define(constructCloudMinMax,{!dnl
   cloudRadMin$1: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=temperature
   cloudRadMax$1: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=temperature!nl})
-  !forall(constructCloudMinMax,2,10,33)
+  !define(cloudBands,{2,5,10,33})
+  !forall(constructCloudMinMax,!cloudBands)
+  !define(allCloudMinMax,{!makelist({cloudRadMin},{},!cloudBands),!makelist({cloudRadMax},{},!cloudBands)})
 
   ;; ----------------------------------------- Baselines
   !define(constructBaseline,{baseline$1: Quantity, type=baseline, $
@@ -241,28 +248,23 @@ begin Construct
 
   ;; ----------------------------------------- ChiSquares
 
-  !define(constructChisqMMAF, {chisqMMAF$1: Quantity, $
-    type=chisqMMAF, signal=!signal($1)!nl})
-  !forall(constructChisqMMAF,!allBands)
-  !define(constructChisqMMIF, {chisqMMIF$1: Quantity, $
-    type=chisqMMIF, signal=!signal($1)!nl})
-  !forall(constructChisqMMIF,!allBands)
-  !define(constructChisqChan, {chisqChan$1: Quantity, $
-    type=chisqChan, signal=!signal($1)!nl})
-  !forall(constructChisqChan,!allBands)
+  !define(ConstructChisqStuff, {!dnl
+    chisqMMAF$1: Quantity, type=chisqMMAF, signal=!signal($1)
+    chisqMMIF$1: Quantity, type=chisqMMIF, signal=!signal($1)
+    chisqChan$1: Quantity, type=chisqChan, signal=!signal($1)
+    noRadsPerMIF$1: Quantity, type=noRadsPerMIF, signal=!signal($1)
+    chisqBinned$1: Quantity, type=chisqBinned, signal=!signal($1), $
+      vGrid=vGridStandard, hGrid=hGridStandard
+    noRadsBinned$1: Quantity, type=noRadsBinned, signal=!signal($1), $
+      vGrid=vGridStandard, hGrid=hGridStandard!nl})
+  !forall(ConstructChisqStuff,!allBands)
 
   !define(allChisqMMAFs,{!makelist({chisqMMAF},{},!allBands)})
   !define(allChisqMMIFs,{!makelist({chisqMMIF},{},!allBands)})
   !define(allChisqChans,{!makelist({chisqChan},{},!allBands)})
-  ;; ----------------------------------------- Binned chi squares
-  !define(constructBinnedChiSq, {chisqBinned$1: Quantity, $
-    type=chisqBinned, signal=!signal($1), vGrid=vGridStandard, $
-    hGrid=hGridStandard!nl})
-  !forall(constructBinnedChiSq,!allBands)
-
   !define(allChisqBinned,{!makelist({chisqBinned},{},!allBands)})
-
-  !define(allRadianceChisqs,{!allChisqMMAFs, !allChisqMMIFs, !allChisqChans, !allChisqBinned})
+  !define(allNoRadsPerMIF,{!makelist({noRadsPerMIF},{},!allBands)})
+  !define(allNoRadsBinned,{!makelist({noRadsBinned},{},!allBands)})
 
   ;; ----------------------------------------- Scan residuals
 
@@ -321,6 +323,7 @@ begin Construct
     tpPressure, $
     iwc, lwc, surfaceType, psd, earthRadius, $
     trans, cext, $
+    massMeanDiameterIce, massMeanDiameterWater, $
     !allMolecules, tropH2O, tropH2O_HR, $
     !allHiResMolecules, $
     rhi, rhi_HR, $
@@ -343,6 +346,11 @@ begin Construct
 
   retrievalDiagnosticsTemplate: VectorTemplate, quantities = [ !allRetrievalDiagnostics ]
 
-  radianceChisqTemplate: VectorTemplate, quantities = [ !allRadianceChisqs ]
+  radianceDiagnosticsTemplate: VectorTemplate, quantities = [ $
+    !allChisqMMAFs, !allChisqMMIFs, !allChisqChans, !allChisqBinned, $
+    !allNoRadsPerMIF, !allNoRadsBinned ]
 
+  cloudOutputTemplate: VectorTemplate, quantities = [ $
+    !allFoldedRadiances, !allDTs, !allCloudMinMax ]
+    
 end Construct
