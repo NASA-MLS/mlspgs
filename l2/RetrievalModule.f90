@@ -78,8 +78,8 @@ contains
       & Subtree
     use Tree_Types, only: N_colon, N_colon_less, N_less_colon, &
       & N_less_colon_less, N_named
-    use VectorsModule, only: AddToVector, AddVectorToDatabase, ClearVector, &
-      & CloneVector, CopyVector, CopyVectorMask, DestroyVectorInfo, &
+    use VectorsModule, only: AddToVector, AddVectorToDatabase, ClearUnderMask, &
+      & ClearVector, CloneVector, CopyVector, CopyVectorMask, DestroyVectorInfo, &
       & DestroyVectorDatabase, DumpMask, GetVectorQuantityByType, &
       & IsVectorQtyMasked, M_Fill, M_FullDerivatives, M_LinAlg, &
       & M_Tikhonov, Vector_T, VectorValue_T
@@ -1288,6 +1288,10 @@ contains
           ! {\bf S}_m^{-1} {\bf f}$
           ! is the right-hand side of the normal equations.  Save it.
           call copyVector ( v(gradient), v(aTb) ) ! gradient := atb
+          ! Make sure the gradient is zerod out in various places.
+          ! aTb may have non zero values in masked places where x/=a.
+          call copyVectorMask ( v(gradient), v(x) )
+          call clearUnderMask ( v(gradient) )
             if ( index(switches,'gvec') /= 0 ) &
               & call dump ( v(gradient), name='gradient' )
 
@@ -3013,6 +3017,10 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.169  2002/09/05 23:08:22  livesey
+! Gradient move handles mask 'correctly', though we might have been right
+! from a philosophical point of view earlier.
+!
 ! Revision 2.168  2002/08/29 04:45:37  livesey
 ! Sped up covariance calculations
 !
