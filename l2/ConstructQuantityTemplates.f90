@@ -10,11 +10,13 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
   use Allocate_Deallocate, only: Allocate_Test
   use HGrid, only: hGrid_T
   use INIT_TABLES_MODULE, only: F_BAND, F_HGRID, F_MODULE, &
-    F_MOLECULE, F_RADIOMETER, F_SIGNAL, F_TYPE, F_UNIT, F_VGRID, FIRST_LIT, LAST_LIT, &
-    L_BASELINE, L_EARTHREFL, L_ELEVOFFSET, L_EXTINCTION, L_GEODALTITUDE, L_GPH, &
-    L_ORBITINCLINE, L_PTAN, L_RADIANCE, L_REFGPH, L_SCGEOCALT, L_SCVEL, &
-    L_SPACERADIANCE, L_TEMPERATURE, L_TNGTGEOCALT, L_TNGTGEODALT, L_TRUE,&
-    L_VMR, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_EXTINCTION, PHYQ_LENGTH,&
+    F_MOLECULE, F_RADIOMETER, F_SIGNAL, F_TYPE, F_UNIT, F_VGRID, &
+    FIRST_LIT, LAST_LIT, L_BASELINE, L_CHANNEL, L_EARTHREFL, &
+    L_ELEVOFFSET, L_EXTINCTION, L_GEODALTITUDE, L_GPH, &
+    L_LOSVEL, L_NONE, L_ORBITINCLINE, L_PTAN, L_RADIANCE, &
+    L_REFGPH, L_SCECI, L_SCGEOCALT, L_SCVEL, L_SPACERADIANCE, &
+    L_TEMPERATURE, L_TNGTECI, L_TNGTGEOCALT, L_TNGTGEODALT, L_TRUE,&
+    L_VMR, L_XYZ, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_EXTINCTION, PHYQ_LENGTH,&
     PHYQ_TEMPERATURE, PHYQ_VELOCITY, PHYQ_VMR, PHYQ_ZETA
   use L1BData, only: L1BData_T, READL1BDATA, DEALLOCATEL1BDATA
   use LEXER_CORE, only: PRINT_SOURCE
@@ -22,16 +24,16 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Info, MLSMSG_L1BRead
   use MLSSignals_m, only:  GetAllModules, IsModuleSpacecraft, GetModuleIndex, &
     & GetModuleFromRadiometer, GetModuleFromSignal, GetModuleName, &
-    & GetRadiometerName, GetRadiometerFromSignal, GetSignalName
+    & GetRadiometerName, GetRadiometerFromSignal, GetSignal, GetSignalName,&
+    & Signal_T
   use OUTPUT_M, only: OUTPUT
   use QuantityTemplates, only: QuantityTemplate_T,SetupNewQuantityTemplate
-  use STRING_TABLE, only: GET_STRING
+  use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
   use TOGGLES, only: GEN, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, SUB_ROSA, SUBTREE
   use TREE_TYPES, only: N_SET_ONE
   use VGrid, only: VGrid_T
-  USE Intrinsic, ONLY: L_NONE
   use init_tables_module, ONLY: LIT_INDICES
   implicit none
   private
@@ -81,6 +83,7 @@ contains ! =====     Public Procedures     =============================
     logical :: BADUNIT
     integer :: BAND                     ! Tree index
     integer :: FAMILY
+    integer :: FREQUENCYCOORDINATE
     integer :: HGRIDINDEX
     integer :: I                        ! Loop counter
     integer :: INSTRUMENTMODULE         ! Tree index
@@ -90,7 +93,7 @@ contains ! =====     Public Procedures     =============================
     integer :: NATURAL_UNITS(first_lit:last_lit)
     integer :: NOINSTANCES
     integer :: NOSURFS
-    logical :: minorFrame               ! Is a minor frame quantity
+    logical :: MINORFRAME               ! Is a minor frame quantity
     integer :: NOCHANS
     integer :: QUANTITYTYPE
     integer :: RADIOMETER               ! Tree index
@@ -100,6 +103,7 @@ contains ! =====     Public Procedures     =============================
     integer :: TYPE_FIELD               ! Index in subtree of "type"
     integer :: VALUE                    ! Node index of value of field of spec
     integer :: VGRIDINDEX
+    type (Signal_T) :: signalInfo       ! Details of the appropriate signal
 
     ! Executable code
 
@@ -120,6 +124,7 @@ contains ! =====     Public Procedures     =============================
     natural_units(l_elevOffset) =     PHYQ_Angle
     natural_units(l_extinction) =     PHYQ_Extinction
     natural_units(l_gph) =            PHYQ_Length
+    natural_units(l_losVel) =          PHYQ_Velocity
     natural_units(l_orbitIncline) =   PHYQ_Angle
     natural_units(l_ptan) =           PHYQ_Zeta
     natural_units(l_radiance) =       PHYQ_Temperature
@@ -182,7 +187,11 @@ contains ! =====     Public Procedures     =============================
 
     if ( family == 0 ) family = natural_units(quantityType)
     minorFrame=any(quantityType == (/ l_Baseline, l_Ptan, l_Radiance, &
-      & l_tngtGeodAlt, l_tngtGeocAlt, l_scGeocAlt /) )
+      & l_tngtECI, l_tngtGeodAlt, l_tngtGeocAlt, l_scECI, l_scGeocAlt,&
+      & l_scVel, l_losVel/) )
+
+    ! Set defaults for other parameters
+    frequencyCoordinate = L_None
 
     ! Here the code splits, for minor frame quantities, we take the information
     ! from the previously constructed MIFGeolocation information.  Otherwise,
@@ -198,9 +207,23 @@ contains ! =====     Public Procedures     =============================
         call announce_error ( root, noModule )
       end if
 
+      ! Work out the channel information
+      if (signal /= 0) then
+        signalInfo = GetSignal(signal)
+        noChans = size(signalInfo%frequencies)
+        frequencyCoordinate = l_channel
+      endif
+      
+      ! For some cases we know the quantity is an xyz vector
+      if ( any(quantityType == (/ l_tngtECI, l_scECI, l_scVel /))) then
+        noChans = 3
+        frequencyCoordinate = l_xyz
+      endif
+
       ! Construct an empty quantity
       call ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModule, &
         & qty, noChans=noChans, mifGeolocation=mifGeolocation )
+      qty%frequencyCoordinate = frequencyCoordinate
     else
 
       ! This is not a minor frame quantity, set it up from VGrids and HGrids
@@ -220,8 +243,6 @@ contains ! =====     Public Procedures     =============================
       call SetupNewQuantityTemplate ( qty, noInstances=noInstances, &
         & noSurfs=noSurfs, coherent=.TRUE., stacked=.TRUE., regular=.TRUE. )
       ! ??? Note in later versions we'll need to think about channels here
-
-      qty%frequencyCoordinate = L_None
 
       if (hGridIndex /=0 ) then
         call CopyHGridInfoIntoQuantity ( hGrids(hGridIndex), qty )
@@ -254,7 +275,7 @@ contains ! =====     Public Procedures     =============================
     qty%radiometer = radiometer
     qty%signal = signal
     qty%scaleFactor = scaleFactor
-    
+
     if ( toggle(gen) ) call trace_end ( "CreateQtyTemplateFromMLSCFInfo" )
 
   end function CreateQtyTemplateFromMLSCFInfo
@@ -538,6 +559,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.10  2001/03/15 18:41:17  livesey
+! Tidied up the frequency coordinate stuff.
+!
 ! Revision 2.9  2001/03/08 21:49:26  livesey
 ! Added elev_offset
 !
