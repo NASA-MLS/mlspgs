@@ -2349,7 +2349,8 @@ CONTAINS
   end subroutine utc_to_yyyymmdd_ints
 
   ! ---------------------------------------------  utc_to_yyyymmdd_strs  -----
-  subroutine utc_to_yyyymmdd_strs(str, ErrTyp, year, month, day, strict)
+  subroutine utc_to_yyyymmdd_strs(str, ErrTyp, year, month, day, &
+    & strict, utcAt0z)
     ! Routine that returns the year, month, and day from a string of the form
     ! (A) yyyy-mm-ddThh:mm:ss.sss
     ! (B) yyyy-dddThh:mm:ss.sss
@@ -2364,6 +2365,9 @@ CONTAINS
     ! For case (B) returns year, month=-1, and day=day of year
     ! Useful to decode utc inputs into attribute values
     
+    ! Optionally returns the input string in utcAt0z modified so that 
+    ! the hh:mm:ss.sss is 00:00:00Z
+    
     ! (See also PGS_TD_UTCtoTAI and mls_UTCtoTAI)
     !--------Argument--------!
     character(len=*),intent(in)   :: str
@@ -2372,11 +2376,13 @@ CONTAINS
     character(len=*), intent(out) :: month
     character(len=*), intent(out) :: day
     logical,intent(in), optional  :: strict
+    character(len=*),intent(out), optional   :: utcAt0z
     !----------Local vars----------!
     character(len=1), parameter :: dash='-'
     character(len=NameLen) :: date
     logical :: mystrict
     character(len=1) :: utc_format        ! 'a' or 'b'
+    character(len=*), parameter :: chars_0z = 'T00:00:00Z'
     !----------Executable part----------!
 
    year = ' '
@@ -2404,8 +2410,10 @@ CONTAINS
      & countEmpty=.true., inDelim='t')
    if ( date == ' ' ) then
      if ( .not. mystrict) Errtyp = 0
+     if ( present(utcAt0z) ) utcAt0z = ' '
      return
    endif
+   if ( present(utcAt0z) ) utcAt0z = trim(date) // chars_0z
    call GetStringElement(trim(date), year, 1, countEmpty=.true., inDelim=dash)
    if ( &
      & NumStringElements(trim(date), countEmpty=.true., inDelim=dash) == 2) then
@@ -2430,6 +2438,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.29  2003/02/27 18:36:57  pwagner
+! utc_to_yyyymmdd optionally returns yy-mm-ddT00:00:00Z
+!
 ! Revision 2.28  2003/02/19 19:08:40  pwagner
 ! Added ReplaceSubString
 !
