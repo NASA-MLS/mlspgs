@@ -20,9 +20,9 @@ begin ReadApriori
   !readTruthL2GP(CH3CN,a)
   !readTruthL2GP(HCN,a)
   !readTruthL2GP(CO,a)
-  !readTruthL2GP(H2O,-2)
+  !readTruthL2GP(H2O,a)
   !readTruthL2GP(O3,a)
-  !readTruthL2GP(RHi,-2)
+  !readTruthL2GP(RHI,a)
 
   ;; Use this macro for later
   !define(l2gpInputSpecies,{BrO,CH3CN,CO,ClO,GPH,H2O,HCN,HCl,HNO3,HO2,HOCl,N2O,O3,OH,RHi,SO2,Temperature})
