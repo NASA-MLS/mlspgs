@@ -7,17 +7,16 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use DUMP_0, only: DUMP
   use Hdf, only: DFNT_CHAR8, DFNT_FLOAT32, DFNT_INT32, DFNT_FLOAT64
-!  use HDF5_params
   use HDFEOS!, only: SWATTACH, SWCREATE, SWDEFDFLD, SWDEFDIM, SWDEFGFLD, &
      !& SWDETACH
-!  use HDFEOS5
-!  use HE5_SWAPI 
+  use Intrinsic ! "units" type literals, beginning with L_
   use MLSCommon, only: R4, R8
   use MLSFiles, only: HDFVERSION_4, HDFVERSION_5
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
        & MLSMSG_Error, MLSMSG_Warning, MLSMSG_Debug
-  use MLSStrings, only: ints2Strings, strings2Ints
+  use MLSStrings, only: ints2Strings, list2array, strings2Ints
   use OUTPUT_M, only: OUTPUT
+  use PCFHdr, only: GA_VALUE_LENGTH
   use STRING_TABLE, only: DISPLAY_STRING
   use SWAPI, only: SWWRFLD, SWRDFLD
 
@@ -31,10 +30,12 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     & ReadL2GPData, SetupNewL2GPRecord,  WriteL2GPData
 
   !---------------------------- RCS Ident Info -------------------------------
-  character(len=256), private :: Id = &
+  character (len=*), private, parameter :: IdParm = &
        & "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
   character(len=*), parameter, private :: ModuleName = &
        & "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
   interface DUMP !And this does WTF? On-the-fly dumps; see l2/tree_walker.f90
@@ -74,7 +75,10 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   ! r4 corresponds to sing. prec. :: same as stored in files
   integer, parameter :: rgp = r4
 
+  integer, parameter :: CHARATTRLEN = GA_VALUE_LENGTH
+  real, parameter    :: UNDEFINED_VALUE = -999.99 ! Same as %template%badvalue
   integer, parameter :: L2GPNameLen = 80
+  integer, parameter :: NumGeolocFields = 10
 
    character (len=*), parameter :: DATA_FIELD1 = 'L2gpValue'
    character (len=*), parameter :: DATA_FIELD2 = 'L2gpPrecision'
@@ -132,6 +136,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 
      character (LEN=L2GPNameLen) :: name ! Typically the swath name.
      integer :: nameIndex       ! Used by the parser to keep track of the data
+     integer :: QUANTITYTYPE = 0         ! E.g., l_temperature
 
      ! Now the dimensions of the data
 
@@ -170,6 +175,10 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
      real (rgp), pointer, dimension(:) :: quality=>NULL()
      ! Both the above dimensioned (nTimes)
 
+     ! The dimensions for the quantity (if, e.g., coming from l2cf)
+     ! character(len=CHARATTRLEN)        :: DIM_Names = '' ! ','-separated
+     ! character(len=CHARATTRLEN)        :: DIM_Units = '' ! ','-separated
+     ! character(len=CHARATTRLEN)        :: VALUE_Units = '' 
   end type L2GPData_T
 
 contains ! =====     Public Procedures     =============================
@@ -180,7 +189,7 @@ contains ! =====     Public Procedures     =============================
     ! This routine sets up the arrays for an l2gp datatype.
 
     ! Dummy arguments
-    type (L2GPData_T), intent(out)  :: l2gp
+    type (L2GPData_T), intent(inout)  :: l2gp
     integer, intent(in), optional :: nFreqs            ! Dimensions
     integer, intent(in), optional :: nLevels           ! Dimensions
     integer, intent(in), optional :: nTimes            ! Dimensions
@@ -188,23 +197,23 @@ contains ! =====     Public Procedures     =============================
     ! Local variables
     integer :: useNFreqs, useNLevels, useNTimes
 
-    if (present(nFreqs)) then
+    if ( present(nFreqs) ) then
        useNFreqs=nFreqs
     else
        useNFreqs=0
-    endif
+    end if
 
-    if (present(nLevels)) then
+    if ( present(nLevels) ) then
        useNLevels=nLevels
     else
        useNLevels=0
-    endif
+    end if
 
-    if (present(nTimes)) then
+    if ( present(nTimes) ) then
        useNTimes=nTimes
     else
        useNTimes=0              ! Default to empty l2gp
-    endif
+    end if
 
     ! Store the dimensionality
 
@@ -213,18 +222,18 @@ contains ! =====     Public Procedures     =============================
     l2gp%nFreqs = useNFreqs
 
     ! But allocate to at least one for times, freqs
+ 
+    useNTimes=MAX(useNTimes,1)
+    useNLevels=MAX(useNLevels,1)
+    useNFreqs=MAX(useNFreqs,1)    
 
-    useNTimes=max(useNTimes,1)
-    useNLevels=max(useNLevels,1)
-    useNFreqs=max(useNFreqs,1)    
-
-    ! Allocate the frequency coordinate
+    ! Allocate the vertical coordinate
 
     call allocate_test ( l2gp%pressures, useNLevels, "l2gp%pressures", &
          & ModuleName )
 
-    ! Allocate the vertical coordinate
-
+    ! Allocate the frequency coordinate
+    
     call allocate_test ( l2gp%frequency, useNFreqs, "l2gp%frequency", ModuleName)
 
     ! Allocate the horizontal coordinates
@@ -260,39 +269,42 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
 
-    call deallocate_test ( l2gp%pressures,    "l2gp%pressures",    ModuleName )
-    call deallocate_test ( l2gp%latitude,     "l2gp%latitude",     ModuleName )
-    call deallocate_test ( l2gp%longitude,    "l2gp%longitude",    ModuleName )
-    call deallocate_test ( l2gp%solarTime,    "l2gp%solarTime",    ModuleName )
-    call deallocate_test ( l2gp%solarZenith,  "l2gp%solarZenith",  ModuleName )
-    call deallocate_test ( l2gp%losAngle,     "l2gp%losAngle",     ModuleName )
-    call deallocate_test ( l2gp%losAngle,     "l2gp%losAngle",     ModuleName )
-    call deallocate_test ( l2gp%geodAngle,    "l2gp%geodAngle",    ModuleName )
-    call deallocate_test ( l2gp%chunkNumber,  "l2gp%chunkNumber",  ModuleName )
-    call deallocate_test ( l2gp%time,         "l2gp%time",         ModuleName )
-    call deallocate_test ( l2gp%frequency,    "l2gp%frequency",    ModuleName )
-    call deallocate_test ( l2gp%l2gpValue,    "l2gp%l2gpValue",    ModuleName )
-    call deallocate_test ( l2gp%l2gpPrecision,"l2gp%l2gpPrecision",ModuleName )
-    call deallocate_test ( l2gp%status,       "l2gp%status",       ModuleName )
-    call deallocate_test ( l2gp%quality,      "l2gp%quality",      ModuleName )
+    call deallocate_test ( l2gp%pressures,         "l2gp%pressures",         ModuleName )
+    call deallocate_test ( l2gp%latitude,          "l2gp%latitude",          ModuleName )
+    call deallocate_test ( l2gp%longitude,         "l2gp%longitude",         ModuleName )
+    call deallocate_test ( l2gp%solarTime,         "l2gp%solarTime",         ModuleName )
+    call deallocate_test ( l2gp%solarZenith,       "l2gp%solarZenith",       ModuleName )
+    call deallocate_test ( l2gp%losAngle,          "l2gp%losAngle",          ModuleName )
+    call deallocate_test ( l2gp%geodAngle,         "l2gp%geodAngle",         ModuleName )
+    call deallocate_test ( l2gp%chunkNumber,       "l2gp%chunkNumber",       ModuleName )
+    call deallocate_test ( l2gp%time,              "l2gp%time",              ModuleName )
+    call deallocate_test ( l2gp%frequency,         "l2gp%frequency",         ModuleName )
+    call deallocate_test ( l2gp%l2gpValue,         "l2gp%l2gpValue",         ModuleName )
+    call deallocate_test ( l2gp%l2gpPrecision,     "l2gp%l2gpPrecision",     ModuleName )
+    call deallocate_test ( l2gp%status,            "l2gp%status",            ModuleName )
+    call deallocate_test ( l2gp%quality,           "l2gp%quality",           ModuleName )
     l2gp%nTimes = 0
     l2gp%nLevels = 0
     l2gp%nFreqs = 0
+
   end subroutine DestroyL2GPContents
 
   !---------------------------------------  ExpandL2GPDataInPlace  -----
   subroutine ExpandL2GPDataInPlace ( l2gp, newNTimes )
 
-    ! This subroutine expands an L2GPData_T in place allowing the user to
-    ! (1) add more profiles to it; or [or? or WTF?]
+    ! This subroutine expands an L2GPData_T in place allowing the user to 
+    ! (1) add more profiles to it; or
+    ! 
 
     ! Dummy arguments
     type (L2GPData_T), intent(inout) :: l2gp
-    integer, optional, intent(in) :: newNTimes
+    integer, optional, intent(in)    :: newNTimes
 
     ! Local variables
     type (L2GPData_T) :: tempL2gp       ! For copying data around
     integer :: myNTimes
+    integer :: tmpNFreqs, tmpNLevels
+
     ! Executable code
 
    if(present(newNTimes)) then
@@ -304,9 +316,10 @@ contains ! =====     Public Procedures     =============================
     ! First do a sanity check
 
 
-    if ( myNTimes<l2gp%nTimes ) &
-         & call MLSMessage ( MLSMSG_Error, ModuleName, &
+    if ( myNTimes<l2gp%nTimes ) then
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
          & "The number of profiles requested is fewer than those already present" )
+    endif
 
     tempL2gp = l2gp ! Copy the pointers to the old information
 
@@ -318,11 +331,15 @@ contains ! =====     Public Procedures     =============================
       & l2gp%solarZenith, l2gp%losAngle, l2gp%losAngle, l2gp%geodAngle, &
       & l2gp%chunkNumber, l2gp%time, l2gp%frequency, l2gp%l2gpValue, &
       & l2gp%l2gpPrecision, l2gp%status, l2gp%quality )
-    call SetupNewL2GPRecord( l2gp, nFreqs=l2gp%nFreqs, nLevels=l2gp%nLevels, &
-      & nTimes=myNTimes)
+    
+    tmpNFreqs = l2gp%nFreqs
+    tmpNLevels = l2gp%nLevels
+    call SetupNewL2GPRecord( l2gp, nFreqs=tmpNFreqs, nLevels=tmpNLevels, &
+      & nTimes=myNTimes )
 
     ! Don't forget the `global' stuff
     l2gp%pressures=templ2gp%pressures
+    l2gp%frequency=templ2gp%frequency
 
     ! Now go through the parameters one by one, and copy the previous contents
     l2gp%latitude(1:templ2gp%nTimes) = templ2gp%latitude(1:templ2gp%nTimes)
@@ -340,7 +357,7 @@ contains ! =====     Public Procedures     =============================
     
     l2gp%status(1:templ2gp%nTimes) = templ2gp%status(1:templ2gp%nTimes)
     l2gp%quality(1:templ2gp%nTimes) = templ2gp%quality(1:templ2gp%nTimes)
-
+    
     ! Deallocate the old arrays
     call DestroyL2GPContents(templ2gp)
 
@@ -358,7 +375,7 @@ contains ! =====     Public Procedures     =============================
     type (l2gpdata_t), intent(in) :: ITEM
 
     ! Local variables
-    type (L2GPData_T), dimension(:), pointer :: tempDatabase
+    type (l2GPData_T), dimension(:), pointer :: tempDatabase
     !This include causes real trouble if you are compiling in a different 
     !directory.
     include "addItemToDatabase.f9h" 
@@ -368,18 +385,18 @@ contains ! =====     Public Procedures     =============================
 
   ! --------------------------------------------------------------------------
 
-  ! This subroutine destroys an L2GP database
+  ! This subroutine destroys a quantity template database
 
   subroutine DestroyL2GPDatabase ( DATABASE )
 
     ! Dummy argument
-    type (L2GPData_T), dimension(:), pointer :: DATABASE
+    type (l2GPData_T), dimension(:), pointer :: DATABASE
 
     ! Local variables
     integer :: l2gpIndex, status
 
-    if ( associated(database)) then
-       do l2gpIndex = 1, size(database)
+    if ( associated(database) ) then
+       do l2gpIndex = 1, SIZE(database)
           call DestroyL2GPContents ( database(l2gpIndex) )
        end do
        deallocate ( database, stat=status )
@@ -461,13 +478,12 @@ contains ! =====     Public Procedures     =============================
     ! Local Variables
     character (len=80) :: list
     character (len=480) :: msr
-
     integer :: alloc_err, first, freq, lev, nDims, size, swid, status
     integer :: start(3), stride(3), edge(3), dims(3)
     integer :: nFreqs, nLevels, nTimes, nFreqsOr1, nLevelsOr1, myNumProfs
     logical :: firstCheck, lastCheck
 
-    real, allocatable :: realFreq(:), realSurf(:), realProf(:), real3(:,:,:)
+    real, allocatable :: realSurf(:), realProf(:), real3(:,:,:)
 !  How to deal with status and columnTypes? swrfld fails
 !  with char data on Linux
 !  Have recourse to ints2Strings and strings2Ints if USEINTS4STRINGS
@@ -574,7 +590,6 @@ contains ! =====     Public Procedures     =============================
     nLevelsOr1=MAX(nLevels, 1)
     allocate ( realProf(myNumProfs), realSurf(l2gp%nLevels), &
       &   string_buffer(1,myNumProfs), &
-      &   realFreq(l2gp%nFreqs), &
       &   real3(nFreqsOr1,nLevelsOr1,myNumProfs), STAT=alloc_err )
     if ( alloc_err /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//' various things in ReadL2GPData' )
@@ -674,12 +689,11 @@ contains ! =====     Public Procedures     =============================
        edge(1) = l2gp%nFreqs
 
        status = swrdfld(swid, GEO_FIELD10, start(1:1), stride(1:1), edge(1:1), &
-         & realFreq)
+         & l2gp%frequency)
        if ( status == -1 ) then
           msr = MLSMSG_L2GPRead // GEO_FIELD10
           call MLSMessage ( MLSMSG_Error, ModuleName, msr )
        end if
-       l2gp%frequency = realFreq
 
     end if
 
@@ -782,7 +796,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Deallocate local variables
 
-    deallocate ( realFreq, realSurf, realProf, real3, STAT=alloc_err )
+    deallocate ( realSurf, realProf, real3, STAT=alloc_err )
     if ( alloc_err /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
          'Failed deallocation of local real variables.' )
 
@@ -2324,12 +2338,16 @@ contains ! =====     Public Procedures     =============================
   !----------------------------------------  OutputL2GP_attributes_hdf5  -----
   subroutine OutputL2GP_attributes_hdf5(l2gp, l2FileHandle, swathName)
 
-  use HDFEOS5, only: HE5_SWattach, HE5_SWdetach
-  use PCFHdr, only:  sw_writeglobalattr
+  use HDFEOS5, only: HE5T_NATIVE_REAL, HE5T_NATIVE_DOUBLE, HE5T_NATIVE_SCHAR, &
+    & HE5_SWattach, HE5_SWdetach
+  use PCFHdr, only:  he5_writeglobalattr
     ! Brief description of subroutine
-    ! This subroutine writes the data fields to an L2GP output file.
-    ! For now, you have to write all of l2gp, but you can choose to write
-    ! it at some offset into the file
+    ! This subroutine writes the attributes for an l2gp
+    ! These include
+    ! Global attributes which are file level
+    ! Swath level
+    ! Geolocation field attributes
+    ! Data field attributes
     ! Arguments
 
     type( L2GPData_T ), intent(inout) :: l2gp
@@ -2343,9 +2361,19 @@ contains ! =====     Public Procedures     =============================
 
     character (len=480) :: msr
     character (len=132) :: name     ! Either swathName or l2gp%name
+    character (len=*), parameter :: GeolocationTitles = &
+      & 'Latitude,Longitude,Time,LocalSolarTime,SolarZenithAngle,LineOfSightAngle,OrbitGeodeticAngle,ChunkNumber,Pressure,Frequency'
+    character (len=*), parameter :: GeolocationUnits = &
+      & 'degrees,degrees,seconds,seconds,degrees,degrees,degrees,none,hPa,GHz'
 
+    integer :: field
+    integer :: rgp_type
     integer :: status
     integer :: swid
+    character(len=CHARATTRLEN), dimension(NumGeolocFields) :: theTitles
+    character(len=CHARATTRLEN), dimension(NumGeolocFields) :: theUnits
+    character(len=CHARATTRLEN) :: field_name
+    character(len=CHARATTRLEN) :: units_name
     
     ! Begin
     if (present(swathName)) then
@@ -2353,8 +2381,19 @@ contains ! =====     Public Procedures     =============================
     else
        name=l2gp%name
     endif
+    if ( rgp == r4 ) then
+      rgp_type = HE5T_NATIVE_REAL
+    elseif ( rgp == r8 ) then
+      rgp_type = HE5T_NATIVE_DOUBLE
+    else
+      call MLSMessage ( MLSMSG_Error, ModuleName, & 
+        & 'Attributes have unrecognized numeric data type; should be r4 or r8')
+    endif
+    call List2Array(GeolocationTitles, theTitles, .true.)
+    call List2Array(GeolocationUnits, theUnits, .true.)
 
-    swid = HE5_SWattach (l2FileHandle, name)
+    ! - -   G l o b a l   A t t r i b u t e s   - -
+    ! swid = HE5_SWattach (l2FileHandle, name)
     !print*," attached swath with swid=",swid," filehandle=",l2FileHandle
     !status = he5_swwrattr(swid, 'Instrument Name', H5T_NATIVE_CHARACTER, &
     !  & 1, 'MLS Aura')
@@ -2362,17 +2401,47 @@ contains ! =====     Public Procedures     =============================
     !   call MLSMessage ( MLSMSG_Warning, ModuleName, &
     !        & 'Failed to write swath attribute' )
     !     Detach from the swath interface.
-    call sw_writeglobalattr(swid)
+    ! call sw_writeglobalattr(swid)
+    print *, 'Writing global attributes'
+    call he5_writeglobalattr(l2FileHandle)
 
+    swid = HE5_SWattach (l2FileHandle, name)
+    
+    !   - -   S w a t h   A t t r i b u t e s   - -
+    print *, 'Writing swath attributes'
+    call he5_swwrattr(swid, 'Pressure', rgp_type, size(l2gp%pressures), &
+      & l2gp%pressures)
+    
+    !   - -   G e o l o c a t i o n   A t t r i b u t e s   - -
+    print *, 'Writing geolocation attributes'
+    do field=1, NumGeolocFields
+      print *, 'field ', field
+      print *, 'title ', trim(theTitles(field))
+      print *, 'units ', trim(theUnits(field))
+      call he5_swwrlattr(swid, trim(theTitles(field)), 'Title', &
+        & HE5T_NATIVE_SCHAR, 1, theTitles(field))
+      call he5_swwrlattr(swid, trim(theTitles(field)), 'Units', &
+        & HE5T_NATIVE_SCHAR, 1, theUnits(field))
+    enddo
+    !   - -   D a t a   A t t r i b u t e s   - -
+    call GetQuantityAttributes ( l2gp%quantityType, &
+      & units_name)
+    field_name = swathName
+    print *, 'Writing data attributes'
+    print *, 'title ', trim(swathName)
+    print *, 'units ', trim(units_name)
+    call he5_swwrlattr(swid, DATA_FIELD1, 'Title', &
+      & HE5T_NATIVE_SCHAR, 1, field_name)
+    call he5_swwrlattr(swid, DATA_FIELD1, 'Units', &
+      & HE5T_NATIVE_SCHAR, 1, units_name)
     status = HE5_SWdetach(swid)
-    !print*,"Detatched from swath -- error=",status
     if ( status == -1 ) then
        call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & 'Failed to detach  from swath interface' )
     end if
 
 
-    !-------------------------------------
+  !-------------------------------------
   end subroutine OutputL2GP_attributes_hdf5
   !-------------------------------------
 
@@ -2566,13 +2635,199 @@ contains ! =====     Public Procedures     =============================
       
   end subroutine Dump_L2GP
     
+  ! ----------------------------------  GetGeolocUnits  -----
+  function GetGeolocUnits ( Title ) result( dim_string )
 
-  !=============================================================================
+  ! Given a dim name type, e.g. l_vmr,
+  ! returns corresponding units as a character string
+
+    ! Dummy arguments
+    character(len=*), intent(in)        :: Title
+    character(len=CHARATTRLEN)                   :: dim_string
+
+    ! Executable code
+    dim_string = 'none'
+    select case (Title)                                       
+    case ( 'Latitude' )  
+      dim_string = 'degrees'
+    case ( 'Longitude' )  
+      dim_string = 'degrees'
+    case ( 'SolarZenithAngle' )  
+      dim_string = 'degrees'
+    case ( 'Time' )  
+      dim_string = 'seconds'
+    case ( 'LocalSolarTime' )  
+      dim_string = 'seconds'
+    case ( 'LineOfSightAngle' )  
+      dim_string = 'degrees'
+    case ( 'OrbitGeodeticAngle' )  
+      dim_string = 'degrees'
+    case ( 'ChunkNumber' )
+      ! No units for this dimension
+    case ( 'Pressure' )  
+      dim_string = 'hPa'
+    case ( 'Frequency' )  
+      dim_string = 'GHz'
+
+    end select                                                       
+
+  end function GetGeolocUnits
+
+  ! ----------------------------------  GetQuantityAttributes  -----
+  subroutine GetQuantityAttributes ( quantityType, &
+   & units_name)
+!  & framing, units_name, dim_names)
+
+  ! Given a quantity type, e.g. l_vmr,
+  ! returns major/minor/neither framing distinction, default unit name,
+  ! and the 3 dimension names, e.g. (/l_channel, l_MIF, l_MAF/)
+
+    ! Dummy arguments
+    integer, intent(in)                :: quantityType
+    character(len=*), intent(out)      :: units_name
+    ! Local variables
+    character(len=8)                   :: framing
+    integer, dimension(3)              :: dim_names
+
+    ! Executable code
+    units_name = ' '
+    select case (quantityType)                                       
+    case ( l_channel )  
+      framing = 'major'
+      units_name = 'channel'
+      dim_names = (/ l_none, l_none, l_none /)                  
+    case ( l_chunk )  
+      framing = 'major'
+      units_name = 'chunk'
+      dim_names = (/ l_none, l_none, l_none /)                  
+    case ( l_effectiveOpticalDepth )  
+      framing = 'minor'
+      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
+    case ( l_elevOffset )  
+      framing = 'neither'
+      units_name = 'degrees'
+      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
+    case ( l_frequency )  
+      framing = 'major'
+      units_name = 'frequency'
+      dim_names = (/ l_none, l_none, l_none /)                  
+    case ( l_geodAngle )  
+      framing = 'neither'
+      units_name = 'degrees'
+      dim_names = (/ l_none, l_none, l_none /)                  
+    case ( l_gph )  
+      framing = 'neither'
+      units_name = 'meters'
+      dim_names = (/ l_none, l_none, l_none /)                  
+    case ( l_heightOffset )  
+      framing = 'minor'
+      units_name = 'degrees'
+      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
+    case ( l_iteration )  
+      framing = 'major'
+      units_name = 'iteration'
+      dim_names = (/ l_none, l_none, l_none /)                  
+    case ( l_losTransFunc )  
+      framing = 'neither'
+      dim_names = (/ l_frequency, l_MIF, l_MAF /)                  
+    case ( l_losVel )  
+      framing = 'minor'
+      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
+    case ( l_MAF )  
+      framing = 'major'
+      units_name = 'MAF'
+      dim_names = (/ l_none, l_none, l_none /)                  
+    case ( l_massMeanDiameterIce )  
+      framing = 'neither'
+      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
+    case ( l_massMeanDiameterWater )  
+      framing = 'neither'
+      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
+    case ( l_MIF )  
+      framing = 'major'
+      units_name = 'MIF'
+      dim_names = (/ l_none, l_none, l_none /)                  
+    case ( l_noiseBandwidth )  
+      framing = 'neither'
+      units_name = 'MHz'
+      dim_names = (/ l_channel, l_none, l_none /)                  
+    case ( l_opticalDepth )  
+      framing = 'minor'
+      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
+    case ( l_orbitInclination )  
+      framing = 'minor'
+      units_name = 'degrees'
+      dim_names = (/ l_none, l_none, l_none /)                  
+    case ( l_phiTan )  
+      framing = 'minor'
+      units_name = 'degrees'
+      dim_names = (/ l_none, l_MIF, l_MAF /)                  
+    case ( l_ptan )  
+      framing = 'minor'
+      units_name = 'log10(hPa)'
+      dim_names = (/ l_none, l_MIF, l_MAF /)                  
+    case ( l_radiance )  
+      framing = 'minor'
+      units_name = 'K'
+      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
+    case ( l_rhi )  
+      framing = 'minor'
+      units_name = '%rhi'
+      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
+    case ( l_scanResidual )  
+      framing = 'minor'
+      units_name = 'meter'
+      dim_names = (/ l_none, l_MIF, l_MAF /)                  
+    case ( l_scECI )  
+      framing = 'minor'
+      units_name = 'meter'
+      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
+    case ( l_sidebandRatio )  
+      framing = 'neither'
+      dim_names = (/ l_channel, l_none, l_none /)                  
+    case ( l_spaceRadiance )  
+      framing = 'neither'
+      units_name = 'K'
+      dim_names = (/ l_none, l_none, l_none /)                  
+    case ( l_surfacetype )  
+      framing = 'neither'
+      dim_names = (/ l_none, l_none, l_none /)                  
+    case ( l_systemTemperature )  
+      framing = 'neither'
+      units_name = 'K'
+      dim_names = (/ l_channel, l_none, l_none /)                  
+    case ( l_Temperature )  
+      framing = 'neither'
+      units_name = 'K'
+      dim_names = (/ l_channel, l_none, l_none /)                  
+    case ( l_totalExtinction )  
+      framing = 'neither'
+      dim_names = (/ l_channel, l_none, l_MAF /)                  
+    case ( l_vmr )  
+      framing = 'neither'
+      dim_names = (/ l_channel, l_none, l_MAF /)                  
+      units_name = 'vmr'
+    case default                                                     
+      framing = 'neither'
+      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
+    end select                                                       
+
+  end subroutine GetQuantityAttributes
+
+!=============================================================================
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
+!=============================================================================
 end module L2GPData
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.50  2003/02/04 22:43:29  pwagner
+! Fixed another serious bug
+!
 ! Revision 2.49  2003/02/03 21:33:15  pwagner
 ! Having fixed (most)bugs, brought back from he5lib
 !
