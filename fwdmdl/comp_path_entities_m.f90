@@ -29,7 +29,7 @@ contains
 SUBROUTINE comp_path_entities(fwdModelIn, fwdModelExtra, molecules, &
            n_lvls,no_t,gl_count,ndx_path,z_glgrid,t_glgrid,h_glgrid,&
            dhdz_glgrid,tan_hts,&
-           no_tan_hts,n_sps,z_path,h_path,     &
+           no_tan_hts,z_path,h_path,     &
            t_path,phi_path,n_path,dhdz_path,eta_phi,no_phi_t,       &
            t_phi_basis,spsfunc_path,no_mmaf,Ier)
 
@@ -45,7 +45,7 @@ Integer(i4), PARAMETER :: ngt = (Ng+1) * N2lvl
 !  ---------------------------
 !  Calling sequence variables:
 !  ---------------------------
-Integer(i4), INTENT(IN) :: no_t, n_sps, n_lvls, gl_count, &
+Integer(i4), INTENT(IN) :: no_t, n_lvls, gl_count, &
              no_mmaf, no_phi_t
 !
 Integer(i4), INTENT(IN OUT) :: no_tan_hts
@@ -202,6 +202,9 @@ END SUBROUTINE comp_path_entities
 
 end module COMP_PATH_ENTITIES_M
 ! $Log$
+! Revision 1.13  2001/03/30 00:07:57  livesey
+! Removed more arguments
+!
 ! Revision 1.12  2001/03/29 08:51:01  zvi
 ! Changing the (*) toi (:) everywhere
 !
