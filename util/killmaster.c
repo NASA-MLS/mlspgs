@@ -12,5 +12,6 @@ main ( int argc, void *argv[] )
 
   tid = atoi ( argv[1] );
   bufID = pvm_initsend ( PvmDataDefault );
+  info = pvm_pkbyte ( &tid, 1, 1);
   info = pvm_send ( tid, 999 );
 }
