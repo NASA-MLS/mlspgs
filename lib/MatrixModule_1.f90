@@ -565,15 +565,16 @@ contains ! =====     Public Procedures     =============================
   end function CheckIntegrity_1
 
   ! -------------------------------------------  CholeskyFactor_1  -----
-  subroutine CholeskyFactor_1 ( Z, X )
+  subroutine CholeskyFactor_1 ( Z, X, STATUS )
   ! Compute the Cholesky factor Z of the matrix X.  Z%M%Block can be
   ! associated with X%M%Block to save space.
     type(Matrix_Cholesky_T), intent(inout) :: Z   ! Factored matrix.
     type(Matrix_SPD_T), intent(in) :: X ! Matrix to factor.
+    integer, dimension(2), intent(out), optional :: STATUS ! Optional status flag
 
     integer :: I, J, K                  ! Subscripts and loop inductors
     type(MatrixElement_T) :: S          ! Sum, to accumulate "inner product"
-    integer :: STATUS                   ! Status flag
+    integer :: BLOCKSTATUS              ! Block level status flag
     character (len=132) :: LINE         ! Message
 
     ! Check that the matrices are compatible.  We don't need to check
@@ -612,12 +613,18 @@ contains ! =====     Public Procedures     =============================
 
     ! Handle the first row specially, to avoid a copy followed by no-dot-product
     !{ Get $Z_{11}$, where $Z_{11}^T Z_{11} = X_{11}$
-    call choleskyFactor ( z%m%block(1,1), x%m%block(1,1), status )
-    if ( status /= 0 ) then
-      write ( line, '(a, i0, a)') &
-        & 'Block (1,1) of matrix is not positive definite (element ', &
-        & status, ')'
-      call MLSMessage ( MLSMSG_Error, ModuleName, line )
+    call choleskyFactor ( z%m%block(1,1), x%m%block(1,1), blockStatus )
+    if ( blockStatus /= 0 ) then
+      if ( present(status) ) then
+        status = (/ 1, blockStatus /)
+        return
+      else
+        call dump ( x%m%block(1,1), 'Guilty party:' )
+        write ( line, '(a, i0, a)') &
+          & 'Block (1,1) of matrix is not positive definite (element ', &
+          & blockStatus, ')'
+        call MLSMessage ( MLSMSG_Error, ModuleName, line )
+      end if
     end if
     do j = 2, x%m%row%nb
       !{ Solve $Z_{11}^T Z_{1j} = X_{1j}$ for $Z_{1j}$
@@ -632,13 +639,18 @@ contains ! =====     Public Procedures     =============================
           & update=.true., subtract=.true. )
       end do ! k = 1, i-1
       !{ Get $Z_{ii}$, where $Z_{ii}^T Z_{ii} = S$
-      call choleskyFactor ( z%m%block(i,i), s, status )   ! z%m%block(i,i) = factor of s
-      if ( status /= 0 ) then
-        call dump ( s, name='Guilty party:' )
-        write ( line, '(a, i0, a, i0, a, i0, a)') &
-          & 'Block (',i,',',i,') of matrix is not positive definite (element ', &
-          & status, ')'
-        call MLSMessage ( MLSMSG_Error, ModuleName, line )
+      call choleskyFactor ( z%m%block(i,i), s, blockStatus )   ! z%m%block(i,i) = factor of s
+      if ( blockStatus /= 0 ) then
+        if ( present ( status ) ) then
+          status = (/ i, blockStatus /)
+          return
+        else
+          call dump ( s, name='Guilty party:' )
+          write ( line, '(a, i0, a, i0, a, i0, a)') &
+            & 'Block (',i,',',i,') of matrix is not positive definite (element ', &
+            & blockStatus, ')'
+          call MLSMessage ( MLSMSG_Error, ModuleName, line )
+        end if
       end if
       do j = i+1, x%m%row%nb
         call copyBlock ( s, x%m%block(i,j) )    ! Destroy s, then s := x...
@@ -653,6 +665,7 @@ contains ! =====     Public Procedures     =============================
       end do ! j = i+1, x%m%row%nb
       call destroyBlock( s )                      ! Avoid a memory leak
     end do ! i = 2, n
+    if ( present ( status ) ) status = 0
   end subroutine CholeskyFactor_1
 
   ! ------------------------------------------------  ClearMatrix  -----
@@ -1024,7 +1037,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine GetCholeskyFromDatabase
 
   ! ----------------------------------------------  GetDiagonal_1  -----
-  subroutine GetDiagonal_1 ( A, X, SquareRoot )
+  subroutine GetDiagonal_1 ( A, X, SquareRoot, Invert, ZeroOK )
   ! Get X from the diagonal of A.
   ! Destroy X and re-create it by cloning the row-defining vector of A.
   ! Return the square roots of the diagonal elements if SquareRoot is
@@ -1032,6 +1045,8 @@ contains ! =====     Public Procedures     =============================
     type(Matrix_T), intent(in) :: A
     type(vector_T), intent(inout) :: X
     logical, intent(in), optional :: SquareRoot
+    logical, intent(in), optional :: Invert
+    logical, intent(in), optional :: ZeroOK
 
     integer :: I
 
@@ -1040,7 +1055,7 @@ contains ! =====     Public Procedures     =============================
       & 'Vector supplied to GetDiagonal_1 does not have same template as matrix rows')
     do i = 1, min(a%row%nb,a%col%nb)
       call getDiagonal ( a%block(i,i), &
-        & x%quantities(a%row%quant(i))%values(:,a%row%inst(i)), squareRoot )
+        & x%quantities(a%row%quant(i))%values(:,a%row%inst(i)), squareRoot, invert, zeroOK )
     end do
   end subroutine GetDiagonal_1
 
@@ -1736,7 +1751,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine ScaleMatrix
 
   ! --------------------------------------------  SolveCholesky_1  -----
-  subroutine SolveCholesky_1 ( Z, X, RHS, TRANSPOSE )
+  subroutine SolveCholesky_1 ( Z, X, RHS, TRANSPOSE, STATUS )
   ! Given the Cholesky-factored normal equations Z and the corresponding
   ! RHS, Solve Z X = RHS for X if TRANSPOSE is absent, or present and
   ! false.  Solve Z^T X = RHS for X if TRANSPOSE is present and true.
@@ -1747,10 +1762,13 @@ contains ! =====     Public Procedures     =============================
     type(Vector_T), intent(inout), target :: X
     type(Vector_T), intent(in), target, optional :: RHS
     logical, optional, intent(in) :: TRANSPOSE
+    integer, dimension(2), optional, intent(out) :: STATUS
 
     integer :: I, J                ! Subscripts and loop inductors
     integer :: IC, IR, QC, QR      ! Instance and quantity indices
     logical My_transpose           ! TRANSPOSE if present, else .false.
+    integer :: BLOCKSTATUS         ! Status for one block
+    character(len=132) :: LINE     ! An error message
 
     my_transpose = .false.
     if ( present(transpose) ) my_transpose = transpose
@@ -1771,7 +1789,19 @@ contains ! =====     Public Procedures     =============================
             & x%quantities(qc)%values(:,ic), update=.true., subtract=.true. )
         end do ! j = 1, i-1
         call solveCholesky ( z%m%block(i,i), x%quantities(qc)%values(:,ic), &
-          & transpose=.true. )
+          & transpose=.true., status=blockStatus )
+        if ( blockStatus /= 0 ) then
+          if ( present ( status ) ) then
+            status = (/ i, blockStatus /)
+            return
+          else
+            call dump ( z%m%block(i,i), name='Guilty party:' )
+            write ( line, '(a, i0, a, i0, a, i0, a)') &
+              & 'Block (',i,',',i,') of matrix is not positive definite (element ', &
+              & blockStatus, ')'
+            call MLSMessage ( MLSMSG_Error, ModuleName, line )
+          end if
+        end if
       end do ! i = 1, z%m%col%nb
     else                           ! Solve Z X = RHS for X
       do i = z%m%col%nb, 1, -1
@@ -1786,9 +1816,22 @@ contains ! =====     Public Procedures     =============================
             & update=.true., subtract=.true. )
         end do ! j = i+1, z%m%col%nb
         call solveCholesky ( z%m%block(i,i), x%quantities(qc)%values(:,ic), &
-          & transpose=.false. )
+          & transpose=.false., status=blockStatus )
+        if ( blockStatus /= 0 ) then
+          if ( present ( status ) ) then
+            status = (/ i, blockStatus /)
+            return
+          else
+            call dump ( z%m%block(i,i), name='Guilty party:' )
+            write ( line, '(a, i0, a, i0, a, i0, a)') &
+              & 'Block (',i,',',i,') of matrix is not positive definite (element ', &
+              & blockStatus, ')'
+            call MLSMessage ( MLSMSG_Error, ModuleName, line )
+          end if
+        end if
       end do ! i = z%m%col%nb, 1, -1
     end if
+    if ( present ( status ) ) status = 0
   end subroutine SolveCholesky_1
 
   ! ----------------------------------------------------  Sparsify_1 ---
@@ -2232,6 +2275,10 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.90  2003/06/03 19:21:38  livesey
+! Made CholeskyFactor and SolveCholesky return with status rather than
+! crash.  Also added invert option to GetDiagonal
+!
 ! Revision 2.89  2003/02/21 04:06:30  livesey
 ! Added some OpenMP stuff
 !
