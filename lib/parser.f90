@@ -250,7 +250,14 @@ o:  do
       case default
         if ( error > 1 ) exit
         call announce_error ( (/ t_identifier, t_number, &
-                                 t_string, t_left_parenthesis /) )
+                                 t_string, t_left_parenthesis /), &
+                      after = (/ t_end_of_input, t_end_of_stmt,  &
+                                 t_right_bracket,  t_comma /) )
+        if ( next%class == t_end_of_input .or. &
+             next%class == t_end_of_stmt .or. &
+             next%class == t_right_bracket .or. &
+             next%class == t_comma ) &
+    exit
       end select
     end do
     if ( toggle(par) ) call output ( 'Exit  PRIMARY', advance='yes' )
@@ -321,7 +328,10 @@ o:  do
       case default
         if ( error > 1 ) exit
         call announce_error ( (/ t_end_of_stmt, t_equal, t_comma /) )
-        if ( next%class == t_end_of_input ) exit
+        if ( next%class == t_end_of_input .or. &
+             next%class == t_right_bracket.or. &
+             next%class == t_comma ) &
+          & exit
       end select
     end do
     if ( toggle(par) ) call output ( 'Exit  SPEC_REST', advance='yes' )
@@ -368,8 +378,11 @@ o:  do
           call get_token ! Consume the right bracket
           exit
         end if
-        if ( next%class /= t_comma ) &
+        if ( next%class /= t_comma ) then
           call announce_error ( (/ t_right_bracket, t_comma /) )
+          if ( next%class == t_end_of_input .or. &
+               next%class == t_end_of_stmt ) exit
+        end if
         call get_token   ! Consume the comma
       end do
     else
@@ -380,6 +393,9 @@ o:  do
 end module PARSER
 
 ! $Log$
+! Revision 2.6  2001/07/20 20:18:05  vsnyder
+! Improve error recovery in a few cases -- more work probably needed
+!
 ! Revision 2.5  2001/02/28 02:37:11  vsnyder
 ! Allow specification with no arguments to have a label
 !
