@@ -552,7 +552,7 @@ contains ! ========= Public Procedures ============================
 
           ! Do special things for coherent quantities
           if ( qty%template%coherent ) then
-            if ( qty%template%verticalCoordinate == l_pressure ) then
+            if ( coordinate == l_pressure ) then
               s1 = minloc ( abs ( -log10(theseHeights) + log10(value(1)) ) )
               s2 = minloc ( abs ( -log10(theseHeights) + log10(value(2)) ) )
             else
@@ -1149,6 +1149,9 @@ contains ! ========= Public Procedures ============================
 end module SubsetModule
  
 ! $Log$
+! Revision 2.11  2003/08/06 17:24:16  livesey
+! Essentially cosmetic change
+!
 ! Revision 2.10  2003/05/14 22:02:08  dwu
 ! fix a bug in flagcloud
 !
