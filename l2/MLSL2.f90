@@ -21,7 +21,7 @@ program MLSL2
 
   implicit NONE
 
-  integer, parameter :: L2CF_UNIT = 20  ! Unit # if L2CF is read by Fortran
+  integer, parameter :: L2CF_UNIT = 20  ! Unit # if L2CF is opened by Fortran
 
   logical :: DO_DUMP = .false.     ! Dump declaration table
   logical :: DUMP_TREE = .false.   ! Dump tree after parsing
@@ -85,7 +85,7 @@ program MLSL2
               levels(gen) = ichar(line(j:j)) - ichar('0')
             end if
           end if
-        case ( 'h', 'H', '?' )
+        case ( 'h', 'H', '?' )     ! Describe command line usage
           call getarg ( 0+hp, line )
           print *, 'Usage: ', trim(line), ' [options] [--] [L2CF-name]'
           print *, ' Options:'
@@ -104,9 +104,11 @@ program MLSL2
           print *, '  --[n]pcf: Open the L2CF [without] using the Toolkit ', &
           &          'and the PCF.'
           if ( pcf ) then
-            print *, '            Default: --pcf'
+            print *, '    --npcf assumed if L2CF-name is present.  ', &
+            &        'Default: --pcf'
           else
-            print *, '            Default: --npcf'
+            print *, '    --npcf assumed if L2CF-name is present.  ', &
+            &        'Default: --npcf'
           end if
           print *, '  Options a, c, g1, l, p and t can be toggled in the ', &
           &          'configuration file'
@@ -138,9 +140,7 @@ program MLSL2
   end do
 
 ! Parse the L2CF, producing an abstract syntax tree
-  if ( pcf ) then
-    call open_MLSCF ( MLSPCF_L2CF_Start, inunit )
-  else if ( line /= ' ' ) then
+  if ( line /= ' ' ) then
     open ( l2cf_unit, file=line, status='old', &
       & form='formatted', access='sequential', iostat=status )
     if ( status /= 0 ) then
@@ -149,6 +149,8 @@ program MLSL2
         & "Unable to open L2CF file " // trim(line) )
     end if
     inunit = l2cf_unit
+  else if ( pcf ) then
+    call open_MLSCF ( MLSPCF_L2CF_Start, inunit )
   end if
   call configuration ( root )
   if ( pcf ) then
@@ -186,6 +188,9 @@ program MLSL2
 end program MLSL2
 
 ! $Log$
+! Revision 2.11  2001/02/28 03:01:48  vsnyder
+! Make presence of L2CF-name on command line take precedence over --[n]pcf
+!
 ! Revision 2.10  2001/02/28 02:52:32  vsnyder
 ! Improve usage description
 !
