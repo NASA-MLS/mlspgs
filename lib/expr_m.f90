@@ -23,32 +23,43 @@ contains ! ====     Public Procedures     ==============================
   ! Analyze an expression, return its type, units and value.
 
     use DECLARATION_TABLE, only: DECLARED, DECLS, EMPTY, ENUM_VALUE, &
-                                 EXPRN, GET_DECL, NAMED_VALUE, &
+                                 EXPRN, FUNCTION, GET_DECL, NAMED_VALUE, &
                                  NUM_VALUE, RANGE, STR_RANGE, STR_VALUE, &
                                  UNDECLARED, UNITS_NAME
+    use Functions, only: F_Exp, F_Log, F_Sqrt
     use INTRINSIC, only: PHYQ_DIMENSIONLESS, PHYQ_INVALID
-    use MORETREE, only: StartErrorMessage
-    use OUTPUT_M, only: OUTPUT
     use STRING_TABLE, only: FLOAT_VALUE
     use TOGGLES, only: CON, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: DUMP_TREE_NODE, NODE_ID, NSONS, SUB_ROSA, SUBTREE
+    use TREE, only: NODE_ID, NSONS, SUB_ROSA, SUBTREE
     use TREE_TYPES ! Everything, especially everything beginning with N_
 
     integer, intent(in) :: ROOT         ! Root of expression subtree
     integer, intent(out) :: UNITS(2)    ! Units of expression value -- UNITS(2)
                                         ! is PHYQ_INVALID if ROOT is not a
                                         ! range (:) operator.
-    double precision, intent(out) :: VALUE(2)! Expression value, if any
-    integer, intent(out), optional :: TYPE        ! Expression type
-    double precision, optional, intent(out) :: SCALE(2)! Scale for units
+    double precision, intent(out) :: VALUE(2) ! Expression value, if any
+    integer, intent(out), optional :: TYPE    ! Expression type
+    double precision, optional, intent(out) :: SCALE(2) ! Scale for units
 
     type(decls) :: DECL            ! Declaration record for "root"
+    integer :: I
     integer :: ME                  ! node_id(root)
+    integer :: Son1                ! First son of "root"
     integer :: STRING              ! Sub_rosa(root)
+    integer :: TYPE2               ! Type of son of "root"
     integer :: UNITS2(2)           ! Units of an expression
     double precision :: VALUE2(2)  ! Value of an expression
     double precision :: SCALE2(2)  ! Units scale
+
+    ! Error codes
+    integer, parameter :: BadNode = 1 ! Unsupported tree node in expr
+    integer, parameter :: NonNumeric = badNode + 1 ! Non numeric arg for func
+    integer, parameter :: NotFunc = nonNumeric + 1 ! Not a function
+    integer, parameter :: NotUnitless = notFunc + 1 ! Not a function
+    integer, parameter :: OutOfRange = notUnitless + 1
+    integer, parameter :: UnsupportedFunc = outOfRange + 1
+    integer, parameter :: WrongNumArgs = unsupportedFunc + 1
 
     if ( toggle(con) ) call trace_begin ( 'EXPR', root )
     units = (/ phyq_dimensionless, phyq_invalid /)     ! default
@@ -78,6 +89,59 @@ contains ! ====     Public Procedures     ==============================
       value = sub_rosa(root)
     case ( n_and, n_or )
       if ( present(type) ) type = exprn
+    case ( n_func_ref )
+      son1 = subtree(1,root)
+      ! Look up the function name
+      string = sub_rosa(son1)
+      decl = get_decl(string,function)
+      if ( decl%type /= function ) then
+        call announceError ( son1, notFunc )
+      else
+        if ( nsons(root) /= 2 ) then
+          call announceError ( root, wrongNumArgs )
+        else
+          call expr ( subtree(2,root), units, value, type2 )
+          if ( type2 /= num_value ) then
+            call announceError ( subtree(2,root), nonNumeric )
+          else if ( units(1) /= phyq_dimensionless ) then
+            call announceError ( subtree(2,root), notUnitless )
+          else
+            select case ( decl%units ) ! the function index in this case
+            case ( f_exp )
+              if ( value(1) > log(huge(value(1))) ) then
+                call announceError ( subtree(2,root), outOfRange )
+              else
+                value(1) = exp(value(1))
+              end if
+            case ( f_log )
+              if ( value(1) <= 0.0 ) then
+                call announceError ( subtree(2,root), outOfRange )
+              else
+                value(1) = log(value(1))
+              end if
+            case ( f_sqrt )
+              if ( value(1) < 0.0 ) then
+                call announceError ( subtree(2,root), outOfRange )
+              else
+                value(1) = sqrt(value(1))
+              end if
+            case default
+              call announceError ( son1, unsupportedFunc )
+            end select
+            if ( present(type) ) type = num_value
+          end if
+        end if
+      end if
+    case ( n_pow )
+      value = 1.0
+      do i = nsons(root), 1, -1 ! Power operator is right associative
+        call expr ( subtree(i,root), units, value2, type2 )
+        if ( type2 == num_value ) then
+          value = value2(1) ** value
+        else
+          value = value2 ** value
+        end if
+      end do
     case default
       call expr ( subtree(1,root), units, value, type, scale )
       if ( me == n_unit ) then
@@ -117,17 +181,52 @@ contains ! ====     Public Procedures     ==============================
         case ( n_into )
           value = value2 / value
         case default
-          call startErrorMessage ( root )
-          call dump_tree_node ( root, 0 )
-          call output ( ' is not supported.', advance='yes' )
-          ! There's no way to return an error, so return something
-          type = empty
-          units = PHYQ_INVALID
-          value = 0.0
+          call announceError ( root, badNode )
         end select
       end if
     end select
     if ( toggle(con) ) call trace_end ( 'EXPR' )
+  contains
+    subroutine AnnounceError ( where, what )
+      use MORETREE, only: StartErrorMessage
+      use OUTPUT_M, only: OUTPUT
+      use String_Table, only: Display_String
+      use TREE, only: DUMP_TREE_NODE
+      integer, intent(in) :: Where ! Tree index
+      integer, intent(in) :: What  ! Error index
+      call startErrorMessage ( where )
+      select case ( what )
+      case ( badNode )
+        call dump_tree_node ( where, 0 )
+        call output ( ' is not supported.', advance='yes' )
+      case ( nonNumeric )
+        call output ( 'Argument of ' )
+        call display_string ( string )
+        call output ( ' is not numeric.', advance='yes' )
+      case ( notFunc )
+        call display_string ( string )
+        call output ( ' is not a valid function.', advance='yes' )
+      case ( notUnitless )
+        call output ( 'Argument of ' )
+        call display_string ( string )
+        call output ( ' is not unitless.', advance='yes' )
+      case ( outOfRange )
+        call output ( 'Argument of ' )
+        call display_string ( string )
+        call output ( ' is out of range.', advance='yes' )
+      case ( unsupportedFunc )
+        call output ( 'Function ' )
+        call display_string ( string )
+        call output ( ' is not supported.', advance='yes' )
+      case ( wrongNumArgs )
+        call output ( 'Incorrect number of arguments for ' )
+        call display_string ( string, advance='yes' )
+      end select
+      ! There's no way to return an error, so return something
+      if ( present(type) ) type = empty
+      units = PHYQ_INVALID
+      value = 0.0
+    end subroutine AnnounceError
   end subroutine EXPR
 
   ! --------------------------------------  GetIndexFlagsFromList  -----
@@ -202,6 +301,9 @@ contains ! ====     Public Procedures     ==============================
 end module EXPR_M
 
 ! $Log$
+! Revision 2.9  2004/05/28 23:13:46  vsnyder
+! Add power (^) operator, log, exp and sqrt functions
+!
 ! Revision 2.8  2004/05/28 00:57:25  vsnyder
 ! Move GetIndexFlagsFromList from MoreTree to Expr_m
 !
