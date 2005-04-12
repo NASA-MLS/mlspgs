@@ -32,17 +32,23 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! Depunctuate        Replaces punctuation with blanks
 ! Hhmmss_value       Converts 'hh:mm:ss' formatted string to a real r8
 !                    (See also PGS_TD_UTCtoTAI and mls_UTCtoTAI)
+! Indexes            Indexes an array of substrings of a string into an array
 ! Ints2Strings       Converts an array of integers to strings using "char" ftn
+! IsRepeat           Is a string composed entirely of one substring repeated?
 ! LinearSearchStringArray     
 !                    Finds string index of substring in array of strings
 ! LowerCase          tr[A-Z] -> [a-z]
+! NCopies            How many copies of a substring in a string
 ! ReadCompleteLineWithoutComments     
 !                    Knits continuations, snips comments
 ! ReadIntsFromChars  Converts an array of strings to ints using Fortran read
 ! ReformatDate       Turns 'yyyymmdd' -> 'yyyy-mm-dd'; or more general format
 ! ReformatTime       Turns 'hhmmss.sss' -> 'hh:mm:ss'
 ! Reverse            Turns 'a string' -> 'gnirts a'
+! Reverse_trim       (Reverses after trimming its argument)
 ! SplitWords         Splits 'first, the, rest, last' -> 'first', 'the, rest', 'last'
+! streq              Generalized strings "==" (optionally ignoring case,
+!                      leading blanks, and allowing wildcard matches)
 ! Strings2Ints       Converts an array of strings to ints using "ichar" ftn
 ! trim_safe          trims string down, but never to length 0
 ! WriteIntsToChars   Converts an array of ints to strings using Fortran write
@@ -53,18 +59,23 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! char* CompressString (char* str)
 ! int count_words (char* str)
 ! char* depunctuate (char* str)
+! int(:) indexes (char* string, char* substrings, [char* mode])
 ! ints2Strings (int ints(:,:), char* strs(:))
 ! int LinearSearchStringArray (char* list(:), char* string, 
 !   [log caseInsensitive, [log testSubstring], [log listInString])
+! log IsRepeat ( char* str, [char* ssubtring] )
 ! char* LowerCase (char* str)
+! int NCopies (char* str, char* substring, [log overlap])
 ! readIntsFromChars (char* strs(:), int ints(:), char* forbiddens)
 ! ReadCompleteLineWithoutComments (int unit, char* fullLine, [log eof], &
 !       & [char commentChar], [char continuationChar])
 ! char* ReformatDate (char* date, [char* fromForm], [char* toForm])
 ! char* ReformatTime (char* time, [char* form])
 ! char* Reverse (char* str)
+! char* Reverse_trim (char* str)
 ! SplitWords (char *line, char* first, char* rest, [char* last], &
 !       & [log threeWay], [char* delimiter])
+! log streq (char* str1, char* str2, [char* options])
 ! strings2Ints (char* strs(:), int ints(:,:))
 ! char* trim_safe (char* str)
 ! writeIntsToChars (int ints(:), char* strs(:))
@@ -79,16 +90,44 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! Therefore in calling one of these you probably need to use the format
 !   call SortArray(myArray(1:mySize), ..
 ! to avoid operating on undefined array elements
+! (2) in some routines trailing blanks are ignored,
+!   while in others they are significant
+! How trailing blanks in argument(s) treated
+! Ignored                   Significant
+! -------                   -----------
+! CatStrings                Capitalize
+! Depunctuate               CompressString
+! HHMMSS_value              count_words
+! indexes                   LowerCase
+! isRepeat                  Reverse
+! LinearSearchStringArray   strings2Ints
+! ncopies                   trim_safe
+! readIntsFromChars         
+! reFormatDate              
+! reFormatTime              
+! Reverse_trim              
+! SplitWords                
+! streq                     
+! yyyymmdd_to_doy           
+! yyyydoy_to_yyyymmdd_str   
 ! === (end of api) ===
 
   public :: Capitalize, CatStrings, CompressString, count_words, &
    & depunctuate, hhmmss_value, &
-   & ints2Strings, LinearSearchStringArray, &
-   & LowerCase, &
+   & indexes, ints2Strings, IsRepeat, &
+   & LinearSearchStringArray, LowerCase, NCopies, &
    & ReadCompleteLineWithoutComments, readIntsFromChars, &
-   & reformatDate, reformatTime, Reverse, &
-   & SplitWords, strings2Ints, trim_safe, &
+   & reformatDate, reformatTime, Reverse, Reverse_trim, &
+   & SplitWords, streq, strings2Ints, trim_safe, &
    & writeIntsToChars
+
+  interface readIntsFromChars
+    module procedure readAnIntFromChars, readIntArrayFromChars
+  end interface
+
+  interface writeIntsToChars
+    module procedure writeAnIntToChars, writeIntArrayToChars
+  end interface
 
   ! hhmmss_value
   integer, public, parameter :: INVALIDHHMMSSSTRING = 1
@@ -338,6 +377,98 @@ contains
 
   end function HHMMSS_value
 
+  ! ---------------------------------------------------  indexes  -----
+  function indexes(str, substrings, mode) result(array)
+    character(len=*), intent(in) :: str
+    character(len=*), intent(in), dimension(:) :: substrings
+    character(len=*), optional :: mode
+    integer, dimension(size(substrings)) :: array
+    character(len=len(str)) :: substr
+    ! Returns the array of indexes of each element of substrings in str
+    ! The mode determines how consecutive elements of array are ordered
+    ! (default is first)
+    ! mode          order
+    ! ------        -----
+    ! first         always find first occurrence of substr(i) in str
+    ! last          always find last occurrence of substr(i) in str
+    ! left          progressively find next substr(i) after substr(i-1)
+    ! right         progressively find next substr(i) before substr(i-1)
+    ! wrap          left-right, meeting in middle
+    !
+    ! E.g., if str='ababababababa' and substrings = (/'a', 'a', 'a', 'a', 'a'/)
+    ! mode            result
+    ! ------          ------
+    ! first        (/1, 1, 1, 1, 1/)
+    ! last         (/13, 13, 13, 13, 13/)
+    ! left         (/1, 3, 5, 7, 9/)
+    ! right        (/13, 11, 9, 7, 5/)
+    ! wrap         (/1, 3, 7, 11, 13/) ! Currently, we give (/1,3,9,11,13/)
+    !
+    ! Notes:
+    ! mode='wrap' does not return true middle value yet--do we care?
+     integer :: i
+     integer :: ipos
+     integer :: lpos
+     integer :: n
+     integer :: rpos
+     integer, dimension(size(substrings)) :: left
+     integer, dimension(size(substrings)) :: right
+     character(len=5) :: myMode
+     !
+     myMode = 'first'
+     if ( present(mode) ) myMode = mode
+     n = size(substrings)
+     ! Simple modes
+     if ( lowercase(myMode(1:2)) == 'fi' ) then
+       do i = 1, n
+         array(i) = index(str, trim(substrings(i)))
+       enddo
+       return
+     elseif ( lowercase(myMode(1:2)) == 'la' ) then
+       do i = 1, n
+         array(i) = index(str, trim(substrings(i)), back=.true.)
+       enddo
+       return
+     endif
+     ! Progressive Modes (which accumulate *pos)
+     lpos = 1
+     rpos = max(len_trim(str), 1) ! len(trim_safe(str))
+     left = 0
+     do i = 1, n
+       ipos = index(str(lpos:), trim_safe(substrings(i)))
+       if ( ipos < 1 ) exit
+       left(i) = lpos + ipos - 1
+       lpos = left(i) + max(len_trim(substrings(i)), 1) ! len(trim_safe(substr(i)))
+       if ( lpos > len(str) ) exit
+     enddo
+     right = 0
+     do i = 1, n
+       ipos = index(str(:rpos), trim_safe(substrings(i)), back=.true.)
+       if ( ipos < 1 ) exit
+       right(i) = ipos
+       rpos = right(i) - 1
+       if ( rpos < 1 ) exit
+     enddo
+     select case (lowercase(myMode(1:2)))
+     case ('le')
+       array = left
+     case ('ri')
+       array = right
+     case ('wr')
+       array(1:n) = right(n:1:-1)
+       lpos = n/2
+       rpos = lpos + 1
+       do i = 1, lpos
+         array(i) = left(i)
+       enddo
+       ! Is n an odd number?
+       !if ( 2*lpos < n ) &
+       !  & array(rpos) = (left(rpos) + right(rpos) ) / 2 ! No, this won't work
+     case default
+       array = left
+     end select
+  end function indexes
+
   ! --------------------------------------------------  Int2Strings  -----
   subroutine Ints2Strings ( ints, strs )
     ! takes an array of integers and returns string array
@@ -366,6 +497,36 @@ contains
    end do
 
   end subroutine Ints2Strings
+
+  ! ---------------------------------------------------  isRepeat  -----
+  logical function isRepeat(str, substr)
+    character(len=*), intent(in) :: str
+    character(len=*), intent(in), optional :: substr
+     ! Is str formed purely of repeated blocks of substr?
+     ! If substr not supplied, 
+     ! then is str any one character repeated over and over?
+     ! Special cases:
+     ! str = ' ' => TRUE 
+     ! str != ' ' and substr = ' ' => FALSE
+     ! Note that otherwise we're ignoring trailing blanks
+     integer :: strlen
+     integer :: substrlen
+     character(len=1) :: aChar
+     isRepeat = .false.
+     if ( len_trim(str) < 1 ) then
+       isRepeat = .true.
+       return
+     endif
+     strlen = len_trim(str)
+     if ( present(substr) ) then
+       substrlen = len_trim(substr)
+       if ( substrlen < 1 ) return
+       isRepeat = (substrlen*ncopies(trim(str), trim(substr)) >= strlen)
+       return
+     endif
+     aChar = str(1:1)
+     isRepeat = (ncopies(trim(str), aChar) >= strlen)
+  end function isRepeat
 
   ! ------------------------------------  LinearSearchStringArray  -----
 
@@ -485,6 +646,39 @@ contains
 
   END FUNCTION LowerCase
 
+  ! ---------------------------------------------------  ncopies  -----
+  integer function ncopies(str, substr, overlap)
+    character(len=*), intent(in) :: str
+    character(len=*), intent(in) :: substr
+    logical, optional, intent(in) :: overlap
+     ! How many copies of substr are in str?
+     ! The copies may optionally overlap
+     ! E.g., str = 'aaaa', substr = 'aa'
+     ! overlap = FALSE => ncopies = 2
+     ! overlap = TRUE => ncopies = 3
+     integer :: ipos
+     integer :: next
+     logical :: mayOverlap
+     !
+     mayOverlap = .false.
+     if ( present(overlap) ) mayOverlap = overlap
+     ncopies = 0
+     ipos = 1
+     do
+       if ( ipos > len_trim(str) ) return
+       next = index(str(ipos:), substr)
+       if ( next < 1 ) then
+         return
+       endif
+       ncopies = ncopies + 1
+       if ( .not. mayOverlap ) then
+         ipos = ipos + next + len(substr) - 1
+       else
+         ipos = ipos + next
+       endif
+     enddo
+  end function ncopies
+
   ! ----------------------------  ReadCompleteLineWithoutComments  -----
 
   ! This funtion reads a line or set of lines from a text file and returns a
@@ -600,8 +794,49 @@ contains
 
   END SUBROUTINE ReadCompleteLineWithoutComments
 
-  ! --------------------------------------------------  readIntsFromChars  -----
-  SUBROUTINE readIntsFromChars (strs, ints, forbiddens)
+  ! --------------------------------------------------  readAnIntFromChars  -----
+  SUBROUTINE readAnIntFromChars (str, int, forbiddens)
+    ! takes a string and returns an integer
+    ! using Fortran "read"
+    ! If the string is blank or contains one of forbiddens
+    ! the int is left undefined
+	 ! Not useful yet
+	 !
+    !--------Argument--------!
+    CHARACTER (LEN=*), INTENT(in) ::   str
+    integer, intent(out)          ::   int
+    CHARACTER (LEN=*), INTENT(in), optional     ::   forbiddens
+    character(len=40)                           ::   myForbiddens
+
+    !----------Local vars----------!
+    INTEGER :: j
+    LOGICAL :: leave_undef
+    !----------Executable part----------!
+
+   ! Check that all is well (if not returns blanks)
+   if ( present(forbiddens) ) then
+     myForbiddens = adjustl(forbiddens)
+   else
+     myForbiddens = ' '
+   endif
+   leave_undef = (str == ' ')
+   if ( myForbiddens /= ' ' ) then
+     do j=1, len(trim(myForbiddens))
+        leave_undef = leave_undef &
+         & .or. &
+         & ( &
+         &    index(str, myForbiddens(j:j)) > 0 &
+         &  .and. &
+         &    myForbiddens(j:j) /= ' ' &
+         & )
+     enddo
+   endif
+   if ( .not. leave_undef ) read(str, *) int
+
+  END SUBROUTINE readAnIntFromChars
+
+  ! --------------------------------------------------  readIntArrayFromChars  -----
+  SUBROUTINE readIntArrayFromChars (strs, ints, forbiddens)
     ! takes an array of strings and returns integer array
     ! using Fortran "read"
     ! If any element of string array is blank or contains one of forbiddens
@@ -613,7 +848,6 @@ contains
     CHARACTER (LEN=*), INTENT(in), dimension(:) ::   strs
     integer, intent(out), dimension(:)          ::   ints
     CHARACTER (LEN=*), INTENT(in), optional     ::   forbiddens
-    character(len=40)                           ::   myForbiddens
 
     !----------Local vars----------!
     INTEGER :: i, j, arrSize
@@ -626,28 +860,11 @@ contains
      ints = LENORSIZETOOSMALL
      return
    endif
-   if ( present(forbiddens) ) then
-     myForbiddens = adjustl(forbiddens)
-   else
-     myForbiddens = ' '
-   endif
    do i=1, arrSize
-      leave_undef = (strs(i) == ' ')
-      if ( myForbiddens /= ' ' ) then
-        do j=1, len(trim(myForbiddens))
-           leave_undef = leave_undef &
-            & .or. &
-            & ( &
-            &    index(strs(i), myForbiddens(j:j)) > 0 &
-            &  .and. &
-            &    myForbiddens(j:j) /= ' ' &
-            & )
-        enddo
-      endif
-      if ( .not. leave_undef ) read(strs(i), *) ints(i)
+     call readAnIntFromChars(strs(i), ints(i), forbiddens)
    enddo
 
-  END SUBROUTINE readIntsFromChars
+  END SUBROUTINE readIntArrayFromChars
 
   ! --------------------------------------------------  reFormatDate  -----
   function reFormatDate(date, fromForm, toForm) result(reFormat)
@@ -849,7 +1066,7 @@ contains
 	 ! e.g., to remove leading blanks
 	 ! arg = Reverse(TRIM(Reverse(arg)))
 	 !
-	 ! See also ReverseList
+	 ! See also Reverse_trim, ReverseList
     !--------Argument--------!
     CHARACTER (LEN=*), INTENT(IN) :: str
     CHARACTER (LEN=LEN(str)) :: outstr
@@ -876,6 +1093,40 @@ contains
 	ENDIF
 
   END FUNCTION Reverse
+
+   ! --------------------------------------------------  Reverse_trim  -----
+  FUNCTION Reverse_trim (str) RESULT (outstr)
+    ! takes a string, trims it then returns one with chars in reversed order
+	 ! See also Reverse which omits the trim step
+    !
+    ! E.g., given 'A string    ' reverse_trim returns 'gnirst A   ' while
+    ! a simple Reverse returns '   gnirst A'
+    !--------Argument--------!
+    CHARACTER (LEN=*), INTENT(IN) :: str
+    CHARACTER (LEN=max(LEN_TRIM(str), 1)) :: outstr
+
+    !----------Local vars----------!
+    INTEGER :: i, istr, irev
+	 CHARACTER (LEN=1) :: strChar
+    !----------Executable part----------!
+    outstr=str
+    IF(LEN_TRIM(str) <= 1) RETURN
+
+    DO i = 1, LEN_TRIM(str)-1, 2
+       istr = 1 + (i-1)/2				! 1, 2, ..
+       irev = LEN_TRIM(str) - (i-1)/2		! N, N-1, ..
+       strChar = str(istr:istr)
+		 outstr(istr:istr) = str(irev:irev)
+		 outstr(irev:irev) = strChar
+    END DO
+
+! Special case: str contains odd number of chars
+    IF(MOD(LEN_TRIM(str), 2) == 1) THEN
+       istr = 1 + (LEN_TRIM(str)-1)/2				! 1, 2, ..
+        outstr(istr:istr) = str(istr:istr)
+	ENDIF
+
+  END FUNCTION Reverse_trim
 
   ! -------------------------------------------------  SplitWords  -----
 
@@ -964,6 +1215,157 @@ contains
 
   END SUBROUTINE SplitWords
        
+  ! -------------------------------------------------  streq  -----
+  function streq (STR1, STR2, OPTIONS) result (relation)
+    ! Are two strings "equal" where equality is modified by
+    ! (1) Wildcard * (off by default) which allows 'a*' to equal 'abcd'
+    ! (2) case insensitive (off by default) which allows 'ABCD' to equal 'abcd'
+    ! (3) flush left (off by default) which allows 'abcd' to equal '  abcd'
+    !
+    ! Defaults to standard (str1 == str2), but options broaden cases of TRUE
+    ! To turn options on, supply optional arg options which is a character
+    ! string containing: 'w' => turns on (1); 'c' => turns on (2); 'f' => (3)
+    ! e.g., streq('Ab*', 'abcd', '-wc') is TRUE
+    !
+    ! Notes:
+    ! The '-' character in options is ignored and therefore not necessary
+    ! A more powerful version can be imagined that would permit full regexp
+    ! Trailing spaces are always ignored; e.g. streq('abcd ', 'abcd') is TRUE
+    ! Only one of str1, str2 may contain wildcards
+    !--------Argument--------!
+    character (len=*), intent(in) :: STR1
+    character (len=*), intent(in) :: STR2
+    character (len=*), intent(in), optional  :: OPTIONS
+    logical                       :: RELATION
+
+    ! Internal variables
+    integer, parameter :: MAXNUMWILDCARDS = 10 ! How many '*' in the pattern
+    character(len=*), parameter :: star = '*'  ! Should we allow others?
+    logical :: flushleft
+    integer :: i
+    logical :: ignorecase
+    integer, dimension(MAXNUMWILDCARDS) :: istars
+    character(len=4) :: myOptions
+    integer :: nstars
+    integer :: spos
+    character(len=max(len(str1), len(str2))) :: str
+    character(len=len(str)) :: ptrn  ! The one with '*'
+    character(len=len(str)), dimension(MAXNUMWILDCARDS+1) :: substrs
+    logical :: wildcard
+    logical, parameter :: deebug = .false.
+    !----------Executable part----------!
+    relation = .FALSE.
+    myOptions = ' '
+    if ( present(options) ) myOptions = lowercase(options)
+    wildcard = (index(myoptions, 'w') > 0)
+    ignorecase = (index(myoptions, 'c') > 0)
+    flushleft  = (index(myoptions, 'f') > 0)
+    ! Now the wildcard(s) should be in ptrn
+    if ( index(str1, star) > 0 ) then
+      str = str2
+      ptrn = str1
+    elseif ( index(str2, star) > 0 ) then
+      str = str1
+      ptrn = str2
+    else
+      ! Whoops--don't need wild card after all
+      wildcard = .false.
+    endif
+    ! Special cases: emptry strings or a bare vanilla match
+    if ( len_trim(str1 // str2) < 1 ) then
+      relation = .true.
+      return
+    elseif ( len_trim(str1) < 1 ) then
+      relation = ( str2 == star .and. wildcard ) 
+      return
+    elseif ( len_trim(str2) < 1 ) then
+      relation = ( str1 == star .and. wildcard ) 
+      return
+    elseif ( str2 == str1 ) then
+      relation = .true.
+      return
+    endif
+
+    if ( .not. wildcard ) then
+      if ( ignorecase ) then
+        if ( flushleft ) then
+          relation = (adjustl(lowercase(str1)) == adjustl(lowercase(str1)))
+        else
+          relation = (lowercase(str1) == lowercase(str1))
+        endif
+      else
+        if ( flushleft ) then
+          relation = (adjustl(str1) == adjustl(str1))
+        ! else plain vanilla case already handled as special case above
+        endif    
+      endif    
+      return
+    endif    
+
+    ! How to handle the wildcard? Use it to split ptrn into sub-patterns
+    if ( ignorecase ) then
+      str = lowercase(str)
+      ptrn = lowercase(ptrn)
+    endif
+    if ( flushleft ) then
+      str = adjustl(str)
+      ptrn = adjustl(ptrn)
+    endif
+    ! if ( deebug ) print *, 'str: ', trim(str), '  ptrn: ', trim(ptrn)
+    if ( ptrn == star ) then
+      relation = .true.
+      return
+    elseif ( isRepeat(ptrn, star) ) then
+      relation = .true.
+      return
+    endif
+
+    ! 1st -- how many stars?
+    nstars =     ncopies(ptrn, star)
+    ! if ( deebug ) print *, 'num of * ', nstars
+    ! 2nd -- extract substrings from inbetween the wildcards
+    substrs = star
+    istars(1:nstars) = indexes(ptrn, substrs(1:nstars), mode='left')
+    ! if ( deebug ) print *, 'where? ', istars(1:nstars)
+    substrs = ' '
+    spos = 1
+    do i=1, nstars
+      if ( spos > len(ptrn) ) exit
+      substrs(i) = firstsubstr(ptrn(spos:), star)
+      spos = max(spos, istars(i)) + 1
+    enddo
+    substrs(nstars+1) = Reverse_trim(firstsubstr(Reverse_trim(ptrn), star))
+!     if ( deebug ) then
+!       do i=1, nstars+1
+!         print *, trim(substrs(i))
+!       enddo
+!     endif
+    ! Deal specifically with empty elements of substrs
+    relation = .true.
+    if ( substrs(1) /= ' ' ) then
+      if ( index(str, trim(substrs(1))) /= 1 ) then
+        relation = .false.
+        return
+      endif
+    endif
+    ! if ( deebug ) print *, 'passed 1st sub-test'
+    ! firstSSindex = 2
+    if ( substrs(nstars+1) /= ' ' ) then
+      if ( index(Reverse_trim(str), Reverse_trim(substrs(nstars+1))) /= 1 ) then
+        relation = .false.
+        ! if ( deebug ) print *, 'failed 2nd sub-test: ', Reverse_trim(str), Reverse_trim(substrs(nstars+1))
+        return
+      endif
+    endif
+    ! lastSSindex = nstars
+    ! if ( deebug ) print *, 'passed 2nd sub-test'
+    if ( nstars < 2 ) return
+    ! Now find the indexes of these sub-patterns according to mode='wrap'
+    istars(1:nstars-1) = indexes(str, substrs(2:nstars), mode='wrap')
+    ! What we want to do is to check that no istars < 1
+    relation = all ( istars(1:nstars-1) > 0 )
+  end function streq
+
   ! --------------------------------------------------  strings2Ints  -----
   SUBROUTINE strings2Ints (strs, ints)
     ! takes an array of strings and returns integer array
@@ -1012,18 +1414,58 @@ contains
 
   end function trim_safe
 
-  ! --------------------------------------------------  writeIntsToChars  -----
-  SUBROUTINE writeIntsToChars (ints, strs)
-    ! takes an array of integers and returns string array
+  ! --------------------------------------------------  writeAnIntToChars  -----
+  SUBROUTINE writeAnIntToChars (int, str, fmt, specialInts, specialChars)
+    ! takes an integer and returns a string
     ! using Fortran "write"
-    ! If any element of string array is blank or contains one of forbiddens
-    ! the corresponding element of ints is left undefined
+    ! Unless integer is one of specialInts, in which case
+    ! we return corresponding one of specialChars
+    ! (So that we can treat -1 as "unlimited' or -999 as 'FillValue')
+	 ! We'll just assume both special arrays are of same size
 	 ! Not useful yet
 	 !
     !--------Argument--------!
     !    dimensions are (len(strs(1)), size(strs(:)))
-    character (LEN=*), intent(out), dimension(:) ::   strs
+    integer, intent(in)                                    ::   int
+    character (LEN=*), intent(out)                         ::   str
+    character (LEN=*), optional, intent(in)                ::   fmt
+    integer, intent(in), dimension(:), optional            ::   specialInts
+    character (LEN=*), intent(in), dimension(:), optional  ::   specialChars
+
+    !----------Local vars----------!
+    integer :: i
+    !----------Executable part----------!
+
+   ! Check that we don't have one of special cases
+   if ( present(specialInts) ) then
+     do i=1, size(specialInts)
+       if ( int == specialInts(i) ) then
+         str = specialChars(i)
+         return
+       endif
+     enddo
+   endif
+   if ( present(fmt) ) then
+     write(str, fmt=fmt) int
+   else
+     write(str, *) int
+   endif
+
+  END SUBROUTINE writeAnIntToChars
+
+  ! --------------------------------------------------  writeIntArrayToChars  -----
+  SUBROUTINE writeIntArrayToChars (ints, strs, fmt, specialInts, specialChars)
+    ! takes an array of integers and returns string array
+    ! using Fortran "write"
+	 ! Not useful yet
+	 !
+    !--------Argument--------!
+    !    dimensions are (len(strs(1)), size(strs(:)))
     integer, intent(in), dimension(:)            ::   ints
+    character (LEN=*), intent(out), dimension(:) ::   strs
+    character (LEN=*), intent(in), optional      ::   fmt
+    integer, intent(in), dimension(:), optional  ::   specialInts
+    character (LEN=*), intent(in), dimension(:), optional  ::   specialChars
 
     !----------Local vars----------!
     integer :: i, j, arrSize
@@ -1037,10 +1479,10 @@ contains
      return
    endif
    do i=1, arrSize
-      write(strs(i), *) ints(i)
+      call writeAnIntToChars(ints(i), strs(i), fmt, specialInts, specialChars)
    enddo
 
-  END SUBROUTINE writeIntsToChars
+  END SUBROUTINE writeIntArrayToChars
 
   ! ---------------------------------------------  yyyymmdd_to_doy_ints  -----
   subroutine yyyymmdd_to_doy_ints(year, month, day, doy)
@@ -1172,6 +1614,38 @@ contains
     number = -1
   end function monthNameToNumber
 
+  ! ---------------------------------------------------  lastchar  -----
+  character function lastchar(str)
+    character(len=*), intent(in) :: str
+     ! Returns the last non-blank character of str (unless str itself is blank)
+     integer :: strlen
+     lastchar = ' '
+     strlen = len_trim(str)
+     if ( strlen < 1 ) return
+     lastchar = str(strlen:strlen)
+  end function lastchar
+
+  ! ---------------------------------------------------  firstsubstr  -----
+  function firstsubstr(str, star) result(substr)
+    character(len=*), intent(in) :: str
+    character(len=1), intent(in) :: star
+    character(len=len(str)) :: substr
+    ! Returns the substr between the start of str and the 1st occurrence of star
+     integer :: strlen
+     integer :: ipos
+     substr = ' '
+     strlen = len_trim(str)
+     if ( strlen < 1 ) return
+     ipos = index(str, star)
+     if ( ipos < 1 ) then
+       substr = str
+     elseif ( ipos == 1 ) then
+       substr = ' '
+     else
+       substr = str(:ipos-1)
+     endif
+  end function firstsubstr
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -1180,6 +1654,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.54  2005/04/12 17:34:53  pwagner
+! isRepeat, streq, ncopies, reverse_trim, scalar versions of read/write intchar
+!
 ! Revision 2.53  2005/03/15 23:45:05  pwagner
 ! Added trim_safe to stop trimming at length 1
 !
