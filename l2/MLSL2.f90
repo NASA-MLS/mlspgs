@@ -120,7 +120,10 @@ program MLSL2
   implicit NONE
 
   integer, parameter :: L2CF_UNIT = 20  ! Unit # if L2CF is opened by Fortran
+  character(len=*), parameter :: L2CFNAMEEXTENSION = ".l2cf"
 
+  character(len=1) :: arg_rhs      ! 'n' part of 'arg=n'
+  character(len=16) :: aSwitch
   character(len=2048) :: command_line ! All the opts
   logical :: COPYARG               ! Copy this argument to parallel command line
   logical :: COUNTCHUNKS = .false. ! Just count the chunks and quit
@@ -131,8 +134,8 @@ program MLSL2
   integer :: FIRST_SECTION         ! Index of son of root of first n_cf node
   logical :: garbage_collection_by_dt = .false. ! Collect garbage after each deallocate_test?
   integer :: I                     ! counter for command line arguments
-  integer, dimension(1) :: ints
   integer :: J                     ! index within option
+  character(len=FILENAMELEN) :: L2CF_file       ! Some text
   integer :: LastCHUNK = 0         ! Just run range [SINGLECHUNK-LastCHUNK]
   character(len=2048) :: LINE      ! Into which is read the command args
   integer :: N                     ! Offset for start of --'s text
@@ -140,6 +143,7 @@ program MLSL2
   integer :: NUMSWITCHES
   integer :: RECL = 20000          ! Record length for l2cf (but see --recl opt)
 ! integer :: RECORD_LENGTH
+  character(len=len(switches)) :: removeSwitches = ''
   integer :: ROOT                  ! of the abstract syntax tree
   logical :: showDefaults = .false. ! Just print default opts and quit
   integer :: SINGLECHUNK = 0       ! Just run one chunk; unless lastChunk nonzero
@@ -147,15 +151,9 @@ program MLSL2
   integer :: STATUS                ! From OPEN
   logical :: SWITCH                ! "First letter after -- was not n"
   real :: T0, T1, T2               ! For timing
-  logical :: Timing = .false.      ! -T option is set
-  character(len=FILENAMELEN) :: L2CF_file       ! Some text
-  character(len=len(switches)) :: removeSwitches = ''
-  character(len=16) :: aSwitch
-  character(len=16), dimension(1) :: strings
   character(len=len(switches)) :: tempSwitches
+  logical :: Timing = .false.      ! -T option is set
   character(len=2048) :: WORD      ! Some text
-  character(len=1) :: arg_rhs      ! 'n' part of 'arg=n'
-  character(len=*), parameter :: L2CFNAMEEXTENSION = ".l2cf"
 
   !------------------------------- RCS Ident Info ------------------------------
   character(len=*), parameter :: IdParm = & 
@@ -186,6 +184,7 @@ program MLSL2
     removeSwitches='slv' ! Since slave output already saved to separate files
     switches=''
     DEFAULT_HDFVERSION_WRITE = HDFVERSION_5
+    MLSMessageConfig%limitWarnings = 50 ! Why print all that stuff?
   else
     ! SCF_VERSION
     switches='0sl'
@@ -541,17 +540,14 @@ program MLSL2
         case ( 't' ); toggle(tab) = .true.
         case ( 'v' ); do_listing = .true.
         case ( 'w' )
-          ! print *, 'w option: ', trim(line(j+1:))
           MLSMessageConfig%limitWarnings = 1
           if ( line(j+1:j+1) == 'p' ) then
             RESTARTWARNINGS = .false.
             j = j + 1
           endif
           if ( j < len_trim(line) ) then
-            strings(1) = line(j+1:)
-            call readIntsFromChars(strings, ints)
+            call readIntsFromChars(line(j+1:), MLSMessageConfig%limitWarnings)
             j = j + len_trim(line(j+1:))
-            MLSMessageConfig%limitWarnings = ints(1)
           end if
         case default
           print *, 'Unrecognized option -', line(j:j), ' ignored.'
@@ -1035,6 +1031,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.135  2005/04/12 18:12:30  pwagner
+! SIPS version limits warnings to 50; reads scalar intfromchars
+!
 ! Revision 2.134  2005/04/01 00:15:37  pwagner
 ! Automatcially remove slv switch from SIPS version
 !
