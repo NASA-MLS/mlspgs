@@ -245,8 +245,8 @@ do
     # These other test are slower, so skip them if we won't print the results
     if [ "$died" = "yes" -a "$skipifrestricting" = "no" ]
     then
-	   chunks=`grep -i died $dir/exec_log/process.stdout | awk '{print $7}'`
-	   nodes=`grep -i died $dir/exec_log/process.stdout | awk '{print $9}'`
+	   chunks=`grep -i 'died,' $dir/exec_log/process.stdout | awk '{print $7}'`
+	   nodes=`grep -i 'died,' $dir/exec_log/process.stdout | awk '{print $9}'`
       list="$list \t $chunks \t $nodes"
     fi
     if [ "$running" = "yes" -a "$skipifrestricting" = "no" ]
@@ -296,6 +296,9 @@ do
 done
 exit 0
 # $Log$
+# Revision 1.2  2005/04/06 22:13:58  pwagner
+# Fixed bug; optionally show unspawnable nodes
+#
 # Revision 1.1  2005/04/01 00:13:15  pwagner
 # First commit
 #
