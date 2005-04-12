@@ -18,7 +18,7 @@ program L2Q
     & MLSMSG_Info, MLSMSG_Warning, PVMERRORMESSAGE
   use MLSSETS, only: FINDFIRST, FINDALL
   use MLSSTRINGLISTS, only: CATLISTS, STRINGELEMENTNUM
-  use MLSSTRINGS, only: LOWERCASE
+  use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS
   use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUT_DATE_AND_TIME, PRUNIT, &
     & TIMESTAMP
   use PVM, only: PVMOK, &
@@ -129,8 +129,14 @@ program L2Q
       &                :: dump_file = '<STDIN>'   ! name of dump file
     logical :: Timing = .false.                   ! -T option is set
     logical :: date_and_times = .false.
-    character(len=1) :: timingUnits = 's'         ! l_s, l_m, l_h
-    character(len=2048) :: selectedHosts =''      ! E.g., 'c0-1,c0-23,c0-55'
+    character(len=1)   :: timingUnits = 's'       ! l_s, l_m, l_h
+    character(len=2048):: selectedHosts =''       ! E.g., 'c0-1,c0-23,c0-55'
+    character(len=FILENAMELEN) &
+      &                :: PMFile = ''        ! name of periodic Master dump file
+    character(len=FILENAMELEN) &
+      &                :: PHFile = ''        ! name of periodic host dump file
+    real               :: MDBPeriod = 600.   ! Period (s) of Master dumps
+    real               :: HDBPeriod = 600.   ! Periodic (s) host dumps
   end type options_T
   
   type ( options_T ) :: options
@@ -145,6 +151,9 @@ program L2Q
   parallel%slaveFilename = 'pvm' ! for later cures only
   !---------------- Task (0) ------------------
   call get_options
+  ! print *, 'dump file: ', trim(options%dump_file)
+  ! print *, 'masters file: ', trim(options%PMFile)
+  ! print *, 'hosts file: ', trim(options%PHfile)
   options%verbose = options%verbose .or. options%debug
   select case (options%timingUnits)
   case ('m')
@@ -239,6 +248,7 @@ program L2Q
 
   if ( options%dump_file /= '<STDIN>' ) then
     prunit = DUMPUNIT
+    ! print *, 'Opening ', prunit, ' as ', trim(options%dump_file)
     open(prunit, file=trim(options%dump_file), &
       & status='replace', form='formatted')
   endif
@@ -269,7 +279,7 @@ program L2Q
   call output_date_and_time(msg='starting l2q')
   call time_now ( t1 )
 
-  if( options%verbose ) then
+  if( options%verbose .or. .true. ) then
     call dump_settings
   end if
 
@@ -464,7 +474,9 @@ contains
     ! Internal variables
     integer :: i
     integer :: j
+    integer :: lineVal
     integer :: n
+    character(len=3) :: subcase
     ! Executable
     i = 1+hp
     command_line = ' '
@@ -487,8 +499,20 @@ contains
           options%cleanMasterDB = switch
         elseif ( line(3+n:7+n) == 'check ' ) then
           options%checklist = switch
-        elseif ( line(3+n:6+n) == 'defer' ) then
+        elseif ( line(3+n:7+n) == 'defer' ) then
           options%deferToElders = switch
+        elseif ( line(3+n:5+n) == 'dhp' ) then
+          i = i + 1
+          call getarg ( i, line )
+          command_line = trim(command_line) // ' ' // trim(line)
+          call readIntsFromChars(line, lineVal)
+          options%HDBPeriod = lineVal
+        elseif ( line(3+n:5+n) == 'dmp' ) then
+          i = i + 1
+          call getarg ( i, line )
+          command_line = trim(command_line) // ' ' // trim(line)
+          call readIntsFromChars(line, lineVal)
+          options%MDBPeriod = lineVal
         elseif ( lowerCase(line(3+n:10+n)) == 'dumpnewm' ) then
           options%dumpEachNewMaster = switch
         elseif ( lowerCase(line(3+n:10+n)) == 'help' ) then
@@ -507,6 +531,7 @@ contains
         else if ( line(3:) == ' ' ) then  ! "--" means "no more options"
           i = i + 1
           call getarg ( i, line )
+          command_line = trim(command_line) // ' ' // trim(line)
           exit
         else
           print *, 'unrecognized option ', trim(line), ' ignored.'
@@ -550,21 +575,42 @@ contains
         case ( 'c' )
           i = i + 1
           call getarg ( i, line )
+          command_line = trim(command_line) // ' ' // trim(line)
           options%command = lowercase(line)
           ! Special commands take yet another arg
           if ( index('check,avoid', trim(options%command)) > 0 ) then
             i = i + 1
             call getarg ( i, line )
+            command_line = trim(command_line) // ' ' // trim(line)
             options%selectedHosts = lowercase(line)
           endif
         case ( 'o' )
+          subcase = line(j:j+2)
           i = i + 1
           call getarg ( i, line )
+          ! print *, 'subcase: ', subcase
+          ! print *, 'file: ', trim(line)
+          command_line = trim(command_line) // ' ' // trim(line)
+          if ( subcase == 'o') then
           options%dump_file = line
+        ! case ( 'oph' )
+          ! i = i + 1
+          ! call getarg ( i, line )
+          ! command_line = trim(command_line) // ' ' // trim(line)
+          elseif ( subcase == 'oph') then
+          options%PHFile = line
+        ! case ( 'opm' )
+          !  i = i + 1
+          !call getarg ( i, line )
+          !command_line = trim(command_line) // ' ' // trim(line)
+          elseif ( subcase == 'opm') then
+          options%PMFile = line
+          endif
         case ( 's' )
           options%command = 'switch'
           i = i + 1
           call getarg ( i, line )
+          command_line = trim(command_line) // ' ' // trim(line)
           options%dump_file = line
         case default
           print *, 'Unrecognized option -', line(j:j), ' ignored.'
@@ -612,9 +658,13 @@ contains
     character(len=FileNameLen)  :: tempfile
     integer :: TID
     integer, dimension(MAXNUMMULTIPROCS) :: TIDS
+    real    :: tLastHDBDump
+    real    :: tLastMDBDump
     type(master_t) :: aMaster
     ! Executable
     numMasters = 0
+    tLastHDBDump = 0.
+    tLastMDBDump = 0.
     do
       checkrevivedhosts = .false.
       dumpdb = .false.
@@ -922,6 +972,7 @@ contains
         if ( tempfile /= '<STDIN>' ) then
           oldPrUnit = prunit
           prUnit = tempUnit
+          ! print *, 'Opening ', prunit, ' as ', trim(tempfile)
           open(prunit, file=trim(tempfile), &
             & status='replace', form='formatted')
         endif
@@ -943,6 +994,7 @@ contains
         if ( tempfile /= '<STDIN>' ) then
           oldPrUnit = prunit
           prUnit = tempUnit
+          ! print *, 'Opening ', prunit, ' as ', trim(tempfile)
           open(prunit, file=trim(tempfile), &
             & status='replace', form='formatted')
         endif
@@ -963,6 +1015,7 @@ contains
         if ( tempfile /= '<STDIN>' ) then
           oldPrUnit = prunit
           prUnit = tempUnit
+          ! print *, 'Opening ', prunit, ' as ', trim(tempfile)
           open(prunit, file=trim(tempfile), &
             & status='replace', form='formatted')
         endif
@@ -1019,6 +1072,7 @@ contains
           if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking newdumpfile' )
           call timestamp(trim(options%dump_file), advance='yes')
           close(DUMPUNIT)
+          ! print *, 'Opening ', prunit, ' as ', trim(options%dump_file)
           open(prunit, file=trim(options%dump_file), &
             & status='replace', form='formatted')
           call timestamp('(new dump file opened)', advance='yes')
@@ -1049,6 +1103,40 @@ contains
         endif
       endif
       ! Now perform any other housekeeping, administration, etc. tasks
+      ! Perhaps a periodic dump of hosts
+      if ( options%PHFile /= ' ' ) then
+        call time_now ( t2 )
+        if ( t2-tLastHDBDump > options%HDBPeriod ) then
+          oldPrUnit = prunit
+          prUnit = tempUnit
+          ! print *, 'Opening ', prunit, ' as ', trim(options%PHfile)
+          open(prunit, file=trim(options%PHFile), &
+            & status='replace', form='formatted')
+          call timestamp ( 'Performing periodic dump hostDB', &
+            & advance='yes' )
+          call dump(hosts)
+          close(prunit)
+          prunit = oldPrUnit
+          tLastHDBDump = t2
+        endif
+      endif
+      ! Perhaps a periodic dump of masters
+      if ( options%PMFile /= ' ' ) then
+        call time_now ( t2 )
+        if ( t2-tLastMDBDump > options%MDBPeriod ) then
+          oldPrUnit = prunit
+          prUnit = tempUnit
+          ! print *, 'Opening ', prunit, ' as ', trim(options%PMfile)
+          open(prunit, file=trim(options%PMFile), &
+            & status='replace', form='formatted')
+          call timestamp ( 'Performing periodic dump masterDB', &
+            & advance='yes' )
+          call dump_master_database(masters)
+          close(prunit)
+          prunit = oldPrUnit
+          tLastMDBDump = t2
+        endif
+      endif
       ! Now, rather than chew up cpu time on this machine, we'll wait a
       ! bit here.
       if ( .not. skipDelay .and. parallel%delay > 0 ) then
@@ -1314,6 +1402,8 @@ contains
     print *, ' --check:     check LIST of hosts'
     print *, ' --[n]clean:  do [not] regularly clean db of finished masters'
     print *, ' --defer:     new masters defer to oldest (has enough hosts)'
+    print *, ' --dhp n :    dump host db every n seconds (need phfile)'
+    print *, ' --dmp m :    dump master db every m seconds (need pmfile)'
     print *, ' --dumpnewm:  dump each new master'
     print *, ' --help:      show help; stop'
     print *, ' --inquire:   show whether an instance of l2q already running'
@@ -1323,7 +1413,9 @@ contains
     ! print *, ' -g:          turn tracing on'
     print *, ' -k:          kill currently-running l2q'
     print *, '               ( same as -c kill )'
-    print *, ' -o dumpfile: direct most output to dumpfile'
+    print *, ' -oph phfile: dump db of hosts periodically to phfile'
+    print *, ' -opm pmfile: dump db of masters periodically to pmfile'
+    print *, ' -o dumpfile: direct most other output to dumpfile'
     print *, '               (if modifying an already-running l2q, direct only'
     print *, '               the requested output to dumpfile)'
     print *, ' -s newfile:  flush current dumpfile; direct later output'
@@ -1395,6 +1487,25 @@ contains
     call output(' New masters defer to old:                       ', advance='no')
     call blanks(4, advance='no')
     call output(options%deferToElders, advance='yes')
+    if ( options%PMFile /= '') then
+    call output(' Periodically dump Master DB to:                 ', advance='no')
+    call blanks(4, advance='no')
+    call output(trim(options%PMFile), advance='yes')
+    call output(' Period (s):                                     ', advance='no')
+    call blanks(4, advance='no')
+    call output(options%MDBPeriod, advance='yes')
+    endif
+    if ( options%PHFile /= '') then
+    call output(' Periodically dump host DB to:                   ', advance='no')
+    call blanks(4, advance='no')
+    call output(trim(options%PHFile), advance='yes')
+    call output(' Period (s):                                     ', advance='no')
+    call blanks(4, advance='no')
+    call output(options%HDBPeriod, advance='yes')
+    endif
+    call output(' Dump other output to:                           ', advance='no')
+    call blanks(4, advance='no')
+    call output(trim(options%dump_File), advance='yes')
     call output(' Time stamp each report:                         ', advance='no')
     call blanks(4, advance='no')
     call output(options%Timing, advance='yes')
@@ -1488,6 +1599,9 @@ contains
 end program L2Q
 
 ! $Log$
+! Revision 1.6  2005/03/18 00:59:36  pwagner
+! Now gets PVMERRORMESSAGE from MLSMessageModule
+!
 ! Revision 1.5  2005/02/03 19:10:11  pwagner
 ! Receives master_date, master_time data from masters for each host
 !
