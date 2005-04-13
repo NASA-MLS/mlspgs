@@ -7,6 +7,7 @@ program testRMS
   implicit none
   integer, parameter :: N=10
   real, dimension(N, N) :: array
+  real, dimension(N, N) :: array2
   real :: min, max, mean, stddev, rms
   double precision, dimension(N, N) :: dblarray
   double precision :: dblmin, dblmax, dblmean, dblstddev, dblrms, eta
@@ -40,6 +41,15 @@ program testRMS
   call allstats(array, max=max, min=min, mean=mean, stddev=stddev, rms=rms, &
     & fillValue=-999.99)
   call dumpstats(max, min, mean, stddev, rms)
+
+  array = 1.
+  array2(:,1:5) = 1./2
+  array2(:,6:) = -1./2
+  call dump ( array-array2, &
+    & '1/2,3/2', stats=.true., rms=.true. )
+  call allstats(array-array2, max=max, min=min, mean=mean, stddev=stddev, rms=rms)
+  call dumpstats(max, min, mean, stddev, rms)
+
   dblarray = array
   dblarray(:,6:10) = -999.99d0
   call dump ( real(dblarray), &
