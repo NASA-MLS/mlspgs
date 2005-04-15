@@ -34,7 +34,7 @@ program chunktimes ! Reads chunk times from l2aux file(s)
 !----------------------------------------------------------
 
 ! Brief description of program
-! Reads chunk times from list of input files
+! Reads chunk times and failures from list of input files
 
 ! To use this, copy it into
 ! mlspgs/tests/lib
@@ -335,7 +335,7 @@ contains
     if (trim(filename) == ' ' .and. n_filenames == 0) then
 
     ! Last chance to enter filename
-      print *,  "Enter the name of the HDFEOS4 or 5 L2GP file. " // &
+      print *,  "Enter the name of the hdf5 l2aux-dgm file. " // &
        &  "The default output file name will be used."
       read(*,'(a)') filename
     endif
@@ -437,6 +437,8 @@ contains
   ! Print brief but helpful message
       write (*,*) &
       & 'Usage:chunktimes [options] [filenames]'
+      write (*,*) &
+      & '  where each filename should be an hdf5 l2aux-dgm file'
       write (*,*) &
       & '(Defaults shown in ())'
       write (*,*) &
@@ -656,6 +658,9 @@ end program chunktimes
 !==================
 
 ! $Log$
+! Revision 1.7  2005/03/24 21:18:52  pwagner
+! Avoid printing starting, ending times when useless
+!
 ! Revision 1.6  2005/03/18 01:01:19  pwagner
 ! -details option narrows output from -fail
 !
