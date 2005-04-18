@@ -217,10 +217,13 @@ program chunktimes ! Reads chunk times from l2aux file(s)
             & call dump(longChunkList, 'list of long chunks')
           longChunkList = ' '
         endif
-        deallocate(l2auxValue, timings, stat=status)
+        deallocate(l2auxValue, stat=status)
       endif
       if ( options%showFailed ) then
         call dumpFailedChunks(fileID)
+      endif
+      if ( showTimings ) then
+        deallocate(timings, stat=status)
       endif
       ! The following is just to test whether we can copy phase names
       ! from one file to another
@@ -658,6 +661,9 @@ end program chunktimes
 !==================
 
 ! $Log$
+! Revision 1.8  2005/04/15 20:08:19  pwagner
+! Clarified and corrected type of files required
+!
 ! Revision 1.7  2005/03/24 21:18:52  pwagner
 ! Avoid printing starting, ending times when useless
 !

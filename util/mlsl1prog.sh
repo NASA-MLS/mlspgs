@@ -2,8 +2,8 @@
 # mlsxxyyzz.sh
 # usage: mlsxxyyzz.sh [option_1] [option_2] ..
 
-# Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
-# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+# Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 # run separate programs specified as the variables
 # MLSPROG_1, MLSPROG_2, MLSPROG_3
@@ -31,6 +31,10 @@ Successful_codes="000 001"
 # causing it to exit with status=NORMAL_STATUS
 # MakeFC sed's this file to replace xxyyzz, hhoommee, etc. as appropriate
 
+# Now if the tool h5repack in the same directory as the three level 1 programs
+# and if the current working directory houses the l1b files created by
+# the level 1 programs, then as a final step repack the l1b files
+
 NORMAL_STATUS=2
 # Use the following line to add extra options to MLSPROG
 EXTRA_OPTIONS=mlseexxttrraa
@@ -52,9 +56,11 @@ if [ "$is_absolute" = "" ]
 then
    echo $MLSHOME/$MLSBIN/$MLSPROG_1 $EXTRA_OPTIONS "$@"
    $MLSHOME/$MLSBIN/$MLSPROG_1 $EXTRA_OPTIONS "$@"
+   H5REPACK=$MLSHOME/$MLSBIN/h5repack
 else
    echo $MLSBIN/$MLSPROG_1 $EXTRA_OPTIONS "$@"
    $MLSBIN/$MLSPROG_1 $EXTRA_OPTIONS "$@"
+   H5REPACK=$MLSBIN/h5repack
 fi
 
 return_status_1=`expr $?`
@@ -113,6 +119,22 @@ do
   fi
 done
 
+# repack level 1 files to speed things up
+if [ -x "$H5REPACK" ]
+  files=`echo *L1*.h5`
+  for file in $files
+  do
+    if [ -r "$file" ]
+    then
+      packed="$file".p
+      echo "Packing $file into $packed"
+      echo $H5REPACK -i "$file" -o "$packed"
+      mv "$packed" "$file"
+    fi
+then
+fi
+
+# Exit with status according to whether we succeeded or failed
 if [ $return_status != $NORMAL_STATUS ]
 then
    exit 1
@@ -121,3 +143,6 @@ else
 fi
 
 # $Log$
+# Revision 1.1  2003/02/03 23:57:06  pwagner
+# First commit
+#
