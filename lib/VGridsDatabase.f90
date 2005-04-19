@@ -68,13 +68,15 @@ contains
 
     integer :: I
 
-    do i = 1, size(vGrids)
-      if ( doVGridsMatch(vGrid,vGrids(i),relerr) ) then
-        call destroyVGridContents ( vGrid )
-        addVgridIfNecessary = i
-        return
-      end if
-    end do
+    if ( associated ( vGrids ) ) then
+      do i = 1, size(vGrids)
+        if ( doVGridsMatch(vGrid,vGrids(i),relerr) ) then
+          call destroyVGridContents ( vGrid )
+          addVgridIfNecessary = i
+          return
+        end if
+      end do
+    end if
 
     addVgridIfNecessary = addVGridToDatabase ( vGrids, vGrid )
 
@@ -322,6 +324,9 @@ contains
 end module VGridsDatabase
 
 ! $Log$
+! Revision 2.19  2005/04/19 20:23:57  livesey
+! Bug fix in AddVGridIfNecessary for case when this is the first vGrid
+!
 ! Revision 2.18  2005/03/15 23:48:55  pwagner
 ! PVMERRORMESSAGE now part of MLSMessageModule
 !
