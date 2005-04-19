@@ -105,9 +105,9 @@ contains ! =====  Public Procedures  ===================================
     ! Now the Fields:
     use Init_Spectroscopy_M, only: F_Continuum, F_Delta, F_DefaultIsotopeRatio, &
       & F_El, F_EMLSSIGNALS, F_EMLSSIGNALSPOL, F_Gamma, F_Lines, F_Mass, &
-      & F_Molecule, F_MLS1SIGNALS, F_N, F_N1, F_N2, F_Ns, F_Ps, F_Qlog, F_QN, &
+      & F_Molecule, F_XPTL1SIGNALS, F_N, F_N1, F_N2, F_Ns, F_Ps, F_Qlog, F_QN, &
       & F_Str, F_UMLSSIGNALS, F_V0, F_W
-    use Intrinsic, only: L_EMLS, L_MLS1, L_UMLS, &
+    use Intrinsic, only: L_EMLS, L_UMLS, L_XPTL1, &
       & Phyq_Dimless => Phyq_Dimensionless, Phyq_Frequency, S_Time
     use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
       & MLSMSG_DeAllocate, MLSMSG_Error
@@ -224,8 +224,8 @@ contains ! =====  Public Procedures  ===================================
             if ( instrument == l_emls ) signalsNodePol = son
           case ( f_gamma )
             call expr_check ( subtree(2,son), lines(numLines)%gamma, phyq_dimless )
-          case ( f_mls1Signals )
-            if ( instrument == l_mls1 ) signalsNode = son
+          case ( f_xptl1Signals )
+            if ( instrument == l_xptl1 ) signalsNode = son
           case ( f_n )
             call expr_check ( subtree(2,son), lines(numLines)%n, phyq_dimless )
           case ( f_n1 )
@@ -728,7 +728,7 @@ contains ! =====  Public Procedures  ===================================
 !   use Intrinsic, only: Phyq_Invalid
     use IO_Stuff, only: Get_Lun
     use Machine, only: IO_Error
-    use MLSHDF5, only: GetHDF5DSDims, LoadFromHDF5DS, LoadPtrFromHDF5DS
+    use MLSHDF5, only: GetHDF5DSDims, IsHDF5DSPresent, LoadFromHDF5DS, LoadPtrFromHDF5DS
     use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
       & MLSMSG_Error
     use MLSSignals_m, only: MaxSigLen
@@ -808,13 +808,30 @@ contains ! =====  Public Procedures  ===================================
         & sidebandList, sigInds, signalNames )
       call loadPtrFromHDF5DS ( fileID, 'LineNames', lineNames )
       call loadPtrFromHDF5DS ( fileID, 'SignalNames', signalNames )
-      call loadPtrFromHDF5DS ( fileID, 'PolarizedList', polarizedList )
+
+      if ( IsHDF5DSPresent ( fileID, 'PolarizedList' ) ) then
+        call loadPtrFromHDF5DS ( fileID, 'PolarizedList', polarizedList )
+      else
+        call Allocate_test ( polarizedList, 0, 'PolarizedList', ModuleName )
+      end if
+
       call loadPtrFromHDF5DS ( fileID, 'PolarizedIndices', polarizedIndices, &
         & lowBound=line1 )
       call loadPtrFromHDF5DS ( fileID, 'QNList', qnList )
       call loadPtrFromHDF5DS ( fileID, 'QNIndices', qnIndices, lowBound=line1 )
-      call loadPtrFromHDF5DS ( fileID, 'SignalList', signalList )
-      call loadPtrFromHDF5DS ( fileID, 'SidebandList', sidebandList )
+
+      if ( IsHDF5DSPresent ( fileID, 'SidebandList' ) ) then
+        call loadPtrFromHDF5DS ( fileID, 'SidebandList', SidebandList )
+      else
+        call Allocate_test ( SidebandList, 0, 'SidebandList', ModuleName )
+      end if
+
+      if ( IsHDF5DSPresent ( fileID, 'SignalList' ) ) then
+        call loadPtrFromHDF5DS ( fileID, 'SignalList', SignalList )
+      else
+        call Allocate_test ( SignalList, 0, 'SignalList', ModuleName )
+      end if
+
       call loadPtrFromHDF5DS ( fileID, 'SignalIndices', signalIndices, &
         & lowBound=line1 )
       call loadFromHDF5DS ( fileID, 'Delta', lines(line1+1:lineN)%delta )
@@ -1209,12 +1226,15 @@ contains ! =====  Public Procedures  ===================================
           signalList(signalIndices(i-1)+1:signalIndices(i)) = lines(i)%signals
         end if
       end do
-      call saveAsHDF5DS ( fileID, 'PolarizedList', polarizedList )
+      if ( size ( polarizedList ) /= 0 ) &
+        & call saveAsHDF5DS ( fileID, 'PolarizedList', polarizedList )
       call saveAsHDF5DS ( fileID, 'PolarizedIndices', polarizedIndices )
       call saveAsHDF5DS ( fileID, 'QNList', qnList )
       call saveAsHDF5DS ( fileID, 'QNIndices', qnIndices )
-      call saveAsHDF5DS ( fileID, 'SignalList', signalList )
-      call saveAsHDF5DS ( fileID, 'SidebandList', sidebandList )
+      if ( size ( signalList ) /= 0 ) &
+        & call saveAsHDF5DS ( fileID, 'SignalList', signalList )
+      if ( size ( sidebandList ) /= 0 ) &
+        & call saveAsHDF5DS ( fileID, 'SidebandList', sidebandList )
       call saveAsHDF5DS ( fileID, 'SignalIndices', signalIndices )
       call saveAsHDF5DS ( fileID, 'Delta', lines%delta )
       call saveAsHDF5DS ( fileID, 'EL', lines%el )
@@ -1349,6 +1369,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.39  2005/03/17 01:31:11  vsnyder
+! Expose spectroscopy file's string index
+!
 ! Revision 2.38  2005/03/03 23:56:18  vsnyder
 ! Spiff up catalog dump
 !
