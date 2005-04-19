@@ -213,7 +213,7 @@ contains ! =====     Public procedures     =============================
     ! Define the enumerated types
     call make_tree ( (/ &
       begin, t+t_boolean, l+l_true, l+l_false, n+n_dt_def,   &
-      begin, t+t_instrument, l+l_emls, l+l_umls, l+l_mls1, n+n_dt_def, &
+      begin, t+t_instrument, l+l_emls, l+l_umls, l+l_xptl1, n+n_dt_def, &
       begin, t+t_polarization, l+l_a, l+l_b, n+n_dt_def /) )
 
   contains
@@ -248,6 +248,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.56  2005/04/19 19:13:10  livesey
+! Changed mls1 to xptl1
+!
 ! Revision 2.55  2004/11/17 20:23:09  vsnyder
 ! Add NRS and NS (scalar required) tags for fields
 !
