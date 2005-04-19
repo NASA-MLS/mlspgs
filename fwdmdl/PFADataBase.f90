@@ -452,6 +452,7 @@ contains ! =====     Public Procedures     =============================
     integer, pointer :: SignalIndices(:) ! output from Parse_Signal
     real(rs) :: SurfStep ! for temperature and pressure grids
     type(vGrid_t) :: TGrid, VGrid
+    integer :: GRIDINDEX
 
     nullify ( channels, signalIndices )
     if ( isHDF5AttributePresent(groupID, 'filterFile') ) then
@@ -496,7 +497,8 @@ contains ! =====     Public Procedures     =============================
     do j = 2, tGrid%noSurfs
       tGrid%surfs(j,1) = tGrid%surfs(j-1,1) + surfStep
     end do
-    PFADatum%tGrid = vGrids(addVGridIfNecessary(tGrid,vGrids))
+    gridIndex = addVGridIfNecessary(tGrid,vGrids)
+    PFADatum%tGrid = vGrids(gridIndex)
     vGrid%name = 0
     vGrid%verticalCoordinate = l_zeta
     call getHDF5Attribute ( groupID, 'nPress', vGrid%noSurfs )
@@ -722,6 +724,9 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.23  2005/04/19 20:16:27  livesey
+! Bug fix for case when no initial vGrids on reading pfa file.
+!
 ! Revision 2.22  2005/04/04 19:53:05  vsnyder
 ! Make Read_PFADatum_H5 subroutine
 !
