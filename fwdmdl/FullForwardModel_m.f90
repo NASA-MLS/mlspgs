@@ -511,8 +511,8 @@ contains
       & do_calc_t, do_calc_t_c, do_calc_t_f, do_calc_tscat, &
       & do_calc_tscat_zp, do_calc_zp, do_gl, drad_dn, drad_dt, drad_dv, &
       & drad_dw, d_rad_pol_df, d_rad_pol_dt, dsdz_gw_path, dTanh_dT_c, &
-      & dTanh_dT_f, d_t_scr_dt, &
-      & dx_dh_out, dx_dt, dxdt_surface, dxdt_tan, eta_cext, eta_cext_zp, &
+      & dTanh_dT_f, d_t_scr_dt )
+    nullify ( dx_dh_out, dx_dt, dxdt_surface, dxdt_tan, eta_cext, eta_cext_zp, &
       & eta_fzp, eta_iwc, eta_iwc_zp, eta_mag_zp, eta_salb, eta_salb_zp, &
       & eta_tscat, eta_tscat_zp, eta_zp, eta_zxp_dn, eta_zxp_dn_c, &
       & eta_zxp_dn_f, eta_zxp_dv, eta_zxp_dv_c, eta_zxp_dv_f, eta_zxp_dw, &
@@ -525,7 +525,8 @@ contains
       & n_path, path_dsdh, phi_path, p_path, p_path_c, &
       & prod_pol, ptg_angles, radiances, RadV, ref_corr, req_out, salb_path, &
       & scat_alb%values, scat_ang, scat_src%values, &
-      & sps_path, tan_chi_out, tan_d2h_dhdt, tan_dh_dt, tanh1_c, tanh1_f, &
+      & sps_path, sum_ddel_lbl, sum_ddel_pfa, &
+      & tan_chi_out, tan_d2h_dhdt, tan_dh_dt, tanh1_c, tanh1_f, &
       & tan_phi, tan_temp, tau_pol, t_der_path_flags, t_glgrid, &
       & t_path, t_path_c, t_path_f, true_path_flags, &
       & tscat_path, t_script_lbl, t_script_pfa, tt_path, tt_path_c, &
@@ -3216,6 +3217,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.234  2005/03/28 20:26:25  vsnyder
+! Lots of PFA stuff
+!
 ! Revision 2.233  2005/03/10 00:28:09  pwagner
 ! Better patching of ptg_angles avoids list-out-of-order in Hunt
 !
