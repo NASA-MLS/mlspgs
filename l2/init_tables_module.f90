@@ -209,9 +209,9 @@ module INIT_TABLES_MODULE
         (/OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,   OK,    0,  & ! Start
           OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,   OK,    0,  & ! mlsSignals
           OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,   OK,    0,  & ! spectroscopy
-           0,    0,   OK,   OK,   OK,   OK,    0,    0,    0,    0,   OK,    0,  & ! globalSettings
-           0,    0,   OK,   OK,   OK,   OK,    0,    0,    0,    0,   OK,    0,  & ! readApriori
-           0,    0,   OK,   OK,   OK,   OK,    0,    0,    0,    0,   OK,    0,  & ! mergeGrids
+          OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,   OK,    0,  & ! globalSettings
+          OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,   OK,    0,  & ! readApriori
+          OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,   OK,    0,  & ! mergeGrids
            0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,   OK,  & ! chunkDivide
            0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,   OK,  & ! Construct
            0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,   OK,  & ! Fill
@@ -1331,6 +1331,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.398  2005/04/19 19:14:09  livesey
+! Changed some section ordering issues related to pfa generation
+!
 ! Revision 2.397  2005/04/01 20:48:28  vsnyder
 ! Add mark and text fields to dump command
 !
