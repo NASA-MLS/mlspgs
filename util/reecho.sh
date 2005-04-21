@@ -28,9 +28,12 @@
 # -[n]w         [don't] reecho args that exist and you have write permission
 # -[n]x         [don't] reecho args that exist and you have execute permission
 # -[n]glob      [don't] reecho any arg containing the glob character '*'
-# -dir "dir"    cd to "dir" before filtering
-# -dirn "dir"   ignore args; cd to "dir" then filter all files/directories there
-# -lib          filter each arg "x" based on the file "libx.a" exists or ...
+# -dir "dir"    cd to "dir" before reechoing
+#               may be repeated; e.g. -dir dir1 -dir dir2 searches both
+# -dirn "dir"   cd to "dir" then just reecho all files/directories there
+#               same as (cd dir; ls; back)
+# -lib          reecho each arg "x" if the file "libx.a" exists or ...
+# -unique       remove duplicates matches before output
 # -h[elp]       print brief help message; exit
 # -prefix=xxx   reecho xxx in front of each arg (separated by a space)
 #               e.g. '-I a-dir -I b-dir -I c-dir ..'
@@ -42,7 +45,7 @@
 #               e.g. 'Xshabam Yshabam Zshabam ..'
 # -excl "bad"   exclude any arg named "bad" (before any pre- or suffixes)
 #               may be repeated; e.g. -excl bad1 -excl bad2 excludes both
-# arg1          an arg that may or may not be reechoed
+# arg1          an arg to be reechoed
 #
 # Note:
 # (1) The option(s) marked with "-", if present,
@@ -50,6 +53,7 @@
 # (2) The options [n](f d r w x glob) are mutually exclusive (for the present)
 #      i.e. don't try 'reecho.sh -d -w *' to get all directories you have 
 #      write permission to (though that is a logical improvement to make)
+# (3) -dirn must stand alone--it cannot be used with any other options
 # 
 # Result:
 # A filtered list of args, e.g. arg3 arg6 .. , that satisfy
@@ -72,8 +76,8 @@
 #  69%util/reecho.sh -lib -dir /usr/lib -prefixn=lib -suffixn=.a dfftw drfftw
 #     libdfftw.a libdrfftw.a
 # --------------- End reecho.sh help
-# Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
-# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+# Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 # "$Id$"
 
@@ -142,6 +146,30 @@ extant_files()
       done
    fi
 }
+
+#---------------------------- sort_array
+#
+# Function to sort the elements of a space-separated array
+# eg given
+# sort_array 'e a b c d'
+# writes 'a b c d e' to standard output
+# as a side-effect, it also removes duplicate elements
+# so 'e e f a b a' becomes 'a b e f'
+
+sort_array()
+{
+
+   # Do we have enough args?
+      if [ $# -lt 1 ]
+      then
+         echo "Usage: sort_array 'a b c ..'"
+         exit 1
+      fi
+      
+      sorting=`echo "$1" | sed 's/ /\n/g' | sort | uniq`
+      echo $sorting
+}
+      
 #------------------------------- Main Program ------------
 
 #****************************************************************
@@ -178,6 +206,8 @@ the_suffix=""
 separate_prefix="yes"
 separate_suffix="yes"
 bad_args=""
+dirs=""
+unique="no"
 while [ "$more_opts" = "yes" ] ; do
 
     case "$1" in
@@ -268,6 +298,7 @@ while [ "$more_opts" = "yes" ] ; do
     -dir )
        shift
        new_dir="$1"
+       dirs="$1 $dirs"
        shift
        ;;
     -dirn )
@@ -283,6 +314,10 @@ while [ "$more_opts" = "yes" ] ; do
     -excl )
        shift
        bad_args="$1 $bad_args"
+       shift
+       ;;
+    -uniq* )
+       unique="yes"
        shift
        ;;
     * )
@@ -309,6 +344,7 @@ then
    extant_files "$@"
 elif [ "$new_list" = "yes" ]
 then
+   # This is that simple -dirn option
    old_dir=`pwd`
    cd "$new_dir"
    my_files=`echo *`
@@ -316,20 +352,24 @@ then
    extant_files "$@"
    cd "$old_dir"
 else
+   if [ $DEEBUG = "on" ]
+   then
+     echo "remaining args $@:" $@
+   fi
+   # Now dirs may contain more than one directory to search
+   results=""
    old_dir=`pwd`
-   cd "$new_dir"
-#  Since we changed directories, args which failed to glob
-#  in old_dir may glob successfully in new_dir
-   extant_files "$@"
-#   Ahh, but this didn't work; not sure why. Worry about it later
-#   new_args=`echo $@`
-#   if [ $DEEBUG = "on" ]
-#   then
-#      pwd
-#      echo "new_args $new_args"
-#   fi
-#   extant_files "$new_args"
-   cd "$old_dir"
+   for new_dir in $dirs
+   do
+     cd "$new_dir"
+     #  Since we changed directories, args which failed to glob
+     #  in old_dir may glob successfully in new_dir
+     #   extant_files "$@"
+     extant_files $@
+     results="$extant_files_result $results"
+     cd "$old_dir"
+   done
+   extant_files_result="$results"
 fi
 
 if [ "$separate_suffix" = "yes" ]   
@@ -340,6 +380,16 @@ if [ "$separate_prefix" = "yes" ]
 then                                
    the_prefix="$the_prefix "        
 fi                                  
+
+if [ $DEEBUG = "on" -a "$unique" = "yes" ]          
+then                           
+   echo "Before sorting and removing duplicates: $extant_files_result"   
+fi                             
+
+if [ "$unique" = "yes" ]          
+then                           
+   extant_files_result=`sort_array "$extant_files_result"   `
+fi                             
 
 if [ $DEEBUG = "on" ]          
 then                           
@@ -379,6 +429,9 @@ else
 fi
 exit
 # $Log$
+# Revision 1.4  2001/11/09 21:50:34  pwagner
+# -dirn and -excl options added
+#
 # Revision 1.3  2001/11/07 00:20:40  pwagner
 # New -lib -dir and -suffix options
 #
