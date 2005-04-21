@@ -1,6 +1,6 @@
 #!/bin/bash
 # --------------- clusterstatus help
-# Create status files for level 2 jobs running on lightspeed, scramjet
+# Create status files for level 2 jobs running on mls clusters at the sips
 # Optionally, mail or scp it to me
 # Usage:
 # clusterstatus.sh [options]
@@ -8,6 +8,8 @@
 # -dryrun     don't run the sipsl2.sh script
 # -mail       mail the file to RECIPIENTS
 # -scp        scp the file to me
+# -[n]sort    [don't] sort the initial table according to machine (sort by default)
+# -temp       don't save the resulting clusterstatus file
 # -h[elp]     print brief help message; exit
 #
 # Note:
@@ -31,6 +33,7 @@ RECIPIENTS="pwagner David.T.Cuddy@jpl.nasa.gov ahanzel@mls.jpl.nasa.gov pzimdars
 #RECIPIENTS="cvuu@mls.jpl.nasa.gov paul.a.wagner@jpl.nasa.gov"
 #RECIPIENTS="pwagner"
 MAILER="/home/pwagner/bin/mailtome.sh"
+clusternames="lightspeed scramjet speedracer"
 debug="no"
 me="$0"
 my_name=clusterstatus
@@ -38,6 +41,8 @@ I=clusterstatus
 dryrun=""
 mail="no"
 scp="no"
+sort="yes"
+temp="no"
 more_opts="yes"
 while [ "$more_opts" = "yes" ] ; do
 
@@ -55,12 +60,23 @@ while [ "$more_opts" = "yes" ] ; do
 	    shift
        scp="yes"
        ;;
+    -nsort )
+	    shift
+       sort="no"
+       ;;
+    -sort )
+	    shift
+       sort="yes"
+       ;;
+    -temp )
+	    shift
+       temp="yes"
+       ;;
     -h | -help )
        sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
            | sed -n 's/^.//p' | sed '1 d; $ d'
        exit
 	     ;;
-
     * )
        more_opts="no"
        ;;
@@ -68,7 +84,12 @@ while [ "$more_opts" = "yes" ] ; do
 done
 
 TODAY=`date +"%Y-%m-%d"`
-OUTPUT=/home/pwagner/clusterstatus/"$TODAY".txt
+if [ "$temp" = "yes" ]
+then
+  OUTPUT=/home/pwagner/clusterstatus/"$TODAY".tmp
+else
+  OUTPUT=/home/pwagner/clusterstatus/"$TODAY".txt
+fi
 mustrun="yes"
 if [ -f "$OUTPUT" ]
 then
@@ -82,8 +103,17 @@ fi
 if [ "$mustrun" = "yes" ]
 then
   echo "Cluster status for $TODAY" > "$OUTPUT"
-  /home/pwagner/bin/sipsl2.sh -c -x >> "$OUTPUT"
-  echo "" >> "$OUTPUT"
+  if [ "$sort" = "yes" ]
+  then
+    for name in $clusternames
+    do
+      /home/pwagner/bin/sipsl2.sh -c -x -m $name >> "$OUTPUT"
+      echo "" >> "$OUTPUT"
+    done
+  else
+    /home/pwagner/bin/sipsl2.sh -c -x >> "$OUTPUT"
+    echo "" >> "$OUTPUT"
+  fi
   echo "Status of running jobs:" >> "$OUTPUT"
   /home/pwagner/bin/sipsl2.sh -c -full -t >> "$OUTPUT"
   echo "" >> "$OUTPUT"
@@ -91,8 +121,17 @@ then
   /home/pwagner/bin/sipsl2.sh -fail >> "$OUTPUT"
 else
   echo "Cluster status for $TODAY $OUTPUT"
-  echo "/home/pwagner/bin/sipsl2.sh -c -x"
-  echo ""
+  if [ "$sort" = "yes" ]
+  then
+    for name in $clusternames
+    do
+      echo "/home/pwagner/bin/sipsl2.sh -c -x $name"
+      echo ""
+    done
+  else
+    echo "/home/pwagner/bin/sipsl2.sh -c -x"
+    echo ""
+  fi
   echo "Status of running jobs: >> $OUTPUT"
   echo "/home/pwagner/bin/sipsl2.sh -c -full -t"
   echo ""
@@ -119,3 +158,6 @@ else
 fi
 exit 0
 # $Log$
+# Revision 1.1  2005/04/06 22:16:22  pwagner
+# First commit
+#
