@@ -1001,8 +1001,17 @@ contains
       if ( do_gl(p_i) ) then
         if ( do_calc(p_i) ) then
           more_inds(i) = p_i
-!         all_inds(j:j+ng-1) = (/ ( (p_i-2)*ng+k, k = 1, ng ) /)
-          all_inds(j:j+ng-1) = (/ ( l + k, k = 0, ng-1 ) /)
+          ! OK, here be dragons.
+          ! Van originally had this line:
+          !         all_inds(j:j+ng-1) = (/ ( (p_i-2)*ng+k, k = 1, ng ) /)
+          ! Then he replaced it with this one
+          !         all_inds(j:j+ng-1) = (/ ( l + k, k = 0, ng-1 ) /)
+          ! It turns out, through a bizarre and worrying series of discoveries about Lahey
+          ! that that was really slow under some repeatable, but totally unjustifiable circumstances.
+          ! hence the regular do loop below - NJL / WVS
+          do k = 0, ng - 1
+            all_inds(j+k) = l+k
+          end do
           i = i + 1
           j = j + Ng
         end if
@@ -1020,6 +1029,9 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.43  2005/03/28 20:24:37  vsnyder
+! Taus past the black-out are zero, not one!
+!
 ! Revision 2.42  2005/03/03 02:07:42  vsnyder
 ! Remove USEs for unreferenced symbols
 !
