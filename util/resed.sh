@@ -11,19 +11,26 @@
 # (3) create new files, based on contents of existing ones
 #
 # Usage:
-# resed.sh [opt] ..  file1 [file2 ..]
+# resed.sh [opt] ..  [file1] [file2 ..]
 #
 #    O p t i o n s
 # -o options    pass options to sed (default is none)
-# -c command    command to pass (surrounded by 's) to sed
+# -c command    command to pass (surrounded by ') to sed
+#                as an alternative to "-c command", you may use the next pair
+# -os oldstring string to be replaced
+# -rs oldstring string to replace it with
 # -f file       file of commands to pass through to sed
+# -d1 dir1      operate on every file in dir1
+# -d2 dir2      storing results in dir2 (if dir2 doesn't exist, it creates it)
+#                (if omitted, replace each file in dir1 with its result)
+# -[n]grep text restrict sed to only those files [not] containing text
 # -h[elp]       print brief help message; exit
 # -example      print brief example; exit
 # -name=xxx     name to use when renaming either new or old file
 # -rn           rename new file, letting old file retain old_name
 # -ro           rename old file, letting new file inherit old_name
 # -rd           replace old file with new only if the editing commands change it
-# -print        instead of creating new file(s), print results of sed to stdout
+# -dryrun       instead of creating new file(s), print results to stdout
 # -suffix=xxx   suffix to use when renaming either new or old file
 #               (w/o any separator; e.g., to add ".bak" use -suffix=.bak)
 # -sed mysed    run mysed instead of sed (e.g. /opt/enhanced/bin/mightysed)
@@ -31,7 +38,7 @@
 #
 # Note:
 # (1) The option(s) marked with "-", if present,
-#     must precede any filen on the command line
+#     must precede any file on the command line
 # (2) If you supply either -suffix=xxx or -name=xxx then
 #     you must also choose one of -rn, -ro, or -rd
 # (3) The options -c and -f are mutually exclusive, but one is mandatory
@@ -45,15 +52,17 @@
 #      (none)         (deleted)             old_name
 #     To repeat, if you choose -rd and the new file is different, or
 #     if you choose none the new file will simply replace the old one
-#     (leaving you with no backup--so test with -print first)
+#     (leaving you with no backup--so test with -dryrun first)
 # (5) The options -name=xxx and -sufffix=xxx are mutually exclusive
+# (6) With the option -d1 dir1 don't name any files on the command line
+#     -- they will be ignored
 # 
 # Result:
 # Files in the list may be modified or new files created
 # according to the the options you supply
 # --------------- End resed.sh help
-# Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
-# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+# Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 # "$Id$"
 
@@ -76,17 +85,11 @@
 #     one will replace the other w/o any warning of this possibility
 # (3) The renaming mechanism suffix=xxx and name=xxx has not been
 #     implemented for the option -rd yet; maybe it makes no sense to do so
+# (4) When using -os "string1" -rs "string2"
+#     you must not have both delimiters "/", ":" present among the strings
 # Unimplemented improvements: 
-# (1) Why not allow the user to input original and replacement strings
-#     via -os "string1" -rs "string2"
-#     though you will have to check whether the delimiters "/", ":", etc.
-#     are present among the strings
-# (2) Also allow inserting a block of text to be stored in a file after  
+# (1) Also allow inserting a block of text to be stored in a file after  
 #     line nnn via -l nnn -b block_file
-# (3) Instead of messing with new names, let the script edit files
-#     from one dir, saving the modified versions in another
-#     via -d1 d_orig -d2 d_mod
-#     (you will have to disable reecho part if you do this)
 #****************************************************************
 # --------------- resed.sh example
 # Example:
@@ -108,7 +111,7 @@
 # 
 # So to set that variable instead to the value "l2" I would first test
 # (to safely assure that my changes accomplish what I want):
-# ../mlspgs:77% util/resed.sh -print -c 's/init_m_dir = l1/init_m_dir = l2/' tests/fwdmdl/platforms/[AD-Z]* tests/cloudfwdm/platforms/[AD-Z]* | grep 'init_m_dir = l2'
+# ../mlspgs:77% util/resed.sh -dryrun -c 's/init_m_dir = l1/init_m_dir = l2/' tests/fwdmdl/platforms/[AD-Z]* tests/cloudfwdm/platforms/[AD-Z]* | grep 'init_m_dir = l2'
 # init_m_dir = l2
 # init_m_dir = l2
 # init_m_dir = l2
@@ -122,7 +125,7 @@
 # init_m_dir = l2
 # init_m_dir = l2
 #
-# and then reenter the last command w/o the -print option
+# and then reenter the last command w/o the -dryrun option
 # --------------- End resed.sh example
 #****************************************************************
 me="$0"
@@ -134,6 +137,8 @@ return_status=0
 unique_name="`echo $0 | sed 's/'$I'/unique_name/'`"
 # $the_splitter is split_path with me's path prepended
 the_splitter="`echo $0 | sed 's/'$I'/split_path/'`"
+# $mkpath is mkpath with me's path prepended
+mkpath="`echo $0 | sed 's/'$I'/mkpath/'`"
 # $reecho is reecho with me's path prepended
 reecho="`echo $0 | sed 's/'$I'/reecho/'`"
 DEEBUG=off
@@ -144,6 +149,8 @@ then
    echo "with args $@"
 fi
 
+the_text=""
+reecho_opt=""
 command_file=""
 the_command=""
 the_opt=""
@@ -151,8 +158,12 @@ more_opts="yes"
 # Possible values for rename_which: {new, old, neither, diff}
 rename_which="neither"
 the_suffix=""
+dir1=""
+dir2=""
 new_name=""
-print_to_stdout="no"
+old_string=""
+new_string=""
+dryrun="no"
 SED="sed"
 while [ "$more_opts" = "yes" ] ; do
 
@@ -165,6 +176,26 @@ while [ "$more_opts" = "yes" ] ; do
        ;;
     -c )
        the_command="$2"
+       shift
+       shift
+       ;;
+    -os )
+       old_string="$2"
+       shift
+       shift
+       ;;
+    -rs )
+       new_string="$2"
+       shift
+       shift
+       ;;
+    -d1 )
+       dir1="$2"
+       shift
+       shift
+       ;;
+    -d2 )
+       dir2="$2"
        shift
        shift
        ;;
@@ -190,8 +221,20 @@ while [ "$more_opts" = "yes" ] ; do
        rename_which="diff"
        shift
        ;;
-    -print )
-       print_to_stdout="yes"
+    -dryrun )
+       dryrun="yes"
+       shift
+       ;;
+    -grep )
+       shift
+       the_text="$1"
+       reecho_opt="-grep"
+       shift
+       ;;
+    -ngrep )
+       shift
+       the_text="$1"
+       reecho_opt="-ngrep"
        shift
        ;;
     -name=* )
@@ -223,10 +266,12 @@ then
    echo "the_opt $the_opt"
    echo "command_file $command_file"
    echo "the_command $the_command"
+   echo "old_string $old_string"
+   echo "new_string $new_string"
    echo "the_suffix $the_suffix"
    echo "new_name $new_name"
    echo "rename_which? $rename_which"
-   echo "print_to_stdout? $print_to_stdout"
+   echo "dryrun? $dryrun"
    echo "sed command to use $SED"
    echo "remaining args $@"
 fi
@@ -238,6 +283,17 @@ then
 elif [ "$command_file" != "" ]
 then
   the_opt="$the_opt -f $command_file"
+elif [ "$old_string" != "" ]
+then
+  # Which delimiter shall we use? / or : ?
+  old_slashed=`echo "$old_string" | grep '/'`
+  new_slashed=`echo "$new_string" | grep '/'`
+  if [ "$old_slashed" = "" -a "$new_slashed" = "" ]
+  then
+    the_opt='s/'$old_string'/'$new_string'/'
+  else
+    the_opt='s:'$old_string':'$new_string':'
+  fi
 elif [ "$the_command" = "" ]
 then
 #
@@ -265,7 +321,13 @@ then
   the_suffix=.old
 fi
 
-the_list=`$reecho "$@"`
+if [ "$dir1" = "" ]
+then
+  the_list=`$reecho $reecho_opt $the_text "$@"`
+else
+  the_list=`$reecho -dir "$dir1" $reecho_opt $the_text '*'`
+fi
+
 if [ "$the_list" = "" ]
 then
   echo 'No valid files were found among the command line arguments'
@@ -273,10 +335,16 @@ then
   exit
 fi
 
-for file in $the_list                                      
+for anyfile in $the_list                                      
 do
+  file="$anyfile"
   file_name=`$the_splitter -f $file`
-  if [ "$file" = "$file_name" ]
+  if [ "$dir1" != "" ]
+  then
+    # The path is the arg
+    path="$dir1"
+    file="$dir1/$anyfile"
+  elif [ "$file" = "$file_name" ]
   then
     # No path supplied
     path=""
@@ -299,6 +367,7 @@ do
   else
     # echo sed $the_opt $file
     # sed $the_opt $file > "$temp_name"
+    # the_opt='s/'$old_string'/'$new_string'/'
     $SED $the_opt $file > "$temp_name"
   fi
   # If sed failed, give up right now
@@ -313,7 +382,7 @@ do
     fi
     rm "$temp_name"
     exit 1                                               
-  elif [ "$print_to_stdout" = "yes" ]
+  elif [ "$dryrun" = "yes" ]
   then
     echo "== $file =="  
     cat "$temp_name"    
@@ -322,6 +391,16 @@ do
   elif [ "$NO_REPLACE" = "on" ]
   then
     echo "Created $temp_name from $file"
+  elif [ "$dir1" != "" -a "$dir2" != "" ]
+  then
+    if [ ! -d "$dir2" ]
+    then
+      $mkpath "$dir2"
+    fi
+    mv "$temp_name" "$dir2/$anyfile"
+  elif [ "$dir1" != "" ]
+  then
+    mv "$temp_name" "$file"
   else
     # 1st--what do we call the renamed file
     if [ "$new_name" != "" ]
@@ -368,6 +447,9 @@ do
 done                                                       
 exit
 # $Log$
+# Revision 1.5  2003/05/22 23:35:41  pwagner
+# Tried to fix problem with writing to read-only dirs
+#
 # Revision 1.4  2003/04/01 23:14:25  pwagner
 # Added -name=xxx option as alternative to suffixing
 #
