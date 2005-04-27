@@ -28,6 +28,7 @@
 # -[n]w         [don't] reecho args that exist and you have write permission
 # -[n]x         [don't] reecho args that exist and you have execute permission
 # -[n]glob      [don't] reecho any arg containing the glob character '*'
+# -[n]grep text reecho any arg that is a file [not] containing text
 # -dir "dir"    cd to "dir" before reechoing
 #               may be repeated; e.g. -dir dir1 -dir dir2 searches both
 # -dirn "dir"   cd to "dir" then just reecho all files/directories there
@@ -131,6 +132,23 @@ extant_files()
             then
                   extant_files_result="$extant_files_result $arg"
             fi
+         elif [ $the_opt = "-grep" ]
+         then
+            # This should return non-blank if the_text is in the file
+            # (but only if the file exists and we have read permission)
+            if [ ! -r "$file" ]
+            then
+              check=""
+            else
+              check=`grep -l "$the_text" "$file"`
+              if [ $the_sense = "yes" -a "$check" != "" ]
+              then
+                  extant_files_result="$extant_files_result $arg"
+              elif [ $the_sense = "no" -a "$check" = "" ]
+              then
+                  extant_files_result="$extant_files_result $arg"
+              fi
+            fi
          elif [ $the_sense = "yes" ]
          then
             if [ $the_opt "$file" ]
@@ -200,6 +218,7 @@ new_list="no"
 as_lib="no"
 the_opt="-f"
 the_sense="yes"
+the_text=""
 more_opts="yes"
 the_prefix=""
 the_suffix=""
@@ -269,6 +288,20 @@ while [ "$more_opts" = "yes" ] ; do
        ;;
     -nglob )
        the_opt="-glob"
+       the_sense="no"
+       shift
+       ;;
+    -grep )
+       shift
+       the_text="$1"
+       the_opt="-grep"
+       the_sense="yes"
+       shift
+       ;;
+    -ngrep )
+       shift
+       the_text="$1"
+       the_opt="-grep"
        the_sense="no"
        shift
        ;;
@@ -429,6 +462,9 @@ else
 fi
 exit
 # $Log$
+# Revision 1.5  2005/04/21 20:42:33  pwagner
+# Removed bug (or so we hope);added new options
+#
 # Revision 1.4  2001/11/09 21:50:34  pwagner
 # -dirn and -excl options added
 #
