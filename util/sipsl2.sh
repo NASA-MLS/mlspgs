@@ -589,6 +589,12 @@ do
     then
       list="$list \t $dir"
     fi
+    if [ "$debug" = "yes" ]
+    then
+      echo "skipifrestricting: $skipifrestricting"
+      echo "list: $list"
+      echo "newlist: $newlist"
+    fi
     # These other test are slower, so skip them if we won't print the results
     if [ "$died" = "yes" -a "$skipifrestricting" = "no" ]
     then
@@ -635,9 +641,9 @@ do
       if [ "$a" = "" ]
       then
         echo "All attempts at spawning jobs succeeded"
-        exit
+      else
+        note_failures "$a" "$dir/exec_log/process.stdout"
       fi
-      note_failures "$a" "$dir/exec_log/process.stdout"
     fi
     if [ "$skipifrestricting" = "no" -a $fail = "no" ]
     then
@@ -647,6 +653,9 @@ do
 done
 exit 0
 # $Log$
+# Revision 1.4  2005/04/21 20:38:02  pwagner
+# Replace -l, -s options with -m; added speedracer name failed status
+#
 # Revision 1.3  2005/04/12 20:33:26  pwagner
 # Tightened criteria for dead chunks, killer nodes
 #
