@@ -208,6 +208,7 @@ SHELL = /bin/sh
 # hl             -- build and install this prog
 # init_gen       -- build and install this prog
 # killmaster     -- build and install this prog
+# l2auxcat       -- build and install this prog
 # l2gpcat        -- build and install this prog
 # l2gpdiff       -- build and install this prog
 # l2q            -- build and install this prog
@@ -719,6 +720,11 @@ killmaster: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/killmaster.c
 	   -C $(MLSCFILE) $(MLSBIN)/$@.c \
       $(UTIL_OPTS) -main killmaster.c
 
+l2auxcat: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2auxcat.f90 l2
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m l2 \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
 l2gpcat: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2gpcat.f90 l1--itm
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
@@ -1058,6 +1064,10 @@ install: $(LEVELS)
 
 update:
 
+# Make most the souce-file tools in the util directory
+tools: chunktimes compare heconvert h5subset h5cat hl killmaster \
+  l2auxcat l2gpcat l2q l2gpdiff machineok WordSplit
+
 .PHONY: all configure clean clean_config\
   configure_pvm configure_fopts configure_full configure_help configure_subdirs\
   depends distclean disttar distarz distarg disthelp doc--api doc--toc \
@@ -1070,10 +1080,14 @@ update:
   makefile mostlyclean $(SUBDIRS) subdirs\
   tar substar tarz substarz targ substarg substars update\
   chunktimes CondenseLeakLog end_stmts f90tex heconvert init_gen \
-  h5subset h5cat hl killmaster machineok MLS_h5ls utctotai WordSplit
+  h5subset h5cat hl killmaster l2auxcat l2gpcat l2gpdiff l2q machineok \
+  MLS_h5ls utctotai WordSplit tools
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.93  2004/12/14 21:27:59  pwagner
+# Added target to build l2q
+#
 # Revision 1.92  2004/09/15 18:12:18  pwagner
 # Added build commands for chunktimes
 #
