@@ -1,5 +1,5 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 module MLSHDF5
 
@@ -295,6 +295,7 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to turn error messages off before getting DSNames' )
 ! The structure, dataset_info, is initialized below.
 !
+    nullify(dataset_info%name)
     call allocate_test ( dataset_info%name, MAXNDSNAMES, 'dataset_info%name', &
       & moduleName )
     dataset_info%name = ''
@@ -4115,6 +4116,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.53  2005/04/29 21:55:17  pwagner
+! Nullified name component of data_set info before allocating
+!
 ! Revision 2.52  2005/01/12 03:04:15  vsnyder
 ! Use correct data type in MakeHDF5Attribute_sngl, some cannonball polishing
 !
