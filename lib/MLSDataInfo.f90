@@ -1,9 +1,8 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
   module MLSDataInfo
 
-  use HDF5, only: hid_t, h5gn_members_f,h5gget_obj_info_idx_f
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
        
   implicit none
@@ -35,7 +34,7 @@
   integer, parameter :: name_len = 64  ! Max len of SDS array name
 
   type MLSDataInfo_T
-    character(len=name_len), dimension(:), pointer :: name ! Name of field in file
+    character(len=name_len), dimension(:), pointer :: name => null() ! Name of field in file
     integer :: number_of_entries
   end type MLSDataInfo_T
 
@@ -44,6 +43,7 @@
 ! -------------------------------------------------  Query_MLSData ----
   recursive subroutine Query_MLSData(loc_id, loc_name, dataset_info)
 !
+    use HDF5, only: hid_t, h5gn_members_f,h5gget_obj_info_idx_f
 ! This subroutine lists entries in the HDF5 file.
 !
 ! define external variables
@@ -108,6 +108,7 @@
     endif ! h5error
 
   end subroutine Query_MLSData
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -115,6 +116,9 @@
 end module MLSDataInfo
 
 ! $Log$
+! Revision 2.4  2005/04/29 21:53:29  pwagner
+! Nullified name component of data type at declaration
+!
 ! Revision 2.3  2002/10/08 00:09:11  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
