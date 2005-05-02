@@ -618,6 +618,9 @@ CONTAINS
 
     ENDDO
 
+    DEALLOCATE (rad, stat=status)
+    DEALLOCATE (rad_prec, stat=status)
+
 ! Output attribute vectors:
 
     CALL h5gopen_f (sd_id, '/', grp_id, status)
@@ -680,6 +683,9 @@ CONTAINS
 END MODULE DACsUtils
 
 ! $Log$
+! Revision 2.9  2005/05/02 16:01:50  perun
+! Deallocate last rad and rad_prec pointers
+!
 ! Revision 2.8  2005/01/25 15:19:20  perun
 ! Add TRIM to remove possible extra blank in precision dataset
 !
