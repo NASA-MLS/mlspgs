@@ -9,7 +9,8 @@ module ForwardModelConfig
 ! the command.
 
   use MLSCommon, only: R8, RP
-  use MLSSignals_M, only: Signal_T
+  use MLSSignals_M, only: Signal_t
+  use PFADatabase_m, only: PFAData_t, PFAPointer_t
   use SpectroscopyCatalog_m, only: Catalog_t
   use VectorsModule, only: VectorValue_T
   use VGridsDatabase, only: VGrid_T, DestroyVGridContents
@@ -43,8 +44,8 @@ module ForwardModelConfig
   ! Beta group type declaration.  Each entry in the Molecules list of the form
   ! "m" has one of these with n_elements == 1, referring to "m".  Each entry
   ! of the form "[m,m1,...,mn]" has one of these with n_elements == n, referring
-  ! to m1,...mn (but not m).  The Cat_Index, Qty and *_Ratio components are
-  ! filled in Get_Species_Data.
+  ! to m1,...mn (but not m).  The Ratio components are filled in
+  ! Get_Species_Data.
   type, public :: LBL_T ! For LBL molecules in the group:
     integer, pointer  :: Cat_Index(:) => NULL() ! 1:size(LBL_Molecules).  Indices
                                       ! for config%catalog and gl_slabs.
@@ -60,12 +61,12 @@ module ForwardModelConfig
   end type LBL_T
 
   type, public :: PFA_T ! For PFA molecules in the group:
-    integer, pointer :: Indices(:,:) => NULL() ! Channels x 1:size(Molecules). 
-                                      ! Indices in PFADataBase%PFAData.  Allocated
-                                      ! and filled in DeriveFromForwardModelConfig.
     integer, pointer :: Molecules(:) => NULL() ! PFA molecules in the group if a
                                       ! group, i.e., "m1...mn", else "m" if "m"
                                       ! is PFA, else zero size.
+    type(PFAPointer_t), pointer :: Data(:,:) => NULL() ! Channels x 1:size(Molecules).
+                                      ! Pointers to PFA Data.  Allocated and
+                                      ! filled in DeriveFromForwardModelConfig.
     real(rp), pointer :: Ratio(:) => NULL() ! 1:size(Molecules).  Isotope
                                       ! ratio.  Allocated in ForwardModelSupport
                                       ! with value 1.0, but could be filled in
@@ -77,7 +78,8 @@ module ForwardModelConfig
     logical :: Derivatives = .false.  ! "Compute derivatives w.r.t. mixing ratio"
     logical :: Group = .false.        ! "Molecule group", i.e., [m,m1,...,mn]
     integer :: Molecule               ! Group name, i.e., "m".
-    type(qtyStuff_t) :: Qty           ! The Qty's vector and foundInFirst
+    type(qtyStuff_t) :: Qty           ! The Qty's vector and foundInFirst, filled
+                                      ! in Get_Species_Data.
     type(lbl_t) :: LBL(2)             ! LSB, USB for Line-By-Line stuff
     type(pfa_t) :: PFA(2)             ! LSB, USB for Pre-Frequency-Averaged stuff
   end type Beta_Group_T
@@ -356,8 +358,11 @@ contains
     subroutine PFA_Stuff
 
       use Intrinsic, only: Lit_Indices
+      use MLSMessageModule, only: MLSMessage,  MLSMSG_Allocate, MLSMSG_Error
+      use MLSSignals_m, only: DisplaySignalName
       use MoreTree, only: StartErrorMessage
       use Output_M, only: Output
+      use PFADatabase_m, only: PFAData
       use String_Table, only: Display_String
       use Tree, only: Source_Ref
 
@@ -368,40 +373,47 @@ contains
       integer :: SB                   ! Sideband index, -1 .. +1
       integer :: SX                   ! Sideband index, 1 .. 2
 
-      character(len=3), parameter :: SBN(2) = (/ 'Low', 'Upp' /)
-
-      ! Fill fwdModelConf%beta_group%pfa%indices
+      ! Fill fwdModelConf%beta_group%pfa%data
 
       if ( associated(pfaData) ) then
         call sort_PFADatabase ! Only does anything once
         do sb = s1, s2, 2
           sx = ( sb + 3 ) / 2
           do b = 1, size(fwdModelConf%beta_group)
-            call allocate_test ( fwdModelConf%beta_group(b)%pfa(sx)%indices, &
+            allocate ( fwdModelConf%beta_group(b)%pfa(sx)%data( &
               & size(fwdModelConf%channels), &
-              & size(fwdModelConf%beta_group(b)%pfa(sx)%molecules), &
-              & 'Beta_group(b)%PFA(sx)%indices', moduleName )
-            fwdModelConf%beta_group(b)%pfa(sx)%indices = 0 ! not junk, to detect missing ones
+              & size(fwdModelConf%beta_group(b)%pfa(sx)%molecules)), stat=i )
+            if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+              & MLSMSG_Allocate // 'Beta_group(b)%PFA(sx)%data' )
             do p = 1, size(fwdModelConf%beta_group(b)%pfa(sx)%molecules)
               do i = PFA_by_molecule(fwdModelConf%beta_group(b)%pfa(sx)%molecules(p)-1)+1, &
                 &    PFA_by_molecule(fwdModelConf%beta_group(b)%pfa(sx)%molecules(p))
                 do channel = 1, size(fwdModelConf%channels)
                   if ( matchSignal ( PFAData(sortPFAdata(i))%theSignal, &
                     &  fwdModelConf%signals(fwdModelConf%channels(channel)%signal), sideband=sb, &
-                    &  channel=fwdModelConf%channels(channel)%used ) > 0 ) &
-                      & fwdModelConf%beta_group(b)%pfa(sx)%indices(channel,p) = &
-                        & sortPFAdata(i)
+                    &  channel=fwdModelConf%channels(channel)%used ) > 0 ) then
+                    fwdModelConf%beta_group(b)%pfa(sx)%data(channel,p)%datum => &
+                      PFAData(sortPFAdata(i))
+                  end if
                 end do ! channel
               end do ! i (molecules)
             end do ! p
-            if ( any(fwdModelConf%beta_group(b)%pfa(sx)%indices == 0) ) then
-              call startErrorMessage ( source_ref ( fwdModelConf%where ) )
-              call output ( ' PFA tables not found for ' )
-              call display_string ( &
-                & lit_indices(fwdModelConf%beta_group(b)%molecule) )
-              call output ( ' in ' // sbn(sx) // 'er sideband.', advance='yes' )
-              error = .true.
-            end if
+            do p = 1, size(fwdModelConf%beta_group(b)%pfa(sx)%data,2)
+              do channel = 1, size(fwdModelConf%beta_group(b)%pfa(sx)%data,1)
+                if ( .not. associated(fwdModelConf%beta_group(b)%pfa(sx)%data(channel,p)%datum) ) then
+                  if ( source_ref(fwdModelConf%where) /= 0 ) &
+                  call startErrorMessage ( fwdModelConf%where )
+                  call display_string ( &
+                    & lit_indices(fwdModelConf%beta_group(b)%molecule), &
+                    & before=' PFA table not found for ' )
+                  call displaySignalName ( &
+                    & fwdModelConf%signals(fwdModelConf%channels(channel)%signal), &
+                    & advance='yes', before=' and ', sideband=sb, &
+                    & channel=fwdModelConf%channels(channel)%used )
+                  error = .true.
+                end if
+              end do ! channel
+            end do ! p (molecules)
           end do ! b
         end do ! sb
       end if ! associated(pfaData)
@@ -616,8 +628,9 @@ contains
       end if
 
       do b = 1, size(fwdModelConf%beta_group)
-        call deallocate_test ( fwdModelConf%beta_group(b)%PFA(s)%indices, &
-          'Beta_group(b)%PFA(s)%indices', moduleName )
+        deallocate ( fwdModelConf%beta_group(b)%PFA(s)%data, stat=ier )
+        if ( ier/= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+          & MLSMSG_Deallocate // 'Beta_group(b)%PFA(s)%indices' )
       end do ! b
     end do ! s
 
@@ -639,8 +652,8 @@ contains
         end do
       end do
 
-      deallocate ( fwdModelConf%catalog, stat=s )
-      if ( s /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      deallocate ( fwdModelConf%catalog, stat=ier )
+      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
         & MLSMSG_Deallocate // 'fwdModelConf%catalog' )
   ! else
   !   It was already deallocated at the end of FullForwardModel
@@ -988,18 +1001,22 @@ contains
   end subroutine DestroyOneForwardModelConfig
 
   ! --------------------------------------------  Dump_Beta_Group  -----
-  subroutine Dump_Beta_Group ( Beta_Group, Name, Sidebands )
+  subroutine Dump_Beta_Group ( Beta_Group, Name, Sidebands, Details )
 
     use Dump_0, only: Dump
     use Intrinsic, only: Lit_indices
-    use Output_m, only: NewLine, Output
+    use Output_m, only: Blanks, NewLine, Output
+    use PFADataBase_m, only: Dump
     use String_Table, only: Display_String
 
     type(beta_group_t), intent(in) :: Beta_Group(:)
     character(len=*), intent(in), optional :: Name
     integer, intent(in), optional :: Sidebands(2)
+    integer, intent(in), optional :: Details ! for Dump_PFADatum (default 0)
 
-    integer :: I, S, S1, S2
+    integer :: B, C, M, S, S1, S2
+    logical :: Missing ! PFA data
+    integer :: MyDetails
     character(3), parameter :: SB(2) = (/ 'Low', 'Upp' /)
 
     s1 = 1; s2 = 2
@@ -1007,35 +1024,50 @@ contains
       s1 = (sidebands(1)+3)/2
       s2 = (sidebands(2)+3)/2
     end if
+    myDetails = 0
+    if ( present(details) ) myDetails = details
     call output ( '  Beta groups' )
     if ( present(name) ) call output ( ' ' // trim(name) )
     call output ( size(beta_group), before=', SIZE = ', advance='yes' )
-    do i = 1, size(beta_group)
-      call output ( i, before='  Beta group ', after=': ' )
-      call display_string ( lit_indices(beta_group(i)%molecule) )
-      if ( beta_group(i)%derivatives ) call output ( ' with derivative' )
+    do b = 1, size(beta_group)
+      call output ( b, before='  Beta group ', after=': ' )
+      call display_string ( lit_indices(beta_group(b)%molecule) )
+      if ( beta_group(b)%derivatives ) call output ( ' with derivative' )
       call newLine
       do s = s1, s2
         call output ( '  ' // sb(s) // 'er sideband:', advance='yes' )
-        if ( size(beta_group(i)%lbl(s)%molecules) > 0 ) then
+        if ( size(beta_group(b)%lbl(s)%molecules) > 0 ) then
           call display_string ( &
-            & lit_indices(beta_group(i)%lbl(s)%molecules), before='   LBL:', &
+            & lit_indices(beta_group(b)%lbl(s)%molecules), before='   LBL:', &
             & advance='yes' )
-          call dump ( beta_group(i)%lbl(s)%ratio, name='    Isotope ratio' )
-          call dump ( beta_group(i)%lbl(s)%cat_index, &
+          call dump ( beta_group(b)%lbl(s)%ratio, name='    Isotope ratio' )
+          call dump ( beta_group(b)%lbl(s)%cat_index, &
             & name='    Spectroscopy catalog extract index' )
         end if
-        if ( size(beta_group(i)%pfa(s)%molecules) > 0 ) then
+        if ( size(beta_group(b)%pfa(s)%molecules) > 0 ) then
           call display_string ( &
-            & lit_indices(beta_group(i)%pfa(s)%molecules), before='   PFA:', &
+            & lit_indices(beta_group(b)%pfa(s)%molecules), before='   PFA:', &
             & advance='yes' )
-          call dump ( beta_group(i)%pfa(s)%ratio, name='    Isotope ratio' )
-          if ( associated(beta_group(i)%pfa(s)%indices) ) &
-            & call dump ( beta_group(i)%pfa(s)%indices(:,:), &
-            & name='    PFA Database indices ' )
+          call dump ( beta_group(b)%pfa(s)%ratio, name='    Isotope ratio' )
+          if ( associated(beta_group(b)%pfa(s)%data) ) then
+            do m = 1, size(beta_group(b)%pfa(s)%data,2)
+              missing = .false.
+              do c = 1, size(beta_group(b)%pfa(s)%data,1)
+                if ( associated(beta_group(b)%pfa(s)%data(c,m)%datum) ) then
+                  call blanks ( 4 )
+                  call dump ( beta_group(b)%pfa(s)%data(c,m)%datum, details=myDetails )
+                else
+                  missing = .true.
+                end if
+              end do ! c
+              if ( missing ) call display_string ( &
+                & lit_indices(beta_group(b)%pfa(s)%molecules(m)), &
+                & before='    Some PFA data missing for ', advance='yes' )
+            end do ! m
+          end if
         end if
       end do ! s
-      if ( associated ( beta_group(i)%qty%qty ) ) call dump ( beta_group(i)%qty )
+      if ( associated ( beta_group(b)%qty%qty ) ) call dump ( beta_group(b)%qty )
     end do
   end subroutine Dump_Beta_Group
 
@@ -1063,7 +1095,7 @@ contains
   end subroutine Dump_ForwardModelConfigDatabase
 
   ! -----------------------------------  Dump_ForwardModelConfig  -----
-  subroutine Dump_ForwardModelConfig ( Config, Where )
+  subroutine Dump_ForwardModelConfig ( Config, Where, Details )
 
     use Dump_0, only: DUMP
     use Intrinsic, only: Lit_indices
@@ -1072,11 +1104,11 @@ contains
     use String_Table, only: Display_String
 
     type (ForwardModelConfig_T), intent(in) :: Config
-    character(len=*), optional, intent(in) :: Where
+    character(len=*), intent(in), optional :: Where
+    integer, intent(in), optional :: Details ! for Dump_Beta_Group
 
     ! Local variables
     integer ::  J                            ! Loop counter
-    character(3), parameter :: SB(2) = (/ 'Low', 'Upp' /)    
     character (len=MaxSigLen) :: SignalName  ! A line of text
 
     ! executable code
@@ -1106,7 +1138,7 @@ contains
     call output ( config%anyPFA(2), advance='yes' )
     if ( associated(config%Beta_group) ) &
       & call dump ( config%Beta_group, &
-        & sidebands=(/config%sidebandStart,config%sidebandStop/) )
+        & sidebands=(/config%sidebandStart,config%sidebandStop/), details=details )
     call output ( '  Molecules: ', advance='yes' )
     if ( associated(config%molecules) ) then
       do j = 1, size(config%molecules)
@@ -1170,6 +1202,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.68  2005/03/28 20:27:51  vsnyder
+! Lots of PFA stuff
+!
 ! Revision 2.67  2005/02/17 02:35:13  vsnyder
 ! Remove PFA stuff from Channels part of config
 !
