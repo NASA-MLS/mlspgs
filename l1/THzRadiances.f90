@@ -1,4 +1,4 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -105,19 +105,24 @@ CONTAINS
     ibgn = 0
     DO MAFno = CalBuf%Cal_start, CalBuf%Cal_end
 
-       CALL CalcLimbRads (MAFno, ibgn)
-
        counterMAF = CalBuf%MAFdata(MAFno)%EMAF%TotalMAF
        TAI = CalBuf%MAFdata(MAFno)%SciMIF(0)%secTAI
 
        IF (OA_counterIndex == 0) THEN
           MAFindex = MAFno
        ELSE
+          IF (counterMAF < OA_counterMAF(1)) THEN
+             print *, 'counterMAF earlier than OA counterMAF!'
+             CalBuf%Cal_start = CalBuf%Cal_start + 1
+             CYCLE
+          ENDIF
           DO
              IF (counterMAF == OA_counterMAF(MAFindex)) EXIT
              MAFindex = MAFindex + 1
           ENDDO
        ENDIF
+
+       CALL CalcLimbRads (MAFno, ibgn)
 
 print *, "Outputting rad for MAFno: ", MAFindex
        CALL OutputL1B_rad (MAFindex, L1BFileInfo, counterMAF, Reflec, TAI, &
@@ -144,6 +149,9 @@ END MODULE THzRadiances
 !=============================================================================
 
 ! $Log$
+! Revision 2.9  2005/05/02 16:10:04  perun
+! Protect counterMAF from running over OA_counterMAF
+!
 ! Revision 2.8  2004/12/07 21:24:17  pwagner
 ! type converted in min intrinsic to appease NAG
 !
