@@ -1,4 +1,4 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -58,8 +58,15 @@ CONTAINS
 
        IF (.NOT. more_data) EXIT    !! Nothing more to do
 
-       CALL NextSciMAF (more_data)
+       DO    ! Read sci data until after start time
 
+          CALL NextSciMAF (more_data)
+
+          IF (.NOT. more_data) EXIT    !! Nothing more to do
+
+          IF (THzSciMAF(2)%secTAI >= L1Config%Expanded_TAI%startTime) EXIT
+
+       ENDDO
        IF (.NOT. more_data) EXIT    !! Nothing more to do
 
        sci_MAFno = THzSciMAF(0)%MAFno
@@ -249,6 +256,9 @@ END MODULE SortQualifyTHz
 !=============================================================================
 
 ! $Log$
+! Revision 2.7  2005/05/02 16:07:41  perun
+! Read sci data until at or after the requested start time
+!
 ! Revision 2.6  2005/01/28 17:07:14  perun
 ! Get THz FOV bright object flags
 !
