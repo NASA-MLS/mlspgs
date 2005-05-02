@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -167,7 +167,7 @@ print *, 'binning rads by lat...'
 
     CHARACTER(LEN=80) :: name
     INTEGER :: i, MAF, MaxMIFs, MIF, noMAFs, Flag
-    INTEGER :: c1, c2, bandno, bandindx
+    INTEGER :: c1, c2, bandno, bandindx, status
     INTEGER, PARAMETER :: dims(3) = (/ FBchans, MIFsGHz, 1 /)
 
     TYPE (L1BData_T) :: L1BData
@@ -229,12 +229,18 @@ print *, 'binning rads by lat...'
 
     ENDDO
 
+    DEALLOCATE (rad, stat=status)
+    DEALLOCATE (rad_err, stat=status)
+
   END SUBROUTINE OutputBaselinedRads
 
 !=============================================================================
 END MODULE GHzBaseline
 !=============================================================================
 ! $Log$
+! Revision 2.4  2005/05/02 16:02:50  perun
+! Deallocate last rad and rad_err pointers
+!
 ! Revision 2.3  2004/11/10 15:35:10  perun
 ! Add call to deallocate L1BData
 !
