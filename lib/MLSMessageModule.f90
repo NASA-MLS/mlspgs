@@ -16,7 +16,6 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
   private :: not_used_here 
@@ -49,7 +48,7 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   integer, public, parameter :: MLSMSG_Crash=5
 
   ! MLSMSG_Severity_to_quit can be reset in a main program to cause us
-  ! to become more lenient (set it higher) or strict (set it lower)
+  ! to become more lenient (set it higher) or strict (set it lower )
   integer, public            :: MLSMSG_Severity_to_quit = MLSMSG_Error
 
   private :: SeverityNames
@@ -59,7 +58,7 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
      & "Warning", &
      & "Error  ", &
      & "Crash  " &
-     /)
+     / )
 
   ! So that we may limit the number of times warnings printed, messagewise
   character(len=*), parameter :: WARNINGSSUPPRESSED = '(No more warnings of this)'
@@ -91,7 +90,7 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
 
    ! May get some of these from MLSLibOptions? 
   type, public :: MLSMessageConfig_T
-    ! We log messages by toolkit (if useToolkit and UseSDPToolkit are TRUE)
+    ! We log messages by toolkit (if useToolkit and UseSDPToolkit are TRUE )
     ! In the following, values would have the effect of adding logged messages:
     ! -2: none added
     ! -1: to stdout
@@ -115,16 +114,20 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   type (MLSMessageConfig_T), public, save :: MLSMessageConfig
   
   ! Public procedures
-  public :: MLSMessage, MLSMessageSetup, MLSMessageClose, MLSMessageExit, &
-    & MLSMessageReset, PVMErrorMessage
+  public :: MLSMessage, MLSMessage_, MLSMessageSetup, MLSMessageClose
+  public :: MLSMessageExit, MLSMessageReset, PVMErrorMessage
+
+  interface MLSMessage
+    module procedure MLSMessage_
+  end interface
 
 contains
 
-  ! -------------------------------------------------  MLSMessage  -----
+  ! ------------------------------------------------  MLSMessage_  -----
 
   ! This first routine is the main `messaging' code.
 
-  subroutine MLSMessage ( Severity, ModuleNameIn, Message, Advance )
+  subroutine MLSMessage_ ( Severity, ModuleNameIn, Message, Advance  )
 
     ! Dummy arguments
     integer, intent(in) :: Severity ! e.g. MLSMSG_Error
@@ -158,28 +161,28 @@ contains
       ! See if we have seen this message before
       newwarning = .not. any(warningmessages == trim(message))
       if ( newwarning .and. numwarnings >= MAXNUMWARNINGS ) then
-      elseif ( newwarning .or. &
+      else if ( newwarning .or. &
         & numwarnings < 1 ) then
         numwarnings = numwarnings + 1
         warningmessages(numwarnings) = message
         timeswarned(numwarnings) = timeswarned(numwarnings) + 1
         if ( timeswarned(numwarnings) > MLSMessageConfig%limitWarnings ) return
         timeswarned(numwarnings) = min(timeswarned(numwarnings) + 1, &
-          & MLSMessageConfig%limitWarnings + 1)
+          & MLSMessageConfig%limitWarnings + 1 )
         nosubsequentwarnings = &
           & (timeswarned(numwarnings) >= MLSMessageConfig%limitWarnings)
       else
-        do warning_index=1, numwarnings
+        do warning_index = 1, numwarnings
           if ( warningmessages(warning_index) == message ) exit
-        enddo
+        end do
         if ( warning_index > numwarnings ) return
         if ( timeswarned(warning_index) > MLSMessageConfig%limitWarnings ) return
         timeswarned(warning_index) = min(timeswarned(warning_index) + 1, &
-          & MLSMessageConfig%limitWarnings + 1)
+          & MLSMessageConfig%limitWarnings + 1 )
         nosubsequentwarnings = &
           & (timeswarned(warning_index) >= MLSMessageConfig%limitWarnings)
-      endif
-    endif
+      end if
+    end if
       
     if ( (.not. MLSMessageConfig%suppressDebugs).OR. &
          & (severity /= MLSMSG_Debug) ) then
@@ -191,7 +194,7 @@ contains
            line = SeverityNames(severity)
          else
            line = 'Unknown'
-         endif
+         end if
          line_len = len_trim(line)
          line(line_len+1:line_len+2) = ' ('
          if ( moduleNameIn(1:1) == '$' ) then
@@ -211,13 +214,13 @@ contains
          line_len = line_len + len(message) ! Not len-trim, so we can get
          ! trailing blanks into a part of a message.  If there are trailing
          ! blanks remaining when my_adv is true, they'll be trimmed off.
-       endif
+       end if
 
        ! Log the message using the toolkit routine
-       ! (or its substitute)
+       ! (or its substitute )
        ! if either using toolkit or severity is sufficient to
        ! quit (which means we might have been called directly
-       ! rather than from output module)
+       ! rather than from output module )
 
        if ( my_adv ) then
          log_it = &
@@ -227,14 +230,14 @@ contains
          if( log_it ) &
          & dummy = PGS_SMF_GenerateStatusReport&
          & (TRIM(MLSMessageConfig%prefix)// &
-              & TRIM(line))
+              & TRIM(line) )
 
          ! Now, if we're also logging to a file then write to that too.
 
-         select case ( MLSMessageConfig%logFileUnit )
-         case ( 0 : )
+         select case ( MLSMessageConfig%logFileUnit  )
+         case ( 0 :  )
            write ( UNIT=max(MLSMessageConfig%logFileUnit,1), FMT=* ) TRIM(line)
-         case ( -1 )
+         case ( -1  )
            write ( UNIT=*, FMT=* ) TRIM(line)
          case default
          end select
@@ -250,14 +253,14 @@ contains
 
     if ( my_adv .and. severity >= MLSMSG_Severity_to_quit ) then
       if ( MLSMessageConfig%SendErrMsgToMaster .and. &
-        & MLSMessageConfig%masterTID > 0 ) call LastGasp(ModulenameIn, Message)
+        & MLSMessageConfig%masterTID > 0 ) call LastGasp(ModulenameIn, Message )
       if ( MLSMessageConfig%logFileUnit > 0 ) &
-        & close ( MLSMessageConfig%logFileUnit )
+        & close ( MLSMessageConfig%logFileUnit  )
       if ( severity >= MLSMSG_Crash .or. MLSMessageConfig%CrashOnAnyError ) &
         & call crash_burn
-      call exit_with_status ( 1 )
+      call exit_with_status ( 1  )
     end if
-  end subroutine MLSMessage
+  end subroutine MLSMessage_
 
   ! --------------------------------------------  MLSMessageSetup  -----
 
@@ -265,7 +268,7 @@ contains
   ! sensible, but the user may wish to change things.
 
   subroutine MLSMessageSetup ( SuppressDebugs, LogFileUnit, Prefix, useToolkit, &
-    & CrashOnAnyError )
+    & CrashOnAnyError  )
 
     ! Dummy arguments
     logical, optional, intent(in) :: SuppressDebugs
@@ -286,7 +289,7 @@ contains
 
     if ( present(logFileUnit) ) then
       if ( MLSMessageConfig%logFileUnit /= -1 ) call MLSMessage ( &
-        & MLSMSG_Error, ModuleName,"Already writing to a log file")
+        & MLSMSG_Error, ModuleName,"Already writing to a log file" )
       MLSMessageConfig%logFileUnit = logFileUnit
     end if
 
@@ -310,11 +313,11 @@ contains
 
   ! This routine (optionally) logs farewell, advances
   ! (hopefully) gracefully ends logging, and exits 
-  ! (optionally with status)
+  ! (optionally with status )
   ! if farewell present, and non-blank, logs it
   ! if farewell present,  but blank, logs default message
   ! if farewell absent, does not log
-  subroutine MLSMessageExit(status, farewell)
+  subroutine MLSMessageExit ( status, farewell )
   integer, optional, intent(in) :: STATUS
   character(LEN=*), optional, intent(in) :: FAREWELL
   CHARACTER(LEN=36) :: mesg
@@ -325,36 +328,32 @@ contains
         if(farewell == ' ') then
           write(mesg, '(A29, I2, A1)') 'Exiting with status (', &
           status, ')'
-          call MLSMessage(MLSMSG_Info, ModuleName, &
-          & mesg, advance='y')
+          call MLSMessage ( MLSMSG_Info, ModuleName, mesg, advance='y' )
         else
-          call MLSMessage(MLSMSG_Info, ModuleName, &
-          & farewell, advance='y')
-        endif
-      endif
+          call MLSMessage ( MLSMSG_Info, ModuleName, farewell, advance='y' )
+        end if
+      end if
       call MLSMessageClose
-      call exit_with_status ( status )
+      call exit_with_status ( status  )
     else
       if(present(farewell)) then
         if(farewell == ' ') then
           mesg='Exiting normally with "stop"'
-          call MLSMessage(MLSMSG_Info, ModuleName, &
-          & mesg, advance='y')
+          call MLSMessage ( MLSMSG_Info, ModuleName, mesg, advance='y' )
         else
-          call MLSMessage(MLSMSG_Info, ModuleName, &
-          & farewell, advance='y')
-        endif
-      endif
+          call MLSMessage ( MLSMSG_Info, ModuleName, farewell, advance='y' )
+        end if
+      end if
       call MLSMessageClose
       stop
-    endif
+    end if
   end subroutine MLSMessageExit
 
   ! --------------------------------------------  MLSMessageReset  -----
 
   ! This routine allows you to reset flags, counters, etc. during runtime
 
-  subroutine MLSMessageReset(logFileUnit, CrashOnAnyError, Warnings)
+  subroutine MLSMessageReset ( logFileUnit, CrashOnAnyError, Warnings )
     ! Args
     integer, intent(in), optional :: logFileUnit
     logical, intent(in), optional :: CrashOnAnyError
@@ -364,25 +363,25 @@ contains
     if ( present(logFileUnit) ) then
       if ( logFileUnit /= MLSMessageConfig%logFileUnit ) then
         write(logname, '(i6)') MLSMessageConfig%logFileUnit
-        call MLSMessage(MLSMSG_Info, ModuleName, &
-          & 'Closing output on' // logname)
+        call MLSMessage ( MLSMSG_Info, ModuleName, &
+          & 'Closing output on' // logname )
         call MLSMessageClose
         MLSMessageConfig%logFileUnit = logFileUnit
         write(logname, '(i6)') MLSMessageConfig%logFileUnit
-        call MLSMessage(MLSMSG_Info, ModuleName, &
-          & 'Opening output on' // logname)
-      endif
-    endif
+        call MLSMessage ( MLSMSG_Info, ModuleName, &
+          & 'Opening output on' // logname )
+      end if
+    end if
     if ( present(CrashOnAnyError) ) MLSMessageConfig%CrashOnAnyError = CrashOnAnyError
     if ( present(Warnings) ) then
       numwarnings = 0
       timeswarned = 0
       warningmessages = ' '
-    endif
+    end if
   end subroutine MLSMessageReset
 
   ! --------------------------------------------  PVMERRORMESSAGE  -----
-  subroutine PVMErrorMessage ( INFO, PLACE )
+  subroutine PVMErrorMessage ( INFO, PLACE  )
     ! This routine is called to log a PVM error
     integer, intent(in) :: INFO
     character (LEN=*) :: PLACE
@@ -390,7 +389,7 @@ contains
     character (LEN=132) :: LINE
 
     write (line, * ) info
-    call MLSMessage(MLSMSG_Error, Place, MLSMSG_PVM // &
+    call MLSMessage ( MLSMSG_Error, Place, MLSMSG_PVM // &
       & ' Info='//trim(adjustl(line)))
   end subroutine PVMErrorMessage
 
@@ -398,26 +397,27 @@ contains
   ! -------------------- LastGasp -------------------
   ! We're a slave and we're about to expire
   ! Before we do, however, try to tell the master why
-  subroutine LastGasp(ModuleNameIn, Message)
+  subroutine LastGasp ( ModuleNameIn, Message )
     character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
     character (len=*), intent(in) :: Message ! Line of text
     ! Local variables
     integer :: BUFFERID                 ! ID for buffer to send
     integer :: INFO                     ! Flag from PVM
     ! Executable code
-    call PVMFInitSend ( PvmDataDefault, bufferID )
-    call PVMF90Pack ( SIG_AboutToDie, info )
+    call PVMFInitSend ( PvmDataDefault, bufferID  )
+    call PVMF90Pack ( SIG_AboutToDie, info  )
     if ( info /= 0 ) &
-      & call PVMErrorMessage ( info, 'packing about-to-die signal' )
-    call PVMF90Pack ( ModuleNameIn // trim(message), info )
+      & call PVMErrorMessage ( info, 'packing about-to-die signal'  )
+    call PVMF90Pack ( ModuleNameIn // trim(message), info  )
     if ( info /= 0 ) &
-      & call PVMErrorMessage ( info, 'packing last gasp message' )
-    call PVMFSend ( MLSMessageConfig%masterTid, InfoTag, info )
+      & call PVMErrorMessage ( info, 'packing last gasp message'  )
+    call PVMFSend ( MLSMessageConfig%masterTid, InfoTag, info  )
     if ( info /= 0 ) &
-      & call PVMErrorMessage ( info, 'sending last gasp' )
+      & call PVMErrorMessage ( info, 'sending last gasp'  )
   end subroutine LastGasp
 !=======================================================================
-  logical function not_used_here()
+  logical function not_used_here( )
+    character (len=len(idParm)) :: Id = idParm ! CVS info
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
 
@@ -426,6 +426,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.19  2005/05/02 22:56:32  vsnyder
+! Make MLSMessage generic
+!
 ! Revision 2.18  2005/03/15 23:47:52  pwagner
 ! Slaves given last chance to send error message to master
 !
