@@ -1,4 +1,4 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 MODULE INIT_TABLES_MODULE
@@ -99,10 +99,11 @@ MODULE INIT_TABLES_MODULE
   INTEGER, PUBLIC, PARAMETER :: P_MoonToLimbAngle_GHz = p_MoonToSpaceAngle + 1
   INTEGER, PUBLIC, PARAMETER :: P_MoonToLimbAngle_THz = p_MoonToLimbAngle_GHz + 1
   INTEGER, PUBLIC, PARAMETER :: P_DACSWINDOW = p_MoonToLimbAngle_THz + 1
+  INTEGER, PUBLIC, PARAMETER :: P_UseAntOffsets = p_DACSWINDOW + 1
 
   ! In Output section:
 
-  INTEGER, PUBLIC, PARAMETER :: P_REMOVEBASELINE = P_DACSWINDOW + 1
+  INTEGER, PUBLIC, PARAMETER :: P_REMOVEBASELINE = P_UseAntOffsets + 1
 
   INTEGER, PUBLIC, PARAMETER :: FIRST_PARM = P_OUTPUT_VERSION_STRING
   INTEGER, PUBLIC, PARAMETER :: LAST_PARM = P_REMOVEBASELINE
@@ -179,6 +180,7 @@ CONTAINS ! =====     Public procedures     =============================
     parm_indices(p_MoonToLimbAngle_GHz)=    add_ident ( 'MoonToLimbAngleGHz' )
     parm_indices(p_MoonToLimbAngle_THz)=    add_ident ( 'MoonToLimbAngleTHz' )
     parm_indices(p_dacswindow)=             add_ident ( 'DACSwindow' )
+    parm_indices(p_UseAntOffsets)=          add_ident ( 'UseAntOffsets' )
 
     ! Put section names into the symbol table
 
@@ -319,6 +321,7 @@ CONTAINS ! =====     Public procedures     =============================
              begin, p+p_mif_dead_time, t+t_numeric, n+n_name_def, &
              begin, p+p_mifspermaf, t+t_numeric, n+n_name_def, &
              begin, p+p_usedefaultgains, t+t_boolean, n+n_name_def, &
+             begin, p+p_UseAntOffsets, t+t_boolean, n+n_name_def, &
              begin, p+p_calibDACS, t+t_boolean, n+n_name_def, &
              s+s_spaceMIFs, s+s_targetMIFs, s+s_limbMIFS, s+s_discardMIFs, &
              s+s_switch, s+s_markchanbad, n+n_section, &
@@ -334,6 +337,9 @@ CONTAINS ! =====     Public procedures     =============================
 END MODULE INIT_TABLES_MODULE
   
 ! $Log$
+! Revision 2.21  2005/05/02 16:03:27  perun
+! Added UseAntOffsets field
+!
 ! Revision 2.20  2005/01/28 16:58:47  perun
 ! Split MoonToLimbAngle into GHz and THz
 !
@@ -356,6 +362,9 @@ END MODULE INIT_TABLES_MODULE
 ! Version 1.2 commit
 !
 ! $Log$
+! Revision 2.21  2005/05/02 16:03:27  perun
+! Added UseAntOffsets field
+!
 ! Revision 2.20  2005/01/28 16:58:47  perun
 ! Split MoonToLimbAngle into GHz and THz
 !
