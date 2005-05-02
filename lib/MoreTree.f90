@@ -11,7 +11,7 @@ module MoreTree
   public
 
   interface FillArray
-    module procedure FillIntegerArray, FillStringArray
+    module procedure FillDecorArray, FillStringArray
   end interface FillArray
 
 !---------------------------- RCS Ident Info -------------------------------
@@ -25,8 +25,8 @@ module MoreTree
 
 contains ! ====     Public Procedures     ==============================
 
-  ! -------------------------------------------  FillIntegerArray  -----
-  integer function FillIntegerArray ( Where, Array, ArrayName ) result(Error)
+  ! ---------------------------------------------  FillDecorArray  -----
+  integer function FillDecorArray ( Where, Array, ArrayName ) result(Error)
     ! Fill Array with the decorations of sons 2..n of Where.
     ! Result > 0 => field had a range in it.
     ! Array is allocated here with Allocate_Test, so don't send me an
@@ -38,7 +38,7 @@ contains ! ====     Public Procedures     ==============================
 
     integer, intent(in) :: Where ! in the tree
     integer, pointer :: Array(:)
-    character(len=*), intent(in) :: ArrayName
+    character(len=*), intent(in) :: ArrayName ! For error message
     integer :: Gson, J, N
 
     error = 0
@@ -55,7 +55,7 @@ contains ! ====     Public Procedures     ==============================
         call display_string ( sub_rosa(subtree(1,where)), advance='yes' )
       end if
     end do
-  end function FillIntegerArray
+  end function FillDecorArray
 
   ! --------------------------------------------  FillStringArray  -----
   integer function FillStringArray ( Where, Array, ArrayName ) result(Error)
@@ -71,7 +71,7 @@ contains ! ====     Public Procedures     ==============================
 
     integer, intent(in) :: Where ! in the tree
     character(len=*), pointer :: Array(:)
-    character(len=*), intent(in) :: ArrayName
+    character(len=*), intent(in) :: ArrayName ! For error message
     integer :: Gson, J, N
 
     error = 0
@@ -90,6 +90,38 @@ contains ! ====     Public Procedures     ==============================
       end if
     end do
   end function FillStringArray
+
+  ! -------------------------------------------  FillSubrosaArray  -----
+  integer function FillSubrosaArray ( Where, Array, ArrayName ) result(Error)
+    ! Fill Array with the decorations of sons 2..n of Where.
+    ! Result > 0 => field had a range in it.
+    ! Array is allocated here with Allocate_Test, so don't send me an
+    ! undefined pointer!
+    use Allocate_Deallocate, only: Allocate_Test
+    use Output_m, only: Output
+    use String_Table, only: Display_String
+    use Tree, only: Node_Kind, Pseudo, Sub_Rosa
+
+    integer, intent(in) :: Where ! in the tree
+    integer, pointer :: Array(:)
+    character(len=*), intent(in) :: ArrayName ! For error message
+    integer :: Gson, J, N
+
+    error = 0
+    n = nsons(where)
+    call allocate_test ( array, n-1, arrayName, moduleName )
+    do j = 2, n
+      gson = subtree(j,where)
+      if ( node_kind(gson) == pseudo ) then
+        array(j-1) = sub_rosa(gson)
+      else
+        error = 1
+        call startErrorMessage ( where )
+        call output ( 'Range not allowed for ' )
+        call display_string ( sub_rosa(subtree(1,where)), advance='yes' )
+      end if
+    end do
+  end function FillSubrosaArray
 
   ! ------------------------------------------------  Get_Boolean  -----
   logical function Get_Boolean ( Root )
@@ -203,6 +235,9 @@ contains ! ====     Public Procedures     ==============================
 end module MoreTree
 
 ! $Log$
+! Revision 2.14  2005/05/02 22:57:29  vsnyder
+! Add FillSubRosaArray
+!
 ! Revision 2.13  2005/01/20 01:31:07  vsnyder
 ! Add FillArray, FillIntegerArray, FillStringArray
 !
