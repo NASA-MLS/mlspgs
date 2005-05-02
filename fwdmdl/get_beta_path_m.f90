@@ -212,9 +212,9 @@ contains
       beta_path(:,i) = 0.0_rp
 
       do n = 1, size(beta_group(i)%molecules)
-        if ( beta_group(i)%indices(frq_i,n) /= 0 ) then
+        if ( associated(beta_group(i)%data(frq_i,n)%datum) ) then
           call create_beta_path_pfa ( frq, p_path, path_inds, t_path, vel_rel, &
-            & PFAData(beta_group(i)%indices(frq_i,n)), beta_group(i)%ratio(n), &
+            & beta_group(i)%data(frq_i,n)%datum, beta_group(i)%ratio(n), &
             & beta_path(:,i), t_der_path_flags, &
             & dBdT, dBdw, dBdn, dBdv )
 
@@ -767,7 +767,6 @@ contains
     use D_Hunt_m, only: Hunt
     use MLSCommon, only: RP, R8
     use PFADataBase_m, only: PFAData_t, RK
-    use Physics, only: SpeedOfLight ! M/s
 
 ! Inputs:
     real(r8), intent(in) :: Frq         ! Channel center frequency in MHz
@@ -794,7 +793,6 @@ contains
 ! -----     Local variables     ----------------------------------------
 
     real(kind(beta_path)) :: BP  ! Temp for one cell of beta_path
-    real(r8), parameter :: C = speedOfLight / 1000.0_r8 ! km/s
     real(rp) :: dBdNu            ! d log Beta / d nu, for Doppler correction
     real(rp) :: Del_T            ! Log Temperature step in tGrid
     real(r8) :: Doppler          ! Doppler corrected frequency offset, MHz
@@ -1108,6 +1106,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.75  2005/03/29 01:58:17  vsnyder
+! Make stuff pure
+!
 ! Revision 2.74  2005/03/26 01:26:29  vsnyder
 ! Make sure dBeta_dw etc get a value even if there are no lines
 !
