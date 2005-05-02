@@ -1,4 +1,4 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -46,6 +46,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
      REAL :: MIF_duration, MIF_DeadTime
      REAL :: MoonToSpaceAngle
      REAL :: MoonToLimbAngle_GHz, MoonToLimbAngle_THz
+     REAL :: AntOffsetsScale = 1.0       ! scale factor for antenna offsets
      LOGICAL :: UseDefaultGains = .FALSE.
      LOGICAL :: CalibDACS = .TRUE.
      CHARACTER(LEN=1) :: GHz_seq(0:MaxMIFs-1), THz_seq(0:MaxMIFs-1)
@@ -342,7 +343,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
            p_mif_dead_time, p_mifspermaf, p_calibDACS, p_THzMaxBias, s_switch, &
            p_thzspaceangle, f_s, f_bandno, f_chan, s_markchanbad, &
            p_MoonToSpaceAngle, p_MoonToLimbAngle_GHz, p_MoonToLimbAngle_THz, &
-           p_DACSwindow
+           p_DACSwindow, p_UseAntOffsets
       USE INTRINSIC, ONLY: l_ghz, l_thz, phyq_mafs, phyq_temperature, &
            phyq_mifs, phyq_time, phyq_angle
       USE TREE, ONLY: Decoration, Nsons, Subtree, Sub_rosa, Node_id
@@ -540,6 +541,14 @@ MODULE MLSL1Config  ! Level 1 Configuration
             CASE (p_usedefaultgains)
 
                L1Config%Calib%UseDefaultGains = Get_Boolean (son)
+
+            CASE (p_UseAntOffsets)
+
+               IF (Get_Boolean (son)) THEN
+                  L1Config%Calib%AntOffsetsScale = 1.0
+               ELSE
+                  L1Config%Calib%AntOffsetsScale = 0.0
+               ENDIF
 
             CASE (p_calibDACS)
 
@@ -752,6 +761,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
 END MODULE MLSL1Config
 
 ! $Log$
+! Revision 2.18  2005/05/02 16:04:15  perun
+! Add UseAntOffsets field and AntOffsetsScale factor
+!
 ! Revision 2.17  2005/01/28 17:00:29  perun
 ! Split MoonToLimbAngle into GHz and THz
 !
