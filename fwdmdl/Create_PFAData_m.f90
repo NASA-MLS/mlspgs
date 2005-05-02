@@ -34,7 +34,8 @@ contains ! =====     Public Procedures     =============================
     use L2PC_PFA_STRUCTURES, only: AllocateOneSlabs, DeAllocateOneSlabs, &
       & SLABS_STRUCT
     use MLSCommon, only: RP, R8
-    use MLSSignals_m, only: GetNameOfSignal, MatchSignal, Signal_T
+    use MLSSignals_m, only: GetNameOfSignal, MatchSignal, MaxSigLen, Signal_T
+    use MoreTree, only: GetStringIndexFromString
     use Output_m, only: Output
     use PFADataBase_m, only: AddPFADatumToDatabase, PFAData, PFAData_T, &
       & Sort_PFADataBase
@@ -42,7 +43,7 @@ contains ! =====     Public Procedures     =============================
     use Slabs_SW_m, only: Slabs_Prep_Struct
     use SpectroscopyCatalog_m, only: Catalog, Catalog_t, Line_t, Lines, &
       & MostLines, SpectroscopyFile
-    use String_Table, only: Display_String
+    use String_Table, only: Display_String, Get_String
     use Toggles, only: Emit, Switches, Toggle
     use Trace_M, only: Trace_begin, Trace_end
     use VGridsDatabase, only: VGrid_t
@@ -81,6 +82,7 @@ contains ! =====     Public Procedures     =============================
     integer :: ShapeInd ! Index of filter shape for signal/sideband/channel
     integer, pointer :: SigInd(:)   ! Index of signal for signal/channel pair
     type(signal_t), pointer :: Signal
+    character(len=maxSigLen) :: SignalText
     logical :: SkipIt   ! No lines or continuum for molecule/signal combination
     type(slabs_struct) :: Slabs
     real(rp) :: T       ! Temperature from temperature grid
@@ -135,7 +137,8 @@ contains ! =====     Public Procedures     =============================
       signal => signals(sigind(c))
 
       ! Create an empty PFA Datum
-      call getNameOfSignal ( signal, pfaDatum%signal, channel=channel(c) )
+      call getNameOfSignal ( signal, signalText, channel=channel(c) )
+      pfaDatum%signal = getStringIndexFromString ( trim(signalText) )
       pfaDatum%signalIndex = signal%index
       pfaDatum%spectroscopyFile = spectroscopyFile
       pfaDatum%theSignal = signal
@@ -147,7 +150,7 @@ contains ! =====     Public Procedures     =============================
       shapeInd = matchSignal ( filterShapes%signal, signal, &
         & sideband=signal%sideband, channel=channel(c) )
       if ( shapeInd == 0 ) then
-        call announce_error ( where, noFilter, pfaDatum%signal )
+        call announce_error ( where, noFilter, signalText )
         cycle
       end if
       pfaDatum%filterFile = filterShapes(shapeInd)%file
@@ -209,7 +212,7 @@ contains ! =====     Public Procedures     =============================
           call output ( 'Created PFA for ' )
           call display_string ( lit_indices(n) )
           call output ( ' / ' )
-          call output ( trim(pfaDatum%signal) )
+          call output ( trim(signalText) )
           call cpu_time ( t2 )
           call output ( t2-t1, before=' using ', after=' seconds', &
             & format='(f0.2)', advance='yes' )
@@ -334,7 +337,7 @@ contains ! =====     Public Procedures     =============================
         ! Check we have at least one line for specie.  Allocate lines if so.
         l = count(lineFlag)
         if ( l == 0 .and. all(myCatalog%continuum == 0) ) then
-          call announce_error ( where, noLines, pfaDatum%signal, lit_indices(n) )
+          call announce_error ( where, noLines, signalText, lit_indices(n) )
           skipIt = .true.
           return
         end if
@@ -362,6 +365,9 @@ contains ! =====     Public Procedures     =============================
 end module Create_PFAData_m
 
 ! $Log$
+! Revision 2.9  2005/05/02 23:02:18  vsnyder
+! Use string index of signal's text
+!
 ! Revision 2.8  2005/04/04 19:52:46  vsnyder
 ! Hoist some loop-invariant stuff
 !
