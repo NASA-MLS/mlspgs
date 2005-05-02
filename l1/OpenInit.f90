@@ -1,4 +1,4 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -136,6 +136,16 @@ CONTAINS
 !! Get the Level 1 configuration from the L1CF file
 
     CALL GetL1Config
+
+    IF (.NOT. THz) THEN
+       IF (L1Config%Calib%AntOffsetsScale <= 0.0) THEN
+          WRITE (L1BFileInfo%LogId, *) &
+           'Antenna offsets are DISABLED.'
+       ELSE
+          WRITE (L1BFileInfo%LogId, *) &
+           'Antenna offsets are ENABLED.'
+       ENDIF
+    ENDIF
 
 !! Check output versions from CF and PCF
 
@@ -994,6 +1004,9 @@ END MODULE OpenInit
 !=============================================================================
 
 ! $Log$
+! Revision 2.19  2005/05/02 16:05:44  perun
+! Write out setting for the UseAntOffsets
+!
 ! Revision 2.18  2004/11/10 15:42:35  perun
 ! Open and init default Chi2 table and baselineAC table; get initial counterMAF
 ! value from L1BOA file
