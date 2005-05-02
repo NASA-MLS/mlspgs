@@ -1,0 +1,40 @@
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
+
+! subroutine MessageWithFoobarArray ( Severity, ModuleNameIn, Message, Datum, &
+!   & Advance )
+!   integer, intent(in) :: Severity ! e.g. MLSMSG_Error
+!   character (len=*), intent(in) :: ModuleNameIn ! Name of module
+!   character (len=*), intent(in) :: Message ! Line of text
+!   type(whatever), intent(in) :: Datum(:)
+!   character (len=*), intent(in), optional :: Advance ! Do not advance
+!   !                                 if present and the first character is 'N'
+!   !                                 or 'n'
+
+    character(512) :: Line ! Should be long enough
+    integer :: I, L        ! Next positions in input, Line
+    integer :: N           ! Len_Trim(Message)
+    integer :: ND          ! Next element of Datum
+
+    n = len_trim(message)
+    nd = 1
+    i = 1
+    l = 1
+    do
+      line(l:l) = message(i:i)
+      if ( i >= n ) exit
+      if ( (message(i:i+1) == '%r' .or. message(i:i+1) == '%R') .and. &
+        & nd <= size(datum) ) then
+        i = i + 2
+        write ( line(l:), * ) datum(nd)
+        line(l:) = adjustl(line(l:))
+        l = len_trim(line) + 1
+        nd = nd + 1
+      else
+        i = i + 1
+        l = l + 1
+      end if
+    end do
+    call MLSMessage ( severity, moduleNameIn, line(:l), advance )
+
+! end subroutine MessageWithFoobarArray
