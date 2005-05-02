@@ -38,14 +38,14 @@ contains
       & F_AllPFA, F_AllQuantityTemplates, F_AllSignals, F_AllSpectra, &
       & F_AllVectors, F_AllVectorTemplates, F_AllVGrids, F_AntennaPatterns, &
       & F_Details, F_DACSFilterShapes, F_FilterShapes, F_ForwardModel, F_HGrid, &
-      & F_Lines, F_Mark, F_PfaData, F_PointingGrids, F_Quantity, F_Signals, &
-      & F_Spectroscopy, F_Stop, F_Template, F_Text, F_TGrid, F_Vector, F_VGrid, &
-      & S_Quantity, S_VectorTemplate
+      & F_Lines, F_Mark, F_PfaData, F_PfaFiles, F_PointingGrids, F_Quantity, &
+      & F_Signals,  F_Spectroscopy, F_Stop, F_Template, F_Text, F_TGrid, &
+      & F_Vector, F_VGrid, S_Quantity, S_VectorTemplate
     use Intrinsic, only: PHYQ_Dimensionless
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
     use MLSSignals_m, only: Dump, Signals
     use Output_M, only: Output
-    use PFADataBase_m, only: Dump, Dump_PFADataBase, PFAData
+    use PFADataBase_m, only: Dump, Dump_PFADataBase, Dump_PFAFileDataBase, PFAData
     use PointingGrid_m, only: Dump_Pointing_Grid_Database
     use QuantityTemplates, only: Dump, QuantityTemplate_T
     use SpectroscopyCatalog_m, only: Catalog, Dump, Dump_Lines_Database, Lines
@@ -107,7 +107,8 @@ contains
       case ( f_allForwardModels, f_allHGrids, f_allLines, f_allPFA, &
         & f_allQuantityTemplates, f_allSignals, f_allSpectra, f_allVectors, &
         & f_allVectorTemplates, f_allVGrids, f_antennaPatterns, &
-        & f_DACSfilterShapes, f_filterShapes, f_pointingGrids, f_stop )
+        & f_DACSfilterShapes, f_filterShapes, f_pfaFiles, f_pointingGrids, &
+        & f_stop )
         if ( get_boolean(son) ) then
           select case ( fieldIndex )
           case ( f_allForwardModels )
@@ -168,6 +169,8 @@ contains
             call dump_dacs_filter_database ( son )
           case ( f_filterShapes )
             call dump_filter_shapes_database ( son )
+          case ( f_pfaFiles )
+            call dump_PFAFileDatabase ( details )
           case ( f_pointingGrids )
             call dump_pointing_grid_database ( son )
           case ( f_stop )
@@ -420,6 +423,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.22  2005/05/02 23:11:37  vsnyder
+! Add dump of PFAFiles database
+!
 ! Revision 2.21  2005/04/01 20:48:28  vsnyder
 ! Add mark and text fields to dump command
 !
