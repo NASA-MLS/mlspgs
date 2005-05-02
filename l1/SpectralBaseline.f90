@@ -525,6 +525,10 @@ print *, 'Updating baselines...'
 
     ENDDO
 
+    DEALLOCATE (baselineAC)
+    DEALLOCATE (baselineACprec)
+    DEALLOCATE (baselineDC)
+
   END SUBROUTINE UpdateBaselines
 
 !=============================================================================
@@ -570,6 +574,9 @@ print *, 'Updating baselines...'
 END MODULE SpectralBaseline
 !=============================================================================
 ! $Log$
+! Revision 2.3  2005/05/02 16:09:11  perun
+! Deallocate baseline pointers
+!
 ! Revision 2.2  2004/12/01 17:11:34  perun
 ! Add calculating and outputting DACS DC baseline
 !
