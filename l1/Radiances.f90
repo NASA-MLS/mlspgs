@@ -1,4 +1,4 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -111,6 +111,7 @@ CONTAINS
   SUBROUTINE CalcNonLimbRad (Band, chan, RadNum, ReflecK, NonLimbRad)
 !=============================================================================
 
+    USE MLSL1Config, ONLY: L1Config
     USE BandTbls, ONLY: SideBandFrac, SpilloverLoss, RadiometerLoss, BandFreq
 
     INTEGER, INTENT (IN) :: Band, chan, RadNum
@@ -143,6 +144,10 @@ CONTAINS
     NonLimbRad = NonLimbRad + SideBandFrac(Band)%Upper(chan) * &
          (1.0 - Spillover_U) * &
          RadiometerLoss(RadNum)%Ohmic * RadiometerLoss(RadNum)%Radiance
+
+! Scale based in user input in the cf file:
+
+    NonLimbRad = NonLimbRad * L1Config%Calib%AntOffsetsScale
 
   END SUBROUTINE CalcNonLimbRad
 
@@ -478,6 +483,9 @@ END MODULE Radiances
 !=============================================================================
 
 ! $Log$
+! Revision 2.12  2005/05/02 16:06:38  perun
+! Use AntOffsetsScale for scaling NonLimbRad
+!
 ! Revision 2.11  2004/11/15 16:50:06  perun
 ! Adjust controlled target temperature per RFJ
 !
