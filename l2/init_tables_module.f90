@@ -184,8 +184,9 @@ module INIT_TABLES_MODULE
   integer, parameter :: P_ENDTIME                     = p_starttime + 1
   integer, parameter :: P_LEAPSECFILE                 = p_endtime + 1
   integer, parameter :: P_INSTRUMENT                  = p_leapsecfile + 1
+  integer, parameter :: P_PFAFile                     = p_instrument + 1
   ! In ChunkDivide section:
-  integer, parameter :: P_CRITICAL_BANDS              = p_instrument + 1
+  integer, parameter :: P_CRITICAL_BANDS              = p_PFAFile  + 1
   integer, parameter :: P_CRITICAL_SCANNING_MODULES   = p_critical_bands + 1
   integer, parameter :: P_HOME_GEOD_ANGLE             = p_critical_scanning_modules + 1
   integer, parameter :: P_HOME_MODULE                 = p_home_geod_angle + 1
@@ -287,7 +288,8 @@ contains ! =====     Public procedures     =============================
     parm_indices(p_endtime) =              add_ident ( 'EndTime' )
     parm_indices(p_instrument) =           add_ident ( 'Instrument' )
     parm_indices(p_leapsecfile) =          add_ident ( 'LeapSecFile' )
-                                           
+    parm_indices(p_PFAfile) =              add_ident ( 'PFAFile' )
+
     parm_indices(p_critical_bands) =       add_ident ( 'CriticalBands' )
     parm_indices(p_critical_scanning_modules) = &
                                            add_ident ( 'CriticalScanningModules' )
@@ -1098,6 +1100,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_mark, t+t_boolean, n+n_field_type, &
              begin, f+f_pfaData, s+s_makePFA, s+s_pfaData, s+s_readPFA, &
                     n+n_field_spec, &
+             begin, f+f_pfaFiles, t+t_boolean, n+n_field_type, &
              begin, f+f_pointingGrids, t+t_boolean, n+n_field_type, &
              begin, f+f_quantity, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
@@ -1272,14 +1275,15 @@ contains ! =====     Public procedures     =============================
              begin, p+p_allow_climatology_overloads, t+t_boolean, n+n_name_def,&
              begin, p+p_instrument, t+t_instrument, n+n_name_def,&
              begin, p+p_leapsecfile, t+t_string, n+n_name_def,&
+             begin, p+p_PFAfile, t+t_string, n+n_name_def,&
              begin, p+p_cycle, t+t_string, n+n_name_def, &
              begin, p+p_starttime, t+t_string, n+n_name_def, &
              begin, p+p_endtime, t+t_string, n+n_name_def, &
-                    s+s_binSelector, s+s_directWriteFile, s+s_dump, &
-                    s+s_empiricalGeometry, s+s_fGrid, s+s_forwardModel, &
-                    s+s_forwardModelGlobal, s+s_l1brad, s+s_l1boa, &
-                    s+s_l2parsf, s+s_makePFA, s+s_pfaData, s+s_readPFA, &
-                    s+s_tGrid, s+s_time, s+s_vGrid, s+s_writePFA, n+n_section, &
+             s+s_binSelector, s+s_directWriteFile, s+s_dump, &
+             s+s_empiricalGeometry, s+s_fGrid, s+s_forwardModel, &
+             s+s_forwardModelGlobal, s+s_l1brad, s+s_l1boa, &
+             s+s_l2parsf, s+s_makePFA, s+s_pfaData, s+s_readPFA, &
+             s+s_tGrid, s+s_time, s+s_vGrid, s+s_writePFA, n+n_section, &
       begin, z+z_readapriori, s+s_time, s+s_gridded, s+s_l2gp, &
              s+s_l2aux, s+s_snoop, n+n_section, &
       begin, z+z_mergegrids, s+s_time, s+s_merge, s+s_concatenate, s+s_delete, &
@@ -1331,6 +1335,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.399  2005/05/02 23:00:40  vsnyder
+! Add PFAFile parameter
+!
 ! Revision 2.398  2005/04/19 19:14:09  livesey
 ! Changed some section ordering issues related to pfa generation
 !
