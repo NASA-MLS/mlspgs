@@ -16,7 +16,7 @@ module Parse_Signal_M
 
 ! === (start of api) ===
 ! Expand_Signal_List ( int node, signal_t* theseSignals[], log* error )
-! Get_Individual_Signals ( char* inSignals[], char* outSignals[] )
+! Get_Individual_Signals ( char* outSignals[], int inSignals_ind[] char* inSignals_txt[] )
 ! Parse_Signal  ( char* Signal_String, int* Signal_Indices(:),
 !    [int Tree_Index], [int Sideband],[log* Channels(:)], [int OnlyCountEm] )
 ! === (end of api) ===
@@ -108,35 +108,45 @@ contains
   end subroutine Expand_signal_list
 
   ! -------------------------------------  Get_Individual_Signals  -----
-  subroutine Get_Individual_Signals ( InSignals, OutSignals )
-  ! Given InSignals, create OutSignals where each of OutSignals is a
-  ! signal denoted in InSignals, but describes exactly one radiometer,
-  ! band, switch, spectrometer, sideband and channel.  OutSignals is
-  ! allocated using Allocate_Test, so don't send in an undefined pointer!
-  ! There will be no duplicates in OutSignals.  Zero-size InSignals works.
+  subroutine Get_Individual_Signals ( OutSignals, InSignals_Ind, InSignals_Txt )
+  ! Given InSignals_Ind or InSignals_Txt, create OutSignals where each of
+  ! OutSignals is a signal denoted in InSignals_*, but describes exactly
+  ! one radiometer, band, switch, spectrometer, sideband and channel. 
+  ! OutSignals is allocated using Allocate_Test, so don't send in an
+  ! undefined pointer! There will be no duplicates in OutSignals. 
+  ! Zero-size InSignals_* works.
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use MLSSignals_m, only: GetSignalName, Signals
+    use MLSSignals_m, only: GetSignalName, MaxSigLen, Signals
     use Sort_m, only: Sort
+    use String_Table, only: Get_String
 
-    character(len=*), intent(in) :: InSignals(:)
     character(len=*), pointer :: OutSignals(:)
+    integer, intent(in), optional :: InSignals_Ind(:)
+    character(len=*), intent(in), optional :: InSignals_Txt(:)
 
     logical, pointer :: Channels(:)
-    integer :: I, J, K, L
+    integer :: I, J, K, L, N
     character(len=len(outSignals)), pointer :: MySignals(:)
+    character(len=maxSigLen) :: OneSignal
     integer :: Sideband
     integer, pointer :: SignalIndices(:)
 
     nullify ( channels, mySignals, signalIndices )
     ! Determine the size of mySignals
     l = 0
-    do i = 1, size(inSignals)
-      call parse_signal ( inSignals(i), signalIndices, sideband=sideband, &
+    if ( present(inSignals_ind) ) n = size(inSignals_ind)
+    if ( present(inSignals_txt) ) n = size(inSignals_txt)
+    do i = 1, n
+      if ( present(inSignals_ind) ) &
+        & call get_string ( inSignals_ind(i), oneSignal, strip=.true. )
+      if ( present(inSignals_txt) ) &
+        & oneSignal = inSignals_txt(i)
+      call parse_signal ( oneSignal, signalIndices, sideband=sideband, &
         & channels=channels )
       if ( .not. associated(signalIndices) ) call MLSMessage ( MLSMSG_Error, &
-        & moduleName, 'Unable to parse signal ' // trim(inSignals(i)) )
+        & moduleName, 'Unable to parse signal ' // trim(oneSignal) )
       if ( .not. associated(channels) ) then
         ! All channels are desired.  Assume channels available in all
         ! selected signals are the same.
@@ -150,13 +160,17 @@ contains
         if ( sideband == 0 .and. signals(signalIndices(j))%singleSideband == 0 ) &
           & l = l + k ! pick up both sidebands
       end do ! j = 1, size(signalIndices)
-    end do ! i = 1, size(inSignals)
+    end do ! i = 1, n
     ! Fill mySignals
     call allocate_test ( mySignals, l, 'mySignals', moduleName )
     if ( l /= 0 ) then
       l = 0
-      do i = 1, size(inSignals)
-        call parse_signal ( inSignals(i), signalIndices, sideband=sideband, &
+      do i = 1, n
+        if ( present(inSignals_ind) ) &
+          & call get_string ( inSignals_ind(i), oneSignal, strip=.true. )
+        if ( present(inSignals_txt) ) &
+          & oneSignal = inSignals_txt(i)
+        call parse_signal ( oneSignal, signalIndices, sideband=sideband, &
           & channels=channels )
         if ( .not. associated(channels) ) then
           ! All channels are desired.  Assume channels available in all
@@ -184,7 +198,7 @@ contains
             end if
           end do ! k = lbound(channels), ubound(channels)
         end do ! j = 1, size(signalIndices)
-      end do ! i = 1, size(inSignals)
+      end do ! i = 1, n
       ! Delete duplicate signals
       call sort ( mySignals, 1, l )
       k = 1
@@ -647,6 +661,9 @@ o:  do
 end module Parse_Signal_M
 
 ! $Log$
+! Revision 2.22  2005/05/02 22:58:24  vsnyder
+! Modify interface for Get_Individual_Signals
+!
 ! Revision 2.21  2005/03/24 01:38:36  vsnyder
 ! Spiff up an error message
 !
