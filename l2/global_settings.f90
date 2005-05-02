@@ -61,7 +61,7 @@ contains
       & L_TRUE, L_L2GP, L_L2DGG, L_L2FWM, &
       & P_ALLOW_CLIMATOLOGY_OVERLOADS, &
       & P_CYCLE, P_ENDTIME, P_INPUT_VERSION_STRING, P_INSTRUMENT, &
-      & P_LEAPSECFILE, P_OUTPUT_VERSION_STRING, P_STARTTIME, &
+      & P_LEAPSECFILE, P_OUTPUT_VERSION_STRING, P_PFAFILE, P_STARTTIME, &
       & P_VERSION_COMMENT, &
       & S_BINSELECTOR, S_DIRECTWRITEFILE, S_DUMP, S_EMPIRICALGEOMETRY, &
       & S_FGRID, S_FORWARDMODEL, S_ForwardModelGlobal, S_L1BOA, S_L1BRAD, &
@@ -89,8 +89,9 @@ contains
     use MLSSignals_m, only: INSTRUMENT
     use MoreTree, only: GET_FIELD_ID, GET_SPEC_ID
     use OUTPUT_M, only: BLANKS, OUTPUT
-    use PFAData_m, only: Get_PFAdata_from_l2cf, Make_PFAData, Read_PFAData, &
-      & Write_PFAData
+    use PFAData_m, only: Get_PFAdata_from_l2cf, Make_PFAData, &
+      & Read_PFAData, Write_PFAData
+    use PFADataBase_m, only: Process_PFA_File
     use PCFHdr, only: GlobalAttributes, FillTAI93Attribute
     use SDPToolkit, only: max_orbits, mls_utctotai
     use String_Table, only: Get_String
@@ -117,8 +118,9 @@ contains
     ! type (PCFData_T) :: l2pcf
 
     integer :: Details             ! How much info about l1b files to dump
+    integer :: F                   ! Index in PFAFiles -- unused function output
     logical :: GOT(2)
-    integer :: I                   ! Index of son of root
+    integer :: I, J                ! Index of son, grandson of root
     integer :: L1BFLAG
     real(r8) :: MINTIME, MAXTIME   ! Time Span in L1B file data
     integer :: NAME                ! Sub-rosa index of name of vGrid or hGrid
@@ -257,6 +259,11 @@ contains
             & '*** Leap Second File supplied global settings despite pcf ***', &
             & just_a_warning = .true.)
           end if
+        case ( p_PFAFile )
+          do j = 2, nsons(son)
+            f = process_PFA_File ( sub_rosa(subtree(j,son)), &
+              & source_ref(subtree(j,son)) )
+          end do
         ! case ( p_maxfailurespermachine )
         !  call expr ( subtree(2,son), units, value )
         !  parallel%maxfailurespermachine = value(1)
@@ -863,6 +870,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.95  2005/01/27 21:22:04  vsnyder
+! Different interface to ReadPFAData
+!
 ! Revision 2.94  2005/01/12 03:18:22  vsnyder
 ! Read and write PFAData in HDF5
 !
