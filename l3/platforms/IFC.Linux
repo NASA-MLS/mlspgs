@@ -33,6 +33,9 @@ srclib = $(CONFDIR)/srclib
 
 dir2 =
 
+# Use the libmlspack.a directory, blaslib, for .mod files
+blaslib = $(CONFDIR)/blas/$(MLSCONFG)
+
 # Set paths for finding source files (different from .o and .mod)
 
 vpath %.o ./
@@ -51,7 +54,7 @@ DUSTY = $(FOPTS)
 PATHS_PREFXD := $(shell ${REECHO} -d -prefixn=-I $(UNPREFXDPTHS)) 
 
 INC_PATHS = $(EXTRA_PATHS) $(PATHS_PREFXD) \
- -I$(PGSINC) -I$(srclib) -I$S -I$(libdir)
+ -I$(PGSINC) -I$(srclib) -I$S -I$(libdir) -I $(blaslib)
 
 # Define some suffix rules
 
@@ -73,3 +76,6 @@ INC_PATHS = $(EXTRA_PATHS) $(PATHS_PREFXD) \
 l_specials = 
 
 # $Log$
+# Revision 1.1  2003/04/01 23:20:53  pwagner
+# First commit
+#
