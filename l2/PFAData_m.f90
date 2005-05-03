@@ -34,7 +34,7 @@ contains ! =====     Public Procedures     =============================
       & F_VGrid, Field_First, Field_Last, L_Zeta
     use Intrinsic, only: PHYQ_Dimensionless, PHYQ_Velocity
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use MLSSignals_m, only: Signals
+    use MLSSignals_m, only: MaxSigLen, Signals
     use MoreTree, only: Get_Field_ID
     use Parse_Signal_m, only: Parse_Signal
     use PFADataBase_m, only: AddPFADatumToDatabase, PFAData, PFAData_T, RK
@@ -72,6 +72,7 @@ contains ! =====     Public Procedures     =============================
     integer :: NArrays, NPress, NTemps
     integer :: Sideband
     integer, pointer :: SignalIndices(:)
+    character(len=maxSigLen) :: SignalText
     integer :: SignalTree       ! Where in tree is signal=...
     integer :: Son, Units(2)
     type(pfaData_t) :: PFADatum
@@ -99,15 +100,16 @@ contains ! =====     Public Procedures     =============================
         pfaDatum%molecule = decoration(subtree(2,son))
       case ( f_signal )
         signalTree = subtree(2,son)
-        call get_string ( sub_rosa(signalTree), pfaDatum%signal, strip=.true. )
-        call parse_signal ( pfaDatum%signal, signalIndices, &
+        pfaDatum%signal = sub_rosa(signalTree)
+        call get_string ( pfaDatum%signal, SignalText, strip=.true. )
+        call parse_signal ( signalText, signalIndices, &
           & tree_index=son, sideband=sideband, channels=channels )
         if ( .not. associated(signalIndices) ) & ! A parse error occurred
-          & call announce_error ( subtree(2,son), signalParse, pfaDatum%signal )
+          & call announce_error ( subtree(2,son), signalParse, signalText )
         if ( size(signalIndices) > 1 ) &
-          & call announce_error ( subtree(2,son), tooManySignals, pfaDatum%signal )
+          & call announce_error ( subtree(2,son), tooManySignals, signalText )
         if ( size(channels) > 1 ) &
-          & call announce_error ( subtree(2,son), tooManyChannels, pfaDatum%signal )
+          & call announce_error ( subtree(2,son), tooManyChannels, signalText )
         pfaDatum%signalIndex = signalIndices(1)
         pfaDatum%theSignal = signals(pfaDatum%signalIndex)
         pfaDatum%theSignal%channels => channels
@@ -439,13 +441,12 @@ contains ! =====     Public Procedures     =============================
 
     use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
     use Init_Tables_Module, only: F_File, F_Molecules, F_Signals
-    use PFADataBase_m, only: MolNameLen, PFAData, Read_PFADatabase
+    use PFADataBase_m, only: PFAData, Read_PFADatabase
     use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
-    use MLSSignals_m, only: MaxSigLen
     use MLSStrings, only: Capitalize
-    use MoreTree, only: FillArray, Get_Field_ID
+    use MoreTree, only: FillSubrosaArray, Get_Field_ID
     use String_Table, only: Get_String
-    use Tree, only: Decorate, Node_Id, NSons, Sub_Rosa, Subtree
+    use Tree, only: Decorate, Node_Id, NSons, Source_Ref, Sub_Rosa, Subtree
     use Tree_Types, only: N_String
     use VGridsDatabase, only: VGrid_t
 
@@ -454,33 +455,35 @@ contains ! =====     Public Procedures     =============================
     type(vGrid_t), pointer :: VGrids(:) ! database of vgrids
     integer, intent(out) :: Error ! 0 => OK
 
-    character(255) :: FileName, FileType ! HDF5(default), Unformatted
+    integer :: FileName, FileType ! HDF5 is all we can do
+    character(len=12) :: FileTypeText
     integer :: I, J
-    character(molNameLen), pointer :: Molecules(:)
-    character(maxSigLen), pointer :: Signals(:)
+    integer, pointer :: Molecules(:)
+    integer, pointer :: Signals(:)
     integer :: Son
 
     integer, parameter :: BadFileType = 1 ! Neither HDF5 nor Unformatted
 
     error = 0
+    fileType = 0
     nullify ( molecules, signals )
     do i = 2, nsons(root)
       son = subtree(i,root)
       select case ( get_field_id(son) )
       case ( f_file )
         j = subtree(2,son)
-        fileType = 'HDF5'
         if ( node_id(j) /= n_string ) then ! must be n_*colon
-          call get_string ( sub_rosa(subtree(2,j)), fileType, strip=.true. )
-          fileType = capitalize(fileType)
-          if ( fileType /= 'HDF5' ) call announce_error ( subtree(2,j), badFileType )
+          fileType = sub_rosa(subtree(2,j))
+          call get_string ( fileType, fileTypeText )
+          fileTypeText = capitalize(fileTypeText)
+          if ( fileTypeText /= 'HDF5' ) call announce_error ( subtree(2,j), badFileType )
           j = subtree(1,j)
         end if
-        call get_string ( sub_rosa(j), fileName, strip=.true. )
+        fileName = sub_rosa(j)
       case ( f_molecules )
-        error = max(error,fillArray ( son, molecules, 'Molecules' ))
+        error = max(error,fillSubrosaArray ( son, molecules, 'Molecules' ))
       case ( f_signals )
-        error = max(error,fillArray ( son, signals, 'Signals' ))
+        error = max(error,fillSubrosaArray ( son, signals, 'Signals' ))
       end select
     end do
     if ( .not. associated(molecules) ) &
@@ -491,7 +494,8 @@ contains ! =====     Public Procedures     =============================
       call MLSMessage ( MLSMSG_Warning, moduleName, &
         & 'Error trying to read PFAData' )
     else
-      call read_PFADatabase ( fileName, fileType, molecules, signals, vGrids )
+      call read_PFADatabase ( fileName, fileType, molecules, signals, vGrids, &
+        & source_ref(root) )
       if ( name /= 0 ) then
         j = size(PFAData)
         call decorate ( root, j )
@@ -612,6 +616,9 @@ contains ! =====     Public Procedures     =============================
 end module PFAData_m
 
 ! $Log$
+! Revision 2.19  2005/05/03 15:53:39  pwagner
+! Consistent with changes to MLSSignals
+!
 ! Revision 2.18  2005/03/25 21:02:48  vsnyder
 ! Add duplicate molecule detector to MakePFA
 !
