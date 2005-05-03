@@ -58,7 +58,7 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
      & "Warning", &
      & "Error  ", &
      & "Crash  " &
-     / )
+     /)
 
   ! So that we may limit the number of times warnings printed, messagewise
   character(len=*), parameter :: WARNINGSSUPPRESSED = '(No more warnings of this)'
@@ -426,6 +426,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.20  2005/05/03 15:56:37  pwagner
+! NAG doesnt like space between / and ) in array constructor
+!
 ! Revision 2.19  2005/05/02 22:56:32  vsnyder
 ! Make MLSMessage generic
 !
