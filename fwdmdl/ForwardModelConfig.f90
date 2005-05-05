@@ -636,10 +636,11 @@ contains
 
     do b = 1, size(fwdModelConf%beta_group)
       do s = 1, 2
-        if ( associated(fwdModelConf%beta_group(b)%PFA(s)%data) ) &
-          & deallocate ( fwdModelConf%beta_group(b)%PFA(s)%data, stat=ier )
-        if ( ier/= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-          & MLSMSG_Deallocate // 'Beta_group(b)%PFA(s)%data' )
+        if ( associated(fwdModelConf%beta_group(b)%PFA(s)%data) ) then
+          deallocate ( fwdModelConf%beta_group(b)%PFA(s)%data, stat=ier )
+          if ( ier/= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+            & MLSMSG_Deallocate // 'Beta_group(b)%PFA(s)%data' )
+        end if
         ! These are probably deallocated somewhere else, but this can't hurt
         call deallocate_test ( fwdModelConf%beta_group(b)%PFA(s)%molecules, &
           & 'fwdModelConf%beta_group(b)%PFA(s)%molecules', moduleName )
@@ -1216,6 +1217,12 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.70  2005/05/05 01:14:22  vsnyder
+! Make sure fields of PFA_t are nullified.
+! Don't try to deallocate channels once for each sideband -- there's only one
+! Don't try to deallocate fwdModelConf%beta_group(b)%PFA(s)%data if it's not
+! associated.
+!
 ! Revision 2.69  2005/05/02 23:04:03  vsnyder
 ! Stuff for PFA Cacheing
 !
