@@ -59,16 +59,18 @@ contains
             if ( associated ( f ) ) & ! Have an isotope ratio
               & fwdModelConf%beta_group(b)%lbl(s)%ratio(m) = f%values(1,1)
           end do ! m
-          ! Now PFA molecules' ratios
-          do m = 1, size(fwdModelConf%beta_group(b)%pfa(s)%molecules)
-            f => getQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-              & quantityType=l_isotopeRatio,                             &
-              & molecule=fwdModelConf%beta_group(b)%pfa(s)%molecules(m), &
-              & noError=.TRUE., config=fwdModelConf )
-            fwdModelConf%beta_group(b)%pfa(s)%ratio(m)     = 1.0
-            if ( associated ( f ) ) & ! Have an isotope ratio
-              & fwdModelConf%beta_group(b)%pfa(s)%ratio(m) = f%values(1,1)
-          end do ! m
+          if ( associated(fwdModelConf%beta_group(b)%pfa(s)%molecules) ) then
+            ! Now PFA molecules' ratios
+            do m = 1, size(fwdModelConf%beta_group(b)%pfa(s)%molecules)
+              f => getQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+                & quantityType=l_isotopeRatio,                             &
+                & molecule=fwdModelConf%beta_group(b)%pfa(s)%molecules(m), &
+                & noError=.TRUE., config=fwdModelConf )
+              fwdModelConf%beta_group(b)%pfa(s)%ratio(m)     = 1.0
+              if ( associated ( f ) ) & ! Have an isotope ratio
+                & fwdModelConf%beta_group(b)%pfa(s)%ratio(m) = f%values(1,1)
+            end do ! m
+          end if
         end do ! s
 !     else ! Not a molecule group, but this is handled in ForwardModelSupport
 !       fwdModelConf%beta_group(b)%lbl_ratio(1)     = 1.0
@@ -99,6 +101,9 @@ contains
 end module Get_Species_Data_m
 
 ! $Log$
+! Revision 2.24  2005/03/15 19:55:51  vsnyder
+! Spiff up a dump
+!
 ! Revision 2.23  2005/02/16 23:16:49  vsnyder
 ! Revise data structures for split-sideband PFA
 !
