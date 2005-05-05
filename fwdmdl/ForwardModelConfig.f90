@@ -416,6 +416,14 @@ contains
             end do ! p (molecules)
           end do ! b
         end do ! sb
+      else ! Make sure pointer fields of PFA are nullified
+        do sx = 1, 2
+          do b = 1, size(fwdModelConf%beta_group)
+            nullify ( fwdModelConf%beta_group(b)%pfa(sx)%data, &
+                      fwdModelConf%beta_group(b)%pfa(sx)%molecules, &
+                      fwdModelConf%beta_group(b)%pfa(sx)%ratio )
+          end do
+        end do
       end if ! associated(pfaData)
 
     end subroutine PFA_Stuff
@@ -618,21 +626,27 @@ contains
 
     integer :: C, B, Ier, S
 
-    do s = 1, 2
-      if ( associated(fwdModelConf%channels) ) then
-        deallocate ( fwdModelConf%channels, stat = ier )
-        if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & MLSMSG_DeAllocate//'fwdModelConf%channels' )
-    ! else
-    !   It was already deallocated at the end of FullForwardModel
-      end if
+    if ( associated(fwdModelConf%channels) ) then
+      deallocate ( fwdModelConf%channels, stat = ier )
+      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_DeAllocate//'fwdModelConf%channels' )
+  ! else
+  !   It was already deallocated at the end of FullForwardModel
+    end if
 
-      do b = 1, size(fwdModelConf%beta_group)
-        deallocate ( fwdModelConf%beta_group(b)%PFA(s)%data, stat=ier )
+    do b = 1, size(fwdModelConf%beta_group)
+      do s = 1, 2
+        if ( associated(fwdModelConf%beta_group(b)%PFA(s)%data) ) &
+          & deallocate ( fwdModelConf%beta_group(b)%PFA(s)%data, stat=ier )
         if ( ier/= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-          & MLSMSG_Deallocate // 'Beta_group(b)%PFA(s)%indices' )
-      end do ! b
-    end do ! s
+          & MLSMSG_Deallocate // 'Beta_group(b)%PFA(s)%data' )
+        ! These are probably deallocated somewhere else, but this can't hurt
+        call deallocate_test ( fwdModelConf%beta_group(b)%PFA(s)%molecules, &
+          & 'fwdModelConf%beta_group(b)%PFA(s)%molecules', moduleName )
+        call deallocate_test ( fwdModelConf%beta_group(b)%PFA(s)%ratio, &
+          & 'fwdModelConf%beta_group(b)%PFA(s)%ratio', moduleName )
+      end do ! s
+    end do ! b
 
     call deallocate_test ( fwdModelConf%DACSStaging, &
       & 'fwdModelConf%DACSStaging', moduleName )
@@ -1202,6 +1216,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.69  2005/05/02 23:04:03  vsnyder
+! Stuff for PFA Cacheing
+!
 ! Revision 2.68  2005/03/28 20:27:51  vsnyder
 ! Lots of PFA stuff
 !
