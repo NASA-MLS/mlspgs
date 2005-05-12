@@ -1,5 +1,5 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 module DUMP_0
 
@@ -8,14 +8,21 @@ module DUMP_0
 ! Behavior depends on optional parameters
 ! Actual output device determined by output_m module
 
+  use ieee_arithmetic, only: ieee_is_finite
+  use MLSCommon, only : FilterValues, IsFinite
   use MLSSets, only: FindAll
   use MLSStringLists, only: GetStringElement, NumStringElements
   use OUTPUT_M, only: BLANKS, OUTPUT
 
   implicit NONE
   private
-  public :: AfterSub, DUMP, DUMP_NAME_V_PAIRS, DUMPSIZE
+  public :: AfterSub, DIFF, DUMP, DUMP_NAME_V_PAIRS, DUMPSIZE
 
+  interface DIFF        ! dump diffs n-d arrays of numeric type
+    module procedure DIFF_1D_DOUBLE, DIFF_1D_REAL
+    module procedure DIFF_2D_DOUBLE, DIFF_2D_REAL
+    module procedure DIFF_3D_DOUBLE, DIFF_3D_REAL
+  end interface
   interface DUMP        ! dump n-d arrays of homogeneous type
     module procedure DUMP_1D_CHAR, DUMP_1D_COMPLEX, DUMP_1D_DCOMPLEX
     module procedure DUMP_1D_DOUBLE, DUMP_1D_INTEGER
@@ -60,6 +67,132 @@ module DUMP_0
     & '(1x,"(",1pg13.6,",",1pg13.6,")")'
 
 contains
+
+ ! ---------------------------------------------  DIFF_1D_DOUBLE  -----
+  subroutine DIFF_1D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    double precision, intent(in) :: ARRAY1(:)
+    character(len=*), intent(in), optional :: NAME1
+    double precision, intent(in) :: ARRAY2(:)
+    character(len=*), intent(in), optional :: NAME2
+    double precision, intent(in), optional :: FILLVALUE
+    logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, intent(in), optional :: STATS
+    logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND ! Low bound for Array
+
+    double precision, dimension(size(array1)) :: filtered1
+    double precision, dimension(size(array2)) :: filtered2
+    include "diff.f9h"
+  end subroutine DIFF_1D_DOUBLE
+
+ ! ---------------------------------------------  DIFF_1D_REAL  -----
+  subroutine DIFF_1D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    real, intent(in) :: ARRAY1(:)
+    character(len=*), intent(in), optional :: NAME1
+    real, intent(in) :: ARRAY2(:)
+    character(len=*), intent(in), optional :: NAME2
+    real, intent(in), optional :: FILLVALUE
+    logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, intent(in), optional :: STATS
+    logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND ! Low bound for Array
+
+    real, dimension(size(array1)) :: filtered1
+    real, dimension(size(array2)) :: filtered2
+    include "diff.f9h"
+  end subroutine DIFF_1D_REAL
+
+  ! ---------------------------------------------  DIFF_2D_DOUBLE  -----
+  subroutine DIFF_2D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
+      & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    double precision, intent(in) :: ARRAY1(:,:)
+    character(len=*), intent(in), optional :: NAME1
+    double precision, intent(in) :: ARRAY2(:,:)
+    character(len=*), intent(in), optional :: NAME2
+    double precision, intent(in), optional :: FILLVALUE
+    logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, optional, intent(in) :: STATS
+    logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND
+    !
+    double precision, dimension(size(array1,1), size(array1,2)) :: filtered1
+    double precision, dimension(size(array2,1), size(array2,2)) :: filtered2
+    include "diff.f9h"
+  end subroutine DIFF_2D_DOUBLE
+
+  ! ---------------------------------------------  DIFF_2D_REAL  -----
+  subroutine DIFF_2D_REAL ( ARRAY1, NAME1, ARRAY2, Name2, &
+      & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    real, intent(in) :: ARRAY1(:,:)
+    character(len=*), intent(in), optional :: NAME1
+    real, intent(in) :: ARRAY2(:,:)
+    character(len=*), intent(in), optional :: NAME2
+    real, intent(in), optional :: FILLVALUE
+    logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, optional, intent(in) :: STATS
+    logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND
+    !
+    real, dimension(size(array1,1), size(array1,2)) :: filtered1
+    real, dimension(size(array2,1), size(array2,2)) :: filtered2
+    include "diff.f9h"
+  end subroutine DIFF_2D_REAL
+
+  ! ---------------------------------------------  DIFF_3D_DOUBLE  -----
+  subroutine DIFF_3D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    double precision, intent(in) :: ARRAY1(:,:,:)
+    character(len=*), intent(in), optional :: NAME1
+    double precision, intent(in) :: ARRAY2(:,:,:)
+    character(len=*), intent(in), optional :: NAME2
+    double precision, intent(in), optional :: FILLVALUE
+    logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, optional, intent(in) :: STATS
+    logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND
+
+    double precision, dimension(size(array1,1), size(array1,2), size(array1,3)) :: filtered1
+    double precision, dimension(size(array2,1), size(array2,2), size(array2,3)) :: filtered2
+    include "diff.f9h"
+  end subroutine DIFF_3D_DOUBLE
+
+  ! ---------------------------------------------  DIFF_3D_REAL  -----
+  subroutine DIFF_3D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    real, intent(in) :: ARRAY1(:,:,:)
+    character(len=*), intent(in), optional :: NAME1
+    real, intent(in) :: ARRAY2(:,:,:)
+    character(len=*), intent(in), optional :: NAME2
+    real, intent(in), optional :: FILLVALUE
+    logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, optional, intent(in) :: STATS
+    logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND
+
+    real, dimension(size(array1,1), size(array1,2), size(array1,3)) :: filtered1
+    real, dimension(size(array2,1), size(array2,2), size(array2,3)) :: filtered2
+    include "diff.f9h"
+  end subroutine DIFF_3D_REAL
 
   ! -----------------------------------------------  DUMP_1D_CHAR  -----
   subroutine DUMP_1D_CHAR ( ARRAY, NAME, FILLVALUE, CLEAN, TRIM )
@@ -620,12 +753,18 @@ contains
   end subroutine DUMP_2D_DCOMPLEX
 
   ! ---------------------------------------------  DUMP_2D_DOUBLE  -----
-  subroutine DUMP_2D_DOUBLE ( ARRAY, NAME, FILLVALUE, CLEAN, FORMAT )
+  subroutine DUMP_2D_DOUBLE ( ARRAY, NAME, &
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
     double precision, intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
     double precision, intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
     character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, optional, intent(in) :: STATS
+    logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND
 
     logical :: myClean
     integer :: I, J, K
@@ -638,6 +777,7 @@ contains
 
     myFillValue = 0.0d0
     if ( present(FillValue) ) myFillValue = FillValue
+    include 'dumpstats.f9h'
 
     myFormat = MyFormatDefault
     if ( present(format) ) myFormat = format
@@ -796,15 +936,17 @@ contains
 
   ! -----------------------------------------------  DUMP_2D_REAL  -----
   subroutine DUMP_2D_REAL ( ARRAY, NAME, &
-    & FILLVALUE, CLEAN, FORMAT, WHOLEARRAY, STATS, RMS )
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
     real, intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
     real, intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
     character(len=*), intent(in), optional :: FORMAT
     logical, intent(in), optional :: WHOLEARRAY
     logical, optional, intent(in) :: STATS
     logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND
 
     logical :: myClean
     integer :: I, J, K
@@ -950,15 +1092,17 @@ contains
 
   ! ---------------------------------------------  DUMP_3D_DOUBLE  -----
   subroutine DUMP_3D_DOUBLE ( ARRAY, NAME, &
-    & FILLVALUE, CLEAN, FORMAT, WHOLEARRAY, STATS, RMS )
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
     double precision, intent(in) :: ARRAY(:,:,:)
     character(len=*), intent(in), optional :: NAME
     double precision, intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
     character(len=*), intent(in), optional :: FORMAT
     logical, intent(in), optional :: WHOLEARRAY
     logical, optional, intent(in) :: STATS
     logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND
 
     logical :: myClean
     integer :: I, J, K, L
@@ -1093,15 +1237,18 @@ contains
 
   ! ---------------------------------------------  DUMP_3D_REAL  -----
   subroutine DUMP_3D_REAL ( ARRAY, NAME, &
-    & FILLVALUE, CLEAN, FORMAT, WHOLEARRAY, STATS, RMS )
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
     real, intent(in) :: ARRAY(:,:,:)
     character(len=*), intent(in), optional :: NAME
     real, intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
     character(len=*), intent(in), optional :: FORMAT
     logical, intent(in), optional :: WHOLEARRAY
     logical, optional, intent(in) :: STATS
     logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND
+
     logical :: myClean
     integer :: I, J, K, L
     integer :: NumZeroRows
@@ -1484,6 +1631,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.44  2005/05/12 20:43:54  pwagner
+! Added diff routines
+!
 ! Revision 2.43  2004/12/14 21:31:59  pwagner
 ! Optional trim arg added to multi-dim char dumps
 !
