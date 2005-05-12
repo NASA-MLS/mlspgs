@@ -1,5 +1,5 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 ! How to handle dumping stats in every module procedure of dump_0
 ! where it makes sense to dump stats
@@ -40,16 +40,23 @@
     endif
     if ( myRMS ) then
       if ( present(name) ) call output(trim(name) // ' rms ', advance='no')
-      call output(sqrt(sum(array*array)/(size(array)+0.)), advance='no')
-      call output('   mean ', advance='no')
-      call output(sum(array)/(size(array)+0.), advance='no')
-      call output('   max ', advance='no')
-      call output(maxval(array), advance='no')
-      call output('   min ', advance='no')
-      call output(minval(array), advance='yes')
+      if ( .not. all(isfinite(array)) ) then
+        call output('   (NaNs found in array--skipped) ', advance='yes')
+      else
+        call output(sqrt(sum(array*array)/(size(array)+0.)), advance='no')
+        call output('   mean ', advance='no')
+        call output(sum(array)/(size(array)+0.), advance='no')
+        call output('   max ', advance='no')
+        call output(maxval(array), advance='no')
+        call output('   min ', advance='no')
+        call output(minval(array), advance='yes')
+      endif
     endif
     if ( .not. myWholeArray ) return
 ! $Log$
+! Revision 2.4  2005/05/12 20:42:45  pwagner
+! Check  for NaNs before computing stats
+!
 ! Revision 2.3  2004/07/21 19:57:21  pwagner
 ! New rms, wholeArray options to some dumps
 !
