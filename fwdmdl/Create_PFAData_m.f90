@@ -138,6 +138,7 @@ contains ! =====     Public Procedures     =============================
 
       ! Create an empty PFA Datum
       call getNameOfSignal ( signal, signalText, channel=channel(c) )
+      pfaDatum%channel = channel(c)
       pfaDatum%signal = getStringIndexFromString ( trim(signalText) )
       pfaDatum%signalIndex = signal%index
       pfaDatum%spectroscopyFile = spectroscopyFile
@@ -365,6 +366,10 @@ contains ! =====     Public Procedures     =============================
 end module Create_PFAData_m
 
 ! $Log$
+! Revision 2.10  2005/05/12 20:49:28  livesey
+! Bug fix (hopefully), fill in channel information in PFADatum on
+! creation.
+!
 ! Revision 2.9  2005/05/02 23:02:18  vsnyder
 ! Use string index of signal's text
 !
