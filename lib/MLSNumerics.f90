@@ -1,14 +1,15 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 !=============================================================================
 module MLSNumerics              ! Some low level numerical stuff
   !=============================================================================
 
-  use Allocate_Deallocate, only : Allocate_test, Deallocate_test
+  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use DUMP_0, only : DUMP
   use MatrixModule_0, only: CreateBlock, M_Absent, MatrixElement_T, Sparsify
-  use MLSCommon, only : DEFAULTUNDEFINEDVALUE, R4, R8, Rm
+  use MLSCommon, only : DEFAULTUNDEFINEDVALUE, R4, R8, Rm, &
+    & filterValues
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSStrings, only: Capitalize
 
@@ -61,6 +62,8 @@ module MLSNumerics              ! Some low level numerical stuff
 
 !         Functions, operations, routines
 ! EssentiallyEqual             Returns true if two real arguments 'close enough'
+!                                (See comments below for interpretation
+!                                 of array versions)
 ! Hunt                         Finds index of item(s) in list closest to prey
 ! HuntArray                    Hunts for multiple items
 ! HuntScalar                   Hunts for just one
@@ -72,6 +75,9 @@ module MLSNumerics              ! Some low level numerical stuff
   
   interface EssentiallyEqual
     module procedure EssentiallyEqual_r4, EssentiallyEqual_r8
+    module procedure EssentiallyEqual_r4_1d, EssentiallyEqual_r8_1d
+    module procedure EssentiallyEqual_r4_2d, EssentiallyEqual_r8_2d
+    module procedure EssentiallyEqual_r4_3d, EssentiallyEqual_r8_3d
   end interface
 
   interface Hunt
@@ -119,6 +125,155 @@ contains
     EssentiallyEqual_r8 = &
       & a >= nearest ( b, -1.0_r8 ) .and. a <= nearest ( b, 1.0_r8 )
   end function EssentiallyEqual_r8
+
+  function EssentiallyEqual_r4_1d ( A, B, FillValue, Precision ) &
+    & result(equal)
+  ! This function is slightly different:
+  ! A scalar logical testing that every element of two arrays are equal
+  ! You may filter out values in either array equal to the FillValue
+  ! or for which the corresponding Precision array is negative
+  ! or where either element is not finite
+  ! Warn if an element of one array is finite while the other is not
+    real(r4), dimension(:), intent(in)             :: A
+    real(r4), dimension(:), intent(in)             :: B
+    real(r4), intent(in)                           :: fillValue
+    real(r4), dimension(:), optional, intent(in)   :: precision
+    logical                                        :: equal
+    real(r4), dimension(size(A))                   :: atab
+    real(r4), dimension(size(B))                   :: btab
+    logical                                        :: warn
+    equal = .false.
+    call filterValues(A, ATAB, B, BTAB, warn, fillValue, precision)
+    if ( .not. warn ) equal = all( &
+      & a >= nearest ( b, -1.0_r4 ) .and. a <= nearest ( b, 1.0_r4 ) &
+      & )
+  end function EssentiallyEqual_r4_1d
+
+  function EssentiallyEqual_r8_1d ( A, B, FillValue, Precision ) &
+    & result(equal)
+  ! This function is slightly different:
+  ! A scalar logical testing that every element of two arrays are equal
+  ! You may filter out values in either array equal to the FillValue
+  ! or for which the corresponding Precision array is negative
+  ! or where either element is not finite
+    real(r8), dimension(:), intent(in)             :: A
+    real(r8), dimension(:), intent(in)             :: B
+    real(r8), intent(in)                           :: fillValue
+    real(r8), dimension(:), optional, intent(in)   :: precision
+    logical                                        :: equal
+    real(r8), dimension(size(A))                   :: atab
+    real(r8), dimension(size(B))                   :: btab
+    logical                                        :: warn
+    equal = .false.
+    call filterValues(A, ATAB, B, BTAB, warn, fillValue, precision)
+    if ( .not. warn ) equal = all( &
+      & a >= nearest ( b, -1.0_r8 ) .and. a <= nearest ( b, 1.0_r8 ) &
+      & )
+  end function EssentiallyEqual_r8_1d
+
+  function EssentiallyEqual_r4_2d ( A, B, FillValue, Precision ) &
+    & result(equal)
+  ! This function is slightly different:
+  ! A scalar logical testing that every element of two arrays are equal
+  ! You may filter out values in either array equal to the FillValue
+  ! or for which the corresponding Precision array is negative
+  ! or where either element is not finite
+    real(r4), dimension(:,:), intent(in)             :: A
+    real(r4), dimension(:,:), intent(in)             :: B
+    real(r4), intent(in)                             :: fillValue
+    real(r4), dimension(:,:), optional, intent(in)   :: precision
+    logical                                        :: equal
+    ! Internal variables
+    integer, dimension(2)                          :: shp
+    shp =shape(a)
+    if ( present(Precision) ) then
+      equal = EssentiallyEqual_r4_1d(reshape(a, (/shp(1)*shp(2)/)), &
+        & reshape(b, (/shp(1)*shp(2)/)), &
+        & FillValue, reshape(Precision, (/shp(1)*shp(2)/)) )
+    else
+      equal = EssentiallyEqual_r4_1d(reshape(a, (/shp(1)*shp(2)/)), &
+        & reshape(b, (/shp(1)*shp(2)/)), FillValue )
+    endif
+      
+  end function EssentiallyEqual_r4_2d
+
+  function EssentiallyEqual_r8_2d ( A, B, FillValue, Precision ) &
+    & result(equal)
+  ! This function is slightly different:
+  ! A scalar logical testing that every element of two arrays are equal
+  ! You may filter out values in either array equal to the FillValue
+  ! or for which the corresponding Precision array is negative
+  ! or where either element is not finite
+    real(r8), dimension(:,:), intent(in)             :: A
+    real(r8), dimension(:,:), intent(in)             :: B
+    real(r8), intent(in)                             :: fillValue
+    real(r8), dimension(:,:), optional, intent(in)   :: precision
+    logical                                        :: equal
+    ! Internal variables
+    integer, dimension(2)                          :: shp
+    shp =shape(a)
+    if ( present(Precision) ) then
+      equal = EssentiallyEqual_r8_1d(reshape(a, (/shp(1)*shp(2)/)), &
+        & reshape(b, (/shp(1)*shp(2)/)), &
+        & FillValue, reshape(Precision, (/shp(1)*shp(2)/)) )
+    else
+      equal = EssentiallyEqual_r8_1d(reshape(a, (/shp(1)*shp(2)/)), &
+        & reshape(b, (/shp(1)*shp(2)/)), FillValue )
+    endif
+      
+  end function EssentiallyEqual_r8_2d
+
+  function EssentiallyEqual_r4_3d ( A, B, FillValue, Precision ) &
+    & result(equal)
+  ! This function is slightly different:
+  ! A scalar logical testing that every element of two arrays are equal
+  ! You may filter out values in either array equal to the FillValue
+  ! or for which the corresponding Precision array is negative
+  ! or where either element is not finite
+    real(r4), dimension(:,:,:), intent(in)             :: A
+    real(r4), dimension(:,:,:), intent(in)             :: B
+    real(r4), intent(in)                               :: fillValue
+    real(r4), dimension(:,:,:), optional, intent(in)   :: precision
+    logical                                        :: equal
+    ! Internal variables
+    integer, dimension(3)                          :: shp
+    shp =shape(a)
+    if ( present(Precision) ) then
+      equal = EssentiallyEqual_r4_1d(reshape(a, (/shp(1)*shp(2)*shp(3)/)), &
+        & reshape(b, (/shp(1)*shp(2)*shp(3)/)), &
+        & FillValue, reshape(Precision, (/shp(1)*shp(2)*shp(3)/)) )
+    else
+      equal = EssentiallyEqual_r4_1d(reshape(a, (/shp(1)*shp(2)*shp(3)/)), &
+        & reshape(b, (/shp(1)*shp(2)*shp(3)/)), FillValue )
+    endif
+      
+  end function EssentiallyEqual_r4_3d
+
+  function EssentiallyEqual_r8_3d ( A, B, FillValue, Precision ) &
+    & result(equal)
+  ! This function is slightly different:
+  ! A scalar logical testing that every element of two arrays are equal
+  ! You may filter out values in either array equal to the FillValue
+  ! or for which the corresponding Precision array is negative
+  ! or where either element is not finite
+    real(r8), dimension(:,:,:), intent(in)             :: A
+    real(r8), dimension(:,:,:), intent(in)             :: B
+    real(r8), intent(in)                               :: fillValue
+    real(r8), dimension(:,:,:), optional, intent(in)   :: precision
+    logical                                        :: equal
+    ! Internal variables
+    integer, dimension(3)                          :: shp
+    shp =shape(a)
+    if ( present(Precision) ) then
+      equal = EssentiallyEqual_r8_1d(reshape(a, (/shp(1)*shp(2)*shp(3)/)), &
+        & reshape(b, (/shp(1)*shp(2)*shp(3)/)), &
+        & FillValue, reshape(Precision, (/shp(1)*shp(2)*shp(3)/)) )
+    else
+      equal = EssentiallyEqual_r8_1d(reshape(a, (/shp(1)*shp(2)*shp(3)/)), &
+        & reshape(b, (/shp(1)*shp(2)*shp(3)/)), FillValue )
+    endif
+      
+  end function EssentiallyEqual_r8_3d
 
 ! -------------------------------------------------  HuntArray_r4  -----
 
@@ -513,7 +668,7 @@ contains
       & abs(a - myFillValue) < Real(FILLVALUETOLERANCE, r8)
   end function IsFillValue_r8
 
-!=============================================================================
+! ============================================================================
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -523,6 +678,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.33  2005/05/12 20:47:56  pwagner
+! Added new versions of EssentaillyEqual discounting Fills, NaNs
+!
 ! Revision 2.32  2005/01/19 17:16:48  pwagner
 ! Now gets dump from dump_0
 !
