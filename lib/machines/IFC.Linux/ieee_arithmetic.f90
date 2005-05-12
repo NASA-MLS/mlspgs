@@ -1,11 +1,9 @@
-! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 !=============================================================================
 MODULE IEEE_ARITHMETIC              ! Common utilities for the MLSL1 program
 !=============================================================================
-
-!  use SUNSOWNIEEE, only: ir_isnan, ir_isinf, r_quiet_nan
 
   implicit NONE
   private
@@ -25,7 +23,7 @@ MODULE IEEE_ARITHMETIC              ! Common utilities for the MLSL1 program
        "$RCSfile$"
 !---------------------------------------------------------------------------
 
-  ! This module contains glue routines for Sun's own f95 compiler
+  ! This module contains glue routines for Intel's f95 compiler
   ! since it fails to conform to ISO/IEC TR15580:1998(E).
   ! If we should ever obtain one that conforms we may cheerfully
   ! dispose of this crude hack
@@ -50,24 +48,37 @@ MODULE IEEE_ARITHMETIC              ! Common utilities for the MLSL1 program
     module procedure IEEE_Support_NaN_D, IEEE_Support_NaN_S
   end interface
 
+  interface IEEE_IS_FINITE
+    module procedure IEEE_IS_FINITE_D, IEEE_IS_FINITE_S
+  end interface
+
   interface IEEE_Value
     module procedure IEEE_Value_D, IEEE_Value_S
   end interface
 
 CONTAINS
 
-  LOGICAL FUNCTION IEEE_IS_FINITE( ARG )
+  elemental logical function IEEE_IS_FINITE_S( ARG )
   ! Formal args
     real, intent(in) ::          arg
-!    integer, external ::         ir_isnan
-!    integer, external ::         ir_isinf
   ! Private
     
-    IEEE_IS_FINITE = .FALSE.
-!    if( ir_isnan(arg) == 1 ) RETURN
-!    if( ir_isinf(arg) == 1 ) RETURN
-    IEEE_IS_FINITE = .TRUE.
-  END FUNCTION IEEE_IS_FINITE
+    IEEE_IS_FINITE_S = .FALSE.
+    if( IEEE_Is_NaN_S(arg) ) RETURN
+    if( IEEE_Is_Inf_io_S(arg) ) RETURN
+    IEEE_IS_FINITE_S = .TRUE.
+  END FUNCTION IEEE_IS_FINITE_S
+  
+  elemental logical function IEEE_IS_FINITE_D( ARG )
+  ! Formal args
+    double precision, intent(in) ::          arg
+  ! Private
+    
+    IEEE_IS_FINITE_D = .FALSE.
+    if( IEEE_Is_NaN_D(arg) ) RETURN
+    if( IEEE_Is_Inf_io_D(arg) ) RETURN
+    IEEE_IS_FINITE_D = .TRUE.
+  END FUNCTION IEEE_IS_FINITE_D
   
   elemental logical function IEEE_Is_NaN_D ( X )
     double precision, intent(in) :: X
@@ -133,3 +144,6 @@ END MODULE IEEE_ARITHMETIC
 
 !
 ! $Log$
+! Revision 1.1  2003/09/29 18:26:17  pwagner
+! First commit; same as sun.sun for now
+!

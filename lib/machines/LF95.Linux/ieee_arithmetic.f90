@@ -1,5 +1,5 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 !=============================================================================
 MODULE IEEE_ARITHMETIC              ! Common utilities for the MLSL1 program
@@ -59,7 +59,7 @@ MODULE IEEE_ARITHMETIC              ! Common utilities for the MLSL1 program
 
 CONTAINS
   
-  LOGICAL FUNCTION IEEE_IS_FINITE_S( ARG )
+  elemental logical function ieee_is_finite_s( arg )
   ! Formal args
     real, intent(in) ::          arg
   ! Private
@@ -70,7 +70,7 @@ CONTAINS
     IEEE_IS_FINITE_S = .TRUE.
   END FUNCTION IEEE_IS_FINITE_S
   
-  LOGICAL FUNCTION IEEE_IS_FINITE_D( ARG )
+  elemental logical function IEEE_IS_FINITE_D( ARG )
   ! Formal args
     double precision, intent(in) ::          arg
   ! Private
@@ -161,6 +161,9 @@ END MODULE IEEE_ARITHMETIC
 
 !
 ! $Log$
+! Revision 1.5  2004/04/08 19:38:20  pwagner
+! ieee_is_finite can handle single, double precision
+!
 ! Revision 1.4  2004/03/26 21:15:00  pwagner
 ! FIrst commit
 !

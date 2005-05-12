@@ -1,5 +1,5 @@
-! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 !=============================================================================
 MODULE IEEE_ARITHMETIC              ! Common utilities for the MLSL1 program
@@ -60,7 +60,7 @@ MODULE IEEE_ARITHMETIC              ! Common utilities for the MLSL1 program
 
 CONTAINS
 
-  LOGICAL FUNCTION IEEE_IS_FINITE_S( ARG )
+  elemental logical function IEEE_IS_FINITE_S( ARG )
   ! Formal args
     real, intent(in) ::          arg
 !    integer, external ::         ir_isnan
@@ -75,7 +75,7 @@ CONTAINS
     IEEE_IS_FINITE_S = .TRUE.
   END FUNCTION IEEE_IS_FINITE_S
   
-  LOGICAL FUNCTION IEEE_IS_FINITE_D( ARG )
+  elemental logical function IEEE_IS_FINITE_D( ARG )
   ! Formal args
     double precision, intent(in) ::          arg
 !    integer, external ::         ir_isnan
@@ -90,7 +90,7 @@ CONTAINS
     IEEE_IS_FINITE_D = .TRUE.
   END FUNCTION IEEE_IS_FINITE_D
   
-  logical function IEEE_Is_Inf_io_D ( X ) result(res)
+  elemental logical function IEEE_Is_Inf_io_D ( X ) result(res)
     double precision, intent(in) :: X
     character(len=80) :: reschar
     write(reschar, *) x
@@ -98,7 +98,7 @@ CONTAINS
       & index(reschar, 'inf') > 0 .or. index(reschar, 'INF') > 0 )
   end function IEEE_Is_Inf_io_D
 
-  logical function IEEE_Is_Inf_io_S ( X ) result(res)
+  elemental logical function IEEE_Is_Inf_io_S ( X ) result(res)
     real, intent(in) :: X
     character(len=80) :: reschar
     write(reschar, *) x
@@ -170,6 +170,9 @@ END MODULE IEEE_ARITHMETIC
 
 !
 ! $Log$
+! Revision 1.6  2004/05/24 18:21:55  pwagner
+! IEEE_Is_NaN can handle both single, double precision
+!
 ! Revision 1.5  2003/07/03 19:25:24  vsnyder
 ! Remove some comments that are no longer true
 !
