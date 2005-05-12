@@ -1,22 +1,24 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 module L1BData
 
   ! Reading and interacting with Level 1B data (HDF4)
 
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use Dump_0, only: DUMP
+  use Dump_0, only: DIFF, DUMP
   use Hdf, only: DFACC_READ, SFSTART, SFGINFO, SFN2INDEX, SFSELECT, &
     & SFRDATA_f90, &
     & SFRCDATA, SFENDACC, DFNT_CHAR8, DFNT_INT32, DFNT_FLOAT64, &
     & DFNT_FLOAT32
+  use ieee_arithmetic, only: ieee_is_finite
   use Lexer_Core, only: PRINT_SOURCE
   use MLSCommon, only: R4, R8, L1BINFO_T, DEFAULTUNDEFINEDVALUE, FILENAMELEN
   use MLSFiles, only: FILENOTFOUND, HDFVERSION_4, HDFVERSION_5, &
     & MLS_HDF_VERSION, MLS_IO_GEN_OPENF
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR, &
     & MLSMSG_WARNING, MLSMSG_L1BREAD, MLSMSG_WARNING, MLSMSG_DEALLOCATE
+  use MLSNumerics, only: EssentiallyEqual
   use MLSStrings, only: CompressString
   use MLSStringLists, only: NumStringElements
   use MoreTree, only: Get_Field_ID
@@ -492,6 +494,8 @@ contains ! ============================ MODULE PROCEDURES ======================
 
     ! Local variables
     logical :: hideAssocStatus
+    logical :: l1b1NotFinite
+    logical :: l1b2NotFinite
     integer :: MYDETAILS
     logical :: prntAssocStatus  ! Whether to remark on association status
                                 !  of multidimensional arrays
@@ -587,9 +591,24 @@ contains ! ============================ MODULE PROCEDURES ======================
 
     if ( associated(l1bData1%dpField) &
       & .and. associated(l1bData1%dpField) ) then
-      if ( any(l1bData1%dpField /= l1bData2%dpField) ) &
-        & call dump ( l1bData1%dpField-l1bData2%dpField, &
-        & 'l1bData%dpField (diff)', stats=stats, rms=rms )
+      ! if ( any(l1bData1%dpField /= l1bData2%dpField) ) &
+      l1b1NotFinite = .not. any(ieee_is_finite(l1bData1%dpField))
+      l1b2NotFinite = .not. any(ieee_is_finite(l1bData2%dpField))
+      if ( l1b1NotFinite .and. l1b2NotFinite ) then
+          call output('both dpField arrays all NaNs', advance='yes')
+      elseif ( l1b1NotFinite ) then
+          call output('l1bData1%dpField array all NaNs', advance='yes')
+      elseif ( l1b2NotFinite ) then
+          call output('l1bData2%dpField array all NaNs', advance='yes')
+      elseif ( .not. EssentiallyEqual(l1bData1%dpField, l1bData2%dpField, &
+        & FillValue=REAL(DEFAULTUNDEFINEDVALUE, R8)) ) then
+          call diff ( l1bData1%dpField, 'l1bData%dpField', &
+        & l1bData2%dpField, 'l1bData%dpField', &
+        & FillValue=REAL(DEFAULTUNDEFINEDVALUE, R8), &
+        & stats=stats, rms=rms )
+        ! & call dump ( l1bData1%dpField-l1bData2%dpField, &
+        ! & 'l1bData%dpField (diff)', stats=stats, rms=rms )
+      endif
     else
       if ( prntAssocStatus ) &
         & call output('(dpField arrays not associated)', advance='yes')
@@ -754,7 +773,7 @@ contains ! ============================ MODULE PROCEDURES ======================
         call deallocatel1bdata(L1bData)
       else
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & 'Failed to find '//trim(fieldName)//' in l1b files')
+        & 'Failed to find '//trim(fieldName)//' in l1b files while FindMaxMAF')
       endif
     end do
     if ( DEEBug ) print *, 'FindMaxMAF ', FindMaxMAF
@@ -955,28 +974,28 @@ contains ! ============================ MODULE PROCEDURES ======================
     if ( myhdfVersion == HDFVERSION_4 ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & 'Not implement in l1boa file')
-	Flag = -1
+	    Flag = -1
     else 
-	call h5gOpen_f (L1FileHandle,'/', aID, status)
+	    call h5gOpen_f (L1FileHandle,'/', aID, status)
         if ( status /= 0 ) then
-	   call MLSMessage ( MLSMSG_Warning, ModuleName, &
+	      call MLSMessage ( MLSMSG_Warning, ModuleName, &
           	& 'Unable to open group attribute in l1boa file' )
-	   Flag = -1
-	end if	
+	      Flag = -1
+	    end if	
      	if ( .not. IsHDF5AttributePresent(aID, AttrName) ) then
      	   Flag = -1
            call MLSMessage ( MLSMSG_Warning, ModuleName, &
-		& 'Failed to find attribute in l1boa file'//AttrName)
-	else 
+             & 'Failed to find attribute in l1boa file'//AttrName)
+	   else 
            call output ('get attribute', advance='no')
            call output (AttrName, advance='yes')
            call GetHDF5Attribute(aID, AttrName, value)
     	end if
-	call h5gClose_f (aID, status)
+	   call h5gClose_f (aID, status)
         if ( status /= 0 ) then
-	   call MLSMessage ( MLSMSG_Warning, ModuleName, &
+	         call MLSMessage ( MLSMSG_Warning, ModuleName, &
           	& 'Unable to close group attribute in l1boa file' )
-	end if	
+	     end if	
     end if
   end subroutine ReadL1BAttribute_intarr1
 
@@ -1267,6 +1286,7 @@ contains ! ============================ MODULE PROCEDURES ======================
         ! print *, 'Warning: ', trim(QuantityName) // ' not found in l1b files'
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & 'Failed to find '//trim(QuantityName)//' in l1b files')
+        return
       end if
     end if
     isScalar = ( l1bData%noMAFs < 2 ) ! There may be a better way to decide
@@ -2191,6 +2211,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.54  2005/05/12 20:44:52  pwagner
+! Uses dump0_m/diff to do diff
+!
 ! Revision 2.53  2005/01/12 23:59:45  pwagner
 ! diff accepts options to print only stats, rms
 !
