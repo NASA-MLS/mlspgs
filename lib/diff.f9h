@@ -1,0 +1,39 @@
+!   subroutine DIFF_1D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
+!     & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+!     double precision, intent(in) :: ARRAY1(:)
+!     character(len=*), intent(in), optional :: NAME1
+!     double precision, intent(in) :: ARRAY2(:)
+!     character(len=*), intent(in), optional :: NAME2
+!     double precision, intent(in), optional :: FILLVALUE
+!     logical, intent(in), optional :: CLEAN
+!     integer, intent(in), optional :: WIDTH
+!     character(len=*), intent(in), optional :: FORMAT
+!     logical, intent(in), optional :: WHOLEARRAY
+!     logical, intent(in), optional :: STATS
+!     logical, intent(in), optional :: RMS
+!     integer, intent(in), optional :: LBOUND ! Low bound for Array
+! 
+!     double precision, dimension(size(array1)) :: filtered1
+!     double precision, dimension(size(array2)) :: filtered2
+    logical :: warn, NaNsIn1, NaNsIn2
+
+    ! Executable
+    if ( DEEBUG ) call output('About to filter 1-d ' // trim(name1) // ' ' &
+      & // trim(name2), advance='yes')
+    call filterValues(array1, filtered1, array2, filtered2, warn, FillValue)
+    NaNsIn1 = any(.not. ieee_is_finite(array1))
+    NaNsIn2 = any(.not. ieee_is_finite(array2))
+    call dump(filtered1-filtered2, trim(name1) // ' - ' // trim(name2), &
+      & real(0.,kind(array1)), CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    if ( NaNsIn1 ) call output( &
+      & '*** NaNs found in ' // trim(name1), advance='yes')
+    if ( NaNsIn2 ) call output( &
+      & '*** NaNs found in ' // trim(name2), advance='yes')
+    if ( warn ) call output( &
+      & '*** non-matched NaNs diffing ' // trim(name1) // ' - ' // trim(name2), &
+      & advance='yes')
+!   end subroutine DIFF_1D_DOUBLE
+! $Log$
+! Revision 2.1  2005/05/12 20:41:11  pwagner
+! First commit
+!
