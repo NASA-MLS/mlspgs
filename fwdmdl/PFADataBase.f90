@@ -860,7 +860,8 @@ contains ! =====     Public Procedures     =============================
 
     use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
     use Intrinsic, only: L_Theta, L_Zeta
-    use MLSHDF5, only: GetHDF5Attribute, IsHDF5AttributePresent, LoadPtrFromHDF5DS
+    use MLSHDF5, only: GetHDF5Attribute, IsHDF5AttributePresent, LoadPtrFromHDF5DS, &
+      & ReadLitIndexFromHDF5ATTR
     use MLSMessageModule, only: MLSMessage,  MLSMSG_Error
     use MLSSignals_m, only: MaxSigLen, Signals
     use MoreTree, only: GetLitIndexFromString, GetStringIndexFromString
@@ -907,8 +908,7 @@ contains ! =====     Public Procedures     =============================
     else
       PFADatum%spectroscopyFile = 0
     end if
-    call getHDF5Attribute ( groupID, 'molecule', molecule )
-    k = getLitIndexFromString ( trim(molecule) )
+    call ReadLitIndexFromHDF5Attr ( groupID, 'molecule', k )
     if ( k < first_molecule .or. k > last_molecule ) call MLSMessage ( &
       & MLSMSG_Error, moduleName, 'The string ' // &
       & trim(molecule) // ' is not a molecule name.' )
@@ -1170,9 +1170,9 @@ contains ! =====     Public Procedures     =============================
     ! Write the PFADatum on FileName using the format given by FileType
 
     use Intrinsic, only: Lit_Indices
-    use MLSHDF5, only: MakeHDF5Attribute, SaveAsHDF5DS
+    use MLSHDF5, only: MakeHDF5Attribute, SaveAsHDF5DS, WriteLitIndexAsHDF5Attribute
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use MLSSignals_m, only: MaxSigLen
+    use MLSSignals_m, only: MaxSigLen, GetSignalName
 !   use MLSStrings, only: Capitalize
     use Output_m, only: Output
     use String_Table, only: Get_String, String_Length
@@ -1189,7 +1189,6 @@ contains ! =====     Public Procedures     =============================
     integer :: GroupID
     character(len=molNameLen+1+maxSigLen+1) :: GroupName
     integer :: IOSTAT, MyLun
-    character(len=molNameLen) :: Molecule
     character(len=maxSigLen) :: SignalText
 
     if ( present(lun) ) myLun = lun
@@ -1229,7 +1228,9 @@ contains ! =====     Public Procedures     =============================
         call MakeHDF5Attribute ( groupID, 'spectroscopyFile', &
           & attrib(:string_length(pfaDatum%spectroscopyFile)) )
       end if
-      call MakeHDF5Attribute ( groupID, 'molecule', molecule )
+      
+      call WriteLitIndexAsHDF5Attribute ( groupID, 'molecule', pfaDatum%molecule )
+      call GetSignalName ( pfaDatum%signalIndex, signalText, channel=pfaDatum%channel )
       call MakeHDF5Attribute ( groupID, 'signal', signalText )
       call MakeHDF5Attribute ( groupID, 'sideband', pfaDatum%theSignal%sideband )
       call MakeHDF5Attribute ( groupID, 'vel_rel', pfaDatum%vel_rel )
@@ -1273,6 +1274,9 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.25  2005/05/13 00:21:07  livesey
+! More bug fixes.  Things not being written/read correctly.
+!
 ! Revision 2.24  2005/05/02 23:03:16  vsnyder
 ! Stuff for PFA Cacheing
 !
