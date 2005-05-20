@@ -29,7 +29,7 @@
 # Main Program
 # ************
 # 
-RECIPIENTS="pwagner David.T.Cuddy@jpl.nasa.gov ahanzel@mls.jpl.nasa.gov pzimdars@sdsio-mail.jpl.nasa.gov sneely@sdsio.jpl.nasa.gov eparaiso@sdsio-mail.jpl.nasa.gov bsaha@sdsio-mail.jpl.nasa.gov dromo@sdsio.jpl.nasa.gov cvuu@mls.jpl.nasa.gov"
+RECIPIENTS="pwagner David.T.Cuddy@jpl.nasa.gov ahanzel@mls.jpl.nasa.gov pzimdars@sdsio-mail.jpl.nasa.gov sneely@sdsio.jpl.nasa.gov eparaiso@sdsio-mail.jpl.nasa.gov bsaha@sdsio-mail.jpl.nasa.gov dromo@sdsio.jpl.nasa.gov cvuu@mls.jpl.nasa.gov Brian.W.Knosp@jpl.nasa.gov"
 #RECIPIENTS="cvuu@mls.jpl.nasa.gov paul.a.wagner@jpl.nasa.gov"
 #RECIPIENTS="pwagner"
 MAILER="/home/pwagner/bin/mailtome.sh"
@@ -107,11 +107,11 @@ then
   then
     for name in $clusternames
     do
-      /home/pwagner/bin/sipsl2.sh -c -x -m $name >> "$OUTPUT"
+      /home/pwagner/bin/sipsl2.sh -c -bug -x -m $name >> "$OUTPUT"
       echo "" >> "$OUTPUT"
     done
   else
-    /home/pwagner/bin/sipsl2.sh -c -x >> "$OUTPUT"
+    /home/pwagner/bin/sipsl2.sh -c -bug -x >> "$OUTPUT"
     echo "" >> "$OUTPUT"
   fi
   echo "Status of running jobs:" >> "$OUTPUT"
@@ -125,11 +125,11 @@ else
   then
     for name in $clusternames
     do
-      echo "/home/pwagner/bin/sipsl2.sh -c -x $name"
+      echo "/home/pwagner/bin/sipsl2.sh -c -bug -x $name"
       echo ""
     done
   else
-    echo "/home/pwagner/bin/sipsl2.sh -c -x"
+    echo "/home/pwagner/bin/sipsl2.sh -c -bug -x"
     echo ""
   fi
   echo "Status of running jobs: >> $OUTPUT"
@@ -158,6 +158,9 @@ else
 fi
 exit 0
 # $Log$
+# Revision 1.2  2005/04/21 20:39:48  pwagner
+# Improved readability, added speedracer name
+#
 # Revision 1.1  2005/04/06 22:16:22  pwagner
 # First commit
 #

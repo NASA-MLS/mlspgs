@@ -6,6 +6,7 @@
 #    O p t i o n s
 # -h[elp]     print brief help message; exit
 # -m cluster  show jobs only for cluster named cluster
+# -bug        show chunks lost to level 2 bug "list out of order in hunt"
 # -c          convert dates from yyyydoy to yyyy Month day
 # -d          show directory names
 # -x          show chunks, nodes that died
@@ -405,6 +406,7 @@ debug="no"
 me="$0"
 my_name=sipsl2
 I=sipsl2
+bug="no"
 convert="no"
 dirnames="no"
 died="no"
@@ -423,6 +425,10 @@ while [ "$more_opts" = "yes" ] ; do
 
     case "$1" in
 
+    -bug )
+	    shift
+       bug="yes"
+       ;;
     -c )
 	    shift
        convert="yes"
@@ -480,17 +486,21 @@ fi
 if [ "$nclusters" = "1" ]
 then
   echo "status for cluster $clusternames only"
-  list="data date"
+  list="date of data"
 else
-  list='data date \t machine'
+  list='date of data \t machine'
 fi
 if [ "$restrict" != "yes" ]
 then
-  list=`cat_args "$list" "status" "\t"`
+  list=`cat_args "$list" "---- status ----" "\t"`
 fi
 if [ "$dirnames" = "yes" ]
 then
   list=`cat_args "$list" "directory" "\t"`
+fi
+if [ "$bug" = "yes" ]
+then
+  list=`cat_args "$list" "lost to bug" "\t"`
 fi
 if [ "$died" = "yes" ]
 then
@@ -524,6 +534,7 @@ do
   for name in $clusternames
   do
     testl=`head $dir/exec_log/process.stdout | grep -i $name`
+    # testl=`grep -i pvm_hosts_info $dir/exec_log/process.stdout | grep -i $name`
     if [ "$testl" != "" ]
     then
       machine="$name"
@@ -531,9 +542,11 @@ do
   done
   statbad=`tail $dir/exec_log/process.stdout | grep -i "ended badly"`
   statnochunks=`tail $dir/exec_log/process.stdout | grep -i "No chunks were processed"`
+  statpvmtrouble=`tail $dir/exec_log/process.stdout | grep -i "probably pvm trouble"`
   statgood=`tail $dir/exec_log/process.stdout | grep -i "catenating slave"`
   l1boa=`echo $dir/*L1BOA_*`
   date=`echo $l1boa | sed "s/_/\n/g;s/.h5//" | tail -1`
+  bugs=`grep -ic 'list out of order' $dir/pvmlog/mlsl2.log 2>/dev/null`
   list=""
   if [ "$lightspeed" = "yes" -a "$testl" != "" ]
   then
@@ -554,9 +567,11 @@ do
     echo "machine: $machine"
     echo "statbad: $statbad"
     echo "statnochunks: $statnochunks"
+    echo "statpvmtrouble: $statpvmtrouble"
     echo "statgood: $statgood"
     echo "l1boa: $l1boa"
     echo "date: $date"
+    echo "bugs: $bugs"
     echo "list: $list"
   fi
   if [ "$machine" != "" ]
@@ -567,7 +582,10 @@ do
       newlist=`cat_args "$list" "ended badly" "\t"`
     elif [ "$statnochunks" != "" ]
     then
-      newlist=`cat_args "$list" "failed" "\t"`
+      newlist=`cat_args "$list" "failed (no chunks)" "\t"`
+    elif [ "$statpvmtrouble" != "" ]
+    then
+      newlist=`cat_args "$list" "failed (pvm)" "\t"`
     elif [ "$statgood" != "" ]
     then
       newlist=`cat_args "$list" "completed normally" "\t"`
@@ -588,6 +606,10 @@ do
     if [ "$dirnames" = "yes" ]
     then
       list="$list \t $dir"
+    fi
+    if [ "$bug" = "yes" ]
+    then
+      list="$list \t $bugs"
     fi
     if [ "$debug" = "yes" ]
     then
@@ -653,6 +675,9 @@ do
 done
 exit 0
 # $Log$
+# Revision 1.5  2005/04/28 18:42:32  pwagner
+# Fixed bug preventing more than one machine  from reporting pvm failures
+#
 # Revision 1.4  2005/04/21 20:38:02  pwagner
 # Replace -l, -s options with -m; added speedracer name failed status
 #
