@@ -37,13 +37,13 @@ contains ! =====     Public Procedures     =============================
     use MLSSignals_m, only: GetNameOfSignal, MatchSignal, MaxSigLen, Signal_T
     use MoreTree, only: GetStringIndexFromString
     use Output_m, only: Output
-    use PFADataBase_m, only: AddPFADatumToDatabase, PFAData, PFAData_T, &
-      & Sort_PFADataBase
+    use PFADataBase_m, only: AddPFADatumToDatabase, HookTableToFindPFA, &
+      & PFAData, PFAData_T, Sort_PFADataBase
     use Physics, only: h_over_K, SpeedOfLight ! m/s
     use Slabs_SW_m, only: Slabs_Prep_Struct
     use SpectroscopyCatalog_m, only: Catalog, Catalog_t, Line_t, Lines, &
       & MostLines, SpectroscopyFile
-    use String_Table, only: Display_String, Get_String
+    use String_Table, only: Display_String
     use Toggles, only: Emit, Switches, Toggle
     use Trace_M, only: Trace_begin, Trace_end
     use VGridsDatabase, only: VGrid_t
@@ -206,8 +206,9 @@ contains ! =====     Public Procedures     =============================
         end do ! tx
 
         ! Put it away
-        create_PFAData = AddPFADatumToDatabase ( pfaData, pfaDatum )
+        create_PFAData = AddPFADatumToDatabase ( PFAData, PFADatum )
         call deallocate_test ( myCatalog%lines, 'myCatalog%lines', moduleName )
+        if ( HookTableToFindPFA ( 0, 0, PFAData(create_PFAData) ) ) continue
 
         if ( progress .or. dumpIt > 0 ) then
           call output ( 'Created PFA for ' )
@@ -366,6 +367,9 @@ contains ! =====     Public Procedures     =============================
 end module Create_PFAData_m
 
 ! $Log$
+! Revision 2.11  2005/05/24 01:54:29  vsnyder
+! Delete unused symbols
+!
 ! Revision 2.10  2005/05/12 20:49:28  livesey
 ! Bug fix (hopefully), fill in channel information in PFADatum on
 ! creation.
