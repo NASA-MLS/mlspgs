@@ -145,7 +145,6 @@ contains
     use Intrinsic, only: Lit_Indices
     use MLSCommon, only: RP, R8
     use Output_m, only: Output
-    use PFADataBase_m, only: PFAData
     use String_Table, only: Display_String
     use Toggles, only: Switches
 
@@ -766,7 +765,7 @@ contains
 
     use D_Hunt_m, only: Hunt
     use MLSCommon, only: RP, R8
-    use PFADataBase_m, only: PFAData_t, RK
+    use PFADataBase_m, only: PFAData_t
 
 ! Inputs:
     real(r8), intent(in) :: Frq         ! Channel center frequency in MHz
@@ -1106,6 +1105,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.76  2005/05/02 23:05:01  vsnyder
+! New data structures for PFA
+!
 ! Revision 2.75  2005/03/29 01:58:17  vsnyder
 ! Make stuff pure
 !

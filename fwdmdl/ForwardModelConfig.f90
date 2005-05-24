@@ -10,7 +10,7 @@ module ForwardModelConfig
 
   use MLSCommon, only: R8, RP
   use MLSSignals_M, only: Signal_t
-  use PFADatabase_m, only: PFAData_t, PFAPointer_t
+  use PFADatabase_m, only: PFAPointer_t
   use SpectroscopyCatalog_m, only: Catalog_t
   use VectorsModule, only: VectorValue_T
   use VGridsDatabase, only: VGrid_T, DestroyVGridContents
@@ -218,7 +218,7 @@ contains
     use MLSSets, only: FindFirst
     use MLSSignals_m, only: MatchSignal
 !   use Output_m, only: Output
-    use PFADataBase_m, only: Dump, PFAData, PFA_By_Molecule, SortPFAData, &
+    use PFADataBase_m, only: Dump, PFA_By_Molecule, SortPFAData, &
       & Sort_PFADataBase
     use SpectroscopyCatalog_m, only: Dump
     use Toggles, only: Switches
@@ -361,7 +361,6 @@ contains
       use MLSMessageModule, only: MLSMessage,  MLSMSG_Allocate, MLSMSG_Error
       use MLSSignals_m, only: DisplaySignalName
       use MoreTree, only: StartErrorMessage
-      use Output_M, only: Output
       use PFADatabase_m, only: PFAData
       use String_Table, only: Display_String
       use Tree, only: Source_Ref
@@ -1217,6 +1216,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.71  2005/05/05 20:48:02  vsnyder
+! Don't check IER if deallocate isn't done
+!
 ! Revision 2.70  2005/05/05 01:14:22  vsnyder
 ! Make sure fields of PFA_t are nullified.
 ! Don't try to deallocate channels once for each sideband -- there's only one
