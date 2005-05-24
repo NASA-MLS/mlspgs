@@ -1298,7 +1298,6 @@ contains
         call rowScale ( weight, Kt )
         ! Now add these terms to the disjoint equations
         call MultiplyMatrix_XTY ( Kr, Kt, matrix, update=.true., useMask=.true. )
-        call dump_struct ( matrix, 'Disjoint equations' )
         ! Now clear the jacobian matrix
         call ClearMatrix ( Kr )
         call ClearMatrix ( Kt )
@@ -1410,7 +1409,6 @@ contains
         ! Now add these terms to the normal equations
         call NormalEquations ( jacobian, matrix, rhs_in=delta, rhs_out=rhsOut, &
           & update=.true., useMask=.true. )
-        call dump_struct ( matrix%m, 'Normal equations', upper=.true. )
         ! Now clear the jacobian matrix
         call ClearMatrix ( jacobian )
       enddo
@@ -1433,6 +1431,9 @@ contains
 end module ALGEBRA_M
 
 ! $Log$
+! Revision 2.17  2005/05/24 23:33:35  livesey
+! Removed some superfluous dumps.
+!
 ! Revision 2.16  2004/10/14 04:54:41  livesey
 ! Added clearLower function
 !
