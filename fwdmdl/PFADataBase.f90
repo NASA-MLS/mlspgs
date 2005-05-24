@@ -359,7 +359,6 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------  Dump_PFAFileDatum  -----
   subroutine Dump_PFAFileDatum ( PFAFileDatum, Details )
-    use Intrinsic, only: Lit_Indices
     use MLSSignals_m, only: MaxSigLen
     use Output_m, only: Blanks, NewLine, Output
     use String_Table, only: Display_String
@@ -437,16 +436,17 @@ contains ! =====     Public Procedures     =============================
   ! See Test_And_Fetch_PFA.
     use Intrinsic, only: Lit_Indices
     use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
-    use MLSSignals_m, only: MaxSigLen, Signals
+    use MLSSignals_m, only: Signals
     use MoreMessage, only: MLSMessage
-    use String_Table, only: Get_String
     integer, intent(in) :: F  ! Index in PFAFiles; zero if not from a file
                               ! specified in a PFAFile= parameter
-    integer, intent(in) :: G  ! Index in PFAFiles(f)%PFAData; zero if not from a file
+    integer, intent(in) :: G  ! Index in PFAFiles(f)%PFAData; zero if not from
+                              ! a file.  -1 if F /= 0 and HookTableToFindPFA is
+                              ! to find where to hook it.
     type(PFAData_t), intent(in), target :: PFADatum
     logical, intent(in), optional :: Replace ! Replace old one, default false
 
-    integer :: M, S, SB, C ! Molecule, Signal, Sideband, Channel
+    integer :: M, MyG, S, SB, C ! Molecule, MyG, Signal, Sideband, Channel
     logical :: MyReplace
     integer :: STAT
 
@@ -454,6 +454,7 @@ contains ! =====     Public Procedures     =============================
     if ( present(replace) ) myReplace = replace
 
     m = PFADatum%molecule
+    myG = g
     s = PFADatum%signalIndex
     sb = (PFADatum%theSignal%sideband + 3 ) / 2
     c = PFADatum%channel
@@ -483,7 +484,23 @@ contains ! =====     Public Procedures     =============================
       findPFA(m)%s(s)%sb(sb)%c(c)%datum => PFADatum
     end if
     findPFA(m)%s(s)%sb(sb)%c(c)%datum%fileIndex = f
-    findPFA(m)%s(s)%sb(sb)%c(c)%datum%groupIndex = g
+    if ( f == 0 ) then
+      myG = 0
+    else if ( myG < 0 ) then
+      myG = 0
+      if ( .not. associated(PFAFiles) ) then
+        myG = -1
+      else if ( .not. associated(PFAFiles(f)%PFAData) ) then
+        myG = -1
+      end if
+      if ( myG < 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+        & 'PFA File or Group data structure not allocated' )
+      do myG = size(PFAFiles(f)%PFAData), 1, -1
+        if ( PFAFiles(f)%PFAData(myG)%molecule == PFADatum%molecule .and. &
+          &  PFAFiles(f)%PFAData(myG)%signalIndex == PFADatum%signalIndex ) exit
+      end do
+    end if
+    findPFA(m)%s(s)%sb(sb)%c(c)%datum%groupIndex = myG
 
   end function HookTableToFindPFA
 
@@ -646,7 +663,6 @@ contains ! =====     Public Procedures     =============================
     use MLSHDF5, only: LoadPtrFromHDF5DS
     use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
       & MLSMSG_Error, MLSMSG_FileOpen
-    use MLSStrings, only: Capitalize
     use MoreMessage, only: MLSMessage
     use MoreTree, only: GetLitIndexFromString, GetStringIndexFromString
     use Parse_Signal_m, only: Get_Individual_Signals
@@ -673,7 +689,6 @@ contains ! =====     Public Procedures     =============================
     integer, pointer :: MySignals(:)
     character(len=maxSigLen), pointer :: MySignalStrings(:) ! From the HDF5
     integer :: NGroups, NPFA
-    character(len=maxSigLen) :: OneSignal
     type(PFAData_t), pointer, save :: TempPFAData(:) => NULL()
     character(len=molNameLen+maxSigLen+1) :: TheGroup
 
@@ -831,7 +846,7 @@ contains ! =====     Public Procedures     =============================
             & 'Unable to open HDF5 PFA group ' // theGroup // ' in ' // &
             & trim(fileName) )
         iPFA = iPFA + 1
-        call read_PFADatum_H5 ( groupID, PFAData(iPFA), .true., VGrids )
+        call read_PFADatum_H5 ( groupID, PFAData(iPFA), .true., VGrids, f=f, g=-1 )
         call h5gClose_f ( groupID, iostat )
         if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'Unable to close HDF5 PFA group ' // theGroup // ' in ' // &
@@ -859,12 +874,13 @@ contains ! =====     Public Procedures     =============================
   ! grids that aren't already in VGrids.
 
     use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
-    use Intrinsic, only: L_Theta, L_Zeta
+    use Intrinsic, only: L_Theta, L_Zeta, Lit_Indices
     use MLSHDF5, only: GetHDF5Attribute, IsHDF5AttributePresent, LoadPtrFromHDF5DS, &
       & ReadLitIndexFromHDF5ATTR
-    use MLSMessageModule, only: MLSMessage,  MLSMSG_Error
+    use MLSMessageModule, only: MLSMSG_Error
     use MLSSignals_m, only: MaxSigLen, Signals
-    use MoreTree, only: GetLitIndexFromString, GetStringIndexFromString
+    use MoreMessage, only: MLSMessage
+    use MoreTree, only: GetStringIndexFromString
     use Parse_Signal_m, only: Parse_Signal
     use VGridsDatabase, only: AddVGridIfNecessary, RS ! Kind for Surfs
 
@@ -874,12 +890,10 @@ contains ! =====     Public Procedures     =============================
     type(vGrid_t), pointer :: VGrids(:)
     logical, intent(in), optional :: Data ! "Read the data -- default true"
     integer, intent(in), optional :: F, G ! Where to hook into PFAFiles,
-                                          ! f == zero (default) means don't do it
 
     logical, pointer :: Channels(:) ! output from Parse_Signal
     integer :: J, K
     character(1023) :: Line ! Text, e.g. filter file name
-    character(len=molNameLen) :: Molecule
     logical :: MyData
     integer :: MyF, MyG
     integer, pointer :: SignalIndices(:) ! output from Parse_Signal
@@ -910,8 +924,8 @@ contains ! =====     Public Procedures     =============================
     end if
     call ReadLitIndexFromHDF5Attr ( groupID, 'molecule', k )
     if ( k < first_molecule .or. k > last_molecule ) call MLSMessage ( &
-      & MLSMSG_Error, moduleName, 'The string ' // &
-      & trim(molecule) // ' is not a molecule name.' )
+      & MLSMSG_Error, moduleName, 'The string %s is not a molecule name.', &
+      & (/ lit_indices(k) /) )
     PFADatum%molecule = k
     call getHDF5Attribute ( groupID, 'signal', signalText )
     PFADatum%signal = getStringIndexFromString ( trim(signalText), .true. )
@@ -920,6 +934,10 @@ contains ! =====     Public Procedures     =============================
     PFADatum%signalIndex = signalIndices(1)
     PFADatum%theSignal = signals(PFADatum%signalIndex)
     PFADatum%theSignal%channels => channels
+    do j = lbound(channels,1), ubound(channels,1)
+      if ( channels(j) ) exit
+    end do
+    PFADatum%channel = j
     nullify ( channels ) ! so as not to clobber PFADatum%theSignal%channels
       ! in next iteration of the loop
     call getHDF5Attribute ( groupID, 'sideband', PFADatum%theSignal%sideband )
@@ -1169,7 +1187,6 @@ contains ! =====     Public Procedures     =============================
 
     ! Write the PFADatum on FileName using the format given by FileType
 
-    use Intrinsic, only: Lit_Indices
     use MLSHDF5, only: MakeHDF5Attribute, SaveAsHDF5DS, WriteLitIndexAsHDF5Attribute
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSSignals_m, only: MaxSigLen, GetSignalName
@@ -1274,6 +1291,9 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.26  2005/05/24 01:54:55  vsnyder
+! Bug fixes -- no channel, wrong subscript...
+!
 ! Revision 2.25  2005/05/13 00:21:07  livesey
 ! More bug fixes.  Things not being written/read correctly.
 !
