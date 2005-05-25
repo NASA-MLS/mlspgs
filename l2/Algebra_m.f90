@@ -83,13 +83,14 @@ contains
     integer :: Error               ! 0 = no error occurred.
     integer :: I_SONS              ! Son indices of sons of root
     integer :: LHS                 ! Index in tree of LHS
+    integer :: Q                   ! Index of quantity in a vector
     integer :: RHS                 ! Index in tree of root of RHS
     integer :: SON                 ! Son of root
     integer :: SPEC                ! Index of SPEC of label, e.g. S_Matrix
     integer :: String              ! String table index
     integer :: Type                ! Type of result
     integer :: Value               ! Index of Vector or Matrix result in database
-    integer :: What                ! See its parameters below
+    integer :: What                ! See its parameters above
     integer :: WhatsLHS            ! As above but for the LHS (only used for matrices)
 
     type(matrix_t), pointer :: LHSMatrix
@@ -169,12 +170,23 @@ contains
             type = exprn_m
             value = addToMatrixDatabase ( matrixDatabase, matrix_s )
           end select
-          call declare ( string, dvalue, type, value, son )
+          call declare ( string, dValue, type, value, son )
         else ! ------------------- Update the declaration for an existing name
           value = decoration ( decl%tree )
           select case ( what )
           case ( w_number )
-            if ( decl%type /= exprn .and. decl%type /= num_value ) then
+            if ( decl%type == label ) then
+              spec = get_spec(decl%tree)
+              if ( spec == s_vector ) then ! Broadcast scalar to entire vector
+                do q = 1, size(vectorDatabase(value)%quantities)
+                  vectorDatabase(value)%quantities(q)%values = dValue
+                end do
+              else
+                call announce_error ( son, incompatible )
+                what = w_nothing
+   go to 100
+              end if
+            else if ( decl%type /= exprn .and. decl%type /= num_value ) then
               call announce_error ( son, incompatible )
               what = w_nothing
    go to 100
@@ -240,7 +252,7 @@ contains
           case default
             stop
           end select
-          call redeclare ( string, dvalue, decl%type, decl%units, decl%tree )
+          call redeclare ( string, dValue, decl%type, decl%units, decl%tree )
           value = decoration ( decl%tree ) ! in case switches contains 'alg'
 100       call destroyStuff ( what, vector, matrix, matrix_c, matrix_k, matrix_s )
         end if
@@ -1431,6 +1443,9 @@ contains
 end module ALGEBRA_M
 
 ! $Log$
+! Revision 2.18  2005/05/25 02:15:13  vsnyder
+! Add 'Broadcast scalar to vector' capability
+!
 ! Revision 2.17  2005/05/24 23:33:35  livesey
 ! Removed some superfluous dumps.
 !
