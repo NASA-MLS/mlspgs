@@ -14,7 +14,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
     & CholeskyFactor, ClearLower, ClearRows, ColumnScale, Col_L1, CopyBlock, &
     & CreateBlock, CyclicJacobi, DenseCyclicJacobi, Densify, &
     & DestroyBlock, Dump, FrobeniusNorm, GetDiagonal, GetMatrixElement, GetVectorFromColumn, & 
-    & InvertCholesky, M_Absent, M_Column_Sparse, M_Banded, M_Full, &            
+    & InvertCholesky, M_Absent, M_Column_Sparse, M_Banded, M_Full, M_Unknown, &            
     & MatrixElement_T, MaxAbsVal, MinDiag, Multiply, MultiplyMatrix_XTY, MultiplyMatrix_XY, &       
     & MultiplyMatrix_XY_T, MultiplyMatrixVectorNoT, NullifyMatrix, operator(+), &              
     & operator(.TX.), ReflectMatrix, RowScale, ScaleBlock, SolveCholesky, &     
@@ -2477,7 +2477,7 @@ contains ! =====     Public Procedures     =============================
     !                                          if present and true.
 
     !                         Absent Banded Sparse   Full
-    character :: CHARS(0:4) = (/ '-',   'B',   'S',   'F',  '?' /)
+    character :: CHARS(m_absent:m_unknown) = (/ '-',   'B',   'S',   'F',  '?' /)
     integer :: I, J, N
     logical :: MyUpper
 
@@ -2549,6 +2549,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.103  2005/05/25 02:14:43  vsnyder
+! Use names for bounds for CHARS in Dump_Struct
+!
 ! Revision 2.102  2004/10/14 04:54:25  livesey
 ! Added ClearLower_1
 !
