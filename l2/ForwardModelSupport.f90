@@ -65,7 +65,7 @@ contains ! =====     Public Procedures     =============================
       & READ_FILTER_SHAPES_FILE, READ_DACS_FILTER_SHAPES_FILE, &
       & CLOSE_FILTER_SHAPES_FILE
     use Init_Tables_Module, only: F_ANTENNAPATTERNS, F_DACSFILTERSHAPES, &
-      & F_FILTERSHAPES, F_L2PC, F_POINTINGGRIDS
+      & F_FILTERSHAPES, F_L2PC, F_PFAFILES, F_POINTINGGRIDS
     use L2ParInfo, only: PARALLEL
     use L2PC_m, only: OPEN_L2PC_FILE, CLOSE_L2PC_FILE, READ_L2PC_FILE, &
       & READCOMPLETEHDF5L2PCFILE
@@ -73,6 +73,7 @@ contains ! =====     Public Procedures     =============================
       &          mlspcf_dacsfltsh_start, MLSPCF_ptggrids_start, &
       &          mlspcf_l2pc_start, mlspcf_l2pc_end
     use MoreTree, only: Get_Field_ID
+    use PFADataBase_m, only: Process_PFA_File
     use PointingGrid_m, only: Close_Pointing_Grid_File, &
       & Open_Pointing_Grid_File, Read_Pointing_Grid_File
     use Toggles, only: Gen, Levels, Toggle
@@ -118,14 +119,6 @@ contains ! =====     Public Procedures     =============================
           call read_antenna_patterns_file ( lun )
           call close_antenna_patterns_file ( lun )
         end do
-      case ( f_filterShapes )
-        do j = 2, nsons(son)
-          call get_file_name ( mlspcf_filtshps_start, &
-            & 'Filter Shapes File not found in PCF' )
-          call open_filter_shapes_file ( fileName, lun, fileIndex )
-          call read_filter_shapes_file ( lun, fileIndex )
-          call close_filter_shapes_file ( lun )
-        end do
       case ( f_DACSfilterShapes )
         do j = 2, nsons(son)
           call get_file_name ( mlspcf_dacsfltsh_start, &
@@ -134,13 +127,13 @@ contains ! =====     Public Procedures     =============================
           call read_DACS_filter_shapes_file ( lun, fileIndex )
           call close_filter_shapes_file ( lun )
         end do
-      case ( f_pointingGrids )
+      case ( f_filterShapes )
         do j = 2, nsons(son)
-          call get_file_name ( mlspcf_ptggrids_start, &
-            & 'Pointing Grids File not found in PCF' )
-          call open_pointing_grid_file ( fileName, lun )
-          call read_pointing_grid_file ( lun )
-          call close_pointing_grid_file ( lun )
+          call get_file_name ( mlspcf_filtshps_start, &
+            & 'Filter Shapes File not found in PCF' )
+          call open_filter_shapes_file ( fileName, lun, fileIndex )
+          call read_filter_shapes_file ( lun, fileIndex )
+          call close_filter_shapes_file ( lun )
         end do
       case ( f_l2pc )
         last_l2pc = last_l2pc + 1
@@ -154,6 +147,19 @@ contains ! =====     Public Procedures     =============================
           else
             call ReadCompleteHDF5L2PCFile ( fileName )
           end if
+        end do
+      case ( f_PFAFiles )
+        do j = 2, nsons(son)
+          if ( process_PFA_File ( sub_rosa(subtree(j,son)), &
+            & source_ref(subtree(j,son)) ) /= 0 ) continue
+        end do
+      case ( f_pointingGrids )
+        do j = 2, nsons(son)
+          call get_file_name ( mlspcf_ptggrids_start, &
+            & 'Pointing Grids File not found in PCF' )
+          call open_pointing_grid_file ( fileName, lun )
+          call read_pointing_grid_file ( lun )
+          call close_pointing_grid_file ( lun )
         end do
       case default
         ! Can't get here if the type checker worked
@@ -1098,6 +1104,9 @@ o:      do j = 2, nsons(PFATrees(s))
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.111  2005/05/26 22:35:48  vsnyder
+! Add PFAFiles field to ForwardModelGlobal
+!
 ! Revision 2.110  2005/03/28 20:29:09  vsnyder
 ! Better error checking and reporting, some PFA stuff
 !
