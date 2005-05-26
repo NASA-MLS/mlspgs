@@ -1119,6 +1119,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_l2pc, t+t_string, n+n_field_type, &
              begin, f+f_filterShapes, t+t_string, n+n_field_type, &
              begin, f+f_DACSfilterShapes, t+t_string, n+n_field_type, &
+             begin, f+f_PFAFiles, t+t_string, n+n_field_type, &
              begin, f+f_pointingGrids, t+t_string, n+n_field_type, np+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_directWriteFile, &
@@ -1335,6 +1336,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.400  2005/05/26 22:35:48  vsnyder
+! Add PFAFiles field to ForwardModelGlobal
+!
 ! Revision 2.399  2005/05/02 23:00:40  vsnyder
 ! Add PFAFile parameter
 !
