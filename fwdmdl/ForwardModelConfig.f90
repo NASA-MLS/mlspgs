@@ -364,7 +364,6 @@ contains
       use MLSMessageModule, only: MLSMessage,  MLSMSG_Allocate, MLSMSG_Error
       use MLSSignals_m, only: DisplaySignalName
       use MoreTree, only: StartErrorMessage
-use output_m, only: output
       use PFADatabase_m, only: FindPFA, PFAData
       use String_Table, only: Display_String
       use Tree, only: Source_Ref
@@ -382,9 +381,6 @@ use output_m, only: output
       do sb = s1, s2, 2
         sx = ( sb + 3 ) / 2
         do b = 1, size(fwdModelConf%beta_group)
-if ( .not. associated(fwdModelConf%beta_group) ) call output ( 'Beta_Group', advance='yes' )
-if ( .not. associated(fwdModelConf%channels) ) call output ( 'Channels', advance='yes' )
-if ( .not. associated(fwdModelConf%beta_group(b)%pfa(sx)%molecules) ) call output ( 'Molecules', advance='yes' )
           allocate ( fwdModelConf%beta_group(b)%pfa(sx)%data( &
             & size(fwdModelConf%channels), &
             & size(fwdModelConf%beta_group(b)%pfa(sx)%molecules)), stat=i )
@@ -1263,6 +1259,9 @@ if ( .not. associated(fwdModelConf%beta_group(b)%pfa(sx)%molecules) ) call outpu
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.74  2005/05/26 20:11:31  vsnyder
+! Don't delete PFA molecules and ratio in DestroyForwardModelDerived
+!
 ! Revision 2.73  2005/05/26 02:15:14  vsnyder
 ! Use molecule.signal.sideband.channel structure for PFA
 !
