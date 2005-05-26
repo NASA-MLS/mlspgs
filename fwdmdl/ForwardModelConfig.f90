@@ -252,7 +252,10 @@ contains
     ! Work out the spectroscopy we're going to need.
     call SpectroscopyCatalogExtract ! Below
 
-    ! Work out the PFA stuff
+    ! Work out the PFA stuff.  The PFA stuff is done here instead of in
+    ! ForwardModelSupport because the PFA stuff might be large (at least
+    ! compared to the LBL stuff), so it is useful to allocate and destroy
+    ! it separately for each forward model run.
     call PFA_Stuff ! Below
 
     if ( dumpFwm > 0 .or. error ) then
@@ -361,7 +364,7 @@ contains
       use MLSMessageModule, only: MLSMessage,  MLSMSG_Allocate, MLSMSG_Error
       use MLSSignals_m, only: DisplaySignalName
       use MoreTree, only: StartErrorMessage
-      use PFADatabase_m, only: PFAData
+      use PFADatabase_m, only: FindPFA, PFAData
       use String_Table, only: Display_String
       use Tree, only: Source_Ref
 
@@ -374,6 +377,33 @@ contains
 
       ! Fill fwdModelConf%beta_group%pfa%data
 
+      ! Look first in the molecule.signal.sideband.channel structure
+      do sb = s1, s2, 2
+        sx = ( sb + 3 ) / 2
+        do b = 1, size(fwdModelConf%beta_group)
+          allocate ( fwdModelConf%beta_group(b)%pfa(sx)%data( &
+            & size(fwdModelConf%channels), &
+            & size(fwdModelConf%beta_group(b)%pfa(sx)%molecules)), stat=i )
+          if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+            & MLSMSG_Allocate // 'Beta_group(b)%PFA(sx)%data' )
+          do p = 1, size(fwdModelConf%beta_group(b)%pfa(sx)%molecules)
+            do channel = 1, size(fwdModelConf%channels)
+              if ( associated(findPFA(fwdModelConf%beta_group(b)%pfa(sx)%molecules(p))%s) ) then
+                if ( associated(findPFA(fwdModelConf%beta_group(b)%pfa(sx)%molecules(p))% &
+                  & s(fwdModelConf%channels(channel)%signal)%sb(sx)%c) ) then
+                  fwdModelConf%beta_group(b)%pfa(sx)%data(channel,p)%datum => &
+                    & findPFA(fwdModelConf%beta_group(b)%pfa(sx)%molecules(p))% &
+                      & s(fwdModelConf%channels(channel)%signal)%sb(sx)% &
+                      & c(fwdModelConf%channels(channel)%used)%datum
+                end if ! signal stru associated
+              end if ! channel stru associated
+            end do ! channel
+          end do ! p
+        end do ! b
+      end do ! sb
+
+      ! Now look in the PFA_By_Molecule structure.
+      ! Maybe this one isn't necessary any more.
       if ( associated(pfaData) ) then
         call sort_PFADatabase ! Only does anything once
         do sb = s1, s2, 2
@@ -385,17 +415,21 @@ contains
             if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
               & MLSMSG_Allocate // 'Beta_group(b)%PFA(sx)%data' )
             do p = 1, size(fwdModelConf%beta_group(b)%pfa(sx)%molecules)
-              do i = PFA_by_molecule(fwdModelConf%beta_group(b)%pfa(sx)%molecules(p)-1)+1, &
-                &    PFA_by_molecule(fwdModelConf%beta_group(b)%pfa(sx)%molecules(p))
-                do channel = 1, size(fwdModelConf%channels)
-                  if ( matchSignal ( PFAData(sortPFAdata(i))%theSignal, &
-                    &  fwdModelConf%signals(fwdModelConf%channels(channel)%signal), sideband=sb, &
-                    &  channel=fwdModelConf%channels(channel)%used ) > 0 ) then
-                    fwdModelConf%beta_group(b)%pfa(sx)%data(channel,p)%datum => &
-                      PFAData(sortPFAdata(i))
-                  end if
-                end do ! channel
-              end do ! i (molecules)
+              do channel = 1, size(fwdModelConf%channels)
+                if ( .not. &
+                  & associated(fwdModelConf%beta_group(b)%pfa(sx)%data(channel,p)%datum) ) then
+                  ! Search the other structure.  Maybe this one isn't necessary any more
+                  do i = PFA_by_molecule(fwdModelConf%beta_group(b)%pfa(sx)%molecules(p)-1)+1, &
+                    &    PFA_by_molecule(fwdModelConf%beta_group(b)%pfa(sx)%molecules(p))
+                    if ( matchSignal ( PFAData(sortPFAdata(i))%theSignal, &
+                      &  fwdModelConf%signals(fwdModelConf%channels(channel)%signal), sideband=sb, &
+                      &  channel=fwdModelConf%channels(channel)%used ) > 0 ) then
+                      fwdModelConf%beta_group(b)%pfa(sx)%data(channel,p)%datum => &
+                        PFAData(sortPFAdata(i))
+                    end if
+                  end do ! i (molecules)
+                end if ! .not. associated....
+              end do ! channel
             end do ! p
             do p = 1, size(fwdModelConf%beta_group(b)%pfa(sx)%data,2)
               do channel = 1, size(fwdModelConf%beta_group(b)%pfa(sx)%data,1)
@@ -415,15 +449,30 @@ contains
             end do ! p (molecules)
           end do ! b
         end do ! sb
-      else ! Make sure pointer fields of PFA are nullified
-        do sx = 1, 2
-          do b = 1, size(fwdModelConf%beta_group)
-            nullify ( fwdModelConf%beta_group(b)%pfa(sx)%data, &
-                      fwdModelConf%beta_group(b)%pfa(sx)%molecules, &
-                      fwdModelConf%beta_group(b)%pfa(sx)%ratio )
-          end do
-        end do
       end if ! associated(pfaData)
+
+      ! Now check that we have PFA data
+      do sb = s1, s2, 2
+        sx = ( sb + 3 ) / 2
+        do b = 1, size(fwdModelConf%beta_group)
+          do p = 1, size(fwdModelConf%beta_group(b)%pfa(sx)%data,2)
+            do channel = 1, size(fwdModelConf%beta_group(b)%pfa(sx)%data,1)
+              if ( .not. associated(fwdModelConf%beta_group(b)%pfa(sx)%data(channel,p)%datum) ) then
+                if ( source_ref(fwdModelConf%where) /= 0 ) &
+                call startErrorMessage ( fwdModelConf%where )
+                call display_string ( &
+                  & lit_indices(fwdModelConf%beta_group(b)%molecule), &
+                  & before=' PFA table not found for ' )
+                call displaySignalName ( &
+                  & fwdModelConf%signals(fwdModelConf%channels(channel)%signal), &
+                  & advance='yes', before=' and ', sideband=sb, &
+                  & channel=fwdModelConf%channels(channel)%used )
+                error = .true.
+              end if
+            end do ! channel
+          end do ! p (molecules)
+        end do ! b
+      end do ! sb
 
     end subroutine PFA_Stuff
 
@@ -640,7 +689,6 @@ contains
           if ( ier/= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
             & MLSMSG_Deallocate // 'Beta_group(b)%PFA(s)%data' )
         end if
-        ! These are probably deallocated somewhere else, but this can't hurt
         call deallocate_test ( fwdModelConf%beta_group(b)%PFA(s)%molecules, &
           & 'fwdModelConf%beta_group(b)%PFA(s)%molecules', moduleName )
         call deallocate_test ( fwdModelConf%beta_group(b)%PFA(s)%ratio, &
@@ -980,10 +1028,6 @@ contains
         call deallocate_test ( config%beta_group(b)%lbl(s)%cat_index, 'Cat_Index', moduleName )
         call deallocate_test ( config%beta_group(b)%lbl(s)%molecules, 'LBL Molecules', moduleName )
         call deallocate_test ( config%beta_group(b)%lbl(s)%ratio, 'LBL Ratio', moduleName )
-      ! PFA_Indices are created and destroyed on each call to FullForwardModel.
-      ! call deallocate_test ( config%beta_group(b)%pfa(s)%indices, 'PFA Indices', moduleName )
-        call deallocate_test ( config%beta_group(b)%pfa(s)%molecules, 'PFA Molecules', moduleName )
-        call deallocate_test ( config%beta_group(b)%pfa(s)%ratio, 'PFA Ratio', moduleName )
       end do ! s
     end do
     deallocate ( config%beta_group, stat=b )
@@ -1216,6 +1260,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.72  2005/05/24 01:54:35  vsnyder
+! Delete unused symbols
+!
 ! Revision 2.71  2005/05/05 20:48:02  vsnyder
 ! Don't check IER if deallocate isn't done
 !
