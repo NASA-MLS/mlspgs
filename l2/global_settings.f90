@@ -118,7 +118,6 @@ contains
     ! type (PCFData_T) :: l2pcf
 
     integer :: Details             ! How much info about l1b files to dump
-    integer :: F                   ! Index in PFAFiles -- unused function output
     logical :: GOT(2)
     integer :: I, J                ! Index of son, grandson of root
     integer :: L1BFLAG
@@ -261,8 +260,8 @@ contains
           end if
         case ( p_PFAFile )
           do j = 2, nsons(son)
-            f = process_PFA_File ( sub_rosa(subtree(j,son)), &
-              & source_ref(subtree(j,son)) )
+            if ( process_PFA_File ( sub_rosa(subtree(j,son)), &
+              & source_ref(subtree(j,son)) ) /= 0 ) continue
           end do
         ! case ( p_maxfailurespermachine )
         !  call expr ( subtree(2,son), units, value )
@@ -870,6 +869,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.96  2005/05/02 22:59:59  vsnyder
+! Add PFAFile command
+!
 ! Revision 2.95  2005/01/27 21:22:04  vsnyder
 ! Different interface to ReadPFAData
 !
