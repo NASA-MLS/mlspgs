@@ -364,6 +364,7 @@ contains
       use MLSMessageModule, only: MLSMessage,  MLSMSG_Allocate, MLSMSG_Error
       use MLSSignals_m, only: DisplaySignalName
       use MoreTree, only: StartErrorMessage
+use output_m, only: output
       use PFADatabase_m, only: FindPFA, PFAData
       use String_Table, only: Display_String
       use Tree, only: Source_Ref
@@ -381,6 +382,9 @@ contains
       do sb = s1, s2, 2
         sx = ( sb + 3 ) / 2
         do b = 1, size(fwdModelConf%beta_group)
+if ( .not. associated(fwdModelConf%beta_group) ) call output ( 'Beta_Group', advance='yes' )
+if ( .not. associated(fwdModelConf%channels) ) call output ( 'Channels', advance='yes' )
+if ( .not. associated(fwdModelConf%beta_group(b)%pfa(sx)%molecules) ) call output ( 'Molecules', advance='yes' )
           allocate ( fwdModelConf%beta_group(b)%pfa(sx)%data( &
             & size(fwdModelConf%channels), &
             & size(fwdModelConf%beta_group(b)%pfa(sx)%molecules)), stat=i )
@@ -689,10 +693,6 @@ contains
           if ( ier/= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
             & MLSMSG_Deallocate // 'Beta_group(b)%PFA(s)%data' )
         end if
-        call deallocate_test ( fwdModelConf%beta_group(b)%PFA(s)%molecules, &
-          & 'fwdModelConf%beta_group(b)%PFA(s)%molecules', moduleName )
-        call deallocate_test ( fwdModelConf%beta_group(b)%PFA(s)%ratio, &
-          & 'fwdModelConf%beta_group(b)%PFA(s)%ratio', moduleName )
       end do ! s
     end do ! b
 
@@ -1028,8 +1028,11 @@ contains
         call deallocate_test ( config%beta_group(b)%lbl(s)%cat_index, 'Cat_Index', moduleName )
         call deallocate_test ( config%beta_group(b)%lbl(s)%molecules, 'LBL Molecules', moduleName )
         call deallocate_test ( config%beta_group(b)%lbl(s)%ratio, 'LBL Ratio', moduleName )
+        call deallocate_test ( config%beta_group(b)%PFA(s)%molecules, 'PFA molecules', moduleName )
+        call deallocate_test ( config%beta_group(b)%PFA(s)%ratio, 'PFA %ratio', moduleName )
       end do ! s
     end do
+
     deallocate ( config%beta_group, stat=b )
     if ( b /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
       & MLSMSG_Deallocate // 'config%Beta_group' )
@@ -1260,6 +1263,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.73  2005/05/26 02:15:14  vsnyder
+! Use molecule.signal.sideband.channel structure for PFA
+!
 ! Revision 2.72  2005/05/24 01:54:35  vsnyder
 ! Delete unused symbols
 !
