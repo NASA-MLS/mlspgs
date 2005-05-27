@@ -78,7 +78,7 @@ contains ! =====     Public Procedures     =============================
       & Open_Pointing_Grid_File, Read_Pointing_Grid_File
     use Toggles, only: Gen, Levels, Toggle
     use Trace_M, only: Trace_begin, Trace_end
-    use Tree, only: Nsons, Sub_Rosa, Subtree
+    use Tree, only: Nsons, Source_Ref, Sub_Rosa, Subtree
 
     integer, intent(in) :: Root         ! of the forwardModel specification.
     !                                     Indexes a "spec_args" vertex.
@@ -996,7 +996,7 @@ o:      do j = 2, nsons(PFATrees(s))
     use MoreTree, only: StartErrorMessage
     use Output_M, only: Output
     use String_Table, only: Display_String
-    use Tree, only: Decoration, Source_Ref
+    use Tree, only: Decoration
 
     integer, intent(in) :: Code       ! Index of error message
     integer, intent(in) :: where      ! Where in the tree did the error occur?
@@ -1104,6 +1104,9 @@ o:      do j = 2, nsons(PFATrees(s))
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.112  2005/05/27 17:56:07  vsnyder
+! Access Source_Ref in the right place
+!
 ! Revision 2.111  2005/05/26 22:35:48  vsnyder
 ! Add PFAFiles field to ForwardModelGlobal
 !
