@@ -130,7 +130,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_FILLDIAGONAL       = s_fillcovariance + 1
   integer, parameter :: S_FLAGCLOUD          = s_filldiagonal + 1
   integer, parameter :: S_FLUSHL2PCBINS      = s_flagCloud + 1
-  integer, parameter :: S_FORGE              = s_flushL2PCBins + 1
+  integer, parameter :: S_FLUSHPFA           = s_flushL2PCBins + 1
+  integer, parameter :: S_FORGE              = s_flushPFA + 1
   integer, parameter :: S_FORWARDMODEL       = s_forge + 1
   integer, parameter :: S_FORWARDMODELGLOBAL = s_forwardModel + 1
   integer, parameter :: S_FREQUENCYGRID      = s_forwardModelGlobal + 1
@@ -337,6 +338,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_fillDiagonal)   =       add_ident ( 'fillDiagonal' )
     spec_indices(s_flagCloud) =            add_ident ( 'flagCloud' )
     spec_indices(s_flushL2PCBins) =        add_ident ( 'flushL2PCBins' )
+    spec_indices(s_flushPFA) =             add_ident ( 'flushPFA' )
     spec_indices(s_forge) =                add_ident ( 'forge' )
     spec_indices(s_forwardModel) =         add_ident ( 'forwardModel' )
     spec_indices(s_forwardModelGlobal) =   add_ident ( 'forwardModelGlobal' )
@@ -670,7 +672,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_allPFA, t+t_boolean, n+n_field_type, &
              begin, f+f_file, t+t_string, nr+n_field_type, &
              begin, f+f_pfaData, s+s_pfaData, s+s_makePFA, n+n_field_spec, &
-             ndp+n_spec_def /) )
+             ndp+n_spec_def, &
+      begin, s+s_flushPFA, ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_phase, & ! Ignores rest of stuff
              begin, f+f_comment, t+t_string, n+n_field_type, &
@@ -1308,13 +1311,13 @@ contains ! =====     Public procedures     =============================
              n+n_section, &
       begin, z+z_fill, &
              s+s_destroy, s+s_dump, s+s_fill, s+s_fillCovariance, &
-             s+s_fillDiagonal, s+s_flagcloud, s+s_flushL2PCBins, s+s_load, s+s_matrix, &
-             s+s_negativePrecision, s+s_phase, s+s_populateL2PCBin, s+s_restrictRange, &
-             s+s_snoop, s+s_subset, s+s_time, s+s_transfer, s+s_updateMask, &
-             s+s_vector, n+n_section, &
-      begin, z+z_retrieve, s+s_dump, s+s_dumpBlocks, s+s_matrix, s+s_retrieve, &
-                           s+s_sids, s+s_snoop, s+s_subset, s+s_flagCloud, s+s_time, &
-                           s+s_restrictRange, s+s_updateMask, n+n_section, &
+             s+s_fillDiagonal, s+s_flagcloud, s+s_flushL2PCBins, s+s_flushPFA, &
+             s+s_load, s+s_matrix, s+s_negativePrecision, s+s_phase, &
+             s+s_populateL2PCBin, s+s_restrictRange, s+s_snoop, s+s_subset, &
+             s+s_time, s+s_transfer, s+s_updateMask, s+s_vector, n+n_section, &
+      begin, z+z_retrieve, s+s_dump, s+s_dumpBlocks, s+s_flagCloud, s+s_flushPFA, &
+             s+s_matrix, s+s_restrictRange, s+s_retrieve, s+s_sids, s+s_snoop, &
+             s+s_subset, s+s_time, s+s_updateMask, n+n_section, &
       begin, z+z_join, s+s_time, s+s_label, s+s_l2gp, s+s_l2aux, &
                        s+s_directWrite, n+n_section, &
       begin, z+z_algebra, s+s_columnScale, s+s_combineChannels, s+s_cyclicJacobi, &
@@ -1336,6 +1339,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.401  2005/05/27 23:57:03  vsnyder
+! Add Flush PFAData
+!
 ! Revision 2.400  2005/05/26 22:35:48  vsnyder
 ! Add PFAFiles field to ForwardModelGlobal
 !
