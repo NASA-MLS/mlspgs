@@ -60,8 +60,9 @@ contains
       & L_highcloud, L_Jacobian_Cols, L_Jacobian_Rows, &
       & L_lowcloud, L_newtonian, L_none, L_norm, &
       & L_numJ, &
-      & S_dump, S_dumpBlocks, S_flagCloud, S_matrix, S_retrieve, S_sids, &
-      & S_snoop, S_subset, S_time, S_RESTRICTRANGE, S_UPDATEMASK
+      & S_dump, S_dumpBlocks, S_flagCloud, S_flushPFA, S_matrix, &
+      & S_restrictRange, S_retrieve, S_sids, S_snoop, S_subset, S_time, &
+      & S_updateMask
     use Intrinsic, only: PHYQ_Dimensionless
     use L2ParInfo, only: PARALLEL
     use MatrixModule_1, only: AddToMatrixDatabase, CopyMatrix, CreateEmptyMatrix, &
@@ -75,6 +76,7 @@ contains
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
     use Output_m, only: BLANKS, OUTPUT
+    use PFAData_m, only: Flush_PFAData
     use SidsModule, only: SIDS
     use SnoopMLSL2, only: SNOOP
     use String_Table, only: Display_String, Get_String
@@ -175,6 +177,7 @@ contains
     integer, dimension(:), pointer :: SparseQuantities ! Which jacobian blocks to sparsify
     integer :: Spec                     ! s_matrix, s_subset or s_retrieve ... 
     type(vector_T), pointer :: State    ! The state vector
+    integer :: Status
     real :: T0, T1, T2, T3              ! for timing
     type(matrix_T) :: Tikhonov          ! Matrix for Tikhonov regularization
     logical :: TikhonovApriori          ! Regularization is to aproiri, not
@@ -275,53 +278,27 @@ contains
           & vectors=vectorDatabase )
       case ( s_dumpblocks )
         call DumpBlocks ( key, matrixDatabase )
-      case ( s_matrix )
-        if ( toggle(gen) ) call trace_begin ( "Retrieve.matrix/vector", root )
-        if ( nsons(key) /= 1 ) call announceError ( noFields, spec )
-        call destroyMatrix( matrixDatabase(decoration(key)) ) ! avoids a memory leak
-        call decorate ( key, 0 )
-        if ( toggle(gen) ) call trace_end ( "Retrieve.matrix/vector" )
-      case ( s_snoop )
-        snoopKey = key
-        do i_key = 2, nsons(key)
-          son = subtree(i_key, key)
-          field = get_field_id(son)  ! tree_checker prevents duplicates
-          select case ( field )
-          case ( f_comment )
-            call get_string ( sub_rosa(subtree(2,son)), snoopComment, strip=.true. )
-          case ( f_phaseName )
-            call get_string ( sub_rosa(subtree(2,son)), phaseName, strip=.true. )
-          case ( f_level )
-            call expr ( subtree(2,son), units, value, type )
-            if ( units(1) /= phyq_dimensionless ) &
-              & call announceError ( wrongUnits, field, string='no' )
-            snoopLevel = nint(value(1))
-          end select
-        end do
-      case ( s_subset )
-        if ( toggle(gen) .and. levels(gen) > 0 ) &
-          & call trace_begin ( "Retrieve.subset", root )
-        call SetupSubset ( key, vectorDatabase )
-        if ( toggle(gen) .and. levels(gen) > 0 ) &
-          & call trace_end ( "Retrieve.subset" )
-      case ( s_restrictRange )
-        if ( toggle(gen) .and. levels(gen) > 0 ) &
-          & call trace_begin ( "Retrieve.RestrictRange", root )
-        call RestrictRange ( key, vectorDatabase )
-        if ( toggle(gen) .and. levels(gen) > 0 ) &
-          & call trace_end ( "Retrieve.RestrictRange" )
       case ( s_flagCloud )
         if ( toggle(gen) .and. levels(gen) > 0 ) &
           & call trace_begin ( "Retrieve.flagCloud", root )
         call SetupflagCloud ( key, vectorDatabase )
         if ( toggle(gen) .and. levels(gen) > 0 ) &
           & call trace_end ( "Retrieve.flagCloud" )
-      case ( s_updateMask )
+      case ( s_flushPFA )
+        call flush_PFAData ( key, status )
+        error = max(error,status)
+      case ( s_matrix )
+        if ( toggle(gen) ) call trace_begin ( "Retrieve.matrix/vector", root )
+        if ( nsons(key) /= 1 ) call announceError ( noFields, spec )
+        call destroyMatrix( matrixDatabase(decoration(key)) ) ! avoids a memory leak
+        call decorate ( key, 0 )
+        if ( toggle(gen) ) call trace_end ( "Retrieve.matrix/vector" )
+      case ( s_restrictRange )
         if ( toggle(gen) .and. levels(gen) > 0 ) &
-          & call trace_begin ( "Retrieve.UpdateMask", root )
-        call UpdateMask ( key, vectorDatabase )
+          & call trace_begin ( "Retrieve.RestrictRange", root )
+        call RestrictRange ( key, vectorDatabase )
         if ( toggle(gen) .and. levels(gen) > 0 ) &
-          & call trace_end ( "Retrieve.UpdateMask" )
+          & call trace_end ( "Retrieve.RestrictRange" )
       case ( s_retrieve )
         if ( SKIPRETRIEVAL ) cycle
         if ( toggle(gen) ) call trace_begin ( "Retrieve.retrieve", root )
@@ -614,6 +591,29 @@ contains
         if ( SKIPRETRIEVAL ) cycle
         call time_now ( t1 )
         call sids ( key, VectorDatabase, MatrixDatabase, configDatabase, chunk)
+      case ( s_snoop )
+        snoopKey = key
+        do i_key = 2, nsons(key)
+          son = subtree(i_key, key)
+          field = get_field_id(son)  ! tree_checker prevents duplicates
+          select case ( field )
+          case ( f_comment )
+            call get_string ( sub_rosa(subtree(2,son)), snoopComment, strip=.true. )
+          case ( f_phaseName )
+            call get_string ( sub_rosa(subtree(2,son)), phaseName, strip=.true. )
+          case ( f_level )
+            call expr ( subtree(2,son), units, value, type )
+            if ( units(1) /= phyq_dimensionless ) &
+              & call announceError ( wrongUnits, field, string='no' )
+            snoopLevel = nint(value(1))
+          end select
+        end do
+      case ( s_subset )
+        if ( toggle(gen) .and. levels(gen) > 0 ) &
+          & call trace_begin ( "Retrieve.subset", root )
+        call SetupSubset ( key, vectorDatabase )
+        if ( toggle(gen) .and. levels(gen) > 0 ) &
+          & call trace_end ( "Retrieve.subset" )
       case ( s_time )
         if ( timing ) then
           call sayTime
@@ -621,6 +621,12 @@ contains
           call time_now ( t1 )
           timing = .true.
         end if
+      case ( s_updateMask )
+        if ( toggle(gen) .and. levels(gen) > 0 ) &
+          & call trace_begin ( "Retrieve.UpdateMask", root )
+        call UpdateMask ( key, vectorDatabase )
+        if ( toggle(gen) .and. levels(gen) > 0 ) &
+          & call trace_end ( "Retrieve.UpdateMask" )
       end select
 
       do j = firstVec, lastVec
@@ -2288,6 +2294,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.262  2005/05/27 23:57:03  vsnyder
+! Add Flush PFAData
+!
 ! Revision 2.261  2005/03/15 01:27:58  vsnyder
 ! Allow Dump command in Retrieve section
 !
