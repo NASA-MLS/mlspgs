@@ -983,6 +983,8 @@ contains ! ===================================== Public Procedures =====
       ! Eventually the ChunkDivide command will be free floating, in the meantime
       ! find it within the section
       ! WE CAN GET RID OF THIS BIT WHEN THE COMMAND FLOATS FREE LATER
+      if ( nsons(sectionRoot) <= 2 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+        & 'ChunkDivide section cannot be empty' )
       do i = 2, nsons(sectionRoot)-1      ! Skip the begin/end section
         root = subtree(i,sectionRoot)
         if ( node_id(root) /= n_named ) cycle
@@ -2208,6 +2210,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.58  2005/05/27 19:53:43  vsnyder
+! Produce meaningful error message instead of crash for empty section
+!
 ! Revision 2.57  2004/12/14 21:43:33  pwagner
 ! Repaired bug in reading mafRange rather than all mafs
 !
