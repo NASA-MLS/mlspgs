@@ -84,7 +84,7 @@ contains ! =====     Public Procedures     =============================
     use INIT_TABLES_MODULE, only: L_ADDNOISE, L_APPLYBASELINE, L_ASCIIFILE, &
       & L_BINMAX, L_BINMEAN, L_BINMIN, L_BINTOTAL, &
       & L_BOUNDARYPRESSURE, L_BOXCAR, L_CHISQBINNED, L_CHISQCHAN, &
-      & L_CHANNEL, L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, &
+      & L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, &
       & L_cloudice, L_cloudextinction, L_cloudInducedRADIANCE, &
       & L_COMBINECHANNELS, L_COLUMNABUNDANCE, &
       & L_ECRTOFOV, L_ESTIMATEDNOISE, L_EXPLICIT, L_EXTRACTCHANNEL, L_FOLD, &
@@ -111,7 +111,7 @@ contains ! =====     Public Procedures     =============================
       & L_XYZ, L_ZETA
     ! Now the specifications:
     use INIT_TABLES_MODULE, only: S_LOAD, S_DESTROY, S_DUMP, S_FILL, S_FILLCOVARIANCE, &
-      & S_FILLDIAGONAL, S_FLUSHL2PCBINS, S_MATRIX,  S_NEGATIVEPRECISION, &
+      & S_FILLDIAGONAL, S_FLUSHL2PCBINS, S_FLUSHPFA, S_MATRIX,  S_NEGATIVEPRECISION, &
       & S_PHASE, S_POPULATEL2PCBIN, S_SNOOP, S_TIME, &
       & S_TRANSFER, S_VECTOR, S_SUBSET, S_FLAGCLOUD, S_RESTRICTRANGE, S_UPDATEMASK
     ! Now some arrays
@@ -153,6 +153,7 @@ contains ! =====     Public Procedures     =============================
     use Molecules, only: L_H2O
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
     use OUTPUT_M, only: BLANKS, OUTPUT
+    use PFAData_m, only: Flush_PFAData
     use QuantityTemplates, only: Epoch, QuantityTemplate_T
     use RHIFromH2O, only: RHIFromH2O_Factor, RHIPrecFromH2O
     use ScanModelModule, only: GetBasisGPH, Get2DHydrostaticTangentPressure, GetGPHPrecision
@@ -596,6 +597,13 @@ contains ! =====     Public Procedures     =============================
         ! That's the end of the create operation
 
       case ( s_dump ) ! ============================== Dump ==========
+        ! Handle disassociated pointers by allocating them with zero size
+        status = 0
+        if ( .not. associated(qtyTemplates) ) allocate ( qtyTemplates(0), stat=status )
+        if ( .not. associated(vectorTemplates) ) allocate ( vectorTemplates(0), stat=status )
+        if ( .not. associated(vectors) ) allocate ( vectors(0), stat=status )
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+          & MLSMSG_Allocate // 'one of QtyTemplates, VectorTemplates or Vectors' )
         call dumpCommand ( key, qtyTemplates, vectorTemplates, vectors )
 
       case ( s_matrix ) ! ===============================  Matrix  =====
@@ -660,6 +668,10 @@ contains ! =====     Public Procedures     =============================
 
       case ( s_flushL2PCBins )
         call FlushLockedBins
+
+      case ( s_flushPFA )
+        call flush_PFAData ( key, status )
+        error = max(error,status)
 
       case ( s_load )
         got = .false.
@@ -6838,6 +6850,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.300  2005/05/27 20:03:06  vsnyder
+! Dissassociated -> zero size before dump
+!
 ! Revision 2.299  2005/03/24 21:23:46  pwagner
 ! Removed buggy, unused FillColAbundance
 !
