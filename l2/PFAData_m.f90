@@ -1,15 +1,24 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
 module PFAData_m
 
   ! Read the PFA data file(s).  Build a database.  Provide for access to it.
   ! Setup to make the PFA Data tables, as specified by a MakePFA statement.
   ! Write PFA data file(s).  Add PFA tables weighted by isotope ratios.
+  ! Flush the PFA database.
 
   implicit NONE
   private
-  public :: Get_PFAdata_from_l2cf, Make_PFAData
+  public :: Flush_PFAData, Get_PFAdata_from_l2cf, Make_PFAData
   public :: Read_PFAData, Write_PFAData
 
 !---------------------------- RCS Ident Info -------------------------------
@@ -22,6 +31,24 @@ module PFAData_m
 !---------------------------------------------------------------------------
 
 contains ! =====     Public Procedures     =============================
+
+  ! ----------------------------------------------  Flush_PFAData  -----
+  subroutine Flush_PFAData ( Root, Error )
+  ! Flush data (absorption and derivatives) from the PFA database.
+  ! Keep enough information to read it from HDF files if it's needed again.
+  ! For now, flush the entire database.  Someday, we may want to add the
+  ! capability to flush selectively by signals, molecules, or the Cartesian
+  ! product.
+
+    use PFADataBase_m, only: Flush_PFADatabase
+
+    integer, intent(in) :: Root            ! of the pfaData subtree in the l2cf
+    integer, intent(out) :: Error          ! 0 => OK, else trouble
+
+    ! For now, just flush everything
+    call Flush_PFADatabase ( null(), null(), error )
+
+  end subroutine Flush_PFAData
 
   ! --------------------------------------  Get_PDAdata_from_l2cf  -----
   subroutine Get_PFAdata_from_l2cf ( Root, Name, VGrids, Error )
@@ -444,7 +471,7 @@ contains ! =====     Public Procedures     =============================
     use PFADataBase_m, only: PFAData, Read_PFADatabase
     use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
     use MLSStrings, only: Capitalize
-    use MoreTree, only: FillSubrosaArray, Get_Field_ID
+    use MoreTree, only: FillDecorArray, FillSubrosaArray, Get_Field_ID
     use String_Table, only: Get_String
     use Tree, only: Decorate, Node_Id, NSons, Source_Ref, Sub_Rosa, Subtree
     use Tree_Types, only: N_String
@@ -481,7 +508,7 @@ contains ! =====     Public Procedures     =============================
         end if
         fileName = sub_rosa(j)
       case ( f_molecules )
-        error = max(error,fillSubrosaArray ( son, molecules, 'Molecules' ))
+        error = max(error,fillDecorArray ( son, molecules, 'Molecules' ))
       case ( f_signals )
         error = max(error,fillSubrosaArray ( son, signals, 'Signals' ))
       end select
@@ -616,6 +643,9 @@ contains ! =====     Public Procedures     =============================
 end module PFAData_m
 
 ! $Log$
+! Revision 2.20  2005/05/27 23:57:03  vsnyder
+! Add Flush PFAData
+!
 ! Revision 2.19  2005/05/03 15:53:39  pwagner
 ! Consistent with changes to MLSSignals
 !
