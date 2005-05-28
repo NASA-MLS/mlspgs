@@ -5064,6 +5064,8 @@ contains ! =====     Public Procedures     =============================
     subroutine FillQuantityFromAsciiFile ( key, quantity, filename, badRange )
       use IO_stuff, only: GET_LUN
       use Machine, only: IO_Error
+      use MoreMessage, only: MLSMessage
+      use Tree, only: Source_Ref
       integer, intent(in) :: KEY        ! Tree node
       type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
       integer, intent(in) :: FILENAME   ! ASCII filename to read from
@@ -5081,17 +5083,20 @@ contains ! =====     Public Procedures     =============================
         & access='sequential', iostat=status )
       if ( status /= 0 ) then
         call io_Error ( "Unable to open ASCII input file ", status, filenameStr )
-        call MLSMessage( MLSMSG_Error, ModuleName, 'Error opening ASCII file' )
+        call MLSMessage( MLSMSG_Error, ModuleName, 'Error opening ASCII file at %l', &
+          & (/ source_ref(key) /) )
       end if
       read ( unit=lun, fmt=*, iostat=status ) quantity%values
       if ( status /= 0 ) then 
         call io_Error ( "Unable to read ASCII input file ", status, filenameStr )
-        call MLSMessage( MLSMSG_Error, ModuleName, 'Error reading ASCII file' )
+        call MLSMessage( MLSMSG_Error, ModuleName, 'Error reading ASCII file %l', &
+          & (/ source_ref(key) /) )
       end if
       close ( unit=lun, iostat=status )
       if ( status /= 0 ) then 
         call io_Error ( "Unable to close ASCII input file ", status, filenameStr )
-        call MLSMessage( MLSMSG_Error, ModuleName, 'Error closing ASCII file' )
+        call MLSMessage( MLSMSG_Error, ModuleName, 'Error closing ASCII file at %l', &
+          & (/ source_ref(key) /) )
       end if
       if ( present ( badRange ) ) then 
         if ( .not. associated ( quantity%mask ) ) call CreateMask ( quantity )
@@ -6850,6 +6855,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.301  2005/05/28 03:25:40  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.300  2005/05/27 20:03:06  vsnyder
 ! Dissassociated -> zero size before dump
 !
