@@ -1,5 +1,13 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
 !=============================================================================
 module ForwardModelConfig
@@ -403,22 +411,17 @@ contains
       end do ! sb
 
       ! Now look in the PFA_By_Molecule structure.
-      ! Maybe this one isn't necessary any more.
+      ! This is only for data created online instead of read from a file.
       if ( associated(pfaData) ) then
         call sort_PFADatabase ! Only does anything once
         do sb = s1, s2, 2
           sx = ( sb + 3 ) / 2
           do b = 1, size(fwdModelConf%beta_group)
-            allocate ( fwdModelConf%beta_group(b)%pfa(sx)%data( &
-              & size(fwdModelConf%channels), &
-              & size(fwdModelConf%beta_group(b)%pfa(sx)%molecules)), stat=i )
-            if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-              & MLSMSG_Allocate // 'Beta_group(b)%PFA(sx)%data' )
             do p = 1, size(fwdModelConf%beta_group(b)%pfa(sx)%molecules)
               do channel = 1, size(fwdModelConf%channels)
                 if ( .not. &
                   & associated(fwdModelConf%beta_group(b)%pfa(sx)%data(channel,p)%datum) ) then
-                  ! Search the other structure.  Maybe this one isn't necessary any more
+                  ! Search the other structure for PFA data created online
                   do i = PFA_by_molecule(fwdModelConf%beta_group(b)%pfa(sx)%molecules(p)-1)+1, &
                     &    PFA_by_molecule(fwdModelConf%beta_group(b)%pfa(sx)%molecules(p))
                     if ( matchSignal ( PFAData(sortPFAdata(i))%theSignal, &
@@ -431,22 +434,6 @@ contains
                 end if ! .not. associated....
               end do ! channel
             end do ! p
-            do p = 1, size(fwdModelConf%beta_group(b)%pfa(sx)%data,2)
-              do channel = 1, size(fwdModelConf%beta_group(b)%pfa(sx)%data,1)
-                if ( .not. associated(fwdModelConf%beta_group(b)%pfa(sx)%data(channel,p)%datum) ) then
-                  if ( source_ref(fwdModelConf%where) /= 0 ) &
-                  call startErrorMessage ( fwdModelConf%where )
-                  call display_string ( &
-                    & lit_indices(fwdModelConf%beta_group(b)%molecule), &
-                    & before=' PFA table not found for ' )
-                  call displaySignalName ( &
-                    & fwdModelConf%signals(fwdModelConf%channels(channel)%signal), &
-                    & advance='yes', before=' and ', sideband=sb, &
-                    & channel=fwdModelConf%channels(channel)%used )
-                  error = .true.
-                end if
-              end do ! channel
-            end do ! p (molecules)
           end do ! b
         end do ! sb
       end if ! associated(pfaData)
@@ -1259,6 +1246,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.75  2005/05/26 20:12:16  vsnyder
+! Delete some debugging code
+!
 ! Revision 2.74  2005/05/26 20:11:31  vsnyder
 ! Don't delete PFA molecules and ratio in DestroyForwardModelDerived
 !
