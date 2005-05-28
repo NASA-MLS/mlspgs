@@ -1,4 +1,4 @@
-! Copyright (c) 2005, by the California Institute of Technology. ALL
+! Copyright 2005, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
 ! at the California Institute of Technology.
@@ -643,6 +643,9 @@ contains ! =====     Public Procedures     =============================
 end module PFAData_m
 
 ! $Log$
+! Revision 2.21  2005/05/28 03:25:58  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.20  2005/05/27 23:57:03  vsnyder
 ! Add Flush PFAData
 !
