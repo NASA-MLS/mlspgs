@@ -76,6 +76,8 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! SplitWords (char *line, char* first, char* rest, [char* last], &
 !       & [log threeWay], [char* delimiter])
 ! log streq (char* str1, char* str2, [char* options])
+! log streq (char* str1(:), char* str2, [char* options])
+! log streq (char* str1, char* str2(:), [char* options])
 ! strings2Ints (char* strs(:), int ints(:,:))
 ! char* trim_safe (char* str)
 ! writeIntsToChars (int ints(:), char* strs(:))
@@ -123,6 +125,10 @@ MODULE MLSStrings               ! Some low level string handling stuff
 
   interface readIntsFromChars
     module procedure readAnIntFromChars, readIntArrayFromChars
+  end interface
+
+  interface streq
+    module procedure streq_scalar, streq_array1, streq_array2
   end interface
 
   interface writeIntsToChars
@@ -1060,7 +1066,7 @@ contains
   end function reFormatTime
 
    ! --------------------------------------------------  Reverse  -----
-  FUNCTION Reverse (str) RESULT (outstr)
+  elemental function Reverse (str) RESULT (outstr)
     ! takes a string and returns one with chars in reversed order
 	 ! Useful in certain contexts:
 	 ! e.g., to remove leading blanks
@@ -1092,10 +1098,10 @@ contains
         outstr(istr:istr) = str(istr:istr)
 	ENDIF
 
-  END FUNCTION Reverse
+  end function Reverse
 
    ! --------------------------------------------------  Reverse_trim  -----
-  FUNCTION Reverse_trim (str) RESULT (outstr)
+  function Reverse_trim (str) RESULT (outstr)
     ! takes a string, trims it then returns one with chars in reversed order
 	 ! See also Reverse which omits the trim step
     !
@@ -1126,7 +1132,7 @@ contains
         outstr(istr:istr) = str(istr:istr)
 	ENDIF
 
-  END FUNCTION Reverse_trim
+  end function Reverse_trim
 
   ! -------------------------------------------------  SplitWords  -----
 
@@ -1215,8 +1221,75 @@ contains
 
   END SUBROUTINE SplitWords
        
-  ! -------------------------------------------------  streq  -----
-  function streq (STR1, STR2, OPTIONS) result (relation)
+  ! -------------------------------------------------  streq_array1  -----
+  function streq_array1 (STR1, STR2, OPTIONS) result (relation)
+    ! Array version of streq
+    ! May return multiple TRUEs (except see 's', 'l' options)
+    ! Extra options
+    ! 'p' is partial match (STR2 is replaced by '*' // STR2 // '*'
+    ! 's' returns TRUE only in element corresponding to shortest STR1
+    ! 'l' returns TRUE only in element corresponding to longest STR1
+    use MLSSets, only: findFirst
+    character (len=*), dimension(:), intent(in) :: STR1
+    character (len=*), intent(in)               :: STR2
+    character (len=*), intent(in), optional     :: OPTIONS
+    logical, dimension(size(STR1))              :: RELATION
+    ! Internal variables
+    integer :: candidate
+    integer :: candidateLength
+    integer :: i
+    integer, dimension(size(STR1))              :: lengths
+    character(len=8) :: myOptions
+    character(len=len(str2)+2) :: mystr2
+    ! Executable
+    myOptions = ''
+    if ( present(options) ) myOptions = lowercase(options)
+    mystr2 = str2
+    if ( index(myOptions, 'p') > 0 ) mystr2 = '*' // trim_safe(str2) // '*'
+    do i=1, size(str1)
+      relation(i) = streq(str1(i), mystr2, OPTIONS)
+    enddo
+    if ( .not. present(options) .or. count(relation) < 2 ) return
+    lengths = len_trim(str1)
+    if ( index(myOptions, 's') > 0 ) then
+      candidate = findFirst(relation)
+      candidateLength = lengths(candidate)
+      do i=1, size(str1)
+        if ( relation(i) .and. lengths(i) < candidateLength ) then
+          candidate = i
+          candidateLength = lengths(candidate)
+        endif
+      enddo
+      relation = .false.
+      relation(candidate) = .true.
+    elseif ( index(myOptions, 'l') > 0 ) then
+      candidate = findFirst(relation)
+      candidateLength = lengths(candidate)
+      do i=1, size(str1)
+        if ( relation(i) .and. lengths(i) > candidateLength ) then
+          candidate = i
+          candidateLength = lengths(candidate)
+        endif
+      enddo
+      relation = .false.
+      relation(candidate) = .true.
+    endif
+  end function streq_array1
+
+  ! -------------------------------------------------  streq_array2  -----
+  function streq_array2 (STR1, STR2, OPTIONS) result (relation)
+    ! Array version of streq
+    ! (see streq_array1)
+    ! Here str2 is array, not str1
+    character (len=*), dimension(:), intent(in) :: STR2
+    character (len=*), intent(in)               :: STR1
+    character (len=*), intent(in), optional     :: OPTIONS
+    logical, dimension(size(STR2))              :: RELATION
+    relation = streq_array1(str2, str1, options)
+  end function streq_array2
+
+  ! -------------------------------------------------  streq_scalar  -----
+  function streq_scalar (STR1, STR2, OPTIONS) result (relation)
     ! Are two strings "equal" where equality is modified by
     ! (1) Wildcard * (off by default) which allows 'a*' to equal 'abcd'
     ! (2) case insensitive (off by default) which allows 'ABCD' to equal 'abcd'
@@ -1245,7 +1318,7 @@ contains
     integer :: i
     logical :: ignorecase
     integer, dimension(MAXNUMWILDCARDS) :: istars
-    character(len=4) :: myOptions
+    character(len=8) :: myOptions
     integer :: nstars
     integer :: spos
     character(len=max(len(str1), len(str2))) :: str
@@ -1364,7 +1437,7 @@ contains
     istars(1:nstars-1) = indexes(str, substrs(2:nstars), mode='wrap')
     ! What we want to do is to check that no istars < 1
     relation = all ( istars(1:nstars-1) > 0 )
-  end function streq
+  end function streq_scalar
 
   ! --------------------------------------------------  strings2Ints  -----
   SUBROUTINE strings2Ints (strs, ints)
@@ -1626,7 +1699,7 @@ contains
   end function lastchar
 
   ! ---------------------------------------------------  firstsubstr  -----
-  function firstsubstr(str, star) result(substr)
+  elemental function firstsubstr(str, star) result(substr)
     character(len=*), intent(in) :: str
     character(len=1), intent(in) :: star
     character(len=len(str)) :: substr
@@ -1654,6 +1727,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.55  2005/05/31 17:46:01  pwagner
+! Added array  interfaces for streq
+!
 ! Revision 2.54  2005/04/12 17:34:53  pwagner
 ! isRepeat, streq, ncopies, reverse_trim, scalar versions of read/write intchar
 !
