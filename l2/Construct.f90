@@ -26,7 +26,8 @@ MODULE Construct                ! The construct module for the MLS L2 sw.
 contains ! =====     Public Procedures     =============================
 
   ! --------------------------------------------- ConstructMIFGeolocation --
-  subroutine ConstructMIFGeolocation ( mifGeolocation, l1bInfo, chunk )
+  ! subroutine ConstructMIFGeolocation ( mifGeolocation, l1bInfo, chunk )
+  subroutine ConstructMIFGeolocation ( mifGeolocation, filedatabase, chunk )
     ! mifGeolocation is just quantity templates containing geolocation
     ! information for the GHz and THz modules.  The software can then
     ! point to these for geolocation information for all minor frame
@@ -34,12 +35,13 @@ contains ! =====     Public Procedures     =============================
     use Chunks_m, only: MLSCHUNK_T
     use ConstructQuantityTemplates, only: ConstructMinorFrameQuantity
     use QuantityTemplates, only: QUANTITYTEMPLATE_T
-    use MLSCommon, only: L1BINFO_T
+    use MLSCommon, only: L1BINFO_T, MLSFile_T
     use MLSSignals_m, only: MODULES
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
 
     type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
-    type (L1BInfo_T), intent(in) :: l1bInfo
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    ! type (L1BInfo_T), intent(in) :: L1BINFO
     type (MLSChunk_T), intent(in) :: chunk
     
     ! Local variables
@@ -54,9 +56,9 @@ contains ! =====     Public Procedures     =============================
         & MLSMSG_Allocate//"mifGeolocation" )
     
       ! Now try to fill it if we have any L1BFiles
-      if (l1bInfo%l1boaID /= 0 ) then
+      if (associated(filedatabase) ) then
         do instrumentModuleIndex = 1, size(modules)
-          call ConstructMinorFrameQuantity ( l1bInfo, chunk, &
+          call ConstructMinorFrameQuantity ( filedatabase, chunk, &
             & instrumentModuleIndex, mifGeolocation(instrumentModuleIndex) )
         end do
       else
@@ -67,7 +69,8 @@ contains ! =====     Public Procedures     =============================
   end subroutine ConstructMIFGeolocation
 
   ! ---------------------------------------------  MLSL2Construct  -----
-  subroutine MLSL2Construct ( root, l1bInfo, processingRange, chunk, &
+  ! subroutine MLSL2Construct ( root, l1bInfo, processingRange, chunk, &
+  subroutine MLSL2Construct ( root, filedatabase, processingRange, chunk, &
        & quantityTemplatesBase, vectorTemplates, FGrids, VGrids, HGrids, &
        & l2gpDatabase, ForwardModelConfigDatabase, mifGeolocation )
 
@@ -87,7 +90,7 @@ contains ! =====     Public Procedures     =============================
     use INIT_TABLES_MODULE, only: S_DUMP, S_FORGE, S_FORWARDMODEL, S_HGRID, &
       & S_PHASE, S_QUANTITY, S_TIME, S_VECTORTEMPLATE
     use L2GPData, only: L2GPDATA_T
-    use MLSCommon, only: L1BInfo_T, TAI93_Range_T
+    use MLSCommon, only: MLSFile_T, TAI93_Range_T
     use MLSL2Options, only: RESTARTWARNINGS
     use MLSMessageModule, only: MLSMessageReset
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, add_to_phase_timing
@@ -108,7 +111,8 @@ contains ! =====     Public Procedures     =============================
 
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Root of the tree for the Construct section
-    type (L1BInfo_T), intent(in) :: l1bInfo
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    ! type (L1BInfo_T), intent(in) :: L1BINFO
     type (TAI93_Range_T), intent(in) :: processingRange
     type (MLSChunk_T), intent(in) :: chunk
     type (QuantityTemplate_T), dimension(:), pointer :: quantityTemplatesBase
@@ -137,7 +141,7 @@ contains ! =====     Public Procedures     =============================
     if ( toggle(gen) ) call trace_begin ( "MLSL2Construct", root )
 
     ! First we're going to setup our mifGeolocation quantityTemplates.
-    call ConstructMIFGeolocation ( mifGeolocation, l1bInfo, chunk )
+    call ConstructMIFGeolocation ( mifGeolocation, filedatabase, chunk )
 
     ! The rest is fairly simple really.  We just loop over the mlscf 
     ! instructions and hand them off to people
@@ -167,7 +171,7 @@ contains ! =====     Public Procedures     =============================
           & ConstructForwardModelConfig ( name, key, vGrids, .false. ) ) )
       case ( s_hgrid )
         call decorate ( key, AddHGridToDatabase ( hGrids, &
-          & CreateHGridFromMLSCFInfo ( name, key, l1bInfo, l2gpDatabase, &
+          & CreateHGridFromMLSCFInfo ( name, key, filedatabase, l2gpDatabase, &
           & processingRange, chunk ) ) )
       case ( s_phase )
         call get_string(name, phaseString)
@@ -176,7 +180,8 @@ contains ! =====     Public Procedures     =============================
       case ( s_quantity )
         call decorate ( key, AddQuantityTemplateToDatabase ( &
           & quantityTemplatesBase, CreateQtyTemplateFromMLSCfInfo ( name, key, &
-            & fGrids, vGrids, hGrids, l1bInfo, chunk, mifGeolocation ) ) )
+            & fGrids, vGrids, hGrids, filedatabase, chunk, mifGeolocation ) ) )
+            ! & fGrids, vGrids, hGrids, l1bInfo, chunk, mifGeolocation ) ) )
       case ( s_vectortemplate )
         call decorate ( key, AddVectorTemplateToDatabase ( vectorTemplates, &
           & CreateVecTemplateFromMLSCfInfo ( name, key, quantityTemplatesBase ) ) )
@@ -241,6 +246,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.51  2005/05/31 17:51:16  pwagner
+! Began switch from passing file handles to passing MLSFiles
+!
 ! Revision 2.50  2005/03/12 00:50:27  pwagner
 ! May restart warnings counter at each phase
 !
