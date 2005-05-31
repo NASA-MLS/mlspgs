@@ -45,7 +45,8 @@ module GLOBAL_SETTINGS
 contains
 
   subroutine SET_GLOBAL_SETTINGS ( ROOT, ForwardModelConfigDatabase, &
-    & FGrids, VGrids, l2gpDatabase, DirectDatabase, processingRange, l1bInfo )
+    & FGrids, VGrids, l2gpDatabase, DirectDatabase, processingRange, filedatabase )
+    ! & FGrids, VGrids, l2gpDatabase, DirectDatabase, processingRange, l1bInfo )
 
     use DirectWrite_m, only: DirectData_T, &
       & AddDirectToDatabase, Dump, SetupNewDirect
@@ -73,9 +74,10 @@ contains
     use L2GPData, only: L2GPDATA_T
     use L2ParInfo, only: parallel
     use L2PC_M, only: AddBinSelectorToDatabase, BinSelectors
-    use MLSCommon, only: R8, FileNameLen, NameLen, L1BInfo_T, TAI93_Range_T
+    use MLSCommon, only: R8, FileNameLen, MLSFile_T, NameLen, &
+      & TAI93_Range_T
     use MLSFiles, only: FILENOTFOUND, &
-      & GetPCFromRef, mls_hdf_version, split_path_name
+      & GetPCFromRef, GetMLSFileByType, split_path_name
     use MLSL2Options, only: ILLEGALL1BRADID, LEVEL1_HDFVERSION, &
       & MAXNUML1BRADIDS, STOPAFTERGLOBAL, STOPAFTERCHUNKDIVIDE, Toolkit
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
@@ -113,7 +115,8 @@ contains
     type ( l2gpData_T), dimension(:), pointer :: L2GPDATABASE
     type (DirectData_T), dimension(:), pointer :: DirectDatabase
     type (TAI93_Range_T) :: processingRange ! Data processing range
-    type (L1BInfo_T) :: l1bInfo    ! File handles etc. for L1B dataset
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    ! type (L1BInfo_T) :: l1bInfo    ! File handles etc. for L1B dataset
     type (L1BData_T) :: l1bField   ! L1B data
     ! type (PCFData_T) :: l2pcf
 
@@ -146,6 +149,7 @@ contains
     character(len=Name_Len) :: l1bItemName
     integer :: OrbNum(max_orbits)
     real(r8) :: OrbPeriod(max_orbits)
+    type(MLSFile_T), pointer :: L1BFile
 
     timing = section_times
     if ( timing ) call time_now ( t1 )
@@ -308,22 +312,24 @@ contains
             & ConstructForwardModelConfig ( name, son, vGrids, .true. ) ) )
         case ( s_l1boa )
           the_hdf_version = LEVEL1_HDFVERSION
-          call l1boaSetup ( son, l1bInfo, F_FILE, hdfVersion=the_hdf_version )
+          ! call l1boaSetup ( son, l1bInfo, F_FILE, hdfVersion=the_hdf_version )
+          call l1boaSetup ( son, filedatabase, F_FILE, hdfVersion=the_hdf_version )
           if ( index(switches, 'pro') /= 0 ) then  
             sub_rosa_index = sub_rosa(subtree(2,subtree(2, son)))
             call get_string ( sub_rosa_index, FilenameString, strip=.true. )
             call proclaim(FilenameString, 'l1boa', &                   
             & hdfVersion=the_hdf_version) 
           end if
-          call ReadL1BAttribute (l1bInfo%l1boaID, OrbNum, 'OrbitNumber', &
-               & l1bFlag, hdfVersion=the_hdf_version)
+          L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
+          call ReadL1BAttribute (L1BFile, OrbNum, 'OrbitNumber', &
+               & l1bFlag)
                if ( l1bFlag == -1 ) then
                   GlobalAttributes%OrbNum = -1
                else
                   GlobalAttributes%OrbNum = OrbNum
                end if
-          call ReadL1BAttribute (l1bInfo%l1boaID, OrbPeriod, 'OrbitPeriod', &
-               & l1bFlag, hdfVersion=the_hdf_version)
+          call ReadL1BAttribute (L1BFile, OrbPeriod, 'OrbitPeriod', &
+               & l1bFlag)
                if ( l1bFlag == -1 ) then
                   GlobalAttributes%OrbPeriod = -1.0
                else
@@ -337,7 +343,8 @@ contains
             & just_a_warning = .true.)
         case ( s_l1brad )
           the_hdf_version = LEVEL1_HDFVERSION
-          call l1bradSetup ( son, l1bInfo, F_FILE, &
+          ! call l1bradSetup ( son, l1bInfo, F_FILE, &
+          call l1bradSetup ( son, filedatabase, F_FILE, &
             & MAXNUML1BRADIDS, ILLEGALL1BRADID, hdfVersion=the_hdf_version )
           if ( index(switches, 'pro') /= 0 ) then  
             sub_rosa_index = sub_rosa(subtree(2,subtree(2, son)))
@@ -389,12 +396,13 @@ contains
       end if
     end do
 
+    L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
     the_hdf_version = &
-      & mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
+      & L1BFile%HDFVersion
     if ( the_hdf_version == FILENOTFOUND ) then                                          
       call MLSMessage ( MLSMSG_Error, ModuleName, &                      
       & 'File not found; make sure the name and path are correct' &
-      & // trim(l1bInfo%L1BOAFileName) )
+      & // trim(L1BFile%Name) )
     else if ( the_hdf_version <= 0 ) then                                          
       call MLSMessage ( MLSMSG_Error, ModuleName, &                      
       & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )    
@@ -409,15 +417,15 @@ contains
      & ) then
 
       ! 1st--check that have L1BOA
-      if ( l1bInfo%L1BOAID == ILLEGALL1BRADID ) then
+      if ( L1BFile%FileID%f_id < 1 ) then
         call announce_error(son, &
           & 'L1BOA file required by global data--but not set')
       end if
 
       quantity = 'MAFStartTimeTAI'
       l1bItemName = AssembleL1BQtyName ( quantity, the_hdf_version, .false. )
-      call ReadL1BData ( l1bInfo%l1boaID, l1bItemName, l1bField, noMAFs, &
-        & l1bFlag, hdfVersion=the_hdf_version, dontPad=.true.)
+      call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
+        & l1bFlag, dontPad=.true.)
       if ( l1bFlag==-1 ) then
         call announce_error(son, &
           & 'unrecognized MAFStarttimeTAI in L1BOA file')
@@ -481,12 +489,11 @@ contains
       ! if gaps occur
       ! For now, just look for them in l1boa
       ! Later you may look also in l1brad files
-      GlobalAttributes%LastMAFCtr = FindMaxMAF ( (/l1bInfo%L1BOAID/), &
-        & the_hdf_version, &
+      GlobalAttributes%LastMAFCtr = FindMaxMAF ( (/L1BFile/), &
         & GlobalAttributes%FirstMAFCtr )
     end if
     if ( details > -4 ) &
-      & call dump_global_settings( processingRange, l1bInfo, DirectDatabase, &
+      & call dump_global_settings( processingRange, filedatabase, DirectDatabase, &
       & LeapSecFileName, details )
 
     if ( error /= 0 ) &
@@ -590,8 +597,9 @@ contains
     end subroutine Announce_Error
 
     ! ------------------------------------------  dump_global_settings  -----
-    subroutine dump_global_settings ( processingRange, l1bInfo, DirectDatabase, &
-      & LeapSecFileName, dumpL1BDetails )
+    ! subroutine dump_global_settings ( processingRange, l1bInfo, DirectDatabase, &
+    subroutine dump_global_settings ( processingRange, &
+      & filedatabase, DirectDatabase, LeapSecFileName, dumpL1BDetails )
 
       ! Dump info obtained during OpenAndInitialize and global_settings:
       ! L1B databse
@@ -601,10 +609,9 @@ contains
       ! cycle number
       ! logfile name
 
-      integer :: num_l1b_files = MAXNUML1BRADIDS
-
       ! Arguments
-      type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
+      type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+      ! type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
       ! type(PCFData_T) :: l2pcf
       type (TAI93_Range_T) :: processingRange ! Data processing range
       type (DirectData_T), dimension(:), pointer :: DirectDatabase
@@ -630,10 +637,11 @@ contains
       logical, parameter ::                   DUMPPRECISIONTOO = .true.
       integer ::  hdfVersion
       character(len=Name_Len) :: l1bItemName
+      type(MLSFile_T), pointer :: L1BFile
 
       ! Begin
-      hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), &
-        & LEVEL1_HDFVERSION)
+      L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
+      hdfVersion = L1BFile%HDFVersion
       if ( hdfversion <= 0 ) &                                          
         & call MLSMessage ( MLSMSG_Error, ModuleName, &                    
         & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )  
@@ -646,67 +654,58 @@ contains
 
       call output ( 'L1B database:', advance='yes' )
 
-     if ( associated(l1bInfo%L1BRADIDs) ) then
-      if ( num_l1b_files > 0 ) then
-        do i = 1, num_l1b_files
-        if ( l1bInfo%L1BRADIDs(i) /= ILLEGALL1BRADID ) then
-  	      call output ( 'fileid:   ' )
-              call output ( l1bInfo%L1BRADIDs(i), advance='yes' )
-         call output ( 'name:   ' )
-    	   call output ( TRIM(l1bInfo%L1BRADFileNames(i)), advance='yes' )
-         if ( myL1BDetails > -2 ) then
-           l1b_quant_name = BASE_QUANT_NAME
-           l1bItemName = AssembleL1BQtyName ( l1b_quant_name, hdfVersion, .false. )
-           call ReadL1BData ( l1bInfo%L1BRADIDs(i), l1bItemName, L1bData, &
-            & NoMAFs, IERR, NeverFail=.true., hdfVersion=hdfVersion )
-           if ( IERR == 0 ) then
-             call Dump(l1bData, myL1BDetails )
-             call DeallocateL1BData ( l1bData )
-           else
-             call output ( 'Error number  ' )
-             call output ( IERR )
-             call output ( ' while reading quantity named  ' )
-             call output ( trim(l1b_quant_name), advance='yes' )
+     ! if ( associated(l1bInfo%L1BRADIDs) ) then
+     ! if ( num_l1b_files > 0 ) then
+        do i = 1, size(filedatabase)
+        ! if ( l1bInfo%L1BRADIDs(i) /= ILLEGALL1BRADID ) then
+         L1BFile => filedatabase(i)
+         if ( L1BFile%content == 'l1brad' ) then
+  	        call output ( 'fileid:   ' )
+           call output ( L1BFile%FileID%f_id, advance='yes' )
+           call output ( 'name:   ' )
+    	     call output ( TRIM(L1BFile%name), advance='yes' )
+           if ( myL1BDetails > -2 ) then
+             l1b_quant_name = BASE_QUANT_NAME
+             l1bItemName = AssembleL1BQtyName ( l1b_quant_name, hdfVersion, .false. )
+             call ReadL1BData ( L1BFile, l1bItemName, L1bData, &
+              & NoMAFs, IERR, NeverFail=.true. )
+             if ( IERR == 0 ) then
+               call Dump(l1bData, myL1BDetails )
+               call DeallocateL1BData ( l1bData )
+             else
+               call output ( 'Error number  ' )
+               call output ( IERR )
+               call output ( ' while reading quantity named  ' )
+               call output ( trim(l1b_quant_name), advance='yes' )
+             end if
            end if
-         end if
-         if ( myL1BDetails > -2 .and. DUMPPRECISIONTOO ) then
-           l1b_quant_name = trim(BASE_QUANT_NAME) // PRECISIONSUFFIX
-           l1bItemName = AssembleL1BQtyName ( l1b_quant_name, hdfVersion, .false. )
-           call ReadL1BData ( l1bInfo%L1BRADIDs(i), l1bItemName, L1bData, &
-            & NoMAFs, IERR, NeverFail=.true., hdfVersion=hdfVersion )
-           if ( IERR == 0 ) then
-             call Dump(l1bData, myL1BDetails )
-             call DeallocateL1BData ( l1bData )
-           else
-             call output ( 'Error number  ' )
-             call output ( IERR )
-             call output ( ' while reading quantity named  ' )
-             call output ( trim(l1b_quant_name), advance='yes' )
+           if ( myL1BDetails > -2 .and. DUMPPRECISIONTOO ) then
+             l1b_quant_name = trim(BASE_QUANT_NAME) // PRECISIONSUFFIX
+             l1bItemName = AssembleL1BQtyName ( l1b_quant_name, hdfVersion, .false. )
+             call ReadL1BData ( L1BFile, l1bItemName, L1bData, &
+              & NoMAFs, IERR, NeverFail=.true. )
+             if ( IERR == 0 ) then
+               call Dump(l1bData, myL1BDetails )
+               call DeallocateL1BData ( l1bData )
+             else
+               call output ( 'Error number  ' )
+               call output ( IERR )
+               call output ( ' while reading quantity named  ' )
+               call output ( trim(l1b_quant_name), advance='yes' )
+             end if
            end if
+         elseif ( L1BFile%content == 'l1boa' ) then
+           call output ( ' ', advance='yes' )
+           call output ( 'L1OA file:', advance='yes' )
+
+           call output ( 'fileid:   ' )
+           call output ( L1BFile%FileID%f_id, advance='yes' )
+           call output ( 'name:   ' )
+           call output ( TRIM(L1BFile%Name), advance='yes' )
          end if
-        end if
         end do
 
-      else
-        call output ( '(empty database)', advance='yes' )
-      end if
 
-     else
-      call output ( '(null database)', advance='yes' )
-
-     end if
-
-      call output ( ' ', advance='yes' )
-      call output ( 'L1OA file:', advance='yes' )
-
-        if ( l1bInfo%L1BOAID /= ILLEGALL1BRADID ) then
-        call output ( 'fileid:   ' )
-        call output ( l1bInfo%L1BOAID, advance='yes' )
-        call output ( 'name:   ' )
-        call output ( TRIM(l1bInfo%L1BOAFileName), advance='yes' )
-      else
-        call output ( '(file unknown)', advance='yes' )
-      end if
 
       call dump(DirectDatabase, Details)
       call output ( ' ', advance='yes' )
@@ -869,6 +868,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.97  2005/05/26 22:34:58  vsnyder
+! use if (...) continue to ignore a function result
+!
 ! Revision 2.96  2005/05/02 22:59:59  vsnyder
 ! Add PFAFile command
 !

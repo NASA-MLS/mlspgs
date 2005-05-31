@@ -64,7 +64,7 @@ contains ! ====     Public Procedures     ==============================
     use MACHINE, only: MLS_HOWMANY_GC
     use MatrixModule_1, only: DestroyMatrixDatabase, Matrix_Database_T
     use MergeGridsModule, only: MergeGrids
-    use MLSCommon, only: L1BINFO_T, TAI93_RANGE_T, MLSFile_T
+    use MLSCommon, only: TAI93_RANGE_T, MLSFile_T
     ! use MLSFiles, only: MLSFile_T
     use MLSL2Options, only: CHECKPATHS, &
       & SKIPRETRIEVAL, STOPAFTERCHUNKDIVIDE, STOPAFTERGLOBAL
@@ -113,7 +113,7 @@ contains ! ====     Public Procedures     ==============================
     integer ::                                   HOWMANY  ! Nsons(Root)
     integer ::                                   I, J     ! Loop inductors
     integer ::                                   LASTCHUNK ! For chunk loop
-    type (L1BInfo_T) ::                          L1BInfo  ! File handles etc. for L1B dataset
+    ! type (L1BInfo_T) ::                          L1BInfo  ! File handles etc. for L1B dataset
     type (L2AUXData_T), dimension(:), pointer :: L2AUXDatabase
     type (DirectData_T), dimension(:), pointer :: DirectDatabase
     type (L2GPData_T), dimension(:), pointer  :: L2GPDatabase
@@ -148,7 +148,8 @@ contains ! ====     Public Procedures     ==============================
     if ( toggle(gen) ) call trace_begin ( 'WALK_TREE_TO_DO_MLS_L2', &
       & subtree(first_section,root) )
     call time_now ( t1 )
-    call OpenAndInitialize ( processingRange, l1bInfo )
+    ! call OpenAndInitialize ( processingRange, l1bInfo )
+    call OpenAndInitialize ( processingRange, filedatabase )
     call add_to_section_timing ( 'open_init', t1)
     i = first_section
     howmany = nsons(root)
@@ -166,7 +167,8 @@ contains ! ====     Public Procedures     ==============================
         ! --------------------------------------------------------- Init sections
       case ( z_globalsettings )
         call set_global_settings ( son, forwardModelConfigDatabase, fGrids, vGrids, &
-          & l2gpDatabase, DirectDatabase, processingRange, l1bInfo )
+          & l2gpDatabase, DirectDatabase, processingRange, filedatabase )
+          ! & l2gpDatabase, DirectDatabase, processingRange, l1bInfo )
         call add_to_section_timing ( 'global_settings', t1)
         if ( GLOBALSETTINGSONLY .and. .not. parallel%slave ) then
           call finishUp(.true.)
@@ -200,8 +202,10 @@ contains ! ====     Public Procedures     ==============================
           parallel%ChunkNo = chunkNo
         else
           if ( .not. checkPaths ) then
-            call ChunkDivide ( son, processingRange, l1bInfo, chunks )
-            call ComputeAllHGridOffsets ( root, i+1, chunks, l1bInfo, &
+            ! call ChunkDivide ( son, processingRange, l1bInfo, chunks )
+            call ChunkDivide ( son, processingRange, filedatabase, chunks )
+            ! call ComputeAllHGridOffsets ( root, i+1, chunks, l1bInfo, &
+            call ComputeAllHGridOffsets ( root, i+1, chunks, filedatabase, &
             & l2gpDatabase, processingRange )
           else
             allocate(chunks(1), stat=error_flag)
@@ -261,7 +265,8 @@ contains ! ====     Public Procedures     ==============================
             call L2MasterTask ( chunks, l2gpDatabase, l2auxDatabase )
           end if
           if ( parallel%slave .and. parallel%fwmParallel ) then
-            call ConstructMIFGeolocation ( mifGeolocation, l1bInfo, &
+            ! call ConstructMIFGeolocation ( mifGeolocation, l1bInfo, &
+            call ConstructMIFGeolocation ( mifGeolocation, filedatabase, &
               & chunks(singleChunk) ) 
             call L2FWMSlaveTask ( mifGeolocation )
           end if
@@ -303,7 +308,7 @@ subtrees:   do while ( j <= howmany )
                 call algebra ( son, vectors, matrices, chunks(chunkNo), forwardModelConfigDatabase )
               case ( z_construct )
                 if ( .not. checkPaths ) &
-                & call MLSL2Construct ( son, l1bInfo, processingRange, &
+                & call MLSL2Construct ( son, filedatabase, processingRange, &
                   & chunks(chunkNo), qtyTemplates, vectorTemplates, &
                   & fGrids, vGrids, hGrids, l2gpDatabase, forwardModelConfigDatabase, &
                   & mifGeolocation )
@@ -311,7 +316,8 @@ subtrees:   do while ( j <= howmany )
               case ( z_fill )
                 !if ( .not. checkPaths) &
                 if ( .not. checkPaths) then 
-                  call MLSL2Fill ( son, l1bInfo, griddedDataBase, &
+                  ! call MLSL2Fill ( son, l1bInfo, griddedDataBase, &
+                  call MLSL2Fill ( son, filedatabase, griddedDataBase, &
                   & vectorTemplates, vectors, qtyTemplates, matrices, vGrids, &
                   & l2gpDatabase, l2auxDatabase, forwardModelConfigDatabase, &
 		            & chunks, chunkNo )
@@ -451,7 +457,7 @@ subtrees:   do while ( j <= howmany )
         call destroyVGridDatabase ( vGrids )
         call destroyFGridDatabase ( fGrids )
         ! call dump(fGrids, destroy=.true.)
-        call DestroyL1BInfo ( l1bInfo )
+        ! call DestroyL1BInfo ( l1bInfo )
       endif
       error_flag = 0
       if ( toggle(gen) ) call trace_end ( 'WALK_TREE_TO_DO_MLS_L2' )
@@ -499,6 +505,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.129  2004/12/14 21:56:50  pwagner
+! Changes related to stopping early
+!
 ! Revision 2.128  2004/07/22 20:49:58  cvuu
 ! Add forwardModelConfigDatabase to the call MLSL2Join and MLSL2Fill
 !
