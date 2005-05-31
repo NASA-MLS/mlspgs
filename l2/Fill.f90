@@ -39,7 +39,8 @@ contains ! =====     Public Procedures     =============================
 
   !---------------------------------------------------  MLSL2Fill  -----
 
-  subroutine MLSL2Fill ( Root, L1bInfo, GriddedDataBase, VectorTemplates, &
+  ! subroutine MLSL2Fill ( Root, L1bInfo, GriddedDataBase, VectorTemplates, &
+  subroutine MLSL2Fill ( Root, filedatabase, GriddedDataBase, VectorTemplates, &
     & Vectors, QtyTemplates , Matrices, vGrids, L2GPDatabase, L2AUXDatabase, &
     & FWModelConfig, Chunks, ChunkNo )
 
@@ -84,7 +85,7 @@ contains ! =====     Public Procedures     =============================
     use INIT_TABLES_MODULE, only: L_ADDNOISE, L_APPLYBASELINE, L_ASCIIFILE, &
       & L_BINMAX, L_BINMEAN, L_BINMIN, L_BINTOTAL, &
       & L_BOUNDARYPRESSURE, L_BOXCAR, L_CHISQBINNED, L_CHISQCHAN, &
-      & L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, &
+      & L_CHANNEL, L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, &
       & L_cloudice, L_cloudextinction, L_cloudInducedRADIANCE, &
       & L_COMBINECHANNELS, L_COLUMNABUNDANCE, &
       & L_ECRTOFOV, L_ESTIMATEDNOISE, L_EXPLICIT, L_EXTRACTCHANNEL, L_FOLD, &
@@ -111,7 +112,7 @@ contains ! =====     Public Procedures     =============================
       & L_XYZ, L_ZETA
     ! Now the specifications:
     use INIT_TABLES_MODULE, only: S_LOAD, S_DESTROY, S_DUMP, S_FILL, S_FILLCOVARIANCE, &
-      & S_FILLDIAGONAL, S_FLUSHL2PCBINS, S_FLUSHPFA, S_MATRIX,  S_NEGATIVEPRECISION, &
+      & S_FILLDIAGONAL, S_FLUSHL2PCBINS, S_MATRIX,  S_NEGATIVEPRECISION, &
       & S_PHASE, S_POPULATEL2PCBIN, S_SNOOP, S_TIME, &
       & S_TRANSFER, S_VECTOR, S_SUBSET, S_FLAGCLOUD, S_RESTRICTRANGE, S_UPDATEMASK
     ! Now some arrays
@@ -119,7 +120,7 @@ contains ! =====     Public Procedures     =============================
     use Intrinsic, only: &
       & PHYQ_Dimensionless, PHYQ_Invalid, PHYQ_Temperature, &
       & PHYQ_Time, PHYQ_Length, PHYQ_Pressure, PHYQ_Zeta, PHYQ_Angle, PHYQ_Profiles
-    use L1BData, only: DeallocateL1BData, Dump, FindL1BData, L1BData_T, &
+    use L1BData, only: DeallocateL1BData, Dump, GetL1BFile, L1BData_T, &
       & PRECISIONSUFFIX, ReadL1BData, AssembleL1BQtyName
     use L2GPData, only: L2GPData_T
     use L2AUXData, only: L2AUXData_T
@@ -136,11 +137,10 @@ contains ! =====     Public Procedures     =============================
       & Matrix_T, NullifyMatrix, UpdateDiagonal
     ! NOTE: If you ever want to include defined assignment for matrices, please
     ! carefully check out the code around the call to snoop.
-    use MLSCommon, only: FileNameLen, L1BInfo_T, R4, R8, RM, RV, &
+    use MLSCommon, only: FileNameLen, MLSFile_T, R4, R8, RM, RV, &
       & DEFAULTUNDEFINEDVALUE
-    use MLSFiles, only: mls_hdf_version, &
-      & ERRORINH5FFUNCTION, WRONGHDFVERSION
-    use MLSL2Options, only: LEVEL1_HDFVERSION, RESTARTWARNINGS
+    use MLSFiles, only: GetMLSFileByType
+    use MLSL2Options, only: RESTARTWARNINGS
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, &
       & add_to_phase_timing, fillTimings, finishTimings
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
@@ -153,7 +153,6 @@ contains ! =====     Public Procedures     =============================
     use Molecules, only: L_H2O
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
     use OUTPUT_M, only: BLANKS, OUTPUT
-    use PFAData_m, only: Flush_PFAData
     use QuantityTemplates, only: Epoch, QuantityTemplate_T
     use RHIFromH2O, only: RHIFromH2O_Factor, RHIPrecFromH2O
     use ScanModelModule, only: GetBasisGPH, Get2DHydrostaticTangentPressure, GetGPHPrecision
@@ -178,7 +177,8 @@ contains ! =====     Public Procedures     =============================
 
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the FILL section in the AST
-    type (l1BInfo_T), intent(in) :: L1bInfo
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    ! type( L1BInfo_T ), intent(in) :: L1BINFO
     type (griddedData_T), dimension(:), pointer :: GriddedDataBase
     type (vectorTemplate_T), dimension(:), pointer :: VectorTemplates
     type (vector_T), dimension(:), pointer :: Vectors
@@ -597,13 +597,6 @@ contains ! =====     Public Procedures     =============================
         ! That's the end of the create operation
 
       case ( s_dump ) ! ============================== Dump ==========
-        ! Handle disassociated pointers by allocating them with zero size
-        status = 0
-        if ( .not. associated(qtyTemplates) ) allocate ( qtyTemplates(0), stat=status )
-        if ( .not. associated(vectorTemplates) ) allocate ( vectorTemplates(0), stat=status )
-        if ( .not. associated(vectors) ) allocate ( vectors(0), stat=status )
-        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-          & MLSMSG_Allocate // 'one of QtyTemplates, VectorTemplates or Vectors' )
         call dumpCommand ( key, qtyTemplates, vectorTemplates, vectors )
 
       case ( s_matrix ) ! ===============================  Matrix  =====
@@ -668,10 +661,6 @@ contains ! =====     Public Procedures     =============================
 
       case ( s_flushL2PCBins )
         call FlushLockedBins
-
-      case ( s_flushPFA )
-        call flush_PFAData ( key, status )
-        error = max(error,status)
 
       case ( s_load )
         got = .false.
@@ -1240,11 +1229,11 @@ contains ! =====     Public Procedures     =============================
             precisionQuantity => GetVectorQtyByTemplateIndex( &
               & vectors(precisionVectorIndex), precisionQuantityIndex )
             call FillVectorQuantityFromL1B ( key, quantity, chunks(chunkNo), &
-              & l1bInfo, isPrecision, suffix=suffix, &
+              & filedatabase, isPrecision, suffix=suffix, &
               & precisionQuantity=precisionQuantity )
           else
             call FillVectorQuantityFromL1B ( key, quantity, chunks(chunkNo), &
-              & l1bInfo, isPrecision, suffix=suffix )
+              & filedatabase, isPrecision, suffix=suffix )
           end if
 
         case ( l_l2gp ) ! --------------  Fill from L2GP quantity  -----
@@ -5065,7 +5054,6 @@ contains ! =====     Public Procedures     =============================
       use IO_stuff, only: GET_LUN
       use Machine, only: IO_Error
       use MoreMessage, only: MLSMessage
-      use Tree, only: Source_Ref
       integer, intent(in) :: KEY        ! Tree node
       type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
       integer, intent(in) :: FILENAME   ! ASCII filename to read from
@@ -5291,48 +5279,54 @@ contains ! =====     Public Procedures     =============================
     end subroutine ExplicitFillVectorQuantity
 
     ! ----------------------------------------- FillVectorQuantityFromL1B ----
-    subroutine FillVectorQuantityFromL1B ( root, quantity, chunk, l1bInfo, &
+    ! subroutine FillVectorQuantityFromL1B ( root, quantity, chunk, l1bInfo, &
+    subroutine FillVectorQuantityFromL1B ( root, quantity, chunk, filedatabase, &
       & isPrecision, suffix, PrecisionQuantity )
       integer, intent(in) :: root
       type (VectorValue_T), INTENT(INOUT) ::        QUANTITY
       type (MLSChunk_T), INTENT(IN) ::              CHUNK
-      type (l1bInfo_T), INTENT(IN) ::               L1BINFO
+      type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+      ! type( L1BInfo_T ), intent(in) :: L1BINFO
       logical, intent(in)               ::          ISPRECISION
       integer, intent(in), optional :: SUFFIX
       type (VectorValue_T), INTENT(IN), optional :: PRECISIONQUANTITY
 
       ! Local variables
       character (len=132) :: NAMESTRING
-      character (len=FileNameLen) :: FILENAMESTRING
       integer :: fileID, FLAG, NOMAFS
       type (l1bData_T) :: L1BDATA
       integer :: ROW, COLUMN
       integer :: this_hdfVersion
+      type (MLSFile_T), pointer             :: L1BFile
 
       ! Executable code
 
       if ( toggle(gen) .and. levels(gen) > 0 ) &
         & call trace_begin ("FillVectorQuantityFromL1B",root)
-      fileID=l1bInfo%l1bOAID
-      if ( quantity%template%quantityType /= l_radiance ) then
-        filenamestring = l1bInfo%L1BOAFileName
-      else
-        if ( .not. associated(l1bInfo%L1BRADFilenames) ) then
-          call Announce_Error ( root, No_Error_code, &
-            & 'No radiances files to read from' )
-          return
-        else
-          filenamestring = l1bInfo%L1BRADFileNames(1)
-        end if
-      end if
-      this_hdfVersion = mls_hdf_version(trim(filenamestring), LEVEL1_HDFVERSION)
-      if ( this_hdfVersion == ERRORINH5FFUNCTION ) then
-        call Announce_Error ( root, No_Error_code, &
-          & 'Error in finding hdfversion of l1b file' )
-      else if ( this_hdfVersion == WRONGHDFVERSION ) then
-        call Announce_Error ( root, No_Error_code, &
-          & 'Wrong hdfversion declared/coded for l1b file' )
-      end if
+      ! print *, 'Filling vector quantity from l1b'
+      L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
+      this_hdfVersion = L1BFile%HDFVersion
+      fileID = L1BFile%FileID%f_id
+!       fileID=l1bInfo%l1bOAID
+!       if ( quantity%template%quantityType /= l_radiance ) then
+!         filenamestring = l1bInfo%L1BOAFileName
+!       else
+!         if ( .not. associated(l1bInfo%L1BRADFilenames) ) then
+!           call Announce_Error ( root, No_Error_code, &
+!             & 'No radiances files to read from' )
+!           return
+!         else
+!           filenamestring = l1bInfo%L1BRADFileNames(1)
+!         end if
+!       end if
+!       this_hdfVersion = mls_hdf_version(trim(filenamestring), LEVEL1_HDFVERSION)
+!       if ( this_hdfVersion == ERRORINH5FFUNCTION ) then
+!         call Announce_Error ( root, No_Error_code, &
+!           & 'Error in finding hdfversion of l1b file' )
+!       else if ( this_hdfVersion == WRONGHDFVERSION ) then
+!         call Announce_Error ( root, No_Error_code, &
+!           & 'Wrong hdfversion declared/coded for l1b file' )
+!       end if
 
       select case ( quantity%template%quantityType )
       case ( l_ECRtoFOV )
@@ -5351,7 +5345,8 @@ contains ! =====     Public Procedures     =============================
         call GetSignalName ( quantity%template%signal, nameString, &
           & sideband=quantity%template%sideband, noChannels=.TRUE. )
         nameString = AssembleL1BQtyName(nameString, this_hdfVersion, .FALSE.)
-        fileID = FindL1BData (l1bInfo%l1bRadIDs, nameString, this_hdfVersion )
+        L1BFile => GetL1bFile(filedatabase, namestring)
+        ! fileID = FindL1BData (filedatabase, nameString )
       case ( l_tngtECI )
         call GetModuleName( quantity%template%instrumentModule,nameString )
         nameString = AssembleL1BQtyName('ECI', this_hdfVersion, .TRUE., &
@@ -5393,7 +5388,8 @@ contains ! =====     Public Procedures     =============================
           call Get_String ( suffix, &
             & nameString(len_trim(nameString)+1:), strip=.true. )
           ! Look for the field again
-          fileID = FindL1BData (l1bInfo%l1bRadIDs, nameString, this_hdfVersion )
+          L1BFile => GetL1bFile(filedatabase, namestring)
+          ! fileID = FindL1BData (filedatabase, nameString )
           ! Note we won't find it if it's in the OA file, I'm going to ignore that
           ! possibility for the moment.
 
@@ -5401,14 +5397,15 @@ contains ! =====     Public Procedures     =============================
       end if
 
       ! If the quantity exists (or it doesn't exist but it's not a radiance)
-      if ( fileId /= 0 .or. ( quantity%template%quantityType /= l_radiance .and. &
+      if ( associated(L1BFile) .or. ( quantity%template%quantityType /= l_radiance .and. &
         & quantity%template%quantityType /= l_L1BMAFBaseline ) ) then
         if ( isPrecision ) nameString = trim(nameString) // PRECISIONSUFFIX
+        L1BFile => GetL1bFile(filedatabase, namestring)
 
-        call ReadL1BData ( fileID , nameString, l1bData, noMAFs, flag, &
+        call ReadL1BData ( L1BFile , nameString, l1bData, noMAFs, flag, &
           & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
-          & NeverFail= .false., hdfVersion=this_hdfVersion, &
-        & dontPad=DONTPAD )
+          & NeverFail= .false., &
+          & dontPad=DONTPAD )
         ! If it didn't exist in the not-a-radiance case, then we'll fail here.
         if ( flag /= 0 ) then
           call Announce_Error ( root, errorReadingL1B )
@@ -6855,11 +6852,11 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.302  2005/05/31 17:51:17  pwagner
+! Began switch from passing file handles to passing MLSFiles
+!
 ! Revision 2.301  2005/05/28 03:25:40  vsnyder
 ! Cannonball polishing
-!
-! Revision 2.300  2005/05/27 20:03:06  vsnyder
-! Dissassociated -> zero size before dump
 !
 ! Revision 2.299  2005/03/24 21:23:46  pwagner
 ! Removed buggy, unused FillColAbundance
