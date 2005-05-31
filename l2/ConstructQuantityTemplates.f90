@@ -1,5 +1,5 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 module ConstructQuantityTemplates
 
@@ -57,8 +57,10 @@ module ConstructQuantityTemplates
 contains ! ============= Public procedures ===================================
 
   ! ------------------------------------------- CreateQtyTemplateFromMLSCFInfo ----
+  ! type (QuantityTemplate_T) function CreateQtyTemplateFromMLSCFInfo ( &
+  !  & Name, Root, FGrids, VGrids, HGrids, L1bInfo, Chunk, MifGeolocation ) &
   type (QuantityTemplate_T) function CreateQtyTemplateFromMLSCFInfo ( &
-    & Name, Root, FGrids, VGrids, HGrids, L1bInfo, Chunk, MifGeolocation ) &
+    & Name, Root, FGrids, VGrids, HGrids, filedatabase, Chunk, MifGeolocation ) &
     & result ( QTY )
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Chunks_m, only: MLSChunk_T
@@ -70,7 +72,7 @@ contains ! ============= Public procedures ===================================
       & F_SIGNAL, F_TYPE, F_VGRID, F_REFLECTOR, FIELD_FIRST, FIELD_LAST, &
       & L_TRUE, L_ZETA, L_XYZ, L_MATRIX3X3, L_CHANNEL, L_LOSTRANSFUNC, L_NONE
     use Intrinsic, only: LIT_INDICES
-    use MLSCommon, only: L1BInfo_T, RK => R8
+    use MLSCommon, only: MLSFile_T, RK => R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MLSSignals_m, only:GetModuleFromRadiometer, GetModuleFromSignal, &
       & GetRadiometerFromSignal, GetSignal, Signal_T, MODULES, IsModuleSpacecraft
@@ -91,7 +93,8 @@ contains ! ============= Public procedures ===================================
     type (FGrid_T), dimension(:), pointer :: FGrids
     type (VGrid_T), dimension(:), pointer :: VGrids
     type (HGrid_T), dimension(:), pointer :: HGrids
-    type (l1bInfo_T), intent(in) :: L1bInfo
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    ! type (L1BInfo_T), intent(in) :: L1BINFO
     type (MLSChunk_T), intent(in) :: Chunk
     type (QuantityTemplate_T), dimension(:), intent(in), optional :: &
       & MifGeolocation
@@ -201,13 +204,14 @@ contains ! ============= Public procedures ===================================
           call MLSMessage ( MLSMSG_Error, ModuleName,&
             & 'Unable to parse signal string' )
         end if
-        if ( size(signalInds) == 1 .or. .not. associated(L1bInfo%L1BRADIds) ) then
+        if ( size(signalInds) == 1 .or. .not. associated(filedatabase) ) then
           signal = signalInds(1)
         else
           ! Seek a signal with any precision values !< 0
           do s_index=1, size(signalInds)
             if ( AnyGoodSignalData ( signalInds(s_index), sideband, &
-              & l1bInfo, Chunk) ) exit
+              & filedatabase, Chunk) ) exit
+              ! & l1bInfo, Chunk) ) exit
           end do
           if ( s_index > size(signalInds) ) then
             signal = signalInds(1)
@@ -330,7 +334,8 @@ contains ! ============= Public procedures ===================================
 
     ! Now do the setup for the different families of quantities
     if ( isMinorFrame ) then
-      call ConstructMinorFrameQuantity ( l1bInfo, chunk, &
+      ! call ConstructMinorFrameQuantity ( l1bInfo, chunk, &
+      call ConstructMinorFrameQuantity ( filedatabase, chunk, &
         & instrumentModule, qty, noChans=noChans, mifGeolocation=mifGeolocation, &
         & regular=regular )
       ! Setup a minor frame quantity
@@ -463,16 +468,16 @@ contains ! ============= Public procedures ===================================
   end function CreateQtyTemplateFromMLSCFInfo
 
   ! --------------------------------  ConstructMinorFrameQuantity  -----
-  subroutine ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModule, &
+  ! subroutine ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModule, &
+  subroutine ConstructMinorFrameQuantity ( filedatabase, chunk, instrumentModule, &
     & qty, noChans, regular, instanceLen, mifGeolocation )
 
     use Chunks_m, only: MLSChunk_T
     use INIT_TABLES_MODULE, only: L_GEODALTITUDE, L_NONE
     use L1BData, only: L1BData_T, READL1BDATA, DEALLOCATEL1BDATA, &
       & AssembleL1BQtyName
-    use MLSCommon, only: L1BInfo_T, NameLen, RK => R8
-    use MLSFiles, only: MLS_HDF_Version
-    use MLSL2Options, only: LEVEL1_HDFVERSION
+    use MLSCommon, only: MLSFile_T, NameLen, RK => R8
+    use MLSFiles, only: GetMLSFileByType
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_L1BRead
     use MLSSignals_m, only:  IsModuleSpacecraft, GetModuleName
     use Output_m, only: OUTPUT
@@ -482,7 +487,8 @@ contains ! ============= Public procedures ===================================
     ! This routine constructs a minor frame based quantity.
 
     ! Dummy arguments
-    type (L1BInfo_T), intent(in) :: l1bInfo  ! File handles for l1bdata
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    ! type (L1BInfo_T), intent(in) :: L1BINFO
     type (MLSChunk_T), intent(in) :: chunk   ! The chunk under consideration
     integer, intent(in) :: instrumentModule  ! Database index
     type (QuantityTemplate_T), intent(out) :: qty ! Resulting quantity
@@ -513,6 +519,7 @@ contains ! ============= Public procedures ===================================
     ! Local variables
 
     type (L1BData_T) :: l1bField
+    type (MLSFile_T), pointer             :: L1BFile
     character (len=NameLen) :: l1bItemName
     integer :: noMAFs, l1bFlag, l1bItem, mafIndex, mifIndex, hdfVersion
 
@@ -521,10 +528,12 @@ contains ! ============= Public procedures ===================================
     ! quantity.  Otherwise, we have to read it all from the l1boa file
     ! ourselves.
 
-    hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
-    if ( hdfversion <= 0 ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )
+    L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
+    hdfversion = L1BFile%HDFVersion
+!     hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
+!     if ( hdfversion <= 0 ) &
+!       & call MLSMessage ( MLSMSG_Error, ModuleName, &
+!       & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )
 
     if ( present(mifGeolocation) ) then
       ! -------------------------------------- Got mifGeolocation ------------
@@ -557,9 +566,8 @@ contains ! ============= Public procedures ===================================
       end if
       l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
 
-      call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField, noMAFs, &
-        & l1bFlag, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
-        & hdfVersion=hdfVersion )
+      call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
+        & l1bFlag, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
       if ( l1bFlag==-1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_L1BRead//l1bItemName )
       
@@ -583,9 +591,8 @@ contains ! ============= Public procedures ===================================
         l1bItemName = TRIM(l1bItemName) // "." // "tpGeodAlt"
         
         l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
-        call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField, noMAFs, &
-          & l1bFlag, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
-          & hdfVersion=hdfVersion )
+        call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
+          & l1bFlag, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
         if ( l1bFlag==-1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & MLSMSG_L1BRead//l1bItemName )
         
@@ -607,9 +614,9 @@ contains ! ============= Public procedures ===================================
           
           ! Read it from the l1boa file
           l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
-          call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField, noMAFs, &
+          call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
             & l1bFlag, firstMAF=chunk%firstMafIndex, &
-            & lastMAF=chunk%lastMafIndex, hdfVersion=hdfVersion )
+            & lastMAF=chunk%lastMafIndex )
           if ( l1bFlag == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
             & MLSMSG_L1BRead//l1bItemName )
           
@@ -867,7 +874,8 @@ contains ! ============= Public procedures ===================================
   end subroutine Announce_Error
 
   ! -----------------------------------------------  AnyGoodSignalData  -----
-  function AnyGoodSignalData ( signal, sideband, l1bInfo, Chunk )  result (answer)
+  ! function AnyGoodSignalData ( signal, sideband, l1bInfo, Chunk )  result (answer)
+  function AnyGoodSignalData ( signal, sideband, filedatabase, Chunk )  result (answer)
   ! Read precision of signal
   ! if all values < 0.0, return FALSE
   ! if no precision data in file, return FALSE
@@ -876,44 +884,44 @@ contains ! ============= Public procedures ===================================
 
     use Chunks_m, only: MLSChunk_T
     use Allocate_Deallocate, only: Deallocate_Test
-    use L1BData, only: L1BData_T, READL1BDATA, &
+    use L1BData, only: L1BData_T, READL1BDATA, GetL1BFile, &
       & FindL1BData, AssembleL1BQtyName, PRECISIONSUFFIX
-    use MLSCommon, only: L1BInfo_T, RK => R8
-    use MLSFiles, only: MLS_HDF_Version
-    use MLSL2Options, only: LEVEL1_HDFVERSION
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSCommon, only: L1BInfo_T, MLSFile_T, RK => R8
     use MLSSignals_m, only: GetSignalName
 
     integer, intent(in) :: signal
     integer, intent(in) :: sideband
     logical             :: answer
     type (MLSChunk_T), intent(in) :: Chunk
-    type (l1bInfo_T), intent(in) :: L1bInfo
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    ! type( L1BInfo_T ), intent(in) :: L1BINFO
   ! Private
     integer :: FileID, flag, noMAFs
     character(len=127)  :: namestring
     type (l1bData_T) :: MY_L1BDATA
     integer :: hdfVersion
+    type (MLSFile_T), pointer ::     L1BFile
 
   ! Executable
-    hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
-    if ( hdfversion <= 0 ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )
+!     hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
+!     if ( hdfversion <= 0 ) &
+!       & call MLSMessage ( MLSMSG_Error, ModuleName, &
+!       & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )
     call GetSignalName ( signal, nameString, &                   
     & sideband=sideband, noChannels=.TRUE. )                     
     nameString = AssembleL1BQtyName ( nameString, hdfVersion, .false. )
     nameString = trim(nameString) // PRECISIONSUFFIX
-    fileID = FindL1BData (l1bInfo%l1bRadIDs, nameString, hdfVersion )
+    L1BFile => GetL1bFile(filedatabase, namestring)
+    ! fileID = FindL1BData (filedatabase, nameString, hdfVersion )
     if ( fileID <= 0 ) then
       answer = .false.
       return
     end if
     ! print *, 'About to read ', trim(nameString)
     ! print *, 'From Fileid ', fileID
-    call ReadL1BData ( fileID , nameString, my_l1bData, noMAFs, flag, &
+    call ReadL1BData ( L1BFile , nameString, my_l1bData, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
-      & NeverFail= .true., hdfVersion=hdfVersion )
+      & NeverFail= .true. )
     if ( flag == 0 ) then
       answer = .not. all (my_l1bData%DpField < 0._rk)
       call deallocate_test(my_l1bData%DpField, trim(nameString), ModuleName)
@@ -1263,6 +1271,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.120  2005/05/31 17:51:17  pwagner
+! Began switch from passing file handles to passing MLSFiles
+!
 ! Revision 2.119  2005/01/07 01:03:19  vsnyder
 ! Remove unused declarations
 !
