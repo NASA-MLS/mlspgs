@@ -123,17 +123,18 @@ contains ! ========================= Public Procedures ====================
   end subroutine InitEmpiricalGeometry
 
   ! -------------------------------------------------- ChooseOptimumLon0 -----
-  subroutine ChooseOptimumLon0 ( l1bInfo, chunk )
+  ! subroutine ChooseOptimumLon0 ( l1bInfo, chunk )
+  subroutine ChooseOptimumLon0 ( filedatabase, chunk )
 
     use Allocate_Deallocate, only: Deallocate_test
     use Chunks_m, only: MLSChunk_T
     use L1BData, only: L1BData_T, ReadL1BData, DeallocateL1BData, Name_Len, &
       & AssembleL1BQtyName
-    use MLSCommon, only: L1BInfo_T
-    use MLSFiles, only: mls_hdf_version
-    use MLSL2Options, only: LEVEL1_HDFVERSION
+    use MLSCommon, only: MLSFile_T
+    use MLSFiles, only: GetMLSFileByType
 
-    type (L1BInfo_T), intent(in) :: L1BINFO ! Where to find L1 files
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    ! type (L1BInfo_T), intent(in) :: L1BINFO
     type (MLSChunk_T), intent(in) :: CHUNK ! This chunk
 
     ! Local parameters
@@ -155,27 +156,29 @@ contains ! ========================= Public Procedures ====================
     real(r8) :: DELTA                   ! For new options
     integer ::  hdfVersion
     character(len=Name_Len) :: l1bItemName
+    type (MLSFile_T), pointer             :: L1BFile
 
     ! Executable code
 
-    hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
-    if ( hdfversion <= 0 ) &                                                
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &                      
-      & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )    
+    L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
+    hdfversion = L1BFile%HDFVersion
+!     hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
+!     if ( hdfversion <= 0 ) &                                            
+!       & call MLSMessage ( MLSMSG_Error, ModuleName, &                      
+!       & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )    
+
     ! Now we want to establish the value of lon0
     nullify ( testPhi, testLon, guessLon )
     l1bItemName = AssembleL1BQtyName ( "GHz.tpGeodAngle", hdfVersion, .false. )
-    call ReadL1BData ( l1bInfo%l1boaID, trim(l1bItemName), tpGeodAngle, noMAFs, flag, &
-      & firstMAF = chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
-      & hdfVersion=hdfVersion )
+    call ReadL1BData ( L1BFile, trim(l1bItemName), tpGeodAngle, noMAFs, flag, &
+      & firstMAF = chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
     call Allocate_test ( testPhi, noMAFs, 'testPhi', ModuleName )
     testPhi = tpGeodAngle%DpField(1,1,:)
     call DeallocateL1BData ( tpGeodAngle )
 
     l1bItemName = AssembleL1BQtyName ( "GHz.tpLon", hdfVersion, .false. )
-    call ReadL1BData ( l1bInfo%l1boaID, trim(l1bItemName), tpLon, noMAFs, flag, &
-      & firstMAF = chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
-      & hdfVersion=hdfVersion )
+    call ReadL1BData ( L1BFile, trim(l1bItemName), tpLon, noMAFs, flag, &
+      & firstMAF = chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
     call Allocate_test ( testLon, noMAFs, 'testLon', ModuleName )
     testLon = tpLon%DpField(1,1,:)
     call DeallocateL1BData ( tpLon )
@@ -215,6 +218,9 @@ contains ! ========================= Public Procedures ====================
 end module EmpiricalGeometry
 
 ! $Log$
+! Revision 2.11  2005/05/31 17:51:17  pwagner
+! Began switch from passing file handles to passing MLSFiles
+!
 ! Revision 2.10  2004/05/19 19:16:09  vsnyder
 ! Move MLSChunk_t to Chunks_m
 !
