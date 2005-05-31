@@ -146,7 +146,7 @@ contains ! ===================================== Public Procedures =====
   end subroutine ReduceChunkDatabase
 
   ! ------------------------------------------------  Chunk Divide -----
-  subroutine ChunkDivide ( root, processingRange, l1bInfo, chunks )
+  subroutine ChunkDivide ( root, processingRange, filedatabase, chunks )
 
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use Chunks_m, only: DUMP, MLSCHUNK_T
@@ -163,16 +163,14 @@ contains ! ===================================== Public Procedures =====
     use L1BData, only: DEALLOCATEL1BDATA, L1BDATA_T, NAME_LEN, READL1BDATA, &
       & AssembleL1BQtyName
     use Lexer_core, only: PRINT_SOURCE
-    use MLSCommon, only: R8, RP, L1BINFO_T, TAI93_Range_T
-    use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
-      & mls_hdf_version
-    use MLSL2Options, only: LEVEL1_HDFVERSION
+    use MLSCommon, only: R8, RP, L1BINFO_T, MLSFile_T, TAI93_Range_T
+    use MLSFiles, only: dump, GetMLSFileByType
     use MLSSets, only: FINDFIRST
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
       & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMSG_WARNING
     use MLSNumerics, only: Hunt
-    use MLSSignals_m, only: MODULES, ISMODULESPACECRAFT
+    use MLSSignals_m, only: MODULES
     use MoreTree, only: GET_BOOLEAN, GET_FIELD_ID, GET_SPEC_ID
     use Output_M, only: BLANKS, OUTPUT
     use String_table, only: GET_STRING, DISPLAY_STRING
@@ -180,10 +178,11 @@ contains ! ===================================== Public Procedures =====
     use TOGGLES, only: GEN, TOGGLE, SWITCHES
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use Tree, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, SUBTREE, SUB_ROSA
-    use Tree_types, only: N_EQUAL, N_NAMED
+    use Tree_types, only: N_NAMED
 
     integer, intent(in) :: ROOT    ! Root of the L2CF tree for ChunkDivide
-    type( L1BInfo_T ), intent(in) :: L1BINFO
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    ! type( L1BInfo_T ), intent(in) :: L1BINFO
     type( TAI93_Range_T ), intent(in) :: PROCESSINGRANGE
     type( MLSChunk_T ), dimension(:), pointer  :: CHUNKS
 
@@ -204,6 +203,7 @@ contains ! ===================================== Public Procedures =====
     ! For timing
     logical :: Timing
     real :: T1
+    type (MLSFile_T)             :: L1BFile
 
     ! Executable code
     nullify(config%criticalSignals)    ! Just for Sun's compiler
@@ -220,7 +220,8 @@ contains ! ===================================== Public Procedures =====
     ! location of obstructions
     nullify ( obstructions )
     if ( config%method /= l_fixed ) then
-      call SurveyL1BData ( processingRange, l1bInfo, config, mafRange,&
+      ! call SurveyL1BData ( processingRange, l1bInfo, config, mafRange,&
+      call SurveyL1BData ( processingRange, filedatabase, config, mafRange,&
       & obstructions )
       if ( index(switches, 'chu') /= 0 ) then
         call output ( 'Requested time range ' )          
@@ -242,13 +243,13 @@ contains ! ===================================== Public Procedures =====
     case ( l_fixed )
       call ChunkDivide_Fixed ( config, chunks )
     case ( l_PE )
-      call ChunkDivide_PE ( config, mafRange, l1bInfo, &
+      call ChunkDivide_PE ( config, mafRange, filedatabase, &
         & obstructions, chunks )
     case ( l_orbital )
-      call ChunkDivide_Orbital ( config, mafRange, l1bInfo, &
+      call ChunkDivide_Orbital ( config, mafRange, filedatabase, &
         & obstructions, chunks )
     case ( l_even )
-      call ChunkDivide_Even ( config, mafRange, l1bInfo, &
+      call ChunkDivide_Even ( config, mafRange, filedatabase, &
         & obstructions, chunks )
     case default
       call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -345,11 +346,13 @@ contains ! ===================================== Public Procedures =====
     end subroutine AnnounceError
 
     !-------------------------------------------- ChunkDivide_Even -----
-    subroutine ChunkDivide_Even ( config, mafRange, l1bInfo, &
+    ! subroutine ChunkDivide_Even ( config, mafRange, l1bInfo, &
+    subroutine ChunkDivide_Even ( config, mafRange, filedatabase, &
       & obstructions, chunks )
       type (ChunkDivideConfig_T), intent(in) :: CONFIG
       integer, dimension(2), intent(in) :: MAFRANGE
-      type (L1BInfo_T), intent(in) :: L1BINFO
+      type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+      ! type (L1BInfo_T), intent(in) :: L1BINFO
       type (Obstruction_T), dimension(:), intent(in) :: OBSTRUCTIONS
       type (MLSChunk_T), dimension(:), pointer :: CHUNKS
 
@@ -396,11 +399,12 @@ contains ! ===================================== Public Procedures =====
     end subroutine ChunkDivide_Fixed
 
     !---------------------------------------------- ChunkDivide_PE -----
-    subroutine ChunkDivide_PE ( config, mafRange, l1bInfo, &
+    subroutine ChunkDivide_PE ( config, mafRange, filedatabase, &
       & obstructions, chunks )
       type (ChunkDivideConfig_T), intent(in) :: CONFIG
       integer, dimension(2), intent(in) :: MAFRANGE
-      type (L1BInfo_T), intent(in) :: L1BINFO
+      type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+      ! type (L1BInfo_T), intent(in) :: L1BINFO
       type (Obstruction_T), dimension(:), intent(in) :: OBSTRUCTIONS
       type (MLSChunk_T), dimension(:), pointer :: CHUNKS
 
@@ -417,8 +421,6 @@ contains ! ===================================== Public Procedures =====
       integer :: HOMEMAF                  ! first MAF after homeGeodAngle
       integer :: HOME                     ! Index of home MAF in array
       integer :: M1, M2                   ! MafRange + 1
-      integer :: NOCHUNKSBELOWHOME        ! Used for placing chunks
-      integer :: NOMAFSATORABOVEHOME      ! Fairly self descriptive
       integer :: NOMAFS                   ! Number of MAFs to consider
       integer :: NOMAFSREAD               ! From ReadL1B
       integer :: ORBIT                    ! Used to locate homeMAF
@@ -433,37 +435,31 @@ contains ! ===================================== Public Procedures =====
       real(r8) :: MINTIME                 ! Time range in data
       real(r8) :: TESTANGLE               ! Angle to check for
 
-      real(r8), dimension(:), pointer :: BOUNDARIES ! Used in placing chunks
-      real(r8), dimension(:), pointer :: FIELD ! Used in placing chunks
       integer   ::                       l1b_hdf_version
       character(len=NAME_LEN) ::         MAF_start, tp_angle
+      type (MLSFile_T), pointer             :: L1BFile
 
       ! Executable code
 
       ! Read in the data we're going to need
       call get_string ( lit_indices(config%homeModule), modNameStr, &
         & strip=.true. )
-      if ( LEVEL1_HDFVERSION /= WILDCARDHDFVERSION ) then
-        l1b_hdf_version = LEVEL1_HDFVERSION
-      else
-        l1b_hdf_version = mls_hdf_version(trim(l1bInfo%L1BOAFileName))
-        if ( l1b_hdf_version <= 0 ) &
-          & call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )
-      endif
+      L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
+      ! call dump(L1BFile)
+      l1b_hdf_version = L1BFile%HDFVersion
       MAF_start = AssembleL1BQtyName ( 'MAFStartTimeTAI', l1b_hdf_version, &
         .false. )
       tp_angle = AssembleL1BQtyName ( trim(modNameStr)//'.tpGeodAngle', &
         & l1b_hdf_version, &
         & .false. )
-      call ReadL1BData ( l1bInfo%l1bOAId, trim(tp_angle), &
-        & tpGeodAngle, noMAFsRead, flag, hdfVersion=l1b_hdf_version , &
+      call ReadL1BData ( L1BFile, trim(tp_angle), &
+        & tpGeodAngle, noMAFsRead, flag, &
         & dontPad=DONTPAD )
       ! If you needed this, should you be using this chunkDivide?
       call smoothOutDroppedMAFs(tpGeodAngle%dpField)
       call smoothOutDroppedMAFs(tpGeodAngle%dpField, monotonize=.true.)
-      call ReadL1BData ( l1bInfo%l1bOAId, trim(MAF_start), &
-        & taiTime, noMAFsRead, flag, hdfVersion=l1b_hdf_version , &
+      call ReadL1BData ( L1BFile, trim(MAF_start), &
+        & taiTime, noMAFsRead, flag, &
         & dontPad=DONTPAD )
       call smoothOutDroppedMAFs(taiTime%dpField)
       noMAFs = mafRange(2) - mafRange(1) + 1
@@ -537,11 +533,12 @@ contains ! ===================================== Public Procedures =====
     end subroutine ChunkDivide_PE
 
     !----------------------------------------- ChunkDivide_Orbital -----
-    subroutine ChunkDivide_Orbital ( config, mafRange, l1bInfo, &
+    subroutine ChunkDivide_Orbital ( config, mafRange, filedatabase, &
       & obstructions, chunks )
       type (ChunkDivideConfig_T), intent(in) :: CONFIG
       integer, dimension(2), intent(in) :: MAFRANGE
-      type (L1BInfo_T), intent(in) :: L1BINFO
+      type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+      ! type (L1BInfo_T), intent(in) :: L1BINFO
       type (Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
       type (MLSChunk_T), dimension(:), pointer :: CHUNKS
 
@@ -586,20 +583,16 @@ contains ! ===================================== Public Procedures =====
 
       integer   ::                       l1b_hdf_version
       character(len=NAME_LEN) ::         MAF_start, tp_angle
+      type (MLSFile_T), pointer             :: L1BFile
       ! Executable code
 
       if ( index ( switches, 'chu' ) /= 0 ) &
         & call output('Entering Orbital Chunk Divide', advance='yes')
       ! Read in the data we're going to need
       call get_string ( lit_indices(config%homeModule), modNameStr, strip=.true. )
-      if ( LEVEL1_HDFVERSION /= WILDCARDHDFVERSION ) then
-        l1b_hdf_version = LEVEL1_HDFVERSION
-      else
-        l1b_hdf_version = mls_hdf_version(trim(l1bInfo%L1BOAFileName))
-        if ( l1b_hdf_version <= 0 ) &
-          & call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )
-      endif
+      L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
+      ! call dump(L1BFile)
+      l1b_hdf_version = L1BFile%HDFVersion
       MAF_start = AssembleL1BQtyName ( 'MAFStartTimeTAI', l1b_hdf_version, &
         .false. )
       tp_angle = AssembleL1BQtyName ( trim(modNameStr)//'.tpGeodAngle', &
@@ -607,8 +600,8 @@ contains ! ===================================== Public Procedures =====
         & .false. )
       if ( index ( switches, 'chu' ) /= 0 ) &
         & call output('Reading Geod Angle', advance='yes')
-      call ReadL1BData ( l1bInfo%l1bOAId, trim(tp_angle), &
-        & tpGeodAngle, noMAFsRead, flag, hdfVersion=l1b_hdf_version , &
+      call ReadL1BData ( L1BFile, trim(tp_angle), &
+        & tpGeodAngle, noMAFsRead, flag, &
         & dontPad=DONTPAD )
       if ( index ( switches, 'chu' ) /= 0 ) &
         & call output('1st smoothing', advance='yes')
@@ -618,8 +611,8 @@ contains ! ===================================== Public Procedures =====
       call smoothOutDroppedMAFs(tpGeodAngle%dpField, monotonize=.true.)
       if ( index ( switches, 'chu' ) /= 0 ) &
         & call output('Reading tai Time', advance='yes')
-      call ReadL1BData ( l1bInfo%l1bOAId, trim(MAF_start), &
-        & taiTime, noMAFsRead, flag, hdfVersion=l1b_hdf_version , &
+      call ReadL1BData ( L1BFile, trim(MAF_start), &
+        & taiTime, noMAFsRead, flag, &
         & dontPad=DONTPAD )
       call smoothOutDroppedMAFs(taiTime%dpField)
       noMAFs = mafRange(2) - mafRange(1) + 1
@@ -970,7 +963,6 @@ contains ! ===================================== Public Procedures =====
       integer :: ROOT                     ! Root of ChunkDivide command
       integer :: signalsNode              ! Node where crit. Sig. begin
       integer :: SON                      ! A son of the ChunkDivide section node
-      integer :: sub_rosa_index
       integer :: UNITS(2)                 ! Units of expression
       integer, dimension(:), pointer :: NEEDED ! Which fields are needed
       integer, dimension(:), pointer :: NOTWANTED ! Which fields are not wanted
@@ -1410,10 +1402,10 @@ contains ! ===================================== Public Procedures =====
     end subroutine DeleteObstruction
 
     ! ----------------------------------------- NoteL1BRADChanges -----
-    subroutine NoteL1BRADChanges ( obstructions, mafRange, l1bInfo )
-      use MLSSignals_m, only:GetModuleFromRadiometer, GetModuleFromSignal, &
-        & GetRadiometerFromSignal, GetSignal, GetSignalName, &
-        & Signal_T, SIGNALS, MODULES
+    ! subroutine NoteL1BRADChanges ( obstructions, mafRange, l1bInfo )
+    subroutine NoteL1BRADChanges ( obstructions, mafRange, filedatabase )
+      use MLSSignals_m, only: GetSignalName, &
+        & SIGNALS
       use MLSStringLists, only: NumStringElements, GetStringElement
       use Parse_signal_m, only: Parse_signal
       ! This routine notes any lack of good data for one of the
@@ -1422,7 +1414,8 @@ contains ! ===================================== Public Procedures =====
       type (Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
       type (Obstruction_T) :: NEWOBSTRUCTION ! In progrss
       integer, dimension(2), intent(in) :: MAFRANGE   ! Processing range in MAFs
-      type (L1BInfo_T), intent(in) :: L1BINFO
+      type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+      !type (L1BInfo_T), intent(in) :: L1BINFO
 
       ! Local variables
       ! This next sets the threshold of what it takes to be an obstruction
@@ -1459,7 +1452,8 @@ contains ! ===================================== Public Procedures =====
       logical :: this_maf_valid
       logical, dimension(:), pointer  :: valids_buffer
       ! Won't check if there are no radiances
-      if ( .not. associated(l1bInfo%l1bRadIDs) ) return
+      ! if ( .not. associated(l1bInfo%l1bRadIDs) ) return
+      if ( .not. associated(filedatabase) ) return
       ! Here we will loop over the signals database
       ! Searching for 
       ! (1) mafs where there is no good data for any of the signals
@@ -1483,7 +1477,7 @@ contains ! ===================================== Public Procedures =====
         if ( mafRange(2) - mafRange(1) + 1 <= MAXMAFSINSET ) then
           good_signals_now(signalIndex) = &
             & any_good_signaldata ( signalIndex, signals(signalIndex)%sideband, &
-            &   l1bInfo, mafRange(1), mafRange(2), &
+            &   filedatabase, mafRange(1), mafRange(2), &
             &   signals_buffer(:,signalIndex), mafRange )
         else
           nmafsets = (mafRange(2) - mafRange(1))/MAXMAFSINSET + 1
@@ -1493,7 +1487,7 @@ contains ! ===================================== Public Procedures =====
             mafset_end = min ( mafRange(2), mafset_end + MAXMAFSINSET )
             good_signals_now(signalIndex) = &
               & any_good_signaldata ( signalIndex, signals(signalIndex)%sideband, &
-              &   l1bInfo, mafset_start, mafset_end, &
+              &   filedatabase, mafset_start, mafset_end, &
               &   signals_buffer(:,signalIndex), mafRange )
           enddo
         endif
@@ -1835,12 +1829,13 @@ contains ! ===================================== Public Procedures =====
     end subroutine SortObstructions
 
     ! ---------------------------------------------- SurveyL1BData -----
-    subroutine SurveyL1BData ( processingRange, l1bInfo, config, mafRange,&
+    subroutine SurveyL1BData ( processingRange, filedatabase, config, mafRange,&
       & obstructions )
       ! This goes through the L1B data files and trys to spot possible
       ! obstructions.
       type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
-      type (L1BInfo_T), intent(in) :: L1BINFO
+      type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+      ! type (L1BInfo_T), intent(in) :: L1BINFO
       type (ChunkDivideConfig_T), intent(in) :: CONFIG
       integer, dimension(2), intent(out) :: MAFRANGE   ! Processing range in MAFs
       type (Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
@@ -1850,7 +1845,6 @@ contains ! ===================================== Public Procedures =====
       type (L1BData_T) :: TPGEODALT       ! Read from L1BOA file
       type (L1BData_T) :: TPGEODANGLE     ! Read from L1BOA file
       type (L1BData_T) :: TPORBY          ! Read from L1BOA file
-      type (Obstruction_T) :: NEWOBSTRUCTION ! A single obstruction
 
       character(len=10) :: MODNAMESTR     ! Module name
 
@@ -1860,7 +1854,6 @@ contains ! ===================================== Public Procedures =====
       integer :: NOMAFS                   ! Number of MAFs in processing range
       integer :: NOMAFSREAD               ! From L1B
 
-      logical :: LASTONEVALID             ! To run through valid
       logical :: THISONEVALID             ! To go into valid
       logical, dimension(:), pointer :: VALID ! Flag for each MAF
       logical, dimension(:), pointer :: WASSMOOTHED ! Flag for each MAF
@@ -1872,23 +1865,19 @@ contains ! ===================================== Public Procedures =====
 
       integer   ::                       l1b_hdf_version
       character(len=NAME_LEN) ::         MAF_start, tp_alt, tp_orbY, tp_angle
+      type (MLSFile_T), pointer             :: L1BFile
       ! Executable code
 
-      if ( LEVEL1_HDFVERSION /= WILDCARDHDFVERSION ) then
-        l1b_hdf_version = LEVEL1_HDFVERSION
-      else
-        l1b_hdf_version = mls_hdf_version(trim(l1bInfo%L1BOAFileName))
-        if ( l1b_hdf_version <= 0 ) &
-          & call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )
-      endif
+      L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
+      ! call dump(L1BFile)
+      l1b_hdf_version = L1BFile%HDFVersion
       MAF_start = AssembleL1BQtyName ( 'MAFStartTimeTAI', l1b_hdf_version, &
         .false. )
       ! tp_angle = AssembleL1BQtyName ( trim(modNameStr)//'.tpGeodAngle', l1b_hdf_version, &
       !  .false. )
       ! Read time from the L1BOA file
-      call ReadL1BData ( l1bInfo%l1boaId, trim(MAF_start), taiTime, &
-        & noMAFsRead, flag, hdfVersion=l1b_hdf_version , &
+      call ReadL1BData ( L1BFile, trim(MAF_start), taiTime, &
+        & noMAFsRead, flag, &
         & dontPad=DONTPAD )
       call smoothOutDroppedMAFs(taiTime%dpField)
 
@@ -1937,17 +1926,17 @@ contains ! ===================================== Public Procedures =====
             & ( any ( config%criticalModules == (/ l_either, l_both /) ) .or. &
             &   lit_indices(config%criticalModules) == modules(mod)%name ) ) then
             ! Read the tangent point altitude
-            call ReadL1BData ( l1bInfo%l1boaID, trim(tp_alt), &
-              & tpGeodAlt, noMAFsRead, flag, hdfVersion=l1b_hdf_version , &
+            call ReadL1BData ( L1BFile, trim(tp_alt), &
+              & tpGeodAlt, noMAFsRead, flag, &
               & firstMAF=mafRange(1), lastMAF=mafRange(2), &
               & dontPad=DONTPAD )
             ! Read the out of plane distance
-            call ReadL1BData ( l1bInfo%l1boaID, trim(tp_orby), &
-              & tpOrbY, noMAFsRead, flag, hdfVersion=l1b_hdf_version , &
+            call ReadL1BData ( L1BFile, trim(tp_orby), &
+              & tpOrbY, noMAFsRead, flag, &
               & firstMAF=mafRange(1), lastMAF=mafRange(2), &
               & dontPad=DONTPAD )
-            call ReadL1BData ( l1bInfo%l1boaID, trim(tp_angle), &
-              & tpGeodAngle, noMAFsRead, flag, hdfVersion=l1b_hdf_version , &
+            call ReadL1BData ( L1BFile, trim(tp_angle), &
+              & tpGeodAngle, noMAFsRead, flag, &
               & firstMAF=mafRange(1), lastMAF=mafRange(2), &
               & dontPad=DONTPAD )
             call smoothOutDroppedMAFs(tpGeodAngle%dpField, angleWasSmoothed, &
@@ -1992,7 +1981,7 @@ contains ! ===================================== Public Procedures =====
 
       ! Here we look at radiances and switch changes.
       if ( .not. config%skipL1BCheck) &
-        call NoteL1BRADChanges ( obstructions, mafRange, l1bInfo ) 
+        call NoteL1BRADChanges ( obstructions, mafRange, filedatabase ) 
 
       ! Sort the obstructions into order; prune them of repeats, overlaps etc.
       call PruneObstructions ( obstructions ) 
@@ -2067,7 +2056,8 @@ contains ! ===================================== Public Procedures =====
   end subroutine Dump_Obstructions
 
 ! -----------------------------------------------  ANY_GOOD_SIGNALDATA  -----
-  function ANY_GOOD_SIGNALDATA ( signal, sideband, l1bInfo, maf, maf2, &
+  ! function ANY_GOOD_SIGNALDATA ( signal, sideband, l1bInfo, maf, maf2, &
+  function ANY_GOOD_SIGNALDATA ( signal, sideband, filedatabase, maf, maf2, &
     & good_buffer, mafRange )  &
     & result (answer)
   ! Scalar use:
@@ -2083,11 +2073,9 @@ contains ! ===================================== Public Procedures =====
 
     use Allocate_Deallocate, only: Deallocate_Test
     use Chunks_m, only: MLSChunk_T
-    use L1BData, only: L1BData_T, READL1BDATA, &
+    use L1BData, only: L1BData_T, READL1BDATA, GetL1bFile, &
       & FindL1BData, AssembleL1BQtyName, PRECISIONSUFFIX, DEALLOCATEL1BDATA
-    use MLSCommon, only: L1BInfo_T, RK => R8
-    use MLSFiles, only: MLS_HDF_Version
-    use MLSL2Options, only: LEVEL1_HDFVERSION
+    use MLSCommon, only: L1BInfo_T, MLSFile_T, RK => R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSSignals_m, only: GetSignalName
 
@@ -2095,7 +2083,8 @@ contains ! ===================================== Public Procedures =====
     integer, intent(in)                            :: sideband
     logical                                        :: answer
     integer, intent(in)                            :: maf
-    type (l1bInfo_T), intent(in)                   :: L1bInfo
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    ! type (L1BInfo_T), intent(in) :: L1BINFO
     integer, optional, intent(in)                  :: maf2
     logical, dimension(:), optional, intent(inout) :: good_buffer
     integer, dimension(2), optional, intent(in)    :: MAFRANGE   ! Processing 
@@ -2107,6 +2096,7 @@ contains ! ===================================== Public Procedures =====
     integer :: mymaf2
     integer :: the_maf
     integer :: maf_index   ! 1 <= maf_index <= mafrange(2)-mafrange(1)+1
+    type(MLSFile_T), pointer :: L1BFile
 
     ! Executable
     answer = .false.
@@ -2122,19 +2112,13 @@ contains ! ===================================== Public Procedures =====
       good_buffer ( maf - mafRange(1) + 1 : myMAF2 - mafRange(1) + 1 ) = .false.
     end if
 
-    ! Quit if no l1b rad files.
-    if ( .not. associated(l1bInfo%l1bRadIDs) ) return
-
     ! OK, try to find this item in an l1brad file
-    hdfVersion = mls_hdf_version ( trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION )
-    if ( hdfversion <= 0 ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )
     call GetSignalName ( signal, nameString, &                   
       & sideband=sideband, noChannels=.TRUE. )                     
     nameString = AssembleL1BQtyName ( nameString, hdfVersion, .false. )
     nameString = trim(nameString) // PRECISIONSUFFIX
-    fileID = FindL1BData (l1bInfo%l1bRadIDs, nameString, hdfVersion )
+    ! fileID = FindL1BData (filedatabase, nameString, hdfVersion )
+    L1BFile => GetL1bFile(filedatabase, namestring)
     ! If not found, exit appropriately
     if ( fileID <= 0 ) then
       answer = .false.
@@ -2142,9 +2126,9 @@ contains ! ===================================== Public Procedures =====
     end if
 
     ! OK, we've found it.  Read the data in.
-    call ReadL1BData ( fileID , nameString, my_l1bData, noMAFs, flag, &
+    call ReadL1BData ( L1BFile, nameString, my_l1bData, noMAFs, flag, &
       & firstMAF=maf, lastMAF=mymaf2, &
-      & NeverFail= .true., hdfVersion=hdfVersion, dontPad = .false. )
+      & NeverFail= .true., dontPad = .false. )
     ! Quit if the reading failed.
     if ( flag /= 0 ) then
       answer = .false.
@@ -2210,6 +2194,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.59  2005/05/31 17:51:16  pwagner
+! Began switch from passing file handles to passing MLSFiles
+!
 ! Revision 2.58  2005/05/27 19:53:43  vsnyder
 ! Produce meaningful error message instead of crash for empty section
 !
