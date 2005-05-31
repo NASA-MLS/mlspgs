@@ -1,5 +1,5 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 !=============================================================================
 module HGrid                    ! Horizontal grid information
@@ -39,7 +39,8 @@ contains ! =====     Public Procedures     =============================
 
   ! -----------------------------------  CreateHGridFromMLSCFInfo  -----
   type(hGrid_T) function CreateHGridFromMLSCFInfo &
-    & ( name, root, l1bInfo, l2gpDatabase, processingRange, chunk ) result ( hGrid )
+    & ( name, root, filedatabase, l2gpDatabase, processingRange, chunk ) result ( hGrid )
+    ! & ( name, root, l1bInfo, l2gpDatabase, processingRange, chunk ) result ( hGrid )
 
     use Chunks_m, only: MLSChunk_T
     use EXPR_M, only: EXPR
@@ -53,9 +54,8 @@ contains ! =====     Public Procedures     =============================
     use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData, &
       & AssembleL1BQtyName
     use L2GPData, only: L2GPDATA_T
-    use MLSCommon, only: L1BInfo_T, NameLen, RK => R8, TAI93_RANGE_T
-    use MLSFiles, only: MLS_HDF_Version       
-    use MLSL2Options, only: LEVEL1_HDFVERSION  
+    use MLSCommon, only: MLSFile_T, NameLen, RK => R8, TAI93_RANGE_T
+    use MLSFiles, only: GetMLSFileByType
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_L1BRead
     use MLSNumerics, only: HUNT
     use MoreTree, only: GET_BOOLEAN
@@ -69,7 +69,8 @@ contains ! =====     Public Procedures     =============================
     ! Dummy arguments
     integer, intent(in) :: NAME               ! String index of name
     integer, intent(in) :: ROOT               ! Root of hGrid subtree
-    type (L1BInfo_T), intent(in) :: L1BINFO   ! File handles for l1b data
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    ! type (L1BInfo_T), intent(in) :: L1BINFO
     type (L2GPData_T), pointer, dimension(:) :: L2GPDATABASE
     type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
     type (MLSChunk_T), intent(in) :: CHUNK ! The chunk
@@ -115,13 +116,16 @@ contains ! =====     Public Procedures     =============================
 
     integer ::  hdfVersion
     character(len=NameLen) :: l1bItemName
+    type (MLSFile_T), pointer             :: L1BFile
 
     ! Executable code
 
-    hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
-    if ( hdfversion <= 0 ) &                                            
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &                      
-      & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )    
+      L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
+      hdfversion = L1BFile%HDFVersion
+!     hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
+!     if ( hdfversion <= 0 ) &                                            
+!       & call MLSMessage ( MLSMSG_Error, ModuleName, &                      
+!       & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )    
 
     call nullifyHGrid ( hgrid ) ! for Sun's rubbish compiler
     
@@ -227,7 +231,8 @@ contains ! =====     Public Procedures     =============================
       if (.not. got_field(f_module) ) then
         call announce_error ( root, NoModule )
       else
-        call CreateMIFBasedHGrids ( l1bInfo, hGridType, chunk, &
+        ! call CreateMIFBasedHGrids ( l1bInfo, hGridType, chunk, &
+        call CreateMIFBasedHGrids ( filedatabase, hGridType, chunk, &
           & got_field, root, height, fraction, interpolationFactor, &
           & instrumentModuleName, mif, maxLowerOverlap, maxUpperOverlap, hGrid )
       end if
@@ -242,7 +247,8 @@ contains ! =====     Public Procedures     =============================
       else if ( .not. all(got_field((/f_spacing, f_origin/)))) then
         call announce_error ( root, NoSpacingOrigin )
       else
-        call CreateRegularHGrid ( l1bInfo, processingRange, chunk, &
+        ! call CreateRegularHGrid ( l1bInfo, processingRange, chunk, &
+        call CreateRegularHGrid ( filedatabase, processingRange, chunk, &
           & spacing, origin, trim(instrumentModuleName), forbidOverspill, &
           & maxLowerOverlap, maxUpperOverlap, insetOverlaps, single, hGrid )
       end if
@@ -251,9 +257,9 @@ contains ! =====     Public Procedures     =============================
       
       ! Get the time from the l1b file
       l1bItemName = AssembleL1BQtyName ( "MAFStartTimeTAI", hdfVersion, .false. )
-      call ReadL1BData ( l1bInfo%l1boaID, l1bItemName, l1bField, noMAFs, &
+      call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
         & l1bFlag, firstMAF=chunk%firstMAFIndex, &
-        & lastMAF=chunk%lastMAFIndex, hdfVersion=hdfVersion, &
+        & lastMAF=chunk%lastMAFIndex, &
         & dontPad=DONTPAD )
       if ( l1bFlag==-1) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_L1BRead//"MAFStartTimeTAI" )
@@ -283,7 +289,8 @@ contains ! =====     Public Procedures     =============================
 
     if ( index ( switches, 'geom' ) /= 0 ) &
       & call DumpChunkHGridGeometry ( hGrid, chunk, &
-      & trim(instrumentModuleName), l1bInfo )
+      & trim(instrumentModuleName), filedatabase )
+      ! & trim(instrumentModuleName), l1bInfo )
 
   end function CreateHGridFromMLSCFInfo
 
@@ -400,7 +407,8 @@ contains ! =====     Public Procedures     =============================
   end subroutine CreateExplicitHGrid
 
   ! ---------------------------------------  CreateMIFBasedHGrids  -----
-  subroutine CreateMIFBasedHGrids ( l1bInfo, hGridType, &
+  ! subroutine CreateMIFBasedHGrids ( l1bInfo, hGridType, &
+  subroutine CreateMIFBasedHGrids ( filedatabase, hGridType, &
     & chunk, got_field, root, height, fraction, interpolationFactor,&
     & instrumentModuleName, mif, maxLowerOverlap, maxUpperOverlap, hGrid )
     ! This is part of ConstructHGridFromMLSCFInfo
@@ -413,13 +421,13 @@ contains ! =====     Public Procedures     =============================
       & F_MIF, L_FIXED, L_FRACTIONAL, L_HEIGHT, L_MIF
     use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData, &
       & AssembleL1BQtyName
-    use MLSCommon, only: L1BInfo_T, NameLen, RK => R8
-    use MLSFiles, only: MLS_HDF_Version       
-    use MLSL2Options, only: LEVEL1_HDFVERSION  
+    use MLSCommon, only: MLSFile_T, NameLen, RK => R8
+    use MLSFiles, only: GetMLSFileByType
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_L1BRead
     use MLSNumerics, only: HUNT, InterpolateValues
 
-    type (L1BInfo_T), intent(in)      :: L1BINFO
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    ! type( L1BInfo_T ), intent(in) :: L1BINFO
     integer, intent(in)               :: HGRIDTYPE
     type (MLSChunk_T), intent(in)     :: CHUNK
     logical, dimension(:), intent(in) :: GOT_FIELD
@@ -467,13 +475,16 @@ contains ! =====     Public Procedures     =============================
     integer ::  hdfVersion
     character (len=NameLen) :: L1BItemName
     logical, parameter     :: DEEBUG = .false.
+    type (MLSFile_T), pointer             :: L1BFile
 
     ! Executable code
 
-    hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
-    if ( hdfversion <= 0 ) &                                            
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &                      
-      & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )    
+      L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
+      hdfversion = L1BFile%HDFVersion
+!     hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
+!     if ( hdfversion <= 0 ) &                                            
+!       & call MLSMessage ( MLSMSG_Error, ModuleName, &                      
+!       & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )    
     nullify ( tpGeodAlt, tpGeodAngle, defaultField, interpolatedField, &
       & defaultMIFs, defaultIndex, interpolatedIndex )
 
@@ -501,9 +512,8 @@ contains ! =====     Public Procedures     =============================
 
     if ( hGridType /= l_Fixed ) then
       l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
-      call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField, noMAFs, &
+      call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
         & l1bFlag, firstMAF=chunk%firstMafIndex, lastMAF=chunk%lastMafIndex, &
-        & hdfVersion=hdfVersion, &
         & dontPad=.true. )
       if ( l1bFlag==-1) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_L1BRead//l1bItemName )
@@ -578,9 +588,8 @@ contains ! =====     Public Procedures     =============================
       
       ! Read it from the l1boa file
       l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
-      call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField,noMAFs, &
+      call ReadL1BData ( L1BFile, l1bItemName, l1bField,noMAFs, &
         & l1bFlag, firstMAF=chunk%firstMafIndex, lastMAF=chunk%lastMafIndex, &
-        & hdfVersion=hdfVersion, &
         & dontPad=.true. )
       if ( l1bFlag==-1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_L1BRead//l1bItemName )
@@ -681,7 +690,8 @@ contains ! =====     Public Procedures     =============================
   end subroutine CreateMIFBasedHGrids
 
   ! -----------------------------------------  CreateRegularHGrid  -----
-  subroutine CreateRegularHGrid ( l1bInfo, processingRange, chunk, &
+  ! subroutine CreateRegularHGrid ( l1bInfo, processingRange, chunk, &
+  subroutine CreateRegularHGrid ( filedatabase, processingRange, chunk, &
     & spacing, origin, instrumentModuleName, forbidOverspill, &
     & maxLowerOverlap, maxUpperOverlap, insetOverlaps, single, hGrid )
 
@@ -692,9 +702,8 @@ contains ! =====     Public Procedures     =============================
     use HGridsDatabase, only: CREATEEMPTYHGRID, HGRID_T, TRIMHGRID
     use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData, &
       & AssembleL1BQtyName
-    use MLSCommon, only: L1BInfo_T, NameLen, RK => R8, TAI93_RANGE_T
-    use MLSFiles, only: MLS_HDF_Version       
-    use MLSL2Options, only: LEVEL1_HDFVERSION  
+    use MLSCommon, only: MLSFile_T, NameLen, RK => R8, TAI93_RANGE_T
+    use MLSFiles, only: GetMLSFileByType
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MLSNumerics, only: HUNT, InterpolateValues
     use OUTPUT_M, only: OUTPUT
@@ -702,7 +711,8 @@ contains ! =====     Public Procedures     =============================
     use TOGGLES, only: SWITCHES
     use UNITS, only: DEG2RAD, RAD2DEG
 
-    type (L1BInfo_T), intent(in) :: L1BINFO
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    ! type( L1BInfo_T ), intent(in) :: L1BINFO
     type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
     type (MLSChunk_T), intent(in) :: CHUNK
     real(rk), intent(in) :: SPACING
@@ -746,28 +756,32 @@ contains ! =====     Public Procedures     =============================
     integer ::  hdfVersion
     character(len=NameLen) :: l1bItemName
     logical     :: deebug = .FALSE.
+    type (MLSFile_T), pointer             :: L1BFile
 
     ! Executable code
     deebug = deebug .or. ( index ( switches, 'hgrid' ) /= 0 )
 
-    hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
-    if ( hdfversion <= 0 ) &                                            
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &                      
-      & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )    
+    L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
+    hdfversion = L1BFile%HDFVersion
+!     hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
+!     if ( hdfversion <= 0 ) &                                            
+!       & call MLSMessage ( MLSMSG_Error, ModuleName, &                      
+!       & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )    
 
     ! Setup the empircal geometry estimate of lon0
     ! (it makes sure it's not done twice
-    call ChooseOptimumLon0 ( l1bInfo, chunk )
+    ! call ChooseOptimumLon0 ( l1bInfo, chunk )
+    call ChooseOptimumLon0 ( filedatabase, chunk )
 
     ! First we're going to work out the geodetic angle range
     ! Read an extra MAF if possible, as we may use it later
     ! when computing the overlaps.
     l1bItemName = AssembleL1BQtyName ( instrumentModuleName//".tpGeodAngle", &
       & hdfVersion, .false. )
-    call ReadL1BData ( l1bInfo%l1bOAID, l1bItemName, &
+    call ReadL1BData ( L1BFile, l1bItemName, &
       & l1bField, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, &
-      & lastMAF=chunk%lastMAFIndex+1, hdfVersion=hdfVersion, dontPad=.true. )
+      & lastMAF=chunk%lastMAFIndex+1, dontPad=.true. )
     noMAFs = chunk%lastMAFIndex - chunk%firstMAFIndex + 1
     minAngle = minval ( l1bField%dpField(1,:,1) )
     maxAngleFirstMAF = maxval ( l1bField%dpField(1,:,1) )
@@ -869,10 +883,10 @@ contains ! =====     Public Procedures     =============================
     ! Now fill the other geolocation information, first latitude
     ! Get orbital inclination
     l1bItemName = AssembleL1BQtyName ( "scOrbIncl", hdfVersion, .false. )
-    call ReadL1BData ( l1bInfo%l1bOAID, l1bItemName, &
+    call ReadL1BData ( L1BFile, l1bItemName, &
       & l1bField, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, &
-      & lastMAF=chunk%lastMAFIndex, hdfVersion=hdfVersion, &
+      & lastMAF=chunk%lastMAFIndex, &
       & dontPad=.true. )
       if ( deebug ) then
         call dump(l1bField%DpField(1,1,:), l1bItemName)
@@ -889,10 +903,9 @@ contains ! =====     Public Procedures     =============================
     ! Now time, because this is important to get right, I'm going to put in
     ! special code for the case where the chunk is of length one.
     l1bItemName = AssembleL1BQtyName ( "MAFStartTimeTAI", hdfVersion, .false. )
-    call ReadL1BData ( l1bInfo%l1bOAID, l1bItemName, &
+    call ReadL1BData ( L1BFile, l1bItemName, &
       & l1bField, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
-      & hdfVersion=hdfVersion, &
       & dontPad=.true. )
     if ( deebug ) then
       call dump(l1bField%DpField(1,1,:), trim(l1bItemName) // ' (before interpolating)')
@@ -924,10 +937,9 @@ contains ! =====     Public Procedures     =============================
     ! This we'll have to do with straight interpolation
     l1bItemName = AssembleL1BQtyName ( instrumentModuleName//".tpSolarZenith", &
       & hdfVersion, .false. )
-    call ReadL1BData ( l1bInfo%l1bOAID, l1bItemName, &
+    call ReadL1BData ( L1BFile, l1bItemName, &
       & l1bField, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
-      & hdfVersion=hdfVersion, &
       & dontPad=.true. )
     if ( deebug ) then
       call dump(l1bField%DpField(1,1,:), trim(l1bItemName) // ' (before interpolating)')
@@ -944,10 +956,9 @@ contains ! =====     Public Procedures     =============================
     ! This we'll have to do with straight interpolation
     l1bItemName = AssembleL1BQtyName ( instrumentModuleName//".tpLosAngle", &
       & hdfVersion, .false. )
-    call ReadL1BData ( l1bInfo%l1bOAID, l1bItemName, &
+    call ReadL1BData ( L1BFile, l1bItemName, &
       & l1bField, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
-      & hdfVersion=hdfVersion, &
       & dontPad=.true. )
     if ( deebug ) then
       call dump(l1bField%DpField(1,1,:), trim(l1bItemName) // ' (before interpolating)')
@@ -1093,22 +1104,23 @@ contains ! =====     Public Procedures     =============================
 
   ! -------------------------------------  DumpChunkHGridGeometry  -----
   subroutine DumpChunkHGridGeometry ( hGrid, chunk, &
-    & instrumentModuleName, l1bInfo )
+    & instrumentModuleName, filedatabase )
+    ! & instrumentModuleName, l1bInfo )
 
     use Chunks_m, only: MLSChunk_T
     use HGridsDatabase, only: HGRID_T
     use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData, &
       & AssembleL1BQtyName
-    use MLSCommon, only: L1BInfo_T, NameLen, R8
-    use MLSFiles, only: MLS_HDF_Version       
-    use MLSL2Options, only: LEVEL1_HDFVERSION  
+    use MLSCommon, only: MLSFile_T, NameLen, R8
+    use MLSFiles, only: GetMLSFileByType
     use MLSMessageModule, only: MLSMessage, MLSMSG_allocate, &
       & MLSMSG_DeAllocate, MLSMSG_Error
     use OUTPUT_M, only: OUTPUT
     use String_Table, only: DISPLAY_STRING
 
     type (HGrid_T), intent(in) :: HGRID
-    type (L1BInfo_T), intent(in) :: L1BINFO
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    ! type( L1BInfo_T ), intent(in) :: L1BINFO
     character (len=*) :: INSTRUMENTMODULENAME
     type (MLSChunk_T), intent(in) :: CHUNK
 
@@ -1146,6 +1158,7 @@ contains ! =====     Public Procedures     =============================
 
     integer ::  hdfVersion
     character(len=NameLen) :: l1bItemName
+    type (MLSFile_T), pointer             :: L1BFile
 
     ! Executable code
 
@@ -1156,17 +1169,19 @@ contains ! =====     Public Procedures     =============================
       call output ( "<no-name>", advance='yes' )
     end if
 
-    hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
-    if ( hdfversion <= 0 ) &                                            
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &                      
-      & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )    
+      L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
+      hdfversion = L1BFile%HDFVersion
+!     hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
+!     if ( hdfversion <= 0 ) &                                            
+!       & call MLSMessage ( MLSMSG_Error, ModuleName, &                      
+!       & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )    
 
     ! Read the geodetic angle from the L1Bfile
     l1bItemName = AssembleL1BQtyName ( instrumentModuleName//".tpGeodAngle", hdfVersion, .false. )
-    call ReadL1BData ( l1bInfo%l1bOAID, l1bItemName, &
+    call ReadL1BData ( L1BFile, l1bItemName, &
       & l1bField, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, &
-      & lastMAF=chunk%lastMAFIndex, hdfVersion=hdfVersion, &
+      & lastMAF=chunk%lastMAFIndex, &
       & dontPad=.true. )
     mifPhi => l1bField%dpField(1,:,:)
 
@@ -1261,12 +1276,13 @@ contains ! =====     Public Procedures     =============================
   end subroutine DumpChunkHGridGeometry
 
   ! ------------------------------------------------ ComputeAllHGridOffsets ---
-  subroutine ComputeAllHGridOffsets ( root, index, chunks, l1bInfo, &
+  ! subroutine ComputeAllHGridOffsets ( root, index, chunks, l1bInfo, &
+  subroutine ComputeAllHGridOffsets ( root, index, chunks, filedatabase, &
     & l2gpDatabase, processingRange )
     ! This routine goes through the L1 file and works out how big each HGrid is going to be
     use Allocate_Deallocate, only: ALLOCATE_TEST
     use Chunks_m, only: MLSChunk_T
-    use MLSCommon, only: L1BINFO_T, TAI93_RANGE_T
+    use MLSCommon, only: MLSFILE_T, TAI93_RANGE_T
     use L2GPData, only: L2GPDATA_T
     use Tree, only: SUBTREE, NSONS, NODE_ID, DECORATION
     use MoreTree, only: GET_SPEC_ID
@@ -1278,7 +1294,8 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: ROOT         ! Tree node for whole l2cf
     integer, intent(in) :: INDEX        ! Where in the tree are we
     type(MLSChunk_T), dimension(:), intent(inout) :: CHUNKS
-    type(L1BInfo_T), intent(in) :: L1BINFO
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    ! type( L1BInfo_T ), intent(in) :: L1BINFO
     type(L2GPData_T), dimension(:), pointer :: L2GPDatabase
     type(TAI93_Range_T), intent(in) :: PROCESSINGRANGE
     ! Local variables
@@ -1320,7 +1337,8 @@ contains ! =====     Public Procedures     =============================
                   ! For the 'zeroth' pass just count up the chunks
                   noHGrids = noHGrids + 1
                 else
-                  dummyHGrid = CreateHGridFromMLSCFInfo ( 0, key, l1bInfo, l2gpDatabase, &
+                  ! dummyHGrid = CreateHGridFromMLSCFInfo ( 0, key, l1bInfo, l2gpDatabase, &
+                  dummyHGrid = CreateHGridFromMLSCFInfo ( 0, key, filedatabase, l2gpDatabase, &
                     & processingRange, chunks(chunk) )
                   chunks(chunk)%hGridOffsets(hGrid) = dummyHGrid%noProfs - &
                     & dummyHGrid%noProfsLowerOverlap - dummyHGrid%noProfsUpperOverlap
@@ -1463,6 +1481,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.68  2005/05/31 17:51:17  pwagner
+! Began switch from passing file handles to passing MLSFiles
+!
 ! Revision 2.67  2004/12/27 23:05:47  vsnyder
 ! Remove unreferenced use names
 !
