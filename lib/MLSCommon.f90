@@ -44,10 +44,13 @@ module MLSCommon                ! Common definitions for the MLS software
   ! This module contains simple definitions that are common to all the MLS PGS
   ! f90 software.
 
+  public :: FileIDs_T
   public :: FilterValues
+  public :: InRange
   public :: IsFinite
   public :: MLSFile_T
   public :: L1BInfo_T
+  public :: Range_T
   public :: TAI93_Range_T
 
   ! Firstly, these are standard numerical types, copied from HCP
@@ -83,6 +86,23 @@ module MLSCommon                ! Common definitions for the MLS software
   real, parameter, private :: FILLVALUETOLERANCE = 0.2 ! Poss. could make it 1
   ! --------------------------------------------------------------------------
   
+  ! A type to hold the hdf ids
+
+  type FileIds_T
+    integer :: f_id     = 0 ! File id, handle, or io unit
+    integer :: grp_id   = 0 ! group id
+    integer :: sd_id    = 0 ! sd or swath id
+  end type Fileids_T
+  ! --------------------------------------------------------------------------
+
+  ! A PCFid range
+
+  type Range_T
+    integer :: Bottom   = 0
+    integer :: Top      = 0
+  end type Range_T
+  ! --------------------------------------------------------------------------
+
   ! Moved here from MLSFiles module
   ! Information describing the files used by the mls software
   ! Stop passing file handles back & forth between routines
@@ -93,10 +113,13 @@ module MLSCommon                ! Common definitions for the MLS software
     character (LEN=8) :: access=""  ! e.g., 'rdonly', 'write', 'rdwrite'
     character (LEN=8) :: content=""  ! e.g., 'l1brad', 'l2gp', 'l2aux'
     character (LEN=FileNameLen) :: Name=""  ! its name (usu. w/path)
-    integer :: File_Id=0     ! The HDF ID (handle) or io unit for the file
-    integer :: PCF_Id=0      ! The PCF ID (ref), if any,  for the file
-    integer :: HDFVersion=0  ! Which hdf version is the file if hdf(eos)
+    ! integer :: File_Id=0     ! its HDF ID (handle) or io unit
+    integer :: HDFVersion=0  ! its hdf version if hdf(eos)
+    integer :: PCFId=0      ! its PCF ID (ref), if any
+    integer :: recordLength=0! its max record_length, if any
     logical :: StillOpen=.false.
+    type(Range_T) :: PCFidRange
+    type(Fileids_T) :: FileID
   end type MLSFile_T
 
   ! The next datatype describes the information on the L1B data files in use
@@ -404,7 +427,13 @@ module MLSCommon                ! Common definitions for the MLS software
       btab = reshape(b1, shp)
   end subroutine filterValues_DOUBLE_3d
 
-
+  elemental function inRange(arg, range) result(relation)
+    ! Is arg in range?
+    integer, intent(in)       :: arg
+    type(Range_T), intent(in) :: range
+    logical                   :: relation
+    relation = (arg < (range%top + 1)) .and. (arg > (range%bottom - 1))
+  end function inRange
 !=============================================================================
   subroutine announce_error(message, int1, int2, dontstop)
     character(len=*), intent(in) :: message
@@ -453,7 +482,6 @@ module MLSCommon                ! Common definitions for the MLS software
     integer, intent(in), optional :: WIDTH ! How many pairs per line (1)?
     
     integer :: J, K, L
-    logical :: MyClean
     integer :: MyWidth
     character(len=24) :: myName
     MyWidth = 1
@@ -523,6 +551,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.23  2005/05/31 17:49:15  pwagner
+! Added new fields to MLSFile_T
+!
 ! Revision 2.22  2005/05/12 20:46:46  pwagner
 ! Added filterValues and isFinite procedures (Should they be elsewhere?)
 !
