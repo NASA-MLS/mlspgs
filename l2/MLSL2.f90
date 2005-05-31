@@ -14,8 +14,8 @@ program MLSL2
   use MACHINE, only: GETARG, HP, IO_ERROR, NEVERCRASH
   use MLSCOMMON, only: FILENAMELEN, MLSFile_T
   use MLSFiles, only: WILDCARDHDFVERSION, HDFVERSION_4, HDFVERSION_5, &
-!   & MLS_IO_GEN_OPENF, &
-    & ADDFILETODATABASE, Deallocate_filedatabase
+    & ADDFILETODATABASE, Deallocate_filedatabase, dump, &
+    & InitializeMLSFile, mls_openFile, mls_closeFile
   use MLSHDF5, only: mls_h5open, mls_h5close
   use MLSL2Options, only: CATENATESPLITS, CHECKPATHS, CURRENT_VERSION_ID, &
     & DEFAULT_HDFVERSION_READ, DEFAULT_HDFVERSION_WRITE, &
@@ -31,11 +31,11 @@ program MLSL2
   use MLSStrings, only: lowerCase, readIntsFromChars
   use MLSStringLists, only: catLists, GetStringElement, GetUniqueList, &
     & NumStringElements, RemoveElemFromList, unquote
-  use OBTAIN_MLSCF, only: Close_MLSCF, Open_MLSCF
+  ! use OBTAIN_MLSCF, only: Close_MLSCF, Open_MLSCF
   use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUT_DATE_AND_TIME, PRUNIT
   use PARSER, only: CONFIGURATION
   use PVM, only: ClearPVMArgs, FreePVMArgs
-  use SDPToolkit, only: UseSDPToolkit !, PGSD_IO_GEN_RSEQFRM
+  use SDPToolkit, only: UseSDPToolkit
   use SnoopMLSL2, only: SNOOPINGACTIVE, SNOOPNAME
   use STRING_TABLE, only: DESTROY_CHAR_TABLE, DESTROY_HASH_TABLE, &
     & DESTROY_STRING_TABLE, DISPLAY_STRING, DO_LISTING, INUNIT
@@ -135,7 +135,7 @@ program MLSL2
   logical :: garbage_collection_by_dt = .false. ! Collect garbage after each deallocate_test?
   integer :: I                     ! counter for command line arguments
   integer :: J                     ! index within option
-  character(len=FILENAMELEN) :: L2CF_file       ! Some text
+  ! character(len=FILENAMELEN) :: L2CF_file       ! Some text
   integer :: LastCHUNK = 0         ! Just run range [SINGLECHUNK-LastCHUNK]
   character(len=2048) :: LINE      ! Into which is read the command args
   integer :: N                     ! Offset for start of --'s text
@@ -163,7 +163,7 @@ program MLSL2
   !-----------------------------------------------------------------------------
 
   type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-  type (MLSFile_T)                        ::     theFile
+  type (MLSFile_T)                        ::     MLSL2CF
   character(len=2) :: quotes
   quotes = char(34) // char(39)   ! {'"}
   nullify (filedatabase)
@@ -649,45 +649,60 @@ program MLSL2
   !---------------- Task (4) ------------------
   ! Open the L2CF
   status = 0
-  L2CF_file = '<STDIN>'
+  status = InitializeMLSFile(MLSL2CF, content = 'l2cf', name='<STDIN>', &
+      & type='ascii', access='nonhdf', recordLength=recl, &
+      & PCBottom=MLSPCF_L2CF_Start, PCTop=MLSPCF_L2CF_Start)
+  MLSL2CF%FileID%f_id = l2cf_unit
   if ( line /= ' ' ) then
-    L2CF_file = line
-    open ( l2cf_unit, file=line, status='old', &
-     & form='formatted', access='sequential', recl=recl, iostat=status )
-    ! inunit = mls_io_gen_openF('op', .true., status, &
-     ! & record_length, PGSd_IO_Gen_RSeqFrm, FileName=trim(line), &
-     ! & inp_rec_length=recl)
+    ! L2CF_file = line
+    MLSL2CF%name = line
+    ! open ( l2cf_unit, file=line, status='old', &
+    ! & form='formatted', access='sequential', recl=recl, iostat=status )
+    ! print *, '1st attempt to open ' // trim(MLSL2CF%name)
+    call mls_openFile(MLSL2CF, status)
+    ! print *, 'status ', status
     if ( status /= 0 ) then
-      L2CF_file = trim(line) // L2CFNAMEEXTENSION
-       open ( l2cf_unit, file=trim(line) // L2CFNAMEEXTENSION, status='old', &
-        & form='formatted', access='sequential', recl=recl, iostat=status )
-    ! inunit = mls_io_gen_openF('op', .true., status, &
-     ! & record_length, PGSd_IO_Gen_RSeqFrm, &
-     ! & FileName=trim(line) // L2CFNAMEEXTENSION, &
-     ! & inp_rec_length=recl)
+      ! L2CF_file = trim(line) // L2CFNAMEEXTENSION
+      MLSL2CF%name = trim(line) // L2CFNAMEEXTENSION
+      ! print *, '1st attempt to open ' // trim(MLSL2CF%name)
+      call mls_openFile(MLSL2CF, status)
+      ! print *, 'status ', status
+       !open ( l2cf_unit, file=trim(line) // L2CFNAMEEXTENSION, status='old', &
+       ! & form='formatted', access='sequential', recl=recl, iostat=status )
     end if
     if ( status /= 0 ) then
       call io_error ( "While opening L2CF", status, line )
       call MLSMessage ( MLSMSG_Error, moduleName, &
-        & "Unable to open L2CF file: " // trim(line) )
+        & "Unable to open L2CF file: " // trim(line), MLSFile=MLSL2CF )
     elseif(index(switches, 'pro') /= 0) then                            
-      call announce_success(L2CF_file, l2cf_unit)               
+      call announce_success(MLSL2CF%name, l2cf_unit)               
     end if
     inunit = l2cf_unit
   else if ( TOOLKIT .and. .not. showDefaults ) then
-    call open_MLSCF ( MLSPCF_L2CF_Start, inunit, L2CF_file, status, recl )
+    ! call open_MLSCF ( MLSPCF_L2CF_Start, inunit, L2CF_file, status, recl )
+    MLSL2CF%name = '' ! To force reference to PCF entry
+    MLSL2CF%type = 'tkgen'
+    ! print *, 'About to try to open l2cf file'
+    call mls_openFile(MLSL2CF, status)
+    ! call dump(MLSL2CF)
+    inunit = MLSL2CF%FileID%f_id
     if(status /= 0) then
       call output( 'Non-zero status returned from open_MLSCF: ', &
       & advance='no')
       call output(status, advance='yes')
       call MLSMessage ( MLSMSG_Error, moduleName, &
-        & "Unable to open L2CF file named in pcf" )
+        & "Unable to open L2CF file named in pcf", MLSFile=MLSL2CF )
     elseif(index(switches, 'pro') /= 0) then                            
-      call announce_success(L2CF_file, inunit)               
+      call announce_success(MLSL2CF%name, inunit)               
     end if
   end if
   error = status
-  numfiles = AddFileToDataBase(filedatabase, theFile)
+  if ( MLSL2CF%name == '<STDIN>' ) then
+    MLSL2CF%FileID%f_id = -1
+  else
+    inunit = MLSL2CF%FileID%f_id
+  endif
+  numfiles = AddFileToDataBase(filedatabase, MLSL2CF)
   
   call time_now ( t1 )
 
@@ -716,7 +731,8 @@ program MLSL2
 
   !---------------- Task (6) ------------------
   if ( TOOLKIT .and. error==0) then
-    call close_MLSCF ( inunit, error )
+    ! call close_MLSCF ( inunit, error )
+    call mls_closeFile ( filedatabase(numfiles), error )
   else
     if ( inunit >= 0 ) close ( inunit )  ! Don't worry about the status
   end if
@@ -724,6 +740,7 @@ program MLSL2
     call output ( &
       'An io error occurred with the l2cf -- there is no abstract syntax tree', &
       advance='yes' )
+    call dump(MLSL2CF)
   else if ( root <= 0 ) then
     call output ( &
       'A syntax error occurred -- there is no abstract syntax tree', &
@@ -866,7 +883,7 @@ contains
     call output(trim(command_line), advance='yes')
     call output(' l2cf file:', advance='no')  
     call blanks(4, advance='no')                                     
-    call output(trim(L2CF_file), advance='yes')                            
+    call output(trim(MLSL2CF%name), advance='yes')                            
     if( index(switches, 'opt1') /= 0 .or. showDefaults ) then                                 
       call output(' -------------- Summary of run time options'      , advance='no')
       call output(' -------------- ', advance='yes')
@@ -1031,6 +1048,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.136  2005/05/31 17:51:17  pwagner
+! Began switch from passing file handles to passing MLSFiles
+!
 ! Revision 2.135  2005/04/12 18:12:30  pwagner
 ! SIPS version limits warnings to 50; reads scalar intfromchars
 !
