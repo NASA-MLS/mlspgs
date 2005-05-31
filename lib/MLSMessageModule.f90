@@ -6,6 +6,7 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
 !==============================================================================
 
   use Machine, only: CRASH_BURN, Exit_with_status
+  use MLSCommon, only: MLSFile_T
   use PVM, only: InfoTag, &
     & PVMDATADEFAULT, PVMFInitSend, PVMF90Pack, SIG_AboutToDie
   use SDPToolkit, only: PGS_SMF_GenerateStatusReport, UseSDPToolkit
@@ -127,7 +128,7 @@ contains
 
   ! This first routine is the main `messaging' code.
 
-  subroutine MLSMessage_ ( Severity, ModuleNameIn, Message, Advance  )
+  subroutine MLSMessage_ ( Severity, ModuleNameIn, Message, Advance, MLSFile )
 
     ! Dummy arguments
     integer, intent(in) :: Severity ! e.g. MLSMSG_Error
@@ -136,13 +137,12 @@ contains
     character (len=*), intent(in), optional :: Advance ! Do not advance
     !                                 if present and the first character is 'N'
     !                                 or 'n'
+    type(MLSFile_T), intent(in), optional :: MLSFile
 
     ! Local variables
-    integer :: Dummy
     character (len=512), save :: Line   ! Line to output, should be long enough
     integer, save :: Line_len=0         ! Number of saved characters in line.
     !                                     If nonzero, do not insert prefix.
-    logical :: log_it
     logical :: My_adv
     logical :: nosubsequentwarnings
     logical :: newwarning
@@ -223,25 +223,7 @@ contains
        ! rather than from output module )
 
        if ( my_adv ) then
-         log_it = &
-         & (MLSMessageConfig%useToolkit .and. UseSDPToolkit) &
-         & .or. &
-         & severity >= MLSMSG_Severity_to_quit
-         if( log_it ) &
-         & dummy = PGS_SMF_GenerateStatusReport&
-         & (TRIM(MLSMessageConfig%prefix)// &
-              & TRIM(line) )
-
-         ! Now, if we're also logging to a file then write to that too.
-
-         select case ( MLSMessageConfig%logFileUnit  )
-         case ( 0 :  )
-           write ( UNIT=max(MLSMessageConfig%logFileUnit,1), FMT=* ) TRIM(line)
-         case ( -1  )
-           write ( UNIT=*, FMT=* ) TRIM(line)
-         case default
-         end select
-
+         call printitout(line, severity)
          line_len = 0
          line = ' '
        end if
@@ -252,6 +234,7 @@ contains
     ! log file if any and quit
 
     if ( my_adv .and. severity >= MLSMSG_Severity_to_quit ) then
+      if ( present(MLSFile) ) call dumpFile(MLSFile)
       if ( MLSMessageConfig%SendErrMsgToMaster .and. &
         & MLSMessageConfig%masterTID > 0 ) call LastGasp(ModulenameIn, Message )
       if ( MLSMessageConfig%logFileUnit > 0 ) &
@@ -394,6 +377,27 @@ contains
   end subroutine PVMErrorMessage
 
   ! Private procedures
+  ! --------------------------------------------  dumpFile  -----
+  subroutine dumpFile ( MLSFile  )
+    ! Show everything about it
+    type(MLSFile_T) :: MLSFile
+    integer, parameter :: SEVERE = MLSMSG_Error
+    ! Executable code
+    call printitout ( 'MLS File Info: ', MLSMSG_Error )                                  
+    call dump ( '(name) ', charValue=trim(MLSFile%Name))                                  
+    call dump ( '    Type         : ', charValue=trim(MLSFile%Type))
+    call dump ( '    Access       : ', charValue=trim(MLSFile%access))
+    call dump ( '    content      : ', charValue=trim(MLSFile%content))
+    call dump ( '    File ID      : ', MLSFile%FileId%f_id)
+    call dump ( '    Group ID     : ', MLSFile%FileId%grp_id)
+    call dump ( '    DataSet ID   : ', MLSFile%FileId%sd_id)
+    call dump ( '    PCF ID       : ', MLSFile%PCFId)
+    call dump ( '    PCF Range    : ', MLSFile%PCFidRange%Bottom)
+    call dump ( '    PCF Range    : ', MLSFile%PCFidRange%Top)
+    call dump ( '    hdf version  : ', MLSFile%HDFVersion)
+    call dump ( '    Open?        : ', logValue= MLSFile%StillOpen)
+  end subroutine dumpFile
+
   ! -------------------- LastGasp -------------------
   ! We're a slave and we're about to expire
   ! Before we do, however, try to tell the master why
@@ -415,6 +419,59 @@ contains
     if ( info /= 0 ) &
       & call PVMErrorMessage ( info, 'sending last gasp'  )
   end subroutine LastGasp
+
+  ! --------------------------------------------  dump  -----
+  subroutine dump ( name, intValue, charValue, logValue  )
+    ! In any way we're asked
+    character(len=*), intent(in) :: name
+    integer, intent(in), optional :: intValue
+    character(len=*), intent(in), optional :: charValue
+    logical, intent(in), optional :: logValue
+    !
+    character(len=132) :: line
+    character(len=32) :: value
+    value = ''
+    if ( present(intValue) ) then
+      write(value, '(i10)') intValue
+    elseif ( present(logValue) ) then
+      write(value, '(l10)') logValue
+    endif
+    if ( present(charValue) ) then
+      line = trim(name) // ' : ' // trim(charvalue)
+    else
+      line = trim(name) // ' : ' // trim(value)
+    endif
+    call printitout(trim(line), MLSMSG_Error)
+  end subroutine dump
+
+  ! --------------------------------------------  PRINTITOUT  -----
+  subroutine PRINTITOUT ( LINE, SEVERITY  )
+    ! In any way we're asked
+    character(len=*), intent(in) :: LINE
+    integer, intent(in) :: SEVERITY
+    logical :: log_it
+    integer :: ioerror
+      log_it = &
+      & (MLSMessageConfig%useToolkit .and. UseSDPToolkit) &
+      & .or. &
+      & severity >= MLSMSG_Severity_to_quit
+      if( log_it ) &
+      & ioerror = PGS_SMF_GenerateStatusReport&
+      & (TRIM(MLSMessageConfig%prefix)// &
+           & TRIM(line) )
+
+      ! Now, if we're also logging to a file then write to that too.
+
+      select case ( MLSMessageConfig%logFileUnit  )
+      case ( 0 :  )
+        write ( UNIT=max(MLSMessageConfig%logFileUnit,1), FMT=* ) TRIM(line)
+      case ( -1  )
+        write ( UNIT=*, FMT=* ) TRIM(line)
+      case default
+      end select
+
+  end subroutine PRINTITOUT
+
 !=======================================================================
   logical function not_used_here( )
     character (len=len(idParm)) :: Id = idParm ! CVS info
@@ -426,6 +483,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.21  2005/05/31 17:48:26  pwagner
+! Added MLSFile as optional arg to be dumped on error
+!
 ! Revision 2.20  2005/05/03 15:56:37  pwagner
 ! NAG doesnt like space between / and ) in array constructor
 !
