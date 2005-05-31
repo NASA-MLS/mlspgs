@@ -2,8 +2,8 @@
 #
 #  Lost? Type 'make help -f MakeFC' from the directory where you see this file
 #
-# Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+# Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 # ---------------------- The name of this file (is the right-hand-side below)
 MakeFName = MakeFC
@@ -208,6 +208,7 @@ SHELL = /bin/sh
 # hl             -- build and install this prog
 # init_gen       -- build and install this prog
 # killmaster     -- build and install this prog
+# l1bdiff        -- build and install this prog
 # l2auxcat       -- build and install this prog
 # l2gpcat        -- build and install this prog
 # l2gpdiff       -- build and install this prog
@@ -720,6 +721,11 @@ killmaster: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/killmaster.c
 	   -C $(MLSCFILE) $(MLSBIN)/$@.c \
       $(UTIL_OPTS) -main killmaster.c
 
+l1bdiff: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l1bdiff.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
 l2auxcat: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2auxcat.f90 l2
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m l2 \
@@ -1066,7 +1072,7 @@ update:
 
 # Make most the souce-file tools in the util directory
 tools: chunktimes compare heconvert h5subset h5cat hl killmaster \
-  l2auxcat l2gpcat l2q l2gpdiff machineok WordSplit
+  l1bdiff l2auxcat l2gpcat l2q l2gpdiff machineok WordSplit
 
 .PHONY: all configure clean clean_config\
   configure_pvm configure_fopts configure_full configure_help configure_subdirs\
@@ -1080,11 +1086,14 @@ tools: chunktimes compare heconvert h5subset h5cat hl killmaster \
   makefile mostlyclean $(SUBDIRS) subdirs\
   tar substar tarz substarz targ substarg substars update\
   chunktimes CondenseLeakLog end_stmts f90tex heconvert init_gen \
-  h5subset h5cat hl killmaster l2auxcat l2gpcat l2gpdiff l2q machineok \
+  h5subset h5cat hl killmaster l1bdiff l2auxcat l2gpcat l2gpdiff l2q machineok \
   MLS_h5ls utctotai WordSplit tools
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.94  2005/04/29 22:08:05  pwagner
+# Added l2auxcat build, tools target
+#
 # Revision 1.93  2004/12/14 21:27:59  pwagner
 # Added target to build l2q
 #
