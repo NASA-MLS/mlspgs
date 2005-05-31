@@ -7,8 +7,7 @@ module Open_Init
   ! Opens and closes several files
   ! Creates and destroys the L1BInfo database
 
-  use MLSCommon, only: FileNameLen, L1BInfo_T, TAI93_Range_T, R8, i4
-  use MLSL2Options, only: LEVEL1_HDFVERSION
+  use MLSCommon, only: FileNameLen, L1BInfo_T, MLSFile_T, TAI93_Range_T, R8, i4
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSStringLists, only: catLists, NumStringElements, GetStringElement, &
     & utc_to_yyyymmdd
@@ -46,7 +45,6 @@ module Open_Init
   private :: not_used_here 
   !-----------------------------------------------------------------------------
 
-  ! integer, parameter :: LEVEL1_HDFVERSION = 4  ! Until we convert level 1 to hdf5
   integer, parameter :: MLSPCF_LOG = 10101 ! This seems to be hard-wired into PCF
   integer, parameter :: CCSDSLen=27
   logical, parameter :: ALWAYSGETSWITCHESCONFIG = .false.
@@ -57,48 +55,13 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------------------------------  DestroyL1BInfo  -----
   subroutine DestroyL1BInfo ( L1BInfo )
 
-    use MLSL2Options, only: ILLEGALL1BRADID
-    use MLSFiles, only: mls_io_gen_closeF
-    use WriteMetadata, only: L2PCF
+    ! Unneeded now that l1b files part of filedatabase
 
     type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
-    ! type (PCFData_T) ::                          L2pcf
     integer :: STATUS ! from deallocate
     integer :: id
     error = 0
     if ( toggle(gen) ) call trace_begin ( "DESTROYL1BInfo" )
-
-    if ( associated(l1bInfo%L1BRADIDs) ) then
-      do id = 1, SIZE(l1bInfo%L1BRADIDs)
-         if(l1bInfo%L1BRADIDs(id) /= ILLEGALL1BRADID) then
-  ! ((( This will have to change if we wish to convert l1 files to hdf5
-  !          Maybe put another wrapper in MSLFiles
-  !      STATUS = sfend(l1bInfo%L1BRADIDs(id))
-  !      STATUS = mls_sfend(l1bInfo%L1BRADIDs(id), hdfVersion=LEVEL1_HDFVERSION)
-         STATUS = mls_io_gen_closeF('hg', l1bInfo%L1BRADIDs(id), &
-           & hdfVersion=LEVEL1_HDFVERSION)
-
-         end if
-      end do
-      deallocate( l1bInfo%L1BRADIDs, l1bInfo%L1BRADFileNames, stat=status )
-      if ( status /= 0 ) then
-        call announce_error ( 0, 'Error deallocating l1bInfo' )
-      end if
-      if(associated(L2pcf%L1BRADPCFIDs)) &
-           deallocate(L2pcf%L1BRADPCFIDs, stat=status)
-      if ( status /= 0 ) then
-        call announce_error ( 0, 'Error deallocating L2pcf%L1BRADPCFIDs' )
-      end if
-    end if
-    
-    if(l1bInfo%L1BOAID /= ILLEGALL1BRADID) then
-  ! ((( This will have to change if we wish to convert l1 files to hdf5
-  !          Maybe put another wrapper in MSLFiles
-  !  STATUS = sfend(l1bInfo%L1BOAID)
-  !  STATUS = mls_sfend(l1bInfo%L1BOAID, hdfVersion=LEVEL1_HDFVERSION)
-     STATUS = mls_io_gen_closeF('hg', l1bInfo%L1BOAID, &
-           & hdfVersion=LEVEL1_HDFVERSION)
-    end if
 
     if ( error /= 0 ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -111,19 +74,20 @@ contains ! =====     Public Procedures     =============================
 
 
   ! ------------------------------------------  OpenAndInitialize  -----
-  subroutine OpenAndInitialize ( processingRange, l1bInfo )
+  ! subroutine OpenAndInitialize ( processingRange, l1bInfo )
+  subroutine OpenAndInitialize ( processingRange, filedatabase )
 
     ! Opens L1 RAD files
     ! Opens L1OA file
     ! Opens and reads the signal nomenclature file
     ! Gets the start and end times from the PCF
 
-    use Hdf, only: DFACC_READ   ! , SFSTART, SFEND
     use L1BData, only: FindMaxMAF, ReadL1BAttribute
     use L2ParInfo, only: parallel
-    use MLSFiles, only: mls_io_gen_openF, mls_hdf_version
+    use MLSFiles, only: &
+      & addFileToDatabase, InitializeMLSFile, mls_openFile
     use MLSL2Options, only: TOOLKIT, PENALTY_FOR_NO_METADATA, &
-      &                   MAXNUML1BRADIDS, ILLEGALL1BRADID
+      & ILLEGALL1BRADID, MAXNUML1BRADIDS
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use MLSPCF2, only: MLSPCF_L1B_OA_START, MLSPCF_L1B_RAD_END, &
       &                MLSPCF_L1B_RAD_START, &
@@ -146,7 +110,8 @@ contains ! =====     Public Procedures     =============================
     ! Arguments
 
     type (TAI93_Range_T) :: processingRange ! Data processing range
-    type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
+    ! type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
     ! type(PCFData_T) :: l2pcf
 
     !Local Variables
@@ -166,13 +131,11 @@ contains ! =====     Public Procedures     =============================
     character(len=CCSDSlen)      :: CCSDSEndTime
     character(len=CCSDSlen)      :: CCSDSStartTime
     integer                      :: Details   ! How much info about l1b files to dump
-    integer(i4)                  :: ErrType
     integer                      :: Ifl1
-    integer                      :: L1FileHandle, L1_Version
-    character (len=fileNameLen)  :: L1physicalFilename
-    integer(i4)                  :: record_length
+    type (MLSFile_T)             :: L1BFile
+    integer                      :: L1FileHandle
+    integer                      :: numFiles
     integer                      :: ReturnStatus
-    integer                      :: Sd_id
     integer                      :: Status, Size ! From allocate
 
     character (len=fileNameLen)  :: name
@@ -181,7 +144,7 @@ contains ! =====     Public Procedures     =============================
 
     integer                      :: Indx, Version                            
 
-    integer                      :: the_hdf_version, l1bFlag
+    integer                      :: l1bFlag
     real                         :: T1, T2                      ! for timing 
     logical                      :: TIMING                                   
 
@@ -227,6 +190,10 @@ contains ! =====     Public Procedures     =============================
    l2pcf%logGranID = '(not applicable)'      ! will not create a Log file
    l2pcf%spec_keys = '(not applicable)'      ! will not create metadata
    l2pcf%spec_hash = '(not applicable)'      ! will not create metadata
+   allocate ( L2pcf%L1BRADPCFIds(MAXNUML1BRADIDS), stat=status )
+   L2pcf%L1BRADPCFIds = ILLEGALL1BRADID
+   if ( status /= 0 ) &
+     & call announce_error ( 0, 'Allocation failed for L1BRADPCFIDs' )
 
    if( .not. TOOLKIT ) then
      if ( levels(gen) > 0 .or. index(switches,'pcf') /= 0 ) then
@@ -245,57 +212,68 @@ contains ! =====     Public Procedures     =============================
     ifl1 = 0
 
     ! Open L1 RAD files
+    numFiles = 0
     do L1FileHandle = mlspcf_l1b_rad_start, mlspcf_l1b_rad_end
+      returnStatus = InitializeMLSFile(L1BFile, content = 'l1brad', &
+        & type='hdf', access='rdonly')
+      L1BFile%PCFIDRange%Top = L1FileHandle
+      L1BFile%PCFIDRange%Bottom = L1FileHandle
+      call mls_openFile(L1BFile, returnStatus)
+      if ( returnStatus == 0 ) then
+        numFiles = addFileToDatabase(filedatabase, L1BFile)
+        ifl1 = ifl1 + 1
+        L2pcf%L1BRADPCFIds(ifl1) = L1BFile%PCFID
+      endif
 
     ! Get the l1 file name from the PCF
-    L1_Version = 1
-
-      returnStatus = Pgs_pc_getReference(L1FileHandle, L1_Version, &
-        & L1physicalFilename)
-
-      if ( returnStatus == PGS_S_SUCCESS ) then
-
-        ! Open the HDF file and initialize the SD interface
-
-        ! Allocate L1BRADIDs, initialize them to illegal values
-
-      if(.NOT. associated(l1bInfo%L1BRADIDs)) then
-        allocate ( l1bInfo%L1BRADIDs(MAXNUML1BRADIDS), stat=status )
-        allocate ( l1bInfo%L1BRADFileNames(MAXNUML1BRADIDS), stat=status )
-        l1bInfo%L1BRADIDs = ILLEGALL1BRADID
-        if ( status /= 0 ) &
-          & call announce_error ( 0, 'Allocation failed for L1BRADIDs' )
-        allocate ( L2pcf%L1BRADPCFIds(MAXNUML1BRADIDS), stat=status )
-        L2pcf%L1BRADPCFIds = ILLEGALL1BRADID
-        if ( status /= 0 ) &
-          & call announce_error ( 0, 'Allocation failed for L1BRADPCFIDs' )
-      end if
-  ! ((( This will have to change if we wish to convert l1 files to hdf5
-  !          Maybe put another wrapper in MSLFiles
-  !    sd_id = sfstart(L1physicalFilename, DFACC_READ)
-  !    sd_id = mls_sfstart(L1physicalFilename, DFACC_READ, &
-  !       hdfVersion=LEVEL1_HDFVERSION)
-        the_hdf_version = mls_hdf_version(L1PhysicalFileName)
-       sd_id = mls_io_gen_openF('hg', caseSensitive, ErrType, &
-         & record_length, DFACC_READ, &
-         & L1physicalFilename, hdfVersion=LEVEL1_HDFVERSION)
-        if ( sd_id <= 0 ) then
-          call announce_error ( 0, &
-            & 'Error opening L1RAD file: ' //L1physicalFilename)
-        elseif(ifl1 == MAXNUML1BRADIDS) then
-          call announce_error ( 0, "Cannot open any more L1BRAD files" )
-          exit
-        else
-          ifl1 = ifl1 + 1
-          L2pcf%L1BRADPCFIds(ifl1) = L1FileHandle
-          l1bInfo%L1BRADIDs(ifl1) = sd_id
-          l1bInfo%L1BRADFileNames(ifl1) = L1physicalFilename
-          if(index(switches, 'pro') /= 0) then  
-            call announce_success(L1physicalFilename, 'l1brad', &                   
-            & hdfVersion=the_hdf_version)                    
-          end if
-        end if
-      end if
+!     L1_Version = 1
+! 
+!       returnStatus = Pgs_pc_getReference(L1FileHandle, L1_Version, &
+!         & L1physicalFilename)
+! 
+!       if ( returnStatus == PGS_S_SUCCESS ) then
+! 
+!         ! Open the HDF file and initialize the SD interface
+! 
+!         ! Allocate L1BRADIDs, initialize them to illegal values
+! 
+!       if(.NOT. associated(l1bInfo%L1BRADIDs)) then
+!         allocate ( l1bInfo%L1BRADIDs(MAXNUML1BRADIDS), stat=status )
+!         allocate ( l1bInfo%L1BRADFileNames(MAXNUML1BRADIDS), stat=status )
+!         l1bInfo%L1BRADIDs = ILLEGALL1BRADID
+!         if ( status /= 0 ) &
+!           & call announce_error ( 0, 'Allocation failed for L1BRADIDs' )
+!         allocate ( L2pcf%L1BRADPCFIds(MAXNUML1BRADIDS), stat=status )
+!         L2pcf%L1BRADPCFIds = ILLEGALL1BRADID
+!         if ( status /= 0 ) &
+!           & call announce_error ( 0, 'Allocation failed for L1BRADPCFIDs' )
+!       end if
+!   ! ((( This will have to change if we wish to convert l1 files to hdf5
+!   !          Maybe put another wrapper in MSLFiles
+!   !    sd_id = sfstart(L1physicalFilename, DFACC_READ)
+!   !    sd_id = mls_sfstart(L1physicalFilename, DFACC_READ, &
+!   !       hdfVersion=LEVEL1_HDFVERSION)
+!         the_hdf_version = mls_hdf_version(L1PhysicalFileName)
+!        sd_id = mls_io_gen_openF('hg', caseSensitive, ErrType, &
+!          & record_length, DFACC_READ, &
+!          & L1physicalFilename, hdfVersion=LEVEL1_HDFVERSION)
+!         if ( sd_id <= 0 ) then
+!           call announce_error ( 0, &
+!             & 'Error opening L1RAD file: ' //L1physicalFilename)
+!         elseif(ifl1 == MAXNUML1BRADIDS) then
+!           call announce_error ( 0, "Cannot open any more L1BRAD files" )
+!           exit
+!         else
+!           ifl1 = ifl1 + 1
+!           L2pcf%L1BRADPCFIds(ifl1) = L1FileHandle
+!           l1bInfo%L1BRADIDs(ifl1) = sd_id
+!           l1bInfo%L1BRADFileNames(ifl1) = L1physicalFilename
+!           if(index(switches, 'pro') /= 0) then  
+!             call announce_success(L1physicalFilename, 'l1brad', &                   
+!             & hdfVersion=the_hdf_version)                    
+!           end if
+!         end if
+!       end if
     end do ! L1FileHandle = mlspcf_l1b_rad_start, mlspcf_l1b_rad_end
 
     if ( ifl1 == 0 .AND. TOOLKIT ) &
@@ -303,50 +281,55 @@ contains ! =====     Public Procedures     =============================
 
     ! Open L1OA File
 
-    l1bInfo%L1BOAID = ILLEGALL1BRADID
-    L1_Version = 1
-    returnStatus = Pgs_pc_getReference(mlspcf_l1b_oa_start, L1_Version, &
-      & L1physicalFilename)
-
+    ! l1bInfo%L1BOAID = ILLEGALL1BRADID
+!     L1_Version = 1
+!     returnStatus = Pgs_pc_getReference(mlspcf_l1b_oa_start, L1_Version, &
+!       & L1physicalFilename)
+    
+    returnStatus = InitializeMLSFile(L1BFile, content = 'l1boa', &
+      & type='hdf', access='rdonly')
+    L1BFile%PCFIDRange%Top = mlspcf_l1b_oa_start
+    L1BFile%PCFIDRange%Bottom = mlspcf_l1b_oa_start
+    call mls_openFile(L1BFile, returnStatus)
     if ( returnStatus == PGS_S_SUCCESS ) then
 
       ! Open the HDF file and initialize the SD interface
 
-        the_hdf_version = mls_hdf_version(L1PhysicalFileName)
-       sd_id = mls_io_gen_openF('hg', caseSensitive, ErrType, &
-         & record_length, DFACC_READ, &
-         & L1physicalFilename, hdfVersion=LEVEL1_HDFVERSION)
+!         the_hdf_version = mls_hdf_version(L1PhysicalFileName)
+!        sd_id = mls_io_gen_openF('hg', caseSensitive, ErrType, &
+!          & record_length, DFACC_READ, &
+!          & L1physicalFilename, hdfVersion=LEVEL1_HDFVERSION)
 
-      if ( sd_id <= 0 ) then
-
-        call announce_error ( 0, "Error opening L1OA file "//L1physicalFilename )
-      else
+!      if ( sd_id <= 0 ) then
+!
+!        call announce_error ( 0, "Error opening L1OA file "//L1physicalFilename )
+!      else
         l2pcf%L1BOAPCFId = mlspcf_l1b_oa_start
-        l1bInfo%L1BOAID = sd_id
-        l1bInfo%L1BOAFileName = L1physicalFilename
+!         l1bInfo%L1BOAID = sd_id
+!         l1bInfo%L1BOAFileName = L1physicalFilename
         if(index(switches, 'pro') /= 0) then  
-          call announce_success(L1physicalFilename, 'l1boa', &                     
-          & hdfVersion=the_hdf_version)                    
+          call announce_success(L1BFile%name, 'l1boa', &                     
+          & hdfVersion=L1BFile%HDFVersion)                    
         end if
+        numFiles = AddFileToDatabase(filedatabase, L1BFile)
 
         ! read l1boa attributes
 
         l1bFlag = 0
-        call ReadL1BAttribute(l1bInfo%L1BOAID, OrbNum, 'OrbitNumber', &
-	   & l1bFlag, hdfVersion=the_hdf_version)
+        call ReadL1BAttribute(l1bFile, OrbNum, 'OrbitNumber', &
+	       & l1bFlag)
         if (l1bFlag == -1) then
            GlobalAttributes%OrbNum = -1
         else
            GlobalAttributes%OrbNum = OrbNum
         end if
-        call ReadL1BAttribute(l1bInfo%L1BOAID, OrbPeriod, 'OrbitPeriod', &
-	   & l1bFlag, hdfVersion=the_hdf_version)
+        call ReadL1BAttribute(l1bFile, OrbPeriod, 'OrbitPeriod', &
+	       & l1bFlag)
         if (l1bFlag == -1) then
            GlobalAttributes%OrbPeriod = -1.0
         else
            GlobalAttributes%OrbPeriod = OrbPeriod
         end if
-      end if
 
     else if ( TOOLKIT ) then
       call announce_error ( 0, "Could not find L1BOA file" )
@@ -356,8 +339,7 @@ contains ! =====     Public Procedures     =============================
     ! if gaps occur
     ! For now, just look for them in l1boa
     ! Later you may look also in l1brad files
-    GlobalAttributes%LastMAFCtr = FindMaxMAF ( (/l1bInfo%L1BOAID/), &
-      & the_hdf_version, &
+    GlobalAttributes%LastMAFCtr = FindMaxMAF ( (/l1BFile/), &
       & GlobalAttributes%FirstMAFCtr )
     ! print *, 'GlobalAttributes%FirstMAFCtr ', GlobalAttributes%FirstMAFCtr
     ! print *, 'GlobalAttributes%LastMAFCtr ', GlobalAttributes%LastMAFCtr
@@ -508,7 +490,7 @@ contains ! =====     Public Procedures     =============================
      Details = -2
    end if
    if ( levels(gen) > 0 .or. index(switches,'pcf') /= 0 ) &
-        & call Dump_open_init ( ifl1, l1binfo, &
+        & call Dump_open_init ( filedatabase, &
           & CCSDSEndTime, CCSDSStartTime, processingrange, details )
    if ( toggle(gen) ) then            
      call trace_end ( "OpenAndInit" ) 
@@ -554,7 +536,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine announce_success
 
   ! ------------------------------------------  Dump_open_init  -----
-  subroutine Dump_open_init ( Num_l1b_files, L1binfo, &
+  subroutine Dump_open_init ( filedatabase, &
     & CCSDSEndTime, CCSDSStartTime, processingrange, Details )
   
     ! Dump info obtained during OpenAndInitialize:
@@ -568,14 +550,14 @@ contains ! =====     Public Procedures     =============================
     use L1BData, only: L1BData_T, NAME_LEN, &
       & AssembleL1BQtyName, DeallocateL1BData, Dump, ReadL1BData
     use L2AUXData, only: MAXSDNAMESBUFSIZE
-    use MLSFiles, only: HDFVERSION_4, mls_hdf_version       
+    use MLSFiles, only: HDFVERSION_4       
     use MLSHDF5, only: GetAllHDF5DSNames
-    use MLSL2Options, only: ILLEGALL1BRADID, LEVEL1_HDFVERSION
     use WriteMetadata, only: L2PCF
 
     ! Arguments
-    integer, intent(in) :: num_l1b_files
-    type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
+    ! integer, intent(in) :: num_l1b_files
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    ! type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
     ! type(PCFData_T) :: l2pcf
     character(len=CCSDSlen) CCSDSEndTime
     character(len=CCSDSlen) CCSDSStartTime
@@ -590,37 +572,43 @@ contains ! =====     Public Procedures     =============================
     type (L1BData_T) :: l1bDataSet   ! L1B dataset
 
     integer ::  hdfVersion
+    integer :: ifl1
     integer :: item
     character(len=Name_Len) :: l1bItemName
     character(len=MAXSDNAMESBUFSIZE) :: l1bitemlist
     integer :: nL1bItems
     logical, parameter :: countEmpty = .true.
+    type (MLSFile_T), pointer ::     L1BFile
 
     ! Begin                                                                       
-    hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)  
+    ! hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)  
     call output ( '============ Open Initialize ============', advance='yes' )
     call output ( '        (Data entered via pcf)', advance='yes' )
     call output ( ' ', advance='yes' )
     call output ( 'L1B database:', advance='yes' )
   
-   if(associated(l1bInfo%L1BRADIDs)) then
-    if ( num_l1b_files > 0 ) then
-      do i = 1, num_l1b_files
-        if(l1bInfo%L1BRADIDs(i) /= ILLEGALL1BRADID) then
+   if(associated(filedatabase)) then
+    ifl1 = 0
+    do i = 1, size(filedatabase)
+      L1BFile => filedatabase(i)
+      if ( L1BFile%content == 'l1brad' ) then
          if(associated(l2pcf%L1BRADPCFIds)) then
+           ifl1 = ifl1 + 1
   	        call output ( 'PCFid:   ' )
-	        call output ( l2pcf%L1BRADPCFIds(i), advance='yes' )
+	        call output ( l2pcf%L1BRADPCFIds(ifl1), advance='yes' )
          endif
+         call output ( 'PCF id:   ' )                                       
+    	   call output ( L1BFile%PCFID, advance='yes' )
   	      call output ( 'fileid:   ' )
-	      call output ( l1bInfo%L1BRADIDs(i), advance='yes' )
+	      call output ( L1BFile%FileID%f_id, advance='yes' )
          call output ( 'name:   ' )                                       
-    	   call output ( TRIM(l1bInfo%L1BRADFileNames(i)), advance='yes' )
+    	   call output ( TRIM(L1BFile%name), advance='yes' )
          call output ( 'hdf version:   ' )                                       
-    	   call output ( hdfVersion, advance='yes' )
+    	   call output ( L1BFile%hdfVersion, advance='yes' )
          if ( Details > -2 .and. hdfVersion == HDFVERSION_4 ) then
            l1bItemName = AssembleL1BQtyName ( l1b_quant_name, hdfVersion, .false. )
-           call ReadL1BData ( l1bInfo%L1BRADIDs(i), l1bItemname, L1bDataSet, &
-            & NoMAFs, IERR, NeverFail=.true., hdfVersion=hdfVersion )
+           call ReadL1BData ( L1BFile, l1bItemname, L1bDataSet, &
+            & NoMAFs, IERR, NeverFail=.true. )
            if ( IERR == 0 ) then
              call Dump ( l1bDataSet, Details )
              call DeallocateL1BData ( l1bDataSet )
@@ -631,14 +619,14 @@ contains ! =====     Public Procedures     =============================
              call output ( trim(l1b_quant_name) )
            end if
          elseif( Details > -2 ) then
-           call GetAllHDF5DSNames (l1bInfo%L1BRADIDs(i), '/', l1bitemlist)
+           call GetAllHDF5DSNames (L1BFile%FileID%f_id, '/', l1bitemlist)
            nL1bItems = NumStringElements(trim(l1bitemlist), countEmpty)
            do item=1, nL1bItems
              call GetStringElement (trim(l1bitemlist), l1bItemName, item, &
                & countEmpty )
              if ( index('/PCF,/LCF', trim(l1bItemName)) > 0 ) cycle
-             call ReadL1BData ( l1bInfo%L1BRADIDs(i), l1bItemName, L1bDataSet, &
-              & NoMAFs, IERR, NeverFail=.true., hdfVersion=hdfVersion )
+             call ReadL1BData ( L1BFile, l1bItemName, L1bDataSet, &
+              & NoMAFs, IERR, NeverFail=.true. )
              if ( IERR == 0 ) then
                call Dump ( l1bDataSet, Details )
                call DeallocateL1BData ( l1bDataSet )
@@ -650,31 +638,26 @@ contains ! =====     Public Procedures     =============================
              end if
              ! if ( item > 2 ) stop
            enddo
-         end if
         end if
-      end do
+      elseif ( L1BFile%content == 'l1boa' ) then
+        call output ( 'L1OA file:', advance='yes' )
+  
+        call output ( 'PCFid:   ' )
+        call output ( l2pcf%L1BOAPCFId, advance='yes' )
+        call output ( 'PCFid:   ' )
+        call output ( L1BFile%PCFId, advance='yes' )
+        call output ( 'fileid:   ' )
+        call output ( L1BFile%FileID%f_id, advance='yes' )
+        call output ( 'name:   ' )
+        call output ( TRIM(L1BFile%Name), advance='yes' )
+      end if
+    enddo
 
-    else
-      call output ( '(empty database)', advance='yes' )
-    end if
 
    else
     call output ( '(null database)', advance='yes' )
 
    end if
-
-    call output ( 'L1OA file:', advance='yes' )
-  
-   if(l1bInfo%L1BOAID /= ILLEGALL1BRADID) then
-      call output ( 'PCFid:   ' )
-      call output ( l2pcf%L1BOAPCFId, advance='yes' )
-      call output ( 'fileid:   ' )
-      call output ( l1bInfo%L1BOAID, advance='yes' )
-      call output ( 'name:   ' )
-      call output ( TRIM(l1bInfo%L1BOAFileName), advance='yes' )
-    else
-      call output ( '(file unknown)', advance='yes' )
-    end if
 
     call output ( 'Start Time:   ' )
     call output ( CCSDSStartTime, advance='yes' )
@@ -781,6 +764,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.82  2005/05/31 17:51:17  pwagner
+! Began switch from passing file handles to passing MLSFiles
+!
 ! Revision 2.81  2004/12/28 00:23:03  vsnyder
 ! Remove unreferenced use names
 !
