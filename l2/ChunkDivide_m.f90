@@ -2076,6 +2076,7 @@ contains ! ===================================== Public Procedures =====
     use L1BData, only: L1BData_T, READL1BDATA, GetL1bFile, &
       & FindL1BData, AssembleL1BQtyName, PRECISIONSUFFIX, DEALLOCATEL1BDATA
     use MLSCommon, only: L1BInfo_T, MLSFile_T, RK => R8
+    use MLSFiles, only: dump
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSSignals_m, only: GetSignalName
 
@@ -2120,10 +2121,12 @@ contains ! ===================================== Public Procedures =====
     ! fileID = FindL1BData (filedatabase, nameString, hdfVersion )
     L1BFile => GetL1bFile(filedatabase, namestring)
     ! If not found, exit appropriately
-    if ( fileID <= 0 ) then
+    ! if ( fileID <= 0 ) then
+    if ( .not. associated(L1BFile) ) then
       answer = .false.
       return
     end if
+    ! call dump(L1BFile)
 
     ! OK, we've found it.  Read the data in.
     call ReadL1BData ( L1BFile, nameString, my_l1bData, noMAFs, flag, &
@@ -2194,6 +2197,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.60  2005/06/01 17:39:26  pwagner
+! Dont read L1bFile if unassocated
+!
 ! Revision 2.59  2005/05/31 17:51:16  pwagner
 ! Began switch from passing file handles to passing MLSFiles
 !
