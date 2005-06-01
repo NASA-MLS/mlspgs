@@ -767,7 +767,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     end if
 
     findL1BData=0
-    print *, 'Looking for ', trim(fieldname)
+    ! print *, 'Looking for ', trim(fieldname)
     do i = 1, size(filedatabase)
       if ( TRUSTDATABASE ) myHDFVersion = filedatabase(i)%HDFVersion
       if ( .not. streq(filedatabase(i)%content, 'l1b*', '-w') ) then
@@ -778,10 +778,10 @@ contains ! ============================ MODULE PROCEDURES ======================
           return
         end if
       else
-        print *, 'Looking in ', trim(filedatabase(i)%name)
+        ! print *, 'Looking in ', trim(filedatabase(i)%name)
         if ( IsHDF5DSPresent(filedatabase(i)%FileID%f_id, trim(fieldName)) ) then
           findL1BData = filedatabase(i)%FileID%f_id
-          print *, 'Eureka '
+          ! print *, 'Eureka '
           return
         end if
       end if
@@ -1388,13 +1388,13 @@ contains ! ============================ MODULE PROCEDURES ======================
     if ( .not. IsL1BGappy(l1bData) ) return
     ! Must pad l1bdata; so first copy to temp l1bData
     if ( associated(l1bdata%dpField) .and. DEEBug ) then
-      print *, 'max(l1bdata) ', maxval(l1bdata%dpField(1,1,:))
-      print *, 'min(l1bdata) ', minval(l1bdata%dpField(1,1,:))
+      ! print *, 'max(l1bdata) ', maxval(l1bdata%dpField(1,1,:))
+      ! print *, 'min(l1bdata) ', minval(l1bdata%dpField(1,1,:))
     endif
     call cpL1bData(l1bdata, l1bdataTmp)
     if ( associated(l1bdatatmp%dpField) .and. DEEBug ) then
-      print *, 'max(l1bdatatmp) ', maxval(l1bdatatmp%dpField(1,1,:))
-      print *, 'min(l1bdatatmp) ', minval(l1bdatatmp%dpField(1,1,:))
+      ! print *, 'max(l1bdatatmp) ', maxval(l1bdatatmp%dpField(1,1,:))
+      ! print *, 'min(l1bdatatmp) ', minval(l1bdatatmp%dpField(1,1,:))
     endif
     call deallocatel1bData(l1bdata)
     if ( GlobalAttributes%LastMAFCtr > 0 ) &
@@ -2032,7 +2032,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     ! Executable code
     alreadyOpen = L1BFile%StillOpen
     if ( .not. alreadyOpen ) then
-      print *, 'Oops--need to open l1b file before reading'
+      ! print *, 'Oops--need to open l1b file before reading'
       call mls_openFile(L1BFile, returnStatus)
       if ( returnStatus /= 0 ) &
         call MLSMessage(MLSMSG_Error, ModuleName, &
@@ -2071,13 +2071,13 @@ contains ! ============================ MODULE PROCEDURES ======================
     if ( .not. IsL1BGappy(l1bData) ) return
     ! Must pad l1bdata; so first copy to temp l1bData
     if ( associated(l1bdata%dpField) .and. DEEBug ) then
-      print *, 'max(l1bdata) ', maxval(l1bdata%dpField(1,1,:))
-      print *, 'min(l1bdata) ', minval(l1bdata%dpField(1,1,:))
+      ! print *, 'max(l1bdata) ', maxval(l1bdata%dpField(1,1,:))
+      ! print *, 'min(l1bdata) ', minval(l1bdata%dpField(1,1,:))
     endif
     call cpL1bData(l1bdata, l1bdataTmp)
     if ( associated(l1bdatatmp%dpField) .and. DEEBug ) then
-      print *, 'max(l1bdatatmp) ', maxval(l1bdatatmp%dpField(1,1,:))
-      print *, 'min(l1bdatatmp) ', minval(l1bdatatmp%dpField(1,1,:))
+      ! print *, 'max(l1bdatatmp) ', maxval(l1bdatatmp%dpField(1,1,:))
+      ! print *, 'min(l1bdatatmp) ', minval(l1bdatatmp%dpField(1,1,:))
     endif
     call deallocatel1bData(l1bdata)
     if ( GlobalAttributes%LastMAFCtr > 0 ) &
@@ -2991,6 +2991,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.56  2005/06/01 17:29:06  pwagner
+! Disabled some superfluous printing
+!
 ! Revision 2.55  2005/05/31 17:50:20  pwagner
 ! Began switch from passing file handles to passing MLSFiles
 !
