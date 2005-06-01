@@ -213,29 +213,35 @@ contains
   end subroutine Allocate_Test_RealR8_3d
   ! -----------------------------------  Allocate_Test_Integer_1d  -----
   subroutine Allocate_Test_Integer_1d ( To_Allocate, Dim1, Its_Name, &
-    & ModuleName, LowBound )
+    & ModuleName, LowBound, Fill )
     integer, pointer, dimension(:) :: To_Allocate
     integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
     character(len=*), intent(in) :: Its_Name, ModuleName
     integer, intent(in), optional :: LowBound     ! Lower bound, default 1
+    integer, intent(in), optional :: Fill ! To fill allocated array
     integer :: MY_LOW, STATUS
     call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
     my_low = 1
     if ( present(lowBound) ) my_low = lowBound
     allocate ( To_Allocate(my_low:dim1), stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name // trim(bounds(lowBound,dim1)) )
-    if ( status == 0 .and. clearOnAllocate ) to_allocate = 0
+    if ( status /= 0 ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Allocate // Its_Name // trim(bounds(lowBound,dim1)) )
+    else
+      if ( clearOnAllocate ) to_allocate = 0
+      if ( present(fill) ) to_allocate = fill
+    end if
     if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, dim1 )
   end subroutine Allocate_Test_Integer_1d
   ! -----------------------------------  Allocate_Test_Integer_2d  -----
   subroutine Allocate_Test_Integer_2d ( To_Allocate, Dim1, Dim2, Its_Name, &
-    & ModuleName, LowBound_1, LowBound_2 )
+    & ModuleName, LowBound_1, LowBound_2, Fill )
     integer, pointer, dimension(:,:) :: To_Allocate
     integer, intent(in) :: Dim1    ! First dimension of To_Allocate
     integer, intent(in) :: Dim2    ! Second dimension of To_Allocate
     character(len=*), intent(in) :: Its_Name, ModuleName
     integer, intent(in), optional :: LowBound_1, LowBound_2 ! default 1
+    integer, intent(in), optional :: Fill ! To fill allocated array
     integer :: MY_LOW_1, MY_LOW_2, STATUS
     call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
     my_low_1 = 1
@@ -243,28 +249,37 @@ contains
     my_low_2 = 1
     if ( present(lowBound_2) ) my_low_2 = lowBound_2
     allocate ( To_Allocate(my_low_1:dim1,my_low_2:dim2), stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name // trim(bounds(my_low_1,dim1,my_low_2,dim2)) )
-    if ( status == 0 .and. clearOnAllocate ) to_allocate = 0
+    if ( status /= 0 ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Allocate // Its_Name // trim(bounds(my_low_1,dim1,my_low_2,dim2)) )
+    else
+      if ( clearOnAllocate ) to_allocate = 0
+      if ( present(fill) ) to_allocate = fill
+    end if
     if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, dim1*dim2 )
   end subroutine Allocate_Test_Integer_2d
   ! -----------------------------------  Allocate_Test_Integer_3d  -----
   subroutine Allocate_Test_Integer_3d ( To_Allocate, Dim1, Dim2, Dim3, Its_Name, &
-    & ModuleName, LowBound_1 )
+    & ModuleName, LowBound_1, Fill )
     integer, pointer, dimension(:,:,:) :: To_Allocate
     integer, intent(in) :: Dim1    ! First dimension of To_Allocate
     integer, intent(in) :: Dim2    ! Second dimension of To_Allocate
     integer, intent(in) :: Dim3    ! Third dimension of To_Allocate
     character(len=*), intent(in) :: Its_Name, ModuleName
     integer, intent(in), optional :: LowBound_1 ! default 1
+    integer, intent(in), optional :: Fill ! To fill allocated array
     integer :: MY_LOW_1, STATUS
     call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
     my_low_1 = 1
     if ( present(lowBound_1) ) my_low_1 = lowBound_1
     allocate ( To_Allocate(my_low_1:dim1,dim2,dim3), stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name // trim(bounds(my_low_1,dim1,1,dim2,1,dim3)) )
-    if ( status == 0 .and. clearOnAllocate ) to_allocate = 0
+    if ( status /= 0 ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Allocate // Its_Name // trim(bounds(my_low_1,dim1,1,dim2,1,dim3)) )
+    else
+      if ( clearOnAllocate ) to_allocate = 0
+      if ( present(fill) ) to_allocate = fill
+    end if
     if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, dim1*dim2*dim3 )
   end subroutine Allocate_Test_Integer_3d
   ! -----------------------------------  Allocate_Test_Logical_1d  -----
@@ -717,6 +732,9 @@ contains
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.20  2005/06/01 02:30:30  vsnyder
+! Add optional Fill argument to allocate_test_integer_...
+!
 ! Revision 2.19  2004/12/28 00:24:39  vsnyder
 ! Use default REAL and DOUBLE PRECISION because R4 and R8 are not guaranteed
 ! to be different.
