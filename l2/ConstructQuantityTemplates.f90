@@ -912,14 +912,14 @@ contains ! ============= Public procedures ===================================
     nameString = AssembleL1BQtyName ( nameString, hdfVersion, .false. )
     nameString = trim(nameString) // PRECISIONSUFFIX
     L1BFile => GetL1bFile(filedatabase, namestring)
-    ! fileID = FindL1BData (filedatabase, nameString, hdfVersion )
-    if ( fileID <= 0 ) then
+    ! fileID = FindL1BData ( filedatabase, nameString )
+    if ( .not. associated(L1BFile) ) then
       answer = .false.
       return
     end if
     ! print *, 'About to read ', trim(nameString)
     ! print *, 'From Fileid ', fileID
-    call ReadL1BData ( L1BFile , nameString, my_l1bData, noMAFs, flag, &
+    call ReadL1BData ( L1BFile, nameString, my_l1bData, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
       & NeverFail= .true. )
     if ( flag == 0 ) then
@@ -1271,6 +1271,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.121  2005/06/01 17:39:26  pwagner
+! Dont read L1bFile if unassocated
+!
 ! Revision 2.120  2005/05/31 17:51:17  pwagner
 ! Began switch from passing file handles to passing MLSFiles
 !
