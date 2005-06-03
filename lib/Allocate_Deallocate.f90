@@ -1,5 +1,13 @@
-! Copyright (c) 1999, California Institute of Technology. ALL RIGHTS RESERVED.
-! U.S. Government sponsorship under NASA Contract NAS7407 is acknowledged.
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
 !=============================================================================
 module Allocate_Deallocate
@@ -7,7 +15,7 @@ module Allocate_Deallocate
 
 ! This module contains procedures to allocate, test the allocation,
 ! and announce an error if it fails, and similarly for deallocation,
-! for Double precision, Integer and Real arrays of one or two dimensions.
+! for Real, Double precision, Integer and Character arrays.
 
 ! **************************************************
 ! *****     Important Notice:                  *****
@@ -65,8 +73,6 @@ module Allocate_Deallocate
   integer, private, save :: NOWORDSALLOCATED=0 ! Number of 4 byte words allocated.
 
   !------------------------------- RCS Ident Info ------------------------------
-  character(len=130), private :: id = & 
-       "$Id$"
   character(len=*), parameter, private :: ModuleName = &
     & "$RCSfile$"
   private :: not_used_here 
@@ -726,12 +732,20 @@ contains
 
   ! ------------------------------------------------  Not_Used_Here  -----
   logical function not_used_here()
+  !------------------------------- RCS Ident Info ------------------------------
+  character(len=*), parameter :: Idparm = &
+    & "$Id$"
+  character(len=len(idparm)) :: Id = idparm
+  !-----------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
 
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.21  2005/06/03 01:53:06  vsnyder
+! New copyright notice, move Id to not_used_here to avoid cascades
+!
 ! Revision 2.20  2005/06/01 02:30:30  vsnyder
 ! Add optional Fill argument to allocate_test_integer_...
 !
