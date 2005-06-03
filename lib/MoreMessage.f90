@@ -1,5 +1,13 @@
-! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
 !==============================================================================
 module MoreMessage ! Messaging with extra functionality
@@ -14,8 +22,6 @@ module MoreMessage ! Messaging with extra functionality
   public :: MessageWithSingle, MessageWithSingleArray
 
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), private, parameter :: IdParm = &
-       "$Id$"
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
   private :: not_used_here 
@@ -74,6 +80,7 @@ contains
     ! Insert the string indexed by "Datum" into "Message" in place of
     ! "%s" or "%S".  Then call MLSMessage.
     use MLSMessageModule, only: MLSMessage
+    use MLSSignals_m, only: GetSignalName
     use String_Table, only: Get_String, String_Length
     integer, intent(in) :: Severity ! e.g. MLSMSG_Error
     character (len=*), intent(in) :: ModuleNameIn ! Name of module
@@ -100,16 +107,21 @@ contains
         line(l:) = adjustl(line(l:))
         l = len_trim(line) + 1
         ok = .false.
-      else if ( (message(i:i+1) == '%s' .or. message(i:i+1) == '%S') .and. ok ) then
+      else if ( (message(i:i+1) == '%g' .or. message(i:i+1) == '%G') .and. ok ) then
         i = i + 2
-        call get_string ( datum, line(l:), strip=.true. )
-        l = l + string_length ( datum ) - 2
+        call getSignalName ( datum, line(l:) )
+        l = len_trim(line) + 1
         ok = .false.
       else if ( (message(i:i+1) == '%l' .or. message(i:i+1) == '%L') .and. ok ) then
         i = i + 2
         write ( line(l:), '("line ", i0, ", column ", i0)' ) &
           & datum/256, mod(datum,256)
         l = len_trim(line) + 1
+        ok = .false.
+      else if ( (message(i:i+1) == '%s' .or. message(i:i+1) == '%S') .and. ok ) then
+        i = i + 2
+        call get_string ( datum, line(l:), strip=.false. )
+        l = l + string_length ( datum )
         ok = .false.
       else
         i = i + 1
@@ -127,6 +139,7 @@ contains
     ! "%s" or "%S".  Insert the line and cokumn number represented by "Datum"
     ! in place of "%l" or "%L".  Then call MLSMessage.
     use MLSMessageModule, only: MLSMessage
+    use MLSSignals_m, only: GetSignalName
     use String_Table, only: Get_String, String_Length
     integer, intent(in) :: Severity ! e.g. MLSMSG_Error
     character (len=*), intent(in) :: ModuleNameIn ! Name of module
@@ -154,11 +167,11 @@ contains
         line(l:) = adjustl(line(l:))
         l = len_trim(line) + 1
         nd = nd + 1
-      else if ( (message(i:i+1) == '%s' .or. message(i:i+1) == '%S') .and. &
+      else if ( (message(i:i+1) == '%g' .or. message(i:i+1) == '%G') .and. &
         & nd <= size(datum) ) then
         i = i + 2
-        call get_string ( datum(nd), line(l:), strip=.true. )
-        l = l + string_length ( datum(nd) ) - 2
+        call getSignalName ( datum(nd), line(l:) )
+        l = len_trim(line) + 1
         nd = nd + 1
       else if ( (message(i:i+1) == '%l' .or. message(i:i+1) == '%L') .and. &
         & nd <= size(datum) ) then
@@ -166,6 +179,12 @@ contains
         write ( line(l:), '("line ", i0, ", column ", i0)' ) &
           & datum(nd)/256, mod(datum(nd),256)
         l = len_trim(line) + 1
+        nd = nd + 1
+      else if ( (message(i:i+1) == '%s' .or. message(i:i+1) == '%S') .and. &
+        & nd <= size(datum) ) then
+        i = i + 2
+        call get_string ( datum(nd), line(l:), strip=.false. )
+        l = l + string_length ( datum(nd) )
         nd = nd + 1
       else
         i = i + 1
@@ -212,6 +231,8 @@ contains
 !=======================================================================
   logical function not_used_here()
     !---------------------------- RCS Ident Info -----------------------
+    character (len=*), parameter :: IdParm = &
+       "$Id$"
     character (len=len(idParm)) :: Id = idParm
     !-------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
@@ -220,6 +241,10 @@ contains
 end module MoreMessage
 
 ! $Log$
+! Revision 2.2  2005/06/03 01:52:30  vsnyder
+! New copyright notice, move Id to not_used_here to avoid cascades,
+! %g switch to dump signals.
+!
 ! Revision 2.1  2005/05/02 22:55:13  vsnyder
 ! Initial commit
 !
