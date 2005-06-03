@@ -39,7 +39,8 @@ module MLSFiles               ! Utility file routines
 
   private 
 
-  public :: AddFileToDataBase, close_MLSFile, Deallocate_filedatabase, Dump, &
+  public :: AddFileToDataBase, AddInitializeMLSFile, close_MLSFile, &
+  & Deallocate_filedatabase, Dump, &
   & get_free_lun, GetMLSFileByName, GetMLSFileByType, GetPCFromRef, &
   & InitializeMLSFile, maskName, &
   & mls_closeFile, mls_exists, mls_hdf_version, mls_inqswath, &
@@ -244,6 +245,35 @@ contains
 
     AddFileToDatabase = newSize
   end function AddFileToDatabase
+
+  !-----------------------------------------  AddInitializeMLSFile  -----
+  function AddInitializeMLSFile ( DATABASE, type, access, content, name, &
+    & HDFVersion, recordLength, PCFIdRange, PCBottom, PCTop ) result(item)
+
+  ! This routine initializes an MLSFile, and adds it to database
+  ! returning a pointer to the new entry
+
+    ! Dummy arguments
+    type (MLSFile_T), dimension(:), pointer :: DATABASE
+    type (MLSFile_T), pointer               :: ITEM
+    character(len=*), optional, intent(in) :: type
+    character(len=*), optional, intent(in) :: access
+    character(len=*), optional, intent(in) :: content
+    character(len=*), optional, intent(in) :: name
+    integer, optional, intent(in)          :: HDFVersion
+    integer, optional, intent(in)          :: recordLength
+    type(Range_T), optional, intent(in)    :: PCFIdRange
+    integer, optional, intent(in)          :: PCBottom ! (Instead of range_T)
+    integer, optional, intent(in)          :: PCTop    ! (Instead of range_T)
+    ! Internal variables
+    integer :: newSize
+    type (MLSFile_T)                       :: NEWITEM
+    ! Executable
+    newSize = InitializeMLSFile ( NEWITEM, type, access, content, name, &
+    & HDFVersion, recordLength, PCFIdRange, PCBottom, PCTop )
+    newSize = AddFileToDatabase ( DATABASE, NEWITEM )
+    item => Database(newSize)
+  end function AddInitializeMLSFile
 
   !-----------------------------------------  InitializeMLSFile  -----
   integer function InitializeMLSFile ( ITEM, type, access, content, name, &
@@ -538,7 +568,7 @@ contains
     & inRange(database%PCFID, PCFIDRange)
   !
   indx = findFirst(doTheyMatch)
-  if ( indx > 0 ) item => database(indx)
+  if ( indx > 0 .and. indx < size(database)+1 ) item => database(indx)
   
   end function GetMLSFileByType
 
@@ -2330,6 +2360,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.64  2005/06/03 23:58:04  pwagner
+! Extra check on indx in GetMLSFileByType; added AddInitializeMLSFile
+!
 ! Revision 2.63  2005/05/31 17:50:20  pwagner
 ! Began switch from passing file handles to passing MLSFiles
 !
