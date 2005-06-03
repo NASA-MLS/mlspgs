@@ -1,5 +1,13 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
 module INIT_TABLES_MODULE
 
@@ -42,9 +50,6 @@ module INIT_TABLES_MODULE
   private :: ADD_IDENT, INIT_SPECTROSCOPY
 
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), private, parameter :: IdParm = &
-       "$Id$"
-  character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
   private :: not_used_here 
@@ -1104,6 +1109,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_pfaData, s+s_makePFA, s+s_pfaData, s+s_readPFA, &
                     n+n_field_spec, &
              begin, f+f_pfaFiles, t+t_boolean, n+n_field_type, &
+             begin, f+f_pfaNum, t+t_numeric, n+n_field_type, &
+             begin, f+f_pfaStru, t+t_boolean, n+n_field_type, &
              begin, f+f_pointingGrids, t+t_boolean, n+n_field_type, &
              begin, f+f_quantity, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
@@ -1333,12 +1340,21 @@ contains ! =====     Public procedures     =============================
   end subroutine INIT_TABLES
 
   logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+!---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
 
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.402  2005/06/03 02:11:52  vsnyder
+! New copyright notice, move Id to not_used_here to avoid cascades,
+! add PFAStru and PFANum fields to Dump command.
+!
 ! Revision 2.401  2005/05/27 23:57:03  vsnyder
 ! Add Flush PFAData
 !
