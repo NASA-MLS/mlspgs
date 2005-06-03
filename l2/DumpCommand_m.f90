@@ -1,5 +1,13 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
 module DumpCommand_M
 
@@ -11,9 +19,6 @@ module DumpCommand_M
   public :: DumpCommand
 
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), private, parameter :: IdParm = &
-       "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
   private :: not_used_here 
@@ -22,7 +27,7 @@ module DumpCommand_M
 contains
 
   subroutine DumpCommand ( Root, QuantityTemplatesDB, &
-    & VectorTemplates, Vectors, ForwardModelConfigs, HGrids, VGrids )
+    & VectorTemplates, Vectors, ForwardModelConfigs, HGrids )
 
   ! Process a "dump" command
 
@@ -38,14 +43,16 @@ contains
       & F_AllPFA, F_AllQuantityTemplates, F_AllSignals, F_AllSpectra, &
       & F_AllVectors, F_AllVectorTemplates, F_AllVGrids, F_AntennaPatterns, &
       & F_Details, F_DACSFilterShapes, F_FilterShapes, F_ForwardModel, F_HGrid, &
-      & F_Lines, F_Mark, F_PfaData, F_PfaFiles, F_PointingGrids, F_Quantity, &
-      & F_Signals,  F_Spectroscopy, F_Stop, F_Template, F_Text, F_TGrid, &
-      & F_Vector, F_VGrid, S_Quantity, S_VectorTemplate
+      & F_Lines, F_Mark, F_PfaData, F_PfaFiles, F_PFANum, F_PFAStru, &
+      & F_PointingGrids, F_Quantity, F_Signals,  F_Spectroscopy, F_Stop, &
+      & F_Template, F_Text, F_TGrid, F_Vector, F_VGrid, S_Quantity, &
+      & S_VectorTemplate
     use Intrinsic, only: PHYQ_Dimensionless
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
     use MLSSignals_m, only: Dump, Signals
     use Output_M, only: Output
-    use PFADataBase_m, only: Dump, Dump_PFADataBase, Dump_PFAFileDataBase, PFAData
+    use PFADataBase_m, only: Dump, Dump_PFADataBase, Dump_PFAFileDataBase, &
+      & Dump_PFAStructure, PFAData
     use PointingGrid_m, only: Dump_Pointing_Grid_Database
     use QuantityTemplates, only: Dump, QuantityTemplate_T
     use SpectroscopyCatalog_m, only: Catalog, Dump, Dump_Lines_Database, Lines
@@ -54,7 +61,7 @@ contains
     use Tree_Types, only: N_Spec_Args
     use VectorsModule, only: Dump, & ! for vectors, vector quantities and templates
       & GetVectorQtyByTemplateIndex, Vector_T, VectorTemplate_T
-    use VGridsDatabase, only: Dump, VGrid_T
+    use VGridsDatabase, only: Dump, VGrids
 
     integer, intent(in) :: Root ! Root of the parse tree for the dump command
     ! Databases:
@@ -63,7 +70,6 @@ contains
     type (vector_T), dimension(:), intent(in), optional :: Vectors
     type (forwardModelConfig_t), dimension(:), pointer, optional :: ForwardModelConfigs
     type (HGrid_T), dimension(:), intent(in), optional :: HGrids
-    type (VGrid_T), dimension(:), pointer, optional :: VGrids
 
     real(tk) :: CPUTime, CPUTimeBase = 0.0_tk
     character(8) :: Date
@@ -92,8 +98,7 @@ contains
     integer, parameter :: NoSignals = noQT + 1
     integer, parameter :: NoTG = noSignals + 1
     integer, parameter :: NoVectors = noTG + 1
-    integer, parameter :: NoVG = noVectors + 1
-    integer, parameter :: NoVT = noVG + 1
+    integer, parameter :: NoVT = noVectors + 1
     integer, parameter :: Numeric = noVT + 1
     integer, parameter :: Stop = numeric + 1
     integer, parameter :: Unknown = stop + 1 ! Unknown template
@@ -107,8 +112,8 @@ contains
       case ( f_allForwardModels, f_allHGrids, f_allLines, f_allPFA, &
         & f_allQuantityTemplates, f_allSignals, f_allSpectra, f_allVectors, &
         & f_allVectorTemplates, f_allVGrids, f_antennaPatterns, &
-        & f_DACSfilterShapes, f_filterShapes, f_pfaFiles, f_pointingGrids, &
-        & f_stop )
+        & f_DACSfilterShapes, f_filterShapes, f_pfaFiles, f_pfaStru, &
+        & f_pointingGrids, f_stop )
         if ( get_boolean(son) ) then
           select case ( fieldIndex )
           case ( f_allForwardModels )
@@ -158,11 +163,7 @@ contains
               call announceError ( son, noVT )
             end if
           case ( f_allVGrids )
-            if ( present(vGrids) ) then
-              call dump ( vGrids )
-            else
-              call announceError ( son, noVG )
-            end if
+            call dump ( vGrids )
           case ( f_antennaPatterns )
             call dump_antenna_patterns_database ( son )
           case ( f_DACSfilterShapes )
@@ -171,6 +172,8 @@ contains
             call dump_filter_shapes_database ( son )
           case ( f_pfaFiles )
             call dump_PFAFileDatabase ( details )
+          case ( f_pfaStru )
+            call dump_PFAStructure ( details )
           case ( f_pointingGrids )
             call dump_pointing_grid_database ( son )
           case ( f_stop )
@@ -214,6 +217,13 @@ contains
         do i = 2, nsons(son)
           look = decoration(decoration(subtree(i,son)))
           call dump ( pfaData(look), details, look )
+        end do
+      case ( f_pfaNum )
+        do i = 2, nsons(son)
+          call expr ( subtree(i,son), units, values, type )
+          if ( units(1) /= phyq_dimensionless ) call AnnounceError ( subtree(i,son), dimless )
+          if ( type /= num_value ) call announceError ( subtree(i,son), numeric )
+          call dump ( pfaData(nint(values(1))), details, nint(values(1)) )
         end do
       case ( f_quantity ) ! Dump vector quantities
         do i = 2, nsons(son)
@@ -342,14 +352,10 @@ contains
           call output ( trim(text), advance='yes' )
         end do ! k
       case ( f_tGrid )
-        if ( present(vGrids) ) then
-          do i = 2, nsons(son)
-            call output ( ' TGrid ' )
-            call dump ( vGRids(decoration(decoration(subtree(i,son)))), details=details )
-          end do
-        else
-          call announceError ( gson, noTG )
-        end if
+        do i = 2, nsons(son)
+          call output ( ' TGrid ' )
+          call dump ( vGRids(decoration(decoration(subtree(i,son)))), details=details )
+        end do
       case ( f_vector ) ! Dump entire vectors
         if ( present(vectors) ) then
           do i = 2, nsons(son)
@@ -360,14 +366,10 @@ contains
           call announceError ( gson, noVectors )
         end if
       case ( f_vGrid )
-        if ( present(vGrids) ) then
-          do i = 2, nsons(son)
-            call output ( ' VGrid ' )
-            call dump ( vGRids(decoration(decoration(subtree(i,son)))), details=details )
-          end do
-        else
-          call announceError ( gson, noVG )
-        end if
+        do i = 2, nsons(son)
+          call output ( ' VGrid ' )
+          call dump ( vGRids(decoration(decoration(subtree(i,son)))), details=details )
+        end do
       end select
     end do
 
@@ -383,7 +385,7 @@ contains
 
       select case ( what )
       case ( dimless )
-        call output ( "The details field is not unitless." )
+        call output ( "The field is not unitless." )
       case ( noFWM )
         call output ( "Can't dump Forward Model Configs here." )
       case ( noHGrid )
@@ -398,12 +400,10 @@ contains
         call output ( "Can't dump TGrids here." )
       case ( noVectors )
         call output ( "Can't dump Vectors here." )
-      case ( noVG )
-        call output ( "Can't dump VGrids here." )
       case ( noVT )
         call output ( "Can't dump Vector Templates here." )
       case ( numeric )
-        call output ( "The details field is not numeric." )
+        call output ( "The field is not numeric." )
       case ( stop )
         call output ( "Program stopped by /stop field on DUMP statement." )
       case ( unknown )
@@ -417,12 +417,22 @@ contains
 ! =====     Private Procedures     =====================================
 
   logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
 
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.23  2005/06/03 02:06:55  vsnyder
+! New copyright notice, move Id to not_used_here to avoid cascades,
+! get VGrids from VGridsDatabase instead of an argument, add dumps for
+! PFA structure, PFA datum by number.
+!
 ! Revision 2.22  2005/05/02 23:11:37  vsnyder
 ! Add dump of PFAFiles database
 !
