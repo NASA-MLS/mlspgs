@@ -1,5 +1,13 @@
-! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
 !=============================================================================
 module Fill                     ! Create vectors and fill them.
@@ -20,16 +28,12 @@ module Fill                     ! Create vectors and fill them.
 ! MLSL2Fill (int root, l1binfo_t l1binfo, *griddedData_T GriddedDataBase(:),
 !        *vectorTemplate_T VectorTemplates(:), &
 !        *vector_t Vectors(:), *quantityTemplate_T QtyTemplates(:),
-!        *matrix_database_T Matrices(:), VGrid_T vGrids(:),
+!        *matrix_database_T Matrices(:),
 !        *l2GPData_T L2GPDatabase(:), *l2AUXData_T L2AUXDatabase(:),
 !        *mlSChunk_T Chunks(:), int ChunkNo )      
 ! === (end of api) ===
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), private, parameter :: IdParm = &
-       "$Id$"
-  character (len=len(idParm)), private :: Id = idParm
-  character (len=*), private, parameter :: ModuleName= &
-       "$RCSfile$"
+  character (len=*), private, parameter :: ModuleName= "$RCSfile$"
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
@@ -41,7 +45,7 @@ contains ! =====     Public Procedures     =============================
 
   ! subroutine MLSL2Fill ( Root, L1bInfo, GriddedDataBase, VectorTemplates, &
   subroutine MLSL2Fill ( Root, filedatabase, GriddedDataBase, VectorTemplates, &
-    & Vectors, QtyTemplates , Matrices, vGrids, L2GPDatabase, L2AUXDatabase, &
+    & Vectors, QtyTemplates , Matrices, L2GPDatabase, L2AUXDatabase, &
     & FWModelConfig, Chunks, ChunkNo )
 
     ! This is the main routine for the module.  It parses the relevant lines
@@ -85,7 +89,7 @@ contains ! =====     Public Procedures     =============================
     use INIT_TABLES_MODULE, only: L_ADDNOISE, L_APPLYBASELINE, L_ASCIIFILE, &
       & L_BINMAX, L_BINMEAN, L_BINMIN, L_BINTOTAL, &
       & L_BOUNDARYPRESSURE, L_BOXCAR, L_CHISQBINNED, L_CHISQCHAN, &
-      & L_CHANNEL, L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, &
+      & L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, &
       & L_cloudice, L_cloudextinction, L_cloudInducedRADIANCE, &
       & L_COMBINECHANNELS, L_COLUMNABUNDANCE, &
       & L_ECRTOFOV, L_ESTIMATEDNOISE, L_EXPLICIT, L_EXTRACTCHANNEL, L_FOLD, &
@@ -137,7 +141,7 @@ contains ! =====     Public Procedures     =============================
       & Matrix_T, NullifyMatrix, UpdateDiagonal
     ! NOTE: If you ever want to include defined assignment for matrices, please
     ! carefully check out the code around the call to snoop.
-    use MLSCommon, only: FileNameLen, MLSFile_T, R4, R8, RM, RV, &
+    use MLSCommon, only: MLSFile_T, R4, R8, RM, RV, &
       & DEFAULTUNDEFINEDVALUE
     use MLSFiles, only: GetMLSFileByType
     use MLSL2Options, only: RESTARTWARNINGS
@@ -174,7 +178,7 @@ contains ! =====     Public Procedures     =============================
       & ValidateVectorQuantity, Vector_T, &
       & VectorTemplate_T, VectorValue_T, M_Fill, M_LinAlg, M_Cloud
 !   use VectorsModule, only: rmVectorFromDatabase
-    use VGridsDatabase, only: VGRID_T, GETUNITFORVERTICALCOORDINATE
+    use VGridsDatabase, only: VGRIDS, GETUNITFORVERTICALCOORDINATE
 
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the FILL section in the AST
@@ -185,7 +189,6 @@ contains ! =====     Public Procedures     =============================
     type (vector_T), dimension(:), pointer :: Vectors
     type (quantityTemplate_T), dimension(:), pointer :: QtyTemplates
     type (matrix_database_T), dimension(:), pointer :: Matrices
-    type (VGrid_T), dimension(:), pointer :: vGrids
     type (l2GPData_T), dimension(:), pointer :: L2GPDatabase
     type (l2AUXData_T), dimension(:), pointer :: L2AUXDatabase
     type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
@@ -6059,7 +6062,8 @@ contains ! =====     Public Procedures     =============================
       use Hydrostatic_M, only: HYDROSTATIC
       use Geometry, only: GEODTOGEOCLAT
       use MLSNumerics, only: HUNT
-      
+      use VGridsDatabase, only: VGRID_T
+
       type (VectorValue_T), intent(inout) :: TPPRES ! Result
       type (VectorValue_T), intent(in) :: TEMPERATURE
       type (VectorValue_T), intent(in) :: REFGPH
@@ -6856,6 +6860,11 @@ contains ! =====     Public Procedures     =============================
   end subroutine MLSL2Fill
 
   logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+!---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
 
@@ -6864,6 +6873,10 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.304  2005/06/03 02:05:29  vsnyder
+! New copyright notice, move Id to not_used_here to avoid cascades,
+! get VGrids from VGridsDatabase instead of passing as an argument.
+!
 ! Revision 2.303  2005/05/31 18:11:45  pwagner
 ! Restored 2.300 revisions mistakenly omitted from 2.302
 !
