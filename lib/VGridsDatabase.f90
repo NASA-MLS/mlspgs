@@ -1,5 +1,13 @@
-! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
 !=============================================================================
 module VGridsDatabase
@@ -27,6 +35,9 @@ module VGridsDatabase
                                    ! (actually dimensioned (1:noSurfs,1))
   end type VGrid_T
 
+  ! The VGrids database:
+  type(VGrid_t), pointer, save, public :: VGrids(:) => NULL()
+
   ! Public procedures:
   interface DoVGridsMatch
     module procedure DoVGridsMatch_VG
@@ -45,9 +56,6 @@ module VGridsDatabase
   public :: RS
 
   !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter, private :: IdParm = &
-    & "$Id$"
-  character (len=len(idParm)) :: Id = IdParm
   character (len=*), parameter, private :: ModuleName= &
     & "$RCSfile$"
   private :: not_used_here 
@@ -57,9 +65,8 @@ contains
 
 
   !-----------------------------------------  AddVGridIfNecessary  -----
-  integer function AddVgridIfNecessary ( VGrid, VGrids, RelErr )
+  integer function AddVgridIfNecessary ( VGrid, RelErr )
     type(vGrid_t), intent(inout) :: VGrid
-    type(vGrid_t), pointer :: VGrids(:)
     real(rs), intent(in), optional :: RelErr
     ! If there is a vGrid in vGrids that matches vGrid according to
     ! doVGridsMatch, destroy vGrid and return the index of the matching one.
@@ -249,6 +256,15 @@ contains
     end select
   end function GetUnitForVerticalCoordinate
 
+  ! ----------------------------------------NullifyVGrid -----
+  subroutine NullifyVGrid ( V )
+    ! Given a vGrid, nullify all the pointers associated with it
+    type ( VGrid_T ), intent(out) :: V
+
+    ! Executable code isn't necessary because V is intent(out) and v%surfs
+    ! has default initialization to NULL()
+  end subroutine NullifyVGrid
+
   ! ------------------------------------------------  PVMPackVGrid ----
   subroutine PVMPackVgrid ( VGRID )
     use PVMIDL, only: PVMIDLPack
@@ -308,22 +324,22 @@ contains
     
   end subroutine PVMUnpackVgrid
 
-  ! ----------------------------------------NullifyVGrid -----
-  subroutine NullifyVGrid ( V )
-    ! Given a vGrid, nullify all the pointers associated with it
-    type ( VGrid_T ), intent(out) :: V
-
-    ! Executable code
-    nullify ( v%surfs )
-  end subroutine NullifyVGrid
-
   logical function not_used_here()
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+    & "$Id$"
+  character (len=len(idParm)) :: Id = IdParm
+  !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
 
 end module VGridsDatabase
 
 ! $Log$
+! Revision 2.20  2005/06/03 01:54:36  vsnyder
+! Make VGrids a public module variable, some cannonball polishing,
+! new copyright notice, move Id to not_used_here to avoid cascades.
+!
 ! Revision 2.19  2005/04/19 20:23:57  livesey
 ! Bug fix in AddVGridIfNecessary for case when this is the first vGrid
 !
