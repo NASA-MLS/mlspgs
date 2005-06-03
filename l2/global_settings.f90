@@ -1,5 +1,13 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
 module GLOBAL_SETTINGS
 
@@ -32,9 +40,6 @@ module GLOBAL_SETTINGS
   character(LEN=FileNameLen), public :: LEAPSECFILENAME = ''
 
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), private, parameter :: IdParm = &
-       "$Id$"
-  character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
   private :: not_used_here 
@@ -45,8 +50,8 @@ module GLOBAL_SETTINGS
 contains
 
   subroutine SET_GLOBAL_SETTINGS ( ROOT, ForwardModelConfigDatabase, &
-    & FGrids, VGrids, l2gpDatabase, DirectDatabase, processingRange, filedatabase )
-    ! & FGrids, VGrids, l2gpDatabase, DirectDatabase, processingRange, l1bInfo )
+    & FGrids, l2gpDatabase, DirectDatabase, processingRange, filedatabase )
+    ! & FGrids, l2gpDatabase, DirectDatabase, processingRange, l1bInfo )
 
     use DirectWrite_m, only: DirectData_T, &
       & AddDirectToDatabase, Dump, SetupNewDirect
@@ -104,14 +109,13 @@ contains
     & DUMP_TREE_NODE, SOURCE_REF
     use TREE_TYPES, only: N_EQUAL, N_NAMED
     use VGrid, only: CreateVGridFromMLSCFInfo
-    use VGridsDatabase, only: AddVGridToDatabase, Dump, VGrid_T
+    use VGridsDatabase, only: AddVGridToDatabase, VGrids
     use WriteMetadata, only: L2PCF
 
     integer, intent(in) :: ROOT    ! Index of N_CF node in abstract syntax tree
     type(ForwardModelConfig_T), dimension(:), pointer :: &
       & ForwardModelConfigDatabase
     type ( fGrid_T ), pointer, dimension(:) :: FGrids
-    type ( vGrid_T ), pointer, dimension(:) :: VGrids
     type ( l2gpData_T), dimension(:), pointer :: L2GPDATABASE
     type (DirectData_T), dimension(:), pointer :: DirectDatabase
     type (TAI93_Range_T) :: processingRange ! Data processing range
@@ -292,8 +296,7 @@ contains
             & DirectDatabase, CreateDirectTypeFromMLSCFInfo ( son ) ) )
         case ( s_dump )
           if ( error == 0 ) then
-            call dumpCommand ( son, forwardModelConfigs=forwardModelConfigDatabase, &
-              & vGrids=vGrids )
+            call dumpCommand ( son, forwardModelConfigs=forwardModelConfigDatabase )
           else
             call announce_error ( subtree(1,son), &
               & 'Preceeding errors prevent doing a dump here.' )
@@ -309,7 +312,7 @@ contains
         case ( s_forwardModel )
           if ( .not. stopEarly ) call decorate (son, AddForwardModelConfigToDatabase ( &
             & forwardModelConfigDatabase, &
-            & ConstructForwardModelConfig ( name, son, vGrids, .true. ) ) )
+            & ConstructForwardModelConfig ( name, son, .true. ) ) )
         case ( s_l1boa )
           the_hdf_version = LEVEL1_HDFVERSION
           ! call l1boaSetup ( son, l1bInfo, F_FILE, hdfVersion=the_hdf_version )
@@ -368,13 +371,13 @@ contains
             & '*** l2cf overrides pcf for L2 Parallel staging file ***', &
             & just_a_warning = .true.)
         case ( s_makePFA )
-          call Make_PFAData ( son, vGrids, returnStatus )
+          call Make_PFAData ( son, returnStatus )
           error = max(error, returnStatus)
         case ( s_pfaData )
-          call Get_PFAdata_from_l2cf ( son, name, vGrids, returnStatus )
+          call Get_PFAdata_from_l2cf ( son, name, returnStatus )
           error = max(error, returnStatus)
         case ( s_readPFA )
-          call read_PFAdata ( son, name, vGrids, returnStatus )
+          call read_PFAdata ( son, name, returnStatus )
           error = max(error, returnStatus)
         case ( s_writePFA )
           call write_PFAdata ( son, returnStatus )
@@ -499,14 +502,6 @@ contains
     if ( error /= 0 ) &
       & call MLSMessage(MLSMSG_Error,ModuleName, &
       & 'Problem with global settings section')
-
-    if ( index(switches, 'vgrid2') /= 0 ) then
-      Details = 1
-    else
-      Details = 0
-    end if
-    if ( index(switches, 'vgrid') /= 0 ) &
-      & call dump ( vgrids, details=Details )
 
     if ( toggle(gen) ) then
       call trace_end ( 'SET_GLOBAL_SETTINGS' )
@@ -862,12 +857,20 @@ contains
 ! =====     Private Procedures     =====================================
 
   logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+!---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
 
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.98  2005/05/31 17:51:17  pwagner
+! Began switch from passing file handles to passing MLSFiles
+!
 ! Revision 2.97  2005/05/26 22:34:58  vsnyder
 ! use if (...) continue to ignore a function result
 !
