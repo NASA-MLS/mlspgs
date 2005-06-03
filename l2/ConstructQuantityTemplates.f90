@@ -1,5 +1,13 @@
-! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
 module ConstructQuantityTemplates
 
@@ -14,9 +22,6 @@ module ConstructQuantityTemplates
   public :: ForgeMinorFrames
 
   !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), private, parameter :: IdParm = &
-       "$Id$"
-  character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
   private :: not_used_here 
@@ -58,9 +63,9 @@ contains ! ============= Public procedures ===================================
 
   ! ------------------------------------------- CreateQtyTemplateFromMLSCFInfo ----
   ! type (QuantityTemplate_T) function CreateQtyTemplateFromMLSCFInfo ( &
-  !  & Name, Root, FGrids, VGrids, HGrids, L1bInfo, Chunk, MifGeolocation ) &
+  !  & Name, Root, FGrids, HGrids, L1bInfo, Chunk, MifGeolocation ) &
   type (QuantityTemplate_T) function CreateQtyTemplateFromMLSCFInfo ( &
-    & Name, Root, FGrids, VGrids, HGrids, filedatabase, Chunk, MifGeolocation ) &
+    & Name, Root, FGrids, HGrids, filedatabase, Chunk, MifGeolocation ) &
     & result ( QTY )
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Chunks_m, only: MLSChunk_T
@@ -85,13 +90,12 @@ contains ! ============= Public procedures ===================================
     use TOGGLES, only: SWITCHES
     use TREE, only: DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE
     use TREE_TYPES, only: N_SET_ONE
-    use VGridsDatabase, only: VGrid_T
+    use VGridsDatabase, only: VGrids
 
     ! Dummy arguments
     integer, intent(in) :: NAME              ! Sub-rosa index of name
     integer, intent(in) :: ROOT              ! Root of QuantityTemplate subtree
     type (FGrid_T), dimension(:), pointer :: FGrids
-    type (VGrid_T), dimension(:), pointer :: VGrids
     type (HGrid_T), dimension(:), pointer :: HGrids
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
     ! type (L1BInfo_T), intent(in) :: L1BINFO
@@ -676,7 +680,7 @@ contains ! ============= Public procedures ===================================
   end subroutine ConstructMinorFrameQuantity
 
   ! ------------------------------------ ForgeMinorFrames --------------
-  subroutine ForgeMinorFrames ( root, chunk, mifGeolocation, vGrids )
+  subroutine ForgeMinorFrames ( root, chunk, mifGeolocation )
     ! This routine is used when we're in the mode of creating l2pc files
     ! and we want to invent a set of minor frame quantities with no
     ! reference to the l1 files
@@ -691,13 +695,12 @@ contains ! ============= Public procedures ===================================
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use QuantityTemplates, only: QuantityTemplate_T, SetupNewQuantityTemplate
     use TREE, only: DECORATION, NSONS, SUBTREE
-    use VgridsDatabase, only: VGRID_T
+    use VgridsDatabase, only: VGrid_t, VGRIDS
 
     ! Dummy arguments
     integer, intent(in) :: ROOT         ! Tree vertex
     type (MLSChunk_T), intent(in) :: CHUNK ! This chunk
     type (QuantityTemplate_T), dimension(:), intent(inout) :: MIFGEOLOCATION
-    type (VGrid_T), dimension(:), pointer :: VGRIDS
 
     ! Local variables
     integer :: GEODANGLENODE            ! Tree vertex
@@ -962,6 +965,11 @@ contains ! ============= Public procedures ===================================
   end subroutine PointQuantityToHGrid
 
   logical function not_used_here()
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+  !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
 
@@ -1271,6 +1279,10 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.122  2005/06/03 02:05:29  vsnyder
+! New copyright notice, move Id to not_used_here to avoid cascades,
+! get VGrids from VGridsDatabase instead of passing as an argument.
+!
 ! Revision 2.121  2005/06/01 17:39:26  pwagner
 ! Dont read L1bFile if unassocated
 !
