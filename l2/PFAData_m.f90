@@ -22,9 +22,6 @@ module PFAData_m
   public :: Read_PFAData, Write_PFAData
 
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), private, parameter :: IdParm = &
-       "$Id$"
-  character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
   private :: not_used_here 
@@ -51,7 +48,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine Flush_PFAData
 
   ! --------------------------------------  Get_PDAdata_from_l2cf  -----
-  subroutine Get_PFAdata_from_l2cf ( Root, Name, VGrids, Error )
+  subroutine Get_PFAdata_from_l2cf ( Root, Name, Error )
   ! Process a PFAdata specification from the l2cf.
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
@@ -68,11 +65,10 @@ contains ! =====     Public Procedures     =============================
     use Physics, only: SpeedOfLight
     use String_Table, only: Get_String
     use Tree, only: Decorate, Decoration, NSons, Sub_Rosa, Subtree
-    use VGridsDatabase, only: VGrid_t
+    use VGridsDatabase, only: VGrids
 
     integer, intent(in) :: Root            ! of the pfaData subtree in the l2cf
     integer, intent(in) :: Name            ! of the pfaData spec, else zero
-    type(vGrid_t), intent(in), target :: VGrids(:) ! database of vgrids
     integer, intent(out) :: Error          ! 0 => OK, else trouble
 
     ! Error codes
@@ -291,7 +287,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine Get_PFAdata_from_l2cf
 
   ! -----------------------------------------------  Make_PFAData  -----
-  subroutine Make_PFAData ( Root, VGrids, Error )
+  subroutine Make_PFAData ( Root, Error )
 
     use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
     use Create_PFAData_m, only: Create_PFAData
@@ -309,10 +305,9 @@ contains ! =====     Public Procedures     =============================
     use String_Table, only: Get_String
     use Tree, only: Decorate, Decoration, Node_Id, NSons, Sub_Rosa, Subtree
     use Tree_types, only: N_Array
-    use VGridsDatabase, only: VGrid_t
+    use VGridsDatabase, only: VGrids ! Both temperature and pressure
 
     integer, intent(in) :: Root ! of the MakePFA subtree
-    type(vGrid_T), intent(in), target :: VGrids(:) ! Both temperature and pressure
     integer, intent(out) :: Error
 
     logical, pointer :: Channels(:)
@@ -461,7 +456,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine Make_PFAData
 
   ! -----------------------------------------------  Read_PFAData  -----
-  subroutine Read_PFAData ( Root, Name, VGrids, Error )
+  subroutine Read_PFAData ( Root, Name, Error )
 
     ! Read PFA data.  If the file= field is a range, the second element
     ! specifies the format.  Default is "UNFORMATTED".
@@ -475,11 +470,9 @@ contains ! =====     Public Procedures     =============================
     use String_Table, only: Get_String
     use Tree, only: Decorate, Node_Id, NSons, Source_Ref, Sub_Rosa, Subtree
     use Tree_Types, only: N_String
-    use VGridsDatabase, only: VGrid_t
 
     integer, intent(in) :: Root ! of the MakePFA subtree, below name if any
     integer, intent(in) :: Name ! ends up labeling the last PFADatum
-    type(vGrid_t), pointer :: VGrids(:) ! database of vgrids
     integer, intent(out) :: Error ! 0 => OK
 
     integer :: FileName, FileType ! HDF5 is all we can do
@@ -521,7 +514,7 @@ contains ! =====     Public Procedures     =============================
       call MLSMessage ( MLSMSG_Warning, moduleName, &
         & 'Error trying to read PFAData' )
     else
-      call read_PFADatabase ( fileName, fileType, molecules, signals, vGrids, &
+      call read_PFADatabase ( fileName, fileType, molecules, signals, &
         & source_ref(root) )
       if ( name /= 0 ) then
         j = size(PFAData)
@@ -637,12 +630,21 @@ contains ! =====     Public Procedures     =============================
 ! =====     Private Procedures     =====================================
 
   logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+!---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
 
 end module PFAData_m
 
 ! $Log$
+! Revision 2.22  2005/06/03 02:09:19  vsnyder
+! New copyright notice, move Id to not_used_here to avoid cascades,
+! get VGrids from VGridsDatabase instead of a dummy argument.
+!
 ! Revision 2.21  2005/05/28 03:25:58  vsnyder
 ! Cannonball polishing
 !
