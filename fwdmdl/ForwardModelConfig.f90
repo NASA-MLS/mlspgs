@@ -18,7 +18,6 @@ module ForwardModelConfig
 
   use MLSCommon, only: R8, RP
   use MLSSignals_M, only: Signal_t
-  use PFADatabase_m, only: PFAPointer_t
   use SpectroscopyCatalog_m, only: Catalog_t
   use VectorsModule, only: VectorValue_T
   use VGridsDatabase, only: VGrid_T, DestroyVGridContents
@@ -72,8 +71,8 @@ module ForwardModelConfig
     integer, pointer :: Molecules(:) => NULL() ! PFA molecules in the group if a
                                       ! group, i.e., "m1...mn", else "m" if "m"
                                       ! is PFA, else zero size.
-    type(PFAPointer_t), pointer :: Data(:,:) => NULL() ! Channels x 1:size(Molecules).
-                                      ! Pointers to PFA Data.  Allocated and
+    integer, pointer :: Data(:,:) => NULL() ! Channels x 1:size(Molecules).
+                                      ! Indices in PFAData.  Allocated and
                                       ! filled in DeriveFromForwardModelConfig.
     real(rp), pointer :: Ratio(:) => NULL() ! 1:size(Molecules).  Isotope
                                       ! ratio.  Allocated in ForwardModelSupport
@@ -172,6 +171,7 @@ module ForwardModelConfig
       ! Some of this is filled in each time the forward model is invoked.  Those
       ! parts aren't dragged around by PVM.
     type (Signal_T), dimension(:), pointer :: Signals=>NULL()
+    integer, dimension(:), pointer :: SignalIndices=>NULL() ! in signals database
     type (vGrid_T), pointer :: IntegrationGrid=>NULL() ! Zeta grid for integration
     type (vGrid_T), pointer :: TangentGrid=>NULL()     ! Zeta grid for integration
     ! Finally stuff that PVMPackFWMConfig and PVMUnpackFWMConfig don't cart around
@@ -224,10 +224,8 @@ contains
     use Allocate_Deallocate, only: Allocate_Test
     use MLSMessageModule, only: MLSMessage,  MLSMSG_Allocate, MLSMSG_Error
     use MLSSets, only: FindFirst
-    use MLSSignals_m, only: MatchSignal
 !   use Output_m, only: Output
-    use PFADataBase_m, only: Dump, PFA_By_Molecule, SortPFAData, &
-      & Sort_PFADataBase
+    use PFADataBase_m, only: Dump
     use SpectroscopyCatalog_m, only: Dump
     use Toggles, only: Switches
 
@@ -368,83 +366,37 @@ contains
     ! ................................................  PFA_Stuff  .....
     subroutine PFA_Stuff
 
+      use Allocate_deallocate, only: Allocate_Test
       use Intrinsic, only: Lit_Indices
-      use MLSMessageModule, only: MLSMessage,  MLSMSG_Allocate, MLSMSG_Error
       use MLSSignals_m, only: DisplaySignalName
       use MoreTree, only: StartErrorMessage
-      use PFADatabase_m, only: FindPFA, PFAData
+      use PFADatabase_m, only: Test_And_Fetch_PFA
       use String_Table, only: Display_String
       use Tree, only: Source_Ref
 
       integer :: B                    ! Index for beta groups
       integer :: Channel              ! Index in fwdModelConf%channels
-      integer :: I                    ! Index for sorted PFA data
       integer :: P                    ! Index for PFA molecules in a beta group
       integer :: SB                   ! Sideband index, -1 .. +1
       integer :: SX                   ! Sideband index, 1 .. 2
 
       ! Fill fwdModelConf%beta_group%pfa%data
 
-      ! Look first in the molecule.signal.sideband.channel structure
       do sb = s1, s2, 2
         sx = ( sb + 3 ) / 2
         do b = 1, size(fwdModelConf%beta_group)
-          allocate ( fwdModelConf%beta_group(b)%pfa(sx)%data( &
+          call allocate_test ( fwdModelConf%beta_group(b)%pfa(sx)%data, &
             & size(fwdModelConf%channels), &
-            & size(fwdModelConf%beta_group(b)%pfa(sx)%molecules)), stat=i )
-          if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-            & MLSMSG_Allocate // 'Beta_group(b)%PFA(sx)%data' )
+            & size(fwdModelConf%beta_group(b)%pfa(sx)%molecules), &
+            & 'Beta_group(b)%PFA(sx)%data', moduleName, fill=0 )
           do p = 1, size(fwdModelConf%beta_group(b)%pfa(sx)%molecules)
             do channel = 1, size(fwdModelConf%channels)
-              if ( associated(findPFA(fwdModelConf%beta_group(b)%pfa(sx)%molecules(p))%s) ) then
-                if ( associated(findPFA(fwdModelConf%beta_group(b)%pfa(sx)%molecules(p))% &
-                  & s(fwdModelConf%channels(channel)%signal)%sb(sx)%c) ) then
-                  fwdModelConf%beta_group(b)%pfa(sx)%data(channel,p)%datum => &
-                    & findPFA(fwdModelConf%beta_group(b)%pfa(sx)%molecules(p))% &
-                      & s(fwdModelConf%channels(channel)%signal)%sb(sx)% &
-                      & c(fwdModelConf%channels(channel)%used)%datum
-                end if ! signal stru associated
-              end if ! channel stru associated
-            end do ! channel
-          end do ! p
-        end do ! b
-      end do ! sb
-
-      ! Now look in the PFA_By_Molecule structure.
-      ! This is only for data created online instead of read from a file.
-      if ( associated(pfaData) ) then
-        call sort_PFADatabase ! Only does anything once
-        do sb = s1, s2, 2
-          sx = ( sb + 3 ) / 2
-          do b = 1, size(fwdModelConf%beta_group)
-            do p = 1, size(fwdModelConf%beta_group(b)%pfa(sx)%molecules)
-              do channel = 1, size(fwdModelConf%channels)
-                if ( .not. &
-                  & associated(fwdModelConf%beta_group(b)%pfa(sx)%data(channel,p)%datum) ) then
-                  ! Search the other structure for PFA data created online
-                  do i = PFA_by_molecule(fwdModelConf%beta_group(b)%pfa(sx)%molecules(p)-1)+1, &
-                    &    PFA_by_molecule(fwdModelConf%beta_group(b)%pfa(sx)%molecules(p))
-                    if ( matchSignal ( PFAData(sortPFAdata(i))%theSignal, &
-                      &  fwdModelConf%signals(fwdModelConf%channels(channel)%signal), sideband=sb, &
-                      &  channel=fwdModelConf%channels(channel)%used ) > 0 ) then
-                      fwdModelConf%beta_group(b)%pfa(sx)%data(channel,p)%datum => &
-                        PFAData(sortPFAdata(i))
-                    end if
-                  end do ! i (molecules)
-                end if ! .not. associated....
-              end do ! channel
-            end do ! p
-          end do ! b
-        end do ! sb
-      end if ! associated(pfaData)
-
-      ! Now check that we have PFA data
-      do sb = s1, s2, 2
-        sx = ( sb + 3 ) / 2
-        do b = 1, size(fwdModelConf%beta_group)
-          do p = 1, size(fwdModelConf%beta_group(b)%pfa(sx)%data,2)
-            do channel = 1, size(fwdModelConf%beta_group(b)%pfa(sx)%data,1)
-              if ( .not. associated(fwdModelConf%beta_group(b)%pfa(sx)%data(channel,p)%datum) ) then
+              ! Look up PFA data and read it if necessary
+              fwdModelConf%beta_group(b)%pfa(sx)%data(channel,p) = &
+                test_and_fetch_PFA(fwdModelConf%beta_group(b)%pfa(sx)%molecules(p), &
+                  & fwdModelConf%signalIndices(fwdModelConf%channels(channel)%signal), &
+                  & sb, fwdModelConf%channels(channel)%used, fwdModelConf%spect_der)
+              if ( fwdModelConf%beta_group(b)%pfa(sx)%data(channel,p) == 0 ) then
                 if ( source_ref(fwdModelConf%where) /= 0 ) &
                 call startErrorMessage ( fwdModelConf%where )
                 call display_string ( &
@@ -457,7 +409,7 @@ contains
                 error = .true.
               end if
             end do ! channel
-          end do ! p (molecules)
+          end do ! p
         end do ! b
       end do ! sb
 
@@ -671,11 +623,8 @@ contains
 
     do b = 1, size(fwdModelConf%beta_group)
       do s = 1, 2
-        if ( associated(fwdModelConf%beta_group(b)%PFA(s)%data) ) then
-          deallocate ( fwdModelConf%beta_group(b)%PFA(s)%data, stat=ier )
-          if ( ier/= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-            & MLSMSG_Deallocate // 'Beta_group(b)%PFA(s)%data' )
-        end if
+        call deallocate_test ( fwdModelConf%beta_group(b)%PFA(s)%data, &
+          & 'Beta_group(b)%PFA(s)%data', moduleName )
       end do ! s
     end do ! b
 
@@ -1012,7 +961,7 @@ contains
         call deallocate_test ( config%beta_group(b)%lbl(s)%molecules, 'LBL Molecules', moduleName )
         call deallocate_test ( config%beta_group(b)%lbl(s)%ratio, 'LBL Ratio', moduleName )
         call deallocate_test ( config%beta_group(b)%PFA(s)%molecules, 'PFA molecules', moduleName )
-        call deallocate_test ( config%beta_group(b)%PFA(s)%ratio, 'PFA %ratio', moduleName )
+        call deallocate_test ( config%beta_group(b)%PFA(s)%ratio, 'PFA ratio', moduleName )
       end do ! s
     end do
 
@@ -1021,6 +970,7 @@ contains
       & MLSMSG_Deallocate // 'config%Beta_group' )
     if ( associated(config%signals) ) &
       & call DestroySignalDatabase ( config%signals, justChannels=.not. myDeep )
+    call deallocate_test ( config%signalIndices, 'SignalIndices', moduleName )
     if ( myDeep ) then
       if ( associated ( config%integrationGrid ) ) then
         call DestroyVGridContents ( config%integrationGrid )
@@ -1050,7 +1000,7 @@ contains
     use Dump_0, only: Dump
     use Intrinsic, only: Lit_indices
     use Output_m, only: Blanks, NewLine, Output
-    use PFADataBase_m, only: Dump
+    use PFADataBase_m, only: Dump, PFAData
     use String_Table, only: Display_String
 
     type(beta_group_t), intent(in) :: Beta_Group(:)
@@ -1097,9 +1047,9 @@ contains
             do m = 1, size(beta_group(b)%pfa(s)%data,2)
               missing = .false.
               do c = 1, size(beta_group(b)%pfa(s)%data,1)
-                if ( associated(beta_group(b)%pfa(s)%data(c,m)%datum) ) then
+                if ( beta_group(b)%pfa(s)%data(c,m) /= 0 ) then
                   call blanks ( 4 )
-                  call dump ( beta_group(b)%pfa(s)%data(c,m)%datum, details=myDetails )
+                  call dump ( PFAData(beta_group(b)%pfa(s)%data(c,m)), details=myDetails )
                 else
                   missing = .true.
                 end if
@@ -1246,6 +1196,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.76  2005/05/28 03:27:21  vsnyder
+! Simplify PFAStuff
+!
 ! Revision 2.75  2005/05/26 20:12:16  vsnyder
 ! Delete some debugging code
 !
