@@ -241,11 +241,13 @@ contains ! =====     Public Procedures     =============================
     use VGridsDatabase, only: Dump
 
     type(PFAData_t), intent(in) :: PFADatum
-    integer, intent(in), optional :: Details ! <= 0 -> Signal and molecule only
-                                             ! 1 -> Dump complete summary
-                                             ! 2 -> Dump Betas (default)
-                                             ! 3 -> Dump Betas and unnamed grids
-                                             ! >3 -> Dump Betas, grids and derivatives
+    integer, intent(in), optional :: Details ! <=-2 -> Signal and molecule if data
+                                             ! -1 -> Complete summary if data
+                                             ! 0 -> Signal and molecule only
+                                             ! 1 -> Complete summary
+                                             ! 2 -> Betas (default)
+                                             ! 3 -> Betas and unnamed grids
+                                             ! >3 -> Betas, grids and derivatives
     integer, intent(in), optional :: Index   ! In PFA Database
 
     integer, parameter :: CK = kind(speedOfLight)
@@ -259,20 +261,22 @@ contains ! =====     Public Procedures     =============================
     myDetails = 2
     if ( present(details) ) myDetails = details
 
+    if ( myDetails < 0 .and. .not. associated(pfaDatum%absorption) ) return
+
     call output ( 'PFA Datum' )
     if ( present(index) ) call output ( index, before=' ' )
     if ( pfaDatum%name /= 0 ) then
       if ( present(index) ) call output ( ': ' )
       call display_string ( pfaDatum%name )
     end if
-    if ( myDetails == 0 ) then
+    if ( myDetails <= -2 .or. myDetails == 0 ) then
       call display_string ( lit_indices(pfaDatum%molecule), before=' for ' )
       call display_string ( pfaDatum%signal, before=' and ' )
       if ( associated(pfaDatum%absorption) ) call output ( ' has data' )
       call newLine
       return
     end if
-    call newLine
+    call output ( ':', advance='yes' )
     call output ( ' Molecule: ' )
     call display_string ( lit_indices(pfaDatum%molecule), advance='yes' )
 
@@ -336,10 +340,7 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------------------------  Dump_PFAFileDataBase  -----
   subroutine Dump_PFAFileDataBase ( Details )
     use Output_m, only: Output
-    integer, intent(in), optional :: Details ! 0 (default) => file names,
-                                             ! 1 => group names too
-                                             ! 2 => location too
-                                             ! >2 => dump group with details-3
+    integer, intent(in), optional :: Details ! See Dump_PFAFileDatum
 
     integer :: I
 
@@ -359,10 +360,9 @@ contains ! =====     Public Procedures     =============================
     use Output_m, only: Blanks, NewLine, Output
     use String_Table, only: Display_String
     type(PFAFile_t), intent(in) :: PFAFileDatum
-    integer, intent(in), optional :: Details ! 0 (default) => file names,
-                                             ! >0 => group names too
-                                             ! >1 => signal stuff too
-                                             ! >2 => dump group with details-3
+    integer, intent(in), optional :: Details ! -4 (default) => file names,
+                                             ! -3 => group names too
+                                             ! >=-2 => see Dump_PFADatum
 
     integer :: G, MyDetails
     character(len=molNameLen+1+maxSigLen) :: GroupName
@@ -371,13 +371,11 @@ contains ! =====     Public Procedures     =============================
     if ( present(details) ) myDetails = details
 
     call display_string ( PFAFileDatum%fileName, before='PFA File ', strip=.true. )
-    if ( myDetails > 0 ) then
+    if ( myDetails > -4 ) then
       call output ( ' has groups:', advance='yes' )
       if ( associated(PFAFileDatum%ix) ) then
         do g = 1, size(PFAFileDatum%ix)
-          if ( myDetails > 2 ) then
-            call dump ( PFAData(PFAFileDatum%ix(g)), myDetails-3, PFAFileDatum%ix(g) )
-          else
+          if ( myDetails <= -3 ) then
             call blanks ( 1 )
             call getGroupName ( PFAData(PFAFileDatum%ix(g)), groupName )
             call output ( trim(groupName) )
@@ -386,7 +384,11 @@ contains ! =====     Public Procedures     =============================
               call output ( PFAData(PFAFileDatum%ix(g))%channel, before=' Channel ' )
               call output ( PFAData(PFAFileDatum%ix(g))%theSignal%sideband, before=' Sideband ' )
             end if
+            if ( associated(PFAData(PFAFileDatum%ix(g))%absorption) ) &
+              call output ( ' has data' )
             call newLine
+          else
+            call dump ( PFAData(PFAFileDatum%ix(g)), myDetails, PFAFileDatum%ix(g) )
           end if
         end do
       else
@@ -1225,6 +1227,9 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.30  2005/06/03 22:55:04  vsnyder
+! Make the 'details' argument for some dumps more sensible
+!
 ! Revision 2.29  2005/06/03 01:58:53  vsnyder
 ! New copyright notice, move Id to not_used_here to avoid cascades,
 ! Revise PFA data structures.
