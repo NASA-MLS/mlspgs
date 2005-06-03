@@ -81,8 +81,9 @@ contains
     use L2PC_M, only: AddBinSelectorToDatabase, BinSelectors
     use MLSCommon, only: R8, FileNameLen, MLSFile_T, NameLen, &
       & TAI93_Range_T
-    use MLSFiles, only: FILENOTFOUND, &
-      & GetPCFromRef, GetMLSFileByType, split_path_name
+    use MLSFiles, only: FILENOTFOUND, HDFVERSION_5, &
+      & AddFileToDataBase, GetPCFromRef, GetMLSFileByType, &
+      & InitializeMLSFile, split_path_name
     use MLSL2Options, only: ILLEGALL1BRADID, LEVEL1_HDFVERSION, &
       & MAXNUML1BRADIDS, STOPAFTERGLOBAL, STOPAFTERCHUNKDIVIDE, Toolkit
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
@@ -120,17 +121,17 @@ contains
     type (DirectData_T), dimension(:), pointer :: DirectDatabase
     type (TAI93_Range_T) :: processingRange ! Data processing range
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-    ! type (L1BInfo_T) :: l1bInfo    ! File handles etc. for L1B dataset
     type (L1BData_T) :: l1bField   ! L1B data
-    ! type (PCFData_T) :: l2pcf
 
     integer :: Details             ! How much info about l1b files to dump
+    type (MLSFile_T) :: DirectFile
     logical :: GOT(2)
     integer :: I, J                ! Index of son, grandson of root
     integer :: L1BFLAG
     real(r8) :: MINTIME, MAXTIME   ! Time Span in L1B file data
     integer :: NAME                ! Sub-rosa index of name of vGrid or hGrid
     integer :: NOMAFS              ! Number of MAFs of L1B data read
+    integer :: NUMFILES
     integer :: ReturnStatus        ! non-zero means trouble
     integer :: SON                 ! Son of root
     logical :: StopEarly
@@ -293,7 +294,9 @@ contains
             & binSelectors, CreateBinSelectorFromMLSCFInfo ( son ) ) )
         case ( s_directWriteFile )
           call decorate (son, AddDirectToDatabase ( &
-            & DirectDatabase, CreateDirectTypeFromMLSCFInfo ( son ) ) )
+            & DirectDatabase, &
+            & CreateDirectTypeFromMLSCFInfo ( son, DirectFile ) ) )
+          numFiles = AddFileToDataBase(fileDataBase, DirectFile)
         case ( s_dump )
           if ( error == 0 ) then
             call dumpCommand ( son, forwardModelConfigs=forwardModelConfigDatabase )
@@ -400,6 +403,11 @@ contains
     end do
 
     L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
+    if ( .not. associated(L1BFile) ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &                      
+      & 'l1boa File not found--hope you dont need one' )
+      return
+    endif
     the_hdf_version = &
       & L1BFile%HDFVersion
     if ( the_hdf_version == FILENOTFOUND ) then                                          
@@ -785,10 +793,11 @@ contains
     end subroutine SayTime
 
     ! --------------------------  CreateDirectTypeFromMLSCFInfo  -----
-    function CreateDirectTypeFromMLSCFInfo ( root ) result (Direct)
+    function CreateDirectTypeFromMLSCFInfo ( root, DirectFile ) result (Direct)
     integer, intent(in) :: ROOT         ! Tree node
     ! type (DirectData_T), pointer :: Direct
     type (DirectData_T) :: Direct
+    type (MLSFile_T)    :: DirectFile
     ! Local variables
     integer :: SON                      ! Tree node
     integer :: GSON                     ! Tree node
@@ -825,26 +834,47 @@ contains
     if ( .not. TOOLKIT ) then
       Direct%handle = 0
       Direct%filename = filename
-    else if ( Direct%Type ==  l_l2gp ) then
-      Direct%Handle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
+    endif
+    if ( Direct%Type ==  l_l2gp ) then
+      if ( TOOLKIT ) &
+        & Direct%Handle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
         & mlspcf_l2gp_end, &
         & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
         & exactName=Direct%Filename)
+      returnStatus = InitializeMLSFile(DirectFile, content = 'l2gp', &
+        & name=Direct%Filename, &
+        & type='hdf', access='create', HDFVersion=HDFVERSION_5, &
+        & PCBottom=mlspcf_l2gp_start, PCTop=mlspcf_l2gp_end)
     else if ( Direct%Type ==  l_l2dgg ) then
-      Direct%Handle = GetPCFromRef(file_base, mlspcf_l2dgg_start, &
+      if ( TOOLKIT ) &
+        & Direct%Handle = GetPCFromRef(file_base, mlspcf_l2dgg_start, &
         & mlspcf_l2dgg_end, &
         & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
         & exactName=Direct%Filename)
+      returnStatus = InitializeMLSFile(DirectFile, content = 'l2dgg', &
+        & name=Direct%Filename, &
+        & type='hdf', access='create', HDFVersion=HDFVERSION_5, &
+        & PCBottom=mlspcf_l2dgg_start, PCTop=mlspcf_l2dgg_end)
     else if ( Direct%Type ==  l_l2fwm ) then
-         Direct%Handle = GetPCFromRef(file_base, mlspcf_l2fwm_full_start, &
+      if ( TOOLKIT ) &
+        & Direct%Handle = GetPCFromRef(file_base, mlspcf_l2fwm_full_start, &
         & mlspcf_l2fwm_full_end, &
         & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
         & exactName=Direct%Filename)
+      returnStatus = InitializeMLSFile(DirectFile, content = 'l2fwm', &
+        & name=Direct%Filename, &
+        & type='hdf', access='create', HDFVersion=HDFVERSION_5, &
+        & PCBottom=mlspcf_l2fwm_full_start, PCTop=mlspcf_l2fwm_full_end)
     else
-      Direct%Handle = GetPCFromRef(file_base, mlspcf_l2dgm_start, &
+      if ( TOOLKIT ) &
+        & Direct%Handle = GetPCFromRef(file_base, mlspcf_l2dgm_start, &
         & mlspcf_l2dgm_end, &
         & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
         & exactName=Direct%Filename)
+      returnStatus = InitializeMLSFile(DirectFile, content = 'l2dgm', &
+        & name=Direct%Filename, &
+        & type='hdf', access='create', HDFVersion=HDFVERSION_5, &
+        & PCBottom=mlspcf_l2dgm_start, PCTop=mlspcf_l2dgm_end)
     end if
     if ( returnStatus /= 0 ) call MLSMessage ( &
        & MLSMSG_Error, ModuleName, &
@@ -868,6 +898,10 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.99  2005/06/03 02:11:14  vsnyder
+! New copyright notice, move Id to not_used_here to avoid cascades,
+! get VGrids from VGridsDatabase instead of a dummy argument.
+!
 ! Revision 2.98  2005/05/31 17:51:17  pwagner
 ! Began switch from passing file handles to passing MLSFiles
 !
