@@ -1,5 +1,13 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
 !=============================================================================
 module ForwardModelSupport
@@ -13,9 +21,6 @@ module ForwardModelSupport
     & resetForwardModelTiming, ShowFwdModelNames, FillFwdModelTimings
 
   !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
-    & "$Id$"
-  character (len=len(idParm)) :: Id = idParm
   character (len=*), parameter :: ModuleName= &
     & "$RCSfile$"
   !---------------------------------------------------------------------------
@@ -312,7 +317,7 @@ contains ! =====     Public Procedures     =============================
 
   ! --------------------------------  ConstructForwardModelConfig  -----
   type (forwardModelConfig_T) function ConstructForwardModelConfig &
-    & ( name, root, vgrids, global ) result ( info )
+    & ( name, root, global ) result ( info )
     ! Process the forwardModel specification to produce ForwardModelConfig to
     ! add to the database
 
@@ -347,13 +352,12 @@ contains ! =====     Public Procedures     =============================
     use Trace_M, only: Trace_begin, Trace_end
     use Tree, only: Decoration, Node_ID, Nsons, Null_Tree, Sub_Rosa, Subtree
     use Tree_Types, only: N_Array
-    use VGridsDatabase, only: VGrid_T
+    use VGridsDatabase, only: VGrids
 
     integer, intent(in) :: NAME         ! The name of the config
     integer, intent(in) :: ROOT         ! of the forwardModel specification.
     !                                     Indexes either a "named" or
     !                                     "spec_args" vertex. Local variables
-    type (vGrid_T), dimension(:), pointer :: vGrids ! vGrid database
     logical, intent(in) :: GLOBAL       ! Goes into info%globalConfig
 
     logical, dimension(:), pointer :: Channels   ! From Parse_Signal
@@ -516,6 +520,8 @@ contains ! =====     Public Procedures     =============================
       case ( f_signals )
         allocate ( info%signals (nsons(son)-1), stat = status )
         if ( status /= 0 ) call announceError( AllocateError, root )
+        call allocate_test ( info%signalIndices, nsons(son)-1, &
+          & 'Info%SignalIndices', moduleName )
         do j = 1, nsons(son)-1
           gson = subtree(j+1,son)
           call get_string ( sub_rosa(gson), signalString, strip=.true.)
@@ -530,6 +536,7 @@ contains ! =====     Public Procedures     =============================
           wanted=1
           info%signals(j) = signals(signalInds(wanted))
           info%signals(j)%sideband = sideband
+          info%signalIndices(j) = signalInds(wanted)
           ! Don't hose channels in database, though shouldn't be an issue
           nullify ( info%signals(j)%channels )
 
@@ -1098,12 +1105,22 @@ o:      do j = 2, nsons(PFATrees(s))
   end subroutine AnnounceError
 
   logical function NOT_USED_HERE()
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+    & "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+  !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function NOT_USED_HERE
 
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.113  2005/06/03 02:07:56  vsnyder
+! New copyright notice, move Id to not_used_here to avoid cascades,
+! get VGrids from VGridsDatabase instead of an argument, add SignalIndices
+! component to config.
+!
 ! Revision 2.112  2005/05/27 17:56:07  vsnyder
 ! Access Source_Ref in the right place
 !
