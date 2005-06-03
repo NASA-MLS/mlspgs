@@ -1,11 +1,18 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
 module TREE_WALKER
 
 ! Traverse the tree output by the parser and checked by the tree checker.
 ! Perform the actions of the MLS L2 processing in the order indicated.
-
 
   implicit NONE
   private
@@ -13,13 +20,11 @@ module TREE_WALKER
   public :: WALK_TREE_TO_DO_MLS_L2
 
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), private, parameter :: IdParm = &
-       "$Id$"
-  character (len=len(idParm)), private :: Id = idParm
-  character (len=*), private, parameter :: ModuleName= &
+  character(len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
   private :: not_used_here 
 !---------------------------------------------------------------------------
+
   logical :: GLOBALSETTINGSONLY = .false.
   logical :: CHUNKDIVIDEONLY = .false.
 
@@ -65,7 +70,7 @@ contains ! ====     Public Procedures     ==============================
     use MatrixModule_1, only: DestroyMatrixDatabase, Matrix_Database_T
     use MergeGridsModule, only: MergeGrids
     use MLSCommon, only: TAI93_RANGE_T, MLSFile_T
-    ! use MLSFiles, only: MLSFile_T
+  ! use MLSFiles, only: MLSFile_T
     use MLSL2Options, only: CHECKPATHS, &
       & SKIPRETRIEVAL, STOPAFTERCHUNKDIVIDE, STOPAFTERGLOBAL
     use MLSMessageModule, only: MLSMessage, MLSMSG_Info, MLSMSG_Error
@@ -83,16 +88,16 @@ contains ! ====     Public Procedures     ==============================
     use RetrievalModule, only: Retrieve
     use SpectroscopyCatalog_m, only: Destroy_Line_Database, &
       & Destroy_SpectCat_Database, Spectroscopy
-    ! use Test_Parse_Signals_m, only: Test_Parse_Signals
+  ! use Test_Parse_Signals_m, only: Test_Parse_Signals
     use Time_M, only: Time_Now
     use Toggles, only: GEN, LEVELS, SWITCHES, TOGGLE
     use Trace_m, only: DEPTH, TRACE_BEGIN, TRACE_END
     use Tree, only: DECORATION, NSONS, SUBTREE
     use VectorsModule, only: DestroyVectorDatabase, DUMP_VECTORS, &
       & Vector_T, VectorTemplate_T
-    use VGridsDatabase, only: DestroyVGridDatabase, VGrid_T
+    use VGridsDatabase, only: DestroyVGridDatabase, VGrids
 
-    integer, intent(in) ::     ROOT         ! Root of the abstract syntax tree
+    integer, intent(in) ::     ROOT        ! Root of the abstract syntax tree
     integer, intent(out) ::    ERROR_FLAG  ! Nonzero means failure
     integer, intent(in) ::     FIRST_SECTION! Index of son of root of first n_cf
     logical, intent(in) ::     COUNTCHUNKS ! Just count the chunks, print them out and quit
@@ -100,8 +105,8 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(in) ::     LASTCHUNKIN ! Just run range [single,last]
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
 
-    integer ::                                  chunkNo ! Index of Chunks
-    type (MLSChunk_T), dimension(:), pointer :: Chunks  ! of data
+    integer ::                                   chunkNo ! Index of Chunks
+    type (MLSChunk_T), dimension(:), pointer ::  Chunks  ! of data
     type (FGrid_T), dimension(:), pointer ::     FGrids
     ! Forward model configurations:
     integer ::                                   FIRSTCHUNK ! For chunk loop
@@ -128,7 +133,6 @@ contains ! ====     Public Procedures     ==============================
     integer ::                                   totalNGC   ! Total num garbage colls.
     logical ::                                   show_totalNGC = .true.
     type (Vector_T), dimension(:), pointer ::    Vectors
-    type (VGrid_T), dimension(:), pointer ::     VGrids
 
     ! Arguments for Construct not declared above:
     type (QuantityTemplate_T), dimension(:), pointer :: MifGeolocation
@@ -166,21 +170,21 @@ contains ! ====     Public Procedures     ==============================
 
         ! --------------------------------------------------------- Init sections
       case ( z_globalsettings )
-        call set_global_settings ( son, forwardModelConfigDatabase, fGrids, vGrids, &
+        call set_global_settings ( son, forwardModelConfigDatabase, fGrids, &
           & l2gpDatabase, DirectDatabase, processingRange, filedatabase )
           ! & l2gpDatabase, DirectDatabase, processingRange, l1bInfo )
         call add_to_section_timing ( 'global_settings', t1)
         if ( GLOBALSETTINGSONLY .and. .not. parallel%slave ) then
           call finishUp(.true.)
           return
-        endif
+        end if
       case ( z_mlsSignals )
         call MLSSignals ( son )
         if ( index(switches,'tps') /= 0 ) then
             ! call test_parse_signals
             call MLSMessage ( MLSMSG_Info, ModuleName, &
               & 'Go back and uncomment the previous line in tree_walker' )
-        endif
+        end if
         call add_to_section_timing ( 'signals', t1)
       case ( z_spectroscopy )
         call spectroscopy ( son )
@@ -211,7 +215,7 @@ contains ! ====     Public Procedures     ==============================
             allocate(chunks(1), stat=error_flag)
             if ( error_flag /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
               & 'unable to allocate chunks' )
-          endif
+          end if
           if ( singleChunk /= 0 ) then
             if ( singleChunk < 0 ) then
               call output ( " single chunk " )
@@ -225,7 +229,7 @@ contains ! ====     Public Procedures     ==============================
               call output ( lastChunk, advance='yes' )
               call MLSMessage ( MLSMSG_Error, ModuleName, &
               & 'single chunk number > lastChunk' )
-            endif
+            end if
             firstChunk = singleChunk
             lastChunk = singleChunk
             if ( lastChunkIn > firstChunk ) &
@@ -245,7 +249,7 @@ contains ! ====     Public Procedures     ==============================
         if ( CHUNKDIVIDEONLY .or. GLOBALSETTINGSONLY ) then
           call finishUp(.true.)
           return
-        endif
+        end if
 
       case ( z_algebra )
         call algebra ( son, vectors, matrices, chunks(1), forwardModelConfigDatabase )
@@ -261,7 +265,7 @@ contains ! ====     Public Procedures     ==============================
             if ( singleChunk /= 0 .and. .not. reducedChunks ) then
               call ReduceChunkDatabase(chunks, singleChunk, lastChunk )
               reducedChunks = .true.  ! So we don't try this more than once
-            endif
+            end if
             call L2MasterTask ( chunks, l2gpDatabase, l2auxDatabase )
           end if
           if ( parallel%slave .and. parallel%fwmParallel ) then
@@ -310,7 +314,7 @@ subtrees:   do while ( j <= howmany )
                 if ( .not. checkPaths ) &
                 & call MLSL2Construct ( son, filedatabase, processingRange, &
                   & chunks(chunkNo), qtyTemplates, vectorTemplates, &
-                  & fGrids, vGrids, hGrids, l2gpDatabase, forwardModelConfigDatabase, &
+                  & fGrids, hGrids, l2gpDatabase, forwardModelConfigDatabase, &
                   & mifGeolocation )
                 call add_to_section_timing ( 'construct', t1)
               case ( z_fill )
@@ -318,10 +322,10 @@ subtrees:   do while ( j <= howmany )
                 if ( .not. checkPaths) then 
                   ! call MLSL2Fill ( son, l1bInfo, griddedDataBase, &
                   call MLSL2Fill ( son, filedatabase, griddedDataBase, &
-                  & vectorTemplates, vectors, qtyTemplates, matrices, vGrids, &
+                  & vectorTemplates, vectors, qtyTemplates, matrices, &
                   & l2gpDatabase, l2auxDatabase, forwardModelConfigDatabase, &
 		            & chunks, chunkNo )
-		          endif
+		          end if
                 call add_to_section_timing ( 'fill', t1)
               case ( z_join )
                 call MLSL2Join ( son, vectors, l2gpDatabase, &
@@ -430,8 +434,8 @@ subtrees:   do while ( j <= howmany )
     call finishUp
 
   contains
-    subroutine finishUp(early)
-      logical, intent(in), optional :: early
+    subroutine FinishUp ( Early )
+      logical, intent(in), optional :: Early
       logical :: myEarly
       integer :: numChunks
       myEarly = .false.
@@ -458,10 +462,10 @@ subtrees:   do while ( j <= howmany )
         call destroyFGridDatabase ( fGrids )
         ! call dump(fGrids, destroy=.true.)
         ! call DestroyL1BInfo ( l1bInfo )
-      endif
+      end if
       error_flag = 0
       if ( toggle(gen) ) call trace_end ( 'WALK_TREE_TO_DO_MLS_L2' )
-    end subroutine finishUp
+    end subroutine FinishUp
 
     subroutine SayTime ( What, startTime )
       character(len=*), intent(in) :: What
@@ -471,7 +475,7 @@ subtrees:   do while ( j <= howmany )
         myt1 = startTime
       else
         myt1 = t1
-      endif
+      end if
       call time_now ( t2 )
       if ( total_times ) then
         call output ( "Total time = " )
@@ -499,12 +503,20 @@ subtrees:   do while ( j <= howmany )
   end subroutine WALK_TREE_TO_DO_MLS_L2
 
   logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+!---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
 
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.130  2005/05/31 17:51:17  pwagner
+! Began switch from passing file handles to passing MLSFiles
+!
 ! Revision 2.129  2004/12/14 21:56:50  pwagner
 ! Changes related to stopping early
 !
