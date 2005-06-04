@@ -87,7 +87,7 @@ contains
     use MLSL2Options, only: ILLEGALL1BRADID, LEVEL1_HDFVERSION, &
       & MAXNUML1BRADIDS, STOPAFTERGLOBAL, STOPAFTERCHUNKDIVIDE, Toolkit
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MLSPCF2, only: mlspcf_l2gp_start, mlspcf_l2gp_end, &
       & mlspcf_l2dgm_start, mlspcf_l2dgm_end, mlspcf_l2fwm_full_start, &
       & mlspcf_l2fwm_full_end, &
@@ -898,6 +898,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.100  2005/06/03 23:58:48  pwagner
+! Hope it wont bomb if no l1boa
+!
 ! Revision 2.99  2005/06/03 02:11:14  vsnyder
 ! New copyright notice, move Id to not_used_here to avoid cascades,
 ! get VGrids from VGridsDatabase instead of a dummy argument.
