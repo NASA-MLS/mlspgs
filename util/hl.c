@@ -1,22 +1,37 @@
 /* 
-Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
-U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
+Copyright 2005, by the California Institute of Technology. ALL
+RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+commercial use must be negotiated with the Office of Technology Transfer
+at the California Institute of Technology.
+
+This software may be subject to U.S. export control laws. By accepting this
+software, the user agrees to comply with all applicable U.S. export laws and
+regulations. User has the responsibility to obtain export licenses, or other
+export authority as may be required before exporting such information to
 */
+
 #include <stdio.h>
 #include <regex.h>
 
-/* Highlight a pattern in the input by coloring it in the output. */
-/* "regex" is used to find the patterns.                          */
+/* Highlight patterns in the input by coloring them in the output. */
+/* "regex" is used to find the patterns.                           */
+/* The exit status if zero if no "red" patterns are found, else 1. */
 
   static char Id[] = "$Id$";
 
 main ( int argc, char* argv[] )
 { char b[256];                      /* input buffer */
-  char after[] = "\033[0m";         /* black on transparent background */
-  char blue[] = "\033[00;34;1m";    /* bold blue on transparent background */
-  char magenta[] = "\033[00;35;1m"; /* bold magenta on transparent background */
-  char red[] = "\033[00;31;1m";     /* bold red on transparent background */
+  char after[] = "\033[0;0m";       /* Normal on normal background */
+  char blue[] = "\033[00;34;1m";    /* Bold blue on transparent background */
+  char magenta[] = "\033[00;35;1m"; /* Bold magenta on transparent background */
+  char red[] = "\033[00;31;1m";     /* Bold red on transparent background */
+  int any;                          /* 1 + index of leftmost match; 0 => none */
   int i;                            /* Subscript/loop inductor */
+  int left;                         /* Lefthand end of leftmost match */
+  int next;                         /* Next element of b to search or print */
+  int result;                       /* Zero = no red messages, else 1 */
+  int right;                        /* Righthand end of leftmost match */
+  _IO_FILE *where;                  /* Where to output -- stdout or stderr */
 
   typedef struct
   { char* find;          /* Pattern to find */
@@ -36,37 +51,59 @@ main ( int argc, char* argv[] )
                  "Obsolescent", blue, {},  "Info", magenta, {},
                  "undefined", red, {} };     /* during linking */
 
-#define NPAT sizeof pats / sizeof pats[0]
+#define NPAT ( sizeof pats / sizeof pats[0] )
 
   /* Compile the patterns */
   for ( i=0; i<NPAT ; i++ ) regcomp ( &pats[i].preg, pats[i].find, REG_EXTENDED );
 
   setvbuf ( stdout, (char*)NULL, _IONBF, 1 ); /* unbuffer the output */
+  setvbuf ( stderr, (char*)NULL, _IONBF, 1 ); /* unbuffer the output */
 
+  result = 0;
   while (1)
   { /* Get a line: */
-    if ( fgets ( b, sizeof b, stdin ) == NULL ) return(0);
-    /* Look for a pattern match */
-    for ( i=0; i<NPAT; i++ )
-    { if ( regexec ( &pats[i].preg, b, 1, &match, 0 ) == 0 )
-      /* Got a match; put the desired color around it */
-      { fwrite ( b, sizeof(char), match.rm_so, stdout );
-        printf ( "%s", pats[i].color );
-        fwrite ( &b[match.rm_so], sizeof(char), match.rm_eo - match.rm_so, stdout );
-        printf ( "%s%s", after, &b[match.rm_eo] );
-        goto cycle;
+    next = 0;
+    if ( fgets ( b, sizeof b, stdin ) == NULL ) return(result);
+    any = 1;
+    where = stdout;
+    while ( any ) { /* Look for pattern matches */
+      left = sizeof(b) + 1;
+      any = 0;
+      for ( i=0; i<NPAT; i++ )
+      { if ( regexec ( &pats[i].preg, &b[next], 1, &match, 0 ) == 0 )
+        { /* Got a match */
+          /* Is it a "red" pattern? */
+          if ( pats[i].color == red )
+          { where = stderr; /* output line to stderr */
+            result = 1;     /* return status is 1 */
+          }
+          /* Is it the leftmost? */
+          if ( match.rm_so < left )
+          { left = match.rm_so;
+            right = match.rm_eo;
+            any = i + 1;
+          }
+        }
+      }
+      if ( any )
+      { /* Got a match; put the desired color around it */
+        fwrite ( &b[next], sizeof(char), left, where );
+        fprintf ( where, "%s", pats[any-1].color );
+        fwrite ( &b[next+left], sizeof(char), right - left, where );
+        fprintf ( where, "%s", after);
+        next = next + right;
       }
     }
-    /* No match; just echo the input */
-    printf ( "%s", b );
-  cycle:
-  /* Nonsense to get around "label at end of compound statement" prohobition */
-  i++;
+    /* Echo the rest of the input (or all of it if no matches) */
+    fprintf ( where, "%s", &b[next] );
   }
 }
 
 /*
 $Log$
+Revision 1.7  2005/03/04 18:46:26  pwagner
+Changed to compile under gcc 3.4.3
+
 Revision 1.6  2004/10/30 00:32:46  vsnyder
 Changed 'puce' to 'magenta'
 
