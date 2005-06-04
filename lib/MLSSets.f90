@@ -1,5 +1,13 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
 module MLSSets
 
@@ -60,9 +68,6 @@ module MLSSets
 ! === (end of api) ===
 
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), private, parameter :: IdParm = &
-       "$Id$"
-  character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
   private :: not_used_here 
@@ -234,10 +239,10 @@ contains ! =====     Public Procedures     =============================
     character(len=*), intent(in) :: Probe
 
     ! Executable code
-    do FindFirstCharacter = 1, size(set)
+    do FindFirstCharacter = size(set), 1, -1
       if ( trim(set(FindFirstCharacter)) == trim(probe) ) return
     end do
-    FindFirstCharacter = 0
+    ! FindFirstCharacter == 0 if we get here
   end function FindFirstCharacter
 
   ! -------------------------------------------  FindFirstInteger  -----
@@ -247,10 +252,10 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: Probe
 
     ! Executable code
-    do FindFirstInteger = 1, size(set)
+    do FindFirstInteger = size(set), 1, -1
       if ( set(FindFirstInteger) == probe ) return
     end do
-    FindFirstInteger = 0
+    ! FindFirstCharacter == 0 if we get here
   end function FindFirstInteger
 
   ! -------------------------------------------  FindFirstLogical  -----
@@ -259,10 +264,10 @@ contains ! =====     Public Procedures     =============================
     logical, dimension(:), intent(in) :: CONDITION
 
     ! Executable code
-    do FindFirstLogical = 1, size(condition)
+    do FindFirstLogical = size(condition), 1, -1
       if ( condition(FindFirstLogical) ) return
     end do
-    FindFirstLogical = 0
+    ! FindFirstCharacter == 0 if we get here
   end function FindFirstLogical
 
   ! --------------------------------------------  FindNextCharacter  -----
@@ -537,12 +542,20 @@ contains ! =====     Public Procedures     =============================
 ! =====     Private Procedures     =====================================
 
   logical function not_used_here()
-    not_used_here = (id(1:1) == ModuleName(1:1))
+  !---------------------------- RCS Ident Info -------------------------------
+    character (len=*), parameter :: IdParm = &
+         "$Id$"
+    character (len=len(idParm)) :: Id = idParm
+  !---------------------------------------------------------------------------
+     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
 
 end module MLSSets
 
 ! $Log$
+! Revision 2.9  2005/06/04 00:32:28  vsnyder
+! New copyright, move Id to not_used_here, simplify FindFirst...
+!
 ! Revision 2.8  2004/07/02 01:34:11  vsnyder
 ! Get rid of unused stuff
 !
