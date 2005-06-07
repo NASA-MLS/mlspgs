@@ -239,10 +239,10 @@ contains ! =====     Public Procedures     =============================
     character(len=*), intent(in) :: Probe
 
     ! Executable code
-    do FindFirstCharacter = size(set), 1, -1
+    do FindFirstCharacter = 1, size(set)
       if ( trim(set(FindFirstCharacter)) == trim(probe) ) return
     end do
-    ! FindFirstCharacter == 0 if we get here
+    FindFirstCharacter = 0
   end function FindFirstCharacter
 
   ! -------------------------------------------  FindFirstInteger  -----
@@ -252,10 +252,10 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: Probe
 
     ! Executable code
-    do FindFirstInteger = size(set), 1, -1
+    do FindFirstInteger = 1, size(set)
       if ( set(FindFirstInteger) == probe ) return
     end do
-    ! FindFirstCharacter == 0 if we get here
+    FindFirstInteger = 0
   end function FindFirstInteger
 
   ! -------------------------------------------  FindFirstLogical  -----
@@ -264,10 +264,10 @@ contains ! =====     Public Procedures     =============================
     logical, dimension(:), intent(in) :: CONDITION
 
     ! Executable code
-    do FindFirstLogical = size(condition), 1, -1
+    do FindFirstLogical = 1, size(condition)
       if ( condition(FindFirstLogical) ) return
     end do
-    ! FindFirstCharacter == 0 if we get here
+    FindFirstLogical = 0
   end function FindFirstLogical
 
   ! --------------------------------------------  FindNextCharacter  -----
@@ -553,6 +553,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSSets
 
 ! $Log$
+! Revision 2.10  2005/06/07 00:49:24  vsnyder
+! Status quo ante 2.9 -- FindFirst means _first_ not _last_
+!
 ! Revision 2.9  2005/06/04 00:32:28  vsnyder
 ! New copyright, move Id to not_used_here, simplify FindFirst...
 !
