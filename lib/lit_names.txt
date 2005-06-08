@@ -19,9 +19,11 @@
 a                # polarization
 adopted
 angle
+ascii
 
 b                # polarization
 baseline
+binary
 boundarypressure
 
 C
@@ -45,6 +47,7 @@ cloudy_nearside_only
 columnabundance
 columns
 complete
+create
 
 days
 deg
@@ -135,6 +138,7 @@ nameFragment
 noiseBandwidth
 none
 
+open
 opticalDepth
 orbitInclination
 orbits
@@ -156,6 +160,8 @@ quality
 rad
 radiance
 radians
+rdonly
+rdwrite
 refGPH
 refltemp
 refltrans
@@ -189,6 +195,7 @@ tertiary
 theta
 THz
 time
+tkgen
 tngteci
 tngtgeocalt
 tngtgeodalt
@@ -204,8 +211,12 @@ xptl1
 xyz
 
 zeta
+zonalavg
 
 # $Log$
+# Revision 2.40  2005/06/08 21:44:27  pwagner
+# Added more file-related lits
+#
 # Revision 2.39  2005/04/19 19:12:54  livesey
 # Renamed mls1 to xptl1
 #
