@@ -61,8 +61,6 @@ contains
       & L_SIZEDISTRIBUTION, L_SPACERADIANCE, L_TEMPERATURE, L_VMR
     use Load_Sps_Data_m, only: DestroyGrids_t, Grids_T, Load_One_Item_Grid, &
       & Load_Sps_Data, Modify_values_for_supersat
-    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT, ALLOCATESLABS, &
-                                &  DESTROYCOMPLETESLABS
     use ManipulateVectorQuantities, only: DoHGridsMatch, FindClosestInstances
     use MatrixModule_1, only: MATRIX_T
     use Metrics_m, only: Metrics
@@ -79,7 +77,8 @@ contains
     use Physics, only: H_OVER_K, SpeedOfLight
     use PointingGrid_m, only: POINTINGGRIDS
     use REFRACTION_M, only: REFRACTIVE_INDEX, COMP_REFCOR
-    use SLABS_SW_M, only: GET_GL_SLABS_ARRAYS
+    use SLABS_SW_M, only: ALLOCATESLABS, DESTROYCOMPLETESLABS, &
+      & GET_GL_SLABS_ARRAYS, SLABS_STRUCT
 ! use testfield_m
     use Tau_M, only: Destroy_Tau, Dump, Get_Tau, Tau_T
     use Toggles, only: Emit, Levels, Switches, Toggle
@@ -3228,6 +3227,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.236  2005/06/03 01:59:25  vsnyder
+! New copyright notice, move Id to not_used_here to avoid cascades
+!
 ! Revision 2.235  2005/04/19 20:16:45  livesey
 ! Added a couple of nullifys
 !

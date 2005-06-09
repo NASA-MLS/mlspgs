@@ -1,5 +1,13 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
 module Bill_GasAbsorption
 
@@ -8,12 +16,10 @@ module Bill_GasAbsorption
   public :: Get_Beta_Bill
 
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter, private :: IdParm = &
-  "$Id$"
-  character (len=len(idParm)) :: Id = IdParm
   character (len=*), parameter, private :: ModuleName= &
   "$RCSfile$"
 !---------------------------------------------------------------------------
+
 contains
 
   subroutine Get_Beta_Bill (T, PB, F, RH, VMR_in, NS, ABSC, Catalog, LosVel )
@@ -24,13 +30,12 @@ contains
 !==============================================================
 
     use Get_Beta_Path_m, only: CREATE_BETA
-    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT, ALLOCATESLABS, &
-      & DESTROYCOMPLETESLABS
     use MLSCommon, only: RK => R8, RP, IP
     use Molecules, only: L_H2O, L_H2O_18, L_HNO3, L_N2, L_N2O, L_O_18_O, &
       & L_O2, L_O3
     use Physics, only: H_OVER_K
-    use SLABS_SW_M, only: GET_GL_SLABS_ARRAYS
+    use SLABS_SW_M, only: ALLOCATESLABS, DESTROYCOMPLETESLABS, &
+      & GET_GL_SLABS_ARRAYS, SLABS_STRUCT
     use SpectroscopyCatalog_m, only: CATALOG_T
     use WaterVapor, only: RHtoEV
 
@@ -150,12 +155,20 @@ contains
   end subroutine get_beta_bill 
 
   logical function not_used_here()
+  !---------------------------- RCS Ident Info -------------------------------
+    character (len=*), parameter :: IdParm = &
+    "$Id$"
+    character (len=len(idParm)) :: Id = IdParm
+  !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
 
 end module Bill_GasAbsorption
 
 ! $Log$
+! Revision 1.29  2004/04/02 01:15:14  jonathan
+! fix bug
+!
 ! Revision 1.28  2004/03/30 00:44:42  vsnyder
 ! Remove USE for unreferenced symbol
 !

@@ -37,9 +37,9 @@ contains
     use Dump_0, only: Dump
     use ForwardModelConfig, only: LBL_T
     use Intrinsic, only: Lit_Indices
-    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use MLSCommon, only: R8, RP, IP
     use Output_m, only: Output
+    use Slabs_SW_m, only: SLABS_STRUCT
     use String_Table, only: Display_String
     use Toggles, only: Switches
 
@@ -49,7 +49,7 @@ contains
     real(rp), intent(in) :: P_path(:)    ! path pressures in hPa!
     real(rp), intent(in) :: T_path(:)    ! path temperatures
     real(rp), intent(in) :: Tanh_path(:) ! tanh(0.5*h_over_k*frq / t_path)
-    type (slabs_struct), dimension(:,:) :: Gl_slabs
+    type (slabs_struct), dimension(:,:), intent(in) :: Gl_slabs
     integer(ip), intent(in) :: Path_inds(:) ! indices for reading p_path and gl_slabs
 
     type (LBL_T), intent(in), dimension(:) :: beta_group
@@ -248,9 +248,9 @@ contains
                                      & Path_inds, Beta_path, dBeta_path_dT )
 
     use ForwardModelConfig, only: LBL_T
-    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use MLSCommon, only: R8, RP, IP
     use O2_Abs_CS_m, only: O2_Abs_CS, D_O2_Abs_CS_dT
+    use Slabs_SW_m, only: SLABS_STRUCT
 
 ! Inputs:
 
@@ -399,13 +399,13 @@ contains
 !  running time was achieved.  Create_Beta is in the inner loop of the
 !  forward model.
 
-    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use MLSCommon, only: RP, R8, IP
     use Molecules, only: L_N2, L_Extinction, L_O2
     use SLABS_SW_M, only: DVOIGT_SPECTRAL, VOIGT_LORENTZ, &
       & SLABS_LINES, SLABS_LINES_DT, &
       & SLABSWINT_LINES, SLABSWINT_LINES_DT
     use SpectroscopyCatalog_m, only: Catalog_T, Lines
+    use Slabs_SW_m, only: SLABS_STRUCT
 
 ! Inputs:
     real(rp), intent(in) :: pressure   ! pressure in hPa
@@ -568,12 +568,12 @@ contains
 !  should be called for primary and image separately. Compute dBeta_dT if it's
 !  associated.  Compute dBeta_dw, dBeta_dn, dBeta_dv if they're associated. 
 
-    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use MLSCommon, only: RP, R8
     use Molecules, only: L_N2, L_Extinction, L_O2
     use SLABS_SW_M, only: DVOIGT_SPECTRAL, VOIGT_LORENTZ, &
       & SLABS_LINES, SLABS_LINES_DT, SLABSWINT_LINES, SLABSWINT_LINES_DT
     use SpectroscopyCatalog_m, only: LINES
+    use Slabs_SW_m, only: SLABS_STRUCT
 
 ! Inputs:
     integer, intent(in) :: Path_inds(:)! Which Pressures to use
@@ -1117,6 +1117,10 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.78  2005/06/03 01:58:53  vsnyder
+! New copyright notice, move Id to not_used_here to avoid cascades,
+! Revise PFA data structures.
+!
 ! Revision 2.77  2005/05/24 01:55:18  vsnyder
 ! Delete unused symbols
 !

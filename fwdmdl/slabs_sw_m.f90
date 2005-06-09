@@ -1,13 +1,61 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
 module SLABS_SW_M
 
   ! Single-Line Absorption Software
 
   use MLSCommon, only: R8, RP
+  use SpectroscopyCatalog_m, only: Catalog_T
   use Units, only: SqrtPi
 
   implicit NONE
 
   private
+
+!--------------------------------------------------  SLABS_STRUCT  -----
+! This structure contains the "slabs preps arrays."  These are the
+! frequency-independent terms in the cross section.
+
+  type, public :: SLABS_STRUCT
+    type(catalog_t), pointer :: Catalog ! everything else is same size
+    !                                     as catalog%lines
+    real(r8), dimension(:), pointer :: v0s => NULL()
+    real(r8), dimension(:), pointer :: x1 => NULL()
+    real(r8), dimension(:), pointer :: y => NULL()
+    real(r8), dimension(:), pointer :: yi => NULL()
+    real(r8), dimension(:), pointer :: slabs1 => NULL()
+    real(r8), dimension(:), pointer :: dx1_dv0 => NULL()
+    real(r8), dimension(:), pointer :: dy_dv0 => NULL()
+    real(r8), dimension(:), pointer :: dslabs1_dv0 => NULL()
+    logical :: UseYi ! Are any yi > 0?
+    ! For temperature derivatives.  Most are logarithmic derivatives,
+    ! so dz_dT really means 1/z dz_dT.
+    real(r8), dimension(:), pointer :: dv0s_dT => NULL()    ! not * 1 / v0s
+    real(r8), dimension(:), pointer :: dx1_dT => NULL()     ! / x1
+    real(r8), dimension(:), pointer :: dy_dT => NULL()      ! / y
+    real(r8), dimension(:), pointer :: dyi_dT => NULL()     ! / yi
+    real(r8), dimension(:), pointer :: dslabs1_dT => NULL() ! / slabs1
+  end type SLABS_STRUCT
+
+  ! Routines to manipulate slabs structs
+
+  interface DUMP
+    module procedure Dump_Slabs_Struct, Dump_Slabs_Struct_2D
+  end interface
+
+  public :: AllocateOneSlabs, AllocateSlabs
+  public :: DeallocateAllSlabs, DeallocateOneSlabs
+  public :: DestroyCompleteSlabs
+  public :: Dump, Dump_Slabs_Struct, Dump_Slabs_Struct_2D
 
   ! Routines to compute Betas and their derivatives, and to get ready to do so:
   public :: Get_GL_Slabs_Arrays,                                          &
@@ -19,15 +67,226 @@ module SLABS_SW_M
   real(rp), parameter :: OneOvSPi = 1.0_rp / sqrtPi  ! 1.0/Sqrt(Pi)
 
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
-    & "$Id$"
-  character ( len=len(idParm)) :: Id = idParm
   character (len=*), parameter :: ModuleName= &
     & "$RCSfile$"
   private :: not_used_here 
 !---------------------------------------------------------------------------
 contains
 !---------------------------------------------------------------------------
+
+  ! -------------------------------------------  AllocateOneSlabs  -----
+  subroutine AllocateOneSlabs ( Slabs, Catalog, TempDer )
+    ! Allocates the items in a slabs structure
+    use Allocate_Deallocate, only: ALLOCATE_TEST
+    use SpectroscopyCatalog_m, only: Catalog_T
+    type (slabs_struct), intent(inout) :: slabs ! Slabs to allocate
+    type (catalog_t), target, intent(in) :: Catalog
+    logical, intent(in), optional :: TempDer    ! "Allocate temperature
+                                                !  derivative fields"
+
+    ! Local variables
+    integer :: myl
+    logical :: MyDer
+    integer :: NL
+
+    ! Executable code
+    myDer = .false.
+    if ( present(tempDer) ) myDer = tempDer
+    if ( associated(catalog%lines) ) then
+      nl = size(catalog%lines)
+    else
+      nl = 0
+    end if
+    myL = nl
+
+    slabs%catalog => catalog
+    call Allocate_test ( slabs%v0s,         myl, 'v0s',         ModuleName )
+    call Allocate_test ( slabs%x1,          myl, 'x1',          ModuleName )
+    call Allocate_test ( slabs%y,           myl, 'y',           ModuleName )
+    call Allocate_test ( slabs%yi,          myl, 'yi',          ModuleName )
+    call Allocate_test ( slabs%slabs1,      myl, 'slabs1',      ModuleName )
+    call Allocate_test ( slabs%dx1_dv0,     myl, 'dx1_dv0',     ModuleName )
+    call Allocate_test ( slabs%dy_dv0,      myl, 'dy_dv0',      ModuleName )
+    call Allocate_test ( slabs%dslabs1_dv0, myl, 'dslabs1_dv0', ModuleName )
+    if ( myDer ) then
+      call Allocate_test ( slabs%dv0s_dT,    myl, 'dv0s_dT',    ModuleName )
+      call Allocate_test ( slabs%dx1_dT,     myl, 'dx1_dT',     ModuleName )
+      call Allocate_test ( slabs%dy_dT,      myl, 'dy_dT',      ModuleName )
+      call Allocate_test ( slabs%dyi_dT,     myl, 'dyi_dT',     ModuleName )
+      call Allocate_test ( slabs%dslabs1_dT, myl, 'dslabs1_dT', ModuleName )
+    end if
+    if ( nl == 0 ) then
+      slabs%v0s = 0.0_r8
+      slabs%x1 = 0.0_r8
+      slabs%y = 0.0_r8
+      slabs%yi = 0.0_r8
+      slabs%slabs1 = 0.0_r8
+      slabs%dx1_dv0 = 0.0_r8
+      slabs%dy_dv0 = 0.0_r8
+      slabs%dslabs1_dv0 = 0.0_r8
+      if ( myDer ) then
+        slabs%dv0s_dT = 0.0_r8
+        slabs%dx1_dT = 0.0_r8
+        slabs%dy_dT = 0.0_r8
+        slabs%dyi_dT = 0.0_r8
+        slabs%dslabs1_dT = 0.0_r8
+      end if
+    end if
+  end subroutine AllocateOneSlabs
+
+  ! --------------------------------------------  AllocateSlabs  ----------
+  subroutine AllocateSlabs ( Slabs, No_Ele, Catalog, Caller, TempDer )
+  ! Allocate an array of slabs structures, and then the items in each one
+
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
+    use SpectroscopyCatalog_m, only: Catalog_T
+
+    type (slabs_struct), dimension(:,:), pointer :: Slabs
+    integer, intent(in) :: No_Ele
+    type (catalog_t), dimension(:), intent(in) :: Catalog
+    character(len=*), intent(in) :: Caller
+    logical, intent(in), optional :: TempDer    ! "Allocate temperature
+                                                !  derivative fields"
+
+    integer :: I, J
+
+    allocate ( slabs(no_ele, size(catalog)), stat=i )
+    if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, Caller, &
+      & MLSMSG_Allocate//"slabs" )
+
+    do i = 1, size(catalog)
+      do j = 1, no_ele
+        call AllocateOneSlabs ( slabs(j,i), catalog(i), TempDer )
+      end do
+    end do
+
+  end subroutine AllocateSlabs
+
+  ! ------------------------------------------ DeallocateAllSlabs ---------
+  subroutine DeallocateAllSlabs ( Slabs, inName )
+    ! Allocates the items in a slabs
+    type (slabs_struct), intent(inout), dimension(:,:) :: Slabs
+    character(len=*), intent(in) :: InName
+
+    integer :: I
+    integer :: J
+    ! Executable code
+    do i = 1, size(slabs,2)
+      do j = 1, size(slabs,1)
+        call DeallocateOneSlabs ( slabs(j,i), inName )
+      end do
+    end do
+  end subroutine DeallocateAllSlabs
+
+  ! ------------------------------------------ DeallocateOneSlabs ---------
+  subroutine DeallocateOneSlabs ( slabs, inName )
+    ! DeAllocates the items in a slabs structure
+    use Allocate_Deallocate, only: DEALLOCATE_TEST
+    type (slabs_struct), intent(inout) :: slabs ! Slabs to deallocate
+    character (len=*), intent(in) :: inName ! ModuleName of caller
+
+    ! Executable code
+    call Deallocate_test ( slabs%v0s,         'v0s',         inName )
+    call Deallocate_test ( slabs%x1,          'x1',          inName )
+    call Deallocate_test ( slabs%y,           'y',           inName )
+    call Deallocate_test ( slabs%yi,          'yi',          inName )
+    call Deallocate_test ( slabs%slabs1,      'slabs1',      inName )
+    call Deallocate_test ( slabs%dx1_dv0,     'dx1_dv0',     inName )
+    call Deallocate_test ( slabs%dy_dv0,      'dy_dv0',      inName )
+    call Deallocate_test ( slabs%dslabs1_dv0, 'dslabs1_dv0', inName )
+    call Deallocate_test ( slabs%dv0s_dT,     'dv0s_dT',     inName )
+    call Deallocate_test ( slabs%dx1_dT,      'dx1_dT',      inName )
+    call Deallocate_test ( slabs%dy_dT,       'dy_dT',       inName )
+    call Deallocate_test ( slabs%dyi_dT,      'dyi_dT',      inName )
+    call Deallocate_test ( slabs%dslabs1_dT,  'dslabs1_dT',  inName )
+  end subroutine DeallocateOneSlabs
+
+  ! ------------------------------------------- DestroyCompleteSlabs -----
+  subroutine DestroyCompleteSlabs ( Slabs )
+    ! Destroys all the components of a slabs
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Deallocate
+    type (slabs_struct), dimension(:,:), pointer :: Slabs
+
+    integer :: I
+    ! Executable code
+    call deallocateAllSlabs ( slabs, moduleName )
+    deallocate ( slabs, stat=i )
+    if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Deallocate//'slabs' )
+  end subroutine DestroyCompleteSlabs
+
+  ! ------------------------------------------  Dump_Slabs_Struct  -----
+  subroutine Dump_Slabs_Struct ( The_Slabs_Struct, Name )
+
+    use Dump_0, only: Dump
+    use Intrinsic, only: Lit_indices
+    use Output_m, only: Output
+    use String_Table, only: Display_String
+
+    type(slabs_struct), intent(in) :: The_Slabs_Struct
+    character(len=*), intent(in), optional :: Name
+
+    integer :: NL
+
+    call output ( 'Slabs_Struct ' )
+    if ( present(name) ) call output ( trim(name) )
+    nl = size(the_slabs_struct%catalog%lines)
+    if ( nl == 0 ) then
+      call output ( ' is empty', advance='yes' )
+    else
+      call output ( '', advance='yes' )
+      if ( the_slabs_struct%catalog%species_name /= 0 ) then
+        call output ( 'Species ' )
+        call display_string ( the_slabs_struct%catalog%species_name )
+      end if
+      call output ( 'Molecule ' )
+      call display_string ( lit_indices(the_slabs_struct%catalog%molecule), advance='yes' )
+      call dump ( the_slabs_struct%v0s(:nl), name='v0s' )
+      call dump ( the_slabs_struct%x1(:nl), name='x1' )
+      call dump ( the_slabs_struct%y(:nl), name='y' )
+      call dump ( the_slabs_struct%yi(:nl), name='yi' )
+      call dump ( the_slabs_struct%slabs1(:nl), name='slabs1' )
+      call dump ( the_slabs_struct%dx1_dv0(:nl), name='dx1_dv0' )
+      call dump ( the_slabs_struct%dy_dv0(:nl), name='dy_dv0' )
+      call dump ( the_slabs_struct%dslabs1_dv0(:nl), name='dslabs1_dv0' )
+      if ( associated (the_slabs_struct%dslabs1_dT) ) then
+        call dump ( the_slabs_struct%dv0s_dT(:nl), name='dv0s_dT' )
+        call dump ( the_slabs_struct%dx1_dT(:nl), name='dx1_dT' )
+        call dump ( the_slabs_struct%dy_dT(:nl), name='dy_dT' )
+        call dump ( the_slabs_struct%dyi_dT(:nl), name='dyi_dT' )
+        call dump ( the_slabs_struct%dslabs1_dT(:nl), name='dslabs1_dT' )
+      end if
+    end if
+
+  end subroutine Dump_Slabs_Struct
+
+  ! ---------------------------------------  Dump_Slabs_Struct_2D  -----
+  subroutine Dump_Slabs_Struct_2D ( The_Slabs_Struct, Name )
+
+    use Output_m, only: Output
+
+    type(slabs_struct), intent(in) :: The_Slabs_Struct(:,:)
+    character(len=*), intent(in), optional :: Name
+
+    integer :: I, J
+
+    call output ( 'Slabs Struct' )
+    if ( present(name) ) call output ( ' ' // trim(name) )
+    call output ( ', SIZE = ' )
+    call output ( size(the_slabs_struct,1) )
+    call output ( ' X ' )
+    call output ( size(the_slabs_struct,2), advance='yes' )
+    do j = 1, size(the_slabs_struct,2)
+      do i = 1, size(the_slabs_struct,1)
+        call output ( 'Item ' )
+        call output ( i )
+        call output ( ', ' )
+        call output ( j, advance='yes' )
+        call dump ( the_slabs_struct(i,j) )
+      end do
+    end do
+
+  end subroutine Dump_Slabs_Struct_2D
 
   ! --------------------------------------------  dVoigt_spectral  -----
   elemental subroutine dVoigt_spectral ( dNu, Nu0, x1, yi, y, w, t, tanh1, slabs1, SwI, &
@@ -117,7 +376,6 @@ contains
 ! NOTE: In here and in all other routines in this module, 
 !       tanh1 = tanh( h * nu / ( 2.0 * k * T ) )
 
-    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use SpectroscopyCatalog_m, only: Lines
     use Voigt_m, only: Simple_Voigt
 
@@ -339,7 +597,6 @@ contains
   ! ------------------------------------------------  Slabs_Lines  -----
   elemental function Slabs_Lines ( Nu, Slabs, tanh1, NoPolarized ) result ( Beta )
 
-    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use SpectroscopyCatalog_m, only: Lines
     use Voigt_m, only: Real_Simple_Voigt
 
@@ -403,7 +660,6 @@ contains
   ! Compute single-line absorption and its derivative w.r.t. temperature
   ! for all lines in the Slabs structure.
 
-    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use SpectroscopyCatalog_m, only: Lines
     use Voigt_m, only: D_Real_Simple_Voigt
 
@@ -657,7 +913,6 @@ contains
   ! --------------------------------------------  Slabswint_Lines  -----
   elemental function Slabswint_Lines ( Nu, Slabs, tanh1, NoPolarized ) result ( Beta )
 
-    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use SpectroscopyCatalog_m, only: Lines
     use Voigt_m, only: Real_Simple_Voigt
 
@@ -721,7 +976,6 @@ contains
   ! Compute single-line absorption and its derivative w.r.t. temperature,
   ! with interference, for all lines in the Slabs structure.
 
-    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use SpectroscopyCatalog_m, only: Lines
     use Voigt_m, only: D_Real_Simple_Voigt
 
@@ -1051,7 +1305,6 @@ contains
   elemental subroutine Slabs_prep_struct ( T, P, Catalog, VelCor, Derivs, Slabs )
   ! Fill all the fields of the Slabs structure
 
-    use L2PC_PFA_STRUCTURES, only: Slabs_Struct
     use SpectroscopyCatalog_m, only: Catalog_T, Lines
 
     ! inputs:
@@ -1333,7 +1586,6 @@ contains
   pure subroutine Get_GL_Slabs_Arrays ( P_path, T_path, Vel_z, GL_Slabs, &
                              &     Do_1D, t_der_flags )
 
-    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use Molecules, only: L_Extinction
     use Physics, only: SpeedOfLight
     use SpectroscopyCatalog_m, only: Catalog_T, Lines
@@ -1423,12 +1675,20 @@ contains
 !=====================================================================
 
   logical function not_used_here()
+  !---------------------------- RCS Ident Info -------------------------------
+    character (len=*), parameter :: IdParm = &
+      & "$Id$"
+    character ( len=len(idParm)) :: Id = idParm
+  !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
 
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.43  2005/03/29 01:58:17  vsnyder
+! Make stuff pure
+!
 ! Revision 2.42  2004/12/28 00:26:40  vsnyder
 ! Remove unreferenced declaration
 !
