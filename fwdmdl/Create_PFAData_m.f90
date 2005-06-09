@@ -36,8 +36,6 @@ contains ! =====     Public Procedures     =============================
     use Dump_0, only: Dump
     use FilterShapes_m, only: FilterShapes
     use Intrinsic, only: LIT_INDICES, L_NONE
-    use L2PC_PFA_STRUCTURES, only: AllocateOneSlabs, DeAllocateOneSlabs, &
-      & SLABS_STRUCT
     use MLSCommon, only: RP, R8
     use MLSSignals_m, only: GetNameOfSignal, MatchSignal, MaxSigLen, Signal_T
     use MoreTree, only: GetStringIndexFromString
@@ -45,7 +43,8 @@ contains ! =====     Public Procedures     =============================
     use PFADataBase_m, only: AddPFADatumToDatabase, HookTableToFindPFA, &
       & PFAData, PFAData_T
     use Physics, only: h_over_K, SpeedOfLight ! m/s
-    use Slabs_SW_m, only: Slabs_Prep_Struct
+    use Slabs_SW_m, only: AllocateOneSlabs, DeAllocateOneSlabs, &
+      & Slabs_Struct, Slabs_Prep_Struct
     use SpectroscopyCatalog_m, only: Catalog, Catalog_t, Line_t, Lines, &
       & MostLines, SpectroscopyFile
     use String_Table, only: Display_String
@@ -375,6 +374,9 @@ contains ! =====     Public Procedures     =============================
 end module Create_PFAData_m
 
 ! $Log$
+! Revision 2.13  2005/06/09 02:34:15  vsnyder
+! Move stuff from l2pc_pfa_structures to slabs_sw_m
+!
 ! Revision 2.12  2005/06/03 01:58:53  vsnyder
 ! New copyright notice, move Id to not_used_here to avoid cascades,
 ! Revise PFA data structures.
