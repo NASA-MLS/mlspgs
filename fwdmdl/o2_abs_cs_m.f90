@@ -1,5 +1,13 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
 module O2_Abs_CS_M
 
@@ -10,9 +18,6 @@ module O2_Abs_CS_M
   integer :: O2_in_catalog = -1   ! Index in Spectroscopy catalog of O2 line.
 
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
-    &  "$Id$"
-  character (len=len(idParm)) :: Id = idParm
   character (len=*), parameter :: ModuleName= &
     &  "$RCSfile$"
   private :: not_used_here
@@ -26,9 +31,9 @@ contains
 ! Compute the complex absorption cross section.
 ! Modified to use Voigt with interfered lineshape
 
-    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use MLSCommon, only: IP, R8, Rk => RP
     use SpectroscopyCatalog_m, only: Lines
+    use Slabs_SW_m, only: SLABS_STRUCT
     use Units, only: SqrtPi
 
     real(r8), intent(in) :: Freq              ! Observation frequency
@@ -110,8 +115,8 @@ contains
 ! Compute the complex absorption cross section and its temperature derivative.
 ! Modified to use Voigt with interfered lineshape
 
-    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use MLSCommon, only: IP, R8, Rk => RP
+    use Slabs_SW_m, only: SLABS_STRUCT
     use SpectroscopyCatalog_m, only: Lines
     use Units, only: SqrtPi
 
@@ -900,12 +905,20 @@ contains
 
 ! ------------------------------------------------  not_used_here  -----
   logical function not_used_here()
+    !---------------------------- RCS Ident Info -------------------------------
+      character (len=*), parameter :: IdParm = &
+        &  "$Id$"
+      character (len=len(idParm)) :: Id = idParm
+    !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
 
 end module O2_Abs_CS_M
 
 ! $Log$
+! Revision 2.14  2005/06/09 02:34:16  vsnyder
+! Move stuff from l2pc_pfa_structures to slabs_sw_m
+!
 ! Revision 2.13  2005/01/20 02:51:28  vsnyder
 ! Delete unused stuff
 !
