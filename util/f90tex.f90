@@ -141,13 +141,15 @@ program F90TEX
   call output ( 'newcommand{\ps@twolines}{%', tex=.true. )
   call output ( '  \renewcommand{\@oddhead}{%' )
   call output ( '    \parbox{' // width // '}{{\bf \Large \hfill%' )
-  call output ( trim(in_file) // '%', und=.true. )
+  call output ( trim(in_file), adv='no', und=.true. )
+  call output ( '%' )
   call output ( '    }\newline%' )
   call output ( '    ' // now // &
   &             '\hfill Page \thepage\ of \pageref{lastpage}}}%' )
   call output ( '  \renewcommand{\@evenhead}{%' )
   call output ( '    \parbox{' // width // '}{{\bf \Large %' )
-  call output ( trim(in_file) // '%', und=.true. )
+  call output ( trim(in_file), adv='no', und=.true. )
+  call output ( '%' )
   call output ( '    }\newline%' )
   call output ( '    Page \thepage\ of \pageref{lastpage} \hfill ' // &
   &             now // '}}%' )
@@ -280,6 +282,9 @@ contains
 end program F90TEX
 
 ! $Log$
+! Revision 1.6  2004/09/22 20:18:48  vsnyder
+! Account for bugs in lstlisting
+!
 ! Revision 1.5  2004/09/22 19:19:24  vsnyder
 ! Repair minor bug in advancing
 !
