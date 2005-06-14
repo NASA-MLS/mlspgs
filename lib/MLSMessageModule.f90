@@ -5,6 +5,7 @@
 module MLSMessageModule         ! Basic messaging for the MLSPGS suite
 !==============================================================================
 
+  use HDF, only: DFACC_CREATE, DFACC_RDONLY, DFACC_RDWR
   use Machine, only: CRASH_BURN, Exit_with_status
   use MLSCommon, only: MLSFile_T
   use PVM, only: InfoTag, &
@@ -377,6 +378,28 @@ contains
   end subroutine PVMErrorMessage
 
   ! Private procedures
+  !-----------------------------------------  accessDFACCToStr  -----
+  function accessDFACCToStr ( dfacc ) result(str)
+
+    ! This routine converts an hdf access type
+    ! like DFACC_RDONLY into a string like 'rdonly'
+    ! If access type is unrecognized, returns 'unknown'
+    ! Args
+    integer, intent(in)           :: dfacc
+    character(len=8)              :: str
+    ! Executable
+    select case (dfacc)
+    case (DFACC_CREATE)
+      str = 'create'
+    case (DFACC_RDONLY)
+      str = 'rdonly'
+    case (DFACC_RDWR)
+      str = 'rdwrite'
+    case default
+      str = 'unknown' ! Why not ' '? Or '?'
+    end select
+  end function accessDFACCToStr
+
   ! --------------------------------------------  dumpFile  -----
   subroutine dumpFile ( MLSFile  )
     ! Show everything about it
@@ -385,17 +408,22 @@ contains
     ! Executable code
     call printitout ( 'MLS File Info: ', MLSMSG_Error )                                  
     call dump ( '(name) ', charValue=trim(MLSFile%Name))                                  
-    call dump ( '    Type         : ', charValue=trim(MLSFile%Type))
-    call dump ( '    Access       : ', charValue=trim(MLSFile%access))
+    call dump ( 'short name ', charValue=trim(MLSFile%shortName))                                  
+    call dump ( '    Type (int)   : ', MLSFile%Type)
+    call dump ( '    Type         : ', charValue=trim(MLSFile%TypeStr))
+    call dump ( '    Access       : ', charValue=trim(accessDFACCToStr(MLSFile%access)))
     call dump ( '    content      : ', charValue=trim(MLSFile%content))
+    call dump ( '    last Operatn : ', charValue=trim(MLSFile%lastOperation))
     call dump ( '    File ID      : ', MLSFile%FileId%f_id)
     call dump ( '    Group ID     : ', MLSFile%FileId%grp_id)
     call dump ( '    DataSet ID   : ', MLSFile%FileId%sd_id)
     call dump ( '    PCF ID       : ', MLSFile%PCFId)
     call dump ( '    PCF Range    : ', MLSFile%PCFidRange%Bottom)
-    call dump ( '    PCF Range    : ', MLSFile%PCFidRange%Top)
+    call dump ( '                 : ', MLSFile%PCFidRange%Top)
     call dump ( '    hdf version  : ', MLSFile%HDFVersion)
+    call dump ( '    record length: ', MLSFile%recordLength)
     call dump ( '    Open?        : ', logValue= MLSFile%StillOpen)
+    call dump ( '    error code   : ', MLSFile%errorCode)
   end subroutine dumpFile
 
   ! -------------------- LastGasp -------------------
@@ -483,6 +511,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.22  2005/06/14 20:32:51  pwagner
+! Many changes to accommodate the new fields in MLSFile_T
+!
 ! Revision 2.21  2005/05/31 17:48:26  pwagner
 ! Added MLSFile as optional arg to be dumped on error
 !
