@@ -5,8 +5,10 @@ program MLSL2
   use Allocate_Deallocate, only: SET_GARBAGE_COLLECTION, TRACKALLOCATES, &
     & CLEARONALLOCATE
   use DECLARATION_TABLE, only: ALLOCATE_DECL, DEALLOCATE_DECL, DUMP_DECL
+  use Hdf, only: DFACC_RDONLY
   use INIT_TABLES_MODULE, only: INIT_TABLES
-  use INTRINSIC, only: L_HOURS, L_MINUTES, L_SECONDS, LIT_INDICES
+  use INTRINSIC, only: L_ASCII, L_HOURS, L_MINUTES, L_SECONDS, l_TKGEN, &
+    & LIT_INDICES
   use L2GPData, only: avoidUnlimitedDims
   use L2PARINFO, only: PARALLEL, INITPARALLEL, ACCUMULATESLAVEARGUMENTS
   use LEXER_CORE, only: INIT_LEXER
@@ -31,7 +33,6 @@ program MLSL2
   use MLSStrings, only: lowerCase, readIntsFromChars
   use MLSStringLists, only: catLists, GetStringElement, GetUniqueList, &
     & NumStringElements, RemoveElemFromList, unquote
-  ! use OBTAIN_MLSCF, only: Close_MLSCF, Open_MLSCF
   use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUT_DATE_AND_TIME, PRUNIT
   use PARSER, only: CONFIGURATION
   use PVM, only: ClearPVMArgs, FreePVMArgs
@@ -649,8 +650,10 @@ program MLSL2
   !---------------- Task (4) ------------------
   ! Open the L2CF
   status = 0
+  ! status = InitializeMLSFile(MLSL2CF, content = 'l2cf', name='<STDIN>', &
+  !    & type=l_ascii, access='nonhdf', recordLength=recl, &
   status = InitializeMLSFile(MLSL2CF, content = 'l2cf', name='<STDIN>', &
-      & type='ascii', access='nonhdf', recordLength=recl, &
+      & type=l_ascii, access=DFACC_RDONLY, recordLength=recl, &
       & PCBottom=MLSPCF_L2CF_Start, PCTop=MLSPCF_L2CF_Start)
   MLSL2CF%FileID%f_id = l2cf_unit
   if ( line /= ' ' ) then
@@ -681,7 +684,7 @@ program MLSL2
   else if ( TOOLKIT .and. .not. showDefaults ) then
     ! call open_MLSCF ( MLSPCF_L2CF_Start, inunit, L2CF_file, status, recl )
     MLSL2CF%name = '' ! To force reference to PCF entry
-    MLSL2CF%type = 'tkgen'
+    MLSL2CF%type = l_tkgen
     ! print *, 'About to try to open l2cf file'
     call mls_openFile(MLSL2CF, status)
     ! call dump(MLSL2CF)
@@ -1048,6 +1051,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.137  2005/06/14 20:45:22  pwagner
+! Many changes to accommodate the new fields in MLSFile_T
+!
 ! Revision 2.136  2005/05/31 17:51:17  pwagner
 ! Began switch from passing file handles to passing MLSFiles
 !
