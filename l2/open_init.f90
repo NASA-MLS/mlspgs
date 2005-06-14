@@ -7,6 +7,8 @@ module Open_Init
   ! Opens and closes several files
   ! Creates and destroys the L1BInfo database
 
+  use Hdf, only: DFACC_RDONLY
+  use intrinsic, only: l_hdf
   use MLSCommon, only: FileNameLen, L1BInfo_T, MLSFile_T, TAI93_Range_T, R8, i4
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSStringLists, only: catLists, NumStringElements, GetStringElement, &
@@ -215,7 +217,7 @@ contains ! =====     Public Procedures     =============================
     numFiles = 0
     do L1FileHandle = mlspcf_l1b_rad_start, mlspcf_l1b_rad_end
       returnStatus = InitializeMLSFile(L1BFile, content = 'l1brad', &
-        & type='hdf', access='rdonly')
+        & type=l_hdf, access=DFACC_RDONLY)
       L1BFile%PCFIDRange%Top = L1FileHandle
       L1BFile%PCFIDRange%Bottom = L1FileHandle
       call mls_openFile(L1BFile, returnStatus)
@@ -287,7 +289,7 @@ contains ! =====     Public Procedures     =============================
 !       & L1physicalFilename)
     
     returnStatus = InitializeMLSFile(L1BFile, content = 'l1boa', &
-      & type='hdf', access='rdonly')
+      & type=l_hdf, access=DFACC_RDONLY)
     L1BFile%PCFIDRange%Top = mlspcf_l1b_oa_start
     L1BFile%PCFIDRange%Bottom = mlspcf_l1b_oa_start
     call mls_openFile(L1BFile, returnStatus)
@@ -764,6 +766,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.83  2005/06/14 20:39:25  pwagner
+! Many changes to accommodate the new fields in MLSFile_T
+!
 ! Revision 2.82  2005/05/31 17:51:17  pwagner
 ! Began switch from passing file handles to passing MLSFiles
 !
