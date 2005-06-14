@@ -9,18 +9,19 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
     & gdopen, gdattach, gddetach, gdclose, gdfldinfo, &
     & gdinqgrid, gdnentries, gdinqdims, gdinqflds
   use Hdf, only: DFACC_RDONLY
+  use intrinsic, only: l_ascii
   use l3ascii, only: l3ascii_read_field
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: LineLen, NameLen, FileNameLen, R8, R4, I4, &
-    & DEFAULTUNDEFINEDVALUE
+    & DEFAULTUNDEFINEDVALUE, MLSFile_T
   use MLSFiles, only: FILENOTFOUND, &
     & GetPCFromRef, MLS_HDF_VERSION, mls_io_gen_closeF, mls_io_gen_openF, &
     & split_path_name
   use MLSStrings, only: Capitalize, LowerCase
   use MLSStringLists, only: GetStringElement, NumStringElements, &
     & List2Array, ReplaceSubString
-  use OUTPUT_M, only: BLANKS, OUTPUT
-  use SDPToolkit, only: PGS_S_SUCCESS, PGS_PC_GETREFERENCE, &
+  use OUTPUT_M, only: OUTPUT
+  use SDPToolkit, only: PGS_S_SUCCESS, &
     & PGS_IO_GEN_CLOSEF, PGS_IO_GEN_OPENF, PGSD_IO_GEN_RSEQFRM, &
     & PGSd_GCT_INVERSE, &
     & UseSDPToolkit
@@ -38,7 +39,6 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   private :: not_used_here 
   !-----------------------------------------------------------------------------
 
-  public:: source_file_already_read
   public:: READ_CLIMATOLOGY
   public:: ReadGriddedData, ReadGloriaFile
 
@@ -65,7 +65,8 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 contains
 
   ! ----------------------------------------------- ReadGriddedData
-  subroutine ReadGriddedData(FileName, lcf_where, description, v_type, &
+  ! subroutine ReadGriddedData(FileName, lcf_where, description, v_type, &
+  subroutine ReadGriddedData(GriddedFile, lcf_where, description, v_type, &
     & the_g_data, returnStatus, &
     & GeoDimList, fieldName, missingValue)
 
@@ -81,7 +82,8 @@ contains
     ! like temperature
 
     ! Arguments
-    character (LEN=*), intent(IN) :: FileName ! Name of the file containing the grid(s)
+    type(MLSFile_T)                :: GriddedFile
+!    character (LEN=*), intent(IN) :: FileName ! Name of the file containing the grid(s)
     integer, intent(IN) :: lcf_where    ! node of the lcf that provoked me
     integer, intent(IN) :: v_type       ! vertical coordinate; an 'enumerated' type
     type( GriddedData_T ) :: the_g_data ! Result
@@ -99,7 +101,7 @@ contains
     my_description = lowercase(description)
     if ( DEEBUG ) print *, 'Reading ' // trim(my_description) // ' data'
 
-    returnStatus = mls_hdf_version(FileName)
+    returnStatus = mls_hdf_version(GriddedFile%Name)
     if ( returnStatus == FILENOTFOUND ) then
       call SetupNewGriddedData ( the_g_data, empty=.true. )
       return
@@ -108,12 +110,9 @@ contains
     endif
     ! According to the kinds of gridded data files we can read
     select case ( trim(my_description) )
-    case ('clim')
-      call announce_error(lcf_where, 'READGriddedData called with climatology' &
-        & // ' description; appropriate for ncep/dao only')
-    case ('dao')
-      call Read_dao(FileName, lcf_where, v_type, &
-        & the_g_data, GeoDimList, fieldName, missingValue)
+    case ('dao', 'gmao')
+      call Read_dao(GriddedFile, lcf_where, v_type, &
+        & the_g_data, GeoDimList, fieldName)
       if ( DEEBUG ) then
         print *, '(Returned from read_dao)'
         print *, 'Quantity Name ' // trim(the_g_data%QuantityName)
@@ -123,7 +122,7 @@ contains
     case ('ncep')
       ! These are ncep global assimilation model data
       ! in hdfeos format
-      call Read_ncep_gdas(FileName, lcf_where, v_type, &
+      call Read_ncep_gdas(GriddedFile, lcf_where, v_type, &
         & the_g_data, GeoDimList, fieldName, missingValue)
       if ( DEEBUG ) then
         print *, '(Returned from Read_ncep_gdas)'
@@ -134,8 +133,8 @@ contains
     case ('strat')
       ! These are ncep stratospheric analysis combined data
       ! in hdfeos5 format
-      call Read_ncep_strat(FileName, lcf_where, v_type, &
-        & the_g_data, GeoDimList, fieldName, missingValue=missingValue)
+      call Read_ncep_strat(GriddedFile, lcf_where, v_type, &
+        & the_g_data, GeoDimList, fieldName)
       !call Read_ncep_strat(FileName, lcf_where, v_type, &
       !  & the_g_data, GeoDimList, fieldName, gridName='SouthernHemisphere', &
       !  & missingValue=missingValue)
@@ -145,9 +144,6 @@ contains
         print *, 'Description   ' // trim(the_g_data%description)
         print *, 'Units         ' // trim(the_g_data%units)
       endif
-    case ('olddao', 'oldncep')
-      call Read_old(FileName, lcf_where, my_description(4:), v_type, &
-        & the_g_data, GeoDimList, fieldName)
     case default
       call announce_error(lcf_where, 'READGriddedData called with unknown' &
         & // ' description: ' // trim(my_description))
@@ -156,12 +152,13 @@ contains
   end subroutine ReadGriddedData
 
   ! ----------------------------------------------- Read_dao
-  subroutine Read_dao(FileName, lcf_where, v_type, &
-    & the_g_data, GeoDimList, fieldName, missingValue)
+  ! subroutine Read_dao(FileName, lcf_where, v_type, &
+  subroutine Read_dao(DAOFile, lcf_where, v_type, &
+    & the_g_data, GeoDimList, fieldName)
     use Dump_0, only: Dump
 
-    ! What was once called 'dao' might be better known as 'gmao'
-    ! This routine reads a dao file, named something like
+    ! What was once called 'dao' now better known as 'gmao'
+    ! This routine reads a gmao file, named something like
     ! DAS.flk.asm.tsyn3d_mis_p.GEOS401.2003011800.2003011818.V01
     ! returning a filled data
     ! structure appropriate for newer style dao
@@ -183,13 +180,13 @@ contains
     ! We'll simply copy it into a single gridded data type
 
     ! Arguments
-    character (LEN=*), intent(IN) :: FileName ! Name of the file containing the grid(s)
+    type(MLSFile_T)                :: DAOFile
+!    character (LEN=*), intent(IN) :: FileName ! Name of the file containing the grid(s)
     integer, intent(IN) :: lcf_where    ! node of the lcf that provoked me
     integer, intent(IN) :: v_type       ! vertical coordinate; an 'enumerated' type
     type( GriddedData_T ) :: the_g_data ! Result
     character (LEN=*), optional, intent(IN) :: GeoDimList ! Comma-delimited dim names
     character (LEN=*), optional, intent(IN) :: fieldName ! Name of gridded field
-    real(rgr), optional, intent(IN) :: missingValue
 
     ! Local Variables
     integer :: file_id, gd_id
@@ -224,24 +221,25 @@ contains
     logical, parameter :: DEEBUG = .false.
     ! Executable code
     ! Find list of grid names on this file (This has been core dumping on me)
-    if(DEEBUG) print *, 'About to find grid list of file ', trim(FileName)
+    if(DEEBUG) print *, 'About to find grid list of file ', trim(DAOFile%Name)
     gridlist = ''
-    inq_success = gdinqgrid(FileName, gridlist, strbufsize)
+    inq_success = gdinqgrid(DAOFile%Name, gridlist, strbufsize)
     if (inq_success < 0) then
-      call announce_error(lcf_where, "Could not inquire gridlist "// trim(FileName))
+      call announce_error(lcf_where, "Could not inquire gridlist "// &
+        & trim(DAOFile%Name))
     elseif ( strbufsize > MAXLISTLENGTH ) then
        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
-          & 'list size too big in Read_dao ' // trim(filename) )
+          & 'list size too big in Read_dao ' // trim(DAOFile%Name), MLSFile=DAOFile )
     elseif ( strbufsize < MAXLISTLENGTH .and. strbufsize > 0 ) then
       gridlist = gridlist(1:strbufsize) // ' '
     endif
     if(DEEBUG) print *, 'grid list ', trim(gridlist)
 
     error = 0
-    file_id = gdopen(FileName, DFACC_RDONLY)
+    file_id = gdopen(DAOFile%Name, DFACC_RDONLY)
 
     if (file_id < 0) then
-      call announce_error(lcf_where, "Could not open "// FileName)
+      call announce_error(lcf_where, "Could not open "// DAOFile%Name)
     end if
 
     ! Find grid name corresponding to the GRIDORDER'th one
@@ -411,7 +409,7 @@ contains
       & //trim(gridname))
     status = gdclose(file_id)
     if(status /= 0) &
-      & call announce_error(lcf_where, "failed to close file " //trim(FileName))
+      & call announce_error(lcf_where, "failed to close file " //trim(DAOFile%Name))
     contains 
        subroutine read_the_dim(gd_id, field_name, field_size, values)
          ! Arguments
@@ -444,7 +442,8 @@ contains
   end subroutine Read_dao
 
   ! ----------------------------------------------- Read_ncep_gdas
-  subroutine Read_ncep_gdas(FileName, lcf_where, v_type, &
+  ! subroutine Read_ncep_gdas(FileName, lcf_where, v_type, &
+  subroutine Read_ncep_gdas(NCEPFile, lcf_where, v_type, &
     & the_g_data, GeoDimList, gridName, missingValue)
     use Dump_0, only: Dump
 
@@ -473,7 +472,8 @@ contains
     ! (3) (Related to 2) The lats and lons have to be inferred, not read
 
     ! Arguments
-    character (LEN=*), intent(IN) :: FileName ! Name of the file of the grid(s)
+    type(MLSFile_T)                :: NCEPFile
+!    character (LEN=*), intent(IN) :: FileName ! Name of the file of the grid(s)
     integer, intent(IN) :: lcf_where    ! node of the lcf that provoked me
     integer, intent(IN) :: v_type       ! vertical coordinate
     type( GriddedData_T ) :: the_g_data ! Result
@@ -513,7 +513,6 @@ contains
     real(r4), dimension(:,:), pointer   :: field_data
     real(r4), dimension(:,:,:), pointer :: all_the_fields, now_the_fields
     real(r8) :: pressure
-    real(r4), dimension(:), pointer :: dim_field
     integer :: xdimsize, ydimsize
     real(r8), dimension(2) :: upLeft, lowRight
     real(r8), dimension(15) :: projParams
@@ -533,11 +532,11 @@ contains
     gridlist = ''
     inq_success = 0 ! inq_success = gdinqgrid(FileName, gridlist, strbufsize)
     error = 0
-    file_id = gdopen(FileName, DFACC_RDONLY)
+    file_id = gdopen(NCEPFile%name, DFACC_RDONLY)
     if(DEEBUG) print *, 'fileID: ', file_id
 
     if (file_id < 0) then
-      call announce_error(lcf_where, "Could not open "// FileName)
+      call announce_error(lcf_where, "Could not open "// NCEPFile%name)
     end if
 
     gd_id = gdattach(file_id, my_gridname)
@@ -747,7 +746,7 @@ contains
       & trim(my_gridname))
     status = gdclose(file_id)
     if(status /= 0) &
-      & call announce_error(lcf_where, "failed to close file " //trim(FileName))
+      & call announce_error(lcf_where, "failed to close file " //trim(NCEPFile%name))
     contains 
        subroutine read_the_dim(gd_id, field_name, field_size, values)
          ! Arguments
@@ -780,8 +779,9 @@ contains
   end subroutine Read_ncep_gdas
 
   ! ----------------------------------------------- Read_ncep_strat
-  subroutine Read_ncep_strat(FileName, lcf_where, v_type, &
-    & the_g_data, GeoDimList, fieldName, gridName, missingValue)
+  ! subroutine Read_ncep_strat(FileName, lcf_where, v_type, &
+  subroutine Read_ncep_strat(NCEPFile, lcf_where, v_type, &
+    & the_g_data, GeoDimList, fieldName)
     use Dump_0, only: Dump
     use HDFEOS5, only: HE5_HDFE_NENTDIM, HE5F_ACC_RDONLY, &
       & HE5_GDOPEN, HE5_GDATTACH, HE5_GDDETACH, HE5_GDCLOSE, &
@@ -811,14 +811,13 @@ contains
     ! a Polar stereographic projection is defined
 
     ! Arguments
-    character (LEN=*), intent(IN) :: FileName ! Name of the file of the grid(s)
+    type(MLSFile_T)                :: NCEPFile
+!    character (LEN=*), intent(IN) :: FileName ! Name of the file of the grid(s)
     integer, intent(IN) :: lcf_where    ! node of the lcf that provoked me
     integer, intent(IN) :: v_type       ! vertical coordinate
     type( GriddedData_T ) :: the_g_data ! Result
     character (LEN=*), optional, intent(IN) :: GeoDimList ! E.g., 'X.Y,..'
     character (LEN=*), optional, intent(IN) :: fieldName  ! Name of grid quant.
-    character (LEN=*), optional, intent(IN) :: gridName   ! Name of grid
-    real(rgr), optional, intent(IN) :: missingValue
 
     ! Local Variables
     integer :: file_id
@@ -836,7 +835,7 @@ contains
     character (len=MAXLISTLENGTH), dimension(2) :: names
     character (len=MAXLISTLENGTH) :: fieldlist
     integer, parameter :: MAXNAMELENGTH=NameLen		! Max length of grid name
-    character (len=MAXNAMELENGTH) :: mygridname, actual_field_name
+    character (len=MAXNAMELENGTH) :: actual_field_name
     integer, dimension(NENTRIESMAX) :: dims, rank, numberTypes
     integer                        :: our_rank, numberType
     integer, dimension(NENTRIESMAX,NENTRIESMAX) :: dims_temp
@@ -867,15 +866,15 @@ contains
     integer, external :: he5_gdrdfld
     ! Executable code
     ! Find list of grid names on this file (This has been core dumping on me)
-    if(DEEBUG) print *, 'About to find grid list of file ', trim(FileName)
+    if(DEEBUG) print *, 'About to find grid list of file ', trim(NCEPFile%name)
     gridlist = ''
-    inq_success = he5_gdinqgrid(FileName, gridlist, strbufsize)
+    inq_success = he5_gdinqgrid(NCEPFile%name, gridlist, strbufsize)
     if (inq_success < 0) then
       call announce_error(lcf_where, &
-	     & "Could not inquire gridlist "// trim(FileName))
+	     & "Could not inquire gridlist "// trim(NCEPFile%name))
     elseif ( strbufsize > MAXLISTLENGTH ) then
        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
-          & 'list size too big in Read_dao ' // trim(filename) )
+          & 'list size too big in Read_dao ' // trim(NCEPFile%name), MLSFile=NCEPFile )
     elseif ( strbufsize < MAXLISTLENGTH .and. strbufsize > 0 ) then
       gridlist = gridlist(1:strbufsize) // ' '
     endif
@@ -883,9 +882,9 @@ contains
     if(DEEBUG) print *, 'grid list ', trim(gridlist)
     error = 0
 
-    file_id = he5_gdopen(FileName, HE5F_ACC_RDONLY)
+    file_id = he5_gdopen(NCEPFile%name, HE5F_ACC_RDONLY)
     if (file_id < 0) then
-      call announce_error(lcf_where, "Could not open "// FileName)
+      call announce_error(lcf_where, "Could not open "// NCEPFile%name)
     end if
 
     ! Find grid name corresponding to the GRIDORDER'th one
@@ -1116,7 +1115,7 @@ contains
 
     status = he5_gdclose(file_id)
     if(status /= 0) &
-      & call announce_error(lcf_where, "failed to close file " //trim(FileName))
+      & call announce_error(lcf_where, "failed to close file " //trim(NCEPFile%name))
 
     contains 
        subroutine read_the_dim(gd_id, field_name, field_size, values)
@@ -1149,181 +1148,11 @@ contains
        end subroutine read_the_dim
   end subroutine Read_ncep_strat
 
-  ! ----------------------------------------------- Read_old
-  subroutine Read_old(FileName, lcf_where, description, v_type, &
-    & the_g_data, GeoDimList, fieldName)
-
-    ! This routine reads a Gridded Data file, returning a filled data
-    ! structure appropriate for older style 'ncep' or 'dao'
-
-    ! FileName and the_g_data are required args
-    ! GeoDimList, if present, should be the Dimensions' short names
-    ! as a comma-delimited character string in the order:
-    ! longitude, latitude, vertical level, time
-
-    ! fieldName, if present, should be the rank 3 or higher object
-    ! like temperature
-
-    ! Arguments
-    character (LEN=*), intent(IN) :: FileName ! Name of the file containing the grid(s)
-    integer, intent(IN) :: lcf_where    ! node of the lcf that provoked me
-    integer, intent(IN) :: v_type       ! vertical coordinate; an 'enumerated' type
-    type( GriddedData_T ) :: the_g_data ! Result
-    character (LEN=*), intent(IN) :: description ! e.g., 'dao'
-    character (LEN=*), optional, intent(IN) :: GeoDimList ! Comma-delimited dim names
-    character (LEN=*), optional, intent(IN) :: fieldName ! Name of gridded field
-
-    ! Local Variables
-    integer :: file_id, gd_id
-    integer :: inq_success
-    integer :: nentries, ngrids, ndims, nfields
-    integer :: strbufsize
-    logical,  parameter       :: CASESENSITIVE = .false.
-    integer, parameter :: GRIDORDER=1   ! What order grid written to file
-    integer, parameter :: MAXLISTLENGTH=Linelen ! Max length list of grid names
-    integer, parameter :: NENTRIESMAX=20 ! Max num of entries
-    character (len=MAXLISTLENGTH) :: gridlist
-    character (len=MAXLISTLENGTH) :: dimlist, actual_dim_list
-    character (len=MAXLISTLENGTH), dimension(1) :: dimlists
-    character (len=MAXLISTLENGTH) :: fieldlist
-    integer, parameter :: MAXNAMELENGTH=NameLen		! Max length of grid name
-    character (len=MAXNAMELENGTH) :: gridname, actual_field_name
-    integer, dimension(NENTRIESMAX) :: dims, rank, numberTypes
-    integer                        :: our_rank, numberType
-
-    !                                  These start out initialized to one
-    integer                        :: nlon=1, nlat=1, nlev=1, ntime=1
-    integer, parameter             :: i_longitude=1
-    integer, parameter             :: i_latitude=i_longitude+1
-    integer, parameter             :: i_vertical=i_latitude+1
-    integer, parameter             :: i_time=i_vertical+1
-    integer, external :: GDRDFLD
-    logical, parameter :: COUNTEMPTY=.true.
-    integer :: status
-    logical, parameter :: DEEBUG = .false.
-    ! Executable code
-    ! Find list of grid names on this file (This has been core dumping on me)
-    if(DEEBUG) print *, 'About to find grid list'
-    if(DEEBUG) print *, "proceed (yes) or (no)"
-    ! read *, gridlist
-    ! if ( index(gridlist, 'y') < 1 ) stop
-    gridlist = ''
-    inq_success = gdinqgrid(FileName, gridlist, strbufsize)
-    if (inq_success < 0) then
-      call announce_error(lcf_where, "Could not inquire gridlist "// FileName)
-    elseif ( strbufsize > MAXLISTLENGTH ) then
-       CALL MLSMessage ( MLSMSG_Error, moduleName,  &
-          & 'list size too big in Read_dao ' // trim(filename) )
-    elseif ( strbufsize < MAXLISTLENGTH .and. strbufsize > 0 ) then
-      gridlist = gridlist(1:strbufsize) // ' '
-    endif
-    if(DEEBUG) print *, 'grid list ', trim(gridlist)
-
-    error = 0
-    file_id = gdopen(FileName, DFACC_RDONLY)
-
-    if (file_id < 0) then
-      call announce_error(lcf_where, "Could not open "// FileName)
-    end if
-
-    ! Find grid name corresponding to the GRIDORDER'th one
-    ngrids = NumStringElements(gridlist, COUNTEMPTY)
-
-    if(ngrids <= 0) then
-      call announce_error(lcf_where, "NumStringElements of gridlist <= 0")
-    elseif(ngrids /= inq_success) then
-      call announce_error(lcf_where, "NumStringElements of gridlist /= inq_success")
-    elseif(ngrids < GRIDORDER) then
-      call announce_error(lcf_where, "NumStringElements of gridlist < GRIDORDER")
-    endif
-
-    call GetStringElement(gridlist, gridname, GRIDORDER, COUNTEMPTY)
-
-    gd_id = gdattach(file_id, gridname)
-    if (gd_id < 0) then
-      call announce_error(lcf_where, "Could not attach "//FileName)
-    end if
-
-    ! Now find dimsize(), dimname(), etc.
-    nentries = gdnentries(gd_id, HDFE_NENTDIM, strbufsize)
-
-    if(nentries <= 0) then
-      call announce_error(lcf_where, "nentries of gd_id <= 0")
-    elseif(nentries > NENTRIESMAX) then
-      call announce_error(lcf_where, "nentries of gd_id > NENTRIESMAX")
-    endif
-
-    dimlist = ''
-    ndims = gdinqdims(gd_id, dimlist, dims)
-
-    if(ndims <= 0) then
-      call announce_error(lcf_where, "ndims of gd_id <= 0")
-    elseif(ndims > NENTRIESMAX) then
-      call announce_error(lcf_where, "ndims of gd_id > NENTRIESMAX")
-    endif
-
-    fieldlist = ''
-    nfields = gdinqflds(gd_id, fieldlist, rank, numberTypes)
-
-    if(nfields <= 0) then
-      call announce_error(lcf_where, "nfields of gd_id <= 0")
-    elseif(nfields > NENTRIESMAX) then
-      call announce_error(lcf_where, "nfields of gd_id > NENTRIESMAX")
-    endif
-
-    if(.not. CASESENSITIVE) then
-      fieldlist = Capitalize(fieldlist)
-    endif
-
-    if(present(fieldName)) then
-      actual_field_name=fieldName
-    else
-      actual_field_name=DEFAULTDAOFIELDNAME
-    endif
-
-    if(present(GeoDimList)) then
-      actual_dim_list=GeoDimList
-    else
-      actual_dim_list=GEO_FIELD1 // ',' // &
-        & GEO_FIELD2 // ',' // &
-        & GEO_FIELD3 // ',' // &
-        & GEO_FIELD4
-    endif
-
-    ! Now find the rank of our field
-    inq_success = gdfldinfo(gd_id, trim(actual_field_name), our_rank, dims, &
-      & numbertype, dimlists(1))
-
-    dimlist = trim(dimlists(1))
-
-    nlon = dims(1)
-    nlat = dims(2)
-    nlev = dims(3)
-    ntime = dims(4)
-
-    the_g_data%quantityName = actual_field_name
-    the_g_data%description = description
-    the_g_data%verticalCoordinate = v_type
-
-    the_g_data%noLons = nlon
-    the_g_data%noLats = nlat
-    the_g_data%noHeights = nlev
-    the_g_data%noLsts = ntime
-
-    ! Close grid
-    status = gddetach(gd_id)
-    if(status /= 0) &
-      & call announce_error(lcf_where, "failed to detach from grid " // &
-      & trim(gridname))
-    status = gdclose(file_id)
-    if(status /= 0) &
-      & call announce_error(lcf_where, "failed to close file " // &
-      & trim(FileName))
-  end subroutine Read_old
-
   ! --------------------------------------------- ReadGloriaFile -------
-  type ( GriddedData_T) function ReadGloriaFile ( filename ) result ( grid )
-    character (len=*), intent(in) :: FILENAME
+  ! type ( GriddedData_T) function ReadGloriaFile ( filename ) result ( grid )
+  type ( GriddedData_T) function ReadGloriaFile ( gloriaFile ) result ( grid )
+    type(MLSFile_T)                :: GloriaFile
+!    character (len=*), intent(in) :: FILENAME
     ! This function reads data in Gloria's gridded data format into memory
     ! Note that Gloria has a very specific format for her gridded data
 
@@ -1345,7 +1174,6 @@ contains
     integer :: SURF                     ! Loop counter
     integer :: LUN                      ! Unit number
     integer :: STATUS                   ! Flag
-    integer(i4) :: DUMMY                ! For record length words
     character (len=headerLen) :: COMMENT
     logical :: EXIST                    ! Flag
     logical :: OPENED                   ! Flag
@@ -1384,13 +1212,13 @@ contains
       inquire ( unit=lun, exist=exist, opened=opened )
       if ( exist .and. .not. opened ) exit
     end do
-    open ( unit=lun, file=filename, status='old', form='unformatted', &
+    open ( unit=lun, file=gloriaFile%name, status='old', form='unformatted', &
       & access='direct', iostat=status, recl=bufferLen )
     if ( status /= 0 ) then
       call output ( 'IOSTAT value is:' )
       call output ( status, advance='yes' )
       call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Problem opening Gloria format datafile' )
+      & 'Problem opening Gloria format datafile', MLSFile=gloriaFile )
     end if
     ! Read the data
     read ( lun, rec=1 ) buffer
@@ -1462,7 +1290,8 @@ contains
   end function ReadGloriaFile
 
   ! --------------------------------------------------  Read_Climatology
-  subroutine READ_CLIMATOLOGY ( input_fname, root, aprioriData, returnStatus, &
+  ! subroutine READ_CLIMATOLOGY ( input_fname, root, aprioriData, returnStatus, &
+  subroutine READ_CLIMATOLOGY ( climFile, root, aprioriData, returnStatus, &
     & mlspcf_l2clim_start, mlspcf_l2clim_end, missingValue, echo_data, &
     & dump_data )
     ! Brief description of program
@@ -1470,7 +1299,8 @@ contains
     ! the data_array to the caller
 
     ! Arguments
-    character*(*), intent(in) :: input_fname			! Physical file name
+    type(MLSFile_T)                :: ClimFile
+    ! character*(*), intent(in) :: input_fname			! Physical file name
     type (GriddedData_T), dimension(:), pointer :: aprioriData 
     integer, intent(in) :: ROOT        ! Root of the L2CF abstract syntax tree
     integer, intent(out) :: returnStatus ! E.g., FILENOTFOUND
@@ -1514,12 +1344,12 @@ contains
 
     use_PCF = present(mlspcf_l2clim_start) &
       & .and. present(mlspcf_l2clim_end) &
-      & .and. UseSDPToolkit
+      & .and. UseSDPToolkit .and. .false.
 
     ! use PCF
 
     if ( use_PCF ) then
-      call split_path_name(input_fname, path, fname)
+      call split_path_name(ClimFile%name, path, fname)
       processCli = GetPCFromRef(fname, mlspcf_l2clim_start, mlspcf_l2clim_end, &
         & .true., ErrType, version, debugOption=debug)
       if(ErrType /= 0) then
@@ -1533,10 +1363,11 @@ contains
       ErrType = Pgs_io_gen_openF ( processCli, PGSd_IO_Gen_RSeqFrm, 0, &
         cliUnit, version )
     else
-      fname = input_fname
+      fname = climFile%name
       ! use Fortran open
       if(debug) call output('opening ' // fname, advance = 'yes')
-      CliUnit = mls_io_gen_openF ( 'open', .true., ErrType, &
+      ! CliUnit = mls_io_gen_openF ( 'open', .true., ErrType, &
+      CliUnit = mls_io_gen_openF ( l_ascii, .true., ErrType, &
 	& record_length, PGSd_IO_Gen_RSeqFrm, FileName=fname)
     endif
 
@@ -1591,7 +1422,8 @@ contains
 	! use Fortran close
       else
         if(debug) call output('closing ' // fname, advance = 'yes')
-        ErrType = mls_io_gen_CloseF ('close', CliUnit )
+        ! ErrType = mls_io_gen_CloseF ('close', CliUnit )
+        ErrType = mls_io_gen_CloseF (l_ascii, CliUnit )
       endif
       if(ErrType /= 0) then
         call announce_error (ROOT, &
@@ -1606,68 +1438,6 @@ contains
     endif
 
   end subroutine READ_CLIMATOLOGY
-
-  ! --------------------------------  source_file_already_read  -----
-  function source_file_already_read(GriddedDataBase, source_file, &
-    & field_name ) result (already)
-    ! check if source file among those already read to form database
-    ! returns .TRUE. if already read, .FALSE. if not or if database is empty
-
-    ! optionally checks that field name is also matched for that partcilar
-    ! source file
-
-    ! Arguments
-    !   
-    type (GriddedData_T), dimension(:), pointer :: GriddedDataBase
-    character (LEN=*), intent(in) :: source_file
-    character (LEN=*), optional, intent(in) :: field_name
-    logical :: already
-
-    ! Local
-    integer :: i
-
-    ! Begin
-    already = .false.
-
-    if(.not. associated(GriddedDataBase)) then
-      return
-    elseif(len(source_file) == 0) then
-      return
-    elseif(size(GriddedDataBase) == 0) then
-      return
-    endif
-    
-    call output('Database, filenames:', advance='no')
-    call blanks(3)
-    call output(GriddedDatabase%sourceFilename, advance='yes')
-    
-    call output('Database, fieldNames:', advance='no')
-    call blanks(3)
-    call output(GriddedDatabase%quantityName, advance='yes')
-    
-    call output('Source file:', advance='no')
-    call blanks(3)
-    call output(source_file, advance='yes')
-    
-    call output('field_name:', advance='no')
-    call blanks(3)
-    call output(field_name, advance='yes')
-    
-    do i=1, size(GriddedDataBase)
-      if(trim(adjustl(source_file)) == trim(adjustl(GriddedDataBase(i)%sourceFileName))) then
-        already = .true.
-        exit
-      endif
-    enddo
-
-    if(present(field_name) .and. already) then
-      if(trim(adjustl(field_name)) == trim(adjustl(GriddedDataBase(i)%quantityName))) then
-        already = .true.
-      else
-        already = .false.
-      endif
-    endif
-  end function source_file_already_read
 
   ! ----- utility procedures ----
   
@@ -1773,6 +1543,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.38  2005/06/14 20:37:06  pwagner
+! Interfaces changed to accept MLSFile_T args
+!
 ! Revision 2.37  2004/08/04 23:19:01  pwagner
 ! Much moved from MLSStrings to MLSStringLists
 !
