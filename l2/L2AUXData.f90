@@ -6,7 +6,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use Dump_0, only: DUMP
   use Hdf, only: &
-    & DFNT_FLOAT32, DFNT_INT32, &
+    & DFACC_CREATE, DFACC_RDONLY, DFACC_RDWR, DFNT_FLOAT32, DFNT_INT32, &
     & SFCREATE, SFDIMID, SFSDSCALE, &
     & SFENDACC, SFRDATA_F90, SFN2INDEX, SFSELECT, SFGINFO, &
     & SFGDINFO, SFSDMNAME, SFWDATA_F90
@@ -34,11 +34,11 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
     L_SPACERADIANCE, L_STRAYRADIANCE, L_SURFACETYPE, L_SYSTEMTEMPERATURE, &
     L_TNGTECI, L_TNGTGEOCALT, L_TNGTGEODALT, &
     L_TOTALEXTINCTION, L_USBFREQUENCY, L_VMR, L_XYZ
-  use intrinsic, only: LIT_INDICES !, L_CHANNEL, &
+  use intrinsic, only: l_hdf, LIT_INDICES !, L_CHANNEL, &
 !    & L_MAF, L_MIF, L_NONE
   use L1BData, only: L1BDATA_T, READL1BDATA
   use LEXER_CORE, only: PRINT_SOURCE
-  use MLSCommon, only: R8, R4, DEFAULTUNDEFINEDVALUE
+  use MLSCommon, only: R8, R4, DEFAULTUNDEFINEDVALUE, MLSFile_T
   use MLSL2Options, only: DEFAULT_HDFVERSION_READ, DEFAULT_HDFVERSION_WRITE
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
     & MLSMSG_ERROR, MLSMSG_WARNING
@@ -108,6 +108,16 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
   interface DUMP
     module procedure Dump_L2AUX
     module procedure Dump_L2AUX_Database
+  end interface
+
+  interface ReadL2AUXData
+    module procedure ReadL2AUXData_FileHandle
+    module procedure ReadL2AUXData_MLSFile
+  end interface
+
+  interface WriteL2AUXData
+    module procedure WriteL2AUXData_FileHandle
+    module procedure WriteL2AUXData_MLSFile
   end interface
 
 !---------------------------- RCS Ident Info -------------------------------
@@ -298,11 +308,9 @@ contains ! =====     Public Procedures     =============================
               & 'Unrecognized quantity type for sd:' // trim(sdName) )
         cycle
       end if
-      ! print *, 'About to read ', trim(sdName)
       call ReadL2AUXData ( sdfid1, trim(sdName), QuantityType, l2aux, &
            & checkDimNames=.false., hdfVersion=hdfVersion )
       ! Write the filled l2aux to file2
-      ! print *, 'About to write ', trim(sdName)
       call WriteL2AUXData(l2aux, sdfid2, status, trim(sdName), &
         & hdfVersion=hdfVersion)
       ! Deallocate memory used by the l2aux
@@ -655,11 +663,11 @@ contains ! =====     Public Procedures     =============================
  
   end subroutine Dump_L2AUX
     
-  !-----------------------------------------------  ReadL2AUXData  -----
-  subroutine ReadL2AUXData(sd_id, quantityname, quantityType, l2aux, firstProf, lastProf, &
+  !-----------------------------------------------  ReadL2AUXData_FileHandle  -----
+  subroutine ReadL2AUXData_FileHandle(sd_id, quantityname, quantityType, l2aux, firstProf, lastProf, &
     & checkDimNames, hdfVersion)
 
-  use MLSFiles, only: HDFVERSION_4, HDFVERSION_5
+  use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, INITIALIZEMLSFILE
 
     ! This routine reads an l2aux file, returning a filled data structure
     ! and the number of profiles read.
@@ -675,23 +683,66 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in), optional :: hdfVersion
     ! Local variables
     integer :: myhdfVersion
+    type( MLSFile_T ) :: l2auxFile
+    integer :: status
     ! Executable code
     myhdfVersion = default_hdfversion_read
     if ( present(hdfVersion) ) myhdfVersion = hdfVersion
-    select case (myhdfVersion)
+    status = InitializeMLSFile(l2auxFile, type=l_hdf, access=DFACC_RDONLY, &
+      & content='l2aux', name='unknown', hdfVersion=myhdfVersion)
+    l2auxFile%FileID%f_id = sd_id
+    l2auxFile%stillOpen = .true.
+    call ReadL2AUXData(l2AUXFile, quantityname, quantityType, l2aux, firstProf, lastProf, &
+      & checkDimNames)
+
+  end subroutine ReadL2AUXData_FileHandle
+
+  !-----------------------------------------------  ReadL2AUXData_MLSFile  -----
+  subroutine ReadL2AUXData_MLSFile(L2AUXFile, quantityname, quantityType, l2aux,&
+    & firstProf, lastProf, checkDimNames)
+
+  use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, &
+    & mls_closeFile, mls_openFile
+
+    ! This routine reads an l2aux file, returning a filled data structure
+    ! and the number of profiles read.
+
+    ! Arguments
+
+    character (LEN=*), intent(IN) :: quantityname ! Name of L2AUX quantity = sdname in writing routine
+    type(MLSFile_T)                :: L2AUXFile
+    integer, intent(in) :: QuantityType ! Lit index
+    integer, intent(IN), optional :: firstProf, lastProf ! Defaults to first and last
+    type( L2AUXData_T ), intent(OUT) :: l2aux ! Result
+    logical, optional, intent(in) :: checkDimNames
+    ! Local variables
+    logical :: alreadyOpen
+    integer :: returnStatus
+    ! Executable code
+    alreadyOpen = L2AUXFile%stillOpen
+    if ( .not. alreadyOpen ) then
+      call mls_openFile(L2AUXFile, returnStatus)
+      if ( returnStatus /= 0 ) &
+        call MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Unable to open l2aux file', MLSFile=L2AUXFile)
+    endif
+    select case (L2AUXFile%hdfVersion)
     case (HDFVERSION_4)
-      call ReadL2AUXData_hdf4(sd_id, quantityname, quantityType, l2aux, firstProf, lastProf, &
-    & checkDimNames)
+      call ReadL2AUXData_MF_hdf4(L2AUXFile, quantityname, quantityType, l2aux, &
+       & firstProf, lastProf, checkDimNames)
     case (HDFVERSION_5)
-      call ReadL2AUXData_hdf5(sd_id, quantityname, quantityType, l2aux, firstProf, lastProf, &
-    & checkDimNames)
+      call ReadL2AUXData_MF_hdf5(L2AUXFile, quantityname, quantityType, l2aux, &
+        & firstProf, lastProf, checkDimNames)
     case default
     end select
+    if ( .not. alreadyOpen )  call mls_closeFile(L2AUXFile, returnStatus)
 
-  end subroutine ReadL2AUXData
+    L2AUXFile%errorCode = returnStatus
+    L2AUXFile%lastOperation = 'read'
+  end subroutine ReadL2AUXData_MLSFile
 
-  ! -----------------------------------------  ReadL2AUXData_hdf4  -----
-  subroutine ReadL2AUXData_hdf4(sd_id, quantityname, quantityType, l2aux, firstProf, lastProf, &
+  ! -----------------------------------------  ReadL2AUXData_MF_hdf4  -----
+  subroutine ReadL2AUXData_MF_hdf4(L2AUXFile, quantityname, quantityType, l2aux, firstProf, lastProf, &
     & checkDimNames )
 
     ! This routine reads an l2aux file, returning a filled data structure and the !
@@ -700,7 +751,7 @@ contains ! =====     Public Procedures     =============================
     ! Arguments
 
     character (LEN=*), intent(IN) :: quantityname ! Name of L2AUX quantity = sdname in writing routine
-    integer, intent(IN) :: sd_id ! Returned by sfstart before calling us
+    type(MLSFile_T)                :: L2AUXFile
     integer, intent(in) :: QuantityType
     integer, intent(IN), optional :: firstProf, lastProf ! Defaults to first and last
     type( L2AUXData_T ), intent(OUT) :: l2aux ! Result
@@ -743,22 +794,22 @@ contains ! =====     Public Procedures     =============================
     ! Attach to the file for reading
 
     ! find SD data set identifier
-    sds_index = sfn2index(sd_id, quantityname)
+    sds_index = sfn2index(L2AUXFile%FileID%f_id, quantityname)
     if (sds_index == -1) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Failed to get sds_index for '//trim(quantityName) )
+      & 'Failed to get sds_index for '//trim(quantityName), MLSFile=L2AUXFile )
 
-    sds_id = sfselect(sd_id, sds_index)
+    sds_id = sfselect(L2AUXFile%FileID%f_id, sds_index)
     if (sds_id == -1) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Failed to get sds_id.' )
+      & 'Failed to get sds_id.', MLSFile=L2AUXFile )
 
     status = sfginfo(sds_id, sds_name, rank, file_dim_sizes, data_type, &
       & num_attrs)
 
     if (status == -1) then
-      call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to get sf info.')
+      call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to get sf info.', MLSFile=L2AUXFile)
     else if (sds_name /= quantityname) then
       call MLSMessage(MLSMSG_Error, ModuleName, &
-        & 'quantityname  fails to match sf info.')
+        & 'quantityname  fails to match sf info.', MLSFile=L2AUXFile)
     end if
 
     ! Check optional input arguments
@@ -777,14 +828,14 @@ contains ! =====     Public Procedures     =============================
       dim_id = sfdimid(sds_id, dim-1)		! dim starts from 0
       if(dim_id == -1) then
         msr = 'Failed to get dim_id for dim index number ' // dim_char
-        call MLSMessage(MLSMSG_Error, ModuleName, msr)
+        call MLSMessage(MLSMSG_Error, ModuleName, msr, MLSFile=L2AUXFile)
       else
         status = sfgdinfo(dim_id, dim_name, dim_size1, data_type, &
           & num_attrs)
         if(status == -1) then
           msr = 'Failed to get dim_info for dim index number ' // &
             & dim_char
-          call MLSMessage(MLSMSG_Error, ModuleName, msr)
+          call MLSMessage(MLSMSG_Error, ModuleName, msr, MLSFile=L2AUXFile)
         else
           file_dim_sizes(dim) = dim_size1
           select case ( trim(dim_name) )
@@ -800,7 +851,7 @@ contains ! =====     Public Procedures     =============================
           case default
             if ( myCHECKDIMNAMES ) then
               call MLSMessage ( MLSMSG_Error, ModuleName, &
-                & 'Unrecognized dimension in l2aux:'//trim(dim_name) )
+                & 'Unrecognized dimension in l2aux:'//trim(dim_name), MLSFile=L2AUXFile )
             else
               dim_families(dim) = l_channel
               data_dim_sizes(dim) = dim_size1
@@ -827,7 +878,7 @@ contains ! =====     Public Procedures     =============================
     status = sfrdata_f90(sds_id, start(1:rank), stride(1:rank), file_dim_sizes(1:rank), &
       & tmpValues )
     if (status == -1) call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'Failed to read SD.')
+      & 'Failed to read SD.', MLSFile=L2AUXFile)
     l2aux%values = reshape ( tmpValues, &
       & (/ data_dim_sizes(1), data_dim_sizes(2), data_dim_sizes(3) /) )
 
@@ -840,7 +891,7 @@ contains ! =====     Public Procedures     =============================
 
     status = sfendacc(sds_id)
     if (status == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
-      &end access to sds_id after reading.')
+      &end access to sds_id after reading.', MLSFile=L2AUXFile)
 
     !  After reading, detach from hdf interface
 
@@ -848,11 +899,11 @@ contains ! =====     Public Procedures     =============================
     !     if (status == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
     !          &detach from SD file after reading.')
 
-  end subroutine ReadL2AUXData_hdf4
+  end subroutine ReadL2AUXData_MF_hdf4
 
 
-  ! -----------------------------------------  ReadL2AUXData_hdf5  -----
-  subroutine ReadL2AUXData_hdf5(sd_id, quantityname, quantityType, l2aux, firstProf, lastProf, &
+  ! -----------------------------------------  ReadL2AUXData_MF_hdf5  -----
+  subroutine ReadL2AUXData_MF_hdf5(L2AUXFile, quantityname, quantityType, l2aux, firstProf, lastProf, &
     & checkDimNames)
     use MLSFiles, only: HDFVERSION_5
 
@@ -867,7 +918,7 @@ contains ! =====     Public Procedures     =============================
     ! Arguments
 
     character (LEN=*), intent(IN) :: quantityname ! Name of L2AUX quantity = sdname in writing routine
-    integer, intent(IN) :: sd_id ! Returned by sfstart before calling us
+    type(MLSFile_T)                :: L2AUXFile
     integer, intent(in) :: QUANTITYTYPE ! Lit index
     integer, intent(IN), optional :: firstProf, lastProf ! Defaults to first and last
     type( L2AUXData_T ), intent(OUT) :: l2aux ! Result
@@ -881,13 +932,13 @@ contains ! =====     Public Procedures     =============================
     integer, dimension(L2AUXRank) :: data_dim_sizes
     integer                       :: status
     ! Executable
-    CALL ReadL1BData(sd_id, QuantityName, L1bData, NoMAFs, status, &
+    CALL ReadL1BData(L2AUXFile, QuantityName, L1bData, NoMAFs, status, &
       & FirstMAF=firstProf, LastMAF=lastProf, NEVERFAIL=NEVERFAIL, &
-      & HDFVersion=HDFVERSION_5, dontPad=.true., L2AUX=.true. )
+      & dontPad=.true., L2AUX=.true. )
     if ( status /= 0 ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to read ' &
-      & // trim(QuantityName) // ' (perhaps too unlike a radiance)' )
+      & // trim(QuantityName) // ' (perhaps too unlike a radiance)', MLSFile=L2AUXFile )
 
     dim_families(1) = l_channel                      
     data_dim_sizes = shape(L1BDATA%DpField)          
@@ -901,22 +952,22 @@ contains ! =====     Public Procedures     =============================
     if ( status /= 0 ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to deallocate l1bdata%dpField while reading' &
-      & // trim(QuantityName) )
-  end subroutine ReadL2AUXData_hdf5
+      & // trim(QuantityName), MLSFile=L2AUXFile )
+  end subroutine ReadL2AUXData_MF_hdf5
 
-  ! ---------------------------------------------  WriteL2AUXData  -----
+  ! ---------------------------------------------  WriteL2AUXData_FileHandle  -----
 
-  subroutine WriteL2AUXData(l2aux, l2FileHandle, returnStatus, sdName, &
+  subroutine WriteL2AUXData_FileHandle(l2aux, sd_id, returnStatus, sdName, &
     & NoMAFS, WriteCounterMAF, DimNames, Reuse_dimNames, hdfVersion)
 
-  use MLSFiles, only: HDFVERSION_4, HDFVERSION_5
+  use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, INITIALIZEMLSFILE
 
   ! Write l2aux to the file with l2FileHandle
   ! Optionally, write a bogus CounterMAF sd so the
   ! resulting file can masquerade as an l1BRad
   ! (Note that this bogus sd should only be written once for each file)
     type (L2AUXData_T), intent(in) :: L2AUX
-    integer, intent(in) :: L2FILEHANDLE                 ! From h5fopen or sfstart
+    integer, intent(in) :: sd_id                      ! From h5fopen or sfstart
     character (len=*), optional, intent(in) :: SDNAME ! Defaults to l2aux%name
     character (len=*), optional, intent(in) :: DimNames ! Comma-separated list
                                                         ! Otherwise automatic
@@ -929,25 +980,75 @@ contains ! =====     Public Procedures     =============================
 
     ! Local variables
     integer :: myhdfVersion
+    type( MLSFile_T ) :: l2auxFile
     ! Executable code
     myhdfVersion = default_hdfversion_write
     if ( present(hdfVersion) ) myhdfVersion = hdfVersion
-    select case (myhdfVersion)
+    returnStatus = InitializeMLSFile(l2auxFile, type=l_hdf, access=DFACC_RDWR, &
+      & content='l2aux', name='unknown', hdfVersion=myhdfVersion)
+    l2auxFile%FileID%f_id = sd_id
+    l2auxFile%stillOpen = .true.
+    call WriteL2AUXData(l2aux, l2auxFile, returnStatus, sdName, &
+    & NoMAFS, WriteCounterMAF, DimNames, Reuse_dimNames)
+  end subroutine WriteL2AUXData_FileHandle
+
+  ! ---------------------------------------------  WriteL2AUXData_MLSFile  -----
+
+  subroutine WriteL2AUXData_MLSFile(l2aux, L2AUXFile, returnStatus, sdName, &
+    & NoMAFS, WriteCounterMAF, DimNames, Reuse_dimNames)
+
+  use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, &
+    & mls_closeFile, mls_openFile
+
+  ! Write l2aux to the file with l2FileHandle
+  ! Optionally, write a bogus CounterMAF sd so the
+  ! resulting file can masquerade as an l1BRad
+  ! (Note that this bogus sd should only be written once for each file)
+    type (L2AUXData_T), intent(in) :: L2AUX
+    type(MLSFile_T)                :: L2AUXFile
+    character (len=*), optional, intent(in) :: SDNAME ! Defaults to l2aux%name
+    character (len=*), optional, intent(in) :: DimNames ! Comma-separated list
+                                                        ! Otherwise automatic
+                                                        ! (Requiring l2cf)
+    integer, intent(in), optional :: NoMAFS
+    logical, intent(in), optional :: WriteCounterMAF  ! Write bogus CounterMAF
+    logical, intent(in), optional :: Reuse_dimNames   ! We already wrote them
+    integer, intent(out) :: returnStatus           ! 0 unless error
+
+    ! Local variables
+    logical :: alreadyOpen
+    ! Executable code
+    alreadyOpen = L2AUXFile%stillOpen
+    if ( .not. alreadyOpen ) then
+      call mls_openFile(L2AUXFile, returnStatus)
+      if ( returnStatus /= 0 ) &
+        call MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Unable to open l2aux file', MLSFile=L2AUXFile)
+    endif
+    if ( L2AUXFile%access == DFACC_RDONLY )  &
+      & call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'l2aux file is rdonly', MLSFile=L2AUXFile)
+    select case (L2AUXFile%hdfVersion)
     case (HDFVERSION_4)
-      call WriteL2AUXData_hdf4(l2aux, l2FileHandle, returnStatus, sdName, &
+      call WriteL2AUXData_MF_hdf4(l2aux, L2AUXFile, returnStatus, sdName, &
     & NoMAFS, WriteCounterMAF, DimNames, Reuse_dimNames)
     case (HDFVERSION_5)
-      call WriteL2AUXData_hdf5(l2aux, l2FileHandle, returnStatus, sdName, &
+      call WriteL2AUXData_MF_hdf5(l2aux, L2AUXFile, returnStatus, sdName, &
     & NoMAFS, WriteCounterMAF, DimNames, Reuse_dimNames)
     case default
+      call MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Unrecognized hdfVersion for l2aux file', MLSFile=L2AUXFile)
     end select
-  end subroutine WriteL2AUXData
+    if ( .not. alreadyOpen )  call mls_closeFile(L2AUXFile, returnStatus)
+    L2AUXFile%errorCode = returnStatus
+    L2AUXFile%lastOperation = 'write'
+  end subroutine WriteL2AUXData_MLSFile
 
-  ! ----------------------------------------  WriteL2AUXData_hdf5  -----
+  ! ----------------------------------------  WriteL2AUXData_MF_hdf5  -----
 
-  subroutine WriteL2AUXData_hdf5(l2aux, l2FileHandle, returnStatus, sdName, &
+  subroutine WriteL2AUXData_MF_hdf5(l2aux, L2AUXFile, returnStatus, sdName, &
     & NoMAFS, WriteCounterMAF, DimNames, Reuse_dimNames)
-  ! Write l2aux to the file with l2FileHandle
+  ! Write l2aux to the L2AUXFile
   ! Optionally, write a bogus CounterMAF sd so the
   ! resulting file can masquerade as an l1BRad
   ! (Note that this bogus sd should only be written once for each file;
@@ -960,7 +1061,7 @@ contains ! =====     Public Procedures     =============================
   use PCFHdr, only: h5_writeglobalattr
 
     type (L2AUXData_T), intent(in) :: L2AUX
-    integer, intent(in) :: L2FILEHANDLE                 ! From h5fopen
+    type(MLSFile_T)                :: L2AUXFile
     character (len=*), optional, intent(in) :: SDNAME ! Defaults to l2aux%name
     character (len=*), optional, intent(in) :: DimNames ! Comma-separated list
                                                         ! Otherwise automatic
@@ -993,7 +1094,7 @@ contains ! =====     Public Procedures     =============================
     
     if ( .not. associated ( l2aux%values ) ) then
 	   call announce_error (0,&
-        & "l2aux values not associated yet " )
+        & "l2aux values not associated yet ", L2AUXFile=L2AUXFile )
       returnStatus = 1
     else
       if ( present(sdName) ) then
@@ -1011,24 +1112,23 @@ contains ! =====     Public Procedures     =============================
       dims(3) = size(l2aux%values, 3)
       ! call Dump_L2AUX(l2AUX)
       if ( myWriteCounterMAF .or. ALWAYSWRITEAS32BITS ) then
-        ! call Build_MLSAuxData(l2FileHandle, dataProduct, real(l2aux%values, r4))
-        call SaveAsHDF5DS (l2FileHandle, trim(dataProduct%name), &
+        call SaveAsHDF5DS (L2AUXFile%FileID%f_id, trim(dataProduct%name), &
          & real(l2aux%values, r4))
-        call WriteL2AUXAttributes(l2FileHandle, l2aux, trim(dataProduct%name))
+        call WriteL2AUXAttributes(L2AUXFile%FileID%f_id, l2aux, trim(dataProduct%name))
       else
         ! call Build_MLSAuxData(l2FileHandle, dataProduct, l2aux%values)
         ! call SaveAsHDF5DS (l2FileHandle, trim(dataProduct%name), l2aux%values)
       end if
-      call h5_writeglobalattr(l2FileHandle, skip_if_already_there=.false.)
+      call h5_writeglobalattr(L2AUXFile%FileID%f_id, skip_if_already_there=.false.)
       ! Write phase and section names as file-level attributes?
       if ( PHASENAMEATTRIBUTES ) then
-        call h5gopen_f(l2FileHandle, '/', grp_id, returnstatus)
+        call h5gopen_f(L2AUXFile%FileID%f_id, '/', grp_id, returnstatus)
         if ( .not. &
-          & IsHDF5AttributePresent('/', l2FileHandle, 'Phase Names') ) &
+          & IsHDF5AttributePresent('/', L2AUXFile%FileID%f_id, 'Phase Names') ) &
           & call MakeHDF5Attribute(grp_id, &
           & 'Phase Names', trim(showTimingNames('phases', .true.)), .true.)
         if ( .not. &
-          & IsHDF5AttributePresent('/', l2FileHandle, 'Section Names') ) &
+          & IsHDF5AttributePresent('/', L2AUXFile%FileID%f_id, 'Section Names') ) &
           & call MakeHDF5Attribute(grp_id, &
           & 'Section Names', trim(showTimingNames('sections', .true.)), .true.)
         call h5gclose_f(grp_id, returnstatus)
@@ -1038,7 +1138,7 @@ contains ! =====     Public Procedures     =============================
       ! Now create and write bogus counterMAF array
       if ( myNoMAFS < 1 ) then
         call announce_error(0, &
-        & "Too few MAFs to fake CounterMAFs in l2aux file:  " )
+        & "Too few MAFs to fake CounterMAFs in l2aux file:  ", L2AUXFile=L2AUXFile )
         return
       end if
       nullify (CounterMAF)
@@ -1046,29 +1146,25 @@ contains ! =====     Public Procedures     =============================
       dims(1) = myNoMAFS
       dataProduct%name = 'counterMAF'
       dataProduct%data_type = 'integer'
-      ! sdId= SFcreate ( l2FileHandle, 'counterMAF', DFNT_INT8, &
-      !  & 1, dimSizes)
       do MAF=0, myNoMAFS-1
         counterMAF(MAF+1) = MAF
       end do
-      ! status= SFWDATA_F90(sdId, (/ 0 /), &
-      !  & (/ 1 /) , dimSizes, CounterMAF)
-      call Build_MLSAuxData(l2FileHandle, dataProduct, counterMAF, &
+      call Build_MLSAuxData(L2AUXFile%FileID%f_id, dataProduct, counterMAF, &
       & myNoMAFS )
       call Deallocate_Test(CounterMAF,"CounterMAF",ModuleName)
     end if
-  end subroutine WriteL2AUXData_hdf5
+  end subroutine WriteL2AUXData_MF_hdf5
 
-  ! ----------------------------------------  WriteL2AUXData_hdf4  -----
+  ! ----------------------------------------  WriteL2AUXData_MF_hdf4  -----
 
-  subroutine WriteL2AUXData_hdf4(l2aux, l2FileHandle, returnStatus, sdName, &
+  subroutine WriteL2AUXData_MF_hdf4(l2aux, L2AUXFile, returnStatus, sdName, &
     & NoMAFS, WriteCounterMAF, DimNames, Reuse_dimNames)
   ! Write l2aux to the file with l2FileHandle
   ! Optionally, write a bogus CounterMAF sd so the
   ! resulting file can masquerade as an l1BRad
   ! (Note that this bogus sd should only be written once for each file)
     type (L2AUXData_T), intent(in) :: L2AUX
-    integer, intent(in) :: L2FILEHANDLE
+    type(MLSFile_T)                :: L2AUXFile
     character (len=*), optional, intent(in) :: SDNAME ! Defaults to l2aux%name
     character (len=*), optional, intent(in) :: DimNames ! Comma-separated list
                                                         ! Otherwise automatic
@@ -1131,7 +1227,7 @@ contains ! =====     Public Procedures     =============================
     end if
 
     ! Create the sd within the file
-    sdId= SFcreate ( l2FileHandle, nameString, DFNT_FLOAT32, &
+    sdId= SFcreate ( L2AUXFile%FileID%f_id, nameString, DFNT_FLOAT32, &
       & noDimensionsUsed, dimSizes)
 
     if ( .not. myReuse_dimNames ) then
@@ -1163,7 +1259,7 @@ contains ! =====     Public Procedures     =============================
 		  		call output("dim name: ")
 		  		call output(TRIM(dimName), advance='yes')
 		  		call announce_error (  0, &
-          & "Error setting dimension name to SDS l2aux file:")
+          & "Error setting dimension name to SDS l2aux file:", L2AUXFile=L2AUXFile)
 !		  		call MLSMessage ( MLSMSG_Error, ModuleName, &
 !          & "Error setting dimension name to SDS l2aux file:")
 	     end if
@@ -1176,7 +1272,7 @@ contains ! =====     Public Procedures     =============================
 		  		call output("dim name: ")
 		  		call output(TRIM(dimName), advance='yes')
 		      call announce_error ( 0, &
-          & "Error writing dimension scale in l2auxFile:" )
+          & "Error writing dimension scale in l2auxFile:", L2AUXFile=L2AUXFile )
 !		      call MLSMessage ( MLSMSG_Error, ModuleName, &
 !          & "Error writing dimension scale in l2auxFile:" )
 	     end if
@@ -1192,7 +1288,7 @@ contains ! =====     Public Procedures     =============================
       & max ( -hugeR4, min ( hugeR4, l2aux%values ) ) ) )
     if ( status /= 0 ) then
 	   call announce_error (0, &
-      & "Error writing SDS data to  l2aux file:  " )
+      & "Error writing SDS data to  l2aux file:  ", L2AUXFile=L2AUXFile )
     end if
 
     call Deallocate_Test(dimSizes,"dimSizes",ModuleName)
@@ -1201,7 +1297,7 @@ contains ! =====     Public Procedures     =============================
     status = sfendacc(sdId)      ! 
     if ( status /= 0 ) then
 	   call announce_error (0,&
-      & "Error ending access to the sd  " )
+      & "Error ending access to the sd  ", L2AUXFile=L2AUXFile )
     end if
     returnStatus = error
     if ( .not. myWriteCounterMAF ) return
@@ -1209,14 +1305,14 @@ contains ! =====     Public Procedures     =============================
     ! Now create and write bogus counterMAF array
     if ( myNoMAFS < 1 ) then
       call announce_error(0, &
-      & "Too few MAFs to fake CounterMAFs in l2aux file:  " )
+      & "Too few MAFs to fake CounterMAFs in l2aux file:  ", L2AUXFile=L2AUXFile )
       return
     end if
     nullify (CounterMAF, dimSizes)
     call allocate_test(CounterMAF,myNoMAFS,'counterMAF',ModuleName)
     call allocate_test(dimSizes,1,'dimSizes',ModuleName)
     dimSizes(1) = myNoMAFS
-    sdId= SFcreate ( l2FileHandle, 'counterMAF', DFNT_INT32, &
+    sdId= SFcreate ( L2AUXFile%FileID%f_id, 'counterMAF', DFNT_INT32, &
       & 1, dimSizes)
     do MAF=0, myNoMAFS-1
       counterMAF(MAF+1) = MAF
@@ -1225,7 +1321,7 @@ contains ! =====     Public Procedures     =============================
       & (/ 1 /) , dimSizes, CounterMAF)
     if ( status /= 0 ) then
 	   call announce_error (0,&
-      & "Error writing counterMAF data to  l2aux file:  " )
+      & "Error writing counterMAF data to  l2aux file:  ", L2AUXFile=L2AUXFile )
     end if
     call Deallocate_Test(dimSizes,"dimSizes",ModuleName)
     call Deallocate_Test(CounterMAF,"CounterMAF",ModuleName)
@@ -1234,12 +1330,12 @@ contains ! =====     Public Procedures     =============================
     status = sfendacc(sdId)
     if ( status /= 0 ) then
 	   call announce_error (0,&
-      & "Error ending access to the sd  " )
+      & "Error ending access to the sd  ", L2AUXFile=L2AUXFile )
     end if
     returnStatus = error
     ! call Dump_L2AUX(l2AUX)
 
-  end subroutine WriteL2AUXData_hdf4
+  end subroutine WriteL2AUXData_MF_hdf4
 
   ! ---------------------------------------  WriteL2AUXAttributes  -----
   subroutine WriteL2AUXAttributes ( L2FileHandle, l2aux, name)
@@ -1717,10 +1813,12 @@ contains ! =====     Public Procedures     =============================
   end function GetQuantityTypeFromName
 
   ! ---------------------------------------------  ANNOUNCE_ERROR  -----
-  subroutine ANNOUNCE_ERROR ( WHERE, full_message, CODE )
+  subroutine ANNOUNCE_ERROR ( WHERE, full_message, CODE, L2AUXFile )
+  use MLSFiles, only: dump
     integer, intent(in) :: WHERE   ! Tree node where error was noticed
 	character(LEN=*), intent(in)    :: full_message
     integer, intent(in), optional :: CODE    ! Code for error message
+    type(MLSFile_T), optional :: L2AUXFile
 
     error = max(error,1)
     call output ( '***** At ' )
@@ -1741,6 +1839,7 @@ contains ! =====     Public Procedures     =============================
       select case ( code )
       end select
     end if
+    if ( present(L2AUXFile) ) call dump(L2AUXFile)
   end subroutine ANNOUNCE_ERROR
 
 !=============================================================================
@@ -1753,6 +1852,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.69  2005/06/14 20:41:02  pwagner
+! Interfaces changed to accept MLSFile_T args
+!
 ! Revision 2.68  2005/03/03 02:10:51  vsnyder
 ! Remove unused symbols, spiff up some dumps
 !
