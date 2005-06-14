@@ -9,7 +9,8 @@ MODULE MLSStringLists               ! Module to treat string lists
     & MLSMSG_Allocate, MLSMSG_DeAllocate
   use MLSCommon, only: i4, NameLen, BareFNLen
   use MLSSets, only: FindFirst
-  use MLSStrings, only: lowerCase, Capitalize, reverse, writeIntsToChars
+  use MLSStrings, only: Capitalize, lowerCase, &
+    & ReadIntsFromChars, reverse, writeIntsToChars
 
   implicit NONE
   private
@@ -55,6 +56,7 @@ MODULE MLSStringLists               ! Module to treat string lists
 ! SortArray          Turns (/'def','ghi','abc'/) -> (/'abc','def','ghi'/)
 ! SortList           Turns 'def,ghi,abc' -> 'abc,def,ghi'
 ! StringElementNum   Returns element number of test string in string list
+! SwitchDetail       Returns detail level of switch in list of switches
 ! unquote            Removes surrounding [quotes]
 ! utc_to_date        Returns date portion from dateTtime; e.g. yyyy-dddThh:mm:ss
 ! utc_to_time        Returns time portion from dateTtime; e.g. yyyy-dddThh:mm:ss
@@ -69,7 +71,7 @@ MODULE MLSStringLists               ! Module to treat string lists
 ! ExpandStringRange (char* str, char* outst)
 ! ExtractSubString (char* str, char* outstr, char* sub1, char* sub2, &
 !       & [char* how], [log no_trim])
-! GetIntHashElement (strlist keyList, hashArray(:), char* key, 
+! int GetIntHashElement (strlist keyList, hashArray(:), char* key, 
 !   int ErrType, log countEmpty, [char inseparator], [log part_match])
 ! GetStringElement (strlist inList, char* outElement,
 !   i4 nElement, log countEmpty, [char inseparator])
@@ -95,6 +97,7 @@ MODULE MLSStringLists               ! Module to treat string lists
 !     [strlist sortedList], [char leftRight])
 ! int StringElementNum(strlist inList, char* test_string, log countEmpty, &
 !    & [char inseparator], [log part_match])
+! int SwitchDetail(strlist inList, char* test_switch)
 ! char* unquote (char* str, [char* quotes], [char* cquotes], [log strict])
 
 ! in the above, a string list is a string of elements (usu. comma-separated)
@@ -124,7 +127,7 @@ MODULE MLSStringLists               ! Module to treat string lists
    & GetUniqueInts, GetUniqueStrings, GetUniqueList, &
    & List2Array, NumStringElements, &
    & RemoveElemFromList, ReplaceSubString, ReverseList, &
-   & SortArray, SortList, StringElementNum, &
+   & SortArray, SortList, StringElementNum, SwitchDetail, &
    & unquote, utc_to_date, utc_to_time, utc_to_yyyymmdd, yyyymmdd_to_dai
 
   interface catLists
@@ -2030,6 +2033,57 @@ CONTAINS
 
   END FUNCTION StringElementNum
 
+
+  ! ---------------------------------------------  SwitchDetail  -----
+
+  ! This function takes a (usually) comma-separated string list, interprets it
+  ! as a list of individual switches, and a test switch
+  ! It returns the detail number of the test switch in the list
+  ! or, -1 if it is not found
+  
+  ! As an example, say the list of switches is
+  ! "abc,def,ghi2"
+  ! and the test switch is "ghi"
+  ! The returned value would be 2
+  ! If the test switch were "abc" the returned value would be 0
+  ! If the test switch were "xyz" the returned value would be -1
+  
+  FUNCTION SwitchDetail(inList, test_switch) RESULT (detail)
+    ! Dummy arguments
+    CHARACTER (LEN=*), INTENT(IN)             :: inList
+    CHARACTER (LEN=*), INTENT(IN)             :: test_switch
+    integer                                   :: detail
+
+    ! Local variables
+    integer :: elem
+    integer :: nElements
+    integer, parameter :: MAXELEMENTLENGTH = 80
+    logical, parameter :: COUNTEMPTY = .true.
+
+    CHARACTER (LEN=MAXELEMENTLENGTH)           :: listElement
+    ! Executable code
+
+	nElements = NumStringElements(inList, countEmpty)
+	
+	IF ( nElements <= 0 .or. test_switch == "" ) THEN
+		detail = -1
+		RETURN
+	ENDIF
+
+	! Check for matches--snipping off any leading blanks
+	DO elem=1, nElements
+		CALL GetStringElement(inList, listElement, elem, countEmpty)
+      if (trim(listElement) /= ' ' .and. &
+          & index(trim(listElement), trim(test_switch)) > 0) then
+        call ReadIntsFromChars(trim(listElement), detail, ignore="*")
+        return
+      endif
+	ENDDO
+	
+	detail = -1
+
+  END FUNCTION SwitchDetail
+
   ! ------------------------------------------------  unquote  -----
   Function unquote(str, quotes, cquotes, strict, stripany, extract) &
     & result (outstr)
@@ -2714,6 +2768,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.8  2005/06/14 18:32:25  pwagner
+! Added SwitchDetail
+!
 ! Revision 2.7  2005/03/26 00:06:54  pwagner
 ! Repaired RemoveElemFromList; added extract option to unquote
 !
