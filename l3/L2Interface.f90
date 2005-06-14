@@ -5,6 +5,7 @@
 MODULE L2Interface
 !==============================================================================
 
+  USE intrinsic, ONLY: l_swath
   USE L2GPData, ONLY: L2GPData_T, ReadL2GPData, WriteL2GPData, SetupNewL2GPRecord
   USE MLSCommon, ONLY: r8
   USE MLSFiles, ONLY: mls_openFile, mls_closeFile, & 
@@ -247,7 +248,8 @@ CONTAINS
 	 GlobalAttributes%OrbNumDays(:,i) = -1
 	 GlobalAttributes%OrbPeriodDays(:,i) = -1.0
       else 
-         file_id = mls_io_gen_openF('swopen', .TRUE., status, &
+         ! file_id = mls_io_gen_openF('swopen', .TRUE., status, &
+         file_id = mls_io_gen_openF(l_swath, .TRUE., status, &
             & record_length, DFACC_READ, pcfNames(i), &
             & hdfVersion=the_hdfVersion, debugOption=.false. )
          if ( status /= 0 ) &
@@ -276,7 +278,8 @@ CONTAINS
 
 !            call output(GlobalAttributes%OrbPeriodDays(:,i), advance='yes')
 
-            status = mls_io_gen_closeF('swclose', file_id, pcfNames(i), & 
+            ! status = mls_io_gen_closeF('swclose', file_id, pcfNames(i), & 
+            status = mls_io_gen_closeF(l_swath, file_id, pcfNames(i), & 
            	& hdfVersion=the_hdfVersion)
             if ( status /= 0 ) &
            	call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -502,7 +505,8 @@ CONTAINS
 
       hdfVersion = mls_hdf_version(trim(l3File))
 
-      file_id = mls_io_gen_openF('swopen', .TRUE., status, &
+      ! file_id = mls_io_gen_openF('swopen', .TRUE., status, &
+      file_id = mls_io_gen_openF(l_swath, .TRUE., status, &
            & record_length, DFACC_RDWR, l3File, &
            & hdfVersion=hdfVersion, debugOption=.false. )
 
@@ -510,7 +514,7 @@ CONTAINS
       call WriteL2GPData(l3r(i), file_id, l3r(i)%name, & 
            & hdfVersion=hdfVersion)
 
-      status = mls_io_gen_closeF('swclose', file_id, l3File, & 
+      status = mls_io_gen_closeF(l_swath, file_id, l3File, & 
            & hdfVersion=hdfVersion)
 
    ENDDO
@@ -627,6 +631,9 @@ END MODULE L2Interface
 !=====================
 
 !# $Log$
+!# Revision 1.16  2004/06/22 16:55:47  cvuu
+!# Using SetupNewL2GPRecord for L3 Residual based on the nLevels from L3 not L2
+!#
 !# Revision 1.15  2004/05/04 15:33:15  cvuu
 !# v1.4.3: Use int array for Date in Data Field
 !#
