@@ -109,14 +109,17 @@ module MLSCommon                ! Common definitions for the MLS software
   ! -- pass one of these instead
   ! (Not used yet; maybe someday)
   type MLSFile_T
-    character (LEN=8) :: type=""  ! e.g., 'ascii', 'hdf', 'swath', 'binary'
-    character (LEN=8) :: access=""  ! e.g., 'rdonly', 'write', 'rdwrite'
-    character (LEN=8) :: content=""  ! e.g., 'l1brad', 'l2gp', 'l2aux'
+    character (LEN=16) :: content=""  ! e.g., 'l1brad', 'l2gp', 'l2aux', ..
+    character (LEN=8) :: lastOperation=""  ! 'open','close','read','write'
     character (LEN=FileNameLen) :: Name=""  ! its name (usu. w/path)
-    ! integer :: File_Id=0     ! its HDF ID (handle) or io unit
+    character (LEN=NameLen) :: ShortName=""  ! its short name; e.g. 'H2O'
+    character (LEN=8) :: typeStr=""  ! one of {'swath', 'hdf', ..}
+    integer :: type=0  ! one of {l_swath, l_hdf, ..}
+    integer :: access=0  ! one of {DFACC_RDONLY, DFACC_CREATE, ..}
     integer :: HDFVersion=0  ! its hdf version if hdf(eos)
     integer :: PCFId=0      ! its PCF ID (ref), if any
     integer :: recordLength=0! its max record_length, if any
+    integer :: errorCode=0  ! non-zero usu. means trouble
     logical :: StillOpen=.false.
     type(Range_T) :: PCFidRange
     type(Fileids_T) :: FileID
@@ -551,6 +554,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.24  2005/06/14 20:31:10  pwagner
+! Added and changed some fields of MLSFile_T
+!
 ! Revision 2.23  2005/05/31 17:49:15  pwagner
 ! Added new fields to MLSFile_T
 !

@@ -120,6 +120,7 @@ module MLSHDFEOS
 
   ! Print debugging stuff?
   logical, parameter :: DEEBUG = .false.  
+  character(len=1), parameter :: BLANK = ' '
 
 contains ! ======================= Public Procedures =========================
 
@@ -130,8 +131,6 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in) :: DATATYPE    ! E.g., MLS_CHARTYPE
     integer, intent(in) :: COUNT   ! How many
     character(len=*), intent(in) :: BUFFER  ! Buffer for write
-    !
-    character(len=1), parameter :: BLANK = ' '
     !
     if ( len_trim(buffer) > 0 ) then
       MLS_EHWRGLATT = he5_ehwrglatt_character_scalar( FILEID, &
@@ -215,8 +214,13 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in) :: COUNT   ! How many
     character(len=*), intent(in) :: BUFFER  ! Buffer for write
     integer, external ::   he5_GDwrattr
-    mls_gdwrattr = HE5_GDWRATTR( GRIDID, &
-    & ATTRNAME, DATATYPE, max(COUNT, len_trim(BUFFER)), BUFFER )
+    if ( len_trim(buffer) > 0 ) then
+      mls_gdwrattr = HE5_GDWRATTR( GRIDID, &
+      & ATTRNAME, DATATYPE, max(COUNT, len_trim(BUFFER)), BUFFER )
+    else
+      mls_gdwrattr = HE5_GDWRATTR( GRIDID, &
+      & ATTRNAME, DATATYPE, 1, BLANK )
+    endif
 
   end function mls_gdwrattr
 
@@ -295,9 +299,6 @@ contains ! ======================= Public Procedures =========================
     logical, parameter :: MUSTCREATE = .true.
     MLS_SWCREATE = 0
     ! All necessary input supplied?
-   ! print *, 'Now in mls_swcreate'
-   ! print *, 'SWATHNAME: ', trim(SWATHNAME)
-    ! if ( present(filename) ) print *, 'filename: ', trim(filename)
     needsFileName = (.not. present(hdfVersion))
     if ( present(hdfVersion) ) &
       & needsFileName = (hdfVersion == WILDCARDHDFVERSION)
@@ -1106,8 +1107,13 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in) :: DATATYPE    ! E.g., MLS_CHARTYPE
     integer, intent(in) :: COUNT   ! How many
     character(len=*), intent(in) :: BUFFER  ! Buffer for write
-    mls_swwrattr = HE5_SWWRATTR( SWATHID, &
-    & ATTRNAME, DATATYPE, max(COUNT, len_trim(BUFFER)), BUFFER )
+    if ( len_trim(buffer) > 0 ) then
+      mls_swwrattr = HE5_SWWRATTR( SWATHID, &
+      & ATTRNAME, DATATYPE, max(COUNT, len_trim(BUFFER)), BUFFER )
+    else
+      mls_swwrattr = HE5_SWWRATTR( SWATHID, &
+      & ATTRNAME, DATATYPE, 1, BLANK )
+    endif
 
   end function mls_swwrattr
 
@@ -1119,8 +1125,19 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in) :: DATATYPE    ! E.g., MLS_CHARTYPE
     integer, intent(in) :: COUNT   ! How many
     character(len=*), intent(in) :: BUFFER  ! Buffer for write
-    mls_swwrlattr = HE5_SWWRLATTR( SWATHID, FIELDNAME, &
-    & ATTRNAME, DATATYPE, max(COUNT, len_trim(BUFFER)), BUFFER )
+    !
+    ! character(len=len(BUFFER)+1) :: TMPBUFFER  ! Buffer for write
+    !
+    ! TMPBUFFER = BUFFER ! Why is this necessary? NAG sometimes dumps core
+    ! print *, SWATHID, &
+    ! & FIELDNAME, ATTRNAME, DATATYPE, COUNT, BUFFER
+    if ( len_trim(buffer) > 0 ) then
+      mls_swwrlattr = HE5_SWWRLATTR( SWATHID, FIELDNAME, &
+      & ATTRNAME, DATATYPE, max(COUNT, len_trim(BUFFER)), BUFFER )
+    else
+      mls_swwrlattr = HE5_SWWRLATTR( SWATHID, FIELDNAME, &
+      & ATTRNAME, DATATYPE, 1, BLANK )
+    endif
 
   end function mls_swwrlattr
 
@@ -1758,6 +1775,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.24  2005/06/14 20:34:20  pwagner
+! Small changes to guard against zero-length characters
+!
 ! Revision 2.23  2004/09/23 22:58:59  pwagner
 ! Fix for when passed blank BUFFER (do we need to fix this elsewhere\?)
 !
