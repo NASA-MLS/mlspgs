@@ -690,27 +690,31 @@ CONTAINS
         call WritePCF2Hdr_hdf4 (file, anText)
       case (HDFVERSION_5)
         if ( the_type == l_swath ) then
-          fileID = mls_io_gen_openF('swopen', .TRUE., status, &
+          ! fileID = mls_io_gen_openF('swopen', .TRUE., status, &
+          fileID = mls_io_gen_openF(l_swath, .TRUE., status, &
            & record_length, DFACC_RDWR, FileName=trim(file), &
            & hdfVersion=hdfVersion, debugOption=.false. )
           if ( status /= PGS_S_SUCCESS) &
             & CALL MLSMessage(MLSMSG_Error, ModuleName, &
             & 'Error opening hdfeos5 swath file for annotating with PCF' )
           call WritePCF2Hdr_hdfeos5 (fileID, anText)
-          status = mls_io_gen_closeF('swclose', fileID, &
+          ! status = mls_io_gen_closeF('swclose', fileID, &
+          status = mls_io_gen_closeF(l_swath, fileID, &
             & hdfVersion=hdfVersion)
           if ( status /= PGS_S_SUCCESS) &
             & CALL MLSMessage(MLSMSG_Error, ModuleName, &
             & 'Error closing hdfeos5 swath file for annotating with PCF' )
         elseif ( the_type == l_grid ) then
-          fileID = mls_io_gen_openF('gdopen', .TRUE., status, &
+          ! fileID = mls_io_gen_openF('gdopen', .TRUE., status, &
+          fileID = mls_io_gen_openF(l_grid, .TRUE., status, &
            & record_length, DFACC_RDWR, FileName=trim(file), &
            & hdfVersion=hdfVersion, debugOption=.false. )
           if ( status /= PGS_S_SUCCESS) &
             & CALL MLSMessage(MLSMSG_Error, ModuleName, &
             & 'Error opening hdfeos5 grid file for annotating with PCF' )
           call WritePCF2Hdr_hdfeos5 (fileID, anText)
-          status = mls_io_gen_closeF('gdclose', fileID, &
+          ! status = mls_io_gen_closeF('gdclose', fileID, &
+          status = mls_io_gen_closeF(l_grid, fileID, &
             & hdfVersion=hdfVersion)
           if ( status /= PGS_S_SUCCESS) &
             & CALL MLSMessage(MLSMSG_Error, ModuleName, &
@@ -1047,6 +1051,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.35  2005/06/14 20:35:24  pwagner
+!# Changed interface to mls_io_gen functions
+!#
 !# Revision 2.34  2005/02/03 19:06:01  pwagner
 !# utc_to_date used to find 0 crossing
 !#
