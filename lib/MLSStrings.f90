@@ -801,22 +801,27 @@ contains
   END SUBROUTINE ReadCompleteLineWithoutComments
 
   ! --------------------------------------------------  readAnIntFromChars  -----
-  SUBROUTINE readAnIntFromChars (str, int, forbiddens)
+  SUBROUTINE readAnIntFromChars (str, int, forbiddens, ignore)
     ! takes a string and returns an integer
     ! using Fortran "read"
     ! If the string is blank or contains one of forbiddens
     ! the int is left undefined
+    ! Snip away any from the set ignore if present
+    ! If ignore is '*', that means ignore all alphabetical chars
 	 ! Not useful yet
 	 !
     !--------Argument--------!
     CHARACTER (LEN=*), INTENT(in) ::   str
     integer, intent(out)          ::   int
     CHARACTER (LEN=*), INTENT(in), optional     ::   forbiddens
-    character(len=40)                           ::   myForbiddens
+    CHARACTER (LEN=*), INTENT(in), optional     ::   ignore
 
     !----------Local vars----------!
-    INTEGER :: j
+    INTEGER :: j, k
     LOGICAL :: leave_undef
+    character(len=40)                           ::   myForbiddens
+    character(len=40)                           ::   myIgnore
+    character(len=len(str))                     ::   myStr
     !----------Executable part----------!
 
    ! Check that all is well (if not returns blanks)
@@ -824,6 +829,11 @@ contains
      myForbiddens = adjustl(forbiddens)
    else
      myForbiddens = ' '
+   endif
+   if ( present(ignore) ) then
+     myignore = adjustl(ignore)
+   else
+     myignore = ' '
    endif
    leave_undef = (str == ' ')
    if ( myForbiddens /= ' ' ) then
@@ -837,7 +847,33 @@ contains
          & )
      enddo
    endif
-   if ( .not. leave_undef ) read(str, *) int
+   if ( leave_undef ) then
+     return
+   elseif (  myIgnore == "" ) then
+     read(str, *) int
+   elseif (  myIgnore == "*" ) then
+     int = 0  ! Assume all ignorables means "0"
+     k = 1
+     myStr = ""
+     do j = 1, len(str)
+       if ( .not. isAlphabet(str(j:j)) ) then
+         myStr(k:k) = str(j:j)
+         k = k + 1
+       endif
+     enddo
+     if ( myStr /= "" ) read(mystr, *) int
+   else
+     int = 0  ! Assume all ignorables means "0"
+     k = 1
+     myStr = ""
+     do j = 1, len(str)
+       if ( index(myIgnore, str(j:j)) < 1 ) then
+         myStr(k:k) = str(j:j)
+         k = k + 1
+       endif
+     enddo
+     if ( myStr /= "" ) read(mystr, *) int
+   endif
 
   END SUBROUTINE readAnIntFromChars
 
@@ -1660,6 +1696,54 @@ contains
      write(yyyymmdd,'(I4.4, 2i2.2)') year, m, day
   end subroutine yeardoy_to_yyyymmdd_ints
 
+  ! Private procedures and functions
+  !
+  ! ---------------------------------------------------  isAlphabet  -----
+  function isAlphabet(arg, inputcase) result(itIs)
+    ! Returns TRUE if arg alphabetical; 
+    ! i.e.is one of {'a', 'b', ..}
+    ! Note: to check if input is UPPER  lower, either, set
+    ! inputcase          case
+    ! ----------         ----
+    !   UPPER             u
+    !   lower             l
+    !   either            e (default)
+    ! Args
+    character(len=1), intent(in) :: arg
+    character(len=1), optional, intent(in) :: inputcase
+    logical                      :: itIs
+    ! Internal variables
+    logical :: itsEither
+    logical :: itsLower
+    character(len=*), parameter :: list='abcdefghijklmnopqrstuvwxyz'
+    character(len=1)            :: myCase
+    ! Executable
+    myCase = 'e'
+    if ( present(inputcase) ) myCase = inputcase
+    itsLower = ( index(list, arg) > 0 )
+    itsEither = ( index(list, lowercase(arg)) > 0 )
+    select case(myCase)
+    case ('u')
+      itIs = itsEither .and. .not. itsLower
+    case ('l')
+      itIs = itsLower
+    case default
+      itis = itsEither
+    end select    
+  end function isAlphabet
+
+  ! ---------------------------------------------------  isDigit  -----
+  function isDigit(arg) result(itIs)
+    ! Returns TRUE if arg is one of {'1', '2', ..}
+    ! Args
+    character(len=1), intent(in) :: arg
+    logical                      :: itIs
+    ! Internal variables
+    character(len=*), parameter :: list='1234567890'
+    ! Executable
+    itIs = ( index(list, arg) > 0 )
+  end function isDigit
+
   ! ---------------------------------------------------  Leapyear  -----
   logical function leapyear(year)
     integer,intent(in) :: year
@@ -1727,6 +1811,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.56  2005/06/14 18:31:41  pwagner
+! readIntsFromChars can now ignore certain chars
+!
 ! Revision 2.55  2005/05/31 17:46:01  pwagner
 ! Added array  interfaces for streq
 !
