@@ -11,6 +11,7 @@
 
 module GLOBAL_SETTINGS
 
+  use Hdf, only: DFACC_CREATE
   use MLSCommon, only: FILENAMELEN
 
   implicit NONE
@@ -73,6 +74,7 @@ contains
       & S_FGRID, S_FORWARDMODEL, S_ForwardModelGlobal, S_L1BOA, S_L1BRAD, &
       & S_L2PARSF, S_MAKEPFA, S_PFADATA, S_READPFA, S_TGRID, S_TIME, S_VGRID, &
       & S_WRITEPFA
+    use intrinsic, only: l_hdf, l_swath
     use L1BData, only: L1BData_T, NAME_LEN, PRECISIONSUFFIX, &
       & AssembleL1BQtyName, DeallocateL1BData, Dump, FindMaxMAF, &
       & l1bradSetup, l1boaSetup, ReadL1BAttribute, ReadL1BData 
@@ -310,7 +312,8 @@ contains
           call decorate ( son, AddFGridToDatabase ( fGrids, &
             & CreateFGridFromMLSCFInfo ( name, son ) ) )
         case ( s_forwardModelGlobal ) !??? Begin temporary stuff for l2load
-          if ( .not. stopEarly ) call forwardModelGlobalSetup ( son, returnStatus )
+          if ( .not. stopEarly ) call forwardModelGlobalSetup ( son, returnStatus, &
+            & fileDataBase )
           error = max(error, returnStatus)
         case ( s_forwardModel )
           if ( .not. stopEarly ) call decorate (son, AddForwardModelConfigToDatabase ( &
@@ -842,8 +845,8 @@ contains
         & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
         & exactName=Direct%Filename)
       returnStatus = InitializeMLSFile(DirectFile, content = 'l2gp', &
-        & name=Direct%Filename, &
-        & type='hdf', access='create', HDFVersion=HDFVERSION_5, &
+        & name=Direct%Filename, shortName=file_base, &
+        & type=l_swath, access=DFACC_CREATE, HDFVersion=HDFVERSION_5, &
         & PCBottom=mlspcf_l2gp_start, PCTop=mlspcf_l2gp_end)
     else if ( Direct%Type ==  l_l2dgg ) then
       if ( TOOLKIT ) &
@@ -852,8 +855,8 @@ contains
         & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
         & exactName=Direct%Filename)
       returnStatus = InitializeMLSFile(DirectFile, content = 'l2dgg', &
-        & name=Direct%Filename, &
-        & type='hdf', access='create', HDFVersion=HDFVERSION_5, &
+        & name=Direct%Filename, shortName=file_base, &
+        & type=l_swath, access=DFACC_CREATE, HDFVersion=HDFVERSION_5, &
         & PCBottom=mlspcf_l2dgg_start, PCTop=mlspcf_l2dgg_end)
     else if ( Direct%Type ==  l_l2fwm ) then
       if ( TOOLKIT ) &
@@ -862,8 +865,8 @@ contains
         & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
         & exactName=Direct%Filename)
       returnStatus = InitializeMLSFile(DirectFile, content = 'l2fwm', &
-        & name=Direct%Filename, &
-        & type='hdf', access='create', HDFVersion=HDFVERSION_5, &
+        & name=Direct%Filename, shortName=file_base, &
+        & type=l_hdf, access=DFACC_CREATE, HDFVersion=HDFVERSION_5, &
         & PCBottom=mlspcf_l2fwm_full_start, PCTop=mlspcf_l2fwm_full_end)
     else
       if ( TOOLKIT ) &
@@ -872,8 +875,8 @@ contains
         & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
         & exactName=Direct%Filename)
       returnStatus = InitializeMLSFile(DirectFile, content = 'l2dgm', &
-        & name=Direct%Filename, &
-        & type='hdf', access='create', HDFVersion=HDFVERSION_5, &
+        & name=Direct%Filename, shortName=file_base, &
+        & type=l_hdf, access=DFACC_CREATE, HDFVersion=HDFVERSION_5, &
         & PCBottom=mlspcf_l2dgm_start, PCTop=mlspcf_l2dgm_end)
     end if
     if ( returnStatus /= 0 ) call MLSMessage ( &
@@ -898,6 +901,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.101  2005/06/04 00:14:53  vsnyder
+! Import MLSMSG_Warning
+!
 ! Revision 2.100  2005/06/03 23:58:48  pwagner
 ! Hope it wont bomb if no l1boa
 !

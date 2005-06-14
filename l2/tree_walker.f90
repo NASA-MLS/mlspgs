@@ -65,12 +65,10 @@ contains ! ====     Public Procedures     ==============================
     use L2ParInfo, only: PARALLEL, CLOSEPARALLEL
     use L2PC_m, only: DestroyL2PCDatabase, DestroyBinSelectorDatabase
     use LinearizedForwardModel_m, only: FLUSHLOCKEDBINS
-!   use MACHINE, only: MLS_GC_NOW
     use MACHINE, only: MLS_HOWMANY_GC
     use MatrixModule_1, only: DestroyMatrixDatabase, Matrix_Database_T
     use MergeGridsModule, only: MergeGrids
     use MLSCommon, only: TAI93_RANGE_T, MLSFile_T
-  ! use MLSFiles, only: MLSFile_T
     use MLSL2Options, only: CHECKPATHS, &
       & SKIPRETRIEVAL, STOPAFTERCHUNKDIVIDE, STOPAFTERGLOBAL
     use MLSMessageModule, only: MLSMessage, MLSMSG_Info, MLSMSG_Error
@@ -78,6 +76,7 @@ contains ! ====     Public Procedures     ==============================
       & DestroyRadiometerDatabase, DestroySignalDatabase, &
       & DestroySpectrometerTypeDatabase, MLSSignals, Modules, Radiometers, &
       & Signals, SpectrometerTypes
+    use MLSStringLists, only: SwitchDetail
     use MLSL2Timings, only: add_to_section_timing, TOTAL_TIMES
     use Open_Init, only: DestroyL1BInfo, OpenAndInitialize
     use OutputAndClose, only: Output_Close
@@ -104,9 +103,11 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(in) ::     SINGLECHUNK ! Just run this one chunk (0 if all)
     integer, intent(in) ::     LASTCHUNKIN ! Just run range [single,last]
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-
+    ! Internal variables
     integer ::                                   chunkNo ! Index of Chunks
     type (MLSChunk_T), dimension(:), pointer ::  Chunks  ! of data
+    integer                                   :: details
+    type (DirectData_T), dimension(:), pointer :: DirectDatabase
     type (FGrid_T), dimension(:), pointer ::     FGrids
     ! Forward model configurations:
     integer ::                                   FIRSTCHUNK ! For chunk loop
@@ -118,20 +119,17 @@ contains ! ====     Public Procedures     ==============================
     integer ::                                   HOWMANY  ! Nsons(Root)
     integer ::                                   I, J     ! Loop inductors
     integer ::                                   LASTCHUNK ! For chunk loop
-    ! type (L1BInfo_T) ::                          L1BInfo  ! File handles etc. for L1B dataset
     type (L2AUXData_T), dimension(:), pointer :: L2AUXDatabase
-    type (DirectData_T), dimension(:), pointer :: DirectDatabase
     type (L2GPData_T), dimension(:), pointer  :: L2GPDatabase
-    ! type (PCFData_T) ::                          L2pcf
     type (Matrix_Database_T), dimension(:), &
       & pointer ::                               Matrices
     type (TAI93_Range_T) ::                      ProcessingRange  ! Data processing range
     logical ::                                   REDUCEDCHUNKS
+    ! logical ::                                   show_totalNGC = .true.
     integer ::                                   SON              ! Son of Root
     logical ::                                   STOPEARLY
     real    ::                                   t1, t2, tChunk
     integer ::                                   totalNGC   ! Total num garbage colls.
-    logical ::                                   show_totalNGC = .true.
     type (Vector_T), dimension(:), pointer ::    Vectors
 
     ! Arguments for Construct not declared above:
@@ -152,7 +150,6 @@ contains ! ====     Public Procedures     ==============================
     if ( toggle(gen) ) call trace_begin ( 'WALK_TREE_TO_DO_MLS_L2', &
       & subtree(first_section,root) )
     call time_now ( t1 )
-    ! call OpenAndInitialize ( processingRange, l1bInfo )
     call OpenAndInitialize ( processingRange, filedatabase )
     call add_to_section_timing ( 'open_init', t1)
     i = first_section
@@ -172,7 +169,6 @@ contains ! ====     Public Procedures     ==============================
       case ( z_globalsettings )
         call set_global_settings ( son, forwardModelConfigDatabase, fGrids, &
           & l2gpDatabase, DirectDatabase, processingRange, filedatabase )
-          ! & l2gpDatabase, DirectDatabase, processingRange, l1bInfo )
         call add_to_section_timing ( 'global_settings', t1)
         if ( GLOBALSETTINGSONLY .and. .not. parallel%slave ) then
           call finishUp(.true.)
@@ -190,7 +186,8 @@ contains ! ====     Public Procedures     ==============================
         call spectroscopy ( son )
         call add_to_section_timing ( 'spectroscopy', t1)
       case ( z_readapriori )
-        if ( .not. stopearly ) call read_apriori ( son , l2gpDatabase, l2auxDatabase, griddedDataBase )
+        if ( .not. stopearly ) call read_apriori ( son , &
+          & l2gpDatabase, l2auxDatabase, griddedDataBase, fileDataBase )
         call add_to_section_timing ( 'read_apriori', t1)
       case ( z_mergeGrids )
         if ( .not. stopearly ) call mergeGrids ( son, griddedDataBase )
@@ -206,9 +203,7 @@ contains ! ====     Public Procedures     ==============================
           parallel%ChunkNo = chunkNo
         else
           if ( .not. checkPaths ) then
-            ! call ChunkDivide ( son, processingRange, l1bInfo, chunks )
             call ChunkDivide ( son, processingRange, filedatabase, chunks )
-            ! call ComputeAllHGridOffsets ( root, i+1, chunks, l1bInfo, &
             call ComputeAllHGridOffsets ( root, i+1, chunks, filedatabase, &
             & l2gpDatabase, processingRange )
           else
@@ -269,7 +264,6 @@ contains ! ====     Public Procedures     ==============================
             call L2MasterTask ( chunks, l2gpDatabase, l2auxDatabase )
           end if
           if ( parallel%slave .and. parallel%fwmParallel ) then
-            ! call ConstructMIFGeolocation ( mifGeolocation, l1bInfo, &
             call ConstructMIFGeolocation ( mifGeolocation, filedatabase, &
               & chunks(singleChunk) ) 
             call L2FWMSlaveTask ( mifGeolocation )
@@ -320,7 +314,6 @@ subtrees:   do while ( j <= howmany )
               case ( z_fill )
                 !if ( .not. checkPaths) &
                 if ( .not. checkPaths) then 
-                  ! call MLSL2Fill ( son, l1bInfo, griddedDataBase, &
                   call MLSL2Fill ( son, filedatabase, griddedDataBase, &
                   & vectorTemplates, vectors, qtyTemplates, matrices, &
                   & l2gpDatabase, l2auxDatabase, forwardModelConfigDatabase, &
@@ -330,7 +323,7 @@ subtrees:   do while ( j <= howmany )
               case ( z_join )
                 call MLSL2Join ( son, vectors, l2gpDatabase, &
                   & l2auxDatabase, DirectDatabase, chunkNo, chunks, &
-		            & forwardModelConfigDatabase )
+		            & forwardModelConfigDatabase, fileDatabase )
                 call add_to_section_timing ( 'join', t1)
               case ( z_retrieve )
                 if ( .not. checkPaths) &
@@ -387,7 +380,7 @@ subtrees:   do while ( j <= howmany )
       case ( z_output ) ! Write out the data
         if ( .not. parallel%slave ) then
           call Output_Close ( son, l2gpDatabase, l2auxDatabase, DirectDatabase, &
-	    & matrices, size(chunks)==1 .or. singleChunk /= 0 )
+	         & matrices, fileDataBase,  size(chunks)==1 .or. singleChunk /= 0 )
         end if
 
         ! For case where there was one chunk, destroy vectors etc.
@@ -424,6 +417,12 @@ subtrees:   do while ( j <= howmany )
         call DestroyDirectDatabase ( DirectDatabase )
         ! vectors, vectorTemplates and qtyTemplates destroyed at the
         ! end of each chunk
+        ! fileDataBase is deallocated in MLSL2
+        if ( index(switches,'pro') /= 0  .and. associated(fileDataBase) ) then
+          ! details = min(index(switches,'pro1'), 1)
+          details = SwitchDetail(switches, 'pro') - 2 ! 'pro' prints only size(DB)
+          call Dump(fileDataBase, details=details)
+        end if
         call add_to_section_timing ( 'output', t1)
 
       end select
@@ -486,19 +485,19 @@ subtrees:   do while ( j <= howmany )
       call output ( dble(t2 - myt1), advance = 'yes' )
     end subroutine SayTime
 
-    integer function Say_num_gcs ( )
-      Say_num_gcs = mls_howmany_gc()
-      if ( show_totalNGC ) then
-        call output ( "Total = " )
-        call output ( Say_num_gcs, advance = 'no' )
-        call blanks ( 4, advance = 'no' )
-      end if
-      call output ( "garbage collections for chunk ")
-      call blanks ( 2, advance = 'no' )
-      call output ( chunkNo )
-      call output ( " = ")
-      call output ( Say_num_gcs - totalNGC, advance = 'yes' )
-    end function Say_num_gcs
+!     integer function Say_num_gcs ( )
+!       Say_num_gcs = mls_howmany_gc()
+!       if ( show_totalNGC ) then
+!         call output ( "Total = " )
+!         call output ( Say_num_gcs, advance = 'no' )
+!         call blanks ( 4, advance = 'no' )
+!       end if
+!       call output ( "garbage collections for chunk ")
+!       call blanks ( 2, advance = 'no' )
+!       call output ( chunkNo )
+!       call output ( " = ")
+!       call output ( Say_num_gcs - totalNGC, advance = 'yes' )
+!     end function Say_num_gcs
 
   end subroutine WALK_TREE_TO_DO_MLS_L2
 
@@ -514,6 +513,10 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.131  2005/06/03 02:05:29  vsnyder
+! New copyright notice, move Id to not_used_here to avoid cascades,
+! get VGrids from VGridsDatabase instead of passing as an argument.
+!
 ! Revision 2.130  2005/05/31 17:51:17  pwagner
 ! Began switch from passing file handles to passing MLSFiles
 !
