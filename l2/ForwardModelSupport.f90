@@ -61,7 +61,7 @@ module ForwardModelSupport
 contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------  ForwardModelGlobalSetup  -----
-  subroutine ForwardModelGlobalSetup ( Root, any_errors )
+  subroutine ForwardModelGlobalSetup ( Root, any_errors, fileDataBase )
     ! Process the forwardModel specification to produce ForwardModelInfo.
 
     use AntennaPatterns_m, only: OPEN_ANTENNA_PATTERNS_FILE, &
@@ -71,9 +71,11 @@ contains ! =====     Public Procedures     =============================
       & CLOSE_FILTER_SHAPES_FILE
     use Init_Tables_Module, only: F_ANTENNAPATTERNS, F_DACSFILTERSHAPES, &
       & F_FILTERSHAPES, F_L2PC, F_PFAFILES, F_POINTINGGRIDS
+    use intrinsic, only: l_ascii, l_hdf
     use L2ParInfo, only: PARALLEL
     use L2PC_m, only: OPEN_L2PC_FILE, CLOSE_L2PC_FILE, READ_L2PC_FILE, &
       & READCOMPLETEHDF5L2PCFILE
+    use MLSCommon, only: MLSFile_T
     use MLSPCF2, only: MLSPCF_antpats_start, MLSPCF_filtshps_start, &
       &          mlspcf_dacsfltsh_start, MLSPCF_ptggrids_start, &
       &          mlspcf_l2pc_start, mlspcf_l2pc_end
@@ -88,6 +90,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: Root         ! of the forwardModel specification.
     !                                     Indexes a "spec_args" vertex.
     integer, intent(out) :: any_errors  ! non-zero means trouble
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
 
     logical, parameter :: DEBUG = .false.
     integer :: FileIndex                ! In the string table
@@ -119,6 +122,7 @@ contains ! =====     Public Procedures     =============================
       case ( f_antennaPatterns )
         do j = 2, nsons(son)
           call get_file_name ( mlspcf_antpats_start, &
+            & get_field_id(son), filedatabase, &
             & 'Antenna Patterns File not found in PCF' )
           call open_antenna_patterns_file ( fileName, lun )
           call read_antenna_patterns_file ( lun )
@@ -127,6 +131,7 @@ contains ! =====     Public Procedures     =============================
       case ( f_DACSfilterShapes )
         do j = 2, nsons(son)
           call get_file_name ( mlspcf_dacsfltsh_start, &
+            & get_field_id(son), filedatabase, &
             & 'DACS Filter Shapes File not found in PCF' )
           call open_filter_shapes_file ( fileName, lun, fileIndex )
           call read_DACS_filter_shapes_file ( lun, fileIndex )
@@ -135,6 +140,7 @@ contains ! =====     Public Procedures     =============================
       case ( f_filterShapes )
         do j = 2, nsons(son)
           call get_file_name ( mlspcf_filtshps_start, &
+            & get_field_id(son), filedatabase, &
             & 'Filter Shapes File not found in PCF' )
           call open_filter_shapes_file ( fileName, lun, fileIndex )
           call read_filter_shapes_file ( lun, fileIndex )
@@ -143,8 +149,9 @@ contains ! =====     Public Procedures     =============================
       case ( f_l2pc )
         last_l2pc = last_l2pc + 1
         do j = 2, nsons(son)
-          call get_file_name ( last_l2pc, 'L2PC File not found in PCF', &
-            & mlspcf_l2pc_end )
+          call get_file_name ( last_l2pc, &
+            & get_field_id(son), filedatabase, &
+            & 'L2PC File not found in PCF', mlspcf_l2pc_end )
           if ( index ( fileName, '.txt' ) /= 0 ) then
             call open_l2pc_file ( fileName, lun)
             call read_l2pc_file ( lun )
@@ -161,6 +168,7 @@ contains ! =====     Public Procedures     =============================
       case ( f_pointingGrids )
         do j = 2, nsons(son)
           call get_file_name ( mlspcf_ptggrids_start, &
+            & get_field_id(son), filedatabase, &
             & 'Pointing Grids File not found in PCF' )
           call open_pointing_grid_file ( fileName, lun )
           call read_pointing_grid_file ( lun )
@@ -178,40 +186,68 @@ contains ! =====     Public Procedures     =============================
   contains
 
     ! ............................................  Get_File_Name  .....
-    subroutine Get_File_Name ( pcfCode, MSG, pcfEndCode )
-      use MLSFiles, only: GetPCFromRef, split_path_name
+    subroutine Get_File_Name ( pcfCode, &
+      & fileType, fileDataBase, MSG, pcfEndCode )
+      use hdf, only: dfacc_rdonly
+      use init_tables_module, only: field_indices
+      use MLSCommon, only: MLSFile_T
+      use MLSFiles, only: HDFVERSION_5, &
+        & AddInitializeMLSFile, GetPCFromRef, split_path_name
       use MLSL2Options, only: TOOLKIT
       use SDPToolkit, only: Pgs_pc_getReference
       use String_Table, only: Get_String
+      ! Dummy args
       integer, intent(in) :: pcfCode
+      integer, intent(in) :: fileType ! f_l2pc, f_antennaPatterns, etc.
+      type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
       character(len=*), intent(in) :: MSG ! in case of error
       integer, intent(in), optional :: pcfEndCode
-
-      character(len=255) :: PCFFileName, path
+      ! Internal variables
+      type (MLSFile_T), pointer :: MLSFile
+      character(len=255) :: fileTypeStr, PCFFileName, path, shortName
       integer :: returnStatus             ! non-zero means trouble
       integer :: mypcfEndCode
-
-      call get_string ( sub_rosa(subtree(j,son)), fileName, strip=.true. )
+      ! Executable
+      mypcfEndCode = 0
+      lun = 0
+      call get_string ( sub_rosa(subtree(j,son)), shortName, strip=.true. )
+      fileName = shortName
+      call get_string ( field_indices(fileType), fileTypeStr, strip=.true. )
       if ( TOOLKIT ) then
         mypcfEndCode = pcfCode
         if ( present(pcfEndCode) ) mypcfEndCode = pcfEndCode
         if ( fileName == ' ' ) then
           returnStatus = Pgs_pc_getReference(pcfCode, version, &
             & fileName)
-          return
-        end if
-        PCFFileName = fileName
-        call split_path_name ( PCFFileName, path, fileName )
-        lun = GetPCFromRef(fileName, pcfCode, &
-          & mypcfEndCode, &
-          & TOOLKIT, returnStatus, Version, DEBUG, &
-          & exactName=PCFFileName)
-        if ( returnStatus /= 0 ) then
-          call AnnounceError ( 0, son, extraMessage=MSG )
+          lun = pcfCode
         else
-          fileName = PCFFileName
+          PCFFileName = fileName
+          call split_path_name ( PCFFileName, path, fileName )
+          lun = GetPCFromRef(fileName, pcfCode, &
+            & mypcfEndCode, &
+            & TOOLKIT, returnStatus, Version, DEBUG, &
+            & exactName=PCFFileName)
+          if ( returnStatus /= 0 ) then
+            call AnnounceError ( 0, son, extraMessage=MSG )
+          else
+            fileName = PCFFileName
+          end if
         end if
       end if
+      if ( fileType == f_l2pc ) then
+        MLSFile => AddInitializeMLSFile(filedatabase, &
+          & content=fileTypeStr, &
+          & name=Filename, shortName=shortName, &
+          & type=l_hdf, access=dfacc_rdonly, HDFVersion=HDFVERSION_5)
+          ! & type=l_hdf, access='rdonly', HDFVersion=HDFVERSION_5)
+      else
+        MLSFile => AddInitializeMLSFile(filedatabase, &
+          & content=fileTypeStr, &
+          & name=Filename, shortName=shortName, &
+          & type=l_ascii, access=dfacc_rdonly)
+          ! & type=l_ascii, access='rdonly')
+      endif      
+      MLSFile%PCFId = lun
     end subroutine Get_File_Name
 
   end subroutine ForwardModelGlobalSetup
@@ -1116,6 +1152,9 @@ o:      do j = 2, nsons(PFATrees(s))
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.114  2005/06/14 20:41:55  pwagner
+! Interfaces changed to accept MLSFile_T args
+!
 ! Revision 2.113  2005/06/03 02:07:56  vsnyder
 ! New copyright notice, move Id to not_used_here to avoid cascades,
 ! get VGrids from VGridsDatabase instead of an argument, add SignalIndices
