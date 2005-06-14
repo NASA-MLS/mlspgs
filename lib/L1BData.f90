@@ -7,11 +7,12 @@ module L1BData
 
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use Dump_0, only: DIFF, DUMP
-  use Hdf, only: DFACC_READ, SFSTART, SFGINFO, SFN2INDEX, SFSELECT, &
+  use Hdf, only: DFACC_RDONLY, DFACC_READ, SFSTART, SFGINFO, SFN2INDEX, SFSELECT, &
     & SFRDATA_f90, &
     & SFRCDATA, SFENDACC, DFNT_CHAR8, DFNT_INT32, DFNT_FLOAT64, &
     & DFNT_FLOAT32
   use ieee_arithmetic, only: ieee_is_finite
+  use intrinsic, only: l_hdf
   use Lexer_Core, only: PRINT_SOURCE
   use MLSCommon, only: MLSFile_T, &
     & R4, R8, DEFAULTUNDEFINEDVALUE, FILENAMELEN
@@ -920,7 +921,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       if ( get_field_id(son) == f_file ) then
         call get_string ( sub_rosa(subtree(2,son)), fileName, strip=.true. )
         returnStatus = InitializeMLSFile(L1BFile, content = 'l1boa', &
-          & type='hdf', access='rdonly', name=fileName)
+          & type=l_hdf, access=DFACC_RDONLY, name=fileName)
         call mls_openFile(L1BFile, returnStatus)
         if ( returnStatus == 0 ) then
           numFiles = addFileToDatabase(filedatabase, L1BFile)
@@ -989,7 +990,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       if ( get_field_id(son) == f_file ) then
         call get_string ( sub_rosa(subtree(2,son)), fileName, strip=.true. )
         returnStatus = InitializeMLSFile(L1BFile, content = 'l1brad', &
-          & type='hdf', access='rdonly', name=fileName)
+          & type=l_hdf, access=DFACC_RDONLY, name=fileName)
         call mls_openFile(L1BFile, returnStatus)
         if ( returnStatus == 0 ) then
           numFiles = addFileToDatabase(filedatabase, L1BFile)
@@ -2991,6 +2992,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.57  2005/06/14 20:37:54  pwagner
+! Many changes to accommodate the new fields in MLSFile_T
+!
 ! Revision 2.56  2005/06/01 17:29:06  pwagner
 ! Disabled some superfluous printing
 !
