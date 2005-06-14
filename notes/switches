@@ -3,8 +3,10 @@ $Id$
 Switches (set by -S option in mlsl2's command line):
 
 ========================= mlsl2 =========================
+  (where [n] appears, you may optionally suffix an integer specifying how
+   detailed you want the extra printing to be: higher the n, more the info)
   ant =>    Antenna patterns
-  apr[n] => apriori file info [higher the n, more the info]
+  apr[n] => apriori file info 
   atb =>    Dump ATb vector
   binsel => L2PC bin selection motivation
   cab =>    Column Abundance-containing l2gp swaths dumped
@@ -17,7 +19,7 @@ Switches (set by -S option in mlsl2's command line):
   diag =>   diagonal of factored normal equations
   dvec =>   'DX' vector during Newton iteration
   dwreq[n] => Dump directwrite requests processed by master
-              [higher the n, more the info] *Warning--may use more memory
+               *Warning--may use more memory
   fac =>    Factors of normal equations during retriever iterations
   filt =>   Dump filter shapes after reading them
   fmt2 =>   mean & standard deviation for timing FullForwardModel at each chunk
@@ -29,7 +31,7 @@ Switches (set by -S option in mlsl2's command line):
   fwmg =>   Dump Forward model config after Get_Species_Data finishes
   fwmG =>   Dump Forward model config after Get_Species_Data finishes, then stop
   geom =>   Show geometry of chunks/hGrids
-  glo[n] => Global settings, info on l1b files [higher the n, more the info]
+  glo[n] => Global settings, info on l1b files 
   gridd =>  Gridded data quantities
   gvec =>   Gradient vector during Newton iteration
   hgrid =>  Information on HGrid construction (at least for regular)
@@ -53,9 +55,8 @@ Switches (set by -S option in mlsl2's command line):
   nin =>    Turn on Newton Method's internal output
   nodb =>   Subvert the DumpBlocks command
   nwt =>    Action flag at each return from Newton solver
-  opt[n] => Print command line options [higher the n, more the info]
-  pcf[n] => open init params obtained from pcf,
-            info on l1b files [higher the n, more the info]
+  opt[n] => Print command line options 
+  pcf[n] => open init params obtained from pcf, info on l1b files 
   pfab =>   Dump PFA Betas
   pfaB =>   pfab + temperature and pressure grids
   PFAB =>   pfaB and then stop
@@ -63,16 +64,12 @@ Switches (set by -S option in mlsl2's command line):
   pguess => Iterations of the pressure guesser
   phase  => Announce phases (e.g., CorePlusR2) as they are begun
   point =>  Pointing grids
-  pro =>    Proclaim each product file l2gp, l2aux, l2dgg, l2pc, meta output
-              and each file l2gp, l1brad, ncep, dao input
+  pro[n] => Proclaim each product file l2gp, l2aux, l2dgg, l2pc, meta output
+              and each file l2gp, l1brad, ncep, dao input; dump filedatabase
   ptg =>    Dump full forward model pointing angles
   qtmp =>   Quantity templates being constructed
   rad =>    Radiances in ForwardModelInterface
   reg =>    Dump regularization matrix
-  runxxx => run only the following chunks in parallel mode (depending on xxx)
-             first (first)  last (last)   firstlast (first and last)
-             (Warning--output files will contain fillvalues for other chunks)
-             (Anyway, the --chunkRange option is a better way)
   sca =>    Scalars of interest to the Newton method
   seez =>   Turn on some of Zvi's debugging output in FullForwardModel
   sig =>    MLS Signals
@@ -125,6 +122,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.53  2005/03/28 22:14:07  vsnyder
+ Add pfag
+
  Revision 1.52  2005/03/28 20:31:24  vsnyder
  Add taul and taup
 
