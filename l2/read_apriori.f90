@@ -7,21 +7,24 @@ module ReadAPriori
   use GriddedData, only: rgr, GriddedData_T, v_is_pressure, &
     & AddGriddedDataToDatabase, Dump, SetupNewGriddedData
   use Expr_M, only: Expr
-  use Hdf, only: DFACC_RDWR, DFACC_READ
+  use Hdf, only: DFACC_RDWR, DFACC_RDONLY
   use INIT_TABLES_MODULE, only: F_AURAINSTRUMENT, F_DIMLIST, F_FIELD, F_FILE, &
     & F_HDFVERSION, F_missingValue, F_ORIGIN, F_SDNAME, F_SWATH, &
     & FIELD_FIRST, FIELD_LAST, L_CLIMATOLOGY, L_DAO, L_NCEP, S_GRIDDED, &
     & L_GLORIA, L_STRAT, S_L2AUX, S_L2GP, F_QUANTITYTYPE
-  use Intrinsic, only: PHYQ_Dimensionless
+  use Intrinsic, only: l_ascii, l_grid, l_hdf, l_swath, PHYQ_Dimensionless
   use L2AUXData, only: L2AUXData_T, AddL2AUXToDatabase, &
     &                  ReadL2AUXData, Dump
   use L2GPData, only: L2GPData_T, MAXSWATHNAMESBUFSIZE, &
     & AddL2GPToDatabase, ReadL2GPData, Dump
   use LEXER_CORE, only: PRINT_SOURCE
-  use MLSCommon, only: FileNameLen
-  use MLSFiles, only: FILENOTFOUND, HDFVERSION_5, WILDCARDHDFVERSION, &
-    & GetPCFromRef, MLS_HDF_VERSION, mls_io_gen_closeF, mls_io_gen_openF, &
-    & MLS_INQSWATH, MLS_SFEND, MLS_SFSTART, SPLIT_PATH_NAME
+  use MLSCommon, only: FileNameLen, MLSFile_T
+  use MLSFiles, only: FILENOTFOUND, &
+    & HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
+    & AddFileToDataBase, Dump, GetPCFromRef, InitializeMLSFile, &
+    & mls_closeFile, MLS_HDF_VERSION, &
+    & MLS_INQSWATH, mls_io_gen_closeF, mls_io_gen_openF, &
+    & mls_openFile, SPLIT_PATH_NAME
   use MLSL2Options, only: DEFAULT_HDFVERSION_READ, TOOLKIT
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
@@ -79,13 +82,15 @@ contains ! =====     Public Procedures     =============================
   ! Read a priori data from data files, be they l2gp, l2aux, climatology,
   ! NCEP, DAO etc.
 
-  subroutine Read_apriori ( Root, L2GPDatabase, L2auxDatabase, GriddedDatabase)
+  subroutine Read_apriori ( Root, L2GPDatabase, L2auxDatabase, GriddedDatabase, &
+    & fileDataBase)
 
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the Read a priori section in the AST
     type (l2gpdata_t), dimension(:), pointer :: L2GPDatabase
     type (L2AUXData_T), dimension(:), pointer :: L2auxDatabase
     type (GriddedData_T), dimension(:), pointer :: GriddedDatabase 
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
 
     ! Local Variables
     integer :: AURAINST             ! index of 'MLS' in AuraInstrument='MLS'
@@ -100,12 +105,12 @@ contains ! =====     Public Procedures     =============================
     integer :: FIELDINDEX          ! Literal
     integer :: FieldName        ! sub-rosa index of name in field='name'
     character(len=FileNameLen) :: FIELDNAMESTRING ! actual literal clim. field
-    integer :: FileHandle          ! fileHandle of a priori data file
     integer :: FileName            ! Sub-rosa index of name in file='name'
     character(len=FileNameLen) :: FileNameString   ! actual literal file name
     integer :: FileType            ! either s_l2gp or s_l2aux
     logical, dimension(field_first:field_last) :: GOT
     type (griddedData_T) :: GriddedData
+    type (MLSFile_T) :: GriddedFile
     integer :: GriddedOrigin            ! From tree
     integer :: GridIndex           ! In the griddeddata database
     logical :: GotAlready               ! Do we need to reread this file?
@@ -114,25 +119,27 @@ contains ! =====     Public Procedures     =============================
     integer :: I, J                ! Loop indices for section, spec
     integer :: KEY                 ! Index of n_spec_args in the AST
     integer :: L2apriori_version
-    integer :: LastClimPCF
+    type (L2AUXData_T) :: L2AUX
+    type (MLSFile_T) :: L2AUXFile
+    type (L2GPData_T) :: L2GP
+    type (MLSFile_T) :: L2GPFile
+    integer :: L2Index             ! In the l2gp or l2aux database
+    integer :: L2Name              ! Sub-rosa index of L2[aux/gp] label
+    integer :: LastAprioriPCF      ! l2gp or l2aux  apriori
+    integer :: LastClimPCF         ! l3ascii or gloria format
     integer :: LastDAOPCF
     integer :: LastNCEPPCF
     integer :: LISTSIZE                 ! Size of string from SWInqSwath
-    type (L2AUXData_T) :: L2AUX
-    type (L2GPData_T) :: L2GP
-    integer :: L2Index             ! In the l2gp or l2aux database
-    integer :: L2Name              ! Sub-rosa index of L2[aux/gp] label
     real(rgr) ::    missingValue = 0.
     integer :: NOSWATHS                 ! In an input file
     character(len=FileNameLen) :: path   ! path of actual literal file name
     integer :: pcf_indx            ! loop index of climatology pcf numbers
     integer :: QUANTITYTYPE             ! Lit index of quantity type
-    integer :: record_length
     integer :: ReturnStatus
+    character(len=FileNameLen) :: ShortFileName
     integer :: SON              ! Of root, an n_spec_args or a n_named
     integer :: SdName        ! sub-rosa index of name in sdName='name'
     character(len=FileNameLen) :: SDNAMESTRING ! actual literal sdName
-    integer :: Sd_id
     character(len=FileNameLen) :: subString   ! file name w/o path
     integer :: SwathName        ! sub-rosa index of name in swath='name'
     character(len=FileNameLen) :: SWATHNAMESTRING ! actual literal swath name
@@ -164,6 +171,7 @@ contains ! =====     Public Procedures     =============================
     if( index(switches, 'apr') /= 0 ) &     
     & call output ( '============ Read APriori ============', advance='yes' )    
     allswathnames = ' '
+    LastAprioriPCF = mlspcf_l2apriori_start - 1
     lastClimPCF = mlspcf_l2clim_start - 1
     lastDAOPCF = mlspcf_l2dao_start - 1
     lastNCEPPCF = mlspcf_l2ncep_start - 1
@@ -237,6 +245,7 @@ contains ! =====     Public Procedures     =============================
       else
         fileNameString = ''
       end if
+      shortFileName = fileNameString
         
       select case ( FileType )
       case ( s_l2gp )
@@ -250,12 +259,19 @@ contains ! =====     Public Procedures     =============================
         ! If we were given only a strand of the filename, expand it
         if ( TOOLKIT ) then
           call split_path_name(FileNameString, path, SubString)
-          LastClimPCF = GetPCFromRef(SubString, mlspcf_l2apriori_start, &
+          LastAprioriPCF = GetPCFromRef(SubString, mlspcf_l2apriori_start, &
           & mlspcf_l2apriori_end, &                                     
           & TOOLKIT, returnStatus, l2apriori_Version, DEBUG, &  
           & exactName=FileNameString)                             
         endif
+        hdfVersion = mls_hdf_version(FilenameString)
 
+        gridIndex = InitializeMLSFile(L2GPFile, content = 'l2gp', &
+          & name=FilenameString, shortName=shortFileName, &
+          & type=l_swath, access=DFACC_RDONLY, hdfVersion=hdfVersion, &
+          & PCBottom=mlspcf_l2apriori_start, PCTop=mlspcf_l2apriori_end)
+        L2GPFile%PCFId = LastAprioriPCF
+        gridIndex = AddFileToDataBase(filedatabase, L2GPFile)
         ! If we didn't get a name get the first swath name in the file
         if ( len_trim(swathNameString) == 0 ) then
           allSwathNames = ''
@@ -264,11 +280,11 @@ contains ! =====     Public Procedures     =============================
           if ( listSize == FILENOTFOUND ) then
             call MLSMessage ( MLSMSG_Error, ModuleName, &
               & 'File not found; make sure the name and path are correct' &
-              & // trim(fileNameString) )
+              & // trim(fileNameString), MLSFile=L2GPFile )
           elseif ( listSize < 1 ) then
             call MLSMessage ( MLSMSG_Error, ModuleName, &
               & 'Failed to determine swath names, perhaps none in file ' &
-              & // trim(fileNameString) )
+              & // trim(fileNameString), MLSFile=L2GPFile )
           elseif ( listSize < len(allSwathNames) ) then
             commaPos = index ( allSwathNames, ',' )
             if ( commaPos == 0 ) then
@@ -276,7 +292,7 @@ contains ! =====     Public Procedures     =============================
             elseif ( commaPos == 1 ) then
               call MLSMessage ( MLSMSG_Error, ModuleName, &
               & 'Failed to determine swath name, allswathnames begin with , ' &
-              & // trim(fileNameString) )
+              & // trim(fileNameString), MLSFile=L2GPFile )
             else
               commaPos = commaPos - 1
             endif
@@ -284,22 +300,20 @@ contains ! =====     Public Procedures     =============================
           else
             call MLSMessage ( MLSMSG_Error, ModuleName, &
               & 'Failed to determine swath names, string too long.' &
-              & // trim(fileNameString) )
+              & // trim(fileNameString), MLSFile=L2GPFile )
           end if
         endif
         if ( swathNameString == ' ' ) then
           call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'Failed to determine swath name, obscure error on ' &
-            & // trim(fileNameString) )
+            & // trim(fileNameString), MLSFile=L2GPFile )
         endif
 
         ! Read the swath
         if ( HMOT /= ' ' ) then
-          call ReadL2GPData ( trim(FileNameString), swathNameString, l2gp, &
-           & hdfVersion=hdfVersion, HMOT=HMOT )
+          call ReadL2GPData ( L2GPFile, swathNameString, l2gp, HMOT=HMOT )
         else
-          call ReadL2GPData ( trim(FileNameString), swathNameString, l2gp, &
-           & hdfVersion=hdfVersion )
+          call ReadL2GPData ( L2GPFile, swathNameString, l2gp )
         endif
 
         if( index(switches, 'apr') /= 0 ) &
@@ -307,7 +321,7 @@ contains ! =====     Public Procedures     =============================
 
         if(index(switches, 'pro') /= 0) then                            
            call announce_success(FilenameString, 'l2gp', &                    
-           & swathNameString, hdfVersion=hdfVersion)    
+           & swathNameString, MLSFile=L2GPFile)    
         end if
         apriorifiles%l2gp = catlists(apriorifiles%l2gp, trim(FilenameString))
 
@@ -319,7 +333,7 @@ contains ! =====     Public Procedures     =============================
 
         if ( TOOLKIT ) then
           call split_path_name(FileNameString, path, SubString)
-          LastClimPCF = GetPCFromRef(SubString, mlspcf_l2apriori_start, &
+          LastAprioriPCF = GetPCFromRef(SubString, mlspcf_l2apriori_start, &
           & mlspcf_l2apriori_end, &                                     
           & TOOLKIT, returnStatus, l2apriori_Version, DEBUG, &  
           & exactName=FileNameString)                             
@@ -331,34 +345,33 @@ contains ! =====     Public Procedures     =============================
         call get_string ( sdName, sdNameString )
         sdNameString = sdNameString(2:LEN_TRIM(sdNameString)-1)
 
-        ! create SD interface identifier for l2aux
-         if ( hdfVersion == WILDCARDHDFVERSION ) &
-           & hdfVersion = mls_hdf_version(trim(FilenameString))
-         sd_id = mls_sfstart(FilenameString, DFACC_READ, hdfVersion=hdfVersion)
-        if (sd_id == -1 ) then
-          call announce_error ( son, 'Failed to open l2aux ' // &
-          &  trim(FilenameString) )
-        end if
+        hdfVersion = mls_hdf_version(FilenameString)
+        gridIndex = InitializeMLSFile(L2AUXFile, content = 'l2aux', &
+          & name=FilenameString, shortName=shortFileName, &
+          & type=l_hdf, access=DFACC_RDONLY, hdfVersion=hdfVersion, &
+          & PCBottom=mlspcf_l2apriori_start, PCTop=mlspcf_l2apriori_end)
+        call mls_openFile(L2AUXFile, returnStatus)
+        L2AUXFile%PCFId = LastAprioriPCF
 
+        gridIndex = AddFileToDataBase(filedatabase, L2AUXFile)
         l2aux%name = l2Name
 
         l2Index = AddL2AUXToDatabase( L2AUXDatabase, l2aux )
         call decorate ( key, l2Index )
-        call ReadL2AUXData ( sd_id, sdNameString, quantityType, L2AUXDatabase(l2Index), &
-          & hdfVersion=hdfVersion, checkDimNames=.false. )
+        call ReadL2AUXData ( L2AUXFile, sdNameString, quantityType, &
+          & L2AUXDatabase(l2Index), &
+          & checkDimNames=.false. )
 
         if( index(switches, 'apr') /= 0 ) &
         & call dump( L2AUXDatabase(l2Index), details )
 
-        if ( hdfVersion == WILDCARDHDFVERSION ) &
-          & hdfVersion = mls_hdf_version(trim(FilenameString))
-        fileHandle = mls_sfend(sd_id, hdfVersion=hdfVersion)
-        if ( fileHandle == -1 ) then
+        call mls_closeFile(L2AUXFile, returnStatus)
+        if ( returnStatus /= 0 ) then
           call announce_error ( son, &
             & 'Failed to close l2aux file ' // trim(FileNameString) )
         elseif(index(switches, 'pro') /= 0) then                            
            call announce_success(FilenameString, 'l2aux', &                    
-           & sdNameString, hdfVersion=hdfVersion)    
+           & sdNameString, MLSFile=L2AUXFile)    
         end if
         apriorifiles%l2aux = catlists(apriorifiles%l2aux, trim(FilenameString))
 
@@ -384,9 +397,6 @@ contains ! =====     Public Procedures     =============================
               if ( returnStatus == PGS_S_SUCCESS) exit
             end do
             if ( returnStatus /= PGS_S_SUCCESS ) then
-              ! call announce_error ( son, &
-              !  & 'PCF number not found to supply' // &
-              !  & ' missing ncep file name' )
               call announce_success('ncep', 'no entry in PCF',  ' ')
             else
               LastNCEPPCF = pcf_indx
@@ -397,13 +407,19 @@ contains ! =====     Public Procedures     =============================
           else
              description = 'strat'
           end if
+          gridIndex = InitializeMLSFile(GriddedFile, content = 'gridded', &
+            & name=FilenameString, shortName=shortFileName, &
+            & type=l_grid, access=DFACC_RDONLY, hdfVersion=HDFVERSION_4, &
+            & PCBottom=mlspcf_l2ncep_start, PCTop=mlspcf_l2ncep_end)
+          GriddedFile%PCFId = LastNCEPPCF
+          gridIndex = AddFileToDataBase(filedatabase, GriddedFile)
           ! The gridded data needs to part of the database, even if the file
           ! won't be found and the gridded data empty,
           ! so it can be merged w/o segment faulting
           gridIndex = AddGriddedDataToDatabase( GriddedDatabase, GriddedData )
           call decorate ( key, gridIndex )
           if ( returnStatus == PGS_S_SUCCESS) then
-            call readGriddedData ( FileNameString, son, description, &
+            call readGriddedData ( GriddedFile, son, description, &
 	           & v_is_pressure, GriddedDatabase(gridIndex), returnStatus, &
               & dimListString, TRIM(fieldNameString), missingValue )
           else
@@ -412,11 +428,11 @@ contains ! =====     Public Procedures     =============================
           if ( returnStatus == 0 ) then
             if(index(switches, 'pro') /= 0) &
               & call announce_success(FilenameString, 'ncep', &                    
-               & fieldNameString, hdfVersion=hdfVersion)
+               & fieldNameString, MLSFile=GriddedFile)
             apriorifiles%ncep = catlists(apriorifiles%ncep, trim(FilenameString))
           else
             call announce_success(FilenameString, 'ncep not found--carry on', &                    
-               & fieldNameString, hdfVersion=hdfVersion)
+               & fieldNameString, MLSFile=GriddedFile)
           endif
         case ( l_dao ) ! ---------------------------- DAO Data
           if ( TOOLKIT .and. got(f_file) ) then
@@ -440,13 +456,19 @@ contains ! =====     Public Procedures     =============================
               LastDAOPCF = pcf_indx
             end if
           endif
+          gridIndex = InitializeMLSFile(GriddedFile, content = 'gridded', &
+            & name=FilenameString, shortName=shortFileName, &
+            & type=l_grid, access=DFACC_RDONLY, hdfVersion=HDFVERSION_4, &
+            & PCBottom=mlspcf_l2dao_start, PCTop=mlspcf_l2dao_end)
+          GriddedFile%PCFId = LastDAOPCF
+          gridIndex = AddFileToDataBase(filedatabase, GriddedFile)
           ! The gridded data needs to part of the database, even if the file
           ! won't be found and the gridded data empty,
           ! so it can be merged w/o segment faulting
           gridIndex = AddGriddedDataToDatabase( GriddedDatabase, GriddedData )
           call decorate ( key, gridIndex )
           if ( returnStatus == PGS_S_SUCCESS) then
-            call ReadGriddedData ( FileNameString, son, 'dao', v_is_pressure, &
+            call ReadGriddedData ( GriddedFile, son, 'dao', v_is_pressure, &
               & GriddedDatabase(gridIndex), returnStatus, &
               & dimListString, TRIM(fieldNameString), &
               & missingValue )
@@ -456,11 +478,11 @@ contains ! =====     Public Procedures     =============================
           if ( returnStatus == 0 ) then
             if(index(switches, 'pro') /= 0) &
               & call announce_success(FilenameString, 'dao', &                    
-               & fieldNameString, hdfVersion=hdfVersion)    
+               & fieldNameString, MLSFile=GriddedFile)    
             apriorifiles%dao = catlists(apriorifiles%dao, trim(FilenameString))
           else
             call announce_success(FilenameString, 'dao not found--carry on', &                    
-               & fieldNameString, hdfVersion=hdfVersion)
+               & fieldNameString, MLSFile=GriddedFile)
           endif
         case ( l_gloria ) ! ------------------------- Data in Gloria's UARS format
           if ( TOOLKIT .and. got(f_file) ) then
@@ -482,12 +504,18 @@ contains ! =====     Public Procedures     =============================
             end if
             LastCLIMPCF = pcf_indx
           endif
+          gridIndex = InitializeMLSFile(GriddedFile, content = 'gridded', &
+            & name=FilenameString, shortName=shortFileName, &
+            & type=l_ascii, access=DFACC_RDONLY, &
+            & PCBottom=mlspcf_l2clim_start, PCTop=mlspcf_l2clim_end)
+          GriddedFile%PCFId = LastCLIMPCF
+          gridIndex = AddFileToDataBase(filedatabase, GriddedFile)
           call decorate ( key, &
             & AddGriddedDataToDatabase ( griddedDatabase, &
-            & ReadGloriaFile ( FilenameString ) ) )
+            & ReadGloriaFile ( GriddedFile ) ) )
           if(index(switches, 'pro') /= 0) then                            
             call announce_success(FilenameString, 'Gloria', &                    
-             & swathNameString)    
+             & swathNameString, MLSFile=GriddedFile)    
           endif
         case ( l_climatology ) ! -------------------- Climatology data
           ! Identify file (maybe from PCF if no name given)
@@ -517,8 +545,14 @@ contains ! =====     Public Procedures     =============================
             gotAlready = any(GriddedDatabase%sourceFilename==filenameString)
           end if
           if ( .not. gotAlready ) then
+            gridIndex = InitializeMLSFile(GriddedFile, content = 'clim', &
+              & name=FilenameString, shortName=shortFileName, &
+              & type=l_ascii, access=DFACC_RDONLY, &
+              & PCBottom=mlspcf_l2clim_start, PCTop=mlspcf_l2clim_end)
+            GriddedFile%PCFId = LastCLIMPCF
+            gridIndex = AddFileToDataBase(filedatabase, GriddedFile)
             ! No, well read it then, add its entire contents to the database
-            call read_climatology ( FileNameString, son, &
+            call read_climatology ( GriddedFile, son, &
               & GriddedDatabase, returnStatus, &
               & mlspcf_l2apriori_start, mlspcf_l2apriori_end, &
               & missingValue )
@@ -539,7 +573,7 @@ contains ! =====     Public Procedures     =============================
             call decorate ( key, gridIndex )
             if(index(switches, 'pro') /= 0) then                          
               call announce_success(FilenameString, 'climatology', &                  
-               & fieldNameString)    
+               & fieldNameString, MLSFile=GriddedFile)
             endif
           else
             call announce_error ( son, 'Field ' // trim(fieldNameString) // &
@@ -588,11 +622,11 @@ contains ! =====     Public Procedures     =============================
     integer             :: record_length
     integer             :: status
     ! Executable
-    fileID = mls_io_gen_openF('swopen', .TRUE., status, &
+    fileID = mls_io_gen_openF(l_swath, .TRUE., status, &
       & record_length, DFACC_RDWR, FileName=Filename, &
       & hdfVersion=hdfVersion, debugOption=.false. )  
     call writeAPrioriAttributes_ID ( fileID, hdfVersion )
-    status = mls_io_gen_closeF('swclose', fileID, &
+    status = mls_io_gen_closeF(l_swath, fileID, &
       & hdfVersion=hdfVersion)
   end subroutine writeAPrioriAttributes_name
 
@@ -600,9 +634,8 @@ contains ! =====     Public Procedures     =============================
   subroutine writeAPrioriAttributes_ID ( fileID, hdfVersion )
     ! Write info about what apriori files were used
     ! Storing them as hdfeos5 attributes
-    use HDFEOS5, only: HE5T_NATIVE_INT, &
-      & HE5T_NATIVE_DOUBLE, MLS_charType
-    use MLSHDFEOS, only: he5_EHwrglatt, mls_EHwrglatt
+    use HDFEOS5, only: MLS_charType
+    use MLSHDFEOS, only: mls_EHwrglatt
     ! Args
     integer, intent(in) :: fileID
     integer, intent(in) :: hdfVersion  ! Must be 5 to work properly
@@ -643,11 +676,13 @@ contains ! =====     Public Procedures     =============================
 ! =====     Private Procedures     =====================================
 
   ! ---------------------------------------------  announce_success  -----
-  subroutine announce_success ( Name, l2_type, quantityName, hdfVersion )
+  subroutine announce_success ( Name, l2_type, quantityName, &
+    & hdfVersion, MLSFile )
     character(LEN=*), intent(in)   :: Name
     character(LEN=*), intent(in)   :: l2_type
     integer, optional,  intent(in) :: hdfVersion
     character(LEN=*), intent(in) :: quantityName
+    type(MLSFile_T), optional :: MLSFile
 
     ! Local variables
     integer                        :: myhdfVersion
@@ -673,11 +708,13 @@ contains ! =====     Public Procedures     =============================
     call output ( 'quantity', advance='yes')           
     call blanks(5)                                        
     call output ( trim(quantityName), advance='yes')      
+    if ( present(MLSFile) .and. index(switches, 'apr') /= 0 ) &
+      & call dump(MLSFile)
   end subroutine announce_success
 
   ! ------------------------------------------------  announce_error  -----
   subroutine Announce_error ( lcf_where, full_message, use_toolkit, &
-    & error_number )
+    & error_number, APrioriFile )
   
    ! Arguments
   
@@ -685,6 +722,7 @@ contains ! =====     Public Procedures     =============================
     character(LEN=*), intent(in)    :: Full_message
     logical, intent(in), optional :: Use_toolkit
     integer, intent(in), optional    :: Error_number
+    type(MLSFile_T), intent(in), optional    :: APrioriFile
     ! Local
     logical :: Just_print_it
     logical, parameter :: Default_output_by_toolkit = .true.
@@ -732,7 +770,7 @@ contains ! =====     Public Procedures     =============================
         call output ( error_number, advance='yes' )
       end if
     end if
-
+    if ( present(APrioriFile) ) call dump(APrioriFile)
 !===========================
   end subroutine Announce_error
 !===========================
@@ -747,6 +785,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.58  2005/06/14 20:40:27  pwagner
+! Interfaces changed to accept MLSFile_T args
+!
 ! Revision 2.57  2004/09/23 23:03:14  pwagner
 ! Added writeAPrioriAttributes
 !
