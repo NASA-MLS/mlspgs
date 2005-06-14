@@ -677,9 +677,6 @@ contains ! =====     Public Procedures     =============================
         call MLSMessage(MLSMSG_Error, ModuleName, &
         & 'Unable to open l2gp file', MLSFile=L2GPFile)
     endif
-    if ( L2GPFile%access == DFACC_RDONLY )  &
-      & call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'l2gp file is rdonly', MLSFile=L2GPFile)
     if (L2GPFile%hdfVersion == HDFVERSION_4) then
       call ReadL2GPData_MF_hdf(L2GPFile, swathname, l2gp, my_hmot,&
         & numProfs, firstProf, lastProf, ReadStatus)
@@ -1856,6 +1853,9 @@ contains ! =====     Public Procedures     =============================
         call MLSMessage(MLSMSG_Error, ModuleName, &
         & 'Unable to open l2gp file', MLSFile=L2GPFile)
     endif
+    if ( L2GPFile%access == DFACC_RDONLY )  &
+      & call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'l2gp file is rdonly', MLSFile=L2GPFile)
     call OutputL2GP_createFile_MF (l2gp, L2GPFile, &
       & swathName, notUnlimited=notUnlimited)
     call OutputL2GP_writeGeo_MF (l2gp, L2GPFile, &
@@ -3208,6 +3208,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.113  2005/06/14 20:38:27  pwagner
+! Interfaces changed to accept MLSFile_T args
+!
 ! Revision 2.112  2004/12/14 21:38:59  pwagner
 ! New verticalCoordinate component, attribute
 !
