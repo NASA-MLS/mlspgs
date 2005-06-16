@@ -8,7 +8,7 @@ module OutputAndClose ! outputs all data from the Join module to the
 
 !=======================================================================================
 
-  use DirectWrite_m, only: DirectData_T
+  use DirectWrite_m, only: DirectData_T, Dump
   use Hdf, only: DFACC_RDWR
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use OUTPUT_M, only: blanks, OUTPUT
@@ -109,7 +109,7 @@ contains ! =====     Public Procedures     =============================
     logical :: ASCII                    ! Is this l2pc ascii?
     integer :: DB_index
     integer, dimension(:), pointer :: DONTPACK ! Quantities not to pack
-    logical, parameter :: DEBUG = .FALSE.
+    logical, parameter :: DEBUG = .false.
     integer :: FIELD_INDEX              ! F_... field code
     integer :: FIELD_NO                 ! Index of assign vertex sons of Key
     integer :: FIELDVALUE               ! For get_boolean
@@ -611,7 +611,7 @@ contains ! =====     Public Procedures     =============================
     ! We assume hdfVersion is 5
     if ( CATENATESPLITS .and. associated(DirectDatabase) &
       & .and. .not. SKIPDIRECTWRITES ) then
-    !! if ( .true. .and. associated(DirectDatabase) ) then
+      if ( debug ) call dump(DirectDatabase)
       ! Any dgg eligible for being catenated
       DB_index = findFirst( DirectDatabase%autoType, l_l2dgg )
       if ( findNext(DirectDatabase%autoType, l_l2dgg, DB_index) > 0 ) then
@@ -654,8 +654,14 @@ contains ! =====     Public Procedures     =============================
           if ( returnStatus /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'unable to addmetadata to ' // trim(l2gpPhysicalFilename) )
         end if
-        if ( madeFile ) &
-         & call writeAPrioriAttributes(trim(l2gpPhysicalFilename), HDFVERSION_5)
+        if ( madeFile ) then
+         call writeAPrioriAttributes(trim(l2gpPhysicalFilename), HDFVERSION_5)
+         outputFile => AddInitializeMLSFile(filedatabase, &
+           & content='l2dgg', &
+           & name=l2gpPhysicalFilename, shortName='DGG', &
+           & type=l_swath, access=DFACC_RDWR, HDFVersion=HDFVERSION_5, &
+           & PCBottom=mlspcf_l2dgg_start, PCTop=mlspcf_l2dgg_end)
+        end if
       end if
       ! Next we would do the same for any split dgm direct write files
       DB_index = findFirst( DirectDatabase%autoType, l_l2aux )
@@ -678,6 +684,11 @@ contains ! =====     Public Procedures     =============================
         madeFile = .false.
         do DB_index = 1, size(DirectDatabase)
           if ( DirectDatabase(DB_index)%autoType /= l_l2aux ) cycle
+          if ( .not. associated(DirectDatabase(DB_index)%sdNames) ) then
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            &  "no sd known for " // trim(DirectDatabase(DB_index)%fileName) )
+            cycle
+          endif
           ! print *, 'About to try to convert array2List'
           ! call dump(DirectDatabase(DB_index))
           call Array2List(DirectDatabase(DB_index)%sdNames, sdList)
@@ -744,6 +755,13 @@ contains ! =====     Public Procedures     =============================
            & 'FailedMsgs', trim_safe(parallel%FailedMsgs), .true.)
           call h5gclose_f(grp_id, returnStatus)
           returnStatus = mls_sfend(sdfid, hdfVersion=HDFVERSION_5)
+          ! Probably excessively complex conditions for whether to add
+          ! into database or not
+          outputFile => AddInitializeMLSFile(filedatabase, &
+           & content='l2aux', &
+           & name=l2auxPhysicalFilename, shortName='L2AUX-DGM', &
+           & type=l_hdf, access=DFACC_RDWR, HDFVersion=HDFVERSION_5, &
+           & PCBottom=mlspcf_l2dgm_start, PCTop=mlspcf_l2dgm_end)
         endif
       end if
     end if
@@ -1018,6 +1036,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.107  2005/06/16 18:43:01  pwagner
+! Should not bomb if catenating split files w/o toolkit
+!
 ! Revision 2.106  2005/06/14 20:43:49  pwagner
 ! Interfaces changed to accept MLSFile_T args
 !
