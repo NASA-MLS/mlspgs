@@ -784,6 +784,7 @@ contains
 
    PRINT_EVERY_OPEN = DEFAULT_PRINT_EVERY_OPEN .or. debug
    returnStatus = 0           ! In case using Toolkit but supplied FileName
+   myPC = 0
     ! In case of premature return
     theFileHandle = FH_ON_ERROR
     ! record_length = DEFAULTRECLEN
@@ -803,7 +804,7 @@ contains
       myPC = thePC
       returnStatus = Pgs_pc_getReference(thePC, your_version, &
         & myName)
-      if ( debug .or. .true. ) then
+      if ( debug ) then
           call output('Call to Pgs_pc_getReference', &
           & advance='yes')
           call output('returnStatus: ', advance='no')
@@ -857,7 +858,7 @@ contains
      myhdfVersion = mls_hdf_version(trim(myName), hdfVersion, FileAccessType)             
    endif
 
-   if ( debug .or. .true. ) then
+   if ( debug ) then
        call output('Arguments and options in call to mls_io_gen_openF', &
        & advance='yes')
        call output('Mode: ', advance='no')
@@ -2583,6 +2584,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.66  2005/06/16 18:41:41  pwagner
+! Stopped some unnecessary printing
+!
 ! Revision 2.65  2005/06/14 20:32:09  pwagner
 ! Many changes to accommodate the new fields in MLSFile_T
 !
