@@ -746,7 +746,7 @@ contains ! =====     Public Procedures     =============================
       ! Open/create the file of interest
       isnewdirect = .true.  ! Just so it has a value even for toolkitless runs
       call split_path_name(filename, path, file_base)
-      if ( distributingSources .or. TOOLKIT ) then ! Was if TOOLKIT !?????? Check with PAW - NJL
+      if ( distributingSources .or. TOOLKIT .or. CATENATESPLITS ) then ! Was if TOOLKIT !?????? Check with PAW - NJL
         call ExpandDirectDB ( DirectDatabase, file_base, thisDirect, &
         & isnewdirect )
         if ( DeeBUG ) then
@@ -762,11 +762,13 @@ contains ! =====     Public Procedures     =============================
           & 'ExpandDirectDB returned unassociated thisDirect' )
         end if
       end if
-      if ( .not. TOOLKIT ) then
+      if ( .not. (TOOLKIT .or. CATENATESPLITS) ) then
         handle = 0
       else if ( .not. isnewdirect ) then
         Filename = thisDirect%fileName
         Handle = thisDirect%Handle
+      else if ( .not. TOOLKIT ) then
+        Handle = -1
       else if ( any ( outputType == (/ l_l2gp /) ) ) then
         Handle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
           & mlspcf_l2gp_end, &
@@ -795,7 +797,7 @@ contains ! =====     Public Procedures     =============================
          & MLSMSG_Error, ModuleName, &
          & 'Failed in GetPCFromRef for ' // trim(filename) )
       end if
-      if ( isnewdirect .and. TOOLKIT ) then
+      if ( isnewdirect .and. (TOOLKIT .or. CATENATESPLITS) ) then
         thisDirect%Handle = Handle
         thisDirect%FileName = FileName
       end if
@@ -948,8 +950,9 @@ contains ! =====     Public Procedures     =============================
           & sourceQuantities(source) )
         hdfNameIndex = qty%label
         call get_string ( hdfNameIndex, hdfName, strip=.true. )
-        if ( TOOLKIT ) call ExpandSDNames(thisDirect, trim(hdfName))
-        if ( TOOLKIT .and. DEEBUG ) call dump(thisDirect)
+        if ( TOOLKIT .or. CATENATESPLITS ) &
+          & call ExpandSDNames(thisDirect, trim(hdfName))
+        if ( (TOOLKIT .or. CATENATESPLITS) .and. DEEBUG ) call dump(thisDirect)
         if ( precisionVectors(source) /= 0 ) then
           precQty => GetVectorQtyByTemplateIndex &
             & ( vectors(precisionVectors(source)), precisionQuantities(source) )
@@ -1093,7 +1096,7 @@ contains ! =====     Public Procedures     =============================
           & MLSFile=directFile )
         return
       end if
-      if ( isnewdirect .and. TOOLKIT ) then
+      if ( isnewdirect .and. (TOOLKIT .or. CATENATESPLITS) ) then
         thisDirect%type = outputType
         thisDirect%fileNameBase = file_base
       end if
@@ -1956,6 +1959,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.119  2005/06/16 18:43:01  pwagner
+! Should not bomb if catenating split files w/o toolkit
+!
 ! Revision 2.118  2005/06/14 20:43:19  pwagner
 ! Interfaces changed to accept MLSFile_T args
 !
