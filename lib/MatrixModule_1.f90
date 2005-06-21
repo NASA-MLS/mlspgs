@@ -2203,7 +2203,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine UpdateDiagonalSPD_1
 
   ! ----------------------------------------  UpdateDiagonalVec_1  -----
-  subroutine UpdateDiagonalVec_1 ( A, X, SUBTRACT, SQUARE, INVERT )
+  subroutine UpdateDiagonalVec_1 ( A, X, SUBTRACT, SQUARE, INVERT, FORGIVEZEROS )
   ! Add X to the diagonal of A.
   ! If SUBTRACT is present and true, subtract X from the diagonal.
     type(matrix_SPD_T), intent(inout) :: A
@@ -2212,6 +2212,7 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in), optional :: SQUARE ! Update with square of X
     logical, intent(in), optional :: INVERT ! Update with inverse of (square
     !                                         of) X
+    logical, intent(in), optional :: FORGIVEZEROS ! Allow zeros in invert case
 
     integer :: I
     logical :: MYSQUARE
@@ -2226,13 +2227,13 @@ contains ! =====     Public Procedures     =============================
       do i = 1, min(a%m%row%nb,a%m%col%nb)
         call updateDiagonal ( a%m%block(i,i), &
           & (x%quantities(a%m%row%quant(i))%values(:,a%m%row%inst(i)))**2, &
-          & subtract, invert )
+          & subtract, invert, forgiveZeros )
       end do
     else
       do i = 1, min(a%m%row%nb,a%m%col%nb)
         call updateDiagonal ( a%m%block(i,i), &
           & x%quantities(a%m%row%quant(i))%values(:,a%m%row%inst(i)), &
-          & subtract, invert )
+          & subtract, invert, forgiveZeros )
       end do
     end if
   end subroutine UpdateDiagonalVec_1
@@ -2549,6 +2550,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.104  2005/06/21 23:58:14  livesey
+! Added forgiveZeros option to UpdateDiagonal
+!
 ! Revision 2.103  2005/05/25 02:14:43  vsnyder
 ! Use names for bounds for CHARS in Dump_Struct
 !
