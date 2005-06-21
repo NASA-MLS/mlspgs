@@ -24,13 +24,19 @@
         j = 1 + m*(i-1)                 ! Index into longer side
         a%r1(i) = j
         a%r2(i) = j + m - 1
+        ! Don't misinterpret the use of r1 and r2 here, it does make sense
+        ! see their assignment above.
         if ( myInvert ) then
-          if ( abs(x(i)) <= tiny(0.0_r8) ) call MLSMessage ( &
-            & MLSMSG_Error, moduleName, &
-            & "Cannot update with inverse of zero in UpdateDiagonalVec_0" )
-          ! Don't misinterpret the use of r1 and r2 here, it does make sense
-          ! see their assignment above.
-          a%values(a%r1(i):a%r2(i),1) = s / x(a%r1(i):a%r2(i))
+          if ( abs(x(i)) <= tiny(0.0_r8) ) then
+            if ( myForgive ) then
+              a%values(a%r1(i):a%r2(i),1) = 0.0_r8
+            else
+              call MLSMessage ( MLSMSG_Error, moduleName, &
+                & "Cannot update with inverse of zero in UpdateDiagonalVec_0" )
+            end if
+          else
+            a%values(a%r1(i):a%r2(i),1) = s / x(a%r1(i):a%r2(i))
+          end if
         else
           a%values(a%r1(i):a%r2(i),1) = s * x(a%r1(i):a%r2(i))
         end if
@@ -48,10 +54,16 @@
           return
         end if
         if ( myInvert ) then
-          if ( abs(x(i)) <= tiny(0.0_r8) ) call MLSMessage ( &
-            & MLSMSG_Error, moduleName, &
-            & "Cannot update with inverse of zero in UpdateDiagonalVec_0" )
-          v = s / x(i)
+          if ( abs(x(i)) <= tiny(0.0_r8) ) then
+            if ( myForgive ) then
+              v = 0.0_r8
+            else
+              call MLSMessage ( MLSMSG_Error, moduleName, &
+                & "Cannot update with inverse of zero in UpdateDiagonalVec_0" )
+            end if
+          else
+            v = s / x(i)
+          end if
         else
           v = s * x(i)
         end if
@@ -63,10 +75,16 @@
         do j = a%r1(i-1)+1, a%r1(i) ! hunt for the diagonal subscript
           if ( a%r2(j) == i ) then
             if ( myInvert ) then
-              if ( abs(x(i)) <= tiny(0.0_r8) ) call MLSMessage ( &
-                & MLSMSG_Error, moduleName, &
-                & "Cannot update with inverse of zero in UpdateDiagonalVec_0" )
-              v = s / x(i)
+              if ( abs(x(i)) <= tiny(0.0_r8) ) then
+                if ( myForgive ) then
+                  v = 0.0_r8
+                else
+                  call MLSMessage ( MLSMSG_Error, moduleName, &
+                    & "Cannot update with inverse of zero in UpdateDiagonalVec_0" )
+                end if
+              else
+                v = s / x(i)
+              end if
             else
               v = s * x(i)
             end if
@@ -88,6 +106,9 @@
     end select
 
 ! $Log$
+! Revision 2.2  2005/06/21 23:57:47  livesey
+! Added handling of forgiveZeros
+!
 ! Revision 2.1  2003/01/08 21:29:27  livesey
 ! First version, extracted from MatrixModule_0
 !
