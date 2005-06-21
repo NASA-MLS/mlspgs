@@ -2307,9 +2307,9 @@ contains ! =====     Public Procedures     =============================
         & vectorNameText='_Dmasked' )
       call ClearUnderMask ( Dmasked )
 
-      if ( lengthScale == 0 .and. .not. invert ) then
+      if ( lengthScale == 0 ) then
         call updateDiagonal ( covariance, vectors(diagonal), square=.true.,&
-          & invert=invert )
+          & invert=invert, forgiveZeros=.true. )
       else
         ! Do a more complex fill, either we're doing non-diagonal, or there might
         ! be zeros to 'invert'
@@ -6873,6 +6873,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.305  2005/06/21 23:56:24  livesey
+! Added forgiveZeros handling to FillCovariance for efficiency.
+!
 ! Revision 2.304  2005/06/03 02:05:29  vsnyder
 ! New copyright notice, move Id to not_used_here to avoid cascades,
 ! get VGrids from VGridsDatabase instead of passing as an argument.
