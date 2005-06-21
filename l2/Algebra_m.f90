@@ -349,6 +349,7 @@ contains
       regOrders = 0
       regWeights = 0
       regQuants = 0
+      horizontal = .false.
 
       do i = 2, nsons(root)
         son = subtree ( i, root )
@@ -966,7 +967,18 @@ contains
             case ( w_matrix_k ) ! .................. Matrix_S * Matrix_K
               call Announce_Error ( root, notSupported )
             case ( w_matrix_s ) ! .................. Matrix_S * Matrix_S
-              call Announce_Error ( root, notSupported )
+              ! Promote matrix to plain
+              call copyMatrix ( matrix, matrix_s%m )
+              call ReflectMatrix ( matrix )
+              ! Promote matrix2 to plain
+              call copyMatrix ( matrix2, matrix_s2%m )
+              call ReflectMatrix ( matrix2 )
+              ! Do the multiplication, store the result
+              call multiplyMatrix_XY ( matrix, matrix2, matrix3 )
+              call assignMatrix ( matrix, matrix3 ) ! Destroys Matrix first
+              ! Tidy up
+              call DestroyMatrix ( matrix2 )
+              what = w_matrix
             end select
           end select
         case ( n_div )  ! value = value / value2 ------------------ Divide By
@@ -1443,6 +1455,9 @@ contains
 end module ALGEBRA_M
 
 ! $Log$
+! Revision 2.19  2005/06/21 23:55:53  livesey
+! Added some more promotions.
+!
 ! Revision 2.18  2005/05/25 02:15:13  vsnyder
 ! Add 'Broadcast scalar to vector' capability
 !
