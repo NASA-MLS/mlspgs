@@ -3194,7 +3194,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine UpdateDiagonal_0_r4
 
   ! ----------------------------------------  UpdateDiagonalVec_0_r8  -----
-  subroutine UpdateDiagonalVec_0_r8 ( A, X, SUBTRACT, INVERT )
+  subroutine UpdateDiagonalVec_0_r8 ( A, X, SUBTRACT, INVERT, FORGIVEZEROS )
   ! Add X to the diagonal of A if SUBTRACT is absent or false.
   ! Subtract X from the diatonal of A if SUBTRACT is present and true.
   ! If INVERT is present and true, use the inverses of the elements of X.
@@ -3202,9 +3202,11 @@ contains ! =====     Public Procedures     =============================
     real(r8), intent(in) :: X(:)
     logical, intent(in), optional :: SUBTRACT
     logical, intent(in), optional :: INVERT  ! Update with inverse of X
+    logical, intent(in), optional :: FORGIVEZEROS ! Allow zeros in invert case
 
     integer :: I, J                          ! Subscripts and loop inductors
     logical :: MyInvert
+    logical :: MyForgive
     integer :: N                             ! min(a%nCols,a%nRows)
     integer :: M                             ! max(a%nCols,a%nRows) / n
     integer :: nCols, nRows                  ! Copies of a%...
@@ -3224,17 +3226,22 @@ contains ! =====     Public Procedures     =============================
       integer :: I
       do i = start, n
         if ( myInvert ) then
-          if ( abs(x(i)) <= tiny(0.0_r8) ) call MLSMessage ( &
-            & MLSMSG_Error, moduleName, &
-            & "Cannot update with inverse of zero in UpdateDiagonalVec_0" )
-          v = s / x(i)
+          if ( abs(x(i)) <= tiny(0.0_r8) ) then
+            if ( myForgive ) then
+              v = 0.0_r8
+            else
+              call MLSMessage ( MLSMSG_Error, moduleName, &
+                & "Cannot update with inverse of zero in UpdateDiagonalVec_0" )
+            end if
+          else
+            v = s / x(i)
+          end if
         else
           v = s * x(i)
         end if
         t(i,i) = t(i,i) + v
       end do
     end subroutine UpdateDenseDiagonal
-
   end subroutine UpdateDiagonalVec_0_r8
 
   ! ----------------------------------------  UpdateDiagonalVec_0_r4  -----
@@ -3249,6 +3256,7 @@ contains ! =====     Public Procedures     =============================
 
     integer :: I, J                          ! Subscripts and loop inductors
     logical :: MyInvert
+    logical :: MyForgive
     integer :: N                             ! min(a%nCols,a%nRows)
     integer :: M                             ! max(a%nCols,a%nRows) / n
     integer :: nCols, nRows                  ! Copies of a%...
@@ -3268,10 +3276,16 @@ contains ! =====     Public Procedures     =============================
       integer :: I
       do i = start, n
         if ( myInvert ) then
-          if ( abs(x(i)) <= tiny(0.0_r8) ) call MLSMessage ( &
-            & MLSMSG_Error, moduleName, &
-            & "Cannot update with inverse of zero in UpdateDiagonalVec_0" )
-          v = s / x(i)
+          if ( abs(x(i)) <= tiny(0.0_r4) ) then
+            if ( myForgive ) then
+              v = 0.0_r4
+            else
+              call MLSMessage ( MLSMSG_Error, moduleName, &
+                & "Cannot update with inverse of zero in UpdateDiagonalVec_0" )
+            end if
+          else
+            v = s / x(i)
+          end if
         else
           v = s * x(i)
         end if
@@ -3425,6 +3439,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.105  2005/06/21 23:57:13  livesey
+! Added forgiveZeros in UpdateDiagonal (invert)
+!
 ! Revision 2.104  2004/10/14 04:54:06  livesey
 ! Added ClearLower_0
 !
