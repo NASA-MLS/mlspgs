@@ -1,8 +1,16 @@
 #!/bin/sh
 # add_idents.sh
 
-# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
-# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
 
 # "$Id$"
 # --------------- add_idents.sh help
@@ -11,15 +19,28 @@
 #List compiled from args on command-line
 #or else automatically computed to match pattern
 #  *{$suffix} in supplied directory names
-#The fix involves adding the following lines to each file:
-#    "$RCSfile$"
+#The fix involves adding the following two blocs to each file:
+#       (bloc 1)
+#  >---------------------------- RCS Module Info ------------------------------
+#    character (len=*), parameter :: IdParm = &
+#  >      "$RCSfile$"
 #  >  private :: not_used_here
+#  >---------------------------------------------------------------------------
 #   . . .
+#       (bloc 2)
 #  >  logical function not_used_here()
+#  >---------------------------- RCS Ident Info -------------------------------
+#    character (len=*), parameter :: IdParm = &
+#  >      "$Id$"
+#    character (len=len(idParm)), save :: Id = idParm
+#  >---------------------------------------------------------------------------
 #  >    not_used_here = (id(1:1) == ModuleName(1:1))
 #  >  end function not_used_here
 #end module L1BData
 #(where the added lines have been marked with the ">")
+# Note that we assume the older style of rcs info is already present
+# In the present incarnation, 
+# we also replace the older wording of the copyright statement
 #
 #Use(2)
 #Print toc or api from list of files
@@ -30,32 +51,150 @@
 #add_idents.sh [opt1 [arg1]] [opt2 [arg2]] .. [optm [argm]] [filelist]
 #
 #    O p t i o n s
-# -api          use(2) printing api
-# -toc          use(2) printing toc
-# -id           with use(2), printing $id line, too
-# -rcs          with use(2), printing $rcs line, too
-# -n            with use(2), print only if there is a (api,toc) section
+# -h[elp]       print brief help message; exit
 # -d path       path of directory if automatic
 # -suf suffix   file name suffix if automatic; e.g. ".f90"
-# -h[elp]       print brief help message; exit
+#       with use (1) only
+# -dryrun       print diff between result and original only, don't replace
+# -dtxt path    where to find RCSIdent.txt, RCSModule.txt, and COPYRIGHT.txt
+# -rep script   use script instead of replacetext.sh
+#       with use (2) only
+# -api          printing api
+# -toc          printing toc
+# -id           printing $id line, too
+# -rcs          printing $rcs line, too
+# -n            print only if there is a (api,toc) section
 #Notes:
 #(1)If option -suf present but -d absent, will search current working directory
 #(2)The options -suf and -d may be repeated; e.g.
 #   add_idents -d dir1 -d dir2 .. -suf sufx1 -suf sufx2 ..
 #(3)The default use is Use(1); -api and -toc are mutually exclusive
+#(4)use(1) requires 
+#   (a) replacetext.sh to be in the path (unless overridden by -rep)
+#   (b) RCSIdent.txt, RCSModule.txt, and COPYRIGHT.txt
+#       to be in the current working directory (unless overridden by -dtxt)
+#(5)Not tested with c, f77, shell scripts, Makefiles, or include files
 # --------------- End add_idents.sh help
 #Another example of my regrettable tendency to bundle a number of
 #different functionalities within a single multi-use file
 #Isn't it cleaner to devote a single file to a single use?
+
+#---------------------------- get_unique_name
+#
+# Function returns a unique name based on arg, PID and HOSTNAME
+# e.g.,
+#           temp_file_name=`get_unique_name foo`
+#           echo $temp_file_name
+# might print foo.colossus.21455
+# if no arg, defaults to "temp" (very original name)
+# if two args present, assumes second is punctuation to
+# use in pace of "."
+
+get_unique_name()
+{
+
+   # How many args?
+      if [ $# -gt 1 ]
+      then
+        pt="$2"
+        temp="$1"
+      elif [ $# -gt 0 ]
+      then
+        pt="."
+        temp="$1"
+      else
+        pt="."
+        temp="temp"
+      fi
+   # Is $HOST defined?
+      if [ "$HOST" != "" ]
+      then
+         our_host_name="$HOST"
+      elif [ "$HOSTNAME" != "" ]
+      then
+         our_host_name="$HOSTNAME"
+      else
+         our_host_name="host"
+      fi
+   # if in form host.moon.planet.star.. extract host
+      our_host_name=`echo $our_host_name | sed 's/\./,/g'`
+      our_host_name=`perl -e '@parts=split(",","$ARGV[0]"); print $parts[0]' $our_host_name`
+      echo $temp${pt}$our_host_name${pt}$$
+}
+      
+#------------------------------- mv_if_diff ------------
+#
+# replace 2nd arg with 1st if diff
+# unless dryrun is "yes", in which case just print diff
+# usage: mv_if_diff file1 file2
+
+mv_if_diff()
+{
+  test=`diff "$1" "$2"`
+  if [ "$1" = "$2" ]
+  then
+    echo "$1 and $2 are the same files"
+  elif [ "$test" = "" ]
+  then
+    echo "$1 and $2 are the same"
+    rm "$1"
+  elif [ "$dryrun" = "yes" ]
+  then
+    echo "$1 and $2 diff:"
+    diff "$1" "$2"
+    rm "$1"
+  else
+    mv "$1" "$2"
+  fi
+}
 
 #------------------------------- add_the_lines ------------
 #
 # Function to add the lines needed to assure that after compilation
 # a file's $id and $RCS idents will be found in the executable
 # Relies upon a trick to circumvent Lahey's zealous optimizer
+# RCS id split into two blocs to circumvent NAG's propensity
+# to launch cascade of recompilation when date field in ID changes
+# at each cvs commit
+# Upgraded to:
+# (1) Replace the copyright statement with its new working
+# (2) Separate $id and $RCS identifiers, moving the former 
+#      among the not_used_here private function code bloc
 # usage: add_the_lines file
 
 add_the_lines()
+{
+file="$1"
+tempfile=`get_unique_name addlines`
+# has the file already had the new copyright statement added?
+test=`grep -i 'Office of Technology Transfer' $file`                     
+if [ "$test" = "" ]                                      
+then                                                     
+  # First: replace the old Copyright
+  $REPLACER -i "Copyright" "Government Sponsorship" \
+    "$file" $dtxt/COPYRIGHT.txt > "$tempfile"
+  mv_if_diff "$tempfile" "$file"
+  # Second: replace the old RCS bloc
+  $REPLACER -i "-- RCS Ident Info --" "!--------------------------------------------" \
+    $file $dtxt/RCSModule.txt > "$tempfile"
+  mv_if_diff "$tempfile" "$file"
+  # Third: replace the old not_used_here bloc
+  $REPLACER -i "logical function not_used_here" "end function not_used_here" \
+    $file $dtxt/RCSIdent.txt > "$tempfile"
+  mv_if_diff "$tempfile" "$file"
+else                                                
+  echo "$file already has ident added in this way"  
+fi                                                  
+}
+
+#------------------------------- add_the_lines_old ------------
+#
+# Function to add the lines needed to assure that after compilation
+# a file's $id and $RCS idents will be found in the executable
+# Relies upon a trick to circumvent Lahey's zealous optimizer
+# usage: add_the_lines file
+
+add_the_lines_old()
 {
 file="$1"
 test=`grep -i 'not_used_here' $file`                     
@@ -158,9 +297,12 @@ my_name=add_idents.sh
 # The following takes possible values "add", "api", "toc"
 # the default is "add"
 my_use="add"
+dryrun="no"
 print_id="no"
 print_rcs="no"
 skip_if_none="no"
+dtxt=`pwd`
+REPLACER="replacetext.sh"
 #
 # Get arguments from command line
 #
@@ -175,6 +317,20 @@ while [ "$more_opts" = "yes" ] ; do
 	;;
 	-suf )
 	    suffixes="$suffixes $2"
+	    shift
+       shift
+	;;
+	-dryrun )
+	    dryrun="yes"
+	    shift
+	;;
+	-dtxt )
+	    dtxt="$2"
+	    shift
+       shift
+	;;
+	-rep )
+	    REPLACER="$2"
 	    shift
        shift
 	;;
@@ -275,6 +431,9 @@ do
 done
 exit 0
 # $Log$
+# Revision 1.3  2002/10/11 23:01:05  pwagner
+# Added -n option with use(2)
+#
 # Revision 1.2  2002/10/11 19:37:42  pwagner
 # Added use(2): print toc/api sections from source files
 #
