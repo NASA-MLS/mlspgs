@@ -1,5 +1,13 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
 module ModelInput
 
@@ -14,14 +22,11 @@ module ModelInput
       Private
       Public :: MODEL_ATMOS 
 
- !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), private, parameter :: IdParm =                          &
-    "$Id$"
-  character (len=len(idParm)), private :: Id = idParm
-  character (len=*), private, parameter :: ModuleName=                       &
-    "$RCSfile$"
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
   private :: not_used_here 
- !---------------------------------------------------------------------------
+!---------------------------------------------------------------------------
       
 contains
 
@@ -139,12 +144,20 @@ contains
       END SUBROUTINE MODEL_ATMOS
 
   logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
 
 end module ModelInput
 
 ! $Log$
+! Revision 1.15  2003/05/14 23:29:13  dwu
+! fix a dimension problem with locate
+!
 ! Revision 1.14  2003/05/14 23:25:36  dwu
 ! fix a dimension problem with WC
 !
