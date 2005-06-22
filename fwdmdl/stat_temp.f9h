@@ -1,5 +1,13 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
 ! pure function ?_STAT_TEMP ( TEMP, FREQ ) result ( STAT_TEMP )
 
@@ -44,6 +52,9 @@
 ! End function ?_STAT_TEMP
 
 ! $Log$
+! Revision 2.5  2003/02/05 21:47:16  vsnyder
+! Cosmetic change
+!
 ! Revision 2.4  2002/10/12 01:36:17  vsnyder
 ! Better comments, more RCS comments, cosmetic changes
 !
