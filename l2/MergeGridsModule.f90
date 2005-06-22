@@ -1,5 +1,13 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
 module MergeGridsModule
 
@@ -11,14 +19,11 @@ module MergeGridsModule
 
   public :: MergeGrids
 
-  !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), private, parameter :: IdParm = &
-    "$Id$"
-  character (len=len(idParm)), private :: Id = idParm
+!---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
-    "$RCSfile$"
+       "$RCSfile$"
   private :: not_used_here 
-  !---------------------------------------------------------------------------
+!---------------------------------------------------------------------------
 
 contains ! =================================== Public procedures
 
@@ -405,12 +410,20 @@ contains ! =================================== Public procedures
   end function MergeOneGrid
 
   logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
 
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.15  2005/06/22 18:57:02  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.14  2003/08/15 23:58:20  vsnyder
 ! Get PHYQ_... directly from Intrinsic instead of indirectly via Units
 !
