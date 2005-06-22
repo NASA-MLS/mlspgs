@@ -1,5 +1,13 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
 module DECLARATION_TABLE
 
@@ -98,11 +106,8 @@ module DECLARATION_TABLE
   integer, save, allocatable :: SYMBOL_DECL(:) ! indexed by string
                                         ! index, gives index in decl_table.
 
-!---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
-    & "$Id$"
-  character (len=len(idParm)) :: Id = idParm
-  character (len=*), parameter :: ModuleName= &
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
   private :: not_used_here 
 !---------------------------------------------------------------------------
@@ -368,12 +373,20 @@ contains ! =====     Public Procedures     =============================
     deallocate ( old_decl )
   end subroutine Increase_Symbol_Decl
   logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
 
 end module DECLARATION_TABLE
 
 ! $Log$
+! Revision 2.9  2005/06/22 17:25:48  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.8  2004/01/23 05:35:50  livesey
 ! Made dump_1_decl a little more robust
 !
