@@ -1,5 +1,13 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
 !=======================================================================================
 
@@ -37,14 +45,11 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
     & ExpandDirectDB, ExpandSDNames, FileNameToID, &
     & SetupNewDirect
 
-  !------------------------------- RCS Ident Info ------------------------------
-  character(len=*), parameter :: IdParm = &
-    & "$Id$"
-  character(len=len(idParm)) :: Id = idParm
-  character(len=*), parameter :: ModuleName = &
-    & "$RCSfile$"
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
   private :: not_used_here 
-  !-----------------------------------------------------------------------------
+!---------------------------------------------------------------------------
 
   interface DirectWrite_L2Aux
     module procedure DirectWrite_L2Aux_FH
@@ -1366,12 +1371,20 @@ contains ! ======================= Public Procedures =========================
   end subroutine ANNOUNCE_ERROR
 
   logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
 
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.31  2005/06/22 18:57:01  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.30  2005/06/14 20:41:17  pwagner
 ! Interfaces changed to accept MLSFile_T args
 !
