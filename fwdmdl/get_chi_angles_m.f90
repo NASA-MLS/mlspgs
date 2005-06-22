@@ -1,5 +1,13 @@
-!{Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
 module Get_Chi_Angles_m
 
@@ -8,12 +16,9 @@ module Get_Chi_Angles_m
   private
   public :: Get_Chi_Angles
 
-!---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
-    & "$Id$"
-  character (len=len(idParm)) :: Id = idParm
-  character (len=*), parameter :: ModuleName = &
-    & "$RCSfile$"
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
   private :: not_used_here 
 !---------------------------------------------------------------------------
 contains
@@ -133,11 +138,19 @@ contains
   end subroutine Get_Chi_Angles
 
   logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
 
 end module Get_Chi_Angles_m
 ! $Log$
+! Revision 2.15  2004/05/17 22:05:40  livesey
+! Minor changes to avoid explosions due to asin(>1)
+!
 ! Revision 2.14  2003/05/14 22:23:10  bill
 ! corrected sign convention for elev offset angle
 !

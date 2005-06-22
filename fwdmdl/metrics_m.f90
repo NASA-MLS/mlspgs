@@ -1,5 +1,13 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
 module Metrics_m
 
@@ -7,14 +15,11 @@ module Metrics_m
   private
   public :: Metrics
 
-  !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter, private :: IdParm = &
-    & "$Id$"
-  character (len=len(idParm)) :: Id = IdParm
-  character (len=*), parameter, private :: ModuleName= &
-    & "$RCSfile$"
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
   private :: not_used_here 
-  !---------------------------------------------------------------------------
+!---------------------------------------------------------------------------
 
   integer, save :: CalledTimes = 0
 
@@ -564,12 +569,20 @@ contains
   end subroutine Metrics
 
   logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
 
 end module Metrics_m
 
 ! $Log$
+! Revision 2.22  2004/09/01 01:47:56  vsnyder
+! Add status argument
+!
 ! Revision 2.21  2004/01/23 18:44:57  bill
 ! problem with approximate correction patch when interpolation can't be done tentatively implimentaed
 !

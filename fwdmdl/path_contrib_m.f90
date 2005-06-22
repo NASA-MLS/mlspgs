@@ -1,3 +1,14 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
 module Path_Contrib_M
 
   implicit NONE
@@ -8,11 +19,9 @@ module Path_Contrib_M
     module procedure PATH_CONTRIB_SCALAR, PATH_CONTRIB_POLARIZED
   end interface
 
-!---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
-    & "$Id$"
-  character (len=len(idParm)) :: Id = idParm
-  character (len=*), parameter :: ModuleName = "$RCSfile$"
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
@@ -216,12 +225,20 @@ contains
 
 !-----------------------------------------------------------------------
   logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
 
 end module Path_Contrib_M
 
 ! $Log$
+! Revision 2.17  2003/11/04 02:49:13  vsnyder
+! Calculate coarse-path indices where GL is needed
+!
 ! Revision 2.16  2003/10/30 20:32:28  vsnyder
 ! Simplify gl_inds computation
 !

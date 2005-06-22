@@ -1,5 +1,13 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
 module Get_Species_Data_m
 
@@ -9,13 +17,11 @@ module Get_Species_Data_m
   private
   public :: Get_Species_Data
 
-  !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter, private :: IdParm = &
-    & "$Id$"
-  character (len=len(idParm)), save :: Id = IdParm
-  character (len=*), parameter, private :: ModuleName= &
-    & "$RCSfile$"
-  !-----------------------------------------------------------------------
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
 
 contains
 
@@ -95,12 +101,21 @@ contains
   end subroutine Get_Species_Data
 
   logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
 
 end module Get_Species_Data_m
 
 ! $Log$
+! Revision 2.25  2005/05/05 01:11:49  vsnyder
+! Don't inquire the size of fwdModelConf%beta_group(b)%pfa(s)%molecules if
+! it's not associated.
+!
 ! Revision 2.24  2005/03/15 19:55:51  vsnyder
 ! Spiff up a dump
 !

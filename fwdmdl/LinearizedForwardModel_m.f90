@@ -1,5 +1,13 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
 !=============================================================================
 module LinearizedForwardModel_m
@@ -13,14 +21,11 @@ module LinearizedForwardModel_m
   ! This array is used to keep track of which bins to use for each (side)band.
   integer, dimension(:,:), pointer, private, save :: lockedBins => NULL()
 
-  !------------------------------- RCS Ident Info ------------------------------
-  character(len=*), parameter :: IdParm = & 
-    "$Id$"
-  character(len=len(idParm)) :: Id = idParm
-  character(len=*), parameter :: ModuleName = &
-    & "$RCSfile$"
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
   private :: not_used_here 
-  !-----------------------------------------------------------------------------
+!---------------------------------------------------------------------------
 
 contains ! =====     Public Procedures     =============================
 
@@ -1129,12 +1134,20 @@ contains ! =====     Public Procedures     =============================
   end subroutine LinearizedForwardModel
 
   logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
 
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.56  2004/11/01 20:24:48  vsnyder
+! Reorganization of representation for molecules and beta groups
+!
 ! Revision 2.55  2004/08/06 01:09:49  livesey
 ! Updated to fix Van's new definition of fmConf%molecules
 !

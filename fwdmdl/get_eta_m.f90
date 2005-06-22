@@ -1,3 +1,14 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
 module GET_ETA_M
 
   use MLSCommon, only: Ip, Rp
@@ -5,12 +16,9 @@ module GET_ETA_M
   private
   public :: GET_ETA
 
-!---------------------------- RCS Ident Info -------------------------------
-  private ID, ModuleName
-  character(len=*), parameter :: IdParm = &
-       "$Id$"
-  character(len=len(idParm)) :: Id = idParm
-  character (len=*), parameter :: ModuleName= "$RCSfile$"
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
@@ -57,12 +65,20 @@ contains
   end subroutine GET_ETA
 
   logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
 
 end module GET_ETA_M
 
 ! $Log$
+! Revision 2.2  2003/09/16 00:21:07  vsnyder
+! Remove unused dummy arguments
+!
 ! Revision 2.1  2002/10/08 17:08:04  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
