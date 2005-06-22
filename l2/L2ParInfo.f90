@@ -1,5 +1,13 @@
-! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
 module L2ParInfo
   ! This module provides definitions needed by L2Parallel and other modules to
@@ -44,14 +52,11 @@ module L2ParInfo
   public :: InflateDirectWriteRequestDB, WaitForDirectWritePermission
   public :: CompactDirectWriteRequestDB, Dump
   
-  !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), private, parameter :: IdParm = &
-    "$Id$"
-  character (len=len(idParm)), private :: Id = idParm
+!---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
-    "$RCSfile$"
+       "$RCSfile$"
   private :: not_used_here 
-  !---------------------------------------------------------------------------
+!---------------------------------------------------------------------------
 
   ! Parameters
 
@@ -819,12 +824,20 @@ contains ! ==================================================================
   end function get_lun
 
   logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
 
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.46  2005/06/22 18:57:02  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.45  2005/03/24 21:20:33  pwagner
 ! New fileds in directWriteRequests figure grant delay, writing time
 !
