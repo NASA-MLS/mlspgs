@@ -1,5 +1,13 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
 program ConvertPFA
 
@@ -42,9 +50,11 @@ program ConvertPFA
 
   use Machine ! May need to get GETARG from here; otherwise, nothing is used
 
-!---------------------------- RCS Ident Info -------------------------------
+!---------------------------- RCS Ident Info ------------------------------
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile$"
   character (len=*), parameter :: IdParm = &
-    & "$Id$"
+       "$Id$"
   character (len=len(idParm)) :: Id = idParm
 !---------------------------------------------------------------------------
 
@@ -208,6 +218,9 @@ contains
 end program ConvertPFA
 
 ! $Log$
+! Revision 1.8  2004/10/06 01:03:37  vsnyder
+! Add copyright notice
+!
 ! Revision 1.7  2004/10/05 23:05:51  vsnyder
 ! Correct a comment
 !

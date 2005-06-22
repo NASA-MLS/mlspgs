@@ -1,5 +1,13 @@
-! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
 program CondenseLeakLog
 
@@ -57,12 +65,12 @@ program CondenseLeakLog
   !                                            indicating a trace is to be
   !                                            trimmed.
 
-!---------------------------- RCS Ident Info -------------------------------
-  character(len=*), parameter :: IdParm = &
-       "$Id$"
-  character (len=len(idParm)) :: Id = idParm
+!---------------------------- RCS Ident Info ------------------------------
   character (len=*), parameter :: ModuleName= &
        "$RCSfile$"
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
 !---------------------------------------------------------------------------
 
   ! =====     Executable Statements     ================================
@@ -401,6 +409,9 @@ contains
 end program CondenseLeakLog
 
 ! $Log$
+! Revision 1.2  2001/08/14 23:33:16  pwagner
+! Changes to build under NAG
+!
 ! Revision 1.1  2001/04/20 16:51:47  vsnyder
 ! Initial commit
 !

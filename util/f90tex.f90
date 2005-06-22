@@ -1,3 +1,14 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
 program F90TEX
 
 !{ Read a Fortran 90 program.  Write a LaTeX file.  Start the output with
@@ -37,12 +48,12 @@ program F90TEX
   character(len=*), parameter :: WIDTH = '6.25in' ! of TeX page
   character(len=*), parameter :: WIDTHP = '6in'   ! of TeX parbox inside fbox
 
-!---------------------------- RCS Ident Info -------------------------------
+!---------------------------- RCS Ident Info ------------------------------
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile$"
   character (len=*), parameter :: IdParm = &
        "$Id$"
   character (len=len(idParm)) :: Id = idParm
-  character (len=*), parameter :: ModuleName= &
-       "$RCSfile$"
 !---------------------------------------------------------------------------
 
 ! =====     Executable Statements     ==================================
@@ -282,6 +293,9 @@ contains
 end program F90TEX
 
 ! $Log$
+! Revision 1.7  2005/06/13 23:36:08  vsnyder
+! Repair minor bug in page heading
+!
 ! Revision 1.6  2004/09/22 20:18:48  vsnyder
 ! Account for bugs in lstlisting
 !

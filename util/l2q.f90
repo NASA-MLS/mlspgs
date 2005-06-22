@@ -1,5 +1,13 @@
-! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
 program L2Q
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
@@ -78,12 +86,13 @@ program L2Q
   integer, parameter          :: TURNREVIVALSOFFTAG = TURNREVIVALSONTAG - 1
   integer, parameter          :: DUMPUNIT = LIST_UNIT + 1
   integer, parameter          :: TEMPUNIT = DUMPUNIT + 1
-  !------------------------------- RCS Ident Info ------------------------------
-  character(len=*), parameter :: IdParm = & 
-     "$Id$"
-  character(len=len(idParm)) :: Id = idParm
-  character(len=*), parameter :: ModuleName="$RCSfile$"
-  !-----------------------------------------------------------------------------
+!---------------------------- RCS Ident Info ------------------------------
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile$"
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+!---------------------------------------------------------------------------
 
 ! To use this, copy it into
 ! mlspgs/tests/lib
@@ -1599,6 +1608,9 @@ contains
 end program L2Q
 
 ! $Log$
+! Revision 1.7  2005/04/12 20:32:19  pwagner
+! May periodically autodump masters, hosts files
+!
 ! Revision 1.6  2005/03/18 00:59:36  pwagner
 ! Now gets PVMERRORMESSAGE from MLSMessageModule
 !

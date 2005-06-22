@@ -1,5 +1,13 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
 program Convert_Spectroscopy
 
@@ -33,12 +41,12 @@ program Convert_Spectroscopy
   Real(r8) :: V0
   Real(r4) :: W
 
-!---------------------------- RCS Ident Info -------------------------------
+!---------------------------- RCS Ident Info ------------------------------
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile$"
   character (len=*), parameter :: IdParm = &
        "$Id$"
   character (len=len(idParm)) :: Id = idParm
-  character (len=*), parameter :: ModuleName= &
-       "$RCSfile$"
 !---------------------------------------------------------------------------
 
   print *, 'Enter "old" format database filename: '
@@ -146,6 +154,9 @@ program Convert_Spectroscopy
 end program Convert_Spectroscopy
 
 ! $Log$
+! Revision 1.5  2001/05/24 22:59:02  vsnyder
+! Change several variables to single precision; insert copyright notice
+!
 ! Revision 1.4  2001/05/21 23:35:07  livesey
 ! Interim version.
 !
