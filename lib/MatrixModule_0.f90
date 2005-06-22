@@ -1,5 +1,13 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
 !OCL INDEPENDENT (dot) ! For LF95 auto-parallelization
 
@@ -199,13 +207,10 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
       & UpdateDiagonal_0_r4, UpdateDiagonalVec_0_r4
   end interface
 
-!---------------------------- RCS Ident Info -------------------------------
-  character (len=*), private, parameter :: IdParm = &
-       "$Id$"
-  character (len=len(idParm)), private :: Id = idParm
+!---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
-  private not_used_here
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
   ! Parameters for the KIND component of objects of type(MatrixElement_T):
@@ -3434,11 +3439,19 @@ contains ! =====     Public Procedures     =============================
   end subroutine TestBlock
 
   logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.106  2005/06/22 17:25:49  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.105  2005/06/21 23:57:13  livesey
 ! Added forgiveZeros in UpdateDiagonal (invert)
 !
