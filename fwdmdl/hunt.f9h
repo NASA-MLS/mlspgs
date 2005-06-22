@@ -9,13 +9,6 @@
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 
-!---------------------------- RCS Module Info ------------------------------
-  character (len=*), private, parameter :: ModuleName= &
-       "$RCSfile$"
-  private :: not_used_here 
-!---------------------------------------------------------------------------
-
-
 ! subroutine ?_HUNT ( ELEMENT, ARRAY, N, JLO, JHI )
 
     integer(i4), intent(in) :: N
@@ -79,6 +72,9 @@
 
 ! end subroutine ?_HUNT
 ! $Log$
+! Revision 2.5  2005/06/22 18:14:01  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.4  2005/03/29 01:58:17  vsnyder
 ! Make stuff pure
 !
