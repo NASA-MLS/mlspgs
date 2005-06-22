@@ -3219,7 +3219,8 @@ contains ! =====     Public Procedures     =============================
     real(rm), dimension(:,:), pointer :: T   ! A temporary dense matrix
     real(rm) :: V                            ! The value to update.  Either
     !                                          S*X or S/X.
-
+    MyForgive = .false.
+    if ( present(ForgiveZeros) ) MyForgive = ForgiveZeros
     include "updatediagonalvec_0.f9h"
 
   contains
@@ -3250,7 +3251,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine UpdateDiagonalVec_0_r8
 
   ! ----------------------------------------  UpdateDiagonalVec_0_r4  -----
-  subroutine UpdateDiagonalVec_0_r4 ( A, X, SUBTRACT, INVERT )
+  subroutine UpdateDiagonalVec_0_r4 ( A, X, SUBTRACT, INVERT, FORGIVEZEROS )
   ! Add X to the diagonal of A if SUBTRACT is absent or false.
   ! Subtract X from the diatonal of A if SUBTRACT is present and true.
   ! If INVERT is present and true, use the inverses of the elements of X.
@@ -3258,6 +3259,7 @@ contains ! =====     Public Procedures     =============================
     real(r4), intent(in) :: X(:)
     logical, intent(in), optional :: SUBTRACT
     logical, intent(in), optional :: INVERT  ! Update with inverse of X
+    logical, intent(in), optional :: FORGIVEZEROS ! Allow zeros in invert case
 
     integer :: I, J                          ! Subscripts and loop inductors
     logical :: MyInvert
@@ -3269,7 +3271,8 @@ contains ! =====     Public Procedures     =============================
     real(rm), dimension(:,:), pointer :: T   ! A temporary dense matrix
     real(rm) :: V                            ! The value to update.  Either
     !                                          S*X or S/X.
-
+    MyForgive = .false.
+    if ( present(ForgiveZeros) ) MyForgive = ForgiveZeros
     include "updatediagonalvec_0.f9h"
 
   contains
@@ -3449,6 +3452,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.107  2005/06/22 20:45:29  pwagner
+! Use optional arg FORGIVEZEROS to UpdateDiagonalVec
+!
 ! Revision 2.106  2005/06/22 17:25:49  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
