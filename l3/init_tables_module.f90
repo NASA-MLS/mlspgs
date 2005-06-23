@@ -1,5 +1,13 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
 module INIT_TABLES_MODULE
 
@@ -22,11 +30,10 @@ module INIT_TABLES_MODULE
   !        names below.
   private :: ADD_IDENT, MAKE_TREE
 
-!---------------------------- RCS Ident Info -------------------------------
-  character (len=256), private :: Id = &
-       "$Id$"
+!---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 ! Enumeration types:
@@ -279,9 +286,20 @@ contains ! =====     Public procedures     =============================
   ! --------------------------------------------------  MAKE_TREE  -----
   include "make_tree.f9h"
 
+  logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 1.15  2004/05/13 20:19:39  ybj
+! *** empty log message ***
+!
 ! Revision 1.14  2003/03/22 02:08:42  jdone
 ! added average orbital period value and HDF output string
 !

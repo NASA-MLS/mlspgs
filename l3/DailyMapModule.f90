@@ -1,6 +1,14 @@
 
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
 !==============================================================================
 Module DailyMapModule
@@ -18,14 +26,12 @@ Module DailyMapModule
     & FFSM_Opt, FFSM, FFSMA, FFSMD, Reconstruct, Diagnostics, DataGenerate, &
     & DataGeneratePrec, CopyPrec2Data
   
-  PRIVATE :: ID, ModuleName
 
-  !------------------- RCS Ident Info -----------------------
-  CHARACTER(LEN=130) :: Id = &
-       
-       "$Id$"
-  CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile$"
-  !----------------------------------------------------------
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
 
   ! Contents:
 
@@ -1406,10 +1412,21 @@ Contains
   End Subroutine CopyPrec2Data
        
 !===================
+  logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
 End Module DailyMapModule
 !===================
 
 ! $Log$
+! Revision 1.13  2004/06/02 20:07:52  ybj
+! *** empty log message ***
+!
 ! Revision 1.12  2004/05/13 20:18:52  ybj
 ! *** empty log message ***
 !

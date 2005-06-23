@@ -1,5 +1,13 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
 !==============================================================================
 MODULE L3SPData
@@ -22,13 +30,12 @@ MODULE L3SPData
    public :: L3SPData_T, AllocateL3SP, OutputL3SP, DeallocateL3SP, &
      &        DestroyL3SPDatabase
 
-   PRIVATE :: ID, ModuleName
 
-!------------------- RCS Ident Info -----------------------
-   CHARACTER(LEN=130) :: Id = &
-   "$Id$"
-   CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
-!----------------------------------------------------------
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
 
 ! Contents:
 
@@ -1021,10 +1028,21 @@ CONTAINS
 !------------------------------------
 
 !==================
+  logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
 END MODULE L3SPData
 !==================
 
 ! $Log$
+! Revision 1.14  2004/05/13 20:19:54  ybj
+! *** empty log message ***
+!
 ! Revision 1.13  2003/07/08 00:18:09  pwagner
 ! fileType now a lit_name instead of a char string
 !
