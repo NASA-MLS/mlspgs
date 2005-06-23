@@ -1,5 +1,13 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 ! NOTE: This module is automatically created by the makemlspcfmodule
 !       perl script.  Do *NOT* attempt to modify this by hand.
 !
@@ -10,11 +18,11 @@ MODULE MLSPCF1
 
   PUBLIC
 
-  !------------------------------- RCS Ident Info ------------------------------
-  CHARACTER(LEN=130), PRIVATE :: id = &
-       "$Id$"
-  CHARACTER(LEN=*), PRIVATE, PARAMETER :: ModuleName="$RCSfile$"
-  !-----------------------------------------------------------------------------
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
 
   INTEGER, PARAMETER :: mlspcf_l1_param_StartUTC = 1001
   INTEGER, PARAMETER :: mlspcf_l1_param_EndUTC = 1002
@@ -129,9 +137,21 @@ MODULE MLSPCF1
   INTEGER, PARAMETER :: mlspcf_mcf_l1bradt_start = 4004
   INTEGER, PARAMETER :: mlspcf_mcf_l1bradt_end = 4004
 
+contains
+  logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
 END MODULE MLSPCF1
 
 ! $Log$
+! Revision 2.11  2005/06/23 18:41:36  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.10  2004/11/10 15:36:34  perun
 ! Add pcf number for default baselineAC table file
 !
