@@ -1,5 +1,13 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
 !==============================================================================
 MODULE L3DZData
@@ -22,13 +30,12 @@ MODULE L3DZData
      & OutputL3DZ, ReadL3DZData, WriteMetaL3DZ, &
      & AllocateL3DZ, DeallocateL3DZ, DestroyL3DZDatabase
 
-   PRIVATE :: ID, ModuleName
 
-!------------------- RCS Ident Info -----------------------
-   CHARACTER(LEN=130) :: Id = &
-   "$Id$"
-   CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
-!----------------------------------------------------------
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
 
 ! Contents:
 
@@ -2155,10 +2162,21 @@ MODULE L3DZData
    !------------------------------------
 
  !==================
+  logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
  END MODULE L3DZData
  !==================
 
 ! $Log$
+! Revision 1.19  2005/01/27 00:35:06  pwagner
+! ReprocessingActual field dropped from product metadata
+!
 ! Revision 1.18  2004/12/16 15:01:01  cvuu
 ! v1.5: Change value of ReprocessingActual to unknown in metadata file
 !
