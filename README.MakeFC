@@ -3,8 +3,16 @@
 #  Lost? Type 'make -f MakeFC help' from the directory where you see this file
 #
 #    README.MakeFC        Instructions about building the mls software
-# Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
 
 # "$Id$"
 # A self-reading guide to building the mls software;
@@ -28,9 +36,9 @@ SUMMARY
 To build the mls software, on many different combinations of compiler/
 platform/OS, minimizing the changes most users will need to make. Therefore
 it is mostly self-configuring. First, you will need:
- (1) f95 compiler (either NAG, Lahey, or Sun)
+ (1) f95 compiler (one of NAG, Lahey, or Sun)
  (2) Installed SDP Toolkit (PGSTK, HDFEOS(5), HDF(5))
- (3) mls software (probably where you're reading this)
+ (3) mls software directory (probably where you're reading this)
  (4) perl
  (5) PVM--a library to emulate parallel virtual machines
  (6) FFTW--a library to accomplish fast Fourier transforms
@@ -49,6 +57,12 @@ are curious or if something goes wrong. The reasons for putting each of the
 two parts "-f MakeFC" and "update" this first time are explained below, but the
 point is that after this first time, you will usually be able to make do with
 just "make".
+
+You might prefer to copy someone else's .configure file before doing this--it
+will save you having to type in the many paths in answer to the questions
+above. An example of a .configure file appears at the end of this document. Or,
+if you build this as part of a shrinkwrap package, creating a correct
+.configure file is automatic.
 
 For more information on obtaining and installing the SDP Toolkit, PVM, and the
 FFTW libraries, see BEFORE.mls which should be in the same directory as this
@@ -672,6 +686,9 @@ idea.
 Under the lib directory is a lib/tests subdirectory containing five test
 programs. They were used to test libmls.a during development. It is likely they
 no longer compile nor link properly. In the long run they should be removed.
+Similarly you'll find the directory mlspgs/sids/l1boa which once was used to
+create l1boa files given the output of orbsim. It has fallen into disuse, and
+should be removed.
 
 Another wrinkle in the lib directory is the versions of machine.f90 which lurk
 under machines with names like machines/NAG.Linux/machine.f90 They are intended
@@ -688,9 +705,10 @@ date-and-time info from utc to tai93, bleeding chunks were extracted and hacked
 into an "concealed library" utctotai. It is automatically built behind the
 scenes and then installed in INSTALLDIR.
 
-Three different binary executables are built under l1: mlsl1log, mlsl1g, and
-mlsl1t. When you do a "make install", all three are moved to INSTALLDIR along
-with the wrapper script "mlsl1.sh" which runs them in sequence.
+Four different binary executables are built under l1: mlsl1log, mlsl1boa,
+mlsl1g, and mlsl1t. When you do a "make install", all four are moved to
+INSTALLDIR along with the wrapper script "mlsl1.sh" which runs them in
+sequence.
 
 Any of the variables assigned in the file .configure can be treated as an
 advanced setting. In other words, you may override any of these on the command
@@ -723,28 +741,29 @@ MLSINSTALLDIR      install puts all the executables here instead of
 
 EXAMPLE OF A .configure FILE
 #	.configure for mls
+TK=/software/toolkit/NAG
 MLSF95=NAG
 MLSPLAT=Linux
-MLSCONFG=customized
-PGSINC=/software/SRC/HDF-EOS/TOOLKIT-5.2.7.4mls1.0/include
-PGSTK=/software/SRC/HDF-EOS/TOOLKIT-5.2.7.4mls1.0/lib/linux
-HDFEOS=/software/SRC/TOOLKIT-5.2.7.3v1.00/hdfeos/lib/linux
-HDFEOS5=/software/SRC/HDF-EOS/TOOLKIT-5.2.7.4mls1.0/hdfeos5.0/lib/linux
-HDF=/software/SRC/TOOLKIT-5.2.7.3v1.00/hdf/linux/HDF4.1r3/lib
-HDF5=/software/SRC/HDF-EOS/TOOLKIT-5.2.7.4mls1.0/hdf5/hdf5-1.4.1/lib
-GCTP=/software/SRC/HDF-EOS/TOOLKIT-5.2.7.4mls1.0/hdfeos5.0/lib/linux
-PGSLIB=/software/SRC/HDF-EOS/TOOLKIT-5.2.7.4mls1.0/lib/linux
-HDFEOS_LIB=/software/SRC/TOOLKIT-5.2.7.3v1.00/hdfeos/lib/linux
-HDFLIB=/software/SRC/TOOLKIT-5.2.7.3v1.00/hdf/linux/HDF4.1r3/lib
+MLSCONFG=NAG.Linux
+PGSINC=${TK}/toolkit/include
+PGSTK=${TK}/toolkit/lib/linux
+HDFEOS=${TK}/hdfeos/lib/linux
+HDFEOS5=${TK}/hdfeos5/lib/linux
+HDF=${TK}/hdf/lib
+HDF5=${TK}/hdf5/lib
+GCTP=${TK}/hdfeos/lib/linux
+PGSLIB=${TK}/toolkit/lib/linux
+HDFEOS_LIB=${TK}/hdfeos/lib/linux
+HDFLIB=${TK}/hdf/lib
 BLAS=
 LIB_BLAS=
 LAPACK=
 LIB_LAPACK=f95
-PVM_ROOT=/usr/share/pvm3
+PVM_ROOT=${TK}/pvm3
 PVM_ARCH=LINUX
-FFTW_ROOT=/usr/lib
-FOPTS=-w
-LDOPTS=
+FFTW_ROOT=${TK}/fftw/lib
+FOPTS=-O2 -C=none
+LDOPTS=-Bstatic
 export MLSF95
 export MLSPLAT
 export MLSCONFG
@@ -768,10 +787,13 @@ export FFTW_ROOT
 export FOPTS
 export LDOPTS
 
--pw                           2000-Oct-24 to 2004-Dec-06
+-pw                           2000-Oct-24 to 2005-Jun-23
 EOF
 exit
 # $Log$
+# Revision 1.38  2004/12/14 21:29:08  pwagner
+# Brought up to date with perl scripts in util
+#
 # Revision 1.37  2004/03/31 19:02:32  pwagner
 # Updated to at least mention shrinkwraps
 #
