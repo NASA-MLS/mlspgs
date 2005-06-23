@@ -1,5 +1,13 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
 !=============================================================================
 MODULE MLSL1Rad     ! Radiance data types and routines for the MLSL1 program
@@ -17,11 +25,11 @@ MODULE MLSL1Rad     ! Radiance data types and routines for the MLSL1 program
   PUBLIC :: InitRad, BandToBanks, UpdateRadSignals, RadPwr
   PUBLIC :: Radiance_T, L1Brad, FBrad, MBrad, WFrad, DACSrad, THzRad, Rad_Name
 
-  !---------------------------- RCS Ident Info -------------------------------
-  CHARACTER (LEN=256) :: Id = &
-       "$Id$"
-  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
-  !---------------------------------------------------------------------------
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
 
   ! This module defines the radiance data types and the nominal
   ! nomenclature sets for the MLSL1 program.
@@ -324,11 +332,22 @@ CONTAINS
   END FUNCTION RadPwr
 
 !=============================================================================
+  logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
 END MODULE MLSL1Rad
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.7  2005/06/23 18:41:36  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.6  2004/01/09 17:46:22  perun
 ! Version 1.4 commit
 !
