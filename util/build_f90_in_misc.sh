@@ -47,8 +47,16 @@
 #                     therefore don't use the -i  and -I options simultaneously
 # --------------- End build_f90_in_misc.sh help
 
-# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
-# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
 
 # "$Id$"
 
@@ -481,6 +489,9 @@ fi
 exit 0
 
 # $Log$
+# Revision 1.14  2003/06/05 16:22:16  pwagner
+# Internal function renamed mkpath()
+#
 # Revision 1.13  2002/08/05 18:07:46  pwagner
 # turns main to MAIN__ if MLSF95 is Lahey
 #

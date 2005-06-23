@@ -2,8 +2,16 @@
 # mlsxxyyzz.sh
 # usage: mlsxxyyzz.sh [option_1] [option_2] ..
 
-# Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
-# U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
 
 # run separate programs specified as the variables
 # MLSPROG_1, MLSPROG_2, MLSPROG_3
@@ -122,6 +130,9 @@ else
 fi
 
 # $Log$
+# Revision 1.3  2005/04/19 21:02:38  pwagner
+# Previous committal an oversight--undoing it
+#
 # Revision 1.2  2005/04/18 16:27:18  pwagner
 # Mistakenly deallocated timings before possibly needing to use it--fixed
 #

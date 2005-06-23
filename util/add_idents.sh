@@ -57,6 +57,11 @@
 #       with use (1) only
 # -dryrun       print diff between result and original only, don't replace
 # -dtxt path    where to find RCSIdent.txt, RCSModule.txt, and COPYRIGHT.txt
+# -f n          forcibly insert bloc n 
+#                 where  n       bloc               where
+#                        1    COPYRIGHT.txt       beginning of file
+#                        2    RCSModule.txt       before 1st "contains"
+#                        3    RCSIdent.txt        before "end module"
 # -rep script   use script instead of replacetext.sh
 #       with use (2) only
 # -api          printing api
@@ -171,17 +176,42 @@ test=`grep -i 'Office of Technology Transfer' $file`
 if [ "$test" = "" ]                                      
 then                                                     
   # First: replace the old Copyright
+  test1=`echo $force_blocs | grep 1`
   $REPLACER -i "Copyright" "Government Sponsorship" \
     "$file" $dtxt/COPYRIGHT.txt > "$tempfile"
   mv_if_diff "$tempfile" "$file"
+  testC=`grep -i copyright "$file"`
+  if [ "$test1" != "" -a "$testC" = "" ]
+  then
+    cat $dtxt/COPYRIGHT.txt "$file" > "$tempfile"
+    mv_if_diff "$tempfile" "$file"
+  fi
+
   # Second: replace the old RCS bloc
+  test2=`echo $force_blocs | grep 2`
   $REPLACER -i "-- RCS Ident Info --" "!--------------------------------------------" \
     $file $dtxt/RCSModule.txt > "$tempfile"
   mv_if_diff "$tempfile" "$file"
+  testC=`grep -i "rcs module" "$file"`
+  if [ "$test2" != "" -a "$testC" = "" ]
+  then
+    $REPLACER -i -b "contains" "contains" \
+    $file $dtxt/RCSModule.txt > "$tempfile"
+    mv_if_diff "$tempfile" "$file"
+  fi
+
   # Third: replace the old not_used_here bloc
+  test3=`echo $force_blocs | grep 3`
   $REPLACER -i "logical function not_used_here" "end function not_used_here" \
     $file $dtxt/RCSIdent.txt > "$tempfile"
   mv_if_diff "$tempfile" "$file"
+  testC=`grep -i "end function not_used_here" "$file"`
+  if [ "$test3" != "" -a "$testC" = "" ]
+  then
+    $REPLACER -i -b "end module" "end module" \
+    $file $dtxt/RCSIdent.txt > "$tempfile"
+    mv_if_diff "$tempfile" "$file"
+  fi
 else                                                
   echo "$file already has ident added in this way"  
 fi                                                  
@@ -303,6 +333,7 @@ print_rcs="no"
 skip_if_none="no"
 dtxt=`pwd`
 REPLACER="replacetext.sh"
+force_blocs=""
 #
 # Get arguments from command line
 #
@@ -331,6 +362,11 @@ while [ "$more_opts" = "yes" ] ; do
 	;;
 	-rep )
 	    REPLACER="$2"
+	    shift
+       shift
+	;;
+	-f )
+	    force_blocs="$2 $force_blocs"
 	    shift
        shift
 	;;
@@ -431,6 +467,9 @@ do
 done
 exit 0
 # $Log$
+# Revision 1.4  2005/06/22 22:43:21  pwagner
+# Changes to add new Copyright statement, rcs blocs
+#
 # Revision 1.3  2002/10/11 23:01:05  pwagner
 # Added -n option with use(2)
 #

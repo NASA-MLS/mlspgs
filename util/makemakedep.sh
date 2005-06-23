@@ -88,8 +88,16 @@
 # Bugs and limitations
 #(1) Tested only with NAG, Lahey, Intel, Sun, g95, and Absoft f95 compilers
 #(2) Still too specialized--works well only with NAG-like compilers
-# Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
 
 # "$Id$"
 
@@ -515,6 +523,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.26  2004/11/03 19:09:33  pwagner
+# perl scripts now get launched via perl rather than as stand-alone executables
+#
 # Revision 1.25  2004/10/27 22:34:08  pwagner
 # Set AUTO_REPLY=1 to automate pointing to wherever perl relocates
 #

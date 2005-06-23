@@ -26,8 +26,16 @@
 # Result:
 # a table of jobs, machine, date, status, etc.
 # --------------- End sipsl2 help
-# Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
-# U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
 
 # "$Id$"
 
@@ -547,6 +555,10 @@ do
   l1boa=`echo $dir/*L1BOA_*`
   date=`echo $l1boa | sed "s/_/\n/g;s/.h5//" | tail -1`
   bugs=`grep -ic 'list out of order' $dir/pvmlog/mlsl2.log 2>/dev/null`
+  if [ "$bugs" = "" ]
+  then
+    bugs=0
+  fi
   list=""
   if [ "$lightspeed" = "yes" -a "$testl" != "" ]
   then
@@ -675,6 +687,9 @@ do
 done
 exit 0
 # $Log$
+# Revision 1.6  2005/05/20 23:10:27  pwagner
+# Show how many chunks succumbed to 'list out of order' bug
+#
 # Revision 1.5  2005/04/28 18:42:32  pwagner
 # Fixed bug preventing more than one machine  from reporting pvm failures
 #

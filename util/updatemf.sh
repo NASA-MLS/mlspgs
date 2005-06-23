@@ -14,8 +14,16 @@
 #
 # --------------- End updatemf.sh help
 #
-# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
-# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
 
 # "$Id$"
 #---------------------------- get_unique_name
@@ -236,6 +244,9 @@ fi
 exit 0
 
 # $Log$
+# Revision 1.4  2004/03/26 23:31:09  pwagner
+# A quickie--but fails if we cvs remove from parent
+#
 # Revision 1.3  2002/09/24 18:10:28  pwagner
 # Fixed -h option
 #

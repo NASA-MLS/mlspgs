@@ -42,8 +42,16 @@
 #      and is in the same directory as which_fftw.sh
 #
 # --------------- End which_fftw.sh help
-# Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
 
 # "$Id$"
 #------------------------------- Main Program ------------
@@ -227,6 +235,9 @@ echo "You probably have to reset FFTW_ROOT in .configure" >> fftw_link_message
 echo "Do that by 'make configure_pvm'" >> fftw_link_message                      
 exit
 # $Log$
+# Revision 1.7  2004/03/19 21:56:03  pwagner
+# Should adapt better to arbitrary gcc versions after 3.2
+#
 # Revision 1.6  2004/03/17 00:19:35  pwagner
 # Use(3) to fix building static Lahey executables when Red Hat>8
 #

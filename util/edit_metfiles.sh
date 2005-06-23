@@ -1,8 +1,16 @@
 #!/bin/sh
 # edit_metfiles.sh
 
-# Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
-# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
 
 # "$Id$"
 # --------------- edit_metfiles.sh help
@@ -244,6 +252,9 @@ then
 fi
 exit 0
 # $Log$
+# Revision 1.4  2003/05/29 22:30:55  pwagner
+# Changed default value for usage(1); added -test option
+#
 # Revision 1.3  2003/05/28 20:25:46  pwagner
 # Fixed embarrassing error where usage(2) no different from (1)
 #
