@@ -111,7 +111,9 @@ l1bMAFBaseline
 latitude
 limbSidebandFraction
 linear
-linewidth
+lineCenter       # \nu_0 offset from catalog
+lineWidth        # w     offset from catalog
+lineWidth_tDep   # n     offset from catalog
 logp
 LOSTransFunc
 LOSVel
@@ -214,6 +216,9 @@ zeta
 zonalavg
 
 # $Log$
+# Revision 2.41  2005/06/24 23:41:19  vsnyder
+# Add LineCenter, LineWidth and LineWidth_TDep
+#
 # Revision 2.40  2005/06/08 21:44:27  pwagner
 # Added more file-related lits
 #
