@@ -479,6 +479,7 @@ contains ! =====     Public procedures     =============================
              l+l_gph, l+l_heightOffset, &
              l+l_isotopeRatio, l+l_jacobian_cols, l+l_jacobian_rows, &
              l+l_l1bMAFBaseline, l+l_limbSidebandFraction, &
+             l+l_lineCenter, l+l_lineWidth, l+l_lineWidth_tDep, &
              l+l_losTransFunc, l+l_losVel, &
              l+l_massMeanDiameterIce, l+l_massMeanDiameterWater, l+l_magneticField, &
              l+l_noiseBandwidth, l+l_noRadsPerMIF, l+l_noRadsBinned, &
@@ -1351,6 +1352,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.403  2005/06/24 23:41:47  vsnyder
+! Add LineCenter, LineWidth and LineWidth_TDep to T_QuantityType
+!
 ! Revision 2.402  2005/06/03 02:11:52  vsnyder
 ! New copyright notice, move Id to not_used_here to avoid cascades,
 ! add PFAStru and PFANum fields to Dump command.
