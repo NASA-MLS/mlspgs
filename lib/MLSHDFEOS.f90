@@ -38,6 +38,7 @@ module MLSHDFEOS
   use HE5_SWAPI_REAL, only: HE5_EHWRGLATT_REAL, HE5_EHRDGLATT_REAL, &
     & HE5_SWRDFLD_REAL, HE5_SWRDFLD_REAL_2D, HE5_SWRDFLD_REAL_3D, &
     & HE5_SWWRFLD_REAL, HE5_SWWRFLD_REAL_2D, HE5_SWWRFLD_REAL_3D
+  use MLSCommon, only: MLSFile_T
   use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
     & mls_hdf_version
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
@@ -99,10 +100,15 @@ module MLSHDFEOS
       & MLS_SWATH_IN_FILE_SCA
   end interface
 
-!   interface MLS_SWSETFILL
-!     module procedure MLS_SWSETFILL_DOUBLE, &
-!       & MLS_SWSETFILL_INTEGER, MLS_SWSETFILL_REAL
-!   end interface
+  interface MLS_SWATTACH
+    module procedure MLS_SWATTACH_ID, &
+      & MLS_SWATTACH_MF
+  end interface
+
+  interface MLS_SWCREATE
+    module procedure MLS_SWCREATE_ID, &
+      & MLS_SWCREATE_MF
+  end interface
 
   interface MLS_SWRDFLD
     module procedure &
@@ -229,13 +235,14 @@ contains ! ======================= Public Procedures =========================
 
   end function mls_gdwrattr
 
-  integer function MLS_SWATTACH ( FILEID, SWATHNAME, FileName, &
-    &  hdfVersion, DONTFAIL )
+  function MLS_SWATTACH_ID ( FILEID, SWATHNAME, FileName, &
+    &  hdfVersion, DONTFAIL ) result(MLS_SWATTACH)
     integer, intent(in) :: FILEID      ! ID returned by mls_swopen
     character(len=*), intent(in) :: SWATHNAME       ! Swath name
     character(len=*), optional, intent(in) :: FILENAME  ! File name
     integer, optional, intent(in) :: hdfVersion
     logical, optional, intent(in) :: DONTFAIL
+    integer :: MLS_SWATTACH
     ! Internal variables
     logical :: myDontFail
     integer :: myHdfVersion
@@ -287,14 +294,119 @@ contains ! ======================= Public Procedures =========================
       CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Failed to attach swath name ' // trim(swathname) )
     endif
-  end function MLS_SWATTACH
+  end function MLS_SWATTACH_ID
 
-  integer function MLS_SWCREATE ( FILEID, SWATHNAME, FileName, hdfVersion )
+  function MLS_SWATTACH_MF ( MLSFile, SWATHNAME, DONTFAIL ) &
+    & result(MLS_SWATTACH)
+    type (MLSFile_T)   :: MLSFile
+    character(len=*), intent(in) :: SWATHNAME       ! Swath name
+    logical, optional, intent(in) :: DONTFAIL
+    ! Internal variables
+    integer :: MLS_SWATTACH
+    logical :: myDontFail
+    if (Deebug) print *, 'swattaching ', trim(SWATHNAME)
+    MLS_SWATTACH = 0
+    myDontFail = .false.
+    if ( present(DontFail) ) myDontFail = DontFail
+    ! All necessary input supplied?
+    select case (MLSFile%HdfVersion)
+    case (HDFVERSION_4)
+      MLS_SWATTACH = swattach(MLSFile%FileID%f_id, trim(swathName))
+    case (HDFVERSION_5)
+      MLS_SWATTACH = he5_swattach(MLSFile%FileID%f_id, trim(swathName))
+    case default
+      MLS_SWATTACH = -1
+    end select
+    if (Deebug) print *, ' (swath id is ', MLS_SWATTACH, ')'
+    if ( MLS_SWATTACH /= -1 ) then
+      return
+    elseif ( myDontFail ) then
+      CALL MLSMessage ( MLSMSG_Warning, moduleName,  &
+          & 'Failed to attach swath name ' // trim(swathname), &
+          & MLSFile=MLSFile )
+    else
+      CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Failed to attach swath name ' // trim(swathname), &
+          & MLSFile=MLSFile )
+    endif
+  end function MLS_SWATTACH_MF
+
+  function MLS_SWCREATE_MF ( MLSFile, SWATHNAME ) &
+    & result(MLS_SWCREATE)
+    use hdf5, only: h5eSet_auto_f
+    type (MLSFile_T)   :: MLSFile
+    character(len=*), intent(in) :: SWATHNAME       ! Swath name
+    integer :: MLS_SWCREATE
+    ! Internal variables
+    logical :: alreadyThere
+    integer :: status
+    logical, parameter :: ALWAYSTRYSWATTACH = .true.
+    logical, parameter :: MUSTCREATE = .true.
+    MLS_SWCREATE = 0
+    ! All necessary input supplied?
+    select case (MLSFile%HdfVersion)
+    case (HDFVERSION_4)
+      if ( MUSTCREATE ) then
+        alreadyThere = .false.
+      elseif ( ALWAYSTRYSWATTACH ) then
+        if(DEEBUG) print *, 'About to call swattach with FileID: ', &
+          & MLSFile%FileID%f_id, ' swathname ', &
+          & trim(swathName)
+        alreadyThere = (swattach(MLSFile%FileId%f_id, trim(swathName)) >= 0)
+      else
+        if(DEEBUG) print *, 'About to call mls_swath_in_file'
+        alreadyThere = mls_swath_in_file(MLSFile%Name, swathName, HDFVERSION_4)
+      endif
+      if ( alreadyThere ) then
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Swathname call to MLS_SWCREATE already there: ' // trim(swathName), &
+          & MLSFile=MLSFile )
+      endif
+      if(DEEBUG) print *, 'About to call swcreate with FileID: ', &
+        &  MLSFile%Fileid%f_id, ' swathname ', &
+        & trim(swathName)
+      MLS_SWCREATE = swcreate(MLSFile%FileID%f_id, trim(swathName))
+    case (HDFVERSION_5)
+      call h5eSet_auto_f ( 0, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to turn error messages off in MLS_SWCREATE', MLSFile=MLSFile )
+      if ( MUSTCREATE ) then
+        alreadyThere = .false.
+      elseif ( ALWAYSTRYSWATTACH  ) then
+        if(DEEBUG) print *, 'About to call he5_swattach with FileID: ', &
+          & MLSFile%FileID%f_id, ' swathname ', &
+          & trim(swathName)
+        alreadyThere = (he5_swattach(MLSFile%FileID%f_id, trim(swathName)) >= 0)
+      else
+        if(DEEBUG) print *, 'About to call mls_swath_in_file'
+        alreadyThere = mls_swath_in_file(MLSFile%Name, swathName, HDFVERSION_5)
+      endif
+      call h5eSet_auto_f ( 1, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to turn error messages back on in MLS_SWCREATE')
+      if ( alreadyThere ) then
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Swathname call to MLS_SWCREATE already there: ' // trim(swathName))
+      endif
+      MLS_SWCREATE = he5_swcreate(MLSFile%FileID%f_id, trim(swathName))
+    case default
+      MLS_SWCREATE = -1
+    end select
+    if ( MLS_SWCREATE /= -1 ) return
+    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Failed to create swath name ' // trim(swathname), &
+          & MLSFile=MLSFile )
+
+  end function MLS_SWCREATE_MF
+
+  function MLS_SWCREATE_ID ( FILEID, SWATHNAME, FileName, hdfVersion ) &
+    & result(MLS_SWCREATE)
     use hdf5, only: h5eSet_auto_f
     integer, intent(in) :: FILEID      ! ID returned by mls_swopen
     character(len=*), intent(in) :: SWATHNAME       ! Swath name
     character(len=*), optional, intent(in) :: FILENAME  ! File name
     integer, optional, intent(in) :: hdfVersion
+    integer  :: MLS_SWCREATE
     ! Internal variables
     logical :: alreadyThere
     integer :: myHdfVersion
@@ -365,7 +477,7 @@ contains ! ======================= Public Procedures =========================
     CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Failed to create swath name ' // trim(swathname) )
 
-  end function MLS_SWCREATE
+  end function MLS_SWCREATE_ID
 
   integer function MLS_SWdefdim ( SWATHID, DIMNAME, DIMSIZE, FILENAME, &
     & hdfVersion, DONTFAIL )
@@ -1785,6 +1897,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.26  2005/06/29 00:39:30  pwagner
+! New interfaces for MLS_SWCREATE MLS_SWATTACH accept MLSFiles
+!
 ! Revision 2.25  2005/06/22 17:25:50  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
