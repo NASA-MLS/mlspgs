@@ -67,7 +67,8 @@ my %times;
 #@Sps = split(',', "initptan,updateptan,inituth,core,coreplusr2,highcloud,coreplusr3,coreplusr4,coreplusr5,(final)");
 #         * * * * * * * * * * * * * * * * * * * * * * * 
 # Check command-line args for options -s etc.
-$headList = "initptan,updateptan,inituth,core,coreplusr2,highcloud,coreplusr3,coreplusr4,coreplusr5,(final)";
+#$headList = "initptan,updateptan,inituth,core,coreplusr2,highcloud,coreplusr3,coreplusr4,coreplusr5,(final)";
+$headList = "initptan,updateptan,inituth,core,coreplusr2a,coreplusr2b,highcloud,coreplusr3,coreplusr4a,coreplusr4b,coreplusr5,(final)";
 $headonly = 0;
 $nohead = 0;
 $nodeToo = 0;
@@ -131,7 +132,13 @@ while (<>) {
     chomp;
     split;
     # print "After split: @_ \n";
-    $chunk = $_[7];
+    # print "chunk: $chunk\n";
+    # print "lastChunk: $lastChunk\n";
+    # $chunk = $_[7];
+    $chunk = $_[4];
+    if (/\(final\)/) {
+      $chunk = $_[5];
+    }
     if ( $chunk eq "" ) {
       print $chunk;
     }
@@ -166,16 +173,21 @@ while (<>) {
       $times{chunk} = $chunk;
       $ishead = 0;
       if (/\(final\)/) {
-        $times{"(final)"} = $_[3];
+        # $times{"(final)"} = $_[3];
+        $times{"(final)"} = $_[1];
         # print "field: (final) set to $_[3] \n";
+        # print "field: (final) set to $_[1] \n";
         }
     }
     $indx=0;
     tr/A-Z/a-z/;
     for $Sp (@Sps) {
-      if (/\s$Sp\s/) {
-        $times{$Sp} = $_[3];
+      # if (/\s$Sp\s/) {
+      if (/$Sp\s/) {
+        # $times{$Sp} = $_[3];
+        $times{$Sp} = $_[1];
         # print "field: $Sp set to $_[3] \n";
+        # print "field: $Sp set to $_[1] \n";
         # $indx++;
         }
     }
@@ -202,6 +214,9 @@ sub PrintTime {
    }
 }
 # $Log$
+# Revision 1.5  2005/06/23 22:22:46  pwagner
+# Reworded Copyright statement
+#
 # Revision 1.4  2004/11/03 19:09:33  pwagner
 # perl scripts now get launched via perl rather than as stand-alone executables
 #
