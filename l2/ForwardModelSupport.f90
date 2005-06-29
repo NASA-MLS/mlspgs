@@ -92,11 +92,13 @@ contains ! =====     Public Procedures     =============================
     integer, intent(out) :: any_errors  ! non-zero means trouble
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
 
+    ! Internal variables
     logical, parameter :: DEBUG = .false.
     integer :: FileIndex                ! In the string table
     character(len=255) :: FileName      ! Duh
     integer :: I, J                     ! Loop inductor, subscript
     integer :: Lun                      ! Unit number for reading a file
+    type (MLSFile_T), pointer   :: MLSFile
     integer :: Son                      ! Some subtree of root.
     integer :: Version
     integer, save :: last_l2pc = mlspcf_l2pc_start - 1
@@ -122,7 +124,7 @@ contains ! =====     Public Procedures     =============================
       case ( f_antennaPatterns )
         do j = 2, nsons(son)
           call get_file_name ( mlspcf_antpats_start, &
-            & get_field_id(son), filedatabase, &
+            & get_field_id(son), filedatabase, MLSFile, &
             & 'Antenna Patterns File not found in PCF' )
           call open_antenna_patterns_file ( fileName, lun )
           call read_antenna_patterns_file ( lun )
@@ -131,7 +133,7 @@ contains ! =====     Public Procedures     =============================
       case ( f_DACSfilterShapes )
         do j = 2, nsons(son)
           call get_file_name ( mlspcf_dacsfltsh_start, &
-            & get_field_id(son), filedatabase, &
+            & get_field_id(son), filedatabase, MLSFile, &
             & 'DACS Filter Shapes File not found in PCF' )
           call open_filter_shapes_file ( fileName, lun, fileIndex )
           call read_DACS_filter_shapes_file ( lun, fileIndex )
@@ -140,7 +142,7 @@ contains ! =====     Public Procedures     =============================
       case ( f_filterShapes )
         do j = 2, nsons(son)
           call get_file_name ( mlspcf_filtshps_start, &
-            & get_field_id(son), filedatabase, &
+            & get_field_id(son), filedatabase, MLSFile, &
             & 'Filter Shapes File not found in PCF' )
           call open_filter_shapes_file ( fileName, lun, fileIndex )
           call read_filter_shapes_file ( lun, fileIndex )
@@ -150,14 +152,15 @@ contains ! =====     Public Procedures     =============================
         last_l2pc = last_l2pc + 1
         do j = 2, nsons(son)
           call get_file_name ( last_l2pc, &
-            & get_field_id(son), filedatabase, &
+            & get_field_id(son), filedatabase, MLSFile, &
             & 'L2PC File not found in PCF', mlspcf_l2pc_end )
           if ( index ( fileName, '.txt' ) /= 0 ) then
             call open_l2pc_file ( fileName, lun)
             call read_l2pc_file ( lun )
             call close_l2pc_file ( lun )
           else
-            call ReadCompleteHDF5L2PCFile ( fileName )
+            ! call ReadCompleteHDF5L2PCFile ( fileName )
+            call ReadCompleteHDF5L2PCFile ( MLSFile )
           end if
         end do
       case ( f_PFAFiles )
@@ -168,7 +171,7 @@ contains ! =====     Public Procedures     =============================
       case ( f_pointingGrids )
         do j = 2, nsons(son)
           call get_file_name ( mlspcf_ptggrids_start, &
-            & get_field_id(son), filedatabase, &
+            & get_field_id(son), filedatabase, MLSFile, &
             & 'Pointing Grids File not found in PCF' )
           call open_pointing_grid_file ( fileName, lun )
           call read_pointing_grid_file ( lun )
@@ -187,7 +190,7 @@ contains ! =====     Public Procedures     =============================
 
     ! ............................................  Get_File_Name  .....
     subroutine Get_File_Name ( pcfCode, &
-      & fileType, fileDataBase, MSG, pcfEndCode )
+      & fileType, fileDataBase, MLSFile, MSG, pcfEndCode )
       use hdf, only: dfacc_rdonly
       use init_tables_module, only: field_indices
       use MLSCommon, only: MLSFile_T
@@ -200,10 +203,11 @@ contains ! =====     Public Procedures     =============================
       integer, intent(in) :: pcfCode
       integer, intent(in) :: fileType ! f_l2pc, f_antennaPatterns, etc.
       type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+      type (MLSFile_T), pointer   :: MLSFile
       character(len=*), intent(in) :: MSG ! in case of error
       integer, intent(in), optional :: pcfEndCode
       ! Internal variables
-      type (MLSFile_T), pointer :: MLSFile
+      ! type (MLSFile_T), pointer :: MLSFile
       character(len=255) :: fileTypeStr, PCFFileName, path, shortName
       integer :: returnStatus             ! non-zero means trouble
       integer :: mypcfEndCode
@@ -1152,6 +1156,9 @@ o:      do j = 2, nsons(PFATrees(s))
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.115  2005/06/29 00:43:45  pwagner
+! Utilizes new interface to ReadCompleteHDF5L2PCFile
+!
 ! Revision 2.114  2005/06/14 20:41:55  pwagner
 ! Interfaces changed to accept MLSFile_T args
 !
