@@ -21,7 +21,11 @@ module MLSHDF5
   ! to finish compiling the highest modules.
 
   use DUMP_0, only: DUMP, DUMP_NAME_V_PAIRS
+  use hdf, only: DFACC_RDONLY
+  use intrinsic, only: l_hdf
+  use MLSCommon, only: MLSFile_T
   use MLSDataInfo, only: MLSDataInfo_T, Query_MLSData
+  use MLSFiles, only: HDFVERSION_5, INITIALIZEMLSFILE
   ! To switch to/from hdfeos5.1.6(+) uncomment next line
   use H5LIB, ONLY: h5open_f, h5close_f
   ! Lets break down our use, parameters first
@@ -123,6 +127,13 @@ module MLSHDF5
 !     real value(:), real value(:,:), real value(:,:,:), real value(:,:,:,:),
 !     double precision value(:), double precision value(:,:),
 !     double precision value(:,:,:)}
+
+! The following may alsso be called with the int itemID or locID arg replaced
+! by a MLSFile_T
+! GetHDF5Attribute (MLSFile_T MLSFile, char name, value)
+! LoadFromHDF5DS (MLSFile_T MLSFile, char name, value,
+!       [int start(:), int count(:), [int stride(:), int block(:)] ] )
+
 ! === (end of api) ===
   interface GetAllHDF5DSNames
     module procedure GetAllHDF5DSNames_fileID, GetAllHDF5DSNames_filename
@@ -145,6 +156,11 @@ module MLSHDF5
       & GetHDF5Attribute_string, GetHDF5Attribute_sngl, GetHDF5Attribute_dbl, &
       & GetHDF5Attribute_snglarr1, GetHDF5Attribute_intarr1, &
       & GetHDF5Attribute_dblarr1, GetHDF5Attribute_stringarr1
+    module procedure GetHDF5Attr_ID_int, GetHDF5Attr_ID_logical, &
+      & GetHDF5Attr_ID_logicalarr1, &
+      & GetHDF5Attr_ID_string, GetHDF5Attr_ID_sngl, GetHDF5Attr_ID_dbl, &
+      & GetHDF5Attr_ID_snglarr1, GetHDF5Attr_ID_intarr1, &
+      & GetHDF5Attr_ID_dblarr1, GetHDF5Attr_ID_stringarr1
   end interface
 
   interface GetHDF5AttributePtr
@@ -181,6 +197,12 @@ module MLSHDF5
   end interface
 
   interface LoadFromHDF5DS
+    module procedure LdFrmHDF5DS_ID_intarr1, LdFrmHDF5DS_ID_intarr2, &
+      & LdFrmHDF5DS_ID_logarr1, &
+      & LdFrmHDF5DS_ID_dblarr1, LdFrmHDF5DS_ID_dblarr2, LdFrmHDF5DS_ID_dblarr3, &
+      & LdFrmHDF5DS_ID_snglarr1, LdFrmHDF5DS_ID_snglarr2, &
+      & LdFrmHDF5DS_ID_snglarr3, LdFrmHDF5DS_ID_snglarr4, &
+      & LdFrmHDF5DS_ID_chararr1, LdFrmHDF5DS_ID_chararr2
     module procedure LoadFromHDF5DS_intarr1, LoadFromHDF5DS_intarr2, &
       & LoadFromHDF5DS_logarr1, &
       & LoadFromHDF5DS_dblarr1, LoadFromHDF5DS_dblarr2, LoadFromHDF5DS_dblarr3, &
@@ -829,8 +851,8 @@ contains ! ======================= Public Procedures =========================
   end subroutine MakeHDF5AttributeDSN_dblarr1
 
   ! ---------------------------------------  GetHDF5Attribute_int  -----
-  subroutine GetHDF5Attribute_int ( itemID, name, value )
-    integer, intent(in) :: ITEMID         ! Group etc. to get attribute from
+  subroutine GetHDF5Attribute_int ( MLSFile, name, value )
+    type (MLSFile_T)   :: MLSFile
     character (len=*), intent(in) :: NAME ! Name of attribute
     integer, intent(out) :: VALUE         ! Result
 
@@ -839,23 +861,26 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    call h5aOpen_name_f ( itemID, name, attrID, status )
+    call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open attribute ' // trim(name) )
+      & 'Unable to open attribute ' // trim(name), &
+      & MLSFile=MLSFile )
     ! Note we're going to assume here that the attribute indeed represents the
     ! right type, and that we won't overflow memory etc. by accidentally trying
     ! to read an array into our one value.
     call h5aread_f ( attrID, H5T_NATIVE_INTEGER, value, ones, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to read attribute ' // trim(name) )
+      & 'Unable to read attribute ' // trim(name), &
+      & MLSFile=MLSFile )
     call h5aClose_f ( attrID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to close attribute ' // trim(name) )
+      & 'Unable to close attribute ' // trim(name), &
+      & MLSFile=MLSFile )
   end subroutine GetHDF5Attribute_int
 
   ! -----------------------------------  GetHDF5Attribute_intarr1  -----
-  subroutine GetHDF5Attribute_intarr1 ( itemID, name, value )
-    integer, intent(in) :: ITEMID         ! Group etc. to get attribute from
+  subroutine GetHDF5Attribute_intarr1 ( MLSFile, name, value )
+    type (MLSFile_T)   :: MLSFile
     character (len=*), intent(in) :: NAME ! Name of attribute
     integer, intent(out) :: VALUE(:)      ! Result
 
@@ -866,20 +891,441 @@ contains ! ======================= Public Procedures =========================
 
     ! Executable code
     shp = shape(value)
-    call h5aOpen_name_f ( itemID, name, attrID, status )
+    call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open attribute ' // trim(name) )
+      & 'Unable to open attribute ' // trim(name), &
+      & MLSFile=MLSFile )
     ! Note we're going to assume here that the attribute indeed represents the
     ! right type, and that we won't overflow memory etc. by accidentally trying
     ! to read an array into our one value.
     call h5aread_f ( attrID, H5T_NATIVE_INTEGER, value, &
       & int ( (/ shp, ones(1:6) /), hID_T ), status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to read attribute ' // trim(name) )
+      & 'Unable to read attribute ' // trim(name), &
+      & MLSFile=MLSFile )
     call h5aClose_f ( attrID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to close attribute ' // trim(name) )
+      & 'Unable to close attribute ' // trim(name), &
+      & MLSFile=MLSFile )
   end subroutine GetHDF5Attribute_intarr1
+
+  ! ------------------------------------  GetHDF5Attribute_string  -----
+  subroutine GetHDF5Attribute_string ( MLSFile, name, value )
+    type (MLSFile_T)   :: MLSFile
+    character (len=*), intent(in) :: NAME   ! Name of attribute
+    character (len=*), intent(out) :: VALUE ! Result
+
+    ! Local variables
+    integer :: ATTRID                   ! ID for attribute
+    integer :: STATUS                   ! Flag from HDF5
+    integer :: STRINGTYPE               ! String type
+    integer :: STRINGSIZE               ! String size
+
+    ! Executable code
+    call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open attribute ' // trim(name), &
+      & MLSFile=MLSFile )
+    call h5aGet_type_f ( attrID, stringType, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get type for attribute ' // trim(name), &
+      & MLSFile=MLSFile )
+    call h5tGet_size_f ( stringType, stringSize, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get size for attribute ' // trim(name), &
+      & MLSFile=MLSFile )
+    if ( stringSize > len(value) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Value too long to fit in space given for attribute ' // trim(name), &
+      & MLSFile=MLSFile )
+    ! Now actually read the data!
+    value = ''
+    call h5aread_f ( attrID, stringType, value(1:stringSize), ones, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to read attribute ' // trim(name), &
+      & MLSFile=MLSFile )
+    call h5aClose_f ( attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close attribute ' // trim(name), &
+      & MLSFile=MLSFile )
+    call h5tClose_f ( stringType, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close string type for attribute ' // trim(name), &
+      & MLSFile=MLSFile )
+  end subroutine GetHDF5Attribute_string
+
+  ! --------------------------------  GetHDF5Attribute_stringarr1  -----
+  subroutine GetHDF5Attribute_stringarr1 ( MLSFile, name, value )
+    type (MLSFile_T)   :: MLSFile
+    character (len=*), intent(in) :: NAME ! Name of attribute
+    character (len=*), intent(out) :: VALUE(:) ! Result
+
+    ! Local variables
+    integer :: ATTRID                   ! ID for attribute
+    integer :: STATUS                   ! Flag from HDF5
+    integer :: STRINGTYPE               ! String type
+    integer :: STRINGSIZE               ! String size
+    integer, dimension(1) :: SHP        ! Shape
+
+    ! Executable code
+    shp = shape(value)
+    call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open attribute ' // trim(name), &
+      & MLSFile=MLSFile )
+    call h5aGet_type_f ( attrID, stringType, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get type for 1-d string attribute ' // trim(name), &
+      & MLSFile=MLSFile )
+    call h5tGet_size_f ( stringType, stringSize, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get size for 1-d string attribute ' // trim(name), &
+      & MLSFile=MLSFile )
+    if ( stringSize > len(value) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Value too long to fit in space given for attribute ' // trim(name), &
+      & MLSFile=MLSFile )
+    ! Note we're going to assume here that the attribute indeed represents the
+    ! right type, and that we won't overflow memory etc. by accidentally trying
+    ! to read an array into our one value.
+    call h5aread_f ( attrID, stringType, value, &
+      & int ( (/ shp, ones(1:6) /), hID_T ), status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to read attribute ' // trim(name), &
+      & MLSFile=MLSFile )
+    call h5aClose_f ( attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close attribute ' // trim(name), &
+      & MLSFile=MLSFile )
+    call h5tClose_f ( stringType, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close string type for attribute ' // trim(name), &
+      & MLSFile=MLSFile )
+  end subroutine GetHDF5Attribute_stringarr1
+
+  ! -----------------------------------  GetHDF5Attribute_logical  -----
+  subroutine GetHDF5Attribute_logical ( MLSFile, name, value )
+    type (MLSFile_T)   :: MLSFile
+    character (len=*), intent(in) :: NAME ! Name of attribute
+    logical, intent(out) :: VALUE         ! Value of attribute
+
+    ! Local variables
+    integer :: IVALUE                     ! Value as integer
+
+    ! Executable code
+    call GetHDF5Attribute ( MLSFile%fileID%sd_ID, name, iValue )
+    value = ( iValue == 1 )
+  end subroutine GetHDF5Attribute_logical
+
+  ! -------------------------------  GetHDF5Attribute_logicalarr1  -----
+  subroutine GetHDF5Attribute_logicalarr1 ( MLSFile, name, value )
+    type (MLSFile_T)   :: MLSFile
+    character (len=*), intent(in) :: NAME ! Name of attribute
+    logical, intent(out) :: VALUE(:)      ! Value of attribute
+
+    ! Local variables
+    integer :: IVALUE(size(VALUE,1))      ! Value as integer
+
+    ! Executable code
+    call GetHDF5Attribute ( MLSFile%fileID%sd_ID, name, iValue )
+    value = ( iValue == 1 )
+  end subroutine GetHDF5Attribute_logicalarr1
+
+  ! ----------------------------------  GetHDF5Attribute_snglarr1  -----
+  subroutine GetHDF5Attribute_snglarr1 ( MLSFile, name, value )
+    type (MLSFile_T)   :: MLSFile
+    character (len=*), intent(in) :: NAME ! Name of attribute
+    real, intent(out) :: VALUE(:)       ! The attribute array result
+
+    ! Local variables
+    integer :: ATTRID                   ! ID for attribute
+    integer :: STATUS                   ! Flag from HDF5
+    integer, dimension(1) :: SHP        ! Shape
+
+    ! Executable code
+    shp = shape(value)
+    call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open attribute ' // trim(name), &
+      & MLSFile=MLSFile )
+    ! Note we're going to assume here that the attribute indeed represents the
+    ! right type, and that we won't overflow memory etc. by accidentally trying
+    ! to read too big array into ours.
+    call h5aread_f ( attrID, H5T_NATIVE_REAL, value, &
+      & int ( (/ shp, ones(1:6) /), hID_T ), status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to read 1d attribute array ' // trim(name), &
+      & MLSFile=MLSFile )
+    call h5aClose_f ( attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close 1d attribute array  ' // trim(name), &
+      & MLSFile=MLSFile )
+  end subroutine GetHDF5Attribute_snglarr1
+
+  ! --------------------------------------  GetHDF5Attribute_sngl  -----
+  subroutine GetHDF5Attribute_sngl ( MLSFile, name, value )
+    type (MLSFile_T)   :: MLSFile
+    character (len=*), intent(in) :: NAME ! Name of attribute
+    real, intent(out) :: VALUE          ! The attribute result
+
+    ! Local variables
+    integer :: ATTRID                   ! ID for attribute
+    integer :: STATUS                   ! Flag from HDF5
+
+    ! Executable code
+    call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open attribute ' // trim(name), &
+      & MLSFile=MLSFile )
+    ! Note we're going to assume here that the attribute indeed represents the
+    ! right type, and that we won't overflow memory etc. by accidentally trying
+    ! to read too big array into ours.
+    call h5aread_f ( attrID, H5T_NATIVE_REAL, value, &
+      & ones, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to read sngl attribute ' // trim(name), &
+      & MLSFile=MLSFile )
+    call h5aClose_f ( attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close sngl attribute  ' // trim(name) )
+  end subroutine GetHDF5Attribute_sngl
+
+  ! ---------------------------------------  GetHDF5Attribute_dbl  -----
+  subroutine GetHDF5Attribute_dbl ( MLSFile, name, value )
+    type (MLSFile_T)   :: MLSFile
+    character (len=*), intent(in) :: NAME  ! Name of attribute
+    double precision, intent(out) :: VALUE ! The attribute result
+
+    ! Local variables
+    integer :: ATTRID                   ! ID for attribute
+    integer :: STATUS                   ! Flag from HDF5
+
+    ! Executable code
+    call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open attribute ' // trim(name), &
+      & MLSFile=MLSFile )
+    ! Note we're going to assume here that the attribute indeed represents the
+    ! right type, and that we won't overflow memory etc. by accidentally trying
+    ! to read too big array into ours.
+    call h5aread_f ( attrID, H5T_NATIVE_DOUBLE, value, ones, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to read dble attribute ' // trim(name), &
+      & MLSFile=MLSFile )
+    call h5aClose_f ( attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close dble attribute  ' // trim(name), &
+      & MLSFile=MLSFile )
+  end subroutine GetHDF5Attribute_dbl
+
+  ! -----------------------------------  GetHDF5Attribute_dblarr1  -----
+  subroutine GetHDF5Attribute_dblarr1 ( MLSFile, name, value )
+    type (MLSFile_T)   :: MLSFile
+    character (len=*), intent(in) :: NAME     ! Name of attribute
+    double precision, intent(out) :: VALUE(:) ! The attribute result
+
+    ! Local variables
+    integer :: ATTRID                   ! ID for attribute
+    integer :: STATUS                   ! Flag from HDF5
+    integer, dimension(1) :: SHP        ! Shape
+
+    ! Executable code
+    shp = shape(value)
+    call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open attribute ' // trim(name), &
+      & MLSFile=MLSFile )
+    ! Note we're going to assume here that the attribute indeed represents the
+    ! right type, and that we won't overflow memory etc. by accidentally trying
+    ! to read too big array into ours.
+    call h5aread_f ( attrID, H5T_NATIVE_DOUBLE, value, &
+      & int ( (/ shp, ones(1:6) /), hID_T ), status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to read dblarr1 attribute ' // trim(name), &
+      & MLSFile=MLSFile )
+    call h5aClose_f ( attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close dblarr1 attribute  ' // trim(name), &
+      & MLSFile=MLSFile )
+  end subroutine GetHDF5Attribute_dblarr1
+
+  ! ---------------------------------------  GetHDF5Attr_ID_int  -----
+  subroutine GetHDF5Attr_ID_int ( itemID, name, value )
+    integer, intent(in) :: ITEMID         ! Group etc. to get attribute from
+    character (len=*), intent(in) :: NAME ! Name of attribute
+    integer, intent(out) :: VALUE         ! Result
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    type (MLSFile_T)   :: MLSFile
+
+    ! Executable code
+    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
+      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
+    MLSFile%fileID%sd_id = itemID
+    MLSFile%stillOpen = .true.
+    call GetHDF5Attribute ( MLSFile, name, value )
+  end subroutine GetHDF5Attr_ID_int
+
+  ! -----------------------------------  GetHDF5Attr_ID_intarr1  -----
+  subroutine GetHDF5Attr_ID_intarr1 ( itemID, name, value )
+    integer, intent(in) :: ITEMID         ! Group etc. to get attribute from
+    character (len=*), intent(in) :: NAME ! Name of attribute
+    integer, intent(out) :: VALUE(:)      ! Result
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    type (MLSFile_T)   :: MLSFile
+
+    ! Executable code
+    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
+      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
+    MLSFile%fileID%sd_id = itemID
+    MLSFile%stillOpen = .true.
+    call GetHDF5Attribute ( MLSFile, name, value )
+  end subroutine GetHDF5Attr_ID_intarr1
+
+  ! ------------------------------------  GetHDF5Attr_ID_string  -----
+  subroutine GetHDF5Attr_ID_string ( itemID, name, value )
+    integer, intent(in) :: ITEMID           ! Group etc. to get attribute from
+    character (len=*), intent(in) :: NAME   ! Name of attribute
+    character (len=*), intent(out) :: VALUE ! Result
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    type (MLSFile_T)   :: MLSFile
+
+    ! Executable code
+    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
+      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
+    MLSFile%fileID%sd_id = itemID
+    MLSFile%stillOpen = .true.
+    call GetHDF5Attribute ( MLSFile, name, value )
+  end subroutine GetHDF5Attr_ID_string
+
+  ! --------------------------------  GetHDF5Attr_ID_stringarr1  -----
+  subroutine GetHDF5Attr_ID_stringarr1 ( itemID, name, value )
+    integer, intent(in) :: ITEMID       ! Group etc. to get attribute from
+    character (len=*), intent(in) :: NAME ! Name of attribute
+    character (len=*), intent(out) :: VALUE(:) ! Result
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    type (MLSFile_T)   :: MLSFile
+
+    ! Executable code
+    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
+      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
+    MLSFile%fileID%sd_id = itemID
+    MLSFile%stillOpen = .true.
+    call GetHDF5Attribute ( MLSFile, name, value )
+  end subroutine GetHDF5Attr_ID_stringarr1
+
+  ! -----------------------------------  GetHDF5Attr_ID_logical  -----
+  subroutine GetHDF5Attr_ID_logical ( itemID, name, value )
+    integer, intent(in) :: ITEMID         ! Group etc. to get attr to.
+    character (len=*), intent(in) :: NAME ! Name of attribute
+    logical, intent(out) :: VALUE         ! Value of attribute
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    type (MLSFile_T)   :: MLSFile
+
+    ! Executable code
+    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
+      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
+    MLSFile%fileID%sd_id = itemID
+    MLSFile%stillOpen = .true.
+    call GetHDF5Attribute ( MLSFile, name, value )
+  end subroutine GetHDF5Attr_ID_logical
+
+  ! -------------------------------  GetHDF5Attr_ID_logicalarr1  -----
+  subroutine GetHDF5Attr_ID_logicalarr1 ( itemID, name, value )
+    integer, intent(in) :: ITEMID         ! Group etc. to get attr to.
+    character (len=*), intent(in) :: NAME ! Name of attribute
+    logical, intent(out) :: VALUE(:)      ! Value of attribute
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    type (MLSFile_T)   :: MLSFile
+
+    ! Executable code
+    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
+      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
+    MLSFile%fileID%sd_id = itemID
+    MLSFile%stillOpen = .true.
+    call GetHDF5Attribute ( MLSFile, name, value )
+  end subroutine GetHDF5Attr_ID_logicalarr1
+
+  ! ----------------------------------  GetHDF5Attr_ID_snglarr1  -----
+  subroutine GetHDF5Attr_ID_snglarr1 ( itemID, name, value )
+    integer, intent(in) :: ITEMID       ! Group etc. to get attribute from
+    character (len=*), intent(in) :: NAME ! Name of attribute
+    real, intent(out) :: VALUE(:)       ! The attribute array result
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    type (MLSFile_T)   :: MLSFile
+
+    ! Executable code
+    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
+      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
+    MLSFile%fileID%sd_id = itemID
+    MLSFile%stillOpen = .true.
+    call GetHDF5Attribute ( MLSFile, name, value )
+  end subroutine GetHDF5Attr_ID_snglarr1
+
+  ! --------------------------------------  GetHDF5Attr_ID_sngl  -----
+  subroutine GetHDF5Attr_ID_sngl ( itemID, name, value )
+    integer, intent(in) :: ITEMID       ! Group etc. to get attribute from
+    character (len=*), intent(in) :: NAME ! Name of attribute
+    real, intent(out) :: VALUE          ! The attribute result
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    type (MLSFile_T)   :: MLSFile
+
+    ! Executable code
+    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
+      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
+    MLSFile%fileID%sd_id = itemID
+    MLSFile%stillOpen = .true.
+    call GetHDF5Attribute ( MLSFile, name, value )
+  end subroutine GetHDF5Attr_ID_sngl
+
+  ! ---------------------------------------  GetHDF5Attr_ID_dbl  -----
+  subroutine GetHDF5Attr_ID_dbl ( itemID, name, value )
+    integer, intent(in) :: ITEMID          ! Group etc. to get attribute from
+    character (len=*), intent(in) :: NAME  ! Name of attribute
+    double precision, intent(out) :: VALUE ! The attribute result
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    type (MLSFile_T)   :: MLSFile
+
+    ! Executable code
+    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
+      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
+    MLSFile%fileID%sd_id = itemID
+    MLSFile%stillOpen = .true.
+    call GetHDF5Attribute ( MLSFile, name, value )
+  end subroutine GetHDF5Attr_ID_dbl
+
+  ! -----------------------------------  GetHDF5Attr_ID_dblarr1  -----
+  subroutine GetHDF5Attr_ID_dblarr1 ( itemID, name, value )
+    integer, intent(in) :: ITEMID       ! Group etc. to get attribute from
+    character (len=*), intent(in) :: NAME     ! Name of attribute
+    double precision, intent(out) :: VALUE(:) ! The attribute result
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    type (MLSFile_T)   :: MLSFile
+
+    ! Executable code
+    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
+      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
+    MLSFile%fileID%sd_id = itemID
+    MLSFile%stillOpen = .true.
+    call GetHDF5Attribute ( MLSFile, name, value )
+  end subroutine GetHDF5Attr_ID_dblarr1
 
   ! --------------------------------  GetHDF5AttributePtr_intarr1  -----
   subroutine GetHDF5AttributePtr_intarr1 ( itemID, name, value, LowBound )
@@ -915,84 +1361,6 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close attribute ' // trim(name) )
   end subroutine GetHDF5AttributePtr_intarr1
-
-  ! ------------------------------------  GetHDF5Attribute_string  -----
-  subroutine GetHDF5Attribute_string ( itemID, name, value )
-    integer, intent(in) :: ITEMID           ! Group etc. to get attribute from
-    character (len=*), intent(in) :: NAME   ! Name of attribute
-    character (len=*), intent(out) :: VALUE ! Result
-
-    ! Local variables
-    integer :: ATTRID                   ! ID for attribute
-    integer :: STATUS                   ! Flag from HDF5
-    integer :: STRINGTYPE               ! String type
-    integer :: STRINGSIZE               ! String size
-
-    ! Executable code
-    call h5aOpen_name_f ( itemID, name, attrID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open attribute ' // trim(name) )
-    call h5aGet_type_f ( attrID, stringType, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to get type for attribute ' // trim(name) )
-    call h5tGet_size_f ( stringType, stringSize, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to get size for attribute ' // trim(name) )
-    if ( stringSize > len(value) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Value too long to fit in space given for attribute ' // trim(name) )
-    ! Now actually read the data!
-    value = ''
-    call h5aread_f ( attrID, stringType, value(1:stringSize), ones, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to read attribute ' // trim(name) )
-    call h5aClose_f ( attrID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to close attribute ' // trim(name) )
-    call h5tClose_f ( stringType, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to close string type for attribute ' // trim(name) )
-  end subroutine GetHDF5Attribute_string
-
-  ! --------------------------------  GetHDF5Attribute_stringarr1  -----
-  subroutine GetHDF5Attribute_stringarr1 ( itemID, name, value )
-    integer, intent(in) :: ITEMID       ! Group etc. to get attribute from
-    character (len=*), intent(in) :: NAME ! Name of attribute
-    character (len=*), intent(out) :: VALUE(:) ! Result
-
-    ! Local variables
-    integer :: ATTRID                   ! ID for attribute
-    integer :: STATUS                   ! Flag from HDF5
-    integer :: STRINGTYPE               ! String type
-    integer :: STRINGSIZE               ! String size
-    integer, dimension(1) :: SHP        ! Shape
-
-    ! Executable code
-    shp = shape(value)
-    call h5aOpen_name_f ( itemID, name, attrID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open attribute ' // trim(name) )
-    call h5aGet_type_f ( attrID, stringType, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to get type for 1-d string attribute ' // trim(name) )
-    call h5tGet_size_f ( stringType, stringSize, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to get size for 1-d string attribute ' // trim(name) )
-    if ( stringSize > len(value) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Value too long to fit in space given for attribute ' // trim(name) )
-    ! Note we're going to assume here that the attribute indeed represents the
-    ! right type, and that we won't overflow memory etc. by accidentally trying
-    ! to read an array into our one value.
-    call h5aread_f ( attrID, stringType, value, &
-      & int ( (/ shp, ones(1:6) /), hID_T ), status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to read attribute ' // trim(name) )
-    call h5aClose_f ( attrID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to close attribute ' // trim(name) )
-    call h5tClose_f ( stringType, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to close string type for attribute ' // trim(name) )
-  end subroutine GetHDF5Attribute_stringarr1
 
   ! -----------------------------  GetHDF5AttributePtr_stringarr1  -----
   subroutine GetHDF5AttributePtr_stringarr1 ( itemID, name, value, LowBound )
@@ -1042,34 +1410,6 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to close string type for attribute ' // trim(name) )
   end subroutine GetHDF5AttributePtr_stringarr1
 
-  ! -----------------------------------  GetHDF5Attribute_logical  -----
-  subroutine GetHDF5Attribute_logical ( itemID, name, value )
-    integer, intent(in) :: ITEMID         ! Group etc. to get attr to.
-    character (len=*), intent(in) :: NAME ! Name of attribute
-    logical, intent(out) :: VALUE         ! Value of attribute
-
-    ! Local variables
-    integer :: IVALUE                     ! Value as integer
-
-    ! Executable code
-    call GetHDF5Attribute ( itemID, name, iValue )
-    value = ( iValue == 1 )
-  end subroutine GetHDF5Attribute_logical
-
-  ! -------------------------------  GetHDF5Attribute_logicalarr1  -----
-  subroutine GetHDF5Attribute_logicalarr1 ( itemID, name, value )
-    integer, intent(in) :: ITEMID         ! Group etc. to get attr to.
-    character (len=*), intent(in) :: NAME ! Name of attribute
-    logical, intent(out) :: VALUE(:)      ! Value of attribute
-
-    ! Local variables
-    integer :: IVALUE(size(VALUE,1))      ! Value as integer
-
-    ! Executable code
-    call GetHDF5Attribute ( itemID, name, iValue )
-    value = ( iValue == 1 )
-  end subroutine GetHDF5Attribute_logicalarr1
-
   ! ----------------------------  GetHDF5AttributePtr_logicalarr1  -----
   subroutine GetHDF5AttributePtr_logicalarr1 ( itemID, name, value, LowBound )
     use Allocate_Deallocate, only: Deallocate_Test
@@ -1087,34 +1427,6 @@ contains ! ======================= Public Procedures =========================
     value = ( iValue == 1 )
     call deallocate_test ( ivalue, 'IValue', moduleName )
   end subroutine GetHDF5AttributePtr_logicalarr1
-
-  ! ----------------------------------  GetHDF5Attribute_snglarr1  -----
-  subroutine GetHDF5Attribute_snglarr1 ( itemID, name, value )
-    integer, intent(in) :: ITEMID       ! Group etc. to get attribute from
-    character (len=*), intent(in) :: NAME ! Name of attribute
-    real, intent(out) :: VALUE(:)       ! The attribute array result
-
-    ! Local variables
-    integer :: ATTRID                   ! ID for attribute
-    integer :: STATUS                   ! Flag from HDF5
-    integer, dimension(1) :: SHP        ! Shape
-
-    ! Executable code
-    shp = shape(value)
-    call h5aOpen_name_f ( itemID, name, attrID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open attribute ' // trim(name) )
-    ! Note we're going to assume here that the attribute indeed represents the
-    ! right type, and that we won't overflow memory etc. by accidentally trying
-    ! to read too big array into ours.
-    call h5aread_f ( attrID, H5T_NATIVE_REAL, value, &
-      & int ( (/ shp, ones(1:6) /), hID_T ), status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to read 1d attribute array ' // trim(name) )
-    call h5aClose_f ( attrID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to close 1d attribute array  ' // trim(name) )
-  end subroutine GetHDF5Attribute_snglarr1
 
   ! -------------------------------  GetHDF5AttributePtr_snglarr1  -----
   subroutine GetHDF5AttributePtr_snglarr1 ( itemID, name, value, LowBound )
@@ -1150,85 +1462,6 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close 1d attribute array  ' // trim(name) )
   end subroutine GetHDF5AttributePtr_snglarr1
-
-  ! --------------------------------------  GetHDF5Attribute_sngl  -----
-  subroutine GetHDF5Attribute_sngl ( itemID, name, value )
-    integer, intent(in) :: ITEMID       ! Group etc. to get attribute from
-    character (len=*), intent(in) :: NAME ! Name of attribute
-    real, intent(out) :: VALUE          ! The attribute result
-
-    ! Local variables
-    integer :: ATTRID                   ! ID for attribute
-    integer :: STATUS                   ! Flag from HDF5
-
-    ! Executable code
-    call h5aOpen_name_f ( itemID, name, attrID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open attribute ' // trim(name) )
-    ! Note we're going to assume here that the attribute indeed represents the
-    ! right type, and that we won't overflow memory etc. by accidentally trying
-    ! to read too big array into ours.
-    call h5aread_f ( attrID, H5T_NATIVE_REAL, value, &
-      & ones, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to read sngl attribute ' // trim(name) )
-    call h5aClose_f ( attrID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to close sngl attribute  ' // trim(name) )
-  end subroutine GetHDF5Attribute_sngl
-
-  ! ---------------------------------------  GetHDF5Attribute_dbl  -----
-  subroutine GetHDF5Attribute_dbl ( itemID, name, value )
-    integer, intent(in) :: ITEMID          ! Group etc. to get attribute from
-    character (len=*), intent(in) :: NAME  ! Name of attribute
-    double precision, intent(out) :: VALUE ! The attribute result
-
-    ! Local variables
-    integer :: ATTRID                   ! ID for attribute
-    integer :: STATUS                   ! Flag from HDF5
-
-    ! Executable code
-    call h5aOpen_name_f ( itemID, name, attrID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open attribute ' // trim(name) )
-    ! Note we're going to assume here that the attribute indeed represents the
-    ! right type, and that we won't overflow memory etc. by accidentally trying
-    ! to read too big array into ours.
-    call h5aread_f ( attrID, H5T_NATIVE_DOUBLE, value, ones, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to read dble attribute ' // trim(name) )
-    call h5aClose_f ( attrID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to close dble attribute  ' // trim(name) )
-  end subroutine GetHDF5Attribute_dbl
-
-  ! -----------------------------------  GetHDF5Attribute_dblarr1  -----
-  subroutine GetHDF5Attribute_dblarr1 ( itemID, name, value )
-    integer, intent(in) :: ITEMID       ! Group etc. to get attribute from
-    character (len=*), intent(in) :: NAME     ! Name of attribute
-    double precision, intent(out) :: VALUE(:) ! The attribute result
-
-    ! Local variables
-    integer :: ATTRID                   ! ID for attribute
-    integer :: STATUS                   ! Flag from HDF5
-    integer, dimension(1) :: SHP        ! Shape
-
-    ! Executable code
-    shp = shape(value)
-    call h5aOpen_name_f ( itemID, name, attrID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open attribute ' // trim(name) )
-    ! Note we're going to assume here that the attribute indeed represents the
-    ! right type, and that we won't overflow memory etc. by accidentally trying
-    ! to read too big array into ours.
-    call h5aread_f ( attrID, H5T_NATIVE_DOUBLE, value, &
-      & int ( (/ shp, ones(1:6) /), hID_T ), status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to read dblarr1 attribute ' // trim(name) )
-    call h5aClose_f ( attrID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to close dblarr1 attribute  ' // trim(name) )
-  end subroutine GetHDF5Attribute_dblarr1
 
   ! ---------------------------------  GetHDF5AttributePtr_dblarr1  -----
   subroutine GetHDF5AttributePtr_dblarr1 ( itemID, name, value, LowBound )
@@ -2526,11 +2759,352 @@ contains ! ======================= Public Procedures =========================
     end if
   end subroutine SaveAsHDF5DS_snglarr4
 
-  ! ------------------------------------  LoadFromHDF5DS_chararr1  -----
-  subroutine LoadFromHDF5DS_chararr1 ( locID, name, value, &
+  ! ------------------------------------  LdFrmHDF5DS_ID_chararr1  -----
+  subroutine LdFrmHDF5DS_ID_chararr1 ( locID, name, value, &
     & start, count, stride, block )
     ! This routine loads a predefined array with values from a DS
     integer, intent(in) :: LOCID          ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    character (len=*), intent(out) :: VALUE(:)    ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinates of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    type (MLSFile_T)   :: MLSFile
+
+    ! Executable code
+    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
+      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
+    MLSFile%fileID%sd_id = locID
+    MLSFile%stillOpen = .true.
+    call LoadFromHDF5DS ( MLSFile, name, value, &
+    & start, count, stride, block )
+  end subroutine LdFrmHDF5DS_ID_chararr1
+
+  ! ------------------------------------  LdFrmHDF5DS_ID_chararr2  -----
+  subroutine LdFrmHDF5DS_ID_chararr2 ( locID, name, value, &
+    & start, count, stride, block )
+    ! This routine loads a predefined array with values from a DS
+    integer, intent(in) :: LOCID          ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    character (len=*), intent(out) :: VALUE(:,:)    ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    type (MLSFile_T)   :: MLSFile
+
+    ! Executable code
+    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
+      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
+    MLSFile%fileID%sd_id = locID
+    MLSFile%stillOpen = .true.
+    call LoadFromHDF5DS ( MLSFile, name, value, &
+    & start, count, stride, block )
+  end subroutine LdFrmHDF5DS_ID_chararr2
+
+  ! -------------------------------------  LdFrmHDF5DS_ID_intarr1  -----
+  subroutine LdFrmHDF5DS_ID_intarr1 ( locID, name, value, &
+    & start, count, stride, block )
+    ! This routine loads a predefined array with values from a DS
+    integer, intent(in) :: LOCID          ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    integer, intent(out) :: VALUE(:)      ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    type (MLSFile_T)   :: MLSFile
+
+    ! Executable code
+    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
+      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
+    MLSFile%fileID%sd_id = locID
+    MLSFile%stillOpen = .true.
+    call LoadFromHDF5DS ( MLSFile, name, value, &
+    & start, count, stride, block )
+  end subroutine LdFrmHDF5DS_ID_intarr1
+
+  ! -------------------------------------  LdFrmHDF5DS_ID_intarr2  -----
+  subroutine LdFrmHDF5DS_ID_intarr2 ( locID, name, value, &
+    & start, count, stride, block )
+    ! This routine loads a predefined array with values from a DS
+    integer, intent(in) :: LOCID          ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    integer, intent(out) :: VALUE(:,:)    ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    type (MLSFile_T)   :: MLSFile
+
+    ! Executable code
+    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
+      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
+    MLSFile%fileID%sd_id = locID
+    MLSFile%stillOpen = .true.
+    call LoadFromHDF5DS ( MLSFile, name, value, &
+    & start, count, stride, block )
+  end subroutine LdFrmHDF5DS_ID_intarr2
+
+  ! -------------------------------------  LdFrmHDF5DS_ID_logarr1  -----
+  subroutine LdFrmHDF5DS_ID_logarr1 ( locID, name, value, &
+    & start, count, stride, block )
+    ! This routine loads a predefined array with values from a DS
+    integer, intent(in) :: LOCID          ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    logical, intent(out) :: VALUE(:)      ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+    ! Local variables
+    character :: MyValue(size(value))   ! 'F' = false, 'T' = true
+
+    ! Executable code
+    call LoadFromHDF5DS ( locID, name, myValue, start, count, stride, block )
+    value = myValue == 'T'
+  end subroutine LdFrmHDF5DS_ID_logarr1
+
+  ! -------------------------------------  LdFrmHDF5DS_ID_dblarr1  -----
+  subroutine LdFrmHDF5DS_ID_dblarr1 ( locID, name, value, &
+    & start, count, stride, block )
+    ! This routine loads a predefined array with values from a DS
+    integer, intent(in) :: LOCID        ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME     ! Name for this dataset
+    double precision, intent(out) :: VALUE(:) ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    type (MLSFile_T)   :: MLSFile
+
+    ! Executable code
+    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
+      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
+    MLSFile%fileID%sd_id = locID
+    MLSFile%stillOpen = .true.
+    call LoadFromHDF5DS ( MLSFile, name, value, &
+    & start, count, stride, block )
+  end subroutine LdFrmHDF5DS_ID_dblarr1
+
+  ! -------------------------------------  LdFrmHDF5DS_ID_dblarr2  -----
+  subroutine LdFrmHDF5DS_ID_dblarr2 ( locID, name, value, &
+    & start, count, stride, block )
+    ! This routine loads a predefined array with values from a DS
+    integer, intent(in) :: LOCID        ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME       ! Name for this dataset
+    double precision, intent(out) :: VALUE(:,:) ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    type (MLSFile_T)   :: MLSFile
+
+    ! Executable code
+    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
+      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
+    MLSFile%fileID%sd_id = locID
+    MLSFile%stillOpen = .true.
+    call LoadFromHDF5DS ( MLSFile, name, value, &
+    & start, count, stride, block )
+  end subroutine LdFrmHDF5DS_ID_dblarr2
+
+  ! -------------------------------------  LdFrmHDF5DS_ID_dblarr3  -----
+  subroutine LdFrmHDF5DS_ID_dblarr3 ( locID, name, value, &
+    & start, count, stride, block )
+    ! This routine loads a predefined array with values from a DS
+    integer, intent(in) :: LOCID          ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    double precision, intent(out) :: VALUE(:,:,:) ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    type (MLSFile_T)   :: MLSFile
+
+    ! Executable code
+    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
+      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
+    MLSFile%fileID%sd_id = locID
+    MLSFile%stillOpen = .true.
+    call LoadFromHDF5DS ( MLSFile, name, value, &
+    & start, count, stride, block )
+  end subroutine LdFrmHDF5DS_ID_dblarr3
+
+  ! ------------------------------------  LdFrmHDF5DS_ID_snglarr1  -----
+  subroutine LdFrmHDF5DS_ID_snglarr1 ( locID, name, value, &
+    & start, count, stride, block )
+    ! This routine loads a predefined array with values from a DS
+    integer, intent(in) :: LOCID          ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    real, intent(out) :: VALUE(:)         ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    type (MLSFile_T)   :: MLSFile
+
+    ! Executable code
+    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
+      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
+    MLSFile%fileID%sd_id = locID
+    MLSFile%stillOpen = .true.
+    call LoadFromHDF5DS ( MLSFile, name, value, &
+    & start, count, stride, block )
+  end subroutine LdFrmHDF5DS_ID_snglarr1
+
+  ! ------------------------------------  LdFrmHDF5DS_ID_snglarr2  -----
+  subroutine LdFrmHDF5DS_ID_snglarr2 ( locID, name, value, &
+    & start, count, stride, block )
+    ! This routine loads a predefined array with values from a DS
+    integer, intent(in) :: LOCID          ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    real, intent(out) :: VALUE(:,:)       ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    type (MLSFile_T)   :: MLSFile
+
+    ! Executable code
+    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
+      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
+    MLSFile%fileID%sd_id = locID
+    MLSFile%stillOpen = .true.
+    call LoadFromHDF5DS ( MLSFile, name, value, &
+    & start, count, stride, block )
+  end subroutine LdFrmHDF5DS_ID_snglarr2
+
+  ! ------------------------------------  LdFrmHDF5DS_ID_snglarr3  -----
+  subroutine LdFrmHDF5DS_ID_snglarr3 ( locID, name, value, &
+    & start, count, stride, block )
+    ! This routine loads a predefined array with values from a DS
+    integer, intent(in) :: LOCID          ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    real, intent(out) :: VALUE(:,:,:)     ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    type (MLSFile_T)   :: MLSFile
+
+    ! Executable code
+    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
+      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
+    MLSFile%fileID%sd_id = locID
+    MLSFile%stillOpen = .true.
+    call LoadFromHDF5DS ( MLSFile, name, value, &
+    & start, count, stride, block )
+  end subroutine LdFrmHDF5DS_ID_snglarr3
+
+  ! ------------------------------------  LdFrmHDF5DS_ID_snglarr4  -----
+  subroutine LdFrmHDF5DS_ID_snglarr4 ( locID, name, value, &
+    & start, count, stride, block )
+    ! This routine loads a predefined array with values from a DS
+    integer, intent(in) :: LOCID          ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    real, intent(out) :: VALUE(:,:,:,:)   ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    type (MLSFile_T)   :: MLSFile
+
+    ! Executable code
+    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
+      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
+    MLSFile%fileID%sd_id = locID
+    MLSFile%stillOpen = .true.
+    call LoadFromHDF5DS ( MLSFile, name, value, &
+    & start, count, stride, block )
+  end subroutine LdFrmHDF5DS_ID_snglarr4
+
+  ! ------------------------------------  LoadFromHDF5DS_chararr1  -----
+  subroutine LoadFromHDF5DS_chararr1 ( MLSFile, name, value, &
+    & start, count, stride, block )
+    ! This routine loads a predefined array with values from a DS
+    type (MLSFile_T)   :: MLSFile
     character (len=*), intent(in) :: NAME ! Name for this dataset
     character (len=*), intent(out) :: VALUE(:)    ! The array itself
     integer, dimension(:), optional, intent(in) :: start
@@ -2553,32 +3127,545 @@ contains ! ======================= Public Procedures =========================
 
     ! Executable code
     shp = shape ( value )
-    call h5dOpen_f ( locID, name, setID, status )
+    call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataset ' // trim(name) )
+      & 'Unable to open dataset ' // trim(name), &
+      & MLSFile=MLSFile )
     call h5dGet_type_f ( setID, stringType, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to get type for 1D char array ' // trim(name) )
+      & 'Unable to get type for 1D char array ' // trim(name), &
+      & MLSFile=MLSFile )
     call h5tGet_size_f ( stringType, stringSize, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to get size for 1D char array ' // trim(name) )
+      & 'Unable to get size for 1D char array ' // trim(name), &
+      & MLSFile=MLSFile )
     if ( stringSize > len(value) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Value too long to fit in space given for 1D char array ' // trim(name) )
+      & 'Value too long to fit in space given for 1D char array ' // trim(name), &
+      & MLSFile=MLSFile )
     call h5dget_space_f ( setID, spaceID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataspace for dataset ' // trim(name) )
+      & 'Unable to open dataspace for dataset ' // trim(name), &
+      & MLSFile=MLSFile )
     if ( present(start) ) then
       call mls_hyperslab ( spaceID, shp, name, memspaceID, &
         & start, count, stride, block )
       call h5dread_f ( setID, stringtype, value, &
         & (/ shp, ones(1:6) /), status, memspaceID, spaceID )
-      call finishLoad ( name, status, spaceID, setID, memspaceID, stringType )
+      call finishLoad ( name, status, spaceID, setID, &
+        & memspaceID, stringType, MLSFile=MLSFile )
     else
       call check_for_fit ( spaceID, shp, name )
       call h5dread_f ( setID, stringtype, value, (/ shp, ones(1:6) /), status )
-      call finishLoad ( name, status, spaceID, setID, stringType=stringType )
+      call finishLoad ( name, status, spaceID, setID, &
+        & stringType=stringType, MLSFile=MLSFile )
     end if
   end subroutine LoadFromHDF5DS_chararr1
+
+  ! ------------------------------------  LoadFromHDF5DS_chararr2  -----
+  subroutine LoadFromHDF5DS_chararr2 ( MLSFile, name, value, &
+    & start, count, stride, block )
+    ! This routine loads a predefined array with values from a DS
+    type (MLSFile_T)   :: MLSFile
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    character (len=*), intent(out) :: VALUE(:,:)    ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    integer, dimension(2) :: SHP        ! Shape of value
+    integer :: SPACEID                  ! ID of dataspace
+    integer :: MEMSPACEID               ! ID of dataspace
+    integer :: SETID                    ! ID of dataset
+    integer :: STRINGTYPE               ! String type
+    integer :: STRINGSIZE               ! String size
+
+    ! Executable code
+    shp = shape ( value )
+    call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataset ' // trim(name), &
+      & MLSFile=MLSFile )
+    call h5dGet_type_f ( setID, stringType, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get type for 2D char array ' // trim(name), &
+      & MLSFile=MLSFile )
+    call h5tGet_size_f ( stringType, stringSize, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get size for 2D char array ' // trim(name), &
+      & MLSFile=MLSFile )
+    if ( stringSize > len(value) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Value too long to fit in space given for 2D char array ' // trim(name), &
+      & MLSFile=MLSFile )
+    call h5dget_space_f ( setID, spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataspace for dataset ' // trim(name), &
+      & MLSFile=MLSFile )
+    if ( present(start) ) then
+      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
+        & start, count, stride, block )
+      call h5dread_f ( setID, stringtype, value, &
+        & (/ shp, ones(1:5) /), status, memspaceID, spaceID )
+      call finishLoad ( name, status, spaceID, setID, &
+        & memspaceID, stringType, MLSFile=MLSFile )
+    else
+      call check_for_fit ( spaceID, shp, name )
+      call h5dread_f ( setID, stringtype, value, (/ shp, ones(1:5) /), status )
+      call finishLoad ( name, status, spaceID, setID, &
+        & stringType=stringType, MLSFile=MLSFile )
+    end if
+  end subroutine LoadFromHDF5DS_chararr2
+
+  ! -------------------------------------  LoadFromHDF5DS_intarr1  -----
+  subroutine LoadFromHDF5DS_intarr1 ( MLSFile, name, value, &
+    & start, count, stride, block )
+    ! This routine loads a predefined array with values from a DS
+    type (MLSFile_T)   :: MLSFile
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    integer, intent(out) :: VALUE(:)      ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    integer, dimension(1) :: SHP        ! Shape of value
+    integer :: SPACEID                  ! ID of dataspace
+    integer :: MEMSPACEID               ! ID of dataspace
+    integer :: SETID                    ! ID of dataset
+
+    ! Executable code
+    shp = shape ( value )
+    call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataset ' // trim(name), &
+      & MLSFile=MLSFile )
+    call h5dget_space_f ( setID, spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataspace for dataset ' // trim(name), &
+      & MLSFile=MLSFile )
+    if ( present(start) ) then
+      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
+        & start, count, stride, block )
+      call h5dread_f ( setID, H5T_NATIVE_INTEGER, value, &
+        & (/ shp, ones(1:6) /), status, memspaceID, spaceID )
+      call finishLoad ( name, status, spaceID, setID, memspaceID, MLSFile=MLSFile )
+    else
+      call check_for_fit ( spaceID, shp, name )
+      call h5dread_f ( setID, H5T_NATIVE_INTEGER, value, &
+        & (/ shp, ones(1:6) /), status )
+      call finishLoad ( name, status, spaceID, setID, MLSFile=MLSFile )
+    end if
+  end subroutine LoadFromHDF5DS_intarr1
+
+  ! -------------------------------------  LoadFromHDF5DS_intarr2  -----
+  subroutine LoadFromHDF5DS_intarr2 ( MLSFile, name, value, &
+    & start, count, stride, block )
+    ! This routine loads a predefined array with values from a DS
+    type (MLSFile_T)   :: MLSFile
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    integer, intent(out) :: VALUE(:,:)    ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    integer, dimension(2) :: SHP        ! Shape of value
+    integer :: SPACEID                  ! ID of dataspace
+    integer :: MEMSPACEID               ! ID of dataspace
+    integer :: SETID                    ! ID of dataset
+
+    ! Executable code
+    shp = shape ( value )
+    call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataset ' // trim(name), &
+      & MLSFile=MLSFile )
+    call h5dget_space_f ( setID, spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataspace for dataset ' // trim(name), &
+      & MLSFile=MLSFile )
+    if ( present(start) ) then
+      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
+        & start, count, stride, block )
+      call h5dread_f ( setID, H5T_NATIVE_INTEGER, value, &
+        & (/ shp, ones(1:5) /), status, memspaceID, spaceID )
+      call finishLoad ( name, status, spaceID, setID, memspaceID, MLSFile=MLSFile )
+    else
+      call check_for_fit ( spaceID, shp, name )
+      call h5dread_f ( setID, H5T_NATIVE_INTEGER, value, &
+        & (/ shp, ones(1:5) /), status )
+      call finishLoad ( name, status, spaceID, setID, MLSFile=MLSFile )
+    end if
+  end subroutine LoadFromHDF5DS_intarr2
+
+  ! -------------------------------------  LoadFromHDF5DS_logarr1  -----
+  subroutine LoadFromHDF5DS_logarr1 ( MLSFile, name, value, &
+    & start, count, stride, block )
+    ! This routine loads a predefined array with values from a DS
+    type (MLSFile_T)   :: MLSFile
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    logical, intent(out) :: VALUE(:)      ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+    ! Local variables
+    character :: MyValue(size(value))   ! 'F' = false, 'T' = true
+
+    ! Executable code
+    call LoadFromHDF5DS ( MLSFile, name, myValue, start, count, stride, block )
+    value = myValue == 'T'
+  end subroutine LoadFromHDF5DS_logarr1
+
+  ! -------------------------------------  LoadFromHDF5DS_dblarr1  -----
+  subroutine LoadFromHDF5DS_dblarr1 ( MLSFile, name, value, &
+    & start, count, stride, block )
+    ! This routine loads a predefined array with values from a DS
+    type (MLSFile_T)   :: MLSFile
+    character (len=*), intent(in) :: NAME     ! Name for this dataset
+    double precision, intent(out) :: VALUE(:) ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    integer, dimension(1) :: SHP        ! Shape of value
+    integer :: SPACEID                  ! ID of dataspace
+    integer :: MEMSPACEID               ! ID of dataspace
+    integer :: SETID                    ! ID of dataset
+
+    ! Executable code
+    shp = shape ( value )
+    call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataset ' // trim(name), &
+      & MLSFile=MLSFile )
+    call h5dget_space_f ( setID, spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataspace for dataset ' // trim(name), &
+      & MLSFile=MLSFile )
+    if ( present(start) ) then
+      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
+        & start, count, stride, block )
+      call h5dread_f(setID, H5T_NATIVE_DOUBLE, value, &
+        & (/ shp, ones(1:6) /), status, memspaceID, spaceID )
+      call finishLoad ( name, status, spaceID, setID, memspaceID, MLSFile=MLSFile )
+    else
+      call check_for_fit ( spaceID, shp, name )
+      call h5dread_f ( setID, H5T_NATIVE_DOUBLE, value, &
+        & (/ shp, ones(1:6) /), status )
+      call finishLoad ( name, status, spaceID, setID, MLSFile=MLSFile )
+    end if
+  end subroutine LoadFromHDF5DS_dblarr1
+
+  ! -------------------------------------  LoadFromHDF5DS_dblarr2  -----
+  subroutine LoadFromHDF5DS_dblarr2 ( MLSFile, name, value, &
+    & start, count, stride, block )
+    ! This routine loads a predefined array with values from a DS
+    type (MLSFile_T)   :: MLSFile
+    character (len=*), intent(in) :: NAME       ! Name for this dataset
+    double precision, intent(out) :: VALUE(:,:) ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    integer, dimension(2) :: SHP        ! Shape of value
+    integer :: SPACEID                  ! ID of dataspace
+    integer :: MEMSPACEID               ! ID of dataspace
+    integer :: SETID                    ! ID of dataset
+
+    ! Executable code
+    shp = shape ( value )
+    call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataset ' // trim(name), &
+      & MLSFile=MLSFile )
+    call h5dget_space_f ( setID, spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataspace for dataset ' // trim(name), &
+      & MLSFile=MLSFile )
+    if ( present(start) ) then
+      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
+        & start, count, stride, block )
+      call h5dread_f ( setID, H5T_NATIVE_DOUBLE, value, &
+        & (/ shp, ones(1:5) /), status, memspaceID, spaceID )
+      call finishLoad ( name, status, spaceID, setID, memspaceID, MLSFile=MLSFile )
+    else
+      call check_for_fit ( spaceID, shp, name )
+      call h5dread_f ( setID, H5T_NATIVE_DOUBLE, value, &
+        & (/ shp, ones(1:5) /), status )
+      call finishLoad ( name, status, spaceID, setID, MLSFile=MLSFile )
+    end if
+  end subroutine LoadFromHDF5DS_dblarr2
+
+  ! -------------------------------------  LoadFromHDF5DS_dblarr3  -----
+  subroutine LoadFromHDF5DS_dblarr3 ( MLSFile, name, value, &
+    & start, count, stride, block )
+    ! This routine loads a predefined array with values from a DS
+    type (MLSFile_T)   :: MLSFile
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    double precision, intent(out) :: VALUE(:,:,:) ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    integer, dimension(3) :: SHP        ! Shape of value
+    integer :: SPACEID                  ! ID of dataspace
+    integer :: MEMSPACEID               ! ID of dataspace
+    integer :: SETID                    ! ID of dataset
+
+    ! Executable code
+    shp = shape ( value )
+    call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataset ' // trim(name), &
+      & MLSFile=MLSFile )
+    call h5dget_space_f ( setID, spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataspace for dataset ' // trim(name), &
+      & MLSFile=MLSFile )
+    if ( present(start) ) then
+      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
+        & start, count, stride, block )
+      call h5dread_f ( setID, H5T_NATIVE_DOUBLE, value, &
+        & (/ shp, ones(1:4) /), status, memspaceID, spaceID )
+      call finishLoad ( name, status, spaceID, setID, memspaceID, MLSFile=MLSFile )
+    else
+      call check_for_fit ( spaceID, shp, name )
+      call h5dread_f ( setID, H5T_NATIVE_DOUBLE, value, &
+        & (/ shp, ones(1:4) /), status )
+      call finishLoad ( name, status, spaceID, setID, MLSFile=MLSFile )
+    end if
+  end subroutine LoadFromHDF5DS_dblarr3
+
+  ! ------------------------------------  LoadFromHDF5DS_snglarr1  -----
+  subroutine LoadFromHDF5DS_snglarr1 ( MLSFile, name, value, &
+    & start, count, stride, block )
+    ! This routine loads a predefined array with values from a DS
+    type (MLSFile_T)   :: MLSFile
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    real, intent(out) :: VALUE(:)         ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    integer, dimension(1) :: SHP        ! Shape of value
+    integer :: SPACEID                  ! ID of dataspace
+    integer :: MEMSPACEID               ! ID of dataspace
+    integer :: SETID                    ! ID of dataset
+
+    ! Executable code
+    shp = shape ( value )
+    call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataset ' // trim(name), &
+      & MLSFile=MLSFile )
+    call h5dget_space_f ( setID, spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataspace for dataset ' // trim(name), &
+      & MLSFile=MLSFile )
+    if ( present(start) ) then
+      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
+        & start, count, stride, block )
+      call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
+        & (/ shp, ones(1:6) /), status, memspaceID, spaceID )
+      call finishLoad ( name, status, spaceID, setID, memspaceID, MLSFile=MLSFile )
+    else
+      call check_for_fit ( spaceID, shp, name )
+      call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
+        & (/ shp, ones(1:6) /), status )
+      call finishLoad ( name, status, spaceID, setID, MLSFile=MLSFile )
+    end if
+  end subroutine LoadFromHDF5DS_snglarr1
+
+  ! ------------------------------------  LoadFromHDF5DS_snglarr2  -----
+  subroutine LoadFromHDF5DS_snglarr2 ( MLSFile, name, value, &
+    & start, count, stride, block )
+    ! This routine loads a predefined array with values from a DS
+    type (MLSFile_T)   :: MLSFile
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    real, intent(out) :: VALUE(:,:)       ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    integer, dimension(2) :: SHP        ! Shape of value
+    integer :: SPACEID                  ! ID of dataspace
+    integer :: MEMSPACEID               ! ID of dataspace
+    integer :: SETID                    ! ID of dataset
+
+    ! Executable code
+    shp = shape ( value )
+    call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataset ' // trim(name), &
+      & MLSFile=MLSFile )
+    call h5dget_space_f ( setID, spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataspace for dataset ' // trim(name), &
+      & MLSFile=MLSFile )
+    if ( present(start) ) then
+      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
+        & start, count, stride, block )
+      call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
+        & (/ shp, ones(1:5) /), status, memspaceID, spaceID )
+      call finishLoad ( name, status, spaceID, setID, memspaceID, MLSFile=MLSFile )
+    else
+      call check_for_fit ( spaceID, shp, name )
+      call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
+        & (/ shp, ones(1:5) /), status )
+      call finishLoad ( name, status, spaceID, setID, MLSFile=MLSFile )
+    end if
+  end subroutine LoadFromHDF5DS_snglarr2
+
+  ! ------------------------------------  LoadFromHDF5DS_snglarr3  -----
+  subroutine LoadFromHDF5DS_snglarr3 ( MLSFile, name, value, &
+    & start, count, stride, block )
+    ! This routine loads a predefined array with values from a DS
+    type (MLSFile_T)   :: MLSFile
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    real, intent(out) :: VALUE(:,:,:)     ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    integer, dimension(3) :: SHP        ! Shape of value
+    integer :: SPACEID                  ! ID of dataspace
+    integer :: MEMSPACEID               ! ID of dataspace
+    integer :: SETID                    ! ID of dataset
+
+    ! Executable code
+    shp = shape ( value )
+    call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataset ' // trim(name), &
+      & MLSFile=MLSFile )
+    call h5dget_space_f ( setID, spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataspace for dataset ' // trim(name), &
+      & MLSFile=MLSFile )
+    if ( present(start) ) then
+      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
+        & start, count, stride, block )
+      call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
+        & (/ shp, ones(1:4) /), status, memspaceID, spaceID )
+      call finishLoad ( name, status, spaceID, setID, memspaceID, MLSFile=MLSFile )
+    else
+      call check_for_fit ( spaceID, shp, name )
+      call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
+        & (/ shp, ones(1:4) /), status )
+      call finishLoad ( name, status, spaceID, setID, MLSFile=MLSFile )
+    end if
+  end subroutine LoadFromHDF5DS_snglarr3
+
+  ! ------------------------------------  LoadFromHDF5DS_snglarr4  -----
+  subroutine LoadFromHDF5DS_snglarr4 ( MLSFile, name, value, &
+    & start, count, stride, block )
+    ! This routine loads a predefined array with values from a DS
+    type (MLSFile_T)   :: MLSFile
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    real, intent(out) :: VALUE(:,:,:,:)   ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    integer, dimension(4) :: SHP        ! Shape of value
+    integer :: SPACEID                  ! ID of dataspace
+    integer :: MEMSPACEID               ! ID of dataspace
+    integer :: SETID                    ! ID of dataset
+
+    ! Executable code
+    shp = shape ( value )
+    call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataset ' // trim(name), &
+      & MLSFile=MLSFile )
+    call h5dget_space_f ( setID, spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataspace for dataset ' // trim(name), &
+      & MLSFile=MLSFile )
+    if ( present(start) ) then
+      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
+        & start, count, stride, block )
+      call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
+        & (/ shp, ones(1:3) /), status, memspaceID, spaceID )
+      call finishLoad ( name, status, spaceID, setID, memspaceID, MLSFile=MLSFile )
+    else
+      call check_for_fit ( spaceID, shp, name )
+      call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
+        & (/ shp, ones(1:3) /), status )
+      call finishLoad ( name, status, spaceID, setID, MLSFile=MLSFile )
+    end if
+  end subroutine LoadFromHDF5DS_snglarr4
 
   ! ---------------------------------  LoadPtrFromHDF5DS_chararr1  -----
   subroutine LoadPtrFromHDF5DS_chararr1 ( locID, name, value, lowBound )
@@ -2622,60 +3709,6 @@ contains ! ======================= Public Procedures =========================
     call finishLoad ( name, status, spaceID, setID, stringType=stringType )
   end subroutine LoadPtrFromHDF5DS_chararr1
 
-  ! ------------------------------------  LoadFromHDF5DS_chararr2  -----
-  subroutine LoadFromHDF5DS_chararr2 ( locID, name, value, &
-    & start, count, stride, block )
-    ! This routine loads a predefined array with values from a DS
-    integer, intent(in) :: LOCID          ! Where to place it (group/file)
-    character (len=*), intent(in) :: NAME ! Name for this dataset
-    character (len=*), intent(out) :: VALUE(:,:)    ! The array itself
-    integer, dimension(:), optional, intent(in) :: start
-                                 ! Starting coordinatess of hyperslab
-    integer, dimension(:), optional, intent(in) :: count
-                                 ! Num of blocks to select from dataspace
-    integer, dimension(:), optional, intent(in) :: stride
-                                 ! How many elements to move in each direction
-    integer, dimension(:), optional, intent(in) :: block
-                                 ! Size of element block
-
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    integer, dimension(2) :: SHP        ! Shape of value
-    integer :: SPACEID                  ! ID of dataspace
-    integer :: MEMSPACEID               ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
-    integer :: STRINGTYPE               ! String type
-    integer :: STRINGSIZE               ! String size
-
-    ! Executable code
-    shp = shape ( value )
-    call h5dOpen_f ( locID, name, setID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataset ' // trim(name) )
-    call h5dGet_type_f ( setID, stringType, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to get type for 2D char array ' // trim(name) )
-    call h5tGet_size_f ( stringType, stringSize, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to get size for 2D char array ' // trim(name) )
-    if ( stringSize > len(value) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Value too long to fit in space given for 2D char array ' // trim(name) )
-    call h5dget_space_f ( setID, spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataspace for dataset ' // trim(name) )
-    if ( present(start) ) then
-      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
-        & start, count, stride, block )
-      call h5dread_f ( setID, stringtype, value, &
-        & (/ shp, ones(1:5) /), status, memspaceID, spaceID )
-      call finishLoad ( name, status, spaceID, setID, memspaceID, stringType )
-    else
-      call check_for_fit ( spaceID, shp, name )
-      call h5dread_f ( setID, stringtype, value, (/ shp, ones(1:5) /), status )
-      call finishLoad ( name, status, spaceID, setID, stringType=stringType )
-    end if
-  end subroutine LoadFromHDF5DS_chararr2
-
   ! ---------------------------------  LoadPtrFromHDF5DS_chararr2  -----
   subroutine LoadPtrFromHDF5DS_chararr2 ( locID, name, value )
     ! This routine allocates an array and loads it with values from a DS
@@ -2713,51 +3746,6 @@ contains ! ======================= Public Procedures =========================
    call finishLoad ( name, status, spaceID, setID, stringType=stringType )
   end subroutine LoadPtrFromHDF5DS_chararr2
 
-  ! -------------------------------------  LoadFromHDF5DS_intarr1  -----
-  subroutine LoadFromHDF5DS_intarr1 ( locID, name, value, &
-    & start, count, stride, block )
-    ! This routine loads a predefined array with values from a DS
-    integer, intent(in) :: LOCID          ! Where to place it (group/file)
-    character (len=*), intent(in) :: NAME ! Name for this dataset
-    integer, intent(out) :: VALUE(:)      ! The array itself
-    integer, dimension(:), optional, intent(in) :: start
-                                 ! Starting coordinatess of hyperslab
-    integer, dimension(:), optional, intent(in) :: count
-                                 ! Num of blocks to select from dataspace
-    integer, dimension(:), optional, intent(in) :: stride
-                                 ! How many elements to move in each direction
-    integer, dimension(:), optional, intent(in) :: block
-                                 ! Size of element block
-
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    integer, dimension(1) :: SHP        ! Shape of value
-    integer :: SPACEID                  ! ID of dataspace
-    integer :: MEMSPACEID               ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
-
-    ! Executable code
-    shp = shape ( value )
-    call h5dOpen_f ( locID, name, setID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataset ' // trim(name) )
-    call h5dget_space_f ( setID, spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataspace for dataset ' // trim(name) )
-    if ( present(start) ) then
-      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
-        & start, count, stride, block )
-      call h5dread_f ( setID, H5T_NATIVE_INTEGER, value, &
-        & (/ shp, ones(1:6) /), status, memspaceID, spaceID )
-      call finishLoad ( name, status, spaceID, setID, memspaceID )
-    else
-      call check_for_fit ( spaceID, shp, name )
-      call h5dread_f ( setID, H5T_NATIVE_INTEGER, value, &
-        & (/ shp, ones(1:6) /), status )
-      call finishLoad ( name, status, spaceID, setID )
-    end if
-  end subroutine LoadFromHDF5DS_intarr1
-
   ! ----------------------------------  LoadPtrFromHDF5DS_intarr1  -----
   subroutine LoadPtrFromHDF5DS_intarr1 ( locID, name, value, lowBound )
     ! This routine allocates an array and loads it with values from a DS
@@ -2791,50 +3779,6 @@ contains ! ======================= Public Procedures =========================
     call finishLoad ( name, status, spaceID, setID )
   end subroutine LoadPtrFromHDF5DS_intarr1
 
-  ! -------------------------------------  LoadFromHDF5DS_intarr2  -----
-  subroutine LoadFromHDF5DS_intarr2 ( locID, name, value, &
-    & start, count, stride, block )
-    ! This routine loads a predefined array with values from a DS
-    integer, intent(in) :: LOCID          ! Where to place it (group/file)
-    character (len=*), intent(in) :: NAME ! Name for this dataset
-    integer, intent(out) :: VALUE(:,:)    ! The array itself
-    integer, dimension(:), optional, intent(in) :: start
-                                 ! Starting coordinatess of hyperslab
-    integer, dimension(:), optional, intent(in) :: count
-                                 ! Num of blocks to select from dataspace
-    integer, dimension(:), optional, intent(in) :: stride
-                                 ! How many elements to move in each direction
-    integer, dimension(:), optional, intent(in) :: block
-                                 ! Size of element block
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    integer, dimension(2) :: SHP        ! Shape of value
-    integer :: SPACEID                  ! ID of dataspace
-    integer :: MEMSPACEID               ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
-
-    ! Executable code
-    shp = shape ( value )
-    call h5dOpen_f ( locID, name, setID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataset ' // trim(name) )
-    call h5dget_space_f ( setID, spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataspace for dataset ' // trim(name) )
-    if ( present(start) ) then
-      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
-        & start, count, stride, block )
-      call h5dread_f ( setID, H5T_NATIVE_INTEGER, value, &
-        & (/ shp, ones(1:5) /), status, memspaceID, spaceID )
-      call finishLoad ( name, status, spaceID, setID, memspaceID )
-    else
-      call check_for_fit ( spaceID, shp, name )
-      call h5dread_f ( setID, H5T_NATIVE_INTEGER, value, &
-        & (/ shp, ones(1:5) /), status )
-      call finishLoad ( name, status, spaceID, setID )
-    end if
-  end subroutine LoadFromHDF5DS_intarr2
-
   ! ----------------------------------  LoadPtrFromHDF5DS_intarr2  -----
   subroutine LoadPtrFromHDF5DS_intarr2 ( locID, name, value )
     ! This routine allocates an array and loads it with values from a DS
@@ -2863,29 +3807,6 @@ contains ! ======================= Public Procedures =========================
     call finishLoad ( name, status, spaceID, setID )
   end subroutine LoadPtrFromHDF5DS_intarr2
 
-  ! -------------------------------------  LoadFromHDF5DS_logarr1  -----
-  subroutine LoadFromHDF5DS_logarr1 ( locID, name, value, &
-    & start, count, stride, block )
-    ! This routine loads a predefined array with values from a DS
-    integer, intent(in) :: LOCID          ! Where to place it (group/file)
-    character (len=*), intent(in) :: NAME ! Name for this dataset
-    logical, intent(out) :: VALUE(:)      ! The array itself
-    integer, dimension(:), optional, intent(in) :: start
-                                 ! Starting coordinatess of hyperslab
-    integer, dimension(:), optional, intent(in) :: count
-                                 ! Num of blocks to select from dataspace
-    integer, dimension(:), optional, intent(in) :: stride
-                                 ! How many elements to move in each direction
-    integer, dimension(:), optional, intent(in) :: block
-                                 ! Size of element block
-    ! Local variables
-    character :: MyValue(size(value))   ! 'F' = false, 'T' = true
-
-    ! Executable code
-    call LoadFromHDF5DS ( locID, name, myValue, start, count, stride, block )
-    value = myValue == 'T'
-  end subroutine LoadFromHDF5DS_logarr1
-
   ! ----------------------------------  LoadPtrFromHDF5DS_logarr1  -----
   subroutine LoadPtrFromHDF5DS_logarr1 ( locID, name, value, lowBound )
     ! This routine allocates an array and loads it with values from a DS
@@ -2909,51 +3830,6 @@ contains ! ======================= Public Procedures =========================
     value = myValue == 'T'
     call deallocate_test ( myValue, 'myValue', moduleName )
   end subroutine LoadPtrFromHDF5DS_logarr1
-
-  ! -------------------------------------  LoadFromHDF5DS_dblarr1  -----
-  subroutine LoadFromHDF5DS_dblarr1 ( locID, name, value, &
-    & start, count, stride, block )
-    ! This routine loads a predefined array with values from a DS
-    integer, intent(in) :: LOCID        ! Where to place it (group/file)
-    character (len=*), intent(in) :: NAME     ! Name for this dataset
-    double precision, intent(out) :: VALUE(:) ! The array itself
-    integer, dimension(:), optional, intent(in) :: start
-                                 ! Starting coordinatess of hyperslab
-    integer, dimension(:), optional, intent(in) :: count
-                                 ! Num of blocks to select from dataspace
-    integer, dimension(:), optional, intent(in) :: stride
-                                 ! How many elements to move in each direction
-    integer, dimension(:), optional, intent(in) :: block
-                                 ! Size of element block
-
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    integer, dimension(1) :: SHP        ! Shape of value
-    integer :: SPACEID                  ! ID of dataspace
-    integer :: MEMSPACEID               ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
-
-    ! Executable code
-    shp = shape ( value )
-    call h5dOpen_f ( locID, name, setID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataset ' // trim(name) )
-    call h5dget_space_f ( setID, spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataspace for dataset ' // trim(name) )
-    if ( present(start) ) then
-      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
-        & start, count, stride, block )
-      call h5dread_f(setID, H5T_NATIVE_DOUBLE, value, &
-        & (/ shp, ones(1:6) /), status, memspaceID, spaceID )
-      call finishLoad ( name, status, spaceID, setID, memspaceID )
-    else
-      call check_for_fit ( spaceID, shp, name )
-      call h5dread_f ( setID, H5T_NATIVE_DOUBLE, value, &
-        & (/ shp, ones(1:6) /), status )
-      call finishLoad ( name, status, spaceID, setID )
-    end if
-  end subroutine LoadFromHDF5DS_dblarr1
 
   ! ----------------------------------  LoadPtrFromHDF5DS_dblarr1  -----
   subroutine LoadPtrFromHDF5DS_dblarr1 ( locID, name, value, lowBound )
@@ -2988,51 +3864,6 @@ contains ! ======================= Public Procedures =========================
     call finishLoad ( name, status, spaceID, setID )
   end subroutine LoadPtrFromHDF5DS_dblarr1
 
-  ! -------------------------------------  LoadFromHDF5DS_dblarr2  -----
-  subroutine LoadFromHDF5DS_dblarr2 ( locID, name, value, &
-    & start, count, stride, block )
-    ! This routine loads a predefined array with values from a DS
-    integer, intent(in) :: LOCID        ! Where to place it (group/file)
-    character (len=*), intent(in) :: NAME       ! Name for this dataset
-    double precision, intent(out) :: VALUE(:,:) ! The array itself
-    integer, dimension(:), optional, intent(in) :: start
-                                 ! Starting coordinatess of hyperslab
-    integer, dimension(:), optional, intent(in) :: count
-                                 ! Num of blocks to select from dataspace
-    integer, dimension(:), optional, intent(in) :: stride
-                                 ! How many elements to move in each direction
-    integer, dimension(:), optional, intent(in) :: block
-                                 ! Size of element block
-
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    integer, dimension(2) :: SHP        ! Shape of value
-    integer :: SPACEID                  ! ID of dataspace
-    integer :: MEMSPACEID               ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
-
-    ! Executable code
-    shp = shape ( value )
-    call h5dOpen_f ( locID, name, setID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataset ' // trim(name) )
-    call h5dget_space_f ( setID, spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataspace for dataset ' // trim(name) )
-    if ( present(start) ) then
-      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
-        & start, count, stride, block )
-      call h5dread_f ( setID, H5T_NATIVE_DOUBLE, value, &
-        & (/ shp, ones(1:5) /), status, memspaceID, spaceID )
-      call finishLoad ( name, status, spaceID, setID, memspaceID )
-    else
-      call check_for_fit ( spaceID, shp, name )
-      call h5dread_f ( setID, H5T_NATIVE_DOUBLE, value, &
-        & (/ shp, ones(1:5) /), status )
-      call finishLoad ( name, status, spaceID, setID )
-    end if
-  end subroutine LoadFromHDF5DS_dblarr2
-
   ! ----------------------------------  LoadPtrFromHDF5DS_dblarr2  -----
   subroutine LoadPtrFromHDF5DS_dblarr2 ( locID, name, value )
     ! This routine allocates an array and loads it with values from a DS
@@ -3060,51 +3891,6 @@ contains ! ======================= Public Procedures =========================
       & (/ int(shp), ones(1:5) /), status )
     call finishLoad ( name, status, spaceID, setID )
   end subroutine LoadPtrFromHDF5DS_dblarr2
-
-  ! -------------------------------------  LoadFromHDF5DS_dblarr3  -----
-  subroutine LoadFromHDF5DS_dblarr3 ( locID, name, value, &
-    & start, count, stride, block )
-    ! This routine loads a predefined array with values from a DS
-    integer, intent(in) :: LOCID          ! Where to place it (group/file)
-    character (len=*), intent(in) :: NAME ! Name for this dataset
-    double precision, intent(out) :: VALUE(:,:,:) ! The array itself
-    integer, dimension(:), optional, intent(in) :: start
-                                 ! Starting coordinatess of hyperslab
-    integer, dimension(:), optional, intent(in) :: count
-                                 ! Num of blocks to select from dataspace
-    integer, dimension(:), optional, intent(in) :: stride
-                                 ! How many elements to move in each direction
-    integer, dimension(:), optional, intent(in) :: block
-                                 ! Size of element block
-
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    integer, dimension(3) :: SHP        ! Shape of value
-    integer :: SPACEID                  ! ID of dataspace
-    integer :: MEMSPACEID               ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
-
-    ! Executable code
-    shp = shape ( value )
-    call h5dOpen_f ( locID, name, setID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataset ' // trim(name) )
-    call h5dget_space_f ( setID, spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataspace for dataset ' // trim(name) )
-    if ( present(start) ) then
-      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
-        & start, count, stride, block )
-      call h5dread_f ( setID, H5T_NATIVE_DOUBLE, value, &
-        & (/ shp, ones(1:4) /), status, memspaceID, spaceID )
-      call finishLoad ( name, status, spaceID, setID, memspaceID )
-    else
-      call check_for_fit ( spaceID, shp, name )
-      call h5dread_f ( setID, H5T_NATIVE_DOUBLE, value, &
-        & (/ shp, ones(1:4) /), status )
-      call finishLoad ( name, status, spaceID, setID )
-    end if
-  end subroutine LoadFromHDF5DS_dblarr3
 
   ! ----------------------------------  LoadPtrFromHDF5DS_dblarr3  -----
   subroutine LoadPtrFromHDF5DS_dblarr3 ( locID, name, value )
@@ -3134,51 +3920,6 @@ contains ! ======================= Public Procedures =========================
       & (/ int(shp), ones(1:4) /), status )
     call finishLoad ( name, status, spaceID, setID )
   end subroutine LoadPtrFromHDF5DS_dblarr3
-
-  ! ------------------------------------  LoadFromHDF5DS_snglarr1  -----
-  subroutine LoadFromHDF5DS_snglarr1 ( locID, name, value, &
-    & start, count, stride, block )
-    ! This routine loads a predefined array with values from a DS
-    integer, intent(in) :: LOCID          ! Where to place it (group/file)
-    character (len=*), intent(in) :: NAME ! Name for this dataset
-    real, intent(out) :: VALUE(:)         ! The array itself
-    integer, dimension(:), optional, intent(in) :: start
-                                 ! Starting coordinatess of hyperslab
-    integer, dimension(:), optional, intent(in) :: count
-                                 ! Num of blocks to select from dataspace
-    integer, dimension(:), optional, intent(in) :: stride
-                                 ! How many elements to move in each direction
-    integer, dimension(:), optional, intent(in) :: block
-                                 ! Size of element block
-
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    integer, dimension(1) :: SHP        ! Shape of value
-    integer :: SPACEID                  ! ID of dataspace
-    integer :: MEMSPACEID               ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
-
-    ! Executable code
-    shp = shape ( value )
-    call h5dOpen_f ( locID, name, setID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataset ' // trim(name) )
-    call h5dget_space_f ( setID, spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataspace for dataset ' // trim(name) )
-    if ( present(start) ) then
-      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
-        & start, count, stride, block )
-      call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
-        & (/ shp, ones(1:6) /), status, memspaceID, spaceID )
-      call finishLoad ( name, status, spaceID, setID, memspaceID )
-    else
-      call check_for_fit ( spaceID, shp, name )
-      call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
-        & (/ shp, ones(1:6) /), status )
-      call finishLoad ( name, status, spaceID, setID )
-    end if
-  end subroutine LoadFromHDF5DS_snglarr1
 
   ! ---------------------------------  LoadPtrFromHDF5DS_snglarr1  -----
   subroutine LoadPtrFromHDF5DS_snglarr1 ( locID, name, value, lowBound )
@@ -3213,51 +3954,6 @@ contains ! ======================= Public Procedures =========================
     call finishLoad ( name, status, spaceID, setID )
   end subroutine LoadPtrFromHDF5DS_snglarr1
 
-  ! ------------------------------------  LoadFromHDF5DS_snglarr2  -----
-  subroutine LoadFromHDF5DS_snglarr2 ( locID, name, value, &
-    & start, count, stride, block )
-    ! This routine loads a predefined array with values from a DS
-    integer, intent(in) :: LOCID          ! Where to place it (group/file)
-    character (len=*), intent(in) :: NAME ! Name for this dataset
-    real, intent(out) :: VALUE(:,:)       ! The array itself
-    integer, dimension(:), optional, intent(in) :: start
-                                 ! Starting coordinatess of hyperslab
-    integer, dimension(:), optional, intent(in) :: count
-                                 ! Num of blocks to select from dataspace
-    integer, dimension(:), optional, intent(in) :: stride
-                                 ! How many elements to move in each direction
-    integer, dimension(:), optional, intent(in) :: block
-                                 ! Size of element block
-
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    integer, dimension(2) :: SHP        ! Shape of value
-    integer :: SPACEID                  ! ID of dataspace
-    integer :: MEMSPACEID               ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
-
-    ! Executable code
-    shp = shape ( value )
-    call h5dOpen_f ( locID, name, setID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataset ' // trim(name) )
-    call h5dget_space_f ( setID, spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataspace for dataset ' // trim(name) )
-    if ( present(start) ) then
-      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
-        & start, count, stride, block )
-      call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
-        & (/ shp, ones(1:5) /), status, memspaceID, spaceID )
-      call finishLoad ( name, status, spaceID, setID, memspaceID )
-    else
-      call check_for_fit ( spaceID, shp, name )
-      call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
-        & (/ shp, ones(1:5) /), status )
-      call finishLoad ( name, status, spaceID, setID )
-    end if
-  end subroutine LoadFromHDF5DS_snglarr2
-
   ! ---------------------------------  LoadPtrFromHDF5DS_snglarr2  -----
   subroutine LoadPtrFromHDF5DS_snglarr2 ( locID, name, value )
     ! This routine allocates an array and loads it with values from a DS
@@ -3285,51 +3981,6 @@ contains ! ======================= Public Procedures =========================
       & (/ int(shp), ones(1:5) /), status )
     call finishLoad ( name, status, spaceID, setID )
   end subroutine LoadPtrFromHDF5DS_snglarr2
-
-  ! ------------------------------------  LoadFromHDF5DS_snglarr3  -----
-  subroutine LoadFromHDF5DS_snglarr3 ( locID, name, value, &
-    & start, count, stride, block )
-    ! This routine loads a predefined array with values from a DS
-    integer, intent(in) :: LOCID          ! Where to place it (group/file)
-    character (len=*), intent(in) :: NAME ! Name for this dataset
-    real, intent(out) :: VALUE(:,:,:)     ! The array itself
-    integer, dimension(:), optional, intent(in) :: start
-                                 ! Starting coordinatess of hyperslab
-    integer, dimension(:), optional, intent(in) :: count
-                                 ! Num of blocks to select from dataspace
-    integer, dimension(:), optional, intent(in) :: stride
-                                 ! How many elements to move in each direction
-    integer, dimension(:), optional, intent(in) :: block
-                                 ! Size of element block
-
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    integer, dimension(3) :: SHP        ! Shape of value
-    integer :: SPACEID                  ! ID of dataspace
-    integer :: MEMSPACEID               ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
-
-    ! Executable code
-    shp = shape ( value )
-    call h5dOpen_f ( locID, name, setID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataset ' // trim(name) )
-    call h5dget_space_f ( setID, spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataspace for dataset ' // trim(name) )
-    if ( present(start) ) then
-      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
-        & start, count, stride, block )
-      call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
-        & (/ shp, ones(1:4) /), status, memspaceID, spaceID )
-      call finishLoad ( name, status, spaceID, setID, memspaceID )
-    else
-      call check_for_fit ( spaceID, shp, name )
-      call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
-        & (/ shp, ones(1:4) /), status )
-      call finishLoad ( name, status, spaceID, setID )
-    end if
-  end subroutine LoadFromHDF5DS_snglarr3
 
   ! ---------------------------------  LoadPtrFromHDF5DS_snglarr3  -----
   subroutine LoadPtrFromHDF5DS_snglarr3 ( locID, name, value )
@@ -3359,51 +4010,6 @@ contains ! ======================= Public Procedures =========================
       & (/ int(shp), ones(1:4) /), status )
     call finishLoad ( name, status, spaceID, setID )
   end subroutine LoadPtrFromHDF5DS_snglarr3
-
-  ! ------------------------------------  LoadFromHDF5DS_snglarr4  -----
-  subroutine LoadFromHDF5DS_snglarr4 ( locID, name, value, &
-    & start, count, stride, block )
-    ! This routine loads a predefined array with values from a DS
-    integer, intent(in) :: LOCID          ! Where to place it (group/file)
-    character (len=*), intent(in) :: NAME ! Name for this dataset
-    real, intent(out) :: VALUE(:,:,:,:)   ! The array itself
-    integer, dimension(:), optional, intent(in) :: start
-                                 ! Starting coordinatess of hyperslab
-    integer, dimension(:), optional, intent(in) :: count
-                                 ! Num of blocks to select from dataspace
-    integer, dimension(:), optional, intent(in) :: stride
-                                 ! How many elements to move in each direction
-    integer, dimension(:), optional, intent(in) :: block
-                                 ! Size of element block
-
-    ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    integer, dimension(4) :: SHP        ! Shape of value
-    integer :: SPACEID                  ! ID of dataspace
-    integer :: MEMSPACEID               ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
-
-    ! Executable code
-    shp = shape ( value )
-    call h5dOpen_f ( locID, name, setID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataset ' // trim(name) )
-    call h5dget_space_f ( setID, spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open dataspace for dataset ' // trim(name) )
-    if ( present(start) ) then
-      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
-        & start, count, stride, block )
-      call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
-        & (/ shp, ones(1:3) /), status, memspaceID, spaceID )
-      call finishLoad ( name, status, spaceID, setID, memspaceID )
-    else
-      call check_for_fit ( spaceID, shp, name )
-      call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
-        & (/ shp, ones(1:3) /), status )
-      call finishLoad ( name, status, spaceID, setID )
-    end if
-  end subroutine LoadFromHDF5DS_snglarr4
 
   ! ---------------------------------  LoadPtrFromHDF5DS_snglarr4  -----
   subroutine LoadPtrFromHDF5DS_snglarr4 ( locID, name, value )
@@ -3672,7 +4278,8 @@ contains ! ======================= Public Procedures =========================
   end subroutine Dump_space
 
 ! ---------------------------------------------------  FinishLoad  -----
-  subroutine FinishLoad ( Name, Status, SpaceID, SetID, MemspaceID, StringType )
+  subroutine FinishLoad ( Name, Status, SpaceID, SetID, &
+    & MemspaceID, StringType, MLSFile )
     ! Checks status and closes stuff to finish Load...
     character(len=*), intent(in) :: Name    ! of the dataset
     integer, intent(inout) :: Status        ! from last read operation
@@ -3680,23 +4287,29 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in) :: SetID            ! dataset ID
     integer, intent(in), optional :: MemspaceID ! dataspace ID
     integer, intent(in), optional :: StringType ! stringtype ID
+    type (MLSFile_T), optional   :: MLSFile
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to read dataset ' // trim(name) )
+      & 'Unable to read dataset ' // trim(name), &
+      & MLSFile=MLSFile )
     call h5sClose_f ( spaceID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to close dataspace for dataset ' // trim(name) )
+      & 'Unable to close dataspace for dataset ' // trim(name), &
+      & MLSFile=MLSFile )
     if ( present(memspaceID) ) then
       call h5sClose_f ( memspaceID, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to close hyperslab dataspace for dataset ' // trim(name) )
+        & 'Unable to close hyperslab dataspace for dataset ' // trim(name), &
+        & MLSFile=MLSFile )
     end if
     call h5dClose_f ( setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to close dataset ' // trim(name) )
+      & 'Unable to close dataset ' // trim(name), &
+      & MLSFile=MLSFile )
     if ( present(stringType) ) then
       call h5tClose_f ( stringType, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to close string type for ' // trim(name) )
+        & 'Unable to close string type for ' // trim(name), &
+        & MLSFile=MLSFile )
     end if
   end subroutine FinishLoad
 
@@ -4126,6 +4739,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.55  2005/06/29 00:40:48  pwagner
+! New interfaces for GetHDF5Attribute and LoadFromHDF5DS accept MLSFiles
+!
 ! Revision 2.54  2005/06/22 17:25:49  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
