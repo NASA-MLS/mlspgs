@@ -28,7 +28,7 @@ module L2PC_m
   use MatrixModule_1, only: CREATEBLOCK, CREATEEMPTYMATRIX, &
     & DESTROYMATRIX, MATRIX_T, DUMP, FINDBLOCK, MATRIX_DATABASE_T, &
     & GETACTUALMATRIXFROMDATABASE, DUMP_STRUCT, COPYMATRIXVALUE
-  use MLSCommon, only: R8, RM, R4
+  use MLSCommon, only: R8, RM, R4, MLSFile_T
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
     & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE
   use MLSSets, only: FindFirst
@@ -51,13 +51,15 @@ module L2PC_m
   implicit NONE
   private
   
-  public :: AdoptVectorTemplate, LoadMatrix, LoadVector
-  public :: AddL2PCToDatabase, DestroyL2PC, DestroyL2PCDatabase, WriteOneL2PC
-  public :: Open_l2pc_file, read_l2pc_file, close_l2pc_file, binSelector_T
-  public :: BinSelectors, DestroyBinSelectorDatabase,  AddBinSelectorToDatabase
-  public :: OutputHDF5L2PC, ReadCompleteHDF5L2PCFile, PopulateL2PCBin, FlushL2PCBins
-  public :: PopulateL2PCBinByName
-  public :: CreateDefaultBinSelectors, DefaultSelector_Latitude, DefaultSelector_FieldAzimuth
+  public :: AddBinSelectorToDatabase, AddL2PCToDatabase, AdoptVectorTemplate, &
+    & binSelector_T, BinSelectors, close_l2pc_file, CreateDefaultBinSelectors, &
+    & DefaultSelector_FieldAzimuth, DefaultSelector_Latitude, &
+    & DestroyL2PC, DestroyL2PCDatabase, DestroyBinSelectorDatabase, &
+    & FlushL2PCBins, &
+    & LoadMatrix, LoadVector, Open_l2pc_file, OutputHDF5L2PC, &
+    & PopulateL2PCBin, PopulateL2PCBinByName, &
+    & read_l2pc_file, ReadCompleteHDF5L2PCFile, &
+    & WriteOneL2PC
 
   ! This is the third attempt to do this.  An l2pc is simply a Matrix_T.
   ! As this contains pointers to vector_T's and so on, I maintain a private
@@ -1212,9 +1214,11 @@ contains ! ============= Public Procedures ==========================
   end subroutine ReadOneVectorFromASCII
 
   ! --------------------------------------- ReadCompleteHDF5L2PC -------
-  subroutine ReadCompleteHDF5L2PCFile ( filename )
+  ! subroutine ReadCompleteHDF5L2PCFile ( filename )
+  subroutine ReadCompleteHDF5L2PCFile ( MLSFile )
   use HDF5, only: H5F_ACC_RDONLY_F, h5fopen_f, H5GN_MEMBERS_F
-    character (len=*), intent(in) :: FILENAME
+    type (MLSFile_T), pointer   :: MLSFile
+    ! character (len=*), intent(in) :: FILENAME
 
     ! Local variables
     integer :: FILEID          ! From hdf5
@@ -1227,25 +1231,29 @@ contains ! ============= Public Procedures ==========================
 
     ! Executable code
 
-    call h5fopen_f ( filename, H5F_ACC_RDONLY_F, fileID, status )
+    call h5fopen_f ( MLSFile%name, H5F_ACC_RDONLY_F, fileID, status )
+    MLSFile%FileID%f_id = fileID
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open hdf5 l2pc file for input:'//trim(filename) )
+      & 'Unable to open hdf5 l2pc file for input:'//trim(MLSFile%name), &
+      & MLSFile=MLSFile )
 
     ! Get the number of bins
     call h5gn_members_f ( fileID, '/', noBins, status ) 
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to get number of bins from input l2pc file:'//trim(filename) )
+      & 'Unable to get number of bins from input l2pc file:'//trim(MLSFile%name), &
+      & MLSFile=MLSFile )
 
     if ( index ( switches, 'l2pc' ) /= 0 ) then
       call output ( 'Reading l2pc ' )
-      call output ( trim(filename), advance='yes' )
+      call output ( trim(MLSFile%name), advance='yes' )
       call output ( 'Number of bins: ' )
       call output ( noBins, advance='yes' )
     endif
     
     ! Don't forget HDF5 numbers things from zero
     do bin = 0, noBins-1
-      call ReadOneHDF5L2PCRecord ( L2PC, fileID, bin, &
+      ! call ReadOneHDF5L2PCRecord ( L2PC, fileID, bin, &
+      call ReadOneHDF5L2PCRecord ( L2PC, MLSFile, bin, &
         & shallow=.true., info=Info )
       dummy = AddL2PCToDatabase ( l2pcDatabase, L2PC )
       if ( index ( switches, 'spa' ) /= 0 ) call Dump_struct ( l2pc, 'One l2pc bin' ) 
@@ -1263,12 +1271,14 @@ contains ! ============= Public Procedures ==========================
   end subroutine ReadCompleteHDF5L2PCFile
 
   ! --------------------------------------- ReadOneHDF5L2PC ------------
-  subroutine ReadOneHDF5L2PCRecord ( l2pc, fileID, l2pcIndex, shallow, info )
+  ! subroutine ReadOneHDF5L2PCRecord ( l2pc, fileID, l2pcIndex, shallow, info )
+  subroutine ReadOneHDF5L2PCRecord ( l2pc, MLSFile, l2pcIndex, shallow, info )
   use HDF5, only: H5GCLOSE_F, H5GOPEN_F, H5GGET_OBJ_INFO_IDX_F
   use MLSHDF5, only: GetHDF5Attribute, LoadFromHDF5DS
   use Symbol_types, only: T_STRING
     type ( Matrix_T ), intent(out), target :: L2PC
-    integer, intent(in) :: FILEID       ! HDF5 ID of input file
+    type (MLSFile_T), pointer   :: MLSFile
+    ! integer, intent(in) :: FILEID       ! HDF5 ID of input file
     integer, intent(in) :: L2PCINDEX        ! Index of l2pc entry to read
     logical, optional, intent(in) :: SHALLOW ! Don't read blocks
     type ( L2PCInfo_T), intent(out), optional :: INFO ! Information output
@@ -1303,24 +1313,33 @@ contains ! ============= Public Procedures ==========================
     if ( index ( switches, 'l2pc' ) /= 0 ) &
       & call output ( 'Reading bin from l2pc file', advance='yes' )
 
-    call h5gGet_obj_info_idx_f ( fileID, '/', l2pcIndex, matrixName, &
+    call h5gGet_obj_info_idx_f ( MLSFile%fileID%f_id, '/', l2pcIndex, matrixName, &
       & objType, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to get information on matrix in input l2pc file' )
-    call h5gOpen_f ( fileID, trim(matrixName), matrixId, status )
+      & 'Unable to get information on matrix in input l2pc file', &
+      & MLSFile=MLSFile )
+    call h5gOpen_f ( MLSFile%fileID%f_id, trim(matrixName), matrixId, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open matrix in input l2pc file' )
+      & 'Unable to open matrix in input l2pc file' , &
+      & MLSFile=MLSFile )
 
     ! Read the row and column vectors
-    call ReadOneVectorFromHDF5 ( matrixId, 'Columns', xStar )
-    call ReadOneVectorFromHDF5 ( matrixId, 'Rows', yStar )
+    MLSFile%fileID%grp_id = matrixId
+    ! call ReadOneVectorFromHDF5 ( matrixId, 'Columns', xStar )
+    ! call ReadOneVectorFromHDF5 ( matrixId, 'Rows', yStar )
+    call ReadOneVectorFromHDF5 ( MLSFile, 'Columns', xStar )
+    call ReadOneVectorFromHDF5 ( MLSFile, 'Rows', yStar )
 
     ! Get the instance first information
     call h5gOpen_f ( matrixID, 'Blocks', blocksID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to access Blocks group of input l2pc matrix' )
-    call GetHDF5Attribute ( blocksID, 'rowInstanceFirst', rowInstanceFirst )
-    call GetHDF5Attribute ( blocksID, 'colInstanceFirst', colInstanceFirst )
+      & 'Unable to access Blocks group of input l2pc matrix' , &
+      & MLSFile=MLSFile )
+    ! call GetHDF5Attribute ( blocksID, 'rowInstanceFirst', rowInstanceFirst )
+    ! call GetHDF5Attribute ( blocksID, 'colInstanceFirst', colInstanceFirst )
+    MLSFile%fileID%sd_id = blocksID
+    call GetHDF5Attribute ( MLSFile, 'rowInstanceFirst', rowInstanceFirst )
+    call GetHDF5Attribute ( MLSFile, 'colInstanceFirst', colInstanceFirst )
 
     stringIndex = GetStringIndexFromString ( "'"//trim(matrixName)//"'" )
 
@@ -1331,7 +1350,7 @@ contains ! ============= Public Procedures ==========================
 
     ! Fill up the information
     if ( present ( info ) ) then
-      info%fileID = fileID
+      info%fileID = MLSFile%fileID%f_id
       info%binID = matrixID
       info%blocksID = blocksID
     end if
@@ -1344,24 +1363,33 @@ contains ! ============= Public Procedures ==========================
           write ( name, * ) 'Block', blockRow, blockCol
           call h5gOpen_f ( blocksId, trim(name), blockId, status )
           if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'Unable to open group for l2pc matrix block '//trim(name) )
+            & 'Unable to open group for l2pc matrix block '//trim(name) , &
+            & MLSFile=MLSFile )
           ! Could check it's the block we're expecting but I think I'll be lazy
-          call GetHDF5Attribute ( blockID, 'kind', kind )
+          ! call GetHDF5Attribute ( blockID, 'kind', kind )
+          MLSFile%fileID%sd_id = blockID
+          ! call GetHDF5Attribute ( blockID, 'kind', kind )
+          call GetHDF5Attribute ( MLSFile, 'kind', kind )
           if ( kind == m_banded .or. kind == m_column_sparse ) then
-            call GetHDF5Attribute ( blockID, 'noValues', noValues )
+            ! call GetHDF5Attribute ( blockID, 'noValues', noValues )
+            call GetHDF5Attribute ( MLSFile, 'noValues', noValues )
             call CreateBlock ( l2pc, blockRow, blockCol, kind, noValues )
             m0 => l2pc%block ( blockRow, blockCol )
-            call LoadFromHDF5DS ( blockId, 'r1', m0%r1 )
-            call LoadFromHDF5DS ( blockId, 'r2', m0%r2 )
+            ! call LoadFromHDF5DS ( blockId, 'r1', m0%r1 )
+            ! call LoadFromHDF5DS ( blockId, 'r2', m0%r2 )
+            call LoadFromHDF5DS ( MLSFile, 'r1', m0%r1 )
+            call LoadFromHDF5DS ( MLSFile, 'r2', m0%r2 )
           else
             call CreateBlock ( l2pc, blockRow, blockCol, kind )
             m0 => l2pc%block ( blockRow, blockCol )
           end if
           if ( kind /= m_absent ) &
-            call LoadFromHDF5DS ( blockID, 'values', m0%values )
+            ! call LoadFromHDF5DS ( blockID, 'values', m0%values )
+            call LoadFromHDF5DS ( MLSFile, 'values', m0%values )
           call h5gClose_f ( blockId, status )
           if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'Unable to close group for input l2pc matrix block '//trim(name) )
+            & 'Unable to close group for input l2pc matrix block '//trim(name) , &
+            & MLSFile=MLSFile )
         end do
       end do
     else
@@ -1377,10 +1405,12 @@ contains ! ============= Public Procedures ==========================
     if ( .not. myShallow ) then
       call h5gClose_f ( blocksID, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to close Blocks group for input l2pc' )
+        & 'Unable to close Blocks group for input l2pc' , &
+        & MLSFile=MLSFile )
       call h5gClose_f ( matrixID, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to close matrix group for input l2pc' )
+        & 'Unable to close matrix group for input l2pc' , &
+        & MLSFile=MLSFile )
     endif
 
     if ( index ( switches, 'l2pc' ) /= 0 ) &
@@ -1389,7 +1419,8 @@ contains ! ============= Public Procedures ==========================
   end subroutine ReadOneHDF5L2PCRecord
 
   ! --------------------------------------- ReadOneVectorFromHDF5 ------
-  subroutine ReadOneVectorFromHDF5 ( location, name, vector )
+  ! subroutine ReadOneVectorFromHDF5 ( location, name, vector )
+  subroutine ReadOneVectorFromHDF5 ( MLSFile, name, vector )
   use HDF5, only: H5GCLOSE_F, H5GOPEN_F, H5GGET_OBJ_INFO_IDX_F
   use MLSHDF5, only: GetHDF5Attribute, IsHDF5AttributePresent, &
     & IsHDF5DSPresent, LoadFromHDF5DS
@@ -1397,7 +1428,8 @@ contains ! ============= Public Procedures ==========================
   use Symbol_types, only: T_IDENTIFIER
     ! Read a vector from an l2pc HDF5 and adds it to internal databases.
     ! Dummy arguments
-    integer, intent(in) :: LOCATION     ! Node in HDF5
+    type (MLSFile_T), pointer   :: MLSFile
+    ! integer, intent(in) :: LOCATION     ! Node in HDF5
     character (len=*), intent(in) :: NAME ! Name of vector
     integer, intent(out) :: VECTOR      ! Index of vector read in L2PCVectors
 
@@ -1451,12 +1483,15 @@ contains ! ============= Public Procedures ==========================
       call output ( ' vector from l2pc', advance='yes' )
     end if
     ! Open the vector group
-    call h5gOpen_f ( location, name, vId, status )
+    call h5gOpen_f ( MLSFile%fileID%grp_id, name, vId, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open group for vector '//trim(name) )
+      & 'Unable to open group for vector '//trim(name), &
+      & MLSFile=MLSFile )
 
     ! Get the number of quantities
-    call GetHDF5Attribute ( vId, 'noQuantities', noQuantities )
+    ! call GetHDF5Attribute ( vId, 'noQuantities', noQuantities )
+    MLSFile%fileID%sd_id = vID
+    call GetHDF5Attribute ( MLSFile, 'noQuantities', noQuantities )
     call allocate_test ( qtInds, noQuantities, 'qtInds', ModuleName )
     ! Work out the order of the quantities
     nullify ( quantityNames )
@@ -1466,18 +1501,23 @@ contains ! ============= Public Procedures ==========================
         call output ( 'Identifying quantity ' )
         call output ( quantity, advance='yes' )
       end if
-      call h5gget_obj_info_idx_f ( location, name, quantity-1, thisName, &
+      call h5gget_obj_info_idx_f ( MLSFile%fileID%grp_id, name, quantity-1, thisName, &
         & objType, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to acces a quantity within '//trim(name) )
+        & 'Unable to access a quantity within '//trim(name) , &
+      & MLSFile=MLSFile )
       call h5gOpen_f ( vId, trim(thisName), qId, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to open quantity '//trim(thisName)//' in vector '//trim(name) )
-      call GetHDF5Attribute ( qId, 'index', i )
+        & 'Unable to open quantity '//trim(thisName)//' in vector '//trim(name), &
+        & MLSFile=MLSFile )
+      ! call GetHDF5Attribute ( qId, 'index', i )
+      MLSFile%fileID%sd_id = qID
+      call GetHDF5Attribute ( MLSFile, 'index', i )
       quantityNames ( i ) = thisName
       call h5gClose_f ( qId, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to close quantity '//trim(thisName)//' in vector '//trim(name) )
+        & 'Unable to close quantity '//trim(thisName)//' in vector '//trim(name), &
+        & MLSFile=MLSFile )
     end do
 
     qtIndexOffset = InflateQuantityTemplateDatabase ( l2pcQTs, noQuantities )
@@ -1497,14 +1537,17 @@ contains ! ============= Public Procedures ==========================
       call h5gOpen_f ( vId, trim(quantityNames(quantity)), qId, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to open quantity '//trim(quantityNames(quantity))// &
-        & ' in vector '//trim(name) )
+        & ' in vector '//trim(name) , &
+        & MLSFile=MLSFile )
 
       ! Store the name
       stringIndex = GetStringIndexFromString ( quantityNames(quantity) )
       nameIndex = stringIndex
 
       ! Get the quantity type
-      call GetHDF5Attribute ( qId, 'type', word )
+      ! call GetHDF5Attribute ( qId, 'type', word )
+      MLSFile%fileID%sd_id = qID
+      call GetHDF5Attribute ( MLSFile, 'type', word )
       quantityType = GetLitIndexFromString ( word )
 
       ! Get other info as appropriate
@@ -1516,10 +1559,12 @@ contains ! ============= Public Procedures ==========================
       unit = phyq_dimensionless
       select case ( quantityType )
       case ( l_vmr )
-        call GetHDF5Attribute ( qID, 'molecule', word )
+        ! call GetHDF5Attribute ( qID, 'molecule', word )
+        call GetHDF5Attribute ( MLSFile, 'molecule', word )
         molecule = GetLitIndexFromString ( word )
         if ( molecule == l_extinction ) then
-          call GetHDF5Attribute ( qID, 'radiometer', word )
+          ! call GetHDF5Attribute ( qID, 'radiometer', word )
+          call GetHDF5Attribute ( MLSFile, 'radiometer', word )
           stringIndex = GetStringIndexFromString ( word )
           radiometer = FindFirst ( Radiometers%prefix, stringIndex )
           frequencyCoordinate = l_intermediateFrequency
@@ -1528,7 +1573,8 @@ contains ! ============= Public Procedures ==========================
         end if
         unit = phyq_vmr
       case ( l_radiance )
-        call GetHDF5Attribute ( qID, 'signal', word )
+        ! call GetHDF5Attribute ( qID, 'signal', word )
+        call GetHDF5Attribute ( MLSFile, 'signal', word )
         call Parse_Signal ( word, sigInds, sideband=sideband)
         signal = sigInds(1)
         verticalCoordinate = l_geodAltitude
@@ -1541,20 +1587,28 @@ contains ! ============= Public Procedures ==========================
       end select
 
       ! Now read the dimensions for the quantity
-      call GetHDF5Attribute ( qID, 'noInstances', noInstances )
-      call GetHDF5Attribute ( qID, 'noSurfs', noSurfs )
-      call GetHDF5Attribute ( qID, 'noChans', noChans )
-      call GetHDF5Attribute ( qId, 'verticalCoordinate', word )
+      ! call GetHDF5Attribute ( qID, 'noInstances', noInstances )
+      ! call GetHDF5Attribute ( qID, 'noSurfs', noSurfs )
+      ! call GetHDF5Attribute ( qID, 'noChans', noChans )
+      ! call GetHDF5Attribute ( qId, 'verticalCoordinate', word )
+      call GetHDF5Attribute ( MLSFile, 'noInstances', noInstances )
+      call GetHDF5Attribute ( MLSFile, 'noSurfs', noSurfs )
+      call GetHDF5Attribute ( MLSFile, 'noChans', noChans )
+      call GetHDF5Attribute ( MLSFile, 'verticalCoordinate', word )
       verticalCoordinate = GetLitIndexFromString ( word )
       ! Look for frequency coordinate (optional for backwards compatability with
       ! older l2pc files.
       if ( IsHDF5AttributePresent ( qID, 'frequencyCoordinate' ) ) then
-        call GetHDF5Attribute ( qId, 'frequencyCoordinate', word )
+        ! call GetHDF5Attribute ( qId, 'frequencyCoordinate', word )
+        call GetHDF5Attribute ( MLSFile, 'frequencyCoordinate', word )
         frequencyCoordinate = GetLitIndexFromString ( trim(word) )
       end if
-      call GetHDF5Attribute ( qId, 'logBasis', logBasis )
-      call GetHDF5Attribute ( qId, 'coherent', coherent )
-      call GetHDF5Attribute ( qId, 'stacked', stacked )
+      ! call GetHDF5Attribute ( qId, 'logBasis', logBasis )
+      ! call GetHDF5Attribute ( qId, 'coherent', coherent )
+      ! call GetHDF5Attribute ( qId, 'stacked', stacked )
+      call GetHDF5Attribute ( MLSFile, 'logBasis', logBasis )
+      call GetHDF5Attribute ( MLSFile, 'coherent', coherent )
+      call GetHDF5Attribute ( MLSFile, 'stacked', stacked )
 
       call SetupNewQuantityTemplate ( qt, &
         & noInstances=noInstances, noSurfs=noSurfs, noChans=noChans, &
@@ -1582,10 +1636,13 @@ contains ! ============= Public Procedures ==========================
       endif
       
       ! Get the surfaces and phis
-      call LoadFromHDF5DS ( qId, 'surfs', qt%surfs )
-      call LoadFromHDF5DS ( qId, 'phi', qt%phi )
+      ! call LoadFromHDF5DS ( qId, 'surfs', qt%surfs )
+      ! call LoadFromHDF5DS ( qId, 'phi', qt%phi )
+      call LoadFromHDF5DS ( MLSFile, 'surfs', qt%surfs )
+      call LoadFromHDF5DS ( MLSFile, 'phi', qt%phi )
       if ( IsHDF5DSPresent ( qId, 'solarZenith' ) ) then
-        call LoadFromHDF5DS ( qId, 'solarZenith', qt%solarZenith )
+        ! call LoadFromHDF5DS ( qId, 'solarZenith', qt%solarZenith )
+        call LoadFromHDF5DS ( MLSFile, 'solarZenith', qt%solarZenith )
       else
         qt%solarZenith = 0.0
       endif
@@ -1593,7 +1650,8 @@ contains ! ============= Public Procedures ==========================
       if ( IsHDF5DSPresent ( qId, 'frequencies' ) ) then
         call Allocate_test( qt%frequencies, qt%noChans, &
           & 'qt%frequencies', ModuleName )
-        call LoadFromHDF5DS ( qId, 'frequencies', qt%frequencies )
+        ! call LoadFromHDF5DS ( qId, 'frequencies', qt%frequencies )
+        call LoadFromHDF5DS ( MLSFile, 'frequencies', qt%frequencies )
       end if
 
       ! Now record the index for this quantity template
@@ -1603,7 +1661,8 @@ contains ! ============= Public Procedures ==========================
       ! up the values for the vector
       call h5gClose_f ( qId, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to close quantity '//trim(thisName)//' in vector '//trim(name) )
+        & 'Unable to close quantity '//trim(thisName)//' in vector '//trim(name), &
+        & MLSFile=MLSFile )
     end do
 
     ! Now create a vector template with these quantities
@@ -1629,12 +1688,16 @@ contains ! ============= Public Procedures ==========================
       call h5gOpen_f ( vId, trim(quantityNames(quantity)), qId, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to open quantity '//trim(quantityNames(quantity))// &
-        & ' in vector '//trim(name) )
-      call LoadFromHDF5DS ( qId, 'values', &
+        & ' in vector '//trim(name), &
+        & MLSFile=MLSFile )
+      MLSFile%fileID%sd_id = qID
+      ! call LoadFromHDF5DS ( qId, 'values', &
+      call LoadFromHDF5DS ( MLSFile, 'values', &
         & l2pcVs(vector)%quantities(quantity)%values )
       call h5gClose_f ( qId, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to close quantity '//trim(thisName)//' in vector '//trim(name) )
+        & 'Unable to close quantity '//trim(thisName)//' in vector '//trim(name), &
+        & MLSFile=MLSFile )
     end do
 
     call Deallocate_test ( quantityNames, 'quantityNames', ModuleName )
@@ -1740,6 +1803,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.75  2005/06/29 00:42:35  pwagner
+! Passes MLSFiles to GetHDF5Attribute, LoadFromHDF5DS
+!
 ! Revision 2.74  2005/06/22 17:25:49  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
