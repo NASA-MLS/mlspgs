@@ -23,7 +23,8 @@ program MLSL2
   use LEXER_M, only: CapIdentifiers
   use MACHINE, only: GETARG, HP, IO_ERROR, NEVERCRASH
   use MLSCOMMON, only: FILENAMELEN, MLSFile_T
-  use MLSFiles, only: WILDCARDHDFVERSION, HDFVERSION_4, HDFVERSION_5, &
+  use MLSFiles, only: FILESTRINGTABLE, &
+    & HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
     & ADDFILETODATABASE, Deallocate_filedatabase, dump, &
     & InitializeMLSFile, mls_openFile, mls_closeFile
   use MLSHDF5, only: mls_h5open, mls_h5close
@@ -206,7 +207,7 @@ program MLSL2
   call allocate_decl ( ndecls=8000 )
   call allocate_tree ( n_tree=2000000 )
   call init_tables
-
+  FILESTRINGTABLE = .true.
   !---------------- Task (2) ------------------
 ! Where to send output, how severe an error to quit
    prunit = OUTPUT_PRINT_UNIT
@@ -1060,6 +1061,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.139  2005/06/29 17:57:40  pwagner
+! FILESTRINGTABLE set to TRUE
+!
 ! Revision 2.138  2005/06/22 18:57:02  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
