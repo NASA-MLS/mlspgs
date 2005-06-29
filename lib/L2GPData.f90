@@ -42,7 +42,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   public :: L2GPData_T
   public :: L2GPNameLen
   public :: AddL2GPToDatabase, AppendL2GPData, cpL2GPData, &
-    & DestroyL2GPContents,  DestroyL2GPDatabase, diff, Dump, &
+    & DestroyL2GPContents, DestroyL2GPDatabase, diff, Dump, &
     & ExpandL2GPDataInPlace, &
     & ReadL2GPData, SetupNewL2GPRecord, WriteL2GPData
 
@@ -179,10 +179,6 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
    integer, dimension(7), parameter :: DEFAULT_CHUNKDIMS = (/ 1,1,1,1,1,1,1 /)
    integer, parameter :: HDFE_AUTOMERGE = 1     ! MERGE FIELDS WITH SHARE DIM
    integer, parameter :: HDFE_NOMERGE = 0       ! don't merge
-  ! The following, if true, says to encode strings as ints
-  ! before swapi write; also decode ints to strings after read
-  ! otherwise, try swapi read, write directly with strings
-  ! logical, parameter :: USEINTS4STRINGS = .false.  
   
   ! So far, the nameIndex component of the main data type is never set
   logical, parameter :: NAMEINDEXEVERSET = .false.  
@@ -756,12 +752,6 @@ contains ! =====     Public Procedures     =============================
     logical :: dontfail
     logical :: ReadingStatus
     logical :: deeBugHere
-!  How to deal with status and columnTypes? swrfld fails
-!  with char data on Linux with HDF4. With HDF5 we may or may not need to
-!  Have recourse to ints2Strings and strings2Ints if USEINTS4STRINGS
-!    character (LEN=8), allocatable :: the_status_buffer(:)
-!    character (LEN=L2GPNameLen), allocatable :: the_status_buffer(:)
-!    integer, allocatable, dimension(:,:) :: string_buffer
 
     deeBugHere = DEEBUG     ! .or. .true.
     nullify ( realFreq, realSurf, realProf, real3 )
@@ -776,12 +766,14 @@ contains ! =====     Public Procedures     =============================
     
     select case (HMOT)
     case ('H')
-      swid = mls_SWattach(L2GPFile%FileID%f_id, 'HIRDLS', hdfVersion=hdfVersion)
+      ! swid = mls_SWattach(L2GPFile%FileID%f_id, 'HIRDLS', hdfVersion=hdfVersion)
+      swid = mls_SWattach(L2GPFile, 'HIRDLS')
       DF_Name = TRIM(l2gp%Name)
       DF_Precision = TRIM(l2gp%Name) // 'Precision'
       l2gp%MissingValue = -999.  ! This is a HIRDLS-specific setting
     case ('M')
-      swid = mls_SWattach(L2GPFile%FileID%f_id, l2gp%Name, hdfVersion=hdfVersion)
+      ! swid = mls_SWattach(L2GPFile%FileID%f_id, l2gp%Name, hdfVersion=hdfVersion)
+      swid = mls_SWattach(L2GPFile, l2gp%Name)
       DF_Name = DATA_FIELD1
       DF_Precision = DATA_FIELD2
     case default
@@ -1162,8 +1154,8 @@ contains ! =====     Public Procedures     =============================
     ! Create the swath within the file
 
     if ( DEEBUG )  print *, 'About to sw_create ', TRIM(name)
-    swid = mls_SWcreate(L2GPFile%FileID%f_id, trim(name), &
-      & filename=L2GPFile%name, hdfVersion=hdfVersion)
+    ! swid = mls_SWcreate(L2GPFile%FileID%f_id, trim(name), &
+    swid = mls_SWcreate(L2GPFile, trim(name) )
     if ( swid == -1 ) then
        msr = 'Failed to create swath ' // TRIM(name) &
         & // ' (maybe has the same name as another swath in this file?)'
@@ -1386,7 +1378,8 @@ contains ! =====     Public Procedures     =============================
     endif
     hdfVersion = L2GPFile%hdfVersion
 
-    swid = mls_SWattach (L2GPFile%fileID%f_id, name, hdfVersion=hdfVersion)
+    ! swid = mls_SWattach (L2GPFile%fileID%f_id, name, hdfVersion=hdfVersion)
+    swid = mls_SWattach (L2GPFile, name)
 
     ! Write data to the fields
 
@@ -1493,7 +1486,8 @@ contains ! =====     Public Procedures     =============================
     edge(1) = l2gp%nFreqs
     edge(2) = l2gp%nLevels
     edge(3) = l2gp%nTimes
-    swid = mls_SWattach (L2GPFile%fileID%f_id, name, hdfVersion=hdfVersion)
+    ! swid = mls_SWattach (L2GPFile%fileID%f_id, name, hdfVersion=hdfVersion)
+    swid = mls_SWattach (L2GPFile, name)
     if ( l2gp%nFreqs > 0 ) then
        ! Value and Precision are 3-D fields
        if (DEEBUG) print *, 'start, stride, edge ', start, stride, edge
@@ -1631,7 +1625,8 @@ contains ! =====     Public Procedures     =============================
     ! - -   G l o b a l   A t t r i b u t e s   - -
     call he5_writeglobalattr(L2GPFile%fileID%f_id)
 
-    swid = mls_SWattach (L2GPFile%fileID%f_id, name, hdfVersion=HDFVERSION_5)
+    ! swid = mls_SWattach (L2GPFile%fileID%f_id, name, hdfVersion=HDFVERSION_5)
+    swid = mls_SWattach (L2GPFile, name)
     
     !   - -   S w a t h   A t t r i b u t e s   - -
     status = he5_swwrattr(swid, trim(l2gp%verticalCoordinate), &
@@ -1807,7 +1802,8 @@ contains ! =====     Public Procedures     =============================
     else
        name=l2gp%name
     endif
-    sw_id = mls_swattach(L2GPFile%FileID%f_id, trim(name), hdfVersion=HDFVERSION_5)
+    ! sw_id = mls_swattach(L2GPFile%FileID%f_id, trim(name), hdfVersion=HDFVERSION_5)
+    sw_id = mls_swattach(L2GPFile, trim(name))
     if ( sw_id < 1 ) then 
       call MLSMessage ( MLSMSG_Error, ModuleName, & 
         & "Error in attaching swath for setting alias.", MLSFile=L2GPFile )
@@ -2075,8 +2071,9 @@ contains ! =====     Public Procedures     =============================
     if ( present(createSwath) ) then
       swath_exists = .not. createSwath
     else
-      swathid = mls_swattach(L2GPFile%FileID%f_id, trim(myswathName), &
-        & hdfVersion=L2GPFile%hdfVersion, DONTFAIL=.true.)
+      ! swathid = mls_swattach(L2GPFile%FileID%f_id, trim(myswathName), &
+      swathid = mls_swattach(L2GPFile, trim(myswathName), &
+        & DONTFAIL=.true.)
       swath_exists = ( swathid > 0 )
       if ( swath_exists ) then
         status = mls_swdetach(swathid, hdfVersion=myhdfVersion)
@@ -3218,6 +3215,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.115  2005/06/22 17:25:49  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.114  2005/06/14 22:33:45  pwagner
 ! Moved rdonly error check from read procedure to write
 !
