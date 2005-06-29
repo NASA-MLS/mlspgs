@@ -196,6 +196,11 @@ module MLSFiles               ! Utility file routines
   ! (must *not* be 4 or 5)
   integer, parameter, public :: WILDCARDHDFVERSION=HDFVERSION_4+HDFVERSION_5
 
+  ! Unless you fill the string table with l_ quantities from intrinsic
+  ! make sure the next entry is .false. 
+  ! (or else it will segment fault in get_string)
+  ! MLSL2 does fill the string table, but many tools do not
+  logical, save, public :: FILESTRINGTABLE = .FALSE.
   ! This isn't NameLen because it may have a path prefixed
   integer, parameter :: MAXFILENAMELENGTH=PGSd_PC_FILE_PATH_MAX
 
@@ -435,7 +440,7 @@ contains
     endif
 !     if ( item%access > 0 ) &
 !       & item%accessStr = accessType(access)
-    if ( item%type > 0 ) &
+    if ( item%type > 0 .and. FILESTRINGTABLE ) &
       & call get_string(lit_indices(item%type), item%typeStr, strip=.true.)
   end function InitializeMLSFile
 
@@ -869,8 +874,10 @@ contains
        & advance='yes')
        call output('Mode: ', advance='no')
        call blanks(2)
+       if ( FILESTRINGTABLE ) then
        call display_string ( lit_indices(the_eff_mode), strip=.true.)                                  
        call blanks(2)
+       endif
        call output(the_eff_mode, advance='yes')
        call output('File Name: ', advance='no')
        call blanks(2)
@@ -1715,9 +1722,11 @@ contains
     endif
     call output ( '    Type         : ')                                
     call output ( trim(MLSFile%TypeStr), advance='yes')                                  
+    if ( FILESTRINGTABLE ) then
     call output ( '    Type(int)    : ')                                
     call display_string ( lit_indices(MLSFile%Type), strip=.true.)                                  
     call output(' ', advance='yes')
+    endif
     call output ( '    Access       : ')                                
     ! call output ( trim(MLSFile%accessStr), advance='yes')                                  
     call output ( trim(accessType(MLSFile%access)), advance='yes')                                  
@@ -2595,6 +2604,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.68  2005/06/29 17:56:24  pwagner
+! FILESTRINGTABLE utilized to prevent tools from segment faulting
+!
 ! Revision 2.67  2005/06/22 17:25:49  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
