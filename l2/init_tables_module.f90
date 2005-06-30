@@ -1219,6 +1219,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_matrix, s+s_matrix, nr+n_field_spec, &
              begin, f+f_measurements, s+s_vector, nr+n_field_spec, &
              begin, f+f_measurementSD, s+s_vector, n+n_field_spec, &
+             begin, f+f_residualSupplied, t+t_boolean, n+n_field_type, &
              begin, f+f_rhsOut, s+s_vector, nr+n_field_spec, &
              ndp+n_spec_def /) )
     call make_tree( (/ &
@@ -1352,6 +1353,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.404  2005/06/30 22:43:08  livesey
+! Added residualSupplied
+!
 ! Revision 2.403  2005/06/24 23:41:47  vsnyder
 ! Add LineCenter, LineWidth and LineWidth_TDep to T_QuantityType
 !
