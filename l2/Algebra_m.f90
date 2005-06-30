@@ -291,7 +291,8 @@ contains
       use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST, F_MATRIX, F_EIGENVECTORS, F_SCALE, &
         & F_RHSOUT, F_FORWARDMODEL, F_FWDMODELIN, F_FWDMODELOUT, F_FWDMODELEXTRA, &
         & F_MEASUREMENTS, F_MEASUREMENTSD, F_REGORDERS, F_REGQUANTS, F_REGWEIGHTS, F_REGWEIGHTVEC, &
-        & F_HORIZONTAL, F_RETRIEVALEXTRA, F_RETRIEVALFORWARDMODEL, F_RETRIEVALIN, &
+        & F_HORIZONTAL, F_RESIDUALSUPPLIED, F_RETRIEVALEXTRA, &
+        & F_RETRIEVALFORWARDMODEL, F_RETRIEVALIN, &
         & F_SOURCEMATRIX, F_TRUTHEXTRA, F_TRUTHFORWARDMODEL, F_TRUTHIN
       use Init_Tables_Module, only: L_TRUE
       use Init_Tables_Module, only: S_COLUMNSCALE, S_COMBINECHANNELS, S_CYCLICJACOBI, &
@@ -309,6 +310,7 @@ contains
       ! Local variables
       logical, dimension(field_first:field_last) :: GOT ! Fields
       logical :: HORIZONTAL             ! Regularization direction
+      logical :: RESIDUALSUPPLIED       ! For NormalEquations command
       integer :: FIELDID                ! ID for a field (duh!)
       integer :: FORWARDMODELNODE       ! Tree node
       integer :: TRUTHFORWARDMODELNODE  ! Tree node
@@ -355,6 +357,7 @@ contains
       regWeights = 0
       regQuants = 0
       horizontal = .false.
+      residualSupplied = .false.
 
       do i = 2, nsons(root)
         son = subtree ( i, root )
@@ -394,6 +397,8 @@ contains
           regWeights = son
         case ( f_regWeightVec )
           regWeightVec => vectorDatabase ( decoration ( value ) )
+        case ( f_residualSupplied )
+          residualSupplied = get_boolean ( son )
         case ( f_retrievalExtra )
           retrievalExtra => vectorDatabase ( decoration ( value ) )
         case ( f_retrievalForwardModel )
@@ -481,7 +486,7 @@ contains
         if ( matrixKind /= k_spd ) call Announce_Error ( key, notSupported )
         call NormalEquationsCommand ( matrix_s, rhsOut, forwardModelNode, &
           & fwdModelIn, fwdModelExtra, fwdModelOut, measurements, measurementSD, &
-          & chunk, forwardModelConfigDatabase )
+          & chunk, forwardModelConfigDatabase, residualSupplied )
       case ( s_regularization )
         if ( matrixKind /= k_plain ) call Announce_Error ( key, notSupported )
         call Regularize ( matrix, regOrders, regQuants, regWeights, regWeightVec, rows, horizontal )
@@ -1345,7 +1350,7 @@ contains
     ! ...........................................  NormalEquationsCommand .....
     subroutine NormalEquationsCommand ( matrix, rhsOut, forwardModelNode, &
       & fwdModelIn, fwdModelExtra, fwdModelOut, &
-      & measurements, measurementSD, chunk, configDatabase )
+      & measurements, measurementSD, chunk, configDatabase, residualSupplied )
       ! Imports
       use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
       use ForwardModelWrappers, only: FORWARDMODEL
@@ -1363,6 +1368,7 @@ contains
       type (Vector_T), pointer :: MEASUREMENTSD ! Measurement noise (row scale)
       type (MLSChunk_T), intent(in) :: CHUNK ! The chunk we're processing
       type (ForwardModelConfig_T), intent(inout), dimension(:) :: CONFIGDATABASE
+      logical, intent(in) :: RESIDUALSUPPLIED
 
       ! Local variables
       integer :: NOMAFS                 ! Number of major frames
@@ -1418,12 +1424,19 @@ contains
         call cloneVector ( delta, fwdModelOut )
         do rowBlock = 1, size(fmStat%rows)
           if ( fmStat%rows(rowBlock) ) then
-            call copyVector ( delta, fwdModelOut, & ! delta = f
-              & quant=jacobian%row%quant(rowBlock), &
-              & inst=jacobian%row%inst(rowBlock) )
-            call subtractFromVector ( delta, measurements, &
-              & quant=jacobian%row%quant(rowBlock), &
-              & inst=jacobian%row%inst(rowBlock) ) ! f - y
+            ! Form residual (or take from measurements)
+            if ( residualSupplied ) then
+              call copyVector ( delta, measurements, &
+                & quant=jacobian%row%quant(rowBlock), &
+                & inst=jacobian%row%inst(rowBlock) )
+            else
+              call copyVector ( delta, fwdModelOut, & ! delta = f
+                & quant=jacobian%row%quant(rowBlock), &
+                & inst=jacobian%row%inst(rowBlock) )
+              call subtractFromVector ( delta, measurements, &
+                & quant=jacobian%row%quant(rowBlock), &
+                & inst=jacobian%row%inst(rowBlock) ) ! f - y
+            endif
             ! Do any row scaling
             if ( associated ( measurementSD ) ) then
               call multiply ( delta, weight, &
@@ -1465,6 +1478,9 @@ contains
 end module ALGEBRA_M
 
 ! $Log$
+! Revision 2.21  2005/06/30 22:43:40  livesey
+! Added residualSupplied option to normal equations
+!
 ! Revision 2.20  2005/06/22 18:57:01  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
