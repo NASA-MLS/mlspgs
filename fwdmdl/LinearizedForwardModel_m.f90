@@ -254,7 +254,8 @@ contains ! =====     Public Procedures     =============================
     ! and deliberately so.
     if ( sidebandStart /= sidebandStop .or. fmConf%forceSidebandFraction ) then
       sidebandFraction => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-        & quantityType = l_limbSidebandFraction, signal=signal%index, noError=.true. )
+        & quantityType = l_limbSidebandFraction, signal=signal%index, &
+        & sideband=0, noError=.true. )
       lowerSidebandFraction => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
         & quantityType = l_limbSidebandFraction, signal=signal%index, &
         & sideband=-1, noError=.true. )
@@ -1145,6 +1146,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.57  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.56  2004/11/01 20:24:48  vsnyder
 ! Reorganization of representation for molecules and beta groups
 !
