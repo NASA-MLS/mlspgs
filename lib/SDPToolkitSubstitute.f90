@@ -16,10 +16,15 @@
 !  IMPLICIT NONE
 
 !  PRIVATE :: Id, ModuleName
+! *** NOTE*** Because this is not now a Module, but is just a set of 
+! functions that get compiled into a library, you can NOT define a 
+! module variable which is outside of the functions, nor can you use
+! the "private" keyword. This bit is therefcre commented out and added to the 
+! function not_used_here at the end of the source file.
 !---------------------------- RCS Module Info ------------------------------
-  character (len=*), private, parameter :: ModuleName= &
-       "$RCSfile$"
-  private :: not_used_here 
+!  character (len=*), parameter :: ModuleName= &
+!       "$RCSfile$"
+  !private :: not_used_here 
 !---------------------------------------------------------------------------
 
 
@@ -38,7 +43,7 @@
 
 !CONTAINS
 
-       INTEGER FUNCTION PGS_SMF_GenerateStatusReport(msg)
+      INTEGER FUNCTION PGS_SMF_GenerateStatusReport(msg)
          CHARACTER (LEN=*):: msg
          !INTEGER :: PGS_SMF_GenerateStatusReport
 
@@ -206,6 +211,8 @@
       END FUNCTION PGS_MET_SFEnd
       
   logical function not_used_here()
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile$"
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
@@ -220,6 +227,11 @@
 
 !
 ! $Log$
+! Revision 2.14  2005/07/04 08:38:02  hcp
+! Moved variable inside a function and eliminated "private" keywords.
+! (This isn't a module so you can't have them.) Added comment in the
+! hope that this change will not e un-done.
+!
 ! Revision 2.13  2005/06/22 17:25:50  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
