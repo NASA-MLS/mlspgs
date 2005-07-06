@@ -1563,7 +1563,7 @@ contains ! =====     Public Procedures     =============================
     ! Parameters
 
     character (len=*), parameter :: WR_ERR = 'Failed to write attribute field '
-
+    character (len=*), parameter :: NOUNITS = 'NoUnits'
     ! Variables
 
     character (len=132) :: name     ! Either swathName or l2gp%name
@@ -1599,7 +1599,7 @@ contains ! =====     Public Procedures     =============================
     character(len=CHARATTRLEN), dimension(NumGeolocFields) :: theTitles
     character(len=CHARATTRLEN), dimension(NumGeolocFields) :: theUnits
     character(len=CHARATTRLEN) :: field_name
-    character(len=CHARATTRLEN) :: species_name
+    character(len=CHARATTRLEN) :: species_name ! Always lower case
     character(len=CHARATTRLEN) :: units_name
     character(len=CHARATTRLEN) :: abbr_uniq_fdef
     character(len=CHARATTRLEN) :: expnd_uniq_fdef
@@ -1695,13 +1695,13 @@ contains ! =====     Public Procedures     =============================
     ! call GetQuantityAttributes ( l2gp%quantityType, &
     !  & units_name, expnd_uniq_fdef)
     field_name = Name
-    species_name = name
-    isColumnAmt = ( index(species_name, 'Column') > 0 )
+    species_name = lowercase(name)
+    isColumnAmt = ( index(species_name, 'column') > 0 )
     if ( isColumnAmt ) then
-      call ExtractSubString(Name, species_name, 'Column', 'wmo')
+      call ExtractSubString(Name, species_name, 'column', 'wmo')
     endif
     call GetStringHashElement (lowercase(Species), &
-      & SpUniqueFieldDefinition, trim(lowercase(species_name)), &
+      & SpUniqueFieldDefinition, trim(species_name), &
       & abbr_uniq_fdef, .false.)
     call GetStringHashElement (UniqueFieldDefKeys, &
       & UniqueFieldDefValues, trim(abbr_uniq_fdef), &
@@ -1745,7 +1745,7 @@ contains ! =====     Public Procedures     =============================
     status = mls_swwrlattr(swid, 'Status', 'Title', &
       & MLS_CHARTYPE, 1, trim(field_name)//'Status')
     status = mls_swwrlattr(swid, 'Status', 'Units', &
-      & MLS_CHARTYPE, 1, 'NoUnits')
+      & MLS_CHARTYPE, 1, NOUNITS)
     status = he5_swwrlattr(swid, 'Status', 'MissingValue', &
       & HE5T_NATIVE_INT, 1, (/ l2gp%MissingStatus /) )
       ! & HE5T_NATIVE_INT, 1, (/ int(l2gp%MissingValue) /) )
@@ -1759,7 +1759,8 @@ contains ! =====     Public Procedures     =============================
     status = mls_swwrlattr(swid, 'Quality', 'Title', &
       & MLS_CHARTYPE, 1, trim(field_name)//'Quality')
     status = mls_swwrlattr(swid, 'Quality', 'Units', &
-      & MLS_CHARTYPE, 1, units_name)
+      & MLS_CHARTYPE, 1, NOUNITS)
+      ! & MLS_CHARTYPE, 1, units_name)
     status = he5_swwrlattr(swid, 'Quality', 'MissingValue', &
       & rgp_type, 1, (/ real(l2gp%MissingValue, rgp) /) )
     status = mls_swwrlattr(swid, 'Quality', &
@@ -2159,7 +2160,7 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------- cpL2GPData_fileID  ---------------------------
 
   subroutine cpL2GPData_fileID(file1, file2, swathList, &
-    & hdfVersion1, hdfVersion2, notUnlimited, swathList2, ReadStatus)
+    & hdfVersion1, hdfVersion2, notUnlimited, swathList2, ReadStatus, options)
     !------------------------------------------------------------------------
 
     ! Given file names file1 and file2,
@@ -2175,23 +2176,32 @@ contains ! =====     Public Procedures     =============================
     logical, optional, intent(in) :: notUnlimited
     logical, optional, intent(in) :: ReadStatus
     character (len=*), optional, intent(in) :: swathList2
+    character (len=*), optional, intent(in) :: options ! E.g., '-v'
 
     ! Local variables
     logical, parameter            :: countEmpty = .true.
-    type (L2GPData_T) :: l2gp
     integer :: i
+    type (L2GPData_T) :: l2gp
+    character (len=8) :: myOptions
     integer :: noSwaths
     character (len=L2GPNameLen) :: swath
     character (len=L2GPNameLen) :: swath2
+    logical :: verbose
     
     ! Executable code
+    myOptions = ' '
+    if ( present(options) ) myOptions = options
+    verbose = ( index(myOptions, 'v') > 0 )
     noSwaths = NumStringElements(trim(swathList), countEmpty)
     if ( noSwaths < 1 ) then
        call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & 'No swaths cp to file--unable to count swaths in ' // trim(swathList) )
     endif
-    if ( present(swathList2) ) &
-      & noSwaths = min(noSwaths, NumStringElements(trim(swathList2), countEmpty))
+    if ( verbose ) call dump(swathlist, 'swath names')
+    if ( present(swathList2) ) then
+      noSwaths = min(noSwaths, NumStringElements(trim(swathList2), countEmpty))
+      if ( verbose ) call dump(swathlist2, 'swath names (copied)')
+    endif
     if ( noSwaths < 1 ) then
        call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & 'No swaths cp to file--unable to count swaths in ' // trim(swathList2) )
@@ -2227,7 +2237,7 @@ contains ! =====     Public Procedures     =============================
 
   subroutine cpL2GPData_fileName(file1, file2, &
     & create2, hdfVersion1,  hdfVersion2, swathList, swathList2, &
-    & notUnlimited, andGlAttributes, ReadStatus)
+    & notUnlimited, andGlAttributes, ReadStatus, options)
     !------------------------------------------------------------------------
 
     ! Given file names file1 and file2,
@@ -2247,25 +2257,26 @@ contains ! =====     Public Procedures     =============================
     character (len=*), optional, intent(in) :: swathList2
     logical, optional, intent(in) :: notUnlimited
     logical, optional, intent(in) :: ReadStatus
+    character (len=*), optional, intent(in) :: options ! E.g., '-v'
 
     ! Local
+    integer :: DayofYear
     integer :: File1Handle
     integer :: File2Handle
-    integer :: record_length
-    integer :: status
-    integer :: the_hdfVersion1
-    integer :: the_hdfVersion2
     logical :: file_exists
     integer :: file_access
-    integer :: listsize
-    integer :: noSwaths
-    character (len=MAXSWATHNAMESBUFSIZE) :: mySwathList
     type(GlobalAttributes_T) :: gAttributes
     type(GlobalAttributes_T) :: gAttributesOriginal
+    integer :: listsize
+    logical :: myandGlAttributes
+    character (len=MAXSWATHNAMESBUFSIZE) :: mySwathList
+    integer :: noSwaths
     character(len=40)        :: ProcessLevel
-    integer                  :: DayofYear
+    integer :: record_length
+    integer :: status
     double precision         :: TAI93At0zOfGranule
-    logical                  :: myandGlAttributes
+    integer :: the_hdfVersion1
+    integer :: the_hdfVersion2
     
     ! Executable code
     the_hdfVersion1 = L2GPDEFAULT_HDFVERSION
@@ -2358,7 +2369,7 @@ contains ! =====     Public Procedures     =============================
     call cpL2GPData_fileID(File1Handle, File2Handle, &
       & mySwathList, the_hdfVersion1, the_hdfVersion2, &
       & notUnlimited=notUnlimited, swathList2=swathList2, &
-      & ReadStatus=ReadStatus )
+      & ReadStatus=ReadStatus, options=options )
     if ( DEEBUG ) print *, 'About to close File1Handle: ', File1Handle
     status = mls_io_gen_closeF(l_swath, File1Handle, FileName=File1, &
       & hdfVersion=the_hdfVersion1, debugOption=.false.)
@@ -3215,6 +3226,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.116  2005/06/29 00:41:50  pwagner
+! Passes MLSFiles to mls_swattach,create
+!
 ! Revision 2.115  2005/06/22 17:25:49  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
