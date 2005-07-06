@@ -31,8 +31,8 @@ contains
 ! ---------------------------------------  Get_Beta_Path_Scalar  -----
   subroutine Get_Beta_Path_Scalar ( frq, p_path, t_path, tanh_path, &
         & beta_group, NoPolarized, gl_slabs, path_inds,             &
-        & beta_path, t_der_path_flags, dTanh_dT, dBeta_dt_path,     &
-        & dBeta_dw_path, dBeta_dn_path, dBeta_dv_path )
+        & beta_path, t_der_path_flags, dTanh_dT, VelCor,            &
+        & dBeta_dt_path, dBeta_dw_path, dBeta_dn_path, dBeta_dv_path )
 
     use Dump_0, only: Dump
     use ForwardModelConfig, only: LBL_T
@@ -63,6 +63,9 @@ contains
     logical, pointer :: t_der_path_flags(:)     ! where temperature derivatives
 !                               are needed. Only useful for subsetting.
     real(rp), pointer :: dTanh_dT(:)    ! dTanh( (-h nu) / (k T) ) / dT on path
+
+! Input for spectroscopy derivatives
+    real(rp), intent(in) :: VelCor
 
 ! Outputs
 
@@ -119,7 +122,7 @@ contains
       do n = 1, size(beta_group(i)%cat_index)
         call create_beta_path ( path_inds, p_path, t_path, frq,             &
           & beta_group(i)%ratio(n), gl_slabs(:,beta_group(i)%cat_index(n)), &
-          & tanh_path, noPolarized, &
+          & tanh_path, noPolarized, velCor, &
           & beta_path(:,i), dTanh_dT, t_der_path_flags, dBdT, dBdw, dBdn, dBdv )
 
         if ( dumpBeta ) then
@@ -443,12 +446,14 @@ contains
     real(rp), pointer :: Cont(:)    ! Continuum parameters
     integer(ip) :: LN_I             ! Line index
     integer(ip) :: NL               ! no of lines
+    logical :: Spect_Der
 
     real(rp) :: bv, dNu, dw, dn, ds, dbdt, dbdw, dbdn, dbdv
 
 !----------------------------------------------------------------------------
 
-    if ( present(dBeta_dw) .or. present(dBeta_dn) .or. present(dBeta_dv) ) then
+    spect_der = present(dBeta_dw) .or. present(dBeta_dn) .or. present(dBeta_dv)
+    if ( spect_der ) then
       dbdw = 0.0_rp
       dbdn = 0.0_rp
       dbdv = 0.0_rp
@@ -500,7 +505,7 @@ contains
       return
     end if
 
-    if ( present(dBeta_dw) .or. present(dBeta_dn) .or. present(dBeta_dv) ) then
+    if ( spect_der ) then
 
       do ln_i = 1, nl
 
@@ -561,7 +566,7 @@ contains
 ! -----------------------------------------  Create_beta_path  ---------
 
   pure subroutine Create_beta_path ( Path_inds, Pressure, Temp, Fgr, Ratio, &
-         &   Slabs_0, Tanh1, NoPolarized, Beta_value, dTanh_dT,        &
+         &   Slabs_0, Tanh1, NoPolarized, VelCor, Beta_value, dTanh_dT,     &
          &   Path_flags, dBeta_dT, dBeta_dw, dBeta_dn, dBeta_dv )
 
 !  For a given frequency and height, compute beta_value function. This routine
@@ -570,10 +575,10 @@ contains
 
     use MLSCommon, only: RP, R8
     use Molecules, only: L_N2, L_Extinction, L_O2
-    use SLABS_SW_M, only: DVOIGT_SPECTRAL, VOIGT_LORENTZ, &
-      & SLABS_LINES, SLABS_LINES_DT, SLABSWINT_LINES, SLABSWINT_LINES_DT
-    use SpectroscopyCatalog_m, only: LINES
-    use Slabs_SW_m, only: SLABS_STRUCT
+    use Slabs_SW_m, only: SLABS_STRUCT, &
+      & SLABS_LINES, SLABS_LINES_DAll, SLABS_LINES_DSpectral, SLABS_LINES_DT, &
+      & SLABSWINT_LINES, &
+      & SLABSWINT_LINES_DAll, SLABSWINT_LINES_DSpectral, SLABSWINT_LINES_DT
 
 ! Inputs:
     integer, intent(in) :: Path_inds(:)! Which Pressures to use
@@ -596,6 +601,9 @@ contains
     ! "Don't do line L if slabs_0(k)%catalog%Polarized(L)"
     logical, intent(in) :: NoPolarized
 
+    ! For spectroscopy derivatives:
+    real(rp), intent(in) :: VelCor
+
 ! Outputs
     real(rp), intent(inout) :: Beta_value(:)
 
@@ -612,12 +620,11 @@ contains
 ! -----     Local variables     ----------------------------------------
 
     integer :: J, K              ! Subscript, loop inductor
-    integer :: LN_I              ! Line index
     integer :: NL                ! no of lines
     logical :: Spect_Der         ! Spectroscopy derivatives required
     logical :: Temp_Der          ! Temperature derivatives required
 
-    real(rp) :: dNu, bv, dw, dn, dv, dbdT, dbdw, dbdn, dbdv
+    real(rp) :: bv, dw, dn, dv, dbdT, dbdw, dbdn, dbdv
 
 !----------------------------------------------------------------------------
 
@@ -703,63 +710,53 @@ contains
             & ratio * slabs_lines ( Fgr, slabs_0(k), tanh1(j), noPolarized )
         end if
 
-      else
+      else if ( temp_der .and. .not. spect_der ) then
 
-        if ( temp_der ) then ! Temperature derivatives required
-
-          if ( slabs_0(k)%useYi ) then
-            call slabswint_lines_dT ( fgr, slabs_0(k), tanh1(j), dTanh_dT(j), &
-              & bv, dBdT, noPolarized )
-          else
-            call slabs_lines_dT ( fgr, slabs_0(k), tanh1(j), dTanh_dT(j), &
-              & bv, dBdT, noPolarized )
-          end if
-          beta_value(j) = beta_value(j) + ratio * bv
-          dBeta_dT(j) = dBeta_dT(j) + ratio * dBdT
-
+        if ( slabs_0(k)%useYi ) then
+          call slabswint_lines_dT ( fgr, slabs_0(k), tanh1(j), dTanh_dT(j), &
+            & bv, dBdT, noPolarized )
+        else
+          call slabs_lines_dT ( fgr, slabs_0(k), tanh1(j), dTanh_dT(j), &
+            & bv, dBdT, noPolarized )
         end if
 
-        if ( spect_der ) then ! Spectroscopy derivatives required
-                              ! Will recompute Beta but not use it if temp_der
+        beta_value(j) = beta_value(j) + ratio * bv
+        dBeta_dT(j) = dBeta_dT(j) + ratio * dBdT
 
-          !ocl temp(dNu,dw,dn,dv)
-          do ln_i = 1, nl
+      else if ( .not. temp_der .and. spect_der ) then
 
-            if ( noPolarized ) then
-              if ( slabs_0(k)%catalog%polarized(ln_i) ) cycle
-            end if
+        if ( slabs_0(k)%useYi ) then
+          call slabswint_lines_dSpectral ( Fgr, slabs_0(k), temp(j), tanh1(j), &
+            & velCor, noPolarized, bv, dw, dn, dv )
+        else
+          call slabs_lines_dSpectral ( Fgr, slabs_0(k), temp(j), tanh1(j), &
+            & velCor, noPolarized, bv, dw, dn, dv )
+        end if
 
-            dNu = Fgr - slabs_0(k)%v0s(ln_i)
+        beta_value(j) = beta_value(j) + ratio * bv
 
-            if ( abs(slabs_0(k)%y(ln_i))+0.666666_rp*abs(slabs_0(k)%x1(ln_i)*dNu) &
-            & > 100.0_rp ) then
-              call Voigt_Lorentz ( dNu, slabs_0(k)%v0s(ln_i), slabs_0(k)%x1(ln_i), &
-                &  slabs_0(k)%yi(ln_i), slabs_0(k)%y(ln_i), &
-                &  lines(slabs_0(k)%catalog%lines(ln_i))%w, temp(j), &
-                &  tanh1(j), slabs_0(k)%slabs1(ln_i), bv, slabs_0(k)%dslabs1_dv0(ln_i), &
-                &  dw, dn, dv )
-            else
-              call DVoigt_Spectral ( dNu, slabs_0(k)%v0s(ln_i), slabs_0(k)%x1(ln_i), &
-                &  slabs_0(k)%yi(ln_i), slabs_0(k)%y(ln_i), &
-                &  lines(slabs_0(k)%catalog%lines(ln_i))%w, temp(j), &
-                &  tanh1(j), slabs_0(k)%slabs1(ln_i), bv, slabs_0(k)%dslabs1_dv0(ln_i), &
-                &  dw, dn, dv )
-            end if
+        if ( associated(dBeta_dw) ) dBeta_dw(j) = ratio * dw
+        if ( associated(dBeta_dn) ) dBeta_dn(j) = ratio * dn
+        if ( associated(dBeta_dv) ) dBeta_dv(j) = ratio * dv
 
-            if ( .not. temp_der ) beta_value(j) = beta_value(j) + ratio * bv
-            dbdw = dbdw + dw
-            dbdn = dbdn + dn
-            dbdv = dbdv + dv
+      else if ( temp_der .and. spect_der ) then
 
-          end do
+        if ( slabs_0(k)%useYi ) then
+          call slabswint_lines_dAll ( Fgr, slabs_0(k), temp(j), tanh1(j), &
+            & dTanh_dT(j), velCor, noPolarized, bv, dBdT, dw, dn, dv )
+        else
+          call slabs_lines_dAll ( Fgr, slabs_0(k), temp(j), tanh1(j), &
+            & dTanh_dT(j), velCor, noPolarized, bv, dBdT, dw, dn, dv )
+        end if
 
-          if ( associated(dBeta_dw) ) dBeta_dw(j) = ratio * dbdw
-          if ( associated(dBeta_dn) ) dBeta_dn(j) = ratio * dbdn
-          if ( associated(dBeta_dv) ) dBeta_dv(j) = ratio * dbdv
+        beta_value(j) = beta_value(j) + ratio * bv
+        dBeta_dT(j) = dBeta_dT(j) + ratio * dBdT
 
-        end if ! spect_der
+        if ( associated(dBeta_dw) ) dBeta_dw(j) = ratio * dbdw
+        if ( associated(dBeta_dn) ) dBeta_dn(j) = ratio * dbdn
+        if ( associated(dBeta_dv) ) dBeta_dv(j) = ratio * dbdv
 
-      end if ! neither temp_der nor spect_der
+      end if
 
     end do ! j = 1, size(path_inds)
 
@@ -1117,6 +1114,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.79  2005/06/09 02:34:16  vsnyder
+! Move stuff from l2pc_pfa_structures to slabs_sw_m
+!
 ! Revision 2.78  2005/06/03 01:58:53  vsnyder
 ! New copyright notice, move Id to not_used_here to avoid cascades,
 ! Revise PFA data structures.

@@ -35,7 +35,9 @@ contains
     use Comp_Eta_Docalc_No_Frq_m, only: Comp_Eta_Docalc_No_Frq
     use Comp_Sps_Path_Frq_m, only: Comp_Sps_Path, Comp_Sps_Path_Frq
     use Compute_GL_Grid_m, only: Compute_GL_Grid
-    use Convolve_All_m, only: Convolve_All
+    use Convolve_All_m, only: Convolve_Radiance, Convolve_Temperature_Deriv, &
+      & Convolve_Other_Deriv, Interpolate_Radiance, &
+      & Interpolate_Temperature_Deriv, Interpolate_Other_Deriv
     use D_Hunt_m, only: Hunt
     use D_T_SCRIPT_DTNP_M, only: DT_SCRIPT_DT
     use Dump_0, only: Dump
@@ -48,6 +50,8 @@ contains
                                     &   ForwardModelStatus_t, &
                                     &   B_Metrics, B_Ptg_Angles, B_Refraction
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
+    use FOV_Convolve_m, only: Convolve_Support_T, FOV_Convolve_Setup, &
+      & FOV_Convolve_Teardown
     use Freq_Avg_m, only: Freq_Avg, Freq_Avg_DACS
     use Geometry, only: EarthRadA, EarthRadB, MaxRefraction
     use Get_Chi_Angles_m, only: Get_Chi_Angles
@@ -56,7 +60,8 @@ contains
     use GLnp, only: GW, NG
     use Intrinsic, only: L_A, L_BOUNDARYPRESSURE, L_CLEAR, L_CLOUDICE, &
       & L_CLOUDWATER, L_DN, L_DV, L_DW, L_EARTHREFL, L_ECRtoFOV, &
-      & L_ELEVOFFSET, L_GPH, L_LOSVEL, L_LIMBSIDEBANDFRACTION, L_MAGNETICFIELD, &
+      & L_ELEVOFFSET, L_GPH, L_LINECENTER, L_LINEWIDTH, L_LINEWIDTH_TDEP, &
+      & L_LOSVEL, L_LIMBSIDEBANDFRACTION, L_MAGNETICFIELD, &
       & L_ORBITINCLINATION, L_PHITAN, L_PTAN, L_RADIANCE, L_REFGPH, L_SCGEOCALT, &
       & L_SIZEDISTRIBUTION, L_SPACERADIANCE, L_TEMPERATURE, L_VMR
     use Load_Sps_Data_m, only: DestroyGrids_t, Grids_T, Load_One_Item_Grid, &
@@ -67,11 +72,11 @@ contains
     use MLSCommon, only: R4, R8, RP, IP
     use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate,&
       & MLSMSG_Error, MLSMSG_Warning
-    use MLSNumerics, only: Hunt, InterpolateValues
+    use MLSNumerics, only: Coefficients => Coefficients_r8, Hunt, &
+      & InterpolateArraySetup, InterpolateArrayTeardown, InterpolateValues
     use MLSSignals_m, only: AreSignalsSuperset, GetNameOfSignal, MatchSignal, &
       & Radiometers, Signal_t
     use Molecules, only: L_H2O, L_N2O, L_O3
-    use NO_CONV_AT_ALL_M, only: NO_CONV_AT_ALL
     use Output_m, only: Output
     use Path_Contrib_M, only: Get_GL_Inds
     use Physics, only: H_OVER_K, SpeedOfLight
@@ -388,7 +393,7 @@ contains
     real(rp) :: earthradc ! minor axis of orbit plane projected Earth ellipse
     real(rp) :: surf_angle(1), one_dhdz(1), one_dxdh(1)
 
-    real(rp), dimension(:), pointer :: dhdz_out
+    real(rp), dimension(:), pointer :: dh_dz_out
     real(rp), dimension(:), pointer :: dx_dh_out
     real(rp), dimension(:), pointer :: est_scgeocalt
     real(rp), dimension(:), pointer :: est_los_vel
@@ -412,6 +417,9 @@ contains
     type (VectorValue_T), pointer :: ECRtoFOV      ! Rotation matrices
     type (VectorValue_T), pointer :: F             ! An arbitrary species
     type (VectorValue_T), pointer :: GPH           ! Geopotential height
+    type (VectorValue_T), pointer :: LineCenter    ! Avg. delta line centers for molecule
+    type (VectorValue_T), pointer :: LineWidth     ! Avg. delta line widths for molecule
+    type (VectorValue_T), pointer :: LineWidth_TDep ! Avg. delta line width temp. dep
     type (VectorValue_T), pointer :: LOSVEL        ! Line of sight velocity
     type (VectorValue_T), pointer :: MAGFIELD      ! Profiles
     type (VectorValue_T), pointer :: ORBINCLINE    ! Orbital inclination
@@ -439,6 +447,9 @@ contains
     type (Grids_T) :: Grids_Tscat ! All the coordinates for scaterring source function
     type (Grids_T) :: Grids_Salb ! All the coordinates for single scaterring albedo
     type (Grids_T) :: Grids_Cext ! All the coordinates for cloud extinction
+
+    type (Coefficients) :: Coeffs ! For interpolation
+    type (Convolve_Support_T) :: Convolve_Support
 
 !   Extra DEBUG for Nathaniel and Bill
 !   real(rp), dimension(:), pointer :: REQS         ! Accumulation of REQ
@@ -508,7 +519,7 @@ contains
       & dBeta_dT_polarized_path_c, dBeta_dT_polarized_path_f, &
       & d_delta_df, ddhidhidtl0, de_df, de_dt, del_s, deltau_pol, del_zeta, &
       & dh_dt_glgrid, dh_dt_path, dh_dt_path_c, dh_dt_path_f, dhdz_glgrid, &
-      & dhdz_gw_path, dhdz_out, dhdz_path, dincoptdepth_pol_dt, &
+      & dhdz_gw_path, dh_dz_out, dhdz_path, dincoptdepth_pol_dt, &
       & do_calc_Cext, do_calc_Cext_zp, do_calc_dn, do_calc_dn_c, &
       & do_calc_dn_F, do_calc_dv, do_calc_dv_c, do_calc_dv_f, do_calc_dw, &
       & do_calc_dw_c, do_calc_dw_f, do_calc_fzp, do_calc_hyd, do_calc_hyd_c, &
@@ -605,6 +616,17 @@ contains
     if ( FwdModelConf%i_saturation /= l_clear ) then
       boundaryPressure => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
         & quantityType=l_boundaryPressure, config=fwdModelConf )
+    end if
+    if ( spect_der ) then
+      lineCenter => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_lineCenter, instrumentModule=firstSignal%instrumentModule, &
+      & config=fwdModelConf )
+      lineWidth => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_lineWidth, instrumentModule=firstSignal%instrumentModule, &
+      & config=fwdModelConf )
+      lineWidth_Tdep => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_lineWidth_Tdep, instrumentModule=firstSignal%instrumentModule, &
+      & config=fwdModelConf )
     end if
 
     ! Check that RefGPH and Temp have the same hGrid.  This is not checked in
@@ -751,7 +773,7 @@ contains
                        & moduleName )
     call allocate_test ( dx_dh_out, ptan%template%nosurfs, 'dx_dh_out', &
                        & moduleName )
-    call allocate_test ( dhdz_out, ptan%template%nosurfs, 'dhdz_out', &
+    call allocate_test ( dh_dz_out, ptan%template%nosurfs, 'dh_dz_out', &
                        & moduleName )
 
     if ( temp_der ) then
@@ -769,7 +791,7 @@ contains
        & (/ (refGPH%template%surfs(1,1), j=1,no_sv_p_t) /), &
        & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
        & orbIncline%values(1,maf)*Deg2Rad, 0.0_rp, &
-       & req_out, grids_f, h2o_ind, tan_chi_out, dhdz_out, dx_dh_out, &
+       & req_out, grids_f, h2o_ind, tan_chi_out, dh_dz_out, dx_dh_out, &
        & dxdt_tan=dxdt_tan, d2xdxdt_tan=d2xdxdt_tan )
 
 ! Compute Gauss Legendre (GL) grid ---------------------------------------
@@ -1678,7 +1700,7 @@ contains
 
     call deallocate_test ( tan_chi_out,      'tan_chi_out',      moduleName )
     call deallocate_test ( dx_dh_out,        'dx_dh_out',        moduleName )
-    call deallocate_test ( dhdz_out,         'dhdz_out',         moduleName )
+    call deallocate_test ( dh_dz_out,        'dh_dz_out',        moduleName )
 
     if ( FwdModelConf%incl_cld ) then
       call deallocate_test ( scat_src%values, 'scat_src%values', &
@@ -1839,7 +1861,7 @@ contains
   contains
 
   ! ................................................  Convolution  .....
-    subroutine Convolution
+    subroutine Convolution ! or simply interpolation to output grid
 
       logical, parameter :: OLDPATCHER = .false. ! Old one was buggy
       ! Convolution if needed, or interpolation to ptan ----------------------
@@ -1898,7 +1920,7 @@ contains
           end do
           ! Don't worry about missing the last one here, it will get caught by the
           ! next iteration of the outer loop
-        elseif ( ptg_angles(ptg_i) <= ptg_angles(ptg_i-1) ) then
+        else if ( ptg_angles(ptg_i) <= ptg_angles(ptg_i-1) ) then
           patchedAPtg = .true.
           ! This one is at or below its predecessor, find the next one above
           ptg_j = ptg_i + 1
@@ -1956,7 +1978,7 @@ contains
           & sideband=thisSideband, config=fwdModelConf )
         thisElev = elevOffset%values(chanInd,1) * deg2Rad
 
-        ! Here comes the Convolution codes
+        ! Here comes the Convolution (or not) codes
         update = ( thisSideband /= fwdModelConf%sidebandStart )
 
         if ( FwdModelConf%do_conv ) then
@@ -1975,90 +1997,54 @@ contains
           if ( whichPattern < 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
             & "No matching antenna patterns." )
 
-          ! Now change channel from starting at 0 or 1 to definitely 1
+          call fov_convolve_setup ( antennaPatterns(whichPattern), ptg_angles, &
+            & tan_chi_out-thisElev, convolve_support, do_dRad_dx=ptan_der )
 
-          j = sv_t_len
-          !??? Which grids_... should give the windowStart:windowFinish to use here ???
-          if ( .not. temp_der .AND. .not. atmos_der ) then
-            call convolve_all ( FwdModelConf, FwdModelIn, FwdModelExtra, maf,  &
-               & chanInd, windowStart, windowFinish, beta_group%qty, temp,     &
-               & ptan, thisRadiance, update, ptg_angles, Radiances(:,i),       &
-               & tan_chi_out-thisElev, dhdz_out, dx_dh_out, thisFraction,      &
-               & antennaPatterns(whichPattern), Grids_tmp%deriv_flags,         &
-               & Grids_f, Jacobian, fmStat%rows, SURF_ANGLE=surf_angle(1),     &
-               & PTAN_DER=ptan_der )
-          else if ( temp_der .AND. .not. atmos_der ) then
-            call convolve_all ( FwdModelConf, FwdModelIn, FwdModelExtra, maf,  &
-               & chanInd, windowStart, windowFinish, beta_group%qty, temp,     &
-               & ptan, thisRadiance, update, ptg_angles, Radiances(:,i),       &
-               & tan_chi_out-thisElev, dhdz_out, dx_dh_out, thisFraction,      &
-               & antennaPatterns(whichPattern), Grids_tmp%deriv_flags,         &
-               & Grids_f, Jacobian, fmStat%rows, SURF_ANGLE=surf_angle(1),     &
-               & DI_DT=real(RESHAPE(k_temp(i,:,:,:),(/no_tan_hts,j/)),kind=rp),&
-               & DX_DT=dx_dt, D2X_DXDT=d2x_dxdt, DXDT_TAN=dxdt_tan,            &
-               & DXDT_SURFACE=dxdt_surface, PTAN_DER=ptan_der )
-          else if ( atmos_der .AND. .not. temp_der ) then
-            call convolve_all ( FwdModelConf, FwdModelIn, FwdModelExtra, maf,  &
-               & chanInd, windowStart, windowFinish, beta_group%qty, temp,     &
-               & ptan, thisRadiance, update, ptg_angles, Radiances(:,i),       &
-               & tan_chi_out-thisElev, dhdz_out, dx_dh_out, thisFraction,      &
-               & antennaPatterns(whichPattern), Grids_tmp%deriv_flags,         &
-               & Grids_f, Jacobian, fmStat%rows, SURF_ANGLE=surf_angle(1),     &
-               & DI_DF=real(k_atmos(i,:,:),kind=rp), PTAN_DER=ptan_der )
-!              & DI_DF=real(RESHAPE(k_atmos(i,:,:),(/no_tan_hts,size(grids_f%values)/)),kind=rp)) )
-          else
-            call convolve_all ( FwdModelConf, FwdModelIn, FwdModelExtra, maf,  &
-               & chanInd, windowStart, windowFinish, beta_group%qty, temp,     &
-               & ptan, thisRadiance, update, ptg_angles, Radiances(:,i),       &
-               & tan_chi_out-thisElev, dhdz_out, dx_dh_out, thisFraction,      &
-               & antennaPatterns(whichPattern), Grids_tmp%deriv_flags,         &
-               & Grids_f, Jacobian, fmStat%rows, SURF_ANGLE=surf_angle(1),     &
-               & DI_DT=real(RESHAPE(k_temp(i,:,:,:),(/no_tan_hts,j/)),kind=rp),&
-               & DX_DT=dx_dt, D2X_DXDT=d2x_dxdt, DXDT_TAN=dxdt_tan,            &
-               & DXDT_SURFACE=dxdt_surface,                                    &
-               & DI_DF=real(k_atmos(i,:,:),kind=rp), PTAN_DER=ptan_der )
-!              & DI_DF=real(RESHAPE(k_atmos(i,:,:),(/no_tan_hts,size(grids_f%values)/)),kind=rp)) )
-          end if
+          call convolve_radiance ( convolve_support, maf, chanInd, &
+            & radiances(:,i), thisFraction, update, ptan, thisRadiance, &
+            & Jacobian, fmStat%rows, dh_dz_out, dx_dh_out, ptan_der )
+
+          if ( temp_der ) &
+            & call convolve_temperature_deriv ( convolve_support, maf, chanInd, &
+              & radiances(:,i), thisFraction, update, thisRadiance, &
+              & temp, grids_tmp, surf_angle(1), &
+              & real(RESHAPE(k_temp(i,:,:,:),(/no_tan_hts,sv_t_len/)),kind=rp), &
+              & dx_dt, d2x_dxdt, dxdt_tan, dxdt_surface, Jacobian, fmStat%rows )
+
+          if ( atmos_der ) &
+            & call convolve_other_deriv ( convolve_support, maf, chanInd, &
+              & thisFraction, update, thisRadiance, &
+              & beta_group%qty, Grids_f, real(k_atmos(i,:,:),kind=rp), &
+              & Jacobian, fmStat%rows )
+
+          call fov_convolve_teardown ( convolve_support )
 
         else          ! No convolution needed ..
 
-          !??? Which grids_... should give the windowStart:windowFinish to use here ???
-          j = sv_t_len
-          if ( .not. temp_der .AND. .not. atmos_der ) then
-            call no_conv_at_all ( fwdModelConf, fwdModelIn, fwdModelExtra, maf, chanInd, &
-              &  windowStart, windowFinish, temp, ptan, thisRadiance, update,   &
-              &  Grids_tmp%deriv_flags, ptg_angles, tan_chi_out-thisElev,       &
-              &  dhdz_out, dx_dh_out, Grids_f,                                  &
-              &  Radiances(:,i), thisFraction, beta_group%qty, fmStat%rows,     &
-              &  Jacobian,  PTAN_DER=ptan_der)
-          else if ( temp_der .AND. .not. atmos_der ) then
-            call no_conv_at_all ( fwdModelConf, fwdModelIn, fwdModelExtra, maf, chanInd, &
-              &  windowStart, windowFinish, temp, ptan, thisRadiance, update,   &
-              &  Grids_tmp%deriv_flags, ptg_angles, tan_chi_out-thisElev,       &
-              &  dhdz_out, dx_dh_out, Grids_f,                                  &
-              &  Radiances(:,i), thisFraction, beta_group%qty, fmStat%rows,     &
-              &  Jacobian, DI_DT=real(RESHAPE(k_temp(i,:,:,:),(/no_tan_hts,j/)),kind=rp), &
-              &  PTAN_DER=ptan_der )
-          else if ( atmos_der .AND. .not. temp_der ) then
-            call no_conv_at_all ( fwdModelConf, fwdModelIn, fwdModelExtra, maf, chanInd, &
-              &  windowStart, windowFinish, temp, ptan, thisRadiance, update,   &
-              &  Grids_tmp%deriv_flags, ptg_angles, tan_chi_out-thisElev,       &
-              &  dhdz_out, dx_dh_out, Grids_f,                                  &
-              &  Radiances(:,i), thisFraction, beta_group%qty, fmStat%rows,     &
-              &  Jacobian, DI_DF=real(k_atmos(i,:,:),kind=rp), PTAN_DER=ptan_der )
-!             &  DI_DF=real(RESHAPE(k_atmos(i,:,:),(/no_tan_hts,size(grids_f%values)/)),kind=rp) )
-          else
-            call no_conv_at_all ( fwdModelConf, fwdModelIn, fwdModelExtra, maf, chanInd, &
-              &  windowStart, windowFinish, temp, ptan, thisRadiance, update,   &
-              &  Grids_tmp%deriv_flags, ptg_angles, tan_chi_out-thisElev,       &
-              &  dhdz_out, dx_dh_out, Grids_f,                                  &
-              &  Radiances(:,i), thisFraction, beta_group%qty, fmStat%rows,     &
-              &  Jacobian, DI_DT=real(RESHAPE(k_temp(i,:,:,:),(/no_tan_hts,j/)),kind=rp), &
-              &  DI_DF=real(k_atmos(i,:,:),kind=rp), PTAN_DER=ptan_der )
-!             &  DI_DF=real(RESHAPE(k_atmos(i,:,:),(/no_tan_hts,size(grids_f%values)/)),kind=rp) )
-          end if
+          call interpolateArraySetup ( ptg_angles, tan_chi_out-thisElev, &
+            & method='S', extrapolate='C', coeffs=coeffs, dyByDx=ptan_der )
 
-        end if
+          call interpolate_radiance ( coeffs, maf, chanInd, ptg_angles, &
+            & radiances(:,i), thisFraction, update, ptan, tan_chi_out-thisElev, &
+            & thisRadiance, Jacobian, fmStat%rows, dh_dz_out, dx_dh_out, &
+            & ptan_der )
+
+          if ( temp_der ) &
+            & call interpolate_temperature_deriv ( coeffs, maf, chanInd, &
+              & ptg_angles, thisFraction, update, tan_chi_out-thisElev,  &
+              & thisRadiance, temp, grids_tmp, &
+              & real(RESHAPE(k_temp(i,:,:,:),(/no_tan_hts,sv_t_len/)),kind=rp), &
+              & Jacobian, fmStat%rows )
+
+          if ( atmos_der ) &
+            & call interpolate_other_deriv ( coeffs, maf, chanInd, ptg_angles, &
+              & thisFraction, update, tan_chi_out-thisElev, thisRadiance, &
+              & beta_group%qty, grids_f, real(k_atmos(i,:,:),kind=rp), &
+              & Jacobian, fmStat%rows, linear=.true. )
+
+          call interpolateArrayTeardown ( coeffs )
+
+        end if ! Convolve or interpolate
 
       end do                            ! Channel loop
 
@@ -2421,7 +2407,7 @@ contains
               & frqhk / t_path_c**2 * ( tanh1_c - 1.0_rp / tanh1_c )
           call get_beta_path ( Frq, p_path, t_path_c, tanh1_c,                &
             &  beta_group%lbl(sx), fwdModelConf%polarized, gl_slabs, c_inds,  &
-            &  beta_path_c, t_der_path_flags, dTanh_dT_c,                     &
+            &  beta_path_c, t_der_path_flags, dTanh_dT_c, vel_rel,            &
             &  dbeta_dT_path_c, dbeta_dw_path_c, dbeta_dn_path_c, dbeta_dv_path_c )
         end if
 
@@ -2668,6 +2654,7 @@ contains
           call get_beta_path ( Frq, p_path, t_path_f(:ngl), tanh1_f(1:ngl),    &
             & beta_group%lbl(sx), fwdModelConf%polarized, gl_slabs,            &
             & gl_inds(:ngl), beta_path_f(:ngl,:), t_der_path_flags, dTanh_dT_f,&
+            & vel_rel, &
             & dbeta_dT_path_f, dbeta_dw_path_f, dbeta_dn_path_f, dbeta_dv_path_f )
 
         end if ! .not. pfa
@@ -3227,6 +3214,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.237  2005/06/09 02:34:16  vsnyder
+! Move stuff from l2pc_pfa_structures to slabs_sw_m
+!
 ! Revision 2.236  2005/06/03 01:59:25  vsnyder
 ! New copyright notice, move Id to not_used_here to avoid cascades
 !
