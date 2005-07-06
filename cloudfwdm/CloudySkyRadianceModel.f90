@@ -14,32 +14,8 @@ module CloudySkyRadianceModel
 ! -------------------------------------------------------------------------  
 ! CLOUDY-SKY MICROWAVE RADIATIVE TRANSFER MODEL      (VERSION 1.0)  
 ! -------------------------------------------------------------------------
-      use AntennaPatterns_m,       only: AntennaPattern_T
-      use ClearSkyModule,          only: CLEAR_SKY
-      use CloudySkyModule,         only: CLOUDY_SKY
-      use FOV_CONVOLVE_M,          only: FOV_CONVOLVE ! , FOV_CONVOLVE_OLD
-      use MLSCommon,               only: r8
-      use MLSMessageModule,        only: MLSMessage, MLSMSG_Error
-      use MLSNumerics,             only: INTERPOLATEVALUES
-      use ModelInput,              only: MODEL_ATMOS
-      use ModelOutput,             only: SENSITIVITY
-      use RadiativeTransferModule, only: RADXFER
-      use ScatteringAngle,         only: ANGLE
-      use SpectroscopyCatalog_m,   only: CATALOG_T
-      use Tmp,                     only: GET_TAN_PRESS
-      USE Intrinsic,               only: l_clear,                  &
-                                      &  l_clear_0RH,              &
-                                      &  l_clear_110RH_below_top,  &
-                                      &  l_clear_lowest_0_110RH,   &
-                                      &  l_cloudy_110RH_below_top, &
-                                      &  l_cloudy_110RH_in_cloud,  &
-                                      &  l_cloudy_nearside_only,   &
-                                      &  l_none
 
-      use Toggles, only: Emit, Levels, Switches, Toggle
-      use Trace_M, only: Trace_begin, Trace_end
-
-      IMPLICIT NONE
+      implicit NONE
       private
       public :: CloudForwardModel
 
@@ -52,14 +28,14 @@ module CloudySkyRadianceModel
 contains 
 
   !----------------------------------------  CloudForwardModel  -----
-      SUBROUTINE CloudForwardModel (doChannel, NF, NZ, NT, NS, N,      &
-             &   NZmodel,                                              &
-             &   FREQUENCY, PRESSURE, HEIGHT, TEMPERATURE, VMRin,      &
-             &   WCin, IPSDin, ZZT, RE, ISURF, Cloud_der, I_Saturation, IFOV,   &
-             &   Bill_data,                                            &
-             &   h_obs, elev_offset, AntennaPattern,                   &
-             &   TB0, DTcir, Trans, BETA, BETAc, Dm, TAUeff, SS,       &
-             &   NU, NUA, NAB, NR, Slevl, noS, Catalog, LosVel )
+  SUBROUTINE CloudForwardModel (doChannel, NF, NZ, NT, NS, N,      &
+         &   NZmodel,                                              &
+         &   FREQUENCY, PRESSURE, HEIGHT, TEMPERATURE, VMRin,      &
+         &   WCin, IPSDin, ZZT, RE, ISURF, Cloud_der, I_Saturation, IFOV,   &
+         &   Bill_data,                                            &
+         &   h_obs, elev_offset, AntennaPattern,                   &
+         &   TB0, DTcir, Trans, BETA, BETAc, Dm, TAUeff, SS,       &
+         &   NU, NUA, NAB, NR, Slevl, noS, Catalog, LosVel )
 
 !============================================================================C
 !   >>>>>>>>> FULL CLOUD FORWARD MODEL FOR MICROWAVE LIMB SOUNDER >>>>>>>>   C
@@ -164,6 +140,31 @@ contains
 !     FAX:   (818) 393-5065                                                  C
 !============================================================================C
 
+      use AntennaPatterns_m,       only: AntennaPattern_T
+      use ClearSkyModule,          only: CLEAR_SKY
+      use CloudySkyModule,         only: CLOUDY_SKY
+      use FOV_CONVOLVE_M,          only: CONVOLVE_SUPPORT_T, FOV_CONVOLVE_SETUP, &
+                                      &  FOV_CONVOLVE_1D, FOV_CONVOLVE_TEARDOWN
+      USE Intrinsic,               only: l_clear,                  &
+                                      &  l_clear_0RH,              &
+                                      &  l_clear_110RH_below_top,  &
+                                      &  l_clear_lowest_0_110RH,   &
+                                      &  l_cloudy_110RH_below_top, &
+                                      &  l_cloudy_110RH_in_cloud,  &
+                                      &  l_cloudy_nearside_only,   &
+                                      &  l_none
+      use MLSCommon,               only: r8
+      use MLSMessageModule,        only: MLSMessage, MLSMSG_Error
+      use MLSNumerics,             only: INTERPOLATEVALUES
+      use ModelInput,              only: MODEL_ATMOS
+      use ModelOutput,             only: SENSITIVITY
+      use RadiativeTransferModule, only: RADXFER
+      use ScatteringAngle,         only: ANGLE
+      use SpectroscopyCatalog_m,   only: CATALOG_T
+      use Tmp,                     only: GET_TAN_PRESS
+      use Toggles,                 only: Emit, Levels, Switches, Toggle
+      use Trace_M,                 only: Trace_begin, Trace_end
+
 !---------------------------------------
 !     INPUT PARAMETERS (INPUTS FROM L2)        ! -- INTERFACE AEA -- ! 
 !---------------------------------------
@@ -240,7 +241,7 @@ contains
 !-------------------------------
 
       INTEGER :: MULTI
-      integer, parameter :: Nsub=5             !Below surface tangent grids
+      integer, parameter :: Nsub=5             ! Below surface tangent grids
       
       INTEGER :: NU                            ! NO. OF SCATTERING ANGLES
       INTEGER :: NUA                           ! NO. OF SCAT. AZIMUTH ANGLES
@@ -361,6 +362,7 @@ contains
 
       type(antennaPattern_T), intent(in) :: AntennaPattern
       Type(Catalog_T), INTENT(IN) :: Catalog(:)
+      type(convolve_support_t) :: Convolve_Support
 
       integer :: FFT_pts
       REAL(r8) :: schi
@@ -800,8 +802,11 @@ contains
          SRad0=0.0_r8
          SRad =0.0_r8
 
-         call fov_convolve ( AntennaPattern, ptg_angle, RAD0, ptg_angle, SRad0 )
-         call fov_convolve ( AntennaPattern, ptg_angle, RAD,  ptg_angle, SRad )
+         call fov_convolve_setup ( antennaPattern, ptg_angle, ptg_angle, &
+           & convolve_support )
+         call fov_convolve_1d ( convolve_support, RAD0, SRad0 )
+         call fov_convolve_1d ( convolve_support, RAD , SRad  )
+         call fov_convolve_teardown ( convolve_support )
 
 ! -----------------------------------------------------------------------------
 
@@ -874,6 +879,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.66  2005/06/22 18:27:38  pwagner
+! Cant have access declared outside module scope
+!
 ! Revision 1.65  2004/01/08 00:48:46  livesey
 ! Calmed down the tracing
 !
