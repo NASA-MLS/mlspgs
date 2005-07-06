@@ -607,7 +607,7 @@ contains
     real(r8), intent(in) :: ds   ! 1/S  dS/dT
     real(r8), intent(in) :: dw   ! 1/w  dw/dT
     real(r8), intent(in) :: dy   ! 1/y  dy/dT
-    real(r8), intent(in) :: dv0s ! dv0s/dT, not 1/dv0s dv0s/dT
+    real(r8), intent(in) :: dv0s ! dv0s/dT, not 1/v0s dv0s/dT
 
     complex(rk), intent(inout) :: Sigma_P ! absorption coefficient at unity mixing
                                  ! ratio for Delta M = +1
@@ -916,6 +916,9 @@ contains
 end module O2_Abs_CS_M
 
 ! $Log$
+! Revision 2.15  2005/07/06 02:13:31  vsnyder
+! Correct a comment
+!
 ! Revision 2.14  2005/06/09 02:34:16  vsnyder
 ! Move stuff from l2pc_pfa_structures to slabs_sw_m
 !
