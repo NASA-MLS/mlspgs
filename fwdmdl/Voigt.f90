@@ -11,8 +11,6 @@
 
 module Voigt_M
 
-  ! Single-Line Absorption Software
-
   use MLSCommon, only: RP
   use Units, only: Pi, SqrtPi
 
@@ -21,10 +19,11 @@ module Voigt_M
   private
 
   ! Routines to compute Fadeeva/Voigt/Lorentz:
-  public :: Real_Simple_Voigt, D_Real_Simple_Voigt,                     &
-         &  Simple_Voigt, D_Simple_Voigt,                               &
-         &  RLorentz, CLorentz, RVoigth2, CVoigth2, RVoigth6, CVoigth6, &
-         &  RHui6, CHui6, RDrayson, CDrayson, Taylor
+  public :: Real_Simple_Voigt, D_Real_Simple_Voigt
+  public :: Simple_Voigt, D_Simple_Voigt
+  public :: W_Asymp, D_W_Asymp
+  public :: RLorentz, CLorentz, RVoigth2, CVoigth2, RVoigth6, CVoigth6
+  public :: RHui6, CHui6, RDrayson, CDrayson, Taylor
 
   real(rp), parameter :: OneOvSPi = 1.0_rp / sqrtPi  ! 1.0/Sqrt(Pi)
 
@@ -257,14 +256,19 @@ contains
   end subroutine Real_Simple_Voigt
 
   ! -----------------------------------------------  Simple_Voigt  -----
-  elemental subroutine Simple_Voigt ( x, y, u, v, du, dv )
+  elemental subroutine Simple_Voigt ( x, y, u, v, du, dv, dx, dy )
 
-! Simple Voigt function, also known as Fadeeva function.  exp(-z^2)*erfc(-I*z).
+! Simple Voigt function, also known as Fadeeva function w = exp(-z^2)*erfc(-I*z).
+! Compute du or dv if present, where du + i dv = dw/dz.
+! If furthermore dx and dy are present, compute dw/dt.
+
+! It is assumed that if dx is present then dy is present too!
 
 ! inputs
 
     real(rp), intent(in) :: x ! doppler width, delta frequency ratio
     real(rp), intent(in) :: y ! doppler width, collision width ratio
+    real(rp), intent(in), optional :: dx, dy ! dx/dt, dy/dt
 
 ! outputs
 
@@ -276,7 +280,7 @@ contains
 ! internals
 
     ! For asymptotic expansion
-    real(rp), parameter :: A = OneOvSpi, B = 1.5 * a
+    real(rp), parameter :: A = OneOvSpi, B = 1.5 * a, B2 = 3.0 * a
 
     ! For 2-pt Gauss-Hermite
 !   real(rp), parameter :: GX = 0.70710678118655_rp ! 1.0/sqrt(2.0)
@@ -296,7 +300,7 @@ contains
 
     if ( y + 0.666666*xa > 100.0_rp ) then
 
-!{    clorentz is one term of the asymptotic expansion
+!{    CLorentz is one term of the asymptotic expansion
 !     $w(z) \sim \frac{i}{z\sqrt{\pi}}
 !       \left(1 + \sum_{m=1}^\infty \frac{1 \cdot 3 \dots (2m-1)}{(2z^2)^m}\right)$.
 !     This exactly cancels in the derivative
@@ -307,7 +311,7 @@ contains
         !{ Compute the derivative first using two terms of the asymptotic
         ! expansion, then compute w(z) from it, to avoid cancellation
         !%
-        ! Taking the first three terms,
+        ! Taking the first two terms,
         ! $w(z) \approx \frac{i}{\sqrt{\pi}z}
         !   \left( 1 + \frac1{2z^2}\right)$.
         !%
@@ -322,47 +326,61 @@ contains
         ! This is four multiplies and three adds cheaper than in the next
         ! region inward.
 
-        r = 1.0_rp / ( x*x + y*y )  ! 1 / |z|
+        r = 1.0_rp / ( x*x + y*y )  ! 1 / |z|^2
         s = -y * r                  ! Im(1/z)
         r = x * r                   ! Re(1/z)
 
-        x2 = ( r - s ) * ( r + s )  ! Re(1/z^2)
+        x2 = ( s - r ) * ( s + r )  ! -Re(1/z^2)
         y2 = 2.0 * r * s            ! Im(1/z^2)
 
-        p = a * y2                  ! Re(w')
-        q = -a * x2                 ! Im(w')
+        p = a * y2                  ! Re(w') = 1/sqrt(pi) Im(a/z^2)
+        q = a * x2                  ! Im(w') = -1/sqrt(pi) Re(a/z^2)
 
-        !{ Writing $z^{-1} = r + i s$ and using
-        ! $w(z) = \frac1z \left( \frac{i}{\sqrt\pi} - \frac12 w^\prime(z)\right)$
+        !{ Writing $z^{-1} = r + i s$ and $w^\prime(z) = p + i q$, and using
+        ! $w(z) \approx \frac1z \left( \frac{i}{\sqrt\pi} -
+        !               \frac12 w^\prime(z)\right)$
         ! we have
         !
-        ! $w(z) \approx \frac12\left( -r p + s q \right) - a s +
-        !       i \left[\frac12\left( -r q - s p \right) + a r \right]$.
+        ! $w(z) \approx \frac12\left( s q - r p \right) - a s +
+        !       i \left[\frac12\left(a r  -( r q + s p ) \right) +  \right]$.
 
-        u = 0.5 * ( s * q - r * p ) - s * a ! Re(w)
+        u = 0.5 * ( s * q - r * p ) - a * s ! Re(w)
         if ( present(v) ) v = sign(r * a - 0.5 * ( r * q + s * p ), x) ! Im(w)
-        if ( present(du) ) du = p
-        if ( present(dv) ) dv = q
+
+        if ( present(du) ) then
+          if ( present(dx) ) then ! dw/dt = dw/dz dz/dt
+            du = p * dx - q * dy
+          else ! dw/dz
+            du = p
+          end if
+        end if
+        if ( present(dv) ) then
+          if ( present(dx) ) then ! dw/dt = dw/dz dz/dt
+            dv = p * dy + q * dx
+          else ! dw/dz
+            dv = q
+          end if
+        end if
 
       else ! no derivatives; use one term.  This isn't quite as accurate.
 
-        ! uv = clorentz(xa,y) ! i/(\sqrt\pi z)
+        ! uv = CLorentz(xa,y) ! i/(\sqrt\pi z)
         r = oneOvSpi / ( x*x + y*y )
         u = y * r
         if ( present(v) ) v = x * r
 
-        ! If we need something more accurate, use two terms:
-        ! $w(z) ~ \frac{i}{\sqrt\pi} \left( 1 + \frac1{2 z^2} )$.
+        !{ If we need something more accurate, use two terms:
+        !  $w(z) \approx \frac{i}{\sqrt\pi} \left( 1 + \frac1{2 z^2} \right)$.
 
-!       r = 1.0_rp / ( x*x + y*y )  ! 1 / |z|
-!       s = -y * r                  ! Im(1/z)
-!       r = x * r                   ! Re(1/z)
+!       r = 1.0 / ( x*x + y*y )  ! 1 / |z|^2
+!       s = -y * r               ! Im(1/z)
+!       r = x * r                ! Re(1/z)
 
-!       x2 = 1.0_rp + 0.5_rp * ( r - s ) * ( r + s )  ! 1 + Re(1/(2 z^2))
-!       y2 = r * s                  ! Im(1/(2 z^2))
+!       x2 = 1.0 + 0.5 * ( r - s ) * ( r + s )  ! 1 + Re(1/(2 z^2))
+!       y2 = r * s                              ! Im(1/(2 z^2))
 
-!       u = oneOvSpi * ( r * x2 - s * y2 )
-!       v = oneOvSpi * ( r * y2 + s * x2 )
+!       u = - oneOvSpi * ( r * y2 + s * x2 ) ! Re(w)
+!       v = oneOvSpi * ( r * x2 - s * y2 )   ! Im(w)
 
       end if
 
@@ -387,11 +405,8 @@ contains
       ! Substituting $z^{-2} = x_2 + i y_2$ and using $a = \frac1{\sqrt{\pi}}$
       ! and $b = \frac3{2\sqrt{\pi}}$ gives
       !
-      ! $w^\prime(z) \approx b x_2 y_2 + ( a + b x_2 ) y_2 +
-      !             i \left( -( a + b x_2 ) x_2 + b y_2^2 \right)$.
-      !%
-      ! Writing the common subexpressions $u = b y_2$ and $v = a + b x_2$
-      ! we finally have $w^\prime(z) \approx u x_2 + v y_2 + i ( -v x_2 + u y_2 )$.
+      ! $w^\prime(z) \approx ( a + 2 b x_2 ) y_2 +
+      !             i \left( b (y_2^2 - x_2^2) - a x_2 \right)$.
 
       r = 1.0_rp / ( x*x + y*y )  ! 1 / |z|
       s = -y * r                  ! Im(1/z)
@@ -400,10 +415,8 @@ contains
       x2 = ( r - s ) * ( r + s )  ! Re(1/z^2)
       y2 = 2.0 * r * s            ! Im(1/z^2)
 
-      u = b * y2        ! $\frac{3 y2}{2 \sqrt{\pi}}
-      vv = a + b * x2   ! $\frac1{\sqrt{\pi}} + $\frac{3 x2}{2 \sqrt{\pi}}
-      p = x2*u + y2*vv  ! Re(w')
-      q = -x2*vv + y2*u ! Im(w')
+      p = (a + b2 * x2) * y2           ! Re(w')
+      q = b * (y2-x2)*(y2+x2) - a * x2 ! Im(w')
 
       !{ Writing $z^{-1} = r + i s$ and using
       ! $w(z) = \frac1z \left( \frac{i}{\sqrt\pi} - \frac12 w^\prime(z)\right)$
@@ -414,8 +427,21 @@ contains
 
       u = 0.5 * ( s * q - r * p ) - s * a ! Re(w)
       if ( present(v) ) v = sign(r * a - 0.5 * ( r * q + s * p ), x) ! Im(w)
-      if ( present(du) ) du = p
-      if ( present(dv) ) dv = q
+
+      if ( present(du) ) then
+        if ( present(dx) ) then ! dw/dt = dw/dz dz/dt
+          du = p * dx - q * dy
+        else ! dw/dz
+          du = p
+        end if
+      end if
+      if ( present(dv) ) then
+        if ( present(dx) ) then ! dw/dt = dw/dz dz/dt
+          dv = p * dy + q * dx
+        else ! dw/dz
+          dv = q
+        end if
+      end if
 
       ! Drayson's quick 2pt hermite integral (essentially a lorentz)
 
@@ -461,8 +487,15 @@ contains
       if ( present(v) ) v = vv
 
       ! w' = 2*I/sqrt(pi) - 2*z*w
-      if ( present(du) ) du = 2.0_rp * ( y*vv - x*u )
-      if ( present(dv) ) dv = 2.0_rp * ( OneOvSpi - x*vv - y*u )
+      if ( present(dx) ) then ! dw/dt = dw/dz dz/dt
+        p = 2.0_rp * ( y*vv - x*u )
+        q = 2.0_rp * ( OneOvSpi - x*vv - y*u )
+        if ( present(du) ) du = p * dx - q * dy
+        if ( present(dv) ) dv = p * dy + q * dx
+      else ! dw/dz?
+        if ( present(du) ) du = 2.0_rp * ( y*vv - x*u )
+        if ( present(dv) ) dv = 2.0_rp * ( OneOvSpi - x*vv - y*u )
+      end if
     end if
 
   end subroutine Simple_Voigt
@@ -496,8 +529,10 @@ contains
     real(rp) :: denom
 
 !{ This is one term of the asymptotic expansion
-!     $w(z) \sim \frac{i}{z\sqrt{\pi}}
-!       \left(1 + \sum_{m=1}^\infty \frac{1 \cdot 3 \dots (2m-1)}{(2z^2)^m}\right)$.
+!  $w(z) \sim \frac{i}{z\sqrt{\pi}}
+!    \left(1 + \sum_{m=1}^\infty \frac{1 \cdot 3 \dots (2m-1)}{(2z^2)^m}\right)$.
+!  {\tt W\_Asymp} computes the same thing, with two real results instead of
+!  one complex result.
 
     denom = OneOvSPi / (x*x + y*y)
     clorentz = CMPLX(y*denom,x*denom,KIND=rp)
@@ -552,7 +587,6 @@ contains
 
 ! Real Voigt region IV 6pt GL integration
 
-    use Units, only: Pi
     real(rp), intent(in) :: x ! sqrt(ln2)*delnu / wd
     real(rp), intent(in) :: y ! sqrt(ln2)*wc / wd
 
@@ -582,7 +616,6 @@ contains
 
 ! Voigt region IV 6pt GL integration
 
-    use Units, only: Pi
     real(rp), intent(in) :: x ! sqrt(ln2)*delnu) / wd
     real(rp), intent(in) :: y ! sqrt(ln2)*wc / wd
 
@@ -870,7 +903,6 @@ contains
   !  terms up to second order in each of the even and odd series, so this
   !  approximation gets seven digits only for $x, y \leq 0.06$.
 
-    use Units, only: SqrtPi
     real(rp), intent(in) :: X, Y
     real(rp) :: U, V
     real(rp) :: X2, Y2, Y4, TR, TI
@@ -892,13 +924,87 @@ contains
 
   end function Taylor
 
-!{ \newpage
+  ! ----------------------------------------------------  W_Asymp  -----
+  elemental subroutine W_Asymp ( x, y, u, v )
+  ! Evaluate the asymptotic approximation for w(z), without checking the
+  ! range of the arguments.  Use only one term = i / (z \sqrt\pi), the
+  ! same approximation as in CLorentz, but with two real results instead
+  ! of one complex one.
+
+    real(rp), intent(in) :: x, y  ! z = x + i y
+    real(rp), intent(out) :: u, v ! w = u + i v
+
+    real(rp) :: r ! 1/(|z|^2 \sqrt\pi)
+
+    r = oneOvSpi / ( x*x + y*y )
+    u = y * r
+    v = x * r
+
+    !{ If we need something more accurate, use two terms:                     
+    !  $w(z) \approx \frac{i}{\sqrt\pi} \left( 1 + \frac1{2 z^2} \right)$.    
+
+!   r = 1.0 / ( x*x + y*y ) ! 1 / |z|^2                                   
+!   s = -y * r              ! Im(1/z)                                     
+!   r = x * r               ! Re(1/z)                                     
+
+!   x2 = 1.0 + 0.5 * ( r - s ) * ( r + s )  ! 1 + Re(1/(2 z^2))         
+!   y2 = r * s                              ! Im(1/(2 z^2))             
+
+!   u = - oneOvSpi * ( r * y2 + s * x2 ) ! Re(w)                              
+!   v = oneOvSpi * ( r * x2 - s * y2 )   ! Im(w)                              
+
+  end subroutine W_Asymp
+
+  ! --------------------------------------------------  D_W_Asymp  -----
+  elemental subroutine D_W_Asymp ( x, y, u, v, du, dv, dx, dy )
+  ! Compute w(z) and dw/dz using the asymptotic expansion without
+  ! checking the range of the arguments.  If dx and dy are present they
+  ! represent dz/dp, in which case dw/dp is computed.  See Simple_Voigt
+  ! above for TeXnicalities.
+
+  ! It is assumed that if dx is present, then dy is too!
+ 
+    real(rp), intent(in) :: x, y    ! z = x + i y
+    real(rp), intent(out) :: u, v   ! w = u + i v
+    real(rp), intent(out) :: du, dv ! dw = du + i dv
+    real(rp), intent(in), optional :: dx, dy ! dx/dp, dy/dp
+
+    real(rp), parameter :: A = OneOvSpi, C = 2.0 * a
+    real(rp) :: dut, dvt ! du/dz, dv/dz if dx, dy are present
+    real(rp) :: r, s     ! 1/|z|^2, then Re(1/z); Im(1/z)
+
+    r = 1.0 / ( x*x + y*y )           ! 1 / |z|^2
+    s = -y * r                        ! Im(1/z)
+    r = x * r                         ! Re(1/z)
+
+    if ( present(dx) ) then ! compute dw/dp
+
+      dut = c * r * s                 ! Re(w') = 1/sqrt(pi) Im(a/z^2)  
+      dvt = a * ( s - r ) * ( s + r ) ! Im(w') = -1/sqrt(pi) Re(a/z^2) 
+
+      u = 0.5 * ( s * dvt - r * dut ) - a * s          ! Re(w)
+      v = sign(r * a - 0.5 * ( r * dvt + s * dut ), x) ! Im(w)
+
+      du = dut * dx - dvt * dy        ! du/dp
+      dv = dut * dy + dvt * dx        ! dv/dp
+
+    else ! compute dw/dz
+
+      du = c * r * s                  ! Re(w') = 1/sqrt(pi) Im(a/z^2)  
+      dv = a * ( s - r ) * ( s + r )  ! Im(w') = -1/sqrt(pi) Re(a/z^2) 
+
+      u = 0.5 * ( s * dv - r * du ) - a * s            ! Re(w)
+      v = sign(r * a - 0.5 * ( r * dv + s * du ), x)   ! Im(w)
+
+    end if
+
+  end subroutine D_W_Asymp
 
   ! ----------------------------------------  D_Real_Simple_Voigt  -----
   elemental subroutine D_Real_Simple_Voigt ( x, y, dx, dy, u, du )
   ! Compute the real part of Fadeeva = Voigt (without Lorentz) and
-  ! the real part of the derivative (which isn't just the derivative
-  ! of Voigt).
+  ! the real part of the derivative with respect to some parameter T
+  ! (which isn't just the derivative of Voigt).
 
 !{ The Fadeeva function $w(z)$, where $z = x + i y$, can be written as
 !  $V(x,y) + i L(x,y)$, where $V(x,y)$ is the Voigt function and
@@ -907,34 +1013,43 @@ contains
 !  From 7.1.20 in {\bf Handbook of Mathematical Functions} by Abramowitz
 !  and Stegun (National Bureau of Standards Applied Math Series 55) we have
 !  $w^{\prime}(z) = \frac{2i}{\sqrt{\pi}} - 2 z w(z)$.\\
-!  $\Re \, \frac{\partial w(z(t))}{\partial T} =
+!  Thus $\Re \, \frac{\partial w(z(t))}{\partial T} =
 !   2 \left[ \left( -x V(x,y) + y L(x,y) \right) \frac{\partial x}{\partial T} +
 !            \left( x L(x,y) + y V(x,y) +\frac1{\sqrt{\pi}} \right)
 !             \frac{\partial y}{\partial T} \right]$.
+!
+!  We don't use this, however, because it has severe cancellation in the
+!  asymptotic region.  Instead, we use the derivatives that Simple\_Voigt
+!  calculates carefully -- q.v. above.
 
-    real(rp), intent(in) :: x, y, dx, dy
-    real(rp), intent(out) :: u, du
+    real(rp), intent(in) :: x, y
+    real(rp), intent(in) :: dx, dy ! dx/dT, dy/dT
+    real(rp), intent(out) :: u, du ! Re(w), Re(dw/dT)
 
-    real(rp) :: v ! Lorentz function
+    real(rp) :: a, b ! Re(dw/dz), Im(dw/dz)
+    real(rp) :: v    ! Lorentz function
 
-    call simple_voigt ( x, y, u, v )
-    du = 2.0_rp * ( (-x * u + y * v) * dx + (x * v + y * u - oneOvSpi) * dy )
+    call simple_voigt ( x, y, u, v, a, b )
+    du = a * dx - b * dy
 
   end subroutine D_Real_Simple_Voigt
 
   ! ---------------------------------------------  D_Simple_Voigt  -----
   elemental subroutine D_Simple_Voigt ( x, y, dx, dy, u, v, du, dv )
-  ! Compute Fadeeva = Voigt & Lorentz and its derivative
+  ! Compute Fadeeva = Voigt & Lorentz and its derivative with respect
+  ! to some parameter T.
 
 !{ Let $w^\prime(z) = a + i b$ and $z = x + i y$, and assume $x$ and $y$
-!  are functions of some parameter, say $T$.  Then $\frac{d w(z)}{d T} =
+!  are functions of some parameter $T$.  Then $\frac{d w(z)}{d T} =
 !  \frac{d w(z)}{d z} \frac{d z}{d T} = a ^\prime - b y^\prime +
 !  i ( a y^\prime + b x^\prime)$.
 
-    real(rp), intent(in) :: x, y, dx, dy
-    real(rp), intent(out) :: u, v, du, dv
+    real(rp), intent(in) :: x, y
+    real(rp), intent(in) :: dx, dy  ! dx/dT, dy/dT
+    real(rp), intent(out) :: u, v   ! Re(w), Im(w)
+    real(rp), intent(out) :: du, dv ! Re(dw/dT), Im(dw/dT)
 
-    real(rp) :: a, b
+    real(rp) :: a, b ! Re(dw/dz), Im(dw/dz)
 
     call simple_voigt ( x, y, u, v, a, b )
     du = a * dx - b * dy
@@ -956,6 +1071,9 @@ contains
 end module Voigt_M
 
 ! $Log$
+! Revision 2.7  2005/07/06 02:12:44  vsnyder
+! Added capability to compute derivatives in Simple_Voigt.  Added W_Asymp.
+!
 ! Revision 2.6  2005/06/22 18:08:20  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
