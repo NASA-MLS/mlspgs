@@ -70,7 +70,6 @@ contains
     logical :: DOY
     integer :: H1, M2, SEP1, SEP2, Y2 ! locations of separators
     integer :: L
-    character(len=len_trim(ccsds)+1) :: T
     integer :: YY, MO, DD, HH, MM
     real :: SS
 
@@ -186,6 +185,9 @@ contains
 end module CCSDS_Time
 
 ! $Log$
+! Revision 2.3  2005/07/06 01:58:35  vsnyder
+! Remove unused variable
+!
 ! Revision 2.2  2005/06/22 17:25:48  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
