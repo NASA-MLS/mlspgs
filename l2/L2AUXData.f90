@@ -186,7 +186,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------------- cpL2AUXData  -----
 
-  subroutine cpL2AUXData(file1, file2, create2, hdfVersion, sdList)
+  subroutine cpL2AUXData(file1, file2, create2, hdfVersion, sdList, options)
     use Hdf, only: DFACC_READ, DFACC_CREATE, DFACC_RDWR
     use HDF5, only: H5GCLOSE_F, H5GOPEN_F, H5DOPEN_F, H5DCLOSE_F
     use MLSFILES, only: FILENOTFOUND, WILDCARDHDFVERSION, &
@@ -206,27 +206,33 @@ contains ! =====     Public Procedures     =============================
     logical, optional, intent(in) :: create2
     integer, optional, intent(in) :: hdfVersion
     character (len=*), optional, intent(in) :: sdList
+    character (len=*), optional, intent(in) :: options ! E.g., '-v'
 
     ! Local
-    integer :: QuantityType
-    integer :: sdfid1
-    integer :: sdfid2
-    integer :: grpid
-    integer :: sd_id
-    integer :: status
-    integer :: the_hdfVersion
+    logical, parameter            :: countEmpty = .true.
     logical :: file_exists
     integer :: file_access
-    integer :: noSds
-    character (len=MAXSDNAMESBUFSIZE) :: mySdList
-    logical, parameter            :: countEmpty = .true.
-    type (L2AUXData_T) :: l2aux
+    integer :: grpid
     integer :: i
+    type (L2AUXData_T) :: l2aux
+    character (len=8) :: myOptions
+    character (len=MAXSDNAMESBUFSIZE) :: mySdList
+    integer :: noSds
+    integer :: QuantityType
+    integer :: sd_id
+    integer :: sdfid1
+    integer :: sdfid2
     character (len=80) :: sdName
+    integer :: status
+    integer :: the_hdfVersion
+    logical :: verbose
     
     ! Executable code
     the_hdfVersion = DEFAULT_HDFVERSION_WRITE
     if ( present(hdfVersion) ) the_hdfVersion = hdfVersion
+    myOptions = ' '
+    if ( present(options) ) myOptions = options
+    verbose = ( index(myOptions, 'v') > 0 )
     file_exists = ( mls_exists(trim(File1)) == 0 )
     if ( .not. file_exists ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -242,17 +248,17 @@ contains ! =====     Public Procedures     =============================
     end if
     if ( present(sdList) ) then
       mysdList = sdList
-      call dump(mysdList, 'DS names')
+      if ( verbose ) call dump(mysdList, 'DS names')
     else
       call GetAllHDF5DSNames (trim(File1), '/', mysdList)
-      call output ( '============ DS names in ', advance='no' )
-      call output ( trim(file1) //' ============', advance='yes' )
+      if ( verbose ) call output ( '============ DS names in ', advance='no' )
+      if ( verbose ) call output ( trim(file1) //' ============', advance='yes' )
       if ( mysdList == ' ' ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'No way yet to find sdList in ' // trim(File1) )
         return
       else
-        call dump(mysdList, 'DS names')
+        if ( verbose ) call dump(mysdList, 'DS names')
       end if
     end if
 
@@ -1862,6 +1868,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.71  2005/07/06 00:29:26  pwagner
+! optional arg options determines whether cpL2AUXData dumps DS names
+!
 ! Revision 2.70  2005/06/22 18:57:01  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
