@@ -51,7 +51,7 @@ contains
                                     &   B_Metrics, B_Ptg_Angles, B_Refraction
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use FOV_Convolve_m, only: Convolve_Support_T, FOV_Convolve_Setup, &
-      & FOV_Convolve_Teardown
+      & FOV_Convolve_Teardown, No_FFT
     use Freq_Avg_m, only: Freq_Avg, Freq_Avg_DACS
     use Geometry, only: EarthRadA, EarthRadB, MaxRefraction
     use Get_Chi_Angles_m, only: Get_Chi_Angles
@@ -270,6 +270,7 @@ contains
     real(rp), dimension(:), pointer :: P_PATH       ! Pressure on path
     real(rp), dimension(:), pointer :: P_PATH_C     ! P_PATH on coarse grid
     real(rp), dimension(:), pointer :: PTG_ANGLES   ! (no_tan_hts)
+    real(r8), dimension(:), pointer :: RAD_FFT      ! Convolved radiance on FFT grid
     real(rp), dimension(:), pointer :: RADV         ! Radiances for 1 pointing on
                                                     ! Freq_Grid
     real(rp), dimension(:), pointer :: REF_CORR     ! Refraction correction
@@ -778,9 +779,10 @@ contains
 
     if ( temp_der ) then
       call allocate_test ( dxdt_tan, ptan%template%nosurfs, sv_t_len, &
-                         & 'dxdt_tan',moduleName )
+                         & 'dxdt_tan', moduleName )
       call allocate_test ( d2xdxdt_tan, ptan%template%nosurfs, sv_t_len, &
-                         & 'd2xdxdt_tan',moduleName )
+                         & 'd2xdxdt_tan', moduleName )
+      call allocate_test ( rad_fft, no_fft, 'Rad_FFT', moduleName )
     end if
 
     ! Temperature's windowStart:windowFinish are correct here.
@@ -1735,6 +1737,7 @@ contains
       call deallocate_test ( eta_zxp_t_c,     'eta_zxp_t_c',     moduleName )
       call deallocate_test ( eta_zxp_t,       'eta_zxp_t',       moduleName )
       call deallocate_test ( eta_zxp_t_f,     'eta_zxp_t_f',     moduleName )
+      call deallocate_test ( rad_fft,         'Rad_FFT',         moduleName )
       call deallocate_test ( tan_d2h_dhdt,    'tan_d2h_dhdt',    moduleName )
       call deallocate_test ( tan_dh_dt,       'tan_dh_dt',       moduleName )
       call deallocate_test ( t_der_path_flags,'t_der_path_flags',moduleName )
@@ -2000,16 +2003,20 @@ contains
           call fov_convolve_setup ( antennaPatterns(whichPattern), ptg_angles, &
             & tan_chi_out-thisElev, convolve_support, do_dRad_dx=ptan_der )
 
-          call convolve_radiance ( convolve_support, maf, chanInd, &
-            & radiances(:,i), thisFraction, update, ptan, thisRadiance, &
-            & Jacobian, fmStat%rows, dh_dz_out, dx_dh_out, ptan_der )
-
-          if ( temp_der ) &
-            & call convolve_temperature_deriv ( convolve_support, maf, chanInd, &
-              & radiances(:,i), thisFraction, update, thisRadiance, &
+          if ( temp_der ) then
+            call convolve_radiance ( convolve_support, maf, chanInd, &
+              & radiances(:,i), thisFraction, update, ptan, thisRadiance, &
+              & Jacobian, fmStat%rows, dh_dz_out, dx_dh_out, ptan_der, rad_FFT )
+            call convolve_temperature_deriv ( convolve_support, maf, chanInd, &
+              & radiances(:,i), rad_fft, thisFraction, update, thisRadiance, &
               & temp, grids_tmp, surf_angle(1), &
               & real(RESHAPE(k_temp(i,:,:,:),(/no_tan_hts,sv_t_len/)),kind=rp), &
               & dx_dt, d2x_dxdt, dxdt_tan, dxdt_surface, Jacobian, fmStat%rows )
+          else ! No temperature derivative
+            call convolve_radiance ( convolve_support, maf, chanInd, &
+              & radiances(:,i), thisFraction, update, ptan, thisRadiance, &
+              & Jacobian, fmStat%rows, dh_dz_out, dx_dh_out, ptan_der )
+          end if
 
           if ( atmos_der ) &
             & call convolve_other_deriv ( convolve_support, maf, chanInd, &
@@ -3214,6 +3221,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.238  2005/07/06 02:17:20  vsnyder
+! Revisions for spectral parameter derivatives
+!
 ! Revision 2.237  2005/06/09 02:34:16  vsnyder
 ! Move stuff from l2pc_pfa_structures to slabs_sw_m
 !
