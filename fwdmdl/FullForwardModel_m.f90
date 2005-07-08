@@ -540,8 +540,8 @@ contains
       & k_spect_dn, k_spect_dn_frq, k_spect_dv, k_spect_dv_frq, k_spect_dw, &
       & k_spect_dw_frq, k_temp, k_temp_frq, mag_path, &
       & n_path, path_dsdh, phi_path, p_path, p_path_c, &
-      & prod_pol, ptg_angles, radiances, RadV, ref_corr, req_out, salb_path, &
-      & scat_alb%values, scat_ang, scat_src%values, &
+      & prod_pol, ptg_angles, rad_FFT, radiances, RadV, ref_corr, req_out, &
+      & salb_path, scat_alb%values, scat_ang, scat_src%values, &
       & sps_path, sum_ddel_lbl, sum_ddel_pfa, &
       & tan_chi_out, tan_d2h_dhdt, tan_dh_dt, tanh1_c, tanh1_f, &
       & tan_phi, tan_temp, tau_pol, t_der_path_flags, t_glgrid, &
@@ -3221,6 +3221,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.239  2005/07/08 00:12:11  vsnyder
+! Get Rad_FFT from Convolve_Radiance to Convolve_Temperature_Deriv
+!
 ! Revision 2.238  2005/07/06 02:17:20  vsnyder
 ! Revisions for spectral parameter derivatives
 !
