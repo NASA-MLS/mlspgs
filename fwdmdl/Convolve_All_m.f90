@@ -35,7 +35,7 @@ contains
 
   subroutine Convolve_Radiance ( Convolve_Support, MAF, Channel, Rad_In, &
            & SbRatio, Update, Ptan, Radiance, &
-           & Jacobian, RowFlags, dh_dz_out, dx_dh_out, ptan_Der )
+           & Jacobian, RowFlags, dh_dz_out, dx_dh_out, ptan_Der, Rad_FFT )
 
   ! Convolve the radiance, and maybe dRadiance/dPtan, with the antenna pattern
 
@@ -63,6 +63,9 @@ contains
     real(rp), optional, intent(in) :: dx_dh_out(:) ! dx/dh on the output pointing grid
     logical, optional, intent(in) :: Ptan_der ! "Process PTAN derivatives"
 
+    ! Temperature derivatives need this
+    real(r8), intent(out), optional :: Rad_FFT(:) ! Convolved radiances on FFT grid
+
     logical :: my_ptan_der
     integer :: Col, NoChans, NoPtan, Row
     real(r8) :: SRad(ptan%template%noSurfs), di_dx(ptan%template%noSurfs)
@@ -76,9 +79,10 @@ contains
     ! Convolve the radiances (and maybe the derivative w.r.t. PTan):
 
     if ( my_ptan_der ) then ! Convolve radiance and get di_dx
-      call fov_convolve_1d ( convolve_support, rad_in, SRad, dRad_dx_out=di_dx )
+      call fov_convolve_1d ( convolve_support, rad_in, SRad, dRad_dx_out=di_dx, &
+        & rad_fft_out=rad_fft )
     else
-      call fov_convolve_1d ( convolve_support, rad_in, SRad )
+      call fov_convolve_1d ( convolve_support, rad_in, SRad, rad_fft_out=rad_fft )
     end if
 
     ! Load the Radiance values into the Radiance structure:
@@ -107,7 +111,7 @@ contains
 
   ! ---------------------------------  Convolve_Temperature_Deriv  -----
   subroutine Convolve_Temperature_Deriv ( Convolve_Support, MAF, Channel, &
-           & Rad_In, SbRatio, Update, Radiance, Temp, Grids_Tmp, &
+           & Rad_In, Rad_FFT, SbRatio, Update, Radiance, Temp, Grids_Tmp, &
            & surf_angle, di_dT, dx_dT, d2x_dxdT, dxdt_tan, dxdt_surface, &
            & Jacobian, RowFlags )
 
@@ -123,6 +127,7 @@ contains
     integer, intent(in) :: MAF
     integer, intent(in) :: CHANNEL
     real(rp), intent(in) :: Rad_In(:)  ! input radiances
+    real(r8), intent(in) :: Rad_FFT(:) ! convolved radiance on FFT grid
     real(r8), intent(in) :: SbRatio
     logical, intent(in) :: Update      ! "add to Jacobian, don't overwrite"
     type (VectorValue_T), intent(in) :: RADIANCE ! Only for some indices
@@ -157,8 +162,8 @@ contains
     noPtan = size(convolve_support%del_chi_out)
     n_t_zeta = temp%template%noSurfs
 
-    call fov_convolve_temp_derivs ( convolve_support,  &
-      & rad_in, surf_angle, dI_dT, dx_dT, d2x_dxdT,    &
+    call fov_convolve_temp_derivs ( convolve_support, rad_in,  &
+      & rad_fft, surf_angle, dI_dT, dx_dT, d2x_dxdT,   &
       & dxdt_tan - SPREAD(dxdt_surface(1,:),1,noPtan), &
       & grids_tmp%deriv_flags, dRad_dT_out )
 
@@ -584,6 +589,9 @@ contains
 end module Convolve_All_m
 
 ! $Log$
+! Revision 2.2  2005/07/08 00:12:11  vsnyder
+! Get Rad_FFT from Convolve_Radiance to Convolve_Temperature_Deriv
+!
 ! Revision 2.1  2005/07/06 02:16:54  vsnyder
 ! Initial commit, replacing convolve_all_m.f90 and no_conv_at_all.f90
 !

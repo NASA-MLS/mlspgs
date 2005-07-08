@@ -29,7 +29,7 @@ module FOV_Convolve_m
 !---------------------------------------------------------------------------
 
   ! FFT-related parameters
-  integer, parameter, private :: pwr=12, no_fft=2**pwr, ffth = no_fft / 2
+  integer, parameter, public :: pwr=12, no_fft=2**pwr, ffth = no_fft / 2
 
   ! Results of setting up for convolution
   type, public :: Convolve_Support_T
@@ -124,7 +124,7 @@ contains
 
   ! --------------------------------------------  FOV_Convolve_1D  -----
   subroutine FOV_Convolve_1D ( Convolve_Support, &
-    & Rad_In, Rad_Out, DRad_dx_out )
+    & Rad_In, Rad_Out, DRad_dx_out, Rad_FFT_out )
 
     use MLSCommon, only: Rp
     use MLSNumerics, only: InterpolateValues
@@ -134,9 +134,15 @@ contains
     real(rp), intent(out) :: rad_out(:) ! output radiances
     real(rp), optional, intent(out) :: drad_dx_out(:) ! output derivative
 !                                      of radiance wrt to Chi_out
+    real(r8), optional, intent(out), target :: Rad_FFT_out(:) ! Temp derivs need it
 
     integer :: I
-    real(r8), dimension(no_fft) :: rad_fft, rad_fft1
+    real(r8), dimension(no_fft), target :: My_rad_FFT
+    real(r8), dimension(no_fft) :: rad_fft1
+    real(r8), dimension(:), pointer :: rad_fft
+
+    rad_fft => my_rad_fft
+    if ( present(rad_fft_out) ) rad_fft => rad_fft_out
 
     ! interpolate from input grid to FFT angles
 
@@ -216,11 +222,11 @@ contains
   end subroutine FOV_Convolve_2d
 
   ! -----------------------------------  FOV_Convolve_Temp_Derivs  -----
-  subroutine FOV_Convolve_Temp_Derivs ( Convolve_Support, &
-    & Rad_In, Surf_Angle, dI_dT, dx_dT, ddx_dxdT, dx_dT_out, di_dT_flag, &
+  subroutine FOV_Convolve_Temp_Derivs ( Convolve_Support, Rad_In, &
+    & Rad_FFT, Surf_Angle, dI_dT, dx_dT, ddx_dxdT, dx_dT_out, di_dT_flag, &
     & dRad_dT_out )
 
-    use MLSCommon, only: Rp
+    use MLSCommon, only: Rp, R8
     use MLSNumerics, only: Coefficients=>Coefficients_r8, Hunt, &
       & InterpolateArraySetup, InterpolateArrayTeardown, InterpolateValues
 
@@ -229,6 +235,7 @@ contains
     type(convolve_support_t), intent(in) :: Convolve_Support
 
     real(rp), intent(in) :: Rad_In(:)  ! input radiances
+    real(r8), intent(in) :: Rad_FFT(:) ! Convolved radiances on FFT grid
     real(rp), intent(in) :: Surf_Angle ! An angle (radians) that defines the
     !                       Earth surface.
     real(rp), intent(in) :: dI_dT(:,:) ! derivative of radiance wrt
@@ -249,7 +256,7 @@ contains
 
     type(coefficients) :: Coeffs_t ! for chi_in-init_angle -> angles(ffth+zero_out_s+1:no_fft)
     integer :: AAAPN, I, J, K, N_Coeffs, Zero_out_s, Zero_out_t
-    real(r8), dimension(no_fft) :: dp, rad_fft, rad_fft1
+    real(r8), dimension(no_fft) :: dp, rad_fft1, rad_fft2
     real(r8) :: drad_dT_temp(size(convolve_support%del_chi_out))
 
     ! Set up for interpolations.  First find the surface dimension
@@ -306,12 +313,12 @@ contains
       call interpolateValues ( coeffs_t, convolve_support%del_chi_in, &
         &  (rad_in-rad_in(k)) * ddx_dxdT(:,i), &
         &  convolve_support%angles(ffth+zero_out_s+1:no_fft), &
-        &  rad_fft(ffth+zero_out_s+1:no_fft), METHOD='S',  &
+        &  rad_fft2(ffth+zero_out_s+1:no_fft), METHOD='S',  &
         &  EXTRAPOLATE='C' )
 
     ! zero out the subsurface stuff
 
-      rad_fft(ffth:ffth+zero_out_s) = 0.0_rp
+      rad_fft2(ffth:ffth+zero_out_s) = 0.0_rp
 
 
     ! add in di_dT part
@@ -321,24 +328,24 @@ contains
         & convolve_support%angles(ffth:no_fft), rad_fft1(ffth:no_fft), &
         & METHOD='S', EXTRAPOLATE='C' )
 
-      rad_fft(ffth:no_fft) = rad_fft(ffth:no_fft) + rad_fft1(ffth:no_fft)
+      rad_fft2(ffth:no_fft) = rad_fft2(ffth:no_fft) + rad_fft1(ffth:no_fft)
 
     ! zero out this array above toa
 
-      rad_fft(ffth+zero_out_t + 1:no_fft) = 0.0_rp
+      rad_fft2(ffth+zero_out_t + 1:no_fft) = 0.0_rp
 
     ! resymetrize
 
-      rad_fft(1:ffth-1) = rad_fft(no_fft-1:no_fft-ffth+1:-1)
+      rad_fft2(1:ffth-1) = rad_fft2(no_fft-1:no_fft-ffth+1:-1)
 
     ! I don't know if this step is truly necessary but it rephases the radiances
     ! identically to the prototype code
 
-      rad_fft = cshift(rad_fft,-1)
+      rad_fft2 = cshift(rad_fft2,-1)
 
     ! take fft of rad_in * ddx_dxdT + di_dT array
 
-      call drft1_t ( rad_fft, 'a' )
+      call drft1_t ( rad_fft2, 'a' )
 
     ! do the rad_in * dx_dT term
 
@@ -366,19 +373,19 @@ contains
 
     ! apply convolution theorem
 
-      rad_fft(1:2) = rad_fft(1:2) * convolve_support%p(1:2)
+      rad_fft2(1:2) = rad_fft2(1:2) * convolve_support%p(1:2)
       do j = 3, no_fft-1, 2
-        rad_fft(j+1) = rad_fft(j) * convolve_support%p(j+1) - rad_fft1(j) * dp(j+1)
-        rad_fft(j)   = rad_fft(j) * convolve_support%p(j)   - rad_fft1(j) * dp(j)
+        rad_fft2(j+1) = rad_fft2(j) * convolve_support%p(j+1) - rad_fft1(j) * dp(j+1)
+        rad_fft2(j)   = rad_fft2(j) * convolve_support%p(j)   - rad_fft1(j) * dp(j)
       end do
 
     ! interplolate to chi_out
 
-      call drft1_t ( rad_fft, 's' )
+      call drft1_t ( rad_fft2, 's' )
 
       call interpolateValues ( convolve_support%coeffs_2, &
         & convolve_support%angles(ffth-1:no_fft-1), &
-        & rad_fft(ffth:no_fft), convolve_support%del_chi_out, drad_dT_out(:, i), &
+        & rad_fft2(ffth:no_fft), convolve_support%del_chi_out, drad_dT_out(:, i), &
         & METHOD='S', EXTRAPOLATE='C' )
 
     ! compute final result
@@ -438,6 +445,9 @@ contains
 end module FOV_Convolve_m
 
 ! $Log$
+! Revision 2.2  2005/07/08 00:12:11  vsnyder
+! Get Rad_FFT from Convolve_Radiance to Convolve_Temperature_Deriv
+!
 ! Revision 2.1  2005/07/06 02:16:34  vsnyder
 ! Initial commit, replacing fov_convolve_m.f90
 !
