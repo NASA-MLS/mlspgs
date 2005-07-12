@@ -47,7 +47,7 @@ subroutine h5_write_griddeddata(loc_id,field)
   integer::noHeights,error
   integer(kind=hid_t)::group_id,dspace_id,dset_id
   integer(kind=hsize_t),dimension(MAX_RANK)::dims
-  integer, dimension(MAX_RANK)::the_dims
+  integer(kind=hsize_t), dimension(MAX_RANK)::the_dims
   noHeights=field%noHeights
   ! create group: all the stuff from this field goes in the group
   call h5gcreate_f(loc_id,field%quantityName, group_id, error)
@@ -118,6 +118,9 @@ end module h5_griddeddata
 
 
 ! $Log$
+! Revision 2.7  2005/07/12 17:12:50  pwagner
+! New hdf5 library will drop integer dimension interfaces
+!
 ! Revision 2.6  2005/06/22 17:25:48  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
