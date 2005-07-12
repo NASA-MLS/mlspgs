@@ -25,7 +25,7 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
     ! so instead write them out chunk-by-chunk
 
   use Allocate_Deallocate, only: Allocate_test, DeAllocate_test
-  use Hdf, only: DFACC_RDONLY
+  use Hdf, only: DFACC_CREATE, DFACC_RDONLY
   use INIT_TABLES_MODULE, only: L_PRESSURE, L_ZETA, &
     & L_L2GP, L_L2AUX, L_L2DGG, L_L2FWM
   use MLSCommon, only: RV, DEFAULTUNDEFINEDVALUE, MLSFile_T
@@ -33,6 +33,7 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
     & MLSMSG_Error, MLSMSG_Warning
   use MLSSets, only: FindFirst
   use OUTPUT_M, only: blanks, OUTPUT
+  use readAPriori, only: APrioriFiles
   use STRING_TABLE, only: GET_STRING
   use TOGGLES, only: SWITCHES
   use VectorsModule, only: VectorValue_T
@@ -205,7 +206,7 @@ contains ! ======================= Public Procedures =========================
     ! so instead write them out profile-by-profile
     use L2GPData, only: L2GPData_T, L2GPNameLen, &
       & AppendL2GPData, DestroyL2GPContents, DUMP
-
+    use readApriori, only: writeAPrioriAttributes
     type(MLSFile_T)               :: L2GPFile
     type (VectorValue_T), intent(in) :: QUANTITY
     type (VectorValue_T), pointer :: precision
@@ -252,6 +253,7 @@ contains ! ======================= Public Procedures =========================
     call AppendL2GPData(l2gp, l2gpFile, &
       & sdName, offset, lastprofile=lastInstance, &
       & TotNumProfs=TotalProfs, createSwath=createSwath)
+    if ( l2gpFile%access == DFACC_CREATE ) call writeAPrioriAttributes(l2gpFile)
     if ( index(switches, 'l2gp') /= 0 ) call dump(l2gp)
     ! Clear up our temporary l2gp
     call DestroyL2GPContents(l2gp)
@@ -1332,6 +1334,10 @@ contains ! ======================= Public Procedures =========================
     else
       l2gp%status(firstProfile:lastProfile) = 0
     endif
+    ! njl wants this done by l2cf in FillStatus Quantity
+    !  if ( APrioriFiles%dao // AprioriFiles%ncep == ' ' ) &
+    !    & l2gp%status(firstProfile:lastProfile) = &
+    !    & l2gp%status(firstProfile:lastProfile) + CLIMATOLOGYFALLBACKSTATUS
     ! l2gp%status(firstProfile:lastProfile) = 'G'
     if ( DEEBUG ) print *, 'Vector converted to l2gp; name: ', trim(name)
     if ( DEEBUG ) print *, 'firstProfile, lastProfile: ', firstProfile, lastProfile
@@ -1382,6 +1388,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.32  2005/07/12 17:38:57  pwagner
+! Writes APriori File names as an attribute to every l2gp file
+!
 ! Revision 2.31  2005/06/22 18:57:01  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
