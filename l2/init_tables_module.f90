@@ -787,6 +787,7 @@ contains ! =====     Public procedures     =============================
                     n+n_dot, &
              begin, f+f_height, t+t_numeric, n+n_field_type /) )
     call make_tree ( (/ & ! Continuing for s_fill...
+             begin, f+f_ifMissingGMAO, t+t_boolean, n+n_field_type, &
              begin, f+f_ignoreGeolocation, t+t_boolean, n+n_field_type, &
              begin, f+f_ignoreNegative, t+t_boolean, n+n_field_type, &
              begin, f+f_ignoreZero, t+t_boolean, n+n_field_type, &
@@ -1353,6 +1354,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.405  2005/07/12 17:40:24  pwagner
+! May fill status with condition that no gmaos found
+!
 ! Revision 2.404  2005/06/30 22:43:08  livesey
 ! Added residualSupplied
 !
