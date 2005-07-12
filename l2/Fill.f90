@@ -66,8 +66,8 @@ contains ! =====     Public Procedures     =============================
       & F_EXTINCTION, F_FIELDECR, F_FILE, F_FORCE, &
       & F_FRACTION, F_FROMPRECISION, F_GEOCALTITUDEQUANTITY, F_GPHQUANTITY, &
       & F_HEIGHT, F_HIGHBOUND, F_H2OQUANTITY, F_H2OPRECISIONQUANTITY, &
-      & F_IGNORENEGATIVE, F_IGNOREGEOLOCATION, F_IGNOREZERO, F_INSTANCES, & 
-      &	F_INTEGRATIONTIME, F_INTERNALVGRID, &
+      & F_IFMISSINGGMAO, F_IGNORENEGATIVE, F_IGNOREGEOLOCATION, F_IGNOREZERO, & 
+      & F_INSTANCES, F_INTEGRATIONTIME, F_INTERNALVGRID, &
       & F_INTERPOLATE, F_INVERT, F_INTRINSIC, F_ISPRECISION, &
       & F_LENGTHSCALE, F_LOGSPACE, F_LOSQTY, F_LOWBOUND, F_LSB, F_LSBFRACTION, &
       & F_MANIPULATION, F_MATRIX, F_MAXITERATIONS, F_MAXVALUE, F_MEASUREMENTS, F_METHOD, &
@@ -159,6 +159,7 @@ contains ! =====     Public Procedures     =============================
     use OUTPUT_M, only: BLANKS, OUTPUT
     use PFAData_m, only: Flush_PFAData
     use QuantityTemplates, only: Epoch, QuantityTemplate_T
+    use readAPriori, only: APrioriFiles
     use RHIFromH2O, only: RHIFromH2O_Factor, RHIPrecFromH2O
     use ScanModelModule, only: GetBasisGPH, Get2DHydrostaticTangentPressure, GetGPHPrecision
     use SnoopMLSL2, only: SNOOP
@@ -374,6 +375,7 @@ contains ! =====     Public Procedures     =============================
     integer :: H2OPRECISIONVECTORINDEX           ! In the vector database
     integer :: I, J                     ! Loop indices for section, spec, expr
     integer :: GLOBALUNIT               ! To go into the vector
+    logical :: IFMISSINGGMAO            ! Only if missing GMAO
     logical :: IGNOREZERO               ! Don't sum chi^2 at values of noise = 0
     logical :: IGNORENEGATIVE           ! Don't sum chi^2 at values of noise < 0
     logical :: IGNOREGEOLOCATION        ! Don't copy geolocation to vector qua 
@@ -531,6 +533,7 @@ contains ! =====     Public Procedures     =============================
       force = .false.
       fromPrecision = .false.
       got= .false.
+      ifMissingGMAO = .false.
       ignoreZero = .false.
       ignoreNegative = .false.
       ignoreGeolocation = .false.
@@ -824,6 +827,8 @@ contains ! =====     Public Procedures     =============================
             ignoreGeolocation =get_boolean ( gson )
           case ( f_ignoreNegative )
             ignoreNegative = get_boolean ( gson )
+          case ( f_ifMissingGMAO )
+            ifMissingGMAO = get_boolean ( gson )
           case ( f_instances )
             instancesNode = subtree(j,key)
           case ( f_integrationTime )
@@ -1767,7 +1772,8 @@ contains ! =====     Public Procedures     =============================
           if ( all ( got ( (/ f_minValue, f_maxValue /) ) ) .and. &
             &  maxValue <= minValue ) call Announce_Error ( key, no_error_code, &
             & 'Bad combination of max/min values' )
-          call FillStatusQuantity ( key, quantity, sourceQuantity, statusValue, &
+          if ( .not. ifMissingGMAO .or. APrioriFiles%dao // AprioriFiles%ncep == ' ') &
+            & call FillStatusQuantity ( key, quantity, sourceQuantity, statusValue, &
             & minValue, maxValue, heightNode, additional )
           
         case ( l_vector ) ! ---------------- Fill from another qty.
@@ -6443,7 +6449,7 @@ contains ! =====     Public Procedures     =============================
 
     end subroutine FillWithBoxcarFunction
 
-    ! -------------------------------------------- FillQualityFromChisq --------
+    ! -------------------------------------------- FillStatusQuantity --------
     subroutine FillStatusQuantity ( key, quantity, sourceQuantity, statusValue, &
       & minValue, maxValue, heightNode, additional )
       integer, intent(in) :: KEY        ! Tree node
@@ -6469,7 +6475,7 @@ contains ! =====     Public Procedures     =============================
       ! Work out the height
       if ( heightNode /= 0 ) then
         if ( nsons ( heightNode ) /= 2 ) call Announce_Error ( key, no_error_code, &
-          & 'Only one height can be supplied for satus fill' )
+          & 'Only one height can be supplied for status fill' )
         if ( sourceQuantity%template%verticalCoordinate /= l_zeta ) &
           & call Announce_Error ( key, 0, 'Bad vertical coordinate for sourceQuantity' )
         call expr ( heightNode, unitAsArray, valueAsArray )
@@ -6873,6 +6879,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.306  2005/07/12 17:40:52  pwagner
+! May fill status with condition that no gmaos found
+!
 ! Revision 2.305  2005/06/21 23:56:24  livesey
 ! Added forgiveZeros handling to FillCovariance for efficiency.
 !
