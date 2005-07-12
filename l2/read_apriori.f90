@@ -44,6 +44,7 @@ module ReadAPriori
   use MoreTree, only: Get_Spec_ID
   use ncep_dao, only: READ_CLIMATOLOGY, ReadGriddedData, ReadGloriaFile
   use OUTPUT_M, only: BLANKS, OUTPUT
+  use PCFHdr, only: GlobalAttributes
   use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS
   use String_Table, only: GET_STRING
   use Time_M, only: Time_Now
@@ -55,7 +56,8 @@ module ReadAPriori
 
   implicit none
   private
-  public ::  read_apriori, writeAPrioriAttributes
+  public ::  APrioriFiles, APrioriFiles_T, read_apriori, writeAPrioriAttributes
+  ! integer, public, parameter :: CLIMATOLOGYFALLBACKSTATUS = 1024
   private ::  announce_error
   integer, private :: ERROR
   integer, private, parameter :: MAXNUMFILES = 10
@@ -68,9 +70,11 @@ module ReadAPriori
     character (len=MAXNUMFILES*FileNameLen) :: dao = ''
   end type APrioriFiles_T
 
-  type (APrioriFiles_T), private, save :: APrioriFiles
+  type (APrioriFiles_T), save :: APrioriFiles
   interface writeAPrioriAttributes
-    module procedure writeAPrioriAttributes_id, writeAPrioriAttributes_name
+    module procedure writeAPrioriAttributes_id
+    module procedure writeAPrioriAttributes_MF
+    module procedure writeAPrioriAttributes_name
   end interface
   
   ! -----     Private declarations     ---------------------------------
@@ -598,7 +602,7 @@ contains ! =====     Public Procedures     =============================
       call MLSMessage(MLSMSG_Error,ModuleName, &
         & 'Problem with read_apriori section')
     end if
-
+    
     if ( toggle(gen) ) call trace_end("read_apriori")
   
     if ( timing ) call sayTime
@@ -617,6 +621,22 @@ contains ! =====     Public Procedures     =============================
       timing = .false.
     end subroutine SayTime
   end subroutine read_apriori
+
+  ! ------------------------------------------  writeAPrioriAttributes_MF  -----
+  subroutine writeAPrioriAttributes_MF ( MLSFile )
+    type(MLSFile_T) :: MLSFile
+    ! Executable
+    if ( MLSFile%hdfVersion /= HDFVERSION_5 ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'Wrong hdfVersion--can write apriori attributes for hdf5 only', &
+        & MLSFile=MLSFile )
+      return ! Can only do this for hdf5 files
+    elseif ( MLSFile%StillOpen ) then
+      call writeAPrioriAttributes_ID(MLSFile%fileID%f_id, HDFVERSION_5)
+    else
+      call writeAPrioriAttributes_name(MLSFile%name, HDFVERSION_5)
+    endif
+  end subroutine writeAPrioriAttributes_MF
 
   ! ------------------------------------------  writeAPrioriAttributes_name  -----
   subroutine writeAPrioriAttributes_name ( fileName, hdfVersion )
@@ -795,6 +815,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.60  2005/07/12 17:34:57  pwagner
+! Added MLSFile interface for writing apriori attributes
+!
 ! Revision 2.59  2005/06/22 18:57:02  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
