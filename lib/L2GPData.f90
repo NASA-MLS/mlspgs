@@ -3029,7 +3029,7 @@ contains ! =====     Public Procedures     =============================
       call dump(gAttributes%orbPeriod, 'Orbit Periods')
       call output ('InstrumentName: ' // trim( gAttributes%InstrumentName  ))
       call output ('Process level: ' // trim(  gAttributes%ProcessLevel    ))
-      call output ('Input version: ' // trim(  gAttributes%inputVersion    ))
+      ! call output ('Input version: ' // trim(  gAttributes%inputVersion    ))
       call output ('PGE version: ' // trim(    gAttributes%PGEVersion      ))
       call output ('Start UTC: ' // trim(      gAttributes%StartUTC        ))
       call output ('End UTC: ' // trim(        gAttributes%EndUTC          ))
@@ -3226,6 +3226,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.117  2005/07/06 00:31:06  pwagner
+! More robust determination of column swaths; quality data field has no units
+!
 ! Revision 2.116  2005/06/29 00:41:50  pwagner
 ! Passes MLSFiles to mls_swattach,create
 !

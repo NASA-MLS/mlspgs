@@ -157,7 +157,7 @@ CONTAINS
 
     ! Store appropriate user input as global attributes
     GlobalAttributes%ProcessLevel = '3-daily'
-    GlobalAttributes%InputVersion = l3pcf%outputVersion
+    ! GlobalAttributes%InputVersion = l3pcf%outputVersion
     GlobalAttributes%StartUTC = l3pcf%l3StartDay // &
       & 'T00:00:00.000000Z'
     GlobalAttributes%EndUTC = l3pcf%l3EndDay // &
@@ -515,6 +515,9 @@ END MODULE OpenInit
 !==================
 
 ! $Log$
+! Revision 1.17  2005/06/23 19:07:39  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 1.16  2004/08/04 23:20:55  pwagner
 ! Much moved from MLSStrings to MLSStringLists
 !

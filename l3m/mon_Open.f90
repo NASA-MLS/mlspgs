@@ -159,7 +159,7 @@ CONTAINS
     ! Store appropriate user input as global attributes
  
     GlobalAttributes%ProcessLevel = '3-monthly'
-    GlobalAttributes%InputVersion = l3pcf%outputVersion
+    ! GlobalAttributes%InputVersion = l3pcf%outputVersion
     GlobalAttributes%StartUTC = l3pcf%StartDay // &
       & 'T00:00:00.000000Z'
     GlobalAttributes%EndUTC = l3pcf%EndDay // &
@@ -297,6 +297,9 @@ CONTAINS
 !==================
 
 ! $Log$
+! Revision 1.10  2005/06/23 19:17:59  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 1.9  2004/08/04 23:21:23  pwagner
 ! Much moved from MLSStrings to MLSStringLists
 !
