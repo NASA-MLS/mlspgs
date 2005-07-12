@@ -221,7 +221,7 @@ module MLSHDF5
   end interface
 
   ! Local parameters
-  integer, dimension(7) :: ones = (/1,1,1,1,1,1,1/)
+  integer(kind=hsize_t), dimension(7) :: ones = (/1,1,1,1,1,1,1/)
   logical, parameter    :: DEEBUG = .false.
   integer, save :: cantGetDataspaceDims = 0
   integer, parameter :: MAXNUMWARNS = 40
@@ -564,7 +564,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag from HDF5
     integer :: STRINGTYPE               ! Type for string
     logical :: my_skip
-    integer, dimension(1) :: SHP        ! Shape
+    integer(kind=hsize_t), dimension(1) :: SHP        ! Shape
 
     ! Executable code
     my_skip = .false.
@@ -607,7 +607,7 @@ contains ! ======================= Public Procedures =========================
     integer :: ATTRID                   ! ID for attribute
     integer :: spaceID                  ! ID for dataspace
     integer :: STATUS                   ! Flag from HDF5
-    integer, dimension(1) :: SHP        ! Shape
+    integer(kind=hsize_t), dimension(1) :: SHP        ! Shape
 
     ! Executable code
     ! (Maybe) create the attribute
@@ -616,7 +616,7 @@ contains ! ======================= Public Procedures =========================
       & attrID, skip_if_already_there, shp ) ) then
       ! Write
       call h5aWrite_f ( attrID, H5T_NATIVE_REAL, value, &
-        & int ( (/ shp, ones(1:6) /), hID_T ), status )
+        & int ( (/ shp, ones(1:6) /), hsize_t ), status )
       call finishMakeAttrib ( name, status, attrID, spaceID )
     end if
   end subroutine MakeHDF5Attribute_snglarr1
@@ -633,7 +633,7 @@ contains ! ======================= Public Procedures =========================
     integer :: ATTRID                   ! ID for attribute
     integer :: spaceID                  ! ID for dataspace
     integer :: STATUS                   ! Flag from HDF5
-    integer, dimension(1) :: SHP        ! Shape
+    integer(kind=hsize_t), dimension(1) :: SHP        ! Shape
 
     ! Executable code
     ! (Maybe) create the attribute
@@ -642,7 +642,7 @@ contains ! ======================= Public Procedures =========================
       & attrID, skip_if_already_there, shp ) ) then
       ! Write
       call h5aWrite_f ( attrID, H5T_NATIVE_DOUBLE, value, &
-        & int ( (/ shp, ones(1:6) /), hID_T ), status )
+        & int ( (/ shp, ones(1:6) /), hsize_t ), status )
       call finishMakeAttrib ( name, status, attrID, spaceID )
     end if
   end subroutine MakeHDF5Attribute_dblarr1
@@ -659,7 +659,7 @@ contains ! ======================= Public Procedures =========================
     integer :: ATTRID                   ! ID for attribute
     integer :: spaceID                  ! ID for dataspace
     integer :: STATUS                   ! Flag from HDF5
-    integer, dimension(1) :: SHP        ! Shape
+    integer(kind=hsize_t), dimension(1) :: SHP        ! Shape
 
     ! Executable code
     ! (Maybe) create the attribute
@@ -668,7 +668,7 @@ contains ! ======================= Public Procedures =========================
       & attrID, skip_if_already_there, shp ) ) then
       ! Write
       call h5aWrite_f ( attrID, H5T_NATIVE_INTEGER, value, &
-        & int ( (/ shp, ones(1:6) /), hID_T ), status )
+        & int ( (/ shp, ones(1:6) /), hsize_t ), status )
       call finishMakeAttrib ( name, status, attrID, spaceID )
     end if
   end subroutine MakeHDF5Attribute_intarr1
@@ -887,7 +887,7 @@ contains ! ======================= Public Procedures =========================
     ! Local variables
     integer :: ATTRID                   ! ID for attribute
     integer :: STATUS                   ! Flag from HDF5
-    integer, dimension(1) :: SHP        ! Shape
+    integer(kind=hsize_t), dimension(1) :: SHP        ! Shape
 
     ! Executable code
     shp = shape(value)
@@ -899,7 +899,7 @@ contains ! ======================= Public Procedures =========================
     ! right type, and that we won't overflow memory etc. by accidentally trying
     ! to read an array into our one value.
     call h5aread_f ( attrID, H5T_NATIVE_INTEGER, value, &
-      & int ( (/ shp, ones(1:6) /), hID_T ), status )
+      & int ( (/ shp, ones(1:6) /), hsize_t ), status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to read attribute ' // trim(name), &
       & MLSFile=MLSFile )
@@ -964,7 +964,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag from HDF5
     integer :: STRINGTYPE               ! String type
     integer :: STRINGSIZE               ! String size
-    integer, dimension(1) :: SHP        ! Shape
+    integer(kind=hsize_t), dimension(1) :: SHP        ! Shape
 
     ! Executable code
     shp = shape(value)
@@ -987,7 +987,7 @@ contains ! ======================= Public Procedures =========================
     ! right type, and that we won't overflow memory etc. by accidentally trying
     ! to read an array into our one value.
     call h5aread_f ( attrID, stringType, value, &
-      & int ( (/ shp, ones(1:6) /), hID_T ), status )
+      & int ( (/ shp, ones(1:6) /), hsize_t ), status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to read attribute ' // trim(name), &
       & MLSFile=MLSFile )
@@ -1038,7 +1038,7 @@ contains ! ======================= Public Procedures =========================
     ! Local variables
     integer :: ATTRID                   ! ID for attribute
     integer :: STATUS                   ! Flag from HDF5
-    integer, dimension(1) :: SHP        ! Shape
+    integer(kind=hsize_t), dimension(1) :: SHP        ! Shape
 
     ! Executable code
     shp = shape(value)
@@ -1050,7 +1050,7 @@ contains ! ======================= Public Procedures =========================
     ! right type, and that we won't overflow memory etc. by accidentally trying
     ! to read too big array into ours.
     call h5aread_f ( attrID, H5T_NATIVE_REAL, value, &
-      & int ( (/ shp, ones(1:6) /), hID_T ), status )
+      & int ( (/ shp, ones(1:6) /), hsize_t ), status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to read 1d attribute array ' // trim(name), &
       & MLSFile=MLSFile )
@@ -1125,7 +1125,7 @@ contains ! ======================= Public Procedures =========================
     ! Local variables
     integer :: ATTRID                   ! ID for attribute
     integer :: STATUS                   ! Flag from HDF5
-    integer, dimension(1) :: SHP        ! Shape
+    integer(kind=hsize_t), dimension(1) :: SHP        ! Shape
 
     ! Executable code
     shp = shape(value)
@@ -1137,7 +1137,7 @@ contains ! ======================= Public Procedures =========================
     ! right type, and that we won't overflow memory etc. by accidentally trying
     ! to read too big array into ours.
     call h5aread_f ( attrID, H5T_NATIVE_DOUBLE, value, &
-      & int ( (/ shp, ones(1:6) /), hID_T ), status )
+      & int ( (/ shp, ones(1:6) /), hsize_t ), status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to read dblarr1 attribute ' // trim(name), &
       & MLSFile=MLSFile )
@@ -1354,7 +1354,7 @@ contains ! ======================= Public Procedures =========================
     ! right type, and that we won't overflow memory etc. by accidentally trying
     ! to read an array into our one value.
     call h5aread_f ( attrID, H5T_NATIVE_INTEGER, value, &
-      & (/ int(shp,hid_t), int(ones(1:6),hid_t) /), status )
+      & (/ shp, ones(1:6) /), status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to read attribute ' // trim(name) )
     call h5aClose_f ( attrID, status )
@@ -1399,7 +1399,7 @@ contains ! ======================= Public Procedures =========================
     ! right type, and that we won't overflow memory etc. by accidentally trying
     ! to read an array into our one value.
     call h5aread_f ( attrID, stringType, value, &
-      & (/ int(shp,hid_t), int(ones(1:6),hid_t) /), status )
+      & (/ shp, ones(1:6) /), status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to read attribute ' // trim(name) )
     call h5aClose_f ( attrID, status )
@@ -1455,7 +1455,7 @@ contains ! ======================= Public Procedures =========================
     ! right type, and that we won't overflow memory etc. by accidentally trying
     ! to read too big array into ours.
     call h5aread_f ( attrID, H5T_NATIVE_REAL, value, &
-      & (/ int(shp,hid_t), int(ones(1:6),hid_t) /), status )
+      & (/ shp, int(ones(1:6), hsize_t) /), status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to read 1d attribute array ' // trim(name) )
     call h5aClose_f ( attrID, status )
@@ -1490,7 +1490,7 @@ contains ! ======================= Public Procedures =========================
     ! right type, and that we won't overflow memory etc. by accidentally trying
     ! to read too big array into ours.
     call h5aread_f ( attrID, H5T_NATIVE_DOUBLE, value, &
-      & (/ int(shp,hid_t), int(ones(1:6),hid_t) /), status )
+      & (/ shp, int(ones(1:6), hsize_t) /), status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to read dblarr1 attribute ' // trim(name) )
     call h5aClose_f ( attrID, status )
@@ -1854,7 +1854,7 @@ contains ! ======================= Public Procedures =========================
     integer :: spaceID                  ! ID for dataspace
     integer (HID_T) :: setID            ! ID for dataset
     integer :: status                   ! Flag from HDF5
-    integer, dimension(1) :: SHP        ! Shape
+    integer(kind=hsize_t), dimension(1) :: SHP        ! Shape
     integer(hid_t) :: s_type_id
     integer(hid_t) :: type_id
 
@@ -1874,7 +1874,7 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to create dataset for scalar character ' // trim(name) )
     ! Write the data
     call h5dWrite_f ( setID, s_type_id, value, &
-      & int ( (/ shp, ones(1:6) /), hID_T ), status )
+      & int ( (/ shp, ones(1:6) /), hsize_t ), status )
     call finishSaveDS ( name, status, setID, spaceID )
   end subroutine SaveAsHDF5DS_charsclr
 
@@ -1893,7 +1893,7 @@ contains ! ======================= Public Procedures =========================
     integer :: spaceID                  ! ID for dataspace
     integer (HID_T) :: setID            ! ID for dataset
     integer :: status                   ! Flag from HDF5
-    integer, dimension(1) :: SHP, MAXDIMS        ! Shape
+    integer(kind=hsize_t), dimension(1) :: SHP, MAXDIMS        ! Shape
     integer :: STRINGTYPE               ! Type for string
 
     ! Executable code
@@ -1931,7 +1931,7 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to create dataset for 1D char array ' // trim(name) )
     ! Write the data
     call h5dWrite_f ( setID, stringtype, value, &
-      & int ( (/ shp, ones(1:6) /), hID_T ), status )
+      & int ( (/ shp, ones(1:6) /), hsize_t ), status )
     call finishSaveDS ( name, status, setID, spaceID, stringType )
   end subroutine SaveAsHDF5DS_chararr1
 
@@ -1950,7 +1950,7 @@ contains ! ======================= Public Procedures =========================
     integer :: spaceID                  ! ID for dataspace
     integer (HID_T) :: setID            ! ID for dataset
     integer :: status                   ! Flag from HDF5
-    integer, dimension(2) :: SHP, MAXDIMS        ! Shape
+    integer(kind=hsize_t), dimension(2) :: SHP, MAXDIMS        ! Shape
     integer :: STRINGTYPE               ! Type for string
 
     ! Executable code
@@ -1988,7 +1988,7 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to create dataset for 2D char array ' // trim(name) )
     ! Write the data
     call h5dWrite_f ( setID, stringtype, value, &
-      & int ( (/ shp, ones(1:5) /), hID_T ), status )
+      & int ( (/ shp, ones(1:5) /), hsize_t ), status )
     call finishSaveDS ( name, status, setID, spaceID, stringType )
   end subroutine SaveAsHDF5DS_chararr2
 
@@ -2007,7 +2007,7 @@ contains ! ======================= Public Procedures =========================
     integer :: spaceID                  ! ID for dataspace
     integer (HID_T) :: setID            ! ID for dataset
     integer :: status                   ! Flag from HDF5
-    integer, dimension(1) :: SHP, MAXDIMS        ! Shape
+    integer(kind=hsize_t), dimension(1) :: SHP, MAXDIMS        ! Shape
 
     ! Executable code
     shp = shape(value)
@@ -2020,7 +2020,7 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to create dataset for 1D integer array ' // trim(name) )
     ! Write the data
     call h5dWrite_f ( setID, H5T_NATIVE_INTEGER, value, &
-      & int ( (/ shp, ones(1:6) /), hID_T ), status )
+      & int ( (/ shp, ones(1:6) /), hsize_t ), status )
     call finishSaveDS ( name, status, setID, spaceID )
   end subroutine SaveAsHDF5DS_intarr1
 
@@ -2039,7 +2039,7 @@ contains ! ======================= Public Procedures =========================
     integer :: spaceID                  ! ID for dataspace
     integer (HID_T) :: setID            ! ID for dataset
     integer :: status                   ! Flag from HDF5
-    integer, dimension(2) :: SHP, MAXDIMS        ! Shape
+    integer(kind=hsize_t), dimension(2) :: SHP, MAXDIMS        ! Shape
 
     ! Executable code
     shp = shape(value)
@@ -2052,7 +2052,7 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to create dataset for 2D integer array ' // trim(name) )
     ! Write the data
     call h5dWrite_f ( setID, H5T_NATIVE_INTEGER, value, &
-      & int ( (/ shp, ones(1:5) /), hID_T ), status )
+      & int ( (/ shp, ones(1:5) /), hsize_t ), status )
     call finishSaveDS ( name, status, setID, spaceID )
   end subroutine SaveAsHDF5DS_intarr2
 
@@ -2071,7 +2071,7 @@ contains ! ======================= Public Procedures =========================
     integer :: spaceID                  ! ID for dataspace
     integer (HID_T) :: setID            ! ID for dataset
     integer :: status                   ! Flag from HDF5
-    integer, dimension(3) :: SHP, MAXDIMS        ! Shape
+    integer(kind=hsize_t), dimension(3) :: SHP, MAXDIMS        ! Shape
 
     ! Executable code
     shp = shape(value)
@@ -2084,7 +2084,7 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to create dataset for 3D integer array ' // trim(name) )
     ! Write the data
     call h5dWrite_f ( setID, H5T_NATIVE_INTEGER, value, &
-      & int ( (/ shp, ones(1:4) /), hID_T ), status )
+      & int ( (/ shp, ones(1:4) /), hsize_t ), status )
     call finishSaveDS ( name, status, setID, spaceID )
   end subroutine SaveAsHDF5DS_intarr3
 
@@ -2132,7 +2132,7 @@ contains ! ======================= Public Procedures =========================
     integer :: spaceID                  ! ID for dataspace
     integer (HID_T) :: setID            ! ID for dataset
     integer :: status                   ! Flag from HDF5
-    integer, dimension(1) :: SHP, MAXDIMS        ! Shape
+    integer(kind=hsize_t), dimension(1) :: SHP, MAXDIMS        ! Shape
 
     ! Executable code
     shp = shape(value)
@@ -2145,7 +2145,7 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to create dataset for 1D double array ' // trim(name) )
     ! Write the data
     call h5dWrite_f ( setID, H5T_NATIVE_DOUBLE, value, &
-      & int ( (/ shp, ones(1:6) /), hID_T ), status )
+      & int ( (/ shp, ones(1:6) /), hsize_t ), status )
     call finishSaveDS ( name, status, setID, spaceID )
   end subroutine SaveAsHDF5DS_dblarr1
 
@@ -2164,7 +2164,7 @@ contains ! ======================= Public Procedures =========================
     integer :: spaceID                  ! ID for dataspace
     integer (HID_T) :: setID            ! ID for dataset
     integer :: status                   ! Flag from HDF5
-    integer, dimension(2) :: SHP, MAXDIMS        ! Shape
+    integer(kind=hsize_t), dimension(2) :: SHP, MAXDIMS        ! Shape
 
     ! Executable code
     shp = shape(value)
@@ -2177,7 +2177,7 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to create dataset for 2D double array ' // trim(name) )
     ! Write the data
     call h5dWrite_f ( setID, H5T_NATIVE_DOUBLE, value, &
-      & int ( (/ shp, ones(1:5) /), hID_T ), status )
+      & int ( (/ shp, ones(1:5) /), hsize_t ), status )
     call finishSaveDS ( name, status, setID, spaceID )
   end subroutine SaveAsHDF5DS_dblarr2
 
@@ -2196,7 +2196,7 @@ contains ! ======================= Public Procedures =========================
     integer :: spaceID                  ! ID for dataspace
     integer (HID_T) :: setID            ! ID for dataset
     integer :: status                   ! Flag from HDF5
-    integer, dimension(3) :: SHP, MAXDIMS        ! Shape
+    integer(kind=hsize_t), dimension(3) :: SHP, MAXDIMS        ! Shape
 
     ! Executable code
     shp = shape(value)
@@ -2209,7 +2209,7 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to create dataset for 3D double array ' // trim(name) )
     ! Write the data
     call h5dWrite_f ( setID, H5T_NATIVE_DOUBLE, value, &
-      & int ( (/ shp, ones(1:4) /), hID_T ), status )
+      & int ( (/ shp, ones(1:4) /), hsize_t ), status )
     call finishSaveDS ( name, status, setID, spaceID )
   end subroutine SaveAsHDF5DS_dblarr3
 
@@ -2228,7 +2228,7 @@ contains ! ======================= Public Procedures =========================
     integer :: spaceID                  ! ID for dataspace
     integer (HID_T) :: setID            ! ID for dataset
     integer :: status                   ! Flag from HDF5
-    integer, dimension(1) :: SHP, MAXDIMS        ! Shape
+    integer(kind=hsize_t), dimension(1) :: SHP, MAXDIMS        ! Shape
 
     ! Executable code
     shp = shape(value)
@@ -2241,7 +2241,7 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to create dataset for 1D double array ' // trim(name) )
     ! Write the data
     call h5dWrite_f ( setID, H5T_NATIVE_REAL, value, &
-      & int ( (/ shp, ones(1:6) /), hID_T ), status )
+      & int ( (/ shp, ones(1:6) /), hsize_t ), status )
     call finishSaveDS ( name, status, setID, spaceID )
   end subroutine SaveAsHDF5DS_snglarr1
 
@@ -2273,7 +2273,7 @@ contains ! ======================= Public Procedures =========================
     integer :: filespaceID              ! ID for filespace
     integer (HID_T) :: setID            ! ID for dataset
     integer :: status                   ! Flag from HDF5
-    integer, dimension(2) :: SHP        ! Shape
+    integer(kind=hsize_t), dimension(2) :: SHP        ! Shape
     integer :: style   ! fixed static (0), dynamic 1st (1), adding to (2)
     ! integer :: test_rank
     ! integer(hsize_t), dimension(7) :: test_dims, test_maxdims
@@ -2321,7 +2321,7 @@ contains ! ======================= Public Procedures =========================
     else if ( style == 1 ) then
      ! print *, 'Creating a dynamic data space'
       maxdims(2) = H5S_UNLIMITED_F
-      dims(2) = max(1, shp(2))
+      dims(2) = max(int(1, hsize_T), shp(2))
       chunk_dims(2) = 1
       if ( DEEBUG ) print *, 'shape ', shp
       if ( DEEBUG ) print *, 'maxdims ', maxdims
@@ -2394,7 +2394,7 @@ contains ! ======================= Public Procedures =========================
     end if
     if ( present(start) ) then
      ! print *, 'start ', start
-      call mls_extend ( setID, Count, start, filespaceID )
+      call mls_extend ( setID, int(Count, hsize_T), start, filespaceID )
       call mls_hyperslab_save ( filespaceID, start, count, stride, block )
 !     Check before actually writing
      ! print *, 'About to write'
@@ -2429,14 +2429,14 @@ contains ! ======================= Public Procedures =========================
      ! print *, 'max_dims: ', test_maxdims(1:test_rank)
      ! print *, 'offsets : ', test_offset(1:test_rank)
       call h5dWrite_f ( setID, H5T_NATIVE_REAL, value, &
-        & int ( (/ shp, ones(1:5) /), hID_T ), status, &
+        & int ( (/ shp, ones(1:5) /), hsize_t ), status, &
         & memspaceID, filespaceID )
      ! print *, 'After writing mem space ', memspaceID
       spaceID = filespaceID
     else
       ! Write the data
       call h5dWrite_f ( setID, H5T_NATIVE_REAL, value, &
-        & int ( (/ shp, ones(1:5) /), hID_T ), status )
+        & int ( (/ shp, ones(1:5) /), hsize_t ), status )
     end if
     if ( present(start) ) then
       call finishSaveDS ( name, status, setID, spaceID, memspaceID=memspaceID )
@@ -2473,7 +2473,7 @@ contains ! ======================= Public Procedures =========================
     integer :: memSpaceID               ! ID for arrayspace
     integer (HID_T) :: setID            ! ID for dataset
     integer :: status                   ! Flag from HDF5
-    integer, dimension(3) :: SHP        ! Shape
+    integer(kind=hsize_t), dimension(3) :: SHP        ! Shape
     integer :: style   ! fixed static (0), dynamic 1st (1), adding to (2)
     ! integer :: test_rank
     ! integer(hsize_t), dimension(7) :: test_dims, test_maxdims
@@ -2520,7 +2520,7 @@ contains ! ======================= Public Procedures =========================
       filespaceID = spaceID
     else if ( style == 1 ) then
       maxdims(3) = H5S_UNLIMITED_F
-      dims(3) = max(1, shp(3))
+      dims(3) = max(int(1, hsize_T), shp(3))
       chunk_dims(3) = 1
       if ( DEEBUG ) print *, 'shape ', shp
       if ( DEEBUG ) print *, 'maxdims ', maxdims
@@ -2588,7 +2588,7 @@ contains ! ======================= Public Procedures =========================
       if ( DEEBUG ) print *, 'shape(value) ', shp
       if ( DEEBUG ) print *, 'start ', start
       if ( DEEBUG ) print *, 'count ', count
-      call mls_extend ( setID, Count, start, filespaceID )
+      call mls_extend ( setID, int(Count, hsize_T), start, filespaceID )
       call mls_hyperslab_save ( filespaceID, start, count, stride, block )
       if ( style == 2 ) &
         & call h5screate_simple_f(3, dims, memspaceID, status, maxdims)
@@ -2597,13 +2597,13 @@ contains ! ======================= Public Procedures =========================
       if ( DEEBUG ) print *, 'memspaceID ', memspaceID
       call dump_space(memspaceID)
       call h5dWrite_f ( setID, H5T_NATIVE_REAL, value, &
-        & int ( (/ shp, ones(1:4) /), hID_T ), status, &
+        & int ( (/ shp, ones(1:4) /), hsize_t ), status, &
         & memspaceID, filespaceID )
       spaceID = filespaceID
     else
       ! Write the data
       call h5dWrite_f ( setID, H5T_NATIVE_REAL, value, &
-        & int ( (/ shp, ones(1:4) /), hID_T ), status )
+        & int ( (/ shp, ones(1:4) /), hsize_t ), status )
     end if
     if ( present(start) ) then
       call finishSaveDS ( name, status, setID, spaceID, memspaceID=memspaceID )
@@ -2640,7 +2640,7 @@ contains ! ======================= Public Procedures =========================
     integer :: memSpaceID               ! ID for arrayspace
     integer (HID_T) :: setID            ! ID for dataset
     integer :: status                   ! Flag from HDF5
-    integer, dimension(4) :: SHP        ! Shape
+    integer(kind=hsize_t), dimension(4) :: SHP        ! Shape
     integer :: style   ! fixed static (0), dynamic 1st (1), adding to (2)
 
     ! Executable code
@@ -2683,7 +2683,7 @@ contains ! ======================= Public Procedures =========================
       filespaceID = spaceID
     else if ( style == 1 ) then
       maxdims(4) = H5S_UNLIMITED_F
-      dims(4) = max(1, shp(4))
+      dims(4) = max(int(1, hsize_T), shp(4))
       chunk_dims(4) = 1
       if ( DEEBUG ) print *, 'shape ', shp
       if ( DEEBUG ) print *, 'maxdims ', maxdims
@@ -2735,7 +2735,7 @@ contains ! ======================= Public Procedures =========================
       if ( DEEBUG ) print *, 'shape(value) ', shp
       if ( DEEBUG ) print *, 'start ', start
       if ( DEEBUG ) print *, 'count ', count
-      call mls_extend ( setID, Count, start, filespaceID )
+      call mls_extend ( setID, int(Count, hsize_T), start, filespaceID )
       call mls_hyperslab_save ( filespaceID, start, count, stride, block )
       if ( style == 2 ) &
         & call h5screate_simple_f(4, dims, memspaceID, status, maxdims)
@@ -2744,13 +2744,13 @@ contains ! ======================= Public Procedures =========================
       if ( DEEBUG ) print *, 'memspaceID ', memspaceID
       call dump_space ( memspaceID )
       call h5dWrite_f ( setID, H5T_NATIVE_REAL, value, &
-        & int ( (/ shp, ones(1:3) /), hID_T ), status, &
+        & int ( (/ shp, ones(1:3) /), hsize_t ), status, &
         & memspaceID, filespaceID )
       spaceID = filespaceID
     else
       ! Write the data
       call h5dWrite_f ( setID, H5T_NATIVE_REAL, value, &
-        & int ( (/ shp, ones(1:3) /), hID_T ), status )
+        & int ( (/ shp, ones(1:3) /), hsize_t ), status )
     end if
     if ( present(start) ) then
       call finishSaveDS ( name, status, setID, spaceID, memspaceID=memspaceID )
@@ -3118,7 +3118,7 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: STATUS                   ! Flag from HDF5
-    integer, dimension(1) :: SHP        ! Shape of value
+    integer(kind=hsize_t), dimension(1) :: SHP        ! Shape of value
     integer :: SPACEID                  ! ID of dataspace
     integer :: MEMSPACEID               ! ID of dataspace
     integer :: SETID                    ! ID of dataset
@@ -3179,7 +3179,7 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: STATUS                   ! Flag from HDF5
-    integer, dimension(2) :: SHP        ! Shape of value
+    integer(kind=hsize_t), dimension(2) :: SHP        ! Shape of value
     integer :: SPACEID                  ! ID of dataspace
     integer :: MEMSPACEID               ! ID of dataspace
     integer :: SETID                    ! ID of dataset
@@ -3240,7 +3240,7 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: STATUS                   ! Flag from HDF5
-    integer, dimension(1) :: SHP        ! Shape of value
+    integer(kind=hsize_t), dimension(1) :: SHP        ! Shape of value
     integer :: SPACEID                  ! ID of dataspace
     integer :: MEMSPACEID               ! ID of dataspace
     integer :: SETID                    ! ID of dataset
@@ -3286,7 +3286,7 @@ contains ! ======================= Public Procedures =========================
                                  ! Size of element block
     ! Local variables
     integer :: STATUS                   ! Flag from HDF5
-    integer, dimension(2) :: SHP        ! Shape of value
+    integer(kind=hsize_t), dimension(2) :: SHP        ! Shape of value
     integer :: SPACEID                  ! ID of dataspace
     integer :: MEMSPACEID               ! ID of dataspace
     integer :: SETID                    ! ID of dataset
@@ -3356,7 +3356,7 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: STATUS                   ! Flag from HDF5
-    integer, dimension(1) :: SHP        ! Shape of value
+    integer(kind=hsize_t), dimension(1) :: SHP        ! Shape of value
     integer :: SPACEID                  ! ID of dataspace
     integer :: MEMSPACEID               ! ID of dataspace
     integer :: SETID                    ! ID of dataset
@@ -3403,7 +3403,7 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: STATUS                   ! Flag from HDF5
-    integer, dimension(2) :: SHP        ! Shape of value
+    integer(kind=hsize_t), dimension(2) :: SHP        ! Shape of value
     integer :: SPACEID                  ! ID of dataspace
     integer :: MEMSPACEID               ! ID of dataspace
     integer :: SETID                    ! ID of dataset
@@ -3450,7 +3450,7 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: STATUS                   ! Flag from HDF5
-    integer, dimension(3) :: SHP        ! Shape of value
+    integer(kind=hsize_t), dimension(3) :: SHP        ! Shape of value
     integer :: SPACEID                  ! ID of dataspace
     integer :: MEMSPACEID               ! ID of dataspace
     integer :: SETID                    ! ID of dataset
@@ -3497,7 +3497,7 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: STATUS                   ! Flag from HDF5
-    integer, dimension(1) :: SHP        ! Shape of value
+    integer(kind=hsize_t), dimension(1) :: SHP        ! Shape of value
     integer :: SPACEID                  ! ID of dataspace
     integer :: MEMSPACEID               ! ID of dataspace
     integer :: SETID                    ! ID of dataset
@@ -3544,7 +3544,7 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: STATUS                   ! Flag from HDF5
-    integer, dimension(2) :: SHP        ! Shape of value
+    integer(kind=hsize_t), dimension(2) :: SHP        ! Shape of value
     integer :: SPACEID                  ! ID of dataspace
     integer :: MEMSPACEID               ! ID of dataspace
     integer :: SETID                    ! ID of dataset
@@ -3591,7 +3591,7 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: STATUS                   ! Flag from HDF5
-    integer, dimension(3) :: SHP        ! Shape of value
+    integer(kind=hsize_t), dimension(3) :: SHP        ! Shape of value
     integer :: SPACEID                  ! ID of dataspace
     integer :: MEMSPACEID               ! ID of dataspace
     integer :: SETID                    ! ID of dataset
@@ -3638,7 +3638,7 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: STATUS                   ! Flag from HDF5
-    integer, dimension(4) :: SHP        ! Shape of value
+    integer(kind=hsize_t), dimension(4) :: SHP        ! Shape of value
     integer :: SPACEID                  ! ID of dataspace
     integer :: MEMSPACEID               ! ID of dataspace
     integer :: SETID                    ! ID of dataset
@@ -3705,7 +3705,7 @@ contains ! ======================= Public Procedures =========================
     if ( present(lowBound) ) lb = lowBound
     ub = lb - 1 + shp(1)
     call allocate_test ( value, ub, 'Value', moduleName, lowBound=lb )
-    call h5dread_f ( setID, stringtype, value, (/ int(shp(1)), ones(1:6) /), status )
+    call h5dread_f ( setID, stringtype, value, (/ shp(1), ones(1:6) /), status )
     call finishLoad ( name, status, spaceID, setID, stringType=stringType )
   end subroutine LoadPtrFromHDF5DS_chararr1
 
@@ -3742,7 +3742,7 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to open dataspace for dataset ' // trim(name) )
    call get_DS_shape ( spaceID, shp, name )
    call allocate_test ( value, int(shp(1)), int(shp(2)), 'Value', moduleName )
-   call h5dread_f ( setID, stringtype, value, (/ int(shp), ones(1:5) /), status )
+   call h5dread_f ( setID, stringtype, value, (/ shp, ones(1:5) /), status )
    call finishLoad ( name, status, spaceID, setID, stringType=stringType )
   end subroutine LoadPtrFromHDF5DS_chararr2
 
@@ -3775,7 +3775,7 @@ contains ! ======================= Public Procedures =========================
     ub = lb - 1 + shp(1)
     call allocate_test ( value, ub, 'Value', moduleName, lowBound=lb )
     call h5dread_f ( setID, H5T_NATIVE_INTEGER, value, &
-      & (/ int(shp), ones(1:6) /), status )
+      & (/ shp, ones(1:6) /), status )
     call finishLoad ( name, status, spaceID, setID )
   end subroutine LoadPtrFromHDF5DS_intarr1
 
@@ -3803,7 +3803,7 @@ contains ! ======================= Public Procedures =========================
     call get_ds_shape ( spaceID, shp, name )
     call allocate_test ( value, int(shp(1)), int(shp(2)), 'Value', moduleName )
     call h5dread_f ( setID, H5T_NATIVE_INTEGER, value, &
-      & (/ int(shp), ones(1:5) /), status )
+      & (/ shp, ones(1:5) /), status )
     call finishLoad ( name, status, spaceID, setID )
   end subroutine LoadPtrFromHDF5DS_intarr2
 
@@ -3860,7 +3860,7 @@ contains ! ======================= Public Procedures =========================
     ub = lb - 1 + shp(1)
     call allocate_test ( value, ub, 'Value', moduleName, lowBound=lb )
     call h5dread_f ( setID, H5T_NATIVE_DOUBLE, value, &
-      & (/ int(shp), ones(1:6) /), status )
+      & (/ shp, ones(1:6) /), status )
     call finishLoad ( name, status, spaceID, setID )
   end subroutine LoadPtrFromHDF5DS_dblarr1
 
@@ -3888,7 +3888,7 @@ contains ! ======================= Public Procedures =========================
     call get_ds_shape ( spaceID, shp, name )
     call allocate_test ( value, int(shp(1)), int(shp(2)), 'Value', moduleName )
     call h5dread_f ( setID, H5T_NATIVE_DOUBLE, value, &
-      & (/ int(shp), ones(1:5) /), status )
+      & (/ shp, ones(1:5) /), status )
     call finishLoad ( name, status, spaceID, setID )
   end subroutine LoadPtrFromHDF5DS_dblarr2
 
@@ -3917,7 +3917,7 @@ contains ! ======================= Public Procedures =========================
     call allocate_test ( value, int(shp(1)), int(shp(2)), int(shp(3)), 'Value', &
       & moduleName )
     call h5dread_f ( setID, H5T_NATIVE_DOUBLE, value, &
-      & (/ int(shp), ones(1:4) /), status )
+      & (/ shp, ones(1:4) /), status )
     call finishLoad ( name, status, spaceID, setID )
   end subroutine LoadPtrFromHDF5DS_dblarr3
 
@@ -3950,7 +3950,7 @@ contains ! ======================= Public Procedures =========================
     ub = lb - 1 + shp(1)
     call allocate_test ( value, ub, 'Value', moduleName, lowBound=lb )
     call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
-      & (/ int(shp), ones(1:6) /), status )
+      & (/ shp, ones(1:6) /), status )
     call finishLoad ( name, status, spaceID, setID )
   end subroutine LoadPtrFromHDF5DS_snglarr1
 
@@ -3978,7 +3978,7 @@ contains ! ======================= Public Procedures =========================
     call get_ds_shape ( spaceID, shp, name )
     call allocate_test ( value, int(shp(1)), int(shp(2)), 'Value', moduleName )
     call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
-      & (/ int(shp), ones(1:5) /), status )
+      & (/ shp, ones(1:5) /), status )
     call finishLoad ( name, status, spaceID, setID )
   end subroutine LoadPtrFromHDF5DS_snglarr2
 
@@ -4007,7 +4007,7 @@ contains ! ======================= Public Procedures =========================
     call allocate_test ( value, int(shp(1)), int(shp(2)), int(shp(3)), 'Value', &
       & moduleName )
     call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
-      & (/ int(shp), ones(1:4) /), status )
+      & (/ shp, ones(1:4) /), status )
     call finishLoad ( name, status, spaceID, setID )
   end subroutine LoadPtrFromHDF5DS_snglarr3
 
@@ -4037,7 +4037,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
       & MLSMSG_Allocate // 'Value' )
     call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
-      & (/ int(shp), ones(1:3) /), status )
+      & (/ shp, ones(1:3) /), status )
     call finishLoad ( name, status, spaceID, setID )
   end subroutine LoadPtrFromHDF5DS_snglarr4
 
@@ -4128,7 +4128,7 @@ contains ! ======================= Public Procedures =========================
   subroutine Check_for_fit ( spaceID, value_dims, name )
   ! Checks that dataspace will fit into values before LoadFromHDF5DS
     integer, intent(in)               :: spaceID
-    integer, dimension(:), intent(in) :: value_dims
+    integer(hsize_t), dimension(:), intent(in) :: value_dims
     character (len=*), intent(in)     :: NAME ! Name for this dataset
     integer(hsize_t), dimension(size(value_dims)) :: dims
     integer                           :: i
@@ -4136,7 +4136,7 @@ contains ! ======================= Public Procedures =========================
     if ( any ( dims > value_dims ) ) &
       & call my_message ( MLSMSG_Error, ModuleName, &
       & 'Dataspace too large for destination value of ' // trim(name) , &
-      & 'dims(space), dims(value)', (/ (int(dims(i)), value_dims(i), i=1, size(dims)) /), &
+      & 'dims(space), dims(value)', (/ (int(dims(i)), int(value_dims(i)), i=1, size(dims)) /), &
       & no_pairs=.true. )
   end subroutine Check_for_fit
 
@@ -4146,7 +4146,7 @@ contains ! ======================= Public Procedures =========================
   ! Creates or optionally attaches dataspace and dataset
     integer, intent(in)               :: locID
     character (len=*), intent(in)     :: NAME ! Name for this dataset
-    integer, dimension(:), intent(in) :: maxdims
+    integer(hsize_t), dimension(:), intent(in) :: maxdims
     integer, intent(in)               :: datatype
     integer, intent(out)              :: spaceID
     integer, intent(out)              :: setID
@@ -4398,7 +4398,7 @@ contains ! ======================= Public Procedures =========================
   ! plus any offsets in start array
   ! Does the extending if necessary
     integer, intent(in)                :: setID
-    integer, dimension(:), intent(in)  :: newCount
+    integer(hsize_t), dimension(:), intent(in)  :: newCount
     integer, dimension(:), optional, intent(in) :: start
     integer, optional, intent(inout) :: dataSpaceID
                                  ! Starting coordinatess of hyperslab
@@ -4470,7 +4470,7 @@ contains ! ======================= Public Procedures =========================
   ! pattern(2): start, count, stride, block)
     integer, intent(in)                :: spaceID
     integer, intent(out)               :: memspaceID
-    integer, dimension(:), intent(in)  :: value_dims
+    integer(hsize_t), dimension(:), intent(in)  :: value_dims
     character (len=*), intent(in)     :: NAME ! Name for this dataset
     integer, dimension(:), optional, intent(in) :: start
                                  ! Starting coordinatess of hyperslab
@@ -4703,7 +4703,7 @@ contains ! ======================= Public Procedures =========================
     integer, intent(out) :: SpaceID       ! Dataspace ID
     integer, intent(out) :: AttrId        ! Attrib ID
     logical, intent(in), optional :: Skip_if_already_there ! Duh...
-    integer, intent(in), optional :: Shp(:) ! Shape of array attrib, else scalar
+    integer(kind=hsize_t), intent(in), optional :: Shp(:) ! Shape of array attrib, else scalar
     ! Local variables
     logical :: my_skip
     integer :: STATUS                   ! Flag from HDF5
@@ -4739,6 +4739,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.56  2005/07/12 17:12:50  pwagner
+! New hdf5 library will drop integer dimension interfaces
+!
 ! Revision 2.55  2005/06/29 00:40:48  pwagner
 ! New interfaces for GetHDF5Attribute and LoadFromHDF5DS accept MLSFiles
 !
