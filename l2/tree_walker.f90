@@ -78,7 +78,7 @@ contains ! ====     Public Procedures     ==============================
       & Signals, SpectrometerTypes
     use MLSStringLists, only: SwitchDetail
     use MLSL2Timings, only: add_to_section_timing, TOTAL_TIMES
-    use Open_Init, only: DestroyL1BInfo, OpenAndInitialize
+    use Open_Init, only: OpenAndInitialize
     use OutputAndClose, only: Output_Close
     use Output_m, only: BLANKS, Output
     use PointingGrid_m, only: Destroy_Pointing_Grid_Database
@@ -460,7 +460,6 @@ subtrees:   do while ( j <= howmany )
         call destroyVGridDatabase ( vGrids )
         call destroyFGridDatabase ( fGrids )
         ! call dump(fGrids, destroy=.true.)
-        ! call DestroyL1BInfo ( l1bInfo )
       end if
       error_flag = 0
       if ( toggle(gen) ) call trace_end ( 'WALK_TREE_TO_DO_MLS_L2' )
@@ -513,6 +512,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.132  2005/06/14 20:44:36  pwagner
+! Interfaces changed to accept MLSFile_T args
+!
 ! Revision 2.131  2005/06/03 02:05:29  vsnyder
 ! New copyright notice, move Id to not_used_here to avoid cascades,
 ! get VGrids from VGridsDatabase instead of passing as an argument.
