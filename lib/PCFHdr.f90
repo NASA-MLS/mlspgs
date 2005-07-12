@@ -66,6 +66,7 @@ MODULE PCFHdr
 ! in particular hdfeos5 and plain hdf5
   integer, parameter, public :: INPUTPTR_STRING_LENGTH = PGSd_PC_UREF_LENGTH_MAX
   integer, parameter, public :: GA_VALUE_LENGTH = 40
+  integer, parameter, public :: MiscNotesLENGTH = 1024
   integer, parameter, public :: UTC_A_VALUE_LENGTH = 27
   integer, parameter, public :: UTC_B_VALUE_LENGTH = 25
   character(len=*), parameter, private :: PCFATTRIBUTENAME = 'PCF'
@@ -86,13 +87,11 @@ MODULE PCFHdr
     real(r8), pointer, dimension(:,:) :: OrbPeriodDays => Null()
     character(len=GA_VALUE_LENGTH) :: InstrumentName = 'MLS Aura'
     character(len=GA_VALUE_LENGTH) :: ProcessLevel = ''
-    character(len=GA_VALUE_LENGTH) :: InputVersion = ''  ! may drop eventually
+    ! character(len=GA_VALUE_LENGTH) :: InputVersion = ''  ! may drop eventually
     character(len=GA_VALUE_LENGTH) :: PGEVersion = ''
+    character(len=MiscNotesLENGTH) :: MiscNotes = ''
     character(len=GA_VALUE_LENGTH) :: StartUTC = ''
     character(len=GA_VALUE_LENGTH) :: EndUTC = ''
-    ! character(len=GA_VALUE_LENGTH) :: GranuleMonth = ''
-    ! character(len=GA_VALUE_LENGTH) :: GranuleDay   = ''
-    ! character(len=GA_VALUE_LENGTH) :: GranuleYear  = ''
     integer :: GranuleMonth                  = 0
     integer :: GranuleDay                    = 0
     integer :: GranuleYear                   = 0
@@ -281,6 +280,8 @@ CONTAINS
        & 'FirstMAF', GlobalAttributes%FirstMAFCtr, .true.)
       call MakeHDF5Attribute(grp_id, &
        & 'LastMAF', GlobalAttributes%LastMAFCtr, .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'MiscNotes', GlobalAttributes%MiscNotes, .true.)
       call h5gclose_f(grp_id, status)
 
 !------------------------------------------------------------
@@ -363,6 +364,9 @@ CONTAINS
       status = he5_EHwrglatt(fileID, &
        & 'LastMAF', HE5T_NATIVE_INT, 1, &
        &  (/ GlobalAttributes%LastMAFCtr /) )
+      status = mls_EHwrglatt(fileID, &
+       & 'MiscNotes', MLS_CHARTYPE, 1, &
+       &  GlobalAttributes%MiscNotes)
 !------------------------------------------------------------
    END SUBROUTINE he5_writeglobalattr
 !------------------------------------------------------------
@@ -613,6 +617,9 @@ CONTAINS
       status = he5_SWwrattr(swathID, &
        & 'LastMAF', HE5T_NATIVE_INT, 1, &
        &  (/ GlobalAttributes%LastMAFCtr/) )
+      status = he5_SWwrattr(swathID, &
+       & 'MiscNotes', MLS_CHARTYPE, 1, &
+       &  GlobalAttributes%MiscNotes)
 !------------------------------------------------------------
    END SUBROUTINE sw_writeglobalattr
 !------------------------------------------------------------
@@ -1061,6 +1068,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.37  2005/07/12 17:14:22  pwagner
+!# Global attribute MiscNotes added; InputVersion dropped
+!#
 !# Revision 2.36  2005/06/22 17:25:50  pwagner
 !# Reworded Copyright statement, moved rcs id
 !#
