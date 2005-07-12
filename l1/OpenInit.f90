@@ -171,7 +171,7 @@ CONTAINS
 
 !! Store appropriate user inputs as global attributes
 
-    GlobalAttributes%InputVersion = L1PCF%OutputVersion
+    ! GlobalAttributes%InputVersion = L1PCF%OutputVersion
     GlobalAttributes%StartUTC = L1PCF%StartUTC
     GlobalAttributes%EndUTC = L1PCF%EndUTC
     GlobalAttributes%ProcessLevel = '1'
@@ -1020,6 +1020,9 @@ END MODULE OpenInit
 !=============================================================================
 
 ! $Log$
+! Revision 2.21  2005/07/12 17:18:15  pwagner
+! Dropped global attribute InputVersion
+!
 ! Revision 2.20  2005/06/23 18:41:36  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
