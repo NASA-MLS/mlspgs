@@ -17,7 +17,7 @@ module Open_Init
 
   use Hdf, only: DFACC_RDONLY
   use intrinsic, only: l_hdf
-  use MLSCommon, only: FileNameLen, L1BInfo_T, MLSFile_T, TAI93_Range_T, R8, i4
+  use MLSCommon, only: FileNameLen, MLSFile_T, TAI93_Range_T, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSStringLists, only: catLists, NumStringElements, GetStringElement, &
     & utc_to_yyyymmdd
@@ -43,7 +43,7 @@ module Open_Init
 ! === (end of toc) ===
 
   private
-  public :: DestroyL1BInfo, OpenAndInitialize
+  public :: OpenAndInitialize
 
   ! -----     Private declarations     ---------------------------------
 
@@ -60,29 +60,7 @@ module Open_Init
   
 contains ! =====     Public Procedures     =============================
 
-  ! ---------------------------------------------  DestroyL1BInfo  -----
-  subroutine DestroyL1BInfo ( L1BInfo )
-
-    ! Unneeded now that l1b files part of filedatabase
-
-    type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
-    integer :: STATUS ! from deallocate
-    integer :: id
-    error = 0
-    if ( toggle(gen) ) call trace_begin ( "DESTROYL1BInfo" )
-
-    if ( error /= 0 ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Problem with DestroyL1BInfo' )
-
-    if ( toggle(gen) ) then
-      call trace_end ( "DESTROYL1BInfo" )
-    end if
-  end subroutine DestroyL1BInfo
-
-
   ! ------------------------------------------  OpenAndInitialize  -----
-  ! subroutine OpenAndInitialize ( processingRange, l1bInfo )
   subroutine OpenAndInitialize ( processingRange, filedatabase )
 
     ! Opens L1 RAD files
@@ -118,23 +96,19 @@ contains ! =====     Public Procedures     =============================
     ! Arguments
 
     type (TAI93_Range_T) :: processingRange ! Data processing range
-    ! type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-    ! type(PCFData_T) :: l2pcf
 
     !Local Variables
     logical, parameter :: DEBUG = .FALSE.
-    ! integer, parameter :: CCSDSEndId = 10412    ! Illegal PCFid
-    ! integer, parameter :: CCSDSStartId = 10411    ! Illegal PCFid
     logical, parameter :: CaseSensitive = .true.
 
    ! The following parameters will only be needed if PCF ids are missing
     character(len=*), parameter :: DEFAULTANTEXT= &
       & 'PCF file number missing from PCF--add this line'
-    character(len=*), parameter :: DEFAULT_SPEC_KEYS= &
-      & 'temp,gph,h2o,hno3,o3,hcl,clo,co,n2o,oh,rhi,so2,ho2,bro,hocl,hcn,cirrus-ice,others'
-    character(len=*), parameter :: DEFAULT_SPEC_HASH= &
-      & 't,z,h2o,hno3,o3,hcl,clo,co,n2o,oh,rhi,so2,ho2,bro,hocl,hcn,ice,oth'
+! character(len=*), parameter :: DEFAULT_SPEC_KEYS= &
+!   & 'temp,gph,h2o,hno3,o3,hcl,clo,co,n2o,oh,rhi,so2,ho2,bro,hocl,hcn,cirrus-ice,others'
+! character(len=*), parameter :: DEFAULT_SPEC_HASH= &
+!   & 't,z,h2o,hno3,o3,hcl,clo,co,n2o,oh,rhi,so2,ho2,bro,hocl,hcn,ice,oth'
 
     character(len=CCSDSlen)      :: CCSDSEndTime
     character(len=CCSDSlen)      :: CCSDSStartTime
@@ -233,66 +207,12 @@ contains ! =====     Public Procedures     =============================
         L2pcf%L1BRADPCFIds(ifl1) = L1BFile%PCFID
       endif
 
-    ! Get the l1 file name from the PCF
-!     L1_Version = 1
-! 
-!       returnStatus = Pgs_pc_getReference(L1FileHandle, L1_Version, &
-!         & L1physicalFilename)
-! 
-!       if ( returnStatus == PGS_S_SUCCESS ) then
-! 
-!         ! Open the HDF file and initialize the SD interface
-! 
-!         ! Allocate L1BRADIDs, initialize them to illegal values
-! 
-!       if(.NOT. associated(l1bInfo%L1BRADIDs)) then
-!         allocate ( l1bInfo%L1BRADIDs(MAXNUML1BRADIDS), stat=status )
-!         allocate ( l1bInfo%L1BRADFileNames(MAXNUML1BRADIDS), stat=status )
-!         l1bInfo%L1BRADIDs = ILLEGALL1BRADID
-!         if ( status /= 0 ) &
-!           & call announce_error ( 0, 'Allocation failed for L1BRADIDs' )
-!         allocate ( L2pcf%L1BRADPCFIds(MAXNUML1BRADIDS), stat=status )
-!         L2pcf%L1BRADPCFIds = ILLEGALL1BRADID
-!         if ( status /= 0 ) &
-!           & call announce_error ( 0, 'Allocation failed for L1BRADPCFIDs' )
-!       end if
-!   ! ((( This will have to change if we wish to convert l1 files to hdf5
-!   !          Maybe put another wrapper in MSLFiles
-!   !    sd_id = sfstart(L1physicalFilename, DFACC_READ)
-!   !    sd_id = mls_sfstart(L1physicalFilename, DFACC_READ, &
-!   !       hdfVersion=LEVEL1_HDFVERSION)
-!         the_hdf_version = mls_hdf_version(L1PhysicalFileName)
-!        sd_id = mls_io_gen_openF('hg', caseSensitive, ErrType, &
-!          & record_length, DFACC_READ, &
-!          & L1physicalFilename, hdfVersion=LEVEL1_HDFVERSION)
-!         if ( sd_id <= 0 ) then
-!           call announce_error ( 0, &
-!             & 'Error opening L1RAD file: ' //L1physicalFilename)
-!         elseif(ifl1 == MAXNUML1BRADIDS) then
-!           call announce_error ( 0, "Cannot open any more L1BRAD files" )
-!           exit
-!         else
-!           ifl1 = ifl1 + 1
-!           L2pcf%L1BRADPCFIds(ifl1) = L1FileHandle
-!           l1bInfo%L1BRADIDs(ifl1) = sd_id
-!           l1bInfo%L1BRADFileNames(ifl1) = L1physicalFilename
-!           if(index(switches, 'pro') /= 0) then  
-!             call announce_success(L1physicalFilename, 'l1brad', &                   
-!             & hdfVersion=the_hdf_version)                    
-!           end if
-!         end if
-!       end if
     end do ! L1FileHandle = mlspcf_l1b_rad_start, mlspcf_l1b_rad_end
 
     if ( ifl1 == 0 .AND. TOOLKIT ) &
       &  call announce_error ( 0, "Could not find any L1BRAD files" )
 
     ! Open L1OA File
-
-    ! l1bInfo%L1BOAID = ILLEGALL1BRADID
-!     L1_Version = 1
-!     returnStatus = Pgs_pc_getReference(mlspcf_l1b_oa_start, L1_Version, &
-!       & L1physicalFilename)
     
     returnStatus = InitializeMLSFile(L1BFile, content = 'l1boa', &
       & type=l_hdf, access=DFACC_RDONLY)
@@ -301,20 +221,7 @@ contains ! =====     Public Procedures     =============================
     call mls_openFile(L1BFile, returnStatus)
     if ( returnStatus == PGS_S_SUCCESS ) then
 
-      ! Open the HDF file and initialize the SD interface
-
-!         the_hdf_version = mls_hdf_version(L1PhysicalFileName)
-!        sd_id = mls_io_gen_openF('hg', caseSensitive, ErrType, &
-!          & record_length, DFACC_READ, &
-!          & L1physicalFilename, hdfVersion=LEVEL1_HDFVERSION)
-
-!      if ( sd_id <= 0 ) then
-!
-!        call announce_error ( 0, "Error opening L1OA file "//L1physicalFilename )
-!      else
         l2pcf%L1BOAPCFId = mlspcf_l1b_oa_start
-!         l1bInfo%L1BOAID = sd_id
-!         l1bInfo%L1BOAFileName = L1physicalFilename
         if(index(switches, 'pro') /= 0) then  
           call announce_success(L1BFile%name, 'l1boa', &                     
           & hdfVersion=L1BFile%HDFVersion)                    
@@ -352,17 +259,11 @@ contains ! =====     Public Procedures     =============================
     ! print *, 'GlobalAttributes%FirstMAFCtr ', GlobalAttributes%FirstMAFCtr
     ! print *, 'GlobalAttributes%LastMAFCtr ', GlobalAttributes%LastMAFCtr
     ! Get the Start and End Times from PCF
-    ! Temporarily we allow the use of older PCFids: CCSDSStartId, CCSDEndId
-    ! (if TOOLKIT is FALSE)
 
     returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_CCSDSStartId, &
                                            CCSDSStartTime)
     if ( returnstatus /= PGS_S_SUCCESS .and. TOOLKIT ) then
       call announce_error ( 0, "Missing pcf param: CCSDSStartTime" )
-    !else if ( returnstatus /= PGS_S_SUCCESS ) then
-    !  returnStatus = pgs_pc_getconfigdata (CCSDSStartId, CCSDSStartTime)
-    !  if ( returnstatus /= PGS_S_SUCCESS ) &
-    !    & call announce_error ( 0, "Could not get CCSDS Start Time" )
     end if
 
     returnStatus = pgs_td_utctotai (CCSDSStartTime, processingrange%starttime)
@@ -377,10 +278,6 @@ contains ! =====     Public Procedures     =============================
                                           CCSDSEndTime)
     if ( returnstatus /= PGS_S_SUCCESS .and. TOOLKIT ) then
       call announce_error ( 0, "Missing pcf param: CCSDSEndTime" )
-    !else if ( returnstatus /= PGS_S_SUCCESS ) then
-    !  returnStatus = pgs_pc_getconfigdata (CCSDSEndId, CCSDSEndTime)
-    !  if ( returnstatus /= PGS_S_SUCCESS ) &
-    !    & call announce_error ( 0, "Could not get CCSDS End Time" )
     end if
 
     returnStatus = pgs_td_utctotai (CCSDSEndTime, processingrange%endtime)
@@ -398,40 +295,30 @@ contains ! =====     Public Procedures     =============================
                                           l2pcf%inputVersion)
     if ( returnstatus /= PGS_S_SUCCESS ) then
       call announce_error ( 0, "Missing pcf param: input version" )
-    else if ( returnstatus /= PGS_S_SUCCESS ) then
-      l2pcf%inputVersion = 'V0-5'
     end if
 
     returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_PGEVersion, &
                                           l2pcf%PGEVersion)
     if ( returnstatus /= PGS_S_SUCCESS ) then
       call announce_error ( 0, "Missing pcf param: output version" )
-    else if ( returnstatus /= PGS_S_SUCCESS ) then
-      l2pcf%PGEVersion = 'V0-5'
     end if
 	
     returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_Cycle, l2pcf%cycle)
 
     if ( returnstatus /= PGS_S_SUCCESS ) then
       call announce_error ( 0, "Missing pcf param: cycle" )
-    else if ( returnstatus /= PGS_S_SUCCESS ) then
-      l2pcf%cycle = '1'
     end if
 	
     returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_spec_keys, l2pcf%spec_keys)
 
     if ( returnstatus /= PGS_S_SUCCESS ) then
       call announce_error ( 0, "Missing pcf param: spec_keys" )
-    else if ( returnstatus /= PGS_S_SUCCESS ) then
-      l2pcf%spec_keys = DEFAULT_SPEC_KEYS
     end if
 	
     returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_spec_hash, l2pcf%spec_hash)
 
     if ( returnstatus /= PGS_S_SUCCESS ) then
       call announce_error ( 0, "Missing pcf param: spec_hash" )
-    else if ( returnstatus /= PGS_S_SUCCESS ) then
-      l2pcf%spec_hash = DEFAULT_SPEC_HASH
     end if
 	
     if ( .NOT. MCFCASESENSITIVE ) then
@@ -465,7 +352,7 @@ contains ! =====     Public Procedures     =============================
     end if
  
     ! Store appropriate user input as global attributes
-    GlobalAttributes%InputVersion = l2pcf%inputVersion
+    ! GlobalAttributes%InputVersion = l2pcf%inputVersion
     GlobalAttributes%StartUTC = l2pcf%StartUTC
     GlobalAttributes%EndUTC = l2pcf%EndUTC
     GlobalAttributes%PGEVersion = l2pcf%PGEVersion
@@ -565,8 +452,6 @@ contains ! =====     Public Procedures     =============================
     ! Arguments
     ! integer, intent(in) :: num_l1b_files
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-    ! type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
-    ! type(PCFData_T) :: l2pcf
     character(len=CCSDSlen) CCSDSEndTime
     character(len=CCSDSlen) CCSDSStartTime
     type (TAI93_Range_T) :: processingRange ! Data processing range
@@ -777,6 +662,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.85  2005/07/12 17:17:46  pwagner
+! Dropped global attribute InputVersion
+!
 ! Revision 2.84  2005/06/22 18:57:02  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
