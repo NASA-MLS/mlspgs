@@ -95,7 +95,7 @@ contains
       & mlspcf_l2fwm_full_end, &
       & mlspcf_l2dgg_start, mlspcf_l2dgg_end
     use MLSStrings, only: hhmmss_value
-    use MLSStringLists, only: utc_to_yyyymmdd
+    use MLSStringLists, only: catLists,  utc_to_yyyymmdd
     use MLSSignals_m, only: INSTRUMENT
     use MoreTree, only: GET_FIELD_ID, GET_SPEC_ID
     use OUTPUT_M, only: BLANKS, OUTPUT
@@ -103,6 +103,7 @@ contains
       & Read_PFAData, Write_PFAData
     use PFADataBase_m, only: Process_PFA_File
     use PCFHdr, only: GlobalAttributes, FillTAI93Attribute
+    use readAPriori, only: APrioriFiles
     use SDPToolkit, only: max_orbits, mls_utctotai
     use String_Table, only: Get_String
     use Time_M, only: Time_Now
@@ -490,7 +491,7 @@ contains
 
     if ( .not. TOOLKIT ) then
       ! Store appropriate user input as global attributes
-      GlobalAttributes%InputVersion = l2pcf%inputVersion
+      ! GlobalAttributes%InputVersion = l2pcf%inputVersion
       GlobalAttributes%StartUTC = l2pcf%StartUTC
       GlobalAttributes%EndUTC = l2pcf%EndUTC
       GlobalAttributes%PGEVersion = l2pcf%PGEVersion
@@ -509,6 +510,14 @@ contains
     if ( details > -4 ) &
       & call dump_global_settings( processingRange, filedatabase, DirectDatabase, &
       & LeapSecFileName, details )
+
+    if ( APrioriFiles%dao // AprioriFiles%ncep == ' ' ) then
+      GlobalAttributes%MiscNotes = catLists(GlobalAttributes%MiscNotes, &
+        & 'No dao or ncep files--falling back to climatology', '\')
+    elseif ( APrioriFiles%dao == ' ' ) then
+      GlobalAttributes%MiscNotes = catLists(GlobalAttributes%MiscNotes, &
+        & 'No dao files--falling back to ncep', '\')
+    endif
 
     if ( error /= 0 ) &
       & call MLSMessage(MLSMSG_Error,ModuleName, &
@@ -603,7 +612,6 @@ contains
     end subroutine Announce_Error
 
     ! ------------------------------------------  dump_global_settings  -----
-    ! subroutine dump_global_settings ( processingRange, l1bInfo, DirectDatabase, &
     subroutine dump_global_settings ( processingRange, &
       & filedatabase, DirectDatabase, LeapSecFileName, dumpL1BDetails )
 
@@ -617,8 +625,6 @@ contains
 
       ! Arguments
       type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-      ! type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
-      ! type(PCFData_T) :: l2pcf
       type (TAI93_Range_T) :: processingRange ! Data processing range
       type (DirectData_T), dimension(:), pointer :: DirectDatabase
 
@@ -901,6 +907,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.102  2005/06/14 20:42:38  pwagner
+! Interfaces changed to accept MLSFile_T args
+!
 ! Revision 2.101  2005/06/04 00:14:53  vsnyder
 ! Import MLSMSG_Warning
 !
