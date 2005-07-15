@@ -166,7 +166,12 @@ contains
     if ( severity == MLSMSG_Warning .and. MLSMessageConfig%limitWarnings > -1 &
       & .and. numwarnings <= MAXNUMWARNINGS .and. message /= ' ' ) then
       ! See if we have seen this message before
-      newwarning = .not. any(warningmessages == trim(message))
+      ! newwarning = .not. any(warningmessages == trim(message))
+      newwarning = .true.
+      do warning_index = 1, numwarnings
+        newwarning = newwarning .and. &
+          & (warningmessages(warning_index) /= trim(message))
+      enddo
       if ( newwarning .and. numwarnings >= MAXNUMWARNINGS ) then
       else if ( newwarning .or. &
         & numwarnings < 1 ) then
@@ -521,6 +526,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.24  2005/07/15 20:03:21  pwagner
+! A work-around for Lahey memory leak doing any(strarray == str)
+!
 ! Revision 2.23  2005/06/22 17:25:50  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
