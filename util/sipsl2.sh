@@ -425,9 +425,14 @@ full="no"
 time="no"
 more_opts="yes"
 DATECONVERTER=`which dateconverter 2>/dev/null`
+REECHO=`which reecho.sh 2>/dev/null`
 if [ ! -r "$DATECONVERTER" ]
 then
   DATECONVERTER="/home/pwagner/bin/dateconverter"
+fi 
+if [ ! -r "$REECHO" ]
+then
+  REECHO="/home/pwagner/bin/reecho.sh"
 fi 
 while [ "$more_opts" = "yes" ] ; do
 
@@ -552,7 +557,8 @@ do
   statnochunks=`tail $dir/exec_log/process.stdout | grep -i "No chunks were processed"`
   statpvmtrouble=`tail $dir/exec_log/process.stdout | grep -i "probably pvm trouble"`
   statgood=`tail $dir/exec_log/process.stdout | grep -i "catenating slave"`
-  l1boa=`echo $dir/*L1BOA_*`
+  # l1boa=`echo $dir/*L1BOA_*`
+  l1boa=`$REECHO $dir/*L1BOA_*`
   date=`echo $l1boa | sed "s/_/\n/g;s/.h5//" | tail -1`
   bugs=`grep -ic 'list out of order' $dir/pvmlog/mlsl2.log 2>/dev/null`
   if [ "$bugs" = "" ]
@@ -609,7 +615,10 @@ do
     then
       list="$newlist"
     fi
-    if [ "$convert" = "yes" ]
+    if [ "$date" = '' ]
+    then
+      list="(empty date) \t  $list"
+    elif [ "$convert" = "yes" ]
     then
       list="`$DATECONVERTER $date` \t  $list"
     else
@@ -687,6 +696,9 @@ do
 done
 exit 0
 # $Log$
+# Revision 1.7  2005/06/23 22:20:46  pwagner
+# Reworded Copyright statement
+#
 # Revision 1.6  2005/05/20 23:10:27  pwagner
 # Show how many chunks succumbed to 'list out of order' bug
 #
