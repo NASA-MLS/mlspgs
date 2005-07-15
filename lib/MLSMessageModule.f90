@@ -170,7 +170,7 @@ contains
       newwarning = .true.
       do warning_index = 1, numwarnings
         newwarning = newwarning .and. &
-          & (warningmessages(warning_index) /= trim(message))
+          & ( warningmessages(warning_index) /= trim(message(1:WARNINGMESSLENGTH)) )
       enddo
       if ( newwarning .and. numwarnings >= MAXNUMWARNINGS ) then
       else if ( newwarning .or. &
@@ -185,7 +185,7 @@ contains
           & (timeswarned(numwarnings) >= MLSMessageConfig%limitWarnings)
       else
         do warning_index = 1, numwarnings
-          if ( warningmessages(warning_index) == message ) exit
+          if ( warningmessages(warning_index) == message(1:WARNINGMESSLENGTH) ) exit
         end do
         if ( warning_index > numwarnings ) return
         if ( timeswarned(warning_index) > MLSMessageConfig%limitWarnings ) return
@@ -526,6 +526,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.25  2005/07/15 20:37:40  pwagner
+! Handles warning messages longer than 80 chars better
+!
 ! Revision 2.24  2005/07/15 20:03:21  pwagner
 ! A work-around for Lahey memory leak doing any(strarray == str)
 !
