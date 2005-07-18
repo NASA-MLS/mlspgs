@@ -150,6 +150,7 @@ contains
     character (len=512), save :: Line   ! Line to output, should be long enough
     integer, save :: Line_len=0         ! Number of saved characters in line.
     !                                     If nonzero, do not insert prefix.
+    integer :: msgLength                  
     logical :: My_adv
     logical :: nosubsequentwarnings
     logical :: newwarning
@@ -160,6 +161,8 @@ contains
     my_adv = .true.
     if ( present(advance) ) &
       & my_adv = advance(1:1) /= 'n' .and. advance(1:1) /= 'N'
+    ! This is the smaller of the actual length and what we can check for repeats
+    msgLength = min(len(message), WARNINGMESSLENGTH)
 
     ! Here's where we suppress warning messages beyond a limit for each
     nosubsequentwarnings = .false.
@@ -170,7 +173,7 @@ contains
       newwarning = .true.
       do warning_index = 1, numwarnings
         newwarning = newwarning .and. &
-          & ( warningmessages(warning_index) /= trim(message(1:WARNINGMESSLENGTH)) )
+          & ( warningmessages(warning_index) /= trim(message(1:msgLength)) )
       enddo
       if ( newwarning .and. numwarnings >= MAXNUMWARNINGS ) then
       else if ( newwarning .or. &
@@ -185,7 +188,7 @@ contains
           & (timeswarned(numwarnings) >= MLSMessageConfig%limitWarnings)
       else
         do warning_index = 1, numwarnings
-          if ( warningmessages(warning_index) == message(1:WARNINGMESSLENGTH) ) exit
+          if ( warningmessages(warning_index) == message(1:msgLength) ) exit
         end do
         if ( warning_index > numwarnings ) return
         if ( timeswarned(warning_index) > MLSMessageConfig%limitWarnings ) return
@@ -526,6 +529,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.26  2005/07/18 17:44:19  pwagner
+! Bug allowed substring index past actual length; fixed
+!
 ! Revision 2.25  2005/07/15 20:37:40  pwagner
 ! Handles warning messages longer than 80 chars better
 !
