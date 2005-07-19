@@ -578,9 +578,9 @@ CONTAINS
     INTEGER :: Pgs_td_taiToUTC
 
     ! Variables
-    TYPE( L1BOAindex_T ) :: index
-    TYPE( L1BOAsc_T ) :: sc
-    TYPE( L1BOAtp_T ) :: tp
+    TYPE (L1BOAindex_T), SAVE :: index
+    TYPE (L1BOAsc_T), SAVE :: sc
+    TYPE (L1BOAtp_T), SAVE :: tp
     CHARACTER (LEN=27) :: mafTime
     CHARACTER (LEN=480) :: msr
     INTEGER :: error, i, nV, returnStatus, oastat, gtindx
@@ -1465,6 +1465,9 @@ CONTAINS
 END MODULE TkL1B
 
 ! $Log$
+! Revision 2.24  2005/07/19 16:34:46  perun
+! Added SAVE to sc and tp structures to prevent memory leaks
+!
 ! Revision 2.23  2005/06/23 18:41:36  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
