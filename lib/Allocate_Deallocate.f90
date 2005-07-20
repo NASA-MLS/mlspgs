@@ -35,10 +35,8 @@ module Allocate_Deallocate
   private
 
   public :: ALLOCATE_TEST, DEALLOCATE_TEST, DEALLOC_STATUS, & 
-    & SET_GARBAGE_COLLECTION, REPORTALLOCATEDEALLOCATE
-
-  integer, save :: DEALLOC_STATUS = 0
-  logical, save :: COLLECT_GARBAGE_EACH_TIME = .false.
+    & SET_GARBAGE_COLLECTION, REPORTALLOCATEDEALLOCATE, &
+    & Test_Allocate, Test_Deallocate
 
   interface ALLOCATE_TEST
     module procedure ALLOCATE_TEST_CHARACTER_1D
@@ -47,6 +45,7 @@ module Allocate_Deallocate
     module procedure ALLOCATE_TEST_INTEGER_1D, ALLOCATE_TEST_INTEGER_2D
     module procedure ALLOCATE_TEST_INTEGER_3D
     module procedure ALLOCATE_TEST_LOGICAL_1D, ALLOCATE_TEST_LOGICAL_2D
+    module procedure ALLOCATE_TEST_LOGICAL_3D
     module procedure ALLOCATE_TEST_REALR4_1D, ALLOCATE_TEST_REALR4_2D
     module procedure ALLOCATE_TEST_REALR4_3D
     module procedure ALLOCATE_TEST_REALR8_1D, ALLOCATE_TEST_REALR8_2D
@@ -60,17 +59,26 @@ module Allocate_Deallocate
     module procedure DEALLOCATE_TEST_INTEGER_1D, DEALLOCATE_TEST_INTEGER_2D
     module procedure DEALLOCATE_TEST_INTEGER_3D
     module procedure DEALLOCATE_TEST_LOGICAL_1D, DEALLOCATE_TEST_LOGICAL_2D
+    module procedure DEALLOCATE_TEST_LOGICAL_3D
     module procedure DEALLOCATE_TEST_REALR4_1D, DEALLOCATE_TEST_REALR4_2D
     module procedure DEALLOCATE_TEST_REALR4_3D
     module procedure DEALLOCATE_TEST_REALR8_1D, DEALLOCATE_TEST_REALR8_2D
     module procedure DEALLOCATE_TEST_REALR8_3D
   end interface
 
+  integer, save :: DEALLOC_STATUS = 0
+
   logical, public :: TRACKALLOCATES = .false. ! If true keep track of memory allocated
   logical, public :: CLEARONALLOCATE = .false. ! If true, zero all allocated stuff
   ! and report on it.
 
-  integer, private, save :: NOWORDSALLOCATED=0 ! Number of 4 byte words allocated.
+  ! Element sizes (bytes)
+  integer, parameter, public :: E_Ch = 1 ! Character
+    ! Default integer, logical and real:
+  integer, parameter, public :: E_Def = (bit_size(e_ch) + 7 ) / 8
+  integer, parameter, public :: E_DP = 2 * e_def ! DP and Complex
+
+  logical, save, private :: COLLECT_GARBAGE_EACH_TIME = .false.
 
   !------------------------------- RCS Ident Info ------------------------------
   character(len=*), parameter, private :: ModuleName = &
@@ -79,25 +87,30 @@ module Allocate_Deallocate
   !-----------------------------------------------------------------------------
 
 contains
-  ! =====     Public Procedures      ============================
-  subroutine ReportAllocateDeallocate ( name, moduleName, noWords )
+  ! =====     Public Procedures      ===================================
+
+  !-----------------------------------   ReportAllocateDeallocate  -----
+  subroutine ReportAllocateDeallocate ( name, moduleName, noBytes )
     use Output_m, only: OUTPUT
     use Dump_0, only: DUMPSIZE
     ! Dummy arguments
     character (len=*), intent(in) :: NAME ! Name of thing allocated
     character (len=*), intent(in) :: MODULENAME ! Module that allocated it
-    integer, intent(in) :: NOWORDS      ! No words allocated (or deallocated if -ve)
+    integer, intent(in) :: noBytes      ! No bytes allocated (or deallocated if -ve)
+
+    integer, save :: NoBytesAllocated=0 ! Number of bytes allocated.
+
     ! Executable code
     if ( .not. trackAllocates ) return        ! Most probably will not be called anyway
-    noWordsAllocated = noWordsAllocated + noWords
+    noBytesAllocated = noBytesAllocated + noBytes
     call output ( 'Tracking: ' )
-    if ( noWords < 0 ) then
+    if ( noBytes < 0 ) then
       call output ( 'Dea' )
     else
       call output ( 'A' )
     end if
     call output ( 'llocated ' )
-    call DumpSize ( abs ( noWords*4.0 ) )
+    call DumpSize ( abs ( noBytes ) )
     call output ( ' for ' // trim ( name ) // ' in ' )
     if ( moduleName(1:1) == '$' ) then
       ! The moduleNameIn is <dollar>RCSFile: <filename>,v <dollar>
@@ -106,629 +119,354 @@ contains
       call output ( moduleName )
     end if
     call output ( ' total ' )
-    call DumpSize ( noWordsAllocated*4.0, advance='yes' )
+    call DumpSize ( noBytesAllocated, advance='yes' )
   end subroutine ReportAllocateDeallocate
-    
-  ! =====     Private Procedures     ============================
-  ! ---------------------------------  Allocate_Test_Character_1d  -----
-  subroutine Allocate_Test_Character_1d ( To_Allocate, Dim1, Its_Name, &
-    & ModuleName, LowBound )
-    character(len=*), pointer, dimension(:) :: To_Allocate
-    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
-    character(len=*), intent(in) :: Its_Name, ModuleName
-    integer, intent(in), optional :: LowBound     ! Lower bound, default 1
-    integer :: MY_LOW, STATUS
-    call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
-    my_low = 1
-    if ( present(lowBound) ) my_low = lowBound
-    allocate ( To_Allocate(my_low:dim1), stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name // trim(bounds(1,dim1)) )
-    if ( status == 0 .and. clearOnAllocate ) to_allocate = ' '
-    if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, dim1/4+1 )
-  end subroutine Allocate_Test_Character_1d
-  ! ---------------------------------  Allocate_Test_Character_2d  -----
-  subroutine Allocate_Test_Character_2d ( To_Allocate, Dim1, Dim2, Its_Name, &
-    & ModuleName )
-    character(len=*), pointer, dimension(:,:) :: To_Allocate
-    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
-    integer, intent(in) :: Dim2    ! Second dimension of To_Allocate
-    character(len=*), intent(in) :: Its_Name, ModuleName
-    integer :: STATUS
-    call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
-    allocate ( To_Allocate(dim1,dim2), stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name // trim(bounds(1,dim1,1,dim2)) )
-    if ( status == 0 .and. clearOnAllocate ) to_allocate = ' '
-    if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, (dim1*dim2)/4+1 )
-  end subroutine Allocate_Test_Character_2d
-  ! ---------------------------------  Allocate_Test_Character_3d  -----
-  subroutine Allocate_Test_Character_3d ( To_Allocate, Dim1, Dim2, Dim3, &
-    & Its_Name, ModuleName )
-    character(len=*), pointer, dimension(:,:,:) :: To_Allocate
-    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
-    integer, intent(in) :: Dim2    ! Second dimension of To_Allocate
-    integer, intent(in) :: Dim3    ! Third dimension of To_Allocate
-    character(len=*), intent(in) :: Its_Name, ModuleName
-    integer :: STATUS
-    call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
-    allocate ( To_Allocate(dim1,dim2,dim3), stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name // trim(bounds(1,dim1,1,dim2,1,dim3)) )
-    if ( status == 0 .and. clearOnAllocate ) to_allocate = ' '
-    if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, (dim1*dim2*dim3)/4+1 )
-  end subroutine Allocate_Test_Character_3d
-  ! ------------------------------------  Allocate_Test_RealR8_1d  -----
-  subroutine Allocate_Test_RealR8_1d ( To_Allocate, Dim1, Its_Name, &
-    & ModuleName, LowBound )
-    double precision, pointer, dimension(:) :: To_Allocate
-    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
-    character(len=*), intent(in) :: Its_Name, ModuleName
-    integer, intent(in), optional :: LowBound     ! Lower bound, default 1
-    integer :: MY_LOW, STATUS
-    call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
-    my_low = 1
-    if ( present(lowBound) ) my_low = lowBound
-    allocate ( To_Allocate(my_low:dim1), stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name // trim(bounds(my_low,dim1)) )
-    if ( status == 0 .and. clearOnAllocate ) to_allocate = 0.0d0
-    if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, 2*dim1 )
-  end subroutine Allocate_Test_RealR8_1d
-  ! ------------------------------------  Allocate_Test_RealR8_2d  -----
-  subroutine Allocate_Test_RealR8_2d ( To_Allocate, Dim1, Dim2, Its_Name, &
-    & ModuleName, Low1, Low2 )
-    double precision, pointer, dimension(:,:) :: To_Allocate
-    integer, intent(in) :: Dim1    ! First dimension of To_Allocate
-    integer, intent(in) :: Dim2    ! Second dimension of To_Allocate
-    character(len=*), intent(in) :: Its_Name, ModuleName
-    integer, intent(in), optional :: Low1, Low2 ! Low bounds for dimensions
-    integer :: MyLow1, MyLow2
-    integer :: STATUS
-    call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
-    myLow1 = 1; myLow2 = 1
-    if ( present(low1) ) myLow1 = low1
-    if ( present(low2) ) myLow2 = low2
-    allocate ( To_Allocate(myLow1:dim1,myLow2:dim2), stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name // trim(bounds(myLow1,dim1,myLow2,dim2)) )
-    if ( status == 0 .and. clearOnAllocate ) to_allocate = 0.0d0
-    if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, 2*dim1*dim2 )
-  end subroutine Allocate_Test_RealR8_2d
-  ! ------------------------------------  Allocate_Test_RealR8_3d  -----
-  subroutine Allocate_Test_RealR8_3d ( To_Allocate, Dim1, Dim2, Dim3, &
-    & Its_Name, ModuleName, Low1, Low2, Low3 )
-    double precision, pointer, dimension(:,:,:) :: To_Allocate
-    integer, intent(in) :: Dim1    ! First dimension of To_Allocate
-    integer, intent(in) :: Dim2    ! Second dimension of To_Allocate
-    integer, intent(in) :: Dim3    ! Third dimension of To_Allocate
-    character(len=*), intent(in) :: Its_Name, ModuleName
-    integer, intent(in), optional :: Low1, Low2, Low3 ! Low bounds for dimensions
-    integer :: MyLow1, MyLow2, MyLow3
-    integer :: STATUS
-    call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
-    myLow1 = 1; myLow2 = 1; myLow3 = 1
-    if ( present(low1) ) myLow1 = low1
-    if ( present(low2) ) myLow2 = low2
-    if ( present(low3) ) myLow3 = low3
-    allocate ( To_Allocate(myLow1:dim1,myLow2:dim2,myLow3:dim3), stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name // trim(bounds(myLow1,dim1,myLow2,dim2,myLow3,dim3)) )
-    if ( status == 0 .and. clearOnAllocate ) to_allocate = 0.0d0
-    if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, 2*dim1*dim2*dim3 )
-  end subroutine Allocate_Test_RealR8_3d
-  ! -----------------------------------  Allocate_Test_Integer_1d  -----
-  subroutine Allocate_Test_Integer_1d ( To_Allocate, Dim1, Its_Name, &
-    & ModuleName, LowBound, Fill )
-    integer, pointer, dimension(:) :: To_Allocate
-    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
-    character(len=*), intent(in) :: Its_Name, ModuleName
-    integer, intent(in), optional :: LowBound     ! Lower bound, default 1
-    integer, intent(in), optional :: Fill ! To fill allocated array
-    integer :: MY_LOW, STATUS
-    call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
-    my_low = 1
-    if ( present(lowBound) ) my_low = lowBound
-    allocate ( To_Allocate(my_low:dim1), stat=status )
-    if ( status /= 0 ) then
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Allocate // Its_Name // trim(bounds(lowBound,dim1)) )
-    else
-      if ( clearOnAllocate ) to_allocate = 0
-      if ( present(fill) ) to_allocate = fill
-    end if
-    if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, dim1 )
-  end subroutine Allocate_Test_Integer_1d
-  ! -----------------------------------  Allocate_Test_Integer_2d  -----
-  subroutine Allocate_Test_Integer_2d ( To_Allocate, Dim1, Dim2, Its_Name, &
-    & ModuleName, LowBound_1, LowBound_2, Fill )
-    integer, pointer, dimension(:,:) :: To_Allocate
-    integer, intent(in) :: Dim1    ! First dimension of To_Allocate
-    integer, intent(in) :: Dim2    ! Second dimension of To_Allocate
-    character(len=*), intent(in) :: Its_Name, ModuleName
-    integer, intent(in), optional :: LowBound_1, LowBound_2 ! default 1
-    integer, intent(in), optional :: Fill ! To fill allocated array
-    integer :: MY_LOW_1, MY_LOW_2, STATUS
-    call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
-    my_low_1 = 1
-    if ( present(lowBound_1) ) my_low_1 = lowBound_1
-    my_low_2 = 1
-    if ( present(lowBound_2) ) my_low_2 = lowBound_2
-    allocate ( To_Allocate(my_low_1:dim1,my_low_2:dim2), stat=status )
-    if ( status /= 0 ) then
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Allocate // Its_Name // trim(bounds(my_low_1,dim1,my_low_2,dim2)) )
-    else
-      if ( clearOnAllocate ) to_allocate = 0
-      if ( present(fill) ) to_allocate = fill
-    end if
-    if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, dim1*dim2 )
-  end subroutine Allocate_Test_Integer_2d
-  ! -----------------------------------  Allocate_Test_Integer_3d  -----
-  subroutine Allocate_Test_Integer_3d ( To_Allocate, Dim1, Dim2, Dim3, Its_Name, &
-    & ModuleName, LowBound_1, Fill )
-    integer, pointer, dimension(:,:,:) :: To_Allocate
-    integer, intent(in) :: Dim1    ! First dimension of To_Allocate
-    integer, intent(in) :: Dim2    ! Second dimension of To_Allocate
-    integer, intent(in) :: Dim3    ! Third dimension of To_Allocate
-    character(len=*), intent(in) :: Its_Name, ModuleName
-    integer, intent(in), optional :: LowBound_1 ! default 1
-    integer, intent(in), optional :: Fill ! To fill allocated array
-    integer :: MY_LOW_1, STATUS
-    call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
-    my_low_1 = 1
-    if ( present(lowBound_1) ) my_low_1 = lowBound_1
-    allocate ( To_Allocate(my_low_1:dim1,dim2,dim3), stat=status )
-    if ( status /= 0 ) then
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Allocate // Its_Name // trim(bounds(my_low_1,dim1,1,dim2,1,dim3)) )
-    else
-      if ( clearOnAllocate ) to_allocate = 0
-      if ( present(fill) ) to_allocate = fill
-    end if
-    if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, dim1*dim2*dim3 )
-  end subroutine Allocate_Test_Integer_3d
-  ! -----------------------------------  Allocate_Test_Logical_1d  -----
-  subroutine Allocate_Test_Logical_1d ( To_Allocate, Dim1, Its_Name, &
-    & ModuleName, LowBound )
-    logical, pointer, dimension(:) :: To_Allocate
-    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
-    character(len=*), intent(in) :: Its_Name, ModuleName
-    integer, intent(in), optional :: LowBound     ! Lower bound, default 1
-    integer :: MY_LOW, STATUS
-    call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
-    my_low = 1
-    if ( present(lowBound) ) my_low = lowBound
-    allocate ( To_Allocate(my_low:dim1), stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name // trim(bounds(lowBound,dim1)) )
-    if ( status == 0 .and. clearOnAllocate ) to_allocate = .false.
-    if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, dim1/4+1 )
-  end subroutine Allocate_Test_Logical_1d
-  ! -------------------------------------  Allocate_Test_Logical_2d  -----
-  subroutine Allocate_Test_Logical_2d ( To_Allocate, Dim1, Dim2, Its_Name, &
-    & ModuleName, Low1, Low2 )
-    logical, pointer, dimension(:,:) :: To_Allocate
-    integer, intent(in) :: Dim1    ! First dimension of To_Allocate
-    integer, intent(in) :: Dim2    ! Second dimension of To_Allocate
-    character(len=*), intent(in) :: Its_Name, ModuleName
-    integer, intent(in), optional :: Low1, Low2 ! Low bounds for dimensions
-    integer :: MyLow1, MyLow2
-    integer :: STATUS
-    call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
-    myLow1 = 1; myLow2 = 1
-    if ( present(low1) ) myLow1 = low1
-    if ( present(low2) ) myLow2 = low2
-    allocate ( To_Allocate(myLow1:dim1,myLow2:dim2), stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name // trim(bounds(myLow1,dim1,myLow2,dim2)) )
-    if ( status == 0 .and. clearOnAllocate ) to_allocate = .false.
-    if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, (dim1*dim2)/4+1 )
-  end subroutine Allocate_Test_Logical_2d
-  ! --------------------------------------  Allocate_Test_RealR4_1d  -----
-  subroutine Allocate_Test_RealR4_1d ( To_Allocate, Dim1, Its_Name, ModuleName, &
-    & LowBound )
-    real, pointer, dimension(:) :: To_Allocate
-    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
-    character(len=*), intent(in) :: Its_Name, ModuleName
-    integer, intent(in), optional :: LowBound     ! Lower bound, default 1
-    integer :: MY_LOW, STATUS
-    call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
-    my_low = 1
-    if ( present(lowBound) ) my_low = lowBound
-    allocate ( To_Allocate(my_low:dim1), stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name // trim(bounds(lowBound,dim1)) )
-    if ( status == 0 .and. clearOnAllocate ) to_allocate = 0.0
-    if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, dim1 )
-  end subroutine Allocate_Test_RealR4_1d
-  ! --------------------------------------  Allocate_Test_RealR4_2d  -----
-  subroutine Allocate_Test_RealR4_2d ( To_Allocate, Dim1, Dim2, Its_Name, &
-    & ModuleName, Low1, Low2 )
-    real, pointer, dimension(:,:) :: To_Allocate
-    integer, intent(in) :: Dim1    ! First dimension of To_Allocate
-    integer, intent(in) :: Dim2    ! Second dimension of To_Allocate
-    character(len=*), intent(in) :: Its_Name, ModuleName
-    integer, intent(in), optional :: Low1, Low2 ! Low bounds for dimensions
-    integer :: MyLow1, MyLow2
-    integer :: STATUS
-    call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
-    myLow1 = 1; myLow2 = 1
-    if ( present(low1) ) myLow1 = low1
-    if ( present(low2) ) myLow2 = low2
-    allocate ( To_Allocate(myLow1:dim1,myLow2:dim2), stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name // trim(bounds(myLow1,dim1,myLow2,dim2)) )
-    if ( status == 0 .and. clearOnAllocate ) to_allocate = 0.0
-    if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, dim1*dim2 )
-  end subroutine Allocate_Test_RealR4_2d
-  ! ------------------------------------  Allocate_Test_RealR4_3d  -----
-  subroutine Allocate_Test_RealR4_3d ( To_Allocate, Dim1, Dim2, Dim3, &
-    & Its_Name, ModuleName, Low1, Low2, Low3 )
-    real, pointer, dimension(:,:,:) :: To_Allocate
-    integer, intent(in) :: Dim1    ! First dimension of To_Allocate
-    integer, intent(in) :: Dim2    ! Second dimension of To_Allocate
-    integer, intent(in) :: Dim3    ! Third dimension of To_Allocate
-    character(len=*), intent(in) :: Its_Name, ModuleName
-    integer, intent(in), optional :: Low1, Low2, Low3 ! Low bounds for dimensions
-    integer :: MyLow1, MyLow2, MyLow3
-    integer :: STATUS
-    call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
-    myLow1 = 1; myLow2 = 1; myLow3 = 1
-    if ( present(low1) ) myLow1 = low1
-    if ( present(low2) ) myLow2 = low2
-    if ( present(low3) ) myLow3 = low3
-    allocate ( To_Allocate(myLow1:dim1,myLow2:dim2,myLow3:dim3), stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name // trim(bounds(myLow1,dim1,myLow2,dim2,myLow3,dim3)) )
-    if ( status == 0 .and. clearOnAllocate ) to_allocate = 0.0
-    if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, dim1*dim2*dim3 )
-  end subroutine Allocate_Test_RealR4_3d
-  ! -------------------------------  Deallocate_Test_Character_1d  -----
-  subroutine Deallocate_Test_Character_1d ( To_Deallocate, Its_Name, ModuleName )
-    character(len=*), pointer, dimension(:) :: To_Deallocate
-    character(len=*) :: Its_Name, ModuleName
-    integer :: STATUS
-    integer :: DIM1
-    if ( associated(To_Deallocate) ) then
-      if ( trackAllocates ) then
-        dim1 = size ( to_deallocate, 1 )
-      endif
-      deallocate ( To_Deallocate, stat=status )
-      if ( status /= 0 ) then
-        call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          & MLSMSG_DeAllocate // Its_Name )
-        dealloc_status = max(dealloc_status, status)
-      else if ( collect_garbage_each_time ) then
-        call mls_gc_now
-      end if
-      nullify ( to_Deallocate )
-      if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, -dim1/4-1 )
-    end if
-  end subroutine Deallocate_Test_Character_1d
-  ! -------------------------------  Deallocate_Test_Character_2d  -----
-  subroutine Deallocate_Test_Character_2d ( To_Deallocate, Its_Name, ModuleName )
-    character(len=*), pointer, dimension(:,:) :: To_Deallocate
-    character(len=*) :: Its_Name, ModuleName
-    integer :: STATUS
-    integer :: DIM1, DIM2
-    if ( associated(To_Deallocate) ) then
-      if ( trackAllocates ) then
-        dim1 = size ( to_deallocate, 1 )
-        dim2 = size ( to_deallocate, 2 )
-      endif
-      deallocate ( To_Deallocate, stat=status )
-      if ( status /= 0 ) then
-        call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          & MLSMSG_DeAllocate // Its_Name )
-        dealloc_status = max(dealloc_status, status)
-      else if ( collect_garbage_each_time ) then
-        call mls_gc_now
-      end if
-      nullify ( to_Deallocate )
-      if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, -(dim1*dim2)/4-1 )
-    end if
-  end subroutine Deallocate_Test_Character_2d
-  ! -------------------------------  Deallocate_Test_Character_3d  -----
-  subroutine Deallocate_Test_Character_3d ( To_Deallocate, Its_Name, ModuleName )
-    character(len=*), pointer, dimension(:,:,:) :: To_Deallocate
-    character(len=*) :: Its_Name, ModuleName
-    integer :: STATUS
-    integer :: DIM1, DIM2, DIM3
-    if ( associated(To_Deallocate) ) then
-      if ( trackAllocates ) then
-        dim1 = size ( to_deallocate, 1 )
-        dim2 = size ( to_deallocate, 2 )
-        dim3 = size ( to_deallocate, 3 )
-      endif
-      deallocate ( To_Deallocate, stat=status )
-      if ( status /= 0 ) then
-        call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          & MLSMSG_DeAllocate // Its_Name )
-        dealloc_status = max(dealloc_status, status)
-      else if ( collect_garbage_each_time ) then
-        call mls_gc_now
-      end if
-      nullify ( to_Deallocate )
-      if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, -(dim1*dim2*dim3)/4-1 )
-    end if
-  end subroutine Deallocate_Test_Character_3d
-  ! ----------------------------------  Deallocate_Test_RealR8_1d  -----
-  subroutine Deallocate_Test_RealR8_1d ( To_Deallocate, Its_Name, ModuleName )
-    double precision, pointer, dimension(:) :: To_Deallocate
-    character(len=*) :: Its_Name, ModuleName
-    integer :: STATUS
-    integer :: DIM1
-    if ( associated(To_Deallocate) ) then
-      if ( trackAllocates ) then
-        dim1 = size ( to_deallocate, 1 )
-      endif
-      deallocate ( To_Deallocate, stat=status )
-      if ( status /= 0 ) then
-        call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          & MLSMSG_DeAllocate // Its_Name )
-        dealloc_status = max(dealloc_status, status)
-      else if ( collect_garbage_each_time ) then
-        call mls_gc_now
-      end if
-      nullify ( to_Deallocate )
-      if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, -2*dim1 )
-    end if
-  end subroutine Deallocate_Test_RealR8_1d
-  ! ----------------------------------  Deallocate_Test_RealR8_2d  -----
-  subroutine Deallocate_Test_RealR8_2d ( To_Deallocate, Its_Name, ModuleName )
-    double precision, pointer, dimension(:,:) :: To_Deallocate
-    character(len=*) :: Its_Name, ModuleName
-    integer :: STATUS
-    integer :: DIM1, DIM2
-    if ( associated(To_Deallocate) ) then
-      if ( trackAllocates ) then
-        dim1 = size ( to_deallocate, 1 )
-        dim2 = size ( to_deallocate, 2 )
-      endif
-      deallocate ( To_Deallocate, stat=status )
-      if ( status /= 0 ) then
-        call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          & MLSMSG_DeAllocate // Its_Name )
-        dealloc_status = max(dealloc_status, status)
-      else if ( collect_garbage_each_time ) then
-        call mls_gc_now
-      end if
-      nullify ( to_Deallocate )
-      if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, -2*dim1*dim2 )
-    end if
-  end subroutine Deallocate_Test_RealR8_2d
-  ! ----------------------------------  Deallocate_Test_RealR8_3d  -----
-  subroutine Deallocate_Test_RealR8_3d ( To_Deallocate, Its_Name, ModuleName )
-    double precision, pointer, dimension(:,:,:) :: To_Deallocate
-    character(len=*) :: Its_Name, ModuleName
-    integer :: STATUS
-    integer :: DIM1, DIM2, DIM3
-    if ( associated(To_Deallocate) ) then
-      if ( trackAllocates ) then
-        dim1 = size ( to_deallocate, 1 )
-        dim2 = size ( to_deallocate, 2 )
-        dim3 = size ( to_deallocate, 3 )
-      endif
-      deallocate ( To_Deallocate, stat=status )
-      if ( status /= 0 ) then
-        call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          & MLSMSG_DeAllocate // Its_Name )
-        dealloc_status = max(dealloc_status, status)
-      else if ( collect_garbage_each_time ) then
-        call mls_gc_now
-      end if
-      nullify ( to_Deallocate )
-      if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, -2*dim1*dim2*dim3 )
-    end if
-  end subroutine Deallocate_Test_RealR8_3d
-  ! ---------------------------------  Deallocate_Test_Integer_1d  -----
-  subroutine Deallocate_Test_Integer_1d ( To_Deallocate, Its_Name, ModuleName )
-    integer, pointer, dimension(:) :: To_Deallocate
-    character(len=*) :: Its_Name, ModuleName
-    integer :: STATUS
-    integer :: DIM1
-    if ( associated(To_Deallocate) ) then
-      if ( trackAllocates ) then
-        dim1 = size ( to_deallocate, 1 )
-      endif
-      deallocate ( To_Deallocate, stat=status )
-      if ( status /= 0 ) then
-        call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          & MLSMSG_DeAllocate // Its_Name )
-        dealloc_status = max(dealloc_status, status)
-      else if ( collect_garbage_each_time ) then
-        call mls_gc_now
-      end if
-      nullify ( to_Deallocate )
-      if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, -dim1 )
-    end if
-  end subroutine Deallocate_Test_Integer_1d
-  ! ---------------------------------  Deallocate_Test_Integer_2d  -----
-  subroutine Deallocate_Test_Integer_2d ( To_Deallocate, Its_Name, ModuleName )
-    integer, pointer, dimension(:,:) :: To_Deallocate
-    character(len=*) :: Its_Name, ModuleName
-    integer :: STATUS
-    integer :: DIM1, DIM2
-    if ( associated(To_Deallocate) ) then
-      if ( trackAllocates ) then
-        dim1 = size ( to_deallocate, 1 )
-        dim2 = size ( to_deallocate, 2 )
-      endif
-      deallocate ( To_Deallocate, stat=status )
-      if ( status /= 0 ) then
-        call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          & MLSMSG_DeAllocate // Its_Name )
-        dealloc_status = max(dealloc_status, status)
-      else if ( collect_garbage_each_time ) then
-        call mls_gc_now
-      end if
-      nullify ( to_Deallocate )
-      if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, -dim1*dim2 )
-    end if
-  end subroutine Deallocate_Test_Integer_2d
-  ! ---------------------------------  Deallocate_Test_Integer_3d  -----
-  subroutine Deallocate_Test_Integer_3d ( To_Deallocate, Its_Name, ModuleName )
-    integer, pointer, dimension(:,:,:) :: To_Deallocate
-    character(len=*) :: Its_Name, ModuleName
-    integer :: STATUS
-    integer :: DIM1, DIM2, DIM3
-    if ( associated(To_Deallocate) ) then
-      if ( trackAllocates ) then
-        dim1 = size ( to_deallocate, 1 )
-        dim2 = size ( to_deallocate, 2 )
-        dim3 = size ( to_deallocate, 3 )
-      endif
-      deallocate ( To_Deallocate, stat=status )
-      if ( status /= 0 ) then
-        call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          & MLSMSG_DeAllocate // Its_Name )
-        dealloc_status = max(dealloc_status, status)
-      else if ( collect_garbage_each_time ) then
-        call mls_gc_now
-      end if
-      nullify ( to_Deallocate )
-      if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, -dim1*dim2*dim3 )
-    end if
-  end subroutine Deallocate_Test_Integer_3d
-  ! ---------------------------------  Deallocate_Test_Logical_1d  -----
-  subroutine Deallocate_Test_Logical_1d ( To_Deallocate, Its_Name, ModuleName )
-    logical, pointer, dimension(:) :: To_Deallocate
-    character(len=*) :: Its_Name, ModuleName
-    integer :: STATUS
-    integer :: DIM1
-    if ( associated(To_Deallocate) ) then
-      if ( trackAllocates ) then
-        dim1 = size ( to_deallocate, 1 )
-      endif
-      deallocate ( To_Deallocate, stat=status )
-      if ( status /= 0 ) then
-        call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          & MLSMSG_DeAllocate // Its_Name )
-        dealloc_status = max(dealloc_status, status)
-      else if ( collect_garbage_each_time ) then
-        call mls_gc_now
-      end if
-      nullify ( to_Deallocate )
-      if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, -dim1/4-1 )
-    end if
-  end subroutine Deallocate_Test_Logical_1d
-  ! ---------------------------------  Deallocate_Test_Logical_1d  -----
-  subroutine Deallocate_Test_Logical_2d ( To_Deallocate, Its_Name, ModuleName )
-    logical, pointer, dimension(:,:) :: To_Deallocate
-    character(len=*) :: Its_Name, ModuleName
-    integer :: STATUS
-    integer :: DIM1, DIM2
-    if ( associated(To_Deallocate) ) then
-      if ( trackAllocates ) then
-        dim1 = size ( to_deallocate, 1 )
-        dim2 = size ( to_deallocate, 2 )
-      endif
-      deallocate ( To_Deallocate, stat=status )
-      if ( status /= 0 ) then
-        call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          & MLSMSG_DeAllocate // Its_Name )
-        dealloc_status = max(dealloc_status, status)
-      else if ( collect_garbage_each_time ) then
-        call mls_gc_now
-      end if
-      nullify ( to_Deallocate )
-      if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, -(dim1*dim2)/4-1 )
-    end if
-  end subroutine Deallocate_Test_Logical_2d
-  ! ------------------------------------  Deallocate_Test_RealR4_1d  -----
-  subroutine Deallocate_Test_RealR4_1d ( To_Deallocate, Its_Name, ModuleName )
-    real, pointer, dimension(:) :: To_Deallocate
-    character(len=*) :: Its_Name, ModuleName
-    integer :: STATUS
-    integer :: DIM1
-    if ( associated(To_Deallocate) ) then
-      if ( trackAllocates ) then
-        dim1 = size ( to_deallocate, 1 )
-      endif
-      deallocate ( To_Deallocate, stat=status )
-      if ( status /= 0 ) then
-        call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          & MLSMSG_DeAllocate // Its_Name )
-        dealloc_status = max(dealloc_status, status)
-      else if ( collect_garbage_each_time ) then
-        call mls_gc_now
-      end if
-      nullify ( to_Deallocate )
-      if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, -dim1 )
-    end if
-  end subroutine Deallocate_Test_RealR4_1d
-  ! ------------------------------------  Deallocate_Test_RealR4_2d  -----
-  subroutine Deallocate_Test_RealR4_2d ( To_Deallocate, Its_Name, ModuleName )
-    real, pointer, dimension(:,:) :: To_Deallocate
-    character(len=*) :: Its_Name, ModuleName
-    integer :: STATUS
-    integer :: DIM1, DIM2
-    if ( associated(To_Deallocate) ) then
-      if ( trackAllocates ) then
-        dim1 = size ( to_deallocate, 1 )
-        dim2 = size ( to_deallocate, 2 )
-      endif
-      deallocate ( To_Deallocate, stat=status )
-      if ( status /= 0 ) then
-        call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          & MLSMSG_DeAllocate // Its_Name )
-        dealloc_status = max(dealloc_status, status)
-      else if ( collect_garbage_each_time ) then
-        call mls_gc_now
-      end if
-      nullify ( to_Deallocate )
-      if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, -dim1*dim2 )
-    end if
-  end subroutine Deallocate_Test_RealR4_2d
-  ! ----------------------------------  Deallocate_Test_RealR4_3d  -----
-  subroutine Deallocate_Test_RealR4_3d ( To_Deallocate, Its_Name, ModuleName )
-    real, pointer, dimension(:,:,:) :: To_Deallocate
-    character(len=*) :: Its_Name, ModuleName
-    integer :: STATUS
-    integer :: DIM1, DIM2, DIM3
-    if ( associated(To_Deallocate) ) then
-      if ( trackAllocates ) then
-        dim1 = size ( to_deallocate, 1 )
-        dim2 = size ( to_deallocate, 2 )
-        dim3 = size ( to_deallocate, 3 )
-      endif
-      deallocate ( To_Deallocate, stat=status )
-      if ( status /= 0 ) then
-        call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          & MLSMSG_DeAllocate // Its_Name )
-        dealloc_status = max(dealloc_status, status)
-      else if ( collect_garbage_each_time ) then
-        call mls_gc_now
-      end if
-      nullify ( to_Deallocate )
-      if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, -dim1*dim2*dim3 )
-    end if
-  end subroutine Deallocate_Test_RealR4_3d
 
-  ! ---------------------------------------  Set_garbage_collection  -----
+  ! -------------------------------------  Set_garbage_collection  -----
   subroutine Set_garbage_collection ( setting )
     logical :: setting
     collect_garbage_each_time = setting
   end subroutine Set_garbage_collection
 
-  ! =====  Private Procedures  ===========================================
-  ! -------------------------------------------------------  Bounds  -----
-  character(127) function Bounds ( Low1, High1, Low2, High2, Low3, High3 )
-    integer, intent(in) :: Low1, High1
-    integer, intent(in), optional :: Low2, High2, Low3, High3
-    character(127) :: Temp
-    write ( bounds, '("(",i0,":",i0)' ) low1, high1
-    if ( present(low2) ) then
-      write ( temp, '(",",i0,":",i0)' ) low2, high2
-      bounds = trim(bounds) // temp
+  ! ----------------------------------------------  Test_Allocate  -----
+  subroutine Test_Allocate ( Status, ModuleNameIn, ItsName, lBounds, uBounds, &
+    & ElementSize )
+  ! Test the status from an allocate.  If it's nonzero, issue a message.
+  ! Track allocations if TrackAllocates is true and ElementSize is present
+  ! and > 0.  
+    integer, intent(in) :: Status
+    character(len=*), intent(in) :: ModuleNameIn, ItsName
+    integer, intent(in) :: Lbounds(:), Ubounds(:)
+    integer, intent(in), optional :: ElementSize ! Bytes, <= 0 for no tracking
+    character(127) :: Bounds
+    integer :: I
+
+    if ( status /= 0 ) then
+      write ( bounds, '("(",i0,":",i0:(",",i0,":",i0))' ) &
+        & ( lBounds(i), uBounds(i), i = 1, size(lBounds) )
+      l = len_trim(bounds)+1
+      bounds(l:l)= ')'
+      call MLSMessage ( MLSMSG_Error, moduleNameIn, &
+        & MLSMSG_Allocate // ItsName  // bounds(:l) )
     end if
-    if ( present(low3) ) then
-      write ( temp, '(",",i0,":",i0)' ) low3, high3
-      bounds = trim(bounds) // temp
+
+    if ( trackAllocates .and. present(elementSize) ) then
+      if ( elementSize > 0 ) &
+        & call ReportAllocateDeallocate ( itsName, moduleNameIn, &
+          & elementSize*product(ubounds-lbounds+1) )
     end if
-    bounds = trim(bounds) // ')'
-  end function Bounds
+
+  end subroutine Test_Allocate
+
+  ! --------------------------------------------  Test_DeAllocate  -----
+  subroutine Test_DeAllocate ( Status, ModuleNameIn, ItsName, Size )
+  ! Test the status from a deallocate.  If it's nonzero, issue a message.
+  ! Do garbage collection if Collect_garbage_each_time is true.
+  ! Track deallocations if TrackAllocates is true and Size is present and > 0.
+    integer, intent(in) :: Status
+    character(len=*), intent(in) :: ModuleNameIn, ItsName
+    integer, intent(in), optional :: Size ! Bytes, <= 0 for no tracking
+
+    if ( status /= 0 ) then
+      call MLSMessage ( MLSMSG_Warning, moduleNameIn, &
+        & MLSMSG_DeAllocate // itsName )
+      dealloc_status = max(dealloc_status, status)
+    else if ( collect_garbage_each_time ) then
+      call mls_gc_now
+    end if
+    if ( status == 0 .and. trackAllocates .and. present(size) ) then
+      if ( size > 0 ) &
+        & call ReportAllocateDeallocate ( itsName, moduleNameIn, -size )
+    end if
+
+  end subroutine Test_DeAllocate
+
+  ! =====     Private Procedures     ===================================
+  ! ---------------------------------  Allocate_Test_Character_1d  -----
+  subroutine Allocate_Test_Character_1d ( To_Allocate, Dim1, &
+    & ItsName, ModuleName, LowBound, Fill )
+    character(len=*), pointer, dimension(:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: LowBound     ! Lower bound, default 1
+    character(len=*), intent(in), optional :: Fill
+    character(len=1), parameter :: Default = ''
+    integer, parameter :: ESize = E_ch
+    include "Allocate_Test_1D.f9h"
+  end subroutine Allocate_Test_Character_1d
+  ! ---------------------------------  Allocate_Test_Character_2d  -----
+  subroutine Allocate_Test_Character_2d ( To_Allocate, Dim1, Dim2, &
+    & ItsName, ModuleName, Low1, Low2, Fill )
+    character(len=*), pointer, dimension(:,:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    integer, intent(in) :: Dim2    ! Upper bound of second dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: Low1, Low2 ! default 1
+    character(len=*), intent(in), optional :: Fill ! To fill allocated array
+    character(len=1), parameter :: Default = ''
+    integer, parameter :: ESize = E_ch
+    include "Allocate_Test_2D.f9h"
+  end subroutine Allocate_Test_Character_2d
+  ! ---------------------------------  Allocate_Test_Character_3d  -----
+  subroutine Allocate_Test_Character_3d ( To_Allocate, Dim1, Dim2, Dim3, &
+    & ItsName, ModuleName, Low1, Low2, Low3, Fill )
+    character(len=*), pointer, dimension(:,:,:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    integer, intent(in) :: Dim2    ! Upper bound of second dim. of To_Allocate
+    integer, intent(in) :: Dim3    ! Upper bound of third dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: Low1, Low2, Low3 ! Low bounds for dimensions
+    character(len=*), intent(in), optional :: Fill ! To fill allocated array
+    character(len=1), parameter :: Default = ''
+    integer, parameter :: ESize = E_ch
+    include "Allocate_Test_3D.f9h"
+  end subroutine Allocate_Test_Character_3d
+  ! ------------------------------------  Allocate_Test_RealR8_1d  -----
+  subroutine Allocate_Test_RealR8_1d ( To_Allocate, Dim1, &
+    & ItsName, ModuleName, LowBound, Fill )
+    double precision, pointer, dimension(:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: LowBound     ! Lower bound, default 1
+    double precision, intent(in), optional :: Fill
+    double precision, parameter :: Default = 0.0d0
+    integer, parameter :: ESize = E_dp
+    include "Allocate_Test_1D.f9h"
+  end subroutine Allocate_Test_RealR8_1d
+  ! ------------------------------------  Allocate_Test_RealR8_2d  -----
+  subroutine Allocate_Test_RealR8_2d ( To_Allocate, Dim1, Dim2, &
+    & ItsName, ModuleName, Low1, Low2, Fill )
+    double precision, pointer, dimension(:,:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    integer, intent(in) :: Dim2    ! Upper bound of second dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: Low1, Low2 ! Low bounds for dimensions
+    double precision, intent(in), optional :: Fill
+    double precision, parameter :: Default = 0.0d0
+    integer, parameter :: ESize = E_dp
+    include "Allocate_Test_2D.f9h"
+  end subroutine Allocate_Test_RealR8_2d
+  ! ------------------------------------  Allocate_Test_RealR8_3d  -----
+  subroutine Allocate_Test_RealR8_3d ( To_Allocate, Dim1, Dim2, Dim3, &
+    & ItsName, ModuleName, Low1, Low2, Low3, Fill )
+    double precision, pointer, dimension(:,:,:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    integer, intent(in) :: Dim2    ! Upper bound of second dim. of To_Allocate
+    integer, intent(in) :: Dim3    ! Upper bound of third dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: Low1, Low2, Low3 ! Low bounds for dimensions
+    double precision, intent(in), optional :: Fill
+    double precision, parameter :: Default = 0.0d0
+    integer, parameter :: ESize = E_dp
+    include "Allocate_Test_3D.f9h"
+  end subroutine Allocate_Test_RealR8_3d
+  ! -----------------------------------  Allocate_Test_Integer_1d  -----
+  subroutine Allocate_Test_Integer_1d ( To_Allocate, Dim1, &
+    & ItsName, ModuleName, LowBound, Fill )
+    integer, pointer, dimension(:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: LowBound     ! Lower bound, default 1
+    integer, intent(in), optional :: Fill ! To fill allocated array
+    integer, parameter :: Default = 0
+    integer, parameter :: ESize = E_def
+    include "Allocate_Test_1D.f9h"
+  end subroutine Allocate_Test_Integer_1d
+  ! -----------------------------------  Allocate_Test_Integer_2d  -----
+  subroutine Allocate_Test_Integer_2d ( To_Allocate, Dim1, Dim2, &
+    & ItsName, ModuleName, Low1, Low2, Fill )
+    integer, pointer, dimension(:,:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    integer, intent(in) :: Dim2    ! Upper bound of second dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: Low1, Low2 ! default 1
+    integer, intent(in), optional :: Fill ! To fill allocated array
+    integer, parameter :: Default = 0
+    integer, parameter :: ESize = E_def
+    include "Allocate_Test_2D.f9h"
+  end subroutine Allocate_Test_Integer_2d
+  ! -----------------------------------  Allocate_Test_Integer_3d  -----
+  subroutine Allocate_Test_Integer_3d ( To_Allocate, Dim1, Dim2, Dim3, &
+    & ItsName, ModuleName, Low1, Low2, Low3, Fill )
+    integer, pointer, dimension(:,:,:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    integer, intent(in) :: Dim2    ! Upper bound of second dim. of To_Allocate
+    integer, intent(in) :: Dim3    ! Upper bound of third dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: Low1, Low2, Low3 ! default 1
+    integer, intent(in), optional :: Fill ! To fill allocated array
+    integer, parameter :: Default = 0
+    integer, parameter :: ESize = E_def
+    include "Allocate_Test_3D.f9h"
+  end subroutine Allocate_Test_Integer_3d
+  ! -----------------------------------  Allocate_Test_Logical_1d  -----
+  subroutine Allocate_Test_Logical_1d ( To_Allocate, Dim1, &
+    & ItsName, ModuleName, LowBound, Fill )
+    logical, pointer, dimension(:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: LowBound     ! Lower bound, default 1
+    logical, intent(in), optional :: Fill ! To fill allocated array
+    logical, parameter :: Default = .false.
+    integer, parameter :: ESize = E_def
+    include "Allocate_Test_1D.f9h"
+  end subroutine Allocate_Test_Logical_1d
+  ! -------------------------------------  Allocate_Test_Logical_2d  -----
+  subroutine Allocate_Test_Logical_2d ( To_Allocate, Dim1, Dim2, &
+    & ItsName, ModuleName, Low1, Low2, Fill )
+    logical, pointer, dimension(:,:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    integer, intent(in) :: Dim2    ! Upper bound of second dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: Low1, Low2 ! Low bounds for dimensions
+    logical, intent(in), optional :: Fill
+    logical, parameter :: Default = .false.
+    integer, parameter :: ESize = e_def
+    include "Allocate_Test_2D.f9h"
+  end subroutine Allocate_Test_Logical_2d
+  ! -------------------------------------  Allocate_Test_Logical_3d  -----
+  subroutine Allocate_Test_Logical_3d ( To_Allocate, Dim1, Dim2, Dim3, &
+    & ItsName, ModuleName, Low1, Low2, Low3, Fill )
+    logical, pointer, dimension(:,:,:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    integer, intent(in) :: Dim2    ! Upper bound of second dim. of To_Allocate
+    integer, intent(in) :: Dim3    ! Upper bound of third dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: Low1, Low2, Low3 ! Low bounds for dimensions
+    logical, intent(in), optional :: Fill
+    logical, parameter :: Default = .false.
+    integer, parameter :: ESize = e_def
+    include "Allocate_Test_3D.f9h"
+  end subroutine Allocate_Test_Logical_3d
+  ! --------------------------------------  Allocate_Test_RealR4_1d  -----
+  subroutine Allocate_Test_RealR4_1d ( To_Allocate, Dim1, &
+    & ItsName, ModuleName, LowBound, Fill )
+    real, pointer, dimension(:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: LowBound     ! Lower bound, default 1
+    real, intent(in), optional :: Fill
+    real, parameter :: Default = 0.0
+    integer, parameter :: ESize = e_def
+    include "Allocate_Test_1D.f9h"
+  end subroutine Allocate_Test_RealR4_1d
+  ! --------------------------------------  Allocate_Test_RealR4_2d  -----
+  subroutine Allocate_Test_RealR4_2d ( To_Allocate, Dim1, Dim2, &
+    & ItsName, ModuleName, Low1, Low2, Fill )
+    real, pointer, dimension(:,:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    integer, intent(in) :: Dim2    ! Upper bound of second dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: Low1, Low2 ! Low bounds for dimensions
+    real, intent(in), optional :: Fill
+    real, parameter :: Default = 0.0
+    integer, parameter :: ESize = e_def
+    include "Allocate_Test_2D.f9h"
+  end subroutine Allocate_Test_RealR4_2d
+  ! ------------------------------------  Allocate_Test_RealR4_3d  -----
+  subroutine Allocate_Test_RealR4_3d ( To_Allocate, Dim1, Dim2, Dim3, &
+    & ItsName, ModuleName, Low1, Low2, Low3, Fill )
+    real, pointer, dimension(:,:,:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    integer, intent(in) :: Dim2    ! Upper bound of second dim. of To_Allocate
+    integer, intent(in) :: Dim3    ! Upper bound of third dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: Low1, Low2, Low3 ! Low bounds for dimensions
+    real, intent(in), optional :: Fill
+    real, parameter :: Default = 0.0
+    integer, parameter :: ESize = e_def
+    include "Allocate_Test_3D.f9h"
+  end subroutine Allocate_Test_RealR4_3d
+  ! -------------------------------  Deallocate_Test_Character_1d  -----
+  subroutine Deallocate_Test_Character_1d ( To_Deallocate, ItsName, ModuleName )
+    character(len=*), pointer, dimension(:) :: To_Deallocate
+    integer, parameter :: ESize = e_ch
+    include "Deallocate_Test.f9h"
+  end subroutine Deallocate_Test_Character_1d
+  ! -------------------------------  Deallocate_Test_Character_2d  -----
+  subroutine Deallocate_Test_Character_2d ( To_Deallocate, ItsName, ModuleName )
+    character(len=*), pointer, dimension(:,:) :: To_Deallocate
+    integer, parameter :: ESize = e_ch
+    include "Deallocate_Test.f9h"
+  end subroutine Deallocate_Test_Character_2d
+  ! -------------------------------  Deallocate_Test_Character_3d  -----
+  subroutine Deallocate_Test_Character_3d ( To_Deallocate, ItsName, ModuleName )
+    character(len=*), pointer, dimension(:,:,:) :: To_Deallocate
+    integer, parameter :: ESize = e_ch
+    include "Deallocate_Test.f9h"
+  end subroutine Deallocate_Test_Character_3d
+  ! ----------------------------------  Deallocate_Test_RealR8_1d  -----
+  subroutine Deallocate_Test_RealR8_1d ( To_Deallocate, ItsName, ModuleName )
+    double precision, pointer, dimension(:) :: To_Deallocate
+    integer, parameter :: ESize = e_dp
+    include "Deallocate_Test.f9h"
+  end subroutine Deallocate_Test_RealR8_1d
+  ! ----------------------------------  Deallocate_Test_RealR8_2d  -----
+  subroutine Deallocate_Test_RealR8_2d ( To_Deallocate, ItsName, ModuleName )
+    double precision, pointer, dimension(:,:) :: To_Deallocate
+    integer, parameter :: ESize = e_dp
+    include "Deallocate_Test.f9h"
+  end subroutine Deallocate_Test_RealR8_2d
+  ! ----------------------------------  Deallocate_Test_RealR8_3d  -----
+  subroutine Deallocate_Test_RealR8_3d ( To_Deallocate, ItsName, ModuleName )
+    double precision, pointer, dimension(:,:,:) :: To_Deallocate
+    integer, parameter :: ESize = e_dp
+    include "Deallocate_Test.f9h"
+  end subroutine Deallocate_Test_RealR8_3d
+  ! ---------------------------------  Deallocate_Test_Integer_1d  -----
+  subroutine Deallocate_Test_Integer_1d ( To_Deallocate, ItsName, ModuleName )
+    integer, pointer, dimension(:) :: To_Deallocate
+    integer, parameter :: ESize = e_def
+    include "Deallocate_Test.f9h"
+  end subroutine Deallocate_Test_Integer_1d
+  ! ---------------------------------  Deallocate_Test_Integer_2d  -----
+  subroutine Deallocate_Test_Integer_2d ( To_Deallocate, ItsName, ModuleName )
+    integer, pointer, dimension(:,:) :: To_Deallocate
+    integer, parameter :: ESize = e_def
+    include "Deallocate_Test.f9h"
+  end subroutine Deallocate_Test_Integer_2d
+  ! ---------------------------------  Deallocate_Test_Integer_3d  -----
+  subroutine Deallocate_Test_Integer_3d ( To_Deallocate, ItsName, ModuleName )
+    integer, pointer, dimension(:,:,:) :: To_Deallocate
+    integer, parameter :: ESize = e_def
+    include "Deallocate_Test.f9h"
+  end subroutine Deallocate_Test_Integer_3d
+  ! ---------------------------------  Deallocate_Test_Logical_1d  -----
+  subroutine Deallocate_Test_Logical_1d ( To_Deallocate, ItsName, ModuleName )
+    logical, pointer, dimension(:) :: To_Deallocate
+    integer, parameter :: ESize = e_def
+    include "Deallocate_Test.f9h"
+  end subroutine Deallocate_Test_Logical_1d
+  ! ---------------------------------  Deallocate_Test_Logical_2d  -----
+  subroutine Deallocate_Test_Logical_2d ( To_Deallocate, ItsName, ModuleName )
+    logical, pointer, dimension(:,:) :: To_Deallocate
+    integer, parameter :: ESize = e_def
+    include "Deallocate_Test.f9h"
+  end subroutine Deallocate_Test_Logical_2d
+  ! ---------------------------------  Deallocate_Test_Logical_3d  -----
+  subroutine Deallocate_Test_Logical_3d ( To_Deallocate, ItsName, ModuleName )
+    logical, pointer, dimension(:,:,:) :: To_Deallocate
+    integer, parameter :: ESize = e_def
+    include "Deallocate_Test.f9h"
+  end subroutine Deallocate_Test_Logical_3d
+  ! ------------------------------------  Deallocate_Test_RealR4_1d  -----
+  subroutine Deallocate_Test_RealR4_1d ( To_Deallocate, ItsName, ModuleName )
+    real, pointer, dimension(:) :: To_Deallocate
+    integer, parameter :: ESize = e_def
+    include "Deallocate_Test.f9h"
+  end subroutine Deallocate_Test_RealR4_1d
+  ! ------------------------------------  Deallocate_Test_RealR4_2d  -----
+  subroutine Deallocate_Test_RealR4_2d ( To_Deallocate, ItsName, ModuleName )
+    real, pointer, dimension(:,:) :: To_Deallocate
+    integer, parameter :: ESize = e_def
+    include "Deallocate_Test.f9h"
+  end subroutine Deallocate_Test_RealR4_2d
+  ! ----------------------------------  Deallocate_Test_RealR4_3d  -----
+  subroutine Deallocate_Test_RealR4_3d ( To_Deallocate, ItsName, ModuleName )
+    real, pointer, dimension(:,:,:) :: To_Deallocate
+    integer, parameter :: ESize = e_def
+    include "Deallocate_Test.f9h"
+  end subroutine Deallocate_Test_RealR4_3d
 
   ! ------------------------------------------------  Not_Used_Here  -----
   logical function not_used_here()
@@ -743,6 +481,12 @@ contains
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.22  2005/07/20 01:32:55  vsnyder
+! Add Test_Allocate and Test_Deallocate.  Regularize routines.  All now have an
+! optional Fill argument.  For a given rank, calling sequences are the same
+! (modulo types), including argument names.  Add [De]Allocate_Test_Logical_3d.
+! Move guts of [De]Allocate_Test* into include files.
+!
 ! Revision 2.21  2005/06/03 01:53:06  vsnyder
 ! New copyright notice, move Id to not_used_here to avoid cascades
 !
