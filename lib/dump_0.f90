@@ -1460,50 +1460,34 @@ contains
 
   end subroutine DUMP_NAME_V_PAIRS_REAL
 
-  ! ----------------------------------------------------- DumpSize_integer -----
+  ! --------------------------------------------- DumpSize_integer -----
   subroutine DumpSize_integer ( n, advance )
     integer, intent(in) :: N
     character(len=*), intent(in), optional :: ADVANCE
     ! Local parameters
-    integer, parameter :: KB = 1024
-    integer, parameter :: MB = KB * 1024
-    integer, parameter :: GB = MB * 1024
-    ! Make a 'nice' output
-    if ( n < kb ) then
-      call output ( n*1.0, format='(f6.1)' )
-      call output ( ' bytes', advance=advance )
-    else if ( n < Mb ) then
-      call output ( n*1.0/kb, format='(f6.1)' )
-      call output ( ' kb', advance=advance )
-    else if ( n < Gb ) then
-      call output ( n*1.0/Mb, format='(f6.1)' )
-      call output ( ' Mb', advance=advance )
-    else
-      call output ( n*1.0/Gb, format='(f6.1)' )
-      call output ( ' Gb', advance=advance )
-    end if
+    call dumpSize ( n*1.0, advance )
   end subroutine DumpSize_integer
 
-  ! ----------------------------------------------------- DumpSize_real -----
+  ! ------------------------------------------------ DumpSize_real -----
   subroutine DumpSize_real ( n, advance )
     real, intent(in) :: N
     character(len=*), intent(in), optional :: ADVANCE
     ! Local parameters
-    integer, parameter :: KB = 1024
-    integer, parameter :: MB = KB * 1024
-    integer, parameter :: GB = MB * 1024
+    real, parameter :: KB = 1024.0
+    real, parameter :: MB = KB * 1024.0
+    real, parameter :: GB = MB * 1024.0
     ! Make a 'nice' output
     if ( n < kb ) then
-      call output ( n*1.0, format='(f6.1)' )
+      call output ( n, format='(f6.1)' )
       call output ( ' bytes', advance=advance )
     else if ( n < Mb ) then
-      call output ( n*1.0/kb, format='(f6.1)' )
+      call output ( n/kb, format='(f6.1)' )
       call output ( ' kb', advance=advance )
     else if ( n < Gb ) then
-      call output ( n*1.0/Mb, format='(f6.1)' )
+      call output ( n/Mb, format='(f6.1)' )
       call output ( ' Mb', advance=advance )
     else
-      call output ( n*1.0/Gb, format='(f6.1)' )
+      call output ( n/Gb, format='(f6.1)' )
       call output ( ' Gb', advance=advance )
     end if
   end subroutine DumpSize_real
@@ -1641,6 +1625,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.46  2005/07/20 01:33:47  vsnyder
+! Simplify DumpSize routines
+!
 ! Revision 2.45  2005/06/22 17:25:48  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
