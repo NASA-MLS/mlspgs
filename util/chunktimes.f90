@@ -66,7 +66,7 @@ program chunktimes ! Reads chunk times from l2aux file(s)
                                                     ! E.g., 'NumCompletedChunks'
     character(len=3)   :: convert= ' '              ! 's2h', 'h2s', ''
     integer            :: hdfVersion = HDFVERSION_5
-    integer            :: finalPhase = 10           ! phase number ~ total
+    integer            :: finalPhase = 12           ! phase number ~ total
     integer            :: nHosts = 0                ! number of hosts
     real(r4)           :: longChunks = 0._r4
   end type options_T
@@ -469,7 +469,7 @@ contains
       write (*,*) '                         print only the value[s] of param1[..]'
       write (*,*) '          -hdf m      => hdfVersion is m (5)'
       write (*,*) '          -l t        => show chunks that took longer than t'
-      write (*,*) '          -n n        => use phase number n (10)'
+      write (*,*) '          -n n        => use phase number n (12)'
       write (*,*) '          -nstat      => skip showing statistics'
       write (*,*) '          -s2h        => convert from sec to hours; or'
       write (*,*) '          -h2s        => convert from hours to sec'
@@ -671,6 +671,9 @@ end program chunktimes
 !==================
 
 ! $Log$
+! Revision 1.10  2005/06/22 19:27:32  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 1.9  2005/04/18 16:27:18  pwagner
 ! Mistakenly deallocated timings before possibly needing to use it--fixed
 !
