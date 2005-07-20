@@ -139,7 +139,7 @@ contains
     integer, intent(in) :: Lbounds(:), Ubounds(:)
     integer, intent(in), optional :: ElementSize ! Bytes, <= 0 for no tracking
     character(127) :: Bounds
-    integer :: I
+    integer :: I, L
 
     if ( status /= 0 ) then
       write ( bounds, '("(",i0,":",i0:(",",i0,":",i0))' ) &
@@ -481,6 +481,9 @@ contains
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.23  2005/07/20 16:22:52  pwagner
+! Declared undeclared variable L; compiles successfully
+!
 ! Revision 2.22  2005/07/20 01:32:55  vsnyder
 ! Add Test_Allocate and Test_Deallocate.  Regularize routines.  All now have an
 ! optional Fill argument.  For a given rank, calling sequences are the same
