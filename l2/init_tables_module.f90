@@ -882,6 +882,8 @@ contains ! =====     Public procedures     =============================
                     f+f_quantities, n+n_dot, &
              begin, f+f_vmrQuantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
+             begin, f+f_whereFill, t+t_boolean, n+n_field_type, &
+             begin, f+f_whereNotFill, t+t_boolean, n+n_field_type, &
              begin, f+f_width, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def /), &
              continue = .true. ) ! WHEW! Finally done for s_fill
@@ -1354,6 +1356,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.406  2005/07/21 23:43:43  pwagner
+! Added extras for explicit fill fields where fillvalued
+!
 ! Revision 2.405  2005/07/12 17:40:24  pwagner
 ! May fill status with condition that no gmaos found
 !
