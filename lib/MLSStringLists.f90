@@ -115,6 +115,16 @@ MODULE MLSStringLists               ! Module to treat string lists
 ! Many of these routines take optional arguments that greatly modify
 ! their default operation
 
+! One standard is the character flag "options" which affects how loosely
+! string matches may be interpreted
+! it may include any of the following (poss. in combination, e.g. "-wc")
+! w    Wildcard * which allows 'a*' to equal 'abcd'
+! c    case insensitive which allows 'ABCD' to equal 'abcd'
+! f    flush left which allows 'abcd' to equal '  abcd'
+
+! The above is to replace the countEmpty, caseSensitive, etc. that are
+! separate optional args to many of the current module procedures
+
 ! Warnings: 
 ! (1) in the routines Array2List, and SortArray
 ! the input arguments include an array of strings;
@@ -2053,20 +2063,28 @@ CONTAINS
   ! If the test switch were "abc" the returned value would be 0
   ! If the test switch were "xyz" the returned value would be -1
   
-  FUNCTION SwitchDetail(inList, test_switch) RESULT (detail)
+  ! The behavior may be modified by options flag
+  ! For which see comment above
+  
+  FUNCTION SwitchDetail(inList, test_switch, options) RESULT (detail)
     ! Dummy arguments
     CHARACTER (LEN=*), INTENT(IN)             :: inList
     CHARACTER (LEN=*), INTENT(IN)             :: test_switch
     integer                                   :: detail
+    character (len=*), intent(in), optional  :: OPTIONS
 
     ! Local variables
-    integer :: elem
-    integer :: nElements
-    integer, parameter :: MAXELEMENTLENGTH = 80
     logical, parameter :: COUNTEMPTY = .true.
-
+    integer :: elem
+    integer, parameter :: MAXELEMENTLENGTH = 80
     CHARACTER (LEN=MAXELEMENTLENGTH)           :: listElement
+    character(len=8) :: myOptions
+    integer :: nElements
+    character (len=len(test_switch))           :: switch
+
     ! Executable code
+    myOptions = ''
+    if ( present(options) ) myOptions = lowercase(options)
 
 	nElements = NumStringElements(inList, countEmpty)
 	
@@ -2074,18 +2092,30 @@ CONTAINS
 		detail = -1
 		RETURN
 	ENDIF
+   
+   if ( index(myOptions, 'c') > 0 ) then
+     switch = lowercase(test_switch)
+   else
+     switch = test_switch
+   endif
 
 	! Check for matches--snipping off any leading blanks
+   ! (That means 'f' is by default on, contradicting notes above)
 	DO elem=1, nElements
 		CALL GetStringElement(inList, listElement, elem, countEmpty)
+      if ( index(myOptions, 'c') > 0 ) listElement = lowercase(listElement)
       if (trim(listElement) /= ' ' .and. &
-          & index(trim(listElement), trim(test_switch)) > 0) then
+          & index(trim(listElement), trim(switch)) > 0) then
         call ReadIntsFromChars(trim(listElement), detail, ignore="*")
         return
       endif
 	ENDDO
-	
-	detail = -1
+
+  	if ( index(myOptions, 'w') > 0 .and. index(inList, '*') > 0 ) then
+     detail = 0
+   else
+     detail = -1
+   endif
 
   END FUNCTION SwitchDetail
 
@@ -2778,6 +2808,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.10  2005/07/21 23:38:18  pwagner
+! Added explanation of to-be-standard character flag options
+!
 ! Revision 2.9  2005/06/22 17:25:50  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
