@@ -47,8 +47,8 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! Update these lines before delivery to sips     
   ! id to print out in response to "--version" command-line option       
   character(LEN=*), dimension(2), parameter :: CURRENT_VERSION_ID = (/ &    
-    & 'v1.51 swdev team                                                      ', &       
-    & 'Copyright (c) 2005, California Institute of Technology.               '/)
+    & 'v1.51 swdev team              ', &       
+    & 'Copyright statement omitted   '/)
      
   ! Set the following to 1 before delivering to sips;                       
   ! when set to 0, it allows program to run w/o creating metadata           
@@ -84,10 +84,6 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! on input                                                                
   integer            :: DEFAULT_HDFVERSION_READ = WILDCARDHDFVERSION
   integer            :: LEVEL1_HDFVERSION = WILDCARDHDFVERSION
-
-  integer, parameter :: ILLEGALL1BRADID=-1   ! sfstart should catch
-  integer, parameter :: MAXNUML1BRADIDS=&
-  & mlspcf_l1b_rad_end-mlspcf_l1b_rad_start+1   ! In case more than one
 
   ! What units to use in summarizing timings at end of run
   integer            :: SECTIONTIMINGUNITS = L_SECONDS
@@ -128,6 +124,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.33  2005/07/21 23:40:54  pwagner
+! Removed unneeded ILLEGALL1BRADID, MAXNUML1BRADIDS
+!
 ! Revision 2.32  2005/06/22 18:57:02  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
