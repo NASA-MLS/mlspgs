@@ -91,8 +91,7 @@ module L1BData
 ! Dump (l1bData_T l1bData, int details)
 ! int FindL1BData (int files(:), char filedName, [int hdfVersion]) 
 ! L1boaSetup (int root, L1BInfo_T L1BInfo, int f_file, [int hdfVersion])
-! L1bradSetup (int root, L1BInfo_T L1BInfo, int f_file, 
-!               int MaxNumL1BRadIDs, int illegalL1BRadID, [int hdfVersion])
+! L1bradSetup (int root, L1BInfo_T L1BInfo, int f_file, [int hdfVersion])
 ! ReadL1BData (int L1FileHandle, char QuantityName, l1bData_T l1bData,
 !               int NoMAFs, int Flag, [int FirstMAF], [int LastMAF],
 !               [log NeverFail], [int hdfVersion]) 
@@ -962,17 +961,13 @@ contains ! ============================ MODULE PROCEDURES ======================
   end subroutine L1boaSetup
 
   ! ------------------------------------------------- L1BRadSetup  -----
-  ! subroutine L1bradSetup ( Root, L1bInfo, F_File, MaxNumL1BRadIDs, &
-  subroutine L1bradSetup ( Root, filedatabase, F_File, MaxNumL1BRadIDs, &
-    & illegalL1BRadID, hdfVersion )
+  subroutine L1bradSetup ( Root, filedatabase, F_File, &
+    & hdfVersion )
     ! Take file name from l2cf, open, and store unit no. in l1bInfo
     ! Dummy arguments
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-    ! type (L1BInfo_T) :: L1BINFO         ! File handles etc. for L1B dataset
     integer, intent(in) :: ROOT         ! of the l1brad file specification.
     integer, intent(in) :: F_FILE
-    integer, intent(in) :: MAXNUML1BRADIDS
-    integer, intent(in) :: ILLEGALL1BRADID
     integer, optional, intent(inout) :: hdfVersion
 
     ! Local variables
@@ -1000,40 +995,6 @@ contains ! ============================ MODULE PROCEDURES ======================
         if ( returnStatus == 0 ) then
           numFiles = addFileToDatabase(filedatabase, L1BFile)
         endif
-!         if ( .NOT. associated(l1bInfo%L1BRADIDs) ) then
-!           allocate ( l1bInfo%L1BRADIDs(MAXNUML1BRADIDS), stat=status )
-!           allocate ( l1bInfo%L1BRADFileNames(MAXNUML1BRADIDS), stat=status )
-!           l1bInfo%L1BRADIDs = ILLEGALL1BRADID
-!           if ( status /= 0 ) &
-!             & call announce_error ( son, 'Allocation failed for l1bInfo' )
-!         endif
-!         the_hdf_version = mls_hdf_version(FileName)
-!         if ( the_hdf_Version == FILENOTFOUND ) &
-!           call MLSMessage ( MLSMSG_Error, ModuleName, &
-!             & 'File not found; make sure the name and path are correct' &
-!             & // trim(fileName) )
-! 
-!         if ( present(hdfVersion) ) then
-!           sd_id = mls_io_gen_openF('hg', .true., error, &
-!             & record_length, DFACC_READ, &
-!             & FileName, hdfVersion=the_hdf_version, debugOption=.false.)
-!         else
-!           sd_id = mls_io_gen_openF('hg', .true., error, &
-!             & record_length, DFACC_READ, &
-!             & FileName)
-!         end if
-!         if ( sd_id <= 0 ) then
-!           call announce_error ( son, &
-!             & 'Error opening L1BRAD file: ' //Filename)
-!         else if ( ifl1 == MAXNUML1BRADIDS ) then
-!           call announce_error ( son, "Cannot open any more L1BRAD files" )
-!           exit
-!         else
-!           ifl1 = ifl1 + 1
-!           l1bInfo%L1BRADIDs(ifl1) = sd_id
-!           l1bInfo%L1BRADFileNames(ifl1) = Filename
-!           if ( present(hdfVersion) ) hdfVersion = the_hdf_version
-!         end if
            if ( present(hdfVersion) ) hdfVersion = L1BFile%HDFVersion
       else
         call announce_error ( son, &
@@ -3002,6 +2963,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.59  2005/07/21 23:36:28  pwagner
+! Simplified L1bradSetup
+!
 ! Revision 2.58  2005/06/22 17:25:49  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
