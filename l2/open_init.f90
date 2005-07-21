@@ -72,8 +72,7 @@ contains ! =====     Public Procedures     =============================
     use L2ParInfo, only: parallel
     use MLSFiles, only: &
       & addFileToDatabase, InitializeMLSFile, mls_openFile
-    use MLSL2Options, only: TOOLKIT, PENALTY_FOR_NO_METADATA, &
-      & ILLEGALL1BRADID, MAXNUML1BRADIDS
+    use MLSL2Options, only: TOOLKIT, PENALTY_FOR_NO_METADATA
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use MLSPCF2, only: MLSPCF_L1B_OA_START, MLSPCF_L1B_RAD_END, &
       &                MLSPCF_L1B_RAD_START, &
@@ -172,10 +171,6 @@ contains ! =====     Public Procedures     =============================
    l2pcf%logGranID = '(not applicable)'      ! will not create a Log file
    l2pcf%spec_keys = '(not applicable)'      ! will not create metadata
    l2pcf%spec_hash = '(not applicable)'      ! will not create metadata
-   allocate ( L2pcf%L1BRADPCFIds(MAXNUML1BRADIDS), stat=status )
-   L2pcf%L1BRADPCFIds = ILLEGALL1BRADID
-   if ( status /= 0 ) &
-     & call announce_error ( 0, 'Allocation failed for L1BRADPCFIDs' )
 
    if( .not. TOOLKIT ) then
      if ( levels(gen) > 0 .or. index(switches,'pcf') /= 0 ) then
@@ -204,7 +199,7 @@ contains ! =====     Public Procedures     =============================
       if ( returnStatus == 0 ) then
         numFiles = addFileToDatabase(filedatabase, L1BFile)
         ifl1 = ifl1 + 1
-        L2pcf%L1BRADPCFIds(ifl1) = L1BFile%PCFID
+        ! L2pcf%L1BRADPCFIds(ifl1) = L1BFile%PCFID
       endif
 
     end do ! L1FileHandle = mlspcf_l1b_rad_start, mlspcf_l1b_rad_end
@@ -221,7 +216,7 @@ contains ! =====     Public Procedures     =============================
     call mls_openFile(L1BFile, returnStatus)
     if ( returnStatus == PGS_S_SUCCESS ) then
 
-        l2pcf%L1BOAPCFId = mlspcf_l1b_oa_start
+        ! l2pcf%L1BOAPCFId = mlspcf_l1b_oa_start
         if(index(switches, 'pro') /= 0) then  
           call announce_success(L1BFile%name, 'l1boa', &                     
           & hdfVersion=L1BFile%HDFVersion)                    
@@ -256,8 +251,6 @@ contains ! =====     Public Procedures     =============================
     ! Later you may look also in l1brad files
     GlobalAttributes%LastMAFCtr = FindMaxMAF ( (/l1BFile/), &
       & GlobalAttributes%FirstMAFCtr )
-    ! print *, 'GlobalAttributes%FirstMAFCtr ', GlobalAttributes%FirstMAFCtr
-    ! print *, 'GlobalAttributes%LastMAFCtr ', GlobalAttributes%LastMAFCtr
     ! Get the Start and End Times from PCF
 
     returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_CCSDSStartId, &
@@ -485,11 +478,6 @@ contains ! =====     Public Procedures     =============================
     do i = 1, size(filedatabase)
       L1BFile => filedatabase(i)
       if ( L1BFile%content == 'l1brad' ) then
-         if(associated(l2pcf%L1BRADPCFIds)) then
-           ifl1 = ifl1 + 1
-  	        call output ( 'PCFid:   ' )
-	        call output ( l2pcf%L1BRADPCFIds(ifl1), advance='yes' )
-         endif
          call output ( 'PCF id:   ' )                                       
     	   call output ( L1BFile%PCFID, advance='yes' )
   	      call output ( 'fileid:   ' )
@@ -535,8 +523,8 @@ contains ! =====     Public Procedures     =============================
       elseif ( L1BFile%content == 'l1boa' ) then
         call output ( 'L1OA file:', advance='yes' )
   
-        call output ( 'PCFid:   ' )
-        call output ( l2pcf%L1BOAPCFId, advance='yes' )
+        ! call output ( 'PCFid:   ' )
+        ! call output ( l2pcf%L1BOAPCFId, advance='yes' )
         call output ( 'PCFid:   ' )
         call output ( L1BFile%PCFId, advance='yes' )
         call output ( 'fileid:   ' )
@@ -662,6 +650,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.86  2005/07/21 23:45:21  pwagner
+! Removed unused l1b fileinfo fields from l2pcf
+!
 ! Revision 2.85  2005/07/12 17:17:46  pwagner
 ! Dropped global attribute InputVersion
 !
