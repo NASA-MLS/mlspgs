@@ -43,7 +43,6 @@ contains ! =====     Public Procedures     =============================
 
   !---------------------------------------------------  MLSL2Fill  -----
 
-  ! subroutine MLSL2Fill ( Root, L1bInfo, GriddedDataBase, VectorTemplates, &
   subroutine MLSL2Fill ( Root, filedatabase, GriddedDataBase, VectorTemplates, &
     & Vectors, QtyTemplates , Matrices, L2GPDatabase, L2AUXDatabase, &
     & FWModelConfig, Chunks, ChunkNo )
@@ -83,7 +82,8 @@ contains ! =====     Public Procedures     =============================
       & F_SOURCEQUANTITY, F_SOURCEVGRID, F_SPREAD, F_STATUS, F_SUFFIX, F_SUPERDIAGONAL, &
       & F_SYSTEMTEMPERATURE, F_TEMPERATUREQUANTITY, F_TEMPPRECISIONQUANTITY, &
       & F_TEMPLATE, F_TNGTECI, F_TERMS, &
-      & F_TYPE, F_USB, F_USBFRACTION, F_VECTOR, F_VMRQUANTITY, F_WIDTH, &
+      & F_TYPE, F_USB, F_USBFRACTION, F_VECTOR, F_VMRQUANTITY, &
+      & F_WHEREFILL, F_WHERENOTFILL, F_WIDTH, &
       & FIELD_FIRST, FIELD_LAST
     ! Now the literals:
     use INIT_TABLES_MODULE, only: L_ADDNOISE, L_APPLYBASELINE, L_ASCIIFILE, &
@@ -156,7 +156,7 @@ contains ! =====     Public Procedures     =============================
       & GetSignal, Signal_T
     use Molecules, only: L_H2O
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
-    use OUTPUT_M, only: BLANKS, OUTPUT
+    use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
     use PFAData_m, only: Flush_PFAData
     use QuantityTemplates, only: Epoch, QuantityTemplate_T
     use readAPriori, only: APrioriFiles
@@ -184,7 +184,6 @@ contains ! =====     Public Procedures     =============================
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the FILL section in the AST
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-    ! type( L1BInfo_T ), intent(in) :: L1BINFO
     type (griddedData_T), dimension(:), pointer :: GriddedDataBase
     type (vectorTemplate_T), dimension(:), pointer :: VectorTemplates
     type (vector_T), dimension(:), pointer :: Vectors
@@ -375,7 +374,6 @@ contains ! =====     Public Procedures     =============================
     integer :: H2OPRECISIONVECTORINDEX           ! In the vector database
     integer :: I, J                     ! Loop indices for section, spec, expr
     integer :: GLOBALUNIT               ! To go into the vector
-    logical :: IFMISSINGGMAO            ! Only if missing GMAO
     logical :: IGNOREZERO               ! Don't sum chi^2 at values of noise = 0
     logical :: IGNORENEGATIVE           ! Don't sum chi^2 at values of noise < 0
     logical :: IGNOREGEOLOCATION        ! Don't copy geolocation to vector qua 
@@ -413,6 +411,7 @@ contains ! =====     Public Procedures     =============================
     real, dimension(2) :: MULTIPLIER   ! To scale source,noise part of addNoise
     real(r8) :: MINVALUE                 ! Value of f_minValue field
     integer :: MINVALUEUNIT              ! Unit for f_minValue field
+    logical :: MISSINGGMAO              ! Only if missing GMAO
     integer :: MULTIPLIERNODE           ! For the parser
     integer :: NBWVECTORINDEX           ! In vector database
     integer :: NBWQUANTITYINDEX         ! In vector database
@@ -459,6 +458,7 @@ contains ! =====     Public Procedures     =============================
     integer :: SOURCE                   ! l_rows or l_colums for adoption
     integer :: SOURCEQUANTITYINDEX      ! in the quantities database
     integer :: SOURCEVECTORINDEX        ! In the vector database
+    logical :: SKIPFILL                 ! Don't execute Fill command
     logical :: SPREADFLAG               ! Do we spread values accross instances in explict
     integer :: STATUS                   ! Flag from allocate etc.
     integer :: STATUSVALUE              ! Vaue of f_status
@@ -490,6 +490,8 @@ contains ! =====     Public Procedures     =============================
     integer :: VGRIDINDEX               ! Index of sourceVGrid
     integer :: VMRQTYINDEX
     integer :: VMRQTYVCTRINDEX
+    logical :: WHEREFILL                ! Replace only fill values
+    logical :: WHERENOTFILL             ! Don't replace fill values
     integer :: WIDTH                    ! Width of boxcar
     integer :: MEASQTYINDEX
     integer :: MEASVECTORINDEX
@@ -533,7 +535,7 @@ contains ! =====     Public Procedures     =============================
       force = .false.
       fromPrecision = .false.
       got= .false.
-      ifMissingGMAO = .false.
+      MissingGMAO = .false.
       ignoreZero = .false.
       ignoreNegative = .false.
       ignoreGeolocation = .false.
@@ -560,8 +562,11 @@ contains ! =====     Public Procedures     =============================
       phiWindowUnits = phyq_angle
       phiZero = 0.0
       quadrature = .false.
+      skipFill = .false.
       statusValue = 0
       heightNode = 0
+      whereFill = .false.
+      whereNotFill = .false.
 
       ! Node_id(key) is now n_spec_args.
 
@@ -828,7 +833,8 @@ contains ! =====     Public Procedures     =============================
           case ( f_ignoreNegative )
             ignoreNegative = get_boolean ( gson )
           case ( f_ifMissingGMAO )
-            ifMissingGMAO = get_boolean ( gson )
+            MissingGMAO = get_boolean ( gson ) .and. &
+              & ( APrioriFiles%dao // AprioriFiles%ncep == ' ' )
           case ( f_instances )
             instancesNode = subtree(j,key)
           case ( f_integrationTime )
@@ -991,6 +997,7 @@ contains ! =====     Public Procedures     =============================
           case ( f_spread ) ! For explicit fill, note that gson here is not same as others
             spreadFlag = get_boolean ( gson )
           case ( f_status )
+            valuesNode=subtree(j,key)
             call expr ( gson , unitAsArray, valueAsArray )
             if ( unitAsArray(1) /= PHYQ_Dimensionless ) &
               call Announce_error ( key, badUnitsForStatus )
@@ -1020,6 +1027,10 @@ contains ! =====     Public Procedures     =============================
           case ( f_vmrQuantity )     ! For special fill of columnAbundance
             vmrQtyVctrIndex = decoration(decoration(subtree(1,gson)))
             vmrQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_whereFill )
+            whereFill = get_boolean ( gson )
+          case ( f_whereNotFill )
+            whereNotFill = get_boolean ( gson )
           case ( f_width )
             call expr ( gson , unitAsArray, valueAsArray )
             if ( unitAsArray(1) /= PHYQ_Dimensionless ) &
@@ -1028,6 +1039,10 @@ contains ! =====     Public Procedures     =============================
           end select
         end do                  ! Loop over arguments to fill instruction
 
+        ! Put various conditions under which you would want to skip this fill
+        if ( got(f_ifMissingGMAO) .and. .not. MissingGMAO ) skipFill = .true.
+        if ( skipFill ) fillMethod = -1 ! We'll assume no l_value can be this
+        
         ! Now call various routines to do the filling
         quantity => GetVectorQtyByTemplateIndex( &
           & vectors(vectorIndex), quantityIndex )
@@ -1191,6 +1206,8 @@ contains ! =====     Public Procedures     =============================
         case ( l_explicit ) ! ---------  Explicitly fill from l2cf  -----
           if ( .not. got(f_explicitValues) ) &
             & call Announce_Error ( key, noExplicitValuesGiven )
+          ! if ( .not. ifMissingGMAO .or. APrioriFiles%dao // AprioriFiles%ncep == ' ') &
+          !  & call ExplicitFillVectorQuantity ( quantity, valuesNode, spreadFlag, &
           call ExplicitFillVectorQuantity ( quantity, valuesNode, spreadFlag, &
             & vectors(vectorIndex)%globalUnit, dontmask )
 
@@ -1753,28 +1770,42 @@ contains ! =====     Public Procedures     =============================
           call SpreadChannelFill ( quantity, channel, dontMask, key )
 
         case ( l_status )
-          if ( .not. all ( got ( (/ f_sourceQuantity, f_status /) ) ) ) &
-            & call Announce_Error ( key, no_error_code, &
+          if ( got(f_ifMissingGMAO) ) then
+            if ( MissingGMAO ) call ExplicitFillVectorQuantity ( quantity, &
+              & valuesNode, .true., phyq_Invalid, .true., verbose=.true. )
+!             if ( MissingGMAO ) call FillStatusQuantity ( key, quantity, &
+!               & sourceQuantity, statusValue, &
+!               & 0._r8, 0._r8, heightNode, additional )
+          elseif ( .not. all ( got ( (/ f_sourceQuantity, f_status /) ) ) ) then
+            call Announce_Error ( key, no_error_code, &
             & 'Need sourceQuantity and status fields for status fill' )
-          if ( .not. any ( got ( (/ f_minValue, f_maxValue /) ) ) ) &
-            & call Announce_Error ( key, no_error_code, &
+          elseif ( .not. any ( got ( (/ f_minValue, f_maxValue /) ) ) ) then
+            call Announce_Error ( key, no_error_code, &
             & 'Need one or both of maxValue, minValue for status fill' )
-          sourceQuantity => GetVectorQtyByTemplateIndex ( vectors(sourceVectorIndex), &
-            & sourceQuantityIndex )
-          if ( got ( f_maxValue) .and. &
-            &  all ( maxValueUnit /= (/ sourceQuantity%template%unit, PHYQ_Dimensionless/) ) ) &
-            & call Announce_Error ( key, no_error_code, &
-            & 'Bad unit for maxValue' )
-          if ( got ( f_minValue) .and. &
-            &  all ( minValueUnit /= (/ sourceQuantity%template%unit, PHYQ_Dimensionless/) ) ) &
-            & call Announce_Error ( key, no_error_code, &
-            & 'Bad unit for minValue' )
-          if ( all ( got ( (/ f_minValue, f_maxValue /) ) ) .and. &
-            &  maxValue <= minValue ) call Announce_Error ( key, no_error_code, &
-            & 'Bad combination of max/min values' )
-          if ( .not. ifMissingGMAO .or. APrioriFiles%dao // AprioriFiles%ncep == ' ') &
-            & call FillStatusQuantity ( key, quantity, sourceQuantity, statusValue, &
-            & minValue, maxValue, heightNode, additional )
+          else
+            sourceQuantity => &
+              &GetVectorQtyByTemplateIndex ( vectors(sourceVectorIndex), &
+              & sourceQuantityIndex )
+            if ( got ( f_maxValue) .and. &
+              &  all ( maxValueUnit /= &
+              & (/ sourceQuantity%template%unit, PHYQ_Dimensionless/) ) ) &
+              & call Announce_Error ( key, no_error_code, &
+              & 'Bad unit for maxValue' )
+            if ( got ( f_minValue) .and. &
+              &  all ( minValueUnit /= &
+              & (/ sourceQuantity%template%unit, PHYQ_Dimensionless/) ) ) &
+              & call Announce_Error ( key, no_error_code, &
+              & 'Bad unit for minValue' )
+            if ( all ( got ( (/ f_minValue, f_maxValue /) ) ) .and. &
+              &  maxValue <= minValue ) call Announce_Error ( key, no_error_code, &
+              & 'Bad combination of max/min values' )
+            ! if ( .not. ifMissingGMAO .or. APrioriFiles%dao // AprioriFiles%ncep == ' ') &
+            !  & call FillStatusQuantity ( key, quantity, sourceQuantity, statusValue, &
+            !  & minValue, maxValue, heightNode, additional )
+            call FillStatusQuantity ( key, quantity, &
+              & sourceQuantity, statusValue, &
+              & minValue, maxValue, heightNode, additional )
+          endif
           
         case ( l_vector ) ! ---------------- Fill from another qty.
           ! This is VERY PRELIMINARY, A more fancy one needs to be written
@@ -1864,7 +1895,8 @@ contains ! =====     Public Procedures     =============================
           call FillQtyWithWMOTropopause ( quantity, &
             & temperatureQuantity, refGPHQuantity, vGrids(internalVGridIndex) )
 
-
+        case (-1)
+          ! We must have decided to skip this fill
         case default
           call Announce_error ( key, 0, 'This fill method not yet implemented' )
         end select      ! s_method
@@ -5191,7 +5223,8 @@ contains ! =====     Public Procedures     =============================
 
     !=============================================== ExplicitFillVectorQuantity ==
     subroutine ExplicitFillVectorQuantity ( quantity, valuesNode, spreadFlag, &
-      & globalUnit, dontmask, AzEl )
+      & globalUnit, dontmask, &
+      & AzEl, whereNotFill, whereFill, FillValue, verbose )
 
       ! This routine is called from MLSL2Fill to fill values from an explicit
       ! fill command line
@@ -5206,16 +5239,27 @@ contains ! =====     Public Procedures     =============================
         ! desired quantity is components of Mag in the coordinate system to
         ! which Az and El are referenced.  So the number of values has to be
         ! a multiple of 3.
+      logical, intent(in), optional :: verbose       ! Print some extra stuff
+      ! The next two determine which values to replace
+      logical, intent(in), optional :: whereNotFill  ! only values /= FillValue
+      logical, intent(in), optional :: whereFill     ! only values == FillValue
+                                          ! (defaults to replacing all)
+      real(r8), intent(in), optional :: FillValue
 
       ! Local variables
       integer :: K                        ! Loop counter
       integer :: I,J                      ! Other indices
       logical :: MyAzEl
+      real(kind(quantity%values)) :: myFillValue
+      logical :: myVerbose
+      logical :: mywhereFill
+      logical :: mywhereNotFill
       integer :: NoValues
       integer :: TestUnit                 ! Unit to use
       integer, dimension(2) :: unitAsArray ! Unit for value given
       real (r8), dimension(2) :: valueAsArray ! Value given
       real (r8), pointer, dimension(:) :: VALUES
+      character(len=2) :: whichToReplace ! '/=' (.ne. fillValue), '==', or ' ' (always)
 
       ! Executable code
       myAzEl = .false.
@@ -5225,6 +5269,21 @@ contains ! =====     Public Procedures     =============================
       if ( globalUnit /= phyq_Invalid ) testUnit = globalUnit
       noValues = nsons(valuesNode) - 1
 
+      myFillValue = 0.
+      if ( present(FillValue) ) myFillValue = FillValue
+      
+      whichToReplace = ' '
+      mywhereFill = .false.
+      mywhereNotFill = .false.
+      if ( present(whereFill) ) mywhereFill = whereFill
+      if ( present(whereNotFill) ) mywhereNotFill = whereNotFill
+      if ( mywhereFill ) then
+        whichToReplace = '=='
+      elseif ( mywhereNotFill ) then
+        whichToReplace = '/='
+      endif
+      myVerbose = .false.
+      if ( present(verbose) ) myVerbose = verbose
       ! Check the dimensions work out OK
       if ( myAzEl .and. mod(noValues,3) /= 0 ) &
           & call Announce_Error ( valuesNode, invalidExplicitFill )
@@ -5282,6 +5341,13 @@ contains ! =====     Public Procedures     =============================
         end do
       end if
 
+      if ( myVerbose ) then
+        call output('Explicit fill of values for ', advance='no')
+        call display_string ( quantity%template%name )
+        call newline
+        call output(values)
+        call newline
+      endif
       ! Now loop through the quantity
       k = 0
       do i = 1, quantity%template%noInstances
@@ -5290,10 +5356,20 @@ contains ! =====     Public Procedures     =============================
           if ( .not. dontMask .and. associated ( quantity%mask ) ) then
             if ( iand ( ichar(quantity%mask(j,i)), m_Fill ) /= 0 ) cycle
           end if
+          select case (whichToReplace)
+          case ('/=')
+            if ( quantity%values(j,i) == myFillValue ) cycle
+          case ('==')
+            if ( quantity%values(j,i) /= myFillValue ) cycle
+          end select
           quantity%values(j,i) = values ( mod ( k-1, noValues ) + 1 )
         end do
       end do
 
+      if ( myVerbose ) then
+        call output(quantity%values(1,:))
+        call newline
+      endif
       ! Tidy up
       call Deallocate_test ( values, 'values', ModuleName )
 
@@ -6879,6 +6955,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.307  2005/07/21 23:42:31  pwagner
+! Repaired bugs in Fill status for missingGMAO; extras for explicit fill
+!
 ! Revision 2.306  2005/07/12 17:40:52  pwagner
 ! May fill status with condition that no gmaos found
 !
