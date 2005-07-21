@@ -89,6 +89,19 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! Many of these routines take optional arguments that greatly modify
 ! their default operation
 
+! One standard is the character flag "options" which affects how loosely
+! string matches may be interpreted
+! it may include any of the following (poss. in combination, e.g. "-wc")
+! w    Wildcard * which allows 'a*' to equal 'abcd'
+! c    case insensitive which allows 'ABCD' to equal 'abcd'
+! f    flush left which allows 'abcd' to equal '  abcd'
+! (These are different in streq_array1, however--either redo that function
+! to make it conform, or rename the options flag there to prevent
+! unnecessary confusion)
+
+! The above is to replace the countEmpty, caseSensitive, etc. that are
+! separate optional args to many of the current module procedures
+
 ! Warnings: 
 ! (1) in the routine LinearSearchStringArray
 ! the input arguments include an array of strings;
@@ -1821,6 +1834,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.58  2005/07/21 23:37:22  pwagner
+! Added explanation of to-be-standard character flag options
+!
 ! Revision 2.57  2005/06/22 17:25:50  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
