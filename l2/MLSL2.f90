@@ -201,6 +201,7 @@ program MLSL2
     switches='0sl'
     NeverCrash = .false.
   endif
+  use_wall_clock = SIPS_VERSION
 ! Initialize the lexer, symbol table, and tree checker's tables:
 !  ( Under some circumstances, you may need to increase these )
   call init_lexer ( n_chars=80000, n_symbols=4000, hash_table_size=611957 )
@@ -1061,6 +1062,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.140  2005/07/21 23:39:49  pwagner
+! use_wall_clock tied to SIPS_VERSION
+!
 ! Revision 2.139  2005/06/29 17:57:40  pwagner
 ! FILESTRINGTABLE set to TRUE
 !
