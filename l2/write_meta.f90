@@ -21,8 +21,7 @@ module WriteMetadata ! Populate metadata and write it out
   use MLSCommon, only: FileNameLen, NameLen, R8
   use MLSFiles, only: GetPCFromRef, mls_sfstart, mls_sfend, Split_path_name, &
    &  mls_hdf_version, HDFVERSION_5, mls_io_gen_openF
-  use MLSL2Options, only: PENALTY_FOR_NO_METADATA, TOOLKIT, &
-    & ILLEGALL1BRADID
+  use MLSL2Options, only: PENALTY_FOR_NO_METADATA, TOOLKIT
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use MLSPCF2, only: Mlspcf_mcf_l2gp_end, Mlspcf_mcf_l2gp_start, &
     & Mlspcf_mcf_l2log_start
@@ -132,8 +131,8 @@ module WriteMetadata ! Populate metadata and write it out
     character (len=fileNameLen) :: logGranID
 
     ! Parts of the input pointer
-    INTEGER :: L1BOAPCFId=0  ! The PCF ID for the L1BOA file
-    INTEGER, DIMENSION(:), POINTER :: L1BRADPCFIds => NULL()
+    ! INTEGER :: L1BOAPCFId=0  ! The PCF ID for the L1BOA file
+    ! INTEGER, DIMENSION(:), POINTER :: L1BRADPCFIds => NULL()
 
   end type PCFData_T
 
@@ -525,9 +524,11 @@ contains
 
     attrName = 'InputPointer'
     if ( SETINPUTPOINTER ) then
-      call InputInputPointer(inpt, &
-        & (/ L2pcf%L1BOAPCFId, L2pcf%L1BRADPCFIds(:) /) )
-      returnStatus = WriteInputPointer(groups(INVENTORY), attrName, inpt)
+!       call InputInputPointer(inpt, &
+!         & (/ L2pcf%L1BOAPCFId, L2pcf%L1BRADPCFIds(:) /) )
+!       returnStatus = WriteInputPointer(groups(INVENTORY), attrName, inpt)
+      call announce_error ( 0, &
+      & "Invalid method of writing InputPointer attribute.") 
     else
       ! returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
       !     INPUTPOINTERMESG)
@@ -1279,7 +1280,7 @@ contains
 
     ! Executable code
     nullify ( p%AnText )
-    nullify ( p%L1BRADPCFIds )
+    ! nullify ( p%L1BRADPCFIds )
   end subroutine NullifyPCFData
 
   ! ---------------------------------------------  announce_success  -----
@@ -1368,6 +1369,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.59  2005/07/21 23:45:03  pwagner
+! Removed unused l1b fileinfo fields from l2pcf
+!
 ! Revision 2.58  2005/06/22 18:57:02  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
