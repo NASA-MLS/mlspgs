@@ -497,13 +497,15 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
   !define(statusDoNotUse,1)
 ;; Bit 1 - Be careful with this profile                            
   !define(statusBeWary,2)
-;; Bit 2 - Empty for now
+;; Bit 2 - FYI                            
+  !define(statusInform,4)
 ;; Bit 3 - Empty for now
 ;; Bit 4 - This profile may have been affected by high altitude clouds
   !define(statusHighCloud,16)
 ;; Bit 5 - This profile may have been affected by low altitude clouds
   !define(statusLowCloud,32)
-;; Bit 6 - Empty for now
+;; Bit 6 - Missing gmao--fallback to climatology
+  !define(statusMissingGMAO,64)
 ;; Bit 7 - Empty for now
 ;; Bit 8 - This profile is based on too few radiances
   !define(statusTooFewRadiances,256)
@@ -544,6 +546,11 @@ Fill, quantity=otherDiagnostics.quality!MFproduct, method=quality, $
 
 ;; Status
 Fill, quantity=otherDiagnostics.status!MFproduct, method=explicit, explicitValues=0, /spread
+
+Fill, quantity=otherDiagnostics.status!MFproduct, method=status, $
+  status=!statusMissingGMAO+!statusInform, $
+  /additional, /ifMissingGMAO
+
 !ifdef(MFminrads,{
 ;; too few radiances
 Fill, quantity=temporaryDiagnostics.noRadsTmp, method=explicit, explicitValues=0, /spread
@@ -567,8 +574,10 @@ Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusL
   sourceQuantity=otherDiagnostics.lowCloudSummary!MFradiometer, minValue=!MFcloudmin, /additional
 })})
 
-
 ; $Log$
+; Revision 1.103  2005/01/27 18:36:13  pwagner
+; Removed SO2 from allStandardProductsWithColumns
+;
 ; Revision 1.102  2004/11/29 21:54:08  livesey
 ; Changed chisqProfile to be mean not max chi squared in the MAF.  It's
 ; used in deriving quality.
