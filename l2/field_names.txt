@@ -387,6 +387,8 @@ vRegQuants
 vRegWeights
 vRegWeightVec
 
+whereFill
+whereNotFill
 writeCounterMAF
 
 xStar
@@ -394,6 +396,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.144  2005/07/21 23:43:29  pwagner
+# Added extras for explicit fill fields where fillvalued
+#
 # Revision 2.143  2005/07/12 17:17:13  pwagner
 # Added ifMissingGMAO
 #
