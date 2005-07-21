@@ -86,8 +86,8 @@ contains
     use MLSFiles, only: FILENOTFOUND, HDFVERSION_5, &
       & AddFileToDataBase, GetPCFromRef, GetMLSFileByType, &
       & InitializeMLSFile, split_path_name
-    use MLSL2Options, only: ILLEGALL1BRADID, LEVEL1_HDFVERSION, &
-      & MAXNUML1BRADIDS, STOPAFTERGLOBAL, STOPAFTERCHUNKDIVIDE, Toolkit
+    use MLSL2Options, only: LEVEL1_HDFVERSION, &
+      & STOPAFTERGLOBAL, STOPAFTERCHUNKDIVIDE, Toolkit
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MLSPCF2, only: mlspcf_l2gp_start, mlspcf_l2gp_end, &
@@ -355,7 +355,7 @@ contains
           the_hdf_version = LEVEL1_HDFVERSION
           ! call l1bradSetup ( son, l1bInfo, F_FILE, &
           call l1bradSetup ( son, filedatabase, F_FILE, &
-            & MAXNUML1BRADIDS, ILLEGALL1BRADID, hdfVersion=the_hdf_version )
+            & hdfVersion=the_hdf_version )
           if ( index(switches, 'pro') /= 0 ) then  
             sub_rosa_index = sub_rosa(subtree(2,subtree(2, son)))
             call get_string ( sub_rosa_index, FilenameString, strip=.true. )
@@ -907,6 +907,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.103  2005/07/12 17:36:16  pwagner
+! Dropped global attribute InputVersion; fills MiscNotes if no dao
+!
 ! Revision 2.102  2005/06/14 20:42:38  pwagner
 ! Interfaces changed to accept MLSFile_T args
 !
