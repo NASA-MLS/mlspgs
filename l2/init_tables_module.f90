@@ -478,7 +478,7 @@ contains ! =====     Public procedures     =============================
              l+l_fwdModelTiming, l+l_fwdModelMean, l+l_fwdModelStdDev, &
              l+l_gph, l+l_heightOffset, &
              l+l_isotopeRatio, l+l_jacobian_cols, l+l_jacobian_rows, &
-             l+l_l1bMAFBaseline, l+l_limbSidebandFraction, &
+             l+l_l1bMAFBaseline, l+l_l1bMIF_TAI, l+l_limbSidebandFraction, &
              l+l_lineCenter, l+l_lineWidth, l+l_lineWidth_tDep, &
              l+l_losTransFunc, l+l_losVel, &
              l+l_massMeanDiameterIce, l+l_massMeanDiameterWater, l+l_magneticField, &
@@ -1050,6 +1050,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_allLinesInCatalog, t+t_boolean, n+n_field_type, &
              begin, f+f_atmos_der, t+t_boolean, n+n_field_type, &
              begin, f+f_binSelectors, s+s_binSelector, n+n_field_spec, &
+             begin, f+f_cloud_der, t+t_cloud_der, n+n_field_type, &
              begin, f+f_default_spectroscopy, t+t_boolean, n+n_field_type, &
              begin, f+f_differentialScan, t+t_boolean, n+n_field_type, &
              begin, f+f_do_baseline, t+t_boolean, n+n_field_type, &
@@ -1057,9 +1058,13 @@ contains ! =====     Public procedures     =============================
              begin, f+f_do_freq_avg, t+t_boolean, n+n_field_type, &
              begin, f+f_do_1d, t+t_boolean, n+n_field_type, &
              begin, f+f_forceSidebandFraction, t+t_boolean, n+n_field_type, &
+             begin, f+f_i_saturation, t+t_i_saturation, n+n_field_type,&
              begin, f+f_incl_cld, t+t_boolean, n+n_field_type, &
              begin, f+f_integrationGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_linearSideband, t+t_numeric, n+n_field_type, &
+             begin, f+f_lineCenter, t+t_molecule, n+n_field_type, &
+             begin, f+f_lineWidth, t+t_molecule, n+n_field_type, &
+             begin, f+f_lineWidth_TDep, t+t_molecule, n+n_field_type, &
              begin, f+f_lockBins, t+t_boolean, n+n_field_type, &
              begin, f+f_lsbPFAMolecules, t+t_molecule, n+n_field_type, &
              begin, f+f_module, s+s_module, n+n_field_spec, &
@@ -1074,13 +1079,11 @@ contains ! =====     Public procedures     =============================
              begin, f+f_phiWindow, t+t_numeric, n+n_field_type, &
              begin, f+f_polarized, t+t_boolean, n+n_field_type /) )
     call make_tree ( (/ &
+             begin, f+f_scanAverage, t+t_boolean, n+n_field_type, &
              begin, f+f_signals, t+t_string, n+n_field_type, &
              begin, f+f_skipOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_switchingMirror, t+t_boolean, n+n_field_type, &
              begin, f+f_specificQuantities, s+s_quantity, n+n_field_spec, &
-             begin, f+f_cloud_der, t+t_cloud_der, n+n_field_type, &
-             begin, f+f_i_saturation, t+t_i_saturation, n+n_field_type,&
-             begin, f+f_spect_der, t+t_boolean, n+n_field_type, &
              begin, f+f_tangentGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_temp_der, t+t_boolean, n+n_field_type, &
              begin, f+f_tolerance, t+t_numeric, n+n_field_type, &
@@ -1356,6 +1359,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.407  2005/08/03 18:06:46  vsnyder
+! Scan averaging, some spectroscopy derivative stuff and cannonball polishing
+!
 ! Revision 2.406  2005/07/21 23:43:43  pwagner
 ! Added extras for explicit fill fields where fillvalued
 !
