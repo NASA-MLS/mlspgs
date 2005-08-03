@@ -804,8 +804,10 @@ contains
 
          call fov_convolve_setup ( antennaPattern, ptg_angle, ptg_angle, &
            & convolve_support )
-         call fov_convolve_1d ( convolve_support, RAD0, SRad0 )
-         call fov_convolve_1d ( convolve_support, RAD , SRad  )
+         ! No provision for scan averaging yet -- the NULL() are MIF_Times
+         ! and DeadTime
+         call fov_convolve_1d ( convolve_support, RAD0, NULL(), NULL(), SRad0 )
+         call fov_convolve_1d ( convolve_support, RAD , NULL(), NULL(), SRad  )
          call fov_convolve_teardown ( convolve_support )
 
 ! -----------------------------------------------------------------------------
@@ -879,6 +881,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.67  2005/07/06 02:17:43  vsnyder
+! Use new antenna convolution module
+!
 ! Revision 1.66  2005/06/22 18:27:38  pwagner
 ! Cant have access declared outside module scope
 !
