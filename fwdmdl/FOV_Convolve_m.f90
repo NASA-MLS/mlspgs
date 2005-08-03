@@ -46,7 +46,7 @@ contains
 
   ! -----------------------------------------  FOV_Convolve_Setup  -----
   subroutine FOV_Convolve_Setup ( AntennaPattern, Chi_in, Chi_out, &
-    & Convolve_Support, Req, Rsc, Earth_frac, Do_dRad_dx )
+    & Convolve_Support, Req, Rsc, Earth_frac, Do_dRad_dx, Do_Scan_Avg )
 
     use Allocate_Deallocate, only: Allocate_test
     use AntennaPatterns_m, only: AntennaPattern_T
@@ -68,6 +68,7 @@ contains
     ! full FFT field between earth and space components.
 
     logical, optional, intent(in) :: Do_dRad_dx ! "dRad_dx will be convolved"
+    logical, optional, intent(in) :: Do_Scan_Avg ! "Scan averaging will be done."
 
     ! Output
     type(Convolve_Support_T), intent(out) :: Convolve_Support
@@ -75,7 +76,7 @@ contains
     integer :: AAAPN, I
     real(r8) :: AAAP_step, Ang_step
     real(r8) :: E_frac, R_eq, R_sc, R_ratio
-    logical :: My_Do_dRad_dx
+    logical :: My_Do_dRad_dx, My_Do_Scan_Avg
 
     r_eq = 6371.0_rp
     r_sc = r_eq + 705.0_rp
@@ -87,7 +88,8 @@ contains
 
     my_Do_dRad_dx = .false.
     if ( present(do_dRad_dx) ) my_Do_dRad_dx = do_DRad_dx
-
+    my_Do_Scan_Avg = .false.
+    if ( present(do_Scan_Avg) ) my_Do_Scan_Avg = do_Scan_Avg
     ! load up the antenna pattern
 
     convolve_support%antennaPattern => antennaPattern
@@ -118,22 +120,25 @@ contains
     call interpolateArraySetup ( convolve_support%angles(ffth-1:no_fft-1), &
       & convolve_support%del_chi_out, &
       & METHOD='S', coeffs=convolve_support%coeffs_2, EXTRAPOLATE='C', &
-      & dyByDx=my_Do_dRad_dx )
+      & dyByDx=my_Do_dRad_dx .and. .not. my_Do_Scan_Avg, intYdX = do_Scan_Avg )
 
   end subroutine FOV_Convolve_Setup
 
   ! --------------------------------------------  FOV_Convolve_1D  -----
   subroutine FOV_Convolve_1D ( Convolve_Support, &
-    & Rad_In, Rad_Out, DRad_dx_out, Rad_FFT_out )
+    & Rad_In, MIF_Times, DeadTime, Rad_Out, DRad_dx_out, Rad_FFT_out )
 
-    use MLSCommon, only: Rp
+    use MLSCommon, only: Rp, Rv
     use MLSNumerics, only: InterpolateValues
+    use ScanAverage_m, only: ScanAverage
 
     type(convolve_support_t), intent(in) :: Convolve_Support
     real(rp), intent(in) :: Rad_In(:)   ! input radiances
+    real(rv), pointer :: MIF_Times(:)   ! Disassociated if no scan average, q.v.
+    real(rv), pointer :: DeadTime(:,:)  ! Disassociated if no scan average, q.v.
     real(rp), intent(out) :: rad_out(:) ! output radiances
     real(rp), optional, intent(out) :: drad_dx_out(:) ! output derivative
-!                                      of radiance wrt to Chi_out
+!                                         of radiance wrt to Chi_out
     real(r8), optional, intent(out), target :: Rad_FFT_out(:) ! Temp derivs need it
 
     integer :: I
@@ -176,18 +181,24 @@ contains
 
     ! interpolate from FFT angles to output grid
 
-    call interpolateValues ( convolve_support%coeffs_2, &
-      & convolve_support%angles(ffth-1:no_fft-1), &
-      & rad_fft1(ffth:no_fft), convolve_support%del_chi_out, rad_out, &
-      & METHOD='S', EXTRAPOLATE='C', dyByDx=drad_dx_out )
+    if ( associated(MIF_Times) ) then
+      call scanAverage ( convolve_support%coeffs_2, MIF_Times, deadTime(1,1), &
+        & real(convolve_support%angles(ffth-1:no_fft-1),rp), &
+        & convolve_support%del_chi_out, real(rad_fft1(ffth:no_fft),rp), rad_out )
+    else
+      call interpolateValues ( convolve_support%coeffs_2, &
+        & convolve_support%angles(ffth-1:no_fft-1), &
+        & rad_fft1(ffth:no_fft), convolve_support%del_chi_out, rad_out, &
+        & METHOD='S', EXTRAPOLATE='C', dyByDx=drad_dx_out )
+    end if
 
   end subroutine FOV_Convolve_1D
 
   ! --------------------------------------------  FOV_Convolve_2d  -----
-  subroutine FOV_Convolve_2d ( Convolve_Support, dI_df, dI_df_flag, &
-    & dRad_df_out )
+  subroutine FOV_Convolve_2d ( Convolve_Support, dI_df, MIF_Times, DeadTime, &
+    & dI_df_flag, dRad_df_out )
 
-    use MLSCommon, only: Rp
+    use MLSCommon, only: Rp, Rv
 
     ! Inputs
 
@@ -195,6 +206,8 @@ contains
     real(rp), intent(in) :: di_df(:,:) ! mixing ratio derivatives or any
     !                                 parameter where a simple convolution
     !                                 will suffice
+    real(rv), pointer :: MIF_Times(:)   ! Disassociated if no scan average, q.v.
+    real(rv), pointer :: DeadTime(:,:)  ! Disassociated if no scan average, q.v.
     logical, optional, intent(in) :: di_df_flag(:) ! Flag to indicate which of
     !                                 di_df are to be calculated.  Deafult true.
 
@@ -215,7 +228,8 @@ contains
         if ( .not. di_df_flag(i) ) cycle
       end if
 
-      call fov_convolve_1d ( convolve_support, di_df(:,i), drad_df_out(:,i) )
+      call fov_convolve_1d ( convolve_support, di_df(:,i), MIF_Times, DeadTime, &
+        & drad_df_out(:,i) )
 
     end do
 
@@ -223,12 +237,13 @@ contains
 
   ! -----------------------------------  FOV_Convolve_Temp_Derivs  -----
   subroutine FOV_Convolve_Temp_Derivs ( Convolve_Support, Rad_In, &
-    & Rad_FFT, Surf_Angle, dI_dT, dx_dT, ddx_dxdT, dx_dT_out, di_dT_flag, &
-    & dRad_dT_out )
+    & Rad_FFT, Surf_Angle, MIF_Times, DeadTime, dI_dT, dx_dT, ddx_dxdT, &
+    & dx_dT_out, di_dT_flag, dRad_dT_out )
 
-    use MLSCommon, only: Rp, R8
+    use MLSCommon, only: Rp, Rv, R8
     use MLSNumerics, only: Coefficients=>Coefficients_r8, Hunt, &
       & InterpolateArraySetup, InterpolateArrayTeardown, InterpolateValues
+    use ScanAverage_m, only: ScanAverage
 
     ! inputs
 
@@ -238,6 +253,8 @@ contains
     real(r8), intent(in) :: Rad_FFT(:) ! Convolved radiances on FFT grid
     real(rp), intent(in) :: Surf_Angle ! An angle (radians) that defines the
     !                       Earth surface.
+    real(rv), pointer :: MIF_Times(:)  ! Disassociated if no scan average, q.v.
+    real(rv), pointer :: DeadTime(:,:) ! Disassociated if no scan average, q.v.
     real(rp), intent(in) :: dI_dT(:,:) ! derivative of radiance wrt
     !                       temperature on chi_in
     real(rp), intent(in) :: dx_dT(:,:) ! derivative of angle wrt
@@ -383,10 +400,17 @@ contains
 
       call drft1_t ( rad_fft2, 's' )
 
-      call interpolateValues ( convolve_support%coeffs_2, &
-        & convolve_support%angles(ffth-1:no_fft-1), &
-        & rad_fft2(ffth:no_fft), convolve_support%del_chi_out, drad_dT_out(:, i), &
-        & METHOD='S', EXTRAPOLATE='C' )
+      if ( associated(MIF_Times) ) then
+        call scanAverage ( convolve_support%coeffs_2, MIF_Times, deadTime(1,1), &
+          & real(convolve_support%angles(ffth-1:no_fft-1),rp), &
+          & convolve_support%del_chi_out, real(rad_fft2(ffth:no_fft),rp), &
+          & drad_dT_out(:, i) )
+      else
+        call interpolateValues ( convolve_support%coeffs_2, &
+          & convolve_support%angles(ffth-1:no_fft-1), &
+          & rad_fft2(ffth:no_fft), convolve_support%del_chi_out, drad_dT_out(:, i), &
+          & METHOD='S', EXTRAPOLATE='C' )
+      end if
 
     ! compute final result
 
@@ -445,6 +469,9 @@ contains
 end module FOV_Convolve_m
 
 ! $Log$
+! Revision 2.3  2005/08/03 18:03:20  vsnyder
+! Scan averaging
+!
 ! Revision 2.2  2005/07/08 00:12:11  vsnyder
 ! Get Rad_FFT from Convolve_Radiance to Convolve_Temperature_Deriv
 !

@@ -34,14 +34,14 @@ module Convolve_All_m
 contains
 
   subroutine Convolve_Radiance ( Convolve_Support, MAF, Channel, Rad_In, &
-           & SbRatio, Update, Ptan, Radiance, &
+           & SbRatio, Update, Ptan, Radiance, MIF_Times, DeadTime, &
            & Jacobian, RowFlags, dh_dz_out, dx_dh_out, ptan_Der, Rad_FFT )
 
   ! Convolve the radiance, and maybe dRadiance/dPtan, with the antenna pattern
 
     use FOV_Convolve_m, only: Convolve_Support_t, FOV_Convolve_1d
     use MatrixModule_1, only: FINDBLOCK, MATRIX_T
-    use MLSCommon, only: R8, RP
+    use MLSCommon, only: R8, RP, RV
     use VectorsModule, only: VectorValue_T
 
     ! Required inputs
@@ -52,8 +52,10 @@ contains
     real(r8), intent(in) :: SbRatio
     logical, intent(in) :: Update       ! "add to radiance, don't overwrite"
     type(vectorvalue_t), intent(in) :: PTAN ! Only for some indices
+    real(rv), pointer :: MIF_Times(:,:) ! Disassociated if no scan average, q.v.
+    real(rv), pointer :: DeadTime(:,:)  ! Disassociated if no scan average, q.v.
 
-    ! output
+    ! Output
     type (VectorValue_T), intent(inout) :: RADIANCE   ! Output radiances
 
     ! Optional if PTan derivative processed.  All or none.
@@ -68,21 +70,25 @@ contains
 
     logical :: my_ptan_der
     integer :: Col, NoChans, NoPtan, Row
+    real(rv), pointer :: MIF_Times_for_MAF(:)
     real(r8) :: SRad(ptan%template%noSurfs), di_dx(ptan%template%noSurfs)
 
     my_ptan_der = .false.
     if ( present ( ptan_der ) ) my_ptan_der = ptan_der
 
+    nullify ( MIF_Times_for_MAF )
+    if ( associated(MIF_Times) ) MIF_Times_for_MAF => MIF_Times(:,maf)
     noChans = Radiance%template%noChans
     noPtan = ptan%template%nosurfs
 
     ! Convolve the radiances (and maybe the derivative w.r.t. PTan):
 
     if ( my_ptan_der ) then ! Convolve radiance and get di_dx
-      call fov_convolve_1d ( convolve_support, rad_in, SRad, dRad_dx_out=di_dx, &
-        & rad_fft_out=rad_fft )
+      call fov_convolve_1d ( convolve_support, rad_in, MIF_Times_for_MAF, DeadTime, &
+        & SRad, dRad_dx_out=di_dx, rad_fft_out=rad_fft )
     else
-      call fov_convolve_1d ( convolve_support, rad_in, SRad, rad_fft_out=rad_fft )
+      call fov_convolve_1d ( convolve_support, rad_in, MIF_Times_for_MAF, DeadTime, &
+        & SRad, rad_fft_out=rad_fft )
     end if
 
     ! Load the Radiance values into the Radiance structure:
@@ -112,14 +118,14 @@ contains
   ! ---------------------------------  Convolve_Temperature_Deriv  -----
   subroutine Convolve_Temperature_Deriv ( Convolve_Support, MAF, Channel, &
            & Rad_In, Rad_FFT, SbRatio, Update, Radiance, Temp, Grids_Tmp, &
-           & surf_angle, di_dT, dx_dT, d2x_dxdT, dxdt_tan, dxdt_surface, &
-           & Jacobian, RowFlags )
+           & surf_angle, MIF_Times, DeadTime, di_dT, dx_dT, d2x_dxdT, &
+           & dxdt_tan, dxdt_surface, Jacobian, RowFlags )
 
     use Fov_Convolve_m, only: Convolve_Support_T, &
       & FOV_Convolve_Temp_Derivs
     use Load_sps_data_m, only: Grids_T
     use MatrixModule_1, only: FINDBLOCK, MATRIX_T
-    use MLSCommon, only: R8, RP
+    use MLSCommon, only: R8, RP, RV
     use VectorsModule, only: VectorValue_T
 
     ! Inputs
@@ -135,6 +141,8 @@ contains
     type (Grids_T), intent(in) :: Grids_Tmp      ! Temperature's grids, etc.
     real(rp), intent(in) :: Surf_angle ! An angle that defines the
     !                      Earth surface.
+    real(rv), pointer :: MIF_Times(:,:) ! Disassociated if no scan average, q.v.
+    real(rv), pointer :: DeadTime(:,:)  ! Disassociated if no scan average, q.v.
     real(rp), intent(in) :: dI_dT(:,:) ! derivative of radiance wrt
     !                      temperature on chi_in
     real(rp), intent(in) :: dx_dT(:,:) ! derivative of angle wrt
@@ -155,16 +163,19 @@ contains
     real(r8) :: dRad_dT_out(size(convolve_support%del_chi_out), &
                 & temp%template%noSurfs*( &
                   & grids_tmp%windowFinish(1) - grids_tmp%windowStart(1) + 1))
+    real(rv), pointer :: MIF_Times_for_MAF(:)
 
     ! Start here
 
+    nullify ( MIF_Times_for_MAF )
+    if ( associated(MIF_Times) ) MIF_Times_for_MAF => MIF_Times(:,maf)
     noChans = Radiance%template%noChans
     noPtan = size(convolve_support%del_chi_out)
     n_t_zeta = temp%template%noSurfs
 
-    call fov_convolve_temp_derivs ( convolve_support, rad_in,  &
-      & rad_fft, surf_angle, dI_dT, dx_dT, d2x_dxdT,   &
-      & dxdt_tan - SPREAD(dxdt_surface(1,:),1,noPtan), &
+    call fov_convolve_temp_derivs ( convolve_support, rad_in, &
+      & rad_fft, surf_angle, MIF_Times_for_MAF, DeadTime, dI_dT, dx_dT, &
+      & d2x_dxdT, dxdt_tan - SPREAD(dxdt_surface(1,:),1,noPtan), &
       & grids_tmp%deriv_flags, dRad_dT_out )
 
     ! Load the Temp. derivative values into the Jacobian
@@ -196,15 +207,15 @@ contains
 
   ! ----------------------------------------  Convolve_OtherDeriv  -----
   subroutine Convolve_Other_Deriv ( Convolve_Support, MAF, Channel, &
-             & SbRatio, Update, Radiance, Qtys, Grids_f, dI_df, &
-             & Jacobian, RowFlags )
+             & SbRatio, Update, Radiance, Qtys, Grids_f, &
+             & MIF_Times, DeadTime, dI_df, Jacobian, RowFlags )
 
     use ForwardModelConfig, only: QtyStuff_T
     use Fov_Convolve_m, only: Convolve_Support_T, &
       & FOV_Convolve_2d
     use Load_sps_data_m, only: Grids_T
     use MatrixModule_1, only: FINDBLOCK, MATRIX_T
-    use MLSCommon, only: R8, RP
+    use MLSCommon, only: R8, RP, RV
     use VectorsModule, only: VectorValue_T
 
     ! Inputs
@@ -216,6 +227,8 @@ contains
     type (VectorValue_T), intent(in) :: RADIANCE ! Only for some indices
     type(QtyStuff_T), intent(in) :: Qtys(:)
     type (Grids_T), intent(in) :: Grids_f
+    real(rv), pointer :: MIF_Times(:,:) ! Disassociated if no scan average, q.v.
+    real(rv), pointer :: DeadTime(:,:)  ! Disassociated if no scan average, q.v.
     real(rp), intent(in) :: dI_df(:,:) ! mixing ratio derivatives or any
     !                                    parameter for which a simple
     !                                    convolution will suffice
@@ -228,13 +241,16 @@ contains
     integer :: Col, JF, K, NFZ, NoChans, Row, SPS_I, SV_F
     real(r8) :: drad_df_out(size(convolve_support%del_chi_out), &
       &                     size(di_df,dim=2))
+    real(rv), pointer :: MIF_Times_for_MAF(:)
 
+    nullify ( MIF_Times_for_MAF )
+    if ( associated(MIF_Times) ) MIF_Times_for_MAF => MIF_Times(:,maf)
     noChans = Radiance%template%noChans
 
     ! do the convolution
 
-    call fov_convolve_2d ( convolve_support, di_df, grids_f%deriv_flags, &
-      & drad_df_out )
+    call fov_convolve_2d ( convolve_support, di_df, MIF_Times_for_MAF, DeadTime, &
+      & grids_f%deriv_flags, drad_df_out )
 
     ! load derivatives into jacobian
     ! First, find index location in Jacobian and set the derivative flags
@@ -274,14 +290,15 @@ contains
 
   ! ---------------------------------------  Interpolate_Radiance  -----
   subroutine Interpolate_Radiance ( Coeffs, MAF, Channel, Chi_In, Rad_In, &
-           & SbRatio, Update, Ptan, Chi_Out, Radiance, &
+           & SbRatio, Update, Ptan, Chi_Out, Radiance, MIF_Times, DeadTime, &
            & Jacobian, RowFlags, dh_dz_out, dx_dh_out, ptan_Der )
 
     ! Interpolate the radiance from Chi_In to Chi_Out, and maybe dI/PTan too.
 
     use MatrixModule_1, only: FINDBLOCK, MATRIX_T
-    use MLSCommon, only: R8, RP
+    use MLSCommon, only: R8, RP, RV
     use MLSNumerics, only: Coefficients => Coefficients_r8, InterpolateValues
+    use ScanAverage_m, only: ScanAverage
     use VectorsModule, only: VectorValue_T
 
     ! Required inputs
@@ -297,6 +314,8 @@ contains
 
     ! output
     type (VectorValue_T), intent(inout) :: RADIANCE   ! Output radiances
+    real(rv), pointer :: MIF_Times(:,:) ! Disassociated if no scan average, q.v.
+    real(rv), pointer :: DeadTime(:,:)  ! Disassociated if no scan average, q.v.
 
     ! Optional if PTan derivative processed.  All or none.
     type (Matrix_t), optional, intent(inout) :: Jacobian
@@ -308,6 +327,9 @@ contains
     logical :: my_ptan_der
     integer :: Col, NoChans, NoPtan, Row
     real(r8), dimension(ptan%template%noSurfs) :: SRad, dI_dx, Rad_Out
+    real(rv), pointer :: MIF_Times_for_MAF(:)
+
+    if ( associated(MIF_Times) ) MIF_Times_for_MAF => MIF_Times(:,maf)
 
     my_ptan_der = .false.
     if ( present ( ptan_der ) ) my_ptan_der = ptan_der
@@ -320,8 +342,13 @@ contains
       rowFlags(row) = .TRUE.
       col = FindBlock ( Jacobian%col, ptan%index, maf )
 
-      call InterpolateValues ( coeffs, chi_in, rad_in, chi_out, rad_out, &
-                             & METHOD='S', extrapolate='C', dyByDx=di_dx )
+      if ( associated(MIF_Times) ) then
+        call scanAverage ( coeffs, MIF_Times_for_MAF, deadTime(1,1), &
+          & chi_in, chi_out, rad_in, rad_out, dY_dX_out=di_dx )
+      else
+        call InterpolateValues ( coeffs, chi_in, rad_in, chi_out, rad_out, &
+                               & METHOD='S', extrapolate='C', dyByDx=di_dx )
+      end if
 
       ! Use the chain rule to compute dI/dPtan on the output grid:
 
@@ -332,8 +359,13 @@ contains
 
     else
 
-      call InterpolateValues ( coeffs, chi_in, rad_in, chi_out, rad_out, &
-                             & METHOD='S', extrapolate='C' )
+        if ( associated(MIF_Times) ) then
+          call scanAverage ( coeffs, MIF_Times_for_MAF, deadTime(1,1), &
+            & chi_in, chi_out, rad_in, rad_out )
+        else
+          call InterpolateValues ( coeffs, chi_in, rad_in, chi_out, rad_out, &
+                                 & METHOD='S', extrapolate='C' )
+        end if
 
     end if
 
@@ -347,12 +379,13 @@ contains
   ! ------------------------------  Interpolate_Temperature_Deriv  -----
   subroutine Interpolate_Temperature_Deriv ( Coeffs, MAF, Channel, Chi_In, &
            & SbRatio, Update, Chi_Out, Radiance, Temp, Grids_Tmp, &
-           & di_dT, Jacobian, RowFlags )
+           & MIF_Times, DeadTime, di_dT, Jacobian, RowFlags )
 
     use Load_sps_data_m, only: Grids_T
     use MatrixModule_1, only: FINDBLOCK, MATRIX_T
-    use MLSCommon, only: R8, RP
+    use MLSCommon, only: R8, RP, RV
     use MLSNumerics, only: Coefficients => Coefficients_r8, InterpolateValues
+    use ScanAverage_m, only: ScanAverage
     use VectorsModule, only: VectorValue_T
 
     ! Inputs
@@ -366,6 +399,8 @@ contains
     type (VectorValue_T), intent(in) :: RADIANCE ! Only for some indices
     type (vectorvalue_t), intent(in) :: TEMP     ! Only for some indices
     type (Grids_T), intent(in) :: Grids_Tmp      ! Temperature's grids, etc.
+    real(rv), pointer :: MIF_Times(:,:) ! Disassociated if no scan average, q.v.
+    real(rv), pointer :: DeadTime(:,:)  ! Disassociated if no scan average, q.v.
     real(rp), intent(in) :: dI_dT(:,:) ! derivative of radiance wrt
     !                      temperature on chi_in
 
@@ -376,8 +411,11 @@ contains
     ! Local variables
     integer :: Col, JF, JZ, K, NoChans, Row, SV_I
     real(r8) :: dRad_dT_in(size(chi_in)), dRad_dT_out(size(chi_out))
+    real(rv), pointer :: MIF_Times_for_MAF(:)
 
     ! Start here
+
+    if ( associated(MIF_Times) ) MIF_Times_for_MAF => MIF_Times(:,maf)
 
     sv_i = 0
     k = size(chi_in)
@@ -398,9 +436,14 @@ contains
         sv_i = sv_i + 1
         if ( grids_tmp%deriv_flags(sv_i) ) then
           dRad_dT_in = di_dt(1:k,sv_i)
-          call InterpolateValues ( coeffs, chi_in, dRad_dT_in, &
-                                 & chi_out, dRad_dT_out, &
-                                 & method = 'S', extrapolate = 'C' )
+          if ( associated(MIF_Times) ) then
+            call scanAverage ( coeffs, MIF_Times_for_MAF, deadTime(1,1), &
+              & chi_in, chi_out, dRad_dT_in, dRad_dT_out )
+          else
+            call InterpolateValues ( coeffs, chi_in, dRad_dT_in, &
+                                   & chi_out, dRad_dT_out, &
+                                   & method = 'S', extrapolate = 'C' )
+          end if
           call loadMatrixValue ( dRad_dT_out, &
             & jacobian%block(row,col)%values(channel::noChans,jz), sbRatio, &
             & update )
@@ -414,14 +457,15 @@ contains
 
   ! ------------------------------------  Interpolate_Other_Deriv  -----
   subroutine Interpolate_Other_Deriv ( Coeffs, MAF, Channel, Chi_In, &
-             & SbRatio, Update, Chi_Out, Radiance, Qtys, Grids_f, dI_df, &
-             & Jacobian, RowFlags, Linear )
+             & SbRatio, Update, Chi_Out, Radiance, Qtys, Grids_f, &
+             & MIF_Times, DeadTime, dI_df, Jacobian, RowFlags, Linear )
 
     use ForwardModelConfig, only: QtyStuff_T
     use Load_sps_data_m, only: Grids_T
     use MatrixModule_1, only: FINDBLOCK, MATRIX_T
-    use MLSCommon, only: R8, RP
+    use MLSCommon, only: R8, RP, RV
     use MLSNumerics, only: Coefficients => Coefficients_r8, InterpolateValues
+    use ScanAverage_m, only: ScanAverage
     use VectorsModule, only: VectorValue_T
 
     ! Inputs
@@ -435,6 +479,8 @@ contains
     type (VectorValue_T), intent(in) :: RADIANCE ! Only for some indices
     type(QtyStuff_T), intent(in) :: Qtys(:)
     type (Grids_T), intent(in) :: Grids_f
+    real(rv), pointer :: MIF_Times(:,:) ! Disassociated if no scan average, q.v.
+    real(rv), pointer :: DeadTime(:,:)  ! Disassociated if no scan average, q.v.
     real(rp), intent(in) :: dI_df(:,:) ! mixing ratio derivatives or any
     !                                    parameter for which a simple
     !                                    convolution will suffice
@@ -452,6 +498,9 @@ contains
     logical :: MyLinear
 
     real(r8) :: dRad_df_in(size(chi_in)), dRad_df_out(size(chi_out))
+    real(rv), pointer :: MIF_Times_for_MAF(:)
+
+    if ( associated(MIF_Times) ) MIF_Times_for_MAF => MIF_Times(:,maf)
 
     myLinear = .true.
     if ( present(linear) ) myLinear = linear
@@ -481,7 +530,10 @@ contains
           sv_f = sv_f + 1
           if ( Grids_f%deriv_flags(sv_f) ) then
             dRad_df_in = di_df(:,sv_f)
-            if ( myLinear ) then
+            if ( associated(MIF_Times) ) then
+              call scanAverage ( coeffs, MIF_Times_for_MAF, deadTime(1,1), &
+                & chi_in, chi_out, dRad_df_in, dRad_df_out )
+            else if ( myLinear ) then
               call InterpolateValues ( chi_in, dRad_df_in, &
                                      & chi_out, dRad_df_out, &
                                      & method = 'L', extrapolate = 'C' )
@@ -589,6 +641,9 @@ contains
 end module Convolve_All_m
 
 ! $Log$
+! Revision 2.3  2005/08/03 18:03:20  vsnyder
+! Scan averaging
+!
 ! Revision 2.2  2005/07/08 00:12:11  vsnyder
 ! Get Rad_FFT from Convolve_Radiance to Convolve_Temperature_Deriv
 !
