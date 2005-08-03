@@ -14,7 +14,7 @@ module Comp_Sps_Path_Frq_m
   implicit NONE
 
   private
-  public :: Comp_Sps_Path_Frq, Comp_Sps_Path
+  public :: Comp_Sps_Path_Frq, Comp_Sps_Path, Comp_Sps_Path_No_Frq
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -26,7 +26,7 @@ module Comp_Sps_Path_Frq_m
 
 ! --------------------------------------------  Comp_Sps_Path_Frq  -----
   subroutine Comp_Sps_Path_Frq ( Grids_x, lo, sideband, Frq, eta_zp, &
-    & do_calc_zp, sps_path, do_calc_fzp, eta_fzp, DoPFA )
+    & do_calc_zp, sps_path, do_calc_fzp, eta_fzp )
 
 ! Compute the SPS path
 
@@ -56,10 +56,6 @@ module Comp_Sps_Path_Frq_m
     real(rp), intent(inout) :: Eta_Fzp(:,:)  ! Path X (Eta_f x Eta_z x Eta_phi)
 !                         First dimension is same as sps_values.
 
-! Optional:
-
-    logical, intent(in), optional :: DoPFA ! Doing PFA, default false.
-
 ! Notes:
 ! units of z_basis must be same as zeta_path (usually -log(P)) and units of
 ! phi_basis must be the same as phi_path (either radians or degrees).
@@ -67,7 +63,6 @@ module Comp_Sps_Path_Frq_m
 
 ! Internal declarations
 
-    logical :: MyPFA
     integer(ip) :: n_f, no_mol
     integer(ip) :: sps_i, sv_zp, sv_f
     integer(ip) :: v_inda, f_inda, f_indb, w_inda, w_indb
@@ -77,13 +72,7 @@ module Comp_Sps_Path_Frq_m
 
 ! Begin executable code:
 
-    myPFA = .false.
-    if ( present(doPFA) ) myPFA = doPFA
-
     no_mol = ubound(grids_x%l_z,1)
-    if ( myPFA ) then
-    else
-    end if
 
     if ( frq <= 1.0_r8 ) then
       do_calc_fzp = .FALSE.
@@ -204,6 +193,67 @@ module Comp_Sps_Path_Frq_m
 
   end subroutine Comp_Sps_Path
 
+! -----------------------------------------  Comp_Sps_Path_No_Frq  -----
+  subroutine Comp_Sps_Path_No_Frq ( Grids_x, eta_zp, sps_path )
+
+! Compute the SPS path for species that don't use frequency
+
+    use MLSCommon, only: RP, IP, R8
+    use Get_Eta_Matrix_m, only: Get_Eta_Sparse
+    use Load_sps_data_m, only: Grids_T
+
+! Input:
+
+    type (grids_t), intent(in) :: Grids_x  ! All the needed coordinates
+    real(rp), intent(in) :: Eta_zp(:,:)    ! Path X (Eta_z x Eta_phi)
+!                         First dimension is same as sps_values.
+
+! Output:
+
+    real(rp), intent(inout) :: Sps_Path(:,:) ! Path X Species.  vmr values
+!                         along the path by species number
+
+! Notes:
+! units of z_basis must be same as zeta_path (usually -log(P)) and units of
+! phi_basis must be the same as phi_path (either radians or degrees).
+! Units of sps_path = sps_values.
+
+! Internal declarations
+
+    integer(ip) :: no_mol
+    integer(ip) :: sps_i, sv_zp
+    integer(ip) :: v_inda, f_inda, w_inda, w_indb
+
+! Begin executable code:
+
+    no_mol = ubound(grids_x%l_z,1)
+
+    sps_path = 0.0_rp
+
+    w_inda = 0
+
+    do sps_i = 1, no_mol
+
+      w_indb = w_inda + (Grids_x%l_z(sps_i) - Grids_x%l_z(sps_i-1)) * &
+                        (Grids_x%l_p(sps_i) - Grids_x%l_p(sps_i-1))
+
+      ! Compute Sps_Path
+      v_inda = grids_x%l_v(sps_i-1)
+      ! Grids_X%Values are really 3-d: Frequencies (1 here) X Zeta X Phi
+      do sv_zp = w_inda + 1, w_indb
+        v_inda = v_inda + 1
+        sps_path(:,sps_i) = sps_path(:,sps_i) +  &
+                         &  grids_x%values(v_inda) * eta_zp(:,v_inda)
+      end do ! sv_zp
+
+      if ( grids_x%lin_log(sps_i)) sps_path(:,sps_i) = EXP(sps_path(:,sps_i))
+
+      w_inda = w_indb
+
+    end do
+
+  end subroutine Comp_Sps_Path_No_Frq
+
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -216,6 +266,9 @@ module Comp_Sps_Path_Frq_m
 end module Comp_Sps_Path_Frq_m
 !
 ! $Log$
+! Revision 2.21  2005/08/03 18:04:09  vsnyder
+! Some spectroscopy derivative stuff
+!
 ! Revision 2.20  2005/06/22 18:08:18  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
