@@ -1031,8 +1031,9 @@ contains ! ============= Public procedures ===================================
       L_FIELDAZIMUTH, L_FIELDELEVATION, L_FIELDSTRENGTH, &
       L_GPH, L_HEIGHTOFFSET, &
       L_ISOTOPERATIO, L_JACOBIAN_COLS, L_JACOBIAN_ROWS, &
-      L_L1BMAFBASELINE, L_LIMBSIDEBANDFRACTION, L_LOSTRANSFUNC, L_LOSVEL, &
+      L_L1BMAFBASELINE, L_L1BMIF_TAI, L_LIMBSIDEBANDFRACTION, L_LOSTRANSFUNC, L_LOSVEL, &
       L_MASSMEANDIAMETERICE, L_MASSMEANDIAMETERWATER, L_MAGNETICFIELD, &
+      L_MIFDEADTIME, &
       L_NOISEBANDWIDTH, L_NORADSPERMIF, L_NORADSBINNED, &
       L_NUMJ, L_OPTICALDEPTH, L_ORBITINCLINATION, &
       L_PHASETIMING, L_PHITAN, L_PTAN, L_QUALITY, L_RADIANCE, &
@@ -1045,7 +1046,7 @@ contains ! ============= Public procedures ===================================
       L_VMR
     use Init_Tables_Module, only: PHYQ_EXTINCTION, PHYQ_FREQUENCY,&
       & PHYQ_GAUSS, PHYQ_IceDensity, PHYQ_LENGTH, &
-      & PHYQ_PRESSURE, PHYQ_TEMPERATURE, PHYQ_VELOCITY, &
+      & PHYQ_PRESSURE, PHYQ_TEMPERATURE, PHYQ_TIME, PHYQ_VELOCITY, &
       & PHYQ_VMR, PHYQ_ZETA, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_DOBSONUNITS
     use MLSMessageModule, only: MLSMSG_Error, MLSMessage
     use Intrinsic, only: LIT_INDICES
@@ -1123,12 +1124,14 @@ contains ! ============= Public procedures ===================================
       l_jacobian_cols, phyq_dimensionless, p_vGrid, next, &
       l_jacobian_rows, phyq_dimensionless, p_vGrid, next, &
       l_l1bMAFBaseline, phyq_temperature, p_majorFrame, p_signal, next, &
+      l_l1bMIF_TAI, phyq_time, p_minorFrame, p_module, next, &
       l_limbSidebandFraction, phyq_dimensionless, p_signal, next, &
       l_losTransFunc, phyq_dimensionless, p_minorFrame, p_sGrid, p_module, next, &
       l_losVel, phyq_dimensionless, p_minorFrame, p_module, next, &
       l_magneticField, phyq_gauss, p_vGrid, p_hGrid, p_xyz, p_mustBeZeta, next, &
       l_massMeanDiameterIce, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
       l_massMeanDiameterWater, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
+      l_mifDeadTime, phyq_time, p_module, next, &
       l_noRadsBinned, phyq_dimensionless, p_vGrid, p_hGrid, &
                       p_signal, p_suppressChannels, p_mustBeZeta, next, &
       l_noRadsPerMIF, phyq_dimensionless, p_minorFrame, p_signal, &
@@ -1279,6 +1282,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.123  2005/08/03 18:08:35  vsnyder
+! Add L1BMIF_TAI and MifDeadTime for scan averaging
+!
 ! Revision 2.122  2005/06/03 02:05:29  vsnyder
 ! New copyright notice, move Id to not_used_here to avoid cascades,
 ! get VGrids from VGridsDatabase instead of passing as an argument.
