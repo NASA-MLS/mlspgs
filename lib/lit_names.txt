@@ -14,6 +14,8 @@
 
 # Blank lines don't count.
 
+# Comments begin with # and extend to the end of the line.
+
 # $Id$
 
 a                # polarization
@@ -55,10 +57,7 @@ degrees
 dimensionless
 dimless
 dl
-dn
 dobsonunits
-dv
-dw
 
 ECRtoFOV
 earthradius
@@ -108,6 +107,7 @@ km
 kms # km/s
 
 l1bMAFBaseline
+l1bMIF_TAI
 latitude
 limbSidebandFraction
 linear
@@ -132,6 +132,7 @@ mb
 meters
 MHz
 mif
+mifDeadTime      # How much of MIF is not collecting data
 mifs
 minutes
 ms # m/s
@@ -216,6 +217,9 @@ zeta
 zonalavg
 
 # $Log$
+# Revision 2.42  2005/08/03 18:00:24  vsnyder
+# Delete d[nvw], add L1BMIF_TAI and MifDeadTime
+#
 # Revision 2.41  2005/06/24 23:41:19  vsnyder
 # Add LineCenter, LineWidth and LineWidth_TDep
 #
