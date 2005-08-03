@@ -97,7 +97,8 @@ contains ! =====     Public Procedures     =============================
       & L_GEOCALTITUDE, L_GEODALTITUDE, L_GPH, L_GPHPRECISION, L_GRIDDED, L_H2OFROMRHI, &
       & L_HEIGHT, L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, &
       & L_IWCFROMEXTINCTION, L_KRONECKER, &
-      & L_L1B, L_L1BMAFBASELINE, L_L2GP, L_L2AUX, L_LIMBSIDEBANDFRACTION, L_LOSVEL, &
+      & L_L1B, L_L1BMAFBASELINE, L_L1BMIF_TAI, L_L2GP, L_L2AUX, &
+      & L_LIMBSIDEBANDFRACTION, L_LOSVEL, &
       & L_MAGAZEL, L_MAGNETICFIELD, L_MAGNETICMODEL, &
       & L_MANIPULATE, L_MAX, L_MEAN, L_MIN, L_NEGATIVEPRECISION, &
       & L_NOISEBANDWIDTH, L_NONE, &
@@ -5434,6 +5435,17 @@ contains ! =====     Public Procedures     =============================
         call GetSignalName ( quantity%template%signal, nameString, &
           & sideband=quantity%template%sideband, noChannels=.TRUE. )
         nameString = AssembleL1BQtyName(nameString, this_hdfVersion, .FALSE.)
+      case ( l_l1bMIF_TAI )
+        call GetModuleName ( quantity%template%instrumentModule, nameString )
+        nameString = AssembleL1BQtyName ('MIF_TAI', this_hdfVersion, .TRUE., &
+          & trim(nameString) )
+      case ( l_LosVel )
+        call GetModuleName ( quantity%template%instrumentModule, nameString )
+        nameString = AssembleL1BQtyName ('LosVel', this_hdfVersion, .TRUE., &
+          & trim(nameString) )
+      case ( l_orbitInclination )
+        nameString = AssembleL1BQtyName('OrbIncl', this_hdfVersion, .FALSE., &
+          & 'sc')
       case ( l_ptan )
         call GetModuleName( quantity%template%instrumentModule,nameString )
         nameString = AssembleL1BQtyName('ptan', this_hdfVersion, .FALSE., &
@@ -5444,24 +5456,11 @@ contains ! =====     Public Procedures     =============================
         nameString = AssembleL1BQtyName(nameString, this_hdfVersion, .FALSE.)
         L1BFile => GetL1bFile(filedatabase, namestring)
         ! fileID = FindL1BData (filedatabase, nameString )
-      case ( l_tngtECI )
-        call GetModuleName( quantity%template%instrumentModule,nameString )
-        nameString = AssembleL1BQtyName('ECI', this_hdfVersion, .TRUE., &
-          & trim(nameString))
-      case ( l_tngtGeodAlt )
-        call GetModuleName( quantity%template%instrumentModule,nameString )
-        nameString = AssembleL1BQtyName('GeodAlt', this_hdfVersion, .TRUE., &
-          & trim(nameString))
-      case ( l_LosVel )
-        call GetModuleName ( quantity%template%instrumentModule, nameString )
-        nameString = AssembleL1BQtyName ('LosVel', this_hdfVersion, .TRUE., &
-          & trim(nameString) )
-      case ( l_tngtGeocAlt )
-        call GetModuleName( quantity%template%instrumentModule,nameString )
-        nameString = AssembleL1BQtyName('GeocAlt', this_hdfVersion, .TRUE., &
-          & trim(nameString))
       case ( l_scECI )
         nameString = AssembleL1BQtyName('ECI', this_hdfVersion, .FALSE., 'sc')
+      case ( l_scGeocAlt )
+        nameString = AssembleL1BQtyName('GeocAlt', this_hdfVersion, .FALSE., &
+          & 'sc')
       case ( l_scVel )
         nameString = AssembleL1BQtyName('Vel', this_hdfVersion, .FALSE., 'sc')
       case ( l_scVelECI )
@@ -5470,12 +5469,18 @@ contains ! =====     Public Procedures     =============================
       case ( l_scVelECR )
         nameString = AssembleL1BQtyName('VelECR', this_hdfVersion, .FALSE., &
           & 'sc')
-      case ( l_scGeocAlt )
-        nameString = AssembleL1BQtyName('GeocAlt', this_hdfVersion, .FALSE., &
-          & 'sc')
-      case ( l_orbitInclination )
-        nameString = AssembleL1BQtyName('OrbIncl', this_hdfVersion, .FALSE., &
-          & 'sc')
+      case ( l_tngtECI )
+        call GetModuleName( quantity%template%instrumentModule,nameString )
+        nameString = AssembleL1BQtyName('ECI', this_hdfVersion, .TRUE., &
+          & trim(nameString))
+      case ( l_tngtGeocAlt )
+        call GetModuleName( quantity%template%instrumentModule,nameString )
+        nameString = AssembleL1BQtyName('GeocAlt', this_hdfVersion, .TRUE., &
+          & trim(nameString))
+      case ( l_tngtGeodAlt )
+        call GetModuleName( quantity%template%instrumentModule,nameString )
+        nameString = AssembleL1BQtyName('GeodAlt', this_hdfVersion, .TRUE., &
+          & trim(nameString))
       case default
         call Announce_Error ( root, cantFillFromL1B )
       end select
@@ -6955,6 +6960,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.308  2005/08/03 18:09:38  vsnyder
+! Cannon ball polishing, scan averaging
+!
 ! Revision 2.307  2005/07/21 23:42:31  pwagner
 ! Repaired bugs in Fill status for missingGMAO; extras for explicit fill
 !
