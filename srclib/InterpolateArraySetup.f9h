@@ -12,11 +12,12 @@
 ! $Id$
 
 ! subroutine InterpolateArraySetup_r* ( OldX, NewX, Method, Coeffs, &
-!   & Extrapolate, Width, DyByDx, dNewByDOld )
+!   & Extrapolate, Width, DyByDx, dNewByDOld, intYdX )
 
     ! Local variables
     logical :: ComputeDNewByDOld
     character :: ExtrapolateMethod
+    real(rk) :: Gap2(size(newX,1))
     integer :: Ind, NewInd, NoNew, NoOld
     integer, parameter :: RA = kind(coeffs%a)
     real(rm), pointer :: TempDNewByDOld(:,:)
@@ -50,7 +51,7 @@
     ! If extrapolate is "C"onstant, deal with that
     if ( extrapolateMethod == "C" ) coeffs%A = max(min(coeffs%A,1.0_rA),0.0_rA)
 
-    coeffs%B = 1.0_rk - coeffs%A
+    coeffs%B = 1.0 - coeffs%A
 
     ! If extrapolate mode is "B"ad, deal with that
     if ( extrapolateMethod == "B" ) then
@@ -68,22 +69,23 @@
         & ( MLSMSG_Error, ModuleName, "Cannot get dNewBydOld from spline")
       call allocate_test ( coeffs%c, noNew, "Coeffs%C", ModuleName )
       call allocate_test ( coeffs%d, noNew, "Coeffs%D", ModuleName )
-      call allocate_test ( coeffs%gap2, noNew, "Coeffs%Gap2", ModuleName )
       call allocate_test ( coeffs%sig, noOld-1, "Coeffs%Sig", ModuleName, &
         & lowBound=2 )
       ! Note the extrapolate bad case is covered as A=B=0.0
-      coeffs%gap2 = coeffs%gap ** 2
-      coeffs%C = (coeffs%A**3-coeffs%A)*coeffs%gap2/6.0    
-      coeffs%D = (coeffs%B**3-coeffs%B)*coeffs%gap2/6.0
+      gap2 = coeffs%gap ** 2 / 6.0
+      coeffs%C = (coeffs%A**3-coeffs%A) * gap2
+      coeffs%D = (coeffs%B**3-coeffs%B) * gap2
       coeffs%sig = (oldX(2:noOld-1)-oldX(1:noOld-2)) / &
         &          (oldX(3:noOld)-oldX(1:noOld-2))
 
       ! Compute some more coefficients for splines if DyByDx is present
       if ( present(dyByDx) ) then
-        call allocate_test ( coeffs%e, noNew, "Coeffs%C", ModuleName )
-        call allocate_test ( coeffs%f, noNew, "Coeffs%D", ModuleName )
-        coeffs%e = 3.0_rk*coeffs%a**2 - 1.0_rk
-        coeffs%f = 3.0_rk*coeffs%b**2 - 1.0_rk
+        if ( dyByDx ) then
+          call allocate_test ( coeffs%e, noNew, "Coeffs%C", ModuleName )
+          call allocate_test ( coeffs%f, noNew, "Coeffs%D", ModuleName )
+          coeffs%e = 3.0*coeffs%a**2 - 1.0
+          coeffs%f = 3.0*coeffs%b**2 - 1.0
+        end if
       end if
     end if
 
@@ -108,9 +110,25 @@
         & "tempDNewByDOld", ModuleName ) ! dNewbyDOld := tempDNewByDOld
     end if
 
+    if ( present(intYdX) ) then
+      if ( intYdX ) then
+        call allocate_test ( coeffs%ai, noNew, "Coeffs%AI", ModuleName )
+        call allocate_test ( coeffs%bi, noNew, "Coeffs%BI", ModuleName )
+        call allocate_test ( coeffs%ci, noNew, "Coeffs%CI", ModuleName )
+        call allocate_test ( coeffs%di, noNew, "Coeffs%DI", ModuleName )
+        coeffs%AI = newX * (oldX(coeffs%upperInds)-0.5 * newX)/coeffs%gap
+        coeffs%BI = newX - coeffs%AI
+        coeffs%CI = -gap2 * ( coeffs%AI + 0.25 * coeffs%gap * coeffs%A**4 )
+        coeffs%DI = -gap2 * ( coeffs%BI - 0.25 * coeffs%gap * coeffs%B**4 )
+      end if
+    end if
+        
 ! end subroutine InterpolateArraySetup_r*
 
 ! $Log$
+! Revision 1.2  2005/06/22 20:03:55  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 1.1  2002/11/22 23:58:48  vsnyder
 ! Initial Commit
 !

@@ -25,8 +25,13 @@
     call deallocate_test ( coeffs%d, 'Coeffs%D', ModuleName )
     call deallocate_test ( coeffs%e, 'Coeffs%E', ModuleName )
     call deallocate_test ( coeffs%f, 'Coeffs%F', ModuleName )
-    call deallocate_test ( coeffs%gap2, 'Coeffs%Gap2', ModuleName )
     call deallocate_test ( coeffs%sig, 'Coeffs%Sig', ModuleName )
+
+    ! Stuff for integration -- again no need to test if it's there
+    call deallocate_test ( coeffs%ai, 'Coeffs%AI', ModuleName )
+    call deallocate_test ( coeffs%bi, 'Coeffs%BI', ModuleName )
+    call deallocate_test ( coeffs%ci, 'Coeffs%CI', ModuleName )
+    call deallocate_test ( coeffs%di, 'Coeffs%DI', ModuleName )
 
     ! Stuff for Extrapolate == "B"ad
     call deallocate_test ( coeffs%badValue, 'Coeffs%BadValue', ModuleName )
@@ -34,6 +39,9 @@
 ! end subroutine InterpolateArrayTeardown_r*
 
 ! $Log$
+! Revision 1.2  2005/06/22 20:03:55  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 1.1  2002/11/22 23:58:49  vsnyder
 ! Initial Commit
 !
