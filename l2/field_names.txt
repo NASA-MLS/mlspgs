@@ -184,6 +184,9 @@ length
 lengthScale
 level
 linearSideband
+lineCenter      # Spectroscopy parameter
+lineWidth       # Spectroscopy parameter
+lineWidth_TDep  # Spectroscopy parameter
 lockBins
 logBasis
 logSpace
@@ -305,6 +308,7 @@ rows
 rowSurfaces
 
 scale
+scanAverage
 scanLowerLimit
 scanUpperLimit
 scECI
@@ -338,7 +342,6 @@ spacing
 sparseQuantities
 species
 specificQuantities
-spect_der
 spectroscopy
 spread
 state
@@ -396,6 +399,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.145  2005/08/03 18:05:39  vsnyder
+# Scan averaging, some spectroscopy derivative stuff
+#
 # Revision 2.144  2005/07/21 23:43:29  pwagner
 # Added extras for explicit fill fields where fillvalued
 #
