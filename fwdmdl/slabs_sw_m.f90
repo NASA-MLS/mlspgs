@@ -63,7 +63,7 @@ module SLABS_SW_M
   public :: Get_GL_Slabs_Arrays
   public :: Slabs, Slabs_dSpectral, Slabs_dAll, Slabs_dT, Slabs_Lines
   public :: Slabs_Lines_dAll, Slabs_lines_dSpectral, Slabs_Lines_dT
-  public :: Slabs_Prep, Slabs_Prep_Struct, Slabs_Prep_dT
+  public :: Slabs_Prep, Slabs_Prep_Struct, Slabs_Prep_Struct_Offset, Slabs_Prep_dT
   public :: Slabswint, Slabswint_dAll, Slabswint_dT
   public :: Slabswint_Lines, Slabswint_Lines_dAll, Slabswint_Lines_dSpectral
   public :: Slabswint_Lines_dT
@@ -2127,8 +2127,8 @@ contains
 
     y = x1 * w * p * exp(n*t3t)
 
-!{ $\nu_{0_s} = v_c \left[ \nu_0 + p_s p \left( \frac{300}T \right) ^{n_s} \right]$.
-!  $\frac{\partial \nu_{0_s}}{\partial \nu_0} = v_c$.
+!{ $\nu_{0_s} = \nu_0 + p_s p \left( \frac{300}T \right) ^{n_s}$.
+!  $\frac{\partial \nu_{0_s}}{\partial \nu_0} = 0$.
 
     v0s = v0 + ps * p * exp(ns*t3t) ! VelCor is multiplied below
 
@@ -2137,6 +2137,10 @@ contains
 
     betae = el / boltzcm
     betav = v0s / boltzmhz
+
+!{ Now $\nu_{0_s} = v_c \left[ \nu_0 + p_s p \left( \frac{300}T \right) ^{n_s} \right]$.
+!  $\frac{\partial \nu_{0_s}}{\partial \nu_0} = v_c$.
+
     v0s = velcor * v0s
 
     if ( t < 225.0_rp ) then
@@ -2230,6 +2234,62 @@ contains
     end do ! i = 1, size(catalog%lines)
 
   end subroutine Slabs_prep_struct
+
+  ! -----------------------------------  Slabs_prep_struct_offset  -----
+  elemental subroutine Slabs_prep_struct_offset ( T, P, Catalog, VelCor, &
+    & Derivs, Slabs, DV0, DW, DN )
+  ! Fill all the fields of the Slabs structure
+
+    use SpectroscopyCatalog_m, only: Catalog_T, Lines
+
+    ! inputs:
+
+    real(rp), intent(in) :: T        ! Temperature K
+    real(rp), intent(in) :: P        ! Pressure
+    type(catalog_t), intent(in) :: Catalog ! The spectroscopy
+    real(rp), intent(in) :: VelCor   ! Doppler velocity correction term, 
+                                     ! 1 - losVel / C
+    logical, intent(in) :: Derivs    ! "Setup for derivative calculations"
+    real(r8), intent(in) :: DV0, DW, DN  ! Offsets from catalog%v0, %w, %n
+    ! output:
+
+    type(slabs_struct), intent(inout) :: Slabs ! inout so as not to clobber
+                                     ! pointer associations
+
+    integer :: I ! A loop index
+    integer :: L ! Index in the Lines array
+
+    slabs%useYi = .false.
+    !ocl independent
+    !ocl temp(l)
+    do i = 1, size(catalog%lines)
+      l = catalog%lines(i)
+      slabs%useYi = slabs%useYi .or. lines(l)%useYi
+      if ( derivs ) then
+        call slabs_prep_dT ( t, catalog%mass, &
+          & lines(l)%v0+dv0, lines(l)%el, lines(l)%w+dw, lines(l)%ps, p, &
+          & lines(l)%n+dn, lines(l)%ns, lines(l)%str, catalog%QLOG(1:3), &
+          & lines(l)%delta, lines(l)%gamma, lines(l)%n1, lines(l)%n2, &
+          & velCor, lines(l)%useYi, &
+          & slabs%v0s(i), slabs%x1(i), slabs%y(i), &
+          & slabs%yi(i), slabs%slabs1(i), &
+          & slabs%dslabs1_dv0(i), &
+          & slabs%dv0s_dT(i), slabs%dx1_dT(i), &
+          & slabs%dy_dT(i), slabs%dyi_dT(i), &
+          & slabs%dslabs1_dT(i) )
+      else
+        call slabs_prep ( t, catalog%mass, &
+          & lines(l)%v0+dv0, lines(l)%el, lines(l)%w+dw, lines(l)%ps, p, &
+          & lines(l)%n+dn, lines(l)%ns, lines(l)%str, catalog%QLOG(1:3), &
+          & lines(l)%delta, lines(l)%gamma, lines(l)%n1, lines(l)%n2, &
+          & velCor, lines(l)%useYi, &
+          & slabs%v0s(i), slabs%x1(i), slabs%y(i), &
+          & slabs%yi(i), slabs%slabs1(i), &
+          & slabs%dslabs1_dv0(i) )
+      end if
+    end do ! i = 1, size(catalog%lines)
+
+  end subroutine Slabs_prep_struct_offset
 
   ! ----------------------------------------------  Slabs_prep_DT  -----
   pure subroutine Slabs_prep_dT ( t, m, v0, el, w, ps, p, n, ns, i, q, delta, gamma, &
@@ -2350,19 +2410,6 @@ contains
       dyi_dT = 0.0
     end if
 
-!{ $\nu_{0_s} = v_c \left[ \nu_0 + p_s p \left( \frac{300}T \right)^{n_s} \right]$.
-!  $\frac{\partial \nu_{0_s}}{\partial T} = \frac{-n_s}T ( \nu_{0_s} - v_c \nu_0 )$.
-!  $\frac{\partial \nu_{0_s}}{\partial \nu_0} = v_c$.
-
-    if ( ps /= 0.0_r8 ) then
-      v0s = velCor * ps * p * exp(ns*t3t)
-      dv0s_dT = -ns * v0s * onedt
-      v0s = velCor * v0 + v0s
-    else
-      v0s = velCor * v0
-      dv0s_dT = 0.0
-    end if
-
 !{ $w_d = \nu_0 d_c \sqrt{\frac{T}M}$.  The $\nu_0$ term should
 !  really be $\nu$.  We approximate $\nu$ by $\nu_0$ so that we can use
 !  this routine outside the frequency loop.  Thus
@@ -2405,6 +2452,19 @@ contains
     end if
     q_log_b = -q_log_b - 1.0 ! This is what's interesting later
 
+!{ $\nu_{0_s} = \nu_0 + p_s p \left( \frac{300}T \right)^{n_s}$.
+!  $\frac{\partial \nu_{0_s}}{\partial T} = \frac{-n_s}T ( \nu_{0_s} - \nu_0 )$.
+!  $\frac{\partial \nu_{0_s}}{\partial \nu_0} = 0$.
+
+    if ( ps /= 0.0_r8 ) then
+      v0s = ps * p * exp(ns*t3t)
+      dv0s_dT = -ns * v0s * onedt
+      v0s = v0 + v0s
+    else
+      v0s = v0
+      dv0s_dT = 0.0
+    end if
+
 !{ $\beta_e = 10^{-4} \frac{h}k c\, e_l$. $\beta_v = \frac{h}k \nu_{0_s}$.
 !  $\frac{\partial \beta_v}{\partial T} =
 !    \frac{h}k \frac{\partial \nu_{0_s}}{\partial T}$.
@@ -2412,6 +2472,13 @@ contains
     betae = el / boltzcm
     betav = v0s / boltzmhz ! should not be velocity corrected
     dBetav_dT = dv0s_dT / boltzmhz
+
+!{ Now, $\nu_{0_s} = v_c \left[ \nu_0 + p_s p \left( \frac{300}T \right)^{n_s} \right]$.
+!  $\frac{\partial \nu_{0_s}}{\partial T} = \frac{-n_s}T ( \nu_{0_s} - v_c \nu_0 )$.
+!  $\frac{\partial \nu_{0_s}}{\partial \nu_0} = v_c$.
+
+    v0s = velcor * v0s
+    dv0s_dT = velcor * dv0s_dT
 
 !{ Write {\tt slabs1} $= \frac{I_2 \, p \, 10^{i - a - b \log_{10} T
 !   + \frac{\beta_e}{\ln 10}\left(\frac1{300}-\frac1T\right)}
@@ -2448,7 +2515,7 @@ contains
 !    + \frac{H_1}{300} \right) \frac{h}k + \frac1{\nu_0} \right] $
 !   where $H_1 = \frac{H}{1-H}$.
 
-    dslabs1_dv0 = -slabs1 * ( (z1 * onedt * velCor + expd / z2 * oned300) / boltzmhz + &
+    dslabs1_dv0 = -slabs1 * ( (z1 * onedt + expd / z2 * oned300) / boltzmhz + &
       & 1.0 / v0 )
 
   end subroutine Slabs_prep_dT
@@ -2456,7 +2523,8 @@ contains
   ! ----------------------------------------  Get_GL_Slabs_Arrays  -----
   !ocl disjoint
   pure subroutine Get_GL_Slabs_Arrays ( P_path, T_path, Vel_z, GL_Slabs, &
-                             &     Do_1D, t_der_flags )
+    & Do_1D, t_der_flags, LineCenter, LineCenter_ix, LineWidth, LineWidth_ix, &
+    & LineWidth_TDep, LineWidth_TDep_ix )
 
     use Molecules, only: L_Extinction
     use Physics, only: SpeedOfLight
@@ -2473,17 +2541,35 @@ contains
     logical, intent(in) :: Do_1D
     logical, intent(in), optional :: t_der_flags(:) ! do derivatives if present
 
+    ! Line parameter offsets from catalog (path x molecule) -- intent(in):
+    real, optional, pointer :: LineCenter(:,:), LineWidth(:,:), &
+      & LineWidth_TDep(:,:)
+    ! Which molecules are to be offset, and where are they in Line....  Zero
+    ! means no offset, otherwise, second subscript for Line... above.
+    integer, optional, pointer :: LineCenter_ix(:), LineWidth_ix(:), &
+      & LineWidth_TDep_ix(:)
+
 !  ----------------
 !  Local variables:
 !  ----------------
 
     type(Catalog_T), pointer :: Catalog
     integer :: i, j, k, n, n_sps, nl, no_ele
-    logical :: Temp_Der
+    logical :: DoCenter, DoWidth, DoWidth_TDep, Offset, Temp_Der
+    real(r8) :: DV0, DW, DN  !  Offsets to center, width, width_TDep
 
     real(rp) :: vel_z_correction
 
 ! Begin code:
+
+    doCenter = .false.; doWidth = .false.; doWidth_TDep = .false.
+    if ( present(lineCenter) .and. present(lineCenter_ix) ) &
+      & doCenter = associated(lineCenter) .and. associated(lineCenter_ix)
+    if ( present(lineWidth) .and. present(lineWidth_ix) ) &
+      & doWidth = associated(lineWidth) .and. associated(lineWidth_ix)
+    if ( present(lineWidth_TDep) .and. present(lineWidth_TDep_ix) ) &
+      & doWidth_TDep = associated(lineWidth_TDep) .and. associated(lineWidth_TDep_ix)
+    offset = doCenter .or. doWidth .or. doWidth_TDep
 
     no_ele = size(p_path)
     n_sps = size(gl_slabs,2)
@@ -2506,8 +2592,20 @@ contains
       do j = 1, n
         temp_der = present(t_der_flags)
         if ( temp_der ) temp_der = t_der_flags(j)
-        call slabs_prep_struct ( t_path(j), p_path(j), catalog, &
-          &                      Vel_z_correction, temp_der, gl_slabs(j,i) )
+        if ( offset ) then
+          dv0 = 0.0; dw = 0.0; dn = 0.0
+          if ( doCenter .and. lineCenter_ix(i) /= 0 ) &
+            dv0 = lineCenter(j,lineCenter_ix(i))
+          if ( doWidth .and. lineWidth_ix(i) /= 0 ) &
+            dw = lineWidth(j,lineWidth_ix(i))
+          if ( doWidth_TDep .and. lineWidth_TDep_ix(i) /= 0 ) &
+            dn = lineWidth_TDep(j,lineWidth_TDep_ix(i))
+          call slabs_prep_struct_offset ( t_path(j), p_path(j), catalog, &
+            & Vel_z_correction, temp_der, gl_slabs(j,i), dv0, dw, dn )
+        else
+          call slabs_prep_struct ( t_path(j), p_path(j), catalog, &
+            &                      Vel_z_correction, temp_der, gl_slabs(j,i) )
+        end if
       end do ! j = 1, n
 
       if ( Do_1D ) then
@@ -2556,6 +2654,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.45  2005/07/06 02:17:21  vsnyder
+! Revisions for spectral parameter derivatives
+!
 ! Revision 2.44  2005/06/09 02:34:16  vsnyder
 ! Move stuff from l2pc_pfa_structures to slabs_sw_m
 !
