@@ -12,9 +12,9 @@
 ! $Id$
 
 !  subroutine InterpolateScalarUsingSetup_r* ( coeffs, oldX, oldY, newX, newY, &
-!    & method, extrapolate, badValue, missingRegions, dyByDx )
+!    & method, extrapolate, badValue, missingRegions, dyByDx, skipNewY, IntYdX )
     ! Local variables
-    real(rk) :: dyByDxFill         ! Fill value for dyByDx
+    real(rk) :: Fill               ! Fill value for dyByDx or intYdX
     character :: extrapolateMethod ! Tidy copy of extrapolate parameter
     integer :: ind                 ! Loop counter
     real(rk), dimension(:), pointer :: oldSecond
@@ -166,30 +166,49 @@
           dyByDx = (oldYupper-oldYlower) / coeffs%gap
         end where
       end if
+      if ( present(intYdX) ) then
+        where ( coeffs%badValue(coeffs%lowerInds) .or. coeffs%badValue(coeffs%upperInds) )
+          intYdX = badValue
+        elsewhere
+          intYdX = (coeffs%bi*oldYupper-coeffs%ai*oldYlower) / coeffs%gap
+        end where
+      end if
     else  ! Don't worry about missing regions flag
       if ( doNewY ) newY = newY + coeffs%a*oldYlower + coeffs%b*oldYupper
       if ( present(dyByDx) ) dyByDx = (oldYupper-oldYlower)/coeffs%gap
+      if ( present(intYdX) ) intYdX = (coeffs%bi*oldYupper-coeffs%ai*oldYlower) / &
+        &                             coeffs%gap
     end if
 
     ! Now do the spline calculation
     if ( spline ) then
       if ( doNewY ) &
         & newY = newY + coeffs%C*oldSecondLower + coeffs%D*oldSecondUpper
-      if ( present(dyByDx)) &
+      if ( present(dyByDx) ) &
         & dyByDx = dyByDx + (coeffs%Gap/6.0_rk) * &
         &   ( coeffs%f*oldSecondUpper - coeffs%e*oldSecondLower )
+      if ( present(intYdX) ) &
+        & intYdX = intYdX + coeffs%ci * oldSecondLower + &
+        &                   coeffs%di * oldSecondUpper
     end if
 
     ! Now make sure the dyByDX's are correct for extrapolated regions
-    if ( present ( dyByDx ) .and. scan(extrapolateMethod(1:1),"BC") > 0) then
+    if ( ( present (dyByDx) .or. present(intYdX) ) &
+      &  .and. scan(extrapolateMethod(1:1),"BC") > 0) then
       select case ( extrapolateMethod(1:1) )
       case ( "C" )
-        dyByDxFill = 0.0_rk
+        Fill = 0.0_rk
       case ( "B" )
-        dyByDxFill = badValue
+        Fill = badValue
       end select
-      where ( ( newX >= oldX(noOld) ) .or. ( newX < oldX(1) ) ) &
-          & dyByDx = dyByDXFill
+      if ( present (dyByDx) ) then
+        where ( ( newX >= oldX(noOld) ) .or. ( newX < oldX(1) ) ) &
+            & dyByDx = Fill
+      end if
+      if ( present (intYdX) ) then
+        where ( ( newX >= oldX(noOld) ) .or. ( newX < oldX(1) ) ) &
+            & intYdX = Fill
+      end if
     end if
 
     ! Tidy up
@@ -204,6 +223,9 @@
 ! end subroutine InterpolateScalarUsingSetup_r*
 
 ! $Log$
+! Revision 1.3  2005/06/22 20:03:56  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 1.2  2003/09/11 23:09:39  livesey
 ! Added handling of skipNewY argument
 !

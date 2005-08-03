@@ -11,10 +11,10 @@
 
 ! $Id$
 !  subroutine InterpolateScalar_r* ( oldX, oldY, newX, newY, method, extrapolate, &
-!    & badValue, missingRegions, dyByDx, RangeOfPeriod )
+!    & badValue, missingRegions, dyByDx, RangeOfPeriod, skipNewY, IntYdX )
 
   ! local working space
-    real(rk), dimension(:,:), pointer :: tempDerivative
+    real(rk), dimension(:,:), pointer :: tempDerivative, tempIntegral
     real(rk), dimension(size(newX), 1) :: tempResult
     real(rk), dimension(size(oldY)) :: tempY
     real(rk) period
@@ -44,17 +44,48 @@
     if ( present(dyByDx) ) then
       call Allocate_Test ( tempDerivative, size(newX), 1, &
         & "tempDerivative", ModuleName )
+      if ( present(intYdX) ) then
 
-      call InterpolateValues ( oldX, spread(tempY,2,1), newX, tempResult, method, &
-        & extrapolate=extrapolate, badValue=badValue, &
-        & missingRegions=missingRegions, dyByDx=tempDerivative )
-      dyByDx = tempDerivative(:,1)
+        call Allocate_Test ( tempIntegral, size(newX), 1, &
+          & "tempIntegral", ModuleName )
+        call InterpolateValues ( oldX, spread(tempY,2,1), newX, tempResult, method, &
+          & extrapolate=extrapolate, badValue=badValue, &
+          & missingRegions=missingRegions, skipNewY=skipNewY, &
+          & dyByDx=tempDerivative, &
+          & intYdX=tempIntegral )
+        dyByDx = tempDerivative(:,1)
+        intYdX = tempIntegral(:,1)
+        call Deallocate_Test ( tempIntegral, "tempIntegral", ModuleName )
+
+      else
+
+        call InterpolateValues ( oldX, spread(tempY,2,1), newX, tempResult, method, &
+          & extrapolate=extrapolate, badValue=badValue, &
+          & missingRegions=missingRegions, skipNewY=skipNewY, &
+          & dyByDx=tempDerivative )
+        dyByDx = tempDerivative(:,1)
+
+      end if
 
       call Deallocate_Test ( tempDerivative, "tempDerivative", ModuleName )
     else
-      call InterpolateValues ( oldX, spread(tempY,2,1), newX, tempResult, method, &
-        & extrapolate=extrapolate, badValue=badValue, &
-        & missingRegions=missingRegions )
+      if ( present(intYdX) ) then
+
+        call Allocate_Test ( tempIntegral, size(newX), 1, &
+          & "tempIntegral", ModuleName )
+        call InterpolateValues ( oldX, spread(tempY,2,1), newX, tempResult, method, &
+          & extrapolate=extrapolate, badValue=badValue, &
+          & missingRegions=missingRegions, skipNewY=skipNewY, &
+          & intYdX=tempIntegral )
+        intYdX = tempIntegral(:,1)
+        call Deallocate_Test ( tempIntegral, "tempIntegral", ModuleName )
+
+      else
+
+        call InterpolateValues ( oldX, spread(tempY,2,1), newX, tempResult, method, &
+          & extrapolate=extrapolate, badValue=badValue, &
+          & missingRegions=missingRegions, skipNewY=skipNewY )
+      end if
     end if
     newY = tempResult(:,1)
 
@@ -69,6 +100,9 @@
 !  end subroutine InterpolateScalar_r*
 
 ! $Log$
+! Revision 1.3  2005/06/22 20:03:55  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 1.2  2002/11/21 02:28:48  vsnyder
 ! Cosmetic changes
 !
