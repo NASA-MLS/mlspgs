@@ -25,7 +25,7 @@ module LOAD_SPS_DATA_M
     integer,  pointer :: l_z(:) => null() ! Last entry in zeta grid per sps
     integer,  pointer :: l_p(:) => null() ! Last entry in phi  grid per sps
     integer,  pointer :: l_v(:) => null() ! Last entry in values grid per sps
-    integer :: P_Len ! \sum_i=1^n (l_z(i)-l_z(i-1))*(l_p(i)-l_p(i-1))
+    integer :: P_Len ! \sum_{i=1}^n (l_z(i)-l_z(i-1))*(l_p(i)-l_p(i-1))
     integer,  pointer :: windowstart(:) => null()! horizontal starting index
 !                                                  from l2gp
     integer,  pointer :: windowfinish(:) => null()! horizontal ending index
@@ -38,7 +38,7 @@ module LOAD_SPS_DATA_M
 !                                                 molecules
     real(rp), pointer :: phi_basis(:) => null() ! phi  grid entries for all
 !                                                 molecules
-    real(rp), pointer :: values(:) => null()    ! species values (ie vmr). 
+    real(rp), pointer :: values(:) => null()    ! species values (eg vmr). 
 !     This is really a three-dimensional quantity dimensioned frequency
 !     (or 1) X zeta (or 1) X phi (or 1), taken in Fortran's column-major
 !     array-element order.
@@ -61,49 +61,39 @@ contains
 
   ! ----------------------------------------------  Load_SPS_Data  -----
 
-  subroutine Load_Sps_Data ( FwdModelConf, fwdModelIn, fwdModelExtra, MAF, &
-       &    radiometer, QuantityType, Grids_x, h2o_ind, ext_ind )
+  subroutine Load_Sps_Data ( FwdModelConf, Phitan, MAF, &
+    & Grids_x, h2o_ind, ext_ind, QtyStuffIn )
 
     use ForwardModelConfig, only: ForwardModelConfig_t, QtyStuff_T
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Intrinsic, only: L_Phitan, L_VMR
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate, &
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Deallocate, &
       & MLSMSG_Error
     use Molecules, only: l_extinction, l_h2o
     use VectorsModule, only: Vector_T, VectorValue_T
 
     type (forwardModelConfig_T), intent(in) :: fwdModelConf
-    type (vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
+    type (VectorValue_T), intent(in) ::  PHITAN  ! Tangent geodAngle component of
     integer, intent(in) :: MAF
-
-    integer, intent(in) :: RADIOMETER       
-
-    integer, intent(in) :: QuantityType      ! L_vmr, L_dv, etc.
 
     type (Grids_T), intent(out) :: Grids_x   ! All the coordinates
 
     integer, intent(out), optional :: H2O_IND
     integer, intent(out), optional :: EXT_IND
 
+    type (qtyStuff_t), intent(in), optional , target :: QtyStuffIn(:)
 ! Local variables:
 
     integer :: ii, kk, no_mol, mol, my_ext_ind, my_h2o_ind
-
-    type (VectorValue_T), pointer :: PHITAN  ! Tangent geodAngle component of
 
     type (qtyStuff_t), pointer :: QtyStuff(:)
 
 ! Begin code:
 
-    no_mol = size( fwdModelConf%molecules )
+    qtyStuff => fwdModelConf%beta_group%qty
+    if ( present(qtyStuffIn) ) qtyStuff => qtyStuffIn
 
-    if ( quantityType == l_vmr ) then ! fill the one in the fwdModelConf
-      qtyStuff => fwdModelConf%beta_group%qty
-    else ! Need a temp; don't clobber the one in the fwdModelConf
-      allocate ( qtyStuff( no_mol ), stat = ii )
-      if ( ii /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-        & MLSMSG_Allocate // 'qtyStuff' )
-    end if
+    no_mol = size( qtyStuff )
 
     call create_grids_1 ( Grids_x, no_mol )
 
@@ -113,22 +103,13 @@ contains
     my_ext_ind = 0
     my_h2o_ind = 0
 
-    phitan => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_phitan, config=fwdModelConf, &
-      & instrumentModule=FwdModelConf%signals(1)%instrumentModule )
-
     do mol = 1, no_mol
 
-      kk = FwdModelConf%molecules(mol)
-      if ( kk == l_h2o ) my_h2o_ind = mol        ! memorize h2o index
-      if ( kk == l_extinction ) my_ext_ind = mol ! memorize extiction ix
-
-      if ( quantityType /= l_vmr ) &
-        & qtyStuff(mol)%qty => GetQuantityforForwardModel ( &
-          & fwdModelIn, fwdModelExtra, &
-          & quantityType=quantityType, molIndex=mol, &
-          & radiometer=radiometer, config=fwdModelConf, &
-          & foundInFirst=qtyStuff(mol)%foundInFirst )
+      if ( .not. present(qtyStuffIn) ) then
+        kk = FwdModelConf%molecules(mol)
+        if ( kk == l_h2o ) my_h2o_ind = mol        ! memorize h2o index
+        if ( kk == l_extinction ) my_ext_ind = mol ! memorize extiction ix
+      end if
 
       call fill_grids_1 ( grids_x, mol, qtyStuff(mol)%qty, phitan, maf, &
         &                 fwdModelConf )
@@ -150,12 +131,6 @@ contains
 ! ** ZEBUG - Simulate qty%values for EXTINCTION, using the N2 function
 !  (Some code here ...)
 ! ** END ZEBUG
-
-    if ( quantityType /= l_vmr ) then
-      deallocate ( qtyStuff, stat = ii )
-      if ( ii /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-        & MLSMSG_DeAllocate // 'qtyStuff' )
-    end if
 
     if ( present(ext_ind) ) ext_ind = my_ext_ind
     if ( present(h2o_ind) ) h2o_ind = my_h2o_ind
@@ -399,11 +374,11 @@ contains
 
     integer :: KF, KP, KZ
 
-      kf = qty%template%noChans ! == 1 if qty%template%frequencyCoordinate == l_none
-      call FindInstanceWindow ( qty, phitan, maf, fwdModelConf%phiWindow, &
-        & fwdModelConf%windowUnits, grids_x%windowStart(ii), grids_x%windowFinish(ii) )
+    kf = qty%template%noChans ! == 1 if qty%template%frequencyCoordinate == l_none
+    call FindInstanceWindow ( qty, phitan, maf, fwdModelConf%phiWindow, &
+      & fwdModelConf%windowUnits, grids_x%windowStart(ii), grids_x%windowFinish(ii) )
 
-      kp = grids_x%windowFinish(ii) - grids_x%windowStart(ii) + 1
+    kp = grids_x%windowFinish(ii) - grids_x%windowStart(ii) + 1
 
     kz = qty%template%noSurfs
     grids_x%l_f(ii) = grids_x%l_f(ii-1) + kf
@@ -560,6 +535,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.62  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.61  2004/11/01 20:26:36  vsnyder
 ! Reorganization of representation for molecules and beta groups; PFA may be broken for now
 !

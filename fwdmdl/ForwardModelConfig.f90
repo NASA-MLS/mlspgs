@@ -48,23 +48,34 @@ module ForwardModelConfig
     logical :: FoundInFirst
   end type QtyStuff_T
 
+  ! Data structures to indicate which spectral parameters are being solved.
+  type, public :: SpectroParam_T
+    integer :: Molecule
+    type (QtyStuff_T) :: Qty ! The Qty's vector
+  end type SpectroParam_T
+
   ! Beta group type declaration.  Each entry in the Molecules list of the form
   ! "m" has one of these with n_elements == 1, referring to "m".  Each entry
   ! of the form "[m,m1,...,mn]" has one of these with n_elements == n, referring
   ! to m1,...mn (but not m).  The Ratio components are filled in
   ! Get_Species_Data.
-  type, public :: LBL_T ! For LBL molecules in the group:
-    integer, pointer  :: Cat_Index(:) => NULL() ! 1:size(LBL_Molecules).  Indices
-                                      ! for config%catalog and gl_slabs.
-                                      ! Allocated in ConstructForwardModelConfig.
-                                      ! Filled in DeriveFromForwardModelConfig.
+  type, public :: LBL_T ! For LBL molecules in the group.  All the same
+    ! size, if associated at all.
+    integer, pointer  :: Cat_Index(:) => NULL() ! Indices for config%catalog
+                                      ! and gl_slabs. Allocated in
+                                      ! ConstructForwardModelConfig. Filled in
+                                      ! DeriveFromForwardModelConfig.
     integer, pointer :: Molecules(:) => NULL() ! LBL molecules in the group
                                       ! if a group, i.e., "m1...mn", else "m" if
                                       ! "m" is LBL, else zero size.
-    real(rp), pointer :: Ratio(:) => NULL() ! 1:size(LBL_Molecules).  Isotope
-                                      ! ratio.  Allocated in ForwardModelSupport
-                                      ! with value 1.0, but could be filled in
-                                      ! Get_Species_Data.
+    real(rp), pointer :: Ratio(:) => NULL() ! Isotope ratio.  Allocated in
+                                      ! ForwardModelSupport with value 1.0, but
+                                      ! could be filled in Get_Species_Data.
+    ! Indices in info%line....  Nonzero means use the solved-for parameter;
+    ! zero (or not associated) means use the one in the catalog.
+    integer, pointer :: LineCenter(:) => NULL()
+    integer, pointer :: LineWidth(:) => NULL()
+    integer, pointer :: LineWidth_TDep(:) => NULL()
   end type LBL_T
 
   type, public :: PFA_T ! For PFA molecules in the group:
@@ -150,6 +161,7 @@ module ForwardModelConfig
     logical :: Incl_cld ! Include cloud extinction calculation in Bill's forward model
     logical :: LockBins               ! Use same l2pc bin for whole chunk
     logical :: Polarized              ! Use polarized model for Zeeman-split lines
+    logical :: ScanAverage            ! Average scan over MIF
     logical :: SkipOverlaps           ! Don't calculate for MAFs in overlap regions
     logical :: Spect_Der              ! Do spectroscopy derivatives
     logical :: SwitchingMirror        ! Model radiance at the switching mirror
@@ -162,12 +174,13 @@ module ForwardModelConfig
     ! Now the arrays
     integer, dimension(:), pointer :: BinSelectors=>NULL() ! List of relevant bin selectors
     integer, dimension(:), pointer :: Molecules=>NULL() ! Which molecules to consider
-      ! >0 = beginning of a group or a lonesome molecule, <0 = member of a group.
-      ! Size is one more than number in config; last one is a huge positive sentinel.
     logical, dimension(:), pointer :: MoleculeDerivatives=>NULL() ! Want Jacobians
     integer, dimension(:), pointer :: SpecificQuantities=>NULL() ! Specific quantities to use
     ! Now the derived types
     type (beta_group_t), dimension(:), pointer :: Beta_Group => NULL() ! q.v. above
+    type (spectroParam_t), dimension(:), pointer :: LineCenter => NULL()
+    type (spectroParam_t), dimension(:), pointer :: LineWidth => NULL()
+    type (spectroParam_t), dimension(:), pointer :: LineWidth_TDep => NULL()
       ! Some of this is filled in each time the forward model is invoked.  Those
       ! parts aren't dragged around by PVM.
     type (Signal_T), dimension(:), pointer :: Signals=>NULL()
@@ -936,7 +949,7 @@ contains
 
   ! ------------------------------------ DestroyOneForwardModelConfig --
   subroutine DestroyOneForwardModelConfig ( Config, Deep )
-    use Allocate_Deallocate, only: Deallocate_Test
+    use Allocate_Deallocate, only: Deallocate_Test, Test_Deallocate
     use MLSSignals_M, only: DestroySignalDatabase
     use MLSMessageModule, only: MLSMSG_Deallocate, MLSMSG_Error, MLSMessage
 
@@ -957,17 +970,33 @@ contains
     ! Destroy the beta groups
     do b = 1, size(config%beta_group)
       do s = 1, 2
-        call deallocate_test ( config%beta_group(b)%lbl(s)%cat_index, 'Cat_Index', moduleName )
-        call deallocate_test ( config%beta_group(b)%lbl(s)%molecules, 'LBL Molecules', moduleName )
-        call deallocate_test ( config%beta_group(b)%lbl(s)%ratio, 'LBL Ratio', moduleName )
+        call deallocate_test ( config%beta_group(b)%LBL(s)%cat_index, 'Cat_Index', moduleName )
+        call deallocate_test ( config%beta_group(b)%LBL(s)%molecules, 'LBL Molecules', moduleName )
+        call deallocate_test ( config%beta_group(b)%LBL(s)%ratio, 'LBL Ratio', moduleName )
+        call deallocate_test ( config%beta_group(b)%LBL(s)%lineCenter, 'LineCenter', moduleName )
+        call deallocate_test ( config%beta_group(b)%LBL(s)%lineWidth, 'LineWidth', moduleName )
+        call deallocate_test ( config%beta_group(b)%LBL(s)%lineWidth_TDep, 'LineWidth_TDep', moduleName )
         call deallocate_test ( config%beta_group(b)%PFA(s)%molecules, 'PFA molecules', moduleName )
         call deallocate_test ( config%beta_group(b)%PFA(s)%ratio, 'PFA ratio', moduleName )
       end do ! s
-    end do
+    end do ! b = 1, size(config%beta_group)
 
-    deallocate ( config%beta_group, stat=b )
-    if ( b /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      & MLSMSG_Deallocate // 'config%Beta_group' )
+    if ( associated(config%lineCenter) ) then
+      deallocate ( config%lineCenter, stat=status )
+      call test_deallocate ( status, moduleName, 'LineCenter' )
+    end if
+    if ( associated(config%lineWidth) ) then
+      deallocate ( config%lineWidth, stat=status )
+      call test_deallocate ( status, moduleName, 'LineWidth' )
+    end if
+    if ( associated(config%lineWidth_TDep) ) then
+      deallocate ( config%lineWidth_TDep, stat=status )
+      call test_deallocate ( status, moduleName, 'LineWidth_TDep' )
+    end if
+
+    deallocate ( config%beta_group, stat=status )
+    call test_deallocate ( status, moduleName, 'config%Beta_group' )
+
     if ( associated(config%signals) ) &
       & call DestroySignalDatabase ( config%signals, justChannels=.not. myDeep )
     call deallocate_test ( config%signalIndices, 'SignalIndices', moduleName )
@@ -975,22 +1004,20 @@ contains
       if ( associated ( config%integrationGrid ) ) then
         call DestroyVGridContents ( config%integrationGrid )
         deallocate ( config%integrationGrid, stat=status )
-        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & MLSMSG_Deallocate // "config%integrationGrid" )
+        call test_deallocate ( status, moduleName, 'Config%integrationGrid' )
       end if
       if ( associated ( config%tangentGrid ) ) then
         call DestroyVGridContents ( config%tangentGrid )
         deallocate ( config%tangentGrid, stat=status )
-        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & MLSMSG_Deallocate // "config%tangentGrid" )
+        call test_deallocate ( status, moduleName, 'Config%tangentGrid' )
       end if
     end if
     ! Otherwise don't destroy integrationGrid and tangentGrid.  Assume they will
     ! be (or already are) destroyed by destroyVGridDatabase.
     ! Don't deallocate config%molecules because it's a pointer into beta_group
-    call Deallocate_test ( config%specificQuantities, &
+    call deallocate_test ( config%specificQuantities, &
       & "config%specificQuantities", ModuleName )
-    call Deallocate_test ( config%binSelectors, &
+    call deallocate_test ( config%binSelectors, &
       & "config%binSelectors", ModuleName )
   end subroutine DestroyOneForwardModelConfig
 
@@ -1037,6 +1064,22 @@ contains
           call dump ( beta_group(b)%lbl(s)%ratio, name='    Isotope ratio' )
           call dump ( beta_group(b)%lbl(s)%cat_index, &
             & name='    Spectroscopy catalog extract index' )
+          if ( associated(beta_group(b)%lbl(s)%lineCenter) ) &
+            call display_string ( &
+              & lit_indices(pack(beta_group(b)%lbl(s)%molecules, &
+                &                beta_group(b)%lbl(s)%lineCenter/=0)), &
+              & before='   Line centers for:', advance='yes' )
+          if ( associated(beta_group(b)%lbl(s)%lineWidth) ) &
+            call display_string ( &
+              & lit_indices(pack(beta_group(b)%lbl(s)%molecules, &
+                &                beta_group(b)%lbl(s)%lineWidth/=0)), &
+              & before='   Line widths for:', advance='yes' )
+          if ( associated(beta_group(b)%lbl(s)%lineWidth_TDep) ) &
+            call display_string ( &
+              & lit_indices(pack(beta_group(b)%lbl(s)%molecules, &
+                &                beta_group(b)%lbl(s)%lineWidth_TDep/=0)), &
+              & before='   Line width temperature depencence for:', &
+              & advance='yes' )
         end if
         if ( size(beta_group(b)%pfa(s)%molecules) > 0 ) then
           call display_string ( &
@@ -1196,6 +1239,10 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.77  2005/06/03 01:58:53  vsnyder
+! New copyright notice, move Id to not_used_here to avoid cascades,
+! Revise PFA data structures.
+!
 ! Revision 2.76  2005/05/28 03:27:21  vsnyder
 ! Simplify PFAStuff
 !

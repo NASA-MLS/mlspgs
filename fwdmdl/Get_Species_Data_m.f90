@@ -12,6 +12,7 @@
 module Get_Species_Data_m
 
   ! Get species data for the molecules in the beta groups.
+  ! Get the spectal parameters from the state vector.
 
   implicit NONE
   private
@@ -32,10 +33,11 @@ contains
 
     use ForwardModelConfig, only: Dump, ForwardModelConfig_t
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
-    use Intrinsic, only: L_ISOTOPERATIO, L_VMR
+    use Intrinsic, only: L_ISOTOPERATIO, L_LINECENTER, L_LINEWIDTH, &
+      & L_LINEWIDTH_TDEP, L_VMR
     use SpectroscopyCatalog_m, only: Dump
     use Toggles, only: Switches
-    use VectorsModule, only: VECTOR_T, VECTORVALUE_T
+    use VectorsModule, only: GetVectorQuantityByType, Vector_T, VectorValue_T
 
     type(forwardModelConfig_t), intent(inout) :: FwdModelConf ! Fills Beta_Group
     type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
@@ -43,6 +45,7 @@ contains
     integer :: B         ! Index for beta groups 
     integer, save :: DumpFWM = -1
     type (VectorValue_T), pointer :: F  ! An arbitrary species
+    integer :: L         ! Index in spectral parameter data structure
     integer :: M         ! Index for molecules in beta groups, or size thereof
     integer :: S         ! Sideband index, 1 = LSB, 2 = USB
 
@@ -92,11 +95,57 @@ contains
         &  foundInFirst=fwdModelConf%beta_group(b)%qty%foundInFirst )
     end do ! b
 
+    ! Get state vector quantities for spectral parameters
+    ! fwdModelConf%beta_group(b)%LBL(s)%line... have indices into these
+    if ( associated(fwdModelConf%lineCenter) ) then
+      do l = 1, size(fwdModelConf%lineCenter)
+        fwdModelConf%lineCenter(l)%qty%qty => getVectorQuantityByType ( &
+        &  fwdModelIn, quantityType=l_lineCenter, &
+        &  molecule=fwdModelConf%lineCenter(l)%molecule, &
+        &  radiometer=fwdModelConf%signals(1)%radiometer )
+        call check_no_frq_coord ( fwdModelConf%lineCenter(l)%qty%qty )
+        fwdModelConf%lineCenter(l)%qty%foundInFirst = .true.
+      end do ! l
+    end if
+    if ( associated(fwdModelConf%lineWidth) ) then
+      do l = 1, size(fwdModelConf%lineWidth)
+        fwdModelConf%lineWidth(l)%qty%qty => getVectorQuantityByType ( &
+        &  fwdModelIn, quantityType=l_lineWidth, &
+        &  molecule=fwdModelConf%lineWidth(l)%molecule, &
+        &  radiometer=fwdModelConf%signals(1)%radiometer )
+        call check_no_frq_coord ( fwdModelConf%lineWidth(l)%qty%qty )
+        fwdModelConf%lineWidth(l)%qty%foundInFirst = .true.
+      end do
+    end if
+    if ( associated(fwdModelConf%lineWidth_TDep) ) then
+      do l = 1, size(fwdModelConf%lineWidth_TDep)
+        fwdModelConf%lineWidth_TDep(l)%qty%qty => getVectorQuantityByType ( &
+        &  fwdModelIn, quantityType=l_lineWidth_TDep, &
+        &  molecule=fwdModelConf%lineWidth_TDep(l)%molecule, &
+        &  radiometer=fwdModelConf%signals(1)%radiometer )
+        call check_no_frq_coord ( fwdModelConf%lineWidth_TDep(l)%qty%qty )
+        fwdModelConf%lineWidth_TDep(l)%qty%foundInFirst = .true.
+      end do
+    end if
+
     if ( dumpFWM > 0 ) then
       call dump ( fwdModelConf, moduleName(11:len_trim(moduleName)-8) )
       call dump ( fwdModelConf%catalog )
       if ( dumpFWM > 1 ) stop
     end if
+
+  contains
+
+    subroutine Check_No_Frq_Coord ( Qty )
+      use Intrinsic, only: L_None
+      use MLSMessageModule, only: MLSMSG_Error
+      use MoreMessage, only: MLSMessage
+      type(vectorValue_t), intent(in) :: Qty
+      if ( qty%template%frequencyCoordinate == l_none ) return
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+        & 'The %s vector quantity shall not have a frequency coordinate', &
+        & (/ qty%template%name /) )
+    end subroutine Check_No_Frq_Coord
 
   end subroutine Get_Species_Data
 
@@ -112,6 +161,9 @@ contains
 end module Get_Species_Data_m
 
 ! $Log$
+! Revision 2.26  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.25  2005/05/05 01:11:49  vsnyder
 ! Don't inquire the size of fwdModelConf%beta_group(b)%pfa(s)%molecules if
 ! it's not associated.
