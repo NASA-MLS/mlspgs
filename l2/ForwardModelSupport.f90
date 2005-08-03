@@ -41,7 +41,9 @@ module ForwardModelSupport
   integer, parameter :: IncompleteLinearFwm    = IncompleteFullFwm + 1
   integer, parameter :: IrrelevantFwmParameter = IncompleteLinearFwm + 1
   integer, parameter :: LinearSidebandHasUnits = IrrelevantFwmParameter + 1
-  integer, parameter :: NeedBothXYStar         = LinearSidebandHasUnits + 1
+  integer, parameter :: LineNotMolecule        = LinearSidebandHasUnits + 1
+  integer, parameter :: LineParamTwice         = LineNotMolecule + 1
+  integer, parameter :: NeedBothXYStar         = LineParamTwice + 1
   integer, parameter :: Nested                 = NeedBothXYStar + 1
   integer, parameter :: NoArray                = Nested + 1
   integer, parameter :: NoBetaGroup            = NoArray + 1
@@ -363,7 +365,8 @@ contains ! =====     Public Procedures     =============================
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Expr_M, only: EXPR
-    use ForwardModelConfig, only: Dump, ForwardModelConfig_T, NullifyForwardModelConfig
+    use ForwardModelConfig, only: Dump, ForwardModelConfig_T, &
+      & NullifyForwardModelConfig, SpectroParam_T
     use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
     use Init_Tables_Module, only: L_FULL, L_SCAN, L_LINEAR, L_CLOUDFULL, L_HYBRID, &
       & L_POLARLINEAR
@@ -372,11 +375,13 @@ contains ! =====     Public Procedures     =============================
       & F_DEFAULT_spectroscopy, F_DIFFERENTIALSCAN, F_DO_BASELINE, F_DO_CONV, &
       & F_DO_FREQ_AVG, F_DO_1D, F_FREQUENCY, F_I_SATURATION, F_INCL_CLD, &
       & F_FORCESIDEBANDFRACTION, F_INTEGRATIONGRID, F_LINEARSIDEBAND, &
+      & F_LINECENTER, F_LINEWIDTH, F_LINEWIDTH_TDEP, &
       & F_LOCKBINS, F_LSBPFAMOLECULES, F_MODULE, F_MOLECULES, &
       & F_MOLECULEDERIVATIVES, F_NABTERMS, F_NAZIMUTHANGLES, &
       & F_NCLOUDSPECIES, F_NMODELSURFS, F_NSCATTERINGANGLES, &
-      & F_NSIZEBINS, F_PHIWINDOW, F_POLARIZED, F_SIGNALS, F_SKIPOVERLAPS, &
-      & F_SPECIFICQUANTITIES, F_SPECT_DER, F_SWITCHINGMIRROR, F_TANGENTGRID, &
+      & F_NSIZEBINS, F_PHIWINDOW, F_POLARIZED, F_SCANAVERAGE, F_SIGNALS, &
+      & F_SKIPOVERLAPS, F_SPECIFICQUANTITIES, &
+      & F_SWITCHINGMIRROR, F_TANGENTGRID, &
       & F_TEMP_DER, F_TOLERANCE, F_TYPE, F_USBPFAMOLECULES, F_XSTAR, F_YSTAR
     use Intrinsic, only: L_NONE, L_CLEAR, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, &
       & PHYQ_PROFILES, PHYQ_TEMPERATURE
@@ -400,14 +405,20 @@ contains ! =====     Public Procedures     =============================
     !                                     "spec_args" vertex. Local variables
     logical, intent(in) :: GLOBAL       ! Goes into info%globalConfig
 
+    integer :: B                        ! Index of a beta group
     logical, dimension(:), pointer :: Channels   ! From Parse_Signal
     integer :: DerivTree                ! Tree index of f_MoleculeDerivatives
     integer :: Expr_Units(2)            ! Units of value returned by EXPR
     integer :: Field                    ! Field index -- f_something
+    integer :: Found                    ! Where something is found in a list
     logical :: Got(field_first:field_last)   ! "Got this field already"
     integer :: GSON                     ! Son of son
     integer :: I, J, K                  ! Subscript and loop inductor.
+    integer, pointer :: SpecIndices(:)  ! Indices in info%line...
+    type(spectroParam_t), pointer :: LineStru(:)
+    integer :: LineTrees(3)             ! Tree indices of f_line...
     integer :: MoleculeTree             ! Tree index of f_molecules
+    integer, dimension(:), pointer :: Molecules ! In a LineTree
     integer :: NELTS                    ! Number of elements of an array tree
     integer :: NumPFA, NumLBL           ! Numbers of such molecules in a beta group
     integer :: PFATrees(2)              ! Tree indices of f_[lu]sbPFAMolecules
@@ -423,6 +434,9 @@ contains ! =====     Public Procedures     =============================
     integer :: type                     ! Type of value returned by EXPR
     real (r8) :: Value(2)               ! Value returned by EXPR
     integer :: WANTED                   ! Which signal do we want?
+
+    ! Subscripts for LineTrees
+    integer, parameter :: LineCenter = 1, LineWidth = 2, LineWidth_TDep = 3
 
     ! Nullify some pointers so allocate_test doesn't try to deallocate them.
     ! Don't initialize them with =>NULL() because that makes them SAVEd.
@@ -441,7 +455,7 @@ contains ! =====     Public Procedures     =============================
     info%anyPFA = .false.
     info%atmos_der = .false.
     info%cloud_der = l_none
-    info%DEFAULT_spectroscopy = .false.
+    info%default_spectroscopy = .false.
     info%differentialScan = .false.
     info%do_1d = .false.
     info%do_baseline = .false.
@@ -463,6 +477,7 @@ contains ! =====     Public Procedures     =============================
     info%num_size_bins = 40
     info%phiwindow = 5
     info%polarized = .false.
+    info%scanAverage = .false.
     info%sideBandStart = -1
     info%sideBandStop = 1
     info%skipOverlaps = .false.
@@ -476,6 +491,7 @@ contains ! =====     Public Procedures     =============================
 
     got = .false.
     info%tolerance = -1.0 ! Kelvins, in case the tolerance field is absent
+    lineTrees = null_tree
     pfaTrees = null_tree
     do i = 2, nsons(root)
       son = subtree(i,root)
@@ -521,6 +537,12 @@ contains ! =====     Public Procedures     =============================
         info%linearSideband = nint ( value(1) )
         if ( expr_units(1) /= phyq_dimensionless ) &
           & call AnnounceError ( toleranceNotK, root )
+      case ( f_lineCenter )
+        lineTrees(lineCenter) = son
+      case ( f_lineWidth )
+        lineTrees(lineWidth) = son
+      case ( f_lineWidth_TDep )
+        lineTrees(lineWidth_TDep) = son
       case ( f_lockBins )
         info%lockBins = get_boolean(son)
       case ( f_lsbPFAMolecules )
@@ -557,6 +579,8 @@ contains ! =====     Public Procedures     =============================
         info%windowUnits = expr_units(1)
       case ( f_polarized )
         info%polarized = get_boolean(son)
+      case ( f_scanAverage )
+        info%scanAverage = get_boolean(son)
       case ( f_signals )
         allocate ( info%signals (nsons(son)-1), stat = status )
         if ( status /= 0 ) call announceError( AllocateError, root )
@@ -602,8 +626,6 @@ contains ! =====     Public Procedures     =============================
         do j = 1, nsons(son) - 1
           info%specificQuantities(j) = decoration ( decoration ( subtree ( j+1, son ) ) )
         end do
-      case ( f_spect_der )
-        info%spect_der = get_boolean(son)
       case ( f_switchingMirror )
         info%switchingMirror = get_boolean(son)
       case ( f_tangentGrid )
@@ -637,17 +659,17 @@ contains ! =====     Public Procedures     =============================
       ! the PFA Molecules trees.
       allocate ( info%beta_group(nsons(moleculeTree)-1), stat = status )
       if ( status /= 0 ) call announceError( AllocateError, moleculeTree )
-      do i = 1, nsons(moleculeTree) - 1
-        son = subtree(i+1,moleculeTree)
-        info%beta_group(i)%group = node_id(son) == n_array
-        if ( info%beta_group(i)%group ) then
+      do b = 1, nsons(moleculeTree) - 1
+        son = subtree(b+1,moleculeTree)
+        info%beta_group(b)%group = node_id(son) == n_array
+        if ( info%beta_group(b)%group ) then
           if ( info%fwmType /= l_full ) &
             & call announceError ( noBetaGroup, son )
-          call allocate_test ( info%beta_group(i)%lbl(1)%molecules, nsons(son)-1, &
-            & 'info%beta_group(i)%lbl(1)%molecules', moduleName )
-          call allocate_test ( info%beta_group(i)%lbl(2)%molecules, nsons(son)-1, &
-            & 'info%beta_group(i)%lbl(2)%molecules', moduleName )
-          info%beta_group(i)%molecule = decoration(subtree(1,son)) ! group name
+          call allocate_test ( info%beta_group(b)%lbl(1)%molecules, nsons(son)-1, &
+            & 'info%beta_group(b)%lbl(1)%molecules', moduleName )
+          call allocate_test ( info%beta_group(b)%lbl(2)%molecules, nsons(son)-1, &
+            & 'info%beta_group(b)%lbl(2)%molecules', moduleName )
+          info%beta_group(b)%molecule = decoration(subtree(1,son)) ! group name
           j = nsons(son)
           if ( j < 2 ) call announceError ( badMoleculeGroup, son )
           nelts = nelts + j - 1
@@ -656,32 +678,32 @@ contains ! =====     Public Procedures     =============================
             if ( node_id(gson) == n_array ) then
               call announceError ( nested, gson )
             else
-              info%beta_group(i)%lbl(1)%molecules(j-1) = decoration(gson)
+              info%beta_group(b)%lbl(1)%molecules(j-1) = decoration(gson)
             end if
           end do
-          info%beta_group(i)%lbl(2)%molecules = info%beta_group(i)%lbl(1)%molecules
+          info%beta_group(b)%lbl(2)%molecules = info%beta_group(b)%lbl(1)%molecules
         else ! type checker guarantees a molecule name here
           nelts = nelts + 1
-          info%beta_group(i)%molecule = decoration(son)
-          call allocate_test ( info%beta_group(i)%lbl(1)%molecules, 1, &
-            & 'info%beta_group(i)%lbl(1)%molecules', moduleName )
-          call allocate_test ( info%beta_group(i)%lbl(2)%molecules, 1, &
-            & 'info%beta_group(i)%lbl(2)%molecules', moduleName )
-          info%beta_group(i)%lbl(1)%molecules(1) = info%beta_group(i)%molecule
-          info%beta_group(i)%lbl(2)%molecules(1) = info%beta_group(i)%molecule
+          info%beta_group(b)%molecule = decoration(son)
+          call allocate_test ( info%beta_group(b)%lbl(1)%molecules, 1, &
+            & 'info%beta_group(b)%lbl(1)%molecules', moduleName )
+          call allocate_test ( info%beta_group(b)%lbl(2)%molecules, 1, &
+            & 'info%beta_group(b)%lbl(2)%molecules', moduleName )
+          info%beta_group(b)%lbl(1)%molecules(1) = info%beta_group(b)%molecule
+          info%beta_group(b)%lbl(2)%molecules(1) = info%beta_group(b)%molecule
         end if
         do s = 1, 2 ! both sidebands
           if ( pfaTrees(s) /= null_tree ) then
             ! Allocate PFA_Molecules temporarily for a "this is a PFA molecule" flag
-            call allocate_test ( info%beta_group(i)%pfa(s)%molecules, &
-              & size(info%beta_group(i)%lbl(s)%molecules), 'PFA Molecules', moduleName )
-            info%beta_group(i)%pfa(s)%molecules = 0
+            call allocate_test ( info%beta_group(b)%pfa(s)%molecules, &
+              & size(info%beta_group(b)%lbl(s)%molecules), 'PFA Molecules', moduleName )
+            info%beta_group(b)%pfa(s)%molecules = 0
           else
-            call allocate_test ( info%beta_group(i)%pfa(s)%molecules, 0, &
+            call allocate_test ( info%beta_group(b)%pfa(s)%molecules, 0, &
               & 'PFA Molecules', moduleName )
           end if
         end do ! s = 1, 2
-      end do ! i = 1, nsons(moleculeTree) - 1
+      end do ! b = 1, nsons(moleculeTree) - 1
     else
       allocate ( info%beta_group(0), stat = status )
       if ( status /= 0 ) call announceError( AllocateError, moleculeTree )
@@ -693,65 +715,143 @@ contains ! =====     Public Procedures     =============================
       if ( pfaTrees(s) /= null_tree ) then
         ! Verify that the PFA molecules are all listed molecules.  Mark the
         ! ones that are PFA.
-o:      do j = 2, nsons(PFATrees(s))
+op:     do j = 2, nsons(PFATrees(s))
           son = subtree( j, PFATrees(s) )
           if ( node_id(son) == n_array ) then
             call announceError ( NoArray, son )
             cycle
           end if
           thisMolecule = decoration( son )
-          do i = 1, size(info%beta_group)
-            do k = 1, size(info%beta_group(i)%lbl(s)%molecules)
-              if ( thisMolecule == info%beta_group(i)%lbl(s)%molecules(k) ) then
-                if ( info%beta_group(i)%pfa(s)%molecules(k) /= 0 ) &
+          do b = 1, size(info%beta_group)
+            do k = 1, size(info%beta_group(b)%lbl(s)%molecules)
+              if ( thisMolecule == info%beta_group(b)%lbl(s)%molecules(k) ) then
+                if ( info%beta_group(b)%pfa(s)%molecules(k) /= 0 ) &
                   & call announceError ( PFATwice, son )
-                info%beta_group(i)%pfa(s)%molecules(k) = -1
-                cycle o
+                info%beta_group(b)%pfa(s)%molecules(k) = -1
+                cycle op
               end if
-            end do ! k
-          end do ! i
+            end do ! k = 1, size(info%beta_group(b)%lbl(s)%molecules)
+          end do ! b = 1, size(info%beta_group)
           call announceError ( PFANotMolecule, son )
-        end do o ! j
+        end do op ! j = 2, nsons(PFATrees(s))
         ! Divide the LBL and PFA molecules into separate lists
-        do i = 1, size(info%beta_group)
-          tempLBL => info%beta_group(i)%lbl(s)%molecules
-          tempPFA => info%beta_group(i)%pfa(s)%molecules
+        do b = 1, size(info%beta_group)
+          tempLBL => info%beta_group(b)%lbl(s)%molecules
+          tempPFA => info%beta_group(b)%pfa(s)%molecules
           numLBL = count(tempPFA == 0)
           numPFA = size(tempPFA) - numLBL
-          nullify ( info%beta_group(i)%lbl(s)%molecules, &
-            &       info%beta_group(i)%pfa(s)%molecules )
-          call allocate_test ( info%beta_group(i)%lbl(s)%molecules, numLBL, &
+          nullify ( info%beta_group(b)%lbl(s)%molecules, &
+            &       info%beta_group(b)%pfa(s)%molecules )
+          call allocate_test ( info%beta_group(b)%lbl(s)%molecules, numLBL, &
             & 'LBL Molecules', moduleName )
-          call allocate_test ( info%beta_group(i)%pfa(s)%molecules, numPFA, &
+          call allocate_test ( info%beta_group(b)%pfa(s)%molecules, numPFA, &
             & 'PFA Molecules', moduleName )
-          info%beta_group(i)%lbl(s)%molecules = pack(tempLBL,tempPFA == 0)
-          info%beta_group(i)%pfa(s)%molecules = pack(tempLBL,tempPFA /= 0)
+          info%beta_group(b)%lbl(s)%molecules = pack(tempLBL,tempPFA == 0)
+          info%beta_group(b)%pfa(s)%molecules = pack(tempLBL,tempPFA /= 0)
           call deallocate_test ( tempLBL, 'TempLBL', moduleName )
           call deallocate_test ( tempPFA, 'TempPFA', moduleName )
           if ( numLBL /= 0 ) info%anyLBL(s) = .true.
           if ( numPFA /= 0 ) info%anyPFA(s) = .true.
-        end do ! i
+        end do ! b
       else
         info%anyLBL(s) = .true.
       end if
 
       ! Now the cat_index and isotope ratio fields
-      do i = 1, size(info%beta_group)
-        call allocate_test ( info%beta_group(i)%lbl(s)%cat_index, &
-          & size(info%beta_group(i)%lbl(s)%molecules), &
+      do b = 1, size(info%beta_group)
+        call allocate_test ( info%beta_group(b)%lbl(s)%cat_index, &
+          & size(info%beta_group(b)%lbl(s)%molecules), &
           & 'beta_group(b)%Cat_Index', moduleName )
-        info%beta_group(i)%lbl(s)%cat_index = 0 ! in case somebody asks for a dump
-        call allocate_test ( info%beta_group(i)%lbl(s)%ratio, &
-          &                  size(info%beta_group(i)%lbl(s)%molecules), &
+        info%beta_group(b)%lbl(s)%cat_index = 0 ! in case somebody asks for a dump
+        call allocate_test ( info%beta_group(b)%lbl(s)%ratio, &
+          &                  size(info%beta_group(b)%lbl(s)%molecules), &
           &                  'LBL Ratio', moduleName )
-        info%beta_group(i)%lbl(s)%ratio = 1.0
-        call allocate_test ( info%beta_group(i)%pfa(s)%ratio, &
-          &                  size(info%beta_group(i)%pfa(s)%molecules), &
+        info%beta_group(b)%lbl(s)%ratio = 1.0
+        call allocate_test ( info%beta_group(b)%pfa(s)%ratio, &
+          &                  size(info%beta_group(b)%pfa(s)%molecules), &
           &                  'PFA Ratio', moduleName )
-        info%beta_group(i)%pfa(s)%ratio = 1.0
-      end do ! i
+        info%beta_group(b)%pfa(s)%ratio = 1.0
+      end do ! b = 1, size(info%beta_group)
 
     end do ! s = 1, 2
+
+    ! Now the spectroscopy parameters.  They only make sense for LBL.
+    do i = lineCenter, lineWidth_TDep
+      if ( lineTrees(i) /= null_tree ) then
+        info%spect_der = .true.
+        ! Make a list of the molecules
+        allocate ( lineStru(nsons(lineTrees(i)-1)), stat=status )
+        if ( status /= 0 ) call announceError( AllocateError, lineTrees(i) )
+        select case ( i )
+        case ( lineCenter )
+          info%lineCenter => lineStru
+        case ( lineWidth )
+          info%lineWidth => lineStru
+        case ( lineWidth_TDep )
+          info%lineWidth_TDep => lineStru
+        end select
+        molecules => lineStru%molecule
+        do j = 2, nsons(LineTrees(i))
+          son = subtree( j, LineTrees(i) )
+          if ( node_id(son) == n_array ) then
+            call announceError ( NoArray, son )
+            cycle
+          end if
+          thisMolecule = decoration( son )
+          ! Find the molecule's index in info%molecules
+          do k = size(info%molecules), 1, -1
+            if ( info%molecules(k) == thisMolecule ) exit
+          end do ! k = size(info%molecules), 1, -1
+          if ( k == 0 ) call announceError ( LineNotMolecule, son )
+          molecules(j-1) = thisMolecule
+          ! Look for duplicates
+          do k = 2, j-1
+            if ( molecules(k-1) == k ) call announceError ( lineParamTwice, son )
+          end do  ! k = 2, j-1
+        end do ! j = 2, nsons(LineTrees(i))
+        ! Abstract from the list for each beta group's LBL molecules
+        do b = 1, size(info%beta_group)
+          do s = 1, 2 ! Sideband
+            ! Do we need to allocate the spectroscopy parameter structure?
+NeedSP:     do j = 1, size(molecules)
+              do found = size(info%beta_group(b)%lbl(s)%molecules), 1, -1
+                if ( molecules(j) == info%beta_group(b)%lbl(s)%molecules(found) ) &
+                  & exit NeedSP
+              end do ! found
+            end do NeedSp
+            if ( found > 0 ) then ! Need to allocate
+              call allocate_test ( specIndices, &
+                & size(info%beta_group(b)%lbl(s)%molecules), &
+                & 'SpecIndices', moduleName, fill=0 )
+            end if
+            select case ( i )
+            case ( lineCenter )
+              info%beta_group(b)%lbl(s)%lineCenter => specIndices
+            case ( lineWidth )
+              info%beta_group(b)%lbl(s)%lineWidth => specIndices
+            case ( lineWidth_TDep )
+              info%beta_group(b)%lbl(s)%lineWidth_TDep => specIndices
+            end select
+            ! Now mark the molecules needed
+MarkSP:     do j = 1, size(molecules)
+              do found = 1, size(specIndices)
+                if ( abs(molecules(j)) == info%beta_group(b)%lbl(s)%molecules(found) ) then
+                  specIndices(found) = j
+                  molecules(j) = -molecules(j) ! Mark it as used
+                  exit MarkSP
+                end if
+              end do ! found
+            end do MarkSP
+          end do ! s = 1, 2
+        end do ! b = 1, size(info%beta_group)
+        ! Check for unused ones, make them positive again
+        do j = 1, size(molecules)
+          if ( molecules(j) > 0 ) & ! not used, so not in any LBL list
+            & call announceError ( LineNotMolecule, subtree(j+1,lineTrees(i)) )
+          molecules(j) = abs(molecules(j))
+        end do
+      end if ! lineTrees(i) /= null_tree
+    end do ! i = lineCenter, lineWidth_TDep
 
     info%moleculeDerivatives => info%beta_group%derivatives
     info%moleculeDerivatives = .false.
@@ -809,9 +909,12 @@ o:      do j = 2, nsons(PFATrees(s))
 
     case ( l_scan )
       ! Add 1d/2d method later probably !??? NJL
-      if ( any(got( (/f_atmos_der,f_channels,f_do_conv,f_do_baseline,f_do_freq_avg, &
-        & f_do_1d, f_incl_cld, f_frequency, f_molecules, f_moleculeDerivatives, &
-        & f_signals, f_spect_der, f_temp_der /) )) ) &
+      if ( any(got( (/ f_channels, f_frequency, f_lineCenter, f_lineWidth, &
+        &              f_lineWidth_TDep, f_molecules, f_moleculeDerivatives, &
+        &              f_signals /) )) .or. &
+        & any( (/ info%atmos_der, info%do_conv, info%do_baseline, &
+        &         info%do_freq_avg, info%do_1d, info%incl_cld, &
+        &         info%temp_der /) ) ) &
         & call AnnounceError ( IrrelevantFwmParameter, root )
 
     case ( l_linear, l_polarLinear )
@@ -1096,13 +1199,21 @@ o:      do j = 2, nsons(PFATrees(s))
     case ( LinearSidebandHasUnits )
       call output ( 'irrelevant units for this linear sideband', &
         & advance='yes' )
+    case ( LineNotMolecule )
+      call output ( 'Spectral parameter requested for ' )
+      call display_string ( lit_indices(decoration(where)) )
+      call output ( ' but it is not in an LBL molecule list', advance='yes' )
+    case ( LineParamTwice )
+      call output ( 'Molecule ' )
+      call display_string ( lit_indices(decoration(where)) )
+      call output ( ' listed twice for spectral parameter', advance='yes' )
     case ( NeedBothXYStar )
       call output ( 'x/yStar must either be both present or both absent', &
         & advance='yes' )
     case ( Nested )
       call output ( 'Group within group is not allowed', advance='yes' )
     case ( NoArray )
-      call output ( "I'm not set up to have a nested array in [LU]SBPFAMolecules", advance='yes' )
+      call output ( "Nested array not allowed here", advance='yes' )
     case ( NoBetaGroup )
       call output ( 'Beta grouping allowed only for full clear-sky model', &
         & advance='yes' )
@@ -1156,6 +1267,9 @@ o:      do j = 2, nsons(PFATrees(s))
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.116  2005/08/03 18:07:39  vsnyder
+! Scan averaging, some spectroscopy derivative stuff
+!
 ! Revision 2.115  2005/06/29 00:43:45  pwagner
 ! Utilizes new interface to ReadCompleteHDF5L2PCFile
 !
