@@ -19,37 +19,77 @@ module MLSNumerics              ! Some low level numerical stuff
   use MLSCommon, only : DEFAULTUNDEFINEDVALUE, R4, R8, Rm, &
     & filterValues
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-  use MLSStrings, only: Capitalize
+  use MLSStrings, only: Capitalize, lowercase
 
   implicit none
 
   private
   public :: EssentiallyEqual, Hunt, InterpolateArraySetup
   public :: InterpolateArrayTeardown, InterpolateValues
-  public :: IsFillValue
+  public :: IsFillValue, ReplaceFillValues
 
   type, public :: Coefficients_R4
     private
-    ! Stuff for linear
-    real(r4), pointer :: A(:) => NULL(), B(:) => NULL(), Gap(:) => NULL()
     integer, pointer :: LowerInds(:) => NULL(), UpperInds(:) => NULL()
-    ! Stuff for spline
+    !{ Coefficients for linear interpolation:
+    !  {\tt Gap} $= g = x_{i+1}-x_i$.  $A = \frac{x_{i+1}-x}g$.
+    !                                  $B = 1-A = \frac{x-x_i}g$.
+    !  Coefficients for differentiation in the linear case (and of the linear
+    !  terms in the spline case) are just $-1$ and $+1$, so they're not
+    !  computed here.
+    real(r4), pointer :: A(:) => NULL(), B(:) => NULL(), Gap(:) => NULL()
+    !{ Coefficients for spline interpolation:
+    !  $C = (A^3-A) \frac{g^2}6$.  $D = (B^3-B) \frac{g^2}6$.
     real(r4), pointer :: C(:) => NULL(), D(:) => NULL()
-    real(r4), pointer :: E(:) => NULL(), F(:) => NULL(), Gap2(:) => NULL()
     real(r4), pointer :: Sig(:) => NULL() ! for second derivative guesser
+    !{ Coefficients for spline derivatives:
+    !  $E = \frac{\text{d}C}{\text{d}A} = \frac6g \frac{\text{d}C}{\text{d}x}
+    !     = 3 A^2 - 1$.
+    !  $F = \frac{\text{d}D}{\text{d}A} = \frac6g \frac{\text{d}D}{\text{d}x}
+    !     = 3 B^2 - 1$.
+    real(r4), pointer :: E(:) => NULL(), F(:) => NULL()
+    !{ Coefficients for integration:
+    !  $\int A \text{d}x =  \frac{x(x_{i+1}-\frac{x}2)}g$.
+    !  $\int B \text{d}x = -\frac{x(x_i    +\frac{x}2)}g$.\\
+    !  $\int C \text{d}x = -\frac{g^2}6
+    !                      \left( \int A \text{d}x + \frac{g a^4}4 \right)$.
+    !  $\int D \text{d}x = -\frac{g^2}6
+    !                      \left( \int B \text{d}x - \frac{g b^4}4 \right)$.
+    real(r4), pointer :: AI(:) => NULL(), BI(:) => NULL(), &
+      &                  CI(:) => NULL(), DI(:) => NULL()
     ! Stuff for extrapolation == "B"ad
     logical, pointer :: BadValue(:) => NULL()
   end type Coefficients_R4
 
   type, public :: Coefficients_R8
     private
-    ! Stuff for linear
-    real(r8), pointer :: A(:) => NULL(), B(:) => NULL(), Gap(:) => NULL()
     integer, pointer :: LowerInds(:) => NULL(), UpperInds(:) => NULL()
-    ! Stuff for spline
+    !{ Coefficients for linear interpolation:
+    !  {\tt Gap} $= g = x_{i+1}-x_i$.  $A = \frac{x_{i+1}-x}g$.
+    !                                  $B = 1-A = \frac{x-x_i}g$.
+    !  Coefficients for differentiation in the linear case (and of the linear
+    !  terms in the spline case) are just $-1$ and $+1$, so they're not
+    !  computed here.
+    real(r8), pointer :: A(:) => NULL(), B(:) => NULL(), Gap(:) => NULL()
+    !{ Coefficients for spline interpolation:
+    !  $C = (A^3-A) \frac{g^2}6$.  $D = (B^3-B) \frac{g^2}6$.
     real(r8), pointer :: C(:) => NULL(), D(:) => NULL()
-    real(r8), pointer :: E(:) => NULL(), F(:) => NULL(), Gap2(:) => NULL()
     real(r8), pointer :: Sig(:) => NULL() ! for second derivative guesser
+    !{ Coefficients for spline derivatives:
+    !  $E = \frac{\text{d}C}{\text{d}A} = \frac6g \frac{\text{d}C}{\text{d}x}
+    !     = 3 A^2 - 1$.
+    !  $F = \frac{\text{d}D}{\text{d}A} = \frac6g \frac{\text{d}D}{\text{d}x}
+    !     = 3 B^2 - 1$.
+    real(r8), pointer :: E(:) => NULL(), F(:) => NULL()
+    !{ Coefficients for integration:
+    !  $\int A \text{d}x =  \frac{x(x_{i+1}-\frac{x}2)}g$.
+    !  $\int B \text{d}x = -\frac{x(x_i    +\frac{x}2)}g$.\\
+    !  $\int C \text{d}x = -\frac{g^2}6
+    !                      \left( \int A \text{d}x + \frac{g a^4}4 \right)$.
+    !  $\int D \text{d}x = -\frac{g^2}6
+    !                      \left( \int B \text{d}x - \frac{g b^4}4 \right)$.
+    real(r8), pointer :: AI(:) => NULL(), BI(:) => NULL(), &
+      &                  CI(:) => NULL(), DI(:) => NULL()
     ! Stuff for extrapolation == "B"ad
     logical, pointer :: BadValue(:) => NULL()
   end type Coefficients_R8
@@ -76,7 +116,7 @@ module MLSNumerics              ! Some low level numerical stuff
 ! InterpolateArray             Interpolates for multiple values
 ! InterpolateScalar            Interpolates for just one
 ! IsFillValue                  Returns true if argument is FillValue
-
+! ReplaceFillValues            Replaces FillValue entries in an array
   
   interface EssentiallyEqual
     module procedure EssentiallyEqual_r4, EssentiallyEqual_r8
@@ -106,9 +146,14 @@ module MLSNumerics              ! Some low level numerical stuff
   end interface
 
   interface IsFillValue
-    module procedure IsFillValue_r4, IsFillValue_r8
+    module procedure IsFillValue_r4, IsFillValue_r8, IsFillValue_int
   end interface
-  
+
+  interface ReplaceFillValues
+    module procedure ReplaceFill1d_r4, ReplaceFill1d_r8, ReplaceFill1d_int
+    module procedure ReplaceFill2d_r4, ReplaceFill2d_r8, ReplaceFill2d_int
+    module procedure ReplaceFill3d_r4, ReplaceFill3d_r8, ReplaceFill3d_int
+  end interface
   real, parameter, private :: FILLVALUETOLERANCE = 0.2 ! Poss. could make it 1
 
 contains
@@ -391,7 +436,7 @@ contains
   !   missingRegions will probably slow the code down, as will extrapolate=B
 
   subroutine InterpolateArray_r4 ( oldX, oldY, newX, newY, method, extrapolate, &
-    & badValue, missingRegions, dyByDx, dNewByDOld, skipNewY )
+    & badValue, missingRegions, dyByDx, dNewByDOld, skipNewY, IntYdX )
     integer, parameter :: RK = R4
 
     ! Dummy arguments
@@ -407,6 +452,8 @@ contains
     real(rk), dimension(:,:), optional, intent(out) :: dyByDx
     type (matrixElement_T), intent(out), optional :: dNewByDOld ! Derivatives
     logical, optional, intent(in) :: SKIPNEWY ! Don't compute newY
+    real(rk), dimension(:,:), optional, intent(out) :: IntYdX ! Antiderivative
+                                              ! of Y at X
 
     type(coefficients_r4) :: Coeffs
 
@@ -417,7 +464,7 @@ contains
 ! ------------------------------------------  InterpolateArray_r8  -----
 
   subroutine InterpolateArray_r8 ( oldX, oldY, newX, newY, method, extrapolate, &
-    & badValue, missingRegions, dyByDx, dNewByDOld, skipNewY )
+    & badValue, missingRegions, dyByDx, dNewByDOld, skipNewY, IntYdX )
     integer, parameter :: RK = R8
 
     ! Dummy arguments
@@ -433,6 +480,8 @@ contains
     real(rk), dimension(:,:), optional, intent(out) :: dyByDx
     type (matrixElement_T), intent(OUT), optional :: dNewByDOld ! Derivatives
     logical, optional, intent(in) :: SKIPNEWY ! Don't compute newY
+    real(rk), dimension(:,:), optional, intent(out) :: IntYdX ! Antiderivative
+                                              ! of Y at X
 
     type(coefficients_r8) :: Coeffs
 
@@ -443,7 +492,7 @@ contains
 ! -------------------------------------  InterpolateArraySetup_r4  -----
 
   subroutine InterpolateArraySetup_r4 ( OldX, NewX, Method, Coeffs, &
-    & Extrapolate, Width, DyByDx, dNewByDOld )
+    & Extrapolate, Width, DyByDx, dNewByDOld, IntYdX )
 
     integer, parameter :: RK = R4
 
@@ -458,6 +507,8 @@ contains
     type (matrixElement_T), intent(inout), optional :: dNewByDOld ! Derivatives
                                            ! inout so createBlock can clean up
                                            ! after an old one
+    logical, optional, intent(in) :: IntYdX ! just a signal to
+                                           ! compute more coeffs for splines
 
     include "InterpolateArraySetup.f9h"
 
@@ -466,7 +517,7 @@ contains
 ! -------------------------------------  InterpolateArraySetup_r8  -----
 
   subroutine InterpolateArraySetup_r8 ( OldX, NewX, Method, Coeffs, &
-    & Extrapolate, Width, DyByDx, dNewByDOld )
+    & Extrapolate, Width, DyByDx, dNewByDOld, IntYdX )
 
     integer, parameter :: RK = R8
 
@@ -481,6 +532,8 @@ contains
     type (matrixElement_T), intent(inout), optional :: dNewByDOld ! Derivatives
                                            ! inout so createBlock can clean up
                                            ! after an old one
+    logical, optional, intent(in) :: IntYdX ! just a signal to
+                                           ! compute more coeffs for splines
 
     include "InterpolateArraySetup.f9h"
 
@@ -511,7 +564,7 @@ contains
 ! This subroutine is a scalar wrapper for the array one.
 
   subroutine InterpolateScalar_r4 ( oldX, oldY, newX, newY, method, extrapolate, &
-    & badValue, missingRegions, dyByDx, RangeOfPeriod, skipNewY )
+    & badValue, missingRegions, dyByDx, RangeOfPeriod, skipNewY, IntYdX )
     integer, parameter :: RK = R4
 
     ! Dummy arguments
@@ -527,6 +580,8 @@ contains
     real(rk), dimension(2), optional, intent(in) :: rangeofperiod	  ! for periodic data
     logical, optional, intent(in) :: missingRegions ! Allow missing regions
     logical, optional, intent(in) :: SKIPNEWY ! Don't compute newY
+    real(rk), dimension(:), optional, intent(out) :: IntYdX ! Antiderivative
+                                              ! of Y at X
 
     include "InterpolateScalar.f9h"
   end subroutine InterpolateScalar_r4
@@ -534,7 +589,7 @@ contains
 ! -----------------------------------------  InterpolateScalar_r8  -----
 
   subroutine InterpolateScalar_r8 ( oldX, oldY, newX, newY, method, extrapolate, &
-    & badValue, missingRegions, dyByDx, RangeOfPeriod, skipNewY )
+    & badValue, missingRegions, dyByDx, RangeOfPeriod, skipNewY, IntYdX )
     integer, parameter :: RK = R8
 
     ! Dummy arguments
@@ -550,6 +605,8 @@ contains
     real(rk), dimension(:), optional, intent(out) :: dyByDx
     real(rk), dimension(2), optional, intent(in) :: rangeofperiod	  ! for periodic data
     logical, optional, intent(in) :: SKIPNEWY ! Don't compute newY
+    real(rk), dimension(:), optional, intent(out) :: IntYdX ! Antiderivative
+                                              ! of Y at X
 
     include "InterpolateScalar.f9h"
   end subroutine InterpolateScalar_r8
@@ -557,7 +614,7 @@ contains
 ! -------------------------------  InterpolateScalarUsingSetup_r4  -----
 
   subroutine InterpolateScalarUsingSetup_r4 ( coeffs, oldX, oldY, newX, newY, &
-    & method, extrapolate, badValue, missingRegions, dyByDx, skipNewY )
+    & method, extrapolate, badValue, missingRegions, dyByDx, skipNewY, IntYdX )
     integer, parameter :: RK = R4
 
     ! Dummy arguments
@@ -573,6 +630,8 @@ contains
     logical, optional, intent(in) :: missingRegions ! Allow missing regions
     real(rk), dimension(:), optional, intent(out) :: dyByDx
     logical, optional, intent(in) :: SKIPNEWY ! Don't compute newY
+    real(rk), dimension(:), optional, intent(out) :: IntYdX ! Antiderivative
+                                              ! of Y at X
 
     include "InterpolateScalarUsingSetup.f9h"
 
@@ -581,7 +640,7 @@ contains
 ! -------------------------------  InterpolateScalarUsingSetup_r8  -----
 
   subroutine InterpolateScalarUsingSetup_r8 ( coeffs, oldX, oldY, newX, newY, &
-    & method, extrapolate, badValue, missingRegions, dyByDx, skipNewY )
+    & method, extrapolate, badValue, missingRegions, dyByDx, skipNewY, IntYdX )
     integer, parameter :: RK = R8
 
     ! Dummy arguments
@@ -597,6 +656,8 @@ contains
     logical, optional, intent(in) :: missingRegions ! Allow missing regions
     real(rk), dimension(:), optional, intent(out) :: dyByDx
     logical, optional, intent(in) :: SKIPNEWY ! Don't compute newY
+    real(rk), dimension(:), optional, intent(out) :: IntYdX ! Antiderivative
+                                              ! of Y at X
 
     include "InterpolateScalarUsingSetup.f9h"
 
@@ -605,7 +666,7 @@ contains
 ! -------------------------------------  InterpolateUsingSetup_r4  -----
 
   subroutine InterpolateUsingSetup_r4 ( coeffs, oldX, oldY, newX, newY, &
-    & method, extrapolate, badValue, missingRegions, dyByDx, skipNewY )
+    & method, extrapolate, badValue, missingRegions, dyByDx, skipNewY, IntYdX )
     integer, parameter :: RK = R4
 
     ! Dummy arguments
@@ -621,6 +682,8 @@ contains
     logical, optional, intent(in) :: missingRegions ! Allow missing regions
     real(rk), dimension(:,:), optional, intent(out) :: dyByDx
     logical, optional, intent(in) :: SKIPNEWY ! Don't compute newY
+    real(rk), dimension(:,:), optional, intent(out) :: IntYdX ! Antiderivative
+                                              ! of Y at X
 
     include "InterpolateUsingSetup.f9h"
 
@@ -629,7 +692,7 @@ contains
 ! -------------------------------------  InterpolateUsingSetup_r8  -----
 
   subroutine InterpolateUsingSetup_r8 ( coeffs, oldX, oldY, newX, newY, &
-    & method, extrapolate, badValue, missingRegions, dyByDx, skipNewY )
+    & method, extrapolate, badValue, missingRegions, dyByDx, skipNewY, IntYdX )
     integer, parameter :: RK = R8
 
     ! Dummy arguments
@@ -645,14 +708,144 @@ contains
     logical, optional, intent(in) :: missingRegions ! Allow missing regions
     real(rk), dimension(:,:), optional, intent(out) :: dyByDx
     logical, optional, intent(in) :: SKIPNEWY ! Don't compute newY
+    real(rk), dimension(:,:), optional, intent(out) :: IntYdX ! Antiderivative
+                                              ! of Y at X
 
     include "InterpolateUsingSetup.f9h"
 
   end subroutine InterpolateUsingSetup_r8
 
+! -------------------------------------  ReplaceFillValues  -----
+
+  ! This family of routines replaces entries in an array
+  ! based on whethet they
+  ! (1) are equal to FillValue; or
+  ! (2) other criteria set by options
+  ! The replacement values are supplied either by 
+  ! newvalues, newFill, or according to options (e.g., you may interpolate)
+
+  subroutine ReplaceFill1d_int ( values, FillValue, newValues, newFill, options )
+    integer, dimension(:), intent(inout) :: values
+    integer, intent(in) :: FillValue
+    integer, dimension(:), optional, intent(in) :: newvalues
+    integer, optional, intent(in) :: newFill
+    character(len=*), optional, intent(in) :: options
+    !
+    ! Local variables
+    ! More local variables and executable
+    include 'ReplaceFillValues.f9h'
+  end subroutine ReplaceFill1d_int
+
+  subroutine ReplaceFill1d_r4 ( values, FillValue, newValues, newFill, options )
+    real(r4), dimension(:), intent(inout) :: values
+    real(r4), intent(in) :: FillValue
+    real(r4), dimension(:), optional, intent(in) :: newvalues
+    real(r4), optional, intent(in) :: newFill
+    character(len=*), optional, intent(in) :: options
+    !
+    ! Local variables
+    ! More local variables and executable
+    include 'ReplaceFillValues.f9h'
+  end subroutine ReplaceFill1d_r4
+
+  subroutine ReplaceFill1d_r8 ( values, FillValue, newValues, newFill, options )
+    real(r8), dimension(:), intent(inout) :: values
+    real(r8), intent(in) :: FillValue
+    real(r8), dimension(:), optional, intent(in) :: newvalues
+    real(r8), optional, intent(in) :: newFill
+    character(len=*), optional, intent(in) :: options
+    !
+    ! Local variables
+    ! More local variables and executable
+    include 'ReplaceFillValues.f9h'
+  end subroutine ReplaceFill1d_r8
+
+  subroutine ReplaceFill2d_int ( values, FillValue, newValues, newFill, options )
+    integer, dimension(:, :), intent(inout) :: values
+    integer, intent(in) :: FillValue
+    integer, dimension(:, :), optional, intent(in) :: newvalues
+    integer, optional, intent(in) :: newFill
+    character(len=*), optional, intent(in) :: options
+    !
+    ! Local variables
+    ! More local variables and executable
+    include 'ReplaceFillValues.f9h'
+  end subroutine ReplaceFill2d_int
+
+  subroutine ReplaceFill2d_r4 ( values, FillValue, newValues, newFill, options )
+    real(r4), dimension(:, :), intent(inout) :: values
+    real(r4), intent(in) :: FillValue
+    real(r4), dimension(:, :), optional, intent(in) :: newvalues
+    real(r4), optional, intent(in) :: newFill
+    character(len=*), optional, intent(in) :: options
+    !
+    ! Local variables
+    ! More local variables and executable
+    include 'ReplaceFillValues.f9h'
+  end subroutine ReplaceFill2d_r4
+
+  subroutine ReplaceFill2d_r8 ( values, FillValue, newValues, newFill, options )
+    real(r8), dimension(:, :), intent(inout) :: values
+    real(r8), intent(in) :: FillValue
+    real(r8), dimension(:, :), optional, intent(in) :: newvalues
+    real(r8), optional, intent(in) :: newFill
+    character(len=*), optional, intent(in) :: options
+    !
+    ! Local variables
+    ! More local variables and executable
+    include 'ReplaceFillValues.f9h'
+  end subroutine ReplaceFill2d_r8
+
+  subroutine ReplaceFill3d_int ( values, FillValue, newValues, newFill, options )
+    integer, dimension(:, :, :), intent(inout) :: values
+    integer, intent(in) :: FillValue
+    integer, dimension(:, :, :), optional, intent(in) :: newvalues
+    integer, optional, intent(in) :: newFill
+    character(len=*), optional, intent(in) :: options
+    !
+    ! Local variables
+    ! More local variables and executable
+    include 'ReplaceFillValues.f9h'
+  end subroutine ReplaceFill3d_int
+
+  subroutine ReplaceFill3d_r4 ( values, FillValue, newValues, newFill, options )
+    real(r4), dimension(:, :, :), intent(inout) :: values
+    real(r4), intent(in) :: FillValue
+    real(r4), dimension(:, :, :), optional, intent(in) :: newvalues
+    real(r4), optional, intent(in) :: newFill
+    character(len=*), optional, intent(in) :: options
+    !
+    ! Local variables
+    ! More local variables and executable
+    include 'ReplaceFillValues.f9h'
+  end subroutine ReplaceFill3d_r4
+
+  subroutine ReplaceFill3d_r8 ( values, FillValue, newValues, newFill, options )
+    real(r8), dimension(:, :, :), intent(inout) :: values
+    real(r8), intent(in) :: FillValue
+    real(r8), dimension(:, :, :), optional, intent(in) :: newvalues
+    real(r8), optional, intent(in) :: newFill
+    character(len=*), optional, intent(in) :: options
+    !
+    ! Local variables
+    ! More local variables and executable
+    include 'ReplaceFillValues.f9h'
+  end subroutine ReplaceFill3d_r8
+
 ! ------------------------------------------------- IsFillValue ---
 
   ! This family of routines checks to see if an arg is a fillValue
+  ! This family of routines checks to see if an arg is a fillValue
+  elemental logical function IsFillValue_int ( A, FILLVALUE )
+    integer, intent(in) :: A
+    integer ,intent(in), optional :: FILLVALUE
+    integer  :: MYFILLVALUE
+    myFillValue = int(DEFAULTUNDEFINEDVALUE)
+    if ( present(fillValue) ) myFillValue = fillValue
+    IsFillValue_int = &
+      & abs(a - myFillValue) < 1 ! FILLVALUETOLERANCE
+  end function IsFillValue_int
+
   elemental logical function IsFillValue_r4 ( A, FILLVALUE )
     real(r4), intent(in) :: A
     real(r4) ,intent(in), optional :: FILLVALUE
@@ -688,6 +881,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.35  2005/08/03 16:36:46  pwagner
+! antiderivatives; added replaceFillValues
+!
 ! Revision 2.34  2005/06/22 17:25:50  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
