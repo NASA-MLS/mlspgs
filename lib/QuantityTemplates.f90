@@ -503,7 +503,7 @@ contains ! =====     Public Procedures     =============================
       call deallocate_test ( qty%frequencies, "qty%frequencies", ModuleName )
     end if
 
-    if ( .not. qty%regular) then
+    if ( .not. qty%regular ) then
       call deallocate_test ( qty%surfIndex, "qty%surfIndex", ModuleName )
       call deallocate_test ( qty%chanIndex, "qty%chanIndex", ModuleName )
     end if
@@ -549,10 +549,10 @@ contains ! =====     Public Procedures     =============================
     call output ( ' Name = ' )
     call myDisplayString ( quantity_template%name )
     if ( .not. myNoL2CF ) then
-    call output ( ' quantityType = ' )
-    call myDisplayString ( lit_indices(quantity_template%quantityType), &
-      & advance='yes' )
-    endif
+      call output ( ' quantityType = ' )
+      call myDisplayString ( lit_indices(quantity_template%quantityType), &
+        & advance='yes' )
+    end if
     call output ( '      NoInstances = ' )
     call output ( quantity_template%noInstances )
     call output ( ' NoSurfs = ' )
@@ -570,7 +570,7 @@ contains ! =====     Public Procedures     =============================
       call output ('log-')
     else
       call output ('linear-')
-    endif
+    end if
     call output ('basis ' )  
     if ( .not. quantity_template%minorFrame ) call output ( 'non' )
     call output ( 'minorFrame', advance='yes' )
@@ -581,35 +581,35 @@ contains ! =====     Public Procedures     =============================
     call output ( '      BadValue = ' )
     call output ( quantity_template%badValue )
     if ( .not. myNoL2CF ) then
-    call output ( ' Unit = ' )
-    call myDisplayString ( phyq_indices(quantity_template%unit) )
-    endif
+      call output ( ' Unit = ' )
+      call myDisplayString ( phyq_indices(quantity_template%unit) )
+    end if
     call output ( ' InstanceLen = ' )
     call output ( quantity_template%InstanceLen, advance='yes' )
-    call output ( ' sharedHGrid = ' )
+    call output ( '      sharedHGrid = ' )
     call output ( quantity_template%sharedHGrid, advance='no' )
-    if ( quantity_template%sharedHGrid  ) then
+    if ( quantity_template%sharedHGrid ) then
       call output ( ' hGridIndex = ' )
       call output ( quantity_template%hGridIndex, advance='yes' )
     else
       call newline
-    endif
-    call output ( ' sharedVGrid = ' )
+    end if
+    call output ( '      sharedVGrid = ' )
     call output ( quantity_template%sharedVGrid, advance='no' )
-    if ( quantity_template%sharedVGrid  ) then
+    if ( quantity_template%sharedVGrid ) then
       call output ( ' vGridIndex = ' )
       call output ( quantity_template%vGridIndex, advance='yes' )
     else
       call newline
-    endif
-    call output ( ' sharedFGrid = ' )
+    end if
+    call output ( '      sharedFGrid = ' )
     call output ( quantity_template%sharedFGrid, advance='no' )
-    if ( quantity_template%sharedFGrid  ) then
+    if ( quantity_template%sharedFGrid ) then
       call output ( ' fGridIndex = ' )
       call output ( quantity_template%fGridIndex, advance='yes' )
     else
       call newline
-    endif
+    end if
     if ( myDetails < 0 ) then
       call dump ( quantity_template%surfs, '  Surfs = ' )
       call dump ( quantity_template%phi, '      Phi = ' )
@@ -701,18 +701,19 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------- myDisplayString -----
   subroutine myDisplayString ( index, advance )
-    ! Given a quantity template, nullify all the pointers associated with it
+    ! Given a string index, display the string or an error message
+    use String_Table, only: How_Many_Strings
     integer, intent(in) :: index
     character(len=*), intent(in), optional :: advance
 
     ! Executable code
     if ( index < 1 ) then
       call output ( '(string index < 1)' )
-    elseif ( index /= index ) then
-      call output ( '(string index is NaN)' )
+    else if ( index > how_many_strings() ) then ! How can an integer be a NaN ?????
+      call output ( how_many_strings(), before='(string index > ', after=')' )
     else
       call display_string ( index, advance )
-    endif
+    end if
   end subroutine myDisplayString
 
   ! ----------------------------------------NullifyQuantityTemplate -----
@@ -720,18 +721,8 @@ contains ! =====     Public Procedures     =============================
     ! Given a quantity template, nullify all the pointers associated with it
     type ( QuantityTemplate_T ), intent(out) :: Q
 
-    ! Executable code
-    nullify ( q%surfs )
-    nullify ( q%phi )
-    nullify ( q%geodLat )
-    nullify ( q%lon )
-    nullify ( q%time )
-    nullify ( q%solarTime )
-    nullify ( q%solarZenith )
-    nullify ( q%losAngle )
-    nullify ( q%frequencies )
-    nullify ( q%surfIndex )
-    nullify ( q%chanIndex )
+    ! Executable code not needed because Q is intent(out)
+
   end subroutine NullifyQuantityTemplate
 
   ! -----------------------------------  SetupNewQuantityTemplate  -----
@@ -879,7 +870,7 @@ contains ! =====     Public Procedures     =============================
         & "qty%losAngle", ModuleName )
     end if
 
-    if ( .not. qty%regular) then        !
+    if ( .not. qty%regular ) then        !
       call allocate_test ( qty%surfIndex, qty%instanceLen, qty%noInstances, &
         & "qty%surfIndex", ModuleName )
       call allocate_test ( qty%chanIndex, qty%instanceLen, qty%noInstances, &
@@ -905,6 +896,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.40  2005/06/22 17:25:50  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.39  2004/08/26 18:54:49  pwagner
 ! qtmp switch now dumps in CreateQtyTemplateFromMLSCFInfo, not setup..
 !
