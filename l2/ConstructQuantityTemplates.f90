@@ -1124,14 +1124,14 @@ contains ! ============= Public procedures ===================================
       l_jacobian_cols, phyq_dimensionless, p_vGrid, next, &
       l_jacobian_rows, phyq_dimensionless, p_vGrid, next, &
       l_l1bMAFBaseline, phyq_temperature, p_majorFrame, p_signal, next, &
-      l_l1bMIF_TAI, phyq_time, p_minorFrame, p_module, next, &
+      l_l1bMIF_TAI, phyq_time, p_minorFrame, p_scmodule, next, &
       l_limbSidebandFraction, phyq_dimensionless, p_signal, next, &
       l_losTransFunc, phyq_dimensionless, p_minorFrame, p_sGrid, p_module, next, &
       l_losVel, phyq_dimensionless, p_minorFrame, p_module, next, &
       l_magneticField, phyq_gauss, p_vGrid, p_hGrid, p_xyz, p_mustBeZeta, next, &
       l_massMeanDiameterIce, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
       l_massMeanDiameterWater, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
-      l_mifDeadTime, phyq_time, p_module, next, &
+      l_mifDeadTime, phyq_time, next, &
       l_noRadsBinned, phyq_dimensionless, p_vGrid, p_hGrid, &
                       p_signal, p_suppressChannels, p_mustBeZeta, next, &
       l_noRadsPerMIF, phyq_dimensionless, p_minorFrame, p_signal, &
@@ -1282,6 +1282,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.124  2005/08/04 02:59:54  vsnyder
+! Correct definitions for L1BMIF_TAI and MIFDeadTime
+!
 ! Revision 2.123  2005/08/03 18:08:35  vsnyder
 ! Add L1BMIF_TAI and MifDeadTime for scan averaging
 !
