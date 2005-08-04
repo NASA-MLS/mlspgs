@@ -15,7 +15,7 @@ module EXPR_M
 
   implicit NONE
   private
-  public :: EXPR, GetIndexFlagsFromList
+  public :: EXPR, EXPR_CHECK, GetIndexFlagsFromList
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -237,6 +237,42 @@ contains ! ====     Public Procedures     ==============================
     end subroutine AnnounceError
   end subroutine EXPR
 
+  ! -------------------------------------------------  EXPR_CHECK  -----
+  subroutine EXPR_CHECK ( ROOT, UNITS, VALUE, NEED, ERROR, TYPE, SCALE )
+  ! Analyze an expression, return its type, units and value.  Check that
+  ! its units are one of the units in NEED.  ERROR = true if not.
+    use INTRINSIC, only: PHYQ_INVALID
+    integer, intent(in) :: ROOT         ! Root of expression subtree
+    integer, intent(out) :: UNITS(2)    ! Units of expression value -- UNITS(2)
+                                        ! is PHYQ_INVALID if ROOT is not a
+                                        ! range (:) operator.
+    double precision, intent(out) :: VALUE(2) ! Expression value, if any
+    integer, intent(in) :: NEED(:)      ! Needed units
+    logical, intent(out) :: ERROR       ! "Wrong units"
+    integer, intent(out), optional :: TYPE    ! Expression type
+    double precision, optional, intent(out) :: SCALE(2) ! Scale for units
+    integer :: I
+
+    call expr ( root, units, value, type, scale )
+    error = .true.
+    do i = 1, size(need)
+      if ( units(1) == need(i) ) then
+        error = .false.
+        exit
+      end if
+    end do
+    if ( units(2) /= phyq_invalid .and. .not. error ) then
+      error = .true.
+      do i = 1, size(need)
+        if ( units(2) == need(i) ) then
+          error = .false.
+          exit
+        end if
+      end do
+    end if
+
+  end subroutine EXPR_CHECK
+
   ! --------------------------------------  GetIndexFlagsFromList  -----
 
   subroutine GetIndexFlagsFromList ( root, flags, status, lower, noError )
@@ -314,6 +350,9 @@ contains ! ====     Public Procedures     ==============================
 end module EXPR_M
 
 ! $Log$
+! Revision 2.12  2005/08/04 02:55:02  vsnyder
+! Add Expr_Check
+!
 ! Revision 2.11  2005/06/22 17:25:48  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
