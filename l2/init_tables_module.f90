@@ -120,7 +120,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_COLUMNSCALE        = s_chunkDivide + 1
   integer, parameter :: S_COMBINECHANNELS    = s_columnScale + 1
   integer, parameter :: S_CONCATENATE        = s_combineChannels + 1
-  integer, parameter :: S_CYCLICJACOBI       = s_concatenate + 1
+  integer, parameter :: S_COPY               = s_concatenate + 1
+  integer, parameter :: S_CYCLICJACOBI       = s_copy + 1
   integer, parameter :: S_DELETE             = s_cyclicJacobi + 1
   integer, parameter :: S_DESTROY            = s_delete + 1
   integer, parameter :: S_DIRECTWRITE        = s_destroy + 1
@@ -328,6 +329,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_columnScale) =          add_ident ( 'columnScale' )
     spec_indices(s_combineChannels) =      add_ident ( 'combineChannels' )
     spec_indices(s_concatenate) =          add_ident ( 'concatenate' )
+    spec_indices(s_copy)   =               add_ident ( 'copy' )
     spec_indices(s_cyclicJacobi) =         add_ident ( 'cyclicJacobi' )
     spec_indices(s_empiricalGeometry) =    add_ident ( 'EmpiricalGeometry' )
     spec_indices(s_delete) =               add_ident ( 'delete' )
@@ -977,6 +979,17 @@ contains ! =====     Public procedures     =============================
              begin, f+f_hdfVersion, t+t_numeric, ndr+n_field_type, &
              np+n_spec_def /) )
     call make_tree ( (/ &
+      begin, s+s_copy, &  ! Must be AFTER s_l2aux and s_l2gp
+             begin, f+f_type, t+t_outputType, nr+n_field_type, &
+             begin, f+f_file, t+t_string, nr+n_field_type, &
+             begin, f+f_inputFile, t+t_string, nr+n_field_type, &
+             begin, f+f_hdfVersion, t+t_numeric, n+n_field_type, &
+             begin, f+f_ifAnyCrashedChunks, t+t_boolean, n+n_field_type, &
+             begin, f+f_repairGeolocations, t+t_boolean, n+n_field_type, &
+             begin, f+f_swath, t+t_string, n+n_field_type, &
+             begin, f+f_exclude, t+t_string, n+n_field_type, &
+             ndp+n_spec_def /) )
+    call make_tree ( (/ &
       begin, s+s_output, &  ! Must be AFTER s_l2aux and s_l2gp
              begin, f+f_type, t+t_outputType, nr+n_field_type, &
              begin, f+f_file, t+t_string, nr+n_field_type, &
@@ -1339,7 +1352,7 @@ contains ! =====     Public procedures     =============================
       begin, z+z_algebra, s+s_columnScale, s+s_combineChannels, s+s_cyclicJacobi, &
              s+s_disjointEquations, s+s_normalEquations, &
              s+s_reflect, s+s_regularization, s+s_rowScale, n+n_section+d*no_check_eq, &
-      begin, z+z_output, s+s_time, s+s_output, n+n_section /) )
+      begin, z+z_output, s+s_time, s+s_output, s+s_copy, n+n_section /) )
 
   contains
 
@@ -1360,6 +1373,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.409  2005/08/04 19:36:18  pwagner
+! New copy command in Output section
+!
 ! Revision 2.408  2005/08/04 02:58:13  vsnyder
 ! Add MIFDeadTime to QuantityTypes
 !
