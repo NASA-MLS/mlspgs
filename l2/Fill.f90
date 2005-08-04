@@ -53,7 +53,7 @@ contains ! =====     Public Procedures     =============================
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Chunks_m, only: MLSChunk_T
     use DumpCommand_m, only: DumpCommand
-    use Expr_M, only: EXPR, GetIndexFlagsFromList
+    use Expr_M, only: EXPR, EXPR_CHECK, GetIndexFlagsFromList
     use ForwardModelConfig, only: ForwardModelConfig_T
     use ForwardModelSupport, only: FillFwdModelTimings
     use GriddedData, only: GriddedData_T, WrapGriddedData
@@ -203,69 +203,42 @@ contains ! =====     Public Procedures     =============================
 
     ! Error codes for "announce_error"  
     integer, parameter :: No_Error_code = 0
-    integer, parameter :: Wrong_Number = No_Error_code+1     ! of fields of a VECTOR command
-    integer, parameter :: UnknownQuantityName = wrong_number + 1
-    integer, parameter :: Source_not_in_db = unknownQuantityName + 1
-    integer, parameter :: ZeroProfilesFound = source_not_in_db + 1
-    integer, parameter :: ZeroGeodSpan = zeroProfilesFound + 1
-    integer, parameter :: CantFillFromL2AUX = ZeroGeodSpan + 1
-    integer, parameter :: VectorWontMatchPDef = cantFillFromL2AUX + 1
-    integer, parameter :: CantFillFromL1B = vectorWontMatchPDef + 1
+    integer, parameter :: CantFillFromL2AUX = No_Error_code + 1
+    integer, parameter :: CantFillFromL1B = cantFillFromL2AUX + 1
 
     ! Error codes for "Matrix" specification
     integer, parameter :: MissingField = cantFillFromL1B + 1
 
     ! More Error codes relating to FillVector
-    integer, parameter :: NumInstancesisZero = missingField + 1
-    integer, parameter :: NumSurfsisZero = numInstancesisZero + 1
-    integer, parameter :: NumChansisZero = numSurfsisZero + 1
-    integer, parameter :: ObjIsFullRank3 = numChansisZero + 1
-    integer, parameter :: OtherErrorInFillVector = objIsFullRank3 + 1
-    integer, parameter :: NoSourceGridGiven= otherErrorInFillVector + 1
+    integer, parameter :: NumChansisZero = missingField + 1
+    integer, parameter :: NoSourceGridGiven= numChansisZero + 1
     integer, parameter :: NoSourceL2GPGiven= noSourceGridGiven + 1
     integer, parameter :: NoSourceL2AUXGiven= noSourceL2GPGiven + 1
     integer, parameter :: NoExplicitValuesGiven= noSourceL2AUXGiven + 1
-    integer, parameter :: NoSourceQuantityGiven= noExplicitValuesGiven + 1
-    integer, parameter :: InvalidExplicitFill= noSourceQuantityGiven + 1
-    integer, parameter :: BadUnitsForExplicit= invalidExplicitFill + 1
-    integer, parameter :: BadUnitsForIntegrationTime = badUnitsForExplicit + 1
-    integer, parameter :: BadUnitsForStatus = badUnitsForIntegrationTime + 1
-    integer, parameter :: BadUnitsForSystemTemperature = badUnitsForStatus + 1
-    integer, parameter :: BadUnitsForWidth = badUnitsForSystemTemperature + 1
-    integer, parameter :: BadIsotopeFill = badUnitsForWidth + 1
+    integer, parameter :: InvalidExplicitFill = noExplicitValuesGiven + 1
+    integer, parameter :: BadIsotopeFill = invalidExplicitFill + 1
     integer, parameter :: BadlosGridFill = badIsotopeFill + 1
     integer, parameter :: CantInterpolate3d = badlosGridFill + 1
+    integer, parameter :: WrongUnits = CantInterpolate3d + 1
 
     ! Error codes resulting from FillCovariance
-    integer, parameter :: NotSPD = CantInterpolate3D + 1
+    integer, parameter :: NotSPD = WrongUnits + 1
     integer, parameter :: NotPlain = NotSPD + 1
     integer, parameter :: NotImplemented = notPlain + 1
     integer, parameter :: BothFractionAndLength = NotImplemented + 1
 
-    ! Error codes resulting from squeeze
-    integer, parameter :: N1_is_zero = BothFractionAndLength + 1
-    integer, parameter :: N2_is_zero = n1_is_zero + 1
-    integer, parameter :: N3_is_zero = n2_is_zero + 1
-    integer, parameter :: M1_too_small = n3_is_zero + 1
-    integer, parameter :: M2_too_small = m1_too_small + 1
-    integer, parameter :: Not_permutation = m2_too_small + 1
-    integer, parameter :: Allocation_err = not_permutation + 1
-    integer, parameter :: Deallocation_err = allocation_err + 1
-
     ! Miscellaneous
-    integer, parameter :: Miscellaneous_err = deallocation_err + 1
+    integer, parameter :: Miscellaneous_err = BothFractionAndLength + 1
     integer, parameter :: ErrorReadingL1B = miscellaneous_err + 1
     integer, parameter :: NeedTempREFGPH = errorReadingL1B + 1
     integer, parameter :: NeedH2O = needTempRefGPH + 1
     integer, parameter :: NeedOrbitInclination = needH2O + 1
     integer, parameter :: NeedGeocAltitude = needOrbitInclination + 1
-    integer, parameter :: NeedGeodAltitude = needGeocAltitude + 1
-    integer, parameter :: BadGeocAltitudeQuantity = needGeodAltitude + 1
+    integer, parameter :: BadGeocAltitudeQuantity = needGeocAltitude + 1
     integer, parameter :: BadTemperatureQuantity = badGeocAltitudeQuantity + 1
     integer, parameter :: BadREFGPHQuantity = badTemperatureQuantity + 1
     integer, parameter :: NonConformingHydrostatic = badREFGPHQuantity + 1
-    integer, parameter :: BadUnitsForMaxIterations = nonConformingHydrostatic + 1
-    integer, parameter :: NoSpecialFill = badUnitsForMaxIterations + 1
+    integer, parameter :: NoSpecialFill = nonConformingHydrostatic + 1
     integer, parameter :: BadlosVelFill = noSpecialFill + 1
     integer, parameter :: NotZetaForGrid = BadLosVelFill + 1
     integer, parameter :: BadEstNoiseFill = NotZetaForGrid + 1
@@ -480,6 +453,7 @@ contains ! =====     Public Procedures     =============================
     integer :: TNGTECIQUANTITYINDEX     ! In the quantities database
     integer :: TNGTECIVECTORINDEX       ! In the vector database
     integer, dimension(2) :: UNITASARRAY ! From expr
+    logical :: UNITSERROR               ! From expr
     integer :: USBVECTORINDEX           ! Inddex in vector database
     integer :: USBQUANTITYINDEX         ! Inddex in vector database
     integer :: USBFRACTIONVECTORINDEX   ! Index in vector database
@@ -780,10 +754,10 @@ contains ! =====     Public Procedures     =============================
             bndPressVctrIndex = decoration(decoration(subtree(1,gson)))
             bndPressQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_channel )
-            call expr ( gson , unitAsArray, valueAsArray )
-            if ( all ( unitAsArray /= (/PHYQ_Dimensionless, PHYQ_Invalid/) ) ) &
-              call Announce_error ( key, no_error_code, &
-              & 'Channel should be dimensionless' )
+            call expr_check ( gson , unitAsArray, valueAsArray, &
+              & (/PHYQ_Dimensionless/), unitsError )
+            if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
+              & extraInfo=(/unitAsArray(1), PHYQ_Dimensionless/) )
             channel = valueAsArray(1)
           case ( f_centerVertically )
             centerVertically = get_boolean ( gson )
@@ -799,7 +773,7 @@ contains ! =====     Public Procedures     =============================
             ecrToFOVVectorIndex = decoration(decoration(subtree(1,gson)))
             ecrToFOVQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_explicitValues ) ! For explicit fill
-            valuesNode=subtree(j,key)
+            valuesNode = subtree(j,key)
           case ( f_extinction ) ! For cloud extinction fill
             extinction = get_boolean ( gson )
           case ( f_fieldECR ) ! For hydrostatic
@@ -839,9 +813,10 @@ contains ! =====     Public Procedures     =============================
           case ( f_instances )
             instancesNode = subtree(j,key)
           case ( f_integrationTime )
-            call expr ( gson , unitAsArray, valueAsArray )
-            if ( all (unitAsArray /= (/PHYQ_Time, PHYQ_Invalid/) ) ) &
-              call Announce_error ( key, badUnitsForIntegrationtime )
+            call expr_check ( gson , unitAsArray, valueAsArray, &
+              & (/PHYQ_Time/), unitsError )
+            if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
+              & extraInfo=(/unitAsArray(1), PHYQ_Time/) )
             integrationTime = valueAsArray(1)
           case ( f_internalVGrid )
             internalVGridIndex=decoration(decoration(gson))
@@ -867,12 +842,13 @@ contains ! =====     Public Procedures     =============================
           case ( f_manipulation )
             manipulation = sub_rosa ( gson )
           case ( f_maxIterations )      ! For hydrostatic fill
-            call expr ( subtree(2,subtree(j,key)), unitAsArray,valueAsArray )
-            if ( all(unitAsArray(1) /= (/PHYQ_Dimensionless,PHYQ_Invalid/)) ) &
-              & call Announce_error ( key, badUnitsForMaxIterations )
+            call expr_check ( gson , unitAsArray, valueAsArray, &
+              & (/PHYQ_Dimensionless/), unitsError )
+            if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
+              & extraInfo=(/unitAsArray(1), PHYQ_Dimensionless/) )
             maxIterations = valueAsArray(1)
           case ( f_maxValue )      ! For status fill
-            call expr ( subtree(2,subtree(j,key)), unitAsArray,valueAsArray )
+            call expr ( gson, unitAsArray, valueAsArray )
             maxValueUnit = unitAsArray(1)
             maxValue = valueAsArray(1)
           case ( f_measurements )   ! Only used for diagnostic special fills
@@ -881,7 +857,7 @@ contains ! =====     Public Procedures     =============================
           case ( f_method )   ! How are we going to fill it?
             fillMethod = decoration(gson)
           case ( f_minValue )      ! For status fill
-            call expr ( subtree(2,subtree(j,key)), unitAsArray,valueAsArray )
+            call expr ( gson, unitAsArray, valueAsArray )
             minValueUnit = unitAsArray(1)
             minValue = valueAsArray(1)
           case ( f_model )   ! Only used for diagnostic special fills
@@ -890,18 +866,19 @@ contains ! =====     Public Procedures     =============================
           case ( f_multiplier ) ! For scaling noise part of addnoise
             multiplierNode=subtree(j,key)
           case ( f_noFineGrid )      ! For cloud extinction fill
-            call expr ( subtree(2,subtree(j,key)), unitAsArray,valueAsArray )
-            if ( all(unitAsArray(1) /= (/PHYQ_Dimensionless,PHYQ_Invalid/)) ) &
-              & call Announce_error ( key, badUnitsForMaxIterations )
+            call expr_check ( gson , unitAsArray, valueAsArray, &
+              & (/PHYQ_Dimensionless/), unitsError )
+            if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
+              & extraInfo=(/unitAsArray(1), PHYQ_Dimensionless/) )
             noFineGrid = valueAsArray(1)
           case ( f_noiseBandwidth )
             nbwVectorIndex = decoration(decoration(subtree(1,gson)))
             nbwQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_offsetAmount )    ! For marking unused radiances
-            call expr ( subtree(2,subtree(j,key)), unitAsArray, valueAsArray )
-            if ( unitAsArray(1) /= PHYQ_Temperature ) &
-              & call Announce_error ( key, No_Error_code, &
-              & 'Bad units for offsetAmount' )
+            call expr_check ( gson , unitAsArray, valueAsArray, &
+              & (/PHYQ_Temperature/), unitsError )
+            if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
+              & extraInfo=(/unitAsArray(1), PHYQ_Temperature/) )
             offsetAmount = valueAsArray(1)
           case ( f_orbitInclination ) ! For hydrostatic fill
             orbitinclInationVectorIndex = &
@@ -912,15 +889,16 @@ contains ! =====     Public Procedures     =============================
             precisionVectorIndex = decoration(decoration(subtree(1,gson)))
             precisionQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_precisionFactor )    ! For setting negative errors
-            call expr ( subtree(2,subtree(j,key)), unitAsArray, valueAsArray )
-            if ( unitAsArray(1) /= PHYQ_Dimensionless ) &
-              & call Announce_error ( key, No_Error_code, &
-              & 'Bad units for precisionFactor' )
+            call expr_check ( gson , unitAsArray, valueAsArray, &
+              & (/PHYQ_Dimensionless/), unitsError )
+            if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
+              & extraInfo=(/unitAsArray(1), PHYQ_Dimensionless/) )
             precisionFactor = valueAsArray(1)
           case ( f_profile )
-            call expr ( gson , unitAsArray, valueAsArray )
-            if ( all (unitAsArray /= (/PHYQ_Dimensionless, PHYQ_Invalid/) ) ) &
-              call Announce_error ( key, 0, 'Bad units for profile' )
+            call expr_check ( gson , unitAsArray, valueAsArray, &
+              & (/PHYQ_Dimensionless/), unitsError )
+            if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
+              & extraInfo=(/unitAsArray(1), PHYQ_Dimensionless/) )
             profile = valueAsArray(1)
           case ( f_profileValues )
             valuesNode = subtree(j,key)
@@ -931,16 +909,18 @@ contains ! =====     Public Procedures     =============================
             PhitanVectorIndex = decoration(decoration(subtree(1,gson)))
             PhitanQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_phiWindow )
-            call expr ( gson, unitAsArray, valueAsArray )
+            call expr_check ( gson , unitAsArray, valueAsArray, &
+              & (/ PHYQ_Profiles, PHYQ_Angle /), unitsError )
+            if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
+              & extraInfo=(/unitAsArray(1), PHYQ_Profiles, PHYQ_Angle/) )
             phiWindow = valueAsArray(1)
-            if ( all ( unitAsArray(1) /= (/ PHYQ_Profiles, PHYQ_Angle /) ) ) &
-              call Announce_Error ( key, 0, 'Bad units for phiWindow' )
             phiWindowUnits = unitAsArray(1)
           case ( f_phiZero )
-            call expr ( gson, unitAsArray, valueAsArray )
+            call expr_check ( gson , unitAsArray, valueAsArray, &
+              & (/PHYQ_Angle/), unitsError )
+            if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
+              & extraInfo=(/unitAsArray(1), PHYQ_Angle/) )
             phiZero = valueAsArray(1)
-            if ( all ( unitAsArray(1) /= (/ PHYQ_Angle /) ) ) &
-              call Announce_Error ( key, 0, 'Bad units for phiZero' )
           case ( f_quadrature )
             quadrature = get_boolean ( gson )
           case ( f_quantity )   ! What quantity are we filling quantity=vector.quantity
@@ -966,10 +946,11 @@ contains ! =====     Public Procedures     =============================
             sourceVectorIndex = decoration(decoration(subtree(1,gson)))
             sourceQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))    
           case ( f_scale )
-            call expr ( gson, unitAsArray, valueAsArray )
+            call expr_check ( gson , unitAsArray, valueAsArray, &
+              & (/PHYQ_Dimensionless/), unitsError )
+            if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
+              & extraInfo=(/unitAsArray(1), PHYQ_Dimensionless/) )
             scale = valueAsArray(1)
-            if ( unitAsArray(1) /= PHYQ_Dimensionless ) &
-              call Announce_Error ( key, 0, 'Bad units for scale' )
           case ( f_scECI )                ! For special fill of losVel
             scECIVectorIndex = decoration(decoration(subtree(1,gson)))
             scECIQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -998,10 +979,11 @@ contains ! =====     Public Procedures     =============================
           case ( f_spread ) ! For explicit fill, note that gson here is not same as others
             spreadFlag = get_boolean ( gson )
           case ( f_status )
-            valuesNode=subtree(j,key)
-            call expr ( gson , unitAsArray, valueAsArray )
-            if ( unitAsArray(1) /= PHYQ_Dimensionless ) &
-              call Announce_error ( key, badUnitsForStatus )
+            valuesNode = subtree(j,key)
+            call expr_check ( gson , unitAsArray, valueAsArray, &
+              & (/PHYQ_Dimensionless/), unitsError )
+            if ( unitsError ) call Announce_error ( valuesNode, wrongUnits, &
+              & extraInfo=(/unitAsArray(1), PHYQ_Dimensionless/) )
             statusValue = nint ( valueAsArray(1) )
           case ( f_suffix )
             suffix = sub_rosa ( gson )
@@ -1033,9 +1015,10 @@ contains ! =====     Public Procedures     =============================
           case ( f_whereNotFill )
             whereNotFill = get_boolean ( gson )
           case ( f_width )
-            call expr ( gson , unitAsArray, valueAsArray )
-            if ( unitAsArray(1) /= PHYQ_Dimensionless ) &
-              call Announce_error ( key, badUnitsForWidth )
+            call expr_check ( gson , unitAsArray, valueAsArray, &
+              & (/PHYQ_Dimensionless/), unitsError )
+            if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
+              & extraInfo=(/unitAsArray(1), PHYQ_Dimensionless/) )
             width = valueAsArray(1)
           end select
         end do                  ! Loop over arguments to fill instruction
@@ -1257,7 +1240,7 @@ contains ! =====     Public Procedures     =============================
 
         case ( l_gridded ) ! ------------  Fill from gridded data  -----
           if ( .not. got(f_sourceGrid) ) &
-            & call Announce_Error ( key,noSourceGridGiven )
+            & call Announce_Error ( key, noSourceGridGiven )
           call FillVectorQuantityFromGrid &
             & ( quantity, griddedDataBase(gridIndex), allowMissing, errorCode )
           if ( errorCode /= 0 ) call Announce_error ( key, errorCode )
@@ -1324,7 +1307,7 @@ contains ! =====     Public Procedures     =============================
         case ( l_hydrostatic ) ! -------------  Hydrostatic fills  -----
           ! Need a temperature and a refgph quantity
           if ( .not.all(got( (/ f_refGPHQuantity, f_temperatureQuantity /))) ) &
-            call Announce_Error ( key,needTempREFGPH )
+            call Announce_Error ( key, needTempREFGPH )
 
           temperatureQuantity => GetVectorQtyByTemplateIndex( &
             &  vectors(temperatureVectorIndex), temperatureQuantityIndex)
@@ -2034,10 +2017,10 @@ contains ! =====     Public Procedures     =============================
           case ( f_aprioriPrecision )
             aprPrecVctrIndex =  decoration(fieldValue)
           case ( f_precisionFactor )
-            call expr ( gson, unitAsArray, valueAsArray )
-            if ( unitAsArray(1) /= PHYQ_Dimensionless ) &
-              & call Announce_error ( key, No_Error_code, &
-              & 'Bad units for precisionFactor' )
+            call expr_check ( gson , unitAsArray, valueAsArray, &
+              & (/PHYQ_Dimensionless/), unitsError )
+            if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
+              & extraInfo=(/unitAsArray(1), PHYQ_Dimensionless/) )
             precisionFactor = valueAsArray(1)
           case default ! Can't get here if type checker worked
           end select
@@ -5306,35 +5289,30 @@ contains ! =====     Public Procedures     =============================
       call Allocate_test ( values, noValues, 'values', ModuleName )
       if ( .not. myAzEl ) then
         do k = 1, noValues
-          call expr(subtree(k+1,valuesNode),unitAsArray,valueAsArray)
-          ! Check unit OK
-          if ( (unitAsArray(1) /= testUnit) .and. &
-            &  (unitAsArray(1) /= PHYQ_Dimensionless) ) &
-            & call Announce_error ( valuesNode, badUnitsForExplicit )
+          call expr_check ( subtree(k+1,valuesNode) , unitAsArray, valueAsArray, &
+            & (/testUnit, PHYQ_Dimensionless/), unitsError )
+          if ( unitsError ) call Announce_error ( valuesNode, wrongUnits, &
+            & extraInfo=(/unitAsArray(1), testUnit, PHYQ_Dimensionless/) )
           values ( k ) = valueAsArray(1)
         end do
       else
         ! Convert from Mag, Az, El to 3-D projections
         do k = 1, noValues, 3
-          call expr(subtree(k+1,valuesNode),unitAsArray,valueAsArray)
-          ! Check unit OK
-          if ( (unitAsArray(1) /= testUnit) .and. &
-            &  (unitAsArray(1) /= PHYQ_Dimensionless) ) &
-            & call Announce_error ( valuesNode, badUnitsForExplicit, &
-              & extraInfo = (/ testUnit, PHYQ_Dimensionless /) )
+          call expr_check ( subtree(k+1,valuesNode) , unitAsArray, valueAsArray, &
+            & (/testUnit, PHYQ_Dimensionless/), unitsError )
+          if ( unitsError ) call Announce_error ( valuesNode, wrongUnits, &
+            & extraInfo=(/unitAsArray(1), testUnit, PHYQ_Dimensionless/) )
           values ( k ) = valueAsArray(1)
           ! Next two quantities have to be angles
-          call expr(subtree(k+2,valuesNode),unitAsArray,valueAsArray)
-          ! Check unit OK
-          if ( unitAsArray(1) /= PHYQ_Angle ) &
-            & call Announce_error ( valuesNode, badUnitsForExplicit, &
-              & extraInfo = (/ PHYQ_Angle /) )
+          call expr_check ( subtree(k+2,valuesNode) , unitAsArray, valueAsArray, &
+            & (/PHYQ_Angle/), unitsError )
+          if ( unitsError ) call Announce_error ( valuesNode, wrongUnits, &
+            & extraInfo=(/unitAsArray(1), PHYQ_Angle/) )
           values (k+1) = deg2rad * valueAsArray(1)
-          call expr(subtree(k+3,valuesNode),unitAsArray,valueAsArray)
-          ! Check unit OK
-          if ( unitAsArray(1) /= PHYQ_Angle ) &
-            & call Announce_error ( valuesNode, badUnitsForExplicit, &
-              & extraInfo = (/ PHYQ_Angle /) )
+          call expr_check ( subtree(k+3,valuesNode) , unitAsArray, valueAsArray, &
+            & (/PHYQ_Angle/), unitsError )
+          if ( unitsError ) call Announce_error ( valuesNode, wrongUnits, &
+            & extraInfo=(/unitAsArray(1), PHYQ_Angle/) )
           values (k+2) = deg2rad * valueAsArray(1)
           values(k:k+2) = values(k) * (/ cos(values(k+1))*cos(values(k+2)), &
                                          sin(values(k+1))*cos(values(k+2)), &
@@ -5380,6 +5358,7 @@ contains ! =====     Public Procedures     =============================
     ! subroutine FillVectorQuantityFromL1B ( root, quantity, chunk, l1bInfo, &
     subroutine FillVectorQuantityFromL1B ( root, quantity, chunk, filedatabase, &
       & isPrecision, suffix, PrecisionQuantity )
+      use MLSFiles, only: HDFVERSION_5
       integer, intent(in) :: root
       type (VectorValue_T), INTENT(INOUT) ::        QUANTITY
       type (MLSChunk_T), INTENT(IN) ::              CHUNK
@@ -5436,9 +5415,13 @@ contains ! =====     Public Procedures     =============================
           & sideband=quantity%template%sideband, noChannels=.TRUE. )
         nameString = AssembleL1BQtyName(nameString, this_hdfVersion, .FALSE.)
       case ( l_l1bMIF_TAI )
-        call GetModuleName ( quantity%template%instrumentModule, nameString )
-        nameString = AssembleL1BQtyName ('MIF_TAI', this_hdfVersion, .TRUE., &
-          & trim(nameString) )
+        if ( this_hdfVersion == HDFVERSION_5 ) then
+          call GetModuleName ( quantity%template%instrumentModule, nameString )
+          nameString = AssembleL1BQtyName ('MIF_TAI', this_hdfVersion, .FALSE., &
+            & trim(nameString) )
+        else ! ??? MIF_TAI is goofy in HDF4 files -- no sc, no tp, no GHz....
+          nameString = 'MIF_TAI'
+        end if
       case ( l_LosVel )
         call GetModuleName ( quantity%template%instrumentModule, nameString )
         nameString = AssembleL1BQtyName ('LosVel', this_hdfVersion, .TRUE., &
@@ -6124,10 +6107,10 @@ contains ! =====     Public Procedures     =============================
 
       ! Loop over fourier terms, coefficients are son i+2
       do i = 0, nsons ( termsNode ) - 2
-        call expr(subtree(i+2,termsNode),unitAsArray,valueAsArray)
-        ! Check unit OK
-        if ( unitAsArray(1) /= PHYQ_Temperature ) &
-          & call Announce_error ( termsNode, no_error_code, 'Bad unit for fourier term' )
+        call expr_check ( subtree(i+2,termsNode), unitAsArray, valueAsArray, &
+          & (/PHYQ_Temperature/), unitsError )
+        if ( unitsError ) call Announce_error ( termsNode, wrongUnits, &
+          & extraInfo=(/unitAsArray(1), PHYQ_Temperature/) )
         ! Add in this coefficient
         if ( i == 0 ) then
           quantity%values = valueAsArray(1)
@@ -6559,11 +6542,11 @@ contains ! =====     Public Procedures     =============================
           & 'Only one height can be supplied for status fill' )
         if ( sourceQuantity%template%verticalCoordinate /= l_zeta ) &
           & call Announce_Error ( key, 0, 'Bad vertical coordinate for sourceQuantity' )
-        call expr ( heightNode, unitAsArray, valueAsArray )
-        height = valueAsArray(1)
-        if ( all ( unitAsArray(1) /= (/ PHYQ_Pressure /) ) ) &
-          call Announce_Error ( key, 0, 'Bad units for height' )
-        height = - log10 ( height )
+        call expr_check ( subtree(2,heightNode) , unitAsArray, valueAsArray, &
+          & (/PHYQ_Pressure/), unitsError )
+        if ( unitsError ) call Announce_error ( heightNode, wrongUnits, &
+          & extraInfo=(/unitAsArray(1), PHYQ_Pressure/) )
+        height = - log10 ( valueAsArray(1) )
         call Hunt ( sourceQuantity%template%surfs(:,1), height, surface, nearest=.true. )
       else
         surface = 1
@@ -6600,12 +6583,11 @@ contains ! =====     Public Procedures     =============================
       if ( heightNode /= 0 ) then
         if ( nsons ( heightNode ) /= 2 ) call Announce_Error ( key, no_error_code, &
           & 'Only one height can be supplied for quality fill' )
-        call expr ( heightNode, unitAsArray, valueAsArray )
-        height = valueAsArray(1)
-        if ( all ( unitAsArray(1) /= (/ PHYQ_Pressure /) ) ) &
-          call Announce_Error ( key, 0, 'Bad units for height' )
-        ! chisqBinned must be on zeta surfaces already, forced at construction, so take log.
-        height = - log10 ( height )
+        call expr_check ( subtree(2,heightNode) , unitAsArray, valueAsArray, &
+          & (/PHYQ_Pressure/), unitsError )
+        if ( unitsError ) call Announce_error ( heightNode, wrongUnits, &
+          & extraInfo=(/unitAsArray(1), PHYQ_Pressure/) )
+        height = - log10 ( valueAsArray(1) )
         call Hunt ( sourceQuantity%template%surfs(:,1), height, surface, nearest=.true. )
       else
         surface = 1
@@ -6669,10 +6651,12 @@ contains ! =====     Public Procedures     =============================
       ! Executable code
       scaleLowerLoop: do i = 1, quantity%template%noInstancesLowerOverlap
         if ( i+1 > nsons ( multiplierNode ) ) exit scaleLowerLoop
-        call expr ( subtree( i+1, multiplierNode ), exprUnit, exprValue )
-        if ( exprUnit(1) /= PHYQ_Dimensionless ) then
-          call Announce_Error ( key, no_error_code, &
-            & 'multipliers in scaleOverlaps must be dimensionless' )
+        call expr_check ( subtree( i+1, multiplierNode ), exprUnit, exprValue, &
+          & (/PHYQ_Dimensionless/), unitsError )
+        if ( unitsError ) then
+          call Announce_error ( multiplierNode, wrongUnits, &
+            & extraMessage="for scaleOverlaps fill", &
+            & extraInfo=(/exprUnit(1), PHYQ_Dimensionless/) )
           return
         end if
         if ( associated ( quantity%mask ) .and. .not. dontMask ) then
@@ -6689,10 +6673,12 @@ contains ! =====     Public Procedures     =============================
         & quantity%template%noInstancesUpperOverlap + 1, - 1
         j = quantity%template%noInstances - i + 1
         if ( j+1 > nsons ( multiplierNode ) ) exit scaleUpperLoop
-        call expr ( subtree( j+1, multiplierNode ), exprUnit, exprValue )
-        if ( exprUnit(1) /= PHYQ_Dimensionless ) then
-          call Announce_Error ( key, no_error_code, &
-            & 'multipliers in scaleOverlaps must be dimensionless' )
+        call expr_check ( subtree( j+1, multiplierNode ), exprUnit, exprValue, &
+          & (/PHYQ_Dimensionless/), unitsError )
+        if ( unitsError ) then
+          call Announce_error ( multiplierNode, wrongUnits, &
+            & extraMessage="for scaleOverlaps fill", &
+            & extraInfo=(/exprUnit(1), PHYQ_Dimensionless/) )
           return
         end if
         if ( associated ( quantity%mask ) .and. .not. dontMask ) then
@@ -6779,8 +6765,8 @@ contains ! =====     Public Procedures     =============================
     ! ---------------------------------------------  ANNOUNCE_ERROR  -----
     subroutine ANNOUNCE_ERROR ( where, CODE , ExtraMessage, ExtraInfo )
 
-      use Intrinsic, only: PHYQ_Indices
-      use LEXER_CORE, only: PRINT_SOURCE
+      use Intrinsic, only: Field_indices, PHYQ_Indices
+      use MoreTree, only: Get_Field_Id, StartErrorMessage
       use String_Table, only: Display_String
 
       integer, intent(in) :: where   ! Tree node where error was noticed
@@ -6791,19 +6777,10 @@ contains ! =====     Public Procedures     =============================
       integer :: I
 
       error = max(error,1)
-      call output ( '***** At ' )
-
-      if ( where > 0 ) then
-        call print_source ( source_ref(where) )
-      else
-        call output ( '(no lcf tree available)' )
-      end if
-
-      call output ( ': The' );
+      call StartErrorMessage ( where )
+      call output ( 'The' );
 
       select case ( code )
-      case ( allocation_err )
-        call output ( " command caused an allocation error in squeeze.", advance='yes' )
       case ( badEstNoiseFill )
         call output ( " missing information for estimated noise fill", advance='yes' )
       case ( badGeocAltitudeQuantity )
@@ -6816,29 +6793,10 @@ contains ! =====     Public Procedures     =============================
         call output ( " incomplete/incorrect information for isotope fill", advance='yes' )
       case ( badREFGPHQuantity )
         call output ( " refGPHQuantity is not refGPH", advance='yes' )
+      case ( badRefractFill )
+        call output ( " missing information for phiTan refract fill", advance='yes' )
       case ( badTemperatureQuantity )
         call output ( " temperatureQuantity is not temperature", advance='yes' )
-      case ( badUnitsForExplicit )
-        call output ( " explitictValues field has inappropriate " // &
-          & "units for Fill instruction.", advance='yes' )
-        if ( present(extraInfo) ) then
-          call output ( "Units should be" )
-          do i = 1, size(extraInfo)
-            call output ( ' ' )
-            call display_String ( phyq_indices(extraInfo(i)) )
-          end do
-          call output ( '', advance='yes' )
-        end if
-      case ( badUnitsForIntegrationTime )
-        call output ( " has inappropriate units for integration time.", advance='yes' )
-      case ( badUnitsForSystemTemperature )
-        call output ( " has inappropriate units for system temperature.", advance='yes' )
-      case ( badUnitsForStatus )
-        call output ( " has inappropriate units for status.", advance='yes' )
-      case ( badUnitsForMaxIterations )
-        call output ( " maxIterations should be dimensionless", advance='yes' )
-      case ( badUnitsForWidth )
-        call output ( " width should be dimensionless", advance='yes' )
       case ( bothFractionAndLength )
         call output ( " specified both fraction and lengthScale", advance='yes' )
       case ( cantFillFromL1B )
@@ -6847,8 +6805,8 @@ contains ! =====     Public Procedures     =============================
         call output ( " command could not be filled from L2AUX.", advance='yes' )
       case ( cantInterpolate3D )
         call output ( " cannot interpolate 3d quantities (yet).", advance='yes' )
-      case ( deallocation_err )
-        call output ( " command caused an deallocation error in squeeze.", advance='yes' )
+      case ( emptyGridForFill )
+        call output ( " an empty grid for the fill", advance='yes' )
       case ( errorReadingL1B )
         call output ( " L1B file could not be read.", advance='yes' )
       case ( invalidExplicitFill )
@@ -6856,10 +6814,8 @@ contains ! =====     Public Procedures     =============================
         call output ( " Should have " )
         call output ( extraInfo )
         call output ( " elements.", advance='yes' )
-      case ( m1_too_small )
-        call output ( " command caused a m1 too small error in squeeze.", advance='yes' )
-      case ( m2_too_small )
-        call output ( " command caused a m2 too small error in squeeze.", advance='yes' )
+      case ( missingDataInGrid )
+        call output ( " missing/bad data points in grid for fill", advance='yes' )
       case ( missingField )
         call output ( " fields " )
         do i = 1, size(extraInfo)
@@ -6873,9 +6829,6 @@ contains ! =====     Public Procedures     =============================
         call output ( " are required.", advance='yes' )
       case ( needGeocAltitude )
         call output ( " needs geocAltitudeQuantity.", advance='yes' )
-      case ( needGeodAltitude )
-        call output ( " vertical coordinate should be geoditic altitude.", &
-          & advance='yes' )
       case ( needH2O )
         call output ( " needs H2OQuantity.", advance='yes' )
       case ( needOrbitInclination )
@@ -6892,8 +6845,6 @@ contains ! =====     Public Procedures     =============================
         call output ( " no sourceL2AUX field given for L2AUX fill.", advance='yes' )
       case ( noSourceL2GPGiven )
         call output ( " no sourceL2GP field given for L2GP fill.", advance='yes' )
-      case ( noSourceQuantityGiven )
-        call output ( " no sourceQuantity field given for vector fill.", advance='yes' )
       case ( noSpecialFill )
         call output ( " invalid special fill", advance='yes' )
       case ( notImplemented )
@@ -6903,40 +6854,21 @@ contains ! =====     Public Procedures     =============================
         call output ( " is not a SPD matrix.", advance='yes' )
       case ( notPlain )
         call output ( " is not a plain matrix.", advance='yes' )
-      case ( not_permutation )
-        call output ( " command caused an illegal permutation in squeeze.", advance='yes' )
-      case ( numInstancesisZero )
-        call output ( " command has zero instances.", advance='yes' )
-      case ( numSurfsisZero )
-        call output ( " command has zero surfaces.", advance='yes' )
-      case ( n1_is_zero )
-        call output ( " command caused an n1=0 error in squeeze.", advance='yes' )
-      case ( n2_is_zero )
-        call output ( " command caused an n2=0 error in squeeze.", advance='yes' )
-      case ( n3_is_zero )
-        call output ( " command caused an n3=0 error in squeeze.", advance='yes' )
-      case ( objIsFullRank3 )
-        call output ( " command array is full rank 3.", advance='yes' )
-      case ( otherErrorInFillVector )
-        call output ( " command caused an error in FillVector.", advance='yes' )
-      case ( source_not_in_db )
-        call output ( " source was not found in the db.", advance='yes' )
-      case ( unknownQuantityName )
-        call output ( " quantity was not found in the vector", advance='yes' )
-      case ( vectorWontMatchPDef )
-        call output ( " command found new and prev. vectors unmatched.", advance='yes' )
-      case ( wrong_number )
-        call output ( " command does not have exactly one field.", advance='yes' )
-      case ( zeroGeodSpan )
-        call output ( " command found zero geod. ang. span.", advance='yes' )
-      case ( zeroProfilesFound )
-        call output ( " command found zero profiles.", advance='yes' )
-      case ( badRefractFill )
-        call output ( " missing information for phiTan refract fill", advance='yes' )
-      case ( missingDataInGrid )
-        call output ( " missing/bad data points in grid for fill", advance='yes' )
-      case ( emptyGridForFill )
-        call output ( " an empty grid for the fill", advance='yes' )
+      case ( wrongUnits )
+        call display_string ( field_indices(Get_Field_Id(where)), &
+          & before=" values of the " )
+        call output ( " field have the wrong units", advance="yes" )
+        if ( present(extraInfo) ) then
+          i = 1
+          if ( size(extraInfo) > 1 ) then
+            call display_String ( phyq_indices(extraInfo(1)), &
+              & before="Units are " )
+            call output ( ", " )
+            i = 2
+          end if
+          call display_String ( phyq_indices(extraInfo(i:)), advance='yes', &
+            & before="Units should be" )
+        end if
       case default
         call output ( " command caused an unrecognized programming error", advance='yes' )
       end select
@@ -6944,6 +6876,7 @@ contains ! =====     Public Procedures     =============================
         call output(ExtraMessage, advance='yes')
       end if
     end subroutine ANNOUNCE_ERROR
+
   end subroutine MLSL2Fill
 
   logical function not_used_here()
@@ -6960,6 +6893,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.309  2005/08/04 03:28:50  vsnyder
+! Correct fill for goofy L1BMIF_TAI, lots of cannonball polishing
+!
 ! Revision 2.308  2005/08/03 18:09:38  vsnyder
 ! Cannon ball polishing, scan averaging
 !
