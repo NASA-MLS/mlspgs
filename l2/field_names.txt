@@ -112,6 +112,7 @@ earthRadius
 ECRtoFOV
 eigenVectors
 exact
+exclude
 excludeBelowBottom
 extendedAverage
 explicitValues
@@ -156,12 +157,14 @@ hRegWeights
 hRegWeightVec
 
 i_saturation
+ifAnyCrashedChunks
 ifMissingGMAO
 ignore
 ignoreGeolocation
 ignoreNegative
 ignoreZero
 inclination
+inputFile
 insetOverlaps
 instances
 integrationGrid
@@ -292,6 +295,7 @@ regOrders
 regQuants
 regWeights
 regWeightVec
+repairGeolocations
 reset
 resetSeed
 residualSupplied
@@ -399,6 +403,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.146  2005/08/04 20:59:43  pwagner
+# Added more for copy command in Output section
+#
 # Revision 2.145  2005/08/03 18:05:39  vsnyder
 # Scan averaging, some spectroscopy derivative stuff
 #
