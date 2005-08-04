@@ -482,6 +482,7 @@ contains ! =====     Public procedures     =============================
              l+l_lineCenter, l+l_lineWidth, l+l_lineWidth_tDep, &
              l+l_losTransFunc, l+l_losVel, &
              l+l_massMeanDiameterIce, l+l_massMeanDiameterWater, l+l_magneticField, &
+             l+l_MIFDeadTime, &
              l+l_noiseBandwidth, l+l_noRadsPerMIF, l+l_noRadsBinned, &
              l+l_numJ, l+l_opticalDepth, l+l_orbitInclination, &
              l+l_phaseTiming, l+l_phiTan, l+l_ptan, &
@@ -1359,6 +1360,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.408  2005/08/04 02:58:13  vsnyder
+! Add MIFDeadTime to QuantityTypes
+!
 ! Revision 2.407  2005/08/03 18:06:46  vsnyder
 ! Scan averaging, some spectroscopy derivative stuff and cannonball polishing
 !
