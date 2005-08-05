@@ -26,11 +26,12 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use MLSHDFEOS, only: mls_swattach, mls_swdetach
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Warning
+  use MLSNumerics, only: ReplaceFillValues
   use MLSStrings, only: Capitalize, lowercase
   use MLSStringLists, only: ExtractSubString, &
     & GetStringHashElement, GetStringElement, GetUniqueList, &
-    & list2array, NumStringElements, &
-    & StringElementNum
+    & list2array, NumStringElements, RemoveListFromList, &
+    & StringElementNum, SwitchDetail
   use OUTPUT_M, only: BLANKS, OUTPUT
   use PCFHdr, only: GlobalAttributes_T, GlobalAttributes, &
     & he5_readglobalattr, he5_writeglobalattr
@@ -44,7 +45,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   public :: AddL2GPToDatabase, AppendL2GPData, cpL2GPData, &
     & DestroyL2GPContents, DestroyL2GPDatabase, diff, Dump, &
     & ExpandL2GPDataInPlace, &
-    & ReadL2GPData, SetupNewL2GPRecord, WriteL2GPData
+    & ReadL2GPData, RepairL2GP, SetupNewL2GPRecord, WriteL2GPData
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -106,6 +107,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 ! ExpandL2GPDataInPlace   Adds more profiles to an existing L2GP
 ! AppendL2GPData          Appends L2GP onto end of existing swath file
 ! ReadL2GPData            Reads L2GP from existing swath file
+! RepairL2GP              Replaces fillValues in one L2GP with a another's values
 ! SetupNewL2GPRecord      Allocates arrays for a new L2GP
 ! WriteL2GPData           Writes an L2GP into a swath file
 
@@ -2160,7 +2162,7 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------- cpL2GPData_fileID  ---------------------------
 
   subroutine cpL2GPData_fileID(file1, file2, swathList, &
-    & hdfVersion1, hdfVersion2, notUnlimited, swathList2, ReadStatus, options)
+    & hdfVersion1, hdfVersion2, notUnlimited, rename, ReadStatus, options)
     !------------------------------------------------------------------------
 
     ! Given file names file1 and file2,
@@ -2175,7 +2177,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in)           :: hdfVersion2
     logical, optional, intent(in) :: notUnlimited
     logical, optional, intent(in) :: ReadStatus
-    character (len=*), optional, intent(in) :: swathList2
+    character (len=*), optional, intent(in) :: rename
     character (len=*), optional, intent(in) :: options ! E.g., '-v'
 
     ! Local variables
@@ -2198,19 +2200,19 @@ contains ! =====     Public Procedures     =============================
             & 'No swaths cp to file--unable to count swaths in ' // trim(swathList) )
     endif
     if ( verbose ) call dump(swathlist, 'swath names')
-    if ( present(swathList2) ) then
-      noSwaths = min(noSwaths, NumStringElements(trim(swathList2), countEmpty))
-      if ( verbose ) call dump(swathlist2, 'swath names (copied)')
+    if ( present(rename) ) then
+      noSwaths = min(noSwaths, NumStringElements(trim(rename), countEmpty))
+      if ( verbose ) call dump(rename, 'swath names (copied)')
     endif
     if ( noSwaths < 1 ) then
        call MLSMessage ( MLSMSG_Warning, ModuleName, &
-            & 'No swaths cp to file--unable to count swaths in ' // trim(swathList2) )
+            & 'No swaths cp to file--unable to count swaths in ' // trim(rename) )
     endif
     ! Loop over swaths in file 1
     do i = 1, noSwaths
       call GetStringElement (trim(swathList), swath, i, countEmpty )
-      if ( present(swathList2) ) then
-        call GetStringElement (trim(swathList2), swath2, i, countEmpty )
+      if ( present(rename) ) then
+        call GetStringElement (trim(rename), swath2, i, countEmpty )
       else
         swath2 = swath
       endif
@@ -2236,7 +2238,7 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------- cpL2GPData_fileName  ---------------------------
 
   subroutine cpL2GPData_fileName(file1, file2, &
-    & create2, hdfVersion1,  hdfVersion2, swathList, swathList2, &
+    & create2, hdfVersion1, hdfVersion2, swathList, rename, exclude, &
     & notUnlimited, andGlAttributes, ReadStatus, options)
     !------------------------------------------------------------------------
 
@@ -2253,8 +2255,9 @@ contains ! =====     Public Procedures     =============================
     logical, optional, intent(in) :: andGlAttributes
     integer, optional, intent(in) :: hdfVersion1
     integer, optional, intent(in) :: hdfVersion2
-    character (len=*), optional, intent(in) :: swathList
-    character (len=*), optional, intent(in) :: swathList2
+    character (len=*), optional, intent(in) :: swathList ! Copy only these
+    character (len=*), optional, intent(in) :: rename ! But rename them these
+    character (len=*), optional, intent(in) :: exclude ! Don't copy these
     logical, optional, intent(in) :: notUnlimited
     logical, optional, intent(in) :: ReadStatus
     character (len=*), optional, intent(in) :: options ! E.g., '-v'
@@ -2270,6 +2273,7 @@ contains ! =====     Public Procedures     =============================
     integer :: listsize
     logical :: myandGlAttributes
     character (len=MAXSWATHNAMESBUFSIZE) :: mySwathList
+    character (len=MAXSWATHNAMESBUFSIZE) :: myrename
     integer :: noSwaths
     character(len=40)        :: ProcessLevel
     integer :: record_length
@@ -2366,9 +2370,14 @@ contains ! =====     Public Procedures     =============================
         GlobalAttributes = gAttributesOriginal
       endif
     endif
+
+    if ( present(exclude) ) then
+      call RemoveListFromList(mySwathList, myrename, exclude)
+      mySwathList = myrename
+    endif
     call cpL2GPData_fileID(File1Handle, File2Handle, &
       & mySwathList, the_hdfVersion1, the_hdfVersion2, &
-      & notUnlimited=notUnlimited, swathList2=swathList2, &
+      & notUnlimited=notUnlimited, rename=rename, &
       & ReadStatus=ReadStatus, options=options )
     if ( DEEBUG ) print *, 'About to close File1Handle: ', File1Handle
     status = mls_io_gen_closeF(l_swath, File1Handle, FileName=File1, &
@@ -2391,7 +2400,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------ DiffL2GPData ------------
   subroutine DiffL2GPData ( L2gp1, L2gp2, &
-    & Details, wholeArray, stats, rms, ignoreBadChunks )
+    & Details, wholeArray, stats, rms, ignoreBadChunks, fields )
     ! Show diff between l2gp1 and l2gp2 down to level of Details
     ! Assumes fields of each already allocated
     ! (If not, then why are you trying to show differences?)
@@ -2418,21 +2427,28 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in), optional :: WHOLEARRAY   ! if TRUE, print anyway
     logical, intent(in), optional :: IGNOREBADCHUNKS   ! if TRUE, ignore
                                                      ! instances where geod bad
+    character(len=*), intent(in), optional :: fields  ! diff only these fields
     ! Local variables
-    integer :: MYDETAILS
-    logical :: ShapesDontMatch
     logical :: badChunks
-    integer :: instance
     integer :: badInstances
+    character(len=*), parameter :: DEFAULTFIELDS = &
+      & 'pressures, latitude, longitude, solarTime, solarZenith,' // &
+      & 'losAngle, geodAngle, time, chunkNumber, frequency,'  // &
+      & 'l2gpvalue, l2gpPrecision, status, quality'
+    integer :: instance
+    integer :: MYDETAILS
+    character(len=len(DEFAULTFIELDS)) :: myFields
+    logical :: ShapesDontMatch
     ! Executable code
     myDetails = 1
     if ( present(details) ) myDetails = details
     ShapesDontMatch = .false.
     badChunks = .false.
     badInstances = 0
-      !FillValue = real(l2gp1%MissingValue, r8)
-      !ChunkFillValue = int(l2gp1%MissingValue)
-
+    myFields = DEFAULTFIELDS
+    if ( present(fields) ) myFields = fields
+    if ( myFields == '*' .or. lowercase(myFields) == 'all' ) &
+      & myFields = DEFAULTFIELDS
       if ( trim(l2gp1%name) /= trim(l2gp2%name) ) then
         call output('(1) name: ' // trim(l2gp1%name), advance='yes')
         call output('(2) name: ' // trim(l2gp2%name), advance='yes')
@@ -2471,48 +2487,58 @@ contains ! =====     Public Procedures     =============================
           & advance='yes')
         return
       endif
-      if ( any(l2gp1%pressures /= l2gp2%pressures)) then
+      if ( any(l2gp1%pressures /= l2gp2%pressures) .and. &
+        & SwitchDetail(lowercase(myFields), 'pressure', '-c') > -1 ) then
           call dump ( l2gp1%pressures - l2gp2%pressures, &
             & 'l2gp%pressures (diff)', stats=stats, rms=rms )
       endif
-      if ( any(l2gp1%latitude /= l2gp2%latitude)) then
+      if ( any(l2gp1%latitude /= l2gp2%latitude) .and. &
+        & SwitchDetail(lowercase(myFields), 'lat', '-c') > -1 ) then
           call dump ( l2gp1%latitude - l2gp2%latitude, &
             & 'l2gp%latitude (diff)', stats=stats, rms=rms )
       endif
-      if ( any(l2gp1%longitude /= l2gp2%longitude)) then
+      if ( any(l2gp1%longitude /= l2gp2%longitude) .and. &
+        & SwitchDetail(lowercase(myFields), 'lon', '-c') > -1 ) then
           call dump ( l2gp1%longitude - l2gp2%longitude, &
             & 'l2gp%longitude (diff)', stats=stats, rms=rms )
       endif
-      if ( any(l2gp1%solarTime /= l2gp2%solarTime)) then
+      if ( any(l2gp1%solarTime /= l2gp2%solarTime) .and. &
+        & SwitchDetail(lowercase(myFields), 'solartime', '-c') > -1 ) then
         call dump ( l2gp1%solarTime - l2gp2%solarTime, &
           & 'l2gp%solarTime (diff)', stats=stats, rms=rms )
       endif
-      if ( any(l2gp1%solarZenith /= l2gp2%solarZenith)) then
+      if ( any(l2gp1%solarZenith /= l2gp2%solarZenith) .and. &
+        & SwitchDetail(lowercase(myFields), 'solarzenith', '-c') > -1 ) then
         call dump ( l2gp1%solarZenith - l2gp2%solarZenith, &
           & 'l2gp%solarZenith (diff)', stats=stats, rms=rms )
         badChunks = .true.
       endif
-      if ( any(l2gp1%losAngle /= l2gp2%losAngle)) then
+      if ( any(l2gp1%losAngle /= l2gp2%losAngle) .and. &
+        & SwitchDetail(lowercase(myFields), 'losangle', '-c') > -1 ) then
         call dump ( l2gp1%losAngle - l2gp2%losAngle, &
           & 'l2gp%losAngle (diff)', stats=stats, rms=rms )
       endif
-      if ( any(l2gp1%geodAngle /= l2gp2%geodAngle)) then
+      if ( any(l2gp1%geodAngle /= l2gp2%geodAngle) .and. &
+        & SwitchDetail(lowercase(myFields), 'geodangle', '-c') > -1 ) then
         call dump ( l2gp1%geodAngle - l2gp2%geodAngle, &
           & 'l2gp%geodAngle (diff)', stats=stats, rms=rms )
         badChunks = .true.
       endif
-      if ( any(l2gp1%time /= l2gp2%time)) then
+      if ( any(l2gp1%time /= l2gp2%time) .and. &
+        & SwitchDetail(lowercase(myFields), 'time', '-c') > -1 ) then
         call dump ( l2gp1%time - l2gp2%time, &
           & 'l2gp%time (diff)', stats=stats, rms=rms )
         badChunks = .true.
       endif
-      if ( any(l2gp1%chunkNumber /= l2gp2%chunkNumber)) then
+      if ( any(l2gp1%chunkNumber /= l2gp2%chunkNumber) .and. &
+        & SwitchDetail(lowercase(myFields), 'chunknumber', '-c') > -1 ) then
         call dump ( l2gp1%chunkNumber - l2gp2%chunkNumber, &
           & 'l2gp%chunkNumber (diff)', stats=stats, rms=rms )
       endif
       
       if ( associated(l2gp1%frequency) .and.  associated(l2gp2%frequency)) then
-        if ( any(l2gp1%frequency /= l2gp2%frequency)) then
+        if ( any(l2gp1%frequency /= l2gp2%frequency) .and. &
+          & SwitchDetail(lowercase(myFields), 'freq', '-c') > -1 ) then
           call dump ( l2gp1%frequency - l2gp2%frequency, &
             & 'l2gp%frequency (diff)', stats=stats, rms=rms )
         endif
@@ -2546,21 +2572,25 @@ contains ! =====     Public Procedures     =============================
         call output('Number of bad instances of l2gp2 reset to l2gp1 ', advance='no')
         call output(badInstances, advance='yes')
       endif
-      if ( any(l2gp1%l2gpValue /= l2gp2%l2gpValue)) then
+      if ( any(l2gp1%l2gpValue /= l2gp2%l2gpValue) .and. &
+        & SwitchDetail(lowercase(myFields), 'value', '-c') > -1 ) then
         call dump ( real(l2gp1%l2gpValue - l2gp2%l2gpValue, r8), &
           & 'l2gp%l2gpValue (diff)', stats=stats, rms=rms )
           !& 'l2gp%l2gpValue (diff)', FillValue=FillValue )
       endif
-      if ( any(l2gp1%l2gpPrecision /= l2gp2%l2gpPrecision)) then
+      if ( any(l2gp1%l2gpPrecision /= l2gp2%l2gpPrecision) .and. &
+        & SwitchDetail(lowercase(myFields), 'precision', '-c') > -1 ) then
         call dump ( real(l2gp1%l2gpPrecision - l2gp2%l2gpPrecision, r8), &
           & 'l2gp%l2gpPrecision (diff)', stats=stats, rms=rms )
       endif
       
-      if ( any(l2gp1%status /= l2gp2%status)) then
+      if ( any(l2gp1%status /= l2gp2%status) .and. &
+        & SwitchDetail(lowercase(myFields), 'status', '-c') > -1 ) then
         call dump (l2gp1%status - l2gp2%status, &
           & 'l2gp%status (diff)', stats=stats, rms=rms )
       endif
-      if ( any(l2gp1%quality /= l2gp2%quality)) then
+      if ( any(l2gp1%quality /= l2gp2%quality) .and. &
+        & SwitchDetail(lowercase(myFields), 'quality', '-c') > -1 ) then
         call dump ( l2gp1%quality - l2gp2%quality, &
           & 'l2gp%quality (diff)', stats=stats, rms=rms )
       endif
@@ -2569,7 +2599,8 @@ contains ! =====     Public Procedures     =============================
     
   ! ------------------------------------------ DiffL2GPFiles ------------
   subroutine DiffL2GPFiles ( file1, file2, &
-    & Details, wholeArray, stats, rms, ignoreBadChunks, swList, showMissing )
+    & Details, wholeArray, stats, rms, ignoreBadChunks, &
+    & swList, showMissing, fields, force, swaths1, swaths2 )
     ! Show diff between swaths in file1 and file2 down to level of Details
     ! Dummy arguments
     character (len=*), intent(in) :: file1 ! Name of file 1
@@ -2588,27 +2619,33 @@ contains ! =====     Public Procedures     =============================
     ! swList currently used only if showMissing is TRUE
     character (len=*), optional, intent(in) :: swList
     logical, intent(in), optional :: showMissing   ! if TRUE, just show which
+    character(len=*), intent(in), optional :: fields  ! only these fields
+    character(len=*), intent(in), optional :: swaths1  ! only these swaths
+    character(len=*), intent(in), optional :: swaths2  ! only these swaths
+    logical, intent(in), optional :: FORCE ! Force diff even if swathnames differ
     ! Local                                         swaths are missing from other
     logical, parameter            :: countEmpty = .true.
+    logical :: file_exists
     integer :: File1Handle
     integer :: File2Handle
-    integer :: record_length
     integer :: i
-    integer :: status
-    integer :: the_hdfVersion1
-    integer :: the_hdfVersion2
-    logical :: file_exists
+    type (L2GPData_T) :: l2gp1
+    type (L2GPData_T) :: l2gp2
     integer :: listsize
+    logical :: myForce
+    logical :: myShowMissing
     integer :: noSwaths
     integer :: noSwaths2
     integer :: noUnique
-    logical :: myShowMissing
-    character (len=MAXSWATHNAMESBUFSIZE) :: swathList1
-    character (len=MAXSWATHNAMESBUFSIZE) :: swathList2
-    character (len=MAXSWATHNAMESBUFSIZE) :: swathUnique
+    integer :: record_length
+    character (len=MAXSWATHNAMESBUFSIZE) :: rename
+    integer :: status
     character (len=L2GPNameLen) :: swath
-    type (L2GPData_T) :: l2gp1
-    type (L2GPData_T) :: l2gp2
+    character (len=L2GPNameLen) :: swath2
+    character (len=MAXSWATHNAMESBUFSIZE) :: swathList1
+    character (len=MAXSWATHNAMESBUFSIZE) :: swathUnique
+    integer :: the_hdfVersion1
+    integer :: the_hdfVersion2
     ! Executable code
     myShowMissing = .false.
     if ( present(showMissing) ) myShowMissing=showMissing
@@ -2618,6 +2655,8 @@ contains ! =====     Public Procedures     =============================
         & 'File 1 not found; make sure the name and path are correct' &
         & // trim(file1) )
     endif
+    myForce = .false.
+    if ( present(force) ) myForce = force
     the_hdfVersion1 = mls_hdf_version(File1)
     the_hdfVersion2 = mls_hdf_version(File2)
     file_exists = ( mls_exists(trim(File2)) == 0 )
@@ -2629,8 +2668,20 @@ contains ! =====     Public Procedures     =============================
     the_hdfVersion2 = mls_hdf_version(File2)
     noSwaths = mls_InqSwath ( file1, swathList1, listSize, &
          & hdfVersion=the_hdfVersion1)
-    noSwaths2 = mls_InqSwath ( file2, swathList2, listSize, &
+    if ( present(swaths1) ) then
+      if ( swaths1 /= 'all' .and. swaths1 /= '*' ) then
+        swathList1 = swaths1
+        noSwaths = NumStringElements( swaths1, countEmpty=.true. )
+      endif
+    endif
+    noSwaths2 = mls_InqSwath ( file2, rename, listSize, &
          & hdfVersion=the_hdfVersion2)
+    if ( present(swaths2) ) then
+      if ( swaths2 /= 'all' .and. swaths2 /= '*' ) then
+        rename = swaths2
+        noSwaths2 = NumStringElements( swaths2, countEmpty=.true. )
+      endif
+    endif
     ! Are we merely to point out which swaths are missing from the other file?
     if ( myShowMissing ) then
       if ( present(swList) ) then
@@ -2643,7 +2694,7 @@ contains ! =====     Public Procedures     =============================
           call output('All swaths in ' // trim(File1), advance='yes')
         endif
         call GetUniqueList(swList, swathUnique, noUnique, countEmpty, &
-          & str2=trim(swathList2))
+          & str2=trim(rename))
         if ( noUnique > 0 ) then
           call output('swaths missing from ' // trim(File2), advance='yes')
           call output(trim(swathUnique), advance='yes')
@@ -2654,12 +2705,12 @@ contains ! =====     Public Procedures     =============================
         call output('Comparing swaths in ' // trim(File1), advance='no')
         call output(' with ' // trim(File2), advance='yes')
         call GetUniqueList(trim(swathList1), swathUnique, noUnique, countEmpty, &
-          & str2=trim(swathList2))
+          & str2=trim(rename))
         if ( noUnique > 0 ) then
           call output('swaths only in ' // trim(File1), advance='yes')
           call output(trim(swathUnique), advance='yes')
         endif
-        call GetUniqueList(trim(swathList2), swathUnique, noUnique, countEmpty, &
+        call GetUniqueList(trim(rename), swathUnique, noUnique, countEmpty, &
           & str2=trim(swathList1))
         if ( noUnique > 0 ) then
           call output('swaths only in ' // trim(File2), advance='yes')
@@ -2690,22 +2741,33 @@ contains ! =====     Public Procedures     =============================
           &  trim(File1), advance='yes')
         cycle
       endif
-      status = stringElementNum(swathList2, trim(swath), countEmpty)
+      swath2 = swath
+      status = stringElementNum(rename, trim(swath), countEmpty)
       if ( status < 1 ) then
-        call output('Swath ' // trim(swath) // ' not found in ' // &
-          & trim(File2), advance='yes')
-        cycle
+        if ( .not. myForce ) then
+          call output('Swath ' // trim(swath) // ' not found in ' // &
+            & trim(File2), advance='yes')
+          cycle
+        else
+          call GetStringElement (trim(rename), swath2, i, countEmpty )
+          call blanks( 22+len_trim(swath), fillChar='-', advance='yes')
+          call output( '---- swath(1) name: ' // trim(swath) // ' ----', advance='yes')
+          call blanks( 22+len_trim(swath), fillChar='-', advance='yes')
+          call output( '     swath(2) name: ' // trim(swath2)// '     ', advance='yes')
+          call blanks( 22+len_trim(swath), fillChar='-', advance='yes')
+        endif
+      else
+        call blanks( 22+len_trim(swath), fillChar='-', advance='yes')
+        call output( '---- swath name: ' // trim(swath) // ' ----', advance='yes')
+        call blanks( 22+len_trim(swath), fillChar='-', advance='yes')
       endif
-      call blanks( 22+len_trim(swath), fillChar='-', advance='yes')
-      call output( '---- swath name: ' // trim(swath) // ' ----', advance='yes')
-      call blanks( 22+len_trim(swath), fillChar='-', advance='yes')
       call ReadL2GPData ( File1Handle, trim(swath), l2gp1, &
            & hdfVersion=the_hdfVersion1 )
-      call ReadL2GPData ( File2Handle, trim(swath), l2gp2, &
+      call ReadL2GPData ( File2Handle, trim(swath2), l2gp2, &
            & hdfVersion=the_hdfVersion2 )
-      call DiffL2GPData(l2gp1, l2gp2, &
+      call DiffL2GPData( l2gp1, l2gp2, &
         & details=details, wholeArray=wholeArray, rms=rms, stats=stats, &
-        & ignoreBadChunks=ignoreBadChunks)
+        & ignoreBadChunks=ignoreBadChunks, fields=fields )
       call DestroyL2GPContents ( l2gp1 )
       call DestroyL2GPContents ( l2gp2 )
     enddo
@@ -3171,6 +3233,88 @@ contains ! =====     Public Procedures     =============================
   end subroutine DumpL2GP_attributes_hdf5
   !-------------------------------------
 
+  !-----------------------------------------  RepairL2GP  -----
+  subroutine RepairL2GP ( L2GP1, L2GP2, fields )
+
+    ! This routine repairs l2gp1 using values from l2gp2
+    ! wherever the first has fillvalues
+    
+    ! Thew optional arg fields will dtermine which fields this applies to:
+    ! value                  fields
+    ! -----                  ------
+    ! '*' (or missing)    all
+    ! 'latitude,time'     latitude, time
+    ! 'l2gpvalue'         l2gpvalue
+    ! 'value'             l2gpvalue, l2gpPrecision, status, quality
+    ! 'geolocation'       geolocations (all except 'value')
+
+    ! Dummy arguments
+    type (L2GPData_T), intent(inout) :: L2GP1
+    type (L2GPData_T), intent(in)    :: L2GP2
+    character(len=*), optional, intent(in) :: fields
+    
+    ! Internal variables
+    character(len=128) :: myFields
+
+    ! Executable code
+    myFields = '*'
+    if ( present(fields) ) myFields = lowercase(fields)
+    select case (trim(myFields))
+    case ('value')
+      myFields = 'l2gpvalue, l2gpPrecision, status, quality'
+    case ('geolocation')
+      myFields = lowercase(GEO_FIELDS) // ',pressure,time,frequency,chunknumber'
+    case default
+      ! Not a special case
+    end select
+
+    if ( SwitchDetail(myFields, 'pressure', '-wc') > -1 ) then
+      call ReplaceFillValues ( l2gp1%pressures, l2gp1%MissingValue, l2gp2%pressures )
+    endif
+    if ( SwitchDetail(myFields, 'latitude', '-wc') > -1 ) then
+      call ReplaceFillValues ( l2gp1%latitude, l2gp1%MissingValue, l2gp2%latitude )
+    endif
+    if ( SwitchDetail(myFields, 'longitude', '-wc') > -1 ) then
+      call ReplaceFillValues ( l2gp1%longitude, l2gp1%MissingValue, l2gp2%longitude )
+    endif
+    if ( SwitchDetail(myFields, 'solartime', '-wc') > -1 ) then
+      call ReplaceFillValues ( l2gp1%solartime, l2gp1%MissingValue, l2gp2%solartime )
+    endif
+    if ( SwitchDetail(myFields, 'solarzenith', '-wc') > -1 ) then
+      call ReplaceFillValues ( l2gp1%solarzenith, l2gp1%MissingValue, l2gp2%solarzenith )
+    endif
+    if ( SwitchDetail(myFields, 'LineOfSightAngle', '-wc') > -1 ) then
+      call ReplaceFillValues ( l2gp1%losangle, l2gp1%MissingValue, l2gp2%losangle )
+    endif
+    if ( SwitchDetail(myFields, 'OrbitGeodeticAngle', '-wc') > -1 ) then
+      call ReplaceFillValues ( l2gp1%geodangle, l2gp1%MissingValue, l2gp2%geodangle )
+    endif
+    if ( SwitchDetail(myFields, 'time', '-wc') > -1 ) then
+      call ReplaceFillValues ( l2gp1%time, real(l2gp1%MissingValue, r8), &
+        & l2gp2%time )
+    endif
+    if ( SwitchDetail(myFields, 'chunknumber', '-wc') > -1 ) then
+      call ReplaceFillValues ( l2gp1%chunknumber, int(l2gp1%MissingValue), &
+        & l2gp2%chunknumber )
+    endif
+    if ( SwitchDetail(myFields, 'frequency', '-wc') > -1 ) then
+      call ReplaceFillValues ( l2gp1%frequency, l2gp1%MissingValue, l2gp2%frequency )
+    endif
+    if ( SwitchDetail(myFields, 'l2gpvalue', '-wc') > -1 ) then
+      call ReplaceFillValues ( l2gp1%l2gpvalue, l2gp1%MissingValue, l2gp2%l2gpvalue )
+    endif
+    if ( SwitchDetail(myFields, 'l2gpprecision', '-wc') > -1 ) then
+      call ReplaceFillValues ( l2gp1%l2gpprecision, l2gp1%MissingValue, l2gp2%l2gpprecision )
+    endif
+    if ( SwitchDetail(myFields, 'status', '-wc') > -1 ) then
+      call ReplaceFillValues ( l2gp1%status, l2gp1%MissingStatus, l2gp2%status )
+    endif
+    if ( SwitchDetail(myFields, 'quality', '-wc') > -1 ) then
+      call ReplaceFillValues ( l2gp1%quality, l2gp1%MissingValue, l2gp2%quality )
+    endif
+
+  end subroutine RepairL2GP
+
   ! ----------------------------------  GetGeolocUnits  -----
   function GetGeolocUnits ( Title ) result( dim_string )
 
@@ -3226,6 +3370,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.118  2005/07/12 17:15:47  pwagner
+! Dropped global attribute InputVersion
+!
 ! Revision 2.117  2005/07/06 00:31:06  pwagner
 ! More robust determination of column swaths; quality data field has no units
 !
