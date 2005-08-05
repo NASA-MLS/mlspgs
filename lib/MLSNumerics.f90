@@ -118,6 +118,12 @@ module MLSNumerics              ! Some low level numerical stuff
 ! IsFillValue                  Returns true if argument is FillValue
 ! ReplaceFillValues            Replaces FillValue entries in an array
   
+  interface BridgeMissingValues
+    module procedure BridgeMissingValues_1dr4, BridgeMissingValues_1dr8, BridgeMissingValues_1dint
+    module procedure BridgeMissingValues_2dr4, BridgeMissingValues_2dr8, BridgeMissingValues_2dint
+    module procedure BridgeMissingValues_3dr4, BridgeMissingValues_3dr8, BridgeMissingValues_3dint
+  end interface
+
   interface EssentiallyEqual
     module procedure EssentiallyEqual_r4, EssentiallyEqual_r8
     module procedure EssentiallyEqual_r4_1d, EssentiallyEqual_r8_1d
@@ -154,6 +160,7 @@ module MLSNumerics              ! Some low level numerical stuff
     module procedure ReplaceFill2d_r4, ReplaceFill2d_r8, ReplaceFill2d_int
     module procedure ReplaceFill3d_r4, ReplaceFill3d_r8, ReplaceFill3d_int
   end interface
+
   real, parameter, private :: FILLVALUETOLERANCE = 0.2 ! Poss. could make it 1
 
 contains
@@ -718,11 +725,16 @@ contains
 ! -------------------------------------  ReplaceFillValues  -----
 
   ! This family of routines replaces entries in an array
-  ! based on whethet they
+  ! based on whether they
   ! (1) are equal to FillValue; or
   ! (2) other criteria set by options
   ! The replacement values are supplied either by 
   ! newvalues, newFill, or according to options (e.g., you may interpolate)
+  ! Note:
+  ! When interpolating arrays with rank > 1, the interpolated-against
+  ! index is the last one
+  ! Thus we don't do true multi-dimensional interpolation
+  ! If you wish to interpolate against another index, you must reshape
 
   subroutine ReplaceFill1d_int ( values, FillValue, newValues, newFill, options )
     integer, dimension(:), intent(inout) :: values
@@ -867,6 +879,115 @@ contains
   end function IsFillValue_r8
 
 ! ============================================================================
+  ! This family of subroutines bridges missing values by interpolation
+  subroutine BridgeMissingValues_1dint(values, MissingValue)
+    ! Args
+    integer, dimension(:), intent(inout) :: values
+    integer, intent(in), optional        :: missingValue
+    ! Internal variables
+    integer :: dx
+    integer :: myMissingValue
+    integer :: x1
+    integer :: x2
+    include 'BridgeMissingValues.f9h'
+  end subroutine BridgeMissingValues_1dint
+
+  subroutine BridgeMissingValues_1dr4(values, MissingValue)
+    ! Args
+    real(r4), dimension(:), intent(inout) :: values
+    real(r4), intent(in), optional        :: missingValue
+    ! Internal variables
+    real(r4) :: dx
+    real(r4) :: myMissingValue
+    real(r4) :: x1
+    real(r4) :: x2
+    include 'BridgeMissingValues.f9h'
+  end subroutine BridgeMissingValues_1dr4
+
+  subroutine BridgeMissingValues_1dr8(values, MissingValue)
+    ! Args
+    real(r8), dimension(:), intent(inout) :: values
+    real(r8), intent(in), optional        :: missingValue
+    ! Internal variables
+    real(r8) :: dx
+    real(r8) :: myMissingValue
+    real(r8) :: x1
+    real(r8) :: x2
+    include 'BridgeMissingValues.f9h'
+  end subroutine BridgeMissingValues_1dr8
+
+  subroutine BridgeMissingValues_2dint(values, MissingValue)
+    ! Args
+    integer, dimension(:,:), intent(inout) :: values
+    integer, intent(in), optional          :: missingValue
+    ! Internal variables
+    integer :: i
+    do i=1, size(values, 1)
+      call BridgeMissingValues(values(i,:), MissingValue)
+    enddo
+  end subroutine BridgeMissingValues_2dint
+
+  subroutine BridgeMissingValues_2dr4(values, MissingValue)
+    ! Args
+    real(r4), dimension(:,:), intent(inout) :: values
+    real(r4), intent(in), optional          :: missingValue
+    ! Internal variables
+    integer :: i
+    do i=1, size(values, 1)
+      call BridgeMissingValues(values(i,:), MissingValue)
+    enddo
+  end subroutine BridgeMissingValues_2dr4
+
+  subroutine BridgeMissingValues_2dr8(values, MissingValue)
+    ! Args
+    real(r8), dimension(:,:), intent(inout) :: values
+    real(r8), intent(in), optional          :: missingValue
+    ! Internal variables
+    integer :: i
+    do i=1, size(values, 1)
+      call BridgeMissingValues(values(i,:), MissingValue)
+    enddo
+  end subroutine BridgeMissingValues_2dr8
+
+  subroutine BridgeMissingValues_3dint(values, MissingValue)
+    ! Args
+    integer, dimension(:,:,:), intent(inout) :: values
+    integer, intent(in), optional            :: missingValue
+    ! Internal variables
+    integer :: i, j
+    do j=1, size(values, 2)
+      do i=1, size(values, 1)
+        call BridgeMissingValues(values(i,j,:), MissingValue)
+      enddo
+    enddo
+  end subroutine BridgeMissingValues_3dint
+
+  subroutine BridgeMissingValues_3dr4(values, MissingValue)
+    ! Args
+    real(r4), dimension(:,:,:), intent(inout) :: values
+    real(r4), intent(in), optional            :: missingValue
+    ! Internal variables
+    integer :: i, j
+    do j=1, size(values, 2)
+      do i=1, size(values, 1)
+        call BridgeMissingValues(values(i,j,:), MissingValue)
+      enddo
+    enddo
+  end subroutine BridgeMissingValues_3dr4
+
+  subroutine BridgeMissingValues_3dr8(values, MissingValue)
+    ! Args
+    real(r8), dimension(:,:,:), intent(inout) :: values
+    real(r8), intent(in), optional            :: missingValue
+    ! Internal variables
+    integer :: i, j
+    do j=1, size(values, 2)
+      do i=1, size(values, 1)
+        call BridgeMissingValues(values(i,j,:), MissingValue)
+      enddo
+    enddo
+  end subroutine BridgeMissingValues_3dr8
+
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -881,6 +1002,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.36  2005/08/05 20:34:47  pwagner
+! ReplaceFillValues can now to interpolate to bridge across MissingValues
+!
 ! Revision 2.35  2005/08/03 16:36:46  pwagner
 ! antiderivatives; added replaceFillValues
 !
