@@ -794,13 +794,12 @@ contains ! ============================ MODULE PROCEDURES ======================
   end function FindL1BData
 
   ! ------------------------------------------------  FindMaxMAF  -----
-  ! integer function FindMaxMAF ( files, hdfVersion, minMAF )
   integer function FindMaxMAF ( files, minMAF )
   ! Find maximum MAF among files (using counterMAF arrays)
 
   use MLSHDF5, only: IsHDF5DSPresent
 
-    type(MLSFile_T), dimension(:), intent(in) :: files ! File handles
+    type(MLSFile_T), dimension(:), intent(in), target :: files ! File handles
     integer, optional, intent(out) :: minMAF
 
     ! Externals
@@ -812,6 +811,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     integer :: myhdfVersion
     character(len=*), parameter :: fieldname = 'counterMAF'
     type(L1BData_T) :: l1bData
+    type(MLSFile_T), pointer :: L1BFile
     integer :: noMAFs
     integer :: myMinMAF
     integer :: status
@@ -823,6 +823,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     myMinMAF = BIGGESTMAFCTR
     haveCtrMAF = .false.
     do i = 1, size(files)
+      L1BFile => files(i)
       if ( streq(files(i)%content, 'l1b*', '-w') ) then
         ! This is an l1b file
         alreadyOpen = files(i)%StillOpen
@@ -832,13 +833,17 @@ contains ! ============================ MODULE PROCEDURES ======================
         if ( myhdfVersion == HDFVERSION_4 ) then
           haveCtrMAF = sfn2index(files(i)%FileID%f_id,trim(fieldName)) /= -1
           if ( haveCtrMAF ) then
-            call ReadL1BData ( files(i), fieldName, L1bData, noMAFs, status, &
+            call ReadL1BData ( L1BFile, fieldName, L1bData, noMAFs, status, &
               & dontPad=.true.)
+            ! call ReadL1BData ( files(i), fieldName, L1bData, noMAFs, status, &
+            !   & dontPad=.true.)
           end if
         else
           haveCtrMAF = IsHDF5DSPresent(files(i)%FileID%f_id, trim(fieldName))
           if ( haveCtrMAF ) then
-            call ReadL1BData ( files(i), fieldName, L1bData, noMAFs, status, &
+            ! call ReadL1BData ( files(i), fieldName, L1bData, noMAFs, status, &
+            !   & dontPad=.true.)
+            call ReadL1BData ( L1BFile, fieldName, L1bData, noMAFs, status, &
               & dontPad=.true.)
           end if
         end if
@@ -1978,7 +1983,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     
     ! Dummy arguments
     character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
-    type(MLSFile_T)                :: L1BFile
+    type(MLSFile_T), pointer       :: L1BFile
     integer, intent(in), optional  :: FIRSTMAF ! First to read (default 0)
     integer, intent(in), optional  :: LASTMAF ! Last to read (default last/file)
     logical, intent(in), optional  :: NEVERFAIL ! Don't quit if TRUE
@@ -1997,6 +2002,10 @@ contains ! ============================ MODULE PROCEDURES ======================
     logical :: myDontPad
     integer :: returnStatus
     ! Executable code
+    if ( .not. associated(L1BFile) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'null pointer passed to readl1bdata--probably cant find ' // &
+        & trim(QuantityName) )
     alreadyOpen = L1BFile%StillOpen
     if ( .not. alreadyOpen ) then
       ! print *, 'Oops--need to open l1b file before reading'
@@ -2077,7 +2086,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     
     ! Dummy arguments
     character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
-    type(MLSFile_T)                :: L1BFile
+    type(MLSFile_T), pointer       :: L1BFile
     integer, intent(in), optional  :: FIRSTMAF ! First to read (default 0)
     integer, intent(in), optional  :: LASTMAF ! Last to read (default last in file)
     logical, intent(in), optional  :: NEVERFAIL ! Don't quit if TRUE
@@ -2360,7 +2369,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     
     ! Dummy arguments
     character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
-    type(MLSFile_T)                :: L1BFile
+    type(MLSFile_T), pointer       :: L1BFile
     integer, intent(in), optional  :: FIRSTMAF ! First to read (default 0)
     integer, intent(in), optional  :: LASTMAF ! Last to read (default last/file)
     logical, intent(in), optional  :: NEVERFAIL ! Don't quit if TRUE
@@ -2963,6 +2972,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.60  2005/08/05 20:36:29  pwagner
+! L1BFile arg to ReadL1BData now a pointer
+!
 ! Revision 2.59  2005/07/21 23:36:28  pwagner
 ! Simplified L1bradSetup
 !
