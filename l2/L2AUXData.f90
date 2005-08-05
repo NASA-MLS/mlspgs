@@ -694,7 +694,8 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in), optional :: hdfVersion
     ! Local variables
     integer :: myhdfVersion
-    type( MLSFile_T ) :: l2auxFile
+    type( MLSFile_T ), target  :: l2auxFile
+    type( MLSFile_T ), pointer :: l2auxPointer
     integer :: status
     ! Executable code
     myhdfVersion = default_hdfversion_read
@@ -703,7 +704,8 @@ contains ! =====     Public Procedures     =============================
       & content='l2aux', name='unknown', hdfVersion=myhdfVersion)
     l2auxFile%FileID%f_id = sd_id
     l2auxFile%stillOpen = .true.
-    call ReadL2AUXData(l2AUXFile, quantityname, quantityType, l2aux, firstProf, lastProf, &
+    l2auxPointer => l2auxFile
+    call ReadL2AUXData(l2auxPointer, quantityname, quantityType, l2aux, firstProf, lastProf, &
       & checkDimNames)
 
   end subroutine ReadL2AUXData_FileHandle
@@ -721,7 +723,7 @@ contains ! =====     Public Procedures     =============================
     ! Arguments
 
     character (LEN=*), intent(IN) :: quantityname ! Name of L2AUX quantity = sdname in writing routine
-    type(MLSFile_T)                :: L2AUXFile
+    type(MLSFile_T), pointer      :: L2AUXFile
     integer, intent(in) :: QuantityType ! Lit index
     integer, intent(IN), optional :: firstProf, lastProf ! Defaults to first and last
     type( L2AUXData_T ), intent(OUT) :: l2aux ! Result
@@ -762,7 +764,7 @@ contains ! =====     Public Procedures     =============================
     ! Arguments
 
     character (LEN=*), intent(IN) :: quantityname ! Name of L2AUX quantity = sdname in writing routine
-    type(MLSFile_T)                :: L2AUXFile
+    type(MLSFile_T), pointer      :: L2AUXFile
     integer, intent(in) :: QuantityType
     integer, intent(IN), optional :: firstProf, lastProf ! Defaults to first and last
     type( L2AUXData_T ), intent(OUT) :: l2aux ! Result
@@ -929,7 +931,7 @@ contains ! =====     Public Procedures     =============================
     ! Arguments
 
     character (LEN=*), intent(IN) :: quantityname ! Name of L2AUX quantity = sdname in writing routine
-    type(MLSFile_T)                :: L2AUXFile
+    type(MLSFile_T), pointer      :: L2AUXFile
     integer, intent(in) :: QUANTITYTYPE ! Lit index
     integer, intent(IN), optional :: firstProf, lastProf ! Defaults to first and last
     type( L2AUXData_T ), intent(OUT) :: l2aux ! Result
@@ -1868,6 +1870,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.72  2005/08/05 20:38:31  pwagner
+! L2AUXFile arg to ReadL2AUXFile now a pointer
+!
 ! Revision 2.71  2005/07/06 00:29:26  pwagner
 ! optional arg options determines whether cpL2AUXData dumps DS names
 !
