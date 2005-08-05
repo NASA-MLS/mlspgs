@@ -56,6 +56,7 @@ MODULE MLSStringLists               ! Module to treat string lists
 ! List2Array         Converts a single string list to an array of strings
 ! NumStringElements  Returns number of elements in string list
 ! RemoveElemFromList removes occurrence(s) of elem in a string list
+! RemoveListFromList removes occurrence(s) of elems in a string list from another
 ! ReplaceSubString   replaces occurrence(s) of sub1 with sub2 in a string
 ! ReverseList        Turns 'abc,def,ghi' -> 'ghi,def,abc'
 ! SortArray          Turns (/'def','ghi','abc'/) -> (/'abc','def','ghi'/)
@@ -92,6 +93,10 @@ MODULE MLSStringLists               ! Module to treat string lists
 !   [char inseparator], [log IgnoreLeadingSpaces])
 ! int NumStringElements(strlist inList, log countEmpty, &
 !   & [char inseparator], [int LongestLen])
+! RemoveElemFromList(strlist inList, strlist outList, char* elem, &
+!    & [char inseparator])
+! RemoveListFromList(strlist inList, strlist outList, strlist exclude, &
+!    & [char inseparator])
 ! ReplaceSubString (char* str, char* outstr, char* sub1, char* sub2, &
 !       & [char* which], [log no_trim])
 ! strlist ReverseList (strlist str, [char inseparator])
@@ -141,7 +146,7 @@ MODULE MLSStringLists               ! Module to treat string lists
    & GetIntHashElement, GetStringElement, GetStringHashElement, &
    & GetUniqueInts, GetUniqueStrings, GetUniqueList, &
    & List2Array, NumStringElements, &
-   & RemoveElemFromList, ReplaceSubString, ReverseList, &
+   & RemoveElemFromList, RemoveListFromList, ReplaceSubString, ReverseList, &
    & SortArray, SortList, StringElementNum, SwitchDetail, &
    & unquote, utc_to_date, utc_to_time, utc_to_yyyymmdd, yyyymmdd_to_dai
 
@@ -1320,6 +1325,39 @@ CONTAINS
       outList = unique_list(len(elem)+1:)
     endif
   END SUBROUTINE RemoveElemFromList
+
+  ! --------------------------------------------------  RemoveListFromList  -----
+  SUBROUTINE RemoveListFromList (inList, outList, exclude, inseparator)
+    ! Takes one list and removes from it all occurrence(s) 
+    ! of each elem in another list called "exclude"
+	 ! E.g., given 'a,b,c,d,..,z' and asked to remove 'c,a' returns 'b,d,..z'
+    !--------Argument--------!
+    CHARACTER (LEN=*), INTENT(IN) :: inList
+    CHARACTER (LEN=*), INTENT(IN) :: exclude ! What to exclude
+    CHARACTER (LEN=*), INTENT(OUT)                :: outList
+    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)       :: inseparator
+    ! Method:
+    ! Repeatedly call RemoveElemFromList for each elem of exclude
+    !----------Local vars----------!
+    logical, parameter :: countEmpty = .true.
+    integer :: i
+    character(len=max(len(inList), len(exclude)) + 1) :: elem
+    integer :: numElems
+    character(len=len(inList)+1) :: temp_list
+    character(len=len(inList)+1) :: temp_list2
+    !----------Executable part----------!
+    outList = inList
+    if ( len_trim(exclude) < 1 .or. len_trim(inList) < 1 ) return
+    numElems = NumStringElements(exclude, countEmpty, inseparator)
+    if ( numElems < 1 ) return
+    temp_list = inList
+    do i=1, numElems
+      call GetStringElement(exclude, elem, i, countEmpty, inseparator)
+      call RemoveElemFromList(temp_list, temp_list2, elem, inseparator)
+      temp_list = temp_list2
+    enddo
+    outList = temp_list
+  END SUBROUTINE RemoveListFromList
 
   ! --------------------------------------------------  ReplaceSubString  -----
   SUBROUTINE ReplaceSubString (str, outstr, sub1, sub2, which, no_trim)
@@ -2808,6 +2846,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.11  2005/08/05 16:31:07  pwagner
+! Added RemoveListFromList
+!
 ! Revision 2.10  2005/07/21 23:38:18  pwagner
 ! Added explanation of to-be-standard character flag options
 !
