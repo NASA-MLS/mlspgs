@@ -129,7 +129,7 @@ contains ! =====     Public Procedures     =============================
     integer :: KEY                 ! Index of n_spec_args in the AST
     integer :: L2apriori_version
     type (L2AUXData_T) :: L2AUX
-    type (MLSFile_T) :: L2AUXFile
+    type (MLSFile_T), pointer :: L2AUXFile
     type (L2GPData_T) :: L2GP
     type (MLSFile_T) :: L2GPFile
     integer :: L2Index             ! In the l2gp or l2aux database
@@ -815,6 +815,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.61  2005/08/05 20:39:07  pwagner
+! L2AUXFile arg to ReadL2AUXFile now a pointer
+!
 ! Revision 2.60  2005/07/12 17:34:57  pwagner
 ! Added MLSFile interface for writing apriori attributes
 !
