@@ -27,7 +27,9 @@
    ! -n : replace fillValues and also any < 0
    ! -p : replace fillValues and also any > 0
    ! -i : interpolate between non-fill values
-   ! This last is to hard for now, so I'll just handle the first two
+   ! -u : interpolate between non-monotonically increasing values
+   ! -d : interpolate between non-monotonically decreasing values
+   ! These last two are too hard for now, so I'll just handle -[npi]
    if ( index(myOptions, 'n') > 0 ) then
      where (values < 0.0)
        values = FillValue
@@ -39,8 +41,18 @@
      end where
    endif
    if ( index(myOptions, 'i') > 0 ) then
+      ! call MLSMessage ( MLSMSG_Error, &
+      !   & ModuleName, "Can't yet interpolate to ReplaceFillValues" )
+      call BridgeMissingValues(values, FillValue)
+      return
+   endif
+   if ( index(myOptions, 'u') > 0 ) then
       call MLSMessage ( MLSMSG_Error, &
-        & ModuleName, "Can't yet interpolate to ReplaceFillValues" )
+        & ModuleName, "Can't yet u-monotonize ReplaceFillValues" )
+   endif
+   if ( index(myOptions, 'd') > 0 ) then
+      call MLSMessage ( MLSMSG_Error, &
+        & ModuleName, "Can't yet d-monotonize ReplaceFillValues" )
    endif
    if ( present(newValues) ) then
      if ( any( shape(values) /= shape(newValues) ) ) &
@@ -60,3 +72,6 @@
 ! end subroutine ReplaceFill*
 
 ! $Log$
+! Revision 1.1  2005/08/03 16:35:16  pwagner
+! First commit
+!
