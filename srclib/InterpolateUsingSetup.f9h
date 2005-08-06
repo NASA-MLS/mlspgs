@@ -145,10 +145,20 @@
           end if
         end do
       end if
+      if ( present(intYdX) ) then
+        do ind = 1, noNew
+          if ( coeffs%badValue(ind) ) then
+            intYdX(ind,:) = badValue
+          else
+            intYdX(ind,:) = 0.0
+          end if
+        end do
+      end if
     else
       ! Clear the result array(s)
       if ( doNewY ) newY = 0.0
       if ( present(dyByDx) ) dyByDx = 0.0
+      if ( present(intYdX) ) intYdX = 0.0
     end if
 
     oldYlower = oldY(coeffs%lowerInds,:)
@@ -186,9 +196,8 @@
             &  coeffs%badValue(coeffs%upperInds(ind)) ) then
             intYdX(ind,:) = badValue
           else
-            intYdX(ind,:) = (coeffs%bi(ind)*oldYupper(ind,:) + &
-              &              coeffs%ai(ind)*oldYlower(ind,:)) / &
-              &             coeffs%gap(ind)
+            intYdX(ind,:) = coeffs%ai(ind)*oldYlower(ind,:) + &
+              &             coeffs%bi(ind)*oldYupper(ind,:)
           end if
         end do
       end if
@@ -206,9 +215,8 @@
       end if
       if ( present(intYdX) ) then
         do ind = 1, noNew
-          intYdX(ind,:) = (coeffs%bi(ind) * oldYupper(ind,:) + &
-            &              coeffs%ai(ind) * oldYlower(ind,:)) / &
-            &             coeffs%gap(ind)
+          intYdX(ind,:) = coeffs%ai(ind) * oldYlower(ind,:) + &
+            &             coeffs%bi(ind) * oldYupper(ind,:)
         end do
       end if
     end if
@@ -232,7 +240,7 @@
         do ind = 1, noNew
           intYdX(ind,:) = intYdX(ind,:) + &
             &   coeffs%ci(ind) * oldSecondLower(ind,:) + &
-            &   coeffs%ci(ind) * oldSecondUpper(ind,:)
+            &   coeffs%di(ind) * oldSecondUpper(ind,:)
         end do
       end if
     end if
@@ -272,6 +280,9 @@
 ! end subroutine InterpolateUsingSetup_r*
 
 ! $Log$
+! Revision 1.5  2005/08/03 17:54:35  vsnyder
+! Add antiderivatives
+!
 ! Revision 1.4  2005/06/22 20:03:56  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
