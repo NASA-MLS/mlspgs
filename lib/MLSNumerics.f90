@@ -11,7 +11,7 @@
 
 !=============================================================================
 module MLSNumerics              ! Some low level numerical stuff
-  !=============================================================================
+!=============================================================================
 
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use DUMP_0, only : DUMP
@@ -24,7 +24,7 @@ module MLSNumerics              ! Some low level numerical stuff
   implicit none
 
   private
-  public :: EssentiallyEqual, Hunt, InterpolateArraySetup
+  public :: Dump, EssentiallyEqual, Hunt, InterpolateArraySetup
   public :: InterpolateArrayTeardown, InterpolateValues
   public :: IsFillValue, ReplaceFillValues
 
@@ -50,11 +50,12 @@ module MLSNumerics              ! Some low level numerical stuff
     real(r4), pointer :: E(:) => NULL(), F(:) => NULL()
     !{ Coefficients for integration:
     !  $\int A \text{d}x =  \frac{x(x_{i+1}-\frac{x}2)}g$.
-    !  $\int B \text{d}x = -\frac{x(x_i    +\frac{x}2)}g$.\\
+    !  $\int B \text{d}x = -\frac{x(x_i    -\frac{x}2)}g
+    !                    = x - \int A \text{d}x$.\\
     !  $\int C \text{d}x = -\frac{g^2}6
-    !                      \left( \int A \text{d}x + \frac{g a^4}4 \right)$.
+    !                      \left( \int A \text{d}x + \frac{g A^4}4 \right)$.
     !  $\int D \text{d}x = -\frac{g^2}6
-    !                      \left( \int B \text{d}x - \frac{g b^4}4 \right)$.
+    !                      \left( \int B \text{d}x - \frac{g B^4}4 \right)$.
     real(r4), pointer :: AI(:) => NULL(), BI(:) => NULL(), &
       &                  CI(:) => NULL(), DI(:) => NULL()
     ! Stuff for extrapolation == "B"ad
@@ -83,11 +84,12 @@ module MLSNumerics              ! Some low level numerical stuff
     real(r8), pointer :: E(:) => NULL(), F(:) => NULL()
     !{ Coefficients for integration:
     !  $\int A \text{d}x =  \frac{x(x_{i+1}-\frac{x}2)}g$.
-    !  $\int B \text{d}x = -\frac{x(x_i    +\frac{x}2)}g$.\\
+    !  $\int B \text{d}x = -\frac{x(x_i    -\frac{x}2)}g
+    !                    = x - \int A \text{d}x$.\\
     !  $\int C \text{d}x = -\frac{g^2}6
-    !                      \left( \int A \text{d}x + \frac{g a^4}4 \right)$.
+    !                      \left( \int A \text{d}x + \frac{g A^4}4 \right)$.
     !  $\int D \text{d}x = -\frac{g^2}6
-    !                      \left( \int B \text{d}x - \frac{g b^4}4 \right)$.
+    !                      \left( \int B \text{d}x - \frac{g B^4}4 \right)$.
     real(r8), pointer :: AI(:) => NULL(), BI(:) => NULL(), &
       &                  CI(:) => NULL(), DI(:) => NULL()
     ! Stuff for extrapolation == "B"ad
@@ -106,22 +108,27 @@ module MLSNumerics              ! Some low level numerical stuff
 !     - - - - - - - -
 
 !         Functions, operations, routines
+! Dump                         Dump coefficients structure
 ! EssentiallyEqual             Returns true if two real arguments 'close enough'
 !                                (See comments below for interpretation
 !                                 of array versions)
 ! Hunt                         Finds index of item(s) in list closest to prey
 ! HuntArray                    Hunts for multiple items
 ! HuntScalar                   Hunts for just one
+! InterpolateArraySetup        Compute coefficients for InterpolateUsingSetup
+! InterpolateArrayTeardown     Deallocate tables created by InterpolateArraySetup
 ! InterpolateValues            Interpolate for new y value(s): given old (x,y), new (x), method
-! InterpolateArray             Interpolates for multiple values
-! InterpolateScalar            Interpolates for just one
 ! IsFillValue                  Returns true if argument is FillValue
 ! ReplaceFillValues            Replaces FillValue entries in an array
-  
+
   interface BridgeMissingValues
     module procedure BridgeMissingValues_1dr4, BridgeMissingValues_1dr8, BridgeMissingValues_1dint
     module procedure BridgeMissingValues_2dr4, BridgeMissingValues_2dr8, BridgeMissingValues_2dint
     module procedure BridgeMissingValues_3dr4, BridgeMissingValues_3dr8, BridgeMissingValues_3dint
+  end interface
+
+  interface Dump
+    module procedure DumpCoefficients_r4, DumpCoefficients_r8
   end interface
 
   interface EssentiallyEqual
@@ -165,7 +172,20 @@ module MLSNumerics              ! Some low level numerical stuff
 
 contains
 
-! ------------------------------------------------- EssentiallyEqual ---
+! ---------------------------------------------------------  Dump  -----
+  subroutine DumpCoefficients_r4 ( Coeffs )
+    use Dump_0, only: Dump
+    type(coefficients_r4), intent(in) :: Coeffs
+    include 'DumpCoefficients.f9h'
+  end subroutine DumpCoefficients_r4
+
+  subroutine DumpCoefficients_r8 ( Coeffs )
+    use Dump_0, only: Dump
+    type(coefficients_r8), intent(in) :: Coeffs
+    include 'DumpCoefficients.f9h'
+  end subroutine DumpCoefficients_r8
+
+! ---------------------------------------------  EssentiallyEqual  -----
 
   ! This family of routines checks to see if two reals are essentially
   ! the same.
@@ -1002,6 +1022,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.37  2005/08/06 01:36:30  vsnyder
+! Add Dump for interpolation coefficients
+!
 ! Revision 2.36  2005/08/05 20:34:47  pwagner
 ! ReplaceFillValues can now to interpolate to bridge across MissingValues
 !
