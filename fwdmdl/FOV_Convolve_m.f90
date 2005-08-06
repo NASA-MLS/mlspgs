@@ -182,7 +182,7 @@ contains
     ! interpolate from FFT angles to output grid
 
     if ( associated(MIF_Times) ) then
-      call scanAverage ( convolve_support%coeffs_2, MIF_Times, deadTime(1,1), &
+      call scanAverage ( MIF_Times, deadTime(1,1), &
         & real(convolve_support%angles(ffth-1:no_fft-1),rp), &
         & convolve_support%del_chi_out, real(rad_fft1(ffth:no_fft),rp), rad_out )
     else
@@ -401,7 +401,7 @@ contains
       call drft1_t ( rad_fft2, 's' )
 
       if ( associated(MIF_Times) ) then
-        call scanAverage ( convolve_support%coeffs_2, MIF_Times, deadTime(1,1), &
+        call scanAverage ( MIF_Times, deadTime(1,1), &
           & real(convolve_support%angles(ffth-1:no_fft-1),rp), &
           & convolve_support%del_chi_out, real(rad_fft2(ffth:no_fft),rp), &
           & drad_dT_out(:, i) )
@@ -469,6 +469,9 @@ contains
 end module FOV_Convolve_m
 
 ! $Log$
+! Revision 2.4  2005/08/06 01:40:45  vsnyder
+! ScanAverage doesn't need coeffs
+!
 ! Revision 2.3  2005/08/03 18:03:20  vsnyder
 ! Scan averaging
 !

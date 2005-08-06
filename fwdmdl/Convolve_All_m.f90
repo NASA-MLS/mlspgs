@@ -343,7 +343,7 @@ contains
       col = FindBlock ( Jacobian%col, ptan%index, maf )
 
       if ( associated(MIF_Times) ) then
-        call scanAverage ( coeffs, MIF_Times_for_MAF, deadTime(1,1), &
+        call scanAverage ( MIF_Times_for_MAF, deadTime(1,1), &
           & chi_in, chi_out, rad_in, rad_out, dY_dX_out=di_dx )
       else
         call InterpolateValues ( coeffs, chi_in, rad_in, chi_out, rad_out, &
@@ -360,7 +360,7 @@ contains
     else
 
         if ( associated(MIF_Times) ) then
-          call scanAverage ( coeffs, MIF_Times_for_MAF, deadTime(1,1), &
+          call scanAverage ( MIF_Times_for_MAF, deadTime(1,1), &
             & chi_in, chi_out, rad_in, rad_out )
         else
           call InterpolateValues ( coeffs, chi_in, rad_in, chi_out, rad_out, &
@@ -437,7 +437,7 @@ contains
         if ( grids_tmp%deriv_flags(sv_i) ) then
           dRad_dT_in = di_dt(1:k,sv_i)
           if ( associated(MIF_Times) ) then
-            call scanAverage ( coeffs, MIF_Times_for_MAF, deadTime(1,1), &
+            call scanAverage ( MIF_Times_for_MAF, deadTime(1,1), &
               & chi_in, chi_out, dRad_dT_in, dRad_dT_out )
           else
             call InterpolateValues ( coeffs, chi_in, dRad_dT_in, &
@@ -531,7 +531,7 @@ contains
           if ( Grids_f%deriv_flags(sv_f) ) then
             dRad_df_in = di_df(:,sv_f)
             if ( associated(MIF_Times) ) then
-              call scanAverage ( coeffs, MIF_Times_for_MAF, deadTime(1,1), &
+              call scanAverage ( MIF_Times_for_MAF, deadTime(1,1), &
                 & chi_in, chi_out, dRad_df_in, dRad_df_out )
             else if ( myLinear ) then
               call InterpolateValues ( chi_in, dRad_df_in, &
@@ -641,6 +641,9 @@ contains
 end module Convolve_All_m
 
 ! $Log$
+! Revision 2.4  2005/08/06 01:40:45  vsnyder
+! ScanAverage doesn't need coeffs
+!
 ! Revision 2.3  2005/08/03 18:03:20  vsnyder
 ! Scan averaging
 !
