@@ -116,7 +116,7 @@
         call allocate_test ( coeffs%bi, noNew, "Coeffs%BI", ModuleName )
         call allocate_test ( coeffs%ci, noNew, "Coeffs%CI", ModuleName )
         call allocate_test ( coeffs%di, noNew, "Coeffs%DI", ModuleName )
-        coeffs%AI = newX * (oldX(coeffs%upperInds)-0.5 * newX)/coeffs%gap
+        coeffs%AI = newX * (oldX(coeffs%upperInds) - 0.5 * newX) / coeffs%gap
         coeffs%BI = newX - coeffs%AI
         coeffs%CI = -gap2 * ( coeffs%AI + 0.25 * coeffs%gap * coeffs%A**4 )
         coeffs%DI = -gap2 * ( coeffs%BI - 0.25 * coeffs%gap * coeffs%B**4 )
@@ -126,6 +126,9 @@
 ! end subroutine InterpolateArraySetup_r*
 
 ! $Log$
+! Revision 1.3  2005/08/03 16:34:20  pwagner
+! InterpolateArray optionally finds antiderivatives
+!
 ! Revision 1.2  2005/06/22 20:03:55  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
