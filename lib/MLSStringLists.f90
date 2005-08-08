@@ -2492,6 +2492,7 @@ CONTAINS
     ! Routine that returns the year, month, and day from a string of the form
     ! (A) yyyy-mm-ddThh:mm:ss.sss
     ! (B) yyyy-dddThh:mm:ss.sss
+    ! (N) yyyydddThh:mm:ss.sss (no-dash)
     ! where the field separator 'T' divides the string into two
     ! sub-strings encoding the date and time
     ! The date substring in subdivided by the separator '-'
@@ -2521,7 +2522,7 @@ CONTAINS
     character(LEN=*), parameter :: time_conversion='(I4)'
     logical :: mystrict
     logical :: mynodash
-    character(len=1) :: utc_format        ! 'a' or 'b'
+    character(len=1) :: utc_format        ! 'a' or 'b' or 'n' (no-dash)
     ! The following arrys contains the maximum permissible day for each month
     ! where month=-1 means the whole year, month=1..12 means Jan, .., Dec
     integer, dimension(-1:12), parameter :: DAYMAX = (/ &
@@ -2555,6 +2556,7 @@ CONTAINS
      yyyy = date(1:4)
      mm = date(5:6)
      dd = date(7:8)
+     utc_format = 'n'
    else
      call GetStringElement(trim(date), yyyy, 1, countEmpty=.true., inseparator=dash)
      if ( &
@@ -2846,6 +2848,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.12  2005/08/08 23:53:18  pwagner
+! utc_format never undefined in utc_to_yyyymmdd_ints
+!
 ! Revision 2.11  2005/08/05 16:31:07  pwagner
 ! Added RemoveListFromList
 !
