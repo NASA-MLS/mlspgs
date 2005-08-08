@@ -673,6 +673,7 @@ contains ! =====     Public Procedures     =============================
       & "Unrecognized instrument key passed to ReadL2GPData: "// my_hmot, &
       & MLSFile=L2GPFile )
     end select
+    status = 0
     alreadyOpen = L2GPFile%stillOpen
     if ( .not. alreadyOpen ) then
       call mls_openFile(L2GPFile, Status)
@@ -1850,6 +1851,7 @@ contains ! =====     Public Procedures     =============================
     integer :: status
     ! Executable code
 
+    status = 0
     alreadyOpen = L2GPFile%stillOpen
     if ( .not. alreadyOpen ) then
       call mls_openFile(L2GPFile, Status)
@@ -2045,6 +2047,7 @@ contains ! =====     Public Procedures     =============================
     character (len=L2GPNameLen) :: myswathName
 
     ! Executable code
+    status = 0
     ! Optional args should _ONLY_ appear like this, inside an IF 
     ! block that checks if they are present. HCP replaced one occurance
     ! of TotNumProfs with myLastProfile as they are equal if TotNumProfs
@@ -3370,6 +3373,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.119  2005/08/05 20:32:56  pwagner
+! Added RepairL2GP
+!
 ! Revision 2.118  2005/07/12 17:15:47  pwagner
 ! Dropped global attribute InputVersion
 !
