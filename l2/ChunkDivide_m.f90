@@ -208,7 +208,6 @@ contains ! ===================================== Public Procedures =====
     ! For timing
     logical :: Timing
     real :: T1
-    type (MLSFile_T)             :: L1BFile
 
     ! Executable code
     nullify(config%criticalSignals)    ! Just for Sun's compiler
@@ -2081,7 +2080,7 @@ contains ! ===================================== Public Procedures =====
     use L1BData, only: L1BData_T, READL1BDATA, GetL1bFile, &
       & FindL1BData, AssembleL1BQtyName, PRECISIONSUFFIX, DEALLOCATEL1BDATA
     use MLSCommon, only: L1BInfo_T, MLSFile_T, RK => R8
-    use MLSFiles, only: dump
+    use MLSFiles, only: dump, GetMLSFileByType
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSSignals_m, only: GetSignalName
 
@@ -2098,7 +2097,6 @@ contains ! ===================================== Public Procedures =====
     integer :: FileID, flag, noMAFs
     character(len=127)  :: namestring
     type (l1bData_T) :: MY_L1BDATA
-    integer :: hdfVersion
     integer :: mymaf2
     integer :: the_maf
     integer :: maf_index   ! 1 <= maf_index <= mafrange(2)-mafrange(1)+1
@@ -2119,14 +2117,15 @@ contains ! ===================================== Public Procedures =====
     end if
 
     ! OK, try to find this item in an l1brad file
+    L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
+    if ( .not. associated(L1BFile) ) return
     call GetSignalName ( signal, nameString, &                   
       & sideband=sideband, noChannels=.TRUE. )                     
-    nameString = AssembleL1BQtyName ( nameString, hdfVersion, .false. )
+    nameString = AssembleL1BQtyName ( nameString, L1BFile%hdfVersion, .false. )
     nameString = trim(nameString) // PRECISIONSUFFIX
     ! fileID = FindL1BData (filedatabase, nameString, hdfVersion )
     L1BFile => GetL1bFile(filedatabase, namestring)
     ! If not found, exit appropriately
-    ! if ( fileID <= 0 ) then
     if ( .not. associated(L1BFile) ) then
       answer = .false.
       return
@@ -2207,6 +2206,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.62  2005/08/09 00:02:09  pwagner
+! hdfVersion not left undefined in ANY_GOOD_SIGNALDATA
+!
 ! Revision 2.61  2005/06/03 02:02:17  vsnyder
 ! New copyright notice, move Id to not_used_here to avoid cascades
 !
