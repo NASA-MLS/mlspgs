@@ -472,7 +472,6 @@ contains ! ============= Public procedures ===================================
   end function CreateQtyTemplateFromMLSCFInfo
 
   ! --------------------------------  ConstructMinorFrameQuantity  -----
-  ! subroutine ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModule, &
   subroutine ConstructMinorFrameQuantity ( filedatabase, chunk, instrumentModule, &
     & qty, noChans, regular, instanceLen, mifGeolocation )
 
@@ -877,7 +876,6 @@ contains ! ============= Public procedures ===================================
   end subroutine Announce_Error
 
   ! -----------------------------------------------  AnyGoodSignalData  -----
-  ! function AnyGoodSignalData ( signal, sideband, l1bInfo, Chunk )  result (answer)
   function AnyGoodSignalData ( signal, sideband, filedatabase, Chunk )  result (answer)
   ! Read precision of signal
   ! if all values < 0.0, return FALSE
@@ -890,6 +888,7 @@ contains ! ============= Public procedures ===================================
     use L1BData, only: L1BData_T, READL1BDATA, GetL1BFile, &
       & FindL1BData, AssembleL1BQtyName, PRECISIONSUFFIX
     use MLSCommon, only: L1BInfo_T, MLSFile_T, RK => R8
+    use MLSFiles, only: GetMLSFileByType
     use MLSSignals_m, only: GetSignalName
 
     integer, intent(in) :: signal
@@ -897,22 +896,23 @@ contains ! ============= Public procedures ===================================
     logical             :: answer
     type (MLSChunk_T), intent(in) :: Chunk
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-    ! type( L1BInfo_T ), intent(in) :: L1BINFO
   ! Private
     integer :: FileID, flag, noMAFs
     character(len=127)  :: namestring
     type (l1bData_T) :: MY_L1BDATA
-    integer :: hdfVersion
     type (MLSFile_T), pointer ::     L1BFile
 
   ! Executable
+  answer = .false.
 !     hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
 !     if ( hdfversion <= 0 ) &
 !       & call MLSMessage ( MLSMSG_Error, ModuleName, &
 !       & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )
+    L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
+    if ( .not. associated(L1BFile) ) return
     call GetSignalName ( signal, nameString, &                   
     & sideband=sideband, noChannels=.TRUE. )                     
-    nameString = AssembleL1BQtyName ( nameString, hdfVersion, .false. )
+    nameString = AssembleL1BQtyName ( nameString, L1BFile%hdfVersion, .false. )
     nameString = trim(nameString) // PRECISIONSUFFIX
     L1BFile => GetL1bFile(filedatabase, namestring)
     ! fileID = FindL1BData ( filedatabase, nameString )
@@ -1282,6 +1282,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.125  2005/08/09 00:03:04  pwagner
+! hdfVersion not left undefined in AnyGoodSignalData
+!
 ! Revision 2.124  2005/08/04 02:59:54  vsnyder
 ! Correct definitions for L1BMIF_TAI and MIFDeadTime
 !
