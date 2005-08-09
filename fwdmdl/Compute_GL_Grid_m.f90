@@ -93,7 +93,8 @@ contains
 
     ! Add the original Integration Grid:
     z_all_size = z_all_prev + Size(FwdModelConf%integrationGrid%surfs)
-    z_all(z_all_prev+1:z_all_size) = FwdModelConf%integrationGrid%surfs(:,1)
+    if ( associated(FwdModelConf%integrationGrid%surfs) ) &
+      & z_all(z_all_prev+1:z_all_size) = FwdModelConf%integrationGrid%surfs(:,1)
     z_all_prev = z_all_size
 
     if ( associated(FwdModelConf%tangentGrid) ) then
@@ -170,6 +171,9 @@ contains
 end module Compute_GL_Grid_M
 
 ! $Log$
+! Revision 2.10  2005/08/09 15:15:43  pwagner
+! Don't add pointer to z_all if not associated
+!
 ! Revision 2.9  2005/06/22 18:08:18  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
