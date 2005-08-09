@@ -484,17 +484,20 @@ contains
     character (LEN=*), optional, intent(out) :: ExactName
 
     ! Local variables
-    character (LEN=BareFNLen), dimension(:), allocatable &
-     &                                :: nameArray
+    logical ::                           debug
     integer, dimension(:), allocatable &
      &                                :: intArray
-    character (LEN=*), parameter      :: UNASSIGNEDFILENAME = '*'
     character (LEN=MAXFILENAMELENGTH) :: MatchName, TryName, NameOnly
-    character (LEN=MAXFILENAMELENGTH) :: PhysicalName, MatchPath
-	 integer                       ::     version, returnStatus
+    character (LEN=BareFNLen), dimension(:), allocatable &
+     &                                :: nameArray
     integer                       ::     numberPCs
-    logical ::                            debug
+    character (LEN=MAXFILENAMELENGTH) :: PhysicalName, MatchPath
+    character (LEN=*), parameter      :: UNASSIGNEDFILENAME = '*'
+    character (LEN=BareFNLen), dimension(:), allocatable &
+     &                                :: unsortedArray
+	 integer                       ::     version, returnStatus
 
+   ! Executable
    if(.not. UseSDPToolkit) then
       ErrType = NOPCIFNOTOOLKIT
       thePC = 0
@@ -537,7 +540,8 @@ contains
     endif
 
     numberPCs = PCTop - PCBottom + 1
-    Allocate(nameArray(numberPCs), intArray(numberPCs), STAT=ErrType)
+    Allocate(nameArray(numberPCs), unsortedArray(numberPCs), &
+      & intArray(numberPCs), STAT=ErrType)
     if ( ErrType /= 0 ) then
       ErrType = CANTALLOCATENAMEARRAY
       return
@@ -571,7 +575,8 @@ contains
     enddo
     ! Sort the file names from short to long
     ! to prevent unwanted matches between "O3" and "HNO3"
-    call SortArray(nameArray, intArray, caseSensitive, &
+    unsortedArray = nameArray
+    call SortArray(unsortedArray, intArray, caseSensitive, &
      & sortedArray=nameArray, shorterFirst=.true., leftRight='r')
     do notThePC = 1, numberPCs
       thePC = intArray(notThePC) + PCBottom - 1         
@@ -611,7 +616,7 @@ contains
       ExactName = PhysicalName
     endif
 
-    Deallocate(nameArray, intArray)
+    Deallocate(nameArray, unsortedArray, intArray)
   end function GetPCFromRef
 
 ! ---------------------------------------------- get_free_lun ------
@@ -2604,6 +2609,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.69  2005/08/09 00:00:10  pwagner
+! Mistake to call sortarray from GetPCFFromRef with same nameArray in both positions--fixed
+!
 ! Revision 2.68  2005/06/29 17:56:24  pwagner
 ! FILESTRINGTABLE utilized to prevent tools from segment faulting
 !
