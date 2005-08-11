@@ -437,6 +437,9 @@ CONTAINS
     WRITE (unit, *) 'SciUTC: ', asciiUTC(1)//' to '//asciiUTC(2)
     WRITE (unit, *) 'SciGaps: ', SciGaps
     WRITE (unit, *) 'Sci_Warns, Sci_Errs: ', Sci_Warns, Sci_Errs
+    IF (SciMAFs > EngMAFs) THEN
+       WRITE (unit, *) "L0 input warning-> SciMAFs greater than EngMAFs!"
+    ENDIF
 
     WRITE (unit, *) ''
     WRITE (unit, *) '############## Engineering data summary ##############'
@@ -516,7 +519,6 @@ CONTAINS
   SUBROUTINE LogStatus
 
     USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Warning
-!    USE Machine, ONLY: Shell_Command
 
     IF (eng_warns > 0 .OR. sci_warns > 0) THEN
        CALL MLSMessage (MLSMSG_Warning, ModuleName, &
@@ -527,16 +529,10 @@ CONTAINS
     IF (SciMAFs > EngMAFs) THEN
 
        CALL MLSMessage (MLSMSG_Warning, ModuleName, &
-            "Check PCF L0 inputs!")
-       CALL MLSMessage (MLSMSG_Error, ModuleName, &
-            "L0 input error-> SciMAFs greater than EngMAFs!")
+            "L0 input warning-> SciMAFs greater than EngMAFs!")
     ENDIF
 
     IF (eng_errs > 0 .OR. sci_errs > 0) THEN
-
-! send email on failure (next version?!):
-
-       !CALL Shell_Command ("/usr/lib/sendmail -t <mail.vsp")
 
        CALL MLSMessage (MLSMSG_Error, ModuleName, &
             "EOS MLS Level 1 log file " //TRIM(L1BFileInfo%LogFilename)//&
@@ -558,6 +554,9 @@ END MODULE L1LogUtils
 !=============================================================================
 
 ! $Log$
+! Revision 2.10  2005/08/11 19:05:03  perun
+! Change SciMAFs greater than EngMAFs from error to warning
+!
 ! Revision 2.9  2005/06/23 18:41:35  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
