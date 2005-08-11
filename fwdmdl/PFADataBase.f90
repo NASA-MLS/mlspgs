@@ -818,14 +818,19 @@ contains ! =====     Public Procedures     =============================
     logical, parameter :: Crash = .true.
 
     integer :: SB                   ! Sideband Subscript 1..2
+    logical, parameter :: debug = .false.
 
     PFADatumIx = 0
 
     sb = ( sideband + 3 ) / 2 ! -1..+1 => 1..2
+    if ( debug ) print *, 'Molecule, Signal, Sideband, Channel, Derivs ', &
+      & Molecule, Signal, Sideband, Channel, Derivs
     if ( associated(findPFA(molecule)%s) ) then
       if ( associated(findPFA(molecule)%s(signal)%sb(sb)%c ) ) then
         PFADatumIx = findPFA(molecule)%s(signal)%sb(sb)%c(channel)
         if ( PFADatumIx /= 0 ) then
+          if ( debug ) print *, 'PFADatumIx ', &
+            & PFADatumIx
 
           call readDS ( 'absorption', PFAData(PFADatumIx)%absorption )
           call readDS ( 'dAbsDnu', PFAData(PFADatumIx)%dAbsDnu )
@@ -1186,8 +1191,13 @@ contains ! =====     Public Procedures     =============================
     do j = 2, tGrid%noSurfs
       tGrid%surfs(j,1) = tGrid%surfs(j-1,1) + surfStep
     end do
-    gridIndex = addVGridIfNecessary(tGrid) ! Needed in case vGrids not yet associated
-    PFADatum%tGrid = vGrids(gridIndex)
+
+    ! These lines seemed to have resulted in the VGrids components of
+    ! FwdmodelConfs becoming clobbered in sids tests 2005 Aug 9-10
+    ! Similarly below
+!    gridIndex = addVGridIfNecessary(tGrid, dontDestroy=.true.) ! Needed in case vGrids not yet associated
+!     PFADatum%tGrid = vGrids(gridIndex)
+     PFADatum%tGrid = tGrid
     vGrid%name = 0
     vGrid%verticalCoordinate = l_zeta
     call getHDF5Attribute ( groupID, 'nPress', vGrid%noSurfs )
@@ -1198,9 +1208,11 @@ contains ! =====     Public Procedures     =============================
     do j = 2, vGrid%noSurfs
       vGrid%surfs(j,1) = vGrid%surfs(j-1,1) + surfStep
     end do
-    gridIndex = addVGridIfNecessary(vGrid, &
-      &                       relErr=vGrid%noSurfs*0.2_rs*epsilon(1.0_rs))
-    PFADatum%vGrid = vGrids(gridIndex)
+!     gridIndex = addVGridIfNecessary(vGrid, &
+!       &                       relErr=vGrid%noSurfs*0.2_rs*epsilon(1.0_rs), &
+!       & dontDestroy=.true.)
+!     PFADatum%vGrid = vGrids(gridIndex)
+     PFADatum%vGrid = vGrid
 
     if ( myData ) then
       call loadPtrFromHDF5DS ( groupID, 'absorption', PFADatum%absorption )
@@ -1227,6 +1239,9 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.31  2005/08/11 00:17:50  pwagner
+! Comment out  addVGridIfNecessary in Read_PFADatum_H5
+!
 ! Revision 2.30  2005/06/03 22:55:04  vsnyder
 ! Make the 'details' argument for some dumps more sensible
 !
