@@ -151,6 +151,7 @@ CONTAINS
 !=============================================================================
 
     USE MLSL1Utils, ONLY: BigEndianStr
+    USE MLSL1Common, ONLY: L1BFileInfo
     USE SDPToolkit, ONLY: PGS_TD_TAItoUTC
 
     CHARACTER(LEN=*), DIMENSION(:) :: engpkt
@@ -249,6 +250,9 @@ CONTAINS
           WRITE (msg, &
                '("Bad Checksum: Eng Pkt ", i1, ", UTC: ", A27)') i, asciiUTC
           PRINT *, TRIM(msg)
+          WRITE (L1BFileInfo%LogId, *) ''
+          WRITE (L1BFileInfo%LogId, *) '### Info: '//TRIM(msg)
+          WRITE (L1BFileInfo%LogId, *) ''
           CALL MLSMessage (MLSMSG_Info, ModuleName, TRIM(msg))
           RETURN   ! Can't do any more
        ENDIF
@@ -286,6 +290,9 @@ END MODULE L0Utils
 !=============================================================================
 
 ! $Log$
+! Revision 2.9  2005/08/11 19:03:11  perun
+! Write bad checksum message to log file
+!
 ! Revision 2.8  2005/06/23 18:41:35  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
