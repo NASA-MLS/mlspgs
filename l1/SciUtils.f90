@@ -49,6 +49,7 @@ MODULE SciUtils ! L0 science utilities
 !=============================================================================
 
     USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Info
+    USE MLSL1Common, ONLY: L1BFileInfo
     USE ERMSG_M, ONLY: ermset
     USE THzUtils, ONLY: ConvertLLO
     USE SDPToolkit, ONLY: PGS_TD_TAItoUTC
@@ -147,6 +148,9 @@ MODULE SciUtils ! L0 science utilities
                '("Bad Checksum: Sci Pkt ", i1, ", MIF: ", i3, ", UTC: ", A27)')&
                i, Sci_pkt%MIFno, asciiUTC
           PRINT *, TRIM(msg)
+          WRITE (L1BFileInfo%LogId, *) ''
+          WRITE (L1BFileInfo%LogId, *) '### Info: '//TRIM(msg)
+          WRITE (L1BFileInfo%LogId, *) ''
           CALL MLSMessage (MLSMSG_Info, ModuleName, TRIM(msg))
           RETURN   ! Can't do any more
        ENDIF
@@ -197,6 +201,9 @@ MODULE SciUtils ! L0 science utilities
           BandSwitch(i) = Sci_pkt%BandSwitch(i)  ! new current value
           WRITE (msg, '("S", i1, " switching to Band ", i2)') i, bandswitch(i)
           PRINT *, TRIM(msg)
+          WRITE (L1BFileInfo%LogId, *) ''
+          WRITE (L1BFileInfo%LogId, *) '### Info: '//TRIM(msg)
+          WRITE (L1BFileInfo%LogId, *) ''
           CALL MLSMessage (MLSMSG_Info, ModuleName, TRIM(msg))
        ENDIF
     ENDDO
@@ -845,6 +852,9 @@ MODULE SciUtils ! L0 science utilities
 END MODULE SciUtils
 
 ! $Log$
+! Revision 2.12  2005/08/11 19:06:02  perun
+! Write bad checksum and band switching messages to log file
+!
 ! Revision 2.11  2005/06/23 18:41:36  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
@@ -873,6 +883,9 @@ END MODULE SciUtils
 ! moved parameter statement to data statement for LF/NAG compatitibility
 !
 ! $Log$
+! Revision 2.12  2005/08/11 19:06:02  perun
+! Write bad checksum and band switching messages to log file
+!
 ! Revision 2.11  2005/06/23 18:41:36  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
