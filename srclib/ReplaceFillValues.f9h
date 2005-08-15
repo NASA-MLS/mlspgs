@@ -41,18 +41,22 @@
      end where
    endif
    if ( index(myOptions, 'i') > 0 ) then
-      ! call MLSMessage ( MLSMSG_Error, &
-      !   & ModuleName, "Can't yet interpolate to ReplaceFillValues" )
       call BridgeMissingValues(values, FillValue)
       return
    endif
    if ( index(myOptions, 'u') > 0 ) then
-      call MLSMessage ( MLSMSG_Error, &
-        & ModuleName, "Can't yet u-monotonize ReplaceFillValues" )
+!       call MLSMessage ( MLSMSG_Error, &
+!         & ModuleName, "Can't yet u-monotonize ReplaceFillValues" )
+      call Monotonize(values)
+      return
    endif
    if ( index(myOptions, 'd') > 0 ) then
-      call MLSMessage ( MLSMSG_Error, &
-        & ModuleName, "Can't yet d-monotonize ReplaceFillValues" )
+!       call MLSMessage ( MLSMSG_Error, &
+!         & ModuleName, "Can't yet d-monotonize ReplaceFillValues" )
+      values = - values
+      call Monotonize(values)
+      values = - values
+      return
    endif
    if ( present(newValues) ) then
      if ( any( shape(values) /= shape(newValues) ) ) &
@@ -72,6 +76,9 @@
 ! end subroutine ReplaceFill*
 
 ! $Log$
+! Revision 1.2  2005/08/05 20:35:26  pwagner
+! ReplaceFillValues can now to interpolate to bridge across MissingValues
+!
 ! Revision 1.1  2005/08/03 16:35:16  pwagner
 ! First commit
 !
