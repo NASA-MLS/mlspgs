@@ -276,10 +276,12 @@ CONTAINS
        & 'GranuleYear', GlobalAttributes%GranuleYear, .true.)
       call MakeHDF5Attribute(grp_id, &
        & 'TAI93At0zOfGranule', GlobalAttributes%TAI93At0zOfGranule, .true.)
-      call MakeHDF5Attribute(grp_id, &
-       & 'FirstMAF', GlobalAttributes%FirstMAFCtr, .true.)
-      call MakeHDF5Attribute(grp_id, &
-       & 'LastMAF', GlobalAttributes%LastMAFCtr, .true.)
+      if ( lowercase(ProcessLevel(1:2)) == 'l2' ) then
+        call MakeHDF5Attribute(grp_id, &
+         & 'FirstMAF', GlobalAttributes%FirstMAFCtr, .true.)
+        call MakeHDF5Attribute(grp_id, &
+         & 'LastMAF', GlobalAttributes%LastMAFCtr, .true.)
+      endif
       call MakeHDF5Attribute(grp_id, &
        & 'MiscNotes', GlobalAttributes%MiscNotes, .true.)
       call h5gclose_f(grp_id, status)
@@ -358,12 +360,14 @@ CONTAINS
       status = he5_EHwrglatt(fileID, &
        & 'TAI93At0zOfGranule', HE5T_NATIVE_DOUBLE, 1, &
        &  (/ GlobalAttributes%TAI93At0zOfGranule/) )
-      status = he5_EHwrglatt(fileID, &
-       & 'FirstMAF', HE5T_NATIVE_INT, 1, &
-       &  (/ GlobalAttributes%FirstMAFCtr /) )
-      status = he5_EHwrglatt(fileID, &
-       & 'LastMAF', HE5T_NATIVE_INT, 1, &
-       &  (/ GlobalAttributes%LastMAFCtr /) )
+      if ( lowercase(ProcessLevel(1:2)) == 'l2' ) then
+        status = he5_EHwrglatt(fileID, &
+         & 'FirstMAF', HE5T_NATIVE_INT, 1, &
+         &  (/ GlobalAttributes%FirstMAFCtr /) )
+        status = he5_EHwrglatt(fileID, &
+         & 'LastMAF', HE5T_NATIVE_INT, 1, &
+         &  (/ GlobalAttributes%LastMAFCtr /) )
+      endif
       status = mls_EHwrglatt(fileID, &
        & 'MiscNotes', MLS_CHARTYPE, 1, &
        &  GlobalAttributes%MiscNotes)
@@ -415,9 +419,10 @@ CONTAINS
       status = he5_EHrdglatt(fileID, &
        & 'InstrumentName', &
        &  gAttributes%InstrumentName)
-      if ( present(ProcessLevel) ) status = he5_EHrdglatt(fileID, &
+      status = he5_EHrdglatt(fileID, &
        & 'ProcessLevel', &
-       &  ProcessLevel)
+       &  gattributes%ProcessLevel)
+      if ( present(ProcessLevel) ) ProcessLevel = gattributes%ProcessLevel
       status = he5_EHrdglatt(fileID, &
        & 'PGEVersion', &
        &  gAttributes%PGEVersion)
@@ -448,14 +453,16 @@ CONTAINS
          & 'TAI93At0zOfGranule', dbuf )
         TAI93At0zOfGranule = dbuf(1)
       endif
-      status = he5_EHrdglatt(fileID, &
-       & 'FirstMAF', &
-       &  ibuf  )
-      gAttributes%FirstMAFCtr = ibuf(1)
-      status = he5_EHrdglatt(fileID, &
-       & 'LastMAF', &
-       &  ibuf  )
-      gAttributes%LastMAFCtr = ibuf(1)
+      if ( lowercase(gAttributes%ProcessLevel(1:2)) == 'l2' ) then
+        status = he5_EHrdglatt(fileID, &
+         & 'FirstMAF', &
+         &  ibuf  )
+        gAttributes%FirstMAFCtr = ibuf(1)
+        status = he5_EHrdglatt(fileID, &
+         & 'LastMAF', &
+         &  ibuf  )
+        gAttributes%LastMAFCtr = ibuf(1)
+      endif
       if ( present(returnStatus) ) returnStatus = status
 !------------------------------------------------------------
    END SUBROUTINE he5_readglobalattr
@@ -611,12 +618,14 @@ CONTAINS
       status = he5_SWwrattr(swathID, &
        & 'TAI93At0zOfGranule', HE5T_NATIVE_DOUBLE, 1, &
        &  (/ GlobalAttributes%TAI93At0zOfGranule/) )
-      status = he5_SWwrattr(swathID, &
-       & 'FirstMAF', HE5T_NATIVE_INT, 1, &
-       &  (/ GlobalAttributes%FirstMAFCtr/) )
-      status = he5_SWwrattr(swathID, &
-       & 'LastMAF', HE5T_NATIVE_INT, 1, &
-       &  (/ GlobalAttributes%LastMAFCtr/) )
+      if ( lowercase(ProcessLevel(1:2)) == 'l2' ) then
+        status = he5_SWwrattr(swathID, &
+         & 'FirstMAF', HE5T_NATIVE_INT, 1, &
+         &  (/ GlobalAttributes%FirstMAFCtr/) )
+        status = he5_SWwrattr(swathID, &
+         & 'LastMAF', HE5T_NATIVE_INT, 1, &
+         &  (/ GlobalAttributes%LastMAFCtr/) )
+      endif
       status = he5_SWwrattr(swathID, &
        & 'MiscNotes', MLS_CHARTYPE, 1, &
        &  GlobalAttributes%MiscNotes)
@@ -1068,6 +1077,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.38  2005/08/15 20:38:39  pwagner
+!# FirstMAf, LastMAF global attributes written for level 2 files only
+!#
 !# Revision 2.37  2005/07/12 17:14:22  pwagner
 !# Global attribute MiscNotes added; InputVersion dropped
 !#

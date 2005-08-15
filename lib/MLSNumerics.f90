@@ -162,6 +162,12 @@ module MLSNumerics              ! Some low level numerical stuff
     module procedure IsFillValue_r4, IsFillValue_r8, IsFillValue_int
   end interface
 
+  interface Monotonize
+    module procedure Monotonize_1dr4, Monotonize_1dr8, Monotonize_1dint
+    module procedure Monotonize_2dr4, Monotonize_2dr8, Monotonize_2dint
+    module procedure Monotonize_3dr4, Monotonize_3dr8, Monotonize_3dint
+  end interface
+
   interface ReplaceFillValues
     module procedure ReplaceFill1d_r4, ReplaceFill1d_r8, ReplaceFill1d_int
     module procedure ReplaceFill2d_r4, ReplaceFill2d_r8, ReplaceFill2d_int
@@ -1008,6 +1014,103 @@ contains
     enddo
   end subroutine BridgeMissingValues_3dr8
 
+  ! This family of subroutines makes arrays of values monotonically (increasing)
+  subroutine Monotonize_1dint(values)
+    ! Args
+    integer, dimension(:), intent(inout) :: values
+    ! Internal variables
+    integer :: dx
+    integer :: x1
+    integer :: x2
+    include 'Monotonize.f9h'
+  end subroutine Monotonize_1dint
+
+  subroutine Monotonize_1dr4(values)
+    ! Args
+    real(r4), dimension(:), intent(inout) :: values
+    ! Internal variables
+    real(r4) :: dx
+    real(r4) :: x1
+    real(r4) :: x2
+    include 'Monotonize.f9h'
+  end subroutine Monotonize_1dr4
+
+  subroutine Monotonize_1dr8(values)
+    ! Args
+    real(r8), dimension(:), intent(inout) :: values
+    ! Internal variables
+    real(r8) :: dx
+    real(r8) :: x1
+    real(r8) :: x2
+    include 'Monotonize.f9h'
+  end subroutine Monotonize_1dr8
+
+  subroutine Monotonize_2dint(values)
+    ! Args
+    integer, dimension(:,:), intent(inout) :: values
+    ! Internal variables
+    integer :: i
+    do i=1, size(values, 1)
+      call Monotonize(values(i,:))
+    enddo
+  end subroutine Monotonize_2dint
+
+  subroutine Monotonize_2dr4(values)
+    ! Args
+    real(r4), dimension(:,:), intent(inout) :: values
+    ! Internal variables
+    integer :: i
+    do i=1, size(values, 1)
+      call Monotonize(values(i,:))
+    enddo
+  end subroutine Monotonize_2dr4
+
+  subroutine Monotonize_2dr8(values)
+    ! Args
+    real(r8), dimension(:,:), intent(inout) :: values
+    ! Internal variables
+    integer :: i
+    do i=1, size(values, 1)
+      call Monotonize(values(i,:))
+    enddo
+  end subroutine Monotonize_2dr8
+
+  subroutine Monotonize_3dint(values)
+    ! Args
+    integer, dimension(:,:,:), intent(inout) :: values
+    ! Internal variables
+    integer :: i, j
+    do j=1, size(values, 2)
+      do i=1, size(values, 1)
+        call Monotonize(values(i,j,:))
+      enddo
+    enddo
+  end subroutine Monotonize_3dint
+
+  subroutine Monotonize_3dr4(values)
+    ! Args
+    real(r4), dimension(:,:,:), intent(inout) :: values
+    ! Internal variables
+    integer :: i, j
+    do j=1, size(values, 2)
+      do i=1, size(values, 1)
+        call Monotonize(values(i,j,:))
+      enddo
+    enddo
+  end subroutine Monotonize_3dr4
+
+  subroutine Monotonize_3dr8(values)
+    ! Args
+    real(r8), dimension(:,:,:), intent(inout) :: values
+    ! Internal variables
+    integer :: i, j
+    do j=1, size(values, 2)
+      do i=1, size(values, 1)
+        call Monotonize(values(i,j,:))
+      enddo
+    enddo
+  end subroutine Monotonize_3dr8
+
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -1022,6 +1125,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.38  2005/08/15 20:35:37  pwagner
+! Added Monotonize interfaces
+!
 ! Revision 2.37  2005/08/06 01:36:30  vsnyder
 ! Add Dump for interpolation coefficients
 !
