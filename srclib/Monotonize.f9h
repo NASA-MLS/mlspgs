@@ -1,0 +1,53 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id$
+!  subroutine Monotonize_1dr4(values)
+!     ! Make values montonically increasing by putting MissingValues
+!     ! Wherever values are < max(previous values)
+!     ! Args
+!     real(r4), dimension(:), intent(inout) :: values
+!     ! Internal variables
+!     real(r4) :: x1
+    logical :: stillTooLow
+    integer :: i
+    integer :: i1
+    integer :: i2
+    integer :: ib
+    ! Executable
+    x1 = minval(values)
+    stillTooLow = .false.
+    do i=1, size(values)
+      if ( stillTooLow ) then
+        if ( values(i) < x1 ) cycle
+        i2 = i
+        x2 = values(i)
+        dx = (x2 - x1) /max(1, i2-i1)
+        do ib=i1+1, i2-1
+          values(ib) = x1 + (ib-i1)*dx
+        enddo
+        i1 = i2
+        x1 = x2
+        stillTooLow = .false.
+      elseif ( values(i) < x1 ) then
+        stillTooLow = .true.
+      else
+        i1 = i
+        x1 = values(i)
+      endif
+    enddo
+    if ( StillTooLow ) values(i1+1:) = x1 ! In case we ended on a down note(s)
+!  end subroutine Monotonize_1dr4
+
+! $Log$
+! Revision 1.1  2005/08/05 20:31:22  pwagner
+! First commit
+!
