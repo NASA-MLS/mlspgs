@@ -1528,7 +1528,6 @@ contains ! =====     Public Procedures     =============================
          real(l2gp%quality), hdfVersion=hdfVersion)
 
     !     Detach from the swath interface.
-
     status = mls_SWdetach(swid, hdfVersion=hdfVersion)
     if(DEEBUG) print *, 'Detached from swid ', swid
     if(DEEBUG) print *, 'file handle ', L2GPFile%FileID%f_id
@@ -1929,6 +1928,7 @@ contains ! =====     Public Procedures     =============================
       & content='l2gp', name='unknown', hdfVersion=myhdfVersion)
     l2gpFile%FileID%f_id = l2FileHandle
     l2gpFile%stillOpen = .true.
+    
     call AppendL2GPData(l2gp, l2gpFile, &
     & swathName, offset, lastProfile, TotNumProfs, createSwath)
   end subroutine AppendL2GPData_fileID
@@ -1970,6 +1970,8 @@ contains ! =====     Public Procedures     =============================
     the_hdfVersion = L2GPDEFAULT_HDFVERSION
     if ( present(hdfVersion) ) the_hdfVersion = hdfVersion
     if ( the_hdfVersion == WILDCARDHDFVERSION ) then
+
+
       ! Does the file exist, yet?
       if ( .not. file_exists ) then
         call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -2039,7 +2041,7 @@ contains ! =====     Public Procedures     =============================
     ! Local
     integer :: actual_ntimes
     logical :: alreadyOpen
-    integer :: myhdfVersion
+    ! integer :: myhdfVersion !Not used in this function
     integer :: status
     logical :: swath_exists
     integer :: swathid
@@ -2082,7 +2084,7 @@ contains ! =====     Public Procedures     =============================
         & DONTFAIL=.true.)
       swath_exists = ( swathid > 0 )
       if ( swath_exists ) then
-        status = mls_swdetach(swathid, hdfVersion=myhdfVersion)
+        status = mls_swdetach(swathid, hdfVersion=l2gpfile%hdfVersion)
         if ( status /= 0 ) &
           & call MLSMessage ( MLSMSG_Error, ModuleName, & 
           & 'Failed to detach from swath in AppendL2GPData_fileID', MLSFile=L2GPFile)
@@ -3373,6 +3375,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.120  2005/08/08 23:55:04  pwagner
+! Never leave status undefined if L2GPFile%errorCode assigned to it
+!
 ! Revision 2.119  2005/08/05 20:32:56  pwagner
 ! Added RepairL2GP
 !
