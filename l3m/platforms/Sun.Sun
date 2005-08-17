@@ -24,6 +24,9 @@ libdir = $(CONFDIR)/lib/$(MLSCONFG)
 
 dir1 = $(libdir)/
 
+# Use the libmlspack.a directory, blaslib, for .mod files
+blaslib = $(CONFDIR)/blas/$(MLSCONFG)
+
 # Set paths for finding source files (different from .o and .mod)
 
 vpath %.mod ./
@@ -50,10 +53,8 @@ dir2 = $(libmlsl3dir)/
 PATHS_PREFXD := $(shell ${REECHO} -d -prefixn=-M $(UNPREFXDPTHS)) \
                 $(shell ${REECHO} -d -prefixn=-I $(UNPREFXDPTHS))
 INC_PATHS = $(EXTRA_PATHS) $(PATHS_PREFXD) \
-     -M$(PGSINC) -M$S -M$(libdir) \
-     -M$(libmlsl3dir) \
-     -I$(PGSINC) -I$S -I$(libdir) \
-     -I$(libmlsl3dir)
+     -M$(PGSINC) -M$S -M$(libdir) -M$(libmlsl3dir) -M$(blaslib) \
+     -I$(PGSINC) -I$S -I$(libdir) -I$(libmlsl3dir) -I$(blaslib)
 
 # Define some suffix rules
 
@@ -75,6 +76,9 @@ INC_PATHS = $(EXTRA_PATHS) $(PATHS_PREFXD) \
 l_specials = -lnsl
 
 # $Log$
+# Revision 1.7  2002/09/04 16:36:58  pwagner
+# libmlsl3dir and dir2 now defined properly
+#
 # Revision 1.6  2002/07/17 16:54:15  pwagner
 # Omit forbidden space between -I and include directory in compile command
 #

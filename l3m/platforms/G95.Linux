@@ -22,6 +22,9 @@ libdir = $(CONFDIR)/lib/$(MLSCONFG)
 
 dir1 = $(libdir)/
 
+# Use the libmlspack.a directory, blaslib, for .mod files
+blaslib = $(CONFDIR)/blas/$(MLSCONFG)
+
 # Set paths for finding source files (different from .o and .mod)
 
 vpath %.mod ./
@@ -47,7 +50,7 @@ dir2 = $(libmlsl3dir)/
 # Precede each path by "-I "
 PATHS_PREFXD := $(shell ${REECHO} -d -prefix=-I $(UNPREFXDPTHS))
 INC_PATHS = $(EXTRA_PATHS) $(PATHS_PREFXD) \
- -I $(PGSINC) -I $S -I $(libdir) -I $(libmlsl3dir)
+ -I $(PGSINC) -I $S -I $(libdir) -I $(libmlsl3dir) -I $(blaslib)
 
 # Define some suffix rules
 
@@ -73,3 +76,6 @@ INC_PATHS = $(EXTRA_PATHS) $(PATHS_PREFXD) \
 l_specials =
 
 # $Log$
+# Revision 1.1  2003/04/25 23:11:12  pwagner
+# First commit
+#
