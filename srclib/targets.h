@@ -80,7 +80,7 @@ else
 endif
 ifdef HDFVERSIONS
    he5lib_linker_line=-L$(CONFDIR)/he5lib/$(MLSCONFG) -lhe5
-   he5lib_message=mlsl2 will support files with either hdf version
+   he5lib_message=program will support files with either hdf version
    mlsl2_prereqs := $(mlsl2_prereqs) $(he5libdir)/libhe5.a
 endif
    hdf5_message=Building program with hdf5
@@ -91,7 +91,19 @@ else
 endif
 
 fftw_linker_line = $(shell ${UTILDIR}/which_fftw.sh ${FFTW_ROOT} ${FFTW_PREC})
+
+mlspack_dir=$(CONFDIR)/blas/$(MLSCONFG)
+
+mlspack_linker_line=-L${mlspack_dir} -lmlspack
+mlspack_message=Building program with mlspack
+
+utctotai_linker_line=-L${INSTALLDIR} -lutctotai
+utctotai_message=Building program with toolkitless utc to tai conversion
+
 # $Log$
+# Revision 1.2  2005/03/07 17:38:17  pwagner
+# Fixed bug in linking non-static LF95
+#
 # Revision 1.1  2005/03/04 19:00:19  pwagner
 # First commit
 #

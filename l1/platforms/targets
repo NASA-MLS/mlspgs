@@ -101,14 +101,7 @@ include $(srclib)/Makefile.dep
 # Add them to L1OBJS
 ALLOBJS = $(OBJS) $(srclib_objs)
 
-mlspack_dir=$(CONFDIR)/blas/$(MLSCONFG)
-
 include $(srclib)/targets.h
-
-mlspack_linker_line=-L${mlspack_dir} -lmlspack
-mlspack_message=Building mlsl2 with mlspack
-utctotai_linker_line=-L${INSTALLDIR} -lutctotai
-utctotai_message=Building mlsl2 with toolkitless utc to tai conversion
 
 # ========================================================================
 MLSL1log MLSL1G MLSL1T MLSL1BOA: $(ALLOBJS) \
@@ -123,7 +116,7 @@ MLSL1log MLSL1G MLSL1T MLSL1BOA: $(ALLOBJS) \
 		@echo "$(lapack_message)"
 		@echo "$(hdf5_message)"
 		@echo "$(he5lib_message)"
-		@echo "$(utctotai_message)"
+		@echo "$(mlspack_message)"
 		@cat fftw_link_message | sed 's/3\[dm\]/1/'
 	$(FC) $(LDOPTS) -o $@ $(ALLOBJS) $@.o $(PVM_OBJS) \
         $(he5lib_linker_line) \
@@ -170,6 +163,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.32  2005/03/04 19:13:31  pwagner
+# Utilizes targets.h from srclib
+#
 # Revision 1.31  2004/12/07 19:36:09  pwagner
 # Needed to link against mlspack
 #

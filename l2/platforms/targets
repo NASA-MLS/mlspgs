@@ -99,14 +99,10 @@ endif
 
 include $(srclib)/targets.h
 include ../../customblds/$(MLSF95).$(MLSPLAT)
-mlspack_linker_line=-L${mlspack_dir} -lmlspack
-mlspack_message=Building mlsl2 with mlspack
 fwdmdl_linker_line=-L${fwdmdldir} -lfwdmdl
 fwdmdl_message=Building mlsl2 with forward model
 cloud_linker_line=-L${clouddir} -lcloud
 cloud_message=Building mlsl2 with cloud forward model
-utctotai_linker_line=-L${INSTALLDIR} -lutctotai
-utctotai_message=Building mlsl2 with toolkitless utc to tai conversion
 mlsl2_prereqs := $(ALLOBJS) $(PVM_OBJS) \
     $(mlspack_dir)/libmlspack.a $(libdir)/libmls.a \
 	 $(fwdmdldir)/libfwdmdl.a $(clouddir)/libcloud.a $(INSTALLDIR)/libutctotai.a\
@@ -126,6 +122,7 @@ mlsl2: $(mlsl2_prereqs)
 		@echo "$(fwdmdl_message)"
 		@echo "$(cloud_message)"
 		@echo "$(utctotai_message)"
+		@echo "$(mlspack_message)"
 		$(FC) $(LDOPTS) -o mlsl2 $(ALLOBJS) \
         $(cloud_linker_line) \
         $(fwdmdl_linker_line) \
@@ -155,7 +152,7 @@ clean:
 mark_all_as_uptodate:
 		@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
 		 $(UTILDIR)/mark_as_uptodate.sh -T mlsl2 -M $(MAKE) $(MARKING_ARG) \
-       $(libdir) $(fwdmdldir) $(clouddir) ; \
+       $(mlspack_dir) $(libdir) $(fwdmdldir) $(clouddir) ; \
 		fi
 
 tar:
@@ -168,6 +165,9 @@ tar:
 # (See also Abs.Linux, LF95.Linux, etc.)
 
 # $Log$
+# Revision 1.47  2005/03/04 19:13:31  pwagner
+# Utilizes targets.h from srclib
+#
 # Revision 1.46  2004/03/17 00:21:10  pwagner
 # Extra static object to fix building static Lahey executables when Red Hat>8
 #
