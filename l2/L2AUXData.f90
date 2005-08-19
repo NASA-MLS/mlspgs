@@ -203,12 +203,13 @@ contains ! =====     Public Procedures     =============================
 
     character (len=*), intent(in) :: file1 ! Name of file 1
     character (len=*), intent(in) :: file2 ! Name of file 2
-    logical, optional, intent(in) :: create2
+    logical, optional, intent(in) :: create2 ! Force creation of new file2
     integer, optional, intent(in) :: hdfVersion
-    character (len=*), optional, intent(in) :: sdList
+    character (len=*), optional, intent(in) :: sdList ! If not all SDs
     character (len=*), optional, intent(in) :: options ! E.g., '-v'
 
     ! Local
+    logical :: allSDs
     logical, parameter            :: countEmpty = .true.
     logical :: file_exists
     integer :: file_access
@@ -246,7 +247,10 @@ contains ! =====     Public Procedures     =============================
           & 'File 1 not found; make sure the name and path are correct' &
           & // trim(file1) )
     end if
-    if ( present(sdList) ) then
+    allSDs = .not. present(sdList)
+    if ( present(sdList) ) allSDs = (sdList == '*')
+    ! if ( present(sdList) ) then
+    if ( .not. allSDs ) then
       mysdList = sdList
       if ( verbose ) call dump(mysdList, 'DS names')
     else
@@ -1870,6 +1874,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.73  2005/08/19 23:27:02  pwagner
+! Uses '*' as wildcard sdList string in cpL2AUXData
+!
 ! Revision 2.72  2005/08/05 20:38:31  pwagner
 ! L2AUXFile arg to ReadL2AUXFile now a pointer
 !
