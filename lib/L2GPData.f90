@@ -85,6 +85,11 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     module procedure cpL2GPData_fileName
   end interface
 
+  interface RepairL2GP
+    module procedure RepairL2GP_L2GP
+    module procedure RepairL2GP_HGrid
+  end interface
+
   interface writeL2GPData
     module procedure writeL2GPData_fileID
     module procedure writeL2GPData_MLSFile
@@ -2167,12 +2172,15 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------- cpL2GPData_fileID  ---------------------------
 
   subroutine cpL2GPData_fileID(file1, file2, swathList, &
-    & hdfVersion1, hdfVersion2, notUnlimited, rename, ReadStatus, options)
+    & hdfVersion1, hdfVersion2, notUnlimited, rename, ReadStatus, &
+    & HGrid, options)
     !------------------------------------------------------------------------
 
     ! Given file names file1 and file2,
     ! This routine copies swathList from 1 to 2
+    ! and, depending on options, makes some repairs
 
+    use HGridsDatabase, only: HGrid_T
     ! Arguments
 
     integer, intent(in)           :: file1 ! handle of file 1
@@ -2183,6 +2191,7 @@ contains ! =====     Public Procedures     =============================
     logical, optional, intent(in) :: notUnlimited
     logical, optional, intent(in) :: ReadStatus
     character (len=*), optional, intent(in) :: rename
+    type (HGrid_T), optional, intent(in)    :: HGrid
     character (len=*), optional, intent(in) :: options ! E.g., '-v'
 
     ! Local variables
@@ -2191,6 +2200,7 @@ contains ! =====     Public Procedures     =============================
     type (L2GPData_T) :: l2gp
     character (len=8) :: myOptions
     integer :: noSwaths
+    logical :: repair
     character (len=L2GPNameLen) :: swath
     character (len=L2GPNameLen) :: swath2
     logical :: verbose
@@ -2198,7 +2208,14 @@ contains ! =====     Public Procedures     =============================
     ! Executable code
     myOptions = ' '
     if ( present(options) ) myOptions = options
-    verbose = ( index(myOptions, 'v') > 0 )
+    verbose = ( index(myOptions, '-v') > 0 )
+    repair  = ( index(myOptions, '-r') > 0 )
+    if ( repair .and. .not. present(HGrid) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'cpL2GPFile must be given HGrid to repair L2GPData' )
+    if ( .not. repair .and. present(HGrid) ) &
+      & call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'cpL2GPFile was given HGrid but no order to repair L2GPData' )
     noSwaths = NumStringElements(trim(swathList), countEmpty)
     if ( noSwaths < 1 ) then
        call MLSMessage ( MLSMSG_Warning, ModuleName, &
@@ -2232,6 +2249,8 @@ contains ! =====     Public Procedures     =============================
         print *, 'l2gp%nTimes:  ', l2gp%nTimes
         print *, 'shape(l2gp%l2gpvalue):  ', shape(l2gp%l2gpvalue)
       endif
+      ! Possibly repair l2gp
+      if ( repair ) call RepairL2GP(l2gp, HGrid)
       ! Write the filled l2gp to file2
       call WriteL2GPData(l2gp, file2, trim(swath2), hdfVersion=hdfVersion2, &
         & notUnlimited=notUnlimited)
@@ -2244,14 +2263,16 @@ contains ! =====     Public Procedures     =============================
 
   subroutine cpL2GPData_fileName(file1, file2, &
     & create2, hdfVersion1, hdfVersion2, swathList, rename, exclude, &
-    & notUnlimited, andGlAttributes, ReadStatus, options)
+    & notUnlimited, andGlAttributes, ReadStatus, HGrid, options)
     !------------------------------------------------------------------------
 
     ! Given file names file1 and file2,
     ! This routine copies all the l2gpdata from 1 to 2
     ! (see cpL2GPData_fileID)
     ! If file2 doesn't exist yet, or if create2 is TRUE, it'll create it
+    ! Optionally repairs l2gpdata
 
+    use HGridsDatabase, only: HGrid_T
     ! Arguments
 
     character (len=*), intent(in) :: file1 ! Name of file 1
@@ -2263,11 +2284,13 @@ contains ! =====     Public Procedures     =============================
     character (len=*), optional, intent(in) :: swathList ! Copy only these
     character (len=*), optional, intent(in) :: rename ! But rename them these
     character (len=*), optional, intent(in) :: exclude ! Don't copy these
-    logical, optional, intent(in) :: notUnlimited
-    logical, optional, intent(in) :: ReadStatus
+    logical, optional, intent(in)           :: notUnlimited
+    logical, optional, intent(in)           :: ReadStatus
+    type (HGrid_T), optional, intent(in)    :: HGrid
     character (len=*), optional, intent(in) :: options ! E.g., '-v'
 
     ! Local
+    logical :: allSwaths
     integer :: DayofYear
     integer :: File1Handle
     integer :: File2Handle
@@ -2292,7 +2315,7 @@ contains ! =====     Public Procedures     =============================
     if ( present(hdfVersion1) ) the_hdfVersion1 = hdfVersion1
     file_exists = ( mls_exists(trim(File1)) == 0 )
     if ( .not. file_exists ) then
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      call MLSMessage ( MLSMSG_Error, trim(ModuleName) // '/cpL2GPData', &
         & 'File 1 not found; make sure the name and path are correct' &
         & // trim(file1) )
     endif
@@ -2305,7 +2328,11 @@ contains ! =====     Public Procedures     =============================
     endif
     the_hdfVersion2 = the_hdfVersion1  ! Defaults to same hdf version as file 1
     if ( present(hdfVersion2) ) the_hdfVersion2 = hdfVersion2
-    if ( present(swathList) ) then
+
+    allSwaths = .not. present(swathList)
+    if ( present(swathList) ) allSwaths = (swathList == '*')
+    ! if ( present(swathList) ) then
+    if ( .not. allSwaths ) then
       if ( DEEBUG ) then
         noSwaths = mls_InqSwath ( file1, mySwathList, listSize, &
            & hdfVersion=the_hdfVersion1)
@@ -2383,7 +2410,7 @@ contains ! =====     Public Procedures     =============================
     call cpL2GPData_fileID(File1Handle, File2Handle, &
       & mySwathList, the_hdfVersion1, the_hdfVersion2, &
       & notUnlimited=notUnlimited, rename=rename, &
-      & ReadStatus=ReadStatus, options=options )
+      & ReadStatus=ReadStatus, HGrid=HGrid, options=options )
     if ( DEEBUG ) print *, 'About to close File1Handle: ', File1Handle
     status = mls_io_gen_closeF(l_swath, File1Handle, FileName=File1, &
       & hdfVersion=the_hdfVersion1, debugOption=.false.)
@@ -3238,8 +3265,8 @@ contains ! =====     Public Procedures     =============================
   end subroutine DumpL2GP_attributes_hdf5
   !-------------------------------------
 
-  !-----------------------------------------  RepairL2GP  -----
-  subroutine RepairL2GP ( L2GP1, L2GP2, fields )
+  !-----------------------------------------  RepairL2GP_L2GP  -----
+  subroutine RepairL2GP_L2GP ( L2GP1, L2GP2, fields )
 
     ! This routine repairs l2gp1 using values from l2gp2
     ! wherever the first has fillvalues
@@ -3318,7 +3345,84 @@ contains ! =====     Public Procedures     =============================
       call ReplaceFillValues ( l2gp1%quality, l2gp1%MissingValue, l2gp2%quality )
     endif
 
-  end subroutine RepairL2GP
+  end subroutine RepairL2GP_L2GP
+
+  !-----------------------------------------  RepairL2GP_HGrid  -----
+  subroutine RepairL2GP_HGrid ( L2GP, HGrid, fields, offset )
+    use HGridsDatabase, only: HGrid_T
+    ! This routine repairs l2gp1 using values from l2gp2
+    ! wherever the first has fillvalues
+    
+    ! Thew optional arg fields will determine which fields this applies to:
+    ! value                  fields
+    ! -----                  ------
+    ! '*' (or missing)    all
+    ! 'latitude,time'     latitude, time
+    ! 'geolocation'       geolocations (all)
+
+    ! Dummy arguments
+    type (L2GPData_T), intent(inout) :: L2GP
+    type (HGrid_T), intent(in)       :: HGrid
+    character(len=*), optional, intent(in) :: fields
+    integer, optional, intent(in) :: offset ! If HGrid profs offset from l2gp    
+    ! Internal variables
+    character(len=128) :: myFields
+    integer :: HGp1 ! Effective starting HGrid profile
+    real(rgp), dimension(:), pointer :: HGridField => null()
+    ! Executable code
+    nullify(HGridField)
+    myFields = '*'
+    if ( present(fields) ) myFields = lowercase(fields)
+    HGp1 = 1 ! 2  ! No longer assume we're not offset; was 1
+    if ( present(offset) ) HGp1 = offset
+    call allocate_test(HGridField, l2gp%nTimes, 'HGridField', &
+         & ModuleName )
+    select case (trim(myFields))
+    case ('geolocation')
+      myFields = lowercase(GEO_FIELDS) // ',pressure,time,frequency,chunknumber'
+    case default
+      ! Not a special case
+    end select
+
+    print *, 'shape l2gp%latitude: ', shape(l2gp%latitude)
+    print *, 'shape HGrid%geodLat: ', shape(HGrid%geodLat)
+    
+    if ( SwitchDetail(myFields, 'latitude', '-wc') > -1 ) then
+      HGridField = hgrid%geodLat(1,HGp1:)
+      call ReplaceFillValues ( l2gp%latitude, l2gp%MissingValue, &
+        & HGridField )
+    endif
+    print *, 'shape l2gp%longitude: ', shape(l2gp%longitude)
+    print *, 'shape HGrid%lon: ', shape(HGrid%lon)
+    if ( SwitchDetail(myFields, 'longitude', '-wc') > -1 ) then
+      HGridField = hgrid%lon(1,HGp1:)
+      call ReplaceFillValues ( l2gp%longitude, l2gp%MissingValue, &
+        & HGridField )
+    endif
+    if ( SwitchDetail(myFields, 'solartime', '-wc') > -1 ) then
+      call ReplaceFillValues ( l2gp%solartime, l2gp%MissingValue, &
+        & real(hgrid%solartime(1,HGp1:), rgp) )
+    endif
+    if ( SwitchDetail(myFields, 'solarzenith', '-wc') > -1 ) then
+      call ReplaceFillValues ( l2gp%solarzenith, l2gp%MissingValue, &
+        & real(hgrid%solarzenith(1,HGp1:), rgp) )
+    endif
+    if ( SwitchDetail(myFields, 'LineOfSightAngle', '-wc') > -1 ) then
+      call ReplaceFillValues ( l2gp%losangle, l2gp%MissingValue, &
+        & real(hgrid%losangle(1,HGp1:), rgp) )
+    endif
+    if ( SwitchDetail(myFields, 'OrbitGeodeticAngle', '-wc') > -1 ) then
+      call ReplaceFillValues ( l2gp%geodAngle, l2gp%MissingValue, &
+        & real(hgrid%phi(1,HGp1:), rgp) )
+    endif
+    if ( SwitchDetail(myFields, 'time', '-wc') > -1 ) then
+      call ReplaceFillValues ( l2gp%time, real(l2gp%MissingValue, r8), &
+        & hgrid%time(1,HGp1:) )
+    endif
+    call deallocate_test(HGridField, 'HGridField', &
+         & ModuleName )
+
+  end subroutine RepairL2GP_HGrid
 
   ! ----------------------------------  GetGeolocUnits  -----
   function GetGeolocUnits ( Title ) result( dim_string )
@@ -3375,6 +3479,10 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.121  2005/08/15 10:40:38  hcp
+! in AppendL2GPData_fileID, mls_swdetach was called with an undefined
+! variable as hdfVersion, causing failures. Now fixed.
+!
 ! Revision 2.120  2005/08/08 23:55:04  pwagner
 ! Never leave status undefined if L2GPFile%errorCode assigned to it
 !
