@@ -979,15 +979,18 @@ contains ! =====     Public procedures     =============================
              begin, f+f_hdfVersion, t+t_numeric, ndr+n_field_type, &
              np+n_spec_def /) )
     call make_tree ( (/ &
-      begin, s+s_copy, &  ! Must be AFTER s_l2aux and s_l2gp
-             begin, f+f_type, t+t_outputType, nr+n_field_type, &
+      begin, s+s_copy, &  ! Must be AFTER s_hGrid if repairGeoLocations
+             begin, f+f_create, t+t_boolean, n+n_field_type, &
+             begin, f+f_exclude, t+t_string, n+n_field_type, &
              begin, f+f_file, t+t_string, nr+n_field_type, &
-             begin, f+f_inputFile, t+t_string, nr+n_field_type, &
              begin, f+f_hdfVersion, t+t_numeric, n+n_field_type, &
+             begin, f+f_hGrid, s+s_hgrid, n+n_field_spec, &
              begin, f+f_ifAnyCrashedChunks, t+t_boolean, n+n_field_type, &
+             begin, f+f_inputFile, t+t_string, nr+n_field_type, &
+             begin, f+f_inputtype, t+t_outputType, n+n_field_type, &
              begin, f+f_repairGeolocations, t+t_boolean, n+n_field_type, &
              begin, f+f_swath, t+t_string, n+n_field_type, &
-             begin, f+f_exclude, t+t_string, n+n_field_type, &
+             begin, f+f_type, t+t_outputType, nr+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_output, &  ! Must be AFTER s_l2aux and s_l2gp
@@ -1352,7 +1355,7 @@ contains ! =====     Public procedures     =============================
       begin, z+z_algebra, s+s_columnScale, s+s_combineChannels, s+s_cyclicJacobi, &
              s+s_disjointEquations, s+s_normalEquations, &
              s+s_reflect, s+s_regularization, s+s_rowScale, n+n_section+d*no_check_eq, &
-      begin, z+z_output, s+s_time, s+s_output, s+s_copy, n+n_section /) )
+      begin, z+z_output, s+s_time, s+s_output, s+s_copy, s+s_hgrid, n+n_section /) )
 
   contains
 
@@ -1373,6 +1376,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.410  2005/08/19 23:24:55  pwagner
+! Allows HGrid, Copy commands in Output section
+!
 ! Revision 2.409  2005/08/04 19:36:18  pwagner
 ! New copy command in Output section
 !
