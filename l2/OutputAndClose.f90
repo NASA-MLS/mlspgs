@@ -18,9 +18,10 @@ module OutputAndClose ! outputs all data from the Join module to the
 
   use DirectWrite_m, only: DirectData_T, Dump
   use Hdf, only: DFACC_RDWR
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+  use MLSMessageModule, only: MLSMessage, &
+    & MLSMSG_Error, MLSMSG_Info, MLSMSG_Warning
   use OUTPUT_M, only: blanks, OUTPUT
-  use STRING_TABLE, only: GET_STRING
+  use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
 
   implicit none
   private
@@ -37,6 +38,7 @@ module OutputAndClose ! outputs all data from the Join module to the
   ! Should we get this from MLSL2Options?
   logical, parameter :: LOGFILEGETSMETADATA = .false.  ! metadata to log file?
   logical, parameter :: FAKEPARALLELMASTER =  .false.  ! make up fake stuff?
+  integer, parameter:: MAXQUANTITIESPERFILE=10000
   ! For Announce_Error
   integer :: ERROR
 
@@ -44,7 +46,7 @@ contains ! =====     Public Procedures     =============================
 
   ! -----------------------------------------------  Output_Close  -----
   subroutine Output_Close ( root, l2gpDatabase, l2auxDatabase, DirectDatabase, &
-    & matrices, fileDataBase, canWriteL2PC )
+    & matrices, fileDataBase, chunks, processingRange, canWriteL2PC )
 
     ! Hard-wired assumptions:
 
@@ -59,11 +61,19 @@ contains ! =====     Public Procedures     =============================
     ! (see write_metadata module for fuller explanation)
 
     use Allocate_Deallocate, only: Deallocate_Test, Allocate_test
+    use Chunks_m, only: MLSChunk_T
     use Expr_M, only: Expr
-    use INIT_TABLES_MODULE, only: F_ASCII, F_FILE, F_HDFVERSION, &
-      & F_METANAME, F_METADATAONLY, F_OVERLAPS, F_PACKED, F_QUANTITIES, &
-      & F_TYPE, F_WRITECOUNTERMAF, F_DONTPACK, &
-      & L_L2AUX, L_L2DGG, L_L2GP, L_L2PC, S_OUTPUT, S_TIME
+    use HGrid, only: CREATEHGRIDFROMMLSCFINFO
+    use HGridsDatabase, only: ADDHGRIDTODATABASE, Dump, HGRID_T
+    use INIT_TABLES_MODULE, only: F_ASCII, F_CREATE, F_DONTPACK, F_EXCLUDE, &
+      & F_FILE, F_HDFVERSION, F_HGRID, &
+      & F_IFANYCRASHEDCHUNKS, F_INPUTFILE, F_INPUTTYPE, &
+      & F_METADATAONLY, F_METANAME, F_OVERLAPS, F_PACKED, &
+      & F_QUANTITIES, F_REPAIRGEOLOCATIONS, &
+      & F_SWATH, F_TYPE, F_WRITECOUNTERMAF, &
+      & FIELD_FIRST, FIELD_LAST, &
+      & L_L2AUX, L_L2DGG, L_L2GP, L_L2PC, &
+      & S_COPY, S_HGrid, S_OUTPUT, S_TIME
     use HDF5, only: h5gclose_f, h5gopen_f
     use Intrinsic, only: l_ascii, l_swath, l_hdf, Lit_indices, PHYQ_Dimensionless
     use L2AUXData, only: L2AUXDATA_T, cpL2AUXData, WriteL2AUXData
@@ -72,7 +82,7 @@ contains ! =====     Public Procedures     =============================
     use L2PC_m, only: WRITEONEL2PC, OUTPUTHDF5L2PC
     use L2ParInfo, only: parallel
     use MatrixModule_1, only: MATRIX_DATABASE_T, MATRIX_T, GETFROMMATRIXDATABASE
-    use MLSCommon, only: I4, MLSFile_T
+    use MLSCommon, only: I4, MLSFile_T, TAI93_Range_T
     use MLSFiles, only: HDFVERSION_5, &
       & AddInitializeMLSFile, GetMLSFileByName, GetPCFromRef, mls_exists, &
       & MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, MLS_SFSTART, MLS_SFEND, &
@@ -87,7 +97,7 @@ contains ! =====     Public Procedures     =============================
       & Mlspcf_mcf_l2gp_start, Mlspcf_mcf_l2dgm_start, &
       & Mlspcf_mcf_l2dgg_start
     use MLSSets, only: FindFirst, FindNext
-    use MLSStringLists, only: Array2List
+    use MLSStringLists, only: Array2List, unquote
     use MLSStrings, only: trim_safe
     use MoreTree, only: Get_Spec_ID, GET_BOOLEAN
     use SDPToolkit, only: PGS_S_SUCCESS, PGSD_IO_GEN_WSEQFRM, Pgs_smf_getMsg
@@ -95,7 +105,7 @@ contains ! =====     Public Procedures     =============================
     use Time_M, only: Time_Now
     use TOGGLES, only: GEN, TOGGLE, Switches
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: DECORATION, NODE_ID, NSONS, SUBTREE, SUB_ROSA
+    use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SUBTREE, SUB_ROSA
     use TREE_TYPES, only: N_NAMED
     use WriteMetadata, only: L2PCF, WriteMetaLog
 
@@ -105,33 +115,37 @@ contains ! =====     Public Procedures     =============================
     type (L2AUXData_T), dimension(:), pointer :: L2AUXDATABASE ! L2AUX products
     type (Matrix_Database_T), dimension(:), pointer :: MATRICES ! Matrix database (for l2pcs)
     type (DirectData_T), dimension(:), pointer :: DirectDatabase
-    logical, intent(in) :: canWriteL2PC ! Flag
+    type (MLSChunk_T), dimension(:), pointer ::  Chunks  ! of data
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-    ! type(PCFData_T), intent(in) :: l2pcf
+    type (TAI93_Range_T), intent(in) :: processingRange
+    logical, intent(in) :: canWriteL2PC ! Flag
 
     ! - - - Local declarations - - -
 
+    type (MLSChunk_T) ::  AllChunks     ! in one
     logical :: ASCII                    ! Is this l2pc ascii?
     integer :: DB_index
+    logical :: create
     integer, dimension(:), pointer :: DONTPACK ! Quantities not to pack
     logical, parameter :: DEBUG = .false.
+    character (len=MAXSWATHNAMESBUFSIZE) :: EXCLUDE   ! From the exclude= field
     integer :: FIELD_INDEX              ! F_... field code
     integer :: FIELD_NO                 ! Index of assign vertex sons of Key
     integer :: FIELDVALUE               ! For get_boolean
     character (len=132) :: FILE_BASE    ! From the FILE= field
+    logical, dimension(field_first:field_last) :: GOT ! Fields
     integer :: GRP_ID
     integer :: GSON                     ! Son of Son -- an assign node
     integer :: hdfVersion               ! 4 or 5 (corresp. to hdf4 or hdf5)
+    integer :: HGridIndex
+    type (HGrid_T), dimension(:), pointer :: HGrids => null()
     integer :: IN_FIELD_NO              ! Index of sons of assign vertex
+    character (len=132) :: INPUTFILE_BASE    ! From the inputfile= field
+    character (len=132) :: inputPhysicalFilename
+    integer :: INPUT_TYPE              ! L_L2AUX, L_L2GP, L_PC, L_L2DGG
     integer :: KEY                      ! Index of spec_args node
-    integer :: L2auxFileHandle, L2aux_Version
-    character (len=132) :: L2auxPhysicalFilename
-    integer :: L2aux_mcf, L2dgg_mcf, L2gp_mcf  ! mcf numbers for writing metadata
-    integer :: L2gpFileHandle, L2gp_Version
-    character (len=132) :: L2gpPhysicalFilename
     integer :: L2PCUNIT
     logical :: madeFile
-    integer, parameter:: MAXQUANTITIESPERFILE=10000
     integer :: Metadata_error
     character (len=32) :: meta_name    ! From the metaName= field
     integer :: NAME                     ! string index of label on output
@@ -142,12 +156,14 @@ contains ! =====     Public Procedures     =============================
     character(len=8) :: OUTPUTTYPESTR   ! 'l2gp', 'l2aux', etc.
     logical :: PACKED                   ! Do we pack this l2pc?
     character (len=132) :: path
+    character (len=132) :: PhysicalFilename
     integer :: QUANTITIESNODE           ! A tree node
-    character(len=L2GPNameLen), dimension(MAXQUANTITIESPERFILE) :: QuantityNames  ! From "quantities" field
     integer :: RECLEN                   ! For file stuff
+    logical :: RepairGeoLocations
     integer :: ReturnStatus
     integer(i4) :: SDFID                ! File handle
     character (len=MAXSWATHNAMESBUFSIZE) :: sdList
+    logical :: skipCopy
     integer :: SON                      ! Of Root -- spec_args or named node
     integer :: SPEC_NO                  ! Index of son of Root
     real :: T1, T2     ! for timing
@@ -175,24 +191,26 @@ contains ! =====     Public Procedures     =============================
     end if
 
     usingSubmit = trim_safe(parallel%submit) /= ''
+    
+    AllChunks%firstMAFIndex = chunks(1)%firstMAFIndex + 1
+    AllChunks%lastMAFIndex = chunks(size(chunks))%lastMAFIndex
 
-    ! l2gp_mcf will be incremented in get_l2gp_mcf (if MCFFORL2GPOPTION == 1)
-    l2gp_mcf = mlspcf_mcf_l2gp_start - 1   
-
-    l2aux_mcf = mlspcf_mcf_l2dgm_start
-    l2dgg_mcf = mlspcf_mcf_l2dgg_start
-
-    L2auxPhysicalFilename = ' '
+    inputPhysicalFilename = ' '
+    PhysicalFilename = ' '
     ! Loop over the lines in the l2cf
 
     do spec_no = 2, nsons(root)-1 ! Skip name at begin and end of section
 
-      l2gp_Version = 1
-      l2aux_Version = 1
       hdfVersion = DEFAULT_HDFVERSION_WRITE
+      exclude = ''
       meta_name = ''
+      sdList = '*'
       writeCounterMAF = .false.
       writeMetaDataOnly = .false.
+      got = .false.
+      repairGeoLocations = .false.
+      skipCopy = .false.
+      create = .false.
 
       son = subtree(spec_no,root)
       if ( node_id(son) == n_named ) then ! Is spec labeled?
@@ -204,6 +222,155 @@ contains ! =====     Public Procedures     =============================
       end if
 
       select case( get_spec_id(key) )
+      case (s_copy)
+        ! call announce_error ( spec_no, &
+        !  &  "Error--copy not implemented yet")
+        do field_no = 2, nsons(key)       ! Skip the command name
+          gson = subtree(field_no, key)   ! An assign node
+          if ( nsons(gson) > 1 ) then
+            fieldValue = decoration(subtree(2,gson)) ! The field's value
+          else
+            fieldValue = gson
+          end if
+          field_index = decoration(subtree(1,gson))
+          select case ( field_index )   ! Field name
+          case ( f_create )
+            create = get_boolean ( gson )
+          case ( f_exclude )
+            call get_string ( sub_rosa(subtree(2,gson)), exclude )
+            exclude = unquote(exclude) ! Parser includes quotes
+          case ( f_file )
+            call get_string ( sub_rosa(subtree(2,gson)), file_base )
+            file_base = unquote(file_base) ! Parser includes quotes
+            print *, 'file_base: ', trim(file_base)
+          case ( f_hdfVersion )
+            call expr ( subtree(2,gson), units, value, type )
+            if ( units(1) /= phyq_dimensionless ) &
+              & call Announce_error ( gson, &
+              & 'No units allowed for hdfVersion: just integer 4 or 5')
+            hdfVersion = value(1)
+          case ( f_hgrid )
+            HGridIndex = decoration(fieldValue)
+            ! print *, 'HGridIndex: ', HGridIndex
+          case ( f_ifAnyCrashedChunks )
+            skipCopy = get_boolean ( gson ) .and. &
+              & ( parallel%numFailedChunks == 0 )
+          case ( f_inputfile )
+            call get_string ( sub_rosa(subtree(2, gson)), inputfile_base )
+            inputfile_base = unquote(inputfile_base) ! Parser includes quotes
+          case ( f_inputtype )
+            input_type = decoration(subtree(2, gson))
+          case ( f_repairGeoLocations )
+            repairGeoLocations = get_boolean ( gson )
+          case ( f_swath )
+            call get_string ( sub_rosa(subtree(2,gson)), sdList )
+            sdList = unquote(sdList) ! Parser includes quotes
+          case ( f_type )
+            output_type = decoration(subtree(2, gson))
+            call get_string ( lit_indices(output_Type), outputTypeStr, strip=.true. )
+          case default                  ! Parser should have caught this
+          end select
+        end do
+        ! Make certain we have everything we need
+        if ( ( got(f_repairGeoLocations) .and. .not. got(f_hgrid) ) ) &
+          & call MLSMessage(MLSMSG_Error, ModuleName, &
+          & "Cannot repair Geolocs w/o an HGrid to copy from")
+        if ( ( size(HGrids) < 1 .and. got(f_hgrid) ) ) &
+          & call MLSMessage(MLSMSG_Error, ModuleName, &
+          & "No HGrids defined yet")
+        if ( ( got(f_swath) .and. got(f_exclude) ) ) &
+          & call MLSMessage(MLSMSG_Error, ModuleName, &
+          & "Cannot copy specifying both swaths and excludes")
+        ! To skip or not to skip
+        if ( skipCopy ) then
+          call MLSMessage(MLSMSG_Info, ModuleName, &
+          & "No crashed chunks so skipping this copy")
+          cycle
+        endif
+        if ( .not. got(f_inputtype) ) input_type = output_type
+
+        select case ( input_type )
+        case ( l_l2aux ) ! --------------------- Copying l2aux files -----
+          call returnFullFileName(inputfile_base, inputPhysicalFilename, &
+            & mlspcf_l2dgm_start, mlspcf_l2dgm_end)
+        case ( l_l2gp ) ! --------------------- Copying l2gp files -----
+          call returnFullFileName(inputfile_base, inputPhysicalFilename, &
+            & mlspcf_l2gp_start, mlspcf_l2gp_end)
+        case ( l_l2dgg ) ! --------------------- Copying l2dgg files -----
+          call returnFullFileName(inputfile_base, inputPhysicalFilename, &
+            & mlspcf_l2dgg_start, mlspcf_l2dgg_end)
+        case default
+        end select
+
+        select case ( output_type )
+        case ( l_l2aux ) ! --------------------- Copying l2aux files -----
+          call returnFullFileName(file_base, PhysicalFilename, &
+            & mlspcf_l2dgm_start, mlspcf_l2dgm_end)
+        case ( l_l2gp ) ! --------------------- Copying l2gp files -----
+          call returnFullFileName(file_base, PhysicalFilename, &
+            & mlspcf_l2gp_start, mlspcf_l2gp_end)
+        case ( l_l2dgg ) ! --------------------- Copying l2dgg files -----
+          call returnFullFileName(file_base, PhysicalFilename, &
+            & mlspcf_l2dgg_start, mlspcf_l2dgg_end)
+        case default
+        end select
+        print *, 'inputPhysicalfileName: ', inputPhysicalfileName
+        print *, 'outputPhysicalfileName: ', PhysicalfileName
+        print *, 'repairGeoLocations: ', repairGeoLocations
+        print *, 'create: ', create
+        call display_string ( lit_indices(output_type), &
+        &             strip=.true., advance='yes' )
+        call display_string ( lit_indices(input_type), &
+        &             strip=.true., advance='yes' )
+
+        select case ( output_type )
+        case ( l_l2aux ) ! --------------------- Copying l2aux files -----
+          call cpL2AUXData(trim(inputPhysicalfileName), &
+            & trim(PhysicalFilename), create2=create, &
+            & hdfVersion=HDFVERSION_5, sdList=trim(sdList))
+        case ( l_l2gp, l_l2dgg ) ! --------------------- Copying l2gp files -----
+          ! How to use swaths field?
+          if ( got(f_exclude) .and. .not. repairGeoLocations ) then
+            call cpL2GPData(trim(inputPhysicalfileName), &
+              & trim(PhysicalFilename), create2=create, &
+              & hdfVersion1=HDFVERSION_5, hdfVersion2=HDFVERSION_5, &
+              & exclude=trim(exclude), &
+              & notUnlimited=avoidUnlimitedDims, ReadStatus=.true.)
+          elseif ( .not. got(f_exclude) .and. repairGeoLocations ) then
+            ! call dump(HGrids(HGridIndex))
+            call cpL2GPData(trim(inputPhysicalfileName), &
+              & trim(PhysicalFilename), create2=create, &
+              & hdfVersion1=HDFVERSION_5, hdfVersion2=HDFVERSION_5, &
+              & swathList=trim(sdList), &
+              & notUnlimited=avoidUnlimitedDims, ReadStatus=.true., &
+              & HGrid=HGrids(HGridIndex), options="-r")
+          elseif ( got(f_exclude) .and. repairGeoLocations ) then
+            call cpL2GPData(trim(inputPhysicalfileName), &
+              & trim(PhysicalFilename), create2=create, &
+              & hdfVersion1=HDFVERSION_5, hdfVersion2=HDFVERSION_5, &
+              & swathList=trim(sdList), &
+              & exclude=trim(exclude), &
+              & notUnlimited=avoidUnlimitedDims, ReadStatus=.true., &
+              & HGrid=HGrids(HGridIndex), options="-r")
+          else
+            call cpL2GPData(trim(inputPhysicalfileName), &
+              & trim(PhysicalFilename), create2=create, &
+              & hdfVersion1=HDFVERSION_5, hdfVersion2=HDFVERSION_5, &
+              & swathList=trim(sdList), &
+              & notUnlimited=avoidUnlimitedDims, ReadStatus=.true.)
+          endif
+        case default
+        end select
+
+      case (s_HGrid)
+        ! call announce_error ( spec_no, &
+        !   &  "Error--HGrid not implemented yet")
+        call decorate ( key, AddHGridToDatabase ( hGrids, &
+          & CreateHGridFromMLSCFInfo ( name, key, filedatabase, l2gpDatabase, &
+          & processingRange, allChunks ) ) )
+        print *, 'HGrid added; size now: ', size(hGrids)
+        call dump(HGrids(size(hGrids)))
+
       case ( s_output )
         do field_no = 2, nsons(key)       ! Skip the command name
           gson = subtree(field_no, key)   ! An assign node
@@ -239,183 +406,15 @@ contains ! =====     Public Procedures     =============================
         ! Otherwise--normal output commands
         select case ( output_type )
         case ( l_l2gp ) ! --------------------- Writing l2gp files -----
-          ! Get the l2gp file name from the PCF
-
-          if ( TOOLKIT ) then
-            call split_path_name(file_base, path, file_base)
-
-            l2gpFileHandle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
-              & mlspcf_l2gp_end, &
-              & TOOLKIT, returnStatus, l2gp_Version, DEBUG, &
-              & exactName=l2gpPhysicalFilename)
-          else
-            l2gpPhysicalFilename = file_base
-            returnStatus = 0
-          end if
-
-          if ( returnStatus == 0 .and. .not. checkPaths ) then
-            ! Open the HDF-EOS file and write swath data
-
-!             swfid = mls_io_gen_openF('swopen', .TRUE., returnStatus, &
-!               & record_length, DFACC_CREATE, FileName=l2gpPhysicalFilename, &
-!               & hdfVersion=hdfVersion, debugOption=.false. )
-            outputFile => GetMLSFileByName(filedatabase, l2gpPhysicalFilename)
-            if ( .not. associated(outputFile) ) then
-              if(DEBUG) call MLSMessage(MLSMSG_Warning, ModuleName, &
-                & 'No entry in filedatabase for ' // trim(l2gpPhysicalFilename) )
-              outputFile => AddInitializeMLSFile(filedatabase, &
-                & content=outputTypeStr, &
-                & name=l2gpPhysicalFilename, shortName=file_base, &
-                & type=l_swath, access=DFACC_RDWR, HDFVersion=hdfVersion, &
-                & PCBottom=mlspcf_l2gp_start, PCTop=mlspcf_l2gp_end)
-            endif
-            ! Loop over the segments of the l2cf line
-
-            numquantitiesperfile = 0
-            do field_no = 2, nsons(key) ! Skip "output" name
-              gson = subtree(field_no,key)
-              select case ( decoration(subtree(1,gson)) )
-              case ( f_quantities )
-                do in_field_no = 2, nsons(gson)
-                  db_index = -decoration(decoration(subtree(in_field_no ,gson)))
-                  if ( db_index >= 1 ) then
-!                     call writeL2GPData ( l2gpDatabase(db_index), swfid, &
-!                       & hdfVersion=hdfVersion )
-                    call writeL2GPData ( l2gpDatabase(db_index), outputFile )
-                    numquantitiesperfile = numquantitiesperfile+1
-                    if ( numquantitiesperfile > MAXQUANTITIESPERFILE ) then
-                      call announce_error ( son, &
-                        & 'Attempt to write too many l2gp quantities to a file', &
-                        & numquantitiesperfile )
-                      numquantitiesperfile = MAXQUANTITIESPERFILE
-                    end if
-                    quantityNames(numquantitiesperfile) = l2gpDatabase(db_index)%name
-                  else
-                    call MLSMessage ( MLSMSG_Warning, ModuleName, &
-                      & 'Unable to write quantity to l2gp file, perhaps no chunks processed' )
-                  end if
-                end do ! in_field_no = 2, nsons(gson)
-              case ( f_overlaps )
-                ! ??? More work needed here
-              end select
-            end do ! field_no = 2, nsons(key)
-
-            !           returnStatus = swclose(swfid)
-!             returnStatus = mls_io_gen_closeF('swclose', swfid, &
-!               & hdfVersion=hdfVersion)
-!             if ( returnStatus /= PGS_S_SUCCESS ) then
-!               call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
-!               call MLSMessage ( MLSMSG_Error, ModuleName, &
-!                 &  "Error closing  l2gp file:  "//mnemonic//" "//msg )
-!             else if (index(switches, 'pro') /= 0) then
-            if (index(switches, 'pro') /= 0) then
-              call announce_success(l2gpPhysicalFilename, 'l2gp', &
-                & numquantitiesperfile, quantityNames, hdfVersion=hdfVersion)
-            end if
-
-            if ( .not. TOOLKIT ) cycle
-
-            ! Write the metadata file
-            call add_metadata ( son, file_base, numquantitiesperfile, &
-              & quantityNames, hdfVersion, l_swath, metadata_error )
-          else if ( returnStatus /= PGS_S_SUCCESS ) then
-            call announce_error ( son, &
-              &  "Error finding l2gp file matching:  "//file_base, returnStatus)
-          end if
+          call OutputL2GP ( key, file_base, DEBUG, &
+            & output_type, mlspcf_l2gp_start, mlspcf_l2gp_end, &
+            & filedatabase, l2gpDatabase )
+          if ( .not. TOOLKIT ) cycle
 
         case ( l_l2aux ) ! ------------------------------ Writing l2aux files ---
-
-          ! Get the l2aux file name from the PCF
-
-          if ( TOOLKIT ) then
-            call split_path_name(file_base, path, file_base)
-            l2auxFileHandle = GetPCFromRef(file_base, mlspcf_l2dgm_start, &
-              & mlspcf_l2dgm_end, &
-              & TOOLKIT, returnStatus, l2aux_Version, DEBUG, &
-              & exactName=l2auxPhysicalFilename)
-          else
-            l2auxPhysicalFilename = file_base
-            returnStatus = 0
-          end if
-
-          if ( returnStatus == 0 .and. .not. checkPaths ) then
-
-            ! Create the HDF file and initialize the SD interface
-!             sdfId = mls_sfstart(l2auxPhysicalFilename, DFACC_CREATE, &
-!               & hdfVersion=hdfVersion)
-            outputFile => GetMLSFileByName(filedatabase, l2auxPhysicalFilename)
-            if ( .not. associated(outputFile) ) then
-              if(DEBUG) call MLSMessage(MLSMSG_Warning, ModuleName, &
-                & 'No entry in filedatabase for ' // trim(l2auxPhysicalFilename) )
-              outputFile => AddInitializeMLSFile(filedatabase, &
-                & content=outputTypeStr, &
-                & name=l2auxPhysicalFilename, shortName=file_base, &
-                & type=l_hdf, access=DFACC_RDWR, HDFVersion=hdfVersion, &
-                & PCBottom=mlspcf_l2dgm_start, PCTop=mlspcf_l2dgm_end)
-            endif
-
-            numquantitiesperfile = 0
-            do field_no = 2, nsons(key) ! Skip "output" name
-              gson = subtree(field_no,key)
-              select case ( decoration(subtree(1,gson)) )
-              case ( f_quantities )
-                do in_field_no = 2, nsons(gson)
-                  db_index = -decoration(decoration(subtree(in_field_no ,gson)))
-                  if ( db_index >= 1 ) then
-!                     call WriteL2AUXData ( l2auxDatabase(db_index), sdfid, returnStatus,&
-!                       & WriteCounterMAF = &
-!                       &   (writeCounterMAF .and. numquantitiesperfile == 0), &
-!                       & hdfVersion=hdfVersion )
-                    call WriteL2AUXData ( l2auxDatabase(db_index), outputFile,&
-                      & returnStatus, &
-                      & WriteCounterMAF = &
-                      &   (writeCounterMAF .and. numquantitiesperfile == 0) )
-                    error = max(error, returnStatus)
-                    numquantitiesperfile = numquantitiesperfile+1
-                    if ( DEBUG ) call output(&
-                      & "attempting to fill quantity name", advance='yes')
-                    if ( numquantitiesperfile > MAXQUANTITIESPERFILE ) then
-                      call announce_error ( son, &
-                        & 'Attempt to write too many l2aux quantities to a file', &
-                        & numquantitiesperfile )
-                      numquantitiesperfile = MAXQUANTITIESPERFILE
-                    end if
-                    call get_string &
-                      & ( l2auxDatabase(db_index)%name, &
-                      &     QuantityNames(numquantitiesperfile) )
-                  else
-                    call MLSMessage ( MLSMSG_Warning, ModuleName, &
-                      & 'Unable to save l2aux quantity, perhaps no chunks processed' )
-                  end if
-                end do ! in_field_no = 2, nsons(gson)
-              case ( f_overlaps )
-                ! ??? More work needed here
-              end select
-            end do ! field_no = 2, nsons(key)
-
-            ! Now close the file
-!            returnStatus = mls_sfend(sdfid, hdfVersion=hdfVersion)
-            !        returnStatus = sfend(sdfid)
-
-!             if ( returnStatus /= PGS_S_SUCCESS ) then
-!               call announce_error ( son, &
-!                 &  "Error closing l2aux file:  "//l2auxPhysicalFilename, returnStatus)
-!             else if (index(switches, 'pro') /= 0) then
-            if (index(switches, 'pro') /= 0) then
-              call announce_success(l2auxPhysicalFilename, 'l2aux', &
-                & numquantitiesperfile, quantityNames, hdfVersion=hdfVersion)
-            end if
-
-            if ( .not. TOOLKIT ) cycle
-
-            ! Write the metadata file
-            call add_metadata ( son, file_base, numquantitiesperfile, &
-              & quantityNames, hdfVersion, l_hdf, metadata_error )
-
-          else if ( returnStatus /= PGS_S_SUCCESS ) then
-            call announce_error ( son, &
-              &  "Error finding l2aux file matching:  "//file_base, returnStatus)
-          end if
+          call OutputL2AUX ( key, file_base, DEBUG, writeCounterMAF, &
+            & filedatabase, l2auxDatabase )
+          if ( .not. TOOLKIT ) cycle
 
         case ( l_l2pc ) ! ------------------------------ Writing l2pc files --
           if ( checkPaths ) exit   ! Not done on sips, so this is good enough
@@ -465,112 +464,21 @@ contains ! =====     Public Procedures     =============================
               call MLSMessage(MLSMSG_Error,ModuleName,&
                 & 'Failed to close l2pc file:'//trim(file_base))
             else if ( index(switches, 'pro') /= 0) then
-              call announce_success(file_base, 'l2pc', &
-                & 0, quantityNames)
+              call announce_success(file_base, 'l2pc', 0)
             end if
           else
             ! For the moment call a routine
             call OutputHDF5L2PC ( trim(file_base), matrices, quantitiesNode, packed, &
               & dontPack )
-            ! Later on when HDF5 is 'blessed' I want to move all this code
-            ! here instead
-            !            call H5FCreate_F ( trim(file_base), H5F_ACC_TRUNC, l2pcUnit, &
-            !              & returnStatus )
-            !            if ( returnStatus /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-            !              & 'Unable to open hdf5 l2pc file for output.' )
-            !            do in_field_no = 2, nsons(quantitiesNode)
-            !              db_index = decoration(decoration(subtree(in_field_no, quantitiesNode )))
-            !              call GetFromMatrixDatabase ( matrices(db_index), tmpMatrix )
-            !              call writeOneHDF5L2PC ( tmpMatrix, l2pcUnit, packed )
-            !            end do ! in_field_no = 2, nsons(gson)
-            !            call H5FClose ( l2pcUnit, returnStatus )
-            !            if ( returnStatus /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
-            !              & 'Unable to close hdf5 l2pc file.' )
 
           end if
           call Deallocate_test ( dontPack, 'dontPack', ModuleName )
 
         case ( l_l2dgg ) ! --------------------- Writing l2dgg files -----
-
-          ! Get the l2gp file name from the PCF
-
-          if ( TOOLKIT ) then
-            call split_path_name(file_base, path, file_base)
-            l2gpFileHandle = GetPCFromRef(file_base, mlspcf_l2dgg_start, &
-              & mlspcf_l2dgg_end, &
-              & TOOLKIT, returnStatus, l2gp_Version, DEBUG, &
-              & exactName=l2gpPhysicalFilename)
-          else
-            l2gpPhysicalFilename = file_base
-            returnStatus = 0
-          end if
-
-         if ( returnStatus == 0 .and. .not. checkPaths ) then
-            ! Open the HDF-EOS file and write swath data
-
-!             swfid = mls_io_gen_openF('swopen', .TRUE., returnStatus, &
-!               & record_length, DFACC_CREATE, FileName=l2gpPhysicalFilename, &
-!               & hdfVersion=hdfVersion, debugOption=.false. )
-            outputFile => GetMLSFileByName(filedatabase, l2gpPhysicalFilename)
-            if ( .not. associated(outputFile) ) then
-              if(DEBUG) call MLSMessage(MLSMSG_Warning, ModuleName, &
-                & 'No entry in filedatabase for ' // trim(l2gpPhysicalFilename) )
-              outputFile => AddInitializeMLSFile(filedatabase, &
-                & content=outputTypeStr, &
-                & name=l2gpPhysicalFilename, shortName=file_base, &
-                & type=l_swath, access=DFACC_RDWR, HDFVersion=hdfVersion, &
-                & PCBottom=mlspcf_l2dgg_start, PCTop=mlspcf_l2dgg_end)
-            endif
-
-            ! Loop over the segments of the l2cf line
-
-            numquantitiesperfile = 0
-            do field_no = 2, nsons(key) ! Skip "output" name
-              gson = subtree(field_no,key)
-              select case ( decoration(subtree(1,gson)) )
-              case ( f_quantities )
-                do in_field_no = 2, nsons(gson)
-                  db_index = -decoration(decoration(subtree(in_field_no ,gson)))
-!                   call writeL2GPData ( l2gpDatabase(db_index), swfid, &
-!                     & hdfVersion=hdfVersion )
-                  call writeL2GPData ( l2gpDatabase(db_index), outputFile )
-                  numquantitiesperfile = numquantitiesperfile+1
-                  if ( numquantitiesperfile > MAXQUANTITIESPERFILE ) then
-                    call announce_error ( son, &
-                      & 'Attempt to write too many l2dgg quantities to a file', &
-                      & numquantitiesperfile )
-                    numquantitiesperfile = MAXQUANTITIESPERFILE
-                  end if
-                  quantityNames(numquantitiesperfile) = l2gpDatabase(db_index)%name
-                end do ! in_field_no = 2, nsons(gson)
-              case ( f_overlaps )
-                ! ??? More work needed here
-              end select
-            end do ! field_no = 2, nsons(key)
-
-!             returnStatus = mls_io_gen_closeF('swclose', swfid, &
-!               & hdfVersion=hdfVersion)
-!             if ( returnStatus /= PGS_S_SUCCESS ) then
-!               call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
-!               call MLSMessage ( MLSMSG_Error, ModuleName, &
-!                 &  "Error closing  l2dgg file:  "//mnemonic//" "//msg )
-!            else if (index(switches, 'pro') /= 0) then
-            if (index(switches, 'pro') /= 0) then
-              call announce_success(l2gpPhysicalFilename, 'l2dgg', &
-                & numquantitiesperfile, quantityNames, hdfVersion=hdfVersion)
-            end if
-
-            if ( .not. TOOLKIT ) cycle
-
-            ! Write the metadata file
-            call add_metadata ( son, file_base, numquantitiesperfile, &
-              & quantityNames, hdfVersion, output_type, metadata_error )
-
-          else if ( returnStatus /= PGS_S_SUCCESS ) then
-            call announce_error ( son, &
-              &  "Error finding l2gp file matching:  "//file_base, returnStatus)
-          end if
-
+          call OutputL2GP ( key, file_base, DEBUG, &
+            & output_type, mlspcf_l2dgg_start, mlspcf_l2dgg_end, &
+            & filedatabase, l2gpDatabase )
+          if ( .not. TOOLKIT ) cycle
 
         case default
           if ( any(output_type /= (/ l_l2gp, l_l2dgg, l_l2aux, l_l2pc /)) ) then
@@ -616,6 +524,603 @@ contains ! =====     Public Procedures     =============================
     ! We assume hdfVersion is 5
     if ( CATENATESPLITS .and. associated(DirectDatabase) &
       & .and. .not. SKIPDIRECTWRITES ) then
+      call unsplitFiles ( DirectDatabase, FileDatabase, usingSubmit, debug )
+    end if
+
+    ! Write the log file metadata
+    if ( LOGFILEGETSMETADATA .and. .not. checkPaths ) then
+      if ( DEBUG ) then
+        call output('About to write log file metadata' , advance='yes')
+      end if
+
+      if ( TOOLKIT ) then
+        call writeMetaLog ( metadata_error )
+        error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
+      end if
+    end if
+
+    ! Done with text of PCF file at last
+   
+    if ( DEBUG ) &
+      & call output ( 'About to deallocate text of PCF file' , advance='yes' )
+
+    call deallocate_test ( l2pcf%anText, 'anText of PCF file', moduleName )
+
+    if (index(switches, 'pro') /= 0) then
+      call output ( '============ End Level 2 Products ============', advance='yes' )
+      call output ( ' ', advance='yes' )
+    end if
+
+    if ( error /= 0 ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Problem with Output_Close section' )
+    end if
+
+    if ( timing ) call sayTime
+    if ( toggle(gen) ) call trace_end ( "Output_Close")
+
+  contains
+    subroutine SayTime
+      call time_now ( t2 )
+      if ( total_times ) then
+        call output ( "Total time = " )
+        call output ( dble(t2), advance = 'no' )
+        call blanks ( 4, advance = 'no' )
+      end if
+      call output ( "Timing for Output_Close =" )
+      call output ( DBLE(t2 - t1), advance = 'yes' )
+      timing = .false.
+    end subroutine SayTime
+
+  end subroutine Output_Close
+
+  ! ---------------------------------------------  add_metadata  -----
+  subroutine add_metadata ( node, fileName, numquantitiesperfile, &
+    & quantityNames, hdfVersion, filetype, metadata_error )
+    
+    use INIT_TABLES_MODULE, only: L_L2DGG
+    use Intrinsic, only: l_swath, l_hdf
+    use MLSFiles, only: GetPCFromRef, split_path_name
+    use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
+      & MLSPCF_L2GP_START, mlspcf_l2dgg_start, mlspcf_l2dgg_end, &
+      & Mlspcf_mcf_l2dgm_start, Mlspcf_mcf_l2dgg_start, &
+      & Mlspcf_mcf_l2gp_start
+    use WriteMetadata, only: Populate_metadata_std, &
+      & Populate_metadata_oth, Get_l2gp_mcf
+  ! Deal with metadata--1st for direct write, but later for all cases
+  integer, intent(in) :: node
+  character(len=*), intent(in) :: fileName
+  integer, intent(in) :: numquantitiesperfile
+  character(len=*), dimension(:), intent(in) :: quantityNames
+  integer, intent(in) :: hdfVersion
+  integer, intent(in) :: fileType  ! l_swath, l_hdf, ..
+  integer, intent(out) :: metadata_error
+  
+  ! Internal variables
+  integer :: baseIndex
+  logical, parameter :: DEBUG = .false.
+  character(len=*), parameter :: L2GPHEAD = 'L2GP-'
+  integer :: field_no
+  character (len=132) :: FILE_BASE
+  integer :: fileHandle
+  integer :: L2aux_mcf
+  integer :: l2dgg_mcf
+  integer :: L2gp_mcf
+  character (len=32) :: meta_name=' '
+  character (len=132) :: path
+  character(len=len(fileName)) :: PhysicalFilename
+  integer :: returnStatus
+  integer :: Version
+  ! Executable
+  l2aux_mcf = mlspcf_mcf_l2dgm_start
+  l2dgg_mcf = mlspcf_mcf_l2dgg_start
+  l2gp_mcf  = mlspcf_mcf_l2gp_start - 1
+  metadata_error = 0
+  Version = 1
+  select case (filetype)
+  case (l_swath, l_l2dgg)
+     call split_path_name(fileName, path, file_base)
+     baseIndex = index(trim(file_base), L2GPHEAD)
+     if ( baseIndex > 0 ) then
+       file_base=file_base(baseIndex+len(L2GPHEAD):)
+     end if
+     if ( filetype == l_l2dgg ) then
+       FileHandle = GetPCFromRef(file_base, mlspcf_l2dgg_start, &
+         & mlspcf_l2dgg_end, &
+         & .true., returnStatus, Version, DEBUG, &
+         & exactName=PhysicalFilename)
+       l2gp_mcf = l2dgg_mcf
+     else
+       FileHandle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
+         & mlspcf_l2gp_end, &
+         & .true., returnStatus, Version, DEBUG, &
+         & exactName=PhysicalFilename)
+       call get_l2gp_mcf ( file_base, meta_name, l2gp_mcf  )
+     end if
+     if (returnStatus /= 0) then
+         call MLSMessage ( MLSMSG_Error, ModuleName, &
+           &  "While adding metadata failed to GetPCFromRef for " // trim(fileName) )
+     else if ( l2gp_mcf <= -999 ) then
+         call MLSMessage ( MLSMSG_Warning, ModuleName, &
+           &  "no mcf for this l2gp species in" // trim(file_base) )
+         return
+     else if (l2gp_mcf <= 0) then
+         call MLSMessage ( MLSMSG_Error, ModuleName, &
+           &  "no mcf for this l2gp species in" // trim(file_base) )
+     end if
+
+     if ( QuantityNames(numquantitiesperfile) &
+       & == QuantityNames(1) ) then
+       ! Typical homogeneous l2gp file: 
+       ! e.g., associated with BrO is ML2BRO.001.MCF
+       if ( DEBUG ) then
+         call output('preparing to populate metadata_std', advance='yes')
+         call output('l2gpFileHandle: ', advance='no')
+         call output(FileHandle , advance='no')
+         call output('   l2gp_mcf: ', advance='no')
+         call output(l2gp_mcf , advance='yes')
+       end if
+       call populate_metadata_std &
+         & (FileHandle, l2gp_mcf, QuantityNames(1), &
+         & hdfVersion=hdfVersion, metadata_error=metadata_error, &
+         & filetype=filetype  )
+     else
+       ! Type l2gp file 'other'
+       if ( DEBUG ) then
+         call output ( 'preparing to populate metadata_oth', advance='yes' )
+         call output ( 'l2gpFileHandle: ', advance='no' )
+         call output ( FileHandle , advance='no' )
+         call output ( '   l2gp_mcf: ', advance='no' )
+         call output ( l2gp_mcf , advance='yes' )
+       end if
+
+       call populate_metadata_oth &
+         & ( FileHandle, l2gp_mcf, &
+         & numquantitiesperfile, QuantityNames, &
+         & hdfVersion=hdfVersion, metadata_error=metadata_error, &
+         & filetype=filetype  )
+     end if
+  case (l_hdf)
+     if ( DEBUG ) call output ( 'output file type l2aux', advance='yes' )
+     ! Get the l2aux file name from the PCF
+
+     call split_path_name(fileName, path, file_base)
+     FileHandle = GetPCFromRef(file_base, mlspcf_l2dgm_start, &
+       & mlspcf_l2dgm_end, &
+       & .true., returnStatus, Version, DEBUG, &
+       & exactName=PhysicalFilename)
+     if (returnStatus /= 0) then
+         call MLSMessage ( MLSMSG_Error, ModuleName, &
+           &  "While adding metadata failed to GetPCFromRef for " // trim(fileName) )
+     else if ( DEBUG ) then
+       call output ( 'preparing to populate metadata_oth', advance='yes' )
+       call output ( 'l2auxFileHandle: ', advance='no' )
+       call output ( FileHandle , advance='no' )
+       call output ( '   l2aux_mcf: ', advance='no' )
+       call output ( l2aux_mcf , advance='no' )
+       call output ( '   number of quantities: ', advance='no' )
+       call output ( numquantitiesperfile , advance='yes' )
+       do field_no=1, numquantitiesperfile
+         call output ( field_no , advance='no' )
+         call output ( '       ', advance='no' )
+         call output ( trim(QuantityNames(field_no)) , advance='yes' )
+       end do
+     end if
+     call populate_metadata_oth &
+       & ( FileHandle, l2aux_mcf, &
+       & numquantitiesperfile, QuantityNames,&
+       & hdfVersion=hdfVersion, metadata_error=metadata_error, &
+       & filetype=filetype  )
+  case default
+    call announce_error ( node, &
+      &  "Error--filetype unrecognized", filetype)
+    call MLSMessage(MLSMSG_Error,ModuleName,&
+      & "Unrecognized filetype in add_metadata (must be swath or hdf) "&
+      & // trim(filename))
+  end select
+
+  end subroutine add_metadata
+
+! =====     Private Procedures     =====================================
+
+  ! ---------------------------------------------  announce_success  -----
+  subroutine announce_success ( Name, l2_type, num_quants, quantities, hdfVersion )
+    integer, intent(in) :: num_quants 
+    character(LEN=*), intent(in)   :: Name
+    character(LEN=*), intent(in)   :: l2_type
+    integer, optional,  intent(in) :: hdfVersion
+    character(LEN=*), dimension(:), optional, intent(in) :: quantities
+    integer :: i
+
+    call output ( 'Level 2 output product type : ' )
+    call output ( trim(l2_type), advance='no')
+    if ( present(hdfVersion) ) then
+      call blanks(4)
+      call output ( 'hdf ' )
+      call output ( hdfVersion, advance='yes')
+    else
+      call output ( ' ', advance='yes')
+    end if
+    call blanks(15)
+    call output ( 'name : ' )
+    call blanks(8)
+    call output ( trim(Name), advance='yes')
+
+    if ( num_quants > 0 .and. present(quantities) ) then
+      call output ( 'number ' )
+      call blanks(5)
+      call output ( 'quantity', advance='yes')
+      do i=1, num_quants
+          call output ( i )
+          call blanks(5)
+          call output ( trim(quantities(i)), advance='yes')
+      end do
+    end  if
+  end subroutine announce_success
+
+  ! ---------------------------------------------  ANNOUNCE_ERROR  -----
+  subroutine ANNOUNCE_ERROR ( Where, Full_message, Code, Penalty )
+
+    use LEXER_CORE, only: PRINT_SOURCE
+    use TREE, only: SOURCE_REF
+
+    integer, intent(in) :: Where   ! Tree node where error was noticed
+    character(LEN=*), intent(in) :: Full_Message
+    integer, intent(in), optional :: Code    ! Code for error message
+    integer, intent(in), optional :: Penalty
+    integer :: myPenalty
+
+    myPenalty = 1
+    if ( present(penalty) ) myPenalty = penalty
+    error = max(error,myPenalty)
+
+    call output ( '***** At ' )
+    if ( where > 0 ) then
+      call print_source ( source_ref(where) )
+    else
+      call output ( '(no lcf node available)' )
+    end if
+    call output ( ' OutputAndClose complained: ' )
+
+    call output ( trim(full_message), advance='yes', &
+      & from_where=ModuleName )
+    if ( present(code) ) then
+      ! select case ( code )
+      ! end select
+      call output ( ' Code: ' )
+      call output ( Code, advance='yes' )
+    end  if
+  end subroutine ANNOUNCE_ERROR
+
+  ! ---------------------------------------------  OutputL2AUX  -----
+  subroutine OutputL2AUX ( key, fileName, DEBUG, writeCounterMAF, &
+    & filedatabase, l2auxDatabase )
+    ! Do the work of outputting specified l2aux data to a named file
+    use INIT_TABLES_MODULE, only: F_OVERLAPS, F_QUANTITIES
+    use Intrinsic, only: l_ascii, l_swath, l_hdf, Lit_indices, PHYQ_Dimensionless
+    use L2AUXData, only: L2AUXDATA_T, cpL2AUXData, WriteL2AUXData
+    use L2GPData, only: L2GPNameLen
+    use MLSCommon, only: I4, MLSFile_T
+    use MLSL2Options, only: checkPaths, TOOLKIT
+    use MLSFiles, only: AddInitializeMLSFile, GetMLSFileByName, &
+      & GetPCFromRef, split_path_name
+    use MLSPCF2, only: mlspcf_l2dgm_start, mlspcf_l2dgm_end
+    use SDPToolkit, only: PGS_S_SUCCESS, PGSD_IO_GEN_WSEQFRM, Pgs_smf_getMsg
+    use TOGGLES, only: Switches
+    use TREE, only: DECORATION, NODE_ID, NSONS, SUBTREE, SUB_ROSA
+    ! Args
+    integer, intent(in)                     :: key ! tree node
+    character(len=*), intent(inout)         :: fileName ! according to l2cf
+    logical, intent(in)                     :: DEBUG ! Print lots?
+    logical, intent(in)                     :: writeCounterMAF
+    type(MLSFile_T), dimension(:), pointer  :: filedatabase
+    type(L2AUXData_T), dimension(:), pointer :: l2auxDatabase
+    ! Local variables
+    integer :: DB_index
+    integer :: FIELD_NO                 ! Index of assign vertex sons of Key
+    character (len=132) :: FullFilename
+    integer :: FileHandle
+    integer :: GSON                     ! Son of Son -- an assign node
+    integer :: hdfVersion               ! 4 or 5 (corresp. to hdf4 or hdf5)
+    integer :: IN_FIELD_NO              ! Index of sons of assign vertex
+    integer :: Metadata_error
+    integer :: Numquantitiesperfile     ! < MAXQUANTITIESPERFILE
+    type(MLSFile_T), pointer :: outputFile
+    character(len=8) :: OUTPUTTYPESTR   ! 'l2gp', 'l2aux', etc.
+    character (len=132) :: path
+    character(len=L2GPNameLen), dimension(MAXQUANTITIESPERFILE) :: &
+      &                           QuantityNames  ! From "quantities" field
+    integer :: ReturnStatus
+    integer :: SON                      ! Of Root -- spec_args or named node
+    integer :: Version
+    ! Executable
+    Version = 1
+    OUTPUTTYPESTR = 'l2aux'
+    ! Get the l2gp file name from the PCF
+
+    if ( TOOLKIT ) then
+      call split_path_name(fileName, path, fileName)
+
+      FileHandle = GetPCFromRef(fileName, mlspcf_l2dgm_start, &
+        & mlspcf_l2dgm_end, &
+        & TOOLKIT, returnStatus, Version, DEBUG, &
+        & exactName=FullFilename)
+    else
+      FullFilename = fileName
+      returnStatus = 0
+    end if
+
+    if ( returnStatus == 0 .and. .not. checkPaths ) then
+      ! Open the HDF-EOS file and write swath data
+      outputFile => GetMLSFileByName(filedatabase, FullFilename)
+      if ( .not. associated(outputFile) ) then
+        if(DEBUG) call MLSMessage(MLSMSG_Warning, ModuleName, &
+          & 'No entry in filedatabase for ' // trim(FullFilename) )
+        outputFile => AddInitializeMLSFile(filedatabase, &
+          & content=outputTypeStr, &
+          & name=FullFilename, shortName=fileName, &
+          & type=l_hdf, access=DFACC_RDWR, HDFVersion=hdfVersion, &
+          & PCBottom=mlspcf_l2dgm_start, PCTop=mlspcf_l2dgm_end)
+      endif
+      ! Loop over the segments of the l2cf line
+
+      numquantitiesperfile = 0
+      do field_no = 2, nsons(key) ! Skip "output" name
+        gson = subtree(field_no,key)
+        select case ( decoration(subtree(1,gson)) )
+        case ( f_quantities )
+          do in_field_no = 2, nsons(gson)
+            db_index = -decoration(decoration(subtree(in_field_no, gson)))
+            if ( db_index >= 1 ) then
+              call WriteL2AUXData ( l2auxDatabase(db_index), outputFile, &
+                & returnStatus, &
+                & WriteCounterMAF = &
+                &   (writeCounterMAF .and. numquantitiesperfile == 0) )
+                    error = max(error, returnStatus)
+              numquantitiesperfile = numquantitiesperfile+1
+              if ( numquantitiesperfile > MAXQUANTITIESPERFILE ) then
+                call announce_error ( son, &
+                  & 'Attempt to write too many l2aux quantities to a file', &
+                  & numquantitiesperfile )
+                numquantitiesperfile = MAXQUANTITIESPERFILE
+              end if
+              call get_string &
+                & ( l2auxDatabase(db_index)%name, &
+                &     QuantityNames(numquantitiesperfile) )
+            else
+              call MLSMessage ( MLSMSG_Warning, ModuleName, &
+                & 'Unable to write quantity to l2aux file, ' // &
+                & 'perhaps no chunks processed' )
+            end if
+          end do ! in_field_no = 2, nsons(gson)
+        case ( f_overlaps )
+          ! ??? More work needed here
+        end select
+      end do ! field_no = 2, nsons(key)
+
+      if (index(switches, 'pro') /= 0) then
+        call announce_success(FullFilename, 'l2aux', &
+          & numquantitiesperfile, quantityNames, hdfVersion=hdfVersion)
+      end if
+
+      if ( .not. TOOLKIT ) return
+
+      ! Write the metadata file
+      call add_metadata ( son, fileName, numquantitiesperfile, &
+        & quantityNames, hdfVersion, l_hdf, metadata_error )
+    else if ( returnStatus /= PGS_S_SUCCESS ) then
+      call announce_error ( son, &
+        &  "Error finding l2aux file matching:  "//fileName, returnStatus)
+    end if
+  end subroutine OutputL2AUX
+
+  ! ---------------------------------------------  OutputL2GP  -----
+  subroutine OutputL2GP ( key, fileName, DEBUG, &
+    & output_type, pcf_start, pcf_end, &
+    & filedatabase, l2gpDatabase )
+    ! Do the work of outputting specified l2gp data to a named file
+    use INIT_TABLES_MODULE, only: F_OVERLAPS, F_QUANTITIES
+    use Intrinsic, only: l_ascii, l_swath, l_hdf, Lit_indices, PHYQ_Dimensionless
+    use L2GPData, only: L2GPData_T, L2GPNameLen, WriteL2GPData
+    use MLSCommon, only: I4, MLSFile_T
+    use MLSL2Options, only: checkPaths, TOOLKIT
+    use MLSFiles, only: AddInitializeMLSFile, GetMLSFileByName, &
+      & GetPCFromRef, split_path_name
+    use SDPToolkit, only: PGS_S_SUCCESS, PGSD_IO_GEN_WSEQFRM, Pgs_smf_getMsg
+    use TOGGLES, only: Switches
+    use TREE, only: DECORATION, NODE_ID, NSONS, SUBTREE, SUB_ROSA
+    ! Args
+    integer, intent(in)                     :: key ! tree node
+    character(len=*), intent(inout)         :: fileName ! according to l2cf
+    logical, intent(in)                     :: DEBUG ! Print lots?
+    integer, intent(in)                     :: output_type
+    integer, intent(in)                     :: pcf_start
+    integer, intent(in)                     :: pcf_end
+    type(MLSFile_T), dimension(:), pointer  :: filedatabase
+    type(L2GPData_T), dimension(:), pointer :: l2gpDatabase
+    ! Local variables
+    integer :: DB_index
+    integer :: FIELD_NO                 ! Index of assign vertex sons of Key
+    character (len=132) :: FullFilename
+    integer :: FileHandle
+    integer :: GSON                     ! Son of Son -- an assign node
+    integer :: hdfVersion               ! 4 or 5 (corresp. to hdf4 or hdf5)
+    integer :: IN_FIELD_NO              ! Index of sons of assign vertex
+    integer :: Metadata_error
+    integer :: Numquantitiesperfile     ! < MAXQUANTITIESPERFILE
+    type(MLSFile_T), pointer :: outputFile
+    character(len=8) :: OUTPUTTYPESTR   ! 'l2gp', 'l2aux', etc.
+    character (len=132) :: path
+    character(len=L2GPNameLen), dimension(MAXQUANTITIESPERFILE) :: &
+      &                           QuantityNames  ! From "quantities" field
+    integer :: ReturnStatus
+    integer :: SON                      ! Of Root -- spec_args or named node
+    integer :: Version
+    ! Executable
+    Version = 1
+    call get_string ( lit_indices(output_Type), outputTypeStr, strip=.true. )
+    ! Get the l2gp file name from the PCF
+
+    if ( TOOLKIT ) then
+      call split_path_name(fileName, path, fileName)
+
+      FileHandle = GetPCFromRef(fileName, pcf_start, &
+        & pcf_end, &
+        & TOOLKIT, returnStatus, Version, DEBUG, &
+        & exactName=FullFilename)
+    else
+      FullFilename = fileName
+      returnStatus = 0
+    end if
+
+    if ( returnStatus == 0 .and. .not. checkPaths ) then
+      ! Open the HDF-EOS file and write swath data
+      outputFile => GetMLSFileByName(filedatabase, FullFilename)
+      if ( .not. associated(outputFile) ) then
+        if(DEBUG) call MLSMessage(MLSMSG_Warning, ModuleName, &
+          & 'No entry in filedatabase for ' // trim(FullFilename) )
+        outputFile => AddInitializeMLSFile(filedatabase, &
+          & content=outputTypeStr, &
+          & name=FullFilename, shortName=fileName, &
+          & type=l_swath, access=DFACC_RDWR, HDFVersion=hdfVersion, &
+          & PCBottom=pcf_start, PCTop=pcf_end)
+      endif
+      ! Loop over the segments of the l2cf line
+
+      numquantitiesperfile = 0
+      do field_no = 2, nsons(key) ! Skip "output" name
+        gson = subtree(field_no,key)
+        select case ( decoration(subtree(1,gson)) )
+        case ( f_quantities )
+          do in_field_no = 2, nsons(gson)
+            db_index = -decoration(decoration(subtree(in_field_no ,gson)))
+            if ( db_index >= 1 ) then
+              call writeL2GPData ( l2gpDatabase(db_index), outputFile )
+              numquantitiesperfile = numquantitiesperfile+1
+              if ( numquantitiesperfile > MAXQUANTITIESPERFILE ) then
+                call announce_error ( son, &
+                  & 'Attempt to write too many ' // trim(outputTypeStr) // &
+                  & ' quantities to a file', &
+                  & numquantitiesperfile )
+                numquantitiesperfile = MAXQUANTITIESPERFILE
+              end if
+              quantityNames(numquantitiesperfile) = l2gpDatabase(db_index)%name
+            else
+              call MLSMessage ( MLSMSG_Warning, ModuleName, &
+                & 'Unable to write quantity to ' // trim(outputTypeStr) // &
+                & ' file, ' // &
+                & 'perhaps no chunks processed' )
+            end if
+          end do ! in_field_no = 2, nsons(gson)
+        case ( f_overlaps )
+          ! ??? More work needed here
+        end select
+      end do ! field_no = 2, nsons(key)
+
+      if (index(switches, 'pro') /= 0) then
+        call announce_success(FullFilename, trim(outputTypeStr), &
+          & numquantitiesperfile, quantityNames, hdfVersion=hdfVersion)
+      end if
+
+      if ( .not. TOOLKIT ) return
+
+      ! Write the metadata file
+      call add_metadata ( son, fileName, numquantitiesperfile, &
+        & quantityNames, hdfVersion, l_swath, metadata_error )
+    else if ( returnStatus /= PGS_S_SUCCESS ) then
+      call announce_error ( son, &
+        &  "Error finding " // trim(outputTypeStr)  // &
+        & ' file matching:  ' //fileName, returnStatus)
+    end if
+  end subroutine OutputL2GP
+
+  ! ---------------------------------------------  returnFullFileName  -----
+  subroutine returnFullFileName ( shortName, FullName, &
+    & pcf_start, pcf_end )
+    use MLSFiles, only: HDFVERSION_5, &
+      & AddInitializeMLSFile, GetMLSFileByName, GetPCFromRef, mls_exists, &
+      & MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, MLS_SFSTART, MLS_SFEND, &
+      & SPLIT_PATH_NAME, unSplitName
+    use MLSL2Options, only: TOOLKIT
+    ! Given a possibly-abbreviated shortName, return the full name
+    ! as found in the PCF
+    ! (w/o toolkit panoply, simply return shortName)
+    ! Args
+    character(len=*), intent(in)  :: shortName
+    character(len=*), intent(out) :: FullName
+    integer, intent(in)           :: pcf_start
+    integer, intent(in)           :: pcf_end
+    ! Internal variables
+    logical, parameter :: DEBUG = .false.
+    integer :: FileHandle
+    integer :: returnStatus
+    integer :: Version
+    ! Executable
+    if ( TOOLKIT ) then
+      Version = 1
+      FileHandle = GetPCFromRef(shortName, pcf_start, &
+        & pcf_end, &
+        & TOOLKIT, returnStatus, Version, DEBUG, &
+        & exactName=FullName)
+    else
+      FullName = shortName
+    end if
+  end subroutine returnFullFileName
+
+  ! ---------------------------------------------  unsplitFiles  -----
+  subroutine unsplitFiles ( DirectDatabase, FileDatabase, usingSubmit, debug )
+    ! Catenate any split Direct Writes
+    ! We assume hdfVersion is 5
+    use HDF5, only: h5gclose_f, h5gopen_f
+    use INIT_TABLES_MODULE, only: F_ASCII, F_EXCLUDE, F_FILE, F_HDFVERSION, &
+      & F_METANAME, F_METADATAONLY, F_OVERLAPS, F_PACKED, F_QUANTITIES, &
+      & F_SWATH, F_TYPE, F_WRITECOUNTERMAF, F_DONTPACK, &
+      & L_L2AUX, L_L2DGG, L_L2GP, L_L2PC, S_COPY, S_OUTPUT, S_TIME
+    use Intrinsic, only: l_swath, l_hdf
+    use L2AUXData, only: L2AUXDATA_T, cpL2AUXData, WriteL2AUXData
+    use L2GPData, only: AVOIDUNLIMITEDDIMS, L2GPNameLen, L2GPData_T, &
+      & MAXSWATHNAMESBUFSIZE, cpL2GPData, WriteL2GPData
+    use L2ParInfo, only: parallel
+    use MLSCommon, only: I4, MLSFile_T
+    use MLSFiles, only: HDFVERSION_5, &
+      & AddInitializeMLSFile, GetMLSFileByName, GetPCFromRef, mls_exists, &
+      & MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, MLS_SFSTART, MLS_SFEND, &
+      & SPLIT_PATH_NAME, unSplitName
+    use MLSHDF5, only: CpHDF5GlAttribute, MakeHDF5Attribute
+    use MLSL2Options, only: CATENATESPLITS, CHECKPATHS, &
+      & DEFAULT_HDFVERSION_WRITE, &
+      & PENALTY_FOR_NO_METADATA, SKIPDIRECTWRITES, TOOLKIT
+    use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
+      & MLSPCF_L2GP_START, mlspcf_l2dgg_start, mlspcf_l2dgg_end, &
+      & Mlspcf_mcf_l2gp_start, Mlspcf_mcf_l2dgm_start, &
+      & Mlspcf_mcf_l2dgg_start
+    use MLSSets, only: FindFirst, FindNext
+    use MLSStringLists, only: Array2List, unquote
+    use MLSStrings, only: trim_safe
+    use readAPriori, only: writeAPrioriAttributes
+    use TOGGLES, only: Switches
+    ! Arguments
+    type (DirectData_T), dimension(:), pointer :: DirectDatabase
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    logical, intent(in) :: debug
+    logical, intent(in) :: USINGSUBMIT              ! Set if using the submit mechanism
+    ! Local variables
+    integer :: DB_index
+    character (len=132) :: FILE_BASE    ! From the FILE= field
+    integer :: GRP_ID
+    integer :: L2auxFileHandle, L2aux_Version
+    character (len=132) :: L2auxPhysicalFilename
+    integer :: L2aux_mcf, L2dgg_mcf, L2gp_mcf  ! mcf numbers for writing metadata
+    integer :: L2gpFileHandle, L2gp_Version
+    character (len=132) :: L2gpPhysicalFilename
+    integer :: L2PCUNIT
+    logical :: madeFile
+    type(MLSFile_T), pointer :: outputFile
+    character (len=132) :: path
+    integer :: ReturnStatus
+    integer(i4) :: SDFID                ! File handle
+    character (len=MAXSWATHNAMESBUFSIZE) :: sdList
+      ! Executable
       if ( debug ) call dump(DirectDatabase)
       ! Any dgg eligible for being catenated
       DB_index = findFirst( DirectDatabase%autoType, l_l2dgg )
@@ -769,271 +1274,8 @@ contains ! =====     Public Procedures     =============================
            & PCBottom=mlspcf_l2dgm_start, PCTop=mlspcf_l2dgm_end)
         endif
       end if
-    end if
-
-    ! Write the log file metadata
-    if ( LOGFILEGETSMETADATA .and. .not. checkPaths ) then
-      if ( DEBUG ) then
-        call output('About to write log file metadata' , advance='yes')
-      end if
-
-      if ( TOOLKIT ) then
-        call writeMetaLog ( metadata_error )
-        error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
-      end if
-    end if
-
-    ! Done with text of PCF file at last
-   
-    if ( DEBUG ) &
-      & call output ( 'About to deallocate text of PCF file' , advance='yes' )
-
-    call deallocate_test ( l2pcf%anText, 'anText of PCF file', moduleName )
-
-    if (index(switches, 'pro') /= 0) then
-      call output ( '============ End Level 2 Products ============', advance='yes' )
-      call output ( ' ', advance='yes' )
-    end if
-
-    if ( error /= 0 ) then
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Problem with Output_Close section' )
-    end if
-
-    if ( timing ) call sayTime
-    if ( toggle(gen) ) call trace_end ( "Output_Close")
-
-  contains
-    subroutine SayTime
-      call time_now ( t2 )
-      if ( total_times ) then
-        call output ( "Total time = " )
-        call output ( dble(t2), advance = 'no' )
-        call blanks ( 4, advance = 'no' )
-      end if
-      call output ( "Timing for Output_Close =" )
-      call output ( DBLE(t2 - t1), advance = 'yes' )
-      timing = .false.
-    end subroutine SayTime
-
-  end subroutine Output_Close
-
-  ! ---------------------------------------------  add_metadata  -----
-  subroutine add_metadata ( node, fileName, numquantitiesperfile, &
-    & quantityNames, hdfVersion, filetype, metadata_error )
+  end subroutine unsplitFiles
     
-    use INIT_TABLES_MODULE, only: L_L2DGG
-    use Intrinsic, only: l_swath, l_hdf
-    use MLSFiles, only: GetPCFromRef, split_path_name
-    use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
-      & MLSPCF_L2GP_START, mlspcf_l2dgg_start, mlspcf_l2dgg_end, &
-      & Mlspcf_mcf_l2dgm_start, Mlspcf_mcf_l2dgg_start
-    use WriteMetadata, only: Populate_metadata_std, &
-      & Populate_metadata_oth, Get_l2gp_mcf
-  ! Deal with metadata--1st for direct write, but later for all cases
-  integer, intent(in) :: node
-  character(len=*), intent(in) :: fileName
-  integer, intent(in) :: numquantitiesperfile
-  character(len=*), dimension(:), intent(in) :: quantityNames
-  integer, intent(in) :: hdfVersion
-  integer, intent(in) :: fileType  ! l_swath, l_hdf, ..
-  integer, intent(out) :: metadata_error
-  
-  ! Internal variables
-  integer :: baseIndex
-  logical, parameter :: DEBUG = .false.
-  character(len=*), parameter :: L2GPHEAD = 'L2GP-'
-  integer :: field_no
-  character (len=132) :: FILE_BASE
-  integer :: fileHandle
-  integer :: L2aux_mcf
-  integer :: l2dgg_mcf
-  integer :: L2gp_mcf
-  character (len=32) :: meta_name=' '
-  character (len=132) :: path
-  character(len=len(fileName)) :: PhysicalFilename
-  integer :: returnStatus
-  integer :: Version
-  ! Executable
-  l2aux_mcf = mlspcf_mcf_l2dgm_start
-  l2dgg_mcf = mlspcf_mcf_l2dgg_start
-  metadata_error = 0
-  Version = 1
-  select case (filetype)
-  case (l_swath, l_l2dgg)
-     call split_path_name(fileName, path, file_base)
-     baseIndex = index(trim(file_base), L2GPHEAD)
-     if ( baseIndex > 0 ) then
-       file_base=file_base(baseIndex+len(L2GPHEAD):)
-     end if
-     if ( filetype == l_l2dgg ) then
-       FileHandle = GetPCFromRef(file_base, mlspcf_l2dgg_start, &
-         & mlspcf_l2dgg_end, &
-         & .true., returnStatus, Version, DEBUG, &
-         & exactName=PhysicalFilename)
-       l2gp_mcf = l2dgg_mcf
-     else
-       FileHandle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
-         & mlspcf_l2gp_end, &
-         & .true., returnStatus, Version, DEBUG, &
-         & exactName=PhysicalFilename)
-       call get_l2gp_mcf ( file_base, meta_name, l2gp_mcf  )
-     end if
-     if (returnStatus /= 0) then
-         call MLSMessage ( MLSMSG_Error, ModuleName, &
-           &  "While adding metadata failed to GetPCFromRef for " // trim(fileName) )
-     else if ( l2gp_mcf <= -999 ) then
-         call MLSMessage ( MLSMSG_Warning, ModuleName, &
-           &  "no mcf for this l2gp species in" // trim(file_base) )
-         return
-     else if (l2gp_mcf <= 0) then
-         call MLSMessage ( MLSMSG_Error, ModuleName, &
-           &  "no mcf for this l2gp species in" // trim(file_base) )
-     end if
-
-     if ( QuantityNames(numquantitiesperfile) &
-       & == QuantityNames(1) ) then
-       ! Typical homogeneous l2gp file: 
-       ! e.g., associated with BrO is ML2BRO.001.MCF
-       if ( DEBUG ) then
-         call output('preparing to populate metadata_std', advance='yes')
-         call output('l2gpFileHandle: ', advance='no')
-         call output(FileHandle , advance='no')
-         call output('   l2gp_mcf: ', advance='no')
-         call output(l2gp_mcf , advance='yes')
-       end if
-       call populate_metadata_std &
-         & (FileHandle, l2gp_mcf, QuantityNames(1), &
-         & hdfVersion=hdfVersion, metadata_error=metadata_error, &
-         & filetype=filetype  )
-     else
-       ! Type l2gp file 'other'
-       if ( DEBUG ) then
-         call output ( 'preparing to populate metadata_oth', advance='yes' )
-         call output ( 'l2gpFileHandle: ', advance='no' )
-         call output ( FileHandle , advance='no' )
-         call output ( '   l2gp_mcf: ', advance='no' )
-         call output ( l2gp_mcf , advance='yes' )
-       end if
-
-       call populate_metadata_oth &
-         & ( FileHandle, l2gp_mcf, &
-         & numquantitiesperfile, QuantityNames, &
-         & hdfVersion=hdfVersion, metadata_error=metadata_error, &
-         & filetype=filetype  )
-     end if
-  case (l_hdf)
-     if ( DEBUG ) call output ( 'output file type l2aux', advance='yes' )
-     ! Get the l2aux file name from the PCF
-
-     call split_path_name(fileName, path, file_base)
-     FileHandle = GetPCFromRef(file_base, mlspcf_l2dgm_start, &
-       & mlspcf_l2dgm_end, &
-       & .true., returnStatus, Version, DEBUG, &
-       & exactName=PhysicalFilename)
-     if (returnStatus /= 0) then
-         call MLSMessage ( MLSMSG_Error, ModuleName, &
-           &  "While adding metadata failed to GetPCFromRef for " // trim(fileName) )
-     else if ( DEBUG ) then
-       call output ( 'preparing to populate metadata_oth', advance='yes' )
-       call output ( 'l2auxFileHandle: ', advance='no' )
-       call output ( FileHandle , advance='no' )
-       call output ( '   l2aux_mcf: ', advance='no' )
-       call output ( l2aux_mcf , advance='no' )
-       call output ( '   number of quantities: ', advance='no' )
-       call output ( numquantitiesperfile , advance='yes' )
-       do field_no=1, numquantitiesperfile
-         call output ( field_no , advance='no' )
-         call output ( '       ', advance='no' )
-         call output ( trim(QuantityNames(field_no)) , advance='yes' )
-       end do
-     end if
-     call populate_metadata_oth &
-       & ( FileHandle, l2aux_mcf, &
-       & numquantitiesperfile, QuantityNames,&
-       & hdfVersion=hdfVersion, metadata_error=metadata_error, &
-       & filetype=filetype  )
-  case default
-    call announce_error ( node, &
-      &  "Error--filetype unrecognized", filetype)
-    call MLSMessage(MLSMSG_Error,ModuleName,&
-      & "Unrecognized filetype in add_metadata (must be swath or hdf) "&
-      & // trim(filename))
-  end select
-
-  end subroutine add_metadata
-
-! =====     Private Procedures     =====================================
-
-  ! ---------------------------------------------  announce_success  -----
-  subroutine announce_success ( Name, l2_type, num_quants, quantities, hdfVersion )
-    integer, intent(in) :: num_quants 
-    character(LEN=*), intent(in)   :: Name
-    character(LEN=*), intent(in)   :: l2_type
-    integer, optional,  intent(in) :: hdfVersion
-    character(LEN=*), dimension(:), intent(in) :: quantities
-    integer :: i
-
-    call output ( 'Level 2 output product type : ' )
-    call output ( trim(l2_type), advance='no')
-    if ( present(hdfVersion) ) then
-      call blanks(4)
-      call output ( 'hdf ' )
-      call output ( hdfVersion, advance='yes')
-    else
-      call output ( ' ', advance='yes')
-    end if
-    call blanks(15)
-    call output ( 'name : ' )
-    call blanks(8)
-    call output ( trim(Name), advance='yes')
-
-    if ( num_quants > 0 ) then
-      call output ( 'number ' )
-      call blanks(5)
-      call output ( 'quantity', advance='yes')
-      do i=1, num_quants
-          call output ( i )
-          call blanks(5)
-          call output ( trim(quantities(i)), advance='yes')
-      end do
-    end  if
-  end subroutine announce_success
-
-  ! ---------------------------------------------  ANNOUNCE_ERROR  -----
-  subroutine ANNOUNCE_ERROR ( Where, Full_message, Code, Penalty )
-
-    use LEXER_CORE, only: PRINT_SOURCE
-    use TREE, only: SOURCE_REF
-
-    integer, intent(in) :: Where   ! Tree node where error was noticed
-    character(LEN=*), intent(in) :: Full_Message
-    integer, intent(in), optional :: Code    ! Code for error message
-    integer, intent(in), optional :: Penalty
-    integer :: myPenalty
-
-    myPenalty = 1
-    if ( present(penalty) ) myPenalty = penalty
-    error = max(error,myPenalty)
-
-    call output ( '***** At ' )
-    if ( where > 0 ) then
-      call print_source ( source_ref(where) )
-    else
-      call output ( '(no lcf node available)' )
-    end if
-    call output ( ' OutputAndClose complained: ' )
-
-    call output ( trim(full_message), advance='yes', &
-      & from_where=ModuleName )
-    if ( present(code) ) then
-      ! select case ( code )
-      ! end select
-      call output ( ' Code: ' )
-      call output ( Code, advance='yes' )
-    end  if
-  end subroutine ANNOUNCE_ERROR
-
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -1046,6 +1288,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.109  2005/08/19 23:35:35  pwagner
+! Allow Output to repair l2gp with HGrid while copying files
+!
 ! Revision 2.108  2005/06/22 18:57:02  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
