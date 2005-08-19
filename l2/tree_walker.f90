@@ -380,7 +380,8 @@ subtrees:   do while ( j <= howmany )
       case ( z_output ) ! Write out the data
         if ( .not. parallel%slave ) then
           call Output_Close ( son, l2gpDatabase, l2auxDatabase, DirectDatabase, &
-	         & matrices, fileDataBase,  size(chunks)==1 .or. singleChunk /= 0 )
+	         & matrices, fileDataBase, chunks, processingRange, &
+            & size(chunks)==1 .or. singleChunk /= 0 )
         end if
 
         ! For case where there was one chunk, destroy vectors etc.
@@ -512,6 +513,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.133  2005/07/12 17:37:20  pwagner
+! Removed unused DestroyL1BInfo
+!
 ! Revision 2.132  2005/06/14 20:44:36  pwagner
 ! Interfaces changed to accept MLSFile_T args
 !
