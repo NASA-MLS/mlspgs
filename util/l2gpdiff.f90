@@ -47,13 +47,18 @@ program l2gpdiff ! show diffs between swaths in two different files
 
 ! Then run it
 ! LF95.Linux/test [options] [input files]
+  integer, parameter ::          MAXFIELDSLENGTH = 256
   type options_T
-    logical     :: verbose = .false.
     integer     :: Details = 1
-    logical     :: stats = .false.
-    logical     :: rms = .false.
+    character(len=MAXFIELDSLENGTH) :: fields = '*' ! wild card means 'all'
+    logical     :: force = .false.
     logical     :: ignoreBadChunks = .false.
+    logical     :: rms = .false.
     logical     :: showMissing = .false.
+    logical     :: stats = .false.
+    character(len=MAXSWATHNAMESBUFSIZE) :: swaths1 = '*'
+    character(len=MAXSWATHNAMESBUFSIZE) :: swaths2 = '*'
+    logical     :: verbose = .false.
   end type options_T
   
   type ( options_T ) :: options
@@ -126,7 +131,8 @@ program l2gpdiff ! show diffs between swaths in two different files
     call diff(trim(filenames(i-1)), &
       & trim(filenames(i)), details=options%Details, stats=options%stats, &
       & rms=options%rms, ignoreBadChunks=options%ignoreBadChunks, &
-      & showMissing=options%showMissing)
+      & showMissing=options%showMissing, fields=options%fields, &
+      & force=options%force, swaths1=options%swaths1, swaths2=options%swaths2 )
     call sayTime('diff these files: ' // trim(filenames(i-1)) // &
       & ' and ' // trim(filenames(i)), tFile)
   enddo
@@ -154,8 +160,15 @@ contains
       if ( filename(1:1) /= '-' ) exit
       if ( filename(1:3) == '-h ' ) then
         call print_help
+      elseif ( filename(1:6) == '-force' ) then
+        options%force = .true.
+        exit
       elseif ( filename(1:3) == '-v ' ) then
         options%verbose = .true.
+        exit
+      else if ( filename(1:6) == '-field' ) then
+        call getarg ( i+1+hp, options%fields )
+        i = i + 1
         exit
       else if ( filename(1:3) == '-f ' ) then
         call getarg ( i+1+hp, filename )
@@ -176,6 +189,14 @@ contains
       else if ( filename(1:3) == '-s ' ) then
         options%stats = .true.
         exit
+      else if ( filename(1:3) == '-s1' ) then
+        call getarg ( i+1+hp, options%swaths1 )
+        i = i + 1
+        exit
+      else if ( filename(1:3) == '-s2' ) then
+        call getarg ( i+1+hp, options%swaths2 )
+        i = i + 1
+        exit
       else if ( filename(1:6) == '-miss ' ) then
         options%showMissing = .true.
         exit
@@ -194,18 +215,32 @@ contains
   subroutine print_help
   ! Print brief but helpful message
       write (*,*) &
-      & 'Usage:l2gpcat [options] [filenames]'
+      & 'Usage:l2gpdiff [options] [filenames]'
       write (*,*) &
-      & ' If no filenames supplied, you will be prompted to supply one'
+      & ' diffs swaths between paired l2gp files [2k] and [2k - 1]'
+      write (*,*) &
+      & ' each file contains one or more swaths, each swath many named fields'
       write (*,*) ' Options: -f filename => add filename to list of filenames'
       write (*,*) '                         (can do the same w/o the -f)'
+      write (*,*) '          -fields "f1,f2,.."'
+      write (*,*) '                      =>   diff only fields f1, f2,..'
       write (*,*) '          -d details  => level of details to show'
+      write (*,*) '          -force      => force diff even if swath names differ'
+      write (*,*) '          -s1 "swath1,swath2,.."'
+      write (*,*) '                      =>   diff only swath1,swath2,..'
+      write (*,*) '          -s2 "swath1,swath2,.."'
+      write (*,*) '                      =>   diff only swath1,swath2,..'
+      write (*,*) '                           from even-numbered files in list'
       write (*,*) '          -v          => switch on verbose mode'
       write (*,*) '          -ignore     => ignore bad chunks'
       write (*,*) '          -rms        => just print mean, rms'
       write (*,*) '          -s          => just show statistics'
       write (*,*) '          -miss       => just show which swaths are missing'
       write (*,*) '          -h          => print brief help'
+      write (*,*) '    (Notes)'
+      write (*,*) ' (1) The -d and -fields options should be mutually exclusive'
+      write (*,*) ' (2) -s1 lets you pick out which swaths to diff'
+      write (*,*) ' (3) -s2 along with -force diffs swaths despite different names'
       stop
   end subroutine print_help
 !------------------------- SayTime ---------------------
@@ -228,6 +263,9 @@ end program l2gpdiff
 !==================
 
 ! $Log$
+! Revision 1.4  2005/06/22 19:27:33  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 1.3  2004/08/07 00:15:55  pwagner
 ! All stringlist stuff was moved from mlsstrings to mlsstringlists
 !
