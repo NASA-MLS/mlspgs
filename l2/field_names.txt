@@ -83,6 +83,7 @@ copy
 cost
 covariance
 covSansReg # Compute covariance matrix without regularization
+create
 criteria
 criticalModules
 criticalSignals
@@ -165,6 +166,7 @@ ignoreNegative
 ignoreZero
 inclination
 inputFile
+inputType
 insetOverlaps
 instances
 integrationGrid
@@ -403,6 +405,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.147  2005/08/19 23:24:55  pwagner
+# Allows HGrid, Copy commands in Output section
+#
 # Revision 2.146  2005/08/04 20:59:43  pwagner
 # Added more for copy command in Output section
 #
