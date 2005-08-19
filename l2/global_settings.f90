@@ -60,7 +60,7 @@ contains
     use EmpiricalGeometry, only: INITEMPIRICALGEOMETRY
 !   use EXPR_M, only: EXPR
     use FGrid, only: AddFGridToDatabase, CreateFGridFromMLSCFInfo, FGrid_T
-    use ForwardModelConfig, only: AddForwardModelConfigToDatabase, &
+    use ForwardModelConfig, only: AddForwardModelConfigToDatabase, Dump, &
       & ForwardModelConfig_T
     use ForwardModelSupport, only: ConstructForwardModelConfig, &
       & ForwardModelGlobalSetup, CreateBinSelectorFromMLSCFInfo
@@ -509,7 +509,7 @@ contains
     end if
     if ( details > -4 ) &
       & call dump_global_settings( processingRange, filedatabase, DirectDatabase, &
-      & LeapSecFileName, details )
+      & ForwardModelConfigDatabase, LeapSecFileName, details )
 
     if ( APrioriFiles%dao // AprioriFiles%ncep == ' ' ) then
       GlobalAttributes%MiscNotes = catLists(GlobalAttributes%MiscNotes, &
@@ -613,7 +613,7 @@ contains
 
     ! ------------------------------------------  dump_global_settings  -----
     subroutine dump_global_settings ( processingRange, &
-      & filedatabase, DirectDatabase, LeapSecFileName, dumpL1BDetails )
+      & filedatabase, DirectDatabase, ForwardModelConfigDatabase, LeapSecFileName, dumpL1BDetails )
 
       ! Dump info obtained during OpenAndInitialize and global_settings:
       ! L1B databse
@@ -627,6 +627,8 @@ contains
       type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
       type (TAI93_Range_T) :: processingRange ! Data processing range
       type (DirectData_T), dimension(:), pointer :: DirectDatabase
+      type(ForwardModelConfig_T), dimension(:), pointer :: &
+        & ForwardModelConfigDatabase
 
       ! The following dtermines the level of detail to expose:
       ! -1 Skip even counterMAF
@@ -763,6 +765,7 @@ contains
       call output ( allow_climatology_overloads, advance='yes' )
 
       call output ( ' ', advance='yes' )
+      call dump(ForwardModelConfigDatabase, details=9, skipPFA=.true.)
       call output ( '============ End Global Settings ============', advance='yes' )
 
     end subroutine dump_global_settings
@@ -907,6 +910,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.104  2005/07/21 23:45:33  pwagner
+! Removed unused l1b fileinfo fields from l2pcf
+!
 ! Revision 2.103  2005/07/12 17:36:16  pwagner
 ! Dropped global attribute InputVersion; fills MiscNotes if no dao
 !
