@@ -20,7 +20,7 @@ module ForwardModelConfig
   use MLSSignals_M, only: Signal_t
   use SpectroscopyCatalog_m, only: Catalog_t
   use VectorsModule, only: VectorValue_T
-  use VGridsDatabase, only: VGrid_T, DestroyVGridContents
+  use VGridsDatabase, only: VGrid_T, DestroyVGridContents, dump
 
   implicit NONE
   private
@@ -243,7 +243,7 @@ contains
     use Toggles, only: Switches
 
     type (ForwardModelConfig_T), intent(inout) :: FwdModelConf
-
+    logical, parameter :: debug = .false.
     integer :: DumpFwm = -1                ! -1 = not called yet, 0 = no dumps,
                                            ! 1 = dump, 2 = dump and stop
     logical :: Error
@@ -254,7 +254,10 @@ contains
       if ( index(switches,'fwmd') /= 0 )  dumpFwm = 1
       if ( index(switches,'fwmD') /= 0 )  dumpFwm = 2
     end if
-
+    if ( debug ) then
+      print *, 'Entering DeriveFromForwardModelConfig'
+      call dump(fwdModelConf, details=9, skipPFA=.true.)
+    endif
     error = .false.
 
     s1 = fwdModelConf%sidebandStart
@@ -264,18 +267,34 @@ contains
     ! Allocate and compute UsedDACSSignals and allocate DACsStaging.
     call DACS_Stuff ( fwdModelConf%DACsStaging, &
                     & fwdModelConf%usedDACSSignals ) ! Below
+    if ( debug .and. .false. ) then
+      print *, 'Exiting DACS_Stuff'
+      call dump(fwdModelConf, details=9, skipPFA=.true.)
+    endif
 
     ! Work out which channels are used.
     call channel_stuff ( fwdModelConf%channels, fwdModelConf%usedDACSSignals ) ! Below
+    if ( debug .and. .false. ) then
+      print *, 'Exiting channel_stuff'
+      call dump(fwdModelConf, details=9, skipPFA=.true.)
+    endif
 
     ! Work out the spectroscopy we're going to need.
     call SpectroscopyCatalogExtract ! Below
+    if ( debug .and. .false. ) then
+      print *, 'Exiting SpectroscopyCatalogExtract'
+      call dump(fwdModelConf, details=9, skipPFA=.true.)
+    endif
 
     ! Work out the PFA stuff.  The PFA stuff is done here instead of in
     ! ForwardModelSupport because the PFA stuff might be large (at least
     ! compared to the LBL stuff), so it is useful to allocate and destroy
     ! it separately for each forward model run.
     call PFA_Stuff ! Below
+    if ( debug ) then
+      print *, 'Exiting PFA_Stuff'
+      call dump(fwdModelConf, details=9, skipPFA=.true.)
+    endif
 
     if ( dumpFwm > 0 .or. error ) then
       call dump ( fwdModelConf, 'DeriveFromForwardModelConfig' )
@@ -283,6 +302,10 @@ contains
       if ( dumpFwm > 1 .and. .not. error ) stop ! error message will stop later
     end if
 
+    if ( debug ) then
+      print *, 'Exiting DeriveFromForwardModelConfig'
+      call dump(fwdModelConf, details=9, skipPFA=.true.)
+    endif
     if ( error ) &
       & call MLSMessage ( MLSMSG_Error, moduleName, &
         & 'Unrecoverable errors in forward model configuration' )
@@ -402,13 +425,29 @@ contains
             & size(fwdModelConf%channels), &
             & size(fwdModelConf%beta_group(b)%pfa(sx)%molecules), &
             & 'Beta_group(b)%PFA(sx)%data', moduleName, fill=0 )
+          if ( debug .and. .false. ) then
+            print *, 'sb, b, n_beta, n_channels, n_molecules ', &
+              & sb, b, size(fwdModelConf%beta_group), size(fwdModelConf%channels), &
+              & size(fwdModelConf%beta_group(b)%pfa(sx)%molecules)
+            call dump(fwdModelConf, details=9, skipPFA=.true.)
+          endif
           do p = 1, size(fwdModelConf%beta_group(b)%pfa(sx)%molecules)
             do channel = 1, size(fwdModelConf%channels)
               ! Look up PFA data and read it if necessary
+              if ( debug .and. .false. ) then
+                print *, 'b, size(beta) ', b, size(fwdModelConf%beta_group)
+                print *, 'signal, size(signals) ', fwdModelConf%channels(channel)%signal, size(fwdModelConf%signalIndices)
+                print *, 'sx, size(pfa) ', sx, size(fwdModelConf%beta_group(b)%pfa)
+                print *, 'channel, p, shape(data) ', channel, p, shape(fwdModelConf%beta_group(b)%pfa(sx)%data)
+              endif
               fwdModelConf%beta_group(b)%pfa(sx)%data(channel,p) = &
                 test_and_fetch_PFA(fwdModelConf%beta_group(b)%pfa(sx)%molecules(p), &
                   & fwdModelConf%signalIndices(fwdModelConf%channels(channel)%signal), &
                   & sb, fwdModelConf%channels(channel)%used, fwdModelConf%spect_der)
+              if ( debug ) then
+                print *, 'after test_and_fetch_PFA ', fwdModelConf%beta_group(b)%pfa(sx)%data(channel,p)
+                call dump(fwdModelConf, details=9, skipPFA=.true.)
+              endif
               if ( fwdModelConf%beta_group(b)%pfa(sx)%data(channel,p) == 0 ) then
                 if ( source_ref(fwdModelConf%where) /= 0 ) &
                 call startErrorMessage ( fwdModelConf%where )
@@ -1109,13 +1148,16 @@ contains
   end subroutine Dump_Beta_Group
 
   ! ----------------------------  Dump_ForwardModelConfigDatabase  -----
-  subroutine Dump_ForwardModelConfigDatabase ( Database, Where )
+  subroutine Dump_ForwardModelConfigDatabase ( Database, &
+    & Where, Details, SkipPFA )
 
     use MoreTree, only: StartErrorMessage
     use Output_M, only: Output
 
     type (ForwardModelConfig_T), pointer, dimension(:) :: Database
     integer, optional, intent(in) :: Where ! Tree node index
+    integer, intent(in), optional :: Details ! for Dump_Beta_Group
+    logical, optional, intent(in) :: skipPFA
 
     ! Local variables
     integer :: I                         ! Loop counters
@@ -1123,7 +1165,8 @@ contains
     ! executable code
     if ( associated(database) ) then
       do i = 1, size(database)
-        call Dump_ForwardModelConfig( database(i) )
+        call Dump_ForwardModelConfig( database(i), &
+          & details=details, skipPFA=skipPFA )
       end do
     else
       if ( present(where) ) call startErrorMessage ( where )
@@ -1132,7 +1175,7 @@ contains
   end subroutine Dump_ForwardModelConfigDatabase
 
   ! -----------------------------------  Dump_ForwardModelConfig  -----
-  subroutine Dump_ForwardModelConfig ( Config, Where, Details )
+  subroutine Dump_ForwardModelConfig ( Config, Where, Details, SkipPFA )
 
     use Dump_0, only: DUMP
     use Intrinsic, only: Lit_indices
@@ -1143,12 +1186,16 @@ contains
     type (ForwardModelConfig_T), intent(in) :: Config
     character(len=*), intent(in), optional :: Where
     integer, intent(in), optional :: Details ! for Dump_Beta_Group
+    logical, optional, intent(in) :: skipPFA
 
     ! Local variables
     integer ::  J                            ! Loop counter
     character (len=MaxSigLen) :: SignalName  ! A line of text
+    logical :: dumpPFA
 
     ! executable code
+    dumpPFA = .true.
+    if ( present(skipPFA) ) dumpPFA = .not. skipPFA
 
     call output ( '  Forward Model Config Name: ' )
     call display_string ( config%name )
@@ -1173,7 +1220,7 @@ contains
     call output ( config%anyLBL(2) )
     call output ( config%anyPFA(1), before='  AnyPFA:' )
     call output ( config%anyPFA(2), advance='yes' )
-    if ( associated(config%Beta_group) ) &
+    if ( associated(config%Beta_group) .and. dumpPFA ) &
       & call dump ( config%Beta_group, &
         & sidebands=(/config%sidebandStart,config%sidebandStop/), details=details )
     call output ( '  Molecules: ', advance='yes' )
@@ -1214,6 +1261,16 @@ contains
           & advance='yes' )
       end do ! j = 1, size(config%channels)
     end if
+    if ( associated(config%IntegrationGrid) ) then
+      call dump(config%IntegrationGrid, details=details)
+    else
+      call output (' no IntegrationGrid', advance='yes')
+    endif
+    if ( associated(config%tangentGrid) ) then
+      call dump(config%tangentGrid, details=details)
+    else
+      call output (' no tangentGrid', advance='yes')
+    endif
   end subroutine Dump_ForwardModelConfig
 
   ! ---------------------------------------------  Dump_Qty_Stuff  -----
@@ -1239,6 +1296,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.78  2005/08/03 18:04:09  vsnyder
+! Some spectroscopy derivative stuff
+!
 ! Revision 2.77  2005/06/03 01:58:53  vsnyder
 ! New copyright notice, move Id to not_used_here to avoid cascades,
 ! Revise PFA data structures.
