@@ -1126,14 +1126,19 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     logical :: alreadyThere
-    character(len=80), dimension(:), pointer :: sdNames => null()
+    integer :: i
     integer :: newsize
+    character(len=80), dimension(:), pointer :: sdNames => null()
     integer :: status
     ! Check if the sdName already there
     ! print *, 'Check if the sdName already there'
     if ( associated(directData%sdNames) ) then
       newSize=SIZE(directData%sdNames)+1
-      alreadyThere = any(sdName == directData%sdNames)
+      ! alreadyThere = any(sdName == directData%sdNames)
+      alreadyThere = .false.
+      do i=1, size(directData%sdNames)
+        alreadyThere = alreadyThere .or. (sdName == directData%sdNames(i))
+      enddo
       ! if ( alreadyThere ) print *, trim(sdName), ' already there'
       if ( alreadyThere ) return
     else
@@ -1388,6 +1393,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.33  2005/08/19 23:28:02  pwagner
+! Trying to avoid possibility of Lahey-causes memory leak
+!
 ! Revision 2.32  2005/07/12 17:38:57  pwagner
 ! Writes APriori File names as an attribute to every l2gp file
 !
