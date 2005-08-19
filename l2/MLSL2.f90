@@ -41,7 +41,7 @@ program MLSL2
   use MLSPCF2, only: MLSPCF_L2CF_START
   use MLSStrings, only: lowerCase, readIntsFromChars
   use MLSStringLists, only: catLists, GetStringElement, GetUniqueList, &
-    & NumStringElements, RemoveElemFromList, unquote
+    & NumStringElements, RemoveElemFromList, SwitchDetail, unquote
   use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUT_DATE_AND_TIME, PRUNIT
   use PARSER, only: CONFIGURATION
   use PVM, only: ClearPVMArgs, FreePVMArgs
@@ -538,8 +538,10 @@ program MLSL2
               if( line(j+1:j+1) /= '0' ) &
                 & switches = catLists(trim(switches), 'time')
               section_times = &
-                & ( index(switches, 'time') /= 0 .and. (line(j+1:j+1) /= '1') )
-              total_times = section_times .and. (line(j+1:j+1) /= '2')
+                & switchDetail(switches, 'time') > -1 &
+                & .and. &
+                & switchDetail(switches, 'time') /= 1
+              total_times = section_times .and. switchDetail(switches, 'time') /= 2
             elseif ( lowercase(line(j+1:j+1)) == 's' ) then
               sectionTimingUnits = l_seconds
             elseif ( lowercase(line(j+1:j+1)) == 'm' ) then
@@ -610,7 +612,7 @@ program MLSL2
      prunit = -1          ! output sent only to stdout, not logged
   end if
 
-  if( index(switches, 'log') /= 0 .or. .not. toolkit ) then
+  if( SwitchDetail(switches, 'log') >= 0 .or. .not. toolkit ) then
      MLSMessageConfig%LogFileUnit = -1
   else
      MLSMessageConfig%LogFileUnit = -2   ! the default in MLSMessageModule
@@ -688,7 +690,7 @@ program MLSL2
       call io_error ( "While opening L2CF", status, line )
       call MLSMessage ( MLSMSG_Error, moduleName, &
         & "Unable to open L2CF file: " // trim(line), MLSFile=MLSL2CF )
-    elseif(index(switches, 'pro') /= 0) then                            
+    elseif(switchDetail(switches, 'pro') >= 0) then                            
       call announce_success(MLSL2CF%name, l2cf_unit)               
     end if
     inunit = l2cf_unit
@@ -706,7 +708,7 @@ program MLSL2
       call output(status, advance='yes')
       call MLSMessage ( MLSMSG_Error, moduleName, &
         & "Unable to open L2CF file named in pcf", MLSFile=MLSL2CF )
-    elseif(index(switches, 'pro') /= 0) then                            
+    elseif(switchDetail(switches, 'pro') >= 0) then                            
       call announce_success(MLSL2CF%name, inunit)               
     end if
   end if
@@ -720,7 +722,7 @@ program MLSL2
   
   call time_now ( t1 )
 
-  if( index(switches, 'opt') /= 0 .or. showDefaults ) then
+  if( switchDetail(switches, 'opt') >= 0 .or. showDefaults ) then
     do j=1, size(current_version_id)
       call output(trim(current_version_id(j)), advance='yes')
     end do
@@ -833,7 +835,7 @@ program MLSL2
   endif    
   if ( timing ) call sayTime ( 'Closing and deallocating' )
   call add_to_section_timing( 'main', t0 )
-  if ( index(switches, 'time') /= 0 ) call dump_section_timings
+  if ( switchDetail(switches, 'time') >= 0 ) call dump_section_timings
   call output_date_and_time(msg='ending mlsl2')
   if( error /= 0 .or. STOPWITHERROR ) then
      call MLSMessageExit(1)
@@ -898,7 +900,8 @@ contains
     call output(' l2cf file:', advance='no')  
     call blanks(4, advance='no')                                     
     call output(trim(MLSL2CF%name), advance='yes')                            
-    if( index(switches, 'opt1') /= 0 .or. showDefaults ) then                                 
+    ! if( index(switches, 'opt1') /= 0 .or. showDefaults ) then                                 
+    if( SwitchDetail(switches, 'opt1') > 0 .or. showDefaults ) then                                 
       call output(' -------------- Summary of run time options'      , advance='no')
       call output(' -------------- ', advance='yes')
       call output(' Use toolkit panoply:                            ', advance='no')
@@ -1062,6 +1065,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.141  2005/08/19 23:29:04  pwagner
+! Wider use of SwitchDetail function
+!
 ! Revision 2.140  2005/07/21 23:39:49  pwagner
 ! use_wall_clock tied to SIPS_VERSION
 !
