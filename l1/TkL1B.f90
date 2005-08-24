@@ -557,7 +557,7 @@ CONTAINS
   !-------------------------------------------------- L1BOA_MAF ----------------
   SUBROUTINE L1BOA_MAF (altG, altT, ascTAI, counterMAF, dscTAI, L1FileHandle, &
        MAFinfo, noMAF, MIFsPerMAF, numOrb, scAngleG, scAngleT, encAngleG, &
-       encAngleT)
+       encAngleT, APE_pos_P, TSSM_pos_P)
 
     ! This subroutine creates the SIDS L1BOA MAF records, and writes them to an
     ! HDF output file.
@@ -571,6 +571,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: L1FileHandle, counterMAF, noMAF, numOrb, MIFsPerMAF
     REAL, INTENT(INOUT) :: scAngleG(:), scAngleT(:)
     REAL, INTENT(IN) :: encAngleG(:), encAngleT(:)  ! encoder Angles
+    REAL, DIMENSION(:,:), INTENT(IN) :: APE_pos_P(2,*), TSSM_pos_P(2,*)
     REAL(r8), INTENT(IN) :: altG, altT
     REAL(r8), INTENT(IN) :: ascTAI(:), dscTAI(:)
 
@@ -807,6 +808,14 @@ CONTAINS
        ENDIF
     ENDIF
 
+    IF (.NOT. ASSOCIATED(tp%tpPos_P)) THEN
+       ALLOCATE (tp%tpPos_P(2,lenG), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  GHz tp quantities: Pos_P'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
+
     IF (.NOT. ASSOCIATED(tp%tpOrbY)) THEN
        ALLOCATE (tp%tpOrbY(lenG), STAT=error)
        IF (error /= 0) THEN
@@ -951,6 +960,10 @@ CONTAINS
     GHz_GeodLat = tp%tpGeodLat
     GHz_GeodAngle = tp%tpGeodAngle
 
+    ! Save pos1/pos2 prime data:
+
+    tp%tpPos_P = APE_pos_P(:,1:lenG)
+
     ELSE
 
        CALL Init_L1BOAtp (tp)
@@ -985,6 +998,10 @@ CONTAINS
             sc%scECI(:,1:lenT), sc%scVelECI(:,1:lenT), scAngleT, encAngleT, &
             tp, ecrtosc, GroundToFlightMountsTHz, ScToGroundMountsTHz, gtindx)
     ENDIF
+
+    ! Save pos1/pos2 prime data:
+
+    tp%tpPos_P = TSSM_pos_P(:,1:lenG)
 
     ! Compute THz master coordinate
 
@@ -1465,6 +1482,9 @@ CONTAINS
 END MODULE TkL1B
 
 ! $Log$
+! Revision 2.25  2005/08/24 15:53:43  perun
+! Allocate and save pos1/pos2 prime data in the tangent point structures
+!
 ! Revision 2.24  2005/07/19 16:34:46  perun
 ! Added SAVE to sc and tp structures to prevent memory leaks
 !
