@@ -325,6 +325,7 @@ MODULE SciUtils ! L0 science utilities
     REAL :: GSM_pos(0:(MaxMIFs-1),2), TSSM_pos(0:(MaxMIFs-1),2)
     REAL :: APE_theta(0:(MaxMIFs-1)), GSM_theta(0:(MaxMIFs-1)), &
          TSSM_theta(0:(MaxMIFs-1))
+    REAL :: APE_pos_P(0:(MaxMIFs-1),2), TSSM_pos_P(0:(MaxMIFs-1),2)
 
     more_data = .TRUE.
 
@@ -348,6 +349,10 @@ MODULE SciUtils ! L0 science utilities
        IF (L1ProgType == THzType) THEN
           CALL Save_THz_pkt (SciMAF(Sci_pkt%MIFno), THzSciMAF(Sci_pkt%MIFno))
        ENDIF
+       APE_pos(MIFno,:) = SciMAF(MIFno)%APE_pos
+       ASA_pos(MIFno,:) = SciMAF(MIFno)%ASA_pos
+       GSM_pos(MIFno,:) = SciMAF(MIFno)%GSM_pos
+       TSSM_pos(MIFno,:) = SciMAF(MIFno)%TSSM_pos
     ENDIF
 
     DO
@@ -396,6 +401,8 @@ MODULE SciUtils ! L0 science utilities
     APE_theta = QNan()
     GSM_theta = QNan()
     TSSM_theta = QNan()
+    APE_pos_P = QNan()
+    TSSM_pos_P = QNan()
 
     DO m = 0, (MaxMIFs - 2)
 
@@ -432,6 +439,20 @@ MODULE SciUtils ! L0 science utilities
           GSM_theta(m) = pos2 + 0.25 * (dif - 180.0)
        ENDIF
 
+! Save Pos1 and Pos2 Prime to save in the L1BOA file:
+
+       TSSM_pos_P(m,1) = TSSM_pos(m,1)
+       IF (m == 1 .OR. m > 2) THEN
+          APE_pos_P((m-1),2) = APE_pos(m,2)
+          TSSM_pos_P((m-1),2) = TSSM_pos(m,2)
+          APE_pos_P((m-1),1) = APE_pos(m,1)
+       ELSE IF (m == 2) THEN
+          APE_pos_P(1,1) = 2 * APE_pos(1,2) - APE_pos(1,1) 
+          TSSM_pos_P(2,1) = 2 * TSSM_pos(3,2) - TSSM_pos(3,1)
+          APE_pos_P(1,2) = 2 * APE_pos(3,1) - APE_pos(3,2)
+          TSSM_pos_P(1,2) = 2 * TSSM_pos(1,1) - TSSM_pos(1,2)
+       ENDIF
+
     ENDDO
     APE_theta(MaxMIFs-2) = APE_pos(MaxMIFs-1,2)
     APE_theta(MaxMIFs-1) = APE_pos(MaxMIFs-1,1)
@@ -444,6 +465,8 @@ MODULE SciUtils ! L0 science utilities
        SciMAF(m)%GHz_sw_pos = SwMirPos ("G", GSM_theta(m))
        SciMAF(m)%THz_sw_pos = SwMirPos ("T", TSSM_theta(m))
        SciMAF(m)%TSSM_theta = TSSM_theta(m)
+       SciMAF(m)%APE_pos_P = APE_pos_P(m,:)
+       SciMAF(m)%TSSM_pos_P = TSSM_pos_P(m,:)
        THzSciMAF(m)%TSSM_theta = TSSM_theta(m)
        THzSciMAF(m)%SwMirPos = SwMirPos ("T", TSSM_theta(m))
     ENDDO
@@ -852,6 +875,9 @@ MODULE SciUtils ! L0 science utilities
 END MODULE SciUtils
 
 ! $Log$
+! Revision 2.13  2005/08/24 15:53:18  perun
+! Save pos1/pos2 prime data for the L1BOA file
+!
 ! Revision 2.12  2005/08/11 19:06:02  perun
 ! Write bad checksum and band switching messages to log file
 !
@@ -883,6 +909,9 @@ END MODULE SciUtils
 ! moved parameter statement to data statement for LF/NAG compatitibility
 !
 ! $Log$
+! Revision 2.13  2005/08/24 15:53:18  perun
+! Save pos1/pos2 prime data for the L1BOA file
+!
 ! Revision 2.12  2005/08/11 19:06:02  perun
 ! Write bad checksum and band switching messages to log file
 !
