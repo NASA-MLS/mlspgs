@@ -324,12 +324,18 @@ CONTAINS
 
                 IF (rad_prec > 0.0) rad_prec = rad_prec * MIN ( &
                      MIFprecSign(MIF_index), BandChanBad%Sign(Bandno, chan))
-                FBrad(bank)%precision(chan,MIF_index+1) = rad_prec
 
                 CALL CalcNonLimbRad (BandNo, chan, radNum, ReflecAvg, &
                      NonLimbRad)
-                FBrad(bank)%value(chan,MIF_index+1) = &
-                     FBrad(bank)%value(chan,MIF_index+1) - NonLimbRad
+
+                IF (Finite (NonLimbRad)) THEN
+                   FBrad(bank)%value(chan,MIF_index+1) = &
+                        FBrad(bank)%value(chan,MIF_index+1) - NonLimbRad
+                   FBrad(bank)%precision(chan,MIF_index+1) = rad_prec
+                ELSE
+                   FBrad(bank)%value(chan,MIF_index+1) = 0.0
+                   FBrad(bank)%precision(chan,MIF_index+1) = -1.0
+                ENDIF
 
                 IF (do_chi2_err) FBrad(bank)%precision(chan,MIF_index+1) = &
                      SQRT (deflt_chi2%FB(chan,BandNo)) * &
@@ -371,12 +377,18 @@ CONTAINS
 
                 IF (rad_prec > 0.0) rad_prec = rad_prec * MIN ( &
                      MIFprecSign(MIF_index),  BandChanBad%Sign(Bandno, chan))
-                MBrad(bank)%precision(chan,MIF_index+1) = rad_prec
 
                 CALL CalcNonLimbRad (BandNo, chan, radNum, ReflecAvg, &
                      NonLimbRad)
-                MBrad(bank)%value(chan,MIF_index+1) = &
-                     MBrad(bank)%value(chan,MIF_index+1) - NonLimbRad
+
+                IF (Finite (NonLimbRad)) THEN
+                   MBrad(bank)%value(chan,MIF_index+1) = &
+                        MBrad(bank)%value(chan,MIF_index+1) - NonLimbRad
+                   MBrad(bank)%precision(chan,MIF_index+1) = rad_prec
+                ELSE
+                   MBrad(bank)%value(chan,MIF_index+1) = 0.0
+                   MBrad(bank)%precision(chan,MIF_index+1) = -1.0
+                ENDIF
 
                 IF (do_chi2_err) MBrad(bank)%precision(chan,MIF_index+1) = &
                      SQRT (deflt_chi2%MB(chan,bank)) * &
@@ -413,12 +425,18 @@ CONTAINS
 
                 IF (rad_prec > 0.0) rad_prec = rad_prec * MIN ( &
                      MIFprecSign(MIF_index), BandChanBad%Sign(Bandno, chan))
-                WFrad(bank)%precision(chan,MIF_index+1) = rad_prec
 
                 CALL CalcNonLimbRad (BandNo, chan, radNum, ReflecAvg, &
                      NonLimbRad)
-                WFrad(bank)%value(chan,MIF_index+1) = &
-                     WFrad(bank)%value(chan,MIF_index+1) - NonLimbRad
+
+                IF (Finite (NonLimbRad)) THEN
+                   WFrad(bank)%value(chan,MIF_index+1) = &
+                        WFrad(bank)%value(chan,MIF_index+1) - NonLimbRad
+                   WFrad(bank)%precision(chan,MIF_index+1) = rad_prec
+                ELSE
+                   WFrad(bank)%value(chan,MIF_index+1) = 0.0
+                   WFrad(bank)%precision(chan,MIF_index+1) = -1.0
+                ENDIF
 
                 IF (do_chi2_err) WFrad(bank)%precision(chan,MIF_index+1) = &
                      SQRT (deflt_chi2%WF(chan,bank)) * &
@@ -465,12 +483,18 @@ CONTAINS
 
                    IF (rad_prec > 0.0) rad_prec = rad_prec * MIN ( &
                       MIFprecSign(MIF_index), BandChanBad%Sign(Bandno, chan))
-                   DACSrad(bank)%precision(chan,MIF_index+1) = rad_prec
 
                    CALL CalcNonLimbRad (BandNo, chan, radNum, ReflecAvg, &
                         NonLimbRad)
-                   DACSrad(bank)%value(chan,MIF_index+1) = &
-                        DACSrad(bank)%value(chan,MIF_index+1) - NonLimbRad
+
+                   IF (Finite (NonLimbRad)) THEN
+                      DACSrad(bank)%value(chan,MIF_index+1) = &
+                           DACSrad(bank)%value(chan,MIF_index+1) - NonLimbRad
+                      DACSrad(bank)%precision(chan,MIF_index+1) = rad_prec
+                   ELSE
+                      DACSrad(bank)%value(chan,MIF_index+1) = 0.0
+                      DACSrad(bank)%precision(chan,MIF_index+1) = -1.0
+                  ENDIF
 
                 ENDDO
              ENDDO
@@ -499,6 +523,9 @@ END MODULE Radiances
 !=============================================================================
 
 ! $Log$
+! Revision 2.14  2005/08/24 15:52:54  perun
+! Set rads and precs to fill values when nonlimb radiances are unavailable
+!
 ! Revision 2.13  2005/06/23 18:41:36  pwagner
 ! Reworded Copyright statement, moved rcs id
 !

@@ -43,6 +43,7 @@ CONTAINS
     INTEGER, PARAMETER :: last_MIF_indx = MaxMIFs - 1
     REAL :: scAngleG(0:last_MIF_indx), scAngleT(0:last_MIF_indx)
     REAL :: encAngleG(0:last_MIF_indx), encAngleT(0:last_MIF_indx)
+    REAL :: APE_pos_P(2,0:last_MIF_indx), TSSM_pos_P(2,0:last_MIF_indx)
 
     IF (.NOT. L1Config%Globals%ProduceL1BOA) RETURN
 
@@ -60,11 +61,13 @@ CONTAINS
           IF (scAngleG(i) < 0.0) scAngleG(i) = scAngleG(i-1)
           IF (scAngleT(i) < 0.0) scAngleT(i) = scAngleT(i-1)
        ENDIF
+       APE_pos_P(:,i) = CurMAFdata%SciPkt(i)%APE_pos_P
+       TSSM_pos_P(:,i) = CurMAFdata%SciPkt(i)%TSSM_pos_P
     ENDDO
 
     CALL L1BOA_MAF (altG, altT, ascTAI, counterMAF, dscTAI, &
          l1bFileInfo%OAId, MAFinfo, MAFno, MIFsPerMAF, numOrb, scAngleG, &
-         scAngleT, encAngleG, encAngleT)
+         scAngleT, encAngleG, encAngleT, APE_pos_P, TSSM_pos_P)
 
   END SUBROUTINE OutputL1BOA
 
@@ -134,6 +137,9 @@ CONTAINS
 END MODULE L1BOutUtils
 
 ! $Log$
+! Revision 2.14  2005/08/24 15:50:57  perun
+! Assemble and pass APE and TSSM pos_P for output
+!
 ! Revision 2.13  2005/06/23 18:41:35  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
