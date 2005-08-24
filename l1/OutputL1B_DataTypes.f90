@@ -71,6 +71,7 @@ MODULE OutputL1B_DataTypes
     REAL(r8), DIMENSION(:,:), POINTER :: tpECI => NULL()    ! tp location in ECI
     REAL(r8), DIMENSION(:,:), POINTER :: tpECR => NULL()    ! tp location in ECR
     REAL(r8), DIMENSION(:,:), POINTER :: tpECRtoFOV => NULL() ! tp ECR to FOV
+    REAL, DIMENSION(:,:), POINTER :: tpPos_P => NULL()  ! tp Pos Prime vals
     ! dimensioned (mod.MIF)
     REAL(r8), DIMENSION(:), POINTER :: tpGeodAlt => NULL()  ! geod alt of tp 
     REAL(r8), DIMENSION(:), POINTER :: tpGeocAlt  => NULL() ! geoc alt of tp
@@ -99,6 +100,9 @@ contains
 END MODULE OutputL1B_DataTypes
 
 ! $Log$
+! Revision 2.5  2005/08/24 15:51:55  perun
+! Add pointer for Pos_P to tangent point structure
+!
 ! Revision 2.4  2005/06/23 18:41:36  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
