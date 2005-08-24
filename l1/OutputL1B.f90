@@ -228,12 +228,17 @@ CONTAINS
     dataset%Dimensions(1) = 'xyz                 '
     dataset%Dimensions(2) = 'GHz.MIF             '
     dataset%Dimensions(3) = 'MAF                 '
-    CALL Build_MLSAuxData (sd_id,dataset, tp%tpECI, lastIndex=noMAF)
+    CALL Build_MLSAuxData (sd_id, dataset, tp%tpECI, lastIndex=noMAF)
     dataset%name      = 'GHz/ECR           '
-    CALL Build_MLSAuxData (sd_id,dataset, tp%tpECR, lastIndex=noMAF)
+    CALL Build_MLSAuxData (sd_id, dataset, tp%tpECR, lastIndex=noMAF)
     dataset%name      = 'GHz/ECRtoFOV      '
     dataset%Dimensions(1) = '3x3                 '
-    CALL Build_MLSAuxData (sd_id,dataset, tp%tpECRtoFOV, lastIndex=noMAF)
+    CALL Build_MLSAuxData (sd_id, dataset, tp%tpECRtoFOV, lastIndex=noMAF)
+
+    dataset%name      = 'GHz/Pos_Prime     '
+    dataset%data_type = 'real              '
+    dataset%Dimensions(1) = '2                   '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%tpPos_P, lastIndex=noMAF)
 
     CALL Deallocate_DataProducts (dataset)
 
@@ -316,6 +321,10 @@ CONTAINS
     dataset%name      = 'THz/ECRtoFOV      '
     dataset%Dimensions(1) = '3x3                 '
     CALL Build_MLSAuxData (sd_id,dataset, tp%tpECRtoFOV, lastIndex=noMAF)
+    dataset%name      = 'THz/Pos_Prime     '
+    dataset%data_type = 'real              '
+    dataset%Dimensions(1) = '2                   '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpPos_P, lastIndex=noMAF)
 
     CALL Deallocate_DataProducts (dataset)
 
@@ -893,6 +902,9 @@ END MODULE OutputL1B
 !=============================================================================
 
 ! $Log$
+! Revision 2.17  2005/08/24 15:52:26  perun
+! Output Pos_Prime for both GHz and THz in the L1BOA file
+!
 ! Revision 2.16  2005/06/23 18:41:36  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
