@@ -291,6 +291,7 @@ MODULE L0_sci_tbls  ! Define L0 science tables
      INTEGER :: WF(WFchans,WFnum)
      REAL :: DACS(DACSchans,DACSnum)
      REAL :: APE_pos(2), ASA_pos(2), GSM_pos(2), TSSM_pos(2)
+     REAL :: APE_pos_P(2), TSSM_pos_P(2)
      REAL :: APE_theta, ASA_theta, GSM_theta, TSSM_theta
      REAL :: scAngleG                  ! Boresight wrt. spc +x (GHz)
      REAL :: scAngleT                  ! Boresight wrt. spc +x (THz)
@@ -602,6 +603,9 @@ CONTAINS
 END MODULE L0_sci_tbls
 
 ! $Log$
+! Revision 2.11  2005/08/24 15:50:28  perun
+! Add APE and TSSM pos_P to each science packet
+!
 ! Revision 2.10  2005/06/23 18:41:35  pwagner
 ! Reworded Copyright statement, moved rcs id
 !

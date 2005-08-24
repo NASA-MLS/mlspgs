@@ -44,9 +44,9 @@ MODULE L1LogUtils
   CHARACTER(LEN=27) :: asciiUTC(2)
   INTEGER :: unit ! for writing log file
   INTEGER :: eng_warns, eng_errs, sci_warns, sci_errs
-  INTEGER :: MAF_dif, PGS_stat
+  INTEGER :: MAF_dif, PGS_stat, last_MIF
   REAL(R8) :: last_TAI
-  REAL :: MAF_dur
+  REAL :: MAF_dur, MIF_dur
   TYPE (TAI93_Range_T) :: TAI_range
 
   TYPE (Chan_R_T) :: Atten_cnts = &  ! FB, MB, WF, DACS
@@ -202,6 +202,19 @@ CONTAINS
           WRITE (unit, *) 'UTC gap: ', asciiUTC(1)//' to '//asciiUTC(2)
           WRITE (unit, *) ''
        ENDIF
+
+       DO i = 0, last_MIF
+          IF (SciMAF(i)%MIFno < 0) THEN
+             SciGaps = SciGaps + 1
+             Sci_Warns = Sci_Warns + 1
+             WRITE (unit, *) '##### WARNING! Data Gap:'
+             WRITE (unit, *) 'MIF missing: ', i
+             PGS_stat = PGS_TD_TAItoUTC (SciMAF(0)%secTAI+MIF_dur*i,asciiUTC(2))
+             WRITE (unit, *) 'UTC: ', asciiUTC(2)
+             WRITE (unit, *) ''
+          ENDIF
+       ENDDO
+
        last_TAI = SciMAF(0)%secTAI
 
        SciMAFs = SciMAFs + 1
@@ -479,9 +492,11 @@ CONTAINS
 
     window_MAFs = L1Config%Calib%CalWindow
     MAF_dur = L1Config%Calib%MIF_duration * L1Config%Calib%MIFsPerMAF
+    MIF_dur = L1Config%Calib%MIF_duration
     TAI_range = L1Config%Input_TAI
     TAI_range%startTime = TAI_range%startTime - (window_MAFs/2 * MAF_dur)
     TAI_range%endTime = TAI_range%endTime + ((window_MAFs/2 - 1)* MAF_dur)
+    last_MIF = L1Config%Calib%MIFsPerMAF - 1
 
 ! Init number of warnings and errors
 
@@ -554,6 +569,9 @@ END MODULE L1LogUtils
 !=============================================================================
 
 ! $Log$
+! Revision 2.11  2005/08/24 15:51:29  perun
+! Check for and report missing MIFs in science data
+!
 ! Revision 2.10  2005/08/11 19:05:03  perun
 ! Change SciMAFs greater than EngMAFs from error to warning
 !
