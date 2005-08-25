@@ -144,13 +144,12 @@ endif
 #Any sources to explicitly exclude from dependency list?
 OMIT_SRCS := $(OMIT) MLSL1.f90
 
-PROG=mlsl1log mlsl1g mlsl1t mlsl1boa
-# PROG=mlsl1
+PROG=mlsl1log mlsl1g mlsl1t
 
 OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 
 #These are the source files for the drivers; they should be excluded from OBJS
-DRIVERS=MLSL1G.f90 MLSL1log.f90 MLSL1T.f90 MLSL1BOA.f90
+DRIVERS=MLSL1G.f90 MLSL1log.f90 MLSL1T.f90
 DRIVERS_PREFXD := $(shell ${REECHO} -prefix=-do $(DRIVERS))
 
 #CASCADE determines whether to create/use .mod dependencies:
@@ -320,9 +319,6 @@ install: $(PROG)
 	   $(MLSBIN)/mkpath.sh $(INSTALLDIR) ; \
 	fi ; \
 	if [ -f $(PLATFORMS)/$(MLSCONFG)/mlsl1log ] ; then \
-	   mv $(PLATFORMS)/$(MLSCONFG)/mlsl1boa $(INSTALLDIR) ; \
-	fi ; \
-	if [ -f $(PLATFORMS)/$(MLSCONFG)/mlsl1log ] ; then \
 	   mv $(PLATFORMS)/$(MLSCONFG)/mlsl1log $(INSTALLDIR) ; \
 	fi ; \
 	if [ -f $(PLATFORMS)/$(MLSCONFG)/mlsl1t ] ; then \
@@ -354,6 +350,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
 
 # $Log$
+# Revision 2.49  2005/08/25 19:21:58  pwagner
+# Removed MLSL1BOA as target
+#
 # Revision 2.48  2005/06/23 23:02:30  pwagner
 # Reworded Copyright statement
 #
