@@ -42,8 +42,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
     L_SPACERADIANCE, L_STRAYRADIANCE, L_SURFACETYPE, L_SYSTEMTEMPERATURE, &
     L_TNGTECI, L_TNGTGEOCALT, L_TNGTGEODALT, &
     L_TOTALEXTINCTION, L_USBFREQUENCY, L_VMR, L_XYZ
-  use intrinsic, only: l_hdf, LIT_INDICES !, L_CHANNEL, &
-!    & L_MAF, L_MIF, L_NONE
+  use intrinsic, only: l_hdf, LIT_INDICES
   use L1BData, only: L1BDATA_T, READL1BDATA
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: R8, R4, DEFAULTUNDEFINEDVALUE, MLSFile_T
@@ -736,6 +735,7 @@ contains ! =====     Public Procedures     =============================
     logical :: alreadyOpen
     integer :: returnStatus
     ! Executable code
+    returnStatus = 0
     alreadyOpen = L2AUXFile%stillOpen
     if ( .not. alreadyOpen ) then
       call mls_openFile(L2AUXFile, returnStatus)
@@ -909,12 +909,6 @@ contains ! =====     Public Procedures     =============================
     status = sfendacc(sds_id)
     if (status == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
       &end access to sds_id after reading.', MLSFile=L2AUXFile)
-
-    !  After reading, detach from hdf interface
-
-    !     status = sfend(sd_id)
-    !     if (status == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
-    !          &detach from SD file after reading.')
 
   end subroutine ReadL2AUXData_MF_hdf4
 
@@ -1277,8 +1271,6 @@ contains ! =====     Public Procedures     =============================
 		  		call output(TRIM(dimName), advance='yes')
 		  		call announce_error (  0, &
           & "Error setting dimension name to SDS l2aux file:", L2AUXFile=L2AUXFile)
-!		  		call MLSMessage ( MLSMSG_Error, ModuleName, &
-!          & "Error setting dimension name to SDS l2aux file:")
 	     end if
         ! Write dimension scale
         status=SFSDScale(dimID, dimSizes(dimensionInFile+1), DFNT_FLOAT32, &
@@ -1290,8 +1282,6 @@ contains ! =====     Public Procedures     =============================
 		  		call output(TRIM(dimName), advance='yes')
 		      call announce_error ( 0, &
           & "Error writing dimension scale in l2auxFile:", L2AUXFile=L2AUXFile )
-!		      call MLSMessage ( MLSMSG_Error, ModuleName, &
-!          & "Error writing dimension scale in l2auxFile:" )
 	     end if
         dimensionInFile=dimensionInFile+1
       end if
@@ -1874,6 +1864,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.74  2005/08/25 20:21:41  pwagner
+! Ensure returnStatus defined in ReadL2AUXData_MLSFile
+!
 ! Revision 2.73  2005/08/19 23:27:02  pwagner
 ! Uses '*' as wildcard sdList string in cpL2AUXData
 !
