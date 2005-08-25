@@ -92,10 +92,11 @@ contains
     z_all(z_all_prev) = 4.000_rp
 
     ! Add the original Integration Grid:
-    z_all_size = z_all_prev + Size(FwdModelConf%integrationGrid%surfs)
-    if ( associated(FwdModelConf%integrationGrid%surfs) ) &
-      & z_all(z_all_prev+1:z_all_size) = FwdModelConf%integrationGrid%surfs(:,1)
-    z_all_prev = z_all_size
+    if ( associated(FwdModelConf%integrationGrid%surfs) ) then
+      z_all_size = z_all_prev + Size(FwdModelConf%integrationGrid%surfs)
+      z_all(z_all_prev+1:z_all_size) = FwdModelConf%integrationGrid%surfs(:,1)
+      z_all_prev = z_all_size
+    end if
 
     if ( associated(FwdModelConf%tangentGrid) ) then
       ! if pointing grid is associated concatenate it to the state vector
@@ -171,6 +172,9 @@ contains
 end module Compute_GL_Grid_M
 
 ! $Log$
+! Revision 2.11  2005/08/25 00:49:01  vsnyder
+! Don't look at the size of integration grid if it's not associated
+!
 ! Revision 2.10  2005/08/09 15:15:43  pwagner
 ! Don't add pointer to z_all if not associated
 !
