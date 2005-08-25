@@ -213,9 +213,16 @@ contains ! =========== Public procedures ===================================
     use OUTPUT_M, only: OUTPUT
     use STRING_TABLE, only: DISPLAY_STRING
     type(hGrid_T), intent(in) :: aHGRID
+    integer :: IERR
     integer :: J
+      IERR = 0
       call output ( 'Name = ' )
-      call display_string ( aHgrid%name )
+      if ( aHgrid%name > 0 ) then
+        call display_string ( aHgrid%name, ierr=ierr )
+        if ( ierr /= 0 ) call output ( '(not found in string table)')
+      else
+        call output('(unknown)')
+      endif
       call output ( aHgrid%noProfs, before=' noProfs = ' )
       call output ( aHgrid%noProfsLowerOverlap, before=' lowerOverlap = ' )
       call output ( aHgrid%noProfsUpperOverlap, before=' upperOverlap = ', advance='yes' )
@@ -310,6 +317,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.6  2005/08/25 20:18:05  pwagner
+! Protect against crashing when dumping anonymous HGrids
+!
 ! Revision 2.5  2005/06/22 17:25:49  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
