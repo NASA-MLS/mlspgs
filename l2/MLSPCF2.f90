@@ -74,8 +74,8 @@ MODULE MLSPCF2
    INTEGER, PARAMETER :: mlspcf_l2clim_end = 22299
    !
    INTEGER, PARAMETER :: mlspcf_l2gp_start = 30000
-   INTEGER, PARAMETER :: mlspcf_l2gp_end = 30029   ! Otherwise more toolkit msgs
-   ! INTEGER, PARAMETER :: mlspcf_l2gp_end = 30569 ! warning "id not found"
+   !INTEGER, PARAMETER :: mlspcf_l2gp_end = 30029   ! Otherwise more toolkit msgs
+   INTEGER, PARAMETER :: mlspcf_l2gp_end = 30569 ! warning "id not found"
    !
    INTEGER, PARAMETER :: mlspcf_l2dgg_start = 30570
    INTEGER, PARAMETER :: mlspcf_l2dgg_end = 30599
@@ -114,6 +114,9 @@ contains
 END MODULE MLSPCF2
 
 ! $Log$
+! Revision 2.16  2005/08/25 20:30:20  pwagner
+! Restored larger mlspcf_l2gp_end--better way to limit warnings found
+!
 ! Revision 2.15  2005/06/22 18:57:02  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
