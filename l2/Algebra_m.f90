@@ -75,7 +75,7 @@ contains
     use TREE_TYPES ! Everything, except tree_init; remainder begin with N_
     use VectorsModule, only:  AddToVector, AddVectorToDatabase,  CopyVector, &
       & CloneVector, DestroyVectorInfo, Dump, ScaleVector, Vector_T, PowVector, &
-      & ReciprocateVector
+      & ReciprocateVector, MultiplyVectors
 
     integer, intent(in) :: ROOT
     type(vector_T), dimension(:), pointer :: VectorDatabase
@@ -898,7 +898,7 @@ contains
             case ( w_number ) ! ........................ Vector * Number
               call scaleVector ( vector, dValue2 )
             case ( w_vector ) ! ........................ Vector * Vector
-              call Announce_Error ( root, notSupported )
+              call MultiplyVectors ( vector, vector2 )
             case ( w_matrix ) ! ........................ Vector * Matrix
               call Announce_Error ( root, notSupported )
             case ( w_matrix_c ) ! .................... Vector * Matrix_C
@@ -1478,6 +1478,9 @@ contains
 end module ALGEBRA_M
 
 ! $Log$
+! Revision 2.22  2005/08/31 19:40:03  livesey
+! Added vector multiply capability
+!
 ! Revision 2.21  2005/06/30 22:43:40  livesey
 ! Added residualSupplied option to normal equations
 !
