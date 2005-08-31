@@ -44,7 +44,8 @@ contains ! =====     Public Procedures     =============================
 
   ! -----------------------------------  CreateHGridFromMLSCFInfo  -----
   type(hGrid_T) function CreateHGridFromMLSCFInfo &
-    & ( name, root, filedatabase, l2gpDatabase, processingRange, chunk ) result ( hGrid )
+    & ( name, root, filedatabase, l2gpDatabase, processingRange, chunk, &
+    & suppressGeometryDump ) result ( hGrid )
     ! & ( name, root, l1bInfo, l2gpDatabase, processingRange, chunk ) result ( hGrid )
 
     use Chunks_m, only: MLSChunk_T
@@ -79,6 +80,7 @@ contains ! =====     Public Procedures     =============================
     type (L2GPData_T), pointer, dimension(:) :: L2GPDATABASE
     type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
     type (MLSChunk_T), intent(in) :: CHUNK ! The chunk
+    logical, intent(in), optional :: SUPPRESSGEOMETRYDUMP
 
     ! Local variables
     integer :: DATE                 ! Tree node
@@ -98,6 +100,7 @@ contains ! =====     Public Procedures     =============================
 
     real(rk) :: incline                 ! Orbital inclination / degrees
     real(rk) :: MINTIME, MAXTIME        ! Span for a chunk
+    logical :: MYSUPPRESSGEOMETRYDUMP
     integer, dimension(2) :: PROFRANGE  ! Profile range
     integer :: A,B                      ! Elements of profile range
 
@@ -124,6 +127,8 @@ contains ! =====     Public Procedures     =============================
     type (MLSFile_T), pointer             :: L1BFile
 
     ! Executable code
+    mySuppressGeometryDump = .false.
+    if ( present ( suppressGeometryDump ) ) mySuppressGeometryDump = suppressGeometryDump
 
       L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
       hdfversion = L1BFile%HDFVersion
@@ -292,7 +297,7 @@ contains ! =====     Public Procedures     =============================
     
     if ( toggle(gen) ) call trace_end ( "CreateHGridFromMLSCFInfo" )
 
-    if ( index ( switches, 'geom' ) /= 0 ) &
+    if ( index ( switches, 'geom' ) /= 0 .and. .not. mySuppressGeometryDump ) &
       & call DumpChunkHGridGeometry ( hGrid, chunk, &
       & trim(instrumentModuleName), filedatabase )
       ! & trim(instrumentModuleName), l1bInfo )
@@ -1344,7 +1349,7 @@ contains ! =====     Public Procedures     =============================
                 else
                   ! dummyHGrid = CreateHGridFromMLSCFInfo ( 0, key, l1bInfo, l2gpDatabase, &
                   dummyHGrid = CreateHGridFromMLSCFInfo ( 0, key, filedatabase, l2gpDatabase, &
-                    & processingRange, chunks(chunk) )
+                    & processingRange, chunks(chunk), suppressGeometryDump=.true. )
                   chunks(chunk)%hGridOffsets(hGrid) = dummyHGrid%noProfs - &
                     & dummyHGrid%noProfsLowerOverlap - dummyHGrid%noProfsUpperOverlap
                   call DestroyHGridContents ( dummyHGrid )
@@ -1491,6 +1496,11 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.70  2005/08/31 19:41:16  livesey
+! Added option to suppress the geometry dump in that first run through
+! generating the HGrids that is done by tree walker to assess where each
+! direct write places stuff in the output files.
+!
 ! Revision 2.69  2005/06/22 18:57:01  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
