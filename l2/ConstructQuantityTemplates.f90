@@ -1031,7 +1031,9 @@ contains ! ============= Public procedures ===================================
       L_FIELDAZIMUTH, L_FIELDELEVATION, L_FIELDSTRENGTH, &
       L_GPH, L_HEIGHTOFFSET, &
       L_ISOTOPERATIO, L_JACOBIAN_COLS, L_JACOBIAN_ROWS, &
-      L_L1BMAFBASELINE, L_L1BMIF_TAI, L_LIMBSIDEBANDFRACTION, L_LOSTRANSFUNC, L_LOSVEL, &
+      L_L1BMAFBASELINE, L_L1BMIF_TAI, L_LIMBSIDEBANDFRACTION, &
+      L_LineCenter, L_LineWidth, L_LineWidth_TDep, &
+      L_LOSTRANSFUNC, L_LOSVEL, &
       L_MASSMEANDIAMETERICE, L_MASSMEANDIAMETERWATER, L_MAGNETICFIELD, &
       L_MIFDEADTIME, &
       L_NOISEBANDWIDTH, L_NORADSPERMIF, L_NORADSBINNED, &
@@ -1126,6 +1128,9 @@ contains ! ============= Public procedures ===================================
       l_l1bMAFBaseline, phyq_temperature, p_majorFrame, p_signal, next, &
       l_l1bMIF_TAI, phyq_time, p_minorFrame, p_scmodule, next, &
       l_limbSidebandFraction, phyq_dimensionless, p_signal, next, &
+      l_lineCenter, phyq_frequency, p_hGrid, p_vGrid, p_molecule, next, &
+      l_lineWidth,  phyq_frequency, p_hGrid, p_vGrid, p_molecule, next, &
+      l_lineWidth_TDep, phyq_dimensionless, p_hGrid, p_vGrid, p_molecule, next, &
       l_losTransFunc, phyq_dimensionless, p_minorFrame, p_sGrid, p_module, next, &
       l_losVel, phyq_dimensionless, p_minorFrame, p_module, next, &
       l_magneticField, phyq_gauss, p_vGrid, p_hGrid, p_xyz, p_mustBeZeta, next, &
@@ -1282,6 +1287,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.126  2005/09/02 21:57:23  vsnyder
+! Add spectroscopy parameter quantities
+!
 ! Revision 2.125  2005/08/09 00:03:04  pwagner
 ! hdfVersion not left undefined in AnyGoodSignalData
 !
