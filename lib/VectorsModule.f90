@@ -1603,6 +1603,8 @@ contains ! =====     Public Procedures     =============================
   ! specified type, as well as the specified molecule and/or radiometer
   ! index, is returned.
 
+    use MLSSignals_m, only: GetRadiometerName
+
     ! Dummy arguments
     type (Vector_T), intent(in), target :: VECTOR
     integer, intent(in) :: QUANTITYTYPE ! Quantity type index (l_...)
@@ -1681,7 +1683,7 @@ contains ! =====     Public Procedures     =============================
 
       if ( present ( radiometer ) ) then
         msg = trim(msg) // ' for radiometer'
-        call get_string ( lit_indices(radiometer), msg(len_trim(msg)+2:))
+        call getradiometerName ( radiometer, msg(len_trim(msg)+2:))
       end if
 
       if ( present ( reflector ) ) then
@@ -1691,7 +1693,7 @@ contains ! =====     Public Procedures     =============================
 
       if ( present ( instrumentModule ) ) then
         msg = trim(msg) // ' for instrument module'
-        call get_string ( lit_indices(instrumentModule), msg(len_trim(msg)+2:))
+        call get_string ( modules(instrumentModule)%name, msg(len_trim(msg)+2:))
       end if
 
       if ( present ( signal ) ) then
@@ -2279,6 +2281,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.117  2005/06/22 17:25:51  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.116  2005/03/03 02:14:01  vsnyder
 ! Spiff up some dumps
 !
