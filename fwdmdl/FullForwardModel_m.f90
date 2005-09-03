@@ -187,6 +187,9 @@ contains
     integer, dimension(:), pointer :: F_INDS  ! Indices on fine grid
     integer, dimension(:), pointer :: GL_INDS ! Index of GL points -- subset of f_inds
     integer, dimension(:), pointer :: GRIDS ! Heights in ptgGrid for each tangent
+    integer, dimension(:), pointer :: LineCenter_IX ! Where are line center offsets?
+    integer, dimension(:), pointer :: LineWidth_IX  ! Where are line width offsets?
+    integer, dimension(:), pointer :: LineWidth_TDep_IX  ! Where are line width TDep offsets?
     integer, dimension(:), pointer :: TAN_INDS ! Index of tangent grid into gl grid
     integer, dimension(:), pointer :: USEDDACSSIGNALS ! Indices in FwdModelConf
                                          ! of signals for our dacs
@@ -500,9 +503,7 @@ contains
     temp_der = present ( jacobian ) .and. FwdModelConf%temp_der
     atmos_der = present ( jacobian ) .and. FwdModelConf%atmos_der
 
-! ** Re-instate when appropriate code is done
-!   spect_der = present ( jacobian ) .and. FwdModelConf%spect_der
-    spect_der = present ( jacobian ) .and. .false.    ! ** ZEBUG
+    spect_der = present ( jacobian ) .and. FwdModelConf%spect_der
 
     any_der = temp_der .or. atmos_der .or. spect_der
 
@@ -542,7 +543,9 @@ contains
       & h_glgrid, h_path, h_path_c, h_path_f, incoptdepth, incoptdepth_pol, &
       & incoptdepth_pol_gl, ipsd, iwc_path, k_atmos, k_atmos_frq, &
       & k_spect_dn, k_spect_dn_frq, k_spect_dv, k_spect_dv_frq, k_spect_dw, &
-      & k_spect_dw_frq, k_temp, k_temp_frq, l1bMIF_TAI, mag_path, MIFDeadTime, &
+      & k_spect_dw_frq, k_temp, k_temp_frq, l1bMIF_TAI, &
+      & lineCenter_ix, lineWidth_ix, lineWidth_TDep_ix, &
+      & mag_path, MIFDeadTime, &
       & n_path, path_dsdh, phi_path, p_path, p_path_c, &
       & prod_pol, ptg_angles, rad_FFT, radiances, RadV, ref_corr, req_out, &
       & salb_path, scat_alb%values, scat_ang, scat_src%values, &
@@ -1008,11 +1011,23 @@ contains
       k_atmos = 0.0
     end if ! atmos_der
 
-    if ( spect_der ) then
-
-      if ( associated(fwdModelConf%lineCenter) ) then
-        call allocate_test ( spect_v_path, max_ele, size(fwdModelConf%lineCenter), &
-          & 'spect_v_path', moduleName )
+    if ( associated(fwdModelConf%lineCenter) ) then
+      call allocate_test ( spect_v_path, max_ele, size(fwdModelConf%lineCenter), &
+        & 'spect_v_path', moduleName )
+      f_len_v = grids_v%l_v(ubound(grids_v%l_v,1))
+      call allocate_test ( do_calc_v, max_ele, f_len_v, 'do_calc_v', &
+                        &  moduleName )
+      call allocate_test ( do_calc_v_c,   npc, f_len_v, 'do_calc_v_c', &
+                        &  moduleName )
+      call allocate_test ( do_calc_v_f, max_ele, f_len_v, 'do_calc_v_f', &
+                        &  moduleName )
+      call allocate_test ( eta_zxp_v, max_ele, f_len_v, 'eta_zxp_v', &
+                        &  moduleName )
+      call allocate_test ( eta_zxp_v_c,   npc, f_len_v, 'eta_zxp_v_c', &
+                        &  moduleName )
+      call allocate_test ( eta_zxp_v_f, max_ele, f_len_v, 'eta_zxp_v_f', &
+                        &  moduleName )
+      if ( spect_der ) then
         !??? Are temperature's windowStart:windowFinish correct here.  Should ???
         !??? we use minval(grids_d?%windowStart):maxval(grids_d?%windowFinish) ???
         allocate ( k_spect_dv(noUsedChannels, no_tan_hts, maxNoFreqs, &
@@ -1023,24 +1038,26 @@ contains
           & 'dbeta_dv_path_c', moduleName )
         call allocate_test ( dbeta_dv_path_f, max_ele, no_mol, &
           & 'dbeta_dv_path_f', moduleName )
-        f_len_v = grids_v%l_v(ubound(grids_v%l_v,1))
-        call allocate_test ( do_calc_v, max_ele, f_len_v, 'do_calc_v', &
-                          &  moduleName )
-        call allocate_test ( do_calc_v_c,   npc, f_len_v, 'do_calc_v_c', &
-                          &  moduleName )
-        call allocate_test ( do_calc_v_f, max_ele, f_len_v, 'do_calc_v_f', &
-                          &  moduleName )
-        call allocate_test ( eta_zxp_v, max_ele, f_len_v, 'eta_zxp_v', &
-                          &  moduleName )
-        call allocate_test ( eta_zxp_v_c,   npc, f_len_v, 'eta_zxp_v_c', &
-                          &  moduleName )
-        call allocate_test ( eta_zxp_v_f, max_ele, f_len_v, 'eta_zxp_v_f', &
-                          &  moduleName )
         call allocate_test ( drad_dv, f_len_v, 'drad_dv', moduleName )
       end if
-      if ( associated(fwdModelConf%lineWidth) ) then
-        call allocate_test ( spect_w_path, max_ele, size(fwdModelConf%lineWidth), &
-          & 'spect_w_path', moduleName )
+    end if
+    if ( associated(fwdModelConf%lineWidth) ) then
+      call allocate_test ( spect_w_path, max_ele, size(fwdModelConf%lineWidth), &
+        & 'spect_w_path', moduleName )
+      f_len_w = grids_w%l_v(ubound(grids_w%l_v,1))
+      call allocate_test ( do_calc_w, max_ele, f_len_w, 'do_calc_w', &
+                        &  moduleName )
+      call allocate_test ( do_calc_w_c,   npc, f_len_w, 'do_calc_w_c', &
+                        &  moduleName )
+      call allocate_test ( do_calc_w_f, max_ele, f_len_w, 'do_calc_w_f', &
+                        &  moduleName )
+      call allocate_test ( eta_zxp_w, max_ele, f_len_w, 'eta_zxp_w', &
+                        &  moduleName )
+      call allocate_test ( eta_zxp_w_c,   npc, f_len_w, 'eta_zxp_w_c', &
+                        &  moduleName )
+      call allocate_test ( eta_zxp_w_f, max_ele, f_len_w, 'eta_zxp_w_f', &
+                        &  moduleName )
+      if ( spect_der ) then
         !??? Are temperature's windowStart:windowFinish correct here.  Should ???
         !??? we use minval(grids_d?%windowStart):maxval(grids_d?%windowFinish) ???
         allocate ( k_spect_dw(noUsedChannels, no_tan_hts, maxNoFreqs, &
@@ -1051,24 +1068,26 @@ contains
           & 'dbeta_dw_path_c', moduleName )
         call allocate_test ( dbeta_dw_path_f, max_ele, no_mol, &
           & 'dbeta_dw_path_f', moduleName )
-        f_len_w = grids_w%l_v(ubound(grids_w%l_v,1))
-        call allocate_test ( do_calc_w, max_ele, f_len_w, 'do_calc_w', &
-                          &  moduleName )
-        call allocate_test ( do_calc_w_c,   npc, f_len_w, 'do_calc_w_c', &
-                          &  moduleName )
-        call allocate_test ( do_calc_w_f, max_ele, f_len_w, 'do_calc_w_f', &
-                          &  moduleName )
-        call allocate_test ( eta_zxp_w, max_ele, f_len_w, 'eta_zxp_w', &
-                          &  moduleName )
-        call allocate_test ( eta_zxp_w_c,   npc, f_len_w, 'eta_zxp_w_c', &
-                          &  moduleName )
-        call allocate_test ( eta_zxp_w_f, max_ele, f_len_w, 'eta_zxp_w_f', &
-                          &  moduleName )
         call allocate_test ( drad_dw, f_len_w, 'drad_dw', moduleName )
       end if
-      if ( associated(fwdModelConf%lineWidth_TDep) ) then
-        call allocate_test ( spect_n_path, max_ele, size(fwdModelConf%lineWidth_TDep), &
-          & 'spect_n_path', moduleName )
+    end if
+    if ( associated(fwdModelConf%lineWidth_TDep) ) then
+      f_len_n = grids_n%l_v(ubound(grids_n%l_v,1))
+      call allocate_test ( do_calc_n, max_ele, f_len_n, 'do_calc_n', &
+                        &  moduleName )
+      call allocate_test ( do_calc_n_c,   npc, f_len_n, 'do_calc_n_c', &
+                        &  moduleName )
+      call allocate_test ( do_calc_n_f, max_ele, f_len_n, 'do_calc_n_f', &
+                        &  moduleName )
+      call allocate_test ( eta_zxp_n, max_ele, f_len_n, 'eta_zxp_n', &
+                        &  moduleName )
+      call allocate_test ( eta_zxp_n_c,   npc, f_len_n, 'eta_zxp_n_c', &
+                        &  moduleName )
+      call allocate_test ( eta_zxp_n_f, max_ele, f_len_n, 'eta_zxp_n_f', &
+                        &  moduleName )
+      call allocate_test ( spect_n_path, max_ele, size(fwdModelConf%lineWidth_TDep), &
+        & 'spect_n_path', moduleName )
+      if ( spect_der ) then
         !??? Are temperature's windowStart:windowFinish correct here.  Should ???
         !??? we use minval(grids_d?%windowStart):maxval(grids_d?%windowFinish) ???
         allocate ( k_spect_dn(noUsedChannels, no_tan_hts, maxNoFreqs, &
@@ -1078,29 +1097,9 @@ contains
         call allocate_test ( dbeta_dn_path_c,    npc, no_mol, &
           & 'dbeta_dn_path_c', moduleName )
         call allocate_test ( dbeta_dn_path_f, max_ele, no_mol, &
-        & 'dbeta_dn_path_f', moduleName )
-        f_len_n = grids_n%l_v(ubound(grids_n%l_v,1))
-        call allocate_test ( do_calc_n, max_ele, f_len_n, 'do_calc_n', &
-                          &  moduleName )
-        call allocate_test ( do_calc_n_c,   npc, f_len_n, 'do_calc_n_c', &
-                          &  moduleName )
-        call allocate_test ( do_calc_n_f, max_ele, f_len_n, 'do_calc_n_f', &
-                          &  moduleName )
-        call allocate_test ( eta_zxp_n, max_ele, f_len_n, 'eta_zxp_n', &
-                          &  moduleName )
-        call allocate_test ( eta_zxp_n_c,   npc, f_len_n, 'eta_zxp_n_c', &
-                          &  moduleName )
-        call allocate_test ( eta_zxp_n_f, max_ele, f_len_n, 'eta_zxp_n_f', &
-                          &  moduleName )
+          & 'dbeta_dn_path_f', moduleName )
         call allocate_test ( drad_dn, f_len_n, 'drad_dn', moduleName )
       end if
-
-    else
-
-      f_len_w = 0
-      f_len_n = 0
-      f_len_v = 0
-
     end if
 
     if ( FwdModelConf%polarized ) then
@@ -1339,31 +1338,35 @@ contains
           & do_calc_zp(1:no_ele,:), sps_path(1:no_ele,:), &
           & do_calc_fzp(1:no_ele,:), eta_fzp(1:no_ele,:) )
 
-        if ( spect_der ) then
-          if ( associated(fwdModelConf%lineCenter) ) then
-            call comp_eta_docalc_no_frq ( grids_v, z_path(1:no_ele), &
-              & phi_path(1:no_ele), eta_zxp_v(1:no_ele,:), do_calc_v(1:no_ele,:) )
-            do_calc_v_c(1:npc,:) = do_calc_v(c_inds(1:npc),:)
-            eta_zxp_v_c(1:npc,:) = eta_zxp_v(c_inds(1:npc),:)
-            call comp_sps_path_no_frq ( grids_v, eta_zxp_v(1:no_ele,:), &
-              & spect_v_path(1:no_ele,:) )
-          end if
-          if ( associated(fwdModelConf%lineWidth) ) then
-            call comp_eta_docalc_no_frq ( grids_w, z_path(1:no_ele), &
-              & phi_path(1:no_ele), eta_zxp_w(1:no_ele,:), do_calc_w(1:no_ele,:) )
-            do_calc_w_c(1:npc,:) = do_calc_w(c_inds(1:npc),:)
-            eta_zxp_w_c(1:npc,:) = eta_zxp_w(c_inds(1:npc),:)
-            call comp_sps_path_no_frq ( grids_w, eta_zxp_w(1:no_ele,:), &
-              & spect_w_path(1:no_ele,:) )
-          end if
-          if ( associated(fwdModelConf%lineWidth_TDep) ) then
-            call comp_eta_docalc_no_frq ( grids_n, z_path(1:no_ele), &
-              & phi_path(1:no_ele), eta_zxp_n(1:no_ele,:), do_calc_n(1:no_ele,:) )
-            do_calc_n_c(1:npc,:) = do_calc_n(c_inds(1:npc),:)
-            eta_zxp_n_c(1:npc,:) = eta_zxp_n(c_inds(1:npc),:)
-            call comp_sps_path_no_frq ( grids_n, eta_zxp_n(1:no_ele,:), &
-              & spect_n_path(1:no_ele,:) )
-          end if
+        if ( associated(fwdModelConf%lineCenter) ) then
+          call comp_eta_docalc_no_frq ( grids_v, z_path(1:no_ele), &
+            & phi_path(1:no_ele), eta_zxp_v(1:no_ele,:), do_calc_v(1:no_ele,:) )
+          do_calc_v_c(1:npc,:) = do_calc_v(c_inds(1:npc),:)
+          eta_zxp_v_c(1:npc,:) = eta_zxp_v(c_inds(1:npc),:)
+          call comp_sps_path_no_frq ( grids_v, eta_zxp_v(1:no_ele,:), &
+            & spect_v_path(1:no_ele,:) )
+          if ( associated(FwdModelConf%lineCenter_ix) ) &
+            & lineCenter_ix => FwdModelConf%lineCenter_ix(sx,:FwdModelConf%cat_Size(sx))
+        end if
+        if ( associated(fwdModelConf%lineWidth) ) then
+          call comp_eta_docalc_no_frq ( grids_w, z_path(1:no_ele), &
+            & phi_path(1:no_ele), eta_zxp_w(1:no_ele,:), do_calc_w(1:no_ele,:) )
+          do_calc_w_c(1:npc,:) = do_calc_w(c_inds(1:npc),:)
+          eta_zxp_w_c(1:npc,:) = eta_zxp_w(c_inds(1:npc),:)
+          call comp_sps_path_no_frq ( grids_w, eta_zxp_w(1:no_ele,:), &
+            & spect_w_path(1:no_ele,:) )
+          if ( associated(FwdModelConf%lineWidth_ix) ) &
+            & lineWidth_ix => FwdModelConf%lineWidth_ix(sx,:FwdModelConf%cat_Size(sx))
+        end if
+        if ( associated(fwdModelConf%lineWidth_TDep) ) then
+          call comp_eta_docalc_no_frq ( grids_n, z_path(1:no_ele), &
+            & phi_path(1:no_ele), eta_zxp_n(1:no_ele,:), do_calc_n(1:no_ele,:) )
+          do_calc_n_c(1:npc,:) = do_calc_n(c_inds(1:npc),:)
+          eta_zxp_n_c(1:npc,:) = eta_zxp_n(c_inds(1:npc),:)
+          call comp_sps_path_no_frq ( grids_n, eta_zxp_n(1:no_ele,:), &
+            & spect_n_path(1:no_ele,:) )
+          if ( associated(FwdModelConf%lineWidth_TDep_ix) ) &
+            & lineWidth_TDep_ix => FwdModelConf%lineWidth_TDep_ix(sx,:FwdModelConf%cat_Size(sx))
         end if
 
         ! Special path quantities for cloud model
@@ -1470,10 +1473,16 @@ contains
         if ( temp_der ) then
           call get_gl_slabs_arrays ( p_path(1:no_ele), t_path(1:no_ele), &
             &  est_los_vel(ptg_i), gl_slabs(1:no_ele,:), fwdModelConf%Do_1D, &
+            &  spect_v_path, lineCenter_ix, &
+            &  spect_w_path, lineWidth_ix, &
+            &  spect_n_path, lineWidth_TDep_ix, &
             &  t_der_path_flags(1:no_ele) )
         else
           call get_gl_slabs_arrays ( p_path(1:no_ele), t_path(1:no_ele), &
-            &  est_los_vel(ptg_i), gl_slabs(1:no_ele,:), fwdModelConf%Do_1D )
+            &  est_los_vel(ptg_i), gl_slabs(1:no_ele,:), fwdModelConf%Do_1D, &
+            &  spect_v_path, lineCenter_ix, &
+            &  spect_w_path, lineWidth_ix, &
+            &  spect_n_path, lineWidth_TDep_ix )
         end if
 
         ! If we're doing frequency averaging, get the frequencies we need for
@@ -1769,6 +1778,30 @@ contains
       call deallocate_test ( k_atmos,         'k_atmos',         moduleName )
     end if
 
+    call deallocate_test ( do_calc_n_c,     'do_calc_n_c',     moduleName )
+    call deallocate_test ( do_calc_n,       'do_calc_n',       moduleName )
+    call deallocate_test ( do_calc_n_f,     'do_calc_n_f',     moduleName )
+    call deallocate_test ( do_calc_v_c,     'do_calc_v_c',     moduleName )
+    call deallocate_test ( do_calc_v,       'do_calc_v',       moduleName )
+    call deallocate_test ( do_calc_v_f,     'do_calc_v_f',     moduleName )
+    call deallocate_test ( do_calc_w_c,     'do_calc_w_c',     moduleName )
+    call deallocate_test ( do_calc_w,       'do_calc_w',       moduleName )
+    call deallocate_test ( do_calc_w_f,     'do_calc_w_f',     moduleName )
+
+    call deallocate_test ( eta_zxp_n_c,     'eta_zxp_n_c',     moduleName )
+    call deallocate_test ( eta_zxp_n,       'eta_zxp_n',       moduleName )
+    call deallocate_test ( eta_zxp_n_f,     'eta_zxp_n_f',     moduleName )
+    call deallocate_test ( eta_zxp_v_c,     'eta_zxp_v_c',     moduleName )
+    call deallocate_test ( eta_zxp_v,       'eta_zxp_v',       moduleName )
+    call deallocate_test ( eta_zxp_v_f,     'eta_zxp_v_f',     moduleName )
+    call deallocate_test ( eta_zxp_w_c,     'eta_zxp_w_c',     moduleName )
+    call deallocate_test ( eta_zxp_w,       'eta_zxp_w',       moduleName )
+    call deallocate_test ( eta_zxp_w_f,     'eta_zxp_w_f',     moduleName )
+
+    call deallocate_test ( spect_n_path,    'spect_n_path',    moduleName )
+    call deallocate_test ( spect_v_path,    'spect_v_path',    moduleName )
+    call deallocate_test ( spect_w_path,    'spect_w_path',    moduleName )
+
     if ( spect_der ) then
 
       call deallocate_test ( dbeta_dn_path_c, 'dbeta_dn_path_c', moduleName )
@@ -1778,29 +1811,9 @@ contains
       call deallocate_test ( dbeta_dw_path_c, 'dbeta_dw_path_c', moduleName )
       call deallocate_test ( dbeta_dw_path_f, 'dbeta_dw_path_f', moduleName )
 
-      call deallocate_test ( do_calc_n_c,     'do_calc_n_c',     moduleName )
-      call deallocate_test ( do_calc_n,       'do_calc_n',       moduleName )
-      call deallocate_test ( do_calc_n_f,     'do_calc_n_f',     moduleName )
-      call deallocate_test ( do_calc_v_c,     'do_calc_v_c',     moduleName )
-      call deallocate_test ( do_calc_v,       'do_calc_v',       moduleName )
-      call deallocate_test ( do_calc_v_f,     'do_calc_v_f',     moduleName )
-      call deallocate_test ( do_calc_w_c,     'do_calc_w_c',     moduleName )
-      call deallocate_test ( do_calc_w,       'do_calc_w',       moduleName )
-      call deallocate_test ( do_calc_w_f,     'do_calc_w_f',     moduleName )
-
       call deallocate_test ( drad_dn,         'drad_dn',         moduleName )
       call deallocate_test ( drad_dv,         'drad_dv',         moduleName )
       call deallocate_test ( drad_dw,         'drad_dw',         moduleName )
-
-      call deallocate_test ( eta_zxp_n_c,     'eta_zxp_n_c',     moduleName )
-      call deallocate_test ( eta_zxp_n,       'eta_zxp_n',       moduleName )
-      call deallocate_test ( eta_zxp_n_f,     'eta_zxp_n_f',     moduleName )
-      call deallocate_test ( eta_zxp_v_c,     'eta_zxp_v_c',     moduleName )
-      call deallocate_test ( eta_zxp_v,       'eta_zxp_v',       moduleName )
-      call deallocate_test ( eta_zxp_v_f,     'eta_zxp_v_f',     moduleName )
-      call deallocate_test ( eta_zxp_w_c,     'eta_zxp_w_c',     moduleName )
-      call deallocate_test ( eta_zxp_w,       'eta_zxp_w',       moduleName )
-      call deallocate_test ( eta_zxp_w_f,     'eta_zxp_w_f',     moduleName )
 
       if ( associated(k_spect_dv) ) then
         i = size(k_spect_dv) * E_def
@@ -1817,10 +1830,6 @@ contains
         deallocate ( k_spect_dn, stat=ier )
         call test_deallocate ( ier, ModuleName, 'k_spect_dn', i )
       end if
-
-      call deallocate_test ( spect_n_path,    'spect_n_path',    moduleName )
-      call deallocate_test ( spect_v_path,    'spect_v_path',    moduleName )
-      call deallocate_test ( spect_w_path,    'spect_w_path',    moduleName )
 
     end if
 
@@ -3276,6 +3285,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.241  2005/08/03 18:03:42  vsnyder
+! Scan averaging, some spectroscopy derivative stuff
+!
 ! Revision 2.240  2005/07/08 19:40:51  vsnyder
 ! OOPS, forgot to nullify Rad_FFT
 !

@@ -96,13 +96,12 @@ contains
     end do ! b
 
     ! Get state vector quantities for spectral parameters
-    ! fwdModelConf%beta_group(b)%LBL(s)%line... have indices into these
+    ! fwdModelConf%line..._ix have indices into these
     if ( associated(fwdModelConf%lineCenter) ) then
       do l = 1, size(fwdModelConf%lineCenter)
         fwdModelConf%lineCenter(l)%qty%qty => getVectorQuantityByType ( &
         &  fwdModelIn, quantityType=l_lineCenter, &
-        &  molecule=fwdModelConf%lineCenter(l)%molecule, &
-        &  radiometer=fwdModelConf%signals(1)%radiometer )
+        &  molecule=fwdModelConf%lineCenter(l)%molecule )
         call check_no_frq_coord ( fwdModelConf%lineCenter(l)%qty%qty )
         fwdModelConf%lineCenter(l)%qty%foundInFirst = .true.
       end do ! l
@@ -111,8 +110,7 @@ contains
       do l = 1, size(fwdModelConf%lineWidth)
         fwdModelConf%lineWidth(l)%qty%qty => getVectorQuantityByType ( &
         &  fwdModelIn, quantityType=l_lineWidth, &
-        &  molecule=fwdModelConf%lineWidth(l)%molecule, &
-        &  radiometer=fwdModelConf%signals(1)%radiometer )
+        &  molecule=fwdModelConf%lineWidth(l)%molecule )
         call check_no_frq_coord ( fwdModelConf%lineWidth(l)%qty%qty )
         fwdModelConf%lineWidth(l)%qty%foundInFirst = .true.
       end do
@@ -121,8 +119,7 @@ contains
       do l = 1, size(fwdModelConf%lineWidth_TDep)
         fwdModelConf%lineWidth_TDep(l)%qty%qty => getVectorQuantityByType ( &
         &  fwdModelIn, quantityType=l_lineWidth_TDep, &
-        &  molecule=fwdModelConf%lineWidth_TDep(l)%molecule, &
-        &  radiometer=fwdModelConf%signals(1)%radiometer )
+        &  molecule=fwdModelConf%lineWidth_TDep(l)%molecule )
         call check_no_frq_coord ( fwdModelConf%lineWidth_TDep(l)%qty%qty )
         fwdModelConf%lineWidth_TDep(l)%qty%foundInFirst = .true.
       end do
@@ -161,6 +158,9 @@ contains
 end module Get_Species_Data_m
 
 ! $Log$
+! Revision 2.27  2005/08/03 18:04:09  vsnyder
+! Some spectroscopy derivative stuff
+!
 ! Revision 2.26  2005/06/22 18:08:19  pwagner
 ! Reworded Copyright statement, moved rcs id
 !

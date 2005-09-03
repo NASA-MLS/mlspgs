@@ -71,11 +71,6 @@ module ForwardModelConfig
     real(rp), pointer :: Ratio(:) => NULL() ! Isotope ratio.  Allocated in
                                       ! ForwardModelSupport with value 1.0, but
                                       ! could be filled in Get_Species_Data.
-    ! Indices in info%line....  Nonzero means use the solved-for parameter;
-    ! zero (or not associated) means use the one in the catalog.
-    integer, pointer :: LineCenter(:) => NULL()
-    integer, pointer :: LineWidth(:) => NULL()
-    integer, pointer :: LineWidth_TDep(:) => NULL()
   end type LBL_T
 
   type, public :: PFA_T ! For PFA molecules in the group:
@@ -173,6 +168,13 @@ module ForwardModelConfig
     real :: sum_squareDeltaTime = 0.0 ! sum of the square of delta times calling FullForwardModel 
     ! Now the arrays
     integer, dimension(:), pointer :: BinSelectors=>NULL() ! List of relevant bin selectors
+    ! Indices for spectral parameters.   If LineCenter+ix(s,i) is nonzero,
+    ! LineCenter(LineCenter_ix(s,i)) is added onto the line center in the gl_slabs
+    ! array for the i'th line-by-line molecule in sideband s.  Similarly for
+    ! LineWidth_ix and LineWidth_Tdep_ix.
+    integer, dimension(:,:), pointer :: LineCenter_ix=>NULL() ! sidebands,1:noNonPFA
+    integer, dimension(:,:), pointer :: LineWidth_ix=>NULL() ! sidebands,1:noNonPFA
+    integer, dimension(:,:), pointer :: LineWidth_Tdep_ix=>NULL() ! sidebands,1:noNonPFA
     integer, dimension(:), pointer :: Molecules=>NULL() ! Which molecules to consider
     logical, dimension(:), pointer :: MoleculeDerivatives=>NULL() ! Want Jacobians
     integer, dimension(:), pointer :: SpecificQuantities=>NULL() ! Specific quantities to use
@@ -469,10 +471,9 @@ contains
 
     ! ...............................  SpectroscopyCatalogExtract  .....
     subroutine SpectroscopyCatalogExtract
-      use Allocate_Deallocate, only: Allocate_Test
+      use Allocate_Deallocate, only: Allocate_Test, Test_Allocate
       use Intrinsic, only: LIT_INDICES, L_NONE
-      use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
-        & MLSMSG_Warning
+      use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
       use MLSSignals_m, only: GetRadiometerFromSignal
       use SpectroscopyCatalog_m, only: Catalog, Empty_Cat, Line_t, &
         & Lines, MostLines
@@ -500,19 +501,9 @@ contains
       if ( noLinesMsg < 0 ) noLinesMsg = index(switches, '0sl') ! Done once
 
       ! Allocate the spectroscopy catalog extract
-      c = 0
-      do sx = (s1+3)/2,(s2+3)/2
-        m = 0
-        do b = 1, size(fwdModelConf%beta_group) ! Get total catalog size
-          m = m + size(fwdModelConf%beta_group(b)%lbl(sx)%molecules)
-        end do ! b
-        fwdModelConf%cat_size(sx) = m
-        c = max(c,m)
-      end do ! sx
-
+      c = maxval(fwdModelConf%cat_size)
       allocate ( fwdModelConf%catalog(s1:s2,c), stat=stat )
-      if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-          & MLSMSG_Allocate//'fwdModelConf%catalog' )
+      call test_allocate ( stat, moduleName, 'fwdModelConf%catalog', (/s1,1/), (/1,c/) )
 
       ! Work out the spectroscopy we're going to need.
       fwdModelConf%catalog = empty_cat
@@ -1012,9 +1003,6 @@ contains
         call deallocate_test ( config%beta_group(b)%LBL(s)%cat_index, 'Cat_Index', moduleName )
         call deallocate_test ( config%beta_group(b)%LBL(s)%molecules, 'LBL Molecules', moduleName )
         call deallocate_test ( config%beta_group(b)%LBL(s)%ratio, 'LBL Ratio', moduleName )
-        call deallocate_test ( config%beta_group(b)%LBL(s)%lineCenter, 'LineCenter', moduleName )
-        call deallocate_test ( config%beta_group(b)%LBL(s)%lineWidth, 'LineWidth', moduleName )
-        call deallocate_test ( config%beta_group(b)%LBL(s)%lineWidth_TDep, 'LineWidth_TDep', moduleName )
         call deallocate_test ( config%beta_group(b)%PFA(s)%molecules, 'PFA molecules', moduleName )
         call deallocate_test ( config%beta_group(b)%PFA(s)%ratio, 'PFA ratio', moduleName )
       end do ! s
@@ -1058,6 +1046,12 @@ contains
       & "config%specificQuantities", ModuleName )
     call deallocate_test ( config%binSelectors, &
       & "config%binSelectors", ModuleName )
+    call deallocate_test ( config%lineCenter_ix, &
+      & "config%lineCenter_ix", moduleName )
+    call deallocate_test ( config%lineWidth_ix, &
+      & "config%lineWidth_ix", moduleName )
+    call deallocate_test ( config%lineWidth_Tdep_ix, &
+      & "config%lineWidth_Tdep_ix", moduleName )
   end subroutine DestroyOneForwardModelConfig
 
   ! --------------------------------------------  Dump_Beta_Group  -----
@@ -1103,22 +1097,6 @@ contains
           call dump ( beta_group(b)%lbl(s)%ratio, name='    Isotope ratio' )
           call dump ( beta_group(b)%lbl(s)%cat_index, &
             & name='    Spectroscopy catalog extract index' )
-          if ( associated(beta_group(b)%lbl(s)%lineCenter) ) &
-            call display_string ( &
-              & lit_indices(pack(beta_group(b)%lbl(s)%molecules, &
-                &                beta_group(b)%lbl(s)%lineCenter/=0)), &
-              & before='   Line centers for:', advance='yes' )
-          if ( associated(beta_group(b)%lbl(s)%lineWidth) ) &
-            call display_string ( &
-              & lit_indices(pack(beta_group(b)%lbl(s)%molecules, &
-                &                beta_group(b)%lbl(s)%lineWidth/=0)), &
-              & before='   Line widths for:', advance='yes' )
-          if ( associated(beta_group(b)%lbl(s)%lineWidth_TDep) ) &
-            call display_string ( &
-              & lit_indices(pack(beta_group(b)%lbl(s)%molecules, &
-                &                beta_group(b)%lbl(s)%lineWidth_TDep/=0)), &
-              & before='   Line width temperature depencence for:', &
-              & advance='yes' )
         end if
         if ( size(beta_group(b)%pfa(s)%molecules) > 0 ) then
           call display_string ( &
@@ -1189,14 +1167,16 @@ contains
     logical, optional, intent(in) :: skipPFA
 
     ! Local variables
-    integer ::  J                            ! Loop counter
-    character (len=MaxSigLen) :: SignalName  ! A line of text
     logical :: dumpPFA
+    integer :: J                             ! Loop counter
+    integer :: S1, S2                        ! Sideband limits
+    character (len=MaxSigLen) :: SignalName  ! A line of text
 
     ! executable code
     dumpPFA = .true.
     if ( present(skipPFA) ) dumpPFA = .not. skipPFA
 
+    s1 = (config%sidebandStart+3)/2; s2 = (config%sidebandStop+3)/2
     call output ( '  Forward Model Config Name: ' )
     call display_string ( config%name )
     if ( present(where) ) then
@@ -1235,6 +1215,26 @@ contains
           call output (' no derivatives', advance='yes')
         end if
       end do
+    end if
+    if ( associated(config%lineCenter) .or. associated(config%lineWidth) .or. &
+      &  associated(config%lineWidth_Tdep) ) then
+      call output ( '  Spectroscopy parameters:', advance='yes')
+      if ( associated(config%lineCenter) ) &
+        & call display_string ( lit_indices(config%lineCenter%molecule), &
+          & advance='yes', before='    Line centers:' )
+      if ( associated(config%lineCenter_ix) ) &
+        & call dump ( config%lineCenter_ix(s1:s2,:), name='    Line Center Indices' )
+      if ( associated(config%lineWidth) ) &
+        & call display_string ( lit_indices(config%lineWidth%molecule), &
+          & advance='yes', before='    Line widths:' )
+      if ( associated(config%lineWidth_ix) ) &
+        & call dump ( config%lineWidth_ix(s1:s2,:), name='    Line Width Indices' )
+      if ( associated(config%lineWidth_Tdep) ) &
+        & call display_string ( lit_indices(config%lineWidth%molecule), &
+          & advance='yes', before='    Line width temperature dependencies:' )
+      if ( associated(config%lineWidth_Tdep_ix) ) &
+        & call dump ( config%lineWidth_Tdep_ix(s1:s2,:), &
+          & name='    Line Width Temperature Dependence Indices' )
     end if
     call output ( '  Signals:', advance='yes')
     do j = 1, size(config%signals)
@@ -1296,6 +1296,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.79  2005/08/19 23:32:06  pwagner
+! option to allow skipping voluminous PFA DB dump when dumping FwdMdl
+!
 ! Revision 2.78  2005/08/03 18:04:09  vsnyder
 ! Some spectroscopy derivative stuff
 !

@@ -137,7 +137,7 @@ contains
   subroutine AllocateSlabs ( Slabs, No_Ele, Catalog, Caller, TempDer )
   ! Allocate an array of slabs structures, and then the items in each one
 
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
+    use Allocate_Deallocate, only: Test_Allocate
     use SpectroscopyCatalog_m, only: Catalog_T
 
     type (slabs_struct), dimension(:,:), pointer :: Slabs
@@ -150,8 +150,7 @@ contains
     integer :: I, J
 
     allocate ( slabs(no_ele, size(catalog)), stat=i )
-    if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, Caller, &
-      & MLSMSG_Allocate//"slabs" )
+    call test_allocate ( i, moduleName, 'Slabs', (/1,1/), (/no_ele,size(catalog)/) )
 
     do i = 1, size(catalog)
       do j = 1, no_ele
@@ -2522,9 +2521,10 @@ contains
 
   ! ----------------------------------------  Get_GL_Slabs_Arrays  -----
   !ocl disjoint
-  pure subroutine Get_GL_Slabs_Arrays ( P_path, T_path, Vel_z, GL_Slabs, &
-    & Do_1D, t_der_flags, LineCenter, LineCenter_ix, LineWidth, LineWidth_ix, &
-    & LineWidth_TDep, LineWidth_TDep_ix )
+  pure &
+  subroutine Get_GL_Slabs_Arrays ( P_path, T_path, Vel_z, GL_Slabs, &
+    & Do_1D, LineCenter, LineCenter_ix, LineWidth, LineWidth_ix, &
+    & LineWidth_TDep, LineWidth_TDep_ix, T_der_flags )
 
     use Molecules, only: L_Extinction
     use Physics, only: SpeedOfLight
@@ -2535,19 +2535,19 @@ contains
 
     real(rp), intent(in) :: vel_z     ! Meters per second
 
-    ! GL_Slabs needs to have been created by L2PC_pfa_structures%AllocateSlabs
+    ! GL_Slabs needs to have been created by AllocateSlabs
     type (slabs_struct), intent(inout) :: GL_Slabs(:,:)
 
     logical, intent(in) :: Do_1D
-    logical, intent(in), optional :: t_der_flags(:) ! do derivatives if present
 
     ! Line parameter offsets from catalog (path x molecule) -- intent(in):
-    real, optional, pointer :: LineCenter(:,:), LineWidth(:,:), &
+    real(rp), optional, pointer :: LineCenter(:,:), LineWidth(:,:), &
       & LineWidth_TDep(:,:)
     ! Which molecules are to be offset, and where are they in Line....  Zero
     ! means no offset, otherwise, second subscript for Line... above.
     integer, optional, pointer :: LineCenter_ix(:), LineWidth_ix(:), &
       & LineWidth_TDep_ix(:)
+    logical, intent(in), optional :: t_der_flags(:) ! do derivatives if present
 
 !  ----------------
 !  Local variables:
@@ -2654,6 +2654,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.46  2005/08/03 18:02:31  vsnyder
+! Some spectroscopy derivative stuff, finish v0s modification
+!
 ! Revision 2.45  2005/07/06 02:17:21  vsnyder
 ! Revisions for spectral parameter derivatives
 !
