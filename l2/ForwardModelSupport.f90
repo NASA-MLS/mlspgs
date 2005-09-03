@@ -414,19 +414,22 @@ contains ! =====     Public Procedures     =============================
     logical :: Got(field_first:field_last)   ! "Got this field already"
     integer :: GSON                     ! Son of son
     integer :: I, J, K                  ! Subscript and loop inductor.
-    integer, pointer :: SpecIndices(:)  ! Indices in info%line...
+    integer, dimension(:,:), pointer :: Line_Ix ! LineCenter_ix, ...
     type(spectroParam_t), pointer :: LineStru(:)
     integer :: LineTrees(3)             ! Tree indices of f_line...
+    integer :: M                        ! Max LBL molecules in either sideband
     integer :: MoleculeTree             ! Tree index of f_molecules
     integer, dimension(:), pointer :: Molecules ! In a LineTree
     integer :: NELTS                    ! Number of elements of an array tree
     integer :: NumPFA, NumLBL           ! Numbers of such molecules in a beta group
     integer :: PFATrees(2)              ! Tree indices of f_[lu]sbPFAMolecules
     integer :: S                        ! Sideband index, for PFAtrees
+    integer :: S1, S2                   ! Sideband Start/Stop (1..2, not -1..1).
     integer :: SIDEBAND                 ! Returned from Parse_Signal
     integer, dimension(:), pointer :: SIGNALINDS ! From Parse_Signal
     character (len=80) :: SIGNALSTRING  ! E.g. R1A....
     integer :: Son                      ! Some subtree of root.
+    integer, pointer :: SpecIndices(:)  ! Indices in info%line...
     integer :: STATUS                   ! From allocates etc.
     integer :: TANGENT                  ! Loop counter
     integer, pointer :: TempLBL(:), TempPFA(:) ! Used to separate LBL and PFA
@@ -650,6 +653,7 @@ contains ! =====     Public Procedures     =============================
       end select
 
     end do ! i = 2, nsons(root)
+    s1 = (info%sidebandStart+3)/2; s2 = (info%sidebandStop+3)/2
 
     ! Now the molecule lists.
     nelts = 0    ! Total number of molecules, not counting group names
@@ -692,7 +696,7 @@ contains ! =====     Public Procedures     =============================
           info%beta_group(b)%lbl(1)%molecules(1) = info%beta_group(b)%molecule
           info%beta_group(b)%lbl(2)%molecules(1) = info%beta_group(b)%molecule
         end if
-        do s = 1, 2 ! both sidebands
+        do s = s1, s2 ! both sidebands
           if ( pfaTrees(s) /= null_tree ) then
             ! Allocate PFA_Molecules temporarily for a "this is a PFA molecule" flag
             call allocate_test ( info%beta_group(b)%pfa(s)%molecules, &
@@ -702,7 +706,7 @@ contains ! =====     Public Procedures     =============================
             call allocate_test ( info%beta_group(b)%pfa(s)%molecules, 0, &
               & 'PFA Molecules', moduleName )
           end if
-        end do ! s = 1, 2
+        end do ! s = s1, s2
       end do ! b = 1, nsons(moleculeTree) - 1
     else
       allocate ( info%beta_group(0), stat = status )
@@ -711,7 +715,7 @@ contains ! =====     Public Procedures     =============================
     info%molecules => info%beta_group%molecule
 
     ! Now the PFAMolecules lists
-    do s = 1, 2
+    do s = s1, s2
       if ( pfaTrees(s) /= null_tree ) then
         ! Verify that the PFA molecules are all listed molecules.  Mark the
         ! ones that are PFA.
@@ -758,14 +762,15 @@ op:     do j = 2, nsons(PFATrees(s))
       end if
 
       ! Now the cat_index and isotope ratio fields
+      info%cat_size(s) = 0
       do b = 1, size(info%beta_group)
+        k = size(info%beta_group(b)%lbl(s)%molecules)
+        info%cat_size(s) = info%cat_size(s) + k
         call allocate_test ( info%beta_group(b)%lbl(s)%cat_index, &
-          & size(info%beta_group(b)%lbl(s)%molecules), &
-          & 'beta_group(b)%Cat_Index', moduleName )
+          &                  k, 'beta_group(b)%Cat_Index', moduleName )
         info%beta_group(b)%lbl(s)%cat_index = 0 ! in case somebody asks for a dump
         call allocate_test ( info%beta_group(b)%lbl(s)%ratio, &
-          &                  size(info%beta_group(b)%lbl(s)%molecules), &
-          &                  'LBL Ratio', moduleName )
+          &                  k, 'LBL Ratio', moduleName )
         info%beta_group(b)%lbl(s)%ratio = 1.0
         call allocate_test ( info%beta_group(b)%pfa(s)%ratio, &
           &                  size(info%beta_group(b)%pfa(s)%molecules), &
@@ -773,84 +778,64 @@ op:     do j = 2, nsons(PFATrees(s))
         info%beta_group(b)%pfa(s)%ratio = 1.0
       end do ! b = 1, size(info%beta_group)
 
-    end do ! s = 1, 2
+    end do ! s = s1, s2
+    m = maxval(info%cat_size)
 
     ! Now the spectroscopy parameters.  They only make sense for LBL.
     do i = lineCenter, lineWidth_TDep
-      if ( lineTrees(i) /= null_tree ) then
-        info%spect_der = .true.
-        ! Make a list of the molecules
-        allocate ( lineStru(nsons(lineTrees(i)-1)), stat=status )
-        if ( status /= 0 ) call announceError( AllocateError, lineTrees(i) )
-        select case ( i )
-        case ( lineCenter )
-          info%lineCenter => lineStru
-        case ( lineWidth )
-          info%lineWidth => lineStru
-        case ( lineWidth_TDep )
-          info%lineWidth_TDep => lineStru
-        end select
-        molecules => lineStru%molecule
-        do j = 2, nsons(LineTrees(i))
-          son = subtree( j, LineTrees(i) )
-          if ( node_id(son) == n_array ) then
-            call announceError ( NoArray, son )
-            cycle
-          end if
-          thisMolecule = decoration( son )
-          ! Find the molecule's index in info%molecules
-          do k = size(info%molecules), 1, -1
-            if ( info%molecules(k) == thisMolecule ) exit
-          end do ! k = size(info%molecules), 1, -1
-          if ( k == 0 ) call announceError ( LineNotMolecule, son )
-          molecules(j-1) = thisMolecule
-          ! Look for duplicates
-          do k = 2, j-1
-            if ( molecules(k-1) == k ) call announceError ( lineParamTwice, son )
-          end do  ! k = 2, j-1
-        end do ! j = 2, nsons(LineTrees(i))
-        ! Abstract from the list for each beta group's LBL molecules
+      if ( lineTrees(i) == null_tree ) cycle
+      info%spect_der = .true.
+      ! Make a list of the molecules
+      allocate ( lineStru(nsons(lineTrees(i))-1), stat=status )
+      if ( status /= 0 ) call announceError( AllocateError, lineTrees(i) )
+      call allocate_test ( line_ix, 2, m, 'Line_ix', moduleName, fill=0 )
+      select case ( i )
+      case ( lineCenter )
+        info%lineCenter => lineStru
+        info%lineCenter_ix => line_ix
+      case ( lineWidth )
+        info%lineWidth => lineStru
+        info%lineWidth_ix => line_ix
+      case ( lineWidth_TDep )
+        info%lineWidth_TDep => lineStru
+        info%lineWidth_Tdep_ix => line_ix
+      end select
+      molecules => lineStru%molecule
+      do j = 2, nsons(LineTrees(i))
+        son = subtree( j, LineTrees(i) )
+        if ( node_id(son) == n_array ) then
+          call announceError ( NoArray, son )
+          cycle
+        end if
+        molecules(j-1) = decoration( son )
+        ! Look for duplicates
+        do k = 2, j-1
+          if ( molecules(k-1) == thisMolecule ) &
+            & call announceError ( lineParamTwice, son )
+        end do  ! k = 2, j-1
+      end do ! j = 2, nsons(LineTrees(i))
+      ! Check that molecules are in some LBL's molecule list
+      do s = s1, s2 ! Sideband
+        k = 0 ! Index in line..._ix
         do b = 1, size(info%beta_group)
-          do s = 1, 2 ! Sideband
-            ! Do we need to allocate the spectroscopy parameter structure?
-NeedSP:     do j = 1, size(molecules)
-              do found = size(info%beta_group(b)%lbl(s)%molecules), 1, -1
-                if ( molecules(j) == info%beta_group(b)%lbl(s)%molecules(found) ) &
-                  & exit NeedSP
-              end do ! found
-            end do NeedSp
-            if ( found > 0 ) then ! Need to allocate
-              call allocate_test ( specIndices, &
-                & size(info%beta_group(b)%lbl(s)%molecules), &
-                & 'SpecIndices', moduleName, fill=0 )
-            end if
-            select case ( i )
-            case ( lineCenter )
-              info%beta_group(b)%lbl(s)%lineCenter => specIndices
-            case ( lineWidth )
-              info%beta_group(b)%lbl(s)%lineWidth => specIndices
-            case ( lineWidth_TDep )
-              info%beta_group(b)%lbl(s)%lineWidth_TDep => specIndices
-            end select
-            ! Now mark the molecules needed
-MarkSP:     do j = 1, size(molecules)
-              do found = 1, size(specIndices)
-                if ( abs(molecules(j)) == info%beta_group(b)%lbl(s)%molecules(found) ) then
-                  specIndices(found) = j
-                  molecules(j) = -molecules(j) ! Mark it as used
-                  exit MarkSP
-                end if
-              end do ! found
-            end do MarkSP
-          end do ! s = 1, 2
+          do j = 1, size(info%beta_group(b)%lbl(s)%molecules)
+            k = k + 1
+            do found = 1, size(molecules)
+              if ( abs(molecules(found)) == info%beta_group(b)%lbl(s)%molecules(j) ) then
+                molecules(found) = -abs(molecules(found)) ! Mark it as used
+                line_ix(s,k) = found
+                exit
+              end if
+            end do ! found
+          end do ! j
         end do ! b = 1, size(info%beta_group)
-        ! Check for unused ones, make them positive again
-        do j = 1, size(molecules)
-          if ( molecules(j) > 0 ) & ! not used, so not in any LBL list
-            & call announceError ( LineNotMolecule, subtree(j+1,lineTrees(i)) )
-          molecules(j) = abs(molecules(j))
-        end do
-      end if ! lineTrees(i) /= null_tree
+      end do ! s = s1, s2
+      ! Check for unused ones, make them positive again
+      do j = 1, size(molecules)
+        if ( molecules(j) > 0 ) & ! not used, so not in any LBL list
+          & call announceError ( LineNotMolecule, subtree(j+1,lineTrees(i)) )
+        molecules(j) = abs(molecules(j))
+      end do
     end do ! i = lineCenter, lineWidth_TDep
 
     info%moleculeDerivatives => info%beta_group%derivatives
@@ -877,6 +862,10 @@ MarkSP:     do j = 1, size(molecules)
       if ( .not. ( got(f_molecules) .and. &
         & all(got( (/ f_signals, f_integrationGrid, f_tangentGrid /) )) ) ) &
         & call AnnounceError ( IncompleteFullFwm, root )
+
+      if ( .not. associated(info%integrationGrid%surfs) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        &   'How can the integration grid not be associated?' )
 
       ! Now identify the Earth's surface in the tangent grid
       call Hunt ( info%tangentGrid%surfs(:,1), info%integrationGrid%surfs(1,1), &
@@ -1267,6 +1256,9 @@ MarkSP:     do j = 1, size(molecules)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.117  2005/09/03 01:20:41  vsnyder
+! Spectral parameter offsets stuff
+!
 ! Revision 2.116  2005/08/03 18:07:39  vsnyder
 ! Scan averaging, some spectroscopy derivative stuff
 !
