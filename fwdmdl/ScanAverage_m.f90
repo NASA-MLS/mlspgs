@@ -10,6 +10,7 @@
 ! foreign countries or providing access to foreign persons.
 
 module ScanAverage_m
+  use MLSCommon, only: RP
 
   implicit NONE
   private
@@ -26,19 +27,30 @@ module ScanAverage_m
     module procedure ScanAverage_1d, ScanAverage_2d
   end interface
 
+  integer, parameter :: NG = 8 ! Order of Gauss quadrature
+  real(rp), parameter :: GX(ng) = (/ & ! Gauss abscissae
+    & -.960289856497536231684_rp, -.796666477413626739592_rp, &
+    & -.525532409916328985818_rp, -.183434642495649804939_rp, &
+    & 0.183434642495649804939_rp, 0.525532409916328985818_rp, &
+    & 0.796666477413626739592_rp, 0.960289856497536231684_rp /)
+  real(rp), parameter :: GW(ng) = 0.5_rp * (/ & ! Gauss weights
+    & 0.101228536290376259153_rp, 0.222381034453374470544_rp, &
+    & 0.313706645877887287338_rp, 0.362683783378361982965_rp, &
+    & 0.362683783378361982965_rp, 0.313706645877887287338_rp, &
+    & 0.222381034453374470544_rp, 0.101228536290376259153_rp /)
+
 contains
 
   ! ---------------------------------------------  ScanAverage_1d  -----
   subroutine ScanAverage_1d ( MIF_Times, DeadTime, Chi_In, Chi_Out, Y_in, &
-    &                         Y_Out, DY_DX_Out )
+    &                         Y_Out, Pos1P, DY_DX_Out )
     ! Average over each MIF.  Assume linear motion during the MIF.
-    ! Assume MIF_Times are midway between T1 and T2-deadTime, where T1 and
-    ! T2 are the beginning and ending times for MIF integration.
+    ! Assume the MIFs begin at MIF_Times + deadTime.
 
     use MLSCommon, only: RP, RV
     use MLSNumerics, only: InterpolateValues
 
-    real(rv), intent(in) :: MIF_Times(:)
+    real(rv), intent(in) :: MIF_Times(:)   ! MIF starts here + deadTime
     real(rv), intent(in) :: DeadTime ! How much of each MIF is not collecting data
     real(rp), intent(in) :: Chi_In(:)   ! For Y_In
     real(rp), intent(in) :: Chi_Out(:)  ! For Y_Out.  Same size as MIF_Times
@@ -46,38 +58,51 @@ contains
                                         ! size(Chi_in)
     real(rp), intent(out) :: Y_Out(:)   ! Scan averaged quantity
                                         ! size(Chi_out)
+    real(rp), intent(in), optional :: Pos1P(:) ! Positions (Chi) at MIF_Times.
+                                        ! If present, Chi_Out is assumed to be
+                                        ! Pos2P
     real(rp), intent(out), optional :: DY_DX_Out(:)
 
-    real(rp), dimension(size(chi_out)) :: DYBDX, DYEDX ! \int YB dX, \int YE dX
-!   real(rp), dimension(size(chi_out)) :: IntYBDX, IntYEDX ! \int YB dX, \int YE dX
-    real(rp), dimension(size(chi_out)) :: TB, TE ! Bounding times
-    real(rp), dimension(size(chi_out)) :: XB, XE ! Bounding angles
-    real(rp), dimension(size(chi_out)) :: YB, YE ! Y at XB and XE
+    integer :: I ! Subscript and loop inductor
 
-    call scanAverage_prep ( MIF_Times, deadTime, chi_out, xb, xe )
+    real(rp), dimension(ng*size(chi_out)) :: X     ! Quadrature abscissae
+    real(rp), dimension(ng*size(chi_out)) :: Y, DY ! Quadrature ordinates
 
-    ! Scan smooth to get the output
-    call InterpolateValues ( chi_in, y_in, xb, yb, &
-                           & METHOD='S', extrapolate='C', dYbYdX=dYBdX ) ! intYdx=intYbDx )
-    call InterpolateValues ( chi_in, y_in, xe, ye, &
-                           & METHOD='S', extrapolate='C', dYbYdX=dYEdX ) ! intYdx=intYeDx )
-    y_out = 0.5 * ( yb + ye ) + (xe - xb ) * ( dyEdX - dyBdx ) / 12.0
-!   y_out = intYeDx - intYbDx
-    if ( present(dY_dX_out) ) dY_dX_out = ye - yb ! \int y' dx = y
+    call scanAverage_prep ( MIF_Times, deadTime, chi_out, x )
+
+    if ( present(dY_dX_out) ) then
+      ! Interpolate from (Chi_In,Y_in) to (x,y) and to (x,dy)
+      call interpolateValues ( chi_in, y_in, x, y, &
+                             & METHOD='S', extrapolate='C', dYbYdX=dY )
+      ! Integrate panels of y and dy
+      do i = 1, size(y_out)
+        y_out(i) = dot_product(y(1+(i-1)*ng:i*ng),gw)
+        dy_dx_out(i) = dot_product(dy(1+(i-1)*ng:i*ng),gw)
+      end do
+    else
+      ! Interpolate from (Chi_In,Y_in) to (x,y)
+      call interpolateValues ( chi_in, y_in, x, y, &
+                             & METHOD='S', extrapolate='C' )
+      ! Integrate panels of y
+      do i = 1, size(y_out)
+        y_out(i) = dot_product(y(1+(i-1)*ng:i*ng),gw)
+      end do
+    end if
 
   end subroutine ScanAverage_1d
 
   ! ---------------------------------------------  ScanAverage_1d  -----
   subroutine ScanAverage_2d ( MIF_Times, DeadTime, Chi_In, Chi_Out, Y_in, &
-    &                         Y_Out, DY_DX_Out )
+    &                         Y_Out, Pos1P, DY_DX_Out )
     ! Average over each MIF.  Assume linear motion during the MIF.
     ! Assume MIF_Times are midway between T1 and T2-deadTime, where T1 and
     ! T2 are the beginning and ending times for MIF integration.
 
     use MLSCommon, only: RP, RV
-    use MLSNumerics, only: Coefficients => Coefficients_r8, InterpolateValues
+    use MLSNumerics, only: Coefficients => Coefficients_r8, InterpolateArraySetup, &
+      & InterpolateArrayTeardown, InterpolateValues
 
-    real(rv), intent(in) :: MIF_Times(:)
+    real(rv), intent(in) :: MIF_Times(:) ! MIF starts here + deadTime
     real(rv), intent(in) :: DeadTime ! How much of each MIF is not collecting data
     real(rp), intent(in) :: Chi_In(:)   ! For Y_In
     real(rp), intent(in) :: Chi_Out(:)  ! For Y_Out.  Same size as MIF_Times
@@ -85,113 +110,111 @@ contains
                                         ! size(Chi_in) x ???
     real(rp), intent(out) :: Y_Out(:,:) ! Scan averaged quantity
                                         ! size(Chi_out) x size(Y_in,2)
+    real(rp), intent(in), optional :: Pos1P(:) ! Positions (Chi) at MIF_Times.
+                                        ! If present, Chi_Out is assumed to be
+                                        ! Pos2P
     real(rp), intent(out), optional :: DY_DX_Out(:,:)
 
-    real(rp), dimension(size(chi_out)) :: DYBDX, DYEDX ! \int YB dX, \int YE dX
-!   real(rp), dimension(size(chi_out)) :: IntYBDX, IntYEDX ! \int YB dX, \int YE dX
-    real(rp), dimension(size(chi_out)) :: R      ! Time or angle difference ratios
-    real(rp), dimension(size(chi_out)) :: TB, TE ! Bounding times
-    real(rp), dimension(size(chi_out)) :: XB, XE ! Bounding angles
-    real(rp), dimension(size(chi_out)) :: YB, YE ! Y at XB and XE
+    type(coefficients) :: Coeffs        ! to interpolate from Chi_In to X
 
-    integer :: I     ! Subscript and loop inductor
+    integer :: I, J ! Subscripts and loop inductors
 
-    call scanAverage_prep ( MIF_Times, deadTime, chi_out, xb, xe )
+    real(rp), dimension(ng*size(chi_out)) :: X     ! Quadrature abscissae
+    real(rp), dimension(ng*size(chi_out)) :: Y, DY ! Quadrature ordinates
 
-    ! Scan smooth to get the output
-    r = ( xe - xb ) / 12.0
-    do i = 1, size(y_out,2)
-      call InterpolateValues ( chi_in, y_in(:,i), xb, yb, &
-                               & METHOD='S', extrapolate='C', dYbYdX=dYBdX ) ! intYdx=intYbDx )
-      call InterpolateValues ( chi_in, y_in(:,i), xe, ye, &
-                               & METHOD='S', extrapolate='C', dYbYdX=dYEdX ) ! intYdx=intYeDx )
-      y_out(:,i) = 0.5 * ( yb + ye ) + r * ( dyEdX - dyBdx )
-!     y_out(:,i) = intYeDx - intYbDx
-      if ( present(dY_dX_out) ) dY_dX_out(:,i) = ye - yb ! \int y' dx = y
+    call scanAverage_prep ( MIF_Times, deadTime, chi_out, x )
+
+    call interpolateArraySetup ( chi_in, x, 'S', coeffs, extrapolate='C', &
+      & DyByDx=present(dY_dX_out) )
+
+    do j = 1, size(y_out,2)
+      if ( present(dY_dX_out) ) then
+        ! Interpolate from (Chi_In,Y_in) to (x,y) and to (x,dy)
+        call interpolateValues ( coeffs, chi_in, y_in(:,j), x, y, &
+                               & METHOD='S', extrapolate='C', dYbYdX=dY )
+        ! Integrate panels of y and dy
+        do i = 1, size(y_out)
+          y_out(i,j) = dot_product(y(1+(i-1)*ng:i*ng),gw)
+          dy_dx_out(i,j) = dot_product(dy(1+(i-1)*ng:i*ng),gw)
+        end do
+      else
+        ! Interpolate from (Chi_In,Y_in) to (x,y)
+        call interpolateValues ( coeffs, chi_in, y_in(:,j), x, y, &
+                               & METHOD='S', extrapolate='C' )
+        ! Integrate panels of y
+        do i = 1, size(y_out)
+          y_out(i,j) = dot_product(y(1+(i-1)*ng:i*ng),gw)
+        end do
+      end if
     end do
+
+    call interpolateArrayTeardown ( coeffs )
 
   end subroutine ScanAverage_2d
 
   ! ---------------------------------------------  ScanAverage_Prep  -----
-  subroutine ScanAverage_Prep ( MIF_Times, DeadTime, Chi_Out, XB, XE )
+  subroutine ScanAverage_Prep ( MIF_Times, DeadTime, Chi_Out, X, Pos1P )
     ! Average over each MIF.  Assume linear motion during the MIF.
     ! Assume MIF_Times are midway between T1 and T2-deadTime, where T1 and
     ! T2 are the beginning and ending times for MIF integration.
 
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use MLSCommon, only: RP, RV
-    real(rv), intent(in) :: MIF_Times(:)
+    use MLSNumerics, only: InterpolateValues
+    use Sort_m, only: Sortp
+
+    real(rv), intent(in) :: MIF_Times(:) ! MIF starts here + deadTime
     real(rv), intent(in) :: DeadTime ! How much of each MIF is not collecting data
     real(rp), intent(in) :: Chi_Out(:)  ! For Y_Out.  No larger than MIF_Times
-    real(rp), intent(out) :: XB(:), XE(:) ! Bounding angles
+    real(rp), intent(out) :: X(:)       ! Quadrature abscissae
+    real(rp), intent(in), optional :: Pos1P(:) ! Positions (Chi) at MIF_Times.
+                                        ! If present, Chi_Out is assumed to be
+                                        ! Pos2P.  Size(Chi_Out).
 
-    real(rp), dimension(1:size(chi_out)-4) :: A  ! Acceleration
-    real(rp), dimension(2:size(chi_out)-5) :: B  ! Acceleration's moment
-    real(rp), dimension(size(chi_out)-1) :: R    ! Time or angle difference ratios
-    real(rp), dimension(size(chi_out)) :: TB, TE ! Bounding times
-
-    real(rp) :: AMAX ! Maxval(A)
     integer :: I     ! Subscript and loop inductor
-    integer :: M     ! minloc(abs(a)+abs(b))
     integer :: N     ! Size(chi_Out)
 
+    real(rp), dimension(ng*size(chi_out)) :: T     ! Quadrature abscissae
+    real(rp), dimension(size(chi_out)) :: TB, TE   ! Bounding times
+    real(rp), dimension(size(chi_out)) :: TBAR     ! Time at Chi_Out
+
+    ! If Pos1P is present
+    integer, dimension(:), pointer :: I_POS
+    real(rp), dimension(:), pointer :: X_POS, T_POS
+
     n = size(chi_out)
-
-    ! Get the times at the MIF starts and ends
-    tb(1) = ( 3.0 * MIF_times(1) - MIF_times(2) + deadTime ) * 0.5
-    te(1) = 2.0 * MIF_Times(1) - tb(1)
-    do i = 2, n
-      tb(i) = 2.0 * MIF_times(i-1) - tb(i-1) + deadTime
-      te(i) = 2.0 * MIF_times(i) - tb(i)
+    ! Integration start times for each MIF
+    tb = MIF_Times(:n) + deadTime
+    ! Integration end times for each MIF
+    te(1:n-1) = MIF_Times(2:n)
+    te(n) = 2.0*MIF_Times(n) - MIF_Times(n-1)
+    ! Times corresponding to Chi_Out
+    tbar(1:n-1) = 0.5 * ( MIF_Times(1:n-1) + MIF_Times(2:n) )
+    tbar(n) = 0.5 * ( MIF_Times(n) + te(n) )
+    ! Times at quadrature abscissae
+    do i = 1, n
+      t(1+(i-1)*ng:i*ng) = 0.5 * ( tb(i) + te(i) + ( te(i) - tb(i) ) * gx )
     end do
 
-    ! Get the bounding angles.
-    ! The accuracy depends critically upon getting a good initial condition.
-    ! We choose a place where the scan acceleration is zero or velocity is
-    ! most constant.
-    ! Compute acceleration:
-    a = ((chi_out(5:n)-chi_out(4:n-1)) / ((MIF_times(5:n)-MIF_times(4:n-1)) * &
-      &                                   (MIF_times(4:n-1)-MIF_times(3:n-2))) + &
-      &  (chi_out(4:n-1)-2.0*chi_out(3:n-2)+chi_out(2:n-3)) / &
-      &     ((MIF_times(4:n-1)-MIF_times(3:n-2)) * &
-      &      (MIF_times(3:n-2)-MIF_times(2:n-3))) - &
-      &  (chi_out(2:n-3)-chi_out(1:n-4)) / ((MIF_times(3:n-2)-MIF_times(2:n-3)) * &
-      &  (MIF_times(2:n-3)-MIF_times(1:n-4)))) / 4.0
-    amax = maxval(a)
-    ! Compute first moment of acceleration
-    b = ((a(3:n-4)-a(2:n-5)) / (MIF_times(5:n-2)-MIF_times(4:n-3)) + &
-      & (a(2:n-5)-a(1:n-6)) / (MIF_times(4:n-3)-MIF_times(3:n-4)))*0.5
-    ! Find where acceleration + moment is minimum.  We add 2 to the index
-    ! because acceleration is a second difference.
-    m = minloc(abs(a(2:n-5))+abs(b),1) + 2
-
-    ! Estimate an initial value for XB(m)
-    xb(m) = chi_out(m-1) + (chi_out(m)-chi_out(m-1)) * (tb(m)-MIF_times(m-1)) / &
-      &                  (MIF_times(m)-MIF_times(m-1))
-
-    ! Get time difference ratios
-    r = (tb(2:n)-tb(1:n-1)) / (MIF_times(1:n-1)-tb(1:n-1))
-
-    ! Get XB for MIFs above M
-    do i = m+1, n
-      xb(i) = xb(i-1) + ( chi_out(i-1) - xb(i-1) ) * r(i-1)
-    end do
-    ! Get XB for MIFs below B
-    do i = m-1, 1, -1
-      xb(i) = ( xb(i+1) - r(i) * chi_out(i) ) / ( 1.0 - r(i) )
-    end do
-
-    ! Get XE
-    xe(1:n-1) = xb(1:n-1) + ( xb(2:n) - xb(1:n-1) ) * ( te(1:n-1) - tb(1:n-1) ) / &
-      &                                               ( tb(2:n)   - tb(1:n-1) )
-    ! With an estimated extrapolated XE(n)
-    xe(n) = xb(n) + (( chi_out(n) - xb(n) ) * ( te(n) - tb(n) ) / &
-      &                                       ( MIF_times(n) - tb(n)))
-
-    ! We could have replaced this with a simple interpolation from
-    ! MIF_times, Chi_out to XB, XE at TB, TE, but that does not
-    ! guarantee a constant velocity between Xb and XE, which is a
-    ! requirement for the scan smoothing integration algorithm.  In
-    ! practice it probably doesn't matter.
+    if ( present(pos1P) ) then
+      call allocate_test ( i_pos, 2*size(chi_out), 'I_Pos', moduleName )
+      call allocate_test ( t_pos, 2*size(chi_out), 'T_Pos', moduleName )
+      call allocate_test ( x_pos, 2*size(chi_out), 'X_Pos', moduleName )
+      x_pos(1:n) = chi_out
+      x_pos(n+1:) = pos1P
+      t_pos(1:n) = tbar
+      t_pos(n+1:) = MIF_Times
+      call sortp ( t_pos, 1, 2*n, i_pos )
+      call interpolateValues ( t_pos(i_pos), x_pos(i_pos), t, x, &
+                             & METHOD='S', extrapolate='C' )
+      call deallocate_test ( i_pos, 'I_Pos', moduleName )
+      call deallocate_test ( t_pos, 'T_Pos', moduleName )
+      call deallocate_test ( x_pos, 'X_Pos', moduleName )
+    else
+      ! Interpolate from (tbar,Chi_Out) to (t,x)
+      call interpolateValues ( tbar, Chi_Out, t, x, &
+                             & METHOD='S', extrapolate='C' )
+    end if
 
   end subroutine ScanAverage_Prep
 
@@ -207,6 +230,9 @@ contains
 end module ScanAverage_m
 
 ! $Log$
+! Revision 2.3  2005/09/03 01:21:59  vsnyder
+! Completely revised
+!
 ! Revision 2.2  2005/08/06 01:41:10  vsnyder
 ! Get rid of coeffs, use trapezoid rule with endpoint corrections
 !
