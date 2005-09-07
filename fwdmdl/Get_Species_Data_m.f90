@@ -100,28 +100,28 @@ contains
     if ( associated(fwdModelConf%lineCenter) ) then
       do l = 1, size(fwdModelConf%lineCenter)
         fwdModelConf%lineCenter(l)%qty%qty => getVectorQuantityByType ( &
-        &  fwdModelIn, quantityType=l_lineCenter, &
-        &  molecule=fwdModelConf%lineCenter(l)%molecule )
+        &  fwdModelIn, fwdModelExtra, quantityType=l_lineCenter, &
+        &  molecule=fwdModelConf%lineCenter(l)%molecule, &
+        &  foundInFirst=fwdModelConf%lineCenter(l)%qty%foundInFirst )
         call check_no_frq_coord ( fwdModelConf%lineCenter(l)%qty%qty )
-        fwdModelConf%lineCenter(l)%qty%foundInFirst = .true.
       end do ! l
     end if
     if ( associated(fwdModelConf%lineWidth) ) then
       do l = 1, size(fwdModelConf%lineWidth)
         fwdModelConf%lineWidth(l)%qty%qty => getVectorQuantityByType ( &
-        &  fwdModelIn, quantityType=l_lineWidth, &
-        &  molecule=fwdModelConf%lineWidth(l)%molecule )
+        &  fwdModelIn, fwdModelExtra, quantityType=l_lineWidth, &
+        &  molecule=fwdModelConf%lineWidth(l)%molecule, &
+        &  foundInFirst=fwdModelConf%lineWidth(l)%qty%foundInFirst )
         call check_no_frq_coord ( fwdModelConf%lineWidth(l)%qty%qty )
-        fwdModelConf%lineWidth(l)%qty%foundInFirst = .true.
       end do
     end if
     if ( associated(fwdModelConf%lineWidth_TDep) ) then
       do l = 1, size(fwdModelConf%lineWidth_TDep)
         fwdModelConf%lineWidth_TDep(l)%qty%qty => getVectorQuantityByType ( &
-        &  fwdModelIn, quantityType=l_lineWidth_TDep, &
-        &  molecule=fwdModelConf%lineWidth_TDep(l)%molecule )
+        &  fwdModelIn, fwdModelExtra, quantityType=l_lineWidth_TDep, &
+        &  molecule=fwdModelConf%lineWidth_TDep(l)%molecule, &
+        &  foundInFirst=fwdModelConf%lineWidth_TDep(l)%qty%foundInFirst )
         call check_no_frq_coord ( fwdModelConf%lineWidth_TDep(l)%qty%qty )
-        fwdModelConf%lineWidth_TDep(l)%qty%foundInFirst = .true.
       end do
     end if
 
@@ -158,6 +158,9 @@ contains
 end module Get_Species_Data_m
 
 ! $Log$
+! Revision 2.28  2005/09/03 01:21:33  vsnyder
+! Spectral parameter offsets stuff
+!
 ! Revision 2.27  2005/08/03 18:04:09  vsnyder
 ! Some spectroscopy derivative stuff
 !
