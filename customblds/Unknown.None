@@ -10,7 +10,7 @@ ifndef CASCADE
 
 EngTbls.o: engtbls.mod
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
-   -T EngTbls.o outputl1b.mod 
+   -T EngTbls.o engtbls.mod 
 engtbls.mod:
 	$(UTILDIR)/newAifBdiff.sh -a engtbls.mod $(FC) -c $(DUSTY) -maxcontin=100 \
    $(INC_PATHS) $(S)/EngTbls.f90 $(FAFTER)
@@ -186,7 +186,7 @@ else
 #	l1
 
 EngTbls.o: $(S)/EngTbls.f90
-	$(FC) -c $(DUSTY) -maxcontin=100 $(INC_PATHS) $(S)/OutputL1B.f90 $(FAFTER)
+	$(FC) -c $(DUSTY) -maxcontin=100 $(INC_PATHS) $(S)/EngTbls.f90 $(FAFTER)
 OutputL1B.o: $(S)/OutputL1B.f90
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B.f90 $(FAFTER)
 OutputL1B_HDF4.o: $(S)/OutputL1B_HDF4.f90
@@ -320,6 +320,9 @@ ncep_dao.o:
 
 endif
 # $Log$
+# Revision 1.13  2004/08/19 00:07:46  pwagner
+# Fixed missing mod dependencies for machine.o
+#
 # Revision 1.12  2003/10/08 21:13:16  pwagner
 # Changed options to sort to tolerate duplicate entries
 #

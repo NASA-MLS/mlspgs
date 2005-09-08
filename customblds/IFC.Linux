@@ -17,7 +17,7 @@ ifndef CASCADE
 
 EngTbls.o: ENGTBLS.mod
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
-   -T EngTbls.o OUTPUTL1B.mod 
+   -T EngTbls.o ENGTBLS.mod 
 ENGTBLS.mod:
 	$(UTILDIR)/newAifBdiff.sh -a ENGTBLS.mod $(FC) -c $(DUSTY) \
    $(INC_PATHS) $(S)/EngTbls.f90 $(FAFTER)
@@ -333,6 +333,9 @@ ncep_dao.o:
 
 endif
 # $Log$
+# Revision 1.7  2004/08/19 00:07:46  pwagner
+# Fixed missing mod dependencies for machine.o
+#
 # Revision 1.6  2004/05/20 22:58:55  pwagner
 # Added build rules for ieee-arithmetic module for mod-variant depends
 #
