@@ -606,6 +606,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_upperOverlap, t+t_numeric, n+n_field_type, &
              begin, f+f_maxLength, t+t_numeric, n+n_field_type, &
              begin, f+f_maxOrbY, t+t_numeric, n+n_field_type, &
+             begin, f+f_allowPriorOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_noSlaves, t+t_numeric, n+n_field_type, &
              begin, f+f_homeModule, t+t_module, n+n_field_type, &
              begin, f+f_homeGeodAngle, t+t_numeric, n+n_field_type, &
@@ -1376,6 +1377,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.411  2005/09/09 23:07:26  pwagner
+! Changes to allow pre-starttime overlaps in first chunk
+!
 ! Revision 2.410  2005/08/19 23:24:55  pwagner
 ! Allows HGrid, Copy commands in Output section
 !
