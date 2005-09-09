@@ -37,11 +37,10 @@
 # Main Program
 # ************
 # 
-RECIPIENTS="pwagner David.T.Cuddy@jpl.nasa.gov ahanzel@mls.jpl.nasa.gov pzimdars@sdsio-mail.jpl.nasa.gov sneely@sdsio.jpl.nasa.gov eparaiso@sdsio-mail.jpl.nasa.gov bsaha@sdsio-mail.jpl.nasa.gov dromo@sdsio.jpl.nasa.gov cvuu@mls.jpl.nasa.gov Brian.W.Knosp@jpl.nasa.gov"
-#RECIPIENTS="cvuu@mls.jpl.nasa.gov paul.a.wagner@jpl.nasa.gov"
-#RECIPIENTS="pwagner"
+RECIPIENTS="pwagner David.T.Cuddy@jpl.nasa.gov ahanzel@mls.jpl.nasa.gov sysadmin@sdsio.jpl.nasa.gov eparaiso@sdsio-mail.jpl.nasa.gov bsaha@sdsio-mail.jpl.nasa.gov dromo@sdsio.jpl.nasa.gov cvuu@mls.jpl.nasa.gov Brian.W.Knosp@jpl.nasa.gov"
 MAILER="/home/pwagner/bin/mailtome.sh"
-clusternames="lightspeed scramjet speedracer"
+# clusternames="lightspeed scramjet speedracer"
+clusternames="lightspeed speedracer"
 debug="no"
 me="$0"
 my_name=clusterstatus
@@ -148,12 +147,16 @@ else
 fi
 if [ "$mail" = "yes" -a "$dryrun" != "yesyes" ]
 then
+  #$MAILER -r /home/pwagner/maillogs -s "clusterstatus $TODAY" \
+  # -R "$RECIPIENTS" "$OUTPUT"
   $MAILER -r /home/pwagner/maillogs -s "clusterstatus $TODAY" \
-   -R "$RECIPIENTS" "$OUTPUT"
+   -f "Paul Wagner <paul.a.wagner@jpl.nasa.gov>" -R "$RECIPIENTS" "$OUTPUT"
 elif [ "$mail" = "yes" ]
 then
+  # $MAILER -r /home/pwagner/maillogs -s "clusterstatus $TODAY" \
+  # -R "$RECIPIENTS" -dryrun "$OUTPUT"
   $MAILER -r /home/pwagner/maillogs -s "clusterstatus $TODAY" \
-   -R "$RECIPIENTS" -dryrun "$OUTPUT"
+   -f "Paul Wagner <paul.a.wagner@jpl.nasa.gov>" -R "$RECIPIENTS" -dryrun "$OUTPUT"
 elif [ "$scp" = "no" ]
 then
   exit 0
@@ -166,6 +169,9 @@ else
 fi
 exit 0
 # $Log$
+# Revision 1.4  2005/06/23 22:20:45  pwagner
+# Reworded Copyright statement
+#
 # Revision 1.3  2005/05/20 23:10:49  pwagner
 # Show how many chunks succumbed to 'list out of order' bug
 #
