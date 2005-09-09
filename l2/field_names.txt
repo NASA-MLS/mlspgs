@@ -34,6 +34,7 @@ allHGrids
 allLines
 allLinesForRadiometer
 allLinesInCatalog
+allowPriorOverlaps
 allPFA
 allQuantityTemplates
 allSignals
@@ -405,6 +406,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.148  2005/09/09 23:07:26  pwagner
+# Changes to allow pre-starttime overlaps in first chunk
+#
 # Revision 2.147  2005/08/19 23:24:55  pwagner
 # Allows HGrid, Copy commands in Output section
 #
