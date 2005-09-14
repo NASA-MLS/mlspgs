@@ -2185,7 +2185,7 @@ contains ! =====     Public Procedures     =============================
 
     integer, intent(in)           :: file1 ! handle of file 1
     integer, intent(in)           :: file2 ! handle of file 2
-    character (len=*), intent(in) :: swathList
+    character (len=*), intent(in) :: swathList ! copy only these; no wildcard
     integer, intent(in)           :: hdfVersion1
     integer, intent(in)           :: hdfVersion2
     logical, optional, intent(in) :: notUnlimited
@@ -2280,8 +2280,8 @@ contains ! =====     Public Procedures     =============================
     logical, optional, intent(in) :: create2
     logical, optional, intent(in) :: andGlAttributes
     integer, optional, intent(in) :: hdfVersion1
-    integer, optional, intent(in) :: hdfVersion2
-    character (len=*), optional, intent(in) :: swathList ! Copy only these
+    integer, optional, intent(in) :: hdfVersion2         !              is wild
+    character (len=*), optional, intent(in) :: swathList ! Copy only these; '*'
     character (len=*), optional, intent(in) :: rename ! But rename them these
     character (len=*), optional, intent(in) :: exclude ! Don't copy these
     logical, optional, intent(in)           :: notUnlimited
@@ -3350,7 +3350,7 @@ contains ! =====     Public Procedures     =============================
   !-----------------------------------------  RepairL2GP_HGrid  -----
   subroutine RepairL2GP_HGrid ( L2GP, HGrid, fields, offset )
     use HGridsDatabase, only: HGrid_T
-    ! This routine repairs l2gp1 using values from l2gp2
+    ! This routine repairs l2gp1 using values from HGrid
     ! wherever the first has fillvalues
     
     ! Thew optional arg fields will determine which fields this applies to:
@@ -3366,17 +3366,28 @@ contains ! =====     Public Procedures     =============================
     character(len=*), optional, intent(in) :: fields
     integer, optional, intent(in) :: offset ! If HGrid profs offset from l2gp    
     ! Internal variables
-    character(len=128) :: myFields
+    logical, parameter :: DEEBUG = .false.
     integer :: HGp1 ! Effective starting HGrid profile
     real(rgp), dimension(:), pointer :: HGridField => null()
+    character(len=128) :: myFields
     ! Executable code
     nullify(HGridField)
     myFields = '*'
     if ( present(fields) ) myFields = lowercase(fields)
-    HGp1 = 1 ! 2  ! No longer assume we're not offset; was 1
-    if ( present(offset) ) HGp1 = offset
-    call allocate_test(HGridField, l2gp%nTimes, 'HGridField', &
-         & ModuleName )
+    if ( present(offset) ) then
+      HGp1 = offset
+    ! elseif ( HGrid%allowPriorOverlaps ) then
+    !  HGp1 = 1
+    else
+      HGp1 = 1 + HGrid%noProfsLowerOverlap ! 2  ! No longer assume we're not offset; was 1
+    endif
+    ! Check that we've calculated array sizes correectly
+    ! In particular, useable profiles matched HGrid and l2gp
+    if ( size(hgrid%geodLat(1,HGp1:)) /= size(l2gp%longitude) ) &
+     & call MLSMessage ( MLSMSG_Error, ModuleName, & 
+        & 'HGrid and l2gp size mismatch')
+    ! call allocate_test(HGridField, l2gp%nTimes, 'HGridField', &
+    !    & ModuleName )
     select case (trim(myFields))
     case ('geolocation')
       myFields = lowercase(GEO_FIELDS) // ',pressure,time,frequency,chunknumber'
@@ -3384,20 +3395,20 @@ contains ! =====     Public Procedures     =============================
       ! Not a special case
     end select
 
-    print *, 'shape l2gp%latitude: ', shape(l2gp%latitude)
-    print *, 'shape HGrid%geodLat: ', shape(HGrid%geodLat)
+    if ( DEEBUG ) print *, 'shape l2gp%latitude: ', shape(l2gp%latitude)
+    if ( DEEBUG ) print *, 'shape HGrid%geodLat: ', shape(HGrid%geodLat)
     
     if ( SwitchDetail(myFields, 'latitude', '-wc') > -1 ) then
-      HGridField = hgrid%geodLat(1,HGp1:)
+      ! HGridField = hgrid%geodLat(1,HGp1:)
       call ReplaceFillValues ( l2gp%latitude, l2gp%MissingValue, &
-        & HGridField )
+        & real(hgrid%geodLat(1,HGp1:), rgp) )
     endif
-    print *, 'shape l2gp%longitude: ', shape(l2gp%longitude)
-    print *, 'shape HGrid%lon: ', shape(HGrid%lon)
+    if ( DEEBUG ) print *, 'shape l2gp%longitude: ', shape(l2gp%longitude)
+    if ( DEEBUG ) print *, 'shape HGrid%lon: ', shape(HGrid%lon)
     if ( SwitchDetail(myFields, 'longitude', '-wc') > -1 ) then
-      HGridField = hgrid%lon(1,HGp1:)
+      ! HGridField = hgrid%lon(1,HGp1:)
       call ReplaceFillValues ( l2gp%longitude, l2gp%MissingValue, &
-        & HGridField )
+        & real(hgrid%lon(1,HGp1:), rgp) )
     endif
     if ( SwitchDetail(myFields, 'solartime', '-wc') > -1 ) then
       call ReplaceFillValues ( l2gp%solartime, l2gp%MissingValue, &
@@ -3419,8 +3430,8 @@ contains ! =====     Public Procedures     =============================
       call ReplaceFillValues ( l2gp%time, real(l2gp%MissingValue, r8), &
         & hgrid%time(1,HGp1:) )
     endif
-    call deallocate_test(HGridField, 'HGridField', &
-         & ModuleName )
+    ! call deallocate_test(HGridField, 'HGridField', &
+    !      & ModuleName )
 
   end subroutine RepairL2GP_HGrid
 
@@ -3479,6 +3490,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.122  2005/08/19 23:37:22  pwagner
+! May use HGrid to repair l2gp geolocations
+!
 ! Revision 2.121  2005/08/15 10:40:38  hcp
 ! in AppendL2GPData_fileID, mls_swdetach was called with an undefined
 ! variable as hdfVersion, causing failures. Now fixed.
