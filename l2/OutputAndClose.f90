@@ -62,6 +62,7 @@ contains ! =====     Public Procedures     =============================
 
     use Allocate_Deallocate, only: Deallocate_Test, Allocate_test
     use Chunks_m, only: MLSChunk_T
+    use ChunkDivide_m, only: ChunkDivideConfig
     use Expr_M, only: Expr
     use HGrid, only: CREATEHGRIDFROMMLSCFINFO
     use HGridsDatabase, only: ADDHGRIDTODATABASE, Dump, HGRID_T
@@ -191,8 +192,19 @@ contains ! =====     Public Procedures     =============================
     end if
 
     usingSubmit = trim_safe(parallel%submit) /= ''
+
+    ! Before looping over lines in l2cf, do any automatic tasks
+    ! Catenate any split Direct Writes
+    ! (Because copy commands may refer to DGG/DGM file)
+    ! We assume hdfVersion is 5
+    ! (Shouldn't you test and report an error if it's not?)
+    if ( CATENATESPLITS .and. associated(DirectDatabase) &
+      & .and. .not. SKIPDIRECTWRITES ) then
+      call unsplitFiles ( DirectDatabase, FileDatabase, usingSubmit, debug )
+    end if
+
     
-    AllChunks%firstMAFIndex = chunks(1)%firstMAFIndex + 1
+    AllChunks%firstMAFIndex = chunks(1)%firstMAFIndex
     AllChunks%lastMAFIndex = chunks(size(chunks))%lastMAFIndex
 
     inputPhysicalFilename = ' '
@@ -204,7 +216,7 @@ contains ! =====     Public Procedures     =============================
       hdfVersion = DEFAULT_HDFVERSION_WRITE
       exclude = ''
       meta_name = ''
-      sdList = '*'
+      sdList = '*' ! This is wildcard meaning 'every sd or swath'
       writeCounterMAF = .false.
       writeMetaDataOnly = .false.
       got = .false.
@@ -242,7 +254,7 @@ contains ! =====     Public Procedures     =============================
           case ( f_file )
             call get_string ( sub_rosa(subtree(2,gson)), file_base )
             file_base = unquote(file_base) ! Parser includes quotes
-            print *, 'file_base: ', trim(file_base)
+            if ( DEBUG ) print *, 'file_base: ', trim(file_base)
           case ( f_hdfVersion )
             call expr ( subtree(2,gson), units, value, type )
             if ( units(1) /= phyq_dimensionless ) &
@@ -314,10 +326,10 @@ contains ! =====     Public Procedures     =============================
             & mlspcf_l2dgg_start, mlspcf_l2dgg_end)
         case default
         end select
-        print *, 'inputPhysicalfileName: ', inputPhysicalfileName
-        print *, 'outputPhysicalfileName: ', PhysicalfileName
-        print *, 'repairGeoLocations: ', repairGeoLocations
-        print *, 'create: ', create
+        if ( DEBUG ) print *, 'inputPhysicalfileName: ', inputPhysicalfileName
+        if ( DEBUG ) print *, 'outputPhysicalfileName: ', PhysicalfileName
+        if ( DEBUG ) print *, 'repairGeoLocations: ', repairGeoLocations
+        if ( DEBUG ) print *, 'create: ', create
         call display_string ( lit_indices(output_type), &
         &             strip=.true., advance='yes' )
         call display_string ( lit_indices(input_type), &
@@ -325,11 +337,13 @@ contains ! =====     Public Procedures     =============================
 
         select case ( output_type )
         case ( l_l2aux ) ! --------------------- Copying l2aux files -----
+          ! Note that we haven't yet implemented all the repair stuff
+          ! So crashed chunks remain crashed chunks
           call cpL2AUXData(trim(inputPhysicalfileName), &
             & trim(PhysicalFilename), create2=create, &
             & hdfVersion=HDFVERSION_5, sdList=trim(sdList))
         case ( l_l2gp, l_l2dgg ) ! --------------------- Copying l2gp files -----
-          ! How to use swaths field?
+          ! How to use swaths field? See definition of sdList
           if ( got(f_exclude) .and. .not. repairGeoLocations ) then
             call cpL2GPData(trim(inputPhysicalfileName), &
               & trim(PhysicalFilename), create2=create, &
@@ -368,8 +382,11 @@ contains ! =====     Public Procedures     =============================
         call decorate ( key, AddHGridToDatabase ( hGrids, &
           & CreateHGridFromMLSCFInfo ( name, key, filedatabase, l2gpDatabase, &
           & processingRange, allChunks ) ) )
-        print *, 'HGrid added; size now: ', size(hGrids)
-        call dump(HGrids(size(hGrids)))
+        ! Don't skip the lower overlap profiles if ChunkDivide included them
+        if ( ChunkDivideConfig%allowPriorOverlaps ) &
+          & HGrids(size(hGrids))%noProfsLowerOverlap = 0
+        if ( DEBUG ) print *, 'HGrid added; size now: ', size(hGrids)
+        if ( DEBUG ) call dump(HGrids(size(hGrids)))
 
       case ( s_output )
         do field_no = 2, nsons(key)       ! Skip the command name
@@ -520,13 +537,6 @@ contains ! =====     Public Procedures     =============================
 
     end do  ! spec_no
     
-    ! Catenate any split Direct Writes
-    ! We assume hdfVersion is 5
-    if ( CATENATESPLITS .and. associated(DirectDatabase) &
-      & .and. .not. SKIPDIRECTWRITES ) then
-      call unsplitFiles ( DirectDatabase, FileDatabase, usingSubmit, debug )
-    end if
-
     ! Write the log file metadata
     if ( LOGFILEGETSMETADATA .and. .not. checkPaths ) then
       if ( DEBUG ) then
@@ -1288,6 +1298,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.110  2005/09/14 00:15:32  pwagner
+! Relocate unsplitFiles before l2cf commands (so may copy swaths from DGG)
+!
 ! Revision 2.109  2005/08/19 23:35:35  pwagner
 ! Allow Output to repair l2gp with HGrid while copying files
 !
