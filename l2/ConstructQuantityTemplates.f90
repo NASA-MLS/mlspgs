@@ -62,8 +62,6 @@ module ConstructQuantityTemplates
 contains ! ============= Public procedures ===================================
 
   ! ------------------------------------------- CreateQtyTemplateFromMLSCFInfo ----
-  ! type (QuantityTemplate_T) function CreateQtyTemplateFromMLSCFInfo ( &
-  !  & Name, Root, FGrids, HGrids, L1bInfo, Chunk, MifGeolocation ) &
   type (QuantityTemplate_T) function CreateQtyTemplateFromMLSCFInfo ( &
     & Name, Root, FGrids, HGrids, filedatabase, Chunk, MifGeolocation ) &
     & result ( QTY )
@@ -98,7 +96,6 @@ contains ! ============= Public procedures ===================================
     type (FGrid_T), dimension(:), pointer :: FGrids
     type (HGrid_T), dimension(:), pointer :: HGrids
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-    ! type (L1BInfo_T), intent(in) :: L1BINFO
     type (MLSChunk_T), intent(in) :: Chunk
     type (QuantityTemplate_T), dimension(:), intent(in), optional :: &
       & MifGeolocation
@@ -215,7 +212,6 @@ contains ! ============= Public procedures ===================================
           do s_index=1, size(signalInds)
             if ( AnyGoodSignalData ( signalInds(s_index), sideband, &
               & filedatabase, Chunk) ) exit
-              ! & l1bInfo, Chunk) ) exit
           end do
           if ( s_index > size(signalInds) ) then
             signal = signalInds(1)
@@ -338,7 +334,6 @@ contains ! ============= Public procedures ===================================
 
     ! Now do the setup for the different families of quantities
     if ( isMinorFrame ) then
-      ! call ConstructMinorFrameQuantity ( l1bInfo, chunk, &
       call ConstructMinorFrameQuantity ( filedatabase, chunk, &
         & instrumentModule, qty, noChans=noChans, mifGeolocation=mifGeolocation, &
         & regular=regular )
@@ -363,7 +358,7 @@ contains ! ============= Public procedures ===================================
       ! Setup the horizontal coordinates
       if ( got(f_hGrid) ) then
         qty%hGridIndex = hGridIndex
-        call PointQuantityToHGrid ( hGrids(hGridIndex), qty )
+        call PointQuantityToHGrid ( hGrids(hGridIndex), chunk, qty )
       else
         call SetupEmptyHGridForQuantity ( qty )
       end if
@@ -491,7 +486,6 @@ contains ! ============= Public procedures ===================================
 
     ! Dummy arguments
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-    ! type (L1BInfo_T), intent(in) :: L1BINFO
     type (MLSChunk_T), intent(in) :: chunk   ! The chunk under consideration
     integer, intent(in) :: instrumentModule  ! Database index
     type (QuantityTemplate_T), intent(out) :: qty ! Resulting quantity
@@ -533,10 +527,6 @@ contains ! ============= Public procedures ===================================
 
     L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
     hdfversion = L1BFile%HDFVersion
-!     hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
-!     if ( hdfversion <= 0 ) &
-!       & call MLSMessage ( MLSMSG_Error, ModuleName, &
-!       & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )
 
     if ( present(mifGeolocation) ) then
       ! -------------------------------------- Got mifGeolocation ------------
@@ -887,7 +877,7 @@ contains ! ============= Public procedures ===================================
     use Allocate_Deallocate, only: Deallocate_Test
     use L1BData, only: L1BData_T, READL1BDATA, GetL1BFile, &
       & FindL1BData, AssembleL1BQtyName, PRECISIONSUFFIX
-    use MLSCommon, only: L1BInfo_T, MLSFile_T, RK => R8
+    use MLSCommon, only: MLSFile_T, RK => R8
     use MLSFiles, only: GetMLSFileByType
     use MLSSignals_m, only: GetSignalName
 
@@ -904,10 +894,6 @@ contains ! ============= Public procedures ===================================
 
   ! Executable
   answer = .false.
-!     hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
-!     if ( hdfversion <= 0 ) &
-!       & call MLSMessage ( MLSMSG_Error, ModuleName, &
-!       & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )
     L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
     if ( .not. associated(L1BFile) ) return
     call GetSignalName ( signal, nameString, &                   
@@ -934,16 +920,19 @@ contains ! ============= Public procedures ===================================
   end function AnyGoodSignalData
 
   ! ----------------------------------  PointQuantityToHGrid  -----
-  subroutine PointQuantityToHGrid ( hGrid, qty )
+  subroutine PointQuantityToHGrid ( hGrid, chunk, qty )
 
   ! This routine copies HGrid information into an already defined quantity
 
+    use Chunks_m, only: MLSChunk_T
+    use ChunkDivide_m, only: ChunkDivideConfig
     use HGridsDatabase, only: hGrid_T
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use QuantityTemplates, only: QuantityTemplate_T
 
     ! Dummy arguments
     type (hGrid_T), intent(in) :: HGRID
+    type (MLSChunk_T), intent(in) :: Chunk
     type (QuantityTemplate_T), intent(inout) :: QTY
 
     ! Executable code
@@ -961,6 +950,8 @@ contains ! ============= Public procedures ===================================
     qty%losAngle => hGrid%losAngle
     qty%noInstancesLowerOverlap = hGrid%noProfsLowerOverlap
     qty%noInstancesUpperOverlap = hGrid%noProfsUpperOverlap
+    if ( ChunkDivideConfig%allowPriorOverlaps .and. chunk%chunkNumber == 1 ) &
+      & qty%noInstancesLowerOverlap = 0
 
   end subroutine PointQuantityToHGrid
 
@@ -1287,6 +1278,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.127  2005/09/14 00:13:30  pwagner
+! Uses ChunkDivideConfig%allowPriorOverlaps in calculating qty%noInstancesLowerOverlap
+!
 ! Revision 2.126  2005/09/02 21:57:23  vsnyder
 ! Add spectroscopy parameter quantities
 !
