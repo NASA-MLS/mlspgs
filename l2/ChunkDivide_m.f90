@@ -43,6 +43,7 @@ module ChunkDivide_m
   private :: not_used_here 
   !---------------------------------------------------------------------------
 
+  public :: ChunkDivideConfig_T
   ! This type is filled by the l2cf and describes the configuration of the
   ! chunk division process.
   type ChunkDivideConfig_T
@@ -70,6 +71,7 @@ module ChunkDivide_m
     real(rp)  :: maxGap = 0.0           ! Length of time/MAFs/orbits allowed for gap
     integer   :: maxGapFamily = PHYQ_Invalid ! PHYQ_MAF, PHYQ_Time etc.
     logical   :: skipL1BCheck = .false. ! Don't check for l1b data probs
+    logical   :: allowPriorOverlaps = .false. ! Use MAFs before start time
   end type ChunkDivideConfig_T
 
   ! The chunk divide methods are:
@@ -83,6 +85,14 @@ module ChunkDivide_m
   !           orbit where possible.
   !
   ! Even - Hope to have chunks all about the same length, as quoted. 
+
+  type(ChunkDivideConfig_T), public, save :: ChunkDivideConfig
+
+  type MAFRange_T
+    integer, dimension(2) :: L1BCover ! Range found in L1B files
+    integer, dimension(2) :: L2Cover  ! Range covered by L2 ProcessingRange
+    integer, dimension(2) :: Expanded ! L2Cover plus prior/post overlaps
+  end  type MAFRange_T
 
   ! This type describes obstructions in the Level 1 data which will affect the
   ! selection of chunk divisions.
@@ -157,9 +167,11 @@ contains ! ===================================== Public Procedures =====
     use Chunks_m, only: DUMP, MLSCHUNK_T
     use Dump_0, only: DUMP
     use EXPR_M, only: EXPR
-    use Init_Tables_Module, only: F_OVERLAP, F_LOWEROVERLAP, F_UPPEROVERLAP, &
+    use Init_Tables_Module, only: F_ALLOWPRIOROVERLAPS, &
+      & F_CRITICALMODULES, F_CRITICALSIGNALS, &
+      & F_HOMEMODULE, F_HOMEGEODANGLE, &
+      & F_OVERLAP, F_LOWEROVERLAP, F_UPPEROVERLAP, &
       & F_MAXLENGTH, F_MAXORBY, F_METHOD, F_NOCHUNKS, &
-      & F_HOMEMODULE, F_CRITICALMODULES, F_CRITICALSIGNALS, F_HOMEGEODANGLE, &
       & F_SCANLOWERLIMIT, F_SCANUPPERLIMIT, F_NOSLAVES, F_SKIPL1BCHECK, &
       & FIELD_FIRST, FIELD_LAST, L_EVEN, &
       & L_FIXED, F_MAXGAP, L_ORBITAL, L_PE, S_CHUNKDIVIDE, L_BOTH, L_EITHER
@@ -187,15 +199,15 @@ contains ! ===================================== Public Procedures =====
 
     integer, intent(in) :: ROOT    ! Root of the L2CF tree for ChunkDivide
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-    ! type( L1BInfo_T ), intent(in) :: L1BINFO
     type( TAI93_Range_T ), intent(in) :: PROCESSINGRANGE
     type( MLSChunk_T ), dimension(:), pointer  :: CHUNKS
 
     ! Local variables
-    type (ChunkDivideConfig_T) :: CONFIG ! Configuration
+    ! type (ChunkDivideConfig_T) :: CONFIG ! Configuration
     type (Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
+    type (MAFRange_T) :: MAFRange
     integer :: STATUS                   ! From deallocate
-    integer, dimension(2) :: MAFRANGE   ! Processing range in MAFs
+    ! integer, dimension(2) :: MAFRANGE   ! Processing range in MAFs
 
     ! For announce_error:
     integer :: ERROR                    ! Error level
@@ -210,7 +222,7 @@ contains ! ===================================== Public Procedures =====
     real :: T1
 
     ! Executable code
-    nullify(config%criticalSignals)    ! Just for Sun's compiler
+    nullify(ChunkDivideConfig%criticalSignals)    ! Just for Sun's compiler
 
     if ( toggle(gen) ) call trace_begin ( "ChunkDivide", root )
 
@@ -218,14 +230,13 @@ contains ! ===================================== Public Procedures =====
     if ( timing ) call time_now ( t1 )
 
     ! First decode the l2cf instructions
-    call ChunkDivideL2CF ( root, config )
+    call ChunkDivideL2CF ( root )
 
     ! For methods other than fixed, we want to survey the L1 data and note the
     ! location of obstructions
     nullify ( obstructions )
-    if ( config%method /= l_fixed ) then
-      ! call SurveyL1BData ( processingRange, l1bInfo, config, mafRange,&
-      call SurveyL1BData ( processingRange, filedatabase, config, mafRange,&
+    if ( ChunkDivideConfig%method /= l_fixed ) then
+      call SurveyL1BData ( processingRange, filedatabase, mafRange,&
       & obstructions )
       if ( index(switches, 'chu') /= 0 ) then
         call output ( 'Requested time range ' )          
@@ -233,27 +244,35 @@ contains ! ===================================== Public Procedures =====
         call output ( ' : ' )    
         call output ( processingRange%endTime, advance='yes' )    
         call output ( 'Corresponding MAF range ' )          
-        call output ( mafRange(1) )              
+        call output ( mafRange%L2Cover(1) )              
         call output ( ' : ' )
-        call output ( mafRange(2), advance='yes' )
+        call output ( mafRange%L2Cover(2), advance='yes' )
+        call output ( 'MAF range in L1B files' )          
+        call output ( mafRange%L1BCover(1) )              
+        call output ( ' : ' )
+        call output ( mafRange%L1BCover(2), advance='yes' )
+        call output ( 'including overlapped days' )          
+        call output ( mafRange%Expanded(1) )              
+        call output ( ' : ' )
+        call output ( mafRange%Expanded(2), advance='yes' )
         call output ( 'Method: ' )
-        call display_string ( lit_indices(config%method), &
+        call display_string ( lit_indices(ChunkDivideConfig%method), &
           &             strip=.true., advance='yes' )
       endif
     endif
 
     ! Now go place the chunks.
-    select case ( config%method )
+    select case ( ChunkDivideConfig%method )
     case ( l_fixed )
-      call ChunkDivide_Fixed ( config, chunks )
+      call ChunkDivide_Fixed ( chunks )
     case ( l_PE )
-      call ChunkDivide_PE ( config, mafRange, filedatabase, &
+      call ChunkDivide_PE ( mafRange%Expanded, filedatabase, &
         & obstructions, chunks )
     case ( l_orbital )
-      call ChunkDivide_Orbital ( config, mafRange, filedatabase, &
+      call ChunkDivide_Orbital ( mafRange%Expanded, filedatabase, &
         & obstructions, chunks )
     case ( l_even )
-      call ChunkDivide_Even ( config, mafRange, filedatabase, &
+      call ChunkDivide_Even ( mafRange%Expanded, filedatabase, &
         & obstructions, chunks )
     case default
       call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -267,17 +286,17 @@ contains ! ===================================== Public Procedures =====
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Deallocate//'obstructions' )
     end if
-    if ( associated(config%criticalSignals) ) then
-      if ( index(switches, 'chu') /= 0 ) call Dump_criticalSignals ( config )
-      deallocate ( config%criticalSignals, stat=status )
+    if ( associated(ChunkDivideConfig%criticalSignals) ) then
+      if ( index(switches, 'chu') /= 0 ) call Dump_criticalSignals
+      deallocate ( ChunkDivideConfig%criticalSignals, stat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Deallocate//'config%criticalSignals' )
+        & MLSMSG_Deallocate//'ChunkDivideConfig%criticalSignals' )
     end if
     ! Check that no 2 chunks share non-overlapped MAFs
     ! That mafrange(1) <= all_mafs <= mafrange(2)
     ! And that all overlaps are >= 0
-    if ( config%method /= l_fixed ) &
-      & call CheckChunkSanity ( chunks, mafRange )
+    if ( ChunkDivideConfig%method /= l_fixed ) &
+      & call CheckChunkSanity ( chunks, mafRange%Expanded )
     if ( .not. associated(chunks) ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &  
         & 'ChunkDivide failed to associate the chunks pointer with a target' )     
@@ -350,13 +369,11 @@ contains ! ===================================== Public Procedures =====
     end subroutine AnnounceError
 
     !-------------------------------------------- ChunkDivide_Even -----
-    ! subroutine ChunkDivide_Even ( config, mafRange, l1bInfo, &
-    subroutine ChunkDivide_Even ( config, mafRange, filedatabase, &
+    subroutine ChunkDivide_Even ( mafRange, filedatabase, &
       & obstructions, chunks )
-      type (ChunkDivideConfig_T), intent(in) :: CONFIG
+      ! type (ChunkDivideConfig_T), intent(in) :: CONFIG
       integer, dimension(2), intent(in) :: MAFRANGE
       type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-      ! type (L1BInfo_T), intent(in) :: L1BINFO
       type (Obstruction_T), dimension(:), intent(in) :: OBSTRUCTIONS
       type (MLSChunk_T), dimension(:), pointer :: CHUNKS
 
@@ -368,8 +385,8 @@ contains ! ===================================== Public Procedures =====
     end subroutine ChunkDivide_Even
 
     !------------------------------------------- ChunkDivide_Fixed -----
-    subroutine ChunkDivide_Fixed ( config, chunks )
-      type (ChunkDivideConfig_T), intent(in) :: CONFIG
+    subroutine ChunkDivide_Fixed ( chunks )
+      ! type (ChunkDivideConfig_T), intent(in) :: CONFIG
       type (MLSChunk_T), dimension(:), pointer :: CHUNKS
 
       ! Local variables
@@ -381,15 +398,15 @@ contains ! ===================================== Public Procedures =====
       integer :: NONONOVERLAP             ! maxLength-2*overlap
 
       ! Exectuable code
-      allocate ( chunks(config%noChunks), stat=status )
+      allocate ( chunks(ChunkDivideConfig%noChunks), stat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'chunks' )
 
-      maxLength = nint ( config%maxLength )
-      lowerOverlap = nint ( config%lowerOverlap )
-      upperOverlap = nint ( config%upperOverlap )
+      maxLength = nint ( ChunkDivideConfig%maxLength )
+      lowerOverlap = nint ( ChunkDivideConfig%lowerOverlap )
+      upperOverlap = nint ( ChunkDivideConfig%upperOverlap )
       noNonOverlap = maxLength - ( lowerOverlap + upperOverlap )
-      do i = 1, config%noChunks
+      do i = 1, ChunkDivideConfig%noChunks
         chunks(i)%firstMAFIndex = max ( (i-1)*maxLength - lowerOverlap, 0 )
         chunks(i)%lastMAFIndex = i*maxLength + upperOverlap - 1
         chunks(i)%noMAFsUpperOverlap = upperOverlap
@@ -403,12 +420,11 @@ contains ! ===================================== Public Procedures =====
     end subroutine ChunkDivide_Fixed
 
     !---------------------------------------------- ChunkDivide_PE -----
-    subroutine ChunkDivide_PE ( config, mafRange, filedatabase, &
+    subroutine ChunkDivide_PE ( mafRange, filedatabase, &
       & obstructions, chunks )
-      type (ChunkDivideConfig_T), intent(in) :: CONFIG
+      ! type (ChunkDivideConfig_T), intent(in) :: CONFIG
       integer, dimension(2), intent(in) :: MAFRANGE
       type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-      ! type (L1BInfo_T), intent(in) :: L1BINFO
       type (Obstruction_T), dimension(:), intent(in) :: OBSTRUCTIONS
       type (MLSChunk_T), dimension(:), pointer :: CHUNKS
 
@@ -446,7 +462,7 @@ contains ! ===================================== Public Procedures =====
       ! Executable code
 
       ! Read in the data we're going to need
-      call get_string ( lit_indices(config%homeModule), modNameStr, &
+      call get_string ( lit_indices(ChunkDivideConfig%homeModule), modNameStr, &
         & strip=.true. )
       L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
       ! call dump(L1BFile)
@@ -479,14 +495,14 @@ contains ! ===================================== Public Procedures =====
       ! First try to locate the last MAF before the homeGeodAngle
       orbit = int ( tpGeodAngle%dpField(1,1,m1)/360.0 )
       if ( tpGeodAngle%dpField(1,1,m1) < 0.0 ) orbit = orbit - 1
-      testAngle = config%homeGeodAngle + orbit*360.0
-      if ( config%maxLengthFamily == PHYQ_Angle ) then
-        angleIncrement = config%maxLength
+      testAngle = ChunkDivideConfig%homeGeodAngle + orbit*360.0
+      if ( ChunkDivideConfig%maxLengthFamily == PHYQ_Angle ) then
+        angleIncrement = ChunkDivideConfig%maxLength
       else
         angleIncrement = 360.0
       end if
 
-      maxLength = nint ( config%maxLength )
+      maxLength = nint ( ChunkDivideConfig%maxLength )
 
       homeHuntLoop: do
         if ( testAngle < minAngle ) then
@@ -516,7 +532,7 @@ contains ! ===================================== Public Procedures =====
       ! OK, now we have a home MAF, get a first cut for the chunks
       ! We work out the chunk ends for each chunk according to how the
       ! maxLength field is specified.
-      ! config%maxLengthFamily == PHYQ_MAFs
+      ! ChunkDivideConfig%maxLengthFamily == PHYQ_MAFs
       noChunks = 1
 
       ! Allocate the chunk
@@ -537,12 +553,11 @@ contains ! ===================================== Public Procedures =====
     end subroutine ChunkDivide_PE
 
     !----------------------------------------- ChunkDivide_Orbital -----
-    subroutine ChunkDivide_Orbital ( config, mafRange, filedatabase, &
+    subroutine ChunkDivide_Orbital ( mafRange, filedatabase, &
       & obstructions, chunks )
-      type (ChunkDivideConfig_T), intent(in) :: CONFIG
+      ! type (ChunkDivideConfig_T), intent(in) :: CONFIG
       integer, dimension(2), intent(in) :: MAFRANGE
       type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-      ! type (L1BInfo_T), intent(in) :: L1BINFO
       type (Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
       type (MLSChunk_T), dimension(:), pointer :: CHUNKS
 
@@ -593,7 +608,7 @@ contains ! ===================================== Public Procedures =====
       if ( index ( switches, 'chu' ) /= 0 ) &
         & call output('Entering Orbital Chunk Divide', advance='yes')
       ! Read in the data we're going to need
-      call get_string ( lit_indices(config%homeModule), modNameStr, strip=.true. )
+      call get_string ( lit_indices(ChunkDivideConfig%homeModule), modNameStr, strip=.true. )
       L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
       ! call dump(L1BFile)
       l1b_hdf_version = L1BFile%HDFVersion
@@ -628,7 +643,7 @@ contains ! ===================================== Public Procedures =====
       minTime = minval ( taiTime%dpField(1,1,m1:m2) )
       maxTime = maxval ( taiTime%dpField(1,1,m1:m2) )
       if ( index ( switches, 'chu' ) /= 0 ) then
-        call output ( 'No MAFs in file: ' )
+        call output ( 'Num MAFs in file: ' )
         call output ( noMAFsRead, advance='yes' )
         call output ( 'MAF time range: ' )
         call output ( minTime )
@@ -644,9 +659,9 @@ contains ! ===================================== Public Procedures =====
       ! First try to locate the last MAF before the homeGeodAngle
       orbit = int ( tpGeodAngle%dpField(1,1,m1)/360.0 )
       if ( tpGeodAngle%dpField(1,1,m1) < 0.0 ) orbit = orbit - 1
-      testAngle = config%homeGeodAngle + orbit*360.0
-      if ( config%maxLengthFamily == PHYQ_Angle ) then
-        angleIncrement = config%maxLength
+      testAngle = ChunkDivideConfig%homeGeodAngle + orbit*360.0
+      if ( ChunkDivideConfig%maxLengthFamily == PHYQ_Angle ) then
+        angleIncrement = ChunkDivideConfig%maxLength
       else
         angleIncrement = 360.0
       end if
@@ -708,20 +723,20 @@ contains ! ===================================== Public Procedures =====
       ! OK, now we have a home MAF, get a first cut for the chunks
       ! We work out the chunk ends for each chunk according to how the
       ! maxLength field is specified.
-      if ( config%maxLengthFamily == PHYQ_MAFs ) then
-        maxLength = nint ( config%maxLength )
+      if ( ChunkDivideConfig%maxLengthFamily == PHYQ_MAFs ) then
+        maxLength = nint ( ChunkDivideConfig%maxLength )
         noMAFsBelowHome = home - m1
         noChunksBelowHome = noMAFsBelowHome / maxLength
         if ( mod ( noMAFsBelowHome, maxLength ) /= 0 ) noChunksBelowHome = noChunksBelowHome + 1
         noMAFsAtOrAboveHome = m2 - home + 1
-        if ( config%noChunks == 0 ) then
+        if ( ChunkDivideConfig%noChunks == 0 ) then
           ! If user did not request specific number of chunks choose them
           noChunks = noChunksBelowHome + noMAFsAtOrAboveHome / maxLength
           if ( mod ( noMAFsAtOrAboveHome, maxLength ) /= 0 ) &
             & noChunks = noChunks + 1
         else
           ! User requested specific number of chunks
-          noChunks = config%noChunks
+          noChunks = ChunkDivideConfig%noChunks
         end if
 
         ! Allocate the chunks
@@ -738,7 +753,7 @@ contains ! ===================================== Public Procedures =====
       else
         ! For angle and time, they are similar enough we'll just do some stuff
         ! with pointers to allow us to use common code to sort them out
-        select case ( config%maxLengthFamily )
+        select case ( ChunkDivideConfig%maxLengthFamily )
         case ( PHYQ_Angle )
           field => tpGeodAngle%dpField(1,1,:)
           minV = minAngle
@@ -753,15 +768,15 @@ contains ! ===================================== Public Procedures =====
 
         noMAFsBelowHome = -999
         noMAFsAtOrAboveHome = -999
-        noChunksBelowHome = int ( ( homeV - minV ) / config%maxLength )
+        noChunksBelowHome = int ( ( homeV - minV ) / ChunkDivideConfig%maxLength )
         if ( homeV > minV ) noChunksBelowHome = noChunksBelowHome + 1
-        if ( config%noChunks == 0 ) then
+        if ( ChunkDivideConfig%noChunks == 0 ) then
           ! Choose the number of chunks ourselves
-          noChunks = noChunksBelowHome + int ( ( maxV - homeV ) / config%maxLength )
-          if ( homeV + config%maxLength * ( noChunks - noChunksBelowHome ) < maxV ) &
+          noChunks = noChunksBelowHome + int ( ( maxV - homeV ) / ChunkDivideConfig%maxLength )
+          if ( homeV + ChunkDivideConfig%maxLength * ( noChunks - noChunksBelowHome ) < maxV ) &
             & noChunks = noChunks + 1
         else
-          noChunks = config%noChunks
+          noChunks = ChunkDivideConfig%noChunks
         end if
 
         ! Allocate the chunks
@@ -774,7 +789,7 @@ contains ! ===================================== Public Procedures =====
         nullify ( boundaries )
         call Allocate_test ( boundaries, noChunks, 'boundaries', ModuleName )
         do chunk = 1, noChunks
-          boundaries(chunk) = homeV + ( chunk - noChunksBelowHome ) * config%maxLength
+          boundaries(chunk) = homeV + ( chunk - noChunksBelowHome ) * ChunkDivideConfig%maxLength
         end do
         boundaries = min ( boundaries, maxV )
         boundaries = max ( boundaries, minV )
@@ -843,43 +858,14 @@ contains ! ===================================== Public Procedures =====
       ! We could split things out to deal with mixed unit, but lets make life easier 
       ! for ourselves.  ChunkDivideL2PC has already insisted that 
       ! lowerOverlapFamily == upperOverlapFamily.
-      if ( config%lowerOverlapFamily == PHYQ_MAFs ) then
-        newFirstMAFs = max(chunks%firstMAFIndex - nint(config%lowerOverlap), &
+      if ( ChunkDivideConfig%lowerOverlapFamily == PHYQ_MAFs ) then
+        newFirstMAFs = max(chunks%firstMAFIndex - nint(ChunkDivideConfig%lowerOverlap), &
           & mafRange(1) )
-        newLastMAFs = min(chunks%lastMAFIndex + nint(config%upperOverlap), &
+        newLastMAFs = min(chunks%lastMAFIndex + nint(ChunkDivideConfig%upperOverlap), &
           & mafRange(2) )
       else
         call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'The bit of code that deals with non-MAF overlaps is probably broken' )
-!         ! For angle and time, they are similar enough we'll just do some stuff
-!         ! with pointers to allow us to use common code to sort them out
-!         ! Note that before we search only over the range in mafRange, here we
-!         ! search over the whole file as we can spill over the processing range
-!         ! for overlaps.
-!         select case ( config%maxLengthFamily )
-!         case ( PHYQ_Angle )
-!           field => tpGeodAngle%dpField(1,1,:)
-!           minV = minAngle
-!         case ( PHYQ_Time )
-!           field => taiTime%dpField(1,1,:)
-!           minV = minTime
-!         case ( PHYQ_MAFs)
-!         end select
-!         call Hunt ( field, field(chunks%firstMAFIndex-1) + &
-!           & config%lowerOverlap, newFirstMAFs, allowTopValue=.true. )
-!         call Hunt ( field, field(chunks%firstMAFIndex-1) - &
-!           & config%upperOverlap, newLastMAFs, allowTopValue=.true. )
-!         if ( index(switches, 'chu') /= 0 ) then
-!           call dump ( field(chunks%firstMAFIndex-1) + &
-!             & config%lowerOverlap , 'fields+lowerOverlap' )
-!           call dump ( field(newFirstMAFs) , 'hunted values' )
-!           call dump ( field(chunks%firstMAFIndex-1) - &
-!             & config%upperOverlap , 'fields-upperOverlap' )
-!           call dump ( field(newLastMAFs) , 'hunted values' )
-!         end if
-!         ! Correct this to be real MAF indices (starting from zero)
-!         newFirstMAFs = newFirstMAFs - 1
-!         newLastMAFs = newLastMAFs - 1
       end if
       chunks%noMAFsLowerOverlap = chunks%firstMAFIndex - newFirstMAFs
       chunks%noMAFsUpperOverlap = newLastMAFs - chunks%lastMAFIndex
@@ -926,12 +912,12 @@ contains ! ===================================== Public Procedures =====
     end subroutine ChunkDivide_Orbital
 
     !--------------------------------------------- ChunkDivideL2CF -----
-    subroutine ChunkDivideL2CF ( sectionRoot, config )
+    subroutine ChunkDivideL2CF ( sectionRoot )
       ! This subroutine identifies, separates, and checks values from the section
       ! of the MLSCF (ChunkDivide) passed to Scan/Divide.
       integer, intent(in) :: SECTIONROOT    ! Root of the ChunkDivide section of the
       ! MLSCF abstract syntax tree
-      type (ChunkDivideConfig_T), intent(out) :: CONFIG ! Result of operation
+      ! type (ChunkDivideConfig_T), intent(out) :: CONFIG ! Result of operation
 
       integer, target, dimension(3) :: NeededForFixed = &
         & (/ f_noChunks, f_maxLength, f_overlap /)
@@ -1004,75 +990,77 @@ contains ! ===================================== Public Procedures =====
         ! Get value for this field if appropriate
         select case ( fieldIndex )
         case ( f_method )
-          config%method = decoration ( gson )
+          ChunkDivideConfig%method = decoration ( gson )
         case ( f_noChunks )
-          config%noChunks = nint ( value(1) )
+          ChunkDivideConfig%noChunks = nint ( value(1) )
         case ( f_maxLength )
-          config%maxLength = value(1)
-          config%maxLengthFamily = units(1)
+          ChunkDivideConfig%maxLength = value(1)
+          ChunkDivideConfig%maxLengthFamily = units(1)
         case ( f_maxOrbY )
-          config%maxOrbY = value(1)
+          ChunkDivideConfig%maxOrbY = value(1)
           if ( units(1) /= PHYQ_Length ) &
             & call AnnounceError ( root, BadUnits, fieldIndex )
         case ( f_overlap )
-          config%overlap = value(1)
-          config%overlapFamily = units(1)
+          ChunkDivideConfig%overlap = value(1)
+          ChunkDivideConfig%overlapFamily = units(1)
         case ( f_lowerOverlap )
-          config%lowerOverlap = value(1)
-          config%lowerOverlapFamily = units(1)
+          ChunkDivideConfig%lowerOverlap = value(1)
+          ChunkDivideConfig%lowerOverlapFamily = units(1)
         case ( f_upperOverlap )
-          config%upperOverlap = value(1)
-          config%upperOverlapFamily = units(1)
+          ChunkDivideConfig%upperOverlap = value(1)
+          ChunkDivideConfig%upperOverlapFamily = units(1)
         case ( f_noSlaves )
-          config%noSlaves = value(1)
+          ChunkDivideConfig%noSlaves = value(1)
           if ( units(1) /= PHYQ_DimensionLess ) &
             & call AnnounceError ( root, BadUnits, fieldIndex )
         case ( f_homeModule )
-          config%homeModule = decoration ( gson )
+          ChunkDivideConfig%homeModule = decoration ( gson )
         case ( f_homeGeodAngle )
-          config%homeGeodAngle = value(1)
+          ChunkDivideConfig%homeGeodAngle = value(1)
           if ( units(1) /= PHYQ_Angle ) &
             & call AnnounceError ( root, BadUnits, fieldIndex )
         case ( f_scanLowerLimit )
           if ( any ( units /= PHYQ_Dimensionless .and. units /= PHYQ_Length ) &
             & .or. .not. any ( units == PHYQ_Length ) ) &
             & call AnnounceError ( root, BadUnits, fieldIndex )
-          config%scanLowerLimit = value
-          config%scanLLSet = .true.
+          ChunkDivideConfig%scanLowerLimit = value
+          ChunkDivideConfig%scanLLSet = .true.
         case ( f_scanUpperLimit )
           if ( any ( units /= PHYQ_Dimensionless .and. units /= PHYQ_Length ) &
             & .or. .not. any ( units == PHYQ_Length ) ) &
             & call AnnounceError ( root, BadUnits, fieldIndex )
-          config%scanUpperLimit = value
-          config%scanULSet = .true.
+          ChunkDivideConfig%scanUpperLimit = value
+          ChunkDivideConfig%scanULSet = .true.
         case ( f_criticalModules )
-          config%criticalModules = decoration ( gson )
+          ChunkDivideConfig%criticalModules = decoration ( gson )
         case ( f_criticalSignals )
-          ! sub_rosa_index = sub_rosa(gson)
-          ! call get_string ( sub_rosa_index, config%criticalSignals, &
-          !  & strip=.true. )
           signalsNode = son
           numCriticalSignals = nsons(signalsNode) - 1
-          call allocate_test(config%criticalSignals, numCriticalSignals, &
+          call allocate_test(ChunkDivideConfig%criticalSignals, numCriticalSignals, &
             & 'critical signals', ModuleName)
           do j = 2, nsons(signalsNode)    ! Skip name
             call get_string ( sub_rosa ( subtree (j, signalsNode) ), &
-              & config%criticalSignals(j-1), strip=.true. )
+              & ChunkDivideConfig%criticalSignals(j-1), strip=.true. )
           end do
         case ( f_maxGap )
-          config%maxGap = value(1)
-          config%maxGapFamily = units(1)
+          ChunkDivideConfig%maxGap = value(1)
+          ChunkDivideConfig%maxGapFamily = units(1)
         case ( f_skipL1BCheck )
-          config%skipL1BCheck = get_boolean ( fieldValue )
-          if ( config%skipL1BCheck ) &
+          ChunkDivideConfig%skipL1BCheck = get_boolean ( fieldValue )
+          if ( ChunkDivideConfig%skipL1BCheck ) &
             & call MLSMessage(MLSMSG_Warning, ModuleName, &
             & 'You have elected to skip checking the l1b data for problems' )
+        case ( f_allowPriorOverlaps )
+          ChunkDivideConfig%allowPriorOverlaps = get_boolean ( fieldValue )
+          if ( ChunkDivideConfig%allowPriorOverlaps ) &
+            & call MLSMessage(MLSMSG_Warning, ModuleName, &
+            & 'You have elected to allow MAFs prior to time range' )
         end select
       end do
 
       ! Now check the sanity of what we've been given, this varies a bit
       ! depending on the method
-      select case ( config%method )
+      select case ( ChunkDivideConfig%method )
       case ( l_fixed )
         needed => NeededForFixed
         notWanted => NotWantedForFixed
@@ -1096,15 +1084,15 @@ contains ! ===================================== Public Procedures =====
           & call AnnounceError ( root, unnecessary, f_overlap )
         got ( f_overlap ) = .true.
         ! Insist that upper/lower overlaps be specified in the same units
-        if ( config%lowerOverlapFamily /= config%upperOverlapFamily ) &
+        if ( ChunkDivideConfig%lowerOverlapFamily /= ChunkDivideConfig%upperOverlapFamily ) &
           & call AnnounceError ( root, badUnits, f_upperOverlap )
       else
         ! If single overlap specified, copy it into upper/lower
         if ( got ( f_overlap ) ) then
-          config%lowerOverlap = config%overlap
-          config%lowerOverlapFamily = config%overlapFamily
-          config%upperOverlap = config%overlap
-          config%upperOverlapFamily = config%overlapFamily
+          ChunkDivideConfig%lowerOverlap = ChunkDivideConfig%overlap
+          ChunkDivideConfig%lowerOverlapFamily = ChunkDivideConfig%overlapFamily
+          ChunkDivideConfig%upperOverlap = ChunkDivideConfig%overlap
+          ChunkDivideConfig%upperOverlapFamily = ChunkDivideConfig%overlapFamily
         end if
       end if
 
@@ -1120,7 +1108,7 @@ contains ! ===================================== Public Procedures =====
       end do
 
       ! Make other checks of parameters
-      if ( config%criticalModules /= l_none ) then
+      if ( ChunkDivideConfig%criticalModules /= l_none ) then
         if ( .not. got(f_scanLowerLimit) ) &
           & call AnnounceError ( root, notSpecified, f_scanLowerLimit )
         if ( .not. got (f_scanUpperLimit) ) &
@@ -1133,26 +1121,26 @@ contains ! ===================================== Public Procedures =====
       end if
 
       ! Now check the units for various cases
-      if ( got(f_maxgap) .and. all ( config%maxGapFamily /= &
+      if ( got(f_maxgap) .and. all ( ChunkDivideConfig%maxGapFamily /= &
         & (/ PHYQ_MAFs, PHYQ_Angle, PHYQ_Time /))) &
         & call AnnounceError ( root, badUnits, f_maxGap )
-      select case ( config%method )
+      select case ( ChunkDivideConfig%method )
       case ( l_PE )
-        if ( config%maxLengthFamily /= PHYQ_MAFs ) &
+        if ( ChunkDivideConfig%maxLengthFamily /= PHYQ_MAFs ) &
           & call AnnounceError ( root, badUnits, f_maxLength )
       case ( l_orbital )
-        if (all(config%maxLengthFamily/=(/PHYQ_MAFs, PHYQ_Angle, PHYQ_Time/))) &
+        if (all(ChunkDivideConfig%maxLengthFamily/=(/PHYQ_MAFs, PHYQ_Angle, PHYQ_Time/))) &
           & call AnnounceError ( root, badUnits, f_maxLength )
-        if (all(config%lowerOverlapFamily/=(/PHYQ_MAFs, PHYQ_Angle, PHYQ_Time/))) &
+        if (all(ChunkDivideConfig%lowerOverlapFamily/=(/PHYQ_MAFs, PHYQ_Angle, PHYQ_Time/))) &
           & call AnnounceError ( root, badUnits, f_lowerOverlap )
-        if (all(config%upperOverlapFamily/=(/PHYQ_MAFs, PHYQ_Angle, PHYQ_Time/))) &
+        if (all(ChunkDivideConfig%upperOverlapFamily/=(/PHYQ_MAFs, PHYQ_Angle, PHYQ_Time/))) &
           & call AnnounceError ( root, badUnits, f_upperOverlap )
       case ( l_fixed, l_even )
-        if ( config%maxLengthFamily /= PHYQ_MAFs ) &
+        if ( ChunkDivideConfig%maxLengthFamily /= PHYQ_MAFs ) &
           & call AnnounceError ( root, badUnits, f_maxLength )
-        if ( config%lowerOverlapFamily /= PHYQ_MAFs ) &
+        if ( ChunkDivideConfig%lowerOverlapFamily /= PHYQ_MAFs ) &
           & call AnnounceError ( root, badUnits, f_lowerOverlap )
-        if ( config%upperOverlapFamily /= PHYQ_MAFs ) &
+        if ( ChunkDivideConfig%upperOverlapFamily /= PHYQ_MAFs ) &
           & call AnnounceError ( root, badUnits, f_upperOverlap )
       end select
 
@@ -1406,7 +1394,6 @@ contains ! ===================================== Public Procedures =====
     end subroutine DeleteObstruction
 
     ! ----------------------------------------- NoteL1BRADChanges -----
-    ! subroutine NoteL1BRADChanges ( obstructions, mafRange, l1bInfo )
     subroutine NoteL1BRADChanges ( obstructions, mafRange, filedatabase )
       use MLSSignals_m, only: GetSignalName, &
         & SIGNALS
@@ -1417,9 +1404,9 @@ contains ! ===================================== Public Procedures =====
       ! augments the database of obstructions
       type (Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
       type (Obstruction_T) :: NEWOBSTRUCTION ! In progrss
-      integer, dimension(2), intent(in) :: MAFRANGE   ! Processing range in MAFs
+      type (MAFRange_T) :: MAFRange
+      ! integer, dimension(2), intent(in) :: MAFRANGE   ! Processing range in MAFs
       type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-      !type (L1BInfo_T), intent(in) :: L1BINFO
 
       ! Local variables
       ! This next sets the threshold of what it takes to be an obstruction
@@ -1444,6 +1431,7 @@ contains ! ===================================== Public Procedures =====
       integer :: mafset_end
       integer :: mafset_start
       integer, parameter :: MAXMAFSINSET = 250
+      integer :: nmafs
       integer :: nmafsets
       integer :: num_goods_after_gap
       integer :: num_goodness_changes
@@ -1458,6 +1446,7 @@ contains ! ===================================== Public Procedures =====
       ! Won't check if there are no radiances
       ! if ( .not. associated(l1bInfo%l1bRadIDs) ) return
       if ( .not. associated(filedatabase) ) return
+      nmafs = mafRange%Expanded(2) - mafRange%Expanded(1) + 1
       ! Here we will loop over the signals database
       ! Searching for 
       ! (1) mafs where there is no good data for any of the signals
@@ -1470,29 +1459,29 @@ contains ! ===================================== Public Procedures =====
       
       nullify ( signals_buffer, goods_after_gap, goodness_changes )
       call allocate_test( &
-        & signals_buffer, mafRange(2) - mafRange(1) + 1 , size(signals), &
+        & signals_buffer, nmafs , size(signals), &
         & 'signals_buffer', ModuleName)
-      call allocate_test( goods_after_gap, mafRange(2) - mafRange(1) + 1,&
+      call allocate_test( goods_after_gap, nmafs,&
         & 'goods_after_gap', ModuleName)
-      call allocate_test( goodness_changes, mafRange(2) - mafRange(1) + 1,&
+      call allocate_test( goodness_changes, nmafs,&
         & 'goodness_changes', ModuleName)
       good_signals_now = .false.   ! Initializing
       do signalIndex=1, size(signals)
-        if ( mafRange(2) - mafRange(1) + 1 <= MAXMAFSINSET ) then
+        if ( nmafs <= MAXMAFSINSET ) then
           good_signals_now(signalIndex) = &
             & any_good_signaldata ( signalIndex, signals(signalIndex)%sideband, &
-            &   filedatabase, mafRange(1), mafRange(2), &
-            &   signals_buffer(:,signalIndex), mafRange )
+            &   filedatabase, mafRange%Expanded(1), mafRange%Expanded(2), &
+            &   signals_buffer(:,signalIndex), mafRange%Expanded )
         else
-          nmafsets = (mafRange(2) - mafRange(1))/MAXMAFSINSET + 1
-          mafset_end = mafRange(1) - 1   ! A trick--mafset_start is mafRange(1)
+          nmafsets = (nmafs-1)/MAXMAFSINSET + 1
+          mafset_end = mafRange%Expanded(1) - 1   ! A trick--mafset_start is mafRange(1)
           do mafset=1, nmafsets
             mafset_start = mafset_end + 1
-            mafset_end = min ( mafRange(2), mafset_end + MAXMAFSINSET )
+            mafset_end = min ( mafRange%Expanded(2), mafset_end + MAXMAFSINSET )
             good_signals_now(signalIndex) = &
               & any_good_signaldata ( signalIndex, signals(signalIndex)%sideband, &
               &   filedatabase, mafset_start, mafset_end, &
-              &   signals_buffer(:,signalIndex), mafRange )
+              &   signals_buffer(:,signalIndex), mafRange%Expanded )
           enddo
         endif
       enddo
@@ -1507,8 +1496,8 @@ contains ! ===================================== Public Procedures =====
       num_goodness_changes = 0
       num_goods_after_gap = 0
       howlong_nogood       = 0
-      do maf = mafRange(1), mafRange(2)
-        maf_index = maf - mafRange(1) + 1
+      do maf = mafRange%Expanded(1), mafRange%Expanded(2)
+        maf_index = maf - mafRange%Expanded(1) + 1
         do signalIndex=1, size(signals)
           good_signals_now(signalIndex) = signals_buffer(maf_index, signalIndex)
           if ( .not. good_signals_now(signalIndex) ) &
@@ -1516,10 +1505,10 @@ contains ! ===================================== Public Procedures =====
           good_after_maxgap(signalIndex) = &
             & good_signals_now(signalIndex) &
             & .and. &
-            & ( howlong_nogood(signalIndex) > config%maxGap )
+            & ( howlong_nogood(signalIndex) > ChunkDivideConfig%maxGap )
           if ( good_signals_now(signalIndex) ) howlong_nogood(signalIndex) = 0
         enddo
-        if ( maf /= mafRange(1) ) then
+        if ( maf /= mafRange%Expanded(1) ) then
           if ( Any(good_signals_now .neqv. good_signals_last) ) then
             num_goodness_changes = num_goodness_changes + 1
             goodness_changes(num_goodness_changes) = maf
@@ -1535,20 +1524,20 @@ contains ! ===================================== Public Procedures =====
       ! Task (2): Find regions where there is no signal among at least one
       ! of the critical signals
       ! if (config%criticalSignals /= '' ) then
-      if ( associated(config%criticalSignals) ) then
+      if ( associated(ChunkDivideConfig%criticalSignals) ) then
         nullify ( valids_buffer )
         call allocate_test( &
-          & valids_buffer, mafRange(2) - mafRange(1) + 1 , &
+          & valids_buffer, nmafs , &
           & 'valids_buffer', ModuleName)
         nullify ( or_valids_buffer )
         call allocate_test( &
-          & or_valids_buffer, mafRange(2) - mafRange(1) + 1 , &
+          & or_valids_buffer, nmafs , &
           & 'or_valids_buffer', ModuleName)
         valids_buffer = .true.
         if ( index(switches, 'chu') /= 0 ) then
           call output ( 'Checking for critical signals: ')
-          do critical_index=1, size(config%criticalSignals)
-            call output ( trim(config%criticalSignals(critical_index)), &
+          do critical_index=1, size(ChunkDivideConfig%criticalSignals)
+            call output ( trim(ChunkDivideConfig%criticalSignals(critical_index)), &
               & advance='yes')
           enddo
           call output ( &
@@ -1567,12 +1556,12 @@ contains ! ===================================== Public Procedures =====
         ! and or-ing the list elements
         ! You might prefer the formula that a maf is invalid if for any of the
         ! array elements, none of its signals is turned on
-        do critical_index=1, size(config%criticalSignals)
+        do critical_index=1, size(ChunkDivideConfig%criticalSignals)
           or_valids_buffer = .false.
           do critical_sub_index=1, NumStringElements( &
-            & trim(config%criticalSignals(critical_index)), .FALSE.)
+            & trim(ChunkDivideConfig%criticalSignals(critical_index)), .FALSE.)
             call GetStringElement( &
-              & trim(config%criticalSignals(critical_index)), signal_str, &
+              & trim(ChunkDivideConfig%criticalSignals(critical_index)), signal_str, &
               & critical_sub_index, .FALSE. )
             ! Which signals match the incomplete signal string we've been given?
             nullify(Signal_Indices)
@@ -1587,8 +1576,8 @@ contains ! ===================================== Public Procedures =====
                 call output ( trim(signal_full), advance='yes')
               enddo
             endif
-            do maf = mafRange(1), mafRange(2)
-              maf_index = maf - mafRange(1) + 1
+            do maf = mafRange%Expanded(1), mafRange%Expanded(2)
+              maf_index = maf - mafRange%Expanded(1) + 1
               this_maf_valid = .false.   ! not valid unless at least one signal
               do i=1, size(Signal_Indices)
                 signalIndex = Signal_Indices(i)
@@ -1603,7 +1592,8 @@ contains ! ===================================== Public Procedures =====
           valids_buffer = &
             & valids_buffer .and. or_valids_buffer
         enddo
-        call ConvertFlagsToObstructions ( valids_buffer, obstructions, mafRange )
+        call ConvertFlagsToObstructions ( valids_buffer, obstructions, &
+          & mafRange%Expanded )
         call deallocate_test(valids_buffer, 'valids_buffer', ModuleName)
         call deallocate_test(or_valids_buffer, 'or_valids_buffer', ModuleName)
       endif
@@ -1613,14 +1603,14 @@ contains ! ===================================== Public Procedures =====
         do mafset = 1, num_goodness_changes
           newObstruction%range = .false.
           newObstruction%mafs(1) = goodness_changes(mafset)
-          newObstruction%mafs(2) = 0    ! For overzelous Lahey uninitialized checking
+          newObstruction%mafs(2) = 0    ! For overzealous Lahey uninitialized checking
           call AddObstructionToDatabase ( obstructions, newObstruction )
         enddo
       elseif ( num_goods_after_gap > 0 ) then
         do mafset = 1, num_goods_after_gap
           newObstruction%range = .false.
           newObstruction%mafs(1) = goods_after_gap(mafset)
-          newObstruction%mafs(2) = 0    ! For overzelous Lahey uninitialized checking
+          newObstruction%mafs(2) = 0    ! For overzealous Lahey uninitialized checking
           call AddObstructionToDatabase ( obstructions, newObstruction )
         enddo
       endif
@@ -1833,15 +1823,15 @@ contains ! ===================================== Public Procedures =====
     end subroutine SortObstructions
 
     ! ---------------------------------------------- SurveyL1BData -----
-    subroutine SurveyL1BData ( processingRange, filedatabase, config, mafRange,&
+    subroutine SurveyL1BData ( processingRange, filedatabase, mafRange, &
       & obstructions )
-      ! This goes through the L1B data files and trys to spot possible
+      ! This goes through the L1B data files and tries to spot possible
       ! obstructions.
       type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
       type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-      ! type (L1BInfo_T), intent(in) :: L1BINFO
-      type (ChunkDivideConfig_T), intent(in) :: CONFIG
-      integer, dimension(2), intent(out) :: MAFRANGE   ! Processing range in MAFs
+      ! type (ChunkDivideConfig_T), intent(in) :: CONFIG
+      type (MAFRange_T), intent(out) :: MAFRange
+      !integer, dimension(2), intent(out) :: MAFRANGE   ! Processing range in MAFs
       type (Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
 
       ! Local variables
@@ -1884,36 +1874,50 @@ contains ! ===================================== Public Procedures =====
         & noMAFsRead, flag, &
         & dontPad=DONTPAD )
       call smoothOutDroppedMAFs(taiTime%dpField)
+      
+      ! We shall assume that all l1b files cover this range
+      mafRange%L1BCover(1) = taiTime%FirstMAF
+      mafRange%L1BCover(2) = taiTime%NoMAFs - 1 ! Because it starts with 0
 
-      ! Deduce the first and last MAFs to consider
+      ! Deduce the first and last MAFs covered the L2 Processing Range
       call Hunt ( taiTime%dpField(1,1,:), &
         & (/ processingRange%startTime, processingRange%endTime /), &
-        & mafRange, allowTopValue=.true., allowBelowValue=.true. )
+        & mafRange%L2Cover, allowTopValue=.true., allowBelowValue=.true. )
 
       ! Check the validity of the MAF range returned
-      if ( mafRange(2) == 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      if ( mafRange%L2Cover(2) == 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'L1B data starts after requested processing range' )
-      if ( mafRange(1) == taiTime%noMAFs ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      if ( mafRange%L2Cover(1) == taiTime%noMAFs ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'L1B data ends before requested processing range' )
-      mafRange = min ( noMAFsRead-1, max ( 0, mafRange - 1 ) )          ! Index from zero
-      noMAFS = mafRange(2) - mafRange(1) + 1
-      if ( mafRange(2) < mafRange(1) ) then
+      mafRange%L2Cover = min ( noMAFsRead-1, max ( 0, mafRange%L2Cover - 1 ) )          ! Index from zero
+      if ( mafRange%L2Cover(2) < mafRange%L2Cover(1) ) then
         call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'mafRange(2) < mafRange(1)' )
-      elseif ( mafRange(2) < 1 ) then
+          & 'L2 mafRange(2) < L2 mafRange(1)' )
+      elseif ( mafRange%L2Cover(2) < 1 ) then
         call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'mafRange(2) < 1' )
+          & 'L2 mafRange(2) < 1' )
       endif
 
+      ! Expand the range covered by L2 with possible overlaps
+      ! For now, allow only lower overlaps
+      if ( ChunkDivideConfig%allowPriorOverlaps ) then
+        mafRange%Expanded(1) = max( mafRange%L1BCover(1), &
+          & mafRange%L2Cover(1) - nint(ChunkDivideConfig%lowerOverlap) )
+        mafRange%Expanded(2) = mafRange%L2Cover(2)
+      else
+        mafRange%Expanded(1) = mafRange%L2Cover(1)
+        mafRange%Expanded(2) = mafRange%L2Cover(2)
+      endif
+      noMAFS = mafRange%Expanded(2) - mafRange%Expanded(1) + 1
       ! Now look through the L1B data, first look for scan problems
-      if ( config%criticalModules /= l_none ) then
+      if ( ChunkDivideConfig%criticalModules /= l_none ) then
         nullify ( valid )
         nullify ( anglewasSmoothed )
         nullify ( wasSmoothed )
         call Allocate_test ( valid, noMAFs, 'valid', ModuleName )
         call Allocate_test ( anglewasSmoothed, noMAFs, 'angleWasSmoothed', ModuleName )
         call Allocate_test ( wasSmoothed, noMAFs, 'wasSmoothed', ModuleName )
-        if ( config%criticalModules == l_both ) then
+        if ( ChunkDivideConfig%criticalModules == l_both ) then
           valid = .true.
         else
           valid = .false.
@@ -1927,21 +1931,21 @@ contains ! ===================================== Public Procedures =====
           tp_angle = AssembleL1BQtyName ( trim(modNameStr)//'.tpGeodAngle', &
             & l1b_hdf_version, .false. )
           if ( .not. modules(mod)%spacecraft .and. &
-            & ( any ( config%criticalModules == (/ l_either, l_both /) ) .or. &
-            &   lit_indices(config%criticalModules) == modules(mod)%name ) ) then
+            & ( any ( ChunkDivideConfig%criticalModules == (/ l_either, l_both /) ) .or. &
+            &   lit_indices(ChunkDivideConfig%criticalModules) == modules(mod)%name ) ) then
             ! Read the tangent point altitude
             call ReadL1BData ( L1BFile, trim(tp_alt), &
               & tpGeodAlt, noMAFsRead, flag, &
-              & firstMAF=mafRange(1), lastMAF=mafRange(2), &
+              & firstMAF=mafRange%Expanded(1), lastMAF=mafRange%Expanded(2), &
               & dontPad=DONTPAD )
             ! Read the out of plane distance
             call ReadL1BData ( L1BFile, trim(tp_orby), &
               & tpOrbY, noMAFsRead, flag, &
-              & firstMAF=mafRange(1), lastMAF=mafRange(2), &
+              & firstMAF=mafRange%Expanded(1), lastMAF=mafRange%Expanded(2), &
               & dontPad=DONTPAD )
             call ReadL1BData ( L1BFile, trim(tp_angle), &
               & tpGeodAngle, noMAFsRead, flag, &
-              & firstMAF=mafRange(1), lastMAF=mafRange(2), &
+              & firstMAF=mafRange%Expanded(1), lastMAF=mafRange%Expanded(2), &
               & dontPad=DONTPAD )
             call smoothOutDroppedMAFs(tpGeodAngle%dpField, angleWasSmoothed, &
               & monotonize=.true.)
@@ -1954,17 +1958,17 @@ contains ! ===================================== Public Procedures =====
               scanMin = minval ( tpGeodAlt%dpField(1,:,maf) )
               orbyMax = maxval ( tpOrbY%dpField(1,:,maf) )
 
-              thisOneValid = ( scanMin >= config%scanLowerLimit(1) .and. &
-                &              scanMin <= config%scanLowerLimit(2) ) .and. &
-                &            ( scanMax >= config%scanUpperLimit(1) .and. &
-                &              scanMax <= config%scanUpperLimit(2) )
-              if ( config%maxOrbY > 0.0 ) then
-                thisOneValid = thisOneValid .and. orbYMax < config%maxOrbY
+              thisOneValid = ( scanMin >= ChunkDivideConfig%scanLowerLimit(1) .and. &
+                &              scanMin <= ChunkDivideConfig%scanLowerLimit(2) ) .and. &
+                &            ( scanMax >= ChunkDivideConfig%scanUpperLimit(1) .and. &
+                &              scanMax <= ChunkDivideConfig%scanUpperLimit(2) )
+              if ( ChunkDivideConfig%maxOrbY > 0.0 ) then
+                thisOneValid = thisOneValid .and. orbYMax < ChunkDivideConfig%maxOrbY
               end if
               ! this one is not valid if it's valid only by virtue
               ! of having been smoothed
               thisOneValid = thisOneValid .and. .not. wasSmoothed(maf)
-              if ( config%criticalModules == l_both ) then
+              if ( ChunkDivideConfig%criticalModules == l_both ) then
                 valid(maf) = valid(maf) .and. thisOneValid
               else
                 valid(maf) = valid(maf) .or. thisOneValid
@@ -1984,7 +1988,7 @@ contains ! ===================================== Public Procedures =====
       end if                              ! Consider scan issues
 
       ! Here we look at radiances and switch changes.
-      if ( .not. config%skipL1BCheck) &
+      if ( .not. ChunkDivideConfig%skipL1BCheck) &
         call NoteL1BRADChanges ( obstructions, mafRange, filedatabase ) 
 
       ! Sort the obstructions into order; prune them of repeats, overlaps etc.
@@ -1997,25 +2001,25 @@ contains ! ===================================== Public Procedures =====
   end subroutine ChunkDivide
 
   ! -------------------------------------------- Dump Dump_criticalSignals -----
-  subroutine Dump_criticalSignals ( config )
+  subroutine Dump_criticalSignals
 
     use Output_M, only: OUTPUT
 
-    type (ChunkDivideConfig_T) :: CONFIG ! Configuration
+    ! type (ChunkDivideConfig_T) :: CONFIG ! Configuration
     ! Local variables
     integer :: i                        ! Loop counter
     ! Executable code
-    if ( associated ( config%criticalSignals ) ) then
-      if ( size(config%criticalSignals) == 0 ) then
+    if ( associated ( ChunkDivideConfig%criticalSignals ) ) then
+      if ( size(ChunkDivideConfig%criticalSignals) == 0 ) then
         call output ( 'criticalSignals is a zero size array.', advance='yes' )
       else
         call output ( 'Dumping ' )
-        call output ( size(config%criticalSignals) )
+        call output ( size(ChunkDivideConfig%criticalSignals) )
         call output ( ' criticalSignals:', advance='yes' )
-        do i = 1, size(config%criticalSignals)
+        do i = 1, size(ChunkDivideConfig%criticalSignals)
           call output ( i )
           call output ( ': ' )
-          call output ( trim(config%criticalSignals(i)), advance='yes' )
+          call output ( trim(ChunkDivideConfig%criticalSignals(i)), advance='yes' )
         end do
       end if
     else
@@ -2060,7 +2064,6 @@ contains ! ===================================== Public Procedures =====
   end subroutine Dump_Obstructions
 
 ! -----------------------------------------------  ANY_GOOD_SIGNALDATA  -----
-  ! function ANY_GOOD_SIGNALDATA ( signal, sideband, l1bInfo, maf, maf2, &
   function ANY_GOOD_SIGNALDATA ( signal, sideband, filedatabase, maf, maf2, &
     & good_buffer, mafRange )  &
     & result (answer)
@@ -2089,7 +2092,6 @@ contains ! ===================================== Public Procedures =====
     logical                                        :: answer
     integer, intent(in)                            :: maf
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-    ! type (L1BInfo_T), intent(in) :: L1BINFO
     integer, optional, intent(in)                  :: maf2
     logical, dimension(:), optional, intent(inout) :: good_buffer
     integer, dimension(2), optional, intent(in)    :: MAFRANGE   ! Processing 
@@ -2206,6 +2208,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.63  2005/09/14 00:10:37  pwagner
+! ChunkDivideConfig public so allowPriorOverlaps visible
+!
 ! Revision 2.62  2005/08/09 00:02:09  pwagner
 ! hdfVersion not left undefined in ANY_GOOD_SIGNALDATA
 !
