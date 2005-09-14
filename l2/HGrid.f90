@@ -29,6 +29,11 @@ module HGrid                    ! Horizontal grid information
   integer, private :: ERROR
   logical, parameter :: DONTPAD = .false.
 
+  interface PlaceArray
+    module procedure PlaceArray_r4
+    module procedure PlaceArray_r8
+  end interface
+
 ! Error codes for "announce_error"
   integer, private, parameter :: AngleUnitMessage = 1
   integer, private, parameter :: LengthUnitMessage = AngleUnitMessage + 1
@@ -46,9 +51,9 @@ contains ! =====     Public Procedures     =============================
   type(hGrid_T) function CreateHGridFromMLSCFInfo &
     & ( name, root, filedatabase, l2gpDatabase, processingRange, chunk, &
     & suppressGeometryDump ) result ( hGrid )
-    ! & ( name, root, l1bInfo, l2gpDatabase, processingRange, chunk ) result ( hGrid )
 
     use Chunks_m, only: MLSChunk_T
+    use ChunkDivide_m, only: ChunkDivideConfig
     use EXPR_M, only: EXPR
     use HGridsDatabase, only: HGRID_T, CREATEEMPTYHGRID, NULLIFYHGRID
     use INIT_TABLES_MODULE, only: F_DATE, F_FORBIDOVERSPILL, F_FRACTION, F_GEODANGLE, &
@@ -64,6 +69,7 @@ contains ! =====     Public Procedures     =============================
     use MLSFiles, only: GetMLSFileByType
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_L1BRead
     use MLSNumerics, only: HUNT
+    use MLSStringLists, only: SwitchDetail
     use MoreTree, only: GET_BOOLEAN
     use STRING_TABLE, only: GET_STRING
     use TOGGLES, only: GEN, TOGGLE, SWITCHES
@@ -76,11 +82,10 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: NAME               ! String index of name
     integer, intent(in) :: ROOT               ! Root of hGrid subtree
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-    ! type (L1BInfo_T), intent(in) :: L1BINFO
     type (L2GPData_T), pointer, dimension(:) :: L2GPDATABASE
     type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
-    type (MLSChunk_T), intent(in) :: CHUNK ! The chunk
     logical, intent(in), optional :: SUPPRESSGEOMETRYDUMP
+    type (MLSChunk_T), intent(in) :: CHUNK ! The chunk
 
     ! Local variables
     integer :: DATE                 ! Tree node
@@ -130,16 +135,13 @@ contains ! =====     Public Procedures     =============================
     mySuppressGeometryDump = .false.
     if ( present ( suppressGeometryDump ) ) mySuppressGeometryDump = suppressGeometryDump
 
-      L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
-      hdfversion = L1BFile%HDFVersion
-!     hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
-!     if ( hdfversion <= 0 ) &                                            
-!       & call MLSMessage ( MLSMSG_Error, ModuleName, &                      
-!       & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )    
+    L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
+    hdfversion = L1BFile%HDFVersion
 
     call nullifyHGrid ( hgrid ) ! for Sun's rubbish compiler
     
     hGrid%name = name
+    ! hGrid%allowPriorOverlaps = ChunkDivideConfig%allowPriorOverlaps
     if ( toggle(gen) ) call trace_begin ( "CreateHGridFromMLSCFInfo", root )
 
     got_field = .false.
@@ -241,7 +243,6 @@ contains ! =====     Public Procedures     =============================
       if (.not. got_field(f_module) ) then
         call announce_error ( root, NoModule )
       else
-        ! call CreateMIFBasedHGrids ( l1bInfo, hGridType, chunk, &
         call CreateMIFBasedHGrids ( filedatabase, hGridType, chunk, &
           & got_field, root, height, fraction, interpolationFactor, &
           & instrumentModuleName, mif, maxLowerOverlap, maxUpperOverlap, hGrid )
@@ -257,7 +258,6 @@ contains ! =====     Public Procedures     =============================
       else if ( .not. all(got_field((/f_spacing, f_origin/)))) then
         call announce_error ( root, NoSpacingOrigin )
       else
-        ! call CreateRegularHGrid ( l1bInfo, processingRange, chunk, &
         call CreateRegularHGrid ( filedatabase, processingRange, chunk, &
           & spacing, origin, trim(instrumentModuleName), forbidOverspill, &
           & maxLowerOverlap, maxUpperOverlap, insetOverlaps, single, hGrid )
@@ -297,10 +297,9 @@ contains ! =====     Public Procedures     =============================
     
     if ( toggle(gen) ) call trace_end ( "CreateHGridFromMLSCFInfo" )
 
-    if ( index ( switches, 'geom' ) /= 0 .and. .not. mySuppressGeometryDump ) &
+    if ( switchDetail(switches, 'geom') >= 0 .and. .not. mySuppressGeometryDump ) &
       & call DumpChunkHGridGeometry ( hGrid, chunk, &
       & trim(instrumentModuleName), filedatabase )
-      ! & trim(instrumentModuleName), l1bInfo )
 
   end function CreateHGridFromMLSCFInfo
 
@@ -417,7 +416,6 @@ contains ! =====     Public Procedures     =============================
   end subroutine CreateExplicitHGrid
 
   ! ---------------------------------------  CreateMIFBasedHGrids  -----
-  ! subroutine CreateMIFBasedHGrids ( l1bInfo, hGridType, &
   subroutine CreateMIFBasedHGrids ( filedatabase, hGridType, &
     & chunk, got_field, root, height, fraction, interpolationFactor,&
     & instrumentModuleName, mif, maxLowerOverlap, maxUpperOverlap, hGrid )
@@ -437,7 +435,6 @@ contains ! =====     Public Procedures     =============================
     use MLSNumerics, only: HUNT, InterpolateValues
 
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-    ! type( L1BInfo_T ), intent(in) :: L1BINFO
     integer, intent(in)               :: HGRIDTYPE
     type (MLSChunk_T), intent(in)     :: CHUNK
     logical, dimension(:), intent(in) :: GOT_FIELD
@@ -491,10 +488,6 @@ contains ! =====     Public Procedures     =============================
 
       L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
       hdfversion = L1BFile%HDFVersion
-!     hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
-!     if ( hdfversion <= 0 ) &                                            
-!       & call MLSMessage ( MLSMSG_Error, ModuleName, &                      
-!       & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )    
     nullify ( tpGeodAlt, tpGeodAngle, defaultField, interpolatedField, &
       & defaultMIFs, defaultIndex, interpolatedIndex )
 
@@ -700,7 +693,6 @@ contains ! =====     Public Procedures     =============================
   end subroutine CreateMIFBasedHGrids
 
   ! -----------------------------------------  CreateRegularHGrid  -----
-  ! subroutine CreateRegularHGrid ( l1bInfo, processingRange, chunk, &
   subroutine CreateRegularHGrid ( filedatabase, processingRange, chunk, &
     & spacing, origin, instrumentModuleName, forbidOverspill, &
     & maxLowerOverlap, maxUpperOverlap, insetOverlaps, single, hGrid )
@@ -716,13 +708,13 @@ contains ! =====     Public Procedures     =============================
     use MLSFiles, only: GetMLSFileByType
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MLSNumerics, only: HUNT, InterpolateValues
+    use MLSStringLists, only: SwitchDetail
     use OUTPUT_M, only: OUTPUT
     use String_Table, only: Display_String
     use TOGGLES, only: SWITCHES
     use UNITS, only: DEG2RAD, RAD2DEG
 
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-    ! type( L1BInfo_T ), intent(in) :: L1BINFO
     type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
     type (MLSChunk_T), intent(in) :: CHUNK
     real(rk), intent(in) :: SPACING
@@ -769,18 +761,13 @@ contains ! =====     Public Procedures     =============================
     type (MLSFile_T), pointer             :: L1BFile
 
     ! Executable code
-    deebug = deebug .or. ( index ( switches, 'hgrid' ) /= 0 )
+    deebug = deebug .or. ( switchDetail(switches, 'hgrid') >= 0 )
 
     L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
     hdfversion = L1BFile%HDFVersion
-!     hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
-!     if ( hdfversion <= 0 ) &                                            
-!       & call MLSMessage ( MLSMSG_Error, ModuleName, &                      
-!       & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )    
 
     ! Setup the empircal geometry estimate of lon0
     ! (it makes sure it's not done twice
-    ! call ChooseOptimumLon0 ( l1bInfo, chunk )
     call ChooseOptimumLon0 ( filedatabase, chunk )
 
     ! First we're going to work out the geodetic angle range
@@ -868,7 +855,7 @@ contains ! =====     Public Procedures     =============================
       hGrid%phi(1,i) = first + (i-1)*spacing
     end do
 
-    if ( index ( switches, 'hgrid' ) /= 0 .or. deebug ) then
+    if ( switchDetail(switches, 'hgrid') >= 0 .or. deebug ) then
       call output ( 'Constructing regular hGrid ' )
       if ( hgrid%name /= 0 ) call display_string ( hgrid%name )
       call output ( '', advance='yes' )
@@ -898,11 +885,14 @@ contains ! =====     Public Procedures     =============================
       & firstMAF=chunk%firstMAFIndex, &
       & lastMAF=chunk%lastMAFIndex, &
       & dontPad=.true. )
-      if ( deebug ) then
-        call dump(l1bField%DpField(1,1,:), l1bItemName)
-      end if
+    if ( deebug ) then
+      call dump(l1bField%DpField(1,1,:), l1bItemName)
+    end if
     ! Use the average of all the first MIFs to get inclination for chunk
     incline = sum ( l1bField%dpField(1,1,:) ) / noMAFs
+    if ( deebug ) then
+      call dump( (/incline/), 'Average inclination')
+    end if
     call DeallocateL1BData ( l1bField )
     hGrid%geodLat = rad2deg * asin ( sin( deg2Rad*hGrid%phi ) * &
       & sin ( deg2Rad*incline ) )
@@ -996,7 +986,7 @@ contains ! =====     Public Procedures     =============================
     ! So we do a subtraction to get the number in the overlap.
     hGrid%noProfsUpperOverlap = hGrid%noProfs - hGrid%noProfsUpperOverlap
 
-    if ( index ( switches, 'hgrid' ) /= 0 .or. deebug ) then
+    if ( switchDetail(switches, 'hgrid') >= 0 .or. deebug ) then
       call output ( 'Initial Hgrid size: ' )
       call output ( hGrid%noProfs ) 
       call output ( ', overlaps: ' )
@@ -1023,7 +1013,7 @@ contains ! =====     Public Procedures     =============================
         call output ( processingRange%startTime, advance='yes' )
       end if
       if ( firstProfInRun > 0 .and. forbidOverspill ) then
-        if ( index ( switches, 'hgrid' ) /= 0  .or. deebug ) &
+        if ( switchDetail(switches, 'hgrid') >= 0  .or. deebug ) &
           & call output ( 'hGrid starts before run trimming start.', &
           & advance='yes' )
         call TrimHGrid ( hGrid, -1, firstProfInRun )
@@ -1038,7 +1028,7 @@ contains ! =====     Public Procedures     =============================
         call output ( processingRange%endTime, advance='yes' )
       end if
       if ( lastProfInRun < hGrid%noProfs .and. forbidOverspill ) then
-        if ( index ( switches, 'hgrid' ) /= 0  .or. deebug ) &
+        if ( switchDetail(switches, 'hgrid') >= 0  .or. deebug ) &
           & call output ( 'hGrid ends after run trimming end.',&
           & advance='yes' )
         call TrimHGrid ( hGrid, 1, hGrid%noProfs-lastProfInRun )
@@ -1049,7 +1039,7 @@ contains ! =====     Public Procedures     =============================
     ! overlap regions around if necessary to deal with overspill.
     if ( hGrid%noProfsLowerOverlap+1 <= hGrid%noProfs ) then
       if ( hGrid%time(1,hGrid%noProfsLowerOverlap+1) < processingRange%startTime ) then
-        if ( index ( switches, 'hgrid' ) /= 0  .or. deebug ) &
+        if ( switchDetail(switches, 'hgrid') >= 0  .or. deebug ) &
           & call output ( &
           & 'Non overlapped part of hGrid starts before run, extending overlap.', &
           & advance='yes' )
@@ -1061,7 +1051,7 @@ contains ! =====     Public Procedures     =============================
     if ( hGrid%noProfs-hGrid%noProfsUpperOverlap >= 1 ) then
       if ( hGrid%time(1,hGrid%noProfs-hGrid%noProfsUpperOverlap) > &
         & processingRange%endTime ) then
-        if ( index ( switches, 'hgrid' ) /= 0  .or. deebug ) &
+        if ( switchDetail(switches, 'hgrid') >= 0  .or. deebug ) &
           & call output ( &
           & 'Non overlapped part of hGrid end after run, extending overlap.', &
           & advance='yes' )
@@ -1098,7 +1088,7 @@ contains ! =====     Public Procedures     =============================
     end if
 
     ! Finally we're done.
-    if ( index ( switches, 'hgrid' ) /= 0  .or. deebug ) then
+    if ( switchDetail(switches, 'hgrid') >= 0  .or. deebug ) then
       call output ( 'Final Hgrid size: ' )
       call output ( hGrid%noProfs )
       call output ( ', overlaps: ' )
@@ -1115,7 +1105,6 @@ contains ! =====     Public Procedures     =============================
   ! -------------------------------------  DumpChunkHGridGeometry  -----
   subroutine DumpChunkHGridGeometry ( hGrid, chunk, &
     & instrumentModuleName, filedatabase )
-    ! & instrumentModuleName, l1bInfo )
 
     use Chunks_m, only: MLSChunk_T
     use HGridsDatabase, only: HGRID_T
@@ -1130,7 +1119,6 @@ contains ! =====     Public Procedures     =============================
 
     type (HGrid_T), intent(in) :: HGRID
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-    ! type( L1BInfo_T ), intent(in) :: L1BINFO
     character (len=*) :: INSTRUMENTMODULENAME
     type (MLSChunk_T), intent(in) :: CHUNK
 
@@ -1181,10 +1169,6 @@ contains ! =====     Public Procedures     =============================
 
       L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
       hdfversion = L1BFile%HDFVersion
-!     hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
-!     if ( hdfversion <= 0 ) &                                            
-!       & call MLSMessage ( MLSMSG_Error, ModuleName, &                      
-!       & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )    
 
     ! Read the geodetic angle from the L1Bfile
     l1bItemName = AssembleL1BQtyName ( instrumentModuleName//".tpGeodAngle", hdfVersion, .false. )
@@ -1286,26 +1270,28 @@ contains ! =====     Public Procedures     =============================
   end subroutine DumpChunkHGridGeometry
 
   ! ------------------------------------------------ ComputeAllHGridOffsets ---
-  ! subroutine ComputeAllHGridOffsets ( root, index, chunks, l1bInfo, &
-  subroutine ComputeAllHGridOffsets ( root, index, chunks, filedatabase, &
+  subroutine ComputeAllHGridOffsets ( root, treeindex, chunks, filedatabase, &
     & l2gpDatabase, processingRange )
     ! This routine goes through the L1 file and works out how big each HGrid is going to be
     use Allocate_Deallocate, only: ALLOCATE_TEST
     use Chunks_m, only: MLSChunk_T
-    use MLSCommon, only: MLSFILE_T, TAI93_RANGE_T
-    use L2GPData, only: L2GPDATA_T
-    use Tree, only: SUBTREE, NSONS, NODE_ID, DECORATION
-    use MoreTree, only: GET_SPEC_ID
-    use TREE_TYPES, only: N_NAMED
+    use ChunkDivide_m, only: ChunkDivideConfig
+    use HGridsDatabase, only: HGRID_T, DESTROYHGRIDCONTENTS, DUMP
     use Init_Tables_Module, only: Z_CONSTRUCT, S_HGRID, Z_OUTPUT
-    use HGridsDatabase, only: HGRID_T, DESTROYHGRIDCONTENTS
+    use L2GPData, only: L2GPDATA_T
+    use MLSCommon, only: MLSFILE_T, TAI93_RANGE_T
+    use MoreTree, only: GET_SPEC_ID
     use MLSMessageModule, only: MLSMessage, MLSMSG_ERROR
+    use MLSStringLists, only: SwitchDetail
+    use OUTPUT_M, only: BLANKS, OUTPUT
+    use TOGGLES, only: SWITCHES
+    use Tree, only: SUBTREE, NSONS, NODE_ID, DECORATION
+    use TREE_TYPES, only: N_NAMED
     ! Dummy arguments
     integer, intent(in) :: ROOT         ! Tree node for whole l2cf
-    integer, intent(in) :: INDEX        ! Where in the tree are we
+    integer, intent(in) :: treeindex    ! Where in the tree are we
     type(MLSChunk_T), dimension(:), intent(inout) :: CHUNKS
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-    ! type( L1BInfo_T ), intent(in) :: L1BINFO
     type(L2GPData_T), dimension(:), pointer :: L2GPDatabase
     type(TAI93_Range_T), intent(in) :: PROCESSINGRANGE
     ! Local variables
@@ -1317,6 +1303,7 @@ contains ! =====     Public Procedures     =============================
     integer :: HowMany                  ! How many sons does Root have?
     integer :: NOHGRIDS                 ! Number of hGrids
     integer :: SON                      ! Tree node
+    integer :: sum1, sum2, sum3
     integer :: GSON                     ! son of son
     integer :: KEY                      ! Tree node
     type(HGrid_T) :: DUMMYHGRID         ! A temporary hGrid
@@ -1329,7 +1316,7 @@ contains ! =====     Public Procedures     =============================
     howMany = nsons(root)
     noHGrids = 0
     do chunk = 0, size(chunks)
-      section = index
+      section = treeindex
       hGrid = 1
       ! Loop over all the setions in the l2cf, look for construct sections
       sectionLoop: do while ( section <= howMany )
@@ -1347,11 +1334,16 @@ contains ! =====     Public Procedures     =============================
                   ! For the 'zeroth' pass just count up the chunks
                   noHGrids = noHGrids + 1
                 else
-                  ! dummyHGrid = CreateHGridFromMLSCFInfo ( 0, key, l1bInfo, l2gpDatabase, &
                   dummyHGrid = CreateHGridFromMLSCFInfo ( 0, key, filedatabase, l2gpDatabase, &
                     & processingRange, chunks(chunk), suppressGeometryDump=.true. )
-                  chunks(chunk)%hGridOffsets(hGrid) = dummyHGrid%noProfs - &
+                  if ( chunk /= 1 .or. .not. ChunkDivideConfig%allowPriorOverlaps ) then
+                    chunks(chunk)%hGridOffsets(hGrid) = dummyHGrid%noProfs - &
                     & dummyHGrid%noProfsLowerOverlap - dummyHGrid%noProfsUpperOverlap
+                  else
+                    chunks(chunk)%hGridOffsets(hGrid) = dummyHGrid%noProfs - &
+                    & dummyHGrid%noProfsUpperOverlap
+                  endif
+                  if ( switchDetail(switches, 'hgrid') >= 0 ) call dump(dummyHGrid)
                   call DestroyHGridContents ( dummyHGrid )
                   hGrid = hGrid + 1
                 end if
@@ -1384,6 +1376,24 @@ contains ! =====     Public Procedures     =============================
       end if
     end do                              ! Chunk loop
     
+    if ( switchDetail(switches, 'hgrid') >= 0 ) then
+      sum1 = 0
+      sum2 = 0
+      sum3 = 0
+      call output ( "number of profiles in each chunk/grid: " , advance='yes')
+      do chunk = 1, size ( chunks )
+        call output ( chunk )
+        call blanks ( 3 )
+        call output ( chunks(chunk)%hGridOffsets, advance='yes' )
+        sum1 = sum1 + chunks(chunk)%hGridOffsets(1)
+        sum2 = sum2 + chunks(chunk)%hGridOffsets(2)
+        sum3 = sum3 + chunks(chunk)%hGridOffsets(3)
+      end do
+      call output ( "Total number of profiles" , advance='yes')
+      call output ( sum1 , advance='no' )
+      call output ( sum2 , advance='no' )
+      call output ( sum3 , advance='yes' )
+    endif
     ! Now accumulate hGridOffsets which currently contains the number
     ! of profiles each chunk/hGrid.  After this it will contain
     ! the accumulated number.  This is equivalent to storing the
@@ -1404,6 +1414,15 @@ contains ! =====     Public Procedures     =============================
     end do
     chunks(1)%hGridOffsets = 0
     
+    if ( switchDetail(switches, 'pro') < 0 ) return
+    call output ( "Dumping offsets, hgridTotals for all chunks: " , advance='yes')
+    do chunk = 1, size ( chunks )
+      call output ( chunk )
+      call blanks ( 3 )
+      call output ( chunks(chunk)%hGridOffsets )
+      call blanks ( 3 )
+      call output ( chunks(chunk)%hGridTotals, advance='yes' )
+    end do
   end subroutine ComputeAllHGridOffsets
 
   ! ------------------------------------- ComputeNextChunksHGridOffsets --
@@ -1431,6 +1450,28 @@ contains ! =====     Public Procedures     =============================
       & chunks(chunkNo+1)%hGridOffsets = chunks(chunkNo+1)%hGridOffsets + &
       & chunks(chunkNo)%hGridOffsets + 1
   end subroutine ComputeNextChunksHGridOffsets
+  
+  ! ------------------------------------- PlaceHGridContents --
+  subroutine PlaceHGridContents ( HGrid1, HGrid2, offset )
+    ! Place the contents of one Hgrid1 inside HGrid2, possibly offset
+    use HGridsDatabase, only: HGRID_T, CREATEEMPTYHGRID, NULLIFYHGRID
+    ! Args
+    type(HGRID_T), intent(in)     :: HGrid1
+    type(HGRID_T), intent(inout)  :: HGrid2
+    integer, optional, intent(in) :: offset ! where in HGrid2 to place HGrid1
+    ! Internal variables
+    integer :: myOffset
+    ! Executable
+    myOffset = 0
+    if ( present(offset) ) myOffset=offset
+    call PlaceArray(HGrid1%phi, HGrid2%phi, myOffset)
+    call PlaceArray(HGrid1%geodLat, HGrid2%geodLat, myOffset)
+    call PlaceArray(HGrid1%lon, HGrid2%lon, myOffset)
+    call PlaceArray(HGrid1%time, HGrid2%time, myOffset)
+    call PlaceArray(HGrid1%solarTime, HGrid2%solarTime, myOffset)
+    call PlaceArray(HGrid1%solarZenith, HGrid2%solarZenith, myOffset)
+    call PlaceArray(HGrid1%losAngle, HGrid2%losAngle, myOffset)
+  end subroutine PlaceHGridContents
   
 ! =====     Private Procedures     =====================================
 
@@ -1480,6 +1521,48 @@ contains ! =====     Public Procedures     =============================
       call output ( " field is required to dimensionless", advance='yes' )
     end select
     end subroutine ANNOUNCE_ERROR
+    
+    subroutine PlaceArray_r4(array1, array2, offset)
+      ! place contents of array1 inside array2, possibly offset
+      use MLSCommon, only: r4, r8
+      use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+      ! Args
+      real(r4), dimension(:,:), intent(in)     :: array1
+      real(r4), dimension(:,:), intent(inout)  :: array2
+      integer, intent(in) :: offset ! Where inside array2 to place array
+      ! Internal variables
+      integer :: N
+      ! Executable
+      N = size(array1, 2)
+      if ( size(array1, 1) /= size(array2, 1) ) &
+        & call MLSMessage ( MLSMSG_Error, trim(ModuleName) // '/PlaceArray_r4', &
+        & 'array sizes mismatched in first index' )
+      if ( N+offset > size(array2, 2) ) &
+        & call MLSMessage ( MLSMSG_Error, trim(ModuleName) // '/PlaceArray_r4', &
+        & 'array1 too big to place in array2 with given offset' )
+      array2(:, 1+offset:N+offset) = array1
+    end subroutine PlaceArray_r4
+
+    subroutine PlaceArray_r8(array1, array2, offset)
+      ! place contents of array1 inside array2, possibly offset
+      use MLSCommon, only: r4, r8
+      use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+      ! Args
+      real(r8), dimension(:,:), intent(in)     :: array1
+      real(r8), dimension(:,:), intent(inout)  :: array2
+      integer, intent(in) :: offset ! Where inside array2 to place array
+      ! Internal variables
+      integer :: N
+      ! Executable
+      N = size(array1, 2)
+      if ( size(array1, 1) /= size(array2, 1) ) &
+        & call MLSMessage ( MLSMSG_Error, trim(ModuleName) // '/PlaceArray_r4', &
+        & 'array sizes mismatched in first index' )
+      if ( N+offset > size(array2, 2) ) &
+        & call MLSMessage ( MLSMSG_Error, trim(ModuleName) // '/PlaceArray_r4', &
+        & 'array1 too big to place in array2 with given offset' )
+      array2(:, 1+offset:N+offset) = array1
+    end subroutine PlaceArray_r8
 
 !=============================================================================
   logical function not_used_here()
@@ -1496,6 +1579,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.71  2005/09/14 00:12:33  pwagner
+! Uses ChunkDivideConfig%allowPriorOverlaps in calculating offsets
+!
 ! Revision 2.70  2005/08/31 19:41:16  livesey
 ! Added option to suppress the geometry dump in that first run through
 ! generating the HGrids that is done by tree walker to assess where each
