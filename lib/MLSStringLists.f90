@@ -10,7 +10,7 @@
 ! foreign countries or providing access to foreign persons.
 
 !=============================================================================
-MODULE MLSStringLists               ! Module to treat string lists
+module MLSStringLists               ! Module to treat string lists
 !=============================================================================
 
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
@@ -20,7 +20,7 @@ MODULE MLSStringLists               ! Module to treat string lists
   use MLSStrings, only: Capitalize, lowerCase, &
     & ReadIntsFromChars, reverse, writeIntsToChars
 
-  implicit NONE
+  implicit none
   private
 
 !---------------------------- RCS Module Info ------------------------------
@@ -31,6 +31,8 @@ MODULE MLSStringLists               ! Module to treat string lists
 
 !
 ! This module contains some low level string handling stuff for mls
+! (Perhaps the date and time conversions should be moved out of here
+! and MLSStrings and put into time_m? Or into a stand-alone module?)
 
 ! === (start of toc) ===
 !     c o n t e n t s
@@ -44,6 +46,7 @@ MODULE MLSStringLists               ! Module to treat string lists
 !     (subroutines and functions)
 ! Array2List         Converts an array of strings to a single string list
 ! catLists           cats 2 string lists, taking care if either one is blank
+! dai_to_yyyymmdd    Converts days after Jan 1, 2001 to yyyymmdd
 ! ExpandStringRange  Turns '1,2-5,7' into '1,2,3,4,5,7' or ints or logicals
 ! ExtractSubString   Extracts portion of string sandwiched between sub1 and sub2
 ! GetIntHashElement  Returns int from hash array corresponding to key string
@@ -74,6 +77,8 @@ MODULE MLSStringLists               ! Module to treat string lists
 ! Array2List (char* inArray(:), char* outList(:), &
 !   & [char inseparator], [int ordering], [char leftRight]) 
 ! char* catLists (char* str1, char* str2)
+! dai_to_yyyymmdd (int dai, int yyyy, int mm, int dd, [char* startingDate])
+! dai_to_yyyymmdd (int dai, char* str, [char* startingDate])
 ! ExpandStringRange (char* str, char* outst)
 ! ExtractSubString (char* str, char* outstr, char* sub1, char* sub2, &
 !       & [char* how], [log no_trim])
@@ -109,6 +114,8 @@ MODULE MLSStringLists               ! Module to treat string lists
 !    & [char inseparator], [log part_match])
 ! int SwitchDetail(strlist inList, char* test_switch)
 ! char* unquote (char* str, [char* quotes], [char* cquotes], [log strict])
+! yyyymmdd_to_dai (int yyyy, int mm, int dd, int dai, [char* startingDate])
+! yyyymmdd_to_dai (char* str, int dai, [char* startingDate])
 
 ! in the above, a string list is a string of elements (usu. comma-separated)
 ! e.g., units='cm,m,in,ft'
@@ -142,7 +149,8 @@ MODULE MLSStringLists               ! Module to treat string lists
 ! element is longer than a limit: MAXSTRELEMENTLENGTH
 ! === (end of api) ===
 
-  public :: catLists, Array2List, ExpandStringRange, ExtractSubString, &
+  public :: Array2List, catLists, &
+   & dai_to_yyyymmdd, ExpandStringRange, ExtractSubString, &
    & GetIntHashElement, GetStringElement, GetStringHashElement, &
    & GetUniqueInts, GetUniqueStrings, GetUniqueList, &
    & List2Array, NumStringElements, &
@@ -152,6 +160,10 @@ MODULE MLSStringLists               ! Module to treat string lists
 
   interface catLists
     module procedure catLists_str, catLists_int, catLists_intarray
+  end interface
+
+  interface dai_to_yyyymmdd
+    module procedure dai_to_yyyymmdd_str, dai_to_yyyymmdd_ints
   end interface
 
   interface ExpandStringRange
@@ -354,6 +366,87 @@ CONTAINS
       outstr = trim(str1) // separator // trim(str2)
     endif
   end function catLists_str
+
+  ! ---------------------------------------------  dai_to_yyyymmdd_ints  -----
+  subroutine dai_to_yyyymmdd_ints(dai, yyyy, mm, dd, startingDate)
+    ! Routine that given the number of days after a starting date
+    ! returns 3 ints: the form yyyymmdd
+    !--------Argument--------!
+    integer, intent(in)  :: dai
+    integer, intent(out) :: yyyy
+    integer, intent(out) :: mm
+    integer, intent(out) :: dd
+    character(len=*), intent(in), optional :: startingDate  ! If not Jan 1 2001
+    !----------Local vars----------!
+    integer :: doy1
+    integer :: ErrTyp
+    integer :: loss
+    integer :: mydai
+    character(len=8) :: mystartingDate
+    !----------Executable part----------!
+   if(present(startingDate)) then
+      mystartingDate=startingDate
+   else
+      mystartingDate='20010101'
+   endif
+   call utc_to_yyyymmdd_ints(mystartingDate, ErrTyp, yyyy, mm, dd, nodash=.true.)
+   if ( dai < 1 ) return
+   call yyyymmdd_to_doy_str(mystartingDate, doy1)
+   ! Here's what we do:
+   ! Given doy1 (the day-of-year of the starting date)
+   ! we keep trying to add dai to it
+   ! If the result is greater than the number of days in that year (yyyy),
+   ! we increment the starting date's year counter (yyyy), its doy1,
+   ! and reduce the dai accordingly and try again
+   ! If the result is less than the number of days in that year
+   ! Then compute mm and dd for yyyy-(doy1+dai)
+   mydai = dai
+   do
+     if ( mydai + doy1 <= daysinyear(yyyy) ) exit
+     ! What we said we'd do
+     loss = daysinyear(yyyy) - doy1 + 1
+     yyyy = yyyy + 1
+     doy1 = 1
+     mydai = mydai - loss
+   enddo
+   ! Now convert from doy to mmdd
+   doy1 = 0 ! How many days into year yyyy added by prior months
+   do mm=1, 12
+     if ( leapyear(yyyy) ) then
+       if ( doy1 + DAYMAXLY(mm) > mydai ) exit
+       doy1 = doy1 + DAYMAXLY(mm)
+     else
+       if ( doy1 + DAYMAXNY(mm) > mydai ) exit
+       doy1 = doy1 + DAYMAXNY(mm)
+     endif
+   enddo
+   dd = mydai - doy1 + 1
+  end subroutine dai_to_yyyymmdd_ints
+
+  ! ---------------------------------------------  dai_to_yyyymmdd_str  -----
+  subroutine dai_to_yyyymmdd_str(dai, str, startingDate)
+    ! Routine that given the number of days after a starting date
+    ! returns a string: the form yyyymmdd
+    !--------Argument--------!
+    integer, intent(in)           :: dai
+    character(len=*), intent(out) :: str
+    character(len=*), intent(in), optional :: startingDate  ! If not Jan 1 2001
+    ! Internal variables
+    integer :: yyyy, mm, dd
+    character(len=8) :: year, month, day
+    ! executable
+    call dai_to_yyyymmdd(dai, yyyy, mm, dd, startingDate)
+    ! print *, 'dai: ', dai
+    ! print *, 'yyyy: ', yyyy
+    ! print *, 'mm: ', mm
+    ! print *, 'dd: ', dd
+    call writeIntsToChars(yyyy , year )
+    call writeIntsToChars(mm   , month, fmt='(i2.2)')
+    call writeIntsToChars(dd   , day  , fmt='(i2.2)')
+    str(1:4) = adjustl(year )
+    str(5:6) = adjustl(month)
+    str(7:8) = adjustl(day  )
+  end subroutine dai_to_yyyymmdd_str
 
   ! ----------------------------------------  ExpandStringRange_ints  -----
   subroutine ExpandStringRange_ints (instr, ints, length)
@@ -2674,6 +2767,7 @@ CONTAINS
   end subroutine utc_to_yyyymmdd_strs
 
   ! ---------------------------------------------  yyyymmdd_to_dai_ints  -----
+
   subroutine yyyymmdd_to_dai_ints(yyyy, mm, dd, dai, startingDate)
     ! Routine that returns the number of days after a starting date
     ! from 3 ints: the form yyyymmdd
@@ -2823,11 +2917,22 @@ CONTAINS
      call yyyymmdd_to_doy_ints(year, month, day, doy)
   end subroutine yyyymmdd_to_doy_str
 
+  function daysinyear(year) result(days)
+    integer, intent(in) :: year
+    integer :: days
+     ! How many days in the particular year
+     if ( leapyear(year) ) then
+       days = 366
+     else
+       days = 365
+     endif
+  end function daysinyear
+
   logical function leapyear(year)
     integer,intent(in) :: year
      ! This is to capture rule that centuries are leap only
      ! if divisible by 400
-     ! Otherwise, as prehaps you knew, leapyears are those years divisible by 4
+     ! Otherwise, as perhaps you knew, leapyears are those years divisible by 4
      if ( 100 * (year/100) >= year ) then
        leapyear = ( 400 * (year/400) >= year )
      else
@@ -2848,6 +2953,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.13  2005/09/14 22:53:26  pwagner
+! Added dai_to_yyyymmdd
+!
 ! Revision 2.12  2005/08/08 23:53:18  pwagner
 ! utc_format never undefined in utc_to_yyyymmdd_ints
 !
