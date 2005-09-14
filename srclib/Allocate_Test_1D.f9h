@@ -21,7 +21,7 @@
     if ( present(lowBound) ) myLow = lowBound
     allocate ( To_Allocate(myLow:dim1), stat=status )
     call test_allocate ( status, moduleName, ItsName, &
-      & lBound(to_allocate), uBound(to_allocate), eSize )
+      & (/myLow/), (/dim1/), eSize )
     if ( status == 0 ) then
       if ( present(fill) ) then
         to_allocate = fill
@@ -31,3 +31,6 @@
     end if
 
 ! $Log$
+! Revision 1.1  2005/07/20 01:29:46  vsnyder
+! Initial commit
+!
