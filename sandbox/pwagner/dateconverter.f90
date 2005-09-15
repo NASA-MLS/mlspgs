@@ -3,7 +3,8 @@ PROGRAM dateconverter
 !=================================
 
    use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
-   USE MLSStrings , ONLY: lowerCase, reFormatDate
+   USE MLSStrings, ONLY: lowerCase, readIntsFromChars, reFormatDate
+   USE MLSStringLists, ONLY: dai_to_yyyymmdd, yyyymmdd_to_dai
 
    IMPLICIT NONE
 
@@ -21,6 +22,7 @@ PROGRAM dateconverter
 ! while the other uses month-and-day
 
   type options_T
+    integer     :: offset = 0                      ! How many days to add/subtract
     logical     :: verbose = .false.
     character(len=255) :: outputFormat= ' '        ! output format
     character(len=255) :: inputFormat= ' '         ! input format
@@ -49,21 +51,24 @@ PROGRAM dateconverter
     & 'June     ', 'July     ', 'August   ', 'September', 'October  ', &
     & 'November ', 'December '/)
 
-   INTEGER, PARAMETER :: MAXLISTLENGTH=24
+   integer, parameter :: MAXLISTLENGTH=24
    integer, parameter ::          MAXDATES = 100
-	CHARACTER (LEN=MAXLISTLENGTH) :: converted_date
-	CHARACTER (LEN=MAXLISTLENGTH) :: date
+   character (LEN=MAXLISTLENGTH) :: converted_date
+   character (LEN=MAXLISTLENGTH) :: date
+   character (LEN=MAXLISTLENGTH) :: intermediate_date
    character(len=MAXLISTLENGTH), dimension(MAXDATES) :: dates
-	CHARACTER (LEN=MAXLISTLENGTH) :: toForm
-	CHARACTER (LEN=MAXLISTLENGTH) :: fromForm
+   character (LEN=MAXLISTLENGTH) :: fromForm
+   character (LEN=*), parameter  :: intermediateForm = 'yyyymmdd'
+   character (LEN=MAXLISTLENGTH) :: toForm
    character(len=*), parameter   :: MFORMAT = 'yyyy M dd'
    character(len=*), parameter   :: DOYFORMAT = 'yyyy-doy'
+   integer                       :: dai
    integer                       :: i
    integer                       :: n_dates = 0
   ! Executable
   do      ! Loop over options
      call get_date(date, n_dates, options)
-     if ( date(1:1) == '-' ) cycle
+     if ( index('-+', date(1:1)) > 0 ) cycle
      if ( date == ' ' ) exit
      if ( index(dateForm(date), 'yyyy') == 0 ) then
        print *, 'Sorry--date format not found: ', trim(date)
@@ -88,12 +93,24 @@ PROGRAM dateconverter
       print *, 'Input was ', trim(date)
       print *, 'Input format was ', trim(fromForm)
       print *, 'Output format is ', trim(toForm)
+      print *, 'Offset is ', options%offset
     endif
     
     ! Process date
-    converted_date = reFormatDate(date, &
-      & fromForm=trim(fromForm), toForm=trim(toForm))
-
+    if ( options%offset /= 0 ) then
+      intermediate_date = reFormatDate(date, &
+        & fromForm=trim(fromForm), toForm=intermediateForm)
+      ! print *, 'intermediate_date', intermediate_date
+      call yyyymmdd_to_dai(intermediate_date, dai)
+      ! print *, 'dai', dai
+      dai = dai + options%offset
+      call dai_to_yyyymmdd(dai, intermediate_date)
+      converted_date = reFormatDate(intermediate_date, &
+        fromForm=intermediateForm, toForm=trim(toForm))
+    else
+      converted_date = reFormatDate(date, &
+        & fromForm=trim(fromForm), toForm=trim(toForm))
+    endif
     call print_string(trim(converted_date))
    enddo
 contains
@@ -251,7 +268,7 @@ contains
       call getarg ( i+hp, date )
       ! print *, i, ' th Arg: ', trim(date)
       error = 0
-      if ( date(1:1) /= '-' ) exit
+      if ( index('-+', date(1:1)) < 1 ) exit
       if ( date(1:3) == '-h ' ) then
         call print_help
       elseif ( date(1:3) == '-i ' ) then
@@ -264,6 +281,9 @@ contains
         exit
       elseif ( date(1:3) == '-v ' ) then
         options%verbose = .true.
+        exit
+      elseif ( index('0123456789', date(2:2)) > 0 ) then
+        call readIntsFromChars(date, options%offset)
         exit
       else
         call print_help
@@ -294,6 +314,8 @@ contains
       write (*,*) '                        e.g., "2004 October 01" <=> 2004-d275'
       write (*,*) '          -i format   => input format'
       write (*,*) '                        by default attempt to auto-recognize'
+      write (*,*) '          -number     => subtract "number" days'
+      write (*,*) '          +number     => add "number" days'
       write (*,*) '          -v          => switch on verbose mode'
       write (*,*) '          -h          => print brief help'
       stop
@@ -309,6 +331,9 @@ END PROGRAM dateconverter
 !==================
 
 ! $Log$
+! Revision 1.3  2004/10/13 22:58:00  pwagner
+! Fixed bug in date_format; added -i option
+!
 ! Revision 1.2  2004/10/12 23:42:29  pwagner
 ! Suitable for shell substitution tasks now
 !
