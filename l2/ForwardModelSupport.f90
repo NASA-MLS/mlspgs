@@ -380,7 +380,7 @@ contains ! =====     Public Procedures     =============================
       & F_MOLECULEDERIVATIVES, F_NABTERMS, F_NAZIMUTHANGLES, &
       & F_NCLOUDSPECIES, F_NMODELSURFS, F_NSCATTERINGANGLES, &
       & F_NSIZEBINS, F_PHIWINDOW, F_POLARIZED, F_SCANAVERAGE, F_SIGNALS, &
-      & F_SKIPOVERLAPS, F_SPECIFICQUANTITIES, &
+      & F_SKIPOVERLAPS, F_SPECIFICQUANTITIES, F_SPECT_DER, &
       & F_SWITCHINGMIRROR, F_TANGENTGRID, &
       & F_TEMP_DER, F_TOLERANCE, F_TYPE, F_USBPFAMOLECULES, F_XSTAR, F_YSTAR
     use Intrinsic, only: L_NONE, L_CLEAR, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, &
@@ -429,7 +429,6 @@ contains ! =====     Public Procedures     =============================
     integer, dimension(:), pointer :: SIGNALINDS ! From Parse_Signal
     character (len=80) :: SIGNALSTRING  ! E.g. R1A....
     integer :: Son                      ! Some subtree of root.
-    integer, pointer :: SpecIndices(:)  ! Indices in info%line...
     integer :: STATUS                   ! From allocates etc.
     integer :: TANGENT                  ! Loop counter
     integer, pointer :: TempLBL(:), TempPFA(:) ! Used to separate LBL and PFA
@@ -629,6 +628,8 @@ contains ! =====     Public Procedures     =============================
         do j = 1, nsons(son) - 1
           info%specificQuantities(j) = decoration ( decoration ( subtree ( j+1, son ) ) )
         end do
+      case ( f_spect_der )
+        info%spect_der = get_boolean(son)
       case ( f_switchingMirror )
         info%switchingMirror = get_boolean(son)
       case ( f_tangentGrid )
@@ -784,10 +785,10 @@ op:     do j = 2, nsons(PFATrees(s))
     ! Now the spectroscopy parameters.  They only make sense for LBL.
     do i = lineCenter, lineWidth_TDep
       if ( lineTrees(i) == null_tree ) cycle
-      info%spect_der = .true.
       ! Make a list of the molecules
       allocate ( lineStru(nsons(lineTrees(i))-1), stat=status )
       if ( status /= 0 ) call announceError( AllocateError, lineTrees(i) )
+      nullify ( line_ix )
       call allocate_test ( line_ix, 2, m, 'Line_ix', moduleName, fill=0 )
       select case ( i )
       case ( lineCenter )
@@ -1256,6 +1257,9 @@ op:     do j = 2, nsons(PFATrees(s))
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.118  2005/09/16 23:39:07  vsnyder
+! Add spect_der field to ForwardModel
+!
 ! Revision 2.117  2005/09/03 01:20:41  vsnyder
 ! Spectral parameter offsets stuff
 !
