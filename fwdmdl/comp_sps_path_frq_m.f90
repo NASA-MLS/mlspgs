@@ -198,8 +198,7 @@ module Comp_Sps_Path_Frq_m
 
 ! Compute the SPS path for species that don't use frequency
 
-    use MLSCommon, only: RP, IP, R8
-    use Get_Eta_Matrix_m, only: Get_Eta_Sparse
+    use MLSCommon, only: RP, IP
     use Load_sps_data_m, only: Grids_T
 
 ! Input:
@@ -222,7 +221,7 @@ module Comp_Sps_Path_Frq_m
 
     integer(ip) :: no_mol
     integer(ip) :: sps_i, sv_zp
-    integer(ip) :: v_inda, f_inda, w_inda, w_indb
+    integer(ip) :: v_inda, w_inda, w_indb
 
 ! Begin executable code:
 
@@ -266,6 +265,9 @@ module Comp_Sps_Path_Frq_m
 end module Comp_Sps_Path_Frq_m
 !
 ! $Log$
+! Revision 2.22  2005/09/16 23:41:19  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.21  2005/08/03 18:04:09  vsnyder
 ! Some spectroscopy derivative stuff
 !
