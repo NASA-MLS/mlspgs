@@ -503,7 +503,7 @@ contains
       call output ( ' ', advance='no' )
       call output ( name, advance='no' )
     end if
-    call output ( the_grid%p_len, before = ', P_Len = ' )
+    call output ( the_grid%p_len, before = ', P_Len = ', advance='yes' )
     call dump ( the_grid%l_f(1:), 'The_grid%l_f' )
     call dump ( the_grid%l_z(1:), 'The_grid%l_z' )
     call dump ( the_grid%l_p(1:), 'The_grid%l_p' )
@@ -535,6 +535,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.63  2005/08/03 18:04:09  vsnyder
+! Some spectroscopy derivative stuff
+!
 ! Revision 2.62  2005/06/22 18:08:19  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
