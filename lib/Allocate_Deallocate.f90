@@ -24,7 +24,8 @@ module Allocate_Deallocate
 ! *****     of the Allocate_test generic       *****
 ! *****     deallocate the object to be        *****
 ! *****     allocated.  Therefore, it must     *****
-! *****     be declared with => NULL()         *****
+! *****     be declared with => NULL() or      *****
+! *****     nullified before its first use     *****
 ! **************************************************
 
   use MACHINE, only: MLS_GC_NOW
@@ -42,6 +43,12 @@ module Allocate_Deallocate
     module procedure ALLOCATE_TEST_CHARACTER_1D
     module procedure ALLOCATE_TEST_CHARACTER_2D
     module procedure ALLOCATE_TEST_CHARACTER_3D
+    module procedure ALLOCATE_TEST_COMPLEX_1D
+    module procedure ALLOCATE_TEST_COMPLEX_2D
+    module procedure ALLOCATE_TEST_COMPLEX_3D
+    module procedure ALLOCATE_TEST_DCOMPLEX_1D
+    module procedure ALLOCATE_TEST_DCOMPLEX_2D
+    module procedure ALLOCATE_TEST_DCOMPLEX_3D
     module procedure ALLOCATE_TEST_INTEGER_1D, ALLOCATE_TEST_INTEGER_2D
     module procedure ALLOCATE_TEST_INTEGER_3D
     module procedure ALLOCATE_TEST_LOGICAL_1D, ALLOCATE_TEST_LOGICAL_2D
@@ -56,6 +63,12 @@ module Allocate_Deallocate
     module procedure DEALLOCATE_TEST_CHARACTER_1D
     module procedure DEALLOCATE_TEST_CHARACTER_2D
     module procedure DEALLOCATE_TEST_CHARACTER_3D
+    module procedure DEALLOCATE_TEST_COMPLEX_1D
+    module procedure DEALLOCATE_TEST_COMPLEX_2D
+    module procedure DEALLOCATE_TEST_COMPLEX_3D
+    module procedure DEALLOCATE_TEST_DCOMPLEX_1D
+    module procedure DEALLOCATE_TEST_DCOMPLEX_2D
+    module procedure DEALLOCATE_TEST_DCOMPLEX_3D
     module procedure DEALLOCATE_TEST_INTEGER_1D, DEALLOCATE_TEST_INTEGER_2D
     module procedure DEALLOCATE_TEST_INTEGER_3D
     module procedure DEALLOCATE_TEST_LOGICAL_1D, DEALLOCATE_TEST_LOGICAL_2D
@@ -221,6 +234,84 @@ contains
     integer, parameter :: ESize = E_ch
     include "Allocate_Test_3D.f9h"
   end subroutine Allocate_Test_Character_3d
+  ! -----------------------------------  Allocate_Test_Complex_1d  -----
+  subroutine Allocate_Test_Complex_1d ( To_Allocate, Dim1, &
+    & ItsName, ModuleName, LowBound, Fill )
+    Complex, pointer, dimension(:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: LowBound     ! Lower bound, default 1
+    Complex, intent(in), optional :: Fill
+    Complex, parameter :: Default = (0.0,0.0)
+    integer, parameter :: ESize = 2 * e_def
+    include "Allocate_Test_1D.f9h"
+  end subroutine Allocate_Test_Complex_1d
+  ! -----------------------------------  Allocate_Test_Complex_2d  -----
+  subroutine Allocate_Test_Complex_2d ( To_Allocate, Dim1, Dim2, &
+    & ItsName, ModuleName, Low1, Low2, Fill )
+    Complex, pointer, dimension(:,:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    integer, intent(in) :: Dim2    ! Upper bound of second dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: Low1, Low2 ! default 1
+    Complex, intent(in), optional :: Fill ! To fill allocated array
+    Complex, parameter :: Default = (0.0,0.0)
+    integer, parameter :: ESize = 2 * e_def
+    include "Allocate_Test_2D.f9h"
+  end subroutine Allocate_Test_Complex_2d
+  ! -----------------------------------  Allocate_Test_Complex_3d  -----
+  subroutine Allocate_Test_Complex_3d ( To_Allocate, Dim1, Dim2, Dim3, &
+    & ItsName, ModuleName, Low1, Low2, Low3, Fill )
+    Complex, pointer, dimension(:,:,:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    integer, intent(in) :: Dim2    ! Upper bound of second dim. of To_Allocate
+    integer, intent(in) :: Dim3    ! Upper bound of third dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: Low1, Low2, Low3 ! Low bounds for dimensions
+    Complex, intent(in), optional :: Fill ! To fill allocated array
+    Complex, parameter :: Default = (0.0,0.0)
+    integer, parameter :: ESize = 2 * e_def
+    include "Allocate_Test_3D.f9h"
+  end subroutine Allocate_Test_Complex_3d
+  ! ----------------------------------  Allocate_Test_DComplex_1d  -----
+  subroutine Allocate_Test_DComplex_1d ( To_Allocate, Dim1, &
+    & ItsName, ModuleName, LowBound, Fill )
+    Complex(kind(0.0d0)), pointer, dimension(:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: LowBound     ! Lower bound, default 1
+    Complex(kind(0.0d0)), intent(in), optional :: Fill
+    Complex(kind(0.0d0)), parameter :: Default = (0.0d0,0.0d0)
+    integer, parameter :: ESize = 2 * e_dp
+    include "Allocate_Test_1D.f9h"
+  end subroutine Allocate_Test_DComplex_1d
+  ! ----------------------------------  Allocate_Test_DComplex_2d  -----
+  subroutine Allocate_Test_DComplex_2d ( To_Allocate, Dim1, Dim2, &
+    & ItsName, ModuleName, Low1, Low2, Fill )
+    Complex(kind(0.0d0)), pointer, dimension(:,:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    integer, intent(in) :: Dim2    ! Upper bound of second dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: Low1, Low2 ! default 1
+    Complex(kind(0.0d0)), intent(in), optional :: Fill ! To fill allocated array
+    Complex(kind(0.0d0)), parameter :: Default = (0.0d0,0.0d0)
+    integer, parameter :: ESize = 2 * e_dp
+    include "Allocate_Test_2D.f9h"
+  end subroutine Allocate_Test_DComplex_2d
+  ! ----------------------------------  Allocate_Test_DComplex_3d  -----
+  subroutine Allocate_Test_DComplex_3d ( To_Allocate, Dim1, Dim2, Dim3, &
+    & ItsName, ModuleName, Low1, Low2, Low3, Fill )
+    Complex(kind(0.0d0)), pointer, dimension(:,:,:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    integer, intent(in) :: Dim2    ! Upper bound of second dim. of To_Allocate
+    integer, intent(in) :: Dim3    ! Upper bound of third dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: Low1, Low2, Low3 ! Low bounds for dimensions
+    Complex(kind(0.0d0)), intent(in), optional :: Fill ! To fill allocated array
+    Complex(kind(0.0d0)), parameter :: Default = (0.0d0,0.0d0)
+    integer, parameter :: ESize = 2 * e_dp
+    include "Allocate_Test_3D.f9h"
+  end subroutine Allocate_Test_DComplex_3d
   ! ------------------------------------  Allocate_Test_RealR8_1d  -----
   subroutine Allocate_Test_RealR8_1d ( To_Allocate, Dim1, &
     & ItsName, ModuleName, LowBound, Fill )
@@ -395,6 +486,42 @@ contains
     integer, parameter :: ESize = e_ch
     include "Deallocate_Test.f9h"
   end subroutine Deallocate_Test_Character_3d
+  ! ---------------------------------  Deallocate_Test_Complex_1d  -----
+  subroutine Deallocate_Test_Complex_1d ( To_Deallocate, ItsName, ModuleName )
+    complex, pointer, dimension(:) :: To_Deallocate
+    integer, parameter :: ESize = 2 * e_def
+    include "Deallocate_Test.f9h"
+  end subroutine Deallocate_Test_Complex_1d
+  ! ---------------------------------  Deallocate_Test_Complex_2d  -----
+  subroutine Deallocate_Test_Complex_2d ( To_Deallocate, ItsName, ModuleName )
+    complex, pointer, dimension(:,:) :: To_Deallocate
+    integer, parameter :: ESize = 2 * e_def
+    include "Deallocate_Test.f9h"
+  end subroutine Deallocate_Test_Complex_2d
+  ! ---------------------------------  Deallocate_Test_Complex_3d  -----
+  subroutine Deallocate_Test_Complex_3d ( To_Deallocate, ItsName, ModuleName )
+    complex, pointer, dimension(:,:,:) :: To_Deallocate
+    integer, parameter :: ESize = 2 * e_def
+    include "Deallocate_Test.f9h"
+  end subroutine Deallocate_Test_Complex_3d
+  ! --------------------------------  Deallocate_Test_Dcomplex_1d  -----
+  subroutine Deallocate_Test_Dcomplex_1d ( To_Deallocate, ItsName, ModuleName )
+    complex(kind(0.0d0)), pointer, dimension(:) :: To_Deallocate
+    integer, parameter :: ESize = 2 * e_dp
+    include "Deallocate_Test.f9h"
+  end subroutine Deallocate_Test_Dcomplex_1d
+  ! --------------------------------  Deallocate_Test_Dcomplex_2d  -----
+  subroutine Deallocate_Test_Dcomplex_2d ( To_Deallocate, ItsName, ModuleName )
+    complex(kind(0.0d0)), pointer, dimension(:,:) :: To_Deallocate
+    integer, parameter :: ESize = 2 * e_dp
+    include "Deallocate_Test.f9h"
+  end subroutine Deallocate_Test_Dcomplex_2d
+  ! --------------------------------  Deallocate_Test_Dcomplex_3d  -----
+  subroutine Deallocate_Test_Dcomplex_3d ( To_Deallocate, ItsName, ModuleName )
+    complex(kind(0.0d0)), pointer, dimension(:,:,:) :: To_Deallocate
+    integer, parameter :: ESize = 2 * e_dp
+    include "Deallocate_Test.f9h"
+  end subroutine Deallocate_Test_Dcomplex_3d
   ! ----------------------------------  Deallocate_Test_RealR8_1d  -----
   subroutine Deallocate_Test_RealR8_1d ( To_Deallocate, ItsName, ModuleName )
     double precision, pointer, dimension(:) :: To_Deallocate
@@ -481,6 +608,9 @@ contains
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.24  2005/09/16 23:38:20  vsnyder
+! Add Complex allocators
+!
 ! Revision 2.23  2005/07/20 16:22:52  pwagner
 ! Declared undeclared variable L; compiles successfully
 !
