@@ -1102,6 +1102,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_skipOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_switchingMirror, t+t_boolean, n+n_field_type, &
              begin, f+f_specificQuantities, s+s_quantity, n+n_field_spec, &
+             begin, f+f_spect_der, t+t_boolean, n+n_field_type, &
              begin, f+f_tangentGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_temp_der, t+t_boolean, n+n_field_type, &
              begin, f+f_tolerance, t+t_numeric, n+n_field_type, &
@@ -1377,6 +1378,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.412  2005/09/16 23:38:04  vsnyder
+! Add spect_der field to ForwardModel
+!
 ! Revision 2.411  2005/09/09 23:07:26  pwagner
 ! Changes to allow pre-starttime overlaps in first chunk
 !
