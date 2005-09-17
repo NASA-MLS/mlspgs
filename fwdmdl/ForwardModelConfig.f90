@@ -503,7 +503,7 @@ contains
       ! Allocate the spectroscopy catalog extract
       c = maxval(fwdModelConf%cat_size)
       allocate ( fwdModelConf%catalog(s1:s2,c), stat=stat )
-      call test_allocate ( stat, moduleName, 'fwdModelConf%catalog', (/s1,1/), (/1,c/) )
+      call test_allocate ( stat, moduleName, 'fwdModelConf%catalog', (/s1,1/), (/s2,c/) )
 
       ! Work out the spectroscopy we're going to need.
       fwdModelConf%catalog = empty_cat
@@ -1296,6 +1296,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.80  2005/09/03 01:21:33  vsnyder
+! Spectral parameter offsets stuff
+!
 ! Revision 2.79  2005/08/19 23:32:06  pwagner
 ! option to allow skipping voluminous PFA DB dump when dumping FwdMdl
 !
