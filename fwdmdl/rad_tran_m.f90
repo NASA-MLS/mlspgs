@@ -262,8 +262,8 @@ contains
 
   subroutine DRad_tran_df ( indices_c, gl_inds, del_zeta, Grids_f, &
                          &  beta_path_c, eta_zxp_f, sps_path, do_calc_f, &
-                         &  beta_path_f, do_gl, del_s, ref_cor, &
-                         &  ds_dz_gw, t_script, tau, i_stop,    &
+                         &  beta_path_f, do_gl, del_s, ref_cor,    &
+                         &  ds_dz_gw, t_script, tau, i_stop,       &
                          &  d_delta_df, drad_df )
 
     use GLNP, only: NG
@@ -307,8 +307,8 @@ contains
       !              mixing ratio state vector element. (K)
 ! Internals
 
+    integer(ip) :: a, aa, ga(ng), i, ii, iii
     integer(ip) :: i_start, n_inds, no_to_gl, sps_i, sps_n, sv_i
-    integer(ip) :: a, aa, i
     integer(ip), target, dimension(1:Ng*size(tau)) :: all_inds_B
     integer(ip), target, dimension(1:size(tau)) :: inds_B, more_inds_B
     integer(ip), pointer :: all_inds(:)  ! all_inds => part of all_inds_B;
@@ -369,10 +369,12 @@ contains
           if ( grids_f%lin_log(sps_i) ) then
 
             do i = 1, n_inds ! Don't trust the compiler to fuse loops
-              singularity(inds(i)) = beta_path_c(inds(i),sps_i) &
-                        & * eta_zxp_f(indices_c(inds(i)),sv_i) &
-                        & * sps_path(indices_c(inds(i)),sps_i)
-              d_delta_df(inds(i),sv_i) = singularity(inds(i)) * del_s(inds(i))
+              ii = inds(i)
+              iii = indices_c(ii)
+              singularity(ii) = beta_path_c(ii,sps_i) &
+                        & * eta_zxp_f(iii,sv_i) &
+                        & * sps_path(iii,sps_i)
+              d_delta_df(ii,sv_i) = singularity(ii) * del_s(ii)
             end do ! i
 
       !{ Apply Gauss-Legendre quadrature to the panels indicated by
@@ -394,13 +396,13 @@ contains
             a = 1
             do i = 1, no_to_gl
               aa = all_inds(a)
-              d_delta_df(more_inds(i),sv_i) = d_delta_df(more_inds(i),sv_i) + &
-                & del_zeta(more_inds(i)) * &
-                & sum( (beta_path_f(aa:aa+ng-1,sps_i) * &
-                     &  eta_zxp_f(gl_inds(aa:aa+ng-1),sv_i) * &
-                     &  sps_path(gl_inds(aa:aa+ng-1),sps_i) - &
-                     &  singularity(more_inds(i))) * &
-                     & ds_dz_gw(gl_inds(aa:aa+ng-1)) )
+              ga = gl_inds(aa:aa+ng-1)
+              ii = more_inds(i)
+              d_delta_df(ii,sv_i) = d_delta_df(ii,sv_i) + &
+                & del_zeta(ii) * &
+                & sum( (beta_path_f(aa:aa+ng-1,sps_i) &
+                     &   * eta_zxp_f(ga,sv_i) * sps_path(ga,sps_i) - &
+                     &  singularity(ii)) * ds_dz_gw(ga) )
               a = a + ng
             end do
             d_delta_df(inds,sv_i) = ref_cor(inds) * d_delta_df(inds,sv_i) * &
@@ -433,12 +435,12 @@ contains
             a = 1
             do i = 1, no_to_gl
               aa = all_inds(a)
-              d_delta_df(more_inds(i),sv_i) = d_delta_df(more_inds(i),sv_i) + &
-                & del_zeta(more_inds(i)) * &
-                & sum( (beta_path_f(aa:aa+ng-1,sps_i) * &
-                     &  eta_zxp_f(gl_inds(aa:aa+ng-1),sv_i) - &
-                     &  singularity(more_inds(i))) * &
-                     & ds_dz_gw(gl_inds(aa:aa+ng-1)) )
+              ga = gl_inds(aa:aa+ng-1)
+              ii = more_inds(i)
+              d_delta_df(ii,sv_i) = d_delta_df(ii,sv_i) + &
+                & del_zeta(ii) * &
+                & sum( (beta_path_f(aa:aa+ng-1,sps_i) * eta_zxp_f(ga,sv_i) - &
+                     &  singularity(ii)) * ds_dz_gw(ga) )
               a = a + ng
             end do
             d_delta_df(inds,sv_i) = ref_cor(inds) * d_delta_df(inds,sv_i)
@@ -462,10 +464,10 @@ contains
 ! This is the radiative transfer derivative wrt spectroscopy model
 !  (Here dx could be: dw, dn or dv (dNu0) )
 
-  subroutine DRad_tran_dx ( del_zeta, Grids_f, dbeta_path_c, eta_zxp_f_c, &
-                         &  sps_path_c, do_calc_f_c, dbeta_path_f, eta_zxp_f_f, &
-                         &  sps_path_f, do_calc_f_f, do_gl, gl_inds, del_s, &
-                         &  ref_cor, ds_dz_gw, t_script, tau, i_stop, drad_dx )
+  subroutine DRad_tran_dx ( indices_c, gl_inds, del_zeta, Grids_f,        &
+                         &  sps_path, eta_zxp_f, do_calc_f, dbeta_path_c, &
+                         &  dbeta_path_f, do_gl, del_s, ref_cor,          &
+                         &  ds_dz_gw, t_script, tau, i_stop, drad_dx )
 
     use GLNP, only: NG
     use LOAD_SPS_DATA_M, ONLY: GRIDS_T
@@ -475,29 +477,22 @@ contains
 
 ! Inputs
 
-    real(rp), intent(in) :: del_zeta(:)     ! path -log(P) differences on the
+    integer(ip), intent(in) :: indices_c(:)  ! coarse grid indicies
+    integer(ip), intent(in) :: gl_inds(:)    ! Gauss-Legendre grid indicies
+    real(rp), intent(in) :: del_zeta(:)      ! path -log(P) differences on the
       !              main grid.  This is for the whole coarse path, not just
       !              the part up to the black-out
     type (Grids_T) :: Grids_f                ! All the coordinates
+    real(rp), intent(in) :: sps_path(:,:)    ! species function
+    real(rp), intent(in) :: eta_zxp_f(:,:)   ! representation basis function.
+    logical, intent(in) :: do_calc_f(:,:)    ! A logical indicating where the
+!                                              representation basis function is
+!                                              not zero.
     real(rp), intent(in) :: dbeta_path_c(:,:) ! derivative of beta wrt dx
 !                                              on main grid.
-    real(rp), intent(in) :: eta_zxp_f_c(:,:) ! representation basis function
-!                                              main grid.
-    real(rp), intent(in) :: sps_path_c(:,:)  ! species function on  main grid.
-    logical, intent(in) :: do_calc_f_c(:,:)  ! A logical indicating where the
-!                                              representation basis function is
-!                                              not zero on main grid.
     real(rp), intent(in) :: dbeta_path_f(:,:) ! derivative of beta wrt dx
-!                                              on gl grid.
-    real(rp), intent(in) :: eta_zxp_f_f(:,:) ! representation basis function
-!                                              gl grid.
-    real(rp), intent(in) :: sps_path_f(:,:)  ! species function on gl grid.
-    logical, intent(in) :: do_calc_f_f(:,:)  ! A logical indicating where the
-!                                              representation basis function is
-!                                              not zero on main grid.
     logical, intent(in) :: do_gl(:)          ! A logical indicating where to
 !                                              do rec_tan_inds gl integrations
-    integer(ip), intent(in) :: gl_inds(:)    ! Gauss-Legendre grid indicies
     real(rp), intent(in) :: ref_cor(:)       ! refracted to unrefracted path
 !                                              length ratios.
     real(rp), intent(in) :: del_s(:)         ! unrefracted path length.
@@ -513,7 +508,7 @@ contains
 !                                              state vector element. (K)
 ! Internals
 
-    integer(ip) :: A, AA, I
+    integer(ip) :: A, AA, GA(ng), I, II, III
     integer(ip) :: i_start, n_inds, no_mol, no_to_gl, sps_i, sv_i, sv_j
     integer(ip), target, dimension(1:Ng*size(tau)) :: all_inds_B
     integer(ip), target, dimension(1:size(tau)) :: inds_B, more_inds_B
@@ -549,8 +544,8 @@ contains
         sv_i = sv_i + 1
         d_delta_dx = 0.0_rp
 
-        call get_do_calc ( do_calc_f_c(:,sv_i), do_calc_f_f(:,sv_i), do_gl, &
-          & do_calc )
+        call get_do_calc ( do_calc_f(indices_c,sv_i), do_calc_f(gl_inds,sv_i), &
+          & do_gl, do_calc )
 
 ! find where the non zeros are along the path
 
@@ -562,9 +557,11 @@ contains
           call where ( do_calc, inds )
 
           do i = 1, n_inds ! Don't trust the compiler to fuse loops
-            singularity(inds(i)) = dbeta_path_c(inds(i),sps_i) * eta_zxp_f_c(inds(i),sv_i)  &
-                       &  * sps_path_c(inds(i),sps_i)
-            d_delta_dx(inds(i)) = singularity(inds(i)) * del_s(inds(i))
+            ii = inds(i)
+            iii = indices_c(ii)
+            singularity(ii) = dbeta_path_c(ii,sps_i) * eta_zxp_f(iii,sv_i) &
+                            &  * sps_path(iii,sps_i)
+            d_delta_dx(ii) = singularity(ii) * del_s(ii)
           end do ! i
 
           no_to_gl = count(do_gl(inds))
@@ -595,14 +592,14 @@ contains
 
             a = 1
             do i = 1, no_to_gl
+              ii = more_inds(i)
               aa = all_inds(a)
-              d_delta_dx(more_inds(i)) = d_delta_dx(more_inds(i)) + &
-                & del_zeta(more_inds(i)) * &
-                & sum( (dbeta_path_f(aa:aa+ng-1,sps_i) * &
-                     &  eta_zxp_f_f(aa:aa+ng-1,sv_i) * &
-                     &  sps_path_f(aa:aa+ng-1,sps_i) - &
-                     &  singularity(more_inds(i))) * &
-                     & ds_dz_gw(gl_inds(aa:aa+ng-1)) )
+              ga = gl_inds(aa:aa+ng-1)
+              d_delta_dx(ii) = d_delta_dx(ii) + &
+                & del_zeta(ii) * &
+                & sum( (dbeta_path_f(aa:aa+ng-1,sps_i) &
+                     &   * eta_zxp_f(ga,sv_i) * sps_path(ga,sps_i) - &
+                     &  singularity(ii)) * ds_dz_gw(ga) )
               a = a + ng
             end do
 
@@ -968,7 +965,8 @@ contains
     integer :: I, P_I
 
     i = 1
-    do_calc = do_calc_all(c_inds)
+!     do_calc = do_calc_all(c_inds)
+    forall ( i = 1: size(do_calc) ) do_calc(i) = do_calc_all(c_inds(i))
     do p_i = 1 , size(do_gl)
       if ( do_gl(p_i) ) then
         if ( any(do_calc_all(f_inds(i:i+ng-1))) ) do_calc(p_i)=.true.
@@ -1007,6 +1005,9 @@ contains
       if ( do_gl(p_i) ) then
         if ( do_calc(p_i) ) then
           more_inds(i) = p_i
+! !         all_inds(j:j+ng-1) = (/ ( (p_i-2)*ng+k, k = 1, ng ) /)
+!           all_inds(j:j+ng-1) = (/ ( l + k, k = 0, ng-1 ) /)
+!           forall( k = 0: ng - 1 ) all_inds(j+k) = l + k
           ! OK, here be dragons.
           ! Van originally had this line:
           !         all_inds(j:j+ng-1) = (/ ( (p_i-2)*ng+k, k = 1, ng ) /)
@@ -1040,6 +1041,9 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.45  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.44  2005/04/26 15:35:54  livesey
 ! Minor changes necessitated by wierdo problems with LF95.  Probably won't
 ! fix the problem but might as well keep them.

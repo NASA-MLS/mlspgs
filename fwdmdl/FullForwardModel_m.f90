@@ -30,7 +30,7 @@ contains
 
   ! This is the full radiative transfer forward model, the workhorse code
 
-    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST, E_Def, E_DP, &
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST, E_RP=>E_DP, &
       & Test_Allocate, Test_Deallocate
     use AntennaPatterns_m, only: ANTENNAPATTERNS
     use Comp_Eta_Docalc_No_Frq_m, only: Comp_Eta_Docalc_No_Frq
@@ -46,7 +46,7 @@ contains
     use FilterShapes_m, only: DACSFilterShapes, FilterShapes
     use ForwardModelConfig, only: Beta_Group_T, Channels_T, &
       & DeriveFromForwardModelConfig, DestroyForwardModelDerived, &
-      & ForwardModelConfig_t, QtyStuff_t
+      & ForwardModelConfig_t
     use ForwardModelIntermediate, only: ForwardModelIntermediate_t, &
                                     &   ForwardModelStatus_t, &
                                     &   B_Metrics, B_Ptg_Angles, B_Refraction
@@ -65,14 +65,13 @@ contains
       & L_LOSVEL, L_LIMBSIDEBANDFRACTION, L_MAGNETICFIELD, L_MIFDEADTIME, &
       & L_ORBITINCLINATION, L_PHITAN, L_PTAN, L_RADIANCE, L_REFGPH, L_SCGEOCALT, &
       & L_SIZEDISTRIBUTION, L_SPACERADIANCE, L_TEMPERATURE, L_VMR
-    use Load_Sps_Data_m, only: DestroyGrids_t, Grids_T, Load_One_Item_Grid, &
-      & Load_Sps_Data, Modify_values_for_supersat
+    use Load_Sps_Data_m, only: DestroyGrids_t, Dump, Grids_T, &
+      & Load_One_Item_Grid, Load_Sps_Data, Modify_values_for_supersat
     use ManipulateVectorQuantities, only: DoHGridsMatch, FindClosestInstances
     use MatrixModule_1, only: MATRIX_T
     use Metrics_m, only: Metrics
     use MLSCommon, only: R4, R8, RP, RV, IP
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate,&
-      & MLSMSG_Error, MLSMSG_Warning
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MLSNumerics, only: Coefficients => Coefficients_r8, Hunt, &
       & InterpolateArraySetup, InterpolateArrayTeardown, InterpolateValues
     use MLSSignals_m, only: AreSignalsSuperset, GetNameOfSignal, MatchSignal, &
@@ -175,6 +174,7 @@ contains
     logical, parameter :: PFAFalse = .false.
     logical, parameter :: PFATrue = .true.
     logical :: temp_der, atmos_der, spect_der, ptan_der ! Flags for various derivatives
+    logical :: Spect_Der_Center, Spect_Der_Width, Spect_Der_Width_TDep
     logical :: PATCHEDAPTG              ! Used in patching the pointings
 
     character (len=32) :: SigName       ! Name of a Signal
@@ -182,10 +182,12 @@ contains
     logical :: Clean                    ! Used for dumping
     logical, parameter :: dummy(2) = (/.FALSE.,.FALSE./)  ! dummy Flag array for Metrics
 
-    integer, dimension(:), pointer :: C_INDS  ! Indices on coarse grid
-    integer, dimension(:), pointer :: CG_INDS ! Indices on coarse grid where GL needed
-    integer, dimension(:), pointer :: F_INDS  ! Indices on fine grid
-    integer, dimension(:), pointer :: GL_INDS ! Index of GL points -- subset of f_inds
+    integer, dimension(:), pointer :: C_INDS   ! Indices on coarse grid
+    integer, dimension(:), pointer :: C_INDS_B ! Base array for C_INDS
+    integer, dimension(:), pointer :: CG_INDS  ! Indices on coarse grid where GL needed
+    integer, dimension(:), pointer :: F_INDS   ! Indices on fine grid
+    integer, dimension(:), pointer :: GL_INDS  ! Index of GL points -- subset of f_inds
+    integer, dimension(:), pointer :: GL_INDS_B ! Base array for GL_INDS
     integer, dimension(:), pointer :: GRIDS ! Heights in ptgGrid for each tangent
     integer, dimension(:), pointer :: LineCenter_IX ! Where are line center offsets?
     integer, dimension(:), pointer :: LineWidth_IX  ! Where are line width offsets?
@@ -197,14 +199,9 @@ contains
     logical, dimension(:), pointer :: DO_GL ! GL indicator
 
     logical, dimension(:,:), pointer :: DO_CALC_N     ! 'Avoid zeros'
-    logical, dimension(:,:), pointer :: DO_CALC_N_C   ! DO_CALC_N on coarse grid  
-    logical, dimension(:,:), pointer :: DO_CALC_N_F   ! DO_CALC_N on fine grid    
     logical, dimension(:,:), pointer :: DO_CALC_V     ! 'Avoid zeros'             
-    logical, dimension(:,:), pointer :: DO_CALC_V_C   ! DO_CALC_V on coarse grid  
-    logical, dimension(:,:), pointer :: DO_CALC_V_F   ! DO_CALC_V on fine grid    
     logical, dimension(:,:), pointer :: DO_CALC_W     ! 'Avoid zeros'             
     logical, dimension(:,:), pointer :: DO_CALC_W_C   ! DO_CALC_W  on coarse grid 
-    logical, dimension(:,:), pointer :: DO_CALC_W_F   ! DO_CALC_W  on fine grid   
     logical, dimension(:,:), pointer :: DO_CALC_FZP   ! 'Avoid zeros' indicator
     logical, dimension(:,:), pointer :: DO_CALC_IWC   ! 'Avoid zeros' indicator
     logical, dimension(:,:), pointer :: DO_CALC_Tscat ! 'Avoid zeros' indicator
@@ -252,10 +249,6 @@ contains
     real(rp), dimension(:), pointer :: DEL_ZETA     ! Integration lengths in Zeta coords
     real(rp), dimension(:), pointer :: DHDZ_PATH    ! dH/dZ on path
     real(rp), dimension(:), pointer :: DHDZ_GW_PATH ! dH/dZ * GW on path
-    real(rp), dimension(:), pointer :: DRAD_DN      ! dI/dN
-    real(rp), dimension(:), pointer :: DRAD_DT      ! dI/dT
-    real(rp), dimension(:), pointer :: DRAD_DV      ! dI/dV
-    real(rp), dimension(:), pointer :: DRAD_DW      ! dI/dW
     real(rp), dimension(:), pointer :: DSDZ_GW_PATH ! ds/dH * dH/dZ * GW on path
     real(rp), dimension(:), pointer :: DTanh_DT_C   ! 1/tanh1_c d/dT tanh1_c
     real(rp), dimension(:), pointer :: DTanh_DT_F   ! 1/tanh1_f d/dT tanh1_f
@@ -271,7 +264,6 @@ contains
     real(rp), dimension(:), pointer :: P_GLGRID     ! Pressure on glGrid surfs
     real(rp), dimension(:), pointer :: PHI_PATH     ! Phi's on path
     real(rp), dimension(:), pointer :: P_PATH       ! Pressure on path
-    real(rp), dimension(:), pointer :: P_PATH_C     ! P_PATH on coarse grid
     real(rp), dimension(:), pointer :: PTG_ANGLES   ! (no_tan_hts)
     real(r8), dimension(:), pointer :: RAD_FFT      ! Convolved radiance on FFT grid
     real(rp), dimension(:), pointer :: RADV         ! Radiances for 1 pointing on
@@ -328,18 +320,12 @@ contains
     real(rp), dimension(:,:), pointer :: ETA_Cext_ZP  !
     real(rp), dimension(:,:), pointer :: ETA_Mag_ZP   ! Eta_z x Eta_p
     real(rp), dimension(:,:), pointer :: ETA_ZP       ! Eta_z x Eta_p
-    real(rp), dimension(:,:), pointer :: ETA_ZXP_N_C  ! ETA_ZXP_N on coarse grid
     real(rp), dimension(:,:), pointer :: ETA_ZXP_N    ! Eta_z x Eta_p for N
-    real(rp), dimension(:,:), pointer :: ETA_ZXP_N_F  ! ETA_ZXP_N on fine grid
     real(rp), dimension(:,:), pointer :: ETA_ZXP_T_C  ! ETA_ZXP_T on coarse grid
     real(rp), dimension(:,:), pointer :: ETA_ZXP_T    ! Eta_t_z x Eta_t_p
     real(rp), dimension(:,:), pointer :: ETA_ZXP_T_F  ! ETA_ZXP_T on fine grid
-    real(rp), dimension(:,:), pointer :: ETA_ZXP_V_C  ! ETA_ZXP_V on coarse grid
     real(rp), dimension(:,:), pointer :: ETA_ZXP_V    ! Eta_z x Eta_p for V
-    real(rp), dimension(:,:), pointer :: ETA_ZXP_V_F  ! ETA_ZXP_V on fine grid
-    real(rp), dimension(:,:), pointer :: ETA_ZXP_W_C  ! ETA_ZXP_W on coarse grid
     real(rp), dimension(:,:), pointer :: ETA_ZXP_W    ! Eta_z x Eta_p for W
-    real(rp), dimension(:,:), pointer :: ETA_ZXP_W_F  ! ETA_ZXP_W on fine grid
     real(rp), dimension(:,:), pointer :: H_GLGRID     ! H on glGrid surfs
     real(rp), dimension(:,:), pointer :: IWC_PATH     ! IWC on path
     real(rp), dimension(:,:), pointer :: K_ATMOS_FRQ  ! dI/dVMR, frq X vmr
@@ -390,7 +376,6 @@ contains
     complex(rp), dimension(:,:,:), pointer :: DINCOPTDEPTH_POL_DT ! D Incoptdepth_Pol / DT
     complex(rp), dimension(:,:),   pointer :: GL_DELTA_POLARIZED
     complex(rp), dimension(:,:,:), pointer :: INCOPTDEPTH_POL ! 2 x 2 x path
-    complex(rp), dimension(:,:,:), pointer :: INCOPTDEPTH_POL_GL ! Corrections to INCOPTDEPTH_POL
     complex(rp), dimension(:,:,:), pointer :: PROD_POL ! P in Michael's notes
     complex(rp), dimension(:,:,:), pointer :: TAU_POL  ! Tau in Michael's notes
 
@@ -465,14 +450,14 @@ contains
     ! place, and doesn't want to write comments for
 
     ! Local storage places for derivatives..(Temporary..)
-    ! Channels x pointings x surfaces x instances
-    real(r4), dimension(:,:,:,:)  , pointer :: K_TEMP
+    ! Channels x pointings x grid values (== x surfaces x instances )
+    real(r4), dimension(:,:,:), pointer :: K_TEMP
     ! Channels x pointings x grid values
     real(r4), dimension(:,:,:), pointer :: K_ATMOS
-    ! Channels x pointings x frequencies x surfaces x instances x molecules:
-    real(r4), dimension(:,:,:,:,:,:), pointer :: K_SPECT_DN
-    real(r4), dimension(:,:,:,:,:,:), pointer :: K_SPECT_DV
-    real(r4), dimension(:,:,:,:,:,:), pointer :: K_SPECT_DW
+    ! Channels x pointings x grid values == frequencies x surfaces x instances x molecules:
+    real(r4), dimension(:,:,:), pointer :: K_SPECT_DN
+    real(r4), dimension(:,:,:), pointer :: K_SPECT_DV
+    real(r4), dimension(:,:,:), pointer :: K_SPECT_DW
 
 !  The 'all_radiometers grid file' approach variables declaration:
 
@@ -504,6 +489,9 @@ contains
     atmos_der = present ( jacobian ) .and. FwdModelConf%atmos_der
 
     spect_der = present ( jacobian ) .and. FwdModelConf%spect_der
+    spect_der_center = spect_der .and. associated(fwdModelConf%lineCenter)
+    spect_der_width = spect_der .and. associated(fwdModelConf%lineWidth)
+    spect_der_width_TDep = spect_der .and. associated(fwdModelConf%lineWidth_TDep)
 
     any_der = temp_der .or. atmos_der .or. spect_der
 
@@ -515,7 +503,7 @@ contains
     nullify ( alpha_path_c, alpha_path_f, alpha_path_polarized, &
       & alpha_path_polarized_f, beta_path_c, &
       & beta_path_cloud_c, beta_path_f, beta_path_polarized, &
-      & beta_path_polarized_f, c_inds, cext_path, cg_inds, &
+      & beta_path_polarized_f, c_inds_b, cext_path, cg_inds, &
       & channelCenters, cld_ext%values, closestInstances, d2x_dxdt, &
       & d2xdxdt_surface, d2xdxdt_tan, DACsStaging, DACsStaging2, &
       & dalpha_dT_path_c, dalpha_dT_path_f, &
@@ -526,27 +514,27 @@ contains
       & d_delta_df, ddhidhidtl0, de_df, de_dt, del_s, deltau_pol, del_zeta, &
       & dh_dt_glgrid, dh_dt_path, dh_dt_path_c, dh_dt_path_f, dhdz_glgrid, &
       & dhdz_gw_path, dh_dz_out, dhdz_path, dincoptdepth_pol_dt, &
-      & do_calc_Cext, do_calc_Cext_zp, do_calc_n, do_calc_n_c, &
-      & do_calc_n_F, do_calc_v, do_calc_v_c, do_calc_v_f, do_calc_w, &
-      & do_calc_w_c, do_calc_w_f, do_calc_fzp, do_calc_hyd, do_calc_hyd_c, &
+      & do_calc_Cext, do_calc_Cext_zp, do_calc_n, &
+      & do_calc_v, do_calc_w, &
+      & do_calc_w_c, do_calc_fzp, do_calc_hyd, do_calc_hyd_c, &
       & do_calc_iwc, do_calc_iwc_zp, do_calc_Salb, do_calc_Salb_zp, &
       & do_calc_t, do_calc_t_c, do_calc_t_f, do_calc_tscat, &
-      & do_calc_tscat_zp, do_calc_zp, do_gl, drad_dn, drad_dt, drad_dv, &
-      & drad_dw, d_rad_pol_df, d_rad_pol_dt, dsdz_gw_path, dTanh_dT_c, &
+      & do_calc_tscat_zp, do_calc_zp, do_gl, &
+      & d_rad_pol_df, d_rad_pol_dt, dsdz_gw_path, dTanh_dT_c, &
       & dTanh_dT_f, d_t_scr_dt )
     nullify ( dx_dh_out, dx_dt, dxdt_surface, dxdt_tan, eta_cext, eta_cext_zp, &
       & eta_fzp, eta_iwc, eta_iwc_zp, eta_mag_zp, eta_salb, eta_salb_zp, &
-      & eta_tscat, eta_tscat_zp, eta_zp, eta_zxp_n, eta_zxp_n_c, &
-      & eta_zxp_n_f, eta_zxp_v, eta_zxp_v_c, eta_zxp_v_f, eta_zxp_w, &
-      & eta_zxp_w_c, eta_zxp_w_f, eta_zxp_t, eta_zxp_t_c, eta_zxp_t_f, &
-      & f_inds, frequencies, gph_prof, gl_delta_polarized, gl_inds, gph, grids, &
+      & eta_tscat, eta_tscat_zp, eta_zp, eta_zxp_n, &
+      & eta_zxp_v, eta_zxp_w, &
+      & eta_zxp_t, eta_zxp_t_c, eta_zxp_t_f, &
+      & f_inds, frequencies, gph_prof, gl_delta_polarized, gl_inds_b, gph, grids, &
       & h_glgrid, h_path, h_path_c, h_path_f, incoptdepth, incoptdepth_pol, &
-      & incoptdepth_pol_gl, ipsd, iwc_path, k_atmos, k_atmos_frq, &
+      & ipsd, iwc_path, k_atmos, k_atmos_frq, &
       & k_spect_dn, k_spect_dn_frq, k_spect_dv, k_spect_dv_frq, k_spect_dw, &
       & k_spect_dw_frq, k_temp, k_temp_frq, l1bMIF_TAI, &
       & lineCenter_ix, lineWidth_ix, lineWidth_TDep_ix, &
       & mag_path, MIFDeadTime, &
-      & n_path, path_dsdh, phi_path, p_path, p_path_c, &
+      & n_path, path_dsdh, phi_path, p_path, &
       & prod_pol, ptg_angles, rad_FFT, radiances, RadV, ref_corr, req_out, &
       & salb_path, scat_alb%values, scat_ang, scat_src%values, &
       & spect_n_path, spect_v_path, spect_w_path, &
@@ -672,9 +660,9 @@ contains
 
     windowStart = grids_tmp%windowStart(1)
     windowFinish = grids_tmp%windowFinish(1)
-    no_sv_p_t = windowFinish - windowStart + 1
-    n_t_zeta = grids_tmp%l_z(1)
-    sv_t_len = grids_tmp%p_len ! zeta X phi
+    no_sv_p_t = grids_tmp%l_p(1) ! phi == windowFinish - windowStart + 1
+    n_t_zeta = grids_tmp%l_z(1)  ! zeta
+    sv_t_len = grids_tmp%p_len   ! zeta X phi == n_t_zeta * no_sv_p_t
 
     if ( FwdModelConf%incl_cld ) &
       & call load_one_item_grid ( grids_iwc, cloudIce, phitan, maf, &
@@ -746,6 +734,13 @@ contains
     if ( associated(fwdModelConf%lineWidth_TDep) ) call load_sps_data ( &
       & FwdModelConf, phitan, maf, grids_n, &
       & qtyStuffIn=fwdModelConf%lineWidth_TDep%qty )
+
+    if ( index(switches,'grids') /= 0 ) then ! dump the grids
+      call dump ( grids_f )
+      if ( associated(fwdModelConf%lineCenter) ) call dump ( grids_v )
+      if ( associated(fwdModelConf%lineWidth) ) call dump ( grids_w )
+      if ( associated(fwdModelConf%lineWidth_TDep) ) call dump ( grids_n )
+    end if
 
 ! modify h2o mixing ratio if a special supersaturation is requested
     if ( fwdModelConf%i_saturation /= l_clear ) &
@@ -899,7 +894,7 @@ contains
     call allocate_test ( alpha_path_f,    max_ele, 'alpha_path_f',     moduleName )
     call allocate_test ( beta_path_cloud_c,   npc, 'beta_path_cloud_c',moduleName )
     call allocate_test ( cg_inds,             npc, 'cg_inds',          moduleName )
-    call allocate_test ( c_inds,              npc, 'c_inds',           moduleName )
+    call allocate_test ( c_inds_b,            npc, 'c_inds_b',         moduleName )
     call allocate_test ( del_s,               npc, 'del_s',            moduleName )
     call allocate_test ( del_zeta,            npc, 'del_zeta',         moduleName )
     call allocate_test ( dhdz_gw_path,    max_ele, 'dhdz_gw_path',     moduleName )
@@ -907,7 +902,7 @@ contains
     call allocate_test ( do_gl,               npc, 'do_gl',            moduleName )
     call allocate_test ( dsdz_gw_path,    max_ele, 'dsdz_gw_path',     moduleName )
     call allocate_test ( f_inds,         ng * npc, 'f_inds',           moduleName )
-    call allocate_test ( gl_inds,         max_ele, 'gl_inds',          moduleName )
+    call allocate_test ( gl_inds_b,       max_ele, 'gl_inds_b',        moduleName )
     call allocate_test ( h_path_c,            npc, 'h_path_c',         moduleName )
     call allocate_test ( h_path_f,        max_ele, 'h_path_f',         moduleName )
     call allocate_test ( h_path,          max_ele, 'h_path',           moduleName )
@@ -915,7 +910,6 @@ contains
     call allocate_test ( n_path,              npc, 'n_path',           moduleName )
     call allocate_test ( path_dsdh,       max_ele, 'path_dsdh',        moduleName )
     call allocate_test ( phi_path,        max_ele, 'phi_path',         moduleName )
-    call allocate_test ( p_path_c,            npc, 'p_path_c',         moduleName )
     call allocate_test ( p_path,          max_ele, 'p_path',           moduleName )
     call allocate_test ( ref_corr,            npc, 'ref_corr',         moduleName )
     call allocate_test ( tanh1_c,             npc, 'tanh1_c',          moduleName )
@@ -954,18 +948,14 @@ contains
 
     end if
 
-    if ( temp_der ) then
+    if ( temp_der ) then ! Temperature derivatives
 
       call allocate_test ( dAlpha_dT_path_c,     npc, 'dAlpha_dT_path_c', moduleName )
       call allocate_test ( dAlpha_dT_path_f, max_ele, 'dAlpha_dT_path_f', moduleName )
 
-! Allocation for metrics routine when Temp. derivative is needed:
+      call allocate_test ( k_temp, noUsedChannels, no_tan_hts, sv_t_len, &
+                         & 'k_temp', moduleName )
 
-!      call allocate_test ( k_temp, noUsedChannels, no_tan_hts, n_t_zeta, &
-!                         & no_sv_p_t, 'k_temp', moduleName )
-      allocate ( k_temp(noUsedChannels, no_tan_hts, n_t_zeta, no_sv_p_t) )
-
-      call allocate_test ( dRad_dt, sv_t_len, 'dRad_dt', moduleName )
       call allocate_test ( d_t_scr_dt,         npc, sv_t_len, 'd_t_scr_dt', &
                                                               & moduleName )
       call allocate_test ( dBeta_dT_path_c,    npc, no_mol,   'dBeta_dT_path_c', &
@@ -1006,8 +996,8 @@ contains
     if ( atmos_der ) then
       call allocate_test ( d_delta_df, npc, size(grids_f%values), 'd_delta_df', &
                                                               & moduleName )
-      call allocate_test ( k_atmos, noUsedChannels, no_tan_hts, size(grids_f%values), &
-        & 'k_atmos', moduleName )
+      call allocate_test ( k_atmos, noUsedChannels, no_tan_hts, &
+        & size(grids_f%values), 'k_atmos', moduleName )
       k_atmos = 0.0
     end if ! atmos_der
 
@@ -1017,29 +1007,18 @@ contains
       f_len_v = grids_v%l_v(ubound(grids_v%l_v,1))
       call allocate_test ( do_calc_v, max_ele, f_len_v, 'do_calc_v', &
                         &  moduleName )
-      call allocate_test ( do_calc_v_c,   npc, f_len_v, 'do_calc_v_c', &
-                        &  moduleName )
-      call allocate_test ( do_calc_v_f, max_ele, f_len_v, 'do_calc_v_f', &
-                        &  moduleName )
       call allocate_test ( eta_zxp_v, max_ele, f_len_v, 'eta_zxp_v', &
                         &  moduleName )
-      call allocate_test ( eta_zxp_v_c,   npc, f_len_v, 'eta_zxp_v_c', &
-                        &  moduleName )
-      call allocate_test ( eta_zxp_v_f, max_ele, f_len_v, 'eta_zxp_v_f', &
-                        &  moduleName )
       if ( spect_der ) then
-        !??? Are temperature's windowStart:windowFinish correct here.  Should ???
-        !??? we use minval(grids_d?%windowStart):maxval(grids_d?%windowFinish) ???
-        allocate ( k_spect_dv(noUsedChannels, no_tan_hts, maxNoFreqs, &
-          & maxNoSurfs, windowStart:windowFinish, no_mol), stat=ier )
-        call test_allocate ( ier, ModuleName, 'k_spect_dv', lbound(k_spect_dv), &
-          & ubound(k_spect_dv), e_def )
+        call allocate_test ( k_spect_dv, noUsedChannels, no_tan_hts, grids_v%l_v(f_len_v), &
+          & 'k_spect_dv', moduleName )
         call allocate_test ( dbeta_dv_path_c,    npc, no_mol, &
           & 'dbeta_dv_path_c', moduleName )
         call allocate_test ( dbeta_dv_path_f, max_ele, no_mol, &
           & 'dbeta_dv_path_f', moduleName )
-        call allocate_test ( drad_dv, f_len_v, 'drad_dv', moduleName )
       end if
+    else
+      f_len_v = 0
     end if
     if ( associated(fwdModelConf%lineWidth) ) then
       call allocate_test ( spect_w_path, max_ele, size(fwdModelConf%lineWidth), &
@@ -1049,120 +1028,82 @@ contains
                         &  moduleName )
       call allocate_test ( do_calc_w_c,   npc, f_len_w, 'do_calc_w_c', &
                         &  moduleName )
-      call allocate_test ( do_calc_w_f, max_ele, f_len_w, 'do_calc_w_f', &
-                        &  moduleName )
       call allocate_test ( eta_zxp_w, max_ele, f_len_w, 'eta_zxp_w', &
                         &  moduleName )
-      call allocate_test ( eta_zxp_w_c,   npc, f_len_w, 'eta_zxp_w_c', &
-                        &  moduleName )
-      call allocate_test ( eta_zxp_w_f, max_ele, f_len_w, 'eta_zxp_w_f', &
-                        &  moduleName )
       if ( spect_der ) then
-        !??? Are temperature's windowStart:windowFinish correct here.  Should ???
-        !??? we use minval(grids_d?%windowStart):maxval(grids_d?%windowFinish) ???
-        allocate ( k_spect_dw(noUsedChannels, no_tan_hts, maxNoFreqs, &
-          & maxNoSurfs, windowStart:windowFinish, no_mol), stat=ier )
-        call test_allocate ( ier, ModuleName, 'k_spect_dw', lbound(k_spect_dw), &
-          & ubound(k_spect_dw), e_def )
+        call allocate_test ( k_spect_dw, noUsedChannels, no_tan_hts, grids_w%l_v(f_len_v), &
+          & 'k_spect_dw', moduleName )
         call allocate_test ( dbeta_dw_path_c,    npc, no_mol, &
           & 'dbeta_dw_path_c', moduleName )
         call allocate_test ( dbeta_dw_path_f, max_ele, no_mol, &
           & 'dbeta_dw_path_f', moduleName )
-        call allocate_test ( drad_dw, f_len_w, 'drad_dw', moduleName )
       end if
+    else
+      f_len_w = 0
     end if
     if ( associated(fwdModelConf%lineWidth_TDep) ) then
       f_len_n = grids_n%l_v(ubound(grids_n%l_v,1))
       call allocate_test ( do_calc_n, max_ele, f_len_n, 'do_calc_n', &
                         &  moduleName )
-      call allocate_test ( do_calc_n_c,   npc, f_len_n, 'do_calc_n_c', &
-                        &  moduleName )
-      call allocate_test ( do_calc_n_f, max_ele, f_len_n, 'do_calc_n_f', &
-                        &  moduleName )
       call allocate_test ( eta_zxp_n, max_ele, f_len_n, 'eta_zxp_n', &
-                        &  moduleName )
-      call allocate_test ( eta_zxp_n_c,   npc, f_len_n, 'eta_zxp_n_c', &
-                        &  moduleName )
-      call allocate_test ( eta_zxp_n_f, max_ele, f_len_n, 'eta_zxp_n_f', &
                         &  moduleName )
       call allocate_test ( spect_n_path, max_ele, size(fwdModelConf%lineWidth_TDep), &
         & 'spect_n_path', moduleName )
       if ( spect_der ) then
-        !??? Are temperature's windowStart:windowFinish correct here.  Should ???
-        !??? we use minval(grids_d?%windowStart):maxval(grids_d?%windowFinish) ???
-        allocate ( k_spect_dn(noUsedChannels, no_tan_hts, maxNoFreqs, &
-          & maxNoSurfs, windowStart:windowFinish, no_mol), stat=ier )
-        call test_allocate ( ier, ModuleName, 'k_spect_dn', lbound(k_spect_dn), &
-          & ubound(k_spect_dn), e_def )
+        call allocate_test ( k_spect_dn, noUsedChannels, no_tan_hts, grids_n%l_v(f_len_v), &
+          & 'k_spect_dn', moduleName )
         call allocate_test ( dbeta_dn_path_c,    npc, no_mol, &
           & 'dbeta_dn_path_c', moduleName )
         call allocate_test ( dbeta_dn_path_f, max_ele, no_mol, &
           & 'dbeta_dn_path_f', moduleName )
-        call allocate_test ( drad_dn, f_len_n, 'drad_dn', moduleName )
       end if
+    else
+      f_len_n = 0
     end if
 
     if ( FwdModelConf%polarized ) then
-      call allocate_test ( eta_mag_zp,     max_ele, grids_mag%p_len,        'eta_mag_zp',     moduleName )
-      call allocate_test ( mag_path,       max_ele, magfield%template%noChans+1, 'mag_path', &
-        & moduleName )
-      allocate ( alpha_path_polarized(-1:1,npc), stat=ier )
-      call test_allocate ( ier, moduleName, 'alpha_path_polarized', &
-        & lbound(alpha_path_polarized), ubound(alpha_path_polarized), e_dp )
-      allocate ( beta_path_polarized(-1:1,npc,no_mol), stat=ier )
-      call test_allocate ( ier, moduleName, 'beta_path_polarized', &
-        & lbound(beta_path_polarized), ubound(beta_path_polarized), e_dp )
-      allocate ( alpha_path_polarized_f(-1:1,max_ele), stat=ier )
-      call test_allocate ( ier, moduleName, 'alpha_path_polarized_f', &
-        & lbound(alpha_path_polarized_f), ubound(alpha_path_polarized_f), e_dp )
-      allocate ( beta_path_polarized_f(-1:1,max_ele,no_mol), stat=ier )
-      call test_allocate ( ier, moduleName, 'beta_path_polarized_f', &
-        & lbound(beta_path_polarized_f), ubound(beta_path_polarized_f), e_dp )
-      allocate ( gl_delta_polarized(-1:1,max_ele), stat=ier )
-      call test_allocate ( ier, moduleName, 'gl_delta_polarized', &
-        & lbound(gl_delta_polarized), ubound(gl_delta_polarized), e_dp )
-      allocate ( incoptdepth_pol(2,2,npc), stat=ier )
-      call test_allocate ( ier, moduleName, 'incoptdepth_pol', &
-        & lbound(incoptdepth_pol), ubound(incoptdepth_pol), e_dp )
-      allocate ( incoptdepth_pol_gl(2,2,npc), stat=ier )
-      call test_allocate ( ier, moduleName, 'incoptdepth_pol_gl', &
-        & lbound(incoptdepth_pol_gl), ubound(incoptdepth_pol_gl), e_dp )
-      allocate ( prod_pol(2,2,npc), stat=ier )
-      call test_allocate ( ier, moduleName, 'prod_pol', &
-        & lbound(prod_pol), ubound(prod_pol), e_dp )
-      allocate ( tau_pol(2,2,npc), stat=ier )
-      call test_allocate ( ier, moduleName, 'tau_pol', lbound(tau_pol), ubound(tau_pol), e_dp )
-      allocate ( deltau_pol(2,2,npc), stat=ier )
-      call test_allocate ( ier, moduleName, 'deltau_pol', &
-        & lbound(deltau_pol), ubound(deltau_pol), e_dp )
+      call allocate_test ( eta_mag_zp,     max_ele, grids_mag%p_len, &
+        & 'eta_mag_zp', moduleName )
+      call allocate_test ( mag_path,       max_ele, magfield%template%noChans+1, &
+        & 'mag_path', moduleName )
+      call allocate_test ( alpha_path_polarized, 1, npc, &
+        & 'alpha_path_polarized', moduleName, low1=-1 )
+      call allocate_test ( beta_path_polarized, 1, npc, no_mol, &
+        & 'beta_path_polarized', moduleName, low1=-1 )
+      call allocate_test ( alpha_path_polarized_f, 1, max_ele, &
+        & 'alpha_path_polarized_f', moduleName, low1=-1 )
+      call allocate_test ( beta_path_polarized_f, 1, max_ele, no_mol, &
+        & 'beta_path_polarized_f', moduleName, low1=-1 )
+      call allocate_test ( gl_delta_polarized, 1, max_ele, &
+        & 'gl_delta_polarized', moduleName, low1=-1 )
+      call allocate_test ( incoptdepth_pol, 2, 2, npc, &
+        & 'incoptdepth_pol', moduleName )
+      call allocate_test ( prod_pol, 2, 2, npc, 'prod_pol', moduleName )
+      call allocate_test ( tau_pol, 2, 2, npc, 'tau_pol', moduleName )
+      call allocate_test ( deltau_pol, 2, 2, npc, 'deltau_pol', moduleName )
       if ( atmos_der ) then
-        allocate ( d_rad_pol_df(2,2,grids_f%l_v(ubound(grids_f%l_v,1))), stat=ier )
-        call test_allocate ( ier, moduleName, 'd_rad_pol_df', &
-          & lbound(d_rad_pol_df), ubound(d_rad_pol_df), e_dp )
+        call allocate_test ( d_rad_pol_df, 2, 2, grids_f%l_v(ubound(grids_f%l_v,1)), &
+          & 'd_rad_pol_df', moduleName )
         allocate ( de_df(2,2,npc,grids_f%l_v(ubound(grids_f%l_v,1))), stat=ier )
-        call test_allocate ( ier, moduleName, 'de_df', lbound(de_df), ubound(de_df), e_dp )
+        call test_allocate ( ier, moduleName, 'de_df', &
+          & (/1,1,1,1/), (/2,2,npc,grids_f%l_v(ubound(grids_f%l_v,1))/), e_rp )
       end if
       if ( temp_der ) then
-        allocate ( d_rad_pol_dt(2,2,sv_t_len), stat=ier )
-        call test_allocate ( ier, moduleName, 'd_rad_pol_dt', &
-          & lbound(d_rad_pol_dt), ubound(d_rad_pol_dt), e_dp )
-        allocate ( dAlpha_dT_polarized_path_c(-1:1,npc), stat=ier )
-        call test_allocate ( ier, moduleName, 'dAlpha_dT_polarized_path_c', &
-          & lbound(dAlpha_dT_polarized_path_c), ubound(dAlpha_dT_polarized_path_c), e_dp )
-        allocate ( dAlpha_dT_polarized_path_f(-1:1,max_ele), stat=ier )
-        call test_allocate ( ier, moduleName, 'dAlpha_dT_polarized_path_f', &
-          & lbound(dAlpha_dT_polarized_path_f), ubound(dAlpha_dT_polarized_path_f), e_dp )
-        allocate ( dBeta_dT_polarized_path_c(-1:1,npc,no_mol), stat=ier )
-        call test_allocate ( ier, moduleName, 'dBeta_dT_polarized_path_c', &
-          & lbound(dBeta_dT_polarized_path_c), ubound(dBeta_dT_polarized_path_c), e_dp )
-        allocate ( dBeta_dT_polarized_path_f(-1:1,max_ele,no_mol), stat=ier )
-        call test_allocate ( ier, moduleName, 'dBeta_dT_polarized_path_f', &
-          & lbound(dBeta_dT_polarized_path_f), ubound(dBeta_dT_polarized_path_f), e_dp )
+        call allocate_test ( d_rad_pol_dt, 2, 2, sv_t_len, &
+          & 'd_rad_pol_dt', moduleName )
+        call allocate_test ( dAlpha_dT_polarized_path_c, 1, npc, &
+          & 'dAlpha_dT_polarized_path_c', moduleName, low1=-1 )
+        call allocate_test ( dAlpha_dT_polarized_path_f, 1, max_ele, &
+          & 'dAlpha_dT_polarized_path_f', moduleName, low1=-1 )
+        call allocate_test ( dBeta_dT_polarized_path_c, 1, npc, no_mol, &
+          & 'dBeta_dT_polarized_path_c', moduleName, low1=-1 )
+        call allocate_test ( dBeta_dT_polarized_path_f, 1, max_ele, no_mol, &
+          & 'dBeta_dT_polarized_path_f', moduleName, low1=-1 )
         allocate ( de_dt(2,2,npc,sv_t_len), stat=ier )
-        call test_allocate ( ier, moduleName, 'de_dt', lbound(de_dt), ubound(de_dt), e_dp )
-        allocate ( dincoptdepth_pol_dt(2,2,npc), stat=ier )
-        call test_allocate ( ier, moduleName, 'dincoptdepth_pol_dt', &
-          & lbound(dincoptdepth_pol_dt), ubound(dincoptdepth_pol_dt), e_dp )
+        call test_allocate ( ier, moduleName, 'de_dt', &
+          & (/1,1,1,1/), (/2,2,npc,sv_t_len/), e_rp )
+        call allocate_test ( dincoptdepth_pol_dt, 2, 2, npc, &
+          & 'dincoptdepth_pol_dt', moduleName )
       end if
     end if
 
@@ -1213,8 +1154,8 @@ contains
         npc = 2 * mid
 
         ! This is not pretty but we need some coarse grid extraction indices
-        c_inds(1:npc) = (/(i*Ngp1-Ng,i=1,mid),((i-1)*Ngp1-Ng+1,i=mid+1,npc)/)
-        c_inds(npc+1:) = 0
+        c_inds => c_inds_b(:npc)
+        c_inds = (/(i*Ngp1-Ng,i=1,mid),((i-1)*Ngp1-Ng+1,i=mid+1,npc)/)
         ! And some fine grid extraction indices
         do_gl(:npc) = (/ .false., (.true., i=2,npc-1), .false. /)
         call get_gl_inds ( do_gl(:npc), f_inds, cg_inds, nglMax, ncg )
@@ -1230,7 +1171,6 @@ contains
 
         p_path(1:no_ele) = (/(p_glgrid(i),i=MaxVert,tan_inds(ptg_i),-1), &
                            & (p_glgrid(i),i=tan_inds(ptg_i),MaxVert)/)
-        p_path_c(1:npc) = p_path(c_inds(1:npc))
 
         ! Compute the h_path, t_path, dhdz_path, phi_path, dhdt_path
 
@@ -1258,10 +1198,10 @@ contains
               &  ETA_ZXP = eta_zxp_t(1:no_ele,:),                            &
               &  DO_CALC_T = do_calc_t(1:no_ele,:),                          &
               &  DO_CALC_HYD = do_calc_hyd(1:no_ele,:) )
-            dh_dt_path_c(1:npc,:) = dh_dt_path(c_inds(1:npc),:)
-            do_calc_hyd_c(1:npc,:) = do_calc_hyd(c_inds(1:npc),:)
-            do_calc_t_c(1:npc,:) = do_calc_t(c_inds(1:npc),:)
-            eta_zxp_t_c(1:npc,:) = eta_zxp_t(c_inds(1:npc),:)
+            dh_dt_path_c(1:npc,:) = dh_dt_path(c_inds,:)
+            do_calc_hyd_c(1:npc,:) = do_calc_hyd(c_inds,:)
+            do_calc_t_c(1:npc,:) = do_calc_t(c_inds,:)
+            eta_zxp_t_c(1:npc,:) = eta_zxp_t(c_inds,:)
             t_der_path_flags(1:no_ele) = any(do_calc_t(1:no_ele,:),2)
           else
             call metrics ( tan_phi(ptg_i:ptg_i), tan_inds(ptg_i:ptg_i),      &
@@ -1292,10 +1232,10 @@ contains
               &  ETA_ZXP = eta_zxp_t(1:no_ele,:),                            &
               &  DO_CALC_T = do_calc_t(1:no_ele,:),                          &
               &  DO_CALC_HYD = do_calc_hyd(1:no_ele,:) )
-            dh_dt_path_c(1:npc,:) = dh_dt_path(c_inds(1:npc),:)
-            do_calc_hyd_c(1:npc,:) = do_calc_hyd(c_inds(1:npc),:)
-            do_calc_t_c(1:npc,:) = do_calc_t(c_inds(1:npc),:)
-            eta_zxp_t_c(1:npc,:) = eta_zxp_t(c_inds(1:npc),:)
+            dh_dt_path_c(1:npc,:) = dh_dt_path(c_inds,:)
+            do_calc_hyd_c(1:npc,:) = do_calc_hyd(c_inds,:)
+            do_calc_t_c(1:npc,:) = do_calc_t(c_inds,:)
+            eta_zxp_t_c(1:npc,:) = eta_zxp_t(c_inds,:)
             t_der_path_flags(1:no_ele) = any(do_calc_t(1:no_ele,:),2)
           else
             call metrics ( tan_phi(ptg_i:ptg_i), tan_inds(ptg_i:ptg_i),      &
@@ -1312,8 +1252,8 @@ contains
           dhdz_gw_path(f_inds(i:i+ng-1)) = dhdz_path(f_inds(i:i+ng-1)) * gw
         end do
         h_path(1:no_ele) = req + h_path(1:no_ele)
-        h_path_c(1:npc) = h_path(c_inds(1:npc))
-        t_path_c(1:npc) = t_path(c_inds(1:npc))
+        h_path_c(1:npc) = h_path(c_inds)
+        t_path_c(1:npc) = t_path(c_inds)
         ! Fill the diagnostic arrays for Nathaniel and Bill
 !       tan_temps ( ptg_i ) = one_tan_temp ( 1 )
 !       tan_hts ( ptg_i ) = one_tan_ht ( 1 )
@@ -1341,8 +1281,6 @@ contains
         if ( associated(fwdModelConf%lineCenter) ) then
           call comp_eta_docalc_no_frq ( grids_v, z_path(1:no_ele), &
             & phi_path(1:no_ele), eta_zxp_v(1:no_ele,:), do_calc_v(1:no_ele,:) )
-          do_calc_v_c(1:npc,:) = do_calc_v(c_inds(1:npc),:)
-          eta_zxp_v_c(1:npc,:) = eta_zxp_v(c_inds(1:npc),:)
           call comp_sps_path_no_frq ( grids_v, eta_zxp_v(1:no_ele,:), &
             & spect_v_path(1:no_ele,:) )
           if ( associated(FwdModelConf%lineCenter_ix) ) &
@@ -1351,8 +1289,7 @@ contains
         if ( associated(fwdModelConf%lineWidth) ) then
           call comp_eta_docalc_no_frq ( grids_w, z_path(1:no_ele), &
             & phi_path(1:no_ele), eta_zxp_w(1:no_ele,:), do_calc_w(1:no_ele,:) )
-          do_calc_w_c(1:npc,:) = do_calc_w(c_inds(1:npc),:)
-          eta_zxp_w_c(1:npc,:) = eta_zxp_w(c_inds(1:npc),:)
+          do_calc_w_c(1:npc,:) = do_calc_w(c_inds,:)
           call comp_sps_path_no_frq ( grids_w, eta_zxp_w(1:no_ele,:), &
             & spect_w_path(1:no_ele,:) )
           if ( associated(FwdModelConf%lineWidth_ix) ) &
@@ -1361,8 +1298,6 @@ contains
         if ( associated(fwdModelConf%lineWidth_TDep) ) then
           call comp_eta_docalc_no_frq ( grids_n, z_path(1:no_ele), &
             & phi_path(1:no_ele), eta_zxp_n(1:no_ele,:), do_calc_n(1:no_ele,:) )
-          do_calc_n_c(1:npc,:) = do_calc_n(c_inds(1:npc),:)
-          eta_zxp_n_c(1:npc,:) = eta_zxp_n(c_inds(1:npc),:)
           call comp_sps_path_no_frq ( grids_n, eta_zxp_n(1:no_ele,:), &
             & spect_n_path(1:no_ele,:) )
           if ( associated(FwdModelConf%lineWidth_TDep_ix) ) &
@@ -1436,11 +1371,11 @@ contains
         end if
 
         if ( h2o_ind > 0 ) then
-          call refractive_index ( p_path_c(1:npc), &
+          call refractive_index ( p_path(c_inds), &
             &  t_path_c(1:npc), n_path(1:npc),     &
-            &  h2o_path=sps_path(c_inds(1:npc), h2o_ind) )
+            &  h2o_path=sps_path(c_inds, h2o_ind) )
         else
-          call refractive_index ( p_path_c(1:npc), &
+          call refractive_index ( p_path(c_inds), &
             &  t_path_c(1:npc), n_path(1:npc) )
         end if
 
@@ -1459,8 +1394,8 @@ contains
 
         n_path(1:npc) = n_path(1:npc) + 1.0_rp
 
-        call comp_refcor ( h_path_c(1:npc), n_path(1:npc), &
-                      &  Req+one_tan_ht(1), del_s(1:npc), ref_corr(1:npc), ier )
+        call comp_refcor ( h_path_c(:npc), n_path(:npc), &
+                      &  Req+one_tan_ht(1), del_s(:npc), ref_corr(:npc), ier )
         if ( ier /= 0 ) fmStat%flags = ior(fmStat%flags,b_refraction)
 
         path_dsdh(f_inds(:nglMax)) = h_path(f_inds(:nglMax)) / &
@@ -1495,13 +1430,13 @@ contains
           & call Trace_End ( 'ForwardModel.MetricsEtc' )
 
         if ( FwdModelConf%anyLBL(sx) ) then
-          call frequency_loop ( alpha_path_c(:npc), beta_path_c(:npc,:),          &
-            & c_inds(:npc), del_s(:npc), del_zeta(:npc),                          &
-            & do_calc_fzp(:no_ele,:), do_calc_zp(:no_ele,:), do_GL(:npc),         &
-            & eta_fzp(:no_ele,:), eta_zp(:no_ele,:), frequencies, h_path_c,       &
-            & incoptdepth(:npc), p_path(:no_ele), pfaFalse, ref_corr(:npc),       &
-            & sps_path(:no_ele,:), tau_lbl, t_path_c(:npc), t_script_lbl(:npc,:), &
-            & tanh1_c(:npc), tt_path_c(:npc), w0_path_c(:npc), z_path(:no_ele) )
+          call frequency_loop ( alpha_path_c(:npc), beta_path_c(:npc,:), c_inds,  &
+            & del_s(:npc), del_zeta(:npc),do_calc_fzp(:no_ele,:),                 &
+            & do_calc_zp(:no_ele,:), do_GL(:npc), eta_fzp(:no_ele,:),             &
+            & eta_zp(:no_ele,:), frequencies, h_path_c, incoptdepth(:npc),        &
+            & p_path(:no_ele), pfaFalse, ref_corr(:npc), sps_path(:no_ele,:),     &
+            & tau_lbl, t_path_c(:npc), t_script_lbl(:npc,:), tanh1_c(:npc),       &
+            & tt_path_c(:npc), w0_path_c(:npc), z_path(:no_ele) )
           if ( index(switches,'taul') /= 0 ) then
             call output ( thisSideband, before='Sideband ' )
             call output ( ptg_i, before=' Pointing ' )
@@ -1518,13 +1453,13 @@ contains
 
         ! Handle PFA molecules
         if ( FwdModelConf%anyPFA(sx) ) then
-          call frequency_loop ( alpha_path_c(:npc), beta_path_c(:npc,:),          &
-            & c_inds(:npc), del_s(:npc), del_zeta(:npc),                          &
-            & do_calc_fzp(:no_ele,:), do_calc_zp(:no_ele,:), do_GL(:npc),         &
-            & eta_fzp(:no_ele,:), eta_zp(:no_ele,:), channelCenters, h_path_c,    &
-            & incoptdepth(:npc), p_path(:no_ele), pfaTrue, ref_corr(:npc),        &
-            & sps_path(:no_ele,:), tau_pfa, t_path_c(:npc), t_script_pfa(:npc,:), &
-            & tanh1_c(:npc), tt_path_c(:npc), w0_path_c(:npc), z_path(:no_ele) )
+          call frequency_loop ( alpha_path_c(:npc), beta_path_c(:npc,:), c_inds, &
+            & del_s(:npc), del_zeta(:npc), do_calc_fzp(:no_ele,:),               &
+            & do_calc_zp(:no_ele,:), do_GL(:npc), eta_fzp(:no_ele,:),            &
+            & eta_zp(:no_ele,:), channelCenters, h_path_c, incoptdepth(:npc),    &
+            & p_path(:no_ele), pfaTrue, ref_corr(:npc), sps_path(:no_ele,:),     &
+            & tau_pfa, t_path_c(:npc), t_script_pfa(:npc,:), tanh1_c(:npc),      &
+            & tt_path_c(:npc), w0_path_c(:npc), z_path(:no_ele) )
           if ( index(switches,'taup') /= 0 ) then
             call output ( thisSideband, before='Sideband ' )
             call output ( ptg_i, before=' Pointing ' )
@@ -1643,9 +1578,9 @@ contains
 
     ! Now deallocate lots of stuff
 
-    call Deallocate_Test ( WC, 'WC', moduleName )
+    call Deallocate_Test ( WC,       'WC',       moduleName )
     call Deallocate_Test ( Scat_ang, 'Scat_ang', moduleName )
-    call Deallocate_Test ( IPSD, 'IPSD', moduleName )
+    call Deallocate_Test ( IPSD,     'IPSD',     moduleName )
 
     call destroyForwardModelDerived ( fwdModelConf )
 
@@ -1664,7 +1599,7 @@ contains
     call deallocate_test ( tan_press,     'tan_press',     moduleName )
     call deallocate_test ( tan_phi,       'tan_phi',       moduleName )
     call deallocate_test ( est_scgeocalt, 'est_scgeocalt', moduleName )
-    call deallocate_test ( est_los_vel, 'est_los_vel', moduleName )
+    call deallocate_test ( est_los_vel,   'est_los_vel',   moduleName )
     call deallocate_test ( tan_temp,      'tan_temp',      moduleName )
 
     ! Extra DEBUG for Nathaniel and Bill
@@ -1686,14 +1621,14 @@ contains
     call deallocate_test ( beta_path_c,      'beta_path_c',      moduleName )
     call deallocate_test ( beta_path_cloud_c,'beta_path_cloud_c',moduleName )
     call deallocate_test ( cg_inds,          'cg_inds',          moduleName )
-    call deallocate_test ( c_inds,           'c_inds',           moduleName )
+    call deallocate_test ( c_inds_b,         'c_inds_b',         moduleName )
     call deallocate_test ( del_s,            'del_s',            moduleName )
     call deallocate_test ( dhdz_gw_path,     'dhdz_gw_path',     moduleName )
     call deallocate_test ( dhdz_path,        'dhdz_path',        moduleName )
     call deallocate_test ( do_gl,            'do_gl',            moduleName )
     call deallocate_test ( dsdz_gw_path,     'dsdz_gw_path',     moduleName )
     call deallocate_test ( f_inds,           'f_inds',           moduleName )
-    call deallocate_test ( gl_inds,          'gl_inds',          moduleName )
+    call deallocate_test ( gl_inds_b,        'gl_inds_b',        moduleName )
     call deallocate_test ( h_path_c,         'h_path_c',         moduleName )
     call deallocate_test ( h_path_f,         'h_path_f',         moduleName )
     call deallocate_test ( h_path,           'h_path',           moduleName )
@@ -1701,7 +1636,6 @@ contains
     call deallocate_test ( n_path,           'n_path',           moduleName )
     call deallocate_test ( path_dsdh,        'path_dsdh',        moduleName )
     call deallocate_test ( phi_path,         'phi_path',         moduleName )
-    call deallocate_test ( p_path_c,         'p_path_c',         moduleName )
     call deallocate_test ( p_path,           'p_path',           moduleName )
     call deallocate_test ( ref_corr,         'ref_corr',         moduleName )
     call deallocate_test ( tanh1_c,          'tanh1_c',          moduleName )
@@ -1743,7 +1677,7 @@ contains
     end if
 
     if ( temp_der ) then
-      deallocate ( k_temp, STAT=i )
+      call deallocate_test ( k_temp,          'k_temp',          moduleName )
       call deallocate_test ( d2xdxdt_tan,     'd2xdxdt_tan',     moduleName )
       call deallocate_test ( dAlpha_dT_path_c,'dAlpha_dT_path_c',moduleName )
       call deallocate_test ( dAlpha_dT_path_f,'dAlpha_dT_path_f',moduleName )
@@ -1757,7 +1691,6 @@ contains
       call deallocate_test ( do_calc_t_c,     'do_calc_t_c',     moduleName )
       call deallocate_test ( do_calc_t,       'do_calc_t',       moduleName )
       call deallocate_test ( do_calc_t_f,     'do_calc_t_f',     moduleName )
-      call deallocate_test ( dRad_dt,         'dRad_dt',         moduleName )
       call deallocate_test ( dTanh_dT_c,      'dTanh_dT_c',      moduleName )
       call deallocate_test ( dTanh_dT_f,      'dTanh_dT_f',      moduleName )
       call deallocate_test ( d_t_scr_dt,      'd_t_scr_dt',      moduleName )
@@ -1778,25 +1711,14 @@ contains
       call deallocate_test ( k_atmos,         'k_atmos',         moduleName )
     end if
 
-    call deallocate_test ( do_calc_n_c,     'do_calc_n_c',     moduleName )
     call deallocate_test ( do_calc_n,       'do_calc_n',       moduleName )
-    call deallocate_test ( do_calc_n_f,     'do_calc_n_f',     moduleName )
-    call deallocate_test ( do_calc_v_c,     'do_calc_v_c',     moduleName )
     call deallocate_test ( do_calc_v,       'do_calc_v',       moduleName )
-    call deallocate_test ( do_calc_v_f,     'do_calc_v_f',     moduleName )
     call deallocate_test ( do_calc_w_c,     'do_calc_w_c',     moduleName )
     call deallocate_test ( do_calc_w,       'do_calc_w',       moduleName )
-    call deallocate_test ( do_calc_w_f,     'do_calc_w_f',     moduleName )
 
-    call deallocate_test ( eta_zxp_n_c,     'eta_zxp_n_c',     moduleName )
     call deallocate_test ( eta_zxp_n,       'eta_zxp_n',       moduleName )
-    call deallocate_test ( eta_zxp_n_f,     'eta_zxp_n_f',     moduleName )
-    call deallocate_test ( eta_zxp_v_c,     'eta_zxp_v_c',     moduleName )
     call deallocate_test ( eta_zxp_v,       'eta_zxp_v',       moduleName )
-    call deallocate_test ( eta_zxp_v_f,     'eta_zxp_v_f',     moduleName )
-    call deallocate_test ( eta_zxp_w_c,     'eta_zxp_w_c',     moduleName )
     call deallocate_test ( eta_zxp_w,       'eta_zxp_w',       moduleName )
-    call deallocate_test ( eta_zxp_w_f,     'eta_zxp_w_f',     moduleName )
 
     call deallocate_test ( spect_n_path,    'spect_n_path',    moduleName )
     call deallocate_test ( spect_v_path,    'spect_v_path',    moduleName )
@@ -1810,85 +1732,40 @@ contains
       call deallocate_test ( dbeta_dv_path_f, 'dbeta_dv_path_f', moduleName )
       call deallocate_test ( dbeta_dw_path_c, 'dbeta_dw_path_c', moduleName )
       call deallocate_test ( dbeta_dw_path_f, 'dbeta_dw_path_f', moduleName )
-
-      call deallocate_test ( drad_dn,         'drad_dn',         moduleName )
-      call deallocate_test ( drad_dv,         'drad_dv',         moduleName )
-      call deallocate_test ( drad_dw,         'drad_dw',         moduleName )
-
-      if ( associated(k_spect_dv) ) then
-        i = size(k_spect_dv) * E_def
-        deallocate ( k_spect_dv, stat=ier )
-        call test_deallocate ( ier, ModuleName, 'k_spect_dv', i )
-      end if
-      if ( associated(k_spect_dw) ) then
-        i = size(k_spect_dw) * E_def
-        deallocate ( k_spect_dw, stat=ier )
-        call test_deallocate ( ier, ModuleName, 'k_spect_dw', i )
-      end if
-      if ( associated(k_spect_dn) ) then
-        i = size(k_spect_dn) * E_def
-        deallocate ( k_spect_dn, stat=ier )
-        call test_deallocate ( ier, ModuleName, 'k_spect_dn', i )
-      end if
+      call deallocate_test ( k_spect_dn,      'k_spect_dn',      moduleName )
+      call deallocate_test ( k_spect_dv,      'k_spect_dv',      moduleName )
+      call deallocate_test ( k_spect_dw,      'k_spect_dw',      moduleName )
+      call destroygrids_t ( grids_n )
+      call destroygrids_t ( grids_w )
+      call destroygrids_t ( grids_v )
 
     end if
 
     if ( FwdModelConf%polarized ) then
-      deallocate ( alpha_path_polarized, stat=ier )
-      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_DeAllocate//'alpha_path_polarized' )
-      deallocate ( beta_path_polarized, stat=ier )
-      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_DeAllocate//'beta_path_polarized' )
-      deallocate ( alpha_path_polarized_f, stat=ier )
-      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_DeAllocate//'alpha_path_polarized_f' )
-      deallocate ( beta_path_polarized_f, stat=ier )
-      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_DeAllocate//'beta_path_polarized_f' )
-      deallocate ( gl_delta_polarized, stat=ier )
-      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_DeAllocate//'gl_delta_polarized' )
-      deallocate ( incoptdepth_pol, stat=ier )
-      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_DeAllocate//'incoptdepth_pol' )
-      deallocate ( incoptdepth_pol_gl, stat=ier )
-      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_DeAllocate//'incoptdepth_pol_gl' )
+      call deallocate_test ( alpha_path_polarized,   'alpha_path_polarized',   moduleName )
+      call deallocate_test ( beta_path_polarized,    'beta_path_polarized',    moduleName )
+      call deallocate_test ( alpha_path_polarized_f, 'alpha_path_polarized_f', moduleName )
+      call deallocate_test ( beta_path_polarized_f,  'beta_path_polarized_f',  moduleName )
+      call deallocate_test ( gl_delta_polarized,     'gl_delta_polarized',     moduleName )
+      call deallocate_test ( incoptdepth_pol,        'incoptdepth_pol',        moduleName )
       if ( atmos_der ) then
-        deallocate ( d_rad_pol_df, stat=ier )
-        if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & MLSMSG_DeAllocate//'d_rad_pol_df' )
+        call deallocate_test ( d_rad_pol_df,         'd_rad_pol_df',           moduleName )
+        k = size(de_df)
         deallocate ( de_df, stat=ier )
-        if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & MLSMSG_DeAllocate//'de_df' )
+        call test_deallocate ( ier, ModuleName, 'de_df', 2*k*e_rp )
       end if
       if ( temp_der ) then
-        deallocate ( d_rad_pol_dt, stat=ier )
-        if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & MLSMSG_DeAllocate//'d_rad_pol_dt' )
-        deallocate ( dBeta_dT_polarized_path_c, stat=ier )
-        if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & MLSMSG_DeAllocate//'dBeta_dT_polarized_path_c' )
-        deallocate ( dBeta_dT_polarized_path_f, stat=ier )
-        if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & MLSMSG_DeAllocate//'dBeta_dT_polarized_path_f' )
+        call deallocate_test ( d_rad_pol_dt,         'd_rad_pol_dt',           moduleName )
+        call deallocate_test ( dBeta_dT_polarized_path_c, 'dBeta_dT_polarized_path_c', moduleName )
+        call deallocate_test ( dBeta_dT_polarized_path_f, 'dBeta_dT_polarized_path_f', moduleName )
+        k = size(de_dt)
         deallocate ( de_dt, stat=ier )
-        if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & MLSMSG_DeAllocate//'de_dt' )
-        deallocate ( dincoptdepth_pol_dt, stat=ier )
-        if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & MLSMSG_DeAllocate//'dincoptdepth_pol_dt' )
+        call test_deallocate ( ier, ModuleName, 'de_dt', 2*k*e_rp )
+        call deallocate_test ( dincoptdepth_pol_dt,  'dincoptdepth_pol_dt',    moduleName )
       end if
-      deallocate ( deltau_pol, stat=ier )
-      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_DeAllocate//'deltau_pol' )
-      deallocate ( prod_pol, stat=ier )
-      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_DeAllocate//'prod_pol' )
-      deallocate ( tau_pol, stat=ier )
-      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_DeAllocate//'tau_pol' )
+      call deallocate_test ( deltau_pol,             'deltau_pol',             moduleName )
+      call deallocate_test ( prod_pol,               'prod_pol',               moduleName )
+      call deallocate_test ( tau_pol,                'tau_pol',                moduleName )
     end if
 
     call deallocate_test ( ptg_angles,       'ptg_angles',     moduleName )
@@ -1896,9 +1773,7 @@ contains
     call deallocate_test ( dx_dt,            'dx_dt',          moduleName )
     call deallocate_test ( d2x_dxdt,         'd2x_dxdt',       moduleName )
 
-    if ( toggle(emit) ) then
-      call trace_end ( 'ForwardModel MAF=', fmStat%maf )
-    end if
+    if ( toggle(emit) ) call trace_end ( 'ForwardModel MAF=', fmStat%maf )
 
   contains
 
@@ -1989,7 +1864,7 @@ contains
       
       if ( patchedAPtg ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          & 'Had to patch some out of order ptg_angles' )
+          & 'Had to patch some out-of-order ptg_angles' )
         fmStat%flags = ior(fmStat%flags,b_ptg_angles)
         if ( index(switches,'ptg') /= 0 ) &
           & call Dump ( ptg_angles, 'ptg_angles (after patching)', format='(1PG22.17)' )
@@ -2051,7 +1926,7 @@ contains
             call convolve_temperature_deriv ( convolve_support, maf, chanInd, &
               & radiances(:,i), rad_fft, thisFraction, update, thisRadiance, &
               & temp, grids_tmp, surf_angle(1), L1BMIF_TAI, MIFDeadTime, &
-              & real(RESHAPE(k_temp(i,:,:,:),(/no_tan_hts,sv_t_len/)),kind=rp), &
+              & real(k_temp(i,:,:),kind=rp), &
               & dx_dt, d2x_dxdt, dxdt_tan, dxdt_surface, Jacobian, fmStat%rows )
           else ! No temperature derivative
             call convolve_radiance ( convolve_support, maf, chanInd, &
@@ -2066,26 +1941,21 @@ contains
               & L1BMIF_TAI, MIFDeadTime, real(k_atmos(i,:,:),kind=rp), &
               & Jacobian, fmStat%rows )
 
-          if ( spect_der ) then
-            if ( associated(fwdModelConf%lineCenter) ) &
-              & call convolve_other_deriv ( convolve_support, maf, chanInd, &
-                & thisFraction, update, thisRadiance, &
-                & fwdModelConf%lineCenter%qty, grids_v, L1BMIF_TAI, MIFDeadTime, &
-                & real(RESHAPE(k_spect_dv(i,:,:,:,:,:),(/no_tan_hts,sv_t_len/)),kind=rp), &
-                & Jacobian, fmStat%rows )
-            if ( associated(fwdModelConf%lineWidth) ) &
-              & call convolve_other_deriv ( convolve_support, maf, chanInd, &
-                & thisFraction, update, thisRadiance, &
-                & fwdModelConf%lineWidth%qty, grids_w, L1BMIF_TAI, MIFDeadTime, &
-                & real(RESHAPE(k_spect_dw(i,:,:,:,:,:),(/no_tan_hts,sv_t_len/)),kind=rp), &
-                & Jacobian, fmStat%rows )
-            if ( associated(fwdModelConf%lineWidth_TDep) ) &
-              & call convolve_other_deriv ( convolve_support, maf, chanInd, &
-                & thisFraction, update, thisRadiance, &
-                & fwdModelConf%lineWidth_TDep%qty, grids_n, L1BMIF_TAI, MIFDeadTime, &
-                & real(RESHAPE(k_spect_dn(i,:,:,:,:,:),(/no_tan_hts,sv_t_len/)),kind=rp), &
-                & Jacobian, fmStat%rows )
-          end if
+          if ( spect_der_center ) &
+            & call convolve_other_deriv ( convolve_support, maf, chanInd, &
+              & thisFraction, update, thisRadiance, &
+              & fwdModelConf%lineCenter%qty, grids_v, L1BMIF_TAI, MIFDeadTime, &
+              & real(k_spect_dv(i,:,:),kind=rp), Jacobian, fmStat%rows )
+          if ( spect_der_Width ) &
+            & call convolve_other_deriv ( convolve_support, maf, chanInd, &
+              & thisFraction, update, thisRadiance, &
+              & fwdModelConf%lineWidth%qty, grids_w, L1BMIF_TAI, MIFDeadTime, &
+              & real(k_spect_dw(i,:,:),kind=rp), Jacobian, fmStat%rows )
+          if ( spect_der_Width_TDep ) &
+            & call convolve_other_deriv ( convolve_support, maf, chanInd, &
+              & thisFraction, update, thisRadiance, &
+              & fwdModelConf%lineWidth_TDep%qty, grids_n, L1BMIF_TAI, MIFDeadTime, &
+              & real(k_spect_dn(i,:,:),kind=rp), Jacobian, fmStat%rows )
 
           call fov_convolve_teardown ( convolve_support )
 
@@ -2104,8 +1974,7 @@ contains
             & call interpolate_temperature_deriv ( coeffs, maf, chanInd, &
               & ptg_angles, thisFraction, update, tan_chi_out-thisElev,  &
               & thisRadiance, temp, grids_tmp, L1BMIF_TAI, MIFDeadTime, &
-              & real(RESHAPE(k_temp(i,:,:,:),(/no_tan_hts,sv_t_len/)),kind=rp), &
-              & Jacobian, fmStat%rows )
+              & real(k_temp(i,:,:),kind=rp), Jacobian, fmStat%rows )
 
           if ( atmos_der ) &
             & call interpolate_other_deriv ( coeffs, maf, chanInd, ptg_angles, &
@@ -2124,72 +1993,6 @@ contains
 
     end subroutine Convolution
 
-  ! ..............................................  dI_dSomething  .....
-    subroutine dI_dSomething ( grids_dS, k_spect_dS_frq, k_spect_dS, K )
-
-    ! Do or don't do frequency averaging, to finish up derivative of I w.r.t. S
-
-      type(grids_T), intent(in) :: grids_dS
-      real(rp), dimension(:,:), intent(in) :: K_SPECT_DS_FRQ ! ****
-      real(r4), dimension(:,:,:,:,:,:), intent(out) :: K_SPECT_DS
-      integer, intent(in) :: K ! Which molecule
-
-      integer :: Channel, I, Instance, JF, ShapeInd, SigInd, Surface, SV_I
-      real(rp) :: R
-
-      if ( fwdModelConf%do_freq_avg ) then
-        ! Do DACs stuff for all DACs channels first
-        do i = 1, noUsedDACS
-          shapeInd = MatchSignal ( dacsFilterShapes%signal, &
-            & fwdModelConf%signals(usedDacsSignals(i)), sideband = thisSideband )
-          sv_i = Grids_dS%l_v(k-1)
-          do instance = Grids_dS%WindowStart(k), Grids_dS%WindowFinish(k)
-            do surface = 1, Grids_dS%l_z(k) - Grids_dS%l_z(k-1)
-              do jf = 1, Grids_dS%l_f(k) - Grids_dS%l_f(k-1)
-                sv_i = sv_i + 1
-                call Freq_Avg_DACS ( frequencies, DACSFilterShapes(shapeInd), &
-                  & k_spect_dS_frq(:,sv_i), DACsStaging2(:,sv_i,i) )
-              end do   ! jf -- Frequencies loop
-            end do     ! Surface loop
-          end do       ! Instance loop
-        end do         ! i -- DACS loop
-        do i = 1, noUsedChannels
-          sigInd = channels(i)%signal
-          channel = channels(i)%used
-          shapeInd = MatchSignal ( filterShapes%signal, &
-            & fwdModelConf%signals(sigInd),             &
-            & sideband = thisSideband, channel=channel )
-          sv_i = Grids_dS%l_v(k-1)
-          do instance = Grids_dS%WindowStart(k), Grids_dS%WindowFinish(k)
-            do surface = 1, Grids_dS%l_z(k) - Grids_dS%l_z(k-1)
-              do jf = 1, Grids_dS%l_f(k) - Grids_dS%l_f(k-1)
-                sv_i = sv_i + 1
-                if ( channels(i)%dacs == 0 ) then
-                  call Freq_Avg ( frequencies,           &
-                    & FilterShapes(shapeInd)%FilterGrid, &
-                    & FilterShapes(shapeInd)%FilterShape,&
-                    & k_spect_dS_frq(:,sv_i), r )
-                else
-                  r = DACsStaging2 ( channel, sv_i, channels(i)%dacs )
-                end if
-                k_spect_dS(i,ptg_i,jf,surface,instance,k) = r
-              end do              ! Frequencies loop
-            end do                ! Surface loop
-          end do                  ! Instance loop
-        end do                    ! Channel loop
-      else                        ! else not frequency averaging
-        k_spect_dS( 1:noUsedChannels, ptg_i, &
-          &         1:Grids_dS%l_f(k) - Grids_dS%l_f(k-1), &
-          &         1:Grids_dS%l_z(k) - Grids_dS%l_z(k-1), &
-          &         Grids_dS%WindowStart(k):Grids_dS%WindowFinish(k), k ) = &
-          & reshape(k_spect_dS_frq( 1:noUsedChannels, &
-          &                         Grids_dS%l_v(k-1) + 1: Grids_dS%l_v(k) ), &
-            &       (/ noUsedChannels, Grids_dS%l_f(k) - Grids_dS%l_f(k-1), &
-            &          Grids_dS%l_z(k) - Grids_dS%l_z(k-1), &
-            &          Grids_dS%WindowFinish(k) - Grids_dS%WindowStart(k) + 1 /) )
-      end if                      ! Frequency averaging or not
-    end subroutine dI_dSomething
-
   ! ............................................  Dump_Print_Code  .....
     subroutine Dump_Print_Code
       include "dump_print_code.f9h"
@@ -2206,7 +2009,7 @@ contains
 
       integer :: Channel
       real(r8) :: dF
-      integer :: I, Instance, K, KHi, KLo, ShapeInd, SigInd, Surface, SV_I
+      integer :: I, K, KHi, KLo, ShapeInd, SigInd
 
       if ( toggle(emit) .and. levels(emit) > 4 ) &
         & call trace_begin ( 'ForwardModel.FrequencyAvg' )
@@ -2256,136 +2059,111 @@ contains
         radiances(ptg_i,1:noUsedChannels) = radV(1:)
       end if
 
-      ! Frequency averaging of derivatives if needed -----------------------
-
       ! Frequency Average the temperature derivatives with the appropriate
       ! filter shapes
 
-      if ( temp_der ) then
-        if ( fwdModelConf%do_freq_avg ) then
-          ! Do DACs stuff for all DACs channels first
-          do i = 1, noUsedDACS
-            shapeInd = MatchSignal ( dacsFilterShapes%signal, &
-              & fwdModelConf%signals(usedDacsSignals(i)), sideband = thisSideband )
-            sv_i = 1
-            do instance = 1, no_sv_p_t
-              do surface = 1, n_t_zeta
-                call Freq_Avg_DACS ( frequencies, DACSFilterShapes(shapeInd), &
-                  & k_temp_frq(:,sv_i), DACsStaging2(:,sv_i,i) )
-                sv_i = sv_i + 1
-              end do                  ! Surface loop
-            end do                    ! Instance loop
-          end do                      ! i -- DACs loop
-          ! Now go through channel by channel
-          do i = 1, noUsedChannels
-            sigInd = channels(i)%signal
-            channel = channels(i)%used
-            shapeInd = MatchSignal ( filterShapes%signal, &
-              & fwdModelConf%signals(sigInd), &
-              & sideband = thisSideband, channel=channel )
-            sv_i = 1
-            do instance = 1, no_sv_p_t
-              do surface = 1, n_t_zeta
-                if ( channels(i)%dacs == 0 ) then
-                  call Freq_Avg ( frequencies, &
-                    & FilterShapes(shapeInd)%FilterGrid, &
-                    & FilterShapes(shapeInd)%FilterShape, &
-                    & k_temp_frq(:,sv_i), r )
-                else
-                  r = DACsStaging2 ( channel, sv_i, channels(i)%dacs )
-                end if
-                k_temp(i,ptg_i,surface,instance) = r
-                sv_i = sv_i + 1
-              end do                  ! Surface loop
-            end do                    ! Instance loop
-          end do                      ! Channel loop
-        else
-          k_temp(1:noUsedChannels,ptg_i,1:n_t_zeta,1:no_sv_p_t) = &
-            & reshape( k_temp_frq(1:noUsedChannels,1:no_sv_p_t*n_t_zeta), &
-              &        (/ noUsedChannels, n_t_zeta, no_sv_p_t /) )
-        end if
-      end if
+      if ( temp_der ) call frequency_average_derivative &
+        &                  ( grids_tmp, k_temp_frq, k_temp(:,ptg_i,:), 1 )
 
       ! Frequency Average the atmospheric derivatives with the appropriate
       ! filter shapes
 
       if ( atmos_der ) then
-
         do k = 1, no_mol
-          if ( fwdModelConf%moleculeDerivatives(k) ) then
-            if ( fwdModelConf%do_freq_avg ) then
-              ! Do DACs stuff for all DACs channels first
-              do i = 1, noUsedDACS
-                shapeInd = MatchSignal ( dacsFilterShapes%signal, &
-                  & fwdModelConf%signals(usedDacsSignals(i)), sideband = thisSideband )
-                do sv_i = grids_f%l_v(k-1)+1, grids_f%l_v(k)
-                  call Freq_Avg_DACS ( frequencies, DACSFilterShapes(shapeInd), &
-                    & k_atmos_frq(:,sv_i), DACsStaging2(:,sv_i,i) )
-                end do                  ! Surface loop X Instance loop
-              end do
-              ! Now go through channel by channel
-              do i = 1, noUsedChannels
-                sigInd = channels(i)%signal
-                channel = channels(i)%used
-                shapeInd = MatchSignal ( filterShapes%signal, &
-                  & fwdModelConf%signals(sigInd),             &
-                  & sideband = thisSideband, channel=channel )
-                do sv_i = grids_f%l_v(k-1)+1, grids_f%l_v(k)
-                  if ( grids_f%deriv_flags(sv_i) ) then
-                    if ( channels(i)%dacs == 0 ) then
-                      call Freq_Avg ( frequencies,            &
-                        & FilterShapes(shapeInd)%FilterGrid,  &
-                        & FilterShapes(shapeInd)%FilterShape, &
-                        & k_atmos_frq(1:noFreqs,sv_i), r )
-                    else
-                      r = DACsStaging2 ( channel, sv_i, channels(i)%dacs )
-                    end if
-                  else
-                    r = 0.0
-                  end if
-                  k_atmos(i,ptg_i,sv_i) = r
-                end do                ! Surface loop X Instance loop
-              end do                  ! Channel loop
-            else                      ! Else not frequency averaging
-              do sv_i = grids_f%l_v(k-1)+1, grids_f%l_v(k)
-                if ( grids_f%deriv_flags(sv_i) ) then
-                  k_atmos(1:noUsedChannels,ptg_i,sv_i) = &
-                    & min ( max ( k_atmos_frq(1:noUsedChannels,sv_i), &
-                    &   real(-huge(0.0_r4), rp ) ), &
-                    &   real( huge(0.0_r4), rp ) )
-                else
-                  k_atmos(1:noUsedChannels,ptg_i,sv_i) = 0.0
-                end if
-              end do
-            end if                    ! Frequency averaging or not
-          end if                      ! Want derivatives for this specie?
+          if ( fwdModelConf%moleculeDerivatives(k) ) &
+            & call frequency_average_derivative &
+              & ( grids_f, k_atmos_frq, k_atmos(:,ptg_i,:), k )
         end do                        ! Loop over major molecules
-        !
       end if                          ! Want derivatives for atmos
 
       ! Frequency Average the spectroscopic derivatives with the appropriate
       ! filter shapes
 
-      if ( spect_der ) then
-
-        do k = 1, no_mol
-          if ( fwdModelConf%moleculeDerivatives(k) ) then
-            !  *** dI/dW
-            call dI_dSomething ( grids_w, k_spect_dw_frq, k_spect_dw, k )
-            !  *** dI/dN
-            call dI_dSomething ( grids_n, k_spect_dn_frq, k_spect_dn, k )
-            !  *** dI/dV
-            call dI_dSomething ( grids_v, k_spect_dv_frq, k_spect_dv, k )
-          end if                        ! Want derivatives for this
-        end do                          ! Loop over major molecules
+      if ( spect_der_center ) then
+        do k = 1, size(fwdModelConf%lineCenter)
+          call frequency_average_derivative &
+            & ( grids_v, k_spect_dv_frq, k_spect_dv(:,ptg_i,:), k )
+        end do
+      end if
+      if ( spect_der_width ) then
+        do k = 1, size(fwdModelConf%lineWidth)
+          call frequency_average_derivative &
+            & ( grids_w, k_spect_dw_frq, k_spect_dw(:,ptg_i,:), k )
+        end do
+      end if
+      if ( spect_der_width_TDep ) then
+        do k = 1, size(fwdModelConf%lineWidth_TDep)
+          call frequency_average_derivative &
+            & ( grids_n, k_spect_dn_frq, k_spect_dn(:,ptg_i,:), k )
+        end do
+      end if
 
         !??? So now we have k_spect_d?.  What do we do with them ???
-
-      end if                        ! Want derivatives for spect
 
       if ( toggle(emit) .and. levels(emit) > 4 ) &
         & call trace_end ( 'ForwardModel.FrequencyAvg' )
     end subroutine Frequency_Average
+
+  ! ...............................  Frequency_Average_Derivative  .....
+    subroutine Frequency_Average_Derivative ( Grids, K_Frq, K, Mol )
+
+      ! Frequency average or simply copy K_Frq to give K, the final
+      ! Jacobian.
+
+      type(grids_T), intent(in) :: Grids
+      real(rp), intent(in) :: K_FRQ(:,:) ! To be averaged  Frq X Grid
+      real(r4), intent(out) :: K(:,:)    ! Averaged        Chan X Grid
+      integer, intent(in) :: Mol         ! Which molecule
+
+      integer :: Channel, I, ShapeInd, SigInd
+      real(rp) :: R    ! Frequency-averaged value
+      integer :: SV_I  ! State-vector index
+
+      if ( fwdModelConf%do_freq_avg ) then
+        ! Do DACs stuff for all DACs channels first
+        do i = 1, noUsedDACS
+          shapeInd = MatchSignal ( dacsFilterShapes%signal, &
+            & fwdModelConf%signals(usedDacsSignals(i)), sideband = thisSideband )
+          do sv_i = grids%l_v(mol-1)+1, grids%l_v(mol)
+            call Freq_Avg_DACS ( frequencies, DACSFilterShapes(shapeInd), &
+              & k_frq(:,sv_i), DACsStaging2(:,sv_i,i) )
+          end do                  ! Surface loop X Instance loop
+        end do
+        ! Now go through channel by channel
+        do i = 1, noUsedChannels
+          sigInd = channels(i)%signal
+          channel = channels(i)%used
+          shapeInd = MatchSignal ( filterShapes%signal, &
+            & fwdModelConf%signals(sigInd),             &
+            & sideband = thisSideband, channel=channel )
+          do sv_i = grids%l_v(mol-1)+1, grids%l_v(mol)
+            if ( grids%deriv_flags(sv_i) ) then
+              if ( channels(i)%dacs == 0 ) then
+                call Freq_Avg ( frequencies,            &
+                  & FilterShapes(shapeInd)%FilterGrid,  &
+                  & FilterShapes(shapeInd)%FilterShape, &
+                  & k_frq(1:noFreqs,sv_i), r )
+              else
+                r = DACsStaging2 ( channel, sv_i, channels(i)%dacs )
+              end if
+            else
+              r = 0.0
+            end if
+            k(i,sv_i) = r
+          end do                ! Grid loop
+        end do                  ! Channel loop
+      else                      ! Else not frequency averaging, just copy it
+        do sv_i = grids%l_v(mol-1)+1, grids%l_v(mol)
+          if ( grids%deriv_flags(sv_i) ) then
+            k(:,sv_i) = min ( max ( k_frq(:,sv_i), &
+                          &   real(-huge(0.0_r4), rp ) ), &
+                          &   real( huge(0.0_r4), rp ) )
+          else
+            k(:,sv_i) = 0.0
+          end if
+        end do
+      end if                    ! Frequency averaging or not
+    end subroutine Frequency_Average_Derivative
 
   ! .............................................  Frequency_Loop  .....
     subroutine Frequency_Loop ( Alpha_Path_c, Beta_Path_c, C_Inds, Del_S,    &
@@ -2699,13 +2477,14 @@ contains
               & 0.5 * ( alpha_path_c(j) + alpha_path_c(j+1) ) * del_s(j)
         end do
 
-        call get_GL_inds ( do_gl, gl_inds, cg_inds, ngl, ncg )
+        call get_GL_inds ( do_gl, gl_inds_b, cg_inds, ngl, ncg )
+        gl_inds => gl_inds_b(:ngl)
         ! ngl is ng * count(do_gl)
-        t_path_f(:ngl) = t_path(gl_inds(:ngl))
+        t_path_f(:ngl) = t_path(gl_inds)
 
         if ( pfa ) then
 
-          call get_beta_path_PFA ( frq, frq_i, z_path, gl_inds(:ngl), t_path_f(:ngl),  &
+          call get_beta_path_PFA ( frq, frq_i, z_path, gl_inds, t_path_f(:ngl),   &
             & beta_group%PFA(sx), vel_rel, beta_path_f(:ngl,:), t_der_path_flags, &
             & dbeta_dT_path_f, dbeta_dw_path_f, dbeta_dn_path_f, dbeta_dv_path_f )
 
@@ -2724,7 +2503,7 @@ contains
 
           call get_beta_path ( Frq, p_path, t_path_f(:ngl), tanh1_f(1:ngl),    &
             & beta_group%lbl(sx), fwdModelConf%polarized, gl_slabs,            &
-            & gl_inds(:ngl), beta_path_f(:ngl,:), t_der_path_flags, dTanh_dT_f,&
+            & gl_inds, beta_path_f(:ngl,:), t_der_path_flags, dTanh_dT_f,      &
             & vel_rel, &
             & dbeta_dT_path_f, dbeta_dw_path_f, dbeta_dn_path_f, dbeta_dv_path_f )
 
@@ -2744,15 +2523,15 @@ contains
 
         if ( FwdModelConf%anyPFA(sx) ) then
           ! Doing PFA, or doing LBL but will be doing PFA
-          call get_tau ( frq_i, gl_inds(1:ngl), cg_inds(1:ncg), e_rflty, &
-            & del_zeta, alpha_path_c, ref_corr, incoptdepth, alpha_path_f(1:ngl), &
+          call get_tau ( frq_i, gl_inds, cg_inds(1:ncg), e_rflty, del_zeta, &
+            & alpha_path_c, ref_corr, incoptdepth, alpha_path_f(1:ngl),     &
             & dsdz_gw_path, tau )
             i_stop = tau%i_stop(frq_i)
         else if ( .not. fwdModelConf%polarized ) then
           ! Not doing PFA, and not going to do it
-          call rad_tran ( gl_inds(1:ngl), cg_inds(1:ncg), e_rflty, del_zeta, &
-            & alpha_path_c, ref_corr,incoptdepth, alpha_path_f(1:ngl),       &
-            & dsdz_gw_path, t_script(:,frq_i), tau%tau(:npc,frq_i),          &
+          call rad_tran ( gl_inds, cg_inds(1:ncg), e_rflty, del_zeta,       &
+            & alpha_path_c, ref_corr,incoptdepth, alpha_path_f(1:ngl),      &
+            & dsdz_gw_path, t_script(:,frq_i), tau%tau(:npc,frq_i),         &
             & radV(frq_i), i_stop )
             tau%i_stop(frq_i) = i_stop
         else ! Polarized model
@@ -2764,7 +2543,7 @@ contains
           ! Get the corrections to integrals for layers that need GL for
           ! the polarized species.
           call get_beta_path_polarized ( frq, h, beta_group%lbl(sx), gl_slabs, &
-            & gl_inds(:ngl), beta_path_polarized_f, dBeta_dT_polarized_path_f )
+            & gl_inds, beta_path_polarized_f, dBeta_dT_polarized_path_f )
 
           ! We put an explicit extent of -1:1 for the first dimension in
           ! the hope a clever compiler will do better optimization with
@@ -2780,7 +2559,7 @@ contains
               & 0.25 * alpha_path_f(j)
           end do
 
-          call rad_tran_pol ( gl_inds(1:ngl), cg_inds(1:ncg), e_rflty, del_zeta,    &
+          call rad_tran_pol ( gl_inds, cg_inds(1:ncg), e_rflty, del_zeta,    &
             & alpha_path_polarized(:,1:npc), ref_corr, incoptdepth_pol(:,:,1:npc),  &
             & deltau_pol(:,:,1:npc), alpha_path_polarized_f(:,1:ngl), dsdz_gw_path, &
             & ct, stcp, stsp, t_script(:,frq_i), prod_pol(:,:,1:npc),               &
@@ -2813,10 +2592,10 @@ contains
           ! Same code works for PFA and non-PFA (it knows which one it's
           ! working on).  Results of PFA and non-PFA don't need to be combined
           ! because we never process the same molecule both ways.
-          call drad_tran_df ( c_inds, gl_inds(1:ngl), del_zeta,      &
-            &  Grids_f, beta_path_c, eta_fzp, sps_path, do_calc_fzp, &
-            &  beta_path_f, do_gl, del_s, ref_corr, dsdz_gw_path,    &
-            &  t_script(:,frq_i), tau%tau(:npc,frq_i), i_stop,       &
+          call drad_tran_df ( c_inds, gl_inds, del_zeta, Grids_f, &
+            &  beta_path_c, eta_fzp, sps_path, do_calc_fzp,       &
+            &  beta_path_f, do_gl, del_s, ref_corr, dsdz_gw_path, &
+            &  t_script(:,frq_i), tau%tau(:npc,frq_i), i_stop,    &
             &  d_delta_df(1:npc,:), k_atmos_frq(frq_i,:) )
 
           if ( .not. pfa_or_not_pol ) then
@@ -2853,29 +2632,28 @@ contains
           call dt_script_dt ( t_path_c, eta_zxp_t_c(1:npc,:), frq, &
                             & d_t_scr_dt(1:npc,:) )
 
-          dh_dt_path_f(:ngl,:) = dh_dt_path(gl_inds(:ngl),:)
-          do_calc_t_f(:ngl,:) = do_calc_t(gl_inds(:ngl),:)
-          eta_zxp_t_f(:ngl,:) = eta_zxp_t(gl_inds(:ngl),:)
-          h_path_f(:ngl) = h_path(gl_inds(:ngl))
-          dAlpha_dT_path_c(:npc) = sum( sps_path(c_inds,:) *         &
+          dh_dt_path_f(:ngl,:) = dh_dt_path(gl_inds,:)
+          do_calc_t_f(:ngl,:) = do_calc_t(gl_inds,:)
+          eta_zxp_t_f(:ngl,:) = eta_zxp_t(gl_inds,:)
+          h_path_f(:ngl) = h_path(gl_inds)
+          dAlpha_dT_path_c(:npc) = sum( sps_path(c_inds,:) *  &
                                         dBeta_dT_path_c(1:npc,:),dim=2 )
-          dAlpha_dT_path_f(:ngl) = sum( sps_path(gl_inds(1:ngl),:) * &
+          dAlpha_dT_path_f(:ngl) = sum( sps_path(gl_inds,:) * &
                                         dBeta_dT_path_f(1:ngl,:),dim=2 )
 
           if ( pfa_or_not_pol ) then
 
             call drad_tran_dt ( del_zeta, h_path_c,                         &
-              & dh_dt_path_c(1:npc,:),alpha_path_c,                         &
+              & dh_dt_path_c(1:npc,:), alpha_path_c,                        &
               & dAlpha_dT_path_c(:npc), eta_zxp_t_c(1:npc,:),               &
               & do_calc_t_c(1:npc,:), do_calc_hyd_c(1:npc,:), del_s,        &
               & ref_corr, Req + one_tan_ht(1), dh_dt_path(brkpt,:),         &
-              & do_gl, gl_inds(1:ngl), h_path_f(:ngl),                      &
-              & t_path_f(:ngl), dh_dt_path_f(:ngl,:), alpha_path_f(1:ngl),  &
+              & do_gl, gl_inds, h_path_f(:ngl), t_path_f(:ngl),             &
+              & dh_dt_path_f(:ngl,:), alpha_path_f(1:ngl),                  &
               & dAlpha_dT_path_f(:ngl), eta_zxp_t_f(:ngl,:),                &
               & do_calc_t_f(:ngl,:), path_dsdh, dhdz_gw_path, dsdz_gw_path, &
               & t_script(:,frq_i), d_t_scr_dt(1:npc,:), tau%tau(:npc,frq_i),&
-              & i_stop, grids_tmp%deriv_flags, drad_dt )
-            k_temp_frq(frq_i,:) = drad_dt
+              & i_stop, grids_tmp%deriv_flags, k_temp_frq(frq_i,:) )
 
           else ! pol and not pfa
 
@@ -2889,12 +2667,10 @@ contains
               do l = -1, 1
                 dAlpha_dT_polarized_path_c(l,1:npc) = &
               & dAlpha_dT_polarized_path_c(l,1:npc) + &
-                  & sps_path(c_inds,j) *              &
-                  & dBeta_dT_polarized_path_c(l,1:npc,j)
+                  & sps_path(c_inds,j) * dBeta_dT_polarized_path_c(l,1:npc,j)
                 dAlpha_dT_polarized_path_f(l,1:ngl) = &
               & dAlpha_dT_polarized_path_f(l,1:ngl) + &
-                  & sps_path(gl_inds(1:ngl),j) *      &
-                  & dBeta_dT_polarized_path_f(l,1:ngl,j)
+                  & sps_path(gl_inds,j) * dBeta_dT_polarized_path_f(l,1:ngl,j)
               end do ! l
             end do ! j
             do l = -1, 1
@@ -2912,7 +2688,7 @@ contains
               & dAlpha_dT_path_c(:npc), dAlpha_dT_path_f(:ngl),             &
               & dAlpha_dT_polarized_path_c, dAlpha_dT_polarized_path_f,     &
               & eta_zxp_t_c(1:p_stop,:), eta_zxp_t_f(:ngl,:), del_s,        &
-              & gl_inds(:ngl), del_zeta, do_calc_t_c(1:p_stop,:),           &
+              & gl_inds, del_zeta, do_calc_t_c(1:p_stop,:),                 &
               & do_calc_t_f(:ngl,:), do_gl(1:p_stop), path_dsdh,            &
               & dhdz_gw_path, dsdz_gw_path, incoptdepth_pol(:,:,1:p_stop),  &
               & ref_corr(1:p_stop), h_path_c, h_path_f(:ngl),               &
@@ -2941,51 +2717,41 @@ contains
 
         if ( spect_der ) then
 
-          if ( pfa ) then
+          if ( fwdModelConf%polarized ) then
+            call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & "Spectroscopic derivatives for Polarized species not implemented yet." )
+          else if ( pfa ) then
             call MLSMessage ( MLSMSG_Error, ModuleName, &
               & "Spectroscopic derivatives for PFA not implemented yet." )
-          else if ( .not. fwdModelConf%polarized ) then
+          else
+
             ! Spectroscopic derivative  wrt: W
 
-            do_calc_w_f(:ngl,:) = do_calc_w(gl_inds(:ngl),:)
-            eta_zxp_w_f(:ngl,:) = eta_zxp_w(gl_inds(:ngl),:)
-            call drad_tran_dx ( del_zeta, grids_w,                     &
-              &  dbeta_dw_path_c(1:npc,:), eta_zxp_w_c(1:npc,:),       &
-              &  sps_path(c_inds,:), do_calc_w_c(1:npc,:),             &
-              &  dbeta_dw_path_f(:ngl,:), eta_zxp_w_f(:ngl,:),         &
-              &  sps_path(gl_inds(1:ngl),:), do_calc_w_f(:ngl,:),      &
-              &  do_gl, gl_inds(:ngl), del_s,  ref_corr, dhdz_gw_path, &
-              &  t_script(:,frq_i), tau%tau(:npc,frq_i), i_stop, drad_dw )
-
-            k_spect_dw_frq(frq_i,1:f_len_w) = drad_dw(1:f_len_w)
+            if ( spect_der_width ) &
+              & call drad_tran_dx ( c_inds, gl_inds, del_zeta, grids_w,      &
+                &  sps_path, eta_zxp_w, do_calc_w, dbeta_dw_path_c,          &
+                &  dbeta_dw_path_f, do_gl,  del_s, ref_corr, dhdz_gw_path,   &
+                &  t_script(:,frq_i), tau%tau(:npc,frq_i), i_stop,           &
+                &  k_spect_dw_frq(frq_i,:) )
 
             ! Spectroscopic derivative  wrt: N
 
-            do_calc_n_f(:ngl,:) = do_calc_n(gl_inds(:ngl),:)
-            eta_zxp_n_f(:ngl,:) = eta_zxp_n(gl_inds(:ngl),:)
-            call drad_tran_dx ( del_zeta, grids_n,                     &
-              &  dbeta_dn_path_c(1:npc,:), eta_zxp_n_c(1:npc,:),       &
-              &  sps_path(c_inds,:), do_calc_n_c(1:npc,:),             &
-              &  dbeta_dn_path_f(:ngl,:), eta_zxp_n_f(:ngl,:),         &
-              &  sps_path(gl_inds(1:ngl),:), do_calc_n_f(:ngl,:),      &
-              &  do_gl, gl_inds(:ngl), del_s, ref_corr, dhdz_gw_path,  &
-              &  t_script(:,frq_i), tau%tau(:npc,frq_i), i_stop, drad_dn )
-
-            k_spect_dn_frq(frq_i,1:f_len_n) = drad_dn(1:f_len_n)
+            if ( spect_der_width_TDep ) &
+              & call drad_tran_dx ( c_inds, gl_inds, del_zeta, grids_n,      &
+                &  sps_path, eta_zxp_n, do_calc_n, dbeta_dn_path_c,          &
+                &  dbeta_dn_path_f, do_gl, del_s, ref_corr, dhdz_gw_path,    &
+                &  t_script(:,frq_i), tau%tau(:npc,frq_i), i_stop,           &
+                &  k_spect_dn_frq(frq_i,:) )
 
             ! Spectroscopic derivative  wrt: Nu0
 
-            do_calc_v_f(:ngl,:) = do_calc_v(gl_inds(:ngl),:)
-            eta_zxp_v_f(:ngl,:) = eta_zxp_v(gl_inds(:ngl),:)
-            call drad_tran_dx ( del_zeta, grids_v,                     &
-              &  dbeta_dv_path_c(1:npc,:), eta_zxp_v_c(1:npc,:),       &
-              &  sps_path(c_inds,:), do_calc_v_c(1:npc,:),             &
-              &  dbeta_dv_path_f(:ngl,:), eta_zxp_v_f(:ngl,:),         &
-              &  sps_path(gl_inds(1:ngl),:), do_calc_v_f(:ngl,:),      &
-              &  do_gl, gl_inds(:ngl), del_s, ref_corr, dhdz_gw_path,  &
-              &  t_script(:,frq_i), tau%tau(:npc,frq_i), i_stop, drad_dv )
+            if ( spect_der_center ) &
+              & call drad_tran_dx ( c_inds, gl_inds, del_zeta, grids_v,      &
+                &  sps_path, eta_zxp_v, do_calc_v, dbeta_dv_path_c,          &
+                &  dbeta_dv_path_f, do_gl, del_s, ref_corr, dhdz_gw_path,    &
+                &  t_script(:,frq_i), tau%tau(:npc,frq_i), i_stop,           &
+                &  k_spect_dv_frq(frq_i,:) )
 
-            k_spect_dv_frq(frq_i,1:f_len_v) = drad_dv(1:f_len_v)
           end if
 
         end if
@@ -3100,14 +2866,15 @@ contains
         & call allocate_test ( k_atmos_frq, maxNoPtgFreqs, size(grids_f%values), 'k_atmos_frq',&
                              & moduleName )
 
-      if ( spect_der ) then
-        call allocate_test ( k_spect_dw_frq , maxNoPtgFreqs, f_len_w, &
-                           & 'k_spect_dw_frq', moduleName )
-        call allocate_test ( k_spect_dn_frq , maxNoPtgFreqs, f_len_n, &
-                           & 'k_spect_dn_frq', moduleName )
-        call allocate_test ( k_spect_dv_frq , maxNoPtgFreqs, f_len_v, &
-                           & 'k_spect_dv_frq', moduleName )
-      end if
+      if ( spect_der_width ) &
+        & call allocate_test ( k_spect_dw_frq , maxNoPtgFreqs, f_len_w, &
+                            & 'k_spect_dw_frq', moduleName )
+      if ( spect_der_width_TDep ) &
+        & call allocate_test ( k_spect_dn_frq , maxNoPtgFreqs, f_len_n, &
+                            & 'k_spect_dn_frq', moduleName )
+      if ( spect_der_center ) &
+        & call allocate_test ( k_spect_dv_frq , maxNoPtgFreqs, f_len_v, &
+                            & 'k_spect_dv_frq', moduleName )
 
       if ( any_der ) &
         & call allocate_test ( DACsStaging2, ubound(DACsStaging,1), &
@@ -3285,6 +3052,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.242  2005/09/03 01:21:33  vsnyder
+! Spectral parameter offsets stuff
+!
 ! Revision 2.241  2005/08/03 18:03:42  vsnyder
 ! Scan averaging, some spectroscopy derivative stuff
 !
