@@ -33,7 +33,7 @@ module SLABS_SW_M
     real(r8), dimension(:), pointer :: y => NULL()
     real(r8), dimension(:), pointer :: yi => NULL()
     real(r8), dimension(:), pointer :: slabs1 => NULL()
-    ! Contribution of dx1_dv0 and dy_dv0 in d Beta / d Nu0 cancels out.
+    ! Contribution of dx1_dv0 and dy_dv0 in d Beta / d Nu0 cancel.
     ! See Slabs_DSpectral.
 !   real(r8), dimension(:), pointer :: dx1_dv0 => NULL()
 !   real(r8), dimension(:), pointer :: dy_dv0 => NULL()
@@ -83,7 +83,6 @@ contains
   subroutine AllocateOneSlabs ( Slabs, Catalog, TempDer )
     ! Allocates the items in a slabs structure
     use Allocate_Deallocate, only: ALLOCATE_TEST
-    use SpectroscopyCatalog_m, only: Catalog_T
     type (slabs_struct), intent(inout) :: slabs ! Slabs to allocate
     type (catalog_t), target, intent(in) :: Catalog
     logical, intent(in), optional :: TempDer    ! "Allocate temperature
@@ -138,7 +137,6 @@ contains
   ! Allocate an array of slabs structures, and then the items in each one
 
     use Allocate_Deallocate, only: Test_Allocate
-    use SpectroscopyCatalog_m, only: Catalog_T
 
     type (slabs_struct), dimension(:,:), pointer :: Slabs
     integer, intent(in) :: No_Ele
@@ -150,7 +148,7 @@ contains
     integer :: I, J
 
     allocate ( slabs(no_ele, size(catalog)), stat=i )
-    call test_allocate ( i, moduleName, 'Slabs', (/1,1/), (/no_ele,size(catalog)/) )
+    call test_allocate ( i, caller, 'Slabs', (/1,1/), (/no_ele,size(catalog)/) )
 
     do i = 1, size(catalog)
       do j = 1, no_ele
@@ -2183,7 +2181,7 @@ contains
   elemental subroutine Slabs_prep_struct ( T, P, Catalog, VelCor, Derivs, Slabs )
   ! Fill all the fields of the Slabs structure
 
-    use SpectroscopyCatalog_m, only: Catalog_T, Lines
+    use SpectroscopyCatalog_m, only: Lines
 
     ! inputs:
 
@@ -2239,7 +2237,7 @@ contains
     & Derivs, Slabs, DV0, DW, DN )
   ! Fill all the fields of the Slabs structure
 
-    use SpectroscopyCatalog_m, only: Catalog_T, Lines
+    use SpectroscopyCatalog_m, only: Lines
 
     ! inputs:
 
@@ -2528,7 +2526,7 @@ contains
 
     use Molecules, only: L_Extinction
     use Physics, only: SpeedOfLight
-    use SpectroscopyCatalog_m, only: Catalog_T, Lines
+    use SpectroscopyCatalog_m, only: Lines
 
     real(rp), intent(in) :: p_path(:) ! Pressure in hPa or mbar
     real(rp), intent(in) :: t_path(:)
@@ -2594,12 +2592,16 @@ contains
         if ( temp_der ) temp_der = t_der_flags(j)
         if ( offset ) then
           dv0 = 0.0; dw = 0.0; dn = 0.0
-          if ( doCenter .and. lineCenter_ix(i) /= 0 ) &
-            dv0 = lineCenter(j,lineCenter_ix(i))
-          if ( doWidth .and. lineWidth_ix(i) /= 0 ) &
-            dw = lineWidth(j,lineWidth_ix(i))
-          if ( doWidth_TDep .and. lineWidth_TDep_ix(i) /= 0 ) &
-            dn = lineWidth_TDep(j,lineWidth_TDep_ix(i))
+          if ( doCenter ) then
+            if ( lineCenter_ix(i) /= 0 ) dv0 = lineCenter(j,lineCenter_ix(i))
+          end if
+          if ( doWidth ) then
+            if ( lineWidth_ix(i) /= 0 ) dw = lineWidth(j,lineWidth_ix(i))
+          end if
+          if ( doWidth_TDep ) then
+            if ( lineWidth_TDep_ix(i) /= 0 ) &
+              dn = lineWidth_TDep(j,lineWidth_TDep_ix(i))
+          end if
           call slabs_prep_struct_offset ( t_path(j), p_path(j), catalog, &
             & Vel_z_correction, temp_der, gl_slabs(j,i), dv0, dw, dn )
         else
@@ -2654,6 +2656,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.47  2005/09/03 01:21:33  vsnyder
+! Spectral parameter offsets stuff
+!
 ! Revision 2.46  2005/08/03 18:02:31  vsnyder
 ! Some spectroscopy derivative stuff, finish v0s modification
 !
