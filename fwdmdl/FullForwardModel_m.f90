@@ -1010,9 +1010,9 @@ contains
       call allocate_test ( eta_zxp_v, max_ele, f_len_v, 'eta_zxp_v', &
                         &  moduleName )
       if ( spect_der ) then
-        call allocate_test ( k_spect_dv, noUsedChannels, no_tan_hts, grids_v%l_v(f_len_v), &
+        call allocate_test ( k_spect_dv, noUsedChannels, no_tan_hts, f_len_v, &
           & 'k_spect_dv', moduleName )
-        call allocate_test ( dbeta_dv_path_c,    npc, no_mol, &
+        call allocate_test ( dbeta_dv_path_c,     npc, no_mol, &
           & 'dbeta_dv_path_c', moduleName )
         call allocate_test ( dbeta_dv_path_f, max_ele, no_mol, &
           & 'dbeta_dv_path_f', moduleName )
@@ -1031,9 +1031,9 @@ contains
       call allocate_test ( eta_zxp_w, max_ele, f_len_w, 'eta_zxp_w', &
                         &  moduleName )
       if ( spect_der ) then
-        call allocate_test ( k_spect_dw, noUsedChannels, no_tan_hts, grids_w%l_v(f_len_v), &
+        call allocate_test ( k_spect_dw, noUsedChannels, no_tan_hts, f_len_w, &
           & 'k_spect_dw', moduleName )
-        call allocate_test ( dbeta_dw_path_c,    npc, no_mol, &
+        call allocate_test ( dbeta_dw_path_c,     npc, no_mol, &
           & 'dbeta_dw_path_c', moduleName )
         call allocate_test ( dbeta_dw_path_f, max_ele, no_mol, &
           & 'dbeta_dw_path_f', moduleName )
@@ -1050,9 +1050,9 @@ contains
       call allocate_test ( spect_n_path, max_ele, size(fwdModelConf%lineWidth_TDep), &
         & 'spect_n_path', moduleName )
       if ( spect_der ) then
-        call allocate_test ( k_spect_dn, noUsedChannels, no_tan_hts, grids_n%l_v(f_len_v), &
+        call allocate_test ( k_spect_dn, noUsedChannels, no_tan_hts, f_len_n, &
           & 'k_spect_dn', moduleName )
-        call allocate_test ( dbeta_dn_path_c,    npc, no_mol, &
+        call allocate_test ( dbeta_dn_path_c,     npc, no_mol, &
           & 'dbeta_dn_path_c', moduleName )
         call allocate_test ( dbeta_dn_path_f, max_ele, no_mol, &
           & 'dbeta_dn_path_f', moduleName )
@@ -3052,6 +3052,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.243  2005/09/17 00:49:53  vsnyder
+! Revise arrays for spectroscopic derivatives, plus some cannonball polishing
+!
 ! Revision 2.242  2005/09/03 01:21:33  vsnyder
 ! Spectral parameter offsets stuff
 !
