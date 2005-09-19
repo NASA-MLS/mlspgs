@@ -314,6 +314,7 @@ rowQuantity
 rows
 rowSurfaces
 
+saveObstructions
 scale
 scanAverage
 scanLowerLimit
@@ -407,6 +408,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.150  2005/09/19 16:55:06  pwagner
+# Save Obstructions will allow OutputClose to faithfully replicate data gaps
+#
 # Revision 2.149  2005/09/16 23:38:04  vsnyder
 # Add spect_der field to ForwardModel
 #
