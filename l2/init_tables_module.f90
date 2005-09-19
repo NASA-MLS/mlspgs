@@ -615,6 +615,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_criticalModules, t+t_criticalModule, n+n_field_type, &
              begin, f+f_criticalSignals, t+t_string, n+n_field_type, &
              begin, f+f_maxGap, t+t_numeric, n+n_field_type, &
+             begin, f+f_saveObstructions, t+t_boolean, n+n_field_type, &
              begin, f+f_skipL1BCheck, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
@@ -1378,6 +1379,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.413  2005/09/19 16:55:06  pwagner
+! Save Obstructions will allow OutputClose to faithfully replicate data gaps
+!
 ! Revision 2.412  2005/09/16 23:38:04  vsnyder
 ! Add spect_der field to ForwardModel
 !
