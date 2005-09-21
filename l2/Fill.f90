@@ -1756,7 +1756,7 @@ contains ! =====     Public Procedures     =============================
         case ( l_status )
           if ( got(f_ifMissingGMAO) ) then
             if ( MissingGMAO ) call ExplicitFillVectorQuantity ( quantity, &
-              & valuesNode, .true., phyq_Invalid, .true., verbose=.true. )
+              & valuesNode, .true., phyq_Invalid, .true., options='-v' )
 !             if ( MissingGMAO ) call FillStatusQuantity ( key, quantity, &
 !               & sourceQuantity, statusValue, &
 !               & 0._r8, 0._r8, heightNode, additional )
@@ -5208,7 +5208,8 @@ contains ! =====     Public Procedures     =============================
     !=============================================== ExplicitFillVectorQuantity ==
     subroutine ExplicitFillVectorQuantity ( quantity, valuesNode, spreadFlag, &
       & globalUnit, dontmask, &
-      & AzEl, whereNotFill, whereFill, FillValue, verbose )
+      & AzEl, options, FillValue )
+      ! & AzEl, whereNotFill, whereFill, FillValue, verbose )
 
       ! This routine is called from MLSL2Fill to fill values from an explicit
       ! fill command line
@@ -5223,11 +5224,19 @@ contains ! =====     Public Procedures     =============================
         ! desired quantity is components of Mag in the coordinate system to
         ! which Az and El are referenced.  So the number of values has to be
         ! a multiple of 3.
-      logical, intent(in), optional :: verbose       ! Print some extra stuff
+      ! logical, intent(in), optional :: verbose       ! Print some extra stuff
       ! The next two determine which values to replace
-      logical, intent(in), optional :: whereNotFill  ! only values /= FillValue
-      logical, intent(in), optional :: whereFill     ! only values == FillValue
+      ! logical, intent(in), optional :: whereNotFill  ! only values /= FillValue
+      ! logical, intent(in), optional :: whereFill     ! only values == FillValue
                                           ! (defaults to replacing all)
+      ! The options are peculiar to this procedure, apart from verbose
+      ! option           meaning
+      ! ------           -------
+      !   v              verbose
+      !   e              replace only values in quantity == FillValue
+      !   n              replace only values in quantity != FillValue
+      !                   (defaults to replacing all)
+      character (len=*), optional, intent(in) :: options ! E.g., '-v'
       real(r8), intent(in), optional :: FillValue
 
       ! Local variables
@@ -5235,19 +5244,22 @@ contains ! =====     Public Procedures     =============================
       integer :: I,J                      ! Other indices
       logical :: MyAzEl
       real(kind(quantity%values)) :: myFillValue
-      logical :: myVerbose
-      logical :: mywhereFill
-      logical :: mywhereNotFill
+      character (len=8) :: myOptions
       integer :: NoValues
       integer :: TestUnit                 ! Unit to use
       integer, dimension(2) :: unitAsArray ! Unit for value given
-      real (r8), dimension(2) :: valueAsArray ! Value given
       real (r8), pointer, dimension(:) :: VALUES
+      real (r8), dimension(2) :: valueAsArray ! Value given
+      logical :: Verbose
+      ! logical :: mywhereFill
+      ! logical :: mywhereNotFill
       character(len=2) :: whichToReplace ! '/=' (.ne. fillValue), '==', or ' ' (always)
 
       ! Executable code
       myAzEl = .false.
       if ( present(azEl) ) myAzEl = azEl
+      myOptions = ' '
+      if ( present(options) ) myOptions = options
 
       testUnit = quantity%template%unit
       if ( globalUnit /= phyq_Invalid ) testUnit = globalUnit
@@ -5257,17 +5269,18 @@ contains ! =====     Public Procedures     =============================
       if ( present(FillValue) ) myFillValue = FillValue
       
       whichToReplace = ' '
-      mywhereFill = .false.
-      mywhereNotFill = .false.
-      if ( present(whereFill) ) mywhereFill = whereFill
-      if ( present(whereNotFill) ) mywhereNotFill = whereNotFill
-      if ( mywhereFill ) then
+      ! mywhereFill = .false.
+      ! mywhereNotFill = .false.
+      ! if ( present(whereFill) ) mywhereFill = whereFill
+      ! if ( present(whereNotFill) ) mywhereNotFill = whereNotFill
+      if ( index(myOptions, 'e') > 0 ) then
         whichToReplace = '=='
-      elseif ( mywhereNotFill ) then
+      elseif ( index(myOptions, 'n') > 0 ) then
         whichToReplace = '/='
       endif
-      myVerbose = .false.
-      if ( present(verbose) ) myVerbose = verbose
+      ! myVerbose = .false.
+      ! if ( present(verbose) ) myVerbose = verbose
+      verbose = ( index(myOptions, 'v') > 0 )
       ! Check the dimensions work out OK
       if ( myAzEl .and. mod(noValues,3) /= 0 ) &
           & call Announce_Error ( valuesNode, invalidExplicitFill )
@@ -5320,7 +5333,7 @@ contains ! =====     Public Procedures     =============================
         end do
       end if
 
-      if ( myVerbose ) then
+      if ( verbose ) then
         call output('Explicit fill of values for ', advance='no')
         call display_string ( quantity%template%name )
         call newline
@@ -5345,7 +5358,7 @@ contains ! =====     Public Procedures     =============================
         end do
       end do
 
-      if ( myVerbose ) then
+      if ( verbose ) then
         call output(quantity%values(1,:))
         call newline
       endif
@@ -6893,6 +6906,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.310  2005/09/21 23:21:58  pwagner
+! Use of single arg options in ExplicitFillVectorQuantity replaces three
+!
 ! Revision 2.309  2005/08/04 03:28:50  vsnyder
 ! Correct fill for goofy L1BMIF_TAI, lots of cannonball polishing
 !
