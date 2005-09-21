@@ -16,7 +16,7 @@ module HGrid                    ! Horizontal grid information
   implicit none
   private
   public :: CreateHGridFromMLSCFInfo, ComputeNextChunksHGridOffsets, &
-    & ComputeAllHGridOffsets
+    & ComputeAllHGridOffsets, DealWithObstructions
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -27,6 +27,7 @@ module HGrid                    ! Horizontal grid information
 ! -----     Private declarations     ---------------------------------
 
   integer, private :: ERROR
+  logical, parameter     :: DEEBUG = .false.
   logical, parameter :: DONTPAD = .false.
 
   interface PlaceArray
@@ -141,7 +142,6 @@ contains ! =====     Public Procedures     =============================
     call nullifyHGrid ( hgrid ) ! for Sun's rubbish compiler
     
     hGrid%name = name
-    ! hGrid%allowPriorOverlaps = ChunkDivideConfig%allowPriorOverlaps
     if ( toggle(gen) ) call trace_begin ( "CreateHGridFromMLSCFInfo", root )
 
     got_field = .false.
@@ -481,7 +481,6 @@ contains ! =====     Public Procedures     =============================
     real(rk), dimension(:), pointer :: interpolatedIndex
     integer ::  hdfVersion
     character (len=NameLen) :: L1BItemName
-    logical, parameter     :: DEEBUG = .false.
     type (MLSFile_T), pointer             :: L1BFile
 
     ! Executable code
@@ -699,6 +698,7 @@ contains ! =====     Public Procedures     =============================
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Chunks_m, only: MLSChunk_T
+    use ChunkDivide_m, only: ChunkDivideConfig
     use Dump_0, only: DUMP
     use EmpiricalGeometry, only: EmpiricalLongitude, ChooseOptimumLon0
     use HGridsDatabase, only: CREATEEMPTYHGRID, HGRID_T, TRIMHGRID
@@ -733,6 +733,7 @@ contains ! =====     Public Procedures     =============================
     ! one MAF in the chunk
     real(rk), parameter :: ORBITALPERIOD = 98.8418*60.0
 
+    logical :: DEEBUGHERE
     integer :: NOMAFS                   ! From ReadL1B
     integer :: FLAG                     ! From ReadL1B
     integer :: I                        ! Loop counter
@@ -757,11 +758,10 @@ contains ! =====     Public Procedures     =============================
 
     integer ::  hdfVersion
     character(len=NameLen) :: l1bItemName
-    logical     :: deebug = .FALSE.
     type (MLSFile_T), pointer             :: L1BFile
 
     ! Executable code
-    deebug = deebug .or. ( switchDetail(switches, 'hgrid') >= 0 )
+    deebughere = deebug .or. ( switchDetail(switches, 'hgrid') > 0 ) ! e.g., 'hgrid1' 
 
     L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
     hdfversion = L1BFile%HDFVersion
@@ -855,7 +855,7 @@ contains ! =====     Public Procedures     =============================
       hGrid%phi(1,i) = first + (i-1)*spacing
     end do
 
-    if ( switchDetail(switches, 'hgrid') >= 0 .or. deebug ) then
+    if ( switchDetail(switches, 'hgrid') >= 0 .or. deebughere ) then
       call output ( 'Constructing regular hGrid ' )
       if ( hgrid%name /= 0 ) call display_string ( hgrid%name )
       call output ( '', advance='yes' )
@@ -865,7 +865,9 @@ contains ! =====     Public Procedures     =============================
       call output ( maxAngle, format='(F7.2)' )
       call output ( ' nextAngle: ' )
       call output ( nextAngle, format='(F7.2)', advance='yes' )
-      call output ( 'Spacing: ' )
+      call output ( 'Num profiles: ' )
+      call output ( hGrid%noProfs )
+      call output ( ' Spacing: ' )
       call output ( spacing )
       call output ( ' first: ' )
       call output ( first, format='(F7.2)' )
@@ -874,7 +876,11 @@ contains ! =====     Public Procedures     =============================
       call output ( ' firstMAFIndex: ' )
       call output ( chunk%firstMAFIndex )
       call output ( ' lastMAFIndex: ' )
-      call output ( chunk%lastMAFIndex, advance='yes' )
+      call output ( chunk%lastMAFIndex )
+      call output ( ' forbidoverspill: ' )
+      call output ( forbidoverspill, advance='yes' )
+      call output ( ' allowPriorOverlaps: ' )
+      call output ( ChunkDivideConfig%allowPriorOverlaps, advance='yes' )
     end if
 
     ! Now fill the other geolocation information, first latitude
@@ -885,12 +891,12 @@ contains ! =====     Public Procedures     =============================
       & firstMAF=chunk%firstMAFIndex, &
       & lastMAF=chunk%lastMAFIndex, &
       & dontPad=.true. )
-    if ( deebug ) then
+    if ( deebughere ) then
       call dump(l1bField%DpField(1,1,:), l1bItemName)
     end if
     ! Use the average of all the first MIFs to get inclination for chunk
     incline = sum ( l1bField%dpField(1,1,:) ) / noMAFs
-    if ( deebug ) then
+    if ( deebughere ) then
       call dump( (/incline/), 'Average inclination')
     end if
     call DeallocateL1BData ( l1bField )
@@ -907,7 +913,7 @@ contains ! =====     Public Procedures     =============================
       & l1bField, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
       & dontPad=.true. )
-    if ( deebug ) then
+    if ( deebughere ) then
       call dump(l1bField%DpField(1,1,:), trim(l1bItemName) // ' (before interpolating)')
     end if
     if ( chunk%firstMAFIndex /= chunk%lastMAFIndex ) then
@@ -919,7 +925,7 @@ contains ! =====     Public Procedures     =============================
       hGrid%time = l1bField%dpField(1,1,1) + &
         & ( OrbitalPeriod/360.0 ) * ( hGrid%phi - mif1GeodAngle(1) )
     end if
-      if ( deebug ) then
+      if ( deebughere ) then
         call dump(hGrid%time(1,:), trim(l1bItemName) // ' (after interpolating)')
       end if
     call DeallocateL1BData ( l1bField )
@@ -941,13 +947,13 @@ contains ! =====     Public Procedures     =============================
       & l1bField, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
       & dontPad=.true. )
-    if ( deebug ) then
+    if ( deebughere ) then
       call dump(l1bField%DpField(1,1,:), trim(l1bItemName) // ' (before interpolating)')
     end if
     call InterpolateValues ( mif1GeodAngle, l1bField%dpField(1,1,:), &
       & hGrid%phi(1,:), hGrid%solarZenith(1,:), &
       & method='Linear', extrapolate='Allow' )
-    if ( deebug ) then
+    if ( deebughere ) then
       call dump(hGrid%solarZenith(1,:), trim(l1bItemName) // ' (after interpolating)')
     end if
     call DeallocateL1BData ( l1bField )
@@ -960,13 +966,13 @@ contains ! =====     Public Procedures     =============================
       & l1bField, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
       & dontPad=.true. )
-    if ( deebug ) then
+    if ( deebughere ) then
       call dump(l1bField%DpField(1,1,:), trim(l1bItemName) // ' (before interpolating)')
     end if
     call InterpolateValues ( mif1GeodAngle, l1bField%dpField(1,1,:), &
       & hGrid%phi(1,:), hGrid%losAngle(1,:), &
       & method='Linear', extrapolate='Allow' )
-    if ( deebug ) then
+    if ( deebughere ) then
       call dump(hGrid%losAngle(1,:), trim(l1bItemName) // ' (after interpolating)')
     end if
     call DeallocateL1BData ( l1bField )
@@ -986,7 +992,7 @@ contains ! =====     Public Procedures     =============================
     ! So we do a subtraction to get the number in the overlap.
     hGrid%noProfsUpperOverlap = hGrid%noProfs - hGrid%noProfsUpperOverlap
 
-    if ( switchDetail(switches, 'hgrid') >= 0 .or. deebug ) then
+    if ( switchDetail(switches, 'hgrid') >= 0 .or. deebughere ) then
       call output ( 'Initial Hgrid size: ' )
       call output ( hGrid%noProfs ) 
       call output ( ', overlaps: ' )
@@ -1004,7 +1010,7 @@ contains ! =====     Public Procedures     =============================
     if ( forbidOverspill ) then
       call Hunt ( hGrid%time(1,:), processingRange%startTime, &
         & firstProfInRun, allowTopValue=.true., allowBelowValue=.true. )
-      if ( deebug ) then
+      if ( deebughere ) then
         call dump( hGrid%time(1,:), 'Hgrid times')
         call dump( hGrid%time(1,:)-hGrid%time(1,1), 'Hgrid delta times')
         call output ( 'First profile in Run: ' )
@@ -1012,8 +1018,8 @@ contains ! =====     Public Procedures     =============================
         call output ( '    processingRange%startTime: ' )
         call output ( processingRange%startTime, advance='yes' )
       end if
-      if ( firstProfInRun > 0 .and. forbidOverspill ) then
-        if ( switchDetail(switches, 'hgrid') >= 0  .or. deebug ) &
+      if ( firstProfInRun > 0 .and. .not. ChunkDivideConfig%allowPriorOverlaps ) then
+        if ( switchDetail(switches, 'hgrid') >= 0  .or. deebughere ) &
           & call output ( 'hGrid starts before run trimming start.', &
           & advance='yes' )
         call TrimHGrid ( hGrid, -1, firstProfInRun )
@@ -1021,14 +1027,14 @@ contains ! =====     Public Procedures     =============================
 
       call Hunt ( hGrid%time(1,:), processingRange%endTime, &
         & lastProfInRun, allowTopValue=.true., allowBelowValue=.true. )
-      if ( deebug ) then
+      if ( deebughere ) then
         call output ( 'Last profile in Run: ' )
         call output ( lastProfInRun, advance='no' )
         call output ( '    processingRange%endTime: ' )
         call output ( processingRange%endTime, advance='yes' )
       end if
-      if ( lastProfInRun < hGrid%noProfs .and. forbidOverspill ) then
-        if ( switchDetail(switches, 'hgrid') >= 0  .or. deebug ) &
+      if ( lastProfInRun < hGrid%noProfs ) then
+        if ( switchDetail(switches, 'hgrid') >= 0  .or. deebughere ) &
           & call output ( 'hGrid ends after run trimming end.',&
           & advance='yes' )
         call TrimHGrid ( hGrid, 1, hGrid%noProfs-lastProfInRun )
@@ -1039,7 +1045,7 @@ contains ! =====     Public Procedures     =============================
     ! overlap regions around if necessary to deal with overspill.
     if ( hGrid%noProfsLowerOverlap+1 <= hGrid%noProfs ) then
       if ( hGrid%time(1,hGrid%noProfsLowerOverlap+1) < processingRange%startTime ) then
-        if ( switchDetail(switches, 'hgrid') >= 0  .or. deebug ) &
+        if ( switchDetail(switches, 'hgrid') >= 0  .or. deebughere ) &
           & call output ( &
           & 'Non overlapped part of hGrid starts before run, extending overlap.', &
           & advance='yes' )
@@ -1051,7 +1057,7 @@ contains ! =====     Public Procedures     =============================
     if ( hGrid%noProfs-hGrid%noProfsUpperOverlap >= 1 ) then
       if ( hGrid%time(1,hGrid%noProfs-hGrid%noProfsUpperOverlap) > &
         & processingRange%endTime ) then
-        if ( switchDetail(switches, 'hgrid') >= 0  .or. deebug ) &
+        if ( switchDetail(switches, 'hgrid') >= 0  .or. deebughere ) &
           & call output ( &
           & 'Non overlapped part of hGrid end after run, extending overlap.', &
           & advance='yes' )
@@ -1088,7 +1094,7 @@ contains ! =====     Public Procedures     =============================
     end if
 
     ! Finally we're done.
-    if ( switchDetail(switches, 'hgrid') >= 0  .or. deebug ) then
+    if ( switchDetail(switches, 'hgrid') >= 0  .or. deebughere ) then
       call output ( 'Final Hgrid size: ' )
       call output ( hGrid%noProfs )
       call output ( ', overlaps: ' )
@@ -1101,6 +1107,81 @@ contains ! =====     Public Procedures     =============================
     call Deallocate_test ( mif1GeodAngle, 'mif1GeodAngle', ModuleName )
 
   end subroutine CreateRegularHGrid
+
+  ! --------------------------------------- DealWithObstructions -----
+  subroutine DealWithObstructions ( HGrid, obstructions )
+    use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
+    use ChunkDivide_m, only: Obstruction_T
+    use HGridsDatabase, only: HGRID_T, CreateEmptyHGrid, DestroyHGridContents
+    type (HGRID_T), pointer :: HGRID
+    type (Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
+    ! This routine modifies the chunks according to the information
+    ! given in the obstructions.
+
+    ! Local variables
+    type (HGRID_T), target :: NEWHGrid ! The one we'll create create
+    integer :: FIRSTMAF                 ! Index of first MAF in range
+    integer :: LASTMAF                  ! Index of last MAF in range
+    integer :: MAF                      ! Index of MAF for wall
+    integer :: newProfile               ! Counter in newHGrid
+    integer :: OBSTRUCTION              ! Loop counter
+    integer :: PROFILE                  ! Loop counter
+    logical, dimension(:), pointer :: obstructed => null()
+
+    ! Executable code
+    ! 1st--some short-circuits
+    if ( hGrid%noProfs < 1 ) return
+    if ( .not. associated(obstructions) ) return
+    if ( .not. associated(hGrid%phi) ) return
+    ! Next--fill obstructed array
+    nullify (obstructed)
+    call Allocate_Test ( obstructed, hGrid%noProfs, &
+      & 'obstructed', ModuleName )
+    obstructed = .false.
+    do obstruction=1, size(obstructions)
+      if ( obstructions(obstruction)%range ) then
+        ! A range obstruction
+        firstMAF = obstructions(obstruction)%mafs(1)
+        lastMAF = obstructions(obstruction)%mafs(2)
+        if ( firstMAF < 0 .or. firstMAF+1 > hGrid%noProfs ) cycle
+        if ( lastMAF < firstMAF .or. lastMAF+1 > hGrid%noProfs ) cycle
+        obstructed(firstMAF+1:lastMAF+1) = .true. ! MAF indexes start at 0
+      else
+        ! A wall obstruction
+        maf = obstructions(obstruction)%mafs(1)
+        if ( maf < 0 .or. maf+1 > hGrid%noProfs ) cycle
+        obstructed(maf+1:maf+1) = .true. ! MAF indexes start at 0
+      endif
+    enddo
+    if ( any(obstructed) ) then
+      newHGrid%noProfs = count( .not. obstructed )
+      call CreateEmptyHGrid(newHGrid)
+      newHGrid%name = hgrid%name
+      newProfile = 0
+      do profile=1, hGrid%noProfs
+        if ( obstructed(profile) ) cycle
+        newProfile = newProfile + 1
+        newHGrid%phi        (1, newProfile) = hgrid%phi        (1, profile)
+        newHGrid%geodLat    (1, newProfile) = hgrid%geodLat    (1, profile)
+        newHGrid%lon        (1, newProfile) = hgrid%lon        (1, profile)
+        newHGrid%time       (1, newProfile) = hgrid%time       (1, profile)
+        newHGrid%solarTime  (1, newProfile) = hgrid%solarTime  (1, profile)
+        newHGrid%solarZenith(1, newProfile) = hgrid%solarZenith(1, profile)
+        newHGrid%losAngle   (1, newProfile) = hgrid%losAngle   (1, profile)
+      enddo
+      if ( hgrid%noProfsLowerOverlap > 0 ) then
+        newHGrid%noProfsLowerOverlap = hgrid%noProfsLowerOverlap &
+          & - count( obstructed(1:hgrid%noProfsLowerOverlap) )
+      endif
+      if ( hgrid%noProfsUpperOverlap > 0 ) then
+        newHGrid%noProfsUpperOverlap = hgrid%noProfsUpperOverlap &
+          & - count( obstructed(hgrid%noProfs-hgrid%noProfsUpperOverlap+1:hgrid%noProfs) )
+      endif
+      call DestroyHGridContents(hGrid)
+      hGrid => newHGrid
+    endif
+    call DeAllocate_Test( obstructed, 'obstructed', ModuleName )
+  end subroutine DealWithObstructions
 
   ! -------------------------------------  DumpChunkHGridGeometry  -----
   subroutine DumpChunkHGridGeometry ( hGrid, chunk, &
@@ -1343,7 +1424,8 @@ contains ! =====     Public Procedures     =============================
                     chunks(chunk)%hGridOffsets(hGrid) = dummyHGrid%noProfs - &
                     & dummyHGrid%noProfsUpperOverlap
                   endif
-                  if ( switchDetail(switches, 'hgrid') >= 0 ) call dump(dummyHGrid)
+                  if ( switchDetail(switches, 'hgrid') >= 0 .and. DEEBUG ) &
+                    & call dump(dummyHGrid)
                   call DestroyHGridContents ( dummyHGrid )
                   hGrid = hGrid + 1
                 end if
@@ -1376,7 +1458,7 @@ contains ! =====     Public Procedures     =============================
       end if
     end do                              ! Chunk loop
     
-    if ( switchDetail(switches, 'hgrid') >= 0 ) then
+    if ( switchDetail(switches, 'hgrid') >= 0 .and. DEEBUG ) then
       sum1 = 0
       sum2 = 0
       sum3 = 0
@@ -1414,7 +1496,7 @@ contains ! =====     Public Procedures     =============================
     end do
     chunks(1)%hGridOffsets = 0
     
-    if ( switchDetail(switches, 'pro') < 0 ) return
+    if ( switchDetail(switches, 'pro') < 0 .and. DEEBUG ) return
     call output ( "Dumping offsets, hgridTotals for all chunks: " , advance='yes')
     do chunk = 1, size ( chunks )
       call output ( chunk )
@@ -1579,6 +1661,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.72  2005/09/21 23:19:47  pwagner
+! Added DealWithObstructions
+!
 ! Revision 2.71  2005/09/14 00:12:33  pwagner
 ! Uses ChunkDivideConfig%allowPriorOverlaps in calculating offsets
 !
