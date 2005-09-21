@@ -40,7 +40,7 @@ module Chunks_m
   end type MLSChunk_T
 
   interface DUMP
-    module procedure Dump_Chunks
+    module procedure Dump_Chunks, Dump_one_chunk
   end interface
 
 contains ! =====     Private Procedures     ============================
@@ -56,21 +56,30 @@ contains ! =====     Private Procedures     ============================
     call output ( size(chunks), advance='yes' )
     do i = 1, size(chunks)
       call output ( i, before=' Chunk ', advance='yes' )
-      call output ( chunks(i)%firstMAFIndex, before='  firstMAFIndex: ' )
-      call output ( chunks(i)%lastMAFIndex, before='  lastMAFIndex: ', advance='yes' )
-      call output ( chunks(i)%noMAFsLowerOverlap, before='  noMAFsLowerOverlap: ' )
-      call output ( chunks(i)%noMAFsUpperOverlap, before='  noMAFsUpperOverlap: ', advance='yes' )
-      call output ( chunks(i)%firstMAFIndex + chunks(i)%noMAFsLowerOverlap, &
-        & before='  1st non-overlapped MAF: ' )
-      call output ( chunks(i)%lastMAFIndex - chunks(i)%noMAFsUpperOverlap, &
-        & before='  last non-overlapped MAF: ', advance='yes' )
-      call output ( chunks(i)%lastMAFIndex - chunks(i)%firstMAFIndex + 1, &
-        & before='  chunk size: ' )
-      call output ( chunks(i)%lastMAFIndex - chunks(i)%firstMAFIndex &
-        & - chunks(i)%noMAFsUpperOverlap - chunks(i)%noMAFsLowerOverlap + 1, &
-        & before='  non-overlapped chunk size: ', advance='yes' )
+      call dump(chunks(i))
     end do
   end subroutine DUMP_CHUNKS
+
+  ! ------------------------------------------------  DUMP_ONE_CHUNK  -----
+  subroutine DUMP_ONE_CHUNK ( CHUNK )
+
+    use Output_M, only: Output
+
+    type(MLSChunk_t), intent(in) :: CHUNK
+      call output ( chunk%firstMAFIndex, before='  firstMAFIndex: ' )
+      call output ( chunk%lastMAFIndex, before='  lastMAFIndex: ', advance='yes' )
+      call output ( chunk%noMAFsLowerOverlap, before='  noMAFsLowerOverlap: ' )
+      call output ( chunk%noMAFsUpperOverlap, before='  noMAFsUpperOverlap: ', advance='yes' )
+      call output ( chunk%firstMAFIndex + chunk%noMAFsLowerOverlap, &
+        & before='  1st non-overlapped MAF: ' )
+      call output ( chunk%lastMAFIndex - chunk%noMAFsUpperOverlap, &
+        & before='  last non-overlapped MAF: ', advance='yes' )
+      call output ( chunk%lastMAFIndex - chunk%firstMAFIndex + 1, &
+        & before='  chunk size: ' )
+      call output ( chunk%lastMAFIndex - chunk%firstMAFIndex &
+        & - chunk%noMAFsUpperOverlap - chunk%noMAFsLowerOverlap + 1, &
+        & before='  non-overlapped chunk size: ', advance='yes' )
+  end subroutine DUMP_ONE_CHUNK
 
 !=======================================================================
   logical function not_used_here()
@@ -85,6 +94,9 @@ contains ! =====     Private Procedures     ============================
 end module Chunks_m
 
 ! $Log$
+! Revision 2.3  2005/09/21 23:22:42  pwagner
+! Dump may dump a single chunk
+!
 ! Revision 2.2  2005/06/22 18:57:01  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
