@@ -2208,8 +2208,8 @@ contains ! =====     Public Procedures     =============================
     ! Executable code
     myOptions = ' '
     if ( present(options) ) myOptions = options
-    verbose = ( index(myOptions, '-v') > 0 )
-    repair  = ( index(myOptions, '-r') > 0 )
+    verbose = ( index(myOptions, 'v') > 0 )
+    repair  = ( index(myOptions, 'r') > 0 )
     if ( repair .and. .not. present(HGrid) ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'cpL2GPFile must be given HGrid to repair L2GPData' )
@@ -2250,7 +2250,7 @@ contains ! =====     Public Procedures     =============================
         print *, 'shape(l2gp%l2gpvalue):  ', shape(l2gp%l2gpvalue)
       endif
       ! Possibly repair l2gp
-      if ( repair ) call RepairL2GP(l2gp, HGrid)
+      if ( repair ) call RepairL2GP(l2gp, HGrid, options=options)
       ! Write the filled l2gp to file2
       call WriteL2GPData(l2gp, file2, trim(swath2), hdfVersion=hdfVersion2, &
         & notUnlimited=notUnlimited)
@@ -3266,7 +3266,7 @@ contains ! =====     Public Procedures     =============================
   !-------------------------------------
 
   !-----------------------------------------  RepairL2GP_L2GP  -----
-  subroutine RepairL2GP_L2GP ( L2GP1, L2GP2, fields )
+  subroutine RepairL2GP_L2GP ( L2GP1, L2GP2, fields, options )
 
     ! This routine repairs l2gp1 using values from l2gp2
     ! wherever the first has fillvalues
@@ -3284,13 +3284,19 @@ contains ! =====     Public Procedures     =============================
     type (L2GPData_T), intent(inout) :: L2GP1
     type (L2GPData_T), intent(in)    :: L2GP2
     character(len=*), optional, intent(in) :: fields
+    character(len=*), optional, intent(in) :: options ! E.g., '-v'
     
     ! Internal variables
     character(len=128) :: myFields
+    character (len=8) :: myOptions
+    logical :: verbose
 
     ! Executable code
     myFields = '*'
     if ( present(fields) ) myFields = lowercase(fields)
+    myOptions = ' '
+    if ( present(options) ) myOptions = options
+    verbose = ( index(myOptions, 'v') > 0 )
     select case (trim(myFields))
     case ('value')
       myFields = 'l2gpvalue, l2gpPrecision, status, quality'
@@ -3348,7 +3354,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine RepairL2GP_L2GP
 
   !-----------------------------------------  RepairL2GP_HGrid  -----
-  subroutine RepairL2GP_HGrid ( L2GP, HGrid, fields, offset )
+  subroutine RepairL2GP_HGrid ( L2GP, HGrid, fields, offset, options )
     use HGridsDatabase, only: HGrid_T
     ! This routine repairs l2gp1 using values from HGrid
     ! wherever the first has fillvalues
@@ -3365,27 +3371,64 @@ contains ! =====     Public Procedures     =============================
     type (HGrid_T), intent(in)       :: HGrid
     character(len=*), optional, intent(in) :: fields
     integer, optional, intent(in) :: offset ! If HGrid profs offset from l2gp    
+    character (len=*), optional, intent(in) :: options ! E.g., '-v'
     ! Internal variables
-    logical, parameter :: DEEBUG = .false.
+    ! logical, parameter :: DEEBUG = .false.
     integer :: HGp1 ! Effective starting HGrid profile
+    integer :: HGpn ! Effective ending HGrid profile
     real(rgp), dimension(:), pointer :: HGridField => null()
     character(len=128) :: myFields
+    character (len=8) :: myOptions
+    logical :: verbose
     ! Executable code
     nullify(HGridField)
     myFields = '*'
     if ( present(fields) ) myFields = lowercase(fields)
+    myOptions = ' '
+    if ( present(options) ) myOptions = options
+    verbose = ( index(myOptions, 'v') > 0 ) .or. DEEBUG
     if ( present(offset) ) then
       HGp1 = offset
-    ! elseif ( HGrid%allowPriorOverlaps ) then
-    !  HGp1 = 1
     else
       HGp1 = 1 + HGrid%noProfsLowerOverlap ! 2  ! No longer assume we're not offset; was 1
     endif
     ! Check that we've calculated array sizes correectly
     ! In particular, useable profiles matched HGrid and l2gp
-    if ( size(hgrid%geodLat(1,HGp1:)) /= size(l2gp%longitude) ) &
-     & call MLSMessage ( MLSMSG_Error, ModuleName, & 
-        & 'HGrid and l2gp size mismatch')
+    if ( size(hgrid%geodLat(1,HGp1:)) < size(l2gp%latitude) ) then
+      call output('shape l2gp%latitude: ')
+      call output(shape(l2gp%latitude), advance='yes')
+      call output('shape HGrid%geodLat: ')
+      call output(shape(HGrid%geodLat), advance='yes')
+      call output('HGp1: ')
+      call output(HGp1, advance='yes')
+      call dump(hgrid%geodLat(1,HGp1:), 'hgrid%geodLat(1,HGp1:)')
+      call dump(l2gp%latitude, 'l2gp%latitude')
+      call MLSMessage ( MLSMSG_Error, ModuleName, & 
+        & 'HGrid and l2gp size mismatch: HGrid too small')
+    elseif ( size(hgrid%geodLat(1,HGp1:)) > size(l2gp%latitude) ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, & 
+        & 'HGrid and l2gp size mismatch: HGrid needed to be trimmed; done')
+      verbose = .true.
+    endif
+    HGpn = size(l2gp%latitude) + HGp1 - 1
+    if ( verbose ) then
+      call output('1st HGrid angle: ')
+      call output(hgrid%phi(1,HGp1), advance='yes')
+      call output('1st l2gp angle: ')
+      call output(l2gp%geodAngle(1), advance='yes')
+      call output('last HGrid angle: ')
+      call output(hgrid%phi(1,HGpn), advance='yes')
+      call output('last l2gp angle: ')
+      call output( l2gp%geodAngle( size(l2gp%geodAngle) ), advance='yes' )
+      call output('HGp1: ')
+      call output(HGp1, advance='yes')
+      call output('HGpn: ')
+      call output(HGpn, advance='yes')
+      call output('shape l2gp%latitude: ')
+      call output(shape(l2gp%latitude), advance='yes')
+      call output('shape HGrid%phi(1,HGp1:HGpn): ')
+      call output(shape(HGrid%phi(1,HGp1:HGpn)), advance='yes')
+    endif
     ! call allocate_test(HGridField, l2gp%nTimes, 'HGridField', &
     !    & ModuleName )
     select case (trim(myFields))
@@ -3401,34 +3444,34 @@ contains ! =====     Public Procedures     =============================
     if ( SwitchDetail(myFields, 'latitude', '-wc') > -1 ) then
       ! HGridField = hgrid%geodLat(1,HGp1:)
       call ReplaceFillValues ( l2gp%latitude, l2gp%MissingValue, &
-        & real(hgrid%geodLat(1,HGp1:), rgp) )
+        & real(hgrid%geodLat(1,HGp1:HGpn), rgp) )
     endif
     if ( DEEBUG ) print *, 'shape l2gp%longitude: ', shape(l2gp%longitude)
     if ( DEEBUG ) print *, 'shape HGrid%lon: ', shape(HGrid%lon)
     if ( SwitchDetail(myFields, 'longitude', '-wc') > -1 ) then
-      ! HGridField = hgrid%lon(1,HGp1:)
+      ! HGridField = hgrid%lon(1,HGp1:HGpn)
       call ReplaceFillValues ( l2gp%longitude, l2gp%MissingValue, &
-        & real(hgrid%lon(1,HGp1:), rgp) )
+        & real(hgrid%lon(1,HGp1:HGpn), rgp) )
     endif
     if ( SwitchDetail(myFields, 'solartime', '-wc') > -1 ) then
       call ReplaceFillValues ( l2gp%solartime, l2gp%MissingValue, &
-        & real(hgrid%solartime(1,HGp1:), rgp) )
+        & real(hgrid%solartime(1,HGp1:HGpn), rgp) )
     endif
     if ( SwitchDetail(myFields, 'solarzenith', '-wc') > -1 ) then
       call ReplaceFillValues ( l2gp%solarzenith, l2gp%MissingValue, &
-        & real(hgrid%solarzenith(1,HGp1:), rgp) )
+        & real(hgrid%solarzenith(1,HGp1:HGpn), rgp) )
     endif
     if ( SwitchDetail(myFields, 'LineOfSightAngle', '-wc') > -1 ) then
       call ReplaceFillValues ( l2gp%losangle, l2gp%MissingValue, &
-        & real(hgrid%losangle(1,HGp1:), rgp) )
+        & real(hgrid%losangle(1,HGp1:HGpn), rgp) )
     endif
     if ( SwitchDetail(myFields, 'OrbitGeodeticAngle', '-wc') > -1 ) then
       call ReplaceFillValues ( l2gp%geodAngle, l2gp%MissingValue, &
-        & real(hgrid%phi(1,HGp1:), rgp) )
+        & real(hgrid%phi(1,HGp1:HGpn), rgp) )
     endif
     if ( SwitchDetail(myFields, 'time', '-wc') > -1 ) then
       call ReplaceFillValues ( l2gp%time, real(l2gp%MissingValue, r8), &
-        & hgrid%time(1,HGp1:) )
+        & hgrid%time(1,HGp1:HGpn) )
     endif
     ! call deallocate_test(HGridField, 'HGridField', &
     !      & ModuleName )
@@ -3490,6 +3533,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.123  2005/09/14 00:08:15  pwagner
+! Dispense with some debug prints; observe HGRid%noProfsLowerOverlap
+!
 ! Revision 2.122  2005/08/19 23:37:22  pwagner
 ! May use HGrid to repair l2gp geolocations
 !
