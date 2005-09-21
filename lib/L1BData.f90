@@ -69,6 +69,7 @@ module L1BData
 ! DeallocateL1BData               Called when an l1bData is finished with
 ! Dump                            Print facts about l1brad quantity
 ! findl1bdata                     Which file handle contains a given sd name
+! Getl1BFile                      Which MLSFile contains a given sd name
 ! L1BOASetup                      From l2cf, open, and save l1boa file info
 ! L1BRadSetup                     From l2cf, open, and save l1brad file info
 ! ReadL1BData                     Read all info concerning a l1brad quantity
@@ -561,7 +562,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     endif
     if ( L1bData1%LastMAFCtr /= L1bData2%LastMAFCtr ) then
       call output(' (1) Last major frame counter = ', advance='no')
-      call output(L1bData1%FirstMAFCtr, advance='yes')
+      call output(L1bData1%LastMAFCtr, advance='yes')
       call output(' (2) Last major frame counter = ', advance='no')
       call output(L1bData2%LastMAFCtr, advance='yes')
     endif
@@ -2972,6 +2973,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.61  2005/09/21 23:12:28  pwagner
+! Unnecessary changes
+!
 ! Revision 2.60  2005/08/05 20:36:29  pwagner
 ! L1BFile arg to ReadL1BData now a pointer
 !
