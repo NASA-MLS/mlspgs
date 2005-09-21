@@ -61,10 +61,10 @@ contains ! =====     Public Procedures     =============================
     ! (see write_metadata module for fuller explanation)
 
     use Allocate_Deallocate, only: Deallocate_Test, Allocate_test
-    use Chunks_m, only: MLSChunk_T
-    use ChunkDivide_m, only: ChunkDivideConfig
+    use Chunks_m, only: MLSChunk_T, dump
+    use ChunkDivide_m, only: ChunkDivideConfig, OBSTRUCTIONS
     use Expr_M, only: Expr
-    use HGrid, only: CREATEHGRIDFROMMLSCFINFO
+    use HGrid, only: CREATEHGRIDFROMMLSCFINFO, DEALWITHOBSTRUCTIONS
     use HGridsDatabase, only: ADDHGRIDTODATABASE, Dump, HGRID_T
     use INIT_TABLES_MODULE, only: F_ASCII, F_CREATE, F_DONTPACK, F_EXCLUDE, &
       & F_FILE, F_HDFVERSION, F_HGRID, &
@@ -139,6 +139,8 @@ contains ! =====     Public Procedures     =============================
     integer :: GSON                     ! Son of Son -- an assign node
     integer :: hdfVersion               ! 4 or 5 (corresp. to hdf4 or hdf5)
     integer :: HGridIndex
+    type (HGrid_T), target :: newHGrid
+    type (HGrid_T), pointer :: newHGridp
     type (HGrid_T), dimension(:), pointer :: HGrids => null()
     integer :: IN_FIELD_NO              ! Index of sons of assign vertex
     character (len=132) :: INPUTFILE_BASE    ! From the inputfile= field
@@ -207,6 +209,12 @@ contains ! =====     Public Procedures     =============================
     AllChunks%firstMAFIndex = chunks(1)%firstMAFIndex
     AllChunks%lastMAFIndex = chunks(size(chunks))%lastMAFIndex
 
+    if ( DEBUG ) then
+      print *, 'Num chunks: ', size(chunks)
+      print *, 'firstMAFIndex: ', AllChunks%firstMAFIndex
+      print *, 'lastMAFIndex: ', AllChunks%lastMAFIndex
+      call dump(AllChunks)
+    endif
     inputPhysicalFilename = ' '
     PhysicalFilename = ' '
     ! Loop over the lines in the l2cf
@@ -357,7 +365,7 @@ contains ! =====     Public Procedures     =============================
               & hdfVersion1=HDFVERSION_5, hdfVersion2=HDFVERSION_5, &
               & swathList=trim(sdList), &
               & notUnlimited=avoidUnlimitedDims, ReadStatus=.true., &
-              & HGrid=HGrids(HGridIndex), options="-r")
+              & HGrid=HGrids(HGridIndex), options="-rv")
           elseif ( got(f_exclude) .and. repairGeoLocations ) then
             call cpL2GPData(trim(inputPhysicalfileName), &
               & trim(PhysicalFilename), create2=create, &
@@ -365,7 +373,7 @@ contains ! =====     Public Procedures     =============================
               & swathList=trim(sdList), &
               & exclude=trim(exclude), &
               & notUnlimited=avoidUnlimitedDims, ReadStatus=.true., &
-              & HGrid=HGrids(HGridIndex), options="-r")
+              & HGrid=HGrids(HGridIndex), options="-rv")
           else
             call cpL2GPData(trim(inputPhysicalfileName), &
               & trim(PhysicalFilename), create2=create, &
@@ -379,14 +387,20 @@ contains ! =====     Public Procedures     =============================
       case (s_HGrid)
         ! call announce_error ( spec_no, &
         !   &  "Error--HGrid not implemented yet")
-        call decorate ( key, AddHGridToDatabase ( hGrids, &
-          & CreateHGridFromMLSCFInfo ( name, key, filedatabase, l2gpDatabase, &
-          & processingRange, allChunks ) ) )
+        newHGrid = CreateHGridFromMLSCFInfo ( name, key, filedatabase, l2gpDatabase, &
+          & processingRange, allChunks )
+        if ( DEBUG ) print *, 'Before dealing with obstructions'
+        newHGridp => newHGrid
+        if ( DEBUG ) call dump(newHGridp)
+        if ( associated(obstructions) ) &
+          & call DealWithObstructions( newHGridp, obstructions )
         ! Don't skip the lower overlap profiles if ChunkDivide included them
         if ( ChunkDivideConfig%allowPriorOverlaps ) &
-          & HGrids(size(hGrids))%noProfsLowerOverlap = 0
+          & newHGridp%noProfsLowerOverlap = 0
+        call decorate ( key, AddHGridToDatabase ( hGrids, newHGridp ) )
         if ( DEBUG ) print *, 'HGrid added; size now: ', size(hGrids)
-        if ( DEBUG ) call dump(HGrids(size(hGrids)))
+        if ( DEBUG ) print *, 'After dealing with obstructions'
+        if ( DEBUG ) call dump(newHGridp)
 
       case ( s_output )
         do field_no = 2, nsons(key)       ! Skip the command name
@@ -1298,6 +1312,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.111  2005/09/21 23:27:17  pwagner
+! Pokes holes in all-day HGrid to match obstructions
+!
 ! Revision 2.110  2005/09/14 00:15:32  pwagner
 ! Relocate unsplitFiles before l2cf commands (so may copy swaths from DGG)
 !
