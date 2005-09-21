@@ -203,8 +203,8 @@ contains ! =====     Public Procedures     =============================
     character (len=*), intent(in) :: file1 ! Name of file 1
     character (len=*), intent(in) :: file2 ! Name of file 2
     logical, optional, intent(in) :: create2 ! Force creation of new file2
-    integer, optional, intent(in) :: hdfVersion
-    character (len=*), optional, intent(in) :: sdList ! If not all SDs
+    integer, optional, intent(in) :: hdfVersion       !                      '*'
+    character (len=*), optional, intent(in) :: sdList ! Copy only these, unless
     character (len=*), optional, intent(in) :: options ! E.g., '-v'
 
     ! Local
@@ -1864,6 +1864,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.75  2005/09/21 23:17:34  pwagner
+! Unnecessary changes
+!
 ! Revision 2.74  2005/08/25 20:21:41  pwagner
 ! Ensure returnStatus defined in ReadL2AUXData_MLSFile
 !
