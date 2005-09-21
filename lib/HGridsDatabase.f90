@@ -40,13 +40,13 @@ module HGridsDatabase                   ! Horizontal grid information
     integer :: noProfsUpperOverlap  ! Number of profiles in the upper overlap
 
     ! Now the various coordinates in the HGrid, all dimensioned (noProfs)
-    real(r8), dimension(:,:), pointer :: phi => NULL()
-    real(r8), dimension(:,:), pointer :: geodLat => NULL()
-    real(r8), dimension(:,:), pointer :: lon => NULL()
-    real(r8), dimension(:,:), pointer :: time => NULL()
-    real(r8), dimension(:,:), pointer :: solarTime => NULL()
+    real(r8), dimension(:,:), pointer :: phi         => NULL()
+    real(r8), dimension(:,:), pointer :: geodLat     => NULL()
+    real(r8), dimension(:,:), pointer :: lon         => NULL()
+    real(r8), dimension(:,:), pointer :: time        => NULL()
+    real(r8), dimension(:,:), pointer :: solarTime   => NULL()
     real(r8), dimension(:,:), pointer :: solarZenith => NULL()
-    real(r8), dimension(:,:), pointer :: losAngle => NULL()
+    real(r8), dimension(:,:), pointer :: losAngle    => NULL()
   end type HGrid_T
 
   interface DUMP
@@ -317,6 +317,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.7  2005/09/21 23:11:54  pwagner
+! Unnecessary changes
+!
 ! Revision 2.6  2005/08/25 20:18:05  pwagner
 ! Protect against crashing when dumping anonymous HGrids
 !
