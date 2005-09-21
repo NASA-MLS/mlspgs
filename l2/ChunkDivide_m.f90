@@ -72,6 +72,7 @@ module ChunkDivide_m
     integer   :: maxGapFamily = PHYQ_Invalid ! PHYQ_MAF, PHYQ_Time etc.
     logical   :: skipL1BCheck = .false. ! Don't check for l1b data probs
     logical   :: allowPriorOverlaps = .false. ! Use MAFs before start time
+    logical   :: saveObstructions = .false. ! Save obstructions for Output_Close
   end type ChunkDivideConfig_T
 
   ! The chunk divide methods are:
@@ -94,12 +95,15 @@ module ChunkDivide_m
     integer, dimension(2) :: Expanded ! L2Cover plus prior/post overlaps
   end  type MAFRange_T
 
+  public :: Obstruction_T
   ! This type describes obstructions in the Level 1 data which will affect the
   ! selection of chunk divisions.
   type Obstruction_T
     logical :: range                    ! If set is a range not a wall
     integer, dimension(2) :: MAFS       ! Affected MAF or MAF range
   end type Obstruction_T
+
+  type (Obstruction_T), dimension(:), public, save, pointer :: OBSTRUCTIONS => null()
 
   interface dump
     module procedure DUMP_OBSTRUCTIONS
@@ -170,9 +174,10 @@ contains ! ===================================== Public Procedures =====
     use Init_Tables_Module, only: F_ALLOWPRIOROVERLAPS, &
       & F_CRITICALMODULES, F_CRITICALSIGNALS, &
       & F_HOMEMODULE, F_HOMEGEODANGLE, &
-      & F_OVERLAP, F_LOWEROVERLAP, F_UPPEROVERLAP, &
-      & F_MAXLENGTH, F_MAXORBY, F_METHOD, F_NOCHUNKS, &
-      & F_SCANLOWERLIMIT, F_SCANUPPERLIMIT, F_NOSLAVES, F_SKIPL1BCHECK, &
+      & F_MAXLENGTH, F_MAXORBY, F_METHOD, F_NOCHUNKS, F_NOSLAVES, &
+      & F_OVERLAP, F_LOWEROVERLAP, &
+      & F_SAVEOBSTRUCTIONS, F_SCANLOWERLIMIT, F_SCANUPPERLIMIT, &
+      & F_SKIPL1BCHECK, F_UPPEROVERLAP, &
       & FIELD_FIRST, FIELD_LAST, L_EVEN, &
       & L_FIXED, F_MAXGAP, L_ORBITAL, L_PE, S_CHUNKDIVIDE, L_BOTH, L_EITHER
     use Intrinsic, only: L_NONE, FIELD_INDICES, LIT_INDICES, PHYQ_ANGLE, &
@@ -204,7 +209,7 @@ contains ! ===================================== Public Procedures =====
 
     ! Local variables
     ! type (ChunkDivideConfig_T) :: CONFIG ! Configuration
-    type (Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
+    ! type (Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
     type (MAFRange_T) :: MAFRange
     integer :: STATUS                   ! From deallocate
     ! integer, dimension(2) :: MAFRANGE   ! Processing range in MAFs
@@ -236,8 +241,7 @@ contains ! ===================================== Public Procedures =====
     ! location of obstructions
     nullify ( obstructions )
     if ( ChunkDivideConfig%method /= l_fixed ) then
-      call SurveyL1BData ( processingRange, filedatabase, mafRange,&
-      & obstructions )
+      call SurveyL1BData ( processingRange, filedatabase, mafRange )
       if ( index(switches, 'chu') /= 0 ) then
         call output ( 'Requested time range ' )          
         call output ( processingRange%startTime )              
@@ -266,14 +270,11 @@ contains ! ===================================== Public Procedures =====
     case ( l_fixed )
       call ChunkDivide_Fixed ( chunks )
     case ( l_PE )
-      call ChunkDivide_PE ( mafRange%Expanded, filedatabase, &
-        & obstructions, chunks )
+      call ChunkDivide_PE ( mafRange%Expanded, filedatabase, chunks )
     case ( l_orbital )
-      call ChunkDivide_Orbital ( mafRange%Expanded, filedatabase, &
-        & obstructions, chunks )
+      call ChunkDivide_Orbital ( mafRange%Expanded, filedatabase, chunks )
     case ( l_even )
-      call ChunkDivide_Even ( mafRange%Expanded, filedatabase, &
-        & obstructions, chunks )
+      call ChunkDivide_Even ( mafRange%Expanded, filedatabase, chunks )
     case default
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unexpected problem with ChunkDivide' )
@@ -282,7 +283,8 @@ contains ! ===================================== Public Procedures =====
     ! Tidy up
     if ( associated(obstructions) ) then
       if ( index(switches, 'chu') /= 0 ) call Dump_Obstructions ( obstructions )
-      deallocate ( obstructions, stat=status )
+      if ( .not. ChunkDivideConfig%saveObstructions ) &
+        & deallocate ( obstructions, stat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Deallocate//'obstructions' )
     end if
@@ -369,12 +371,9 @@ contains ! ===================================== Public Procedures =====
     end subroutine AnnounceError
 
     !-------------------------------------------- ChunkDivide_Even -----
-    subroutine ChunkDivide_Even ( mafRange, filedatabase, &
-      & obstructions, chunks )
-      ! type (ChunkDivideConfig_T), intent(in) :: CONFIG
+    subroutine ChunkDivide_Even ( mafRange, filedatabase, chunks )
       integer, dimension(2), intent(in) :: MAFRANGE
       type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-      type (Obstruction_T), dimension(:), intent(in) :: OBSTRUCTIONS
       type (MLSChunk_T), dimension(:), pointer :: CHUNKS
 
       ! Local variables
@@ -420,12 +419,10 @@ contains ! ===================================== Public Procedures =====
     end subroutine ChunkDivide_Fixed
 
     !---------------------------------------------- ChunkDivide_PE -----
-    subroutine ChunkDivide_PE ( mafRange, filedatabase, &
-      & obstructions, chunks )
+    subroutine ChunkDivide_PE ( mafRange, filedatabase, chunks )
       ! type (ChunkDivideConfig_T), intent(in) :: CONFIG
       integer, dimension(2), intent(in) :: MAFRANGE
       type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-      type (Obstruction_T), dimension(:), intent(in) :: OBSTRUCTIONS
       type (MLSChunk_T), dimension(:), pointer :: CHUNKS
 
       ! Local parameters
@@ -553,12 +550,9 @@ contains ! ===================================== Public Procedures =====
     end subroutine ChunkDivide_PE
 
     !----------------------------------------- ChunkDivide_Orbital -----
-    subroutine ChunkDivide_Orbital ( mafRange, filedatabase, &
-      & obstructions, chunks )
-      ! type (ChunkDivideConfig_T), intent(in) :: CONFIG
+    subroutine ChunkDivide_Orbital ( mafRange, filedatabase, chunks )
       integer, dimension(2), intent(in) :: MAFRANGE
       type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-      type (Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
       type (MLSChunk_T), dimension(:), pointer :: CHUNKS
 
       ! Local parameters
@@ -1055,6 +1049,11 @@ contains ! ===================================== Public Procedures =====
           if ( ChunkDivideConfig%allowPriorOverlaps ) &
             & call MLSMessage(MLSMSG_Warning, ModuleName, &
             & 'You have elected to allow MAFs prior to time range' )
+        case ( f_saveObstructions )
+          ChunkDivideConfig%saveObstructions = get_boolean ( fieldValue )
+          if ( ChunkDivideConfig%saveObstructions ) &
+            & call MLSMessage(MLSMSG_Warning, ModuleName, &
+            & 'You have elected to save obstructions (possibly for Output_Close)' )
         end select
       end do
 
@@ -1227,8 +1226,8 @@ contains ! ===================================== Public Procedures =====
             call DeleteChunk ( chunks, deadChunk )
           end do insideRange
 
-          ! Now think about chunks who's non overlapped part completely
-          ! encompas the range, and split them.
+          ! Now think about chunks whose non overlapped part completely
+          ! encompass the range, and split them.
           ! (we'll deal with the issue of ranges spilling into overlap regions below)
           chunk = FindFirst ( &
             & ( chunks%firstMAFIndex + chunks%noMAFsLowerOverlap <= firstMAF ) .and. &
@@ -1405,7 +1404,6 @@ contains ! ===================================== Public Procedures =====
       type (Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
       type (Obstruction_T) :: NEWOBSTRUCTION ! In progrss
       type (MAFRange_T) :: MAFRange
-      ! integer, dimension(2), intent(in) :: MAFRANGE   ! Processing range in MAFs
       type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
 
       ! Local variables
@@ -1823,16 +1821,12 @@ contains ! ===================================== Public Procedures =====
     end subroutine SortObstructions
 
     ! ---------------------------------------------- SurveyL1BData -----
-    subroutine SurveyL1BData ( processingRange, filedatabase, mafRange, &
-      & obstructions )
+    subroutine SurveyL1BData ( processingRange, filedatabase, mafRange )
       ! This goes through the L1B data files and tries to spot possible
       ! obstructions.
       type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
       type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-      ! type (ChunkDivideConfig_T), intent(in) :: CONFIG
       type (MAFRange_T), intent(out) :: MAFRange
-      !integer, dimension(2), intent(out) :: MAFRANGE   ! Processing range in MAFs
-      type (Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
 
       ! Local variables
       type (L1BData_T) :: TAITIME         ! Read from L1BOA file
@@ -2208,6 +2202,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.64  2005/09/21 23:25:42  pwagner
+! Obstructions public now; optionally saved; should add deallocate in tree_walker
+!
 ! Revision 2.63  2005/09/14 00:10:37  pwagner
 ! ChunkDivideConfig public so allowPriorOverlaps visible
 !
