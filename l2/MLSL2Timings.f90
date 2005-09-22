@@ -23,7 +23,7 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
   USE MLSStringLists, only: catLists, GetStringElement, &
     & NumStringElements, StringElementNum 
   use OUTPUT_M, only: BLANKS, OUTPUT, PRUNIT
-  use Time_M, only: Time_Now, Use_Wall_Clock
+  use Time_M, only: Time_Now
   use TOGGLES, only: SWITCHES
 
   IMPLICIT NONE
@@ -762,6 +762,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.28  2005/09/22 23:39:38  pwagner
+! time_config and retry_config now hold config settings
+!
 ! Revision 2.27  2005/06/22 18:57:02  pwagner
 ! Reworded Copyright statement, moved rcs id
 !

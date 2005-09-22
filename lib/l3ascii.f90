@@ -94,7 +94,7 @@ contains
   end subroutine L3ascii_open
 
   subroutine L3ascii_read_field ( Unit, Field, End_of_file, ErrType )
-    use dates_module    ! Shoud use SDP Toolkit eventually. 
+    use dates_module, only: ccsds2tai    ! Shoud use SDP Toolkit eventually. 
     ! ----Arguments ----!
     integer, intent(in) :: unit
     integer, intent(out), optional :: ErrType
@@ -864,6 +864,9 @@ end module L3ascii
 
 !
 ! $Log$
+! Revision 2.28  2005/09/22 23:35:14  pwagner
+! date conversion procedures and functions all moved into dates module
+!
 ! Revision 2.27  2005/06/22 17:25:49  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
