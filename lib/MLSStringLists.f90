@@ -46,7 +46,6 @@ module MLSStringLists               ! Module to treat string lists
 !     (subroutines and functions)
 ! Array2List         Converts an array of strings to a single string list
 ! catLists           cats 2 string lists, taking care if either one is blank
-! dai_to_yyyymmdd    Converts days after Jan 1, 2001 to yyyymmdd
 ! ExpandStringRange  Turns '1,2-5,7' into '1,2,3,4,5,7' or ints or logicals
 ! ExtractSubString   Extracts portion of string sandwiched between sub1 and sub2
 ! GetIntHashElement  Returns int from hash array corresponding to key string
@@ -67,18 +66,12 @@ module MLSStringLists               ! Module to treat string lists
 ! StringElementNum   Returns element number of test string in string list
 ! SwitchDetail       Returns detail level of switch in list of switches
 ! unquote            Removes surrounding [quotes]
-! utc_to_date        Returns date portion from dateTtime; e.g. yyyy-dddThh:mm:ss
-! utc_to_time        Returns time portion from dateTtime; e.g. yyyy-dddThh:mm:ss
-! utc_to_yyyymmdd    Parses yyyy-mm-ddThh:mm:ss.sss or yyyy-dddThh:mm:ss.sss
-! yyyymmdd_to_dai    Converts yyyymmdd to days after Jan 1, 2001
 ! === (end of toc) ===
 
 ! === (start of api) ===
 ! Array2List (char* inArray(:), char* outList(:), &
 !   & [char inseparator], [int ordering], [char leftRight]) 
 ! char* catLists (char* str1, char* str2)
-! dai_to_yyyymmdd (int dai, int yyyy, int mm, int dd, [char* startingDate])
-! dai_to_yyyymmdd (int dai, char* str, [char* startingDate])
 ! ExpandStringRange (char* str, char* outst)
 ! ExtractSubString (char* str, char* outstr, char* sub1, char* sub2, &
 !       & [char* how], [log no_trim])
@@ -114,8 +107,6 @@ module MLSStringLists               ! Module to treat string lists
 !    & [char inseparator], [log part_match])
 ! int SwitchDetail(strlist inList, char* test_switch)
 ! char* unquote (char* str, [char* quotes], [char* cquotes], [log strict])
-! yyyymmdd_to_dai (int yyyy, int mm, int dd, int dai, [char* startingDate])
-! yyyymmdd_to_dai (char* str, int dai, [char* startingDate])
 
 ! in the above, a string list is a string of elements (usu. comma-separated)
 ! e.g., units='cm,m,in,ft'
@@ -150,20 +141,16 @@ module MLSStringLists               ! Module to treat string lists
 ! === (end of api) ===
 
   public :: Array2List, catLists, &
-   & dai_to_yyyymmdd, ExpandStringRange, ExtractSubString, &
+   & ExpandStringRange, ExtractSubString, &
    & GetIntHashElement, GetStringElement, GetStringHashElement, &
    & GetUniqueInts, GetUniqueStrings, GetUniqueList, &
    & List2Array, NumStringElements, &
    & RemoveElemFromList, RemoveListFromList, ReplaceSubString, ReverseList, &
    & SortArray, SortList, StringElementNum, SwitchDetail, &
-   & unquote, utc_to_date, utc_to_time, utc_to_yyyymmdd, yyyymmdd_to_dai
+   & unquote
 
   interface catLists
     module procedure catLists_str, catLists_int, catLists_intarray
-  end interface
-
-  interface dai_to_yyyymmdd
-    module procedure dai_to_yyyymmdd_str, dai_to_yyyymmdd_ints
   end interface
 
   interface ExpandStringRange
@@ -171,24 +158,10 @@ module MLSStringLists               ! Module to treat string lists
       & ExpandStringRange_log
   end interface
 
-  interface switch
-    module procedure switch_ints
-  end interface
-
-  interface utc_to_yyyymmdd
-    module procedure utc_to_yyyymmdd_strs, utc_to_yyyymmdd_ints
-  end interface
-
-  interface yyyymmdd_to_dai
-    module procedure yyyymmdd_to_dai_str, yyyymmdd_to_dai_ints
-  end interface
-
   ! Error return values from:
   ! GetIntHashElement
   integer, public, parameter :: KEYNOTFOUND=-1
   integer, public, parameter :: KEYBEYONDHASHSIZE=KEYNOTFOUND-1
-  ! utc_to_yyyymmdd
-  integer, public, parameter :: INVALIDUTCSTRING = 1
   ! strings2Ints
   integer, public, parameter :: LENORSIZETOOSMALL=-999
   
@@ -196,16 +169,7 @@ module MLSStringLists               ! Module to treat string lists
   integer, private, parameter :: MAXSTRLISTLENGTH = 4096
   integer, private, parameter :: MAXSTRELEMENTLENGTH = BareFNLen
 
-  integer, parameter :: YEARMAX = 4999  ! Conversion invalid after 4999 AD
-  ! The following arrys contains the maximum permissible day for each month
-  ! where month=-1 means the whole year, month=1..12 means Jan, .., Dec
-  integer, dimension(-1:12), parameter :: DAYMAXLY = (/ &
-    & 366, 0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 &
-    & /)
-  integer, dimension(-1:12), parameter :: DAYMAXNY = (/ &
-    & 365, 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 &
-    & /)
-CONTAINS
+contains
 
   ! ---------------------------------------------  Array2List  -----
 
@@ -220,7 +184,7 @@ CONTAINS
   ! (unless the further optional arg leftRight is also supplied and equals
   ! one of {"l", "L"} in which case list[ordering[k]] = array[k])
 
-  SUBROUTINE Array2List ( inArray, outList, inseparator, ordering, leftRight )
+  subroutine Array2List ( inArray, outList, inseparator, ordering, leftRight )
     ! Dummy arguments
     CHARACTER (LEN=*), INTENT(OUT)                :: outList
     CHARACTER (LEN=*), DIMENSION(:), INTENT(IN)   :: inArray
@@ -275,7 +239,7 @@ CONTAINS
       if ( listElem > min(nElems, len(outList)) ) return
     ENDDO
 
-  END SUBROUTINE Array2List
+  end subroutine Array2List
 
   ! -------------------------------------------------  catLists_int  -----
   function catLists_int (STR1, INT, inseparator) result (OUTSTR)
@@ -366,87 +330,6 @@ CONTAINS
       outstr = trim(str1) // separator // trim(str2)
     endif
   end function catLists_str
-
-  ! ---------------------------------------------  dai_to_yyyymmdd_ints  -----
-  subroutine dai_to_yyyymmdd_ints(dai, yyyy, mm, dd, startingDate)
-    ! Routine that given the number of days after a starting date
-    ! returns 3 ints: the form yyyymmdd
-    !--------Argument--------!
-    integer, intent(in)  :: dai
-    integer, intent(out) :: yyyy
-    integer, intent(out) :: mm
-    integer, intent(out) :: dd
-    character(len=*), intent(in), optional :: startingDate  ! If not Jan 1 2001
-    !----------Local vars----------!
-    integer :: doy1
-    integer :: ErrTyp
-    integer :: loss
-    integer :: mydai
-    character(len=8) :: mystartingDate
-    !----------Executable part----------!
-   if(present(startingDate)) then
-      mystartingDate=startingDate
-   else
-      mystartingDate='20010101'
-   endif
-   call utc_to_yyyymmdd_ints(mystartingDate, ErrTyp, yyyy, mm, dd, nodash=.true.)
-   if ( dai < 1 ) return
-   call yyyymmdd_to_doy_str(mystartingDate, doy1)
-   ! Here's what we do:
-   ! Given doy1 (the day-of-year of the starting date)
-   ! we keep trying to add dai to it
-   ! If the result is greater than the number of days in that year (yyyy),
-   ! we increment the starting date's year counter (yyyy), its doy1,
-   ! and reduce the dai accordingly and try again
-   ! If the result is less than the number of days in that year
-   ! Then compute mm and dd for yyyy-(doy1+dai)
-   mydai = dai
-   do
-     if ( mydai + doy1 <= daysinyear(yyyy) ) exit
-     ! What we said we'd do
-     loss = daysinyear(yyyy) - doy1 + 1
-     yyyy = yyyy + 1
-     doy1 = 1
-     mydai = mydai - loss
-   enddo
-   ! Now convert from doy to mmdd
-   doy1 = 0 ! How many days into year yyyy added by prior months
-   do mm=1, 12
-     if ( leapyear(yyyy) ) then
-       if ( doy1 + DAYMAXLY(mm) > mydai ) exit
-       doy1 = doy1 + DAYMAXLY(mm)
-     else
-       if ( doy1 + DAYMAXNY(mm) > mydai ) exit
-       doy1 = doy1 + DAYMAXNY(mm)
-     endif
-   enddo
-   dd = mydai - doy1 + 1
-  end subroutine dai_to_yyyymmdd_ints
-
-  ! ---------------------------------------------  dai_to_yyyymmdd_str  -----
-  subroutine dai_to_yyyymmdd_str(dai, str, startingDate)
-    ! Routine that given the number of days after a starting date
-    ! returns a string: the form yyyymmdd
-    !--------Argument--------!
-    integer, intent(in)           :: dai
-    character(len=*), intent(out) :: str
-    character(len=*), intent(in), optional :: startingDate  ! If not Jan 1 2001
-    ! Internal variables
-    integer :: yyyy, mm, dd
-    character(len=8) :: year, month, day
-    ! executable
-    call dai_to_yyyymmdd(dai, yyyy, mm, dd, startingDate)
-    ! print *, 'dai: ', dai
-    ! print *, 'yyyy: ', yyyy
-    ! print *, 'mm: ', mm
-    ! print *, 'dd: ', dd
-    call writeIntsToChars(yyyy , year )
-    call writeIntsToChars(mm   , month, fmt='(i2.2)')
-    call writeIntsToChars(dd   , day  , fmt='(i2.2)')
-    str(1:4) = adjustl(year )
-    str(5:6) = adjustl(month)
-    str(7:8) = adjustl(day  )
-  end subroutine dai_to_yyyymmdd_str
 
   ! ----------------------------------------  ExpandStringRange_ints  -----
   subroutine ExpandStringRange_ints (instr, ints, length)
@@ -609,7 +492,7 @@ CONTAINS
   end subroutine ExpandStringRange_str
 
   ! --------------------------------------------------  ExtractSubString  -----
-  SUBROUTINE ExtractSubString (instr, outstr, sub1, sub2, how, no_trim)
+  subroutine ExtractSubString (instr, outstr, sub1, sub2, how, no_trim)
     ! Takes a string and extracts what is sandwiched between sub1 and sub2
 	 ! Defaults to choosing only the first occurrence of sub1 and sub2
     ! But if how == 'greedy' chooses last occurrence of sub2
@@ -739,7 +622,7 @@ CONTAINS
     call GetStringElement (tmpstr, outstr, 2, .true., &
       & inseparator=separator )
 
-  END SUBROUTINE ExtractSubString
+  end subroutine ExtractSubString
 
   ! ---------------------------------------------  GetIntHashElement  -----
 
@@ -768,7 +651,7 @@ CONTAINS
   ! Basic premise: Use StringElementNum on key in keyList to find index
   ! Use this index for the array of ints
 
-  FUNCTION GetIntHashElement(keyList, hashArray, key, ErrType, &
+  function GetIntHashElement(keyList, hashArray, key, ErrType, &
   & countEmpty, inseparator, part_match) RESULT (hashInt)
     ! Dummy arguments
     CHARACTER (LEN=*), INTENT(IN)             :: keyList
@@ -796,7 +679,7 @@ CONTAINS
 		hashInt = hashArray(elem)
 	ENDIF
 
-  END FUNCTION GetIntHashElement
+  end function GetIntHashElement
 
   ! ---------------------------------------------  GetStringElement  -----
 
@@ -816,7 +699,7 @@ CONTAINS
   ! As an optional arg the separator may supplied, in case it isn't comma
   ! See also SplitWords
 
-  SUBROUTINE GetStringElement(inList, outElement, nElement, countEmpty, inseparator)
+  subroutine GetStringElement(inList, outElement, nElement, countEmpty, inseparator)
     ! Dummy arguments
     CHARACTER (LEN=*), INTENT(IN)   :: inList
     CHARACTER (LEN=*), INTENT(OUT)  :: outElement
@@ -888,7 +771,7 @@ CONTAINS
 			i = nextseparator+1
 	 ENDDO
 
-  END SUBROUTINE GetStringElement
+  end subroutine GetStringElement
 
   ! ---------------------------------------------  GetStringHashElement  -----
 
@@ -918,7 +801,7 @@ CONTAINS
   ! Someday you may wish to define a StringHash_T made up of the two
   ! strings
   
-  SUBROUTINE GetStringHashElement(keyList, hashList, key, outElement, &
+  subroutine GetStringHashElement(keyList, hashList, key, outElement, &
   & countEmpty, inseparator, part_match)
     ! Dummy arguments
     CHARACTER (LEN=*), INTENT(IN)   :: keyList
@@ -950,7 +833,7 @@ CONTAINS
         & countEmpty, inseparator)
 	ENDIF
 
-  END SUBROUTINE GetStringHashElement
+  end subroutine GetStringHashElement
 
   ! ---------------------------------------------  GetUniqueInts  -----
 
@@ -964,7 +847,7 @@ CONTAINS
   ! else if optional minValue is supplied, values < minValue are ignored
   ! Some checking is done to make sure it's appropriate
 
-  SUBROUTINE GetUniqueInts(ints, outs, noUnique, extra, fillValue, minValue)
+  subroutine GetUniqueInts(ints, outs, noUnique, extra, fillValue, minValue)
     ! Dummy arguments
     integer, dimension(:) :: ints
     integer, dimension(:) :: outs
@@ -1061,7 +944,7 @@ CONTAINS
   ! returns list from str that are not also in str2
   ! If optional FillValue supplied, ignores any entries = fillvalue
 
-  SUBROUTINE GetUniqueList(str, outStr, noUnique, countEmpty, &
+  subroutine GetUniqueList(str, outStr, noUnique, countEmpty, &
     & inseparator, IgnoreLeadingSpaces, str2, fillValue)
     ! Dummy arguments
     CHARACTER (LEN=*), intent(in) :: str
@@ -1140,7 +1023,7 @@ CONTAINS
       endif
       DEALLOCATE(inStringArray, outStringArray)
     endif
-  END SUBROUTINE GetUniqueList
+  end subroutine GetUniqueList
 
   ! ---------------------------------------------  GetUniqueStrings  -----
 
@@ -1151,7 +1034,7 @@ CONTAINS
   ! If optional FillValue supplied, ignores any entries = fillvalue
   ! Some checking is done to make sure it's appropriate
 
-  SUBROUTINE GetUniqueStrings(inList, outList, noUnique, extra, fillValue)
+  subroutine GetUniqueStrings(inList, outList, noUnique, extra, fillValue)
     ! Dummy arguments
     CHARACTER (LEN=*), DIMENSION(:) :: inList
     CHARACTER (LEN=*), DIMENSION(:) :: outList
@@ -1262,7 +1145,7 @@ CONTAINS
   ! If the optional arg ignoreLeadingSpaces is TRUE, "a, b, c" is
   ! treated like "a,b,c"; otherwise the leading spaces are retained
 
-  SUBROUTINE List2Array(inList, outArray, countEmpty, inseparator, &
+  subroutine List2Array(inList, outArray, countEmpty, inseparator, &
    & IgnoreLeadingSpaces)
     ! Dummy arguments
     CHARACTER (LEN=*), INTENT(IN)                 :: inList
@@ -1304,7 +1187,7 @@ CONTAINS
       if ( elem > min(nElems, size(outArray)) ) return
 	 ENDDO
 
-  END SUBROUTINE List2Array
+  end subroutine List2Array
 
   ! ---------------------------------------------  NumStringElements  -----
 
@@ -1323,7 +1206,7 @@ CONTAINS
 
   ! See also GetStringElement
 
-  FUNCTION NumStringElements(inList, countEmpty, &
+  function NumStringElements(inList, countEmpty, &
    & inseparator, LongestLen) RESULT (nElements)
     ! Dummy arguments
     CHARACTER (LEN=*), INTENT(IN)             :: inList
@@ -1376,10 +1259,10 @@ CONTAINS
    if ( present(LongestLen) ) &
      & LongestLen = max(LongestLen, sinceLastseparated)
 
-  END FUNCTION NumStringElements
+  end function NumStringElements
 
   ! --------------------------------------------------  RemoveElemFromList  -----
-  SUBROUTINE RemoveElemFromList (inList, outList, elem, inseparator)
+  subroutine RemoveElemFromList (inList, outList, elem, inseparator)
     ! Takes a list and removes all occurrence(s) of elem
 	 ! E.g., given 'a,b,c,d,..,z' and asked to remove 'c' returns 'a,b,d,..z'
     !--------Argument--------!
@@ -1417,10 +1300,10 @@ CONTAINS
     else
       outList = unique_list(len(elem)+1:)
     endif
-  END SUBROUTINE RemoveElemFromList
+  end subroutine RemoveElemFromList
 
   ! --------------------------------------------------  RemoveListFromList  -----
-  SUBROUTINE RemoveListFromList (inList, outList, exclude, inseparator)
+  subroutine RemoveListFromList (inList, outList, exclude, inseparator)
     ! Takes one list and removes from it all occurrence(s) 
     ! of each elem in another list called "exclude"
 	 ! E.g., given 'a,b,c,d,..,z' and asked to remove 'c,a' returns 'b,d,..z'
@@ -1450,10 +1333,10 @@ CONTAINS
       temp_list = temp_list2
     enddo
     outList = temp_list
-  END SUBROUTINE RemoveListFromList
+  end subroutine RemoveListFromList
 
   ! --------------------------------------------------  ReplaceSubString  -----
-  SUBROUTINE ReplaceSubString (str, outstr, sub1, sub2, which, no_trim)
+  subroutine ReplaceSubString (str, outstr, sub1, sub2, which, no_trim)
     ! Takes a string and replaces occurrence(s) of sub1 with sub2
 	 ! Defaults to replacing only the first
     ! But if which == 'all' replaces all
@@ -1647,10 +1530,10 @@ CONTAINS
           istrt2 = istrt1 + len_trim(sub1) - 1
         enddo
       end subroutine Split_me
-  END SUBROUTINE ReplaceSubString
+  end subroutine ReplaceSubString
 
   ! --------------------------------------------------  ReverseList  -----
-  FUNCTION ReverseList (str, inseparator) RESULT (outstr)
+  function ReverseList (str, inseparator) RESULT (outstr)
     ! takes a string list, usually comma-separated,
 	 ! and returns one with elements in reversed order
 
@@ -1727,7 +1610,7 @@ CONTAINS
 
 	DEALLOCATE(charBuf)
 
-  END FUNCTION ReverseList
+  end function ReverseList
 
   ! ---------------------------------------------  SortArray  -----
 
@@ -1766,7 +1649,7 @@ CONTAINS
   ! until each bin is occupied by no more than one string
   ! The bin number is the ranking index of that string which
   ! is returned as outIntArray
-  SUBROUTINE SortArray(inStrArray, outIntArray, CaseSensitive, &
+  subroutine SortArray(inStrArray, outIntArray, CaseSensitive, &
    & sortedArray, shorterFirst, leftRight)
     ! Dummy arguments
     CHARACTER (LEN=*), DIMENSION(:), INTENT(IN)   :: inStrArray
@@ -1995,7 +1878,7 @@ CONTAINS
        enddo
      end subroutine tie_breaker
 
-  END SUBROUTINE SortArray
+  end subroutine SortArray
 
   ! ---------------------------------------------  SortList  -----
 
@@ -2027,7 +1910,7 @@ CONTAINS
 
   ! Method:
   ! (see SortArray)
-  SUBROUTINE SortList(inList, outArray, CaseSensitive, countEmpty, &
+  subroutine SortList(inList, outArray, CaseSensitive, countEmpty, &
    & ignoreLeadingSpaces, inseparator, sortedList, leftRight)
     ! Dummy arguments
     CHARACTER (LEN=*), INTENT(IN)                 :: inList
@@ -2100,7 +1983,7 @@ CONTAINS
     endif
     DEALLOCATE(stringArray)
 
-  END SUBROUTINE SortList
+  end subroutine SortList
 
   ! ---------------------------------------------  StringElementNum  -----
 
@@ -2137,7 +2020,7 @@ CONTAINS
 
   ! See also GetStringElement, NumStringElements
 
-  FUNCTION StringElementNum(inList, test_string, countEmpty, &
+  function StringElementNum(inList, test_string, countEmpty, &
     & inseparator, part_match) RESULT (elem)
     ! Dummy arguments
     CHARACTER (LEN=*), INTENT(IN)             :: inList
@@ -2177,7 +2060,7 @@ CONTAINS
 	
 	elem = 0
 
-  END FUNCTION StringElementNum
+  end function StringElementNum
 
 
   ! ---------------------------------------------  SwitchDetail  -----
@@ -2197,7 +2080,7 @@ CONTAINS
   ! The behavior may be modified by options flag
   ! For which see comment above
   
-  FUNCTION SwitchDetail(inList, test_switch, options) RESULT (detail)
+  function SwitchDetail(inList, test_switch, options) RESULT (detail)
     ! Dummy arguments
     CHARACTER (LEN=*), INTENT(IN)             :: inList
     CHARACTER (LEN=*), INTENT(IN)             :: test_switch
@@ -2248,12 +2131,12 @@ CONTAINS
      detail = -1
    endif
 
-  END FUNCTION SwitchDetail
+  end function SwitchDetail
 
   ! ------------------------------------------------  unquote  -----
-  Function unquote(str, quotes, cquotes, strict, stripany, extract) &
+  function unquote(str, quotes, cquotes, strict, stripany, extract) &
     & result (outstr)
-    ! Function that removes a single pair of surrounding quotes from string
+    ! function that removes a single pair of surrounding quotes from string
 
     ! E.g., given "Let me see." or 'Let me see.' returns
     !    Let me see.
@@ -2468,478 +2351,9 @@ CONTAINS
        outstr=str
    endif
       
-  end Function unquote
-
-  ! ---------------------------------------------  utc_to_date  -----
-  subroutine utc_to_date(str, ErrTyp, date, &
-    & strict, utcAt0z)
-    ! Routine that returns the date portion from a string of the form
-    ! (A) yyyy-mm-ddThh:mm:ss.sss
-    ! (B) yyyy-dddThh:mm:ss.sss
-    ! where the field separator 'T' divides the string into two
-    ! sub-strings encoding the date and time
-    ! The date substring in subdivided by the separator '-'
-    ! into either two or three fields
-    ! In case (A), the 3 fields are year, month, and day of month
-    ! in case (B) the two fields are year and day of year
-    
-    ! For case (A) returns year, month, and day=day of month
-    ! For case (B) returns year, month=-1, and day=day of year
-    ! Useful to decode utc inputs into attribute values
-    
-    ! Optionally returns the input string in utcAt0z modified so that 
-    ! the hh:mm:ss.sss is 00:00:00Z
-    
-    ! (See also utc_to_time and utc_to_yyymmdd)
-    !--------Argument--------!
-    character(len=*),intent(in)   :: str
-    integer, intent(out)          :: ErrTyp
-    character(len=*), intent(out) :: date
-    logical,intent(in), optional  :: strict
-    character(len=*),intent(out), optional   :: utcAt0z
-    !----------Local vars----------!
-    character(len=1), parameter :: dash='-'
-    logical :: mystrict
-    character(len=1) :: utc_format        ! 'a' or 'b'
-    character(len=*), parameter :: chars_0z = 'T00:00:00Z'
-    !----------Executable part----------!
-
-   if(present(strict)) then
-      mystrict=strict
-   else
-      mystrict=.false.
-   endif
-         
-   if(len_trim(str) <= 0) then
-      if(mystrict) then
-         ErrTyp=INVALIDUTCSTRING
-      else
-         ErrTyp=0
-      endif
-      return
-   endif
-   
-   ErrTyp=INVALIDUTCSTRING
-   ! Snip off time fields from date fields
-   call GetStringElement(lowercase(str), date, 1, &
-     & countEmpty=.true., inseparator='t')
-   if ( date == ' ' ) then
-     if ( .not. mystrict) Errtyp = 0
-     if ( present(utcAt0z) ) utcAt0z = ' '
-     return
-   endif
-   if ( present(utcAt0z) ) utcAt0z = trim(date) // chars_0z
-   ErrTyp=0
-   
-  end subroutine utc_to_date
-
-  ! ---------------------------------------------  utc_to_time  -----
-  subroutine utc_to_time(str, ErrTyp, time, strict)
-    ! Routine that returns the time portion from a string of the form
-    ! (A) yyyy-mm-ddThh:mm:ss.sss
-    ! (B) yyyy-dddThh:mm:ss.sss
-    ! where the field separator 'T' divides the string into two
-    ! sub-strings encoding the date and time
-    ! (See also utc_to_date and utc_to_yyymmdd)
-    !--------Argument--------!
-    character(len=*),intent(in)   :: str
-    integer, intent(out)          :: ErrTyp
-    character(len=*), intent(out) :: time
-    logical,intent(in), optional  :: strict
-    !----------Local vars----------!
-    character(len=1), parameter :: dash='-'
-    logical :: mystrict
-    character(len=1) :: utc_format        ! 'a' or 'b'
-    character(len=*), parameter :: chars_0z = 'T00:00:00Z'
-    !----------Executable part----------!
-
-   if(present(strict)) then
-      mystrict=strict
-   else
-      mystrict=.false.
-   endif
-         
-   if(len_trim(str) <= 0) then
-      if(mystrict) then
-         ErrTyp=INVALIDUTCSTRING
-      else
-         ErrTyp=0
-      endif
-      return
-   endif
-   
-   ErrTyp=INVALIDUTCSTRING
-   ! Snip off time fields from date fields
-   call GetStringElement(lowercase(str), time, 2, &
-     & countEmpty=.true., inseparator='t')
-   if ( time == ' ' ) then
-     if ( .not. mystrict) Errtyp = 0
-     return
-   endif
-   ErrTyp=0
-   
-  end subroutine utc_to_time
-
-  ! ---------------------------------------------  utc_to_yyyymmdd_ints  -----
-  subroutine utc_to_yyyymmdd_ints(str, ErrTyp, year, month, day, strict, nodash)
-    ! Routine that returns the year, month, and day from a string of the form
-    ! (A) yyyy-mm-ddThh:mm:ss.sss
-    ! (B) yyyy-dddThh:mm:ss.sss
-    ! (N) yyyydddThh:mm:ss.sss (no-dash)
-    ! where the field separator 'T' divides the string into two
-    ! sub-strings encoding the date and time
-    ! The date substring in subdivided by the separator '-'
-    ! into either two or three fields
-    ! In case (A), the 3 fields are year, month, and day of month
-    ! in case (B) the two fields are year and day of year
-    
-    ! For case (A) returns year, month, and day=day of month
-    ! For case (B) returns year, month=-1, and day=day of year
-    ! Useful to decode utc inputs into attribute values
-    
-    ! (See also PGS_TD_UTCtoTAI and mls_UTCtoTAI)
-    !--------Argument--------!
-    character(len=*),intent(in) :: str
-    integer, intent(out) :: ErrTyp
-    integer, intent(out) :: year
-    integer, intent(out) :: month
-    integer, intent(out) :: day
-    logical, intent(in), optional :: strict
-    logical, intent(in), optional :: nodash   ! No dash separating date fields
-    !----------Local vars----------!
-    character(len=1), parameter :: dash='-'
-    character(len=NameLen) :: date
-    character(len=NameLen) :: yyyy
-    character(len=NameLen) :: mm
-    character(len=NameLen) :: dd
-    character(LEN=*), parameter :: time_conversion='(I4)'
-    logical :: mystrict
-    logical :: mynodash
-    character(len=1) :: utc_format        ! 'a' or 'b' or 'n' (no-dash)
-    ! The following arrys contains the maximum permissible day for each month
-    ! where month=-1 means the whole year, month=1..12 means Jan, .., Dec
-    integer, dimension(-1:12), parameter :: DAYMAX = (/ &
-      & 366, 0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 &
-      & /)
-    !----------Executable part----------!
-
-   year = -1
-   month = -1
-   day = -1
-   mm = ' '
-
-   if(present(strict)) then
-      mystrict=strict
-   else
-      mystrict=.false.
-   endif
-         
-   if(present(nodash)) then
-      mynodash=nodash
-   else
-      mynodash=.false.
-   endif
-         
-   call utc_to_date(str, ErrTyp, date, strict= .true.)
-   if ( ErrTyp /= 0 ) then
-     if ( .not. mystrict ) ErrTyp = 0
-     return
-   endif
-   if ( myNoDash ) then
-     yyyy = date(1:4)
-     mm = date(5:6)
-     dd = date(7:8)
-     utc_format = 'n'
-   else
-     call GetStringElement(trim(date), yyyy, 1, countEmpty=.true., inseparator=dash)
-     if ( &
-       & NumStringElements(trim(date), countEmpty=.true., inseparator=dash) == 2) then
-       call GetStringElement(trim(date), dd, 2, countEmpty=.true., inseparator=dash)
-       utc_format = 'b'
-     else
-       call GetStringElement(trim(date), mm, 2, countEmpty=.true., inseparator=dash)
-       call GetStringElement(trim(date), dd, 3, countEmpty=.true., inseparator=dash)
-       utc_format = 'a'
-     endif
-   endif
-   
-   ErrTyp=0
-   
-   ! Convert to value
-   if(yyyy /= ' ') then
-      read(yyyy, time_conversion, iostat=ErrTyp) year
-   endif
-   
-   if(ErrTyp /= 0) then
-      return
-   elseif(year < 0 .or. year > YEARMAX) then
-      ErrTyp=INVALIDUTCSTRING
-      return
-   endif
-
-   if(mm /= ' ') then
-      read(mm, time_conversion, iostat=ErrTyp) month
-   endif
-
-   if(utc_format == 'b') then
-     ErrTyp = 0
-     month = -1
-   elseif(ErrTyp /= 0) then
-      return
-   elseif(month < 1 .or. month > 12) then
-      ErrTyp=INVALIDUTCSTRING
-      return
-   endif
-   ! Coming out of the above, month should be in the interval [-1, 12]
-
-   if(dd /= ' ') then
-      read(dd, time_conversion, iostat=ErrTyp) day
-   endif
-
-   if(ErrTyp /= 0) then
-      return
-   elseif(day < 1 .or. day > DAYMAX(month)) then
-      ErrTyp=INVALIDUTCSTRING
-      return
-   endif
-  end subroutine utc_to_yyyymmdd_ints
-
-  ! ---------------------------------------------  utc_to_yyyymmdd_strs  -----
-  subroutine utc_to_yyyymmdd_strs(str, ErrTyp, year, month, day, &
-    & strict)
-    ! Routine that returns the year, month, and day from a string of the form
-    ! (A) yyyy-mm-ddThh:mm:ss.sss
-    ! (B) yyyy-dddThh:mm:ss.sss
-    ! where the field separator 'T' divides the string into two
-    ! sub-strings encoding the date and time
-    ! The date substring in subdivided by the separator '-'
-    ! into either two or three fields
-    ! In case (A), the 3 fields are year, month, and day of month
-    ! in case (B) the two fields are year and day of year
-    
-    ! For case (A) returns year, month, and day=day of month
-    ! For case (B) returns year, month=-1, and day=day of year
-    ! Useful to decode utc inputs into attribute values
-    
-    ! (See also PGS_TD_UTCtoTAI and mls_UTCtoTAI)
-    !--------Argument--------!
-    character(len=*),intent(in)   :: str
-    integer, intent(out)          :: ErrTyp
-    character(len=*), intent(out) :: year
-    character(len=*), intent(out) :: month
-    character(len=*), intent(out) :: day
-    logical,intent(in), optional  :: strict
-    !----------Local vars----------!
-    character(len=1), parameter :: dash='-'
-    character(len=NameLen) :: date
-    logical :: mystrict
-    character(len=1) :: utc_format        ! 'a' or 'b'
-    !----------Executable part----------!
-
-   year = ' '
-   month = ' '
-   day = ' '
-
-   if(present(strict)) then
-      mystrict=strict
-   else
-      mystrict=.false.
-   endif
-         
-   call utc_to_date(str, ErrTyp, date, strict= .true.)
-   if ( ErrTyp /= 0 ) then
-     if ( .not. mystrict ) ErrTyp = 0
-     return
-   endif
-   call GetStringElement(trim(date), year, 1, countEmpty=.true., inseparator=dash)
-   if ( &
-     & NumStringElements(trim(date), countEmpty=.true., inseparator=dash) == 2) then
-     call GetStringElement(trim(date), day, 2, countEmpty=.true., inseparator=dash)
-     utc_format = 'b'
-   else
-     call GetStringElement(trim(date), month, 2, countEmpty=.true., inseparator=dash)
-     call GetStringElement(trim(date), day, 3, countEmpty=.true., inseparator=dash)
-     utc_format = 'a'
-   endif
-   
-   ErrTyp=0
-   
-  end subroutine utc_to_yyyymmdd_strs
-
-  ! ---------------------------------------------  yyyymmdd_to_dai_ints  -----
-
-  subroutine yyyymmdd_to_dai_ints(yyyy, mm, dd, dai, startingDate)
-    ! Routine that returns the number of days after a starting date
-    ! from 3 ints: the form yyyymmdd
-    !--------Argument--------!
-    integer ,intent(in) :: yyyy
-    integer ,intent(in) :: mm
-    integer ,intent(in) :: dd
-    integer,intent(out) :: dai
-    character(len=*),intent(in),optional :: startingDate  ! If not Jan 1 2001
-    !----------Local vars----------!
-    character(len=8) :: mystartingDate
-    integer :: yyyy1, mm1, dd1, doy1
-    integer :: yyyy2, doy2
-    integer :: ErrTyp
-    logical :: daiNegative
-    integer :: y
-    !----------Executable part----------!
-   if(present(startingDate)) then
-      mystartingDate=startingDate
-   else
-      mystartingDate='20010101'
-   endif
-   call utc_to_yyyymmdd_ints(mystartingDate, ErrTyp, yyyy1, mm1, dd1, nodash=.true.)
-   call yyyymmdd_to_doy_str(mystartingDate, doy1)
-   call yyyymmdd_to_doy_ints(yyyy, mm, dd, doy2)
-   yyyy2 = yyyy
-   daiNegative = yyyy1 > yyyy2
-   if ( daiNegative ) then
-     call switch(yyyy1, yyyy2)
-     call switch(doy1, doy2)
-   elseif ( yyyy1 == yyyy2 ) then
-     dai = doy2 - doy1
-     return
-   endif
-   dai = doy2 - doy1
-   do y = yyyy1, yyyy2 - 1
-     if ( leapyear(y) ) then
-       dai = dai + DAYMAXLY(-1)
-     else
-       dai = dai + DAYMAXNY(-1)
-     endif
-   enddo
-   if ( daiNegative ) dai = -dai
-  end subroutine yyyymmdd_to_dai_ints
-
-  ! ---------------------------------------------  yyyymmdd_to_dai_str  -----
-  subroutine yyyymmdd_to_dai_str(str, dai, startingDate)
-    ! Routine that returns the number of days after a starting date
-    ! from a string of the form yyyymmdd
-    !--------Argument--------!
-    character(len=*),intent(in) :: str
-    integer,intent(out) :: dai
-    character(len=*),intent(in),optional :: startingDate  ! If not Jan 1 2001
-    !----------Local vars----------!
-    character(len=8) :: mystartingDate
-    integer :: yyyy1, mm1, dd1, doy1
-    integer :: yyyy2, mm2, dd2, doy2
-    integer :: ErrTyp
-    logical :: daiNegative
-    integer :: y
-    !----------Executable part----------!
-   if(present(startingDate)) then
-      mystartingDate=startingDate
-   else
-      mystartingDate='20010101'
-   endif
-   call utc_to_yyyymmdd_ints(mystartingDate, ErrTyp, yyyy1, mm1, dd1, nodash=.true.)
-   call utc_to_yyyymmdd_ints(str, ErrTyp, yyyy2, mm2, dd2, nodash=.true.)
-   call yyyymmdd_to_doy_str(mystartingDate, doy1)
-   call yyyymmdd_to_doy_str(str, doy2)
-   daiNegative = yyyy1 > yyyy2
-   if ( daiNegative ) then
-     call switch(yyyy1, yyyy2)
-     call switch(doy1, doy2)
-   elseif ( yyyy1 == yyyy2 ) then
-     dai = doy2 - doy1
-     return
-   endif
-   dai = doy2 - doy1
-   do y = yyyy1, yyyy2 - 1
-     if ( leapyear(y) ) then
-       dai = dai + DAYMAXLY(-1)
-     else
-       dai = dai + DAYMAXNY(-1)
-     endif
-   enddo
-   if ( daiNegative ) dai = -dai
-  end subroutine yyyymmdd_to_dai_str
+  end function unquote
 
 !=============================================================================
-  ! ---------------------------------------------  switch_ints  -----
-  subroutine switch_ints(x1, x2)
-    ! Switch args x1 <=> x2
-    !--------Argument--------!
-    integer,intent(inout) :: x1
-    integer,intent(inout) :: x2
-    !----------Local vars----------!
-    integer :: x
-    x = x1
-    x1 = x2
-    x2 = x
-  end subroutine switch_ints
-
-  ! ---------------------------------------------  yyyymmdd_to_doy_ints  -----
-  subroutine yyyymmdd_to_doy_ints(year, month, day, doy)
-    ! Routine that returns the number of days after the year's start
-    ! for year, month, day
-    !--------Argument--------!
-    integer, intent(in) :: year, month, day
-    integer, intent(out) :: doy
-    !----------Local vars----------!
-    integer :: m
-    integer, dimension(-1:12) :: DAYMAX
-    !----------Executable part----------!
-     if ( year < 0 .or. year > YEARMAX ) then
-       doy = -1
-     endif
-     doy = day
-     if ( month <= 1 ) then
-       return
-     endif
-     if ( leapyear(year) ) then
-       DAYMAX = DAYMAXLY
-     else
-       DAYMAX = DAYMAXNY
-     endif
-     do m=1, month-1
-       doy = doy + DAYMAX(m)
-     enddo
-     
-  end subroutine yyyymmdd_to_doy_ints
-
-  ! ---------------------------------------------  yyyymmdd_to_doy_str  -----
-  subroutine yyyymmdd_to_doy_str(str, doy)
-    ! Routine that returns the number of days after the year's start
-    ! for a string of the form yyyymmdd
-    !--------Argument--------!
-    character(len=*),intent(in) :: str
-    integer,intent(out) :: doy
-    !----------Local vars----------!
-    integer :: year, month, day
-    integer :: ErrTyp
-    ! integer :: m
-    ! integer, dimension(-1:12) :: DAYMAX
-    !----------Executable part----------!
-     call utc_to_yyyymmdd_ints(str, ErrTyp, year, month, day, nodash=.true.)
-     call yyyymmdd_to_doy_ints(year, month, day, doy)
-  end subroutine yyyymmdd_to_doy_str
-
-  function daysinyear(year) result(days)
-    integer, intent(in) :: year
-    integer :: days
-     ! How many days in the particular year
-     if ( leapyear(year) ) then
-       days = 366
-     else
-       days = 365
-     endif
-  end function daysinyear
-
-  logical function leapyear(year)
-    integer,intent(in) :: year
-     ! This is to capture rule that centuries are leap only
-     ! if divisible by 400
-     ! Otherwise, as perhaps you knew, leapyears are those years divisible by 4
-     if ( 100 * (year/100) >= year ) then
-       leapyear = ( 400 * (year/400) >= year )
-     else
-       leapyear = ( 4 * (year/4) >= year )
-     endif
-  end function leapyear
-
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -2953,6 +2367,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.14  2005/09/22 23:33:58  pwagner
+! date conversion procedures and functions all moved into dates module
+!
 ! Revision 2.13  2005/09/14 22:53:26  pwagner
 ! Added dai_to_yyyymmdd
 !
