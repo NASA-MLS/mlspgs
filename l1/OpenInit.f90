@@ -50,7 +50,7 @@ CONTAINS
          mlspcf_spilloverloss_start, mlspcf_defltchi2_start, &
          mlspcf_defltbaselineAC_start, mlspcf_l1b_log_start
     USE PCFHdr, ONLY: CreatePCFAnnotation, GlobalAttributes, FillTAI93Attribute
-    USE MLSStringLists, ONLY: utc_to_yyyymmdd
+    USE dates_module, ONLY: utc_to_yyyymmdd
     USE L0_sci_tbls, ONLY: InitSciPointers
     USE MLSL1Common, ONLY: L1BFileInfo, deflt_gain, deflt_zero, L1ProgType, &
          THzType, THz_SwMir_Range, THzTol
@@ -1020,6 +1020,9 @@ END MODULE OpenInit
 !=============================================================================
 
 ! $Log$
+! Revision 2.22  2005/09/22 23:40:12  pwagner
+! date conversion procedures and functions all moved into dates module
+!
 ! Revision 2.21  2005/07/12 17:18:15  pwagner
 ! Dropped global attribute InputVersion
 !
