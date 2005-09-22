@@ -50,7 +50,7 @@ program MLSL2
   use STRING_TABLE, only: DESTROY_CHAR_TABLE, DESTROY_HASH_TABLE, &
     & DESTROY_STRING_TABLE, DISPLAY_STRING, DO_LISTING, INUNIT
   use SYMBOL_TABLE, only: DESTROY_SYMBOL_TABLE
-  use Time_M, only: Time_Now, Use_Wall_Clock
+  use Time_M, only: Time_Now, time_config
   use TOGGLES, only: CON, EMIT, GEN, LEVELS, LEX, PAR, SYN, SWITCHES, TAB, &
     & TOGGLE
   use TREE, only: ALLOCATE_TREE, DEALLOCATE_TREE, PRINT_SUBTREE
@@ -201,7 +201,7 @@ program MLSL2
     switches='0sl'
     NeverCrash = .false.
   endif
-  use_wall_clock = SIPS_VERSION
+  time_config%use_wall_clock = SIPS_VERSION
 ! Initialize the lexer, symbol table, and tree checker's tables:
 !  ( Under some circumstances, you may need to increase these )
   call init_lexer ( n_chars=80000, n_symbols=4000, hash_table_size=611957 )
@@ -476,7 +476,7 @@ program MLSL2
         end do
         stop
       else if ( line(3+n:7+n) == 'wall ' ) then
-        use_wall_clock = switch
+        time_config%use_wall_clock = switch
       else if ( line(3:) == ' ' ) then  ! "--" means "no more options"
         i = i + 1
         call getarg ( i, line )
@@ -624,7 +624,7 @@ program MLSL2
      penalty_for_no_metadata = 0
   end if
   
-  if ( use_wall_clock ) call time_now(run_start_time)
+  if ( time_config%use_wall_clock ) call time_now(run_start_time)
   ! If checking paths, run as a single-chunk case in serial mode
   if ( checkPaths ) then
     parallel%master = .false.
@@ -1002,7 +1002,7 @@ contains
       call output(parallel%stageInMemory, advance='yes')
       call output(' Using wall clock instead of cpu time?:          ', advance='no')
       call blanks(4, advance='no')
-      call output(use_wall_clock, advance='yes')
+      call output(time_config%use_wall_clock, advance='yes')
       call output(' Summarize time in what units?:                   ', advance='no')
       call blanks(4, advance='no')
       call display_string ( lit_indices(sectionTimingUnits), &
@@ -1065,6 +1065,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.142  2005/09/22 23:38:54  pwagner
+! time_config and retry_config now hold config settings
+!
 ! Revision 2.141  2005/08/19 23:29:04  pwagner
 ! Wider use of SwitchDetail function
 !
