@@ -27,7 +27,7 @@ MODULE PCFHdr
    USE MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
      & MLSMSG_Warning, MLSMSG_DeAllocate, MLSMSG_FILEOPEN,MLSMSG_Info
    use MLSStrings, only: lowerCase
-   use MLSStringLists, only: utc_to_date, utc_to_yyyymmdd
+   use dates_module, only: utc_to_date, utc_to_yyyymmdd
    USE SDPToolkit, only: PGSD_PC_UREF_LENGTH_MAX, PGS_S_SUCCESS, &
      & PGSD_MET_GROUP_NAME_L, PGS_IO_GEN_CLOSEF, PGS_IO_GEN_OPENF, &
      & PGSD_IO_GEN_RDIRUNF, &
@@ -1077,6 +1077,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.39  2005/09/22 23:34:31  pwagner
+!# date conversion procedures and functions all moved into dates module
+!#
 !# Revision 2.38  2005/08/15 20:38:39  pwagner
 !# FirstMAf, LastMAF global attributes written for level 2 files only
 !#
