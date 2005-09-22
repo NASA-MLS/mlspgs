@@ -15,12 +15,12 @@ module Open_Init
   ! Opens and closes several files
   ! Creates and destroys the L1BInfo database
 
+  use dates_module, only: utc_to_yyyymmdd
   use Hdf, only: DFACC_RDONLY
   use intrinsic, only: l_hdf
   use MLSCommon, only: FileNameLen, MLSFile_T, TAI93_Range_T, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-  use MLSStringLists, only: catLists, NumStringElements, GetStringElement, &
-    & utc_to_yyyymmdd
+  use MLSStringLists, only: catLists, NumStringElements, GetStringElement
   use Output_m, only: Blanks, Output
   use PCFHdr, only: GlobalAttributes, CreatePCFAnnotation, FillTAI93Attribute
   use SDPToolkit, only: max_orbits
@@ -650,6 +650,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.87  2005/09/22 23:38:12  pwagner
+! date conversion procedures and functions all moved into dates module
+!
 ! Revision 2.86  2005/07/21 23:45:21  pwagner
 ! Removed unused l1b fileinfo fields from l2pcf
 !
