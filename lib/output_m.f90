@@ -11,8 +11,9 @@
 
 module OUTPUT_M
 
+  use dates_module, only:  reformatDate, reformatTime
   use MLSMessageModule, only: MLSMessage, MLSMSG_Info, MLSMSG_Error
-  use MLSStrings, only:  lowercase, reformatDate, reformatTime
+  use MLSStrings, only: lowerCase
   implicit NONE
   private
 
@@ -742,6 +743,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.42  2005/09/22 23:34:56  pwagner
+! date conversion procedures and functions all moved into dates module
+!
 ! Revision 2.41  2005/06/22 17:25:50  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
