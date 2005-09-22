@@ -1479,7 +1479,7 @@ MODULE L3DZData
         & DFACC_RDWR
    USE HDFEOS5, ONLY: HE5F_ACC_RDWR, HE5_GDCLOSE, HE5_GDOPEN 
    USE MLSPCF3
-   USE MLSStringLists, only: utc_to_yyyymmdd
+   USE dates_module, only: utc_to_yyyymmdd
    USE PCFHdr, ONLY: WritePCF2Hdr, WriteInputPointer, GlobalAttributes, &
 	& he5_writeglobalattr
    USE mon_Open, ONLY: PCFMData_T 
@@ -2174,6 +2174,9 @@ MODULE L3DZData
  !==================
 
 ! $Log$
+! Revision 1.20  2005/06/23 19:17:57  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 1.19  2005/01/27 00:35:06  pwagner
 ! ReprocessingActual field dropped from product metadata
 !

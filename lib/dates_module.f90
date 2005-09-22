@@ -13,6 +13,25 @@ module dates_module
 
   ! Converts dates between various formats. The resolution of everything 
   ! in here is one day, there is nothing to handle hours, minutes and seconds.
+  ! Except for ReformatTime, utc_to_time added later
+  
+  ! Eventaully, perhaps, the redundancies will be eliminated, and a
+  ! unified set of date-conversion functions exposed to the public
+
+  use MLSCommon, only: NameLen
+  use MLSStringLists, only: GetStringElement, NumStringElements
+  use MLSStrings, only: capitalize, depunctuate, lowerCase, writeIntsToChars
+  use MLSMessageModule, only: MLSMSG_Warning, MLSMessage
+
+  implicit none
+  private
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
   ! Cal is calendar date as in "25 Jan 1998" or "25 1 1998"
   ! Separators can be any non-alphanumerc character. Leading 0s no problem
   ! If you want the three items in an order that is not day/month/year then
@@ -21,6 +40,39 @@ module dates_module
   ! EUDTF is Extended UDTF -- Y2K compliant variant of UDTF
   ! EUDTF is an integer of form yyyyddd with yyyy==year and ddd==day of year
   ! (I (HCP) invented this, it isn;t a standard)
+
+! === (start of toc) ===
+!     c o n t e n t s
+!     - - - - - - - -
+
+!     (subroutines and functions)
+! cal2eudtf          cal date -> yyyyddd
+! ccsds2tai          ccsds -> tai (days, not s)
+! ccsds2eudtf        ccsds -> eudtf
+! ccsdsa2b           yyyy-mm-dd -> yyyy-DDD
+! ccsdsb2a           yyyy-DDD -> yyyy-mm-dd
+! dai_to_yyyymmdd    Converts days after Jan 1, 2001 to yyyymmdd
+! daysince2eudtf     days since starting date -> eudtf
+! days_in_year       how many days in (leap, normal) year
+! eudtf2cal          yyyyddd -> cal date
+! eudtf2daysince     eudtf -> days since starting date
+! lastday            how many days in leap month
+! ReformatDate       Turns 'yyyymmdd' -> 'yyyy-mm-dd'; or more general format
+! ReformatTime       Turns 'hhmmss.sss' -> 'hh:mm:ss'
+! utc_to_date        Returns date portion from dateTtime; e.g. yyyy-dddThh:mm:ss
+! utc_to_time        Returns time portion from dateTtime; e.g. yyyy-dddThh:mm:ss
+! utc_to_yyyymmdd    Parses yyyy-mm-ddThh:mm:ss.sss or yyyy-dddThh:mm:ss.sss
+! yyyymmdd_to_dai    Converts yyyymmdd to days after Jan 1, 2001
+
+! === (end of toc) ===
+
+! === (start of api) ===
+! dai_to_yyyymmdd (int dai, int yyyy, int mm, int dd, [char* startingDate])
+! dai_to_yyyymmdd (int dai, char* str, [char* startingDate])
+! char* ReformatDate (char* date, [char* fromForm], [char* toForm])
+! char* ReformatTime (char* time, [char* form])
+! yyyymmdd_to_dai (int yyyy, int mm, int dd, int dai, [char* startingDate])
+! yyyymmdd_to_dai (char* str, int dai, [char* startingDate])
 
   ! Since starting this, I (HCP again) discover that the standard text 
   ! format for EOS will be CCSDS format. This comes in two sorts: 
@@ -38,24 +90,35 @@ module dates_module
 
   ! Be warned that the format we call TAI here is in DAYS
   ! while genuine TAI93 is in SECONDS. 
-
-
-  use MLSStrings
-  use MLSMessageModule
-
-  implicit none
-  private
+! === (end of api) ===
 
   !Here are the provided functions 
   public:: eudtf2cal,cal2eudtf,lastday,ccsdsa2b,ccsdsb2a,eudtf2daysince
   public:: daysince2eudtf,ccsds2tai,ccsds2eudtf,days_in_year
+  public :: dai_to_yyyymmdd
+  public :: utc_to_date, utc_to_time, utc_to_yyyymmdd, yyyymmdd_to_dai
+  public :: reformatDate, reformatTime
   private::isleap
-  
-!---------------------------- RCS Module Info ------------------------------
-  character (len=*), private, parameter :: ModuleName= &
-       "$RCSfile$"
-  private :: not_used_here 
-!---------------------------------------------------------------------------
+
+  interface dai_to_yyyymmdd
+    module procedure dai_to_yyyymmdd_str, dai_to_yyyymmdd_ints
+  end interface
+
+  interface switch
+    module procedure switch_ints
+  end interface
+
+  interface utc_to_yyyymmdd
+    module procedure utc_to_yyyymmdd_strs, utc_to_yyyymmdd_ints
+  end interface
+
+  interface yyyymmdd_to_dai
+    module procedure yyyymmdd_to_dai_str, yyyymmdd_to_dai_ints
+  end interface
+
+  ! utc_to_yyyymmdd
+  integer, public, parameter :: INVALIDUTCSTRING = 1
+
   !Here are some useful definitions of the properties of months
   character(len=3),private,dimension(12),parameter::monthnames=&
        (/ "Jan","Feb","Mar","Apr","May","Jun","Jul","Aug",&
@@ -65,6 +128,23 @@ module dates_module
        "SEP","OCT","NOV","DEC" /)
   integer,private,parameter,dimension(12)::nonleap_days_in_month=&
        (/31,28,31,30,31,30,31,31,30,31,30,31 /)
+
+  ! These somewhat similar parameters arte used in the separately-coded
+  ! but redundant functions and procedures moved here from their
+  ! original slots in MLSStrings
+  integer, parameter :: YEARMAX = 4999  ! Conversion invalid after 4999 AD
+  ! The following arrays contains the maximum permissible day for each month
+  ! where month=-1 means the whole year, month=1..12 means Jan, .., Dec
+  integer, dimension(-1:12), parameter :: DAYMAXLY = (/ &
+    & 366, 0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 &
+    & /)
+  integer, dimension(-1:12), parameter :: DAYMAXNY = (/ &
+    & 365, 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 &
+    & /)
+  character(len=*), dimension(12), parameter :: MONTHNAME = (/ &
+    & 'January  ', 'February ', 'March    ', 'April    ', 'May      ', &
+    & 'June     ', 'July     ', 'August   ', 'September', 'October  ', &
+    & 'November ', 'December '/)
 
 contains
   function ccsds2eudtf(ccsds) result (eudtf)
@@ -134,7 +214,7 @@ contains
 
 
   function days_in_year(year) result(days) 
-    !Private function returns no. of days in a year
+    !Public function returns no. of days in a year
     integer,intent(in)::year
     integer::days
     if ( isleap(year)) then
@@ -463,6 +543,822 @@ contains
 
   end function ccsdsb2a
 
+  ! ---------------------------------------------  dai_to_yyyymmdd_ints  -----
+  subroutine dai_to_yyyymmdd_ints(dai, yyyy, mm, dd, startingDate)
+    ! Routine that given the number of days after a starting date
+    ! returns 3 ints: the form yyyymmdd
+    !--------Argument--------!
+    integer, intent(in)  :: dai
+    integer, intent(out) :: yyyy
+    integer, intent(out) :: mm
+    integer, intent(out) :: dd
+    character(len=*), intent(in), optional :: startingDate  ! If not Jan 1 2001
+    !----------Local vars----------!
+    integer :: doy1
+    integer :: ErrTyp
+    integer :: loss
+    integer :: mydai
+    character(len=8) :: mystartingDate
+    !----------Executable part----------!
+   if(present(startingDate)) then
+      mystartingDate=startingDate
+   else
+      mystartingDate='20010101'
+   endif
+   call utc_to_yyyymmdd_ints(mystartingDate, ErrTyp, yyyy, mm, dd, nodash=.true.)
+   if ( dai < 1 ) return
+   call yyyymmdd_to_doy_str(mystartingDate, doy1)
+   ! Here's what we do:
+   ! Given doy1 (the day-of-year of the starting date)
+   ! we keep trying to add dai to it
+   ! If the result is greater than the number of days in that year (yyyy),
+   ! we increment the starting date's year counter (yyyy), its doy1,
+   ! and reduce the dai accordingly and try again
+   ! If the result is less than the number of days in that year
+   ! Then compute mm and dd for yyyy-(doy1+dai)
+   mydai = dai
+   do
+     if ( mydai + doy1 <= daysinyear(yyyy) ) exit
+     ! What we said we'd do
+     loss = daysinyear(yyyy) - doy1 + 1
+     yyyy = yyyy + 1
+     doy1 = 1
+     mydai = mydai - loss
+   enddo
+   ! Now convert from doy to mmdd
+   doy1 = 0 ! How many days into year yyyy added by prior months
+   do mm=1, 12
+     if ( leapyear(yyyy) ) then
+       if ( doy1 + DAYMAXLY(mm) > mydai ) exit
+       doy1 = doy1 + DAYMAXLY(mm)
+     else
+       if ( doy1 + DAYMAXNY(mm) > mydai ) exit
+       doy1 = doy1 + DAYMAXNY(mm)
+     endif
+   enddo
+   dd = mydai - doy1 + 1
+  end subroutine dai_to_yyyymmdd_ints
+
+  ! ---------------------------------------------  dai_to_yyyymmdd_str  -----
+  subroutine dai_to_yyyymmdd_str(dai, str, startingDate)
+    ! Routine that given the number of days after a starting date
+    ! returns a string: the form yyyymmdd
+    !--------Argument--------!
+    integer, intent(in)           :: dai
+    character(len=*), intent(out) :: str
+    character(len=*), intent(in), optional :: startingDate  ! If not Jan 1 2001
+    ! Internal variables
+    integer :: yyyy, mm, dd
+    character(len=8) :: year, month, day
+    ! executable
+    call dai_to_yyyymmdd(dai, yyyy, mm, dd, startingDate)
+    ! print *, 'dai: ', dai
+    ! print *, 'yyyy: ', yyyy
+    ! print *, 'mm: ', mm
+    ! print *, 'dd: ', dd
+    call writeIntsToChars(yyyy , year )
+    call writeIntsToChars(mm   , month, fmt='(i2.2)')
+    call writeIntsToChars(dd   , day  , fmt='(i2.2)')
+    str(1:4) = adjustl(year )
+    str(5:6) = adjustl(month)
+    str(7:8) = adjustl(day  )
+  end subroutine dai_to_yyyymmdd_str
+
+  ! --------------------------------------------------  reFormatDate  -----
+  function reFormatDate(date, fromForm, toForm) result(reFormat)
+    ! Reformat yyyymmdd as yyyy-mm-dd
+    ! Wouldn't it be clever to allow an optional string arg defining
+    ! the output format; E.g. 'dd M yyyy' for '03 September 2005'
+    ! (Thus 'M' expands into the full month name)
+    ! or 'yyyy-doy' for '2005-d245' (note the inclusion of the letter 'd')
+    ! or 'yyyy-Doy' for '2005-245' (note the absence of the letter 'd')
+    ! And yet another optional string to hold the input format
+    ! in case it wasn't yyyymmdd?
+    ! Args
+    character(len=*), intent(in)            :: date
+    character(len=len(date)+24)             :: reFormat
+    character(len=*), optional, intent(in)  :: fromform ! output format
+    character(len=*), optional, intent(in)  :: toform   ! input format
+    ! Internal variables
+    character(len=1), parameter             :: ymSpacer = '-'
+    character(len=1), parameter             :: mdSpacer = '-'
+    integer                                 :: i ! format string index
+    integer                                 :: j ! date string index
+    integer                                 :: doy
+    character(len=4)                        :: doyString
+    character(len=4)                        :: yyyyString
+    integer                                 :: month
+    character(len=len(date)+24)             :: tempFormat
+    logical                                 :: inputWasDoy
+    character(len=1), parameter             :: SPACESUBSTITUTE = '?'
+    ! Executable
+    ! print *, 'date: ', trim(date)
+    tempFormat = date
+    if ( present(fromform) ) then
+      ! print *, 'fromForm: ', trim(fromForm)
+      if ( len_trim(fromform) > 0 ) then
+        inputWasDoy = .false.
+        tempFormat = ' '
+        i = 0
+        j = 0
+        do
+          if ( i >= len_trim(fromform) ) exit
+          i = i + 1
+          j = j + 1
+          ! print *, fromform(i:i)
+          select case (fromform(i:i))
+          case ('y')
+            tempFormat(1:4) = date(j:j+3)
+            i = i + 3
+            j = j + 3
+          case ('m')
+            tempFormat(5:6) = date(j:j+1)
+            i = i + 1
+            j = j + 1
+          case ('M')
+            month = monthNameToNumber(date(j:))
+            if ( month < 1 .or. month > 12 ) then
+              reFormat = 'month name uncrecognized'
+              return
+            endif
+            j = j + len_trim(MONTHNAME(month)) - 1
+            write(tempFormat(5:6),'(i2.2)') month
+          case ('D')
+            inputWasDoy = .true.
+            doyString = 'd' // date(j:j+2)
+            i = i + 2
+            j = j + 2
+          case ('d')
+            if ( fromform(i:i+1) == 'dd' ) then
+              tempFormat(7:8) = date(j:j+1)
+              i = i + 1
+              j = j + 1
+            else
+              inputWasDoy = .true.
+              doyString = date(j:j+3)
+              i = i + 2
+              j = j + 2
+            endif
+          case default
+            ! i = i + 1
+          end select
+        enddo
+        if ( inputWasDoy ) then
+          ! Need to convert from yyyydoy to yyyymmdd
+          ! print *, ' Need to convert from yyyydoy to yyyymmdd'
+          yyyyString = tempFormat(1:4)
+          call yyyydoy_to_yyyymmdd_str(yyyyString, doyString(2:4), tempFormat)
+          ! print *, yyyyString, doyString(2:4), tempFormat
+        endif
+      endif
+    endif
+    ! print *, tempFormat
+    reFormat = tempFormat(1:4) // ymSpacer // tempFormat(5:6) // mdSpacer // tempFormat(7:8)
+    if ( .not. present(toform) ) return
+    if ( len_trim(toform) < 1 ) return
+    reFormat = ' '
+    i = 0
+    do
+      if ( i >= len_trim(toform) ) exit
+      i = i + 1
+      select case (toform(i:i))
+      case ('y')
+        reFormat = trim(reFormat) // tempFormat(1:4)
+        i = i + 3
+      case ('m')
+        reFormat = trim(reFormat) // tempFormat(5:6)
+        i = i + 1
+      case ('M')
+        read(tempFormat(5:6), *) month
+        reFormat = trim(reFormat) // trim(MONTHNAME(month))
+      case ('D')
+        call yyyymmdd_to_doy_str(tempFormat, doy)
+        write(doyString, '(i3.3)') doy
+        reFormat = trim(reFormat) // doyString
+        i = i + 2
+      case ('d')
+        if ( toform(i:i+1) == 'dd' ) then
+          reFormat = trim(reFormat) // tempFormat(7:8)
+          i = i + 1
+        else
+          call yyyymmdd_to_doy_str(tempFormat, doy)
+          write(doyString, '(a1, i3.3)') 'd', doy
+          reFormat = trim(reFormat) // doyString
+          i = i + 2
+        endif
+      case (' ')
+        ! Foolish me--it can't handle spaces because of all the trims
+        reFormat = trim(reFormat) // SPACESUBSTITUTE
+      case default
+        reFormat = trim(reFormat) // toform(i:i)
+      end select
+    enddo
+    if ( index(reFormat, SPACESUBSTITUTE) < 1 ) return
+    ! Need to substitute a space for every occurrence of SPACESUBSTITUTE
+    do
+      i = index(reFormat, SPACESUBSTITUTE)
+      if ( i < 1 ) return
+      reFormat(i:i) = ' '
+    enddo
+  end function reFormatDate
+
+  ! --------------------------------------------------  reFormatTime  -----
+  function reFormatTime(time, form) result(reFormat)
+    ! Reformat hhmmss.sss as hh:mm:ss
+    ! (Note it truncates instead of rounding)
+    ! Wouldn't it be clever to allow an optional string arg defining
+    ! the output format; E.g. 'hh:mm' for '13:23' (note 24-hour time)
+    ! or 'HH:mm' for '01:23 PM' (note AM/PM marking)
+    ! Args
+    character(len=*), intent(in)            :: time
+    character(len=len(time)+24)             :: reFormat
+    character(len=*), optional, intent(in)  :: form
+    ! Internal variables
+    character(len=1), parameter             :: hmSpacer = ':'
+    character(len=1), parameter             :: msSpacer = ':'
+    integer                                 :: hours
+    integer                                 :: i
+    character(len=2)                        :: ampm
+    character(len=2)                        :: hh
+    ! Executable
+    reFormat = time(1:2) // hmSpacer // time(3:4) // msSpacer // time(5:6)
+    if ( .not. present(form) ) return
+    if ( len_trim(form) < 1 ) return
+    ampm = ' '
+    reFormat = ' '
+    i = 0
+    do
+      if ( i >= len_trim(form) ) exit
+      i = i + 1
+      select case (form(i:i))
+      case ('h')
+        reFormat = trim(reFormat) // time(1:2)
+        i = i + 1
+      case ('H')
+        read(time(1:2), *) hours
+        ampm = 'AM'
+        if ( hours > 12 ) then
+          hours = hours - 12
+          ampm = 'PM'
+        endif
+        write(hh, '(i2.2)') hours
+        reFormat = trim(reFormat) // hh
+        i = i + 1
+      case ('m')
+        reFormat = trim(reFormat) // time(3:4)
+        i = i + 1
+      case ('s')
+        reFormat = trim(reFormat) // time(5:6)
+        i = i + 1
+      case default
+        reFormat = trim(reFormat) // form(i:i)
+      end select
+    enddo
+    if ( ampm /= ' ' ) reFormat = trim(reFormat) // ' ' // ampm
+  end function reFormatTime
+
+  ! ---------------------------------------------  utc_to_date  -----
+  subroutine utc_to_date(str, ErrTyp, date, &
+    & strict, utcAt0z)
+    ! Routine that returns the date portion from a string of the form
+    ! (A) yyyy-mm-ddThh:mm:ss.sss
+    ! (B) yyyy-dddThh:mm:ss.sss
+    ! where the field separator 'T' divides the string into two
+    ! sub-strings encoding the date and time
+    ! The date substring in subdivided by the separator '-'
+    ! into either two or three fields
+    ! In case (A), the 3 fields are year, month, and day of month
+    ! in case (B) the two fields are year and day of year
+    
+    ! For case (A) returns year, month, and day=day of month
+    ! For case (B) returns year, month=-1, and day=day of year
+    ! Useful to decode utc inputs into attribute values
+    
+    ! Optionally returns the input string in utcAt0z modified so that 
+    ! the hh:mm:ss.sss is 00:00:00Z
+    
+    ! (See also utc_to_time and utc_to_yyymmdd)
+    !--------Argument--------!
+    character(len=*),intent(in)   :: str
+    integer, intent(out)          :: ErrTyp
+    character(len=*), intent(out) :: date
+    logical,intent(in), optional  :: strict
+    character(len=*),intent(out), optional   :: utcAt0z
+    !----------Local vars----------!
+    character(len=1), parameter :: dash='-'
+    logical :: mystrict
+    character(len=1) :: utc_format        ! 'a' or 'b'
+    character(len=*), parameter :: chars_0z = 'T00:00:00Z'
+    !----------Executable part----------!
+
+   if(present(strict)) then
+      mystrict=strict
+   else
+      mystrict=.false.
+   endif
+         
+   if(len_trim(str) <= 0) then
+      if(mystrict) then
+         ErrTyp=INVALIDUTCSTRING
+      else
+         ErrTyp=0
+      endif
+      return
+   endif
+   
+   ErrTyp=INVALIDUTCSTRING
+   ! Snip off time fields from date fields
+   call GetStringElement(lowercase(str), date, 1, &
+     & countEmpty=.true., inseparator='t')
+   if ( date == ' ' ) then
+     if ( .not. mystrict) Errtyp = 0
+     if ( present(utcAt0z) ) utcAt0z = ' '
+     return
+   endif
+   if ( present(utcAt0z) ) utcAt0z = trim(date) // chars_0z
+   ErrTyp=0
+   
+  end subroutine utc_to_date
+
+  ! ---------------------------------------------  utc_to_time  -----
+  subroutine utc_to_time(str, ErrTyp, time, strict)
+    ! Routine that returns the time portion from a string of the form
+    ! (A) yyyy-mm-ddThh:mm:ss.sss
+    ! (B) yyyy-dddThh:mm:ss.sss
+    ! where the field separator 'T' divides the string into two
+    ! sub-strings encoding the date and time
+    ! (See also utc_to_date and utc_to_yyymmdd)
+    !--------Argument--------!
+    character(len=*),intent(in)   :: str
+    integer, intent(out)          :: ErrTyp
+    character(len=*), intent(out) :: time
+    logical,intent(in), optional  :: strict
+    !----------Local vars----------!
+    character(len=1), parameter :: dash='-'
+    logical :: mystrict
+    character(len=1) :: utc_format        ! 'a' or 'b'
+    character(len=*), parameter :: chars_0z = 'T00:00:00Z'
+    !----------Executable part----------!
+
+   if(present(strict)) then
+      mystrict=strict
+   else
+      mystrict=.false.
+   endif
+         
+   if(len_trim(str) <= 0) then
+      if(mystrict) then
+         ErrTyp=INVALIDUTCSTRING
+      else
+         ErrTyp=0
+      endif
+      return
+   endif
+   
+   ErrTyp=INVALIDUTCSTRING
+   ! Snip off time fields from date fields
+   call GetStringElement(lowercase(str), time, 2, &
+     & countEmpty=.true., inseparator='t')
+   if ( time == ' ' ) then
+     if ( .not. mystrict) Errtyp = 0
+     return
+   endif
+   ErrTyp=0
+   
+  end subroutine utc_to_time
+
+  ! ---------------------------------------------  utc_to_yyyymmdd_ints  -----
+  subroutine utc_to_yyyymmdd_ints(str, ErrTyp, year, month, day, strict, nodash)
+    ! Routine that returns the year, month, and day from a string of the form
+    ! (A) yyyy-mm-ddThh:mm:ss.sss
+    ! (B) yyyy-dddThh:mm:ss.sss
+    ! (N) yyyydddThh:mm:ss.sss (no-dash)
+    ! where the field separator 'T' divides the string into two
+    ! sub-strings encoding the date and time
+    ! The date substring in subdivided by the separator '-'
+    ! into either two or three fields
+    ! In case (A), the 3 fields are year, month, and day of month
+    ! in case (B) the two fields are year and day of year
+    
+    ! For case (A) returns year, month, and day=day of month
+    ! For case (B) returns year, month=-1, and day=day of year
+    ! Useful to decode utc inputs into attribute values
+    
+    ! (See also PGS_TD_UTCtoTAI and mls_UTCtoTAI)
+    !--------Argument--------!
+    character(len=*),intent(in) :: str
+    integer, intent(out) :: ErrTyp
+    integer, intent(out) :: year
+    integer, intent(out) :: month
+    integer, intent(out) :: day
+    logical, intent(in), optional :: strict
+    logical, intent(in), optional :: nodash   ! No dash separating date fields
+    !----------Local vars----------!
+    character(len=1), parameter :: dash='-'
+    character(len=NameLen) :: date
+    character(len=NameLen) :: yyyy
+    character(len=NameLen) :: mm
+    character(len=NameLen) :: dd
+    character(LEN=*), parameter :: time_conversion='(I4)'
+    logical :: mystrict
+    logical :: mynodash
+    character(len=1) :: utc_format        ! 'a' or 'b' or 'n' (no-dash)
+    ! The following arrys contains the maximum permissible day for each month
+    ! where month=-1 means the whole year, month=1..12 means Jan, .., Dec
+    integer, dimension(-1:12), parameter :: DAYMAX = (/ &
+      & 366, 0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 &
+      & /)
+    !----------Executable part----------!
+
+   year = -1
+   month = -1
+   day = -1
+   mm = ' '
+
+   if(present(strict)) then
+      mystrict=strict
+   else
+      mystrict=.false.
+   endif
+         
+   if(present(nodash)) then
+      mynodash=nodash
+   else
+      mynodash=.false.
+   endif
+         
+   call utc_to_date(str, ErrTyp, date, strict= .true.)
+   if ( ErrTyp /= 0 ) then
+     if ( .not. mystrict ) ErrTyp = 0
+     return
+   endif
+   if ( myNoDash ) then
+     yyyy = date(1:4)
+     mm = date(5:6)
+     dd = date(7:8)
+     utc_format = 'n'
+   else
+     call GetStringElement(trim(date), yyyy, 1, countEmpty=.true., inseparator=dash)
+     if ( &
+       & NumStringElements(trim(date), countEmpty=.true., inseparator=dash) == 2) then
+       call GetStringElement(trim(date), dd, 2, countEmpty=.true., inseparator=dash)
+       utc_format = 'b'
+     else
+       call GetStringElement(trim(date), mm, 2, countEmpty=.true., inseparator=dash)
+       call GetStringElement(trim(date), dd, 3, countEmpty=.true., inseparator=dash)
+       utc_format = 'a'
+     endif
+   endif
+   
+   ErrTyp=0
+   
+   ! Convert to value
+   if(yyyy /= ' ') then
+      read(yyyy, time_conversion, iostat=ErrTyp) year
+   endif
+   
+   if(ErrTyp /= 0) then
+      return
+   elseif(year < 0 .or. year > YEARMAX) then
+      ErrTyp=INVALIDUTCSTRING
+      return
+   endif
+
+   if(mm /= ' ') then
+      read(mm, time_conversion, iostat=ErrTyp) month
+   endif
+
+   if(utc_format == 'b') then
+     ErrTyp = 0
+     month = -1
+   elseif(ErrTyp /= 0) then
+      return
+   elseif(month < 1 .or. month > 12) then
+      ErrTyp=INVALIDUTCSTRING
+      return
+   endif
+   ! Coming out of the above, month should be in the interval [-1, 12]
+
+   if(dd /= ' ') then
+      read(dd, time_conversion, iostat=ErrTyp) day
+   endif
+
+   if(ErrTyp /= 0) then
+      return
+   elseif(day < 1 .or. day > DAYMAX(month)) then
+      ErrTyp=INVALIDUTCSTRING
+      return
+   endif
+  end subroutine utc_to_yyyymmdd_ints
+
+  ! ---------------------------------------------  utc_to_yyyymmdd_strs  -----
+  subroutine utc_to_yyyymmdd_strs(str, ErrTyp, year, month, day, &
+    & strict)
+    ! Routine that returns the year, month, and day from a string of the form
+    ! (A) yyyy-mm-ddThh:mm:ss.sss
+    ! (B) yyyy-dddThh:mm:ss.sss
+    ! where the field separator 'T' divides the string into two
+    ! sub-strings encoding the date and time
+    ! The date substring in subdivided by the separator '-'
+    ! into either two or three fields
+    ! In case (A), the 3 fields are year, month, and day of month
+    ! in case (B) the two fields are year and day of year
+    
+    ! For case (A) returns year, month, and day=day of month
+    ! For case (B) returns year, month=-1, and day=day of year
+    ! Useful to decode utc inputs into attribute values
+    
+    ! (See also PGS_TD_UTCtoTAI and mls_UTCtoTAI)
+    !--------Argument--------!
+    character(len=*),intent(in)   :: str
+    integer, intent(out)          :: ErrTyp
+    character(len=*), intent(out) :: year
+    character(len=*), intent(out) :: month
+    character(len=*), intent(out) :: day
+    logical,intent(in), optional  :: strict
+    !----------Local vars----------!
+    character(len=1), parameter :: dash='-'
+    character(len=NameLen) :: date
+    logical :: mystrict
+    character(len=1) :: utc_format        ! 'a' or 'b'
+    !----------Executable part----------!
+
+   year = ' '
+   month = ' '
+   day = ' '
+
+   if(present(strict)) then
+      mystrict=strict
+   else
+      mystrict=.false.
+   endif
+         
+   call utc_to_date(str, ErrTyp, date, strict= .true.)
+   if ( ErrTyp /= 0 ) then
+     if ( .not. mystrict ) ErrTyp = 0
+     return
+   endif
+   call GetStringElement(trim(date), year, 1, countEmpty=.true., inseparator=dash)
+   if ( &
+     & NumStringElements(trim(date), countEmpty=.true., inseparator=dash) == 2) then
+     call GetStringElement(trim(date), day, 2, countEmpty=.true., inseparator=dash)
+     utc_format = 'b'
+   else
+     call GetStringElement(trim(date), month, 2, countEmpty=.true., inseparator=dash)
+     call GetStringElement(trim(date), day, 3, countEmpty=.true., inseparator=dash)
+     utc_format = 'a'
+   endif
+   
+   ErrTyp=0
+   
+  end subroutine utc_to_yyyymmdd_strs
+
+  ! ---------------------------------------------  yyyymmdd_to_dai_ints  -----
+
+  subroutine yyyymmdd_to_dai_ints(yyyy, mm, dd, dai, startingDate)
+    ! Routine that returns the number of days after a starting date
+    ! from 3 ints: the form yyyymmdd
+    !--------Argument--------!
+    integer ,intent(in) :: yyyy
+    integer ,intent(in) :: mm
+    integer ,intent(in) :: dd
+    integer,intent(out) :: dai
+    character(len=*),intent(in),optional :: startingDate  ! If not Jan 1 2001
+    !----------Local vars----------!
+    character(len=8) :: mystartingDate
+    integer :: yyyy1, mm1, dd1, doy1
+    integer :: yyyy2, doy2
+    integer :: ErrTyp
+    logical :: daiNegative
+    integer :: y
+    !----------Executable part----------!
+   if(present(startingDate)) then
+      mystartingDate=startingDate
+   else
+      mystartingDate='20010101'
+   endif
+   call utc_to_yyyymmdd_ints(mystartingDate, ErrTyp, yyyy1, mm1, dd1, nodash=.true.)
+   call yyyymmdd_to_doy_str(mystartingDate, doy1)
+   call yyyymmdd_to_doy_ints(yyyy, mm, dd, doy2)
+   yyyy2 = yyyy
+   daiNegative = yyyy1 > yyyy2
+   if ( daiNegative ) then
+     call switch(yyyy1, yyyy2)
+     call switch(doy1, doy2)
+   elseif ( yyyy1 == yyyy2 ) then
+     dai = doy2 - doy1
+     return
+   endif
+   dai = doy2 - doy1
+   do y = yyyy1, yyyy2 - 1
+     if ( leapyear(y) ) then
+       dai = dai + DAYMAXLY(-1)
+     else
+       dai = dai + DAYMAXNY(-1)
+     endif
+   enddo
+   if ( daiNegative ) dai = -dai
+  end subroutine yyyymmdd_to_dai_ints
+
+  ! ---------------------------------------------  yyyymmdd_to_dai_str  -----
+  subroutine yyyymmdd_to_dai_str(str, dai, startingDate)
+    ! Routine that returns the number of days after a starting date
+    ! from a string of the form yyyymmdd
+    !--------Argument--------!
+    character(len=*),intent(in) :: str
+    integer,intent(out) :: dai
+    character(len=*),intent(in),optional :: startingDate  ! If not Jan 1 2001
+    !----------Local vars----------!
+    character(len=8) :: mystartingDate
+    integer :: yyyy1, mm1, dd1, doy1
+    integer :: yyyy2, mm2, dd2, doy2
+    integer :: ErrTyp
+    logical :: daiNegative
+    integer :: y
+    !----------Executable part----------!
+   if(present(startingDate)) then
+      mystartingDate=startingDate
+   else
+      mystartingDate='20010101'
+   endif
+   call utc_to_yyyymmdd_ints(mystartingDate, ErrTyp, yyyy1, mm1, dd1, nodash=.true.)
+   call utc_to_yyyymmdd_ints(str, ErrTyp, yyyy2, mm2, dd2, nodash=.true.)
+   call yyyymmdd_to_doy_str(mystartingDate, doy1)
+   call yyyymmdd_to_doy_str(str, doy2)
+   daiNegative = yyyy1 > yyyy2
+   if ( daiNegative ) then
+     call switch(yyyy1, yyyy2)
+     call switch(doy1, doy2)
+   elseif ( yyyy1 == yyyy2 ) then
+     dai = doy2 - doy1
+     return
+   endif
+   dai = doy2 - doy1
+   do y = yyyy1, yyyy2 - 1
+     if ( leapyear(y) ) then
+       dai = dai + DAYMAXLY(-1)
+     else
+       dai = dai + DAYMAXNY(-1)
+     endif
+   enddo
+   if ( daiNegative ) dai = -dai
+  end subroutine yyyymmdd_to_dai_str
+
+  ! ---------------------------------------------  yyyymmdd_to_doy_ints  -----
+  subroutine yyyymmdd_to_doy_ints(year, month, day, doy)
+    ! Routine that returns the number of days after the year's start
+    ! for year, month, day
+    !--------Argument--------!
+    integer, intent(in) :: year, month, day
+    integer, intent(out) :: doy
+    !----------Local vars----------!
+    integer :: m
+    integer, dimension(-1:12) :: DAYMAX
+    !----------Executable part----------!
+     if ( year < 0 .or. year > YEARMAX ) then
+       doy = -1
+     endif
+     doy = day
+     if ( month <= 1 ) then
+       return
+     endif
+     if ( leapyear(year) ) then
+       DAYMAX = DAYMAXLY
+     else
+       DAYMAX = DAYMAXNY
+     endif
+     do m=1, month-1
+       doy = doy + DAYMAX(m)
+     enddo
+     
+  end subroutine yyyymmdd_to_doy_ints
+
+  ! ---------------------------------------------  yyyymmdd_to_doy_str  -----
+  subroutine yyyymmdd_to_doy_str(str, doy)
+    ! Routine that returns the number of days after the year's start
+    ! for a string of the form yyyymmdd
+    !--------Argument--------!
+    character(len=*),intent(in) :: str
+    integer,intent(out) :: doy
+    !----------Local vars----------!
+    integer :: year, month, day
+    integer :: ErrTyp
+    !----------Executable part----------!
+     ! call utc_to_yyyymmdd_ints(str, ErrTyp, year, month, day, nodash=.true.)
+     doy = -1
+     if ( len_trim(str) < 8 ) return
+     ! print *, 'str: ', str
+     read(str(1:4), *) year
+     read(str(5:6), *) month
+     read(str(7:8), *) day
+     call yyyymmdd_to_doy_ints(year, month, day, doy)
+  end subroutine yyyymmdd_to_doy_str
+
+  ! ---------------------------------------------  yyyydoy_to_yyyymmdd_str  -----
+  subroutine yyyydoy_to_yyyymmdd_str(yyyy, doy, yyyymmdd)
+    ! Routine that converts the string encoding the number of days 
+    ! after the year's start, input as yyyydoy,
+    ! for a string of the form yyyymmdd
+    !--------Argument--------!
+    character(len=*),intent(in) :: yyyy
+    character(len=*),intent(in) :: doy ! w/o the letter 'd'
+    character(len=*),intent(out) :: yyyymmdd
+    !----------Local vars----------!
+    integer :: year, month, day, doynum
+    !----------Executable part----------!
+     read(yyyy, *) year
+     read(doy, *) doynum
+     call yeardoy_to_yyyymmdd_ints(year, doynum, yyyymmdd)
+  end subroutine yyyydoy_to_yyyymmdd_str
+
+  ! ---------------------------------------------  yeardoy_to_yyyymmdd_ints  -----
+  subroutine yeardoy_to_yyyymmdd_ints(year, doy, yyyymmdd)
+    ! Routine that converts the string encoding the number of days 
+    ! after the year's start, input as yyyydoy,
+    ! for a string of the form yyyymmdd
+    !--------Argument--------!
+    integer,intent(in)           :: year
+    integer,intent(in)           :: doy
+    character(len=*),intent(out) :: yyyymmdd
+    !----------Local vars----------!
+    integer :: day
+    integer :: daysum
+    integer :: m
+    integer, dimension(-1:12) :: DAYMAX
+    !----------Executable part----------!
+     if ( year < 0 .or. year > YEARMAX ) then
+       yyyymmdd = 'year not in range'
+     endif
+     daysum = 0
+     if ( leapyear(year) ) then
+       DAYMAX = DAYMAXLY
+     else
+       DAYMAX = DAYMAXNY
+     endif
+     do m=1, 12
+       if ( daysum + DAYMAX(m) >= doy ) exit
+       daysum = daysum + DAYMAX(m)
+     enddo
+     if ( m > 12 ) then
+       yyyymmdd = 'doy not in range'
+       return
+     endif
+     day = doy - daysum
+     write(yyyymmdd,'(I4.4, 2i2.2)') year, m, day
+  end subroutine yeardoy_to_yyyymmdd_ints
+
+  ! ---------------------------------------------------  daysinyear  -----
+  function daysinyear(year) result(days)
+    integer, intent(in) :: year
+    integer :: days
+     ! How many days in the particular year
+     if ( leapyear(year) ) then
+       days = 366
+     else
+       days = 365
+     endif
+  end function daysinyear
+
+  ! ---------------------------------------------------  Leapyear  -----
+  logical function leapyear(year)
+    integer,intent(in) :: year
+     ! This is to capture the rule that centuries are leap only
+     ! if divisible by 400
+     ! Otherwise, as perhaps you knew, leapyears are those years divisible by 4
+     leapyear = mod(year,4) == 0 .and. & ! Processor might short-circuit this
+       & ( (mod(year,100) /= 0) .or. (mod(year,400) == 0) )
+  end function leapyear
+
+  ! ------------------------------------------  monthNameToNumber  -----
+  function monthNameToNumber(name) result(number)
+    ! Convert month name to corresponding number
+    ! E.g., given 'March', returns 3
+    ! As a courtesy, name may be case-insensitive
+    ! As a further courtesy, name may be followed by any junk you like
+    ! Thus 'March 23, 2004 01:59:59.999' still returns 3
+    ! If no such month is found, returns -1
+    ! Args
+    character(len=*), intent(in)             :: name
+    integer                                  :: number
+    do number=1, size(MONTHNAME)
+      if ( index(lowerCase(name), lowercase(trim(MONTHNAME(number)))) > 0 ) return
+    enddo
+    number = -1
+  end function monthNameToNumber
+
+  ! ---------------------------------------------  switch_ints  -----
+  subroutine switch_ints(x1, x2)
+    ! Switch args x1 <=> x2
+    !--------Argument--------!
+    integer,intent(inout) :: x1
+    integer,intent(inout) :: x2
+    !----------Local vars----------!
+    integer :: x
+    x = x1
+    x1 = x2
+    x2 = x
+  end subroutine switch_ints
+
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -474,6 +1370,9 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.8  2005/06/22 17:25:48  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.7  2003/04/04 13:05:24  hcp
 ! Added a number of comments. In particular, made it clearer that the TAI returned
 ! by routines in here is in DAYS not SECONDS

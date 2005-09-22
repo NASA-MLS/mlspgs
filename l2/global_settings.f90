@@ -52,13 +52,12 @@ contains
 
   subroutine SET_GLOBAL_SETTINGS ( ROOT, ForwardModelConfigDatabase, &
     & FGrids, l2gpDatabase, DirectDatabase, processingRange, filedatabase )
-    ! & FGrids, l2gpDatabase, DirectDatabase, processingRange, l1bInfo )
 
+    use dates_module, only: utc_to_yyyymmdd
     use DirectWrite_m, only: DirectData_T, &
       & AddDirectToDatabase, Dump, SetupNewDirect
     use DumpCommand_m, only: DumpCommand
     use EmpiricalGeometry, only: INITEMPIRICALGEOMETRY
-!   use EXPR_M, only: EXPR
     use FGrid, only: AddFGridToDatabase, CreateFGridFromMLSCFInfo, FGrid_T
     use ForwardModelConfig, only: AddForwardModelConfigToDatabase, Dump, &
       & ForwardModelConfig_T
@@ -95,7 +94,7 @@ contains
       & mlspcf_l2fwm_full_end, &
       & mlspcf_l2dgg_start, mlspcf_l2dgg_end
     use MLSStrings, only: hhmmss_value
-    use MLSStringLists, only: catLists,  utc_to_yyyymmdd
+    use MLSStringLists, only: catLists
     use MLSSignals_m, only: INSTRUMENT
     use MoreTree, only: GET_FIELD_ID, GET_SPEC_ID
     use OUTPUT_M, only: BLANKS, OUTPUT
@@ -143,8 +142,6 @@ contains
     logical :: TIMING              ! For S_Time
     logical :: StartTimeIsAbsolute, stopTimeIsAbsolute
     real :: T1, T2                 ! For S_Time
-!   integer :: UNITS(2)            ! Output from Expr
-!   double precision :: VALUE(2)   ! Output from Expr
     real(r8) :: Start_time_from_1stMAF, End_time_from_1stMAF
     logical ::  ItExists
 
@@ -213,10 +210,6 @@ contains
             & call announce_error(0, &
             & '*** l2cf overrides pcf for cycle number ***', &
             & just_a_warning = .true.)
-          !        case ( p_ccsdsstarttime )
-          !          call get_string ( sub_rosa_index, l2pcf%startutc, strip=.true. )
-          !        case ( p_ccsdsendtime )
-          !          call get_string ( sub_rosa_index, l2pcf%endutc, strip=.true. )
         case ( p_starttime )
           got(1) = .true.
           call get_string ( sub_rosa_index, name_string, strip=.true. )
@@ -227,8 +220,6 @@ contains
             startTimeIsAbsolute = .false.
             l2pcf%startutc = start_time_string
           else
-!             call expr ( subtree(2,son), units, value )
-!             start_time_from_1stMAF = value(1)
             read ( name_string, * ) start_time_from_1stMAF
             startTimeIsAbsolute = .true.
           end if
@@ -246,8 +237,6 @@ contains
             stopTimeIsAbsolute = .false.
             l2pcf%endutc = end_time_string
           else
-!             call expr ( subtree(2,son), units, value )
-!             end_time_from_1stMAF = value(1)
             read ( name_string, * ) end_time_from_1stMAF
             stopTimeIsAbsolute = .true.
           end if
@@ -275,12 +264,6 @@ contains
             if ( process_PFA_File ( sub_rosa(subtree(j,son)), &
               & source_ref(subtree(j,son)) ) /= 0 ) continue
           end do
-        ! case ( p_maxfailurespermachine )
-        !  call expr ( subtree(2,son), units, value )
-        !  parallel%maxfailurespermachine = value(1)
-        ! case ( p_maxfailuresperchunk )
-        !  call expr ( subtree(2,son), units, value )
-        !  parallel%maxfailuresperchunk = value(1)
         case default
           call announce_error(son, 'unrecognized global settings parameter')
         end select
@@ -322,7 +305,6 @@ contains
             & ConstructForwardModelConfig ( name, son, .true. ) ) )
         case ( s_l1boa )
           the_hdf_version = LEVEL1_HDFVERSION
-          ! call l1boaSetup ( son, l1bInfo, F_FILE, hdfVersion=the_hdf_version )
           call l1boaSetup ( son, filedatabase, F_FILE, hdfVersion=the_hdf_version )
           if ( index(switches, 'pro') /= 0 ) then  
             sub_rosa_index = sub_rosa(subtree(2,subtree(2, son)))
@@ -353,7 +335,6 @@ contains
             & just_a_warning = .true.)
         case ( s_l1brad )
           the_hdf_version = LEVEL1_HDFVERSION
-          ! call l1bradSetup ( son, l1bInfo, F_FILE, &
           call l1bradSetup ( son, filedatabase, F_FILE, &
             & hdfVersion=the_hdf_version )
           if ( index(switches, 'pro') /= 0 ) then  
@@ -668,10 +649,7 @@ contains
 
       call output ( 'L1B database:', advance='yes' )
 
-     ! if ( associated(l1bInfo%L1BRADIDs) ) then
-     ! if ( num_l1b_files > 0 ) then
         do i = 1, size(filedatabase)
-        ! if ( l1bInfo%L1BRADIDs(i) /= ILLEGALL1BRADID ) then
          L1BFile => filedatabase(i)
          if ( L1BFile%content == 'l1brad' ) then
   	        call output ( 'fileid:   ' )
@@ -807,7 +785,6 @@ contains
     ! --------------------------  CreateDirectTypeFromMLSCFInfo  -----
     function CreateDirectTypeFromMLSCFInfo ( root, DirectFile ) result (Direct)
     integer, intent(in) :: ROOT         ! Tree node
-    ! type (DirectData_T), pointer :: Direct
     type (DirectData_T) :: Direct
     type (MLSFile_T)    :: DirectFile
     ! Local variables
@@ -823,7 +800,6 @@ contains
     integer :: RETURNSTATUS
     logical, parameter :: DEEBUG = .false.
     ! Executable
-    ! nullify(Direct)
     call SetupNewDirect(Direct, 0)
     l2gp_Version = 1
     do i = 2, nsons(root)               ! Skip DirectFileName command
@@ -910,6 +886,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.105  2005/08/19 23:33:03  pwagner
+! FwdMdlDB now dumped when dumping global settings
+!
 ! Revision 2.104  2005/07/21 23:45:33  pwagner
 ! Removed unused l1b fileinfo fields from l2pcf
 !

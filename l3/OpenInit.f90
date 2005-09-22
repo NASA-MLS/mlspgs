@@ -23,7 +23,7 @@ MODULE OpenInit
   USE MLSPCF3, ONLY: mlspcf_l3_param_OutputVersion, mlspcf_l3_param_Cycle, &
        & mlspcf_l3_param_L2DayRange, mlspcf_l3_param_RangDays, & 
        & mlspcf_pcf_start,mlspcf_l3cf_start
-  USE MLSStringLists, only: utc_to_yyyymmdd
+  USE dates_module, only: utc_to_yyyymmdd
   USE Output_m, only: output
   USE PCFHdr, ONLY: CreatePCFAnnotation, GlobalAttributes, FillTAI93Attribute
   USE SDPToolkit, ONLY: PGS_S_SUCCESS, pgs_pc_getConfigData, & 
@@ -515,6 +515,9 @@ END MODULE OpenInit
 !==================
 
 ! $Log$
+! Revision 1.18  2005/07/12 17:18:32  pwagner
+! Dropped global attribute InputVersion
+!
 ! Revision 1.17  2005/06/23 19:07:39  pwagner
 ! Reworded Copyright statement, moved rcs id
 !

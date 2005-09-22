@@ -27,7 +27,7 @@ MODULE L3DMData
        & HDFE_NOMERGE, INVENTORYMETADATA
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Info, & 
        & MLSMSG_DEALLOCATE, MLSMSG_FILEOPEN, MLSMSG_ALLOCATE, MLSMSG_WARNING
-  USE MLSStringLists, only: utc_to_yyyymmdd
+  USE dates_module, only: utc_to_yyyymmdd
   IMPLICIT NONE
   private
   PUBLIC :: L3DMData_T, ConvertDeg2DMS, OutputGrids, &
@@ -2156,6 +2156,9 @@ CONTAINS
 !==================
 
 !# $Log$
+!# Revision 1.41  2005/06/23 19:07:38  pwagner
+!# Reworded Copyright statement, moved rcs id
+!#
 !# Revision 1.40  2005/01/27 00:35:06  pwagner
 !# ReprocessingActual field dropped from product metadata
 !#
