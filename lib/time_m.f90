@@ -16,13 +16,14 @@ module TIME_M
 ! Compute either CPU time, in arbitrary units, or wall-clock time, in
 ! seconds since midnight.
 
-  use MLSStringLists, only: yyyymmdd_to_dai
+  use dates_module, only: yyyymmdd_to_dai
+  use MLSMessageModule, only: MLSMSG_Warning, MLSMessage
   implicit NONE
   private
 
-  public :: TIME_NOW, TIME_NOW_D, TIME_NOW_S, USE_WALL_CLOCK, &
-   & WAIT, WAIT_LOOP_LIMITS, RETRY, INIT_RETRY, &
-   & TRY_AGAIN, RETRY_SUCCESS, TOO_MANY_RETRIES, TIME_DIVISOR, &
+  public :: TIME_NOW, TIME_NOW_D, TIME_NOW_S, &
+   & WAIT, RETRY, INIT_RETRY, &
+   & TRY_AGAIN, RETRY_SUCCESS, TOO_MANY_RETRIES, &
    & SET_STARTTIME
 
   interface TIME_NOW
@@ -35,22 +36,35 @@ module TIME_M
     module procedure WAIT_S
   end interface
 
-  integer, dimension(8), save :: STARTTIME = -1  ! Reset on first call to time_now
-  integer, save          :: STARTDAYSOFF = 0
-  integer, save :: TIME_DIVISOR = 1  ! Divide by this before returning result
-  logical, save :: USE_WALL_CLOCK = .false.
-  integer, save :: WAIT_LOOP_LIMITS = 100
-  integer, save :: TRY_NUMBER
-  integer, save :: RETRY_SUCCESSFUL_RESULT, RETRY_FAILED_RESULT
-  integer, parameter :: RETRY_SUCCESSFUL_DEFAULT = 0
-  integer, parameter :: RETRY_FAILED_DEFAULT = 999
+  ! This is the time configuration type
+  public :: time_config_t
+  type time_config_t
+    integer, dimension(8) :: starttime = -1  ! Reset on first call to time_now
+    integer          :: startdaysoff = 0
+    integer          :: time_divisor = 1  ! Divide by this before returning result
+    logical          :: use_wall_clock = .false.
+    integer          :: wait_loop_limits = 100
+  end type time_config_t
+
+  ! This is the retry configuration type
+  public :: retry_config_t
+  type retry_config_t
+    integer :: try_number
+    integer :: successful_result
+    integer :: failed_result
+    real    :: init_t0
+  end type retry_config_t
+
+  integer, parameter :: SUCCESSFUL_DEFAULT = 0
+  integer, parameter :: FAILED_DEFAULT = 999
   integer, parameter :: TRY_AGAIN = 1
   integer, parameter :: RETRY_SUCCESS = TRY_AGAIN - 1
   integer, parameter :: TOO_MANY_RETRIES = RETRY_SUCCESS - 1
-  real, save    :: INIT_T0
   !                                              so first value is 0.0
   logical, parameter :: WALLCLOCKISELAPSEDFROMSTART = .true.
-  ! integer :: daysoff
+
+  type(time_config_t), public, save :: time_config
+  type(retry_config_t), public, save :: retry_config
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -89,12 +103,12 @@ contains
     character (len=8) :: date   ! in yyyymmdd format
     character (len=4) :: yyyy
     character ( len=2) :: mm, dd
-    STARTTIME = VALUES
+    time_config%starttime = values
     write(yyyy, '(i4)') values(1)
     write(mm, '(i2)') values(2)
     write(dd, '(i2)') values(3)
     date = yyyy // mm // dd
-    call yyyymmdd_to_dai(date, startdaysoff)
+    call yyyymmdd_to_dai(date, time_config%startdaysoff)
     ! print *, 'values: ', values
     ! print *, 'yyyy: ', yyyy
     ! print *, 'mm: ', mm
@@ -106,19 +120,22 @@ contains
   subroutine INIT_RETRY ( SUCCESSFUL_RESULT, FAILED_RESULT )
     integer, intent(in), optional :: SUCCESSFUL_RESULT
     integer, intent(in), optional :: FAILED_RESULT
-    ! As long as RETRY_FAILED_RESULT is default, try for success
-    ! If not default, will try for any value != RETRY_FAILED_RESULT
-    RETRY_FAILED_RESULT = RETRY_FAILED_DEFAULT  
-    if ( present(SUCCESSFUL_RESULT) ) then
-      RETRY_SUCCESSFUL_RESULT = SUCCESSFUL_RESULT
-    elseif ( present(FAILED_RESULT) ) then
-      RETRY_FAILED_RESULT = FAILED_RESULT
-    else
-      RETRY_SUCCESSFUL_RESULT = RETRY_SUCCESSFUL_DEFAULT
+    ! As long as retry_config%FAILED_RESULT is default, try for success
+    ! If not default, will try for any value != retry_config%FAILED_RESULT
+    ! Therefore, there's no reason to input both args
+    if ( present(successful_result) .and. present(failed_result) ) then
+      call MLSMessage( MLSMSG_Warning, ModuleName, &
+       "both args supplied in call to init_retry--only FAILED_RESULT effective")
     endif
+    retry_config%failed_result = FAILED_DEFAULT  
+    retry_config%successful_result = SUCCESSFUL_DEFAULT
+    if ( present(successful_result) ) &
+      & retry_config%successful_result = SUCCESSFUL_RESULT
+    if ( present(failed_result) ) &
+      & retry_config%failed_result = failed_result
     
-    call time_now (INIT_T0)
-    TRY_NUMBER = 0
+    call time_now (retry_config%init_t0)
+    retry_config%try_number = 0
   end subroutine INIT_RETRY
 
   function RETRY ( TRIAL_VALUE, DELAY, MAX_RETRIES, MAX_RETRYING_TIME )
@@ -150,18 +167,20 @@ contains
     ! well with the hdfeos library: if a gdclose is immediately
     ! followed by a gdopen, the bare gdopen may fail because the file
     ! hasn't been fully released
+    
+    ! For other uses, this can hide the grubby details of an event loop
 
     ! Looking for a successful result?
-    if ( RETRY_FAILED_RESULT == RETRY_FAILED_DEFAULT ) then
+    if ( retry_config%failed_result == FAILED_DEFAULT ) then
     ! Have we succeeded yet?
-      if ( TRIAL_VALUE == RETRY_SUCCESSFUL_RESULT ) then
+      if ( TRIAL_VALUE == retry_config%successful_result ) then
         retry = RETRY_SUCCESS
         return
       endif
     else
     ! or looking to avoid failure
     ! have we avoided it?
-      if ( TRIAL_VALUE /= RETRY_FAILED_RESULT ) then
+      if ( TRIAL_VALUE /= retry_config%failed_result ) then
         retry = RETRY_SUCCESS
         return
       endif
@@ -169,7 +188,7 @@ contains
 
     ! Have we tried too many times?
     if ( present(MAX_RETRIES) ) then
-      if ( TRY_NUMBER > MAX_RETRIES ) then
+      if ( retry_config%try_number > MAX_RETRIES ) then
           retry = TOO_MANY_RETRIES
           return
       endif
@@ -177,13 +196,13 @@ contains
     ! For too long?
     if ( present(MAX_RETRYING_TIME) ) then
       call time_now (t1)
-      if ( t1-init_t0 > MAX_RETRYING_TIME ) then
+      if ( t1 - retry_config%init_t0 > MAX_RETRYING_TIME ) then
           retry = TOO_MANY_RETRIES
           return
       endif
     endif
     call wait (delay)
-    TRY_NUMBER = TRY_NUMBER + 1
+    retry_config%try_number = retry_config%try_number + 1
     retry = TRY_AGAIN
   end function RETRY
 
@@ -199,6 +218,9 @@ contains
 end module TIME_M
 
 !$Log$
+!Revision 2.8  2005/09/22 23:36:34  pwagner
+!time_config and retry_config now hold config settings
+!
 !Revision 2.7  2005/06/22 17:25:51  pwagner
 !Reworded Copyright statement, moved rcs id
 !
