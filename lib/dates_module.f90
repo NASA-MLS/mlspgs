@@ -15,7 +15,7 @@ module dates_module
   ! in here is one day, there is nothing to handle hours, minutes and seconds.
   ! Except for ReformatTime, utc_to_time added later
   
-  ! Eventaully, perhaps, the redundancies will be eliminated, and a
+  ! Eventually, perhaps, the redundancies will be eliminated, and a
   ! unified set of date-conversion functions exposed to the public
 
   use MLSCommon, only: NameLen
@@ -40,6 +40,9 @@ module dates_module
   ! EUDTF is Extended UDTF -- Y2K compliant variant of UDTF
   ! EUDTF is an integer of form yyyyddd with yyyy==year and ddd==day of year
   ! (I (HCP) invented this, it isn;t a standard)
+
+  ! See reformatDate below for extra options to describe
+  ! input and output formats
 
 ! === (start of toc) ===
 !     c o n t e n t s
@@ -74,6 +77,27 @@ module dates_module
 ! yyyymmdd_to_dai (int yyyy, int mm, int dd, int dai, [char* startingDate])
 ! yyyymmdd_to_dai (char* str, int dai, [char* startingDate])
 
+! Note: in fromForm and in toForm the following rules are in effect
+! non-alphabetic symbols like '-', '/', and ' ' take their own values
+! otherwise
+!    key       is replaced by                        example
+!    ---       --------------                       ---------
+!    dd        2-digits day of month                07     
+!   doy        3-digits day of year with d-prefix   d270     
+!   Doy        3-digits day of year w/o d-prefix    270     
+!    mm        2-digits month number of year        01     
+!   yyyy       4-digits year number                 2005     
+!     M        full month name                      September
+
+! Putting these together we would have for the same date
+!   "M dd yyyy" => "September 07 2005"
+!   "yyyy-doy " => "2005-d250"
+! In principle, we can demand repetition of some fields, and omission
+! of others, and the routine would obsequiously comply. However,
+! (1) What would be the point?
+! (2) There is a length limit, internal to the procedure, of
+!      24 + length(input date)
+
   ! Since starting this, I (HCP again) discover that the standard text 
   ! format for EOS will be CCSDS format. This comes in two sorts: 
   ! Form A:  yyyy-mm-dd   where mm= month, dd=day in month
@@ -98,7 +122,6 @@ module dates_module
   public :: dai_to_yyyymmdd
   public :: utc_to_date, utc_to_time, utc_to_yyyymmdd, yyyymmdd_to_dai
   public :: reformatDate, reformatTime
-  private::isleap
 
   interface dai_to_yyyymmdd
     module procedure dai_to_yyyymmdd_str, dai_to_yyyymmdd_ints
@@ -119,28 +142,24 @@ module dates_module
   ! utc_to_yyyymmdd
   integer, public, parameter :: INVALIDUTCSTRING = 1
 
-  !Here are some useful definitions of the properties of months
-  character(len=3),private,dimension(12),parameter::monthnames=&
-       (/ "Jan","Feb","Mar","Apr","May","Jun","Jul","Aug",&
-       "Sep","Oct","Nov","Dec" /)
-  character(len=3),private,dimension(12),parameter::capmonthnames=&
-       (/ "JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG",&
-       "SEP","OCT","NOV","DEC" /)
-  integer,private,parameter,dimension(12)::nonleap_days_in_month=&
-       (/31,28,31,30,31,30,31,31,30,31,30,31 /)
-
-  ! These somewhat similar parameters arte used in the separately-coded
+  ! These somewhat similar parameters are used in the separately-coded
   ! but redundant functions and procedures moved here from their
   ! original slots in MLSStrings
   integer, parameter :: YEARMAX = 4999  ! Conversion invalid after 4999 AD
+
   ! The following arrays contains the maximum permissible day for each month
   ! where month=-1 means the whole year, month=1..12 means Jan, .., Dec
+  ! Months in leap-years
   integer, dimension(-1:12), parameter :: DAYMAXLY = (/ &
     & 366, 0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 &
     & /)
+  ! Months in normal-years
   integer, dimension(-1:12), parameter :: DAYMAXNY = (/ &
     & 365, 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 &
     & /)
+
+  ! This should be modified for internationalization; e.g. with
+  ! an include statement or suchlike
   character(len=*), dimension(12), parameter :: MONTHNAME = (/ &
     & 'January  ', 'February ', 'March    ', 'April    ', 'May      ', &
     & 'June     ', 'July     ', 'August   ', 'September', 'October  ', &
@@ -191,33 +210,15 @@ contains
        "in function lastday: month is out of range")
        day=31
     else
-       day=nonleap_days_in_month(imonth)
+       day=DAYMAXNY(imonth)
     endif
   end function lastday
-
-  ! Private function to test whether a year is a leap year or not.
-  function isleap(year) result(leap)
-    integer,intent(in)::year
-    logical::leap
-    if (modulo(year,100)==0 ) then
-       if(modulo(year,400)==0 ) then
-          leap=.true.
-       else
-          leap=.false.
-       endif
-    else if (modulo(year,4)==0 ) then
-       leap=.true.
-    else
-       leap=.false.
-    endif
-  end function isleap
-
 
   function days_in_year(year) result(days) 
     !Public function returns no. of days in a year
     integer,intent(in)::year
     integer::days
-    if ( isleap(year)) then
+    if ( leapyear(year) ) then
        days=366
     else
        days=365
@@ -320,7 +321,6 @@ contains
     character(len=11)::cal
     !------Local vars--------
     integer:: year,dayofyear,month,dayofmonth,daysinyear,j,cumul_days,i
-    !    logical:: isleap ! is this necessary???? No, it is an error
     integer,dimension(12)::days_in_month
     character(len=20),dimension(3)::tmpstring
     character(len=1)::sep_char
@@ -363,8 +363,8 @@ contains
        cal="01 Jan 0001"
        return
     endif
-    days_in_month=nonleap_days_in_month
-    if (isleap(year)) then
+    days_in_month=DAYMAXNY(1:12)
+    if ( leapyear(year) ) then
        daysinyear=366
        days_in_month(2)=29 !Sodding February
     else
@@ -397,7 +397,7 @@ contains
     if(num_month)then
        write(unit=tmpstring(order(2)),fmt="(i2.2)")month
     else
-       tmpstring(order(2))=monthnames(month)
+       tmpstring(order(2))=monthname(month)(1:3)
     endif
     write(unit=tmpstring(order(3)),fmt=*)year
     ! Stick the three bits into a string to be returned
@@ -471,8 +471,8 @@ contains
        return
     endif
 
-    days_in_month=nonleap_days_in_month
-    if (isleap(year)) then
+    days_in_month=DAYMAXNY(1:12)
+    if ( leapyear(year) ) then
        daysinyear=366
        days_in_month(2)=29 !Sodding February
     else
@@ -487,7 +487,7 @@ contains
        monthstring=capitalize(monthstring)
        month=0
        mcloop:do i=1,12
-           if (monthstring==capmonthnames(i)) then
+           if ( monthstring == capitalize(monthname(i)(1:3)) ) then
               month=i
               exit mcloop
            endif
@@ -578,9 +578,9 @@ contains
    ! Then compute mm and dd for yyyy-(doy1+dai)
    mydai = dai
    do
-     if ( mydai + doy1 <= daysinyear(yyyy) ) exit
+     if ( mydai + doy1 <= days_in_year(yyyy) ) exit
      ! What we said we'd do
-     loss = daysinyear(yyyy) - doy1 + 1
+     loss = days_in_year(yyyy) - doy1 + 1
      yyyy = yyyy + 1
      doy1 = 1
      mydai = mydai - loss
@@ -627,12 +627,12 @@ contains
   ! --------------------------------------------------  reFormatDate  -----
   function reFormatDate(date, fromForm, toForm) result(reFormat)
     ! Reformat yyyymmdd as yyyy-mm-dd
-    ! Wouldn't it be clever to allow an optional string arg defining
+    ! Allows an optional string toForm defining
     ! the output format; E.g. 'dd M yyyy' for '03 September 2005'
     ! (Thus 'M' expands into the full month name)
     ! or 'yyyy-doy' for '2005-d245' (note the inclusion of the letter 'd')
     ! or 'yyyy-Doy' for '2005-245' (note the absence of the letter 'd')
-    ! And yet another optional string to hold the input format
+    ! Another optional string fromForm to hold the input format
     ! in case it wasn't yyyymmdd?
     ! Args
     character(len=*), intent(in)            :: date
@@ -1307,18 +1307,6 @@ contains
      write(yyyymmdd,'(I4.4, 2i2.2)') year, m, day
   end subroutine yeardoy_to_yyyymmdd_ints
 
-  ! ---------------------------------------------------  daysinyear  -----
-  function daysinyear(year) result(days)
-    integer, intent(in) :: year
-    integer :: days
-     ! How many days in the particular year
-     if ( leapyear(year) ) then
-       days = 366
-     else
-       days = 365
-     endif
-  end function daysinyear
-
   ! ---------------------------------------------------  Leapyear  -----
   logical function leapyear(year)
     integer,intent(in) :: year
@@ -1370,6 +1358,9 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.9  2005/09/22 23:33:58  pwagner
+! date conversion procedures and functions all moved into dates module
+!
 ! Revision 2.8  2005/06/22 17:25:48  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
