@@ -2,9 +2,9 @@
 PROGRAM dateconverter
 !=================================
 
+   use dates_module, ONLY: reFormatDate, dai_to_yyyymmdd, yyyymmdd_to_dai
    use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
-   USE MLSStrings, ONLY: lowerCase, readIntsFromChars, reFormatDate
-   USE MLSStringLists, ONLY: dai_to_yyyymmdd, yyyymmdd_to_dai
+   use MLSStrings, ONLY: lowerCase, readIntsFromChars
 
    IMPLICIT NONE
 
@@ -20,12 +20,13 @@ PROGRAM dateconverter
 ! E.g., given "2004d274" it will output "2004 September 30"
 ! Useful only because possibly one will use doy 
 ! while the other uses month-and-day
+! Useful also in automatically computing gmao entries in PCF
 
   type options_T
-    integer     :: offset = 0                      ! How many days to add/subtract
+    integer     :: offset = 0                  ! How many days to add/subtract
     logical     :: verbose = .false.
-    character(len=255) :: outputFormat= ' '        ! output format
-    character(len=255) :: inputFormat= ' '         ! input format
+    character(len=255) :: outputFormat= ' '    ! output format
+    character(len=255) :: inputFormat= ' '     ! input format
   end type options_T
 
   type ( options_T ) :: options
@@ -38,7 +39,7 @@ PROGRAM dateconverter
 
 ! Variables
 
-   ! The following arrys contains the maximum permissible day for each month
+   ! The following arrays contains the maximum permissible day for each month
    ! where month=-1 means the whole year, month=1..12 means Jan, .., Dec
    integer, dimension(-1:12), parameter :: DAYMAXLY = (/ &
      & 366, 0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 &
@@ -70,7 +71,9 @@ PROGRAM dateconverter
      call get_date(date, n_dates, options)
      if ( index('-+', date(1:1)) > 0 ) cycle
      if ( date == ' ' ) exit
-     if ( index(dateForm(date), 'yyyy') == 0 ) then
+     if ( options%inputFormat /= ' ' ) then
+       ! Because the internal dateForm will not be needed
+     elseif ( index(dateForm(date), 'yyyy') == 0 ) then
        print *, 'Sorry--date format not found: ', trim(date)
        cycle
      endif
@@ -79,8 +82,8 @@ PROGRAM dateconverter
   enddo
   do i=1, n_dates
     date = dates(i)
-    fromForm = dateForm(date)
-    if ( len_trim(options%inputFormat) > 0 ) fromForm = options%inputFormat
+    fromForm = options%inputFormat
+    if ( len_trim(options%inputFormat) < 1 ) fromForm = dateForm(date)
     ! Figure out logical format to convert it to
     if ( options%outputFormat /= ' ' ) then
       toForm = options%outputFormat
@@ -227,7 +230,7 @@ contains
           ! print *, 'After 0-9  y field: ', form
         case default
           ! Huh? Already finished with dd
-          print *, 'Unexpected digit in dateForm'
+          if ( options%verbose ) print *, 'Unexpected digit in dateForm'
         end select
       case default
         form(i:i) = date(j:j)
@@ -257,8 +260,6 @@ contains
      character(LEN=255), intent(out) :: date          ! date
      integer, intent(in)             :: n_dates
      type ( options_T ), intent(inout) :: options
-     ! character(LEN=*), intent(inout) :: outputFile        ! output date
-     ! logical, intent(inout)          :: verbose
      ! Local variables
      integer ::                         error = 1
      integer, save ::                   i = 1
@@ -331,6 +332,9 @@ END PROGRAM dateconverter
 !==================
 
 ! $Log$
+! Revision 1.4  2005/09/15 00:14:31  pwagner
+! +/-number option added
+!
 ! Revision 1.3  2004/10/13 22:58:00  pwagner
 ! Fixed bug in date_format; added -i option
 !
