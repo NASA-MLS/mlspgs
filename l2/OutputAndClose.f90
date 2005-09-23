@@ -70,7 +70,7 @@ contains ! =====     Public Procedures     =============================
       & F_FILE, F_HDFVERSION, F_HGRID, &
       & F_IFANYCRASHEDCHUNKS, F_INPUTFILE, F_INPUTTYPE, &
       & F_METADATAONLY, F_METANAME, F_OVERLAPS, F_PACKED, &
-      & F_QUANTITIES, F_REPAIRGEOLOCATIONS, &
+      & F_QUANTITIES, F_RENAME, F_REPAIRGEOLOCATIONS, &
       & F_SWATH, F_TYPE, F_WRITECOUNTERMAF, &
       & FIELD_FIRST, FIELD_LAST, &
       & L_L2AUX, L_L2DGG, L_L2GP, L_L2PC, &
@@ -162,6 +162,7 @@ contains ! =====     Public Procedures     =============================
     character (len=132) :: PhysicalFilename
     integer :: QUANTITIESNODE           ! A tree node
     integer :: RECLEN                   ! For file stuff
+    character (len=MAXSWATHNAMESBUFSIZE) :: rename
     logical :: RepairGeoLocations
     integer :: ReturnStatus
     integer(i4) :: SDFID                ! File handle
@@ -225,6 +226,7 @@ contains ! =====     Public Procedures     =============================
       exclude = ''
       meta_name = ''
       sdList = '*' ! This is wildcard meaning 'every sd or swath'
+      rename = ' ' ! This is a blank meaning 'Dont rename the swaths'
       writeCounterMAF = .false.
       writeMetaDataOnly = .false.
       got = .false.
@@ -280,6 +282,9 @@ contains ! =====     Public Procedures     =============================
             inputfile_base = unquote(inputfile_base) ! Parser includes quotes
           case ( f_inputtype )
             input_type = decoration(subtree(2, gson))
+          case ( f_rename )
+            call get_string ( sub_rosa(subtree(2,gson)), rename )
+            rename = unquote(rename) ! Parser includes quotes
           case ( f_repairGeoLocations )
             repairGeoLocations = get_boolean ( gson )
           case ( f_swath )
@@ -363,14 +368,14 @@ contains ! =====     Public Procedures     =============================
             call cpL2GPData(trim(inputPhysicalfileName), &
               & trim(PhysicalFilename), create2=create, &
               & hdfVersion1=HDFVERSION_5, hdfVersion2=HDFVERSION_5, &
-              & swathList=trim(sdList), &
+              & swathList=trim(sdList), rename=rename, &
               & notUnlimited=avoidUnlimitedDims, ReadStatus=.true., &
               & HGrid=HGrids(HGridIndex), options="-rv")
           elseif ( got(f_exclude) .and. repairGeoLocations ) then
             call cpL2GPData(trim(inputPhysicalfileName), &
               & trim(PhysicalFilename), create2=create, &
               & hdfVersion1=HDFVERSION_5, hdfVersion2=HDFVERSION_5, &
-              & swathList=trim(sdList), &
+              & swathList=trim(sdList), rename=rename, &
               & exclude=trim(exclude), &
               & notUnlimited=avoidUnlimitedDims, ReadStatus=.true., &
               & HGrid=HGrids(HGridIndex), options="-rv")
@@ -378,7 +383,7 @@ contains ! =====     Public Procedures     =============================
             call cpL2GPData(trim(inputPhysicalfileName), &
               & trim(PhysicalFilename), create2=create, &
               & hdfVersion1=HDFVERSION_5, hdfVersion2=HDFVERSION_5, &
-              & swathList=trim(sdList), &
+              & swathList=trim(sdList), rename=rename, &
               & notUnlimited=avoidUnlimitedDims, ReadStatus=.true.)
           endif
         case default
@@ -1312,6 +1317,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.112  2005/09/23 23:39:35  pwagner
+! Added rename field to copy command
+!
 ! Revision 2.111  2005/09/21 23:27:17  pwagner
 ! Pokes holes in all-day HGrid to match obstructions
 !
