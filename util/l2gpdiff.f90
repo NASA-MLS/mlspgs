@@ -21,14 +21,14 @@ program l2gpdiff ! show diffs between swaths in two different files
      & L2GPNameLen, MAXSWATHNAMESBUFSIZE
    use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
    use MLSCommon, only: R8
-   use MLSFiles, only: mls_exists, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
+   use MLSFiles, only: mls_exists, &
      & HDFVERSION_4, HDFVERSION_5, MLS_INQSWATH
    use MLSHDF5, only: mls_h5open, mls_h5close
    use MLSMessageModule, only: MLSMessageConfig
    use MLSStringLists, only: GetStringElement, NumStringElements
    use output_m, only: output
    use PCFHdr, only: GlobalAttributes
-   use Time_M, only: Time_Now, USE_WALL_CLOCK
+   use Time_M, only: Time_Now, time_config
    
    implicit none
 
@@ -88,7 +88,7 @@ program l2gpdiff ! show diffs between swaths in two different files
   ! 
   MLSMessageConfig%useToolkit = .false.
   MLSMessageConfig%logFileUnit = -1
-  USE_WALL_CLOCK = .true.
+  time_config%use_wall_clock = .true.
   CALL mls_h5open(error)
   n_filenames = 0
   do      ! Loop over filenames
@@ -263,6 +263,9 @@ end program l2gpdiff
 !==================
 
 ! $Log$
+! Revision 1.5  2005/08/19 23:41:08  pwagner
+! May specify fields, swaths
+!
 ! Revision 1.4  2005/06/22 19:27:33  pwagner
 ! Reworded Copyright statement, moved rcs id
 !

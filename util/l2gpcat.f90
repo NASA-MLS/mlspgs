@@ -28,7 +28,7 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
      & NumStringElements, RemoveElemFromList
    use output_m, only: output
    use PCFHdr, only: GlobalAttributes
-   use Time_M, only: Time_Now, USE_WALL_CLOCK
+   use Time_M, only: Time_Now, time_config
    
    implicit none
 
@@ -87,7 +87,7 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
   ! 
   MLSMessageConfig%useToolkit = .false.
   MLSMessageConfig%logFileUnit = -1
-  USE_WALL_CLOCK = .true.
+  time_config%use_wall_clock = .true.
   CALL mls_h5open(error)
   n_filenames = 0
 !   do      ! Loop over input
@@ -300,6 +300,9 @@ end program L2GPcat
 !==================
 
 ! $Log$
+! Revision 1.5  2005/06/22 19:27:33  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 1.4  2004/12/06 19:13:12  pwagner
 ! With -nodup option ignores dup swath names after 1st
 !

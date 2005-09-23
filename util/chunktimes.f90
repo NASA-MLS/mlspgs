@@ -31,7 +31,7 @@ program chunktimes ! Reads chunk times from l2aux file(s)
    use MLSStrings, only: lowercase
    use output_m, only: blanks, newline, output, output_date_and_time
    use PCFHdr, only: GlobalAttributes
-   use Time_M, only: Time_Now, USE_WALL_CLOCK
+   use Time_M, only: Time_Now, time_config
    
    implicit none
 
@@ -107,7 +107,7 @@ program chunktimes ! Reads chunk times from l2aux file(s)
   ! 
   MLSMessageConfig%useToolkit = .false.
   MLSMessageConfig%logFileUnit = -1
-  USE_WALL_CLOCK = .true.
+  time_config%use_wall_clock = .true.
   CALL mls_h5open(error)
   if ( error /= 0 ) then
     print *, 'Sorry--unable to start hdf5'
@@ -671,6 +671,9 @@ end program chunktimes
 !==================
 
 ! $Log$
+! Revision 1.11  2005/07/20 20:38:00  pwagner
+! Made defaults consistent with v1.51 (final phase is 12th)
+!
 ! Revision 1.10  2005/06/22 19:27:32  pwagner
 ! Reworded Copyright statement, moved rcs id
 !

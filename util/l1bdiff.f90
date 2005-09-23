@@ -31,7 +31,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
      & MLSMessage
    use MLSStringLists, only: GetStringElement, NumStringElements
    use output_m, only: output
-   use Time_M, only: Time_Now, USE_WALL_CLOCK
+   use Time_M, only: Time_Now, time_config
    
    implicit none
 
@@ -79,7 +79,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
   ! 
   MLSMessageConfig%useToolkit = .false.
   MLSMessageConfig%logFileUnit = -1
-  USE_WALL_CLOCK = .true.
+  time_config%use_wall_clock = .true.
   CALL mls_h5open(error)
   n_filenames = 0
   do      ! Loop over filenames
@@ -359,3 +359,6 @@ end program l1bdiff
 !==================
 
 ! $Log$
+! Revision 1.1  2005/06/22 19:27:32  pwagner
+! Reworded Copyright statement, moved rcs id
+!

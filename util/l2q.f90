@@ -36,7 +36,7 @@ program L2Q
     & PVMFCATCHOUT, PVMFSEND, PVMFNOTIFY, PVMTASKEXIT, &
     & PVMFFREEBUF
   use Sort_M, only: SORT
-  use Time_M, only: Time_Now, Use_Wall_Clock
+  use Time_M, only: Time_Now, time_config
   use TOGGLES, only: CON, GEN, LEVELS, PAR, SYN, TAB, &
     & TOGGLE
 
@@ -155,7 +155,7 @@ program L2Q
   MLSMessageConfig%useToolkit = .false.
   MLSMessageConfig%logFileUnit = -1
   MLSMessageConfig%CrashOnAnyError = .true.
-  use_wall_clock = .true.
+  time_config%use_wall_clock = .true.
   parallel%master = .true.  ! not merely master, but master of masters
   parallel%slaveFilename = 'pvm' ! for later cures only
   !---------------- Task (0) ------------------
@@ -536,7 +536,7 @@ contains
         else if ( line(3+n:7+n) == 'reviv' ) then
           options%reviveHosts = switch
         else if ( line(3+n:7+n) == 'wall ' ) then
-          use_wall_clock = switch
+          time_config%use_wall_clock = switch
         else if ( line(3:) == ' ' ) then  ! "--" means "no more options"
           i = i + 1
           call getarg ( i, line )
@@ -1526,7 +1526,7 @@ contains
     call output(options%timingUnits, advance='yes' )
     call output(' Using wall clock instead of cpu time?:          ', advance='no')
     call blanks(4, advance='no')
-    call output(use_wall_clock, advance='yes')
+    call output(time_config%use_wall_clock, advance='yes')
     call output(' ----------------------------------------------------------', &
       & advance='yes')
   end subroutine Dump_settings
@@ -1608,6 +1608,9 @@ contains
 end program L2Q
 
 ! $Log$
+! Revision 1.8  2005/06/22 19:27:33  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 1.7  2005/04/12 20:32:19  pwagner
 ! May periodically autodump masters, hosts files
 !

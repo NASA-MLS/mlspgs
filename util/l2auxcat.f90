@@ -27,7 +27,7 @@ program L2AUXcat ! catenates split L2AUX files, e.g. dgm
      & RemoveElemFromList
    use output_m, only: output
    use PCFHdr, only: GlobalAttributes
-   use Time_M, only: Time_Now, USE_WALL_CLOCK
+   use Time_M, only: Time_Now, time_config
    
    implicit none
 
@@ -80,7 +80,7 @@ program L2AUXcat ! catenates split L2AUX files, e.g. dgm
   ! 
   MLSMessageConfig%useToolkit = .false.
   MLSMessageConfig%logFileUnit = -1
-  USE_WALL_CLOCK = .true.
+  time_config%use_wall_clock = .true.
   CALL mls_h5open(error)
   n_filenames = 0
   do      ! Loop over filenames
@@ -234,6 +234,9 @@ end program L2AUXcat
 !==================
 
 ! $Log$
+! Revision 1.2  2005/06/22 19:27:33  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 1.1  2005/04/29 21:57:22  pwagner
 ! First commit
 !
