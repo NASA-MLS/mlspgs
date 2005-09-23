@@ -2200,6 +2200,7 @@ contains ! =====     Public Procedures     =============================
     type (L2GPData_T) :: l2gp
     character (len=8) :: myOptions
     integer :: noSwaths
+    logical :: renameSwaths
     logical :: repair
     character (len=L2GPNameLen) :: swath
     character (len=L2GPNameLen) :: swath2
@@ -2210,6 +2211,8 @@ contains ! =====     Public Procedures     =============================
     if ( present(options) ) myOptions = options
     verbose = ( index(myOptions, 'v') > 0 )
     repair  = ( index(myOptions, 'r') > 0 )
+    renameSwaths  = present(rename)
+    if ( renameSwaths ) renameSwaths = ( rename /= ' ' )
     if ( repair .and. .not. present(HGrid) ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'cpL2GPFile must be given HGrid to repair L2GPData' )
@@ -2222,7 +2225,7 @@ contains ! =====     Public Procedures     =============================
             & 'No swaths cp to file--unable to count swaths in ' // trim(swathList) )
     endif
     if ( verbose ) call dump(swathlist, 'swath names')
-    if ( present(rename) ) then
+    if ( renameSwaths ) then
       noSwaths = min(noSwaths, NumStringElements(trim(rename), countEmpty))
       if ( verbose ) call dump(rename, 'swath names (copied)')
     endif
@@ -2233,7 +2236,7 @@ contains ! =====     Public Procedures     =============================
     ! Loop over swaths in file 1
     do i = 1, noSwaths
       call GetStringElement (trim(swathList), swath, i, countEmpty )
-      if ( present(rename) ) then
+      if ( renameSwaths ) then
         call GetStringElement (trim(rename), swath2, i, countEmpty )
       else
         swath2 = swath
@@ -3533,6 +3536,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.124  2005/09/21 23:16:40  pwagner
+! Improvements to RepairL2GP_HGrid; they may even be correct
+!
 ! Revision 2.123  2005/09/14 00:08:15  pwagner
 ! Dispense with some debug prints; observe HGRid%noProfsLowerOverlap
 !
