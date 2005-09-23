@@ -298,6 +298,7 @@ regOrders
 regQuants
 regWeights
 regWeightVec
+rename
 repairGeolocations
 reset
 resetSeed
@@ -408,6 +409,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.151  2005/09/23 23:39:16  pwagner
+# Added rename field to copy command
+#
 # Revision 2.150  2005/09/19 16:55:06  pwagner
 # Save Obstructions will allow OutputClose to faithfully replicate data gaps
 #
