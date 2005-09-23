@@ -990,6 +990,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_ifAnyCrashedChunks, t+t_boolean, n+n_field_type, &
              begin, f+f_inputFile, t+t_string, nr+n_field_type, &
              begin, f+f_inputtype, t+t_outputType, n+n_field_type, &
+             begin, f+f_rename, t+t_string, n+n_field_type, &
              begin, f+f_repairGeolocations, t+t_boolean, n+n_field_type, &
              begin, f+f_swath, t+t_string, n+n_field_type, &
              begin, f+f_type, t+t_outputType, nr+n_field_type, &
@@ -1379,6 +1380,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.414  2005/09/23 23:39:16  pwagner
+! Added rename field to copy command
+!
 ! Revision 2.413  2005/09/19 16:55:06  pwagner
 ! Save Obstructions will allow OutputClose to faithfully replicate data gaps
 !
