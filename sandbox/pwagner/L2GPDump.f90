@@ -13,12 +13,12 @@ PROGRAM L2GPDump ! dumps L2GPData files
      & L2GPNameLen, MAXSWATHNAMESBUFSIZE
    use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
    use MLSCommon, only: R8
-   use MLSFiles, only: MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
-     & HDFVERSION_4, HDFVERSION_5, MLS_INQSWATH
+   use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, MLS_INQSWATH
    use MLSHDF5, only: mls_h5open, mls_h5close
    use MLSMessageModule, only: MLSMessageConfig, MLSMSG_Warning, &
      & MLSMessage
-   use MLSStringLists, only: GetStringElement, NumStringElements
+   use MLSStringLists, only: GetStringElement, NumStringElements, &
+     & stringElementNum
    use OUTPUT_M, only: OUTPUT
    use PCFHdr, only: GlobalAttributes
    
@@ -47,6 +47,7 @@ PROGRAM L2GPDump ! dumps L2GPData files
      logical ::          columnsOnly = .false.
      logical ::          attributesToo = .false.
      character(len=255) ::  fields = ''
+     character(len=255) ::  swaths = '*' ! wildcard, meaning all swaths
   end type options_T
 
   type ( options_T ) :: options
@@ -92,6 +93,8 @@ contains
       if ( filename(1:1) /= '-' ) exit
       if ( filename(1:3) == '-h ' ) then
         call print_help
+      elseif ( filename(1:3) == '-v ' ) then
+        options%verbose = .true.
       elseif ( filename(1:3) == '-0 ' ) then
         options%details = 0
       elseif ( filename(1:3) == '-1 ' ) then
@@ -104,6 +107,9 @@ contains
         options%columnsOnly = .true.
       else if ( filename(1:3) == '-l ' ) then
         call getarg ( i+1+hp, options%fields )
+        i = i + 1
+      else if ( filename(1:3) == '-s ' ) then
+        call getarg ( i+1+hp, options%swaths )
         i = i + 1
       else if ( filename(1:3) == '-f ' ) then
         call getarg ( i+1+hp, filename )
@@ -138,6 +144,7 @@ contains
       write (*,*) ' Options: -f filename => use filename'
       write (*,*) '          -h          => print brief help'
       write (*,*) '          -l list     => dump only fields named in list'
+      write (*,*) '          -s slist    => dump only swaths named in slist'
       write (*,*) '          -0          => dump only scalars, 1-d array'
       write (*,*) '          -1          => dump only scalars'
       write (*,*) '          -2          => dump only swath names'
@@ -170,9 +177,9 @@ contains
       return
     endif
     ! print *, 'Opening: ', trim(filename)
-    File1 = mls_io_gen_openF('swopen', .TRUE., status, &
-       & record_length, DFACC_READ, FileName=trim(filename), &
-       & hdfVersion=HDFVERSION_5, debugOption=.false. )
+!     File1 = mls_io_gen_openF('swopen', .TRUE., status, &
+!        & record_length, DFACC_READ, FileName=trim(filename), &
+!        & hdfVersion=HDFVERSION_5, debugOption=.false. )
     ! print *, 'Status: ', status
     ! Executable code
     noSwaths = NumStringElements(trim(swathList), countEmpty)
@@ -183,10 +190,17 @@ contains
     ! Loop over swaths in file 1
     do i = 1, noSwaths
       call GetStringElement (trim(swathList), swath, i, countEmpty )
+      ! Is this one of the swaths we wished to dump?
+      if ( options%swaths /= '*' ) then
+        status = stringElementNum(options%swaths, trim(swath), countEmpty)
+        if ( status < 1 ) cycle
+      endif
       ! Allocate and fill l2gp
       ! print *, 'Reading swath from file: ', trim(swath)
-      call ReadL2GPData ( file1, trim(swath), l2gp, &
+      call ReadL2GPData ( trim(filename), trim(swath), l2gp, &
            & hdfVersion=HDFVERSION_5 )
+!       call ReadL2GPData ( file1, trim(swath), l2gp, &
+!            & hdfVersion=HDFVERSION_5 )
       ! print *, 'Dumping swath: ', trim(swath)
       ! print *, 'l2gp%nFreqs:  ', l2gp%nFreqs
       ! print *, 'l2gp%nLevels: ', l2gp%nLevels
@@ -198,14 +212,17 @@ contains
       call dump(l2gp, options%columnsOnly, options%details, options%fields)
       call DestroyL2GPContents ( l2gp )
     enddo
-    status = mls_io_gen_closeF('swclose', File1, FileName=Filename, &
-      & hdfVersion=HDFVERSION_5, debugOption=.false.)
+!     status = mls_io_gen_closeF('swclose', File1, FileName=Filename, &
+!       & hdfVersion=HDFVERSION_5, debugOption=.false.)
    end subroutine dump_one_file
 !==================
 END PROGRAM L2GPDump
 !==================
 
 ! $Log$
+! Revision 1.7  2005/02/11 21:13:59  pwagner
+! Now -2 option works correctly
+!
 ! Revision 1.6  2004/10/27 16:48:55  pwagner
 ! -l list option added to specify which fields to dump
 !
