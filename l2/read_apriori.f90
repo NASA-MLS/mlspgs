@@ -129,7 +129,8 @@ contains ! =====     Public Procedures     =============================
     integer :: KEY                 ! Index of n_spec_args in the AST
     integer :: L2apriori_version
     type (L2AUXData_T) :: L2AUX
-    type (MLSFile_T), pointer :: L2AUXFile
+    type (MLSFile_T) :: L2AUXFile
+    type (MLSFile_T), pointer :: pL2AUXFile
     type (L2GPData_T) :: L2GP
     type (MLSFile_T) :: L2GPFile
     integer :: L2Index             ! In the l2gp or l2aux database
@@ -359,7 +360,7 @@ contains ! =====     Public Procedures     =============================
           & name=FilenameString, shortName=shortFileName, &
           & type=l_hdf, access=DFACC_RDONLY, hdfVersion=hdfVersion, &
           & PCBottom=mlspcf_l2apriori_start, PCTop=mlspcf_l2apriori_end)
-        call mls_openFile(L2AUXFile, returnStatus)
+        ! call mls_openFile(L2AUXFile, returnStatus)
         L2AUXFile%PCFId = LastAprioriPCF
 
         gridIndex = AddFileToDataBase(filedatabase, L2AUXFile)
@@ -367,18 +368,20 @@ contains ! =====     Public Procedures     =============================
 
         l2Index = AddL2AUXToDatabase( L2AUXDatabase, l2aux )
         call decorate ( key, l2Index )
-        call ReadL2AUXData ( L2AUXFile, sdNameString, quantityType, &
+        pL2AUXFile => filedatabase(gridIndex)
+        call ReadL2AUXData ( pL2AUXFile, sdNameString, quantityType, &
           & L2AUXDatabase(l2Index), &
           & checkDimNames=.false. )
 
         if( index(switches, 'apr') /= 0 ) &
         & call dump( L2AUXDatabase(l2Index), details )
 
-        call mls_closeFile(L2AUXFile, returnStatus)
-        if ( returnStatus /= 0 ) then
-          call announce_error ( son, &
-            & 'Failed to close l2aux file ' // trim(FileNameString) )
-        elseif(index(switches, 'pro') /= 0) then                            
+        ! call mls_closeFile(L2AUXFile, returnStatus)
+!         if ( returnStatus /= 0 ) then
+!           call announce_error ( son, &
+!             & 'Failed to close l2aux file ' // trim(FileNameString) )
+!         elseif(index(switches, 'pro') /= 0) then                            
+        if(index(switches, 'pro') /= 0) then                            
            call announce_success(FilenameString, 'l2aux', &                    
            & sdNameString, MLSFile=L2AUXFile)    
         end if
@@ -815,6 +818,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.62  2005/09/28 17:02:04  pwagner
+! Should not segment fault when reading apriori l2aux
+!
 ! Revision 2.61  2005/08/05 20:39:07  pwagner
 ! L2AUXFile arg to ReadL2AUXFile now a pointer
 !
