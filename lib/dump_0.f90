@@ -1461,34 +1461,52 @@ contains
   end subroutine DUMP_NAME_V_PAIRS_REAL
 
   ! --------------------------------------------- DumpSize_integer -----
-  subroutine DumpSize_integer ( n, advance )
+  subroutine DumpSize_integer ( n, advance, units )
     integer, intent(in) :: N
     character(len=*), intent(in), optional :: ADVANCE
-    ! Local parameters
-    call dumpSize ( n*1.0, advance )
+    integer, intent(in), optional :: units ! E.g., 1024 for kB
+    ! Executable
+    if ( present(units) ) then
+      call dumpSize ( n*1.0, advance=advance, units=units*1.0 )
+    else
+      call dumpSize ( n*1.0, advance=advance )
+    endif
   end subroutine DumpSize_integer
 
   ! ------------------------------------------------ DumpSize_real -----
-  subroutine DumpSize_real ( n, advance )
+  subroutine DumpSize_real ( n, advance, units )
     real, intent(in) :: N
     character(len=*), intent(in), optional :: ADVANCE
+    real, intent(in), optional :: units
     ! Local parameters
     real, parameter :: KB = 1024.0
     real, parameter :: MB = KB * 1024.0
     real, parameter :: GB = MB * 1024.0
+    real, parameter :: TB = GB * 1024.0
+    real            :: myUnits
     ! Make a 'nice' output
-    if ( n < kb ) then
-      call output ( n, format='(f6.1)' )
+    myUnits = 1.0
+    if ( present(units) ) myUnits = units
+    if ( myUnits == 0.0 ) then
+      call output ( n, format='(e12.1)' )
+      call output ( ' (illegal units)', advance=advance )
+      return
+    endif
+    if ( n < kb/myUnits ) then
+      call output ( n*myUnits, format='(f6.1)' )
       call output ( ' bytes', advance=advance )
-    else if ( n < Mb ) then
-      call output ( n/kb, format='(f6.1)' )
+    else if ( n < Mb/myUnits ) then
+      call output ( n*myUnits/kb, format='(f6.1)' )
       call output ( ' kb', advance=advance )
-    else if ( n < Gb ) then
-      call output ( n/Mb, format='(f6.1)' )
+    else if ( n < Gb/myUnits ) then
+      call output ( n*myUnits/Mb, format='(f6.1)' )
       call output ( ' Mb', advance=advance )
-    else
-      call output ( n/Gb, format='(f6.1)' )
+    else if ( n < Tb/myUnits ) then
+      call output ( n*myUnits/Gb, format='(f6.1)' )
       call output ( ' Gb', advance=advance )
+    else
+      call output ( n*myUnits/Tb, format='(f6.1)' )
+      call output ( ' Tb', advance=advance )
     end if
   end subroutine DumpSize_real
 
@@ -1625,6 +1643,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.47  2005/10/03 18:05:52  pwagner
+! Allocated memory now dumped in units of MEMORY_UNITS
+!
 ! Revision 2.46  2005/07/20 01:33:47  vsnyder
 ! Simplify DumpSize routines
 !
