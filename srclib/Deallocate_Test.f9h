@@ -16,12 +16,16 @@
 ! Probably only useful within Allocate_Deallocate.f90
 
     character(len=*), intent(in) :: ItsName, ModuleName
-    integer :: STATUS, S
+    integer :: STATUS
+    real :: S
     if ( associated(To_Deallocate) ) then
-      if ( trackAllocates ) s = eSize * size(to_deallocate)
+      if ( trackAllocates ) s = (eSize/MEMORY_UNITS) * size(to_deallocate)
       deallocate ( To_Deallocate, stat=status )
       call test_deallocate ( status, moduleName, itsName, s )
       nullify ( to_Deallocate )
     end if
 
 ! $Log$
+! Revision 1.1  2005/07/20 01:29:46  vsnyder
+! Initial commit
+!
