@@ -93,37 +93,62 @@ module Allocate_Deallocate
 
   logical, save, private :: COLLECT_GARBAGE_EACH_TIME = .false.
 
+  ! The next two used for tracking allocated memory
+  ! (The 1st is public to enable reporting finer or coarser grains)
+  real, save, public  :: MEMORY_UNITS = 1024. ! Report nothing smaller than KB
+  real, save, private :: NoBytesAllocated=0. ! Number of MEMORY_UNITS allocated.
+
+
   !------------------------------- RCS Ident Info ------------------------------
   character(len=*), parameter, private :: ModuleName = &
     & "$RCSfile$"
   private :: not_used_here 
   !-----------------------------------------------------------------------------
 
+  interface ReportAllocateDeallocate
+    module procedure ReportAllocateDeallocate_ints
+    module procedure ReportAllocateDeallocate_real
+  end interface
+
+  interface Test_Deallocate
+    module procedure Test_Deallocate_int_s
+    module procedure Test_Deallocate_real_s
+  end interface
+
 contains
   ! =====     Public Procedures      ===================================
 
-  !-----------------------------------   ReportAllocateDeallocate  -----
-  subroutine ReportAllocateDeallocate ( name, moduleName, noBytes )
+  !-----------------------------------   ReportAllocateDeallocate_ints  -----
+  subroutine ReportAllocateDeallocate_ints ( name, moduleName, noBytes )
+    ! Dummy arguments
+    character (len=*), intent(in) :: NAME ! Name of thing allocated
+    character (len=*), intent(in) :: MODULENAME ! Module that allocated it
+    integer, intent(in) :: noBytes      ! No bytes allocated (or deallocated if -ve)
+    !
+    call ReportAllocateDeallocate( name, moduleName, noBytes*1.0 )
+  end subroutine ReportAllocateDeallocate_ints
+
+  !-----------------------------------   ReportAllocateDeallocate_real  -----
+  subroutine ReportAllocateDeallocate_real ( name, moduleName, noBytes )
     use Output_m, only: OUTPUT
     use Dump_0, only: DUMPSIZE
     ! Dummy arguments
     character (len=*), intent(in) :: NAME ! Name of thing allocated
     character (len=*), intent(in) :: MODULENAME ! Module that allocated it
-    integer, intent(in) :: noBytes      ! No bytes allocated (or deallocated if -ve)
-
-    integer, save :: NoBytesAllocated=0 ! Number of bytes allocated.
+    real, intent(in) :: noBytes      ! No bytes allocated (or deallocated if -ve)
 
     ! Executable code
     if ( .not. trackAllocates ) return        ! Most probably will not be called anyway
+    ! print *, 'noBytes: ', noBytes
     noBytesAllocated = noBytesAllocated + noBytes
     call output ( 'Tracking: ' )
-    if ( noBytes < 0 ) then
+    if ( noBytes < 0. ) then
       call output ( 'Dea' )
     else
       call output ( 'A' )
     end if
     call output ( 'llocated ' )
-    call DumpSize ( abs ( noBytes ) )
+    call DumpSize ( abs ( noBytes ), units=MEMORY_UNITS )
     call output ( ' for ' // trim ( name ) // ' in ' )
     if ( moduleName(1:1) == '$' ) then
       ! The moduleNameIn is <dollar>RCSFile: <filename>,v <dollar>
@@ -132,8 +157,8 @@ contains
       call output ( moduleName )
     end if
     call output ( ' total ' )
-    call DumpSize ( noBytesAllocated, advance='yes' )
-  end subroutine ReportAllocateDeallocate
+    call DumpSize ( noBytesAllocated, units=MEMORY_UNITS, advance='yes' )
+  end subroutine ReportAllocateDeallocate_real
 
   ! -------------------------------------  Set_garbage_collection  -----
   subroutine Set_garbage_collection ( setting )
@@ -155,7 +180,8 @@ contains
     integer :: I, L
 
     if ( status /= 0 ) then
-      write ( bounds, '("(",i0,":",i0:(",",i0,":",i0))' ) &
+      ! print *, 'status ', status
+      write ( bounds, '("(",i0,":",i0, 2(",",i0,":",i0))' ) &
         & ( lBounds(i), uBounds(i), i = 1, size(lBounds) )
       l = len_trim(bounds)+1
       bounds(l:l)= ')'
@@ -166,19 +192,30 @@ contains
     if ( trackAllocates .and. present(elementSize) ) then
       if ( elementSize > 0 ) &
         & call ReportAllocateDeallocate ( itsName, moduleNameIn, &
-          & elementSize*product(ubounds-lbounds+1) )
+          & memproduct(elementSize, ubounds-lbounds+1) )
     end if
 
   end subroutine Test_Allocate
 
-  ! --------------------------------------------  Test_DeAllocate  -----
-  subroutine Test_DeAllocate ( Status, ModuleNameIn, ItsName, Size )
+  ! --------------------------------------------  Test_DeAllocate_int_s  -----
+  subroutine Test_DeAllocate_int_s ( Status, ModuleNameIn, ItsName, Size )
   ! Test the status from a deallocate.  If it's nonzero, issue a message.
   ! Do garbage collection if Collect_garbage_each_time is true.
   ! Track deallocations if TrackAllocates is true and Size is present and > 0.
     integer, intent(in) :: Status
     character(len=*), intent(in) :: ModuleNameIn, ItsName
-    integer, intent(in), optional :: Size ! Bytes, <= 0 for no tracking
+    integer, intent(in) :: Size ! in MEMORY_UNITS, <= 0 for no tracking
+    call Test_Deallocate( Status, ModuleNameIn, ItsName, Size*1.0 )
+  end subroutine Test_DeAllocate_int_s
+
+  ! --------------------------------------------  Test_Deallocate_real_s  -----
+  subroutine Test_Deallocate_real_s ( Status, ModuleNameIn, ItsName, Size )
+  ! Test the status from a deallocate.  If it's nonzero, issue a message.
+  ! Do garbage collection if Collect_garbage_each_time is true.
+  ! Track deallocations if TrackAllocates is true and Size is present and > 0.
+    integer, intent(in) :: Status
+    character(len=*), intent(in) :: ModuleNameIn, ItsName
+    real, intent(in), optional :: Size ! in MEMORY_UNITS, <= 0 for no tracking
 
     if ( status /= 0 ) then
       call MLSMessage ( MLSMSG_Warning, moduleNameIn, &
@@ -188,11 +225,11 @@ contains
       call mls_gc_now
     end if
     if ( status == 0 .and. trackAllocates .and. present(size) ) then
-      if ( size > 0 ) &
+      if ( size > 0. ) &
         & call ReportAllocateDeallocate ( itsName, moduleNameIn, -size )
     end if
 
-  end subroutine Test_DeAllocate
+  end subroutine Test_Deallocate_real_s
 
   ! =====     Private Procedures     ===================================
   ! ---------------------------------  Allocate_Test_Character_1d  -----
@@ -595,6 +632,19 @@ contains
     include "Deallocate_Test.f9h"
   end subroutine Deallocate_Test_RealR4_3d
 
+  ! ----------------------------------  memproduct  -----
+  function memproduct ( elementSize, dimensions ) result( p )
+    ! Find how many multiples of MEMORY_UNITS an array
+    ! with elementSize and dimensions
+    ! Note: we go through all this to forestall integer overflows
+    integer, dimension(:), intent(in) :: dimensions
+    integer, intent(in)               :: elementSize
+    real                              :: p
+    !
+    p = ( elementSize / MEMORY_UNITS ) * product(dimensions*1.0)
+    ! print *, 'p ', p
+  end function memproduct
+
   ! ------------------------------------------------  Not_Used_Here  -----
   logical function not_used_here()
   !------------------------------- RCS Ident Info ------------------------------
@@ -608,6 +658,9 @@ contains
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.25  2005/10/03 18:04:51  pwagner
+! Allocated memory now tracked in units of MEMORY_UNITS
+!
 ! Revision 2.24  2005/09/16 23:38:20  vsnyder
 ! Add Complex allocators
 !
