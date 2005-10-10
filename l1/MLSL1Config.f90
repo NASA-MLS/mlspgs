@@ -63,6 +63,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
   TYPE Output_T
      LOGICAL :: RemoveBaseline = .TRUE.             ! For GHz Baseline removal
+     LOGICAL :: DeconvolveDACS = .FALSE.            ! For DACS deconvolution
      LOGICAL :: EnableChi2Err(NumBands) = .FALSE.   ! For RadErr calculation
   END TYPE Output_T
 
@@ -258,7 +259,8 @@ MODULE MLSL1Config  ! Level 1 Configuration
 !=============================================================================
 
       USE EXPR_M, ONLY: Expr
-      USE INIT_TABLES_MODULE, ONLY: p_removebaseline, s_chi2err, f_bandno
+      USE INIT_TABLES_MODULE, ONLY: p_removebaseline, p_deconvolveDACS, &
+           s_chi2err, f_bandno
       USE TREE, ONLY: Decoration, Nsons, Subtree, Sub_rosa, Node_id
       USE TREE_TYPES
       USE MLSStrings, ONLY: lowercase
@@ -286,6 +288,10 @@ MODULE MLSL1Config  ! Level 1 Configuration
             CASE (p_removebaseline)
 
                L1Config%Output%RemoveBaseline = Get_Boolean (son)
+
+            CASE (p_deconvolveDACS)
+
+               L1Config%Output%DeconvolveDACS = Get_Boolean (son)
 
             END SELECT
 
@@ -777,6 +783,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
 END MODULE MLSL1Config
 
 ! $Log$
+! Revision 2.20  2005/10/10 19:06:27  perun
+! Add DeconvolveDACS field
+!
 ! Revision 2.19  2005/06/23 18:41:35  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
