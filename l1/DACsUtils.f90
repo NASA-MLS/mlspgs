@@ -423,8 +423,6 @@ CONTAINS
             C(11) * Z_thold * A
     ENDDO
 
-! Apodize here?
-
 ! Prepare for FFT
 
   R(1:129) = rho
@@ -478,6 +476,7 @@ CONTAINS
 
     CHARACTER(len=26), PARAMETER :: DACS_Name(24:25) = (/ &
          "R3:240.B24D:O3.S0.DACS-3  ", "R3:240.B25D:CO.S1.DACS-1  " /)
+    LOGICAL :: deconvolved
 
 !=============================================================================
 
@@ -593,28 +592,34 @@ CONTAINS
        ENDDO
 
        NoiseInflationFactor(bno) = SQRT (SUM(apod(:,bno)**2) / 129)
+       deconvolved = .FALSE.
 
-       IF (NoiseInflationFactor(bno) < MaxNoiseInflationFactor) THEN
+       IF (L1Config%Output%DeconvolveDACS) THEN
+
+          IF (NoiseInflationFactor(bno) < MaxNoiseInflationFactor) THEN
 
 ! Deconvolve:
 
-          CALL DeconvolveRads (rad, apod(:,bno))
+             CALL DeconvolveRads (rad, apod(:,bno))
+             deconvolved = .TRUE.
 
 ! Scale precisions:
 
-          rad_prec = rad_prec * NoiseInflationFactor(bno)
+             rad_prec = rad_prec * NoiseInflationFactor(bno)
+
+          ELSE
+             rad_prec = -1 * ABS(rad_prec)  ! Negate precs
+          ENDIF
+
+       ENDIF
 
 ! Output Band rads:
 
-          DACsDS%name = DACS_Name(bno)
-          DO maf = 1, noMAFS
-             CALL Build_MLSAuxData (sd_id, DACsDS, rad(:,:,maf), &
-                  lastIndex=maf, disable_attrib=.TRUE.)
-          ENDDO
-
-       ELSE
-          rad_prec = -1 * ABS(rad_prec)  ! Negate precs
-       ENDIF
+       DACsDS%name = DACS_Name(bno)
+       DO maf = 1, noMAFS
+          CALL Build_MLSAuxData (sd_id, DACsDS, rad(:,:,maf), &
+               lastIndex=maf, disable_attrib=.TRUE.)
+       ENDDO
 
 ! Output Band precisions:
 
@@ -642,6 +647,7 @@ CONTAINS
          NoiseInflationFactor(24:24), .TRUE.)
     CALL MakeHDF5Attribute (grp_id, 'NoiseInflationFactorB25', &
          NoiseInflationFactor(25:25), .TRUE.)
+    CALL MakeHDF5Attribute (grp_id, 'DACsDeconvolved', deconvolved, .TRUE.)
 
   END SUBROUTINE FinalizeDACSdata
 
@@ -699,6 +705,9 @@ CONTAINS
 END MODULE DACsUtils
 
 ! $Log$
+! Revision 2.11  2005/10/10 19:08:40  perun
+! Test DeconvolveDACS flag and add appropriate attribute to output file
+!
 ! Revision 2.10  2005/06/23 18:41:35  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
