@@ -111,9 +111,10 @@ MODULE INIT_TABLES_MODULE
   ! In Output section:
 
   INTEGER, PUBLIC, PARAMETER :: P_REMOVEBASELINE = P_UseAntOffsets + 1
+  INTEGER, PUBLIC, PARAMETER :: P_DECONVOLVEDACS = P_RemoveBaseline + 1
 
   INTEGER, PUBLIC, PARAMETER :: FIRST_PARM = P_OUTPUT_VERSION_STRING
-  INTEGER, PUBLIC, PARAMETER :: LAST_PARM = P_REMOVEBASELINE
+  INTEGER, PUBLIC, PARAMETER :: LAST_PARM = P_DECONVOLVEDACS
 
 ! Table for section ordering:
 
@@ -188,6 +189,7 @@ CONTAINS ! =====     Public procedures     =============================
     parm_indices(p_MoonToLimbAngle_THz)=    add_ident ( 'MoonToLimbAngleTHz' )
     parm_indices(p_dacswindow)=             add_ident ( 'DACSwindow' )
     parm_indices(p_UseAntOffsets)=          add_ident ( 'UseAntOffsets' )
+    parm_indices(p_DeconvolveDACS)=         add_ident ( 'DeconvolveDACS' )
 
     ! Put section names into the symbol table
 
@@ -334,6 +336,7 @@ CONTAINS ! =====     Public procedures     =============================
              s+s_switch, s+s_markchanbad, n+n_section, &
       begin, z+z_output, &
              begin, p+p_removebaseline, t+t_boolean, n+n_name_def, &
+             begin, p+p_DeconvolveDACS, t+t_boolean, n+n_name_def, &
              s+s_chi2err, n+n_section/) )
 
   END SUBROUTINE INIT_TABLES
@@ -352,6 +355,9 @@ CONTAINS ! =====     Public procedures     =============================
 END MODULE INIT_TABLES_MODULE
   
 ! $Log$
+! Revision 2.23  2005/10/10 19:05:32  perun
+! Add DeconvolveDACS field
+!
 ! Revision 2.22  2005/06/23 18:41:35  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
@@ -380,6 +386,9 @@ END MODULE INIT_TABLES_MODULE
 ! Version 1.2 commit
 !
 ! $Log$
+! Revision 2.23  2005/10/10 19:05:32  perun
+! Add DeconvolveDACS field
+!
 ! Revision 2.22  2005/06/23 18:41:35  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
