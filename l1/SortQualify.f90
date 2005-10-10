@@ -70,6 +70,7 @@ CONTAINS
        EmptyMAFdata%ChanType(i)%WF = "D"
        EmptyMAFdata%ChanType(i)%DACS = "D"
     ENDDO
+    EmptyMAFdata%CalType = .FALSE.   ! Not a calibration type MAF
     EmptyMAFdata%EMAF%MIFsPerMAF = nom_MIFs
     EmptyMAFdata%WeightsFlags%recomp_MAF = .TRUE.
 
@@ -199,6 +200,7 @@ print *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
     USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Warning
     USE SDPToolkit, ONLY: PGS_TD_TAItoUTC
     USE OutputL1B_DataTypes, ONLY: lenG
+    USE MLSStrings, ONLY: Capitalize
  
 !! Qualify the Current MAF data in the cal window
 
@@ -217,13 +219,6 @@ print *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
     INTEGER, PARAMETER :: MaxMIFno = (MaxMIFs - 1)
 
     CurMAFdata => CalWin%MAFdata(CalWin%current)
-
-!! Initialize nominal interpolation flags
-
-    CurMAFdata%Nominal%FB = .TRUE.
-    CurMAFdata%Nominal%MB = .TRUE.
-    CurMAFdata%Nominal%WF = .TRUE.
-    CurMAFdata%Nominal%DACS = .TRUE.
 print *, 'Data:', CurMAFdata%SciPkt%GHz_sw_pos
 
 !! Initialize MIF Rad Precision signs:
@@ -289,6 +284,7 @@ print *, 'Data:', CurMAFdata%SciPkt%GHz_sw_pos
        !! Save current sw pos:
        
        GHz_sw_pos = CurMAFdata%SciPkt(MIF)%GHz_sw_pos
+       IF (GHz_seq_use == match) GHz_sw_pos = Capitalize (GHz_sw_pos)
        THz_sw_pos = CurMAFdata%SciPkt(MIF)%THz_sw_pos
 
        !! Possibly use sequence from configuration:
@@ -331,26 +327,36 @@ print *, 'Data:', CurMAFdata%SciPkt%GHz_sw_pos
           CurMAFdata%ChanType(MIF)%DACS = GHz_sw_pos
        END WHERE
 
-       !! "D"iscard incorrect Target Type:   !TEST!!!
+       !! Upcase "T"arget types for matching
 
-       IF (GHz_sw_pos /= TargetType) THEN    ! Need to set TargetType in CF
-          WHERE (CurMAFdata%ChanType(MIF)%FB(:,1:14) == "T")
-             CurMAFdata%ChanType(MIF)%FB(:,1:14) = discard
+       IF (GHz_seq_use == match) THEN           ! Type Match
+
+          WHERE (CurMAFdata%ChanType(MIF)%FB(:,1:14) == "t")
+             CurMAFdata%ChanType(MIF)%FB(:,1:14) = "T"
           END WHERE
-          WHERE (CurMAFdata%ChanType(MIF)%MB == "T")
-             CurMAFdata%ChanType(MIF)%MB = discard
+          WHERE (CurMAFdata%ChanType(MIF)%MB == "t")
+             CurMAFdata%ChanType(MIF)%MB = "T"
           END WHERE
-          WHERE (CurMAFdata%ChanType(MIF)%WF == "T")
-             CurMAFdata%ChanType(MIF)%WF = discard
+          WHERE (CurMAFdata%ChanType(MIF)%WF == "t")
+             CurMAFdata%ChanType(MIF)%WF = "T"
           END WHERE
-          WHERE (CurMAFdata%ChanType(MIF)%DACS == "T")
-             CurMAFdata%ChanType(MIF)%DACS = discard
+          WHERE (CurMAFdata%ChanType(MIF)%DACS == "t")
+             CurMAFdata%ChanType(MIF)%DACS = "T"
           END WHERE
        ENDIF
 
        CurMAFdata%SciPkt(MIF)%GHz_sw_pos = GHz_sw_pos
 
     ENDDO
+
+! Check if MAF data contains calibration data ("S"pace and "T"arget views):
+
+    IF (ANY (CurMAFdata%SciPkt%GHz_sw_pos == "S" .AND. &
+         ANY (CurMAFdata%SciPkt%GHz_sw_pos == "T"))) THEN
+       CurMAFdata%CalType = .TRUE.
+    ELSE
+       CurMAFdata%CalType = .FALSE.
+    ENDIF
 
 ! Check for any walls flagged in MAF: 
 
@@ -452,13 +458,11 @@ print *, 'switch MAF: ', CurMAFdata%SciPkt(0)%MAFno
                          IF (CurMAFdata%SciPkt(0)%BandSwitch(sw) == band(n)) &
                               THEN
                             CurMAFdata%BankWall%FB(bank(bno)) = .TRUE.
-                            CurMAFdata%Nominal%FB(bank(bno)) = .FALSE.
                             EXIT
                          ENDIF
                       ENDDO
                    ELSE
                       CurMAFdata%BankWall%FB(bank(bno)) = .TRUE.
-                      CurMAFdata%Nominal%FB(bank(bno)) = .FALSE.
                   ENDIF
                 ENDIF
              ENDDO
@@ -671,6 +675,9 @@ END MODULE SortQualify
 !=============================================================================
 
 ! $Log$
+! Revision 2.16  2005/10/10 14:29:35  perun
+! Correct sorting of target types and determine if MAF is calibration type
+!
 ! Revision 2.15  2005/06/23 18:41:36  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
