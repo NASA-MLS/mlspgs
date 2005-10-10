@@ -32,9 +32,9 @@ MODULE Calibration ! Calibration data and routines
   PUBLIC :: Calibrate, InitCalibWindow, UpdateCalVectors
 
 !---------------------------- RCS Module Info ------------------------------
-  character (len=*), private, parameter :: ModuleName= &
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  PRIVATE :: not_used_here 
 !---------------------------------------------------------------------------
 
   !! Channel type (D, L, S, T, Z):
@@ -62,7 +62,6 @@ MODULE Calibration ! Calibration data and routines
      TYPE (Eng_MAF_T) :: EMAF
      TYPE (Chan_type_T) :: ChanType(0:(MaxMIFs-1))
      TYPE (BankLogical_T) :: BankWall
-     TYPE (BankLogical_T) :: Nominal   ! nominal switching flag
      TYPE (BankInt_T) :: BankCalInd(2) ! start & end indexes for calib
      TYPE (BankInt_T) :: WallMIF       ! MIF for start of wall
      TYPE (BrightObjects_T) :: LimbView, SpaceView ! Bright Objects in FOV flags
@@ -70,7 +69,8 @@ MODULE Calibration ! Calibration data and routines
      REAL :: MIFprecSign(0:(MaxMIFs-1))   ! Radiance precision sign per MIF
      INTEGER :: start_index = 0, end_index = 0  ! start/end within cal vectors
      INTEGER :: last_MIF = 0
-     INTEGER :: BandSwitch(5) = 0          ! band switch positions
+     INTEGER :: BandSwitch(5) = 0      ! band switch positions
+     LOGICAL :: CalType                ! calibration type MAF
   END TYPE MAFdata_T
 
   !! Calibration window:
@@ -155,15 +155,6 @@ CONTAINS
     CalWin%current = 0        ! Indicates nothing in the window
     CalWin%central = window_MAFs / 2 + 1
 
-    !! Initialize nominal data flags
-
-    DO i = 1, window_MAFs
-       CalWin%MAFdata(i)%nominal%FB = .TRUE.
-       CalWin%MAFdata(i)%nominal%MB = .TRUE.
-       CalWin%MAFdata(i)%nominal%WF = .TRUE.
-       CalWin%MAFdata(i)%nominal%DACS = .TRUE.
-    ENDDO
-
     !! Initialize space and target weighting vectors:
 
     space_weight%FB = 1.0d0
@@ -185,8 +176,9 @@ CONTAINS
     REAL(r8) :: MIFno
     LOGICAL, SAVE :: done = .FALSE.
 
-    IF (ANY (calwin%mafdata%weightsflags%recomp_maf)) THEN
+    IF (ANY (CalWin%MAFdata%WeightsFlags%recomp_MAF)) THEN
        PRINT *, 'win flags: ', CalWin%MAFdata%WeightsFlags
+       PRINT *, 'cal type: ', CalWin%MAFdata%CalType
     ENDIF
     last_cal_index = CalWin%MAFdata(CalWin%current)%end_index
 
@@ -375,14 +367,14 @@ CONTAINS
   END SUBROUTINE UpdateCalVectors
 
 !=============================================================================
-  SUBROUTINE InterpCals (nVec, time, cal_cnts, cal_interp, cal_err, &
+  SUBROUTINE InterpCals (calMAFs, nVec, time, cal_cnts, cal_interp, cal_err, &
        GHz_comVec, GHz_errmul, BankCalInd, cal_index, cal_time, cal_weight, &
        cal_qual)
 !=============================================================================
 
     USE MLSL1Config, ONLY: L1Config
 
-    INTEGER :: nVec, cal_index(2)
+    INTEGER :: calMAFs, nVec, cal_index(2)
     REAL(r8) :: time, GHz_errmul
     TYPE (Cal_R8_T) :: cal_cnts, cal_time, cal_weight
     TYPE (Cal_Int_T) :: cal_qual
@@ -390,7 +382,7 @@ CONTAINS
     REAL(r8) :: GHz_comVec(0:nVec-1)
     TYPE (BankInt_T) :: BankCalInd(2) ! start & end indexes for calib
 
-    INTEGER :: i, j, Istat, cal1, cal2, calen, calMAFs
+    INTEGER :: i, j, Istat, cal1, cal2, calen
     REAL(r8) :: errmul
     REAL(r8), TARGET :: comVec(0:Max_cal_index)
 
@@ -414,16 +406,26 @@ CONTAINS
     errmulP = GHz_errmul   !! TEST!!!
     is_same = .TRUE.       !! TEST!!!
 
+    IF (calMAFs < MinCalMAFs) THEN   ! Nothing can be interpolated
+       cal_interp%FB = 0.0
+       cal_err%FB = 0.0
+       cal_interp%MB = 0.0
+       cal_err%MB = 0.0
+       cal_interp%WF = 0.0
+       cal_err%WF = 0.0
+       cal_interp%DACS = 0.0
+       cal_err%DACS = 0.0
+       RETURN
+    ENDIF
+
 ! Interpolate calibration values
 
     DO j = 1, GHzNum
        cal1 = BankCalInd(1)%FB(j)
        cal2 = BankCalInd(2)%FB(j)
        calen = cal2 - cal1 + 1
-       calMAFs = calen / L1Config%Calib%MIFsPerMAF
 
-       IF (calMAFs < MinCalMAFs .OR. cal1 > cal_index(1) .OR. &
-            cal2 < cal_index(2)) THEN
+       IF (cal1 > cal_index(1) .OR. cal2 < cal_index(2)) THEN
           cal_interp%FB(:,j) = 0.0
           cal_err%FB(:,j) = 0.0
        ELSE
@@ -461,10 +463,8 @@ CONTAINS
        cal1 = BankCalInd(1)%MB(j)
        cal2 = BankCalInd(2)%MB(j)
        calen = cal2 - cal1 + 1
-       calMAFs = calen / L1Config%Calib%MIFsPerMAF
 
-       IF (calMAFs < MinCalMAFs .OR. cal1 > cal_index(1) .OR. &
-            cal2 < cal_index(2)) THEN
+       IF (cal1 > cal_index(1) .OR. cal2 < cal_index(2)) THEN
           cal_interp%MB(:,j) = 0.0
           cal_err%MB(:,j) = 0.0
        ELSE
@@ -499,10 +499,8 @@ CONTAINS
        cal1 = BankCalInd(1)%WF(j)
        cal2 = BankCalInd(2)%WF(j)
        calen = cal2 - cal1 + 1
-       calMAFs = calen / L1Config%Calib%MIFsPerMAF
 
-       IF (calMAFs < MinCalMAFs .OR. cal1 > cal_index(1) .OR. &
-            cal2 < cal_index(2)) THEN
+       IF (cal1 > cal_index(1) .OR. cal2 < cal_index(2)) THEN
           cal_interp%WF(:,j) = 0.0
           cal_err%WF(:,j) = 0.0
        ELSE
@@ -539,10 +537,8 @@ CONTAINS
           cal1 = BankCalInd(1)%DACS(j)
           cal2 = BankCalInd(2)%DACS(j)
           calen = cal2 - cal1 + 1
-          calMAFs = calen / L1Config%Calib%MIFsPerMAF
-
-          IF (calMAFs < MinCalMAFs .OR. cal1 > cal_index(1) .OR. &
-               cal2 < cal_index(2)) THEN
+ 
+          IF (cal1 > cal_index(1) .OR. cal2 < cal_index(2)) THEN
              cal_interp%DACS(:,j) = 0.0
              cal_err%DACS(:,j) = 0.0
           ELSE
@@ -684,7 +680,7 @@ CONTAINS
 !! Calibrate the science data
 
     INTEGER :: time_index, start_index, end_index, windex
-    INTEGER :: nVec, cal_index(2), MIF_index
+    INTEGER :: nVec, cal_index(2), MIF_index, calMAFs
     REAL(r8) :: time, secs, oldsecs
 
     CHARACTER(len=8) :: date
@@ -709,31 +705,35 @@ oldsecs = secs
 
     CALL SetComVecs
 
+    calMAFs = COUNT (CalWin%MAFdata%CalType)
+
     DO time_index = start_index, end_index  ! for every MIF in the MAF
 
 CALL DATE_AND_TIME (date, dtime, zone, values)
 secs = values(5)*3600.0 + values(6)*60.0 + values(7) + values(8)*0.001
-if (time_index == end_index) then
-print *, "Time dif: ", (secs-oldsecs)
-else if (time_index == start_index) then
+IF (time_index == end_index) THEN
+PRINT *, "Time dif: ", (secs-oldsecs)
+ELSE IF (time_index == start_index) THEN
 oldsecs = secs
-endif
+ENDIF
        time = time_index                     ! "Time" from start of cal window
        MIF_index = time_index - start_index  ! MIF # within the central MAF
 
        ! Space cals:
 
-       CALL InterpCals (nVec, time, space_cnts, space_interp(MIF_index), &
-            space_err(MIF_index), GHz_comVec_S(MIF_index,:), &
-            GHz_errmul_S(MIF_index), CalWin%MAFdata(windex)%BankCalInd, &
-            cal_index, space_time, space_weight, space_qual)
+       CALL InterpCals (calMAFs, nVec, time, space_cnts, &
+            space_interp(MIF_index), space_err(MIF_index), &
+            GHz_comVec_S(MIF_index,:), GHz_errmul_S(MIF_index), &
+            CalWin%MAFdata(windex)%BankCalInd, cal_index, space_time, &
+            space_weight, space_qual)
 
        ! Target cals:
 
-       CALL InterpCals (nVec, time, target_cnts, target_interp(MIF_index), &
-            target_err(MIF_index), GHz_comVec_T(MIF_index,:), &
-            GHz_errmul_T(MIF_index), CalWin%MAFdata(windex)%BankCalInd, &
-            cal_index, target_time, target_weight, target_qual)
+       CALL InterpCals (calMAFs, nVec, time, target_cnts, &
+            target_interp(MIF_index), target_err(MIF_index), &
+            GHz_comVec_T(MIF_index,:), GHz_errmul_T(MIF_index), &
+            CalWin%MAFdata(windex)%BankCalInd, cal_index, target_time, &
+            target_weight, target_qual)
 
     ENDDO
 
@@ -745,18 +745,21 @@ PRINT *, 'end calibrating...'
   END SUBROUTINE Calibrate
 
 !=============================================================================
-  logical function not_used_here()
+  LOGICAL FUNCTION not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
+  CHARACTER (len=*), PARAMETER :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  END FUNCTION not_used_here
 END MODULE Calibration
 !=============================================================================
 
 ! $Log$
+! Revision 2.14  2005/10/10 14:27:32  perun
+! Add CalType for each MAF in CalWin and calibrate based on number of calMAFs
+!
 ! Revision 2.13  2005/06/23 18:41:35  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
