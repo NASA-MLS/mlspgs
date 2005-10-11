@@ -277,7 +277,7 @@ CONTAINS
     INTEGER :: flag, flagQ, i, returnStatus
     LOGICAL :: MIFbad(lenG)
     REAL(r8) :: declination, deltaAlt, deltaLat, deltaLon
-    REAL(r8) :: greenwich, localApparent, rightAscension, tai
+    REAL(r8) :: greenwich, localApparent(lenG), rightAscension, tai
     REAL(r8) :: dot(lenG), latD(lenG), localMean(lenG), lon(lenG), los(lenG)
     REAL(r8) :: ecr_sign(lenG), slantRange(lenG)
     REAL(r8) :: angleRad(numValues)
@@ -388,12 +388,13 @@ CONTAINS
       tai = asciiTAI + (i-1)*offsets(2)
       returnStatus = Pgs_td_taiToUTC (tai, time)
       returnStatus = Pgs_cbp_solarTimeCoords (time, lon(i), greenwich, &
-        localMean(i), localApparent, rightAscension, declination)
+        localMean(i), localApparent(i), rightAscension, declination)
+
     ENDDO
 
     tp%tpGeodLat = Rad2Deg * latD
     tp%tpLon = Rad2Deg * lon
-    tp%tpSolarTime = localMean / 3600.0
+    tp%tpSolarTime = localApparent / 3600.0
 
     ! Calculate solarZenith
 
@@ -1482,6 +1483,9 @@ CONTAINS
 END MODULE TkL1B
 
 ! $Log$
+! Revision 2.26  2005/10/11 16:08:50  perun
+! Replace local mean time with local apparent time for SolarTime
+!
 ! Revision 2.25  2005/08/24 15:53:43  perun
 ! Allocate and save pos1/pos2 prime data in the tangent point structures
 !
