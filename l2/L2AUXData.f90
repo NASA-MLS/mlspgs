@@ -110,7 +110,11 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
   public :: AddL2AUXToDatabase, cpL2AUXData, DestroyL2AUXDatabase, Dump
   public :: SetupNewL2AUXRecord, DestroyL2AUXContents, ExpandL2AUXDataInPlace
   public :: ReadL2AUXData, WriteL2AUXData, WriteL2AUXAttributes
-! public :: GetDimString, GetQuantityAttributes
+
+  interface cpL2AUXData
+    module procedure cpL2AUXData_Name
+    module procedure cpL2AUXData_MLSFile
+  end interface
 
   interface DUMP
     module procedure Dump_L2AUX
@@ -183,9 +187,101 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
 
 contains ! =====     Public Procedures     =============================
 
-  ! ------------------------------------------------- cpL2AUXData  -----
+  ! ------------------------------------------------- cpL2AUXData_MLSFile  -----
 
-  subroutine cpL2AUXData(file1, file2, create2, hdfVersion, sdList, options)
+  subroutine cpL2AUXData_MLSFile(L2AUXFile1, L2AUXFile2, &
+    & create2, sdList, options)
+    use Hdf, only: DFACC_READ, DFACC_CREATE, DFACC_RDWR
+    use HDF5, only: H5GCLOSE_F, H5GOPEN_F, H5DOPEN_F, H5DCLOSE_F
+    use MLSFILES, only: FILENOTFOUND, WILDCARDHDFVERSION, &
+      & mls_exists, mls_hdf_version, mls_sfstart, mls_sfend
+    use MLSHDF5, only: GetAllHDF5DSNames, GetHDF5Attribute, &
+      & IsHDF5AttributePresent
+    !-------------------------------------------------------------------
+
+    ! Given file names file1 and file2,
+    ! This routine copies all the l2auxdata from 1 to 2
+    ! If file2 doesn't exist yet, or if create2 is TRUE, it'll create it
+
+    ! Arguments
+
+    type(MLSFile_T), pointer      :: L2AUXfile1 ! file 1
+    type(MLSFile_T), pointer      :: L2AUXfile2 ! file 2
+    logical, optional, intent(in) :: create2 ! Force creation of new file2
+    character (len=*), optional, intent(in) :: sdList ! Copy only these, unless
+    character (len=*), optional, intent(in) :: options ! E.g., '-v'
+
+    ! Local
+    logical :: allSDs
+    logical, parameter            :: countEmpty = .true.
+    integer :: i
+    type (L2AUXData_T) :: l2aux
+    logical :: myCreate2
+    character (len=8) :: myOptions
+    character (len=MAXSDNAMESBUFSIZE) :: mySdList
+    integer :: noSds
+    integer :: originalAccess
+    integer :: QuantityType
+    character (len=80) :: sdName
+    integer :: status
+    logical :: verbose
+    !
+    myOptions = ' '
+    if ( present(options) ) myOptions = options
+    verbose = ( index(myOptions, 'v') > 0 )
+    myCreate2 = .false.
+    if ( present(create2) ) myCreate2 = create2
+    originalAccess = L2AUXFile2%access
+    if ( myCreate2 ) L2AUXFile2%access = DFACC_CREATE
+    allSDs = .not. present(sdList)
+    if ( present(sdList) ) allSDs = (sdList == '*')
+    if ( .not. allSDs ) then
+      mysdList = sdList
+      if ( verbose ) call dump(mysdList, 'DS names')
+    else
+      call GetAllHDF5DSNames (trim(L2AUXFile1%Name), '/', mysdList)
+      if ( verbose ) call output ( '============ DS names in ', advance='no' )
+      if ( verbose ) call output ( trim(L2AUXfile1%Name) //' ============', &
+        & advance='yes' )
+      if ( mysdList == ' ' ) then
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'No way yet to find sdList ', MLSFile=L2AUXFile1 )
+        return
+      else
+        if ( verbose ) call dump(mysdList, 'DS names')
+      end if
+    end if
+
+    noSds = NumStringElements(trim(mysdList), countEmpty)
+    if ( noSds < 1 ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'No sdNames cp to file--unable to count sdNames in ' // trim(mysdList) )
+    end if
+    ! Loop over sdNames in file 1
+    do i = 1, noSds
+      call GetStringElement (trim(mysdList), sdName, i, countEmpty )
+        QuantityType = GetQuantityTypeFromName(trim(sdName)) ! l_radiance
+      if ( QuantityType < 1 ) then
+        call output('Quantity type: ', advance='no')
+        call output(QuantityType, advance='yes')
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+              & 'Unrecognized quantity type for sd:' // trim(sdName) )
+        cycle
+      end if
+      call ReadL2AUXData ( L2AUXFile1, trim(sdName), QuantityType, l2aux, &
+           & checkDimNames=.false. )
+      ! Write the filled l2aux to file2
+      ! print *, 'writing ', trim(sdName)
+      call WriteL2AUXData( l2aux, L2AUXFile2, status, trim(sdName) )
+      ! Deallocate memory used by the l2aux
+      call DestroyL2AUXContents ( l2aux )
+      L2AUXFile2%access = originalAccess
+    end do
+  end subroutine cpL2AUXData_MLSFile
+
+  ! ------------------------------------------------- cpL2AUXData_Name  -----
+
+  subroutine cpL2AUXData_Name(file1, file2, create2, hdfVersion, sdList, options)
     use Hdf, only: DFACC_READ, DFACC_CREATE, DFACC_RDWR
     use HDF5, only: H5GCLOSE_F, H5GOPEN_F, H5DOPEN_F, H5DCLOSE_F
     use MLSFILES, only: FILENOTFOUND, WILDCARDHDFVERSION, &
@@ -343,7 +439,7 @@ contains ! =====     Public Procedures     =============================
     if ( status /= 0 ) &
       call MLSMessage ( MLSMSG_Error, ModuleName, &
        & "Unable to close L2aux file: " // trim(File2) // ' after cping')
-  end subroutine cpL2AUXData
+  end subroutine cpL2AUXData_Name
 
   ! ---------------------------------------  SetupNewL2AUXRecord   -----
   !   (option 1)
@@ -741,7 +837,7 @@ contains ! =====     Public Procedures     =============================
       call mls_openFile(L2AUXFile, returnStatus)
       if ( returnStatus /= 0 ) &
         call MLSMessage(MLSMSG_Error, ModuleName, &
-        & 'Unable to open l2aux file', MLSFile=L2AUXFile)
+        & 'Unable to open l2aux file for reading', MLSFile=L2AUXFile)
     endif
     select case (L2AUXFile%hdfVersion)
     case (HDFVERSION_4)
@@ -1034,7 +1130,7 @@ contains ! =====     Public Procedures     =============================
       call mls_openFile(L2AUXFile, returnStatus)
       if ( returnStatus /= 0 ) &
         call MLSMessage(MLSMSG_Error, ModuleName, &
-        & 'Unable to open l2aux file', MLSFile=L2AUXFile)
+        & 'Unable to open l2aux file for writing', MLSFile=L2AUXFile)
     endif
     if ( L2AUXFile%access == DFACC_RDONLY )  &
       & call MLSMessage(MLSMSG_Error, ModuleName, &
@@ -1102,6 +1198,10 @@ contains ! =====     Public Procedures     =============================
     if ( any(l2aux%dimensions%dimensionFamily == L_MAF) ) &
      & myNoMAFS = l2aux%dimensions(3)%noValues
     if ( present(NoMAFS) ) myNoMAFS = NoMAFS
+    
+    if ( .not. L2AUXFile%stillOpen ) &
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'File not opened' , MLSFile=L2AUXFile )
     
     if ( .not. associated ( l2aux%values ) ) then
 	   call announce_error (0,&
@@ -1864,6 +1964,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.76  2005/10/11 17:39:58  pwagner
+! Added MLSFile interface to cpL2AUXData
+!
 ! Revision 2.75  2005/09/21 23:17:34  pwagner
 ! Unnecessary changes
 !
