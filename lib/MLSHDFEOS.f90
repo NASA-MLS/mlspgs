@@ -13,6 +13,9 @@ module MLSHDFEOS
 
   ! This module contains MLS specific routines to do common HDFEOS
   ! tasks not specifically found in he5_swapi or he5_gdapi.
+  
+  ! We are in mid-transition between the older FileID/FileName interfaces
+  ! and the newer MLSFile defined-type interfaces
 
   use Hdf, only: DFNT_CHAR8, DFNT_FLOAT32, DFNT_FLOAT64, &
     & DFNT_INT8, DFNT_INT16, DFNT_INT32, DFNT_INT64
@@ -53,8 +56,8 @@ module MLSHDFEOS
   implicit NONE
   private
 
-  public :: HE5_EHWRGLATT, HE5_EHRDGLATT, &
-    & MLS_EHWRGLATT, MLS_DFLDSETUP, MLS_GFLDSETUP, &
+  public :: HE5_EHWRGLATT, HE5_EHRDGLATT, MLS_EHWRGLATT, MLS_ISGLATT, &
+    & MLS_DFLDSETUP, MLS_GFLDSETUP, &
     & MLS_SWDEFDIM, MLS_SWDIMINFO, MLS_SWRDFLD, MLS_SWWRFLD, &
     & MLS_SWATTACH, MLS_SWCREATE, MLS_SWDETACH, MLS_GDCREATE, MLS_GDWRATTR, &
     & MLS_SWWRATTR, MLS_SWWRLATTR, &
@@ -70,20 +73,73 @@ module MLSHDFEOS
 !     c o n t e n t s
 !     - - - - - - - -
 
+! HE5_EHRDGLATT     Reads the global attributes at file level
+! HE5_EHWRGLATT     Writes the global attributes at file level
 ! MLS_DFLDSETUP     Sets up a data field in a swath
-! HE5_EHWRGLATT     Sets the global attributes at file level
+! MLS_GDCREATE      Creates a grid (perhaps prior to writing)
+! MLS_GDWRATTR      Writes a grid-level attribute (e.g., pressures)
 ! MLS_GFLDSETUP     Sets up a geolocation field in a swath
+! MLS_ISGLATT       Is the named global attribute present in the file?
+! MLS_SWATTACH      Attaches a swath (perhaps prior to reading)
+! MLS_SWCREATE      Creates a swath (perhaps prior to writing)
+! MLS_SWDEFDIM      Sets up a dimension for a swath
+! MLS_SWDETACH      Detaches from a swath (perhaps prior to closing the file)
+! MLS_SWDIMINFO     Gets info on a dimension for a swath
 ! MLS_SWRDFLD       Reads a field from a swath, data or geolocation
 ! MLS_SWWRFLD       Writes a field to a swath, data or geolocation
+! MLS_SWWRATTR      Writes a swath-level attribute (e.g., pressures)
+! MLS_SWWRLATTR     Writes a datafield-level attribute (e.g., units)
 ! === (end of toc) ===
 
 ! === (start of api) ===
+! int HE5_EHRDGLATT (int fileID, char* attrName, value)
+!     value can be one of:
+!    {char* value, char* value(:), int value(:), r4 value(:), r8 value(:)}
 ! int HE5_EHWRGLATT (int fileID, char* attrName, int datatype, int count, value)
 !     value can be one of:
 !    {char* value, char* value(:), int value(:), r4 value(:), r8 value(:)}
 ! int MLS_SWSETFILL (int swathID, char* names, int datatype, value) 
 !     value can be one of:
 !    {char* value, int value, r4 value, r8 value}
+! int MLS_DFLDSETUP (int swathID, char* fieldname, char* dimname, 
+!     char* MAXDIMList, int datatype, int merge, int chunk_rank, 
+!     int chunk_dims(:), [char* filename], [int hdfVersion], [log dontFail],
+!     [int iFill], [r4 rFill], [r8 dFill]) 
+! int MLS_GDCREATE (int fileID, char* gridname, 
+!     int xdimsize, int ydimsize, r8 upleft(2), r8 lowright(2), 
+!     [char* filename], [int hdfVersion]) 
+! int MLS_GDWRATTR (int gridID, char* attrName, int datatype, int count, 
+!     char* buffer)
+! int MLS_GFLDSETUP (int swathID, char* fieldname, char* dimname, 
+!     char* MAXDIMList, int datatype, int merge, int chunk_rank, 
+!     int chunk_dims(:), [char* filename], [int hdfVersion], [log dontFail],
+!     [int iFill], [r4 rFill], [r8 dFill]) 
+! log MLS_ISGLATT (file, char* attrname)
+!     file can be one of: int fileID, or char* filename
+! int MLS_SWATTACH (file, char* swathname, [char* filename], [int hdfVersion], 
+!     [log dontFail]) 
+!     file can be one of: int fileID, or type(MLSFile_T) MLSFile
+! int MLS_SWCREATE (file, char* swathname, [char* filename], [int hdfVersion]) 
+!     file can be one of: int fileID, or type(MLSFile_T) MLSFile
+! int MLS_SWdefdim (int swathID, char* dimname, 
+!     int dimsize, [char* filename], [int hdfVersion], [log dontFail]) 
+! int MLS_SWDETACH (int swathID, [char* filename], [int hdfVersion])
+! int MLS_SWdiminfo (int swathID, char* dimname, 
+!     [char* filename], [int hdfVersion], [log dontFail]) 
+! int MLS_SWRDFLD (int swathID, char* fieldname, 
+!     int start(rank), int stride(rank), int edge(rank), values,
+!     [char* filename], [int hdfVersion], [log dontFail]) 
+!     values can be one of:
+!    {char* value, char* value(:), int value(:), r4 value(shp), r8 value(shp)}
+!     and shp is an array of ints of size rank
+! int MLS_SWWRFLD (int swathID, char* fieldname, 
+!     int start(rank), int stride(rank), int edge(rank), values,
+!     [char* filename], [int hdfVersion], [log dontFail]) 
+!     values can be one of types in MLS_SWRDFLD
+! int MLS_SWWRATTR (int swathID, char* attrName, int datatype, int count, 
+!     char* buffer)
+! int MLS_SWWRLATTR (int swathID, char* fieldName, char* attrName, 
+!     int datatype, int count, char* buffer)
 ! === (end of api) ===
   interface HE5_EHWRGLATT   ! From its name, might better be in he5_ehapi.f90
     module procedure HE5_EHWRGLATT_CHARACTER_SCALAR, HE5_EHWRGLATT_DOUBLE, &
@@ -93,6 +149,11 @@ module MLSHDFEOS
   interface HE5_EHRDGLATT   ! From its name, might better be in he5_ehapi.f90
     module procedure HE5_EHRDGLATT_CHARACTER_SCALAR, HE5_EHRDGLATT_DOUBLE, &
     HE5_EHRDGLATT_INTEGER, HE5_EHRDGLATT_REAL, HE5_EHRDGLATT_CHARACTER_ARRAY
+  end interface
+
+  interface MLS_ISGLATT
+    module procedure MLS_ISGLATT_FID, &
+      & MLS_ISGLATT_FN
   end interface
 
   interface MLS_SWATH_IN_FILE
@@ -135,6 +196,7 @@ module MLSHDFEOS
 
 contains ! ======================= Public Procedures =========================
 
+  ! ---------------------------------------------  MLS_EHWRGLATT  -----
   integer function MLS_EHWRGLATT ( FILEID, &
     & ATTRNAME, DATATYPE, COUNT, BUFFER )
     integer, intent(in) :: FILEID      ! File ID
@@ -153,6 +215,51 @@ contains ! ======================= Public Procedures =========================
 
   end function MLS_EHWRGLATT
 
+  ! ---------------------------------------------  MLS_ISGLATT_FN  -----
+  function MLS_ISGLATT_FN ( FILENAME, ATTRNAME ) result(isThere)
+    ! Is the named attribute a global attribute of the named file?
+    use HDFEOS5, only: he5_swclose, he5_swopen, HE5F_ACC_RDONLY
+    ! Args
+    character(len=*), intent(in) :: filename
+    character(len=*), intent(in) :: ATTRNAME     ! Attribute name
+    logical                      :: isThere
+    ! Local variables
+    integer :: fileID
+    integer :: status
+    !
+    isThere = .false.
+    fileID = he5_swopen(trim(fileName), HE5F_ACC_RDONLY)
+    if ( fileID > 0 ) then
+      isThere = MLS_ISGLATT ( fileID, ATTRNAME )
+      status = he5_swclose( fileID )
+    endif
+  end function MLS_ISGLATT_FN
+
+  ! ---------------------------------------------  MLS_ISGLATT_FID  -----
+  function MLS_ISGLATT_FID ( FILEID, ATTRNAME ) result(isThere)
+    ! Is the named attribute a global attribute of the file?
+    use HDFEOS5, only: he5_EHinqglatts
+    use MLSStringLists, only: StringElementNum
+    ! Args
+    integer, intent(in)          :: fileID
+    character(len=*), intent(in) :: ATTRNAME     ! Attribute name
+    logical                      :: isThere
+    ! Local variables
+    character(len=MAXDLISTLENGTH) :: attrList
+    logical, parameter :: countempty = .true.
+    integer :: listSize
+    integer :: status
+    !
+    isThere = .false.
+    status = he5_EHinqglatts(fileID, attrList, listSize)
+    ! if ( status /= 0 ) return
+    if ( len_trim(attrList) > 0 ) then
+      status = StringElementNum( trim(attrList), trim(attrName), countempty)
+      isThere = ( status > 0 )
+    endif
+  end function MLS_ISGLATT_FID
+
+  ! ---------------------------------------------  MLS_GDCREATE  -----
   integer function MLS_GDCREATE ( FILEID, GRIDNAME, &
    &  xdimsize, ydimsize, upleft, lowright, FileName, hdfVersion )
     integer, intent(in) :: FILEID      ! ID returned by mls_swopen
@@ -217,6 +324,7 @@ contains ! ======================= Public Procedures =========================
 
   end function MLS_GDCREATE
 
+  ! ---------------------------------------------  mls_gdwrattr  -----
   integer function mls_gdwrattr ( GRIDID, &
     & ATTRNAME, DATATYPE, COUNT, BUFFER )
     integer, intent(in) :: GRIDID      ! Grid ID
@@ -235,6 +343,7 @@ contains ! ======================= Public Procedures =========================
 
   end function mls_gdwrattr
 
+  ! ---------------------------------------------  MLS_SWATTACH_ID  -----
   function MLS_SWATTACH_ID ( FILEID, SWATHNAME, FileName, &
     &  hdfVersion, DONTFAIL ) result(MLS_SWATTACH)
     integer, intent(in) :: FILEID      ! ID returned by mls_swopen
@@ -296,6 +405,7 @@ contains ! ======================= Public Procedures =========================
     endif
   end function MLS_SWATTACH_ID
 
+  ! ---------------------------------------------  MLS_SWATTACH_MF  -----
   function MLS_SWATTACH_MF ( MLSFile, SWATHNAME, DONTFAIL ) &
     & result(MLS_SWATTACH)
     type (MLSFile_T)   :: MLSFile
@@ -331,6 +441,7 @@ contains ! ======================= Public Procedures =========================
     endif
   end function MLS_SWATTACH_MF
 
+  ! ---------------------------------------------  MLS_SWCREATE_MF  -----
   function MLS_SWCREATE_MF ( MLSFile, SWATHNAME ) &
     & result(MLS_SWCREATE)
     use hdf5, only: h5eSet_auto_f
@@ -399,6 +510,7 @@ contains ! ======================= Public Procedures =========================
 
   end function MLS_SWCREATE_MF
 
+  ! ---------------------------------------------  MLS_SWCREATE_ID  -----
   function MLS_SWCREATE_ID ( FILEID, SWATHNAME, FileName, hdfVersion ) &
     & result(MLS_SWCREATE)
     use hdf5, only: h5eSet_auto_f
@@ -479,13 +591,14 @@ contains ! ======================= Public Procedures =========================
 
   end function MLS_SWCREATE_ID
 
+  ! ---------------------------------------------  MLS_SWdefdim  -----
   integer function MLS_SWdefdim ( SWATHID, DIMNAME, DIMSIZE, FILENAME, &
     & hdfVersion, DONTFAIL )
     integer, parameter :: RANK = 7
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: DIMNAME       ! Dimension name
     integer, intent(in)          :: DIMSIZE
-    character(len=*), optional :: FIleName
+    character(len=*), optional :: FileName
     integer, optional, intent(in) :: hdfVersion
     logical, optional, intent(in) :: DONTFAIL
     ! Internal variables
@@ -527,6 +640,7 @@ contains ! ======================= Public Procedures =========================
 
   end function MLS_SWdefdim
 
+  ! ---------------------------------------------  MLS_SWDETACH  -----
   integer function MLS_SWDETACH ( SWATHID, FileName, hdfVersion )
     integer, intent(in) :: SWATHID      ! ID returned by mls_swattach
     character(len=*), optional, intent(in) :: FILENAME  ! File name
@@ -564,12 +678,13 @@ contains ! ======================= Public Procedures =========================
 
   end function MLS_SWDETACH
 
+  ! ---------------------------------------------  MLS_SWdiminfo  -----
   integer function MLS_SWdiminfo ( SWATHID, DIMNAME, FILENAME, &
     & hdfVersion, DONTFAIL )
     integer, parameter :: RANK = 7
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: DIMNAME       ! Dimension name
-    character(len=*), optional :: FIleName
+    character(len=*), optional :: FileName
     integer, optional, intent(in) :: hdfVersion
     logical, optional, intent(in) :: DONTFAIL
     ! Internal variables
@@ -611,6 +726,7 @@ contains ! ======================= Public Procedures =========================
 
   end function MLS_SWdiminfo
 
+  ! ---------------------------------------------  MLS_dfldsetUP  -----
   integer function MLS_dfldsetUP ( SWATHID, FIELDNAME, DIMNAME, MAXDIMList, &
     & DATATYPE, MERGE, CHUNK_RANK, CHUNK_DIMS, &
     & FILENAME, hdfVersion, DONTFAIL, iFill, rFill, dFill )
@@ -676,12 +792,6 @@ contains ! ======================= Public Procedures =========================
       if ( mls_dfldsetup == 0 ) &
         & mls_dfldsetup = HE5_SWdefdfld(swathid, FIELDName, DIMNAME, MAXDIMLIST, &
         & he2he5_DataType(Datatype), MERGE)
-!>       if ( Datatype == DFNT_CHAR8 ) then
-!>         if(DEEBUG) print *,' Hey, we just tried to set up a char-valued hdfeos5 field'
-!>         if(DEEBUG) print *,' Data type: ', Datatype
-!>         if(DEEBUG) print *,' he2he5_DataType(Datatype): ', he2he5_DataType(Datatype)
-!>         if(DEEBUG) print *,' MLS_CHARTYPE: ', MLS_CHARTYPE
-!>       endif
     case default
       mls_dfldsetup = -1
     end select
@@ -691,6 +801,7 @@ contains ! ======================= Public Procedures =========================
 
   end function MLS_dfldsetUP
 
+  ! ---------------------------------------------  MLS_GFLDSETUP  -----
   integer function MLS_GFLDSETUP ( SWATHID, FIELDNAME, DIMNAME, MAXDIMList, &
     & DATATYPE, MERGE, CHUNK_RANK, CHUNK_DIMS, &
     & FILENAME, hdfVersion, DONTFAIL, iFill, rFill, dFill )
@@ -734,17 +845,6 @@ contains ! ======================= Public Procedures =========================
     else
       myHdfVersion = hdfVersion
     endif
-   ! print *, 'mls_gfldsetup'
-   ! print *, 'FIELDName: ', trim(FIELDName)
-   ! print *, 'myHdfVersion: ', myHdfVersion
-   ! print *, 'swathid: ', swathid
-   ! print *, 'Datatype: ', Datatype
-   ! print *, 'he5_Datatype: ', he2he5_DataType(Datatype)
-   ! print *, 'chunk_rank: ', chunk_rank
-   ! print *, 'chunk_dims: ', chunk_dims
-   ! print *, 'DIMNAME: ', trim(DIMNAME)
-   ! print *, 'MAXDIMLIST: ', trim(MAXDIMLIST)
-   ! print *, 'MERGE: ', MERGE
     select case (myHdfVersion)
     case (HDFVERSION_4)
       mls_gfldsetup = swdefgfld(swathid, trim(FIELDName), trim(DIMNAME), &
@@ -778,6 +878,7 @@ contains ! ======================= Public Procedures =========================
 
   end function MLS_GFLDSETUP
 
+  ! ---------------------------------------------  MLS_SWRDFLD_CHAR_1D  -----
   integer function MLS_SWRDFLD_CHAR_1D ( SWATHID, FIELDNAME, &
     & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
     integer, parameter :: RANK = 1
@@ -846,6 +947,7 @@ contains ! ======================= Public Procedures =========================
 
   end function MLS_SWRDFLD_CHAR_1D
 
+  ! ---------------------------------------------  MLS_SWRDFLD_DOUBLE_1D  -----
   integer function MLS_SWRDFLD_DOUBLE_1D ( SWATHID, FIELDNAME, &
     & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
     integer, parameter :: RANK = 1
@@ -899,6 +1001,7 @@ contains ! ======================= Public Procedures =========================
 
   end function MLS_SWRDFLD_DOUBLE_1D
 
+  ! ---------------------------------------------  MLS_SWRDFLD_DOUBLE_2d  -----
   integer function MLS_SWRDFLD_DOUBLE_2d ( SWATHID, FIELDNAME, &
     & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
     integer, parameter :: RANK = 2
@@ -952,6 +1055,7 @@ contains ! ======================= Public Procedures =========================
 
   end function MLS_SWRDFLD_DOUBLE_2d
 
+  ! ---------------------------------------------  MLS_SWRDFLD_DOUBLE_3d  -----
   integer function MLS_SWRDFLD_DOUBLE_3d ( SWATHID, FIELDNAME, &
     & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
     integer, parameter :: RANK = 3
@@ -1005,6 +1109,7 @@ contains ! ======================= Public Procedures =========================
 
   end function MLS_SWRDFLD_DOUBLE_3d
 
+  ! ---------------------------------------------  MLS_SWRDFLD_INTEGER  -----
   integer function MLS_SWRDFLD_INTEGER ( SWATHID, FIELDNAME, &
     & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
     integer, parameter :: RANK = 1
@@ -1058,6 +1163,7 @@ contains ! ======================= Public Procedures =========================
 
   end function MLS_SWRDFLD_INTEGER
 
+  ! ---------------------------------------------  MLS_SWRDFLD_REAL_1D  -----
   integer function MLS_SWRDFLD_REAL_1D ( SWATHID, FIELDNAME, &
     & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
     integer, parameter :: RANK = 1
@@ -1111,6 +1217,7 @@ contains ! ======================= Public Procedures =========================
 
   end function MLS_SWRDFLD_REAL_1D
 
+  ! ---------------------------------------------  MLS_SWRDFLD_REAL_2d  -----
   integer function MLS_SWRDFLD_REAL_2d ( SWATHID, FIELDNAME, &
     & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
     integer, parameter :: RANK = 2
@@ -1164,6 +1271,7 @@ contains ! ======================= Public Procedures =========================
 
   end function MLS_SWRDFLD_REAL_2d
 
+  ! ---------------------------------------------  MLS_SWRDFLD_REAL_3d  -----
   integer function MLS_SWRDFLD_REAL_3d ( SWATHID, FIELDNAME, &
     & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
     integer, parameter :: RANK = 3
@@ -1217,6 +1325,7 @@ contains ! ======================= Public Procedures =========================
 
   end function MLS_SWRDFLD_REAL_3d
 
+  ! ---------------------------------------------  mls_swwrattr  -----
   integer function mls_swwrattr ( SWATHID, &
     & ATTRNAME, DATATYPE, COUNT, BUFFER )
     integer, intent(in) :: SWATHID      ! Swath ID
@@ -1234,6 +1343,7 @@ contains ! ======================= Public Procedures =========================
 
   end function mls_swwrattr
 
+  ! ---------------------------------------------  mls_swwrlattr  -----
   integer function mls_swwrlattr ( SWATHID, &
     & FIELDNAME, ATTRNAME, DATATYPE, COUNT, BUFFER )
     integer, intent(in) :: SWATHID      ! Swath ID
@@ -1243,11 +1353,6 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in) :: COUNT   ! How many
     character(len=*), intent(in) :: BUFFER  ! Buffer for write
     !
-    ! character(len=len(BUFFER)+1) :: TMPBUFFER  ! Buffer for write
-    !
-    ! TMPBUFFER = BUFFER ! Why is this necessary? NAG sometimes dumps core
-    ! print *, SWATHID, &
-    ! & FIELDNAME, ATTRNAME, DATATYPE, COUNT, BUFFER
     if ( len_trim(buffer) > 0 ) then
       mls_swwrlattr = HE5_SWWRLATTR( SWATHID, FIELDNAME, &
       & ATTRNAME, DATATYPE, max(COUNT, len_trim(BUFFER)), BUFFER )
@@ -1258,6 +1363,7 @@ contains ! ======================= Public Procedures =========================
 
   end function mls_swwrlattr
 
+  ! ---------------------------------------------  MLS_SWWRFLD_CHAR_1D  -----
   integer function MLS_SWWRFLD_CHAR_1D ( SWATHID, FIELDNAME, &
     & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
     integer, parameter :: RANK = 1
@@ -1316,16 +1422,13 @@ contains ! ======================= Public Procedures =========================
     needsFileName = is_swath_datatype_right(swathid, fieldname, DFNT_CHAR8, &
       & myHdfVersion, rank_out=dfrank, numbertype_out=numbertype, &
       & fieldlist_out=fieldlist, nflds_out=nflds)
-!>     if(DEEBUG) print *, 'num data fields  ', nflds
-!>     if(DEEBUG) print *, 'data field ranks ', dfrank
-!>     if(DEEBUG) print *, 'data field types ', numbertype
-!>     if(DEEBUG) print *, 'data field list  ', trim(fieldlist)
     if ( myDontFail .or. mls_SWWRFLD_CHAR_1D /= -1 ) return
     CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Failed to write 1d char field ' // trim(fieldname) )
 
   end function MLS_SWWRFLD_CHAR_1D
 
+  ! ---------------------------------------------  MLS_SWWRFLD_DOUBLE_1D  -----
   integer function MLS_SWWRFLD_DOUBLE_1D ( SWATHID, FIELDNAME, &
     & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
     integer, parameter :: RANK = 1
@@ -1379,6 +1482,7 @@ contains ! ======================= Public Procedures =========================
 
   end function MLS_SWWRFLD_DOUBLE_1D
 
+  ! ---------------------------------------------  MLS_SWWRFLD_DOUBLE_2d  -----
   integer function MLS_SWWRFLD_DOUBLE_2d ( SWATHID, FIELDNAME, &
     & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
     integer, parameter :: RANK = 2
@@ -1432,6 +1536,7 @@ contains ! ======================= Public Procedures =========================
 
   end function MLS_SWWRFLD_DOUBLE_2d
 
+  ! ---------------------------------------------  MLS_SWWRFLD_DOUBLE_3d  -----
   integer function MLS_SWWRFLD_DOUBLE_3d ( SWATHID, FIELDNAME, &
     & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
     integer, parameter :: RANK = 3
@@ -1485,6 +1590,7 @@ contains ! ======================= Public Procedures =========================
 
   end function MLS_SWWRFLD_DOUBLE_3d
 
+  ! ---------------------------------------------  MLS_SWWRFLD_INTEGER  -----
   integer function MLS_SWWRFLD_INTEGER ( SWATHID, FIELDNAME, &
     & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
     integer, parameter :: RANK = 1
@@ -1538,6 +1644,7 @@ contains ! ======================= Public Procedures =========================
 
   end function MLS_SWWRFLD_INTEGER
 
+  ! ---------------------------------------------  MLS_SWWRFLD_REAL_1D  -----
   integer function MLS_SWWRFLD_REAL_1D ( SWATHID, FIELDNAME, &
     & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
     integer, parameter :: RANK = 1
@@ -1591,6 +1698,7 @@ contains ! ======================= Public Procedures =========================
 
   end function MLS_SWWRFLD_REAL_1D
 
+  ! ---------------------------------------------  MLS_SWWRFLD_REAL_2d  -----
   integer function MLS_SWWRFLD_REAL_2d ( SWATHID, FIELDNAME, &
     & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
     integer, parameter :: RANK = 2
@@ -1651,6 +1759,7 @@ contains ! ======================= Public Procedures =========================
 
   end function MLS_SWWRFLD_REAL_2d
 
+  ! ---------------------------------------------  MLS_SWWRFLD_REAL_3d  -----
   integer function MLS_SWWRFLD_REAL_3d ( SWATHID, FIELDNAME, &
     & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
     integer, parameter :: RANK = 3
@@ -1704,6 +1813,7 @@ contains ! ======================= Public Procedures =========================
 
   end function MLS_SWWRFLD_REAL_3d
 
+  ! ---------------------------------------------  mls_swath_in_file_sca  -----
   logical function mls_swath_in_file_sca(filename, swath, HdfVersion)
     ! Returns .true. if swath found in file, .false. otherwise
     character(len=*), intent(in) :: filename
@@ -1714,7 +1824,7 @@ contains ! ======================= Public Procedures =========================
     character(len=MAXDLISTLENGTH)    :: fieldlist
     integer                          :: nswaths
     ! Begin execution
-    print*,'Scalar version'
+    ! print*,'Scalar version'
     nswaths = 0
     mls_swath_in_file_sca = .false.
     fieldlist = ''
@@ -1735,6 +1845,7 @@ contains ! ======================= Public Procedures =========================
       & ( StringElementNum(fieldlist, trim(swath), .true.) > 0 )
   end function mls_swath_in_file_sca
 
+  ! ---------------------------------------------  mls_swath_in_file_arr  -----
   logical function mls_swath_in_file_arr(filename, swaths, HdfVersion, &
     & present )
     ! Array version of the above
@@ -1780,6 +1891,7 @@ contains ! ======================= Public Procedures =========================
 
 ! ======================= Private Procedures =========================  
 
+  ! ---------------------------------------------  is_datafield_in_swath  -----
   logical function is_datafield_in_swath(swathid, field, HdfVersion)
     ! Returns .true. if datafield found in swath, .false. otherwise
     integer, intent(in) :: swathid
@@ -1805,6 +1917,7 @@ contains ! ======================= Public Procedures =========================
       & ( StringElementNum(fieldlist, trim(field), .true.) > 0 )
   end function is_datafield_in_swath
 
+  ! ---------------------------------------------  is_swath_datatype_right  -----
   logical function is_swath_datatype_right(swathid, field, datatype, &
     & HdfVersion, rank_out, numbertype_out, fieldlist_out, nflds_out)
     integer, intent(in)                          :: swathid
@@ -1885,6 +1998,7 @@ contains ! ======================= Public Procedures =========================
     end select
   end function he2he5_DataType
 
+  ! ---------------------------------------------  not_used_here  -----
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -1897,6 +2011,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.27  2005/10/11 17:29:15  pwagner
+! Added MLS_ISGLATT function
+!
 ! Revision 2.26  2005/06/29 00:39:30  pwagner
 ! New interfaces for MLS_SWCREATE MLS_SWATTACH accept MLSFiles
 !
