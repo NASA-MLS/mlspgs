@@ -29,7 +29,7 @@ module MLSHDF5
   ! To switch to/from hdfeos5.1.6(+) uncomment next line
   use H5LIB, ONLY: h5open_f, h5close_f
   ! Lets break down our use, parameters first
-  use HDF5, only: H5F_ACC_RDONLY_F, &
+  use HDF5, only: H5F_ACC_RDONLY_F, H5F_ACC_RDWR_F, &
     & H5P_DATASET_CREATE_F, &
     & H5SIS_SIMPLE_F, & ! H5SOFFSET_SIMPLE_F, &
     & H5S_SCALAR_F, H5S_SELECT_SET_F, H5S_UNLIMITED_F, &
@@ -128,9 +128,12 @@ module MLSHDF5
 !     double precision value(:), double precision value(:,:),
 !     double precision value(:,:,:)}
 
-! The following may alsso be called with the int itemID or locID arg replaced
+! The following may also be called with the int itemID or locID arg replaced
 ! by a MLSFile_T
 ! GetHDF5Attribute (MLSFile_T MLSFile, char name, value)
+!        The attribute will be assumed to be an attribute of
+!         MLSFile%FileID%sd_id
+!         unless that component is zero, when it will try ..%grp_id
 ! LoadFromHDF5DS (MLSFile_T MLSFile, char name, value,
 !       [int start(:), int count(:), [int stride(:), int block(:)] ] )
 
@@ -291,7 +294,7 @@ contains ! ======================= Public Procedures =========================
 
     ! Executable code
     call h5fopen_f ( trim(fromFilename), H5F_ACC_RDONLY_F, fromFileID, status )
-    call h5fopen_f ( trim(toFilename), H5F_ACC_RDONLY_F, toFileID, status )
+    call h5fopen_f ( trim(toFilename), H5F_ACC_RDWR_F, toFileID, status )
     call h5gopen_f ( fromFileID, '/', fromgrpid, status )
     call h5gopen_f ( toFileID, '/', togrpid, status )
     call CpHDF5Attribute_string ( fromgrpID, togrpID, name, &
@@ -861,7 +864,15 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
+    if ( MLSFile%fileID%sd_ID > 0 ) then
+      call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
+    elseif ( MLSFile%fileID%grp_ID > 0 ) then
+      call h5aOpen_name_f ( MLSFile%fileID%grp_ID, name, attrID, status )
+    else
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'no valid sd_id or grp_id to get attribute', MLSFile=MLSFile)
+      return
+    endif
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open attribute ' // trim(name), &
       & MLSFile=MLSFile )
@@ -891,7 +902,15 @@ contains ! ======================= Public Procedures =========================
 
     ! Executable code
     shp = shape(value)
-    call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
+    if ( MLSFile%fileID%sd_ID > 0 ) then
+      call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
+    elseif ( MLSFile%fileID%grp_ID > 0 ) then
+      call h5aOpen_name_f ( MLSFile%fileID%grp_ID, name, attrID, status )
+    else
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'no valid sd_id or grp_id to get attribute', MLSFile=MLSFile)
+      return
+    endif
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open attribute ' // trim(name), &
       & MLSFile=MLSFile )
@@ -922,7 +941,15 @@ contains ! ======================= Public Procedures =========================
     integer :: STRINGSIZE               ! String size
 
     ! Executable code
-    call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
+    if ( MLSFile%fileID%sd_ID > 0 ) then
+      call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
+    elseif ( MLSFile%fileID%grp_ID > 0 ) then
+      call h5aOpen_name_f ( MLSFile%fileID%grp_ID, name, attrID, status )
+    else
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'no valid sd_id or grp_id to get attribute', MLSFile=MLSFile)
+      return
+    endif
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open attribute ' // trim(name), &
       & MLSFile=MLSFile )
@@ -968,7 +995,15 @@ contains ! ======================= Public Procedures =========================
 
     ! Executable code
     shp = shape(value)
-    call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
+    if ( MLSFile%fileID%sd_ID > 0 ) then
+      call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
+    elseif ( MLSFile%fileID%grp_ID > 0 ) then
+      call h5aOpen_name_f ( MLSFile%fileID%grp_ID, name, attrID, status )
+    else
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'no valid sd_id or grp_id to get attribute', MLSFile=MLSFile)
+      return
+    endif
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open attribute ' // trim(name), &
       & MLSFile=MLSFile )
@@ -1011,7 +1046,16 @@ contains ! ======================= Public Procedures =========================
     integer :: IVALUE                     ! Value as integer
 
     ! Executable code
-    call GetHDF5Attribute ( MLSFile%fileID%sd_ID, name, iValue )
+    if ( MLSFile%fileID%sd_ID > 0 ) then
+      call GetHDF5Attribute ( MLSFile%fileID%sd_ID, name, iValue )
+    elseif ( MLSFile%fileID%grp_ID > 0 ) then
+      call GetHDF5Attribute ( MLSFile%fileID%grp_ID, name, iValue )
+    else
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'no valid sd_id or grp_id to get attribute', MLSFile=MLSFile)
+      return
+    endif
+
     value = ( iValue == 1 )
   end subroutine GetHDF5Attribute_logical
 
@@ -1025,7 +1069,15 @@ contains ! ======================= Public Procedures =========================
     integer :: IVALUE(size(VALUE,1))      ! Value as integer
 
     ! Executable code
-    call GetHDF5Attribute ( MLSFile%fileID%sd_ID, name, iValue )
+    if ( MLSFile%fileID%sd_ID > 0 ) then
+      call GetHDF5Attribute ( MLSFile%fileID%sd_ID, name, iValue )
+    elseif ( MLSFile%fileID%grp_ID > 0 ) then
+      call GetHDF5Attribute ( MLSFile%fileID%grp_ID, name, iValue )
+    else
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'no valid sd_id or grp_id to get attribute', MLSFile=MLSFile)
+      return
+    endif
     value = ( iValue == 1 )
   end subroutine GetHDF5Attribute_logicalarr1
 
@@ -1042,7 +1094,15 @@ contains ! ======================= Public Procedures =========================
 
     ! Executable code
     shp = shape(value)
-    call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
+    if ( MLSFile%fileID%sd_ID > 0 ) then
+      call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
+    elseif ( MLSFile%fileID%grp_ID > 0 ) then
+      call h5aOpen_name_f ( MLSFile%fileID%grp_ID, name, attrID, status )
+    else
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'no valid sd_id or grp_id to get attribute', MLSFile=MLSFile)
+      return
+    endif
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open attribute ' // trim(name), &
       & MLSFile=MLSFile )
@@ -1071,7 +1131,15 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
+    if ( MLSFile%fileID%sd_ID > 0 ) then
+      call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
+    elseif ( MLSFile%fileID%grp_ID > 0 ) then
+      call h5aOpen_name_f ( MLSFile%fileID%grp_ID, name, attrID, status )
+    else
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'no valid sd_id or grp_id to get attribute', MLSFile=MLSFile)
+      return
+    endif
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open attribute ' // trim(name), &
       & MLSFile=MLSFile )
@@ -1099,7 +1167,15 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
+    if ( MLSFile%fileID%sd_ID > 0 ) then
+      call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
+    elseif ( MLSFile%fileID%grp_ID > 0 ) then
+      call h5aOpen_name_f ( MLSFile%fileID%grp_ID, name, attrID, status )
+    else
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'no valid sd_id or grp_id to get attribute', MLSFile=MLSFile)
+      return
+    endif
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open attribute ' // trim(name), &
       & MLSFile=MLSFile )
@@ -1129,7 +1205,15 @@ contains ! ======================= Public Procedures =========================
 
     ! Executable code
     shp = shape(value)
-    call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
+    if ( MLSFile%fileID%sd_ID > 0 ) then
+      call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
+    elseif ( MLSFile%fileID%grp_ID > 0 ) then
+      call h5aOpen_name_f ( MLSFile%fileID%grp_ID, name, attrID, status )
+    else
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'no valid sd_id or grp_id to get attribute', MLSFile=MLSFile)
+      return
+    endif
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open attribute ' // trim(name), &
       & MLSFile=MLSFile )
@@ -4739,6 +4823,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.57  2005/10/11 17:35:00  pwagner
+! MLSFile interface to GetHDF5Attribute can get attribute from grp_id component if sd_id is 0
+!
 ! Revision 2.56  2005/07/12 17:12:50  pwagner
 ! New hdf5 library will drop integer dimension interfaces
 !
