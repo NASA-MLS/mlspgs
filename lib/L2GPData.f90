@@ -55,7 +55,8 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 
   interface DIFF
     module procedure DiffL2GPData
-    module procedure DiffL2GPFiles
+    module procedure DiffL2GPFiles_MLSFile
+    module procedure DiffL2GPFiles_Name
   end interface
 
   interface DIFFSTATS
@@ -83,6 +84,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   interface cpL2GPData
     module procedure cpL2GPData_fileID
     module procedure cpL2GPData_fileName
+    module procedure cpL2GPData_MLSFile
   end interface
 
   interface RepairL2GP
@@ -105,14 +107,18 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 ! L2GPData_T              The l2gp data type; holds all data for one swath
 
 ! AddL2GPToDatabase       Adds an l2gp data type to a database
+! AppendL2GPData          Appends L2GP onto end of existing swath file
+! cpL2GPData              Copies swaths from one l2gp file to another
 ! DestroyL2GPContents     Deallocates all the arrays allocated for an L2GP
 ! DestroyL2GPDatabase     Destroys an L2GP database
+! Diff                    Shows differences between two swaths
 ! Dump                    Reveals info about an L2GP or a database of L2GP
 !                            to any desired level of detail
 ! ExpandL2GPDataInPlace   Adds more profiles to an existing L2GP
-! AppendL2GPData          Appends L2GP onto end of existing swath file
 ! ReadL2GPData            Reads L2GP from existing swath file
-! RepairL2GP              Replaces fillValues in one L2GP with a another's values
+! RepairL2GP              Replaces fillValues in one L2GP with either
+!                         (1) corresponding values from another L2GP; or
+!                         (2) corresponding values from an HGrid
 ! SetupNewL2GPRecord      Allocates arrays for a new L2GP
 ! WriteL2GPData           Writes an L2GP into a swath file
 
@@ -125,7 +131,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   integer, public, parameter :: rgp = r4
 
   ! How long may the list of swath names grow (~80 x max num. of swaths/file)
-  integer, public, parameter :: MAXNUMSWATHPERFILE = 250
+  integer, public, parameter :: MAXNUMSWATHPERFILE = 300
   integer, public, parameter :: MAXSWATHNAMESBUFSIZE = 80*MAXNUMSWATHPERFILE
 
   ! TRUE means we can avoid using unlimited dimension and its time penalty
@@ -2433,7 +2439,81 @@ contains ! =====     Public Procedures     =============================
     endif
   end subroutine cpL2GPData_fileName
 
-  ! ------------------------------------------ DiffL2GPData ------------
+  ! ---------------------- cpL2GPData_MLSFile  ---------------------------
+
+  subroutine cpL2GPData_MLSFile(L2GPfile1, L2GPfile2, &
+    & create2, swathList, rename, exclude, &
+    & notUnlimited, andGlAttributes, ReadStatus, HGrid, options)
+    !------------------------------------------------------------------------
+
+    ! Given MLSFiles L2GPfile1 and L2GPfile2,
+    ! This routine copies all the l2gpdata from 1 to 2
+    ! (see cpL2GPData_fileID)
+    ! If L2GPfile2 doesn't exist yet, or if create2 is TRUE, it'll create it
+    ! Optionally repairs l2gpdata
+    use HGridsDatabase, only: HGrid_T
+    ! Arguments
+
+    type(MLSFile_T)               :: L2GPfile1 ! file 1
+    type(MLSFile_T)               :: L2GPfile2 ! file 2
+    logical, optional, intent(in) :: create2
+    logical, optional, intent(in) :: andGlAttributes
+    character (len=*), optional, intent(in) :: swathList ! Copy only these; '*'
+    character (len=*), optional, intent(in) :: rename ! But rename them these
+    character (len=*), optional, intent(in) :: exclude ! Don't copy these
+    logical, optional, intent(in)           :: notUnlimited
+    logical, optional, intent(in)           :: ReadStatus
+    type (HGrid_T), optional, intent(in)    :: HGrid
+    character (len=*), optional, intent(in) :: options ! E.g., '-v'
+    ! Local
+    logical :: L1alreadyOpen
+    logical :: L2alreadyOpen
+    logical :: myCreate2
+    character(len=MAXSWATHNAMESBUFSIZE) :: mySwathList
+    integer :: originalAccess
+    integer :: status
+    !
+    myCreate2 = .false.
+    if ( present(create2) ) myCreate2 = create2
+    mySwathList = '*'
+    if ( present(swathList) ) mySwathList = swathList
+    originalAccess = L2GPFile2%access
+    status = 0
+    L1alreadyOpen = L2GPFile1%stillOpen
+    if ( L1alreadyOpen ) then
+      call mls_closeFile(L2GPFile1, Status)
+      if ( Status /= 0 ) &
+        call MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Unable to close l2gp file to cp from', MLSFile=L2GPFile1)
+    endif
+
+    status = 0
+    L2alreadyOpen = L2GPFile2%stillOpen
+    if ( L2alreadyOpen ) then
+      if ( myCreate2 ) L2GPFile2%access = DFACC_CREATE
+      call mls_closeFile(L2GPFile2, Status)
+      if ( Status /= 0 ) &
+        call MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Unable to close l2gp file to cp to', MLSFile=L2GPFile2)
+    endif
+    
+    call cpL2GPData_fileName(L2GPFile1%Name, L2GPFile2%Name, &
+      & create2, L2GPFile1%hdfVersion, L2GPFile2%hdfVersion, &
+      & SwathList, rename, exclude, &
+      & notUnlimited, andGLAttributes, ReadStatus, HGrid, options)
+
+    if ( L1alreadyOpen )  call mls_openFile(L2GPFile1, Status)
+    L2GPFile1%errorCode = status
+    L2GPFile1%lastOperation = 'read'
+
+    if ( L2alreadyOpen )  call mls_openFile(L2GPFile2, Status)
+    L2GPFile2%errorCode = status
+    L2GPFile2%lastOperation = 'write'
+    L2GPFile2%access = originalAccess
+
+  end subroutine cpL2GPData_MLSFile
+
+  ! ---------------------- DiffL2GPData  ---------------------------
   subroutine DiffL2GPData ( L2gp1, L2gp2, &
     & Details, wholeArray, stats, rms, ignoreBadChunks, fields )
     ! Show diff between l2gp1 and l2gp2 down to level of Details
@@ -2632,8 +2712,69 @@ contains ! =====     Public Procedures     =============================
       
   end subroutine DiffL2GPData
     
-  ! ------------------------------------------ DiffL2GPFiles ------------
-  subroutine DiffL2GPFiles ( file1, file2, &
+  ! ------------------------------------------ DiffL2GPFiles_MLSFile ------------
+  subroutine DiffL2GPFiles_MLSFile ( L2GPFile1, L2GPFile2, &
+    & Details, wholeArray, stats, rms, ignoreBadChunks, &
+    & swList, showMissing, fields, force, swaths1, swaths2 )
+    ! Show diff between swaths in file1 and file2 down to level of Details
+    ! Dummy arguments
+    type(MLSFile_T)               :: L2GPfile1 ! file 1
+    type(MLSFile_T)               :: L2GPfile2 ! file 2
+    integer, intent(in), optional :: DETAILS ! <=0 => Don't diff data fields
+    !                                        ! -1 Skip even geolocation fields
+    !                                        ! -2 Skip all but name
+    !                                        ! >0 Diff even data fields
+    !                                        ! Default 1
+    !
+    ! The following parameters, if present, will override Details
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, intent(in), optional :: RMS   ! if TRUE, just print mean, rms
+    logical, intent(in), optional :: STATS   ! if TRUE, just print stats
+    logical, intent(in), optional :: IGNOREBADCHUNKS
+    ! swList currently used only if showMissing is TRUE
+    character (len=*), optional, intent(in) :: swList
+    logical, intent(in), optional :: showMissing   ! if TRUE, just show which
+    character(len=*), intent(in), optional :: fields  ! only these fields
+    character(len=*), intent(in), optional :: swaths1  ! only these swaths
+    character(len=*), intent(in), optional :: swaths2  ! only these swaths
+    logical, intent(in), optional :: FORCE ! Force diff even if swathnames differ
+    ! Local                                         swaths are missing from other
+    logical :: L1alreadyOpen
+    logical :: L2alreadyOpen
+    integer :: status
+    !
+    L1alreadyOpen = L2GPFile1%stillOpen
+    if ( L1alreadyOpen ) then
+      call mls_closeFile(L2GPFile1, Status)
+      if ( Status /= 0 ) &
+        call MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Unable to close l2gp file to diff between', MLSFile=L2GPFile1)
+    endif
+    !
+    L2alreadyOpen = L2GPFile2%stillOpen
+    if ( L2alreadyOpen ) then
+      call mls_closeFile(L2GPFile2, Status)
+      if ( Status /= 0 ) &
+        call MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Unable to close l2gp file to diff between', MLSFile=L2GPFile2)
+    endif
+    
+    call DiffL2GPFiles_Name ( L2GPFile1%Name, L2GPFile2%Name, &
+      & Details, wholeArray, stats, rms, ignoreBadChunks, &
+      & swList, showMissing, fields, force, swaths1, swaths2 )
+
+    if ( L1alreadyOpen )  call mls_openFile(L2GPFile1, Status)
+    L2GPFile1%errorCode = status
+    L2GPFile1%lastOperation = 'read'
+
+    if ( L2alreadyOpen )  call mls_openFile(L2GPFile2, Status)
+    L2GPFile2%errorCode = status
+    L2GPFile2%lastOperation = 'read'
+
+  end subroutine DiffL2GPFiles_MLSFile
+    
+  ! ------------------------------------------ DiffL2GPFiles_Name ------------
+  subroutine DiffL2GPFiles_Name ( file1, file2, &
     & Details, wholeArray, stats, rms, ignoreBadChunks, &
     & swList, showMissing, fields, force, swaths1, swaths2 )
     ! Show diff between swaths in file1 and file2 down to level of Details
@@ -2816,7 +2957,7 @@ contains ! =====     Public Procedures     =============================
     if ( status /= 0 ) &
       call MLSMessage ( MLSMSG_Error, ModuleName, &
        & "Unable to close L2gp file: " // trim(File2) // ' after diff')
-  end subroutine DiffL2GPFiles
+  end subroutine DiffL2GPFiles_Name
     
   ! ------------------------------------------ DiffStatsInt ------------
   subroutine DiffStatsInt ( array1, array2, arrayName )
@@ -3536,6 +3677,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.125  2005/09/23 23:38:30  pwagner
+! rename only effective if non-blank
+!
 ! Revision 2.124  2005/09/21 23:16:40  pwagner
 ! Improvements to RepairL2GP_HGrid; they may even be correct
 !
