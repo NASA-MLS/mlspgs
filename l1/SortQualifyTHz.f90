@@ -23,9 +23,9 @@ MODULE SortQualifyTHz ! Sort and qualify the L0 data for the THz module
   PUBLIC :: SortAndQualifyTHz
 
 !---------------------------- RCS Module Info ------------------------------
-  character (len=*), private, parameter :: ModuleName= &
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  PRIVATE :: not_used_here 
 !---------------------------------------------------------------------------
 
   TYPE (MAFdata_T), POINTER :: CurMAFdata => NULL()
@@ -98,7 +98,7 @@ CONTAINS
 
        ENDDO
 
-print *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
+PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
        CalMAFno = CalMAFno + 1
        CurMAFdata => CalBuf%MAFdata(CalMAFno)
        CurMAFdata%SciMIF = THzSciMAF
@@ -151,7 +151,7 @@ print *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
     CHARACTER(len=1), PARAMETER :: undefined = "U"
     REAL, PARAMETER :: BadLimbRange(2) = (/ 6.0, 354.0 /)
 
-    print *, 'qualifying all the MAFs'
+    PRINT *, 'qualifying all the MAFs'
 
     DO MAF = 1, CalBuf%MAFs
 
@@ -188,7 +188,7 @@ print *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
 
 !! Rule #4: Check for "Z"ero data
 
-          !! Discard all bands (for now)
+!! Discard all bands (for now)
 
           IF (ANY (CurMAFdata%SciMIF(MIF)%MaxAtten)) SwMirPos = discard
 
@@ -225,6 +225,12 @@ print *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
 
        ENDDO
 
+!! Make sure enough calibration data is in MAF:
+
+       IF ((COUNT (CurMAFdata%SciMIF%SwMirPos == 'T') == 0) .OR. &
+            (COUNT (CurMAFdata%SciMIF%SwMirPos == 'S') == 0)) &
+            CurMAFdata%SciMIF%SwMirPos = discard
+
 !! Check for bright objects in Limb FOV and mark as "D"iscards
 
        VenusInLimbView = ANY (CurMAFdata%LimbView%VenusInFOV(:,2))
@@ -260,18 +266,21 @@ print *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
   END SUBROUTINE SortAndQualifyTHz
 
 !=============================================================================
-  logical function not_used_here()
+  LOGICAL FUNCTION not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
+  CHARACTER (len=*), PARAMETER :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  END FUNCTION not_used_here
 END MODULE SortQualifyTHz
 !=============================================================================
 
 ! $Log$
+! Revision 2.9  2005/10/12 17:12:27  perun
+! Check for enough cal views in MAF
+!
 ! Revision 2.8  2005/06/23 18:41:36  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
