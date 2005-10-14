@@ -48,7 +48,8 @@ module ForwardModelSupport
   integer, parameter :: NoArray                = Nested + 1
   integer, parameter :: NoBetaGroup            = NoArray + 1
   integer, parameter :: NoMolecule             = NoBetaGroup + 1
-  integer, parameter :: PFANotMolecule         = NoMolecule + 1
+  integer, parameter :: PFANeedsFreqAvg        = NoMolecule + 1
+  integer, parameter :: PFANotMolecule         = PFANeedsFreqAvg + 1
   integer, parameter :: PFASSB                 = PFANotMolecule + 1
   integer, parameter :: PFATwice               = PFASSB + 1
   integer, parameter :: PolarizedAndAllLines   = PFATwice + 1
@@ -855,6 +856,10 @@ op:     do j = 2, nsons(PFATrees(s))
       end do                          ! End loop over listed species
     end if
 
+    ! If any PFA, need to do frequency averaging too
+    if ( any(info%anyPFA(s1:s2)) .and. .not. info%do_freq_avg ) &
+      & call AnnounceError ( PFANeedsFreqAvg, root )
+
     if ( ( info%xStar == 0 ) .neqv. ( info%yStar == 0 ) ) &
       & call AnnounceError ( NeedBothXYStar, root )
 
@@ -1210,6 +1215,9 @@ op:     do j = 2, nsons(PFATrees(s))
     case ( NoMolecule )
       call output ( 'A bin selector of type vmr must have a molecule', &
         & advance='yes' )
+    case ( PFANeedsFreqAvg )
+      call output ( 'Frequency averaging must be specified if there are any PFA molecules', &
+        & advance='yes' )
     case ( PFANotMolecule )
       call output ( 'PFA requested for ' )
       call display_string ( lit_indices(decoration(where)) )
@@ -1257,6 +1265,9 @@ op:     do j = 2, nsons(PFATrees(s))
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.119  2005/10/14 23:14:28  vsnyder
+! Require Frequency Averaging if any PFA molecules
+!
 ! Revision 2.118  2005/09/16 23:39:07  vsnyder
 ! Add spect_der field to ForwardModel
 !
