@@ -37,7 +37,7 @@ CONTAINS
 !=============================================================================
 
     USE MLSL1Config, ONLY: L1Config
-    USE MLSL1Common, ONLY: absZero_C
+    USE MLSL1Common, ONLY: absZero_C, OA_counterMAF
     USE EngTbls, ONLY: EngMAF, CalTgtIndx 
     USE EngUtils, ONLY: NextEngMAF
     USE SciUtils, ONLY: NextSciMAF
@@ -124,6 +124,8 @@ PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
 
     ENDDO
 
+    IF (SIZE (OA_counterMAF) > 1) &
+         CalMAFno = MIN (SIZE (OA_counterMAF), CalMAFno)
     CalBuf%MAFs = CalMAFno
 
   END SUBROUTINE FillCalData
@@ -278,6 +280,9 @@ END MODULE SortQualifyTHz
 !=============================================================================
 
 ! $Log$
+! Revision 2.10  2005/10/14 15:55:44  perun
+! Restrict maximum size of CalBuf to size of OA_counterMAF
+!
 ! Revision 2.9  2005/10/12 17:12:27  perun
 ! Check for enough cal views in MAF
 !
