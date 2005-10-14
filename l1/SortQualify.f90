@@ -27,9 +27,9 @@ MODULE SortQualify ! Sort and qualify the L0 data
   PUBLIC :: SortAndQualify
 
 !---------------------------- RCS Module Info ------------------------------
-  character (len=*), private, parameter :: ModuleName= &
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  PRIVATE :: not_used_here 
 !---------------------------------------------------------------------------
 
   TYPE (MAFdata_T), POINTER :: CurMAFdata
@@ -110,9 +110,9 @@ CONTAINS
 
     sci_MAFno = SciMAF(0)%MAFno
 
-print *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
+PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
 
-    MIF_dur = L1Config%Calib%MIF_duration
+    MIF_dur = (SUM(SciMAF(1:100)%secTAI - SciMAF(0:99)%secTAI)/100.0)
     MAF_dur = MIF_dur * nom_MIFs   !Nominal duration of MAF
 
     IF (CalWin%current > 0) THEN
@@ -219,7 +219,7 @@ print *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
     INTEGER, PARAMETER :: MaxMIFno = (MaxMIFs - 1)
 
     CurMAFdata => CalWin%MAFdata(CalWin%current)
-print *, 'Data:', CurMAFdata%SciPkt%GHz_sw_pos
+PRINT *, 'Data:', CurMAFdata%SciPkt%GHz_sw_pos
 
 !! Initialize MIF Rad Precision signs:
 
@@ -369,7 +369,7 @@ print *, 'Data:', CurMAFdata%SciPkt%GHz_sw_pos
        WRITE (L1BFileInfo%LogId, *) 'WALL event at MAF UTC '//asciiUTC
     ENDIF
 
-print *, 'Sort:', CurMAFdata%ChanType(0:149)%FB(1,1)
+PRINT *, 'Sort:', CurMAFdata%ChanType(0:149)%FB(1,1)
 
 !! Rule #6: Discard based on other qualifications such as commanded "W"alls
 
@@ -443,12 +443,12 @@ print *, 'Sort:', CurMAFdata%ChanType(0:149)%FB(1,1)
           WRITE (L1BFileInfo%LogId, *) ''
           WRITE (L1BFileInfo%LogId, *) TRIM(msg)//' at MAF UTC '//asciiUTC
           WRITE (L1BFileInfo%LogId, *) 'WALL event at MAF UTC '//asciiUTC
-print *, 'switch MAF: ', CurMAFdata%SciPkt(0)%MAFno
+PRINT *, 'switch MAF: ', CurMAFdata%SciPkt(0)%MAFno
           WHERE (CurMAFdata%SciPkt%BandSwitch(i) > 0)
              bandMask = .TRUE.  ! contains real band numbers
           ENDWHERE
-          band(1) = minval (CurMAFdata%SciPkt%BandSwitch(i), bandMask)
-          band(2) = maxval (CurMAFdata%SciPkt%BandSwitch(i), bandMask)
+          band(1) = MINVAL (CurMAFdata%SciPkt%BandSwitch(i), bandMask)
+          band(2) = MAXVAL (CurMAFdata%SciPkt%BandSwitch(i), bandMask)
           DO n = 1, 2
              CALL BandToBanks (band(n), bank)
              DO bno = 1, 2
@@ -503,9 +503,9 @@ print *, 'switch MAF: ', CurMAFdata%SciPkt(0)%MAFno
 
        IF (ANY (wallindx(1:current) /= 0)) THEN
 
-          minwall = minval (wallindx(1:current), &
+          minwall = MINVAL (wallindx(1:current), &
                CalWin%MAFdata%BankWall%FB(bank))
-          maxwall = maxval (wallindx(1:current), &
+          maxwall = MAXVAL (wallindx(1:current), &
                CalWin%MAFdata%BankWall%FB(bank))
           DO i = minwall, maxwall
              CalWin%MAFdata(i)%BankWall%FB(bank) = .TRUE.
@@ -526,7 +526,7 @@ print *, 'switch MAF: ', CurMAFdata%SciPkt(0)%MAFno
           ELSE
              CalWin%MAFdata(central)%BankCalInd%FB(bank) = (/ 0, 0 /)
           ENDIF
-print *, 'bank, wall: ', bank, CalWin%MAFdata%BankWall%FB(bank)
+PRINT *, 'bank, wall: ', bank, CalWin%MAFdata%BankWall%FB(bank)
        ELSE
           CalWin%MAFdata(central)%BankCalInd%FB(bank) = cal_range
        ENDIF
@@ -538,9 +538,9 @@ print *, 'bank, wall: ', bank, CalWin%MAFdata%BankWall%FB(bank)
           wallindx(1:current) = indx(1:current)
        END WHERE
        IF (ANY (wallindx(1:current) /= 0)) THEN
-          minwall = minval (wallindx(1:current), &
+          minwall = MINVAL (wallindx(1:current), &
                CalWin%MAFdata%BankWall%MB(bank))
-          maxwall = maxval (wallindx(1:current), &
+          maxwall = MAXVAL (wallindx(1:current), &
                CalWin%MAFdata%BankWall%MB(bank))
           DO i = minwall, maxwall
              CalWin%MAFdata(i)%BankWall%MB(bank) = .TRUE.
@@ -572,9 +572,9 @@ print *, 'bank, wall: ', bank, CalWin%MAFdata%BankWall%FB(bank)
           wallindx(1:current) = indx(1:current)
        END WHERE
        IF (ANY (wallindx(1:current) /= 0)) THEN
-          minwall = minval (wallindx(1:current), &
+          minwall = MINVAL (wallindx(1:current), &
                CalWin%MAFdata%BankWall%WF(bank))
-          maxwall = maxval (wallindx(1:current), &
+          maxwall = MAXVAL (wallindx(1:current), &
                CalWin%MAFdata%BankWall%WF(bank))
           DO i = minwall, maxwall
              CalWin%MAFdata(i)%BankWall%WF(bank) = .TRUE.
@@ -606,9 +606,9 @@ print *, 'bank, wall: ', bank, CalWin%MAFdata%BankWall%FB(bank)
           wallindx(1:current) = indx(1:current)
        END WHERE
        IF (ANY (wallindx(1:current) /= 0)) THEN
-          minwall = minval (wallindx(1:current), &
+          minwall = MINVAL (wallindx(1:current), &
                CalWin%MAFdata%BankWall%DACS(bank))
-          maxwall = maxval (wallindx(1:current), &
+          maxwall = MAXVAL (wallindx(1:current), &
                CalWin%MAFdata%BankWall%DACS(bank))
           DO i = minwall, maxwall
              CalWin%MAFdata(i)%BankWall%DACS(bank) = .TRUE.
@@ -629,7 +629,7 @@ print *, 'bank, wall: ', bank, CalWin%MAFdata%BankWall%FB(bank)
           ELSE
              CalWin%MAFdata(central)%BankCalInd%DACS(bank) = (/ 0, 0 /)
           ENDIF
-print *, 'DACS, wall: ', bank, CalWin%MAFdata%BankWall%DACS(bank)
+PRINT *, 'DACS, wall: ', bank, CalWin%MAFdata%BankWall%DACS(bank)
        ELSE
           CalWin%MAFdata(central)%BankCalInd%DACS(bank) = cal_range
        ENDIF
@@ -663,18 +663,21 @@ print *, 'DACS, wall: ', bank, CalWin%MAFdata%BankWall%DACS(bank)
   END SUBROUTINE SortAndQualify
 
 !=============================================================================
-  logical function not_used_here()
+  LOGICAL FUNCTION not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
+  CHARACTER (len=*), PARAMETER :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  END FUNCTION not_used_here
 END MODULE SortQualify
 !=============================================================================
 
 ! $Log$
+! Revision 2.17  2005/10/14 18:42:57  perun
+! Calculate MIF_dur from science data rather than using CF input
+!
 ! Revision 2.16  2005/10/10 14:29:35  perun
 ! Correct sorting of target types and determine if MAF is calibration type
 !
