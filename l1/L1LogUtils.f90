@@ -25,9 +25,9 @@ MODULE L1LogUtils
   PUBLIC :: ExamineData, LogStatus, EngMAFs, SciMAFs
 
 !---------------------------- RCS Module Info ------------------------------
-  character (len=*), private, parameter :: ModuleName= &
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  PRIVATE :: not_used_here 
 !---------------------------------------------------------------------------
 
   TYPE BeginEnd_T
@@ -494,8 +494,8 @@ CONTAINS
     MAF_dur = L1Config%Calib%MIF_duration * L1Config%Calib%MIFsPerMAF
     MIF_dur = L1Config%Calib%MIF_duration
     TAI_range = L1Config%Input_TAI
-    TAI_range%startTime = TAI_range%startTime - (window_MAFs/2 * MAF_dur)
-    TAI_range%endTime = TAI_range%endTime + ((window_MAFs/2 - 1)* MAF_dur)
+    TAI_range%startTime = TAI_range%startTime - ((window_MAFs/2 + 1) * MAF_dur)
+    TAI_range%endTime = TAI_range%endTime + (window_MAFs/2 * MAF_dur)
     last_MIF = L1Config%Calib%MIFsPerMAF - 1
 
 ! Init number of warnings and errors
@@ -557,18 +557,21 @@ CONTAINS
   END SUBROUTINE LogStatus
 
 !=============================================================================
-  logical function not_used_here()
+  LOGICAL FUNCTION not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
+  CHARACTER (len=*), PARAMETER :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  END FUNCTION not_used_here
 END MODULE L1LogUtils
 !=============================================================================
 
 ! $Log$
+! Revision 2.12  2005/10/14 18:41:41  perun
+! Expanded start and end times to scan data
+!
 ! Revision 2.11  2005/08/24 15:51:29  perun
 ! Check for and report missing MIFs in science data
 !
