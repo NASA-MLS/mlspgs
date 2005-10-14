@@ -196,8 +196,9 @@ CONTAINS
             L1Config%Expanded_TAI%startTime) / MAF_dur
        ALLOCATE (OA_counterMAF(noMAFs))
        OA_counterIndex = 1
-    ELSE   ! expand end time for THz
-       L1Config%Expanded_TAI%endTime = L1Config%Expanded_TAI%endTime + MAF_dur
+    ELSE   ! expand end time for THz (110% MAF_dur)
+       L1Config%Expanded_TAI%endTime = L1Config%Expanded_TAI%endTime + &
+            MAF_dur*1.1
     ENDIF
 
 !! Init orbit data:
@@ -1020,6 +1021,9 @@ END MODULE OpenInit
 !=============================================================================
 
 ! $Log$
+! Revision 2.23  2005/10/14 15:54:27  perun
+! Expand THz end time to guarantee inclusion of last MAF of day
+!
 ! Revision 2.22  2005/09/22 23:40:12  pwagner
 ! date conversion procedures and functions all moved into dates module
 !
