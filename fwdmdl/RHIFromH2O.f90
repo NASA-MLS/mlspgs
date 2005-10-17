@@ -64,7 +64,7 @@ contains ! =====     Public Procedures     =============================
   !--------------------------------------------  RHIPrecFromH2O  -----
 
   subroutine RHIPrecFromH2O ( H2Ovmr, T, zeta, vmr_unit_cnv, &
-    & H2OPrecision, TPrecision, RHIPrecision)
+    & H2OPrecision, TPrecision, RHIPrecision, NEGATIVETOO )
   ! Calculate RHI Precision based on that of H2O and Temperature
   ! Eq. 9 from "UARS Microwave Limb Sounder upper tropospheric
   !  humidity measurement: Method and validation" Read et. al. 
@@ -78,12 +78,18 @@ contains ! =====     Public Procedures     =============================
   real(r8), intent(in)  :: H2OPrecision    ! Precision of H2O
   real(r8), intent(in)  :: TPrecision      ! Precision of Temperature
   real(r8), intent(out) :: RHIPrecision    ! Precision of RHI
-  ! Local variables
+  logical, intent(in), optional   :: NEGATIVETOO  ! Set RHI Precision negative 
+  ! Local variables                          if either T or H2O Precsisions are
   integer :: invs
   real(r8) :: df_db       ! RHi deriv wrt H2O
   real(r8) :: df_dT       ! RHi deriv wrt T
+  logical :: isNegative
   
   ! Executable
+  isNegative = .false.
+  if ( present(negativeToo) ) &
+    & isNegative = negativeToo .and. &
+    & ( H2OPrecision < 0.d0 .or. TPrecision < 0.d0 )
   invs = -1
   df_db = exp(invs*( &
    & (C(T)+zeta+vmr_unit_cnv) * log(10.) &
@@ -100,7 +106,7 @@ contains ! =====     Public Procedures     =============================
    & ( H2OPrecision * df_db )**2 &
    & + ( TPrecision * df_dT )**2 &
    & )
-  
+  if ( isNegative ) RHIPrecision = -RHIPrecision
   contains
     function dC_dT ( T )
       ! As found in ref.
@@ -153,6 +159,9 @@ end module RHIFromH2O
 
 !
 ! $Log$
+! Revision 2.3  2005/10/17 17:25:48  pwagner
+! May set RHIPrecision negative if either T or H2O is
+!
 ! Revision 2.2  2005/06/22 18:08:19  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
