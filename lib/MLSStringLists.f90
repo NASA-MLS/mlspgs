@@ -18,7 +18,7 @@ module MLSStringLists               ! Module to treat string lists
   use MLSCommon, only: i4, NameLen, BareFNLen
   use MLSSets, only: FindFirst
   use MLSStrings, only: Capitalize, lowerCase, &
-    & ReadIntsFromChars, reverse, writeIntsToChars
+    & ReadIntsFromChars, reverse, streq, writeIntsToChars
 
   implicit none
   private
@@ -55,6 +55,7 @@ module MLSStringLists               ! Module to treat string lists
 ! GetUniqueInts      Returns array of only unique entries from input array
 ! GetUniqueList      Returns str list of only unique entries from input list
 ! GetUniqueStrings   Returns array of only unique entries from input array
+! IsInList           Is string in list? options may expand criteria
 ! List2Array         Converts a single string list to an array of strings
 ! NumStringElements  Returns number of elements in string list
 ! RemoveElemFromList removes occurrence(s) of elem in a string list
@@ -87,6 +88,7 @@ module MLSStringLists               ! Module to treat string lists
 !   & [char inseparator], [log IgnoreLeadingSpaces], [char* fillValue]) 
 ! GetUniqueStrings (char* inList(:), char* outList(:), int noUnique, 
 !   [char* extra(:)], [char* fillValue])
+! log IsInList(strlist stringList, char* string, [char* options])
 ! List2Array (strlist inList, char* outArray(:), log countEmpty,
 !   [char inseparator], [log IgnoreLeadingSpaces])
 ! int NumStringElements(strlist inList, log countEmpty, &
@@ -143,7 +145,7 @@ module MLSStringLists               ! Module to treat string lists
   public :: Array2List, catLists, &
    & ExpandStringRange, ExtractSubString, &
    & GetIntHashElement, GetStringElement, GetStringHashElement, &
-   & GetUniqueInts, GetUniqueStrings, GetUniqueList, &
+   & GetUniqueInts, GetUniqueStrings, GetUniqueList, IsInList, &
    & List2Array, NumStringElements, &
    & RemoveElemFromList, RemoveListFromList, ReplaceSubString, ReverseList, &
    & SortArray, SortList, StringElementNum, SwitchDetail, &
@@ -1128,6 +1130,42 @@ contains
 
     deallocate ( duplicate )
   end subroutine GetUniqueStrings
+
+  ! ---------------------------------------------  IsInList  -----
+
+  ! Is string in the stringList? options may expand criteria
+  ! See notes above about options
+  ! options
+  ! Warning: wildcard may be found in either stringList or string
+  ! which may or may not be what you intended
+  ! E.g.
+  ! stringList = 'abcd,a*,bcd,cd,d' and string='acd' with options = '-w'
+  !              returns TRUE because 'a*' matches 'acd'
+  ! Special cases:
+  ! string == ' '      => always FALSE
+  ! stringList == ' '  => always FALSE
+  function IsInList(stringList, string, options) result(itIs)
+    ! Dummy arguments
+    character (len=*), intent(in)                 :: stringlist
+    character (len=*), intent(in)                 :: string
+    character (len=*), optional, intent(in)       :: options
+    logical                                       :: itIs
+    ! Internal variables
+    logical, parameter :: countEmpty = .true.
+    integer :: i
+    integer :: n
+    character(len=max(len(stringList), len(string))) :: element
+    ! Executable
+    itIs = .false.
+    if ( len_trim(stringList) < 1 .or. len_trim(string) < 1 ) return
+    n = NumStringElements( stringList, countEmpty )
+    do i=1, n
+      call GetStringElement( stringList, element, i, countEmpty )
+      if ( element == ' ' ) cycle
+      itIs = streq( trim(element), trim(string), options )
+      if ( itIs ) return
+    enddo
+  end function IsInList
 
   ! ---------------------------------------------  List2Array  -----
 
@@ -2367,6 +2405,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.15  2005/10/18 22:52:04  pwagner
+! Added IsInList function
+!
 ! Revision 2.14  2005/09/22 23:33:58  pwagner
 ! date conversion procedures and functions all moved into dates module
 !
