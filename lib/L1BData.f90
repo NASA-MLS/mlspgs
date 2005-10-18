@@ -70,6 +70,7 @@ module L1BData
 ! Dump                            Print facts about l1brad quantity
 ! findl1bdata                     Which file handle contains a given sd name
 ! Getl1BFile                      Which MLSFile contains a given sd name
+!                                  (or attribute)
 ! L1BOASetup                      From l2cf, open, and save l1boa file info
 ! L1BRadSetup                     From l2cf, open, and save l1brad file info
 ! ReadL1BData                     Read all info concerning a l1brad quantity
@@ -90,7 +91,8 @@ module L1BData
 !                         [char InstrumentName] ) 
 ! DeallocateL1BData (l1bData_T l1bData) 
 ! Dump (l1bData_T l1bData, int details)
-! int FindL1BData (int files(:), char filedName, [int hdfVersion]) 
+! int FindL1BData (int files(:), char fieldName, [int hdfVersion]) 
+! MLSFile_T GetL1BFile (MLSFile_t filedatabase(:), char fieldName, [char options]) 
 ! L1boaSetup (int root, L1BInfo_T L1BInfo, int f_file, [int hdfVersion])
 ! L1bradSetup (int root, L1BInfo_T L1BInfo, int f_file, [int hdfVersion])
 ! ReadL1BData (int L1FileHandle, char QuantityName, l1bData_T l1bData,
@@ -694,14 +696,31 @@ contains ! ============================ MODULE PROCEDURES ======================
   end subroutine DumpL1BData
 
   ! ------------------------------------------------  GetL1BFile  -----
-  function GetL1BFile ( filedatabase, fieldName ) &
+  function GetL1BFile ( filedatabase, fieldName, options, object ) &
     & result(item)
+  ! Which MLSFile contains a given sd name or attribute name
+  !                                  
+  ! options, if present, may influence how it works
+  ! By convention, options is preceded by a "-"; it is ignored, however
+  !
+  ! option      effect
+  ! ------      ------
+  !  a       search for sttribute, not dataset
+  !  d       search for dataset, not attribute
+  !  /       search for attribute under FileID%grp_id; i.e., '/'
+  !  f       search for attribute under FileID%f_id
+  !  s       search for attribute under FileID%sd_id
+  !  w       Wildcard * which allows 'a*' to match 'abcd'
+  !  c       case insensitive which allows 'ABCD' to match 'abcd'
+  
+    use MLSHDF5, only: IsHDF5ItemPresent
+    use HDF5, only: h5dclose_f, h5dopen_f, h5gclose_f, h5gopen_f
 
-  use MLSHDF5, only: IsHDF5DSPresent
-
-    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-    character (len=*), intent(in) :: fieldName ! Name of field
-    type(MLSFile_T), pointer                 :: item
+    type (MLSFile_T), dimension(:), pointer :: FILEDATABASE
+    character (len=*), intent(in)           :: fieldName ! Name of field
+    character (len=*), optional, intent(in) :: options ! E.g., -a
+    character (len=*), optional, intent(in) :: object  ! If we need to open
+    type(MLSFile_T), pointer                :: item
     logical, parameter :: TRUSTDATABASE = .true.
 
     ! Externals
@@ -710,38 +729,96 @@ contains ! ============================ MODULE PROCEDURES ======================
     ! Local variables
     logical :: alreadyOpen
     integer :: i
+    integer :: locID
     integer :: myhdfVersion
+    character(len=80) :: myObject
+    character(len=8) :: myOptions
+    character(len=1) :: openedCode ! What type of object did we open? s,g,f
     integer :: returnStatus
 
     ! Executable code
     nullify(item)
+    myOptions = '-d' ! By default, search for sd names
+    if (present(options)) myOptions = options
+    myObject = '/'
+    if (present(object)) myObject = object
+    openedCode = ' '
     do i = 1, size(filedatabase)
       if ( streq(filedatabase(i)%content, 'l1b*', '-w') ) then
         ! This is an l1b file
         alreadyOpen = filedatabase(i)%StillOpen
-        if ( .not. alreadyOpen ) &
-          & call mls_openFile(filedatabase(i), returnStatus)
-        if ( .not. alreadyOpen ) &
-          & print *, 'Oops--must open file?'
+        if ( .not. alreadyOpen ) then
+          call mls_openFile(filedatabase(i), returnStatus)
+          ! print *, 'Oops--must open file?'
+          if ( returnStatus /= 0 ) &
+            call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'unable to open L1BFile searching for ' // trim(fieldname), &
+              & MLSFile=filedatabase(i) )
+          ! Are we looking for an attribute?
+          ! (Then we may need an object name)
+          if ( index(myoptions, 'a') > 0 ) then
+            ! What object would the attribute be attached to?
+            if ( index(myOptions, 'f') > 0 ) then
+              openedCode = 'f'
+            elseif ( index(myOptions, '/') > 0 ) then
+              call h5gopen_f ( filedatabase(i)%fileID%f_id, trim(myObject), &
+                & filedatabase(i)%fileID%grp_id, returnStatus )
+              openedCode = 'g'
+            elseif ( index(myOptions, 's') > 0 ) then
+              call h5dopen_f ( filedatabase(i)%fileID%f_id, trim(myObject), &
+                & filedatabase(i)%fileID%sd_id, returnStatus )
+              openedCode = 's'
+            else
+              call h5dopen_f ( filedatabase(i)%fileID%f_id, trim(myObject), &
+                & filedatabase(i)%fileID%sd_id, returnStatus )
+              openedCode = 's'
+            endif
+          endif
+        endif
         myHDFVersion = filedatabase(i)%HDFVersion
         
         if ( myhdfVersion == HDFVERSION_4 ) then
-          if ( sfn2index(filedatabase(i)%FileID%f_id, trim(fieldName)) /= -1 ) then
+          if ( index(myOptions, 'a') > 0 ) &
+            call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'Cannot search for attribute names in hdf4 files' )
+            if ( sfn2index(filedatabase(i)%FileID%f_id, trim(fieldName)) /= -1 ) then
             item => filedatabase(i)
             if ( .not. alreadyOpen ) &
               & call mls_closeFile(filedatabase(i), returnStatus)
             return
           end if
         else
-          if ( IsHDF5DSPresent(filedatabase(i)%FileID%f_id, trim(fieldName)) ) then
+          ! Are we looking for an attribute?
+          if ( index(myoptions, 'a') > 0 ) then
+            ! What object would the attribute be attached to?
+            if ( index(myOptions, 'f') > 0 ) then
+              locID = filedatabase(i)%FileID%f_id
+            elseif ( index(myOptions, '/') > 0 ) then
+              locID = filedatabase(i)%FileID%grp_id
+            elseif ( index(myOptions, 's') > 0 ) then
+              locID = filedatabase(i)%FileID%sd_id
+            else
+              locID = filedatabase(i)%FileID%sd_id
+            endif
+          endif
+          if ( IsHDF5ItemPresent( &
+            & locID, trim(fieldName), options ) &
+            & ) then
             item => filedatabase(i)
             if ( .not. alreadyOpen ) &
               & call mls_closeFile(filedatabase(i), returnStatus)
             return
           end if
         end if
-        if ( .not. alreadyOpen ) &
-          & call mls_closeFile(filedatabase(i), returnStatus)
+        if ( .not. alreadyOpen ) then
+          select case (openedCode)
+          case ('s')
+            call h5gclose_f ( filedatabase(i)%fileID%sd_id, returnStatus )
+          case ('g')
+            call h5gclose_f ( filedatabase(i)%fileID%grp_id, returnStatus )
+          end select
+          call mls_closeFile(filedatabase(i), returnStatus)
+        end if
       end if
     end do
   end function GetL1BFile
@@ -2973,6 +3050,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.62  2005/10/18 23:05:11  pwagner
+! Added GetL1BFile to get MLSFile with DS, attribute, or group name
+!
 ! Revision 2.61  2005/09/21 23:12:28  pwagner
 ! Unnecessary changes
 !
