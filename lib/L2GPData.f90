@@ -1604,18 +1604,19 @@ contains ! =====     Public Procedures     =============================
       & 'HMT,M,M,MT,M,M,M,M,HMT,M,' // &
       & 'HMT,M,M,M,HM,M,M,HMT,M,M'   ! These are abbreviated values
 
+    character(len=CHARATTRLEN) :: abbr_uniq_fdef
+    character(len=CHARATTRLEN) :: expnd_uniq_fdef
     integer :: field
+    character(len=CHARATTRLEN) :: field_name
     logical :: isColumnAmt
+    logical :: isTPPressure
     integer :: rgp_type
+    character(len=CHARATTRLEN) :: species_name ! Always lower case
     integer :: status
     integer :: swid
     character(len=CHARATTRLEN), dimension(NumGeolocFields) :: theTitles
     character(len=CHARATTRLEN), dimension(NumGeolocFields) :: theUnits
-    character(len=CHARATTRLEN) :: field_name
-    character(len=CHARATTRLEN) :: species_name ! Always lower case
     character(len=CHARATTRLEN) :: units_name
-    character(len=CHARATTRLEN) :: abbr_uniq_fdef
-    character(len=CHARATTRLEN) :: expnd_uniq_fdef
     ! Begin
     if (present(swathName)) then
        name=swathName
@@ -1709,7 +1710,11 @@ contains ! =====     Public Procedures     =============================
     !  & units_name, expnd_uniq_fdef)
     field_name = Name
     species_name = lowercase(name)
+    ! The following special cases are handled by crude, despicable hacks
+    ! It would be better to check on the quantity type, but paw hasn't
+    ! succeeded in getting that to work properly and reliably
     isColumnAmt = ( index(species_name, 'column') > 0 )
+    isTPPressure = ( index(species_name, 'tpp') > 0 )
     if ( isColumnAmt ) then
       call ExtractSubString(Name, species_name, 'column', 'wmo')
     endif
@@ -1732,6 +1737,7 @@ contains ! =====     Public Procedures     =============================
       units_name = 'vmr'
     end select
     if ( isColumnAmt ) units_name = 'DU'
+    if ( isTPPressure ) units_name = 'hPa'
     if ( DEEBUG ) print *, 'Title ', trim(field_name)
     status = mls_swwrlattr(swid, 'L2gpValue', 'Title', &
       & MLS_CHARTYPE, 1, field_name)
@@ -3677,6 +3683,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.126  2005/10/11 17:36:55  pwagner
+! Added MLSFile interface to cpL2GPData, diff procedures
+!
 ! Revision 2.125  2005/09/23 23:38:30  pwagner
 ! rename only effective if non-blank
 !
