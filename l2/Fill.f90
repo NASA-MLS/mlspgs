@@ -179,7 +179,6 @@ contains ! =====     Public Procedures     =============================
       & GetVectorQtyByTemplateIndex, isVectorQtyMasked, MaskVectorQty, &
       & ValidateVectorQuantity, Vector_T, &
       & VectorTemplate_T, VectorValue_T, M_Fill, M_LinAlg, M_Cloud
-!   use VectorsModule, only: rmVectorFromDatabase
     use VGridsDatabase, only: VGRIDS, GETUNITFORVERTICALCOORDINATE
 
     ! Dummy arguments
@@ -1580,17 +1579,6 @@ contains ! =====     Public Procedures     =============================
                 & quantityType=(/l_temperature/)) ) then
                 call Announce_Error ( key, No_Error_code, &
                   & 'The tempPrecisionQuantity is not a temperature'  )
-                ! This is not the right way to do an invert fill
-                ! The first quantity named on the fill line must
-                ! _always_ be the one getting filled according to
-                ! the pattern '[verb] [direct-object] [modifier(s)]'
-                ! see case l_vmr below for how to do this
-                !else if ( invert ) then
-                !  call FillRHIFromH2O ( key, h2oquantity, &
-                  !  & Quantity, temperatureQuantity, &
-                !  & dontMask, ignoreZero, ignoreNegative, interpolate, &
-                  !  & .true., &   ! Mark Undefined values?
-                !  & invert )    ! invert rather than convert?
               else
                 call FillRHIPrecisionFromH2O ( key, quantity, &
                   & h2oPrecisionQuantity, tempPrecisionQuantity, h2oQuantity, &
@@ -1757,9 +1745,6 @@ contains ! =====     Public Procedures     =============================
           if ( got(f_ifMissingGMAO) ) then
             if ( MissingGMAO ) call ExplicitFillVectorQuantity ( quantity, &
               & valuesNode, .true., phyq_Invalid, .true., options='-v' )
-!             if ( MissingGMAO ) call FillStatusQuantity ( key, quantity, &
-!               & sourceQuantity, statusValue, &
-!               & 0._r8, 0._r8, heightNode, additional )
           elseif ( .not. all ( got ( (/ f_sourceQuantity, f_status /) ) ) ) then
             call Announce_Error ( key, no_error_code, &
             & 'Need sourceQuantity and status fields for status fill' )
@@ -1783,9 +1768,6 @@ contains ! =====     Public Procedures     =============================
             if ( all ( got ( (/ f_minValue, f_maxValue /) ) ) .and. &
               &  maxValue <= minValue ) call Announce_Error ( key, no_error_code, &
               & 'Bad combination of max/min values' )
-            ! if ( .not. ifMissingGMAO .or. APrioriFiles%dao // AprioriFiles%ncep == ' ') &
-            !  & call FillStatusQuantity ( key, quantity, sourceQuantity, statusValue, &
-            !  & minValue, maxValue, heightNode, additional )
             call FillStatusQuantity ( key, quantity, &
               & sourceQuantity, statusValue, &
               & minValue, maxValue, heightNode, additional )
@@ -2267,7 +2249,7 @@ contains ! =====     Public Procedures     =============================
       ! Local variables
       integer :: CHANIND                ! Channel index
       integer :: MIF                    ! Minor frame index
-      ! Exectuable code
+      ! Executable code
       if ( quantity%template%quantityType /= l_singleChannelRadiance ) &
         & call announce_error ( key, 0, 'Quantity to fill must be of type singleChannelRadiance' )
       if ( all ( sourceQuantity%template%quantityType /= (/ l_cloudInducedRadiance, l_radiance /) ) ) &
@@ -3430,7 +3412,6 @@ contains ! =====     Public Procedures     =============================
     end subroutine FillChiSqMMif
 
     ! ------------------------------------------- FillColAbundance ---
-    ! subroutine FillColAbundance_idl ( key, qty, bndPressQty, vmrQty, &
     subroutine FillColAbundance ( key, qty, bndPressQty, vmrQty, &
       & firstInstance, lastInstance )
       ! A special fill according to W.R.Read's idl code
@@ -3520,15 +3501,11 @@ contains ! =====     Public Procedures     =============================
       if ( noOutputInstances < 1 ) return
 
       nullify ( Zetab, Zetac, Zetai, pb, pc, pi )
-      ! call allocate_test ( Zetaa, vmrQty%template%noSurfs, 'Zetaa', ModuleName )
       call allocate_test ( Zetab, vmrQty%template%noSurfs, 'Zetab', ModuleName )
       call allocate_test ( Zetac, vmrQty%template%noSurfs, 'Zetac', ModuleName )
-      ! call allocate_test ( Zetad, vmrQty%template%noSurfs, 'Zetad', ModuleName )
       call allocate_test ( Zetai, vmrQty%template%noSurfs, 'Zetai', ModuleName )
-      ! call allocate_test ( pa, vmrQty%template%noSurfs, 'pa', ModuleName )
       call allocate_test ( pb, vmrQty%template%noSurfs, 'pb', ModuleName )
       call allocate_test ( pc, vmrQty%template%noSurfs, 'pc', ModuleName )
-      ! call allocate_test ( pd, vmrQty%template%noSurfs, 'pd', ModuleName )
       call allocate_test ( pi, vmrQty%template%noSurfs, 'pi', ModuleName )
       Zetai = vmrQty%template%surfs(:,1)
       pi = 10.0 ** ( -Zetai  )
@@ -3871,7 +3848,6 @@ contains ! =====     Public Procedures     =============================
       type (VectorValue_T), intent(inout) :: QUANTITY ! (rhi) Quantity to fill
       type (VectorValue_T), intent(in) :: sourceQuantity ! vmr (unless invert)
       type (VectorValue_T), intent(in) :: temperatureQuantity ! T(zeta)
-  !   type (VectorValue_T), intent(in) :: refGPHQuantity ! zeta
       logical, intent(in)           ::    dontMask    ! Use even masked values
       logical, intent(in)           ::    ignoreZero  ! Ignore 0 values of h2o
       logical, intent(in)           ::    ignoreNegative  ! Ignore <0 values
@@ -4122,23 +4098,6 @@ contains ! =====     Public Procedures     =============================
       end if
     end subroutine FillRHIFromH2O
 
-      ! Properly belongs in FillRHIFromH2O, but that would make two levels
-! >       function C ( T )
-! >         ! As found in ref.
-! >         real(r8), intent(in)   :: T
-! >         real(r8)               :: C
-! >         ! Local
-! >         real(r8), parameter    :: a0 = -1.2141649d0
-! >         real(r8), parameter    :: a1 = 9.09718d0
-! >         real(r8), parameter    :: a2 = 0.876793d0
-! >         real, parameter        :: ILLEGALTEMP = UNDEFINED_VALUE
-! >         !
-! >         if ( T > 0.d0 ) then
-! >           C = a0 - a1*(273.16/T -1.0d0) + a2*(1.0d0 - T/273.16)
-! >         else
-! >           C = ILLEGALTEMP
-! >         end if
-! >       end function C
 
 !MJF
 
@@ -4194,6 +4153,9 @@ contains ! =====     Public Procedures     =============================
       !        => use only xQuantity(instance==1)
       !
       ! (3) Don't know how to invert precisions
+      !
+      ! Note: If either of TempPrecision or H2OPrecision is negative, then
+      ! set Precision to negative, too (if NEGATIVETOO is TRUE)
       integer, intent(in) :: key          ! For messages
       ! Actually, the meaning of the next two is reversed if invert is TRUE)
       type (VectorValue_T), intent(inout) :: QUANTITY ! (rhi) Quantity to fill
@@ -4201,7 +4163,6 @@ contains ! =====     Public Procedures     =============================
       type (VectorValue_T), intent(in) :: tempPrecisionQuantity ! T(zeta)
       type (VectorValue_T), intent(in) :: sourceQuantity ! vmr (unless invert)
       type (VectorValue_T), intent(in) :: temperatureQuantity ! T(zeta)
-  !   type (VectorValue_T), intent(in) :: refGPHQuantity ! zeta
       logical, intent(in)           ::    dontMask    ! Use even masked values
       logical, intent(in)           ::    ignoreZero  ! Ignore 0 values of h2o
       logical, intent(in)           ::    ignoreNegative  ! Ignore <0 values
@@ -4222,9 +4183,6 @@ contains ! =====     Public Procedures     =============================
       integer ::                          I_TPrecision         ! Instance num for values
       integer ::                          I_H2O       ! Instance num for values
       integer ::                          I_T         ! Instance num for values
-      integer ::                          invs        ! 1 if invert, else -1
-      integer ::                          QINDEX                                
-      integer ::                          N           ! Num. of summed values   
       logical                          :: matched_h2oPrecision_channels
       logical                          :: matched_h2oPrecision_instances
       logical                          :: matched_h2o_channels
@@ -4235,6 +4193,10 @@ contains ! =====     Public Procedures     =============================
       logical                          :: matched_TPrecision_instances
       logical                          :: matched_T_channels
       logical                          :: matched_T_instances
+      integer ::                          N           ! Num. of summed values   
+      logical, parameter ::               NEGATIVETOO = .true.
+      integer ::                          QINDEX                                
+      real (r8) ::                        rhi_precision
       integer ::                          S           ! Surface loop counter    
       integer ::                          S_H2OPrecision       ! Instance num for surfs
       integer ::                          S_H2O       ! Instance num for surfs
@@ -4242,14 +4204,9 @@ contains ! =====     Public Procedures     =============================
       integer ::                          S_TPrecision         ! Instance num for surfs
       integer ::                          S_T         ! Instance num for surfs
       logical ::                          skipMe                                
-!     real (r8) ::                        TPrecision
-!     real (r8) ::                        T
       character(len=*), parameter ::      VMR_UNITS = 'vmr'
       integer ::                          VMR_UNIT_CNV
       logical ::                          wereAnySkipped
-!     real (r8) ::                        df_db       ! RHi deriv wrt H2O
-!     real (r8) ::                        df_dT       ! RHi deriv wrt T
-      real (r8) ::                        rhi_precision
       ! These automatic arrays could cause trouble later
       ! You may consider declaring them as pointers and
       ! calling allocate_test and deallocate_test
@@ -4272,11 +4229,6 @@ contains ! =====     Public Procedures     =============================
         & ' FillRHIPrecisionFromH2O unable to invert' )
        return
       end if
-!!$      if ( invert ) then
-!!$        invs = 1
-!!$      else
-        invs = -1
-!!$      end if
       ! Do we need to internally convert the vmr units?
       if ( VMR_UNITS == 'ppmv' ) then
         vmr_unit_cnv = 6
@@ -4506,36 +4458,13 @@ contains ! =====     Public Procedures     =============================
             & (ignoreNegative .and. H2OofZeta(s) < 0.0 ) &
             & .or. (ignoreZero .and. H2OofZeta(s) == 0.0 ) &
             & )
-!!$            skipMe = skipMe .or. &
-!!$            & .not. dontMask .and. ( &
-!!$            & (ignoreNegative .and. H2OPrecisionofZeta(s) < 0.0 ) &
-!!$            & .or. (ignoreZero .and. H2OPrecisionofZeta(s) == 0.0 ) &
-!!$            & .or. (ignoreNegative .and. H2OofZeta(s) < 0.0 ) &
-!!$            & .or. (ignoreZero .and. H2OofZeta(s) == 0.0 ) &
-!!$            & )
             ! But skip no matter what else if temperature illegal
             skipMe = skipMe .or. TofZeta(s) <= 0.0
             if ( .not. skipMe ) then
-!               T = TofZeta(s)
-!               df_db = exp(invs*( &
-!                & (C(T)+zeta(qIndex)+vmr_unit_cnv) * log(10.) &
-!                & + &
-!                & 3.56654*log(T/273.16) &
-!                & ))
-!               df_dT = H2OofZeta(s) * exp(invs*( &
-!                & (C(T)+zeta(qIndex)+vmr_unit_cnv) * log(10.) &
-!                & + &
-!                & 3.56654*log(T/273.16) &
-!                & )) &
-!                & * invs * ( dC_dT(T) * log(10.) + 3.56654 / T )
-!               Quantity%values(qIndex, i) = sqrt (&
-!                & ( H2OPrecisionofZeta(s) * df_db )**2 &
-!                & + ( TPrecisionofZeta(s) * df_dT )**2 &
-!                & )
-              call RHIPrecFromH2O(H2OofZeta(s), &
+              call RHIPrecFromH2O( H2OofZeta(s), &
                & TofZeta(s), zeta(qIndex), vmr_unit_cnv, &
                & H2OPrecisionofZeta(s), TPrecisionofZeta(s), &
-               & rhi_precision)
+               & rhi_precision, negativeToo )
               Quantity%values(qIndex, i) = rhi_precision
             end if
             wereAnySkipped = wereAnySkipped .or. skipMe
@@ -4570,27 +4499,6 @@ contains ! =====     Public Procedures     =============================
         end if
       end if
     end subroutine FillRHIPrecisionFromH2O
-
-      ! Properly belongs in FillRHIPrecisionFromH2O, but that would make two levels
-!       function dC_dT ( T )
-!         ! As found in ref.
-!         real(r8), intent(in)   :: T
-!         real(r8)               :: dC_dT
-!         ! Local
-!         real(r8), parameter    :: a0 = -1.2141649d0
-!         real(r8), parameter    :: a1 = 9.09718d0
-!         real(r8), parameter    :: a2 = 0.876793d0
-!         real, parameter        :: ILLEGALTEMP = UNDEFINED_VALUE
-!         !
-!         if ( T > 0.d0 ) then
-!           dC_dT = a1*(273.16/T**2) - a2/273.16
-! !!$          C = a0 - a1*(273.16/T -1.0d0) + a2*(1.0d0 - T/273.16)
-!         else
-!           dC_dT = ILLEGALTEMP
-! !!$          C = ILLEGALTEMP
-!         end if
-!       end function dC_dT
-
 !MJF
     ! ---------------------------------- FillVectorQuantityWithEsimatedNoise ---
     subroutine FillVectorQtyWithEstNoise ( quantity, radiance, &
@@ -6906,6 +6814,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.311  2005/10/18 16:56:43  pwagner
+! Negative RHIPrecision when either T or H2O Precisions are
+!
 ! Revision 2.310  2005/09/21 23:21:58  pwagner
 ! Use of single arg options in ExplicitFillVectorQuantity replaces three
 !
