@@ -171,7 +171,7 @@ module MLSFiles               ! Utility file routines
 ! Deallocate_filedatabase(MLSFile *dataBase(:))
 ! Dump ( MLSFile *dataBase(:), [char* Name], [int details] )
 ! Dump ( MLSFile MLSFile, [int details] )
-! MLSFile *GetMLSFileByName (MLSFile *dataBase(:), char* name, [log part_match])
+! MLSFile *GetMLSFileByName (MLSFile *dataBase(:), char* name, [log ignore_paths])
 ! MLSFile *GetMLSFileByType (MLSFile *dataBase(:), [int type], [char* content],
 !    [int PCFId], [Range PCFIdRange])
 ! int InitializeMLSFile (MLSFile item, [int type],
@@ -638,28 +638,28 @@ contains
 
 ! This function returns the MLSFile matching a given name
 
-  function GetMLSFileByName(database, name, part_match) result(item)
+  function GetMLSFileByName(database, name, ignore_paths) result(item)
   type(MLSFile_T), dimension(:), pointer :: database
   character(len=*), intent(in)           :: name
   type(MLSFile_T), pointer               :: item
-  logical, optional, intent(in)          :: part_match
+  logical, optional, intent(in)          :: ignore_paths
   !
-  logical, dimension(size(database)) :: doTheyMatch
+  ! logical, dimension(size(database)) :: doTheyMatch
   integer :: indx
-  logical :: myPart_match
-  character(len=8) :: streqOptions
+  logical :: myignore_paths
+  ! character(len=8) :: streqOptions
   !
   nullify(item)
   if ( .not. associated(database) ) return
   if ( size(database) < 1 ) return
-  myPart_match = .false.
-  if ( present(part_match) ) myPart_match = part_match
-  if ( .not. myPart_match ) then
+  myignore_paths = .false.
+  if ( present(ignore_paths) ) myignore_paths = ignore_paths
+  if ( .not. myignore_paths ) then
     indx = findFirst(database%name == name)
   else
-    streqOptions = '-ps' ! Enabling partial match, and returning the shortest
-    doTheyMatch = streq(database%name, name, streqOptions)
-    indx = findFirst(doTheyMatch)
+    ! streqOptions = '-ps' ! Enabling partial match, and returning the shortest
+    ! doTheyMatch = streq(database%name, name, streqOptions)
+    indx = findFirst( strip_path(database%name) == strip_path(name) )
   endif
   if ( indx > 0 ) item => database(indx)
   end function GetMLSFileByName
@@ -868,9 +868,11 @@ contains
 
    ! hdfVersion unimportant for 'pg' or 'op' operations
    ! if (the_eff_mode == 'pg' .or. the_eff_mode == 'op' ) then
+   myhdfVersion = WRONGHDFVERSION
+   if ( present(hdfVersion) ) myHdfVersion = hdfVersion
    if (the_eff_mode == l_tkgen .or. the_eff_mode == l_open ) then
      myhdfVersion = WILDCARDHDFVERSION
-   else
+   elseif ( .not. any( myhdfVersion == (/HDFVERSION_4, HDFVERSION_5/) ) ) then
      myhdfVersion = mls_hdf_version(trim(myName), hdfVersion, FileAccessType)             
    endif
 
@@ -884,6 +886,9 @@ contains
        call blanks(2)
        endif
        call output(the_eff_mode, advance='yes')
+       call output('l_hdf: ', advance='no')
+       call blanks(2)
+       call output(l_hdf, advance='yes')
        call output('File Name: ', advance='no')
        call blanks(2)
        call output(trim(myName), advance='yes')
@@ -899,6 +904,9 @@ contains
        call output('Return status ', advance='no')
        call blanks(2)
        call output(returnStatus, advance='yes')
+       call output('hdf version ', advance='no')
+       call blanks(2)
+       call output(myhdfVersion, advance='yes')
    endif
 
    if ( myhdfVersion < 0 ) then
@@ -977,7 +985,8 @@ contains
         ErrType = returnStatus
         return
       elseif(myhdfVersion == HDFVERSION_5) then
-      
+        ! print *, 'We are using the right mls_sfstart'
+        ! print *, 'FileAccessType ', FileAccessType
         theFileHandle = mls_sfstart(trim(myName), FileAccessType, &
           & HDFVERSION_5)
       elseif(myhdfVersion == HDFVERSION_4) then
@@ -1788,7 +1797,7 @@ contains
   ! optionally you may supply the slash divider
   ! which must be a single character
 
-  subroutine split_path_name ( full_file_name, path, name, slash )
+  elemental subroutine split_path_name ( full_file_name, path, name, slash )
 
     ! Arguments
 
@@ -2298,6 +2307,7 @@ contains
     !
     if ( present(error) ) error = FILEALREADYOPEN
     if ( MLSFile%StillOpen ) return
+    ! print *, 'Opening ' // trim(MLSFile%name)
     version = 1
     PCBottom = MLSFile%PCFidRange%Bottom
     PCTop = MLSFile%PCFidRange%Top
@@ -2320,10 +2330,15 @@ contains
       call GetMLSFileNameFromPCF(MLSFile, ioerror)
     endif
     ! Do we need to find the hdfVersion?
-    ! if ( index(hdfmodes, trim(toolbox_mode)) > 0 .and. &
-   if ( any(MLSFile%type == (/l_hdf, l_swath, l_grid, l_zonalavg /) ) .and. &
-      & (MLSFile%HDFVersion == 0 .or. MLSFile%HDFVersion == WILDCARDHDFVERSION) ) &
-      & MLSFile%HDFVersion = mls_hdf_version(trim(MLSFile%name))
+   if ( &
+     & any(MLSFile%type == (/l_hdf, l_swath, l_grid, l_zonalavg /) ) .and. &
+     & (MLSFile%HDFVersion == 0 .or. MLSFile%HDFVersion == WILDCARDHDFVERSION) &
+     & ) then
+     ! print *, 'MLSFile%type ' , MLSFile%type
+     ! print *, 'MLSFile%HDFVersion ' , MLSFile%HDFVersion
+     ! print *, 'WILDCARDHDFVERSION ' , WILDCARDHDFVERSION
+     MLSFile%HDFVersion = mls_hdf_version(trim(MLSFile%name))
+    endif
     neededPCF = .true.
 
     ! If the file has already been created by this run, we don't want to
@@ -2594,6 +2609,15 @@ contains
       endif
     enddo
   end  subroutine GetMLSFilePCFidFromName
+  elemental function strip_path(fullName) result(name)
+    character(len=*), intent(in) :: fullName
+    character(len=max(1, len(fullName))) :: name
+    character(len=max(1, len(fullName))) :: path
+    !
+    name = ' '
+    if ( len_trim(fullName) < 1 ) return
+    call split_path_name(fullName, path, name)
+  end function strip_path
 !====================
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
@@ -2609,6 +2633,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.70  2005/10/18 23:03:32  pwagner
+! Interface to GetMLSFileByName allows ignoring path
+!
 ! Revision 2.69  2005/08/09 00:00:10  pwagner
 ! Mistake to call sortarray from GetPCFFromRef with same nameArray in both positions--fixed
 !
