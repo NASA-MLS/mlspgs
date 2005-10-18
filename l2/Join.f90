@@ -411,7 +411,7 @@ contains ! =====     Public Procedures     =============================
     character(len=1024) :: PATH         ! path/file_base
     integer :: PCBottom
     integer :: PCTop
-    integer :: record_length
+    ! integer :: record_length
     integer :: RETURNSTATUS
     logical :: SKIPDGG
     logical :: SKIPDGM
@@ -886,7 +886,7 @@ contains ! =====     Public Procedures     =============================
         end if
         ! Call the l2gp open/create routine.  Filename is 'filename'
         ! file id should go into 'handle'
-        directFile => GetMLSFileByName(filedatabase, filename)
+        directFile => GetMLSFileByName(filedatabase, filename, ignore_paths=.true.)
         if ( .not. associated(directFile) ) then
           if(DEEBUG) call MLSMessage(MLSMSG_Warning, ModuleName, &
             & 'No entry in filedatabase for ' // trim(filename) )
@@ -906,7 +906,7 @@ contains ! =====     Public Procedures     =============================
         ! file id should go into 'handle'
         ! handle = mls_io_gen_openF('hg', .true., ErrorType, &
         !  & record_length, FileAccess, FileName, hdfVersion=hdfVersion)
-        directFile => GetMLSFileByName(filedatabase, filename)
+        directFile => GetMLSFileByName(filedatabase, filename, ignore_paths=.true.)
         if ( .not. associated(directFile) ) then
           if(DEEBUG) call MLSMessage(MLSMSG_Warning, ModuleName, &
             & 'No entry in filedatabase for ' // trim(filename) )
@@ -1969,6 +1969,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.121  2005/10/18 23:11:36  pwagner
+! Fixed bug causing standalone, toolkitless run to put split dgg/dgm files in cwd
+!
 ! Revision 2.120  2005/06/22 18:57:01  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
