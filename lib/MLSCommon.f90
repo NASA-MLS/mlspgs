@@ -14,6 +14,7 @@ module MLSCommon                ! Common definitions for the MLS software
 !=============================================================================
 
   use ieee_arithmetic, only: ieee_is_finite
+  use MLSKinds ! Everything
   use SDPTOOLKIT, only: PGSd_PC_FILE_PATH_MAX
 
   implicit none
@@ -59,27 +60,17 @@ module MLSCommon                ! Common definitions for the MLS software
   public :: Range_T
   public :: TAI93_Range_T
 
-  ! Firstly, these are standard numerical types, copied from HCP
-  ! (again with my change in case, sorry Hugh!)
+  ! Make parameters gotten from MLSKinds public
 
-  integer, public, parameter:: i1=selected_int_kind(2)
-  integer, public, parameter:: i2=selected_int_kind(4)
-  integer, public, parameter:: i4=selected_int_kind(7)
-  integer, public, parameter:: r4=selected_real_kind(5)
-  integer, public, parameter:: r8=selected_real_kind(13)
-
-  ! Now choose the precision we want by preference (may automate this through
-  ! make later on, with perl or m4 or something).
-  ! These are used according to the final letter in the two-letter name:
-  ! Final Letter          Context           Suggested Value
-  !    ----               -------           ---------------
-  !     m                 Matrix            r8  (r4 to save memory)
-  !     p                 Forward Model     r8
-  !     v                 Vector            r8
-  integer, public, parameter:: rm=r4
-  integer, public, parameter:: rp=r8
-  integer, public, parameter:: ip=i4
-  integer, public, parameter:: rv=r8
+  public :: i1
+  public :: i2
+  public :: i4
+  public :: r4
+  public :: r8
+  public :: rm
+  public :: rp
+  public :: ip
+  public :: rv
 
   ! Now we have the lengths for various strings
 
@@ -565,6 +556,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.26  2005/10/19 22:53:01  vsnyder
+! Move kinds to MLSKinds
+!
 ! Revision 2.25  2005/06/22 17:25:49  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
