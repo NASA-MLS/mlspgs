@@ -366,18 +366,22 @@ contains ! ======================= Public Procedures =========================
   end subroutine GetAllHDF5AttrNames
 
   ! -----------------------------------  GetAllHDF5DSNames_fileID  -----
-  subroutine GetAllHDF5DSNames_fileID ( FileID, gname, DSNames )
+  subroutine GetAllHDF5DSNames_fileID ( FileID, gname, DSNames, andSlash )
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     integer, intent(in) :: FILEID          ! fileID
     character (len=*), intent(in) :: GNAME ! Name of group; e.g. '/'
     character (len=*), intent(out) :: DSNames ! Names of DS in file (,-separated)
+    logical, optional, intent(in) :: andSlash ! Keep leading '/' if TRUE
 
     ! Local variables
     integer :: i                        ! loop counter
+    logical :: omitSlash
     integer :: STATUS                   ! Flag
     type(MLSDataInfo_T) :: dataset_info
 
     ! Executable code
+    omitSlash = .true.
+    if ( present(andSlash) ) omitSlash = .not. andSlash
     ! Initializing values returned if there was trouble
     DSNames = ''
     call h5eSet_auto_f ( 0, status )
@@ -395,10 +399,14 @@ contains ! ======================= Public Procedures =========================
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
       & 'Unable to get DSNames' )
     else if ( dataset_info%number_of_entries == 1 ) then
+      if ( omitSlash .and. dataset_info%name(1)(1:1) == '/' ) &
+        & dataset_info%name(1) = dataset_info%name(1)(2:)
       DSNames = dataset_info%name(1)
     else if ( dataset_info%number_of_entries > 1 ) then
       ! DSNames = dataset_info%name(1)
       do i = 1, dataset_info%number_of_entries
+        if ( omitSlash .and. dataset_info%name(i)(1:1) == '/' ) &
+          & dataset_info%name(i) = dataset_info%name(i)(2:)
         DSNames = catLists(trim(DSNames), dataset_info%name(i))
       end do
     end if
@@ -409,10 +417,11 @@ contains ! ======================= Public Procedures =========================
   end subroutine GetAllHDF5DSNames_fileID
 
   ! ---------------------------------  GetAllHDF5DSNames_filename  -----
-  subroutine GetAllHDF5DSNames_filename ( FileName, gname, DSNames )
+  subroutine GetAllHDF5DSNames_filename ( FileName, gname, DSNames, andSlash )
     character (len=*), intent(in) :: FILENAME       ! file name
     character (len=*), intent(in) :: GNAME ! Name of group; e.g. '/'
     character (len=*), intent(out) :: DSNames ! Names of DS in file (,-separated)
+    logical, optional, intent(in) :: andSlash ! Keep leading '/' if TRUE
 
     ! Local variables
     integer :: fileID
@@ -425,7 +434,7 @@ contains ! ======================= Public Procedures =========================
     call h5fopen_f ( trim(filename), H5F_ACC_RDONLY_F, fileID, status )
     if ( status == 0 ) then
       call h5eSet_auto_f ( 1, status )
-      call GetAllHDF5DSNames_fileID ( fileID, gname, DSNames )
+      call GetAllHDF5DSNames_fileID ( fileID, gname, DSNames, andSlash )
     else
       call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open file for getting DSNames ' // trim(filename) )
@@ -2023,10 +2032,12 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before looking for item ' // trim(name) )
     ! print *, 'myOptions ', myOptions
-    if ( myOptions == ' ' ) then
+    if ( myOptions == ' ' .or. myOptions == '-d' ) then
       call h5dOpen_f ( locID, name, setID, status )
       IsHDF5ItemPresent = ( status == 0 )
       if ( IsHDF5ItemPresent ) call h5dClose_f ( setID, status )
+      call GetAllHDF5DSNames_fileID ( locID, '/', DSNames )
+      ! print *, 'DSNames ', trim(DSNames)
     elseif ( index(myOptions, 'g') > 0 ) then
       IsHDF5ItemPresent = IsHDF5GroupPresent (locID, name)
     elseif ( index(myOptions, 'a') < 1 ) then
@@ -4939,6 +4950,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.59  2005/10/19 20:46:05  pwagner
+! GetAllHDF5DSNames will omit leading slashes by default
+!
 ! Revision 2.58  2005/10/18 23:01:43  pwagner
 ! Added GetAllHDF5AttrNames, IsHDF5ItemPresent; introduced options
 !
