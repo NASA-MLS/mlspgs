@@ -714,6 +714,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   !  c       case insensitive which allows 'ABCD' to match 'abcd'
   
     use MLSHDF5, only: IsHDF5ItemPresent
+    use MLSFiles, only: dump
     use HDF5, only: h5dclose_f, h5dopen_f, h5gclose_f, h5gopen_f
 
     type (MLSFile_T), dimension(:), pointer :: FILEDATABASE
@@ -798,29 +799,38 @@ contains ! ============================ MODULE PROCEDURES ======================
             elseif ( index(myOptions, 's') > 0 ) then
               locID = filedatabase(i)%FileID%sd_id
             else
-              locID = filedatabase(i)%FileID%sd_id
+              locID = filedatabase(i)%FileID%f_id
             endif
+          else
+            locID = filedatabase(i)%FileID%f_id
           endif
+          ! call dump(filedatabase(i), details=1)
+          ! print *, 'locID ', locID
           if ( IsHDF5ItemPresent( &
-            & locID, trim(fieldName), options ) &
+            & locID, trim(fieldName), myOptions ) &
             & ) then
             item => filedatabase(i)
-            if ( .not. alreadyOpen ) &
-              & call mls_closeFile(filedatabase(i), returnStatus)
+            if ( .not. alreadyOpen ) call closeEverything(filedatabase(i))
             return
           end if
         end if
-        if ( .not. alreadyOpen ) then
-          select case (openedCode)
-          case ('s')
-            call h5gclose_f ( filedatabase(i)%fileID%sd_id, returnStatus )
-          case ('g')
-            call h5gclose_f ( filedatabase(i)%fileID%grp_id, returnStatus )
-          end select
-          call mls_closeFile(filedatabase(i), returnStatus)
-        end if
+        if ( .not. alreadyOpen ) call closeEverything(filedatabase(i))
       end if
     end do
+  contains
+    subroutine closeEverything(L1BFile)
+      ! Args:
+      type(MLSFile_T) :: L1BFile
+      integer :: returnStatus
+      ! Executable
+       select case (openedCode)
+       case ('s')
+         call h5gclose_f ( L1BFile%fileID%sd_id, returnStatus )
+       case ('g')
+         call h5gclose_f ( L1BFile%fileID%grp_id, returnStatus )
+       end select
+       call mls_closeFile(L1BFile, returnStatus)
+    end subroutine closeEverything
   end function GetL1BFile
 
   ! ------------------------------------------------  FindL1BData  -----
@@ -3050,6 +3060,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.63  2005/10/19 20:47:29  pwagner
+! Fixed bug in GetL1BFile (do others remain?)
+!
 ! Revision 2.62  2005/10/18 23:05:11  pwagner
 ! Added GetL1BFile to get MLSFile with DS, attribute, or group name
 !
