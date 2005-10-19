@@ -54,7 +54,6 @@ contains ! =====     Public Procedures     =============================
     & suppressGeometryDump ) result ( hGrid )
 
     use Chunks_m, only: MLSChunk_T
-    use ChunkDivide_m, only: ChunkDivideConfig
     use EXPR_M, only: EXPR
     use HGridsDatabase, only: HGRID_T, CREATEEMPTYHGRID, NULLIFYHGRID
     use INIT_TABLES_MODULE, only: F_DATE, F_FORBIDOVERSPILL, F_FRACTION, F_GEODANGLE, &
@@ -1109,12 +1108,15 @@ contains ! =====     Public Procedures     =============================
   end subroutine CreateRegularHGrid
 
   ! --------------------------------------- DealWithObstructions -----
-  subroutine DealWithObstructions ( HGrid, obstructions )
+  subroutine DealWithObstructions ( HGrid, obstructions, DestroyOld )
     use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
     use ChunkDivide_m, only: Obstruction_T
     use HGridsDatabase, only: HGRID_T, CreateEmptyHGrid, DestroyHGridContents
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+    ! Args
     type (HGRID_T), pointer :: HGRID
     type (Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
+    logical, optional, intent(in) :: DestroyOld
     ! This routine modifies the chunks according to the information
     ! given in the obstructions.
 
@@ -1123,6 +1125,7 @@ contains ! =====     Public Procedures     =============================
     integer :: FIRSTMAF                 ! Index of first MAF in range
     integer :: LASTMAF                  ! Index of last MAF in range
     integer :: MAF                      ! Index of MAF for wall
+    logical :: mayDestroyOld
     integer :: newProfile               ! Counter in newHGrid
     integer :: OBSTRUCTION              ! Loop counter
     integer :: PROFILE                  ! Loop counter
@@ -1133,6 +1136,9 @@ contains ! =====     Public Procedures     =============================
     if ( hGrid%noProfs < 1 ) return
     if ( .not. associated(obstructions) ) return
     if ( .not. associated(hGrid%phi) ) return
+    mayDestroyOld = .false.
+    if ( present(DestroyOld) ) mayDestroyOld = DestroyOld
+    
     ! Next--fill obstructed array
     nullify (obstructed)
     call Allocate_Test ( obstructed, hGrid%noProfs, &
@@ -1177,7 +1183,11 @@ contains ! =====     Public Procedures     =============================
         newHGrid%noProfsUpperOverlap = hgrid%noProfsUpperOverlap &
           & - count( obstructed(hgrid%noProfs-hgrid%noProfsUpperOverlap+1:hgrid%noProfs) )
       endif
-      call DestroyHGridContents(hGrid)
+      if ( mayDestroyOld ) then
+        call DestroyHGridContents(hGrid)
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'Destroying old HGrid known to corrupt other HGrid' )
+      endif
       hGrid => newHGrid
     endif
     call DeAllocate_Test( obstructed, 'obstructed', ModuleName )
@@ -1536,7 +1546,7 @@ contains ! =====     Public Procedures     =============================
   ! ------------------------------------- PlaceHGridContents --
   subroutine PlaceHGridContents ( HGrid1, HGrid2, offset )
     ! Place the contents of one Hgrid1 inside HGrid2, possibly offset
-    use HGridsDatabase, only: HGRID_T, CREATEEMPTYHGRID, NULLIFYHGRID
+    use HGridsDatabase, only: HGRID_T
     ! Args
     type(HGRID_T), intent(in)     :: HGrid1
     type(HGRID_T), intent(inout)  :: HGrid2
@@ -1606,8 +1616,8 @@ contains ! =====     Public Procedures     =============================
     
     subroutine PlaceArray_r4(array1, array2, offset)
       ! place contents of array1 inside array2, possibly offset
-      use MLSCommon, only: r4, r8
-      use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+      use MLSCommon, only: r4
+      use MLSMessageModule, only: MLSMessage, MLSMSG_Error
       ! Args
       real(r4), dimension(:,:), intent(in)     :: array1
       real(r4), dimension(:,:), intent(inout)  :: array2
@@ -1627,8 +1637,8 @@ contains ! =====     Public Procedures     =============================
 
     subroutine PlaceArray_r8(array1, array2, offset)
       ! place contents of array1 inside array2, possibly offset
-      use MLSCommon, only: r4, r8
-      use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+      use MLSCommon, only: r8
+      use MLSMessageModule, only: MLSMessage, MLSMSG_Error
       ! Args
       real(r8), dimension(:,:), intent(in)     :: array1
       real(r8), dimension(:,:), intent(inout)  :: array2
@@ -1661,6 +1671,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.73  2005/10/19 00:06:09  pwagner
+! Fixed bug causing DealWithObstructions to corrupt HGrid
+!
 ! Revision 2.72  2005/09/21 23:19:47  pwagner
 ! Added DealWithObstructions
 !
