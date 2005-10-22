@@ -704,7 +704,7 @@ contains ! =====     Public Procedures     =============================
     use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData, &
       & AssembleL1BQtyName
     use MLSCommon, only: MLSFile_T, NameLen, RK => R8, TAI93_RANGE_T
-    use MLSFiles, only: GetMLSFileByType
+    use MLSFiles, only: Dump, GetMLSFileByType
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MLSNumerics, only: HUNT, InterpolateValues
     use MLSStringLists, only: SwitchDetail
@@ -763,6 +763,8 @@ contains ! =====     Public Procedures     =============================
     deebughere = deebug .or. ( switchDetail(switches, 'hgrid') > 0 ) ! e.g., 'hgrid1' 
 
     L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
+    if ( .not. associated(L1BFile) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'l1boa file not in database' )
     hdfversion = L1BFile%HDFVersion
 
     ! Setup the empircal geometry estimate of lon0
@@ -778,6 +780,8 @@ contains ! =====     Public Procedures     =============================
       & l1bField, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, &
       & lastMAF=chunk%lastMAFIndex+1, dontPad=.true. )
+    if ( .not. associated(L1BFile) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'l1boa file nullified during read' )
     noMAFs = chunk%lastMAFIndex - chunk%firstMAFIndex + 1
     minAngle = minval ( l1bField%dpField(1,:,1) )
     maxAngleFirstMAF = maxval ( l1bField%dpField(1,:,1) )
@@ -885,11 +889,17 @@ contains ! =====     Public Procedures     =============================
     ! Now fill the other geolocation information, first latitude
     ! Get orbital inclination
     l1bItemName = AssembleL1BQtyName ( "scOrbIncl", hdfVersion, .false. )
+    if ( .not. associated(L1BFile) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'l1boa file not in database' )
+    ! print *, 'About to try to read ', trim(l1bItemName)
+    ! call dump(L1BFile)
     call ReadL1BData ( L1BFile, l1bItemName, &
       & l1bField, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, &
       & lastMAF=chunk%lastMAFIndex, &
       & dontPad=.true. )
+    if ( .not. associated(L1BFile) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'l1boa file nullified in read' )
     if ( deebughere ) then
       call dump(l1bField%DpField(1,1,:), l1bItemName)
     end if
@@ -1671,6 +1681,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.74  2005/10/22 00:49:26  pwagner
+! Should throw error when l1boa file not in filedatabase
+!
 ! Revision 2.73  2005/10/19 00:06:09  pwagner
 ! Fixed bug causing DealWithObstructions to corrupt HGrid
 !
