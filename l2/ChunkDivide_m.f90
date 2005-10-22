@@ -32,7 +32,7 @@ module ChunkDivide_m
 ! === (end of toc) ===                                                   
 ! === (start of api) ===
 ! ChunkDivide (int root, TAI93_Range_T processingRange,
-!    L1BInfo_T l1bInfo, *mlSChunk_T Chunks(:) )      
+!    *MLSFile_T filedatabase(:), *mlSChunk_T Chunks(:) )      
 ! DestroyChunkDatabase (*mlSChunk_T Chunks(:) )      
 ! === (end of api) ===
   public :: DestroyChunkDatabase, ChunkDivide, ReduceChunkDatabase
@@ -73,6 +73,7 @@ module ChunkDivide_m
     logical   :: skipL1BCheck = .false. ! Don't check for l1b data probs
     logical   :: allowPriorOverlaps = .false. ! Use MAFs before start time
     logical   :: saveObstructions = .false. ! Save obstructions for Output_Close
+    logical   :: DACSDeconvolved = .true. ! Don't need to do this in level 2
   end type ChunkDivideConfig_T
 
   ! The chunk divide methods are:
@@ -107,6 +108,7 @@ module ChunkDivide_m
 
   interface dump
     module procedure DUMP_OBSTRUCTIONS
+    module procedure DUMP_CONFIG
     module procedure DUMP_CRITICALSIGNALS
   end interface
   
@@ -181,13 +183,15 @@ contains ! ===================================== Public Procedures =====
       & FIELD_FIRST, FIELD_LAST, L_EVEN, &
       & L_FIXED, F_MAXGAP, L_ORBITAL, L_PE, S_CHUNKDIVIDE, L_BOTH, L_EITHER
     use Intrinsic, only: L_NONE, FIELD_INDICES, LIT_INDICES, PHYQ_ANGLE, &
-      & PHYQ_DIMENSIONLESS, PHYQ_INVALID, PHYQ_LENGTH, PHYQ_MAFS, PHYQ_TIME
+      & PHYQ_DIMENSIONLESS, PHYQ_LENGTH, PHYQ_MAFS, PHYQ_TIME
     use L1BData, only: DEALLOCATEL1BDATA, L1BDATA_T, NAME_LEN, READL1BDATA, &
-      & AssembleL1BQtyName
+      & AssembleL1BQtyName, GetL1BFile
     use Lexer_core, only: PRINT_SOURCE
-    use MLSCommon, only: R8, RP, L1BINFO_T, MLSFile_T, TAI93_Range_T
-    use MLSFiles, only: dump, GetMLSFileByType
+    use MLSCommon, only: R8, RP, MLSFile_T, TAI93_Range_T
+    use MLSFiles, only: dump, GetMLSFileByType, mls_OpenFile
+    use MLSHDF5, only: GetHDF5Attribute
     use MLSSets, only: FINDFIRST
+    use MLSStringLists, only: SWITCHDETAIL
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
       & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMSG_WARNING
@@ -201,6 +205,7 @@ contains ! ===================================== Public Procedures =====
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use Tree, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, SUBTREE, SUB_ROSA
     use Tree_types, only: N_NAMED
+    use HDF5, only: h5gclose_f, h5gopen_f
 
     integer, intent(in) :: ROOT    ! Root of the L2CF tree for ChunkDivide
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
@@ -208,11 +213,9 @@ contains ! ===================================== Public Procedures =====
     type( MLSChunk_T ), dimension(:), pointer  :: CHUNKS
 
     ! Local variables
-    ! type (ChunkDivideConfig_T) :: CONFIG ! Configuration
-    ! type (Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
+    type (MLSFile_T), pointer :: DACSFile
     type (MAFRange_T) :: MAFRange
     integer :: STATUS                   ! From deallocate
-    ! integer, dimension(2) :: MAFRANGE   ! Processing range in MAFs
 
     ! For announce_error:
     integer :: ERROR                    ! Error level
@@ -280,7 +283,22 @@ contains ! ===================================== Public Procedures =====
         & 'Unexpected problem with ChunkDivide' )
     end select
 
+    ! Check that level 1 has done the DACS deconvolution (so we don't have to)
+    ! Note that this would be an attribute, a global one, of the DACS
+    ! radiance file attached to the group object '/'
+    DACSFile => GetL1BFile ( filedatabase, 'DACsDeconvolved', '-/a' )
+    if ( associated(DACSFile) ) then
+      if ( .not. DACSFile%stillOpen ) call mls_OpenFile(DACSFile)
+      DACSFile%fileID%sd_id = 0 ! So we don't look here for the attribute
+      ! We still need to open the root group '/'
+      call h5gopen_f ( DACSFile%fileID%f_id, '/', DACSFile%fileID%grp_id, status )
+      call GetHDF5Attribute( DACSFile, 'DACsDeconvolved', &
+      & ChunkDivideConfig%DACSDeconvolved )
+      call h5gclose_f ( DACSFile%fileID%grp_id, status )
+    endif
+
     ! Tidy up
+    if ( switchDetail(switches, 'chu') > -1 ) call dump(ChunkDivideConfig)
     if ( associated(obstructions) ) then
       if ( index(switches, 'chu') /= 0 ) call Dump_Obstructions ( obstructions )
       if ( .not. ChunkDivideConfig%saveObstructions ) &
@@ -289,7 +307,8 @@ contains ! ===================================== Public Procedures =====
         & MLSMSG_Deallocate//'obstructions' )
     end if
     if ( associated(ChunkDivideConfig%criticalSignals) ) then
-      if ( index(switches, 'chu') /= 0 ) call Dump_criticalSignals
+      if ( index(switches, 'chu') /= 0 ) &
+        & call Dump_criticalSignals(ChunkDivideConfig%criticalSignals)
       deallocate ( ChunkDivideConfig%criticalSignals, stat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Deallocate//'ChunkDivideConfig%criticalSignals' )
@@ -1442,7 +1461,6 @@ contains ! ===================================== Public Procedures =====
       logical :: this_maf_valid
       logical, dimension(:), pointer  :: valids_buffer
       ! Won't check if there are no radiances
-      ! if ( .not. associated(l1bInfo%l1bRadIDs) ) return
       if ( .not. associated(filedatabase) ) return
       nmafs = mafRange%Expanded(2) - mafRange%Expanded(1) + 1
       ! Here we will loop over the signals database
@@ -1994,26 +2012,115 @@ contains ! ===================================== Public Procedures =====
     end subroutine SurveyL1BData
   end subroutine ChunkDivide
 
-  ! -------------------------------------------- Dump Dump_criticalSignals -----
-  subroutine Dump_criticalSignals
+  ! -------------------------------------------- Dump_config -----
+  subroutine Dump_config(config)
 
-    use Output_M, only: OUTPUT
+    use Intrinsic, only: LIT_INDICES, phyq_indices, &
+      & PHYQ_MAFS, PHYQ_ANGLE, PHYQ_TIME, PHYQ_INVALID
+    use Output_M, only: BLANKS, OUTPUT
+    use String_table, only: GET_STRING, DISPLAY_STRING
 
-    ! type (ChunkDivideConfig_T) :: CONFIG ! Configuration
+    ! Args
+    type(ChunkDivideConfig_T), intent(in) :: Config
+
     ! Local variables
     integer :: i                        ! Loop counter
     ! Executable code
-    if ( associated ( ChunkDivideConfig%criticalSignals ) ) then
-      if ( size(ChunkDivideConfig%criticalSignals) == 0 ) then
+    call output ( 'method ' )
+    call display_string ( lit_indices(Config%method), &
+      &             strip=.true., advance='yes' )
+    call output ( 'max Length ' )
+    call output ( config%maxLength, advance='yes' )
+    call output ( 'max Length Family ' )
+    call display_string ( phyq_indices(Config%maxLengthFamily), &
+      &             strip=.true., advance='yes' )
+    call output ( 'num chunks ' )
+    call output ( config%noChunks, advance='yes' )
+    call output ( 'overlap ' )
+    call output ( config%overlap, advance='yes' )
+    call output ( 'overlap Family ' )
+    call display_string ( phyq_indices(Config%overlapFamily), &
+      &             strip=.true., advance='yes' )
+    call output ( 'lower overlap ' )
+    call output ( config%loweroverlap, advance='yes' )
+    call output ( 'lower overlap Family ' )
+    call display_string ( phyq_indices(Config%loweroverlapFamily), &
+      &             strip=.true., advance='yes' )
+    call output ( 'upper overlap ' )
+    call output ( config%upperoverlap, advance='yes' )
+    call output ( 'upper overlap Family ' )
+    call display_string ( phyq_indices(Config%upperoverlapFamily), &
+      &             strip=.true., advance='yes' )
+    call output ( 'num slaves ' )
+    call output ( config%noSlaves, advance='yes' )
+    call output ( 'home module ' )
+    call display_string ( lit_indices(Config%homeModule), &
+      &             strip=.true., advance='yes' )
+    call output ( 'home Geod Angle ' )
+    call output ( config%homeGeodAngle, advance='yes' )
+    call output ( 'set scan lower limit? ' )
+    call output ( config%scanLLSet, advance='yes' )
+    if ( config%scanLLSet ) then
+    call output ( 'Bottom scan range ' )
+    call output ( config%scanLowerLimit, advance='yes' )
+    endif
+    call output ( 'set scan upper limit? ' )
+    call output ( config%scanULSet, advance='yes' )
+    if ( config%scanULSet ) then
+    call output ( 'Top scan range ' )
+    call output ( config%scanUpperLimit, advance='yes' )
+    endif
+    call output ( 'max out-of-plane distance ' )
+    call output ( config%maxOrbY, advance='yes' )
+    call output ( 'critical modules ' )
+    call display_string ( lit_indices(Config%criticalModules), &
+      &             strip=.true., advance='yes' )
+    call output ( 'max gap ' )
+    call output ( config%maxGap, advance='yes' )
+    call output ( 'max Gap Family ' )
+    call display_string ( phyq_indices(Config%maxGapFamily), &
+      &             strip=.true., advance='yes' )
+    ! call output ( Config%maxGapFamily )
+    ! call blanks ( 3 )
+    ! call output ( PHYQ_Invalid )
+    ! call blanks ( 3 )
+    ! call output ( PHYQ_MAFs )
+    ! call blanks ( 3 )
+    ! call output ( PHYQ_Angle )
+    ! call blanks ( 3 )
+    ! call output ( PHYQ_Time, advance='yes' )
+    call output ( 'skip check of l1b files ' )
+    call output ( config%skipL1BCheck, advance='yes' )
+    call output ( 'allow overlaps to prior day?' )
+    call output ( config%allowPriorOverlaps, advance='yes' )
+    call output ( 'save obstructions?' )
+    call output ( config%saveObstructions, advance='yes' )
+    call output ( 'DACS already deconvolved?' )
+    call output ( config%DACSDeconvolved, advance='yes' )
+    call Dump_criticalSignals(config%criticalSignals)
+  end subroutine Dump_config
+
+  ! -------------------------------------------- Dump_criticalSignals -----
+  subroutine Dump_criticalSignals(criticalSignals)
+
+    use Output_M, only: OUTPUT
+
+    character(len=160), dimension(:), pointer &
+      & :: criticalSignals       ! Which signals must be on
+    ! Local variables
+    integer :: i                        ! Loop counter
+    ! Executable code
+    if ( associated ( criticalSignals ) ) then
+      if ( size(criticalSignals) == 0 ) then
         call output ( 'criticalSignals is a zero size array.', advance='yes' )
       else
         call output ( 'Dumping ' )
-        call output ( size(ChunkDivideConfig%criticalSignals) )
+        call output ( size(criticalSignals) )
         call output ( ' criticalSignals:', advance='yes' )
-        do i = 1, size(ChunkDivideConfig%criticalSignals)
+        do i = 1, size(criticalSignals)
           call output ( i )
           call output ( ': ' )
-          call output ( trim(ChunkDivideConfig%criticalSignals(i)), advance='yes' )
+          call output ( trim(criticalSignals(i)), advance='yes' )
         end do
       end if
     else
@@ -2072,12 +2179,10 @@ contains ! ===================================== Public Procedures =====
   ! for each of the_mafs between maf and maf2
   ! Arguments
 
-    use Allocate_Deallocate, only: Deallocate_Test
-    use Chunks_m, only: MLSChunk_T
     use L1BData, only: L1BData_T, READL1BDATA, GetL1bFile, &
-      & FindL1BData, AssembleL1BQtyName, PRECISIONSUFFIX, DEALLOCATEL1BDATA
-    use MLSCommon, only: L1BInfo_T, MLSFile_T, RK => R8
-    use MLSFiles, only: dump, GetMLSFileByType
+      & AssembleL1BQtyName, PRECISIONSUFFIX, DEALLOCATEL1BDATA
+    use MLSCommon, only: MLSFile_T, RK => R8
+    use MLSFiles, only: GetMLSFileByType
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSSignals_m, only: GetSignalName
 
@@ -2090,13 +2195,14 @@ contains ! ===================================== Public Procedures =====
     logical, dimension(:), optional, intent(inout) :: good_buffer
     integer, dimension(2), optional, intent(in)    :: MAFRANGE   ! Processing 
     ! Private                                                   range in MAFs
-    integer :: FileID, flag, noMAFs
-    character(len=127)  :: namestring
+    integer :: flag
+    type(MLSFile_T), pointer :: L1BFile
+    integer :: maf_index   ! 1 <= maf_index <= mafrange(2)-mafrange(1)+1
     type (l1bData_T) :: MY_L1BDATA
     integer :: mymaf2
+    character(len=127)  :: namestring
+    integer :: noMAFs
     integer :: the_maf
-    integer :: maf_index   ! 1 <= maf_index <= mafrange(2)-mafrange(1)+1
-    type(MLSFile_T), pointer :: L1BFile
 
     ! Executable
     answer = .false.
@@ -2126,7 +2232,6 @@ contains ! ===================================== Public Procedures =====
       answer = .false.
       return
     end if
-    ! call dump(L1BFile)
 
     ! OK, we've found it.  Read the data in.
     call ReadL1BData ( L1BFile, nameString, my_l1bData, noMAFs, flag, &
@@ -2202,6 +2307,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.65  2005/10/22 00:43:43  pwagner
+! Gets DACSDeconvolved attribute from l1b file if there
+!
 ! Revision 2.64  2005/09/21 23:25:42  pwagner
 ! Obstructions public now; optionally saved; should add deallocate in tree_walker
 !
