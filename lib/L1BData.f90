@@ -779,10 +779,12 @@ contains ! ============================ MODULE PROCEDURES ======================
         myHDFVersion = filedatabase(i)%HDFVersion
         
         if ( myhdfVersion == HDFVERSION_4 ) then
-          if ( index(myOptions, 'a') > 0 ) &
-            call MLSMessage ( MLSMSG_Error, ModuleName, &
+          if ( index(myOptions, 'a') > 0 ) then
+            call MLSMessage ( MLSMSG_Warning, ModuleName, &
               & 'Cannot search for attribute names in hdf4 files' )
-            if ( sfn2index(filedatabase(i)%FileID%f_id, trim(fieldName)) /= -1 ) then
+            cycle
+          endif
+          if ( sfn2index(filedatabase(i)%FileID%f_id, trim(fieldName)) /= -1 ) then
             item => filedatabase(i)
             if ( .not. alreadyOpen ) &
               & call mls_closeFile(filedatabase(i), returnStatus)
@@ -3060,6 +3062,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.64  2005/10/22 00:50:30  pwagner
+! Warns but continues if attributes sought in hdf4 file
+!
 ! Revision 2.63  2005/10/19 20:47:29  pwagner
 ! Fixed bug in GetL1BFile (do others remain?)
 !
