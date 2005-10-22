@@ -16,7 +16,6 @@ module OutputAndClose ! outputs all data from the Join module to the
 
 !=======================================================================================
 
-  use DirectWrite_m, only: DirectData_T, Dump
   use Hdf, only: DFACC_RDWR
   use MLSMessageModule, only: MLSMessage, &
     & MLSMSG_Error, MLSMSG_Info, MLSMSG_Warning
@@ -63,9 +62,11 @@ contains ! =====     Public Procedures     =============================
     use Allocate_Deallocate, only: Deallocate_Test, Allocate_test
     use Chunks_m, only: MLSChunk_T, dump
     use ChunkDivide_m, only: ChunkDivideConfig, OBSTRUCTIONS
+    use DirectWrite_m, only: DirectData_T, Dump
     use Expr_M, only: Expr
     use HGrid, only: CREATEHGRIDFROMMLSCFINFO, DEALWITHOBSTRUCTIONS
-    use HGridsDatabase, only: ADDHGRIDTODATABASE, Dump, HGRID_T
+    use HGridsDatabase, only: HGRID_T, &
+      & ADDHGRIDTODATABASE, Dump
     use INIT_TABLES_MODULE, only: F_ASCII, F_CREATE, F_DONTPACK, F_EXCLUDE, &
       & F_FILE, F_HDFVERSION, F_HGRID, &
       & F_IFANYCRASHEDCHUNKS, F_INPUTFILE, F_INPUTTYPE, &
@@ -75,34 +76,27 @@ contains ! =====     Public Procedures     =============================
       & FIELD_FIRST, FIELD_LAST, &
       & L_L2AUX, L_L2DGG, L_L2GP, L_L2PC, &
       & S_COPY, S_HGrid, S_OUTPUT, S_TIME
-    use HDF5, only: h5gclose_f, h5gopen_f
     use Intrinsic, only: l_ascii, l_swath, l_hdf, Lit_indices, PHYQ_Dimensionless
-    use L2AUXData, only: L2AUXDATA_T, cpL2AUXData, WriteL2AUXData
-    use L2GPData, only: AVOIDUNLIMITEDDIMS, L2GPNameLen, L2GPData_T, &
-      & MAXSWATHNAMESBUFSIZE, cpL2GPData, WriteL2GPData
+    use L2AUXData, only: L2AUXDATA_T, cpL2AUXData
+    use L2GPData, only: AVOIDUNLIMITEDDIMS, L2GPData_T, &
+      & MAXSWATHNAMESBUFSIZE, cpL2GPData
     use L2PC_m, only: WRITEONEL2PC, OUTPUTHDF5L2PC
     use L2ParInfo, only: parallel
     use MatrixModule_1, only: MATRIX_DATABASE_T, MATRIX_T, GETFROMMATRIXDATABASE
-    use MLSCommon, only: I4, MLSFile_T, TAI93_Range_T
-    use MLSFiles, only: HDFVERSION_5, &
-      & AddInitializeMLSFile, GetMLSFileByName, GetPCFromRef, mls_exists, &
-      & MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, MLS_SFSTART, MLS_SFEND, &
-      & SPLIT_PATH_NAME, unSplitName
-    use MLSHDF5, only: CpHDF5GlAttribute, MakeHDF5Attribute
+    use MLSCommon, only: MLSFile_T, TAI93_Range_T
+    use MLSFiles, only: &
+      & AddInitializeMLSFile, GetMLSFileByName, &
+      & MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
     use MLSL2Options, only: CATENATESPLITS, CHECKPATHS, &
       & DEFAULT_HDFVERSION_WRITE, &
       & PENALTY_FOR_NO_METADATA, SKIPDIRECTWRITES, TOOLKIT
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
-      & MLSPCF_L2GP_START, mlspcf_l2dgg_start, mlspcf_l2dgg_end, &
-      & Mlspcf_mcf_l2gp_start, Mlspcf_mcf_l2dgm_start, &
-      & Mlspcf_mcf_l2dgg_start
-    use MLSSets, only: FindFirst, FindNext
-    use MLSStringLists, only: Array2List, unquote
+      & MLSPCF_L2GP_START, mlspcf_l2dgg_start, mlspcf_l2dgg_end
+    use MLSStringLists, only: unquote
     use MLSStrings, only: trim_safe
     use MoreTree, only: Get_Spec_ID, GET_BOOLEAN
-    use SDPToolkit, only: PGS_S_SUCCESS, PGSD_IO_GEN_WSEQFRM, Pgs_smf_getMsg
-    use readAPriori, only: writeAPrioriAttributes
+    use SDPToolkit, only: PGSD_IO_GEN_WSEQFRM
     use Time_M, only: Time_Now
     use TOGGLES, only: GEN, TOGGLE, Switches
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -135,37 +129,33 @@ contains ! =====     Public Procedures     =============================
     integer :: FIELDVALUE               ! For get_boolean
     character (len=132) :: FILE_BASE    ! From the FILE= field
     logical, dimension(field_first:field_last) :: GOT ! Fields
-    integer :: GRP_ID
     integer :: GSON                     ! Son of Son -- an assign node
     integer :: hdfVersion               ! 4 or 5 (corresp. to hdf4 or hdf5)
     integer :: HGridIndex
-    type (HGrid_T), target :: newHGrid
-    type (HGrid_T), pointer :: newHGridp
     type (HGrid_T), dimension(:), pointer :: HGrids => null()
     integer :: IN_FIELD_NO              ! Index of sons of assign vertex
     character (len=132) :: INPUTFILE_BASE    ! From the inputfile= field
     character (len=132) :: inputPhysicalFilename
     integer :: INPUT_TYPE              ! L_L2AUX, L_L2GP, L_PC, L_L2DGG
+    type(MLSFile_T), pointer :: inputFile
     integer :: KEY                      ! Index of spec_args node
     integer :: L2PCUNIT
-    logical :: madeFile
     integer :: Metadata_error
     character (len=32) :: meta_name    ! From the metaName= field
     integer :: NAME                     ! string index of label on output
+    type (HGrid_T), target :: newHGrid
+    type (HGrid_T), pointer :: newHGridp
     integer :: NODE
-    integer :: Numquantitiesperfile     ! < MAXQUANTITIESPERFILE
+    integer :: noGapsHGIndex = 0
     integer :: OUTPUT_TYPE              ! L_L2AUX, L_L2GP, L_PC, L_L2DGG
     type(MLSFile_T), pointer :: outputFile
     character(len=8) :: OUTPUTTYPESTR   ! 'l2gp', 'l2aux', etc.
     logical :: PACKED                   ! Do we pack this l2pc?
-    character (len=132) :: path
     character (len=132) :: PhysicalFilename
     integer :: QUANTITIESNODE           ! A tree node
     integer :: RECLEN                   ! For file stuff
     character (len=MAXSWATHNAMESBUFSIZE) :: rename
     logical :: RepairGeoLocations
-    integer :: ReturnStatus
-    integer(i4) :: SDFID                ! File handle
     character (len=MAXSWATHNAMESBUFSIZE) :: sdList
     logical :: skipCopy
     integer :: SON                      ! Of Root -- spec_args or named node
@@ -245,8 +235,6 @@ contains ! =====     Public Procedures     =============================
 
       select case( get_spec_id(key) )
       case (s_copy)
-        ! call announce_error ( spec_no, &
-        !  &  "Error--copy not implemented yet")
         do field_no = 2, nsons(key)       ! Skip the command name
           gson = subtree(field_no, key)   ! An assign node
           if ( nsons(gson) > 1 ) then
@@ -318,12 +306,27 @@ contains ! =====     Public Procedures     =============================
         case ( l_l2aux ) ! --------------------- Copying l2aux files -----
           call returnFullFileName(inputfile_base, inputPhysicalFilename, &
             & mlspcf_l2dgm_start, mlspcf_l2dgm_end)
+          inputFile => GetMLSFileByName(filedatabase, inputPhysicalFilename)
+          if ( .not. associated(inputFile) ) then
+            call MLSMessage(MLSMSG_Error, ModuleName, &
+              & 'No entry in filedatabase for ' // trim(inputPhysicalFilename) )
+          endif
         case ( l_l2gp ) ! --------------------- Copying l2gp files -----
           call returnFullFileName(inputfile_base, inputPhysicalFilename, &
             & mlspcf_l2gp_start, mlspcf_l2gp_end)
+          inputFile => GetMLSFileByName(filedatabase, inputPhysicalFilename)
+          if ( .not. associated(inputFile) ) then
+            call MLSMessage(MLSMSG_Error, ModuleName, &
+              & 'No entry in filedatabase for ' // trim(inputPhysicalFilename) )
+          endif
         case ( l_l2dgg ) ! --------------------- Copying l2dgg files -----
           call returnFullFileName(inputfile_base, inputPhysicalFilename, &
             & mlspcf_l2dgg_start, mlspcf_l2dgg_end)
+          inputFile => GetMLSFileByName(filedatabase, inputPhysicalFilename)
+          if ( .not. associated(inputFile) ) then
+            call MLSMessage(MLSMSG_Error, ModuleName, &
+              & 'No entry in filedatabase for ' // trim(inputPhysicalFilename) )
+          endif
         case default
         end select
 
@@ -331,12 +334,36 @@ contains ! =====     Public Procedures     =============================
         case ( l_l2aux ) ! --------------------- Copying l2aux files -----
           call returnFullFileName(file_base, PhysicalFilename, &
             & mlspcf_l2dgm_start, mlspcf_l2dgm_end)
+          outputFile => GetMLSFileByName(filedatabase, PhysicalFilename)
+          if ( .not. associated(outputFile) ) then
+            outputFile => AddInitializeMLSFile(filedatabase, &
+              & content=outputTypeStr, &
+              & name=PhysicalFilename, shortName=file_base, &
+              & type=l_hdf, access=DFACC_RDWR, HDFVersion=hdfVersion, &
+              & PCBottom=mlspcf_l2dgm_start, PCTop=mlspcf_l2dgm_end)
+          endif
         case ( l_l2gp ) ! --------------------- Copying l2gp files -----
           call returnFullFileName(file_base, PhysicalFilename, &
             & mlspcf_l2gp_start, mlspcf_l2gp_end)
+          outputFile => GetMLSFileByName(filedatabase, PhysicalFilename)
+          if ( .not. associated(outputFile) ) then
+            outputFile => AddInitializeMLSFile(filedatabase, &
+              & content=outputTypeStr, &
+              & name=PhysicalFilename, shortName=file_base, &
+              & type=l_swath, access=DFACC_RDWR, HDFVersion=hdfVersion, &
+              & PCBottom=mlspcf_l2gp_start, PCTop=mlspcf_l2gp_end)
+          endif
         case ( l_l2dgg ) ! --------------------- Copying l2dgg files -----
           call returnFullFileName(file_base, PhysicalFilename, &
             & mlspcf_l2dgg_start, mlspcf_l2dgg_end)
+          outputFile => GetMLSFileByName(filedatabase, PhysicalFilename)
+          if ( .not. associated(outputFile) ) then
+            outputFile => AddInitializeMLSFile(filedatabase, &
+              & content=outputTypeStr, &
+              & name=PhysicalFilename, shortName=file_base, &
+              & type=l_swath, access=DFACC_RDWR, HDFVersion=hdfVersion, &
+              & PCBottom=mlspcf_l2dgg_start, PCTop=mlspcf_l2dgg_end)
+          endif
         case default
         end select
         if ( DEBUG ) print *, 'inputPhysicalfileName: ', inputPhysicalfileName
@@ -350,42 +377,46 @@ contains ! =====     Public Procedures     =============================
 
         select case ( output_type )
         case ( l_l2aux ) ! --------------------- Copying l2aux files -----
-          ! Note that we haven't yet implemented all the repair stuff
+          ! Note that we haven't yet implemented repair stuff for l2aux
           ! So crashed chunks remain crashed chunks
-          call cpL2AUXData(trim(inputPhysicalfileName), &
-            & trim(PhysicalFilename), create2=create, &
-            & hdfVersion=HDFVERSION_5, sdList=trim(sdList))
+          call cpL2AUXData(inputFile, &
+            & outputFile, create2=create, &
+            & sdList=trim(sdList))
         case ( l_l2gp, l_l2dgg ) ! --------------------- Copying l2gp files -----
+          ! print *, 'Before cpL2GPFata'
+          ! print *, 'noGapsHGIndex: ', noGapsHGIndex
+          ! call dump(hGrids)
           ! How to use swaths field? See definition of sdList
           if ( got(f_exclude) .and. .not. repairGeoLocations ) then
-            call cpL2GPData(trim(inputPhysicalfileName), &
-              & trim(PhysicalFilename), create2=create, &
-              & hdfVersion1=HDFVERSION_5, hdfVersion2=HDFVERSION_5, &
+            call cpL2GPData(inputfile, &
+              & outputfile, create2=create, &
               & exclude=trim(exclude), &
               & notUnlimited=avoidUnlimitedDims, ReadStatus=.true.)
           elseif ( .not. got(f_exclude) .and. repairGeoLocations ) then
             ! call dump(HGrids(HGridIndex))
-            call cpL2GPData(trim(inputPhysicalfileName), &
-              & trim(PhysicalFilename), create2=create, &
-              & hdfVersion1=HDFVERSION_5, hdfVersion2=HDFVERSION_5, &
+            call cpL2GPData(inputfile, &
+              & outputfile, create2=create, &
               & swathList=trim(sdList), rename=rename, &
               & notUnlimited=avoidUnlimitedDims, ReadStatus=.true., &
               & HGrid=HGrids(HGridIndex), options="-rv")
           elseif ( got(f_exclude) .and. repairGeoLocations ) then
-            call cpL2GPData(trim(inputPhysicalfileName), &
-              & trim(PhysicalFilename), create2=create, &
-              & hdfVersion1=HDFVERSION_5, hdfVersion2=HDFVERSION_5, &
+            call cpL2GPData(inputfile, &
+              & outputfile, create2=create, &
               & swathList=trim(sdList), rename=rename, &
               & exclude=trim(exclude), &
               & notUnlimited=avoidUnlimitedDims, ReadStatus=.true., &
               & HGrid=HGrids(HGridIndex), options="-rv")
           else
-            call cpL2GPData(trim(inputPhysicalfileName), &
-              & trim(PhysicalFilename), create2=create, &
-              & hdfVersion1=HDFVERSION_5, hdfVersion2=HDFVERSION_5, &
+            call cpL2GPData(inputfile, &
+              & outputfile, create2=create, &
               & swathList=trim(sdList), rename=rename, &
               & notUnlimited=avoidUnlimitedDims, ReadStatus=.true.)
           endif
+          ! if ( noGapsHGIndex > 0 ) newHGridp => HGrids(noGapsHGIndex)
+          ! print *, 'Before writing attributes'
+          ! print *, 'noGapsHGIndex: ', noGapsHGIndex
+          ! call dump(hGrids(noGapsHGIndex))
+          call writeHGridComponents( trim(PhysicalFilename), HGrids(noGapsHGIndex) )
         case default
         end select
 
@@ -395,17 +426,26 @@ contains ! =====     Public Procedures     =============================
         newHGrid = CreateHGridFromMLSCFInfo ( name, key, filedatabase, l2gpDatabase, &
           & processingRange, allChunks )
         if ( DEBUG ) print *, 'Before dealing with obstructions'
-        newHGridp => newHGrid
+        newHGridp => newHGrid 
         if ( DEBUG ) call dump(newHGridp)
+        noGapsHGIndex = AddHGridToDatabase ( hGrids, newHGridp )
+        ! print *, 'On first adding to db'
+        ! print *, 'noGapsHGIndex: ', noGapsHGIndex
+        ! call dump(hGrids(noGapsHGIndex))
+        newHGridp => newHGrid  ! newHGrid takes due notice of obstructions
+        ! noGapsHGrid = newHGrid
         if ( associated(obstructions) ) &
-          & call DealWithObstructions( newHGridp, obstructions )
+          & call DealWithObstructions( newHGridp, obstructions, DestroyOld = .false. )
         ! Don't skip the lower overlap profiles if ChunkDivide included them
         if ( ChunkDivideConfig%allowPriorOverlaps ) &
           & newHGridp%noProfsLowerOverlap = 0
         call decorate ( key, AddHGridToDatabase ( hGrids, newHGridp ) )
-        if ( DEBUG ) print *, 'HGrid added; size now: ', size(hGrids)
-        if ( DEBUG ) print *, 'After dealing with obstructions'
-        if ( DEBUG ) call dump(newHGridp)
+        ! print *, 'After adding second Hgrid to db'
+        ! print *, 'noGapsHGIndex: ', noGapsHGIndex
+        ! call dump(hGrids(noGapsHGIndex))
+        ! print *, 'HGrid added; size now: ', size(hGrids)
+        ! print *, 'After dealing with obstructions'
+        ! call dump(newHGridp)
 
       case ( s_output )
         do field_no = 2, nsons(key)       ! Skip the command name
@@ -442,9 +482,10 @@ contains ! =====     Public Procedures     =============================
         ! Otherwise--normal output commands
         select case ( output_type )
         case ( l_l2gp ) ! --------------------- Writing l2gp files -----
+        if ( noGapsHGIndex > 0 ) newHGridp => HGrids(noGapsHGIndex)
           call OutputL2GP ( key, file_base, DEBUG, &
             & output_type, mlspcf_l2gp_start, mlspcf_l2gp_end, &
-            & filedatabase, l2gpDatabase )
+            & filedatabase, l2gpDatabase, newHGridp )
           if ( .not. TOOLKIT ) cycle
 
         case ( l_l2aux ) ! ------------------------------ Writing l2aux files ---
@@ -511,9 +552,10 @@ contains ! =====     Public Procedures     =============================
           call Deallocate_test ( dontPack, 'dontPack', ModuleName )
 
         case ( l_l2dgg ) ! --------------------- Writing l2dgg files -----
+        if ( noGapsHGIndex > 0 ) newHGridp => HGrids(noGapsHGIndex)
           call OutputL2GP ( key, file_base, DEBUG, &
             & output_type, mlspcf_l2dgg_start, mlspcf_l2dgg_end, &
-            & filedatabase, l2gpDatabase )
+            & filedatabase, l2gpDatabase, newHGridp )
           if ( .not. TOOLKIT ) cycle
 
         case default
@@ -826,17 +868,17 @@ contains ! =====     Public Procedures     =============================
     & filedatabase, l2auxDatabase )
     ! Do the work of outputting specified l2aux data to a named file
     use INIT_TABLES_MODULE, only: F_OVERLAPS, F_QUANTITIES
-    use Intrinsic, only: l_ascii, l_swath, l_hdf, Lit_indices, PHYQ_Dimensionless
-    use L2AUXData, only: L2AUXDATA_T, cpL2AUXData, WriteL2AUXData
+    use Intrinsic, only: l_hdf
+    use L2AUXData, only: L2AUXDATA_T, WriteL2AUXData
     use L2GPData, only: L2GPNameLen
-    use MLSCommon, only: I4, MLSFile_T
+    use MLSCommon, only: MLSFile_T
     use MLSL2Options, only: checkPaths, TOOLKIT
     use MLSFiles, only: AddInitializeMLSFile, GetMLSFileByName, &
       & GetPCFromRef, split_path_name
     use MLSPCF2, only: mlspcf_l2dgm_start, mlspcf_l2dgm_end
-    use SDPToolkit, only: PGS_S_SUCCESS, PGSD_IO_GEN_WSEQFRM, Pgs_smf_getMsg
+    use SDPToolkit, only: PGS_S_SUCCESS
     use TOGGLES, only: Switches
-    use TREE, only: DECORATION, NODE_ID, NSONS, SUBTREE, SUB_ROSA
+    use TREE, only: DECORATION, NSONS, SUBTREE
     ! Args
     integer, intent(in)                     :: key ! tree node
     character(len=*), intent(inout)         :: fileName ! according to l2cf
@@ -880,7 +922,7 @@ contains ! =====     Public Procedures     =============================
     end if
 
     if ( returnStatus == 0 .and. .not. checkPaths ) then
-      ! Open the HDF-EOS file and write swath data
+      ! Open the HDF file and write l2aux data
       outputFile => GetMLSFileByName(filedatabase, FullFilename)
       if ( .not. associated(outputFile) ) then
         if(DEBUG) call MLSMessage(MLSMSG_Warning, ModuleName, &
@@ -946,18 +988,19 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------------------------------  OutputL2GP  -----
   subroutine OutputL2GP ( key, fileName, DEBUG, &
     & output_type, pcf_start, pcf_end, &
-    & filedatabase, l2gpDatabase )
+    & filedatabase, l2gpDatabase, HGrid )
     ! Do the work of outputting specified l2gp data to a named file
+    use HGridsDatabase, only: HGRID_T
     use INIT_TABLES_MODULE, only: F_OVERLAPS, F_QUANTITIES
-    use Intrinsic, only: l_ascii, l_swath, l_hdf, Lit_indices, PHYQ_Dimensionless
+    use Intrinsic, only: l_swath, Lit_indices
     use L2GPData, only: L2GPData_T, L2GPNameLen, WriteL2GPData
-    use MLSCommon, only: I4, MLSFile_T
+    use MLSCommon, only: MLSFile_T
     use MLSL2Options, only: checkPaths, TOOLKIT
     use MLSFiles, only: AddInitializeMLSFile, GetMLSFileByName, &
       & GetPCFromRef, split_path_name
-    use SDPToolkit, only: PGS_S_SUCCESS, PGSD_IO_GEN_WSEQFRM, Pgs_smf_getMsg
+    use SDPToolkit, only: PGS_S_SUCCESS
     use TOGGLES, only: Switches
-    use TREE, only: DECORATION, NODE_ID, NSONS, SUBTREE, SUB_ROSA
+    use TREE, only: DECORATION, NSONS, SUBTREE
     ! Args
     integer, intent(in)                     :: key ! tree node
     character(len=*), intent(inout)         :: fileName ! according to l2cf
@@ -967,6 +1010,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in)                     :: pcf_end
     type(MLSFile_T), dimension(:), pointer  :: filedatabase
     type(L2GPData_T), dimension(:), pointer :: l2gpDatabase
+    type(HGRID_T)                           :: HGrid
     ! Local variables
     integer :: DB_index
     integer :: FIELD_NO                 ! Index of assign vertex sons of Key
@@ -1051,6 +1095,7 @@ contains ! =====     Public Procedures     =============================
           & numquantitiesperfile, quantityNames, hdfVersion=hdfVersion)
       end if
 
+      call writeHGridComponents( filename, HGrid )
       if ( .not. TOOLKIT ) return
 
       ! Write the metadata file
@@ -1063,13 +1108,48 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine OutputL2GP
 
+  ! ---------------------------------------------  writeHGridComponents  -----
+  subroutine writeHGridComponents ( fileName, HGrid )
+    use HDFEOS5, only: he5_swclose, he5_swopen, &
+      & HE5F_ACC_RDWR, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE
+    use HGridsDatabase, only: HGRID_T
+    use MLSHDFEOS, only: he5_EHwrglatt, MLS_isGlAtt
+    ! Args
+    character(len=*), intent(in) :: fileName
+    type(HGrid_T)                :: HGrid
+    ! Internal variables
+    integer :: FileID
+    integer :: H                        ! Num of profiles in HGrid
+    integer :: Status
+    ! Executable
+    if ( .not. MLS_isGlAtt ( filename, 'HGrid_noProfs' ) ) then
+      ! call dump(HGrid)
+      fileID = he5_swopen(trim(fileName), HE5F_ACC_RDWR)
+      h = HGrid%noProfs
+      status = he5_EHwrglatt(fileID, 'HGrid_noProfs', HE5T_NATIVE_INT, 1, &
+        &  (/ h /) )
+      status = he5_EHwrglatt(fileID, 'HGrid_phi', HE5T_NATIVE_DOUBLE, h, &
+        &  HGrid%phi(1,:) )
+      status = he5_EHwrglatt(fileID, 'HGrid_geodLat', HE5T_NATIVE_DOUBLE, h, &
+        &  HGrid%geodLat(1,:) )
+      status = he5_EHwrglatt(fileID, 'HGrid_lon', HE5T_NATIVE_DOUBLE, h, &
+        &  HGrid%lon(1,:) )
+      status = he5_EHwrglatt(fileID, 'HGrid_time', HE5T_NATIVE_DOUBLE, h, &
+        &  HGrid%time(1,:) )
+      status = he5_EHwrglatt(fileID, 'HGrid_solarTime', HE5T_NATIVE_DOUBLE, h, &
+        &  HGrid%solarTime(1,:) )
+      status = he5_EHwrglatt(fileID, 'HGrid_solarZenith', HE5T_NATIVE_DOUBLE, h, &
+        &  HGrid%solarZenith(1,:) )
+      status = he5_EHwrglatt(fileID, 'HGrid_losAngle', HE5T_NATIVE_DOUBLE, h, &
+        &  HGrid%losAngle(1,:) )
+      status = he5_swclose(fileID)
+    endif
+  end subroutine writeHGridComponents
+
   ! ---------------------------------------------  returnFullFileName  -----
   subroutine returnFullFileName ( shortName, FullName, &
     & pcf_start, pcf_end )
-    use MLSFiles, only: HDFVERSION_5, &
-      & AddInitializeMLSFile, GetMLSFileByName, GetPCFromRef, mls_exists, &
-      & MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, MLS_SFSTART, MLS_SFEND, &
-      & SPLIT_PATH_NAME, unSplitName
+    use MLSFiles, only: GetPCFromRef
     use MLSL2Options, only: TOOLKIT
     ! Given a possibly-abbreviated shortName, return the full name
     ! as found in the PCF
@@ -1100,31 +1180,26 @@ contains ! =====     Public Procedures     =============================
   subroutine unsplitFiles ( DirectDatabase, FileDatabase, usingSubmit, debug )
     ! Catenate any split Direct Writes
     ! We assume hdfVersion is 5
+    use DirectWrite_m, only: DirectData_T, Dump
     use HDF5, only: h5gclose_f, h5gopen_f
-    use INIT_TABLES_MODULE, only: F_ASCII, F_EXCLUDE, F_FILE, F_HDFVERSION, &
-      & F_METANAME, F_METADATAONLY, F_OVERLAPS, F_PACKED, F_QUANTITIES, &
-      & F_SWATH, F_TYPE, F_WRITECOUNTERMAF, F_DONTPACK, &
-      & L_L2AUX, L_L2DGG, L_L2GP, L_L2PC, S_COPY, S_OUTPUT, S_TIME
+    use INIT_TABLES_MODULE, only: L_L2AUX, L_L2DGG
     use Intrinsic, only: l_swath, l_hdf
-    use L2AUXData, only: L2AUXDATA_T, cpL2AUXData, WriteL2AUXData
-    use L2GPData, only: AVOIDUNLIMITEDDIMS, L2GPNameLen, L2GPData_T, &
-      & MAXSWATHNAMESBUFSIZE, cpL2GPData, WriteL2GPData
+    use L2AUXData, only: cpL2AUXData
+    use L2GPData, only: AVOIDUNLIMITEDDIMS, &
+      & MAXSWATHNAMESBUFSIZE, cpL2GPData
     use L2ParInfo, only: parallel
     use MLSCommon, only: I4, MLSFile_T
     use MLSFiles, only: HDFVERSION_5, &
       & AddInitializeMLSFile, GetMLSFileByName, GetPCFromRef, mls_exists, &
-      & MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, MLS_SFSTART, MLS_SFEND, &
-      & SPLIT_PATH_NAME, unSplitName
+      & MLS_SFSTART, MLS_SFEND, &
+      & unSplitName
     use MLSHDF5, only: CpHDF5GlAttribute, MakeHDF5Attribute
-    use MLSL2Options, only: CATENATESPLITS, CHECKPATHS, &
-      & DEFAULT_HDFVERSION_WRITE, &
-      & PENALTY_FOR_NO_METADATA, SKIPDIRECTWRITES, TOOLKIT
-    use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
-      & MLSPCF_L2GP_START, mlspcf_l2dgg_start, mlspcf_l2dgg_end, &
-      & Mlspcf_mcf_l2gp_start, Mlspcf_mcf_l2dgm_start, &
-      & Mlspcf_mcf_l2dgg_start
+    use MLSL2Options, only: CHECKPATHS, &
+      & SKIPDIRECTWRITES, TOOLKIT
+    use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, &
+      & mlspcf_l2dgg_start, mlspcf_l2dgg_end
     use MLSSets, only: FindFirst, FindNext
-    use MLSStringLists, only: Array2List, unquote
+    use MLSStringLists, only: Array2List
     use MLSStrings, only: trim_safe
     use readAPriori, only: writeAPrioriAttributes
     use TOGGLES, only: Switches
@@ -1134,175 +1209,202 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in) :: debug
     logical, intent(in) :: USINGSUBMIT              ! Set if using the submit mechanism
     ! Local variables
+    logical :: create2
     integer :: DB_index
     character (len=132) :: FILE_BASE    ! From the FILE= field
     integer :: GRP_ID
-    integer :: L2auxFileHandle, L2aux_Version
+    type(MLSFile_T), pointer :: inputFile
     character (len=132) :: L2auxPhysicalFilename
-    integer :: L2aux_mcf, L2dgg_mcf, L2gp_mcf  ! mcf numbers for writing metadata
     integer :: L2gpFileHandle, L2gp_Version
     character (len=132) :: L2gpPhysicalFilename
-    integer :: L2PCUNIT
     logical :: madeFile
     type(MLSFile_T), pointer :: outputFile
-    character (len=132) :: path
     integer :: ReturnStatus
     integer(i4) :: SDFID                ! File handle
     character (len=MAXSWATHNAMESBUFSIZE) :: sdList
-      ! Executable
-      if ( debug ) call dump(DirectDatabase)
-      ! Any dgg eligible for being catenated
-      DB_index = findFirst( DirectDatabase%autoType, l_l2dgg )
-      if ( findNext(DirectDatabase%autoType, l_l2dgg, DB_index) > 0 ) then
-        if ( TOOLKIT ) then
-          l2gp_Version = 1
-          l2gpFileHandle = GetPCFromRef('DGG', mlspcf_l2dgg_start, &
-            & mlspcf_l2dgg_end, &
-            & TOOLKIT, returnStatus, l2gp_Version, DEBUG, &
-            & exactName=l2gpPhysicalFilename)
-        else
-          file_base = DirectDatabase(DB_index)%fileName
-          l2gpPhysicalFilename = unSplitName(file_base)
-          returnStatus = 0
-        end if
-        if ( any(DirectDatabase%fileName == l2gpPhysicalFilename) ) then
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & "Cannot unsplit dgg dw to existing file " // &
-            & trim(l2gpPhysicalFilename) )
-        end if
-        madeFile = .false.
-        do DB_index = 1, size(DirectDatabase)
-          if ( DirectDatabase(DB_index)%autoType /= l_l2dgg ) cycle
-          if ( DEBUG ) then
-            call output ( 'preparing to cp split dgg', advance='yes' )
-            call output ( 'from: ', advance='no' )
-            call output ( trim(DirectDatabase(DB_index)%fileName) , advance='yes' )
-            call output ( '   to: ', advance='no' )
-            call output ( trim(l2gpPhysicalFilename) , advance='yes' )
-          end if
-          if ( mls_exists(trim(DirectDatabase(DB_index)%fileName)) /= 0 ) cycle
-          madeFile = .true.
-          call cpL2GPData(trim(DirectDatabase(DB_index)%fileName), &
-            & trim(l2gpPhysicalFilename), create2=(DB_index==1), &
-            & hdfVersion1=HDFVERSION_5, hdfVersion2=HDFVERSION_5, &
-            & notUnlimited=avoidUnlimitedDims, ReadStatus=.true.)
-        end do
-        if ( TOOLKIT .and. madeFile ) then
-          call add_metadata ( 0, trim(l2gpPhysicalFilename), 1, &
-            & (/'dgg'/), HDFVERSION_5, l_l2dgg, returnStatus )
-          if ( returnStatus /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'unable to addmetadata to ' // trim(l2gpPhysicalFilename) )
-        end if
-        if ( madeFile ) then
-         call writeAPrioriAttributes(trim(l2gpPhysicalFilename), HDFVERSION_5)
-         outputFile => AddInitializeMLSFile(filedatabase, &
-           & content='l2dgg', &
-           & name=l2gpPhysicalFilename, shortName='DGG', &
-           & type=l_swath, access=DFACC_RDWR, HDFVersion=HDFVERSION_5, &
-           & PCBottom=mlspcf_l2dgg_start, PCTop=mlspcf_l2dgg_end)
-        end if
+    ! Executable
+    if ( debug ) call dump(DirectDatabase)
+    ! Any dgg eligible for being catenated
+    DB_index = findFirst( DirectDatabase%autoType, l_l2dgg )
+    if ( findNext(DirectDatabase%autoType, l_l2dgg, DB_index) > 0 ) then
+      if ( TOOLKIT ) then
+        l2gp_Version = 1
+        l2gpFileHandle = GetPCFromRef('DGG', mlspcf_l2dgg_start, &
+          & mlspcf_l2dgg_end, &
+          & TOOLKIT, returnStatus, l2gp_Version, DEBUG, &
+          & exactName=l2gpPhysicalFilename)
+      else
+        file_base = DirectDatabase(DB_index)%fileName
+        l2gpPhysicalFilename = unSplitName(file_base)
+        returnStatus = 0
       end if
-      ! Next we would do the same for any split dgm direct write files
-      DB_index = findFirst( DirectDatabase%autoType, l_l2aux )
-      if ( findNext(DirectDatabase%autoType, l_l2aux, DB_index) > 0 ) then
-        if ( TOOLKIT ) then
-          l2gp_Version = 1
-          l2gpFileHandle = GetPCFromRef('DGM', mlspcf_l2dgm_start, &
-            & mlspcf_l2dgm_end, &
-            & TOOLKIT, returnStatus, l2gp_Version, DEBUG, &
-            & exactName=l2auxPhysicalFilename)
-        else
-          file_base = DirectDatabase(DB_index)%fileName
-          l2auxPhysicalFilename = unSplitName(file_base)
-          returnStatus = 0
+      if ( any(DirectDatabase%fileName == l2gpPhysicalFilename) ) then
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "Cannot unsplit dgg dw to existing file " // &
+          & trim(l2gpPhysicalFilename) )
+      end if
+      outputFile => GetMLSFileByName(filedatabase, l2gpPhysicalFilename)
+      if ( .not. associated(outputFile) ) then
+        outputFile => AddInitializeMLSFile(filedatabase, &
+          & content='l2dgg', &
+          & name=l2gpPhysicalFilename, shortName='DGG', &
+          & type=l_swath, access=DFACC_RDWR, HDFVersion=HDFVERSION_5, &
+          & PCBottom=mlspcf_l2dgg_start, PCTop=mlspcf_l2dgg_end)
+      endif
+      madeFile = .false.
+      create2 = .true.
+      do DB_index = 1, size(DirectDatabase)
+        if ( DirectDatabase(DB_index)%autoType /= l_l2dgg ) cycle
+        if ( DEBUG ) then
+          call output ( 'preparing to cp split dgg', advance='yes' )
+          call output ( 'from: ', advance='no' )
+          call output ( trim(DirectDatabase(DB_index)%fileName) , advance='yes' )
+          call output ( '   to: ', advance='no' )
+          call output ( trim(l2gpPhysicalFilename) , advance='yes' )
         end if
-        if ( any(DirectDatabase%fileName == l2auxPhysicalFilename) ) then
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
-            &  "Must not unsplit dgm dw to " // trim(l2auxPhysicalFilename) )
-        end if
-        madeFile = .false.
-        do DB_index = 1, size(DirectDatabase)
-          if ( DirectDatabase(DB_index)%autoType /= l_l2aux ) cycle
-          if ( .not. associated(DirectDatabase(DB_index)%sdNames) ) then
-          call MLSMessage ( MLSMSG_Warning, ModuleName, &
-            &  "no sd known for " // trim(DirectDatabase(DB_index)%fileName) )
-            cycle
-          endif
-          ! print *, 'About to try to convert array2List'
-          ! call dump(DirectDatabase(DB_index))
-          call Array2List(DirectDatabase(DB_index)%sdNames, sdList)
-          ! print *, 'result: ', trim(sdList)
-          ! Not implemented yet
-          if ( DEBUG ) then
-            call output ( 'preparing to cp split dgm', advance='yes' )
-            call output ( 'from: ', advance='no' )
-            call output ( trim(DirectDatabase(DB_index)%fileName) , advance='yes' )
-            call output ( '   to: ', advance='no' )
-            call output ( trim(l2auxPhysicalFilename) , advance='yes' )
-            call output ( '   sdList: ', advance='no' )
-            call output ( trim(sdList) , advance='yes' )
-          end if
-          if ( mls_exists(trim(DirectDatabase(DB_index)%fileName)) /= 0 ) cycle
-          madeFile = .true.
-          if ( sdList /= ' ' ) then
-            call cpL2AUXData(trim(DirectDatabase(DB_index)%fileName), &
-            & trim(l2auxPhysicalFilename), create2=(DB_index==1), &
-            & hdfVersion=HDFVERSION_5, sdList=trim(sdList))
-          else
-            ! Last-ditch effort if somehow sdNames empty or Array2List fails
-            call cpL2AUXData(trim(DirectDatabase(DB_index)%fileName), &
-            & trim(l2auxPhysicalFilename), create2=(DB_index==1), &
-            & hdfVersion=HDFVERSION_5)
-          end if
-          if ( DB_index==1 ) &
-            & call CpHDF5GlAttribute ( DirectDatabase(DB_index)%fileName, &
-            & l2auxPhysicalFilename, 'Phase Names' )
-        end do
-        ! Is metadata really needed for l2aux files?
-        if ( TOOLKIT .and. madeFile ) then
-          call add_metadata ( 0, trim(l2auxPhysicalFilename), 1, &
-            & (/'dgm'/), HDFVERSION_5, l_hdf, returnStatus )
-          if ( returnStatus /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'unable to addmetadata to ' // trim(l2auxPhysicalFilename) )
-        end if
-        
-        ! Now we can write any last-minute attributes or datasets to the l2aux
-        ! E.g., parallel stuff
-        if ( (parallel%master .or. index(switches, 'chu') /= 0) &
-          & .and. .not. (checkPaths .or. SKIPDIRECTWRITES) .and. &
-          & madeFile .and. l2auxPhysicalFilename /= ' ' ) then
-          sdfId = mls_sfstart(l2auxPhysicalFilename, DFACC_RDWR, &
-              & hdfVersion=HDFVERSION_5)
-          call h5gopen_f(sdfId, '/', grp_id, returnStatus)
-          if ( .not. parallel%master .and. FAKEPARALLELMASTER ) then
-            parallel%numCompletedChunks = 347
-            parallel%numFailedChunks = 3
-            parallel%FailedChunks = '2,5,129'
-            parallel%FailedMachs = 'c0-1,c0-66,c0-66'
-            parallel%FailedMachs = 'msg 1\msg 2\msg 3'
-          endif
-          call MakeHDF5Attribute(grp_id, &
-           & 'NumCompletedChunks', parallel%numCompletedChunks, .true.)
-          call MakeHDF5Attribute(grp_id, &
-           & 'NumFailedChunks', parallel%numFailedChunks, .true.)
-          call MakeHDF5Attribute(grp_id, &
-           & 'FailedChunks', trim_safe(parallel%FailedChunks), .true.)
-          if ( .not. usingSubmit ) &
-            call MakeHDF5Attribute(grp_id, &
-             & 'FailedMachines', trim_safe(parallel%FailedMachs), .true.)
-          call MakeHDF5Attribute(grp_id, &
-           & 'FailedMsgs', trim_safe(parallel%FailedMsgs), .true.)
-          call h5gclose_f(grp_id, returnStatus)
-          returnStatus = mls_sfend(sdfid, hdfVersion=HDFVERSION_5)
-          ! Probably excessively complex conditions for whether to add
-          ! into database or not
-          outputFile => AddInitializeMLSFile(filedatabase, &
-           & content='l2aux', &
-           & name=l2auxPhysicalFilename, shortName='L2AUX-DGM', &
-           & type=l_hdf, access=DFACC_RDWR, HDFVersion=HDFVERSION_5, &
-           & PCBottom=mlspcf_l2dgm_start, PCTop=mlspcf_l2dgm_end)
+        if ( mls_exists(trim(DirectDatabase(DB_index)%fileName)) /= 0 ) cycle
+        inputFile => GetMLSFileByName(filedatabase, &
+          & DirectDatabase(DB_index)%fileName)
+        if ( .not. associated(inputFile) ) then
+          call MLSMessage(MLSMSG_Error, ModuleName, &
+            & 'No entry in filedatabase for ' // &
+            & trim(DirectDatabase(DB_index)%fileName) )
         endif
+        madeFile = .true.
+        call cpL2GPData(inputFile, &
+          & outputFile, create2=create2, &
+          & notUnlimited=avoidUnlimitedDims, ReadStatus=.true.)
+        create2 = .false.
+      end do
+      if ( TOOLKIT .and. madeFile ) then
+        call add_metadata ( 0, trim(l2gpPhysicalFilename), 1, &
+          & (/'dgg'/), HDFVERSION_5, l_l2dgg, returnStatus )
+        if ( returnStatus /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'unable to addmetadata to ' // trim(l2gpPhysicalFilename) )
       end if
+      if ( madeFile ) then
+       call writeAPrioriAttributes(trim(l2gpPhysicalFilename), HDFVERSION_5)
+       outputFile => AddInitializeMLSFile(filedatabase, &
+         & content='l2dgg', &
+         & name=l2gpPhysicalFilename, shortName='DGG', &
+         & type=l_swath, access=DFACC_RDWR, HDFVersion=HDFVERSION_5, &
+         & PCBottom=mlspcf_l2dgg_start, PCTop=mlspcf_l2dgg_end)
+      end if
+    end if
+    ! Next we would do the same for any split dgm direct write files
+    DB_index = findFirst( DirectDatabase%autoType, l_l2aux )
+    if ( findNext(DirectDatabase%autoType, l_l2aux, DB_index) > 0 ) then
+      if ( TOOLKIT ) then
+        l2gp_Version = 1
+        l2gpFileHandle = GetPCFromRef('DGM', mlspcf_l2dgm_start, &
+          & mlspcf_l2dgm_end, &
+          & TOOLKIT, returnStatus, l2gp_Version, DEBUG, &
+          & exactName=l2auxPhysicalFilename)
+      else
+        file_base = DirectDatabase(DB_index)%fileName
+        l2auxPhysicalFilename = unSplitName(file_base)
+        returnStatus = 0
+      end if
+      if ( any(DirectDatabase%fileName == l2auxPhysicalFilename) ) then
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          &  "Must not unsplit dgm dw to " // trim(l2auxPhysicalFilename) )
+      end if
+      outputFile => GetMLSFileByName(filedatabase, l2auxPhysicalFilename)
+      if ( .not. associated(outputFile) ) then
+        outputFile => AddInitializeMLSFile(filedatabase, &
+          & content='l2aux', &
+          & name=l2auxPhysicalFilename, shortName='L2AUX-DGM', &
+          & type=l_hdf, access=DFACC_RDWR, HDFVersion=HDFVERSION_5, &
+          & PCBottom=mlspcf_l2dgm_start, PCTop=mlspcf_l2dgm_end)
+      endif
+      madeFile = .false.
+      create2 = .true.
+      do DB_index = 1, size(DirectDatabase)
+        if ( DirectDatabase(DB_index)%autoType /= l_l2aux ) cycle
+        if ( .not. associated(DirectDatabase(DB_index)%sdNames) ) then
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          &  "no sd known for " // trim(DirectDatabase(DB_index)%fileName) )
+          cycle
+        endif
+        ! print *, 'About to try to convert array2List'
+        ! call dump(DirectDatabase(DB_index))
+        call Array2List(DirectDatabase(DB_index)%sdNames, sdList)
+        ! print *, 'result: ', trim(sdList)
+
+        if ( DEBUG ) then
+          call output ( 'preparing to cp split dgm', advance='yes' )
+          call output ( 'from: ', advance='no' )
+          call output ( 'DB_index ', advance='no' )
+          call output ( DB_index , advance='no' )
+          call blanks(3)
+          call output ( trim(DirectDatabase(DB_index)%fileName) , advance='yes' )
+          call output ( '   to: ', advance='no' )
+          call output ( trim(l2auxPhysicalFilename) , advance='yes' )
+          call output ( '   sdList: ', advance='no' )
+          call output ( trim(sdList) , advance='yes' )
+        end if
+        if ( mls_exists(trim(DirectDatabase(DB_index)%fileName)) /= 0 ) cycle
+        inputFile => GetMLSFileByName(filedatabase, &
+          & DirectDatabase(DB_index)%fileName)
+        if ( .not. associated(inputFile) ) then
+          call MLSMessage(MLSMSG_Error, ModuleName, &
+            & 'No entry in filedatabase for ' // &
+            & trim(DirectDatabase(DB_index)%fileName) )
+        endif
+        madeFile = .true.
+        if ( sdList /= ' ' ) then
+          call cpL2AUXData( inputFile, &
+          & outputFile, create2=create2, sdList=trim(sdList) )
+        else
+          ! Last-ditch effort if somehow sdNames empty or Array2List fails
+          call cpL2AUXData( inputFile, &
+          & outputFile, create2=create2 )
+        end if
+        if ( create2 ) then
+          ! print *, 'About to CpHDF5GlAttribute'
+          call CpHDF5GlAttribute ( DirectDatabase(DB_index)%fileName, &
+            & l2auxPhysicalFilename, 'Phase Names' )
+        endif
+        create2= .false.
+      end do
+      ! Is metadata really needed for l2aux files?
+      if ( TOOLKIT .and. madeFile ) then
+        call add_metadata ( 0, trim(l2auxPhysicalFilename), 1, &
+          & (/'dgm'/), HDFVERSION_5, l_hdf, returnStatus )
+        if ( returnStatus /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'unable to addmetadata to ' // trim(l2auxPhysicalFilename) )
+      end if
+      
+      ! Now we can write any last-minute attributes or datasets to the l2aux
+      ! E.g., parallel stuff
+      if ( (parallel%master .or. index(switches, 'chu') /= 0) &
+        & .and. .not. (checkPaths .or. SKIPDIRECTWRITES) .and. &
+        & madeFile .and. l2auxPhysicalFilename /= ' ' ) then
+        sdfId = mls_sfstart(l2auxPhysicalFilename, DFACC_RDWR, &
+            & hdfVersion=HDFVERSION_5)
+        call h5gopen_f(sdfId, '/', grp_id, returnStatus)
+        if ( .not. parallel%master .and. FAKEPARALLELMASTER ) then
+          parallel%numCompletedChunks = 347
+          parallel%numFailedChunks = 3
+          parallel%FailedChunks = '2,5,129'
+          parallel%FailedMachs = 'c0-1,c0-66,c0-66'
+          parallel%FailedMachs = 'msg 1\msg 2\msg 3'
+        endif
+        call MakeHDF5Attribute(grp_id, &
+         & 'NumCompletedChunks', parallel%numCompletedChunks, .true.)
+        call MakeHDF5Attribute(grp_id, &
+         & 'NumFailedChunks', parallel%numFailedChunks, .true.)
+        call MakeHDF5Attribute(grp_id, &
+         & 'FailedChunks', trim_safe(parallel%FailedChunks), .true.)
+        if ( .not. usingSubmit ) &
+          call MakeHDF5Attribute(grp_id, &
+           & 'FailedMachines', trim_safe(parallel%FailedMachs), .true.)
+        call MakeHDF5Attribute(grp_id, &
+         & 'FailedMsgs', trim_safe(parallel%FailedMsgs), .true.)
+        call h5gclose_f(grp_id, returnStatus)
+        returnStatus = mls_sfend(sdfid, hdfVersion=HDFVERSION_5)
+      endif
+    end if
   end subroutine unsplitFiles
     
   logical function not_used_here()
@@ -1317,6 +1419,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.113  2005/10/22 00:46:14  pwagner
+! May write all-day HGrid as attributes
+!
 ! Revision 2.112  2005/09/23 23:39:35  pwagner
 ! Added rename field to copy command
 !
