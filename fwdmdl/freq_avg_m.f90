@@ -67,6 +67,12 @@ contains
 
     call Cspline ( F_grid, F_grid_fltr, Rad, tmpary, n, nfp, Rmin, Rmax )
 
+    ! Since the filter function and its derivatives are zero at the ends
+    ! of the interval, or at least outside of it, use the Euler-Maclaurin
+    ! summation formula.  Why doesn't this work?
+
+!     avg = dF * dot_product(tmpary, fltr_func(:nfp) )
+
     tmpary = tmpary * Fltr_func(1:nfp)
     call Simps ( tmpary, dF, nfp, Avg )
 
@@ -192,6 +198,9 @@ contains
 end module Freq_Avg_m
 
 ! $Log$
+! Revision 2.12  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.11  2004/12/28 00:26:26  vsnyder
 ! Remove unreferenced use names
 !
