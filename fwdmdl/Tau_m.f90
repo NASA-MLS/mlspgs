@@ -41,7 +41,7 @@ contains
   ! Update IncOptDepth with its GL corrections.  Multiply it by the
   ! refraction correction Ref_Cor.  Compute Tau = exp(indefinite sum of
   ! IncOptDepth).  The half-path point is a zero-thickness layer that
-  ! doesn't have any IncOptDepth.  Instead, multiply tau(hal_path) by
+  ! doesn't have any IncOptDepth.  Instead, multiply tau(half_path) by
   ! e_rflty to get tau(half_path+1).
 
     use GLNP, only: NG
@@ -152,7 +152,7 @@ contains
     end do
 
 99  continue
-    tau%tau(i_stop+1:n_path,frq_i) = 1.0_rp
+    tau%tau(i_stop+1:n_path,frq_i) = 0.0_rp
     tau%i_stop(frq_i) = i_stop
 
   end subroutine Get_Tau
@@ -197,6 +197,9 @@ contains
 end module Tau_M
 
 ! $Log$
+! Revision 2.5  2005/10/24 20:14:41  vsnyder
+! Tau after black out is zero, not one
+!
 ! Revision 2.4  2005/06/22 18:08:20  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
