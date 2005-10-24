@@ -26,6 +26,9 @@
     real(rk), parameter :: K38 = 3.0_rk / 8.0_rk
     real(rk), parameter :: KSN = k13 + k38   ! Bndry Simpson with Newton-Cotes
 
+! See e.g. F. B. Hildebrand, "Introduction to Numerical Analysis," Second
+! edition, Dover (1987), p. 93.
+
     select case ( N )
     case ( :0 )                              ! Nothing to do
       r = 0.0_rk
@@ -53,6 +56,9 @@
 ! end subroutine *Simps
 
 ! $Log$
+! Revision 2.5  2005/06/22 18:14:01  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.4  2002/10/15 00:12:19  vsnyder
 ! Use Newton-Cotes 3/8 instead of trapezoid for extra panel in even number
 ! of points (odd number of panels) case.  Copyright notice.  Channge CVS
