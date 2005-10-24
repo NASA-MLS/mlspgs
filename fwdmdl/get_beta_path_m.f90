@@ -565,7 +565,8 @@ contains
 
 ! -----------------------------------------  Create_beta_path  ---------
 
-  pure subroutine Create_beta_path ( Path_inds, Pressure, Temp, Fgr, Ratio, &
+  pure &
+  subroutine Create_beta_path ( Path_inds, Pressure, Temp, Fgr, Ratio, &
          &   Slabs_0, Tanh1, NoPolarized, VelCor, Beta_value, dTanh_dT,     &
          &   Path_flags, dBeta_dT, dBeta_dw, dBeta_dn, dBeta_dv )
 
@@ -624,14 +625,14 @@ contains
     logical :: Spect_Der         ! Spectroscopy derivatives required
     logical :: Temp_Der          ! Temperature derivatives required
 
-    real(rp) :: bv, dw, dn, dv, dbdT, dbdw, dbdn, dbdv
+    real(rp) :: bv, dbdT, dbdw, dbdn, dbdv
 
 !----------------------------------------------------------------------------
 
     if ( associated(dBeta_dw) .or. associated(dBeta_dn) .or. associated(dBeta_dv) ) then
-      dbdw = 0.0_rp
-      dbdn = 0.0_rp
-      dbdv = 0.0_rp
+      dBdw = 0.0_rp
+      dBdn = 0.0_rp
+      dBdv = 0.0_rp
     end if
 
     nl = size(slabs_0(1)%catalog%lines) ! All of the slabs have the same catalog
@@ -727,34 +728,34 @@ contains
 
         if ( slabs_0(k)%useYi ) then
           call slabswint_lines_dSpectral ( Fgr, slabs_0(k), temp(j), tanh1(j), &
-            & velCor, noPolarized, bv, dw, dn, dv )
+            & velCor, noPolarized, bv, dBdw, dBdn, dBdv )
         else
           call slabs_lines_dSpectral ( Fgr, slabs_0(k), temp(j), tanh1(j), &
-            & velCor, noPolarized, bv, dw, dn, dv )
+            & velCor, noPolarized, bv, dBdw, dBdn, dBdv )
         end if
 
         beta_value(j) = beta_value(j) + ratio * bv
 
-        if ( associated(dBeta_dw) ) dBeta_dw(j) = ratio * dw
-        if ( associated(dBeta_dn) ) dBeta_dn(j) = ratio * dn
-        if ( associated(dBeta_dv) ) dBeta_dv(j) = ratio * dv
+        if ( associated(dBeta_dw) ) dBeta_dw(j) = dBeta_dw(j) + ratio * dBdw
+        if ( associated(dBeta_dn) ) dBeta_dn(j) = dBeta_dn(j) + ratio * dBdn
+        if ( associated(dBeta_dv) ) dBeta_dv(j) = dBeta_dv(j) + ratio * dBdv
 
       else if ( temp_der .and. spect_der ) then
 
         if ( slabs_0(k)%useYi ) then
           call slabswint_lines_dAll ( Fgr, slabs_0(k), temp(j), tanh1(j), &
-            & dTanh_dT(j), velCor, noPolarized, bv, dBdT, dw, dn, dv )
+            & dTanh_dT(j), velCor, noPolarized, bv, dBdT, dBdw, dBdn, dBdv )
         else
           call slabs_lines_dAll ( Fgr, slabs_0(k), temp(j), tanh1(j), &
-            & dTanh_dT(j), velCor, noPolarized, bv, dBdT, dw, dn, dv )
+            & dTanh_dT(j), velCor, noPolarized, bv, dBdT, dBdw, dBdn, dBdv )
         end if
 
         beta_value(j) = beta_value(j) + ratio * bv
         dBeta_dT(j) = dBeta_dT(j) + ratio * dBdT
 
-        if ( associated(dBeta_dw) ) dBeta_dw(j) = ratio * dbdw
-        if ( associated(dBeta_dn) ) dBeta_dn(j) = ratio * dbdn
-        if ( associated(dBeta_dv) ) dBeta_dv(j) = ratio * dbdv
+        if ( associated(dBeta_dw) ) dBeta_dw(j) = dBeta_dw(j) + ratio * dBdw
+        if ( associated(dBeta_dn) ) dBeta_dn(j) = dBeta_dn(j) + ratio * dBdn
+        if ( associated(dBeta_dv) ) dBeta_dv(j) = dBeta_dv(j) + ratio * dBdv
 
       end if
 
@@ -1114,6 +1115,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.80  2005/07/06 02:17:21  vsnyder
+! Revisions for spectral parameter derivatives
+!
 ! Revision 2.79  2005/06/09 02:34:16  vsnyder
 ! Move stuff from l2pc_pfa_structures to slabs_sw_m
 !
