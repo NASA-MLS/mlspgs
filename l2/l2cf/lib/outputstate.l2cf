@@ -26,6 +26,57 @@ begin Output
 Output, quantities=[joined_iwc, joined_iwcFine], type=l2gp, $
   hdfVersion=!hdfVersion, $
   file='!l2gpFileName(IWC)'
+},{
+
+!ifdef(flagCopyStandardProducts,{
+
+;; Here we carry out the idea of copying standard Products out of the
+;; DGG file and into their "proper" l2gp files
+;;
+;; for this to work, we must have added an invocation of
+;; storeStandardProductWithColumn or
+;; storeStandardProductWithoutColumn to the template
+;; l2cf for each of the Standard Products
+;; Otherwise, Output will complain "Swath not found"
+;; and the run will stop
+;;
+
+;; This should be the same as hGridStandard, but will span all chunks
+  hGridAllChunks: hGrid, type=regular, spacing=1.5 degrees, origin=0 degrees, $
+    module=GHz, /forbidOverspill, /insetOverlaps
+
+!define(copyStandardProductWithColumn, {Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='$1-StdProd column,$1-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName($1)', rename='$1 column,$1', $
+    HGrid=hGridAllChunks, /create, /repairGeolocations
+})
+!forall(copyStandardProductWithColumn,!allStandardProductsWithColumns)
+
+!define(copyStandardProductWithoutColumn, {Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='$1-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName($1)', rename='$1', $
+    HGrid=hGridAllChunks, /create, /repairGeolocations
+})
+!forall(copyStandardProductWithoutColumn,!allStandardProductsWithoutColumns)
+
+;; --------------------------------- Other files ---
+;; The IWC file is a somewhat special case
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='DGG', swath='IWC-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName(IWC)', rename='IWC', $
+    HGrid=hGridAllChunks, /create, /repairGeolocations
+
+;; Our standard HGrid won't suffice for this product so we don't try
+;; to repair its geolocations
+;; (Perhaps we will in a later improvement)
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='DGG', swath='IWC3-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName(IWC)', rename='IWC3'
+
+})
+
 })
 
 ;; Now output the joined DGG file.
