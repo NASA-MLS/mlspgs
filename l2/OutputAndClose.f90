@@ -66,7 +66,7 @@ contains ! =====     Public Procedures     =============================
     use Expr_M, only: Expr
     use HGrid, only: CREATEHGRIDFROMMLSCFINFO, DEALWITHOBSTRUCTIONS
     use HGridsDatabase, only: HGRID_T, &
-      & ADDHGRIDTODATABASE, Dump
+      & ADDHGRIDTODATABASE, destroyHGridDatabase, Dump
     use INIT_TABLES_MODULE, only: F_ASCII, F_CREATE, F_DONTPACK, F_EXCLUDE, &
       & F_FILE, F_HDFVERSION, F_HGRID, &
       & F_IFANYCRASHEDCHUNKS, F_INPUTFILE, F_INPUTTYPE, &
@@ -85,7 +85,7 @@ contains ! =====     Public Procedures     =============================
     use MatrixModule_1, only: MATRIX_DATABASE_T, MATRIX_T, GETFROMMATRIXDATABASE
     use MLSCommon, only: MLSFile_T, TAI93_Range_T
     use MLSFiles, only: &
-      & AddInitializeMLSFile, GetMLSFileByName, &
+      & AddInitializeMLSFile, Dump, GetMLSFileByName, &
       & MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
     use MLSL2Options, only: CATENATESPLITS, CHECKPATHS, &
       & DEFAULT_HDFVERSION_WRITE, &
@@ -243,6 +243,7 @@ contains ! =====     Public Procedures     =============================
             fieldValue = gson
           end if
           field_index = decoration(subtree(1,gson))
+          got(field_index) = .true.
           select case ( field_index )   ! Field name
           case ( f_create )
             create = get_boolean ( gson )
@@ -261,7 +262,7 @@ contains ! =====     Public Procedures     =============================
             hdfVersion = value(1)
           case ( f_hgrid )
             HGridIndex = decoration(fieldValue)
-            ! print *, 'HGridIndex: ', HGridIndex
+            if ( DEBUG ) print *, 'HGridIndex: ', HGridIndex
           case ( f_ifAnyCrashedChunks )
             skipCopy = get_boolean ( gson ) .and. &
               & ( parallel%numFailedChunks == 0 )
@@ -302,34 +303,6 @@ contains ! =====     Public Procedures     =============================
         endif
         if ( .not. got(f_inputtype) ) input_type = output_type
 
-        select case ( input_type )
-        case ( l_l2aux ) ! --------------------- Copying l2aux files -----
-          call returnFullFileName(inputfile_base, inputPhysicalFilename, &
-            & mlspcf_l2dgm_start, mlspcf_l2dgm_end)
-          inputFile => GetMLSFileByName(filedatabase, inputPhysicalFilename)
-          if ( .not. associated(inputFile) ) then
-            call MLSMessage(MLSMSG_Error, ModuleName, &
-              & 'No entry in filedatabase for ' // trim(inputPhysicalFilename) )
-          endif
-        case ( l_l2gp ) ! --------------------- Copying l2gp files -----
-          call returnFullFileName(inputfile_base, inputPhysicalFilename, &
-            & mlspcf_l2gp_start, mlspcf_l2gp_end)
-          inputFile => GetMLSFileByName(filedatabase, inputPhysicalFilename)
-          if ( .not. associated(inputFile) ) then
-            call MLSMessage(MLSMSG_Error, ModuleName, &
-              & 'No entry in filedatabase for ' // trim(inputPhysicalFilename) )
-          endif
-        case ( l_l2dgg ) ! --------------------- Copying l2dgg files -----
-          call returnFullFileName(inputfile_base, inputPhysicalFilename, &
-            & mlspcf_l2dgg_start, mlspcf_l2dgg_end)
-          inputFile => GetMLSFileByName(filedatabase, inputPhysicalFilename)
-          if ( .not. associated(inputFile) ) then
-            call MLSMessage(MLSMSG_Error, ModuleName, &
-              & 'No entry in filedatabase for ' // trim(inputPhysicalFilename) )
-          endif
-        case default
-        end select
-
         select case ( output_type )
         case ( l_l2aux ) ! --------------------- Copying l2aux files -----
           call returnFullFileName(file_base, PhysicalFilename, &
@@ -366,6 +339,35 @@ contains ! =====     Public Procedures     =============================
           endif
         case default
         end select
+
+        select case ( input_type )
+        case ( l_l2aux ) ! --------------------- Copying l2aux files -----
+          call returnFullFileName(inputfile_base, inputPhysicalFilename, &
+            & mlspcf_l2dgm_start, mlspcf_l2dgm_end)
+          inputFile => GetMLSFileByName(filedatabase, inputPhysicalFilename)
+          if ( .not. associated(inputFile) ) then
+            call MLSMessage(MLSMSG_Error, ModuleName, &
+              & 'No entry in filedatabase for ' // trim(inputPhysicalFilename) )
+          endif
+        case ( l_l2gp ) ! --------------------- Copying l2gp files -----
+          call returnFullFileName(inputfile_base, inputPhysicalFilename, &
+            & mlspcf_l2gp_start, mlspcf_l2gp_end)
+          inputFile => GetMLSFileByName(filedatabase, inputPhysicalFilename)
+          if ( .not. associated(inputFile) ) then
+            call MLSMessage(MLSMSG_Error, ModuleName, &
+              & 'No entry in filedatabase for ' // trim(inputPhysicalFilename) )
+          endif
+        case ( l_l2dgg ) ! --------------------- Copying l2dgg files -----
+          call returnFullFileName(inputfile_base, inputPhysicalFilename, &
+            & mlspcf_l2dgg_start, mlspcf_l2dgg_end)
+          inputFile => GetMLSFileByName(filedatabase, inputPhysicalFilename)
+          if ( .not. associated(inputFile) ) then
+            call MLSMessage(MLSMSG_Error, ModuleName, &
+              & 'No entry in filedatabase for ' // trim(inputPhysicalFilename) )
+          endif
+        case default
+        end select
+
         if ( DEBUG ) print *, 'inputPhysicalfileName: ', inputPhysicalfileName
         if ( DEBUG ) print *, 'outputPhysicalfileName: ', PhysicalfileName
         if ( DEBUG ) print *, 'repairGeoLocations: ', repairGeoLocations
@@ -394,18 +396,25 @@ contains ! =====     Public Procedures     =============================
               & notUnlimited=avoidUnlimitedDims, ReadStatus=.true.)
           elseif ( .not. got(f_exclude) .and. repairGeoLocations ) then
             ! call dump(HGrids(HGridIndex))
+            if ( DEBUG ) print *,' size(filedatabse) ', size(filedatabase)
+            if ( DEBUG ) print *, 'input file: ', trim(inputPhysicalFilename)
+            ! call dump(inputfile)
+            if ( DEBUG ) print *, 'output file: ', trim(PhysicalFilename)
+            ! call dump(outputfile)
             call cpL2GPData(inputfile, &
               & outputfile, create2=create, &
               & swathList=trim(sdList), rename=rename, &
               & notUnlimited=avoidUnlimitedDims, ReadStatus=.true., &
-              & HGrid=HGrids(HGridIndex), options="-rv")
+              & HGrid=HGrids(HGridIndex), options="-r")
+              ! & HGrid=HGrids(HGridIndex), options="-rv")
           elseif ( got(f_exclude) .and. repairGeoLocations ) then
             call cpL2GPData(inputfile, &
               & outputfile, create2=create, &
               & swathList=trim(sdList), rename=rename, &
               & exclude=trim(exclude), &
               & notUnlimited=avoidUnlimitedDims, ReadStatus=.true., &
-              & HGrid=HGrids(HGridIndex), options="-rv")
+              & HGrid=HGrids(HGridIndex), options="-r")
+              ! & HGrid=HGrids(HGridIndex), options="-rv")
           else
             call cpL2GPData(inputfile, &
               & outputfile, create2=create, &
@@ -456,6 +465,7 @@ contains ! =====     Public Procedures     =============================
             fieldValue = gson
           end if
           field_index = decoration(subtree(1,gson))
+          got(field_index) = .true.
           select case ( field_index )   ! Field name
           case ( f_file )
             call get_string ( sub_rosa(subtree(2,gson)), file_base )
@@ -609,6 +619,10 @@ contains ! =====     Public Procedures     =============================
         error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
       end if
     end if
+
+    ! Done wirh any Hgrids we may have created
+    ! print *, 'Was About to destroy HGridDataBase (but we granted it clemency)'
+    ! call destroyHGridDatabase ( hGrids )
 
     ! Done with text of PCF file at last
    
@@ -1419,6 +1433,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.114  2005/10/28 23:19:01  pwagner
+! Many changes related to Copy; one may fixed a bug
+!
 ! Revision 2.113  2005/10/22 00:46:14  pwagner
 ! May write all-day HGrid as attributes
 !
