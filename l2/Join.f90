@@ -1190,6 +1190,7 @@ contains ! =====     Public Procedures     =============================
               & 'No suitable files in directDatabaset' )
         call output('outputType: ')
         call output(outputType, advance='yes')
+        call display_string ( lit_indices(outputType), advance='yes' )
         call output(DirectDataBase%autoType)
         call MLSMessage ( &
         & MLSMSG_Error, ModuleName, &
@@ -1969,6 +1970,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.122  2005/10/28 23:17:37  pwagner
+! Print missing outputType when unable to find suitable for distributing sources
+!
 ! Revision 2.121  2005/10/18 23:11:36  pwagner
 ! Fixed bug causing standalone, toolkitless run to put split dgg/dgm files in cwd
 !
