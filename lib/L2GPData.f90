@@ -3526,12 +3526,10 @@ contains ! =====     Public Procedures     =============================
     ! logical, parameter :: DEEBUG = .false.
     integer :: HGp1 ! Effective starting HGrid profile
     integer :: HGpn ! Effective ending HGrid profile
-    real(rgp), dimension(:), pointer :: HGridField => null()
     character(len=128) :: myFields
     character (len=8) :: myOptions
     logical :: verbose
     ! Executable code
-    nullify(HGridField)
     myFields = '*'
     if ( present(fields) ) myFields = lowercase(fields)
     myOptions = ' '
@@ -3579,7 +3577,6 @@ contains ! =====     Public Procedures     =============================
       call output('shape HGrid%phi(1,HGp1:HGpn): ')
       call output(shape(HGrid%phi(1,HGp1:HGpn)), advance='yes')
     endif
-    ! call allocate_test(HGridField, l2gp%nTimes, 'HGridField', &
     !    & ModuleName )
     select case (trim(myFields))
     case ('geolocation')
@@ -3592,14 +3589,12 @@ contains ! =====     Public Procedures     =============================
     if ( DEEBUG ) print *, 'shape HGrid%geodLat: ', shape(HGrid%geodLat)
     
     if ( SwitchDetail(myFields, 'latitude', '-wc') > -1 ) then
-      ! HGridField = hgrid%geodLat(1,HGp1:)
       call ReplaceFillValues ( l2gp%latitude, l2gp%MissingValue, &
         & real(hgrid%geodLat(1,HGp1:HGpn), rgp) )
     endif
     if ( DEEBUG ) print *, 'shape l2gp%longitude: ', shape(l2gp%longitude)
     if ( DEEBUG ) print *, 'shape HGrid%lon: ', shape(HGrid%lon)
     if ( SwitchDetail(myFields, 'longitude', '-wc') > -1 ) then
-      ! HGridField = hgrid%lon(1,HGp1:HGpn)
       call ReplaceFillValues ( l2gp%longitude, l2gp%MissingValue, &
         & real(hgrid%lon(1,HGp1:HGpn), rgp) )
     endif
@@ -3623,8 +3618,6 @@ contains ! =====     Public Procedures     =============================
       call ReplaceFillValues ( l2gp%time, real(l2gp%MissingValue, r8), &
         & hgrid%time(1,HGp1:HGpn) )
     endif
-    ! call deallocate_test(HGridField, 'HGridField', &
-    !      & ModuleName )
 
   end subroutine RepairL2GP_HGrid
 
@@ -3683,6 +3676,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.127  2005/10/18 23:06:49  pwagner
+! Belated yet crude hack to insure Tropopause units_name is hPa
+!
 ! Revision 2.126  2005/10/11 17:36:55  pwagner
 ! Added MLSFile interface to cpL2GPData, diff procedures
 !
