@@ -346,6 +346,7 @@ contains ! ======================= Public Procedures =========================
     Names = ' '
     ! print *, 'About to read num of attributes'
     call h5aget_num_attrs_f( itemID, num, status )
+    if ( status /= 0 ) return
     ! print *, 'num ', num
     do i=1, num
       call h5aopen_idx_f( itemid, i-1, attr_id, status )
@@ -4950,6 +4951,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.60  2005/10/28 23:13:42  pwagner
+! Prevent ref to undefined num in GetAllHDF5AttrNames
+!
 ! Revision 2.59  2005/10/19 20:46:05  pwagner
 ! GetAllHDF5DSNames will omit leading slashes by default
 !
