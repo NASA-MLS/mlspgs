@@ -33,7 +33,10 @@ begin Join
     source=state.$1, precision=outputPrecision.$1, $
     status=otherDiagnostics.status$1, quality=otherDiagnostics.quality$1, $
     source=state.column_$1, precision=outputPrecision.column_$1!nl})
+!ifdef(flagCopyStandardProducts,{
+},{
   !forall(writeStandardProductWithColumn,!allStandardProductsWithColumns)
+})
 
   ;; Now the species without columns
   !define(writeStandardProductWithoutColumn,{
@@ -42,8 +45,9 @@ begin Join
     file='!l2gpFileName($1)', $
     source=state.$1, precision=outputPrecision.$1, $
     status=otherDiagnostics.status$1,quality=otherDiagnostics.quality$1!nl})
+!ifdef(flagCopyStandardProducts,{
+},{
   !forall(writeStandardProductWithoutColumn,!allStandardProductsWithoutColumns)
-
   ;; IWC is a special case
   Label, quantity=state.iwc, label='IWC'
   Label, quantity=state.iwcFine, label='IWC3'
@@ -56,6 +60,8 @@ begin Join
   Label, quantity=state.tpPressure, label='TPPressureWMO'
   DirectWrite, type=l2gp, hdfVersion=!hdfVersion, $
     file='!l2gpFileName(Temperature)', source=state.tpPressure
+
+})
 
   !flushDGGDGMFiles
 })})
