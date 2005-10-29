@@ -23,7 +23,6 @@ program l1bdiff ! diffs two l1b or L2AUX files
    use MLSCommon, only: R8
    use MLSFiles, only: FILENOTFOUND, WILDCARDHDFVERSION, &
      & mls_exists, mls_hdf_version, mls_sfstart, mls_sfend, &
-     & MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
      & HDFVERSION_4, HDFVERSION_5
    use MLSHDF5, only: GetAllHDF5DSNames, saveAsHDF5DS, &
      & IsHDF5AttributePresent, mls_h5open, mls_h5close
@@ -359,6 +358,9 @@ end program l1bdiff
 !==================
 
 ! $Log$
+! Revision 1.2  2005/09/23 21:01:13  pwagner
+! use_wall_clock now a component of time_config
+!
 ! Revision 1.1  2005/06/22 19:27:32  pwagner
 ! Reworded Copyright statement, moved rcs id
 !

@@ -20,7 +20,7 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
      & L2GPNameLen, MAXSWATHNAMESBUFSIZE
    use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
    use MLSCommon, only: R8
-   use MLSFiles, only: mls_exists, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
+   use MLSFiles, only: mls_exists, &
      & HDFVERSION_4, HDFVERSION_5, MLS_INQSWATH
    use MLSHDF5, only: mls_h5open, mls_h5close
    use MLSMessageModule, only: MLSMessageConfig
@@ -300,6 +300,9 @@ end program L2GPcat
 !==================
 
 ! $Log$
+! Revision 1.6  2005/09/23 21:01:13  pwagner
+! use_wall_clock now a component of time_config
+!
 ! Revision 1.5  2005/06/22 19:27:33  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
