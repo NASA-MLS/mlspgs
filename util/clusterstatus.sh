@@ -6,6 +6,7 @@
 # clusterstatus.sh [options]
 #    O p t i o n s
 # -dryrun     don't run the sipsl2.sh script
+# -R list     change RECIPIENTS to list
 # -mail       mail the file to RECIPIENTS
 # -scp        scp the file to me
 # -[n]sort    [don't] sort the initial table according to machine (sort by default)
@@ -37,7 +38,8 @@
 # Main Program
 # ************
 # 
-RECIPIENTS="pwagner David.T.Cuddy@jpl.nasa.gov ahanzel@mls.jpl.nasa.gov sysadmin@sdsio.jpl.nasa.gov eparaiso@sdsio-mail.jpl.nasa.gov bsaha@sdsio-mail.jpl.nasa.gov dromo@sdsio.jpl.nasa.gov cvuu@mls.jpl.nasa.gov Brian.W.Knosp@jpl.nasa.gov"
+#RECIPIENTS="pwagner David.T.Cuddy@jpl.nasa.gov ahanzel@mls.jpl.nasa.gov sysadmin@sdsio.jpl.nasa.gov eparaiso@sdsio-mail.jpl.nasa.gov bsaha@sdsio-mail.jpl.nasa.gov dromo@sdsio.jpl.nasa.gov cvuu@mls.jpl.nasa.gov Brian.W.Knosp@jpl.nasa.gov"
+RECIPIENTS="pwagner David.T.Cuddy@jpl.nasa.gov ahanzel@mls.jpl.nasa.gov sysadmin@sdsio.jpl.nasa.gov mliukis@sdsio-mail.jpl.nasa.gov bsaha@sdsio-mail.jpl.nasa.gov dromo@sdsio.jpl.nasa.gov cvuu@mls.jpl.nasa.gov Brian.W.Knosp@jpl.nasa.gov"
 MAILER="/home/pwagner/bin/mailtome.sh"
 # clusternames="lightspeed scramjet speedracer"
 clusternames="lightspeed speedracer"
@@ -58,6 +60,11 @@ while [ "$more_opts" = "yes" ] ; do
     -dryrun )
 	    shift
        dryrun="yes$dryrun"
+       ;;
+    -R )
+	    shift
+       RECIPIENTS="$1"
+       shift
        ;;
     -mail )
 	    shift
@@ -147,28 +154,26 @@ else
 fi
 if [ "$mail" = "yes" -a "$dryrun" != "yesyes" ]
 then
-  #$MAILER -r /home/pwagner/maillogs -s "clusterstatus $TODAY" \
-  # -R "$RECIPIENTS" "$OUTPUT"
   $MAILER -r /home/pwagner/maillogs -s "clusterstatus $TODAY" \
-   -f "Paul Wagner <paul.a.wagner@jpl.nasa.gov>" -R "$RECIPIENTS" "$OUTPUT"
+   -f "Paul Wagner <paul.a.wagner@jpl.nasa.gov>" -F -R "$RECIPIENTS" "$OUTPUT"
 elif [ "$mail" = "yes" ]
 then
-  # $MAILER -r /home/pwagner/maillogs -s "clusterstatus $TODAY" \
-  # -R "$RECIPIENTS" -dryrun "$OUTPUT"
   $MAILER -r /home/pwagner/maillogs -s "clusterstatus $TODAY" \
-   -f "Paul Wagner <paul.a.wagner@jpl.nasa.gov>" -R "$RECIPIENTS" -dryrun "$OUTPUT"
+   -f "Paul Wagner <paul.a.wagner@jpl.nasa.gov>" -F -R "$RECIPIENTS" -dryrun "$OUTPUT"
 elif [ "$scp" = "no" ]
 then
   exit 0
 elif [ "$dryrun" = "no" ]
 then
   echo 'Warning: scp not yet properly tested'
-  # /home/pwagner/private/scptome.sh -r /home/pwagner/scplogs "$OUTPUT" 
 else
   /home/pwagner/private/scptome.sh -dryrun "$OUTPUT" 
 fi
 exit 0
 # $Log$
+# Revision 1.5  2005/09/09 16:43:20  pwagner
+# Changed args to MAILER to forge return address to jpl address
+#
 # Revision 1.4  2005/06/23 22:20:45  pwagner
 # Reworded Copyright statement
 #
