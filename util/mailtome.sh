@@ -6,6 +6,7 @@
 #    O p t i o n s
 # -h[elp]     print brief help message; exit
 # -dryrun     don't actually mail the files--just echo commands
+# -F          set mail Return-path to (hard wired) pwagner@mail.jpl.nasa.gov
 # -f address  show mail as having come from address
 # -r dir      keep record of mailing in directory dir
 # -s "subject line"  use "subject line"
@@ -88,6 +89,7 @@ then
   record_dir="$HOME"
 fi
 debug="no"
+forgereturn="no"
 forge=""
 me="$0"
 my_name=mailtome
@@ -105,6 +107,10 @@ while [ "$more_opts" = "yes" ] ; do
     -dryrun )
 	    shift
        dryrun="yes"
+       ;;
+    -F )
+	    shift
+       forgereturn="yes"
        ;;
     -f )
 	    shift
@@ -160,12 +166,19 @@ Subject: $subject
 EOF
 fi
 
+SENDMAILOPTS="-t"
+if [ "$forgereturn" = "yes" ]
+then
+  SENDMAILOPTS="-t -fpwagner@mail"
+fi
+
 if [ $dryrun = "no" ]
 then
   #echo "About to email $files to $RECIPIENTS"
   if [ "$forge" != "" ]
   then
-    cat "$TEMPLATE" $files | /usr/sbin/sendmail -t
+    cat "$TEMPLATE" $files | /usr/sbin/sendmail $SENDMAILOPTS
+    # cat "$TEMPLATE" $files | /usr/sbin/sendmail -t
   else
     cat $files | mail -s"$subject" $RECIPIENTS
   fi
@@ -174,7 +187,8 @@ then
   if [ "$forge" != "" ]
   then
     cat "$TEMPLATE"
-    echo 'cat '"$TEMPLATE"' '$files' | /usr/sbin/sendmail -t'
+    echo 'cat '"$TEMPLATE"' '$files' | /usr/sbin/sendmail ' $SENDMAILOPTS
+    # echo 'cat '"$TEMPLATE"' '$files' | /usr/sbin/sendmail -t'
   else
     echo 'cat '"$files"' | mail -s"'$subject'"' $RECIPIENTS
   fi
@@ -208,3 +222,6 @@ fi
 rm -f "$TEMPLATE"
 exit
 # $Log$
+# Revision 1.1  2005/10/01 00:36:28  pwagner
+# First commit
+#
