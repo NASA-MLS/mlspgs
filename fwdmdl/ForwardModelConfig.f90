@@ -103,6 +103,7 @@ module ForwardModelConfig
     integer :: Origin     ! Index of first channel (zero or one)
     integer :: Signal     ! Signal index for the channel
     integer :: DACS       ! DACS index if any, else zero
+    integer :: ShapeInds(2) ! Filter shape indices, by sideband, 1 => LSB, 2 => USB
   end type Channels_T
 
   ! The scalar components are sorted in the order they are to make the packing
@@ -319,6 +320,9 @@ contains
 
       ! Work out which channels are used.
 
+      use FilterShapes_m, only: DACSFilterShapes, FilterShapes
+      use MLSSignals_m, only: MatchSignal
+
       type(channels_T), pointer :: Channels(:)
       integer :: UsedDACSSignals(:)          ! Indices in FwdModelConf_T%Signals
                                              ! of signals for our dacs
@@ -327,6 +331,7 @@ contains
       integer :: I, Ier
       integer :: NoUsedChannels
       integer :: SigInd
+      integer :: SX, ThisSideband ! Sideband indices
 
       noUsedChannels = 0
       do sigInd = 1, size(fwdModelConf%signals)
@@ -348,6 +353,17 @@ contains
             channels(channel)%used = i + channels(channel)%origin - 1
             channels(channel)%signal = sigInd
             channels(channel)%dacs = FindFirst ( usedDACSSignals, sigind )
+            if ( channels(channel)%dacs == 0 ) then
+              do thisSideband = fwdModelConf%sidebandStart, fwdModelConf%sidebandStop, 2
+                sx = (thisSideband +3) / 2
+                channels(channel)%shapeInds(sx) = MatchSignal ( &
+                  & filterShapes%signal, fwdModelConf%signals(sigInd), &
+                  & sideband = thisSideband, channel=channels(channel)%used )
+                if ( channels(channel)%shapeInds(sx) == 0 ) &
+                  & call MLSMessage ( MLSMSG_Error, ModuleName, &
+                  &    "No matching channel shape information" )
+              end do
+            end if ! not DACS
           end if
         end do
       end do
@@ -1296,6 +1312,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.81  2005/09/17 00:48:42  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.80  2005/09/03 01:21:33  vsnyder
 ! Spectral parameter offsets stuff
 !
