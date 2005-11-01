@@ -28,7 +28,7 @@ module Tau_M
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  private :: not_used_here
 !---------------------------------------------------------------------------
 contains
 !---------------------------------------------------------------------------
@@ -43,6 +43,8 @@ contains
   ! IncOptDepth).  The half-path point is a zero-thickness layer that
   ! doesn't have any IncOptDepth.  Instead, multiply tau(half_path) by
   ! e_rflty to get tau(half_path+1).
+
+  ! This is just Rad_Tran without Inc_Rad_Path and Radiance calculations
 
     use GLNP, only: NG
     use MLSCommon, only: RP, IP
@@ -106,8 +108,8 @@ contains
         aa = gl_inds(a)
         incoptdepth(more_inds(i)) = incoptdepth(more_inds(i)) + &
           & del_zeta(more_inds(i)) * &
-          & sum( (alpha_path_gl(a:a+ng-1) - alpha_path_c(more_inds(i))) * &            
-               & ds_dz_gw(aa:aa+ng-1) ) 
+          & dot_product( (alpha_path_gl(a:a+ng-1) - alpha_path_c(more_inds(i))), &
+               & ds_dz_gw(aa:aa+ng-1) )
         a = a + ng
       end do ! i
 
@@ -197,6 +199,9 @@ contains
 end module Tau_M
 
 ! $Log$
+! Revision 2.6  2005/11/01 23:02:21  vsnyder
+! PFA Derivatives
+!
 ! Revision 2.5  2005/10/24 20:14:41  vsnyder
 ! Tau after black out is zero, not one
 !
