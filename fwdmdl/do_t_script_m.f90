@@ -13,7 +13,7 @@ module DO_T_SCRIPT_M
 
   implicit NONE
   private
-  public :: DO_T_SCRIPT, TWO_D_T_SCRIPT
+  public :: DO_T_SCRIPT, TWO_D_T_SCRIPT, TWO_D_T_SCRIPT_CLOUD
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -28,7 +28,7 @@ contains
 ! This routine builds the t_script array.  In some notes it's called Delta B.
 
     use D_STAT_TEMP_M, only: STAT_TEMP
-    use MLSCommon, only: IP, RP
+    use MLSKinds, only: IP, RP
 
     real(rp), intent(in) :: T_PATH(:)    ! path temperatures            
     real(rp), intent(in) :: Frq          ! Frequency                    
@@ -54,13 +54,50 @@ contains
   end subroutine DO_T_SCRIPT
 
 !------------------------------------------------  Two_D_T_Script  -----
-
-  subroutine Two_D_T_Script ( t_grid, t_scat, w0, t_space, nu, t_scr )
+  subroutine Two_D_T_Script ( t_grid, t_space, nu, t_scr, B )
 
 ! This routine builds the t_script array.  In some notes it's called Delta B.
 
     use D_STAT_TEMP_M, only: STAT_TEMP
-    use MLSCommon, only: R8, RP
+    use MLSKinds, only: R8, RP
+
+! Inputs:
+
+    real(rp), intent(in) :: t_grid(:) ! path temperatures
+    real(r8), intent(in) :: nu        ! Frequency
+    real(rp), intent(in) :: t_space   ! farside boundary temperature
+    !                                   usually cosmic space (2.7K).
+
+!    real(rp) :: t_tmp(size(t_grid))  ! path temperatures modified by scattering
+
+! Outputs:
+
+    real(rp), intent(out) :: t_scr(:) ! path differential temperatures
+    real(rp), intent(out) :: B(:)     ! Planck radiation function on path
+
+! Internal stuff
+
+    integer :: n_path
+    real(rp) :: B_space
+
+! get path information
+
+    n_path = size(t_grid)
+  
+    B = stat_temp(t_grid,nu)
+    B_space = stat_temp(t_space,nu)
+    t_scr = 0.5_rp * (eoshift(B,1,2.0_rp * B_space - B(n_path)) - &
+      &               eoshift(B,-1,-B(1)))
+
+  end subroutine Two_D_T_Script
+
+!------------------------------------------  Two_D_T_Script_Cloud  -----
+  subroutine Two_D_T_Script_Cloud ( t_grid, t_scat, w0, t_space, nu, t_scr, B )
+
+! This routine builds the t_script array.  In some notes it's called Delta B.
+
+    use D_STAT_TEMP_M, only: STAT_TEMP
+    use MLSKinds, only: R8, RP
 
 ! Inputs:
 
@@ -76,30 +113,24 @@ contains
 ! Outputs:
 
     real(rp), intent(out) :: t_scr(:) ! path differential temperatures
+    real(rp), intent(out) :: B(:)     ! Planck radiation function on path
 
 ! Internal stuff
 
     integer :: n_path
-    real(rp) :: a, b
-    real(rp) :: V1(size(t_grid)), Tb(size(t_grid))
+    real(rp) :: V1(size(t_grid))
 
 ! get path information
 
     n_path = size(t_grid)
-  
-!    V1 = stat_temp(t_grid,nu)
-!    b = -stat_temp(t_grid(1),nu)
-!    a = 2.0_rp * stat_temp(t_space,nu)-stat_temp(t_grid(n_path),nu)
-!    t_scr = 0.5_rp * (eoshift(V1,1,a) - eoshift(V1,-1,b))
 
-    Tb=stat_temp(t_grid,nu)                  !clear-sky Tb
-    V1 = (1.0_rp-w0) * Tb + w0 * t_scat      !(1-w0)*Tb + W0*Tscat
-    b = -stat_temp(t_grid(1),nu)
-    a = 2.0_rp * stat_temp(t_space,nu)-stat_temp(t_grid(n_path),nu)
+    B = stat_temp(t_grid,nu)                 ! clear-sky Planck  function on path
+    V1 = (1.0_rp-w0) * B + w0 * t_scat       !(1-w0)*B + W0*Tscat
 
-    t_scr = 0.5_rp * (eoshift(V1,1,a) - eoshift(V1,-1,b))
+    t_scr = 0.5_rp * (eoshift(V1,1,2.0_rp * stat_temp(t_space,nu) - B(n_path)) - &
+      &               eoshift(V1,-1,-B(1)))
 
-  end subroutine Two_D_T_Script
+  end subroutine Two_D_T_Script_Cloud
 
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
@@ -113,6 +144,9 @@ contains
 end module DO_T_SCRIPT_M
 
 ! $Log$
+! Revision 2.10  2005/06/22 18:08:18  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.9  2004/03/31 20:35:17  jonathan
 ! correction on the cloud effect term
 !

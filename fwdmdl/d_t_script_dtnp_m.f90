@@ -26,44 +26,18 @@ contains
 ! (The 'n' zeta coeff. and the 'p' phi coefficient)
 
   ! -----------------------------------------------  DT_SCRIPT_DT  -----
-  subroutine DT_SCRIPT_DT ( T_PATH, ETA_ZXP, NU, DT_SCR_DT )
+  subroutine DT_SCRIPT_DT ( T_PATH, T_SCRIPT, ETA_ZXP, NU, DT_SCR_DT )
 
-! Let h_o_k = h / k = (Planck's constant) / (Boltzmann's constant)
-! Let hxf = h_o_k * f  (f = Frq.)
-! Let B = stat_temp(T,f) = hxf / (exp(hxf/T) - 1.0)
-! Then: dB/dT = ((B/T)**2)*exp(hxf/T)
-! And : dB/dTnp = dB/dT * Etan * Etap
-! Where: Etan = Eta(n,zeta), Etap = Eta(p,phi)
-
-    use DCOSH1_M, only: COSH1             ! In case RP is double
-    use MLSCommon, only: R8, RP, IP
-    use PHYSICS, only: H_O_K => h_over_k
-    use SCOSH1_M, only: COSH1             ! In case RP is single
-
-! inputs
-
-    real(rp), intent(in) :: t_path(:)     ! path temperatures K
-    real(rp), intent(in) :: eta_zxp(:,:)  ! path eta functions
-!    logical, intent(in) :: not_zero(:,:) ! where eta is not zero
-    real(r8) :: nu                        ! calculation frequency (MHz)
-
-! output
-
-    real(rp), intent(out) :: dt_scr_dt(:,:) ! path dt_script temparature
-!                                           derivative
-! internals
-
-    integer(ip) :: n_path, n_sv, sv_i
-
-    real(rp) :: dstdt(1:size(t_path))
-    real(rp) :: a, b
-
-! Do this inefficiently for now because it is quick and easy
-
-    n_path = size(t_path)
-    n_sv = size(eta_zxp,dim=2)
-
-!{ Compute $\frac{\text{d} B}{\text{d} T} =
+!{ \parskip 5pt
+!  Given $T$, $\nu$ and
+!  $B = \frac{\frac{h \nu}k}{exp\left(\frac{h \nu}{k T}-1\right)}$,
+!  compute $\frac{\text{d} B}{\text{d} T}$.  $B$ is called ``T script''
+!  in many notes and reports.
+!
+! B satisfies the differential equation
+! $\frac{\text{d} B}{\text{d} T} = B \frac{\frac{h\nu}k + B}{T^2}$.
+!
+! The old way was to compute $\frac{\text{d} B}{\text{d} T} =
 !   \exp \left ( \frac{h \nu}{k T} \right )
 !   \left ( \frac{h \nu}
 !     {k T \left [ \exp \left ( \frac{h \nu}{k T} \right ) - 1 \right ]}
@@ -72,9 +46,44 @@ contains
 !     $\frac{\left ( \frac{h \nu}{k T} \right )^2}
 !           { 2 \left [ \cosh \left ( \frac{h \nu}{k T} \right ) - 1 \right ]}$.
 !   $2 ( \cosh x \, - \, 1) / x^2$ has substantial cancellation near $x = 0$,
-!   so a specially-developed procedure is used to evaluate it.
+!   so a specially-developed procedure should be used to evaluate it.
+!
+! From $\frac{\text{d} B}{\text{d} T}$ compute
+! $\frac{\text{d} B}{\text{d} T_{np}} =
+!  \frac{\text{d} B}{\text{d} T} \eta_n \eta_p$ where
+! $\eta_n$ = Eta(n,zeta) and $\eta_p$ = Eta(p,phi).
 
-    dstdt = 1.0_rp / cosh1(h_o_k * nu / t_path) !{ \frac{a^2}{2 ( \cosh a - 1 )}
+!   use DCOSH1_M, only: COSH1             ! In case RP is double
+    use MLSCommon, only: R8, RP, IP
+    use PHYSICS, only: H_O_K => h_over_k
+!   use SCOSH1_M, only: COSH1             ! In case RP is single
+
+! inputs
+
+    real(rp), intent(in) :: t_path(:)     ! path temperatures K
+    real(rp), intent(in) :: t_script(:)   ! B, called "T script" in many notes
+    real(rp), intent(in) :: eta_zxp(:,:)  ! path eta functions
+!    logical, intent(in) :: not_zero(:,:) ! where eta is not zero
+    real(r8) :: nu                        ! calculation frequency (MHz)
+
+! output
+
+    real(rp), intent(out) :: dt_scr_dt(:,:) ! path dt_script temperature
+!                                           derivative
+! internals
+
+    integer(ip) :: n_path, n_sv, sv_i
+
+    real(rp) :: dstdt(1:size(t_path))     ! d "script T" / dT
+    real(rp) :: a, b
+
+! Do this inefficiently for now because it is quick and easy
+
+    n_path = size(t_path)
+    n_sv = size(eta_zxp,dim=2)
+
+!   dstdt = 1.0_rp / cosh1(h_o_k * nu / t_path) !{ \frac{a^2}{2 ( \cosh a - 1 )}
+    dstdt = t_script * ( h_o_k * nu + t_script ) / t_path**2
 
 ! This part Zvi will hate
 
@@ -100,6 +109,9 @@ contains
 
 end module D_T_SCRIPT_DTNP_M
 ! $Log$
+! Revision 2.4  2005/06/22 18:08:18  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.3  2002/10/11 21:26:56  vsnyder
 ! use COSH1 to avoid errors for small nu
 !
