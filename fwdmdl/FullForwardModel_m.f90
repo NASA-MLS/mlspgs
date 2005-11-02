@@ -583,6 +583,9 @@ contains
     call deallocate_test ( d2xdxdt_surface, 'd2xdxdt_surface',moduleName )
     call deallocate_test ( req_out, 'req_out', moduleName )
 
+    if ( toggle(emit) .and. levels(emit) > 0 ) &
+      & call Trace_End ( 'ForwardModel.Hydrostatic' )
+
     ! Loop over sidebands ----------------------------------------------------
     do thisSideband = fwdModelConf%sidebandStart, fwdModelConf%sidebandStop, 2
 
@@ -1562,7 +1565,6 @@ contains
    ! Now, allocate other variables we're going to need later ----------------
 
       if ( toggle(emit) .and. levels(emit) > 0 ) then
-        call Trace_End ( 'ForwardModel.Hydrostatic' )
         call Trace_Begin ( 'ForwardModel.Allocate' )
       end if
 
@@ -3187,6 +3189,9 @@ if ( spect_der_center ) call dump ( dbeta_dv_path_c, name='dbeta_dv_path_c' )
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.245  2005/11/01 23:02:08  vsnyder
+! PFA Derivatives, use precomputed ShapeInds
+!
 ! Revision 2.244  2005/09/17 01:02:38  vsnyder
 ! Out of bounds subscript
 !
