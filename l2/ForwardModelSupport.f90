@@ -585,6 +585,7 @@ contains ! =====     Public Procedures     =============================
       case ( f_scanAverage )
         info%scanAverage = get_boolean(son)
       case ( f_signals )
+        info%noUsedChannels = 0
         allocate ( info%signals (nsons(son)-1), stat = status )
         if ( status /= 0 ) call announceError( AllocateError, root )
         call allocate_test ( info%signalIndices, nsons(son)-1, &
@@ -614,9 +615,12 @@ contains ! =====     Public Procedures     =============================
             info%signals(j)%channels(1:lbound(channels,1)-1) = .false.
             info%signals(j)%channels(lbound(channels,1):ubound(channels,1)) = &
               channels
+            info%noUsedChannels = info%noUsedChannels + count(channels)
             info%signals(j)%channels(ubound(channels,1)+1:) = .false.
           else
             info%signals(j)%channels = .true.
+            info%noUsedChannels = info%noUsedChannels + &
+              & size(info%signals(j)%channels)
           end if
           call deallocate_test ( channels, 'channels', ModuleName )
           call deallocate_test ( signalInds, 'signalInds', ModuleName )
@@ -1265,6 +1269,9 @@ op:     do j = 2, nsons(PFATrees(s))
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.120  2005/11/02 21:37:19  vsnyder
+! Hoist some stuff out of FullForwardModel
+!
 ! Revision 2.119  2005/10/14 23:14:28  vsnyder
 ! Require Frequency Averaging if any PFA molecules
 !
