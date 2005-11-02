@@ -129,6 +129,7 @@ module ForwardModelConfig
     ! Now the other integers
     integer :: No_cloud_species       ! No of Cloud Species '2'
     integer :: No_model_surfs         ! No of Model surfaces '640'
+    integer :: NoUsedChannels         ! Total in all signals
     integer :: Ntimes = 0	      ! Number of times calling FullForwardModel
     integer :: Num_ab_terms           ! No of AB terms '50'
     integer :: Num_azimuth_angles     ! No of azmuth angles '8'
@@ -246,7 +247,6 @@ contains
     use Toggles, only: Switches
 
     type (ForwardModelConfig_T), intent(inout) :: FwdModelConf
-    logical, parameter :: debug = .false.
     integer :: DumpFwm = -1                ! -1 = not called yet, 0 = no dumps,
                                            ! 1 = dump, 2 = dump and stop
     logical :: Error
@@ -257,10 +257,6 @@ contains
       if ( index(switches,'fwmd') /= 0 )  dumpFwm = 1
       if ( index(switches,'fwmD') /= 0 )  dumpFwm = 2
     end if
-    if ( debug ) then
-      print *, 'Entering DeriveFromForwardModelConfig'
-      call dump(fwdModelConf, details=9, skipPFA=.true.)
-    endif
     error = .false.
 
     s1 = fwdModelConf%sidebandStart
@@ -270,34 +266,18 @@ contains
     ! Allocate and compute UsedDACSSignals and allocate DACsStaging.
     call DACS_Stuff ( fwdModelConf%DACsStaging, &
                     & fwdModelConf%usedDACSSignals ) ! Below
-    if ( debug .and. .false. ) then
-      print *, 'Exiting DACS_Stuff'
-      call dump(fwdModelConf, details=9, skipPFA=.true.)
-    endif
 
     ! Work out which channels are used.
     call channel_stuff ( fwdModelConf%channels, fwdModelConf%usedDACSSignals ) ! Below
-    if ( debug .and. .false. ) then
-      print *, 'Exiting channel_stuff'
-      call dump(fwdModelConf, details=9, skipPFA=.true.)
-    endif
 
     ! Work out the spectroscopy we're going to need.
     call SpectroscopyCatalogExtract ! Below
-    if ( debug .and. .false. ) then
-      print *, 'Exiting SpectroscopyCatalogExtract'
-      call dump(fwdModelConf, details=9, skipPFA=.true.)
-    endif
 
     ! Work out the PFA stuff.  The PFA stuff is done here instead of in
     ! ForwardModelSupport because the PFA stuff might be large (at least
     ! compared to the LBL stuff), so it is useful to allocate and destroy
     ! it separately for each forward model run.
     call PFA_Stuff ! Below
-    if ( debug ) then
-      print *, 'Exiting PFA_Stuff'
-      call dump(fwdModelConf, details=9, skipPFA=.true.)
-    endif
 
     if ( dumpFwm > 0 .or. error ) then
       call dump ( fwdModelConf, 'DeriveFromForwardModelConfig' )
@@ -305,10 +285,6 @@ contains
       if ( dumpFwm > 1 .and. .not. error ) stop ! error message will stop later
     end if
 
-    if ( debug ) then
-      print *, 'Exiting DeriveFromForwardModelConfig'
-      call dump(fwdModelConf, details=9, skipPFA=.true.)
-    endif
     if ( error ) &
       & call MLSMessage ( MLSMSG_Error, moduleName, &
         & 'Unrecoverable errors in forward model configuration' )
@@ -329,16 +305,10 @@ contains
 
       integer :: Channel
       integer :: I, Ier
-      integer :: NoUsedChannels
       integer :: SigInd
       integer :: SX, ThisSideband ! Sideband indices
 
-      noUsedChannels = 0
-      do sigInd = 1, size(fwdModelConf%signals)
-        noUsedChannels = noUsedChannels + &
-          & count( fwdModelConf%signals(sigInd)%channels )
-      end do
-      allocate ( channels(noUsedChannels), stat=ier )
+      allocate ( channels(fwdModelConf%noUsedChannels), stat=ier )
       if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'fwdModelConf%channels' )
 
@@ -443,29 +413,13 @@ contains
             & size(fwdModelConf%channels), &
             & size(fwdModelConf%beta_group(b)%pfa(sx)%molecules), &
             & 'Beta_group(b)%PFA(sx)%data', moduleName, fill=0 )
-          if ( debug .and. .false. ) then
-            print *, 'sb, b, n_beta, n_channels, n_molecules ', &
-              & sb, b, size(fwdModelConf%beta_group), size(fwdModelConf%channels), &
-              & size(fwdModelConf%beta_group(b)%pfa(sx)%molecules)
-            call dump(fwdModelConf, details=9, skipPFA=.true.)
-          endif
           do p = 1, size(fwdModelConf%beta_group(b)%pfa(sx)%molecules)
             do channel = 1, size(fwdModelConf%channels)
               ! Look up PFA data and read it if necessary
-              if ( debug .and. .false. ) then
-                print *, 'b, size(beta) ', b, size(fwdModelConf%beta_group)
-                print *, 'signal, size(signals) ', fwdModelConf%channels(channel)%signal, size(fwdModelConf%signalIndices)
-                print *, 'sx, size(pfa) ', sx, size(fwdModelConf%beta_group(b)%pfa)
-                print *, 'channel, p, shape(data) ', channel, p, shape(fwdModelConf%beta_group(b)%pfa(sx)%data)
-              endif
               fwdModelConf%beta_group(b)%pfa(sx)%data(channel,p) = &
                 test_and_fetch_PFA(fwdModelConf%beta_group(b)%pfa(sx)%molecules(p), &
                   & fwdModelConf%signalIndices(fwdModelConf%channels(channel)%signal), &
                   & sb, fwdModelConf%channels(channel)%used, fwdModelConf%spect_der)
-              if ( debug ) then
-                print *, 'after test_and_fetch_PFA ', fwdModelConf%beta_group(b)%pfa(sx)%data(channel,p)
-                call dump(fwdModelConf, details=9, skipPFA=.true.)
-              endif
               if ( fwdModelConf%beta_group(b)%pfa(sx)%data(channel,p) == 0 ) then
                 if ( source_ref(fwdModelConf%where) /= 0 ) &
                 call startErrorMessage ( fwdModelConf%where )
@@ -1312,6 +1266,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.82  2005/11/01 23:01:36  vsnyder
+! Precompute ShapeInds and stash in config
+!
 ! Revision 2.81  2005/09/17 00:48:42  vsnyder
 ! Cannonball polishing
 !
