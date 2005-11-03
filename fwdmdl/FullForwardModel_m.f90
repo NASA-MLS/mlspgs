@@ -2963,12 +2963,14 @@ if ( spect_der_center ) call dump ( dbeta_dv_path_c, name='dbeta_dv_path_c' )
         min_ch_freq_grid =  huge(min_ch_freq_grid)
         max_ch_freq_grid = -huge(min_ch_freq_grid)
         do i = 1, noUsedChannels
-          shapeInd = channels(i)%shapeInds(sx)
-          k = Size(FilterShapes(shapeInd)%FilterGrid)
-          r1 = FilterShapes(shapeInd)%FilterGrid(1)
-          r2 = FilterShapes(shapeInd)%FilterGrid(k)
-          min_ch_freq_grid = MIN(r1, r2, min_ch_freq_grid)
-          max_ch_freq_grid = MAX(r1, r2, max_ch_freq_grid)
+          if ( channels(i)%dacs == 0 ) then
+            shapeInd = channels(i)%shapeInds(sx)
+            k = Size(FilterShapes(shapeInd)%FilterGrid)
+            r1 = FilterShapes(shapeInd)%FilterGrid(1)
+            r2 = FilterShapes(shapeInd)%FilterGrid(k)
+            min_ch_freq_grid = MIN(r1, r2, min_ch_freq_grid)
+            max_ch_freq_grid = MAX(r1, r2, max_ch_freq_grid)
+          end if
         end do
 
         if ( FwdModelConf%anyPFA(sx) ) call get_channel_centers ( channelCenters )
@@ -3189,6 +3191,9 @@ if ( spect_der_center ) call dump ( dbeta_dv_path_c, name='dbeta_dv_path_c' )
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.246  2005/11/02 21:38:48  vsnyder
+! Repair a broken tracing message
+!
 ! Revision 2.245  2005/11/01 23:02:08  vsnyder
 ! PFA Derivatives, use precomputed ShapeInds
 !
