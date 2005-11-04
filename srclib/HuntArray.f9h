@@ -184,7 +184,9 @@
         if ( ( searchDirection == 1  .and. wentDown ) .or. &
           &  ( searchDirection == -1 .and. wentUp ) ) then
            call dump(values, 'values')
+           call selfDiff(values, 'values increment')
            call dump(list, 'list')
+           call selfDiff(list, 'list increment')
            ! print*, 'valueIndex ', valueIndex
            ! print*, 'thisValue ', thisValue
            ! print*, 'lowerBelow ', lowerBelow
@@ -248,6 +250,9 @@
 ! end subroutine HuntArray_r*
 
 ! $Log$
+! Revision 1.7  2005/06/22 20:03:55  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 1.6  2005/01/19 01:08:22  pwagner
 ! Dumps list, values if list out of order
 !
