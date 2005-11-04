@@ -1148,8 +1148,8 @@ contains ! =====     Public Procedures     =============================
       if ( createFileFlag .and. TOOLKIT .and. .not. SKIPMETADATA .and. &
         & outputType /= l_l2fwm .and. &
         & .not. (distributingSources .and. CATENATESPLITS) ) then
-        call add_metadata ( node, file_base, NumPermitted, thisDirect%sdNames, &
-          & hdfVersion, filetype, errortype )
+        call add_metadata ( node, file_base, &
+          & hdfVersion, filetype, errortype, NumPermitted, thisDirect%sdNames )
         if ( errortype /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'DirectWriteCommand unable to addmetadata to ' // trim(filename), &
           & MLSFile=directFile )
@@ -1970,6 +1970,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.123  2005/11/04 18:54:04  pwagner
+! Accommodates changed interface to add_metadata
+!
 ! Revision 2.122  2005/10/28 23:17:37  pwagner
 ! Print missing outputType when unable to find suitable for distributing sources
 !
