@@ -24,7 +24,7 @@ module DUMP_0
 
   implicit NONE
   private
-  public :: AfterSub, DIFF, DUMP, DUMP_NAME_V_PAIRS, DUMPSIZE
+  public :: AfterSub, DIFF, DUMP, DUMP_NAME_V_PAIRS, DUMPSIZE, SELFDIFF
 
   interface DIFF        ! dump diffs n-d arrays of numeric type
     module procedure DIFF_1D_DOUBLE, DIFF_1D_REAL
@@ -45,6 +45,11 @@ module DUMP_0
   interface DUMP_NAME_V_PAIRS   ! dump name-value pairs, names in string list
     module procedure DUMP_NAME_V_PAIRS_DOUBLE, DUMP_NAME_V_PAIRS_INTEGER
     module procedure DUMP_NAME_V_PAIRS_REAL
+  end interface
+  interface SELFDIFF       ! dump increments between successive array values
+    module procedure SELFDIFF_INTEGER
+    module procedure SELFDIFF_REAL
+    module procedure SELFDIFF_DOUBLE
   end interface
   interface DUMPSIZE
     module procedure DUMPSIZE_INTEGER, DUMPSIZE_REAL
@@ -1510,6 +1515,84 @@ contains
     end if
   end subroutine DumpSize_real
 
+ ! ---------------------------------------------  SELFDIFF_DOUBLE  -----
+  subroutine SELFDIFF_DOUBLE ( ARRAY, NAME, &
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    ! dump the running increment == ( array(i) - array(i-1) )
+    double precision, intent(in) :: ARRAY(:)
+    character(len=*), intent(in), optional :: NAME
+    double precision, intent(in), optional :: FILLVALUE
+    logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, intent(in), optional :: STATS
+    logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND ! Low bound for Array
+    ! Local variables
+    integer                                  :: i
+    double precision, dimension(size(array)) :: increment
+    ! Executable
+    if ( size(array) < 2 ) return
+    do i=2, size(array)
+      increment(i-1) = array(i) - array(i-1)
+    enddo
+    call dump ( increment, NAME, &
+      & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+  end subroutine SELFDIFF_DOUBLE
+
+ ! ---------------------------------------------  SELFDIFF_INTEGER  -----
+  subroutine SELFDIFF_INTEGER ( ARRAY, NAME, &
+    & FILLVALUE, CLEAN, FORMAT, WIDTH, WHOLEARRAY, STATS, RMS, LBOUND )
+    ! dump the running increment == ( array(i) - array(i-1) )
+    integer, intent(in) :: ARRAY(:)
+    character(len=*), intent(in), optional :: NAME
+    integer, intent(in), optional :: FILLVALUE
+    logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, intent(in), optional :: STATS
+    logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND ! Low bound for Array
+    ! Local variables
+    integer                                  :: i
+    integer, dimension(size(array)) :: increment
+    ! Executable
+    if ( size(array) < 2 ) return
+    do i=2, size(array)
+      increment(i-1) = array(i) - array(i-1)
+    enddo
+    call dump ( increment, NAME, &
+    & FILLVALUE, CLEAN, FORMAT, WIDTH, WHOLEARRAY, STATS, RMS, LBOUND )
+  end subroutine SELFDIFF_INTEGER
+
+ ! ---------------------------------------------  SELFDIFF_REAL  -----
+  subroutine SELFDIFF_REAL ( ARRAY, NAME, &
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    ! dump the running increment == ( array(i) - array(i-1) )
+    real, intent(in) :: ARRAY(:)
+    character(len=*), intent(in), optional :: NAME
+    real, intent(in), optional :: FILLVALUE
+    logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, intent(in), optional :: STATS
+    logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND ! Low bound for Array
+    ! Local variables
+    integer                                  :: i
+    real, dimension(size(array)) :: increment
+    ! Executable
+    if ( size(array) < 2 ) return
+    do i=2, size(array)
+      increment(i-1) = array(i) - array(i-1)
+    enddo
+    call dump ( increment, NAME, &
+      & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+  end subroutine SELFDIFF_REAL
+
   ! ------------------------------------------------------  Empty  -----
   subroutine Empty ( Name )
     character(len=*), intent(in), optional :: Name
@@ -1643,6 +1726,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.48  2005/11/04 18:49:02  pwagner
+! Added SelfDiff procedures to dump diffs among consecutive 1d array elems
+!
 ! Revision 2.47  2005/10/03 18:05:52  pwagner
 ! Allocated memory now dumped in units of MEMORY_UNITS
 !
