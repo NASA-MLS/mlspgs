@@ -150,7 +150,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
    character (len=*), parameter :: DATA_FIELD4 = 'Quality'
    ! This is the above except for Status which has proved troublesome
    character (len=*), parameter :: DATA_FIELDS = &
-     & 'L2gpValue,L2gpPrecision,Quality'
+     & 'L2gpValue,L2gpPrecision,Quality,Status'
 
    ! The following are the current geolocation fields
    character (len=*), parameter :: GEO_FIELD1 = 'Latitude'
@@ -163,10 +163,9 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
    character (len=*), parameter :: GEO_FIELD8 = 'ChunkNumber'
    character (len=*), parameter :: GEO_FIELD9 = 'Pressure'
    character (len=*), parameter :: GEO_FIELD10= 'Frequency'
-   ! These are the above except for 8,9,10 which have special attributes
    character (len=*), parameter :: GEO_FIELDS = &
      & 'Latitude,Longitude,LocalSolarTime,SolarZenithAngle,LineOfSightAngle' // &
-     & ',OrbitGeodeticAngle'
+     & ',OrbitGeodeticAngle,Pressure,Time,Frequency,ChunkNumber'
 
    ! The following are the dimension names according to the mls spec
    character (len=*), parameter :: DIM_NAME1 = 'nTimes'
@@ -3449,9 +3448,9 @@ contains ! =====     Public Procedures     =============================
     verbose = ( index(myOptions, 'v') > 0 )
     select case (trim(myFields))
     case ('value')
-      myFields = 'l2gpvalue, l2gpPrecision, status, quality'
+      myFields = lowercase(DATA_FIELDS) ! 'l2gpvalue, l2gpPrecision, status, quality'
     case ('geolocation')
-      myFields = lowercase(GEO_FIELDS) // ',pressure,time,frequency,chunknumber'
+      myFields = lowercase(GEO_FIELDS) ! // ',pressure,time,frequency,chunknumber'
     case default
       ! Not a special case
     end select
@@ -3580,7 +3579,7 @@ contains ! =====     Public Procedures     =============================
     !    & ModuleName )
     select case (trim(myFields))
     case ('geolocation')
-      myFields = lowercase(GEO_FIELDS) // ',pressure,time,frequency,chunknumber'
+      myFields = lowercase(GEO_FIELDS) ! // ',pressure,time,frequency,chunknumber'
     case default
       ! Not a special case
     end select
@@ -3676,6 +3675,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.128  2005/10/28 23:12:02  pwagner
+! Removed unnecessary HGridField from repairL2GPData
+!
 ! Revision 2.127  2005/10/18 23:06:49  pwagner
 ! Belated yet crude hack to insure Tropopause units_name is hPa
 !
