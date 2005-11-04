@@ -78,7 +78,7 @@ contains ! =====     Public Procedures     =============================
       & S_COPY, S_HGrid, S_OUTPUT, S_TIME
     use Intrinsic, only: l_ascii, l_swath, l_hdf, Lit_indices, PHYQ_Dimensionless
     use L2AUXData, only: L2AUXDATA_T, cpL2AUXData
-    use L2GPData, only: AVOIDUNLIMITEDDIMS, L2GPData_T, &
+    use L2GPData, only: AVOIDUNLIMITEDDIMS, L2GPData_T, L2GPNameLen, &
       & MAXSWATHNAMESBUFSIZE, cpL2GPData
     use L2PC_m, only: WRITEONEL2PC, OUTPUTHDF5L2PC
     use L2ParInfo, only: parallel
@@ -128,6 +128,7 @@ contains ! =====     Public Procedures     =============================
     integer :: FIELD_NO                 ! Index of assign vertex sons of Key
     integer :: FIELDVALUE               ! For get_boolean
     character (len=132) :: FILE_BASE    ! From the FILE= field
+    integer :: FORMATTYPE               ! l_hdf or l_swath
     logical, dimension(field_first:field_last) :: GOT ! Fields
     integer :: GSON                     ! Son of Son -- an assign node
     integer :: hdfVersion               ! 4 or 5 (corresp. to hdf4 or hdf5)
@@ -153,6 +154,8 @@ contains ! =====     Public Procedures     =============================
     logical :: PACKED                   ! Do we pack this l2pc?
     character (len=132) :: PhysicalFilename
     integer :: QUANTITIESNODE           ! A tree node
+    character(len=L2GPNameLen), dimension(MAXQUANTITIESPERFILE) :: &
+      &                           QuantityNames  ! From "quantities" field
     integer :: RECLEN                   ! For file stuff
     character (len=MAXSWATHNAMESBUFSIZE) :: rename
     logical :: RepairGeoLocations
@@ -372,19 +375,23 @@ contains ! =====     Public Procedures     =============================
         if ( DEBUG ) print *, 'outputPhysicalfileName: ', PhysicalfileName
         if ( DEBUG ) print *, 'repairGeoLocations: ', repairGeoLocations
         if ( DEBUG ) print *, 'create: ', create
-        call display_string ( lit_indices(output_type), &
+        if ( DEBUG ) call display_string ( lit_indices(output_type), &
         &             strip=.true., advance='yes' )
-        call display_string ( lit_indices(input_type), &
+        if ( DEBUG ) call display_string ( lit_indices(input_type), &
         &             strip=.true., advance='yes' )
+
+        if ( CHECKPATHS ) cycle
 
         select case ( output_type )
         case ( l_l2aux ) ! --------------------- Copying l2aux files -----
+          formattype = l_hdf
           ! Note that we haven't yet implemented repair stuff for l2aux
           ! So crashed chunks remain crashed chunks
           call cpL2AUXData(inputFile, &
             & outputFile, create2=create, &
             & sdList=trim(sdList))
         case ( l_l2gp, l_l2dgg ) ! --------------------- Copying l2gp files -----
+          formattype = l_swath
           ! print *, 'Before cpL2GPFata'
           ! print *, 'noGapsHGIndex: ', noGapsHGIndex
           ! call dump(hGrids)
@@ -428,6 +435,11 @@ contains ! =====     Public Procedures     =============================
           call writeHGridComponents( trim(PhysicalFilename), HGrids(noGapsHGIndex) )
         case default
         end select
+        
+        if ( TOOLKIT ) then
+          call add_metadata ( son, file_base, &
+          & outputfile%hdfVersion, formattype, metadata_error )
+        endif
 
       case (s_HGrid)
         ! call announce_error ( spec_no, &
@@ -660,29 +672,36 @@ contains ! =====     Public Procedures     =============================
   end subroutine Output_Close
 
   ! ---------------------------------------------  add_metadata  -----
-  subroutine add_metadata ( node, fileName, numquantitiesperfile, &
-    & quantityNames, hdfVersion, filetype, metadata_error )
+  subroutine add_metadata ( node, fileName, &
+    & hdfVersion, filetype, metadata_error, &
+    & numquantitiesperfileinput, quantityNamesInput )
     
+    use Allocate_Deallocate, only: Deallocate_Test, Allocate_test
     use INIT_TABLES_MODULE, only: L_L2DGG
     use Intrinsic, only: l_swath, l_hdf
-    use MLSFiles, only: GetPCFromRef, split_path_name
+    use L2GPData, only: L2GPNameLen, MAXSWATHNAMESBUFSIZE
+    use MLSFiles, only: GetPCFromRef, MLS_INQSWATH, split_path_name
+    use MLSHDF5, only: GetAllHDF5DSNames
+    use MLSHDFEOS, only: 
     use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
       & MLSPCF_L2GP_START, mlspcf_l2dgg_start, mlspcf_l2dgg_end, &
       & Mlspcf_mcf_l2dgm_start, Mlspcf_mcf_l2dgg_start, &
       & Mlspcf_mcf_l2gp_start
+    use MLSStringLists, only: List2Array, NumStringElements
     use WriteMetadata, only: Populate_metadata_std, &
       & Populate_metadata_oth, Get_l2gp_mcf
   ! Deal with metadata--1st for direct write, but later for all cases
   integer, intent(in) :: node
   character(len=*), intent(in) :: fileName
-  integer, intent(in) :: numquantitiesperfile
-  character(len=*), dimension(:), intent(in) :: quantityNames
   integer, intent(in) :: hdfVersion
   integer, intent(in) :: fileType  ! l_swath, l_hdf, ..
   integer, intent(out) :: metadata_error
+  integer, optional, intent(in) :: numquantitiesperfileInput
+  character(len=*), dimension(:), optional, intent(in) :: quantityNamesInput
   
   ! Internal variables
   integer :: baseIndex
+  logical, parameter :: countEmpty = .true.
   logical, parameter :: DEBUG = .false.
   character(len=*), parameter :: L2GPHEAD = 'L2GP-'
   integer :: field_no
@@ -691,12 +710,17 @@ contains ! =====     Public Procedures     =============================
   integer :: L2aux_mcf
   integer :: l2dgg_mcf
   integer :: L2gp_mcf
+  integer :: listSize
   character (len=32) :: meta_name=' '
+  integer :: numquantitiesperfile
   character (len=132) :: path
   character(len=len(fileName)) :: PhysicalFilename
+  character(len=L2GPNameLen), dimension(:), pointer :: quantityNames => null()
   integer :: returnStatus
+  character(len=MAXSWATHNAMESBUFSIZE) :: sdList
   integer :: Version
   ! Executable
+  nullify(quantityNames)
   l2aux_mcf = mlspcf_mcf_l2dgm_start
   l2dgg_mcf = mlspcf_mcf_l2dgg_start
   l2gp_mcf  = mlspcf_mcf_l2gp_start - 1
@@ -733,6 +757,20 @@ contains ! =====     Public Procedures     =============================
          call MLSMessage ( MLSMSG_Error, ModuleName, &
            &  "no mcf for this l2gp species in" // trim(file_base) )
      end if
+     
+     ! What quantities do we want metadata for?
+     if ( present(quantityNamesInput) .and. present(numquantitiesperfileInput) ) then
+       call allocate_test( quantityNames, size(quantityNamesInput), &
+         & 'quantityNames', ModuleName )
+       numquantitiesperfile = numquantitiesperfileInput
+       quantityNames = quantityNamesInput
+     else
+       numquantitiesperfile = mls_InqSwath ( PhysicalFilename, sdList, listSize, &
+           & hdfVersion=hdfVersion)
+       call allocate_test(quantityNames, numquantitiesperfile, &
+         & 'quantityNames', ModuleName )
+       call List2Array( sdList, quantityNames, countEmpty )
+     endif
 
      if ( QuantityNames(numquantitiesperfile) &
        & == QuantityNames(1) ) then
@@ -791,6 +829,18 @@ contains ! =====     Public Procedures     =============================
          call output ( trim(QuantityNames(field_no)) , advance='yes' )
        end do
      end if
+     if ( present(quantityNamesInput) .and. present(numquantitiesperfileInput) ) then
+       call allocate_test( quantityNames, size(quantityNamesInput), &
+         & 'quantityNames', ModuleName )
+       numquantitiesperfile = numquantitiesperfileInput
+       quantityNames = quantityNamesInput
+     else
+       call GetAllHDF5DSNames ( PhysicalFilename, '/', sdList )
+       numquantitiesperfile = NumStringElements ( sdList, countEmpty )
+       call allocate_test( quantityNames, numquantitiesperfile, &
+         & 'quantityNames', ModuleName )
+       call List2Array( sdList, quantityNames, countEmpty )
+     endif
      call populate_metadata_oth &
        & ( FileHandle, l2aux_mcf, &
        & numquantitiesperfile, QuantityNames,&
@@ -804,6 +854,7 @@ contains ! =====     Public Procedures     =============================
       & // trim(filename))
   end select
 
+  call deallocate_test( quantityNames, 'quantityNames', ModuleName )
   end subroutine add_metadata
 
 ! =====     Private Procedures     =====================================
@@ -991,8 +1042,9 @@ contains ! =====     Public Procedures     =============================
       if ( .not. TOOLKIT ) return
 
       ! Write the metadata file
-      call add_metadata ( son, fileName, numquantitiesperfile, &
-        & quantityNames, hdfVersion, l_hdf, metadata_error )
+      call add_metadata ( son, fileName, &
+        & hdfVersion, l_hdf, metadata_error, &
+        & numquantitiesperfile, quantityNames )
     else if ( returnStatus /= PGS_S_SUCCESS ) then
       call announce_error ( son, &
         &  "Error finding l2aux file matching:  "//fileName, returnStatus)
@@ -1113,8 +1165,9 @@ contains ! =====     Public Procedures     =============================
       if ( .not. TOOLKIT ) return
 
       ! Write the metadata file
-      call add_metadata ( son, fileName, numquantitiesperfile, &
-        & quantityNames, hdfVersion, l_swath, metadata_error )
+      call add_metadata ( son, fileName, &
+        & hdfVersion, l_swath, metadata_error, &
+        & numquantitiesperfile, quantityNames )
     else if ( returnStatus /= PGS_S_SUCCESS ) then
       call announce_error ( son, &
         &  "Error finding " // trim(outputTypeStr)  // &
@@ -1284,6 +1337,7 @@ contains ! =====     Public Procedures     =============================
             & 'No entry in filedatabase for ' // &
             & trim(DirectDatabase(DB_index)%fileName) )
         endif
+        if ( CHECKPATHS ) cycle
         madeFile = .true.
         call cpL2GPData(inputFile, &
           & outputFile, create2=create2, &
@@ -1291,8 +1345,8 @@ contains ! =====     Public Procedures     =============================
         create2 = .false.
       end do
       if ( TOOLKIT .and. madeFile ) then
-        call add_metadata ( 0, trim(l2gpPhysicalFilename), 1, &
-          & (/'dgg'/), HDFVERSION_5, l_l2dgg, returnStatus )
+        call add_metadata ( 0, trim(l2gpPhysicalFilename), &
+          & HDFVERSION_5, l_l2dgg, returnStatus, 1, (/'dgg'/) )
         if ( returnStatus /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'unable to addmetadata to ' // trim(l2gpPhysicalFilename) )
       end if
@@ -1334,6 +1388,7 @@ contains ! =====     Public Procedures     =============================
       madeFile = .false.
       create2 = .true.
       do DB_index = 1, size(DirectDatabase)
+        if ( CHECKPATHS ) cycle
         if ( DirectDatabase(DB_index)%autoType /= l_l2aux ) cycle
         if ( .not. associated(DirectDatabase(DB_index)%sdNames) ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
@@ -1383,8 +1438,8 @@ contains ! =====     Public Procedures     =============================
       end do
       ! Is metadata really needed for l2aux files?
       if ( TOOLKIT .and. madeFile ) then
-        call add_metadata ( 0, trim(l2auxPhysicalFilename), 1, &
-          & (/'dgm'/), HDFVERSION_5, l_hdf, returnStatus )
+        call add_metadata ( 0, trim(l2auxPhysicalFilename), &
+          & HDFVERSION_5, l_hdf, returnStatus, 1, (/'dgm'/) )
         if ( returnStatus /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'unable to addmetadata to ' // trim(l2auxPhysicalFilename) )
       end if
@@ -1433,6 +1488,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.115  2005/11/04 18:55:46  pwagner
+! Can add metadata when copying swaths, datasets
+!
 ! Revision 2.114  2005/10/28 23:19:01  pwagner
 ! Many changes related to Copy; one may fixed a bug
 !
