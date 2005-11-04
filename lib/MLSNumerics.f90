@@ -14,7 +14,7 @@ module MLSNumerics              ! Some low level numerical stuff
 !=============================================================================
 
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use DUMP_0, only : DUMP
+  use DUMP_0, only : DUMP, SELFDIFF
   use MatrixModule_0, only: CreateBlock, M_Absent, MatrixElement_T, Sparsify
   use MLSCommon, only : DEFAULTUNDEFINEDVALUE, R4, R8, Rm, &
     & filterValues
@@ -26,7 +26,7 @@ module MLSNumerics              ! Some low level numerical stuff
   private
   public :: Dump, EssentiallyEqual, Hunt, InterpolateArraySetup
   public :: InterpolateArrayTeardown, InterpolateValues
-  public :: IsFillValue, ReplaceFillValues
+  public :: IsFillValue, IsMonotonic, Monotonize, ReplaceFillValues
 
   type, public :: Coefficients_R4
     private
@@ -160,6 +160,10 @@ module MLSNumerics              ! Some low level numerical stuff
 
   interface IsFillValue
     module procedure IsFillValue_r4, IsFillValue_r8, IsFillValue_int
+  end interface
+
+  interface IsMonotonic
+    module procedure IsMonotonic_r4, IsMonotonic_r8, IsMonotonic_int
   end interface
 
   interface Monotonize
@@ -873,7 +877,6 @@ contains
 ! ------------------------------------------------- IsFillValue ---
 
   ! This family of routines checks to see if an arg is a fillValue
-  ! This family of routines checks to see if an arg is a fillValue
   elemental logical function IsFillValue_int ( A, FILLVALUE )
     integer, intent(in) :: A
     integer ,intent(in), optional :: FILLVALUE
@@ -903,6 +906,113 @@ contains
     IsFillValue_r8 = &
       & abs(a - myFillValue) < Real(FILLVALUETOLERANCE, r8)
   end function IsFillValue_r8
+
+! ------------------------------------------------- IsMonotonic ---
+
+  ! This family of routines checks to see if an array monotonically increases
+  ! By default it returns TRUE if either monotonic increasing or decreasing
+  ! If optional DIRECTION is supplied and '+', TRUE means increasing
+  ! if '-', TRUE means drecreasing
+  ! We are strict in the sense that any "stalling" produces FALSE
+  ! Thus {0, 1, 2, 2, 3} is not monotonic
+  !
+  ! If you would like to know instead whether an array is "never falling"
+  ! or "never rising" that's a different though related condition
+  logical function IsMonotonic_int ( ARRAY, DIRECTION ) result(sooDesu)
+    integer, dimension(:), intent(in) :: ARRAY
+    character(len=*), intent(in), optional :: DIRECTION
+    ! Internal variables
+    character(len=1) :: MYDIRECTION
+    integer :: i
+    integer, dimension(size(array)-1) :: increment
+    integer :: incMax
+    integer :: incMin
+    integer, parameter :: ZERO = 0
+    ! Executable
+    myDirection = '0' ! Either direction is OK, as long as monotonic
+    if ( present(direction) ) myDirection = direction
+    if ( size(array) < 2 ) then
+      sooDesu = .true.
+      return
+    endif
+    do i=2, size(array)
+      increment(i-1) = array(i) - array(i-1)
+    enddo
+    incMin = minval(increment)
+    incMax = maxval(increment)
+    select case (myDirection)
+    case ('+') ! Must be increasing monotonic
+      sooDesu = ( incMin > zero )
+    case ('-') ! Must be decreasing monotonic
+      sooDesu = ( incMax < zero )
+    case default ! either will do
+      sooDesu = ( incMin > zero ) .or. ( incMax < zero )
+    end select
+  end function IsMonotonic_int
+
+  logical function IsMonotonic_r4 ( ARRAY, DIRECTION ) result(sooDesu)
+    real(r4), dimension(:), intent(in) :: ARRAY
+    character(len=*), intent(in), optional :: DIRECTION
+    ! Internal variables
+    character(len=1) :: MYDIRECTION
+    integer :: i
+    real(r4), dimension(size(array)-1) :: increment
+    real(r4) :: incMax
+    real(r4) :: incMin
+    real(r4), parameter :: ZERO = 0._r4
+    ! Executable
+    myDirection = '0' ! Either direction is OK, as long as monotonic
+    if ( present(direction) ) myDirection = direction
+    if ( size(array) < 2 ) then
+      sooDesu = .true.
+      return
+    endif
+    do i=2, size(array)
+      increment(i-1) = array(i) - array(i-1)
+    enddo
+    incMin = minval(increment)
+    incMax = maxval(increment)
+    select case (myDirection)
+    case ('+') ! Must be increasing monotonic
+      sooDesu = ( incMin > zero )
+    case ('-') ! Must be decreasing monotonic
+      sooDesu = ( incMax < zero )
+    case default ! either will do
+      sooDesu = ( incMin > zero ) .or. ( incMax < zero )
+    end select
+  end function IsMonotonic_r4
+
+  logical function IsMonotonic_r8 ( ARRAY, DIRECTION ) result(sooDesu)
+    real(r8), dimension(:), intent(in) :: ARRAY
+    character(len=*), intent(in), optional :: DIRECTION
+    ! Internal variables
+    character(len=1) :: MYDIRECTION
+    integer :: i
+    real(r8), dimension(size(array)-1) :: increment
+    real(r8) :: incMax
+    real(r8) :: incMin
+    real(r8), parameter :: ZERO = 0._r8
+    ! Executable
+    myDirection = '0' ! Either direction is OK, as long as monotonic
+    if ( present(direction) ) myDirection = direction
+    if ( size(array) < 2 ) then
+      sooDesu = .true.
+      return
+    endif
+    do i=2, size(array)
+      increment(i-1) = array(i) - array(i-1)
+    enddo
+    incMin = minval(increment)
+    incMax = maxval(increment)
+    select case (myDirection)
+    case ('+') ! Must be increasing monotonic
+      sooDesu = ( incMin > zero )
+    case ('-') ! Must be decreasing monotonic
+      sooDesu = ( incMax < zero )
+    case default ! either will do
+      sooDesu = ( incMin > zero ) .or. ( incMax < zero )
+    end select
+  end function IsMonotonic_r8
 
 ! ============================================================================
   ! This family of subroutines bridges missing values by interpolation
@@ -1125,6 +1235,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.39  2005/11/04 18:47:34  pwagner
+! Added IsMonotonic; Monotonize made public
+!
 ! Revision 2.38  2005/08/15 20:35:37  pwagner
 ! Added Monotonize interfaces
 !
