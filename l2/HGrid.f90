@@ -706,7 +706,7 @@ contains ! =====     Public Procedures     =============================
     use MLSCommon, only: MLSFile_T, NameLen, RK => R8, TAI93_RANGE_T
     use MLSFiles, only: Dump, GetMLSFileByType
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
-    use MLSNumerics, only: HUNT, InterpolateValues
+    use MLSNumerics, only: HUNT, InterpolateValues, isMonotonic, Monotonize
     use MLSStringLists, only: SwitchDetail
     use OUTPUT_M, only: OUTPUT
     use String_Table, only: Display_String
@@ -790,6 +790,11 @@ contains ! =====     Public Procedures     =============================
     nullify ( mif1GeodAngle )
     call Allocate_test ( mif1GeodAngle, noMAFs, 'mif1Geodangle', ModuleName )
     mif1GeodAngle = l1bField%dpField(1,1,1:noMAFs)
+    if ( .not. isMonotonic(mif1GeodAngle) ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'mif1GeodAngle is not monotonic--will try anyway' )
+      call monotonize(mif1GeodAngle)
+    endif
 
     ! Get or guess the start of the next chunk.
     i = noMAFs - chunk%noMAFsUpperOverlap + 1
@@ -1681,6 +1686,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.75  2005/11/04 18:52:36  pwagner
+! Added warning, correction if mif1GeodAngle non-monotonic
+!
 ! Revision 2.74  2005/10/22 00:49:26  pwagner
 ! Should throw error when l1boa file not in filedatabase
 !
