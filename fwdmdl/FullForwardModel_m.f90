@@ -926,12 +926,11 @@ contains
 
         ! Handle PFA molecules
         if ( FwdModelConf%anyPFA(sx) ) then
-          if ( FwdModelConf%anyLBL(sx) .and. FwdModelConf%do_freq_avg .and. &
-            & any_der ) then
+          if ( frq_avg_sel == 15 ) then ! See Frequency_Average for values
             ! For every channel, frequency average the incremental radiance at
             ! every point along the path, giving Rad_Avg_Path for every channel
-            ! and every point along the path.  Then multiply by Tau_PFA to
-            ! combine PFA contribution.
+            ! and every point along the path.  Multiply by Tau_PFA to combine
+            ! PFA contribution in Frequency_Loop.
             call frequency_avg_rad_path
           end if
           call frequency_loop ( alpha_path_c(:npc), beta_path_c(:npc,:), c_inds, &
@@ -2121,7 +2120,7 @@ if ( spect_der_center ) call dump ( k_spect_dv(1:noUsedChannels,:,:) )
         do c = 1, noUsedChannels
           if ( channels(c)%dacs == 0 ) then
             shapeInd = channels(c)%shapeInds(sx)
-            if ( fwdModelConf%anyPFA(sx) ) then ! sel = 14
+            if ( fwdModelConf%anyPFA(sx) ) then ! frq_avg_sel = 14
             ! Combine LBL and PFA Tau's to get radiances.
             ! It's OK to combine the Tau's before doing the frequency
             ! averaging because the filter function is normalized.
@@ -2155,8 +2154,7 @@ if ( spect_der_center ) call dump ( k_spect_dv(1:noUsedChannels,:,:) )
       ! filter shapes
 
       if ( temp_der ) call frequency_average_derivative ( grids_tmp, &
-        &               Tau_LBL, Tau_PFA,  k_temp_frq(:noFreqs,:), &
-        &               k_temp(:,ptg_i,:), 1 )
+        &               k_temp_frq(:noFreqs,:), k_temp(:,ptg_i,:), 1 )
 
       ! Frequency Average the atmospheric derivatives with the appropriate
       ! filter shapes
@@ -2164,9 +2162,8 @@ if ( spect_der_center ) call dump ( k_spect_dv(1:noUsedChannels,:,:) )
       if ( atmos_der ) then
         do k = 1, no_mol
           if ( fwdModelConf%moleculeDerivatives(k) ) &
-            & call frequency_average_derivative ( grids_f, Tau_LBL, Tau_PFA, &
-              & k_atmos_frq(:noFreqs,:), &
-              & k_atmos(:,ptg_i,:), k )
+            & call frequency_average_derivative ( grids_f, &
+              & k_atmos_frq(:noFreqs,:), k_atmos(:,ptg_i,:), k )
         end do                        ! Loop over major molecules
       end if                          ! Want derivatives for atmos
 
@@ -2177,22 +2174,19 @@ if ( spect_der_center ) call dump ( k_spect_dv(1:noUsedChannels,:,:) )
 call dump ( k_spect_dv_frq, name='k_spect_dv_frq' )
         do k = 1, size(fwdModelConf%lineCenter)
           call frequency_average_derivative &
-            & ( grids_v, Tau_LBL, Tau_PFA, k_spect_dv_frq(:noFreqs,:), &
-            &   k_spect_dv(:,ptg_i,:), k )
+            & ( grids_v, k_spect_dv_frq(:noFreqs,:), k_spect_dv(:,ptg_i,:), k )
         end do
       end if
       if ( spect_der_width ) then
         do k = 1, size(fwdModelConf%lineWidth)
           call frequency_average_derivative &
-            & ( grids_w, Tau_LBL, Tau_PFA, k_spect_dw_frq(:noFreqs,:), &
-            &   k_spect_dw(:,ptg_i,:), k )
+            & ( grids_w, k_spect_dw_frq(:noFreqs,:), k_spect_dw(:,ptg_i,:), k )
         end do
       end if
       if ( spect_der_width_TDep ) then
         do k = 1, size(fwdModelConf%lineWidth_TDep)
           call frequency_average_derivative &
-            & ( grids_n, Tau_LBL, Tau_PFA, k_spect_dn_frq(:noFreqs,:), &
-            &   k_spect_dn(:,ptg_i,:), k )
+            & ( grids_n, k_spect_dn_frq(:noFreqs,:), k_spect_dn(:,ptg_i,:), k )
         end do
       end if
 
@@ -2203,14 +2197,12 @@ call dump ( k_spect_dv_frq, name='k_spect_dv_frq' )
     end subroutine Frequency_Average
 
   ! ...............................  Frequency_Average_Derivative  .....
-    subroutine Frequency_Average_Derivative ( Grids, Tau_LBL, Tau_PFA, &
-      & K_Frq, K, Mol )
+    subroutine Frequency_Average_Derivative ( Grids, K_Frq, K, Mol )
 
       ! Frequency average or simply copy K_Frq to give K, the final
       ! Jacobian.
 
       type(grids_T), intent(in) :: Grids
-      type(tau_t), intent(in) :: Tau_LBL, Tau_PFA ! Tau structures
       real(rp), intent(inout) :: K_FRQ(:,:) ! To be averaged  Frq X Grid
       real(r4), intent(out) :: K(:,:)       ! Averaged        Chan X Grid
       integer, intent(in) :: Mol            ! Which molecule
@@ -2270,8 +2262,7 @@ call dump ( k_spect_dv_frq, name='k_spect_dv_frq' )
     subroutine Frequency_Avg_Rad_Path
       ! For every channel, frequency average the incremental radiance at
       ! every point along the path, giving Rad_Avg_Path for every channel
-      ! and every point along the path.  Then multiply by Tau_PFA to
-      ! combine PFA contribution.
+      ! and every point along the path.
 
       use Freq_Avg_m, only: Freq_Avg
 
@@ -3191,6 +3182,9 @@ if ( spect_der_center ) call dump ( dbeta_dv_path_c, name='dbeta_dv_path_c' )
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.247  2005/11/03 03:57:45  vsnyder
+! Don't try to look at filter shapes for DACS
+!
 ! Revision 2.246  2005/11/02 21:38:48  vsnyder
 ! Repair a broken tracing message
 !
