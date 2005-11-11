@@ -114,6 +114,7 @@ module MLSHDF5
 ! GetHDF5DSRank (int FileID, char name, int rank)
 ! GetHDF5DSQType (int FileID, char name, char QType)
 ! log IsHDF5AttributeInFile (char filename, char DSname, char name)
+! log IsHDF5AttributeInFile (char filename, char name)
 ! log IsHDF5DSInFile (char filename, char name)
 ! log IsHDF5AttributePresent (int setid, char name)
 ! log IsHDF5AttributePresent (int fileid, char DSname, char name)
@@ -155,19 +156,20 @@ module MLSHDF5
 ! g    Search for matches among groups
 
 ! === (end of api) ===
-  interface GetAllHDF5DSNames
-    module procedure GetAllHDF5DSNames_fileID, GetAllHDF5DSNames_filename
+  interface CpHDF5Attribute
+    ! module procedure CpHDF5Attribute_int, CpHDF5Attribute_logical
+    module procedure CpHDF5Attribute_string
+    ! module procedure CpHDF5Attribute_sngl, CpHDF5Attribute_dbl
+    ! module procedure CpHDF5Attribute_snglarr1, CpHDF5Attribute_intarr1
+    ! module procedure CpHDF5Attribut _dblarr1, CpHDF5Attribute_stringarr1
   end interface
 
-  interface MakeHDF5Attribute
-    module procedure MakeHDF5Attribute_dbl, MakeHDF5Attribute_sngl, &
-      & MakeHDF5Attribute_int, MakeHDF5Attribute_logical, &
-      & MakeHDF5Attribute_logicalarr1, &
-      & MakeHDF5Attribute_string, MakeHDF5Attribute_snglarr1, &
-      & MakeHDF5Attribute_dblarr1, MakeHDF5Attribute_stringarr1, &
-      & MakeHDF5Attribute_intarr1, MakeHDF5AttributeDSN_int, &
-      & MakeHDF5AttributeDSN_string, MakeHDF5AttributeDSN_snglarr1, &
-      & MakeHDF5AttributeDSN_st_arr1, MakeHDF5AttributeDSN_dblarr1
+  interface CpHDF5GlAttribute
+    module procedure CpHDF5GlAttribute_string
+  end interface
+
+  interface GetAllHDF5DSNames
+    module procedure GetAllHDF5DSNames_fileID, GetAllHDF5DSNames_filename
   end interface
 
   interface GetHDF5Attribute
@@ -189,31 +191,14 @@ module MLSHDF5
       & GetHDF5AttributePtr_logicalarr1
   end interface
 
-  interface CpHDF5Attribute
-    ! module procedure CpHDF5Attribute_int, CpHDF5Attribute_logical
-    module procedure CpHDF5Attribute_string
-    ! module procedure CpHDF5Attribute_sngl, CpHDF5Attribute_dbl
-    ! module procedure CpHDF5Attribute_snglarr1, CpHDF5Attribute_intarr1
-    ! module procedure CpHDF5Attribut _dblarr1, CpHDF5Attribute_stringarr1
-  end interface
-
-  interface CpHDF5GlAttribute
-    module procedure CpHDF5GlAttribute_string
+  interface IsHDF5AttributeInFile
+    module procedure IsHDF5AttributeInFile_DS, &
+      & IsHDF5AttributeInFile_Grp
   end interface
 
   interface IsHDF5AttributePresent
     module procedure IsHDF5AttributePresent_in_fID, &
       & IsHDF5AttributePresent_in_DSID, IsHDF5AttributePresent_in_grp
-  end interface
-
-  interface SaveAsHDF5DS
-    module procedure &
-      & SaveAsHDF5DS_intarr1, SaveAsHDF5DS_intarr2, SaveAsHDF5DS_intarr3, &
-      & SaveAsHDF5DS_logarr1, &
-      & SaveAsHDF5DS_dblarr1, SaveAsHDF5DS_dblarr2, SaveAsHDF5DS_dblarr3, &
-      & SaveAsHDF5DS_snglarr1, SaveAsHDF5DS_snglarr2, SaveAsHDF5DS_snglarr3, &
-      & SaveAsHDF5DS_snglarr4, &
-      & SaveAsHDF5DS_charsclr, SaveAsHDF5DS_chararr1, SaveAsHDF5DS_chararr2
   end interface
 
   interface LoadFromHDF5DS
@@ -238,6 +223,27 @@ module MLSHDF5
       & LoadPtrFromHDF5DS_dblarr2, LoadPtrFromHDF5DS_dblarr3, &
       & LoadPtrFromHDF5DS_snglarr1, LoadPtrFromHDF5DS_snglarr2, &
       & LoadPtrFromHDF5DS_snglarr3, LoadPtrFromHDF5DS_snglarr4
+  end interface
+
+  interface MakeHDF5Attribute
+    module procedure MakeHDF5Attribute_dbl, MakeHDF5Attribute_sngl, &
+      & MakeHDF5Attribute_int, MakeHDF5Attribute_logical, &
+      & MakeHDF5Attribute_logicalarr1, &
+      & MakeHDF5Attribute_string, MakeHDF5Attribute_snglarr1, &
+      & MakeHDF5Attribute_dblarr1, MakeHDF5Attribute_stringarr1, &
+      & MakeHDF5Attribute_intarr1, MakeHDF5AttributeDSN_int, &
+      & MakeHDF5AttributeDSN_string, MakeHDF5AttributeDSN_snglarr1, &
+      & MakeHDF5AttributeDSN_st_arr1, MakeHDF5AttributeDSN_dblarr1
+  end interface
+
+  interface SaveAsHDF5DS
+    module procedure &
+      & SaveAsHDF5DS_intarr1, SaveAsHDF5DS_intarr2, SaveAsHDF5DS_intarr3, &
+      & SaveAsHDF5DS_logarr1, &
+      & SaveAsHDF5DS_dblarr1, SaveAsHDF5DS_dblarr2, SaveAsHDF5DS_dblarr3, &
+      & SaveAsHDF5DS_snglarr1, SaveAsHDF5DS_snglarr2, SaveAsHDF5DS_snglarr3, &
+      & SaveAsHDF5DS_snglarr4, &
+      & SaveAsHDF5DS_charsclr, SaveAsHDF5DS_chararr1, SaveAsHDF5DS_chararr2
   end interface
 
   ! Local parameters
@@ -1789,12 +1795,16 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to turn error messages back on after getting rank ' // trim(name))
   end subroutine GetHDF5DSQType
 
-  ! --------------------------------------  IsHDF5AttributeInFile  -----
-  logical function IsHDF5AttributeInFile ( filename, DSname, name )
+  ! --------------------------------------  IsHDF5AttributeInFile_DS  -----
+  function IsHDF5AttributeInFile_DS ( filename, DSname, name ) &
+    & result(SooDesu)
     ! This routine returns true if the given HDF5 DS is present
+    ! Possible refiements:
+    ! Add interface for MLSFile type
     character (len=*), intent(in) :: FILENAME ! Where to look
     character (len=*), intent(in) :: DSNAME ! Name for the dataset
     character (len=*), intent(in) :: NAME ! Name for the attribute
+    logical                       :: SOODESU
     ! Local variables
     integer :: fileID                   ! Where to look
     integer :: ATTRID                   ! ID for attribute if present
@@ -1802,7 +1812,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag
 
     ! Executable code
-    IsHDF5AttributeInFile = .false.
+    SooDesu = .false.
     call h5eSet_auto_f ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before looking for attribute ' // trim(name) )
@@ -1812,7 +1822,7 @@ contains ! ======================= Public Procedures =========================
       if ( status == 0 ) then
         call h5aopen_name_f(setID, trim(name), attrid, status)
         if ( status == 0 ) then
-          IsHDF5AttributeInFile = .true.
+          SooDesu = .true.
           call h5aclose_f(attrid, status)
         end if
         call h5dClose_f ( setID, status )
@@ -1822,7 +1832,46 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for attribute ' // trim(name) )
-  end function IsHDF5AttributeInFile
+  end function IsHDF5AttributeInFile_DS
+
+  ! --------------------------------------  IsHDF5AttributeInFile_Grp  -----
+  function IsHDF5AttributeInFile_Grp ( filename, name ) &
+    & result(SooDesu)
+    ! This routine returns true if the given HDF5 DS is present in group '/'
+    ! Possible refiements:
+    ! Check for attributes to other groups beside root
+    ! Add interface for MLSFile type
+    character (len=*), intent(in) :: FILENAME ! Where to look
+    character (len=*), intent(in) :: NAME ! Name for the attribute
+    logical                       :: SOODESU
+    ! Local variables
+    integer :: fileID                   ! Where to look
+    integer :: ATTRID                   ! ID for attribute if present
+    integer :: GRPID                    ! ID for group if present
+    integer :: STATUS                   ! Flag
+
+    ! Executable code
+    SooDesu = .false.
+    call h5eSet_auto_f ( 0, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to turn error messages off before looking for attribute ' // trim(name) )
+    call h5fopen_f(trim(filename), H5F_ACC_RDONLY_F, fileID, status)
+    if ( status == 0 ) then
+      call h5gOpen_f ( fileid, '/', grpID, status )
+      if ( status == 0 ) then
+        call h5aopen_name_f(grpID, trim(name), attrid, status)
+        if ( status == 0 ) then
+          SooDesu = .true.
+          call h5aclose_f(attrid, status)
+        end if
+        call h5gClose_f ( grpID, status )
+      end if
+      call h5fclose_f(fileID, status)
+    end if
+    call h5eSet_auto_f ( 1, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to turn error messages back on after looking for attribute ' // trim(name) )
+  end function IsHDF5AttributeInFile_Grp
 
   ! ---------------------------------------------  IsHDF5DSInFile  -----
   logical function IsHDF5DSInFile ( filename, name )
@@ -4951,6 +5000,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.61  2005/11/11 21:36:00  pwagner
+! Added new interface for IsHDF5AttributeInFile when attached to grp, not dataset
+!
 ! Revision 2.60  2005/10/28 23:13:42  pwagner
 ! Prevent ref to undefined num in GetAllHDF5AttrNames
 !
