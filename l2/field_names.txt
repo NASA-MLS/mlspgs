@@ -53,6 +53,7 @@ atmos_der
 AuraInstrument
 autofill
 average
+avoidBrightObjects
 
 b
 badRange
@@ -409,6 +410,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.152  2005/11/11 21:43:33  pwagner
+# Added avoidBrightObjects for use by FillFromL1B
+#
 # Revision 2.151  2005/09/23 23:39:16  pwagner
 # Added rename field to copy command
 #
