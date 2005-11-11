@@ -64,6 +64,7 @@ module MLSStringLists               ! Module to treat string lists
 ! ReverseList        Turns 'abc,def,ghi' -> 'ghi,def,abc'
 ! SortArray          Turns (/'def','ghi','abc'/) -> (/'abc','def','ghi'/)
 ! SortList           Turns 'def,ghi,abc' -> 'abc,def,ghi'
+! StringElement      Returns string element in string list at index number
 ! StringElementNum   Returns element number of test string in string list
 ! SwitchDetail       Returns detail level of switch in list of switches
 ! unquote            Removes surrounding [quotes]
@@ -105,6 +106,8 @@ module MLSStringLists               ! Module to treat string lists
 ! SortList (strlist inStrArray, int outIntArray(:), log CaseSensitive, &
 !   & log countEmpty, [char inseparator], [log IgnoreLeadingSpaces], 
 !     [strlist sortedList], [char leftRight])
+! char* StringElement (strlist inList, &
+!   i4 nElement, log countEmpty, [char inseparator])
 ! int StringElementNum(strlist inList, char* test_string, log countEmpty, &
 !    & [char inseparator], [log part_match])
 ! int SwitchDetail(strlist inList, char* test_switch)
@@ -121,14 +124,21 @@ module MLSStringLists               ! Module to treat string lists
 ! their default operation
 
 ! One standard is the character flag "options" which affects how loosely
-! string matches may be interpreted
+! string matches may be interpreted and how string elements are
+! counted in lists
 ! it may include any of the following (poss. in combination, e.g. "-wc")
 ! w    Wildcard * which allows 'a*' to equal 'abcd'
 ! c    case insensitive which allows 'ABCD' to equal 'abcd'
 ! f    flush left which allows 'abcd' to equal '  abcd'
+! e    count consecutive separators as enclosing an empty element
 
 ! The above is to replace the countEmpty, caseSensitive, etc. that are
 ! separate optional args to many of the current module procedures
+
+! An argument can be made that countEmpty should be TRUE by default 
+! rather than FALSE
+! One example is which FALSE seems best is the slash in file paths
+! where we want /data/a.dat and /data//a.dat to be synonyms
 
 ! Warnings: 
 ! (1) in the routines Array2List, and SortArray
@@ -148,7 +158,7 @@ module MLSStringLists               ! Module to treat string lists
    & GetUniqueInts, GetUniqueStrings, GetUniqueList, IsInList, &
    & List2Array, NumStringElements, &
    & RemoveElemFromList, RemoveListFromList, ReplaceSubString, ReverseList, &
-   & SortArray, SortList, StringElementNum, SwitchDetail, &
+   & SortArray, SortList, StringElement, StringElementNum, SwitchDetail, &
    & unquote
 
   interface catLists
@@ -2023,6 +2033,42 @@ contains
 
   end subroutine SortList
 
+  ! ---------------------------------------------  StringElement  -----
+
+  ! This function takes a (usually) comma-separated string list, interprets it
+  ! as a list of individual elements and returns the
+  ! sub-string which is the n'th element
+  ! if n is too large or small, it returns blank
+  ! See also GetStringElement 
+  ! (which however returns separator if n too large or small)
+
+  function StringElement(inList, nElement, countEmpty, inseparator) &
+    & result(outElement)
+    ! Dummy arguments
+    CHARACTER (LEN=*), INTENT(IN)   :: inList
+    INTEGER(i4), INTENT(IN)         :: nElement 	! Entry number to return
+    LOGICAL, INTENT(IN)   :: countEmpty
+    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)   :: inseparator
+    CHARACTER (LEN=len(inList))  :: outElement
+
+    ! Local variables
+    INTEGER(i4) :: i           ! Loop counters
+    INTEGER(i4) :: elem, nextseparator
+
+    CHARACTER (LEN=1)               :: separator
+    CHARACTER (LEN=1), PARAMETER    :: BLANK = ' '   ! Returned if element empty
+    CHARACTER (LEN=1), PARAMETER    :: COMMA = ','
+
+    ! Executable code
+    IF(PRESENT(inseparator)) THEN
+	     separator = inseparator
+	 ELSE
+	     separator = COMMA
+	 ENDIF
+    call GetStringElement(inList, outElement, nElement, countEmpty, inseparator)
+    if ( outElement == separator ) outElement = ' '
+  end function StringElement
+
   ! ---------------------------------------------  StringElementNum  -----
 
   ! This function takes a (usually) comma-separated string list, interprets it
@@ -2405,6 +2451,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.16  2005/11/11 21:39:12  pwagner
+! added stringElement function (should we keep GetStringElement?)
+!
 ! Revision 2.15  2005/10/18 22:52:04  pwagner
 ! Added IsInList function
 !
