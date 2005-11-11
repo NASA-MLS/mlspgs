@@ -23,10 +23,8 @@ module GLOBAL_SETTINGS
 !     - - - - - - - -
 
 !     (data types and parameters)
-! ALLOW_CLIMATOLOGY_OVERLOADS     Not used yet
-! INPUT_VERSION_STRING            Not used yet
-! OUTPUT_VERSION_STRING           stored as pgeversion among metadata
-! VERSION_COMMENT                 Not used yet
+! LEAPSECFILENAME                 For time conversions (if avoiding PCF)
+! brightObjects                   As determined by l1b
 
 !     (subroutines and functions)
 ! SET_GLOBAL_SETTINGS             Get global settings from l2cf
@@ -34,11 +32,16 @@ module GLOBAL_SETTINGS
 
   public :: SET_GLOBAL_SETTINGS
 
-  logical, public :: ALLOW_CLIMATOLOGY_OVERLOADS = .false.
-  integer, public :: INPUT_VERSION_STRING = 0     ! Sub_rosa index
-  integer, public :: OUTPUT_VERSION_STRING = 0    ! Sub_rosa index
-  integer, public :: VERSION_COMMENT = 0          ! Sub_rosa index
+  ! logical         :: ALLOW_CLIMATOLOGY_OVERLOADS = .false.
+  ! integer         :: INPUT_VERSION_STRING = 0     ! Sub_rosa index
+  ! integer         :: OUTPUT_VERSION_STRING = 0    ! Sub_rosa index
+  ! integer         :: VERSION_COMMENT = 0          ! Sub_rosa index
+
   character(LEN=FileNameLen), public :: LEAPSECFILENAME = ''
+  integer, parameter :: BONAMELISTLEN = 256
+  character(len=BONAMELISTLEN), public, save :: brightObjects = &
+    & 'MERCURY, VENUS, EARTH, MARS, JUPITER, SATURN, URANUS, NEPTUNE, PLUTO, ' // &
+    & 'MOON, SUN, SOLAR-BARYCNTR, EARTH-BARYCNTR, GALACTICCENTER'
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -65,12 +68,11 @@ contains
       & ForwardModelGlobalSetup, CreateBinSelectorFromMLSCFInfo
     use INIT_TABLES_MODULE, only: F_FILE, F_TYPE, &
       & L_TRUE, L_L2GP, L_L2DGG, L_L2FWM, &
-      & P_ALLOW_CLIMATOLOGY_OVERLOADS, &
+      & P_BRIGHTOBJECTS, &
       & P_CYCLE, P_ENDTIME, P_INPUT_VERSION_STRING, P_INSTRUMENT, &
       & P_LEAPSECFILE, P_OUTPUT_VERSION_STRING, P_PFAFILE, P_STARTTIME, &
-      & P_VERSION_COMMENT, &
       & S_BINSELECTOR, S_DIRECTWRITEFILE, S_DUMP, S_EMPIRICALGEOMETRY, &
-      & S_FGRID, S_FORWARDMODEL, S_ForwardModelGlobal, S_L1BOA, S_L1BRAD, &
+      & S_FGRID, S_FORWARDMODEL, S_FORWARDMODELGLOBAL, S_L1BOA, S_L1BRAD, &
       & S_L2PARSF, S_MAKEPFA, S_PFADATA, S_READPFA, S_TGRID, S_TIME, S_VGRID, &
       & S_WRITEPFA
     use intrinsic, only: l_hdf, l_swath
@@ -84,7 +86,7 @@ contains
       & TAI93_Range_T
     use MLSFiles, only: FILENOTFOUND, HDFVERSION_5, &
       & AddFileToDataBase, GetPCFromRef, GetMLSFileByType, &
-      & InitializeMLSFile, split_path_name
+      & InitializeMLSFile, mls_CloseFile, mls_OpenFile, split_path_name
     use MLSL2Options, only: LEVEL1_HDFVERSION, &
       & STOPAFTERGLOBAL, STOPAFTERCHUNKDIVIDE, Toolkit
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
@@ -115,6 +117,11 @@ contains
     use VGridsDatabase, only: AddVGridToDatabase, VGrids
     use WriteMetadata, only: L2PCF
 
+    ! placed non-alphabetically due to Lahey internal compiler error
+    ! (How much longer must we endure these onerous work-arounds?)
+    use MLSHDF5, only: GetHDF5Attribute, IsHDF5AttributeInFile
+    use HDF5, only: h5gclose_f, h5gopen_f
+
     integer, intent(in) :: ROOT    ! Index of N_CF node in abstract syntax tree
     type(ForwardModelConfig_T), dimension(:), pointer :: &
       & ForwardModelConfigDatabase
@@ -127,13 +134,16 @@ contains
 
     integer :: Details             ! How much info about l1b files to dump
     type (MLSFile_T) :: DirectFile
-    logical :: GOT(2)
+    logical :: GOT(3)              ! Used non-canonically--a bad practice
     integer :: I, J                ! Index of son, grandson of root
+    integer :: INPUT_VERSION_STRING  ! Sub_rosa index
+    logical ::  ItExists
     integer :: L1BFLAG
     real(r8) :: MINTIME, MAXTIME   ! Time Span in L1B file data
     integer :: NAME                ! Sub-rosa index of name of vGrid or hGrid
     integer :: NOMAFS              ! Number of MAFs of L1B data read
     integer :: NUMFILES
+    integer :: OUTPUT_VERSION_STRING  ! Sub_rosa index
     integer :: ReturnStatus        ! non-zero means trouble
     integer :: SON                 ! Son of root
     logical :: StopEarly
@@ -143,9 +153,7 @@ contains
     logical :: StartTimeIsAbsolute, stopTimeIsAbsolute
     real :: T1, T2                 ! For S_Time
     real(r8) :: Start_time_from_1stMAF, End_time_from_1stMAF
-    logical ::  ItExists
-
-
+    logical :: wasAlreadyOpen
     character(len=NameLen) :: Name_string
     character(len=NameLen) :: End_time_string, Start_time_string
     character(len=FileNameLen) :: FilenameString
@@ -184,8 +192,13 @@ contains
       if ( node_id(son) == n_equal ) then
         sub_rosa_index = sub_rosa(subtree(2,son))
         select case ( decoration(subtree(1,son)) )
-        case ( p_allow_climatology_overloads )
-          allow_climatology_overloads = decoration(subtree(2,son)) == l_true
+!         case ( p_allow_climatology_overloads )
+!           allow_climatology_overloads = decoration(subtree(2,son)) == l_true
+        ! This will allow us to use different names from the toolkit
+        ! (Now why would you want to do that?)
+        case ( p_brightObjects )
+          call get_string ( sub_rosa_index, brightObjects, strip=.true. )
+          got(3) = .true.
         case ( p_input_version_string )
           input_version_string = sub_rosa_index
           call get_string ( input_version_string, l2pcf%inputVersion, strip=.true. )
@@ -200,8 +213,8 @@ contains
             & call announce_error(0, &
             & '*** l2cf overrides pcf for PGE version ***', &
             & just_a_warning = .true.)
-        case ( p_version_comment )
-          version_comment = sub_rosa_index
+!         case ( p_version_comment )
+!           version_comment = sub_rosa_index
         case ( p_instrument )
           instrument = decoration(subtree(2,son))
         case ( p_cycle )
@@ -488,6 +501,26 @@ contains
       GlobalAttributes%LastMAFCtr = FindMaxMAF ( (/L1BFile/), &
         & GlobalAttributes%FirstMAFCtr )
     end if
+
+    ! Have we overridden the Bright Object names? Can we find them in l1boa?
+    if ( got(3) ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &                      
+      & 'You overrode names of Bright objects found in l1boa file' )    
+    elseif( .not. IsHDF5AttributeInFile(L1BFile%name, 'BO_name') ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &                      
+      & 'Names of Bright objects missing from l1boa file' )    
+    else
+      wasAlreadyOpen = L1BFile%stillOpen
+      if ( .not. wasAlreadyOpen ) call mls_OpenFile(L1BFile)
+      L1BFile%fileID%sd_id = 0 ! So we don't look here for the attribute
+      ! We still need to open the root group '/'
+      call h5gopen_f ( L1BFile%fileID%f_id, '/', L1BFile%fileID%grp_id, ReturnStatus )
+      call GetHDF5Attribute( L1BFile, '/BO_name', BrightObjects )
+      call h5gclose_f ( L1BFile%fileID%grp_id, ReturnStatus )
+      if ( .not. wasAlreadyOpen ) call mls_CloseFile(L1BFile)
+    endif
+
+    ! Perhaps dump global settings
     if ( details > -4 ) &
       & call dump_global_settings( processingRange, filedatabase, DirectDatabase, &
       & ForwardModelConfigDatabase, LeapSecFileName, details )
@@ -594,8 +627,10 @@ contains
 
     ! ------------------------------------------  dump_global_settings  -----
     subroutine dump_global_settings ( processingRange, &
-      & filedatabase, DirectDatabase, ForwardModelConfigDatabase, LeapSecFileName, dumpL1BDetails )
+      & filedatabase, DirectDatabase, ForwardModelConfigDatabase, &
+      & LeapSecFileName, dumpL1BDetails )
 
+      use MLSStringLists, only: NumStringElements, StringElement
       ! Dump info obtained during OpenAndInitialize and global_settings:
       ! L1B databse
       ! L1OA file
@@ -617,14 +652,14 @@ contains
       ! >0 Dump even multi-dim arrays
       integer, optional, intent(in) :: dumpL1BDetails
       character(len=*) LeapSecFileName
-  !    character(len=CCSDSlen) CCSDSStartTime
 
       ! Local
-
+      logical, parameter :: countEmpty = .true.
       type (L1BData_T) :: l1bData   ! L1B dataset
       integer ::                              i, version, NoMAFs, IERR
       integer ::                              myL1BDetails
       character (len=*), parameter ::         TIME_FORMAT = '(1pD18.12)'
+      ! This next is in case we're to dump at greatest possible detail
       character (len=NAME_LEN), parameter ::  BASE_QUANT_NAME = &
                                       &       'R2:190.B3F:N2O.S2.FB25-3'
   !                                    &       'R1A:118.B1F:PT.S0.FB25-1'
@@ -739,8 +774,20 @@ contains
       call output ( 'corresponding mcf hash:   ' )
       call output ( TRIM(l2pcf%spec_hash), advance='yes' )
 
-      call output ( 'Allow climatology overloads?:   ' )
-      call output ( allow_climatology_overloads, advance='yes' )
+      call output ( 'Bright Objects:   ', advance='yes' )
+      call output ( 'bit #             Cause   ', advance='yes' )
+      call output ( '0' )
+      call blanks (2)
+      call output ( 'Moon in space port', advance='yes' )
+      do i=1, NumStringElements(brightObjects, countEmpty)
+        call output ( i )
+        call blanks (2)
+        call output ( TRIM(stringElement(brightObjects, i, .true.)), &
+          & advance='yes' )
+      enddo
+
+!       call output ( 'Allow climatology overloads?:   ' )
+!       call output ( allow_climatology_overloads, advance='yes' )
 
       call output ( ' ', advance='yes' )
       call dump(ForwardModelConfigDatabase, details=9, skipPFA=.true.)
@@ -886,6 +933,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.106  2005/09/22 23:37:45  pwagner
+! date conversion procedures and functions all moved into dates module
+!
 ! Revision 2.105  2005/08/19 23:33:03  pwagner
 ! FwdMdlDB now dumped when dumping global settings
 !
