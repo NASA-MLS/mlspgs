@@ -56,11 +56,15 @@ contains ! =====     Public Procedures     =============================
     use Expr_M, only: EXPR, EXPR_CHECK, GetIndexFlagsFromList
     use ForwardModelConfig, only: ForwardModelConfig_T
     use ForwardModelSupport, only: FillFwdModelTimings
+    use GLOBAL_SETTINGS, only: BrightObjects
     use GriddedData, only: GriddedData_T, WrapGriddedData
     ! We need many things from Init_Tables_Module.  First the fields:
     use INIT_TABLES_MODULE, only: F_A, F_ADDITIONAL, F_ALLOWMISSING, &
-      & F_APRIORIPRECISION, F_B, F_BADRANGE, F_BASELINEQUANTITY, F_BIN, F_BOUNDARYPRESSURE, F_BOXCARMETHOD, &
-      & F_CENTERVERTICALLY, F_CHANNEL, F_COLUMNS, F_DESTINATION, F_DIAGONAL, F_dontMask,&
+      & F_APRIORIPRECISION, F_AVOIDBRIGHTOBJECTS, &
+      & F_B, F_BADRANGE, F_BASELINEQUANTITY, F_BIN, F_BOUNDARYPRESSURE, &
+      & F_BOXCARMETHOD, &
+      & F_CENTERVERTICALLY, F_CHANNEL, F_COLUMNS, &
+      & F_DESTINATION, F_DIAGONAL, F_DONTMASK,&
       & F_ECRTOFOV, F_EARTHRADIUS, F_EXCLUDEBELOWBOTTOM, F_EXPLICITVALUES, &
       & F_EXTINCTION, F_FIELDECR, F_FILE, F_FORCE, &
       & F_FRACTION, F_FROMPRECISION, F_GEOCALTITUDEQUANTITY, F_GPHQUANTITY, &
@@ -155,6 +159,9 @@ contains ! =====     Public Procedures     =============================
     use MLSSets, only: FindFirst
     use MLSSignals_m, only: GetFirstChannel, GetSignalName, GetModuleName, IsModuleSpacecraft, &
       & GetSignal, Signal_T
+    use MLSStringLists, only: catLists, NumStringElements, &
+      & StringElement, StringElementNum
+    use MLSStrings, only: lowerCase
     use Molecules, only: L_H2O
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
     use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
@@ -298,12 +305,15 @@ contains ! =====     Public Procedures     =============================
     integer :: APRPRECVCTRINDEX         ! Index of apriori precision vector
     integer :: AQTYINDEX                ! Index of a quantity in vector
     integer :: AVECINDEX                ! Index of a vector
+    character(len=256) :: AVOIDOBJECTS  ! Which bright objects to avoid
     real(r8) :: BADRANGE(2)             ! Range for 'missing' data value
     integer :: BASELINEQTYINDEX
     integer :: BASELINEVCTRINDEX
     integer :: BINNAME                  ! Name of an l2pc bin
     integer :: BNDPRESSQTYINDEX
     integer :: BNDPRESSVCTRINDEX
+    integer :: BOMASK                   ! Set Prec. neg. if which BO in FOV
+    integer :: BONUM
     integer :: BQTYINDEX                ! Index of a quantity in vector
     integer :: BVECINDEX                ! Index of a vector
     integer :: BOXCARMETHOD             ! l_min, l_max, l_mean
@@ -315,6 +325,7 @@ contains ! =====     Public Procedures     =============================
     !                                     -- for FillCovariance
     integer :: EARTHRADIUSQTYINDEX
     integer :: EARTHRADIUSVECTORINDEX
+    character(len=256) :: EXTRAOBJECTS  ! Which bright objects to avoid
     integer :: Diagonal                 ! Index of diagonal vector in database
     !                                     -- for FillCovariance
     logical :: DONTMASK                 ! Use even masked values if TRUE
@@ -347,6 +358,7 @@ contains ! =====     Public Procedures     =============================
     integer :: H2OPRECISIONVECTORINDEX           ! In the vector database
     integer :: I, J                     ! Loop indices for section, spec, expr
     integer :: GLOBALUNIT               ! To go into the vector
+    integer :: IBO
     logical :: IGNOREZERO               ! Don't sum chi^2 at values of noise = 0
     logical :: IGNORENEGATIVE           ! Don't sum chi^2 at values of noise < 0
     logical :: IGNOREGEOLOCATION        ! Don't copy geolocation to vector qua 
@@ -386,6 +398,7 @@ contains ! =====     Public Procedures     =============================
     integer :: MINVALUEUNIT              ! Unit for f_minValue field
     logical :: MISSINGGMAO              ! Only if missing GMAO
     integer :: MULTIPLIERNODE           ! For the parser
+    integer :: NBO
     integer :: NBWVECTORINDEX           ! In vector database
     integer :: NBWQUANTITYINDEX         ! In vector database
     integer :: NEEDEDCOORDINATE         ! For vGrid fills
@@ -721,7 +734,8 @@ contains ! =====     Public Procedures     =============================
       case ( s_fill ) ! ===================================  Fill  =====
         ! Now we're on actual Fill instructions.
         ! Loop over the instructions to the Fill command
-
+        BOMask = 0
+        AvoidObjects = ' '
         do j = 2, nsons(key)
           gson = subtree(j,key) ! The argument
           fieldIndex = get_field_id(gson)
@@ -738,6 +752,9 @@ contains ! =====     Public Procedures     =============================
           case ( f_aprioriPrecision )
             aprPrecVctrIndex = decoration(decoration(subtree(1,gson)))
             aprPrecQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_avoidBrightObjects )
+            call get_string( gson, extraObjects, strip=.true. )
+            avoidObjects = catLists( avoidObjects, extraObjects )
           case ( f_b )
             bVecIndex = decoration(decoration(subtree(1,gson)))
             bQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -1251,6 +1268,20 @@ contains ! =====     Public Procedures     =============================
             call FillVectorQuantityFromL1B ( key, quantity, chunks(chunkNo), &
               & filedatabase, isPrecision, suffix=suffix, &
               & precisionQuantity=precisionQuantity )
+          elseif ( got(f_avoidbrightobjects) ) then
+            avoidObjects = lowerCase(avoidObjects)
+            nBO = NumStringElements( avoidObjects, .true. )
+            do iBO = 1, nBO
+              BOnum = StringElementNum(lowercase(BrightObjects), &
+                & trim(StringElement(avoidObjects, iBO, .true.)), &
+                & .true.)
+              if ( BOnum > 0 ) BOMask = ibset( BOMask, BOnum )
+            enddo
+            ! Special case: moon in space port
+            if ( index(avoidObjects, 'mooninsp') > 0 ) &
+              & BOMask = ibset( BOMask, 0 )
+            call FillVectorQuantityFromL1B ( key, quantity, chunks(chunkNo), &
+              & filedatabase, isPrecision, suffix=suffix, BOMask=BOMask )
           else
             call FillVectorQuantityFromL1B ( key, quantity, chunks(chunkNo), &
               & filedatabase, isPrecision, suffix=suffix )
@@ -4097,10 +4128,7 @@ contains ! =====     Public Procedures     =============================
         end if
       end if
     end subroutine FillRHIFromH2O
-
-
 !MJF
-
     ! ------------------------------------- FillNoRadsPerMIF -----
     subroutine FillNoRadsPerMif ( key, quantity, measQty )
       integer, intent(in) :: KEY
@@ -5276,56 +5304,41 @@ contains ! =====     Public Procedures     =============================
     end subroutine ExplicitFillVectorQuantity
 
     ! ----------------------------------------- FillVectorQuantityFromL1B ----
-    ! subroutine FillVectorQuantityFromL1B ( root, quantity, chunk, l1bInfo, &
     subroutine FillVectorQuantityFromL1B ( root, quantity, chunk, filedatabase, &
-      & isPrecision, suffix, PrecisionQuantity )
+      & isPrecision, suffix, PrecisionQuantity, BOMask )
+      use BitStuff, only: NegativeIfBitPatternSet
       use MLSFiles, only: HDFVERSION_5
       integer, intent(in) :: root
       type (VectorValue_T), INTENT(INOUT) ::        QUANTITY
       type (MLSChunk_T), INTENT(IN) ::              CHUNK
       type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-      ! type( L1BInfo_T ), intent(in) :: L1BINFO
       logical, intent(in)               ::          ISPRECISION
       integer, intent(in), optional :: SUFFIX
       type (VectorValue_T), INTENT(IN), optional :: PRECISIONQUANTITY
-
+      integer, intent(in), optional :: BOMask ! A pattern of bits--
+                                              ! set prec. neg. if matched
       ! Local variables
+      type (l1bData_T) :: BO_stat
+      character (len=132) :: MODULENAMESTRING
       character (len=132) :: NAMESTRING
       integer :: fileID, FLAG, NOMAFS
       type (l1bData_T) :: L1BDATA
-      integer :: ROW, COLUMN
-      integer :: this_hdfVersion
       type (MLSFile_T), pointer             :: L1BFile
+      type (MLSFile_T), pointer             :: L1BOAFile
+      integer :: ROW, COLUMN
+      integer :: myBOMask
+      integer :: this_hdfVersion
 
       ! Executable code
-
+      myBOMask = 0
+      if ( present(BOMask) ) myBOMask = BOMask
       if ( toggle(gen) .and. levels(gen) > 0 ) &
         & call trace_begin ("FillVectorQuantityFromL1B",root)
       ! print *, 'Filling vector quantity from l1b'
       L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
       this_hdfVersion = L1BFile%HDFVersion
       fileID = L1BFile%FileID%f_id
-!       fileID=l1bInfo%l1bOAID
-!       if ( quantity%template%quantityType /= l_radiance ) then
-!         filenamestring = l1bInfo%L1BOAFileName
-!       else
-!         if ( .not. associated(l1bInfo%L1BRADFilenames) ) then
-!           call Announce_Error ( root, No_Error_code, &
-!             & 'No radiances files to read from' )
-!           return
-!         else
-!           filenamestring = l1bInfo%L1BRADFileNames(1)
-!         end if
-!       end if
-!       this_hdfVersion = mls_hdf_version(trim(filenamestring), LEVEL1_HDFVERSION)
-!       if ( this_hdfVersion == ERRORINH5FFUNCTION ) then
-!         call Announce_Error ( root, No_Error_code, &
-!           & 'Error in finding hdfversion of l1b file' )
-!       else if ( this_hdfVersion == WRONGHDFVERSION ) then
-!         call Announce_Error ( root, No_Error_code, &
-!           & 'Wrong hdfversion declared/coded for l1b file' )
-!       end if
-
+      
       select case ( quantity%template%quantityType )
       case ( l_ECRtoFOV )
         call GetModuleName( quantity%template%instrumentModule, nameString )
@@ -5389,6 +5402,17 @@ contains ! =====     Public Procedures     =============================
         call Announce_Error ( root, cantFillFromL1B )
       end select
 
+      ! Perhaps will need to read bright object status from l1bOA file
+      if ( is Precision .and. myBOMask /= 0 ) then
+        call GetModuleName ( quantity%template%instrumentModule, moduleNameString )
+        moduleNameString = AssembleL1BQtyName('BO_stat', this_hdfVersion, .TRUE., &
+          & trim(moduleNameString))
+        call ReadL1BData ( L1BFile, moduleNameString, BO_stat, noMAFs, flag, &
+          & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+          & NeverFail= .false., &
+          & dontPad=DONTPAD )
+      endif
+
       if ( present ( suffix ) ) then
         if ( suffix /= 0 ) then
           call Get_String ( suffix, &
@@ -5408,7 +5432,7 @@ contains ! =====     Public Procedures     =============================
         if ( isPrecision ) nameString = trim(nameString) // PRECISIONSUFFIX
         L1BFile => GetL1bFile(filedatabase, namestring)
 
-        call ReadL1BData ( L1BFile , nameString, l1bData, noMAFs, flag, &
+        call ReadL1BData ( L1BFile, nameString, l1bData, noMAFs, flag, &
           & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
           & NeverFail= .false., &
           & dontPad=DONTPAD )
@@ -5441,6 +5465,12 @@ contains ! =====     Public Procedures     =============================
             & call trace_end ( "FillVectorQuantityFromL1B")
           return
         end if
+
+        if ( is Precision .and. myBOMask /= 0 ) then
+          l1bData%dpField = NegativeIfBitPatternSet(l1bData%dpField, &
+            & BO_stat%intField, myBOMask)
+          call DeallocateL1BData(BO_stat)
+        endif
 
         quantity%values = RESHAPE(l1bData%dpField, &
           & (/ quantity%template%instanceLen, quantity%template%noInstances /) )
@@ -6814,6 +6844,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.312  2005/11/11 21:49:41  pwagner
+! May set l1b precisions negative if avoidBrightObjects set
+!
 ! Revision 2.311  2005/10/18 16:56:43  pwagner
 ! Negative RHIPrecision when either T or H2O Precisions are
 !
