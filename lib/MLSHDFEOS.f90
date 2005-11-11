@@ -1814,11 +1814,12 @@ contains ! ======================= Public Procedures =========================
   end function MLS_SWWRFLD_REAL_3d
 
   ! ---------------------------------------------  mls_swath_in_file_sca  -----
-  logical function mls_swath_in_file_sca(filename, swath, HdfVersion)
+  logical function mls_swath_in_file_sca(filename, swath, HdfVersion, error)
     ! Returns .true. if swath found in file, .false. otherwise
     character(len=*), intent(in) :: filename
     character(len=*), intent(in) :: swath
     integer, intent(in) :: HdfVersion
+    integer, optional, intent(out) :: error
     ! Internal variables
     integer                          :: listsize
     character(len=MAXDLISTLENGTH)    :: fieldlist
@@ -1834,7 +1835,8 @@ contains ! ======================= Public Procedures =========================
     case (HDFVERSION_5)
       nswaths = HE5_swinqswath(trim(filename), fieldlist, listsize)
     end select
-    if ( nswaths == 0 ) return
+    if ( present(error) ) error = min(0, nswaths)
+    if ( nswaths < 1 ) return
     if ( listsize > MAXDLISTLENGTH ) then
        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'list size too big in mls_swath_in_file_sca ' // trim(filename) )
@@ -1847,12 +1849,13 @@ contains ! ======================= Public Procedures =========================
 
   ! ---------------------------------------------  mls_swath_in_file_arr  -----
   logical function mls_swath_in_file_arr(filename, swaths, HdfVersion, &
-    & present )
+    & present, error )
     ! Array version of the above
     character(len=*), intent(in) :: filename
     character(len=*), dimension(:), intent(in) :: swaths
     integer, intent(in) :: HdfVersion
     logical, dimension(:), intent(out) :: present
+    integer, optional, intent(out) :: error
     ! Internal variables
     integer                          :: listsize
     character(len=MAXDLISTLENGTH)    :: fieldlist
@@ -1872,7 +1875,8 @@ contains ! ======================= Public Procedures =========================
     case (HDFVERSION_5)
       nswaths = HE5_swinqswath(trim(filename), fieldlist, listsize)
     end select
-    if ( nswaths == 0 ) return
+    if ( present(error) ) error = min(0, nswaths)
+    if ( nswaths < 1 ) return
     if (Deebug) print *, ' nswaths is ', nswaths
     if (Deebug) print *, ' listsize is ', listsize
     if (Deebug) print *, ' fieldlist is ', trim(fieldlist)
@@ -2011,6 +2015,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.28  2005/11/11 21:41:03  pwagner
+! mls_swath_in_file_sca optionally returns an error flag, too
+!
 ! Revision 2.27  2005/10/11 17:29:15  pwagner
 ! Added MLS_ISGLATT function
 !
