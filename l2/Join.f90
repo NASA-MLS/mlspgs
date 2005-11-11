@@ -301,6 +301,28 @@ contains ! =====     Public Procedures     =============================
   end subroutine MLSL2Join
 
   ! ------------------------------------------------ DirectWriteCommand -----
+  ! 
+  ! Direct write is probably going to become the predominant form
+  ! of output in the software, as the other forms have become a
+  ! little too intensive.
+
+  ! This routine may be called by a standalone run, or by a slave.
+  ! If called by a standalone run, just do the write and return.
+
+  ! For a slave it will be called many times for each direct write.  The first
+  ! is a pass through to check the syntax etc.
+  ! If it is successful, in a second pass (makeRequests=.true.)
+  ! a request will be made to the master.
+
+  ! Subsequent calls will arrive with permission to actually do the writing,
+  ! each time to a specific named file.
+
+  ! There are two modes:
+  ! (1) The DirectWrite command named the file explicitly--then write the
+  !     quantities to that file
+  ! (2) The DirectWrite command did not name any file
+  !     then distribute the quantities among the appropriate DirectFiles
+  !     i.e., swaths go to DGG files, hdf datasets to DGM files
   subroutine DirectWriteCommand ( node, ticket, vectors, &
     & DirectDataBase, fileDatabase, &
     & chunkNo, chunks, FWModelConfig, makeRequest, create, theFile, &
@@ -381,7 +403,6 @@ contains ! =====     Public Procedures     =============================
     real (r8) :: EXPRVALUE(2)           ! From expr
     integer :: FILE                     ! File name string index
     integer :: FILEACCESS               ! DFACC_CREATE or DFACC_RDWR
-    ! character(len=8) :: FILEACCESSSTR   ! 'create' or 'rdwrite'
     integer :: FIELDINDEX               ! Type of field in l2cf line
     character(len=1024) :: FILENAME     ! Output full filename
     character(len=1024) :: FILE_BASE    ! made up of
@@ -395,7 +416,6 @@ contains ! =====     Public Procedures     =============================
     logical :: ISNEWDIRECT              ! TRUE if not already in database
     integer :: KEYNO                    ! Loop counter, field in l2cf line
     integer :: l2gp_Version
-    !type(MLSFile_T), pointer :: l2gpFile
     integer :: LASTFIELDINDEX           ! Type of previous field in l2cf line
     integer :: MYFILE              ! File permission granted for
     logical :: MYMAKEREQUEST            ! Copy of makeRequest
@@ -411,7 +431,6 @@ contains ! =====     Public Procedures     =============================
     character(len=1024) :: PATH         ! path/file_base
     integer :: PCBottom
     integer :: PCTop
-    ! integer :: record_length
     integer :: RETURNSTATUS
     logical :: SKIPDGG
     logical :: SKIPDGM
@@ -452,15 +471,6 @@ contains ! =====     Public Procedures     =============================
     if ( present ( theFile ) ) myTheFile = theFile
     if ( present(noExtraWrites) ) noExtraWrites = 0
 
-    ! Direct write is probably going to become the predominant form
-    ! of output in the software, as the other forms have become a
-    ! little too intensive.
-
-    ! This routine will be called twice for each direct write.  The first
-    ! (makeRequests=.true.) is a pass through to check the syntax etc.
-    ! If it is successful a request will be made to the master.
-
-    ! The second call will be to actually do the writing.
     lastFieldIndex = 0
     noSources = 0
     hdfVersion = DEFAULT_HDFVERSION_WRITE
@@ -479,7 +489,6 @@ contains ! =====     Public Procedures     =============================
         noSources = noSources + 1
         gotsource = .true.
       case ( f_precision )
-        ! if ( lastFieldIndex /= f_source ) &
         if ( .not. gotsource ) &
           & call Announce_Error ( son, no_error_code, &
             & 'A precision can only be given following a source' )
@@ -508,8 +517,6 @@ contains ! =====     Public Procedures     =============================
 
     if ( file > 0 ) then
       call get_string ( file, filename, strip=.true. )
-   !  else if ( myTheFile > 0 ) then
-   !   call get_string ( myTheFile, filename, strip=.true. )
     else if ( myTheFile /= 'undefined' ) then
       filename = myTheFile
     end if
@@ -574,7 +581,6 @@ contains ! =====     Public Procedures     =============================
       end select
     end do
 
-    ! if ( .not. checkpaths ) then
     if ( .not. (SKIPDIRECTWRITES .or. checkpaths) ) then
     ! Now go through and do some sanity checking
     do source = 1, noSources
@@ -751,7 +757,7 @@ contains ! =====     Public Procedures     =============================
       ! Open/create the file of interest
       isnewdirect = .true.  ! Just so it has a value even for toolkitless runs
       call split_path_name(filename, path, file_base)
-      if ( distributingSources .or. TOOLKIT .or. CATENATESPLITS ) then ! Was if TOOLKIT !?????? Check with PAW - NJL
+      if ( distributingSources .or. TOOLKIT .or. CATENATESPLITS ) then
         call ExpandDirectDB ( DirectDatabase, file_base, thisDirect, &
         & isnewdirect )
         if ( DeeBUG ) then
@@ -823,10 +829,8 @@ contains ! =====     Public Procedures     =============================
       
       if ( createFileFlag .and. .not. patch ) then
         fileaccess = DFACC_CREATE
-        ! fileaccessstr = 'create'
       else
         fileaccess = DFACC_RDWR
-        ! fileaccessstr = 'rdwrite'
       end if
       if ( DeeBUG ) then
         print *, 'Trying to open ', trim(FileName)
@@ -842,20 +846,43 @@ contains ! =====     Public Procedures     =============================
             & 'DirectWriteCommand mismatched outputTypes for ' // trim(filename) )
         end if
       end if
+
+      ! Some indicators of where to find the file in the PCF
+      ! and what type of file it will be (fileType will be redefined later)
       select case ( outputType )
       case ( l_l2gp )
         PCBottom = mlspcf_l2gp_start
         PCTop    = mlspcf_l2gp_end
+        fileType = l_swath
       case ( l_l2dgg )
         PCBottom = mlspcf_l2dgg_start
         PCTop    = mlspcf_l2dgg_end
+        fileType = l_swath
       case ( l_l2fwm )
         PCBottom = mlspcf_l2fwm_full_start
         PCTop    = mlspcf_l2fwm_full_end
+        fileType = l_hdf
       case ( l_l2aux )
         PCBottom = mlspcf_l2dgm_start
         PCTop    = mlspcf_l2dgm_end
+        fileType = l_hdf
       end select
+
+      ! Call the l2gp open/create routine.  Filename is 'filename'
+      ! file id should go into 'handle'
+      directFile => GetMLSFileByName(filedatabase, filename, ignore_paths=.true.)
+      if ( .not. associated(directFile) ) then
+        if(DEEBUG) call MLSMessage(MLSMSG_Warning, ModuleName, &
+          & 'No entry in filedatabase for ' // trim(filename) )
+        directFile => AddInitializeMLSFile(filedatabase, &
+          & content=outputTypeStr, &
+          & name=Filename, shortName=file_base, &
+          & type=fileType, access=DFACC_CREATE, HDFVersion=HDFVERSION_5, &
+          & PCBottom=PCBottom, PCTop=PCTop)
+      endif
+      directFile%access = FileAccess
+      if ( OPENHERE ) call mls_openFile(directFile, ErrorType)
+      if(DEEBUG) call dump(directFile)
 
       errorType = 0
       select case ( outputType )
@@ -871,57 +898,31 @@ contains ! =====     Public Procedures     =============================
         if ( .not. createFileFlag ) then
           do source = 1, noSources
             if(DEEBUG)print*,'Source:', source
-            qty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(source)), &
-              & sourceQuantities(source) )
+            qty => GetVectorQtyByTemplateIndex ( &
+              & vectors(sourceVectors(source)), sourceQuantities(source) )
             hdfNameIndex = qty%label
-            if(DEEBUG)call display_string ( hdfNameIndex, strip=.true., advance='yes' )
+            if(DEEBUG) &
+              & call display_string ( hdfNameIndex, strip=.true., advance='yes' )
             call get_string ( hdfNameIndex, nameBuffer(source), strip=.true. )
             if(DEEBUG)print*,'Done'
           end do
-          dummy = MLS_SWATH_IN_FILE(trim(fileName), nameBuffer, HdfVersion, &
-            & createThisSource )
+          dummy = MLS_SWATH_IN_FILE(directFile%Name, nameBuffer, HdfVersion, &
+            & createThisSource, returnStatus )
           if(DEEBUG)print*,'Got out of MLS_SWATH_IN_FILE'
+          if ( returnStatus /= 0 ) then
+            call MLSMessage(MLSMSG_Warning, ModuleName, &
+              & 'Unable to check on swath in ' // trim(filename) )
+          endif
         else
           createThisSource = .false.
         end if
-        ! Call the l2gp open/create routine.  Filename is 'filename'
-        ! file id should go into 'handle'
-        directFile => GetMLSFileByName(filedatabase, filename, ignore_paths=.true.)
-        if ( .not. associated(directFile) ) then
-          if(DEEBUG) call MLSMessage(MLSMSG_Warning, ModuleName, &
-            & 'No entry in filedatabase for ' // trim(filename) )
-          directFile => AddInitializeMLSFile(filedatabase, &
-            & content=outputTypeStr, &
-            & name=Filename, shortName=file_base, &
-            & type=l_swath, access=DFACC_CREATE, HDFVersion=HDFVERSION_5, &
-            & PCBottom=PCBottom, PCTop=PCTop)
-        endif
-        directFile%access = FileAccess
-        if ( OPENHERE ) call mls_openFile(directFile, ErrorType)
-        if(DEEBUG) call dump(directFile)
-        ! handle = mls_io_gen_openF('sw', .true., ErrorType, &
-        !  & record_length, FileAccess, trim(FileName), hdfVersion=hdfVersion)
       case ( l_l2aux, l_l2fwm )
-        ! Call the l2aux open/create routine.  Filename is 'filename'
-        ! file id should go into 'handle'
-        ! handle = mls_io_gen_openF('hg', .true., ErrorType, &
-        !  & record_length, FileAccess, FileName, hdfVersion=hdfVersion)
-        directFile => GetMLSFileByName(filedatabase, filename, ignore_paths=.true.)
-        if ( .not. associated(directFile) ) then
-          if(DEEBUG) call MLSMessage(MLSMSG_Warning, ModuleName, &
-            & 'No entry in filedatabase for ' // trim(filename) )
-          directFile => AddInitializeMLSFile(filedatabase, &
-            & content=outputTypeStr, &
-            & name=Filename, shortName=file_base, &
-            & type=l_hdf, access=DFACC_CREATE, HDFVersion=HDFVERSION_5, &
-            & PCBottom=PCBottom, PCTop=PCTop)
-        endif
-        directFile%access = FileAccess
-        if ( OPENHERE ) call mls_openFile(directFile, ErrorType)
-        if(DEEBUG) call dump(directFile)
+        ! Nothing special
+        ! (Why don't we need to know which SDs are there and which aren't?)
       case default
           call MLSMessage(MLSMSG_Warning, ModuleName, &
-          & 'Unrecognized output type ' // trim(filename), MLSFile=directFile )
+          & 'Unrecognized output type ' // trim(directFile%name), &
+          & MLSFile=directFile )
       end select
       
       if ( ErrorType /= 0 .and. OPENHERE ) then
@@ -1004,9 +1005,14 @@ contains ! =====     Public Procedures     =============================
           call output(trim(hdfname), advance='yes')
         end if
         call time_now ( timeSetup )
-        if ( timeSetup-timeIn > timeReasonable .and. index(switches,'dwreq') /= 0 ) then
-          call output('Unreasonable set up time for ' //trim(hdfname), advance='yes')
+        if ( timeSetup-timeIn > timeReasonable .and. &
+          & index(switches,'dwreq') /= 0 ) then
+          call output('Unreasonable set up time for ' // trim(hdfname), &
+            & advance='yes')
         endif
+
+        ! Do the actual DirectWrite
+        ! (Why do we need to redefine fileType? Is add_metadata so stupid?)
         select case ( outputType )
         case ( l_l2gp, l_l2dgg )
           ! Call the l2gp swath write routine.  This should write the 
@@ -1075,14 +1081,11 @@ contains ! =====     Public Procedures     =============================
           call Deallocate_test ( createThisSource, 'createThisSource', ModuleName )
           call Deallocate_test ( nameBuffer, 'nameBuffer', ModuleName )
         end if
+
         ! Don't forget to close file
         select case ( outputType )
         case ( l_l2gp, l_l2dgg, l_l2aux, l_l2fwm )
           if ( OPENHERE ) call mls_closeFile(directFile, ErrorType)
-        ! case ( l_l2gp, l_l2dgg )
-          ! errortype = mls_io_gen_closeF('sw', Handle, hdfVersion=hdfVersion)
-        !  case ( l_l2aux, l_l2fwm )
-          ! errortype = mls_io_gen_closeF('hg', Handle, hdfVersion=hdfVersion)
         case default
           call output('outputType: ', advance='no')
           call output(outputType, advance='yes')
@@ -1093,8 +1096,10 @@ contains ! =====     Public Procedures     =============================
             & MLSFile=directFile )
         end select
         call time_now ( timeToClose )
-        if ( timeToClose-timeWriting > timeReasonable .and. index(switches,'dwreq') /= 0 ) then
-          call output('Unreasonable closing time for ' //trim(hdfname), advance='yes')
+        if ( timeToClose-timeWriting > timeReasonable .and. &
+          & index(switches,'dwreq') /= 0 ) then
+          call output('Unreasonable closing time for ' // trim(hdfname), &
+            & advance='yes')
         endif
         if ( errortype /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'DirectWriteCommand unable to close (1)' // trim(filename), &
@@ -1120,8 +1125,6 @@ contains ! =====     Public Procedures     =============================
         call Deallocate_test ( createThisSource, 'createThisSource', ModuleName )
         call Deallocate_test ( nameBuffer, 'nameBuffer', ModuleName )
         ! Call the l2gp close routine
-        ! errortype = mls_io_gen_closeF('sw', Handle, hdfVersion=hdfVersion)
-        ! errortype = he5_SWclose(Handle)
         if ( OPENHERE ) call mls_closeFile(directFile, errorType)
         if ( DeeBUG ) then
           print *, 'Tried to close ', trim(FIleName)
@@ -1131,7 +1134,6 @@ contains ! =====     Public Procedures     =============================
         end if
       case ( l_l2aux, l_l2fwm )
         ! Call the l2aux close routine
-        ! errortype = mls_io_gen_closeF('hg', Handle, hdfVersion=hdfVersion)
         if ( OPENHERE ) call mls_closeFile(directFile, errorType)
       case default
         call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1139,8 +1141,10 @@ contains ! =====     Public Procedures     =============================
         & MLSFile=directFile )
       end select
       call time_now ( timeToClose )
-      if ( timeToClose-timeWriting > timeReasonable .and. index(switches,'dwreq') /= 0 ) then
-        call output('Unreasonable closing time for ' //trim(hdfname), advance='yes')
+      if ( timeToClose-timeWriting > timeReasonable .and. &
+        & index(switches,'dwreq') /= 0 ) then
+        call output('Unreasonable closing time for ' // trim(hdfname), &
+          & advance='yes')
       endif
       if ( errortype /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'DirectWriteCommand unable to close (2)' // trim(filename), &
@@ -1158,7 +1162,8 @@ contains ! =====     Public Procedures     =============================
       ! Tell the master we're done
       if ( parallel%slave ) call FinishedDirectWrite ( ticket )
       call time_now ( timeOut )
-      if ( timeOut-timeToClose > timeReasonable .and. index(switches,'dwreq') /= 0 ) then
+      if ( timeOut-timeToClose > timeReasonable .and. &
+        & index(switches,'dwreq') /= 0 ) then
         call output('Unreasonable time out ' //trim(hdfname), advance='yes')
       endif
     end if
@@ -1970,6 +1975,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.124  2005/11/11 21:47:08  pwagner
+! May have fixed bugs Besetting Alyn and Dong
+!
 ! Revision 2.123  2005/11/04 18:54:04  pwagner
 ! Accommodates changed interface to add_metadata
 !
