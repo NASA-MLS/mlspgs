@@ -182,18 +182,17 @@ module INIT_TABLES_MODULE
 ! Parameter names:
   ! In GlobalSettings section:
   integer, parameter :: FIRST_PARM = spec_last + 1
-  integer, parameter :: P_ALLOW_CLIMATOLOGY_OVERLOADS = first_parm
-  integer, parameter :: P_INPUT_VERSION_STRING        = p_allow_climatology_overloads + 1
+  integer, parameter :: P_INPUT_VERSION_STRING        = first_parm
   integer, parameter :: P_OUTPUT_VERSION_STRING       = p_input_version_string + 1
-  integer, parameter :: P_VERSION_COMMENT             = p_output_version_string + 1
-  integer, parameter :: P_CYCLE                       = p_version_comment + 1
+  integer, parameter :: P_CYCLE                       = p_output_version_string + 1
   integer, parameter :: P_STARTTIME                   = p_cycle + 1
   integer, parameter :: P_ENDTIME                     = p_starttime + 1
   integer, parameter :: P_LEAPSECFILE                 = p_endtime + 1
   integer, parameter :: P_INSTRUMENT                  = p_leapsecfile + 1
-  integer, parameter :: P_PFAFile                     = p_instrument + 1
+  integer, parameter :: P_PFAFILE                     = p_instrument + 1
+  integer, parameter :: P_BRIGHTOBJECTS               = p_pfafile + 1
   ! In ChunkDivide section:
-  integer, parameter :: P_CRITICAL_BANDS              = p_PFAFile  + 1
+  integer, parameter :: P_CRITICAL_BANDS              = p_brightobjects  + 1
   integer, parameter :: P_CRITICAL_SCANNING_MODULES   = p_critical_bands + 1
   integer, parameter :: P_HOME_GEOD_ANGLE             = p_critical_scanning_modules + 1
   integer, parameter :: P_HOME_MODULE                 = p_home_geod_angle + 1
@@ -284,18 +283,16 @@ contains ! =====     Public procedures     =============================
     ! based on the file lit_names.txt
     include 'lit_add.f9h'    
     ! Put parameter names into the symbol table:
-    parm_indices(p_allow_climatology_overloads) = &
-                                           add_ident ( 'AllowClimatologyOverloads' )
     parm_indices(p_input_version_string) = add_ident ( 'InputVersionString' )
     parm_indices(p_ignoreL1B) =            add_ident ( 'IgnoreL1B' )
     parm_indices(p_output_version_string) =add_ident ( 'OutputVersionString' )
-    parm_indices(p_version_comment) =      add_ident ( 'VersionComment' )
     parm_indices(p_cycle) =                add_ident ( 'Cycle' )
     parm_indices(p_starttime) =            add_ident ( 'StartTime' )
     parm_indices(p_endtime) =              add_ident ( 'EndTime' )
     parm_indices(p_instrument) =           add_ident ( 'Instrument' )
     parm_indices(p_leapsecfile) =          add_ident ( 'LeapSecFile' )
     parm_indices(p_PFAfile) =              add_ident ( 'PFAFile' )
+    parm_indices(p_brightObjects) =        add_ident ( 'BrightObjects' )
 
     parm_indices(p_critical_bands) =       add_ident ( 'CriticalBands' )
     parm_indices(p_critical_scanning_modules) = &
@@ -755,6 +752,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_fill, &  ! Must be AFTER s_vector, s_matrix and s_climatology
              begin, f+f_a, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
+             begin, f+f_avoidBrightObjects, t+t_string, n+n_field_type, &
              begin, f+f_additional, t+t_boolean, n+n_field_type, &
              begin, f+f_allowMissing, t+t_boolean, n+n_field_type, &
              begin, f+f_aprioriPrecision, s+s_vector, f+f_template, &
@@ -1309,12 +1307,11 @@ contains ! =====     Public procedures     =============================
       begin, z+z_spectroscopy, s+s_line, s+s_readSpectroscopy, s+s_spectra, &
                              s+s_time, s+s_writeSpectroscopy, n+n_section, &
       begin, z+z_globalsettings, &
-             begin, p+p_version_comment, t+t_string, n+n_name_def, &
              begin, p+p_input_version_string, t+t_string, n+n_name_def, &
              begin, p+p_output_version_string, t+t_string, n+n_name_def, &
-             begin, p+p_allow_climatology_overloads, t+t_boolean, n+n_name_def,&
              begin, p+p_instrument, t+t_instrument, n+n_name_def,&
              begin, p+p_leapsecfile, t+t_string, n+n_name_def,&
+             begin, p+p_brightObjects, t+t_string, n+n_name_def,&
              begin, p+p_PFAfile, t+t_string, n+n_name_def,&
              begin, p+p_cycle, t+t_string, n+n_name_def, &
              begin, p+p_starttime, t+t_string, n+n_name_def, &
@@ -1380,6 +1377,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.415  2005/11/11 21:44:18  pwagner
+! Added avoidBrightObjects for use by FillFromL1B; removed unused globalsettings
+!
 ! Revision 2.414  2005/09/23 23:39:16  pwagner
 ! Added rename field to copy command
 !
