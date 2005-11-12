@@ -38,6 +38,13 @@ module GLOBAL_SETTINGS
   ! integer         :: VERSION_COMMENT = 0          ! Sub_rosa index
 
   character(LEN=FileNameLen), public :: LEAPSECFILENAME = ''
+
+  ! These must be values consistent with level 1
+  ! (Some canny coding below could make this more robust)
+  integer, parameter :: BO_NAMEDIMS = 14
+  integer, parameter :: BO_NAMELEN = 14
+
+  ! This next should be large enough to hold the entire list of BO names
   integer, parameter :: BONAMELISTLEN = 256
   character(len=BONAMELISTLEN), public, save :: brightObjects = &
     & 'MERCURY, VENUS, EARTH, MARS, JUPITER, SATURN, URANUS, NEPTUNE, PLUTO, ' // &
@@ -96,7 +103,7 @@ contains
       & mlspcf_l2fwm_full_end, &
       & mlspcf_l2dgg_start, mlspcf_l2dgg_end
     use MLSStrings, only: hhmmss_value
-    use MLSStringLists, only: catLists
+    use MLSStringLists, only: Array2List, catLists
     use MLSSignals_m, only: INSTRUMENT
     use MoreTree, only: GET_FIELD_ID, GET_SPEC_ID
     use OUTPUT_M, only: BLANKS, OUTPUT
@@ -130,14 +137,16 @@ contains
     type (DirectData_T), dimension(:), pointer :: DirectDatabase
     type (TAI93_Range_T) :: processingRange ! Data processing range
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-    type (L1BData_T) :: l1bField   ! L1B data
 
+    ! Local variables
+    character(len=BO_NAMELEN), dimension(BO_NAMEDIMS) :: BO_names
     integer :: Details             ! How much info about l1b files to dump
     type (MLSFile_T) :: DirectFile
     logical :: GOT(3)              ! Used non-canonically--a bad practice
     integer :: I, J                ! Index of son, grandson of root
     integer :: INPUT_VERSION_STRING  ! Sub_rosa index
     logical ::  ItExists
+    type (L1BData_T) :: l1bField   ! L1B data
     integer :: L1BFLAG
     real(r8) :: MINTIME, MAXTIME   ! Time Span in L1B file data
     integer :: NAME                ! Sub-rosa index of name of vGrid or hGrid
@@ -515,7 +524,8 @@ contains
       L1BFile%fileID%sd_id = 0 ! So we don't look here for the attribute
       ! We still need to open the root group '/'
       call h5gopen_f ( L1BFile%fileID%f_id, '/', L1BFile%fileID%grp_id, ReturnStatus )
-      call GetHDF5Attribute( L1BFile, '/BO_name', BrightObjects )
+      call GetHDF5Attribute( L1BFile, 'BO_name', BO_names )
+      call Array2List ( BO_names, BrightObjects )
       call h5gclose_f ( L1BFile%fileID%grp_id, ReturnStatus )
       if ( .not. wasAlreadyOpen ) call mls_CloseFile(L1BFile)
     endif
@@ -933,6 +943,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.107  2005/11/11 21:46:07  pwagner
+! Added reading bright objects from l1boa; removed unused settings
+!
 ! Revision 2.106  2005/09/22 23:37:45  pwagner
 ! date conversion procedures and functions all moved into dates module
 !
