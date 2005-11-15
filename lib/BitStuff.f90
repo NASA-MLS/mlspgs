@@ -270,25 +270,33 @@ contains
     ! Note: because 0 is an actual bit number, we prefill
     ! arrays with -1. So when returned array has count(set > -1)
     ! elements you will know how to proceed. (No, how?)
+    
+    ! NAG has caused us to employ unsightly array constructors
+    ! because it failed to properly elementalize the logical function
+    ! IsBitSet
     integer, intent(in)                          :: i
     integer, intent(out), dimension(:) :: set
     integer, intent(out), optional               :: howmany
     integer, intent(out), dimension(:), optional :: unset
-    integer :: N
+    integer :: N, indx
     ! Executable
     if ( present(unset) ) then
       N = max( size(set), size(unset) )
       N = min( N, MAXBITNUMBER+1 )
       set = -1
       unset = -1
-      call FindAll( IsBitSet(i, BITINDX(0:N)), set, howmany, unset )
+      call FindAll( &
+        & (/ (IsBitSet(i, indx), indx=0, N) /), &
+        & set, howmany, unset )
       ! The first bit number is 0, not 1
       set = set - 1
       unset = unset - 1
     else
       N = min( size(set), MAXBITNUMBER+1 )
       set = -1
-      call FindAll( IsBitSet(i, BITINDX(0:N)), set, howmany )
+      call FindAll( &
+        & (/ (IsBitSet(i, indx), indx=0, N) /), &
+        & set, howmany )
       set = set - 1
     endif
   end subroutine WhichBitsAreSet
@@ -305,6 +313,9 @@ contains
 end module BitStuff
 
 ! $Log$
+! Revision 2.8  2005/11/15 00:17:20  pwagner
+! Changes to workaround NAG failure to elemntalize properly
+!
 ! Revision 2.7  2005/11/11 21:42:17  pwagner
 ! Added bit setting, retrieval, and conditional sign-changing procedures
 !
