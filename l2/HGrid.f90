@@ -696,7 +696,7 @@ contains ! =====     Public Procedures     =============================
     & maxLowerOverlap, maxUpperOverlap, insetOverlaps, single, hGrid )
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-    use Chunks_m, only: MLSChunk_T
+    use Chunks_m, only: MLSChunk_T, Dump
     use ChunkDivide_m, only: ChunkDivideConfig
     use Dump_0, only: DUMP
     use EmpiricalGeometry, only: EmpiricalLongitude, ChooseOptimumLon0
@@ -798,7 +798,24 @@ contains ! =====     Public Procedures     =============================
 
     ! Get or guess the start of the next chunk.
     i = noMAFs - chunk%noMAFsUpperOverlap + 1
-    if ( i < noMAFs + 1 ) then
+    if ( i < 1 ) then
+      call output ( 'While constructing regular hGrid ', advance='yes' )
+      call output ( 'minAngle: ' )
+      call output ( minAngle, format='(F7.2)' )
+      call output ( ' maxAngle: ' )
+      call output ( maxAngle, format='(F7.2)' )
+      call output ( 'i: ' )
+      call output ( i, advance='yes' )
+      call output ( 'noMAFs: ' )
+      call output ( noMAFs, advance='yes' )
+      call output ( 'chunk%noMAFsUpperOverlap: ' )
+      call output ( chunk%noMAFsUpperOverlap, advance='yes' )
+      call dump(chunk)
+      if ( .not. associated(L1BFile) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Obviously impossible guess where to start next chunk' )
+      
+    elseif ( i < noMAFs + 1 ) then
       nextAngle = l1bField%dpField(1,1,i)
     else
       nextAngle = maxAngle + spacing
@@ -1686,6 +1703,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.76  2005/11/15 00:20:18  pwagner
+! Should catch error arising from chunks with bad data
+!
 ! Revision 2.75  2005/11/04 18:52:36  pwagner
 ! Added warning, correction if mif1GeodAngle non-monotonic
 !
