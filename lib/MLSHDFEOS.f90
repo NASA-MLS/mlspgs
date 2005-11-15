@@ -1849,12 +1849,12 @@ contains ! ======================= Public Procedures =========================
 
   ! ---------------------------------------------  mls_swath_in_file_arr  -----
   logical function mls_swath_in_file_arr(filename, swaths, HdfVersion, &
-    & present, error )
+    & which, error )
     ! Array version of the above
     character(len=*), intent(in) :: filename
     character(len=*), dimension(:), intent(in) :: swaths
     integer, intent(in) :: HdfVersion
-    logical, dimension(:), intent(out) :: present
+    logical, dimension(:), intent(out) :: which
     integer, optional, intent(out) :: error
     ! Internal variables
     integer                          :: listsize
@@ -1864,9 +1864,9 @@ contains ! ======================= Public Procedures =========================
     ! Begin execution
     nswaths = 0
     mls_swath_in_file_arr = .false.
-    present = .false.
+    which = .false.
     fieldlist = ' '
-    if ( size(swaths) > size(present) ) &
+    if ( size(swaths) > size(which) ) &
         CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'array to small to hold values in mls_swath_in_file_arr' )
     select case (HdfVersion)
@@ -1887,10 +1887,10 @@ contains ! ======================= Public Procedures =========================
       fieldlist = fieldlist(1:listsize) // ' '
     endif
     do i=1, size(swaths)
-      present(i) = &
+      which(i) = &
       & ( StringElementNum(fieldlist, trim(swaths(i)), .true.) > 0 )
     enddo
-    mls_swath_in_file_arr = any( present )
+    mls_swath_in_file_arr = any( which )
   end function mls_swath_in_file_arr
 
 ! ======================= Private Procedures =========================  
@@ -2015,6 +2015,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.29  2005/11/15 00:18:20  pwagner
+! present a poor choice for argument name; esp when optional args exist
+!
 ! Revision 2.28  2005/11/11 21:41:03  pwagner
 ! mls_swath_in_file_sca optionally returns an error flag, too
 !
