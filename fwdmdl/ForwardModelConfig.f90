@@ -1207,16 +1207,20 @@ contains
           & name='    Line Width Temperature Dependence Indices' )
     end if
     call output ( '  Signals:', advance='yes')
-    do j = 1, size(config%signals)
-      call getNameOfSignal ( config%signals(j), signalName)
-      call output ( '  '//trim(signalName)//' channels Included:' )
-      if ( associated(config%signals(j)%channels) ) then
-        call newLine
-        call dump ( config%signals(j)%channels )
-      else
-        call output ( ' None', advance='yes' )
-      end if
-    end do
+    if ( associated(config%signals) ) then
+      do j = 1, size(config%signals)
+        call getNameOfSignal ( config%signals(j), signalName)
+        call output ( '  '//trim(signalName)//' channels Included:' )
+        if ( associated(config%signals(j)%channels) ) then
+          call newLine
+          call dump ( config%signals(j)%channels )
+        else
+          call output ( ' None', advance='yes' )
+        end if
+      end do
+    else
+      call output ( '  (none associated yet)', advance='yes')
+    endif
     ! Dump ForwardModelDerived
     call output ( '  ForwardModelDerived:', advance='yes' )
     if ( associated(config%usedDACSSignals) ) &
@@ -1266,6 +1270,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.83  2005/11/02 21:38:24  vsnyder
+! Hoist some stuff out of MAF loop, delete debugging code
+!
 ! Revision 2.82  2005/11/01 23:01:36  vsnyder
 ! Precompute ShapeInds and stash in config
 !
