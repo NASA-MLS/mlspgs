@@ -664,6 +664,7 @@ contains
     character(len=16) :: SIGNALSTRING
     logical :: SIGNIFICANTEVENT
     logical :: SKIPDELAY            ! Don't wait before doing the next go round
+    integer :: STATUS
     character(len=FileNameLen)  :: tempfile
     integer :: TID
     integer, dimension(MAXNUMMULTIPROCS) :: TIDS
@@ -978,17 +979,24 @@ contains
         if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking GROUPNAME' )
         call PVMF90Unpack ( tempfile, info )
         if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking dumpfile' )
+        status = 0
         if ( tempfile /= '<STDIN>' ) then
           oldPrUnit = prunit
           prUnit = tempUnit
           ! print *, 'Opening ', prunit, ' as ', trim(tempfile)
-          open(prunit, file=trim(tempfile), &
-            & status='replace', form='formatted')
+          open( prunit, file=trim(tempfile), &
+            & status='replace', form='formatted', iostat=status )
         endif
         call timestamp ( 'Received an external message to dump databases', &
           & advance='yes' )
-        call dump_master_database(masters)
-        call dump(hosts)
+        if ( status == 0 ) then
+          call dump_master_database(masters)
+          call dump(hosts)
+        else
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'Ignoring message; unable to open ' // &
+            & trim(tempfile) )
+        endif
         if ( tempfile /= '<STDIN>' ) then
           close(prunit)
           prunit = oldPrUnit
@@ -1000,16 +1008,23 @@ contains
         if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking GROUPNAME' )
         call PVMF90Unpack ( tempfile, info )
         if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking dumpfile' )
+        status = 0
         if ( tempfile /= '<STDIN>' ) then
           oldPrUnit = prunit
           prUnit = tempUnit
           ! print *, 'Opening ', prunit, ' as ', trim(tempfile)
-          open(prunit, file=trim(tempfile), &
-            & status='replace', form='formatted')
+          open( prunit, file=trim(tempfile), &
+            & status='replace', form='formatted', iostat=status )
         endif
         call timestamp ( 'Received an external message to dump hostDB', &
           & advance='yes' )
-        call dump(hosts)
+        if ( status == 0 ) then
+          call dump(hosts)
+        else
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'Ignoring message; unable to open ' // &
+            & trim(tempfile) )
+        endif
         if ( tempfile /= '<STDIN>' ) then
           close(prunit)
           prunit = oldPrUnit
@@ -1021,16 +1036,23 @@ contains
         if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking GROUPNAME' )
         call PVMF90Unpack ( tempfile, info )
         if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking dumpfile' )
+        status = 0
         if ( tempfile /= '<STDIN>' ) then
           oldPrUnit = prunit
           prUnit = tempUnit
           ! print *, 'Opening ', prunit, ' as ', trim(tempfile)
-          open(prunit, file=trim(tempfile), &
-            & status='replace', form='formatted')
+          open( prunit, file=trim(tempfile), &
+            & status='replace', form='formatted', iostat=status )
         endif
         call timestamp ( 'Received an external message to dump masterDB', &
           & advance='yes' )
-        call dump_master_database(masters)
+        if ( status == 0 ) then
+          call dump_master_database(masters)
+        else
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'Ignoring message; unable to open ' // &
+            & trim(tempfile) )
+        endif
         if ( tempfile /= '<STDIN>' ) then
           close(prunit)
           prunit = oldPrUnit
@@ -1075,6 +1097,7 @@ contains
         if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking GROUPNAME' )
         if ( prunit == DUMPUNIT ) then
           if ( options%timing ) call sayTime
+          tempfile = options%dump_file
           call output('Switching dump file from '//trim(options%dump_file))
           call output(' to ')
           call PVMF90Unpack ( options%dump_file, info )
@@ -1082,9 +1105,21 @@ contains
           call timestamp(trim(options%dump_file), advance='yes')
           close(DUMPUNIT)
           ! print *, 'Opening ', prunit, ' as ', trim(options%dump_file)
-          open(prunit, file=trim(options%dump_file), &
-            & status='replace', form='formatted')
-          call timestamp('(new dump file opened)', advance='yes')
+          open( prunit, file=trim(options%dump_file), &
+            & status='replace', form='formatted', iostat=status )
+          if ( status /= 0 ) then
+            call MLSMessage ( MLSMSG_Warning, ModuleName, &
+              & 'No new dumpfile; unable to open ' // &
+              & trim(options%dump_file) )
+            options%dump_file = tempfile
+            open( prunit, file=trim(options%dump_file), &
+              & status='replace', form='formatted', iostat=status )
+            if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'Now we cant even revert to old dumpfile; unable to open ' // &
+              & trim(options%dump_file) )
+          else
+            call timestamp('(new dump file opened)', advance='yes')
+          endif
         else
           call timestamp('(switchDumpFileTag ignored--dumping to <STDIN>)', &
             & advance='yes')
@@ -1119,12 +1154,18 @@ contains
           oldPrUnit = prunit
           prUnit = tempUnit
           ! print *, 'Opening ', prunit, ' as ', trim(options%PHfile)
-          open(prunit, file=trim(options%PHFile), &
-            & status='replace', form='formatted')
-          call timestamp ( 'Performing periodic dump hostDB', &
-            & advance='yes' )
-          call dump(hosts)
-          close(prunit)
+          open( prunit, file=trim(options%PHFile), &
+            & status='replace', form='formatted', iostat=status )
+          if ( status == 0 ) then
+            call timestamp ( 'Performing periodic dump hostDB', &
+              & advance='yes' )
+            call dump(hosts)
+            close(prunit)
+          else
+            call MLSMessage ( MLSMSG_Warning, ModuleName, &
+              & 'No periodic dump hostDB; unable to open ' // &
+              & trim(options%PHFile) )
+          endif
           prunit = oldPrUnit
           tLastHDBDump = t2
         endif
@@ -1136,12 +1177,18 @@ contains
           oldPrUnit = prunit
           prUnit = tempUnit
           ! print *, 'Opening ', prunit, ' as ', trim(options%PMfile)
-          open(prunit, file=trim(options%PMFile), &
-            & status='replace', form='formatted')
-          call timestamp ( 'Performing periodic dump masterDB', &
-            & advance='yes' )
-          call dump_master_database(masters)
-          close(prunit)
+          open( prunit, file=trim(options%PMFile), &
+            & status='replace', form='formatted', iostat=status )
+          if ( status == 0 ) then
+            call timestamp ( 'Performing periodic dump masterDB', &
+              & advance='yes' )
+            call dump_master_database(masters)
+            close(prunit)
+          else
+            call MLSMessage ( MLSMSG_Warning, ModuleName, &
+              & 'No periodic dump masterDB; unable to open ' // &
+              & trim(options%PMFile) )
+          endif
           prunit = oldPrUnit
           tLastMDBDump = t2
         endif
@@ -1608,6 +1655,9 @@ contains
 end program L2Q
 
 ! $Log$
+! Revision 1.9  2005/09/23 21:01:13  pwagner
+! use_wall_clock now a component of time_config
+!
 ! Revision 1.8  2005/06/22 19:27:33  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
