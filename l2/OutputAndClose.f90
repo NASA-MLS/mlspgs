@@ -201,7 +201,9 @@ contains ! =====     Public Procedures     =============================
 
     
     AllChunks%firstMAFIndex = chunks(1)%firstMAFIndex
+    AllChunks%noMAFsLowerOverlap = chunks(1)%noMAFsLowerOverlap
     AllChunks%lastMAFIndex = chunks(size(chunks))%lastMAFIndex
+    AllChunks%noMAFsUpperOverlap = chunks(size(chunks))%noMAFsUpperOverlap
 
     if ( DEBUG ) then
       print *, 'Num chunks: ', size(chunks)
@@ -1488,6 +1490,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.116  2005/11/15 00:22:05  pwagner
+! Defined Overlaps for AllChunks chunk
+!
 ! Revision 2.115  2005/11/04 18:55:46  pwagner
 ! Can add metadata when copying swaths, datasets
 !
