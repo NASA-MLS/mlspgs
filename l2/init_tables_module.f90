@@ -750,8 +750,7 @@ contains ! =====     Public procedures     =============================
 
     call make_tree( (/ &
       begin, s+s_fill, &  ! Must be AFTER s_vector, s_matrix and s_climatology
-             begin, f+f_a, s+s_vector, f+f_template, &
-                    f+f_quantities, n+n_dot, &
+             begin, f+f_a, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
              begin, f+f_avoidBrightObjects, t+t_string, n+n_field_type, &
              begin, f+f_additional, t+t_boolean, n+n_field_type, &
              begin, f+f_allowMissing, t+t_boolean, n+n_field_type, &
@@ -775,15 +774,13 @@ contains ! =====     Public procedures     =============================
              begin, f+f_excludeBelowBottom, t+t_boolean, n+n_field_type, &
              begin, f+f_explicitValues, t+t_numeric, n+n_field_type, &
              begin, f+f_extinction, t+t_boolean, n+n_field_type, &
-             begin, f+f_fieldECR, s+s_vector, f+f_template, f+f_quantities, &
-                    n+n_dot, &
+             begin, f+f_fieldECR, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
              begin, f+f_file, t+t_string, n+n_field_type, &
              begin, f+f_force, t+t_boolean, n+n_field_type, &
              begin, f+f_fromPrecision, t+t_boolean, n+n_field_type, &
              begin, f+f_geocAltitudeQuantity, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
-             begin, f+f_gphQuantity, s+s_vector, f+f_template, f+f_quantities, &
-                    n+n_dot, &
+             begin, f+f_gphQuantity, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
              begin, f+f_h2oQuantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
              begin, f+f_h2oPrecisionQuantity, s+s_vector, f+f_template, f+f_quantities, &
@@ -1377,6 +1374,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.416  2005/11/15 00:19:24  pwagner
+! NAG intolerant of too many continuation lines
+!
 ! Revision 2.415  2005/11/11 21:44:18  pwagner
 ! Added avoidBrightObjects for use by FillFromL1B; removed unused globalsettings
 !
