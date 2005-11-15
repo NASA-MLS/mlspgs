@@ -5324,7 +5324,6 @@ contains ! =====     Public Procedures     =============================
       integer :: fileID, FLAG, NOMAFS
       type (l1bData_T) :: L1BDATA
       type (MLSFile_T), pointer             :: L1BFile
-      type (MLSFile_T), pointer             :: L1BOAFile
       integer :: ROW, COLUMN
       integer :: myBOMask
       integer :: this_hdfVersion
@@ -5403,7 +5402,7 @@ contains ! =====     Public Procedures     =============================
       end select
 
       ! Perhaps will need to read bright object status from l1bOA file
-      if ( is Precision .and. myBOMask /= 0 ) then
+      if ( isPrecision .and. myBOMask /= 0 ) then
         call GetModuleName ( quantity%template%instrumentModule, moduleNameString )
         moduleNameString = AssembleL1BQtyName('BO_stat', this_hdfVersion, .TRUE., &
           & trim(moduleNameString))
@@ -5466,7 +5465,7 @@ contains ! =====     Public Procedures     =============================
           return
         end if
 
-        if ( is Precision .and. myBOMask /= 0 ) then
+        if ( isPrecision .and. myBOMask /= 0 ) then
           l1bData%dpField = NegativeIfBitPatternSet(l1bData%dpField, &
             & BO_stat%intField, myBOMask)
           call DeallocateL1BData(BO_stat)
@@ -6844,6 +6843,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.313  2005/11/15 00:21:12  pwagner
+! Removed space between Is and Precision
+!
 ! Revision 2.312  2005/11/11 21:49:41  pwagner
 ! May set l1b precisions negative if avoidBrightObjects set
 !
