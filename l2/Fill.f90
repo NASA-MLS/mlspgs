@@ -753,7 +753,7 @@ contains ! =====     Public Procedures     =============================
             aprPrecVctrIndex = decoration(decoration(subtree(1,gson)))
             aprPrecQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_avoidBrightObjects )
-            call get_string( gson, extraObjects, strip=.true. )
+            call get_string( sub_rosa(gson), extraObjects, strip=.true. )
             avoidObjects = catLists( avoidObjects, extraObjects )
           case ( f_b )
             bVecIndex = decoration(decoration(subtree(1,gson)))
@@ -5318,15 +5318,16 @@ contains ! =====     Public Procedures     =============================
       integer, intent(in), optional :: BOMask ! A pattern of bits--
                                               ! set prec. neg. if matched
       ! Local variables
-      type (l1bData_T) :: BO_stat
-      character (len=132) :: MODULENAMESTRING
-      character (len=132) :: NAMESTRING
-      integer :: fileID, FLAG, NOMAFS
-      type (l1bData_T) :: L1BDATA
+      type (l1bData_T)                      :: BO_stat
+      character (len=132)                   :: MODULENAMESTRING
+      character (len=132)                   :: NAMESTRING
+      integer                               :: fileID, FLAG, NOMAFS
+      type (l1bData_T)                      :: L1BDATA
       type (MLSFile_T), pointer             :: L1BFile
-      integer :: ROW, COLUMN
-      integer :: myBOMask
-      integer :: this_hdfVersion
+      type (MLSFile_T), pointer             :: L1BOAFile
+      integer                               :: ROW, COLUMN
+      integer                               :: myBOMask
+      integer                               :: this_hdfVersion
 
       ! Executable code
       myBOMask = 0
@@ -5335,6 +5336,7 @@ contains ! =====     Public Procedures     =============================
         & call trace_begin ("FillVectorQuantityFromL1B",root)
       ! print *, 'Filling vector quantity from l1b'
       L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
+      L1BOAFile => GetMLSFileByType(filedatabase, content='l1boa')
       this_hdfVersion = L1BFile%HDFVersion
       fileID = L1BFile%FileID%f_id
       
@@ -5406,7 +5408,7 @@ contains ! =====     Public Procedures     =============================
         call GetModuleName ( quantity%template%instrumentModule, moduleNameString )
         moduleNameString = AssembleL1BQtyName('BO_stat', this_hdfVersion, .TRUE., &
           & trim(moduleNameString))
-        call ReadL1BData ( L1BFile, moduleNameString, BO_stat, noMAFs, flag, &
+        call ReadL1BData ( L1BOAFile, moduleNameString, BO_stat, noMAFs, flag, &
           & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
           & NeverFail= .false., &
           & dontPad=DONTPAD )
@@ -6843,6 +6845,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.314  2005/11/17 20:12:51  pwagner
+! Can now read BO_stat successfully
+!
 ! Revision 2.313  2005/11/15 00:21:12  pwagner
 ! Removed space between Is and Precision
 !
