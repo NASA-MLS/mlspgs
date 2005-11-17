@@ -663,28 +663,16 @@ program MLSL2
   !---------------- Task (4) ------------------
   ! Open the L2CF
   status = 0
-  ! status = InitializeMLSFile(MLSL2CF, content = 'l2cf', name='<STDIN>', &
-  !    & type=l_ascii, access='nonhdf', recordLength=recl, &
   status = InitializeMLSFile(MLSL2CF, content = 'l2cf', name='<STDIN>', &
       & type=l_ascii, access=DFACC_RDONLY, recordLength=recl, &
       & PCBottom=MLSPCF_L2CF_Start, PCTop=MLSPCF_L2CF_Start)
   MLSL2CF%FileID%f_id = l2cf_unit
   if ( line /= ' ' ) then
-    ! L2CF_file = line
     MLSL2CF%name = line
-    ! open ( l2cf_unit, file=line, status='old', &
-    ! & form='formatted', access='sequential', recl=recl, iostat=status )
-    ! print *, '1st attempt to open ' // trim(MLSL2CF%name)
     call mls_openFile(MLSL2CF, status)
-    ! print *, 'status ', status
     if ( status /= 0 ) then
-      ! L2CF_file = trim(line) // L2CFNAMEEXTENSION
       MLSL2CF%name = trim(line) // L2CFNAMEEXTENSION
-      ! print *, '1st attempt to open ' // trim(MLSL2CF%name)
       call mls_openFile(MLSL2CF, status)
-      ! print *, 'status ', status
-       !open ( l2cf_unit, file=trim(line) // L2CFNAMEEXTENSION, status='old', &
-       ! & form='formatted', access='sequential', recl=recl, iostat=status )
     end if
     if ( status /= 0 ) then
       call io_error ( "While opening L2CF", status, line )
@@ -695,10 +683,8 @@ program MLSL2
     end if
     inunit = l2cf_unit
   else if ( TOOLKIT .and. .not. showDefaults ) then
-    ! call open_MLSCF ( MLSPCF_L2CF_Start, inunit, L2CF_file, status, recl )
     MLSL2CF%name = '' ! To force reference to PCF entry
     MLSL2CF%type = l_tkgen
-    ! print *, 'About to try to open l2cf file'
     call mls_openFile(MLSL2CF, status)
     ! call dump(MLSL2CF)
     inunit = MLSL2CF%FileID%f_id
@@ -747,7 +733,6 @@ program MLSL2
 
   !---------------- Task (6) ------------------
   if ( TOOLKIT .and. error==0) then
-    ! call close_MLSCF ( inunit, error )
     call mls_closeFile ( filedatabase(numfiles), error )
   else
     if ( inunit >= 0 ) close ( inunit )  ! Don't worry about the status
@@ -966,7 +951,7 @@ contains
       call output(parallel%maxFailuresPerMachine, advance='yes')
       call output(' Sleep time in masterLoop (mus):                 ', advance='no') 
       call blanks(5, advance='no')                                                   
-      call output(parallel%maxFailuresPerMachine, advance='yes')
+      call output(parallel%delay, advance='yes')
       call output(' Range of chunks run in parallel:                ', advance='no') 
       call blanks(4, advance='no')
       if ( max(singleChunk, lastChunk) /= 0 ) then
@@ -1065,6 +1050,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.143  2005/11/17 20:11:46  pwagner
+! Was printing wrong thing for parallel sleeptime
+!
 ! Revision 2.142  2005/09/22 23:38:54  pwagner
 ! time_config and retry_config now hold config settings
 !
