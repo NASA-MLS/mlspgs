@@ -1978,6 +1978,11 @@ contains ! ============================ MODULE PROCEDURES ======================
       print *, 'MAFoffset ', MAFoffset
       print *, 'l1bData%noMAFs ', l1bData%noMAFs
     endif
+    
+    ! The following is a crude and despicable hack
+    ! Please repair GetHDF5DSQType and delete these lines
+    if ( Qtype == 'unknown' ) Qtype = 'character'
+
     select case (trim(Qtype) // Char_rank)
     case ('real1')
       allocate( l1bData%DpField(l1bData%noMAFs, 1, 1),stat=status)
@@ -2044,10 +2049,37 @@ contains ! ============================ MODULE PROCEDURES ======================
       ! call MLSMessage ( MLSMSG_Error, ModuleName, &
       ! & 'Sorry--LoadFromHDF5DS not yet written for type integer(:).')
       l1bdata%data_type = 'integer'
-    case ('integer3')  
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Sorry--LoadFromHDF5DS not yet written for type integer(:,:,:).')
+    case ('integer2')
+      allocate( l1bData%IntField(dims(1),l1bData%noMAFs, 1),stat=status)
+      if ( present(FirstMAF) ) then                                          
+        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%IntField(:,:,1), &
+          & (/0,MAFoffset/), (/int(dims(1)),l1bData%noMAFs/) )                                      
+      else                                                                   
+        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%IntField(:,:,1))  
+      end if                                                                  
       l1bdata%data_type = 'integer'
+    case ('integer3')  
+      allocate( l1bData%IntField(dims(1),dims(2),l1bData%noMAFs),stat=status)
+      if ( present(FirstMAF) ) then                                          
+        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%IntField, &
+          & (/0,0,MAFoffset/), (/int(dims(1)),int(dims(2)),l1bData%noMAFs/) )                                      
+      else                                                                   
+        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%IntField)  
+      endif                                                                  
+!     call MLSMessage ( MLSMSG_Error, ModuleName, &
+!     & 'Sorry--LoadFromHDF5DS not yet written for type integer(:,:,:).')
+      l1bdata%data_type = 'integer'
+    case ('character1')  
+      allocate( l1bData%charField(l1bData%noMAFs, 1, 1),stat=status)
+      if ( present(FirstMAF) ) then                                          
+        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%charField(:,1,1), &
+          & (/MAFoffset/), (/l1bData%noMAFs/) )                                      
+      else                                                                   
+        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%charField(:,1,1))  
+      end if                                                                  
+      ! call MLSMessage ( MLSMSG_Error, ModuleName, &
+      ! & 'Sorry--LoadFromHDF5DS not yet written for type character(:).')
+      l1bdata%data_type = 'character'
     case ('character3') 
         call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Sorry--LoadFromHDF5DS not yet rewritten for type char(:,:,:).')
@@ -2671,6 +2703,11 @@ contains ! ============================ MODULE PROCEDURES ======================
       print *, 'MAFoffset ', MAFoffset
       print *, 'l1bData%noMAFs ', l1bData%noMAFs
     endif
+
+    ! The following is a crude and despicable hack
+    ! Please repair GetHDF5DSQType and delete these lines
+    if ( Qtype == 'unknown' ) Qtype = 'character'
+
     select case (trim(Qtype) // Char_rank)
     case ('real1')
       allocate( l1bData%DpField(l1bData%noMAFs, 1, 1),stat=status)
@@ -2735,10 +2772,37 @@ contains ! ============================ MODULE PROCEDURES ======================
         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%intField(:,1,1))  
       end if                                                                  
       l1bdata%data_type = 'integer'
-    case ('integer3')  
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Sorry--LoadFromHDF5DS not yet written for type integer(:,:,:).', MLSFile=L1BFile)
+    case ('integer2')
+      allocate( l1bData%IntField(dims(1),l1bData%noMAFs, 1),stat=status)
+      if ( present(FirstMAF) ) then                                          
+        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%IntField(:,:,1), &
+          & (/0,MAFoffset/), (/int(dims(1)),l1bData%noMAFs/) )                                      
+      else                                                                   
+        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%IntField(:,:,1))  
+      end if                                                                  
       l1bdata%data_type = 'integer'
+    case ('integer3')  
+      allocate( l1bData%IntField(dims(1),dims(2),l1bData%noMAFs),stat=status)
+      if ( present(FirstMAF) ) then                                          
+        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%IntField, &
+          & (/0,0,MAFoffset/), (/int(dims(1)),int(dims(2)),l1bData%noMAFs/) )                                      
+      else                                                                   
+        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%IntField)  
+      endif                                                                  
+!     call MLSMessage ( MLSMSG_Error, ModuleName, &
+!     & 'Sorry--LoadFromHDF5DS not yet written for type integer(:,:,:).', MLSFile=L1BFile)
+      l1bdata%data_type = 'integer'
+    case ('character1')  
+      allocate( l1bData%charField(l1bData%noMAFs, 1, 1),stat=status)
+      if ( present(FirstMAF) ) then                                          
+        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%charField(:,1,1), &
+          & (/MAFoffset/), (/l1bData%noMAFs/) )                                      
+      else                                                                   
+        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%charField(:,1,1))  
+      end if                                                                  
+      ! call MLSMessage ( MLSMSG_Error, ModuleName, &
+      ! & 'Sorry--LoadFromHDF5DS not yet written for type character(:).')
+      l1bdata%data_type = 'character'
     case ('character3') 
         call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Sorry--LoadFromHDF5DS not yet rewritten for type char(:,:,:).', MLSFile=L1BFile)
@@ -3062,6 +3126,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.65  2005/11/17 20:10:44  pwagner
+! Can now read 2d and 3d integer-valued l1bdata; charaacter still fails
+!
 ! Revision 2.64  2005/10/22 00:50:30  pwagner
 ! Warns but continues if attributes sought in hdf4 file
 !
