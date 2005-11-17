@@ -35,7 +35,7 @@ module MLSHDF5
     & H5S_SCALAR_F, H5S_SELECT_SET_F, H5S_UNLIMITED_F, &
     & H5T_IEEE_F32LE, H5T_IEEE_F64LE, &
     & H5T_NATIVE_DOUBLE, H5T_NATIVE_REAL, H5T_STD_I32LE, &
-    & H5T_NATIVE_CHARACTER, H5T_NATIVE_INTEGER, &
+    & H5T_NATIVE_CHARACTER, H5T_NATIVE_INTEGER, H5T_STRING, &
     & HID_T, HSIZE_T ! , HSSIZE_T
   ! Now routines
   use HDF5, only: H5ACLOSE_F, H5ACREATE_F, &
@@ -203,13 +203,13 @@ module MLSHDF5
 
   interface LoadFromHDF5DS
     module procedure LdFrmHDF5DS_ID_intarr1, LdFrmHDF5DS_ID_intarr2, &
-      & LdFrmHDF5DS_ID_logarr1, &
+      & LdFrmHDF5DS_ID_intarr3, LdFrmHDF5DS_ID_logarr1, &
       & LdFrmHDF5DS_ID_dblarr1, LdFrmHDF5DS_ID_dblarr2, LdFrmHDF5DS_ID_dblarr3, &
       & LdFrmHDF5DS_ID_snglarr1, LdFrmHDF5DS_ID_snglarr2, &
       & LdFrmHDF5DS_ID_snglarr3, LdFrmHDF5DS_ID_snglarr4, &
       & LdFrmHDF5DS_ID_chararr1, LdFrmHDF5DS_ID_chararr2
     module procedure LoadFromHDF5DS_intarr1, LoadFromHDF5DS_intarr2, &
-      & LoadFromHDF5DS_logarr1, &
+      & LoadFromHDF5DS_intarr3, LoadFromHDF5DS_logarr1, &
       & LoadFromHDF5DS_dblarr1, LoadFromHDF5DS_dblarr2, LoadFromHDF5DS_dblarr3, &
       & LoadFromHDF5DS_snglarr1, LoadFromHDF5DS_snglarr2, &
       & LoadFromHDF5DS_snglarr3, LoadFromHDF5DS_snglarr4, &
@@ -1782,6 +1782,8 @@ contains ! ======================= Public Procedures =========================
       Qtype = 'integer'
     else if ( AreThe2TypesEqual(type_id, H5T_NATIVE_CHARACTER) ) then
       Qtype = 'character'
+    else if ( AreThe2TypesEqual(type_id, H5T_STRING) ) then
+      Qtype = 'character'
     else if ( AreThe2TypesEqual(type_id, H5T_NATIVE_REAL) .or. &
       &      AreThe2TypesEqual(type_id, H5T_IEEE_F32LE) ) then
       Qtype = 'real'
@@ -3135,6 +3137,34 @@ contains ! ======================= Public Procedures =========================
     & start, count, stride, block )
   end subroutine LdFrmHDF5DS_ID_intarr2
 
+  ! -------------------------------------  LdFrmHDF5DS_ID_intarr3  -----
+  subroutine LdFrmHDF5DS_ID_intarr3 ( locID, name, value, &
+    & start, count, stride, block )
+    ! This routine loads a predefined array with values from a DS
+    integer, intent(in) :: LOCID          ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    integer, intent(out) :: VALUE(:,:,:)    ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    type (MLSFile_T)   :: MLSFile
+
+    ! Executable code
+    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
+      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
+    MLSFile%fileID%sd_id = locID
+    MLSFile%stillOpen = .true.
+    call LoadFromHDF5DS ( MLSFile, name, value, &
+    & start, count, stride, block )
+  end subroutine LdFrmHDF5DS_ID_intarr3
+
   ! -------------------------------------  LdFrmHDF5DS_ID_logarr1  -----
   subroutine LdFrmHDF5DS_ID_logarr1 ( locID, name, value, &
     & start, count, stride, block )
@@ -3575,6 +3605,52 @@ contains ! ======================= Public Procedures =========================
       call finishLoad ( name, status, spaceID, setID, MLSFile=MLSFile )
     end if
   end subroutine LoadFromHDF5DS_intarr2
+
+  ! -------------------------------------  LoadFromHDF5DS_intarr3  -----
+  subroutine LoadFromHDF5DS_intarr3 ( MLSFile, name, value, &
+    & start, count, stride, block )
+    ! This routine loads a predefined array with values from a DS
+    type (MLSFile_T)   :: MLSFile
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    integer, intent(out) :: VALUE(:,:,:)    ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    integer(kind=hsize_t), dimension(3) :: SHP        ! Shape of value
+    integer :: SPACEID                  ! ID of dataspace
+    integer :: MEMSPACEID               ! ID of dataspace
+    integer :: SETID                    ! ID of dataset
+
+    ! Executable code
+    shp = shape ( value )
+    call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataset ' // trim(name), &
+      & MLSFile=MLSFile )
+    call h5dget_space_f ( setID, spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataspace for dataset ' // trim(name), &
+      & MLSFile=MLSFile )
+    if ( present(start) ) then
+      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
+        & start, count, stride, block )
+      call h5dread_f ( setID, H5T_NATIVE_INTEGER, value, &
+        & (/ shp, ones(1:4) /), status, memspaceID, spaceID )
+      call finishLoad ( name, status, spaceID, setID, memspaceID, MLSFile=MLSFile )
+    else
+      call check_for_fit ( spaceID, shp, name )
+      call h5dread_f ( setID, H5T_NATIVE_INTEGER, value, &
+        & (/ shp, ones(1:4) /), status )
+      call finishLoad ( name, status, spaceID, setID, MLSFile=MLSFile )
+    end if
+  end subroutine LoadFromHDF5DS_intarr3
 
   ! -------------------------------------  LoadFromHDF5DS_logarr1  -----
   subroutine LoadFromHDF5DS_logarr1 ( MLSFile, name, value, &
@@ -5000,6 +5076,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.62  2005/11/17 20:09:24  pwagner
+! LoadFromHDF5DS can now read 3d integer arrays
+!
 ! Revision 2.61  2005/11/11 21:36:00  pwagner
 ! Added new interface for IsHDF5AttributeInFile when attached to grp, not dataset
 !
