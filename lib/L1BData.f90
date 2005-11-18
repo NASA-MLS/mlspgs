@@ -159,6 +159,8 @@ module L1BData
   integer, parameter :: BIGGESTMAFCTR = huge(0)/2
 
   ! This data type is used to store quantities from an L1B data file.
+  ! (This next param may need to be increased)
+  integer, parameter :: MaxCharFieldLen = 128  ! max char field length
 
   type L1BData_T
     character (len=name_len) :: L1BName ! Name of field in file
@@ -173,7 +175,8 @@ module L1BData
     character (len=16) :: NameInst = ' '     
 
     integer, dimension(:), pointer :: CounterMAF => NULL() ! dimensioned (noMAFs)
-    character, dimension(:,:,:), pointer :: CharField => NULL()
+    character(len=MaxCharFieldLen), &
+      &        dimension(:,:,:), pointer :: CharField => NULL()
     real(r8),  dimension(:,:,:), pointer :: DpField => NULL()
     integer,   dimension(:,:,:), pointer :: IntField => NULL()
     ! all the above dimensioned (noAuxInds,maxMIFs,noMAFs)
@@ -836,7 +839,6 @@ contains ! ============================ MODULE PROCEDURES ======================
   end function GetL1BFile
 
   ! ------------------------------------------------  FindL1BData  -----
-  ! integer function FindL1BData ( files, fieldName, hdfVersion )
   integer function FindL1BData ( filedatabase, fieldName, hdfVersion )
 
   use MLSHDF5, only: IsHDF5DSPresent
@@ -925,14 +927,10 @@ contains ! ============================ MODULE PROCEDURES ======================
           if ( haveCtrMAF ) then
             call ReadL1BData ( L1BFile, fieldName, L1bData, noMAFs, status, &
               & dontPad=.true.)
-            ! call ReadL1BData ( files(i), fieldName, L1bData, noMAFs, status, &
-            !   & dontPad=.true.)
           end if
         else
           haveCtrMAF = IsHDF5DSPresent(files(i)%FileID%f_id, trim(fieldName))
           if ( haveCtrMAF ) then
-            ! call ReadL1BData ( files(i), fieldName, L1bData, noMAFs, status, &
-            !   & dontPad=.true.)
             call ReadL1BData ( L1BFile, fieldName, L1bData, noMAFs, status, &
               & dontPad=.true.)
           end if
@@ -941,6 +939,8 @@ contains ! ============================ MODULE PROCEDURES ======================
           FindMaxMAF = max(FindMaxMAF, maxval(l1bData%counterMAF))
           myMinMAF = min(myMinMAF, myminval(l1bData%counterMAF))
           if ( DEEBug ) print *, 'counterMAF ', l1bData%counterMAF
+          ! call output('Shape L1b counterMAF ')
+          ! call output(shape(l1bData%intField), advance='yes')
           call deallocatel1bdata(L1bData)
         else
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
@@ -2837,7 +2837,8 @@ contains ! ============================ MODULE PROCEDURES ======================
     ! Arguments
     type(l1bdata_t), intent(inout) :: L1BDATA ! Result
     ! Local variables
-    character, dimension(:,:,:), pointer :: CharField => NULL()
+    character(len=MaxCharFieldLen), &
+      &        dimension(:,:,:), pointer :: CharField => NULL()
     real(r8),  dimension(:,:,:), pointer :: DpField => NULL()
     integer,   dimension(:,:,:), pointer :: IntField => NULL()
     integer, dimension(3)                :: old_shape    
@@ -3126,6 +3127,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.66  2005/11/18 01:25:16  pwagner
+! L1BData%charField no longer of unit length (hope this breaks nothing else)
+!
 ! Revision 2.65  2005/11/17 20:10:44  pwagner
 ! Can now read 2d and 3d integer-valued l1bdata; charaacter still fails
 !
