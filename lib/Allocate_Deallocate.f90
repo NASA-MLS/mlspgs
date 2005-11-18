@@ -181,7 +181,7 @@ contains
 
     if ( status /= 0 ) then
       ! print *, 'status ', status
-      write ( bounds, '("(",i0,":",i0, 2(",",i0,":",i0))' ) &
+      write ( bounds, '("(",i0,":",i0, 2(:",",i0,":",i0))' ) &
         & ( lBounds(i), uBounds(i), i = 1, size(lBounds) )
       l = len_trim(bounds)+1
       bounds(l:l)= ')'
@@ -658,6 +658,9 @@ contains
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.26  2005/11/18 21:09:35  vsnyder
+! Don't print trailing comma after last dimension in allocation failure message
+!
 ! Revision 2.25  2005/10/03 18:04:51  pwagner
 ! Allocated memory now tracked in units of MEMORY_UNITS
 !
