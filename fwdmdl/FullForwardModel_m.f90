@@ -220,7 +220,6 @@ contains
     logical, dimension(:,:), pointer :: DO_CALC_Tscat_ZP ! 'Avoid zeros' indicator
     logical, dimension(:,:), pointer :: DO_CALC_Salb_ZP  ! 'Avoid zeros' indicator
     logical, dimension(:,:), pointer :: DO_CALC_Cext_ZP  ! 'Avoid zeros' indicator
-    logical, dimension(:), pointer :: true_path_flags ! array of trues
     logical, dimension(:), pointer :: t_der_path_flags! a flag that tells the
 ! where an absorption coefficient is needed for a temperature derivative.
 ! Only useful when subsetting temperature derivatives.
@@ -535,7 +534,7 @@ contains
       & spect_n_path, spect_v_path, spect_w_path, sps_path,  &
       & tan_chi_out, tan_d2h_dhdt, tan_dh_dt, tanh1_c, tanh1_f, &
       & tan_phi, tan_temp, tau_pol, t_der_path_flags, t_glgrid, &
-      & t_path, t_path_c, t_path_f, true_path_flags, tscat_path, &
+      & t_path, t_path_c, t_path_f, tscat_path, &
       & t_script_lbl, t_script_pfa, tt_path, tt_path_c, &
       & usedDacsSignals, vmr, vmrarray, w0_path_c, wc, z_path )
 
@@ -902,11 +901,105 @@ contains
         if ( toggle(emit) .and. levels(emit) > 4 ) &
           & call Trace_End ( 'ForwardModel.MetricsEtc' )
 
-        if ( atmos_der ) k_atmos_frq = 0.0
-        if ( temp_der ) k_temp_frq = 0.0
-        if ( associated(k_spect_dv_frq) ) k_spect_dv_frq = 0.0
-        if ( associated(k_spect_dn_frq) ) k_spect_dn_frq = 0.0
-        if ( associated(k_spect_dw_frq) ) k_spect_dw_frq = 0.0
+!{{\bfseries Notations}
+! 
+! $N_f$ is the number of points in the pointing frequency grid.\\
+! $n$ is an index in the pointing frequency grid.\\
+! $N_p$ is the number of points in the line-of-sight path.\\
+! $i$ is an index in the line-of-sight path.  $c$ is a channel index.\\
+! $s$ indicates a strong-line (LBL) result.
+!   $w$ indicates a weak-line (PFA) result.\\
+! $\delta I^\sigma_{iq} = \Delta B_{iq} \tau^\sigma_{iq}$ is the incremental
+!  radiance contribution at the $i^{\text{th}}$ point along the line-of-sight
+!  path, for $\sigma$ either $s$  or $w$ and $q$ either $c$ or $n$.
+!
+! There are four possible combinations of LBL, PFA and
+! frequency-averaging.
+
+!{{\bfseries Frequency averaged, LBL only}
+!      \begin{equation*}\begin{split}
+!       I^s_c = \sum_{n=1}^{N_f} \phi_{nc} \Delta\nu_{nc}
+!             \sum_{i=1}^{N_p} \delta I^s_{in}
+!       \text{\phantom{xxxx}}
+! %
+!       \frac{\partial I^s_n}{\partial x_k} =& 
+!        \sum_{i=1}^{N_p}
+!         \tau^s_{in} \frac{\partial \Delta B_{in}}{\partial x_k}
+!         - \delta I^s_{in}
+!          \sum_{j=1}^i \frac{\partial \delta^s_{jn}}{\partial x_k}\\
+! %
+!       \frac{\partial I_c}{\partial x_k} =&
+!       \frac{\partial I^s_c}{\partial x_k} =
+!        \sum_{n=1}^{N_f} \phi_{nc} \Delta\nu_{nc}
+!        \frac{\partial I^s_n}{\partial x_k}
+!      \end{split}\end{equation*}
+
+!{{\bfseries Monochromatic, LBL only}
+!      \begin{equation*}
+!       I^s_c = \sum_{i=1}^{N_p} \delta I^s_{ic}
+!       \text{\phantom{xxxx}}
+! %
+!       \frac{\partial I^s_c}{\partial x_k} =
+!        \sum_{i=1}^{N_p}
+!         \tau^s_{ic} \frac{\partial \Delta B_{ic}}{\partial x_k}
+!         - \delta I^s_{ic}
+!          \sum_{j=1}^i \frac{\partial \delta^s_{jc}}{\partial x_k}
+!       \text{\phantom{xxxx}}
+! %
+!       \frac{\partial I_c}{\partial x_k} =
+!       \frac{\partial I^s_c}{\partial x_k}
+!      \end{equation*}
+
+!{{\bfseries Frequency averaged, PFA only}
+!      \begin{equation*}
+!       I_c = \sum_{i=1}^{N_p} \delta I^w_{ic}
+!       \text{\phantom{xxxx}}
+! %
+!       \frac{\partial I_c}{\partial x_k} =
+!        \sum_{i=1}^{N_p}
+!         \tau^w_{ic} \frac{\partial \Delta B_{ic}}{\partial x_k}
+!           - \delta I^w_{ic}
+!            \sum_{j=1}^i \frac{\partial \delta^w_{jc}}{\partial x_k}
+!       \text{\phantom{xxxx}}
+!      \end{equation*}
+
+!{{\bfseries Frequency averaged, LBL and PFA}
+!      \begin{equation*}
+! %
+!       \overline{\delta I^s_{ic}} =
+!        \sum_{n=1}^{N_f} \phi_{nc} \Delta\nu_{nc} \delta I^s_{in}
+!       \text{\phantom{xxxx}}
+! %
+!       I_{ic} = \overline{\delta I^s_{ic}} \tau^w_{ic}
+!       \text{\phantom{xxxx}}
+! %
+!       I_c = \sum_{i=1}^{N_p} I_{ic}
+!       \text{\phantom{xxxx}}
+! %
+!       \frac{\partial I_c}{\partial x_k} =
+!       \frac{\partial I^s_c}{\partial x_k}
+!        - \sum_{i=1}^{N_p} I_{ic}
+!          \sum_{j=1}^i \frac{\partial \delta^w_{jc}}{\partial x_k}
+!      \end{equation*}
+
+!{{\bfseries Program variables}
+! 
+! \begin{tabular}{llll}
+! $\Delta B_{in}$ is {\tt T\_Script\_LBL} &
+! $\Delta B_{ic}$ is {\tt T\_Script\_PFA} &
+! $\tau^s_{in}$ is {\tt Tau\_LBL} &
+! $\tau^w_{ic}$ is {\tt Tau\_PFA}
+! \\
+! $\delta I^\sigma_{iq}$ is {\tt Inc\_Rad\_Path} &
+! $\overline{\delta I^s_{ic}}$ is {\tt Rad\_Avg\_Path} & 
+! $I_{ic}$ is also {\tt Rad\_Avg\_Path} &
+! \\
+! $\sum_{i=1}^{N_p} \delta I^\sigma_{iq}$ is {\tt RadV} & 
+! $I_c$ or $I^s_c$ is {\tt Radiances} &
+! $\frac{\partial I^\sigma_q}{\partial x_k}$ is {\tt K\_}$x${\tt\_FRQ} &
+! $\frac{\partial I_c}{\partial x_k}$ is {\tt K\_}$x$
+! \\
+! \end{tabular}
 
         if ( FwdModelConf%anyLBL(sx) ) then
           call frequency_loop ( alpha_path_c(:npc), beta_path_c(:npc,:), c_inds,  &
@@ -926,12 +1019,13 @@ contains
 
         ! Handle PFA molecules
         if ( FwdModelConf%anyPFA(sx) ) then
-          if ( frq_avg_sel == 15 ) then ! See Frequency_Average for values
+          if ( frq_avg_sel == 15 ) then ! FRQ_avg + LBL + PFA + Derivs
             ! For every channel, frequency average the incremental radiance at
             ! every point along the path, giving Rad_Avg_Path for every channel
             ! and every point along the path.  Multiply by Tau_PFA to combine
             ! PFA contribution in Frequency_Loop.
             call frequency_avg_rad_path
+            call frequency_average_derivatives ( .false. )
           end if
           call frequency_loop ( alpha_path_c(:npc), beta_path_c(:npc,:), c_inds, &
             & del_s(:npc), del_zeta(:npc), do_calc_fzp(:no_ele,:),               &
@@ -946,6 +1040,7 @@ contains
             call dump ( tau_pfa, noUsedChannels, ' Tau_PFA:' )
             call dump ( t_script_pfa(:npc,:noUsedChannels), 'T_Script_PFA' )
           end if
+
         end if
 
         call frequency_average ! or maybe just store
@@ -964,15 +1059,16 @@ contains
         & call Trace_End ( 'ForwardModel.PointingLoop' )
 
       if ( associated(channelCenters,frequencies) ) then
-        call deallocate_test ( channelCenters, 'channelCenters', moduleName )
-        nullify ( frequencies )
+        nullify ( channelCenters )
       else
         call deallocate_test ( channelCenters, 'channelCenters', moduleName )
-        call deallocate_test ( frequencies, 'frequencies', moduleName )
       end if
+      call deallocate_test ( frequencies, 'frequencies', moduleName )
       call deallocate_test ( inc_rad_path,   'Inc_Rad_Path',   moduleName )
 
       call convolution ! or interpolation to ptan
+
+      call deallocate_test ( grids, "Grids", moduleName )
 
       ! Deallocate maxNoPtgFreqs-sized stuff
       call deallocate_test ( radv, 'RadV', moduleName )
@@ -1107,6 +1203,7 @@ contains
     call deallocate_test ( cg_inds,          'cg_inds',          moduleName )
     call deallocate_test ( c_inds_b,         'c_inds_b',         moduleName )
     call deallocate_test ( del_s,            'del_s',            moduleName )
+    call deallocate_test ( del_zeta,         'del_zeta',         moduleName )
     call deallocate_test ( dhdz_gw_path,     'dhdz_gw_path',     moduleName )
     call deallocate_test ( dhdz_path,        'dhdz_path',        moduleName )
     call deallocate_test ( do_gl,            'do_gl',            moduleName )
@@ -1125,6 +1222,7 @@ contains
     call deallocate_test ( tanh1_c,          'tanh1_c',          moduleName )
     call deallocate_test ( tanh1_f,          'tanh1_f',          moduleName )
     call deallocate_test ( t_path_c,         't_path_c',         moduleName )
+    call deallocate_test ( t_path_f,         't_path_f',         moduleName )
     call deallocate_test ( t_path,           't_path',           moduleName )
     call deallocate_test ( tt_path_c,        'tt_path_c',        moduleName )
     call deallocate_test ( w0_path_c,        'w0_path_c',        moduleName )
@@ -1143,7 +1241,6 @@ contains
     call deallocate_test ( iwc_path,         'iwc_path',         moduleName )
     call deallocate_test ( mag_path,         'mag_path',         moduleName )
     call deallocate_test ( sps_path,         'sps_path',         moduleName )
-    call deallocate_test ( true_path_flags,  'true_path_flags',  moduleName )
 
     call deallocate_test ( tan_chi_out,      'tan_chi_out',      moduleName )
     call deallocate_test ( dx_dh_out,        'dx_dh_out',        moduleName )
@@ -1185,7 +1282,6 @@ contains
       call deallocate_test ( tan_d2h_dhdt,    'tan_d2h_dhdt',    moduleName )
       call deallocate_test ( tan_dh_dt,       'tan_dh_dt',       moduleName )
       call deallocate_test ( t_der_path_flags,'t_der_path_flags',moduleName )
-      call deallocate_test ( true_path_flags, 'true_path_flags', moduleName )
     end if
 
     if ( atmos_der ) then
@@ -1236,6 +1332,10 @@ contains
       end if
       if ( temp_der ) then
         call deallocate_test ( d_rad_pol_dt,         'd_rad_pol_dt',           moduleName )
+        call deallocate_test ( dAlpha_dT_polarized_path_c, &
+          & 'dAlpha_dT_polarized_path_c', moduleName )
+        call deallocate_test ( dAlpha_dT_polarized_path_f, &
+          & 'dAlpha_dT_polarized_path_f', moduleName )
         call deallocate_test ( dBeta_dT_polarized_path_c, 'dBeta_dT_polarized_path_c', moduleName )
         call deallocate_test ( dBeta_dT_polarized_path_f, 'dBeta_dT_polarized_path_f', moduleName )
         k = size(de_dt)
@@ -1418,6 +1518,7 @@ contains
         & 'closestInstances', ModuleName )
         call FindClosestInstances ( temp, thisRadiance, closestInstances )
         inst = closestInstances(MAF)
+        call deallocate_test ( closestInstances, 'closestInstances', ModuleName )
 
         ! checking done in ForwardModelSupport%ConstructForwardModelConfig
         nspec = no_mol ! Will be at least 3 if l_n2o is included, because
@@ -1620,12 +1721,11 @@ contains
       call allocate_test ( eta_fzp,       max_ele, size(grids_f%values),  'eta_fzp', moduleName )
       call allocate_test ( eta_zp,        max_ele, grids_f%p_len,  'eta_zp', moduleName )
       call allocate_test ( sps_path,      max_ele, no_mol, 'sps_path',       moduleName )
-      call allocate_test ( true_path_flags, max_ele, 'true_path_flags',moduleName)
-      true_path_flags = .true.
 
       if ( fwdModelConf%Incl_Cld ) then
   !    if ( do_cld ) then !JJ
         call allocate_test ( do_calc_iwc,    max_ele, size(grids_iwc%values),  'do_calc_iwc',  moduleName )
+        call allocate_test ( do_calc_iwc_zp, max_ele, grids_iwc%p_len,  'do_calc_iwc_zp',  moduleName )
         call allocate_test ( eta_iwc,        max_ele, size(grids_iwc%values),  'eta_iwc',      moduleName )
         call allocate_test ( eta_iwc_zp,     max_ele, grids_iwc%p_len,  'eta_iwc_zp',    moduleName )
         call allocate_test ( iwc_path,       max_ele, 1, 'iwc_path',           moduleName )
@@ -2150,54 +2250,14 @@ if ( spect_der_center ) call dump ( k_spect_dv(1:noUsedChannels,:,:) )
                             ! PFA and no frequency averaging
       end select
 
-      ! Frequency Average the temperature derivatives with the appropriate
-      ! filter shapes
-
-      if ( temp_der ) call frequency_average_derivative ( grids_tmp, &
-        &               k_temp_frq(:noFreqs,:), k_temp(:,ptg_i,:), 1 )
-
-      ! Frequency Average the atmospheric derivatives with the appropriate
-      ! filter shapes
-
-      if ( atmos_der ) then
-        do k = 1, no_mol
-          if ( fwdModelConf%moleculeDerivatives(k) ) &
-            & call frequency_average_derivative ( grids_f, &
-              & k_atmos_frq(:noFreqs,:), k_atmos(:,ptg_i,:), k )
-        end do                        ! Loop over major molecules
-      end if                          ! Want derivatives for atmos
-
-      ! Frequency Average the spectroscopic derivatives with the appropriate
-      ! filter shapes
-
-      if ( spect_der_center ) then
-call dump ( k_spect_dv_frq, name='k_spect_dv_frq' )
-        do k = 1, size(fwdModelConf%lineCenter)
-          call frequency_average_derivative &
-            & ( grids_v, k_spect_dv_frq(:noFreqs,:), k_spect_dv(:,ptg_i,:), k )
-        end do
-      end if
-      if ( spect_der_width ) then
-        do k = 1, size(fwdModelConf%lineWidth)
-          call frequency_average_derivative &
-            & ( grids_w, k_spect_dw_frq(:noFreqs,:), k_spect_dw(:,ptg_i,:), k )
-        end do
-      end if
-      if ( spect_der_width_TDep ) then
-        do k = 1, size(fwdModelConf%lineWidth_TDep)
-          call frequency_average_derivative &
-            & ( grids_n, k_spect_dn_frq(:noFreqs,:), k_spect_dn(:,ptg_i,:), k )
-        end do
-      end if
-
-        !??? So now we have k_spect_d?.  What do we do with them ???
+      call frequency_average_derivatives ( frq_avg_sel == 15 )
 
       if ( toggle(emit) .and. levels(emit) > 4 ) &
         & call trace_end ( 'ForwardModel.FrequencyAvg' )
     end subroutine Frequency_Average
 
   ! ...............................  Frequency_Average_Derivative  .....
-    subroutine Frequency_Average_Derivative ( Grids, K_Frq, K, Mol )
+    subroutine Frequency_Average_Derivative ( Grids, K_Frq, K, Mol, Combine )
 
       ! Frequency average or simply copy K_Frq to give K, the final
       ! Jacobian.
@@ -2206,10 +2266,25 @@ call dump ( k_spect_dv_frq, name='k_spect_dv_frq' )
       real(rp), intent(inout) :: K_FRQ(:,:) ! To be averaged  Frq X Grid
       real(r4), intent(out) :: K(:,:)       ! Averaged        Chan X Grid
       integer, intent(in) :: Mol            ! Which molecule
+      logical, intent(in) :: Combine        ! "Combine LBL and PFA"
 
       integer :: C, ShapeInd
       real(rp) :: R    ! Frequency-averaged value
       integer :: SV_I  ! State-vector index
+
+      if ( combine ) then
+        ! Simply add newly-computed PFA derivatives in K_frq to
+        ! previously-averaged LBL derivatives in K.  Remember that
+        ! for PFA, the frequency dimension has extent noUsedChannels,
+        ! not maxNoPtgFreqs.  The first dimension of K_frq is at least
+        ! noUsedChannels, so we're guaranteed this will fit.
+        do c = 1, noUsedChannels
+          do sv_i = grids%l_v(mol-1)+1, grids%l_v(mol)
+            k(c,sv_i) = k(c,sv_i) + k_frq(c,sv_i)
+          end do
+        end do
+        return
+      end if
 
       ! Only possible values for Frq_avg_sel here are 3, 11, 13, 15.
       ! See Frequency_Average for definition of Frq_avg_sel.
@@ -2257,6 +2332,57 @@ call dump ( k_spect_dv_frq, name='k_spect_dv_frq' )
       case default             ! Impossible
       end select               ! Frequency averaging or not
     end subroutine Frequency_Average_Derivative
+
+  ! ..............................  Frequency_Average_Derivatives  .....
+    subroutine Frequency_Average_Derivatives ( Combine )
+      logical, intent(in) :: Combine        ! "Combine LBL and PFA"
+
+      ! Frequency Average the temperature derivatives with the appropriate
+      ! filter shapes
+
+      if ( temp_der ) call frequency_average_derivative ( grids_tmp, &
+        &               k_temp_frq(:noFreqs,:), k_temp(:,ptg_i,:), 1, combine )
+
+      ! Frequency Average the atmospheric derivatives with the appropriate
+      ! filter shapes
+
+      if ( atmos_der ) then
+        do k = 1, no_mol
+          if ( fwdModelConf%moleculeDerivatives(k) ) &
+            & call frequency_average_derivative ( grids_f, &
+              & k_atmos_frq(:noFreqs,:), k_atmos(:,ptg_i,:), k, combine )
+        end do                        ! Loop over major molecules
+      end if                          ! Want derivatives for atmos
+
+      ! Frequency Average the spectroscopic derivatives with the appropriate
+      ! filter shapes
+
+      if ( spect_der_center ) then
+call dump ( k_spect_dv_frq, name='k_spect_dv_frq' )
+        do k = 1, size(fwdModelConf%lineCenter)
+          call frequency_average_derivative &
+            & ( grids_v, k_spect_dv_frq(:noFreqs,:), k_spect_dv(:,ptg_i,:), k, &
+            & combine )
+        end do
+      end if
+      if ( spect_der_width ) then
+        do k = 1, size(fwdModelConf%lineWidth)
+          call frequency_average_derivative &
+            & ( grids_w, k_spect_dw_frq(:noFreqs,:), k_spect_dw(:,ptg_i,:), k, &
+            & combine )
+        end do
+      end if
+      if ( spect_der_width_TDep ) then
+        do k = 1, size(fwdModelConf%lineWidth_TDep)
+          call frequency_average_derivative &
+            & ( grids_n, k_spect_dn_frq(:noFreqs,:), k_spect_dn(:,ptg_i,:), k, &
+            & combine )
+        end do
+      end if
+
+        !??? So now we have k_spect_d?.  What do we do with them ???
+
+    end subroutine Frequency_Average_Derivatives
 
   ! .....................................  Frequency_Avg_Rad_Path  .....
     subroutine Frequency_Avg_Rad_Path
@@ -2677,6 +2803,7 @@ call dump ( k_spect_dv_frq, name='k_spect_dv_frq' )
               Rad_Avg_Path(j,frq_i) = Rad_Avg_Path(j,frq_i) * tau%tau(j,frq_i)
               radV(frq_i) = radV(frq_i) + Rad_Avg_Path(j,frq_i)
             end do ! j
+            inc_rad_path_slice => Rad_Avg_Path(:npc,frq_i)
           end if
         else ! Polarized model; can't combine with PFA
 
@@ -2989,22 +3116,22 @@ if ( spect_der_center ) call dump ( dbeta_dv_path_c, name='dbeta_dv_path_c' )
         & moduleName )
 
       if ( temp_der ) &
-        & call allocate_test ( k_temp_frq, maxNoPtgFreqs, sv_t_len, 'k_temp_frq', &
-                             & moduleName )
+        & call allocate_test ( k_temp_frq, max(maxNoPtgFreqs,noUsedChannels), &
+                             & sv_t_len, 'k_temp_frq', moduleName )
 
       if ( atmos_der ) &
-        & call allocate_test ( k_atmos_frq, maxNoPtgFreqs, size(grids_f%values), 'k_atmos_frq',&
-                             & moduleName )
+        & call allocate_test ( k_atmos_frq, max(maxNoPtgFreqs,noUsedChannels), &
+                             & size(grids_f%values), 'k_atmos_frq', moduleName )
 
       if ( spect_der_width ) &
-        & call allocate_test ( k_spect_dw_frq , maxNoPtgFreqs, f_len_w, &
-                            & 'k_spect_dw_frq', moduleName )
+        & call allocate_test ( k_spect_dw_frq, max(maxNoPtgFreqs,noUsedChannels), &
+                             & f_len_w, 'k_spect_dw_frq', moduleName )
       if ( spect_der_width_TDep ) &
-        & call allocate_test ( k_spect_dn_frq , maxNoPtgFreqs, f_len_n, &
-                            & 'k_spect_dn_frq', moduleName )
+        & call allocate_test ( k_spect_dn_frq, max(maxNoPtgFreqs,noUsedChannels), &
+                             & f_len_n, 'k_spect_dn_frq', moduleName )
       if ( spect_der_center ) &
-        & call allocate_test ( k_spect_dv_frq , maxNoPtgFreqs, f_len_v, &
-                            & 'k_spect_dv_frq', moduleName )
+        & call allocate_test ( k_spect_dv_frq, max(maxNoPtgFreqs,noUsedChannels), &
+                             & f_len_v, 'k_spect_dv_frq', moduleName )
 
       if ( any_der ) &
         & call allocate_test ( DACsStaging2, ubound(DACsStaging,1), &
@@ -3182,6 +3309,9 @@ if ( spect_der_center ) call dump ( dbeta_dv_path_c, name='dbeta_dv_path_c' )
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.248  2005/11/05 03:38:13  vsnyder
+! Frequency_Average_Derivative doesn't need Tau, cannonball polishing
+!
 ! Revision 2.247  2005/11/03 03:57:45  vsnyder
 ! Don't try to look at filter shapes for DACS
 !
