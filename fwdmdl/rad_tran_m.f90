@@ -273,7 +273,7 @@ contains
 
     real(rp), intent(out) :: d_delta_df(:,:) ! path x sve.  derivative of delta
       !              wrt mixing ratio state vector element. (K)
-    real(rp), intent(inout) :: drad_df(:)    ! derivative of radiances wrt
+    real(rp), intent(out) :: drad_df(:)      ! derivative of radiances wrt
       !              mixing ratio state vector element. (K)
 ! Internals
 
@@ -423,6 +423,8 @@ contains
           call dscrt_dx ( d_delta_df(:,sv_i), inc_rad_path, &
                            &  i_start, i_stop, drad_df(sv_i))
 
+        else
+          drad_df(sv_i) = 0.0
         end if
 
       end do ! sv_i
@@ -505,7 +507,7 @@ contains
     logical, intent(in) :: PFA_Update       ! Use DSCRT_DX instead of DSCRT_DT.
 
 ! Output
-    real(rp), intent(inout) :: drad_dt(:)   ! derivative of radiances wrt
+    real(rp), intent(out) :: drad_dt(:)     ! derivative of radiances wrt
 !                                             temperature state vector
 !                                             element. (K)
 ! Internals
@@ -545,6 +547,7 @@ contains
     d_delta_dt = 0.0_rp
 
     do sv_i = 1 , size(eta_zxp_c,dim=2)
+      drad_dt(sv_i) = 0.0
       if ( .not. deriv_flags(sv_i)) cycle
       i_start = 1
 
@@ -785,7 +788,7 @@ use dump_0, only: Dump
 
 ! Outputs
 
-    real(rp), intent(inout) :: drad_dx(:)    ! derivative of radiances wrt x
+    real(rp), intent(out) :: drad_dx(:)      ! derivative of radiances wrt x
 !                                              state vector element. (K)
 ! Internals
 
@@ -900,6 +903,8 @@ no_to_gl=0
           call dscrt_dx ( d_delta_dx, inc_rad_path, i_start, i_stop, &
                        &  drad_dx(sv_i) )
 
+        else
+          drad_dx(sv_i) = 0.0
         end if
 
       end do
@@ -1030,6 +1035,9 @@ stop
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.47  2005/11/01 23:02:21  vsnyder
+! PFA Derivatives
+!
 ! Revision 2.46  2005/09/17 00:49:54  vsnyder
 ! Revise arrays for spectroscopic derivatives, plus some cannonball polishing
 !

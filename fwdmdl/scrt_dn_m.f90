@@ -220,13 +220,14 @@ contains
 
 ! Output
 
-    real(rp), intent(inout) :: drad_dx    ! radiance derivative wrt x
+    real(rp), intent(out) :: drad_dx      ! radiance derivative wrt x
 
 ! internals
 
     integer(ip) :: i, n_path, half_path
     real(rp) :: w
 
+    drad_dx = 0.0_rp
     w = 0.0_rp
     n_path = size(inc_rad_path)
     half_path = n_path/2
@@ -267,6 +268,9 @@ contains
 
 end module SCRT_DN_M
 ! $Log$
+! Revision 2.10  2005/11/01 23:02:21  vsnyder
+! PFA Derivatives
+!
 ! Revision 2.9  2005/06/22 18:08:19  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
