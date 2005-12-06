@@ -41,8 +41,7 @@ CONTAINS
 !=============================================================================
 
     USE MLSL1Config, ONLY: L1Config, MIFsGHz
-    USE TkL1B, ONLY: Flag_Bright_Objects, LOG_ARR1_PTR_T, GHz_GeodAlt, &
-         GHz_GeodLat
+    USE TkL1B, ONLY: GHz_GeodAlt, GHz_GeodLat, GHz_BO_stat
     USE L1BOutUtils, ONLY: OutputL1BOA
 
     LOGICAL, INTENT (OUT) :: more_data
@@ -55,7 +54,6 @@ CONTAINS
     REAL :: MAF_dur, MIF_dur
     INTEGER :: nom_MIFs
     TYPE (WeightsFlags_T) :: WeightsFlags
-    TYPE (LOG_ARR1_PTR_T) :: Space_BO_Flag(2), Limb_BO_Flag(2)
     INTEGER, PARAMETER :: last_GHz_indx = MIFsGHz - 1
 
     nom_MIFs = L1Config%Calib%MIFsPerMAF
@@ -159,16 +157,9 @@ PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
     CurMAFdata%SciPkt(0:last_GHz_indx)%altG = GHz_GeodAlt
     CurMAFdata%SciPkt(0:last_GHz_indx)%latG = GHz_GeodLat
 
-!! Check for Bright Objects in FOVs
+! Save GHz BO_stat for further tests:
 
-    Space_BO_flag(1)%ptr => CurMAFdata%SpaceView%MoonInFOV(:,1)
-    Space_BO_flag(2)%ptr => CurMAFdata%SpaceView%VenusInFOV(:,1)
-    Limb_BO_flag(1)%ptr => CurMAFdata%LimbView%MoonInFOV(:,1)
-    Limb_BO_flag(2)%ptr => CurMAFdata%LimbView%VenusInFOV(:,1)
-
-    CALL Flag_Bright_Objects (CurMAFdata%SciPkt%secTAI, &
-         CurMAFdata%SciPkt%scAngleG, L1Config%Calib%MoonToLimbAngle_GHz, &
-         Limb_BO_flag, Space_BO_flag)
+    CurMAFdata%BO_stat = GHz_BO_stat
 
 !! Update MAFinfo from central MAF
 
@@ -201,16 +192,15 @@ PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
     USE SDPToolkit, ONLY: PGS_TD_TAItoUTC
     USE OutputL1B_DataTypes, ONLY: lenG
     USE MLSStrings, ONLY: Capitalize
+    USE BrightObjects_m, ONLY: Test_BO_stat, BO_Match
  
 !! Qualify the Current MAF data in the cal window
 
     CHARACTER(len=1) :: GHz_sw_pos, THz_sw_pos
     CHARACTER(len=80) :: msg
     CHARACTER(len=27) :: asciiUTC
-    INTEGER :: MIF, last_MIF, i, band(2), bank(2), n, bno, sw
+    INTEGER :: MIF, last_MIF, i, band(2), bank(2), n, bno, stat, sw
     LOGICAL :: bandMask(150)   ! large enough for the maximum MIFs
-    LOGICAL :: MoonInSpaceView, VenusInSpaceView, &
-               MoonInLimbView, VenusInLimbView
     CHARACTER(len=1), PARAMETER :: TargetType = "T" !! Primary target type
     CHARACTER(len=1), PARAMETER :: discard = "D"
     CHARACTER(len=1), PARAMETER :: match = "M"
@@ -376,11 +366,8 @@ PRINT *, 'Sort:', CurMAFdata%ChanType(0:149)%FB(1,1)
 !! Check for bright objects in Space FOV
 !! Will decide later how to handle Space Temperature
 
-    VenusInSpaceView = ANY (CurMAFdata%SpaceView%VenusInFOV(:,1))
-    IF (VenusInSpaceView) msg = 'Venus in Space View'
-    MoonInSpaceView = ANY (CurMAFdata%SpaceView%MoonInFOV(:,1))
-    IF (MoonInSpaceView) msg = 'Moon in Space View'
-    IF (MoonInSpaceView .OR. VenusInSpaceView) THEN
+    IF (ANY (BTEST (CurMAFdata%BO_stat, 0))) THEN    ! Bit 0 for Space FOV
+       msg = 'MOON in Space View'
        n = PGS_TD_TAItoUTC (CurMAFdata%SciPkt(0)%secTAI, asciiUTC)
        CALL MLSMessage (MLSMSG_Warning, ModuleName, TRIM(msg)//' at '//asciiUTC)
        WRITE (L1BFileInfo%LogId, *) ''
@@ -392,24 +379,20 @@ PRINT *, 'Sort:', CurMAFdata%ChanType(0:149)%FB(1,1)
        CurMAFdata%BankWall%DACS = .TRUE.
     ENDIF
 
-!! Check for bright objects in Limb FOV and mark as "D"iscards
+!! Check for bright objects in Limb FOV and mark as "D"iscards via precisions
 
-    VenusInLimbView = ANY (CurMAFdata%LimbView%VenusInFOV(:,1))
-    IF (VenusInLimbView) msg = 'Venus in Limb View' 
-    MoonInLimbView = ANY (CurMAFdata%LimbView%MoonInFOV(:,1))
-    IF (MoonInLimbView) msg = 'Moon in Limb View'
-    IF (MoonInLimbView .OR. VenusInLimbView) THEN   ! Discard
-       n = PGS_TD_TAItoUTC (CurMAFdata%SciPkt(0)%secTAI, asciiUTC)
+    CALL Test_BO_stat (CurMAFdata%BO_stat)
+
+    DO n = 1, BO_Match%Num
+       msg = TRIM(BO_Match%Name(n)) // ' in Limb View'
+       stat = PGS_TD_TAItoUTC (CurMAFdata%SciPkt(0)%secTAI, asciiUTC)
        CALL MLSMessage (MLSMSG_Warning, ModuleName, TRIM(msg)//' at '//asciiUTC)
        WRITE (L1BFileInfo%LogId, *) ''
        WRITE (L1BFileInfo%LogId, *) TRIM(msg)//' at MAF UTC '//asciiUTC
-       DO i = 0, (lenG - 1)
-          IF (CurMAFdata%LimbView%MoonInFOV(i,1) .OR. &
-               CurMAFdata%LimbView%VenusInFOV(i,1)) THEN
-             CurMAFdata%MIFprecSign(i) = -1.0   ! Change sign of precision
-          ENDIF
-       ENDDO
-    ENDIF
+       WHERE (BO_Match%InFOV(:,n))
+          CurMAFdata%MIFprecSign = BO_Match%PrecScale(n)   ! sign of precision
+       ENDWHERE
+    ENDDO
 
 !! Initialize Wall MIFs to beginning of MAF
 
@@ -675,6 +658,9 @@ END MODULE SortQualify
 !=============================================================================
 
 ! $Log$
+! Revision 2.18  2005/12/06 19:29:22  perun
+! Removed call to Flag_Bright_Objects and added testing BO_stat
+!
 ! Revision 2.17  2005/10/14 18:42:57  perun
 ! Calculate MIF_dur from science data rather than using CF input
 !

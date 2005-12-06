@@ -218,6 +218,9 @@ CONTAINS
     dataset%name      = 'GHz/LosVel        '
     dataset%data_type = 'double            '
     CALL Build_MLSAuxData (sd_id,dataset, tp%tpLosVel, lastIndex=noMAF)
+    dataset%name      = 'GHz/BO_stat       '
+    dataset%data_type = 'integer           '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpBO_stat, lastIndex=noMAF)
 
 ! 3-d next:
 
@@ -305,6 +308,9 @@ CONTAINS
     dataset%name      = 'THz/LosVel        '
     dataset%data_type = 'double            '
     CALL Build_MLSAuxData (sd_id,dataset, tp%tpLosVel, lastIndex=noMAF)
+    dataset%name      = 'THz/BO_stat       '
+    dataset%data_type = 'integer           '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpBO_stat, lastIndex=noMAF)
 
 ! 3-d next:
 
@@ -902,6 +908,9 @@ END MODULE OutputL1B
 !=============================================================================
 
 ! $Log$
+! Revision 2.18  2005/12/06 19:28:55  perun
+! Added outputting BO_stat for both GHz and THz tangent point records
+!
 ! Revision 2.17  2005/08/24 15:52:26  perun
 ! Output Pos_Prime for both GHz and THz in the L1BOA file
 !
