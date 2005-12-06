@@ -730,7 +730,8 @@ CONTAINS
     USE MLSFiles, ONLY: MLS_openFile, MLS_closeFile
     USE MLSHDF5, ONLY: MLS_h5open
     USE L1BData, ONLY: L1BData_T, ReadL1BData, DeallocateL1BData
-
+    USE MLSL1Config, ONLY: MIFsTHz
+    USE BrightObjects_m, ONLY: THz_BO_stat
 
     LOGICAL :: THz
 
@@ -739,6 +740,7 @@ CONTAINS
     INTEGER :: noMAFs, Flag
     INTEGER :: firstMAF = 0, lastMAF = 0
     CHARACTER (LEN=*), PARAMETER :: counterMAFname = "counterMAF"
+    CHARACTER (LEN=*), PARAMETER :: BO_stat_name = "/THz/BO_stat"
     TYPE (L1BData_T) :: L1BOAData
 
     INTEGER, EXTERNAL :: PGS_IO_Gen_Track_LUN
@@ -817,7 +819,7 @@ CONTAINS
 
        IF (returnStatus == PGS_S_SUCCESS) THEN
 
-          ! Open the HDF file and read first counterMAF
+          ! Open the HDF file and read first counterMAF plus BO_stat:
 
           CALL MLS_openFile (PhysicalFilename, 'readonly', sd_id, hdfVersion)
           CALL MLSMessage (MLSMSG_Info, &
@@ -829,7 +831,13 @@ CONTAINS
                noMAFs, Flag, firstMAF, NeverFail=.TRUE., HDFversion=5)
           ALLOCATE (OA_counterMAF(noMAFs))
           OA_counterIndex = 1
-          OA_counterMAF = L1BOAData%IntField(:,1,1)
+          OA_counterMAF = L1BOAData%IntField(1,1,:)
+          CALL DeallocateL1BData (L1BOAData)
+
+          CALL ReadL1BData (L1BFileInfo%OAid, BO_stat_name, L1BOAData, &
+               noMAFs, Flag, firstMAF, NeverFail=.TRUE., HDFversion=5)
+          ALLOCATE (THz_BO_stat(MIFsTHz,noMAFs))
+          THz_BO_stat = L1BOAData%IntField(1,:,:)
           CALL DeallocateL1BData (L1BOAData)
 
           CALL MLS_closeFile (L1BFileInfo%OAid, HDFversion=HDFversion)
@@ -1021,6 +1029,9 @@ END MODULE OpenInit
 !=============================================================================
 
 ! $Log$
+! Revision 2.24  2005/12/06 19:28:04  perun
+! Added reading BO_stat for use in THz processing
+!
 ! Revision 2.23  2005/10/14 15:54:27  perun
 ! Expand THz end time to guarantee inclusion of last MAF of day
 !

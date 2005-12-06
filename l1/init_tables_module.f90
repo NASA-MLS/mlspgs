@@ -25,6 +25,7 @@ MODULE INIT_TABLES_MODULE
     ! T_BOOLEAN, T_FIRST, T_LAST_INTRINSIC, T_NUMERIC, T_NUMERIC_RANGE,
     ! T_STRING and Z are used here, but everything is included so that it
     ! can be gotten by USE INIT_TABLES_MODULE.
+  USE BrightObjects_m
 
   IMPLICIT NONE
   PUBLIC ! This would be a MUCH LONGER list than the list of private
@@ -39,86 +40,83 @@ MODULE INIT_TABLES_MODULE
 
 ! Enumeration types:
 
-  INTEGER, PUBLIC, PARAMETER :: T_USE            = last_signal_type+1
-  INTEGER, PUBLIC, PARAMETER :: T_UNITS          = t_use+1
-  INTEGER, PUBLIC, PARAMETER :: T_MODULE         = t_units+1
-  INTEGER, PUBLIC, PARAMETER :: T_ENABLE         = t_module+1
-  INTEGER, PUBLIC, PARAMETER :: T_LAST           = t_enable
+  INTEGER, PARAMETER :: T_USE            = last_BrightObject_type + 1
+  INTEGER, PARAMETER :: T_UNITS          = t_use +1 
+  INTEGER, PARAMETER :: T_ENABLE         = t_units + 1
+  INTEGER, PARAMETER :: T_LAST           = t_enable
 
 ! Field indices:
 
-  INTEGER, PUBLIC, PARAMETER :: F_MIFS = last_Signal_Field + 1
-  INTEGER, PUBLIC, PARAMETER :: F_USE = f_mifs + 1
-  INTEGER, PUBLIC, PARAMETER :: F_SECONDARY = f_use + 1
-  INTEGER, PUBLIC, PARAMETER :: F_S = f_secondary + 1
-  INTEGER, PUBLIC, PARAMETER :: F_BANDNO = f_s + 1
-  INTEGER, PUBLIC, PARAMETER :: F_CHAN = f_bandno + 1
-  INTEGER, PUBLIC, PARAMETER :: FIELD_LAST = f_chan + 1
+  INTEGER, PARAMETER :: F_MIFS = last_BrightObject_Field + 1
+  INTEGER, PARAMETER :: F_USE = f_mifs + 1
+  INTEGER, PARAMETER :: F_SECONDARY = f_use + 1
+  INTEGER, PARAMETER :: F_S = f_secondary + 1
+  INTEGER, PARAMETER :: F_BANDNO = f_s + 1
+  INTEGER, PARAMETER :: F_CHAN = f_bandno + 1
+  INTEGER, PARAMETER :: FIELD_LAST = f_chan + 1
 
 ! Enumeration literals:
 
-  INTEGER, PUBLIC, PARAMETER :: L_MATCH   =  last_signal_lit + 1
-  INTEGER, PUBLIC, PARAMETER :: L_OVERRIDE = l_match + 1
-  INTEGER, PUBLIC, PARAMETER :: LAST_LIT =      l_override + 1
+  INTEGER, PARAMETER :: L_MATCH   =  last_BrightObject_lit + 1
+  INTEGER, PARAMETER :: L_OVERRIDE = l_match + 1
+  INTEGER, PARAMETER :: LAST_LIT =      l_override + 1
 
 ! Section identities:
 
-  INTEGER, PUBLIC, PARAMETER :: Z_GLOBALSETTINGS = 1
-  INTEGER, PUBLIC, PARAMETER :: Z_CALIBRATION = Z_GLOBALSETTINGS + 1
-  INTEGER, PUBLIC, PARAMETER :: Z_OUTPUT = Z_CALIBRATION + 1
-  INTEGER, PUBLIC, PARAMETER :: SECTION_FIRST = z_globalSettings, &
+  INTEGER, PARAMETER :: Z_GLOBALSETTINGS = 1
+  INTEGER, PARAMETER :: Z_CALIBRATION = Z_GLOBALSETTINGS + 1
+  INTEGER, PARAMETER :: Z_OUTPUT = Z_CALIBRATION + 1
+  INTEGER, PARAMETER :: SECTION_FIRST = z_globalSettings, &
                                 SECTION_LAST = Z_OUTPUT
 
 ! Specification indices:
 
-  INTEGER, PUBLIC, PARAMETER :: S_SPACEMIFS = last_Signal_Spec + 1
-  INTEGER, PUBLIC, PARAMETER :: S_TARGETMIFS = s_spaceMIFs + 1
-  INTEGER, PUBLIC, PARAMETER :: S_LIMBMIFS = s_targetMIFs + 1
-  INTEGER, PUBLIC, PARAMETER :: S_DISCARDMIFS = s_limbMIFs + 1
-  INTEGER, PUBLIC, PARAMETER :: S_SWITCH = s_discardMIFs + 1
-  INTEGER, PUBLIC, PARAMETER :: S_CHI2ERR = s_switch + 1
-  INTEGER, PUBLIC, PARAMETER :: S_MARKCHANBAD = s_chi2err + 1
-  INTEGER, PUBLIC, PARAMETER :: SPEC_LAST = s_markchanbad
+  INTEGER, PARAMETER :: S_SPACEMIFS = last_BrightObject_Spec + 1
+  INTEGER, PARAMETER :: S_TARGETMIFS = s_spaceMIFs + 1
+  INTEGER, PARAMETER :: S_LIMBMIFS = s_targetMIFs + 1
+  INTEGER, PARAMETER :: S_DISCARDMIFS = s_limbMIFs + 1
+  INTEGER, PARAMETER :: S_SWITCH = s_discardMIFs + 1
+  INTEGER, PARAMETER :: S_CHI2ERR = s_switch + 1
+  INTEGER, PARAMETER :: S_MARKCHANBAD = s_chi2err + 1
+  INTEGER, PARAMETER :: SPEC_LAST = s_markchanbad
 
 ! Parameter names:
 
   ! In GlobalSettings section:
 
-  INTEGER, PUBLIC, PARAMETER :: P_OUTPUT_VERSION_STRING = spec_last + 1
-  INTEGER, PUBLIC, PARAMETER :: P_PRODUCE_L1BOA = p_output_version_string + 1
-  INTEGER, PUBLIC, PARAMETER :: P_SIMOA = p_produce_l1boa + 1
+  INTEGER, PARAMETER :: P_OUTPUT_VERSION_STRING = spec_last + 1
+  INTEGER, PARAMETER :: P_PRODUCE_L1BOA = p_output_version_string + 1
+  INTEGER, PARAMETER :: P_SIMOA = p_produce_l1boa + 1
 
   ! In Calibration section:
 
-  INTEGER, PUBLIC, PARAMETER :: P_CALWINDOW = p_simoa + 1
-  INTEGER, PUBLIC, PARAMETER :: P_USEDEFAULTGAINS = p_calwindow + 1
-  INTEGER, PUBLIC, PARAMETER :: P_CALIBDACS = p_usedefaultgains + 1
-  INTEGER, PUBLIC, PARAMETER :: P_GHZSPACETEMP = p_calibdacs + 1
-  INTEGER, PUBLIC, PARAMETER :: P_GHZTARGETTEMP = p_GHzSpaceTemp + 1
-  INTEGER, PUBLIC, PARAMETER :: P_THZSPACETEMP = p_GHzTargetTemp + 1
-  INTEGER, PUBLIC, PARAMETER :: P_THZTARGETTEMP = p_THzSpaceTemp + 1
-  INTEGER, PUBLIC, PARAMETER :: P_THZSpaceAngle = p_THzTargetTemp + 1
-  INTEGER, PUBLIC, PARAMETER :: P_MIF_DURATION = p_THzSpaceAngle + 1
-  INTEGER, PUBLIC, PARAMETER :: P_MIF_DEAD_TIME = p_mif_duration + 1
-  INTEGER, PUBLIC, PARAMETER :: P_MIFsPerMAF = p_mif_dead_time + 1
-  INTEGER, PUBLIC, PARAMETER :: P_THzMaxBias = p_MIFsPerMAF + 1
-  INTEGER, PUBLIC, PARAMETER :: P_MoonToSpaceAngle = p_THzMaxBias + 1
-  INTEGER, PUBLIC, PARAMETER :: P_MoonToLimbAngle_GHz = p_MoonToSpaceAngle + 1
-  INTEGER, PUBLIC, PARAMETER :: P_MoonToLimbAngle_THz = p_MoonToLimbAngle_GHz + 1
-  INTEGER, PUBLIC, PARAMETER :: P_DACSWINDOW = p_MoonToLimbAngle_THz + 1
-  INTEGER, PUBLIC, PARAMETER :: P_UseAntOffsets = p_DACSWINDOW + 1
+  INTEGER, PARAMETER :: P_CALWINDOW = p_simoa + 1
+  INTEGER, PARAMETER :: P_USEDEFAULTGAINS = p_calwindow + 1
+  INTEGER, PARAMETER :: P_CALIBDACS = p_usedefaultgains + 1
+  INTEGER, PARAMETER :: P_GHZSPACETEMP = p_calibdacs + 1
+  INTEGER, PARAMETER :: P_GHZTARGETTEMP = p_GHzSpaceTemp + 1
+  INTEGER, PARAMETER :: P_THZSPACETEMP = p_GHzTargetTemp + 1
+  INTEGER, PARAMETER :: P_THZTARGETTEMP = p_THzSpaceTemp + 1
+  INTEGER, PARAMETER :: P_THZSpaceAngle = p_THzTargetTemp + 1
+  INTEGER, PARAMETER :: P_MIF_DURATION = p_THzSpaceAngle + 1
+  INTEGER, PARAMETER :: P_MIF_DEAD_TIME = p_mif_duration + 1
+  INTEGER, PARAMETER :: P_MIFsPerMAF = p_mif_dead_time + 1
+  INTEGER, PARAMETER :: P_THzMaxBias = p_MIFsPerMAF + 1
+  INTEGER, PARAMETER :: P_MoonToSpaceAngle = p_THzMaxBias + 1
+  INTEGER, PARAMETER :: P_DACSWINDOW = p_MoonToSpaceAngle + 1
+  INTEGER, PARAMETER :: P_UseAntOffsets = p_DACSWINDOW + 1
 
   ! In Output section:
 
-  INTEGER, PUBLIC, PARAMETER :: P_REMOVEBASELINE = P_UseAntOffsets + 1
-  INTEGER, PUBLIC, PARAMETER :: P_DECONVOLVEDACS = P_RemoveBaseline + 1
+  INTEGER, PARAMETER :: P_REMOVEBASELINE = P_UseAntOffsets + 1
+  INTEGER, PARAMETER :: P_DECONVOLVEDACS = P_RemoveBaseline + 1
 
-  INTEGER, PUBLIC, PARAMETER :: FIRST_PARM = P_OUTPUT_VERSION_STRING
-  INTEGER, PUBLIC, PARAMETER :: LAST_PARM = P_DECONVOLVEDACS
+  INTEGER, PARAMETER :: FIRST_PARM = P_OUTPUT_VERSION_STRING
+  INTEGER, PARAMETER :: LAST_PARM = P_DECONVOLVEDACS
 
 ! Table for section ordering:
 
-  INTEGER, PUBLIC, PARAMETER :: OK = 1, & ! NO = 0
+  INTEGER, PARAMETER :: OK = 1, & ! NO = 0
     SECTION_ORDERING(section_first:section_last, &
                      section_first-1:section_last) = RESHAPE( &
 ! To: | globalSettings        |
@@ -138,6 +136,7 @@ CONTAINS ! =====     Public procedures     =============================
 
     USE TREE_TYPES, ONLY: N_DOT, N_DT_DEF, N_FIELD_SPEC, N_FIELD_TYPE, &
          N_NAME_DEF, N_SECTION, N_SPEC_DEF, N_PLUS
+    USE Units, ONLY: Init_units
 
   ! Put intrinsic predefined identifiers into the symbol table.
 
@@ -149,7 +148,7 @@ CONTAINS ! =====     Public procedures     =============================
     ! Put enumeration type names into the symbol table
 
     data_type_indices(t_use) =              add_ident ( 'use' )
-    data_type_indices(t_module) =           add_ident ( 'module' )
+!    data_type_indices(t_module) =           add_ident ( 'module' )
     data_type_indices(t_units) =            add_ident ( 'units' )
 
     ! Put enumeration literals into the symbol table:
@@ -185,8 +184,6 @@ CONTAINS ! =====     Public procedures     =============================
     parm_indices(p_simoa)=                  add_ident ( 'SimOA' )
     parm_indices(p_removebaseline)=         add_ident ( 'RemoveBaseline' )
     parm_indices(p_MoonToSpaceAngle)=       add_ident ( 'MoonToSpaceAngle' )
-    parm_indices(p_MoonToLimbAngle_GHz)=    add_ident ( 'MoonToLimbAngleGHz' )
-    parm_indices(p_MoonToLimbAngle_THz)=    add_ident ( 'MoonToLimbAngleTHz' )
     parm_indices(p_dacswindow)=             add_ident ( 'DACSwindow' )
     parm_indices(p_UseAntOffsets)=          add_ident ( 'UseAntOffsets' )
     parm_indices(p_DeconvolveDACS)=         add_ident ( 'DeconvolveDACS' )
@@ -206,6 +203,15 @@ CONTAINS ! =====     Public procedures     =============================
     spec_indices(s_switch) =                  add_ident ( 'switch' )
     spec_indices(s_chi2err) =                 add_ident ( 'EnableChi2Err' )
     spec_indices(s_markchanbad) =             add_ident ( 'MarkChanBad' )
+
+    ! Init Bright Objects symbol table entries:
+
+    CALL Init_BrightObjects
+
+  ! Now initialize the units tables.  Init_Units depends on the lit tables
+  ! having been initialized.
+
+    CALL Init_units
 
   ! Definitions are represented by trees.  The notation in the comments
   ! for the trees is < root first_son ... last_son >.  This is sometimes
@@ -323,8 +329,6 @@ CONTAINS ! =====     Public procedures     =============================
              begin, p+p_THzSpaceAngle, t+t_numeric, n+n_name_def, &
              begin, p+p_THzMaxBias, t+t_numeric, n+n_name_def, &
              begin, p+p_MoonToSpaceAngle, t+t_numeric, n+n_name_def, &
-             begin, p+p_MoonToLimbAngle_GHz, t+t_numeric, n+n_name_def, &
-             begin, p+p_MoonToLimbAngle_THz, t+t_numeric, n+n_name_def, &
              begin, p+p_dacswindow, t+t_numeric, n+n_name_def, &
              begin, p+p_mif_duration, t+t_numeric, n+n_name_def, &
              begin, p+p_mif_dead_time, t+t_numeric, n+n_name_def, &
@@ -333,7 +337,7 @@ CONTAINS ! =====     Public procedures     =============================
              begin, p+p_UseAntOffsets, t+t_boolean, n+n_name_def, &
              begin, p+p_calibDACS, t+t_boolean, n+n_name_def, &
              s+s_spaceMIFs, s+s_targetMIFs, s+s_limbMIFS, s+s_discardMIFs, &
-             s+s_switch, s+s_markchanbad, n+n_section, &
+             s+s_switch, s+s_markchanbad, s+s_brightobject, n+n_section, &
       begin, z+z_output, &
              begin, p+p_removebaseline, t+t_boolean, n+n_name_def, &
              begin, p+p_DeconvolveDACS, t+t_boolean, n+n_name_def, &
@@ -355,6 +359,9 @@ CONTAINS ! =====     Public procedures     =============================
 END MODULE INIT_TABLES_MODULE
   
 ! $Log$
+! Revision 2.24  2005/12/06 19:23:25  perun
+! Removed MoonToLimbAngles fields and added Bright Object fields
+!
 ! Revision 2.23  2005/10/10 19:05:32  perun
 ! Add DeconvolveDACS field
 !
@@ -386,6 +393,9 @@ END MODULE INIT_TABLES_MODULE
 ! Version 1.2 commit
 !
 ! $Log$
+! Revision 2.24  2005/12/06 19:23:25  perun
+! Removed MoonToLimbAngles fields and added Bright Object fields
+!
 ! Revision 2.23  2005/10/10 19:05:32  perun
 ! Add DeconvolveDACS field
 !
