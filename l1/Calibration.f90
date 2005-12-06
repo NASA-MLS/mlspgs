@@ -15,17 +15,17 @@ MODULE Calibration ! Calibration data and routines
 
   USE MLSL1Common, ONLY: Chan_R_T, Chan_R8_T, FBchans, FBnum, MBchans, MBnum, &
        WFchans, WFnum, DACSchans, DACSnum, MaxMIFs, Bandwidth, deflt_zero, R8, &
-       GHzNum, BankLogical_T, BankInt_T, tau, BrightObjects_T
+       GHzNum, BankLogical_T, BankInt_T, tau
   USE L0_sci_tbls, ONLY: Sci_pkt_T
   USE EngTbls, ONLY : Eng_MAF_T
   USE Interpolation, ONLY : QuadInterpW
+  USE MLSL1Config, ONLY: MIFsGHz
 
   IMPLICIT NONE
 
   PRIVATE
 
-  PUBLIC :: CalWin, CalWin_T, MAFdata_T, WeightsFlags_T, Cal_R8_T, &
-       Chan_type_T, BrightObjects_T
+  PUBLIC :: CalWin, CalWin_T, MAFdata_T, WeightsFlags_T, Cal_R8_T, Chan_type_T
   PUBLIC :: limb_cnts, space_interp, target_interp, space_err, target_err, &
        Chi2, Tsys, Cgain
 
@@ -64,10 +64,10 @@ MODULE Calibration ! Calibration data and routines
      TYPE (BankLogical_T) :: BankWall
      TYPE (BankInt_T) :: BankCalInd(2) ! start & end indexes for calib
      TYPE (BankInt_T) :: WallMIF       ! MIF for start of wall
-     TYPE (BrightObjects_T) :: LimbView, SpaceView ! Bright Objects in FOV flags
      TYPE (WeightsFlags_T) :: WeightsFlags
      REAL :: MIFprecSign(0:(MaxMIFs-1))   ! Radiance precision sign per MIF
      INTEGER :: start_index = 0, end_index = 0  ! start/end within cal vectors
+     INTEGER :: BO_stat(MIFsGHz) = 0   ! Bright Objects status (GHz FOV)
      INTEGER :: last_MIF = 0
      INTEGER :: BandSwitch(5) = 0      ! band switch positions
      LOGICAL :: CalType                ! calibration type MAF
@@ -681,7 +681,8 @@ CONTAINS
 
     INTEGER :: time_index, start_index, end_index, windex
     INTEGER :: nVec, cal_index(2), MIF_index, calMAFs
-    REAL(r8) :: time, secs, oldsecs
+    REAL(r8) :: time, secs
+    REAL(r8), SAVE :: oldsecs = 0.0
 
     CHARACTER(len=8) :: date
     CHARACTER (len=10) :: dtime
@@ -692,6 +693,7 @@ PRINT *, 'calibrating...'
 
 CALL DATE_AND_TIME (date, dtime, zone, values)
 secs = values(5)*3600.0 + values(6)*60.0 + values(7) + values(8)*0.001
+PRINT *, "Time dif: ", (secs-oldsecs)
 oldsecs = secs
 
     nVec = CalWin%MAFdata(CalWin%size)%end_index + 1
@@ -709,13 +711,6 @@ oldsecs = secs
 
     DO time_index = start_index, end_index  ! for every MIF in the MAF
 
-CALL DATE_AND_TIME (date, dtime, zone, values)
-secs = values(5)*3600.0 + values(6)*60.0 + values(7) + values(8)*0.001
-IF (time_index == end_index) THEN
-PRINT *, "Time dif: ", (secs-oldsecs)
-ELSE IF (time_index == start_index) THEN
-oldsecs = secs
-ENDIF
        time = time_index                     ! "Time" from start of cal window
        MIF_index = time_index - start_index  ! MIF # within the central MAF
 
@@ -757,6 +752,9 @@ END MODULE Calibration
 !=============================================================================
 
 ! $Log$
+! Revision 2.15  2005/12/06 19:22:30  perun
+! Removed BrightObjest_T and added BO_stat to MAFdata_T
+!
 ! Revision 2.14  2005/10/10 14:27:32  perun
 ! Add CalType for each MAF in CalWin and calibrate based on number of calMAFs
 !
