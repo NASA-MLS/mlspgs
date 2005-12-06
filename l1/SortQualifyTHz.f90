@@ -42,13 +42,12 @@ CONTAINS
     USE EngUtils, ONLY: NextEngMAF
     USE SciUtils, ONLY: NextSciMAF
     USE MLSL1Utils, ONLY : GetIndexedAvg
-    USE TkL1B, ONLY: Flag_Bright_Objects, LOG_ARR1_PTR_T
+    USE BrightObjects_m, ONLY: THz_BO_stat
 
     LOGICAL :: more_data
 
     INTEGER :: sci_MAFno, MIFsPerMAF, CalMAFs, CalMAFno
     REAL :: MAF_dur, MIF_dur
-    TYPE (LOG_ARR1_PTR_T) :: Limb_BO_Flag(2)
 
     MIFsPerMAF = L1Config%Calib%MIFsPerMAF
     MIF_dur = L1Config%Calib%MIF_duration
@@ -110,16 +109,8 @@ PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
             GetIndexedAvg (EngMAF%eng%value, CalTgtIndx%THzAmb) - absZero_C
        CurMAFdata%LimbCalTgtTemp = &
             GetIndexedAvg (EngMAF%eng%value, CalTgtIndx%THzLimb) - absZero_C
+       CurMAFdata%BO_stat = THz_BO_stat(:,CalMAFno)
 
-!! Check for Bright Objects in FOVs
-
-       Limb_BO_flag(1)%ptr => CurMAFdata%LimbView%MoonInFOV(:,2)
-       Limb_BO_flag(2)%ptr => CurMAFdata%LimbView%VenusInFOV(:,2)
-
-
-       CALL Flag_Bright_Objects (CurMAFdata%SciMIF%secTAI, &
-            CurMAFdata%SciMIF%scAngle, L1Config%Calib%MoonToLimbAngle_THz, &
-            Limb_BO_flag)
        more_data =  THzSciMAF(0)%secTAI <= L1Config%Input_TAI%endTime
 
     ENDDO
@@ -138,11 +129,11 @@ PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
     USE MLSL1Common, ONLY: L1BFileInfo
     USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Warning
     USE SDPToolkit, ONLY: PGS_TD_TAItoUTC
+    USE BrightObjects_m, ONLY:Test_BO_stat, BO_Match
 
-    INTEGER :: MAF, MIF, n
+    INTEGER :: MAF, MIF, n, stat
     CHARACTER(len=80) :: msg
     CHARACTER(len=27) :: asciiUTC
-    LOGICAL :: MoonInLimbView, VenusInLimbView
     REAL :: encoder(2)
 
     CHARACTER(len=1) :: SwMirPos
@@ -235,23 +226,19 @@ PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
 
 !! Check for bright objects in Limb FOV and mark as "D"iscards
 
-       VenusInLimbView = ANY (CurMAFdata%LimbView%VenusInFOV(:,2))
-       IF (VenusInLimbView) msg = 'Venus in Limb View' 
-       MoonInLimbView = ANY (CurMAFdata%LimbView%MoonInFOV(:,2))
-       IF (MoonInLimbView) msg = 'Moon in Limb View'
-       IF (MoonInLimbView .OR. VenusInLimbView) THEN   ! Discard
-          n = PGS_TD_TAItoUTC (CurMAFdata%SciMIF(0)%secTAI, asciiUTC)
+       CALL Test_BO_stat (CurMAFdata%BO_stat)
+
+       DO n = 1, BO_Match%Num
+          msg = TRIM(BO_Match%Name(n)) // ' in Limb View'
+          stat = PGS_TD_TAItoUTC (CurMAFdata%SciMIF(0)%secTAI, asciiUTC)
           CALL MLSMessage (MLSMSG_Warning, ModuleName, &
                TRIM(msg)//' at '//asciiUTC)
           WRITE (L1BFileInfo%LogId, *) ''
           WRITE (L1BFileInfo%LogId, *) TRIM(msg)//' at MAF UTC '//asciiUTC
-          DO n = 0, CurMAFdata%last_MIF
-             IF (CurMAFdata%LimbView%MoonInFOV(n,2) .OR. &
-                  CurMAFdata%LimbView%VenusInFOV(n,2)) THEN
-                CurMAFdata%SciMIF(n)%SwMirPos = discard
-             ENDIF
-          ENDDO
-       ENDIF
+          WHERE (BO_Match%InFOV(:,n))
+             CurMAFdata%SciMIF%SwMirPos = discard
+          ENDWHERE
+       ENDDO
 
     ENDDO
 
@@ -280,6 +267,9 @@ END MODULE SortQualifyTHz
 !=============================================================================
 
 ! $Log$
+! Revision 2.11  2005/12/06 19:29:51  perun
+! Removed call to Flag_Bright_Objects and added testing BO_stat
+!
 ! Revision 2.10  2005/10/14 15:55:44  perun
 ! Restrict maximum size of CalBuf to size of OA_counterMAF
 !
