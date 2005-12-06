@@ -53,7 +53,6 @@ MODULE MLSL1Config  ! Level 1 Configuration
      REAL :: THzSpaceAngle, THzMaxBias
      REAL :: MIF_duration, MIF_DeadTime
      REAL :: MoonToSpaceAngle
-     REAL :: MoonToLimbAngle_GHz, MoonToLimbAngle_THz
      REAL :: AntOffsetsScale = 1.0       ! scale factor for antenna offsets
      LOGICAL :: UseDefaultGains = .FALSE.
      LOGICAL :: CalibDACS = .TRUE.
@@ -99,7 +98,6 @@ MODULE MLSL1Config  ! Level 1 Configuration
       USE STRING_TABLE, ONLY: l1cf_unit => inunit
       USE Tree, ONLY: Allocate_Tree, Decoration, Nsons, Subtree
       USE Tree_checker, ONLY: Check_tree
-      USE Units, ONLY: Init_units
 
       CHARACTER (LEN=132) :: physicalFilename
       INTEGER :: i, returnStatus, version
@@ -132,7 +130,6 @@ MODULE MLSL1Config  ! Level 1 Configuration
       CALL Allocate_Decl (ndecls=1000)
       CALL Allocate_Tree (n_tree=10000)
       CALL Init_tables
-      CALL Init_units
 
 !! Produce the abstract syntax tree
 
@@ -356,8 +353,10 @@ MODULE MLSL1Config  ! Level 1 Configuration
            p_GHzTargetTemp, p_THzSpaceTemp, p_THzTargetTemp, p_mif_duration, &
            p_mif_dead_time, p_mifspermaf, p_calibDACS, p_THzMaxBias, s_switch, &
            p_thzspaceangle, f_s, f_bandno, f_chan, s_markchanbad, &
-           p_MoonToSpaceAngle, p_MoonToLimbAngle_GHz, p_MoonToLimbAngle_THz, &
-           p_DACSwindow, p_UseAntOffsets
+           p_MoonToSpaceAngle, p_DACSwindow, p_UseAntOffsets
+      USE BrightObjects_m, ONLY: s_BrightObject, f_angle, f_name, f_negate, &
+           l_mercury, BO_Angle_GHz, BO_Angle_THz, BO_NumGHz, BO_NumTHz, &
+           BO_Index_GHz, BO_Index_THz, BO_Negate_GHz, BO_Negate_THz
       USE INTRINSIC, ONLY: l_ghz, l_thz, phyq_mafs, phyq_temperature, &
            phyq_mifs, phyq_time, phyq_angle
       USE TREE, ONLY: Decoration, Nsons, Subtree, Sub_rosa, Node_id
@@ -370,9 +369,10 @@ MODULE MLSL1Config  ! Level 1 Configuration
       CHARACTER(LEN=1), POINTER :: scan_use
       CHARACTER(LEN=80) :: identifier
       INTEGER :: i, j, k, son, key, spec, swno, bandno, channo
-      INTEGER :: expr_units(2)
+      INTEGER :: expr_units(2), BO_index
+      REAL :: BO_angle
       DOUBLE PRECISION :: expr_value(2)
-      LOGICAL :: GHz_mod, sec_tgt
+      LOGICAL :: GHz_mod, sec_tgt, Negate
 
       TYPE Scan_T
          CHARACTER(LEN=1) :: Use    ! M or O
@@ -486,36 +486,11 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
                CALL Expr (subtree (2, son), expr_units, expr_value)
                L1Config%Calib%THzMaxBias = expr_value(1)
-!!$               IF (expr_units(1) /= phyq_temperature) THEN ! Add Volts later?
-!!$                  CALL Get_string (Sub_rosa (Subtree(1,son)), identifier)
-!!$                  CALL MLSMessage (MLSMSG_Error, ModuleName, &
-!!$                       TRIM (identifier)//' is not input as K')
-!!$               ENDIF
 
             CASE (p_MoonToSpaceAngle)
 
                CALL Expr (subtree (2, son), expr_units, expr_value)
                L1Config%Calib%MoonToSpaceAngle = expr_value(1)
-               IF (expr_units(1) /= phyq_angle) THEN
-                  CALL Get_string (Sub_rosa (Subtree(1,son)), identifier)
-                  CALL MLSMessage (MLSMSG_Error, ModuleName, &
-                       TRIM (identifier)//' is not input as deg[rees]')
-               ENDIF
-
-            CASE (p_MoonTolimbAngle_GHz)
-
-               CALL Expr (subtree (2, son), expr_units, expr_value)
-               L1Config%Calib%MoonToLimbAngle_GHz = expr_value(1)
-               IF (expr_units(1) /= phyq_angle) THEN
-                  CALL Get_string (Sub_rosa (Subtree(1,son)), identifier)
-                  CALL MLSMessage (MLSMSG_Error, ModuleName, &
-                       TRIM (identifier)//' is not input as deg[rees]')
-               ENDIF
-
-            CASE (p_MoonTolimbAngle_THz)
-
-               CALL Expr (subtree (2, son), expr_units, expr_value)
-               L1Config%Calib%MoonToLimbAngle_THz = expr_value(1)
                IF (expr_units(1) /= phyq_angle) THEN
                   CALL Get_string (Sub_rosa (Subtree(1,son)), identifier)
                   CALL MLSMessage (MLSMSG_Error, ModuleName, &
@@ -728,6 +703,50 @@ MODULE MLSL1Config  ! Level 1 Configuration
                        'ChanNo number out of range!')
                ENDIF
                BandChanBad%Sign(bandno,channo) = -1.0  ! Mark as "Bad"
+
+            CASE (s_BrightObject)   ! Bright Objects
+
+               Negate = .FALSE.  ! Initialize to do not negate
+               DO j = 2, nsons (key)
+
+                  son = subtree (j, key)
+
+                  SELECT CASE (decoration (subtree(1,son)))   ! field
+
+                  CASE (f_module)
+
+                     SELECT CASE (decoration (subtree (2, son)))
+
+                     CASE (l_ghz)
+                        GHz_mod = .TRUE.
+                     CASE (l_thz)
+                        GHz_mod = .FALSE.
+                     END SELECT
+
+                  CASE(f_name)
+                     CALL Expr (subtree (2, son), expr_units, expr_value)
+                     BO_index = INT(expr_value(1)) - l_mercury + 1
+                  CASE (f_angle)
+                     CALL Expr (subtree (2, son), expr_units, expr_value)
+                     BO_angle = expr_value(1)
+                  CASE (f_negate)
+                     Negate = Get_Boolean (son)
+                  ENDSELECT
+
+               ENDDO
+
+               IF (GHz_mod) THEN   ! Save appropriate BO info
+                  BO_NumGHz = BO_NumGHz + 1
+                  BO_Index_GHz(BO_NumGHz) = BO_index
+                  BO_Angle_GHz(BO_index) = BO_angle
+                  BO_Negate_GHz(BO_NumGHz) = Negate
+               ELSE
+                  BO_NumTHz = BO_NumTHz + 1
+                  BO_Index_THz(BO_NumTHz) = BO_index
+                  BO_Angle_THz(BO_index) = BO_angle
+                  BO_Negate_THz(BO_NumTHz) = Negate
+                ENDIF
+
             CASE DEFAULT
 
                PRINT *, 'unknown spec!'
@@ -783,6 +802,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
 END MODULE MLSL1Config
 
 ! $Log$
+! Revision 2.21  2005/12/06 19:27:12  perun
+! Removed MoonToLimbAngles parsing and added Bright Object parsing
+!
 ! Revision 2.20  2005/10/10 19:06:27  perun
 ! Add DeconvolveDACS field
 !
