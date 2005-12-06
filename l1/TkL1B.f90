@@ -29,23 +29,19 @@ MODULE TkL1B
 
   PRIVATE
 
-  PUBLIC :: L1BOA_MAF, Flag_Bright_Objects, LOG_ARR1_PTR_T, GHz_GeodAlt, &
-       GHz_GeodLat, GHz_GeodAngle
-
-  TYPE LOG_ARR1_PTR_T
-     LOGICAL, DIMENSION(:), POINTER :: ptr
-  END TYPE LOG_ARR1_PTR_T
+  PUBLIC :: L1BOA_MAF, GHz_GeodAlt, GHz_GeodLat, GHz_GeodAngle, GHz_BO_stat
 
   REAL :: GHz_GeodAlt(LENG), GHz_GeodLat(LENG), GHz_GeodAngle(LENG)
+  INTEGER :: GHz_BO_stat(LENG)
 
   LOGICAL, PARAMETER :: ORBINCLINE_IS_CONSTANT = .FALSE.
   REAL, PARAMETER ::    UNDEFINED_VALUE = DEFAULTUNDEFINEDVALUE ! -999.99
   REAL, PARAMETER ::    HUGE_F = HUGE (1.0)
 
 !---------------------------- RCS Module Info ------------------------------
-  character (len=*), private, parameter :: ModuleName= &
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  PRIVATE :: not_used_here 
 !---------------------------------------------------------------------------
 
   ! This module contains subroutines for producing the L1BOA records on
@@ -247,7 +243,7 @@ CONTAINS
   !------------------------------------------------------TkL1B_tp ----
   SUBROUTINE TkL1B_tp (asciiTAI, asciiUTC, lenG, numValues, offsets, posECR, &
     posECI, velECI, scAngle, encoderAngle, tp, ecrtosc, GroundToFlightMounts, &
-    ScToGroundMounts, gtindx)
+    ScToGroundMounts, BO_def, BO_angle, BO_Negate, gtindx, MoonToSpaceAngle)
     ! This subroutine fills the tangent point record.
 
     USE FOV, ONLY: CalcMountsToFOV
@@ -257,11 +253,14 @@ CONTAINS
     TYPE (L1BOAtp_T) :: tp
     CHARACTER (LEN=27), INTENT(IN) :: asciiUTC
     INTEGER, INTENT(IN) :: lenG, numValues, gtindx
+    INTEGER, INTENT(IN) :: BO_def(:)
+    LOGICAL, INTENT(IN) :: BO_Negate(:)
     REAL, INTENT(IN) :: scAngle(numValues), encoderAngle(numValues)
     REAL(r8), INTENT(IN) :: asciiTAI
     REAL(r8), INTENT(IN) :: offsets(numValues)
     REAL(r8), INTENT(IN) :: posECR(3,lenG), posECI(3,lenG), velECI(3,lenG)
-    REAL, INTENT(IN) :: ecrtosc(3,3,numValues)
+    REAL, INTENT(IN) :: ecrtosc(3,3,numValues), BO_angle(:)
+    REAL, INTENT(IN), OPTIONAL :: MoonToSpaceAngle
 
     REAL(r8), INTENT(IN) :: GroundToFlightMounts(3,3)
     REAL(r8), INTENT(IN) :: ScToGroundMounts(3,3)
@@ -288,7 +287,7 @@ CONTAINS
     REAL(r8) :: fov_sc(3,numValues), fov_orb(3,numValues)
     REAL(r8) :: eciV(6,lenG), ecrV(6,lenG)
     REAL(r8) :: tngtVel(3), los_vec(3)
-    REAL(r8) :: MountsToFOV(3,3), ECRtoFOV(3,3)
+    REAL(r8) :: MountsToFOV(3,3), ECRtoFOV(3,3), FOV_eci(3,lenG)
     REAL(r8) :: GroundMountsToFOV(3,3), ScToFOV(3,3)
     CHARACTER (LEN=32) :: mnemonic
     CHARACTER (LEN=480) :: msg, msr
@@ -345,8 +344,8 @@ CONTAINS
 
     ! Convert s/c vector to ECR
     returnStatus = Pgs_csc_scToECI (spacecraftId, lenG, asciiUTC, &
-      offsets(1:lenG), fov_sc(:,1:lenG), eci)
-    eciV(1:3,:) = eci
+      offsets(1:lenG), fov_sc(:,1:lenG), fov_eci)
+    eciV(1:3,:) = fov_eci
     eciV(4:6,:) = 0.0
     returnStatus = Pgs_csc_eciToECR (lenG, asciiUTC, offsets(1:lenG), eciV, &
          ecrV)
@@ -476,9 +475,14 @@ CONTAINS
     tp%tpGeocAltRate(lenG) = tp%tpGeocAltRate(lenG-1)
     tp%tpGeodAltRate(lenG) = tp%tpGeodAltRate(lenG-1)
 
+    ! Determine Bright Object status:
+
+    CALL Set_BO_stat (asciiUTC, offsets, BO_def, BO_angle, BO_Negate, FOV_eci, &
+         tp%tpBO_stat, MoonToSpaceAngle)
+
     IF (ANY (MIFbad)) THEN
        CALL Init_L1BOAtp (tp, MIFbad)
-       print *, 'some bad MIFs...'
+       PRINT *, 'some bad MIFs...'
     ENDIF
 
   END SUBROUTINE TkL1B_tp
@@ -566,6 +570,8 @@ CONTAINS
     USE MLSL1Config, ONLY: L1Config
     USE FOV, ONLY: GroundToFlightMountsGHz, GroundToFlightMountsTHz, &
          ScToGroundMountsGHz,ScToGroundMountsTHz
+    USE BrightObjects_m, ONLY: BO_NumGHz, BO_NumTHz, BO_Index_GHz, &
+         BO_Index_THz, BO_Angle_GHz, BO_Angle_THz, BO_Negate_GHz, BO_Negate_THz
 
     ! Arguments
     TYPE (MAFinfo_T) :: MAFinfo
@@ -921,6 +927,14 @@ CONTAINS
        ENDIF
     ENDIF
 
+    IF (.NOT. ASSOCIATED(tp%tpBO_stat)) THEN
+       ALLOCATE (tp%tpBO_stat(lenG), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  GHz tp quantities: BO_stat'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
+
     IF (oastat == PGS_S_SUCCESS) THEN
 
     ! Calculate initial guess for look vector in ECR
@@ -936,18 +950,22 @@ CONTAINS
     gtindx = 1
     CALL TkL1B_tp (mafTAI, mafTime, lenG, nV, offsets, sc%scECR(:,1:lenG), &
          sc%scECI(:,1:lenG), sc%scVelECI(:,1:lenG), scAngleG, encAngleG, tp, &
-         ecrtosc, GroundToFlightMountsGHz, ScToGroundMountsGHz, gtindx)
+         ecrtosc, GroundToFlightMountsGHz, ScToGroundMountsGHz, &
+         BO_Index_GHz(1:BO_NumGHz), BO_Angle_GHz, BO_Negate_GHz, gtindx, &
+         L1Config%Calib%MoonToSpaceAngle)
     IF (L1Config%Globals%SimOA) THEN   ! correct nominal scan angles for sim
        angle_del = tp%tpGeodAlt(1) / 5200.0 * 0.1
        scAngleG = scAngleG + angle_del
        CALL TkL1B_tp (mafTAI, mafTime, lenG, nV, offsets, sc%scECR(:,1:lenG), &
             sc%scECI(:,1:lenG), sc%scVelECI(:,1:lenG), scAngleG, encAngleG, &
-            tp, ecrtosc, GroundToFlightMountsGHz, ScToGroundMountsGHz, gtindx)
+            tp, ecrtosc, GroundToFlightMountsGHz, ScToGroundMountsGHz, &
+            BO_Index_GHz(1:BO_NumGHz), BO_Angle_GHz, BO_Negate_GHz, gtindx)
        angle_del = tp%tpGeodAlt(1) / 5200.0 * 0.1
        scAngleG = scAngleG + angle_del
        CALL TkL1B_tp (mafTAI, mafTime, lenG, nV, offsets, sc%scECR(:,1:lenG), &
             sc%scECI(:,1:lenG), sc%scVelECI(:,1:lenG), scAngleG, encAngleG, &
-            tp, ecrtosc, GroundToFlightMountsGHz, ScToGroundMountsGHz, gtindx)
+            tp, ecrtosc, GroundToFlightMountsGHz, ScToGroundMountsGHz, &
+            BO_Index_GHz(1:BO_NumGHz), BO_Angle_GHz, BO_negate_GHz, gtindx)
     ENDIF
 
     ! Compute GHz master coordinate
@@ -960,6 +978,10 @@ CONTAINS
     GHz_GeodAlt = tp%tpGeodAlt
     GHz_GeodLat = tp%tpGeodLat
     GHz_GeodAngle = tp%tpGeodAngle
+
+    ! Save for Bright Object testing:
+
+    GHz_BO_stat = tp%tpBO_stat
 
     ! Save pos1/pos2 prime data:
 
@@ -986,18 +1008,21 @@ CONTAINS
     gtindx = 2
     CALL TkL1B_tp (mafTAI, mafTime, lenT, nV, offsets, sc%scECR(:,1:lenT), &
          sc%scECI(:,1:lenG), sc%scVelECI(:,1:lenG), scAngleT, encAngleT, tp, &
-         ecrtosc, GroundToFlightMountsTHz, ScToGroundMountsTHz, gtindx)
+         ecrtosc, GroundToFlightMountsTHz, ScToGroundMountsTHz, &
+         BO_Index_THz(1:BO_NumTHz), BO_Angle_THz, BO_Negate_THz, gtindx)
     IF (L1Config%Globals%SimOA) THEN   ! correct nominal scan angles for sim
        angle_del = tp%tpGeodAlt(1) / 5200.0 * 0.1
        scAngleT = scAngleT + angle_del
        CALL TkL1B_tp (mafTAI, mafTime, lenT, nV, offsets, sc%scECR(:,1:lenT), &
             sc%scECI(:,1:lenG), sc%scVelECI(:,1:lenG), scAngleT, encAngleT, &
-            tp, ecrtosc, GroundToFlightMountsTHz, ScToGroundMountsTHz, gtindx)
+            tp, ecrtosc, GroundToFlightMountsTHz, ScToGroundMountsTHz, &
+            BO_Index_THz(1:BO_NumTHz), BO_Angle_THz, BO_negate_THz, gtindx)
        angle_del = tp%tpGeodAlt(1) / 5200.0 * 0.1
        scAngleT = scAngleT + angle_del
        CALL TkL1B_tp (mafTAI, mafTime, lenG, nV, offsets, sc%scECR(:,1:lenT), &
             sc%scECI(:,1:lenT), sc%scVelECI(:,1:lenT), scAngleT, encAngleT, &
-            tp, ecrtosc, GroundToFlightMountsTHz, ScToGroundMountsTHz, gtindx)
+            tp, ecrtosc, GroundToFlightMountsTHz, ScToGroundMountsTHz, &
+            BO_Index_THz(1:BO_NumTHz), BO_Angle_THz, BO_Negate_THz, gtindx)
     ENDIF
 
     ! Save pos1/pos2 prime data:
@@ -1181,9 +1206,7 @@ CONTAINS
     ENDIF
     orbInclineCalculated = (180/Pi) * ASIN( &
         COS(lamRad) * (vUnrotated(2)*COS(muRad) - vUnrotated(1)*SIN(muRad)) / v)
-!    sc_velv = [sc_vel(i,j)       - 7.27221d-08*datascecr(1,i,j), $
-!               sc_vel(i+mmifs,j) + 7.27221d-08*datascecr(0,i,j), $
-!               sc_vel(i+2*mmifs,j)]
+
     ! Now added contraints: 90 < beta < 180
     orbInclineCalculated = ABS(orbInclineCalculated) + 90
     IF (orbInclineCalculated < 90.d0) THEN
@@ -1292,8 +1315,6 @@ CONTAINS
     REAL(r8), INTENT(IN) :: dotVec(3,nV)
     REAL, INTENT(OUT) ::    geodAngle(nV)
     REAL, INTENT(in) ::     scOrbIncl(nV)
-!    real(r8), intent(IN) :: scECR(3,nV)             ! s/c pos.
-!    real(r8), intent(IN) :: scVelECR(3,nV)          ! s/c vel.
 
     ! Functions
     INTEGER :: Pgs_csc_getEarthFigure
@@ -1398,91 +1419,151 @@ CONTAINS
   END SUBROUTINE TkL1B_mc
 
 !=============================================================================
-  SUBROUTINE Flag_Bright_Objects (TAI, ScAngle, MoonLimbTol, LimbView, &
-       SpaceView)
+  SUBROUTINE Set_BO_stat (asciiUTC, offset, BO_def, BO_angle, BO_Negate, &
+       FOV_eci, BO_stat, MoonToSpaceAngle)
 !=============================================================================
 
-    USE MLSL1Config, ONLY: L1Config
+    USE BrightObjects_m, ONLY: GC_def
 
-    REAL(r8) :: TAI(:)
-    REAL :: ScAngle(0:), MoonLimbTol
-    TYPE (LOG_ARR1_PTR_T) :: LimbView(:)
-    TYPE (LOG_ARR1_PTR_T), OPTIONAL :: SpaceView(:)
+    CHARACTER (LEN=27), INTENT(in) :: asciiUTC
+    REAL(r8), INTENT(in) :: offset(:), FOV_eci(3,0:(lenG-1))
+    REAL, INTENT(in) :: BO_angle(:) !ScAngle(0:)
+    REAL, INTENT(in), OPTIONAL :: MoonToSpaceAngle
+    INTEGER, INTENT(in) :: BO_def(:)
+    LOGICAL, INTENT(in) :: BO_Negate(:)
+    INTEGER, INTENT(out) :: BO_stat(0:)
 
-    CHARACTER (LEN=27) :: asciiUTC
-    INTEGER :: i, MIF, returnStatus
-    LOGICAL :: HasSpaceView
+    INTEGER :: i, j, MIF, returnStatus
     REAL :: limb_angle, space_angle
-    REAL(r8) :: offset (SIZE(TAI))
     REAL(r8) :: sc_frame_vector(3,0:(lenG-1))  ! start at MIF 0
-    REAL(r8) :: sc_unit_vector(3)
+    REAL(r8) :: sc_unit_vector(3,0:(lenG-1)), eci_unit_vector(3,0:(lenG-1))
+    LOGICAL :: HasSpaceView
 
-    INTEGER, PARAMETER :: BO_defs(2) = (/ PGSd_Moon, PGSd_Venus /)
-    REAL, PARAMETER :: VenusInSpace = 1.0
-    REAL, PARAMETER :: VenusInLimb = 1.0
-    REAL :: space_tol(2) = (/ 0.0, VenusInSpace /) ! tolerance for space port
-    REAL :: limb_tol(2) = (/ 0.0, VenusInLimb /)   ! tolerance for limb port
+! Galactic center variables:
+
+    INTEGER, PARAMETER :: Ngal = 9
+    REAL(r8) :: FOV_gal(3), thetasum, deltacross, deltadot
+
+    REAL(r8), PARAMETER :: ECItogctr(3,3) = RESHAPE ((/ &
+         -0.066990,  0.492699, -0.867620, &
+         -0.872758, -0.450355, -0.188358, &
+         -0.483540,  0.744601,  0.460174 /), (/ 3, 3 /))
+
+    REAL(r8), PARAMETER :: gal_cone_z = 0.992545 !7° bounding cone TBR
+
+! Strawman polygon for galactic core  REC 2005.11.09
+! x unused:
+! revised polygon for galactic core  REC 2005.11.18
+
+    REAL(r8), PARAMETER :: gal(2:3,Ngal) = RESHAPE ((/ &
+         -0.077649,  -0.017740, & !0.996823
+         -0.012147,   0.013177, & !0.999839
+          0.045883,   0.024546, & !0.998645
+          0.074372,   0.024546, & !0.996928
+          0.121742,  -0.005795, & !0.992545
+          0.086660,  -0.038046, & !0.995511
+         -0.013098,  -0.040886, & !0.999078
+         -0.052093,  -0.028565, & !0.998234
+         -0.077649,  -0.017740  & !0.996823
+          /), (/ 2, Ngal /))
 
     ! Functions
 
-    INTEGER, EXTERNAL :: PGS_TD_taiToUTC, PGS_CBP_Sat_CB_Vector
+    INTEGER, EXTERNAL :: PGS_CBP_Sat_CB_Vector, PGS_CSC_SCtoECI
 
-    HasSpaceView = PRESENT (SpaceView)
+    HasSpaceView = PRESENT (MoonToSpaceAngle)
 
-! Get Moon tolerances from CF inputs:
+    BO_stat = 0   ! Nothing in FOV
 
-    space_tol(1) = L1Config%Calib%MoonToSpaceAngle
-!    limb_tol(1) = L1Config%Calib%MoonToLimbAngle
-    limb_tol(1) = MoonLimbTol
+    DO i = 1, SIZE (BO_def)   ! For each Bright Object
 
-    returnStatus = PGS_TD_taiToUTC (TAI(1), asciiUTC)
-    offset = TAI - TAI(1)   ! offset (secs) from start TAI
+       IF (BO_def(i) /= GC_def) THEN    ! Not Galactic Center BO
+          returnStatus = PGS_CBP_Sat_CB_Vector (spacecraftId, lenG, asciiUTC, &
+               offset(1:lenG), BO_def(i), sc_frame_vector)
+          IF (returnStatus /= 0) CYCLE
+ 
+          DO MIF = 0, (lenG - 1)
+             sc_unit_vector(:,MIF) = sc_frame_vector(:,MIF) / &
+                  SQRT (sc_frame_vector(1,MIF)**2 + sc_frame_vector(2,MIF)**2 &
+                  + sc_frame_vector(3,MIF)**2)
+          ENDDO
 
-    DO i = 1, 2
-       IF (HasSpaceView) SpaceView(i)%ptr = .FALSE.
-       LimbView(i)%ptr = .FALSE.
-       returnStatus = PGS_CBP_Sat_CB_Vector (spacecraftId, lenG, asciiUTC, &
-            offset(1:lenG), BO_defs(i), sc_frame_vector)
-       IF (returnStatus /= 0) CYCLE
+          returnStatus = PGS_CSC_SCtoECI (spacecraftId, lenG, asciiUTC, &
+               offset(1:lenG), sc_unit_vector, eci_unit_vector)
+
+       ENDIF
 
        DO MIF = 0, (lenG - 1)
-          sc_unit_vector = sc_frame_vector(:,MIF) / &
-               SQRT (sc_frame_vector(1,MIF)**2 + sc_frame_vector(2,MIF)**2 + &
-               sc_frame_vector(3,MIF)**2)
 
-! Space port angle check
+    ! Limb port angle check
 
-          IF (HasSpaceView) THEN
-             space_angle = ACOS (MAX (MIN (sc_unit_vector(2), 1.0d0), &
-                  -1.0d0)) * Rad2Deg  ! Y vector
-             SpaceView(i)%ptr(MIF) = (space_angle < space_tol(i))
+          IF (BO_def(i) /= GC_def) THEN    ! Not Galactic Center BO
+
+             limb_angle = ACOS (MAX (MIN ( DOT_PRODUCT( &
+                  FOV_eci(:,MIF), eci_unit_vector(:,MIF)), 1.0d0), -1.0d0)) * &
+                  Rad2Deg
+
+             IF (limb_angle < BO_angle(BO_def(i))) THEN ! Set appropriate Bit No
+                BO_stat(MIF) = IBSET (BO_stat(MIF), BO_def(i))
+                IF (BO_Negate(i)) &
+                     BO_stat(MIF) = IBSET (BO_stat(MIF), (BO_def(i)+16))
+             ENDIF
+
+          ELSE ! Check for Galactic center (if requested):
+
+             FOV_gal = MATMUL (ECItogctr, FOV_eci(:,MIF))
+             thetasum = 0.0
+
+             IF (FOV_gal(1) > gal_cone_z) THEN ! Look within bounding cone 
+
+                DO j = 2, Ngal  !  Loop over vertices defining galactic core
+                   deltacross = (gal(3,j)-FOV_gal(3))*(gal(2,j-1)-FOV_gal(2)) &
+                        -(gal(2,j)-FOV_gal(2))*(gal(3,j-1)-FOV_gal(3))
+                   deltadot = (gal(2,j)-FOV_gal(2))*(gal(2,j-1)-FOV_gal(2)) &
+                        +(gal(3,j)-FOV_gal(3))*(gal(3,j-1)-FOV_gal(3))
+
+                   thetasum = thetasum + ATAN2(deltacross, deltadot)
+
+                ENDDO
+
+                IF (ABS(thetasum) > PI) THEN  ! Mark galactic center in this MIF
+                   BO_stat(MIF) = IBSET (BO_stat(MIF), GC_def)
+                ENDIF
+
+             ENDIF
           ENDIF
 
-! Limb port angle check
+! Space port angle check (for Moon Only!)
 
-          limb_angle = ACOS (MAX (MIN ( DOT_PRODUCT( &
-               (/ COS (scAngle(MIF) * Deg2Rad), 0.0, &
-               SIN (scAngle(MIF) * Deg2Rad) /), &
-               sc_unit_vector), 1.0d0), -1.0d0)) * Rad2Deg
-          LimbView(i)%ptr(MIF) = (limb_angle < limb_tol(i))
+          IF (HasSpaceView .AND. BO_def(i) == PGSd_Moon) THEN
+
+             space_angle = ACOS (MAX (MIN (sc_unit_vector(2,MIF), 1.0d0), &
+                  -1.0d0)) * Rad2Deg  ! Y vector
+             IF (space_angle < MoonToSpaceAngle) THEN  ! Set bit 0
+                BO_stat(MIF) = IBSET (BO_stat(MIF), 0)
+             ENDIF
+          ENDIF
 
        ENDDO
+   ENDDO
 
-    ENDDO
+  END SUBROUTINE Set_BO_stat
 
-  END SUBROUTINE Flag_Bright_Objects
-
-  logical function not_used_here()
+  LOGICAL FUNCTION not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
+  CHARACTER (len=*), PARAMETER :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  END FUNCTION not_used_here
+
 END MODULE TkL1B
 
 ! $Log$
+! Revision 2.27  2005/12/06 19:30:42  perun
+! Removed Flag_Bright_Objects routine and added determining BO_stat bits
+!
 ! Revision 2.26  2005/10/11 16:08:50  perun
 ! Replace local mean time with local apparent time for SolarTime
 !
