@@ -14,10 +14,10 @@ MODULE THzCalibration ! Calibration data and routines for the THz module
 !=============================================================================
 
   USE MLSCommon, ONLY: r8
-  USE MLSL1Common, ONLY: MaxMIFs, THzChans, THzNum, LO1, L1BFileInfo, &
-       BrightObjects_T
+  USE MLSL1Common, ONLY: MaxMIFs, THzChans, THzNum, LO1, L1BFileInfo
   USE L0_sci_tbls, ONLY: THz_Sci_pkt_T
   USE EngTbls, ONLY : Eng_MAF_T
+  USE MLSL1Config, ONLY: MIFsTHz
  
   IMPLICIT NONE
 
@@ -30,9 +30,9 @@ MODULE THzCalibration ! Calibration data and routines for the THz module
   PUBLIC :: Chisq, dLlo, nvBounds, yTsys
 
 !---------------------------- RCS Module Info ------------------------------
-  character (len=*), private, parameter :: ModuleName= &
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  PRIVATE :: not_used_here 
 !---------------------------------------------------------------------------
 
   !! Channel type (D, L, S, T, Z):
@@ -49,7 +49,7 @@ MODULE THzCalibration ! Calibration data and routines for the THz module
      TYPE (Chan_type_T) :: ChanType(0:(MaxMIFs-1))
      REAL :: CalTgtTemp       ! Average Calibration Target Temperature (C)
      REAL :: LimbCalTgtTemp   ! Average Limb Calibration Target Temperature (C)
-     TYPE (BrightObjects_T) :: LimbView ! Bright Objects in FOV flags
+     INTEGER :: BO_stat(MIFsTHz) = 0   ! Bright Objects status (GHz FOV)
      INTEGER :: last_MIF
      INTEGER :: BandSwitch(5) ! band switch positions
   END TYPE MAFdata_T
@@ -386,7 +386,7 @@ CONTAINS
     INTEGER, PARAMETER :: mlimb = 122
     LOGICAL :: first_fit, last_fit
 
-    print *, 'THzCal'
+    PRINT *, 'THzCal'
 
     IF (COUNT (CalFlag == 1) == 0) RETURN  ! Nothing to calibrate
 
@@ -621,18 +621,21 @@ PRINT *, 'end calibrating...'
   END SUBROUTINE CalibrateTHz
 
 !=============================================================================
-  logical function not_used_here()
+  LOGICAL FUNCTION not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
+  CHARACTER (len=*), PARAMETER :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  END FUNCTION not_used_here
 END MODULE THzCalibration
 !=============================================================================
 
 ! $Log$
+! Revision 2.9  2005/12/06 19:30:19  perun
+! Removed BrightObjest_T and added BO_stat to MAFdata_T
+!
 ! Revision 2.8  2005/06/23 18:41:36  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
