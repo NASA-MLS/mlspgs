@@ -18,9 +18,9 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
   IMPLICIT NONE
 
 !---------------------------- RCS Module Info ------------------------------
-  character (len=*), private, parameter :: ModuleName= &
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  PRIVATE :: not_used_here 
 !---------------------------------------------------------------------------
 
   ! This module contains data types that are common to the MLSL1 program.
@@ -86,6 +86,10 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
 
   INTEGER, PARAMETER :: MaxMIFs = 150
 
+  ! Maximum number of MIFs per Limb view
+
+  INTEGER, PARAMETER :: LimbMIFs = 125
+
   ! MAF information data type (start time, integration time, etc.)
 
   TYPE MAFinfo_T
@@ -146,7 +150,7 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
   !! Band Logical type
 
   TYPE BandChanR_T
-     REAL :: Sign(NumBands,DACSchans) = 1.0  ! "Good" precision sign
+     REAL :: SIGN(NumBands,DACSchans) = 1.0  ! "Good" precision sign
      INTEGER :: MaxChan(NumBands)    ! Maximum number of channels in band
   END TYPE BandChanR_T
   TYPE (BandChanR_T), SAVE :: BandChanBad = BandChanR_T (1.0, BandChans)
@@ -159,13 +163,6 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
 
   INTEGER, DIMENSION(:), ALLOCATABLE :: OA_counterMAF
   INTEGER :: OA_counterIndex = 0     ! Nothing yet
-
-!! Bright Objects type
-
-  TYPE BrightObjects_T   ! 1 = GHz, 2 = THz
-     LOGICAL :: MoonInFOV(0:MaxMIFs-1,2) = .FALSE.
-     LOGICAL :: VenusInFOV(0:MaxMIFs-1,2) = .FALSE.
-  END TYPE BrightObjects_T
 
 !! Factor to convert 23 bit encoder angle data (shifted by 1 bit) into degrees:
 
@@ -253,20 +250,23 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
 
   ! --------------------------------------------------------------------------
 
-contains
+CONTAINS
 !=============================================================================
-  logical function not_used_here()
+  LOGICAL FUNCTION not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
+  CHARACTER (len=*), PARAMETER :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  END FUNCTION not_used_here
 END MODULE MLSL1Common
 !=============================================================================
 
 ! $Log$
+! Revision 2.15  2005/07/19 16:35:45  perun
+! Increased GHz switching mirror tolerance per REC
+!
 ! Revision 2.14  2005/06/23 18:41:35  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
