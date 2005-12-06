@@ -44,6 +44,7 @@ CONTAINS
     USE MLSHDF5, ONLY: MakeHDF5Attribute, MLS_h5close
     USE Orbit, ONLY: OrbitNumber, OrbPeriod
     USE PCFHdr, ONLY: h5_writeglobalattr
+    USE BrightObjects_m, ONLY: BO_name, BO_Angle_GHz, BO_Angle_THz
 
     CHARACTER(LEN=132) :: filename
     INTEGER :: i, returnStatus, error, grp_id
@@ -168,8 +169,17 @@ CONTAINS
     ! Write Hdr Annotations and Close L1BOA file
 
     CALL H5gOpen_f (L1BFileInfo%OAid, '/', grp_id, returnStatus)
+
+    ! Orbit attributes:
+
     CALL MakeHDF5Attribute (grp_id, 'OrbitNumber', OrbitNumber, .true.)
     CALL MakeHDF5Attribute (grp_id, 'OrbitPeriod', OrbPeriod, .true.)
+
+    ! Bright Object attributes:
+
+    CALL MakeHDF5Attribute (grp_id, 'BO_name', BO_name, .true.)
+    CALL MakeHDF5Attribute (grp_id, 'BO_Angle_GHz', BO_Angle_GHz, .true.)
+    CALL MakeHDF5Attribute (grp_id, 'BO_Angle_THz', BO_Angle_THz, .true.)
     CALL H5gClose_f (grp_id, returnStatus)
 
     CALL WriteHdrAnnots (L1BFileInfo%OAFileName, HDFversion)
@@ -219,6 +229,9 @@ CONTAINS
 END MODULE Close_files
 !=============================================================================
 ! $Log$
+! Revision 2.19  2005/12/06 19:22:56  perun
+! Output Bright Object attributes to BOA file
+!
 ! Revision 2.18  2005/06/23 18:41:35  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
