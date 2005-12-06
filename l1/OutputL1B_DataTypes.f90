@@ -86,6 +86,7 @@ MODULE OutputL1B_DataTypes
     REAL,     DIMENSION(:), POINTER :: tpSolarZenith => NULL() ! solar zenith ang
     REAL,     DIMENSION(:), POINTER :: tpLosAngle => NULL() ! line-of-sight ang to N
     REAL(r8), DIMENSION(:), POINTER :: tpLosVel => NULL()   ! line-of-sight velocity
+    INTEGER,  DIMENSION(:), POINTER :: tpBO_stat => NULL()  ! Bright Obj Status of tp
   END TYPE L1BOAtp_T
 
 contains
@@ -100,6 +101,9 @@ contains
 END MODULE OutputL1B_DataTypes
 
 ! $Log$
+! Revision 2.6  2005/12/06 19:28:30  perun
+! Added BO_stat for each tp record structure
+!
 ! Revision 2.5  2005/08/24 15:51:55  perun
 ! Add pointer for Pos_P to tangent point structure
 !
