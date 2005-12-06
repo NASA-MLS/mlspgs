@@ -307,6 +307,7 @@ MODULE L0_sci_tbls  ! Define L0 science tables
      TYPE (BankLogical_T) :: MaxAtten  ! Whether in maximum attenuation
      TYPE (BankLogical_T) :: DeltaAtten  ! Whether attenuation changed
      LOGICAL :: AttenMaxed             ! Some attenuation is maximum
+     LOGICAL :: LimbAltFlag            ! Flag for "L"imb greater than min alt
      LOGICAL :: CRC_good
   END TYPE Sci_pkt_T
 
@@ -603,6 +604,9 @@ CONTAINS
 END MODULE L0_sci_tbls
 
 ! $Log$
+! Revision 2.12  2005/12/06 19:23:59  perun
+! Added LimbAltFlag to mark minimum altitude limb views
+!
 ! Revision 2.11  2005/08/24 15:50:28  perun
 ! Add APE and TSSM pos_P to each science packet
 !
