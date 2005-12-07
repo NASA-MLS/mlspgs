@@ -265,7 +265,7 @@ contains
     real(rp), dimension(:), pointer :: N_PATH       ! Refractivity on path
     real(rp), dimension(:), pointer :: PATH_DSDH    ! dS/dH on path
     real(rp), dimension(:), pointer :: P_GLGRID     ! Pressure on glGrid surfs
-    real(rp), dimension(:), pointer :: PHI_PATH     ! Phi's on path
+    real(rp), dimension(:), pointer :: PHI_PATH     ! Phi's on path, Radians
     real(rp), dimension(:), pointer :: P_PATH       ! Pressure on path
     real(rp), dimension(:), pointer :: PTG_ANGLES   ! (no_tan_hts)
     real(r8), dimension(:), pointer :: RAD_FFT      ! Convolved radiance on FFT grid
@@ -737,6 +737,7 @@ contains
         ! Now compute the eta_zp & do_calc_zp (for Zeta & Phi only)
 
         ! Things you do whether or not you are doing magnetic or cloud
+
         call comp_eta_docalc_no_frq ( Grids_f, z_path(1:no_ele), &
           &  phi_path(1:no_ele), eta_zp(1:no_ele,:), do_calc_zp(1:no_ele,:) )
 
@@ -749,6 +750,17 @@ contains
           & 0.0_r8, eta_zp(1:no_ele,:),                   &
           & do_calc_zp(1:no_ele,:), sps_path(1:no_ele,:), &
           & do_calc_fzp(1:no_ele,:), eta_fzp(1:no_ele,:) )
+
+        if ( h2o_ind > 0 ) then
+          call refractive_index ( p_path(c_inds), &
+            &  t_path_c(1:npc), n_path(1:npc),     &
+            &  h2o_path=sps_path(c_inds, h2o_ind) )
+        else
+          call refractive_index ( p_path(c_inds), &
+            &  t_path_c(1:npc), n_path(1:npc) )
+        end if
+
+        n_path(1:npc) = min ( n_path(1:npc), MaxRefraction )
 
         if ( associated(fwdModelConf%lineCenter) ) then
           call comp_eta_docalc_no_frq ( grids_v, z_path(1:no_ele), &
@@ -842,17 +854,6 @@ contains
 
         end if
 
-        if ( h2o_ind > 0 ) then
-          call refractive_index ( p_path(c_inds), &
-            &  t_path_c(1:npc), n_path(1:npc),     &
-            &  h2o_path=sps_path(c_inds, h2o_ind) )
-        else
-          call refractive_index ( p_path(c_inds), &
-            &  t_path_c(1:npc), n_path(1:npc) )
-        end if
-
-        n_path(1:npc) = min ( n_path(1:npc), MaxRefraction )
-
         if ( temp_der ) then
           call get_chi_angles ( 0.001*est_scGeocAlt(ptg_i), n_path(npc/2),&
              & one_tan_ht(1), tan_phi(ptg_i), Req, 0.0_rp,                &
@@ -895,7 +896,8 @@ contains
         ! If we're doing frequency averaging, get the frequencies we need for
         ! this pointing.
 
-        if ( FwdModelConf%do_freq_avg ) call frequency_setup_2 ( vel_cor * &
+        if ( FwdModelConf%do_freq_avg .and. fwdModelConf%anyLBL(sx) ) &
+          & call frequency_setup_2 ( vel_cor * &
           & PointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))%frequencies )
 
         if ( toggle(emit) .and. levels(emit) > 4 ) &
@@ -1128,7 +1130,7 @@ contains
         print *, 'Convolution: OFF'
       end if
 
-      if ( FwdModelConf%do_freq_avg ) then
+      if ( FwdModelConf%do_freq_avg .and. fwdModelConf%anyLBL(sx) ) then
         print *, 'Frequency Averaging: ON'
       else
         print *, 'Frequency Averaging: OFF'
@@ -2214,7 +2216,7 @@ if ( spect_der_center ) call dump ( k_spect_dv(1:noUsedChannels,:,:) )
 
       select case ( frq_avg_sel )
       case ( 2, 3, 12, 13 ) ! Just copy radiance. PFA + DACS - LBL impossible
-        radiances(ptg_i,:) = radV
+        radiances(ptg_i,:) = radV(:noFreqs)
       case ( 10, 11, 14 )   ! Frq Avg path integrated radiance
         ! Now go through channel by channel
         do c = 1, noUsedChannels
@@ -3050,7 +3052,7 @@ if ( spect_der_center ) call dump ( dbeta_dv_path_c, name='dbeta_dv_path_c' )
       real(rp) :: R1, R2           ! real variables for various uses
       integer :: SUPERSET          ! Output from AreSignalsSuperset
 
-      if ( fwdModelConf%do_freq_avg ) then ! ---- Doing freq. avg. -----
+      if ( fwdModelConf%do_freq_avg .and. fwdModelConf%anyLBL(sx) ) then
 
         whichPointingGrid = -1
         minSuperset = huge(0)
@@ -3309,6 +3311,9 @@ if ( spect_der_center ) call dump ( dbeta_dv_path_c, name='dbeta_dv_path_c' )
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.249  2005/11/21 22:57:41  vsnyder
+! PFA derivatives stuff, plug some memory leaks
+!
 ! Revision 2.248  2005/11/05 03:38:13  vsnyder
 ! Frequency_Average_Derivative doesn't need Tau, cannonball polishing
 !
