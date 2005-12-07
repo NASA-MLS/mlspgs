@@ -85,15 +85,8 @@ contains
   subroutine Refractive_index_1 ( p_path, t_path, n_path )
 
   ! This routine computes the refractive index as a function of altitude
-  ! and phi. The returned value has one subtracted from it
-  ! We could easily make this elemental but it might run slower due
-  ! to multiple executions of if ( PRESENT(...))
-  !  ===============================================================
-  !  Declaration of variables for sub-program: refractive_index
-  !  ===============================================================
-  !  ---------------------------
-  !  Calling sequence variables:
-  !  ---------------------------
+  ! and phi. The returned value has one subtracted from it.
+
   ! inputs
     real(rp), intent(in) :: p_path(:) ! pressure(hPa) vector
     real(rp), intent(in) :: t_path(:) ! temperature vector(K)
@@ -109,15 +102,8 @@ contains
   subroutine Refractive_index_1_h2o ( p_path, t_path, n_path, h2o_path )
 
   ! This routine computes the refractive index as a function of altitude
-  ! and phi. The returned value has one subtracted from it
-  ! We could easily make this elemental but it might run slower due
-  ! to multiple executions of if ( PRESENT(...))
-  !  ===============================================================
-  !  Declaration of variables for sub-program: refractive_index
-  !  ===============================================================
-  !  ---------------------------
-  !  Calling sequence variables:
-  !  ---------------------------
+  ! and phi. The returned value has one subtracted from it.
+
   ! inputs
     real(rp), intent(in) :: p_path(:) ! pressure(hPa) vector
     real(rp), intent(in) :: t_path(:) ! temperature vector(K)
@@ -135,8 +121,8 @@ contains
 
   subroutine Comp_refcor ( h_path, n_path, ht, del_s, ref_corr, status )
 
-  ! This routine computes the integral described in Eqn. 8.11 of the
-  ! MLS ATBD, pg. 44,  using the Gauss-Legendre method.
+  ! This routine computes the integral described in Eqn. 10.12 of the
+  ! 19 August 2004 MLS ATBD, pg. 45, using the Gauss-Legendre method.
 
   ! For derivation of the code below, please see: "FWD Model" paper,
   ! Page 16, Eqn. 26 & 27
@@ -336,6 +322,9 @@ jl:   do j = j1+1, j2
 
 END module REFRACTION_M
 ! $Log$
+! Revision 2.22  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.21  2004/09/01 01:47:56  vsnyder
 ! Add status argument
 !
