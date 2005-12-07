@@ -79,7 +79,6 @@ contains
     use Molecules, only: L_H2O, L_N2O, L_O3
     use Output_m, only: Output
     use Path_Contrib_M, only: Get_GL_Inds
-use Phi_Refractive_Correction_m, only: Phi_Refractive_Correction
     use Physics, only: H_OVER_K, SpeedOfLight
     use PointingGrid_m, only: POINTINGGRIDS
     use REFRACTION_M, only: REFRACTIVE_INDEX, COMP_REFCOR
@@ -264,10 +263,10 @@ use Phi_Refractive_Correction_m, only: Phi_Refractive_Correction
     real(rp), dimension(:), pointer :: H_PATH_F     ! H_PATH on fine grid
     real(rp), dimension(:), pointer :: INCOPTDEPTH  ! Incremental Optical depth
     real(rp), dimension(:), pointer :: N_PATH       ! Refractivity on path
+    real(rp), dimension(:), pointer :: N_PATH_C     ! Refractivity on coarse path
     real(rp), dimension(:), pointer :: PATH_DSDH    ! dS/dH on path
     real(rp), dimension(:), pointer :: P_GLGRID     ! Pressure on glGrid surfs
     real(rp), dimension(:), pointer :: PHI_PATH     ! Phi's on path, Radians
-real(rp), dimension(:), pointer :: PHI_CORR_PATH
     real(rp), dimension(:), pointer :: P_PATH       ! Pressure on path
     real(rp), dimension(:), pointer :: PTG_ANGLES   ! (no_tan_hts)
     real(r8), dimension(:), pointer :: RAD_FFT      ! Convolved radiance on FFT grid
@@ -529,8 +528,8 @@ real(rp), dimension(:), pointer :: PHI_CORR_PATH
       & k_spect_dn, k_spect_dn_frq, k_spect_dv, k_spect_dv_frq, k_spect_dw, &
       & k_spect_dw_frq, k_temp, k_temp_frq, l1bMIF_TAI, &
       & lineCenter_ix, lineWidth_ix, lineWidth_TDep_ix, &
-      & mag_path, MIFDeadTime, &
-      & n_path, path_dsdh, phi_path, p_path, prod_pol, ptg_angles, &
+      & mag_path, MIFDeadTime, n_path, n_path_c, &
+      & path_dsdh, phi_path, p_path, prod_pol, ptg_angles, &
       & rad_avg_path, rad_FFT, radiances, RadV, ref_corr, req_out, &
       & salb_path, scat_alb%values, scat_ang, scat_src%values, &
       & spect_n_path, spect_v_path, spect_w_path, sps_path,  &
@@ -539,8 +538,6 @@ real(rp), dimension(:), pointer :: PHI_CORR_PATH
       & t_path, t_path_c, t_path_f, tscat_path, &
       & t_script_lbl, t_script_pfa, tt_path, tt_path_c, &
       & usedDacsSignals, vmr, vmrarray, w0_path_c, wc, z_path )
-
-nullify ( phi_corr_path )
 
     call both_sidebands_setup
 
@@ -757,24 +754,26 @@ nullify ( phi_corr_path )
           & do_calc_zp(1:no_ele,:), sps_path(1:no_ele,:), &
           & do_calc_fzp(1:no_ele,:), eta_fzp(1:no_ele,:) )
 
+!         if ( h2o_ind > 0 ) then
+!           call refractive_index ( p_path(c_inds), &
+!             &  t_path_c(1:npc), n_path_c(1:npc),  &
+!             &  h2o_path=sps_path(c_inds, h2o_ind) )
+!         else
+!           call refractive_index ( p_path(c_inds), &
+!             &  t_path_c(1:npc), n_path_c(1:npc) )
+!         end if
+
         if ( h2o_ind > 0 ) then
-          call refractive_index ( p_path(c_inds), &
-            &  t_path_c(1:npc), n_path(1:npc),     &
-            &  h2o_path=sps_path(c_inds, h2o_ind) )
+          call refractive_index ( p_path(:no_ele), &
+            &  t_path(:no_ele), n_path(:no_ele),  &
+            &  h2o_path=sps_path(:no_ele, h2o_ind) )
         else
-          call refractive_index ( p_path(c_inds), &
-            &  t_path_c(1:npc), n_path(1:npc) )
+          call refractive_index ( p_path(:no_ele), &
+            &  t_path(:no_ele), n_path(:no_ele) )
         end if
 
-        n_path(1:npc) = min ( n_path(1:npc), MaxRefraction )
+        n_path_c(1:npc) = min ( n_path(c_inds), MaxRefraction )
 
-call allocate_test ( phi_corr_path, npc, 'phi_corr_path', moduleName )
-call phi_refractive_correction ( n_path(:npc), h_path_c(:npc), phi_corr_path )
-call dump ( n_path(:npc), name='n_path', clean=.true. )
-call dump ( h_path_c(:npc), name='h_path_c', clean=.true. )
-call dump ( phi_corr_path, name='phi_corr_path', clean=.true. )
-call deallocate_test ( phi_corr_path, 'phi_corr_path', moduleName )
-stop
         if ( associated(fwdModelConf%lineCenter) ) then
           call comp_eta_docalc_no_frq ( grids_v, z_path(1:no_ele), &
             & phi_path(1:no_ele), eta_zxp_v(1:no_ele,:), do_calc_v(1:no_ele,:) )
@@ -868,19 +867,19 @@ stop
         end if
 
         if ( temp_der ) then
-          call get_chi_angles ( 0.001*est_scGeocAlt(ptg_i), n_path(npc/2),&
-             & one_tan_ht(1), tan_phi(ptg_i), Req, 0.0_rp,                &
-             & ptg_angles(ptg_i), r, 1.0_rp, tan_dh_dt(1,:),              &
+          call get_chi_angles ( 0.001*est_scGeocAlt(ptg_i), n_path_c(npc/2),&
+             & one_tan_ht(1), tan_phi(ptg_i), Req, 0.0_rp,                  &
+             & ptg_angles(ptg_i), r, 1.0_rp, tan_dh_dt(1,:),                &
              & tan_d2h_dhdt(1,:), dx_dt(ptg_i,:), d2x_dxdt(ptg_i,:) )
         else
-          call get_chi_angles ( 0.001*est_scGeocAlt(ptg_i), n_path(npc/2),&
-             & one_tan_ht(1), tan_phi(ptg_i), Req, 0.0_rp,                &
+          call get_chi_angles ( 0.001*est_scGeocAlt(ptg_i), n_path_c(npc/2),&
+             & one_tan_ht(1), tan_phi(ptg_i), Req, 0.0_rp,                  &
              & ptg_angles(ptg_i), r, 1.0_rp )
         end if
 
-        n_path(1:npc) = n_path(1:npc) + 1.0_rp
+        n_path_c(1:npc) = n_path_c(1:npc) + 1.0_rp
 
-        call comp_refcor ( h_path_c(:npc), n_path(:npc), &
+        call comp_refcor ( h_path_c(:npc), n_path_c(:npc), &
                       &  Req+one_tan_ht(1), del_s(:npc), ref_corr(:npc), ier )
         if ( ier /= 0 ) fmStat%flags = ior(fmStat%flags,b_refraction)
 
@@ -1230,6 +1229,7 @@ stop
     call deallocate_test ( h_path,           'h_path',           moduleName )
     call deallocate_test ( incoptdepth,      'incoptdepth',      moduleName )
     call deallocate_test ( n_path,           'n_path',           moduleName )
+    call deallocate_test ( n_path_c,         'n_path_c',         moduleName )
     call deallocate_test ( path_dsdh,        'path_dsdh',        moduleName )
     call deallocate_test ( phi_path,         'phi_path',         moduleName )
     call deallocate_test ( p_path,           'p_path',           moduleName )
@@ -1715,7 +1715,8 @@ stop
       call allocate_test ( h_path_f,        max_ele, 'h_path_f',         moduleName )
       call allocate_test ( h_path,          max_ele, 'h_path',           moduleName )
       call allocate_test ( incoptdepth,         npc, 'incoptdepth',      moduleName )
-      call allocate_test ( n_path,              npc, 'n_path',           moduleName )
+      call allocate_test ( n_path,          max_ele, 'n_path',           moduleName )
+      call allocate_test ( n_path_c,            npc, 'n_path_c',         moduleName )
       call allocate_test ( path_dsdh,       max_ele, 'path_dsdh',        moduleName )
       call allocate_test ( phi_path,        max_ele, 'phi_path',         moduleName )
       call allocate_test ( p_path,          max_ele, 'p_path',           moduleName )
@@ -3324,6 +3325,9 @@ if ( spect_der_center ) call dump ( dbeta_dv_path_c, name='dbeta_dv_path_c' )
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.251  2005/12/07 01:30:04  vsnyder
+! More on getting correct size for RadV
+!
 ! Revision 2.250  2005/12/07 00:35:04  vsnyder
 ! Allocate RadV with correct size for PFA and no LBL
 !
