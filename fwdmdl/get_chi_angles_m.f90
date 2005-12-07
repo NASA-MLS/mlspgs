@@ -83,8 +83,11 @@ contains
     hs = sc_geoc_alt + ampl * sin(2.0*(phi_tan-phas))
     x = min ( Np1 * ht / hs, 1.0_rp )
 
-    !{ $\sin \chi^{\text{refr}}_{\text{eq}} = N_t \frac{H_t}{H_s}
-    !    \frac{ \text{min} ( H_t, H^{\oplus} ) }{H^{\oplus}}$
+    !{ $\sin \chi^{\text{refr}}_{\text{eq}} =
+    !    \frac{\mathcal{N}_t}{\mathcal{N}_s} \frac{H_t}{H_s}
+    !    \frac{ \text{min} ( H_t, H^{\oplus} ) }{H^{\oplus}}$,
+    !  where $\mathcal{N}_s$ is the index of refraction at the spacecraft,
+    !  which is 1.0, and therefore need not be written explicitly.
 
     ! ptg_angle = asin(x * min(ht,Req)/Req) - elev_offset
 
@@ -148,6 +151,9 @@ contains
 
 end module Get_Chi_Angles_m
 ! $Log$
+! Revision 2.16  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.15  2004/05/17 22:05:40  livesey
 ! Minor changes to avoid explosions due to asin(>1)
 !
