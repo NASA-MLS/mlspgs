@@ -54,7 +54,7 @@ module Hydrostatic_m
 !                 at the reference ellipse surface  equivalent to h_ref = 0.0
 
     real(rp), optional, intent(out) :: ddhdhdtq(:,:) !ddh/dhdt on z_grid
-    real(rp), optional :: z_surface
+    real(rp), optional, intent(out) :: z_surface
 
 ! Internal stuff
 
@@ -80,6 +80,7 @@ module Hydrostatic_m
 
     where ( z_grid > 2.5_rp )
 !     mass_corr = 1.0_rp / (0.875_rp + 0.1_rp*z_grid - 0.02_rp*z_grid**2)
+
 !{A series expansion about z\_grid = 5/2 of
 ! $\frac1{\frac78 + \frac1{10}z - \frac1{50}z^2}$ is
 ! $\sum_{k=0}^{\infty} \left( \frac{(z-\frac52)^2}{50}\right)^k$.  Use the
@@ -160,7 +161,7 @@ module Hydrostatic_m
 ! compute the piq integrals with mass reduction compensation relative to the
 ! surface
 
-    CALL piq_int ( z_grid,t_basis,z_surf,piq,Z_MASS=2.5_rp,C_MASS=0.02_rp )
+    call piq_int ( z_grid,t_basis,z_surf,piq,Z_MASS=2.5_rp,C_MASS=0.02_rp )
 
 ! compute the height vector
 
@@ -177,7 +178,7 @@ module Hydrostatic_m
       & ddhdhdtq = (2.0_rp/(spread(h_grid,2,n_coeffs)+r_eff)) * dhidtq &
                & + eta / spread(t_grid,2,n_coeffs)
 
- end subroutine Hydrostatic
+  end subroutine Hydrostatic
 
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
@@ -191,6 +192,9 @@ module Hydrostatic_m
 end module Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.14  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.13  2004/03/20 04:06:13  vsnyder
 ! Moved Boltz from units to physics
 !
