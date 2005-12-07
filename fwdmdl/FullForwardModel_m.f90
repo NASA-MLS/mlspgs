@@ -79,6 +79,7 @@ contains
     use Molecules, only: L_H2O, L_N2O, L_O3
     use Output_m, only: Output
     use Path_Contrib_M, only: Get_GL_Inds
+use Phi_Refractive_Correction_m, only: Phi_Refractive_Correction
     use Physics, only: H_OVER_K, SpeedOfLight
     use PointingGrid_m, only: POINTINGGRIDS
     use REFRACTION_M, only: REFRACTIVE_INDEX, COMP_REFCOR
@@ -266,6 +267,7 @@ contains
     real(rp), dimension(:), pointer :: PATH_DSDH    ! dS/dH on path
     real(rp), dimension(:), pointer :: P_GLGRID     ! Pressure on glGrid surfs
     real(rp), dimension(:), pointer :: PHI_PATH     ! Phi's on path, Radians
+real(rp), dimension(:), pointer :: PHI_CORR_PATH
     real(rp), dimension(:), pointer :: P_PATH       ! Pressure on path
     real(rp), dimension(:), pointer :: PTG_ANGLES   ! (no_tan_hts)
     real(r8), dimension(:), pointer :: RAD_FFT      ! Convolved radiance on FFT grid
@@ -538,6 +540,8 @@ contains
       & t_script_lbl, t_script_pfa, tt_path, tt_path_c, &
       & usedDacsSignals, vmr, vmrarray, w0_path_c, wc, z_path )
 
+nullify ( phi_corr_path )
+
     call both_sidebands_setup
 
     ! Compute hydrostatic grid -----------------------------------------------
@@ -595,10 +599,12 @@ contains
 
       ! Work out Frequency averaging / LBL / PFA / Derivatives steering.
       frq_avg_sel = 0
-      if ( fwdModelConf%do_freq_avg ) frq_avg_sel = frq_avg_sel + 8
-      if ( fwdModelConf%anyPFA(sx) )  frq_avg_sel = frq_avg_sel + 4
-      if ( fwdModelConf%anyLBL(sx) )  frq_avg_sel = frq_avg_sel + 2
-      if ( any_der )                  frq_avg_sel = frq_avg_sel + 1
+      if ( fwdModelConf%do_freq_avg ) frq_avg_sel = ior(frq_avg_sel, 8)
+      if ( fwdModelConf%anyPFA(sx) .and. .not. &
+        &  fwdModelConf%anyLBL(sx) )  frq_avg_sel = ior(frq_avg_sel, 8)
+      if ( fwdModelConf%anyPFA(sx) )  frq_avg_sel = ior(frq_avg_sel, 4)
+      if ( fwdModelConf%anyLBL(sx) )  frq_avg_sel = ior(frq_avg_sel, 2)
+      if ( any_der )                  frq_avg_sel = ior(frq_avg_sel, 1)
 
       ! Now, allocate gl_slabs arrays
       call allocateSlabs ( gl_slabs, max_ele, &
@@ -762,6 +768,13 @@ contains
 
         n_path(1:npc) = min ( n_path(1:npc), MaxRefraction )
 
+call allocate_test ( phi_corr_path, npc, 'phi_corr_path', moduleName )
+call phi_refractive_correction ( n_path(:npc), h_path_c(:npc), phi_corr_path )
+call dump ( n_path(:npc), name='n_path', clean=.true. )
+call dump ( h_path_c(:npc), name='h_path_c', clean=.true. )
+call dump ( phi_corr_path, name='phi_corr_path', clean=.true. )
+call deallocate_test ( phi_corr_path, 'phi_corr_path', moduleName )
+stop
         if ( associated(fwdModelConf%lineCenter) ) then
           call comp_eta_docalc_no_frq ( grids_v, z_path(1:no_ele), &
             & phi_path(1:no_ele), eta_zxp_v(1:no_ele,:), do_calc_v(1:no_ele,:) )
@@ -2185,9 +2198,9 @@ if ( spect_der_center ) call dump ( k_spect_dv(1:noUsedChannels,:,:) )
       if ( toggle(emit) .and. levels(emit) > 4 ) &
         & call trace_begin ( 'ForwardModel.FrequencyAvg' )
 
-!          8 Frequency averaging?  N N Y Y Y Y Y Y - N
+!          8 Frequency averaging?  N N Y Y - - Y Y - N
 !          4 PFA?                  N N N N Y Y Y Y N Y
-!          2 LBL?                  Y Y Y Y N N Y Y N -
+!          2 LBL?                  Y Y Y Y N N Y Y N Y
 !          1 Derivatives?          N Y N Y N Y N Y - -
 !            Frq_Avg_Sel value     2 3 A B C D E F
 !
@@ -3311,6 +3324,9 @@ if ( spect_der_center ) call dump ( dbeta_dv_path_c, name='dbeta_dv_path_c' )
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.250  2005/12/07 00:35:04  vsnyder
+! Allocate RadV with correct size for PFA and no LBL
+!
 ! Revision 2.249  2005/11/21 22:57:41  vsnyder
 ! PFA derivatives stuff, plug some memory leaks
 !
