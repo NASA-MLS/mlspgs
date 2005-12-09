@@ -61,9 +61,9 @@ CONTAINS
     TYPE (Eta_T), PARAMETER :: Eta(0:4) = (/ &
          Eta_T ("R1A", 0.99598, 0.99587, 0.99575), &  ! Index '0'
          Eta_T ("R1B", 0.99344, 0.99317, 0.99274), &
-         Eta_T ("R2 ", 0.99889, 0.99890, 0.99889), &
-         Eta_T ("R3 ", 0.99929, 0.99928, 0.99929), &
-         Eta_T ("R4 ", 0.99907, 0.99907, 0.99907)  /)
+         Eta_T ("R2 ", 0.99878, 0.99874, 0.99868), &
+         Eta_T ("R3 ", 0.99915, 0.99912, 0.99910), &
+         Eta_T ("R4 ", 0.99894, 0.99892, 0.99890)  /)
 
     rad = 0.0        ! nothing yet
     rad_err = -1.0   ! nothing yet
@@ -523,6 +523,9 @@ END MODULE Radiances
 !=============================================================================
 
 ! $Log$
+! Revision 2.15  2005/12/09 16:39:58  perun
+! Update port baffle transmission values
+!
 ! Revision 2.14  2005/08/24 15:52:54  perun
 ! Set rads and precs to fill values when nonlimb radiances are unavailable
 !
