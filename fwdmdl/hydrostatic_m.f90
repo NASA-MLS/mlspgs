@@ -32,7 +32,7 @@ module Hydrostatic_m
 
     use MLSCommon, only: RP, IP
     use Geometry, only: EarthRadA, EarthRadB, GM, J2, J4, W
-    use Get_eta_m, only: get_eta
+    use Get_eta_matrix_m, only: get_eta_sparse
     use Piq_int_m, only: piq_int
     use Physics, only: BoltzMeters => Boltz
 
@@ -91,8 +91,7 @@ module Hydrostatic_m
     end where
 
 ! compute t_grid
-
-    call get_eta ( z_grid, t_basis, eta )
+    call get_eta_sparse ( t_basis, z_grid, eta )
     t_grid = matmul(eta,t_coeffs)
 !
 ! compute surface acceleration and effective earth radius
@@ -192,6 +191,9 @@ module Hydrostatic_m
 end module Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.15  2005/12/07 00:32:21  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.14  2005/06/22 18:08:19  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
