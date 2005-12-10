@@ -2194,7 +2194,7 @@ if ( spect_der_center ) call dump ( k_spect_dv(1:noUsedChannels,:,:) )
       use Freq_Avg_m, only: Freq_Avg
       use SCRT_dn_m, only: SCRT_PFA
 
-      integer :: C, K, P, ShapeInd
+      integer :: C, ShapeInd
 
       if ( toggle(emit) .and. levels(emit) > 4 ) &
         & call trace_begin ( 'ForwardModel.FrequencyAvg' )
@@ -2408,7 +2408,7 @@ call dump ( k_spect_dv_frq, name='k_spect_dv_frq' )
 
       use Freq_Avg_m, only: Freq_Avg
 
-      integer :: C, K, P, Sel, ShapeInd
+      integer :: C, P, ShapeInd
 
       do c = 1, noUsedChannels
         shapeInd = channels(c)%shapeInds(sx)
@@ -2442,7 +2442,7 @@ call dump ( k_spect_dv_frq, name='k_spect_dv_frq' )
       use Mcrt_m, only: Mcrt_der
       use Opacity_m, only: Opacity
       use Path_Contrib_M, only: Path_Contrib
-      use RAD_TRAN_M, only: RAD_TRAN, RAD_TRAN_POL, DRAD_TRAN_DF, &
+      use RAD_TRAN_M, only: RAD_TRAN_POL, DRAD_TRAN_DF, &
         & DRAD_TRAN_DT, DRAD_TRAN_DX
       use ScatSourceFunc, only: T_SCAT, Interp_Tscat, Convert_Grid
 
@@ -2675,7 +2675,7 @@ call dump ( k_spect_dv_frq, name='k_spect_dv_frq' )
             incoptdepth(j) = alpha_path_c(j) * del_s(j)
           end do
 
-          ! Needed by both rad_tran and rad_tran_pol
+          ! Needed to compute inc_rad_path_slice and by rad_tran_pol
           call two_d_t_script_cloud ( t_path_c, tt_path_c, w0_path_c, &  
             & spaceRadiance%values(1,1), frq, t_script(:,frq_i), B(:npc) )
 
@@ -2687,7 +2687,7 @@ call dump ( k_spect_dv_frq, name='k_spect_dv_frq' )
             incoptdepth(j) = alpha_path_c(j) * del_s(j)
           end do
   
-          ! Needed by both rad_tran and rad_tran_pol
+          ! Needed to compute inc_rad_path_slice and by rad_tran_pol
           call two_d_t_script ( t_path_c, &  
             & spaceRadiance%values(1,1), frq, t_script(:,frq_i), B(:npc) )
 
@@ -3325,6 +3325,9 @@ if ( spect_der_center ) call dump ( dbeta_dv_path_c, name='dbeta_dv_path_c' )
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.252  2005/12/07 19:43:32  vsnyder
+! Mistakenly committed needing Phi_Refractive_Correction
+!
 ! Revision 2.251  2005/12/07 01:30:04  vsnyder
 ! More on getting correct size for RadV
 !
