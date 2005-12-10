@@ -183,9 +183,14 @@ contains
     call allocate_test ( eta_t, n_tan, p_coeffs, 'eta_t', ModuleName )
 
     ! compute the tangent height vertical
+    ! for simplicity, we are going to set the
+    ! surface reference at the input z_grid(1) and adjust the req and the
+    ! h_grid_t relative to this, and adjust h_ref accordingly
     call get_eta_sparse ( p_basis, phi_t, eta_t )
-    h_grid_t = sum(h_ref(tan_inds,:)*eta_t,dim=2)
-    h_surf = sum(h_ref(1,:)*eta_t(1,:))
+    h_surf = dot_product(h_ref(1,:),eta_t(1,:))
+    do i = 1, n_tan
+      h_grid_t(i) = dot_product(h_ref(tan_inds(i),:),eta_t(i,:)) - h_surf
+    end do
 
     ! compute equivalent earth radius at phi_t(1), nearest surface
     cp2 = cos(phi_t(1))**2
@@ -193,17 +198,20 @@ contains
     req = 0.001_rp*sqrt((earthrada**4*sp2 + csq**2*cp2) / &
                       & (earthrada**2*cp2 + csq*sp2))
 
-    ! now for the path quantities. for simplicity, we are going to set the
-    ! surface reference at the input z_grid(1) and adjust the req and the
-    ! h_grid_t relative to this
+    ! now for the path quantities.  adjust req to the input z_grid(1)
     req = req + h_surf
 
-    ! adjust h_ref accordingly
-    h_grid_t = h_grid_t - h_surf
     if ( present(tan_phi_h_grid) ) tan_phi_h_grid = h_grid_t
-    if ( present(tan_phi_t_grid) ) &
-      tan_phi_t_grid = sum(t_ref(tan_inds,:)*eta_t,dim=2)
-    if ( present(dhtdzt) ) dhtdzt = sum(dhidzij(tan_inds,:)*eta_t,dim=2)
+    if ( present(tan_phi_t_grid) ) then
+      do i = 1, n_tan
+        tan_phi_t_grid(i) = dot_product(t_ref(tan_inds(i),:),eta_t(i,:))
+      end do
+    end if
+    if ( present(dhtdzt) ) then
+      do i = 1, n_tan
+        dhtdzt(i) = dot_product(dhidzij(tan_inds(i),:),eta_t(i,:))
+      end do
+    end if
 
     ! compute tangent temperature derivative
     if ( present(dhidtlm) ) then
@@ -212,7 +220,9 @@ contains
       call allocate_test ( dhtdtl, z_coeffs, 'dhtdtl', ModuleName )
 !     dhtdtl = sum(RESHAPE(dhidtlm(1,:,:),(/z_coeffs,p_coeffs/)) &
 !       * SPREAD(RESHAPE(eta_t(1,:),(/p_coeffs/)),1,z_coeffs),dim=2)
-      dhtdtl = sum(dhidtlm(1,:,:) * SPREAD(eta_t(1,:),1,z_coeffs),dim=2)
+      do i = 1, z_coeffs
+        dhtdtl(i) = dot_product(dhidtlm(1,i,:), eta_t(1,:))
+      end do
 
       ! adjust the 2d hydrostatic relative to the surface
       dhidtlm = dhidtlm - SPREAD(SPREAD(dhtdtl,1,n_vert),3,p_coeffs)
@@ -279,7 +289,10 @@ contains
     cvf_sign = (-1.0_rp)**((modulo(cvf_inds-1,2*n_vert)/n_vert)+1)
 
     ! Apparently you can't sequentially access elements of a multirank array
-    ! in f90 like you can in idl, which is a major inconvenience
+    ! in f90 like you can in idl, which is a major but necessary inconvenience
+    ! (because array elements taken in array element order aren't necessarily
+    ! in consecutive memory locations, and it would be a slow process to compute
+    ! where they really are)
     nullify ( mask2 )
     call allocate_test ( mask2, 2*n_vert, n_tan, 'mask2', ModuleName )
     mask2 = .false.
@@ -303,7 +316,7 @@ contains
     cvf_h_tan = PACK(h_tans,mask2)
     cvf_z_grid = PACK(m_z_grid,mask2)
 
-    call deallocate_test ( mask2, 'mask', ModuleName )
+    call deallocate_test ( mask2, 'mask2', ModuleName )
 
     ! These are the tangent indicies on a cvf array
     if ( n_tan > ss_htan ) then
@@ -361,7 +374,9 @@ contains
     eta_p_1 => eta_p(1,:)
 
     call get_eta_sparse ( p_basis, p_grid, eta_p )
-    h_grid = max(cvf_h_tan, sum(h_zf * eta_p,dim=2))
+    do i = 1, n_cvf
+      h_grid(i) = max( cvf_h_tan(i), dot_product(h_zf(i,:), eta_p(i,:)) )
+    end do
 
     ! this construct is considered more desireable than a do while
     ! according to the Fortran explained book
@@ -390,7 +405,10 @@ contains
 
       call get_eta_sparse ( p_basis, cvf_ang_offset(jun) + cvf_sign(jun) &
         & * Acos((req + cvf_h_tan(jun))/(req + old_hts(jun))), et_p )
-      h_grid(jun) = max ( cvf_h_tan(jun), sum(h_zf(jun,:) * et_p, dim=2) )
+      do i = 1, no_of_bad_fits
+        h_grid(jun(i)) = max ( cvf_h_tan(jun(i)), &
+          & dot_product(h_zf(jun(i),:), et_p(i,:)) )
+      end do
 
     end do
 
@@ -439,20 +457,20 @@ contains
           call get_eta_sparse ( p_basis, phi_t((cvf_inds(low_pt)-1) &
                & / (2*n_vert) + 1), eta_p_1 )
           do i = st_ind, end_ind
-            h_grid(jun(i)) = SUM(h_ref(n_vert - MODULO(cvf_inds(jun(i))-1, &
-            & 2*n_vert),:)*eta_p_1) - h_surf
+            h_grid(jun(i)) = dot_product(h_ref(n_vert - MODULO(cvf_inds(jun(i))-1, &
+            & 2*n_vert),:),eta_p_1) - h_surf
           end do
         else if ( cvf_inds(jun(end_ind)) > tan_ptr - 1 ) then
 ! calculate the path ending index.
-          call mlsMessage(mlsmsg_warning,moduleName,'resorting to 1d option in metrics')
+          call mlsMessage ( mlsmsg_warning, moduleName, 'resorting to 1d option in metrics' )
           status = 2
           end_ind1 = st_ind + tan_ptr - cvf_inds(jun(st_ind))
 ! resort to 1 d equvalent
           call get_eta_sparse ( p_basis, phi_t((cvf_inds(low_pt) - 1) &
           & / (2*n_vert) + 1), eta_p_1 )
           do i = st_ind, end_ind1
-            h_grid(jun(i)) = SUM(h_ref(MODULO(cvf_inds(jun(i))-1,2*n_vert) &
-                          & + 1 - n_vert,:)*eta_p_1) - h_surf
+            h_grid(jun(i)) = dot_product(h_ref(MODULO(cvf_inds(jun(i))-1,2*n_vert) &
+                          & + 1 - n_vert,:),eta_p_1) - h_surf
           end do
 ! This is in case the anomaly wraps to the next higher tangent level.
           if ( end_ind1 < end_ind ) then
@@ -460,8 +478,8 @@ contains
             call get_eta_sparse ( p_basis,phi_t((cvf_inds(low_pt)-1) &
                  & / (2*n_vert) + 2), eta_p_1 )
             do i = end_ind1+1, end_ind
-              h_grid(jun(i)) = SUM(h_ref(n_vert - MODULO(cvf_inds(jun(i))-1, &
-              & 2*n_vert),:)*eta_p_1) - h_surf
+              h_grid(jun(i)) = dot_product(h_ref(n_vert - MODULO(cvf_inds(jun(i))-1, &
+              & 2*n_vert),:),eta_p_1) - h_surf
             end do
           end if
         else
@@ -495,10 +513,12 @@ contains
     end if
 
     call get_eta_sparse ( p_basis, p_grid, eta_p, NOT_ZERO = not_zero_p )
-    t_grid = sum(t_ref(vert_inds,:) * eta_p,dim=2)
+    do i = 1, n_cvf
+      t_grid(i) = dot_product(t_ref(vert_inds(i),:), eta_p(i,:))
+      ! compute the vertical derivative grid
+      dhitdzi(i) = dot_product(dhidzij(vert_inds(i),:), eta_p(i,:))
+    end do
 
-    ! compute the vertical derivative grid
-    dhitdzi = sum(dhidzij(vert_inds,:) * eta_p,dim=2)
 
     ! compute the temperature derivative grid
 
@@ -571,6 +591,9 @@ contains
 end module Metrics_m
 
 ! $Log$
+! Revision 2.24  2005/12/10 01:53:23  vsnyder
+! Use get_eta_sparse_1d
+!
 ! Revision 2.23  2005/06/22 18:08:19  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
