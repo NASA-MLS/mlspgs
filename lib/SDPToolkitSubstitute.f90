@@ -51,6 +51,11 @@
          PGS_SMF_GenerateStatusReport=0
        END FUNCTION PGS_SMF_GenerateStatusReport
 
+      INTEGER FUNCTION PGS_SMF_TestStatusLevel(status)
+        integer, intent(in) :: status
+        PGS_SMF_TestStatusLevel = 0
+      END FUNCTION PGS_SMF_TestStatusLevel
+
       INTEGER FUNCTION PGS_IO_Gen_OpenF(file_logical,file_access, &
            & record_length, file_handle, file_version)
         INTEGER, INTENT(IN) :: file_logical
@@ -227,6 +232,9 @@
 
 !
 ! $Log$
+! Revision 2.15  2005/12/10 00:23:56  pwagner
+! Added PGS_SMF_TestStatusLevel interface
+!
 ! Revision 2.14  2005/07/04 08:38:02  hcp
 ! Moved variable inside a function and eliminated "private" keywords.
 ! (This isn't a module so you can't have them.) Added comment in the
