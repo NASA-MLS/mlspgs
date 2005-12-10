@@ -18,7 +18,10 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   use MLSCommon, only: MLSFile_T
   use PVM, only: InfoTag, &
     & PVMDATADEFAULT, PVMFInitSend, PVMF90Pack, SIG_AboutToDie
-  use SDPToolkit, only: PGS_SMF_GenerateStatusReport, UseSDPToolkit
+  use SDPToolkit, only: PGS_S_SUCCESS, PGS_SMF_MASK_LEV_S, PGS_SMF_MASK_LEV_N, &
+    & PGS_SMF_MASK_LEV_F, PGS_SMF_MASK_LEV_W, PGS_SMF_MASK_LEV_M, &
+    & UseSDPToolkit, &
+    & PGS_SMF_GenerateStatusReport, PGS_SMF_TestStatusLevel
 
   implicit none
   private
@@ -35,32 +38,83 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   ! PGS_SMF_GenerateStatusReport.  This writes a string to the `LogReport'
   ! file (PCF# 10101) in the toolkit.  In the Toolkit `substitute' it just
   ! does a simple print.
+  
+  ! Alternate entries for special circumstances are PVMErrorMessage
+  ! (to log a PVM Error)
+  ! and ReportTKStatus
+  ! (to report on the severity of a PGS Toolkit return status)
 
   ! The user can also choose to log the messages to a seperate file when
   ! running under the toolkit.  This is setup by MLSMessageSetup and closed
   ! by MLSMessageClose.  The cataloging of such a file is left up to the
   ! calling code.
 
+! === (start of toc) ===
+!     c o n t e n t s
+!     - - - - - - - -
+
+!     (parameters)
+! MLSMSG_SUCCESS           status returned when all went well
+! MLSMSG_DEBUG             should print only if debugging turned on
+! MLSMSG_INFO              fyi only
+! MLSMSG_WARNING           not fatal, but deserving of attention
+! MLSMSG_ERROR             quits after printing
+! MLSMSG_CRASH             should give traceback before quitting
+! MLSMSG_Severity_to_quit  severity level needed to quit
+! MLSMSG_Allocate          mesg prefix for this type of error
+! MLSMSG_Fileopen          mesg prefix for this type of error
+! MLSMSG_Keyword           mesg prefix for this type of error
+! MLSMSG_L1BRead           mesg prefix for this type of error
+! MLSMSG_Duplicate         mesg prefix for this type of error
+! MLSMSG_DeAllocate        mesg prefix for this type of error
+! MLSMSG_PVM               mesg prefix for this type of error
+! MLSMessageConfig         configuration controlling where to print, etc.
+
+!     (subroutines and functions)
+! MLSMessage               main messaging routine
+! MLSMessageSetup          routine interface to change some parts of MLSMessageConfig
+! MLSMessageClose          close MLSMessage log file; but see MLSMessageExit
+! MLSMessageExit           recommended way to finish main program
+! MLSMessageReset          reset flags, counters, etc. during runtime
+! PVMErrorMessage          log a PVM error
+! ReportTKStatus           converts SDP status to severity, prints if needed
+
+! === (end of toc) ===
+
+! === (start of api) ===
+! MLSMessage ( int Severity, char* ModuleNameIn, char* Message, 
+!      [char* Advance], [MLSFile_T MLSFile] ) 
+! MLSMessageSetup ( [log SuppressDebugs], [int LogFileUnit], [char* Prefix],
+!      [log useToolkit], [log CrashOnAnyError] )
+! MLSMessageExit ( [int status], [char* farewell] )
+! MLSMessageReset ( [int logFileUnit], [log CrashOnAnyError], [log Warnings] )
+! PVMErrorMessage ( int INFO, char* PLACE  )
+! ReportTKStatus( int status, char* ModuleNameIn, char* Message, 
+!      [int Threshold] )
+! === (end of api) ===
   ! ---------------------------------------------------------------------------
 
   ! Define some low level parameters.  These are used by the calling code to
   ! indicate the severity or otherwise of the messages.
 
-  integer, public, parameter :: MLSMSG_Debug=1
-  integer, public, parameter :: MLSMSG_Info=2
-  integer, public, parameter :: MLSMSG_Warning=3
-  integer, public, parameter :: MLSMSG_Error=4
+  integer, public, parameter :: MLSMSG_Success = PGS_S_SUCCESS ! == 0
+  integer, public, parameter :: MLSMSG_Debug   = MLSMSG_Success + 1
+  integer, public, parameter :: MLSMSG_Info    = MLSMSG_Debug + 1
+  integer, public, parameter :: MLSMSG_Warning = MLSMSG_Info + 1
+  integer, public, parameter :: MLSMSG_Error   = MLSMSG_Warning + 1
   ! Warning--a Crash may not properly close files opened by your run
   ! Use it only for specific debugging where you need a walkback
   ! See also MLSMessageConfig%crashOnAnyError
-  integer, public, parameter :: MLSMSG_Crash=5
+  integer, public, parameter :: MLSMSG_Crash   = MLSMSG_Error + 1
 
   ! MLSMSG_Severity_to_quit can be reset in a main program to cause us
   ! to become more lenient (set it higher) or strict (set it lower )
   integer, public            :: MLSMSG_Severity_to_quit = MLSMSG_Error
 
   private :: SeverityNames
-  character (len=*), dimension(5), parameter :: SeverityNames = (/&
+  character (len=*), dimension(MLSMSG_Success:MLSMSG_Crash), parameter :: &
+     & SeverityNames = (/&
+     & "Success", &
      & "Debug  ", &
      & "Info   ", &
      & "Warning", &
@@ -124,6 +178,7 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   ! Public procedures
   public :: MLSMessage, MLSMessage_, MLSMessageSetup, MLSMessageClose
   public :: MLSMessageExit, MLSMessageReset, PVMErrorMessage
+  public :: ReportTKStatus
 
   interface MLSMessage
     module procedure MLSMessage_
@@ -205,7 +260,7 @@ contains
        ! Assemble a full message line
 
        if ( line_len == 0 ) then
-         if ( severity > 0 .and. severity < MLSMSG_Crash+1 ) then
+         if ( severity > MLSMSG_Success-1 .and. severity < MLSMSG_Crash+1 ) then
            line = SeverityNames(severity)
          else
            line = 'Unknown'
@@ -246,7 +301,7 @@ contains
     end if
 
     ! Now if it's an error, and the message is complete, then try to close
-    ! log file if any and quit
+    ! log file if any and quit (or crash)
 
     if ( my_adv .and. severity >= MLSMSG_Severity_to_quit ) then
       if ( present(MLSFile) ) call dumpFile(MLSFile)
@@ -391,6 +446,36 @@ contains
       & ' Info='//trim(adjustl(line)))
   end subroutine PVMErrorMessage
 
+  ! --------------------------------------------  ReportTKStatus  -----
+
+  ! Report on severity represented by value returned by toolkit function
+  ! Some functions may return non-zero values that are mere warnings or notices
+  ! This routine converts these values to a severity level
+  ! By default, it then prints only if severity is MLSMSG_Error or higher
+  ! but by setting threshold this can be changed
+  ! E.g., setting threshold to 0 will print every status, even success
+
+  subroutine ReportTKStatus( status, ModuleNameIn, Message, Threshold )
+    ! Dummy arguments
+    integer, intent(in) :: status ! e.g. PGS_TD_NOLEAPSECFILE
+    character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
+    character (len=*), intent(in) :: Message ! Line of text
+    integer, intent(in), optional :: Threshold ! Min severity to log message
+
+    ! Internal variables
+    integer :: levelmask
+    integer :: myThreshold
+    integer :: severity
+
+    ! Executable code
+    myThreshold = MLSMSG_Error
+    if ( present(threshold) ) myThreshold = threshold
+    levelMask = pgs_smf_teststatuslevel(status)
+    severity = level2severity(levelMask)
+    if ( severity < myThreshold ) return
+    call MLSMessage( severity, ModuleNameIn, Message )
+  end subroutine ReportTKStatus
+
   ! Private procedures
   !-----------------------------------------  accessDFACCToStr  -----
   function accessDFACCToStr ( dfacc ) result(str)
@@ -462,6 +547,29 @@ contains
       & call PVMErrorMessage ( info, 'sending last gasp'  )
   end subroutine LastGasp
 
+  !-----------------------------------------  level2severity  -----
+  function level2severity ( level ) result(severity)
+
+    ! This routine converts a toolkit levelmask to an mls severity
+    ! Args
+    integer, intent(in)           :: level
+    integer :: severity
+    select case (level)
+    case (PGS_SMF_MASK_LEV_S)
+      severity = MLSMSG_Success
+    case (PGS_SMF_MASK_LEV_N)
+      severity = MLSMSG_Debug
+    case (PGS_SMF_MASK_LEV_F)
+      severity = MLSMSG_Error
+    case (PGS_SMF_MASK_LEV_W)
+      severity = MLSMSG_Warning
+    case (PGS_SMF_MASK_LEV_M)
+      severity = MLSMSG_Info
+    case default
+      severity = MLSMSG_Info
+    end select
+  end function level2severity
+
   ! --------------------------------------------  dump  -----
   subroutine dump ( name, intValue, charValue, logValue  )
     ! In any way we're asked
@@ -529,6 +637,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.27  2005/12/10 00:23:21  pwagner
+! Added ReportTKStatus
+!
 ! Revision 2.26  2005/07/18 17:44:19  pwagner
 ! Bug allowed substring index past actual length; fixed
 !
