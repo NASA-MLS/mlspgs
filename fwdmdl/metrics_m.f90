@@ -156,6 +156,7 @@ contains
     real(rp), dimension(:), pointer :: CVF_SIGN
     real(rp), dimension(:), pointer :: CVF_Z_GRID
     real(rp), dimension(:), pointer :: DHTDTL
+    real(rp), dimension(:), pointer :: ETA_P_1
     real(rp), dimension(size(tan_inds)) :: H_GRID_T
     real(rp), dimension(:), pointer :: H_GRID_TT
     real(rp), dimension(:), pointer :: OLD_HTS
@@ -182,7 +183,7 @@ contains
     call allocate_test ( eta_t, n_tan, p_coeffs, 'eta_t', ModuleName )
 
     ! compute the tangent height vertical
-    call get_eta_sparse ( p_basis,phi_t, eta_t )
+    call get_eta_sparse ( p_basis, phi_t, eta_t )
     h_grid_t = sum(h_ref(tan_inds,:)*eta_t,dim=2)
     h_surf = sum(h_ref(1,:)*eta_t(1,:))
 
@@ -357,6 +358,7 @@ contains
     call allocate_test ( junk, n_cvf, 'junk', moduleName )
     call allocate_test ( mask, n_cvf, 'mask', ModuleName )
     call allocate_test ( eta_p, n_cvf, p_coeffs, 'eta_p', ModuleName )
+    eta_p_1 => eta_p(1,:)
 
     call get_eta_sparse ( p_basis, p_grid, eta_p )
     h_grid = max(cvf_h_tan, sum(h_zf * eta_p,dim=2))
@@ -387,12 +389,11 @@ contains
       end do
 
       call get_eta_sparse ( p_basis, cvf_ang_offset(jun) + cvf_sign(jun) &
-        & * Acos((req + cvf_h_tan(jun))/ (req + old_hts(jun))), et_p )
+        & * Acos((req + cvf_h_tan(jun))/(req + old_hts(jun))), et_p )
       h_grid(jun) = max ( cvf_h_tan(jun), sum(h_zf(jun,:) * et_p, dim=2) )
 
     end do
 
-    call deallocate_test ( eta_p, 'eta_p', ModuleName )
     call deallocate_test ( mask, 'mask', ModuleName )
 
     if ( no_of_bad_fits > 0 ) then
@@ -431,44 +432,38 @@ contains
           hi_pt  = MIN(jun(end_ind) + 1,n_cvf)
         end if
         tan_ptr = 2 * n_vert * ((cvf_inds(low_pt)-1) / (2*n_vert) + 1)
-        IF (cvf_inds(jun(st_ind)) == tan_ptr - 2*n_vert + 1) THEN
-          CALL mlsMessage(mlsmsg_warning,moduleName,'resorting to 1d option in metrics')
+        if ( cvf_inds(jun(st_ind)) == tan_ptr - 2*n_vert + 1 ) then
+          call mlsMessage(mlsmsg_warning,moduleName,'resorting to 1d option in metrics')
           status = 2
 ! resort to 1 d equvalent
-          CALL allocate_test(eta_p,1,p_coeffs,'eta_p',modulename)
-          CALL get_eta_sparse(p_basis,(/phi_t((cvf_inds(low_pt)-1) &
-               & / (2*n_vert) + 1)/), eta_p)
-! this should be eta_p(1,p_coeffs)
-          DO i = st_ind, end_ind
+          call get_eta_sparse ( p_basis, phi_t((cvf_inds(low_pt)-1) &
+               & / (2*n_vert) + 1), eta_p_1 )
+          do i = st_ind, end_ind
             h_grid(jun(i)) = SUM(h_ref(n_vert - MODULO(cvf_inds(jun(i))-1, &
-            & 2*n_vert),:)*eta_p(1,:)) - h_surf
-          enddo
-          call deallocate_test ( eta_p, 'eta_p', ModuleName )
-        ELSE IF (cvf_inds(jun(end_ind)) > tan_ptr - 1) THEN
+            & 2*n_vert),:)*eta_p_1) - h_surf
+          end do
+        else if ( cvf_inds(jun(end_ind)) > tan_ptr - 1 ) then
 ! calculate the path ending index.
-          CALL mlsMessage(mlsmsg_warning,moduleName,'resorting to 1d option in metrics')
+          call mlsMessage(mlsmsg_warning,moduleName,'resorting to 1d option in metrics')
           status = 2
           end_ind1 = st_ind + tan_ptr - cvf_inds(jun(st_ind))
 ! resort to 1 d equvalent
-          CALL allocate_test(eta_p,1,p_coeffs,'eta_p',modulename)
-          CALL get_eta_sparse(p_basis,(/phi_t((cvf_inds(low_pt) - 1) &
-          & / (2*n_vert) + 1)/), eta_p)
-          DO i = st_ind, end_ind1
+          call get_eta_sparse ( p_basis, phi_t((cvf_inds(low_pt) - 1) &
+          & / (2*n_vert) + 1), eta_p_1 )
+          do i = st_ind, end_ind1
             h_grid(jun(i)) = SUM(h_ref(MODULO(cvf_inds(jun(i))-1,2*n_vert) &
-                          & + 1 - n_vert,:)*eta_p(1,:)) - h_surf
-          enddo
+                          & + 1 - n_vert,:)*eta_p_1) - h_surf
+          end do
 ! This is in case the anomaly wraps to the next higher tangent level.
-          IF (end_ind1 < end_ind) THEN
+          if ( end_ind1 < end_ind ) then
 ! resort to 1 d equvalent
-            CALL get_eta_sparse(p_basis,(/phi_t((cvf_inds(low_pt)-1) &
-                 & / (2*n_vert) + 2)/), eta_p)
-! this should be eta_p(1,p_coeffs)
-            DO i = end_ind1+1, end_ind
+            call get_eta_sparse ( p_basis,phi_t((cvf_inds(low_pt)-1) &
+                 & / (2*n_vert) + 2), eta_p_1 )
+            do i = end_ind1+1, end_ind
               h_grid(jun(i)) = SUM(h_ref(n_vert - MODULO(cvf_inds(jun(i))-1, &
-              & 2*n_vert),:)*eta_p(1,:)) - h_surf
-            enddo
-          endif
-          call deallocate_test ( eta_p, 'eta_p', ModuleName )
+              & 2*n_vert),:)*eta_p_1) - h_surf
+            end do
+          end if
         else
 
           ! Correct
@@ -476,7 +471,7 @@ contains
              & (h_grid(hi_pt) - h_grid(low_pt)) * &
              & (cvf_z_grid(jun(st_ind):jun(end_ind))-cvf_z_grid(low_pt)) / &
              & (cvf_z_grid(hi_pt) - cvf_z_grid(low_pt))
-        endif
+        end if
         st_ind = end_ind + 1
         if ( st_ind < no_of_bad_fits ) &
           & path_ind = modulo(cvf_inds(jun(st_ind))-1,2*n_vert) + 1
@@ -498,10 +493,6 @@ contains
       p_grid(force_zero) = cvf_ang_offset(force_zero)
       call deallocate_test ( force_zero, 'force_zero', ModuleName )
     end if
-
-    ! now compute the temperature grid
-    nullify ( eta_p )
-    call allocate_test ( eta_p, n_cvf, p_coeffs, 'eta_p', ModuleName )
 
     call get_eta_sparse ( p_basis, p_grid, eta_p, NOT_ZERO = not_zero_p )
     t_grid = sum(t_ref(vert_inds,:) * eta_p,dim=2)
@@ -580,6 +571,9 @@ contains
 end module Metrics_m
 
 ! $Log$
+! Revision 2.23  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.22  2004/09/01 01:47:56  vsnyder
 ! Add status argument
 !
