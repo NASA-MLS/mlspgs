@@ -1435,6 +1435,8 @@ contains ! =====     Public Procedures     =============================
           ! print *, 'About to CpHDF5GlAttribute'
           call CpHDF5GlAttribute ( DirectDatabase(DB_index)%fileName, &
             & l2auxPhysicalFilename, 'Phase Names' )
+          call CpHDF5GlAttribute ( DirectDatabase(DB_index)%fileName, &
+            & l2auxPhysicalFilename, 'ForwardModel Names' )
         endif
         create2= .false.
       end do
@@ -1490,6 +1492,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.117  2005/12/10 00:51:36  pwagner
+! Copies ForwardModel Names attribute when unsplitting spli dgms
+!
 ! Revision 2.116  2005/11/15 00:22:05  pwagner
 ! Defined Overlaps for AllChunks chunk
 !
