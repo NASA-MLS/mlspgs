@@ -31,11 +31,15 @@
     logical :: warn, NaNsIn1, NaNsIn2
 
     ! Executable
-    if ( DEEBUG ) call output('About to filter 1-d ' // trim(name1) // ' ' &
+    if ( DEEBUG ) &
+      & call output('About to filter n-d ' // trim(name1) // ' ' &
       & // trim(name2), advance='yes')
     call filterValues(array1, filtered1, array2, filtered2, warn, FillValue)
     NaNsIn1 = any(.not. ieee_is_finite(array1))
     NaNsIn2 = any(.not. ieee_is_finite(array2))
+    if ( DEEBUG ) &
+      & call output('About to dump n-d ' // trim(name1) // ' ' &
+      & // trim(name2), advance='yes')
     call dump(filtered1-filtered2, trim(name1) // ' - ' // trim(name2), &
       & real(0.,kind(array1)), CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
     if ( NaNsIn1 ) call output( &
@@ -47,6 +51,9 @@
       & advance='yes')
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.3  2005/12/10 00:25:31  pwagner
+! Non-essential fussing with debugging commands
+!
 ! Revision 2.2  2005/06/22 17:44:10  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
