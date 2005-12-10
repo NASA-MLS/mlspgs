@@ -92,6 +92,10 @@ MODULE SDPToolkit               ! F90 interface to SDP Toolkit.
         character(len=*), intent(out) :: MSG      ! Previously stored message
       end subroutine Pgs_smf_getMsg
 
+      INTEGER FUNCTION PGS_SMF_TestStatusLevel(status)
+        integer, intent(in) :: status
+      END FUNCTION PGS_SMF_TestStatusLevel
+
       INTEGER FUNCTION PGS_TD_TAItoUTC(sectai93,asciiutc)
         DOUBLE PRECISION, INTENT(IN) :: sectai93
         CHARACTER(LEN=27), INTENT(OUT) :: asciiutc
@@ -229,6 +233,9 @@ end module SDPToolkit
 
 !
 ! $Log$
+! Revision 2.18  2005/12/10 00:23:56  pwagner
+! Added PGS_SMF_TestStatusLevel interface
+!
 ! Revision 2.17  2005/06/22 17:25:50  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
