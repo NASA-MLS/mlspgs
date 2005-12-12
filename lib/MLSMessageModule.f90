@@ -18,8 +18,9 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   use MLSCommon, only: MLSFile_T
   use PVM, only: InfoTag, &
     & PVMDATADEFAULT, PVMFInitSend, PVMF90Pack, SIG_AboutToDie
-  use SDPToolkit, only: PGS_S_SUCCESS, PGS_SMF_MASK_LEV_S, PGS_SMF_MASK_LEV_N, &
-    & PGS_SMF_MASK_LEV_F, PGS_SMF_MASK_LEV_W, PGS_SMF_MASK_LEV_M, &
+  use SDPToolkit, only: PGS_S_SUCCESS, &
+    & PGS_SMF_MASK_LEV_N, PGS_SMF_MASK_LEV_E, PGS_SMF_MASK_LEV_F, &
+    & PGS_SMF_MASK_LEV_W, PGS_SMF_MASK_LEV_M, PGS_SMF_MASK_LEV_S, &
     & UseSDPToolkit, &
     & PGS_SMF_GenerateStatusReport, PGS_SMF_TestStatusLevel
 
@@ -559,6 +560,8 @@ contains
       severity = MLSMSG_Success
     case (PGS_SMF_MASK_LEV_N)
       severity = MLSMSG_Debug
+    case (PGS_SMF_MASK_LEV_E)
+      severity = MLSMSG_Error
     case (PGS_SMF_MASK_LEV_F)
       severity = MLSMSG_Error
     case (PGS_SMF_MASK_LEV_W)
@@ -637,6 +640,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.28  2005/12/12 19:54:16  pwagner
+! Correctly returns error when given PGS_SMF_MASK_LEV_E
+!
 ! Revision 2.27  2005/12/10 00:23:21  pwagner
 ! Added ReportTKStatus
 !
