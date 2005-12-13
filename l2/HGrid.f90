@@ -1100,17 +1100,15 @@ contains ! =====     Public Procedures     =============================
 
     ! Now deal with the user requests
     if ( single ) then
-      if ( hGrid%noProfs /= 1 ) then
-        ! Set up for no overlaps
-        hGrid%noProfsLowerOverlap = 0
-        hGrid%noProfsUpperOverlap = 0
-        ! Delete all but the 'center' profile
-        extra = hGrid%noProfs - 1
-        left = extra / 2
-        right = extra - left
-        if ( left > 0 ) call TrimHGrid ( hGrid, -1, left )
-        if ( right > 0 ) call TrimHGrid ( hGrid, 1, right )
-      end if
+      ! Set up for no overlaps
+      hGrid%noProfsLowerOverlap = 0
+      hGrid%noProfsUpperOverlap = 0
+      ! Delete all but the 'center' profile
+      extra = hGrid%noProfs - 1
+      left = extra / 2
+      right = extra - left
+      if ( left > 0 ) call TrimHGrid ( hGrid, -1, left )
+      if ( right > 0 ) call TrimHGrid ( hGrid, 1, right )
     else
       if ( maxLowerOverlap >= 0 .and. &
         & ( hGrid%noProfsLowerOverlap > maxLowerOverlap ) ) &
@@ -1703,6 +1701,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.77  2005/12/13 21:26:02  livesey
+! Minor buglet fix for single case in regular hGrid construction.
+!
 ! Revision 2.76  2005/11/15 00:20:18  pwagner
 ! Should catch error arising from chunks with bad data
 !
