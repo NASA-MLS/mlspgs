@@ -700,7 +700,7 @@ contains ! =====     Public Procedures     =============================
     use ChunkDivide_m, only: ChunkDivideConfig
     use Dump_0, only: DUMP
     use EmpiricalGeometry, only: EmpiricalLongitude, ChooseOptimumLon0
-    use HGridsDatabase, only: CREATEEMPTYHGRID, HGRID_T, TRIMHGRID
+    use HGridsDatabase, only: CREATEEMPTYHGRID, HGRID_T, TRIMHGRID, FINDCLOSESTMATCH
     use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData, &
       & AssembleL1BQtyName
     use MLSCommon, only: MLSFile_T, NameLen, RK => R8, TAI93_RANGE_T
@@ -736,6 +736,7 @@ contains ! =====     Public Procedures     =============================
     integer :: NOMAFS                   ! From ReadL1B
     integer :: FLAG                     ! From ReadL1B
     integer :: I                        ! Loop counter
+    integer :: N                        ! Guess at number of profiles
     integer :: EXTRA                    ! How many profiles over 1 are we
     integer :: LEFT                     ! How many profiles to delete from the LHS in single
     integer :: RIGHT                     ! How many profiles to delete from the RHS in single
@@ -748,6 +749,7 @@ contains ! =====     Public Procedures     =============================
     real(rk) :: MAXANGLEFIRSTMAF        ! Gives 'range' of first maf
     real(rk) :: FIRST                   ! First point in of hGrid
     real(rk) :: LAST                    ! Last point in hGrid
+    real(rk), dimension(:), pointer :: TMPANGLE ! A temporary array for the single case
     real(rk), dimension(:), pointer :: MIF1GEODANGLE ! For first mif
     real(rk) :: INCLINE                 ! Mean orbital inclination
     real(rk) :: DELTA                   ! A change in angle
@@ -821,23 +823,16 @@ contains ! =====     Public Procedures     =============================
       nextAngle = maxAngle + spacing
     end if
 
-    call DeallocateL1BData ( l1bField )
-
-    ! Check that the single option is appropriate if set
-    if ( single .and. noMAFs /= 1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Single hGrid option set but more than one MAF in chunk' )
-
     ! Now choose the geodetic angles for the hGrid
-    ! First identify the first point - the one closest to the start of the first MAF
-    first = origin + spacing * int ( (minAngle-origin)/spacing )
-    delta = first - minAngle            ! So +ve means first could be smaller
-    if ( delta > spacing/2 ) then
-      first = first - spacing
-    else if ( delta < -spacing/2 ) then
-      first = first + spacing
-    end if
-    
     if ( .not. single ) then 
+      ! First identify the first point - the one closest to the start of the first MAF
+      first = origin + spacing * int ( (minAngle-origin)/spacing )
+      delta = first - minAngle            ! So +ve means first could be smaller
+      if ( delta > spacing/2 ) then
+        first = first - spacing
+      else if ( delta < -spacing/2 ) then
+        first = first + spacing
+      end if
       ! Now work out the last point in a similar manner
       last = origin + spacing * int ( (maxAngle-origin)/spacing )
       delta = last - maxAngle            ! So +ve means last could be smaller
@@ -847,8 +842,31 @@ contains ! =====     Public Procedures     =============================
         last = last + spacing
       end if
     else
+      ! The 'single' option is typically used for running single profile retrievals
+      ! in a debug mode.  In order to ensure we choose the same profile for each MAF
+      ! that a phiWindow=0 forward model would select, we have to do some extra work.
+
+      ! First check this is a sane request
+      if ( noMAFs /= 1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Single hGrid option set but more than one MAF in chunk' )
+      ! Now construct a temporary HGrid that spans an orbit either side of this MAF
+      ! Overkill I know but not harmfull.
+      first = origin + spacing * int ( (minAngle-origin)/spacing ) - 360.0_rk
+      last = first + 720.0_rk
+      n = ( last - first ) / spacing
+      nullify ( tmpAngle )
+      call Allocate_test ( tmpAngle, n, 'tmpAngle', ModuleName )
+      do i = 1, n
+        tmpAngle ( i ) = first + (i-1) * spacing
+      end do
+      i = FindClosestMatch ( tmpAngle, l1bField%dpField(1,:,:), 1 )
+      first = tmpAngle ( i )
       last = first
+      call Deallocate_test ( tmpAngle, 'tmpAngle', ModuleName )
     endif
+
+    ! Done with the L1B data
+    call DeallocateL1BData ( l1bField )
 
     ! Now in the case where we have overlaps, let's try and have the
     ! first and last profile inside the MAF range
@@ -1701,6 +1719,11 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.78  2005/12/13 22:15:30  livesey
+! New approach to the single option in regular hGrids.  Now it uses
+! exactly the same approach to that chosen by forward models when
+! phiWindow=0 to allow for useful truth in truth out 1D tests.
+!
 ! Revision 2.77  2005/12/13 21:26:02  livesey
 ! Minor buglet fix for single case in regular hGrid construction.
 !
