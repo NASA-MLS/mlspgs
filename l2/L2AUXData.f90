@@ -1073,7 +1073,7 @@ contains ! =====     Public Procedures     =============================
   ! Optionally, write a bogus CounterMAF sd so the
   ! resulting file can masquerade as an l1BRad
   ! (Note that this bogus sd should only be written once for each file)
-    type (L2AUXData_T), intent(in) :: L2AUX
+    type (L2AUXData_T), intent(inout) :: L2AUX
     integer, intent(in) :: sd_id                      ! From h5fopen or sfstart
     character (len=*), optional, intent(in) :: SDNAME ! Defaults to l2aux%name
     character (len=*), optional, intent(in) :: DimNames ! Comma-separated list
@@ -1111,7 +1111,7 @@ contains ! =====     Public Procedures     =============================
   ! Optionally, write a bogus CounterMAF sd so the
   ! resulting file can masquerade as an l1BRad
   ! (Note that this bogus sd should only be written once for each file)
-    type (L2AUXData_T), intent(in) :: L2AUX
+    type (L2AUXData_T), intent(inout) :: L2AUX
     type(MLSFile_T)                :: L2AUXFile
     character (len=*), optional, intent(in) :: SDNAME ! Defaults to l2aux%name
     character (len=*), optional, intent(in) :: DimNames ! Comma-separated list
@@ -1167,7 +1167,7 @@ contains ! =====     Public Procedures     =============================
   use MLSL2Timings, only: showTimingNames
   use PCFHdr, only: h5_writeglobalattr
 
-    type (L2AUXData_T), intent(in) :: L2AUX
+    type (L2AUXData_T), intent(inout) :: L2AUX
     type(MLSFile_T)                :: L2AUXFile
     character (len=*), optional, intent(in) :: SDNAME ! Defaults to l2aux%name
     character (len=*), optional, intent(in) :: DimNames ! Comma-separated list
@@ -1274,7 +1274,7 @@ contains ! =====     Public Procedures     =============================
   ! Optionally, write a bogus CounterMAF sd so the
   ! resulting file can masquerade as an l1BRad
   ! (Note that this bogus sd should only be written once for each file)
-    type (L2AUXData_T), intent(in) :: L2AUX
+    type (L2AUXData_T), intent(inout) :: L2AUX
     type(MLSFile_T)                :: L2AUXFile
     character (len=*), optional, intent(in) :: SDNAME ! Defaults to l2aux%name
     character (len=*), optional, intent(in) :: DimNames ! Comma-separated list
@@ -1450,18 +1450,28 @@ contains ! =====     Public Procedures     =============================
   ! Writes the pertinent attributes for an l2aux
   ! Arguments
   integer, intent(in) :: L2FileHandle
-  type (L2AUXData_T), intent(in) :: L2AUX
+  type (L2AUXData_T), intent(inout) :: L2AUX
   character(len=*) :: name
   ! Internal variables
   integer :: dim
-  integer :: ndims
   character(len=16), dimension(L2AUXRank) :: dim_name
   character(len=16), dimension(L2AUXRank) :: dim_unit
   character(len=16) :: dim_of_i
   character(len=16) :: framing
   character(len=2) :: i_char
+  logical :: is_timing
+  integer :: ndims
   character(len=*), parameter :: ottff = '1,2,3,4,5'
   ! Executable
+  is_timing = ( index( lowercase(name), 'timing') > 0 )
+  if ( is_timing ) then
+    l2aux%majorframe = .false.
+    l2aux%minorframe = .false.
+    l2aux%minorframe = .false.
+    l2aux%DIM_Names  = 'chunk,' // name(1:5) // ',none'
+    l2aux%DIM_Units  =  'none,none,none'
+    l2aux%VALUE_Units=  's'
+  endif
   if ( DEEBUG ) then
     call output('Writing attributes to: ', advance='no')
     call output(trim(Name), advance='yes')
@@ -1471,9 +1481,9 @@ contains ! =====     Public Procedures     =============================
     & trim(l2aux%VALUE_Units))
   call MakeHDF5Attribute(L2FileHandle, name, 'DimensionNames', &
     & trim(l2aux%DIM_Names))
-  if ( l2aux%majorframe) then
+  if ( l2aux%majorframe ) then
     framing = 'major'
-  else if ( l2aux%minorframe) then
+  else if ( l2aux%minorframe ) then
     framing = 'minor'
   else
     framing = 'neither'
@@ -1964,6 +1974,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.77  2005/12/14 01:45:21  pwagner
+! Attribute values to phase, section timing more reasonable
+!
 ! Revision 2.76  2005/10/11 17:39:58  pwagner
 ! Added MLSFile interface to cpL2AUXData
 !
