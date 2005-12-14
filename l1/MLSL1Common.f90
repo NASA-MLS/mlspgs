@@ -178,17 +178,16 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
 !! Switching mirror ranges
 
   REAL(r8), PARAMETER :: GHzTol = 0.05  ! GHz tolerance
-  REAL(r8), PARAMETER :: GHzSwTol = 3.5 ! GHz Sw Mirror tolerance
   REAL(r8), PARAMETER :: THzTol = 360.0 / 16384.0  ! THz tolerance
 
   TYPE (SwMir_Range_T), TARGET :: GHz_SwMir_Range_A(4) = (/ & ! "A" side
        SwMir_Range_T ("L", 149.5-GHzTol, 149.5+GHzTol), &
-       SwMir_Range_T ("S", 329.5-GHzSwTol, 329.5+GHzSwTol), &
+       SwMir_Range_T ("S", 329.5-GHzTol, 329.5+GHzTol), &
        SwMir_Range_T ("T", 239.5-GHzTol, 239.5+GHzTol), &     ! Primary target
        SwMir_Range_T ("t", 59.5-GHzTol, 59.5+GHzTol) /)       ! Secondary target
   TYPE (SwMir_Range_T), TARGET :: GHz_SwMir_Range_B(4) = (/ & ! "B" side
        SwMir_Range_T ("L", 329.599-GHzTol, 329.599+GHzTol), &
-       SwMir_Range_T ("S", 149.599-GHzSwTol, 149.599+GHzSwTol), &
+       SwMir_Range_T ("S", 149.599-GHzTol, 149.599+GHzTol), &
        SwMir_Range_T ("T", 59.599-GHzTol, 59.599+GHzTol), &   ! Primary target
        SwMir_Range_T ("t", 239.599-GHzTol, 239.599+GHzTol) /) ! Secondary target
   TYPE (SwMir_Range_T), TARGET :: THz_SwMir_Range(3) = (/ &
@@ -264,6 +263,9 @@ END MODULE MLSL1Common
 !=============================================================================
 
 ! $Log$
+! Revision 2.16  2005/12/06 19:25:36  perun
+! Removed BrightObjects_T
+!
 ! Revision 2.15  2005/07/19 16:35:45  perun
 ! Increased GHz switching mirror tolerance per REC
 !
