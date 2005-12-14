@@ -695,10 +695,19 @@ contains ! =====     Public Procedures     =============================
     & spacing, origin, instrumentModuleName, forbidOverspill, &
     & maxLowerOverlap, maxUpperOverlap, insetOverlaps, single, hGrid )
 
+    ! Creates an HGrid with coordinates laid out in
+    ! a regular spacing w.r.t. master coordinate, phi, aka Geodetic Angle
+
+    ! Depends on an approximation to the Earth's shape (Empirical Geometry)
+    ! and interpolation
+    
+    ! With older l1b files (pre v2.0), some coordinates
+    ! (solar time, solar zenith angle) are mean rather than apparent local
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Chunks_m, only: MLSChunk_T, Dump
     use ChunkDivide_m, only: ChunkDivideConfig
-    use Dump_0, only: DUMP
+    use dates_module, only: utc_to_time
+    use Dump_0, only: DIFF, DUMP
     use EmpiricalGeometry, only: EmpiricalLongitude, ChooseOptimumLon0
     use HGridsDatabase, only: CREATEEMPTYHGRID, HGRID_T, TRIMHGRID, FINDCLOSESTMATCH
     use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData, &
@@ -708,10 +717,12 @@ contains ! =====     Public Procedures     =============================
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MLSNumerics, only: HUNT, InterpolateValues, isMonotonic, Monotonize
     use MLSStringLists, only: SwitchDetail
+    use MLSStrings, only: hhmmss_value
     use OUTPUT_M, only: OUTPUT
     use String_Table, only: Display_String
     use TOGGLES, only: SWITCHES
     use UNITS, only: DEG2RAD, RAD2DEG
+    use MLSHDF5, only: IsHDF5AttributeInFile
 
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
     type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
@@ -733,42 +744,61 @@ contains ! =====     Public Procedures     =============================
     real(rk), parameter :: ORBITALPERIOD = 98.8418*60.0
 
     logical :: DEEBUGHERE
-    integer :: NOMAFS                   ! From ReadL1B
-    integer :: FLAG                     ! From ReadL1B
-    integer :: I                        ! Loop counter
-    integer :: N                        ! Guess at number of profiles
+    real(rk) :: DELTA                   ! A change in angle
     integer :: EXTRA                    ! How many profiles over 1 are we
-    integer :: LEFT                     ! How many profiles to delete from the LHS in single
-    integer :: RIGHT                     ! How many profiles to delete from the RHS in single
+    real(rk) :: FIRST                   ! First point in of hGrid
     integer :: FIRSTPROFINRUN           ! Index of first profile in processing time
+    integer :: FLAG                     ! From ReadL1B
+    integer ::  hdfVersion
+    integer :: I                        ! Loop counter
+    real(rk) :: INCLINE                 ! Mean orbital inclination
+    type (L1BData_T) :: L1BFIELD        ! A field read from L1 file
+    type (MLSFile_T), pointer             :: L1BFile
+    character(len=NameLen) :: l1bItemName
     integer :: LASTPROFINRUN            ! Index of last profile in processing time
-
-    real(rk) :: MINANGLE                ! Smallest angle in chunk
-    real(rk) :: MINANGLELASTMAF         ! Gives 'range' of last maf
+    real(rk) :: LAST                    ! Last point in hGrid
+    integer :: LEFT                     ! How many profiles to delete from the LHS in single
     real(rk) :: MAXANGLE                ! Largest angle in chunk
     real(rk) :: MAXANGLEFIRSTMAF        ! Gives 'range' of first maf
-    real(rk) :: FIRST                   ! First point in of hGrid
-    real(rk) :: LAST                    ! Last point in hGrid
-    real(rk), dimension(:), pointer :: TMPANGLE ! A temporary array for the single case
     real(rk), dimension(:), pointer :: MIF1GEODANGLE ! For first mif
-    real(rk) :: INCLINE                 ! Mean orbital inclination
-    real(rk) :: DELTA                   ! A change in angle
+    real(rk) :: MINANGLE                ! Smallest angle in chunk
+    real(rk) :: MINANGLELASTMAF         ! Gives 'range' of last maf
+    integer :: NOMAFS                   ! From ReadL1B
+    integer :: NOMIFS
     real(rk) :: NEXTANGLE               ! First non ovl. MAF for next chunk
+    real(rk), dimension(:,:), pointer :: OldMethodValues=> null() ! For comparing with
+    logical :: PreV2Oh                  ! Old way (mean) or new (apparent)?
+    integer :: RIGHT                     ! How many profiles to delete from the RHS in single
 
-    type (L1BData_T) :: L1BFIELD        ! A field read from L1 file
-
-    integer ::  hdfVersion
-    character(len=NameLen) :: l1bItemName
-    type (MLSFile_T), pointer             :: L1BFile
-
+    real(rk) :: a
+    real(rk) :: b
+    real(rk) :: c
+    real(rk) :: ImPart
+    real(rk) :: r1
+    real(rk) :: r2
     ! Executable code
+    nullify(OldMethodValues)
     deebughere = deebug .or. ( switchDetail(switches, 'hgrid') > 0 ) ! e.g., 'hgrid1' 
 
+    if ( deebughere .and. .false.) then
+      print *, 'Checking quadratic solution'
+      do i=1, 10
+        a = 0.25
+        b = i - 5
+        c = 3
+        print *, 'a, b, c: ', a, b, c
+        print *, 'b^2 - 4 a c ', b**2 - 4*a*c
+        call SolveQuadratic( a, b, c, &
+              & r1, r2, imPart )
+        print *, 'r1, r2, ImPart: ', r1, r2, imPart
+      enddo
+      stop
+    endif
     L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
     if ( .not. associated(L1BFile) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'l1boa file not in database' )
     hdfversion = L1BFile%HDFVersion
-
+    PreV2Oh = .not. IsHDF5AttributeInFile(L1BFile%name, 'BO_name')
     ! Setup the empircal geometry estimate of lon0
     ! (it makes sure it's not done twice
     call ChooseOptimumLon0 ( filedatabase, chunk )
@@ -825,7 +855,8 @@ contains ! =====     Public Procedures     =============================
 
     ! Now choose the geodetic angles for the hGrid
     if ( .not. single ) then 
-      ! First identify the first point - the one closest to the start of the first MAF
+      ! First identify the first point - 
+      ! the one closest to the start of the first MAF
       first = origin + spacing * int ( (minAngle-origin)/spacing )
       delta = first - minAngle            ! So +ve means first could be smaller
       if ( delta > spacing/2 ) then
@@ -833,6 +864,7 @@ contains ! =====     Public Procedures     =============================
       else if ( delta < -spacing/2 ) then
         first = first + spacing
       end if
+    
       ! Now work out the last point in a similar manner
       last = origin + spacing * int ( (maxAngle-origin)/spacing )
       delta = last - maxAngle            ! So +ve means last could be smaller
@@ -974,22 +1006,67 @@ contains ! =====     Public Procedures     =============================
       hGrid%time = l1bField%dpField(1,1,1) + &
         & ( OrbitalPeriod/360.0 ) * ( hGrid%phi - mif1GeodAngle(1) )
     end if
-      if ( deebughere ) then
-        call dump(hGrid%time(1,:), trim(l1bItemName) // ' (after interpolating)')
-      end if
+    if ( deebughere ) then
+      call dump(hGrid%time(1,:), trim(l1bItemName) // ' (after interpolating)')
+      call output('geod angle, before and after interpolating', &
+        & advance='yes')
+      call dump(mif1GeodAngle, 'before')
+      call dump(HGrid%phi(1,:), 'after')
+    end if
     call DeallocateL1BData ( l1bField )
       
     ! Solar time
-    ! First get fractional day, note this neglects leap seconds.
-    ! Perhaps fix this later !???????? NJL. We do have access to the
-    ! UTC ascii time field, perhaps we could use that?
-    hGrid%solarTime = modulo ( hGrid%time, secondsInDay ) / secondsInDay
-    ! Now correct for longitude and convert to hours
-    hGrid%solarTime = 24.0 * ( hGrid%solarTime + hGrid%lon/360.0 )
-    hGrid%solarTime = modulo ( hGrid%solarTime, 24.0_rk )
+    if ( Prev2Oh ) then
+      ! First get fractional day, note this neglects leap seconds.
+      ! Perhaps fix this later !???????? NJL. We do have access to the
+      ! UTC ascii time field, perhaps we could use that?
+      hGrid%solarTime = modulo ( hGrid%time, secondsInDay ) / secondsInDay
+      ! Now correct for longitude and convert to hours
+      hGrid%solarTime = 24.0 * ( hGrid%solarTime + hGrid%lon/360.0 )
+      hGrid%solarTime = modulo ( hGrid%solarTime, 24.0_rk )
+    else
+      if ( deebughere ) then
+        call output ( 'About to attempt to get solar time', advance='yes')
+        call output ( 'L1Bfile ' // trim(L1BFile%name), advance='yes')
+        call output ( 'Module ' // trim(instrumentModuleName), advance='yes')
+        call output ( 'firstMAF ')
+        call output ( chunk%firstMAFIndex, advance='yes')
+        call output ( 'lastMAF ')
+        call output ( chunk%lastMAFIndex, advance='yes')
+        call output ( 'shape(solarTime) ')
+        call output ( shape(hGrid%solarTime), advance='yes')
+      endif
+      call GetApparentLocalSolarTime( L1BFile, instrumentModuleName, chunk, &
+        & hGrid )
+      ! What the heck, let's compute the old way, too, and compare
+      
+      noMIFs = size(hGrid%solarTime, 1)
+      if ( deebughere ) then
+        call output('NoMAFs ')
+        call output(NoMAFs, advance='yes' )
+        call output('NoMIFs ')
+        call output(NoMIFs, advance='yes' )
+        call output('About to allocate', advance='yes')
+        call allocate_test(OldMethodValues, noMIFs, size(hGrid%solarTime, 2), &
+          & 'OldMethodValues', ModuleName)
+        call output('Managed to allocate', advance='yes')
+        OldMethodValues = modulo ( hGrid%time, secondsInDay ) / secondsInDay
+        OldMethodValues = 24.0 * ( OldMethodValues + hGrid%lon/360.0 )
+        OldMethodValues = modulo ( OldMethodValues, 24.0_rk )
+        call output('About to diff solartimes', advance='yes')
+        call output('Shape(v1.51) ')
+        call output(Shape(OldMethodValues), advance='yes')
+        call output('Shape(v2.0) ')
+        call output(Shape(hGrid%solarTime), advance='yes')
+        call dump(OldMethodValues, 'v1.51')
+        call dump(hGrid%solarTime, 'v2.0')
+        call diff( OldMethodValues, 'v1.51', hGrid%solarTime, 'v2.0', &
+          & stats=.true., rms=.true. )
+        call deallocate_test(OldMethodValues, 'OldMethodValues', ModuleName)
+      endif
+    endif
 
     ! Solar zenith
-    ! This we'll have to do with straight interpolation
     l1bItemName = AssembleL1BQtyName ( instrumentModuleName//".tpSolarZenith", &
       & hdfVersion, .false. )
     call ReadL1BData ( L1BFile, l1bItemName, &
@@ -997,14 +1074,39 @@ contains ! =====     Public Procedures     =============================
       & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
       & dontPad=.true. )
     if ( deebughere ) then
-      call dump(l1bField%DpField(1,1,:), trim(l1bItemName) // ' (before interpolating)')
+      call dump(l1bField%DpField(1,1,:), trim(l1bItemName) // &
+        & ' (before interpolating)')
     end if
-    call InterpolateValues ( mif1GeodAngle, l1bField%dpField(1,1,:), &
-      & hGrid%phi(1,:), hGrid%solarZenith(1,:), &
-      & method='Linear', extrapolate='Allow' )
-    if ( deebughere ) then
-      call dump(hGrid%solarZenith(1,:), trim(l1bItemName) // ' (after interpolating)')
-    end if
+    if ( Prev2Oh .or. .true. ) then ! Haven't been able to get the other to work
+      ! This we'll have to do with straight interpolation
+      call InterpolateValues ( mif1GeodAngle, l1bField%dpField(1,1,:), &
+        & hGrid%phi(1,:), hGrid%solarZenith(1,:), &
+        & method='Linear', extrapolate='Allow' )
+      if ( deebughere ) then
+        call dump(hGrid%solarZenith(1,:), trim(l1bItemName) // &
+          & ' (after interpolating)')
+      end if
+    else
+      call GetApparentLocalSolarZenith( L1BFile, hGrid, &
+        & l1bField%dpField(1,1,:), chunk )
+      ! What the heck, let's compute the old way, too, and compare
+      call allocate_test(OldMethodValues, noMIFs, size(hGrid%solarTime, 2), &
+        & 'OldMethodValues', ModuleName)
+      call InterpolateValues ( mif1GeodAngle, l1bField%dpField(1,1,:), &
+        & hGrid%phi(1,:), OldMethodValues(1,:), &
+        & method='Linear', extrapolate='Allow' )
+      call output('About to diff solar zeniths', advance='yes')
+      call output('Shape(v1.51) ')
+      call output(Shape(OldMethodValues), advance='yes')
+      call output('Shape(v2.0) ')
+      call output(Shape(hGrid%solarZenith), advance='yes')
+      call dump(OldMethodValues, 'v1.51')
+      call dump(hGrid%solarZenith, 'v2.0')
+      call diff( OldMethodValues, 'v1.51', hGrid%solarZenith, 'v2.0', &
+        & stats=.true., rms=.true. )
+      call deallocate_test(OldMethodValues, 'OldMethodValues', ModuleName)
+      
+    endif
     call DeallocateL1BData ( l1bField )
 
     ! Line of sight angle
@@ -1152,6 +1254,424 @@ contains ! =====     Public Procedures     =============================
 
     ! That's it
     call Deallocate_test ( mif1GeodAngle, 'mif1GeodAngle', ModuleName )
+
+  contains
+    subroutine GetApparentLocalSolarTime( L1BFile, instrumentModuleName, chunk, &
+        & HGrid )
+      character (len=*), intent(in) :: INSTRUMENTMODULENAME
+      type (MLSFile_T), pointer     :: L1BFile
+      type (MLSChunk_T), intent(in) :: CHUNK
+      type(HGrid_T) :: hGrid
+      ! real(rk), dimension(:,:)      :: solarTime
+      ! Local variables
+      type (L1BData_T) :: L1BFIELD        ! A field read from L1 file
+      real (rk), dimension(:,:), pointer :: GMT => null()
+      real (rk), dimension(:,:), pointer :: MAFLongitude => null()
+      real (rk), dimension(:,:), pointer :: MAFTime => null()
+      integer :: maf
+      integer :: mif
+      integer :: noMAFs
+      integer :: noMIFs
+      character(len=1), parameter :: SEPARATOR = ':'
+      real (rk), dimension(:), pointer :: SolarLongitude => null()
+      real (rk), dimension(:), pointer :: SolarTimeCalibration => null()
+      integer :: status
+      logical, parameter :: STRICT = .true.
+      character(len=27) :: time
+      ! Executable
+      nullify( GMT, MAFLongitude, MAFTime, &
+        & SolarLongitude, SolarTimeCalibration )
+      
+      ! The 1st formula:
+
+      ! (LST) = (GMT) + ( (LON) - (LON_S) ) / 15
+
+      ! Where (LST)  Local Solar Time
+      ! (GMT)   Greenwich mean time (aka utc)
+      ! (LON)   Local longitude
+      ! (LON_S) Solar longitude (which we will infer as a 1st step)
+      l1bItemName = AssembleL1BQtyName ( "Lon", &
+        & hdfVersion, .false., instrumentModuleName )
+      call ReadL1BData ( L1BFile, l1bItemName, &
+        & l1bField, noMAFs, status, &
+        & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+        & dontPad=.true. )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to read Lon from l1boa', MLSFile=L1BFile )
+      noMIFs = size(l1bField%dpField, 2)
+      call allocate_test(GMT, noMIFs, noMAFs, 'GMT', ModuleName)
+      call allocate_test(MAFLongitude, noMIFs, noMAFs, 'MAFLongitude', ModuleName)
+      call allocate_test(MAFTime, noMIFs, noMAFs, 'MAFTime', ModuleName)
+      call allocate_test(SolarLongitude, noMAFs, 'SolarLongitude', ModuleName)
+      call allocate_test(SolarTimeCalibration, noMAFs, 'SolarLongitude', ModuleName)
+      MAFLongitude = l1bField%dpField(1,:,:)
+      call DeallocateL1BData ( l1bField )
+
+      l1bItemName = AssembleL1BQtyName ( "MAFStartTimeTAI", &
+        & hdfVersion, .false. )
+      call ReadL1BData ( L1BFile, l1bItemName, &
+        & l1bField, noMAFs, status, &
+        & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+        & dontPad=.true. )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to read MAFStartTimeTAI from l1boa', MLSFile=L1BFile )
+      MAFTime = l1bField%dpField(1,:,:)
+
+      l1bItemName = AssembleL1BQtyName ( "MAFStartTimeUTC", &
+        & hdfVersion, .false. )
+      call ReadL1BData ( L1BFile, l1bItemName, &
+        & l1bField, noMAFs, status, &
+        & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+        & dontPad=.true. )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to read MAFStatTimeUTC from l1boa', MLSFile=L1BFile )
+      ! This converts the utc string into time into the day (in hours)
+      do maf=1, noMAFs
+        do mif=1, noMIFs
+          call utc_to_time(l1bField%CharField(1,mif,maf), status, time, strict)
+          GMT(mif,maf) = hhmmss_value ( time, status, separator, strict ) / 3600
+        enddo
+      enddo
+      call DeallocateL1BData ( l1bField )
+
+      l1bItemName = AssembleL1BQtyName ( "SolarTime", &
+        & hdfVersion, .false., instrumentModuleName )
+      call ReadL1BData ( L1BFile, l1bItemName, &
+        & l1bField, noMAFs, status, &
+        & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+        & dontPad=.true. )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to read SolarTime from l1boa', MLSFile=L1BFile )
+      SolarTimeCalibration = l1bField%dpField(1,1,:)
+      call DeallocateL1BData ( l1bField )
+
+      ! 1st we will find the calibrated solar longitude (in deg)
+      ! assuming our 1st formula above holds for all mifs
+      SolarLongitude = MAFLongitude(1,:) - &
+        & (SolarTimeCalibration-GMT(1,:))*360./24
+
+      ! 2nd we need the GMT corrected for the regular HGrid offsets from MAFs
+      GMT = GMT + ( HGrid%time - MAFTime ) / 3600
+      do maf=1, noMAFs
+        HGrid%SolarTime(:,maf) = GMT(1,maf) + &
+          & ( HGrid%Lon(:,maf) - SolarLongitude(maf) ) / 15
+        ! SolarTime(:,maf) = GMT(:,maf) + &
+        !  & ( MAFLongitude(:,maf) - SolarLongitude(maf) ) / 15
+      enddo
+
+      ! Now deallocate all the junk we allocated
+      call deallocate_test(GMT, 'GMT', ModuleName)
+      call deallocate_test(MAFLongitude, 'MAFLongitude', ModuleName)
+      call deallocate_test(MAFTime, 'MAFTime', ModuleName)
+      call deallocate_test(SolarLongitude, 'SolarLongitude', ModuleName)
+      call deallocate_test(SolarTimeCalibration, 'SolarTimeCalibration', ModuleName)
+    end subroutine GetApparentLocalSolarTime
+
+    subroutine GetApparentLocalSolarZenith(L1BFile, hGrid, solarZenithAtMIF1, &
+      & chunk )
+      ! Alas, was unable to get this to work properly
+      ! There is a web page at
+      ! http://www.pcigeomatics.com/cgi-bin/pcihlp/AVHRRAD%7CDETAILS%7CANGLE+GENERATION
+      ! that includes a summary of some of the same equations we're trying to
+      ! implement here, but starting from the assumed equations
+      ! for solar declination and right ascension
+      ! In any case, we're doing no better than linear interpolation
+      ! for other quantities, so we'll resort to that for solarzenithangle, too
+      type (MLSFile_T), pointer     :: L1BFile
+      type(HGrid_T) :: hGrid
+      real(rk), dimension(:), intent(in) :: solarZenithAtMIF1
+      type (MLSChunk_T), intent(in) :: CHUNK
+      ! The key equation to be considered is
+
+      ! cos(SZA) = sin(LAT) sin(LAT_S) + cos(LAT) cos(LAT_S) cos( 15 (LST-12) )
+
+      ! where SZA is the solar zenit angle we are seeking
+      ! LAT is the local latitude, LAT_S is the sun's latitude, and
+      ! LST is the local solar time
+      ! We will have to solve for LAT_S and assume it's constant over a maf
+      ! Note that all angles are assumed to be in degrees, not radians
+
+      ! Local variables
+      real(rk) :: a ! sin(local latitude)
+      real(rk) :: b ! cos(local latitude) cos( 15 (local solar time - 12) )
+      real(rk) :: c ! cos(SZA calibrating)
+      ! The next variables are used if we forego the quadratic solution
+      ! and instead rely on solving two equations in two "independent"
+      ! variables, s=sin(LAT_S) and c=cos(LAT_S)
+      ! So we solve
+      ! y1 = cos(SZA[1]) = s sin(Lat[1]) + c Q[1] cos(Lat[1])
+      ! y2 = cos(SZA[2]) = s sin(Lat[2]) + c Q[2] cos(Lat[2])
+      ! where
+      ! Q[i] = cos( 15 (LST[i]-12) )
+      ! The solution is of course
+      !
+      !  s        sin(Lat[1])  Q[1] cos(Lat[1])            y1
+      ! ( )  =  (                               ) ^ (-1)  (  )
+      !  c        sin(Lat[2])  Q[2] cos(Lat[2])            y2
+      !
+      ! Rewrite the matrix above as
+      ! a11  a12
+      !(        )
+      ! a21  a22
+      ! and let its determinant delta = ( a11 a22 - a12 a21 )
+      ! then the inverse will be
+      ! a22  -a12
+      !(         ) / delta
+      ! a21   a11
+      real(rk) :: delta ! determinant
+      real(rk) :: a11, a12, a21, a22, y1, y2, s
+      type (L1BData_T) :: L1BFIELD        ! A field read from L1 file
+      real (rk), dimension(:), pointer :: LocalLatitude => null()
+      real (rk), dimension(:), pointer :: LocalSolarTime => null()
+      integer :: maf
+      integer :: mif
+      integer :: noMAFs
+      integer :: noMIFs
+      real(rk) :: r1, r2, imPart, root
+      real (rk), dimension(:,:), pointer :: sinSZA => null()
+      real (rk), dimension(:), pointer :: SolarLatitudeCalibration => null()
+      integer :: status
+      logical, parameter :: TESTFIRST = .true. ! Test whether key eq'n true
+      real (rk), dimension(:,:), pointer :: testLAT => null()
+      real (rk), dimension(:,:), pointer :: testLST => null()
+      real (rk), dimension(:,:), pointer :: testSZA => null()
+      real (rk), dimension(:,:), pointer :: testSSL => null() ! sin solar lat
+      logical, parameter                 :: USEQUADRATIC = .false.
+      ! Executable
+      ! (We'll put stuff here when we're ready)
+      ! call output('Darn! Noone coded this part yet .. tell paw', advance='yes')
+      ! hGrid%solarZenith = -999.99
+
+      ! Try to solve for sin(LAT_S) knowing that
+      ! sin^2(LAT_S) + cos^2(LAT_S) = 1
+      l1bItemName = AssembleL1BQtyName ( "GeodLat", &
+        & hdfVersion, .false., instrumentModuleName )
+      call ReadL1BData ( L1BFile, l1bItemName, &
+        & l1bField, noMAFs, status, &
+        & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+        & dontPad=.true. )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to read Lon from l1boa', MLSFile=L1BFile )
+      noMIFs = size(l1bField%dpField, 2)
+      call allocate_test(LocalLatitude,  noMAFs, 'LocalLatitude', ModuleName)
+      call allocate_test(LocalSolarTime, noMAFs, 'LocalSolarTime', ModuleName)
+      call allocate_test(SolarLatitudeCalibration, noMAFs, 'SolarLatitudeCalibration', ModuleName)
+      LocalLatitude = l1bField%dpField(1,1,:)
+
+      if ( TESTFIRST .or. .not. USEQUADRATIC ) then
+        ! Test whether whatever is stored in l1boa file satisfies
+        ! key equation
+        call allocate_test(testLAT,  noMIFs, noMAFs, 'testLAT', ModuleName)
+        call allocate_test(testLST,  noMIFs, noMAFs, 'testLST', ModuleName)
+        call allocate_test(testSZA,  noMIFs, noMAFs, 'testSZA', ModuleName)
+        call allocate_test(testSSL,  noMIFs, noMAFs, 'testSSL', ModuleName)
+        testLAT = l1bField%dpField(1,:,:)
+        call dump(testLAT, 'Latitude')
+        call DeallocateL1BData ( l1bField )
+
+        l1bItemName = AssembleL1BQtyName ( "SolarTime", &
+          & hdfVersion, .false., instrumentModuleName )
+        call ReadL1BData ( L1BFile, l1bItemName, &
+          & l1bField, noMAFs, status, &
+          & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+          & dontPad=.true. )
+        testLST = l1bField%dpField(1,:,:)
+        call dump(testLST, 'Solar Time')
+        call DeallocateL1BData ( l1bField )
+
+        l1bItemName = AssembleL1BQtyName ( "SolarZenith", &
+          & hdfVersion, .false., instrumentModuleName )
+        call ReadL1BData ( L1BFile, l1bItemName, &
+          & l1bField, noMAFs, status, &
+          & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+          & dontPad=.true. )
+        testSZA = l1bField%dpField(1,:,:)
+        call dump(testSZA, 'Solar Zenith')
+        call DeallocateL1BData ( l1bField )
+
+        if ( .not. USEQUADRATIC ) then
+          ! Just pick two different points and solve for
+          ! sin(LAT_S) and cos(LAT_S) as if they were independent variables
+          noMAFs = HGrid%noProfs
+          y1 = cos( deg2rad * testSZA(1, 1) )
+          y2 = cos( deg2rad * testSZA(1, noMAFs) )
+          a11 = sin( deg2rad * testLAT(1, 1) )
+          a21 = sin( deg2rad * testLAT(1, noMAFs) )
+          a12 = cos( deg2rad * testLAT(1, 1) ) * &
+            &   cos( deg2rad * 15 * (testLST(1, 1) - 12) )
+          a22 = cos( deg2rad * testLAT(1, 1) ) * &
+            &   cos( deg2rad * 15 * (testLST(1, noMAFs) - 12) )
+          delta = a11*a22 - a12*a21
+          if ( delta == 0._rk)  call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'determinant vanishes in GetApparentLocalSolarZenith', &
+          & MLSFile=L1BFile )
+          s = ( a22*y1 - a12*y2 ) / delta
+          c = ( a21*y1 + a11*y2 ) / delta
+          ! How reasonable are these?
+          print *, 's, c: ', s, c
+          print *, 's^2 + c^2: ', s**2 + c**2
+          print *, 'atan(s/c): ', rad2deg*atan2(s, c)
+          ! Now with s and c in hand, we can go ahead and apply our formula
+          ! (and get answers we hope to be correct)
+          HGrid%solarZenith = acos( &
+            & s * sin( deg2rad * HGrid%geodLat ) + &
+            & c * cos( deg2rad * HGrid%geodLat ) * &
+            &     cos( deg2rad * 15 * (HGrid%solarTime - 12) ) &
+            & )
+          return
+        endif
+        do maf=1, noMAFs
+          do mif=1, noMIFs
+            a = sin( deg2rad * testLAT(mif, maf) )
+            b = cos( deg2rad * testLAT(mif, maf) ) * &
+              & cos( deg2rad * 15 * (testLST(mif, maf) - 12) )
+            c = cos( deg2rad * testSZA(mif, maf) )
+            call SolveQuadratic( (a**2 + b**2), -2*a*c, c**2 - b**2, &
+              & r1, r2, imPart )
+            if ( imPart /= 0._rk ) then
+              call output('mif, maf: ', advance='no')
+              call output(mif, advance='no')
+              call output(maf, advance='yes')
+              call output('testLAT ', advance='no')
+              call output(testLAT(mif, maf), advance='yes')
+              call output('testLST ', advance='no')
+              call output(testLST(mif, maf), advance='yes')
+              call output('testSZA ', advance='no')
+              call output(testSZA(mif, maf), advance='yes')
+              call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'quadratic solver returned complex roots during test', &
+              & MLSFile=L1BFile )
+            endif
+            if ( (c - a*r1)/b > 0. ) then
+              testSSL(mif, maf) = asin( rad2deg * r1 )
+            else
+              testSSL(mif, maf) = asin( rad2deg * r2 )
+            endif
+          enddo
+        enddo
+        call dump(testSSL, 'test solar latitudes')
+        call deallocate_test(testLAT, 'testLAT', ModuleName)
+        call deallocate_test(testLST, 'testLST', ModuleName)
+        call deallocate_test(testSZA, 'testSZA', ModuleName)
+        call deallocate_test(testSSL, 'testSSL', ModuleName)
+      else
+        call DeallocateL1BData ( l1bField )
+      endif
+
+      l1bItemName = AssembleL1BQtyName ( "SolarTime", &
+        & hdfVersion, .false., instrumentModuleName )
+      call ReadL1BData ( L1BFile, l1bItemName, &
+        & l1bField, noMAFs, status, &
+        & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+        & dontPad=.true. )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to read SolarTime from l1boa', MLSFile=L1BFile )
+      LocalSolarTime = l1bField%dpField(1,1,:)
+      call DeallocateL1BData ( l1bField )
+
+      ! The 1st thing to do is to compute calibrating LAT_S
+      do maf=1, noMAFs
+      
+        ! Now solve the key equation above for LAT_S given the l1b data
+        a = sin( deg2rad * LocalLatitude(maf) )
+        b = cos( deg2rad * LocalLatitude(maf) ) * &
+          & cos( deg2rad * 15 * (LocalSolarTime(maf) - 12) )
+        c = cos( deg2rad * solarZenithAtMIF1(maf) )
+        ! b = 0 is a special case--don't need to solve quadratic
+        call output('LocalLatitude: ')
+        call output(LocalLatitude(maf), advance='yes')
+        call output('LocalSolarTime: ')
+        call output(LocalSolarTime(maf), advance='yes')
+        call output('solarZenithAtMIF1: ')
+        call output(solarZenithAtMIF1(maf), advance='yes')
+        call output('a, b, c: ')
+        call output( (/a, b, c/), advance='yes')
+        if ( b == 0._rk ) then
+          root = c / a
+        else
+          call SolveQuadratic( (a**2 + b**2), -2*a*c, c**2 - b**2, &
+            & r1, r2, imPart )
+          if ( imPart /= 0._rk ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'quadratic solver returned complex roots', MLSFile=L1BFile )
+          ! Only one of the roots satisfies (c - a x) / b > 0
+          if ( (c - a*r1)/b > 0._rk ) then
+            root = r1
+          elseif ( (c - a*r2)/b > 0._rk ) then
+            root = r2
+          else
+            call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'Neither root satisfies (c - a x)/b > 0', MLSFile=L1BFile )
+          endif
+        endif
+        if ( abs(root) > 1._rk ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'abs(root) > 1', MLSFile=L1BFile )
+        SolarLatitudeCalibration(maf) = rad2deg * asin(root)
+      enddo
+      call deallocate_test(LocalLatitude, 'LocalLatitude', ModuleName)
+      call deallocate_test(LocalSolarTime, 'LocalSolarTime', ModuleName)
+
+      call allocate_test(sinSZA, noMIFs, noMAFs, 'sinSZA', ModuleName)
+      ! Now use key equation to find SZA
+      do maf=1, noMAFs
+        sinSZA(:,maf) = sin( deg2rad * hGrid%geodLat(:,maf) ) * &
+          &             sin( deg2rad * SolarLatitudeCalibration(maf) ) &
+          &   + &
+          &             cos( deg2rad * hGrid%geodLat(:,maf) ) * &
+          &             cos( deg2rad * SolarLatitudeCalibration(maf) ) * &
+          &             cos( deg2rad * 15 * (hGrid%SolarTime(:,maf) - 12) )
+      enddo
+      hGrid%solarZenith = rad2deg * asin(sinSZA)
+      call deallocate_test(sinSZA, 'sinSZA', ModuleName)
+      call deallocate_test(SolarLatitudeCalibration, 'SolarLatitudeCalibration', ModuleName)
+    end subroutine GetApparentLocalSolarZenith
+
+    subroutine SolveQuadratic( a, b, c, r1, r2, imPart )
+      ! Solve
+
+      ! a x^2 + b x + c = 0
+
+      ! for x = r1 + i imPart, and x = r2 - i imPart
+      ! where i^2 = -1
+
+      ! Of course because a, b, and c are all purely real
+      ! if imPart /= 0, r1 = r2
+
+      ! We bother with this to avoid truncation that would result
+      ! from taking a difference between like-signed quantities
+      ! b and + or - sqrt(disc)
+
+      ! Special cases (which you may prefer to intercept yourself)
+      ! If a = 0, we return the same root in both r1 and r2
+      ! If a = b = 0, we divide c by zero
+      real(rk), intent(in)  :: a, b, c
+      real(rk), intent(out) :: r1, r2, imPart
+      ! Local variables
+      real(rk) :: disc ! b^2 - 4 a c
+      ! Executable
+      call output('a, b, c: ')
+      call output( (/a, b, c/), advance='yes')
+      imPart = 0.
+      if ( a == 0._rk ) then
+        ! strictly, in this degenerate case, the root is unique, not repeated
+        r1 = -c/b
+        r2 = r1
+        return
+      endif
+      disc = b*b - 4*a*c
+      if ( disc < 0._rk ) then
+        imPart = sqrt(-disc) / (2*a)
+        r1 = -b / (2*a)
+        r2 = r1
+      elseif ( b < 0._rk ) then
+        r1 = ( -b + sqrt(disc) ) / (2*a)
+        r2 = c / (a*r1)
+      else
+        r1 = ( -b - sqrt(disc) ) / (2*a)
+        r2 = c / (a*r1)
+      endif
+      call output('r1, r2, imPart: ')
+      call output( (/r1, r2, imPart/), advance='yes')
+    end subroutine SolveQuadratic
 
   end subroutine CreateRegularHGrid
 
@@ -1554,7 +2074,7 @@ contains ! =====     Public Procedures     =============================
     end do
     chunks(1)%hGridOffsets = 0
     
-    if ( switchDetail(switches, 'pro') < 0 .and. DEEBUG ) return
+    if ( switchDetail(switches, 'pro') < 0 .or. .not. DEEBUG ) return
     call output ( "Dumping offsets, hgridTotals for all chunks: " , advance='yes')
     do chunk = 1, size ( chunks )
       call output ( chunk )
@@ -1719,6 +2239,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.79  2005/12/14 01:43:33  pwagner
+! Now stores local apparent solar time
+!
 ! Revision 2.78  2005/12/13 22:15:30  livesey
 ! New approach to the single option in regular hGrids.  Now it uses
 ! exactly the same approach to that chosen by forward models when
