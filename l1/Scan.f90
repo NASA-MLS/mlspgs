@@ -14,7 +14,7 @@ MODULE Scan
 !===============================================================================
 
    USE MLSCommon
-   USE MLSMessageModule
+   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Warning, ReportTKStatus
    USE SDPToolkit
 
    IMPLICIT NONE
@@ -24,10 +24,12 @@ MODULE Scan
    PUBLIC :: Scan_guess, Scan_start
 
 !---------------------------- RCS Module Info ------------------------------
-  character (len=*), private, parameter :: ModuleName= &
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  PRIVATE :: not_used_here 
 !---------------------------------------------------------------------------
+
+  CHARACTER (len=*), PARAMETER :: errmsg = "Check LogStatus file for error(s)"
 
 ! Contents:
 
@@ -40,9 +42,9 @@ MODULE Scan
 
 CONTAINS
 
-!------------------------------------------
+!===============================================================================
    SUBROUTINE Scan_guess (asciiUTC, viewECR)
-!------------------------------------------
+!===============================================================================
 
 ! Brief description of subroutine
 ! This subroutine calculates the initial guess for the starting view vector
@@ -80,24 +82,24 @@ CONTAINS
 
       returnStatus = Pgs_csc_scToECI (spacecraftid, numValues, asciiUTC, &
            time_offset, sc, eci)
+      CALL ReportTKStatus (returnStatus, ModuleName, errmsg)
 
       eciV(1:3) = eci
       eciV(4:6) = 0.0
 
       returnStatus = Pgs_csc_eciToECR (numValues, asciiUTC, time_offset, &
            eciV, ecrV)
+      CALL ReportTKStatus (returnStatus, ModuleName, errmsg)
 
 ! Truncate velocity portion of ECR view vector
 
       viewECR = ecrV(1:3)
 
-!---------------------------
    END SUBROUTINE Scan_guess
-!---------------------------
 
-!-----------------------------------------------------------------------
+!===============================================================================
    SUBROUTINE Scan_start (initAlt, posECR, asciiUTC, initRay, startAngle)
-!-----------------------------------------------------------------------
+!===============================================================================
 
 ! Brief description of subroutine
 ! This subroutine takes an initial-guess view vector and iteratively runs the
@@ -126,9 +128,6 @@ CONTAINS
 
 ! Variables
 
-      CHARACTER (LEN=32) :: mnemonic
-      CHARACTER (LEN=480) :: msg, msr
-
       INTEGER :: i, returnStatus, converge
 
       REAL(r8) :: latitude, longitude, missAltitude, slantRange
@@ -139,12 +138,7 @@ CONTAINS
 
       returnStatus = Pgs_csc_grazingRay (earthModel, posECR, initRay, &
            latitude, longitude, missAltitude, slantRange, posNear, posSurf)
-
-!!$      IF (returnStatus /= PGS_S_SUCCESS) THEN
-!!$         CALL Pgs_smf_getMsg(returnStatus, mnemonic, msg)
-!!$         msr = mnemonic // ':  ' // msg
-!!$         CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
-!!$      ENDIF
+      CALL ReportTKStatus (returnStatus, ModuleName, errmsg)
 
 ! Iterations on view vector to see given tangent height
 
@@ -152,24 +146,26 @@ CONTAINS
 
       DO i = 1, 8
 
-         IF ( ABS(missAltitude - initAlt) < 1.0 ) THEN
+         IF (ABS(missAltitude - initAlt) < 1.0) THEN
             converge = 1
             EXIT
          ENDIF
 
          returnStatus = Pgs_csc_geoToECR (longitude, latitude, initAlt, &
               earthModel, ecr)
+         CALL ReportTKStatus (returnStatus, ModuleName, errmsg)
 
          ray = ecr - posECR
 
          returnStatus = Pgs_csc_grazingRay(earthModel, posECR, ray, &
               latitude, longitude, missAltitude, slantRange, posNear, posSurf)
+         CALL ReportTKStatus (returnStatus, ModuleName, errmsg)
 
       ENDDO
 
 ! Check that exit caused by height convergence, rather than loop timing out
 
-      IF ( converge /= 1 ) CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+      IF (converge /= 1) CALL MLSMessage (MLSMSG_Warning, ModuleName, &
            'Iterations timed out before height converged.')
 
 ! Convert final view vector from ECR (to ECI) to SC
@@ -179,32 +175,34 @@ CONTAINS
 
       returnStatus = Pgs_csc_ecrToECI (numValues, asciiUTC, time_offset, ecrV, &
            eciV)
+      CALL ReportTKStatus (returnStatus, ModuleName, errmsg)
 
       eci = eciV(1:3)
 
       returnStatus = Pgs_csc_eciToSc (spacecraftid, numValues, asciiUTC, &
            time_offset, eci, finalRay)
+      CALL ReportTKStatus (returnStatus, ModuleName, errmsg)
 
       startAngle = Rad2Deg * ACOS (finalRay(1))
 
-!---------------------------
    END SUBROUTINE Scan_start
-!---------------------------
-
 
 !==============
-  logical function not_used_here()
+  LOGICAL FUNCTION not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
+  CHARACTER (len=*), PARAMETER :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  END FUNCTION not_used_here
 END MODULE Scan
 !==============
 
 ! $Log$
+! Revision 2.3  2005/06/23 18:41:36  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.2  2004/08/16 17:26:58  perun
 ! Comment out returnStatus check for initial guess
 !
