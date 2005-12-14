@@ -15,7 +15,7 @@ MODULE TkL1B
   USE MLSCommon, ONLY: R8, DEFAULTUNDEFINEDVALUE
   USE MLSL1Common
   USE MLSMessageModule, ONLY: MLSMESSAGE, MLSMSG_Error, MLSMSG_Warning, &
-       MLSMSG_Allocate
+       MLSMSG_Allocate, ReportTKStatus
   USE OUTPUT_M, ONLY: BLANKS, OUTPUT
   USE OutputL1B_DataTypes, ONLY: L1BOAsc_T, L1BOATP_T, L1BOAINDEX_T, LENCOORD, &
        LENG, LENT
@@ -34,6 +34,7 @@ MODULE TkL1B
   REAL :: GHz_GeodAlt(LENG), GHz_GeodLat(LENG), GHz_GeodAngle(LENG)
   INTEGER :: GHz_BO_stat(LENG)
 
+  CHARACTER (len=*), PARAMETER :: errmsg = "Check LogStatus file for error(s)"
   LOGICAL, PARAMETER :: ORBINCLINE_IS_CONSTANT = .FALSE.
   REAL, PARAMETER ::    UNDEFINED_VALUE = DEFAULTUNDEFINEDVALUE ! -999.99
   REAL, PARAMETER ::    HUGE_F = HUGE (1.0)
@@ -202,6 +203,7 @@ CONTAINS
 
     returnStatus = PGS_CSC_ECItoECR (3*numValues, asciiUTC, &
          PACK(SPREAD(offsets,1,3), .TRUE.), sctoeci, sctoecr)
+    CALL ReportTKStatus (returnStatus, ModuleName, errmsg)
 
     ! we really prefer the other index to be exposed for matrix multiplication
     ! now we have [ECR x (SC*numValues)] which requires a loop for rotation
@@ -215,6 +217,7 @@ CONTAINS
     eciV(1:3,:) = sc%scECI
     eciV(4:6,:) = sc%scVelECI    ! was 0.0
     returnStatus = Pgs_csc_eciToECR (numValues, asciiUTC, offsets, eciV, ecrV)
+    CALL ReportTKStatus (returnStatus, ModuleName, errmsg)
     sc%scECR = ecrV(1:3,:)
     sc%scVelECR = ecrV(4:6,:)
 
@@ -349,6 +352,7 @@ CONTAINS
     eciV(4:6,:) = 0.0
     returnStatus = Pgs_csc_eciToECR (lenG, asciiUTC, offsets(1:lenG), eciV, &
          ecrV)
+    CALL ReportTKStatus (returnStatus, ModuleName, errmsg)
     ecr = ecrV(1:3,:)
 
     ! For each scanning MIF
@@ -401,10 +405,12 @@ CONTAINS
          offsets(1:lenG), PGSd_SUN, sc_frame_vector)
     returnStatus = Pgs_csc_scToECI (spacecraftId, lenG, asciiUTC, &
          offsets(1:lenG), sc_frame_vector, eci)
+    CALL ReportTKStatus (returnStatus, ModuleName, errmsg)
     eciV(1:3,:) = eci
     eciV(4:6,:) = 0.0
     returnStatus = Pgs_csc_eciToECR (lenG, asciiUTC, offsets(1:lenG), eciV, &
          ecrV)
+    CALL ReportTKStatus (returnStatus, ModuleName, errmsg)
 
     sc_sun = ecrV(1:3,:)
     DO i = 1, lenG
@@ -1095,14 +1101,18 @@ CONTAINS
     ! Transform the auxilliary vectors from orbital to ECI coordinates
     returnStatus = Pgs_csc_orbToECI (spacecraftId, nV, asciiUTC, &
       offsets, aux1, aux1ECI(1:3,:) )
+    CALL ReportTKStatus (returnStatus, ModuleName, errmsg)
     returnStatus = Pgs_csc_orbToECI (spacecraftId, nV, asciiUTC, &
       offsets, aux2, aux2ECI(1:3,:) )
+    CALL ReportTKStatus (returnStatus, ModuleName, errmsg)
 
     ! Transform again to ECI coordinates
     aux1ECI(4:6,:) = 0.0_r8
     aux2ECI(4:6,:) = 0.0_r8
     returnStatus = Pgs_csc_ECItoECR (nV, asciiUTC, offsets, aux1ECI, aux1ECR)
+    CALL ReportTKStatus (returnStatus, ModuleName, errmsg)
     returnStatus = Pgs_csc_ECItoECR (nV, asciiUTC, offsets, aux2ECI, aux2ECR)
+    CALL ReportTKStatus (returnStatus, ModuleName, errmsg)
 
     ! Define l & a, where l is the distance to the equator along the direction
     ! of one of the auxilliary vectors from the s/c, and a is the auxilliary
@@ -1331,6 +1341,7 @@ CONTAINS
 
     ! Read a & b from earthfigure.dat
     returnStatus = Pgs_csc_getEarthFigure (earthModel, equatRad_a, polarRad_c)
+    CALL ReportTKStatus (returnStatus, ModuleName, errmsg)
     a = equatRad_a/1000
     b = polarRad_c/1000
 
@@ -1561,6 +1572,9 @@ CONTAINS
 END MODULE TkL1B
 
 ! $Log$
+! Revision 2.28  2005/12/14 17:01:21  perun
+! Incorporate ReportTKStatus call for reporting errors
+!
 ! Revision 2.27  2005/12/06 19:30:42  perun
 ! Removed Flag_Bright_Objects routine and added determining BO_stat bits
 !
