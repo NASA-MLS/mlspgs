@@ -155,7 +155,7 @@ program LeakCheck
       if ( k - i >1 .or. l - j > 1 ) then
         write ( *, * ) trim(allocVar(allocPVec(i))), ' is allocated and deallocated several times'
         write ( *, * ) ' Allocations are at lines', allocLine(allocPVec(i:k-1))
-        write ( *, * ) ' Deallocations are at lines', deallocLine(deallocPVec(j:k-1))
+        write ( *, * ) ' Deallocations are at lines', deallocLine(deallocPVec(j:l-1))
       else if ( verbose ) then
         write ( *, * ) trim(allocVar(allocPVec(i))), &
           & ' is allocated at line ', allocLine(allocPVec(i)), &
@@ -177,6 +177,9 @@ program LeakCheck
 end program LeakCheck
 
 ! $Log$
+! Revision 1.2  2005/11/19 02:54:40  vsnyder
+! Print multiple allocate/deallocate even if equal numbers
+!
 ! Revision 1.1  2005/11/19 02:05:11  vsnyder
 ! Initial commit
 !
