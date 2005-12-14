@@ -763,12 +763,14 @@ contains ! =====     Public Procedures     =============================
     real(rk), dimension(:), pointer :: MIF1GEODANGLE ! For first mif
     real(rk) :: MINANGLE                ! Smallest angle in chunk
     real(rk) :: MINANGLELASTMAF         ! Gives 'range' of last maf
+    integer :: N                        ! Guess at number of profiles
     integer :: NOMAFS                   ! From ReadL1B
     integer :: NOMIFS
     real(rk) :: NEXTANGLE               ! First non ovl. MAF for next chunk
     real(rk), dimension(:,:), pointer :: OldMethodValues=> null() ! For comparing with
     logical :: PreV2Oh                  ! Old way (mean) or new (apparent)?
     integer :: RIGHT                     ! How many profiles to delete from the RHS in single
+    real(rk), dimension(:), pointer :: TMPANGLE ! A temporary array for the single case
 
     real(rk) :: a
     real(rk) :: b
@@ -2239,6 +2241,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.80  2005/12/14 01:55:33  pwagner
+! Inadvertantly omitted some of the statements from r2.78
+!
 ! Revision 2.79  2005/12/14 01:43:33  pwagner
 ! Now stores local apparent solar time
 !
