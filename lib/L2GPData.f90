@@ -13,7 +13,7 @@
 module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 !=============================================================================
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
-  use DUMP_0, only: DUMP
+  use DUMP_0, only: DIFF, DUMP
   use Hdf, only: DFACC_RDONLY, DFACC_READ, DFACC_CREATE, DFACC_RDWR, &
     & DFNT_FLOAT32, DFNT_INT32, DFNT_FLOAT64
   use HDFEOS, only: SWINQDIMS
@@ -23,10 +23,10 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     & HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, WRONGHDFVERSION, &
     & DUMP, INITIALIZEMLSFILE, MLS_closeFile, MLS_EXISTS, mls_openFile, &
     & MLS_HDF_VERSION, MLS_INQSWATH, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
+  use MLSFillValues, only: ReplaceFillValues
   use MLSHDFEOS, only: mls_swattach, mls_swdetach
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Warning
-  use MLSNumerics, only: ReplaceFillValues
   use MLSStrings, only: Capitalize, lowercase
   use MLSStringLists, only: ExtractSubString, &
     & GetStringHashElement, GetStringElement, GetUniqueList, &
@@ -2609,58 +2609,70 @@ contains ! =====     Public Procedures     =============================
       endif
       if ( any(l2gp1%pressures /= l2gp2%pressures) .and. &
         & SwitchDetail(lowercase(myFields), 'pressure', '-c') > -1 ) then
-          call dump ( l2gp1%pressures - l2gp2%pressures, &
-            & 'l2gp%pressures (diff)', stats=stats, rms=rms )
+          call diff ( l2gp1%pressures, 'l2gp%pressures', &
+            &         l2gp2%pressures, ' ', &
+            & stats=stats, rms=rms )
       endif
       if ( any(l2gp1%latitude /= l2gp2%latitude) .and. &
         & SwitchDetail(lowercase(myFields), 'lat', '-c') > -1 ) then
-          call dump ( l2gp1%latitude - l2gp2%latitude, &
-            & 'l2gp%latitude (diff)', stats=stats, rms=rms )
+          call diff ( l2gp1%latitude, 'l2gp%latitude', &
+            &         l2gp2%latitude, ' ', &
+            & stats=stats, rms=rms )
       endif
       if ( any(l2gp1%longitude /= l2gp2%longitude) .and. &
         & SwitchDetail(lowercase(myFields), 'lon', '-c') > -1 ) then
-          call dump ( l2gp1%longitude - l2gp2%longitude, &
-            & 'l2gp%longitude (diff)', stats=stats, rms=rms )
+          call diff ( l2gp1%longitude, 'l2gp%longitude', &
+            &         l2gp2%longitude, ' ', &
+            & stats=stats, rms=rms )
       endif
       if ( any(l2gp1%solarTime /= l2gp2%solarTime) .and. &
         & SwitchDetail(lowercase(myFields), 'solartime', '-c') > -1 ) then
-        call dump ( l2gp1%solarTime - l2gp2%solarTime, &
-          & 'l2gp%solarTime (diff)', stats=stats, rms=rms )
+          call diff ( l2gp1%solarTime, 'l2gp%solarTime', &
+            &         l2gp2%solarTime, ' ', &
+            & stats=stats, rms=rms )
       endif
       if ( any(l2gp1%solarZenith /= l2gp2%solarZenith) .and. &
         & SwitchDetail(lowercase(myFields), 'solarzenith', '-c') > -1 ) then
-        call dump ( l2gp1%solarZenith - l2gp2%solarZenith, &
-          & 'l2gp%solarZenith (diff)', stats=stats, rms=rms )
+          call diff ( l2gp1%solarZenith, 'l2gp%solarZenith', &
+            &         l2gp2%solarZenith, ' ', &
+            & stats=stats, rms=rms )
         badChunks = .true.
       endif
       if ( any(l2gp1%losAngle /= l2gp2%losAngle) .and. &
         & SwitchDetail(lowercase(myFields), 'losangle', '-c') > -1 ) then
-        call dump ( l2gp1%losAngle - l2gp2%losAngle, &
-          & 'l2gp%losAngle (diff)', stats=stats, rms=rms )
+          call diff ( l2gp1%losAngle, 'l2gp%losAngle', &
+            &         l2gp2%losAngle, ' ', &
+            & stats=stats, rms=rms )
       endif
       if ( any(l2gp1%geodAngle /= l2gp2%geodAngle) .and. &
         & SwitchDetail(lowercase(myFields), 'geodangle', '-c') > -1 ) then
-        call dump ( l2gp1%geodAngle - l2gp2%geodAngle, &
-          & 'l2gp%geodAngle (diff)', stats=stats, rms=rms )
+          call diff ( l2gp1%geodAngle, 'l2gp%geodAngle', &
+            &         l2gp2%geodAngle, ' ', &
+            & stats=stats, rms=rms )
         badChunks = .true.
       endif
       if ( any(l2gp1%time /= l2gp2%time) .and. &
         & SwitchDetail(lowercase(myFields), 'time', '-c') > -1 ) then
-        call dump ( l2gp1%time - l2gp2%time, &
-          & 'l2gp%time (diff)', stats=stats, rms=rms )
+          call diff ( l2gp1%time, 'l2gp%time', &
+            &         l2gp2%time, ' ', &
+            & stats=stats, rms=rms )
         badChunks = .true.
       endif
       if ( any(l2gp1%chunkNumber /= l2gp2%chunkNumber) .and. &
         & SwitchDetail(lowercase(myFields), 'chunknumber', '-c') > -1 ) then
-        call dump ( l2gp1%chunkNumber - l2gp2%chunkNumber, &
-          & 'l2gp%chunkNumber (diff)', stats=stats, rms=rms )
+        call diff ( l2gp1%chunkNumber, 'l2gp1%chunkNumber', &
+          &         l2gp2%chunkNumber, 'l2gp2%chunkNumber', &
+          & stats=stats, rms=rms )
+        ! call dump ( l2gp1%chunkNumber - l2gp2%chunkNumber, &
+        !  & 'l2gp%chunkNumber (diff)', stats=stats, rms=rms )
       endif
       
       if ( associated(l2gp1%frequency) .and.  associated(l2gp2%frequency)) then
         if ( any(l2gp1%frequency /= l2gp2%frequency) .and. &
           & SwitchDetail(lowercase(myFields), 'freq', '-c') > -1 ) then
-          call dump ( l2gp1%frequency - l2gp2%frequency, &
-            & 'l2gp%frequency (diff)', stats=stats, rms=rms )
+          call diff ( l2gp1%frequency, 'l2gp%frequency', &
+            &         l2gp2%frequency, ' ', &
+            & stats=stats, rms=rms )
         endif
       endif
       
@@ -2694,25 +2706,30 @@ contains ! =====     Public Procedures     =============================
       endif
       if ( any(l2gp1%l2gpValue /= l2gp2%l2gpValue) .and. &
         & SwitchDetail(lowercase(myFields), 'value', '-c') > -1 ) then
-        call dump ( real(l2gp1%l2gpValue - l2gp2%l2gpValue, r8), &
-          & 'l2gp%l2gpValue (diff)', stats=stats, rms=rms )
-          !& 'l2gp%l2gpValue (diff)', FillValue=FillValue )
+        call diff ( l2gp1%l2gpValue, 'l2gp%l2gpValue', &
+          &         l2gp2%l2gpValue, ' ', &
+          & stats=stats, rms=rms )
       endif
       if ( any(l2gp1%l2gpPrecision /= l2gp2%l2gpPrecision) .and. &
         & SwitchDetail(lowercase(myFields), 'precision', '-c') > -1 ) then
-        call dump ( real(l2gp1%l2gpPrecision - l2gp2%l2gpPrecision, r8), &
-          & 'l2gp%l2gpPrecision (diff)', stats=stats, rms=rms )
+        call diff ( l2gp1%l2gpPrecision, 'l2gp%l2gpPrecision', &
+          &         l2gp2%l2gpPrecision, ' ', &
+          & stats=stats, rms=rms )
       endif
       
       if ( any(l2gp1%status /= l2gp2%status) .and. &
         & SwitchDetail(lowercase(myFields), 'status', '-c') > -1 ) then
-        call dump (l2gp1%status - l2gp2%status, &
-          & 'l2gp%status (diff)', stats=stats, rms=rms )
+        call diff ( l2gp1%status, 'l2gp%status', &
+          &         l2gp2%status, ' ', &
+          & stats=stats, rms=rms )
+        ! call dump (l2gp1%status - l2gp2%status, &
+        !  & 'l2gp%status (diff)', stats=stats, rms=rms )
       endif
       if ( any(l2gp1%quality /= l2gp2%quality) .and. &
         & SwitchDetail(lowercase(myFields), 'quality', '-c') > -1 ) then
-        call dump ( l2gp1%quality - l2gp2%quality, &
-          & 'l2gp%quality (diff)', stats=stats, rms=rms )
+        call diff ( l2gp1%quality, 'l2gp%quality', &
+          &         l2gp2%quality, ' ', &
+          & stats=stats, rms=rms )
       endif
       
   end subroutine DiffL2GPData
@@ -3675,6 +3692,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.129  2005/11/04 18:51:19  pwagner
+! Non-substantial stylistic tweaks of GEO, DATA_FIELDS
+!
 ! Revision 2.128  2005/10/28 23:12:02  pwagner
 ! Removed unnecessary HGridField from repairL2GPData
 !
