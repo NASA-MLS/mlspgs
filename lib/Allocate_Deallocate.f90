@@ -130,8 +130,7 @@ contains
 
   !-----------------------------------   ReportAllocateDeallocate_real  -----
   subroutine ReportAllocateDeallocate_real ( name, moduleName, noBytes )
-    use Output_m, only: OUTPUT
-    use Dump_0, only: DUMPSIZE
+    use Output_m, only: OUTPUT, DUMPSIZE
     ! Dummy arguments
     character (len=*), intent(in) :: NAME ! Name of thing allocated
     character (len=*), intent(in) :: MODULENAME ! Module that allocated it
@@ -658,6 +657,9 @@ contains
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.27  2005/12/16 23:25:37  pwagner
+! dumpSize moved from dump0 to output_m
+!
 ! Revision 2.26  2005/11/18 21:09:35  vsnyder
 ! Don't print trailing comma after last dimension in allocation failure message
 !
