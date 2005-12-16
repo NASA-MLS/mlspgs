@@ -22,7 +22,7 @@ module DUMP_0
   use MLSSets, only: FindAll
   use MLSStats1, only: ALLSTATS
   use MLSStringLists, only: GetStringElement, NumStringElements
-  use OUTPUT_M, only: BLANKS, OUTPUT
+  use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
 
   implicit none
   private
@@ -38,8 +38,6 @@ module DUMP_0
 ! DIFF                     dump diffs between pair of arrays of numeric type
 ! DUMP                     dump an array to output
 ! DUMP_NAME_V_PAIRS        dump an array of paired names and values
-! DUMPSIZE                 print a nicely-formatted memory size 
-!                             (should be moved to output_M?)
 ! SELFDIFF                 dump increments between successive array values
 ! === (end of toc) ===
 
@@ -60,12 +58,9 @@ module DUMP_0
 !      [[log clean], [char* format, [int width]] ) 
 !       where values can be a 1d array of ints or reals, and
 !       names is a comma-separated list of corresponding names
-! DumpSize ( n, [char* advance], [units] )
-!       where n can be an int or a real, and 
-!       units is a scalar of the same type, if present
 ! === (end of api) ===
 
-  public :: DIFF, DUMP, DUMP_NAME_V_PAIRS, DUMPSIZE, SELFDIFF
+  public :: DIFF, DUMP, DUMP_NAME_V_PAIRS, SELFDIFF
 
   interface DIFF        ! dump diffs between pair of n-d arrays of numeric type
     module procedure DIFF_1D_DOUBLE, DIFF_1D_INTEGER, DIFF_1D_REAL
@@ -92,10 +87,9 @@ module DUMP_0
     module procedure SELFDIFF_REAL
     module procedure SELFDIFF_DOUBLE
   end interface
-  interface DUMPSIZE
-    module procedure DUMPSIZE_INTEGER, DUMPSIZE_REAL
+  interface printRMSetc
+    module procedure printRMSetc_DOUBLE, printRMSetc_INT, printRMSetc_REAL
   end interface
-
   interface SAY_FILL
     module procedure SAY_FILL_CHAR, SAY_FILL_DOUBLE, SAY_FILL_INT, SAY_FILL_REAL
   end interface
@@ -1546,56 +1540,6 @@ contains
 
   end subroutine DUMP_NAME_V_PAIRS_REAL
 
-  ! --------------------------------------------- DumpSize_integer -----
-  subroutine DumpSize_integer ( n, advance, units )
-    integer, intent(in) :: N
-    character(len=*), intent(in), optional :: ADVANCE
-    integer, intent(in), optional :: units ! E.g., 1024 for kB
-    ! Executable
-    if ( present(units) ) then
-      call dumpSize ( n*1.0, advance=advance, units=units*1.0 )
-    else
-      call dumpSize ( n*1.0, advance=advance )
-    endif
-  end subroutine DumpSize_integer
-
-  ! ------------------------------------------------ DumpSize_real -----
-  subroutine DumpSize_real ( n, advance, units )
-    real, intent(in) :: N
-    character(len=*), intent(in), optional :: ADVANCE
-    real, intent(in), optional :: units
-    ! Local parameters
-    real, parameter :: KB = 1024.0
-    real, parameter :: MB = KB * 1024.0
-    real, parameter :: GB = MB * 1024.0
-    real, parameter :: TB = GB * 1024.0
-    real            :: myUnits
-    ! Make a 'nice' output
-    myUnits = 1.0
-    if ( present(units) ) myUnits = units
-    if ( myUnits == 0.0 ) then
-      call output ( n, format='(e12.1)' )
-      call output ( ' (illegal units)', advance=advance )
-      return
-    endif
-    if ( n < kb/myUnits ) then
-      call output ( n*myUnits, format='(f6.1)' )
-      call output ( ' bytes', advance=advance )
-    else if ( n < Mb/myUnits ) then
-      call output ( n*myUnits/kb, format='(f6.1)' )
-      call output ( ' kb', advance=advance )
-    else if ( n < Gb/myUnits ) then
-      call output ( n*myUnits/Mb, format='(f6.1)' )
-      call output ( ' Mb', advance=advance )
-    else if ( n < Tb/myUnits ) then
-      call output ( n*myUnits/Gb, format='(f6.1)' )
-      call output ( ' Gb', advance=advance )
-    else
-      call output ( n*myUnits/Tb, format='(f6.1)' )
-      call output ( ' Tb', advance=advance )
-    end if
-  end subroutine DumpSize_real
-
  ! ---------------------------------------------  SELFDIFF_DOUBLE  -----
   subroutine SELFDIFF_DOUBLE ( ARRAY, NAME, &
     & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
@@ -1710,6 +1654,108 @@ contains
 
   end subroutine Name_And_Size
 
+  ! ----------------------------------------------  printRMSetc  -----
+  ! This family of routines prints a nicely-formatted list of min, max, etc.
+  ! using output
+  subroutine printRMSetc_double ( Name, min, max, rms, mean  )
+    character(len=*), intent(in) :: Name
+    double precision, intent(in) :: min
+    double precision, intent(in) :: max
+    double precision, intent(in) :: rms
+    double precision, intent(in), optional :: mean
+    if ( STATSONONELINE ) then
+      call output ( trim(name), advance='no' )
+      call output ( ' min : max, rms: ', advance='no' )
+      if ( present(mean) ) call output ( ' mean: ', advance='no' )
+      call output(min, advance='no')
+      call output(' : ', advance='no')
+      call output(max, advance='no')
+      call output(', ', advance='no')
+      call output(rms, advance='no')
+      if ( present(mean) ) then
+        call output ( ': ', advance='no' )
+        call output ( mean, advance='no' )
+      end if
+      call newline
+    else
+      call output ( trim(name), advance='no' )
+      call output ( ' min      max        rms', advance='no' )
+      if ( present(mean) ) call output ( '       mean ', advance='no' )
+      call newline
+      call output(min, advance='no')
+      call output(max, advance='no')
+      call output(rms, advance='no')
+      if ( present(mean) ) call output ( mean, advance='no' )
+      call newline
+    end if
+  end subroutine printRMSetc_double
+
+  subroutine printRMSetc_real ( Name, min, max, rms, mean  )
+    character(len=*), intent(in) :: Name
+    real, intent(in) :: min
+    real, intent(in) :: max
+    real, intent(in) :: rms
+    real, intent(in), optional :: mean
+    if ( STATSONONELINE ) then
+      call output ( trim(name), advance='no' )
+      call output ( ' min : max, rms: ', advance='no' )
+      if ( present(mean) ) call output ( ' mean: ', advance='no' )
+      call output(min, advance='no')
+      call output(' : ', advance='no')
+      call output(max, advance='no')
+      call output(', ', advance='no')
+      call output(rms, advance='no')
+      if ( present(mean) ) then
+        call output ( ': ', advance='no' )
+        call output ( mean, advance='no' )
+      end if
+      call newline
+    else
+      call output ( trim(name), advance='no' )
+      call output ( ' min      max        rms', advance='no' )
+      if ( present(mean) ) call output ( '       mean ', advance='no' )
+      call newline
+      call output(min, advance='no')
+      call output(max, advance='no')
+      call output(rms, advance='no')
+      if ( present(mean) ) call output ( mean, advance='no' )
+      call newline
+    end if
+  end subroutine printRMSetc_real
+
+  subroutine printRMSetc_int ( Name, min, max, rms, mean  )
+    character(len=*), intent(in) :: Name
+    integer, intent(in) :: min
+    integer, intent(in) :: max
+    integer, intent(in) :: rms
+    integer, intent(in), optional :: mean
+    if ( STATSONONELINE ) then
+      call output ( trim(name), advance='no' )
+      call output ( ' min : max, rms: ', advance='no' )
+      if ( present(mean) ) call output ( ' mean: ', advance='no' )
+      call output(min, advance='no')
+      call output(' : ', advance='no')
+      call output(max, advance='no')
+      call output(', ', advance='no')
+      call output(rms, advance='no')
+      if ( present(mean) ) then
+        call output ( ': ', advance='no' )
+        call output ( mean, advance='no' )
+      end if
+      call newline
+    else
+      call output ( trim(name), advance='no' )
+      call output ( ' min      max        rms', advance='no' )
+      if ( present(mean) ) call output ( '       mean ', advance='no' )
+      call newline
+      call output(min, advance='no')
+      call output(max, advance='no')
+      call output(rms, advance='no')
+      if ( present(mean) ) call output ( mean, advance='no' )
+      call newline
+    end if
+  end subroutine printRMSetc_int
+
   ! ----------------------------------------------  Say_Fill_Char  -----
   subroutine Say_Fill_Char ( Subs, NumZeroRows, Fill, Inc  )
     integer, intent(in) :: Subs(:)
@@ -1807,6 +1853,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.50  2005/12/16 23:25:13  pwagner
+! dumpSize moved from dump0 to output_m
+!
 ! Revision 2.49  2005/12/16 00:04:06  pwagner
 ! Changes to reflect new MLSFillValues module
 !
