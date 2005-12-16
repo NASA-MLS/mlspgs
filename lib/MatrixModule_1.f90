@@ -17,7 +17,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 ! quantities in MLS Level 2 software, and related programs.
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-  use DUMP_0, only: DUMP, DUMPSIZE
+  use DUMP_0, only: DUMP
   use MatrixModule_0, only: Add_Matrix_Blocks, Assignment(=), CheckIntegrity, & 
     & CholeskyFactor, ClearLower, ClearRows, ColumnScale, Col_L1, CopyBlock, &
     & CreateBlock, CyclicJacobi, DenseCyclicJacobi, Densify, &
@@ -30,7 +30,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   use MLSCommon, only: RM, RV, R8, R4
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
-  use OUTPUT_M, only: BLANKS, OUTPUT
+  use OUTPUT_M, only: BLANKS, OUTPUT, DUMPSIZE
   use String_Table, only: Display_String, Get_String
   use Symbol_Table, only: Enter_Terminal
   use Symbol_Types, only: T_identifier
@@ -2560,6 +2560,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.106  2005/12/16 23:25:58  pwagner
+! dumpSize moved from dump0 to output_m
+!
 ! Revision 2.105  2005/06/22 17:25:49  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
