@@ -17,13 +17,32 @@ module OUTPUT_M
   implicit NONE
   private
 
+! === (start of toc) ===
+!     c o n t e n t s
+!     - - - - - - - -
+
+!     (subroutines and functions)
+! DUMPSIZE                 print a nicely-formatted memory size 
+!                             (should be moved to output_M?)
+! === (end of toc) ===
+
+! === (start of api) ===
+! DumpSize ( n, [char* advance], [units] )
+!       where n can be an int or a real, and 
+!       units is a scalar of the same type, if present
+! === (end of api) ===
   integer, save, public :: LINE_WIDTH = 120 ! Not used here, but a convenient
                                         ! place to store it
   integer, save, public :: PRUNIT = -1  ! Unit for output.  "printer" unit, *
                                         ! if -1, MLSMessage if -2, both
                                         ! printer and MLSMSG if < -2.
 
-  public :: BLANKS, NEWLINE, OUTPUT, OUTPUT_DATE_AND_TIME, TIMESTAMP
+  public :: BLANKS, DUMPSIZE, NEWLINE, OUTPUT, OUTPUT_DATE_AND_TIME, TIMESTAMP
+
+  interface DUMPSIZE
+    module procedure DUMPSIZE_INTEGER, DUMPSIZE_REAL
+  end interface
+
   interface OUTPUT
     module procedure output_char, output_char_array, output_complex
     module procedure output_dcomplex, output_double
@@ -31,6 +50,7 @@ module OUTPUT_M
     module procedure output_single, output_double_array, output_single_array
     module procedure output_string
   end interface
+
   interface TIMESTAMP
     module procedure timestamp_char, timestamp_integer
   end interface
@@ -110,6 +130,56 @@ contains
       if ( n < 1 ) exit   ! was if n == 0, but this should be safer
     end do
   end subroutine BLANKS
+
+  ! --------------------------------------------- DumpSize_integer -----
+  subroutine DumpSize_integer ( n, advance, units )
+    integer, intent(in) :: N
+    character(len=*), intent(in), optional :: ADVANCE
+    integer, intent(in), optional :: units ! E.g., 1024 for kB
+    ! Executable
+    if ( present(units) ) then
+      call dumpSize ( n*1.0, advance=advance, units=units*1.0 )
+    else
+      call dumpSize ( n*1.0, advance=advance )
+    endif
+  end subroutine DumpSize_integer
+
+  ! ------------------------------------------------ DumpSize_real -----
+  subroutine DumpSize_real ( n, advance, units )
+    real, intent(in) :: N
+    character(len=*), intent(in), optional :: ADVANCE
+    real, intent(in), optional :: units
+    ! Local parameters
+    real, parameter :: KB = 1024.0
+    real, parameter :: MB = KB * 1024.0
+    real, parameter :: GB = MB * 1024.0
+    real, parameter :: TB = GB * 1024.0
+    real            :: myUnits
+    ! Make a 'nice' output
+    myUnits = 1.0
+    if ( present(units) ) myUnits = units
+    if ( myUnits == 0.0 ) then
+      call output ( n, format='(e12.1)' )
+      call output ( ' (illegal units)', advance=advance )
+      return
+    endif
+    if ( n < kb/myUnits ) then
+      call output ( n*myUnits, format='(f6.1)' )
+      call output ( ' bytes', advance=advance )
+    else if ( n < Mb/myUnits ) then
+      call output ( n*myUnits/kb, format='(f6.1)' )
+      call output ( ' kb', advance=advance )
+    else if ( n < Gb/myUnits ) then
+      call output ( n*myUnits/Mb, format='(f6.1)' )
+      call output ( ' Mb', advance=advance )
+    else if ( n < Tb/myUnits ) then
+      call output ( n*myUnits/Gb, format='(f6.1)' )
+      call output ( ' Gb', advance=advance )
+    else
+      call output ( n*myUnits/Tb, format='(f6.1)' )
+      call output ( ' Tb', advance=advance )
+    end if
+  end subroutine DumpSize_real
 
   ! ----------------------------------------------------  NewLine  -----
   subroutine NewLine
@@ -743,6 +813,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.43  2005/12/16 23:25:13  pwagner
+! dumpSize moved from dump0 to output_m
+!
 ! Revision 2.42  2005/09/22 23:34:56  pwagner
 ! date conversion procedures and functions all moved into dates module
 !
