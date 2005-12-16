@@ -14,7 +14,7 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
 !=============================================================================
   use Allocate_Deallocate, only: allocate_Test, Deallocate_Test
   use MLSCommon, only: r4, r8
-  use MLSNumerics, only: isFillValue
+  use MLSFillValues, only: isFillValue
   use MLSSets, only: findAll
   use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
 
@@ -922,6 +922,9 @@ end module MLSStats1
 
 !
 ! $Log$
+! Revision 2.6  2005/12/16 00:04:29  pwagner
+! Changes to reflect new MLSFillValues module
+!
 ! Revision 2.5  2005/06/22 17:25:50  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
