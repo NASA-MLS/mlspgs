@@ -17,17 +17,58 @@ module DUMP_0
 ! Actual output device determined by output_m module
 
   use ieee_arithmetic, only: ieee_is_finite
-  use MLSCommon, only : FilterValues, IsFinite
+  use MLSCommon, only: DEFAULTUNDEFINEDVALUE
+  use MLSFillValues, only : FilterValues, IsFinite
   use MLSSets, only: FindAll
+  use MLSStats1, only: ALLSTATS
   use MLSStringLists, only: GetStringElement, NumStringElements
   use OUTPUT_M, only: BLANKS, OUTPUT
 
-  implicit NONE
+  implicit none
   private
-  public :: AfterSub, DIFF, DUMP, DUMP_NAME_V_PAIRS, DUMPSIZE, SELFDIFF
+! === (start of toc) ===
+!     c o n t e n t s
+!     - - - - - - - -
 
-  interface DIFF        ! dump diffs n-d arrays of numeric type
-    module procedure DIFF_1D_DOUBLE, DIFF_1D_REAL
+!     (parameters)
+! AfterSub                 character printed between row, col id and data
+! STATSONONELINE           stats, rms each printed on a single line
+
+!     (subroutines and functions)
+! DIFF                     dump diffs between pair of arrays of numeric type
+! DUMP                     dump an array to output
+! DUMP_NAME_V_PAIRS        dump an array of paired names and values
+! DUMPSIZE                 print a nicely-formatted memory size 
+!                             (should be moved to output_M?)
+! SELFDIFF                 dump increments between successive array values
+! === (end of toc) ===
+
+! === (start of api) ===
+! diff ( array1, char* name1, array2, char* name2,
+!      [fillvalue], [log clean], [int width], [char* format],
+!      [log wholearray], [log stats], [log rms], [int lbound] ) 
+!       where array1, array2 can be 1, 2, or 3d arrays of 
+!       ints, reals, or doubles, compatible in size and type
+!       and fillValue is a scalar of the same type, if present
+! dump ( array, char* name,
+!      [fillvalue], [log clean], [int width], [char* format],
+!      [log wholearray], [log stats], [log rms], [int lbound] ) 
+!       where array can be a 1, 2, or 3d array of
+!       chars, ints, reals, or doubles,
+!       and fillValue is a scalar of the same type, if present
+! dump_name_v_pairs ( values, char* names,
+!      [[log clean], [char* format, [int width]] ) 
+!       where values can be a 1d array of ints or reals, and
+!       names is a comma-separated list of corresponding names
+! DumpSize ( n, [char* advance], [units] )
+!       where n can be an int or a real, and 
+!       units is a scalar of the same type, if present
+! === (end of api) ===
+
+  public :: DIFF, DUMP, DUMP_NAME_V_PAIRS, DUMPSIZE, SELFDIFF
+
+  interface DIFF        ! dump diffs between pair of n-d arrays of numeric type
+    module procedure DIFF_1D_DOUBLE, DIFF_1D_INTEGER, DIFF_1D_REAL
     module procedure DIFF_2D_DOUBLE, DIFF_2D_REAL
     module procedure DIFF_3D_DOUBLE, DIFF_3D_REAL
   end interface
@@ -65,7 +106,7 @@ module DUMP_0
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
-  character, parameter :: AfterSub = '#'
+  character, public, parameter :: AfterSub = '#'
   logical, public, save ::   STATSONONELINE = .true.
   logical, parameter ::   DEEBUG = .false.
   logical :: myStats, myRMS, myWholeArray
@@ -96,8 +137,41 @@ contains
 
     double precision, dimension(size(array1)) :: filtered1
     double precision, dimension(size(array2)) :: filtered2
+    double precision :: refmin, refmax, refrms
     include "diff.f9h"
   end subroutine DIFF_1D_DOUBLE
+
+ ! ---------------------------------------------  DIFF_1D_INTEGER  -----
+  subroutine DIFF_1D_INTEGER ( IARRAY1, NAME1, IARRAY2, NAME2, &
+    & IFILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+    integer, intent(in) :: IARRAY1(:)
+    character(len=*), intent(in), optional :: NAME1
+    integer, intent(in) :: IARRAY2(:)
+    character(len=*), intent(in), optional :: NAME2
+    integer, intent(in), optional :: IFILLVALUE
+    logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, intent(in), optional :: STATS
+    logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND ! Low bound for Array
+
+    real, dimension(size(iarray1)) :: array1
+    real, dimension(size(iarray2)) :: array2
+    real :: fillValue
+    ! So we don't have to write an integer-version of allstats
+    array1 = iarray1
+    array2 = iarray2
+    if ( present(iFillValue) ) then
+      fillValue = iFillValue
+    else
+      fillValue = int(DEFAULTUNDEFINEDVALUE)
+    endif
+    call DIFF ( ARRAY1, NAME1, ARRAY2, NAME2, &
+      & FILLVALUE=FILLVALUE, CLEAN=CLEAN, WIDTH=WIDTH, FORMAT=FORMAT, &
+      & WHOLEARRAY=WHOLEARRAY, STATS=STATS, RMS=RMS, LBOUND=LBOUND )
+  end subroutine DIFF_1D_INTEGER
 
  ! ---------------------------------------------  DIFF_1D_REAL  -----
   subroutine DIFF_1D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
@@ -117,6 +191,7 @@ contains
 
     real, dimension(size(array1)) :: filtered1
     real, dimension(size(array2)) :: filtered2
+    real :: refmin, refmax, refrms
     include "diff.f9h"
   end subroutine DIFF_1D_REAL
 
@@ -138,6 +213,7 @@ contains
     !
     double precision, dimension(size(array1,1), size(array1,2)) :: filtered1
     double precision, dimension(size(array2,1), size(array2,2)) :: filtered2
+    double precision :: refmin, refmax, refrms
     include "diff.f9h"
   end subroutine DIFF_2D_DOUBLE
 
@@ -159,6 +235,7 @@ contains
     !
     real, dimension(size(array1,1), size(array1,2)) :: filtered1
     real, dimension(size(array2,1), size(array2,2)) :: filtered2
+    real :: refmin, refmax, refrms
     include "diff.f9h"
   end subroutine DIFF_2D_REAL
 
@@ -180,6 +257,7 @@ contains
 
     double precision, dimension(size(array1,1), size(array1,2), size(array1,3)) :: filtered1
     double precision, dimension(size(array2,1), size(array2,2), size(array2,3)) :: filtered2
+    double precision :: refmin, refmax, refrms
     include "diff.f9h"
   end subroutine DIFF_3D_DOUBLE
 
@@ -201,6 +279,7 @@ contains
 
     real, dimension(size(array1,1), size(array1,2), size(array1,3)) :: filtered1
     real, dimension(size(array2,1), size(array2,2), size(array2,3)) :: filtered2
+    real :: refmin, refmax, refrms
     include "diff.f9h"
   end subroutine DIFF_3D_REAL
 
@@ -1270,6 +1349,8 @@ contains
     if ( present(FillValue) ) myFillValue=FillValue
     myClean = .false.
     if ( present(clean) ) myClean = clean
+    include 'dumpstats.f9h'
+
     myFormat = MyFormatDefault
     if ( present(format) ) myFormat = format
 
@@ -1726,6 +1807,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.49  2005/12/16 00:04:06  pwagner
+! Changes to reflect new MLSFillValues module
+!
 ! Revision 2.48  2005/11/04 18:49:02  pwagner
 ! Added SelfDiff procedures to dump diffs among consecutive 1d array elems
 !
