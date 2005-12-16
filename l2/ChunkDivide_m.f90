@@ -16,7 +16,7 @@ module ChunkDivide_m
 
   use Intrinsic, only: L_NONE, PHYQ_INVALID
   use MLSCommon, only: R8, RP
-  use MLSNumerics, only: ISFILLVALUE
+  use MLSFillValues, only: ISFILLVALUE
   use MLSSets, only: FINDFIRST
 
   implicit none
@@ -2307,6 +2307,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.66  2005/12/16 00:06:51  pwagner
+! Changes to reflect new MLSFillValues module
+!
 ! Revision 2.65  2005/10/22 00:43:43  pwagner
 ! Gets DACSDeconvolved attribute from l1b file if there
 !
