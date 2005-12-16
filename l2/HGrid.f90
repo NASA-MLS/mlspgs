@@ -714,8 +714,9 @@ contains ! =====     Public Procedures     =============================
       & AssembleL1BQtyName
     use MLSCommon, only: MLSFile_T, NameLen, RK => R8, TAI93_RANGE_T
     use MLSFiles, only: Dump, GetMLSFileByType
+    use MLSFillValues, only: isMonotonic, Monotonize
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
-    use MLSNumerics, only: HUNT, InterpolateValues, isMonotonic, Monotonize
+    use MLSNumerics, only: HUNT, InterpolateValues
     use MLSStringLists, only: SwitchDetail
     use MLSStrings, only: hhmmss_value
     use OUTPUT_M, only: OUTPUT
@@ -2241,6 +2242,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.81  2005/12/16 00:07:12  pwagner
+! Changes to reflect new MLSFillValues module
+!
 ! Revision 2.80  2005/12/14 01:55:33  pwagner
 ! Inadvertantly omitted some of the statements from r2.78
 !
