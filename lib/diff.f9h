@@ -29,28 +29,56 @@
 !     double precision, dimension(size(array1)) :: filtered1
 !     double precision, dimension(size(array2)) :: filtered2
     logical :: warn, NaNsIn1, NaNsIn2
+    character(len(name1) + len(name2) + 8) :: DiffName
 
     ! Executable
+    myStats = .false.
+    if ( present(stats) ) myStats = stats
+    myRMS = .false.
+    if ( present(RMS) ) myRMS = RMS
+    myWholeArray = .not. (myStats .or. myRMS)
+    if ( present(wholeArray) ) myWholeArray = wholeArray
+    
+    if ( len_trim(name2) < 1 ) then
+      DiffName = trim(name1) // ' (diff)'
+    else
+      DiffName = trim(name1) // ' - ' // trim(name2)
+    endif
     if ( DEEBUG ) &
       & call output('About to filter n-d ' // trim(name1) // ' ' &
       & // trim(name2), advance='yes')
     call filterValues(array1, filtered1, array2, filtered2, warn, FillValue)
+    if ( myRMS ) then
+      call allstats(filtered1, &
+        & addedData=.false., min=refmin, max=refmax, rms=refrms)
+      call allstats(filtered2, &
+        & addedData=.true., min=refmin, max=refmax, rms=refrms)
+!       call output('Reference values (min : max, rms): ', advance='no')
+!       call output(refmin, advance='no')
+!       call output(' : ', advance='no')
+!       call output(refmax, advance='no')
+!       call output(', ', advance='no')
+!       call output(refrms, advance='yes')
+      call printRMSetc ( 'Reference values', refmin, refmax, refrms )
+    endif
     NaNsIn1 = any(.not. ieee_is_finite(array1))
     NaNsIn2 = any(.not. ieee_is_finite(array2))
     if ( DEEBUG ) &
-      & call output('About to dump n-d ' // trim(name1) // ' ' &
-      & // trim(name2), advance='yes')
-    call dump(filtered1-filtered2, trim(name1) // ' - ' // trim(name2), &
+      & call output('About to dump n-d ' // trim(DiffName), advance='yes')
+    call dump(filtered1-filtered2, trim(DiffName), &
       & real(0.,kind(array1)), CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
     if ( NaNsIn1 ) call output( &
       & '*** NaNs found in ' // trim(name1), advance='yes')
     if ( NaNsIn2 ) call output( &
       & '*** NaNs found in ' // trim(name2), advance='yes')
     if ( warn ) call output( &
-      & '*** non-matched NaNs diffing ' // trim(name1) // ' - ' // trim(name2), &
+      & '*** non-matched NaNs diffing ' // trim(DiffName), &
       & advance='yes')
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.4  2005/12/17 00:58:56  pwagner
+! dumps of rms, etc. should appear uniform
+!
 ! Revision 2.3  2005/12/10 00:25:31  pwagner
 ! Non-essential fussing with debugging commands
 !
