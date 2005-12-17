@@ -1727,8 +1727,8 @@ contains
     character(len=*), intent(in) :: Name
     integer, intent(in) :: min
     integer, intent(in) :: max
-    integer, intent(in) :: rms
-    integer, intent(in), optional :: mean
+    real, intent(in) :: rms
+    real, intent(in), optional :: mean
     if ( STATSONONELINE ) then
       call output ( trim(name), advance='no' )
       call output ( ' min : max, rms: ', advance='no' )
@@ -1853,6 +1853,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.51  2005/12/17 00:58:56  pwagner
+! dumps of rms, etc. should appear uniform
+!
 ! Revision 2.50  2005/12/16 23:25:13  pwagner
 ! dumpSize moved from dump0 to output_m
 !
