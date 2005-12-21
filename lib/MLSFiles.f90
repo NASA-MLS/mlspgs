@@ -51,7 +51,7 @@ module MLSFiles               ! Utility file routines
   private 
 
   public :: accessType, AddFileToDataBase, &
-  & AddInitializeMLSFile, &
+  & AddInitializeMLSFile, AreTheSameFile, &
   & close_MLSFile, &
   & Deallocate_filedatabase, Dump, &
   & get_free_lun, GetMLSFileByName, GetMLSFileByType, GetPCFromRef, &
@@ -99,6 +99,7 @@ module MLSFiles               ! Utility file routines
 ! accessType         Converts DFACC_* <-> {l_create, l_rdwr, l_rdonly}
 ! AddFileToDataBase  Enters an MLSFile {FileName, id, ..} into the database
 ! AddInitializeMLSFile  AddFileToDataBase, initializes, and returns pointer to it
+! AreTheSameFile     Returns TRUE if the two args are the same file
 ! close_MLSFile      Closes an mls file (of any type)
 ! Deallocate_filedatabase
 !                    Deallocates file database, closing any still-open files
@@ -155,6 +156,7 @@ module MLSFiles               ! Utility file routines
 ! some of the grittier details
 !    AddFileToDataBase
 !    AddInitializeMLSFile
+!    AreTheSameFile
 !    Deallocate_filedatabase
 !    Dump
 !    GetMLSFileByName
@@ -168,6 +170,7 @@ module MLSFiles               ! Utility file routines
 !   [int access], [char* content], [char* name], [char* shortName], 
 !   [int HDFVersion], [int recordLength], 
 !   [Range PCFIdRange], [int PCFBottom], [int PCFTop])
+! log AreTheSameFile (MLSFile File1, MLSFile File2 )
 ! Deallocate_filedatabase(MLSFile *dataBase(:))
 ! Dump ( MLSFile *dataBase(:), [char* Name], [int details] )
 ! Dump ( MLSFile MLSFile, [int details] )
@@ -383,6 +386,21 @@ contains
     newSize = AddFileToDatabase ( DATABASE, NEWITEM )
     item => Database(newSize)
   end function AddInitializeMLSFile
+
+  !-----------------------------------------  AreTheSameFile  -----
+  function AreTheSameFile ( File1, File2 ) &
+    & result(SooDesu)
+
+  ! This routine initializes an MLSFile, and adds it to database
+  ! returning a pointer to the new entry
+
+    ! Dummy arguments
+    type (MLSFile_T), intent(in) :: File1
+    type (MLSFile_T), intent(in) :: File2
+    logical                      :: SooDesu
+    ! Internal variables
+    SooDesu = ( File1%name == File2%name )
+  end function AreTheSameFile
 
   !-----------------------------------------  InitializeMLSFile  -----
   integer function InitializeMLSFile ( ITEM, type, access, content, name, &
@@ -2633,6 +2651,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.71  2005/12/21 18:44:08  pwagner
+! Added AreTheSameFile; not clever yet, should consider paths, etc
+!
 ! Revision 2.70  2005/10/18 23:03:32  pwagner
 ! Interface to GetMLSFileByName allows ignoring path
 !
