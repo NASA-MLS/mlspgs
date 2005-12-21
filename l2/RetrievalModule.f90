@@ -50,8 +50,9 @@ contains
       & F_highBound, F_hRegOrders, F_hRegQuants, F_hRegWeights, &
       & F_hRegWeightVec, F_jacobian, F_lambda, F_Level, F_lowBound, &
       & F_maxJ, F_measurements, F_measurementSD, F_method, F_muMin, &
+      & F_NegateSD, &
       & F_outputCovariance, F_outputSD, &
-      & F_phaseName, &
+      & F_phaseName, F_precisionFactor, &
       & F_regAfter, F_regApriori, F_serial, F_SparseQuantities, &
       & F_state, F_toleranceA, F_toleranceF, &
       & F_toleranceR, f_vRegOrders, f_vRegQuants, &
@@ -170,11 +171,13 @@ contains
     type(matrix_SPD_T), target :: MyCovariance    ! for OutputCovariance to point at
     type(matrix_T), target :: MyJacobian          ! for Jacobian to point at
     real(rv) :: MuMin                   ! Smallest shrinking of dx before change direction
+    logical :: NegateSD                 ! Flip output error negative for poor information
     type(matrix_T), pointer :: OutputAverage      ! Averaging Kernel
     type(matrix_SPD_T), pointer :: OutputCovariance    ! Covariance of the sol'n
     type(vector_T), pointer :: OutputSD ! Vector containing SD of result
     logical :: ParallelMode             ! Run forward models in parallel
     character(len=127) :: PhaseName     ! To pass to snoopers
+    real(rv) :: PrecisionFactor         ! Default 0.5, precisions 'worse than this' set negative
     integer :: Son                      ! Of Root or Key
     character(len=127) :: SnoopComment  ! From comment= field of S_Snoop spec.
     integer :: SnoopKey                 ! Tree point of S_Snoop spec.
@@ -215,7 +218,9 @@ contains
                           ! ColumnScaleVector is really a diagonal matrix
     integer, parameter :: CovarianceDiag = columnScaleVector + 1
     integer, parameter :: CovarianceXApriori = covarianceDiag + 1
-    integer, parameter :: DX = covarianceXApriori + 1  ! for NWT
+    integer, parameter :: DiagFlagA = CovarianceXApriori + 1  ! for NWT
+    integer, parameter :: DiagFlagB = DiagFlagA + 1  ! for NWT
+    integer, parameter :: DX = DiagFlagB + 1  ! for negateSD case
     integer, parameter :: DXUnScaled = dX + 1      ! for NWT
     integer, parameter :: F = dXUnscaled + 1       ! Residual -- Model - Measurements
     integer, parameter :: F_rowScaled = f + 1      ! Either a copy of f, or f row-scaled
@@ -319,6 +324,8 @@ contains
         maxJacobians = defaultMaxJ
         method = defaultMethod
         muMin = defaultMuMin
+        negateSD = .false.
+        precisionFactor = 0.5_rv
         toleranceA = defaultToleranceA
         toleranceF = defaultToleranceF
         toleranceR = defaultToleranceR
@@ -384,6 +391,8 @@ contains
             measurementSD => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_method )
             method = decoration(subtree(2,son))
+          case ( f_negateSD )
+            negateSD = get_boolean ( son )
           case ( f_regAfter )
             tikhonovBefore = .not. get_Boolean(son)
           case ( f_regApriori )
@@ -394,6 +403,8 @@ contains
             ixCovariance = decoration(subtree(2,son)) ! outCov: matrix vertex
           case ( f_outputSD )
             outputSD => vectorDatabase(decoration(decoration(subtree(2,son))))
+          case ( f_precisionFactor )
+            precisionFactor = value(1)
           case ( f_sparseQuantities )
             call Allocate_Test ( sparseQuantities, nsons(son)-1, &
               & 'sparseQuantities', ModuleName )
@@ -456,6 +467,11 @@ contains
         end if
         if ( got(f_vRegQuants) .and. .not. got(f_vRegOrders) ) &
           & call announceError ( ifAThenB, f_vRegQuants, f_vRegOrders )
+        if ( negateSD .and. .not. tikhonovBefore ) &
+          & call announceError ( inconsistent, f_negateSD, f_regAfter )
+        if ( negateSD .and. .not. got(f_outputSD) ) &
+          & call AnnounceError ( ifAThenB, f_negateSD, f_outputSD )
+        
         if ( error == 0 ) then
 
           ! Verify the consistency of various matrices and vectors
@@ -1075,8 +1091,13 @@ contains
       ! Local Variables
       logical :: Abandoned              ! Flag to indicate numerical problems
       type(nwt_T) :: AJ                 ! "About the Jacobian", see NWT.
+      type(matrix_SPD_T), target :: APlusRegCOV ! Covariance from a priori and Tikhnov alone
+      type(matrix_SPD_T), target :: APlusRegNEQ ! Normal equations from a priori in Tikhnov alone.
+                                        ! Only used when computing solution covariance/sd and needing to
+                                        ! set values negative.
       type(nwt_T) :: BestAJ             ! AJ at Best Fnorm so far.
       real(r8) :: Cosine                ! Of an angle between two vectors
+
       type(matrix_Cholesky_T) :: Factored ! Cholesky-factored normal equations
       type (ForwardModelStatus_T) :: FmStat ! Status for forward model
       type (ForwardModelIntermediate_T) :: Fmw ! Work space for forward model
@@ -1107,6 +1128,7 @@ contains
       integer :: PreserveMatrixName     ! Temporary name store
       integer :: Prev_NWT_Flag          ! Previous value of NWT_Flag
       type(vector_T) :: Q               ! Used to calculate Marquardt parameter
+      integer :: QTY                    ! Loop counter
       integer :: RowBlock               ! Which block of rows is the forward
                                         ! model filling?
       integer, parameter :: SnoopLevels(NF_DX_AITKEN:NF_FANDJ) = (/ &
@@ -1117,6 +1139,7 @@ contains
       integer :: T                      ! Which Tikhonov: 1 -> V, 2 -> H
       real :: T1
       type(matrix_T) :: Temp            ! Because we can't do X := X * Y
+      type(matrix_cholesky_T) :: TempC   ! For negateSD caseXoXo
       character(len=10) :: TheFlagName  ! Name of NWTA's flag argument
       integer :: TikhonovRows           ! How many rows of Tiknonov regularization?
 
@@ -1464,6 +1487,10 @@ contains
           else
             tikhonovRows = 0
           end if
+
+          ! Copy the normal equations formed thus far into a temporary matrix for the
+          ! negateSD case
+          if ( negateSD ) call copyMatrix ( aPlusRegNEQ%m, normalEquations%m )
 
           fmStat%maf = 0
           fmStat%newScanHydros = .true.
@@ -2245,6 +2272,60 @@ contains
           outputCovariance%m%name = preserveMatrixName
           if ( associated(outputSD) ) &
             & call GetDiagonal ( outputCovariance%m, outputSD, squareRoot=.true. )
+
+          ! Deal with possibly setting the error bar negative
+          if ( negateSD ) then
+            ! We need to compute what just the a priori and regularization would give for
+            ! the output covariance.
+
+            ! Firstly, we need to do some gymnastics to avoid singular matrices.  This
+            ! will happen with the ptan terms which have neither a priori or smoothing.
+            ! Set these such that our answer is the same as the outputSD
+            call cloneVector ( v(diagFlagA), state )
+            call GetDiagonal ( aPlusRegNEQ%m, v(diagFlagA) )
+            do qty = 1, v(diagFlagA)%template%noQuantities
+              where ( v(diagFlagA)%quantities(qty)%values <= 0.0_rv )
+                ! Choose a value to let it invert properly
+                v(diagFlagA)%quantities(qty)%values = outputSD%quantities(qty)%values ** (-2)
+              elsewhere
+                v(diagFlagA)%quantities(qty)%values = 0.0_rv
+              end where
+
+            end do
+            call UpdateDiagonal ( aPlusRegNEQ, v(diagFlagA) )
+            
+            ! Now decompose it
+            call createEmptyMatrix ( tempC%m, &
+              & enter_terminal('_tempC', t_identifier), &
+              & state, state, .not. aPlusRegNEQ%m%row%instFirst, .not. aPlusRegNEQ%m%col%instFirst )
+            call CholeskyFactor ( tempC, aPlusRegNEQ, status=matrixStatus )
+            if ( any ( matrixStatus /= 0 ) ) then
+              call MLSMessage ( MLSMSG_Error, 'aPlusRegNEQ', &
+                & 'Non SPD matrix to be factored: aPlusRegNEQ' )
+            end if
+
+            ! Now invert it
+            call createEmptyMatrix ( temp, &
+              & enter_terminal('_temp', t_identifier), &
+              & state, state, .not. aPlusRegNEQ%m%row%instFirst, .not. aPlusRegNEQ%m%col%instFirst )
+            call InvertCholesky ( tempC, temp )
+            call MultiplyMatrix_XY_T ( temp, temp, aPlusRegCov%m, diagonalOnly=.true. )
+
+            ! Destroy works in progress
+            call DestroyMatrix ( tempC%m )
+            call DestroyMatrix ( temp )
+
+            ! Go through and set error bar negative if appropriate
+            call cloneVector ( v(diagFlagB), state )
+            call GetDiagonal ( aPlusRegcov%m, v(diagFlagB), squareRoot=.true. )
+            do qty = 1, v(diagFlagA)%template%noQuantities
+              where ( outputSD%quantities(qty)%values > &
+                &     precisionFactor * v(diagFlagB)%quantities(qty)%values .and. &
+                & v(diagFlagA)%quantities(qty)%values == 0.0_rv )
+                outputSD%quantities(qty)%values = - outputSD%quantities(qty)%values
+              end where
+            end do
+          end if
         end if
 
       ! Compute the averaging kernel
@@ -2304,6 +2385,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.264  2005/12/21 21:48:03  livesey
+! Added handling of the negateSD option.
+!
 ! Revision 2.263  2005/06/03 02:09:46  vsnyder
 ! New copyright notice, move Id to not_used_here to avoid cascades
 !
