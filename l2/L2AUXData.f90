@@ -184,6 +184,10 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
   ! How long may the list of sd names grow (~80 x max num. of sds/file)
   integer, public, parameter :: MAXNUMSDPERFILE = 200
   integer, public, parameter :: MAXSDNAMESBUFSIZE = 80*MAXNUMSDPERFILE
+  
+  ! One quantity is recognized, but not copied, the other uncrecognized
+  integer, private, parameter :: UNRECOGNIZEDQUANTITYTYPE = -999
+  integer, private, parameter :: RECOGNIZEDBUTNOTCOPIEDQT = UNRECOGNIZEDQUANTITYTYPE + 1
 
 contains ! =====     Public Procedures     =============================
 
@@ -194,7 +198,7 @@ contains ! =====     Public Procedures     =============================
     use Hdf, only: DFACC_READ, DFACC_CREATE, DFACC_RDWR
     use HDF5, only: H5GCLOSE_F, H5GOPEN_F, H5DOPEN_F, H5DCLOSE_F
     use MLSFILES, only: FILENOTFOUND, WILDCARDHDFVERSION, &
-      & mls_exists, mls_hdf_version, mls_sfstart, mls_sfend
+      & AreTheSameFile, mls_exists, mls_hdf_version, mls_sfstart, mls_sfend
     use MLSHDF5, only: GetAllHDF5DSNames, GetHDF5Attribute, &
       & IsHDF5AttributePresent
     !-------------------------------------------------------------------
@@ -252,6 +256,9 @@ contains ! =====     Public Procedures     =============================
       end if
     end if
 
+    if ( AreTheSameFile( L2AUXfile1, L2AUXfile2 ) ) &
+      & call MLSMessage ( MLSMSG_Error, trim(ModuleName) // ' cpL2AUXData', &
+      & 'input and output files are the same', MLSFile=L2AUXFile1 )
     noSds = NumStringElements(trim(mysdList), countEmpty)
     if ( noSds < 1 ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
@@ -261,7 +268,9 @@ contains ! =====     Public Procedures     =============================
     do i = 1, noSds
       call GetStringElement (trim(mysdList), sdName, i, countEmpty )
         QuantityType = GetQuantityTypeFromName(trim(sdName)) ! l_radiance
-      if ( QuantityType < 1 ) then
+      if ( QuantityType == RECOGNIZEDBUTNOTCOPIEDQT ) then
+        cycle
+      elseif ( QuantityType < 1 ) then
         call output('Quantity type: ', advance='no')
         call output(QuantityType, advance='yes')
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
@@ -833,6 +842,10 @@ contains ! =====     Public Procedures     =============================
     ! Executable code
     returnStatus = 0
     alreadyOpen = L2AUXFile%stillOpen
+    if ( L2AUXFile%access == DFACC_CREATE ) then
+      call MLSMessage(MLSMSG_Error, trim(ModuleName) // ' ReadL2AUXData_MLSFile', &
+        & 'Attempt to open l2aux file for reading with create access', MLSFile=L2AUXFile)
+    endif
     if ( .not. alreadyOpen ) then
       call mls_openFile(L2AUXFile, returnStatus)
       if ( returnStatus /= 0 ) &
@@ -1920,9 +1933,9 @@ contains ! =====     Public Procedures     =============================
       ! Just like chisqmmif
       quantityType = l_chisqmmif
     else if ( index(trim(myName), 'pcf') > 0 ) then
-      quantityType = -999
+      quantityType = RECOGNIZEDBUTNOTCOPIEDQT ! was -999
     else if ( index(trim(myName), 'coremetadata') > 0 ) then
-      quantityType = -999
+      quantityType = RECOGNIZEDBUTNOTCOPIEDQT ! was -999
     else
       quantityType = l_radiance
     end if                      
@@ -1974,6 +1987,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.78  2005/12/21 18:45:29  pwagner
+! Should recognize but not copy coremetadata, pcf
+!
 ! Revision 2.77  2005/12/14 01:45:21  pwagner
 ! Attribute values to phase, section timing more reasonable
 !
