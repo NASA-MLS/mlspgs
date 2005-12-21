@@ -236,6 +236,7 @@ nabterms
 nameFragment
 nazimuthangles
 ncloudspecies
+negateSD
 nmodelsurfs
 noAbsent # Don't dump absent blocks
 noChunks
@@ -410,6 +411,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.153  2005/12/21 21:47:33  livesey
+# Added negateSD option
+#
 # Revision 2.152  2005/11/11 21:43:33  pwagner
 # Added avoidBrightObjects for use by FillFromL1B
 #
