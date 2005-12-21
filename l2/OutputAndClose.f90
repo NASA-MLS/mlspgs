@@ -16,7 +16,7 @@ module OutputAndClose ! outputs all data from the Join module to the
 
 !=======================================================================================
 
-  use Hdf, only: DFACC_RDWR
+  use Hdf, only: DFACC_RDONLY, DFACC_RDWR
   use MLSMessageModule, only: MLSMessage, &
     & MLSMSG_Error, MLSMSG_Info, MLSMSG_Warning
   use OUTPUT_M, only: blanks, OUTPUT
@@ -1393,14 +1393,16 @@ contains ! =====     Public Procedures     =============================
         if ( CHECKPATHS ) cycle
         if ( DirectDatabase(DB_index)%autoType /= l_l2aux ) cycle
         if ( .not. associated(DirectDatabase(DB_index)%sdNames) ) then
-        call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          &  "no sd known for " // trim(DirectDatabase(DB_index)%fileName) )
-          cycle
+          ! Someday, go back in Join and find out why these aren't saved
+          ! call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          !   &  "no sd known for " // trim(DirectDatabase(DB_index)%fileName) )
+          sdList = ' '
+        else
+          ! print *, 'About to try to convert array2List'
+          ! call dump(DirectDatabase(DB_index))
+          call Array2List(DirectDatabase(DB_index)%sdNames, sdList)
+          ! print *, 'result: ', trim(sdList)
         endif
-        ! print *, 'About to try to convert array2List'
-        ! call dump(DirectDatabase(DB_index))
-        call Array2List(DirectDatabase(DB_index)%sdNames, sdList)
-        ! print *, 'result: ', trim(sdList)
 
         if ( DEBUG ) then
           call output ( 'preparing to cp split dgm', advance='yes' )
@@ -1422,6 +1424,8 @@ contains ! =====     Public Procedures     =============================
             & 'No entry in filedatabase for ' // &
             & trim(DirectDatabase(DB_index)%fileName) )
         endif
+
+        inputFile%access = DFACC_RDONLY
         madeFile = .true.
         if ( sdList /= ' ' ) then
           call cpL2AUXData( inputFile, &
@@ -1492,6 +1496,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.118  2005/12/21 18:46:29  pwagner
+! Fixed bug that clobbered split dgm files while copying them
+!
 ! Revision 2.117  2005/12/10 00:51:36  pwagner
 ! Copies ForwardModel Names attribute when unsplitting spli dgms
 !
