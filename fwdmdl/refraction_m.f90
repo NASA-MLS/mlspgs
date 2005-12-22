@@ -16,14 +16,22 @@ module REFRACTION_M
   implicit none
 
   private
-  public :: Refractive_index, Comp_refcor
+  public :: Refractive_index, Refractive_Index_H2O_Update, Comp_refcor
 
   real(rp), parameter, public :: RefrAterm = 0.0000776_rp
   real(rp), parameter, public :: RefrBterm = 4810.0_rp
 
   interface Refractive_index
-    module procedure Refractive_index_0,     Refractive_index_1
-    module procedure Refractive_index_0_h2o, Refractive_index_1_h2o
+    module procedure Refractive_index_0,   Refractive_index_0_h2o
+    module procedure Refractive_index_1,   Refractive_index_1_h2o
+    module procedure Refractive_index_1_2, Refractive_index_1_2_h2o
+    module procedure Refractive_index_2,   Refractive_index_2_h2o
+  end interface
+
+  interface Refractive_Index_H2O_Update
+    module procedure Refractive_Index_H2O_Update_0
+    module procedure Refractive_Index_H2O_Update_1
+    module procedure Refractive_Index_H2O_Update_2
   end interface
 
 !---------------------------- RCS Module Info ------------------------------
@@ -39,15 +47,10 @@ contains
   ! This routine computes the refractive index as a function of altitude
   ! and phi. The returned value has one subtracted from it
   ! We could easily make this elemental.
-  !  ===============================================================
-  !  Declaration of variables for sub-program: refractive_index
-  !  ===============================================================
-  !  ---------------------------
-  !  Calling sequence variables:
-  !  ---------------------------
+
   ! inputs
-    real(rp), intent(in) :: p_path ! pressure(hPa) vector
-    real(rp), intent(in) :: t_path ! temperature vector(K)
+    real(rp), intent(in) :: p_path ! pressure(hPa)
+    real(rp), intent(in) :: t_path ! temperature(K)
   ! output
     real(rp), intent(out) :: n_path ! refractive indicies - 1
 
@@ -61,16 +64,10 @@ contains
 
   ! This routine computes the refractive index as a function of altitude
   ! and phi. The returned value has one subtracted from it
-  ! We could easily make this elemental.
-  !  ===============================================================
-  !  Declaration of variables for sub-program: refractive_index
-  !  ===============================================================
-  !  ---------------------------
-  !  Calling sequence variables:
-  !  ---------------------------
+
   ! inputs
-    real(rp), intent(in) :: p_path ! pressure(hPa) vector
-    real(rp), intent(in) :: t_path ! temperature vector(K)
+    real(rp), intent(in) :: p_path ! pressure(hPa)
+    real(rp), intent(in) :: t_path ! temperature(K)
   ! output
     real(rp), intent(out) :: n_path ! refractive indicies - 1
   ! Keywords
@@ -81,15 +78,31 @@ contains
 
   end subroutine Refractive_index_0_h2o
 
-!--------------------------------------------  Refractive_index_1  -----
+! --------------------------------  Refractive_Index_H2O_Update_0  -----
+  subroutine Refractive_Index_H2O_Update_0 ( t_path, h2o_path, n_path )
+
+  ! Update the refractive index N_Path previously computed using only
+  ! temperature and pressure to account for H2O.
+
+  ! inputs
+    real(rp), intent(in) :: t_path    ! temperature(K)
+    real(rp), intent(in) :: h2o_path  ! H2O vmr(ppv)
+  ! inout
+    real(rp), intent(inout) :: n_path ! refractive indicies - 1
+
+    n_path = n_path * ( 1.0_rp + refrBterm*h2o_path/t_path)
+
+  end subroutine Refractive_Index_H2O_Update_0
+
+! -------------------------------------------  Refractive_index_1  -----
   subroutine Refractive_index_1 ( p_path, t_path, n_path )
 
   ! This routine computes the refractive index as a function of altitude
   ! and phi. The returned value has one subtracted from it.
 
   ! inputs
-    real(rp), intent(in) :: p_path(:) ! pressure(hPa) vector
-    real(rp), intent(in) :: t_path(:) ! temperature vector(K)
+    real(rp), intent(in) :: p_path(:) ! pressure(hPa)
+    real(rp), intent(in) :: t_path(:) ! temperature(K)
   ! output
     real(rp), intent(out) :: n_path(:) ! refractive indicies - 1
 
@@ -98,15 +111,15 @@ contains
 
   end subroutine Refractive_index_1
 
-!----------------------------------------  Refractive_index_1_h2o  -----
+! ---------------------------------------  Refractive_index_1_h2o  -----
   subroutine Refractive_index_1_h2o ( p_path, t_path, n_path, h2o_path )
 
   ! This routine computes the refractive index as a function of altitude
   ! and phi. The returned value has one subtracted from it.
 
   ! inputs
-    real(rp), intent(in) :: p_path(:) ! pressure(hPa) vector
-    real(rp), intent(in) :: t_path(:) ! temperature vector(K)
+    real(rp), intent(in) :: p_path(:) ! pressure(hPa)
+    real(rp), intent(in) :: t_path(:) ! temperature(K)
   ! output
     real(rp), intent(out) :: n_path(:) ! refractive indicies - 1
   ! Keywords
@@ -116,6 +129,119 @@ contains
     n_path = refrAterm * p_path / t_path * ( 1.0_rp + refrBterm*h2o_path/t_path)
 
   end subroutine Refractive_index_1_h2o
+
+! --------------------------------  Refractive_Index_H2O_Update_1  -----
+  subroutine Refractive_Index_H2O_Update_1 ( t_path, h2o_path, n_path )
+
+  ! Update the refractive index N_Path previously computed using only
+  ! temperature and pressure to account for H2O.
+
+  ! inputs
+    real(rp), intent(in) :: t_path(:)    ! temperature(K)
+    real(rp), intent(in) :: h2o_path(:)  ! H2O vmr(ppv)
+  ! inout
+    real(rp), intent(inout) :: n_path(:) ! refractive indicies - 1
+
+    n_path = n_path * ( 1.0_rp + refrBterm*h2o_path/t_path)
+
+  end subroutine Refractive_Index_H2O_Update_1
+
+! -----------------------------------------  Refractive_index_1_2  -----
+  subroutine Refractive_index_1_2 ( p_path, t_path, n_path )
+
+  ! This routine computes the refractive index as a function of altitude
+  ! and phi. The returned value has one subtracted from it.
+
+  ! inputs
+    real(rp), intent(in) :: p_path(:)   ! pressure(hPa)
+    real(rp), intent(in) :: t_path(:,:) ! temperature(K)
+  ! output
+    real(rp), intent(out) :: n_path(:,:) ! refractive indicies - 1
+
+    integer :: I
+
+  ! begin code
+    do i = 1, size(t_path,2)
+      n_path(:,i) = refrAterm * p_path(:) / t_path(:,i)
+    end do
+
+  end subroutine Refractive_index_1_2
+
+! -------------------------------------  Refractive_index_1_2_h2o  -----
+  subroutine Refractive_index_1_2_h2o ( p_path, t_path, n_path, h2o_path )
+
+  ! This routine computes the refractive index as a function of altitude
+  ! and phi. The returned value has one subtracted from it.
+
+  ! inputs
+    real(rp), intent(in) :: p_path(:)   ! pressure(hPa)
+    real(rp), intent(in) :: t_path(:,:) ! temperature(K)
+  ! output
+    real(rp), intent(out) :: n_path(:,:) ! refractive indicies - 1
+  ! Keywords
+    real(rp), intent(in) :: h2o_path(:,:) ! H2O vmr(ppv)
+
+    integer :: I
+
+  ! begin code
+    do i = 1, size(t_path,2)
+      n_path(:,i) = refrAterm * p_path(:) / t_path(:,i) * &
+        & ( 1.0_rp + refrBterm*h2o_path(:,i)/t_path(:,i))
+    end do
+
+  end subroutine Refractive_index_1_2_h2o
+
+! -------------------------------------------  Refractive_index_2  -----
+  subroutine Refractive_index_2 ( p_path, t_path, n_path )
+
+  ! This routine computes the refractive index as a function of altitude
+  ! and phi. The returned value has one subtracted from it.
+
+  ! inputs
+    real(rp), intent(in) :: p_path(:,:) ! pressure(hPa)
+    real(rp), intent(in) :: t_path(:,:) ! temperature(K)
+  ! output
+    real(rp), intent(out) :: n_path(:,:) ! refractive indicies - 1
+
+  ! begin code
+    n_path = refrAterm * p_path / t_path
+
+  end subroutine Refractive_index_2
+
+! ---------------------------------------  Refractive_index_2_h2o  -----
+  subroutine Refractive_index_2_h2o ( p_path, t_path, n_path, h2o_path )
+
+  ! This routine computes the refractive index as a function of altitude
+  ! and phi. The returned value has one subtracted from it.
+
+  ! inputs
+    real(rp), intent(in) :: p_path(:,:) ! pressure(hPa)
+    real(rp), intent(in) :: t_path(:,:) ! temperature(K)
+  ! output
+    real(rp), intent(out) :: n_path(:,:) ! refractive indicies - 1
+  ! Keywords
+    real(rp), intent(in) :: h2o_path(:,:) ! H2O vmr(ppv)
+
+  ! begin code
+    n_path = refrAterm * p_path / t_path * ( 1.0_rp + refrBterm*h2o_path/t_path)
+
+  end subroutine Refractive_index_2_h2o
+
+! --------------------------------  Refractive_Index_H2O_Update_2  -----
+  subroutine Refractive_Index_H2O_Update_2 ( t_path, h2o_path, n_path )
+
+  ! Update the refractive index N_Path previously computed using only
+  ! temperature and pressure to account for H2O.
+
+  ! inputs
+    real(rp), intent(in) :: t_path(:,:)    ! temperature(K)
+    real(rp), intent(in) :: h2o_path(:,:)  ! H2O vmr(ppv)
+  ! inout
+    real(rp), intent(inout) :: n_path(:,:) ! refractive indicies - 1
+
+    n_path = n_path * ( 1.0_rp + refrBterm*h2o_path/t_path)
+
+  end subroutine Refractive_Index_H2O_Update_2
 
 ! --------------------------------------------------  Comp_refcor  -----
 
@@ -322,6 +448,9 @@ jl:   do j = j1+1, j2
 
 END module REFRACTION_M
 ! $Log$
+! Revision 2.23  2005/12/07 00:33:48  vsnyder
+! Update references to ATBD in comments
+!
 ! Revision 2.22  2005/06/22 18:08:19  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
