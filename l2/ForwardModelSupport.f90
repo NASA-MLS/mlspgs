@@ -860,8 +860,9 @@ op:     do j = 2, nsons(PFATrees(s))
       end do                          ! End loop over listed species
     end if
 
-    ! If any PFA, need to do frequency averaging too
-    if ( any(info%anyPFA(s1:s2)) .and. .not. info%do_freq_avg ) &
+    ! If any PFA and any LBL, need to do frequency averaging too
+    if ( any(info%anyPFA(s1:s2)) .and. any(info%anyLBL(s1:s2)) &
+      & .and. .not. info%do_freq_avg ) &
       & call AnnounceError ( PFANeedsFreqAvg, root )
 
     if ( ( info%xStar == 0 ) .neqv. ( info%yStar == 0 ) ) &
@@ -1220,7 +1221,8 @@ op:     do j = 2, nsons(PFATrees(s))
       call output ( 'A bin selector of type vmr must have a molecule', &
         & advance='yes' )
     case ( PFANeedsFreqAvg )
-      call output ( 'Frequency averaging must be specified if there are any PFA molecules', &
+      call output ( &
+        & 'Frequency averaging must be specified if there are both PFA and LBL molecules', &
         & advance='yes' )
     case ( PFANotMolecule )
       call output ( 'PFA requested for ' )
@@ -1269,6 +1271,9 @@ op:     do j = 2, nsons(PFATrees(s))
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.121  2005/12/22 21:08:15  vsnyder
+! Require frequency averaging if both PFA and LBL
+!
 ! Revision 2.120  2005/11/02 21:37:19  vsnyder
 ! Hoist some stuff out of FullForwardModel
 !
