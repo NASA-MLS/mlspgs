@@ -31,6 +31,10 @@
 # export authority as may be required before exporting such information to
 # foreign countries or providing access to foreign persons.
 
+# Now if the tool h5repack in PGE_BINARY_DIR
+# and if the current working directory houses the forward model files,
+# then as a final step repack them
+
 # usage: see (1) above
 
 CHECKPATHS="yes"
@@ -96,6 +100,8 @@ then
   echo "slavetmplt.sh not in $PGE_SCRIPT_DIR"
   exit 1
 fi
+
+H5REPACK=$PGE_BINARY_DIR/h5repack
 
 # The logs will be written as separate files into ${JOBDIR}/pvmlog
 # before being catenated at end of run
@@ -174,6 +180,22 @@ then
   mv "$LOGFILE".1 "$LOGFILE"
 fi
 
+# repack level 2 forward model files to speed things up
+if [ -x "$H5REPACK" ]
+  files=`echo *L2FWM*.h5`
+  for file in $files
+  do
+    if [ -r "$file" ]
+    then
+      packed="$file".p
+      echo "Packing $file into $packed"
+      echo $H5REPACK -i "$file" -o "$packed"
+      # Here we could insert some check involving h5diff if we were dubious
+      mv "$packed" "$file"
+    fi
+then
+fi
+
 if [ $return_status != $NORMAL_STATUS ]
 then
    exit 1
@@ -182,6 +204,9 @@ else
 fi
 
 # $Log$
+# Revision 1.9  2005/06/23 22:20:45  pwagner
+# Reworded Copyright statement
+#
 # Revision 1.8  2004/03/05 19:08:04  pwagner
 # Made --cat the default option
 #
