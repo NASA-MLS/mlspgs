@@ -32,7 +32,9 @@ contains
 !---------------------------------------------  Get_Eta_Sparse_2d  -----
   subroutine Get_Eta_Sparse_2d ( Basis, Grid, Eta, Not_zero, Sorted )
 
-! Compute the eta matrix
+! Compute the eta matrix.  Basis is assumed to be sorted.  Grid need not
+! be sorted, but if it is, Sorted can be set .true. to suppress sorting it
+! here.
 
     use Sort_m, only: SortP
 ! Inputs
@@ -48,7 +50,7 @@ contains
 
 ! Internals
 
-    integer(ip) :: I, J, N_coeffs, N_Grid, P(size(grid))
+    integer(ip) :: I, J, N_coeffs, N_Grid, P(size(grid)), PI
     real(rp) :: Del_basis
     logical :: MySorted
 
@@ -63,7 +65,7 @@ contains
         p(i) = i
       end do
     else
-      call sortp ( grid, 1, n_grid, p ) ! grid(p(i)) are now sorted
+      call sortp ( grid, 1, n_grid, p ) ! grid(p(:)) are now sorted
     end if
 
 ! The first coefficient is one for all values of grid below basis(1)
@@ -87,17 +89,18 @@ contains
       end do
 
 ! Normal triangular function for j=2 to j=n_coeffs-1.  Both Basis and
-! Grid are sorted, so we don't need to start from i=1.
+! Grid(p(:)) are sorted, so we don't need to start from i=1.
 
       do j = 2 , n_coeffs
-        del_basis = basis(j) - basis(j-1)
+        del_basis = 1.0_rp / ( basis(j) - basis(j-1) )
         do while ( i <= n_grid )
-          if ( grid(p(i)) > basis(j) ) exit
-          if ( basis(j-1) <= grid(p(i)) ) then
-            eta(p(i),j-1) = (basis(j) - grid(p(i))) / del_basis
-            eta(p(i),j) =   (grid(p(i)) - basis(j-1)) / del_basis
-            not_zero(p(i),j-1) = .true.
-            not_zero(p(i),j) = .true.
+          pi = p(i)
+          if ( grid(pi) > basis(j) ) exit
+          if ( basis(j-1) <= grid(pi) ) then
+            eta(pi,j-1) = (basis(j) - grid(pi)) * del_basis
+            eta(pi,j  ) = (grid(pi) - basis(j-1)) * del_basis
+            not_zero(pi,j-1) = .true.
+            not_zero(pi,j) = .true.
           end if
           i = i + 1
         end do
@@ -244,6 +247,9 @@ contains
 end module Get_Eta_Matrix_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.7  2005/12/10 01:52:44  vsnyder
+! Added Get_Eta_Sparse_1d, made Get_Eta_Sparse generic
+!
 ! Revision 2.6  2005/06/22 18:08:19  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
