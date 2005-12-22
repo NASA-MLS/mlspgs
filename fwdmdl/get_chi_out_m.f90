@@ -74,7 +74,7 @@ contains
 
     integer :: beg_p, beg_v, beg_z  ! One less than begin of h2o info in grids_f
     integer :: end_p, end_z         ! End of h2o info in grids_f
-    integer :: ht_i, n_h2o_phi, n_h2o_zeta, n_out, n_t_phi, n_t_zeta
+    integer :: ht_i, n_out, n_t_phi, n_t_zeta
     integer :: sv_p, sv_z
 
     real(rp) :: d2hdhdt_tan(size(zetatan), grids_tmp%l_z(1), grids_tmp%l_p(1))
@@ -114,29 +114,26 @@ contains
     if ( h2o_ind > 0 ) then
       ! compute the tangent water vapor profile along input phi_tan
       end_z = grids_f%l_z(h2o_ind)
-      beg_z = grids_f%l_z(h2o_ind-1)
+      beg_z = grids_f%l_z(h2o_ind-1) + 1
       end_p = grids_f%l_p(h2o_ind)
-      beg_p = grids_f%l_p(h2o_ind-1)
-      beg_v = grids_f%l_v(h2o_ind-1)
+      beg_p = grids_f%l_p(h2o_ind-1) + 1
 
-      n_h2o_zeta = end_z - beg_z
-      n_h2o_phi  = end_p - beg_p
-
-      call allocate_test ( eta_p, n_out, n_h2o_phi, 'eta_p', modulename )
-      call allocate_test ( eta_z, n_out, n_h2o_zeta, 'eta_z', modulename )
+      call allocate_test ( eta_p, n_out, end_p, 'eta_p', modulename, low2=beg_p )
+      call allocate_test ( eta_z, n_out, end_z, 'eta_z', modulename, low2=beg_z )
       call allocate_test ( h2o_tan_out, n_out, 'h2o_tan_out', modulename )
 
-      call get_eta_sparse ( grids_f%phi_basis(beg_p+1:end_p), phitan, eta_p )
-      call get_eta_sparse ( grids_f%zet_basis(beg_z+1:end_z), zetatan, eta_z )
+      call get_eta_sparse ( grids_f%phi_basis(beg_p:end_p), phitan, eta_p )
+      call get_eta_sparse ( grids_f%zet_basis(beg_z:end_z), zetatan, eta_z )
 
-! beg_v is actually one less than the true start index
+! beg_v starts at one less than the true start index
+      beg_v = grids_f%l_v(h2o_ind-1)
 
       h2o_tan_out(:) = 0.0_rp
-      do sv_p = 1, n_h2o_phi
-        do sv_z = 1, n_h2o_zeta
+      do sv_p = beg_p, end_p
+        do sv_z = beg_z, end_z
+          beg_v = beg_v + 1
           h2o_tan_out = h2o_tan_out + &
-            & grids_f%values(beg_v + sv_z + n_h2o_zeta * (sv_p - 1)) * &
-            &   eta_z(:,sv_z) * eta_p(:,sv_p)
+            & grids_f%values(beg_v) * eta_z(:,sv_z) * eta_p(:,sv_p)
         end do
       end do
 
@@ -200,6 +197,9 @@ contains
 end module Get_Chi_Out_m
 
 ! $Log$
+! Revision 2.16  2005/12/22 20:53:29  vsnyder
+! Simplify calcuation of water vapor
+!
 ! Revision 2.15  2005/06/22 18:08:19  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
