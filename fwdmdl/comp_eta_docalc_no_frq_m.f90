@@ -28,7 +28,7 @@ contains
 ! ---------------------------------------  Comp_Eta_Docalc_No_Frq  -----
 
   subroutine Comp_Eta_Docalc_No_Frq ( Grids_x, path_zeta, path_phi, &
-                                  &   eta_zp, do_calc_zp )
+                                  &   eta_zp, do_calc_zp, sps )
 
     use MLSCommon, only: RP, IP
     use Get_Eta_Matrix_m, only: Get_Eta_Sparse
@@ -42,6 +42,7 @@ contains
 !                           species vmr is needed.
     real(rp), intent(in) :: path_phi(:) ! phi values along path for which
 !                           species vmr is needed.
+    integer, intent(in), optional :: SPS ! Only do this species if present
 ! output:
 
     real(rp), intent(out) :: eta_zp(:,:) ! Eta_z * Eta_phi for each state
@@ -56,7 +57,7 @@ contains
 ! Internal declarations:
 
     integer(ip) :: N_p, N_z
-    integer(ip) :: Sps_i, Sv_z, Sv_p
+    integer(ip) :: Sps_1, Sps_n, Sps_i, Sv_z, Sv_p
     integer(ip) :: P_inda, Z_inda, V_inda, P_indb, Z_indb
 
     real(rp) :: Eta_p(1:size(path_zeta),1:Grids_x%l_p(ubound(Grids_x%l_p,1)))
@@ -72,7 +73,14 @@ contains
     v_inda = 0
     z_inda = 0
 
-    do sps_i = 1 , ubound(Grids_x%l_z,1) ! Number of molecules
+    sps_1 = 1
+    sps_n = ubound(Grids_x%l_z,1)
+    if ( present(sps) ) then
+      sps_1 = sps
+      sps_n = sps
+    end if
+
+    do sps_i = sps_1, sps_n ! Number of molecules
 
       p_indb = Grids_x%l_p(sps_i)
       z_indb = Grids_x%l_z(sps_i)
@@ -126,6 +134,9 @@ contains
 end module Comp_Eta_Docalc_No_Frq_m
 
 ! $Log$
+! Revision 2.8  2005/12/22 20:48:55  vsnyder
+! Add a 'this-species-only' optional argument
+!
 ! Revision 2.7  2005/06/22 18:08:18  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
