@@ -6095,9 +6095,7 @@ contains ! =====     Public Procedures     =============================
       real(rv), dimension(grid%noSurfs) :: TFINE ! Temperature on fine grid
       real(rv), dimension(grid%noSurfs) :: HFINE ! Temperature on fine grid
       real(rv), dimension(grid%noSurfs) :: DTDH ! d(tFine)/d(hFine)
-      real(rv), dimension(grid%noSurfs) :: DUMMYT ! Extra arg. for hydrostatic
-      real(rv), dimension(grid%noSurfs) :: DUMMYDHDZ ! Extra arg. for hydrostatic
-      real(rv), dimension(grid%noSurfs,grid%noSurfs) :: DUMMYDHDT ! Extra arg. for hydrostatic
+      real(rv), dimension(grid%noSurfs) :: DUMMYT ! Extra arg. for interpolateValues
       integer :: I                      ! Instance counter
       integer :: S500                   ! 500mb surface?
       integer :: LOWCANDIDATE           ! Possbile tb but below 500hPa
@@ -6161,8 +6159,7 @@ contains ! =====     Public Procedures     =============================
         ! Now get the height for this.
         call Hydrostatic ( GeodToGeocLat ( temperature%template%geodLat(1,i) ), &
           & grid%surfs(:,1), tFine, grid%surfs(:,1), &
-          & refGPH%template%surfs(1,1), refGPH%values(1,i), &
-          & dummyT, hFine, dummyDHDT, dummyDHDZ )
+          & refGPH%template%surfs(1,1), refGPH%values(1,i), hFine )
         ! Note while much of the software thinks in meters.  The hydrostatic
         ! routine works in km.
         ! Now do another spline 'interpolation' to get dTdH
@@ -6845,6 +6842,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.315  2005/12/22 21:05:20  vsnyder
+! Use Hydrostatic_no_der (by way of generic)
+!
 ! Revision 2.314  2005/11/17 20:12:51  pwagner
 ! Can now read BO_stat successfully
 !
