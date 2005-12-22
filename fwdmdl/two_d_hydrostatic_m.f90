@@ -60,7 +60,7 @@ module Two_D_Hydrostatic_m
   integer(ip) :: Z_coeffs, P_coeffs, I, J1, J2
 
   real(rp) :: CSQ ! C**2
-  real(rp) :: Lat, Red_phi_t, SinBeta, SinBetaSQ, SinPhi, SinPhiSQ
+  real(rp) :: Lat, Red_phi_t, SinBeta, SinPhi, SinPhiSQ
 
   real(rp), parameter :: PId2=0.5_rp*pi, PI2=2.0_rp*pi, PI3d2=1.5_rp*pi
 
@@ -73,9 +73,9 @@ module Two_D_Hydrostatic_m
 !  $c^2 = \frac{a^2\,b^2}{a^2 \sin^2 \beta + b^2 \cos^2 \beta}$
 
   sinBeta = sin(beta)
-  sinBetaSQ = sinBeta**2
-  csq = (earthrada*earthradb)**2 / (earthrada**2 * sinBetaSQ + &
-      &                             earthradb**2 * (1.0_rp - sinBetaSQ) ) ! in meters
+  csq = (earthrada * earthradb)**2 / &
+        & ((earthrada**2-earthradb**2)*sinBeta**2 + earthradb**2)
+
 
 ! compute the 2 d hydrostatic
 
@@ -129,6 +129,9 @@ module Two_D_Hydrostatic_m
 end module Two_D_Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.12  2005/06/22 18:08:20  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.11  2003/05/05 23:00:26  livesey
 ! Merged in feb03 newfwm branch
 !
