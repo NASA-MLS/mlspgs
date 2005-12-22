@@ -15,6 +15,7 @@ module Comp_Sps_Path_Frq_m
 
   private
   public :: Comp_Sps_Path_Frq, Comp_Sps_Path, Comp_Sps_Path_No_Frq
+  public :: Comp_1_Sps_Path_No_Frq
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -164,8 +165,8 @@ module Comp_Sps_Path_Frq_m
 
     type (grids_t), intent(in) :: Grids_x  ! All the needed coordinates
     integer, intent(in) :: SPS_I           ! Which thing-o in Grids_X
-    real(rp), intent(in) :: Eta_zp(:,:)    ! Eta_z x Eta_phi for each path
-!                         element and (ZxP). First dimension is same as sps_path.
+    real(rp), intent(in) :: Eta_zp(:,:)    ! Path X (Eta_z X Eta_phi)
+!                         First dimension is size(Sps_Path,1).
 
 ! Output:
 
@@ -177,8 +178,8 @@ module Comp_Sps_Path_Frq_m
 
     n_c = grids_x%l_f(sps_i) - grids_x%l_f(sps_i-1) ! # Components
 
-    v_inda = grids_x%l_v(sps_i-1)              ! One before first value
-    v_indb = grids_x%l_v(sps_i)                ! Last value
+    v_inda = grids_x%l_v(sps_i-1)          ! One before first value
+    v_indb = grids_x%l_v(sps_i)            ! Last value
 
     ! Grids_X%Values are really 3-d: Components X Zeta X Phi.
     ! For each component, multiply the Zeta X Phi part by Eta (on the left).
@@ -194,18 +195,18 @@ module Comp_Sps_Path_Frq_m
   end subroutine Comp_Sps_Path
 
 ! -----------------------------------------  Comp_Sps_Path_No_Frq  -----
-  subroutine Comp_Sps_Path_No_Frq ( Grids_x, eta_zp, sps_path )
+  subroutine Comp_Sps_Path_No_Frq ( Grids_x, Eta_zp, Sps_Path )
 
 ! Compute the SPS path for species that don't use frequency
 
-    use MLSCommon, only: RP, IP
+    use MLSCommon, only: RP
     use Load_sps_data_m, only: Grids_T
 
 ! Input:
 
     type (grids_t), intent(in) :: Grids_x  ! All the needed coordinates
-    real(rp), intent(in) :: Eta_zp(:,:)    ! Path X (Eta_z x Eta_phi)
-!                         First dimension is same as sps_values.
+    real(rp), intent(in) :: Eta_zp(:,:)    ! Path X (Eta_z X Eta_phi)
+!                         First dimension is size(Sps_Path,1).
 
 ! Output:
 
@@ -219,39 +220,74 @@ module Comp_Sps_Path_Frq_m
 
 ! Internal declarations
 
-    integer(ip) :: no_mol
-    integer(ip) :: sps_i, sv_zp
-    integer(ip) :: v_inda, w_inda, w_indb
+    integer :: no_mol
+    integer :: sps_i
+    integer :: v_inda, v_indb
 
 ! Begin executable code:
 
     no_mol = ubound(grids_x%l_z,1)
 
-    sps_path = 0.0_rp
-
-    w_inda = 0
-
+    v_indb = 0 ! = grids_x%l_v(0) ! Index of last one for species 0
     do sps_i = 1, no_mol
 
-      w_indb = w_inda + (Grids_x%l_z(sps_i) - Grids_x%l_z(sps_i-1)) * &
-                        (Grids_x%l_p(sps_i) - Grids_x%l_p(sps_i-1))
-
       ! Compute Sps_Path
-      v_inda = grids_x%l_v(sps_i-1)
-      ! Grids_X%Values are really 3-d: Frequencies (1 here) X Zeta X Phi
-      do sv_zp = w_inda + 1, w_indb
-        v_inda = v_inda + 1
-        sps_path(:,sps_i) = sps_path(:,sps_i) +  &
-                         &  grids_x%values(v_inda) * eta_zp(:,v_inda)
-      end do ! sv_zp
+      v_inda = v_indb
+      v_indb = grids_x%l_v(sps_i) ! Index of last one for sps_i
+      sps_path(:,sps_i) = &
+        & matmul(eta_zp(:,v_inda+1:v_indb), grids_x%values(v_inda+1:v_indb))
 
-      if ( grids_x%lin_log(sps_i)) sps_path(:,sps_i) = EXP(sps_path(:,sps_i))
-
-      w_inda = w_indb
+      if ( grids_x%lin_log(sps_i)) &
+        & sps_path(:,sps_i) = exp(sps_path(:,sps_i))
 
     end do
 
   end subroutine Comp_Sps_Path_No_Frq
+
+! ---------------------------------------  Comp_1_Sps_Path_No_Frq  -----
+  subroutine Comp_1_Sps_Path_No_Frq ( Grids_x, The_Sps, Eta_zp, Sps_Path )
+
+! Compute the SPS path for one species that doesn't use frequency.
+! Actually, if you have an Eta_ZP prepared for an arbitrary grid in its
+! first dimension (not necessary a line-of-sight path), this will put the
+! species on that grid.  It's just a matrix multiply, but it knows how to
+! dig up the species values from the Grids_X structure given The_Sps.
+
+    use MLSCommon, only: RP
+    use Load_sps_data_m, only: Grids_T
+
+! Input:
+
+    type (grids_t), intent(in) :: Grids_x  ! All the needed coordinates
+    integer, intent(in) :: The_Sps ! The molecule for which to compute the
+!                         path value.
+    real(rp), intent(in) :: Eta_zp(:,:)    ! Path X (Eta_z X Eta_phi)
+!                         First dimension is size(Sps_Path).
+
+! Output:
+
+    real(rp), intent(inout) :: Sps_Path(:) ! Path.  vmr values
+!                         along the path for species The_Sps
+
+! Notes:
+! units of z_basis must be same as zeta_path (usually -log(P)) and units of
+! phi_basis must be the same as phi_path (either radians or degrees).
+! Units of sps_path = sps_values.
+
+! Internal declarations
+
+    integer :: v_inda, v_indb
+
+! Begin executable code:
+
+    v_inda = grids_x%l_v(the_sps-1) ! Index of last one for the_sps - 1
+    v_indb = grids_x%l_v(the_sps)   ! Index of last one for the_sps
+    sps_path = &
+      & matmul(eta_zp(:,v_inda+1:v_indb), grids_x%values(v_inda+1:v_indb))
+
+    if ( grids_x%lin_log(the_sps)) sps_path = exp(sps_path)
+
+  end subroutine Comp_1_Sps_Path_No_Frq
 
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
@@ -265,6 +301,9 @@ module Comp_Sps_Path_Frq_m
 end module Comp_Sps_Path_Frq_m
 !
 ! $Log$
+! Revision 2.23  2005/12/22 20:51:46  vsnyder
+! Added Comp_1_Sps_Path_No_Frq
+!
 ! Revision 2.22  2005/09/16 23:41:19  vsnyder
 ! Cannonball polishing
 !
