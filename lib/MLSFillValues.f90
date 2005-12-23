@@ -17,7 +17,7 @@ module MLSFillValues              ! Some FillValue-related stuff
   use MLSCommon, only: r4, r8, DEFAULTUNDEFINEDVALUE
   use MLSKinds ! Everything
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-  use MLSStrings, only: Capitalize, lowercase
+  use MLSStrings, only: Lowercase
 
   implicit none
 
@@ -87,270 +87,79 @@ module MLSFillValues              ! Some FillValue-related stuff
 
 contains
 
-! ------------------------------------------------- FilterValues ---
-  subroutine filterValues_REAL(a, ATAB, b, BTAB, warn, fillValue, precision)
-      ! Return arrays filtered of any fillValues
-      ! or where corresponding precision array < 0
-      ! or whose values are not finite
-      ! "Filter" means offending elements set to 0.
-      ! Returned arrays are allocated and assigned values as appropriate
-      ! Args
-      real, dimension(:), intent(in)             :: a
-      real, dimension(:), intent(in)             :: b
-      real, dimension(:), intent(out)            :: atab
-      real, dimension(:), intent(out)            :: btab
-      logical, intent(out)                           :: warn
-      real, optional, intent(in)                 :: fillValue
-      real, dimension(:), optional, intent(in)   :: precision
-      ! Internal variables
-      integer                                        :: i
-      real                                       :: myFillValue
-      integer                                        :: n
-      ! Executable
-      myFillValue = 0.
-      if ( present(FillValue) ) myFillValue = FillValue
-      warn = .false.
-      n=size(a)
-      if ( n /= size(b) ) then
-        call announce_error('a and b different sizes', n, size(b))
-      elseif ( n /= size(atab) ) then
-        call announce_error('a and atab different sizes', n, size(b))
-      elseif ( n /= size(btab) ) then
-        call announce_error('a and btab different sizes', n, size(b))
-      elseif ( DEEBUG ) then
-        call output('Filtering 1-d reals ', advance='yes')
-        !call dump_name_v_pairs( (/n, size(b), size(atab), size(btab) /), &
-        !  & 'size(a), size(b), size(atab), size(btab)', width=4)
-      endif
-      atab = a
-      btab = b
-      do i=1, N
-        if ( .not. ieee_is_finite(a(i)) .or. .not. ieee_is_finite(b(i)) ) then
-          atab(i) = myFillValue
-          btab(i) = myFillValue
-          warn = warn .or. ieee_is_finite(a(i)) .or. ieee_is_finite(b(i))
-        endif
-      enddo
-      if ( present(fillValue) ) then
-        do i=1, N
-          if ( isFillValue(a(i), FillValue) .or. isFillValue(b(i), FillValue) ) then
-            atab(i) = myFillValue
-            btab(i) = myFillValue
-          endif
-        enddo
-      endif
-      if ( present(precision) ) then
-        do i=1, N
-          if ( (precision(i) < 0.) ) then
-            atab(i) = myFillValue
-            btab(i) = myFillValue
-          endif
-        enddo
-      endif
+! -------------------------------------------------  FilterValues  -----
+  subroutine filterValues_REAL ( a, ATAB, b, BTAB, warn, fillValue, precision )
+    ! Return arrays filtered of any fillValues
+    ! or where corresponding precision array < 0
+    ! or whose values are not finite
+    ! "Filter" means offending elements set to 0.
+    ! Returned arrays are allocated and assigned values as appropriate
+    integer, parameter :: RK = kind(0.0) ! Kind type parameter for default real
+    character(*), parameter :: P = 'default reals'
+    include 'FilterValues_1d.f9h'
   end subroutine filterValues_REAL
 
-  subroutine filterValues_DOUBLE(a, ATAB, b, BTAB, warn, fillValue, precision)
-      ! Return arrays filtered etc.
-      ! Args
-      double precision, dimension(:), intent(in)             :: a
-      double precision, dimension(:), intent(in)             :: b
-      double precision, dimension(:), intent(out)            :: atab
-      double precision, dimension(:), intent(out)            :: btab
-      logical, intent(out)                           :: warn
-      double precision, optional, intent(in)                 :: fillValue
-      double precision, dimension(:), optional, intent(in)   :: precision
-      ! Internal variables
-      integer                                        :: i
-      double precision                                       :: myFillValue
-      integer                                        :: n
-      ! Executable
-      myFillValue = 0.d0
-      if ( present(FillValue) ) myFillValue = FillValue
-      n=size(a)
-      if ( n /= size(b) ) then
-        call announce_error('a and b different sizes', n, size(b))
-      elseif ( n /= size(atab) ) then
-        call announce_error('a and atab different sizes', n, size(b))
-      elseif ( n /= size(btab) ) then
-        call announce_error('a and btab different sizes', n, size(b))
-      elseif ( DEEBUG ) then
-        call output('Filtering 1-d double precision ', advance='yes')
-        !call dump_name_v_pairs( (/n, size(b), size(atab), size(btab)/) , &
-        !  & 'size(a), size(b), size(atab), size(btab)', width=4)
-      endif
-      atab = a
-      btab = b
-      do i=1, N
-        if ( .not. ieee_is_finite(a(i)) .or. .not. ieee_is_finite(b(i)) ) then
-          atab(i) = myFillValue
-          btab(i) = myFillValue
-          warn = warn .or. ieee_is_finite(a(i)) .or. ieee_is_finite(b(i))
-        endif
-      enddo
-      if ( present(fillValue) ) then
-        do i=1, N
-          if ( isFillValue(a(i), FillValue) .or. isFillValue(b(i), FillValue) ) then
-            atab(i) = myFillValue
-            btab(i) = myFillValue
-          endif
-        enddo
-      endif
-      if ( present(precision) ) then
-        do i=1, N
-          if ( (precision(i) < 0.d0) ) then
-            atab(i) = myFillValue
-            btab(i) = myFillValue
-          endif
-        enddo
-      endif
+  subroutine filterValues_DOUBLE ( a, ATAB, b, BTAB, warn, fillValue, precision )
+    ! Return arrays filtered etc.
+    character(*), parameter :: P = 'double precision reals'
+    integer, parameter :: RK = kind(0.0d0) ! Kind type parameter for double precision
+    include 'FilterValues_1d.f9h'
   end subroutine filterValues_DOUBLE
 
   subroutine filterValues_REAL_2d(a, ATAB, b, BTAB, warn, fillValue, precision)
-      ! Return arrays filtered etc.
-      ! Args
-      real, dimension(:,:), intent(in)             :: a
-      real, dimension(:,:), intent(in)             :: b
-      real, dimension(:,:), intent(out)            :: atab
-      real, dimension(:,:), intent(out)            :: btab
-      logical, intent(out)                           :: warn
-      real, optional, intent(in)                 :: fillValue
-      real, dimension(:,:), optional, intent(in)   :: precision
-      ! Internal variables
-      integer, dimension(2)                          :: shp
-      real, dimension(size(a,1)*size(a,2))       :: a1
-      real, dimension(size(b,1)*size(b,2))       :: b1
-      ! Executable
-      shp = shape(a)
-      if ( DEEBUG ) then
-        call dump_name_v_pairs(shp, width=4)
-        call dump_name_v_pairs(shape(b), width=4)
-      endif
-      if ( present(precision) ) then
-        call filterValues(reshape(a, (/shp(1)*shp(2)/)), &
-        & a1, &
-        & reshape(b, (/shp(1)*shp(2)/)), &
-        & b1, &
-        & warn, fillValue, reshape(precision, (/shp(1)*shp(2)/)) )
-      else
-        call filterValues(reshape(a, (/shp(1)*shp(2)/)), &
-        & a1, &
-        & reshape(b, (/shp(1)*shp(2)/)), &
-        & b1, &
-        & warn, fillValue)
-      endif
-      atab = reshape(a1, shp)
-      btab = reshape(b1, shp)
+    ! Return arrays filtered etc.
+    integer, parameter :: RK = kind(0.0) ! Kind type parameter for default real
+    ! Args
+    real(rk), dimension(:,:), intent(in)           :: a
+    real(rk), dimension(:,:), intent(in)           :: b
+    real(rk), dimension(:,:), intent(out)          :: atab
+    real(rk), dimension(:,:), intent(out)          :: btab
+    logical, intent(out)                           :: warn
+    real(rk), optional, intent(in)                 :: fillValue
+    real(rk), dimension(:,:), optional, intent(in) :: precision
+    include 'FilterValues_nd.f9h'
   end subroutine filterValues_REAL_2d
 
   subroutine filterValues_DOUBLE_2d(a, ATAB, b, BTAB, warn, fillValue, precision)
-      ! Return arrays filtered etc.
-      ! Args
-      double precision, dimension(:,:), intent(in)             :: a
-      double precision, dimension(:,:), intent(in)             :: b
-      double precision, dimension(:,:), intent(out)            :: atab
-      double precision, dimension(:,:), intent(out)            :: btab
-      logical, intent(out)                           :: warn
-      double precision, optional, intent(in)                 :: fillValue
-      double precision, dimension(:,:), optional, intent(in)   :: precision
-      ! Internal variables
-      integer, dimension(2)                          :: shp
-      double precision, dimension(size(a,1)*size(a,2))       :: a1
-      double precision, dimension(size(b,1)*size(b,2))       :: b1
-      ! Executable
-      shp = shape(a)
-      if ( DEEBUG ) then
-        call dump_name_v_pairs(shp, width=4)
-        call dump_name_v_pairs(shape(b), width=4)
-      endif
-      if ( present(precision) ) then
-        call filterValues(reshape(a, (/shp(1)*shp(2)/)), &
-        & a1, &
-        & reshape(b, (/shp(1)*shp(2)/)), &
-        & b1, &
-        & warn, fillValue, reshape(precision, (/shp(1)*shp(2)/)) )
-      else
-        call filterValues(reshape(a, (/shp(1)*shp(2)/)), &
-        & a1, &
-        & reshape(b, (/shp(1)*shp(2)/)), &
-        & b1, &
-        & warn, fillValue)
-      endif
-      atab = reshape(a1, shp)
-      btab = reshape(b1, shp)
+    ! Return arrays filtered etc.
+    integer, parameter :: RK = kind(0.0d0) ! Kind type parameter for double precision
+    ! Args
+    real(rk), dimension(:,:), intent(in)           :: a
+    real(rk), dimension(:,:), intent(in)           :: b
+    real(rk), dimension(:,:), intent(out)          :: atab
+    real(rk), dimension(:,:), intent(out)          :: btab
+    logical, intent(out)                           :: warn
+    real(rk), optional, intent(in)                 :: fillValue
+    real(rk), dimension(:,:), optional, intent(in) :: precision
+    include 'FilterValues_nd.f9h'
   end subroutine filterValues_DOUBLE_2d
 
   subroutine filterValues_REAL_3d(a, ATAB, b, BTAB, warn, fillValue, precision)
-      ! Return arrays filtered etc.
-      ! Args
-      real, dimension(:,:,:), intent(in)             :: a
-      real, dimension(:,:,:), intent(in)             :: b
-      real, dimension(:,:,:), intent(out)            :: atab
-      real, dimension(:,:,:), intent(out)            :: btab
-      logical, intent(out)                           :: warn
-      real, optional, intent(in)                 :: fillValue
-      real, dimension(:,:,:), optional, intent(in)   :: precision
-      ! Internal variables
-      integer, dimension(3)                          :: shp
-      real, dimension(size(a,1)*size(a,2)*size(a,3))       :: a1
-      real, dimension(size(b,1)*size(b,2)*size(b,3))       :: b1
-      ! Executable
-      shp = shape(a)
-      if ( DEEBUG ) then
-        call dump_name_v_pairs(shp, width=4)
-        call dump_name_v_pairs(shape(b), width=4)
-      endif
-      if ( present(precision) ) then
-        call filterValues(reshape(a, (/shp(1)*shp(2)*shp(3)/)), &
-        & a1, &
-        & reshape(b, (/shp(1)*shp(2)*shp(3)/)), &
-        & b1, &
-        & warn, fillValue, reshape(precision, (/shp(1)*shp(2)*shp(3)/)) )
-      else
-        call filterValues(reshape(a, (/shp(1)*shp(2)*shp(3)/)), &
-        & a1, &
-        & reshape(b, (/shp(1)*shp(2)*shp(3)/)), &
-        & b1, &
-        & warn, fillValue)
-      endif
-      atab = reshape(a1, shp)
-      btab = reshape(b1, shp)
+    ! Return arrays filtered etc.
+    integer, parameter :: RK = kind(0.0) ! Kind type parameter for default real
+    ! Args
+    real(rk), dimension(:,:,:), intent(in)           :: a
+    real(rk), dimension(:,:,:), intent(in)           :: b
+    real(rk), dimension(:,:,:), intent(out)          :: atab
+    real(rk), dimension(:,:,:), intent(out)          :: btab
+    logical, intent(out)                             :: warn
+    real(rk), optional, intent(in)                   :: fillValue
+    real(rk), dimension(:,:,:), optional, intent(in) :: precision
+    include 'FilterValues_nd.f9h'
   end subroutine filterValues_REAL_3d
 
   subroutine filterValues_DOUBLE_3d(a, ATAB, b, BTAB, warn, fillValue, precision)
-      ! Return arrays filtered etc.
-      ! Args
-      double precision, dimension(:,:,:), intent(in)             :: a
-      double precision, dimension(:,:,:), intent(in)             :: b
-      double precision, dimension(:,:,:), intent(out)            :: atab
-      double precision, dimension(:,:,:), intent(out)            :: btab
-      logical, intent(out)                           :: warn
-      double precision, optional, intent(in)                 :: fillValue
-      double precision, dimension(:,:,:), optional, intent(in)   :: precision
-      ! Internal variables
-      integer, dimension(3)                          :: shp
-      double precision, dimension(size(a,1)*size(a,2)*size(a,3))       :: a1
-      double precision, dimension(size(b,1)*size(b,2)*size(b,3))       :: b1
-      ! Executable
-      shp = shape(a)
-      if ( DEEBUG ) then
-        call dump_name_v_pairs(shp, width=4)
-        call dump_name_v_pairs(shape(b), width=4)
-      endif
-      if ( present(precision) ) then
-        call filterValues(reshape(a, (/shp(1)*shp(2)*shp(3)/)), &
-        & a1, &
-        & reshape(b, (/shp(1)*shp(2)*shp(3)/)), &
-        & b1, &
-        & warn, fillValue, reshape(precision, (/shp(1)*shp(2)*shp(3)/)) )
-      else
-        call filterValues(reshape(a, (/shp(1)*shp(2)*shp(3)/)), &
-        & a1, &
-        & reshape(b, (/shp(1)*shp(2)*shp(3)/)), &
-        & b1, &
-        & warn, fillValue)
-      endif
-      atab = reshape(a1, shp)
-      btab = reshape(b1, shp)
+    ! Return arrays filtered etc.
+    integer, parameter :: RK = kind(0.0d0) ! Kind type parameter for double precision
+    ! Args
+    real(rk), dimension(:,:,:), intent(in)           :: a
+    real(rk), dimension(:,:,:), intent(in)           :: b
+    real(rk), dimension(:,:,:), intent(out)          :: atab
+    real(rk), dimension(:,:,:), intent(out)          :: btab
+    logical, intent(out)                             :: warn
+    real(rk), optional, intent(in)                   :: fillValue
+    real(rk), dimension(:,:,:), optional, intent(in) :: precision
+    include 'FilterValues_nd.f9h'
   end subroutine filterValues_DOUBLE_3d
 
 ! ------------------------------------------------- IsFillValue ---
@@ -922,6 +731,9 @@ end module MLSFillValues
 
 !
 ! $Log$
+! Revision 2.2  2005/12/23 03:10:31  vsnyder
+! Make some routines more generic, using include
+!
 ! Revision 2.1  2005/12/16 00:00:23  pwagner
 ! Created to hold fillValue-related stuff
 !
