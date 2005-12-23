@@ -141,11 +141,9 @@ contains
 
 ! last basis calculation
 
-      do while ( i <= n_grid )
-        if ( basis(n_coeffs) < grid(p(i)) ) then
-          eta(p(i),n_coeffs) = 1.0_rp
-        end if
-        i = i + 1
+      do j = n_grid, i, -1
+        if ( basis(n_coeffs) >= grid(p(j)) ) exit
+        eta(p(j),n_coeffs) = 1.0_rp
       end do
 
     end if
@@ -247,6 +245,9 @@ contains
 end module Get_Eta_Matrix_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.8  2005/12/22 20:55:16  vsnyder
+! Improve handling of sorted grid, some cannonball polishing
+!
 ! Revision 2.7  2005/12/10 01:52:44  vsnyder
 ! Added Get_Eta_Sparse_1d, made Get_Eta_Sparse generic
 !
