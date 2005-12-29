@@ -1092,7 +1092,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_nscatteringangles, t+t_numeric, n+n_field_type, &
              begin, f+f_nsizebins, t+t_numeric, n+n_field_type, &
              begin, f+f_phiWindow, t+t_numeric, n+n_field_type, &
-             begin, f+f_polarized, t+t_boolean, n+n_field_type /) )
+             begin, f+f_polarized, t+t_boolean, n+n_field_type, &
+             begin, f+f_refract, t+t_boolean, n+n_field_type /) )
     call make_tree ( (/ &
              begin, f+f_scanAverage, t+t_boolean, n+n_field_type, &
              begin, f+f_signals, t+t_string, n+n_field_type, &
@@ -1376,6 +1377,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.418  2005/12/29 01:11:08  vsnyder
+! Add boolean 'refract' field to ForwardModel spec
+!
 ! Revision 2.417  2005/12/21 21:47:45  livesey
 ! Added negateSD and precisionFactor arguments to Retrieve
 !
