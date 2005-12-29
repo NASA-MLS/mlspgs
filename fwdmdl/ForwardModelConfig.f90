@@ -112,7 +112,6 @@ module ForwardModelConfig
     ! First the lit_indices
     integer :: Name                   ! String index of config name
     integer :: Where                  ! Tree node index of config (for messages)
-    integer :: Cat_Size(2)            ! Catalog size, by sideband, 1 = LSB, 2 = USB
     integer :: Cloud_der              ! Compute cloud sensitivity in cloud models.
                                       ! l_iwc_low_height, l_iwc_high_height, l_iwp
                                       ! l_none
@@ -125,8 +124,10 @@ module ForwardModelConfig
                                       ! l_cloudy_110rh_in_cloud,
                                       ! l_cloudy_nearside_only
     integer :: InstrumentModule       ! Module for scan model (actually a spec index)
-    integer :: LinearSideband         ! For hybrid model, which SB is linear?
+    integer :: WindowUnits            ! Either degrees or profiles
     ! Now the other integers
+    integer :: Cat_Size(2)            ! Catalog size, by sideband, 1 = LSB, 2 = USB
+    integer :: LinearSideband         ! For hybrid model, which SB is linear?
     integer :: No_cloud_species       ! No of Cloud Species '2'
     integer :: No_model_surfs         ! No of Model surfaces '640'
     integer :: NoUsedChannels         ! Total in all signals
@@ -137,7 +138,6 @@ module ForwardModelConfig
     integer :: Num_size_bins          ! No of size bins '40'
     integer :: SidebandStart, SidebandStop ! Folded or SSB config?
     integer :: SurfaceTangentIndex    ! Index in Tangentgrid of Earth's surface
-    integer :: WindowUnits            ! Either degrees or profiles
     integer :: xStar                  ! Index of specific vector to use for linearized model
     integer :: yStar                  ! Index of specific vector to use for linearized model
     ! Now the logicals
@@ -158,6 +158,7 @@ module ForwardModelConfig
     logical :: Incl_cld ! Include cloud extinction calculation in Bill's forward model
     logical :: LockBins               ! Use same l2pc bin for whole chunk
     logical :: Polarized              ! Use polarized model for Zeeman-split lines
+    logical :: Refract                ! Compute refractive correction for PhiTan
     logical :: ScanAverage            ! Average scan over MIF
     logical :: SkipOverlaps           ! Don't calculate for MAFs in overlap regions
     logical :: Spect_Der              ! Do spectroscopy derivatives
@@ -713,7 +714,7 @@ contains
       & config%differentialScan, config%do_1d, config%do_baseline, &
       & config%do_conv, config%do_freq_avg,  config%forceFoldedOutput, &
       & config%forceSidebandFraction,  config%globalConfig, config%incl_cld, &
-      & config%lockBins, config%polarized,  config%skipOverlaps, &
+      & config%lockBins, config%polarized, config%refract, config%skipOverlaps, &
       & config%spect_Der, config%switchingMirror,  config%temp_Der /), &
       & msg ="Packing fwmConfig logicals" )
 
@@ -787,7 +788,7 @@ contains
     ! Local variables
     integer :: INFO                     ! Flag from PVM
     logical :: FLAG                     ! A flag from the sender
-    logical, dimension(23) :: LS        ! Temporary array, for logical scalars
+    logical, dimension(24) :: LS        ! Temporary array, for logical scalars
     integer, dimension(10) :: IS        ! Temporary array, for integer scalars
     real(r8), dimension(2) :: RS        ! Temporary array, for real scalars
     integer :: I                        ! Loop counter
@@ -839,6 +840,7 @@ contains
     config%incl_cld              = ls(i) ; i = i + 1
     config%lockBins              = ls(i) ; i = i + 1
     config%polarized             = ls(i) ; i = i + 1
+    config%refract               = ls(i) ; i = i + 1
     config%skipOverlaps          = ls(i) ; i = i + 1
     config%spect_der             = ls(i) ; i = i + 1
     config%switchingMirror       = ls(i) ; i = i + 1
@@ -1126,10 +1128,12 @@ contains
   subroutine Dump_ForwardModelConfig ( Config, Where, Details, SkipPFA )
 
     use Dump_0, only: DUMP
-    use Intrinsic, only: Lit_indices
-    use MLSSignals_M, only: GetNameOfSignal, MaxSigLen
+    use Intrinsic, only: Lit_indices, PHYQ_Indices, Spec_Indices
+    use Lexer_Core, only: Print_Source
+    use MLSSignals_M, only: GetNameOfSignal, MaxSigLen, Modules
     use Output_M, only: NewLine, Output
     use String_Table, only: Display_String
+    use Tree, only: Null_Tree, Source_Ref
 
     type (ForwardModelConfig_T), intent(in) :: Config
     character(len=*), intent(in), optional :: Where
@@ -1149,35 +1153,74 @@ contains
     s1 = (config%sidebandStart+3)/2; s2 = (config%sidebandStop+3)/2
     call output ( '  Forward Model Config Name: ' )
     call display_string ( config%name )
+    if ( config%where /= null_tree ) then
+      call output ( ' defined at ' )
+      call print_source ( source_ref(config%where) )
+    end if
     if ( present(where) ) then
       call output ( ' from ' )
       call output ( where )
     end if
     call newLine
-    call output ( config%atmos_der, before='  Atmos_der:', advance='yes' )
-    call output ( config%do_conv, before='  Do_conv:', advance='yes' )
-    call output ( config%do_Baseline, before='  Do_Baseline:', advance='yes' )
-    call output ( config%Default_spectroscopy, before='  Default_spectroscopy:', advance='yes' )
-    call output ( config%do_freq_avg, before='  Do_freq_avg:', advance='yes' )
-    call output ( config%do_1d, before='  Do_1D:', advance='yes' )
-    call output ( config%incl_cld, before='  Incl_Cld:', advance='yes' )
+    ! Logical scalars
+    call output ( config%allLinesForRadiometer, before='  AllLinesForRadiometer: ', advance='yes' )
+    call output ( config%allLinesInCatalog, before='  AllLinesInCatalog: ', advance='yes' )
+    call output ( config%anyLBL(1), before='  AnyLBL: ' )
+    call output ( config%anyLBL(2) )
+    call output ( config%anyPFA(1), before='  AnyPFA: ' )
+    call output ( config%anyPFA(2), advance='yes' )
+    call output ( config%atmos_der, before='  Atmos_der: ', advance='yes' )
+    call output ( config%default_spectroscopy, before='  Default_spectroscopy: ', advance='yes' )
+    call output ( config%DifferentialScan, before='  DifferentialScan: ', advance='yes' )
+    call output ( config%do_1d, before='  Do_1D: ', advance='yes' )
+    call output ( config%do_Baseline, before='  Do_Baseline: ', advance='yes' )
+    call output ( config%do_conv, before='  Do_conv: ', advance='yes' )
+    call output ( config%do_freq_avg, before='  Do_freq_avg: ', advance='yes' )
+    call output ( config%forceFoldedOutput, before='  ForceFoldedOutput: ', advance='yes' )
+    call output ( config%forceSidebandFraction, before='  ForceSidebandFraction: ', advance='yes' )
+    call output ( config%globalConfig, before='  GlobalConfig: ', advance='yes' )
+    call output ( config%incl_cld, before='  Incl_Cld: ', advance='yes' )
+    call output ( config%lockBins, before='  LockBins: ', advance='yes' )
+    call output ( config%polarized, before='  Polarized: ', advance='yes' )
+    call output ( config%refract, before='  Refract: ', advance='yes' )
+    call output ( config%scanAverage, before='  ScanAverage: ', advance='yes' )
+    call output ( config%skipOverlaps, before='  SkipOverlaps: ',advance='yes' )
+    call output ( config%spect_der, before='  Spect_der: ', advance='yes' )
+    call output ( config%switchingMirror, before='  SwitchingMirror: ', advance='yes' )
+    call output ( config%temp_der, before='  Temp_der: ', advance='yes' )
+    ! Strings
+    call display_string ( lit_indices(config%cloud_der), before='  Cloud_der: ', advance='yes' )
+    call display_string ( lit_indices(config%fwmType), before='  FwmType: ', advance='yes' )
+    call display_string ( lit_indices(config%i_saturation), before='  I_saturation: ', advance='yes' )
+    call output ( config%instrumentModule, before='  InstrumentModule: ' )
+    if ( config%instrumentModule /= 0 ) &
+      & call display_string ( modules(config%instrumentModule)%name, &
+        & before=' - ' )
+    call newline
+    ! Integer scalars
+    call output ( config%LinearSideband, before='  LinearSideband: ', advance='yes' )
+    call output ( config%No_cloud_species, before='  No_cloud_species: ', advance='yes' )
+    call output ( config%No_model_surfs, before='  No_model_surfs: ', advance='yes' )
+    call output ( config%NoUsedChannels, before='  NoUsedChannels: ', advance='yes' )
+    call output ( config%Num_ab_terms, before='  Num_ab_terms: ', advance='yes' )
+    call output ( config%Num_azimuth_angles, before='  Num_azimuth_angles: ', advance='yes' )
+    call output ( config%Num_scattering_angles, before='  Num_scattering_angles: ', advance='yes' )
+    call output ( config%Num_size_bins, before='  Num_size_bins: ', advance='yes' )
     call output ( config%sidebandStart, before='  Sidebands: ' )
     call output ( config%sidebandStop, before=' ', advance='yes' )
-    call output ( config%skipOverlaps, before='  SkipOverlaps:',advance='yes' )
-    call output ( config%spect_der, before='  Spect_der:', advance='yes' )
-    call output ( config%temp_der, before='  Temp_der:', advance='yes' )
-    call output ( config%anyLBL(1), before='  AnyLBL:' )
-    call output ( config%anyLBL(2) )
-    call output ( config%anyPFA(1), before='  AnyPFA:' )
-    call output ( config%anyPFA(2), advance='yes' )
+    call output ( config%SurfaceTangentIndex, before='  SurfaceTangentIndex: ', advance='yes' )
+    ! Real scalars
+    call output ( config%PhiWindow, before='  PhiWindow: ' )
+    call display_string ( phyq_indices(config%windowUnits), before=' ', advance='yes' )
+    call output ( config%Tolerance, before='  Tolerance: ', advance='yes' )
+
     if ( associated(config%Beta_group) .and. dumpPFA ) &
       & call dump ( config%Beta_group, &
         & sidebands=(/config%sidebandStart,config%sidebandStop/), details=details )
     call output ( '  Molecules: ', advance='yes' )
     if ( associated(config%molecules) ) then
       do j = 1, size(config%molecules)
-        call output ( '    ' )
-        call display_string(lit_indices(config%molecules(j)))
+        call display_string ( lit_indices(config%molecules(j)), before='    ' )
         call output ( j, before=':' )
         if (config%moleculeDerivatives(j)) then
           call output (' compute derivatives', advance='yes')
@@ -1270,6 +1313,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.84  2005/11/15 00:23:21  pwagner
+! Must not attempt to dump config%signals if not associated
+!
 ! Revision 2.83  2005/11/02 21:38:24  vsnyder
 ! Hoist some stuff out of MAF loop, delete debugging code
 !
