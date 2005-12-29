@@ -47,9 +47,9 @@ module Hydrostatic_m
     real(rp), intent(in) :: t_basis(:)  ! vertical temperature basis
     real(rp), intent(in) :: t_coeffs(:) ! temperature values
     real(rp), intent(in) :: z_grid(:)   ! -log10(P) pressures for which heights
+!                                         are needed
     real(rp), intent(in) :: z_ref       ! reference pressure in -log10(P)
     real(rp), intent(in) :: h_ref       ! reference geopotential height in km
-!                                         are needed
 ! Outputs
 
     real(rp), intent(out) :: t_grid(:)  ! temperatures on z_grid
@@ -186,7 +186,7 @@ module Hydrostatic_m
 
   ! -----------------------------------------  Hydrostatic_No_Der  -----
   subroutine Hydrostatic_No_Der ( lat, t_basis, t_coeffs, z_grid, z_ref, h_ref, &
-                      &  h_grid )
+                               &  h_grid )
 
 ! Compute a hydrostatic function per L2PC method and return
 ! geometric heights. Reference height is now an input
@@ -202,9 +202,9 @@ module Hydrostatic_m
     real(rp), intent(in) :: t_basis(:)  ! vertical temperature basis
     real(rp), intent(in) :: t_coeffs(:) ! temperature values
     real(rp), intent(in) :: z_grid(:)   ! -log10(P) pressures for which heights
+!                                         are needed
     real(rp), intent(in) :: z_ref       ! reference pressure in -log10(P)
     real(rp), intent(in) :: h_ref       ! reference geopotential height in km
-!                                         are needed
 ! Outputs
 
     real(rp), intent(out) :: h_grid(:)  ! heights on z_grid
@@ -329,6 +329,9 @@ module Hydrostatic_m
 end module Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.17  2005/12/22 20:57:10  vsnyder
+! Added Hydrostatic_No_Der, some cannonball polishing
+!
 ! Revision 2.16  2005/12/10 01:53:10  vsnyder
 ! Use get_eta_matrix_m instead of get_eta_matrix
 !
