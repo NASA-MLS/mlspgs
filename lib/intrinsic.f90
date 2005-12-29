@@ -188,6 +188,7 @@ contains ! =====     Public procedures     =============================
     phyq_indices(phyq_dobsonunits) =       add_ident ( 'dobsonunits' )
     phyq_indices(phyq_pctrhi) =            add_ident ( 'pctrhi' )
     phyq_indices(phyq_gauss) =             add_ident ( 'gauss' )
+    phyq_indices(phyq_profiles) =          add_ident ( 'profiles' )
 
   ! Definitions are represented by trees.  The notation in the comments
   ! for the trees is < root first_son ... last_son >.  This is sometimes
@@ -258,6 +259,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.58  2005/12/29 01:09:49  vsnyder
+! Add string for PHYQ_Profiles
+!
 ! Revision 2.57  2005/06/22 17:25:49  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
