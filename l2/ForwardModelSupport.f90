@@ -32,7 +32,8 @@ module ForwardModelSupport
   integer, parameter :: BadHeightUnit          = BadBinSelectors + 1
   integer, parameter :: BadMoleculeGroup       = BadHeightUnit + 1
   integer, parameter :: BadQuantityType        = BadMoleculeGroup + 1
-  integer, parameter :: CloudHas               = BadQuantityType  + 1
+  integer, parameter :: BadSideband            = BadQuantityType + 1
+  integer, parameter :: CloudHas               = BadSideband + 1
   integer, parameter :: CloudNeeds             = CloudHas + 1
   integer, parameter :: CloudNot               = CloudNeeds + 1
   integer, parameter :: DerivSansMolecules     = CloudNot  + 1
@@ -380,8 +381,8 @@ contains ! =====     Public Procedures     =============================
       & F_LOCKBINS, F_LSBPFAMOLECULES, F_MODULE, F_MOLECULES, &
       & F_MOLECULEDERIVATIVES, F_NABTERMS, F_NAZIMUTHANGLES, &
       & F_NCLOUDSPECIES, F_NMODELSURFS, F_NSCATTERINGANGLES, &
-      & F_NSIZEBINS, F_PHIWINDOW, F_POLARIZED, F_SCANAVERAGE, F_SIGNALS, &
-      & F_SKIPOVERLAPS, F_SPECIFICQUANTITIES, F_SPECT_DER, &
+      & F_NSIZEBINS, F_PHIWINDOW, F_POLARIZED, F_REFRACT, F_SCANAVERAGE, &
+      & F_SIGNALS, F_SKIPOVERLAPS, F_SPECIFICQUANTITIES, F_SPECT_DER, &
       & F_SWITCHINGMIRROR, F_TANGENTGRID, &
       & F_TEMP_DER, F_TOLERANCE, F_TYPE, F_USBPFAMOLECULES, F_XSTAR, F_YSTAR
     use Intrinsic, only: L_NONE, L_CLEAR, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, &
@@ -480,6 +481,7 @@ contains ! =====     Public Procedures     =============================
     info%num_size_bins = 40
     info%phiwindow = 5
     info%polarized = .false.
+    info%refract = .true.
     info%scanAverage = .false.
     info%sideBandStart = -1
     info%sideBandStop = 1
@@ -539,7 +541,7 @@ contains ! =====     Public Procedures     =============================
         call expr ( subtree(2,son), expr_units, value, type )
         info%linearSideband = nint ( value(1) )
         if ( expr_units(1) /= phyq_dimensionless ) &
-          & call AnnounceError ( toleranceNotK, root )
+          & call AnnounceError ( badSideband, root )
       case ( f_lineCenter )
         lineTrees(lineCenter) = son
       case ( f_lineWidth )
@@ -582,6 +584,8 @@ contains ! =====     Public Procedures     =============================
         info%windowUnits = expr_units(1)
       case ( f_polarized )
         info%polarized = get_boolean(son)
+      case ( f_refract )
+        info%refract = get_boolean(son)
       case ( f_scanAverage )
         info%scanAverage = get_boolean(son)
       case ( f_signals )
@@ -1172,6 +1176,8 @@ op:     do j = 2, nsons(PFATrees(s))
     case ( BadQuantityType )
       call output ( 'Bin Selectors cannot apply to this quantity type', &
         & advance='yes' )
+    case ( BadSideband )
+      call output ( 'Sideband selector is not unitless', advance='yes' )
     case ( CloudHas )
       call output ( 'Cloud forward model internally has the ' )
       call display_string ( what )
@@ -1271,6 +1277,9 @@ op:     do j = 2, nsons(PFATrees(s))
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.122  2005/12/29 01:11:08  vsnyder
+! Add boolean 'refract' field to ForwardModel spec
+!
 ! Revision 2.121  2005/12/22 21:08:15  vsnyder
 ! Require frequency averaging if both PFA and LBL
 !
