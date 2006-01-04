@@ -33,6 +33,7 @@ Switches (set by -S option in mlsl2's command line):
   geom =>   Show geometry of chunks/hGrids
   glo[n] => Global settings, info on l1b files 
   gridd =>  Gridded data quantities
+  grids =>  Dump Forward Model grids
   gvec =>   Gradient vector during Newton iteration
   hgrid =>  Information on HGrid construction (at least for regular)
   jac =>    Jacobian during retriever iterations
@@ -55,6 +56,7 @@ Switches (set by -S option in mlsl2's command line):
   ngc =>    Show how many times garbage collected during each chunk
   nin =>    Turn on Newton Method's internal output
   nodb =>   Subvert the DumpBlocks command
+  norf =>   Default for Phi refractive correction in forward model is .false.
   nwt =>    Action flag at each return from Newton solver
   opt[n] => Print command line options 
   pcf[n] => open init params obtained from pcf, info on l1b files 
@@ -123,6 +125,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.55  2005/11/15 21:49:58  pwagner
+ Added l2q
+
  Revision 1.54  2005/06/14 18:29:37  pwagner
  pro now takes details; runxxx removed
 
