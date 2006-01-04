@@ -14,6 +14,7 @@
 !  subroutine HuntArray_r* ( list, values, indices, start, allowTopValue, allowBelowValue, &
 !    & nearest )
     ! Local variables
+    real(rk) :: N, D                    ! Numerator, denominator for secant
     real(rk) :: thisValue
     real(rk) :: logThisValue
     integer :: listLen, valuesLen       ! Array sizes
@@ -65,13 +66,6 @@
       useLogSpace = .false.
     end if
 
-    if ( present(start) ) then
-      useStart = start
-    else
-!       useStart = 1
-      useStart = nint( (values(1)-list(1)) / (list(listLen)-list(1)) * listLen ) + 1
-    end if
-
     if ( useNearest .and. useAllowBelowValue ) then
       call dump(values, 'values')
       call dump(list, 'list')
@@ -86,10 +80,10 @@
 
     ! Try to work out the direction, also skip if there's only one value
 
-    if ( size(list) == 0 ) then
+    if ( listLen == 0 ) then
       indices = 0
       return
-    else if ( size(list) == 1 ) then
+    else if ( listLen == 1 ) then
       indices = 1
       if ( useAllowBelowValue ) then
         where ( values < list(1) )
@@ -97,11 +91,22 @@
         end where
       end if
       return
+    end if
+
+    ! Get the starting point
+
+    n = values(1)-list(1)     ! For secant method
+    d = list(listLen)-list(1) ! ditto, and for list direction
+    listDirection = nint(sign(1.0_rk,d))
+    if ( present(start) ) then
+      useStart = start
     else
-      if ( list(size(list)) >= list(1) ) then
-        listDirection = 1
-      else
-        listDirection = -1
+      if ( sign(1.0_rk,n) * listDirection < 0.0 ) then ! before start
+        useStart = 1
+      else if ( abs(n) >= abs(d) ) then ! Avoid overflow in secant method
+        useStart = listLen
+      else ! Use secant method to get a starting point.
+        useStart = nint( (n / d) * listLen ) + 1
       end if
     end if
 
@@ -251,6 +256,9 @@
 ! end subroutine HuntArray_r*
 
 ! $Log$
+! Revision 1.9  2006/01/04 02:10:39  vsnyder
+! Use secant method to get start if start not specified
+!
 ! Revision 1.8  2005/11/04 18:46:34  pwagner
 ! Extra diagnostic printing when List out of order in Hunt
 !
