@@ -65,11 +65,11 @@ contains
 
     integer, intent(in) :: Root ! Root of the parse tree for the dump command
     ! Databases:
-    type (quantityTemplate_t), dimension(:), intent(in), optional :: QuantityTemplatesDB
-    type (vectorTemplate_T), dimension(:), intent(in), optional :: VectorTemplates
-    type (vector_T), dimension(:), intent(in), optional :: Vectors
+    type (quantityTemplate_t), dimension(:), pointer, optional :: QuantityTemplatesDB
+    type (vectorTemplate_T), dimension(:), pointer, optional :: VectorTemplates
+    type (vector_T), dimension(:), pointer, optional :: Vectors
     type (forwardModelConfig_t), dimension(:), pointer, optional :: ForwardModelConfigs
-    type (HGrid_T), dimension(:), intent(in), optional :: HGrids
+    type (HGrid_T), dimension(:), pointer, optional :: HGrids
 
     real(tk) :: CPUTime, CPUTimeBase = 0.0_tk
     character(8) :: Date
@@ -77,6 +77,8 @@ contains
     integer :: FieldIndex
     logical :: GotOne ! of something -- used to test loop completion
     integer :: GSON, I, J, K, L, Look
+    logical :: HaveQuantityTemplatesDB, HaveVectorTemplates, HaveVectors, &
+      &        HaveForwardModelConfigs, HaveHGrids
     integer :: QuantityIndex
     integer :: Son
     integer :: Source ! column*256 + line
@@ -103,6 +105,20 @@ contains
     integer, parameter :: Stop = numeric + 1
     integer, parameter :: Unknown = stop + 1 ! Unknown template
 
+    haveQuantityTemplatesDB = present(quantityTemplatesDB)
+    if ( haveQuantityTemplatesDB ) &
+      & haveQuantityTemplatesDB = associated(quantityTemplatesDB)
+    haveVectorTemplates = present(vectorTemplates)
+    if ( haveVectorTemplates ) &
+      & haveVectorTemplates = associated(vectorTemplates)
+    haveVectors = present(vectors)
+    if ( haveVectors ) haveVectors = associated(Vectors)
+    haveForwardModelConfigs = present(forwardModelConfigs)
+    if ( haveForwardModelConfigs ) &
+      & haveForwardModelConfigs = associated(forwardModelConfigs)
+    haveHGrids = present(hGrids)
+    if ( haveHGrids ) haveHGrids = associated(hGrids)
+
     details = 0
     do j = 2, nsons(root)
       son = subtree(j,root) ! The argument
@@ -117,13 +133,13 @@ contains
         if ( get_boolean(son) ) then
           select case ( fieldIndex )
           case ( f_allForwardModels )
-            if ( present(forwardModelConfigs) ) then
+            if ( haveForwardModelConfigs ) then
               call dump ( forwardModelConfigs, where=son )
             else
               call announceError ( son, noFWM )
             end if
           case ( f_allHGrids )
-            if ( present(hGrids) ) then
+            if ( haveHGrids ) then
               call dump ( hGrids )
             else
               call announceError ( son, noHGrid )
@@ -137,7 +153,7 @@ contains
           case ( f_allPFA )
             call Dump_PFADataBase ( details )
           case ( f_allQuantityTemplates )
-            if ( present(quantityTemplatesDB) ) then
+            if ( haveQuantityTemplatesDB ) then
               call dump ( quantityTemplatesDB )
             else
               call announceError ( son, noQT )
@@ -151,13 +167,13 @@ contains
           case ( f_allSpectra )
             call dump ( catalog, details=details )
           case ( f_allVectors )
-            if ( present(vectors) ) then
+            if ( haveVectors ) then
               call dump ( vectors )
             else
               call announceError ( son, noVectors )
             end if
           case ( f_allVectorTemplates )
-            if ( present(vectorTemplates) ) then
+            if ( haveVectorTemplates ) then
               call dump ( vectorTemplates )
             else
               call announceError ( son, noVT )
@@ -187,7 +203,7 @@ contains
         if ( type /= num_value ) call announceError ( gson, numeric )
         details = nint(values(1))
       case ( f_forwardModel ) ! Dump forward model configs
-        if ( present(forwardModelConfigs) ) then
+        if ( haveForwardModelConfigs ) then
           do i = 2, nsons(son)
             call dump ( & ! has no details switch
               & forwardModelConfigs(decoration(decoration(subtree(i,son)))) )
@@ -196,7 +212,7 @@ contains
           call announceError ( gson, noFWM )
         end if
       case ( f_hGrid )    ! Dump HGrids
-        if ( present(hGrids) ) then
+        if ( haveHGrids ) then
           do i = 2, nsons(son)
             call output ( ' HGrid ' )
             call dump ( & ! has no details switch
@@ -253,14 +269,14 @@ contains
           what = decoration(look)
           select case ( get_spec_id(look) )
           case ( s_quantity )
-            if ( present(quantityTemplatesDB) ) then
+            if ( haveQuantityTemplatesDB ) then
               call output ( ' Quantity template' )
               call dump ( quantityTemplatesDB(what), details=details )
             else
               call announceError ( gson, noQT )
             end if
           case ( s_vectorTemplate )
-            if ( present(vectorTemplates) ) then
+            if ( haveVectorTemplates ) then
               call output ( ' Vector template' )
               call dump ( vectorTemplates(what), details=details, quantities=quantityTemplatesDB )
             else
@@ -357,7 +373,7 @@ contains
           call dump ( vGRids(decoration(decoration(subtree(i,son)))), details=details )
         end do
       case ( f_vector ) ! Dump entire vectors
-        if ( present(vectors) ) then
+        if ( haveVectors ) then
           do i = 2, nsons(son)
             call output ( ' Vector ' )
             call dump ( vectors(decoration(decoration(subtree(i,son)))), details=details )
@@ -428,6 +444,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.24  2006/01/04 01:21:30  vsnyder
+! Make optional arguments pointers, in case actuals aren't associated
+!
 ! Revision 2.23  2005/06/03 02:06:55  vsnyder
 ! New copyright notice, move Id to not_used_here to avoid cascades,
 ! get VGrids from VGridsDatabase instead of an argument, add dumps for
