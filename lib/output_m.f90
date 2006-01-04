@@ -20,24 +20,60 @@ module OUTPUT_M
 ! === (start of toc) ===
 !     c o n t e n t s
 !     - - - - - - - -
+!     (data types and parameters)
+! MLSMSG_Level             MLSMessage level if so logged
+! PrUnit                   How to direct output:
+!                          -2 :: logged via MLSMessage
+!                          -1 :: print stdout
+!                          < -2 :: both
+!                          > 0 :: print to Fortran unit number PrUnit
+! skipMLSMSGLogging        whether to skip MLSMessage by default
+! timeStampStyle           'pre' (at linestart) or 'post' (at end-of-line)
 
 !     (subroutines and functions)
-! DUMPSIZE                 print a nicely-formatted memory size 
-!                             (should be moved to output_M?)
+! blanks                   "print" specified number of blanks [or fill chars]
+! dumpsize                 print a nicely-formatted memory size 
+! newline                  print a newline
+! output                   print argument
+! output_date_and_time     print nicely formatted date and time
+! resumeOutput             resume output
+! suspendOutput            suspend output
+! timestamp                print argument with a timestamp
 ! === (end of toc) ===
 
 ! === (start of api) ===
+! blanks ( int n_blanks, [char fillChar], [char* advance] )
 ! DumpSize ( n, [char* advance], [units] )
 !       where n can be an int or a real, and 
 !       units is a scalar of the same type, if present
+! NewLine
+! output ( char* chars, [char* advance], [char* from_where], 
+!          [log dont_log], [char* log_chars], [char* insteadOfBlank] )
+! output ( char* chars(:), [char* advance],
+!          [char* insteadOfBlank] )
+! output ( value, [char* format], [char* advance],
+!          [char* Before], [char* After] )
+!       where value can be any numerical type, either scalar or 1-d array
+! output_date_and_time ( [log date], [log time], [char* from_where], 
+!          [char* msg], [char* dateFormat], [char* timeFormat], [char* advance] )
+! resumeOutput
+! suspendOutput
+! timeStamp ( char* chars, [char* advance], [char* from_where], 
+!          [log dont_log], [char* log_chars], [char* insteadOfBlank],
+!          [char*8 style] )
+! timeStamp ( int int, [int places], [char* advance],
+!          [log fill], [char* format], [char* Before], [char* After],
+!          [char*8 style] )
 ! === (end of api) ===
+! silentRunning            suspend further output if TRUE (or until FALSE)
   integer, save, public :: LINE_WIDTH = 120 ! Not used here, but a convenient
                                         ! place to store it
   integer, save, public :: PRUNIT = -1  ! Unit for output.  "printer" unit, *
                                         ! if -1, MLSMessage if -2, both
                                         ! printer and MLSMSG if < -2.
 
-  public :: BLANKS, DUMPSIZE, NEWLINE, OUTPUT, OUTPUT_DATE_AND_TIME, TIMESTAMP
+  public :: BLANKS, DUMPSIZE, NEWLINE, OUTPUT, OUTPUT_DATE_AND_TIME, &
+    & RESUMEOUTPUT, SUSPENDOUTPUT, TIMESTAMP
 
   interface DUMPSIZE
     module procedure DUMPSIZE_INTEGER, DUMPSIZE_REAL
@@ -56,6 +92,7 @@ module OUTPUT_M
   end interface
 
   integer, save, public :: MLSMSG_Level = MLSMSG_Info
+  logical, save, private:: SILENTRUNNING = .false. ! Suspend any further output
   logical, save, public :: SKIPMLSMSGLOGGING = .false.
   character(len=8), save, public :: TIMESTAMPSTYLE = 'post' ! 'pre' or 'post'
   logical, save, private :: ATLINESTART = .true.  ! Used by timeStamp if notpost
@@ -202,6 +239,7 @@ contains
     integer :: n_chars
     character(len=3) :: MY_ADV
     !
+    if ( SILENTRUNNING ) return
     my_adv = Advance_is_yes_or_no(advance)
     my_dont_log = SKIPMLSMSGLOGGING ! .false.
     if ( present(dont_log) ) my_dont_log = dont_log
@@ -608,6 +646,18 @@ contains
     end if
   end subroutine OUTPUT_STRING
 
+  ! ----------------------------------------------  resumeOutput  -----
+  subroutine resumeOutput 
+  ! resume outputting to PRUNIT.
+    silentRunning = .false.
+  end subroutine resumeOutput
+
+  ! ----------------------------------------------  suspendOutput  -----
+  subroutine suspendOutput 
+  ! suspend outputting to PRUNIT.
+    silentRunning = .true.
+  end subroutine suspendOutput
+
   ! ------------------------------------------------  timeStamp_char  -----
   subroutine timeStamp_char ( CHARS, &
     & ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, INSTEADOFBLANK, STYLE)
@@ -813,6 +863,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.44  2006/01/04 20:28:51  pwagner
+! Added suspend- and resumeOutput procedures
+!
 ! Revision 2.43  2005/12/16 23:25:13  pwagner
 ! dumpSize moved from dump0 to output_m
 !
