@@ -395,7 +395,7 @@ contains ! =====     Public Procedures     =============================
     use MoreTree, only: Get_Boolean, Get_Field_ID
     use Parse_Signal_m, only: PARSE_SIGNAL
     use String_Table, only: Get_String
-    use Toggles, only: Gen, Levels, Toggle
+    use Toggles, only: Gen, Levels, Switches, Toggle
     use Trace_M, only: Trace_begin, Trace_end
     use Tree, only: Decoration, Node_ID, Nsons, Null_Tree, Sub_Rosa, Subtree
     use Tree_Types, only: N_Array
@@ -481,7 +481,7 @@ contains ! =====     Public Procedures     =============================
     info%num_size_bins = 40
     info%phiwindow = 5
     info%polarized = .false.
-    info%refract = .true.
+    info%refract = index(switches,'norf') == 0 ! Default .true.
     info%scanAverage = .false.
     info%sideBandStart = -1
     info%sideBandStop = 1
@@ -1277,6 +1277,9 @@ op:     do j = 2, nsons(PFATrees(s))
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.123  2006/01/04 21:54:26  vsnyder
+! 'norf' switch sets refraction default to false
+!
 ! Revision 2.122  2005/12/29 01:11:08  vsnyder
 ! Add boolean 'refract' field to ForwardModel spec
 !
