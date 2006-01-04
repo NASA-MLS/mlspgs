@@ -33,7 +33,7 @@ module L1BData
   use MLSStrings, only: CompressString, streq
   use MLSStringLists, only: NumStringElements
   use MoreTree, only: Get_Field_ID
-  use Output_M, only: Output
+  use Output_M, only: Output, resumeOutput, suspendOutput
   use PCFHdr, only: GlobalAttributes
   use SDPToolkit, only: max_orbits
   use String_Table, only: Get_String
@@ -497,7 +497,8 @@ contains ! ============================ MODULE PROCEDURES ======================
   end subroutine DeallocateL1BData
 
   !-------------------------------------------------  DiffL1BData  -----
-  subroutine DiffL1BData ( l1bData1, l1bData2, details, stats, rms )
+  subroutine DiffL1BData ( l1bData1, l1bData2, &
+    & details, stats, rms, silent, numDiffs )
     ! Diff two l1brad quantities
     type( L1BData_T ), intent(inout) :: L1bData1
     type( L1BData_T ), intent(inout) :: L1bData2
@@ -508,6 +509,8 @@ contains ! ============================ MODULE PROCEDURES ======================
     !                                        ! Default 1
     logical, intent(in), optional :: STATS   ! if TRUE, just print stats
     logical, intent(in), optional :: RMS     ! if TRUE, just print mean, rms
+    logical, intent(in), optional :: silent  ! don't print anything
+    integer, intent(out), optional :: numDiffs  ! how many diffs
     ! If either of stats or rms is present and TRUE, print much less
 
     ! Local variables
@@ -515,6 +518,8 @@ contains ! ============================ MODULE PROCEDURES ======================
     logical :: l1b1NotFinite
     logical :: l1b2NotFinite
     integer :: MYDETAILS
+    integer :: myNumDiffs
+    logical :: mySilent
     logical :: prntAssocStatus  ! Whether to remark on association status
                                 !  of multidimensional arrays
     ! Executable code
@@ -524,72 +529,97 @@ contains ! ============================ MODULE PROCEDURES ======================
     if ( present(stats) ) hideAssocStatus = stats
     if ( present(rms) ) hideAssocStatus = hideAssocStatus .or. rms
     prntAssocStatus = .not. hideAssocStatus
+    
+    mySilent = .false.
+    if ( present(silent) ) mySilent = silent
+    if ( mySilent ) call suspendOutput
+    
+    myNumDiffs = 0
     if ( trim(L1bData1%NameInst) /= trim(L1bData2%NameInst) ) then
       call output(trim(L1bData1%NameInst), advance='yes')
       call output(trim(L1bData2%NameInst), advance='yes')
+      myNumDiffs = myNumDiffs + 1
     endif
     if ( trim(L1bData1%L1BName) /= trim(L1bData2%L1BName) ) then
       call output('L1B rad quantity (1) Name = ', advance='no')
       call output(trim(L1bData1%L1BName), advance='yes')
       call output('L1B rad quantity (2) Name = ', advance='no')
       call output(trim(L1bData2%L1BName), advance='yes')
+      myNumDiffs = myNumDiffs + 1
     endif
-    if ( myDetails < -1 ) return
+    if ( myDetails < -1 ) then
+      call doneHere
+      return
+    endif
     if ( L1bData1%FirstMAF /= L1bData2%FirstMAF ) then
       call output(' (1) First major frame read = ', advance='no')
       call output(L1bData1%FirstMAF, advance='yes')
       call output(' (2) First major frame read = ', advance='no')
       call output(L1bData2%FirstMAF, advance='yes')
+      myNumDiffs = myNumDiffs + 1
     endif
     if ( L1bData1%NoMAFs /= L1bData2%NoMAFs ) then
       call output(' (1) Num of MAFs read = ', advance='no')
       call output(L1bData1%NoMAFs, advance='yes')
       call output(' (2) Num of MAFs read = ', advance='no')
       call output(L1bData2%NoMAFs, advance='yes')
+      myNumDiffs = myNumDiffs + 1
     endif
     if ( L1bData1%MaxMIFs /= L1bData2%MaxMIFs ) then
       call output(' (1) Max # of MIFs/MAF in SD array = ', advance='no')
       call output(L1bData1%MaxMIFs, advance='yes')
       call output(' (2) Max # of MIFs/MAF in SD array = ', advance='no')
       call output(L1bData2%MaxMIFs, advance='yes')
+      myNumDiffs = myNumDiffs + 1
     endif
     if ( L1bData1%NoAuxInds /= L1bData2%NoAuxInds ) then
       call output(' (1) Num of auxilliary indices = ', advance='no')
       call output(L1bData1%NoAuxInds, advance='yes')
       call output(' (2) Num of auxilliary indices = ', advance='no')
       call output(L1bData2%NoAuxInds, advance='yes')
+      myNumDiffs = myNumDiffs + 1
     endif
     if ( L1bData1%FirstMAFCtr /= L1bData2%FirstMAFCtr ) then
       call output(' (1) First major frame counter = ', advance='no')
       call output(L1bData1%FirstMAFCtr, advance='yes')
       call output(' (2) First major frame counter = ', advance='no')
       call output(L1bData2%FirstMAFCtr, advance='yes')
+      myNumDiffs = myNumDiffs + 1
     endif
     if ( L1bData1%LastMAFCtr /= L1bData2%LastMAFCtr ) then
       call output(' (1) Last major frame counter = ', advance='no')
       call output(L1bData1%LastMAFCtr, advance='yes')
       call output(' (2) Last major frame counter = ', advance='no')
       call output(L1bData2%LastMAFCtr, advance='yes')
+      myNumDiffs = myNumDiffs + 1
     endif
 
-    if ( myDetails < 0 ) return
+    if ( myDetails < 0 ) then
+      call doneHere
+      return
+    endif
     if ( associated(l1bData1%counterMAF) .and. &
       & associated(l1bData2%counterMAF) ) then
       if ( any(l1bData1%counterMAF /= l1bData2%counterMAF)) then
         call dump ( l1bData1%counterMAF - l1bData2%counterMAF, &
           & 'l1bData%counterMAF (diff)' )
+         myNumDiffs = myNumDiffs + 1
        endif
     else
       if ( prntAssocStatus ) &
         & call output('(CounterMAF arrays not associated)', advance='yes')
     end if
 
-    if ( myDetails < 1 ) return
+    if ( myDetails < 1 ) then
+      call doneHere
+      return
+    endif
     if ( associated(l1bData1%charField) .and. &
       & associated(l1bData2%charField)) then
       if ( any(l1bData1%charField /= l1bData2%charField) ) then
         call dump ( l1bData1%CharField, 'l1bData1%CharField' )
         call dump ( l1bData2%CharField, 'l1bData2%CharField' )
+        myNumDiffs = myNumDiffs + count(l1bData1%charField /= l1bData2%charField)
       end if
     else
       if ( prntAssocStatus ) &
@@ -601,6 +631,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       if ( any(l1bData1%intField /= l1bData2%intField) ) then
         call dump ( l1bData1%intField - l1bData2%intField, &
           & 'l1bData%intField (diff)', stats=stats, rms=rms )
+        myNumDiffs = myNumDiffs + count(l1bData1%charField /= l1bData2%charField)
       endif
     else
       if ( prntAssocStatus ) &
@@ -624,14 +655,19 @@ contains ! ============================ MODULE PROCEDURES ======================
         & l1bData2%dpField, 'l1bData%dpField', &
         & FillValue=REAL(DEFAULTUNDEFINEDVALUE, R8), &
         & stats=stats, rms=rms )
-        ! & call dump ( l1bData1%dpField-l1bData2%dpField, &
-        ! & 'l1bData%dpField (diff)', stats=stats, rms=rms )
+        myNumDiffs = myNumDiffs + count(l1bData1%dpField /= l1bData2%dpField)
       endif
     else
       if ( prntAssocStatus ) &
         & call output('(dpField arrays not associated)', advance='yes')
     end if
 
+  contains
+    subroutine doneHere
+      ! Housekeeping
+      call resumeOutput
+      if ( present(numDiffs) ) numDiffs = myNumDiffs
+    end subroutine doneHere
   end subroutine DiffL1BData
 
   !-------------------------------------------------  DumpL1BData  -----
@@ -3127,6 +3163,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.67  2006/01/04 20:31:18  pwagner
+! Diff procedures may keep silent, returning num of diffs only
+!
 ! Revision 2.66  2005/11/18 01:25:16  pwagner
 ! L1BData%charField no longer of unit length (hope this breaks nothing else)
 !
