@@ -40,7 +40,8 @@ contains ! =====     Public Procedures     =============================
     use Chunks_m, only: MLSCHUNK_T
     use ConstructQuantityTemplates, only: ConstructMinorFrameQuantity
     use QuantityTemplates, only: QUANTITYTEMPLATE_T
-    use MLSCommon, only: L1BINFO_T, MLSFile_T
+    ! use MLSCommon, only: L1BINFO_T
+    use MLSCommon, only: MLSFile_T
     use MLSSignals_m, only: MODULES
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
 
@@ -159,7 +160,7 @@ contains ! =====     Public Procedures     =============================
       end if
 
       ! Node_id(key) is now n_spec_args.
-      
+
       select case( get_spec_id(key) )
       case ( s_dump )
         call dumpCommand ( key, quantityTemplatesBase, &
@@ -253,6 +254,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.53  2006/01/04 01:27:11  vsnyder
+! Comment out use for unreference L1BInfo_T
+!
 ! Revision 2.52  2005/06/03 02:05:29  vsnyder
 ! New copyright notice, move Id to not_used_here to avoid cascades,
 ! get VGrids from VGridsDatabase instead of passing as an argument.
