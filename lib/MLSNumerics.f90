@@ -19,6 +19,7 @@ module MLSNumerics              ! Some low level numerical stuff
   use MLSCommon, only : DEFAULTUNDEFINEDVALUE, R4, R8, Rm
   use MLSFillValues, only: filterValues, IsFillValue
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use MLSSets, only: FindFirst
   use MLSStrings, only: Capitalize, lowercase
 
   implicit none
@@ -26,6 +27,7 @@ module MLSNumerics              ! Some low level numerical stuff
   private
   public :: Dump, EssentiallyEqual, Hunt, InterpolateArraySetup
   public :: InterpolateArrayTeardown, InterpolateValues
+  public :: ClosestElement
 
   type, public :: Coefficients_R4
     private
@@ -107,16 +109,20 @@ module MLSNumerics              ! Some low level numerical stuff
 !     - - - - - - - -
 
 !         Functions, operations, routines
-! Dump                         Dump coefficients structure
-! EssentiallyEqual             Returns true if two real arguments 'close enough'
-!                                (See comments below for interpretation
-!                                 of array versions)
-! Hunt                         Finds index of item(s) in list closest to prey
-! HuntArray                    Hunts for multiple items
-! HuntScalar                   Hunts for just one
-! InterpolateArraySetup        Compute coefficients for InterpolateUsingSetup
-! InterpolateArrayTeardown     Deallocate tables created by InterpolateArraySetup
-! InterpolateValues            Interpolate for new y value(s): given old (x,y), new (x), method
+! ClosestElement           Find index(es) in array closest to test value
+!                           (array may be multidimensional, non-monotonic)
+! Dump                     Dump coefficients structure
+! EssentiallyEqual         Returns true if two real arguments 'close enough'
+!                            (See comments below for interpretation
+!                             of array versions)
+! Hunt                     Finds index of item(s) in list closest to prey
+!                           (list must be monotonic)
+! HuntArray                Hunts for multiple items
+! HuntScalar               Hunts for just one
+! InterpolateArraySetup    Compute coefficients for InterpolateUsingSetup
+! InterpolateArrayTeardown Deallocate tables created by InterpolateArraySetup
+! InterpolateValues        Interpolate for new y value(s):
+!                            given old (x,y), new (x), method
 
   interface Dump
     module procedure DumpCoefficients_r4, DumpCoefficients_r8
@@ -147,6 +153,12 @@ module MLSNumerics              ! Some low level numerical stuff
     module procedure InterpolateScalar_r4, InterpolateScalar_r8
     module procedure InterpolateUsingSetup_r4, InterpolateUsingSetup_r8
     module procedure InterpolateScalarUsingSetup_r4, InterpolateScalarUsingSetup_r8
+  end interface
+
+  interface ClosestElement
+    module procedure ClosestElement_r4_1d, ClosestElement_r8_1d
+    module procedure ClosestElement_r4_2d, ClosestElement_r8_2d
+    module procedure ClosestElement_r4_3d, ClosestElement_r8_3d
   end interface
 
 contains
@@ -721,6 +733,150 @@ contains
 
   end subroutine InterpolateUsingSetup_r8
 
+! -------------------------------------------------  ClosestElement  -----
+
+  ! This family of routines finds the element within a multidimensional
+  ! array nearest a test value
+  ! The array of indices locate that nearest element
+
+  subroutine ClosestElement_r4_1d ( test, array, indices )
+    integer, parameter :: RK = R4
+
+    ! Dummy arguments
+    real(rk), intent(in)               :: test
+    real(rk), dimension(:), intent(in) :: array
+    integer, dimension(:), intent(out) :: indices ! Result
+    include "ClosestElement.f9h"
+
+  end subroutine ClosestElement_r4_1d
+
+  subroutine ClosestElement_r8_1d ( test, array, indices )
+    integer, parameter :: RK = R8
+
+    ! Dummy arguments
+    real(rk), intent(in)               :: test
+    real(rk), dimension(:), intent(in) :: array
+    integer, dimension(:), intent(out) :: indices ! Result
+    include "ClosestElement.f9h"
+
+  end subroutine ClosestElement_r8_1d
+
+  subroutine ClosestElement_r4_2d ( test, array, indices )
+    integer, parameter :: RK = R4
+
+    ! Dummy arguments
+    real(rk), intent(in)               :: test
+    real(rk), dimension(:,:), intent(in) :: array
+    integer, dimension(:), intent(out) :: indices ! Result
+    integer, dimension(1)              :: indices_1d ! Result
+    call ClosestElement( test, &
+      & reshape(array, (/ size(array,1)*size(array,2) /) ), &
+      & indices_1d )
+    call rerank( indices_1d(1), shape(array), indices )
+  end subroutine ClosestElement_r4_2d
+
+  subroutine ClosestElement_r8_2d ( test, array, indices )
+    integer, parameter :: RK = R8
+
+    ! Dummy arguments
+    real(rk), intent(in)               :: test
+    real(rk), dimension(:,:), intent(in) :: array
+    integer, dimension(:), intent(out) :: indices ! Result
+    integer, dimension(1)              :: indices_1d ! Result
+    call ClosestElement( test, &
+      & reshape(array, (/ size(array,1)*size(array,2) /) ), &
+      & indices_1d )
+    call rerank( indices_1d(1), shape(array), indices )
+  end subroutine ClosestElement_r8_2d
+
+  subroutine ClosestElement_r4_3d ( test, array, indices )
+    integer, parameter :: RK = R4
+
+    ! Dummy arguments
+    real(rk), intent(in)               :: test
+    real(rk), dimension(:,:,:), intent(in) :: array
+    integer, dimension(:), intent(out) :: indices ! Result
+    integer, dimension(1)              :: indices_1d ! Result
+    call ClosestElement( test, &
+      & reshape(array, (/ size(array,1)*size(array,2)*size(array,3) /) ), &
+      & indices_1d )
+    call rerank( indices_1d(1), shape(array), indices )
+  end subroutine ClosestElement_r4_3d
+
+  subroutine ClosestElement_r8_3d ( test, array, indices )
+    integer, parameter :: RK = R8
+
+    ! Dummy arguments
+    real(rk), intent(in)               :: test
+    real(rk), dimension(:,:,:), intent(in) :: array
+    integer, dimension(:), intent(out) :: indices ! Result
+    integer, dimension(1)              :: indices_1d ! Result
+    call ClosestElement( test, &
+      & reshape(array, (/ size(array,1)*size(array,2)*size(array,3) /) ), &
+      & indices_1d )
+    call rerank( indices_1d(1), shape(array), indices )
+  end subroutine ClosestElement_r8_3d
+
+!-------------------- Private Procedures -----------------------------------
+  subroutine rerank( address, shp, indices )
+    ! Find multidimensional set of indices in an array
+    ! with shape shp corresponding to 1-d address
+    !
+    ! We shall assume that the first index is the fastest, then the 2nd, ..
+    ! Our method is the following:
+    ! Let the size of the kth index be s[k]
+    ! Then we seek the array i[k] such that
+    ! address = i[1] + s[1] ( i[2] + s[2] ( i[3] + .. + i[N] ) .. )
+    ! (Where we assume 0-based indexing, like c, 
+    !   rather than 1-based, as Fortran uses)
+    ! We can build this by parts as follows
+    ! a[N]   = i[N]
+    ! a[N-1] = i[N-1] + s[N-1] i[N]
+    ! a[N-2] = i[N-2] + s[N-2] ( i[N-1] + s[N-1] i[N] )
+    ! .   .   .
+    ! a[1] = address
+    ! Where N is the rank of the array
+    ! Note then that the recurrences hold
+    ! a[N-1] - a[N] s[N-1]   = i[N-1]
+    ! a[N-2] - a[N-1] s[N-2] = i[N-2]
+    ! .   .   .
+    ! a[1] - a[2] s[1]       = i[1]
+    !
+    ! From this last we realize that
+    ! i[1] = a[1] mod(s[1])
+    ! Solve it for i[1], then a[2] = ( a[1] - i[1] ) / s[1]
+    ! Then for succeeding values of k
+    ! i[k] = a[k] mod(s[k])
+    
+    ! Remember to modify each of these if we wish to use
+    ! Fortran-style indexes which start at 1, not 0, as follows
+    !
+    ! i'[k] = i[k] + 1, k > 1
+    ! i'[1] = i[1]
+    ! address = i'[1] + s[1] ( i'[2] - 1 + s[2] ( i[3] - 1 + .. + i[N] ) .. )
+    integer, intent(in)                :: address
+    integer, dimension(:), intent(in)  :: shp
+    integer, dimension(:), intent(out) :: indices
+    ! Local variables
+    integer :: aofk
+    integer :: k
+    integer :: N
+    integer, parameter :: OFFSET = 1 ! at what index do arrays start?
+    integer :: targ
+    !
+    N = size(shp)
+    if ( N < 2 ) then
+      indices(1) = address
+      return
+    endif
+    aofk = address - OFFSET
+    do k=1, N
+      indices(k) = MOD(aofk, shp(k))
+      aofk = ( aofk - indices(k) ) / shp(k)
+    enddo
+    indices = indices + OFFSET ! Converting to Fortran-style, beginning with 1
+  end subroutine rerank
+
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -735,6 +891,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.41  2006/01/05 00:56:03  pwagner
+! Added ClosestElement for multidimensional, non-monotonic Hunting
+!
 ! Revision 2.40  2005/12/16 00:02:05  pwagner
 ! FillValue-related stuff moved to new MLSFillValues module
 !
