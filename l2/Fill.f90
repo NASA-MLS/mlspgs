@@ -13,7 +13,7 @@
 module Fill                     ! Create vectors and fill them.
   !=============================================================================
 
-  ! This module performs the Fill operation in the Level 2 software.  
+  ! This module performs the Fill operation in the Level 2 software.
   ! This takes a vector template, and creates and fills an appropriate vector
 
   implicit none
@@ -30,11 +30,11 @@ module Fill                     ! Create vectors and fill them.
 !        *vector_t Vectors(:), *quantityTemplate_T QtyTemplates(:),
 !        *matrix_database_T Matrices(:),
 !        *l2GPData_T L2GPDatabase(:), *l2AUXData_T L2AUXDatabase(:),
-!        *mlSChunk_T Chunks(:), int ChunkNo )      
+!        *mlSChunk_T Chunks(:), int ChunkNo )
 ! === (end of api) ===
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: ModuleName= "$RCSfile$"
-  private :: not_used_here 
+  private :: not_used_here
 !---------------------------------------------------------------------------
 
   logical, parameter :: DONTPAD = .false.
@@ -69,7 +69,7 @@ contains ! =====     Public Procedures     =============================
       & F_EXTINCTION, F_FIELDECR, F_FILE, F_FORCE, &
       & F_FRACTION, F_FROMPRECISION, F_GEOCALTITUDEQUANTITY, F_GPHQUANTITY, &
       & F_HEIGHT, F_HIGHBOUND, F_H2OQUANTITY, F_H2OPRECISIONQUANTITY, &
-      & F_IFMISSINGGMAO, F_IGNORENEGATIVE, F_IGNOREGEOLOCATION, F_IGNOREZERO, & 
+      & F_IFMISSINGGMAO, F_IGNORENEGATIVE, F_IGNOREGEOLOCATION, F_IGNOREZERO, &
       & F_INSTANCES, F_INTEGRATIONTIME, F_INTERNALVGRID, &
       & F_INTERPOLATE, F_INVERT, F_INTRINSIC, F_ISPRECISION, &
       & F_LENGTHSCALE, F_LOGSPACE, F_LOSQTY, F_LOWBOUND, F_LSB, F_LSBFRACTION, &
@@ -125,7 +125,6 @@ contains ! =====     Public Procedures     =============================
       & S_PHASE, S_POPULATEL2PCBIN, S_SNOOP, S_TIME, &
       & S_TRANSFER, S_VECTOR, S_SUBSET, S_FLAGCLOUD, S_RESTRICTRANGE, S_UPDATEMASK
     ! Now some arrays
-    use Intrinsic, only: FIELD_INDICES
     use Intrinsic, only: &
       & PHYQ_Dimensionless, PHYQ_Invalid, PHYQ_Temperature, &
       & PHYQ_Time, PHYQ_Length, PHYQ_Pressure, PHYQ_Zeta, PHYQ_Angle, PHYQ_Profiles
@@ -207,7 +206,7 @@ contains ! =====     Public Procedures     =============================
     integer :: ERROR
     logical, parameter :: DEEBUG = .FALSE.                 ! Usually FALSE
 
-    ! Error codes for "announce_error"  
+    ! Error codes for "announce_error"
     integer, parameter :: No_Error_code = 0
     integer, parameter :: CantFillFromL2AUX = No_Error_code + 1
     integer, parameter :: CantFillFromL1B = cantFillFromL2AUX + 1
@@ -253,7 +252,7 @@ contains ! =====     Public Procedures     =============================
     integer, parameter :: EmptyGridForFill = MissingDataInGrid + 1
 
     ! -999.99 ! Same as %template%badvalue
-    real, parameter ::    UNDEFINED_VALUE = DEFAULTUNDEFINEDVALUE 
+    real, parameter ::    UNDEFINED_VALUE = DEFAULTUNDEFINEDVALUE
 
     ! Local variables
 
@@ -301,7 +300,7 @@ contains ! =====     Public Procedures     =============================
 
     logical :: ADDITIONAL               ! Flag for binMax/binMin
     logical :: ALLOWMISSING             ! Flag from l2cf
-    integer :: APRPRECQTYINDEX          ! Index of apriori precision quantity    
+    integer :: APRPRECQTYINDEX          ! Index of apriori precision quantity
     integer :: APRPRECVCTRINDEX         ! Index of apriori precision vector
     integer :: AQTYINDEX                ! Index of a quantity in vector
     integer :: AVECINDEX                ! Index of a vector
@@ -361,7 +360,7 @@ contains ! =====     Public Procedures     =============================
     integer :: IBO
     logical :: IGNOREZERO               ! Don't sum chi^2 at values of noise = 0
     logical :: IGNORENEGATIVE           ! Don't sum chi^2 at values of noise < 0
-    logical :: IGNOREGEOLOCATION        ! Don't copy geolocation to vector qua 
+    logical :: IGNOREGEOLOCATION        ! Don't copy geolocation to vector qua
     integer :: INTERNALVGRIDINDEX       ! Index for internal vgrid (wmoTrop)
     real(r8) :: INTEGRATIONTIME         ! For estimated noise
     logical :: INTERPOLATE              ! Flag for l2gp etc. fill
@@ -451,7 +450,7 @@ contains ! =====     Public Procedures     =============================
     integer :: SUPERDIAGONAL            ! Index of superdiagonal matrix in database
     logical :: Switch2intrinsic         ! Have mls_random_seed call intrinsic
     !                                     -- for FillCovariance
-    real :: T1, T2                      ! for timing 
+    real :: T1, T2                      ! for timing
     integer :: SYSTEMPQUANTITYINDEX     ! in the quantities database
     integer :: SYSTEMPVECTORINDEX       ! in the vector database
     integer :: SUFFIX                   ! Possible suffix in reading L1BData
@@ -686,24 +685,25 @@ contains ! =====     Public Procedures     =============================
           case ( f_vector )
             vectorIndex = decoration(decoration( subtree(2, gson) ))
           case ( f_bin )
-            binName = sub_rosa ( subtree(2,gson) )  
+            binName = sub_rosa ( subtree(2,gson) )
           case ( f_source )
             source = decoration ( subtree(2,gson) )
           end select
         end do
         if ( got ( f_matrix ) ) then
-          if ( got ( f_vector ) ) call Announce_Error ( key, 0, &
+          if ( got ( f_vector ) ) call Announce_Error ( key, no_Error_Code, &
             & 'Cannot load both vector and matrix' )
           call GetFromMatrixDatabase ( matrices(matrixToFill), matrix )
           call LoadMatrix ( matrix, binName, message )
         else if ( got ( f_vector ) ) then
-          if ( .not. got ( f_source ) ) call Announce_Error ( key, 0, &
+          if ( .not. got ( f_source ) ) call Announce_Error ( key, no_Error_Code, &
             & 'Must supply source=rows/columns for vector adoption' )
           call LoadVector ( vectors(vectorIndex), binName, source, message )
         else
-          call Announce_Error ( key, 0, 'Must supply either matrix or vector to adopt' )
+          call Announce_Error ( key, no_Error_Code, 'Must supply either matrix or vector to adopt' )
         end if
-        if ( len_trim(message) /= 0 ) call Announce_Error ( key, 0, trim(message) )
+        if ( len_trim(message) /= 0 ) &
+          & call Announce_Error ( key, no_Error_Code, trim(message) )
 
       case ( s_populateL2PCBin )
         got = .false.
@@ -952,15 +952,15 @@ contains ! =====     Public Procedures     =============================
             refract = get_boolean ( gson )
           case ( f_refGPHQuantity ) ! For hydrostatic or rhi
             refGPHVectorIndex = decoration(decoration(subtree(1,gson)))
-            refGPHQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))    
+            refGPHQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_refGPHPrecisionQuantity ) ! For GPH precision
             refGPHPrecisionVectorIndex = decoration(decoration(subtree(1,gson)))
-            refGPHPrecisionQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))    
+            refGPHPrecisionQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_resetSeed )
             resetSeed = get_boolean ( gson )
           case ( f_rhiQuantity ) ! For h2o from rhi
             sourceVectorIndex = decoration(decoration(subtree(1,gson)))
-            sourceQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))    
+            sourceQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_scale )
             call expr_check ( gson , unitAsArray, valueAsArray, &
               & (/PHYQ_Dimensionless/), unitsError )
@@ -1042,7 +1042,7 @@ contains ! =====     Public Procedures     =============================
         ! Put various conditions under which you would want to skip this fill
         if ( got(f_ifMissingGMAO) .and. .not. MissingGMAO ) skipFill = .true.
         if ( skipFill ) fillMethod = -1 ! We'll assume no l_value can be this
-        
+
         ! Now call various routines to do the filling
         quantity => GetVectorQtyByTemplateIndex( &
           & vectors(vectorIndex), quantityIndex )
@@ -1120,7 +1120,7 @@ contains ! =====     Public Procedures     =============================
 
         case ( l_applyBaseline )
           if ( .not. got ( f_baselineQuantity ) ) &
-            & call Announce_Error ( key, 0, &
+            & call Announce_Error ( key, no_Error_Code, &
             & 'Need baselineQuantity for applyBaseline fill' )
           baselineQuantity => GetVectorQtyByTemplateIndex( &
             & vectors(baselineVctrIndex), baselineQtyIndex )
@@ -1128,7 +1128,7 @@ contains ! =====     Public Procedures     =============================
 
         case ( l_asciiFile )
           if ( .not. got ( f_file ) ) &
-            & call Announce_Error ( key, 0, &
+            & call Announce_Error ( key, no_Error_Code, &
             & 'Need filename for asciiFile fill' )
           if ( got ( f_badRange ) ) then
             call FillQuantityFromASCIIFile ( key, quantity, filename, badRange )
@@ -1138,7 +1138,7 @@ contains ! =====     Public Procedures     =============================
 
         case ( l_binMax, l_binMean, l_binMin, l_binTotal )
           if ( .not. got ( f_sourceQuantity ) ) &
-            & call Announce_Error ( key, 0, &
+            & call Announce_Error ( key, no_Error_Code, &
             & 'Need source quantity for bin max/min fill' )
           sourceQuantity => GetVectorQtyByTemplateIndex( &
             & vectors(sourceVectorIndex), sourceQuantityIndex )
@@ -1154,11 +1154,11 @@ contains ! =====     Public Procedures     =============================
             if ( .not. sourceQuantity%template%minorFrame .or. &
               &  .not. got ( f_ptanQuantity ) .or. &
               &  quantity%template%verticalCoordinate /= l_zeta ) &
-              & call Announce_Error ( key, 0, &
+              & call Announce_Error ( key, no_Error_Code, &
               & 'Vertical coordinate mismatch, perhaps supply tangent pressure?' )
             if ( ptanQuantity%template%instrumentModule .ne. &
               & sourceQuantity%template%instrumentModule ) &
-              & call Announce_Error ( key, 0, &
+              & call Announce_Error ( key, no_Error_Code, &
               & 'Instrument module mismatch between ptan and source quantity' )
           end if
 
@@ -1167,23 +1167,23 @@ contains ! =====     Public Procedures     =============================
 
         case ( l_boxcar )
           if ( .not. got ( f_sourceQuantity ) ) &
-            & call Announce_Error ( key, 0, &
+            & call Announce_Error ( key, no_Error_Code, &
             & 'Need source quantity for bin max/min fill' )
           sourceQuantity => GetVectorQtyByTemplateIndex( &
             & vectors(sourceVectorIndex), sourceQuantityIndex )
-          if ( .not. got ( f_width ) ) call Announce_Error ( key, 0, &
+          if ( .not. got ( f_width ) ) call Announce_Error ( key, no_Error_Code, &
             & 'Must supply width for boxcar fill' )
           call FillWithBoxcarFunction ( key, quantity, sourceQuantity, width, &
             & boxCarMethod )
 
         case ( l_combineChannels )
           if ( .not. got ( f_sourceQuantity ) ) &
-            & call Announce_Error ( key, 0, &
+            & call Announce_Error ( key, no_Error_Code, &
             & 'Need source quantity for combine channels fill' )
           sourceQuantity => GetVectorQtyByTemplateIndex( &
             & vectors(sourceVectorIndex), sourceQuantityIndex )
           call FillWithCombinedChannels ( quantity, sourceQuantity, message )
-          if ( message /= '' ) call Announce_Error ( key, 0, trim(message) )
+          if ( message /= '' ) call Announce_Error ( key, no_Error_Code, trim(message) )
 
         case ( l_estimatedNoise ) ! ----------- Fill with estimated noise ---
           if ( .not. all(got( (/ f_radianceQuantity, &
@@ -1213,7 +1213,8 @@ contains ! =====     Public Procedures     =============================
 
         case ( l_extractChannel )
           if ( .not. all(got ( (/f_sourceQuantity,f_channel/)))) &
-            & call Announce_Error ( key, 0, 'Need sourceQuantity and channel for this fill' )
+            & call Announce_Error ( key, no_Error_Code, &
+              & 'Need sourceQuantity and channel for this fill' )
           sourceQuantity => GetVectorQtyByTemplateIndex( &
             & vectors(sourceVectorIndex), sourceQuantityIndex )
           call ExtractSingleChannel ( key, quantity, sourceQuantity, channel )
@@ -1252,7 +1253,7 @@ contains ! =====     Public Procedures     =============================
             & call Announce_Error ( key, badrefGPHQuantity )
 
           call FillGPHPrecision ( key, quantity, tempPrecisionQuantity, &
-            & refGPHPrecisionQuantity )          
+            & refGPHPrecisionQuantity )
 
         case ( l_gridded ) ! ------------  Fill from gridded data  -----
           if ( .not. got(f_sourceGrid) ) &
@@ -1358,11 +1359,11 @@ contains ! =====     Public Procedures     =============================
               & call Announce_Error ( key, badGeocAltitudeQuantity )
 
             if ( .not. got(f_phiTan) ) &
-              & call Announce_Error ( key, 0, 'Needs phiTan quantity' )
+              & call Announce_Error ( key, no_Error_Code, 'Needs phiTan quantity' )
             phiTanQuantity => GetVectorQtyByTemplateIndex( &
               & vectors(phiTanVectorIndex), phiTanQuantityIndex)
             if ( phiTanQuantity%template%quantityType /= l_phiTan ) &
-              & call Announce_Error ( key, 0, 'Has a bad phiTan quantity' )
+              & call Announce_Error ( key, no_Error_Code, 'Has a bad phiTan quantity' )
 
             if ( .not. got(f_h2oQuantity) ) &
               & call Announce_Error ( key, needH2O )
@@ -1383,7 +1384,7 @@ contains ! =====     Public Procedures     =============================
           call FillVectorQtyHydrostatically ( key, quantity, temperatureQuantity, &
             & refGPHQuantity, h2oQuantity, orbitInclinationQuantity, &
             & phiTanQuantity, geocAltitudeQuantity, maxIterations, &
-            & phiWindow, phiWindowUnits, chunkNo )          
+            & phiWindow, phiWindowUnits, chunkNo )
 
         case ( l_isotope ) ! --------------- Isotope based fills -------
           if ( .not. all(got( (/f_ratioQuantity, f_sourceQuantity/) ) ) ) &
@@ -1420,15 +1421,15 @@ contains ! =====     Public Procedures     =============================
                 & 'The temperatureQuantity is not a temperature'  )
               else
                 call FillIWCFromExtinction ( quantity, &
-                  & sourceQuantity, temperatureQuantity) 
+                  & sourceQuantity, temperatureQuantity)
               end if
             end if
 
         case ( l_manipulate ) ! ---------------------------- Manipulate --
           if ( .not. got ( f_a ) ) &
-            & call Announce_error ( key, 0 ,'aQuantity not supplied' )
+            & call Announce_error ( key, no_Error_Code,'aQuantity not supplied' )
           if ( .not. got ( f_manipulation ) ) &
-            & call Announce_error ( key, 0 ,'manipulation not supplied' )
+            & call Announce_error ( key, no_Error_Code,'manipulation not supplied' )
           aQuantity => GetVectorQtyByTemplateIndex ( &
             & vectors(aVecIndex), aQtyIndex )
           if ( got ( f_b ) ) then
@@ -1448,13 +1449,13 @@ contains ! =====     Public Procedures     =============================
 
         case ( l_magneticModel ) ! --------------------- Magnetic Model --
           if ( .not. got ( f_gphQuantity ) ) then
-            call Announce_Error ( key, 0, 'Need gphQuantity for magnetic model' )
+            call Announce_Error ( key, no_Error_Code, 'Need gphQuantity for magnetic model' )
           else
             GPHQuantity => GetVectorQtyByTemplateIndex( &
               & vectors(GPHVectorIndex), GPHQuantityIndex)
-            call FillQuantityUsingMagneticModel ( quantity, gphQuantity, key )          
+            call FillQuantityUsingMagneticModel ( quantity, gphQuantity, key )
           end if
-          
+
         case ( l_negativePrecision ) ! ------------ Set output SD -ve wrt apriori
           if ( .not. got ( f_aprioriPrecision ) ) &
             & call Announce_Error ( key, No_Error_code, &
@@ -1468,7 +1469,7 @@ contains ! =====     Public Procedures     =============================
 
         case ( l_offsetRadiance ) ! ------------------- Offset radiance --
           if ( .not. got ( f_radianceQuantity ) ) &
-            & call Announce_error ( key, 0, 'radianceQuantity not supplied' )
+            & call Announce_error ( key, no_Error_Code, 'radianceQuantity not supplied' )
           radianceQuantity => GetVectorQtyByTemplateIndex( &
             & vectors(radianceVectorIndex), radianceQuantityIndex )
           call OffsetRadianceQuantity ( quantity, radianceQuantity, offsetAmount )
@@ -1494,7 +1495,7 @@ contains ! =====     Public Procedures     =============================
 
         case ( l_profile ) ! ------------------------ Profile fill -------
           if ( .not. got ( f_profileValues ) ) &
-            call Announce_error ( key, 0, 'profileValues not supplied' )
+            call Announce_error ( key, no_Error_Code, 'profileValues not supplied' )
           if ( .not. got ( f_instances ) ) instancesNode = 0
           if ( got ( f_logSpace ) ) then
             call FillVectorQtyFromProfile ( quantity, valuesNode, &
@@ -1505,23 +1506,33 @@ contains ! =====     Public Procedures     =============================
           end if
 
         case ( l_refract )              ! --------- refraction for phiTan -----
-          if ( refract ) then 
-            if ( .not. all ( got ( &
-            & (/ f_temperatureQuantity, f_h2oQuantity, f_ptanQuantity /) ) ) ) &
-            & call Announce_error ( key, badRefractFill )
-            temperatureQuantity => GetVectorQtyByTemplateIndex( &
-              & vectors(temperatureVectorIndex), temperatureQuantityIndex)
+          ! More sanity checks
+          if ( .not. ValidateVectorQuantity ( quantity, &
+            & quantityType=(/l_phiTan/), minorFrame=.true. ) ) &
+            & call Announce_error ( key, no_Error_Code, 'Quantity to fill is not phiTan' )
+          ! Start off with a copy from the template
+          quantity%values = quantity%template%phi
+          if ( refract ) then
+            if ( .not. all ( got ( (/ f_h2oQuantity, f_orbitinclination, &
+            & f_ptanQuantity, f_refGPHquantity, f_temperatureQuantity /) ) ) ) then
+              call Announce_error ( key, badRefractFill )
+              call announce_error ( key, missingField, extraInfo= &
+                & (/ f_h2oQuantity, f_orbitinclination, &
+                & f_ptanQuantity, f_refGPHquantity, f_temperatureQuantity /) )
+            end if
             h2oQuantity => GetVectorQtyByTemplateIndex( &
               & vectors(h2oVectorIndex), h2oQuantityIndex)
+            orbitInclinationQuantity => GetVectorQtyByTemplateIndex( &
+              & vectors(orbitInclinationVectorIndex), orbitInclinationQuantityIndex)
             ptanQuantity => GetVectorQtyByTemplateIndex( &
               & vectors(ptanVectorIndex), ptanQuantityIndex)
-          else
-            temperatureQuantity => NULL()
-            h2oQuantity => NULL()
-            ptanQuantity => NULL()
+            refGPHquantity => GetVectorQtyByTemplateIndex( &
+              & vectors(refGPHVectorIndex), refGPHQuantityIndex)
+            temperatureQuantity => GetVectorQtyByTemplateIndex( &
+              & vectors(temperatureVectorIndex), temperatureQuantityIndex)
+            call FillPhiTanWithRefraction ( key, quantity, h2oQuantity, &
+              & orbitInclinationQuantity, ptanQuantity, refGPHquantity, temperatureQuantity )
           end if
-          call FillPhiTanWithRefraction ( key, quantity, ptanQuantity, temperatureQuantity, &
-            & h2oQuantity, refract )
 
         case ( l_reflectorTempModel ) ! --------------- Reflector temperature model
           call FillWithReflectorTemperature ( key, quantity, phiZero, termsNode )
@@ -1619,7 +1630,7 @@ contains ! =====     Public Procedures     =============================
                   & invert )    ! invert rather than convert?
               end if
             end if
-            
+
           case ( l_rotateField )
             if ( .not. all ( got ( (/ f_fieldECR, f_ecrtofov /) ) ) ) then
               call Announce_Error ( key, no_error_code, &
@@ -1803,7 +1814,7 @@ contains ! =====     Public Procedures     =============================
               & sourceQuantity, statusValue, &
               & minValue, maxValue, heightNode, additional )
           endif
-          
+
         case ( l_vector ) ! ---------------- Fill from another qty.
           ! This is VERY PRELIMINARY, A more fancy one needs to be written
           ! before too long.
@@ -1886,7 +1897,7 @@ contains ! =====     Public Procedures     =============================
           if ( .not. DoHGridsMatch ( quantity, temperatureQuantity ) .or. &
             &  .not. DoHGridsMatch ( quantity, refGPHQuantity ) ) &
             & call Announce_Error ( key, no_error_code, &
-            & 'Horizontal coordinates for temperature/refGPH and/or quanity disagree' )
+            & 'Horizontal coordinates for temperature/refGPH and/or quantity disagree' )
 
           ! OK, we must be ready to go
           call FillQtyWithWMOTropopause ( quantity, &
@@ -1895,7 +1906,7 @@ contains ! =====     Public Procedures     =============================
         case (-1)
           ! We must have decided to skip this fill
         case default
-          call Announce_error ( key, 0, 'This fill method not yet implemented' )
+          call Announce_error ( key, no_Error_Code, 'This fill method not yet implemented' )
         end select      ! s_method
 
       case ( s_FillCovariance ) ! ===============  FillCovariance  =====
@@ -2051,13 +2062,13 @@ contains ! =====     Public Procedures     =============================
             end where
           end do
         end if
-      
+
       case ( s_phase ) ! ===============================  Phase ==
         ! Set the name for this phase
         call get_string(vectorname, phaseString)
         call add_to_phase_timing(trim(phaseString))
         if ( RESTARTWARNINGS ) call MLSMessageReset(Warnings=.true.)
-      
+
       case ( s_transfer ) ! ===============================  Transfer ==
         ! Here we're on a transfer instruction
         ! Loop over the instructions
@@ -2109,7 +2120,7 @@ contains ! =====     Public Procedures     =============================
           noSnoopedMatrices = 1
           do j = 1, size ( matrices )
             call GetActualMatrixFromDatabase ( matrices(j), oneMatrix )
-            if ( associated ( oneMatrix ) ) then 
+            if ( associated ( oneMatrix ) ) then
               snoopMatrices(noSnoopedMatrices) = oneMatrix
               noSnoopedMatrices = noSnoopedMatrices + 1
             end if
@@ -2222,17 +2233,17 @@ contains ! =====     Public Procedures     =============================
       integer :: IND                    ! Combined MIF/CHAN
       ! Executable code
       if ( quantity%template%quantityType /= l_radiance ) &
-        & call Announce_Error ( key, 0, &
+        & call Announce_Error ( key, no_Error_Code, &
         &   'Quantity to fill must be a radiance' )
       if ( baselineQuantity%template%quantityType /= l_l1bMAFBaseline ) &
-        & call Announce_Error ( key, 0, &
+        & call Announce_Error ( key, no_Error_Code, &
         &   'Quantity to fill must be a L1BMAFBaseline' )
       if ( baselineQuantity%template%signal /= quantity%template%signal .or. &
         &  baselineQuantity%template%sideband /= quantity%template%sideband ) &
-        & call Announce_Error ( key, 0, &
+        & call Announce_Error ( key, no_Error_Code, &
         &   'Quantity and baselineQuantity must have matching signal/sideband' )
       ind = 1
-      if ( quadrature ) then 
+      if ( quadrature ) then
         do mif = 1, quantity%template%noSurfs
           do chan = 1, quantity%template%noChans
             quantity%values ( ind, : ) = sqrt ( quantity%values ( ind, : )**2 + &
@@ -2252,7 +2263,7 @@ contains ! =====     Public Procedures     =============================
     end subroutine ApplyBaseline
 
     ! ------------------------------------- deallocateStuff ---
-    subroutine deallocateStuff(Zetab, Zetac, Zetai, Pb, Pc, Pi)    
+    subroutine deallocateStuff(Zetab, Zetac, Zetai, Pb, Pc, Pi)
       real (r8), pointer, dimension(:) :: Zetab
       real (r8), pointer, dimension(:) :: Zetac
       real (r8), pointer, dimension(:) :: Zetai
@@ -2269,7 +2280,7 @@ contains ! =====     Public Procedures     =============================
       call Deallocate_test ( Zetac, 'Zetac', ModuleName )
       ! call Deallocate_test ( Zetad, 'Zetad', ModuleName )
       call Deallocate_test ( Zetai, 'Zetai', ModuleName )
-    end subroutine DeallocateStuff    
+    end subroutine DeallocateStuff
 
     ! ------------------------------------------- ExtractSingleChannel ---
     subroutine ExtractSingleChannel ( key, quantity, sourceQuantity, channel )
@@ -2282,14 +2293,14 @@ contains ! =====     Public Procedures     =============================
       integer :: MIF                    ! Minor frame index
       ! Executable code
       if ( quantity%template%quantityType /= l_singleChannelRadiance ) &
-        & call announce_error ( key, 0, 'Quantity to fill must be of type singleChannelRadiance' )
+        & call announce_error ( key, no_Error_Code, 'Quantity to fill must be of type singleChannelRadiance' )
       if ( all ( sourceQuantity%template%quantityType /= (/ l_cloudInducedRadiance, l_radiance /) ) ) &
-        & call announce_error ( key, 0, 'source quantity for fill must be of type [cloudInduced]radiance' )
+        & call announce_error ( key, no_Error_Code, 'source quantity for fill must be of type [cloudInduced]radiance' )
       if ( quantity%template%signal /= sourceQuantity%template%signal .or. &
         & quantity%template%sideband /= sourceQuantity%template%sideband ) &
-        & call announce_error ( key, 0, 'quantity/sourceQuantity must be same signal/sideband' )
+        & call announce_error ( key, no_Error_Code, 'quantity/sourceQuantity must be same signal/sideband' )
       if ( .not. sourceQuantity%template%regular ) &
-        & call Announce_Error ( key, 0, 'source quantity must be regular' )
+        & call Announce_Error ( key, no_Error_Code, 'source quantity must be regular' )
       chanInd = channel - GetFirstChannel ( quantity%template%signal ) + 1
       do mif = 1, quantity%template%noSurfs
         quantity%values ( mif, : ) = &
@@ -2352,10 +2363,10 @@ contains ! =====     Public Procedures     =============================
         ! Setup some stuff
         if ( lengthScale /= 0 ) then
           call CopyVector ( Lmasked, vectors(lengthScale), clone=.true., &
-            & vectorNameText='_Lmasked' ) 
+            & vectorNameText='_Lmasked' )
           call ClearUnderMask ( Lmasked )
         end if
-          
+
         ! Check the validity of the supplied vectors
         if ( covariance%m%row%vec%template%name /= &
           & dMasked%template%name ) call MLSMessage ( MLSMSG_Error, &
@@ -2412,7 +2423,7 @@ contains ! =====     Public Procedures     =============================
               ! Loop over off diagonal terms
               do j = 1, n
                 do k = 1, j-1
-                  meanDiag = sqrt ( m(j,j) * m(k,k) ) 
+                  meanDiag = sqrt ( m(j,j) * m(k,k) )
                   if ( lengthScale /= 0 ) &
                     & thisLength = sqrt ( l%values(j,i) * l%values(k,i) )
                   if ( fraction /= 0 ) thisFraction = f%values(j,i)
@@ -2442,7 +2453,7 @@ contains ! =====     Public Procedures     =============================
               do j = 1, n
                 if ( condition(j) ) M(j,j) = 1.0_rm
               end do
-              if ( anyOffDiag ) then 
+              if ( anyOffDiag ) then
                 call MatrixInversion(M, upper=.true.)
               else
                 do j = 1, n
@@ -2547,7 +2558,7 @@ contains ! =====     Public Procedures     =============================
       ! Local variables
       integer ::    FIRSTPROFILE, LASTPROFILE
       integer, dimension(1) :: FIRSTPROFILEASARRAY
-      integer :: INSTANCE               ! Loop counter 
+      integer :: INSTANCE               ! Loop counter
       integer :: THISPROFILE            ! Index
       type (Coefficients_R8) :: COEFFS  ! For interpolation
       real (r8), dimension(quantity%template%noSurfs) :: outZeta
@@ -2577,7 +2588,7 @@ contains ! =====     Public Procedures     =============================
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Quantity and l2gp have different number of surfaces (set interpolate?)' )
 
-      if ( .not. interpolate ) then 
+      if ( .not. interpolate ) then
         if ( quantity%template%verticalCoordinate == l_pressure ) then
           if ( any(ABS(-LOG10(quantity%template%surfs(:,1))+ &
             & LOG10(l2gp%pressures)) > TOLERANCE) ) &
@@ -2598,7 +2609,7 @@ contains ! =====     Public Procedures     =============================
         ! Attempt to match up the first location
         firstProfileAsArray=minloc(abs(quantity%template%phi(1,1)-l2gp%geodAngle))
         firstProfile=firstProfileAsArray(1)
-        
+
         ! Well, the last profile has to be noInstances later, check this would be OK
         lastProfile=firstProfile+quantity%template%noInstances-1
         if ( lastProfile > l2gp%nTimes ) &
@@ -2619,7 +2630,7 @@ contains ! =====     Public Procedures     =============================
           &         quantity%template%time(1,:)) > timeTol) ) &
           & call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'Quantity has profiles that mismatch l2gp in time' )
-        
+
         ! Currently the code cannot interpolate in 3 dimensions, wouldn't
         ! be hard to code up, but no need as yet.
         if ( interpolate .and. quantity%template%noChans /= 1 ) then
@@ -2751,7 +2762,7 @@ contains ! =====     Public Procedures     =============================
         heightUnit = GetUnitForVerticalCoordinate ( quantity%template%verticalCoordinate )
         if ( exprUnit(1) /= heightUnit .and. exprUnit(1) /= PHYQ_Dimensionless &
           & .and. .not. ( exprUnit(1) == PHYQ_Pressure .and. heightUnit == PHYQ_Zeta ) ) &
-          & call Announce_error ( valuesNode, 0, 'Bad height units for profile fill' )
+          & call Announce_error ( valuesNode, no_Error_Code, 'Bad height units for profile fill' )
         ! Store height
         if ( heightUnit == PHYQ_Zeta ) then
           ! Assume zeta coordinates are expressed in mb
@@ -2761,13 +2772,13 @@ contains ! =====     Public Procedures     =============================
         end if
         ! Check value unit OK
         if ( all ( exprUnit(2) /= (/ testUnit, PHYQ_Dimensionless /) ) ) &
-          & call Announce_error ( valuesNode, 0, 'Bad units for profile fill' )
+          & call Announce_error ( valuesNode, no_error_code, 'Bad units for profile fill' )
         ! Store value
         values ( i ) = exprValue(2)
       end do
 
       if ( myLogSpace .and. any ( values <= 0.0 ) ) then
-        call Announce_Error ( valuesNode, 0, &
+        call Announce_Error ( valuesNode, no_error_code, &
           & 'Non-positive input data in log profile fill' )
         return
       end if
@@ -2901,7 +2912,7 @@ contains ! =====     Public Procedures     =============================
       do maf = 1, noMAFs
         do mif = 1, noMIFs
 
-          ! First compute the tangent point velocity in ECI coordinates due 
+          ! First compute the tangent point velocity in ECI coordinates due
           ! to the rotation of the earth.  This no doubt makes approximations
           ! due to the slight non alignment between the earth's rotation axis and
           ! the ECI z axis, but I'm going to ignore this.
@@ -2966,7 +2977,7 @@ contains ! =====     Public Procedures     =============================
       if ( present(noiseQty) ) then
         aok = associated(noiseQty%values)
         if ( DEEBUG .and. .not. associated(noiseQty%values) ) &
-          & call announce_error( 0, No_Error_code, &
+          & call announce_error( no_Error_Code, No_Error_code, &
           & 'Noise values unassociated in FillableChiSq')
       end if
       aok = aok .and. &
@@ -2976,13 +2987,13 @@ contains ! =====     Public Procedures     =============================
 
       if ( DEEBUG ) then
         if ( .not. associated(qty%values) ) &
-          & call announce_error( 0, No_Error_code, &
+          & call announce_error( no_Error_Code, No_Error_code, &
           & 'Quantity values unassociated in FillableChiSq')
         if ( .not. associated(measQty%values) ) &
-          & call announce_error( 0, No_Error_code, &
+          & call announce_error( no_Error_Code, No_Error_code, &
           & 'Measurements values unassociated in FillableChiSq')
         if ( .not. associated(modelQty%values) ) &
-          & call announce_error( 0, No_Error_code, &
+          & call announce_error( no_Error_Code, No_Error_code, &
           & 'Model values unassociated in FillableChiSq')
       end if
 
@@ -3042,7 +3053,7 @@ contains ! =====     Public Procedures     =============================
     subroutine FillChiSqChan ( key, qty, measQty, modelQty, noiseQty, &
     & dontMask, ignoreZero, ignoreNegative, multiplier, &
     & firstInstance, lastInstance )
-      ! A special fill of chi squared 
+      ! A special fill of chi squared
       ! broken out according to channels
       ! Formal arguments
       integer, intent(in) :: KEY
@@ -3174,7 +3185,7 @@ contains ! =====     Public Procedures     =============================
     subroutine FillChiSqMMaf ( key, qty, measQty, modelQty, noiseQty, &
     & dontMask, ignoreZero, ignoreNegative, multiplier, &
     & firstInstance, lastInstance )
-      ! A special fill of chi squared 
+      ! A special fill of chi squared
       ! broken out according to major frames
       ! Formal arguments
       integer, intent(in) :: KEY
@@ -3312,7 +3323,7 @@ contains ! =====     Public Procedures     =============================
     subroutine FillChiSqMMif ( key, qty, measQty, modelQty, noiseQty, &
     & dontMask, ignoreZero, ignoreNegative, multiplier, &
     & firstInstance, lastInstance )
-      ! A special fill of chi squared 
+      ! A special fill of chi squared
       ! broken out according to Mifs
       ! Formal arguments
       integer, intent(in) :: KEY
@@ -3694,33 +3705,33 @@ contains ! =====     Public Procedures     =============================
       ! First some sanity checks
       if ( .not. ValidateVectorQuantity ( radiance, quantityType=(/l_radiance/), &
         & sideband=(/0/), minorFrame=.true. )) &
-        & call Announce_Error ( key, 0, 'Inappropriate radiance quantity to fill' )
+        & call Announce_Error ( key, no_error_code, 'Inappropriate radiance quantity to fill' )
       if ( ( associated ( lsb ) .neqv. associated ( lsbFraction ) ) .or. &
         &  ( associated ( usb ) .neqv. associated ( usbFraction ) ) ) then
-        call Announce_Error ( key, 0, 'Must supply sidebands and fractions together' )
+        call Announce_Error ( key, no_error_code, 'Must supply sidebands and fractions together' )
         return
       end if
-      if ( associated ( lsb ) ) then 
+      if ( associated ( lsb ) ) then
         if ( .not. ValidateVectorQuantity ( lsb, quantityType=(/l_radiance/), &
           & sideband=(/-1/), signal=(/radiance%template%signal/), minorFrame=.true. )) &
-          & call Announce_Error ( key, 0, 'Inappropriate lsb radiance quantity for fill' )
+          & call Announce_Error ( key, no_error_code, 'Inappropriate lsb radiance quantity for fill' )
         if ( .not. ValidateVectorQuantity ( lsbFraction, &
           & quantityType=(/l_limbSidebandFraction/), &
           & signal=(/radiance%template%signal/), sideband=(/-1/) ) ) &
-          & call Announce_Error ( key, 0, 'Inappropriate lsbFraction quantity for fill' )
+          & call Announce_Error ( key, no_error_code, 'Inappropriate lsbFraction quantity for fill' )
       end if
       if ( associated ( usb ) ) then
         if ( .not. ValidateVectorQuantity ( usb, quantityType=(/l_radiance/), &
           & sideband=(/1/), signal=(/radiance%template%signal/), minorFrame=.true. )) &
-          & call Announce_Error ( key, 0, 'Inappropriate usb radiance quantity for fill' )
+          & call Announce_Error ( key, no_error_code, 'Inappropriate usb radiance quantity for fill' )
         if ( .not. ValidateVectorQuantity ( usbFraction, &
           & quantityType=(/l_limbSidebandFraction/), &
           & signal=(/radiance%template%signal/), sideband=(/1/) ) ) &
-          & call Announce_Error ( key, 0, 'Inappropriate usbFraction quantity for fill' )
+          & call Announce_Error ( key, no_error_code, 'Inappropriate usbFraction quantity for fill' )
       end if
 
       if ( .not. associated ( lsb ) .and. .not. associated ( usb ) ) &
-        & call Announce_Error ( key, 0, 'Must supply one or both of lsb/usb' )
+        & call Announce_Error ( key, no_error_code, 'Must supply one or both of lsb/usb' )
 
       ! Now do the work
       ! Note that this is a very inefficient loop, but I don't really care as it's
@@ -3740,43 +3751,122 @@ contains ! =====     Public Procedures     =============================
     end subroutine FillFoldedRadiance
 
     ! ------------------------------------ FillPhiTanWithRefraction --
-    subroutine FillPhiTanWithRefraction ( key, quantity, ptanQuantity, &
-      & temperatureQuantity, h2oQuantity, refract )
-      integer, intent(in) :: KEY          ! Tree node
-      type (VectorValue_T), intent(inout) :: QUANTITY ! PhiTan quantity to fill
-      type (VectorValue_T), pointer :: PTANQUANTITY ! Ptan for same module
-      type (VectorValue_T), pointer :: TEMPERATUREQUANTITY ! Temperature
-      type (VectorValue_T), pointer :: H2OQUANTITY ! Water vapor
-      logical, intent(in) :: REFRACT      ! Do refraction or not
+    subroutine FillPhiTanWithRefraction ( key, quantity, &
+      & h2o, orbIncline, ptan, refGPH, temperature )
+
+      use Geometry, only: EarthRadA, EarthRadB, GEODTOGEOCLAT
+      use Hydrostatic_M, only: HYDROSTATIC
+      use MLSKinds, only: RP
+      use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
+      use MLSNumerics, only: Hunt
+      use Phi_Refractive_Correction_m, only: Phi_Refractive_Correction_Up
+      use Refraction_m, only: REFRACTIVE_INDEX
+      use Units, only: DEG2RAD, RAD2DEG
+
+      integer, intent(in) :: KEY          ! Tree node, for error messages
+      type (VectorValue_T), intent(inout) :: QUANTITY ! PhiTan quantity to update
+      type (VectorValue_T), intent(in) :: H2O         ! Water vapor
+      type (VectorValue_T), intent(in) :: OrbIncline  ! Orbital inclination
+      type (VectorValue_T), intent(in) :: PTan        ! Tangent pressure
+      type (VectorValue_T), intent(in) :: RefGPH      ! Reference GPH
+      type (VectorValue_T), intent(in) :: TEMPERATURE ! Temperature
+
+      real(rp), dimension(quantity%template%noInstances) :: CP2, CSQ, REQ, SP2
+      real(rp) :: PhiCorrs(temperature%template%noSurfs,temperature%template%noInstances)
+      real(rp), dimension(temperature%template%noInstances) :: REQS
+      real(rv), dimension(temperature%template%noSurfs) :: Heights, N, PhiCorr, PS
+      real(rv) :: Hphi, Hzeta ! Interpolating factors
+      integer, dimension(size(quantity%values,1)) :: &
+        & HuntPhi, HuntZeta
+      integer :: I, IP, IZ, J ! Subscripts, loop inductors
 
       ! Executable code
-      ! First check sanity
-      if ( .not. ValidateVectorQuantity ( quantity, &
-        & quantityType=(/l_phiTan/), minorFrame=.true. ) ) &
-        & call Announce_error ( key, 0, 'Quantity to fill is not phiTan' )
-      if ( refract ) then
-        ! More sanity checks
-        if ( .not. ValidateVectorQuantity ( ptanQuantity, &
-          & quantityType=(/l_ptan/), minorFrame=.true. ) ) &
-          & call Announce_error ( key, 0, 'Problem with ptan quantity for phiTan fill' )
-        if ( quantity%template%instrumentModule /= &
-          &  ptanQuantity%template%instrumentModule ) &
-          & call Announce_error ( key, 0, 'phiTan and ptan quantities not for same module' )
-        if ( .not. ValidateVectorQuantity ( temperatureQuantity, &
-          & quantityType=(/l_temperature/), coherent=.true., stacked=.true., &
-          & frequencyCoordinate=(/l_none/), verticalCoordinate=(/l_zeta/) ) ) &
-          & call Announce_error ( key, 0, 'Problem with temperature quantity for phiTan fill' )
-        if ( .not. ValidateVectorQuantity ( h2oQuantity, &
-          & quantityType=(/l_vmr/), molecule=(/l_h2o/), coherent=.true., stacked=.true., &
-          & frequencyCoordinate=(/l_none/), verticalCoordinate=(/l_zeta/) ) ) &
-          & call Announce_error ( key, 0, 'Problem with temperature quantity for phiTan fill' )
+      ! More sanity checks
+      if ( quantity%template%instrumentModule /= ptan%template%instrumentModule ) &
+        & call Announce_Error ( key, No_Error_Code, &
+        & 'PHITan and PTan quantities are not for the same module' )
+      if ( any(shape(quantity%values)/=shape(ptan%values)) ) &
+        & call Announce_Error ( key, No_Error_Code, &
+        & 'PHITan and PTan quantities are not the same size' )
+      if ( .not. ValidateVectorQuantity ( temperature, &
+        & quantityType=(/l_temperature/), coherent=.true., stacked=.true., &
+        & frequencyCoordinate=(/l_none/), verticalCoordinate=(/l_zeta/) ) ) &
+        & call Announce_error ( key, no_error_code, 'Problem with temperature quantity for phiTan fill' )
+      if ( .not. ValidateVectorQuantity ( h2o, &
+        & quantityType=(/l_vmr/), molecule=(/l_h2o/), coherent=.true., stacked=.true., &
+        & frequencyCoordinate=(/l_none/), verticalCoordinate=(/l_zeta/) ) ) &
+        & call Announce_error ( key, no_error_code, 'Problem with temperature quantity for phiTan fill' )
+      if ( .not. ValidateVectorQuantity ( refGPH, &
+        & quantityType = (/l_refGPH/), coherent=.true., stacked=.true., &
+        & verticalCoordinate=(/l_zeta/), frequencyCoordinate=(/l_none/), noSurfs=(/1/) ) ) &
+        & call Announce_Error ( key, badrefGPHQuantity )
 
-        ! OK, do the refraction calculation
-        call Announce_error ( key, 0, 'Refract=true, not yet supported' )
-      else
-        ! Just copy it from the template
-        quantity%values = quantity%template%phi
-      end if
+      i = 0
+      if ( .not. DoHGridsMatch ( temperature, refGPH ) ) i = i + 1
+      if ( .not. DoHGridsMatch ( temperature, h2o ) ) i = i + 2
+      if ( quantity%template%noInstances /= orbincline%template%noInstances ) i = i + 4
+      if ( .not. DoVGridsMatch ( temperature, h2o ) ) i = i + 8
+      if ( i /= 0 ) call Announce_Error ( key, no_error_code, &
+        & ' coordinates for temperature/refGPH/H2O disagree', &
+        & extraInfo = (/i/) )
+
+      ! compute equivalent earth radius at uncorrected tangent phi nearest surface
+      csq = (earthrada * earthradb)**2 / &
+            & ((earthrada**2-earthradb**2)*sin(orbincline%values(1,:)*deg2rad)**2 + &
+            &   earthradb**2)
+      cp2 = cos(quantity%values(1,:)*deg2rad)**2
+      sp2 = 1.0_rp - cp2
+      req = 0.001_rp*sqrt((earthrada**4*sp2 + csq**2*cp2) / &
+                        & (earthrada**2*cp2 + csq*sp2))
+
+      ! Interpolate REQ to temperature/h2o/refGPH hGrid
+      call InterpolateValues ( quantity%values(1,:), req, &
+        & temperature%template%phi(1,:), reqs, 'Linear', extrapolate='Constant' )
+
+      ! Get pressures corresponding to Temperature etc
+      ps = 10.0**(-temperature%template%surfs(:,1))
+
+      ! OK, do the refraction calculation on Temperature's grids
+      do j = 1, temperature%template%noInstances
+
+        ! Get heights.  Temperature and RefGPH are on same hGrids.
+        ! RefGPH is in meters, but Hydrostatic wants it in km.
+        call Hydrostatic ( GeodToGeocLat ( temperature%template%geodLat(1,j) ), &
+          & temperature%template%surfs(:,1), temperature%values(:,j), &
+          & temperature%template%surfs(:,1), &
+          & refGPH%template%surfs(1,1), 0.001*refGPH%values(1,j), &
+          & heights )
+        heights = heights + reqs(j)
+        ! Get refractive indices.  Temperature and H2O are on same grids.
+        call refractive_index ( ps, temperature%values(:,j), n, h2o%values(:,j) )
+        do i = 1, temperature%template%noSurfs
+          call phi_refractive_correction_up ( n(i:), heights(i:), phiCorr(i:) )
+          phiCorrs(i,j) = phiCorr(temperature%template%noSurfs) * rad2deg
+        end do
+      end do
+
+      ! Now interpolate Phi corrections onto the PhiTan grid and apply them.
+      ! Its zeta grid is the value of PTan; its phi grid is its own value.
+
+      do j = 1, size(quantity%values,2)
+        ! Hunt in zeta, phi grids
+        call hunt ( h2o%template%phi(1,:), quantity%values(:,j), huntPhi )
+        call hunt ( h2o%template%surfs(:,1), ptan%values(:,j), huntZeta )
+        do i = 1, size(quantity%values,1)
+          ! Interpolate from PhiCorr's (phi,zeta), which is the same as
+          ! h2o's, to PhiTan's, using bilinear interpolation, and
+          ! apply the interpolated correction.
+          ip = huntPhi(i)
+          iz = huntZeta(i)
+          hPhi = (quantity%values(i,j)-h2o%template%phi(1,ip)) / &
+                 (h2o%template%phi(1,ip+1)-h2o%template%phi(1,ip))
+          hZeta = (ptan%values(i,j)-h2o%template%surfs(iz,1)) / &
+                 (h2o%template%surfs(iz+1,1)-h2o%template%surfs(iz,1))
+          quantity%values(i,j) = quantity%values(i,j) + &
+            & (1.0-hZeta) * ((1.0-hphi)*phiCorrs(iz,ip) + hphi*phiCorrs(iz,ip+1)) + &
+            & hZeta*((1.0-hphi)*phiCorrs(iz+1,ip) + hphi*phiCorrs(iz+1,ip+1))
+        end do ! i
+      end do ! j
 
     end subroutine FillPhiTanWithRefraction
 
@@ -3789,14 +3879,14 @@ contains ! =====     Public Procedures     =============================
       type (VectorValue_T), intent(in) :: temperatureQuantity ! T(zeta)
 
       ! local variables
-      real (r8), dimension(Temperaturequantity%template%noSurfs,quantity%template%noInstances) :: temp 
+      real (r8), dimension(Temperaturequantity%template%noSurfs,quantity%template%noInstances) :: temp
       real (r8), dimension(Temperaturequantity%template%noSurfs) :: zt, yt
       real (r8), dimension(sourceQuantity%template%noSurfs) :: ze, ye
       real (r8), dimension(quantity%template%noSurfs) :: z, Tz, Ez, iwc0
       real (r8), dimension(quantity%template%noInstances) :: x2, y2
       real (r8), dimension(Temperaturequantity%template%noInstances) :: x1, y1
       integer :: i
-     
+
       if ( .not. (quantity%template%coherent .and. sourceQuantity%template%coherent &
          .and. Temperaturequantity%template%coherent)) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -3817,41 +3907,41 @@ contains ! =====     Public Procedures     =============================
          temp = TemperatureQuantity%values
       end if
 
-      if ( quantity%template%verticalCoordinate == l_pressure ) then 
-        z = -log10 ( quantity%template%surfs(:,1) )             
-      else                                                           
-        z = quantity%template%surfs(:,1)            
+      if ( quantity%template%verticalCoordinate == l_pressure ) then
+        z = -log10 ( quantity%template%surfs(:,1) )
+      else
+        z = quantity%template%surfs(:,1)
       end if
-      
-      if ( sourceQuantity%template%verticalCoordinate == l_pressure ) then 
-        ze = -log10 ( sourceQuantity%template%surfs(:,1) )             
-      else                                                           
-        ze = sourceQuantity%template%surfs(:,1)            
+
+      if ( sourceQuantity%template%verticalCoordinate == l_pressure ) then
+        ze = -log10 ( sourceQuantity%template%surfs(:,1) )
+      else
+        ze = sourceQuantity%template%surfs(:,1)
       end if
-      
-      if ( Temperaturequantity%template%verticalCoordinate == l_pressure ) then 
-        zt = -log10 ( Temperaturequantity%template%surfs(:,1) )             
-      else                                                           
-        zt = Temperaturequantity%template%surfs(:,1)    
+
+      if ( Temperaturequantity%template%verticalCoordinate == l_pressure ) then
+        zt = -log10 ( Temperaturequantity%template%surfs(:,1) )
+      else
+        zt = Temperaturequantity%template%surfs(:,1)
       end if
-        
+
       do i=1, quantity%template%noInstances
         yt = Temp(:, i)
         call InterpolateValues( zt, yt, z,  Tz, method='Linear' )
         ye = sourceQuantity%values(:, i)*1000._r8  ! converted to 1/km
         call InterpolateValues( ze, ye, z, Ez, method='Linear' )
         ! see ATBD for the conversion based on the size distribution from
-        ! McFarquhar and Heymsfield [1996] 
-        ! 
-        iwc0 = 10**(-2.77+0.01*(Tz-273.15))  
+        ! McFarquhar and Heymsfield [1996]
+        !
+        iwc0 = 10**(-2.77+0.01*(Tz-273.15))
         where(Ez < 0._r8) Ez = 0._r8
         Ez = Ez**(1./1.4)
-        
+
         quantity%values(:,i) = iwc0*Ez
       end do
 
-    end subroutine FillIWCFromExtinction 
-    
+    end subroutine FillIWCFromExtinction
+
       ! ------------------------------------- FillRHIFromH2O ----
     subroutine FillRHIFromH2O ( key, quantity, &
      & sourceQuantity, temperatureQuantity, &
@@ -3859,7 +3949,7 @@ contains ! =====     Public Procedures     =============================
      & markUndefinedValues, invert )
       ! Convert h2o vmr to %RHI for all instances, channels, surfaces
       ! (See Eq. 9 from "UARS Microwave Limb Sounder upper tropospheric
-      !  humidity measurement: Method and validation" Read et. al. 
+      !  humidity measurement: Method and validation" Read et. al.
       !  J. Geoph. Res. Dec. 2001 (106) D23)
 
       !  Method:
@@ -3887,28 +3977,28 @@ contains ! =====     Public Procedures     =============================
       logical, intent(in)           ::    invert      ! %RHI -> vmr if TRUE
 
       ! Local variables
-      integer ::                          Channel     ! Channel loop counter    
-      integer ::                          Chan_h2o    ! Channel loop counter    
-      integer ::                          Chan_T      ! Channel loop counter    
+      integer ::                          Channel     ! Channel loop counter
+      integer ::                          Chan_h2o    ! Channel loop counter
+      integer ::                          Chan_T      ! Channel loop counter
       logical, parameter ::               DEEBUG_RHI = .false.
       integer                          :: dim
       integer ::                          I           ! Instances
       integer ::                          I_H2O       ! Instance num for values
       integer ::                          I_T         ! Instance num for values
       integer ::                          invs        ! 1 if invert, else -1
-      integer ::                          QINDEX                                
-      integer ::                          N           ! Num. of summed values   
+      integer ::                          QINDEX
+      integer ::                          N           ! Num. of summed values
       logical                          :: matched_h2o_channels
       logical                          :: matched_h2o_instances
       logical                          :: matched_sizes
       logical                          :: matched_surfs
       logical                          :: matched_T_channels
       logical                          :: matched_T_instances
-      integer ::                          S           ! Surface loop counter    
+      integer ::                          S           ! Surface loop counter
       integer ::                          S_H2O       ! Instance num for surfs
       integer ::                          S_RHI       ! Instance num for surfs
       integer ::                          S_T         ! Instance num for surfs
-      logical ::                          skipMe                                
+      logical ::                          skipMe
       real (r8) ::                        T
       character(len=*), parameter ::      VMR_UNITS = 'vmr'
       integer ::                          VMR_UNIT_CNV
@@ -3998,10 +4088,10 @@ contains ! =====     Public Procedures     =============================
           s_t = i
         end if
         ! zeta must be in log(hPa) units
-        if ( quantity%template%verticalCoordinate == l_pressure ) then 
-          zeta = -log10 ( quantity%template%surfs(:,s_rhi) )             
+        if ( quantity%template%verticalCoordinate == l_pressure ) then
+          zeta = -log10 ( quantity%template%surfs(:,s_rhi) )
         else
-          zeta = quantity%template%surfs(:,s_rhi)                        
+          zeta = quantity%template%surfs(:,s_rhi)
         end if
         if ( interpolate .and. .not. matched_h2o_instances ) then
           i_h2o = 1
@@ -4013,15 +4103,15 @@ contains ! =====     Public Procedures     =============================
         else
           i_T = i
         end if
-        if ( sourceQuantity%template%verticalCoordinate == l_pressure ) then 
-          zetah2o = -log10 ( sourceQuantity%template%surfs(:,s_h2o) )             
-        else                                                           
-          zetah2o = sourceQuantity%template%surfs(:,s_h2o)            
+        if ( sourceQuantity%template%verticalCoordinate == l_pressure ) then
+          zetah2o = -log10 ( sourceQuantity%template%surfs(:,s_h2o) )
+        else
+          zetah2o = sourceQuantity%template%surfs(:,s_h2o)
         end if
-        if ( Temperaturequantity%template%verticalCoordinate == l_pressure ) then 
-          zetaTemperature = -log10 ( Temperaturequantity%template%surfs(:,s_T) )             
-        else                                                           
-          zetaTemperature = Temperaturequantity%template%surfs(:,s_T)            
+        if ( Temperaturequantity%template%verticalCoordinate == l_pressure ) then
+          zetaTemperature = -log10 ( Temperaturequantity%template%surfs(:,s_T) )
+        else
+          zetaTemperature = Temperaturequantity%template%surfs(:,s_T)
         end if
         N = 0
         do Channel=1, quantity%template%noChans
@@ -4166,7 +4256,7 @@ contains ! =====     Public Procedures     =============================
       ! For precisions:
       ! Convert h2o vmr to %RHI for all instances, channels, surfaces
       ! (See Eq. 9 from "UARS Microwave Limb Sounder upper tropospheric
-      !  humidity measurement: Method and validation" Read et. al. 
+      !  humidity measurement: Method and validation" Read et. al.
       !  J. Geoph. Res. Dec. 2001 (106) D23)
 
       !  Method:
@@ -4199,11 +4289,11 @@ contains ! =====     Public Procedures     =============================
       logical, intent(in)           ::    invert      ! %RHI -> vmr if TRUE
 
       ! Local variables
-      integer ::                          Channel     ! Channel loop counter    
-      integer ::                          Chan_h2oPrecision    ! Channel loop counter    
-      integer ::                          Chan_TPrecision      ! Channel loop counter    
-      integer ::                          Chan_h2o    ! Channel loop counter    
-      integer ::                          Chan_T      ! Channel loop counter    
+      integer ::                          Channel     ! Channel loop counter
+      integer ::                          Chan_h2oPrecision    ! Channel loop counter
+      integer ::                          Chan_TPrecision      ! Channel loop counter
+      integer ::                          Chan_h2o    ! Channel loop counter
+      integer ::                          Chan_T      ! Channel loop counter
       logical, parameter ::               DEEBUG_RHI = .false.
       integer                          :: dim
       integer ::                          I           ! Instances
@@ -4221,17 +4311,17 @@ contains ! =====     Public Procedures     =============================
       logical                          :: matched_TPrecision_instances
       logical                          :: matched_T_channels
       logical                          :: matched_T_instances
-      integer ::                          N           ! Num. of summed values   
+      integer ::                          N           ! Num. of summed values
       logical, parameter ::               NEGATIVETOO = .true.
-      integer ::                          QINDEX                                
+      integer ::                          QINDEX
       real (r8) ::                        rhi_precision
-      integer ::                          S           ! Surface loop counter    
+      integer ::                          S           ! Surface loop counter
       integer ::                          S_H2OPrecision       ! Instance num for surfs
       integer ::                          S_H2O       ! Instance num for surfs
       integer ::                          S_RHI       ! Instance num for surfs
       integer ::                          S_TPrecision         ! Instance num for surfs
       integer ::                          S_T         ! Instance num for surfs
-      logical ::                          skipMe                                
+      logical ::                          skipMe
       character(len=*), parameter ::      VMR_UNITS = 'vmr'
       integer ::                          VMR_UNIT_CNV
       logical ::                          wereAnySkipped
@@ -4346,10 +4436,10 @@ contains ! =====     Public Procedures     =============================
           s_t = i
         end if
         ! zeta must be in log(hPa) units
-        if ( quantity%template%verticalCoordinate == l_pressure ) then 
-          zeta = -log10 ( quantity%template%surfs(:,s_rhi) )             
+        if ( quantity%template%verticalCoordinate == l_pressure ) then
+          zeta = -log10 ( quantity%template%surfs(:,s_rhi) )
         else
-          zeta = quantity%template%surfs(:,s_rhi)                        
+          zeta = quantity%template%surfs(:,s_rhi)
         end if
         if ( interpolate .and. .not. matched_h2oPrecision_instances ) then
           i_h2oPrecision = 1
@@ -4371,25 +4461,25 @@ contains ! =====     Public Procedures     =============================
         else
           i_T = i
         end if
-        if ( sourcePrecisionQuantity%template%verticalCoordinate == l_pressure ) then 
-          zetah2oPrecision = -log10 ( sourcePrecisionQuantity%template%surfs(:,s_h2o) )             
-        else                                                           
-          zetah2oPrecision = sourcePrecisionQuantity%template%surfs(:,s_h2o)            
+        if ( sourcePrecisionQuantity%template%verticalCoordinate == l_pressure ) then
+          zetah2oPrecision = -log10 ( sourcePrecisionQuantity%template%surfs(:,s_h2o) )
+        else
+          zetah2oPrecision = sourcePrecisionQuantity%template%surfs(:,s_h2o)
         end if
-        if ( TempPrecisionquantity%template%verticalCoordinate == l_pressure ) then 
-          zetaTempPrecision = -log10 ( TempPrecisionquantity%template%surfs(:,s_T) )             
-        else                                                           
-          zetaTempPrecision = TempPrecisionquantity%template%surfs(:,s_T)            
+        if ( TempPrecisionquantity%template%verticalCoordinate == l_pressure ) then
+          zetaTempPrecision = -log10 ( TempPrecisionquantity%template%surfs(:,s_T) )
+        else
+          zetaTempPrecision = TempPrecisionquantity%template%surfs(:,s_T)
         end if
-        if ( sourceQuantity%template%verticalCoordinate == l_pressure ) then 
-          zetah2o = -log10 ( sourceQuantity%template%surfs(:,s_h2o) )             
-        else                                                           
-          zetah2o = sourceQuantity%template%surfs(:,s_h2o)            
+        if ( sourceQuantity%template%verticalCoordinate == l_pressure ) then
+          zetah2o = -log10 ( sourceQuantity%template%surfs(:,s_h2o) )
+        else
+          zetah2o = sourceQuantity%template%surfs(:,s_h2o)
         end if
-        if ( Temperaturequantity%template%verticalCoordinate == l_pressure ) then 
-          zetaTemperature = -log10 ( Temperaturequantity%template%surfs(:,s_T) )             
-        else                                                           
-          zetaTemperature = Temperaturequantity%template%surfs(:,s_T)            
+        if ( Temperaturequantity%template%verticalCoordinate == l_pressure ) then
+          zetaTemperature = -log10 ( Temperaturequantity%template%surfs(:,s_T) )
+        else
+          zetaTemperature = Temperaturequantity%template%surfs(:,s_T)
         end if
         N = 0
         do Channel=1, quantity%template%noChans
@@ -4578,7 +4668,7 @@ contains ! =====     Public Procedures     =============================
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "Invalid system temperature quantity for estimated noise fill.")
 
-      if ( associated ( nbw ) ) then 
+      if ( associated ( nbw ) ) then
         if ( .not. ValidateVectorQuantity ( &
           & nbw, &
           & quantityType=(/l_noiseBandwidth/), &
@@ -4743,7 +4833,7 @@ contains ! =====     Public Procedures     =============================
       real(r8), dimension(:), pointer :: freq2, freqL2, freqU2
       real(r8), dimension(:), pointer :: freq, freqL, freqU
       real(r8) :: ratio1, ratio2    ! signal sideband fractions
-      real(r8) :: scaledRad   ! scaled radiance according to the f^4 law 
+      real(r8) :: scaledRad   ! scaled radiance according to the f^4 law
 
       ! Executable code
       nullify(freq, freqL, freqU, freq1, freqL1, freqU1, freq2, freqL2, freqU2)
@@ -4751,9 +4841,9 @@ contains ! =====     Public Procedures     =============================
       ! check for qualified quantity
       if ( .not. ValidateVectorQuantity ( quantity, quantityType=(/l_cloudInducedRadiance/), &
         & sideband=(/-1,1/), minorFrame=.true. )) &
-        & call Announce_Error ( key, 0, 'Quantity must be cloud-induced-radiances to fill' )
+        & call Announce_Error ( key, no_error_code, 'Quantity must be cloud-induced-radiances to fill' )
       if ( .not. associated(quantity%mask)) &
-        & call Announce_Error ( key, 0, 'Quantity must be a subset to fill' )
+        & call Announce_Error ( key, no_error_code, 'Quantity must be a subset to fill' )
 
       signalIn = GetSignal ( sourceQuantity%template%signal )     ! sideband info gets lost
       signalOut = GetSignal ( Quantity%template%signal )          ! sideband info gets lost
@@ -4789,7 +4879,7 @@ contains ! =====     Public Procedures     =============================
         if ( .not. ValidateVectorQuantity ( sourceQuantity, &
           & quantityType=(/l_cloudInducedRadiance/), &
           & sideband=(/-1,1/), minorFrame=.true. )) &
-          & call Announce_Error ( key, 0, 'Inappropriate sourceQuantity radiance for fill' )
+          & call Announce_Error ( key, no_error_code, 'Inappropriate sourceQuantity radiance for fill' )
         do i=1,size(signalOut%frequencies)
           do maf=1, quantity%template%noInstances
             do mif=1, quantity%template%noSurfs
@@ -4805,23 +4895,23 @@ contains ! =====     Public Procedures     =============================
 
       else
         ! split two sideband radiances according to the f^4 law
-        ! The source cloudy radiance must be from the same signal of double sideband 
+        ! The source cloudy radiance must be from the same signal of double sideband
 
         if ( .not. ValidateVectorQuantity ( sourceQuantity, &
           & quantityType=(/l_cloudInducedRadiance/), &
           & sideband=(/0/), signal=(/quantity%template%signal/), minorFrame=.true. )) &
-          & call Announce_Error ( key, 0, 'Inappropriate sourceQuantity radiance for fill' )
+          & call Announce_Error ( key, no_error_code, 'Inappropriate sourceQuantity radiance for fill' )
         if ( .not. ValidateVectorQuantity ( lsbFraction, &
           & quantityType=(/l_limbSidebandFraction/), &
           & signal=(/quantity%template%signal/), sideband=(/-1/) ) ) &
-          & call Announce_Error ( key, 0, 'Inappropriate lsbFraction quantity for fill' )
+          & call Announce_Error ( key, no_error_code, 'Inappropriate lsbFraction quantity for fill' )
         if ( .not. ValidateVectorQuantity ( usbFraction, &
           & quantityType=(/l_limbSidebandFraction/), &
           & signal=(/quantity%template%signal/), sideband=(/1/) ) ) &
-          & call Announce_Error ( key, 0, 'Inappropriate usbFraction quantity for fill' )
+          & call Announce_Error ( key, no_error_code, 'Inappropriate usbFraction quantity for fill' )
 
-        ! This method is only appliable to the cloud-induced radiances. One may assume 
-        ! that the scattering radiances are proportional to f^4. And this operation 
+        ! This method is only appliable to the cloud-induced radiances. One may assume
+        ! that the scattering radiances are proportional to f^4. And this operation
         ! is only applied to maskbit = m_cloud.
 
         if ( .not. associated(usb) ) then
@@ -4846,8 +4936,8 @@ contains ! =====     Public Procedures     =============================
           ! If both sidebands are within 20GHz but have very different penetration depths,
           ! where one is optically thick and one is optically thin. We may use a reference
           ! cloud radiance near the optically-thin sideband to split cloud radiance in the
-          ! optically-thick sideband. The reference radiance must be a single sideband 
-          ! radiance in this case, namely usb (upper sideband in most cases). The usb is 
+          ! optically-thick sideband. The reference radiance must be a single sideband
+          ! radiance in this case, namely usb (upper sideband in most cases). The usb is
           ! scaled to the sourceQty upperside (thin) via the f^4 law, and the rest cloud
           ! radiance is for the lower sideband.
           !
@@ -4856,7 +4946,7 @@ contains ! =====     Public Procedures     =============================
           !
           if ( .not. ValidateVectorQuantity ( usb, &
             & quantityType=(/l_cloudInducedRadiance/), sideband=(/-1,1/), &
-            & minorFrame=.true. )) call Announce_Error ( key, 0, &
+            & minorFrame=.true. )) call Announce_Error ( key, no_error_code, &
             & 'Inappropriate reference radiance for splitting' )
 
           signalRef = GetSignal ( usb%template%signal )
@@ -4866,7 +4956,7 @@ contains ! =====     Public Procedures     =============================
             & 'LSBfrequencies', ModuleName )
           call allocate_test ( freqU, size(signalRef%frequencies), &
             & 'USBfrequencies', ModuleName )
-          freq = signalRef%centerFrequency + signalRef%direction*signalRef%frequencies 
+          freq = signalRef%centerFrequency + signalRef%direction*signalRef%frequencies
           freqL = signalOut%lo - freq    ! lower sideband freq
           freqU = signalOut%lo + freq    ! upper sideband freq
           if ( usb%template%sideband == -1) freq = freqL
@@ -4874,7 +4964,7 @@ contains ! =====     Public Procedures     =============================
           do i=1,size(signalOut%frequencies)
 
             ! need to scale the opposite sideband for the output signal
-            if ( quantity%template%sideband == 1 ) then 
+            if ( quantity%template%sideband == 1 ) then
               ratio1 = lsbFraction%values(i,1)
               ratio2 = usbFraction%values(i,1)
               freq2 = freqL2
@@ -4894,7 +4984,7 @@ contains ! =====     Public Procedures     =============================
                   & (mif-1)*size(signalOut%frequencies), maf)), m_cloud) /= 0 ) then
                   quantity%values(i+(mif-1)*size(signalOut%frequencies), maf) = &
                     &  (sourceQuantity%values(i+(mif-1)*size(signalIn%frequencies), maf) - &
-                    &  ratio1*scaledRad)/ratio2 
+                    &  ratio1*scaledRad)/ratio2
                 end if
               end do
             end do
@@ -4957,7 +5047,7 @@ contains ! =====     Public Procedures     =============================
         end if
         call GetGPHPrecision ( tempPrecisionQuantity, refGPHPrecisionQuantity, quantity%values )
       case default
-        call Announce_error ( 0, 0, 'GPH precision needed for result of FillGPHPrecision' )
+        call Announce_error ( 0, no_error_code, 'GPH precision needed for result of FillGPHPrecision' )
       end select
 
       if ( toggle(gen) .and. levels(gen) > 0 ) &
@@ -5013,7 +5103,7 @@ contains ! =====     Public Procedures     =============================
       else if ( ratioQuantity%template%molecule == sourceQuantity%template%molecule ) then
         ! Going from isotope to parent
         factor = 1.0/ratioQuantity%values(1,1)
-      else 
+      else
         call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "Unable to understand isotope fill" )
       end if
@@ -5048,21 +5138,21 @@ contains ! =====     Public Procedures     =============================
           & (/ source_ref(key) /) )
       end if
       read ( unit=lun, fmt=*, iostat=status ) quantity%values
-      if ( status /= 0 ) then 
+      if ( status /= 0 ) then
         call io_Error ( "Unable to read ASCII input file ", status, filenameStr )
         call MLSMessage( MLSMSG_Error, ModuleName, 'Error reading ASCII file %l', &
           & (/ source_ref(key) /) )
       end if
       close ( unit=lun, iostat=status )
-      if ( status /= 0 ) then 
+      if ( status /= 0 ) then
         call io_Error ( "Unable to close ASCII input file ", status, filenameStr )
         call MLSMessage( MLSMSG_Error, ModuleName, 'Error closing ASCII file at %l', &
           & (/ source_ref(key) /) )
       end if
-      if ( present ( badRange ) ) then 
+      if ( present ( badRange ) ) then
         if ( .not. associated ( quantity%mask ) ) call CreateMask ( quantity )
         where ( quantity%values >= badRange(1) .and. &
-          & quantity%values <= badRange(2) ) 
+          & quantity%values <= badRange(2) )
           quantity%mask = char(ior(ichar(quantity%mask),m_linAlg))
         end where
       end if
@@ -5083,7 +5173,7 @@ contains ! =====     Public Procedures     =============================
       real(r8) :: THISFIELD(3)          ! A magnetic field vector
       real(r8) :: ROTATION(3,3)         ! One rotation matrix
       real(r8) :: STRENGTH              ! The field strength
-      
+
       ! Executable code
       ! Do some sanity checks
       if ( .not. any ( qty%template%quantityType == &
@@ -5123,7 +5213,7 @@ contains ! =====     Public Procedures     =============================
           case ( l_fieldElevation )
             if ( strength /= 0.0_r8 ) then
               ! Elevation is constrained to 0--90 degrees instead of 0--180 degrees because
-              ! radiative transfer Physics is symmetric.  We save half of l2pc bins. 
+              ! radiative transfer Physics is symmetric.  We save half of l2pc bins.
               qty%values(surface,instance) = acos ( abs ( thisField(3) / strength ) ) * rad2deg
             else
               qty%values(surface,instance) = 0.0
@@ -5138,7 +5228,7 @@ contains ! =====     Public Procedures     =============================
           end select
         end do
       end do
-            
+
     end subroutine RotateMagneticField
 
     !=============================================== ExplicitFillVectorQuantity ==
@@ -5203,7 +5293,7 @@ contains ! =====     Public Procedures     =============================
 
       myFillValue = 0.
       if ( present(FillValue) ) myFillValue = FillValue
-      
+
       whichToReplace = ' '
       ! mywhereFill = .false.
       ! mywhereNotFill = .false.
@@ -5339,7 +5429,7 @@ contains ! =====     Public Procedures     =============================
       L1BOAFile => GetMLSFileByType(filedatabase, content='l1boa')
       this_hdfVersion = L1BFile%HDFVersion
       fileID = L1BFile%FileID%f_id
-      
+
       select case ( quantity%template%quantityType )
       case ( l_ECRtoFOV )
         call GetModuleName( quantity%template%instrumentModule, nameString )
@@ -5563,23 +5653,23 @@ contains ! =====     Public Procedures     =============================
 
       if ( .not. ValidateVectorQuantity ( qty, quantityType=(/l_magneticField/), &
         & frequencyCoordinate=(/ l_xyz /) ) ) then
-        call Announce_Error ( key, 0, &
+        call Announce_Error ( key, no_error_code, &
           & 'Quantity does not describe magnetic field' )
         return
       end if
       if ( .not. ValidateVectorQuantity ( gphQty, quantityType=(/l_gph/), &
         & frequencyCoordinate=(/ l_none /), verticalCoordinate=(/l_zeta/) ) ) then
-        call Announce_Error ( key, 0, &
+        call Announce_Error ( key, no_error_code, &
           & 'GPH quantity does not describe gph field' )
         return
       end if
       if ( .not. DoHGridsMatch ( qty, gphQty ) ) then
-        call Announce_Error ( key, 0, &
+        call Announce_Error ( key, no_error_code, &
           & 'Quantity and GPHQuanity do not share the same horizontal basis' )
         return
       end if
       if ( .not. DoVGridsMatch ( qty, gphQty ) ) then
-        call Announce_Error ( key, 0, &
+        call Announce_Error ( key, no_error_code, &
           & 'Quantity and GPHQuantity do not share the same vertical basis' )
         return
       end if
@@ -5646,8 +5736,8 @@ contains ! =====     Public Procedures     =============================
       ! is when we've used the force option to e.g. copy one band into another.
       if ( .not. doVGridsMatch ( qty, source ) ) then
         ! This quantity needs vertical interpolation
-        ! These checks are for cases the code can't (yet) handle, 
-        ! may add this functionality later. 
+        ! These checks are for cases the code can't (yet) handle,
+        ! may add this functionality later.
         if ( qty%template%noChans /= 1 ) then
           call Announce_error ( key, no_error_code, &
             & 'Code cannot (yet?) interpolate multi channel quantities' )
@@ -5672,7 +5762,7 @@ contains ! =====     Public Procedures     =============================
           newSurfs => qty%template%surfs ( :, 1 )
           mySurfs = .false.
         end if
-        
+
         ! Work out if we have to obey the mask
         myNewValues = .false.
         if ( associated ( qty%mask ) ) &
@@ -5684,7 +5774,7 @@ contains ! =====     Public Procedures     =============================
         else
           newValues => qty%values
         end if
-        
+
         ! OK, do the work
         if ( qty%template%logBasis ) then
           call InterpolateValues ( &
@@ -5698,21 +5788,21 @@ contains ! =====     Public Procedures     =============================
             & newSurfs, newValues, &
             & method='Linear', extrapolate='Constant' )
         end if
-        
+
         if ( myNewValues ) then
           where ( iand ( ichar(qty%mask(:,:)),m_fill) == 0 )
             qty%values = newValues
           end where
           call Deallocate_test ( newValues, 'myNewValues', ModuleName )
         end if
-        
+
         ! Tidy up
         if ( mySurfs ) then
           call Deallocate_test ( oldSurfs, 'oldSurfs', ModuleName )
           call Deallocate_test ( newSurfs, 'newSurfs', ModuleName )
         end if
       else ! ------------------------
-        ! No interpolation needed, more like the 
+        ! No interpolation needed, more like the
         ! case handled in the calling code, except we're more lenient
         ! If we have a mask and we're going to obey it then do so
         if ( associated(quantity%mask) .and. .not. dontMask ) then
@@ -5738,7 +5828,7 @@ contains ! =====     Public Procedures     =============================
       ! marked with the baddata flag (-999.)
 
       ! Dummy arguments
-      integer, intent(in) :: key          ! For messages    
+      integer, intent(in) :: key          ! For messages
       type (VectorValue_T), intent(in) :: LOS ! Vector quantity to fill from
       type (VectorValue_T), intent(in) :: Ptan ! tangent pressure
       type (VectorValue_T), intent(in) :: Re ! Earth's radius
@@ -5787,7 +5877,7 @@ contains ! =====     Public Procedures     =============================
       ! it is converted to cloud extinction if extinction flag is on.
       if ( extinction ) then
         ! both sGrid and sFineGrid are expected to be evenly spaced at present
-        ds = sLevel(2)-sLevel(1)  
+        ds = sLevel(2)-sLevel(1)
         do i=1,noDepths
           do j=1,noFineGrid
             Sfine(j+(i-1)*noFineGrid) = sLevel(i)+(j-1._r8)*ds/noFineGrid
@@ -5800,7 +5890,7 @@ contains ! =====     Public Procedures     =============================
               ! convert increments to derivatives
               y_in(i) = los%values(i+(mif-1)*noDepths,maf)/ds
             end do
-            call InterpolateValues(sLevel,y_in,sFine,TransFine,method='Linear')  
+            call InterpolateValues(sLevel,y_in,sFine,TransFine,method='Linear')
             ! calculate column transmission function by integrating
             ! the derivatives on fine grid
             do i=1,noFineGrid*noDepths
@@ -5839,7 +5929,7 @@ contains ! =====     Public Procedures     =============================
         end do
       end do
 
-      do maf=1,noMAFs  
+      do maf=1,noMAFs
         zt = ptan%values(:,maf)   ! noChans=1 for ptan
         zt = (zt+3.)*16.                      ! converted to height in km
         do mif=1,noMIFs
@@ -5868,19 +5958,19 @@ contains ! =====     Public Procedures     =============================
           ! get phi along path for each mif ( phi is in degree)
           y_in = los%template%phi(mif,maf) &
             & - atan(sLevel/(re%values(1,maf)*0.001_r8 + zt(mif)))*rad2deg
-          ! interpolate phi onto standard vertical grids     
+          ! interpolate phi onto standard vertical grids
           call InterpolateValues(x_in,y_in,outZeta(minZ:maxZ),phi_out(minZ:maxZ), &
             & method='Linear')
-          ! interpolate quantity to standard vertical grids      
+          ! interpolate quantity to standard vertical grids
           y_in = beta(:,mif,maf)
           call InterpolateValues(x_in,y_in,outZeta(minZ:maxZ),beta_out(minZ:maxZ), &
             & method='Linear')
           ! interpolate quantity to standard phi grids
-          do i=minZ,maxZ  
+          do i=minZ,maxZ
             do j = 2, qty%template%noInstances-1
-              if ( phi_out(i) .lt. &     
+              if ( phi_out(i) .lt. &
                 & (qty%template%phi(1,j)+qty%template%phi(1,j+1))/2. &
-                & .and. phi_out(i) .ge. &  
+                & .and. phi_out(i) .ge. &
                 & (qty%template%phi(1,j-1)+qty%template%phi(1,j))/2. ) then
                 out(i,j)=out(i,j) + beta_out(i)
                 cnt(i,j)=cnt(i,j)+1       !  counter
@@ -5925,13 +6015,13 @@ contains ! =====     Public Procedures     =============================
       ! check that what the user has asked for, we can supply.
       call get_string ( manipulation, mstr, strip=.true. )
       if ( all ( mstr /= validManipulations ) ) then
-        call Announce_Error ( key, 0, 'Invalid manipulation' )
+        call Announce_Error ( key, no_error_code, 'Invalid manipulation' )
         return
       end if
 
       ! Now check the sanity of the request.
       if ( .not. associated ( a ) .or. .not. associated ( b ) ) then
-        call Announce_Error ( key, 0, &
+        call Announce_Error ( key, no_error_code, &
           & 'You must supply both the a and b quantities' )
         return
       end if
@@ -5945,7 +6035,7 @@ contains ! =====     Public Procedures     =============================
           aorb => b
           abName = 'b'
         end if
-        
+
         ! For minor frame quantities, check that we're on the same page
         if ( .not. force ) then
           if ( quantity%template%minorFrame ) then
@@ -5968,9 +6058,9 @@ contains ! =====     Public Procedures     =============================
             & .and. quantity%template%noInstances == aorb%template%noInstances &
             & .and. quantity%template%instanceLen == aorb%template%instanceLen
         end if
-        
+
         if ( .not. okSoFar ) then
-          call Announce_Error ( key, 0, &
+          call Announce_Error ( key, no_error_code, &
             & abName // ' is not of the same (or close enough) type as quantity' )
           return
         end if
@@ -6081,8 +6171,8 @@ contains ! =====     Public Procedures     =============================
 
     ! ----------------------------------------- FillQtyWithWMOTropopause ------
     subroutine FillQtyWithWMOTropopause ( tpPres, temperature, refGPH, grid )
-      use Hydrostatic_M, only: HYDROSTATIC
       use Geometry, only: GEODTOGEOCLAT
+      use Hydrostatic_M, only: HYDROSTATIC
       use MLSNumerics, only: HUNT
       use VGridsDatabase, only: VGRID_T
 
@@ -6105,7 +6195,7 @@ contains ! =====     Public Procedures     =============================
       logical :: VALIDTP                ! Flag
 
       ! Now the rules for the WMO tropopause are:
-      
+
       ! 1. The "first tropopause" is defined as the lowest height at which the
       ! lapse rate decreases to 2K per kilometer or less, provided also that
       ! the average lapse rate between this height and all higher altitudes
@@ -6119,11 +6209,11 @@ contains ! =====     Public Procedures     =============================
 
       ! There are also two qualifying remarks attached to the selection
       ! criteria. They are as follows:
-      
+
       ! 1. A height below the 500-mb level is not designated as a tropopause
       ! unless the sounding reaches the 200-mb level and the height is the only
       ! height satisfying the above definitions.
-      
+
       ! 2. When the second or higher tropopauses are being determined, the
       ! 1-kilometer interval with an average lapse rate of 3K per kilometer can
       ! occur at any height above the conventional tropopause and not only at a
@@ -6131,7 +6221,7 @@ contains ! =====     Public Procedures     =============================
 
       ! Stricly melding the WMO tropopause definition with our own
       ! 'linear interpolation between tie points' mantra is problematic.
-      ! If we are strict we'd only ever give the one of our basis points as 
+      ! If we are strict we'd only ever give the one of our basis points as
       ! the solution.  So we're going to interpolate to a higher resolution
       ! using a spline which pop's out the derivatives too.
 
@@ -6160,14 +6250,14 @@ contains ! =====     Public Procedures     =============================
         call Hydrostatic ( GeodToGeocLat ( temperature%template%geodLat(1,i) ), &
           & grid%surfs(:,1), tFine, grid%surfs(:,1), &
           & refGPH%template%surfs(1,1), refGPH%values(1,i), hFine )
-        ! Note while much of the software thinks in meters.  The hydrostatic
+        ! Note while much of the software thinks in meters, the hydrostatic
         ! routine works in km.
         ! Now do another spline 'interpolation' to get dTdH
         call InterpolateValues ( hFine, tFine, hFine, dummyT, &
           & dYbyDx=dtdh, method='Spline' )
         ! Negate dTdH to turn it into lapse rate
         dTdH = - dTdH
-        
+
         ! Locate the 500mb surface
         call Hunt ( grid%surfs(:,1), -log10(500.0_r8), s500 )
 
@@ -6227,7 +6317,7 @@ contains ! =====     Public Procedures     =============================
     ! -------------------------------------------- FillWithBinResults -----
     subroutine FillWithBinResults ( key, quantity, sourceQuantity, ptanQuantity, &
       & channel, method, additional, excludeBelowBottom, centerVertically )
-      ! This fills a coherent quantity with the max/min binned value of 
+      ! This fills a coherent quantity with the max/min binned value of
       ! a typically incoherent one.  The bins are centered horizontally
       ! on the profiles in quantity, but vertically the bins run between one
       ! surface and the next one up.
@@ -6255,7 +6345,7 @@ contains ! =====     Public Procedures     =============================
       ! Check the output quantity
       if ( .not. ValidateVectorQuantity ( quantity, &
         & coherent=.true., stacked=.true. ) ) &
-        & call Announce_Error ( key, 0, &
+        & call Announce_Error ( key, no_error_code, &
         & 'Illegal quantity for bin min/max/total fill' )
 
       ! Also should have the condition:
@@ -6269,12 +6359,12 @@ contains ! =====     Public Procedures     =============================
           & sourceQuantity%template%noinstances, 'sourceHeights', ModuleName )
         sourceHeights = ptanQuantity%values
         if ( quantity%template%verticalCoordinate /= l_zeta ) &
-          & call Announce_Error ( key, 0, &
+          & call Announce_Error ( key, no_error_code, &
           & 'Vertical coordinate in quantity to fill is not zeta' )
       else
         sourceHeights => sourceQuantity%template%surfs
         if ( sourceQuantity%template%verticalCoordinate /= quantity%template%verticalCoordinate ) &
-          & call Announce_Error ( key, 0, &
+          & call Announce_Error ( key, no_error_code, &
           & 'Vertical coordinates in binned fill do not match' )
       end if
 
@@ -6285,7 +6375,7 @@ contains ! =====     Public Procedures     =============================
       call Allocate_test ( insts, sourceQuantity%template%nosurfs, &
         & sourceQuantity%template%noinstances, 'insts', ModuleName )
 
-      ! Work out the vertical mapping, a function of instance for 
+      ! Work out the vertical mapping, a function of instance for
       ! incoherent quantities
       if ( sourceQuantity%template%coherent ) then
         call Hunt ( quantity%template%surfs(:,1), sourceHeights(:,1), surfs(:,1), &
@@ -6327,18 +6417,18 @@ contains ! =====     Public Procedures     =============================
       end if
 
 !      call dump ( insts, 'insts' )
-      
+
       ! Modify the surfs index to account for the channel, so now it's more
       ! of a 'values' index
       if ( sourceQuantity%template%frequencyCoordinate /= l_none .and. &
         & channel == 0 ) then
-        call Announce_Error ( key, 0, &
+        call Announce_Error ( key, no_error_code, &
           & 'Must supply channel for this bin max/min fill' )
         return
       end if
       myChannel = channel
       if ( channel == 0 ) myChannel = 1
-     
+
       ! Now loop over the output quantity points and work out the information
       do qi = 1, quantity%template%noInstances
         do qs = 1, quantity%template%noSurfs
@@ -6417,11 +6507,11 @@ contains ! =====     Public Procedures     =============================
 
       ! Executable code
       if ( quantity%template%name /= sourceQuantity%template%name ) then
-        call Announce_Error ( key, 0, 'Quantity and source quantity do not match' )
+        call Announce_Error ( key, no_error_code, 'Quantity and source quantity do not match' )
         return
       end if
       if ( width <= 1 .or. mod ( width, 2 ) == 0 ) then
-        call Announce_Error ( key, 0, 'width must be greater than 1 and odd' )
+        call Announce_Error ( key, no_error_code, 'width must be greater than 1 and odd' )
         return
       end if
 
@@ -6490,7 +6580,7 @@ contains ! =====     Public Procedures     =============================
         if ( nsons ( heightNode ) /= 2 ) call Announce_Error ( key, no_error_code, &
           & 'Only one height can be supplied for status fill' )
         if ( sourceQuantity%template%verticalCoordinate /= l_zeta ) &
-          & call Announce_Error ( key, 0, 'Bad vertical coordinate for sourceQuantity' )
+          & call Announce_Error ( key, no_error_code, 'Bad vertical coordinate for sourceQuantity' )
         call expr_check ( subtree(2,heightNode) , unitAsArray, valueAsArray, &
           & (/PHYQ_Pressure/), unitsError )
         if ( unitsError ) call Announce_error ( heightNode, wrongUnits, &
@@ -6714,6 +6804,7 @@ contains ! =====     Public Procedures     =============================
     ! ---------------------------------------------  ANNOUNCE_ERROR  -----
     subroutine ANNOUNCE_ERROR ( where, CODE , ExtraMessage, ExtraInfo )
 
+      use Dump_0, only: Dump
       use Intrinsic, only: Field_indices, PHYQ_Indices
       use MoreTree, only: Get_Field_Id, StartErrorMessage
       use String_Table, only: Display_String
@@ -6731,31 +6822,31 @@ contains ! =====     Public Procedures     =============================
 
       select case ( code )
       case ( badEstNoiseFill )
-        call output ( " missing information for estimated noise fill", advance='yes' )
+        call output ( " estimated noise fill is missing information", advance='yes' )
       case ( badGeocAltitudeQuantity )
         call output ( " geocAltitudeQuantity is not geocAltitude", advance='yes' )
       case ( badlosGridfill )
-        call output ( " incomplete/incorrect information for los Grid fill", advance='yes' )
+        call output ( " information for los Grid fill is incomplete/incorrect", advance='yes' )
       case ( badlosvelfill )
-        call output ( " incomplete/incorrect information for los velocity", advance='yes' )
+        call output ( " information for los velocity is incomplete/incorrect", advance='yes' )
       case ( badIsotopeFill )
-        call output ( " incomplete/incorrect information for isotope fill", advance='yes' )
+        call output ( " information for isotope fill is incomplete/incorrect", advance='yes' )
       case ( badREFGPHQuantity )
         call output ( " refGPHQuantity is not refGPH", advance='yes' )
       case ( badRefractFill )
-        call output ( " missing information for phiTan refract fill", advance='yes' )
+        call output ( " phiTan refract fill is missing information", advance='yes' )
       case ( badTemperatureQuantity )
         call output ( " temperatureQuantity is not temperature", advance='yes' )
       case ( bothFractionAndLength )
-        call output ( " specified both fraction and lengthScale", advance='yes' )
+        call output ( " config specifies both fraction and lengthScale", advance='yes' )
       case ( cantFillFromL1B )
         call output ( " command could not be filled from L1B.", advance='yes' )
       case ( cantFillFromL2AUX )
         call output ( " command could not be filled from L2AUX.", advance='yes' )
       case ( cantInterpolate3D )
-        call output ( " cannot interpolate 3d quantities (yet).", advance='yes' )
+        call output ( " program cannot interpolate 3d quantities (yet).", advance='yes' )
       case ( emptyGridForFill )
-        call output ( " an empty grid for the fill", advance='yes' )
+        call output ( " config specifies an empty grid for the fill", advance='yes' )
       case ( errorReadingL1B )
         call output ( " L1B file could not be read.", advance='yes' )
       case ( invalidExplicitFill )
@@ -6764,11 +6855,11 @@ contains ! =====     Public Procedures     =============================
         call output ( extraInfo )
         call output ( " elements.", advance='yes' )
       case ( missingDataInGrid )
-        call output ( " missing/bad data points in grid for fill", advance='yes' )
+        call output ( " grid for fill has missing/bad data points", advance='yes' )
       case ( missingField )
         call output ( " fields " )
         do i = 1, size(extraInfo)
-          call display_string ( field_indices(i) )
+          call display_string ( field_indices(extraInfo(i)) )
           if ( i == size(extraInfo) ) then
             call output ( " and " )
           else
@@ -6777,32 +6868,33 @@ contains ! =====     Public Procedures     =============================
         end do
         call output ( " are required.", advance='yes' )
       case ( needGeocAltitude )
-        call output ( " needs geocAltitudeQuantity.", advance='yes' )
+        call output ( " fill needs geocAltitudeQuantity.", advance='yes' )
       case ( needH2O )
-        call output ( " needs H2OQuantity.", advance='yes' )
+        call output ( " fill needs H2OQuantity.", advance='yes' )
       case ( needOrbitInclination )
-        call output ( " needs OrbitalInclination.", advance='yes' )
+        call output ( " fill needs OrbitalInclination.", advance='yes' )
       case ( needTempREFGPH )
         call output ( " needs temperatureQuantity and refGPHquantity.", advance='yes' )
+      case ( no_Error_Code ) ! Handled at the botom
       case ( noExplicitValuesGiven )
-        call output ( " no explicit values given for explicit fill.", advance='yes' )
+        call output ( " explicit fill requires explicit values.", advance='yes' )
       case ( nonConformingHydrostatic )
         call output ( " quantities needed for hydrostatic fill do not conform", advance='yes' )
       case ( noSourceGridGiven )
-        call output ( " no sourceGrid field given for gridded fill.", advance='yes' )
+        call output ( " gridded fill requires a sourceGrid field.", advance='yes' )
       case ( noSourceL2AUXGiven )
-        call output ( " no sourceL2AUX field given for L2AUX fill.", advance='yes' )
+        call output ( " L2AUX fill requires a sourceL2AUX field.", advance='yes' )
       case ( noSourceL2GPGiven )
-        call output ( " no sourceL2GP field given for L2GP fill.", advance='yes' )
+        call output ( " L2GP fill requires a sourceL2GP field.", advance='yes' )
       case ( noSpecialFill )
-        call output ( " invalid special fill", advance='yes' )
+        call output ( " special fill is invalid", advance='yes' )
       case ( notImplemented )
         call output ( extraMessage )
-        call output ( " is not implemented yet.", advance='yes' )
+        call output ( " method is not implemented yet.", advance='yes' )
       case ( notSPD )
-        call output ( " is not a SPD matrix.", advance='yes' )
+        call output ( " matrix is not a SPD matrix.", advance='yes' )
       case ( notPlain )
-        call output ( " is not a plain matrix.", advance='yes' )
+        call output ( " matrix is not a plain matrix.", advance='yes' )
       case ( wrongUnits )
         call display_string ( field_indices(Get_Field_Id(where)), &
           & before=" values of the " )
@@ -6821,9 +6913,9 @@ contains ! =====     Public Procedures     =============================
       case default
         call output ( " command caused an unrecognized programming error", advance='yes' )
       end select
-      if ( present(ExtraMessage) ) then
-        call output(ExtraMessage, advance='yes')
-      end if
+      if ( present(ExtraMessage) )  call output(ExtraMessage, advance='yes')
+      if ( code == no_Error_Code .and. present(extraInfo) ) &
+        & call dump ( extraInfo, name='Extra info' )
     end subroutine ANNOUNCE_ERROR
 
   end subroutine MLSL2Fill
@@ -6842,6 +6934,10 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.316  2006/01/05 00:04:45  vsnyder
+! Implement refractive correction for PhiTan fill, correct some error
+! messages and rephrase others to make sense.
+!
 ! Revision 2.315  2005/12/22 21:05:20  vsnyder
 ! Use Hydrostatic_no_der (by way of generic)
 !
