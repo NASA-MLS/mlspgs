@@ -653,12 +653,14 @@ contains ! =====     Public Procedures     =============================
       end if
       if ( quantity_template%radiometer + &
         &  quantity_template%molecule /= 0 ) call newLine
-      if ( associated(quantity_template%surfIndex) ) then
-        call dump ( quantity_template%surfIndex, '      SurfIndex = ' )
-      end if
-      if ( associated(quantity_template%chanIndex) ) then
-        call dump ( quantity_template%chanIndex, '      ChanIndex = ' )
-      end if
+      if ( associated(quantity_template%phi) ) &
+        & call dump ( quantity_template%phi, '      Phi = ' )
+      if ( associated(quantity_template%surfs) ) &
+        & call dump ( quantity_template%surfs, '      Surfs = ' )
+      if ( associated(quantity_template%surfIndex) ) &
+        & call dump ( quantity_template%surfIndex, '      SurfIndex = ' )
+      if ( associated(quantity_template%chanIndex) ) &
+        & call dump ( quantity_template%chanIndex, '      ChanIndex = ' )
     end if
   end subroutine DUMP_QUANTITY_TEMPLATE
 
@@ -896,6 +898,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.41  2005/08/04 02:57:27  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.40  2005/06/22 17:25:50  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
