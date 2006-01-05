@@ -153,6 +153,7 @@ module MLSNumerics              ! Some low level numerical stuff
     module procedure InterpolateScalar_r4, InterpolateScalar_r8
     module procedure InterpolateUsingSetup_r4, InterpolateUsingSetup_r8
     module procedure InterpolateScalarUsingSetup_r4, InterpolateScalarUsingSetup_r8
+    module procedure Interp_Bilinear_2d_1d_r4, Interp_Bilinear_2d_1d_r8
   end interface
 
   interface ClosestElement
@@ -733,6 +734,46 @@ contains
 
   end subroutine InterpolateUsingSetup_r8
 
+  ! -----------------------------------  Interp_Bilinear_2d_1d_r4  -----
+  subroutine Interp_Bilinear_2d_1d_r4 ( XOld, Xnew, YOld, YNew, Zold, Znew, &
+    & Update )
+
+    ! Given ZOld on coordinates (XOld x YOld), interpolate to (XNew,YNew)
+    ! to give ZNew.  ZOld must have shape (size(xOld),size(yOld)), while
+    ! XNew, YNew and ZNew must have the same shape.
+
+    integer, parameter :: RK = kind(1.0e0)
+    real(rk), intent(in) :: XOld(:)
+    real(rk), intent(in) :: XNew(:)
+    real(rk), intent(in) :: YOld(:)
+    real(rk), intent(in) :: YNew(:)
+    real(rk), intent(in) :: ZOld(:,:)
+    real(rk), intent(inout) :: ZNew(:)
+    logical, intent(in), optional :: Update ! Add interpolate to Znew
+    include 'Interp_Bilinear_2d_1d.f9h'
+
+  end subroutine Interp_Bilinear_2d_1d_r4
+
+  ! -----------------------------------  Interp_Bilinear_2d_1d_r8  -----
+  subroutine Interp_Bilinear_2d_1d_r8 ( XOld, Xnew, YOld, YNew, Zold, Znew, &
+    & Update )
+
+    ! Given ZOld on coordinates (XOld x YOld), interpolate to (XNew,YNew)
+    ! to give ZNew.  ZOld must have shape (size(xOld),size(yOld)), while
+    ! XNew, YNew and ZNew must have the same shape.
+
+    integer, parameter :: RK = kind(1.0d0)
+    real(rk), intent(in) :: XOld(:)
+    real(rk), intent(in) :: XNew(:)
+    real(rk), intent(in) :: YOld(:)
+    real(rk), intent(in) :: YNew(:)
+    real(rk), intent(in) :: ZOld(:,:)
+    real(rk), intent(inout) :: ZNew(:)
+    logical, intent(in), optional :: Update ! Add interpolate to Znew
+    include 'Interp_Bilinear_2d_1d.f9h'
+
+  end subroutine Interp_Bilinear_2d_1d_r8
+
 ! -------------------------------------------------  ClosestElement  -----
 
   ! This family of routines finds the element within a multidimensional
@@ -891,6 +932,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.42  2006/01/05 03:46:47  vsnyder
+! Add Interp_Bilinear_2d_1d_r*
+!
 ! Revision 2.41  2006/01/05 00:56:03  pwagner
 ! Added ClosestElement for multidimensional, non-monotonic Hunting
 !
