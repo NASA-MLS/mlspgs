@@ -262,7 +262,6 @@ contains
     real(rp), dimension(:), pointer :: H_PATH_C     ! H_PATH on coarse grid
     real(rp), dimension(:), pointer :: H_PATH_F     ! H_PATH on fine grid
     real(rp), dimension(:), pointer :: INCOPTDEPTH  ! Incremental Optical depth
-    real(rp), dimension(:), pointer :: N_PATH       ! Refractivity on path
     real(rp), dimension(:), pointer :: N_PATH_C     ! Refractivity on coarse path
     real(rp), dimension(:), pointer :: PATH_DSDH    ! dS/dH on path
     real(rp), dimension(:), pointer :: P_GLGRID     ! Pressure on glGrid surfs
@@ -343,6 +342,7 @@ contains
     real(rv), dimension(:,:), pointer :: L1BMIF_TAI   ! MIF Times
     real(rp), dimension(:,:), pointer :: MAG_PATH     ! Magnetic field on path
     real(rv), dimension(:,:), pointer :: MIFDEADTIME  ! Not collecting data
+    real(rp), dimension(:,:), pointer :: N_GLGRID     ! N on glGrid surfs
     real(rp), dimension(:,:), pointer :: RAD_AVG_PATH ! Freq. Avgd. LBL radiance
                                                       ! along the path
     real(rp), dimension(:,:), pointer :: RADIANCES    ! (Nptg,noChans)
@@ -396,7 +396,7 @@ contains
 
     real(rp), dimension(:), pointer :: dh_dz_out
     real(rp), dimension(:), pointer :: dx_dh_out
-    real(rp), dimension(:), pointer :: est_scgeocalt
+    real(rp), dimension(:), pointer :: est_scgeocalt ! Est S/C geocentric altitude /m
     real(rp), dimension(:), pointer :: est_los_vel
     real(rp), dimension(:), pointer :: req_out
     real(rp), dimension(:), pointer :: tan_chi_out
@@ -528,7 +528,7 @@ contains
       & k_spect_dn, k_spect_dn_frq, k_spect_dv, k_spect_dv_frq, k_spect_dw, &
       & k_spect_dw_frq, k_temp, k_temp_frq, l1bMIF_TAI, &
       & lineCenter_ix, lineWidth_ix, lineWidth_TDep_ix, &
-      & mag_path, MIFDeadTime, n_path, n_path_c, &
+      & mag_path, MIFDeadTime, n_glgrid, n_path_c, &
       & path_dsdh, phi_path, p_path, prod_pol, ptg_angles, &
       & rad_avg_path, rad_FFT, radiances, RadV, ref_corr, req_out, &
       & salb_path, scat_alb%values, scat_ang, scat_src%values, &
@@ -548,20 +548,25 @@ contains
     ! Insert into bill's 2d hydrostatic equation.
     ! The phi input for this program are the orbit plane projected
     ! geodetic locations of the temperature phi basis -- not necessarily
-    ! the tangent phi's which may be somewhat different.
+    ! the tangent phi's, which may be somewhat different.
 
     if ( toggle(emit) .and. levels(emit) > 0 ) &
       & call Trace_Begin ( 'ForwardModel.Hydrostatic' )
 
     ! Temperature's windowStart:windowFinish are correct here.
     ! RefGPH and temperature have the same horizontal basis.
+    ! RefGPH is in meters, but Two_D_Hydrostatic wants it in km.
     call two_d_hydrostatic ( Grids_tmp, &
-      &  (/ (refGPH%template%surfs(1,1), j=1,no_sv_p_t) /), &
+      &  (/ (refGPH%template%surfs(1,1), j=windowStart,windowFinish) /), &
       &  0.001*refGPH%values(1,windowStart:windowFinish), z_glgrid, &
       &  orbIncline%values(1,maf)*Deg2Rad, t_glgrid, h_glgrid, &
       &  dhdz_glgrid, dh_dt_glgrid, DDHDHDTL0=ddhidhidtl0 )
 
-! This is a lazy way to get the surface angle
+    !??? need to interpolate H2O from Grids_f basis to Grids_tmp basis
+    ! Get index of refraction on the GL grid, not accounting for H2O
+    call refractive_index ( p_glgrid, t_glgrid, n_glgrid )
+
+    ! This is a lazy way to get the surface angle
 
     if ( temp_der ) then
       call allocate_test ( dxdt_surface, 1, sv_t_len,  'dxdt_surface', moduleName )
@@ -572,9 +577,10 @@ contains
     ! Temperature's windowStart:windowFinish are correct here.
     ! refGPH and temperature have the same horizontal basis.
     ! Grids_F is only needed for H2O, for calculating refractive index.
+    ! Est_scgeocalt and RefGPH are in meters, but Get_Chi_Out wants them in km.
     call get_chi_out ( tan_press(1:1), tan_phi(1:1), &
        & 0.001_rp*est_scgeocalt(1:1), Grids_tmp, &
-       & SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t), &
+       & (/ (refGPH%template%surfs(1,1), j=windowStart,windowFinish) /), &
        & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
        & orbIncline%values(1,maf)*Deg2Rad, 0.0_rp, &
        & req_out(1:1), grids_f, h2o_ind, surf_angle, one_dhdz, one_dxdh,  &
@@ -660,8 +666,9 @@ contains
           if ( temp_der ) then
             ! Set up temperature representation basis stuff
             call metrics ( tan_phi(ptg_i:ptg_i), tan_inds(ptg_i:ptg_i),      &
-              &  Grids_tmp%phi_basis, z_glgrid, h_glgrid, t_glgrid, dhdz_glgrid, &
-              &  orbIncline%values(1,maf)*Deg2Rad, Grids_tmp%deriv_flags,    &
+              &  Grids_tmp%phi_basis, z_glgrid, n_glgrid, h_glgrid,          &
+              &  t_glgrid, dhdz_glgrid, orbIncline%values(1,maf)*Deg2Rad,    &
+              &  Grids_tmp%deriv_flags, FwdModelConf%refract,                &
               &  h_path(1:no_ele), phi_path(1:no_ele),                       &
               &  t_path(1:no_ele), dhdz_path(1:no_ele), Req, ier,            &
               &  TAN_PHI_H_GRID=one_tan_ht, TAN_PHI_T_GRID=one_tan_temp,     &
@@ -680,9 +687,10 @@ contains
             t_der_path_flags(1:no_ele) = any(do_calc_t(1:no_ele,:),2)
           else
             call metrics ( tan_phi(ptg_i:ptg_i), tan_inds(ptg_i:ptg_i),      &
-              &  Grids_tmp%phi_basis, z_glgrid, h_glgrid, t_glgrid, dhdz_glgrid, &
-              &  orbIncline%values(1,maf)*Deg2Rad,                           &
-              &  dummy, h_path(1:no_ele), phi_path(1:no_ele),                &
+              &  Grids_tmp%phi_basis, z_glgrid, n_glgrid, h_glgrid,          &
+              &  t_glgrid, dhdz_glgrid, orbIncline%values(1,maf)*Deg2Rad,    &
+              &  dummy, FwdModelConf%refract,                                &
+              &  h_path(1:no_ele), phi_path(1:no_ele),                       &
               &  t_path(1:no_ele), dhdz_path(1:no_ele), Req, ier,            &
               &  TAN_PHI_H_GRID = one_tan_ht, TAN_PHI_T_GRID = one_tan_temp, &
               &  NEG_H_TAN = (/neg_tan_ht/) )
@@ -695,8 +703,9 @@ contains
           if ( temp_der ) then
             ! Set up temperature representation basis stuff
             call metrics ( tan_phi(ptg_i:ptg_i), tan_inds(ptg_i:ptg_i),      &
-              &  Grids_tmp%phi_basis, z_glgrid, h_glgrid, t_glgrid, dhdz_glgrid, &
-              &  orbIncline%values(1,maf)*Deg2Rad, Grids_tmp%deriv_flags,    &
+              &  Grids_tmp%phi_basis, z_glgrid, n_glgrid, h_glgrid,          &
+              &  t_glgrid, dhdz_glgrid, orbIncline%values(1,maf)*Deg2Rad,    &
+              &  Grids_tmp%deriv_flags, FwdModelConf%refract,                &
               &  h_path(1:no_ele), phi_path(1:no_ele),                       &
               &  t_path(1:no_ele), dhdz_path(1:no_ele), Req, ier,            &
               &  TAN_PHI_H_GRID = one_tan_ht, TAN_PHI_T_GRID = one_tan_temp, &
@@ -714,9 +723,10 @@ contains
             t_der_path_flags(1:no_ele) = any(do_calc_t(1:no_ele,:),2)
           else
             call metrics ( tan_phi(ptg_i:ptg_i), tan_inds(ptg_i:ptg_i),      &
-              &  Grids_tmp%phi_basis, z_glgrid, h_glgrid, t_glgrid, dhdz_glgrid, &
-              &  orbIncline%values(1,maf)*Deg2Rad,                           &
-              &  dummy, h_path(1:no_ele), phi_path(1:no_ele),                &
+              &  Grids_tmp%phi_basis, z_glgrid, n_glgrid, h_glgrid,          &
+              &  t_glgrid, dhdz_glgrid, orbIncline%values(1,maf)*Deg2Rad,    &
+              &  dummy, FwdModelConf%refract,                                &
+              &  h_path(1:no_ele), phi_path(1:no_ele),                       &
               &  t_path(1:no_ele), dhdz_path(1:no_ele), Req, ier,            &
               &  TAN_PHI_H_GRID = one_tan_ht, TAN_PHI_T_GRID = one_tan_temp )
           end if
@@ -754,25 +764,16 @@ contains
           & do_calc_zp(1:no_ele,:), sps_path(1:no_ele,:), &
           & do_calc_fzp(1:no_ele,:), eta_fzp(1:no_ele,:) )
 
-!         if ( h2o_ind > 0 ) then
-!           call refractive_index ( p_path(c_inds), &
-!             &  t_path_c(1:npc), n_path_c(1:npc),  &
-!             &  h2o_path=sps_path(c_inds, h2o_ind) )
-!         else
-!           call refractive_index ( p_path(c_inds), &
-!             &  t_path_c(1:npc), n_path_c(1:npc) )
-!         end if
-
         if ( h2o_ind > 0 ) then
-          call refractive_index ( p_path(:no_ele), &
-            &  t_path(:no_ele), n_path(:no_ele),  &
-            &  h2o_path=sps_path(:no_ele, h2o_ind) )
+          call refractive_index ( p_path(c_inds), &
+            &  t_path_c(1:npc), n_path_c(1:npc),  &
+            &  h2o_path=sps_path(c_inds, h2o_ind) )
         else
-          call refractive_index ( p_path(:no_ele), &
-            &  t_path(:no_ele), n_path(:no_ele) )
+          call refractive_index ( p_path(c_inds), &
+            &  t_path_c(1:npc), n_path_c(1:npc) )
         end if
 
-        n_path_c(1:npc) = min ( n_path(c_inds), MaxRefraction )
+        n_path_c(1:npc) = min ( n_path_c(1:npc), MaxRefraction )
 
         if ( associated(fwdModelConf%lineCenter) ) then
           call comp_eta_docalc_no_frq ( grids_v, z_path(1:no_ele), &
@@ -867,6 +868,7 @@ contains
         end if
 
         if ( temp_der ) then
+         ! Ext_SCgeocAlt is in meters, but Get_Chi_Angles wants it in km.
           call get_chi_angles ( 0.001*est_scGeocAlt(ptg_i), n_path_c(npc/2),&
              & one_tan_ht(1), tan_phi(ptg_i), Req, 0.0_rp,                  &
              & ptg_angles(ptg_i), r, 1.0_rp, tan_dh_dt(1,:),                &
@@ -1179,8 +1181,9 @@ contains
 
     ! DESTROY THE SPS DATA STUFF
 
+    call deallocate_test ( n_glGrid,     'n_glGrid',     moduleName )
+    call deallocate_test ( p_glGrid,     'p_glGrid',     moduleName )
     call deallocate_test ( z_glGrid,     'z_glGrid',     moduleName )
-    call deallocate_test ( p_glGrid,     'z_glGrid',     moduleName )
 
     call deallocate_test ( h_glgrid,     'h_glgrid',     moduleName )
     call deallocate_test ( t_glgrid,     't_glgrid',     moduleName )
@@ -1228,7 +1231,6 @@ contains
     call deallocate_test ( h_path_f,         'h_path_f',         moduleName )
     call deallocate_test ( h_path,           'h_path',           moduleName )
     call deallocate_test ( incoptdepth,      'incoptdepth',      moduleName )
-    call deallocate_test ( n_path,           'n_path',           moduleName )
     call deallocate_test ( n_path_c,         'n_path_c',         moduleName )
     call deallocate_test ( path_dsdh,        'path_dsdh',        moduleName )
     call deallocate_test ( phi_path,         'phi_path',         moduleName )
@@ -1617,6 +1619,7 @@ contains
 
       req_out = (earthrada-earthradc)*(earthrada+earthradc) * &
         & COS(phitan%values(:,maf)*Deg2Rad)**2
+      ! Earthrad[abc] are in meters, but Req_Out needs to be in km.
       req_out = 0.001_rp * SQRT( &
         & ( earthrada**4 - (earthrada**2+earthradc**2) * req_out ) / &
         & ( earthradc**2 + req_out ) )
@@ -1639,6 +1642,7 @@ contains
       ! Temperature's windowStart:windowFinish are correct here.
       ! RefGPH and Temperature have the same horizontal basis.
       ! Grids_F is only needed for H2O, for calculating refractive index.
+      ! SCgeocAlt and RefGPH are in meters, but Get_Chi_Out wants them in km.
       call get_chi_out ( ptan%values(:,maf), phitan%values(:,maf)*deg2rad, &
          & 0.001_rp*scGeocAlt%values(:,maf), Grids_tmp, &
          & (/ (refGPH%template%surfs(1,1), j=1,no_sv_p_t) /), &
@@ -1655,6 +1659,7 @@ contains
   ! Allocate more GL grid stuff
 
       call allocate_test ( h_glgrid,    maxVert, no_sv_p_t, 'h_glgrid', moduleName )
+      call allocate_test ( n_glgrid,    maxVert, no_sv_p_t, 'n_glgrid', moduleName )
       call allocate_test ( t_glgrid,    maxVert, no_sv_p_t, 't_glgrid', moduleName )
       call allocate_test ( dhdz_glgrid, maxVert, no_sv_p_t, 'dhdz_glgrid', &
                         &  moduleName )
@@ -1715,7 +1720,6 @@ contains
       call allocate_test ( h_path_f,        max_ele, 'h_path_f',         moduleName )
       call allocate_test ( h_path,          max_ele, 'h_path',           moduleName )
       call allocate_test ( incoptdepth,         npc, 'incoptdepth',      moduleName )
-      call allocate_test ( n_path,          max_ele, 'n_path',           moduleName )
       call allocate_test ( n_path_c,            npc, 'n_path_c',         moduleName )
       call allocate_test ( path_dsdh,       max_ele, 'path_dsdh',        moduleName )
       call allocate_test ( phi_path,        max_ele, 'phi_path',         moduleName )
@@ -3245,7 +3249,7 @@ if ( spect_der_center ) call dump ( dbeta_dv_path_c, name='dbeta_dv_path_c' )
   ! they were previously allocated.
 
     real(rp), dimension(:), pointer :: Tan_phi
-    real(rp), dimension(:), pointer :: Est_scgeocalt
+    real(rp), dimension(:), pointer :: Est_scgeocalt ! Est S/C geocentric altitude /m
     real(rp), dimension(:), pointer :: est_los_vel
 
   ! Local variables
@@ -3325,6 +3329,9 @@ if ( spect_der_center ) call dump ( dbeta_dv_path_c, name='dbeta_dv_path_c' )
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.253  2005/12/10 01:51:54  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.252  2005/12/07 19:43:32  vsnyder
 ! Mistakenly committed needing Phi_Refractive_Correction
 !
