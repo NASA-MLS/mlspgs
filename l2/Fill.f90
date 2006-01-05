@@ -3758,7 +3758,7 @@ contains ! =====     Public Procedures     =============================
       use Hydrostatic_M, only: HYDROSTATIC
       use MLSKinds, only: RP
       use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
-      use MLSNumerics, only: Hunt
+      use MLSNumerics, only: InterpolateValues
       use Phi_Refractive_Correction_m, only: Phi_Refractive_Correction_Up
       use Refraction_m, only: REFRACTIVE_INDEX
       use Units, only: DEG2RAD, RAD2DEG
@@ -3772,13 +3772,10 @@ contains ! =====     Public Procedures     =============================
       type (VectorValue_T), intent(in) :: TEMPERATURE ! Temperature
 
       real(rp), dimension(quantity%template%noInstances) :: CP2, CSQ, REQ, SP2
-      real(rp) :: PhiCorrs(temperature%template%noSurfs,temperature%template%noInstances)
+      real(rp) :: PhiCorrs(temperature%template%noInstances,temperature%template%noSurfs)
       real(rp), dimension(temperature%template%noInstances) :: REQS
       real(rv), dimension(temperature%template%noSurfs) :: Heights, N, PhiCorr, PS
-      real(rv) :: Hphi, Hzeta ! Interpolating factors
-      integer, dimension(size(quantity%values,1)) :: &
-        & HuntPhi, HuntZeta
-      integer :: I, IP, IZ, J ! Subscripts, loop inductors
+      integer :: I, J ! Subscripts, loop inductors
 
       ! Executable code
       ! More sanity checks
@@ -3827,20 +3824,20 @@ contains ! =====     Public Procedures     =============================
       ps = 10.0**(-temperature%template%surfs(:,1))
 
       ! OK, do the refraction calculation on Temperature's grids
-      do j = 1, temperature%template%noInstances
+      do i = 1, temperature%template%noInstances
 
         ! Get heights.  Temperature and RefGPH are on same hGrids.
         ! RefGPH is in meters, but Hydrostatic wants it in km.
-        call Hydrostatic ( GeodToGeocLat ( temperature%template%geodLat(1,j) ), &
-          & temperature%template%surfs(:,1), temperature%values(:,j), &
+        call Hydrostatic ( GeodToGeocLat ( temperature%template%geodLat(1,i) ), &
+          & temperature%template%surfs(:,1), temperature%values(:,i), &
           & temperature%template%surfs(:,1), &
-          & refGPH%template%surfs(1,1), 0.001*refGPH%values(1,j), &
+          & refGPH%template%surfs(1,1), 0.001*refGPH%values(1,i), &
           & heights )
-        heights = heights + reqs(j)
+        heights = heights + reqs(i)
         ! Get refractive indices.  Temperature and H2O are on same grids.
-        call refractive_index ( ps, temperature%values(:,j), n, h2o%values(:,j) )
-        do i = 1, temperature%template%noSurfs
-          call phi_refractive_correction_up ( n(i:), heights(i:), phiCorr(i:) )
+        call refractive_index ( ps, temperature%values(:,i), n, h2o%values(:,i) )
+        do j = 1, temperature%template%noSurfs
+          call phi_refractive_correction_up ( n(j:), heights(j:), phiCorr(j:) )
           phiCorrs(i,j) = phiCorr(temperature%template%noSurfs) * rad2deg
         end do
       end do
@@ -3849,23 +3846,9 @@ contains ! =====     Public Procedures     =============================
       ! Its zeta grid is the value of PTan; its phi grid is its own value.
 
       do j = 1, size(quantity%values,2)
-        ! Hunt in zeta, phi grids
-        call hunt ( h2o%template%phi(1,:), quantity%values(:,j), huntPhi )
-        call hunt ( h2o%template%surfs(:,1), ptan%values(:,j), huntZeta )
-        do i = 1, size(quantity%values,1)
-          ! Interpolate from PhiCorr's (phi,zeta), which is the same as
-          ! h2o's, to PhiTan's, using bilinear interpolation, and
-          ! apply the interpolated correction.
-          ip = huntPhi(i)
-          iz = huntZeta(i)
-          hPhi = (quantity%values(i,j)-h2o%template%phi(1,ip)) / &
-                 (h2o%template%phi(1,ip+1)-h2o%template%phi(1,ip))
-          hZeta = (ptan%values(i,j)-h2o%template%surfs(iz,1)) / &
-                 (h2o%template%surfs(iz+1,1)-h2o%template%surfs(iz,1))
-          quantity%values(i,j) = quantity%values(i,j) + &
-            & (1.0-hZeta) * ((1.0-hphi)*phiCorrs(iz,ip) + hphi*phiCorrs(iz,ip+1)) + &
-            & hZeta*((1.0-hphi)*phiCorrs(iz+1,ip) + hphi*phiCorrs(iz+1,ip+1))
-        end do ! i
+        call interpolateValues ( h2o%template%phi(1,:), quantity%values(:,j), &
+          &                      h2o%template%surfs(:,1), ptan%values(:,j), &
+          &                      phiCorrs, quantity%values(:,j), update=.true. )
       end do ! j
 
     end subroutine FillPhiTanWithRefraction
@@ -4316,10 +4299,10 @@ contains ! =====     Public Procedures     =============================
       integer ::                          QINDEX
       real (r8) ::                        rhi_precision
       integer ::                          S           ! Surface loop counter
-      integer ::                          S_H2OPrecision       ! Instance num for surfs
+!     integer ::                          S_H2OPrecision       ! Instance num for surfs
       integer ::                          S_H2O       ! Instance num for surfs
       integer ::                          S_RHI       ! Instance num for surfs
-      integer ::                          S_TPrecision         ! Instance num for surfs
+!     integer ::                          S_TPrecision         ! Instance num for surfs
       integer ::                          S_T         ! Instance num for surfs
       logical ::                          skipMe
       character(len=*), parameter ::      VMR_UNITS = 'vmr'
@@ -4415,16 +4398,16 @@ contains ! =====     Public Procedures     =============================
         else
           s_rhi = i
         end if
-        if ( sourcePrecisionQuantity%template%coherent ) then
-          s_h2oPrecision = 1
-        else
-          s_h2oPrecision = i
-        end if
-        if ( tempPrecisionquantity%template%coherent ) then
-          s_tPrecision = 1
-        else
-          s_tPrecision = i
-        end if
+!         if ( sourcePrecisionQuantity%template%coherent ) then
+!           s_h2oPrecision = 1
+!         else
+!           s_h2oPrecision = i
+!         end if
+!         if ( tempPrecisionquantity%template%coherent ) then
+!           s_tPrecision = 1
+!         else
+!           s_tPrecision = i
+!         end if
         if ( sourceQuantity%template%coherent ) then
           s_h2o = 1
         else
@@ -5411,7 +5394,8 @@ contains ! =====     Public Procedures     =============================
       type (l1bData_T)                      :: BO_stat
       character (len=132)                   :: MODULENAMESTRING
       character (len=132)                   :: NAMESTRING
-      integer                               :: fileID, FLAG, NOMAFS
+!     integer                               :: fileID
+      integer                               :: FLAG, NOMAFS
       type (l1bData_T)                      :: L1BDATA
       type (MLSFile_T), pointer             :: L1BFile
       type (MLSFile_T), pointer             :: L1BOAFile
@@ -5428,7 +5412,7 @@ contains ! =====     Public Procedures     =============================
       L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
       L1BOAFile => GetMLSFileByType(filedatabase, content='l1boa')
       this_hdfVersion = L1BFile%HDFVersion
-      fileID = L1BFile%FileID%f_id
+      ! fileID = L1BFile%FileID%f_id
 
       select case ( quantity%template%quantityType )
       case ( l_ECRtoFOV )
@@ -6934,6 +6918,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.317  2006/01/05 03:48:17  vsnyder
+! Use Interp_Bilinear_2d_1d (as InterpolateValues)
+!
 ! Revision 2.316  2006/01/05 00:04:45  vsnyder
 ! Implement refractive correction for PhiTan fill, correct some error
 ! messages and rephrase others to make sense.
