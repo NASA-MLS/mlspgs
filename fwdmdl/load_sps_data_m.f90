@@ -84,7 +84,7 @@ contains
     type (qtyStuff_t), intent(in), optional , target :: QtyStuffIn(:)
 ! Local variables:
 
-    integer :: ii, kk, no_mol, mol, my_ext_ind, my_h2o_ind
+    integer :: kk, no_mol, mol, my_ext_ind, my_h2o_ind
 
     type (qtyStuff_t), pointer :: QtyStuff(:)
 
@@ -535,6 +535,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.64  2005/09/16 23:41:45  vsnyder
+! Spiff up a dump
+!
 ! Revision 2.63  2005/08/03 18:04:09  vsnyder
 ! Some spectroscopy derivative stuff
 !
