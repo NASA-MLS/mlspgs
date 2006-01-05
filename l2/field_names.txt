@@ -332,6 +332,7 @@ serial
 sgrid
 signal
 signals
+silent
 single
 singleMAF
 skipL1BCheck
@@ -411,6 +412,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.154  2006/01/05 01:01:37  pwagner
+# Added silent to suspend printing, e.g. via boolean
+#
 # Revision 2.153  2005/12/21 21:47:33  livesey
 # Added negateSD option
 #
