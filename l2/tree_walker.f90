@@ -80,7 +80,7 @@ contains ! ====     Public Procedures     ==============================
     use MLSL2Timings, only: add_to_section_timing, TOTAL_TIMES
     use Open_Init, only: OpenAndInitialize
     use OutputAndClose, only: Output_Close
-    use Output_m, only: BLANKS, Output
+    use Output_m, only: BLANKS, Output, RESUMEOUTPUT
     use PointingGrid_m, only: Destroy_Pointing_Grid_Database
     use QuantityTemplates, only: QuantityTemplate_T
     use ReadAPriori, only: read_apriori
@@ -290,6 +290,7 @@ contains ! ====     Public Procedures     ==============================
         else
         ! Otherwise, this is the 'standard' work for these sections.
           do chunkNo = firstChunk, lastChunk ! ----------------------- Chunk loop
+            call resumeOutput ! In case the last phase was  silent
             call time_now ( tChunk )
             if ( index(switches,'chu') /= 0 ) then
               call output ( " ================ Starting processing for chunk " )
@@ -378,6 +379,7 @@ subtrees:   do while ( j <= howmany )
 
         ! ------------------------------------------- Output section
       case ( z_output ) ! Write out the data
+        call resumeOutput ! In case the last phase was  silent
         if ( .not. parallel%slave ) then
           call Output_Close ( son, l2gpDatabase, l2auxDatabase, DirectDatabase, &
 	         & matrices, fileDataBase, chunks, processingRange, &
@@ -513,6 +515,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.134  2005/08/19 23:35:01  pwagner
+! Allow Output to repair l2gp with HGrid while copying files
+!
 ! Revision 2.133  2005/07/12 17:37:20  pwagner
 ! Removed unused DestroyL1BInfo
 !
