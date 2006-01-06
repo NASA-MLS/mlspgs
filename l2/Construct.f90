@@ -31,7 +31,6 @@ MODULE Construct                ! The construct module for the MLS L2 sw.
 contains ! =====     Public Procedures     =============================
 
   ! --------------------------------------------- ConstructMIFGeolocation --
-  ! subroutine ConstructMIFGeolocation ( mifGeolocation, l1bInfo, chunk )
   subroutine ConstructMIFGeolocation ( mifGeolocation, filedatabase, chunk )
     ! mifGeolocation is just quantity templates containing geolocation
     ! information for the GHz and THz modules.  The software can then
@@ -40,14 +39,12 @@ contains ! =====     Public Procedures     =============================
     use Chunks_m, only: MLSCHUNK_T
     use ConstructQuantityTemplates, only: ConstructMinorFrameQuantity
     use QuantityTemplates, only: QUANTITYTEMPLATE_T
-    ! use MLSCommon, only: L1BINFO_T
     use MLSCommon, only: MLSFile_T
     use MLSSignals_m, only: MODULES
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
 
     type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-    ! type (L1BInfo_T), intent(in) :: L1BINFO
     type (MLSChunk_T), intent(in) :: chunk
     
     ! Local variables
@@ -75,7 +72,6 @@ contains ! =====     Public Procedures     =============================
   end subroutine ConstructMIFGeolocation
 
   ! ---------------------------------------------  MLSL2Construct  -----
-  ! subroutine MLSL2Construct ( root, l1bInfo, processingRange, chunk, &
   subroutine MLSL2Construct ( root, filedatabase, processingRange, chunk, &
        & quantityTemplatesBase, vectorTemplates, FGrids, HGrids, &
        & l2gpDatabase, ForwardModelConfigDatabase, mifGeolocation )
@@ -98,13 +94,11 @@ contains ! =====     Public Procedures     =============================
     use L2GPData, only: L2GPDATA_T
     use MLSCommon, only: MLSFile_T, TAI93_Range_T
     use MLSL2Options, only: RESTARTWARNINGS
-    use MLSMessageModule, only: MLSMessageReset
-    use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, add_to_phase_timing
+    use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, addPhaseToPhaseNames
     use MoreTree, only: Get_Spec_ID
-    use OUTPUT_M, only: BLANKS, OUTPUT
+    use OUTPUT_M, only: BLANKS, OUTPUT, RESUMEOUTPUT, SUSPENDOUTPUT
     use QuantityTemplates, only: AddQuantityTemplateToDatabase, &
       & QuantityTemplate_T
-    use String_Table, only: get_string
     use Time_M, only: Time_Now
     use TOGGLES, only: GEN, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -116,7 +110,6 @@ contains ! =====     Public Procedures     =============================
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Root of the tree for the Construct section
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-    ! type (L1BInfo_T), intent(in) :: L1BINFO
     type (TAI93_Range_T), intent(in) :: processingRange
     type (MLSChunk_T), intent(in) :: chunk
     type (QuantityTemplate_T), dimension(:), pointer :: quantityTemplatesBase
@@ -132,7 +125,6 @@ contains ! =====     Public Procedures     =============================
     integer :: I                ! Loop counter
     integer :: KEY              ! S_... from Init_Tables_Module.
     integer :: NAME             ! Sub-rosa index of name
-    character(len=80) :: PHASESTRING    ! E.g., 'Core'
     integer :: SON              ! Son or grandson of Root
     REAL :: T1, T2              ! for timing
     logical :: TIMING
@@ -177,14 +169,12 @@ contains ! =====     Public Procedures     =============================
           & CreateHGridFromMLSCFInfo ( name, key, filedatabase, l2gpDatabase, &
           & processingRange, chunk ) ) )
       case ( s_phase )
-        call get_string(name, phaseString)
-        call add_to_phase_timing(trim(phaseString))
-        if ( RESTARTWARNINGS ) call MLSMessageReset(Warnings=.true.)
+        call addPhaseToPhaseNames ( name, key )
+
       case ( s_quantity )
         call decorate ( key, AddQuantityTemplateToDatabase ( &
           & quantityTemplatesBase, CreateQtyTemplateFromMLSCfInfo ( name, key, &
             & fGrids, hGrids, filedatabase, chunk, mifGeolocation ) ) )
-            ! & fGrids, hGrids, l1bInfo, chunk, mifGeolocation ) ) )
       case ( s_vectortemplate )
         call decorate ( key, AddVectorTemplateToDatabase ( vectorTemplates, &
           & CreateVecTemplateFromMLSCfInfo ( name, key, quantityTemplatesBase ) ) )
@@ -254,6 +244,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.54  2006/01/06 01:16:34  pwagner
+! silent boolean field can silence selected phases
+!
 ! Revision 2.53  2006/01/04 01:27:11  vsnyder
 ! Comment out use for unreference L1BInfo_T
 !
