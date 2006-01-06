@@ -14,23 +14,29 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
 !=============================================================================
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use INIT_TABLES_MODULE, only: F_SILENT
   use INTRINSIC, only: L_HOURS, L_MINUTES, L_SECONDS
   use L2PARINFO, only: PARALLEL
-  USE MLSL2Options, only: SECTIONTIMINGUNITS, SKIPDIRECTWRITES, SKIPRETRIEVAL, &
+  USE MLSL2Options, only: RESTARTWARNINGS, &
+    & SECTIONTIMINGUNITS, SKIPDIRECTWRITES, SKIPRETRIEVAL, &
     & STOPAFTERCHUNKDIVIDE, STOPAFTERGLOBAL
-  USE MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  USE MLSMessageModule, only: MLSMessage, MLSMessageReset, MLSMSG_Error
   USE MLSStrings, only: LowerCase 
   USE MLSStringLists, only: catLists, GetStringElement, &
     & NumStringElements, StringElementNum 
-  use OUTPUT_M, only: BLANKS, OUTPUT, PRUNIT
+  use MoreTree, only: Get_Boolean
+  use OUTPUT_M, only: BLANKS, OUTPUT, PRUNIT, resumeOutput, suspendOutput
+  use String_Table, only: get_string
   use Time_M, only: Time_Now
   use TOGGLES, only: SWITCHES
+  use TREE, only: DECORATION, NSONS, SUBTREE
 
   IMPLICIT NONE
 
   public :: SECTION_TIMES, TOTAL_TIMES, &
-    & add_to_directwrite_timing, add_to_phase_timing, &
+    & add_to_directwrite_timing, &
     & add_to_retrieval_timing, add_to_section_timing, &
+    & addPhaseToPhaseNames, &
     & dump_section_timings, run_start_time
   public :: finishTimings, fillTimings, restartTimings
   public :: showTimingNames
@@ -253,6 +259,46 @@ contains ! =====     Public Procedures     =============================
     myLastTime = t2
     if ( present(t1) ) call time_now ( t1 )
   end subroutine add_to_section_timing
+
+  ! -----------------------------------  addPhaseToPhaseNames  -----
+  subroutine addPhaseToPhaseNames ( name, root )
+    ! Dummy arguments
+    integer, intent(in) :: NAME               ! String index of name
+    integer, intent(in) :: ROOT               ! Root of hGrid subtree
+    ! Local variables
+    integer :: keyNo
+    integer :: field
+    integer :: field_index
+    integer :: fieldValue
+    logical :: silent
+    integer :: son
+    character(len=80) :: PHASESTRING    ! E.g., 'Core'
+    ! Executable
+    silent = .false.
+    do keyNo = 2, nsons(root)
+      son = subtree(keyNo,root)
+      field = subtree(1,son)
+      if ( nsons(son) > 1 ) then
+        fieldValue = decoration(subtree(2,son)) ! The field's value
+      else
+        fieldValue = son
+      end if
+      field_index = decoration(field)
+      select case ( field_index )
+      case ( f_silent )
+        silent = get_boolean ( fieldValue )
+      case default ! Can't get here if tree_checker works correctly
+      end select
+    end do
+    call get_string(name, phaseString)
+    call add_to_phase_timing(trim(phaseString))
+    if ( RESTARTWARNINGS ) call MLSMessageReset(Warnings=.true.)
+    if ( silent ) then
+      call suspendOutput
+    else
+      call resumeOutput
+    endif
+  end subroutine addPhaseToPhaseNames
 
   ! -----------------------------------------------  dump_section_timings  -----
   subroutine dump_section_timings
@@ -762,6 +808,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.29  2006/01/06 01:15:32  pwagner
+! Added addPhaseToPhaseNames
+!
 ! Revision 2.28  2005/09/22 23:39:38  pwagner
 ! time_config and retry_config now hold config settings
 !
