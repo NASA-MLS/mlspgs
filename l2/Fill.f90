@@ -25,11 +25,13 @@ module Fill                     ! Create vectors and fill them.
 ! === (end of toc) ===
 
 ! === (start of api) ===
-! MLSL2Fill (int root, l1binfo_t l1binfo, *griddedData_T GriddedDataBase(:),
-!        *vectorTemplate_T VectorTemplates(:), &
+! MLSL2Fill (int root, *MLSFile_T fileDataBase(:), 
+!        *griddedData_T GriddedDataBase(:),
+!        *vectorTemplate_T VectorTemplates(:),
 !        *vector_t Vectors(:), *quantityTemplate_T QtyTemplates(:),
 !        *matrix_database_T Matrices(:),
 !        *l2GPData_T L2GPDatabase(:), *l2AUXData_T L2AUXDatabase(:),
+!        *ForwardModelConfig_T FWModelConfig(:),
 !        *mlSChunk_T Chunks(:), int ChunkNo )
 ! === (end of api) ===
 !---------------------------- RCS Ident Info -------------------------------
@@ -150,9 +152,9 @@ contains ! =====     Public Procedures     =============================
     use MLSFiles, only: GetMLSFileByType
     use MLSL2Options, only: RESTARTWARNINGS
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, &
-      & add_to_phase_timing, fillTimings, finishTimings
+      & addPhaseToPhaseNames, fillTimings, finishTimings
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
-      & MLSMSG_Allocate, MLSMSG_Deallocate, MLSMessageReset
+      & MLSMSG_Allocate, MLSMSG_Deallocate
     use MLSNumerics, only: InterpolateValues, Hunt
     use MLSRandomNumber, only: drang, mls_random_seed, MATH77_RAN_PACK
     use MLSSets, only: FindFirst
@@ -406,7 +408,6 @@ contains ! =====     Public Procedures     =============================
     real(rv) :: OFFSETAMOUNT            ! For offsetRadiance
     integer :: ORBITINCLINATIONVECTORINDEX ! In the vector database
     integer :: ORBITINCLINATIONQUANTITYINDEX ! In the quantities database
-    character(len=80) :: PHASESTRING    ! E.g., 'Core'
     integer :: PHITANVECTORINDEX        ! In the vector database
     integer :: PHITANQUANTITYINDEX      ! In the quantities database
     real(r8) :: PHIWINDOW               ! For hydrostatic ptan guesser
@@ -2065,9 +2066,7 @@ contains ! =====     Public Procedures     =============================
 
       case ( s_phase ) ! ===============================  Phase ==
         ! Set the name for this phase
-        call get_string(vectorname, phaseString)
-        call add_to_phase_timing(trim(phaseString))
-        if ( RESTARTWARNINGS ) call MLSMessageReset(Warnings=.true.)
+        call addPhaseToPhaseNames ( vectorname, key )
 
       case ( s_transfer ) ! ===============================  Transfer ==
         ! Here we're on a transfer instruction
@@ -6918,6 +6917,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.318  2006/01/06 01:16:34  pwagner
+! silent boolean field can silence selected phases
+!
 ! Revision 2.317  2006/01/05 03:48:17  vsnyder
 ! Use Interp_Bilinear_2d_1d (as InterpolateValues)
 !
