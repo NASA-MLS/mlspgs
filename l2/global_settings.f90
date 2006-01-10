@@ -415,6 +415,7 @@ contains
       & 'l1boa File not found--hope you dont need one' )
       return
     endif
+
     the_hdf_version = &
       & L1BFile%HDFVersion
     if ( the_hdf_version == FILENOTFOUND ) then                                          
@@ -515,6 +516,9 @@ contains
     if ( got(3) ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &                      
       & 'You overrode names of Bright objects found in l1boa file' )    
+    elseif( L1BFile%hdfVersion /= HDFVERSION_5 ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &                      
+      & 'Names of Bright objects missing from (hdf4) l1boa file' )    
     elseif( .not. IsHDF5AttributeInFile(L1BFile%name, 'BO_name') ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &                      
       & 'Names of Bright objects missing from l1boa file' )    
@@ -943,6 +947,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.108  2005/11/12 00:58:10  pwagner
+! Fixed bug in reading BO_names attribute from l1boa file
+!
 ! Revision 2.107  2005/11/11 21:46:07  pwagner
 ! Added reading bright objects from l1boa; removed unused settings
 !
