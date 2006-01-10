@@ -71,6 +71,7 @@ contains ! =====     Public Procedures     =============================
     use MLSNumerics, only: HUNT
     use MLSStringLists, only: SwitchDetail
     use MoreTree, only: GET_BOOLEAN
+    use output_m, only: output
     use STRING_TABLE, only: GET_STRING
     use TOGGLES, only: GEN, TOGGLE, SWITCHES
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -713,7 +714,7 @@ contains ! =====     Public Procedures     =============================
     use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData, &
       & AssembleL1BQtyName
     use MLSCommon, only: MLSFile_T, NameLen, RK => R8, TAI93_RANGE_T
-    use MLSFiles, only: Dump, GetMLSFileByType
+    use MLSFiles, only: HDFVERSION_5, Dump, GetMLSFileByType
     use MLSFillValues, only: isMonotonic, Monotonize
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MLSNumerics, only: HUNT, InterpolateValues
@@ -739,6 +740,7 @@ contains ! =====     Public Procedures     =============================
     type (HGrid_T), intent(inout) :: HGRID ! Needs inout as name set by caller
 
     ! Local variables/parameters
+    real(rk), dimension(:,:), pointer :: ALLGEODANGLE ! For every mif
     real(rk), parameter :: SECONDSINDAY = 24*60*60
     ! Note this next one is ONLY NEEDED for the case where we have only
     ! one MAF in the chunk
@@ -801,7 +803,11 @@ contains ! =====     Public Procedures     =============================
     if ( .not. associated(L1BFile) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'l1boa file not in database' )
     hdfversion = L1BFile%HDFVersion
-    PreV2Oh = .not. IsHDF5AttributeInFile(L1BFile%name, 'BO_name')
+    if ( ( L1BFile%hdfVersion == HDFVERSION_5 ) .and. .false. ) then
+      PreV2Oh = .not. IsHDF5AttributeInFile(L1BFile%name, 'BO_name')
+    else
+      PreV2Oh= .true.
+    endif
     ! Setup the empircal geometry estimate of lon0
     ! (it makes sure it's not done twice
     call ChooseOptimumLon0 ( filedatabase, chunk )
@@ -818,13 +824,16 @@ contains ! =====     Public Procedures     =============================
     if ( .not. associated(L1BFile) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'l1boa file nullified during read' )
     noMAFs = chunk%lastMAFIndex - chunk%firstMAFIndex + 1
+    noMIFs = size(l1bField%dpField(1,:,1))
     minAngle = minval ( l1bField%dpField(1,:,1) )
     maxAngleFirstMAF = maxval ( l1bField%dpField(1,:,1) )
     maxAngle = maxval ( l1bField%dpField(1,:,noMAFs) )
     minAngleLastMAF = minval ( l1bField%dpField(1,:,noMAFs) )
-    nullify ( mif1GeodAngle )
+    nullify ( mif1GeodAngle, allgeodangle )
     call Allocate_test ( mif1GeodAngle, noMAFs, 'mif1Geodangle', ModuleName )
+    call Allocate_test ( allGeodAngle, noMIFs, noMAFs, 'allGeodangle', ModuleName )
     mif1GeodAngle = l1bField%dpField(1,1,1:noMAFs)
+    allGeodAngle = l1bField%dpField(1,1:noMIFs,1:noMAFs)
     if ( .not. isMonotonic(mif1GeodAngle) ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & 'mif1GeodAngle is not monotonic--will try anyway' )
@@ -1090,8 +1099,10 @@ contains ! =====     Public Procedures     =============================
           & ' (after interpolating)')
       end if
     else
-      call GetApparentLocalSolarZenith( L1BFile, hGrid, &
-        & l1bField%dpField(1,1,:), chunk )
+!       call GetApparentLocalSolarZenith( L1BFile, hGrid, &
+!         & l1bField%dpField(1,1,:), chunk )
+      call closestApparentLocalSolarZenith( allGeodAngle, l1bField%dpField(1,:,:), &
+        & hGrid%phi(1,:), hGrid%solarZenith(1,:) )
       ! What the heck, let's compute the old way, too, and compare
       call allocate_test(OldMethodValues, noMIFs, size(hGrid%solarTime, 2), &
         & 'OldMethodValues', ModuleName)
@@ -1257,6 +1268,7 @@ contains ! =====     Public Procedures     =============================
 
     ! That's it
     call Deallocate_test ( mif1GeodAngle, 'mif1GeodAngle', ModuleName )
+    call Deallocate_test ( allGeodAngle, 'allGeodAngle', ModuleName )
 
   contains
     subroutine GetApparentLocalSolarTime( L1BFile, instrumentModuleName, chunk, &
@@ -1268,7 +1280,7 @@ contains ! =====     Public Procedures     =============================
       ! real(rk), dimension(:,:)      :: solarTime
       ! Local variables
       type (L1BData_T) :: L1BFIELD        ! A field read from L1 file
-      real (rk), dimension(:,:), pointer :: GMT => null()
+      real (rk), dimension(:), pointer :: GMT => null()
       real (rk), dimension(:,:), pointer :: MAFLongitude => null()
       real (rk), dimension(:,:), pointer :: MAFTime => null()
       integer :: maf
@@ -1302,7 +1314,7 @@ contains ! =====     Public Procedures     =============================
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to read Lon from l1boa', MLSFile=L1BFile )
       noMIFs = size(l1bField%dpField, 2)
-      call allocate_test(GMT, noMIFs, noMAFs, 'GMT', ModuleName)
+      call allocate_test(GMT, noMAFs, 'GMT', ModuleName)
       call allocate_test(MAFLongitude, noMIFs, noMAFs, 'MAFLongitude', ModuleName)
       call allocate_test(MAFTime, noMIFs, noMAFs, 'MAFTime', ModuleName)
       call allocate_test(SolarLongitude, noMAFs, 'SolarLongitude', ModuleName)
@@ -1330,10 +1342,8 @@ contains ! =====     Public Procedures     =============================
         & 'Unable to read MAFStatTimeUTC from l1boa', MLSFile=L1BFile )
       ! This converts the utc string into time into the day (in hours)
       do maf=1, noMAFs
-        do mif=1, noMIFs
-          call utc_to_time(l1bField%CharField(1,mif,maf), status, time, strict)
-          GMT(mif,maf) = hhmmss_value ( time, status, separator, strict ) / 3600
-        enddo
+          call utc_to_time(l1bField%CharField(1,1,maf), status, time, strict)
+          GMT(maf) = hhmmss_value ( time, status, separator, strict ) / 3600
       enddo
       call DeallocateL1BData ( l1bField )
 
@@ -1351,15 +1361,13 @@ contains ! =====     Public Procedures     =============================
       ! 1st we will find the calibrated solar longitude (in deg)
       ! assuming our 1st formula above holds for all mifs
       SolarLongitude = MAFLongitude(1,:) - &
-        & (SolarTimeCalibration-GMT(1,:))*360./24
+        & (SolarTimeCalibration-GMT(:))*360./24
 
       ! 2nd we need the GMT corrected for the regular HGrid offsets from MAFs
-      GMT = GMT + ( HGrid%time - MAFTime ) / 3600
+      GMT = GMT + ( HGrid%time(1,:) - MAFTime(1,:) ) / 3600
       do maf=1, noMAFs
-        HGrid%SolarTime(:,maf) = GMT(1,maf) + &
+        HGrid%SolarTime(:,maf) = GMT(maf) + &
           & ( HGrid%Lon(:,maf) - SolarLongitude(maf) ) / 15
-        ! SolarTime(:,maf) = GMT(:,maf) + &
-        !  & ( MAFLongitude(:,maf) - SolarLongitude(maf) ) / 15
       enddo
 
       ! Now deallocate all the junk we allocated
@@ -1369,6 +1377,32 @@ contains ! =====     Public Procedures     =============================
       call deallocate_test(SolarLongitude, 'SolarLongitude', ModuleName)
       call deallocate_test(SolarTimeCalibration, 'SolarTimeCalibration', ModuleName)
     end subroutine GetApparentLocalSolarTime
+
+    subroutine closestApparentLocalSolarZenith( allGeodAngle, allSolarZenith, &
+      & GeodAngle, solarZenith )
+    use MLSNumerics, only: CLOSESTELEMENT
+      ! Another approach--compare against linear interpolation
+      ! Dummy arguments
+      real(rk), dimension(:,:), intent(in) :: allGeodAngle
+      real(rk), dimension(:,:), intent(in) :: allSolarZenith
+      real(rk), dimension(:), intent(in)   :: GeodAngle
+      real(rk), dimension(:), intent(out)  :: solarZenith
+      ! Local variables
+      integer, dimension(2) :: indices(2)
+      integer :: maf, mif
+      ! Executable
+      do maf = 1, size(GeodAngle)
+        call closestElement( GeodAngle(maf), allGeodAngle, indices )
+        if ( any(indices < 1) .or. &
+          & ( indices(1) > size(allGeodAngle, 1) ) .or. &
+          & ( indices(2) > size(allGeodAngle, 2) ) ) then
+          call dump(indices, 'indices')
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Unable to find closest element' )
+        endif
+        solarZenith(maf) = allSolarZenith( indices(1), indices(2) )
+      enddo
+    end subroutine closestApparentLocalSolarZenith
 
     subroutine GetApparentLocalSolarZenith(L1BFile, hGrid, solarZenithAtMIF1, &
       & chunk )
@@ -2242,6 +2276,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.82  2006/01/10 23:52:11  pwagner
+! Fixed segment fault when hdf4 l1boa file
+!
 ! Revision 2.81  2005/12/16 00:07:12  pwagner
 ! Changes to reflect new MLSFillValues module
 !
