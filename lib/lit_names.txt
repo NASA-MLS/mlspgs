@@ -57,7 +57,7 @@ degrees
 dimensionless
 dimless
 dl
-dobsonunits
+dobsonunits  # 1 DU = 2.687e20 molecules/m^2
 
 ECRtoFOV
 earthradius
@@ -135,6 +135,7 @@ mif
 mifDeadTime      # How much of MIF is not collecting data
 mifs
 minutes
+molcm2 # mol/cm^2
 ms # m/s
 
 nameFragment
@@ -217,6 +218,9 @@ zeta
 zonalavg
 
 # $Log$
+# Revision 2.43  2006/01/11 16:54:37  pwagner
+# Added molcm2 for column abundances
+#
 # Revision 2.42  2005/08/03 18:00:24  vsnyder
 # Delete d[nvw], add L1BMIF_TAI and MifDeadTime
 #
