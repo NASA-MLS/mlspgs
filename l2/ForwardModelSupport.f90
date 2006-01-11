@@ -51,8 +51,7 @@ module ForwardModelSupport
   integer, parameter :: NoMolecule             = NoBetaGroup + 1
   integer, parameter :: PFANeedsFreqAvg        = NoMolecule + 1
   integer, parameter :: PFANotMolecule         = PFANeedsFreqAvg + 1
-  integer, parameter :: PFASSB                 = PFANotMolecule + 1
-  integer, parameter :: PFATwice               = PFASSB + 1
+  integer, parameter :: PFATwice               = PFANotMolecule + 1
   integer, parameter :: PolarizedAndAllLines   = PFATwice + 1
   integer, parameter :: TangentNotSubset       = PolarizedAndAllLines + 1
   integer, parameter :: ToleranceNotK          = TangentNotSubset + 1
@@ -389,7 +388,7 @@ contains ! =====     Public Procedures     =============================
       & PHYQ_PROFILES, PHYQ_TEMPERATURE
     use L2PC_m, only: BINSELECTORS, DEFAULTSELECTOR_LATITUDE, CREATEDEFAULTBINSELECTORS
     use MLSCommon, only: R8
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MLSNumerics, only: HUNT
     use MLSSignals_M, only: Signals
     use MoreTree, only: Get_Boolean, Get_Field_ID
@@ -899,7 +898,8 @@ op:     do j = 2, nsons(PFATrees(s))
 
       if ( info%sidebandStart == 1 .and. info%anyPFA(1) .or. &
          & info%sidebandStop == -1 .and. info%anyPFA(2) ) &
-         & call AnnounceError ( PFASSB, root )
+         & call MLSMessage ( MLSMSG_Warning, ModuleName, &
+         & 'Signal is SSB, but PFA is requested for the other sideband' )
 
       ! Cannot specify allLinesInCatalog and polarized
       if ( info%allLinesInCatalog .and. info%polarized ) &
@@ -1234,9 +1234,6 @@ op:     do j = 2, nsons(PFATrees(s))
       call output ( 'PFA requested for ' )
       call display_string ( lit_indices(decoration(where)) )
       call output ( ' but it is not in the molecule list', advance='yes' )
-    case ( PFASSB )
-      call output ( 'Signal is SSB, but PFA is requested for the other sideband', &
-        & advance='yes' )
     case ( PFATwice )
       call output ( 'Molecule ' )
       call display_string ( lit_indices(decoration(where)) )
@@ -1277,6 +1274,9 @@ op:     do j = 2, nsons(PFATrees(s))
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.124  2006/01/11 01:56:48  vsnyder
+! Allow PFA for sidebands not in signals, but ignore it -- of course
+!
 ! Revision 2.123  2006/01/04 21:54:26  vsnyder
 ! 'norf' switch sets refraction default to false
 !
