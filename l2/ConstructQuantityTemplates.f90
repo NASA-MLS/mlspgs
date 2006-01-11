@@ -1040,7 +1040,7 @@ contains ! ============= Public procedures ===================================
     use Init_Tables_Module, only: PHYQ_EXTINCTION, PHYQ_FREQUENCY,&
       & PHYQ_GAUSS, PHYQ_IceDensity, PHYQ_LENGTH, &
       & PHYQ_PRESSURE, PHYQ_TEMPERATURE, PHYQ_TIME, PHYQ_VELOCITY, &
-      & PHYQ_VMR, PHYQ_ZETA, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_DOBSONUNITS
+      & PHYQ_VMR, PHYQ_ZETA, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_COLMABUNDANCE
     use MLSMessageModule, only: MLSMSG_Error, MLSMessage
     use Intrinsic, only: LIT_INDICES
     use Output_M, only: OUTPUT
@@ -1078,7 +1078,7 @@ contains ! ============= Public procedures ===================================
                      p_signal, p_suppressChannels, next, &
       l_cloudRadSensitivity, phyq_temperature, p_minorFrame, p_signal, next, &
       l_cloudWater, phyq_dimensionless, p_hGrid, p_vGrid, p_mustBeZeta, next, &
-      l_columnAbundance, phyq_dobsonunits, p_hGrid, p_molecule, next, &
+      l_columnAbundance, phyq_colmabundance, p_hGrid, p_molecule, next, &
       l_dnwt_ajn, phyq_dimensionless, p_vGrid, next, &
       l_dnwt_axmax, phyq_dimensionless, p_vGrid, next, &
       l_dnwt_cait, phyq_dimensionless, p_vGrid, next, &
@@ -1278,6 +1278,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.128  2006/01/11 18:00:12  pwagner
+! Consistent with new abstract phys quant colmAbundance
+!
 ! Revision 2.127  2005/09/14 00:13:30  pwagner
 ! Uses ChunkDivideConfig%allowPriorOverlaps in calculating qty%noInstancesLowerOverlap
 !
