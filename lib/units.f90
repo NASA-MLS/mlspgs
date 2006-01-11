@@ -106,7 +106,9 @@ contains ! =====     Public procedures     =============================
 !   this is = 1Pa*1000*1sec^2/1meter^4
     call declare_unit ( l_icedensity, 1.0d0, phyq_icedensity )
 !   this is 1DU ( = 2.687e20 molecules/m^2)
-    call declare_unit ( l_DobsonUnits, 1.0d0, phyq_DobsonUnits )
+!   (but we will use molecules/cm^2 as the default)
+    call declare_unit ( l_DobsonUnits, 2.687d16, phyq_colmabundance )
+    call declare_unit ( l_molcm2, 1.0d0, phyq_colmabundance )
 
     call declare_unit ( l_pctrhi, 1.0d0, phyq_pctrhi )
     call declare_unit ( l_gauss, 1.0d0, phyq_gauss )
@@ -138,6 +140,9 @@ contains ! =====     Public procedures     =============================
 end module UNITS
 
 ! $Log$
+! Revision 2.27  2006/01/11 17:01:01  pwagner
+! Made molcm2 default for colmabundance, DobsonUnits an alternate
+!
 ! Revision 2.26  2005/06/22 17:25:51  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
