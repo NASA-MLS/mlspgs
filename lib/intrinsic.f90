@@ -66,8 +66,8 @@ module INTRINSIC
   integer, parameter :: PHYQ_VELOCITY =        phyq_zeta+1        ! Default meters/second
   integer, parameter :: PHYQ_EXTINCTION =      phyq_velocity+1    ! Default 1/meters
   integer, parameter :: PHYQ_ICEDENSITY =      phyq_extinction+1  ! Default g/meters^3
-  integer, parameter :: PHYQ_DOBSONUNITS =     phyq_icedensity+1  ! 1 DU = 2.687e20 molecules/m^2
-  integer, parameter :: PHYQ_PCTRHI =          phyq_dobsonunits+1 ! default %RHI
+  integer, parameter :: PHYQ_COLMABUNDANCE =   phyq_icedensity+1  ! Default molecules/cm^2
+  integer, parameter :: PHYQ_PCTRHI =          phyq_colmabundance+1 ! default %RHI
   integer, parameter :: PHYQ_GAUSS =           phyq_pctrhi + 1
   integer, parameter :: PHYQ_PROFILES =        phyq_gauss + 1
   integer, parameter :: FIRST_PHYQ = phyq_invalid, LAST_PHYQ = phyq_profiles
@@ -185,7 +185,7 @@ contains ! =====     Public procedures     =============================
     phyq_indices(phyq_zeta) =              add_ident ( 'zeta' )
     phyq_indices(phyq_extinction) =        add_ident ( 'extinction' )
     phyq_indices(phyq_icedensity) =        add_ident ( 'icedensity' )
-    phyq_indices(phyq_dobsonunits) =       add_ident ( 'dobsonunits' )
+    phyq_indices(phyq_colmabundance) =     add_ident ( 'colmabundance' )
     phyq_indices(phyq_pctrhi) =            add_ident ( 'pctrhi' )
     phyq_indices(phyq_gauss) =             add_ident ( 'gauss' )
     phyq_indices(phyq_profiles) =          add_ident ( 'profiles' )
@@ -259,6 +259,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.59  2006/01/11 16:59:36  pwagner
+! Abstract phys quant now colmabundance
+!
 ! Revision 2.58  2005/12/29 01:09:49  vsnyder
 ! Add string for PHYQ_Profiles
 !
