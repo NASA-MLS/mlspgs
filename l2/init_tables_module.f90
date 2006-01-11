@@ -502,10 +502,11 @@ contains ! =====     Public procedures     =============================
       begin, t+t_tgridcoord, l+l_theta, n+n_dt_def, &
       begin, t+t_tgridtype, l+l_logarithmic, n+n_dt_def, &
       begin, t+t_units, l+l_c, l+l_days, l+l_deg, l+l_degrees, &
-             l+l_dimensionless, l+l_dimless, l+l_dl, l+l_ghz, &
+             l+l_dimensionless, l+l_dimless, l+l_dl, l+l_dobsonUnits, l+l_ghz, &
              l+l_hours, l+l_hpa, l+l_hz, l+l_k, l+l_khz, l+l_km, l+l_logp, &
              l+l_m, l+l_maf, l+l_mafs, l+l_mb, l+l_meters, l+l_mhz, &
-             l+l_mif, l+l_mifs, l+l_minutes, l+l_orbits, l+l_pa, l+l_ppbv, &
+             l+l_mif, l+l_mifs, l+l_minutes, l+l_molcm2, &
+             l+l_orbits, l+l_pa, l+l_ppbv, &
              l+l_ppmv, l+l_pptv, l+l_rad, l+l_radians, l+l_s, l+l_seconds, &
              l+l_thz, l+l_vmr, l+l_zeta, n+n_dt_def, &
       begin, t+t_vgridcoord, l+l_angle, l+l_geocAltitude, l+l_geodAltitude, l+l_gph, l+l_none, &
@@ -877,6 +878,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_tempPrecisionQuantity, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
              begin, f+f_terms, t+t_numeric, n+n_field_type, &
+             begin, f+f_unit, t+t_units, n+n_field_type, &
              begin, f+f_usb, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
              begin, f+f_usbFraction, s+s_vector, f+f_template, &
@@ -1380,6 +1382,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.420  2006/01/11 17:04:32  pwagner
+! May specify unit when filling column abundances
+!
 ! Revision 2.419  2006/01/06 01:16:34  pwagner
 ! silent boolean field can silence selected phases
 !
