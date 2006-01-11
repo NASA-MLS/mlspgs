@@ -88,7 +88,7 @@ contains ! =====     Public Procedures     =============================
       & F_SOURCEQUANTITY, F_SOURCEVGRID, F_SPREAD, F_STATUS, F_SUFFIX, F_SUPERDIAGONAL, &
       & F_SYSTEMTEMPERATURE, F_TEMPERATUREQUANTITY, F_TEMPPRECISIONQUANTITY, &
       & F_TEMPLATE, F_TNGTECI, F_TERMS, &
-      & F_TYPE, F_USB, F_USBFRACTION, F_VECTOR, F_VMRQUANTITY, &
+      & F_TYPE, F_UNIT, F_USB, F_USBFRACTION, F_VECTOR, F_VMRQUANTITY, &
       & F_WHEREFILL, F_WHERENOTFILL, F_WIDTH, &
       & FIELD_FIRST, FIELD_LAST
     ! Now the literals:
@@ -97,7 +97,7 @@ contains ! =====     Public Procedures     =============================
       & L_BOUNDARYPRESSURE, L_BOXCAR, L_CHISQBINNED, L_CHISQCHAN, &
       & L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, &
       & L_cloudice, L_cloudextinction, L_cloudInducedRADIANCE, &
-      & L_COMBINECHANNELS, L_COLUMNABUNDANCE, &
+      & L_COMBINECHANNELS, L_COLUMNABUNDANCE, L_DOBSONUNITS, &
       & L_ECRTOFOV, L_ESTIMATEDNOISE, L_EXPLICIT, L_EXTRACTCHANNEL, L_FOLD, &
       & L_FWDMODELTIMING, L_FWDMODELMEAN, L_FWDMODELSTDDEV, &
       & L_GEOCALTITUDE, L_GEODALTITUDE, L_GPH, L_GPHPRECISION, L_GRIDDED, L_H2OFROMRHI, &
@@ -106,7 +106,7 @@ contains ! =====     Public Procedures     =============================
       & L_L1B, L_L1BMAFBASELINE, L_L1BMIF_TAI, L_L2GP, L_L2AUX, &
       & L_LIMBSIDEBANDFRACTION, L_LOSVEL, &
       & L_MAGAZEL, L_MAGNETICFIELD, L_MAGNETICMODEL, &
-      & L_MANIPULATE, L_MAX, L_MEAN, L_MIN, L_NEGATIVEPRECISION, &
+      & L_MANIPULATE, L_MAX, L_MEAN, L_MIN, L_MOLCM2, L_NEGATIVEPRECISION, &
       & L_NOISEBANDWIDTH, L_NONE, &
       & L_NORADSPERMIF, L_OFFSETRADIANCE, L_ORBITINCLINATION, &
       & L_PHASETIMING, L_PHITAN, &
@@ -320,6 +320,7 @@ contains ! =====     Public Procedures     =============================
     integer :: BOXCARMETHOD             ! l_min, l_max, l_mean
     logical :: CENTERVERTICALLY         ! For bin based fills
     integer :: CHANNEL                  ! For spreadChannels fill
+    integer :: COLMABUNITS              ! l_DOBSONUNITS, or l_MOLCM2
     integer :: COLVECTOR                ! Vector defining columns of Matrix
     type(matrix_SPD_T), pointer :: Covariance
     integer :: DESTINATIONVECTORINDEX   ! For transfer commands
@@ -515,6 +516,7 @@ contains ! =====     Public Procedures     =============================
       allowMissing = .false.
       boxCarMethod = l_mean
       channel = 0
+      colmabunits = l_molcm2 ! default units for column abundances
       dontMask = .false.
       excludeBelowBottom = .false.
       extinction = .false.
@@ -1018,6 +1020,8 @@ contains ! =====     Public Procedures     =============================
             tempPrecisionQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_terms )
             termsNode = subtree(j,key)
+          case ( f_unit ) ! For folding
+            colmabunits = decoration(gson) ! decoration(subtree(2,gson))
           case ( f_usb ) ! For folding
             usbVectorIndex = decoration(decoration(subtree(1,gson)))
             usbQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -1688,13 +1692,17 @@ contains ! =====     Public Procedures     =============================
             if ( .not. any(got( (/f_vmrQuantity, f_boundaryPressure/) )) ) then
               call Announce_error ( key, No_Error_code, &
               & 'Missing a required field to fill column abundance'  )
+            elseif ( .not. &
+              & any( colmabunits == (/l_dobsonUnits, l_molcm2/) ) ) then
+              call Announce_error ( key, No_Error_code, &
+              & 'Wrong units to fill column abundance'  )
             else
               bndPressQty => GetVectorQtyByTemplateIndex( &
                 & vectors(bndPressVctrIndex), bndPressQtyIndex)
               vmrQty => GetVectorQtyByTemplateIndex( &
                 & vectors(vmrQtyVctrIndex), vmrQtyIndex)
               call FillColAbundance ( key, quantity, &
-                & bndPressQty, vmrQty )
+                & bndPressQty, vmrQty, colmAbUnits )
             end if
           case ( l_chiSQChan )
             if ( .not. any(got( (/f_measurements, f_model, f_noise/) )) ) then
@@ -3453,7 +3461,7 @@ contains ! =====     Public Procedures     =============================
     end subroutine FillChiSqMMif
 
     ! ------------------------------------------- FillColAbundance ---
-    subroutine FillColAbundance ( key, qty, bndPressQty, vmrQty, &
+    subroutine FillColAbundance ( key, qty, bndPressQty, vmrQty, colmAbUnits, &
       & firstInstance, lastInstance )
       ! A special fill according to W.R.Read's idl code
       ! Similar to his hand-written notes, but with a small correction
@@ -3464,6 +3472,7 @@ contains ! =====     Public Procedures     =============================
       type (VectorValue_T), intent(inout) :: QTY
       type (VectorValue_T), intent(in) :: BNDPRESSQTY
       type (VectorValue_T), intent(in) :: VMRQTY
+      integer, intent(in) :: colmAbUnits
       integer, intent(in), optional :: FIRSTINSTANCE
       integer, intent(in), optional :: LASTINSTANCE
       ! The last two are set if only part (e.g. overlap regions) of the quantity
@@ -3472,7 +3481,8 @@ contains ! =====     Public Procedures     =============================
       ! Local parameters
       real(r8) :: LN10         ! = LOG(10.d0)
       real(r8), parameter :: INVERMGPPMV = 0.789 ! in DU / (ppmv hPa)
-      real(r8), parameter :: INVERMG = INVERMGPPMV*1.d6 ! in DU / (vmr hPa)
+      real(r8), parameter :: INVERMGDU = INVERMGPPMV*1.d6 ! in DU / (vmr hPa)
+      real(r8), parameter :: INVERMGMOLCM2 = INVERMGDU*2.687d16 ! in mol / cm^2
 
       ! Local variables
       logical :: printMe
@@ -3490,7 +3500,7 @@ contains ! =====     Public Procedures     =============================
       real (r8) :: COLUMNSUM
       real (r8) :: TRAPEZOIDSUM
       real (r8) :: DELTAZETA      ! Zetai[s+1] - Zetai[s]
-
+      real (r8) :: INVERMG
       real (r8)                        :: Zetaa
       real (r8), pointer, dimension(:) :: Zetab
       real (r8), pointer, dimension(:) :: Zetac
@@ -3530,7 +3540,15 @@ contains ! =====     Public Procedures     =============================
           & 'Fill column abundance, but too few vmr surfaces'  )
         return
       end if
-
+      select case (colmAbUnits)
+      case (l_DobsonUnits)
+        INVERMG = INVERMGDU
+      case (l_molcm2)
+        INVERMG = INVERMGMOLCM2
+      case default
+        call Announce_error ( key, No_Error_code, &
+          & 'Fill column abundance, but wrong units.'  )
+      end select
       ! Work out what to do with the first and last Instance information
       useFirstInstance = 1
       useLastInstance = qty%template%noInstances
@@ -6917,6 +6935,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.319  2006/01/11 17:04:32  pwagner
+! May specify unit when filling column abundances
+!
 ! Revision 2.318  2006/01/06 01:16:34  pwagner
 ! silent boolean field can silence selected phases
 !
