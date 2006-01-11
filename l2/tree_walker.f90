@@ -220,10 +220,10 @@ contains ! ====     Public Procedures     ==============================
             else if ( singleChunk > size(chunks) ) then
               call output ( " single chunk " )
               call output ( singleChunk, advance='yes' )
-              call output ( " lastChunk " )
-              call output ( lastChunk, advance='yes' )
+              call output ( " size(chunks) " )
+              call output ( size(chunks), advance='yes' )
               call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & 'single chunk number > lastChunk' )
+              & 'single chunk number > size(chunks)' )
             end if
             firstChunk = singleChunk
             lastChunk = singleChunk
@@ -515,6 +515,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.135  2006/01/06 01:15:01  pwagner
+! Resumes output at start of each chunk, and OutputClose
+!
 ! Revision 2.134  2005/08/19 23:35:01  pwagner
 ! Allow Output to repair l2gp with HGrid while copying files
 !
