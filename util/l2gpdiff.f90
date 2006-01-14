@@ -25,8 +25,10 @@ program l2gpdiff ! show diffs between swaths in two different files
      & HDFVERSION_4, HDFVERSION_5, MLS_INQSWATH
    use MLSHDF5, only: mls_h5open, mls_h5close
    use MLSMessageModule, only: MLSMessageConfig
-   use MLSStringLists, only: GetStringElement, NumStringElements
-   use output_m, only: output
+   use MLSStringLists, only: ExpandStringRange, &
+     & GetStringElement, NumStringElements
+   use MLSStrings, only: WriteIntsToChars
+   use output_m, only: resumeOutput, suspendOutput, output
    use PCFHdr, only: GlobalAttributes
    use Time_M, only: Time_Now, time_config
    
@@ -49,6 +51,7 @@ program l2gpdiff ! show diffs between swaths in two different files
 ! LF95.Linux/test [options] [input files]
   integer, parameter ::          MAXFIELDSLENGTH = 256
   type options_T
+    character(len=MAXFIELDSLENGTH) :: chunks = '*' ! wild card means 'all'
     integer     :: Details = 1
     character(len=MAXFIELDSLENGTH) :: fields = '*' ! wild card means 'all'
     logical     :: force = .false.
@@ -58,33 +61,38 @@ program l2gpdiff ! show diffs between swaths in two different files
     logical     :: stats = .false.
     character(len=MAXSWATHNAMESBUFSIZE) :: swaths1 = '*'
     character(len=MAXSWATHNAMESBUFSIZE) :: swaths2 = '*'
+    logical     :: silent = .false.
     logical     :: verbose = .false.
+    integer     :: numDiffs = 0
   end type options_T
   
   type ( options_T ) :: options
 
   integer, parameter ::          MAXFILES = 100
-  ! logical ::          columnsOnly
+  integer, parameter :: MAXNCHUNKS = 50
+
+  integer, dimension(MAXNCHUNKS) :: chunks
+  character(len=10) :: column_name
   character(len=255) :: filename          ! input filename
-  ! character(len=255) :: outputFile= 'default.he5'        ! output filename
   character(len=255), dimension(MAXFILES) :: filenames
-  integer            :: n_filenames
-  integer     ::  i, j, count, status, error ! Counting indices & Error flags
+  integer     ::  i, error ! Counting indices & Error flags
   integer     ::  hdfversion1
   integer     ::  hdfversion2
   logical     :: is_hdf5
+  integer :: listSize
+  integer            :: n_filenames
+  integer :: nChunks
+  integer :: numDiffs
+  integer :: NUMSWATHSPERFILE
+  character(len=16) :: string
   character(len=MAXSWATHNAMESBUFSIZE) :: swathList1
   character(len=MAXSWATHNAMESBUFSIZE) :: swathList2
   character(len=10) :: swath_name
-  character(len=10) :: column_name
   character(len=*), parameter :: SWATHPREFIX='R3:240.B25D:CO.S1.DACS-1 chisqBinned Core'
-  logical, parameter :: USEALLINPUTSWATHS = .true.
-  integer :: NUMSWATHSPERFILE
-  integer :: listSize
-  ! logical     :: verbose = .false.
   real        :: t1
   real        :: t2
   real        :: tFile
+  logical, parameter :: USEALLINPUTSWATHS = .true.
   ! 
   MLSMessageConfig%useToolkit = .false.
   MLSMessageConfig%logFileUnit = -1
@@ -105,6 +113,9 @@ program l2gpdiff ! show diffs between swaths in two different files
   if ( n_filenames < 2 ) then
     if ( options%verbose ) print *, 'Sorry -- need at least 2 input files to diff'
     stop
+  elseif ( options%verbose .and. options%silent ) then
+    print *, 'Sorry--either verbose or silent; cant be both'
+    stop
   endif
   if ( USEALLINPUTSWATHS ) then
     NUMSWATHSPERFILE = mls_InqSwath ( trim(filenames(1)), &
@@ -120,23 +131,42 @@ program l2gpdiff ! show diffs between swaths in two different files
     NUMSWATHSPERFILE = 2
     swathList1 = ''
   endif
+  if ( options%silent ) call suspendOutput
   call time_now ( t1 )
-  count = 0
   do i = 2, n_filenames, 2
     call time_now ( tFile )
     if ( options%verbose ) then
       print *, 'diff (1): ', trim(filenames(i-1))
       print *, '     (2): ', trim(filenames(i))
     endif
-    call diff(trim(filenames(i-1)), &
-      & trim(filenames(i)), details=options%Details, stats=options%stats, &
+    if ( options%chunks == '*' ) then
+      call diff(trim(filenames(i-1)), trim(filenames(i)), &
+      & details=options%Details, stats=options%stats, &
       & rms=options%rms, ignoreBadChunks=options%ignoreBadChunks, &
       & showMissing=options%showMissing, fields=options%fields, &
-      & force=options%force, swaths1=options%swaths1, swaths2=options%swaths2 )
+      & force=options%force, swaths1=options%swaths1, swaths2=options%swaths2, &
+      & silent=options%silent, numDiffs=numDiffs )
+    else
+      call ExpandStringRange(options%chunks, chunks, nchunks)
+      if ( nchunks < 1 ) cycle
+      call diff(trim(filenames(i-1)), trim(filenames(i)), &
+      & chunks(1:nchunks), &
+      & details=options%Details, stats=options%stats, &
+      & rms=options%rms, ignoreBadChunks=options%ignoreBadChunks, &
+      & showMissing=options%showMissing, fields=options%fields, &
+      & force=options%force, swaths1=options%swaths1, swaths2=options%swaths2, &
+      & silent=options%silent, numDiffs=numDiffs )
+    endif
+    options%numDiffs = options%numDiffs + numDiffs
     call sayTime('diff these files: ' // trim(filenames(i-1)) // &
       & ' and ' // trim(filenames(i)), tFile)
   enddo
   call sayTime('diffing all files')
+  call resumeOutput
+  if ( options%silent .and. options%numDiffs > 0 ) then
+    call WriteIntsToChars ( options%numDiffs, string )
+    call print_string(string)
+  endif
   call mls_h5close(error)
 contains
 !------------------------- get_filenames ---------------------
@@ -145,8 +175,6 @@ contains
      character(LEN=255), intent(out) :: filename          ! filename
      integer, intent(in)             :: n_filenames
      type ( options_T ), intent(inout) :: options
-     ! character(LEN=*), intent(inout) :: outputFile        ! output filename
-     ! logical, intent(inout)          :: verbose
      ! Local variables
      integer ::                         error = 1
      integer, save ::                   i = 1
@@ -160,8 +188,15 @@ contains
       if ( filename(1:1) /= '-' ) exit
       if ( filename(1:3) == '-h ' ) then
         call print_help
+      else if ( filename(1:6) == '-chunk' ) then
+        call getarg ( i+1+hp, options%chunks )
+        i = i + 1
+        exit
       elseif ( filename(1:6) == '-force' ) then
         options%force = .true.
+        exit
+      elseif ( filename(1:8) == '-silent ' ) then
+        options%silent = .true.
         exit
       elseif ( filename(1:3) == '-v ' ) then
         options%verbose = .true.
@@ -220,8 +255,12 @@ contains
       & ' diffs swaths between paired l2gp files [2k] and [2k - 1]'
       write (*,*) &
       & ' each file contains one or more swaths, each swath many named fields'
+      write (*,*) &
+      & ' optionally restrict diffs to certain fields, chunks, etc.'
       write (*,*) ' Options: -f filename => add filename to list of filenames'
       write (*,*) '                         (can do the same w/o the -f)'
+      write (*,*) '          -chunks "c1,c2,.."'
+      write (*,*) '                      =>   diff only chunks c1, c2,..'
       write (*,*) '          -fields "f1,f2,.."'
       write (*,*) '                      =>   diff only fields f1, f2,..'
       write (*,*) '          -d details  => level of details to show'
@@ -232,6 +271,8 @@ contains
       write (*,*) '                      =>   diff only swath1,swath2,..'
       write (*,*) '                           from even-numbered files in list'
       write (*,*) '          -v          => switch on verbose mode'
+      write (*,*) '          -silent         => switch on silent mode'
+      write (*,*) '                            (printing only if diffs found)'
       write (*,*) '          -ignore     => ignore bad chunks'
       write (*,*) '          -rms        => just print mean, rms'
       write (*,*) '          -s          => just show statistics'
@@ -241,8 +282,16 @@ contains
       write (*,*) ' (1) The -d and -fields options should be mutually exclusive'
       write (*,*) ' (2) -s1 lets you pick out which swaths to diff'
       write (*,*) ' (3) -s2 along with -force diffs swaths despite different names'
+      write (*,*) ' (4) the list of chunks may include the range operator "-"'
       stop
   end subroutine print_help
+
+!------------------------- print_string ---------------------
+  subroutine print_string(string)
+    character(len=*), intent(in) :: string
+    write(*,'(a)') trim(string)
+  end subroutine print_string
+
 !------------------------- SayTime ---------------------
   subroutine SayTime ( What, startTime )
     character(len=*), intent(in) :: What
@@ -263,6 +312,9 @@ end program l2gpdiff
 !==================
 
 ! $Log$
+! Revision 1.6  2005/09/23 21:01:13  pwagner
+! use_wall_clock now a component of time_config
+!
 ! Revision 1.5  2005/08/19 23:41:08  pwagner
 ! May specify fields, swaths
 !
