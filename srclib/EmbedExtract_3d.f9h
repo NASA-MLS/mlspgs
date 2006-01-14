@@ -1,0 +1,59 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id$
+
+    ! Dummy args
+    real(rk), dimension(:,:,:), pointer :: bloc
+    real(rk), dimension(:,:,:), pointer :: array ! The larger array
+    integer, dimension(2), intent(in)     :: range1
+    integer, dimension(2), intent(in)     :: range2
+    integer, dimension(2), intent(in)     :: range3
+    character(len=*), intent(in), optional :: options
+    ! Local variables
+    integer :: i, j, k
+    character(len=4) :: myOptions
+    integer :: status
+    ! Executable
+    myOptions = ''
+    if ( present(options) ) myOptions = options
+    
+    select case(direction)
+    case('m') ! embedding
+      do k=range3(1), range3(2)
+        do j=range2(1), range2(2)
+          do i=range1(1), range1(2)
+            array(i, j, k) = &
+            & bloc( i - range1(1) + 1, j - range2(1) + 1, k - range3(1) + 1  )
+          enddo
+        enddo
+      enddo
+    case('x') ! extracting
+      ! Do we need to allocate bloc first?
+      if ( index(myOptions, 'a') > 0 ) then
+        allocate(bloc(range1(2)-range1(1)+1, range2(2)-range2(1)+1, range3(2)-range3(1)+1), &
+          & stat=status)
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
+          & ModuleName, "unable to allocate 3-d bloc before extracting" )
+      endif
+      do k=range3(1), range3(2)
+        do j=range2(1), range2(2)
+          do i=range1(1), range1(2)
+            bloc( i - range1(1) + 1, j - range2(1) + 1, k - range3(1) + 1  ) = &
+              & array(i, j, k)
+          enddo
+        enddo
+      enddo
+    case default
+      call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "direction neither embedding nor extracting" )
+    end select
+! $Log$
