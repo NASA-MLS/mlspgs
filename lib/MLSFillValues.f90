@@ -23,6 +23,7 @@ module MLSFillValues              ! Some FillValue-related stuff
 
   private
 
+  public :: EmbedArray, ExtractArray
   public :: FilterValues
   public :: IsFillValue, ReplaceFillValues
   public :: IsFinite
@@ -40,6 +41,10 @@ module MLSFillValues              ! Some FillValue-related stuff
 !     - - - - - - - -
 
 !         Functions, operations, routines
+! EmbedArray                   Replace a bloc of elements in the larger array
+!                              with the smaller
+! ExtractArray                 Extract a bloc of elements from the larger array
+!                               (optionally allocates bloc first)
 ! FilterValues                 Filters entries in two arrays
 ! IsFillValue                  Returns true if argument is FillValue
 ! IsFinite                     Returns true if argument is finite
@@ -49,6 +54,20 @@ module MLSFillValues              ! Some FillValue-related stuff
     module procedure BridgeMissingValues_1dr4, BridgeMissingValues_1dr8, BridgeMissingValues_1dint
     module procedure BridgeMissingValues_2dr4, BridgeMissingValues_2dr8, BridgeMissingValues_2dint
     module procedure BridgeMissingValues_3dr4, BridgeMissingValues_3dr8, BridgeMissingValues_3dint
+  end interface
+
+  interface EmbedArray
+    module procedure EmbedArray_1d_r4, EmbedArray_1d_r8
+    module procedure EmbedArray_2d_r4, EmbedArray_2d_r8
+    module procedure EmbedArray_3d_r4, EmbedArray_3d_r8
+    module procedure EmbedArray_1d_int
+  end interface
+
+  interface ExtractArray
+    module procedure ExtractArray_1d_r4, ExtractArray_1d_r8
+    module procedure ExtractArray_2d_r4, ExtractArray_2d_r8
+    module procedure ExtractArray_3d_r4, ExtractArray_3d_r8
+    module procedure ExtractArray_1d_int
   end interface
 
   interface FilterValues
@@ -87,13 +106,146 @@ module MLSFillValues              ! Some FillValue-related stuff
 
 contains
 
+  ! ---------------------------------------------  EmbedArray  -----
+  ! This family of routines replace a bloc of elements in a larger
+  ! array with corresponding elements from a smaller
+  subroutine EmbedArray_1d_int ( ibloc, iarray, range, options )
+    integer, dimension(:), pointer :: ibloc
+    integer, dimension(:), pointer :: iarray ! The larger array
+    integer, parameter :: RK = R4
+    integer, dimension(2), intent(in)     :: range
+    character(len=*), intent(in), optional :: options
+    ! Local variables
+    real(rk), dimension(:), pointer :: bloc => null()
+    real(rk), dimension(:), pointer :: array => null() ! The larger array
+    integer :: status
+    ! Executable
+    allocate( bloc(size(ibloc)), stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "unable to allocate 1-d bloc for int embedding" )
+    allocate( array(size(iarray)), stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "unable to allocate 1-d array for int embedding" )
+    array = iarray
+    bloc = ibloc
+    call EmbedArray ( bloc, array, range, options )
+    iarray = array
+    deallocate( bloc, array, stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "unable to deallocate 1-d bloc for int embedding" )
+  end subroutine EmbedArray_1d_int
+
+  subroutine EmbedArray_1d_r4 ( bloc, array, range, options )
+    integer, parameter :: RK = R4
+    character, parameter :: DIRECTION = 'm'
+    include 'EmbedExtract_1d.f9h'
+  end subroutine EmbedArray_1d_r4
+
+  subroutine EmbedArray_1d_r8 ( bloc, array, range, options )
+    integer, parameter :: RK = R8
+    character, parameter :: DIRECTION = 'm'
+    include 'EmbedExtract_1d.f9h'
+  end subroutine EmbedArray_1d_r8
+
+  subroutine ExtractArray_1d_int ( ibloc, iarray, range, options )
+    integer, dimension(:), pointer :: ibloc
+    integer, dimension(:), pointer :: iarray ! The larger array
+    integer, parameter :: RK = R4
+    integer, dimension(2), intent(in)     :: range
+    character(len=*), intent(in), optional :: options
+    ! Local variables
+    real(rk), dimension(:), pointer :: bloc => null()
+    real(rk), dimension(:), pointer :: array => null() ! The larger array
+    integer :: status
+    ! Executable
+    if ( associated(ibloc) ) then
+      allocate( bloc(size(ibloc)), stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "unable to allocate 1-d bloc for int extracting" )
+    endif
+    allocate( array(size(iarray)), stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "unable to allocate 1-d array for int extracting" )
+    array = iarray
+    call ExtractArray ( bloc, array, range, options )
+    if ( .not. associated(ibloc) ) then
+      allocate( ibloc(size(bloc)), stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "unable to allocate 1-d bloc for int extracting" )
+    endif
+    ibloc = bloc
+    deallocate( bloc, array, stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "unable to deallocate 1-d bloc for int extracting" )
+  end subroutine ExtractArray_1d_int
+
+  subroutine ExtractArray_1d_r4 ( bloc, array, range, options )
+    integer, parameter :: RK = R4
+    character, parameter :: DIRECTION = 'x'
+    include 'EmbedExtract_1d.f9h'
+  end subroutine ExtractArray_1d_r4
+
+  subroutine ExtractArray_1d_r8 ( bloc, array, range, options )
+    integer, parameter :: RK = R8
+    character, parameter :: DIRECTION = 'x'
+    include 'EmbedExtract_1d.f9h'
+  end subroutine ExtractArray_1d_r8
+
+  subroutine EmbedArray_2d_r4 ( bloc, array, range1, range2, options )
+    integer, parameter :: RK = R4
+    character, parameter :: DIRECTION = 'm'
+    include 'EmbedExtract_2d.f9h'
+  end subroutine EmbedArray_2d_r4
+
+  subroutine EmbedArray_2d_r8 ( bloc, array, range1, range2, options )
+    integer, parameter :: RK = R8
+    character, parameter :: DIRECTION = 'm'
+    include 'EmbedExtract_2d.f9h'
+  end subroutine EmbedArray_2d_r8
+
+  subroutine ExtractArray_2d_r4 ( bloc, array, range1, range2, options )
+    integer, parameter :: RK = R4
+    character, parameter :: DIRECTION = 'x'
+    include 'EmbedExtract_2d.f9h'
+  end subroutine ExtractArray_2d_r4
+
+  subroutine ExtractArray_2d_r8 ( bloc, array, range1, range2, options )
+    integer, parameter :: RK = R8
+    character, parameter :: DIRECTION = 'x'
+    include 'EmbedExtract_2d.f9h'
+  end subroutine ExtractArray_2d_r8
+
+  subroutine EmbedArray_3d_r4 ( bloc, array, range1, range2, range3, options )
+    integer, parameter :: RK = R4
+    character, parameter :: DIRECTION = 'm'
+    include 'EmbedExtract_3d.f9h'
+  end subroutine EmbedArray_3d_r4
+
+  subroutine EmbedArray_3d_r8 ( bloc, array, range1, range2, range3, options )
+    integer, parameter :: RK = R8
+    character, parameter :: DIRECTION = 'm'
+    include 'EmbedExtract_3d.f9h'
+  end subroutine EmbedArray_3d_r8
+
+  subroutine ExtractArray_3d_r4 ( bloc, array, range1, range2, range3, options )
+    integer, parameter :: RK = R4
+    character, parameter :: DIRECTION = 'x'
+    include 'EmbedExtract_3d.f9h'
+  end subroutine ExtractArray_3d_r4
+
+  subroutine ExtractArray_3d_r8 ( bloc, array, range1, range2, range3, options )
+    integer, parameter :: RK = R8
+    character, parameter :: DIRECTION = 'x'
+    include 'EmbedExtract_3d.f9h'
+  end subroutine ExtractArray_3d_r8
+
 ! -------------------------------------------------  FilterValues  -----
   subroutine filterValues_REAL ( a, ATAB, b, BTAB, warn, fillValue, precision )
     ! Return arrays filtered of any fillValues
     ! or where corresponding precision array < 0
     ! or whose values are not finite
     ! "Filter" means offending elements set to 0.
-    ! Returned arrays are allocated and assigned values as appropriate
+    ! Returned arrays are assigned values as appropriate
     integer, parameter :: RK = kind(0.0) ! Kind type parameter for default real
     character(*), parameter :: P = 'default reals'
     include 'FilterValues_1d.f9h'
@@ -731,6 +883,9 @@ end module MLSFillValues
 
 !
 ! $Log$
+! Revision 2.3  2006/01/14 00:50:15  pwagner
+! Added procedures to embed, extract blocs from larger arrays
+!
 ! Revision 2.2  2005/12/23 03:10:31  vsnyder
 ! Make some routines more generic, using include
 !
