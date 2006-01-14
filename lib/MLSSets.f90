@@ -15,11 +15,15 @@ module MLSSets
 
   implicit NONE
   private
-  public :: FindAll, FindFirst, FindNext, Intersect, Intersection, Union, &
-    & UnionSize
+  public :: FindAll, FindFirst, FindLast, FindNext, Intersect, Intersection, &
+    & Union, UnionSize
 
   interface FindFirst
     module procedure FindFirstInteger, FindFirstLogical, FindFirstCharacter
+  end interface
+
+  interface FindLast
+    module procedure FindLastInteger, FindLastLogical, FindLastCharacter
   end interface
 
   interface FindNext
@@ -39,8 +43,8 @@ module MLSSets
 !               integers in the array equal to the probe
 ! FindFirst     Find the first logical in the array that is true, or the
 !               first integer in the array equal to the probe
-! FindNext      Find the next logical in the array that is true, or the
-!               next integer in the array equal to the probe
+! FindLast      Find the last instead
+! FindNext      Find the next instead
 ! Intersect     Return true if two sets represented by arrays of integers have
 !               a common element
 ! Intersection  Compute intersection of two sets, represented as arrays of integers
@@ -58,6 +62,9 @@ module MLSSets
 ! int FindFirstCharacter (char* set(:), char* probe)      
 ! int FindFirstInteger (int set(:), int probe)      
 ! int FindFirstLogical (log condition(:))      
+! int FindLastCharacter (char* set(:), char* probe)      
+! int FindLastInteger (int set(:), int probe)      
+! int FindLastLogical (log condition(:))      
 ! int FindNextCharacter (char* set(:), char* probe, int current, {log wrap}, {log repeat})      
 ! int FindNextInteger (int set(:), int probe, int current, {log wrap}, {log repeat})      
 ! int FindNextLogical (log condition(:), int current, {log wrap}, {log repeat})
@@ -269,6 +276,47 @@ contains ! =====     Public Procedures     =============================
     end do
     FindFirstLogical = 0
   end function FindFirstLogical
+
+  ! These next could be done by reversing the list order and
+  ! calling findFirst
+  ! -------------------------------------------  FindLastCharacter  -----
+  integer function FindLastCharacter ( Set, Probe )
+    ! Find the last element in the array Set that is equal to Probe
+    ! (case-sensitive, ignores trailing blanks, but alert to leading blanks)
+    character(len=*), dimension(:), intent(in) :: Set
+    character(len=*), intent(in) :: Probe
+
+    ! Executable code
+    do FindLastCharacter = size(set), 1, -1
+      if ( trim(set(FindLastCharacter)) == trim(probe) ) return
+    end do
+    FindLastCharacter = 0
+  end function FindLastCharacter
+
+  ! -------------------------------------------  FindLastInteger  -----
+  integer function FindLastInteger ( Set, Probe )
+    ! Find the last element in the array Set that is equal to Probe
+    integer, dimension(:), intent(in) :: Set
+    integer, intent(in) :: Probe
+
+    ! Executable code
+    do FindLastInteger = size(set), 1, -1
+      if ( set(FindLastInteger) == probe ) return
+    end do
+    FindLastInteger = 0
+  end function FindLastInteger
+
+  ! -------------------------------------------  FindLastLogical  -----
+  integer function FindLastLogical ( condition )
+    ! Find the last logical in the array that is true
+    logical, dimension(:), intent(in) :: CONDITION
+
+    ! Executable code
+    do FindLastLogical = size(condition), 1, -1
+      if ( condition(FindLastLogical) ) return
+    end do
+    FindLastLogical = 0
+  end function FindLastLogical
 
   ! --------------------------------------------  FindNextCharacter  -----
   integer function FindNextCharacter ( Set, Probe, Current, Wrap, Repeat )
@@ -553,6 +601,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSSets
 
 ! $Log$
+! Revision 2.11  2006/01/14 00:51:39  pwagner
+! Added FindLast functions
+!
 ! Revision 2.10  2005/06/07 00:49:24  vsnyder
 ! Status quo ante 2.9 -- FindFirst means _first_ not _last_
 !
