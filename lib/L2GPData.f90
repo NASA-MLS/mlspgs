@@ -23,10 +23,11 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     & HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, WRONGHDFVERSION, &
     & DUMP, INITIALIZEMLSFILE, MLS_closeFile, MLS_EXISTS, mls_openFile, &
     & MLS_HDF_VERSION, MLS_INQSWATH, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
-  use MLSFillValues, only: ReplaceFillValues
+  use MLSFillValues, only: ExtractArray, ReplaceFillValues
   use MLSHDFEOS, only: mls_swattach, mls_swdetach
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Warning
+  use MLSNumerics, only: HuntRange
   use MLSStrings, only: Capitalize, lowercase
   use MLSStringLists, only: ExtractSubString, &
     & GetStringHashElement, GetStringElement, GetUniqueList, &
@@ -44,7 +45,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   public :: L2GPNameLen
   public :: AddL2GPToDatabase, AppendL2GPData, cpL2GPData, &
     & DestroyL2GPContents, DestroyL2GPDatabase, diff, Dump, &
-    & ExpandL2GPDataInPlace, &
+    & ExpandL2GPDataInPlace, ExtractL2GPRecord, &
     & ReadL2GPData, RepairL2GP, SetupNewL2GPRecord, WriteL2GPData
 
 !---------------------------- RCS Module Info ------------------------------
@@ -55,6 +56,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 
   interface DIFF
     module procedure DiffL2GPData
+    module procedure DiffL2GPData_Chunks
     module procedure DiffL2GPFiles_MLSFile
     module procedure DiffL2GPFiles_Name
   end interface
@@ -65,6 +67,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 
   interface DUMP
     module procedure DUMP_L2GP
+    module procedure DUMP_L2GP_CHUNKS
     module procedure DUMP_L2GP_DataBase
     module procedure DumpL2GP_attributes_hdf5
   end interface
@@ -115,6 +118,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 ! Dump                    Reveals info about an L2GP or a database of L2GP
 !                            to any desired level of detail
 ! ExpandL2GPDataInPlace   Adds more profiles to an existing L2GP
+! ExtractL2GPRecord       Extract a reduced L2GP from an existing L2GP
 ! ReadL2GPData            Reads L2GP from existing swath file
 ! RepairL2GP              Replaces fillValues in one L2GP with either
 !                         (1) corresponding values from another L2GP; or
@@ -282,9 +286,88 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 
 contains ! =====     Public Procedures     =============================
 
+  !------------------------------------------  ExtractL2GPRecord  -----
+  subroutine ExtractL2GPRecord ( ol2gp, l2gp, rFreqs, rLevels, rTimes )
+    ! Extract a reduced copy of an original l2gp record
+    ! picking out a range of subscripts for freqs, level2, times
+    ! Omitted ranges will be same range as original l2gp
+    
+    ! Note that this does not do the more useful task:
+    ! Reposition an l2gp record onto a new set of geolocations
+    ! via multi-dimensional or repeated interpolation
+
+    ! Nor does it (yet) do another potentially useful task:
+    ! Extract the range of profiles within a box of times, lats, lons
+    ! and a range of levels within a range of pressures
+    
+    ! These last tasks aren't too difficult, since we could define
+    ! myTimes and myLevels based on HuntRange.
+
+    ! Dummy arguments
+    type (L2GPData_T), intent(in)   :: ol2gp
+    type (L2GPData_T), intent(out)  :: l2gp
+    integer, dimension(2), intent(in), optional :: rFreqs  ! subscript range
+    integer, dimension(2), intent(in), optional :: rLevels ! subscript range
+    integer, dimension(2), intent(in), optional :: rTimes  ! subscript range
+    ! Local variables
+    integer, dimension(2) :: myFreqs  ! subscript range
+    integer, dimension(2) :: myLevels ! subscript range
+    integer, dimension(2) :: myTimes  ! subscript range
+    
+    ! Executable
+    if ( present(rFreqs) ) then
+      myFreqs = rFreqs
+    else
+      myFreqs(1) = 1
+      myFreqs(2) = ol2gp%nFreqs
+    endif
+    if ( present(rLevels) ) then
+      myLevels = rLevels
+    else
+      myLevels(1) = 1
+      myLevels(2) = ol2gp%nLevels
+    endif
+    if ( present(rTimes) ) then
+      myTimes = rTimes
+    else
+      myTimes(1) = 1
+      myTimes(2) = ol2gp%nTimes
+    endif
+    
+    call SetupNewL2GPRecord ( l2gp, &
+      & ( myFreqs(2) - myFreqs(1) + 1 ), &
+      & ( myLevels(2) - myLevels(1) + 1 ), &
+      & ( myTimes(2) - myTimes(1) + 1 ) )
+
+    l2gp%name               = ol2gp%name    
+    l2gp%nameIndex          = ol2gp%nameIndex    
+    l2gp%quantitytype       = ol2gp%quantitytype 
+    l2gp%MissingValue       = ol2gp%MissingValue 
+    l2gp%MissingStatus      = ol2gp%MissingStatus
+    l2gp%verticalCoordinate = ol2gp%verticalCoordinate    
+    ! Now fill the actual arrays
+    ! We'll need to have sane ranges for freqs and levels even if the
+    ! we supplied 0 originally
+    myFreqs(2) = max( myFreqs(2), myFreqs(1) )
+    myLevels(2) = max( myLevels(2), myLevels(1) )
+    call ExtractArray ( l2gp%pressures    , ol2gp%pressures    , myLevels )
+    call ExtractArray ( l2gp%frequency    , ol2gp%frequency    , myFreqs )
+    call ExtractArray ( l2gp%latitude     , ol2gp%latitude     , myTimes )
+    call ExtractArray ( l2gp%longitude    , ol2gp%longitude    , myTimes )
+    call ExtractArray ( l2gp%solarTime    , ol2gp%solarTime    , myTimes )
+    call ExtractArray ( l2gp%solarZenith  , ol2gp%solarZenith  , myTimes )
+    call ExtractArray ( l2gp%losAngle     , ol2gp%losAngle     , myTimes )
+    call ExtractArray ( l2gp%geodAngle    , ol2gp%geodAngle    , myTimes )
+    call ExtractArray ( l2gp%time         , ol2gp%time         , myTimes )
+    call ExtractArray ( l2gp%chunkNumber  , ol2gp%chunkNumber  , myTimes )
+    call ExtractArray ( l2gp%l2gpValue    , ol2gp%l2gpValue    , myFreqs, myLevels, myTimes )
+    call ExtractArray ( l2gp%l2gpPrecision, ol2gp%l2gpPrecision, myFreqs, myLevels, myTimes )
+    call ExtractArray ( l2gp%status       , ol2gp%status       , myTimes )
+  end subroutine ExtractL2GPRecord
+
   !------------------------------------------  SetupNewL2GPRecord  -----
   subroutine SetupNewL2GPRecord ( l2gp, nFreqs, nLevels, nTimes, nTimesTotal, &
-    & FillIn)
+    & FillIn )
 
     ! This routine sets up the arrays for an l2gp datatype.
 
@@ -377,18 +460,18 @@ contains ! =====     Public Procedures     =============================
     call allocate_test(l2gp%status, useNTimes,"l2gp%status", ModuleName)
     call allocate_test(l2gp%quality,useNTimes,"l2gp%quality",ModuleName)
     if ( .not. myFillIn ) return
-    l2gp%pressures = l2gp%MissingValue
-    l2gp%frequency = l2gp%MissingValue
-    l2gp%latitude = l2gp%MissingValue
-    l2gp%longitude = l2gp%MissingValue
-    l2gp%solarTime = l2gp%MissingValue
-    l2gp%losAngle = l2gp%MissingValue
-    l2gp%geodAngle = l2gp%MissingValue
-    l2gp%time = l2gp%MissingValue
-    l2gp%chunkNumber = l2gp%MissingValue
-    l2gp%l2gpValue = l2gp%MissingValue
-    l2gp%l2gpPrecision = l2gp%MissingValue
-    l2gp%status = l2gp%MissingStatus ! l2gp%MissingValue
+    l2gp%pressures    = l2gp%MissingValue
+    l2gp%frequency    = l2gp%MissingValue
+    l2gp%latitude     = l2gp%MissingValue
+    l2gp%longitude    = l2gp%MissingValue
+    l2gp%solarTime    = l2gp%MissingValue
+    l2gp%losAngle     = l2gp%MissingValue
+    l2gp%geodAngle    = l2gp%MissingValue
+    l2gp%time         = l2gp%MissingValue
+    l2gp%chunkNumber  = l2gp%MissingValue
+    l2gp%l2gpValue    = l2gp%MissingValue
+    l2gp%l2gpPrecision= l2gp%MissingValue
+    l2gp%status       = l2gp%MissingStatus ! l2gp%MissingValue
     ! l2gp%status = ' '
     l2gp%quality = l2gp%MissingValue
 
@@ -2518,6 +2601,57 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine cpL2GPData_MLSFile
 
+  ! ------------------------------------------ DiffL2GPData_CHUNKS ------------
+
+
+  subroutine DiffL2GPData_CHUNKS ( fullL2gp1, fullL2gp2, Chunks, &
+    & Details, wholeArray, stats, rms, ignoreBadChunks, fields, silent, numDiffs )
+    ! Dump selected chunks of an l2gp
+    ! Dummy arguments
+    type (l2gpData_T), intent(in) ::          FULLL2GP1
+    type (l2gpData_T), intent(in) ::          FULLL2GP2
+    integer, intent(in), dimension(:) :: Chunks ! Which chunks to dump
+    integer, intent(in), optional :: DETAILS ! <=0 => Don't diff data fields
+    !                                        ! -1 Skip even geolocation fields
+    !                                        ! -2 Skip all but name
+    !                                        ! >0 Diff even data fields
+    !                                        ! Default 1
+    logical, intent(in), optional :: STATS   ! if TRUE, just print stats
+    logical, intent(in), optional :: RMS     ! if TRUE, just print mean, rms
+    logical, intent(in), optional :: WHOLEARRAY   ! if TRUE, print anyway
+    logical, intent(in), optional :: IGNOREBADCHUNKS   ! if TRUE, ignore
+                                                     ! instances where geod bad
+    character(len=*), intent(in), optional :: fields  ! diff only these fields
+    logical, intent(in), optional :: silent  ! don't print anything
+    integer, intent(out), optional :: numDiffs  ! how many diffs
+
+    ! Local variables
+    integer :: chunk
+    integer :: i
+    integer, dimension(2) :: irange
+    type (l2gpData_T) ::          L2GP1, L2gp2
+    logical :: mySilent
+    ! Executable
+    mySilent = .false.
+    if ( present(silent) ) mySilent = silent
+    do i=1, size(Chunks)
+      chunk = Chunks(i)
+      call HuntRange( fullL2gp1%chunkNumber, (/ chunk /), irange )
+      if ( any( irange == 0 ) ) cycle
+      if ( .not. mySilent ) then
+        call output ( ' - - - Chunk number:', advance='no')
+        call output ( chunk, advance='no')
+        call output ( ' - - -', advance='yes')
+      endif
+      call ExtractL2GPRecord ( fullL2gp1, l2gp1, rTimes=irange )
+      call ExtractL2GPRecord ( fullL2gp2, l2gp2, rTimes=irange )
+      call Diff ( L2gp1, L2gp2, &
+        & Details, wholeArray, stats, rms, ignoreBadChunks, fields, silent, numDiffs )
+      call DestroyL2GPContents( l2gp1 )
+      call DestroyL2GPContents( l2gp2 )
+    enddo
+  end subroutine DiffL2GPData_CHUNKS
+
   ! ---------------------- DiffL2GPData  ---------------------------
   subroutine DiffL2GPData ( L2gp1, L2gp2, &
     & Details, wholeArray, stats, rms, ignoreBadChunks, fields, silent, numDiffs )
@@ -2780,13 +2914,14 @@ contains
   end subroutine DiffL2GPData
     
   ! ------------------------------------------ DiffL2GPFiles_MLSFile ------------
-  subroutine DiffL2GPFiles_MLSFile ( L2GPFile1, L2GPFile2, &
+  subroutine DiffL2GPFiles_MLSFile ( L2GPFile1, L2GPFile2, chunks, &
     & Details, wholeArray, stats, rms, ignoreBadChunks, &
     & swList, showMissing, fields, force, swaths1, swaths2, silent, numDiffs )
     ! Show diff between swaths in file1 and file2 down to level of Details
     ! Dummy arguments
     type(MLSFile_T)               :: L2GPfile1 ! file 1
     type(MLSFile_T)               :: L2GPfile2 ! file 2
+    integer, intent(in), dimension(:) :: Chunks ! Which chunks to dump
     integer, intent(in), optional :: DETAILS ! <=0 => Don't diff data fields
     !                                        ! -1 Skip even geolocation fields
     !                                        ! -2 Skip all but name
@@ -2829,8 +2964,11 @@ contains
     endif
     
     call DiffL2GPFiles_Name ( L2GPFile1%Name, L2GPFile2%Name, &
-      & Details, wholeArray, stats, rms, ignoreBadChunks, &
-      & swList, showMissing, fields, force, swaths1, swaths2, silent, numDiffs )
+      & chunks=chunks, Details=Details, wholeArray=wholeArray, &
+      & stats=stats, rms=rms, ignoreBadChunks=ignoreBadChunks, &
+      & swList=swList, showMissing=showMissing, &
+      & fields=fields, force=force, swaths1=swaths1, swaths2=swaths2, &
+      & silent=silent, numDiffs=numDiffs )
 
     if ( L1alreadyOpen )  call mls_openFile(L2GPFile1, Status)
     L2GPFile1%errorCode = status
@@ -2843,13 +2981,14 @@ contains
   end subroutine DiffL2GPFiles_MLSFile
     
   ! ------------------------------------------ DiffL2GPFiles_Name ------------
-  subroutine DiffL2GPFiles_Name ( file1, file2, &
+  subroutine DiffL2GPFiles_Name ( file1, file2, chunks, &
     & Details, wholeArray, stats, rms, ignoreBadChunks, &
     & swList, showMissing, fields, force, swaths1, swaths2, silent, numDiffs )
     ! Show diff between swaths in file1 and file2 down to level of Details
     ! Dummy arguments
     character (len=*), intent(in) :: file1 ! Name of file 1
     character (len=*), intent(in) :: file2 ! Name of file 2
+    integer, intent(in), dimension(:), optional :: Chunks ! Which chunks to diff
     integer, intent(in), optional :: DETAILS ! <=0 => Don't diff data fields
     !                                        ! -1 Skip even geolocation fields
     !                                        ! -2 Skip all but name
@@ -3018,7 +3157,7 @@ contains
            & hdfVersion=the_hdfVersion1 )
       call ReadL2GPData ( File2Handle, trim(swath2), l2gp2, &
            & hdfVersion=the_hdfVersion2 )
-      call DiffL2GPData( l2gp1, l2gp2, &
+      call Diff( l2gp1, l2gp2, chunks=chunks, &
         & details=details, wholeArray=wholeArray, rms=rms, stats=stats, &
         & ignoreBadChunks=ignoreBadChunks, fields=fields, &
         & silent=silent, numDiffs=numDiffs )
@@ -3104,6 +3243,41 @@ contains
     end do
       
   end subroutine DUMP_L2GP_DATABASE
+
+  ! ------------------------------------------ DUMP_L2GP_CHUNKS ------------
+
+
+  subroutine DUMP_L2GP_CHUNKS ( fullL2gp, Chunks, ColumnsOnly, Details, Fields )
+    ! Dump selected chunks of an l2gp
+    ! Dummy arguments
+    type (l2gpData_T), intent(in) ::          FULLL2GP
+    integer, intent(in), dimension(:) :: Chunks ! Which chunks to dump
+    logical, intent(in), optional ::          ColumnsOnly ! if true, dump only with columns
+    integer, intent(in), optional :: DETAILS ! <=0 => Don't dump multidim arrays
+    !                                        ! -1 Skip even 1-d arrays
+    !                                        ! -2 Skip all but name
+    !                                        ! >0 Dump even multi-dim arrays
+    !                                        ! Default 1
+    character(len=*), intent(in), optional :: fields ! ,-separated list of names
+
+    ! Local variables
+    integer :: chunk
+    integer :: i
+    integer, dimension(2) :: irange
+    type (l2gpData_T) ::          L2GP
+    ! Executable
+    do i=1, size(Chunks)
+      chunk = Chunks(i)
+      call HuntRange( fullL2gp%chunkNumber, (/ chunk /), irange )
+      if ( any( irange == 0 ) ) cycle
+      call output ( ' - - - Chunk number:', advance='no')
+      call output ( chunk, advance='no')
+      call output ( ' - - -', advance='yes')
+      call ExtractL2GPRecord ( fullL2gp, l2gp, rTimes=irange )
+      call Dump ( L2gp, ColumnsOnly, Details, Fields )
+      call DestroyL2GPContents( l2gp )
+    enddo
+  end subroutine DUMP_L2GP_CHUNKS
 
   ! ------------------------------------------ DUMP_L2GP ------------
 
@@ -3750,6 +3924,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.131  2006/01/04 20:31:19  pwagner
+! Diff procedures may keep silent, returning num of diffs only
+!
 ! Revision 2.130  2005/12/16 00:05:57  pwagner
 ! Changes to reflect new MLSFillValues module; diff from dump0
 !
