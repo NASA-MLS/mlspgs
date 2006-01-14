@@ -19,15 +19,15 @@ module MLSNumerics              ! Some low level numerical stuff
   use MLSCommon, only : DEFAULTUNDEFINEDVALUE, R4, R8, Rm
   use MLSFillValues, only: filterValues, IsFillValue
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-  use MLSSets, only: FindFirst
+  use MLSSets, only: FindFirst, FindLast
   use MLSStrings, only: Capitalize, lowercase
 
   implicit none
 
   private
-  public :: Dump, EssentiallyEqual, Hunt, InterpolateArraySetup
-  public :: InterpolateArrayTeardown, InterpolateValues
   public :: ClosestElement
+  public :: Dump, EssentiallyEqual, Hunt, HuntRange, InterpolateArraySetup
+  public :: InterpolateArrayTeardown, InterpolateValues
 
   type, public :: Coefficients_R4
     private
@@ -119,6 +119,8 @@ module MLSNumerics              ! Some low level numerical stuff
 !                           (list must be monotonic)
 ! HuntArray                Hunts for multiple items
 ! HuntScalar               Hunts for just one
+! HuntRange                Finds index range between which
+!                           all item(s) in list lie within range of values
 ! InterpolateArraySetup    Compute coefficients for InterpolateUsingSetup
 ! InterpolateArrayTeardown Deallocate tables created by InterpolateArraySetup
 ! InterpolateValues        Interpolate for new y value(s):
@@ -138,6 +140,10 @@ module MLSNumerics              ! Some low level numerical stuff
   interface Hunt
     module procedure HuntArray_r8, HuntArray_r4
     module procedure HuntScalar_r8, HuntScalar_r4
+  end interface
+
+  interface HuntRange
+    module procedure HuntRange_int, HuntRange_r4, HuntRange_r8
   end interface
 
   interface InterpolateArraySetup
@@ -438,6 +444,39 @@ contains
       & allowTopValue, allowBelowValue, nearest )
     index = indices(1)
   end subroutine HuntScalar_r8
+
+! ------------------------------------------------  HuntRange  -----
+! This family of subroutines search not for a single index
+! but for a range within which all list elements
+! lie within a range of values, inclusive
+! If none, return (/ 0, 0 /)
+! Special interpretation: inclusive means
+! if vrange(1) == vrange(2), any values of list also == vrange
+! are within that range
+! As with other Hunts, list must be monotonic
+  subroutine HuntRange_int ( list, vrange, irange )
+    integer, parameter :: RK = R4
+    ! Dummy args
+    integer, dimension(:) :: list
+    integer, dimension(2) :: vrange
+    include 'HuntRange.f9h'
+  end subroutine HuntRange_int
+
+  subroutine HuntRange_r4 ( list, vrange, irange )
+    integer, parameter :: RK = R4
+    ! Dummy args
+    real(rk), dimension(:) :: list
+    real(rk), dimension(2) :: vrange
+    include 'HuntRange.f9h'
+  end subroutine HuntRange_r4
+
+  subroutine HuntRange_r8 ( list, vrange, irange )
+    integer, parameter :: RK = R8
+    ! Dummy args
+    real(rk), dimension(:) :: list
+    real(rk), dimension(2) :: vrange
+    include 'HuntRange.f9h'
+  end subroutine HuntRange_r8
 
 ! ------------------------------------------  InterpolateArray_r4  -----
 
@@ -932,6 +971,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.43  2006/01/14 00:53:05  pwagner
+! Added HuntRange
+!
 ! Revision 2.42  2006/01/05 03:46:47  vsnyder
 ! Add Interp_Bilinear_2d_1d_r*
 !
