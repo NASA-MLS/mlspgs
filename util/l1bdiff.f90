@@ -29,7 +29,8 @@ program l1bdiff ! diffs two l1b or L2AUX files
    use MLSMessageModule, only: MLSMessageConfig, MLSMSG_Error, MLSMSG_Warning, &
      & MLSMessage
    use MLSStringLists, only: GetStringElement, NumStringElements
-   use output_m, only: output
+   use MLSStrings, only: WriteIntsToChars
+   use output_m, only: resumeOutput, suspendOutput, output
    use Time_M, only: Time_Now, time_config
    
    implicit none
@@ -52,10 +53,12 @@ program l1bdiff ! diffs two l1b or L2AUX files
 ! LF95.Linux/test [options] [input files]
 
   type options_T
+    logical     :: silent = .false.
     logical     :: verbose = .false.
     logical     :: list = .false.
     logical     :: stats = .false.
     logical     :: rms = .false.
+    integer     :: numDiffs = 0
     character(len=255) :: referenceFileName= 'default.h5'  ! reference filename
   end type options_T
   
@@ -72,6 +75,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
   integer     ::  i, count, status, error ! Counting indices & Error flags
   logical     :: is_hdf5
   character (len=MAXSDNAMESBUFSIZE) :: mySdList
+  character(len=16) :: string
   real        :: t1
   real        :: t2
   real        :: tFile
@@ -96,12 +100,16 @@ program l1bdiff ! diffs two l1b or L2AUX files
   if ( n_filenames == 0 ) then
     if ( options%verbose ) print *, 'Sorry no input files supplied'
     stop
+  elseif ( options%verbose .and. options%silent ) then
+    print *, 'Sorry--either verbose or silent; cant be both'
+    stop
   elseif ( options%referenceFileName == 'default.h5' ) then
     options%referenceFileName = filenames(n_filenames)
     n_filenames = n_filenames - 1
   endif
+  if ( options%silent ) call suspendOutput
   call time_now ( t1 )
-  if ( options%verbose .and. .not. options%list) &
+  if ( options%verbose .and. .not. options%list ) &
     & print *, 'Compare l1b data to: ', trim(options%referenceFileName)
   do i=1, n_filenames
     call time_now ( tFile )
@@ -120,6 +128,12 @@ program l1bdiff ! diffs two l1b or L2AUX files
     endif
   enddo
   if ( .not. options%list) call sayTime('diffing all files')
+  call resumeOutput
+  if ( options%silent .and. options%numDiffs > 0 ) then
+    ! write(string, '(i)') options%numDiffs
+    call WriteIntsToChars ( options%numDiffs, string )
+    call print_string(string)
+  endif
   call mls_h5close(error)
 contains
 !------------------------- get_filename ---------------------
@@ -144,6 +158,9 @@ contains
       elseif ( filename(1:3) == '-r ' ) then
         call getarg ( i+1+hp, options%referenceFileName )
         i = i + 1
+        exit
+      elseif ( filename(1:8) == '-silent ' ) then
+        options%silent = .true.
         exit
       elseif ( filename(1:3) == '-v ' ) then
         options%verbose = .true.
@@ -189,6 +206,8 @@ contains
       write (*,*) '                           (can do the same w/o the -f)'
       ! write (*,*) '          -r reffile      => compare sds to reffile'
       write (*,*) '          -v              => switch on verbose mode'
+      write (*,*) '          -silent         => switch on silent mode'
+      write (*,*) '                            (printing only if diffs found)'
       write (*,*) '          -l              => just list sd names in files'
       write (*,*) '          -rms            => just print mean, rms'
       write (*,*) '          -s              => just show statistics'
@@ -221,28 +240,28 @@ contains
 
     character (len=*), intent(in) :: file1 ! Name of file 1
     character (len=*), intent(in) :: file2 ! Name of file 2
-    logical, intent(in) :: create2
-    integer, intent(in) :: hdfVersion
-    type ( options_T ), intent(in) :: options
+    logical, intent(in)           :: create2
+    integer, intent(in)           :: hdfVersion
+    type ( options_T )            :: options
 
     ! Local
-    integer :: sdfid1
-    integer :: sdfid2
-    integer :: grpid
-    integer :: status
-    integer :: the_hdfVersion
+    logical, parameter            :: countEmpty = .true.
     logical :: file_exists
     integer :: file_access
-    integer :: noSds
-    character (len=MAXSDNAMESBUFSIZE) :: mySdList
-    logical, parameter            :: countEmpty = .true.
+    integer :: grpid
+    integer :: i
     logical :: isl1boa
-    ! type (L2AUXData_T) :: l2aux
     type(l1bdata_t) :: L1BDATA  ! Result
     type(l1bdata_t) :: L1BDATA2 ! for diff
-    integer :: i
+    character (len=MAXSDNAMESBUFSIZE) :: mySdList
     integer :: NoMAFs
+    integer :: noSds
+    integer :: numDiffs
+    integer :: sdfid1
+    integer :: sdfid2
     character (len=80) :: sdName
+    integer :: status
+    integer :: the_hdfVersion
     
     ! Executable code
     the_hdfVersion = HDFVERSION_5
@@ -334,9 +353,12 @@ contains
           call DeallocateL1BData ( l1bData )
           cycle
         endif
-        call diff(L1bData, L1bData2, stats=options%stats, rms=options%rms)
+        call diff(L1bData, L1bData2, &
+          & stats=options%stats, rms=options%rms, &
+          & silent=options%silent, numDiffs=numDiffs )
         call DeallocateL1BData ( l1bData )
         call DeallocateL1BData ( l1bData2 )
+        options%numDiffs = options%numDiffs + numDiffs
     enddo
 	 call h5gClose_f (grpID, status)
     if ( status /= 0 ) then
@@ -353,11 +375,20 @@ contains
        & "Unable to close L2aux file: " // trim(File2) // ' after diffing')
   end subroutine myDiff
 
+!------------------------- print_string ---------------------
+  subroutine print_string(string)
+    character(len=*), intent(in) :: string
+    write(*,'(a)') trim(string)
+  end subroutine print_string
+
 !==================
 end program l1bdiff
 !==================
 
 ! $Log$
+! Revision 1.3  2005/10/29 00:13:56  pwagner
+! Removed unused procedures from use statements
+!
 ! Revision 1.2  2005/09/23 21:01:13  pwagner
 ! use_wall_clock now a component of time_config
 !
