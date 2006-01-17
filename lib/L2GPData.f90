@@ -2636,7 +2636,7 @@ contains ! =====     Public Procedures     =============================
     if ( present(silent) ) mySilent = silent
     do i=1, size(Chunks)
       chunk = Chunks(i)
-      call HuntRange( fullL2gp1%chunkNumber, (/ chunk /), irange )
+      call HuntRange( fullL2gp1%chunkNumber, (/ chunk, chunk /), irange )
       if ( any( irange == 0 ) ) cycle
       if ( .not. mySilent ) then
         call output ( ' - - - Chunk number:', advance='no')
@@ -3268,7 +3268,7 @@ contains
     ! Executable
     do i=1, size(Chunks)
       chunk = Chunks(i)
-      call HuntRange( fullL2gp%chunkNumber, (/ chunk /), irange )
+      call HuntRange( fullL2gp%chunkNumber, (/ chunk, chunk /), irange )
       if ( any( irange == 0 ) ) cycle
       call output ( ' - - - Chunk number:', advance='no')
       call output ( chunk, advance='no')
@@ -3924,6 +3924,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.132  2006/01/14 00:54:08  pwagner
+! May diff, dump specified chunks only
+!
 ! Revision 2.131  2006/01/04 20:31:19  pwagner
 ! Diff procedures may keep silent, returning num of diffs only
 !
