@@ -27,6 +27,8 @@ MODULE MLSPCF2
    INTEGER, PARAMETER :: mlspcf_l2_param_spec_keys = 2005
    INTEGER, PARAMETER :: mlspcf_l2_param_spec_hash = 2006
    INTEGER, PARAMETER :: mlspcf_l2_param_switches = 2007
+   INTEGER, PARAMETER :: mlspcf_l2_param_col_spec_keys = 2008
+   INTEGER, PARAMETER :: mlspcf_l2_param_col_spec_hash = 2009
    !
    INTEGER, PARAMETER :: mlspcf_pcf_start = 900
    INTEGER, PARAMETER :: mlspcf_pcf_end = 900
@@ -49,8 +51,8 @@ MODULE MLSPCF2
    INTEGER, PARAMETER :: mlspcf_ptggrids_start = 20004
    INTEGER, PARAMETER :: mlspcf_ptggrids_end = 20004
    !
-   INTEGER, PARAMETER :: mlspcf_clouds_start = 20005
-   INTEGER, PARAMETER :: mlspcf_clouds_end = 20034
+   INTEGER, PARAMETER :: mlspcf_pfa_start = 20005
+   INTEGER, PARAMETER :: mlspcf_pfa_end = 20034
    !
    INTEGER, PARAMETER :: mlspcf_l2pc_start = 20035
    INTEGER, PARAMETER :: mlspcf_l2pc_end = 20064
@@ -74,8 +76,7 @@ MODULE MLSPCF2
    INTEGER, PARAMETER :: mlspcf_l2clim_end = 22299
    !
    INTEGER, PARAMETER :: mlspcf_l2gp_start = 30000
-   !INTEGER, PARAMETER :: mlspcf_l2gp_end = 30029   ! Otherwise more toolkit msgs
-   INTEGER, PARAMETER :: mlspcf_l2gp_end = 30569 ! warning "id not found"
+   INTEGER, PARAMETER :: mlspcf_l2gp_end = 30569
    !
    INTEGER, PARAMETER :: mlspcf_l2dgg_start = 30570
    INTEGER, PARAMETER :: mlspcf_l2dgg_end = 30599
@@ -114,6 +115,9 @@ contains
 END MODULE MLSPCF2
 
 ! $Log$
+! Revision 2.17  2006/01/19 00:31:02  pwagner
+! Set aside range for pfa files, col_spec_keys and _hash
+!
 ! Revision 2.16  2005/08/25 20:30:20  pwagner
 ! Restored larger mlspcf_l2gp_end--better way to limit warnings found
 !
