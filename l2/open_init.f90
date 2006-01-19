@@ -18,6 +18,7 @@ module Open_Init
   use dates_module, only: utc_to_yyyymmdd
   use Hdf, only: DFACC_RDONLY
   use intrinsic, only: l_hdf
+  use L2GPData, only: col_species_keys, col_species_hash
   use MLSCommon, only: FileNameLen, MLSFile_T, TAI93_Range_T, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSStringLists, only: catLists, NumStringElements, GetStringElement
@@ -81,6 +82,8 @@ contains ! =====     Public Procedures     =============================
       &                MLSPCF_L2_param_Cycle, &
       &                MLSPCF_L2_param_CCSDSStartId, &
       &                MLSPCF_L2_param_CCSDSEndId, &
+      &                MLSPCF_L2_param_col_spec_keys, &
+      &                MLSPCF_L2_param_col_spec_hash, &
       &                MLSPCF_L2_param_spec_keys, &
       &                MLSPCF_L2_param_spec_hash, &
       &                MLSPCF_L2_param_switches, &
@@ -300,6 +303,20 @@ contains ! =====     Public Procedures     =============================
 
     if ( returnstatus /= PGS_S_SUCCESS ) then
       call announce_error ( 0, "Missing pcf param: cycle" )
+    end if
+	
+    returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_col_spec_keys, col_species_keys)
+
+    if ( returnstatus /= PGS_S_SUCCESS ) then
+      call announce_error ( 0, "Missing pcf param: col_spec_keys", &
+        & forgiveable=.true. )
+    end if
+	
+    returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_col_spec_hash, col_species_hash)
+
+    if ( returnstatus /= PGS_S_SUCCESS ) then
+      call announce_error ( 0, "Missing pcf param: col_spec_hash", &
+        & forgiveable=.true. )
     end if
 	
     returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_spec_keys, l2pcf%spec_keys)
@@ -567,6 +584,12 @@ contains ! =====     Public Procedures     =============================
     call output ( 'Log file name:   ' )
     call output ( TRIM(l2pcf%logGranID), advance='yes' )
 
+    call output ( 'l2gp column species name keys:   ' )
+    call output ( TRIM(col_species_keys), advance='yes' )
+
+    call output ( 'corresponding units hash:   ' )
+    call output ( TRIM(col_species_hash), advance='yes' )
+
     call output ( 'l2gp species name keys:   ' )
     call output ( TRIM(l2pcf%spec_keys), advance='yes' )
 
@@ -577,7 +600,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------------  Announce_Error  -----
   subroutine Announce_Error ( Lcf_where, Full_message, Use_toolkit, &
-    & Error_number )
+    & Error_number, forgiveable )
 
     use LEXER_CORE, only: PRINT_SOURCE
     use TREE, only: DUMP_TREE_NODE, SOURCE_REF
@@ -588,6 +611,7 @@ contains ! =====     Public Procedures     =============================
     character(LEN=*), intent(in) :: Full_message
     logical, intent(in), optional :: Use_toolkit
     integer, intent(in), optional :: Error_number
+    logical, intent(in), optional :: forgiveable
 
     ! Local
     logical :: Just_print_it
@@ -595,6 +619,7 @@ contains ! =====     Public Procedures     =============================
 
     just_print_it = .not. default_output_by_toolkit
     if ( present(use_toolkit) ) just_print_it = .not. use_toolkit
+    if ( present(forgiveable) ) just_print_it = just_print_it .or. forgiveable
 
     if ( .not. just_print_it ) then
       error = max(error,1)
@@ -650,6 +675,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.88  2006/01/19 00:31:54  pwagner
+! reads col_spec_keys and _hash from PCF
+!
 ! Revision 2.87  2005/09/22 23:38:12  pwagner
 ! date conversion procedures and functions all moved into dates module
 !
