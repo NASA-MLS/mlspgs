@@ -205,6 +205,18 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   ! Do you want to pre-fill arrays with MissingValue by default?
   logical, parameter :: ALWAYSFILLWITHMISSINGVALUE = .true.  
 
+  ! The following pair, keys and hash, tell what value the units attribute
+  ! will be given when writing column abundances in hdfeos5-formatted files
+  ! You should override these if you need to do so
+  character(len=255), public, save :: COL_SPECIES_KEYS = &
+    & 'h2o,hno3,o3,hcl,clo,co,n2o,oh,rhi,so2,' &
+    & // &
+    & 'ho2,bro,hocl,hcn,iwc,ch3cn'
+  character(len=255), public, save :: COL_SPECIES_HASH = &
+    & 'molcm2,molcm2,molcm2,molcm2,molcm2,molcm2,molcm2,molcm2,molcm2,molcm2,' &
+    & // &
+    & 'molcm2,molcm2,molcm2,molcm2,molcm2,molcm2'
+
   ! This datatype is the main one, it simply defines one l2gp swath
   ! It is used for 
   ! (1) normal swaths, which have geolocations along nTimes
@@ -1818,7 +1830,13 @@ contains ! =====     Public Procedures     =============================
     case default
       units_name = 'vmr'
     end select
-    if ( isColumnAmt ) units_name = 'DU'
+    if ( isColumnAmt ) then
+      ! units_name = 'DU'
+      call GetStringHashElement (col_species_keys, &
+      & col_species_hash, trim(lowercase(species_name)), &
+      & units_name, .true.)
+      if ( units_name == ',' ) units_name = 'molcm2'
+    endif
     if ( isTPPressure ) units_name = 'hPa'
     if ( DEEBUG ) print *, 'Title ', trim(field_name)
     status = mls_swwrlattr(swid, 'L2gpValue', 'Title', &
@@ -3924,6 +3942,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.133  2006/01/17 17:49:26  pwagner
+! Fixed bug in call to HuntRange
+!
 ! Revision 2.132  2006/01/14 00:54:08  pwagner
 ! May diff, dump specified chunks only
 !
