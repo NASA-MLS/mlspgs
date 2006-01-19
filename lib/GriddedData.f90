@@ -301,6 +301,8 @@ contains
     ! Local Variables
     integer :: MYDETAILS
     integer :: FIELDVALUESDETAILS
+    integer :: date
+    character(len=4) :: dateChar
 
     ! Executable code
     myDetails = 0
@@ -366,16 +368,30 @@ contains
       if ( GriddedData%noDates == 1 .and. GriddedData%noSzas == 1 &
         & .and. GriddedData%noLsts == 1 ) then
         call dump ( GriddedData%field(:,:,:,1,1,1), &
-          & '    gridded field values =' )
+          & '    gridded field values =', &
+          & FillValue=GriddedData%MissingValue )
       elseif ( GriddedData%noDates == 1 .and. GriddedData%noSzas == 1 ) then
+     ! May dump a 3-d slices through this 4-d array
         call dump ( GriddedData%field(:,:,:,1,1,1), &
-          & '    gridded field values (1st solar time) =' )
+          & '    gridded field values (1st solar time) =' , &
+          & FillValue=GriddedData%MissingValue )
         call dump ( GriddedData%field(:,:,1,:,1,1), &
-          & '    gridded field values (1st longitude) =' )
+          & '    gridded field values (1st longitude) =' , &
+          & FillValue=GriddedData%MissingValue )
         call dump ( GriddedData%field(:,1,:,:,1,1), &
           & '    gridded field values (1st latitude) =' )
         call dump ( GriddedData%field(1,:,:,:,1,1), &
-          & '    gridded field values (1st height) =' )
+          & '    gridded field values (1st height) =' , &
+          & FillValue=GriddedData%MissingValue )
+      elseif ( GriddedData%noSzas == 1 .and. GriddedData%noLsts == 1 ) then
+     ! May dump a 4-d array as noDates instances of 3-d arrays
+        do date=1, GriddedData%noDates
+          write(dateChar, '(i4)') date
+          call dump ( GriddedData%field(:,:,:,1,1,date), &
+            & '    gridded field values (' // &
+            & trim(dateChar) // 'th solar time) =' , &
+            & FillValue=GriddedData%MissingValue )
+        enddo
       else
         ! No dump for 6-dimensional double arrays yet, anyway
         !     call dump ( GriddedData%field, &
@@ -941,6 +957,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.35  2006/01/19 00:24:17  pwagner
+! Small improvements to dump routine
+!
 ! Revision 2.34  2005/06/22 17:25:48  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
