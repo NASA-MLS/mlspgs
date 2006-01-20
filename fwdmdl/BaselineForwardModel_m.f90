@@ -61,11 +61,14 @@ contains ! ======================================== BaselineForwardModel ======
 
     logical :: BSLINFIRST               ! Set if baseline in FwdModelIn
     logical :: BANDBSLINFIRST           ! Set if band based baseline in FwdModelIn
+    logical :: BLANKBSLINFIRST          ! Set if blank baseline in FwdModelIn
     logical :: RADBSLINFIRST            ! Set if radiometer based baseline in FwdModelIn
     logical :: BANDBSLWASSPECIFIC       ! Set if band based baseline in FwdModelIn
+    logical :: BLANKBSLWASSPECIFIC      ! Set if blank baseline in FwdModelIn
     logical :: RADBSLWASSPECIFIC        ! Set if radiometer based baseline in FwdModelIn
     logical :: PTANINFIRST              ! Set if ptan in FwdModelIn
     logical :: MINORFRAMEBASIS          ! Set if baseline has a minor frame basis
+    logical, dimension(3) :: SPECIFICMATCHES ! Composite of band,rad,blank BslWasSpecific
 
     integer :: SIGINDEX                 ! Index into fwdModelConf%signals
     integer :: MAF                      ! Major frame index
@@ -108,6 +111,7 @@ contains ! ======================================== BaselineForwardModel ======
 
     type (VectorValue_T), pointer :: RADIANCE ! The radiance quantity
     type (VectorValue_T), pointer :: BANDCANDIDATE ! A possible baseline quantity
+    type (VectorValue_T), pointer :: BLANKCANDIDATE ! A possible baseline quantity
     type (VectorValue_T), pointer :: RADCANDIDATE ! A possible baseline quantity
     type (VectorValue_T), pointer :: BASELINE ! The baseline quantity
     type (VectorValue_T), pointer :: PTAN ! The tangent pressure quantity
@@ -137,6 +141,7 @@ contains ! ======================================== BaselineForwardModel ======
       noMIFs = radiance%template%noSurfs
 
       ! Now work out which baseline quantity we want
+      nullify ( baseline )
       ! Look for a band based baseline
       bandCandidate => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
         & quantityType=l_baseline, signal=signal%index, sideband=signal%sideband,&
@@ -147,18 +152,32 @@ contains ! ======================================== BaselineForwardModel ======
         & quantityType=l_baseline, radiometer=signal%radiometer, &
         & noError=.true., config=fwdModelConf, &
         & foundInFirst=radBslInFirst, wasSpecific=radBslWasSpecific )
+      ! Look for any baseline
+      blankCandidate => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+        & quantityType=l_baseline, &
+        & noError=.true., config=fwdModelConf, &
+        & foundInFirst=blankBslInFirst, wasSpecific=blankBslWasSpecific )
+      ! Avoid redundancy
+      if ( associated ( blankCandidate, bandCandidate ) .or. &
+        & associated ( blankCandidate, bandCandidate ) ) nullify ( blankCandidate )
       ! Now the complicated bit of working out which to pick
       ! First go by those listed in the 'specific quantities' field
-      if ( bandBslWasSpecific .or. radBslWasSpecific ) then
-        if ( bandBslWasSpecific .and. radBslWasSpecific ) then
+      specificMatches = (/ bandBslWasSpecific, radBslWasSpecific, blankBslWasSpecific /)
+
+      if ( any ( specificMatches ) ) then
+        if ( count ( specificMatches ) > 1 ) then
           call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'Ambiguous listing of two baselines in specificQuantities' )
-        else if ( bandBslWasSpecific ) then
+            & 'Ambiguous listing of multiple baselines in specificQuantities' )
+        end if
+        if ( bandBslWasSpecific ) then
           baseline => bandCandidate
           bslInFirst = bandBslInFirst
-        else
+        else if ( radBslWasSpecific ) then 
           baseline => radCandidate
           bslInFirst = radBslInFirst
+        else if ( blankBslWasSpecific ) then
+          baseline => blankCandidate
+          bslInFirst = blankBslInFirst        
         end if
       ! Now go for the one found in first if either were
       else if ( bandBslInFirst .or. radBslInFirst ) then
@@ -501,6 +520,10 @@ contains ! ======================================== BaselineForwardModel ======
 end module BaselineForwardModel_m
   
 ! $Log$
+! Revision 2.25  2006/01/20 23:52:20  livesey
+! Added ability to use a baseline for another band/radiometer if listed in
+! specificQuantities
+!
 ! Revision 2.24  2005/06/22 18:08:18  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
