@@ -1,4 +1,4 @@
-! Copyright 2005, by the California Institute of Technology. ALL
+
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
 ! at the California Institute of Technology.
@@ -115,7 +115,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   public :: CreateMask, CreateVector, DestroyVectorDatabase, DestroyVectorInfo
   public :: DestroyVectorMask, DestroyVectorTemplateDatabase
   public :: DestroyVectorTemplateInfo, DestroyVectorValue, DivideVectors
-  public :: DotVectors, DotVectorsMasked
+  public :: DotVectors, DotVectorsMasked, DumpNiceMaskSummary
   public :: DumpMask, DumpQuantityMask, DumpVectorMask, Dump_Vector
   public :: Dump_Vectors, Dump_Vector_Template, Dump_Vector_Templates
   public :: Dump_Vector_Quantity
@@ -1097,6 +1097,146 @@ contains ! =====     Public Procedures     =============================
       end if
     end do
   end function DotVectorsMasked
+
+  ! -----------------------------------------  DumpNiceMaskSummary ---
+  ! This routine tries to produce a useful human readable dump of a vector
+  ! mask.
+  subroutine DumpNiceMaskSummary ( qty, prefix, masksToDump )
+    type(VectorValue_T), intent(in) :: qty
+    character(len=*), intent(in), optional :: prefix
+    integer, dimension(:), intent(in) :: masksToDump
+    ! Local variables
+    integer :: I, C, M                  ! Loop counters
+    integer :: S0, S1                   ! Delimiters
+    character, dimension ( qty%template%instanceLen ) :: MERGEDMASK ! Merge of all the masks we have
+    character, dimension ( qty%template%noSurfs ) :: EXTRACTEDMASK ! Subset of merged mask for a channel
+    logical, dimension ( qty%template%noSurfs ) :: THISMASK ! This particular mask flags
+    logical :: VARIES                   ! Masking varies from instance to instance
+    logical :: CONTINUOUS               ! Masking is in one continuous block
+    character(len=2) :: CHANOFFSET      ! My prefix
+
+    ! Executable code
+    if ( .not. associated ( qty%mask ) ) then
+      if ( present ( prefix ) ) call output ( prefix )
+      call output ( 'This quantity has no subsetting in force.', advance='yes' )
+    else
+      mergedMask = qty%mask(:,1)
+      varies = .false.
+      do i = 2, qty%template%noInstances
+        if ( any ( qty%mask(:,i) /= mergedMask ) ) then
+          varies = .true.
+          mergedMask = char ( iand ( ichar ( qty%mask(:,i) ), ichar ( mergedMask ) ) )
+        end if
+      end do
+      if ( present ( prefix ) ) call output ( prefix )
+      if ( varies ) then
+        call output ( 'Subsetting varies from instance to instance, printing widest', advance='yes' )
+      else
+        call output ( 'Subsetting is constant for all instances', advance='yes' )
+      end if
+      do c = 1, qty%template%noChans
+        chanOffset = ''
+        if ( qty%template%noChans /= 1 ) then
+          if ( present ( prefix ) ) call output ( prefix )
+          call output ( 'Channel: ' )
+          if ( size ( masksToDump ) == 1 ) then
+            call output ( c )
+            call output ( ' - ' )
+          else
+            call output ( c, advance='yes' )
+            chanOffset = '  '
+          end if
+        end if
+        extractedMask = (/ (mergedMask(c+(i-1)*qty%template%noChans), i=1, qty%template%noSurfs) /)
+        ! Now have the flags for this channel, lets describe them in a helpful manner
+        do m = 1, size ( masksToDump )
+          thisMask = iand ( ichar ( extractedMask ), masksToDump(m) ) == 1
+          call output ( chanOffset )
+          ! Do a nice name for the mask
+          select case ( masksToDump ( m ) )
+          case ( m_linAlg )
+            call output ( 'Retrieved / used: ' )
+          case ( m_tikhonov )
+            call output ( 'Smoothed: ' )
+          case ( m_fill )
+            call output ( 'Fill: ' )
+          case ( m_fullDerivatives )
+            call output ( 'Full derivatives: ' )
+          case ( m_spare )
+            call output ( 'Spare mask: ' )
+          end select
+              
+          s0 = FindFirst ( .not. thisMask )
+          if ( s0 /= 0 ) then
+            s1 = FindFirst ( thisMask(s0:) )
+            if ( s1 == 0 ) then
+              s1 = qty%template%noSurfs
+            else
+              s1 = s1 + s0 - 2
+            end if
+            continuous = count ( .not. thisMask ) == s1 - s0 + 1
+            if ( s0 /= 1 .and. s1 /= qty%template%noSurfs ) then
+              call outputNiceSurface ( qty%template%surfs(s0,1), qty%template%verticalCoordinate )
+              call output ( ' -> ' )
+              call outputNiceSurface ( qty%template%surfs(s1,1), qty%template%verticalCoordinate )
+            else
+              call output ( 'Everywhere' )
+            end if
+            if ( continuous ) then
+              call output ( ' uninterrupted.', advance='yes' )
+            else
+              call output ( ' with gaps', advance='yes' )
+            end if
+          else
+            call output ( ' Nowhere', advance='yes' )
+          end if
+        end do
+
+      end do
+    end if
+  contains
+    ! - - - - - - - - - - -  OutputNiceSurface
+    subroutine OutputNiceSurface ( value, coordinate )
+      use intrinsic, only: L_ANGLE, L_GEODALTITUDE, L_GPH, L_INTEGER, L_NONE, &
+        & L_PRESSURE, L_THETA, L_ZETA
+      real(r8), intent(in) :: VALUE
+      integer, intent(in) :: COORDINATE
+      ! Executable code
+      real(r8) :: P
+      select case ( coordinate )
+      case ( l_angle )
+        call output ( value, format='(f0.1)' )
+        call output ( ' degrees' )
+      case ( l_geodAltitude, l_gph )
+        call output ( value/1e3, format='(f0.2)' )
+        call output ( ' km' )
+      case ( l_none )
+        call output ( 'No surface' )
+      case ( l_pressure, l_zeta )
+        if ( coordinate == l_pressure ) then
+          p = value
+        else
+          p = 10.0**(-value)
+        end if
+        if ( p > 10.0 ) then
+          call output ( nint ( p ) )
+        else if ( p >= 1.0 ) then
+          call output ( p, format='(F0.1)' )
+        else if ( p >= 0.1 ) then
+          call output ( p, format='(F0.2)' )
+        else if ( p >= 0.01 ) then
+          call output ( p, format='(F0.3)' )
+        else
+          call output ( p, format='(F0.5)' )
+        end if
+        call output ( ' hPa' )
+      case ( l_theta )
+        call output ( value, format='(i0)' )
+        call output ( ' K' )
+      end select
+    end subroutine OutputNiceSurface
+
+  end subroutine DumpNiceMaskSummary
 
   ! -----------------------------------------  DumpQuantityMask  -----
   subroutine DumpQuantityMask ( VectorQuantity )
@@ -2281,6 +2421,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.118  2005/09/02 20:33:22  vsnyder
+! Correct error messages in GetVectorQuantityIndexByType
+!
 ! Revision 2.117  2005/06/22 17:25:51  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
