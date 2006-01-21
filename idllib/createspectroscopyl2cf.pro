@@ -3,7 +3,7 @@
 pro CreateSpectroscopyL2CF, $
   molName=molName, $
   lineName=lineName, $
-  crossRefName=crosRefName, $
+  crossRefName=crossRefName, $
   instrument=instrument, $
   retrieval=retrieval, $
   maxExtinctions=maxExtinctions, $
@@ -463,13 +463,14 @@ for noExtinctions = 1, maxExtinctions do begin
         ;; Now do the flat list for pfa stuff
         line = '!define(PFAWorthyMolecules' + extraName + 'For' + outName + $
           sidebandStrings(sideband) + ',{[ '
+        doneAny = 0
         for p = 0, n_elements(usedParents) - 1 do begin
           thisParent = usedParents(p)
           if thisParent ne 'EXTINCTION' then begin ;; Skip extinction by definition
             children = where ( parentNames eq thisParent and $
               reform ( array(sideband, band, *) ) )
             for c = 0, n_elements(children) - 1 do begin
-              if p ne 0 or c ne 0 then line = line + ', '
+              if doneAny then line = line + ', ' else doneAny = 1
               AddWordToLine, line, units, 4, niceNames(children(c))
             endfor
           endif
