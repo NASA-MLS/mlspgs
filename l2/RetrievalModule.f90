@@ -499,6 +499,8 @@ contains
         end if
         if ( error == 0 ) then
 
+          if ( index ( switches, 'rtv' ) /= 0 ) call DumpRetrievalConfig
+
           ! Create the Jacobian matrix
           if ( got(f_jacobian) ) then
             k = decoration(ixJacobian)
@@ -851,7 +853,7 @@ contains
           & 'Come on! In BoundMove, it has to be a low bound or a high bound!' )
       end if
 
-      ! Now if mu has goten really small, we'll change it back to one,
+      ! Now if mu has gotten really small, we'll change it back to one,
       ! and do an element-by-element modification of dx
       if ( abs(mu) < muMin ) then
         mu = muOrig
@@ -923,10 +925,94 @@ contains
           call output ( 'mu=' )
           call output ( mu, advance='yes' )
           call MLSMessage ( MLSMSG_Error, moduleName, &
-            &  'How did mu get to be negative?' )
+            &  'How did mu get to be negative, might the initial guess be out of bounds?' )
         end if
       end if
     end subroutine BoundMove
+
+    ! ---------------------------------------------   DumpRetrievalConfig --
+    subroutine DumpRetrievalConfig
+      use lexer_core, only: PRINT_SOURCE
+      use VectorsModule, only: DUMPNICEMASKSUMMARY, m_tikhonov, m_fullderivatives
+      ! Local variables
+      integer :: Q, I, J                ! Loop counters
+      ! Executable code
+      call output ( '---------------------------- Begin retrieval configuration dump', advance='yes' )
+      call output ( 'Dumping retrieval configuration for retrieve statement at ' )
+      call print_source ( source_ref ( son ) )
+      call output ( '', advance='yes' )
+      call output ( 'Retrieval state vector name: ' )
+      call display_string ( state%name )
+      call output ( ', template name: ' )
+      call display_string ( state%template%name, advance='yes' )
+      ! Now display the list of quantities retrieved
+      do q = 1, state%template%noQuantities
+        call output ( 'Retrieved quantity ' )
+        call output ( q )
+        call output ( ' ( ' )
+        call display_string ( state%quantities(q)%template%name )
+        call output ( ' ) ' )
+        call output ( state%quantities(q)%template%noInstances )
+        if ( state%quantities(q)%template%noInstances == 1 ) then
+          call output ( ' instance, ' )
+        else
+          call output ( ' instances, ' )
+        end if
+        call output ( state%quantities(q)%template%noSurfs )
+        if ( state%quantities(q)%template%noSurfs == 1 ) then
+          call output ( ' surface, ' )
+        else
+          call output ( ' surfaces, ' )
+        end if
+        call output ( state%quantities(q)%template%noChans )
+        if ( state%quantities(q)%template%noChans == 1 ) then
+          call output ( ' channel.', advance='yes' )
+        else
+          call output ( ' channel.', advance='yes' )
+        end if
+        ! Call a routine to dump a nice summary of the retrieval range etc.
+        call DumpNiceMaskSummary ( state%quantities(q), '  ', &
+          & (/ m_linAlg, m_tikhonov, m_fullDerivatives /) )
+      end do
+
+      ! Now display the list of measurements used
+      call output ( 'Measurements vector name: ' )
+      call display_string ( measurements%name )
+      call output ( ', template name: ' )
+      call display_string ( measurements%template%name, advance='yes' )
+      ! Now display the list of quantities retrieved
+      do q = 1, measurements%template%noQuantities
+        call output ( 'Measurement quantity ' )
+        call output ( q )
+        call output ( ' ( ' )
+        call display_string ( measurements%quantities(q)%template%name )
+        call output ( ' ) ' )
+        call output ( measurements%quantities(q)%template%noInstances )
+        if ( measurements%quantities(q)%template%noInstances == 1 ) then
+          call output ( ' instance, ' )
+        else
+          call output ( ' instances, ' )
+        end if
+        call output ( measurements%quantities(q)%template%noSurfs )
+        if ( measurements%quantities(q)%template%noSurfs == 1 ) then
+          call output ( ' surface, ' )
+        else
+          call output ( ' surfaces, ' )
+        end if
+        call output ( measurements%quantities(q)%template%noChans )
+        if ( measurements%quantities(q)%template%noChans == 1 ) then
+          call output ( ' channel.', advance='yes' )
+        else
+          call output ( ' channel.', advance='yes' )
+        end if
+        ! Call a routine to dump a nice summary of the retrieval range etc.
+        call DumpNiceMaskSummary ( measurements%quantities(q), '  ', (/ m_linalg /) )
+      end do
+
+
+      call output ( '---------------------------- End retrieval configuration dump', advance='yes' )
+      stop
+    end subroutine DumpRetrievalConfig
 
     ! ----------------------------------------------  FillDiagQty  -----
     subroutine FillDiagQty ( Diagnostics, QuantityIndex, Value )
@@ -2385,6 +2471,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.265  2006/01/21 00:04:14  livesey
+! Added the start of a dump retrieval config option (-Srtv)
+!
 ! Revision 2.264  2005/12/21 21:48:03  livesey
 ! Added handling of the negateSD option.
 !
