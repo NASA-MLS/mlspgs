@@ -1,5 +1,13 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
 !=================================
 PROGRAM L2GPDump ! dumps L2GPData files
@@ -17,7 +25,8 @@ PROGRAM L2GPDump ! dumps L2GPData files
    use MLSHDF5, only: mls_h5open, mls_h5close
    use MLSMessageModule, only: MLSMessageConfig, MLSMSG_Warning, &
      & MLSMessage
-   use MLSStringLists, only: GetStringElement, NumStringElements, &
+   use MLSStringLists, only: ExpandStringRange, &
+     & GetStringElement, NumStringElements, &
      & stringElementNum
    use OUTPUT_M, only: OUTPUT
    use PCFHdr, only: GlobalAttributes
@@ -31,7 +40,7 @@ PROGRAM L2GPDump ! dumps L2GPData files
 !----------------------------------------------------------
 
 ! Brief description of program
-! This program tests the L2GPData subroutines.
+! This program dumps L2GPData files
 
 ! To use this, copy it into
 ! mlspgs/tests/lib
@@ -41,22 +50,25 @@ PROGRAM L2GPDump ! dumps L2GPData files
 ! Then run it
 ! LF95.Linux/test [options] [filenames]
 
+  integer, parameter ::  max_nsds = 1000  ! Maximum number of datasets in file.
+  integer, parameter :: MAXNCHUNKS = 50
+
   type options_T
-     logical ::          verbose = .false.
-     integer ::          details = 1
-     logical ::          columnsOnly = .false.
-     logical ::          attributesToo = .false.
+    character(len=255) ::   chunks = '*' ! wild card means 'all'
+     logical ::             verbose = .false.
+     integer ::             details = 1
+     logical ::             columnsOnly = .false.
+     logical ::             attributesToo = .false.
      character(len=255) ::  fields = ''
      character(len=255) ::  swaths = '*' ! wildcard, meaning all swaths
   end type options_T
 
   type ( options_T ) :: options
-     CHARACTER(LEN=255) :: filename          ! filename
-     integer            :: n_filenames
-     INTEGER     ::  i, count, status, error ! Counting indices & Error flags
-     INTEGER, PARAMETER ::  max_nsds = 1000  ! Maximum number of datasets in file.
-     LOGICAL     :: is_hdf5
-     ! 
+  character(LEN=255) :: filename          ! filename
+  integer            :: n_filenames
+  integer     ::  i, count, status, error ! Counting indices & Error flags
+  logical     :: is_hdf5
+  ! 
   MLSMessageConfig%useToolkit = .false.   
   MLSMessageConfig%logFileUnit = -1       
   CALL mls_h5open(error)
@@ -105,6 +117,9 @@ contains
         options%attributesToo = .true.
       elseif ( filename(1:3) == '-c ' ) then
         options%columnsOnly = .true.
+      else if ( filename(1:6) == '-chunk' ) then
+        call getarg ( i+1+hp, options%chunks )
+        i = i + 1
       else if ( filename(1:3) == '-l ' ) then
         call getarg ( i+1+hp, options%fields )
         i = i + 1
@@ -141,29 +156,41 @@ contains
       & 'Usage: l2gpdump [options] [filenames]'
       write (*,*) &
       & ' If no filenames supplied, you will be prompted to supply one'
+      write (*,*) &
+      & ' optionally restrict dumps to certain fields, chunks, etc.'
       write (*,*) ' Options: -f filename => use filename'
       write (*,*) '          -h          => print brief help'
+      write (*,*) '          -chunks cl  => dump only chunks named in cl'
       write (*,*) '          -l list     => dump only fields named in list'
       write (*,*) '          -s slist    => dump only swaths named in slist'
-      write (*,*) '          -0          => dump only scalars, 1-d array'
-      write (*,*) '          -1          => dump only scalars'
-      write (*,*) '          -2          => dump only swath names'
       write (*,*) '          -c          => dump only column abundances'
       write (*,*) '          -a          => dump attributes, too'
       write (*,*) '          -v          => verbose'
-      write (*,*) ' (by default, dumps all fields in allswaths, but not attributes)'
+      write (*,*) '     (details level)'
+      write (*,*) '          -0          => dump only scalars, 1-d array'
+      write (*,*) '          -1          => dump only scalars'
+      write (*,*) '          -2          => dump only swath names'
+      write (*,*) '    (Notes)'
+      write (*,*) ' (1) by default, dumps all fields in allswaths, but not attributes'
+      write (*,*) ' (2) by default, detail level is -1'
+      write (*,*) ' (2) details levels, -l options are all mutually exclusive'
+      write (*,*) ' (4) the list of chunks may include the range operator "-"'
       stop
   end subroutine print_help
 
    subroutine dump_one_file(filename, options)
+    ! Dummy args
     character(len=*), intent(in) :: filename          ! filename
     type ( options_T ) :: options
+    ! Local variables
+    integer, dimension(MAXNCHUNKS) :: chunks
     character (len=MAXSWATHNAMESBUFSIZE) :: SwathList
     integer :: File1
     integer :: listsize
     logical, parameter            :: countEmpty = .true.
     type (L2GPData_T) :: l2gp
     integer :: i
+    integer :: nChunks
     integer :: noSwaths
     character (len=L2GPNameLen) :: swath
     integer :: record_length
@@ -209,7 +236,14 @@ contains
       ! Dump the swath- and file-level attributes
       if ( options%attributesToo ) call dump(file1, l2gp)
       ! Dump the actual swath
-      call dump(l2gp, options%columnsOnly, options%details, options%fields)
+      if ( options%chunks == '*' ) then
+        call dump(l2gp, options%columnsOnly, options%details, options%fields)
+      else
+        call ExpandStringRange(options%chunks, chunks, nchunks)
+        if ( nchunks < 1 ) cycle
+        call dump(l2gp, chunks(1:nChunks), &
+          & options%columnsOnly, options%details, options%fields)
+      endif
       call DestroyL2GPContents ( l2gp )
     enddo
 !     status = mls_io_gen_closeF('swclose', File1, FileName=Filename, &
@@ -220,6 +254,9 @@ END PROGRAM L2GPDump
 !==================
 
 ! $Log$
+! Revision 1.8  2005/09/27 17:06:16  pwagner
+! Added -s option; changed to conform with new MLSFiles module
+!
 ! Revision 1.7  2005/02/11 21:13:59  pwagner
 ! Now -2 option works correctly
 !
