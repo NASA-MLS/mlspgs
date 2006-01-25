@@ -2083,13 +2083,10 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before looking for item ' // trim(name) )
-    ! print *, 'myOptions ', myOptions
     if ( myOptions == ' ' .or. myOptions == '-d' ) then
       call h5dOpen_f ( locID, name, setID, status )
       IsHDF5ItemPresent = ( status == 0 )
       if ( IsHDF5ItemPresent ) call h5dClose_f ( setID, status )
-      call GetAllHDF5DSNames_fileID ( locID, '/', DSNames )
-      ! print *, 'DSNames ', trim(DSNames)
     elseif ( index(myOptions, 'g') > 0 ) then
       IsHDF5ItemPresent = IsHDF5GroupPresent (locID, name)
     elseif ( index(myOptions, 'a') < 1 ) then
@@ -5076,6 +5073,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.63  2006/01/25 00:57:39  pwagner
+! Removed some troublesome, superfluous calls from IsHDF5ItemPresent
+!
 ! Revision 2.62  2005/11/17 20:09:24  pwagner
 ! LoadFromHDF5DS can now read 3d integer arrays
 !
