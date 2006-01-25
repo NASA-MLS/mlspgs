@@ -71,7 +71,6 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 contains
 
   ! ----------------------------------------------- ReadGriddedData
-  ! subroutine ReadGriddedData(FileName, lcf_where, description, v_type, &
   subroutine ReadGriddedData(GriddedFile, lcf_where, description, v_type, &
     & the_g_data, returnStatus, &
     & GeoDimList, fieldName, missingValue)
@@ -89,7 +88,6 @@ contains
 
     ! Arguments
     type(MLSFile_T)                :: GriddedFile
-!    character (LEN=*), intent(IN) :: FileName ! Name of the file containing the grid(s)
     integer, intent(IN) :: lcf_where    ! node of the lcf that provoked me
     integer, intent(IN) :: v_type       ! vertical coordinate; an 'enumerated' type
     type( GriddedData_T ) :: the_g_data ! Result
@@ -141,9 +139,6 @@ contains
       ! in hdfeos5 format
       call Read_ncep_strat(GriddedFile, lcf_where, v_type, &
         & the_g_data, GeoDimList, fieldName)
-      !call Read_ncep_strat(FileName, lcf_where, v_type, &
-      !  & the_g_data, GeoDimList, fieldName, gridName='SouthernHemisphere', &
-      !  & missingValue=missingValue)
       if ( DEEBUG ) then
         print *, '(Returned from read_ncep-strat)'
         print *, 'Quantity Name ' // trim(the_g_data%QuantityName)
@@ -158,7 +153,6 @@ contains
   end subroutine ReadGriddedData
 
   ! ----------------------------------------------- Read_dao
-  ! subroutine Read_dao(FileName, lcf_where, v_type, &
   subroutine Read_dao(DAOFile, lcf_where, v_type, &
     & the_g_data, GeoDimList, fieldName)
     use Dump_0, only: Dump
@@ -187,7 +181,6 @@ contains
 
     ! Arguments
     type(MLSFile_T)                :: DAOFile
-!    character (LEN=*), intent(IN) :: FileName ! Name of the file containing the grid(s)
     integer, intent(IN) :: lcf_where    ! node of the lcf that provoked me
     integer, intent(IN) :: v_type       ! vertical coordinate; an 'enumerated' type
     type( GriddedData_T ) :: the_g_data ! Result
@@ -448,7 +441,6 @@ contains
   end subroutine Read_dao
 
   ! ----------------------------------------------- Read_ncep_gdas
-  ! subroutine Read_ncep_gdas(FileName, lcf_where, v_type, &
   subroutine Read_ncep_gdas(NCEPFile, lcf_where, v_type, &
     & the_g_data, GeoDimList, gridName, missingValue)
     use Dump_0, only: Dump
@@ -479,7 +471,6 @@ contains
 
     ! Arguments
     type(MLSFile_T)                :: NCEPFile
-!    character (LEN=*), intent(IN) :: FileName ! Name of the file of the grid(s)
     integer, intent(IN) :: lcf_where    ! node of the lcf that provoked me
     integer, intent(IN) :: v_type       ! vertical coordinate
     type( GriddedData_T ) :: the_g_data ! Result
@@ -785,7 +776,6 @@ contains
   end subroutine Read_ncep_gdas
 
   ! ----------------------------------------------- Read_ncep_strat
-  ! subroutine Read_ncep_strat(FileName, lcf_where, v_type, &
   subroutine Read_ncep_strat(NCEPFile, lcf_where, v_type, &
     & the_g_data, GeoDimList, fieldName)
     use Dump_0, only: Dump
@@ -818,7 +808,6 @@ contains
 
     ! Arguments
     type(MLSFile_T)                :: NCEPFile
-!    character (LEN=*), intent(IN) :: FileName ! Name of the file of the grid(s)
     integer, intent(IN) :: lcf_where    ! node of the lcf that provoked me
     integer, intent(IN) :: v_type       ! vertical coordinate
     type( GriddedData_T ) :: the_g_data ! Result
@@ -1155,10 +1144,8 @@ contains
   end subroutine Read_ncep_strat
 
   ! --------------------------------------------- ReadGloriaFile -------
-  ! type ( GriddedData_T) function ReadGloriaFile ( filename ) result ( grid )
   type ( GriddedData_T) function ReadGloriaFile ( gloriaFile ) result ( grid )
     type(MLSFile_T)                :: GloriaFile
-!    character (len=*), intent(in) :: FILENAME
     ! This function reads data in Gloria's gridded data format into memory
     ! Note that Gloria has a very specific format for her gridded data
 
@@ -1296,7 +1283,6 @@ contains
   end function ReadGloriaFile
 
   ! --------------------------------------------------  Read_Climatology
-  ! subroutine READ_CLIMATOLOGY ( input_fname, root, aprioriData, returnStatus, &
   subroutine READ_CLIMATOLOGY ( climFile, root, aprioriData, returnStatus, &
     & mlspcf_l2clim_start, mlspcf_l2clim_end, missingValue, echo_data, &
     & dump_data )
@@ -1306,7 +1292,6 @@ contains
 
     ! Arguments
     type(MLSFile_T)                :: ClimFile
-    ! character*(*), intent(in) :: input_fname			! Physical file name
     type (GriddedData_T), dimension(:), pointer :: aprioriData 
     integer, intent(in) :: ROOT        ! Root of the L2CF abstract syntax tree
     integer, intent(out) :: returnStatus ! E.g., FILENOTFOUND
@@ -1372,7 +1357,6 @@ contains
       fname = climFile%name
       ! use Fortran open
       if(debug) call output('opening ' // fname, advance = 'yes')
-      ! CliUnit = mls_io_gen_openF ( 'open', .true., ErrType, &
       CliUnit = mls_io_gen_openF ( l_ascii, .true., ErrType, &
 	& record_length, PGSd_IO_Gen_RSeqFrm, FileName=fname)
     endif
@@ -1428,7 +1412,6 @@ contains
 	! use Fortran close
       else
         if(debug) call output('closing ' // fname, advance = 'yes')
-        ! ErrType = mls_io_gen_CloseF ('close', CliUnit )
         ErrType = mls_io_gen_CloseF (l_ascii, CliUnit )
       endif
       if(ErrType /= 0) then
@@ -1450,7 +1433,7 @@ contains
   ! ------------------------------------------------  ncepFieldNameTohPa  -----
   subroutine ncepFieldNameTohPa ( field_name, pressure )
 
-    ! Snip INTRO and TAIL off filed_name
+    ! Snip INTRO and TAIL off field_name
     ! If remainder can be interpreted as a number return that
     ! Otherwise return -999.99
     ! Arguments
@@ -1554,6 +1537,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.40  2006/01/25 00:58:44  pwagner
+! Cleared out some commented-out stuff
+!
 ! Revision 2.39  2005/06/22 17:24:59  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
