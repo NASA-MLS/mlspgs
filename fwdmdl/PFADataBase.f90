@@ -556,7 +556,8 @@ contains ! =====     Public Procedures     =============================
 
     use Allocate_Deallocate, only: Deallocate_Test
     use MLSHDF5, only: LoadPtrFromHDF5DS
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
+      & MLSMSG_Severity_to_quit
     use MLSSignals_m, only: Signals
     use MoreMessage, only: MLSMessage
     use MoreTree, only: GetLitIndexFromString, GetStringIndexFromString
@@ -568,6 +569,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: Where  ! Source_ref field, for error messages
 
     logical, pointer :: Channels(:)
+    logical :: Error
     integer :: F, G                    ! Subscripts, loop inductors
     integer(hid_t) :: GroupID          ! From HDF5 open group
     integer :: IPFA                    ! Index in PFA database
@@ -633,9 +635,15 @@ contains ! =====     Public Procedures     =============================
     call deallocate_test ( mySignalStrings, 'mySignalStrings', moduleName )
 
     ! Now hook the tables to the FindPFA structure
+    ! Report all errors instead of quitting on the first one
+    error = .false.
+    MLSMSG_Severity_to_quit = MLSMSG_Error + 1
     do g = 1, size(PFAFileDatum%ix)
-      if ( hookTableToFindPFA ( f, g, PFAFileDatum%ix(g) ) ) continue
+      error = error .or. hookTableToFindPFA ( f, g, PFAFileDatum%ix(g) )
     end do
+    MLSMSG_Severity_to_quit = MLSMSG_Error
+    if ( error ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & 'Errors while hooking up and finding PFA tables' )
 
     process_PFA_File = f
 
@@ -1239,6 +1247,9 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.32  2006/01/26 03:06:52  vsnyder
+! Accumulate all errors before crashing
+!
 ! Revision 2.31  2005/08/11 00:17:50  pwagner
 ! Comment out  addVGridIfNecessary in Read_PFADatum_H5
 !
