@@ -24,7 +24,6 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     & DUMP, INITIALIZEMLSFILE, MLS_closeFile, MLS_EXISTS, mls_openFile, &
     & MLS_HDF_VERSION, MLS_INQSWATH, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
   use MLSFillValues, only: ExtractArray, ReplaceFillValues
-  use MLSHDFEOS, only: mls_swattach, mls_swdetach
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Warning
   use MLSNumerics, only: HuntRange
@@ -34,8 +33,6 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     & list2array, NumStringElements, RemoveListFromList, &
     & StringElementNum, SwitchDetail
   use Output_M, only: blanks, Output, resumeOutput, suspendOutput
-  use PCFHdr, only: GlobalAttributes_T, GlobalAttributes, &
-    & he5_readglobalattr, he5_writeglobalattr
   use STRING_TABLE, only: DISPLAY_STRING
 
   implicit none
@@ -806,7 +803,7 @@ contains ! =====     Public Procedures     =============================
   subroutine ReadL2GPData_MF_hdf(L2GPFile, swathname, l2gp, HMOT, &
     & numProfs, firstProf, lastProf, ReadStatus)
   use HDFEOS5, only: HE5_SWINQDIMS, HE5_swfldinfo
-  use MLSHDFEOS, only: mls_swdiminfo, mls_swrdfld
+  use MLSHDFEOS, only: mls_swattach, mls_swdetach, mls_swdiminfo, mls_swrdfld
     !------------------------------------------------------------------------
 
     ! This routine reads an L2GP file, returning a filled data structure and the !
@@ -874,13 +871,11 @@ contains ! =====     Public Procedures     =============================
     
     select case (HMOT)
     case ('H')
-      ! swid = mls_SWattach(L2GPFile%FileID%f_id, 'HIRDLS', hdfVersion=hdfVersion)
       swid = mls_SWattach(L2GPFile, 'HIRDLS')
       DF_Name = TRIM(l2gp%Name)
       DF_Precision = TRIM(l2gp%Name) // 'Precision'
       l2gp%MissingValue = -999.  ! This is a HIRDLS-specific setting
     case ('M')
-      ! swid = mls_SWattach(L2GPFile%FileID%f_id, l2gp%Name, hdfVersion=hdfVersion)
       swid = mls_SWattach(L2GPFile, l2gp%Name)
       DF_Name = DATA_FIELD1
       DF_Precision = DATA_FIELD2
@@ -1196,8 +1191,8 @@ contains ! =====     Public Procedures     =============================
     & swathName, nLevels, notUnlimited, compressTimes)
 
   use HDFEOS5, only: HE5S_UNLIMITED_F
-  use MLSHDFEOS, ONLY : mls_swcreate, mls_dfldsetup, mls_gfldsetup, &
-    & mls_swdefdim
+  use MLSHDFEOS, only: mls_swattach, mls_swdetach, &
+    & mls_swcreate, mls_dfldsetup, mls_gfldsetup, mls_swdefdim
     ! Brief description of subroutine
     ! This subroutine sets up the structural definitions in an empty L2GP file.
 
@@ -1449,7 +1444,7 @@ contains ! =====     Public Procedures     =============================
   subroutine OutputL2GP_writeGeo_MF (l2gp, L2GPFile, &
     & swathName,offset)
 
-  use MLSHDFEOS, only: mls_swwrfld
+  use MLSHDFEOS, only: mls_swattach, mls_swdetach, mls_swwrfld
     ! Brief description of subroutine
     ! This subroutine writes the geolocation fields to an L2GP output file.
 
@@ -1486,7 +1481,6 @@ contains ! =====     Public Procedures     =============================
     endif
     hdfVersion = L2GPFile%hdfVersion
 
-    ! swid = mls_SWattach (L2GPFile%fileID%f_id, name, hdfVersion=hdfVersion)
     swid = mls_SWattach (L2GPFile, name)
 
     ! Write data to the fields
@@ -1549,7 +1543,7 @@ contains ! =====     Public Procedures     =============================
   subroutine OutputL2GP_writeData_MF(l2gp, L2GPFile, &
     & swathName,offset)
 
-  use MLSHDFEOS, only: mls_swwrfld
+  use MLSHDFEOS, only: mls_swattach, mls_swdetach, mls_swwrfld
     ! Brief description of subroutine
     ! This subroutine writes the data fields to an L2GP output file.
     ! For now, you have to write all of l2gp, but you can choose to write
@@ -1594,7 +1588,6 @@ contains ! =====     Public Procedures     =============================
     edge(1) = l2gp%nFreqs
     edge(2) = l2gp%nLevels
     edge(3) = l2gp%nTimes
-    ! swid = mls_SWattach (L2GPFile%fileID%f_id, name, hdfVersion=hdfVersion)
     swid = mls_SWattach (L2GPFile, name)
     if ( l2gp%nFreqs > 0 ) then
        ! Value and Precision are 3-D fields
@@ -1653,7 +1646,7 @@ contains ! =====     Public Procedures     =============================
   use HDFEOS5, only: HE5T_NATIVE_INT, HE5T_NATIVE_REAL, HE5T_NATIVE_DOUBLE, &
     & MLS_charType
   use he5_swapi, only: he5_swwrattr, he5_swwrlattr
-  use MLSHDFEOS, only: mls_swwrattr, mls_swwrlattr
+  use MLSHDFEOS, only: mls_swattach, mls_swdetach, mls_swwrattr, mls_swwrlattr
   use PCFHdr, only:  he5_writeglobalattr
     ! Brief description of subroutine
     ! This subroutine writes the attributes for an l2gp
@@ -1733,7 +1726,6 @@ contains ! =====     Public Procedures     =============================
     ! - -   G l o b a l   A t t r i b u t e s   - -
     call he5_writeglobalattr(L2GPFile%fileID%f_id)
 
-    ! swid = mls_SWattach (L2GPFile%fileID%f_id, name, hdfVersion=HDFVERSION_5)
     swid = mls_SWattach (L2GPFile, name)
     
     !   - -   S w a t h   A t t r i b u t e s   - -
@@ -1901,6 +1893,7 @@ contains ! =====     Public Procedures     =============================
   subroutine SetL2GP_aliases_MF(l2gp, L2GPFile, swathName)
 
   use HDFEOS5, only: HE5_SWSETALIAS
+  use MLSHDFEOS, only: mls_swattach, mls_swdetach
   use SDPToolkit, only: PGS_S_SUCCESS
     ! Arguments
     type(MLSFile_T)                :: L2GPFile
@@ -1922,7 +1915,6 @@ contains ! =====     Public Procedures     =============================
     else
        name=l2gp%name
     endif
-    ! sw_id = mls_swattach(L2GPFile%FileID%f_id, trim(name), hdfVersion=HDFVERSION_5)
     sw_id = mls_swattach(L2GPFile, trim(name))
     if ( sw_id < 1 ) then 
       call MLSMessage ( MLSMSG_Error, ModuleName, & 
@@ -2134,6 +2126,7 @@ contains ! =====     Public Procedures     =============================
     ! This call has been altered recently, so that it can be used to create
     ! a swath as well as adding to one. 
 
+  use MLSHDFEOS, only: mls_swattach, mls_swdetach
     ! Arguments
 
     type(MLSFile_T)                :: L2GPFile
@@ -2196,7 +2189,6 @@ contains ! =====     Public Procedures     =============================
     if ( present(createSwath) ) then
       swath_exists = .not. createSwath
     else
-      ! swathid = mls_swattach(L2GPFile%FileID%f_id, trim(myswathName), &
       swathid = mls_swattach(L2GPFile, trim(myswathName), &
         & DONTFAIL=.true.)
       swath_exists = ( swathid > 0 )
@@ -2388,6 +2380,8 @@ contains ! =====     Public Procedures     =============================
     ! Optionally repairs l2gpdata
 
     use HGridsDatabase, only: HGrid_T
+    use PCFHdr, only: GlobalAttributes_T, GlobalAttributes, &
+      & he5_readglobalattr, he5_writeglobalattr
     ! Arguments
 
     character (len=*), intent(in) :: file1 ! Name of file 1
@@ -3449,6 +3443,7 @@ contains
 
   use HDFEOS5, only: HE5T_NATIVE_REAL, HE5T_NATIVE_DOUBLE
   use he5_swapi, only: he5_swrdattr, he5_swrdlattr
+  use MLSHDFEOS, only: mls_swattach, mls_swdetach
   use PCFHdr, only:  GlobalAttributes_T, he5_readglobalattr
     ! Brief description of subroutine
     ! This subroutine dumps the attributes for an l2gp
@@ -3942,6 +3937,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.134  2006/01/19 00:29:10  pwagner
+! Units attribute for column abundances corrected
+!
 ! Revision 2.133  2006/01/17 17:49:26  pwagner
 ! Fixed bug in call to HuntRange
 !

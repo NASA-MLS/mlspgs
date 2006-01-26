@@ -11,7 +11,6 @@
 
 module GLOBAL_SETTINGS
 
-  use Hdf, only: DFACC_CREATE
   use MLSCommon, only: FILENAMELEN
 
   implicit NONE
@@ -845,6 +844,7 @@ contains
 
     ! --------------------------  CreateDirectTypeFromMLSCFInfo  -----
     function CreateDirectTypeFromMLSCFInfo ( root, DirectFile ) result (Direct)
+    use Hdf, only: DFACC_CREATE
     integer, intent(in) :: ROOT         ! Tree node
     type (DirectData_T) :: Direct
     type (MLSFile_T)    :: DirectFile
@@ -947,6 +947,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.109  2006/01/10 23:51:11  pwagner
+! Fixed segment fault when hdf4 l1boa file
+!
 ! Revision 2.108  2005/11/12 00:58:10  pwagner
 ! Fixed bug in reading BO_names attribute from l1boa file
 !
