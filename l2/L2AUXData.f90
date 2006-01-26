@@ -43,7 +43,6 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
     L_TNGTECI, L_TNGTGEOCALT, L_TNGTGEODALT, &
     L_TOTALEXTINCTION, L_USBFREQUENCY, L_VMR, L_XYZ
   use intrinsic, only: l_hdf, LIT_INDICES
-  use L1BData, only: L1BDATA_T, READL1BDATA
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: R8, R4, DEFAULTUNDEFINEDVALUE, MLSFile_T
   use MLSL2Options, only: DEFAULT_HDFVERSION_READ, DEFAULT_HDFVERSION_WRITE
@@ -1025,6 +1024,7 @@ contains ! =====     Public Procedures     =============================
   ! -----------------------------------------  ReadL2AUXData_MF_hdf5  -----
   subroutine ReadL2AUXData_MF_hdf5(L2AUXFile, quantityname, quantityType, l2aux, firstProf, lastProf, &
     & checkDimNames)
+    use L1BData, only: L1BDATA_T, READL1BDATA
     use MLSFiles, only: HDFVERSION_5
 
     ! This routine reads an l2aux file, returning a filled data structure and the !
@@ -1045,14 +1045,14 @@ contains ! =====     Public Procedures     =============================
     logical, optional, intent(in) :: checkDimNames
 
     ! Parameters
-    type(l1bdata_t)               :: L1BDATA ! Intermediate Result
+    type(l1bdata_t)               :: L1BDATA1 ! Intermediate Result
     integer                       :: NoMAFs
     logical, parameter            :: NEVERFAIL = .TRUE.
     integer, dimension(L2AUXRank) :: dim_families
     integer, dimension(L2AUXRank) :: data_dim_sizes
     integer                       :: status
     ! Executable
-    CALL ReadL1BData(L2AUXFile, QuantityName, L1bData, NoMAFs, status, &
+    CALL ReadL1BData(L2AUXFile, QuantityName, L1BDATA1, NoMAFs, status, &
       & FirstMAF=firstProf, LastMAF=lastProf, NEVERFAIL=NEVERFAIL, &
       & dontPad=.true., L2AUX=.true. )
     if ( status /= 0 ) &
@@ -1061,14 +1061,14 @@ contains ! =====     Public Procedures     =============================
       & // trim(QuantityName) // ' (perhaps too unlike a radiance)', MLSFile=L2AUXFile )
 
     dim_families(1) = l_channel                      
-    data_dim_sizes = shape(L1BDATA%DpField)          
+    data_dim_sizes = shape(L1BDATA1%DpField)          
     dim_families(2) = l_mif                          
     dim_families(3) = l_maf                          
 !   call SetupNewl2auxRecord ( dim_families, data_dim_sizes, (/1,1,1/), l2aux )
     call SetupNewl2auxRecord ( l2aux, inputDimFamilies=dim_families, &
      & inputDimSizes=data_dim_sizes, inputDimStarts=(/1,1,1/), inputQuantityType=quantityType )
-    l2aux%values = L1BDATA%DpField
-    deallocate(L1BDATA%DpField, stat=status)
+    l2aux%values = L1BDATA1%DpField
+    deallocate(L1BDATA1%DpField, stat=status)
     if ( status /= 0 ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to deallocate l1bdata%dpField while reading' &
@@ -1987,6 +1987,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.79  2006/01/26 00:34:50  pwagner
+! demoted more use statements from module level to speed Lahey compiles
+!
 ! Revision 2.78  2005/12/21 18:45:29  pwagner
 ! Should recognize but not copy coremetadata, pcf
 !
