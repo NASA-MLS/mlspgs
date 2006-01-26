@@ -37,6 +37,8 @@ contains ! =====     Public Procedures     =============================
     use FilterShapes_m, only: FilterShapes
     use Intrinsic, only: LIT_INDICES, L_NONE
     use MLSCommon, only: RP, R8
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
+      & MLSMSG_Severity_to_quit
     use MLSSignals_m, only: GetNameOfSignal, MatchSignal, MaxSigLen, Signal_T
     use MoreTree, only: GetStringIndexFromString
     use Output_m, only: Output
@@ -68,6 +70,7 @@ contains ! =====     Public Procedures     =============================
     real(r8) :: DF      ! Spacing in filter bank's frequency grid
     integer :: DumpIt   ! Dump Beta, dBetaD... if nonzero.  Stop after first
                         !   one if > 1.
+    logical :: Error
     integer :: I        ! Index for signals associated with a line, or lines in catalog
     integer :: L        ! Index for lines in catalog
     logical, pointer :: LINEFLAG(:) ! Use this line
@@ -96,7 +99,8 @@ contains ! =====     Public Procedures     =============================
     real(rp) :: VelCor  ! Velocity correction = 1 - velRel
     real(rp) :: VelRel  ! LosVel/c
 
-    integer, parameter :: NoCat = 1
+    integer, parameter :: DupSignals = 1
+    integer, parameter :: NoCat = dupSignals + 1
     integer, parameter :: NoFilter = noCat + 1
     integer, parameter :: NoLines = noFilter + 1
 
@@ -107,16 +111,29 @@ contains ! =====     Public Procedures     =============================
     if ( index(switches,'pfab') /= 0 ) dumpIt = 1
     if ( index(switches,'pfaB') /= 0 ) dumpIt = 2
 
+    error = .false.
+
     ! Opposite sign convention here from ATBD
     velRel = losVel / speedOfLight ! losVel & speedOfLight both M/s
     velCor = 1.0_rp - velRel
 
     ! Work out the signal/channel combinations.  Flatten the represenation.
+    ! Check for duplicate signals
     numChannels = 0
     do s = 1, size(signals)
       numChannels = numChannels + count(signals(s)%channels)
+      do i = 1, s-1
+        if ( matchSignal(signals(s),signals(i)) > 0 ) then
+          call getNameOfSignal ( signals(s), signalText )
+          call announce_error ( where, dupSignals, signalText )
+          error = .true.
+        end if
+      end do
     end do
     nullify ( channel, sigInd )
+    if ( error ) &
+      & call MLSMessage ( MLSMSG_Error, moduleName, 'Duplicate signals' )
+
     call allocate_test ( channel, numChannels, 'Channel', moduleName )
     call allocate_test ( sigInd, numChannels, 'SigInd', moduleName )
 
@@ -212,7 +229,11 @@ contains ! =====     Public Procedures     =============================
         ! Put it away
         create_PFAData = AddPFADatumToDatabase ( PFAData, PFADatum )
         call deallocate_test ( myCatalog%lines, 'myCatalog%lines', moduleName )
-        if ( HookTableToFindPFA ( 0, 0, create_PFAData ) ) continue
+
+        ! Report all errors instead of quitting on the first one
+        MLSMSG_Severity_to_quit = MLSMSG_Error + 1
+        error = error .or. HookTableToFindPFA ( 0, 0, create_PFAData )
+        MLSMSG_Severity_to_quit = MLSMSG_Error
 
         if ( progress .or. dumpIt > 0 ) then
           call output ( 'Created PFA for ' )
@@ -234,6 +255,8 @@ contains ! =====     Public Procedures     =============================
         end if
       end do ! m
     end do ! c
+    if ( error ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & 'Errors while hooking up and finding PFA tables' )
 
     call deallocate_test ( channel, 'Channel', moduleName )
     call deallocate_test ( sigInd, 'SigInd', moduleName )
@@ -259,6 +282,10 @@ contains ! =====     Public Procedures     =============================
       integer, intent(in), optional :: More
       call startErrorMessage ( where )
       select case ( what )
+      case ( dupSignals )
+        call output ( 'Signal ' )
+        call output ( trim(string) )
+        call output (' duplicates a previously-specified signal.', advance='yes' )
       case ( noCat )
         call output ( 'No catalog for ' )
         call display_string ( more, advance='yes' )
@@ -374,6 +401,9 @@ contains ! =====     Public Procedures     =============================
 end module Create_PFAData_m
 
 ! $Log$
+! Revision 2.14  2006/01/26 03:08:05  vsnyder
+! Accumulate all errors before crashing, detect duplicate signals early
+!
 ! Revision 2.13  2005/06/09 02:34:15  vsnyder
 ! Move stuff from l2pc_pfa_structures to slabs_sw_m
 !
