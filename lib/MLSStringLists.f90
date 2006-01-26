@@ -57,9 +57,12 @@ module MLSStringLists               ! Module to treat string lists
 ! GetUniqueStrings   Returns array of only unique entries from input array
 ! IsInList           Is string in list? options may expand criteria
 ! List2Array         Converts a single string list to an array of strings
+! MakeStringHashElement   
+!                    Replaces string from hash list corresponding to key string
 ! NumStringElements  Returns number of elements in string list
-! RemoveElemFromList removes occurrence(s) of elem in a string list
+! RemoveElemFromList removes occurrence(s) of elem from a string list
 ! RemoveListFromList removes occurrence(s) of elems in a string list from another
+! RemoveNumFromList  removes a numbered elem from a string list
 ! ReplaceSubString   replaces occurrence(s) of sub1 with sub2 in a string
 ! ReverseList        Turns 'abc,def,ghi' -> 'ghi,def,abc'
 ! SortArray          Turns (/'def','ghi','abc'/) -> (/'abc','def','ghi'/)
@@ -92,11 +95,15 @@ module MLSStringLists               ! Module to treat string lists
 ! log IsInList(strlist stringList, char* string, [char* options])
 ! List2Array (strlist inList, char* outArray(:), log countEmpty,
 !   [char inseparator], [log IgnoreLeadingSpaces])
+! MakeStringHashElement (strlist keyList, strlist hashList, char* key, 
+!   char* elem, log countEmpty, [char inseparator], [log part_match])
 ! int NumStringElements(strlist inList, log countEmpty, &
 !   & [char inseparator], [int LongestLen])
 ! RemoveElemFromList(strlist inList, strlist outList, char* elem, &
 !    & [char inseparator])
 ! RemoveListFromList(strlist inList, strlist outList, strlist exclude, &
+!    & [char inseparator])
+! RemoveNumFromList(strlist inList, strlist outList, int nElement, &
 !    & [char inseparator])
 ! ReplaceSubString (char* str, char* outstr, char* sub1, char* sub2, &
 !       & [char* which], [log no_trim])
@@ -156,8 +163,9 @@ module MLSStringLists               ! Module to treat string lists
    & ExpandStringRange, ExtractSubString, &
    & GetIntHashElement, GetStringElement, GetStringHashElement, &
    & GetUniqueInts, GetUniqueStrings, GetUniqueList, IsInList, &
-   & List2Array, NumStringElements, &
-   & RemoveElemFromList, RemoveListFromList, ReplaceSubString, ReverseList, &
+   & List2Array, MakeStringHashElement, NumStringElements, &
+   & RemoveElemFromList, RemoveListFromList, RemoveNumFromList, &
+   & ReplaceSubString, ReverseList, &
    & SortArray, SortList, StringElement, StringElementNum, SwitchDetail, &
    & unquote
 
@@ -181,6 +189,8 @@ module MLSStringLists               ! Module to treat string lists
   integer, private, parameter :: MAXSTRLISTLENGTH = 4096
   integer, private, parameter :: MAXSTRELEMENTLENGTH = BareFNLen
 
+  character (len=1), parameter    :: COMMA = ','
+  character (len=1), parameter    :: BLANK = ' '   ! Returned for any element empty
 contains
 
   ! ---------------------------------------------  Array2List  -----
@@ -208,8 +218,6 @@ contains
     INTEGER(i4) :: listElem, arrayElem, nElems
 
     CHARACTER (LEN=1)               :: separator
-    CHARACTER (LEN=1), PARAMETER    :: BLANK = ' '   ! Returned for any element empty
-    CHARACTER (LEN=1), PARAMETER    :: COMMA = ','
     CHARACTER (LEN=1)               :: myLeftRight
     ! Executable code
 
@@ -266,7 +274,6 @@ contains
     character (len=len(str1)+9) :: OUTSTR
 
     !----------Local vars----------!
-    character (len=1), parameter    :: COMMA = ','
     character (len=1)               :: separator
     character (len=8), dimension(1) :: str2
     !----------executable part----------!
@@ -326,7 +333,6 @@ contains
     character (len=len(str1)+len(str2)+1) :: OUTSTR
 
     !----------Local vars----------!
-    character (len=1), parameter    :: COMMA = ','
     character (len=1)               :: separator
     !----------executable part----------!
     if(present(inseparator)) then
@@ -724,8 +730,6 @@ contains
     INTEGER(i4) :: elem, nextseparator
 
     CHARACTER (LEN=1)               :: separator
-    CHARACTER (LEN=1), PARAMETER    :: BLANK = ' '   ! Returned if element empty
-    CHARACTER (LEN=1), PARAMETER    :: COMMA = ','
     ! Executable code
 
     IF(PRESENT(inseparator)) THEN
@@ -825,9 +829,8 @@ contains
     LOGICAL, OPTIONAL, INTENT(IN)             :: part_match
 
     ! Local variables
-	INTEGER(i4) :: elem
+    INTEGER(i4) :: elem
     CHARACTER (LEN=1)                          :: separator
-    CHARACTER (LEN=1), PARAMETER               :: COMMA = ','
 
     ! Executable code
 
@@ -970,7 +973,6 @@ contains
 
     ! Local variables
     CHARACTER (LEN=1)               :: separator
-    CHARACTER (LEN=1), PARAMETER    :: COMMA = ','
     CHARACTER (LEN=MAXSTRELEMENTLENGTH), DIMENSION(:), ALLOCATABLE    &
       &                             :: inStringArray, outStringArray, inStrAr2
     integer :: nElems
@@ -1206,8 +1208,6 @@ contains
     INTEGER(i4) :: elem, nElems
 
     CHARACTER (LEN=1)               :: separator
-    CHARACTER (LEN=1), PARAMETER    :: BLANK = ' '   ! Returned for any element empty
-    CHARACTER (LEN=1), PARAMETER    :: COMMA = ','
     logical                         :: myIgnoreLeadingSpaces
     ! Executable code
 
@@ -1236,6 +1236,70 @@ contains
 	 ENDDO
 
   end subroutine List2Array
+
+  ! ---------------------------------------------  MakeStringHashElement  -----
+
+  ! This subroutine takes two (usually) comma-separated string lists, interprets it
+  ! each as a list of elements, treating the first as keys and the second as
+  ! a hash table, associative array or dictionary
+  ! It replaces with elem the sub-string from the hash table corresponding to the key
+  ! If the key is not found in the array of keys, it adds a new key
+
+  ! If countEmpty is TRUE, consecutive separators, with no chars in between,
+  ! are treated as enclosing an empty element
+  ! Otherwise, they are treated the same as a single separator
+  ! E.g., "a,b,,d" has 4 elements if countEmpty TRUE, 3 if FALSE
+  ! If TRUE, the elements would be {'a', 'b', ' ', 'd'}
+
+  ! As an optional arg the separator may supplied, in case it isn't comma
+  ! Another optional arg, part_match, returns a match for the 
+  ! first hash element merely found in the key; e.g.
+  ! 'won, to, tree' and key 'protocol.dat' matches 'to'
+
+  ! Basic premise: Find the element number corresponding to the key
+  ! If found remove that element from both key and hash list
+  ! Then add new key and hash to lists
+
+  ! Someday you may wish to define a StringHash_T made up of the two
+  ! strings
+  
+  subroutine MakeStringHashElement(keyList, hashList, key, elem, &
+  & countEmpty, inseparator, part_match)
+    ! Dummy arguments
+    character (len=*), intent(inout)   :: keyList
+    character (len=*), intent(inout)   :: hashList
+    character (len=*), intent(in)      :: key
+    character (len=*), intent(in)      :: elem
+    logical, intent(in)   :: countEmpty
+    character (len=1), optional, intent(in)   :: inseparator
+    logical, optional, intent(in)             :: part_match
+
+    ! Local variables
+    integer                                    :: num
+    character (LEN=1)                          :: separator
+    character(len=len(keyList)+len(key)+1)     :: keys
+    character(len=len(hashList)+len(elem)+1)   :: hash
+
+    ! Executable code
+
+    IF(PRESENT(inseparator)) THEN
+	     separator = inseparator
+	 ELSE
+	     separator = COMMA
+	 ENDIF
+
+	num = StringElementNum(keyList, key, countEmpty, inseparator, part_match)
+	if( num > 0) then
+		call RemoveNumFromList( keyList, keys, num, inseparator )
+		call RemoveNumFromList( hashList, hash, num, inseparator )
+	else
+		keys = keyList
+      hash = hashList
+	endif
+   keyList = catLists(keys, key)
+   hashList = catLists(hash, elem)
+
+  end subroutine MakeStringHashElement
 
   ! ---------------------------------------------  NumStringElements  -----
 
@@ -1268,7 +1332,6 @@ contains
 	 LOGICAL :: lastWasNotseparated
 
     CHARACTER (LEN=1)               :: separator
-    CHARACTER (LEN=1), PARAMETER    :: COMMA = ','
     ! Executable code
 
     IF(PRESENT(inseparator)) THEN
@@ -1324,8 +1387,6 @@ contains
     !----------Local vars----------!
     character(len=len(inList)+len(elem)+1) :: temp_list, unique_list
     CHARACTER (LEN=1)               :: separator
-    CHARACTER (LEN=1), PARAMETER    :: BLANK = ' '   ! Returned for any element empty
-    CHARACTER (LEN=1), PARAMETER    :: COMMA = ','
     integer :: numUnique
     !----------Executable part----------!
     IF(PRESENT(inseparator)) THEN
@@ -1382,6 +1443,44 @@ contains
     enddo
     outList = temp_list
   end subroutine RemoveListFromList
+
+  ! --------------------------------------------------  RemoveNumFromList  -----
+  subroutine RemoveNumFromList (inList, outList, nElement, inseparator)
+    ! Removes a numbered element from a list
+	 ! E.g., given 'a,b,c,d,..,z' and asked to remove number 3 returns 'a,b,d,..z'
+    !--------Argument--------!
+    character (len=*), intent(in) :: inlist
+    integer          , intent(in) :: nElement
+    character (len=*), intent(out)                :: outList
+    character (len=1), optional, intent(in)       :: inseparator
+    ! Method:
+    ! Loop through list, forming new one
+    !----------Local vars----------!
+    character(len=len(inList)+1) :: elem
+    character(len=len(inList)+1) :: temp_list
+    character (len=1)               :: separator
+    integer :: i
+    integer :: num
+    !----------Executable part----------!
+    IF(PRESENT(inseparator)) THEN
+      separator = inseparator
+    ELSE
+      separator = COMMA
+    END IF
+
+    outList = inList
+    if ( len_trim(inList) < 1 .or. nElement < 1 ) return
+    num = NumStringElements( inList, countEmpty=.true., inSeparator=inSeparator )
+    if ( nElement < 1 .or. nElement > num ) return
+    outList = ' '
+    do i=1, num
+      if ( i == nElement ) cycle
+      call GetStringElement(inList, elem, i, &
+        & countEmpty=.true., inSeparator=inSeparator )
+      temp_list = outList
+      outList = catLists( outList, trim(elem) )
+    enddo
+  end subroutine RemoveNumFromList
 
   ! --------------------------------------------------  ReplaceSubString  -----
   subroutine ReplaceSubString (str, outstr, sub1, sub2, which, no_trim)
@@ -1598,7 +1697,6 @@ contains
     INTEGER(i4) :: i, istr, irev, elem, iBuf
     INTEGER, PARAMETER :: MAXWORDLENGTH=80
     CHARACTER (LEN=1)               :: separator
-    CHARACTER (LEN=1), PARAMETER    :: COMMA = ','
     CHARACTER (LEN=1), DIMENSION(:), ALLOCATABLE :: charBuf
     CHARACTER (LEN=MAXWORDLENGTH) :: word
 ! Treat consecutive separators as if enclosing an empty element
@@ -1725,7 +1823,6 @@ contains
     logical                                :: allTheSameInThisBin
     logical                                :: myShorterFirst
     CHARACTER (LEN=1)                      :: theChar  
-    CHARACTER (LEN=1), PARAMETER           :: BLANK = ' '
     CHARACTER (LEN=MAXSTRELEMENTLENGTH), DIMENSION(:), ALLOCATABLE    &
       &                                    :: stringArray
     CHARACTER (LEN=MAXSTRELEMENTLENGTH)    :: theString  
@@ -1975,7 +2072,6 @@ contains
     INTEGER(i4) :: nElems, status, LongestLen
 
     CHARACTER (LEN=1)               :: separator
-    CHARACTER (LEN=1), PARAMETER    :: COMMA = ','
     CHARACTER (LEN=MAXSTRELEMENTLENGTH), DIMENSION(:), ALLOCATABLE    &
       &                             :: stringArray
     CHARACTER (LEN=1)               :: myLeftRight
@@ -2056,8 +2152,6 @@ contains
     INTEGER(i4) :: elem, nextseparator
 
     CHARACTER (LEN=1)               :: separator
-    CHARACTER (LEN=1), PARAMETER    :: BLANK = ' '   ! Returned if element empty
-    CHARACTER (LEN=1), PARAMETER    :: COMMA = ','
 
     ! Executable code
     IF(PRESENT(inseparator)) THEN
@@ -2451,6 +2545,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.17  2006/01/26 00:31:46  pwagner
+! Added RemoveNumFromList, MakeStringHashElement
+!
 ! Revision 2.16  2005/11/11 21:39:12  pwagner
 ! added stringElement function (should we keep GetStringElement?)
 !
