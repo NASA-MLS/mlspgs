@@ -427,8 +427,6 @@ contains
 
     end do
 
-    call deallocate_test ( mask, 'mask', moduleName )
-
     if ( no_of_bad_fits > 0 ) then
 
       if ( toggle(emit) ) then
@@ -517,6 +515,8 @@ contains
       call deallocate_test ( junk, 'junk', moduleName )
 
     end if
+
+    call deallocate_test ( mask, 'mask', moduleName )
 
     ! deallocate the loop iteration stuff
     call deallocate_test ( h_zf, 'h_zf', moduleName )
@@ -618,6 +618,9 @@ contains
 end module Metrics_m
 
 ! $Log$
+! Revision 2.26  2006/01/05 00:03:52  vsnyder
+! Implement refractive correction for Phi
+!
 ! Revision 2.25  2005/12/10 03:31:09  vsnyder
 ! Replace SUM(A*B) with Dot_Product(A,B) to avoid array temps
 !
