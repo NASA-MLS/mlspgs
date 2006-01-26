@@ -108,6 +108,7 @@ contains ! =====     Public procedures     =============================
 !   this is 1DU ( = 2.687e20 molecules/m^2)
 !   (but we will use molecules/cm^2 as the default)
     call declare_unit ( l_DobsonUnits, 2.687d16, phyq_colmabundance )
+    call declare_unit ( l_DU, 2.687d16, phyq_colmabundance )
     call declare_unit ( l_molcm2, 1.0d0, phyq_colmabundance )
 
     call declare_unit ( l_pctrhi, 1.0d0, phyq_pctrhi )
@@ -140,6 +141,9 @@ contains ! =====     Public procedures     =============================
 end module UNITS
 
 ! $Log$
+! Revision 2.28  2006/01/26 00:30:35  pwagner
+! DU synonym for DobsonUnits
+!
 ! Revision 2.27  2006/01/11 17:01:01  pwagner
 ! Made molcm2 default for colmabundance, DobsonUnits an alternate
 !
