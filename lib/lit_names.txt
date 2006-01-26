@@ -58,6 +58,7 @@ dimensionless
 dimless
 dl
 dobsonunits  # 1 DU = 2.687e20 molecules/m^2
+DU  # 1 DU = 2.687e20 molecules/m^2
 
 ECRtoFOV
 earthradius
@@ -218,6 +219,9 @@ zeta
 zonalavg
 
 # $Log$
+# Revision 2.44  2006/01/26 00:30:35  pwagner
+# DU synonym for DobsonUnits
+#
 # Revision 2.43  2006/01/11 16:54:37  pwagner
 # Added molcm2 for column abundances
 #
