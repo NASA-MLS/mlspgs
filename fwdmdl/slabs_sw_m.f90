@@ -1341,11 +1341,12 @@ contains
     d = 1.0_rp / ( sigmaX1**2 + y2 )
     c = slabs1 * real(nu / v0,rp) * tanh1
     sa = c * u
-    sb = c * yi * v
+!   sb = c * yi * v
+    sb = c * yi
     c = c * d * OneOvSPi
     sc = c * sigmaX1 * yi
     sd = c * y
-    Slabswint = sa + sb - sc + sd
+    Slabswint = sa + sb * v - sc + sd
 
 !{ Then
 !  $\frac{\partial S}{\partial T} = \frac{\partial S_a}{\partial T} +
@@ -1387,17 +1388,20 @@ contains
 !  $\frac{\partial a}{\partial T} = -x_1 \frac{\partial \nu_{0_s}}{\partial T} +
 !   \delta \frac{\partial x_1}{\partial T}$ and $\frac{\partial y}{\partial T}$.
 
+!{ We don't actually calculate things this way, because if $\delta \equiv 0$
+!  then $L(a,y) \equiv 0$.
+
     c = dSlabs1_dT + dtanh_dT
     dd = -2.0_rp * d * ( sigmaX1 * ( x1 * dv0S_dT + sigmaX1 * dx1_dT ) + y2 * dy_dT )
-    dSlabS_dT = sa * ( c + du / u ) &
-      &       + sb * ( c + dv / v ) &
+    dSlabS_dT = c  * ( c * u + du ) & ! sa * ( c + du / u )
+      &       + sb * ( c * v + dv ) & ! sb * v * ( c + dv / v )
       &       - sc * ( c + dd + dyi_dT + dx1_dT + dv0S_dT / sigma ) &
       &       + sd * ( c + dd + dy_dT )
 
   end subroutine Slabswint_dT
 
   ! ----------------------------------------------  Slabswint_dAll  -----
-! elemental &
+  elemental &
   subroutine Slabswint_dAll ( Nu, v0, v0s, x1, yi, y, w, T, tanh1, slabs1, &
     &                         dv0s_dT, dx1_dT, dtanh_dT, dslabs1_dT, dy_dT, dyi_dT, &
     &                         dslabs1_dNu0, velCor, &
@@ -1573,7 +1577,8 @@ contains
   end function Slabswint_Lines
 
   ! -----------------------------------------  Slabswint_Lines_dT  -----
-  elemental subroutine Slabswint_Lines_dT ( Nu, Slabs, tanh1, dTanh_dT, &
+  elemental &
+  subroutine Slabswint_Lines_dT ( Nu, Slabs, tanh1, dTanh_dT, &
     &                             Beta, dBeta_dT, NoPolarized )
 
   ! Compute single-line absorption and its derivative w.r.t. temperature,
@@ -1648,19 +1653,17 @@ contains
       sd = c2 * y
       c3 = slabs%dSlabs1_dT(l) + dtanh_dT
       dd = -2.0_rp * d * ( sigmaX1 * ( x1 * dv0s_dT + sigmaX1 * dx1_dT ) + y2 * dy_dT )
+      beta = beta + sa + sd
+!     dBeta_dT = dBeta_dT + sa * ( c3 + du / u ) + sd * ( c3 + dd + dy_dT )
+      dBeta_dT = dBeta_dT + c1 * ( c3 * u + du ) + sd * ( c3 + dd + dy_dT )
       if ( abs(yi) > 1.0e-6_rp ) then
-        sb = c1 * yi * v
+        sb = c1 * yi
         sc = c2 * sigmaX1 * yi
-        beta = beta + sa + sd - sc + sb
+        beta = beta + sb * v - sc
 
         dBeta_dT = dBeta_dT &
-          &      + sa * ( c3 + du / u ) &
-          &      + sb * ( c3 + dv / v ) &
-          &      - sc * ( c3 + dd + dyi_dT + dx1_dT + dv0s_dT / sigma ) &
-          &      + sd * ( c3 + dd + dy_dT )
-      else
-        beta = beta + sa + sd
-        dBeta_dT = dBeta_dT + sa * ( c3 + du / u )  + sd * ( c3 + dd + dy_dT )
+          &      + sb * ( c3 * v + dv ) & ! sb * v * ( c3 + dv / v )
+          &      - sc * ( c3 + dd + dyi_dT + dx1_dT + dv0s_dT / sigma ) ! &
       end if
 
     end do
@@ -2656,6 +2659,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.48  2005/09/17 00:48:09  vsnyder
+! Don't look at an array that might not be there, plus some cannonball polishing
+!
 ! Revision 2.47  2005/09/03 01:21:33  vsnyder
 ! Spectral parameter offsets stuff
 !
