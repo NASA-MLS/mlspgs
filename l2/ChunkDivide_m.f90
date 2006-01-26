@@ -16,7 +16,6 @@ module ChunkDivide_m
 
   use Intrinsic, only: L_NONE, PHYQ_INVALID
   use MLSCommon, only: R8, RP
-  use MLSFillValues, only: ISFILLVALUE
   use MLSSets, only: FINDFIRST
 
   implicit none
@@ -2261,6 +2260,7 @@ contains ! ===================================== Public Procedures =====
   subroutine smoothOutDroppedMAFs(field, wasSmoothed, monotonize)
     ! detect any fillValues--replace them with nearest neighbor values
     ! or, optionally, detect and correct any departures from monotone growth
+  use MLSFillValues, only: ISFILLVALUE
     ! Args
     real(r8), intent(inout)                      :: field(:,:,:)
     logical, dimension(:), optional, intent(out) :: wasSmoothed
@@ -2307,6 +2307,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.67  2006/01/26 00:34:50  pwagner
+! demoted more use statements from module level to speed Lahey compiles
+!
 ! Revision 2.66  2005/12/16 00:06:51  pwagner
 ! Changes to reflect new MLSFillValues module
 !
