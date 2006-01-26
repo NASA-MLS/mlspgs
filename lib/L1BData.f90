@@ -29,12 +29,10 @@ module L1BData
     & mls_openFile, mls_closeFile
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR, &
     & MLSMSG_WARNING, MLSMSG_L1BREAD, MLSMSG_WARNING, MLSMSG_DEALLOCATE
-  use MLSNumerics, only: EssentiallyEqual
   use MLSStrings, only: CompressString, streq
   use MLSStringLists, only: NumStringElements
   use MoreTree, only: Get_Field_ID
   use Output_M, only: Output, resumeOutput, suspendOutput
-  use PCFHdr, only: GlobalAttributes
   use SDPToolkit, only: max_orbits
   use String_Table, only: Get_String
   use TREE, only: NSONS, SUB_ROSA, SUBTREE, DUMP_TREE_NODE, SOURCE_REF
@@ -499,6 +497,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   !-------------------------------------------------  DiffL1BData  -----
   subroutine DiffL1BData ( l1bData1, l1bData2, &
     & details, stats, rms, silent, numDiffs )
+  use MLSNumerics, only: EssentiallyEqual
     ! Diff two l1brad quantities
     type( L1BData_T ), intent(inout) :: L1bData1
     type( L1BData_T ), intent(inout) :: L1bData2
@@ -995,6 +994,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   !--------------------------------------------------  IsL1BGappy  -----
   logical function IsL1BGappy ( l1bData, ignoreGlobalAttrs )
     ! Look for gaps in l1bData, returning true if any found
+  use PCFHdr, only: GlobalAttributes
 
     ! Dummy arguments
     type (L1BData_T), intent(in) :: l1bData
@@ -1429,6 +1429,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   subroutine ReadL1BData_fileHandle ( L1FileHandle, QuantityName, L1bData, NoMAFs, Flag, &
     & FirstMAF, LastMAF, NEVERFAIL, hdfVersion, dontPad, L2AUX )
     
+  use PCFHdr, only: GlobalAttributes
     ! Dummy arguments
     character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
     integer, intent(in)            :: L1FILEHANDLE ! From HDF
@@ -2139,6 +2140,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   subroutine ReadL1BData_MLSFile ( L1BFile, QuantityName, L1bData, NoMAFs, Flag, &
     & FirstMAF, LastMAF, NEVERFAIL, dontPad, L2AUX )
     
+  use PCFHdr, only: GlobalAttributes
     ! Dummy arguments
     character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
     type(MLSFile_T), pointer       :: L1BFile
@@ -3163,6 +3165,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.68  2006/01/26 00:33:09  pwagner
+! demoted more use statements from module level to speed Lahey compiles
+!
 ! Revision 2.67  2006/01/04 20:31:18  pwagner
 ! Diff procedures may keep silent, returning num of diffs only
 !
