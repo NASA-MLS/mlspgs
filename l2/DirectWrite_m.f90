@@ -25,7 +25,6 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
     ! so instead write them out chunk-by-chunk
 
   use Allocate_Deallocate, only: Allocate_test, DeAllocate_test
-  use Hdf, only: DFACC_CREATE, DFACC_RDONLY
   use INIT_TABLES_MODULE, only: L_PRESSURE, L_ZETA, &
     & L_L2GP, L_L2AUX, L_L2DGG, L_L2FWM
   use MLSCommon, only: RV, DEFAULTUNDEFINEDVALUE, MLSFile_T
@@ -33,7 +32,6 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
     & MLSMSG_Error, MLSMSG_Warning
   use MLSSets, only: FindFirst
   use OUTPUT_M, only: blanks, OUTPUT
-  use readAPriori, only: APrioriFiles
   use STRING_TABLE, only: GET_STRING
   use TOGGLES, only: SWITCHES
   use VectorsModule, only: VectorValue_T
@@ -204,6 +202,7 @@ contains ! ======================= Public Procedures =========================
     ! Write standard hdfeos-formatted files ala l2gp for datasets that
     ! are too big to keep all chunks stored in memory
     ! so instead write them out profile-by-profile
+    use Hdf, only: DFACC_CREATE, DFACC_RDONLY
     use L2GPData, only: L2GPData_T, L2GPNameLen, &
       & AppendL2GPData, DestroyL2GPContents, DUMP
     use readApriori, only: writeAPrioriAttributes
@@ -633,6 +632,7 @@ contains ! ======================= Public Procedures =========================
     ! Despite the name the routine takes vector quantities, not l2aux ones
     use Chunks_m, only: MLSChunk_T
     use ForwardModelConfig, only: ForwardModelConfig_T
+    use Hdf, only: DFACC_CREATE, DFACC_RDONLY
     use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, &
       & mls_closeFile, mls_openFile
     use VectorsModule, only: VectorValue_T, Dump
@@ -1339,11 +1339,6 @@ contains ! ======================= Public Procedures =========================
     else
       l2gp%status(firstProfile:lastProfile) = 0
     endif
-    ! njl wants this done by l2cf in FillStatus Quantity
-    !  if ( APrioriFiles%dao // AprioriFiles%ncep == ' ' ) &
-    !    & l2gp%status(firstProfile:lastProfile) = &
-    !    & l2gp%status(firstProfile:lastProfile) + CLIMATOLOGYFALLBACKSTATUS
-    ! l2gp%status(firstProfile:lastProfile) = 'G'
     if ( DEEBUG ) print *, 'Vector converted to l2gp; name: ', trim(name)
     if ( DEEBUG ) print *, 'firstProfile, lastProfile: ', firstProfile, lastProfile
     if ( DEEBUG ) print *, 'useFirstInstance, useLastInstance: ', useFirstInstance, useLastInstance
@@ -1393,6 +1388,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.34  2006/01/26 00:34:50  pwagner
+! demoted more use statements from module level to speed Lahey compiles
+!
 ! Revision 2.33  2005/08/19 23:28:02  pwagner
 ! Trying to avoid possibility of Lahey-causes memory leak
 !
