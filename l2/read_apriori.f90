@@ -12,8 +12,6 @@
 !=============================================================================
 module ReadAPriori
 
-  use GriddedData, only: rgr, GriddedData_T, v_is_pressure, &
-    & AddGriddedDataToDatabase, Dump, SetupNewGriddedData
   use Expr_M, only: Expr
   use Hdf, only: DFACC_RDWR, DFACC_RDONLY
   use INIT_TABLES_MODULE, only: F_AURAINSTRUMENT, F_DIMLIST, F_FIELD, F_FILE, &
@@ -21,10 +19,6 @@ module ReadAPriori
     & FIELD_FIRST, FIELD_LAST, L_CLIMATOLOGY, L_DAO, L_NCEP, S_GRIDDED, &
     & L_GLORIA, L_STRAT, S_L2AUX, S_L2GP, F_QUANTITYTYPE
   use Intrinsic, only: l_ascii, l_grid, l_hdf, l_swath, PHYQ_Dimensionless
-  use L2AUXData, only: L2AUXData_T, AddL2AUXToDatabase, &
-    &                  ReadL2AUXData, Dump
-  use L2GPData, only: L2GPData_T, MAXSWATHNAMESBUFSIZE, &
-    & AddL2GPToDatabase, ReadL2GPData, Dump
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: FileNameLen, MLSFile_T
   use MLSFiles, only: FILENOTFOUND, &
@@ -42,9 +36,7 @@ module ReadAPriori
     & mlspcf_l2clim_start, mlspcf_l2clim_end
   use MLSStringLists, only: catLists
   use MoreTree, only: Get_Spec_ID
-  use ncep_dao, only: READ_CLIMATOLOGY, ReadGriddedData, ReadGloriaFile
   use OUTPUT_M, only: BLANKS, OUTPUT
-  use PCFHdr, only: GlobalAttributes
   use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS
   use String_Table, only: GET_STRING
   use Time_M, only: Time_Now
@@ -94,6 +86,13 @@ contains ! =====     Public Procedures     =============================
   subroutine Read_apriori ( Root, L2GPDatabase, L2auxDatabase, GriddedDatabase, &
     & fileDataBase)
 
+  use GriddedData, only: rgr, GriddedData_T, v_is_pressure, &
+    & AddGriddedDataToDatabase, Dump, SetupNewGriddedData
+  use L2AUXData, only: L2AUXData_T, AddL2AUXToDatabase, &
+    &                  ReadL2AUXData, Dump
+  use L2GPData, only: L2GPData_T, MAXSWATHNAMESBUFSIZE, &
+    & AddL2GPToDatabase, ReadL2GPData, Dump
+  use ncep_dao, only: READ_CLIMATOLOGY, ReadGriddedData, ReadGloriaFile
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the Read a priori section in the AST
     type (l2gpdata_t), dimension(:), pointer :: L2GPDatabase
@@ -118,7 +117,7 @@ contains ! =====     Public Procedures     =============================
     character(len=FileNameLen) :: FileNameString   ! actual literal file name
     integer :: FileType            ! either s_l2gp or s_l2aux
     logical, dimension(field_first:field_last) :: GOT
-    type (griddedData_T) :: GriddedData
+    type (griddedData_T) :: GriddedData1
     type (MLSFile_T) :: GriddedFile
     integer :: GriddedOrigin            ! From tree
     integer :: GridIndex           ! In the griddeddata database
@@ -428,7 +427,7 @@ contains ! =====     Public Procedures     =============================
           ! The gridded data needs to part of the database, even if the file
           ! won't be found and the gridded data empty,
           ! so it can be merged w/o segment faulting
-          gridIndex = AddGriddedDataToDatabase( GriddedDatabase, GriddedData )
+          gridIndex = AddGriddedDataToDatabase( GriddedDatabase, GriddedData1 )
           call decorate ( key, gridIndex )
           if ( returnStatus == PGS_S_SUCCESS) then
             call readGriddedData ( GriddedFile, son, description, &
@@ -477,7 +476,7 @@ contains ! =====     Public Procedures     =============================
           ! The gridded data needs to part of the database, even if the file
           ! won't be found and the gridded data empty,
           ! so it can be merged w/o segment faulting
-          gridIndex = AddGriddedDataToDatabase( GriddedDatabase, GriddedData )
+          gridIndex = AddGriddedDataToDatabase( GriddedDatabase, GriddedData1 )
           call decorate ( key, gridIndex )
           if ( returnStatus == PGS_S_SUCCESS) then
             call ReadGriddedData ( GriddedFile, son, 'dao', v_is_pressure, &
@@ -818,6 +817,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.63  2006/01/26 00:35:35  pwagner
+! demoted more use statements from module level to speed Lahey compiles
+!
 ! Revision 2.62  2005/09/28 17:02:04  pwagner
 ! Should not segment fault when reading apriori l2aux
 !
