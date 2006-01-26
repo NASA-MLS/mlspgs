@@ -502,7 +502,8 @@ contains ! =====     Public procedures     =============================
       begin, t+t_tgridcoord, l+l_theta, n+n_dt_def, &
       begin, t+t_tgridtype, l+l_logarithmic, n+n_dt_def, &
       begin, t+t_units, l+l_c, l+l_days, l+l_deg, l+l_degrees, &
-             l+l_dimensionless, l+l_dimless, l+l_dl, l+l_dobsonUnits, l+l_ghz, &
+             l+l_dimensionless, l+l_dimless, l+l_dl, l+l_dobsonUnits, l+l_DU, &
+             l+l_ghz, &
              l+l_hours, l+l_hpa, l+l_hz, l+l_k, l+l_khz, l+l_km, l+l_logp, &
              l+l_m, l+l_maf, l+l_mafs, l+l_mb, l+l_meters, l+l_mhz, &
              l+l_mif, l+l_mifs, l+l_minutes, l+l_molcm2, &
@@ -1382,6 +1383,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.421  2006/01/26 00:36:20  pwagner
+! DU synonym for DobsonUnits
+!
 ! Revision 2.420  2006/01/11 17:04:32  pwagner
 ! May specify unit when filling column abundances
 !
