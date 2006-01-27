@@ -30,7 +30,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use MLSStrings, only: Capitalize, lowercase
   use MLSStringLists, only: ExtractSubString, &
     & GetStringHashElement, GetStringElement, GetUniqueList, &
-    & list2array, NumStringElements, RemoveListFromList, &
+    & list2array, NumStringElements, RemoveListFromList, ReplaceSubString, &
     & StringElementNum, SwitchDetail
   use Output_M, only: blanks, Output, resumeOutput, suspendOutput
   use STRING_TABLE, only: DISPLAY_STRING
@@ -210,7 +210,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     & // &
     & 'ho2,bro,hocl,hcn,iwc,ch3cn'
   character(len=255), public, save :: COL_SPECIES_HASH = &
-    & 'molcm2,molcm2,molcm2,molcm2,molcm2,molcm2,molcm2,molcm2,molcm2,molcm2,' &
+    & 'molcm2,molcm2,DU,molcm2,molcm2,molcm2,molcm2,molcm2,molcm2,molcm2,' &
     & // &
     & 'molcm2,molcm2,molcm2,molcm2,molcm2,molcm2'
 
@@ -1692,6 +1692,7 @@ contains ! =====     Public Procedures     =============================
       & 'HMT,M,M,M,HM,M,M,HMT,M,M'   ! These are abbreviated values
 
     character(len=CHARATTRLEN) :: abbr_uniq_fdef
+    logical, parameter :: DEEBUG = .true.
     character(len=CHARATTRLEN) :: expnd_uniq_fdef
     integer :: field
     character(len=CHARATTRLEN) :: field_name
@@ -1701,6 +1702,7 @@ contains ! =====     Public Procedures     =============================
     character(len=CHARATTRLEN) :: species_name ! Always lower case
     integer :: status
     integer :: swid
+    character(len=CHARATTRLEN) :: temp_name
     character(len=CHARATTRLEN), dimension(NumGeolocFields) :: theTitles
     character(len=CHARATTRLEN), dimension(NumGeolocFields) :: theUnits
     character(len=CHARATTRLEN) :: units_name
@@ -1802,8 +1804,22 @@ contains ! =====     Public Procedures     =============================
     isColumnAmt = ( index(species_name, 'column') > 0 )
     isTPPressure = ( index(species_name, 'tpp') > 0 )
     if ( isColumnAmt ) then
+      ! This next failed sometimes
+      temp_name = species_name
       call ExtractSubString(Name, species_name, 'column', 'wmo')
+      if ( species_name == ' ' ) species_name=temp_name
+      ! So we'll try another tack:
+      temp_name = species_name
+      call ReplaceSubString ( temp_name, species_name, 'column', '' )
+      if ( species_name == ' ' ) species_name=temp_name
+      temp_name = species_name
+      call GetStringElement( temp_name, species_name, &
+        & 1, countEmpty=.true., inseparator='-' )
+      if ( species_name == ' ' ) species_name=temp_name
+      ! Hopefully by now we've turned species_name into one of the species
     endif
+    if ( DEEBUG ) &
+      & print *, 'full name: ', trim(name), ' Species: ', trim(species_name)
     call GetStringHashElement (lowercase(Species), &
       & SpUniqueFieldDefinition, trim(species_name), &
       & abbr_uniq_fdef, .false.)
@@ -1824,9 +1840,14 @@ contains ! =====     Public Procedures     =============================
     end select
     if ( isColumnAmt ) then
       ! units_name = 'DU'
+      if ( DEEBUG ) &
+        & call dump( .true., col_species_keys, col_species_hash, &
+        & 'column species units' )
       call GetStringHashElement (col_species_keys, &
       & col_species_hash, trim(lowercase(species_name)), &
       & units_name, .true.)
+      if ( DEEBUG ) &
+      & print *, 'units_name: ', trim(units_name)
       if ( units_name == ',' ) units_name = 'molcm2'
     endif
     if ( isTPPressure ) units_name = 'hPa'
@@ -3937,6 +3958,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.135  2006/01/26 00:33:09  pwagner
+! demoted more use statements from module level to speed Lahey compiles
+!
 ! Revision 2.134  2006/01/19 00:29:10  pwagner
 ! Units attribute for column abundances corrected
 !
