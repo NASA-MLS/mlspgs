@@ -159,7 +159,7 @@ contains ! ======================================== BaselineForwardModel ======
         & foundInFirst=blankBslInFirst, wasSpecific=blankBslWasSpecific )
       ! Avoid redundancy
       if ( associated ( blankCandidate, bandCandidate ) .or. &
-        & associated ( blankCandidate, bandCandidate ) ) then
+        & associated ( blankCandidate, radCandidate ) ) then
         nullify ( blankCandidate )
         blankBslWasSpecific = .false.
         blankBslInFirst = .false.
@@ -524,6 +524,9 @@ contains ! ======================================== BaselineForwardModel ======
 end module BaselineForwardModel_m
   
 ! $Log$
+! Revision 2.27  2006/01/27 17:23:29  livesey
+! Embarrassing slip up.
+!
 ! Revision 2.26  2006/01/27 17:19:27  livesey
 ! Minor bug fix to further avoid double triggers in the blank cases.
 !
