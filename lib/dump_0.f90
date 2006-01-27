@@ -54,10 +54,15 @@ module DUMP_0
 !       where array can be a 1, 2, or 3d array of
 !       chars, ints, reals, or doubles,
 !       and fillValue is a scalar of the same type, if present
-! dump_name_v_pairs ( values, char* names,
+! dump ( strlist string, char* name, [char* fillvalue], [log clean] )
+! dump ( log countEmpty, strlist keys, strlist values, char* name, 
+!       [char* separator] )
+! dump_name_v_pairs ( values, strlist names,
 !      [[log clean], [char* format, [int width]] ) 
 !       where values can be a 1d array of ints or reals, and
-!       names is a comma-separated list of corresponding names
+!       names is a string list of corresponding names
+
+! in the above, a string list is a string of elements (usu. comma-separated)
 ! === (end of api) ===
 
   public :: DIFF, DUMP, DUMP_NAME_V_PAIRS, SELFDIFF
@@ -76,7 +81,7 @@ module DUMP_0
     module procedure DUMP_2D_LOGICAL, DUMP_2D_REAL
     module procedure DUMP_3D_CHAR, DUMP_3D_DOUBLE, DUMP_3D_INTEGER
     module procedure DUMP_3D_REAL
-    module procedure DUMP_STRING
+    module procedure DUMP_HASH, DUMP_STRLIST
   end interface
   interface DUMP_NAME_V_PAIRS   ! dump name-value pairs, names in string list
     module procedure DUMP_NAME_V_PAIRS_DOUBLE, DUMP_NAME_V_PAIRS_INTEGER
@@ -1386,8 +1391,45 @@ contains
    end if
   end subroutine DUMP_3D_REAL
 
-  ! -----------------------------------------------  DUMP_STRING  -----
-  subroutine DUMP_STRING ( STRING, NAME, FILLVALUE, CLEAN )
+  ! -----------------------------------------------  DUMP_HASH  -----
+  subroutine DUMP_HASH ( COUNTEMPTY, KEYS, VALUES, NAME, SEPARATOR )
+    ! Dumps a hash composed of two string lists: keys and values
+    logical, intent(in)          :: COUNTEMPTY
+    character(len=*), intent(in) :: KEYS
+    character(len=*), intent(in) :: VALUES
+    character(len=*), intent(in), optional :: NAME
+    character(len=*), intent(in), optional :: SEPARATOR
+
+    character( len=max(len(values), len(keys)) ) :: element
+    integer :: J
+    integer :: NumElements
+    character(len=1) :: mySeparator
+    character(len=*), parameter :: COMMA = ','
+
+    mySeparator = COMMA
+    if ( present(SEPARATOR) ) mySeparator = SEPARATOR
+
+    NumElements = NumStringElements(keys, countEmpty, &
+     & separator)
+    if ( NumElements == 0 ) then
+      call empty ( name )
+    else
+      call name_and_size ( name, .false., NumElements )
+      if ( present(name) ) call output ( '', advance='yes' )
+      call output ( '(key)    =   (value)', advance='yes' )
+      do j = 1, NumElements
+        call GetStringElement( keys, element, j, countEmpty, separator)
+        call output ( trim(element), advance='no' )
+        call output( ' = ', advance='no' )
+        call GetStringElement( values, element, j, countEmpty, separator)
+        call output ( trim(element), advance='yes' )
+      end do ! j
+    end if
+  end subroutine DUMP_HASH
+
+  ! -----------------------------------------------  DUMP_STRLIST  -----
+  subroutine DUMP_STRLIST ( STRING, NAME, FILLVALUE, CLEAN )
+    ! Dumps a ','-separated list of strings
     character(len=*), intent(in) :: STRING
     character(len=*), intent(in), optional :: NAME
     character(len=*), intent(in), optional :: FILLVALUE
@@ -1421,8 +1463,11 @@ contains
         call output ( trim(myFillValue), advance='yes' )
       end do ! j
     end if
-  end subroutine DUMP_STRING
+  end subroutine DUMP_STRLIST
 
+  ! -----------------------------------  DUMP_NAME_V_PAIRS  -----
+  ! Another hash-like dump:
+  ! Show names and related (numerical) values
   ! -----------------------------------  DUMP_NAME_V_PAIRS_DOUBLE  -----
   subroutine DUMP_NAME_V_PAIRS_DOUBLE ( VALUES, NAMES, CLEAN, FORMAT, WIDTH )
     double precision, intent(in)                         :: values(:)
@@ -1853,6 +1898,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.52  2006/01/27 01:01:37  pwagner
+! Can now dump hashes
+!
 ! Revision 2.51  2005/12/17 00:58:56  pwagner
 ! dumps of rms, etc. should appear uniform
 !
