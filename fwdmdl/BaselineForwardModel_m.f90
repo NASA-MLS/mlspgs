@@ -159,7 +159,11 @@ contains ! ======================================== BaselineForwardModel ======
         & foundInFirst=blankBslInFirst, wasSpecific=blankBslWasSpecific )
       ! Avoid redundancy
       if ( associated ( blankCandidate, bandCandidate ) .or. &
-        & associated ( blankCandidate, bandCandidate ) ) nullify ( blankCandidate )
+        & associated ( blankCandidate, bandCandidate ) ) then
+        nullify ( blankCandidate )
+        blankBslWasSpecific = .false.
+        blankBslInFirst = .false.
+      end if
       ! Now the complicated bit of working out which to pick
       ! First go by those listed in the 'specific quantities' field
       specificMatches = (/ bandBslWasSpecific, radBslWasSpecific, blankBslWasSpecific /)
@@ -520,6 +524,9 @@ contains ! ======================================== BaselineForwardModel ======
 end module BaselineForwardModel_m
   
 ! $Log$
+! Revision 2.26  2006/01/27 17:19:27  livesey
+! Minor bug fix to further avoid double triggers in the blank cases.
+!
 ! Revision 2.25  2006/01/20 23:52:20  livesey
 ! Added ability to use a baseline for another band/radiometer if listed in
 ! specificQuantities
