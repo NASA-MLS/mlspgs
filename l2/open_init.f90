@@ -647,7 +647,12 @@ contains ! =====     Public Procedures     =============================
         call output ( error_number, places=9, advance='yes' )
       end if
     else
-      call output ( '***Error in module ' )
+      call output ( '*** ' )
+      if ( present(forgiveable) ) then
+        call output ( 'Warning in module' )
+      else
+        call output ( 'Error in module ' )
+      endif
       call output ( ModuleName, advance='yes' )
       call output ( trim(full_message), advance='yes' )
       if ( present(error_number) ) then
@@ -675,6 +680,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.89  2006/01/27 01:03:29  pwagner
+! Changed wording when merely a warning
+!
 ! Revision 2.88  2006/01/19 00:31:54  pwagner
 ! reads col_spec_keys and _hash from PCF
 !
