@@ -16,6 +16,8 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
   use MLSCommon, only: r4, r8
   use MLSFillValues, only: isFillValue
   use MLSSets, only: findAll
+  use MLSStringLists, only: catLists
+  use MLSStrings, only: lowerCase
   use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
 
   implicit none
@@ -66,7 +68,8 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
   ! (How about a separate count of times fillValue had to be ignored?)
 
   type Stat_T
-    integer :: count = 0    ! If > 0, merging data from prior call(s)
+    integer :: count = 0      ! If > 0, merging data from prior call(s)
+    integer :: fillcount = 0  ! Number of times fillValues ignored
     real(r8) :: min
     real(r8) :: max
     real(r8) :: mean
@@ -83,6 +86,23 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
   interface ALLSTATS
     module procedure allstats_d1r4, allstats_d2r4, allstats_d3r4
     module procedure allstats_d1r8, allstats_d2r8, allstats_d3r8
+  end interface
+  
+  interface dump
+    module procedure dump_all
+    module procedure dump_selected
+  end interface
+  
+  interface dump_if_selected
+    module procedure dump_if_selected_int_array
+    module procedure dump_if_selected_int_scalar
+    module procedure dump_if_selected_r8_array
+    module procedure dump_if_selected_r8_scalar
+  end interface
+  
+  interface filterValues
+    module procedure filterValues_r4
+    module procedure filterValues_r8
   end interface
   
   interface mlsmin
@@ -110,6 +130,10 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
     module procedure mlsrms_d1r8, mlsrms_d2r8, mlsrms_d3r8
   end interface
   
+  interface stat1
+    module procedure STAT1_r4, STAT1_r8
+  end interface
+  
   real, parameter :: FAC = 64.0E0
   logical, parameter :: DEEBUG = .false.
   ! Function names
@@ -122,177 +146,25 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
 
 contains
       ! ------------------- allstats_d1r4 -----------------------
-      subroutine allstats_d1r4(values, &
+      subroutine allstats_d1r4( values, &
         & nbins, bounds, addedData, fillValue, precision, &
-        & count, min, max, mean, stddev, rms, bincount)
-        ! Args
-        real(r4), dimension(:), intent(in)             :: values
-        integer, optional, intent(in)                  :: nbins
-        real(r4), dimension(2), optional, intent(in)   :: bounds
-        logical, optional, intent(in)                  :: addeddata
-        real(r4), optional, intent(in)                 :: fillValue
-        real(r4), dimension(:), optional, intent(in)   :: precision
-        integer, optional, intent(inout)               :: count
-        real(r4), optional, intent(out)                :: min
-        real(r4), optional, intent(out)                :: max
-        real(r4), optional, intent(out)                :: mean
-        real(r4), optional, intent(out)                :: stddev
-        real(r4), optional, intent(out)                :: rms
-        integer, dimension(:), optional, intent(out)   :: bincount
-        ! Internal variables
-        real(r4), dimension(5)                         :: stats
-        logical                                        :: myAddedData
-        integer                                        :: ncells
-        integer                                        :: n
-        integer                                        :: nx
-        real(r4)                                       :: x1, x2
-        real(r4), dimension(:), pointer                :: xtab => null()
-        real(r4)                                       :: absMu, sigma
-        ! Executable
-        ncells = 1
-        if ( present(nbins) .and. present(bincount) ) ncells = nbins
-        x1 = 1.
-        x2 = 1.
-        if ( present(bounds) ) then
-          x1 = bounds(1)
-          x2 = bounds(2)
-        endif
-        myAddedData = .false.
-        if ( present(addedData) ) myAddedData = addedData
-        if ( myAddedData ) then
-          stats(1) = MLSStat%count
-          stats(2) = MLSStat%min
-          stats(3) = MLSStat%max
-          stats(4) = MLSStat%mean
-          stats(5) = MLSStat%stddev
-          if ( DEEBUG ) then
-          call output('Merging with existing stats count min max mean stddev ', advance='yes')
-          call output(stats, advance='yes')
-          endif
-        else
-          stats(1) = 0  ! Reset count to start again
-          if ( DEEBUG ) call output('Resetting count to 0', advance='yes')
-        endif
-        if ( present(fillValue) ) then
-          call filterValues_r4(values, XTAB, NX, fillValue=fillValue)
-          call STAT1_r4(XTAB, NX, STATS, bincount, NCELLS, X1, X2)
-          call Deallocate_test ( XTAB, 'XTAB', ModuleName )
-        elseif ( present(precision) ) then
-          call filterValues_r4(values, XTAB, NX, precision=precision)
-          call STAT1_r4(XTAB, NX, STATS, bincount, NCELLS, X1, X2)
-          call Deallocate_test ( XTAB, 'XTAB', ModuleName )
-        else
-          call STAT1_r4(values, size(values), STATS, bincount, NCELLS, X1, X2)
-        endif
-        MLSStat%count  = stats(1)
-        MLSStat%min    = stats(2)
-        MLSStat%max    = stats(3)
-        MLSStat%mean   = stats(4)
-        MLSStat%stddev = stats(5)
-        if ( present(count ) ) count  = stats(1)
-        if ( present(min   ) ) min    = stats(2)
-        if ( present(max   ) ) max    = stats(3)
-        if ( present(mean  ) ) mean   = stats(4)
-        if ( present(stddev) ) stddev = stats(5)
-        if ( present(rms   ) ) then
-          n = stats(1)
-          absMu = ABS(stats(4))
-          sigma = stats(5)
-          if ( n == 0 .or. (absMu == 0. .and. sigma == 0.) ) then
-            rms = 0.
-          elseif ( sigma < absMu ) then
-            rms = absMu*sqrt( ((n-1.)/n)*(sigma/absMu)**2 + 1. )
-          else
-            rms = sigma*sqrt( ((n-1.)/n) + (absMu/sigma)**2 )
-          endif
-        endif
-        
+        & count, min, max, mean, stddev, rms, bincount, doDump )
+        integer, parameter :: rk = r4
+        include 'allstats_d1.f9h'
       end subroutine allstats_d1r4
 
       ! ------------------- allstats_d1r8 -----------------------
-      subroutine allstats_d1r8(values, &
+      subroutine allstats_d1r8( values, &
         & nbins, bounds, addedData, fillValue, precision, &
-        & count, min, max, mean, stddev, rms, bincount)
-        ! Args
-        real(r8), dimension(:), intent(in)             :: values
-        integer, optional, intent(in)                  :: nbins
-        real(r8), dimension(2), optional, intent(in)   :: bounds
-        logical, optional, intent(in)                  :: addeddata
-        real(r8), optional, intent(in)                 :: fillValue
-        real(r8), dimension(:), optional, intent(in)   :: precision
-        integer, optional, intent(inout)               :: count
-        real(r8), optional, intent(out)                :: min
-        real(r8), optional, intent(out)                :: max
-        real(r8), optional, intent(out)                :: mean
-        real(r8), optional, intent(out)                :: stddev
-        real(r8), optional, intent(out)                :: rms
-        integer, dimension(:), optional, intent(out)   :: bincount
-        ! Internal variables
-        real(r8), dimension(5)                         :: stats
-        logical                                        :: myAddedData
-        integer                                        :: ncells
-        integer                                        :: n
-        integer                                        :: nx
-        real(r8)                                       :: x1, x2
-        real(r8), dimension(:), pointer                :: xtab => null()
-        real(r8)                                       :: absMu, sigma
-        ! Executable
-        ncells = 1
-        if ( present(nbins) .and. present(bincount) ) ncells = nbins
-        x1 = 1.
-        x2 = 1.
-        if ( present(bounds) ) then
-          x1 = bounds(1)
-          x2 = bounds(2)
-        endif
-        stats(1) = MLSStat%count
-        stats(2) = MLSStat%min
-        stats(3) = MLSStat%max
-        stats(4) = MLSStat%mean
-        stats(5) = MLSStat%stddev
-        myAddedData = .false.
-        if ( present(addedData) ) myAddedData = addedData
-        if ( .not. myAddedData ) stats(1) = 0  ! Reset count to start again
-        if ( present(fillValue) ) then
-          call filterValues_r8(values, XTAB, NX, fillValue=fillValue)
-          call STAT1_r8(XTAB, NX, STATS, bincount, NCELLS, X1, X2)
-          call Deallocate_test ( XTAB, 'XTAB', ModuleName )
-        elseif ( present(precision) ) then
-          call filterValues_r8(values, XTAB, NX, precision=precision)
-          call STAT1_r8(XTAB, NX, STATS, bincount, NCELLS, X1, X2)
-          call Deallocate_test ( XTAB, 'XTAB', ModuleName )
-        else
-          call STAT1_r8(values, size(values), STATS, bincount, NCELLS, X1, X2)
-        endif
-        MLSStat%count  = stats(1)
-        MLSStat%min    = stats(2)
-        MLSStat%max    = stats(3)
-        MLSStat%mean   = stats(4)
-        MLSStat%stddev = stats(5)
-        if ( present(count ) ) count  = stats(1)
-        if ( present(min   ) ) min    = stats(2)
-        if ( present(max   ) ) max    = stats(3)
-        if ( present(mean  ) ) mean   = stats(4)
-        if ( present(stddev) ) stddev = stats(5)
-        if ( present(rms   ) ) then
-          n = stats(1)
-          absMu = ABS(stats(4))
-          sigma = stats(5)
-          if ( n == 0 .or. (absMu == 0. .and. sigma == 0.) ) then
-            rms = 0.
-          elseif ( sigma < absMu ) then
-            rms = absMu*sqrt( ((n-1.)/n)*(sigma/absMu)**2 + 1. )
-          else
-            rms = sigma*sqrt( ((n-1.)/n) + (absMu/sigma)**2 )
-          endif
-        endif
-        
+        & count, min, max, mean, stddev, rms, bincount, doDump )
+        integer, parameter :: rk = r8
+        include 'allstats_d1.f9h'
       end subroutine allstats_d1r8
 
       ! ------------------- allstats_d2r4 -----------------------
-      subroutine allstats_d2r4(values, &
+      subroutine allstats_d2r4( values, &
         & nbins, bounds, addedData, fillValue, precision, &
-        & count, min, max, mean, stddev, rms, bincount)
+        & count, min, max, mean, stddev, rms, bincount, doDump )
         ! Args
         real(r4), dimension(:,:), intent(in)           :: values
         integer, optional, intent(in)                  :: nbins
@@ -307,6 +179,7 @@ contains
         real(r4), optional, intent(out)                :: stddev
         real(r4), optional, intent(out)                :: rms
         integer, dimension(:), optional, intent(out)   :: bincount
+        logical , optional, intent(in)                 :: doDump
         ! Internal variables
         integer, dimension(2)                          :: shp
         ! Executable
@@ -315,20 +188,20 @@ contains
           call allstats_d1r4(reshape(values, (/shp(1)*shp(2)/)), &
             & nbins, bounds, addedData, fillValue, &
             & count=count, min=min, max=max, mean=mean, &
-            & stddev=stddev, rms=rms, bincount=bincount)
+            & stddev=stddev, rms=rms, bincount=bincount, doDump=doDump)
         else
           call allstats_d1r4(reshape(values, (/shp(1)*shp(2)/)), &
             & nbins, bounds, addedData, fillValue, &
             & reshape(precision, (/shp(1)*shp(2)/)),&
             & count=count, min=min, max=max, mean=mean, &
-            & stddev=stddev, rms=rms, bincount=bincount)
+            & stddev=stddev, rms=rms, bincount=bincount, doDump=doDump)
         endif
       end subroutine allstats_d2r4
 
       ! ------------------- allstats_d2r8 -----------------------
-      subroutine allstats_d2r8(values, &
+      subroutine allstats_d2r8( values, &
         & nbins, bounds, addedData, fillValue, precision, &
-        & count, min, max, mean, stddev, rms, bincount)
+        & count, min, max, mean, stddev, rms, bincount, doDump )
         ! Args
         real(r8), dimension(:,:), intent(in)           :: values
         integer, optional, intent(in)                  :: nbins
@@ -343,6 +216,7 @@ contains
         real(r8), optional, intent(out)                :: stddev
         real(r8), optional, intent(out)                :: rms
         integer, dimension(:), optional, intent(out)   :: bincount
+        logical , optional, intent(in)                 :: doDump
         ! Internal variables
         integer, dimension(2)                          :: shp
         ! Executable
@@ -351,20 +225,20 @@ contains
           call allstats_d1r8(reshape(values, (/shp(1)*shp(2)/)), &
             & nbins, bounds, addedData, fillValue, &
             & count=count, min=min, max=max, mean=mean, &
-            & stddev=stddev, rms=rms, bincount=bincount)
+            & stddev=stddev, rms=rms, bincount=bincount, doDump=doDump)
         else
           call allstats_d1r8(reshape(values, (/shp(1)*shp(2)/)), &
             & nbins, bounds, addedData, fillValue, &
             & reshape(precision, (/shp(1)*shp(2)/)),&
             & count=count, min=min, max=max, mean=mean, &
-            & stddev=stddev, rms=rms, bincount=bincount)
+            & stddev=stddev, rms=rms, bincount=bincount, doDump=doDump)
         endif
       end subroutine allstats_d2r8
 
       ! ------------------- allstats_d3r4 -----------------------
-      subroutine allstats_d3r4(values, &
+      subroutine allstats_d3r4( values, &
         & nbins, bounds, addedData, fillValue, precision, &
-        & count, min, max, mean, stddev, rms, bincount)
+        & count, min, max, mean, stddev, rms, bincount, doDump )
         ! Args
         real(r4), dimension(:,:,:), intent(in)         :: values
         integer, optional, intent(in)                  :: nbins
@@ -379,6 +253,7 @@ contains
         real(r4), optional, intent(out)                :: stddev
         real(r4), optional, intent(out)                :: rms
         integer, dimension(:), optional, intent(out)   :: bincount
+        logical , optional, intent(in)                 :: doDump
         ! Internal variables
         integer, dimension(3)                          :: shp
         ! Executable
@@ -387,20 +262,20 @@ contains
           call allstats_d1r4(reshape(values, (/shp(1)*shp(2)*shp(3)/)), &
             & nbins, bounds, addedData, fillValue, &
             & count=count, min=min, max=max, mean=mean, &
-            & stddev=stddev, rms=rms, bincount=bincount)
+            & stddev=stddev, rms=rms, bincount=bincount, doDump=doDump)
         else
           call allstats_d1r4(reshape(values, (/shp(1)*shp(2)*shp(3)/)), &
             & nbins, bounds, addedData, fillValue, &
             & reshape(precision, (/shp(1)*shp(2)/)),&
             & count=count, min=min, max=max, mean=mean, &
-            & stddev=stddev, rms=rms, bincount=bincount)
+            & stddev=stddev, rms=rms, bincount=bincount, doDump=doDump)
         endif
       end subroutine allstats_d3r4
 
       ! ------------------- allstats_d3r8 -----------------------
-      subroutine allstats_d3r8(values, &
+      subroutine allstats_d3r8( values, &
         & nbins, bounds, addedData, fillValue, precision, &
-        & count, min, max, mean, stddev, rms, bincount)
+        & count, min, max, mean, stddev, rms, bincount, doDump )
         ! Args
         real(r8), dimension(:,:,:), intent(in)         :: values
         integer, optional, intent(in)                  :: nbins
@@ -415,6 +290,7 @@ contains
         real(r8), optional, intent(out)                :: stddev
         real(r8), optional, intent(out)                :: rms
         integer, dimension(:), optional, intent(out)   :: bincount
+        logical , optional, intent(in)                 :: doDump
         ! Internal variables
         integer, dimension(3)                          :: shp
         ! Executable
@@ -423,13 +299,13 @@ contains
           call allstats_d1r8(reshape(values, (/shp(1)*shp(2)*shp(3)/)), &
             & nbins, bounds, addedData, fillValue, &
             & count=count, min=min, max=max, mean=mean, &
-            & stddev=stddev, rms=rms, bincount=bincount)
+            & stddev=stddev, rms=rms, bincount=bincount, doDump=doDump)
         else
           call allstats_d1r8(reshape(values, (/shp(1)*shp(2)*shp(3)/)), &
             & nbins, bounds, addedData, fillValue, &
             & reshape(precision, (/shp(1)*shp(2)/)),&
             & count=count, min=min, max=max, mean=mean, &
-            & stddev=stddev, rms=rms, bincount=bincount)
+            & stddev=stddev, rms=rms, bincount=bincount, doDump=doDump)
         endif
       end subroutine allstats_d3r8
 
@@ -757,10 +633,11 @@ contains
         endif
       end subroutine statistics
       
-      ! ------------------- dump -----------------------
-      subroutine dump(statistic)
+      ! ------------------- dump_all -----------------------
+      subroutine dump_all(statistic)
         ! Dumps all details of statistic
         type(stat_T), intent(in)         :: statistic
+        ! 
         call output('count:  ')
         call output(statistic%count)
         call blanks(4)
@@ -787,9 +664,108 @@ contains
         call newline
         call output(statistic%bincount)
         call newline
-      end subroutine dump
+      end subroutine dump_all
+      
+      ! ------------------- dump_selected -----------------------
+      subroutine dump_selected( statistic, which )
+        ! Dumps selected details of statistic
+        type(stat_T), intent(in)         :: statistic
+        character(len=*), intent(in)     :: which ! E.g., 'max,min'; '*' means all
+        ! 
+        call dump_if_selected( statistic%count, which, 'count', 'no' )
+        call dump_if_selected( statistic%max, which, 'max', 'no' )
+        call dump_if_selected( statistic%min, which, 'min', 'no' )
+        call newline
+        call dump_if_selected( statistic%mean, which, 'mean', 'no' )
+        call dump_if_selected( statistic%stddev, which, 'stddev', 'no' )
+        call dump_if_selected( statistic%rms, which, 'rms', 'no' )
+        call newline
+        if ( statistic%nbins < 3 .or. index(which, 'bin') < 1 ) return
+        call output('x1,x2: ')
+        call output(statistic%bounds)
+        call newline
+        call output('bincounts: ')
+        call newline
+        call output(statistic%bincount)
+        call newline
+      end subroutine dump_selected
       
       ! ------------------- Private Procedures -----------------------
+      ! ------------------- dump_if_selected -----------------------
+      subroutine dump_if_selected_r8_array( what, fields, name )
+        ! Dumps selected details of statistic
+        real(r8), dimension(:), intent(in) :: what
+        character(len=*), intent(in)       :: fields ! E.g., 'max,min'; '*' means all
+        character(len=*), intent(in)       :: name
+        ! 
+        if ( .not. showMe( name, fields ) ) return
+        call output(trim(name) // ': ')
+        call newline
+        call output(what)
+        call newline
+      end subroutine dump_if_selected_r8_array
+
+      subroutine dump_if_selected_r8_scalar( what, fields, name, advance )
+        ! Dumps selected details of statistic
+        real(r8), intent(in)               :: what
+        character(len=*), intent(in)       :: fields ! E.g., 'max,min'; '*' means all
+        character(len=*), intent(in)       :: advance
+        character(len=*), intent(in)       :: name
+        ! 
+        if ( .not. showMe( name, fields ) ) return
+        call output(trim(name) // ': ')
+        if ( advance == 'yes' ) call newline
+        call output(what)
+        if ( advance == 'yes' ) then
+          call newline
+        else
+          call blanks(3)
+        endif
+      end subroutine dump_if_selected_r8_scalar
+
+      subroutine dump_if_selected_int_array( what, fields, name )
+        ! Dumps selected details of statistic
+        integer, dimension(:), intent(in)  :: what
+        character(len=*), intent(in)       :: fields ! E.g., 'max,min'; '*' means all
+        character(len=*), intent(in)       :: name
+        ! 
+        if ( .not. showMe( name, fields ) ) return
+        call output(trim(name) // ': ')
+        call newline
+        call output(what)
+        call newline
+      end subroutine dump_if_selected_int_array
+
+      subroutine dump_if_selected_int_scalar( what, fields, name, advance )
+        ! Dumps selected details of statistic
+        integer, intent(in)                :: what
+        character(len=*), intent(in)       :: fields ! E.g., 'max,min'; '*' means all
+        character(len=*), intent(in)       :: advance
+        character(len=*), intent(in)       :: name
+        ! 
+        if ( .not. showMe( name, fields ) ) return
+        call output(trim(name) // ': ')
+        if ( advance == 'yes' ) call newline
+        call output(what)
+        if ( advance == 'yes' ) then
+          call newline
+        else
+          call blanks(3)
+        endif
+      end subroutine dump_if_selected_int_scalar
+
+      logical function showMe( field, fields )                      
+        ! Determine whether this field should be dumped or not               
+        character(len=*), intent(in) :: field
+        character(len=*), intent(in) :: fields
+        !                                                                    
+        if ( fields == '*' ) then                                     
+          showMe = .true.                                                 
+        else                                                                 
+          showMe = ( index(LowerCase(fields), LowerCase(trim(field))) > 0 )  
+        endif                                                                
+      end function showMe                                                    
+
       ! ------------------- filterValues_r4 -----------------------
       subroutine filterValues_r4(values, XTAB, NX, fillValue, precision)
       ! Return an array filtered of any fillValues
@@ -922,6 +898,9 @@ end module MLSStats1
 
 !
 ! $Log$
+! Revision 2.7  2006/02/01 23:44:37  pwagner
+! Added doDump option to allStats
+!
 ! Revision 2.6  2005/12/16 00:04:29  pwagner
 ! Changes to reflect new MLSFillValues module
 !
