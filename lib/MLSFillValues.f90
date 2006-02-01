@@ -25,9 +25,10 @@ module MLSFillValues              ! Some FillValue-related stuff
 
   public :: EmbedArray, ExtractArray
   public :: FilterValues
-  public :: IsFillValue, ReplaceFillValues
+  public :: IsFillValue
   public :: IsFinite
   public :: IsMonotonic, Monotonize
+  public :: RemoveFillValues, ReplaceFillValues
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -35,8 +36,11 @@ module MLSFillValues              ! Some FillValue-related stuff
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
-  ! This module contains some low level numerical stuff, hunting, interpolating
-  ! etc.
+! This module contains stuff related to:
+! (1) fill values
+! (2) embedding/extracting blocs of elements
+! (3) monotonic increasing or decreasing arrays
+! (All but (1) should perhaps be relocated into other modules)
 !     c o n t e n t s
 !     - - - - - - - -
 
@@ -48,6 +52,10 @@ module MLSFillValues              ! Some FillValue-related stuff
 ! FilterValues                 Filters entries in two arrays
 ! IsFillValue                  Returns true if argument is FillValue
 ! IsFinite                     Returns true if argument is finite
+! IsMonotonic                  Returns true if array is monotonic
+! Monotonize                   Replace any non-monotonic elements
+! RemoveFillValues             Removes FillValues from an array
+!                                returning a new array smaller in size
 ! ReplaceFillValues            Replaces FillValue entries in an array
 
   interface BridgeMissingValues
@@ -84,6 +92,17 @@ module MLSFillValues              ! Some FillValue-related stuff
     module procedure IsFinite_REAL, IsFinite_DOUBLE, IsFinite_INTEGER
   end interface
   
+  interface output
+    module procedure output_str, output_int
+  end interface
+  
+  interface RemoveFillValues
+    module procedure RemoveFill1d_r4, RemoveFill1d_r8, RemoveFill1d_int
+    ! I'm not certain it makes sense to do this except in 1-d
+    ! module procedure RemoveFill2d_r4, RemoveFill2d_r8, RemoveFill2d_int
+    ! module procedure RemoveFill3d_r4, RemoveFill3d_r8, RemoveFill3d_int
+  end interface
+
   interface ReplaceFillValues
     module procedure ReplaceFill1d_r4, ReplaceFill1d_r8, ReplaceFill1d_int
     module procedure ReplaceFill2d_r4, ReplaceFill2d_r8, ReplaceFill2d_int
@@ -100,6 +119,12 @@ module MLSFillValues              ! Some FillValue-related stuff
     module procedure Monotonize_3dr4, Monotonize_3dr8, Monotonize_3dint
   end interface
 
+  ! This tolerance won't work w/o a little fudging 
+  ! when fill values get really huge; e.g. gmao use 1.e15, gloria 1.e12
+  ! The fidging will take the form of
+  ! max( FILLVALUETOLERANCE, abs(FILLVALUE/100000) )
+  ! where obviously 100000 is an arbitrary number
+  ! Should we study this more carefully?
   real, parameter, private :: FILLVALUETOLERANCE = 0.2 ! Poss. could make it 1
 
   logical, parameter ::   DEEBUG = .false.
@@ -334,7 +359,7 @@ contains
     myFillValue = DEFAULTUNDEFINEDVALUE
     if ( present(fillValue) ) myFillValue = fillValue
     IsFillValue_r4 = &
-      & abs(a - myFillValue) < FILLVALUETOLERANCE
+      & abs(a - myFillValue) < max( FILLVALUETOLERANCE, abs(FILLVALUE/100000) )
   end function IsFillValue_r4
 
   elemental logical function IsFillValue_r8 ( A, FILLVALUE )
@@ -344,7 +369,8 @@ contains
     myFillValue = DEFAULTUNDEFINEDVALUE
     if ( present(fillValue) ) myFillValue = fillValue
     IsFillValue_r8 = &
-      & abs(a - myFillValue) < Real(FILLVALUETOLERANCE, r8)
+      & abs(a - myFillValue) < &
+      & max( Real(FILLVALUETOLERANCE, r8), abs(FILLVALUE/100000) )
   end function IsFillValue_r8
 
 ! ------------------------------------------------- IsFinite ---
@@ -363,6 +389,61 @@ contains
     finite = .true.
   end function isfinite_INTEGER
 
+! -------------------------------------  RemoveFillValues  -----
+
+  ! This family of routines removes fill values from an array
+  ! returning a new, possibly smaller array
+  ! If a second array of the same size is supplied
+  ! it is reduced similarly by removing corresponding
+  ! elements
+  ! The new arrays must be large enough to accomodate non-fill elements
+  ! 
+  ! This should be a standard way of dealing with fill values:
+  ! Say we read in a set of GMAO temperatures and their associated heights
+  ! Some of the temperatures are fill values
+  ! Before using the arrays to calculate tropopause pressures, we
+  ! wish to remove all fill values (whose inclusion would sink the calculation)
+  ! So count how many non-fill temperatures we've got, allocate new arrays
+  ! to hold temperatures and heights, then call RemoveFillValues
+
+  ! See also ReplaceFillValues
+
+  subroutine RemoveFill1d_int ( array, FillValue, newArray, second, newSecond )
+    integer, dimension(:), intent(in) :: array
+    integer, intent(in) :: FillValue
+    integer, dimension(:) :: newArray
+    integer, dimension(:), optional, intent(in) :: second
+    integer, dimension(:), optional :: newSecond
+    !
+    ! Local variables
+    ! More local variables and executable
+    include 'RemoveFillValues.f9h'
+  end subroutine RemoveFill1d_int
+
+  subroutine RemoveFill1d_r4 ( array, FillValue, newArray, second, newSecond )
+    real(r4), dimension(:), intent(in) :: array
+    real(r4), intent(in) :: FillValue
+    real(r4), dimension(:) :: newArray
+    real(r4), dimension(:), optional, intent(in) :: second
+    real(r4), dimension(:), optional :: newSecond
+    !
+    ! Local variables
+    ! More local variables and executable
+    include 'RemoveFillValues.f9h'
+  end subroutine RemoveFill1d_r4
+
+  subroutine RemoveFill1d_r8 ( array, FillValue, newArray, second, newSecond )
+    real(r8), dimension(:), intent(in) :: array
+    real(r8), intent(in) :: FillValue
+    real(r8), dimension(:) :: newArray
+    real(r8), dimension(:), optional, intent(in) :: second
+    real(r8), dimension(:), optional :: newSecond
+    !
+    ! Local variables
+    ! More local variables and executable
+    include 'RemoveFillValues.f9h'
+  end subroutine RemoveFill1d_r8
+
 ! -------------------------------------  ReplaceFillValues  -----
 
   ! This family of routines replaces entries in an array
@@ -371,11 +452,26 @@ contains
   ! (2) other criteria set by options
   ! The replacement values are supplied either by 
   ! newvalues, newFill, or according to options (e.g., you may interpolate)
+  ! In short, you ensure result is positive-definite, negative definite,
+  ! monotonic, or an analogous condition
   ! Note:
   ! When interpolating arrays with rank > 1, the interpolated-against
   ! index is the last one
   ! Thus we don't do true multi-dimensional interpolation
   ! If you wish to interpolate against another index, you must reshape
+  
+  ! This should be a standard way of dealing with fill values:
+  ! Say you have an array of results, some of which are fillValues
+  ! and also some of which are unphysical
+  ! (Perhaps the calculations were invalid for some points)
+  ! Before passing the array on for extra calculations you
+  ! want to ensure all its entries will be valid (to keep next step
+  ! from bombing)
+
+  ! Can also be used to replace one set of fill values (e.g. 10^12)
+  ! with another (e.g., -999.99)
+
+  ! See also RemoveFillValues
 
   subroutine ReplaceFill1d_int ( values, FillValue, newValues, newFill, options )
     integer, dimension(:), intent(inout) :: values
@@ -834,12 +930,21 @@ contains
     
   end subroutine blanks
 
-  subroutine output(str, advance)
+  subroutine output_str(str, advance)
     character(len=*), intent(in) :: str
     character(len=*), optional, intent(in) :: advance
     write(*, '(a1)', advance=advance) trim(str)
     
-  end subroutine output
+  end subroutine output_str
+
+  subroutine output_int(int, advance)
+    integer, intent(in) :: int
+    character(len=*), optional, intent(in) :: advance
+    character(len=16) :: str
+    write(str, '(i)') int
+    write(*, '(a1)', advance=advance) trim(str)
+    
+  end subroutine output_int
 
   ! ----------------------------------  DUMP_NAME_V_PAIRS  -----
   subroutine DUMP_NAME_V_PAIRS ( VALUES, WIDTH )
@@ -883,6 +988,9 @@ end module MLSFillValues
 
 !
 ! $Log$
+! Revision 2.4  2006/02/01 23:42:14  pwagner
+! Added RemoveFillValues
+!
 ! Revision 2.3  2006/01/14 00:50:15  pwagner
 ! Added procedures to embed, extract blocs from larger arrays
 !
