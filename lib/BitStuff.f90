@@ -19,6 +19,7 @@ module BitStuff
 
   implicit none
   private
+  public :: BitsToBooleans, BooleansToBits
   public :: CountBits, CountBits_0, CountBits_1, CountBits_2
   public :: CountCharBits_0, CountCharBits_1, CountCharBits_2
   public :: isBitSet, IsBitPatternSet, SetBits, WhichBitsAreSet
@@ -53,6 +54,44 @@ module BitStuff
     & (/ (ibitindx, ibitindx = 0, MAXBITNUMBER) /)
 
 contains
+
+  ! ------------------------------------------------  BitsToBooleans  -----
+  subroutine BitsToBooleans ( i, Booleans )
+    ! Convert an integer to an array of booleans, treating
+    ! the integer as a bit pattern
+    ! E.g., given 41 (101001 in binary) returns (/ T, F, F, T, F, T /)
+    ! Note that the first element of the array Booleans
+    ! corresponds to bit number 0
+    ! That's why we begin its index number with 0 instead of 1
+    integer, intent(in)                 :: i
+    logical, dimension(0:), intent(out) :: Booleans
+    ! Local variables
+    integer :: bitNumber
+    ! Executable
+    Booleans = .false.
+    do bitNumber = 0, min(size(Booleans) - 1, MAXBITNUMBER)
+      Booleans(bitNumber) = isBitSet( i, bitNumber )
+    enddo
+  end subroutine BitsToBooleans
+
+  ! ------------------------------------------------  BooleansToBits  -----
+  subroutine BooleansToBits ( Booleans, i )
+    ! Convert an an array of booleans to an integer, treating
+    ! the integer as a bit pattern
+    ! E.g., given (/ T, F, F, T, F, T /) returns 41 (101001 in binary) 
+    ! Note that the first element of the array Booleans
+    ! corresponds to bit number 0
+    ! That's why we begin its index number with 0 instead of 1
+    logical, dimension(0:), intent(in)  :: Booleans
+    integer, intent(out)                :: i
+    ! Local variables
+    integer :: bitNumber
+    ! Executable
+    i = 0
+    do bitNumber = 0, min(size(Booleans) - 1, MAXBITNUMBER)
+      if ( Booleans(bitNumber) ) i = ibset( i, bitNumber )
+    enddo
+  end subroutine BooleansToBits
 
   ! ------------------------------------------------  CountBits_0  -----
   integer function CountBits_0 ( Word )
@@ -313,6 +352,9 @@ contains
 end module BitStuff
 
 ! $Log$
+! Revision 2.9  2006/02/01 23:41:05  pwagner
+! Can convert bits <-> booleans
+!
 ! Revision 2.8  2005/11/15 00:17:20  pwagner
 ! Changes to workaround NAG failure to elemntalize properly
 !
