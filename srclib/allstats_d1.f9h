@@ -1,0 +1,135 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id$
+!   subroutine allstats*( values, &
+!        & nbins, bounds, addedData, fillValue, precision, &
+!        & count, min, max, mean, stddev, rms, bincount, doDump )
+        ! Args
+        real(rk), dimension(:), intent(in)             :: values
+        integer, optional, intent(in)                  :: nbins
+        real(rk), dimension(2), optional, intent(in)   :: bounds
+        logical, optional, intent(in)                  :: addeddata
+        real(rk), optional, intent(in)                 :: fillValue
+        real(rk), dimension(:), optional, intent(in)   :: precision
+        integer, optional, intent(inout)               :: count
+        real(rk), optional, intent(out)                :: min
+        real(rk), optional, intent(out)                :: max
+        real(rk), optional, intent(out)                :: mean
+        real(rk), optional, intent(out)                :: stddev
+        real(rk), optional, intent(out)                :: rms
+        integer, dimension(:), optional, intent(out)   :: bincount
+        logical , optional, intent(in)                 :: doDump
+        ! Internal variables
+        character(len=64)                              :: fields
+        logical                                        :: myAddedData
+        logical                                        :: myDump
+        real(rk)                                       :: myRMS
+        integer                                        :: ncells
+        integer                                        :: n
+        integer                                        :: nx
+        real(rk), dimension(5)                         :: stats
+        real(rk)                                       :: x1, x2
+        real(rk), dimension(:), pointer                :: xtab => null()
+        real(rk)                                       :: absMu, sigma
+        ! Executable
+        myDump = .false.
+        if ( present(doDump) ) myDump = doDump
+        ncells = 1
+        if ( present(nbins) .and. present(bincount) ) ncells = nbins
+        x1 = 1.
+        x2 = 1.
+        if ( present(bounds) ) then
+          x1 = bounds(1)
+          x2 = bounds(2)
+        endif
+        myAddedData = .false.
+        if ( present(addedData) ) myAddedData = addedData
+        if ( myAddedData ) then
+          stats(1) = MLSStat%count
+          stats(2) = MLSStat%min
+          stats(3) = MLSStat%max
+          stats(4) = MLSStat%mean
+          stats(5) = MLSStat%stddev
+          if ( DEEBUG ) then
+          call output('Merging with existing stats count min max mean stddev ', advance='yes')
+          call output(stats, advance='yes')
+          endif
+        else
+          stats(1) = 0  ! Reset count to start again
+          if ( DEEBUG ) call output('Resetting count to 0', advance='yes')
+        endif
+        if ( present(fillValue) ) then
+          call filterValues(values, XTAB, NX, fillValue=fillValue)
+          call STAT1(XTAB, NX, STATS, bincount, NCELLS, X1, X2)
+          MLSStat%fillCount = MLSStat%fillCount + size(values) - size(XTAB)
+          call Deallocate_test ( XTAB, 'XTAB', ModuleName )
+        elseif ( present(precision) ) then
+          call filterValues(values, XTAB, NX, precision=precision)
+          call STAT1(XTAB, NX, STATS, bincount, NCELLS, X1, X2)
+          MLSStat%fillCount = MLSStat%fillCount + size(values) - size(XTAB)
+          call Deallocate_test ( XTAB, 'XTAB', ModuleName )
+        else
+          call STAT1(values, size(values), STATS, bincount, NCELLS, X1, X2)
+        endif
+        ! Side calculation in case we need rms
+        n = stats(1)
+        absMu = ABS(stats(4))
+        sigma = stats(5)
+        if ( n == 0 .or. (absMu == 0. .and. sigma == 0.) ) then
+          myRMS = 0.
+        elseif ( sigma < absMu ) then
+          myRMS = absMu*sqrt( ((n-1.)/n)*(sigma/absMu)**2 + 1. )
+        else
+          myRMS = sigma*sqrt( ((n-1.)/n) + (absMu/sigma)**2 )
+        endif
+!         call output('n: ')
+!         call output(n, advance='yes')
+!         call output('absMu: ')
+!         call output(absMu, advance='yes')
+!         call output('sigma: ')
+!         call output(sigma, advance='yes')
+!         call output('rms: ')
+!         call output(myRMS, advance='yes')
+        MLSStat%count  = stats(1)
+        MLSStat%min    = stats(2)
+        MLSStat%max    = stats(3)
+        MLSStat%mean   = stats(4)
+        MLSStat%stddev = stats(5)
+        MLSStat%rms    = myRMS
+        if ( present(count ) ) count  = stats(1)
+        if ( present(min   ) ) min    = stats(2)
+        if ( present(max   ) ) max    = stats(3)
+        if ( present(mean  ) ) mean   = stats(4)
+        if ( present(stddev) ) stddev = stats(5)
+        if ( present(rms   ) ) rms    = myRMS
+        ! Have we been asked to dump the calculated stats?
+        if ( .not. myDump ) return
+        call output('Combined statistics')
+        if ( present(fillValue) ) then
+          call output(' (ignoring any fill values of ')
+          call output(fillValue)
+          call output(')')
+        endif
+        call newline
+        fields = ' '
+        if ( present(count ) ) fields = catLists(fields, 'count')
+        if ( present(min   ) ) fields = catLists(fields, 'min  ')
+        if ( present(max   ) ) fields = catLists(fields, 'max  ')
+        if ( present(mean  ) ) fields = catLists(fields, 'mean ')
+        if ( present(stddev) ) fields = catLists(fields, 'stddev')
+        if ( present(rms   ) ) fields = catLists(fields, 'rms  ')
+        if ( present(bincount) ) fields = catLists(fields, 'bin')
+        ! call output('fields: ' // trim(fields), advance='yes')
+        call dump( MLSStat, fields )
+! end subroutine sllstats*
+
+! $Log$
