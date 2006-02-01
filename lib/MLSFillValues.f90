@@ -941,7 +941,7 @@ contains
     integer, intent(in) :: int
     character(len=*), optional, intent(in) :: advance
     character(len=16) :: str
-    write(str, '(i)') int
+    write(str, '(i12)') int
     write(*, '(a1)', advance=advance) trim(str)
     
   end subroutine output_int
@@ -988,6 +988,9 @@ end module MLSFillValues
 
 !
 ! $Log$
+! Revision 2.5  2006/02/01 23:54:20  pwagner
+! Fixed bug in integer format
+!
 ! Revision 2.4  2006/02/01 23:42:14  pwagner
 ! Added RemoveFillValues
 !
