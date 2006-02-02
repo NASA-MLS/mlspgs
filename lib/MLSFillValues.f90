@@ -359,7 +359,7 @@ contains
     myFillValue = DEFAULTUNDEFINEDVALUE
     if ( present(fillValue) ) myFillValue = fillValue
     IsFillValue_r4 = &
-      & abs(a - myFillValue) < max( FILLVALUETOLERANCE, abs(FILLVALUE/100000) )
+      & abs(a - myFillValue) < max( FILLVALUETOLERANCE, abs(myFillValue/100000) )
   end function IsFillValue_r4
 
   elemental logical function IsFillValue_r8 ( A, FILLVALUE )
@@ -370,7 +370,7 @@ contains
     if ( present(fillValue) ) myFillValue = fillValue
     IsFillValue_r8 = &
       & abs(a - myFillValue) < &
-      & max( Real(FILLVALUETOLERANCE, r8), abs(FILLVALUE/100000) )
+      & max( Real(FILLVALUETOLERANCE, r8), abs(myFillValue/100000) )
   end function IsFillValue_r8
 
 ! ------------------------------------------------- IsFinite ---
@@ -988,6 +988,9 @@ end module MLSFillValues
 
 !
 ! $Log$
+! Revision 2.6  2006/02/02 16:19:57  pwagner
+! Should not use optional arg FillValue unless present
+!
 ! Revision 2.5  2006/02/01 23:54:20  pwagner
 ! Fixed bug in integer format
 !
