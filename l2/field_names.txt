@@ -34,6 +34,7 @@ allHGrids
 allLines
 allLinesForRadiometer
 allLinesInCatalog
+allowPostOverlaps
 allowPriorOverlaps
 allPFA
 allQuantityTemplates
@@ -412,6 +413,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.155  2006/02/03 21:26:47  pwagner
+# ChunkDivide adds allowPostOverlaps field
+#
 # Revision 2.154  2006/01/05 01:01:37  pwagner
 # Added silent to suspend printing, e.g. via boolean
 #
