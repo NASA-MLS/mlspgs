@@ -1692,7 +1692,7 @@ contains ! =====     Public Procedures     =============================
       & 'HMT,M,M,M,HM,M,M,HMT,M,M'   ! These are abbreviated values
 
     character(len=CHARATTRLEN) :: abbr_uniq_fdef
-    logical, parameter :: DEEBUG = .true.
+    ! logical, parameter :: DEEBUG = .false.
     character(len=CHARATTRLEN) :: expnd_uniq_fdef
     integer :: field
     character(len=CHARATTRLEN) :: field_name
@@ -3958,6 +3958,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.136  2006/01/27 01:02:19  pwagner
+! Does better at picking units name for column abundances
+!
 ! Revision 2.135  2006/01/26 00:33:09  pwagner
 ! demoted more use statements from module level to speed Lahey compiles
 !
