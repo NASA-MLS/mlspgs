@@ -777,6 +777,7 @@ contains ! =====  Public Procedures  ===================================
     integer(hsize_t) :: Shp(1), Shp2(2) ! To get the shapes of datasets HDF
     integer, pointer :: SidebandList(:) ! Concatenation from all lines
     integer, dimension(:), pointer :: SigInds ! From Parse_signal
+    logical :: SignalError
     integer , pointer:: SignalIndices(:) ! signalIndices(i) is index in
                                  ! SidebandList and SignalList of last signal
                                  ! for line I.
@@ -787,6 +788,7 @@ contains ! =====  Public Procedures  ===================================
     character(len=5) :: What
 
     error = .false.
+    signalError = .false.
     if ( capitalize(fileType) == 'HDF5' ) then
       call h5fopen_f ( trim(fileName), H5F_ACC_RDONLY_F, fileID, iostat )
       if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
@@ -868,8 +870,9 @@ contains ! =====  Public Procedures  ===================================
               & sigInds, null_tree )
             if ( .not. associated(sigInds) ) then
               call announceError ( &
-              & 'The string ' // trim(signalNames(lines(i)%signals(j))) // &
+              & 'The string ' // trim(signalNames(signalList(signalIndices(i-1)+j))) // &
               & ' is not a signal name.' )
+              signalError = .true.
             else
               lines(i)%signals(j) = sigInds(1)
             end if
@@ -885,6 +888,9 @@ contains ! =====  Public Procedures  ===================================
           end if
         end if
       end do
+      if ( signalError ) call announceError ( &
+        & 'Signals in L2CF are inconsistent with '// &
+        & 'signals used to create spectroscopy file' )
       call deallocate_test ( lineNames, 'LineNames', moduleName )
       call deallocate_test ( signalNames, 'SignalNames', moduleName )
       call deallocate_test ( polarizedIndices, 'PolarizedIndices', moduleName )
@@ -1379,6 +1385,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.41  2005/06/22 18:08:20  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.40  2005/04/19 19:13:41  livesey
 ! Changed mls1 to xptl1
 !
