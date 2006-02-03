@@ -605,6 +605,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_upperOverlap, t+t_numeric, n+n_field_type, &
              begin, f+f_maxLength, t+t_numeric, n+n_field_type, &
              begin, f+f_maxOrbY, t+t_numeric, n+n_field_type, &
+             begin, f+f_allowPostOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_allowPriorOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_noSlaves, t+t_numeric, n+n_field_type, &
              begin, f+f_homeModule, t+t_module, n+n_field_type, &
@@ -1383,6 +1384,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.422  2006/02/03 21:26:47  pwagner
+! ChunkDivide adds allowPostOverlaps field
+!
 ! Revision 2.421  2006/01/26 00:36:20  pwagner
 ! DU synonym for DobsonUnits
 !
