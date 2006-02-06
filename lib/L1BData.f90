@@ -91,8 +91,8 @@ module L1BData
 ! Dump (l1bData_T l1bData, int details)
 ! int FindL1BData (int files(:), char fieldName, [int hdfVersion]) 
 ! MLSFile_T GetL1BFile (MLSFile_t filedatabase(:), char fieldName, [char options]) 
-! L1boaSetup (int root, L1BInfo_T L1BInfo, int f_file, [int hdfVersion])
-! L1bradSetup (int root, L1BInfo_T L1BInfo, int f_file, [int hdfVersion])
+! L1boaSetup (int root, MLSFile_t filedatabase(:), int f_file, [int hdfVersion])
+! L1bradSetup (int root, MLSFile_t filedatabase(:), int f_file, [int hdfVersion])
 ! ReadL1BData (int L1FileHandle, char QuantityName, l1bData_T l1bData,
 !               int NoMAFs, int Flag, [int FirstMAF], [int LastMAF],
 !               [log NeverFail], [int hdfVersion]) 
@@ -1027,13 +1027,11 @@ contains ! ============================ MODULE PROCEDURES ======================
   end function IsL1BGappy
 
   !--------------------------------------------------  L1BOASetup  -----
-  ! subroutine L1boaSetup ( root, l1bInfo, F_FILE, hdfVersion )
   subroutine L1boaSetup ( root, filedatabase, F_FILE, hdfVersion )
-    ! Take file name from l2cf, open, and store unit no. in l1bInfo
+    ! Take file name from l2cf, open, and add new file to filedatabase
 
     ! Dummy arguments
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-    ! type (L1BInfo_T) :: L1BINFO         ! File handles etc. for L1B dataset
     integer, intent(in) :: ROOT         ! of the l1brad file specification.
     integer, intent(in) :: F_FILE       ! From init_tables_module
     integer, optional, intent(inout) :: hdfVersion
@@ -1050,6 +1048,7 @@ contains ! ============================ MODULE PROCEDURES ======================
 
     ! Executable code
     error = 0
+    if ( present(hdfVersion) ) hdfVersion = FILENOTFOUND
     ! Collect data from the fields. (only one legal field: file='...')
     do i = 2, nsons(root)
       son = subtree(i,root)
@@ -1060,30 +1059,8 @@ contains ! ============================ MODULE PROCEDURES ======================
         call mls_openFile(L1BFile, returnStatus)
         if ( returnStatus == 0 ) then
           numFiles = addFileToDatabase(filedatabase, L1BFile)
+          if ( present(hdfVersion) ) hdfVersion = L1BFile%HDFVersion
         endif
-!         the_hdf_version = mls_hdf_version(FileName)
-!         if ( the_hdf_Version == FILENOTFOUND ) &
-!           call MLSMessage ( MLSMSG_Error, ModuleName, &
-!             & 'File not found; make sure the name and path are correct' &
-!             & // trim(fileName) )
-!         if ( present(hdfVersion) ) then
-!           sd_id = mls_io_gen_openF('hg', .true., error, &
-!             & record_length, DFACC_READ, &
-!             & FileName, hdfVersion=the_hdf_version, debugOption=.false.)
-!         else
-!           sd_id = mls_io_gen_openF('hg', .true., error, &
-!             & record_length, DFACC_READ, &
-!             & FileName)
-!         end if
-!         if ( sd_id <= 0 ) then
-!           call announce_error ( son, &
-!             & 'Error opening L1BOA file: ' //Filename)
-!         else
-!           l1bInfo%L1BOAID = sd_id
-!           l1bInfo%L1BOAFileName = Filename
-!           if ( present(hdfVersion) ) hdfVersion = the_hdf_version
-!         end if
-           if ( present(hdfVersion) ) hdfVersion = L1BFile%HDFVersion
       else
         call announce_error ( son, &
           & 'Unknown field specified in read l1boa' )
@@ -1094,7 +1071,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   ! ------------------------------------------------- L1BRadSetup  -----
   subroutine L1bradSetup ( Root, filedatabase, F_File, &
     & hdfVersion )
-    ! Take file name from l2cf, open, and store unit no. in l1bInfo
+    ! Take file name from l2cf, open, and add new file to filedatabase
     ! Dummy arguments
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
     integer, intent(in) :: ROOT         ! of the l1brad file specification.
@@ -1114,6 +1091,7 @@ contains ! ============================ MODULE PROCEDURES ======================
 
     ! Executable code
     error = 0
+    if ( present(hdfVersion) ) hdfVersion = FILENOTFOUND
 
     ! Collect data from the fields. (only one legal field: file='...')
     do i = 2, nsons(root)
@@ -1125,8 +1103,8 @@ contains ! ============================ MODULE PROCEDURES ======================
         call mls_openFile(L1BFile, returnStatus)
         if ( returnStatus == 0 ) then
           numFiles = addFileToDatabase(filedatabase, L1BFile)
+          if ( present(hdfVersion) ) hdfVersion = L1BFile%HDFVersion
         endif
-           if ( present(hdfVersion) ) hdfVersion = L1BFile%HDFVersion
       else
         call announce_error ( son, &
           & 'Unknown field specified in read l1brad' )
@@ -3165,6 +3143,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.69  2006/02/06 22:54:51  pwagner
+! Should print warnings, not bomb if l1b files not found
+!
 ! Revision 2.68  2006/01/26 00:33:09  pwagner
 ! demoted more use statements from module level to speed Lahey compiles
 !
