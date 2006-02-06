@@ -19,11 +19,50 @@ module BitStuff
 
   implicit none
   private
+
+! === (start of toc) ===
+!     c o n t e n t s
+!     - - - - - - - -
+
+! In the following "bits" refers in most cases to the bits
+! held within an integer. Thus an integer can be decomposed
+! into an array of bits. How large an array and what the starting index to use
+! are very important. We will assume that the starting index is 0 and 
+! that the largest index is MAXBITNUMBER.
+
+!     (subroutines and functions)
+! BitsToBooleans     Converts bits to an array of Boolean
+! BooleansToBits     Converts an array of Boolean to bits
+! CountBits          Returns the number of non-zero bits
+! IsBitPatternSet    Are any of the bits set in bitpattern also set in the arg
+! IsBitSet           Is the specified bit number set
+! NegativeIfBitPatternSet  Return the negative abs. of the first arg
+!                      if any of the bits set in bitpattern also set in i
+! NegativeIfBitSet   Return the negative abs. of the first arg
+!                      if the bitnumber is set in i
+! SetBits            Return the integer represented by the bits set among set
+! WhichBitsAreSet    Which bit numbers are set?
+! === (end of toc) ===
+! === (start of api) ===
+! BitsToBooleans ( bits i, log Booleans(:) )
+! BooleansToBits ( log Booleans(:), bits i )
+! int CountBits ( value )
+!                 value can be a scalar or an array of ints or chars
+! log IsBitPatternSet ( bits i, bits bitPattern )
+! log IsBitSet ( bits i, int bitNumber )
+! value NegativeIfBitPatternSet ( value, bits i, bits bitPattern )
+! value NegativeIfBitSet ( value, bits i, int bitNumber )
+!                  value can be an int, real or double, scalar or array
+! bits SetBits ( int set(:) )
+! WhichBitsAreSet ( bits i, int set(:), [int howMany], [int unset(:)] )
+! === (end of api) ===
+
   public :: BitsToBooleans, BooleansToBits
   public :: CountBits, CountBits_0, CountBits_1, CountBits_2
   public :: CountCharBits_0, CountCharBits_1, CountCharBits_2
   public :: isBitSet, IsBitPatternSet, SetBits, WhichBitsAreSet
   public :: NegativeIfBitSet, NegativeIfBitPatternSet
+  public :: Reverse
 
   interface CountBits
     module procedure countBits_0, countBits_1, countBits_2
@@ -49,6 +88,13 @@ module BitStuff
   ! bitNumber starts with 0 at the smallest
   ! and goes up from there
   integer, private :: ibitindx ! A dummy index used in array constructor
+  
+  ! Note: the following is assumed to be the max bit number by all
+  ! procedures in this module except for Reverse
+  ! which relies on the intrinsic bit_size which should return
+  ! an integer = (MAXBITNUMBER+1)
+  ! If you plan on using the software on a platform for which
+  ! bit_size returns a different value, change the following
   integer, parameter :: MAXBITNUMBER = 30 ! The 31st is the sign bit
   integer, parameter, dimension(0:MAXBITNUMBER) :: BITINDX = &
     & (/ (ibitindx, ibitindx = 0, MAXBITNUMBER) /)
@@ -88,7 +134,7 @@ contains
     integer :: bitNumber
     ! Executable
     i = 0
-    do bitNumber = 0, min(size(Booleans) - 1, MAXBITNUMBER)
+    do bitNumber = 0, min( ubound(Booleans, 1), bit_size(i) - 1 )
       if ( Booleans(bitNumber) ) i = ibset( i, bitNumber )
     enddo
   end subroutine BooleansToBits
@@ -209,7 +255,7 @@ contains
 
   ! --------------------------------------------  NegativeIfBitPatternSet  -----
   ! This family of functions returns the negative abs. val.
-  ! of value if the bitNumber of i is set
+  ! of value if any of the bitNumbers in bitPattern set in i
   ! This may be useful if precisions for certain radiances are to be
   ! set negative (which means don't use them) when a certain bright object
   ! is in the field of view
@@ -283,6 +329,37 @@ contains
   end function NegativeIfBitSet_dbl
 
   ! --------------------------------------------  SetBits  -----
+  function Reverse ( i ) result(anti)
+    ! Return the integer reversing the bit order of i
+    ! E.g., if set(i) = (/ 0, 2, 4 /) set(result) will be (/N, N-2, N-4/)
+    ! where N = MAXBITNUMBER(i)
+    
+    ! Because the 31st bit is the sign bit, the zeroth bit would be discarded
+    ! Therefore we multiply by 2 before reversing
+    
+    ! Restrictions:
+    ! i >= 0
+    ! 2*i < huge(i)
+    
+    ! Always returns 0 if restrictions violated
+    integer, intent(in) :: i
+    integer :: anti
+    ! Local variables
+    integer :: howmany
+    integer :: N
+    integer, dimension(bit_size(1)) :: set
+    ! Executable
+    anti = 0
+    ! Error checks
+    if ( i < 0 .or. i > huge(i)/2 ) return
+    N = bit_size(i) - 1 ! Because bit numbers start with 0, 31st is sign
+    call WhichBitsAreSet ( 2*i, set, howmany )
+    if ( howmany == 0 ) return
+    set = N - set
+    anti = SetBits(set)
+  end function Reverse
+
+  ! --------------------------------------------  SetBits  -----
   function SetBits ( set ) result(i)
     ! Return the integer represented by setting the bitNumbers
     ! in the array set
@@ -352,6 +429,9 @@ contains
 end module BitStuff
 
 ! $Log$
+! Revision 2.10  2006/02/06 22:40:11  pwagner
+! Added Reverse function
+!
 ! Revision 2.9  2006/02/01 23:41:05  pwagner
 ! Can convert bits <-> booleans
 !
