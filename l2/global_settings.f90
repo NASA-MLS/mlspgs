@@ -91,7 +91,7 @@ contains
     use MLSCommon, only: R8, FileNameLen, MLSFile_T, NameLen, &
       & TAI93_Range_T
     use MLSFiles, only: FILENOTFOUND, HDFVERSION_5, &
-      & AddFileToDataBase, GetPCFromRef, GetMLSFileByType, &
+      & AddFileToDataBase, GetPCFromRef, GetMLSFileByName, GetMLSFileByType, &
       & InitializeMLSFile, mls_CloseFile, mls_OpenFile, split_path_name
     use MLSL2Options, only: LEVEL1_HDFVERSION, &
       & STOPAFTERGLOBAL, STOPAFTERCHUNKDIVIDE, Toolkit
@@ -334,40 +334,53 @@ contains
             & hdfVersion=the_hdf_version) 
           end if
           L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
-          call ReadL1BAttribute (L1BFile, OrbNum, 'OrbitNumber', &
+          if ( associated(L1BFile) ) then
+            call ReadL1BAttribute (L1BFile, OrbNum, 'OrbitNumber', &
                & l1bFlag)
                if ( l1bFlag == -1 ) then
                   GlobalAttributes%OrbNum = -1
                else
                   GlobalAttributes%OrbNum = OrbNum
                end if
-          call ReadL1BAttribute (L1BFile, OrbPeriod, 'OrbitPeriod', &
+              call ReadL1BAttribute (L1BFile, OrbPeriod, 'OrbitPeriod', &
                & l1bFlag)
                if ( l1bFlag == -1 ) then
                   GlobalAttributes%OrbPeriod = -1.0
                else
                   GlobalAttributes%OrbPeriod = OrbPeriod
                end if
-          if ( details > -4 ) call output &
-            & ('finished readL1BAttribute in global_setting', advance='yes')
-          if ( TOOLKIT ) &
+            if ( details > -4 ) call output &
+              & ('finished readL1BAttribute in global_setting', advance='yes')
+            if ( TOOLKIT ) &
             & call announce_error(0, &
             & '*** l2cf overrides pcf for L1BOA file ***', &
             & just_a_warning = .true.)
+          else
+            call announce_error(0, &
+            & '*** Unable to find L1BOA file ***', &
+            & just_a_warning = .true.)
+          end if
         case ( s_l1brad )
           the_hdf_version = LEVEL1_HDFVERSION
           call l1bradSetup ( son, filedatabase, F_FILE, &
             & hdfVersion=the_hdf_version )
+          sub_rosa_index = sub_rosa(subtree(2,subtree(2, son)))
+          call get_string ( sub_rosa_index, FilenameString, strip=.true. )
           if ( index(switches, 'pro') /= 0 ) then  
-            sub_rosa_index = sub_rosa(subtree(2,subtree(2, son)))
-            call get_string ( sub_rosa_index, FilenameString, strip=.true. )
             call proclaim(FilenameString, 'l1brad', &                   
             & hdfVersion=the_hdf_version) 
           end if
-          if ( TOOLKIT ) &
+          L1BFile => GetMLSFileByName(filedatabase, FilenameString)
+          if ( associated(L1BFile) ) then
+            if ( TOOLKIT ) &
             & call announce_error(0, &
             & '*** l2cf overrides pcf for L1B Rad. file(s) ***', &
             & just_a_warning = .true.)
+          else
+            call announce_error(0, &
+            & '*** Unable to find L1BRAD file ***' // trim(FilenameString), &
+            & just_a_warning = .true.)
+          end if
         case ( s_l2parsf )
           sub_rosa_index = sub_rosa(subtree(2,subtree(2, son)))
           call get_string ( sub_rosa_index, FilenameString, strip=.true. )
@@ -947,6 +960,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.110  2006/01/26 00:35:12  pwagner
+! demoted more use statements from module level to speed Lahey compiles
+!
 ! Revision 2.109  2006/01/10 23:51:11  pwagner
 ! Fixed segment fault when hdf4 l1boa file
 !
