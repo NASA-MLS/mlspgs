@@ -71,6 +71,7 @@ module ChunkDivide_m
     integer   :: maxGapFamily = PHYQ_Invalid ! PHYQ_MAF, PHYQ_Time etc.
     logical   :: skipL1BCheck = .false. ! Don't check for l1b data probs
     logical   :: allowPriorOverlaps = .false. ! Use MAFs before start time
+    logical   :: allowPostOverlaps = .false. ! Use MAFs after end time
     logical   :: saveObstructions = .false. ! Save obstructions for Output_Close
     logical   :: DACSDeconvolved = .true. ! Don't need to do this in level 2
   end type ChunkDivideConfig_T
@@ -172,7 +173,7 @@ contains ! ===================================== Public Procedures =====
     use Chunks_m, only: DUMP, MLSCHUNK_T
     use Dump_0, only: DUMP
     use EXPR_M, only: EXPR
-    use Init_Tables_Module, only: F_ALLOWPRIOROVERLAPS, &
+    use Init_Tables_Module, only: F_ALLOWPOSTOVERLAPS, F_ALLOWPRIOROVERLAPS, &
       & F_CRITICALMODULES, F_CRITICALSIGNALS, &
       & F_HOMEMODULE, F_HOMEGEODANGLE, &
       & F_MAXLENGTH, F_MAXORBY, F_METHOD, F_NOCHUNKS, F_NOSLAVES, &
@@ -274,7 +275,7 @@ contains ! ===================================== Public Procedures =====
     case ( l_PE )
       call ChunkDivide_PE ( mafRange%Expanded, filedatabase, chunks )
     case ( l_orbital )
-      call ChunkDivide_Orbital ( mafRange%Expanded, filedatabase, chunks )
+      call ChunkDivide_Orbital ( mafRange, filedatabase, chunks )
     case ( l_even )
       call ChunkDivide_Even ( mafRange%Expanded, filedatabase, chunks )
     case default
@@ -569,7 +570,8 @@ contains ! ===================================== Public Procedures =====
 
     !----------------------------------------- ChunkDivide_Orbital -----
     subroutine ChunkDivide_Orbital ( mafRange, filedatabase, chunks )
-      integer, dimension(2), intent(in) :: MAFRANGE
+      ! integer, dimension(2), intent(in) :: MAFRANGE
+      type (MAFRange_T) :: MAFRange
       type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
       type (MLSChunk_T), dimension(:), pointer :: CHUNKS
 
@@ -585,11 +587,12 @@ contains ! ===================================== Public Procedures =====
       integer :: CHUNK                    ! Loop counter
       integer :: FLAG                     ! From ReadL1B
       integer :: HOME                     ! Index of home MAF in array
-      integer :: M1, M2                   ! MafRange + 1
+      integer :: M1, M2                   ! MafRange%L2Cover + 1
+      integer :: MEXP1, MEXP2             ! MafRange%Expanded + 1
       integer :: NOCHUNKSBELOWHOME        ! Used for placing chunks
       integer :: NOMAFSATORABOVEHOME      ! Fairly self descriptive
       integer :: NOMAFSBELOWHOME          ! Fairly self descriptive
-      integer :: NOMAFS                   ! Number of MAFs to consider
+      ! integer :: NOMAFS                   ! Number of MAFs to consider
       integer :: NOMAFSREAD               ! From ReadL1B
       integer :: ORBIT                    ! Used to locate home
       integer :: STATUS                   ! From allocate etc.
@@ -646,9 +649,11 @@ contains ! ===================================== Public Procedures =====
         & taiTime, noMAFsRead, flag, &
         & dontPad=DONTPAD )
       call smoothOutDroppedMAFs(taiTime%dpField)
-      noMAFs = mafRange(2) - mafRange(1) + 1
-      m1 = mafRange(1) + 1
-      m2 = mafRange(2) + 1
+      ! noMAFs = mafRange%L2Cover(2) - mafRange%L2Cover(1) + 1
+      m1 = mafRange%L2Cover(1) + 1
+      m2 = mafRange%L2Cover(2) + 1
+      mexp1 = mafRange%Expanded(1) + 1
+      mexp2 = mafRange%Expanded(2) + 1
 
       minAngle = minval ( tpGeodAngle%dpField(1,1,m1:m2) )
       maxAngle = maxval ( tpGeodAngle%dpField(1,1,m1:m2) )
@@ -780,12 +785,20 @@ contains ! ===================================== Public Procedures =====
 
         noMAFsBelowHome = -999
         noMAFsAtOrAboveHome = -999
-        noChunksBelowHome = int ( ( homeV - minV ) / ChunkDivideConfig%maxLength )
+        noChunksBelowHome = int ( &
+          & ( homeV - minV ) / ChunkDivideConfig%maxLength )
         if ( homeV > minV ) noChunksBelowHome = noChunksBelowHome + 1
         if ( ChunkDivideConfig%noChunks == 0 ) then
           ! Choose the number of chunks ourselves
-          noChunks = noChunksBelowHome + int ( ( maxV - homeV ) / ChunkDivideConfig%maxLength )
-          if ( homeV + ChunkDivideConfig%maxLength * ( noChunks - noChunksBelowHome ) < maxV ) &
+          noChunks = noChunksBelowHome + int ( &
+            & ( maxV - homeV ) / ChunkDivideConfig%maxLength )
+          if ( homeV + ChunkDivideConfig%maxLength * &
+            & ( noChunks - noChunksBelowHome ) < maxV ) &
+            & noChunks = noChunks + 1
+          if ( (mexp1 < m1) .and. ( &
+            & homeV + (ChunkDivideConfig%maxLength-1) + &
+            & ChunkDivideConfig%maxLength * &
+            & ( noChunks - 1 - noChunksBelowHome ) < maxV ) ) &
             & noChunks = noChunks + 1
         else
           noChunks = ChunkDivideConfig%noChunks
@@ -800,9 +813,21 @@ contains ! ===================================== Public Procedures =====
         ! Boundaries are the angles/times at the end of the chunks
         nullify ( boundaries )
         call Allocate_test ( boundaries, noChunks, 'boundaries', ModuleName )
-        do chunk = 1, noChunks
-          boundaries(chunk) = homeV + ( chunk - noChunksBelowHome ) * ChunkDivideConfig%maxLength
-        end do
+        ! When we allow prior overlaps, the first chunk 
+        ! sometimes has 1 too many MAFs unless we take extra care
+        if ( mexp1 == m1 ) then
+          do chunk = 1, noChunks
+            boundaries(chunk) = homeV + &
+              & ( chunk - noChunksBelowHome ) * ChunkDivideConfig%maxLength
+          end do
+        else
+          boundaries(1) = homeV + &
+            & ( 1 - noChunksBelowHome ) * (ChunkDivideConfig%maxLength - 1)
+          do chunk = 2, noChunks
+            boundaries(chunk) = boundaries(chunk-1) + &
+              & ChunkDivideConfig%maxLength
+          end do
+        endif
         boundaries = min ( boundaries, maxV )
         boundaries = max ( boundaries, minV )
 
@@ -872,9 +897,9 @@ contains ! ===================================== Public Procedures =====
       ! lowerOverlapFamily == upperOverlapFamily.
       if ( ChunkDivideConfig%lowerOverlapFamily == PHYQ_MAFs ) then
         newFirstMAFs = max(chunks%firstMAFIndex - nint(ChunkDivideConfig%lowerOverlap), &
-          & mafRange(1) )
+          & m1 - 1 )
         newLastMAFs = min(chunks%lastMAFIndex + nint(ChunkDivideConfig%upperOverlap), &
-          & mafRange(2) )
+          & m2 - 1 )
       else
         call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'The bit of code that deals with non-MAF overlaps is probably broken' )
@@ -908,12 +933,25 @@ contains ! ===================================== Public Procedures =====
       call PruneChunks ( chunks )
 
 !       ! Forcibly zero out number of lower (upper) overlaps on 1st (last) chunks
-!       noChunks = size ( chunks )
+      noChunks = size ( chunks )
 !       chunks(1)%noMAFsLowerOverlap = 0
 !       chunks(noChunks)%noMAFsUpperOverlap = 0
 
+      ! Add lower overlap to first chunk if allowed
+      if ( mexp1 < m1 ) then
+        chunks(1)%firstMAFIndex = chunks(1)%firstMAFIndex + mexp1 - m1
+        chunks(1)%noMAFsLowerOverlap = m1 - mexp1
+      endif
+
+      ! Add upper overlap to last chunk if allowed
+      if ( mexp2 > m2 ) then
+        chunks(noChunks)%lastMAFIndex = chunks(noChunks)%lastMAFIndex + mexp2 - m2
+        chunks(noChunks)%noMAFsUpperOverlap = mexp2 - m2
+      endif
+
       if ( index(switches, 'chu') /= 0 ) then
-        call output ( 'After dealing with obstructions', advance='yes' )
+        call output ( 'After dealing with obstructions', advance='no' )
+        call output ( ', poss. overlaps outside proc. range', advance='yes' )
         call Dump ( chunks )
       end if
 
@@ -1067,6 +1105,11 @@ contains ! ===================================== Public Procedures =====
           if ( ChunkDivideConfig%allowPriorOverlaps ) &
             & call MLSMessage(MLSMSG_Warning, ModuleName, &
             & 'You have elected to allow MAFs prior to time range' )
+        case ( f_allowPostOverlaps )
+          ChunkDivideConfig%allowPostOverlaps = get_boolean ( fieldValue )
+          if ( ChunkDivideConfig%allowPostOverlaps ) &
+            & call MLSMessage(MLSMSG_Warning, ModuleName, &
+            & 'You have elected to allow MAFs after to time range' )
         case ( f_saveObstructions )
           ChunkDivideConfig%saveObstructions = get_boolean ( fieldValue )
           if ( ChunkDivideConfig%saveObstructions ) &
@@ -1909,15 +1952,16 @@ contains ! ===================================== Public Procedures =====
           & 'L2 mafRange(2) < 1' )
       endif
 
+      mafRange%Expanded(1) = mafRange%L2Cover(1)
+      mafRange%Expanded(2) = mafRange%L2Cover(2)
       ! Expand the range covered by L2 with possible overlaps
-      ! For now, allow only lower overlaps
       if ( ChunkDivideConfig%allowPriorOverlaps ) then
         mafRange%Expanded(1) = max( mafRange%L1BCover(1), &
           & mafRange%L2Cover(1) - nint(ChunkDivideConfig%lowerOverlap) )
-        mafRange%Expanded(2) = mafRange%L2Cover(2)
-      else
-        mafRange%Expanded(1) = mafRange%L2Cover(1)
-        mafRange%Expanded(2) = mafRange%L2Cover(2)
+      endif
+      if ( ChunkDivideConfig%allowPostOverlaps ) then
+        mafRange%Expanded(2) = min( mafRange%L1BCover(2), &
+          & mafRange%L2Cover(2) + nint(ChunkDivideConfig%upperOverlap) )
       endif
       noMAFS = mafRange%Expanded(2) - mafRange%Expanded(1) + 1
       ! Now look through the L1B data, first look for scan problems
@@ -2092,6 +2136,8 @@ contains ! ===================================== Public Procedures =====
     call output ( config%skipL1BCheck, advance='yes' )
     call output ( 'allow overlaps to prior day?' )
     call output ( config%allowPriorOverlaps, advance='yes' )
+    call output ( 'allow overlaps to next day?' )
+    call output ( config%allowPostOverlaps, advance='yes' )
     call output ( 'save obstructions?' )
     call output ( config%saveObstructions, advance='yes' )
     call output ( 'DACS already deconvolved?' )
@@ -2307,6 +2353,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.68  2006/02/07 00:55:47  pwagner
+! Now allows overlaps after data end time
+!
 ! Revision 2.67  2006/01/26 00:34:50  pwagner
 ! demoted more use statements from module level to speed Lahey compiles
 !
