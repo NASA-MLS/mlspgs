@@ -968,6 +968,8 @@ contains ! =====     Public Procedures     =============================
       call output ( forbidoverspill, advance='yes' )
       call output ( ' allowPriorOverlaps: ' )
       call output ( ChunkDivideConfig%allowPriorOverlaps, advance='yes' )
+      call output ( ' allowPostOverlaps: ' )
+      call output ( ChunkDivideConfig%allowPostOverlaps, advance='yes' )
     end if
 
     ! Now fill the other geolocation information, first latitude
@@ -1198,7 +1200,7 @@ contains ! =====     Public Procedures     =============================
         call output ( '    processingRange%endTime: ' )
         call output ( processingRange%endTime, advance='yes' )
       end if
-      if ( lastProfInRun < hGrid%noProfs ) then
+      if ( lastProfInRun < hGrid%noProfs .and. .not. ChunkDivideConfig%allowPostOverlaps ) then
         if ( switchDetail(switches, 'hgrid') >= 0  .or. deebughere ) &
           & call output ( 'hGrid ends after run trimming end.',&
           & advance='yes' )
@@ -2276,6 +2278,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.83  2006/02/07 00:56:26  pwagner
+! Now allows overlaps after data end time
+!
 ! Revision 2.82  2006/01/10 23:52:11  pwagner
 ! Fixed segment fault when hdf4 l1boa file
 !
