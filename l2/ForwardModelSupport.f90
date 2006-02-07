@@ -49,7 +49,8 @@ module ForwardModelSupport
   integer, parameter :: NoArray                = Nested + 1
   integer, parameter :: NoBetaGroup            = NoArray + 1
   integer, parameter :: NoMolecule             = NoBetaGroup + 1
-  integer, parameter :: PFANeedsFreqAvg        = NoMolecule + 1
+  integer, parameter :: NoPolarizedAndPFA      = NoMolecule + 1
+  integer, parameter :: PFANeedsFreqAvg        = NoPolarizedAndPFA + 1
   integer, parameter :: PFANotMolecule         = PFANeedsFreqAvg + 1
   integer, parameter :: PFATwice               = PFANotMolecule + 1
   integer, parameter :: PolarizedAndAllLines   = PFATwice + 1
@@ -367,6 +368,7 @@ contains ! =====     Public Procedures     =============================
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Expr_M, only: EXPR
     use ForwardModelConfig, only: Dump, ForwardModelConfig_T, &
+      & LineCenter, LineWidth, LineWidth_TDep, &
       & NullifyForwardModelConfig, SpectroParam_T
     use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
     use Init_Tables_Module, only: L_FULL, L_SCAN, L_LINEAR, L_CLOUDFULL, L_HYBRID, &
@@ -415,7 +417,6 @@ contains ! =====     Public Procedures     =============================
     logical :: Got(field_first:field_last)   ! "Got this field already"
     integer :: GSON                     ! Son of son
     integer :: I, J, K                  ! Subscript and loop inductor.
-    integer, dimension(:,:), pointer :: Line_Ix ! LineCenter_ix, ...
     type(spectroParam_t), pointer :: LineStru(:)
     integer :: LineTrees(3)             ! Tree indices of f_line...
     integer :: M                        ! Max LBL molecules in either sideband
@@ -437,9 +438,6 @@ contains ! =====     Public Procedures     =============================
     integer :: type                     ! Type of value returned by EXPR
     real (r8) :: Value(2)               ! Value returned by EXPR
     integer :: WANTED                   ! Which signal do we want?
-
-    ! Subscripts for LineTrees
-    integer, parameter :: LineCenter = 1, LineWidth = 2, LineWidth_TDep = 3
 
     ! Nullify some pointers so allocate_test doesn't try to deallocate them.
     ! Don't initialize them with =>NULL() because that makes them SAVEd.
@@ -796,18 +794,13 @@ op:     do j = 2, nsons(PFATrees(s))
       ! Make a list of the molecules
       allocate ( lineStru(nsons(lineTrees(i))-1), stat=status )
       if ( status /= 0 ) call announceError( AllocateError, lineTrees(i) )
-      nullify ( line_ix )
-      call allocate_test ( line_ix, 2, m, 'Line_ix', moduleName, fill=0 )
       select case ( i )
       case ( lineCenter )
         info%lineCenter => lineStru
-        info%lineCenter_ix => line_ix
       case ( lineWidth )
         info%lineWidth => lineStru
-        info%lineWidth_ix => line_ix
       case ( lineWidth_TDep )
         info%lineWidth_TDep => lineStru
-        info%lineWidth_Tdep_ix => line_ix
       end select
       molecules => lineStru%molecule
       do j = 2, nsons(LineTrees(i))
@@ -825,18 +818,17 @@ op:     do j = 2, nsons(PFATrees(s))
       end do ! j = 2, nsons(LineTrees(i))
       ! Check that molecules are in some LBL's molecule list
       do s = s1, s2 ! Sideband
-        k = 0 ! Index in line..._ix
         do b = 1, size(info%beta_group)
-          do j = 1, size(info%beta_group(b)%lbl(s)%molecules)
-            k = k + 1
+          if ( size(info%beta_group(b)%lbl(s)%molecules) > 0 ) then
             do found = 1, size(molecules)
-              if ( abs(molecules(found)) == info%beta_group(b)%lbl(s)%molecules(j) ) then
+              if ( abs(molecules(found)) == info%beta_group(b)%lbl(s)%molecules(1) ) then
+                lineStru%beta(s) = b ! Store beta group index
                 molecules(found) = -abs(molecules(found)) ! Mark it as used
-                line_ix(s,k) = found
+                info%beta_group(b)%lbl(s)%spect_der_ix(i) = found
                 exit
               end if
             end do ! found
-          end do ! j
+          end if
         end do ! b = 1, size(info%beta_group)
       end do ! s = s1, s2
       ! Check for unused ones, make them positive again
@@ -867,6 +859,10 @@ op:     do j = 2, nsons(PFATrees(s))
     if ( any(info%anyPFA(s1:s2)) .and. any(info%anyLBL(s1:s2)) &
       & .and. .not. info%do_freq_avg ) &
       & call AnnounceError ( PFANeedsFreqAvg, root )
+
+    ! If any PFA, can't do polarized
+    if ( any(info%anyPFA(s1:s2)) .and. info%polarized ) &
+      & call announceError ( noPolarizedAndPFA, root )
 
     if ( ( info%xStar == 0 ) .neqv. ( info%yStar == 0 ) ) &
       & call AnnounceError ( NeedBothXYStar, root )
@@ -1179,15 +1175,13 @@ op:     do j = 2, nsons(PFATrees(s))
     case ( BadSideband )
       call output ( 'Sideband selector is not unitless', advance='yes' )
     case ( CloudHas )
-      call output ( 'Cloud forward model internally has the ' )
-      call display_string ( what )
+      call display_string ( what, before='Cloud forward model internally has the ' )
       call output ( ' molecule', advance='yes' )
     case ( CloudNeeds )
       call output ( 'Cloud forward model needs both H2O and O3 molecules', &
         & advance='yes' )
     case ( CloudNot )
-      call output ( 'Cloud formard model cannot accept the ' )
-      call display_string ( what )
+      call display_string ( what, before='Cloud formard model cannot accept the ' )
       call output ( ' molecule', advance='yes' )
     case ( DerivSansMolecules )
       call output ( 'Derivative(s) requested for molecule(s) not specified.', &
@@ -1206,12 +1200,11 @@ op:     do j = 2, nsons(PFATrees(s))
       call output ( 'irrelevant units for this linear sideband', &
         & advance='yes' )
     case ( LineNotMolecule )
-      call output ( 'Spectral parameter requested for ' )
-      call display_string ( lit_indices(decoration(where)) )
-      call output ( ' but it is not in an LBL molecule list', advance='yes' )
+      call display_string ( lit_indices(decoration(where)), &
+        before='Spectral parameter requested for ' )
+      call output ( ' but it is not an LBL molecule group', advance='yes' )
     case ( LineParamTwice )
-      call output ( 'Molecule ' )
-      call display_string ( lit_indices(decoration(where)) )
+      call display_string ( lit_indices(decoration(where)), before='Molecule '  )
       call output ( ' listed twice for spectral parameter', advance='yes' )
     case ( NeedBothXYStar )
       call output ( 'x/yStar must either be both present or both absent', &
@@ -1226,6 +1219,9 @@ op:     do j = 2, nsons(PFATrees(s))
     case ( NoMolecule )
       call output ( 'A bin selector of type vmr must have a molecule', &
         & advance='yes' )
+    case ( NoPolarizedAndPFA )
+      call output ( "Sorry, don't yet know how to combine polarized and PFA", &
+        & advance='yes' )
     case ( PFANeedsFreqAvg )
       call output ( &
         & 'Frequency averaging must be specified if there are both PFA and LBL molecules', &
@@ -1235,8 +1231,8 @@ op:     do j = 2, nsons(PFATrees(s))
       call display_string ( lit_indices(decoration(where)) )
       call output ( ' but it is not in the molecule list', advance='yes' )
     case ( PFATwice )
-      call output ( 'Molecule ' )
-      call display_string ( lit_indices(decoration(where)) )
+      call display_string ( lit_indices(decoration(where)), &
+        & before='Molecule ' )
       call output ( ' listed twice for PFA', advance='yes' )
     case ( PolarizedAndAllLines )
       call output ( 'cannot specify both polarized and allLinesInCatalog', &
@@ -1274,6 +1270,9 @@ op:     do j = 2, nsons(PFATrees(s))
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.125  2006/02/07 00:19:07  vsnyder
+! Prohibit conspiracy of polarized and PFA
+!
 ! Revision 2.124  2006/01/11 01:56:48  vsnyder
 ! Allow PFA for sidebands not in signals, but ignore it -- of course
 !
