@@ -50,9 +50,13 @@ module ForwardModelConfig
 
   ! Data structures to indicate which spectral parameters are being solved.
   type, public :: SpectroParam_T
+    integer :: Beta(2)       ! Beta group LBL indices
     integer :: Molecule
     type (QtyStuff_T) :: Qty ! The Qty's vector
   end type SpectroParam_T
+
+  ! Subscripts for spectral parameter stuff
+  integer, parameter, public :: LineCenter = 1, LineWidth = 2, LineWidth_TDep = 3
 
   ! Beta group type declaration.  Each entry in the Molecules list of the form
   ! "m" has one of these with n_elements == 1, referring to "m".  Each entry
@@ -71,6 +75,11 @@ module ForwardModelConfig
     real(rp), pointer :: Ratio(:) => NULL() ! Isotope ratio.  Allocated in
                                       ! ForwardModelSupport with value 1.0, but
                                       ! could be filled in Get_Species_Data.
+    integer :: Spect_der_ix(lineCenter:lineWidth_tDep) = 0 ! Do deriv w.r.t.
+      ! spectral param if nonzero. If Spect_der_ix(lineCenter) is nonzero,
+      ! fwdModelConf%%LineCenter(Spect_der_ix_ix(lineCenter)) is added onto the
+      ! line center in the gl_slabs array for the i'th line-by-line molecule in
+      ! sideband s.  Similarly for %LineWidth and %LineWidth_Tdep.
   end type LBL_T
 
   type, public :: PFA_T ! For PFA molecules in the group:
@@ -171,13 +180,6 @@ module ForwardModelConfig
     real :: sum_squareDeltaTime = 0.0 ! sum of the square of delta times calling FullForwardModel 
     ! Now the arrays
     integer, dimension(:), pointer :: BinSelectors=>NULL() ! List of relevant bin selectors
-    ! Indices for spectral parameters.   If LineCenter+ix(s,i) is nonzero,
-    ! LineCenter(LineCenter_ix(s,i)) is added onto the line center in the gl_slabs
-    ! array for the i'th line-by-line molecule in sideband s.  Similarly for
-    ! LineWidth_ix and LineWidth_Tdep_ix.
-    integer, dimension(:,:), pointer :: LineCenter_ix=>NULL() ! sidebands,1:noNonPFA
-    integer, dimension(:,:), pointer :: LineWidth_ix=>NULL() ! sidebands,1:noNonPFA
-    integer, dimension(:,:), pointer :: LineWidth_Tdep_ix=>NULL() ! sidebands,1:noNonPFA
     integer, dimension(:), pointer :: Molecules=>NULL() ! Which molecules to consider
     logical, dimension(:), pointer :: MoleculeDerivatives=>NULL() ! Want Jacobians
     integer, dimension(:), pointer :: SpecificQuantities=>NULL() ! Specific quantities to use
@@ -1018,12 +1020,6 @@ contains
       & "config%specificQuantities", ModuleName )
     call deallocate_test ( config%binSelectors, &
       & "config%binSelectors", ModuleName )
-    call deallocate_test ( config%lineCenter_ix, &
-      & "config%lineCenter_ix", moduleName )
-    call deallocate_test ( config%lineWidth_ix, &
-      & "config%lineWidth_ix", moduleName )
-    call deallocate_test ( config%lineWidth_Tdep_ix, &
-      & "config%lineWidth_Tdep_ix", moduleName )
   end subroutine DestroyOneForwardModelConfig
 
   ! --------------------------------------------  Dump_Beta_Group  -----
@@ -1044,6 +1040,10 @@ contains
     logical :: Missing ! PFA data
     integer :: MyDetails
     character(3), parameter :: SB(2) = (/ 'Low', 'Upp' /)
+    character(*), parameter :: ParamNames(lineCenter:lineWidth_tDep) = &
+      & (/ ' LineCenter=    ', &
+      &    ' LineWidth=     ', &
+      &    ' LineWidth_tDep=' /)
 
     s1 = 1; s2 = 2
     if ( present(sidebands) ) then
@@ -1069,6 +1069,15 @@ contains
           call dump ( beta_group(b)%lbl(s)%ratio, name='    Isotope ratio' )
           call dump ( beta_group(b)%lbl(s)%cat_index, &
             & name='    Spectroscopy catalog extract index' )
+          if ( any(beta_group(b)%lbl(s)%spect_der_ix /= 0) ) then
+            call output ( '    Spectrosopy parameter derivatives:' )
+            do m = lineCenter, lineWidth_tDep
+              if ( beta_group(b)%lbl(s)%spect_der_ix(m) /= 0 ) &
+                & call output ( beta_group(b)%lbl(s)%spect_der_ix(m), &
+                  & before=trim(paramNames(m)) )
+            end do
+            call newLine
+          end if
         end if
         if ( size(beta_group(b)%pfa(s)%molecules) > 0 ) then
           call display_string ( &
@@ -1235,19 +1244,12 @@ contains
       if ( associated(config%lineCenter) ) &
         & call display_string ( lit_indices(config%lineCenter%molecule), &
           & advance='yes', before='    Line centers:' )
-      if ( associated(config%lineCenter_ix) ) &
-        & call dump ( config%lineCenter_ix(s1:s2,:), name='    Line Center Indices' )
       if ( associated(config%lineWidth) ) &
         & call display_string ( lit_indices(config%lineWidth%molecule), &
           & advance='yes', before='    Line widths:' )
-      if ( associated(config%lineWidth_ix) ) &
-        & call dump ( config%lineWidth_ix(s1:s2,:), name='    Line Width Indices' )
       if ( associated(config%lineWidth_Tdep) ) &
         & call display_string ( lit_indices(config%lineWidth%molecule), &
           & advance='yes', before='    Line width temperature dependencies:' )
-      if ( associated(config%lineWidth_Tdep_ix) ) &
-        & call dump ( config%lineWidth_Tdep_ix(s1:s2,:), &
-          & name='    Line Width Temperature Dependence Indices' )
     end if
     call output ( '  Signals:', advance='yes')
     if ( associated(config%signals) ) then
@@ -1313,6 +1315,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.85  2005/12/29 01:12:04  vsnyder
+! Add 'refract' field, polished up dump
+!
 ! Revision 2.84  2005/11/15 00:23:21  pwagner
 ! Must not attempt to dump config%signals if not associated
 !

@@ -749,10 +749,9 @@ contains
 !  (Here dx could be: dw, dn or dv (dNu0) )
 
   subroutine DRad_tran_dx ( indices_c, gl_inds, del_zeta, Grids_f,        &
-                         &  eta_zxp_f, sps_path, do_calc_f, dbeta_path_c, &
-                         &  dbeta_path_f, do_gl, del_s, ref_cor,          &
-                         &  ds_dz_gw, inc_rad_path, i_stop, drad_dx )
-use dump_0, only: Dump
+                         &  eta_zxp_f, sps_path, sps_map, do_calc_f,      &
+                         &  dbeta_path_c, dbeta_path_f, do_gl, del_s,     &
+                         &  ref_cor, ds_dz_gw, inc_rad_path, i_stop, drad_dx )
     use GLNP, only: NG
     use LOAD_SPS_DATA_M, ONLY: GRIDS_T
     use MLSKinds, only: RP, IP
@@ -768,7 +767,8 @@ use dump_0, only: Dump
       !              the part up to the black-out
     type (Grids_T), intent(in) :: Grids_f    ! All the coordinates
     real(rp), intent(in) :: eta_zxp_f(:,:)   ! representation basis function.
-    real(rp), intent(in) :: sps_path(:,:)    ! Path species function.
+    real(rp), intent(in) :: sps_path(:,:)    ! Path species function, path X species.
+    integer, intent(in) :: sps_map(:)        ! second-dimension subscripts for sps_path.
     logical, intent(in) :: do_calc_f(:,:)    ! A logical indicating where the
       !                                        representation basis function is
       !                                        not zero.
@@ -793,7 +793,7 @@ use dump_0, only: Dump
 ! Internals
 
     integer(ip) :: A, AA, GA(ng), I, II, III
-    integer(ip) :: i_start, n_inds, sps_n, no_to_gl, sps_i, sv_i
+    integer(ip) :: i_start, n_inds, no_to_gl, sps_i, sps_m, sps_n, sv_i
     integer(ip), target, dimension(1:Ng*size(inc_rad_path)) :: all_inds_B
     integer(ip), target, dimension(1:size(inc_rad_path)) :: inds_B, more_inds_B
     integer(ip), pointer :: all_inds(:)  ! all_inds => part of all_inds_B;
@@ -819,10 +819,8 @@ use dump_0, only: Dump
 
     sps_n = ubound(grids_f%l_z,1)
 
-call dump ( dbeta_path_c, name='dbeta_path_c' )
-print *, 'sps_n =', sps_n
-
     do sps_i = 1 , sps_n
+      sps_m = sps_map(sps_i)
 
       do sv_i = Grids_f%l_v(sps_i-1)+1, Grids_f%l_v(sps_i)
 
@@ -832,7 +830,6 @@ print *, 'sps_n =', sps_n
           & do_gl, do_calc )
 
 ! find where the non zeros are along the path
-do_calc=.true.
 
         n_inds = count(do_calc)
         if ( n_inds > 0 ) then
@@ -845,16 +842,11 @@ do_calc=.true.
             ii = inds(i)
             iii = indices_c(ii)
             singularity(ii) = dbeta_path_c(ii,sps_i) &
-                            &  * eta_zxp_f(iii,sv_i) * sps_path(iii,sps_i)
+                            &  * eta_zxp_f(iii,sv_i) * sps_path(iii,sps_m)
             d_delta_dx(ii) = singularity(ii) * del_s(ii)
           end do ! i
-call dump ( dbeta_path_c(:,sps_i), name='dbeta_path_c(:,sps_i)' )
-call dump ( eta_zxp_f(indices_c,sv_i), name='eta_zxp_f(indices_c,sv_i)' )
-call dump ( sps_path(indices_c,sps_i), name='sps_path(indices_c,sps_i)' )
-call dump ( d_delta_dx, name='d_delta_dx' )
 
           no_to_gl = count(do_gl(inds))
-no_to_gl=0
           if ( no_to_gl > 0 ) then
 
 ! see if anything needs to be gl-d
@@ -888,7 +880,7 @@ no_to_gl=0
               d_delta_dx(ii) = d_delta_dx(ii) + &
                 & del_zeta(ii) * &
                 & sum( (dbeta_path_f(aa:aa+ng-1,sps_i) &
-                     &   * eta_zxp_f(ga,sv_i) * sps_path(ga,sps_i) - &
+                     &   * eta_zxp_f(ga,sv_i) * sps_path(ga,sps_m) - &
                      &  singularity(ii)) * ds_dz_gw(ga) )
               a = a + ng
             end do
@@ -910,7 +902,7 @@ no_to_gl=0
       end do
 
     end do
-stop
+
   end subroutine DRad_tran_dx
 
   ! ------------------------------------------------  Get_Do_Calc  -----
@@ -1035,6 +1027,9 @@ stop
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.48  2005/11/21 22:57:27  vsnyder
+! PFA derivatives stuff
+!
 ! Revision 2.47  2005/11/01 23:02:21  vsnyder
 ! PFA Derivatives
 !

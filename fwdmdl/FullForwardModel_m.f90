@@ -46,7 +46,7 @@ contains
     use FilterShapes_m, only: DACSFilterShapes, FilterShapes
     use ForwardModelConfig, only: Beta_Group_T, Channels_T, &
       & DeriveFromForwardModelConfig, DestroyForwardModelDerived, &
-      & ForwardModelConfig_t
+      & ForwardModelConfig_t, LineCenter, LineWidth, LineWidth_TDep
     use ForwardModelIntermediate, only: ForwardModelIntermediate_t, &
                                     &   ForwardModelStatus_t, &
                                     &   B_Metrics, B_Ptg_Angles, B_Refraction
@@ -780,8 +780,7 @@ contains
             & phi_path(1:no_ele), eta_zxp_v(1:no_ele,:), do_calc_v(1:no_ele,:) )
           call comp_sps_path_no_frq ( grids_v, eta_zxp_v(1:no_ele,:), &
             & spect_v_path(1:no_ele,:) )
-          if ( associated(FwdModelConf%lineCenter_ix) ) &
-            & lineCenter_ix => FwdModelConf%lineCenter_ix(sx,:FwdModelConf%cat_Size(sx))
+          lineCenter_ix => beta_group%lbl(sx)%spect_der_ix(lineCenter)
         end if
         if ( associated(fwdModelConf%lineWidth) ) then
           call comp_eta_docalc_no_frq ( grids_w, z_path(1:no_ele), &
@@ -789,16 +788,14 @@ contains
           do_calc_w_c(1:npc,:) = do_calc_w(c_inds,:)
           call comp_sps_path_no_frq ( grids_w, eta_zxp_w(1:no_ele,:), &
             & spect_w_path(1:no_ele,:) )
-          if ( associated(FwdModelConf%lineWidth_ix) ) &
-            & lineWidth_ix => FwdModelConf%lineWidth_ix(sx,:FwdModelConf%cat_Size(sx))
+          lineWidth_ix => beta_group%lbl(sx)%spect_der_ix(lineWidth)
         end if
         if ( associated(fwdModelConf%lineWidth_TDep) ) then
           call comp_eta_docalc_no_frq ( grids_n, z_path(1:no_ele), &
             & phi_path(1:no_ele), eta_zxp_n(1:no_ele,:), do_calc_n(1:no_ele,:) )
           call comp_sps_path_no_frq ( grids_n, eta_zxp_n(1:no_ele,:), &
             & spect_n_path(1:no_ele,:) )
-          if ( associated(FwdModelConf%lineWidth_TDep_ix) ) &
-            & lineWidth_TDep_ix => FwdModelConf%lineWidth_TDep_ix(sx,:FwdModelConf%cat_Size(sx))
+          lineWidth_TDep_ix => beta_group%lbl(sx)%spect_der_ix(lineWidth_TDep)
         end if
 
         ! Special path quantities for cloud model
@@ -1822,9 +1819,9 @@ contains
         if ( spect_der ) then
           call allocate_test ( k_spect_dv, noUsedChannels, no_tan_hts, f_len_v, &
             & 'k_spect_dv', moduleName )
-          call allocate_test ( dbeta_dv_path_c,     npc, no_mol, &
+          call allocate_test ( dbeta_dv_path_c,     npc, size(fwdModelConf%lineCenter), &
             & 'dbeta_dv_path_c', moduleName )
-          call allocate_test ( dbeta_dv_path_f, max_ele, no_mol, &
+          call allocate_test ( dbeta_dv_path_f, max_ele, size(fwdModelConf%lineCenter), &
             & 'dbeta_dv_path_f', moduleName )
         end if
       else
@@ -1844,9 +1841,9 @@ contains
         if ( spect_der ) then
           call allocate_test ( k_spect_dw, noUsedChannels, no_tan_hts, f_len_w, &
             & 'k_spect_dw', moduleName )
-          call allocate_test ( dbeta_dw_path_c,     npc, no_mol, &
+          call allocate_test ( dbeta_dw_path_c,     npc, size(fwdModelConf%lineWidth), &
             & 'dbeta_dw_path_c', moduleName )
-          call allocate_test ( dbeta_dw_path_f, max_ele, no_mol, &
+          call allocate_test ( dbeta_dw_path_f, max_ele, size(fwdModelConf%lineWidth), &
             & 'dbeta_dw_path_f', moduleName )
         end if
       else
@@ -1864,9 +1861,9 @@ contains
         if ( spect_der ) then
           call allocate_test ( k_spect_dn, noUsedChannels, no_tan_hts, f_len_n, &
             & 'k_spect_dn', moduleName )
-          call allocate_test ( dbeta_dn_path_c,     npc, no_mol, &
+          call allocate_test ( dbeta_dn_path_c,     npc, size(fwdModelConf%lineWidth_TDep), &
             & 'dbeta_dn_path_c', moduleName )
-          call allocate_test ( dbeta_dn_path_f, max_ele, no_mol, &
+          call allocate_test ( dbeta_dn_path_f, max_ele, size(fwdModelConf%lineWidth_TDep), &
             & 'dbeta_dn_path_f', moduleName )
         end if
       else
@@ -1964,8 +1961,6 @@ contains
       type (VectorValue_T), pointer :: ELEVOFFSET       ! Elevation offset
       type (VectorValue_T), pointer :: SIDEBANDFRACTION ! The sideband fraction to use
       type (VectorValue_T), pointer :: THISRADIANCE     ! A radiance vector quantity
-
-if ( spect_der_center ) call dump ( k_spect_dv(1:noUsedChannels,:,:) )
 
       if ( toggle(emit) .and. levels(emit) > 2 ) &
         & call trace_begin ( 'ForwardModel.Convolution' )
@@ -2270,7 +2265,7 @@ if ( spect_der_center ) call dump ( k_spect_dv(1:noUsedChannels,:,:) )
                             ! PFA and no frequency averaging
       end select
 
-      call frequency_average_derivatives ( frq_avg_sel == 15 )
+      if ( any_der ) call frequency_average_derivatives ( frq_avg_sel == 15 )
 
       if ( toggle(emit) .and. levels(emit) > 4 ) &
         & call trace_end ( 'ForwardModel.FrequencyAvg' )
@@ -2378,7 +2373,6 @@ if ( spect_der_center ) call dump ( k_spect_dv(1:noUsedChannels,:,:) )
       ! filter shapes
 
       if ( spect_der_center ) then
-call dump ( k_spect_dv_frq, name='k_spect_dv_frq' )
         do k = 1, size(fwdModelConf%lineCenter)
           call frequency_average_derivative &
             & ( grids_v, k_spect_dv_frq(:noFreqs,:), k_spect_dv(:,ptg_i,:), k, &
@@ -2399,8 +2393,6 @@ call dump ( k_spect_dv_frq, name='k_spect_dv_frq' )
             & combine )
         end do
       end if
-
-        !??? So now we have k_spect_d?.  What do we do with them ???
 
     end subroutine Frequency_Average_Derivatives
 
@@ -3020,26 +3012,28 @@ call dump ( k_spect_dv_frq, name='k_spect_dv_frq' )
 
             if ( spect_der_width ) &
               & call drad_tran_dx ( c_inds, gl_inds, del_zeta, grids_w,      &
-                &  eta_zxp_w, sps_path, do_calc_w, dbeta_dw_path_c,          &
-                &  dbeta_dw_path_f, do_gl,  del_s, ref_corr, dhdz_gw_path,   &
-                &  inc_rad_path_slice, i_stop, k_spect_dw_frq(frq_i,:) )
+                &  eta_zxp_w, sps_path, fwdModelConf%lineWidth%beta(sx),     &
+                &  do_calc_w, dbeta_dw_path_c, dbeta_dw_path_f, do_gl, del_s,&
+                &  ref_corr, dhdz_gw_path, inc_rad_path_slice, i_stop,       &
+                &  k_spect_dw_frq(frq_i,:) )
 
             ! Spectroscopic derivative  wrt: N
 
             if ( spect_der_width_TDep ) &
               & call drad_tran_dx ( c_inds, gl_inds, del_zeta, grids_n,      &
-                &  eta_zxp_n, sps_path, do_calc_n, dbeta_dn_path_c,          &
-                &  dbeta_dn_path_f, do_gl, del_s, ref_corr, dhdz_gw_path,    &
-                &  inc_rad_path_slice, i_stop, k_spect_dn_frq(frq_i,:) )
+                &  eta_zxp_n, sps_path, fwdModelConf%lineWidth_tDep%beta(sx),&
+                &  do_calc_n, dbeta_dn_path_c, dbeta_dn_path_f, do_gl, del_s,&
+                &  ref_corr, dhdz_gw_path, inc_rad_path_slice, i_stop,       &
+                &  k_spect_dn_frq(frq_i,:) )
 
             ! Spectroscopic derivative  wrt: Nu0
 
-if ( spect_der_center ) call dump ( dbeta_dv_path_c, name='dbeta_dv_path_c' )
             if ( spect_der_center ) &
               & call drad_tran_dx ( c_inds, gl_inds, del_zeta, grids_v,      &
-                &  eta_zxp_v, sps_path, do_calc_v, dbeta_dv_path_c,          &
-                &  dbeta_dv_path_f, do_gl, del_s, ref_corr, dhdz_gw_path,    &
-                &  inc_rad_path_slice, i_stop, k_spect_dv_frq(frq_i,:) )
+                &  eta_zxp_v, sps_path, fwdModelConf%lineCenter%beta(sx),    &
+                &  do_calc_v, dbeta_dv_path_c, dbeta_dv_path_f, do_gl, del_s,&
+                &  ref_corr, dhdz_gw_path, inc_rad_path_slice, i_stop,       &
+                &  k_spect_dv_frq(frq_i,:) )
 
           end if
 
@@ -3329,6 +3323,9 @@ if ( spect_der_center ) call dump ( dbeta_dv_path_c, name='dbeta_dv_path_c' )
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.254  2006/01/05 00:03:52  vsnyder
+! Implement refractive correction for Phi
+!
 ! Revision 2.253  2005/12/10 01:51:54  vsnyder
 ! Cannonball polishing
 !

@@ -35,7 +35,7 @@ contains
         & dBeta_dt_path, dBeta_dw_path, dBeta_dn_path, dBeta_dv_path )
 
     use Dump_0, only: Dump
-    use ForwardModelConfig, only: LBL_T
+    use ForwardModelConfig, only: LBL_T, LineCenter, LineWidth, LineWidth_TDep
     use Intrinsic, only: Lit_Indices
     use MLSCommon, only: R8, RP, IP
     use Output_m, only: Output
@@ -96,24 +96,23 @@ contains
       dumpBeta = dumpAll .or. ( index(switches,'lblb') > 0 )
     end if
 
-    nullify ( dBdn, dBdv, dBdw )
+    nullify ( dBdn, dBdT, dBdv, dBdw ) ! Disassociated means "Don't compute it"
 
     do i = 1, size(beta_group)
-      if ( associated(dBeta_dn_path) ) then
-        dBdn => dBeta_dn_path(:,i)
+      if ( beta_group(i)%spect_der_ix(lineWidth_tDep) /= 0 .and. associated(dBeta_dn_path) ) then
+        dBdn => dBeta_dn_path(:,beta_group(i)%spect_der_ix(lineWidth_tDep))
         dBdn = 0.0_rp
       end if
-      if ( associated(dBeta_dv_path) ) then
-        dBdv => dBeta_dv_path(:,i)
+      if ( beta_group(i)%spect_der_ix(lineCenter) /= 0 .and. associated(dBeta_dv_path) ) then
+        dBdv => dBeta_dv_path(:,beta_group(i)%spect_der_ix (lineCenter))
         dBdv = 0.0_rp
       end if
-      if ( associated(dBeta_dw_path) ) then
-        dBdw => dBeta_dw_path(:,i)
+      if ( beta_group(i)%spect_der_ix(lineWidth) /= 0 .and. associated(dBeta_dw_path) ) then
+        dBdw => dBeta_dw_path(:,beta_group(i)%spect_der_ix(lineWidth))
         dBdw = 0.0_rp
       end if
 
       beta_path(:,i) = 0.0_rp
-      dBdT => null()
       if ( associated(dBeta_dt_path) ) then
         dBdT => dBeta_dt_path(:,i)
         dBdT = 0.0_rp
@@ -1115,6 +1114,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.81  2005/10/24 20:19:35  vsnyder
+! Corrections for spectroscopy derivatives
+!
 ! Revision 2.80  2005/07/06 02:17:21  vsnyder
 ! Revisions for spectral parameter derivatives
 !
