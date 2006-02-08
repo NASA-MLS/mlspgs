@@ -2512,7 +2512,7 @@ contains
 
         if ( pfa ) then
           call get_beta_path_PFA ( frq, frq_i, z_path, c_inds, t_path_c,  &
-            & beta_group%PFA(sx), vel_rel, beta_path_c, t_der_path_flags, &
+            & beta_group, sx, vel_rel, beta_path_c, t_der_path_flags,     &
             & dbeta_dT_path_c, dbeta_dw_path_c, dbeta_dn_path_c, dbeta_dv_path_c )
         else
           frqhk = 0.5_r8 * frq * h_over_k    ! h nu / 2 k
@@ -2521,7 +2521,7 @@ contains
           if ( temp_der ) dTanh_dT_c(:npc) = &
               & frqhk / t_path_c**2 * ( tanh1_c - 1.0_rp / tanh1_c )
           call get_beta_path ( Frq, p_path, t_path_c, tanh1_c,                &
-            &  beta_group%lbl(sx), fwdModelConf%polarized, gl_slabs, c_inds,  &
+            &  beta_group, sx, fwdModelConf%polarized, gl_slabs, c_inds,      &
             &  beta_path_c, t_der_path_flags, dTanh_dT_c, vel_rel,            &
             &  dbeta_dT_path_c, dbeta_dw_path_c, dbeta_dn_path_c, dbeta_dv_path_c )
         end if
@@ -2757,7 +2757,7 @@ contains
         if ( pfa ) then
 
           call get_beta_path_PFA ( frq, frq_i, z_path, gl_inds, t_path_f(:ngl),   &
-            & beta_group%PFA(sx), vel_rel, beta_path_f(:ngl,:), t_der_path_flags, &
+            & beta_group, sx, vel_rel, beta_path_f(:ngl,:), t_der_path_flags,     &
             & dbeta_dT_path_f, dbeta_dw_path_f, dbeta_dn_path_f, dbeta_dv_path_f )
 
         else
@@ -2774,7 +2774,7 @@ contains
           ! different set of optional arguments.
 
           call get_beta_path ( Frq, p_path, t_path_f(:ngl), tanh1_f(1:ngl),    &
-            & beta_group%lbl(sx), fwdModelConf%polarized, gl_slabs,            &
+            & beta_group, sx, fwdModelConf%polarized, gl_slabs,                &
             & gl_inds, beta_path_f(:ngl,:), t_der_path_flags, dTanh_dT_f,      &
             & vel_rel, &
             & dbeta_dT_path_f, dbeta_dw_path_f, dbeta_dn_path_f, dbeta_dv_path_f )
@@ -3323,6 +3323,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.255  2006/02/08 01:02:01  vsnyder
+! More stuff for spectroscopy derivatives
+!
 ! Revision 2.254  2006/01/05 00:03:52  vsnyder
 ! Implement refractive correction for Phi
 !

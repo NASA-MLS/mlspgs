@@ -21,6 +21,10 @@ module GET_BETA_PATH_M
     module procedure Get_Beta_Path_Scalar, Get_Beta_Path_Polarized
   end interface
 
+  ! RHi = H2O * exp(RHa - RHb/T) / P
+  real, parameter, private :: RHa = 19.6783
+  real, parameter, private :: RHb = 6140.4
+
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: ModuleName= &
     &  "$RCSfile$"
@@ -30,13 +34,13 @@ contains
 
 ! ---------------------------------------  Get_Beta_Path_Scalar  -----
   subroutine Get_Beta_Path_Scalar ( frq, p_path, t_path, tanh_path, &
-        & beta_group, NoPolarized, gl_slabs, path_inds,             &
+        & beta_group, SX, NoPolarized, gl_slabs, path_inds,         &
         & beta_path, t_der_path_flags, dTanh_dT, VelCor,            &
         & dBeta_dt_path, dBeta_dw_path, dBeta_dn_path, dBeta_dv_path )
 
     use Dump_0, only: Dump
-    use ForwardModelConfig, only: LBL_T, LineCenter, LineWidth, LineWidth_TDep
-    use Intrinsic, only: Lit_Indices
+    use ForwardModelConfig, only: Beta_Group_T, LineCenter, LineWidth, LineWidth_TDep
+    use Intrinsic, only: L_RHi, Lit_Indices
     use MLSCommon, only: R8, RP, IP
     use Output_m, only: Output
     use Slabs_SW_m, only: SLABS_STRUCT
@@ -52,7 +56,8 @@ contains
     type (slabs_struct), dimension(:,:), intent(in) :: Gl_slabs
     integer(ip), intent(in) :: Path_inds(:) ! indices for reading p_path and gl_slabs
 
-    type (LBL_T), intent(in), dimension(:) :: beta_group
+    type (beta_group_t), intent(in), dimension(:) :: beta_group
+    integer, intent(in) :: SX            ! Sideband index, 1 or 2.
 
     logical, intent(in) :: NoPolarized   ! "Don't work on Zeeman-split lines"
 
@@ -83,6 +88,7 @@ contains
 ! Local variables.
 
     real(rp), pointer :: dBdn(:), dBdT(:), dBdv(:), dBdw(:) ! slices of dBeta_d*_path
+    real(rp) :: ES(size(t_path)) ! Used for RHi calculation
     integer(ip) :: I, N
     logical, save :: DumpAll, DumpBeta, DumpStop
     logical, save :: First = .true. ! Fist-time flag
@@ -99,16 +105,16 @@ contains
     nullify ( dBdn, dBdT, dBdv, dBdw ) ! Disassociated means "Don't compute it"
 
     do i = 1, size(beta_group)
-      if ( beta_group(i)%spect_der_ix(lineWidth_tDep) /= 0 .and. associated(dBeta_dn_path) ) then
-        dBdn => dBeta_dn_path(:,beta_group(i)%spect_der_ix(lineWidth_tDep))
+      if ( beta_group(i)%lbl(sx)%spect_der_ix(lineWidth_tDep) /= 0 .and. associated(dBeta_dn_path) ) then
+        dBdn => dBeta_dn_path(:,beta_group(i)%lbl(sx)%spect_der_ix(lineWidth_tDep))
         dBdn = 0.0_rp
       end if
-      if ( beta_group(i)%spect_der_ix(lineCenter) /= 0 .and. associated(dBeta_dv_path) ) then
-        dBdv => dBeta_dv_path(:,beta_group(i)%spect_der_ix (lineCenter))
+      if ( beta_group(i)%lbl(sx)%spect_der_ix(lineCenter) /= 0 .and. associated(dBeta_dv_path) ) then
+        dBdv => dBeta_dv_path(:,beta_group(i)%lbl(sx)%spect_der_ix (lineCenter))
         dBdv = 0.0_rp
       end if
-      if ( beta_group(i)%spect_der_ix(lineWidth) /= 0 .and. associated(dBeta_dw_path) ) then
-        dBdw => dBeta_dw_path(:,beta_group(i)%spect_der_ix(lineWidth))
+      if ( beta_group(i)%lbl(sx)%spect_der_ix(lineWidth) /= 0 .and. associated(dBeta_dw_path) ) then
+        dBdw => dBeta_dw_path(:,beta_group(i)%lbl(sx)%spect_der_ix(lineWidth))
         dBdw = 0.0_rp
       end if
 
@@ -118,14 +124,23 @@ contains
         dBdT = 0.0_rp
       end if
 
-      do n = 1, size(beta_group(i)%cat_index)
+      do n = 1, size(beta_group(i)%lbl(sx)%cat_index)
         call create_beta_path ( path_inds, p_path, t_path, frq,             &
-          & beta_group(i)%ratio(n), gl_slabs(:,beta_group(i)%cat_index(n)), &
-          & tanh_path, noPolarized, velCor, &
+          & beta_group(i)%lbl(sx)%ratio(n),                                 &
+          & gl_slabs(:,beta_group(i)%lbl(sx)%cat_index(n)),                 &
+          & tanh_path, noPolarized, velCor,                                 &
           & beta_path(:,i), dTanh_dT, t_der_path_flags, dBdT, dBdw, dBdn, dBdv )
 
+        ! Convert specific humidity to relative humidity?
+        if ( beta_group(i)%molecule == l_rhi ) then
+          es = exp(RHa - RHb/t_path) / p_path(path_inds)
+          beta_path(:,i) = beta_path(:,i) * es
+          if ( associated(dBdT) ) &
+            & dBdT = es * dBdT + RHb / t_path**2 * beta_path(:,i)
+        end if
+
         if ( dumpBeta ) then
-          call display_string ( lit_indices(beta_group(i)%molecules(n)), &
+          call display_string ( lit_indices(beta_group(i)%lbl(sx)%molecules(n)), &
             & before='LBL Betas for ' )
           call output ( frq, before=', FRQ = ', advance='yes' )
           call dump ( beta_path(:,i), name='Beta' )
@@ -144,12 +159,12 @@ contains
 
   ! ------------------------------------------  Get_Beta_Path_PFA  -----
   subroutine Get_Beta_Path_PFA ( Frq, Frq_i, P_Path, Path_Inds, T_Path, &
-    & Beta_Group, Vel_Rel, Beta_Path, T_Der_Path_Flags, &
+    & Beta_Group, SX, Vel_Rel, Beta_Path, T_Der_Path_Flags, &
     & dBeta_dT_Path, dBeta_dw_Path, dBeta_dn_Path, dBeta_dv_Path )
 
     use Dump_0, only: Dump
-    use ForwardModelConfig, only: PFA_T
-    use Intrinsic, only: Lit_Indices
+    use ForwardModelConfig, only: Beta_Group_T
+    use Intrinsic, only: L_RHi, Lit_Indices
     use MLSCommon, only: RP, R8
     use Output_m, only: Output
     use PFADataBase_m, only: PFAData
@@ -162,7 +177,8 @@ contains
     real(rp), intent(in) :: P_path(:)   ! path pressures in hPa!
     integer, intent(in) :: Path_inds(:) ! indicies for reading P_path
     real(rp), intent(in) :: T_path(:)   ! path temperatures
-    type(PFA_t), intent(in) :: Beta_Group(:) ! PFA stuff for the beta group
+    type(beta_group_t), intent(in) :: Beta_Group(:) ! PFA stuff for the beta group
+    integer, intent(in) :: SX            ! Sideband index, 1 or 2.
     real(rp), intent(in) :: Vel_Rel     ! LOS Vel / C
 
 ! Output
@@ -185,6 +201,7 @@ contains
     real(rp), pointer :: dBeta_dv_path(:,:) ! line position
 
     real(rp), pointer :: dBdn(:), dBdT(:), dBdv(:), dBdw(:) ! slices of dBeta_d*_path
+    real(rp) :: ES(size(t_path)) ! Used for RHi calculation
     integer :: I, N
     logical, save :: DumpAll, DumpBeta, DumpStop
     logical, save :: First = .true. ! First-time flag
@@ -218,22 +235,30 @@ contains
 
       beta_path(:,i) = 0.0_rp
 
-      do n = 1, size(beta_group(i)%molecules)
-        if ( beta_group(i)%data(frq_i,n)/= 0 ) then
+      do n = 1, size(beta_group(i)%pfa(sx)%molecules)
+        if ( beta_group(i)%pfa(sx)%data(frq_i,n)/= 0 ) then
           call create_beta_path_pfa ( frq, p_path, path_inds, t_path, vel_rel, &
-            & PFAData(beta_group(i)%data(frq_i,n)), beta_group(i)%ratio(n), &
-            & beta_path(:,i), t_der_path_flags, &
-            & dBdT, dBdw, dBdn, dBdv )
+            & PFAData(beta_group(i)%pfa(sx)%data(frq_i,n)),   &
+            & beta_group(i)%pfa(sx)%ratio(n), beta_path(:,i), &
+            & t_der_path_flags, dBdT, dBdw, dBdn, dBdv )
+
+          ! Convert specific humidity to relative humidity?
+          if ( beta_group(i)%molecule == l_rhi ) then
+            es = exp(RHa - RHb/t_path) / p_path(path_inds)
+            beta_path(:,i) = beta_path(:,i) * es
+            if ( associated(dBdT) ) &
+              & dBdT = es * dBdT + RHb / t_path**2 * beta_path(:,i)
+          end if
 
           if ( dumpBeta ) then
-            call display_string ( lit_indices(beta_group(i)%molecules(n)), &
+            call display_string ( lit_indices(beta_group(i)%pfa(sx)%molecules(n)), &
             & before='PFA Betas for ' )
             call output ( frq, before=', FRQ = ', advance='yes' )
             call dump ( beta_path(:,i), name='Beta' )
             if ( associated(dBdT) ) call dump ( dBdT, name='dBdT' )
           end if
         end if
-      end do ! n = 1, size(beta_group(i)%molecules)
+      end do ! n = 1, size(beta_group(i)%pfa(sx)%molecules)
 
     end do ! i = 1, size(beta_group)
 
@@ -1114,6 +1139,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.82  2006/02/08 01:02:22  vsnyder
+! More stuff for spectroscopy derivatives
+!
 ! Revision 2.81  2005/10/24 20:19:35  vsnyder
 ! Corrections for spectroscopy derivatives
 !
