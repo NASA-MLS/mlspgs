@@ -446,12 +446,13 @@ contains
     subroutine SpectroscopyCatalogExtract
       use Allocate_Deallocate, only: Allocate_Test, Test_Allocate
       use Intrinsic, only: LIT_INDICES, L_NONE
-      use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
       use MLSSignals_m, only: GetRadiometerFromSignal
+      use MoreTree, only: StartErrorMessage
       use SpectroscopyCatalog_m, only: Catalog, Empty_Cat, Line_t, &
         & Lines, MostLines
-      use String_table, only: GET_STRING
+      use String_table, only: Display_String
       use Toggles, only: Switches
+      use Tree, only: Source_Ref
 
       integer :: B         ! Beta_group index
       integer :: C         ! Spectroscopy catalog extract size/index
@@ -489,10 +490,20 @@ contains
             c = c + 1
             fwdModelConf%beta_group(b)%lbl(sx)%cat_index(m) = c
             n = fwdModelConf%beta_group(b)%lbl(sx)%molecules(m)
-            if ( catalog(n)%molecule == l_none ) then
-              call get_string ( lit_indices(n), molName )
-              call MLSMessage ( MLSMSG_Error, moduleName, &
-                & 'No spectroscopy catalog for ' // molName )
+            if ( n > ubound(catalog,1) .or. n < lbound(catalog,1) ) then ! Probably RHi
+              if ( source_ref(fwdModelConf%where) /= 0 ) &
+              call startErrorMessage ( fwdModelConf%where )
+              call display_string ( lit_indices(n), &
+                & before=' No spectroscopy catalog for ', advance='yes' )
+              error = .true.
+              cycle
+            else if ( catalog(n)%molecule == l_none ) then
+              if ( source_ref(fwdModelConf%where) /= 0 ) &
+              call startErrorMessage ( fwdModelConf%where )
+              call display_string ( lit_indices(n), &
+                & before=' No spectroscopy catalog for ', advance='yes' )
+              error = .true.
+              cycle
             end if
             fwdModelConf%catalog(s,c) = catalog(n)
             ! Don't deallocate them by mistake -- fwdModelConf%catalog is a shallow copy
@@ -563,9 +574,10 @@ contains
               l = count(lineFlag /= 0)
               if ( l == 0 .and. all ( fwdModelConf%catalog(s,c)%continuum == 0.0 ) &
                 & .and. noLinesMsg > 0 ) then
-                call get_string ( lit_indices(n), molName )
-                call MLSMessage ( MLSMSG_Warning, ModuleName, &
-                  & 'No relevant lines or continuum for '//trim(molName) )
+                if ( source_ref(fwdModelConf%where) /= 0 ) &
+                call startErrorMessage ( fwdModelConf%where )
+                call display_string ( lit_indices(n), &
+                  & before='No relevant lines or continuum for ' )
               end if
               call allocate_test ( fwdModelConf%catalog(s,c)%lines, l, &
                 & 'fwdModelConf%catalog(?,?)%lines', moduleName )
@@ -1281,15 +1293,15 @@ contains
       end do ! j = 1, size(config%channels)
     end if
     if ( associated(config%IntegrationGrid) ) then
-      call dump(config%IntegrationGrid, details=details)
+      call dump ( config%IntegrationGrid, details=details, what='Integration grid' )
     else
-      call output (' no IntegrationGrid', advance='yes')
-    endif
+      call output ( ' no IntegrationGrid', advance='yes' )
+    end if
     if ( associated(config%tangentGrid) ) then
-      call dump(config%tangentGrid, details=details)
+      call dump ( config%tangentGrid, details=details, what='Tangent grid' )
     else
-      call output (' no tangentGrid', advance='yes')
-    endif
+      call output ( ' no tangentGrid', advance='yes' )
+    end if
   end subroutine Dump_ForwardModelConfig
 
   ! ---------------------------------------------  Dump_Qty_Stuff  -----
@@ -1315,6 +1327,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.86  2006/02/08 01:02:01  vsnyder
+! More stuff for spectroscopy derivatives
+!
 ! Revision 2.85  2005/12/29 01:12:04  vsnyder
 ! Add 'refract' field, polished up dump
 !
