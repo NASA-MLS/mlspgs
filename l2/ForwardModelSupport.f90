@@ -37,7 +37,8 @@ module ForwardModelSupport
   integer, parameter :: CloudNeeds             = CloudHas + 1
   integer, parameter :: CloudNot               = CloudNeeds + 1
   integer, parameter :: DerivSansMolecules     = CloudNot  + 1
-  integer, parameter :: IncompleteBinSelectors = DerivSansMolecules + 1
+  integer, parameter :: DuplicateMolecule      = DerivSansMolecules + 1
+  integer, parameter :: IncompleteBinSelectors = DuplicateMolecule + 1
   integer, parameter :: IncompleteFullFwm      = IncompleteBinSelectors + 1
   integer, parameter :: IncompleteLinearFwm    = IncompleteFullFwm + 1
   integer, parameter :: IrrelevantFwmParameter = IncompleteLinearFwm + 1
@@ -721,6 +722,31 @@ contains ! =====     Public Procedures     =============================
     end if
     info%molecules => info%beta_group%molecule
 
+    ! Announce duplicate molecules, but don't make it an error.
+    ! All of the molecules are in ...%lbl(1) at this moment.
+    do b = 1, size(info%beta_group)
+      do i = 1, size(info%beta_group(b)%lbl(1)%molecules)
+        ! First in the same group
+        do j = i+1, size(info%beta_group(b)%lbl(1)%molecules)
+          if ( info%beta_group(b)%lbl(1)%molecules(i) == &
+            &  info%beta_group(b)%lbl(1)%molecules(j) ) then
+            call announceError ( duplicateMolecule, moleculeTree, &
+              what=info%beta_group(b)%lbl(1)%molecules(i), warn=.true. )
+          end if
+        end do
+        ! Now in other groups
+        do k = b+1, size(info%beta_group)
+          do j = 1, size(info%beta_group(k)%lbl(1)%molecules)
+            if ( info%beta_group(b)%lbl(1)%molecules(i) == &
+              &  info%beta_group(k)%lbl(1)%molecules(j) ) then
+              call announceError ( duplicateMolecule, moleculeTree, &
+                what=info%beta_group(b)%lbl(1)%molecules(i), warn=.true. )
+            end if
+          end do
+        end do
+      end do
+    end do
+
     ! Now the PFAMolecules lists
     do s = s1, s2
       if ( pfaTrees(s) /= null_tree ) then
@@ -1186,6 +1212,9 @@ op:     do j = 2, nsons(PFATrees(s))
     case ( DerivSansMolecules )
       call output ( 'Derivative(s) requested for molecule(s) not specified.', &
         & advance='yes')
+    case ( DuplicateMolecule )
+      call display_string ( lit_indices(what), before='Duplicate molecule ', &
+        & advance='yes' )
     case ( IncompleteBinSelectors )
       call output ('must have some binSelectors for the polarlinear model',advance='yes' )
     case ( IncompleteFullFwm )
@@ -1270,6 +1299,9 @@ op:     do j = 2, nsons(PFATrees(s))
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.126  2006/02/08 21:33:43  vsnyder
+! Announce warning for duplicate molecules
+!
 ! Revision 2.125  2006/02/07 00:19:07  vsnyder
 ! Prohibit conspiracy of polarized and PFA
 !
