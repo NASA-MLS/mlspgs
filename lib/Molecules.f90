@@ -106,10 +106,12 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_o3_r5h) =       add_ident ( 'o3_r5h' )
     lit_indices(l_o3_r5v) =       add_ident ( 'o3_r5v' )
 
-    ! Create the type tree for the molecule type
+    ! Create the type tree for the molecule type.  RHi is added explicitly
+    ! since it's already a literal for other purposes (in Intrinsic).
     call make_tree ( (/ &
-      begin, t+t_molecule, l+(/ (i,i=first_molecule, last_molecule) /), &
-             n+n_dt_def /) )
+      begin, t+t_molecule, &
+        & l+(/ (i,i=first_molecule, last_molecule), l_rhi /), &
+        & n+n_dt_def /) )
 
   contains
 
@@ -130,6 +132,9 @@ contains ! =====     Public procedures     =============================
 end module MOLECULES
 
 ! $Log$
+! Revision 2.24  2006/02/08 21:35:22  vsnyder
+! Add RHi to the 'molecule' type
+!
 ! Revision 2.23  2005/06/22 17:25:50  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
