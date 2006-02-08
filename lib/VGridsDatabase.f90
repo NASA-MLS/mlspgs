@@ -172,7 +172,7 @@ contains
   end function DoVGridsMatch_VG
 
   ! -----------------------------------------------  Dump_a_VGrid  -----
-  subroutine Dump_a_VGrid ( VGrid, Details )
+  subroutine Dump_a_VGrid ( VGrid, Details, What )
     use Dump_0, only: DUMP
     use Intrinsic, only: Lit_Indices
     use OUTPUT_M, only: NEWLINE, OUTPUT
@@ -181,9 +181,11 @@ contains
     integer, intent(in), optional :: Details ! <= 0 => Don't dump arrays
     !                                        ! >0   => Do dump arrays
     !                                        ! Default 1
+    character(len=*), intent(in), optional :: What ! Prints ' '//what//':'
     integer :: MyDetails
     myDetails = 1
     if ( present(details) ) myDetails = details
+    if ( present(what) ) call output ( ' ' // trim(what) // ':' )
     call output ( ' Name = ' )
     if ( vGrid%name /= 0 ) then
       call display_string ( vgrid%name )
@@ -336,6 +338,9 @@ contains
 end module VGridsDatabase
 
 ! $Log$
+! Revision 2.21  2006/02/08 21:34:46  vsnyder
+! Add a 'what' argument, that just prints, to Dump_a_VGrid
+!
 ! Revision 2.20  2005/06/03 01:54:36  vsnyder
 ! Make VGrids a public module variable, some cannonball polishing,
 ! new copyright notice, move Id to not_used_here to avoid cascades.
