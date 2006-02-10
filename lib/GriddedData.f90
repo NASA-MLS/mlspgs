@@ -42,12 +42,13 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
 
   ! These are 'enumerated types' consistent with hph's
   ! work in l3ascii_read_field
-  public :: V_is_pressure, V_is_altitude, V_is_GPH, V_is_theta
+  public :: V_is_pressure, V_is_altitude, V_is_GPH, V_is_theta, V_is_eta
 
   integer, parameter :: V_is_pressure = 1
   integer, parameter :: V_is_altitude = v_is_pressure+1
-  integer, parameter :: V_is_GPH = v_is_altitude+1
-  integer, parameter :: V_is_theta = v_is_gph+1
+  integer, parameter :: V_is_GPH      = v_is_altitude+1
+  integer, parameter :: V_is_theta    = v_is_gph+1
+  integer, parameter :: V_is_eta      = V_is_theta+1
   
   ! If dumping gridded data, always give some details of any matching these
   character(len=*), parameter :: ALWAYSDUMPTHESE = 'dao,ncep' ! -> ' '
@@ -70,7 +71,7 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
     character (LEN=NameLen) :: units ! Units for quantity
 
     ! Now define the various coordinate systems, first vertical
-    integer :: verticalCoordinate ! An 'enumerated' type
+    integer :: verticalCoordinate ! An 'enumerated' type (e.g., V_is_...)
     integer :: noHeights         ! Number of surfaces
     real (rgr), pointer, dimension(:) :: heights  => NULL()
     ! Surfaces (e.g. pressures etc.) [noHeights]
@@ -957,6 +958,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.36  2006/02/10 21:21:20  pwagner
+! Added V_is_eta verticalCoordinate
+!
 ! Revision 2.35  2006/01/19 00:24:17  pwagner
 ! Small improvements to dump routine
 !
