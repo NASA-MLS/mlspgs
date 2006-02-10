@@ -54,12 +54,12 @@ contains ! =====     Public Procedures     =============================
     use L2ParInfo, only: PARALLEL, WAITFORDIRECTWRITEPERMISSION
     use LEXER_CORE, only: PRINT_SOURCE
     use MLSCommon, only: MLSFile_T
-    use MLSL2Options, only: CHECKPATHS, SKIPDIRECTWRITES
+    use MLSL2Options, only: CHECKPATHS, SKIPDIRECTWRITES, SPECIALDUMPFILE
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, &
       & add_to_directwrite_timing, add_to_section_timing
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MoreTree, only: GET_SPEC_ID
-    use Output_m, only: OUTPUT
+    use Output_m, only: OUTPUT, revertoutput, switchOutput
     use TOGGLES, only: GEN, TOGGLE, SWITCHES
     use Tree, only: SUBTREE, NSONS, NODE_ID, SOURCE_REF
     use TREE_TYPES, only: N_NAMED
@@ -112,6 +112,8 @@ contains ! =====     Public Procedures     =============================
     if ( toggle(gen) ) call trace_begin ( "MLSL2Join", root )
     timing = section_times
     if ( timing ) call time_now ( t1 )
+    if ( specialDumpFile /= ' ' ) &
+      & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
     ! Will we (perhaps) be automatically assigning Direct writes to
     ! files declared in global settings section?
     autoDirectWrite = .false.
@@ -278,6 +280,8 @@ contains ! =====     Public Procedures     =============================
       end if
     end do passLoop                     ! End loop over passes
 
+    if ( specialDumpFile /= ' ' ) &
+      & call revertOutput
     ! Check for errors
     if ( error /= 0 ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, 'Error in Join section' )
@@ -1975,6 +1979,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.125  2006/02/10 21:17:33  pwagner
+! dumps may go to special dumpfile
+!
 ! Revision 2.124  2005/11/11 21:47:08  pwagner
 ! May have fixed bugs Besetting Alyn and Dong
 !
