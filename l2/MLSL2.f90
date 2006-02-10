@@ -32,8 +32,10 @@ program MLSL2
     & DEFAULT_HDFVERSION_READ, DEFAULT_HDFVERSION_WRITE, &
     & LEVEL1_HDFVERSION, NORMAL_EXIT_STATUS, OUTPUT_PRINT_UNIT, &
     & PATCH, PENALTY_FOR_NO_METADATA, QUIT_ERROR_THRESHOLD, RESTARTWARNINGS, &
-    & SECTIONTIMINGUNITS, SIPS_VERSION, SKIPDIRECTWRITES, SKIPRETRIEVAL, &
-    & STOPAFTERCHUNKDIVIDE, STOPAFTERGLOBAL, STOPWITHERROR, TOOLKIT
+    & SECTIONTIMINGUNITS, SIPS_VERSION, SKIPDIRECTWRITES, &
+    & SKIPRETRIEVAL, SKIPRETRIEVALORIGINAL, &
+    & SPECIALDUMPFILE, STOPAFTERCHUNKDIVIDE, STOPAFTERGLOBAL, STOPWITHERROR, &
+    & TOOLKIT
   use MLSL2Timings, only: RUN_START_TIME, SECTION_TIMES, TOTAL_TIMES, &
     & ADD_TO_SECTION_TIMING, DUMP_SECTION_TIMINGS
   use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMSG_Debug, &
@@ -291,6 +293,12 @@ program MLSL2
           call io_error ( "After --delay option", status, line )
           stop
         end if
+      else if ( line(3+n:7+n) == 'dump ' ) then
+        call AccumulateSlaveArguments ( line )
+        i = i + 1
+        call getarg ( i, line )
+        command_line = trim(command_line) // ' ' // trim(line)
+        specialDumpFile = trim(line)
       else if ( lowercase(line(3+n:8+n)) == 'evercr' ) then
         neverCrash = .not. switch ! Because "neverCrash" makes NEVERCRASH TRUE
       else if ( lowercase(line(3+n:14+n)) == 'fwmparallel ' ) then
@@ -784,6 +792,7 @@ program MLSL2
         & STOPAFTERGLOBAL)
       SKIPRETRIEVAL = (SKIPRETRIEVAL .or. STOPAFTERCHUNKDIVIDE .or. &
         & STOPAFTERGLOBAL)
+      SKIPRETRIEVALORIGINAL = SKIPRETRIEVAL
       call time_now ( t1 )
       if ( timing ) &
         & call output ( "-------- Processing Begun ------ ", advance='yes' )
@@ -1027,6 +1036,11 @@ contains
       call output(' Set error before stopping:                      ', advance='no')
       call blanks(4, advance='no')
       call output(StopWithError, advance='yes')
+      if ( specialDumpFile /= ' ' ) then
+      call output(' Save special dumps to:                          ', advance='no')
+      call blanks(4, advance='no')
+      call output(trim(specialDumpFile), advance='yes')
+      endif
       call output(' ----------------------------------------------------------', &
         & advance='yes')
     endif
@@ -1050,6 +1064,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.144  2006/02/10 21:14:32  pwagner
+! May specify skipRetrivel for particular Phases; dumps may go to special dumpfile
+!
 ! Revision 2.143  2005/11/17 20:11:46  pwagner
 ! Was printing wrong thing for parallel sleeptime
 !
