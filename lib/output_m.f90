@@ -36,8 +36,11 @@ module OUTPUT_M
 ! newline                  print a newline
 ! output                   print argument
 ! output_date_and_time     print nicely formatted date and time
+! revertOutput             revert output to file used before switchOutput
+!                           if you plan to revert, keepOldUnitOpen when switching
 ! resumeOutput             resume output
 ! suspendOutput            suspend output
+! switchOutput             switch output to a new named file
 ! timestamp                print argument with a timestamp
 ! === (end of toc) ===
 
@@ -57,7 +60,9 @@ module OUTPUT_M
 ! output_date_and_time ( [log date], [log time], [char* from_where], 
 !          [char* msg], [char* dateFormat], [char* timeFormat], [char* advance] )
 ! resumeOutput
+! revertOutput
 ! suspendOutput
+! switchOutput( char* filename, [int unit] )
 ! timeStamp ( char* chars, [char* advance], [char* from_where], 
 !          [log dont_log], [char* log_chars], [char* insteadOfBlank],
 !          [char*8 style] )
@@ -67,13 +72,18 @@ module OUTPUT_M
 ! === (end of api) ===
 ! silentRunning            suspend further output if TRUE (or until FALSE)
   integer, save, public :: LINE_WIDTH = 120 ! Not used here, but a convenient
-                                        ! place to store it
-  integer, save, public :: PRUNIT = -1  ! Unit for output.  "printer" unit, *
-                                        ! if -1, MLSMessage if -2, both
-                                        ! printer and MLSMSG if < -2.
+                                         ! place to store it
+  integer, save, public :: PRUNIT = -1   ! Unit for output.  
+                                         ! -1 means "printer" unit, *
+                                         ! -2 means MLSMessage if 
+                                         ! < -2, both printer and MLSMSG
+                                         ! > 0, actual unit number
+                                         !
+  integer, save, private :: OLDUNIT = -1 ! Previous Unit for output.
+  logical, save, private :: OLDUNITSTILLOPEN = .TRUE.
 
   public :: BLANKS, DUMPSIZE, NEWLINE, OUTPUT, OUTPUT_DATE_AND_TIME, &
-    & RESUMEOUTPUT, SUSPENDOUTPUT, TIMESTAMP
+    & RESUMEOUTPUT, revertOutput, SUSPENDOUTPUT, switchOutput, TIMESTAMP
 
   interface DUMPSIZE
     module procedure DUMPSIZE_INTEGER, DUMPSIZE_REAL
@@ -652,11 +662,70 @@ contains
     silentRunning = .false.
   end subroutine resumeOutput
 
+  ! ----------------------------------------------  revertOutput  -----
+  subroutine revertOutput
+  ! revert to outputting to OLDUNIT. Close current PRUNIT (if > 0 and open)
+    ! Local variables
+    logical :: itsOpen
+    ! Executable
+    call resumeOutput
+    if ( .not. OLDUNITSTILLOPEN ) then
+      call output( 'Unable to Revert output--old unit not open', advance='yes' )
+      return
+    endif
+    call output( 'Reverting output to unit: ', advance='no' )
+    call output( OLDUNIT, advance='yes' )
+    if ( PRUNIT > 0 ) then
+      inquire( unit=PRUNIT, opened=itsOpen )
+      if ( itsOpen ) then
+        close(PRUNIT)
+      endif
+    endif
+    PRUNIT = OLDUNIT    
+
+  end subroutine revertOutput
+
   ! ----------------------------------------------  suspendOutput  -----
   subroutine suspendOutput 
   ! suspend outputting to PRUNIT.
     silentRunning = .true.
   end subroutine suspendOutput
+
+  ! ----------------------------------------------  switchOutput  -----
+  subroutine switchOutput ( filename, unit, keepOldUnitOpen )
+  ! stop outputting to PRUNIT. Switch to filename [using unit if supplied]
+    ! Args
+    character(len=*), intent(in)    :: filename
+    integer, optional, intent(in)   :: unit
+    logical, optional, intent(in)   :: keepOldUnitOpen
+    ! Internal variables
+    integer, parameter :: DEFAULTSWITCHUNIT = 59
+    logical :: dontCloseOldUnit
+    integer :: switchUnit
+    ! Executable
+    dontCloseOldUnit = .false.
+    if ( present(keepOldUnitOpen) ) dontCloseOldUnit = keepOldUnitOpen
+    switchUnit = DEFAULTSWITCHUNIT
+    call resumeOutput
+    if ( present(unit) ) then
+      call output('Switching further output to: ', advance='no')
+      call output(trim(filename), advance='yes')
+      call output('using unit number: ', advance='no')
+      call output(unit, advance='yes')
+      switchUnit = unit
+    else
+      call output('Switching further output to: ', advance='no')
+      call output(trim(filename), advance='yes')
+      if ( PRUNIT > 0 ) switchUnit = PRUNIT
+    endif
+    if ( PRUNIT > 0 .and. .not. dontCloseOldUnit ) then
+      close(PRUNIT)
+      OLDUNIT = PRUNIT
+      OLDUNITSTILLOPEN = .false.
+    endif
+    open( unit=switchUnit, file=filename, status='replace' )
+    PRUNIT = SwitchUnit
+  end subroutine switchOutput
 
   ! ------------------------------------------------  timeStamp_char  -----
   subroutine timeStamp_char ( CHARS, &
@@ -863,6 +932,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.45  2006/02/10 21:23:05  pwagner
+! Added switchOutput, revertOutput
+!
 ! Revision 2.44  2006/01/04 20:28:51  pwagner
 ! Added suspend- and resumeOutput procedures
 !
