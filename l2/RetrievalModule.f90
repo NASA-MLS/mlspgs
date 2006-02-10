@@ -77,11 +77,11 @@ contains
       & Sparsify, MultiplyMatrix_XTY
     use MatrixTools, only: DumpBlocks
     use MLSCommon, only: R8, RV
-    use MLSL2Options, only: SKIPRETRIEVAL
+    use MLSL2Options, only: SKIPRETRIEVAL, SPECIALDUMPFILE
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, Add_To_Retrieval_Timing
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
-    use Output_m, only: BLANKS, OUTPUT
+    use Output_m, only: BLANKS, OUTPUT, revertoutput, switchOutput
     use PFAData_m, only: Flush_PFAData
     use SidsModule, only: SIDS
     use SnoopMLSL2, only: SNOOP
@@ -268,6 +268,8 @@ contains
     if ( timing ) call time_now ( t1 )
 
     if ( toggle(gen) ) call trace_begin ( "Retrieve", root )
+    if ( specialDumpFile /= ' ' ) &
+      & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
     do i_sons = 2, nsons(root) - 1      ! skip names at begin/end of section
       son = subtree(i_sons, root)
       if ( node_id(son) == n_named ) then
@@ -657,6 +659,8 @@ contains
       end do
 
     end do ! i_sons = 2, nsons(root) - 1
+    if ( specialDumpFile /= ' ' ) &
+      & call revertOutput
     if ( toggle(gen) ) call trace_end ( "Retrieve" )
     if ( timing ) call sayTime
 
@@ -2471,6 +2475,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.266  2006/02/10 21:17:09  pwagner
+! dumps may go to special dumpfile
+!
 ! Revision 2.265  2006/01/21 00:04:14  livesey
 ! Added the start of a dump retrieval config option (-Srtv)
 !
