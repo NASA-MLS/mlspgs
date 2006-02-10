@@ -339,6 +339,7 @@ singleMAF
 skipL1BCheck
 skipMask
 skipOverlaps
+skipRetrieval
 solarTime
 solarZenith
 source
@@ -413,6 +414,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.156  2006/02/10 21:11:29  pwagner
+# May specify skipRetrivel for particular Phases
+#
 # Revision 2.155  2006/02/03 21:26:47  pwagner
 # ChunkDivide adds allowPostOverlaps field
 #
