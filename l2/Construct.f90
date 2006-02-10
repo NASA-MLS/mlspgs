@@ -93,10 +93,11 @@ contains ! =====     Public Procedures     =============================
       & S_PHASE, S_QUANTITY, S_TIME, S_VECTORTEMPLATE
     use L2GPData, only: L2GPDATA_T
     use MLSCommon, only: MLSFile_T, TAI93_Range_T
-    use MLSL2Options, only: RESTARTWARNINGS
+    use MLSL2Options, only: RESTARTWARNINGS, SPECIALDUMPFILE
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, addPhaseToPhaseNames
     use MoreTree, only: Get_Spec_ID
-    use OUTPUT_M, only: BLANKS, OUTPUT, RESUMEOUTPUT, SUSPENDOUTPUT
+    use OUTPUT_M, only: BLANKS, OUTPUT, RESUMEOUTPUT, &
+      & revertoutput, SUSPENDOUTPUT, switchOutput
     use QuantityTemplates, only: AddQuantityTemplateToDatabase, &
       & QuantityTemplate_T
     use Time_M, only: Time_Now
@@ -134,6 +135,8 @@ contains ! =====     Public Procedures     =============================
     if ( timing ) call time_now ( t1 )
 
     if ( toggle(gen) ) call trace_begin ( "MLSL2Construct", root )
+    if ( specialDumpFile /= ' ' ) &
+      & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
 
     ! First we're going to setup our mifGeolocation quantityTemplates.
     call ConstructMIFGeolocation ( mifGeolocation, filedatabase, chunk )
@@ -189,6 +192,8 @@ contains ! =====     Public Procedures     =============================
       end select
     end do
 
+    if ( specialDumpFile /= ' ' ) &
+      & call revertOutput
     if ( toggle(gen) ) call trace_end ( "MLSL2Construct" )
 
     if ( timing ) call sayTIme
@@ -244,6 +249,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.55  2006/02/10 21:19:07  pwagner
+! dumps may go to special dumpfile
+!
 ! Revision 2.54  2006/01/06 01:16:34  pwagner
 ! silent boolean field can silence selected phases
 !
