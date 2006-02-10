@@ -131,23 +131,32 @@ contains
           & tanh_path, noPolarized, velCor,                                 &
           & beta_path(:,i), dTanh_dT, t_der_path_flags, dBdT, dBdw, dBdn, dBdv )
 
-        ! Convert specific humidity to relative humidity?
-        if ( beta_group(i)%molecule == l_rhi ) then
-          es = exp(RHa - RHb/t_path) / p_path(path_inds)
-          beta_path(:,i) = beta_path(:,i) * es
-          if ( associated(dBdT) ) &
-            & dBdT = es * dBdT + RHb / t_path**2 * beta_path(:,i)
-        end if
-
         if ( dumpBeta ) then
-          call display_string ( lit_indices(beta_group(i)%lbl(sx)%molecules(n)), &
+          call display_string ( lit_indices(beta_group(i)%lbl(sx)%molecules(1:n)), &
             & before='LBL Betas for ' )
           call output ( frq, before=', FRQ = ', advance='yes' )
           call dump ( beta_path(:,i), name='Beta' )
           if ( associated(dBdT) ) call dump ( dBdT, name='dBdT' )
         end if
       end do
-    end do
+
+      ! Convert specific humidity to relative humidity?
+      if ( beta_group(i)%molecule == l_rhi ) then
+        es = exp(RHa - RHb/t_path) / p_path(path_inds)
+        beta_path(:,i) = beta_path(:,i) * es
+        if ( associated(dBdT) ) &
+          & dBdT = es * dBdT + RHb / t_path**2 * beta_path(:,i)
+
+        if ( dumpBeta ) then
+          call display_string ( lit_indices(beta_group(i)%molecule), &
+          & before='LBL Betas for ' )
+          call output ( frq, before=', FRQ = ', advance='yes' )
+          call dump ( beta_path(:,i), name='Beta' )
+          if ( associated(dBdT) ) call dump ( dBdT, name='dBdT' )
+        end if
+      end if
+
+    end do ! i = 1, size(beta_group)
 
     if ( dumpAll ) then
       call dump ( p_path(path_inds), name='Pressures' )
@@ -242,16 +251,8 @@ contains
             & beta_group(i)%pfa(sx)%ratio(n), beta_path(:,i), &
             & t_der_path_flags, dBdT, dBdw, dBdn, dBdv )
 
-          ! Convert specific humidity to relative humidity?
-          if ( beta_group(i)%molecule == l_rhi ) then
-            es = exp(RHa - RHb/t_path) / p_path(path_inds)
-            beta_path(:,i) = beta_path(:,i) * es
-            if ( associated(dBdT) ) &
-              & dBdT = es * dBdT + RHb / t_path**2 * beta_path(:,i)
-          end if
-
           if ( dumpBeta ) then
-            call display_string ( lit_indices(beta_group(i)%pfa(sx)%molecules(n)), &
+            call display_string ( lit_indices(beta_group(i)%pfa(sx)%molecules(1:n)), &
             & before='PFA Betas for ' )
             call output ( frq, before=', FRQ = ', advance='yes' )
             call dump ( beta_path(:,i), name='Beta' )
@@ -259,6 +260,22 @@ contains
           end if
         end if
       end do ! n = 1, size(beta_group(i)%pfa(sx)%molecules)
+
+      ! Convert specific humidity to relative humidity?
+      if ( beta_group(i)%molecule == l_rhi ) then
+        es = exp(RHa - RHb/t_path) / p_path(path_inds)
+        beta_path(:,i) = beta_path(:,i) * es
+        if ( associated(dBdT) ) &
+          & dBdT = es * dBdT + RHb / t_path**2 * beta_path(:,i)
+
+        if ( dumpBeta ) then
+          call display_string ( lit_indices(beta_group(i)%molecule), &
+          & before='PFA Betas for ' )
+          call output ( frq, before=', FRQ = ', advance='yes' )
+          call dump ( beta_path(:,i), name='Beta' )
+          if ( associated(dBdT) ) call dump ( dBdT, name='dBdT' )
+        end if
+      end if
 
     end do ! i = 1, size(beta_group)
 
@@ -1139,6 +1156,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.83  2006/02/08 21:38:18  vsnyder
+! Add relative humidity (RHi) calculation
+!
 ! Revision 2.82  2006/02/08 01:02:22  vsnyder
 ! More stuff for spectroscopy derivatives
 !
