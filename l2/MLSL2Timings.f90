@@ -14,11 +14,12 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
 !=============================================================================
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-  use INIT_TABLES_MODULE, only: F_SILENT
+  use INIT_TABLES_MODULE, only: F_SILENT, f_SKIPRETRIEVAL
   use INTRINSIC, only: L_HOURS, L_MINUTES, L_SECONDS
   use L2PARINFO, only: PARALLEL
   USE MLSL2Options, only: RESTARTWARNINGS, &
-    & SECTIONTIMINGUNITS, SKIPDIRECTWRITES, SKIPRETRIEVAL, &
+    & SECTIONTIMINGUNITS, &
+    & SKIPDIRECTWRITES, SKIPRETRIEVAL, SKIPRETRIEVALORIGINAL, &
     & STOPAFTERCHUNKDIVIDE, STOPAFTERGLOBAL
   USE MLSMessageModule, only: MLSMessage, MLSMessageReset, MLSMSG_Error
   USE MLSStrings, only: LowerCase 
@@ -275,6 +276,7 @@ contains ! =====     Public Procedures     =============================
     character(len=80) :: PHASESTRING    ! E.g., 'Core'
     ! Executable
     silent = .false.
+    skipRetrieval = skipRetrievalOriginal
     do keyNo = 2, nsons(root)
       son = subtree(keyNo,root)
       field = subtree(1,son)
@@ -287,6 +289,8 @@ contains ! =====     Public Procedures     =============================
       select case ( field_index )
       case ( f_silent )
         silent = get_boolean ( fieldValue )
+      case ( f_skipRetrieval )
+        skipRetrieval = get_boolean ( fieldValue )
       case default ! Can't get here if tree_checker works correctly
       end select
     end do
@@ -808,6 +812,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.30  2006/02/10 21:11:29  pwagner
+! May specify skipRetrivel for particular Phases
+!
 ! Revision 2.29  2006/01/06 01:15:32  pwagner
 ! Added addPhaseToPhaseNames
 !
