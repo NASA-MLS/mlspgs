@@ -27,7 +27,7 @@ module ReadAPriori
     & mls_closeFile, MLS_HDF_VERSION, &
     & MLS_INQSWATH, mls_io_gen_closeF, mls_io_gen_openF, &
     & mls_openFile, SPLIT_PATH_NAME
-  use MLSL2Options, only: DEFAULT_HDFVERSION_READ, TOOLKIT
+  use MLSL2Options, only: DEFAULT_HDFVERSION_READ, SPECIALDUMPFILE, TOOLKIT
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use MLSPCF2, only: mlspcf_l2apriori_start, mlspcf_l2apriori_end, &
@@ -36,7 +36,7 @@ module ReadAPriori
     & mlspcf_l2clim_start, mlspcf_l2clim_end
   use MLSStringLists, only: catLists
   use MoreTree, only: Get_Spec_ID
-  use OUTPUT_M, only: BLANKS, OUTPUT
+  use OUTPUT_M, only: BLANKS, OUTPUT, revertoutput, switchOutput
   use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS
   use String_Table, only: GET_STRING
   use Time_M, only: Time_Now
@@ -325,8 +325,13 @@ contains ! =====     Public Procedures     =============================
           call ReadL2GPData ( L2GPFile, swathNameString, l2gp )
         endif
 
-        if( index(switches, 'apr') /= 0 ) &
-        & call dump( l2gp, details=details )
+        if( index(switches, 'apr') /= 0 ) then
+          if ( specialDumpFile /= ' ' ) &
+            & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
+          call dump( l2gp, details=details )
+          if ( specialDumpFile /= ' ' ) &
+            & call revertOutput
+        endif
 
         if(index(switches, 'pro') /= 0) then                            
            call announce_success(FilenameString, 'l2gp', &                    
@@ -372,8 +377,13 @@ contains ! =====     Public Procedures     =============================
           & L2AUXDatabase(l2Index), &
           & checkDimNames=.false. )
 
-        if( index(switches, 'apr') /= 0 ) &
-        & call dump( L2AUXDatabase(l2Index), details )
+        if( index(switches, 'apr') /= 0 ) then
+          if ( specialDumpFile /= ' ' ) &
+            & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
+          call dump( L2AUXDatabase(l2Index), details )
+          if ( specialDumpFile /= ' ' ) &
+            & call revertOutput
+        endif
 
         ! call mls_closeFile(L2AUXFile, returnStatus)
 !         if ( returnStatus /= 0 ) then
@@ -593,8 +603,13 @@ contains ! =====     Public Procedures     =============================
         case default ! Can't get here if tree_checker worked correctly
         end select   ! origins of gridded data
 
-        if( index(switches, 'apr') /= 0 ) &
-        & call dump( GriddedDatabase(gridIndex), details )
+        if( index(switches, 'apr') /= 0 ) then
+          if ( specialDumpFile /= ' ' ) &
+            & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
+          call dump( GriddedDatabase(gridIndex), details )
+          if ( specialDumpFile /= ' ' ) &
+            & call revertOutput
+        endif
 
       case default
       end select     ! types of apriori data
@@ -817,6 +832,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.64  2006/02/10 21:15:55  pwagner
+! dumps may go to special dumpfile
+!
 ! Revision 2.63  2006/01/26 00:35:35  pwagner
 ! demoted more use statements from module level to speed Lahey compiles
 !
