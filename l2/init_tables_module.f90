@@ -176,7 +176,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_VECTOR             = s_updateMask + 1
   integer, parameter :: S_VECTORTEMPLATE     = s_vector + 1
   integer, parameter :: S_VGRID              = s_vectortemplate + 1
-  integer, parameter :: S_WRITEPFA           = s_vGrid + 1
+  integer, parameter :: S_WMOTROP            = s_vGrid + 1
+  integer, parameter :: S_WRITEPFA           = S_wmoTrop + 1
   integer, parameter :: SPEC_LAST = s_writePFA 
 
 ! Parameter names:
@@ -382,6 +383,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_vector) =               add_ident ( 'vector' )
     spec_indices(s_vectortemplate) =       add_ident ( 'vectorTemplate' )
     spec_indices(s_vgrid) =                add_ident ( 'vGrid' )
+    spec_indices(s_wmoTrop) =              add_ident ( 'wmoTrop' )
     spec_indices(s_writePFA) =             add_ident ( 'writePFA' )
 
   ! Now initialize the units tables.  Init_Units depends on the lit tables
@@ -586,6 +588,10 @@ contains ! =====     Public procedures     =============================
              begin, f+f_b, s+s_gridded, n+n_field_spec, &
              nadp+n_spec_def /) )
     call make_tree ( (/ &
+      begin, s+s_wmoTrop, &  ! Must be AFTER S_Gridded
+             begin, f+f_grid, s+s_gridded, n+n_field_spec, &
+             nadp+n_spec_def /) )
+    call make_tree ( (/ &
       begin, s+s_merge, &  ! Must be AFTER S_Gridded
              begin, f+f_operational, s+s_gridded, s+s_concatenate, n+n_field_spec, &
              begin, f+f_climatology, s+s_gridded, s+s_concatenate, n+n_field_spec, &
@@ -691,6 +697,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_phaseName, t+t_string, n+n_field_type, &
              begin, f+f_level, t+t_numeric, n+n_field_type, &
              begin, f+f_silent, t+t_boolean, n+n_field_type, &
+             begin, f+f_skipRetrieval, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_quantity, & ! Must be AFTER s_hgrid and s_vgrid
              begin, f+f_irregular, t+t_boolean, n+n_field_type, &
@@ -1277,12 +1284,14 @@ contains ! =====     Public procedures     =============================
              begin, f+f_phaseName, t+t_string, n+n_field_type, &
              begin, f+f_level, t+t_numeric, n+n_field_type, &
              begin, f+f_silent, t+t_boolean, n+n_field_type, &
+             begin, f+f_skipRetrieval, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_phase, & ! Ignores rest of stuff
              begin, f+f_comment, t+t_string, n+n_field_type, &
              begin, f+f_phaseName, t+t_string, n+n_field_type, &
              begin, f+f_level, t+t_numeric, n+n_field_type, &
              begin, f+f_silent, t+t_boolean, n+n_field_type, &
+             begin, f+f_skipRetrieval, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_dumpblocks, &
              begin, f+f_matrix, s+s_matrix, nr+n_field_spec, &
@@ -1331,6 +1340,7 @@ contains ! =====     Public procedures     =============================
       begin, z+z_readapriori, s+s_time, s+s_gridded, s+s_l2gp, &
              s+s_l2aux, s+s_snoop, n+n_section, &
       begin, z+z_mergegrids, s+s_time, s+s_merge, s+s_concatenate, s+s_delete, &
+             s+s_wmoTrop, &
              n+n_section /) )
     call make_tree ( (/ &
       begin, z+z_chunkdivide, &
@@ -1384,6 +1394,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.423  2006/02/10 21:11:29  pwagner
+! May specify skipRetrivel for particular Phases
+!
 ! Revision 2.422  2006/02/03 21:26:47  pwagner
 ! ChunkDivide adds allowPostOverlaps field
 !
