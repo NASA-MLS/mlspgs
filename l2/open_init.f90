@@ -18,7 +18,6 @@ module Open_Init
   use dates_module, only: utc_to_yyyymmdd
   use Hdf, only: DFACC_RDONLY
   use intrinsic, only: l_hdf
-  use L2GPData, only: col_species_keys, col_species_hash
   use MLSCommon, only: FileNameLen, MLSFile_T, TAI93_Range_T, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSStringLists, only: catLists, NumStringElements, GetStringElement
@@ -70,6 +69,7 @@ contains ! =====     Public Procedures     =============================
     ! Gets the start and end times from the PCF
 
     use L1BData, only: FindMaxMAF, ReadL1BAttribute
+    use L2GPData, only: col_species_keys, col_species_hash
     use L2ParInfo, only: parallel
     use MLSFiles, only: &
       & addFileToDatabase, InitializeMLSFile, mls_openFile
@@ -455,8 +455,11 @@ contains ! =====     Public Procedures     =============================
     use L1BData, only: L1BData_T, NAME_LEN, &
       & AssembleL1BQtyName, DeallocateL1BData, Dump, ReadL1BData
     use L2AUXData, only: MAXSDNAMESBUFSIZE
+    use L2GPData, only: col_species_keys, col_species_hash
+    use MLSL2Options, only: TOOLKIT, PENALTY_FOR_NO_METADATA, SPECIALDUMPFILE
     use MLSFiles, only: HDFVERSION_4       
     use MLSHDF5, only: GetAllHDF5DSNames
+    use output_m, only: revertoutput, switchOutput
     use WriteMetadata, only: L2PCF
 
     ! Arguments
@@ -491,6 +494,8 @@ contains ! =====     Public Procedures     =============================
     call output ( 'L1B database:', advance='yes' )
   
    if(associated(filedatabase)) then
+     if ( specialDumpFile /= ' ' .and. Details > -2 ) &
+       & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
     ifl1 = 0
     do i = 1, size(filedatabase)
       L1BFile => filedatabase(i)
@@ -551,6 +556,8 @@ contains ! =====     Public Procedures     =============================
       end if
     enddo
 
+     if ( specialDumpFile /= ' ' .and. Details > -2 ) &
+       & call revertOutput
 
    else
     call output ( '(null database)', advance='yes' )
@@ -680,6 +687,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.90  2006/02/10 21:16:20  pwagner
+! dumps may go to special dumpfile
+!
 ! Revision 2.89  2006/01/27 01:03:29  pwagner
 ! Changed wording when merely a warning
 !
