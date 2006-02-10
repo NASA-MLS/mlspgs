@@ -47,7 +47,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! Update these lines before delivery to sips     
   ! id to print out in response to "--version" command-line option       
   character(LEN=*), dimension(2), parameter :: CURRENT_VERSION_ID = (/ &    
-    & 'v1.51 swdev team              ', &       
+    & 'v2.xx swdev team              ', &       
     & 'Copyright statement omitted   '/)
      
   ! Set the following to 1 before delivering to sips;                       
@@ -93,7 +93,10 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! Whether to skip doing the direct writes--quicker when snooping       swath  
   logical            :: SKIPDIRECTWRITES = .false.         
   ! Whether to skip doing the retrieval--a pre-flight checkout of paths, etc.
-  logical            :: SKIPRETRIEVAL = .false.         
+  logical            :: SKIPRETRIEVAL = .false.
+  logical            :: SKIPRETRIEVALORIGINAL = .false. ! May skip for some phases
+  ! In case special dumps are to go to a special dumpfile
+  character(len=255) :: SPECIALDUMPFILE = ' '
   ! Whether to stop after the chunk division section
   logical            :: STOPAFTERCHUNKDIVIDE = .false.         
   ! Whether to stop after doing the global settings section
@@ -124,6 +127,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.34  2006/02/10 21:13:30  pwagner
+! May specify skipRetrivel for particular Phases; dumps may go to special dumpfile
+!
 ! Revision 2.33  2005/07/21 23:40:54  pwagner
 ! Removed unneeded ILLEGALL1BRADID, MAXNUML1BRADIDS
 !
