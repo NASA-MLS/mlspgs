@@ -40,6 +40,7 @@ module Fill                     ! Create vectors and fill them.
 !---------------------------------------------------------------------------
 
   logical, parameter :: DONTPAD = .false.
+  logical, parameter :: USEREICHLER = .false.
 
 contains ! =====     Public Procedures     =============================
 
@@ -97,7 +98,7 @@ contains ! =====     Public Procedures     =============================
       & L_BOUNDARYPRESSURE, L_BOXCAR, L_CHISQBINNED, L_CHISQCHAN, &
       & L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, &
       & L_cloudice, L_cloudextinction, L_cloudInducedRADIANCE, &
-      & L_COMBINECHANNELS, L_COLUMNABUNDANCE, L_DOBSONUNITS, &
+      & L_COMBINECHANNELS, L_COLUMNABUNDANCE, L_DOBSONUNITS, L_DU, &
       & L_ECRTOFOV, L_ESTIMATEDNOISE, L_EXPLICIT, L_EXTRACTCHANNEL, L_FOLD, &
       & L_FWDMODELTIMING, L_FWDMODELMEAN, L_FWDMODELSTDDEV, &
       & L_GEOCALTITUDE, L_GEODALTITUDE, L_GPH, L_GPHPRECISION, L_GRIDDED, L_H2OFROMRHI, &
@@ -127,12 +128,12 @@ contains ! =====     Public Procedures     =============================
       & S_PHASE, S_POPULATEL2PCBIN, S_SNOOP, S_TIME, &
       & S_TRANSFER, S_VECTOR, S_SUBSET, S_FLAGCLOUD, S_RESTRICTRANGE, S_UPDATEMASK
     ! Now some arrays
-    use Intrinsic, only: &
+    use Intrinsic, only: lit_indices, &
       & PHYQ_Dimensionless, PHYQ_Invalid, PHYQ_Temperature, &
       & PHYQ_Time, PHYQ_Length, PHYQ_Pressure, PHYQ_Zeta, PHYQ_Angle, PHYQ_Profiles
     use L1BData, only: DeallocateL1BData, Dump, GetL1BFile, L1BData_T, &
       & PRECISIONSUFFIX, ReadL1BData, AssembleL1BQtyName
-    use L2GPData, only: L2GPData_T
+    use L2GPData, only: L2GPData_T, COL_SPECIES_HASH, COL_SPECIES_KEYS
     use L2AUXData, only: L2AUXData_T
     use L2PC_m, only: POPULATEL2PCBINBYNAME, LOADMATRIX, LOADVECTOR
     use LinearizedForwardModel_m, only: FLUSHLOCKEDBINS
@@ -150,7 +151,7 @@ contains ! =====     Public Procedures     =============================
     use MLSCommon, only: MLSFile_T, R4, R8, RM, RV, &
       & DEFAULTUNDEFINEDVALUE
     use MLSFiles, only: GetMLSFileByType
-    use MLSL2Options, only: RESTARTWARNINGS
+    use MLSL2Options, only: RESTARTWARNINGS, SPECIALDUMPFILE
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, &
       & addPhaseToPhaseNames, fillTimings, finishTimings
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
@@ -160,12 +161,12 @@ contains ! =====     Public Procedures     =============================
     use MLSSets, only: FindFirst
     use MLSSignals_m, only: GetFirstChannel, GetSignalName, GetModuleName, IsModuleSpacecraft, &
       & GetSignal, Signal_T
-    use MLSStringLists, only: catLists, NumStringElements, &
+    use MLSStringLists, only: catLists, MakeStringHashElement, NumStringElements, &
       & StringElement, StringElementNum
     use MLSStrings, only: lowerCase
     use Molecules, only: L_H2O
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
-    use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
+    use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, revertoutput, switchOutput
     use PFAData_m, only: Flush_PFAData
     use QuantityTemplates, only: Epoch, QuantityTemplate_T
     use readAPriori, only: APrioriFiles
@@ -335,6 +336,7 @@ contains ! =====     Public Procedures     =============================
     integer :: ECRTOFOVVECTORINDEX      ! Rotation matirx
     integer :: ERRORCODE                ! 0 unless error; returned by called routines
     logical :: EXCLUDEBELOWBOTTOM       ! If set in binmax/binmin does not consider stuff below bottom
+    character(len=16)  :: explicitUnit  ! E.g., DU
     logical :: Extinction               ! Flag for cloud extinction calculation
     integer :: FIELDINDEX               ! Entry in tree
     integer :: FieldValue               ! Value of a field in the L2CF
@@ -395,6 +397,7 @@ contains ! =====     Public Procedures     =============================
     integer :: MATRIXTYPE               ! Type of matrix, L_... from init_tables
     integer :: MAXITERATIONS            ! For hydrostatic fill
     character(len=80) :: MESSAGE        ! Possible error message
+    character(len=16)  :: MOL  ! E.g., H2O
     real, dimension(2) :: MULTIPLIER   ! To scale source,noise part of addNoise
     real(r8) :: MINVALUE                 ! Value of f_minValue field
     integer :: MINVALUEUNIT              ! Unit for f_minValue field
@@ -495,6 +498,8 @@ contains ! =====     Public Procedures     =============================
     old_math77_ran_pack = math77_ran_pack
 
     if ( toggle(gen) ) call trace_begin ( "MLSL2Fill", root )
+    if ( specialDumpFile /= ' ' ) &
+      & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
 
     error = 0
     templateIndex = -1
@@ -1693,7 +1698,7 @@ contains ! =====     Public Procedures     =============================
               call Announce_error ( key, No_Error_code, &
               & 'Missing a required field to fill column abundance'  )
             elseif ( .not. &
-              & any( colmabunits == (/l_dobsonUnits, l_molcm2/) ) ) then
+              & any( colmabunits == (/l_dobsonUnits, l_DU, l_molcm2/) ) ) then
               call Announce_error ( key, No_Error_code, &
               & 'Wrong units to fill column abundance'  )
             else
@@ -1701,6 +1706,21 @@ contains ! =====     Public Procedures     =============================
                 & vectors(bndPressVctrIndex), bndPressQtyIndex)
               vmrQty => GetVectorQtyByTemplateIndex( &
                 & vectors(vmrQtyVctrIndex), vmrQtyIndex)
+              if ( got(f_unit) ) then
+                ! Switch column species hash to explicit unit
+                call get_string( lit_indices(colmabunits), explicitUnit, &
+                  & strip=.true. )
+                call get_string( lit_indices(quantity%template%molecule), mol, &
+                  & strip=.true. )
+                call MakeStringHashElement( col_species_keys, col_species_hash, &
+                  & lowerCase(mol), ExplicitUnit, countEmpty=.true. )
+                ! print *,'col_species_keys: '
+                ! print *,col_species_keys
+                ! print *,'col_species_hash: '
+                ! print *,col_species_hash
+                ! call dump( .true., col_species_keys, col_species_hash, &
+                !   & 'column species units' )
+              endif
               call FillColAbundance ( key, quantity, &
                 & bndPressQty, vmrQty, colmAbUnits )
             end if
@@ -1875,14 +1895,17 @@ contains ! =====     Public Procedures     =============================
             & quantity%template%noInstances )
 
         case ( l_wmoTropopause ) ! ---------------- Fill with wmo tropopause --
-          if ( .not. all(got( (/ f_temperatureQuantity, f_refGPHquantity, &
-            & f_internalVGrid /) ))) &
+!           if ( .not. all(got( (/ f_temperatureQuantity, f_refGPHquantity, &
+!             & f_internalVGrid /) ))) &
+!             & call Announce_Error ( key, no_error_code, &
+!             & 'wmoTropopause fill needs temperatureQuantity, refGPHQuantity ' // &
+!             & 'and internalVGrid' )
+!           if ( vGrids(internalVGridIndex)%verticalCoordinate /= l_zeta ) &
+!             & call Announce_Error ( key, No_Error_code, &
+!             &  'Vertical coordinate in internal vGrid is not log pressure' )
+          if ( .not. all(got( (/ f_temperatureQuantity, f_refGPHquantity /) ))) &
             & call Announce_Error ( key, no_error_code, &
-            & 'wmoTropopause fill needs temperatureQuantity, refGPHQuantity ' // &
-            & 'and internalVGrid' )
-          if ( vGrids(internalVGridIndex)%verticalCoordinate /= l_zeta ) &
-            & call Announce_Error ( key, No_Error_code, &
-            &  'Vertical coordinate in internal vGrid is not log pressure' )
+            & 'wmoTropopause fill needs temperatureQuantity, refGPHQuantity' )
           if ( .not. ValidateVectorQuantity ( quantity, &
             & quantityType = (/l_boundaryPressure/), verticalCoordinate=(/l_none/), &
             & coherent=.true., stacked=.true. ) ) &
@@ -1909,9 +1932,13 @@ contains ! =====     Public Procedures     =============================
             & 'Horizontal coordinates for temperature/refGPH and/or quantity disagree' )
 
           ! OK, we must be ready to go
-          call FillQtyWithWMOTropopause ( quantity, &
+          if ( .not. USEREICHLER ) then
+            call FillQtyWithWMOTropopause ( quantity, &
             & temperatureQuantity, refGPHQuantity, vGrids(internalVGridIndex) )
-
+          else
+            call FillQtyWithReichlerWMOTP ( quantity, &
+            & temperatureQuantity, refGPHQuantity )
+          endif
         case (-1)
           ! We must have decided to skip this fill
         case default
@@ -2151,8 +2178,10 @@ contains ! =====     Public Procedures     =============================
         call dump ( vectors, details=levels(gen)-1 )
         call dump ( matrices, details=levels(gen)-1 )
       end if
-      call trace_end ( "MLSL2Fill" )
     end if
+    if ( specialDumpFile /= ' ' ) &
+      & call revertOutput
+    if ( toggle(gen) ) call trace_end ( "MLSL2Fill" )
     math77_ran_pack = old_math77_ran_pack
     if ( timing ) call sayTime
 
@@ -3542,6 +3571,8 @@ contains ! =====     Public Procedures     =============================
       end if
       select case (colmAbUnits)
       case (l_DobsonUnits)
+        INVERMG = INVERMGDU
+      case (l_DU)
         INVERMG = INVERMGDU
       case (l_molcm2)
         INVERMG = INVERMGMOLCM2
@@ -5235,7 +5266,6 @@ contains ! =====     Public Procedures     =============================
     subroutine ExplicitFillVectorQuantity ( quantity, valuesNode, spreadFlag, &
       & globalUnit, dontmask, &
       & AzEl, options, FillValue )
-      ! & AzEl, whereNotFill, whereFill, FillValue, verbose )
 
       ! This routine is called from MLSL2Fill to fill values from an explicit
       ! fill command line
@@ -5250,10 +5280,6 @@ contains ! =====     Public Procedures     =============================
         ! desired quantity is components of Mag in the coordinate system to
         ! which Az and El are referenced.  So the number of values has to be
         ! a multiple of 3.
-      ! logical, intent(in), optional :: verbose       ! Print some extra stuff
-      ! The next two determine which values to replace
-      ! logical, intent(in), optional :: whereNotFill  ! only values /= FillValue
-      ! logical, intent(in), optional :: whereFill     ! only values == FillValue
                                           ! (defaults to replacing all)
       ! The options are peculiar to this procedure, apart from verbose
       ! option           meaning
@@ -5277,8 +5303,6 @@ contains ! =====     Public Procedures     =============================
       real (r8), pointer, dimension(:) :: VALUES
       real (r8), dimension(2) :: valueAsArray ! Value given
       logical :: Verbose
-      ! logical :: mywhereFill
-      ! logical :: mywhereNotFill
       character(len=2) :: whichToReplace ! '/=' (.ne. fillValue), '==', or ' ' (always)
 
       ! Executable code
@@ -5295,17 +5319,11 @@ contains ! =====     Public Procedures     =============================
       if ( present(FillValue) ) myFillValue = FillValue
 
       whichToReplace = ' '
-      ! mywhereFill = .false.
-      ! mywhereNotFill = .false.
-      ! if ( present(whereFill) ) mywhereFill = whereFill
-      ! if ( present(whereNotFill) ) mywhereNotFill = whereNotFill
       if ( index(myOptions, 'e') > 0 ) then
         whichToReplace = '=='
       elseif ( index(myOptions, 'n') > 0 ) then
         whichToReplace = '/='
       endif
-      ! myVerbose = .false.
-      ! if ( present(verbose) ) myVerbose = verbose
       verbose = ( index(myOptions, 'v') > 0 )
       ! Check the dimensions work out OK
       if ( myAzEl .and. mod(noValues,3) /= 0 ) &
@@ -5411,8 +5429,7 @@ contains ! =====     Public Procedures     =============================
       type (l1bData_T)                      :: BO_stat
       character (len=132)                   :: MODULENAMESTRING
       character (len=132)                   :: NAMESTRING
-!     integer                               :: fileID
-      integer                               :: FLAG, NOMAFS
+      integer                               :: FLAG, NOMAFS, maxMIFs
       type (l1bData_T)                      :: L1BDATA
       type (MLSFile_T), pointer             :: L1BFile
       type (MLSFile_T), pointer             :: L1BOAFile
@@ -5559,8 +5576,10 @@ contains ! =====     Public Procedures     =============================
         end if
 
         if ( isPrecision .and. myBOMask /= 0 ) then
+          noMAFs = size(l1bData%dpField, 3)
+          maxMIFs = l1bData%maxMIFs
           l1bData%dpField = NegativeIfBitPatternSet(l1bData%dpField, &
-            & BO_stat%intField, myBOMask)
+            & BO_stat%intField(:, 1:maxMIFs, 1:noMAFs), myBOMask)
           call DeallocateL1BData(BO_stat)
         endif
 
@@ -6169,6 +6188,77 @@ contains ! =====     Public Procedures     =============================
       end do
 
     end subroutine FillWithReflectorTemperature
+
+    ! ----------------------------------------- FillQtyWithReichlerWMOTP -------------
+    subroutine FillQtyWithReichlerWMOTP ( tpPres, temperature, refGPH )
+      use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+      use MLSCommon, only: DEFAULTUNDEFINEDVALUE
+      use MLSFillValues, only: IsFillValue, RemoveFillValues
+      use wmoTropopause, only: ExtraTropics, twmo
+      ! Implements the algorithm published in GRL
+      ! Loosely called the "Reichler" algorithm
+      ! Ideas the same as in FillQtyWithWMOTropopause
+      ! But implemented differently
+      ! 
+      type (VectorValue_T), intent(inout) :: TPPRES ! Result
+      type (VectorValue_T), intent(in) :: TEMPERATURE
+      type (VectorValue_T), intent(in) :: REFGPH
+      ! Local variables
+      integer :: i
+      integer :: instance
+      integer :: invert
+      real :: MISSINGVALUE
+      integer :: nlev
+      integer :: nvalid
+      real, dimension(size(refGPH%values, 1)) :: p ! Pa
+      real, parameter :: pliml = 65.*100 ! in Pa
+      real, parameter :: plimlex = 65.*100 ! in Pa
+      real, parameter :: plimu = 550.*100 ! in Pa
+      real, dimension(size(refGPH%values, 1)) :: t
+      real :: trp
+      real, dimension(:), pointer :: xyTemp, xyPress
+      ! Executable
+      nlev = size(refGPH%values, 1)
+      MISSINGVALUE = REAL( DEFAULTUNDEFINEDVALUE )
+      ! Loop over the instances
+      tpPres%values = MISSINGVALUE
+      instanceLoop: do instance = 1, temperature%template%noInstances
+        ! Check the temperatures are in a sensible range
+        if ( any ( &
+          & temperature%values(:,instance) < 10.0 .or. &
+          & temperature%values(:,instance) > 1000.0 ) ) then
+          cycle instanceLoop
+        end if
+        ! check vertical orientation of data
+        ! (twmo expects ordered from top downward)
+        if (refGPH%values(1,instance) .gt. refGPH%values(2,instance)) then
+          invert=1
+          p=refGPH%values(nlev:1:-1,instance)*100.  ! hPa > Pa
+          t = temperature%values(nlev:1:-1,instance)
+        else
+          invert=0
+          p=refGPH%values(:,instance)*100.         ! hPa > Pa
+          t = temperature%values(:,instance)
+        endif
+        where ( t < 0. .or. t > 100000. )
+          t = MissingValue
+        end where
+        nvalid = count( .not. isFillValue(t) )
+        if ( nvalid < 2 ) cycle
+        call Allocate_test (xyTemp, nvalid, 'xyTemp', ModuleName )
+        call Allocate_test (xyPress, nvalid, 'xyPress', ModuleName )
+        call RemoveFillValues( t, MISSINGVALUE, xyTemp, &
+          & p, xyPress )
+        call twmo(nvalid, xyTemp, xyPress, plimu, pliml, trp)
+        ! Don't let tropopause sink too low in "extra tropics"
+        if ( trp < plimlex .and. &
+          & extraTropics(temperature%template%geodLat(1, instance) ) ) &
+          & trp = MISSINGVALUE
+        if ( trp > 0. .and. trp < 100000000. ) tpPres%values(1, instance) = trp/100
+        call Deallocate_test ( xyTemp, 'xyTemp', ModuleName )
+        call Deallocate_test ( xyPress, 'xyPress', ModuleName )
+      end do instanceLoop
+    end subroutine FillQtyWithReichlerWMOTP
 
     ! ----------------------------------------- FillQtyWithWMOTropopause ------
     subroutine FillQtyWithWMOTropopause ( tpPres, temperature, refGPH, grid )
@@ -6935,6 +7025,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.320  2006/02/10 21:18:48  pwagner
+! Added code for wmoTropopause (unused); dumps may go to special dumpfile
+!
 ! Revision 2.319  2006/01/11 17:04:32  pwagner
 ! May specify unit when filling column abundances
 !
