@@ -20,9 +20,12 @@ module wmoTropopause ! Based on stuff from Reichler et al
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
-  public:: tropo, twmo
+  public:: extraTropics, tropo, twmo
   real, parameter                           :: gamma=-0.002 ! K/m
 
+  interface extraTropics
+    module procedure extraTropics_real, extraTropics_double
+  end interface
 contains
 
 subroutine tropo(temp, nlon, nlat, nlev, pres, plimu, pliml, plimlex, &
@@ -381,6 +384,41 @@ return
 end function loch
 end subroutine fill
 
+   !-------------------- ExtraTropics ---------------------
+   ! This family of functions answers the question
+   ! Is the latitude outside the Northern Hemisphere and
+   ! Southern Hemisphere Boundaries marking the extra-tropics
+   ! These are equivalent to the values Reichler uses
+   ! if (lat.lt..15*nlat.and.trp.lt.plimlex) trp=min(-99., trp)
+   ! if (lat.gt..85*nlat.and.trp.lt.plimlex) trp=min(-99., trp)
+   ! Assuming nlat spans the range from the South Pole to the North
+   ! Note that this definition of "extra tropical" differs from
+   ! others, e.g. < -30 or > 30
+   !
+   ! So far we have always used the same values for pliml and plimlex
+   ! So this has had no effect
+   function extraTropics_real(lat) result(sooDesu)
+     ! Dummy args
+     real, intent(in) :: lat ! latitude in degrees
+     logical :: sooDesu
+     ! Local variables
+     real, parameter :: NHBoundary =  180 * 0.85 - 90.
+     real, parameter :: SHBoundary =  180 * 0.15 - 90.
+     ! Executable
+     SooDesu = ( lat < SHBoundary .or. lat > NHBoundary )
+   end function extraTropics_real
+
+   function extraTropics_double(lat) result(sooDesu)
+     ! Dummy args
+     double precision, intent(in) :: lat ! latitude in degrees
+     logical :: sooDesu
+     ! Local variables
+     double precision, parameter :: NHBoundary =  180 * 0.85 - 90.
+     double precision, parameter :: SHBoundary =  180 * 0.15 - 90.
+     ! Executable
+     SooDesu = ( lat < SHBoundary .or. lat > NHBoundary )
+   end function extraTropics_double
+
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -393,6 +431,9 @@ end subroutine fill
 end module wmoTropopause
 
 ! $Log$
+! Revision 2.2  2006/02/10 21:20:25  pwagner
+! Added ExtraTropics function
+!
 ! Revision 2.1  2006/02/07 00:58:18  pwagner
 ! First commit
 !
