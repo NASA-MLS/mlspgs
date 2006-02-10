@@ -70,7 +70,7 @@ contains ! ====     Public Procedures     ==============================
     use MergeGridsModule, only: MergeGrids
     use MLSCommon, only: TAI93_RANGE_T, MLSFile_T
     use MLSL2Options, only: CHECKPATHS, &
-      & SKIPRETRIEVAL, STOPAFTERCHUNKDIVIDE, STOPAFTERGLOBAL
+      & SKIPRETRIEVAL, SPECIALDUMPFILE, STOPAFTERCHUNKDIVIDE, STOPAFTERGLOBAL
     use MLSMessageModule, only: MLSMessage, MLSMSG_Info, MLSMSG_Error
     use MLSSignals_M, only: Bands, DestroyBandDatabase, DestroyModuleDatabase, &
       & DestroyRadiometerDatabase, DestroySignalDatabase, &
@@ -80,7 +80,7 @@ contains ! ====     Public Procedures     ==============================
     use MLSL2Timings, only: add_to_section_timing, TOTAL_TIMES
     use Open_Init, only: OpenAndInitialize
     use OutputAndClose, only: Output_Close
-    use Output_m, only: BLANKS, Output, RESUMEOUTPUT
+    use Output_m, only: BLANKS, Output, RESUMEOUTPUT, revertoutput, switchOutput
     use PointingGrid_m, only: Destroy_Pointing_Grid_Database
     use QuantityTemplates, only: QuantityTemplate_T
     use ReadAPriori, only: read_apriori
@@ -340,10 +340,14 @@ subtrees:   do while ( j <= howmany )
             if ( index(switches,'chi1') /= 0 .and. chunkNo > 1) then
               ! Dumps nothing after 1st chunk
             else if ( index(switches,'chi') /= 0 ) then
+              if ( specialDumpFile /= ' ' ) &
+                & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
               call output('Here are our diagnostics for chunk ', advance='no')
               call output(chunkNo, advance='yes')
               call dump_vectors( vectors, details=1, &
               & quantityTypes = (/l_chisqchan, l_chisqmmaf, l_chisqmmif/) )
+              if ( specialDumpFile /= ' ' ) &
+                & call revertOutput
             end if
 
             ! Now, if we're dealing with more than one chunk destroy stuff
@@ -396,6 +400,8 @@ subtrees:   do while ( j <= howmany )
           call DestroyMatrixDatabase ( matrices )
         end if
 
+        if ( specialDumpFile /= ' ' ) &
+          & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
         ! Now tidy up any remaining `pointer' data.
         ! processingRange needs no deallocation
         if ( index(switches,'gridd') /= 0 .and. .not. parallel%slave &
@@ -426,6 +432,8 @@ subtrees:   do while ( j <= howmany )
           details = SwitchDetail(switches, 'pro') - 2 ! 'pro' prints only size(DB)
           call Dump(fileDataBase, details=details)
         end if
+        if ( specialDumpFile /= ' ' ) &
+          & call revertOutput
         call add_to_section_timing ( 'output', t1)
 
       end select
@@ -515,6 +523,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.136  2006/01/11 17:02:16  pwagner
+! Repaired erroneous report when single chunk > size(chunks)
+!
 ! Revision 2.135  2006/01/06 01:15:01  pwagner
 ! Resumes output at start of each chunk, and OutputClose
 !

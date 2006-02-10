@@ -31,11 +31,6 @@ module GLOBAL_SETTINGS
 
   public :: SET_GLOBAL_SETTINGS
 
-  ! logical         :: ALLOW_CLIMATOLOGY_OVERLOADS = .false.
-  ! integer         :: INPUT_VERSION_STRING = 0     ! Sub_rosa index
-  ! integer         :: OUTPUT_VERSION_STRING = 0    ! Sub_rosa index
-  ! integer         :: VERSION_COMMENT = 0          ! Sub_rosa index
-
   character(LEN=FileNameLen), public :: LEAPSECFILENAME = ''
 
   ! These must be values consistent with level 1
@@ -93,7 +88,7 @@ contains
     use MLSFiles, only: FILENOTFOUND, HDFVERSION_5, &
       & AddFileToDataBase, GetPCFromRef, GetMLSFileByName, GetMLSFileByType, &
       & InitializeMLSFile, mls_CloseFile, mls_OpenFile, split_path_name
-    use MLSL2Options, only: LEVEL1_HDFVERSION, &
+    use MLSL2Options, only: LEVEL1_HDFVERSION, SPECIALDUMPFILE, &
       & STOPAFTERGLOBAL, STOPAFTERCHUNKDIVIDE, Toolkit
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
@@ -105,7 +100,7 @@ contains
     use MLSStringLists, only: Array2List, catLists
     use MLSSignals_m, only: INSTRUMENT
     use MoreTree, only: GET_FIELD_ID, GET_SPEC_ID
-    use OUTPUT_M, only: BLANKS, OUTPUT
+    use OUTPUT_M, only: BLANKS, OUTPUT, revertoutput, switchOutput
     use PFAData_m, only: Get_PFAdata_from_l2cf, Make_PFAData, &
       & Read_PFAData, Write_PFAData
     use PFADataBase_m, only: Process_PFA_File
@@ -546,6 +541,8 @@ contains
       if ( .not. wasAlreadyOpen ) call mls_CloseFile(L1BFile)
     endif
 
+    if ( specialDumpFile /= ' ' ) &
+      & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
     ! Perhaps dump global settings
     if ( details > -4 ) &
       & call dump_global_settings( processingRange, filedatabase, DirectDatabase, &
@@ -567,6 +564,8 @@ contains
       call trace_end ( 'SET_GLOBAL_SETTINGS' )
     end if
     if ( timing ) call sayTime
+    if ( specialDumpFile /= ' ' ) &
+      & call revertOutput
 
   contains
 
@@ -960,6 +959,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.111  2006/02/06 22:54:51  pwagner
+! Should print warnings, not bomb if l1b files not found
+!
 ! Revision 2.110  2006/01/26 00:35:12  pwagner
 ! demoted more use statements from module level to speed Lahey compiles
 !
