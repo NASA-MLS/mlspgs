@@ -190,6 +190,7 @@ contains ! ===================================== Public Procedures =====
     use MLSCommon, only: R8, RP, MLSFile_T, TAI93_Range_T
     use MLSFiles, only: dump, GetMLSFileByType, mls_OpenFile
     use MLSHDF5, only: GetHDF5Attribute
+    use MLSL2Options, only: SPECIALDUMPFILE
     use MLSSets, only: FINDFIRST
     use MLSStringLists, only: SWITCHDETAIL
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
@@ -198,7 +199,7 @@ contains ! ===================================== Public Procedures =====
     use MLSNumerics, only: Hunt
     use MLSSignals_m, only: MODULES
     use MoreTree, only: GET_BOOLEAN, GET_FIELD_ID, GET_SPEC_ID
-    use Output_M, only: BLANKS, OUTPUT
+    use Output_M, only: BLANKS, OUTPUT, revertoutput, switchOutput
     use String_table, only: GET_STRING, DISPLAY_STRING
     use Time_M, only: Time_Now
     use TOGGLES, only: GEN, TOGGLE, SWITCHES
@@ -236,6 +237,8 @@ contains ! ===================================== Public Procedures =====
 
     timing = section_times
     if ( timing ) call time_now ( t1 )
+    if ( specialDumpFile /= ' ' ) &
+      & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
 
     ! First decode the l2cf instructions
     call ChunkDivideL2CF ( root )
@@ -331,8 +334,10 @@ contains ! ===================================== Public Procedures =====
       chunks(chunk)%chunkNumber = chunk
     end do
 
-    if ( toggle(gen) ) call trace_end ( "ChunkDivide" )
     if ( index(switches, 'chu') /= 0 ) call dump ( chunks )
+    if ( specialDumpFile /= ' ' ) &
+      & call revertOutput
+    if ( toggle(gen) ) call trace_end ( "ChunkDivide" )
 
   contains
 
@@ -2353,6 +2358,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.69  2006/02/10 21:19:24  pwagner
+! dumps may go to special dumpfile
+!
 ! Revision 2.68  2006/02/07 00:55:47  pwagner
 ! Now allows overlaps after data end time
 !
