@@ -59,6 +59,7 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
   --defaults: Just print all default options and quit
   --delay[ ]<amount> sleep <amount> micosecs at end of each master event loop
       default is 200000; 0 means no sleeping
+  --dump <filename>: put output from special dumps in filename, not stdout
   --[n]everCrash: Certain strong errors do [not] cause crash with walkback
   --fwmParallel: Run in forward model parallel mode.  Send each MAF of forward
     model calculations out to a slave.
@@ -133,6 +134,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will not be printed in response to mlsl2 -?)
 
  $Log$
+ Revision 1.39  2005/03/12 00:45:19  pwagner
+ -w option added; changed note onconcatenating options
+
  Revision 1.38  2005/03/03 00:24:32  pwagner
  Added -Rs1,s2,.. Removeswitches option
 
