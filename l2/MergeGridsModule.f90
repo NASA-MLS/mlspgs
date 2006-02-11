@@ -13,6 +13,8 @@ module MergeGridsModule
 
   ! This module contains code for merging operational gridded data with apriori
   ! information.
+  ! Secondary operations may be performed directly on the gridded data--
+  ! e.g., calculating wmo tropopause pressures from eta-level temperatures
 
   implicit none
   private
@@ -34,7 +36,8 @@ contains ! =================================== Public procedures
     use GriddedData, only: GRIDDEDDATA_T, RGR, SETUPNEWGRIDDEDDATA, &
       & ADDGRIDDEDDATATODATABASE, NULLIFYGRIDDEDDATA, &
       & WRAPGRIDDEDDATA, CONCATENATEGRIDDEDDATA, COPYGRID
-    use Init_tables_module, only: S_MERGE, S_CONCATENATE, S_DELETE
+    use Init_tables_module, only: S_MERGE, S_CONCATENATE, S_DELETE, &
+      & S_WMOTROP
     use MLSCommon, only: R8
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
     use MoreTree, only: GET_SPEC_ID
@@ -72,10 +75,13 @@ contains ! =================================== Public procedures
           & Concatenate ( key, griddedDataBase ) ) )
       case ( s_delete )
         call DeleteGriddedData ( key, griddedDatabase )
+      case ( s_wmoTrop )
+        call decorate ( key, AddgriddedDataToDatabase ( griddedDataBase, &
+          & wmoTropFromGrid ( key, griddedDataBase ) ) )
       case default
         ! Shouldn't get here is parser worked?
         call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Only merge and concatenate commands allowed in MergeGrids section' )
+          & 'Unrecognized command in MergeGrids section' )
       end select
     end do
     if ( toggle(gen) ) call trace_end ( "MergeGrids" )
@@ -409,6 +415,167 @@ contains ! =================================== Public procedures
     if ( toggle(gen) ) call trace_end ( "MergeOneGrid" )
   end function MergeOneGrid
 
+  ! ----------------------------------------- wmoTropFromGrid
+  type (griddedData_T) function wmoTropFromGrid ( root, griddedDataBase ) &
+    & result ( newGrid )
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use GriddedData, only: GRIDDEDDATA_T, NULLIFYGRIDDEDDATA, COPYGRID, &
+      & WRAPGRIDDEDDATA, SETUPNEWGRIDDEDDATA, RGR, V_IS_PRESSURE, SLICEGRIDDEDDATA
+    use Init_tables_module, only: F_GRID
+    use MLSCommon, only: DEFAULTUNDEFINEDVALUE
+    use MLSFillValues, only: IsFillValue, RemoveFillValues
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
+    use Toggles, only: GEN, TOGGLE
+    use Trace_M, only: TRACE_BEGIN, TRACE_END
+    use Tree, only: NSONS, SUBTREE, DECORATION
+    use wmoTropopause, only: ExtraTropics, twmo
+    ! Implements the algorithm published in GRL
+
+    integer, intent(in) :: ROOT         ! Tree node
+    type (griddedData_T), dimension(:), pointer :: griddedDataBase ! Database
+
+    ! This routine creates a new grid by finding wmo Tropopause
+    ! pressure levels among the temperatures of another grid.
+    ! The new "grid" has only one "level" per horizontal grid point
+    ! with tropopause pressures stored in the values field
+    
+    ! Local variables
+    integer :: field
+    integer :: field_index
+    real, dimension(:), pointer :: h ! hPa
+    integer :: i
+    integer :: iDate
+    integer :: iLst
+    integer :: invert
+    integer :: iSza
+    integer :: lat
+    integer :: lon
+    real :: missingValue
+    integer :: nLev
+    integer :: nValid
+    real, dimension(:), pointer :: p ! Pa
+    real, parameter :: pliml = 65.*100 ! in Pa
+    real, parameter :: plimlex = 65.*100 ! in Pa
+    real, parameter :: plimu = 550.*100 ! in Pa
+    integer :: son
+    real, dimension(:), pointer :: t
+    type (griddedData_T), pointer :: Temperatures => null()
+    real :: trp
+    integer :: value
+    real, dimension(:), pointer :: xyTemp, xyPress
+
+    ! Executable code
+    call nullifyGriddedData ( newGrid ) ! for Sun's still useless compiler
+    if ( toggle(gen) ) call trace_begin ( "MergeOneGrid", root )
+    MISSINGVALUE = REAL( DEFAULTUNDEFINEDVALUE )
+
+    ! Get the information from the l2cf    
+    ! Note that init_tables_module has insisted that we have all
+    ! arguments so we don't need a 'got' type arrangement
+    do i = 2, nsons(root)
+      son = subtree(i,root)
+      field = subtree(1,son)
+      value = subtree(2,son)
+      field_index = decoration(field)
+      select case ( field_index )
+      case ( f_grid ) 
+        Temperatures => griddedDataBase ( decoration ( decoration ( value ) ) )
+      end select
+    end do
+
+    if ( .not. associated(Temperatures) ) then
+      call MLSMessage ( MLSMSG_Warning, moduleName, &
+        & 'No associated Temperatures grid for calculating wmo tropopause' )
+      return
+    endif
+    nlev = Temperatures%noHeights
+    if ( nlev < 2 ) then
+      call MLSMessage ( MLSMSG_Warning, moduleName, &
+        & 'Too few levels on Temperatures grid for calculating wmo tropopause' )
+      return
+    endif
+    call Allocate_test (h, nlev, 'h', ModuleName )
+    call Allocate_test (p, nlev, 'p', ModuleName )
+    call Allocate_test (t, nlev, 't', ModuleName )
+    ! check vertical orientation of data
+    ! (twmo expects ordered from top downward)
+
+    ! Right now we can't read eta levels, only pressures
+    ! but when we move to GOES5 GMAO we'll have no choice:
+    ! Must read eta-level files
+    ! if ( .not. any( &
+    !   & Temperatures%verticalCoordinate == (/ v_is_pressure, v_is_eta /) &
+    !   & ) ) then
+    if (  Temperatures%verticalCoordinate /= v_is_pressure ) then
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+        & 'Temperatures illegal verticalcoordinate calculating wmo tropopause' )
+    endif
+    h = Temperatures%heights
+    if (h(1) .gt. h(2)) then
+      invert=1
+      p=h(nlev:1:-1)*100.  ! hPa > Pa
+    else
+      invert=0
+      p=h(:)*100.         ! hPa > Pa
+    endif
+    
+    call SetupNewGriddedData ( newGrid, source=Temperatures, &
+      & noHeights=1 )
+    ! Setup the rest of the quantity
+    newGrid%sourceFileName     = 'Gridded Temperatures'
+    newGrid%quantityName       = 'wmo Tropopause'
+    newGrid%description        = 'wmo Tropopause'
+    newGrid%units              = 'hPa'
+    newGrid%verticalCoordinate = v_is_pressure
+    newGrid%equivalentLatitude = Temperatures%equivalentLatitude
+    newGrid%heights            = Temperatures%missingValue
+    newGrid%lats               = Temperatures%lats
+    newGrid%lons               = Temperatures%lons
+    newGrid%lsts               = Temperatures%lsts
+    newGrid%szas               = Temperatures%szas
+    newGrid%dateEnds           = Temperatures%dateEnds
+    newGrid%dateStarts         = Temperatures%dateStarts
+    newGrid%field              = MISSINGVALUE
+    ! Now actually calculate the tropopause
+    ! for every "horizontal" point
+    do idate=1, size( Temperatures%field, 6 )
+      do iSza=1, size( Temperatures%field, 5 )
+        do iLst=1, size( Temperatures%field, 4 )
+          do lon=1, size( Temperatures%field, 3 )
+            do lat=1, size( Temperatures%field, 2 )
+              if ( invert == 1 ) then
+                t = temperatures%field(nlev:1:-1,lat,lon,iLst,iSza,idate)
+              else
+                t = temperatures%field(:,lat,lon,iLst,iSza,idate)
+              endif
+              where ( t < 0. .or. t > 100000. )
+                t = MissingValue
+              end where
+              nvalid = count( .not. isFillValue(t) )
+              if ( nvalid < 2 ) cycle
+              call Allocate_test (xyTemp, nvalid, 'xyTemp', ModuleName )
+              call Allocate_test (xyPress, nvalid, 'xyPress', ModuleName )
+              call RemoveFillValues( t, MISSINGVALUE, xyTemp, &
+                & p, xyPress )
+              call twmo(nvalid, xyTemp, xyPress, plimu, pliml, trp)
+              ! Don't let tropopause sink too low in "extra tropics"
+              if ( trp < plimlex .and. &
+                & extraTropics(temperatures%lats(lat)) )  &
+                & trp = MISSINGVALUE
+              if ( trp > 0. .and. trp < 100000000. ) &
+                & newGrid%field(1, lat,lon,iLst,iSza,idate) = trp/100
+              call Deallocate_test ( xyTemp, 'xyTemp', ModuleName )
+              call Deallocate_test ( xyPress, 'xyPress', ModuleName )
+            enddo ! Lats
+          enddo ! Lons
+        enddo ! Lsts
+      enddo ! Szas
+    enddo ! dates
+    call Deallocate_test ( h, 'h', ModuleName )
+    call Deallocate_test ( p, 'p', ModuleName )
+    call Deallocate_test ( t, 't', ModuleName )
+  end function wmoTropFromGrid
+
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -421,6 +588,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.16  2006/02/11 00:14:08  pwagner
+! May calculate wmoTropopause in this section directly
+!
 ! Revision 2.15  2005/06/22 18:57:02  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
