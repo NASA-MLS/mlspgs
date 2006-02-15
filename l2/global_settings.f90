@@ -560,12 +560,12 @@ contains
       & call MLSMessage(MLSMSG_Error,ModuleName, &
       & 'Problem with global settings section')
 
+    if ( specialDumpFile /= ' ' ) &
+      & call revertOutput
     if ( toggle(gen) ) then
       call trace_end ( 'SET_GLOBAL_SETTINGS' )
     end if
     if ( timing ) call sayTime
-    if ( specialDumpFile /= ' ' ) &
-      & call revertOutput
 
   contains
 
@@ -959,6 +959,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.112  2006/02/10 21:16:43  pwagner
+! dumps may go to special dumpfile
+!
 ! Revision 2.111  2006/02/06 22:54:51  pwagner
 ! Should print warnings, not bomb if l1b files not found
 !
