@@ -314,6 +314,9 @@ contains
     my_dont_log = SKIPMLSMSGLOGGING ! .false.
     if ( present(dont_log) ) my_dont_log = dont_log
     n_stamp = len(chars) + len_trim(stamped_chars) - len_trim(chars)
+    ! Special case: if chars is blank (chars are blank?)
+    ! we'll want to print anyway
+    if ( len_trim(chars) < 1 ) n_stamp = max(n_stamp, 1)
     if ( (prunit == -1 .or. prunit < -2) .and. n_stamp > 0 ) &
       & write ( *, '(a)', advance=my_adv ) stamped_chars(1:n_stamp)
     if ( prunit < -1 .and. .not. my_dont_log  ) then
@@ -1124,6 +1127,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.47  2006/02/15 18:10:44  pwagner
+! Fixed bug preventing CR from being printed sometimes
+!
 ! Revision 2.46  2006/02/15 00:00:07  pwagner
 ! Added automatic stamping features
 !
