@@ -28,20 +28,25 @@ module OUTPUT_M
 !                          < -2 :: both
 !                          > 0 :: print to Fortran unit number PrUnit
 ! skipMLSMSGLogging        whether to skip MLSMessage by default
+! stampOptions             whether and how to stamp each output to stdout
 ! timeStampStyle           'pre' (at linestart) or 'post' (at end-of-line)
+!                            (only for timeStamp)
 
 !     (subroutines and functions)
 ! blanks                   "print" specified number of blanks [or fill chars]
 ! dumpsize                 print a nicely-formatted memory size 
+! getStamp                 get stamp being added to every output
 ! newline                  print a newline
 ! output                   print argument
 ! output_date_and_time     print nicely formatted date and time
 ! revertOutput             revert output to file used before switchOutput
-!                           if you plan to revert, keepOldUnitOpen when switching
+!                           if you will revert, keepOldUnitOpen when switching
 ! resumeOutput             resume output
+! setStamp                 set stamp to be added to every output
 ! suspendOutput            suspend output
 ! switchOutput             switch output to a new named file
 ! timestamp                print argument with a timestamp
+!                            (both stdout and logged output)
 ! === (end of toc) ===
 
 ! === (start of api) ===
@@ -49,6 +54,8 @@ module OUTPUT_M
 ! DumpSize ( n, [char* advance], [units] )
 !       where n can be an int or a real, and 
 !       units is a scalar of the same type, if present
+! getStamp ( [char* textCode], [log post], [int interval],
+!          [log showTime], [char* dateFormat], [char* timeFormat] )
 ! NewLine
 ! output ( char* chars, [char* advance], [char* from_where], 
 !          [log dont_log], [char* log_chars], [char* insteadOfBlank] )
@@ -61,6 +68,8 @@ module OUTPUT_M
 !          [char* msg], [char* dateFormat], [char* timeFormat], [char* advance] )
 ! resumeOutput
 ! revertOutput
+! setStamp ( [char* textCode], [log post], [int interval],
+!          [log showTime], [char* dateFormat], [char* timeFormat] )
 ! suspendOutput
 ! switchOutput( char* filename, [int unit] )
 ! timeStamp ( char* chars, [char* advance], [char* from_where], 
@@ -70,9 +79,20 @@ module OUTPUT_M
 !          [log fill], [char* format], [char* Before], [char* After],
 !          [char*8 style] )
 ! === (end of api) ===
-! silentRunning            suspend further output if TRUE (or until FALSE)
+!
+! Note:
+! By calling appropriate functions and procedures you can adjust aspects of
+! behavior of output, and others can be changed by setting various
+! public global parameters directly
+! (in OO-speak they are class-level rather than instance-level)
+! Sometimes there is more than one way to accomplish the same thing
+! E.g., calling timeStamp or using setStamp before calling output
+!
+! To understand the codes for dateformat and timeFormat, see the dates_module
+! 
   integer, save, public :: LINE_WIDTH = 120 ! Not used here, but a convenient
                                          ! place to store it
+  ! Where to output?
   integer, save, public :: PRUNIT = -1   ! Unit for output.  
                                          ! -1 means "printer" unit, *
                                          ! -2 means MLSMessage if 
@@ -82,8 +102,11 @@ module OUTPUT_M
   integer, save, private :: OLDUNIT = -1 ! Previous Unit for output.
   logical, save, private :: OLDUNITSTILLOPEN = .TRUE.
 
-  public :: BLANKS, DUMPSIZE, NEWLINE, OUTPUT, OUTPUT_DATE_AND_TIME, &
-    & RESUMEOUTPUT, revertOutput, SUSPENDOUTPUT, switchOutput, TIMESTAMP
+  public :: BLANKS, DUMPSIZE, GETSTAMP, NEWLINE, OUTPUT, OUTPUT_DATE_AND_TIME, &
+    & RESUMEOUTPUT, revertOutput, &
+    & SETSTAMP, SUSPENDOUTPUT, switchOutput, TIMESTAMP
+
+  public :: stampOptions_T
 
   interface DUMPSIZE
     module procedure DUMPSIZE_INTEGER, DUMPSIZE_REAL
@@ -100,12 +123,32 @@ module OUTPUT_M
   interface TIMESTAMP
     module procedure timestamp_char, timestamp_integer
   end interface
+  
+  ! This is the type for configuring whether and how to automatically stamp
+  ! lines sent to stdout
+  ! If interval > 1 only a fraction of lines will be stamped
+  ! If interval > 10, the stamps will not be in-line, instead
+  ! they will appear alone as page headers
+  ! (As an alternative, use timeStamp to stamp only individual lines)
+  type stampOptions_T
+    logical :: post = .true.      ! Put stamp at end of line?
+    logical :: showTime = .false. ! Don't show date or time unless TRUE
+    character(len=24) :: textCode = ' '
+    ! Don't show date unless dateFormat is non-blank
+    character(len=16) :: dateFormat = ' '
+    character(len=16) :: timeFormat = 'hh:mm'
+    integer :: interval = 1 ! 1 means stamp every line; n means every nth line
+  end type
+  
+  type(stampOptions_T), public, save :: stampOptions ! Could leave this private
 
-  integer, save, public :: MLSMSG_Level = MLSMSG_Info
-  logical, save, private:: SILENTRUNNING = .false. ! Suspend any further output
+  integer, save, public :: MLSMSG_Level = MLSMSG_Info ! What level if logging
+  logical, save, private:: SILENTRUNNING = .false. ! Suspend all further output
   logical, save, public :: SKIPMLSMSGLOGGING = .false.
   character(len=8), save, public :: TIMESTAMPSTYLE = 'post' ! 'pre' or 'post'
-  logical, save, private :: ATLINESTART = .true.  ! Used by timeStamp if notpost
+  ! Private parameters
+  logical, save, private :: ATLINESTART = .true.  ! Whether to stamp if notpost
+  integer, save, private :: LINESSINCELASTSTAMP = 0
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -114,35 +157,6 @@ module OUTPUT_M
 !---------------------------------------------------------------------------
 
 contains
-
-  ! .......................................  Advance_is_yes_or_no  .....
-  function Advance_is_yes_or_no ( str ) result ( outstr )
-    ! takes '[Yy]...' or '[Nn..] and returns 'yes' or 'no' respectively
-    ! also does the same with '[Tt]..' and '[Ff]..'
-    ! leaves all other patterns unchanged, but truncated to three
-    ! characters.  Returns 'no' if the argument is absent.
-    !--------Argument--------!
-    character (len=*), intent(in), optional :: Str
-    character (len=3) :: Outstr
-
-    !----------Local vars----------!
-    character (len=*), parameter :: yeses = 'YyTt'
-    character (len=*), parameter :: nose = 'NnFf'
-
-    if ( .not. present(str)  ) then
-      outstr = 'no'
-      return
-    end if
-
-    outstr = adjustl(str)
-    if ( index( yeses, outstr(:1)) > 0  ) then
-      outstr = 'yes'
-    else if ( index( nose, outstr(:1)) > 0  ) then
-      outstr = 'no'
-    else
-      outstr = str
-    end if
-  end function Advance_is_yes_or_no
 
   ! -----------------------------------------------------  BLANKS  -----
   subroutine BLANKS ( N_BLANKS, FILLCHAR, ADVANCE )
@@ -228,6 +242,24 @@ contains
     end if
   end subroutine DumpSize_real
 
+  ! ----------------------------------------------  getStamp  -----
+  subroutine getStamp ( textCode, showTime, dateFormat, timeFormat, &
+    & post, interval )
+  ! get stamp being added to every output to PRUNIT.
+    character(len=*), optional, intent(out) :: textCode
+    logical, optional, intent(out)          :: showTime
+    character(len=*), optional, intent(out) :: dateFormat
+    character(len=*), optional, intent(out) :: timeFormat
+    logical, optional, intent(out)          :: post
+    integer, optional, intent(out)          :: interval
+    if ( present(showTime) )   showTime   = stampOptions%showTime
+    if ( present(textCode) )   textCode   = stampOptions%textCode
+    if ( present(dateFormat) ) dateFormat = stampOptions%dateFormat
+    if ( present(timeFormat) ) timeFormat = stampOptions%timeFormat
+    if ( present(post) )       post       = stampOptions%post
+    if ( present(interval) )   interval   = stampOptions%interval
+  end subroutine getStamp
+
   ! ----------------------------------------------------  NewLine  -----
   subroutine NewLine
     call output ( '', advance='yes' )
@@ -235,7 +267,7 @@ contains
 
   ! ------------------------------------------------  OUTPUT_CHAR  -----
   subroutine OUTPUT_CHAR ( CHARS, &
-    & ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, INSTEADOFBLANK)
+    & ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, INSTEADOFBLANK, DONT_STAMP )
   ! Output CHARS to PRUNIT.
     character(len=*), intent(in) :: CHARS
     character(len=*), intent(in), optional :: ADVANCE
@@ -243,18 +275,47 @@ contains
     logical, intent(in), optional          :: DONT_LOG ! Prevent double-logging
     character(len=*), intent(in), optional :: LOG_CHARS
     character(len=*), intent(in), optional :: INSTEADOFBLANK ! What to output
+    logical, intent(in), optional          :: DONT_STAMP ! Prevent double-stamping
+    !
     character(len=max(16,len(chars)+1)) :: my_chars
+    character(len=len(chars)+64) :: stamped_chars ! What to print to stdout
     character(len=max(16,len(chars)+1)) :: the_chars
     logical :: my_dont_log
+    logical :: my_dont_stamp
     integer :: n_chars
     character(len=3) :: MY_ADV
+    integer :: n_stamp ! How much of stamped_chars to print
+    logical :: stamped
+    logical :: stamp_header
     !
     if ( SILENTRUNNING ) return
     my_adv = Advance_is_yes_or_no(advance)
+    my_dont_stamp = .false.
+    if ( present(dont_stamp) ) my_dont_stamp = dont_stamp
+    my_dont_stamp = ( my_dont_stamp .or. &
+      & linesSinceLastStamp < (stampOptions%interval - 1) )
+    stamped = .false.
+    stamp_header = .false.
+    stamped_chars = chars
+    ! Do we need to stamp this line? If so, at beginning or at end?
+    if ( my_dont_stamp ) then
+    elseif ( stampoptions%interval > 9 ) then
+      stamp_header = (my_adv == 'yes')
+    elseif ( stampoptions%post ) then
+      if ( my_adv == 'yes' ) then
+        stamped_chars = stamp(chars)
+        stamped = .true.
+      endif
+    elseif( ATLINESTART ) then
+      stamped_chars = stamp(chars)
+      stamped = .true.
+    endif
+
     my_dont_log = SKIPMLSMSGLOGGING ! .false.
     if ( present(dont_log) ) my_dont_log = dont_log
-    if ( prunit == -1 .or. prunit < -2 ) &
-      & write ( *, '(a)', advance=my_adv ) chars
+    n_stamp = len(chars) + len_trim(stamped_chars) - len_trim(chars)
+    if ( (prunit == -1 .or. prunit < -2) .and. n_stamp > 0 ) &
+      & write ( *, '(a)', advance=my_adv ) stamped_chars(1:n_stamp)
     if ( prunit < -1 .and. .not. my_dont_log  ) then
       the_chars = chars // ' '
       n_chars = max(len(chars), 1)
@@ -281,12 +342,29 @@ contains
     
     if ( prunit < 0  ) then
       ! Already logged; no output to stdout
-    else if ( chars == ' ' .and. present(insteadofblank)  ) then
+    else if ( stamped_chars == ' ' .and. present(insteadofblank)  ) then
       write ( prunit, '(a)', advance=my_adv ) trim(insteadofblank)
     else
-      write ( prunit, '(a)', advance=my_adv ) chars
+      write ( prunit, '(a)', advance=my_adv ) stamped_chars(1:n_stamp)
     end if
-    ATLINESTART = (my_adv == 'yes')
+    atLineStart = (my_adv == 'yes')
+    if ( atLineStart ) then
+      if ( stamp_header ) then
+        ! Time to add stamp as a page header on its own line
+        stamped_chars = stamp(' ')
+        stamped = .true.
+        if ( prunit == -1 .or. prunit < -2 ) then
+          write ( *, '(a)', advance='yes' ) trim(stamped_chars)
+        elseif( prUnit > 0 ) then
+          write ( prunit, '(a)', advance='yes' ) trim(stamped_chars)
+        endif
+      endif
+      if ( stamped ) then
+        linesSinceLastStamp = 0
+      else
+        linesSinceLastStamp = linesSinceLastStamp + 1
+      endif
+    endif
   end subroutine OUTPUT_CHAR
 
   ! ------------------------------------------  OUTPUT_CHAR_ARRAY  -----
@@ -329,6 +407,9 @@ contains
   ! ---------------------------------------  OUTPUT_DATE_AND_TIME  -----
   subroutine OUTPUT_DATE_AND_TIME ( date, time, &
     & from_where, msg, dateFormat, timeFormat, advance )
+    ! Output nicely-formatted date, time, and extra message
+    ! We'll assume we won't want this line stamped with date and time
+    ! (for fear of being redundant, which we fear)
     logical, intent(in), optional :: date ! output date as character string
     logical, intent(in), optional :: time ! output time as character string
     character(len=*), intent(in), optional :: FROM_WHERE
@@ -336,7 +417,9 @@ contains
     character(len=*), intent(in), optional :: DATEFORMAT
     character(len=*), intent(in), optional :: TIMEFORMAT
     character(len=*), intent(in), optional :: ADVANCE
+    !
     character(len=16) :: dateString
+    logical, parameter :: DONT_STAMP = .true. ! Don't double-stamp
     character(len=16) :: timeString
     logical :: myDate
     logical :: myTime
@@ -355,20 +438,25 @@ contains
     call date_and_time ( date=dateString, time=timeString )
     dateString = reFormatDate(trim(dateString), toForm=dateFormat)
     timeString = reFormatTime(trim(timeString), timeFormat)
-    if ( myDate .and. myTime  ) then
-      call output ( trim(dateString), from_where=from_where, advance='no' )
+    if ( myDate .and. myTime ) then
+      call output ( trim(dateString), from_where=from_where, advance='no', &
+        & DONT_STAMP=DONT_STAMP )
       call blanks(3)
-      call output ( trim(timeString), from_where=from_where, advance=my_adv )
-    else if ( myDate  ) then
-      call output ( trim(dateString), from_where=from_where, advance=my_adv )
-    else if ( myTime  ) then
-      call output ( trim(TimeString), from_where=from_where, advance=my_adv )
+      call output ( trim(timeString), from_where=from_where, advance=my_adv, &
+        & DONT_STAMP=DONT_STAMP )
+    else if ( myDate ) then
+      call output ( trim(dateString), from_where=from_where, advance=my_adv, &
+        & DONT_STAMP=DONT_STAMP )
+    else if ( myTime ) then
+      call output ( trim(TimeString), from_where=from_where, advance=my_adv, &
+        & DONT_STAMP=DONT_STAMP )
     end if
     if ( .not. present(msg) ) return
     my_adv = 'yes'
     if ( present(advance) ) my_adv = advance
     call blanks ( 3 )
-    call output ( trim(msg), from_where=from_where, advance=my_adv )
+    call output ( trim(msg), from_where=from_where, advance=my_adv, &
+      & DONT_STAMP=DONT_STAMP )
   end subroutine OUTPUT_DATE_AND_TIME
 
   ! --------------------------------------------  OUTPUT_DCOMPLEX  -----
@@ -475,7 +563,8 @@ contains
   end subroutine OUTPUT_DOUBLE_ARRAY
 
   ! ---------------------------------------------  OUTPUT_INTEGER  -----
-  subroutine OUTPUT_INTEGER ( INT, PLACES, ADVANCE, FILL, FORMAT, Before, After )
+  subroutine OUTPUT_INTEGER ( INT, PLACES, ADVANCE, FILL, FORMAT, &
+    & Before, After, DONT_STAMP )
   ! Output INT to PRUNIT using at most PLACES (default zero) places
   ! If 'fill' is present and true, fill leading blanks with zeroes (only
   ! makes sense if 'places' is specified).
@@ -485,6 +574,8 @@ contains
     logical, intent(in), optional :: FILL
     character(len=*), intent(in), optional :: FORMAT
     character(len=*), intent(in), optional :: Before, After ! text to print
+    logical, intent(in), optional :: DONT_STAMP
+    !
     logical :: My_Fill
     integer :: I, J
     character(len=12) :: LINE
@@ -509,10 +600,10 @@ contains
     end if
     if ( present(before) ) call output ( before )
     if ( present(after)  ) then
-      call output ( line(i:j) )
-      call output ( after, advance=advance )
+      call output ( line(i:j), DONT_STAMP=DONT_STAMP )
+      call output ( after, advance=advance, DONT_STAMP=DONT_STAMP )
     else
-      call output ( line(i:j), advance=advance )
+      call output ( line(i:j), advance=advance, DONT_STAMP=DONT_STAMP )
     end if
   end subroutine OUTPUT_INTEGER
 
@@ -540,23 +631,25 @@ contains
   end subroutine OUTPUT_INTEGER_ARRAY
 
   ! ---------------------------------------------  OUTPUT_LOGICAL  -----
-  subroutine OUTPUT_LOGICAL ( LOG, ADVANCE, BEFORE )
+  subroutine OUTPUT_LOGICAL ( LOG, ADVANCE, BEFORE, DONT_STAMP )
   ! Output LOG to PRUNIT using at most PLACES (default zero) places
     logical, intent(in) :: LOG
     character(len=*), intent(in), optional :: ADVANCE
     character(len=*), intent(in), optional :: BEFORE
+    logical, optional, intent(in) :: DONT_STAMP
     character(len=2) :: LINE
     if ( log ) then
       line=' T'
     else
       line=' F'
     end if
-    if ( present(before) ) call output ( before )
-    call output ( line, advance=advance )
+    if ( present(before) ) call output ( before, DONT_STAMP=DONT_STAMP )
+    call output ( line, advance=advance, DONT_STAMP=DONT_STAMP )
   end subroutine OUTPUT_LOGICAL
 
   ! ----------------------------------------------  OUTPUT_SINGLE  -----
-  subroutine OUTPUT_SINGLE ( VALUE, FORMAT, LogFormat, ADVANCE, Before, After )
+  subroutine OUTPUT_SINGLE ( VALUE, FORMAT, LogFormat, ADVANCE, &
+    & Before, After, DONT_STAMP )
   ! Output "SINGLE" to "prunit" using * format, trimmed of insignificant
   ! trailing zeroes, and trimmed of blanks at both ends.
     real, intent(in) :: VALUE
@@ -564,6 +657,7 @@ contains
     character(len=*), intent(in), optional :: LogFormat     ! How to post to Log
     character(len=*), intent(in), optional :: ADVANCE
     character(len=*), intent(in), optional :: Before, After ! text to print
+    logical, optional, intent(in) :: DONT_STAMP
     integer :: I, J, K
     character(len=30) :: LINE, LOG_CHARS
 
@@ -601,12 +695,13 @@ contains
     if ( present(LogFormat)  ) then
       write ( log_chars, LogFormat ) value
     end if
-    if ( present(before) ) call output ( before )
+    if ( present(before) ) call output ( before, DONT_STAMP=DONT_STAMP )
     if ( present(after)  ) then
-      call output ( line(:k), log_chars=log_chars )
-      call output ( after, advance=advance )
+      call output ( line(:k), log_chars=log_chars, DONT_STAMP=DONT_STAMP )
+      call output ( after, advance=advance, DONT_STAMP=DONT_STAMP )
     else
-      call output ( line(:k), advance=advance, log_chars=log_chars )
+      call output ( line(:k), advance=advance, log_chars=log_chars, &
+        & DONT_STAMP=DONT_STAMP )
     end if
   end subroutine OUTPUT_SINGLE
 
@@ -685,6 +780,24 @@ contains
 
   end subroutine revertOutput
 
+  ! ----------------------------------------------  setStamp  -----
+  subroutine setStamp ( textCode, showTime, dateFormat, timeFormat, &
+    & post, interval )
+  ! set stamp to be added to every output to PRUNIT.
+    character(len=*), optional, intent(in) :: textCode
+    logical, optional, intent(in)          :: showTime
+    character(len=*), optional, intent(in) :: dateFormat
+    character(len=*), optional, intent(in) :: timeFormat
+    logical, optional, intent(in)          :: post
+    integer, optional, intent(in)          :: interval
+    if ( present(showTime) )   stampOptions%showTime   = showTime  
+    if ( present(textCode) )   stampOptions%textCode   = textCode  
+    if ( present(dateFormat) ) stampOptions%dateFormat = dateFormat
+    if ( present(timeFormat) ) stampOptions%timeFormat = timeFormat
+    if ( present(post) )       stampOptions%post       = post
+    if ( present(interval) )   stampOptions%interval   = interval
+  end subroutine setStamp
+
   ! ----------------------------------------------  suspendOutput  -----
   subroutine suspendOutput 
   ! suspend outputting to PRUNIT.
@@ -701,10 +814,12 @@ contains
     ! Internal variables
     integer, parameter :: DEFAULTSWITCHUNIT = 59
     logical :: dontCloseOldUnit
+    logical, save :: NeedToAppend = .false. ! 1st time here overwrite; append later
     integer :: switchUnit
     ! Executable
     dontCloseOldUnit = .false.
     if ( present(keepOldUnitOpen) ) dontCloseOldUnit = keepOldUnitOpen
+    oldUnit = prUnit
     switchUnit = DEFAULTSWITCHUNIT
     call resumeOutput
     if ( present(unit) ) then
@@ -716,15 +831,20 @@ contains
     else
       call output('Switching further output to: ', advance='no')
       call output(trim(filename), advance='yes')
-      if ( PRUNIT > 0 ) switchUnit = PRUNIT
+      ! if ( PRUNIT > 0 ) switchUnit = PRUNIT
     endif
     if ( PRUNIT > 0 .and. .not. dontCloseOldUnit ) then
       close(PRUNIT)
       OLDUNIT = PRUNIT
       OLDUNITSTILLOPEN = .false.
     endif
-    open( unit=switchUnit, file=filename, status='replace' )
+    if ( NeedToAppend ) then
+      open( unit=switchUnit, file=filename, status='old', position='append' )
+    else
+      open( unit=switchUnit, file=filename, status='replace' )
+    endif
     PRUNIT = SwitchUnit
+    NeedToAppend = .true.
   end subroutine switchOutput
 
   ! ------------------------------------------------  timeStamp_char  -----
@@ -744,6 +864,8 @@ contains
     character(len=*), intent(in), optional :: LOG_CHARS
     character(len=*), intent(in), optional :: INSTEADOFBLANK ! What to output
     character(len=8), intent(in), optional :: STYLE ! pre or post
+    !
+    logical, parameter :: DONT_STAMP = .true. ! Don't double-stamp
     logical :: my_dont_log
     character(len=8) :: my_style
     integer :: n_chars
@@ -757,21 +879,21 @@ contains
     if ( my_style == 'post' ) then
       call output_char( CHARS, &
         & ADVANCE='no', FROM_WHERE=FROM_WHERE, DONT_LOG=DONT_LOG, &
-        & LOG_CHARS=LOG_CHARS, INSTEADOFBLANK=INSTEADOFBLANK )
+        & LOG_CHARS=LOG_CHARS, INSTEADOFBLANK=INSTEADOFBLANK, DONT_STAMP=DONT_STAMP )
       if ( my_adv=='yes' ) then
-        call output_char(' (', ADVANCE='no', DONT_LOG=DONT_LOG)
+        call output_char(' (', ADVANCE='no', DONT_LOG=DONT_LOG, DONT_STAMP=DONT_STAMP)
         call OUTPUT_DATE_AND_TIME(date=.false., advance='no')
-        call output_char(')', ADVANCE='yes', DONT_LOG=DONT_LOG)
+        call output_char(')', ADVANCE='yes', DONT_LOG=DONT_LOG, DONT_STAMP=DONT_STAMP)
       endif
     else
       if ( ATLINESTART ) then
-        call output_char('(', ADVANCE='no', DONT_LOG=DONT_LOG)
+        call output_char('(', ADVANCE='no', DONT_LOG=DONT_LOG, DONT_STAMP=DONT_STAMP)
         call OUTPUT_DATE_AND_TIME(date=.false., advance='no')
-        call output_char(')', ADVANCE='no', DONT_LOG=DONT_LOG)
+        call output_char(')', ADVANCE='no', DONT_LOG=DONT_LOG, DONT_STAMP=DONT_STAMP)
       endif
       call output_char( CHARS, &
         & ADVANCE, FROM_WHERE, DONT_LOG, &
-        & LOG_CHARS, INSTEADOFBLANK )
+        & LOG_CHARS, INSTEADOFBLANK, DONT_STAMP=DONT_STAMP )
     endif
   end subroutine timeStamp_char
 
@@ -792,6 +914,8 @@ contains
     character(len=*), intent(in), optional :: FORMAT
     character(len=*), intent(in), optional :: Before, After ! text to print
     character(len=*), intent(in), optional :: style ! pre or post
+    !
+    logical, parameter :: DONT_STAMP = .true. ! Don't double-stamp
     character(len=8) :: my_style
     integer :: n_chars
     character(len=3) :: MY_ADV
@@ -801,25 +925,55 @@ contains
     if ( present(style) ) my_style = lowercase(style)
     if ( my_style == 'post' ) then
       call output_integer( INT, PLACES, &
-        & ADVANCE='no', FILL=FILL, FORMAT=FORMAT, BEFORE=BEFORE, AFTER=AFTER )
+        & ADVANCE='no', FILL=FILL, FORMAT=FORMAT, BEFORE=BEFORE, AFTER=AFTER, &
+        & DONT_STAMP=DONT_STAMP )
       if ( my_adv=='yes' ) then
-        call output_char(' (', ADVANCE='no')
+        call output_char(' (', ADVANCE='no', DONT_STAMP=DONT_STAMP )
         call OUTPUT_DATE_AND_TIME(date=.false., advance='no')
-        call output_char(')', ADVANCE='yes')
+        call output_char(')', ADVANCE='yes', DONT_STAMP=DONT_STAMP)
       endif
     else
       if ( ATLINESTART ) then
-        call output_char('(', ADVANCE='no')
+        call output_char('(', ADVANCE='no', DONT_STAMP=DONT_STAMP)
         call OUTPUT_DATE_AND_TIME(date=.false., advance='no')
-        call output_char(')', ADVANCE='no')
+        call output_char(')', ADVANCE='no', DONT_STAMP=DONT_STAMP)
       endif
       call output_integer( INT, PLACES, &
-        & ADVANCE, FILL, FORMAT, BEFORE, AFTER )
+        & ADVANCE, FILL, FORMAT, BEFORE, AFTER, DONT_STAMP=DONT_STAMP )
     endif
   end subroutine timeStamp_integer
 
   ! Internal procedures
   
+  ! .......................................  Advance_is_yes_or_no  .....
+  function Advance_is_yes_or_no ( str ) result ( outstr )
+    ! takes '[Yy]...' or '[Nn..] and returns 'yes' or 'no' respectively
+    ! also does the same with '[Tt]..' and '[Ff]..'
+    ! leaves all other patterns unchanged, but truncated to three
+    ! characters.  Returns 'no' if the argument is absent.
+    !--------Argument--------!
+    character (len=*), intent(in), optional :: Str
+    character (len=3) :: Outstr
+
+    !----------Local vars----------!
+    character (len=*), parameter :: yeses = 'YyTt'
+    character (len=*), parameter :: nose = 'NnFf'
+
+    if ( .not. present(str)  ) then
+      outstr = 'no'
+      return
+    end if
+
+    outstr = adjustl(str)
+    if ( index( yeses, outstr(:1)) > 0  ) then
+      outstr = 'yes'
+    else if ( index( nose, outstr(:1)) > 0  ) then
+      outstr = 'no'
+    else
+      outstr = str
+    end if
+  end function Advance_is_yes_or_no
+
   ! .............................................  nCharsinFormat  .....
   function nCharsinFormat ( Format ) result(nplusm)
     ! Utility to calculate how many characters in a format spec:         
@@ -919,6 +1073,44 @@ contains
     endif
   end subroutine ourReplaceSubString
 
+  ! ----------------------------------------------  stamp  -----
+  function stamp( chars )
+  ! stamp input chars before outputting to PRUNIT.
+  ! Args
+    character(len=*), intent(in) :: chars
+    character(len=len(chars)+64) :: stamp
+    character(len=16) :: dateString
+    character(len=16) :: timeString
+    ! Executable
+    stamp = chars
+    if ( stampOptions%showTime ) then
+      call date_and_time ( date=dateString, time=timeString )
+      dateString = reFormatDate(trim(dateString), toForm=stampOptions%dateFormat)
+      timeString = reFormatTime(trim(timeString), stampOptions%timeFormat)
+      if ( stampOptions%dateFormat /= ' ' ) &
+      & stamp = catStrings( stamp, dateString )
+      if ( stampOptions%timeFormat /= ' ' ) &
+      & stamp = catStrings( stamp, timeString )
+    endif
+    if ( stampOptions%textCode /= ' ' ) &
+        & stamp = catStrings( stamp, stampOptions%textCode )
+    contains
+    function catStrings(a, b) result(c)
+      ! Catenates strings a and b with intervening space
+      ! if post then a before b
+      ! otherwise b before a
+      character(len=*), intent(in) :: a
+      character(len=*), intent(in) :: b
+      character(len = (len(a)+len(b)+1) ) :: c
+      if ( stampOptions%post ) then
+        c = trim(a) // ' ' // b
+      else
+        c = trim(b) // ' ' // a
+      endif
+    end function catStrings
+    
+  end function stamp 
+
   ! ..............................................  not_used_here  .....
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
@@ -932,6 +1124,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.46  2006/02/15 00:00:07  pwagner
+! Added automatic stamping features
+!
 ! Revision 2.45  2006/02/10 21:23:05  pwagner
 ! Added switchOutput, revertOutput
 !
