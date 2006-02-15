@@ -1324,7 +1324,7 @@ contains ! =====     Public Procedures     =============================
               temperatureQuantity => GetVectorQtyByTemplateIndex( &
                 & vectors(temperatureVectorIndex), temperatureQuantityIndex)
               if ( .not. ValidateVectorQuantity(sourceQuantity, &
-                & quantityType=(/l_rhi/)) ) then
+                & quantityType=(/l_rhi, l_vmr/)) ) then
                 call Announce_Error ( key, No_Error_code, &
                 & 'The rhiQuantity is not an rhi'  )
               else if ( .not. ValidateVectorQuantity(Quantity, &
@@ -7025,6 +7025,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.321  2006/02/15 00:01:19  pwagner
+! Shoule let you fill H2O from new RHIvmr quantity
+!
 ! Revision 2.320  2006/02/10 21:18:48  pwagner
 ! Added code for wmoTropopause (unused); dumps may go to special dumpfile
 !
