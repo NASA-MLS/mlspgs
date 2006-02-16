@@ -35,6 +35,7 @@ Switches (set by -S option in mlsl2's command line):
   gridd =>  Gridded data quantities
   grids =>  Dump Forward Model grids
   gvec =>   Gradient vector during Newton iteration
+  help =>   Display this screen (or "?")
   hgrid =>  Information on HGrid construction (at least for regular)
   jac =>    Jacobian during retriever iterations
   l1b =>    l1b quantities dumped (only when filled from)
@@ -53,7 +54,6 @@ Switches (set by -S option in mlsl2's command line):
   Ndb =>    Dump all the Newton method's internal variables after every SOLVE step
   NDB =>    Dump all the Newton method's internal variables before every call
   neq =>    Normal equations during retriever iterations
-  ngc =>    Show how many times garbage collected during each chunk
   nin =>    Turn on Newton Method's internal output
   nodb =>   Subvert the DumpBlocks command
   norf =>   Default for Phi refractive correction in forward model is .false.
@@ -65,7 +65,7 @@ Switches (set by -S option in mlsl2's command line):
   PFAB =>   pfaB and then stop
   pfag =>   Show PFA table generation progress
   pguess => Iterations of the pressure guesser
-  phase  => Announce phases (e.g., CorePlusR2) as they are begun
+  phase[n]=> Announce phases (e.g., Core) as they begin, with n also progress
   point =>  Pointing grids
   pro[n] => Proclaim each product file l2gp, l2aux, l2dgg, l2pc, meta output
               and each file l2gp, l1brad, ncep, dao input; dump filedatabase
@@ -96,25 +96,45 @@ The general pattern is to use upper-case letters for single-letter ones,
 and lower-case letters for strings. Switches are case-sensitive.
 
 The -S option sets the "switches" array in toggles_core.f90.
-It's tested by "if ( index(switches,'foo') /= 0 ) then ..." so
-you can put longer strings on the command line (so long as the rest
-of it doesn't contain something you DON'T want to test for!).
- E.g. -Ssca could mean -Sscalars
-but beware: literally setting -Sscalars may also turn on an unwanted switch,
-"lars", causing mlsl2 to begin outputting all text in "Swedish Chef" mode
-BORK! BORK! BORK!
-(The above joke has fallen flat--
-it is deprecated and may be removed in a future revision)
 
-Let us clarify the requirement for adding new switches above:
-if an existing switch is 'abc' don't add a new switch that contains
-'abc' as a substring. Why? Because turning on your switch will
-automatically turn on the existing 'abc' switch, too.
+                T e s t   1
+In places, it's still tested by the older construct 
+"if ( index(switches,'foo') /= 0 ) then ..." 
+which allowed you to put longer strings on the command line (so long as
+the rest of it didn't contain something you DIDN'T want to test for!).
 
-As of Oct 9 2003, we recommend separating switches with a comma rather
-than catenating them. Thus to turn on both 'abc' and 'def', either use
--Sabc -Sdef or -S"abc,def". Among other good things, this prevents
-accidentally turning on an unwanted 'cde' switch.
+Let us clarify the requirement for adding new switches according to this
+restriction:
+if an existing switch is 'abc' don't add a new switch that contains 'abc' as a
+substring, e.g. 'gabcs'. Why? Because turning on your switch will automatically
+turn on the existing 'abc' switch, too.
+
+We recommend separating switches rather than catenating them. You can separate
+them either by preceding each with its own "-S" prefix or else by commas in a
+single string. Thus to turn on both 'abc' and 'def', either use -Sabc -Sdef or
+-S"abc,def". Among other good things, this prevents accidentally turning on an
+unwanted 'cde' switch.
+
+                T e s t   2
+As an alternative to the "if ( index(switches,'foo') /= 0 ) then ..." test shown
+above, the MLSStringLists module contains a function SwitchDetail which as a
+substitute has its advantages; assuming it was called as
+SwitchDetail(switches, 'foo') it returns 
+-1  means foo was not among switches
+0   means foo or foo0 was one of the comma-separated switches
+1   means foo1
+2   means foo2
+    .   .   .
+Note that use of SwitchDetail requires separating the switches. It also requires
+that you match the switch name precisely; e.g. if the switch is "ab" but you
+forget, and so try to set "abc", you won't set "ab" after all. The advantage is
+that by using SwitchDetail each switch is now unique: you can have "foo", "bar",
+and "foobar" as three distinct switches, confident that setting "foobar" won't
+inadvertently set the other two.
+
+I have been substituting SwitchDetail for the "if ( index .." test in the
+modules that have come under my gaze from time to time, and this process will
+continue until they take my keyboard away.
 
 (Add any more that are relevant to mlsl2,
 or separate sections for mlsl1 or mlsl3)
@@ -125,6 +145,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.56  2006/01/04 21:55:39  vsnyder
+ Describe 'grids' and 'norf' switches
+
  Revision 1.55  2005/11/15 21:49:58  pwagner
  Added l2q
 
