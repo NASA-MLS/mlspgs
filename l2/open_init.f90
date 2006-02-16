@@ -20,7 +20,8 @@ module Open_Init
   use intrinsic, only: l_hdf
   use MLSCommon, only: FileNameLen, MLSFile_T, TAI93_Range_T, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-  use MLSStringLists, only: catLists, NumStringElements, GetStringElement
+  use MLSStringLists, only: catLists, GetStringElement, NumStringElements, &
+    & switchDetail
   use Output_m, only: Blanks, Output
   use PCFHdr, only: GlobalAttributes, CreatePCFAnnotation, FillTAI93Attribute
   use SDPToolkit, only: max_orbits
@@ -176,7 +177,7 @@ contains ! =====     Public Procedures     =============================
    l2pcf%spec_hash = '(not applicable)'      ! will not create metadata
 
    if( .not. TOOLKIT ) then
-     if ( levels(gen) > 0 .or. index(switches,'pcf') /= 0 ) then
+     if ( levels(gen) > 0 .or. switchDetail(switches,'pcf') > -1 ) then
        call output('====== No parameters or radiances read :: no pcf ======', &
          & advance='yes')
        call output('====  (These must be supplied through the l2cf) ======', &
@@ -220,7 +221,7 @@ contains ! =====     Public Procedures     =============================
     if ( returnStatus == PGS_S_SUCCESS ) then
 
         ! l2pcf%L1BOAPCFId = mlspcf_l1b_oa_start
-        if(index(switches, 'pro') /= 0) then  
+        if( switchDetail(switches, 'pro') > -1 ) then  
           call announce_success(L1BFile%name, 'l1boa', &                     
           & hdfVersion=L1BFile%HDFVersion)                    
         end if
@@ -385,16 +386,8 @@ contains ! =====     Public Procedures     =============================
       & call MLSMessage(MLSMSG_Error,ModuleName, &
         & 'Problem with open_init section')
 
-   if ( index(switches, 'pcf3') /= 0 ) then
-     Details = 1
-   elseif ( index(switches, 'pcf2') /= 0 ) then
-     Details = 0
-   elseif ( index(switches, 'pcf1') /= 0 ) then
-     Details = -1
-   else
-     Details = -2
-   end if
-   if ( levels(gen) > 0 .or. index(switches,'pcf') /= 0 ) &
+   Details = switchDetail(switches, 'pcf') - 2 ! -3 means don't dump
+   if ( levels(gen) > 0 .or. details > -3 ) &
         & call Dump_open_init ( filedatabase, &
           & CCSDSEndTime, CCSDSStartTime, processingrange, details )
    if ( toggle(gen) ) then            
@@ -687,6 +680,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.91  2006/02/16 00:16:01  pwagner
+! switchDetail instead of index
+!
 ! Revision 2.90  2006/02/10 21:16:20  pwagner
 ! dumps may go to special dumpfile
 !
