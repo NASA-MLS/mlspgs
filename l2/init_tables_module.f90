@@ -698,6 +698,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_level, t+t_numeric, n+n_field_type, &
              begin, f+f_silent, t+t_boolean, n+n_field_type, &
              begin, f+f_skipRetrieval, t+t_boolean, n+n_field_type, &
+             begin, f+f_stamp, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_quantity, & ! Must be AFTER s_hgrid and s_vgrid
              begin, f+f_irregular, t+t_boolean, n+n_field_type, &
@@ -1285,6 +1286,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_level, t+t_numeric, n+n_field_type, &
              begin, f+f_silent, t+t_boolean, n+n_field_type, &
              begin, f+f_skipRetrieval, t+t_boolean, n+n_field_type, &
+             begin, f+f_stamp, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_phase, & ! Ignores rest of stuff
              begin, f+f_comment, t+t_string, n+n_field_type, &
@@ -1292,6 +1294,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_level, t+t_numeric, n+n_field_type, &
              begin, f+f_silent, t+t_boolean, n+n_field_type, &
              begin, f+f_skipRetrieval, t+t_boolean, n+n_field_type, &
+             begin, f+f_stamp, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_dumpblocks, &
              begin, f+f_matrix, s+s_matrix, nr+n_field_spec, &
@@ -1394,6 +1397,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.424  2006/02/16 00:11:06  pwagner
+! Added stamp boolean field to phase asks for printing phase names, times
+!
 ! Revision 2.423  2006/02/10 21:11:29  pwagner
 ! May specify skipRetrivel for particular Phases
 !
