@@ -80,7 +80,8 @@ contains ! ====     Public Procedures     ==============================
     use MLSL2Timings, only: add_to_section_timing, TOTAL_TIMES
     use Open_Init, only: OpenAndInitialize
     use OutputAndClose, only: Output_Close
-    use Output_m, only: BLANKS, Output, RESUMEOUTPUT, revertoutput, switchOutput
+    use Output_m, only: BLANKS, getStamp, Output, &
+      & RESUMEOUTPUT, revertoutput, setStamp, switchOutput
     use PointingGrid_m, only: Destroy_Pointing_Grid_Database
     use QuantityTemplates, only: QuantityTemplate_T
     use ReadAPriori, only: read_apriori
@@ -125,11 +126,11 @@ contains ! ====     Public Procedures     ==============================
       & pointer ::                               Matrices
     type (TAI93_Range_T) ::                      ProcessingRange  ! Data processing range
     logical ::                                   REDUCEDCHUNKS
-    ! logical ::                                   show_totalNGC = .true.
+    logical ::                                   showTime
     integer ::                                   SON              ! Son of Root
     logical ::                                   STOPEARLY
     real    ::                                   t1, t2, tChunk
-    integer ::                                   totalNGC   ! Total num garbage colls.
+    character(len=24) ::                         textCode
     type (Vector_T), dimension(:), pointer ::    Vectors
 
     ! Arguments for Construct not declared above:
@@ -146,7 +147,6 @@ contains ! ====     Public Procedures     ==============================
     stopearly          = globalsettingsonly .or. chunkdivideonly
     reducedChunks      = .false.
     depth = 0
-    totalNGC = 0
     if ( toggle(gen) ) call trace_begin ( 'WALK_TREE_TO_DO_MLS_L2', &
       & subtree(first_section,root) )
     call time_now ( t1 )
@@ -176,7 +176,7 @@ contains ! ====     Public Procedures     ==============================
         end if
       case ( z_mlsSignals )
         call MLSSignals ( son )
-        if ( index(switches,'tps') /= 0 ) then
+        if ( switchDetail(switches,'tps') > -1 ) then
             ! call test_parse_signals
             call MLSMessage ( MLSMSG_Info, ModuleName, &
               & 'Go back and uncomment the previous line in tree_walker' )
@@ -283,7 +283,7 @@ contains ! ====     Public Procedures     ==============================
           end select
           ! print the timing for FullForwardModel, the following return
 	  ! if fmt1 or fmt2 is true
-          if ( index(switches, 'fmt') /= 0 .and. &
+          if ( switchDetail(switches, 'fmt') > -1 .and. &
 	     & associated(forwardModelConfigDatabase)) then
                   call printForwardModelTiming ( forwardModelConfigDatabase )
           end if
@@ -292,7 +292,7 @@ contains ! ====     Public Procedures     ==============================
           do chunkNo = firstChunk, lastChunk ! ----------------------- Chunk loop
             call resumeOutput ! In case the last phase was  silent
             call time_now ( tChunk )
-            if ( index(switches,'chu') /= 0 ) then
+            if ( switchDetail(switches,'chu') > -1 ) then
               call output ( " ================ Starting processing for chunk " )
               call output ( chunkNo )
               call output ( " ================ ", advance='yes' )
@@ -313,8 +313,7 @@ subtrees:   do while ( j <= howmany )
                   & mifGeolocation )
                 call add_to_section_timing ( 'construct', t1)
               case ( z_fill )
-                !if ( .not. checkPaths) &
-                if ( .not. checkPaths) then 
+                if ( .not. checkPaths ) then 
                   call MLSL2Fill ( son, filedatabase, griddedDataBase, &
                   & vectorTemplates, vectors, qtyTemplates, matrices, &
                   & l2gpDatabase, l2auxDatabase, forwardModelConfigDatabase, &
@@ -337,9 +336,9 @@ subtrees:   do while ( j <= howmany )
               j = j + 1
             end do subtrees
 
-            if ( index(switches,'chi1') /= 0 .and. chunkNo > 1) then
+            if ( switchDetail(switches,'chi') > 0 .and. chunkNo > 1 ) then
               ! Dumps nothing after 1st chunk
-            else if ( index(switches,'chi') /= 0 ) then
+            else if ( switchDetail(switches,'chi') > -1 ) then
               if ( specialDumpFile /= ' ' ) &
                 & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
               call output('Here are our diagnostics for chunk ', advance='no')
@@ -358,21 +357,19 @@ subtrees:   do while ( j <= howmany )
                 & mifGeolocation, hGrids )
               call DestroyVectorDatabase ( vectors )
               call DestroyMatrixDatabase ( matrices )
-              ! if (garbage_collection_by_chunk) call mls_gc_now
-              ! if ( index(switches,'ngc') /= 0 ) &
-              !  & totalNGC = Say_num_gcs()
             end if
             call ForgetOptimumLon0
             ! print the timing for FullForwardModel
             ! fmt2: at each chunk, fmt1: at last chunk
-            if ( index(switches, 'fmt2') /= 0 ) then
+            if ( switchDetail(switches, 'fmt') > 1 ) then
                   call printForwardModelTiming ( forwardModelConfigDatabase )
             end if
-            if ( index(switches, 'fmt1') /= 0 .and. chunkNo == lastChunk) then
+            if ( switchDetail(switches, 'fmt') == 1 .and. &
+              & chunkNo == lastChunk ) then
                   call printForwardModelTiming ( forwardModelConfigDatabase )
             end if
             call StripForwardModelConfigDatabase ( forwardModelConfigDatabase )
-            if ( index(switches,'chu') /= 0 ) then
+            if ( switchDetail(switches,'chu') > -1 ) then
               call sayTime('processing this chunk', tChunk)
             end if
           end do ! ---------------------------------- End of chunk loop
@@ -382,6 +379,12 @@ subtrees:   do while ( j <= howmany )
         end if
 
         ! ------------------------------------------- Output section
+      ! If we're stamping stdout with phase, times, etc.
+      ! we'll want to show the last phase is over
+      call getStamp( textcode=textcode, showTime=showTime )
+      if ( showTime .or. textCode /= ' ' ) then
+        call setStamp( textCode="Output" )
+      endif
       case ( z_output ) ! Write out the data
         call resumeOutput ! In case the last phase was  silent
         if ( .not. parallel%slave ) then
@@ -404,31 +407,27 @@ subtrees:   do while ( j <= howmany )
           & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
         ! Now tidy up any remaining `pointer' data.
         ! processingRange needs no deallocation
-        if ( index(switches,'gridd') /= 0 .and. .not. parallel%slave &
+        if ( switchDetail(switches,'gridd') > -1 .and. .not. parallel%slave &
          & .and. associated(griddedDataBase) ) then
           call Dump(griddedDataBase)
         end if
-        ! print *, 'About to destroy gridded databse'
         call DestroyGriddedDataDatabase ( griddedDataBase )
-        if ( index(switches,'l2gp') /= 0 .and. .not. parallel%slave) then
+        if ( switchDetail(switches,'l2gp') > -1 .and. .not. parallel%slave) then
           call Dump(l2gpDatabase)
-        elseif ( index(switches,'cab') /= 0 .and. .not. parallel%slave) then
+        elseif ( switchDetail(switches,'cab') > -1 .and. .not. parallel%slave) then
           call Dump(l2gpDatabase, ColumnsOnly=.true.)
         end if
-        ! print *, 'About to destroy l2gp databse'
         call DestroyL2GPDatabase ( l2gpDatabase )
-        if ( index(switches,'l2aux') /= 0 .and. .not. parallel%slave) then
+        if ( switchDetail(switches,'l2aux') > -1 .and. .not. parallel%slave) then
           call Dump(l2auxDatabase)
         end if
-        ! print *, 'About to destroy l2aux databse'
         call DestroyL2AUXDatabase ( l2auxDatabase )
-        ! print *, 'About to destroy direct databse'
         call DestroyDirectDatabase ( DirectDatabase )
         ! vectors, vectorTemplates and qtyTemplates destroyed at the
         ! end of each chunk
         ! fileDataBase is deallocated in MLSL2
-        if ( index(switches,'pro') /= 0  .and. associated(fileDataBase) ) then
-          ! details = min(index(switches,'pro1'), 1)
+        if ( switchDetail(switches,'pro') > -1 &
+          & .and. associated(fileDataBase) ) then
           details = SwitchDetail(switches, 'pro') - 2 ! 'pro' prints only size(DB)
           call Dump(fileDataBase, details=details)
         end if
@@ -495,20 +494,6 @@ subtrees:   do while ( j <= howmany )
       call output ( dble(t2 - myt1), advance = 'yes' )
     end subroutine SayTime
 
-!     integer function Say_num_gcs ( )
-!       Say_num_gcs = mls_howmany_gc()
-!       if ( show_totalNGC ) then
-!         call output ( "Total = " )
-!         call output ( Say_num_gcs, advance = 'no' )
-!         call blanks ( 4, advance = 'no' )
-!       end if
-!       call output ( "garbage collections for chunk ")
-!       call blanks ( 2, advance = 'no' )
-!       call output ( chunkNo )
-!       call output ( " = ")
-!       call output ( Say_num_gcs - totalNGC, advance = 'yes' )
-!     end function Say_num_gcs
-
   end subroutine WALK_TREE_TO_DO_MLS_L2
 
   logical function not_used_here()
@@ -523,6 +508,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.137  2006/02/10 21:15:26  pwagner
+! dumps may go to special dumpfile
+!
 ! Revision 2.136  2006/01/11 17:02:16  pwagner
 ! Repaired erroneous report when single chunk > size(chunks)
 !
