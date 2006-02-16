@@ -803,11 +803,26 @@ contains
   SUBROUTINE readAnIntFromChars (str, int, forbiddens, ignore)
     ! takes a string and returns an integer
     ! using Fortran "read"
+    ! (which could cause an io error--that's why this
+    ! subroutine exists, to filter out invalid characters)
     ! If the string is blank or contains one of forbiddens
     ! the int is left undefined
-    ! Snip away any from the set ignore if present
+    
+    ! Then snip away any from the set ignore if present
     ! If ignore is '*', that means ignore all alphabetical chars
-	 ! Not useful yet
+    ! If ignore contains '*', that means ignore all alphabetical chars
+    ! plus any other chars among ignore
+    ! If the string is composed entirely of ignorable chars, int is 0
+    
+    ! Finally attempt to read as an int what remains
+
+    ! Examples:
+    ! (1) if str='band13a' and ignore='*', int will be 13
+    ! (2) if str='3 cm' and forbiddens='c', int will be left undefined
+
+    ! Limitation: you're unable to "escape" a * so you'll have to
+    ! preprocess the * away if you really want to read a string which has
+    ! a * in it somewhere
 	 !
     !--------Argument--------!
     CHARACTER (LEN=*), INTENT(in) ::   str
@@ -850,19 +865,21 @@ contains
      return
    elseif (  myIgnore == "" ) then
      read(str, *) int
-   elseif (  myIgnore == "*" ) then
-     int = 0  ! Assume all ignorables means "0"
+   ! elseif (  myIgnore == "*" ) then
+   elseif (  index(myIgnore, "*") /= 0 ) then
+     int = 0  ! a str made up entirely of ignorables means "0"
      k = 1
      myStr = ""
      do j = 1, len(str)
-       if ( .not. isAlphabet(str(j:j)) ) then
+       if ( .not. isAlphabet(str(j:j)) .and. &
+         & index(myIgnore, str(j:j)) < 1 ) then
          myStr(k:k) = str(j:j)
          k = k + 1
        endif
      enddo
      if ( myStr /= "" ) read(mystr, *) int
    else
-     int = 0  ! Assume all ignorables means "0"
+     int = 0  ! a str made up entirely of ignorables means "0"
      k = 1
      myStr = ""
      do j = 1, len(str)
@@ -1492,6 +1509,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.60  2006/02/16 00:58:12  pwagner
+! ignore arg to ReadIntsFromChars may include * plus others
+!
 ! Revision 2.59  2005/09/22 23:33:58  pwagner
 ! date conversion procedures and functions all moved into dates module
 !
