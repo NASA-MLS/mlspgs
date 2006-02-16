@@ -2298,7 +2298,9 @@ contains
       if ( index(myOptions, 'c') > 0 ) listElement = lowercase(listElement)
       if (trim(listElement) /= ' ' .and. &
           & index(trim(listElement), trim(switch)) > 0) then
-        call ReadIntsFromChars(trim(listElement), detail, ignore="*")
+        ! Because we have sometimes allowed a "?" to be a switch
+        ! (Perhaps too permissive of us)
+        call ReadIntsFromChars(trim(listElement), detail, ignore="*?")
         return
       endif
 	ENDDO
@@ -2364,7 +2366,6 @@ contains
     ! (2) If len(quotes) > 1, processes them in order quotes(i:i), i=1 2 ..
     !     unless extract=TRUE in which case returns after first one found
     ! (3) Perhaps extract=TRUE should be moved from here to ExtractSubString
-    
 
     !--------Argument--------!
     character(len=*), intent(in) :: str
@@ -2545,6 +2546,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.18  2006/02/16 00:59:08  pwagner
+! Fixed bug preventing "?" switch from working properly
+!
 ! Revision 2.17  2006/01/26 00:31:46  pwagner
 ! Added RemoveNumFromList, MakeStringHashElement
 !
