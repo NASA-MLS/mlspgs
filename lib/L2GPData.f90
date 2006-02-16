@@ -3838,6 +3838,10 @@ contains
     elseif ( size(hgrid%geodLat(1,HGp1:)) > size(l2gp%latitude) ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, & 
         & 'HGrid and l2gp size mismatch: HGrid needed to be trimmed; done')
+      call output('shape l2gp%latitude: ')
+      call output(shape(l2gp%latitude), advance='yes')
+      call output('shape HGrid%geodLat: ')
+      call output(shape(HGrid%geodLat), advance='yes')
       verbose = .true.
     endif
     HGpn = size(l2gp%latitude) + HGp1 - 1
@@ -3958,6 +3962,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.137  2006/02/03 21:25:00  pwagner
+! Finally ended unnecessary debug printing
+!
 ! Revision 2.136  2006/01/27 01:02:19  pwagner
 ! Does better at picking units name for column abundances
 !
