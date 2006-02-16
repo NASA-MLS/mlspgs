@@ -14,7 +14,7 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
 !=============================================================================
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-  use INIT_TABLES_MODULE, only: F_SILENT, f_SKIPRETRIEVAL
+  use INIT_TABLES_MODULE, only: F_SILENT, f_SKIPRETRIEVAL, F_STAMP
   use INTRINSIC, only: L_HOURS, L_MINUTES, L_SECONDS
   use L2PARINFO, only: PARALLEL
   USE MLSL2Options, only: RESTARTWARNINGS, &
@@ -24,9 +24,10 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
   USE MLSMessageModule, only: MLSMessage, MLSMessageReset, MLSMSG_Error
   USE MLSStrings, only: LowerCase 
   USE MLSStringLists, only: catLists, GetStringElement, &
-    & NumStringElements, StringElementNum 
+    & NumStringElements, StringElementNum, SwitchDetail
   use MoreTree, only: Get_Boolean
-  use OUTPUT_M, only: BLANKS, OUTPUT, PRUNIT, resumeOutput, suspendOutput
+  use OUTPUT_M, only: BLANKS, OUTPUT, PRUNIT, &
+    & RESUMEOUTPUT, SETSTAMP, SUSPENDOUTPUT
   use String_Table, only: get_string
   use Time_M, only: Time_Now
   use TOGGLES, only: SWITCHES
@@ -187,7 +188,8 @@ contains ! =====     Public Procedures     =============================
       myLastTime = t2
       myLastElem = elem
       if ( present(t1) ) call time_now ( t1 )
-      if ( index(switches, 'phase') /= 0 ) call announce_phase(trim(phase_name))
+      if ( switchDetail(switches, 'phase') > -1 ) &
+        & call announce_phase(trim(phase_name))
   end subroutine add_to_phase_timing
 
   ! -----------------------------------------  add_to_retrieval_timing  -----
@@ -267,15 +269,20 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: NAME               ! String index of name
     integer, intent(in) :: ROOT               ! Root of hGrid subtree
     ! Local variables
-    integer :: keyNo
+    integer :: detail
     integer :: field
     integer :: field_index
     integer :: fieldValue
+    integer :: interval
+    integer :: keyNo
+    character(len=80) :: PHASESTRING    ! E.g., 'Core'
     logical :: silent
     integer :: son
-    character(len=80) :: PHASESTRING    ! E.g., 'Core'
+    logical :: stamp
     ! Executable
+    detail = switchDetail( switches, 'phase' )
     silent = .false.
+    stamp = detail > 0 ! E.g., -Sphase1; was .false.
     skipRetrieval = skipRetrievalOriginal
     do keyNo = 2, nsons(root)
       son = subtree(keyNo,root)
@@ -291,16 +298,36 @@ contains ! =====     Public Procedures     =============================
         silent = get_boolean ( fieldValue )
       case ( f_skipRetrieval )
         skipRetrieval = get_boolean ( fieldValue )
+      case ( f_stamp )
+        stamp = get_boolean ( fieldValue )
       case default ! Can't get here if tree_checker works correctly
       end select
     end do
     call get_string(name, phaseString)
-    call add_to_phase_timing(trim(phaseString))
+    call add_to_phase_timing( trim(phaseString) )
     if ( RESTARTWARNINGS ) call MLSMessageReset(Warnings=.true.)
     if ( silent ) then
       call suspendOutput
     else
       call resumeOutput
+    endif
+
+    if ( detail < 2 ) then
+      interval = 25 ! print header once every 25 lines
+    elseif ( detail < 3 ) then
+      ! -Sphase2
+      interval = 10 ! print header once every 10 lines
+    else
+      ! -Sphase3 or more
+      interval = 1 ! stamp every line with time, phase name
+    endif
+    
+    if ( stamp ) then
+      call setStamp( textcode=phaseString(1:24), showTime=.true., &
+        & interval=25 )
+    else
+      ! Possibly undo stamp added by prior phase
+      call setStamp( textcode=' ', showTime=.false. )
     endif
   end subroutine addPhaseToPhaseNames
 
@@ -794,7 +821,7 @@ contains ! =====     Public Procedures     =============================
     if ( BLAZON /= ' ' ) then
       call output ( '  '  // BLAZON  , advance='no' )
     else
-      call output ( ' ', advance='yes' )
+      call output ( ' ', advance='yes', DONT_STAMP=.true. )
     endif
   end subroutine announce_phase
 
@@ -812,6 +839,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.31  2006/02/16 00:12:02  pwagner
+! Added stamp boolean field to phase asks for printing phase names, times
+!
 ! Revision 2.30  2006/02/10 21:11:29  pwagner
 ! May specify skipRetrivel for particular Phases
 !
