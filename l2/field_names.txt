@@ -359,6 +359,7 @@ specificQuantities
 spectroscopy
 spect_der  # spectroscopy derivatives
 spread
+stamp
 state
 status
 # step already in MLSSignals field set, so can't put it here, too
@@ -414,6 +415,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.157  2006/02/16 16:20:02  pwagner
+# Added stamp
+#
 # Revision 2.156  2006/02/10 21:11:29  pwagner
 # May specify skipRetrivel for particular Phases
 #
