@@ -871,7 +871,6 @@ contains
     logical, parameter :: DONT_STAMP = .true. ! Don't double-stamp
     logical :: my_dont_log
     character(len=8) :: my_style
-    integer :: n_chars
     character(len=3) :: MY_ADV
     !
     my_adv = Advance_is_yes_or_no(advance)
@@ -920,7 +919,6 @@ contains
     !
     logical, parameter :: DONT_STAMP = .true. ! Don't double-stamp
     character(len=8) :: my_style
-    integer :: n_chars
     character(len=3) :: MY_ADV
     !
     my_adv = Advance_is_yes_or_no(advance)
@@ -1127,6 +1125,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.48  2006/02/21 19:08:36  pwagner
+! Removed two unused declarations
+!
 ! Revision 2.47  2006/02/15 18:10:44  pwagner
 ! Fixed bug preventing CR from being printed sometimes
 !
