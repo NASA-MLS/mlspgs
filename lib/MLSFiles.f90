@@ -28,7 +28,6 @@ module MLSFiles               ! Utility file routines
   use MLSSets, only: findFirst
   use MLSStrings, only: Capitalize, LowerCase, streq
   use MLSStringLists, only: ExtractSubString, &
-    & GetStringHashElement, GetIntHashElement, &
     & ReplaceSubString, SortArray
   use output_m, only: blanks, output
   use SDPToolkit, only: &
@@ -2329,12 +2328,6 @@ contains
     version = 1
     PCBottom = MLSFile%PCFidRange%Bottom
     PCTop = MLSFile%PCFidRange%Top
-!     call GetStringHashElement (types, &
-!       & modes, trim(MLSFile%type), &
-!       & toolbox_mode, .false.)
-!     FileAccessType = GetIntHashElement (accesses, &
-!       & accessTypes, trim(MLSFile%access), ioerror, &
-!       & .false.)
     record_length = MLSFile%recordLength
     ! call dump(MLSFile)
     ! Fill in file name if blank and we're using the toolkit panoply
@@ -2495,9 +2488,6 @@ contains
     version = 1
     PCBottom = MLSFile%PCFidRange%Bottom
     PCTop = MLSFile%PCFidRange%Top
-!     call GetStringHashElement (types, &
-!       & modes, trim(MLSFile%type), &
-!       & toolbox_mode, .false.)
     if ( MLSFile%hdfVersion < 1 ) then
       ! ioerror = mls_io_gen_closeF(toolbox_mode, MLSFile%FileID%f_id)
       ioerror = mls_io_gen_closeF(MLSFile%type, MLSFile%FileID%f_id)
@@ -2651,6 +2641,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.72  2006/02/21 19:07:58  pwagner
+! Removed references to unused stuff
+!
 ! Revision 2.71  2005/12/21 18:44:08  pwagner
 ! Added AreTheSameFile; not clever yet, should consider paths, etc
 !
