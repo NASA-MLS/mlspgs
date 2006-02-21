@@ -92,6 +92,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   logical            :: RESTARTWARNINGS = .true.
   ! Whether to skip doing the direct writes--quicker when snooping       swath  
   logical            :: SKIPDIRECTWRITES = .false.         
+  logical            :: SKIPDIRECTWRITESORIGINAL = .false.         
   ! Whether to skip doing the retrieval--a pre-flight checkout of paths, etc.
   logical            :: SKIPRETRIEVAL = .false.
   logical            :: SKIPRETRIEVALORIGINAL = .false. ! May skip for some phases
@@ -111,6 +112,21 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   logical            :: TOOLKIT =                SIPS_VERSION 
   ! --------------------------------------------------------------------------
 
+  ! This is the type to store runtime Booleans set and used by the l2cf
+  integer, parameter :: RTVSTRINGLENGTH = 1024
+  integer, parameter :: RTVARRAYLENGTH  = 128
+  
+  integer, private :: i ! For loop constructor below
+
+  type :: runTimeValues_T
+    ! Two arrays bound as a logical-valued hash
+    character(len=RTVSTRINGLENGTH)     :: lkeys = 'true,false'
+    logical, dimension(RTVARRAYLENGTH) :: lvalues = &
+      & (/ .TRUE., (.FALSE., i=2, RTVARRAYLENGTH) /)
+    ! Add two more arrays bound for each kind of hash: integer, string, real, ..
+  end type runTimeValues_T
+  
+  type(runTimeValues_T), save :: runTimeValues
 !=============================================================================
 contains 
   logical function not_used_here()
@@ -127,6 +143,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.35  2006/02/21 19:19:27  pwagner
+! New things to create, refer to run time booleans in l2cf
+!
 ! Revision 2.34  2006/02/10 21:13:30  pwagner
 ! May specify skipRetrivel for particular Phases; dumps may go to special dumpfile
 !
