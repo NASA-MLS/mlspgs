@@ -161,8 +161,8 @@ contains ! =====     Public Procedures     =============================
     use MLSSets, only: FindFirst
     use MLSSignals_m, only: GetFirstChannel, GetSignalName, GetModuleName, IsModuleSpacecraft, &
       & GetSignal, Signal_T
-    use MLSStringLists, only: catLists, MakeStringHashElement, NumStringElements, &
-      & StringElement, StringElementNum
+    use MLSStringLists, only: catLists, PutHashElement, NumStringElements, &
+      & StringElement, StringElementNum, switchDetail
     use MLSStrings, only: lowerCase
     use Molecules, only: L_H2O
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
@@ -1712,7 +1712,7 @@ contains ! =====     Public Procedures     =============================
                   & strip=.true. )
                 call get_string( lit_indices(quantity%template%molecule), mol, &
                   & strip=.true. )
-                call MakeStringHashElement( col_species_keys, col_species_hash, &
+                call PutHashElement( col_species_keys, col_species_hash, &
                   & lowerCase(mol), ExplicitUnit, countEmpty=.true. )
                 ! print *,'col_species_keys: '
                 ! print *,col_species_keys
@@ -3601,9 +3601,11 @@ contains ! =====     Public Procedures     =============================
       pi = 10.0 ** ( -Zetai  )
       N = vmrQty%template%noSurfs
       do instance = useFirstInstance, useLastInstance
-        printMe = (instance == useFirstInstance) .and. (index(switches, 'column') /= 0)
+        printMe = ( instance == useFirstInstance) .and. &
+         & (switchDetail(switches, 'column') > -1 )
         if ( printMe ) print *, 'switches: ', trim(switches)
-        if ( printMe ) print *, 'index(switches, column) ', index(switches, 'column')
+        if ( printMe ) &
+          & print *, 'switchDetail(switches, column) ', switchDetail(switches, 'column')
         ! Find 1st surface at or above tropopause
         ! (i.e., at a pressure equal to or less than boundaryPressure)
         ! This next check should be unnecessary--the HGrids were already matched
@@ -5601,7 +5603,7 @@ contains ! =====     Public Procedures     =============================
           end do
         end if
 
-        if ( index(switches, 'l1b') /= 0 ) &
+        if ( switchDetail(switches, 'l1b') > -1 ) &
           & call Dump( l1bData )
         call DeallocateL1BData(l1bData)
       else
@@ -5716,8 +5718,8 @@ contains ! =====     Public Procedures     =============================
         end do
       end do
 
-      if ( index(switches,'mag') /= 0 ) &
-        & call dump ( qty, clean=index(switches,'clean') /= 0 )
+      if ( switchDetail(switches,'mag') > -1 ) &
+        & call dump ( qty, clean=(switchDetail(switches,'clean') > -1) )
 
     end subroutine FillQuantityUsingMagneticModel
 
@@ -7025,6 +7027,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.322  2006/02/21 19:16:10  pwagner
+! GetHashElement is now a generic
+!
 ! Revision 2.321  2006/02/15 00:01:19  pwagner
 ! Shoule let you fill H2O from new RHIvmr quantity
 !
