@@ -584,7 +584,8 @@ program MLSL2
     if ( copyArg ) call AccumulateSlaveArguments(line)
   end do
 
-  if( index(switches, '?') /= 0 .or. index(switches, 'hel') /= 0 ) then
+  if( switchDetail(switches, '?') > -1 .or. &
+    & switchDetail(switches, 'help') > -1 ) then
    call switch_usage
   end if
   ! Remove any quote marks from RemoveSwitches array
@@ -894,7 +895,6 @@ contains
     call output(' l2cf file:', advance='no')  
     call blanks(4, advance='no')                                     
     call output(trim(MLSL2CF%name), advance='yes')                            
-    ! if( index(switches, 'opt1') /= 0 .or. showDefaults ) then                                 
     if( SwitchDetail(switches, 'opt1') > 0 .or. showDefaults ) then                                 
       call output(' -------------- Summary of run time options'      , advance='no')
       call output(' -------------- ', advance='yes')
@@ -1064,6 +1064,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.145  2006/02/21 19:15:17  pwagner
+! Uses switchDetail only now
+!
 ! Revision 2.144  2006/02/10 21:14:32  pwagner
 ! May specify skipRetrivel for particular Phases; dumps may go to special dumpfile
 !
