@@ -48,18 +48,15 @@ module MLSStringLists               ! Module to treat string lists
 ! catLists           cats 2 string lists, taking care if either one is blank
 ! ExpandStringRange  Turns '1,2-5,7' into '1,2,3,4,5,7' or ints or logicals
 ! ExtractSubString   Extracts portion of string sandwiched between sub1 and sub2
-! GetIntHashElement  Returns int from hash array corresponding to key string
 ! GetStringElement   Returns n'th element of string list
-! GetStringHashElement   
-!                    Returns string from hash list corresponding to key string
+! GetHashElement     Returns value from hash list corresponding to key string
 ! GetUniqueInts      Returns array of only unique entries from input array
 ! GetUniqueList      Returns str list of only unique entries from input list
 ! GetUniqueStrings   Returns array of only unique entries from input array
 ! IsInList           Is string in list? options may expand criteria
 ! List2Array         Converts a single string list to an array of strings
-! MakeStringHashElement   
-!                    Replaces string from hash list corresponding to key string
 ! NumStringElements  Returns number of elements in string list
+! PutHashElement     puts value into hash list corresponding to key string
 ! RemoveElemFromList removes occurrence(s) of elem from a string list
 ! RemoveListFromList removes occurrence(s) of elems in a string list from another
 ! RemoveNumFromList  removes a numbered elem from a string list
@@ -80,11 +77,9 @@ module MLSStringLists               ! Module to treat string lists
 ! ExpandStringRange (char* str, char* outst)
 ! ExtractSubString (char* str, char* outstr, char* sub1, char* sub2, &
 !       & [char* how], [log no_trim])
-! int GetIntHashElement (strlist keyList, hashArray(:), char* key, 
-!   int ErrType, log countEmpty, [char inseparator], [log part_match])
 ! GetStringElement (strlist inList, char* outElement,
 !   i4 nElement, log countEmpty, [char inseparator])
-! GetStringHashElement (strlist keyList, strlist hashList, char* key, 
+! GetHashElement (hash {keys = values}, char* key, 
 !   char* outElement, log countEmpty, [char inseparator], [log part_match])
 ! GetUniqueInts (int ints(:), int outs(:), int noUnique, 
 !    [int extra(:)], [int fillValue], [int minValue]) 
@@ -95,10 +90,10 @@ module MLSStringLists               ! Module to treat string lists
 ! log IsInList(strlist stringList, char* string, [char* options])
 ! List2Array (strlist inList, char* outArray(:), log countEmpty,
 !   [char inseparator], [log IgnoreLeadingSpaces])
-! MakeStringHashElement (strlist keyList, strlist hashList, char* key, 
-!   char* elem, log countEmpty, [char inseparator], [log part_match])
 ! int NumStringElements(strlist inList, log countEmpty, &
 !   & [char inseparator], [int LongestLen])
+! PutHashElement (hash {keys = values}, char* key, 
+!   char* elem, log countEmpty, [char inseparator], [log part_match])
 ! RemoveElemFromList(strlist inList, strlist outList, char* elem, &
 !    & [char inseparator])
 ! RemoveListFromList(strlist inList, strlist outList, strlist exclude, &
@@ -123,10 +118,8 @@ module MLSStringLists               ! Module to treat string lists
 ! in the above, a string list is a string of elements (usu. comma-separated)
 ! e.g., units='cm,m,in,ft'
 ! an array is a Fortran array of strings or integers
-! a hash is a list of key strings and either
-! (1) a list of associated strings
-! (2) an array of associated integers
-! (an idea called a hash in perl or a dictionary in python)
+! a hash is a list of key strings and their associated values
+! (a string list, or array of ints or logicals)
 ! Many of these routines take optional arguments that greatly modify
 ! their default operation
 
@@ -157,13 +150,17 @@ module MLSStringLists               ! Module to treat string lists
 ! to avoid operating on undefined array elements
 ! (2) In operating on string lists it is sometimes assumed that no
 ! element is longer than a limit: MAXSTRELEMENTLENGTH
+! (3) Integer hashes should not be used if some negative
+! values are expected. The value KEYNOTFOUND=-1 is used to indicate
+! "no such key."
+! (4) "No such key" is indicated by FALSE for logical values and "," strings
 ! === (end of api) ===
 
   public :: Array2List, catLists, &
    & ExpandStringRange, ExtractSubString, &
-   & GetIntHashElement, GetStringElement, GetStringHashElement, &
+   & GetHashElement, GetStringElement, &
    & GetUniqueInts, GetUniqueStrings, GetUniqueList, IsInList, &
-   & List2Array, MakeStringHashElement, NumStringElements, &
+   & List2Array, PutHashElement, NumStringElements, &
    & RemoveElemFromList, RemoveListFromList, RemoveNumFromList, &
    & ReplaceSubString, ReverseList, &
    & SortArray, SortList, StringElement, StringElementNum, SwitchDetail, &
@@ -173,13 +170,33 @@ module MLSStringLists               ! Module to treat string lists
     module procedure catLists_str, catLists_int, catLists_intarray
   end interface
 
+  interface GetHashElement
+    module procedure GetHashElement_str
+    module procedure GetHashElement_int
+    module procedure GetHashElement_log
+  end interface
+
+  interface GetStringHashElement
+    module procedure GetHashElement_str
+  end interface
+
   interface ExpandStringRange
     module procedure ExpandStringRange_str, ExpandStringRange_ints, &
       & ExpandStringRange_log
   end interface
 
+  interface PutHashElement
+    module procedure PutHashElement_str
+    module procedure PutHashElement_int
+    module procedure PutHashElement_log
+  end interface
+
+  interface MakeStringHashElement
+    module procedure PutHashElement_str
+  end interface
+
   ! Error return values from:
-  ! GetIntHashElement
+  ! GetHashElement (int args)
   integer, public, parameter :: KEYNOTFOUND=-1
   integer, public, parameter :: KEYBEYONDHASHSIZE=KEYNOTFOUND-1
   ! strings2Ints
@@ -642,63 +659,6 @@ contains
 
   end subroutine ExtractSubString
 
-  ! ---------------------------------------------  GetIntHashElement  -----
-
-  ! This function takes one (usually) comma-separated string list, interprets it
-  ! it as a list of elements, and an array of ints
-  ! treating the list as keys and the array as
-  ! a hash table, associative array or dictionary
-  ! It returns the int from the hash table corresponding to the key
-  ! If the key is not found in the array of keys, it sets ErrType=KEYNOTFOUND
-  ! otherwise ErrType=0
-  
-  ! This is useful because many of the hdfeos routines *inq*() return
-  ! comma-separated lists
-
-  ! If countEmpty is TRUE, consecutive separators, with no chars in between,
-  ! are treated as enclosing an empty element
-  ! Otherwise, they are treated the same as a single separator
-  ! E.g., "a,b,,d" has 4 elements if countEmpty TRUE, 3 if FALSE
-  ! If TRUE, the elements would be {'a', 'b', ' ', 'd'}
-
-  ! As an optional arg the separator may supplied, in case it isn't comma
-  ! Another optional arg, part_match, returns a match for the 
-  ! first hash element merely found in the key; e.g.
-  ! 'won, to, tree' and key 'protocol.dat' matches 'to'
-
-  ! Basic premise: Use StringElementNum on key in keyList to find index
-  ! Use this index for the array of ints
-
-  function GetIntHashElement(keyList, hashArray, key, ErrType, &
-  & countEmpty, inseparator, part_match) RESULT (hashInt)
-    ! Dummy arguments
-    CHARACTER (LEN=*), INTENT(IN)             :: keyList
-    INTEGER, DIMENSION(:), INTENT(IN)         :: hashArray
-    INTEGER                                   :: hashInt
-    CHARACTER (LEN=*), INTENT(IN)             :: key
-    INTEGER, INTENT(OUT)                      :: ErrType
-    LOGICAL, INTENT(IN)                       :: countEmpty
-    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)   :: inseparator
-    LOGICAL, OPTIONAL, INTENT(IN)             :: part_match
-
-    ! Local variables
-	INTEGER :: elem
-
-    ! Executable code
-
-   ErrType = 0
-	elem = StringElementNum(keyList, key, countEmpty, inseparator, part_match)
-	hashInt = elem
-	IF(elem <= 0) THEN
-		ErrType = KEYNOTFOUND
-	ELSEIF(elem > SIZE(hashArray)) THEN
-		ErrType = KEYBEYONDHASHSIZE
-	ELSE
-		hashInt = hashArray(elem)
-	ENDIF
-
-  end function GetIntHashElement
-
   ! ---------------------------------------------  GetStringElement  -----
 
   ! This subroutine takes a (usually) comma-separated string list, interprets it
@@ -789,9 +749,92 @@ contains
 
   end subroutine GetStringElement
 
-  ! ---------------------------------------------  GetStringHashElement  -----
+  ! ---------------------------------------------  GetHashElement  -----
 
-  ! This subroutine takes two (usually) comma-separated string lists, interprets it
+  ! This family of subroutines interpret two arguments as a set
+  ! of {key = value} pairs
+  
+  subroutine GetHashElement_int(keys, values, key, value, &
+  & countEmpty, inseparator, part_match)
+
+  ! If no match found, return KEYNOTFOUND
+
+  ! Someday you may wish to define a StringHash_T made up of the two
+  ! strings
+  
+    ! Dummy arguments
+    character (len=*), intent(in)             :: keys
+    integer, dimension(:), intent(in)         :: values
+    character (len=*), intent(in)             :: key
+    integer, intent(out)                      :: value
+    logical, intent(in)                       :: countEmpty
+    character (len=1), optional, intent(in)   :: inseparator
+    logical, optional, intent(in)             :: part_match
+
+    ! Local variables
+    integer(i4) :: elem
+    character (len=1)                          :: separator
+
+    ! Executable code
+
+    if(present(inseparator)) then
+	     separator = inseparator
+	 else
+	     separator = comma
+	 endif
+    value = KEYNOTFOUND
+	 elem = StringElementNum(keys, key, countEmpty, inseparator, part_match)
+	 if( elem <= 0 ) then
+	 elseif( elem > size(values) ) then
+      value = KEYBEYONDHASHSIZE
+	 else
+      value = values(elem)
+	 endif
+
+  end subroutine GetHashElement_int
+
+  subroutine GetHashElement_log(keys, values, key, value, &
+  & countEmpty, inseparator, part_match)
+
+  ! If no match found, return FALSE
+
+  ! Someday you may wish to define a StringHash_T made up of the two
+  ! strings
+  
+    ! Dummy arguments
+    character (len=*), intent(in)             :: keys
+    logical, dimension(:), intent(in)         :: values
+    character (len=*), intent(in)             :: key
+    logical, intent(out)                      :: value
+    logical, intent(in)                       :: countEmpty
+    character (len=1), optional, intent(in)   :: inseparator
+    logical, optional, intent(in)             :: part_match
+
+    ! Local variables
+    integer(i4) :: elem
+    character (len=1)                          :: separator
+
+    ! Executable code
+
+    IF(PRESENT(inseparator)) THEN
+	     separator = inseparator
+	 ELSE
+	     separator = COMMA
+	 ENDIF
+    value = .FALSE.
+	 elem = StringElementNum(keys, key, countEmpty, inseparator, part_match)
+	 if( elem <= 0 ) then
+	 elseif( elem > size(values) ) then
+      value = .false.
+	 else
+      value = values(elem)
+	 endif
+
+  end subroutine GetHashElement_log
+
+  subroutine GetHashElement_str(keyList, hashList, key, outElement, &
+  & countEmpty, inseparator, part_match)
+  ! subroutine takes two (usually) comma-separated string lists, interprets it
   ! each as a list of elements, treating the first as keys and the second as
   ! a hash table, associative array or dictionary
   ! It returns the sub-string from the hash table corresponding to the key
@@ -817,8 +860,6 @@ contains
   ! Someday you may wish to define a StringHash_T made up of the two
   ! strings
   
-  subroutine GetStringHashElement(keyList, hashList, key, outElement, &
-  & countEmpty, inseparator, part_match)
     ! Dummy arguments
     CHARACTER (LEN=*), INTENT(IN)   :: keyList
     CHARACTER (LEN=*), INTENT(IN)   :: hashList
@@ -848,7 +889,7 @@ contains
         & countEmpty, inseparator)
 	ENDIF
 
-  end subroutine GetStringHashElement
+  end subroutine GetHashElement_str
 
   ! ---------------------------------------------  GetUniqueInts  -----
 
@@ -1237,70 +1278,6 @@ contains
 
   end subroutine List2Array
 
-  ! ---------------------------------------------  MakeStringHashElement  -----
-
-  ! This subroutine takes two (usually) comma-separated string lists, interprets it
-  ! each as a list of elements, treating the first as keys and the second as
-  ! a hash table, associative array or dictionary
-  ! It replaces with elem the sub-string from the hash table corresponding to the key
-  ! If the key is not found in the array of keys, it adds a new key
-
-  ! If countEmpty is TRUE, consecutive separators, with no chars in between,
-  ! are treated as enclosing an empty element
-  ! Otherwise, they are treated the same as a single separator
-  ! E.g., "a,b,,d" has 4 elements if countEmpty TRUE, 3 if FALSE
-  ! If TRUE, the elements would be {'a', 'b', ' ', 'd'}
-
-  ! As an optional arg the separator may supplied, in case it isn't comma
-  ! Another optional arg, part_match, returns a match for the 
-  ! first hash element merely found in the key; e.g.
-  ! 'won, to, tree' and key 'protocol.dat' matches 'to'
-
-  ! Basic premise: Find the element number corresponding to the key
-  ! If found remove that element from both key and hash list
-  ! Then add new key and hash to lists
-
-  ! Someday you may wish to define a StringHash_T made up of the two
-  ! strings
-  
-  subroutine MakeStringHashElement(keyList, hashList, key, elem, &
-  & countEmpty, inseparator, part_match)
-    ! Dummy arguments
-    character (len=*), intent(inout)   :: keyList
-    character (len=*), intent(inout)   :: hashList
-    character (len=*), intent(in)      :: key
-    character (len=*), intent(in)      :: elem
-    logical, intent(in)   :: countEmpty
-    character (len=1), optional, intent(in)   :: inseparator
-    logical, optional, intent(in)             :: part_match
-
-    ! Local variables
-    integer                                    :: num
-    character (LEN=1)                          :: separator
-    character(len=len(keyList)+len(key)+1)     :: keys
-    character(len=len(hashList)+len(elem)+1)   :: hash
-
-    ! Executable code
-
-    IF(PRESENT(inseparator)) THEN
-	     separator = inseparator
-	 ELSE
-	     separator = COMMA
-	 ENDIF
-
-	num = StringElementNum(keyList, key, countEmpty, inseparator, part_match)
-	if( num > 0) then
-		call RemoveNumFromList( keyList, keys, num, inseparator )
-		call RemoveNumFromList( hashList, hash, num, inseparator )
-	else
-		keys = keyList
-      hash = hashList
-	endif
-   keyList = catLists(keys, key)
-   hashList = catLists(hash, elem)
-
-  end subroutine MakeStringHashElement
-
   ! ---------------------------------------------  NumStringElements  -----
 
   ! This function takes a (usually) comma-separated string list, interprets it
@@ -1371,6 +1348,150 @@ contains
      & LongestLen = max(LongestLen, sinceLastseparated)
 
   end function NumStringElements
+
+  ! ---------------------------------------------  PutHashElement  -----
+
+  ! This family of subroutines interprets two arguments as
+  ! a set of {key = value} pairs
+  ! Given a (possibly new) key and value, insert or replace the value
+
+  subroutine PutHashElement_int(keys, values, key, value, &
+  & countEmpty, inseparator, part_match)
+    ! Dummy arguments
+    character (len=*), intent(inout)          :: keys
+    integer, dimension(:), intent(inout)      :: values
+    character (len=*), intent(in)             :: key
+    integer, intent(in)                       :: value
+    logical, intent(in)                       :: countEmpty
+    character (len=1), optional, intent(in)   :: inseparator
+    logical, optional, intent(in)             :: part_match
+
+    ! Local variables
+    integer                                    :: N
+    integer                                    :: num
+    character (LEN=1)                          :: separator
+
+    ! Executable code
+
+    if(present(inseparator)) then
+	     separator = inseparator
+	 else
+	     separator = comma
+	 endif
+
+	 num = StringElementNum(keys, key, countEmpty, inseparator, part_match)
+	 if( num > 0 .and. num <= size(values) ) then
+      values(num) = value
+    elseif( num > size(values) ) then
+      ! Can't handle arrays this big
+	 else
+      ! key not found :: must add to keys, values
+      N = NumStringElements(keys, countEmpty)
+      keys = catlists(keys, key)
+      values(N+1) = value
+	endif
+
+  end subroutine PutHashElement_int
+
+  subroutine PutHashElement_log(keys, values, key, value, &
+  & countEmpty, inseparator, part_match)
+    ! Dummy arguments
+    character (len=*), intent(inout)          :: keys
+    logical, dimension(:), intent(inout)      :: values
+    character (len=*), intent(in)             :: key
+    logical, intent(in)                       :: value
+    logical, intent(in)                       :: countEmpty
+    character (len=1), optional, intent(in)   :: inseparator
+    logical, optional, intent(in)             :: part_match
+
+    ! Local variables
+    integer                                    :: N
+    integer                                    :: num
+    character (LEN=1)                          :: separator
+
+    ! Executable code
+
+    if(present(inseparator)) then
+	     separator = inseparator
+	 else
+	     separator = comma
+	 endif
+
+	 num = StringElementNum(keys, key, countEmpty, inseparator, part_match)
+	 if( num > 0 .and. num <= size(values) ) then
+      values(num) = value
+    elseif( num > size(values) ) then
+      ! Can't handle arrays this big
+	 else
+      ! key not found :: must add to keys, values
+      N = NumStringElements(keys, countEmpty)
+      keys = catlists(keys, key)
+      values(N+1) = value
+	endif
+
+  end subroutine PutHashElement_log
+
+  subroutine PutHashElement_str(keyList, hashList, key, elem, &
+  & countEmpty, inseparator, part_match)
+  ! This subroutine takes two (usually) comma-separated string lists, interprets it
+  ! each as a list of elements, treating the first as keys and the second as
+  ! a hash table, associative array or dictionary
+  ! It replaces with elem the sub-string from the hash table corresponding to the key
+  ! If the key is not found in the array of keys, it adds a new key
+
+  ! If countEmpty is TRUE, consecutive separators, with no chars in between,
+  ! are treated as enclosing an empty element
+  ! Otherwise, they are treated the same as a single separator
+  ! E.g., "a,b,,d" has 4 elements if countEmpty TRUE, 3 if FALSE
+  ! If TRUE, the elements would be {'a', 'b', ' ', 'd'}
+
+  ! As an optional arg the separator may supplied, in case it isn't comma
+  ! Another optional arg, part_match, returns a match for the 
+  ! first hash element merely found in the key; e.g.
+  ! 'won, to, tree' and key 'protocol.dat' matches 'to'
+
+  ! Basic premise: Find the element number corresponding to the key
+  ! If found remove that element from both key and hash list
+  ! Then add new key and hash to lists
+
+  ! Someday you may wish to define a StringHash_T made up of the two
+  ! strings
+  
+    ! Dummy arguments
+    character (len=*), intent(inout)   :: keyList
+    character (len=*), intent(inout)   :: hashList
+    character (len=*), intent(in)      :: key
+    character (len=*), intent(in)      :: elem
+    logical, intent(in)   :: countEmpty
+    character (len=1), optional, intent(in)   :: inseparator
+    logical, optional, intent(in)             :: part_match
+
+    ! Local variables
+    integer                                    :: num
+    character (LEN=1)                          :: separator
+    character(len=len(keyList)+len(key)+1)     :: keys
+    character(len=len(hashList)+len(elem)+1)   :: hash
+
+    ! Executable code
+
+    IF(PRESENT(inseparator)) THEN
+	     separator = inseparator
+	 ELSE
+	     separator = COMMA
+	 ENDIF
+
+	num = StringElementNum(keyList, key, countEmpty, inseparator, part_match)
+	if( num > 0) then
+		call RemoveNumFromList( keyList, keys, num, inseparator )
+		call RemoveNumFromList( hashList, hash, num, inseparator )
+	else
+		keys = keyList
+      hash = hashList
+	endif
+   keyList = catLists(keys, key)
+   hashList = catLists(hash, elem)
+
+  end subroutine PutHashElement_str
 
   ! --------------------------------------------------  RemoveElemFromList  -----
   subroutine RemoveElemFromList (inList, outList, elem, inseparator)
@@ -2546,6 +2667,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.19  2006/02/21 19:06:25  pwagner
+! Made Get, PutHashElement routines generic
+!
 ! Revision 2.18  2006/02/16 00:59:08  pwagner
 ! Fixed bug preventing "?" switch from working properly
 !
