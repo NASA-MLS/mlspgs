@@ -71,7 +71,6 @@ contains ! =====     Public Procedures     =============================
     use MLSNumerics, only: HUNT
     use MLSStringLists, only: SwitchDetail
     use MoreTree, only: GET_BOOLEAN
-    use output_m, only: output
     use STRING_TABLE, only: GET_STRING
     use TOGGLES, only: GEN, TOGGLE, SWITCHES
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -1286,7 +1285,6 @@ contains ! =====     Public Procedures     =============================
       real (rk), dimension(:,:), pointer :: MAFLongitude => null()
       real (rk), dimension(:,:), pointer :: MAFTime => null()
       integer :: maf
-      integer :: mif
       integer :: noMAFs
       integer :: noMIFs
       character(len=1), parameter :: SEPARATOR = ':'
@@ -1391,7 +1389,7 @@ contains ! =====     Public Procedures     =============================
       real(rk), dimension(:), intent(out)  :: solarZenith
       ! Local variables
       integer, dimension(2) :: indices(2)
-      integer :: maf, mif
+      integer :: maf
       ! Executable
       do maf = 1, size(GeodAngle)
         call closestElement( GeodAngle(maf), allGeodAngle, indices )
@@ -1719,7 +1717,7 @@ contains ! =====     Public Procedures     =============================
     use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
     use ChunkDivide_m, only: Obstruction_T
     use HGridsDatabase, only: HGRID_T, CreateEmptyHGrid, DestroyHGridContents
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
     ! Args
     type (HGRID_T), pointer :: HGRID
     type (Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
@@ -1978,11 +1976,13 @@ contains ! =====     Public Procedures     =============================
     use Init_Tables_Module, only: Z_CONSTRUCT, S_HGRID, Z_OUTPUT
     use L2GPData, only: L2GPDATA_T
     use MLSCommon, only: MLSFILE_T, TAI93_RANGE_T
+    use MLSL2Options, only: SPECIALDUMPFILE
     use MoreTree, only: GET_SPEC_ID
     use MLSMessageModule, only: MLSMessage, MLSMSG_ERROR
     use MLSStringLists, only: SwitchDetail
-    use OUTPUT_M, only: BLANKS, OUTPUT
-    use TOGGLES, only: SWITCHES
+    use OUTPUT_M, only: BLANKS, OUTPUT, REVERTOUTPUT, SWITCHOUTPUT
+    use TOGGLES, only: GEN, SWITCHES, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use Tree, only: SUBTREE, NSONS, NODE_ID, DECORATION
     use TREE_TYPES, only: N_NAMED
     ! Dummy arguments
@@ -2007,6 +2007,9 @@ contains ! =====     Public Procedures     =============================
     type(HGrid_T) :: DUMMYHGRID         ! A temporary hGrid
 
     ! Executable code
+    if ( toggle(gen) ) call trace_begin ( "ComputeAllHGridOffsets", root )
+    if ( specialDumpFile /= ' ' ) &
+      & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
     ! Slightly clever loop here, the zero run doesn't do anything except
     ! count the number of hGrids.  The other run works out how big each HGrid
     ! is going to be for each chunk.  This is stored in chunks%hGridOffsets.
@@ -2113,15 +2116,21 @@ contains ! =====     Public Procedures     =============================
     end do
     chunks(1)%hGridOffsets = 0
     
-    if ( switchDetail(switches, 'pro') < 0 .or. .not. DEEBUG ) return
-    call output ( "Dumping offsets, hgridTotals for all chunks: " , advance='yes')
-    do chunk = 1, size ( chunks )
-      call output ( chunk )
-      call blanks ( 3 )
-      call output ( chunks(chunk)%hGridOffsets )
-      call blanks ( 3 )
-      call output ( chunks(chunk)%hGridTotals, advance='yes' )
-    end do
+    if ( switchDetail(switches, 'pro') >= 0 .or. DEEBUG ) then
+      call output ( "Dumping offsets, hgridTotals for all chunks: " , &
+        & advance='yes')
+      do chunk = 1, size ( chunks )
+        call output ( chunk )
+        call blanks ( 3 )
+        call output ( chunks(chunk)%hGridOffsets )
+        call blanks ( 3 )
+        call output ( chunks(chunk)%hGridTotals, advance='yes' )
+      end do
+    endif
+
+    if ( specialDumpFile /= ' ' ) &
+      & call revertOutput
+    if ( toggle(gen) ) call trace_end ( "MLSL2Fill" )
   end subroutine ComputeAllHGridOffsets
 
   ! ------------------------------------- ComputeNextChunksHGridOffsets --
@@ -2278,6 +2287,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.84  2006/02/21 19:11:30  pwagner
+! Some tweaks to where, when to dump
+!
 ! Revision 2.83  2006/02/07 00:56:26  pwagner
 ! Now allows overlaps after data end time
 !
