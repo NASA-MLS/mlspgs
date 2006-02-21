@@ -29,7 +29,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use MLSNumerics, only: HuntRange
   use MLSStrings, only: Capitalize, lowercase
   use MLSStringLists, only: ExtractSubString, &
-    & GetStringHashElement, GetStringElement, GetUniqueList, &
+    & GetHashElement, GetStringElement, GetUniqueList, &
     & list2array, NumStringElements, RemoveListFromList, ReplaceSubString, &
     & StringElementNum, SwitchDetail
   use Output_M, only: blanks, Output, resumeOutput, suspendOutput
@@ -917,7 +917,7 @@ contains ! =====     Public Procedures     =============================
       ! HE5_SWdiminfo returns 1 instead of the right answer.
       status = HE5_swfldinfo(swid, trim(DF_Name), rank, flddims, &
         & numberType, dimlist, maxdimlist)
-      call GetStringHashElement (dimlist, &
+      call GetHashElement (dimlist, &
        & maxdimlist, 'nTimes', &
        & maxDimName, .false.)
       if ( maxDimName == 'Unlim' ) then
@@ -1755,10 +1755,10 @@ contains ! =====     Public Procedures     =============================
         field_name = theTitles(field)
         if ( trim(theTitles(field)) == 'Pressure' ) &
           & field_name = l2gp%verticalCoordinate
-        call GetStringHashElement (GeolocationTitles, &
+        call GetHashElement (GeolocationTitles, &
           & GeoUniqueFieldDefinition, trim(theTitles(field)), &
           & abbr_uniq_fdef, .false.)
-        call GetStringHashElement (UniqueFieldDefKeys, &
+        call GetHashElement (UniqueFieldDefKeys, &
           & UniqueFieldDefValues, trim(abbr_uniq_fdef), &
           & expnd_uniq_fdef, .false.)
         if ( DEEBUG ) print *, 'Field Title ', trim(theTitles(field))
@@ -1820,10 +1820,10 @@ contains ! =====     Public Procedures     =============================
     endif
     if ( DEEBUG ) &
       & print *, 'full name: ', trim(name), ' Species: ', trim(species_name)
-    call GetStringHashElement (lowercase(Species), &
+    call GetHashElement (lowercase(Species), &
       & SpUniqueFieldDefinition, trim(species_name), &
       & abbr_uniq_fdef, .false.)
-    call GetStringHashElement (UniqueFieldDefKeys, &
+    call GetHashElement (UniqueFieldDefKeys, &
       & UniqueFieldDefValues, trim(abbr_uniq_fdef), &
       & expnd_uniq_fdef, .false.)
     if ( expnd_uniq_fdef == '' .or. expnd_uniq_fdef == ',' ) &
@@ -1843,7 +1843,7 @@ contains ! =====     Public Procedures     =============================
       if ( DEEBUG ) &
         & call dump( .true., col_species_keys, col_species_hash, &
         & 'column species units' )
-      call GetStringHashElement (col_species_keys, &
+      call GetHashElement (col_species_keys, &
       & col_species_hash, trim(lowercase(species_name)), &
       & units_name, .true.)
       if ( DEEBUG ) &
@@ -3589,10 +3589,10 @@ contains
         & .and. l2gp%nLevels < 1 ) then
         field_name = ''
       else
-        call GetStringHashElement (GeolocationTitles, &
+        call GetHashElement (GeolocationTitles, &
           & GeoUniqueFieldDefinition, trim(theTitles(field)), &
           & abbr_uniq_fdef, .false.)
-        call GetStringHashElement (UniqueFieldDefKeys, &
+        call GetHashElement (UniqueFieldDefKeys, &
           & UniqueFieldDefValues, trim(abbr_uniq_fdef), &
           & expnd_uniq_fdef, .false.)
         status = he5_swrdlattr(swid, trim(theTitles(field)), 'Title', field_name)
@@ -3613,10 +3613,10 @@ contains
     if ( isColumnAmt ) then
       call ExtractSubString(Name, species_name, 'Column', 'wmo')
     endif
-    call GetStringHashElement (lowercase(Species), &
+    call GetHashElement (lowercase(Species), &
       & SpUniqueFieldDefinition, trim(lowercase(species_name)), &
       & abbr_uniq_fdef, .false.)
-    call GetStringHashElement (UniqueFieldDefKeys, &
+    call GetHashElement (UniqueFieldDefKeys, &
       & UniqueFieldDefValues, trim(abbr_uniq_fdef), &
       & expnd_uniq_fdef, .false.)
     select case (trim(lowercase(species_name)))
@@ -3962,6 +3962,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.138  2006/02/16 00:09:23  pwagner
+! Show how l2gp, Hgrid shapes differ
+!
 ! Revision 2.137  2006/02/03 21:25:00  pwagner
 ! Finally ended unnecessary debug printing
 !
