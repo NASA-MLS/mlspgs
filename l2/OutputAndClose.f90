@@ -19,7 +19,6 @@ module OutputAndClose ! outputs all data from the Join module to the
   use Hdf, only: DFACC_RDONLY, DFACC_RDWR
   use MLSMessageModule, only: MLSMessage, &
     & MLSMSG_Error, MLSMSG_Info, MLSMSG_Warning
-  use OUTPUT_M, only: blanks, OUTPUT
   use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
 
   implicit none
@@ -66,7 +65,7 @@ contains ! =====     Public Procedures     =============================
     use Expr_M, only: Expr
     use HGrid, only: CREATEHGRIDFROMMLSCFINFO, DEALWITHOBSTRUCTIONS
     use HGridsDatabase, only: HGRID_T, &
-      & ADDHGRIDTODATABASE, destroyHGridDatabase, Dump
+      & ADDHGRIDTODATABASE, Dump
     use INIT_TABLES_MODULE, only: F_ASCII, F_CREATE, F_DONTPACK, F_EXCLUDE, &
       & F_FILE, F_HDFVERSION, F_HGRID, &
       & F_IFANYCRASHEDCHUNKS, F_INPUTFILE, F_INPUTTYPE, &
@@ -78,7 +77,7 @@ contains ! =====     Public Procedures     =============================
       & S_COPY, S_HGrid, S_OUTPUT, S_TIME
     use Intrinsic, only: l_ascii, l_swath, l_hdf, Lit_indices, PHYQ_Dimensionless
     use L2AUXData, only: L2AUXDATA_T, cpL2AUXData
-    use L2GPData, only: AVOIDUNLIMITEDDIMS, L2GPData_T, L2GPNameLen, &
+    use L2GPData, only: AVOIDUNLIMITEDDIMS, L2GPData_T, &
       & MAXSWATHNAMESBUFSIZE, cpL2GPData
     use L2PC_m, only: WRITEONEL2PC, OUTPUTHDF5L2PC
     use L2ParInfo, only: parallel
@@ -89,13 +88,14 @@ contains ! =====     Public Procedures     =============================
       & MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
     use MLSL2Options, only: CATENATESPLITS, CHECKPATHS, &
       & DEFAULT_HDFVERSION_WRITE, &
-      & PENALTY_FOR_NO_METADATA, SKIPDIRECTWRITES, TOOLKIT
+      & PENALTY_FOR_NO_METADATA, SPECIALDUMPFILE, SKIPDIRECTWRITES, TOOLKIT
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
       & MLSPCF_L2GP_START, mlspcf_l2dgg_start, mlspcf_l2dgg_end
-    use MLSStringLists, only: unquote
+    use MLSStringLists, only: switchDetail, unquote
     use MLSStrings, only: trim_safe
     use MoreTree, only: Get_Spec_ID, GET_BOOLEAN
+    use OUTPUT_M, only: blanks, OUTPUT, revertOutput, switchOutput
     use SDPToolkit, only: PGSD_IO_GEN_WSEQFRM
     use Time_M, only: Time_Now
     use TOGGLES, only: GEN, TOGGLE, Switches
@@ -154,8 +154,6 @@ contains ! =====     Public Procedures     =============================
     logical :: PACKED                   ! Do we pack this l2pc?
     character (len=132) :: PhysicalFilename
     integer :: QUANTITIESNODE           ! A tree node
-    character(len=L2GPNameLen), dimension(MAXQUANTITIESPERFILE) :: &
-      &                           QuantityNames  ! From "quantities" field
     integer :: RECLEN                   ! For file stuff
     character (len=MAXSWATHNAMESBUFSIZE) :: rename
     logical :: RepairGeoLocations
@@ -182,7 +180,7 @@ contains ! =====     Public Procedures     =============================
 
     error = 0
 
-    if (index(switches, 'pro') /= 0) then
+    if (switchDetail( switches, 'pro') > -1 ) then
       call output ( '============ Level 2 Products ============', advance='yes' )
       call output ( ' ', advance='yes' )
     end if
@@ -446,6 +444,8 @@ contains ! =====     Public Procedures     =============================
       case (s_HGrid)
         ! call announce_error ( spec_no, &
         !   &  "Error--HGrid not implemented yet")
+        if ( specialDumpFile /= ' ' ) &
+          & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
         newHGrid = CreateHGridFromMLSCFInfo ( name, key, filedatabase, l2gpDatabase, &
           & processingRange, allChunks )
         if ( DEBUG ) print *, 'Before dealing with obstructions'
@@ -469,6 +469,8 @@ contains ! =====     Public Procedures     =============================
         ! print *, 'HGrid added; size now: ', size(hGrids)
         ! print *, 'After dealing with obstructions'
         ! call dump(newHGridp)
+        if ( specialDumpFile /= ' ' ) &
+          & call revertOutput
 
       case ( s_output )
         do field_no = 2, nsons(key)       ! Skip the command name
@@ -564,7 +566,7 @@ contains ! =====     Public Procedures     =============================
             if ( error /= 0 ) then
               call MLSMessage(MLSMSG_Error,ModuleName,&
                 & 'Failed to close l2pc file:'//trim(file_base))
-            else if ( index(switches, 'pro') /= 0) then
+            else if ( switchDetail(switches, 'pro') > -1 ) then
               call announce_success(file_base, 'l2pc', 0)
             end if
           else
@@ -645,7 +647,7 @@ contains ! =====     Public Procedures     =============================
 
     call deallocate_test ( l2pcf%anText, 'anText of PCF file', moduleName )
 
-    if (index(switches, 'pro') /= 0) then
+    if ( switchDetail(switches, 'pro') > -1 ) then
       call output ( '============ End Level 2 Products ============', advance='yes' )
       call output ( ' ', advance='yes' )
     end if
@@ -690,6 +692,7 @@ contains ! =====     Public Procedures     =============================
       & Mlspcf_mcf_l2dgm_start, Mlspcf_mcf_l2dgg_start, &
       & Mlspcf_mcf_l2gp_start
     use MLSStringLists, only: List2Array, NumStringElements
+    use OUTPUT_M, only: OUTPUT
     use WriteMetadata, only: Populate_metadata_std, &
       & Populate_metadata_oth, Get_l2gp_mcf
   ! Deal with metadata--1st for direct write, but later for all cases
@@ -863,6 +866,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------------  announce_success  -----
   subroutine announce_success ( Name, l2_type, num_quants, quantities, hdfVersion )
+    use OUTPUT_M, only: blanks, OUTPUT
     integer, intent(in) :: num_quants 
     character(LEN=*), intent(in)   :: Name
     character(LEN=*), intent(in)   :: l2_type
@@ -900,6 +904,7 @@ contains ! =====     Public Procedures     =============================
   subroutine ANNOUNCE_ERROR ( Where, Full_message, Code, Penalty )
 
     use LEXER_CORE, only: PRINT_SOURCE
+    use OUTPUT_M, only: OUTPUT
     use TREE, only: SOURCE_REF
 
     integer, intent(in) :: Where   ! Tree node where error was noticed
@@ -943,6 +948,7 @@ contains ! =====     Public Procedures     =============================
     use MLSFiles, only: AddInitializeMLSFile, GetMLSFileByName, &
       & GetPCFromRef, split_path_name
     use MLSPCF2, only: mlspcf_l2dgm_start, mlspcf_l2dgm_end
+    use MLSStringLists, only: switchDetail
     use SDPToolkit, only: PGS_S_SUCCESS
     use TOGGLES, only: Switches
     use TREE, only: DECORATION, NSONS, SUBTREE
@@ -1036,7 +1042,7 @@ contains ! =====     Public Procedures     =============================
         end select
       end do ! field_no = 2, nsons(key)
 
-      if (index(switches, 'pro') /= 0) then
+      if ( switchDetail(switches, 'pro') > -1 ) then
         call announce_success(FullFilename, 'l2aux', &
           & numquantitiesperfile, quantityNames, hdfVersion=hdfVersion)
       end if
@@ -1066,6 +1072,7 @@ contains ! =====     Public Procedures     =============================
     use MLSL2Options, only: checkPaths, TOOLKIT
     use MLSFiles, only: AddInitializeMLSFile, GetMLSFileByName, &
       & GetPCFromRef, split_path_name
+    use MLSStringLists, only: switchDetail
     use SDPToolkit, only: PGS_S_SUCCESS
     use TOGGLES, only: Switches
     use TREE, only: DECORATION, NSONS, SUBTREE
@@ -1158,7 +1165,7 @@ contains ! =====     Public Procedures     =============================
         end select
       end do ! field_no = 2, nsons(key)
 
-      if (index(switches, 'pro') /= 0) then
+      if ( switchDetail(switches, 'pro') > -1 ) then
         call announce_success(FullFilename, trim(outputTypeStr), &
           & numquantitiesperfile, quantityNames, hdfVersion=hdfVersion)
       end if
@@ -1268,8 +1275,9 @@ contains ! =====     Public Procedures     =============================
     use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, &
       & mlspcf_l2dgg_start, mlspcf_l2dgg_end
     use MLSSets, only: FindFirst, FindNext
-    use MLSStringLists, only: Array2List
+    use MLSStringLists, only: Array2List, switchDetail
     use MLSStrings, only: trim_safe
+    use OUTPUT_M, only: blanks, OUTPUT
     use readAPriori, only: writeAPrioriAttributes
     use TOGGLES, only: Switches
     ! Arguments
@@ -1454,7 +1462,7 @@ contains ! =====     Public Procedures     =============================
       
       ! Now we can write any last-minute attributes or datasets to the l2aux
       ! E.g., parallel stuff
-      if ( (parallel%master .or. index(switches, 'chu') /= 0) &
+      if ( (parallel%master .or. switchDetail(switches, 'chu') > -1 ) &
         & .and. .not. (checkPaths .or. SKIPDIRECTWRITES) .and. &
         & madeFile .and. l2auxPhysicalFilename /= ' ' ) then
         sdfId = mls_sfstart(l2auxPhysicalFilename, DFACC_RDWR, &
@@ -1496,6 +1504,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.119  2006/02/21 19:13:33  pwagner
+! Some tweaks to where, when to dump
+!
 ! Revision 2.118  2005/12/21 18:46:29  pwagner
 ! Fixed bug that clobbered split dgm files while copying them
 !
