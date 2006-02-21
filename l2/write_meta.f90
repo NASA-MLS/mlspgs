@@ -26,7 +26,7 @@ module WriteMetadata ! Populate metadata and write it out
   use MLSPCF2, only: Mlspcf_mcf_l2gp_end, Mlspcf_mcf_l2gp_start, &
     & Mlspcf_mcf_l2log_start
   use MLSStrings, only: LowerCase
-  use MLSStringLists, only: GetStringHashElement, ExtractSubString
+  use MLSStringLists, only: GetHashElement, ExtractSubString
   use Output_m, only: Output, blanks
   use PCFHdr, only: INPUTPTR_STRING_LENGTH, &
     & InputInputPointer, WriteInputPointer, WritePCF2Hdr, &
@@ -1087,7 +1087,7 @@ contains
 
         ! get mcfspecies name from associative array
         ! if the species name not found in spec_keys, it will return ','
-        call GetStringHashElement ( l2pcf%spec_keys, l2pcf%spec_hash, &
+        call GetHashElement ( l2pcf%spec_keys, l2pcf%spec_hash, &
           & trim(sd_name), sd_full, .TRUE. )
 
         if ( DEBUG ) then
@@ -1369,6 +1369,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.60  2006/02/21 19:12:00  pwagner
+! GetHashElement is now a generic
+!
 ! Revision 2.59  2005/07/21 23:45:03  pwagner
 ! Removed unused l1b fileinfo fields from l2pcf
 !
