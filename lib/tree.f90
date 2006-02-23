@@ -250,12 +250,12 @@ contains
     do i = 1, indent; call output ( '.' ); end do
     select case ( the_tree(where) % kind )
     case ( empty )
-      call output ( 'empty', advance )
+      call output ( 'empty' )
     case ( more )
       call output ( 'more, nsons = ' )
       call output ( the_tree(where) % nsons )
       call output ( ', next = ' )
-      call output ( the_tree(where) % link, advance=advance )
+      call output ( the_tree(where) % link )
     case ( pseudo, internal )
       if ( the_tree(where) % kind == pseudo ) then
         call display_string ( tree_texts(the_tree(where) % node) )
@@ -268,8 +268,12 @@ contains
         call output ( ' decor=' )
         call output ( the_tree(where) % decor )
       end if
-      call output ( '', advance )
     end select
+    if ( the_tree(where)%source /= 0 ) then
+      call output ( the_tree(where)%source/256, before=' line ' )
+      call output ( mod(the_tree(where)%source,256), before=' column ' )
+    end if
+    call output ( '', advance )
     return
   end subroutine DUMP_TREE_NODE
 
@@ -629,6 +633,9 @@ contains
 end module TREE
 
 ! $Log$
+! Revision 2.9  2006/02/23 00:56:43  vsnyder
+! Add source line and column to tree node dump
+!
 ! Revision 2.8  2005/06/22 17:25:51  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
