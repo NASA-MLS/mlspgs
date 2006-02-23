@@ -102,22 +102,23 @@
 # "$Id$"
 
 #
-#----------------------- UserPrompt -----------------------
+#----------------------- Exclude -----------------------
 
-# Function to prompt for user response
+# Function to temporarily hide a file to excclude it from calculations
 #
 
-UserPrompt()
+Exclude()
 {
-    if [ "$AUTO_REPLY" = 1 ] ; then
-      user_response='y'
-    elif [ "$BRAND" = "linux" ] ; then
-	/bin/echo -n "$* " > /dev/tty
-    read user_response
-    else
-	echo "$* \\c" > /dev/tty
-    read user_response
-    fi
+	if [ -f "$1" ]
+   then
+	   if [ "$f90suffix" != "$dsuffix" ]
+      then
+	      mv "$1" "$dsuffix"
+	   else
+	      echo "$1 wrongly added to dependency lists"
+                        wrong_list="$wrong_list $1"
+	   fi
+   fi
 }
 
 #---------------------------- get_unique_name
@@ -226,6 +227,10 @@ PRINT_TOO_MUCH=0
 #          ^^^----- this is the suffix stuck onto any excluded files
 #                   or else the name of a temp directory hiding them
 dsuffix=".`get_unique_name m`"
+#
+EXCLUDE_TEMPFILES=1
+#                 ^  -- set this to 1 to exclude files matching ~*
+#
 # Do we have write permission in the current working directory
 if [ -w "`pwd`" ]
 then
@@ -301,6 +306,11 @@ while [ "$more_opts" = "yes" ] ; do
        ;;
 #                  Rename or hide excluded files so they !~= %.f90
     -d )
+	    var=`Exclude $2`
+       shift
+	    shift
+       ;;
+    -dddd )
 	    if [ -f "$2" ]
        then
 	       if [ "$f90suffix" != "$dsuffix" ]
@@ -366,6 +376,11 @@ while [ "$more_opts" = "yes" ] ; do
     esac
 done
 
+if [ "$EXCLUDE_TEMPFILES" = 1 ]
+then
+  var=`Exclude ~*`
+fi
+
 if [ $PRINT_TOO_MUCH = "1" ]                            
 then                                                    
    echo " Summary of options to $me "  
@@ -381,6 +396,7 @@ then
    echo " o_pattern: $o_pattern "  
    echo " ACT_COURTEOUS: $ACT_COURTEOUS "  
    echo " TRY_CLEANUP: $TRY_CLEANUP "  
+   echo " EXCLUDE_TEMPFILES: $EXCLUDE_TEMPFILES "  
    echo " DEPMAKER: $DEPMAKER "  
    echo " dsuffix: $dsuffix "  
 fi                                                      
@@ -523,6 +539,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.27  2005/06/23 22:20:45  pwagner
+# Reworded Copyright statement
+#
 # Revision 1.26  2004/11/03 19:09:33  pwagner
 # perl scripts now get launched via perl rather than as stand-alone executables
 #
