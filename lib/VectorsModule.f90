@@ -1706,14 +1706,16 @@ contains ! =====     Public Procedures     =============================
   end function GetVectorQtyByTemplateIndex
 
   ! -------------------------------  GetVectorQuantityIndexByName  -----
-  integer function GetVectorQuantityIndexByName ( vector, quantityName )
+  integer function GetVectorQuantityIndexByName ( vector, quantityName, NoErr )
 
   ! Given a quantity name's sub-rosa index, this function returns the index
   ! of the quantity within the vector that has that name.
 
     ! Dummy arguments
     type (Vector_T), intent(in) :: Vector
-    integer, intent(in) :: QuantityName ! Quantity name sub-rosa index
+    integer, intent(in) :: QuantityName    ! Quantity name sub-rosa index.
+    logical, intent(in), optional :: NoErr ! No error if present and true.
+                                           ! Return -1 if no such quantity.
 
     ! Local variables
     character(len=127) :: MSG
@@ -1726,6 +1728,10 @@ contains ! =====     Public Procedures     =============================
     return
       end if
     end do
+    if ( present(noErr) ) then
+      GetVectorQuantityIndexByName = -1
+      if ( noErr ) return
+    end if
     call get_string ( quantityName, msg )
     msg(string_length(quantityName)+2:) = 'is not a quantity in vector'
     call get_string ( vector%name, msg(len_trim(msg)+2:) )
@@ -2421,6 +2427,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.119  2006/01/21 00:03:12  livesey
+! Added DumpNiceMaskSummary
+!
 ! Revision 2.118  2005/09/02 20:33:22  vsnyder
 ! Correct error messages in GetVectorQuantityIndexByType
 !
