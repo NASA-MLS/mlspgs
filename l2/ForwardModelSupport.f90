@@ -467,6 +467,7 @@ contains ! =====     Public Procedures     =============================
     info%forceSidebandFraction = .false.
     info%globalConfig = global
     info%incl_cld = .false.
+    info%instrumentModule = 0
     info%i_saturation = l_clear
     info%lockBins = .false.
     info%linearSideband = 0
@@ -590,6 +591,7 @@ contains ! =====     Public Procedures     =============================
         info%noUsedChannels = 0
         allocate ( info%signals (nsons(son)-1), stat = status )
         if ( status /= 0 ) call announceError( AllocateError, root )
+        info%signals%index = -1 ! Indicate error, covered up if successful
         call allocate_test ( info%signalIndices, nsons(son)-1, &
           & 'Info%SignalIndices', moduleName )
         do j = 1, nsons(son)-1
@@ -599,7 +601,7 @@ contains ! =====     Public Procedures     =============================
             & tree_index=gson, sideband=sideband, channels=channels )
           if ( .not. associated(signalInds) ) then ! A parse error occurred
             error = max(error,1)
-            exit
+            cycle
           end if
           ! Later on choose the `right' one from the match
           ! For the moment choose first !????
@@ -1299,6 +1301,9 @@ op:     do j = 2, nsons(PFATrees(s))
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.127  2006/02/23 00:52:09  vsnyder
+! Make sure instrumentModule has a value, report all errors before quitting
+!
 ! Revision 2.126  2006/02/08 21:33:43  vsnyder
 ! Announce warning for duplicate molecules
 !
