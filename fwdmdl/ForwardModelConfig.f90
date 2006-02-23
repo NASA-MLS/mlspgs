@@ -1266,13 +1266,17 @@ contains
     call output ( '  Signals:', advance='yes')
     if ( associated(config%signals) ) then
       do j = 1, size(config%signals)
-        call getNameOfSignal ( config%signals(j), signalName)
-        call output ( '  '//trim(signalName)//' channels Included:' )
-        if ( associated(config%signals(j)%channels) ) then
-          call newLine
-          call dump ( config%signals(j)%channels )
+        if ( config%signals(j)%index < 0 ) then
+          call output ( j, before='unable to parse signal ', advance='yes' )
         else
-          call output ( ' None', advance='yes' )
+          call getNameOfSignal ( config%signals(j), signalName)
+          call output ( '  '//trim(signalName)//' channels Included:' )
+          if ( associated(config%signals(j)%channels) ) then
+            call newLine
+            call dump ( config%signals(j)%channels )
+          else
+            call output ( ' None', advance='yes' )
+          end if
         end if
       end do
     else
@@ -1327,6 +1331,10 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.87  2006/02/08 21:37:36  vsnyder
+! Delay halting on error until all possible error messages are emitted.
+! Add descriptive titles to integration grid and tangent grid dumps.
+!
 ! Revision 2.86  2006/02/08 01:02:01  vsnyder
 ! More stuff for spectroscopy derivatives
 !
