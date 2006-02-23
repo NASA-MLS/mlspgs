@@ -89,7 +89,7 @@ contains
 
     real(rp), pointer :: dBdn(:), dBdT(:), dBdv(:), dBdw(:) ! slices of dBeta_d*_path
     real(rp) :: ES(size(t_path)) ! Used for RHi calculation
-    integer(ip) :: I, N
+    integer(ip) :: I, N, NP
     logical, save :: DumpAll, DumpBeta, DumpStop
     logical, save :: First = .true. ! Fist-time flag
 
@@ -104,23 +104,25 @@ contains
 
     nullify ( dBdn, dBdT, dBdv, dBdw ) ! Disassociated means "Don't compute it"
 
+    np = size(beta_path,1)
+
     do i = 1, size(beta_group)
       if ( beta_group(i)%lbl(sx)%spect_der_ix(lineWidth_tDep) /= 0 .and. associated(dBeta_dn_path) ) then
-        dBdn => dBeta_dn_path(:,beta_group(i)%lbl(sx)%spect_der_ix(lineWidth_tDep))
+        dBdn => dBeta_dn_path(:np,beta_group(i)%lbl(sx)%spect_der_ix(lineWidth_tDep))
         dBdn = 0.0_rp
       end if
       if ( beta_group(i)%lbl(sx)%spect_der_ix(lineCenter) /= 0 .and. associated(dBeta_dv_path) ) then
-        dBdv => dBeta_dv_path(:,beta_group(i)%lbl(sx)%spect_der_ix (lineCenter))
+        dBdv => dBeta_dv_path(:np,beta_group(i)%lbl(sx)%spect_der_ix (lineCenter))
         dBdv = 0.0_rp
       end if
       if ( beta_group(i)%lbl(sx)%spect_der_ix(lineWidth) /= 0 .and. associated(dBeta_dw_path) ) then
-        dBdw => dBeta_dw_path(:,beta_group(i)%lbl(sx)%spect_der_ix(lineWidth))
+        dBdw => dBeta_dw_path(:np,beta_group(i)%lbl(sx)%spect_der_ix(lineWidth))
         dBdw = 0.0_rp
       end if
 
       beta_path(:,i) = 0.0_rp
       if ( associated(dBeta_dt_path) ) then
-        dBdT => dBeta_dt_path(:,i)
+        dBdT => dBeta_dt_path(:np,i)
         dBdT = 0.0_rp
       end if
 
@@ -1156,6 +1158,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.84  2006/02/10 21:50:33  vsnyder
+! Move RHi conversion to correct place, spiff up some dumps
+!
 ! Revision 2.83  2006/02/08 21:38:18  vsnyder
 ! Add relative humidity (RHi) calculation
 !
