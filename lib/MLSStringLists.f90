@@ -18,7 +18,7 @@ module MLSStringLists               ! Module to treat string lists
   use MLSCommon, only: i4, NameLen, BareFNLen
   use MLSSets, only: FindFirst
   use MLSStrings, only: Capitalize, lowerCase, &
-    & ReadIntsFromChars, reverse, streq, writeIntsToChars
+    & ReadIntsFromChars, reverse, SplitNest, streq, writeIntsToChars
 
   implicit none
   private
@@ -45,6 +45,7 @@ module MLSStringLists               ! Module to treat string lists
 
 !     (subroutines and functions)
 ! Array2List         Converts an array of strings to a single string list
+! BooleanValue       Evaluate a boolean formula: e.g. 'p and not {q or r)'
 ! catLists           cats 2 string lists, taking care if either one is blank
 ! ExpandStringRange  Turns '1,2-5,7' into '1,2,3,4,5,7' or ints or logicals
 ! ExtractSubString   Extracts portion of string sandwiched between sub1 and sub2
@@ -73,6 +74,7 @@ module MLSStringLists               ! Module to treat string lists
 ! === (start of api) ===
 ! Array2List (char* inArray(:), char* outList(:), &
 !   & [char inseparator], [int ordering], [char leftRight]) 
+! log BooleanValue ( char* str, char* lkeys, log lvalues[:] )
 ! char* catLists (char* str1, char* str2)
 ! ExpandStringRange (char* str, char* outst)
 ! ExtractSubString (char* str, char* outstr, char* sub1, char* sub2, &
@@ -156,7 +158,7 @@ module MLSStringLists               ! Module to treat string lists
 ! (4) "No such key" is indicated by FALSE for logical values and "," strings
 ! === (end of api) ===
 
-  public :: Array2List, catLists, &
+  public :: Array2List, BooleanValue, catLists, &
    & ExpandStringRange, ExtractSubString, &
    & GetHashElement, GetStringElement, &
    & GetUniqueInts, GetUniqueStrings, GetUniqueList, IsInList, &
@@ -277,6 +279,163 @@ contains
     ENDDO
 
   end subroutine Array2List
+
+  ! ----------------------------------------  BooleanValue  -----
+  function BooleanValue (str, lkeys, lvalues)
+    ! Takes a well-formed formula and returns its value
+    ! given a hash of variables and their values
+    ! E.g., given 'p and not (q or r)' 
+    ! and p=q=TRUE, r=FALSE, returns FALSE
+
+    ! Method:
+    ! Progressively collapse all the '(..)' pairs into their values
+    ! until only primitives remain
+    ! Then evaluate the primitives
+    !
+    ! Limitations:
+    ! Does not check for unmatched parens or other illegal syntax
+    !--------Argument--------!
+    character (len=*), intent(in)     :: str
+    character (len=*), intent(in)     :: lkeys
+    logical, dimension(:), intent(in) :: lvalues
+    logical                           :: BooleanValue
+    ! Internal variables
+    logical, parameter          :: deeBug = .false.
+    integer :: level
+    integer, parameter :: MAXNESTINGS=64 ! Max number of '(..)' pairs
+    character(len=MAXSTRLISTLENGTH) :: collapsedstr
+    character(len=MAXSTRLISTLENGTH) :: part1
+    character(len=MAXSTRLISTLENGTH) :: part2
+    character(len=MAXSTRLISTLENGTH) :: part3
+    logical :: pvalue
+    character(len=8) :: vChar
+    logical, parameter :: countEmpty=.true.
+    ! Executable
+    BooleanValue = .FALSE.
+    if ( str == ' ' ) return
+    if ( min(len_trim(lkeys), size(lvalues)) < 1 ) return
+    ! Collapse every sub-formula nested within parentheses
+    collapsedstr = lowerCase(str)
+    do level =1, MAXNESTINGS ! To prevent endlessly looping if ill-formed
+      if ( index( collapsedstr, '(' ) < 1 ) exit
+      call SplitNest ( collapsedstr, part1, part2, part3 )
+      ! Now evaluate the part2
+      if ( DeeBUG ) then
+        print *, 'part1 ', part1
+        print *, 'part2 ', part2
+        print *, 'part3 ', part3
+      endif
+      if ( part2 == ' ' ) then
+        ! This should never happen with well-formed formulas
+        collapsedstr = part1
+        cycle
+      else
+        pvalue = evaluatePrimitive( trim(part2) )
+        vChar = 'true'
+        if ( .not. pvalue ) vChar = 'false'
+      endif
+      ! And substitute its value for the spaces it occupied
+      if (  part1 == ' ' ) then
+        collapsedstr = trim(vChar) // ' ' // part3
+      elseif ( part3 == ' ' ) then
+        collapsedstr = trim(part1) // ' ' // vChar
+      else
+        collapsedstr = trim(part1) // ' ' // trim(vChar) // &
+          & ' ' // part3
+      endif
+      if ( DeeBUG ) then
+        print *, 'collapsedstr ', collapsedstr
+      endif
+    enddo
+    ! Presumably we have collapsed all the nested '(..)' pairs by now
+    BooleanValue = evaluatePrimitive( trim(collapsedstr) )
+  contains
+    function evaluatePrimitive(primitive) result(value)
+      ! Evaluate an expression composed entirely of
+      ! (0) constants (e.g., 'true')
+      ! (1) primitives (e.g., 'p')
+      ! (2) unary operators ('not')
+      ! (3) binary operators ('or', 'and', 'xor')
+      ! Dummy args
+      character(len=*) :: primitive
+      logical          :: value
+      ! Internal variables
+      logical          :: done
+      integer          :: elem
+      logical          :: hit
+      character(len=3) :: lastOp ! "or", "and", "xor"
+      integer          :: n
+      logical          :: negating
+      logical          :: part
+      character(len=32) :: variable
+      ! Executable
+      value = .true.
+      done = .false.
+      negating = .false.
+      elem = 0
+      lastOp = 'nul' ! 'or'
+      n = NumStringElements( trim(primitive), countEmpty=.false., inseparator=' ' )
+      do
+        ! go through the elements, re-evaluating every time we "hit" a primitive
+        ! Otherwise revising our lastOp or negating status
+        elem = elem + 1
+        call GetStringElement ( trim(primitive), variable, elem, &
+          & countEmpty=.false., inseparator=' ' )
+        select case(trim(variable))
+        case ('t', 'true')
+          part = .true.
+          hit = .true.
+        case ('f', 'false')
+          part = .false.
+          hit = .true.
+        case ('or')
+          lastOp = 'or'
+          hit = .false.
+        case ('xor')
+          lastOp = 'xor'
+          hit = .false.
+        case ('and')
+          lastOp = 'and'
+          hit = .false.
+        case ('not', '~')
+          negating = .true.
+          hit = .false.
+        case default
+          call GetHashElement( lkeys, lvalues, trim(variable), part, &
+            & countEmpty=.true. )
+          hit = .true.
+        end select
+        if ( hit ) then
+          if ( negating ) part = .not. part
+          select case(lastOp)
+          case ('nul')
+              value = part
+          case ('or')
+              value = value .or. part
+          case ('and')
+              value = value .and. part
+          case ('xor')
+              value = ( value .or. part ) .and. &
+                & .not. ( value .and. part )
+          case default
+            ! How could this happen?
+              call MLSMessage( MLSMSG_Error, ModuleName, &
+                & lastOp // ' not a legal binary op in evaluatePrimitive' )
+          end select
+          negating = .false.
+        endif
+        if ( DeeBUG ) then
+          print *, 'variable ', variable
+          print *, 'part ', part
+          print *, 'hit ', hit
+          print *, 'negating ', negating
+          print *, 'value ', value
+        endif
+        done = ( elem >= n )
+        if ( done ) exit
+      enddo
+    end function evaluatePrimitive
+  end function BooleanValue
 
   ! -------------------------------------------------  catLists_int  -----
   function catLists_int (STR1, INT, inseparator) result (OUTSTR)
@@ -2491,7 +2650,7 @@ contains
     !--------Argument--------!
     character(len=*), intent(in) :: str
     character(len=len(str)) :: outstr
-    character(len=*),intent(in), optional :: quotes
+    character(len=*), intent(in), optional :: quotes
     character(len=*), intent(in), optional :: cquotes
     logical, intent(in), optional :: strict
     logical, intent(in), optional :: stripany
@@ -2667,6 +2826,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.20  2006/02/24 01:14:54  pwagner
+! Added BooleanValue to evaluate boolean formulas
+!
 ! Revision 2.19  2006/02/21 19:06:25  pwagner
 ! Made Get, PutHashElement routines generic
 !
