@@ -49,6 +49,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! ReadIntsFromChars  Converts an array of strings to ints using Fortran read
 ! Reverse            Turns 'a string' -> 'gnirts a'
 ! Reverse_trim       (Reverses after trimming its argument)
+! SplitNest          Splits 'part 1 (part 2) part 3' -> 'part 1', 'part 2', 'part 3'
 ! SplitWords         Splits 'first, the, rest, last' -> 'first', 'the, rest', 'last'
 ! streq              Generalized strings "==" (optionally ignoring case,
 !                      leading blanks, and allowing wildcard matches)
@@ -74,6 +75,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 !       & [char commentChar], [char continuationChar])
 ! char* Reverse (char* str)
 ! char* Reverse_trim (char* str)
+! SplitNest ( char *str, char* part1, char* part2, char* part3, [char* parens] )
 ! SplitWords (char *line, char* first, char* rest, [char* last], &
 !       & [log threeWay], [char* delimiter])
 ! log streq (char* str1, char* str2, [char* options])
@@ -132,7 +134,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
    & LinearSearchStringArray, LowerCase, NCopies, &
    & ReadCompleteLineWithoutComments, readIntsFromChars, &
    & Reverse, Reverse_trim, &
-   & SplitWords, streq, strings2Ints, trim_safe, &
+   & SplitNest, SplitWords, streq, strings2Ints, trim_safe, &
    & writeIntsToChars
 
   interface readIntsFromChars
@@ -993,6 +995,70 @@ contains
 
   end function Reverse_trim
 
+  ! ---------------------------------------------  SplitNest  -----
+
+  ! This subroutine splits an input string into 3 parts; it is most
+  ! easily described with the following diagram:
+  ! Given "part 1 (part 2) part 3"
+  ! it returns "part 1" "part 2" "part 3"
+  ! Note the paramount role played by the nesting parentheses
+  ! If given "No parentheses here", part 2 and part 3 will be empty
+  ! If given "(part 2)" part 1 and part 3 will be empty
+  ! The cases where only part 1 or only part 3 would be empty are obvious
+  ! To permit recursive passes, the split is made at the rightmost pair
+  ! of nesting parentheses
+  ! Thus given
+  ! "(((a))) (b (c))"
+  ! it will return "(((a))) (b " "c" and ")"
+  ! The motivation is to recursively parse expressions such as
+  ! "p or not (q and (r or s))"
+  ! by turning this by successive steps of collapsing the nesting parentheses
+  ! "p or not (q and t)"
+  ! "p or not u"
+  ! Since we collapse one nesting level each time, we are assured of
+  ! arriving at an expression without nests in a finite number of steps
+
+  subroutine SplitNest( str, part1, part2, part3, parens )
+    character(len=*), intent(in)           :: str
+    character(len=*), intent(out)          :: part1
+    character(len=*), intent(out)          :: part2
+    character(len=*), intent(out)          :: part3
+    character(len=*), intent(in), optional :: parens
+    ! Local variables
+    character(len=1) :: closeParen ! Usu. right parenthesis
+    integer          :: firstOpen
+    integer          :: matchingClose
+    character(len=1) :: openParen  ! Usu. left parenthesis
+    ! Executable
+    if ( present(parens) ) then
+      openParen  = parens(1:1)
+      closeParen = openParen
+      if ( len_trim(parens) > 1 ) closeParen = parens(2:2)
+    else
+      openParen  = '('
+      closeParen = ')'
+    endif
+    part1 = ' '
+    part2 = ' '
+    part3 = ' '
+    if ( str == ' ' ) return
+    firstOpen = index( str, openParen, back=.true. )
+    if ( firstOpen < 1 ) then
+      part1 = str
+      return
+    endif
+    matchingClose = index( str(firstOpen+1:), closeParen )
+    if ( matchingClose < 1 ) then
+      ! This probably means an ill-formed expression with an unmatched '('
+      part1 = str
+      return
+    endif
+    matchingClose = matchingClose + firstOpen ! Referenced back to original
+    if ( firstOpen > 1 ) part1 = str(1:firstOpen-1)
+    if ( matchingClose < len_trim(str) ) part3 = str(matchingClose+1:)
+    part2 = str(firstOpen+1:matchingClose-1)
+  end subroutine SplitNest
+
   ! -------------------------------------------------  SplitWords  -----
 
   ! This subroutine is based on my IDL one of the same name.
@@ -1509,6 +1575,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.61  2006/02/24 01:14:02  pwagner
+! Added SplitNest (is this the best name)
+!
 ! Revision 2.60  2006/02/16 00:58:12  pwagner
 ! ignore arg to ReadIntsFromChars may include * plus others
 !
