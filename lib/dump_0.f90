@@ -18,7 +18,7 @@ module DUMP_0
 
   use ieee_arithmetic, only: ieee_is_finite
   use MLSCommon, only: DEFAULTUNDEFINEDVALUE
-  use MLSFillValues, only : FilterValues, IsFinite
+  use MLSFillValues, only : FilterValues, IsFinite, ReplaceFillValues
   use MLSSets, only: FindAll
   use MLSStats1, only: ALLSTATS
   use MLSStringLists, only: GetStringElement, NumStringElements
@@ -110,7 +110,6 @@ module DUMP_0
   logical, parameter ::   DEEBUG = .false.
   logical :: myStats, myRMS, myWholeArray
   integer :: numNonFill, numFill
-  real :: pctNonFill, pctFill
 
   character(*), parameter :: MyFormatDefault = '(1pg14.6)'
   character(*), parameter :: MyFormatDefaultCmplx = &
@@ -118,7 +117,18 @@ module DUMP_0
 
 contains
 
- ! ---------------------------------------------  DIFF_1D_DOUBLE  -----
+ ! ---------------------------------------------  DIFF  -----
+ ! This family of routines dumps the differences between two arrays
+ ! with the same shape and numeric type
+ ! Its behavior is modified by the following optional parameters
+ ! FillValue   Ignore these values when computing min, max
+ ! Clean       Clean up after any prior dumps
+ ! Width       Row size when dumping wholearrays
+ ! Format      Output format when printing wholearray
+ ! Wholearray  Whether to print whole array of differences
+ ! Stats       Dump number of differences found, %
+ ! RMS         Dump min, max, rms
+ ! LBound      Lower bound when printing wholearray indices
   subroutine DIFF_1D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
     & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
     double precision, intent(in) :: ARRAY1(:)
@@ -140,7 +150,6 @@ contains
     include "diff.f9h"
   end subroutine DIFF_1D_DOUBLE
 
- ! ---------------------------------------------  DIFF_1D_INTEGER  -----
   subroutine DIFF_1D_INTEGER ( IARRAY1, NAME1, IARRAY2, NAME2, &
     & IFILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
     integer, intent(in) :: IARRAY1(:)
@@ -172,7 +181,6 @@ contains
       & WHOLEARRAY=WHOLEARRAY, STATS=STATS, RMS=RMS, LBOUND=LBOUND )
   end subroutine DIFF_1D_INTEGER
 
- ! ---------------------------------------------  DIFF_1D_REAL  -----
   subroutine DIFF_1D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
     & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
     real, intent(in) :: ARRAY1(:)
@@ -194,7 +202,6 @@ contains
     include "diff.f9h"
   end subroutine DIFF_1D_REAL
 
-  ! ---------------------------------------------  DIFF_2D_DOUBLE  -----
   subroutine DIFF_2D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
       & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
     double precision, intent(in) :: ARRAY1(:,:)
@@ -216,7 +223,6 @@ contains
     include "diff.f9h"
   end subroutine DIFF_2D_DOUBLE
 
-  ! ---------------------------------------------  DIFF_2D_REAL  -----
   subroutine DIFF_2D_REAL ( ARRAY1, NAME1, ARRAY2, Name2, &
       & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
     real, intent(in) :: ARRAY1(:,:)
@@ -238,7 +244,6 @@ contains
     include "diff.f9h"
   end subroutine DIFF_2D_REAL
 
-  ! ---------------------------------------------  DIFF_3D_DOUBLE  -----
   subroutine DIFF_3D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
     & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
     double precision, intent(in) :: ARRAY1(:,:,:)
@@ -260,7 +265,6 @@ contains
     include "diff.f9h"
   end subroutine DIFF_3D_DOUBLE
 
-  ! ---------------------------------------------  DIFF_3D_REAL  -----
   subroutine DIFF_3D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
     & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
     real, intent(in) :: ARRAY1(:,:,:)
@@ -1699,6 +1703,30 @@ contains
 
   end subroutine Name_And_Size
 
+  ! ----------------------------------------------  printPercentages  -----
+  ! Prints a nicely-formatted summary of equal, unequal, etc.
+  ! using output
+  subroutine printPercentages ( name, equal, unequal  )
+    character(len=*), intent(in) :: Name
+    integer, intent(in) :: equal
+    integer, intent(in) :: unequal
+    if ( equal+unequal < 1 ) return
+      call output ( trim(name), advance='no' )
+      call output ( ' =, != (%) ', advance='no' )
+      call output ( equal, advance='no' )
+      call output ( ': ', advance='no' )
+      call output ( unequal, advance='no' )
+      if ( .not. STATSONONELINE ) then
+        call newline
+        call blanks(10)
+      endif
+      call output ( '( ', advance='no' )
+      call output ( 100*equal/(equal+unequal+0.), advance='no' )
+      call output ( ': ', advance='no' )
+      call output ( 100*unequal/(equal+unequal+0.), advance='no' )
+      call output ( ' )', advance='yes' )
+  end subroutine printPercentages
+
   ! ----------------------------------------------  printRMSetc  -----
   ! This family of routines prints a nicely-formatted list of min, max, etc.
   ! using output
@@ -1898,6 +1926,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.53  2006/02/28 21:42:29  pwagner
+! Replace fillvalues with 0 before computing rms (should actually remove)
+!
 ! Revision 2.52  2006/01/27 01:01:37  pwagner
 ! Can now dump hashes
 !
