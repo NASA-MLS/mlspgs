@@ -49,9 +49,8 @@ MODULE OpenInit
   !                OpenAndInitialize
   !                AvgOrbPeriod
   
-  ! Remarks:  This is a prototype module for the routines needed for the 
-  ! L3 Daily
-  ! Open/Init task.
+  ! Description:  This module contains the routines needed for the 
+  ! L3 Daily Open/Init task.
   
   ! Parameters
   
@@ -157,7 +156,7 @@ CONTAINS
 
     ! Store appropriate user input as global attributes
     GlobalAttributes%ProcessLevel = '3-daily'
-    ! GlobalAttributes%InputVersion = l3pcf%outputVersion
+    !GlobalAttributes%InputVersion = l3pcf%outputVersion
     GlobalAttributes%StartUTC = l3pcf%l3StartDay // &
       & 'T00:00:00.000000Z'
     GlobalAttributes%EndUTC = l3pcf%l3EndDay // &
@@ -335,7 +334,9 @@ CONTAINS
     ! Get L2GP Attributes
 
     CALL ReadL2GPAttribute (l3pcf%l3StartDay, l3pcf%l3EndDay, &
-	& l3cf(1)%fileTemplate)
+	& l3cf(1)%fileTemplate, numDays)
+
+!    l3cf(1)%nDays = numDays  !override the correct valid days 
 
 ! If the average orbit period is either not in the cf file or is a number <=
 !     Then calculate the average orbit period for each day in the input window.
@@ -362,9 +363,7 @@ CONTAINS
              avgPer(i) = cfDef%averageOrbitalPeriod
           END IF
        END DO
-
     ELSE
-       print *, 'in else'
        call AvgOrbPeriod(l3pcf%l2StartDay, l3pcf%l2EndDay, avgPer)
     END IF
 
@@ -515,6 +514,9 @@ END MODULE OpenInit
 !==================
 
 ! $Log$
+! Revision 1.19  2005/09/22 23:40:49  pwagner
+! date conversion procedures and functions all moved into dates module
+!
 ! Revision 1.18  2005/07/12 17:18:32  pwagner
 ! Dropped global attribute InputVersion
 !

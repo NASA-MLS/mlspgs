@@ -26,8 +26,7 @@ Module global_data
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
-  ! Remarks:  This is a prototype module which defines quantities used in the
-  !           Core processing.
+  ! Description:  This module defines quantities used in the Core processing.
   
   ! Parameters
 
@@ -69,6 +68,9 @@ End Module global_data
 !=====================
 
 ! $Log$
+! Revision 1.6  2005/06/23 19:07:38  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 1.5  2004/05/19 18:08:16  cvuu
 ! Add parameters DPrec and APrec
 !

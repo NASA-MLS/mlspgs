@@ -37,7 +37,7 @@ Module NumRecipesModule
 !                DataGenerate1
 ! Function -- DataField
 
-! Remarks:  This is a prototype module for the main Core processing.
+! Remarks:  This is a module for the main Core processing.
 
 ! Parameters
 
@@ -122,6 +122,9 @@ End Module NumRecipesModule
 !===================
 
 ! $Log$
+! Revision 1.4  2005/06/23 19:07:39  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 1.3  2003/04/06 19:32:34  jdone
 ! minor header editing
 !

@@ -1,14 +1,6 @@
 
-! Copyright 2005, by the California Institute of Technology. ALL
-! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
-! commercial use must be negotiated with the Office of Technology Transfer
-! at the California Institute of Technology.
-
-! This software may be subject to U.S. export control laws. By accepting this
-! software, the user agrees to comply with all applicable U.S. export laws and
-! regulations. User has the responsibility to obtain export licenses, or other
-! export authority as may be required before exporting such information to
-! foreign countries or providing access to foreign persons.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !==============================================================================
 Module DailyMapModule
@@ -26,12 +18,14 @@ Module DailyMapModule
     & FFSM_Opt, FFSM, FFSMA, FFSMD, Reconstruct, Diagnostics, DataGenerate, &
     & DataGeneratePrec, CopyPrec2Data
   
+  PRIVATE :: ID, ModuleName
 
-!---------------------------- RCS Module Info ------------------------------
-  character (len=*), private, parameter :: ModuleName= &
-       "$RCSfile$"
-  private :: not_used_here 
-!---------------------------------------------------------------------------
+  !------------------- RCS Ident Info -----------------------
+  CHARACTER(LEN=130) :: Id = &
+       
+       "$Id$"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile$"
+  !----------------------------------------------------------
 
   ! Contents:
 
@@ -47,7 +41,7 @@ Module DailyMapModule
   !                CopyPrec2Data
   ! Function -- 
   
-  ! Remarks:  This is a prototype module for the main Core processing.
+  ! Remarks:  This is a module for the main Core processing.
 
   ! Parameters
 
@@ -126,7 +120,7 @@ Contains
     endif
     !! jpd
     dtad = delTad_i 
-    
+
     if(lonD0_i < 0) then
        lonD0_i_temp = 2.0*PI+lonD0_i
     else 
@@ -160,6 +154,9 @@ Contains
     lonA0   = lonA0_i
     tA0     = tA0_i
     
+    !open(1, file="para.dat", status="new")
+    !write(1,*) nt, tA0, tD0, lonD0, lonA0, dlonad, dtad, ds,  tau0
+
     !	  if(mode == 'com') then
     Allocate(lonD(nt), STAT=err)
     IF ( err /= 0 ) THEN
@@ -305,11 +302,11 @@ Contains
     
     INTEGER :: err
 
-    DeAllocate(lonD, STAT=err)
-    IF ( err /= 0 ) THEN
+      DeAllocate(lonD, STAT=err)
+      IF ( err /= 0 ) THEN
        msr = MLSMSG_Deallocate // ' lonD array.'
        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-    ENDIF
+      ENDIF
 
     DeAllocate(tD, STAT=err)
     IF ( err /= 0 ) THEN
@@ -1381,6 +1378,16 @@ Contains
 	 Do i = 1, nt
             Dscend(nt+1-i) = dField(i) 
             Ascend(nt+1-i) = aField(i) 
+            if(dField(i) < 0.0) then
+              !Dscend(nt+1-i) = 0.0
+            end if
+            if(aField(i) < 0.0) then
+              !Ascend(nt+1-i) = 0.0
+            end if
+         End Do
+
+	 Do i = 1, nt
+           !write(*,*) i, Dscend(nt+1-i), Ascend(nt+1-i) 
          End Do
 
   End Subroutine DataGenerate
@@ -1412,14 +1419,6 @@ Contains
   End Subroutine CopyPrec2Data
        
 !===================
-  logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
-       "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
-    not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
 End Module DailyMapModule
 !===================
 

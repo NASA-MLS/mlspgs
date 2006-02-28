@@ -481,7 +481,7 @@ CONTAINS
 ! If match was found, this is an error condition
 
       IF (match == -1) THEN
-         msr = 'No PCF entry of the form ' // TRIM(type) // ' for day ' // date
+         msr = 'SearchPCFDates: No PCF entry of the form ' // TRIM(type) // ' for day ' // date
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
@@ -502,6 +502,9 @@ END MODULE PCFModule
 !===================
 
 ! $Log$
+! Revision 1.16  2005/06/23 19:07:39  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 1.15  2004/05/04 15:33:15  cvuu
 ! v1.4.3: Use int array for Date in Data Field
 !

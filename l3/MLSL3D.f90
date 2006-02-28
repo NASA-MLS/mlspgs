@@ -88,7 +88,7 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
   endif
  
   ! Fill structures with input data from the PCF and L3CF.
-  
+
   CALL OpenAndInitialize(pcf, cf, cfProd, cfDef, anText, avgPer)
  
   ! Determine the necessary version for HDF output
@@ -104,14 +104,14 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
   endif
   
   ! For each product in the DailyMap section of the cf,
-  
+ 
   DO i = 1, SIZE(cfProd)
    
      ! Read all the l2gp data which exist in the input window for that product
 
      CALL ReadL2GPProd(cfProd(i)%l3prodNameD, cfProd(i)%fileTemplate, &
           & pcf%l2StartDay, pcf%l2EndDay, l2Days, mis_l2Days, mis_Days, l2gp)
-     
+    
      ! If no data , go on to the next product
 
      IF (l2Days < cfDef%minDays ) THEN
@@ -175,6 +175,9 @@ END PROGRAM MLSL3D
 !=================
 
 ! $Log$
+! Revision 1.19  2005/06/23 19:07:39  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 1.18  2004/05/12 21:49:25  pwagner
 ! Uses mls_h5open/close
 !

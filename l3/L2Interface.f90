@@ -14,7 +14,8 @@ MODULE L2Interface
 !==============================================================================
 
   USE intrinsic, ONLY: l_swath
-  USE L2GPData, ONLY: L2GPData_T, ReadL2GPData, WriteL2GPData, SetupNewL2GPRecord
+  USE L2GPData, ONLY: L2GPData_T, ReadL2GPData, WriteL2GPData, SetupNewL2GPRecord, &
+       & DestroyL2GPContents
   USE MLSCommon, ONLY: r8
   USE MLSFiles, ONLY: mls_openFile, mls_closeFile, & 
        & mls_hdf_version, mls_inqswath, mls_io_gen_openF, mls_io_gen_closeF
@@ -95,12 +96,11 @@ CONTAINS
     CHARACTER (LEN=FileNameLen) :: physicalFilename, type
     CHARACTER (LEN=8) :: date
     CHARACTER (LEN=7) :: dateChar
-    CHARACTER (LEN=3) :: startChar, endChar
+    CHARACTER (LEN=3) :: startChar, endChar, dayChar
     
     INTEGER :: i, indx, returnStatus, version, size, err
-    INTEGER :: startInt, endInt, dateInt
+    INTEGER :: startInt, endInt, dateInt, dayInt
     LOGICAL, parameter :: DEBUG = .false. 
- 
   
     ! Expand the level/species template
     
@@ -113,7 +113,8 @@ CONTAINS
 
     numFiles = 0
     mis_numFiles = 0
-    
+    mis_Days = 0
+ 
     ! Loop through all the PCF numbers for L2GP files
    
     DO i = mlspcf_start, mlspcf_end
@@ -149,13 +150,13 @@ CONTAINS
 		   IF (numFiles <= (endInt - startInt)) then 
                
                    ! Save the name in an array of files for the species
-                
-                    mis_numFiles = mis_numFiles + 1
+                       mis_numFiles = mis_numFiles + 1
                 
 		   ! convert from char to int. There was problem using charstring 
 		   ! with tk 5.2.10 (hdfeos5.1.6.2) 3/2004                         
-	              dateChar = date(1:4) // date(6:8)
+	              dateChar = date(1:4) // date(6:8) 
                       read (dateChar, '(i7)') dateInt
+		      dateInt = dateInt + 1
                       mis_Days(mis_numFiles) = dateInt
 		   ENDIF
                 
@@ -180,8 +181,6 @@ CONTAINS
 	  if (DEBUG) then
              call output('date=', advance='no')
 	     call output( date, advance='yes')
-             print *, startDOY 
-             print *, endDOY 
 	  end if
 
           IF ( (date .GE. startDOY) .AND. (date .LE. endDOY) ) THEN
@@ -207,7 +206,7 @@ CONTAINS
   !-------------------------------
   
   !--------------------------------------------------------
-  SUBROUTINE ReadL2GPAttribute(l3StartDay, l3EndDay, tempfile, L3MFlag)
+  SUBROUTINE ReadL2GPAttribute(l3StartDay, l3EndDay, tempfile, nDays, L3MFlag)
   !--------------------------------------------------------
     
     ! Brief description of subroutine
@@ -222,68 +221,118 @@ CONTAINS
     ! Arguments
 
     CHARACTER (LEN=*), INTENT(IN) :: l3StartDay, l3EndDay, tempfile
+    Integer, intent(out) :: nDays
     Integer, intent(in), optional :: L3MFlag
     
     ! Local variables
 
     CHARACTER (LEN=FileNameLen) :: pcfNames(40)
     !CHARACTER (LEN=DATE_LEN) :: mis_Days(maxMisDays)
-    INTEGER :: mis_Days(maxMisDays)
+    INTEGER :: mis_Days(maxMisDays), misDInt
     INTEGER :: numDays, mis_numDay, the_hdfVersion, file_id
-    INTEGER :: record_length, i, status, aID, mis_numDays
-    INTEGER :: Flag = 0, size, err=0
+    INTEGER :: record_length, i, status, aID, mis_numDays, n=1 
+    INTEGER :: Flag = 0, size, err=0, indx, j, k, l3DayInt, m=1
     INTEGER, external :: HE5_EHrdglatt
-    character  (len=20) :: name
+    character (len=20) :: name
+    character (len=3) :: date, misD 
+    character (len=7) :: misDchar 
+    character (LEN=FileNameLen) :: pcfFileNames
 
     call GetL2GPfromPCF(mlspcf_l2gp_start,mlspcf_l2gp_end, tempfile, &
 	& l3StartDay, l3EndDay, numDays, pcfNames, mis_numDays, mis_Days)
 
-    if (present(L3MFlag)) numDays = numDays + 1
+    if (present(L3MFlag)) then
+	numDays = numDays + 1
+    endif
 
     call Allocate_test (GlobalAttributes%OrbNumDays, max_orbits, &
-	& numDays,'GlobalAttributes%OrbNumDays', ModuleName)
+	& numDays+mis_numDays,'GlobalAttributes%OrbNumDays', ModuleName)
     call Allocate_test (GlobalAttributes%OrbPeriodDays, max_orbits, &
-	& numDays,'GlobalAttributes%OrbPeriodDays', ModuleName)
+	& numDays+mis_numDays,'GlobalAttributes%OrbPeriodDays', ModuleName)
 
     DO i = 1, numDays
 
+       m = n
        if (present(L3MFLag) .and. i==numDays ) exit
 
        the_hdfVersion = mls_hdf_version(trim(pcfNames(i)))
+       pcfFileNames = trim(pcfNames(i))
+       indx = INDEX(pcfFileNames, '.', .TRUE.)
+       date = pcfFileNames(indx-3:indx-1)
+       read(date, '(i3)')l3DayInt 
+       l3DayInt = l3DayInt - 1
+       
+       do j = 1, mis_numDays
+	   write(misDchar, '(I7)') mis_Days(j)
+	   misD = misDchar(5:7)
+           read(misD, '(i3)')misDInt 
+	   if (l3DayInt == misDInt) then
+	       do k = 1, 16
+	          GlobalAttributes%OrbNumDays(k,m) = &
+		     & GlobalAttributes%OrbNumDays(15,m-1)+k
+	          GlobalAttributes%OrbPeriodDays(k,m) = 5930.5056 
+	       enddo  
+	       n = n+1
+	       m = m+1
+	    endif
+       enddo
 
-      if (the_hdfVersion == 4) then
-	 GlobalAttributes%OrbNumDays(:,i) = -1
-	 GlobalAttributes%OrbPeriodDays(:,i) = -1.0
-      else 
-         ! file_id = mls_io_gen_openF('swopen', .TRUE., status, &
-         file_id = mls_io_gen_openF(l_swath, .TRUE., status, &
+       ! file_id = mls_io_gen_openF('swopen', .TRUE., status, &
+       file_id = mls_io_gen_openF(l_swath, .TRUE., status, &
             & record_length, DFACC_READ, pcfNames(i), &
             & hdfVersion=the_hdfVersion, debugOption=.false. )
-         if ( status /= 0 ) &
+       if ( status /= 0 ) &
             call MLSMessage ( MLSMSG_Error, ModuleName, &
 		& "Unable to open L2gp file: " &
 		& // trim(pcfNames(i))//' for reading')
             status = HE5_EHrdglatt(file_id, 'OrbitNumber', &
-		& GlobalAttributes%OrbNumDays(:,i))
+		& GlobalAttributes%OrbNumDays(:,m))
+	    n = n+1
       	    if (status /= 0) then 
                call MLSMessage ( MLSMSG_Warning, ModuleName, &
-       	    	  & "Unable to read attribute OrbitNumber for " &
+       	    	  & "Unable to read attribute OrbitNumber, calculate "  &
 		  & //trim(pcfNames(i)))
-	       GlobalAttributes%OrbNumDays(:,i) = -1
+	       do j = 1, 16
+	          GlobalAttributes%OrbNumDays(j,m) = &
+		     & GlobalAttributes%OrbNumDays(15,m-1)+j
+	       enddo  
             end if
 
-!            call output(GlobalAttributes%OrbNumDays(:,i), advance='yes')
+!            call output(GlobalAttributes%OrbNumDays(:,m), advance='yes')
 
             status = HE5_EHrdglatt(file_id, 'OrbitPeriod', & 
-		& GlobalAttributes%OrbPeriodDays(:,i))
+		& GlobalAttributes%OrbPeriodDays(:,m))
             if (status /= 0) then
          	call MLSMessage ( MLSMSG_Warning, ModuleName, &
        	    	   & "Unable to read attribute OrbitPeriod for "&
 		   & //trim(pcfNames(i)))
-	  	GlobalAttributes%OrbPeriodDays(:,i) = -1.0
+	       do j = 1, 16
+	          GlobalAttributes%OrbPeriodDays(j,m) = &
+		     & GlobalAttributes%OrbPeriodDays(15,m-1)
+	       enddo  
+	  !	GlobalAttributes%OrbPeriodDays(:,m) = -1.0
+		
             end if
 
-!            call output(GlobalAttributes%OrbPeriodDays(:,i), advance='yes')
+!            call output(GlobalAttributes%OrbPeriodDays(:,m), advance='yes')
+
+            status = HE5_EHrdglatt(file_id, 'FirstMAF', &
+                & GlobalAttributes%FirstMAFCtr)
+            if (status /= 0) then
+                call MLSMessage ( MLSMSG_Warning, ModuleName, &
+                   & "Unable to read attribute FirstMAF for "&
+                   & //trim(pcfNames(i)))
+            end if
+            call output(GlobalAttributes%FirstMAFCtr, advance='yes')
+                                                                            
+            status = HE5_EHrdglatt(file_id, 'LastMAF', &
+                & GlobalAttributes%LastMAFCtr)
+            if (status /= 0) then
+                call MLSMessage ( MLSMSG_Warning, ModuleName, &
+                   & "Unable to read attribute LastMAF for "&
+                   & //trim(pcfNames(i)))
+            end if
+            call output(GlobalAttributes%LastMAFCtr, advance='yes')
 
             ! status = mls_io_gen_closeF('swclose', file_id, pcfNames(i), & 
             status = mls_io_gen_closeF(l_swath, file_id, pcfNames(i), & 
@@ -291,24 +340,23 @@ CONTAINS
             if ( status /= 0 ) &
            	call MLSMessage ( MLSMSG_Error, ModuleName, &
        	      	   & "Unable to close L2gp file:"//trim(pcfNames(i)))
-	end if
     END DO
 
     if (present(L3MFlag)) then
-       GlobalAttributes%OrbNumDays(:,numDays) = -1
-       GlobalAttributes%OrbNumDays(1:1,numDays) = &
+       GlobalAttributes%OrbNumDays(:,numDays+mis_numDays) = -1
+       GlobalAttributes%OrbNumDays(1:1,numDays+mis_numDays) = &
 	      &	GlobalAttributes%OrbNumDays(1:1,1)
-       GlobalAttributes%OrbNumDays(2:2,numDays) = &
-	      &	maxval(GlobalAttributes%OrbNumDays(:,numDays-1))
-!       call output('OrbNum_last =', advance='no')
-!       call output(GlobalAttributes%OrbNumDays(:,numDays), advance='yes')
-       GlobalAttributes%OrbPeriodDays(:,numDays) = -1.0
-       GlobalAttributes%OrbPeriodDays(1:1,numDays) = &
+       GlobalAttributes%OrbNumDays(2:2,numDays+mis_numDays) = &
+	      &	maxval(GlobalAttributes%OrbNumDays(:,numDays+mis_numDays-1))
+       call output('OrbNum_last =', advance='no')
+       call output(GlobalAttributes%OrbNumDays(:,numDays+mis_numDays), advance='yes')
+       GlobalAttributes%OrbPeriodDays(:,numDays+mis_numDays) = -1.0
+       GlobalAttributes%OrbPeriodDays(1:1,numDays+mis_numDays) = &
 	      &	GlobalAttributes%OrbPeriodDays(1:1,1)
-       GlobalAttributes%OrbPeriodDays(2:2,numDays) = &
-	      &	maxval(GlobalAttributes%OrbPeriodDays(:,numDays-1))
-!       call output('OrbNum_last =', advance='no')
-!       call output(GlobalAttributes%OrbPeriodDays(:,numDays), advance='yes')
+       GlobalAttributes%OrbPeriodDays(2:2,numDays+mis_numDays) = &
+	      &	maxval(GlobalAttributes%OrbPeriodDays(:,numDays+mis_numDays-1))
+       call output('OrbNum_last =', advance='no')
+       call output(GlobalAttributes%OrbPeriodDays(:,numDays+mis_numDays), advance='yes')
     end if
 
   !-------------------------------
@@ -336,7 +384,7 @@ CONTAINS
   !-------------------------
     
   !--------------------------------------------------------------------------
-  SUBROUTINE SetupL2GPProd (numDays, totalIndex, totalTimes, prodL2GP)
+  SUBROUTINE SetupL2GPProd (numDays, totalIndex, l3rtemp, l3Res)
   !--------------------------------------------------------------------------
     ! Brief description of subroutine
     ! This subroutine setup l2gp Records files for a quantity over a range of days.  
@@ -345,9 +393,9 @@ CONTAINS
 
     ! Arguments
       
-    INTEGER, INTENT(IN) :: numDays, totalIndex, totalTimes
+    INTEGER, INTENT(IN) :: numDays, totalIndex
       
-    TYPE( L2GPData_T ), POINTER :: prodL2GP(:)
+    TYPE( L2GPData_T ), POINTER :: l3Res(:), l3rtemp(:)
       
     ! Parameters
             
@@ -365,24 +413,38 @@ CONTAINS
          
        msr = 'No L2GP data found for '
        CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
-       NULLIFY(prodL2GP)
+       NULLIFY(l3Res)
          
        ! If so, open, read, & close the files for this quantity
          
     ELSE
          
-       ALLOCATE( prodL2GP(numDays), STAT=err )
+       ALLOCATE( l3Res(numDays), STAT=err )
        IF ( err /= 0 ) THEN
           msr = MLSMSG_Allocate // ' l2gp array for '
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
        ENDIF
-         
+        
        DO i = 1, numDays
-                        
           ! Read information from the L2GP file
-          CALL SetupNewL2GPRecord(prodL2GP(i), nFreqs=0, nLevels=totalIndex, &
-	     & nTimes=totalTimes, nTimesTotal=totalTimes, Fillin=.false. )
-                        
+          CALL SetupNewL2GPRecord(l3Res(i), nFreqs=0, nLevels=totalIndex, &
+	     & nTimes=l3rtemp(i)%nTimes)
+          l3Res(i)%chunkNumber = l3rtemp(i)%chunkNumber
+          l3Res(i)%solarTime = l3rtemp(i)%solarTime
+          l3Res(i)%solarZenith = l3rtemp(i)%solarZenith
+          l3Res(i)%losAngle = l3rtemp(i)%losAngle
+          l3Res(i)%geodAngle = l3rtemp(i)%geodAngle
+          l3Res(i)%latitude = l3rtemp(i)%latitude
+          l3Res(i)%longitude = l3rtemp(i)%longitude
+          l3Res(i)%time = l3rtemp(i)%time
+          l3Res(i)%quality = l3rtemp(i)%quality
+          l3Res(i)%status = l3rtemp(i)%status
+          l3Res(i)%frequency = l3rtemp(i)%frequency
+          l3Res(i)%nTimes = l3rtemp(i)%nTimes
+          l3Res(i)%nTimesTotal = l3rtemp(i)%nTimesTotal
+          l3Res(i)%nLevels = totalIndex
+          l3Res(i)%nFreqs = 0
+          l3Res(i)%verticalCoordinate = 'Pressures'
        ENDDO
             
     ENDIF
@@ -416,10 +478,10 @@ CONTAINS
     ! Parameters
             
     ! Variables
-      
     CHARACTER (LEN=480) :: msr
     CHARACTER (LEN=FileNameLen) :: pcfNames(40)
-      
+    CHARACTER (LEN=8) :: date
+
     INTEGER :: err, i
     
     mis_Days = 0
@@ -451,10 +513,8 @@ CONTAINS
          
 
        DO i = 1, numDays
-                        
           ! Read information from the L2GP file
           CALL ReadL2GP(pcfNames(i), product, prodL2GP(i) )
-                        
        ENDDO
             
     ENDIF
@@ -486,8 +546,8 @@ CONTAINS
    CHARACTER (LEN=480) :: msr
    CHARACTER (LEN=FileNameLen) :: l3File
    CHARACTER (LEN=8) :: date
-   
-   INTEGER :: i, match, numDays, file_id, hdfVersion, record_length, status 
+   REAL(r8) :: validTime
+   INTEGER :: i, j, match, numDays, file_id, hdfVersion, record_length, status 
 
    ! For each element of the database,
    
@@ -496,8 +556,13 @@ CONTAINS
    DO i = 1, numDays
       
       ! Find the l3dm file for the proper day
-      
-      CALL FindFileDay(type, l3r(i)%time(1), mlspcf_l3dm_start, &
+   
+      DO j = 1, l3r(i)%ntimes
+         validTime = l3r(i)%time(j)
+         IF (validTime /= 0.0) Exit
+      ENDDO
+  
+      CALL FindFileDay(type, validTime, mlspcf_l3dm_start, &
            & mlspcf_l3dm_end, match, l3File, date)
       IF (match == -1) THEN
          msr = 'No ' // TRIM(type) // ' file for day ' // date & 
@@ -517,7 +582,7 @@ CONTAINS
            & record_length, DFACC_RDWR, l3File, &
            & hdfVersion=hdfVersion, debugOption=.false. )
 
-      !call dump (real(l3r(i)%l2gpValue, r8), 'l2gpValue: ')
+      ! call dump (real(l3r(i)%l2gpValue, r8), 'l2gpValue: ')
       call WriteL2GPData(l3r(i), file_id, l3r(i)%name, & 
            & hdfVersion=hdfVersion)
 
@@ -531,7 +596,7 @@ CONTAINS
  !-------------------------------
 
  !-----------------------------------------------------------------------
- SUBROUTINE ReadL2DGData (product, numFiles, files, numDays, prodL2GP)
+ SUBROUTINE ReadL2DGData (product, numFiles, files, numDays, prodL2DG)
    !-----------------------------------------------------------------------
       
    ! Brief description of subroutine
@@ -549,15 +614,17 @@ CONTAINS
    
    INTEGER, INTENT(OUT) :: numDays
       
-   TYPE( L2GPData_T ), POINTER :: prodL2GP(:)
+   TYPE( L2GPData_T ), POINTER :: prodL2DG(:)
 
    ! Functions
-            
+   INTEGER, EXTERNAL :: he5_swattach, he5_swclose, &
+           & he5_swdetach, he5_swopen, he5_swinqswath
+                                                                            
    ! Parameters
    
    ! Variables
       
-   CHARACTER (LEN=6000) :: list
+   CHARACTER (LEN=8000) :: list, templist
    CHARACTER (LEN=480) :: msr
    CHARACTER (LEN=FileNameLen) :: prodFiles(numFiles)
    CHARACTER (LEN=GridNameLen) :: swath
@@ -567,17 +634,17 @@ CONTAINS
    ! Check for the product in the input files
       
    numDays = 0
-   
-   DO i = 1, numFiles
-         
-      ns = mls_inqswath( files(i), list, len, hdfversion=5 )
-
-      IF (ns == -1) THEN
-         msr = 'Failed to read swath list from ' // files(i)
+  
+   ns = he5_swinqswath( trim(files(1)), templist, len)
+                                                                            
+   IF (ns == -1) THEN
+         msr = 'Failed to read swath list from ' // files(1)
          CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
-         CYCLE
-      ENDIF
-         
+         !CYCLE
+   ENDIF
+ 
+   DO i = 1, numFiles
+      list = templist 
       DO j = 1, ns
             
          indx = INDEX(list, ',')
@@ -594,9 +661,7 @@ CONTAINS
             prodFiles(numDays) = files(i)
             EXIT
          ENDIF
-            
       ENDDO
-         
    ENDDO
       
    ! Check that numDays is at least 1, so pointer allocation is possible
@@ -607,13 +672,13 @@ CONTAINS
       
       msr = 'No L2GP data found for ' // product
       CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
-      NULLIFY(prodL2GP)
+      NULLIFY(prodL2DG)
          
       ! If so, open, read, & close the files for this quantity
          
    ELSE
 
-      ALLOCATE( prodL2GP(numDays), STAT=err )
+      ALLOCATE( prodL2DG(numDays), STAT=err )
       IF ( err /= 0 ) THEN
          msr = MLSMSG_Allocate // ' l2gp array for ' // product
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -623,7 +688,7 @@ CONTAINS
          
          ! Read information from the L2GP file
          
-         CALL ReadL2GP( prodFiles(i), product, prodL2GP(i) )
+         CALL ReadL2GP( prodFiles(i), product, prodL2DG(i) )
                         
       ENDDO
          
@@ -646,6 +711,9 @@ END MODULE L2Interface
 !=====================
 
 !# $Log$
+!# Revision 1.18  2005/06/23 19:07:38  pwagner
+!# Reworded Copyright statement, moved rcs id
+!#
 !# Revision 1.17  2005/06/14 20:46:42  pwagner
 !# Changed interface to mls_io_gen functions
 !#

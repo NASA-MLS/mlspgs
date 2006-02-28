@@ -64,8 +64,22 @@ MODULE MLSL3Common
    CHARACTER (LEN=*), PARAMETER :: DIMLL_NAME = 'nLevels,nLats'
    CHARACTER (LEN=*), PARAMETER :: DIMRL_NAME = 'RDim,nLats'
    CHARACTER (LEN=*), PARAMETER :: DIMXYZ_NAME = 'ZDim,YDim,XDim'
-
+   CHARACTER (LEN=*), PARAMETER :: DIMZYX_NAME = 'XDim,YDim,ZDim'
+   CHARACTER (LEN=*), PARAMETER :: PROJ_NAME = 'Projection'
+   CHARACTER (LEN=*), PARAMETER :: NAMEPROJ = 'Simple Cylindrical'
+                                                                            
+   CHARACTER (LEN=*), PARAMETER :: FILEATTR_ERR = 'Failed to write attribute'
    CHARACTER (LEN=*), PARAMETER :: DAT_ERR = 'Failed to define data field '
+   CHARACTER (LEN=*), PARAMETER :: GRID_ORIGIN = 'GridOrigin'
+   CHARACTER (LEN=*), PARAMETER :: GRID_NAME = 'Center'
+   CHARACTER (LEN=*), PARAMETER :: GRID_SPACING = 'GridSpacing'
+   CHARACTER (LEN=*), PARAMETER :: GSPACING_VALUE = '(4,2)'
+   CHARACTER (LEN=*), PARAMETER :: GRID_SPACING_UNIT = 'GridSpacingUnit'
+   CHARACTER (LEN=*), PARAMETER :: GSPACING_UNIT = 'Degree'
+   CHARACTER (LEN=*), PARAMETER :: GRID_SPAN = 'GridSpan'
+   CHARACTER (LEN=*), PARAMETER :: GSPAN_VALUE = '(0,360,-82,+82)'
+   CHARACTER (LEN=*), PARAMETER :: GRID_SPAN_UNIT = 'GridSpanUnit'
+   CHARACTER (LEN=*), PARAMETER :: GSPAN_UNIT = 'Degree'
    CHARACTER (LEN=*), PARAMETER :: DIM_ERR = 'Failed to define dimension '
    CHARACTER (LEN=*), PARAMETER :: GEO_ERR = & 
         & 'Failed to define geolocation field '
@@ -85,6 +99,7 @@ MODULE MLSL3Common
    INTEGER, PARAMETER :: DATE_LEN = 8
    INTEGER, PARAMETER :: GCTP_GEO = 0
    INTEGER, PARAMETER :: HDFE_NOMERGE = 0
+   INTEGER, PARAMETER :: HE5_HDFE_NOMERGE = 0
    INTEGER, PARAMETER :: INVENTORYMETADATA = 2
    INTEGER, PARAMETER :: GridNameLen = 64
    INTEGER, PARAMETER :: maxDgProds = 42
@@ -121,6 +136,9 @@ END MODULE MLSL3Common
 !=====================
 
 !# $Log$
+!# Revision 1.16  2005/06/23 19:07:39  pwagner
+!# Reworded Copyright statement, moved rcs id
+!#
 !# Revision 1.15  2004/01/07 21:43:18  cvuu
 !# version 1.4 commit
 !#

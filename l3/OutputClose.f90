@@ -44,7 +44,7 @@ MODULE OutputClose
 !                OutputProd
 !                OutputAndClose
 
-! Remarks:  This is a prototype module for the routines needed for the L3 Daily
+! Remarks:  This module contains the routines needed for the L3 Daily
 ! Output/Close task.
 
 ! Parameters
@@ -414,6 +414,9 @@ CONTAINS
  !=====================
 
 !$Log$
+!Revision 1.22  2005/06/23 19:07:39  pwagner
+!Reworded Copyright statement, moved rcs id
+!
 !Revision 1.21  2004/05/04 15:33:15  cvuu
 !v1.4.3: Use int array for Date in Data Field
 !
