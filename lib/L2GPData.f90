@@ -16,14 +16,13 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use DUMP_0, only: DIFF, DUMP
   use Hdf, only: DFACC_RDONLY, DFACC_READ, DFACC_CREATE, DFACC_RDWR, &
     & DFNT_FLOAT32, DFNT_INT32, DFNT_FLOAT64
-  use HDFEOS, only: SWINQDIMS
   use Intrinsic ! "units" type literals, beginning with L_
   use MLSCommon, only: I4, R4, R8, DEFAULTUNDEFINEDVALUE, MLSFile_T
   use MLSFiles, only: FILENOTFOUND, &
     & HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, WRONGHDFVERSION, &
     & DUMP, INITIALIZEMLSFILE, MLS_closeFile, MLS_EXISTS, mls_openFile, &
     & MLS_HDF_VERSION, MLS_INQSWATH, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
-  use MLSFillValues, only: ExtractArray, ReplaceFillValues
+  use MLSFillValues, only: ExtractArray, IsFillValue, ReplaceFillValues
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Warning
   use MLSNumerics, only: HuntRange
@@ -42,7 +41,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   public :: L2GPNameLen
   public :: AddL2GPToDatabase, AppendL2GPData, cpL2GPData, &
     & DestroyL2GPContents, DestroyL2GPDatabase, diff, Dump, &
-    & ExpandL2GPDataInPlace, ExtractL2GPRecord, &
+    & ExpandL2GPDataInPlace, ExtractL2GPRecord, isL2GPSetUp, &
     & ReadL2GPData, RepairL2GP, SetupNewL2GPRecord, WriteL2GPData
 
 !---------------------------- RCS Module Info ------------------------------
@@ -116,6 +115,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 !                            to any desired level of detail
 ! ExpandL2GPDataInPlace   Adds more profiles to an existing L2GP
 ! ExtractL2GPRecord       Extract a reduced L2GP from an existing L2GP
+! isL2GPSetUp             Returns TRUE if all L2GP arrays allocated
 ! ReadL2GPData            Reads L2GP from existing swath file
 ! RepairL2GP              Replaces fillValues in one L2GP with either
 !                         (1) corresponding values from another L2GP; or
@@ -373,6 +373,31 @@ contains ! =====     Public Procedures     =============================
     call ExtractArray ( l2gp%l2gpPrecision, ol2gp%l2gpPrecision, myFreqs, myLevels, myTimes )
     call ExtractArray ( l2gp%status       , ol2gp%status       , myTimes )
   end subroutine ExtractL2GPRecord
+
+  !------------------------------------------  IsL2GPSetUp  -----
+  function IsL2GPSetUp ( l2gp ) result( sooDesu )
+
+    ! return TRUE only if all arrays allocated
+
+    ! Dummy arguments
+    type (L2GPData_T), intent(in)  :: l2gp
+    logical :: sooDesu
+    ! Executable
+    sooDesu = .true.
+    sooDesu = sooDesu .and. ( size(l2gp%pressures       )     > 0 )
+    sooDesu = sooDesu .and. ( size(l2gp%frequency       )     > 0 )
+    sooDesu = sooDesu .and. ( size(l2gp%latitude        )     > 0 )
+    sooDesu = sooDesu .and. ( size(l2gp%longitude       )     > 0 )
+    sooDesu = sooDesu .and. ( size(l2gp%solarTime       )     > 0 )
+    sooDesu = sooDesu .and. ( size(l2gp%solarZenith     )     > 0 )
+    sooDesu = sooDesu .and. ( size(l2gp%losAngle        )     > 0 )
+    sooDesu = sooDesu .and. ( size(l2gp%geodAngle       )     > 0 )
+    sooDesu = sooDesu .and. ( size(l2gp%time            )     > 0 )
+    sooDesu = sooDesu .and. ( size(l2gp%chunkNumber     )     > 0 )
+    sooDesu = sooDesu .and. ( size(l2gp%l2gpValue       )     > 0 )
+    sooDesu = sooDesu .and. ( size(l2gp%l2gpPrecision   )     > 0 )
+    sooDesu = sooDesu .and. ( size(l2gp%status          )     > 0 )
+  end function IsL2GPSetUp
 
   !------------------------------------------  SetupNewL2GPRecord  -----
   subroutine SetupNewL2GPRecord ( l2gp, nFreqs, nLevels, nTimes, nTimesTotal, &
@@ -802,6 +827,7 @@ contains ! =====     Public Procedures     =============================
 
   subroutine ReadL2GPData_MF_hdf(L2GPFile, swathname, l2gp, HMOT, &
     & numProfs, firstProf, lastProf, ReadStatus)
+  use HDFEOS, only: SWINQDIMS
   use HDFEOS5, only: HE5_SWINQDIMS, HE5_swfldinfo
   use MLSHDFEOS, only: mls_swattach, mls_swdetach, mls_swdiminfo, mls_swrdfld
     !------------------------------------------------------------------------
@@ -2660,6 +2686,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Local variables
     integer :: chunk
+    ! logical, parameter :: DEEBUG = .true.
     integer :: i
     integer, dimension(2) :: irange
     type (l2gpData_T) ::          L2GP1, L2gp2
@@ -2667,6 +2694,15 @@ contains ! =====     Public Procedures     =============================
     ! Executable
     mySilent = .false.
     if ( present(silent) ) mySilent = silent
+    if ( DEEBUG ) then
+      call output( 'mySilent: ', advance='no' )
+      call output( mySilent, advance='yes' )
+      call output( 'size(chunks): ', advance='no' )
+      call output( size(chunks), advance='yes' )
+      call output( chunks, advance='yes' )
+      call output( 'fullL2gp1%chunkNumber: ', advance='no' )
+      call output( fullL2gp1%chunkNumber, advance='yes' )
+    endif
     do i=1, size(Chunks)
       chunk = Chunks(i)
       call HuntRange( fullL2gp1%chunkNumber, (/ chunk, chunk /), irange )
@@ -2689,9 +2725,6 @@ contains ! =====     Public Procedures     =============================
   subroutine DiffL2GPData ( L2gp1, L2gp2, &
     & Details, wholeArray, stats, rms, ignoreBadChunks, fields, silent, numDiffs )
     ! Show diff between l2gp1 and l2gp2 down to level of Details
-    ! Assumes fields of each already allocated
-    ! (If not, then why are you trying to show differences?)
-    ! (Couldn't you at least print warning and return if not?)
     
     ! Note:
     ! by default, print arrays of diffs, but not stats nor rms
@@ -2724,13 +2757,24 @@ contains ! =====     Public Procedures     =============================
       & 'pressures, latitude, longitude, solarTime, solarZenith,' // &
       & 'losAngle, geodAngle, time, chunkNumber, frequency,'  // &
       & 'l2gpvalue, l2gpPrecision, status, quality'
+    ! logical, parameter :: DEEBUG = .true.
     integer :: instance
+    type (l2gpData_T) ::          L2GP2Temp
     integer :: MYDETAILS
     character(len=len(DEFAULTFIELDS)) :: myFields
     integer :: myNumDiffs
     logical :: mySilent
     logical :: ShapesDontMatch
     ! Executable code
+    if ( .not. isL2GPSetUp(l2gp1) ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, & 
+        'l2gp1 not yet allocated in diff')
+      return
+    elseif ( .not. isL2GPSetUp(l2gp2) ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, & 
+        'l2gp2 not yet allocated in diff')
+      return
+    endif
     myDetails = 1
     if ( present(details) ) myDetails = details
     mySilent = .false.
@@ -2744,6 +2788,14 @@ contains ! =====     Public Procedures     =============================
     badInstances = 0
     myFields = DEFAULTFIELDS
     if ( present(fields) ) myFields = fields
+    if ( DEEBUG ) then
+      call output( 'myDetails: ', advance='no' )
+      call output( myDetails, advance='yes' )
+      call output( 'mySilent: ', advance='no' )
+      call output( mySilent, advance='yes' )
+      call output( 'myFields: ', advance='no' )
+      call output( myFields, advance='yes' )
+    endif
     if ( myFields == '*' .or. lowercase(myFields) == 'all' ) &
       & myFields = DEFAULTFIELDS
       if ( trim(l2gp1%name) /= trim(l2gp2%name) ) then
@@ -2875,6 +2927,12 @@ contains ! =====     Public Procedures     =============================
         endif
       endif
       
+      badChunks = badChunks .or. &
+        & ( &
+        & any( IsFillValue ( l2gp1%l2gpValue, l2gp1%MissingValue ) ) &
+        & .or. &
+        & any( IsFillValue ( l2gp2%l2gpValue, l2gp2%MissingValue ) ) &
+        & )
       if ( present ( ignoreBadChunks ) ) then
         badChunks = ignoreBadChunks .and. badChunks
       else
@@ -2888,6 +2946,15 @@ contains ! =====     Public Procedures     =============================
       ! whose ostensible purpose is merely to dump them
       ! It would be smarter to allocate a temp array and use
       ! that, remembering to deallocate it before returning
+      
+      ! OK, we'll try what you suggest
+      call SetupNewL2GPRecord ( l2gp2Temp, l2gp2%nFreqs, l2gp2%nLevels, &
+        & l2gp2%nTimes )
+      ! Transfer values to new temporary
+      l2gp2Temp%l2gpValue       = l2gp2%l2gpValue
+      l2gp2Temp%l2gpPrecision   = l2gp2%l2gpPrecision
+      l2gp2Temp%status          = l2gp2%status
+      l2gp2Temp%quality         = l2gp2%quality
       if ( badChunks ) then
         do instance=1, L2gp1%nTimes
           if ( l2gp1%geodAngle(instance) /= l2gp2%geodAngle(instance) &
@@ -2895,48 +2962,55 @@ contains ! =====     Public Procedures     =============================
             & l2gp1%solarZenith(instance) /= l2gp2%solarZenith(instance) &
             & .or. &
             & l2gp1%time(instance) /= l2gp2%time(instance) &
+            & .or. &
+            & any( IsFillValue ( l2gp1%l2gpValue(:,:,instance), l2gp1%MissingValue ) ) &
+            & .or. &
+            & any( IsFillValue ( l2gp2%l2gpValue(:,:,instance), l2gp2%MissingValue ) ) &
             & ) then
-            l2gp2%l2gpValue(:,:,instance) = l2gp1%l2gpValue(:,:,instance)
-            l2gp2%l2gpPrecision(:,:,instance) = l2gp1%l2gpPrecision(:,:,instance)
-            l2gp2%status(instance) = l2gp1%status(instance)
-            l2gp2%quality(instance) = l2gp1%quality(instance)
+            l2gp2Temp%l2gpValue(:,:,instance) = l2gp1%l2gpValue(:,:,instance)
+            l2gp2Temp%l2gpPrecision(:,:,instance) = l2gp1%l2gpPrecision(:,:,instance)
+            l2gp2Temp%status(instance) = l2gp1%status(instance)
+            l2gp2Temp%quality(instance) = l2gp1%quality(instance)
             badInstances = badInstances + 1
           endif
         enddo
         call output('Number of bad instances of l2gp2 reset to l2gp1 ', advance='no')
         call output(badInstances, advance='yes')
       endif
-      if ( any(l2gp1%l2gpValue /= l2gp2%l2gpValue) .and. &
+      if ( any(l2gp1%l2gpValue /= l2gp2Temp%l2gpValue) .and. &
         & SwitchDetail(lowercase(myFields), 'value', '-c') > -1 ) then
         call diff ( l2gp1%l2gpValue, 'l2gp%l2gpValue', &
-          &         l2gp2%l2gpValue, ' ', &
-          & stats=stats, rms=rms )
-        myNumDiffs = myNumDiffs + count( l2gp1%l2gpValue /= l2gp2%l2gpValue )
+          &         l2gp2Temp%l2gpValue, ' ', &
+          & stats=stats, rms=rms, fillValue=l2gp1%MissingValue )
+        myNumDiffs = myNumDiffs + count( l2gp1%l2gpValue /= l2gp2Temp%l2gpValue )
       endif
-      if ( any(l2gp1%l2gpPrecision /= l2gp2%l2gpPrecision) .and. &
+      if ( any(l2gp1%l2gpPrecision /= l2gp2Temp%l2gpPrecision) .and. &
         & SwitchDetail(lowercase(myFields), 'precision', '-c') > -1 ) then
         call diff ( l2gp1%l2gpPrecision, 'l2gp%l2gpPrecision', &
-          &         l2gp2%l2gpPrecision, ' ', &
-          & stats=stats, rms=rms )
-        myNumDiffs = myNumDiffs + count( l2gp1%l2gpPrecision /= l2gp2%l2gpPrecision )
+          &         l2gp2Temp%l2gpPrecision, ' ', &
+          & stats=stats, rms=rms, fillValue=l2gp1%MissingValue )
+        myNumDiffs = myNumDiffs + count( l2gp1%l2gpPrecision /= l2gp2Temp%l2gpPrecision )
       endif
       
-      if ( any(l2gp1%status /= l2gp2%status) .and. &
+      if ( any(l2gp1%status /= l2gp2Temp%status) .and. &
         & SwitchDetail(lowercase(myFields), 'status', '-c') > -1 ) then
         call diff ( l2gp1%status, 'l2gp%status', &
-          &         l2gp2%status, ' ', &
+          &         l2gp2Temp%status, ' ', &
           & stats=stats, rms=rms )
         ! call dump (l2gp1%status - l2gp2%status, &
         !  & 'l2gp%status (diff)', stats=stats, rms=rms )
-        myNumDiffs = myNumDiffs + count( l2gp1%status /= l2gp2%status )
+        myNumDiffs = myNumDiffs + count( l2gp1%status /= l2gp2Temp%status )
       endif
-      if ( any(l2gp1%quality /= l2gp2%quality) .and. &
+      if ( any(l2gp1%quality /= l2gp2Temp%quality) .and. &
         & SwitchDetail(lowercase(myFields), 'quality', '-c') > -1 ) then
         call diff ( l2gp1%quality, 'l2gp%quality', &
-          &         l2gp2%quality, ' ', &
+          &         l2gp2Temp%quality, ' ', &
           & stats=stats, rms=rms )
-        myNumDiffs = myNumDiffs + count( l2gp1%quality /= l2gp2%quality )
+        myNumDiffs = myNumDiffs + count( l2gp1%quality /= l2gp2Temp%quality )
       endif
+
+      ! Done with the temporary, so deallocate it before returning
+      call DestroyL2GPContents ( L2GP2Temp )
       
 contains
     subroutine doneHere
@@ -2954,7 +3028,7 @@ contains
     ! Dummy arguments
     type(MLSFile_T)               :: L2GPfile1 ! file 1
     type(MLSFile_T)               :: L2GPfile2 ! file 2
-    integer, intent(in), dimension(:) :: Chunks ! Which chunks to dump
+    integer, intent(in), dimension(:), optional :: Chunks ! Which chunks to dump
     integer, intent(in), optional :: DETAILS ! <=0 => Don't diff data fields
     !                                        ! -1 Skip even geolocation fields
     !                                        ! -2 Skip all but name
@@ -2996,12 +3070,21 @@ contains
         & 'Unable to close l2gp file to diff between', MLSFile=L2GPFile2)
     endif
     
-    call DiffL2GPFiles_Name ( L2GPFile1%Name, L2GPFile2%Name, &
+    if ( present(chunks) ) then
+      call DiffL2GPFiles_Name ( L2GPFile1%Name, L2GPFile2%Name, &
       & chunks=chunks, Details=Details, wholeArray=wholeArray, &
       & stats=stats, rms=rms, ignoreBadChunks=ignoreBadChunks, &
       & swList=swList, showMissing=showMissing, &
       & fields=fields, force=force, swaths1=swaths1, swaths2=swaths2, &
       & silent=silent, numDiffs=numDiffs )
+    else
+      call DiffL2GPFiles_Name ( L2GPFile1%Name, L2GPFile2%Name, &
+      & Details=Details, wholeArray=wholeArray, &
+      & stats=stats, rms=rms, ignoreBadChunks=ignoreBadChunks, &
+      & swList=swList, showMissing=showMissing, &
+      & fields=fields, force=force, swaths1=swaths1, swaths2=swaths2, &
+      & silent=silent, numDiffs=numDiffs )
+    endif
 
     if ( L1alreadyOpen )  call mls_openFile(L2GPFile1, Status)
     L2GPFile1%errorCode = status
@@ -3190,10 +3273,18 @@ contains
            & hdfVersion=the_hdfVersion1 )
       call ReadL2GPData ( File2Handle, trim(swath2), l2gp2, &
            & hdfVersion=the_hdfVersion2 )
-      call Diff( l2gp1, l2gp2, chunks=chunks, &
+      if ( present(chunks) ) then
+        call Diff( l2gp1, l2gp2, chunks=chunks, &
         & details=details, wholeArray=wholeArray, rms=rms, stats=stats, &
         & ignoreBadChunks=ignoreBadChunks, fields=fields, &
         & silent=silent, numDiffs=numDiffs )
+      else
+        call Diff( l2gp1, l2gp2, &
+        & details=details, wholeArray=wholeArray, rms=rms, stats=stats, &
+        & ignoreBadChunks=ignoreBadChunks, fields=fields, &
+        & silent=silent, numDiffs=numDiffs )
+      endif
+
       if ( present(numDiffs) ) myNumDiffs = myNumDiffs + numDiffs
       call DestroyL2GPContents ( l2gp1 )
       call DestroyL2GPContents ( l2gp2 )
@@ -3962,6 +4053,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.139  2006/02/21 19:09:25  pwagner
+! GetHashElement is now a generic
+!
 ! Revision 2.138  2006/02/16 00:09:23  pwagner
 ! Show how l2gp, Hgrid shapes differ
 !
