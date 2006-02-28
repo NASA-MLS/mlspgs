@@ -224,14 +224,14 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
   endif
   call MLSMessageExit(NORMAL_EXIT_STATUS)
 
-   ! Detailed description of program
-   ! The program is a prototype for the MLS Level 3 Monthly subprogram.
-
 !=================
 END PROGRAM MLSL3M
 !=================
 
 ! $Log$
+! Revision 1.18  2005/06/23 19:17:58  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 1.17  2004/05/12 21:49:58  pwagner
 ! Uses mls_h5open/close
 !

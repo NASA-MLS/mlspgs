@@ -47,7 +47,7 @@ MODULE mon_Out
 !                OutputDg
 !                OutputMON
 
-! Remarks:  This is a prototype module for the routines needed for the L3
+! Remarks:  This is a module for the routines needed for the L3
 ! Monthly Output/Close task.
 
 ! Parameters
@@ -456,6 +456,9 @@ END MODULE mon_Out
 !=================
 
 !$Log$
+!Revision 1.12  2005/06/23 19:17:59  pwagner
+!Reworded Copyright statement, moved rcs id
+!
 !Revision 1.11  2004/05/04 15:57:38  cvuu
 !Fixed bug
 !

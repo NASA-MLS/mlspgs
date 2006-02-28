@@ -1,14 +1,6 @@
 
-! Copyright 2005, by the California Institute of Technology. ALL
-! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
-! commercial use must be negotiated with the Office of Technology Transfer
-! at the California Institute of Technology.
-
-! This software may be subject to U.S. export control laws. By accepting this
-! software, the user agrees to comply with all applicable U.S. export laws and
-! regulations. User has the responsibility to obtain export licenses, or other
-! export authority as may be required before exporting such information to
-! foreign countries or providing access to foreign persons.
+! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !===============
 MODULE MonthlyProcessModule
@@ -26,12 +18,14 @@ MODULE MonthlyProcessModule
   Implicit none
   private
   public :: MonthlyCoreProcessing
+  PRIVATE :: ID, ModuleName
 
-!---------------------------- RCS Module Info ------------------------------
-  character (len=*), private, parameter :: ModuleName= &
-       "$RCSfile$"
-  private :: not_used_here 
-!---------------------------------------------------------------------------
+  !------------------- RCS Ident Info -----------------------
+  CHARACTER(LEN=130) :: Id = &
+       "$Id$"
+  CHARACTER (LEN=*), PARAMETER :: & 
+       & ModuleName= "$RCSfile$"
+  !----------------------------------------------------------
 
   ! Contents:
 
@@ -903,6 +897,7 @@ CONTAINS
           l3dz(iD)%localSolarTime(2, J)        = -1.e20 
           DO I = 1, l3dz(iD)%nLevels 
              l3dz(iD)%perMisPoints(I,J) = 0 
+             l3dz(iD)%dataCount(I,J) = 0 
           ENDDO
 
           dzA(iD)%localSolarZenithAngle(1, J) =  1.e20 
@@ -911,6 +906,7 @@ CONTAINS
           dzA(iD)%localSolarTime(2, J)        = -1.e20 
           DO I = 1, dzA(iD)%nLevels 
              dzA(iD)%perMisPoints(I,J) = 0 
+             dzA(iD)%dataCount(I,J) = 0 
           ENDDO
 
           dzD(iD)%localSolarZenithAngle(1, J) =  1.e20 
@@ -919,6 +915,7 @@ CONTAINS
           dzD(iD)%localSolarTime(2, J)        = -1.e20 
           DO I = 1, dzD(iD)%nLevels 
              dzD(iD)%perMisPoints(I,J) = 0 
+             dzD(iD)%dataCount(I,J) = 0 
           ENDDO
        ENDDO
     ENDDO
@@ -937,129 +934,106 @@ CONTAINS
              iDesArr(iT) = 0
 
              l3dz(iD)%l3dzValue(iP, iT) = 0.0 
+             l3dz(iD)%l3dzPrecision(iP, iT) = 0.0
              dzA(iD)%l3dzValue(iP, iT)  = 0.0 
+             dzA(iD)%l3dzPrecision(iP, iT) = 0.0
              dzD(iD)%l3dzValue(iP, iT)  = 0.0 
+             dzD(iD)%l3dzPrecision(iP, iT) = 0.0
           ENDDO
           
           DO iT = 1, l2gp(iD)%nTimes-1
+            IF(isGoodData(l2gp(iD)%l2gpValue(1, kP, iT), l2gp(iD)%Quality(iT), l2gp(iD)%Status(iT)) ) THEN
              iCom = FindIndexForNormGrid(cfDef, l2gp(iD)%latitude(iT))
-             l3dz(iD)%l3dzValue(iP, iCom) = & 
-                  & l3dz(iD)%l3dzValue(iP, iCom) + & 
-                  & l2gp(iD)%l2gpValue(1, kP, iT)
+             l3dz(iD)%l3dzValue(iP, iCom) = l3dz(iD)%l3dzValue(iP, iCom) + l2gp(iD)%l2gpValue(1, kP, iT)
+             l3dz(iD)%l3dzPrecision(iP, iCom) = l3dz(iD)%l3dzPrecision(iP, iCom) + l2gp(iD)%l2gpPrecision(1, kP, iT)
              !** Solar Zenith Angle & Time
              if(iP == 1) then
-                if( l3dz(iD)%localSolarZenithAngle(2, iCom) <= & 
-                     & l2gp(iD)%solarZenith(iT)) then
-                   l3dz(iD)%localSolarZenithAngle(2, iCom) = & 
-                        l2gp(iD)%solarZenith(iT)
-                else if(l3dz(iD)%localSolarZenithAngle(1, iCom) >= & 
-                     & l2gp(iD)%solarZenith(iT)) then
-                   l3dz(iD)%localSolarZenithAngle(1, iCom) = & 
-                        & l2gp(iD)%solarZenith(iT)
+                if( l3dz(iD)%localSolarZenithAngle(2, iCom) <= l2gp(iD)%solarZenith(iT)) then
+                   l3dz(iD)%localSolarZenithAngle(2, iCom) = l2gp(iD)%solarZenith(iT)
+                else if(l3dz(iD)%localSolarZenithAngle(1, iCom) >= l2gp(iD)%solarZenith(iT)) then
+                   l3dz(iD)%localSolarZenithAngle(1, iCom) = l2gp(iD)%solarZenith(iT)
                 end if
 
-                if(l3dz(iD)%localSolarTime(2, iCom) <= & 
-                     & l2gp(iD)%solarTime(iT)) then
+                if(l3dz(iD)%localSolarTime(2, iCom) <= l2gp(iD)%solarTime(iT)) then
                    l3dz(iD)%localSolarTime(2, iCom) = l2gp(iD)%solarTime(iT)
-                else if(l3dz(iD)%localSolarTime(1, iCom) >= & 
-                     & l2gp(iD)%solarTime(iT)) then
+                else if(l3dz(iD)%localSolarTime(1, iCom) >= l2gp(iD)%solarTime(iT)) then
                    l3dz(iD)%localSolarTime(1, iCom) =  l2gp(iD)%solarTime(iT)
                 end if
              end if
              iComArr(iCom) = iComArr(iCom) + 1 
              comFieldArr(iCom, iComArr(iCom)) = l2gp(iD)%l2gpValue(1, kP, iT)
-             IF( l2gp(iD)%longitude(iT) >= -PI   .AND. &
-                  l2gp(iD)%longitude(iT) < 0.0   .AND. &
-                  l2gp(iD)%longitude(iT+1) <= PI .AND. &
-                  l2gp(iD)%longitude(iT+1) > 0.0 .AND. &
-                  l2gp(iD)%longitude(iT+1) > l2gp(iD)%longitude(iT) ) THEN
-                slope = & 
-                     & (l2gp(iD)%longitude(iT+1)-2.*PI - & 
-                     & l2gp(iD)%longitude(iT))/	  &
-                     & (l2gp(iD)%latitude(iT+1)-l2gp(iD)%latitude(iT)) 
-             ELSE
-                slope = (l2gp(iD)%longitude(iT+1)-l2gp(iD)%longitude(iT))/ &
-                     & (l2gp(iD)%latitude(iT+1)-l2gp(iD)%latitude(iT)) 
-             END IF
-             IF( slope < 0.0 ) THEN
-                dzA(iD)%l3dzValue(iP, iCom) = dzA(iD)%l3dzValue(iP, iCom) + & 
-                     & l2gp(iD)%l2gpValue(1, kP, iT)
+             IF( isAscending(l2gp(iD)%geodAngle(iT)) == 1 ) THEN
+                dzA(iD)%l3dzValue(iP, iCom) = dzA(iD)%l3dzValue(iP, iCom) + l2gp(iD)%l2gpValue(1, kP, iT)
+                dzA(iD)%l3dzPrecision(iP, iCom) = dzA(iD)%l3dzPrecision(iP, iCom) + l2gp(iD)%l2gpPrecision(1, kP, iT)
                 iAscArr(iCom) = iAscArr(iCom) + 1 
-                ascFieldArr(iCom, iAscArr(iCom)) = & 
-                     & l2gp(iD)%l2gpValue(1, kP, iT)
+                ascFieldArr(iCom, iAscArr(iCom)) = l2gp(iD)%l2gpValue(1, kP, iT)
                 if(iP == 1) then
-                   if(dzA(iD)%localSolarZenithAngle(2, iCom) <= & 
-                        & l2gp(iD)%solarZenith(iT)) then
-                      dzA(iD)%localSolarZenithAngle(2, iCom) =  & 
-                           & l2gp(iD)%solarZenith(iT)
-                   else if(dzA(iD)%localSolarZenithAngle(1, iCom) >= & 
-                        & l2gp(iD)%solarZenith(iT)) then
-                      dzA(iD)%localSolarZenithAngle(1, iCom) = & 
-                           & l2gp(iD)%solarZenith(iT)
+                   if(dzA(iD)%localSolarZenithAngle(2, iCom) <= l2gp(iD)%solarZenith(iT)) then
+                      dzA(iD)%localSolarZenithAngle(2, iCom) = l2gp(iD)%solarZenith(iT)
+                   else if(dzA(iD)%localSolarZenithAngle(1, iCom) >= l2gp(iD)%solarZenith(iT)) then
+                      dzA(iD)%localSolarZenithAngle(1, iCom) = l2gp(iD)%solarZenith(iT)
                    end if
 
-                   if(dzA(iD)%localSolarTime(2, iCom) <= & 
-                        & l2gp(iD)%solarTime(iT)) then
-                      dzA(iD)%localSolarTime(2, iCom) = & 
-                           & l2gp(iD)%solarTime(iT)
-                   else if(dzA(iD)%localSolarTime(1, iCom) >= & 
-                        & l2gp(iD)%solarTime(iT)) then
+                   if(dzA(iD)%localSolarTime(2, iCom) <= l2gp(iD)%solarTime(iT)) then
+                      dzA(iD)%localSolarTime(2, iCom) = l2gp(iD)%solarTime(iT)
+                   else if(dzA(iD)%localSolarTime(1, iCom) >= l2gp(iD)%solarTime(iT)) then
                       dzA(iD)%localSolarTime(1, iCom) = l2gp(iD)%solarTime(iT)
                    end if
                 end if
              ELSE
-                dzD(iD)%l3dzValue(iP, iCom) = & 
-                     & dzD(iD)%l3dzValue(iP, iCom) + & 
-                     & l2gp(iD)%l2gpValue(1, kP, iT)
+                dzD(iD)%l3dzValue(iP, iCom) = dzD(iD)%l3dzValue(iP, iCom) + l2gp(iD)%l2gpValue(1, kP, iT)
+                dzD(iD)%l3dzPrecision(iP, iCom) = dzD(iD)%l3dzPrecision(iP, iCom) + l2gp(iD)%l2gpPrecision(1, kP, iT)
                 iDesArr(iCom) = iDesArr(iCom) + 1 
-                desFieldArr(iCom, iDesArr(iCom)) = & 
-                     & l2gp(iD)%l2gpValue(1, kP, iT)
+                desFieldArr(iCom, iDesArr(iCom)) = l2gp(iD)%l2gpValue(1, kP, iT)
                 if(iP == 1) then
-                   if(dzD(iD)%localSolarZenithAngle(2, iCom) <= & 
-                        & l2gp(iD)%solarZenith(iT)) then
-                      dzD(iD)%localSolarZenithAngle(2, iCom) =  & 
-                           & l2gp(iD)%solarZenith(iT)
-                   else if(dzD(iD)%localSolarZenithAngle(1, iCom) >= & 
-                        & l2gp(iD)%solarZenith(iT)) then
-	              dzD(iD)%localSolarZenithAngle(1, iCom) = & 
-                           & l2gp(iD)%solarZenith(iT)
+                   if(dzD(iD)%localSolarZenithAngle(2, iCom) <= l2gp(iD)%solarZenith(iT)) then
+                      dzD(iD)%localSolarZenithAngle(2, iCom) =  l2gp(iD)%solarZenith(iT)
+                   else if(dzD(iD)%localSolarZenithAngle(1, iCom) >= l2gp(iD)%solarZenith(iT)) then
+	              dzD(iD)%localSolarZenithAngle(1, iCom) = l2gp(iD)%solarZenith(iT)
 		   end if
 
-	           if(dzD(iD)%localSolarTime(2, iCom) <= & 
-                        & l2gp(iD)%solarTime(iT)) then
-	              dzD(iD)%localSolarTime(2, iCom) = & 
-                           & l2gp(iD)%solarTime(iT)
-		   else if(dzD(iD)%localSolarTime(1, iCom) >= & 
-                        & l2gp(iD)%solarTime(iT)) then
+	           if(dzD(iD)%localSolarTime(2, iCom) <= l2gp(iD)%solarTime(iT)) then
+	              dzD(iD)%localSolarTime(2, iCom) = l2gp(iD)%solarTime(iT)
+		   else if(dzD(iD)%localSolarTime(1, iCom) >= l2gp(iD)%solarTime(iT)) then
 	              dzD(iD)%localSolarTime(1, iCom) =  l2gp(iD)%solarTime(iT)
 		   end if
 	        end if
              END IF
+            END IF
           ENDDO
+          l3dz(iD)%dataCount(iP,:)= iComArr(:)
+          dzA(iD)%dataCount(iP,:) = iAscArr(:)
+          dzD(iD)%dataCount(iP,:) = iDesArr(:)
 
           DO iT = 1, cfDef%nNom 
              IF(iComArr(iT) == 0) THEN
-	      	l3dz(iD)%l3dzValue(iP, iT) = 0.0 
-	      	dzA(iD)%l3dzValue(iP, iT)  = 0.0 
-	      	dzD(iD)%l3dzValue(iP, iT)  = 0.0 
+	      	l3dz(iD)%l3dzValue(iP, iT) = -999.99 
+	      	dzA(iD)%l3dzValue(iP, iT)  = -999.99 
+	      	dzD(iD)%l3dzValue(iP, iT)  = -999.99 
                 
-	      	l3dz(iD)%latRss(iP, iT)    = 0.0 
-	      	dzA(iD)%latRss(iP, iT)     = 0.0 
-	      	dzD(iD)%latRss(iP, iT)     = 0.0 
+	      	l3dz(iD)%l3dzPrecision(iP, iT) = -999.99 
+	      	dzA(iD)%l3dzPrecision(iP, iT)  = -999.99 
+	      	dzD(iD)%l3dzPrecision(iP, iT)  = -999.99 
+                
+	      	l3dz(iD)%latRss(iP, iT)    = -999.99 
+	      	dzA(iD)%latRss(iP, iT)     = -999.99 
+	      	dzD(iD)%latRss(iP, iT)     = -999.99 
              ELSE
-                l3dz(iD)%l3dzValue(iP, iT) = & 
-                     & l3dz(iD)%l3dzValue(iP, iT)/real(iComArr(iT))
+                l3dz(iD)%l3dzValue(iP, iT) = l3dz(iD)%l3dzValue(iP, iT)/real(iComArr(iT))
+                l3dz(iD)%l3dzPrecision(iP, iT) = l3dz(iD)%l3dzPrecision(iP, iT)/real(iComArr(iT))
                 IF(iAscArr(iT) > 0) THEN
-                   dzA(iD)%l3dzValue(iP, iT) = & 
-                        dzA(iD)%l3dzValue(iP, iT)/real(iAscArr(iT))
+                   dzA(iD)%l3dzValue(iP, iT) = dzA(iD)%l3dzValue(iP, iT)/real(iAscArr(iT))
+                   dzA(iD)%l3dzPrecision(iP, iT) = dzA(iD)%l3dzPrecision(iP, iT)/real(iAscArr(iT))
                 ELSE
-                   dzA(iD)%l3dzValue(iP, iT) = 0.0 
+                   dzA(iD)%l3dzValue(iP, iT) = -999.99 
+                   dzA(iD)%l3dzPrecision(iP, iT) = -999.99 
                 END IF
                 IF(iDesArr(iT) > 0) THEN
-                   dzD(iD)%l3dzValue(iP, iT) = & 
-                        & dzD(iD)%l3dzValue(iP, iT)/real(iDesArr(iT))
+                   dzD(iD)%l3dzValue(iP, iT) = dzD(iD)%l3dzValue(iP, iT)/real(iDesArr(iT))
+                   dzD(iD)%l3dzPrecision(iP, iT) = dzD(iD)%l3dzPrecision(iP, iT)/real(iDesArr(iT))
                 ELSE
-                   dzD(iD)%l3dzValue(iP, iT) = 0.0 
+                   dzD(iD)%l3dzValue(iP, iT) = -999.99 
+                   dzD(iD)%l3dzPrecision(iP, iT) = -999.99 
                 END IF
 
                 !*** calculate Root-Sum-Square for each latitude, 
@@ -1070,8 +1044,7 @@ CONTAINS
                         & (comFieldArr(iT, J)-l3dz(iD)%l3dzValue(iP, iT))* &
                         & (comFieldArr(iT, J)-l3dz(iD)%l3dzValue(iP, iT))
                 ENDDO
-                l3dz(iD)%latRss(iP, iT) = & 
-                     & l3dz(iD)%latRss(iP, iT)/real(iComArr(iT))
+                l3dz(iD)%latRss(iP, iT) = l3dz(iD)%latRss(iP, iT)/real(iComArr(iT))
 
                 IF(iAscArr(iT) > 0) THEN
                    DO J = 1, iAscArr(iT)  
@@ -1079,10 +1052,9 @@ CONTAINS
                            & (ascFieldArr(iT, J)-dzA(iD)%l3dzValue(iP, iT))* &
                            & (ascFieldArr(iT, J)-dzA(iD)%l3dzValue(iP, iT))
                    ENDDO
-                   dzA(iD)%latRss(iP, iT) = & 
-                        & dzA(iD)%latRss(iP, iT)/real(iAscArr(iT))
+                   dzA(iD)%latRss(iP, iT) = dzA(iD)%latRss(iP, iT)/real(iAscArr(iT))
                 ELSE
-                   dzA(iD)%latRss(iP, iT) = 0.0 
+                   dzA(iD)%latRss(iP, iT) = -999.99 
                 END IF
                 
                 IF(iDesArr(iT) > 0) THEN
@@ -1091,10 +1063,9 @@ CONTAINS
                            & (desFieldArr(iT, J)-dzD(iD)%l3dzValue(iP, iT))* &
                            & (desFieldArr(iT, J)-dzD(iD)%l3dzValue(iP, iT))
                    ENDDO
-                   dzD(iD)%latRss(iP, iT) = & 
-                        & dzD(iD)%latRss(iP, iT)/real(iDesArr(iT))
+                   dzD(iD)%latRss(iP, iT) = dzD(iD)%latRss(iP, iT)/real(iDesArr(iT))
                 ELSE
-                   dzD(iD)%latRss(iP, iT) = 0.0 
+                   dzD(iD)%latRss(iP, iT) = -999.99 
                 END IF
 
              END IF
@@ -1217,6 +1188,9 @@ CONTAINS
           l3mz%l3mzValue(iP, J) = 0.0 
           mzA%l3mzValue(iP, J)  = 0.0 
           mzD%l3mzValue(iP, J)  = 0.0 
+          l3mz%l3mzPrecision(iP, J) = 0.0 
+          mzA%l3mzPrecision(iP, J)  = 0.0 
+          mzD%l3mzPrecision(iP, J)  = 0.0 
        ENDDO
     ENDDO
 
@@ -1263,137 +1237,113 @@ CONTAINS
           iAscArr(iT) = 0
           iDesArr(iT) = 0
           DO J = 1,  100*l2Days
-             comFieldArr(iT, J) = 0.0
-             ascFieldArr(iT, J) = 0.0
-             desFieldArr(iT, J) = 0.0
+             comFieldArr(iT, J) = 0.0 
+             ascFieldArr(iT, J) = 0.0 
+             desFieldArr(iT, J) = 0.0 
           ENDDO
        ENDDO
 
        DO iD = 1, l2Days
           DO iT = 1, l2gp(iD)%nTimes-1
+
+            IF(isGoodData(l2gp(iD)%l2gpValue(1, kP, iT), l2gp(iD)%Quality(iT), l2gp(iD)%Status(iT)) ) THEN
+
              !iCom = real(l2gp(iD)%latitude(iT)-l3mz%latitude(1))/
              ! real(l3mz%latitude(2)-l3mz%latitude(1))+1.5
              iCom = FindIndexForNormGrid(cfDef, l2gp(iD)%latitude(iT))
-             l3mz%l3mzValue(iP, iCom) = l3mz%l3mzValue(iP, iCom) + & 
-                  & l2gp(iD)%l2gpValue(1, kP, iT)
+             l3mz%l3mzValue(iP, iCom) = l3mz%l3mzValue(iP, iCom) + l2gp(iD)%l2gpValue(1, kP, iT)
+             l3mz%l3mzPrecision(iP, iCom) = l3mz%l3mzPrecision(iP, iCom) + l2gp(iD)%l2gpPrecision(1, kP, iT)
              !** Solar Zenith Angle & Time
              if(iP == 1) then
-                if(l3mz%localSolarZenithAngle(2, iCom) <= & 
-                     & l2gp(iD)%solarZenith(iT)) then
-                   l3mz%localSolarZenithAngle(2, iCom) =  & 
-                        & l2gp(iD)%solarZenith(iT)
-                else if(l3mz%localSolarZenithAngle(1, iCom) >= & 
-                     & l2gp(iD)%solarZenith(iT)) then
-                   l3mz%localSolarZenithAngle(1, iCom) = & 
-                        & l2gp(iD)%solarZenith(iT)
+                if(l3mz%localSolarZenithAngle(2, iCom) <= l2gp(iD)%solarZenith(iT)) then
+                   l3mz%localSolarZenithAngle(2, iCom) =  l2gp(iD)%solarZenith(iT)
+                else if(l3mz%localSolarZenithAngle(1, iCom) >= l2gp(iD)%solarZenith(iT)) then
+                   l3mz%localSolarZenithAngle(1, iCom) = l2gp(iD)%solarZenith(iT)
                 end if
                 
-                if(l3mz%localSolarTime(2, iCom) <= & 
-                     & l2gp(iD)%solarTime(iT)) then
-                   l3mz%localSolarTime(2, iCom) = & 
-                        & l2gp(iD)%solarTime(iT)
-                else if(l3mz%localSolarTime(1, iCom) >= & 
-                     & l2gp(iD)%solarTime(iT)) then
+                if(l3mz%localSolarTime(2, iCom) <= l2gp(iD)%solarTime(iT)) then
+                   l3mz%localSolarTime(2, iCom) = l2gp(iD)%solarTime(iT)
+                else if(l3mz%localSolarTime(1, iCom) >= l2gp(iD)%solarTime(iT)) then
                    l3mz%localSolarTime(1, iCom) =  l2gp(iD)%solarTime(iT)
                 end if
              end if
              iComArr(iCom) = iComArr(iCom) + 1 
-             comFieldArr(iCom, iComArr(iCom)) = & 
-                  & l2gp(iD)%l2gpValue(1, kP, iT)
-             IF( l2gp(iD)%longitude(iT) >= -PI     .AND. &
-                  & l2gp(iD)%longitude(iT) < 0.0   .AND. &
-                  & l2gp(iD)%longitude(iT+1) <= PI .AND. &
-                  & l2gp(iD)%longitude(iT+1) > 0.0 .AND. &
-                  & l2gp(iD)%longitude(iT+1) > l2gp(iD)%longitude(iT) ) & 
-                  & THEN
-
-                slope = & 
-                     & (l2gp(iD)%longitude(iT+1)-2.0*PI- & 
-                     & l2gp(iD)%longitude(iT))/	&
-                     & (l2gp(iD)%latitude(iT+1)-l2gp(iD)%latitude(iT)) 
-             ELSE
-                slope = & 
-                     & (l2gp(iD)%longitude(iT+1)-l2gp(iD)%longitude(iT))/ &
-                     & (l2gp(iD)%latitude(iT+1)-l2gp(iD)%latitude(iT)) 
-             END IF
-                 IF( slope < 0.0 ) THEN
-                    mzA%l3mzValue(iP, iCom) = mzA%l3mzValue(iP, iCom) + & 
-                         & l2gp(iD)%l2gpValue(1, kP, iT)
+             comFieldArr(iCom, iComArr(iCom)) = l2gp(iD)%l2gpValue(1, kP, iT)
+             IF( isAscending(l2gp(iD)%geodAngle(iT)) == 1 ) THEN
+                    mzA%l3mzValue(iP, iCom) = mzA%l3mzValue(iP, iCom) + l2gp(iD)%l2gpValue(1, kP, iT)
+                    mzA%l3mzPrecision(iP, iCom) = mzA%l3mzPrecision(iP, iCom) + l2gp(iD)%l2gpPrecision(1, kP, iT)
                     iAscArr(iCom) = iAscArr(iCom) + 1 
-                    ascFieldArr(iCom, iAscArr(iCom)) = & 
-                         & l2gp(iD)%l2gpValue(1, kP, iT)
+                    ascFieldArr(iCom, iAscArr(iCom)) = l2gp(iD)%l2gpValue(1, kP, iT)
                     if(iP == 1) then
-                       if(mzA%localSolarZenithAngle(2, iCom) <= & 
-                            & l2gp(iD)%solarZenith(iT)) then
-                          mzA%localSolarZenithAngle(2, iCom) = & 
-                               & l2gp(iD)%solarZenith(iT)
-                       else if(mzA%localSolarZenithAngle(1, iCom) >= & 
-                            & l2gp(iD)%solarZenith(iT)) then
-                          mzA%localSolarZenithAngle(1, iCom) = & 
-                               & l2gp(iD)%solarZenith(iT)
+                       if(mzA%localSolarZenithAngle(2, iCom) <= l2gp(iD)%solarZenith(iT)) then
+                          mzA%localSolarZenithAngle(2, iCom) = l2gp(iD)%solarZenith(iT)
+                       else if(mzA%localSolarZenithAngle(1, iCom) >= l2gp(iD)%solarZenith(iT)) then
+                          mzA%localSolarZenithAngle(1, iCom) = l2gp(iD)%solarZenith(iT)
                        end if
                        
-                       if(mzA%localSolarTime(2, iCom) <= & 
-                            & l2gp(iD)%solarTime(iT)) then
-                          mzA%localSolarTime(2, iCom) = & 
-                               & l2gp(iD)%solarTime(iT)
-                       else if(mzA%localSolarTime(1, iCom) >= & 
-                            & l2gp(iD)%solarTime(iT)) then
+                       if(mzA%localSolarTime(2, iCom) <= l2gp(iD)%solarTime(iT)) then
+                          mzA%localSolarTime(2, iCom) = l2gp(iD)%solarTime(iT)
+                       else if(mzA%localSolarTime(1, iCom) >= l2gp(iD)%solarTime(iT)) then
                           mzA%localSolarTime(1, iCom) =  l2gp(iD)%solarTime(iT)
                        end if
                     end if
-                 ELSE
-                    mzD%l3mzValue(iP, iCom) = mzD%l3mzValue(iP, iCom) + & 
-                         & l2gp(iD)%l2gpValue(1, kP, iT)
+             ELSE
+                    mzD%l3mzValue(iP, iCom) = mzD%l3mzValue(iP, iCom) + l2gp(iD)%l2gpValue(1, kP, iT)
+                    mzD%l3mzPrecision(iP, iCom) = mzD%l3mzPrecision(iP, iCom) + l2gp(iD)%l2gpPrecision(1, kP, iT)
                     iDesArr(iCom) = iDesArr(iCom) + 1 
-                    desFieldArr(iCom, iDesArr(iCom)) = & 
-                         & l2gp(iD)%l2gpValue(1, kP, iT)
+                    desFieldArr(iCom, iDesArr(iCom)) = l2gp(iD)%l2gpValue(1, kP, iT)
                     if(iP == 1) then
-                       if(mzD%localSolarZenithAngle(2, iCom) <= & 
-                            & l2gp(iD)%solarZenith(iT)) then
-                          mzD%localSolarZenithAngle(2, iCom) = & 
-                               & l2gp(iD)%solarZenith(iT)
-                       else if(mzD%localSolarZenithAngle(1, iCom) >= & 
-                            & l2gp(iD)%solarZenith(iT)) then
-                          mzD%localSolarZenithAngle(1, iCom) = & 
-                               & l2gp(iD)%solarZenith(iT)
+                       if(mzD%localSolarZenithAngle(2, iCom) <= l2gp(iD)%solarZenith(iT)) then
+                          mzD%localSolarZenithAngle(2, iCom) = l2gp(iD)%solarZenith(iT)
+                       else if(mzD%localSolarZenithAngle(1, iCom) >= l2gp(iD)%solarZenith(iT)) then
+                          mzD%localSolarZenithAngle(1, iCom) = l2gp(iD)%solarZenith(iT)
                        end if
                        
-                       if(mzD%localSolarTime(2, iCom) <= & 
-                            & l2gp(iD)%solarTime(iT)) then
+                       if(mzD%localSolarTime(2, iCom) <= l2gp(iD)%solarTime(iT)) then
                           mzD%localSolarTime(2, iCom) =  l2gp(iD)%solarTime(iT)
-                       else if(mzD%localSolarTime(1, iCom) >= & 
-                            & l2gp(iD)%solarTime(iT)) then
+                       else if(mzD%localSolarTime(1, iCom) >= l2gp(iD)%solarTime(iT)) then
                           mzD%localSolarTime(1, iCom) =  l2gp(iD)%solarTime(iT)
                        end if
                     end if
-                 END IF
-              ENDDO
-           ENDDO
+             END IF
+            END IF
+          ENDDO
+       ENDDO
+
+       ! save data count
+       l3mz%dataCount(iP,:)= iComArr(:)
+       mzA%dataCount(iP,:) = iAscArr(:)
+       mzD%dataCount(iP,:) = iDesArr(:)
            
-           DO iT = 1, cfDef%nNom 
+       DO iT = 1, cfDef%nNom 
               IF(iComArr(iT) == 0) THEN
-                 l3mz%l3mzValue(iP, iT) = 0.0 
-                 mzA%l3mzValue(iP, iT)  = 0.0 
-                 mzD%l3mzValue(iP, iT)  = 0.0 
+                 l3mz%l3mzValue(iP, iT) = -999.99 
+                 mzA%l3mzValue(iP, iT)  = -999.99 
+                 mzD%l3mzValue(iP, iT)  = -999.99 
                  
-                 l3mz%latRss(iP, iT)    = 0.0 
-                 mzA%latRss(iP, iT)     = 0.0 
-                 mzD%latRss(iP, iT)     = 0.0 
+                 l3mz%l3mzPrecision(iP, iT) = -999.99 
+                 mzA%l3mzPrecision(iP, iT)  = -999.99 
+                 mzD%l3mzPrecision(iP, iT)  = -999.99 
+                 
+                 l3mz%latRss(iP, iT)    = -999.99 
+                 mzA%latRss(iP, iT)     = -999.99 
+                 mzD%latRss(iP, iT)     = -999.99 
               ELSE
-                 l3mz%l3mzValue(iP, iT) = & 
-                      & l3mz%l3mzValue(iP, iT)/real(iComArr(iT))
+                 l3mz%l3mzValue(iP, iT) = l3mz%l3mzValue(iP, iT)/real(iComArr(iT))
+                 l3mz%l3mzPrecision(iP, iT) = l3mz%l3mzPrecision(iP, iT)/real(iComArr(iT))
                  IF(iAscArr(iT) > 0) THEN
-                    mzA%l3mzValue(iP, iT) = & 
-                         & mzA%l3mzValue(iP, iT)/real(iAscArr(iT))
+                    mzA%l3mzValue(iP, iT) = mzA%l3mzValue(iP, iT)/real(iAscArr(iT))
+                    mzA%l3mzPrecision(iP, iT) = mzA%l3mzPrecision(iP, iT)/real(iAscArr(iT))
                  ELSE
-                    mzA%l3mzValue(iP, iT) = 0.0 
+                    mzA%l3mzValue(iP, iT) = -999.99 
+                    mzA%l3mzPrecision(iP, iT) = -999.99 
                  END IF
                  IF(iDesArr(iT) > 0) THEN
-                    mzD%l3mzValue(iP, iT) = & 
-                         & mzD%l3mzValue(iP, iT)/real(iDesArr(iT))
+                    mzD%l3mzValue(iP, iT) = mzD%l3mzValue(iP, iT)/real(iDesArr(iT))
+                    mzD%l3mzPrecision(iP, iT) = mzD%l3mzPrecision(iP, iT)/real(iDesArr(iT))
                  ELSE
-                  mzD%l3mzValue(iP, iT) = 0.0 
+                    mzD%l3mzValue(iP, iT) = -999.99 
+                    mzD%l3mzPrecision(iP, iT) = -999.99 
                END IF
                
                !*** calculate Root-Sum-Square for each latitude, 
@@ -1414,7 +1364,7 @@ CONTAINS
                   ENDDO
                   mzA%latRss(iP, iT) = mzA%latRss(iP, iT)/real(iAscArr(iT))
                ELSE
-                  mzA%latRss(iP, iT) = 0.0 
+                  mzA%latRss(iP, iT) = -999.99 
                END IF
                
                IF(iDesArr(iT) > 0) THEN
@@ -1425,53 +1375,53 @@ CONTAINS
                   ENDDO
                   mzD%latRss(iP, iT) = mzD%latRss(iP, iT)/real(iDesArr(iT))
                ELSE
-                  mzD%latRss(iP, iT) = 0.0 
+                  mzD%latRss(iP, iT) = -999.99 
                END IF
 
 	    END IF
          ENDDO
          
-	ENDDO
+       ENDDO
         
-        !*** Deallocate 
+       !*** Deallocate 
         
-        DEALLOCATE(iComArr, STAT=error)
-        IF ( error /= 0 ) THEN
+       DEALLOCATE(iComArr, STAT=error)
+       IF ( error /= 0 ) THEN
            msr = MLSMSG_Deallocate // ' iComArr array.'
            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-        ENDIF
+       ENDIF
      
-        DEALLOCATE(iAscArr, STAT=error)
-        IF ( error /= 0 ) THEN
+       DEALLOCATE(iAscArr, STAT=error)
+       IF ( error /= 0 ) THEN
            msr = MLSMSG_Deallocate // ' iAscArr array.'
            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-        ENDIF
+       ENDIF
 
-        DEALLOCATE(iDesArr, STAT=error)
-        IF ( error /= 0 ) THEN
+       DEALLOCATE(iDesArr, STAT=error)
+       IF ( error /= 0 ) THEN
            msr = MLSMSG_Deallocate // ' iDesArr array.'
            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-        ENDIF
+       ENDIF
         
-        DEALLOCATE(comFieldArr, STAT=error)
-        IF ( error /= 0 ) THEN
+       DEALLOCATE(comFieldArr, STAT=error)
+       IF ( error /= 0 ) THEN
            msr = MLSMSG_Deallocate // ' comFieldArr array.'
            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-        ENDIF
+       ENDIF
      
-        DEALLOCATE(ascFieldArr, STAT=error)
-        IF ( error /= 0 ) THEN
+       DEALLOCATE(ascFieldArr, STAT=error)
+       IF ( error /= 0 ) THEN
            msr = MLSMSG_Deallocate // ' ascFieldArr array.'
            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-        ENDIF
+       ENDIF
 
-        DEALLOCATE(desFieldArr, STAT=error)
-        IF ( error /= 0 ) THEN
+       DEALLOCATE(desFieldArr, STAT=error)
+       IF ( error /= 0 ) THEN
            msr = MLSMSG_Deallocate // ' desFieldArr array.'
            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-        ENDIF
+       ENDIF
 
-        !-----------------------------------
+       !-----------------------------------
       END SUBROUTINE MonthlyZonalMeanFromL2
       !-----------------------------------
 
@@ -1551,6 +1501,9 @@ CONTAINS
                 l3mm%l3mmValue(iP, I, J) = 0.0 
                 mmA%l3mmValue(iP, I, J)  = 0.0 
                 mmD%l3mmValue(iP, I, J)  = 0.0 
+                l3mm%l3mmPrecision(iP, I, J) = 0.0 
+                mmA%l3mmPrecision(iP, I, J)  = 0.0 
+                mmD%l3mmPrecision(iP, I, J)  = 0.0 
              ENDDO
           ENDDO
        END DO
@@ -1589,46 +1542,34 @@ CONTAINS
                 iAscArr(I,J) = 0
                 iDesArr(I,J) = 0
                 DO K = 1,  10*l2Days
-                   comFieldArr(I,J, K) = 0.0
-                   ascFieldArr(I,J, K) = 0.0
-                   desFieldArr(I,J, K) = 0.0
+                   comFieldArr(I,J, K) = 0.0 
+                   ascFieldArr(I,J, K) = 0.0 
+                   desFieldArr(I,J, K) = 0.0 
                 ENDDO
              ENDDO
           ENDDO
           
           DO iD = 1, l2Days
              DO iT = 1, l2gp(iD)%nTimes-1
-                iComLat = FindLatIndexForL3Grid(cfProd, l2gp(iD)%latitude(iT))
-                iComLon = FindLonIndexForL3Grid(cfProd, l2gp(iD)%longitude(iT))
-                IF(l2gp(iD)%l2gpValue(1, kP, iT) > 0.0) THEN
+              IF(isGoodData(l2gp(iD)%l2gpValue(1, kP, iT), l2gp(iD)%Quality(iT), l2gp(iD)%Status(iT)) ) THEN
+                   iComLat = FindLatIndexForL3Grid(cfProd, l2gp(iD)%latitude(iT))
+                   iComLon = FindLonIndexForL3Grid(cfProd, l2gp(iD)%longitude(iT))
                    l3mm%l3mmValue(iP, iComLat, iComLon) = & 
                         & l3mm%l3mmValue(iP, iComLat, iComLon) + & 
                         & l2gp(iD)%l2gpValue(1, kP, iT)
-                   l3mm%l3mmPrecision(iP, iComLat, iComLon) = 0.0 
+                   l3mm%l3mmPrecision(iP, iComLat, iComLon) = & 
+                        & l3mm%l3mmPrecision(iP, iComLat, iComLon) + & 
+                        & l2gp(iD)%l2gpPrecision(1, kP, iT)
                    iComArr(iComLat, iComLon) = iComArr(iComLat, iComLon) + 1 
                    comFieldArr(iComLat, iComLon, iComArr(iComLat, iComLon)) =& 
                         & l2gp(iD)%l2gpValue(1, kP, iT)
-                   IF( l2gp(iD)%longitude(iT) >= -PI     .AND. &
-                        & l2gp(iD)%longitude(iT) < 0.0   .AND. &
-                        & l2gp(iD)%longitude(iT+1) <= PI .AND. &
-                        & l2gp(iD)%longitude(iT+1) > 0.0 .AND. &
-                        & l2gp(iD)%longitude(iT+1) > l2gp(iD)%longitude(iT) )& 
-                        & THEN
-                      
-                      slope = & 
-                           & (l2gp(iD)%longitude(iT+1)-2.0*PI- & 
-                           & l2gp(iD)%longitude(iT))/	&
-                           & (l2gp(iD)%latitude(iT+1)-l2gp(iD)%latitude(iT)) 
-                   ELSE
-                      slope = & 
-                           & (l2gp(iD)%longitude(iT+1)-& 
-                           & l2gp(iD)%longitude(iT))/	&
-                           & (l2gp(iD)%latitude(iT+1)-l2gp(iD)%latitude(iT)) 
-                   END IF
-                   IF( slope < 0.0 ) THEN
+                   IF( isAscending(l2gp(iD)%geodAngle(iT)) == 1 ) THEN
                       mmA%l3mmValue(iP, iComLat, iComLon) = & 
                            & mmA%l3mmValue(iP, iComLat, iComLon) + & 
                            & l2gp(iD)%l2gpValue(1, kP, iT)
+                      mmA%l3mmPrecision(iP, iComLat, iComLon) = & 
+                           & mmA%l3mmPrecision(iP, iComLat, iComLon) + & 
+                           & l2gp(iD)%l2gpPrecision(1, kP, iT)
                       iAscArr(iComLat, iComLon) = iAscArr(iComLat, iComLon)+1 
                       ascFieldArr(iComLat, iComLon, iAscArr(iComLat,iComLon))&
                            & = l2gp(iD)%l2gpValue(1, kP, iT)
@@ -1636,34 +1577,48 @@ CONTAINS
                       mmD%l3mmValue(iP, iComLat, iComLon) = & 
                            & mmD%l3mmValue(iP, iComLat, iComLon) + & 
                            & l2gp(iD)%l2gpValue(1, kP, iT)
+                      mmD%l3mmPrecision(iP, iComLat, iComLon) = & 
+                           & mmD%l3mmPrecision(iP, iComLat, iComLon) + & 
+                           & l2gp(iD)%l2gpPrecision(1, kP, iT)
                       iDesArr(iComLat, iComLon) = iDesArr(iComLat, iComLon)+ 1 
                       desFieldArr(iComLat,iComLon,iDesArr(iComLat,iComLon))= & 
                            & l2gp(iD)%l2gpValue(1, kP, iT)
                    END IF
-                END IF
+              END IF
              ENDDO
 	  ENDDO
           
 	  DO I = 1, cfProd%nLats 
              DO J = 1, cfProd%nLons 
                 IF(iComArr(I, J) == 0) THEN
-                   l3mm%l3mmValue(iP, I, J) = 0.0 
-                   mmA%l3mmValue(iP, I, J)  = 0.0 
-                   mmD%l3mmValue(iP, I, J)  = 0.0 
+                   l3mm%l3mmValue(iP, I, J) = -999.99 
+                   mmA%l3mmValue(iP, I, J)  = -999.99 
+                   mmD%l3mmValue(iP, I, J)  = -999.99 
+                   l3mm%l3mmPrecision(iP, I, J) = -999.99 
+                   mmA%l3mmPrecision(iP, I, J)  = -999.99 
+                   mmD%l3mmPrecision(iP, I, J)  = -999.99 
                 ELSE
                    l3mm%l3mmValue(iP, I, J) = & 
                         & l3mm%l3mmValue(iP, I, J)/real(iComArr(I, J))
+                   l3mm%l3mmPrecision(iP, I, J) = & 
+                        & l3mm%l3mmPrecision(iP, I, J)/real(iComArr(I, J))
                    IF(iAscArr(I, J) > 0) THEN
                       mmA%l3mmValue(iP, I, J) = & 
                            & mmA%l3mmValue(iP, I, J)/real(iAscArr(I, J))
+                      mmA%l3mmPrecision(iP, I, J) = & 
+                           & mmA%l3mmPrecision(iP, I, J)/real(iAscArr(I, J))
                    ELSE
-                      mmA%l3mmValue(iP, I, J) = 0.0 
+                      mmA%l3mmValue(iP, I, J) = -999.99 
+                      mmA%l3mmPrecision(iP, I, J) = -999.99 
                    END IF
                    IF(iDesArr(I, J) > 0) THEN
                       mmD%l3mmValue(iP, I, J) = & 
                            & mmD%l3mmValue(iP, I, J)/real(iDesArr(I, J))
+                      mmD%l3mmPrecision(iP, I, J) = & 
+                           & mmD%l3mmPrecision(iP, I, J)/real(iDesArr(I, J))
                    ELSE
-                      mmD%l3mmValue(iP, I, J) = 0.0 
+                      mmD%l3mmValue(iP, I, J) = -999.99 
+                      mmD%l3mmPrecision(iP, I, J) = -999.99 
                    END IF
                 END IF
              ENDDO
@@ -1824,10 +1779,8 @@ CONTAINS
                  mmA%l3mmValue(iP, J, K) = 0.0 
                  DO
                     nc = nc + 1
-                    CALL SPLINT(lons_rev, fields_rev, Y2, anlats(J, iP), & 
-                         & lonStart, newField)
-                    mmA%l3mmValue(iP, J, K) = & 
-                         & mmA%l3mmValue(iP, J, K) + newField 
+                    CALL SPLINT(lons_rev, fields_rev, Y2, anlats(J, iP), lonStart, newField)
+                    mmA%l3mmValue(iP, J, K) = mmA%l3mmValue(iP, J, K) + newField 
                     lonStart = lonStart - 2.0*PI
                     IF( lonStart < lons_rev(anlats(J, iP)) ) EXIT
                  ENDDO
@@ -1909,10 +1862,8 @@ CONTAINS
                     mmD%l3mmValue(iP, J, K) = 0.0 
                     DO
                        nc = nc + 1
-                       CALL SPLINT(lons_rev, fields_rev, Y2, dnlats(J, iP), & 
-                            & lonStart, newField)
-                       mmD%l3mmValue(iP, J, K) = & 
-                            & mmD%l3mmValue(iP, J, K) + newField 
+                       CALL SPLINT(lons_rev, fields_rev, Y2, dnlats(J, iP), lonStart, newField)
+                       mmD%l3mmValue(iP, J, K) = mmD%l3mmValue(iP, J, K) + newField 
                        lonStart = lonStart - 2.0*PI
                        IF( lonStart < lons_rev(dnlats(J, iP)) ) EXIT
                     ENDDO
@@ -1965,9 +1916,7 @@ CONTAINS
                       l3mm%l3mmValue(iP, J, K) = mmD%l3mmValue(iP, J, K)
                       l3mm%l3mmPrecision(iP, J, K) = 0.0 
                    ELSE IF( anlats(J, iP) > 0 .and. dnlats(J, iP) > 0 ) THEN
-                      l3mm%l3mmValue(iP, J, K) = & 
-                           & (mmA%l3mmValue(iP, J, K)+ & 
-                           & mmD%l3mmValue(iP, J, K))*0.5
+                      l3mm%l3mmValue(iP, J, K) = (mmA%l3mmValue(iP, J, K) + mmD%l3mmValue(iP, J, K))*0.5
                       l3mm%l3mmPrecision(iP, J, K) = 0.0 
                    END IF
 		ENDDO
@@ -2010,16 +1959,12 @@ CONTAINS
                 FindIndexForNormGrid = i
                 EXIT
              ELSE IF( i == 1 ) THEN
-                IF (alat < & 
-                     & (cfDef%l2nomLats(i)+cfDef%l2nomLats(i+1))*0.5 )&
-                     & THEN 
+                IF (alat < (cfDef%l2nomLats(i)+cfDef%l2nomLats(i+1))*0.5 ) THEN 
                    FindIndexForNormGrid = i
                    EXIT
                 END IF
-             ELSE IF( alat >= & 
-                  & (cfDef%l2nomLats(i)+cfDef%l2nomLats(i-1))*0.5 .and. &
-                  alat <  & 
-                  & (cfDef%l2nomLats(i)+cfDef%l2nomLats(i+1))*0.5 ) THEN
+             ELSE IF( alat >= (cfDef%l2nomLats(i)+cfDef%l2nomLats(i-1))*0.5 .and. &
+                  alat < (cfDef%l2nomLats(i)+cfDef%l2nomLats(i+1))*0.5 ) THEN
                 FindIndexForNormGrid = i
                 EXIT
              END IF
@@ -2050,17 +1995,12 @@ CONTAINS
                  FindLatIndexForL3Grid = i
                  EXIT
               ELSE IF( i == 1 ) THEN
-                 IF( alat < & 
-                      & (cfProd%latGridMap(i)+ & 
-                      & cfProd%latGridMap(i+1))*0.5 ) THEN 
+                 IF( alat < (cfProd%latGridMap(i) + cfProd%latGridMap(i+1))*0.5 ) THEN 
                     FindLatIndexForL3Grid = i
                     EXIT
                  END IF
-              ELSE IF( alat >= & 
-                   & (cfProd%latGridMap(i)+cfProd%latGridMap(i-1))*0.5 .and.&
-                   & alat < & 
-                   & (cfProd%latGridMap(i)+cfProd%latGridMap(i+1))*0.5)&
-                   & THEN
+              ELSE IF( alat >= (cfProd%latGridMap(i)+cfProd%latGridMap(i-1))*0.5 .and.&
+                   & alat < (cfProd%latGridMap(i)+cfProd%latGridMap(i+1))*0.5) THEN
                  FindLatIndexForL3Grid = i
                  EXIT
               END IF
@@ -2091,16 +2031,12 @@ CONTAINS
                  FindLonIndexForL3Grid = i
                  EXIT
               ELSE IF( i == 1 ) THEN
-                 IF( alon < & 
-                      & (cfProd%longGrid(i)+cfProd%longGrid(i+1))*0.5) &
-                      & THEN 
+                 IF( alon < (cfProd%longGrid(i)+cfProd%longGrid(i+1))*0.5) THEN 
                     FindLonIndexForL3Grid = i
                     EXIT
                  END IF
-              ELSE IF( alon >= & 
-                   & (cfProd%longGrid(i)+cfProd%longGrid(i-1))*0.5 .and. &
-                   & alon < & 
-                   & (cfProd%longGrid(i)+cfProd%longGrid(i+1))*0.5 ) THEN
+              ELSE IF( alon >= (cfProd%longGrid(i)+cfProd%longGrid(i-1))*0.5 .and. &
+                   & alon < (cfProd%longGrid(i)+cfProd%longGrid(i+1))*0.5 ) THEN
                  FindLonIndexForL3Grid = i
                  EXIT
               END IF
@@ -2224,15 +2160,50 @@ CONTAINS
      END SUBROUTINE CalSolarRange
 !-----------------------------------
 
+     !-------------------------------------------------------------------------
+     Logical FUNCTION isGoodData(value, qual, status)
+     !-------------------------------------------------------------------------
+
+       Real value, qual
+       Integer status
+
+       IF(value == -999.99 .or. qual < 0.0 .or. status < 0 .or. mod(status, 2) == 1) THEN
+          isGoodData = .false.
+       ELSE
+          isGoodData = .true.
+       END IF
+
+      !-----------------------------------
+     END FUNCTION isGoodData
+     !-----------------------------------
+
+     !-------------------------------------------------------------------------
+     Integer FUNCTION isAscending(geodAngle)
+     !-------------------------------------------------------------------------
+
+       Real modGeod, geodAngle
+
+       IF(geodAngle > -360.0) THEN
+          modGeod = mod(geodAngle, 360.0)
+          IF(modGeod < 0.0) THEN
+            modGeod = modGeod + 360.0
+          ENd IF
+          IF(modGeod < 90.0 .OR. modGeod >= 270.0) THEN
+            isAscending = 1
+          ELSE IF(modGeod >= 90.0 .AND. modGeod < 270.0) THEN
+            isAscending = 2
+          ELSE
+            isAscending = 0
+          END IF
+       ELSE
+          isAscending = 0
+       END IF
+
+      !-----------------------------------
+     END FUNCTION isAscending
+     !-----------------------------------
+
 !===================
-  logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
-       "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
-    not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
    END MODULE MonthlyProcessModule
 !===================
 

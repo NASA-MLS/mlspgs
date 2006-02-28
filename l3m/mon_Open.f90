@@ -240,7 +240,7 @@ CONTAINS
 
       CHARACTER (LEN=480) :: msr
 
-      INTEGER :: error, pcfId, returnStatus, l3mFlag = 1
+      INTEGER :: error, pcfId, returnStatus, nDays, l3mFlag = 1
 
 ! Read the PCF into an annotation for file headers
 
@@ -278,7 +278,7 @@ CONTAINS
 ! Get L2GP Attributes
 
       CALL ReadL2GPAttribute(l3pcf%startDay, l3pcf%endDay, &
-	& cfStd(1)%fileTemplate, l3mFlag)
+	& cfStd(1)%fileTemplate, nDays, l3mFlag)
 
 !------------------------
     END SUBROUTINE OpenMON
@@ -297,6 +297,9 @@ CONTAINS
 !==================
 
 ! $Log$
+! Revision 1.12  2005/09/22 23:41:14  pwagner
+! date conversion procedures and functions all moved into dates module
+!
 ! Revision 1.11  2005/07/12 17:18:52  pwagner
 ! Dropped global attribute InputVersion
 !
