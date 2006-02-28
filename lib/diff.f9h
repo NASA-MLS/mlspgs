@@ -30,6 +30,7 @@
 !     double precision, dimension(size(array2)) :: filtered2
     logical :: warn, NaNsIn1, NaNsIn2
     character(len(name1) + len(name2) + 8) :: DiffName
+    integer :: nEqual, nUnEqual
 
     ! Executable
     myStats = .false.
@@ -48,19 +49,40 @@
       & call output('About to filter n-d ' // trim(name1) // ' ' &
       & // trim(name2), advance='yes')
     call filterValues(array1, filtered1, array2, filtered2, warn, FillValue)
+    if ( present(FillValue) ) then
+      call ReplaceFillValues( filtered1, FillValue, newFill=real(0., kind(FillValue)) )
+      call ReplaceFillValues( filtered2, FillValue, newFill=real(0., kind(FillValue)) )
+    endif
+    if ( DEEBUG ) then
+      call output('min, max array1 before filtering ', advance='no')
+      call output(minval(array1), advance='no')
+      call blanks(2)
+      call output(maxval(array1), advance='no')
+      call output('  min, max array2 before filtering ', advance='no')
+      call output(minval(array2), advance='no')
+      call blanks(2)
+      call output(maxval(array2), advance='yes')
+      call output('min, max array1 after filtering ', advance='no')
+      call output(minval(filtered1), advance='no')
+      call blanks(2)
+      call output(maxval(filtered1), advance='no')
+      call output('  min, max array2 after filtering ', advance='no')
+      call output(minval(filtered2), advance='no')
+      call blanks(2)
+      call output(maxval(filtered2), advance='yes')
+    endif
     if ( myRMS ) then
       call allstats(filtered1, &
         & addedData=.false., min=refmin, max=refmax, rms=refrms)
       call allstats(filtered2, &
         & addedData=.true., min=refmin, max=refmax, rms=refrms)
-!       call output('Reference values (min : max, rms): ', advance='no')
-!       call output(refmin, advance='no')
-!       call output(' : ', advance='no')
-!       call output(refmax, advance='no')
-!       call output(', ', advance='no')
-!       call output(refrms, advance='yes')
       call printRMSetc ( 'Reference values', refmin, refmax, refrms )
     endif
+    ! if ( myStats ) then
+    !   nEqual = count( filtered1 == filtered2 )
+    !   nUnEqual = count( filtered1 /= filtered2 )
+    !   call printPercentages( trim(DiffName), nEqual, nUnEqual )
+    ! endif
     NaNsIn1 = any(.not. ieee_is_finite(array1))
     NaNsIn2 = any(.not. ieee_is_finite(array2))
     if ( DEEBUG ) &
@@ -76,6 +98,9 @@
       & advance='yes')
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.5  2006/02/28 21:42:29  pwagner
+! Replace fillvalues with 0 before computing rms (should actually remove)
+!
 ! Revision 2.4  2005/12/17 00:58:56  pwagner
 ! dumps of rms, etc. should appear uniform
 !
