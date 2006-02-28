@@ -35,8 +35,6 @@
       call announce_error('a and btab different sizes', n, size(b))
     else if ( DEEBUG ) then
       call output('Filtering 1-d '//p, advance='yes')
-      !call dump_name_v_pairs( (/n, size(b), size(atab), size(btab) /), &
-      !  & 'size(a), size(b), size(atab), size(btab)', width=4)
     end if
     atab = a
     btab = b
@@ -47,14 +45,6 @@
         warn = warn .or. ieee_is_finite(a(i)) .or. ieee_is_finite(b(i))
       end if
     end do
-    if ( present(fillValue) ) then
-      do i=1, N
-        if ( isFillValue(a(i), FillValue) .or. isFillValue(b(i), FillValue) ) then
-          atab(i) = myFillValue
-          btab(i) = myFillValue
-        end if
-      end do
-    end if
     if ( present(precision) ) then
       do i=1, N
         if ( (precision(i) < 0.0_rk) ) then
@@ -65,3 +55,6 @@
     end if
 
 ! $Log$
+! Revision 1.1  2005/12/23 03:09:33  vsnyder
+! Initial commit
+!
