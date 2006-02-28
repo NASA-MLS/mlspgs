@@ -21,51 +21,26 @@
     if ( present(RMS) ) myRMS = RMS
     myWholeArray = .not. (myStats .or. myRMS)
     if ( present(wholeArray) ) myWholeArray = wholeArray
-    if ( myStats ) then
-      numNonFill = count(array /= myFillValue)
-      numFill = size(array) - numNonFill
-      pctNonFill = numNonFill / ( 0.01 * (numNonFill+numFill) )
-      pctFill = 100.0 - pctNonFill
-      if ( STATSONONELINE ) then
-        if ( present(name) ) call output(trim(name) // ' ', advance='no')
-        call output('compared to ', advance='no')
-        call output(myFillValue, advance='no')
-      else
-        if ( present(name) ) call output(trim(name) // ' ', advance='no')
-        call output('Statistics on elements = or != ', advance='no')
-        call output(myFillValue, advance='yes')
-      endif
-      call output('"!=" ', advance='no')
-      call output(numNonFill, advance='no')
-      call output('( ', advance='no')
-      call output(pctNonFill, advance='no')
-      call output('%)   ', advance='no')
-      call output(' "=" ', advance='no')
-      call output(numFill, advance='no')
-      call output('( ', advance='no')
-      call output(pctFill, advance='no')
-      call output('%)   ', advance='yes')
-    endif
     if ( myRMS ) then
-!       if ( present(name) ) call output(trim(name) // ' rms ', advance='no')
       if ( .not. all(isfinite(array)) ) then
         call output(trim(name) //'   (NaNs found in array--skipped) ', &
           & advance='yes')
       else
-!         call output(sqrt(sum(array*array)/(size(array)+0.)), advance='no')
-!         call output('   mean ', advance='no')
-!         call output(sum(array)/(size(array)+0.), advance='no')
-!         call output('   max ', advance='no')
-!         call output(maxval(array), advance='no')
-!         call output('   min ', advance='no')
-!         call output(minval(array), advance='yes')
         call printRMSetc ( Name, minval(array), maxval(array), &
           & sqrt(sum(array*array)/(size(array)+0.)), &
           & mean=sum(array)/(size(array)+0.)  )
       endif
     endif
+    if ( myStats ) then
+      numNonFill = count(array /= myFillValue)
+      numFill = size(array) - numNonFill
+      call printPercentages ( name, numFill, numNonFill  )
+    endif
     if ( .not. myWholeArray ) return
 ! $Log$
+! Revision 2.7  2006/02/28 21:40:10  pwagner
+! Reordered printing of rms, stats
+!
 ! Revision 2.6  2005/12/17 00:58:56  pwagner
 ! dumps of rms, etc. should appear uniform
 !

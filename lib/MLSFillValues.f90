@@ -266,11 +266,20 @@ contains
 
 ! -------------------------------------------------  FilterValues  -----
   subroutine filterValues_REAL ( a, ATAB, b, BTAB, warn, fillValue, precision )
-    ! Return arrays filtered of any fillValues
-    ! or where corresponding precision array < 0
+    ! Return arrays filtered
+    ! where corresponding precision array < 0
     ! or whose values are not finite
-    ! "Filter" means offending elements set to 0.
+    ! "Filter" means offending elements set to 0. or optional fillValue
     ! Returned arrays are assigned values as appropriate
+    
+    ! An older version was able to reset any fillValues found to 0
+    ! but that functionality has been removed
+    ! It can be accomplished with ease in your code via
+    ! where ( isFillValue(array) )
+    !    array = 0.
+    ! endwhere
+    
+    ! See also ReplaceFillValues
     integer, parameter :: RK = kind(0.0) ! Kind type parameter for default real
     character(*), parameter :: P = 'default reals'
     include 'FilterValues_1d.f9h'
@@ -988,6 +997,9 @@ end module MLSFillValues
 
 !
 ! $Log$
+! Revision 2.7  2006/02/28 21:43:31  pwagner
+! Improve comments regarding FilterValues
+!
 ! Revision 2.6  2006/02/02 16:19:57  pwagner
 ! Should not use optional arg FillValue unless present
 !
