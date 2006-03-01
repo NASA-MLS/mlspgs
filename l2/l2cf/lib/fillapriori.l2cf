@@ -45,6 +45,12 @@ begin Fill
   Fill, quantity=apriori.rhi, h2oQuantity=apriori.h2o, $
     temperatureQuantity=apriori.temperature, method=RHIFromH2O, /dontMask
 
+   Fill, quantity=apriori.RHiVmr, method=profile, $
+     profileValues = [ 1000mb: 50, 500mb : 10, 150mb : 10 , 100mb : 0.0001 ]
+   Fill, quantity=aprioriPrecision.RHiVmr, method=profile, profileValues = $
+    [ 1000mb : 100, 464mb : 100, 316mb : 50, 215mb : 20, 147mb : 5, $
+        100mb : 0.01, 68mb : 0.000001]
+
   ;; --------------------------------------------- tpPressure
   !ifdef(tpPressure,{
     Fill, quantity=apriori.tpPressure, method=explicit, $
