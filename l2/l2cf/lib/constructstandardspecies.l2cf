@@ -71,6 +71,10 @@ begin Construct
     molecule=h2o
   rhi_HR: Quantity, vGrid=vGridHiRes, hGrid=hGridStandard, type=rhi, $
     molecule=h2o
+
+  ;; special quantity for RHi retrieval using saturated radiances
+  RHiVMR:Quantity, vGrid=vGridStandard, $
+    hGrid=hGridStandard, type=vmr, molecule=RHi
   
   ;; ----------------------------------------- Columns
   tpPressure: Quantity, type=boundaryPressure, hGrid=hGridStandard
@@ -435,7 +439,7 @@ begin Construct
     massMeanDiameterIce, massMeanDiameterWater, $
     !allMolecules, $
     !allHiResMolecules, $
-    rhi, rhi_HR, $
+    RHiVMR, rhi, rhi_HR, $
     !allColumns, $
     !allBaselines, $
     !allBaselinesFine, $
