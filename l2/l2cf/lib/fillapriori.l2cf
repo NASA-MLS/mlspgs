@@ -262,6 +262,9 @@ begin Fill
   Fill, quantity=lowBound.h2o, method=explicit, explicitValues=0.1ppmv, /spread
   Fill, quantity=highBound.h2o, method=explicit, explicitValues=0.01, /spread
 
+  Fill, quantity=lowBound.RHiVmr, method=explicit, explicitValues=0.1, /spread
+  Fill, quantity=highBound.RHiVmr, method=explicit, explicitValues=200, /spread
+
   !interpolateToHiRes(lowBound.temperature_HR)
   !interpolateToHiRes(highBound.temperature_HR)
   !forall(interpolateToHiRes,!makelist(lowBound.,{},!allHiResMolecules))
