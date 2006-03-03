@@ -81,7 +81,7 @@ module DUMP_0
     module procedure DUMP_2D_LOGICAL, DUMP_2D_REAL
     module procedure DUMP_3D_CHAR, DUMP_3D_DOUBLE, DUMP_3D_INTEGER
     module procedure DUMP_3D_REAL
-    module procedure DUMP_HASH, DUMP_STRLIST
+    module procedure DUMP_HASH_LOG, DUMP_HASH_STR, DUMP_STRLIST
   end interface
   interface DUMP_NAME_V_PAIRS   ! dump name-value pairs, names in string list
     module procedure DUMP_NAME_V_PAIRS_DOUBLE, DUMP_NAME_V_PAIRS_INTEGER
@@ -1395,8 +1395,8 @@ contains
    end if
   end subroutine DUMP_3D_REAL
 
-  ! -----------------------------------------------  DUMP_HASH  -----
-  subroutine DUMP_HASH ( COUNTEMPTY, KEYS, VALUES, NAME, SEPARATOR )
+  ! -----------------------------------------------  DUMP_HASH_STR  -----
+  subroutine DUMP_HASH_STR ( COUNTEMPTY, KEYS, VALUES, NAME, SEPARATOR )
     ! Dumps a hash composed of two string lists: keys and values
     logical, intent(in)          :: COUNTEMPTY
     character(len=*), intent(in) :: KEYS
@@ -1429,7 +1429,42 @@ contains
         call output ( trim(element), advance='yes' )
       end do ! j
     end if
-  end subroutine DUMP_HASH
+  end subroutine DUMP_HASH_STR
+
+  ! -----------------------------------------------  DUMP_HASH_LOG  -----
+  subroutine DUMP_HASH_LOG ( COUNTEMPTY, KEYS, VALUES, NAME, SEPARATOR )
+    ! Dumps a hash composed of two string lists: keys and values
+    logical, intent(in)          :: COUNTEMPTY
+    character(len=*), intent(in) :: KEYS
+    logical, dimension(:), intent(in) :: VALUES
+    character(len=*), intent(in), optional :: NAME
+    character(len=*), intent(in), optional :: SEPARATOR
+
+    character( len=len(keys)) :: element
+    integer :: J
+    integer :: NumElements
+    character(len=1) :: mySeparator
+    character(len=*), parameter :: COMMA = ','
+
+    mySeparator = COMMA
+    if ( present(SEPARATOR) ) mySeparator = SEPARATOR
+
+    NumElements = NumStringElements(keys, countEmpty, &
+     & separator)
+    if ( NumElements == 0 ) then
+      call empty ( name )
+    else
+      call name_and_size ( name, .false., NumElements )
+      if ( present(name) ) call output ( '', advance='yes' )
+      call output ( '(key)    =   (value)', advance='yes' )
+      do j = 1, NumElements
+        call GetStringElement( keys, element, j, countEmpty, separator)
+        call output ( trim(element), advance='no' )
+        call output( ' = ', advance='no' )
+        call output ( values(j), advance='yes' )
+      end do ! j
+    end if
+  end subroutine DUMP_HASH_LOG
 
   ! -----------------------------------------------  DUMP_STRLIST  -----
   subroutine DUMP_STRLIST ( STRING, NAME, FILLVALUE, CLEAN )
@@ -1926,6 +1961,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.54  2006/03/03 23:04:55  pwagner
+! May dump logical-valued hashes
+!
 ! Revision 2.53  2006/02/28 21:42:29  pwagner
 ! Replace fillvalues with 0 before computing rms (should actually remove)
 !
