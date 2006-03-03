@@ -54,6 +54,7 @@ module MLSStringLists               ! Module to treat string lists
 ! GetUniqueInts      Returns array of only unique entries from input array
 ! GetUniqueList      Returns str list of only unique entries from input list
 ! GetUniqueStrings   Returns array of only unique entries from input array
+! Intersection       Return the intersection of two stringlists; may return blank
 ! IsInList           Is string in list? options may expand criteria
 ! List2Array         Converts a single string list to an array of strings
 ! NumStringElements  Returns number of elements in string list
@@ -89,6 +90,7 @@ module MLSStringLists               ! Module to treat string lists
 !   & [char inseparator], [log IgnoreLeadingSpaces], [char* fillValue]) 
 ! GetUniqueStrings (char* inList(:), char* outList(:), int noUnique, 
 !   [char* extra(:)], [char* fillValue])
+! char* intersection (char* str1, char* str2)
 ! log IsInList(strlist stringList, char* string, [char* options])
 ! List2Array (strlist inList, char* outArray(:), log countEmpty,
 !   [char inseparator], [log IgnoreLeadingSpaces])
@@ -156,12 +158,16 @@ module MLSStringLists               ! Module to treat string lists
 ! values are expected. The value KEYNOTFOUND=-1 is used to indicate
 ! "no such key."
 ! (4) "No such key" is indicated by FALSE for logical values and "," strings
+! (5) If the optional extra array or list is supplied to the GetUnique...
+!     function, repeated elements purely in the first arg are left undeleted;
+!     if you want uniqueness among them, too, you must invoke it twice:
+!     first w/o the extra arg, and the second time with the extra arg
 ! === (end of api) ===
 
   public :: Array2List, BooleanValue, catLists, &
    & ExpandStringRange, ExtractSubString, &
    & GetHashElement, GetStringElement, &
-   & GetUniqueInts, GetUniqueStrings, GetUniqueList, IsInList, &
+   & GetUniqueInts, GetUniqueStrings, GetUniqueList, Intersection, IsInList, &
    & List2Array, PutHashElement, NumStringElements, &
    & RemoveElemFromList, RemoveListFromList, RemoveNumFromList, &
    & ReplaceSubString, ReverseList, &
@@ -1342,6 +1348,44 @@ contains
 
     deallocate ( duplicate )
   end subroutine GetUniqueStrings
+
+  ! -------------------------------------------------  Intersection  -----
+  function Intersection (STR1, STR2) result (OUTSTR)
+    ! return intersection of 2 string lists, blank means empty set
+    ! E.g., given str1 = 'a,b,c' and str2 = 'd,e,f,c,a'
+    ! returns 'a,c'
+    !--------Argument--------!
+    character (len=*), intent(in) :: STR1
+    character (len=*), intent(in) :: STR2
+    character (len=len(str1)+len(str2)+1) :: OUTSTR
+
+    !----------Local vars----------!
+    logical, parameter :: countEmpty = .true.
+    logical, parameter :: ignoreLeadingSpaces = .true.
+    character(len=len(str1)) :: elem
+    character(len=len(str1)) :: uniq1
+    character(len=len(str2)) :: uniq2
+    integer :: n1, n2
+    integer :: i
+    !----------executable part----------!
+
+    if ( str1 == ' ' .or. str2 == ' ' ) then
+      outstr = ' '
+      return
+    endif
+    
+    call GetUniqueList( str1, uniq1, n1, &
+      & countEmpty=countEmpty, ignoreLeadingSpaces=ignoreLeadingSpaces )
+    call GetUniqueList( str2, uniq2, n2, &
+      & countEmpty=countEmpty, ignoreLeadingSpaces=ignoreLeadingSpaces )
+    outstr = ' '
+    do i=1, n1
+      call GetStringElement( uniq1, elem, i, countEmpty )
+      if ( IsInList( uniq2, trim(elem) ) ) &
+        & outstr = catLists( outstr, elem )
+    enddo
+
+  end function Intersection
 
   ! ---------------------------------------------  IsInList  -----
 
@@ -2826,6 +2870,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.21  2006/03/03 23:06:35  pwagner
+! Added Intersection function
+!
 ! Revision 2.20  2006/02/24 01:14:54  pwagner
 ! Added BooleanValue to evaluate boolean formulas
 !
