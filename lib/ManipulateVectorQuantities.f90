@@ -41,22 +41,79 @@ module ManipulateVectorQuantities ! Various routines for manipulating vectors
 contains
 
   ! --------------------------------------- AnyGoodDataInQty --------------
-  logical function AnyGoodDataInQty ( a, a_precision )
+  logical function AnyGoodDataInQty ( a, &
+    & precision, quality, status, quality_min, op )
     ! Returns true if any of the mask != char(0)
     ! Returns true if any of the precision values >= 0 (if present)
-    type ( VectorValue_T ), intent(in) :: a           ! Precision of qty
-    type ( VectorValue_T ), intent(in), optional :: a_precision ! Precision of qty
+    ! Returns true if any of the quality values >= quality_min (if present)
+    ! Returns true if any of the status values are not odd (if present)
+    !
+    ! By default the result returned is the "and" of all the results
+    ! for each of its args
+    ! If instead you want the "or", set op = "or"
+    
+    ! If mask is not associated, should we return TRUE or FALSE?
+    ! The answer should be TRUE
+    ! But if values aren't associated for precision, quality, or status,
+    ! the behavior depends on context and may be the opposite 
+    ! of what you would expect
+    ! If you supply only precision, and that precision array is not associated
+    ! we return TRUE
+    ! 
+    ! Should we warn of misuse if user supplies quality w/o quality_min?
+    use MLSStrings, only: lowerCase
+
+    type ( VectorValue_T ), pointer   , optional :: a         ! qty values
+    type ( VectorValue_T ), pointer   , optional :: precision ! Precision
+    type ( VectorValue_T ), pointer   , optional :: quality   ! Quality
+    type ( VectorValue_T ), pointer   , optional :: status    ! Status
+    real(rv),               intent(in), optional :: quality_min
+    character(len=*),       intent(in), optional :: op
+    ! Local variables
+    character(len=4) :: myOp
 
     ! Executable code
-    AnyGoodDataInQty = .false.
-    if ( present(a_precision) ) then
-      if ( .not. associated ( a_precision%values ) ) return
-      AnyGoodDataInQty = any(a_precision%values >= 0._rv)
-      return
-    endif
+    myOp = "and"
+    if ( present(op) ) myOp = lowerCase(op)
     AnyGoodDataInQty = .true.
-    if ( .not. associated ( a%mask ) ) return
-    AnyGoodDataInQty = any(a%mask == char(0) )
+    if ( myOp /= "and" ) AnyGoodDataInQty = .false.
+
+    if ( present(a) ) then
+      if ( associated(a) ) then
+        AnyGoodDataInQty = .true. ! Return TRUE if mask not associated
+        if ( associated ( a%mask ) ) &
+        & call joinResults( any(a%mask == char(0) ) )
+      endif
+    endif
+    if ( present(precision) ) then
+      if ( associated(precision) ) then
+        if ( associated ( precision%values ) ) &
+        & call joinResults( any(precision%values >= 0._rv) )
+      endif
+    endif
+    if ( present(quality) .and. present(quality_min) ) then
+      if ( associated(quality) ) then
+        if ( associated ( quality%values ) ) &
+        & call joinResults( any(quality%values >= quality_min) )
+      endif
+    endif
+    if ( present(status) ) then
+      if ( associated(status) ) then
+        if ( associated ( status%values ) ) &
+        & call joinResults( any(mod(int(status%values), 2) /= 0) )
+      endif
+    endif
+    
+    contains
+    subroutine joinResults (arg)
+      logical, intent(in) :: arg
+      if ( myOp == "and" ) then
+        AnyGoodDataInQty = ( AnyGoodDataInQty .and. arg )
+      else
+        AnyGoodDataInQty = ( AnyGoodDataInQty .or. arg )
+      endif
+    end subroutine joinResults
+    
   end function AnyGoodDataInQty
 
   ! ------------------------------ FindClosestInstances -----------------
@@ -449,6 +506,9 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.31  2006/03/03 23:05:50  pwagner
+! Changed interface to AnyGoodDataInQty
+!
 ! Revision 2.30  2005/06/22 17:25:49  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
