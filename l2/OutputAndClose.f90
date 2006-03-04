@@ -85,14 +85,14 @@ contains ! =====     Public Procedures     =============================
     use MLSCommon, only: MLSFile_T, TAI93_Range_T
     use MLSFiles, only: &
       & AddInitializeMLSFile, Dump, GetMLSFileByName, &
-      & MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
+      & MLS_INQSWATH, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
     use MLSL2Options, only: CATENATESPLITS, CHECKPATHS, &
       & DEFAULT_HDFVERSION_WRITE, &
       & PENALTY_FOR_NO_METADATA, SPECIALDUMPFILE, SKIPDIRECTWRITES, TOOLKIT
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
       & MLSPCF_L2GP_START, mlspcf_l2dgg_start, mlspcf_l2dgg_end
-    use MLSStringLists, only: switchDetail, unquote
+    use MLSStringLists, only: Intersection, switchDetail, unquote
     use MLSStrings, only: trim_safe
     use MoreTree, only: Get_Spec_ID, GET_BOOLEAN
     use OUTPUT_M, only: blanks, OUTPUT, revertOutput, switchOutput
@@ -141,6 +141,7 @@ contains ! =====     Public Procedures     =============================
     type(MLSFile_T), pointer :: inputFile
     integer :: KEY                      ! Index of spec_args node
     integer :: L2PCUNIT
+    integer :: listSize
     integer :: Metadata_error
     character (len=32) :: meta_name    ! From the metaName= field
     integer :: NAME                     ! string index of label on output
@@ -148,6 +149,7 @@ contains ! =====     Public Procedures     =============================
     type (HGrid_T), pointer :: newHGridp
     integer :: NODE
     integer :: noGapsHGIndex = 0
+    integer :: noSwaths
     integer :: OUTPUT_TYPE              ! L_L2AUX, L_L2GP, L_PC, L_L2DGG
     type(MLSFile_T), pointer :: outputFile
     character(len=8) :: OUTPUTTYPESTR   ! 'l2gp', 'l2aux', etc.
@@ -158,6 +160,7 @@ contains ! =====     Public Procedures     =============================
     character (len=MAXSWATHNAMESBUFSIZE) :: rename
     logical :: RepairGeoLocations
     character (len=MAXSWATHNAMESBUFSIZE) :: sdList
+    character (len=MAXSWATHNAMESBUFSIZE) :: sdListThere
     logical :: skipCopy
     integer :: SON                      ! Of Root -- spec_args or named node
     integer :: SPEC_NO                  ! Index of son of Root
@@ -365,6 +368,15 @@ contains ! =====     Public Procedures     =============================
             & mlspcf_l2dgg_start, mlspcf_l2dgg_end)
           inputFile => GetMLSFileByName(filedatabase, inputPhysicalFilename)
           if ( .not. associated(inputFile) ) then
+            call output( ' output base ', advance='no' )
+            call output( trim(file_base), advance='yes' )
+            call output( ' output file ', advance='no' )
+            call output( trim(outputFile%name), advance='yes' )
+            call output( ' input base ', advance='no' )
+            call output( trim(inputfile_base), advance='yes' )
+            call output( ' input file ', advance='no' )
+            call output( trim(inputFile%name), advance='yes' )
+            call dump(filedatabase)
             call MLSMessage(MLSMSG_Error, ModuleName, &
               & 'No entry in filedatabase for ' // trim(inputPhysicalFilename) )
           endif
@@ -392,10 +404,12 @@ contains ! =====     Public Procedures     =============================
             & sdList=trim(sdList))
         case ( l_l2gp, l_l2dgg ) ! --------------------- Copying l2gp files -----
           formattype = l_swath
-          ! print *, 'Before cpL2GPFata'
-          ! print *, 'noGapsHGIndex: ', noGapsHGIndex
-          ! call dump(hGrids)
           ! How to use swaths field? See definition of sdList
+          ! Before trying to cp these swaths, make sure they're actually there
+          noSwaths = mls_InqSwath ( inputFile%name, sdListThere, listSize, &
+           & hdfVersion=inputFile%hdfVersion )
+          sdList = Intersection( sdList, sdListThere )
+          if ( sdList == ' ' ) cycle
           if ( got(f_exclude) .and. .not. repairGeoLocations ) then
             call cpL2GPData(inputfile, &
               & outputfile, create2=create, &
@@ -1504,6 +1518,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.120  2006/03/04 00:23:30  pwagner
+! Will not attempt copy unless input file contains swath
+!
 ! Revision 2.119  2006/02/21 19:13:33  pwagner
 ! Some tweaks to where, when to dump
 !
