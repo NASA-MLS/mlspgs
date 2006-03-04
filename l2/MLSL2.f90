@@ -32,7 +32,8 @@ program MLSL2
     & DEFAULT_HDFVERSION_READ, DEFAULT_HDFVERSION_WRITE, &
     & LEVEL1_HDFVERSION, NORMAL_EXIT_STATUS, OUTPUT_PRINT_UNIT, &
     & PATCH, PENALTY_FOR_NO_METADATA, QUIT_ERROR_THRESHOLD, RESTARTWARNINGS, &
-    & SECTIONTIMINGUNITS, SIPS_VERSION, SKIPDIRECTWRITES, &
+    & SECTIONTIMINGUNITS, SIPS_VERSION, &
+    & SKIPDIRECTWRITES, SKIPDIRECTWRITESORIGINAL, &
     & SKIPRETRIEVAL, SKIPRETRIEVALORIGINAL, &
     & SPECIALDUMPFILE, STOPAFTERCHUNKDIVIDE, STOPAFTERGLOBAL, STOPWITHERROR, &
     & TOOLKIT
@@ -789,11 +790,12 @@ program MLSL2
     if ( error == 0 .and. first_section /= 0 .and. .not. checkl2cf ) then
       ! Now do the L2 processing.
       ! stop-early flags => no writing, no retrieval
-      SKIPDIRECTWRITES = (SKIPDIRECTWRITES .or. STOPAFTERCHUNKDIVIDE .or. &
-        & STOPAFTERGLOBAL)
-      SKIPRETRIEVAL = (SKIPRETRIEVAL .or. STOPAFTERCHUNKDIVIDE .or. &
-        & STOPAFTERGLOBAL)
-      SKIPRETRIEVALORIGINAL = SKIPRETRIEVAL
+      skipDirectwrites = (skipDirectwrites .or. stopAfterChunkDivide .or. &
+        & stopAfterGlobal)
+      skipRetrieval = (skipRetrieval .or. stopAfterChunkDivide .or. &
+        & stopAfterGlobal)
+      skipDirectwritesOriginal = skipDirectwrites
+      skipRetrievalOriginal = skipRetrieval
       call time_now ( t1 )
       if ( timing ) &
         & call output ( "-------- Processing Begun ------ ", advance='yes' )
@@ -1064,6 +1066,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.146  2006/03/04 00:17:20  pwagner
+! May skip retrieval, directWrites depending on runtime Booleans
+!
 ! Revision 2.145  2006/02/21 19:15:17  pwagner
 ! Uses switchDetail only now
 !
