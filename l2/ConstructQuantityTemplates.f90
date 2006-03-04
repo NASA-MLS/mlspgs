@@ -18,7 +18,7 @@ module ConstructQuantityTemplates
   implicit none
   private
 
-  public :: ConstructMinorFrameQuantity, CreateQtyTemplateFromMLSCFInfo
+  public :: AnyGoodSignalData, ConstructMinorFrameQuantity, CreateQtyTemplateFromMLSCFInfo
   public :: ForgeMinorFrames
 
   !---------------------------- RCS Ident Info -------------------------------
@@ -1278,6 +1278,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.129  2006/03/04 00:18:02  pwagner
+! AnyGoodSignalData made public
+!
 ! Revision 2.128  2006/01/11 18:00:12  pwagner
 ! Consistent with new abstract phys quant colmAbundance
 !
