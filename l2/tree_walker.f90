@@ -14,7 +14,7 @@ module TREE_WALKER
 ! Traverse the tree output by the parser and checked by the tree checker.
 ! Perform the actions of the MLS L2 processing in the order indicated.
 
-  implicit NONE
+  implicit none
   private
 
   public :: WALK_TREE_TO_DO_MLS_L2
@@ -77,6 +77,7 @@ contains ! ====     Public Procedures     ==============================
       & DestroySpectrometerTypeDatabase, MLSSignals, Modules, Radiometers, &
       & Signals, SpectrometerTypes
     use MLSStringLists, only: SwitchDetail
+    use MLSL2Options, only: SKIPDIRECTWRITES, SKIPDIRECTWRITESORIGINAL
     use MLSL2Timings, only: add_to_section_timing, TOTAL_TIMES
     use Open_Init, only: OpenAndInitialize
     use OutputAndClose, only: Output_Close
@@ -308,7 +309,7 @@ subtrees:   do while ( j <= howmany )
               case ( z_construct )
                 if ( .not. checkPaths ) &
                 & call MLSL2Construct ( son, filedatabase, processingRange, &
-                  & chunks(chunkNo), qtyTemplates, vectorTemplates, &
+                  & chunks(chunkNo), qtyTemplates, vectorTemplates, vectors, &
                   & fGrids, hGrids, l2gpDatabase, forwardModelConfigDatabase, &
                   & mifGeolocation )
                 call add_to_section_timing ( 'construct', t1)
@@ -385,6 +386,8 @@ subtrees:   do while ( j <= howmany )
       if ( showTime .or. textCode /= ' ' ) then
         call setStamp( textCode="Output" )
       endif
+      ! And resume directwrites
+      skipDirectwrites = skipDirectwritesOriginal
       case ( z_output ) ! Write out the data
         call resumeOutput ! In case the last phase was  silent
         if ( .not. parallel%slave ) then
@@ -508,6 +511,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.138  2006/02/16 00:16:32  pwagner
+! switchDetail instead of index
+!
 ! Revision 2.137  2006/02/10 21:15:26  pwagner
 ! dumps may go to special dumpfile
 !
