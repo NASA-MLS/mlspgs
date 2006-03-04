@@ -30,6 +30,261 @@ MODULE Construct                ! The construct module for the MLS L2 sw.
 
 contains ! =====     Public Procedures     =============================
 
+  ! ------------------------------------- BooleanFromAnyGoodRadiances --
+  function BooleanFromAnyGoodRadiances ( root, chunk, filedatabase ) &
+    & result(hashsize)
+    use Allocate_Deallocate, only: DEALLOCATE_TEST
+    use ConstructQuantityTemplates, only: AnyGoodSignalData
+    use Chunks_m, only: MLSCHUNK_T
+    use Dump_0, only: Dump
+    use INIT_TABLES_MODULE, only: F_SIGNAL, F_Boolean
+    use MLSCommon, only: r8, MLSFile_T
+    use MLSL2Options, only: runTimeValues
+    use MLSSignals_m, only: GetSignalName, &
+      & SIGNALS
+    use MLSStringLists, only: NumStringElements, PutHashElement, &
+      & SwitchDetail
+    use MLSStrings, only: lowerCase
+    use output_m, only: output
+    use Parse_signal_m, only: Parse_signal
+    use String_Table, only: get_string
+    use TOGGLES, only: SWITCHES
+    use TREE, only: DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE
+    ! Dummy args
+    ! integer, intent(in) :: name
+    integer, intent(in) :: root
+    type (MLSChunk_T), intent(in) :: chunk
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    integer             :: hashsize
+    ! Internal variables
+    logical, parameter :: countEmpty = .true.
+    integer :: field
+    integer :: field_index
+    integer :: fieldValue
+    character(len=255) :: formula
+    integer :: keyNo
+    character(len=32) :: nameString
+    integer :: s
+    integer :: signalIndex
+    integer, pointer :: Signal_Indices(:)         ! Indices in the signals
+    character(len=32) :: signalString
+    integer :: son
+    character(len=32) :: subSignalString
+    logical :: tvalue
+    ! Executable
+    nullify(Signal_Indices)
+    ! call get_string(name, nameString)
+    ! nameString = lowerCase(nameString)
+    signalString = ' '
+    do keyNo = 2, nsons(root)
+      son = subtree(keyNo,root)
+      field = subtree(1,son)
+      if ( nsons(son) > 1 ) then
+        fieldValue = decoration(subtree(2,son)) ! The field's value
+      else
+        fieldValue = son
+      end if
+      field_index = decoration(field)
+
+      select case ( field_index )
+      case ( f_Boolean )
+        call get_string( sub_rosa(subtree(2,son)), nameString )
+      case ( f_signal )
+        call get_string( sub_rosa(subtree(2,son)), signalString, strip=.true. )
+      case default ! Can't get here if tree_checker works correctly
+      end select
+    end do
+
+    if ( signalString /= ' ' ) then
+      if ( switchDetail(switches, 'bool') > 0 ) &
+        & call output( 'signal: ' // trim(signalString), advance='yes' )
+      call Parse_signal(signalString, signal_indices)
+      tvalue = .false.
+      ! Loop over signals, or-ing them until we get TRUE
+      do s=1, size(signal_indices)
+        signalIndex = signal_indices(s)
+        if ( switchDetail(switches, 'bool') > 0 ) then
+          call GetSignalName ( signalIndex, subSignalString, &                   
+            & sideband=signals(signalIndex)%sideband, noChannels=.TRUE. )
+          call output( 'sub-signal: ' // trim(subSignalString), advance='yes' )
+        endif
+        tvalue = tvalue .or. &
+          & AnyGoodSignalData ( signalIndex, signals(signalIndex)%sideband, &
+          & filedatabase, chunk )
+        if ( tvalue ) then
+          if ( switchDetail(switches, 'bool') > 0 ) then
+            call output( 'good signal data found: ' &
+              & // trim(subSignalString), advance='yes' )
+          endif
+          exit
+        endif
+      enddo
+      call deallocate_test(Signal_Indices, 'Signal_Indices', ModuleName)
+    else
+      print *, 'Sorry-unable to parse ', trim(signalString)
+      tvalue = .false.
+    endif
+    call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
+      & lowercase(trim(nameString)), tvalue, countEmpty=countEmpty )
+    hashsize = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
+    if ( switchDetail(switches, 'bool') > 0 ) &
+      & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
+      & 'Run-time Boolean flags' )
+  end function BooleanFromAnyGoodRadiances
+
+  ! ------------------------------------- BooleanFromAnyGoodValues --
+  function BooleanFromAnyGoodValues ( root, vectors ) result(size)
+    use Dump_0, only: Dump
+    use Expr_M, only: EXPR
+    use INIT_TABLES_MODULE, only: F_PRECISION, F_QUALITY, &
+      & F_QUANTITY, F_Boolean, F_STATUS
+    use ManipulateVectorQuantities, only: AnyGoodDataInQty
+    use MLSCommon, only: r8, rv
+    use MLSL2Options, only: runTimeValues
+    use MLSStringLists, only: BooleanValue, NumStringElements, PutHashElement, &
+      & SwitchDetail
+    use MLSStrings, only: lowerCase
+    use String_Table, only: get_string
+    use TOGGLES, only: SWITCHES
+    use TREE, only: DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE
+    use VectorsModule, only: Vector_T, VectorValue_T, &
+      & GetVectorQtyByTemplateIndex
+    ! Dummy args
+    ! integer, intent(in) :: name
+    integer, intent(in) :: root
+    type (vector_T), dimension(:), pointer :: Vectors
+    integer             :: size
+    ! Internal variables
+    logical, parameter :: countEmpty = .true.
+    integer :: field
+    integer :: field_index
+    integer :: fieldValue
+    character(len=255) :: formula
+    integer :: keyNo
+    character(len=32) :: nameString
+    type (vectorValue_T), pointer :: PRECISIONQUANTITY
+    integer :: QUANTITYINDEX
+    real(rv) :: QUALITY_MIN
+    type (vectorValue_T), pointer :: QUALITYQUANTITY
+    type (vectorValue_T), pointer :: Quantity
+    integer :: son
+    integer :: source
+    type (vectorValue_T), pointer :: STATUSQUANTITY
+    logical :: tvalue
+    integer :: VECTORINDEX
+    ! Executable
+    nullify( precisionquantity, qualityquantity, Quantity, statusquantity )
+    ! call get_string(name, nameString)
+    ! nameString = lowerCase(nameString)
+    do keyNo = 2, nsons(root)
+      son = subtree(keyNo,root)
+      field = subtree(1,son)
+      if ( nsons(son) > 1 ) then
+        fieldValue = decoration(subtree(2,son)) ! The field's value
+      else
+        fieldValue = son
+      end if
+      field_index = decoration(field)
+      source = subtree(2,son) ! required to be an n_dot vertex
+
+      select case ( field_index )
+      case ( f_Boolean )
+        call get_string( sub_rosa(subtree(2,son)), nameString )
+      case ( f_precision )
+        VectorIndex = decoration(decoration(subtree(1,source)))
+        QuantityIndex = decoration(decoration(decoration(subtree(2,source))))
+        precisionQuantity => GetVectorQtyByTemplateIndex( &
+          & vectors(VectorIndex), QuantityIndex )
+      case ( f_quality )
+        VectorIndex = decoration(decoration(subtree(1,source)))
+        QuantityIndex = decoration(decoration(decoration(subtree(2,source))))
+        qualityQuantity => GetVectorQtyByTemplateIndex( &
+          & vectors(VectorIndex), QuantityIndex )
+      case ( f_quantity )
+        VectorIndex = decoration(decoration(subtree(1,source)))
+        QuantityIndex = decoration(decoration(decoration(subtree(2,source))))
+        Quantity => GetVectorQtyByTemplateIndex( &
+          & vectors(VectorIndex), QuantityIndex )
+      case ( f_status )
+        VectorIndex = decoration(decoration(subtree(1,source)))
+        QuantityIndex = decoration(decoration(decoration(subtree(2,source))))
+        statusQuantity => GetVectorQtyByTemplateIndex( &
+          & vectors(VectorIndex), QuantityIndex )
+      case default ! Can't get here if tree_checker works correctly
+      end select
+    end do
+    tvalue = AnyGoodDataInQty ( a=Quantity, &
+      & precision=precisionQuantity, quality=qualityQuantity, &
+      & status=statusQuantity, quality_min=quality_min )
+    call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
+      & lowercase(trim(nameString)), tvalue, countEmpty=countEmpty )
+    size = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
+    if ( switchDetail(switches, 'bool') > 0 ) &
+      & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
+      & 'Run-time Boolean flags' )
+  end function BooleanFromAnyGoodValues
+
+  ! ------------------------------------- DealWithBooleanFromMLSCfInfo --
+  function DealWithBooleanFromMLSCfInfo ( name, root ) result(size)
+    use Dump_0, only: Dump
+    use Expr_M, only: EXPR
+    use INIT_TABLES_MODULE, only: F_FORMULA, F_VALUES
+    use MLSCommon, only: r8
+    use MLSL2Options, only: runTimeValues
+    use MLSStringLists, only: BooleanValue, NumStringElements, PutHashElement, &
+      & SwitchDetail
+    use MLSStrings, only: lowerCase
+    use String_Table, only: get_string
+    use TOGGLES, only: SWITCHES
+    use TREE, only: DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE
+    ! Dummy args
+    integer, intent(in) :: name
+    integer, intent(in) :: root
+    integer             :: size
+    ! Internal variables
+    logical, parameter :: countEmpty = .true.
+    integer :: field
+    integer :: field_index
+    integer :: fieldValue
+    character(len=255) :: formula
+    integer :: keyNo
+    character(len=32) :: nameString
+    integer :: son
+    logical :: tvalue
+    integer, dimension(2) :: UNITASARRAY ! From expr
+    real(r8), dimension(2) :: VALUEASARRAY ! From expr
+    ! Executable
+    call get_string(name, nameString)
+    nameString = lowerCase(nameString)
+    do keyNo = 2, nsons(root)
+      son = subtree(keyNo,root)
+      field = subtree(1,son)
+      if ( nsons(son) > 1 ) then
+        fieldValue = decoration(subtree(2,son)) ! The field's value
+      else
+        fieldValue = son
+      end if
+      field_index = decoration(field)
+
+      select case ( field_index )
+      case ( f_formula )
+        call get_string ( sub_rosa(subtree(2,son)), formula, strip=.true. )
+        tvalue = BooleanValue (formula, runTimeValues%lkeys, runTimeValues%lvalues)
+      case ( f_values )
+        call expr ( son , unitAsArray, valueAsArray )
+        tvalue = ( valueAsArray(1) /= 0 )
+        ! badRange = valueAsArray
+      case default ! Can't get here if tree_checker works correctly
+      end select
+    end do
+    call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
+      & lowercase(trim(nameString)), tvalue, countEmpty=countEmpty )
+    size = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
+    if ( switchDetail(switches, 'bool') > 0 ) &
+      & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
+      & 'Run-time Boolean flags' )
+  end function DealWithBooleanFromMLSCfInfo
+
   ! --------------------------------------------- ConstructMIFGeolocation --
   subroutine ConstructMIFGeolocation ( mifGeolocation, filedatabase, chunk )
     ! mifGeolocation is just quantity templates containing geolocation
@@ -73,7 +328,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------------  MLSL2Construct  -----
   subroutine MLSL2Construct ( root, filedatabase, processingRange, chunk, &
-       & quantityTemplatesBase, vectorTemplates, FGrids, HGrids, &
+       & quantityTemplatesBase, vectorTemplates, vectors, FGrids, HGrids, &
        & l2gpDatabase, ForwardModelConfigDatabase, mifGeolocation )
 
   ! This is the `main' subroutine for this module
@@ -89,8 +344,9 @@ contains ! =====     Public Procedures     =============================
     use ForwardModelSupport, only: ConstructForwardModelConfig
     use HGridsDatabase, only: ADDHGRIDTODATABASE, HGRID_T
     use HGrid, only: CREATEHGRIDFROMMLSCFINFO
-    use INIT_TABLES_MODULE, only: S_DUMP, S_FORGE, S_FORWARDMODEL, S_HGRID, &
-      & S_PHASE, S_QUANTITY, S_TIME, S_VECTORTEMPLATE
+    use INIT_TABLES_MODULE, only: S_ANYGOODVALUES, S_ANYGOODRADIANCES, S_DUMP, &
+      & S_FORGE, S_FORWARDMODEL, S_HGRID, &
+      & S_PHASE, S_QUANTITY, S_Boolean, S_TIME, S_VECTORTEMPLATE
     use L2GPData, only: L2GPDATA_T
     use MLSCommon, only: MLSFile_T, TAI93_Range_T
     use MLSL2Options, only: RESTARTWARNINGS, SPECIALDUMPFILE
@@ -106,7 +362,7 @@ contains ! =====     Public Procedures     =============================
     use TREE, only: DECORATE, NODE_ID, NSONS, SUB_ROSA, SUBTREE
     use TREE_TYPES, only: N_NAMED
     use VectorsModule, only: AddVectorTemplateToDatabase, &
-      & VectorTemplate_T
+      & Vector_T, VectorTemplate_T
 
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Root of the tree for the Construct section
@@ -115,6 +371,7 @@ contains ! =====     Public Procedures     =============================
     type (MLSChunk_T), intent(in) :: chunk
     type (QuantityTemplate_T), dimension(:), pointer :: quantityTemplatesBase
     type (VectorTemplate_T), dimension(:), pointer :: vectorTemplates
+    type (vector_T), dimension(:), pointer :: Vectors
     type (FGrid_T), dimension(:), pointer :: fGrids
     type (HGrid_T), dimension(:), pointer :: HGrids
     type (L2GPData_T), dimension(:), pointer :: L2GPDatabase
@@ -157,6 +414,12 @@ contains ! =====     Public Procedures     =============================
       ! Node_id(key) is now n_spec_args.
 
       select case( get_spec_id(key) )
+      case ( s_anygoodvalues )
+        call decorate ( key, &
+          & BooleanFromAnyGoodValues ( key, vectors ) )
+      case ( s_anygoodradiances )
+        call decorate ( key, &
+          & BooleanFromAnyGoodRadiances ( key, chunk, filedatabase ) )
       case ( s_dump )
         call dumpCommand ( key, quantityTemplatesBase, &
           & vectorTemplates, forwardModelConfigs=forwardModelConfigDatabase, &
@@ -178,6 +441,8 @@ contains ! =====     Public Procedures     =============================
         call decorate ( key, AddQuantityTemplateToDatabase ( &
           & quantityTemplatesBase, CreateQtyTemplateFromMLSCfInfo ( name, key, &
             & fGrids, hGrids, filedatabase, chunk, mifGeolocation ) ) )
+      case ( s_Boolean )
+        call decorate ( key,  DealWithBooleanFromMLSCfInfo ( name, key ) )
       case ( s_vectortemplate )
         call decorate ( key, AddVectorTemplateToDatabase ( vectorTemplates, &
           & CreateVecTemplateFromMLSCfInfo ( name, key, quantityTemplatesBase ) ) )
@@ -249,6 +514,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.56  2006/03/04 00:20:45  pwagner
+! May skip retrieval, directWrites depending on runtime Booleans
+!
 ! Revision 2.55  2006/02/10 21:19:07  pwagner
 ! dumps may go to special dumpfile
 !
