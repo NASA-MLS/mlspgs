@@ -114,9 +114,12 @@ module INIT_TABLES_MODULE
 !  W a r n i n g   W a r n i n g   W a r n i n g   W a r n i n g   
 ! Beware of adding spec indices
 ! The NAG compiler will generate code that has memory problems
-  integer, parameter :: S_APRIORI            = last_Spectroscopy_Spec + 1
+  integer, parameter :: S_ANYGOODRADIANCES   = last_Spectroscopy_Spec + 1
+  integer, parameter :: S_ANYGOODVALUES      = s_anygoodradiances + 1
+  integer, parameter :: S_APRIORI            = s_anygoodvalues + 1
   integer, parameter :: S_BINSELECTOR        = s_apriori + 1
-  integer, parameter :: S_CHUNKDIVIDE        = s_binSelector + 1
+  integer, parameter :: S_BOOLEAN            = s_binSelector + 1
+  integer, parameter :: S_CHUNKDIVIDE        = s_boolean + 1
   integer, parameter :: S_COLUMNSCALE        = s_chunkDivide + 1
   integer, parameter :: S_COMBINECHANNELS    = s_columnScale + 1
   integer, parameter :: S_CONCATENATE        = s_combineChannels + 1
@@ -166,7 +169,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_RESTRICTRANGE      = s_regularization + 1
   integer, parameter :: S_RETRIEVE           = s_restrictRange + 1
   integer, parameter :: S_ROWSCALE           = s_retrieve + 1
-  integer, parameter :: S_SIDS               = s_rowScale + 1
+  integer, parameter :: S_SIDS               = s_rowscale + 1
   integer, parameter :: S_SNOOP              = s_sids + 1
   integer, parameter :: S_SUBSET             = s_snoop + 1
   integer, parameter :: S_TEMPLATE           = s_subset + 1
@@ -321,8 +324,11 @@ contains ! =====     Public procedures     =============================
     section_indices(z_spectroscopy) =      add_ident ( 'spectroscopy' )
     ! Put spec names into the symbol table.  Don't add ones that are
     ! put in by init_MLSSignals.
+    spec_indices(s_anygoodradiances) =     add_ident ( 'anyGoodRadiances' )
+    spec_indices(s_anygoodvalues) =        add_ident ( 'anyGoodValues' )
     spec_indices(s_apriori) =              add_ident ( 'apriori' )
     spec_indices(s_binSelector) =          add_ident ( 'binSelector' )
+    spec_indices(s_Boolean) =              add_ident ( 'boolean' )
     spec_indices(s_chunkDivide) =          add_ident ( 'chunkDivide' )
     spec_indices(s_columnScale) =          add_ident ( 'columnScale' )
     spec_indices(s_combineChannels) =      add_ident ( 'combineChannels' )
@@ -630,6 +636,10 @@ contains ! =====     Public procedures     =============================
              begin, f+f_apriori, n+n_field_type, &
              begin, f+f_autofill, n+n_field_type, &
              np+n_spec_def, &
+      begin, s+s_Boolean, &
+             begin, f+f_formula, t+t_string, n+n_field_type, &
+             begin, f+f_values, t+t_boolean, n+n_field_type, &
+             ndp+n_spec_def, &
       begin, s+s_fgrid, &
              begin, f+f_coordinate, t+t_fGridCoord, n+n_field_type, &
              begin, f+f_values, t+t_numeric, n+n_field_type, &
@@ -639,7 +649,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_number, t+t_numeric, n+n_field_type, &
              begin, f+f_start, t+t_numeric, nr+n_field_type, &
              begin, f+f_step, t+t_numeric, n+n_field_type, &
-             ndp+n_spec_def, &
+             ndp+n_spec_def /) )
+    call make_tree ( (/ &
       begin, s+s_vgrid, &
              begin, f+f_type, t+t_vGridType, nr+n_field_type, &
              begin, f+f_coordinate, t+t_vGridCoord, n+n_field_type, &
@@ -697,7 +708,10 @@ contains ! =====     Public procedures     =============================
              begin, f+f_phaseName, t+t_string, n+n_field_type, &
              begin, f+f_level, t+t_numeric, n+n_field_type, &
              begin, f+f_silent, t+t_boolean, n+n_field_type, &
+             begin, f+f_skipDirectWrites, t+t_boolean, n+n_field_type, &
+             begin, f+f_skipDirectWritesif, s+s_Boolean, n+n_field_spec, &
              begin, f+f_skipRetrieval, t+t_boolean, n+n_field_type, &
+             begin, f+f_skipRetrievalif, s+s_Boolean, n+n_field_spec, &
              begin, f+f_stamp, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_quantity, & ! Must be AFTER s_hgrid and s_vgrid
@@ -916,6 +930,25 @@ contains ! =====     Public procedures     =============================
              begin, f+f_vector, s+s_vector, n+n_field_spec, &
              begin, f+f_source, t+t_rowsOrColumns, n+n_field_type, &
              ndp+n_spec_def /) )
+
+    call make_tree( (/ &
+      begin, s+s_anyGoodRadiances, &
+             begin, f+f_signal, t+t_string, nr+n_field_type, &
+             begin, f+f_Boolean, s+s_Boolean, n+n_field_spec, &
+             np+n_spec_def /) )
+
+    call make_tree( (/ &
+      begin, s+s_anyGoodValues, &
+             begin, f+f_quantity, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
+             begin, f+f_precision, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
+             begin, f+f_quality, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
+             begin, f+f_status, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
+             begin, f+f_Boolean, s+s_Boolean, n+n_field_spec, &
+             np+n_spec_def /) )
 
     call make_tree( (/ &
       begin, s+s_label, &
@@ -1285,14 +1318,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_phaseName, t+t_string, n+n_field_type, &
              begin, f+f_level, t+t_numeric, n+n_field_type, &
              begin, f+f_silent, t+t_boolean, n+n_field_type, &
-             begin, f+f_skipRetrieval, t+t_boolean, n+n_field_type, &
-             begin, f+f_stamp, t+t_boolean, n+n_field_type, &
-             ndp+n_spec_def, &
-      begin, s+s_phase, & ! Ignores rest of stuff
-             begin, f+f_comment, t+t_string, n+n_field_type, &
-             begin, f+f_phaseName, t+t_string, n+n_field_type, &
-             begin, f+f_level, t+t_numeric, n+n_field_type, &
-             begin, f+f_silent, t+t_boolean, n+n_field_type, &
+             begin, f+f_skipDirectWrites, t+t_boolean, n+n_field_type, &
              begin, f+f_skipRetrieval, t+t_boolean, n+n_field_type, &
              begin, f+f_stamp, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def, &
@@ -1359,8 +1385,10 @@ contains ! =====     Public procedures     =============================
              begin, p+p_scan_lower_limit, t+t_numeric_range, n+n_name_def, &
              begin, p+p_scan_upper_limit, t+t_numeric_range, n+n_name_def, &
              s+s_time, s+s_chunkDivide, n+n_section, &
-      begin, z+z_construct, s+s_hgrid, s+s_dump, s+s_forge, s+s_forwardModel, &
-             s+s_quantity, s+s_snoop, s+s_time, s+s_vectortemplate, s+s_phase, &
+      begin, z+z_construct, s+s_anyGoodRadiances, s+s_anyGoodValues, s+s_dump, &
+             s+s_forge, s+s_forwardModel, s+s_hgrid, &
+             s+s_phase, s+s_quantity, s+s_Boolean, s+s_snoop, s+s_time, &
+             s+s_vectortemplate, &
              n+n_section, &
       begin, z+z_fill, &
              s+s_destroy, s+s_dump, s+s_fill, s+s_fillCovariance, &
@@ -1397,6 +1425,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.425  2006/03/04 00:15:30  pwagner
+! Added things for runtime Booleans to selectively skip phases
+!
 ! Revision 2.424  2006/02/16 00:11:06  pwagner
 ! Added stamp boolean field to phase asks for printing phase names, times
 !
