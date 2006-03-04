@@ -62,6 +62,7 @@ baselineQuantity
 basisFraction
 bin
 binSelectors
+Boolean
 boundarypressure
 boxCarMethod
 
@@ -336,10 +337,13 @@ signals
 silent
 single
 singleMAF
+skipDirectWrites
+skipDirectWritesif
 skipL1BCheck
 skipMask
 skipOverlaps
 skipRetrieval
+skipRetrievalif
 solarTime
 solarZenith
 source
@@ -415,6 +419,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.158  2006/03/04 00:14:43  pwagner
+# Added things for runtime Booleans to selectively skip phases
+#
 # Revision 2.157  2006/02/16 16:20:02  pwagner
 # Added stamp
 #
