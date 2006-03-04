@@ -54,7 +54,7 @@ contains ! =====     Public Procedures     =============================
     use L2ParInfo, only: PARALLEL, WAITFORDIRECTWRITEPERMISSION
     use LEXER_CORE, only: PRINT_SOURCE
     use MLSCommon, only: MLSFile_T
-    use MLSL2Options, only: CHECKPATHS, SKIPDIRECTWRITES, SPECIALDUMPFILE
+    use MLSL2Options, only: CHECKPATHS, SPECIALDUMPFILE
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, &
       & add_to_directwrite_timing, add_to_section_timing
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
@@ -188,7 +188,7 @@ contains ! =====     Public Procedures     =============================
             call LabelVectorQuantity ( son, vectors )
           end if
         case ( s_directWrite )
-          if ( SKIPDIRECTWRITES ) exit
+          ! if ( SKIPDIRECTWRITES ) exit
           call time_now ( dwt1 )
           if ( pass == 1 ) then
             ! On the first pass just count the number of direct writes
@@ -265,7 +265,8 @@ contains ! =====     Public Procedures     =============================
 
       ! Bail out of pass loop if there are no direct writes, or there was
       ! an error.
-      if ( noDirectWrites == 0 .or. SKIPDIRECTWRITES .or. error /= 0 ) exit passLoop
+      ! if ( noDirectWrites == 0 .or. SKIPDIRECTWRITES .or. error /= 0 ) exit passLoop
+      if ( noDirectWrites == 0 .or. error /= 0 ) exit passLoop
       pass = pass + 1
       ! Did we receive permission to write to a "ghost node"
       if ( .not. didTheWrite ) then
@@ -585,7 +586,8 @@ contains ! =====     Public Procedures     =============================
       end select
     end do
 
-    if ( .not. (SKIPDIRECTWRITES .or. checkpaths) ) then
+    ! if ( .not. (SKIPDIRECTWRITES .or. checkpaths) ) then
+    if ( .not. checkpaths ) then
     ! Now go through and do some sanity checking
     do source = 1, noSources
       qty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(source)), &
@@ -668,6 +670,12 @@ contains ! =====     Public Procedures     =============================
       call output('size(DirectDB): ', advance='no')
       call output(size(DirectDatabase), advance='yes')
     end if
+
+    ! If we're skipping all directwrites, let's deallocate and return
+    if ( SKIPDIRECTWRITES ) then
+      call DeallocateStuff
+      return
+    endif
 
     ! If this is the first pass through, then we just log our request
     ! with the master
@@ -824,8 +832,8 @@ contains ! =====     Public Procedures     =============================
           & 'did you enter any in global settings?' )
       end if
       ! Done what we wished to do if just checking paths or SKIPDIRECTWRITES
-      ! if ( checkPaths ) return
-      if ( SKIPDIRECTWRITES .or. checkPaths ) then
+      if ( checkPaths ) then
+      ! if ( SKIPDIRECTWRITES .or. checkPaths ) then
         if ( toggle(gen) .and. index(switches,'dwreq') /= 0) &
         & call trace_end ( "DirectWriteCommand" )
         return
@@ -1979,6 +1987,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.126  2006/03/04 00:20:13  pwagner
+! Account for directdatabase even if skipping directWrites
+!
 ! Revision 2.125  2006/02/10 21:17:33  pwagner
 ! dumps may go to special dumpfile
 !
