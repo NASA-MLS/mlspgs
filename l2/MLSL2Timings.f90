@@ -14,16 +14,19 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
 !=============================================================================
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-  use INIT_TABLES_MODULE, only: F_SILENT, f_SKIPRETRIEVAL, F_STAMP
+  use Dump_0, only: Dump
+  use INIT_TABLES_MODULE, only: F_SILENT, &
+    & F_SKIPDIRECTWRITES, F_SKIPDIRECTWRITESIF, &
+    & F_SKIPRETRIEVAL, F_SKIPRETRIEVALIF, F_STAMP
   use INTRINSIC, only: L_HOURS, L_MINUTES, L_SECONDS
   use L2PARINFO, only: PARALLEL
-  USE MLSL2Options, only: RESTARTWARNINGS, &
-    & SECTIONTIMINGUNITS, &
-    & SKIPDIRECTWRITES, SKIPRETRIEVAL, SKIPRETRIEVALORIGINAL, &
+  USE MLSL2Options, only: RESTARTWARNINGS, RUNTIMEVALUES, &
+    & SECTIONTIMINGUNITS, SKIPDIRECTWRITES, SKIPDIRECTWRITESORIGINAL, &
+    & SKIPRETRIEVAL, SKIPRETRIEVALORIGINAL, &
     & STOPAFTERCHUNKDIVIDE, STOPAFTERGLOBAL
   USE MLSMessageModule, only: MLSMessage, MLSMessageReset, MLSMSG_Error
   USE MLSStrings, only: LowerCase 
-  USE MLSStringLists, only: catLists, GetStringElement, &
+  USE MLSStringLists, only: BooleanValue, catLists, GetStringElement, &
     & NumStringElements, StringElementNum, SwitchDetail
   use MoreTree, only: Get_Boolean
   use OUTPUT_M, only: BLANKS, OUTPUT, PRUNIT, &
@@ -31,7 +34,7 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
   use String_Table, only: get_string
   use Time_M, only: Time_Now
   use TOGGLES, only: SWITCHES
-  use TREE, only: DECORATION, NSONS, SUBTREE
+  use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
 
   IMPLICIT NONE
 
@@ -276,14 +279,18 @@ contains ! =====     Public Procedures     =============================
     integer :: interval
     integer :: keyNo
     character(len=80) :: PHASESTRING    ! E.g., 'Core'
+    character(len=80) :: BOOLEANSTRING  ! E.g., 'BAND13_OK'
     logical :: silent
     integer :: son
     logical :: stamp
+    logical :: toldToSkip
     ! Executable
     detail = switchDetail( switches, 'phase' )
     silent = .false.
     stamp = detail > 0 ! E.g., -Sphase1; was .false.
+    skipDirectwrites = skipDirectWritesoriginal
     skipRetrieval = skipRetrievalOriginal
+    toldToSkip = .false.
     do keyNo = 2, nsons(root)
       son = subtree(keyNo,root)
       field = subtree(1,son)
@@ -296,8 +303,28 @@ contains ! =====     Public Procedures     =============================
       select case ( field_index )
       case ( f_silent )
         silent = get_boolean ( fieldValue )
+      case ( f_skipDirectwrites )
+        skipDirectwrites = get_boolean ( fieldValue )
+        toldToSkip = .true.
+      case ( f_skipDirectwritesif )
+        call get_string( sub_rosa(subtree(2,son)), booleanString )
+        ! call output( 'skipDirectwrites: ', advance='no' )
+        ! call output( trim(booleanString), advance='yes' )
+        skipDirectwrites = BooleanValue ( lowercase(booleanString), &
+          & runTimeValues%lkeys, runTimeValues%lvalues)
+        ! call output( skipDirectwrites, advance='yes' )
+        toldToSkip = .true.
       case ( f_skipRetrieval )
         skipRetrieval = get_boolean ( fieldValue )
+        toldToSkip = .true.
+      case ( f_skipRetrievalif )
+        call get_string( sub_rosa(subtree(2,son)), booleanString )
+        ! call output( 'skipRetrieval: ', advance='no' )
+        ! call output( trim(booleanString), advance='yes' )
+        skipRetrieval = BooleanValue ( lowercase(booleanString), &
+          & runTimeValues%lkeys, runTimeValues%lvalues)
+        ! call output( skipRetrieval, advance='yes' )
+        toldToSkip = .true.
       case ( f_stamp )
         stamp = get_boolean ( fieldValue )
       case default ! Can't get here if tree_checker works correctly
@@ -329,6 +356,12 @@ contains ! =====     Public Procedures     =============================
       ! Possibly undo stamp added by prior phase
       call setStamp( textcode=' ', showTime=.false. )
     endif
+    if ( switchDetail(switches, 'bool') > -1 ) &
+      & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
+      & 'Run-time Boolean flags' )
+    ! if ( toldToSkip ) &
+    !   &  call MLSMessage ( MLSMSG_Error, moduleName, &
+    !   & 'Told to skip something' )
   end subroutine addPhaseToPhaseNames
 
   ! -----------------------------------------------  dump_section_timings  -----
@@ -839,6 +872,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.32  2006/03/04 00:16:38  pwagner
+! May skip retrieval, directWrites depending on runtime Booleans
+!
 ! Revision 2.31  2006/02/16 00:12:02  pwagner
 ! Added stamp boolean field to phase asks for printing phase names, times
 !
