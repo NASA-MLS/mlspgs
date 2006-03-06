@@ -112,6 +112,7 @@ contains
 
     real(rp) :: A          ! a**2 at I
     real(rp) :: AB         ! A*b = a**2 * b at I
+    real(rp) :: DA, DAB    ! 1 - a, 1 - ab*b
     real(rp) :: B          ! b at I
     real(rp) :: HT         ! H at tangent point
     real(rp) :: II         ! Integrand, then integral, at I
@@ -140,8 +141,11 @@ contains
           a = ( ht / h_path(g) ) ** 2     ! a^2
           b = nt / (1.0_r8 + n_path(g))   ! b
           ab = a * b                      ! a^2 b
-          ii = ii + dHdz_gw(g) * &
-            & ( ab / sqrt(1.0 - ab*b ) - a / sqrt(1.0 - a) )
+          da = 1.0 - a
+          dab = 1.0 - ab*b
+          if ( da > epsilon(da) .and. dab > epsilon(dab) ) &
+            & ii = ii + dHdz_gw(g) * &
+              & ( ab / sqrt(dab) - a / sqrt(da) )
         end do
         ! The factor of 0.5 is because GW are on -1..1
         ii = 0.5 * (z_path(i) - z_path(i-mng)) * ii / ht
@@ -179,6 +183,7 @@ contains
 
     real(rp) :: A, AP      ! a I, I-M
     real(rp) :: B          ! b at I
+    real(rp) :: DA, DAB    ! 1 - a**2, 1 - (a*b)**2
     real(rp) :: HT         ! H at tangent point
     real(rp) :: II, IP     ! Integrand at I, I-M
     real(r8) :: NT         ! N at tangent point
@@ -201,7 +206,13 @@ contains
         ! trapezoidal quadrature on one panel
         a = ( ht / h_path(i) )
         b = nt / (1.0_r8 + n_path(i))
-        ii = 1.0 / sqrt(1.0 - a**2) - b / sqrt(1.0 - (a*b)**2)
+        da = 1.0 - a**2
+        dab = 1.0 - (a*b)**2
+        if ( da < epsilon(da) .or. dab < epsilon(dab) ) then
+          ii = 0.0
+        else
+          ii = 1.0 / sqrt(da) - b / sqrt(dab)
+        end if
         phi_corr(i) = phi_corr(i-m) + 0.5 * ( a - ap ) * ( ip + ii )
         ! Get ready for next panel
         ap = a
@@ -231,6 +242,7 @@ contains
 
     real(rp) :: A, AP      ! a I, I-M
     real(rp) :: B          ! b at I
+    real(rp) :: DA, DAB    ! 1 - a**2, 1 - (a*b)**2
     real(rp) :: HT         ! H at tangent point
     real(rp) :: II, IP     ! Integrand at I, I-M
     real(r8) :: NT         ! N at tangent point
@@ -247,7 +259,13 @@ contains
       ! trapezoidal quadrature on one panel
       a = ( ht / h_path(i) )
       b = nt / (1.0_r8 + n_path(i))
-      ii = 1.0 / sqrt(1.0 - a**2) - b / sqrt(1.0 - (a*b)**2)
+      da = 1.0 - a**2
+      dab = 1.0 - (a*b)**2
+      if ( da < epsilon(da) .or. dab < epsilon(dab) ) then
+        ii = 0.0
+      else
+        ii = 1.0 / sqrt(da) - b / sqrt(dab)
+      end if
       phi_corr(i) = phi_corr(i-1) + 0.5 * ( a - ap ) * ( ip + ii )
       ! Get ready for next panel
       ap = a
@@ -268,6 +286,9 @@ contains
 end module Phi_Refractive_Correction_m
 
 ! $Log$
+! Revision 2.2  2006/03/06 20:45:34  vsnyder
+! Avoid simgularities caused by temperature inversions
+!
 ! Revision 2.1  2005/12/30 01:28:01  vsnyder
 ! Initial commit
 !
