@@ -2355,8 +2355,13 @@ contains
       ! Frequency Average the temperature derivatives with the appropriate
       ! filter shapes
 
+      integer :: UB ! Upper bound for first dimension of k_..._frq
+
+      ub = noFreqs
+      if ( combine ) ub = max(ub,noUsedChannels)
+
       if ( temp_der ) call frequency_average_derivative ( grids_tmp, &
-        &               k_temp_frq(:noFreqs,:), k_temp(:,ptg_i,:), 1, combine )
+        &               k_temp_frq(:ub,:), k_temp(:,ptg_i,:), 1, combine )
 
       ! Frequency Average the atmospheric derivatives with the appropriate
       ! filter shapes
@@ -2365,7 +2370,7 @@ contains
         do k = 1, no_mol
           if ( fwdModelConf%moleculeDerivatives(k) ) &
             & call frequency_average_derivative ( grids_f, &
-              & k_atmos_frq(:noFreqs,:), k_atmos(:,ptg_i,:), k, combine )
+              & k_atmos_frq(:ub,:), k_atmos(:,ptg_i,:), k, combine )
         end do                        ! Loop over major molecules
       end if                          ! Want derivatives for atmos
 
@@ -2375,21 +2380,21 @@ contains
       if ( spect_der_center ) then
         do k = 1, size(fwdModelConf%lineCenter)
           call frequency_average_derivative &
-            & ( grids_v, k_spect_dv_frq(:noFreqs,:), k_spect_dv(:,ptg_i,:), k, &
+            & ( grids_v, k_spect_dv_frq(:ub,:), k_spect_dv(:,ptg_i,:), k, &
             & combine )
         end do
       end if
       if ( spect_der_width ) then
         do k = 1, size(fwdModelConf%lineWidth)
           call frequency_average_derivative &
-            & ( grids_w, k_spect_dw_frq(:noFreqs,:), k_spect_dw(:,ptg_i,:), k, &
+            & ( grids_w, k_spect_dw_frq(:ub,:), k_spect_dw(:,ptg_i,:), k, &
             & combine )
         end do
       end if
       if ( spect_der_width_TDep ) then
         do k = 1, size(fwdModelConf%lineWidth_TDep)
           call frequency_average_derivative &
-            & ( grids_n, k_spect_dn_frq(:noFreqs,:), k_spect_dn(:,ptg_i,:), k, &
+            & ( grids_n, k_spect_dn_frq(:ub,:), k_spect_dn(:,ptg_i,:), k, &
             & combine )
         end do
       end if
@@ -3323,6 +3328,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.256  2006/02/08 21:38:18  vsnyder
+! Add relative humidity (RHi) calculation
+!
 ! Revision 2.255  2006/02/08 01:02:01  vsnyder
 ! More stuff for spectroscopy derivatives
 !
