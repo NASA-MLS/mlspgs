@@ -50,7 +50,7 @@ contains
     use Allocate_deallocate, only: Allocate_test, Deallocate_test
     use Geometry, only: EarthRadA, EarthRadB
     use Get_Eta_Matrix_m, only: Get_Eta_Sparse
-    use MLSCommon, only: RP, IP
+    use MLSKinds, only: RP, IP
     use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
     use Output_m, only: OUTPUT
     use Phi_Refractive_Correction_m, only: Phi_Refractive_Correction
@@ -319,7 +319,7 @@ contains
 
     ! compute phi_s - phi_t
     j = n_vert
-    do i = 1 , ss_htan ! Subsurface stuff
+    do i = 1 , ss_htan ! Subsurface stuff; ss_htan == 0 if neg_h_tan not present
       cvf_ang_offset(j+1:j+n_vert)=phi_t(i)-2.0_rp*Acos((req+neg_h_tan(i))/req)
       h_tans(:,i) = neg_h_tan(i)
       j = j + n_vert + n_vert
@@ -409,7 +409,7 @@ contains
 
       ! recompute phi_s - phi_t because we have to iterate on phi_s - phi_t
       j = n_vert
-      do i = 1 , ss_htan ! Subsurface stuff
+      do i = 1 , ss_htan ! Subsurface stuff; ss_htan == 0 if neg_h_tan not present
         cvf_ang_offset(j+1:j+n_vert) = phi_t(i) - &
                   & 2.0_rp*Acos((req+neg_h_tan(i))/(req+h_grid(j)))
         j = j + n_vert + n_vert
@@ -491,7 +491,7 @@ contains
           end do
 ! This is in case the anomaly wraps to the next higher tangent level.
           if ( end_ind1 < end_ind ) then
-! resort to 1 d equvalent
+! resort to 1 d equivalent
             call get_eta_sparse ( p_basis,phi_t((cvf_inds(low_pt)-1) &
                  & / (2*n_vert) + 2), eta_p_1 )
             do i = end_ind1+1, end_ind
@@ -618,6 +618,9 @@ contains
 end module Metrics_m
 
 ! $Log$
+! Revision 2.27  2006/01/26 03:06:17  vsnyder
+! Don't deallocate 'mask' until after it's no longer needed!
+!
 ! Revision 2.26  2006/01/05 00:03:52  vsnyder
 ! Implement refractive correction for Phi
 !
