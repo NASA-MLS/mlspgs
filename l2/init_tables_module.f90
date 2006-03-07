@@ -164,7 +164,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_POPULATEL2PCBIN    = s_phase + 1
   integer, parameter :: S_QUANTITY           = s_populateL2pcBin + 1
   integer, parameter :: S_READPFA            = s_quantity + 1
-  integer, parameter :: S_REFLECT            = s_readPFA + 1
+  integer, parameter :: S_reevaluate         = s_readPFA + 1
+  integer, parameter :: S_REFLECT            = s_reevaluate + 1
   integer, parameter :: S_REGULARIZATION     = s_reflect + 1
   integer, parameter :: S_RESTRICTRANGE      = s_regularization + 1
   integer, parameter :: S_RETRIEVE           = s_restrictRange + 1
@@ -373,7 +374,8 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_phase) =                add_ident ( 'phase' )
     spec_indices(s_populateL2PCBin) =      add_ident ( 'populateL2PCBin' )
     spec_indices(s_quantity) =             add_ident ( 'quantity' )
-    spec_indices(s_readPFA) =              add_ident ( 'readPFA' )
+    spec_indices(s_readpfa) =              add_ident ( 'readPFA' )
+    spec_indices(s_reevaluate) =           add_ident ( 'reevaluate' )
     spec_indices(s_reflect) =              add_ident ( 'reflect' )
     spec_indices(s_regularization) =       add_ident ( 'regularization' )
     spec_indices(s_restrictRange) =        add_ident ( 'restrictRange' )
@@ -932,9 +934,15 @@ contains ! =====     Public procedures     =============================
              ndp+n_spec_def /) )
 
     call make_tree( (/ &
+      begin, s+s_reevaluate, &
+             begin, f+f_formula, t+t_string, nr+n_field_type, &
+             begin, f+f_Boolean, s+s_Boolean, nr+n_field_spec, &
+             np+n_spec_def /) )
+
+    call make_tree( (/ &
       begin, s+s_anyGoodRadiances, &
              begin, f+f_signal, t+t_string, nr+n_field_type, &
-             begin, f+f_Boolean, s+s_Boolean, n+n_field_spec, &
+             begin, f+f_Boolean, s+s_Boolean, nr+n_field_spec, &
              np+n_spec_def /) )
 
     call make_tree( (/ &
@@ -947,7 +955,7 @@ contains ! =====     Public procedures     =============================
                     n+n_dot, &
              begin, f+f_status, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
-             begin, f+f_Boolean, s+s_Boolean, n+n_field_spec, &
+             begin, f+f_Boolean, s+s_Boolean, nr+n_field_spec, &
              np+n_spec_def /) )
 
     call make_tree( (/ &
@@ -1158,6 +1166,7 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ & ! Must be AFTER s_forwardModel, s_hGrid, s_pfaData,
                           ! s_makePFA, s_vector, and s_vectorTemplate
       begin, s+s_dump, &
+             begin, f+f_allBooleans, t+t_boolean, n+n_field_type, &
              begin, f+f_allForwardModels, t+t_boolean, n+n_field_type, &
              begin, f+f_allHGrids, t+t_boolean, n+n_field_type, &
              begin, f+f_allLines, t+t_boolean, n+n_field_type, &
@@ -1169,6 +1178,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_allVectorTemplates, t+t_boolean, n+n_field_type, &
              begin, f+f_allVGrids, t+t_boolean, n+n_field_type, &
              begin, f+f_antennaPatterns, t+t_boolean, n+n_field_type, &
+             begin, f+f_Boolean, s+s_Boolean, n+n_field_spec, &
              begin, f+f_DACSfilterShapes, t+t_boolean, n+n_field_type, &
              begin, f+f_details, t+t_numeric, n+n_field_type, &
              begin, f+f_forwardModel, s+s_forwardModel, n+n_field_spec, &
@@ -1385,10 +1395,10 @@ contains ! =====     Public procedures     =============================
              begin, p+p_scan_lower_limit, t+t_numeric_range, n+n_name_def, &
              begin, p+p_scan_upper_limit, t+t_numeric_range, n+n_name_def, &
              s+s_time, s+s_chunkDivide, n+n_section, &
-      begin, z+z_construct, s+s_anyGoodRadiances, s+s_anyGoodValues, s+s_dump, &
-             s+s_forge, s+s_forwardModel, s+s_hgrid, &
-             s+s_phase, s+s_quantity, s+s_Boolean, s+s_snoop, s+s_time, &
-             s+s_vectortemplate, &
+      begin, z+z_construct, s+s_anyGoodRadiances, s+s_anyGoodValues, &
+             s+s_Boolean, s+s_dump, s+s_forge, s+s_forwardModel, s+s_hgrid, &
+             s+s_phase, s+s_quantity, s+s_reevaluate, s+s_snoop, &
+             s+s_time, s+s_vectortemplate, &
              n+n_section, &
       begin, z+z_fill, &
              s+s_destroy, s+s_dump, s+s_fill, s+s_fillCovariance, &
@@ -1425,6 +1435,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.426  2006/03/07 00:50:59  pwagner
+! May change already-set Booleans via reevaluate command
+!
 ! Revision 2.425  2006/03/04 00:15:30  pwagner
 ! Added things for runtime Booleans to selectively skip phases
 !
