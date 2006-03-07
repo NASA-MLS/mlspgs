@@ -29,6 +29,7 @@ a
 absorption
 additional
 adopt
+allBooleans
 allForwardModels
 allHGrids
 allLines
@@ -419,6 +420,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.159  2006/03/07 00:49:42  pwagner
+# May dump Booleans
+#
 # Revision 2.158  2006/03/04 00:14:43  pwagner
 # Added things for runtime Booleans to selectively skip phases
 #
