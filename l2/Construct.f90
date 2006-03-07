@@ -226,9 +226,16 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------- DealWithBooleanFromMLSCfInfo --
   function DealWithBooleanFromMLSCfInfo ( name, root ) result(size)
+    ! Called either when a Boolean is first declared
+    ! syntax: 
+    ! name: Boolean, formula="formula"
+    !
+    ! or when it is reevaluated
+    ! syntax: 
+    ! Reevaluate, formula="formula", Boolean="name"
     use Dump_0, only: Dump
     use Expr_M, only: EXPR
-    use INIT_TABLES_MODULE, only: F_FORMULA, F_VALUES
+    use INIT_TABLES_MODULE, only: F_BOOLEAN, F_FORMULA, F_VALUES
     use MLSCommon, only: r8
     use MLSL2Options, only: runTimeValues
     use MLSStringLists, only: BooleanValue, NumStringElements, PutHashElement, &
@@ -254,8 +261,11 @@ contains ! =====     Public Procedures     =============================
     integer, dimension(2) :: UNITASARRAY ! From expr
     real(r8), dimension(2) :: VALUEASARRAY ! From expr
     ! Executable
-    call get_string(name, nameString)
-    nameString = lowerCase(nameString)
+    tvalue= .false.
+    if ( name > 0 ) then
+      call get_string(name, nameString)
+      nameString = lowerCase(nameString)
+    endif
     do keyNo = 2, nsons(root)
       son = subtree(keyNo,root)
       field = subtree(1,son)
@@ -267,6 +277,9 @@ contains ! =====     Public Procedures     =============================
       field_index = decoration(field)
 
       select case ( field_index )
+      case ( f_Boolean )
+        call get_string ( sub_rosa(subtree(2,son)), nameString, strip=.true. )
+        nameString = lowerCase(nameString)
       case ( f_formula )
         call get_string ( sub_rosa(subtree(2,son)), formula, strip=.true. )
         tvalue = BooleanValue (formula, runTimeValues%lkeys, runTimeValues%lvalues)
@@ -344,9 +357,10 @@ contains ! =====     Public Procedures     =============================
     use ForwardModelSupport, only: ConstructForwardModelConfig
     use HGridsDatabase, only: ADDHGRIDTODATABASE, HGRID_T
     use HGrid, only: CREATEHGRIDFROMMLSCFINFO
-    use INIT_TABLES_MODULE, only: S_ANYGOODVALUES, S_ANYGOODRADIANCES, S_DUMP, &
+    use INIT_TABLES_MODULE, only: S_ANYGOODVALUES, S_ANYGOODRADIANCES, &
+      & S_BOOLEAN, S_DUMP, &
       & S_FORGE, S_FORWARDMODEL, S_HGRID, &
-      & S_PHASE, S_QUANTITY, S_Boolean, S_TIME, S_VECTORTEMPLATE
+      & S_PHASE, S_QUANTITY, S_REEVALUATE, S_TIME, S_VECTORTEMPLATE
     use L2GPData, only: L2GPDATA_T
     use MLSCommon, only: MLSFile_T, TAI93_Range_T
     use MLSL2Options, only: RESTARTWARNINGS, SPECIALDUMPFILE
@@ -443,6 +457,8 @@ contains ! =====     Public Procedures     =============================
             & fGrids, hGrids, filedatabase, chunk, mifGeolocation ) ) )
       case ( s_Boolean )
         call decorate ( key,  DealWithBooleanFromMLSCfInfo ( name, key ) )
+      case ( s_Reevaluate )
+        call decorate ( key,  DealWithBooleanFromMLSCfInfo ( 0, key ) )
       case ( s_vectortemplate )
         call decorate ( key, AddVectorTemplateToDatabase ( vectorTemplates, &
           & CreateVecTemplateFromMLSCfInfo ( name, key, quantityTemplatesBase ) ) )
@@ -514,6 +530,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.57  2006/03/07 00:51:32  pwagner
+! May change already-set Booleans via reevaluate command
+!
 ! Revision 2.56  2006/03/04 00:20:45  pwagner
 ! May skip retrieval, directWrites depending on runtime Booleans
 !
