@@ -136,6 +136,8 @@ contains ! =====     Public Procedures     =============================
     if ( present ( suppressGeometryDump ) ) mySuppressGeometryDump = suppressGeometryDump
 
     L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
+    if ( .not. associated(L1BFile) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Didn't I warn you about not having an L1BOA file?" )
     hdfversion = L1BFile%HDFVersion
 
     call nullifyHGrid ( hgrid ) ! for Sun's rubbish compiler
@@ -2287,6 +2289,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.85  2006/03/07 23:23:28  vsnyder
+! Crash gently if there's bo L1BOA file
+!
 ! Revision 2.84  2006/02/21 19:11:30  pwagner
 ! Some tweaks to where, when to dump
 !
