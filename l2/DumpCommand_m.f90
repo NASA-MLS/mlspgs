@@ -39,17 +39,20 @@ contains
       & Dump_DACS_Filter_Database
     use ForwardModelConfig, only: Dump, ForwardModelConfig_T
     use HGridsDatabase, only: Dump, HGRID_T
-    use Init_Tables_Module, only: F_AllForwardModels, F_AllHGrids, F_AllLines, &
-      & F_AllPFA, F_AllQuantityTemplates, F_AllSignals, F_AllSpectra, &
+    use Init_Tables_Module, only: F_AllBooleans, F_AllForwardModels, F_AllHGrids, &
+      & F_AllLines, F_AllPFA, F_AllQuantityTemplates, F_AllSignals, F_AllSpectra, &
       & F_AllVectors, F_AllVectorTemplates, F_AllVGrids, F_AntennaPatterns, &
-      & F_Details, F_DACSFilterShapes, F_FilterShapes, F_ForwardModel, F_HGrid, &
-      & F_Lines, F_Mark, F_PfaData, F_PfaFiles, F_PFANum, F_PFAStru, &
+      & F_Boolean, F_Details, F_DACSFilterShapes, F_FilterShapes, F_ForwardModel, &
+      & F_HGrid, F_Lines, F_Mark, F_PfaData, F_PfaFiles, F_PFANum, F_PFAStru, &
       & F_PointingGrids, F_Quantity, F_Signals,  F_Spectroscopy, F_Stop, &
       & F_Template, F_Text, F_TGrid, F_Vector, F_VGrid, S_Quantity, &
       & S_VectorTemplate
     use Intrinsic, only: PHYQ_Dimensionless
+    use MLSL2Options, only: runTimeValues
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
     use MLSSignals_m, only: Dump, Signals
+    use MLSStrings, only: lowerCase
+    use MLSStringLists, only: BooleanValue
     use Output_M, only: Output
     use PFADataBase_m, only: Dump, Dump_PFADataBase, Dump_PFAFileDataBase, &
       & Dump_PFAStructure, PFAData
@@ -71,6 +74,8 @@ contains
     type (forwardModelConfig_t), dimension(:), pointer, optional :: ForwardModelConfigs
     type (HGrid_T), dimension(:), pointer, optional :: HGrids
 
+    character(len=80) :: BOOLEANSTRING  ! E.g., 'BAND13_OK'
+    logical, parameter :: countEmpty = .true.
     real(tk) :: CPUTime, CPUTimeBase = 0.0_tk
     character(8) :: Date
     integer :: Details
@@ -85,6 +90,7 @@ contains
     character :: TempText*20, Text*255
     type(time_t) :: Time
     character(10) :: TimeOfDay
+    logical :: tvalue
     integer :: VectorIndex
     integer :: Type     ! of the Details expr -- has to be num_value
     integer :: Units(2) ! of the Details expr -- has to be phyq_dimensionless
@@ -125,13 +131,16 @@ contains
       fieldIndex = get_field_id(son)
       if (nsons(son) > 1) gson = subtree(2,son) ! Now value of said argument
       select case ( fieldIndex )
-      case ( f_allForwardModels, f_allHGrids, f_allLines, f_allPFA, &
-        & f_allQuantityTemplates, f_allSignals, f_allSpectra, f_allVectors, &
-        & f_allVectorTemplates, f_allVGrids, f_antennaPatterns, &
+      case ( f_allBooleans, f_allForwardModels, f_allHGrids, f_allLines, &
+        & f_allPFA, f_allQuantityTemplates, f_allSignals, f_allSpectra, &
+        & f_allVectors, f_allVectorTemplates, f_allVGrids, f_antennaPatterns, &
         & f_DACSfilterShapes, f_filterShapes, f_pfaFiles, f_pfaStru, &
         & f_pointingGrids, f_stop )
         if ( get_boolean(son) ) then
           select case ( fieldIndex )
+          case ( f_allBooleans )
+            call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
+            & 'Run-time Boolean flags' )
           case ( f_allForwardModels )
             if ( haveForwardModelConfigs ) then
               call dump ( forwardModelConfigs, where=son )
@@ -197,6 +206,13 @@ contains
             stop
           end select
         end if
+      case ( f_Boolean )
+        call get_string ( sub_rosa(gson), booleanString, strip=.true. )
+        booleanString = lowerCase(booleanString)
+        call output( trim(booleanString) // ' = ', advance='no' )
+        tvalue = BooleanValue ( lowercase(booleanString), &
+          & runTimeValues%lkeys, runTimeValues%lvalues)
+        call output( tvalue, advance='yes' )
       case ( f_details )
         call expr ( gson, units, values, type )
         if ( units(1) /= phyq_dimensionless ) call AnnounceError ( gson, dimless )
@@ -444,6 +460,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.25  2006/03/07 00:49:42  pwagner
+! May dump Booleans
+!
 ! Revision 2.24  2006/01/04 01:21:30  vsnyder
 ! Make optional arguments pointers, in case actuals aren't associated
 !
