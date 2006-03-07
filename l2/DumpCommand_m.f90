@@ -34,6 +34,7 @@ contains
     use AntennaPatterns_m, only: Dump_Antenna_Patterns_Database
     use Calendar, only: Duration_Formatted, Time_T, TK
     use Declaration_table, only: Num_Value
+    use Dump_0, only: Dump
     use Expr_m, only: Expr
     use FilterShapes_m, only: Dump_Filter_Shapes_Database, &
       & Dump_DACS_Filter_Database
@@ -460,6 +461,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.26  2006/03/07 16:23:52  pwagner
+! Fixed bug only NAG caught
+!
 ! Revision 2.25  2006/03/07 00:49:42  pwagner
 ! May dump Booleans
 !
