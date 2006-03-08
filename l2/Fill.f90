@@ -6016,40 +6016,64 @@ contains ! =====     Public Procedures     =============================
       integer, intent(in) :: KEY        ! Tree node
       logical, intent(in) :: FORCE      ! If set throw caution to the wind
       ! Local parameters
-      integer, parameter :: NOMANIPULATIONS = 7
-      character(len=7), parameter :: VALIDMANIPULATIONS ( noManipulations ) = (/ &
+      integer, parameter :: NO2WAYMANIPULATIONS = 8
+      character(len=7), parameter :: VALID2WAYMANIPULATIONS ( NO2WAYMANIPULATIONS ) = (/ &
         & 'a+b    ', &
         & '(a+b)/2', &
         & 'a-b    ', &
         & 'a*b    ', &
         & 'a>b    ', &
         & 'a<b    ', &
-        & 'a|b    ' /)
+        & 'a|b    ', &
+        & 'a/b    ' /)
+      integer, parameter :: NO1WAYMANIPULATIONS = 5
+      character(len=7), parameter :: VALID1WAYMANIPULATIONS ( NO1WAYMANIPULATIONS ) = (/ &
+        & '-a     ', &
+        & '1/a    ', &
+        & 'abs(a) ', &
+        & 'sign(a)', &
+        & 'log(a) ' /)
       ! Local variables
       character (len=128) :: MSTR
       character (len=1) :: ABNAME
       logical :: OKSOFAR
+      logical :: OneWay
+      logical :: TwoWay
       integer :: I
+      integer :: NUMWAYS ! 1 or 2
       type (VectorValue_T), pointer :: AORB
       ! Executable code
 
       ! Currently we have a rather brain dead approach to this, so
       ! check that what the user has asked for, we can supply.
       call get_string ( manipulation, mstr, strip=.true. )
-      if ( all ( mstr /= validManipulations ) ) then
+      
+      OneWay = any ( mstr == valid1WayManipulations )
+      TwoWay = any ( mstr == valid2WayManipulations )
+      if ( .not. ( OneWay .or. TwoWay ) ) then
         call Announce_Error ( key, no_error_code, 'Invalid manipulation' )
         return
       end if
 
       ! Now check the sanity of the request.
-      if ( .not. associated ( a ) .or. .not. associated ( b ) ) then
-        call Announce_Error ( key, no_error_code, &
-          & 'You must supply both the a and b quantities' )
-        return
+      if ( OneWay ) then
+        numWays = 1
+        if ( .not. associated ( a ) ) then
+          call Announce_Error ( key, no_error_code, &
+            & 'You must supply the a quantity' )
+          return
+        end if
+      elseif ( TwoWay ) then
+        numWays = 2
+        if ( .not. associated ( a ) .or. .not. associated ( b ) ) then
+          call Announce_Error ( key, no_error_code, &
+            & 'You must supply both a and b quantities' )
+          return
+        end if
       end if
 
       okSoFar = .true.
-      do i = 1, 2
+      do i = 1, numWays ! 2
         if ( i == 1 ) then
           aorb => a
           abName = 'a'
@@ -6091,6 +6115,7 @@ contains ! =====     Public Procedures     =============================
       ! OK do the simple work for now
       ! Later we'll do fancy stuff to parse the manipulation.
       select case ( mstr )
+      ! The binary manipulations
       case ( 'a+b' )
         if ( .not. associated ( quantity%mask ) ) then
           quantity%values = a%values + b%values
@@ -6145,6 +6170,67 @@ contains ! =====     Public Procedures     =============================
         else
           where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 )
             quantity%values = ior ( nint(a%values), nint(b%values) )
+          end where
+        end if
+      case ( 'a/b' )
+        if ( .not. associated ( quantity%mask ) ) then
+          where ( b%values /= 0._rv )
+            quantity%values = a%values / b%values
+          end where
+        else
+          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 .and. &
+            & ( b%values /= 0._rv ) )
+            quantity%values = a%values / b%values
+          end where
+        end if
+      ! The unary manipulations
+      case ( '-a'  )
+        if ( .not. associated ( quantity%mask ) ) then
+            quantity%values = -a%values
+        else
+          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0  )
+            quantity%values = -a%values
+          end where
+        end if
+      case ( '1/a'  )
+        if ( .not. associated ( quantity%mask ) ) then
+          where ( a%values /= 0._rv )
+            quantity%values = 1./a%values
+          end where
+        else
+          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 .and. &
+            & ( a%values /= 0._rv ) )
+            quantity%values = 1./a%values
+          end where
+        end if
+      case ( 'abs(a)'  )
+        if ( .not. associated ( quantity%mask ) ) then
+            quantity%values = abs(a%values)
+        else
+          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0  )
+            quantity%values = abs(a%values)
+          end where
+        end if
+      case ( 'sign(a)' )
+        if ( .not. associated ( quantity%mask ) ) then
+          where ( a%values /= 0._rv )
+            quantity%values = sign(1., a%values)
+          end where
+        else
+          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 .and. &
+            & ( a%values /= 0._rv ) )
+            quantity%values = sign(1., a%values)
+          end where
+        end if
+      case ( 'log(a)' )
+        if ( .not. associated ( quantity%mask ) ) then
+          where ( a%values > 0._rv )
+            quantity%values = log(a%values)
+          end where
+        else
+          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 .and. &
+            & ( a%values > 0._rv ) )
+            quantity%values = log(a%values)
           end where
         end if
       end select
@@ -7027,6 +7113,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.323  2006/03/08 21:30:32  pwagner
+! Added new manipulations: a/b, 1/a, -a, abs(a), sign(a), log(a)
+!
 ! Revision 2.322  2006/02/21 19:16:10  pwagner
 ! GetHashElement is now a generic
 !
