@@ -23,9 +23,10 @@
       real(KINDVALUE)                                   :: mean
       real(KINDVALUE)                                   :: stddev
       real(KINDVALUE)                                   :: rms
+      real(KINDVALUE)                                   :: median
       ! Executable
-      call allstats(values, fillValue=fillValue, &
-        & min=min, max=max, mean=mean, stddev=stddev, rms=rms)
+      call allstats( values, fillValue=fillValue, &
+        & min=min, max=max, mean=mean, stddev=stddev, rms=rms, median=median )
       select case (FN)
       case (FN_MIN)
         rValue = min
@@ -37,12 +38,17 @@
         rValue = stddev
       case (FN_RMS)
         rValue = rms
+      case (FN_MEDIAN)
+        rValue = median
       case default
         ! We should never come here--coding error
       end select
       ! end function mlsmin
 !
 ! $Log$
+! Revision 2.3  2006/03/08 01:13:38  pwagner
+! Added median as statistical component
+!
 ! Revision 2.2  2005/06/22 17:44:11  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
