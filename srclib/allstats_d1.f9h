@@ -12,7 +12,7 @@
 ! $Id$
 !   subroutine allstats*( values, &
 !        & nbins, bounds, addedData, fillValue, precision, &
-!        & count, min, max, mean, stddev, rms, bincount, doDump )
+!        & count, min, max, mean, stddev, rms, median, bincount, doDump )
         ! Args
         real(rk), dimension(:), intent(in)             :: values
         integer, optional, intent(in)                  :: nbins
@@ -26,6 +26,7 @@
         real(rk), optional, intent(out)                :: mean
         real(rk), optional, intent(out)                :: stddev
         real(rk), optional, intent(out)                :: rms
+        real(rk), optional, intent(out)                :: median
         integer, dimension(:), optional, intent(out)   :: bincount
         logical , optional, intent(in)                 :: doDump
         ! Internal variables
@@ -39,6 +40,8 @@
         real(rk), dimension(5)                         :: stats
         real(rk)                                       :: x1, x2
         real(rk), dimension(:), pointer                :: xtab => null()
+        real(rk), dimension(:), pointer                :: xmed1 => null()
+        real(rk), dimension(:), pointer                :: xmed2 => null()
         real(rk)                                       :: absMu, sigma
         ! Executable
         myDump = .false.
@@ -71,14 +74,20 @@
           call filterValues(values, XTAB, NX, fillValue=fillValue)
           call STAT1(XTAB, NX, STATS, bincount, NCELLS, X1, X2)
           MLSStat%fillCount = MLSStat%fillCount + size(values) - size(XTAB)
+          ! Find median (only if not adding data)
+          if ( .not. myAddedData ) call FindMedian( XTAB, NX, MLSStat%median )
           call Deallocate_test ( XTAB, 'XTAB', ModuleName )
         elseif ( present(precision) ) then
           call filterValues(values, XTAB, NX, precision=precision)
           call STAT1(XTAB, NX, STATS, bincount, NCELLS, X1, X2)
           MLSStat%fillCount = MLSStat%fillCount + size(values) - size(XTAB)
+          ! Find median (only if not adding data)
+          if ( .not. myAddedData ) call FindMedian( XTAB, NX, MLSStat%median )
           call Deallocate_test ( XTAB, 'XTAB', ModuleName )
         else
           call STAT1(values, size(values), STATS, bincount, NCELLS, X1, X2)
+          ! Find median (only if not adding data)
+          if ( .not. myAddedData ) call FindMedian( values, size(values), MLSStat%median )
         endif
         ! Side calculation in case we need rms
         n = stats(1)
@@ -111,6 +120,7 @@
         if ( present(mean  ) ) mean   = stats(4)
         if ( present(stddev) ) stddev = stats(5)
         if ( present(rms   ) ) rms    = myRMS
+        if ( present(median) ) median = MLSStat%median
         ! Have we been asked to dump the calculated stats?
         if ( .not. myDump ) return
         call output('Combined statistics')
@@ -127,9 +137,52 @@
         if ( present(mean  ) ) fields = catLists(fields, 'mean ')
         if ( present(stddev) ) fields = catLists(fields, 'stddev')
         if ( present(rms   ) ) fields = catLists(fields, 'rms  ')
+        if ( present(median) ) fields = catLists(fields, 'median')
         if ( present(bincount) ) fields = catLists(fields, 'bin')
         ! call output('fields: ' // trim(fields), advance='yes')
         call dump( MLSStat, fields )
+contains
+  subroutine FindMedian( array, N, median )
+    ! Find the median of the values contained in array
+    ! Method:
+    ! At each step, delete the high and low values of the array
+    ! Until left with an array of length either 2 or 1
+    ! (depending on whether the starting length was even or odd)
+    ! The 1st element of this shrunken array is our median
+    
+    ! (If even, would you prefer to split: median = (x1 +x2)/2?)
+    ! No, because then the median value wouldn't actually be in the array
+    
+    ! Dummy args
+    real(rk), dimension(:), intent(in) :: array
+    integer, intent(in)                :: N
+    real(r8), intent(out)              :: median
+    ! Local variables
+    logical :: done
+    integer, dimension(1) :: low, high
+    integer :: newsize
+    ! Executable
+    nullify(xmed1, xmed2)
+    call allocate_test( xmed1, N, 'xmed1', trim(Modulename) // '/FindMedian' )
+    call allocate_test( xmed2, N, 'xmed2', trim(Modulename) // '/FindMedian' )
+    xmed1(1:N) = array(1:N)
+    newsize = N
+    done = (N < 3)
+    do
+      if ( done ) exit
+      low = minloc( xmed1(1:newsize) )
+      high = maxloc( xmed1(1:newsize) )
+      newsize = shrinkArray( xmed1(1:newsize), (/ low(1), high(1) /), xmed2 )
+      xmed1 = xmed2
+      done = (newsize < 3)
+    enddo
+    median = xmed1(1)
+    call deallocate_test(xmed1, 'xmed1', trim(Modulename) // '/FindMedian' )
+    call deallocate_test(xmed2, 'xmed2', trim(Modulename) // '/FindMedian' )
+  end subroutine FindMedian
 ! end subroutine sllstats*
 
 ! $Log$
+! Revision 1.1  2006/02/01 23:43:24  pwagner
+! First commit
+!
