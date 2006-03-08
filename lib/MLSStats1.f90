@@ -25,7 +25,8 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
   
   public :: STAT_T             ! The data type
   public :: ALLSTATS, DUMP, STATISTICS  ! subroutines
-  public :: MLSMIN, MLSMAX, MLSMEAN, MLSSTDDEV, MLSRMS, STATFUNCTION ! functions
+  public :: MLSMIN, MLSMAX, MLSMEAN, MLSMEDIAN, MLSSTDDEV, MLSRMS ! functions
+  public :: STATFUNCTION
   
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -45,9 +46,13 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
   
   ! Interfaces have been supplied so that most procedures accept
   ! arrays of rank 1, 2, or 3 and either single or double precision
-  ! In addition to the usual min, max, mean, stddev functions
-  ! an rms function has been created.
-  ! Missing so far is a median function, mode function, chi^2, 
+  
+  ! Note that multidimensional arrays are reshaped into longer
+  ! 1-d arrays, rather than returning reduced rank results
+  
+  ! In addition to min, max, mean, stddev functions of MATH77
+  ! median and rms functions have been created.
+  ! Missing so far is a mode function, chi^2, 
   ! confidence level, etc.
   
   ! If called via a subroutine,
@@ -62,17 +67,19 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
   
   ! Also, if called via a subroutine, successive calls may "merge" data
   ! allowing the calculation of statistics for a larger cumulative data set
+  ! Except, in this case, medians are not found correctly
+  ! (hard to fix this bug; perhaps why median not part of original MATH77)
 
   ! This is the main datatype, a stat.
   ! (Would making fillValue a component makes sense?)
-  ! (How about a separate count of times fillValue had to be ignored?)
 
   type Stat_T
     integer :: count = 0      ! If > 0, merging data from prior call(s)
     integer :: fillcount = 0  ! Number of times fillValues ignored
-    real(r8) :: min
     real(r8) :: max
     real(r8) :: mean
+    real(r8) :: median        ! incorrect if merging data
+    real(r8) :: min
     real(r8) :: stddev
     real(r8) :: rms
     ! The next 3 deal with histogramming data
@@ -120,6 +127,11 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
     module procedure mlsmean_d1r8, mlsmean_d2r8, mlsmean_d3r8
   end interface
   
+  interface mlsmedian
+    module procedure mlsmedian_d1r4, mlsmedian_d2r4, mlsmedian_d3r4
+    module procedure mlsmedian_d1r8, mlsmedian_d2r8, mlsmedian_d3r8
+  end interface
+  
   interface mlsstddev
     module procedure mlsstddev_d1r4, mlsstddev_d2r4, mlsstddev_d3r4
     module procedure mlsstddev_d1r8, mlsstddev_d2r8, mlsstddev_d3r8
@@ -128,6 +140,10 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
   interface mlsrms
     module procedure mlsrms_d1r4, mlsrms_d2r4, mlsrms_d3r4
     module procedure mlsrms_d1r8, mlsrms_d2r8, mlsrms_d3r8
+  end interface
+  
+  interface shrinkarray
+    module procedure shrinkarray_int, shrinkarray_r4, shrinkarray_r8
   end interface
   
   interface stat1
@@ -143,12 +159,13 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
   integer, parameter              :: FN_MEAN = FN_MAX + 1
   integer, parameter              :: FN_STDDEV = FN_MEAN + 1
   integer, parameter              :: FN_RMS = FN_STDDEV + 1
+  integer, parameter              :: FN_MEDIAN = FN_RMS + 1
 
 contains
       ! ------------------- allstats_d1r4 -----------------------
       subroutine allstats_d1r4( values, &
         & nbins, bounds, addedData, fillValue, precision, &
-        & count, min, max, mean, stddev, rms, bincount, doDump )
+        & count, min, max, mean, stddev, rms, median, bincount, doDump )
         integer, parameter :: rk = r4
         include 'allstats_d1.f9h'
       end subroutine allstats_d1r4
@@ -156,7 +173,7 @@ contains
       ! ------------------- allstats_d1r8 -----------------------
       subroutine allstats_d1r8( values, &
         & nbins, bounds, addedData, fillValue, precision, &
-        & count, min, max, mean, stddev, rms, bincount, doDump )
+        & count, min, max, mean, stddev, rms, median, bincount, doDump )
         integer, parameter :: rk = r8
         include 'allstats_d1.f9h'
       end subroutine allstats_d1r8
@@ -164,7 +181,7 @@ contains
       ! ------------------- allstats_d2r4 -----------------------
       subroutine allstats_d2r4( values, &
         & nbins, bounds, addedData, fillValue, precision, &
-        & count, min, max, mean, stddev, rms, bincount, doDump )
+        & count, min, max, mean, stddev, rms, median, bincount, doDump )
         ! Args
         real(r4), dimension(:,:), intent(in)           :: values
         integer, optional, intent(in)                  :: nbins
@@ -178,6 +195,7 @@ contains
         real(r4), optional, intent(out)                :: mean
         real(r4), optional, intent(out)                :: stddev
         real(r4), optional, intent(out)                :: rms
+        real(r4), optional, intent(out)                :: median
         integer, dimension(:), optional, intent(out)   :: bincount
         logical , optional, intent(in)                 :: doDump
         ! Internal variables
@@ -188,20 +206,22 @@ contains
           call allstats_d1r4(reshape(values, (/shp(1)*shp(2)/)), &
             & nbins, bounds, addedData, fillValue, &
             & count=count, min=min, max=max, mean=mean, &
-            & stddev=stddev, rms=rms, bincount=bincount, doDump=doDump)
+            & stddev=stddev, rms=rms, median=median, bincount=bincount, &
+            & doDump=doDump)
         else
           call allstats_d1r4(reshape(values, (/shp(1)*shp(2)/)), &
             & nbins, bounds, addedData, fillValue, &
             & reshape(precision, (/shp(1)*shp(2)/)),&
             & count=count, min=min, max=max, mean=mean, &
-            & stddev=stddev, rms=rms, bincount=bincount, doDump=doDump)
+            & stddev=stddev, rms=rms, median=median, bincount=bincount, &
+            & doDump=doDump)
         endif
       end subroutine allstats_d2r4
 
       ! ------------------- allstats_d2r8 -----------------------
       subroutine allstats_d2r8( values, &
         & nbins, bounds, addedData, fillValue, precision, &
-        & count, min, max, mean, stddev, rms, bincount, doDump )
+        & count, min, max, mean, stddev, rms, median, bincount, doDump )
         ! Args
         real(r8), dimension(:,:), intent(in)           :: values
         integer, optional, intent(in)                  :: nbins
@@ -215,6 +235,7 @@ contains
         real(r8), optional, intent(out)                :: mean
         real(r8), optional, intent(out)                :: stddev
         real(r8), optional, intent(out)                :: rms
+        real(r8), optional, intent(out)                :: median
         integer, dimension(:), optional, intent(out)   :: bincount
         logical , optional, intent(in)                 :: doDump
         ! Internal variables
@@ -225,20 +246,22 @@ contains
           call allstats_d1r8(reshape(values, (/shp(1)*shp(2)/)), &
             & nbins, bounds, addedData, fillValue, &
             & count=count, min=min, max=max, mean=mean, &
-            & stddev=stddev, rms=rms, bincount=bincount, doDump=doDump)
+            & stddev=stddev, rms=rms, median=median, bincount=bincount, &
+            & doDump=doDump)
         else
           call allstats_d1r8(reshape(values, (/shp(1)*shp(2)/)), &
             & nbins, bounds, addedData, fillValue, &
             & reshape(precision, (/shp(1)*shp(2)/)),&
             & count=count, min=min, max=max, mean=mean, &
-            & stddev=stddev, rms=rms, bincount=bincount, doDump=doDump)
+            & stddev=stddev, rms=rms, median=median, bincount=bincount, &
+            & doDump=doDump)
         endif
       end subroutine allstats_d2r8
 
       ! ------------------- allstats_d3r4 -----------------------
       subroutine allstats_d3r4( values, &
         & nbins, bounds, addedData, fillValue, precision, &
-        & count, min, max, mean, stddev, rms, bincount, doDump )
+        & count, min, max, mean, stddev, rms, median, bincount, doDump )
         ! Args
         real(r4), dimension(:,:,:), intent(in)         :: values
         integer, optional, intent(in)                  :: nbins
@@ -252,6 +275,7 @@ contains
         real(r4), optional, intent(out)                :: mean
         real(r4), optional, intent(out)                :: stddev
         real(r4), optional, intent(out)                :: rms
+        real(r4), optional, intent(out)                :: median
         integer, dimension(:), optional, intent(out)   :: bincount
         logical , optional, intent(in)                 :: doDump
         ! Internal variables
@@ -262,20 +286,22 @@ contains
           call allstats_d1r4(reshape(values, (/shp(1)*shp(2)*shp(3)/)), &
             & nbins, bounds, addedData, fillValue, &
             & count=count, min=min, max=max, mean=mean, &
-            & stddev=stddev, rms=rms, bincount=bincount, doDump=doDump)
+            & stddev=stddev, rms=rms, median=median, bincount=bincount, &
+            & doDump=doDump)
         else
           call allstats_d1r4(reshape(values, (/shp(1)*shp(2)*shp(3)/)), &
             & nbins, bounds, addedData, fillValue, &
             & reshape(precision, (/shp(1)*shp(2)/)),&
             & count=count, min=min, max=max, mean=mean, &
-            & stddev=stddev, rms=rms, bincount=bincount, doDump=doDump)
+            & stddev=stddev, rms=rms, median=median, bincount=bincount, &
+            & doDump=doDump)
         endif
       end subroutine allstats_d3r4
 
       ! ------------------- allstats_d3r8 -----------------------
       subroutine allstats_d3r8( values, &
         & nbins, bounds, addedData, fillValue, precision, &
-        & count, min, max, mean, stddev, rms, bincount, doDump )
+        & count, min, max, mean, stddev, rms, median, bincount, doDump )
         ! Args
         real(r8), dimension(:,:,:), intent(in)         :: values
         integer, optional, intent(in)                  :: nbins
@@ -289,6 +315,7 @@ contains
         real(r8), optional, intent(out)                :: mean
         real(r8), optional, intent(out)                :: stddev
         real(r8), optional, intent(out)                :: rms
+        real(r8), optional, intent(out)                :: median
         integer, dimension(:), optional, intent(out)   :: bincount
         logical , optional, intent(in)                 :: doDump
         ! Internal variables
@@ -299,13 +326,15 @@ contains
           call allstats_d1r8(reshape(values, (/shp(1)*shp(2)*shp(3)/)), &
             & nbins, bounds, addedData, fillValue, &
             & count=count, min=min, max=max, mean=mean, &
-            & stddev=stddev, rms=rms, bincount=bincount, doDump=doDump)
+            & stddev=stddev, rms=rms, median=median, bincount=bincount, &
+            & doDump=doDump)
         else
           call allstats_d1r8(reshape(values, (/shp(1)*shp(2)*shp(3)/)), &
             & nbins, bounds, addedData, fillValue, &
             & reshape(precision, (/shp(1)*shp(2)/)),&
             & count=count, min=min, max=max, mean=mean, &
-            & stddev=stddev, rms=rms, bincount=bincount, doDump=doDump)
+            & stddev=stddev, rms=rms, median=median, bincount=bincount, &
+            & doDump=doDump)
         endif
       end subroutine allstats_d3r8
 
@@ -471,6 +500,60 @@ contains
         include 'stats0.f9h'
       end function mlsmean_d3r8
 
+      ! ------------------- mlsmedian_d1r4 -----------------------
+      function mlsmedian_d1r4(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_median
+        ! Args
+        real(KINDVALUE), dimension(:), intent(in)      :: values
+        include 'stats0.f9h'
+      end function mlsmedian_d1r4
+
+      ! ------------------- mlsmedian_d1r8 -----------------------
+      function mlsmedian_d1r8(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r8
+        integer, parameter                             :: FN = FN_median
+        ! Args
+        real(KINDVALUE), dimension(:), intent(in)      :: values
+        include 'stats0.f9h'
+      end function mlsmedian_d1r8
+
+      ! ------------------- mlsmedian_d2r4 -----------------------
+      function mlsmedian_d2r4(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_median
+        ! Args
+        real(KINDVALUE), dimension(:,:), intent(in)    :: values
+        include 'stats0.f9h'
+      end function mlsmedian_d2r4
+
+      ! ------------------- mlsmedian_d2r8 -----------------------
+      function mlsmedian_d2r8(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r8
+        integer, parameter                             :: FN = FN_median
+        ! Args
+        real(KINDVALUE), dimension(:,:), intent(in)    :: values
+        include 'stats0.f9h'
+      end function mlsmedian_d2r8
+
+      ! ------------------- mlsmedian_d3r4 -----------------------
+      function mlsmedian_d3r4(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_median
+        ! Args
+        real(KINDVALUE), dimension(:,:,:), intent(in)  :: values
+        include 'stats0.f9h'
+      end function mlsmedian_d3r4
+
+      ! ------------------- mlsmedian_d3r8 -----------------------
+      function mlsmedian_d3r8(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r8
+        integer, parameter                             :: FN = FN_median
+        ! Args
+        real(KINDVALUE), dimension(:,:,:), intent(in)  :: values
+        include 'stats0.f9h'
+      end function mlsmedian_d3r8
+
       ! ------------------- mlsstddev_d1r4 -----------------------
       function mlsstddev_d1r4(values, fillValue) result(rValue)
         integer, parameter                             :: KINDVALUE = r4
@@ -623,13 +706,14 @@ contains
           call allstats(values, &
             & nbins, bounds, addeddata, fillValue, precision, &
             & statistic%count, statistic%min, statistic%max, statistic%mean, &
-            & statistic%stddev, statistic%rms, statistic%bincount)
+            & statistic%stddev, statistic%rms, statistic%median, &
+            & statistic%bincount)
         else
           call allstats(values, &
             & nbins, bounds, addeddata, fillValue, precision, &
             & count=statistic%count, min=statistic%min, max=statistic%max, &
             & mean=statistic%mean, &
-            & stddev=statistic%stddev, rms=statistic%rms)
+            & stddev=statistic%stddev, rms=statistic%rms, median=statistic%rms )
         endif
       end subroutine statistics
       
@@ -646,6 +730,9 @@ contains
         call blanks(4)
         call output('min:    ')
         call output(statistic%min)
+        call blanks(4)
+        call output('median:    ')
+        call output(statistic%median)
         call newline
         call output('mean:   ')
         call output(statistic%mean)
@@ -675,8 +762,9 @@ contains
         call dump_if_selected( statistic%count, which, 'count', 'no' )
         call dump_if_selected( statistic%max, which, 'max', 'no' )
         call dump_if_selected( statistic%min, which, 'min', 'no' )
-        call newline
         call dump_if_selected( statistic%mean, which, 'mean', 'no' )
+        call dump_if_selected( statistic%median, which, 'median', 'no' )
+        call newline
         call dump_if_selected( statistic%stddev, which, 'stddev', 'no' )
         call dump_if_selected( statistic%rms, which, 'rms', 'no' )
         call newline
@@ -882,6 +970,31 @@ contains
       real(r8), intent(in) :: XTAB(:)
       include 'stats1.f9h'
       end subroutine STAT1_r8
+      
+      ! This family shrinks an array, deleting indices from set delete
+      function shrinkarray_int( array, delete, shrunken ) result(newsize)
+        integer, dimension(:), intent(in)    :: array
+        ! Local variables
+        integer, dimension(:), intent(out)   :: shrunken
+        ! Executable
+        include 'shrinkArray.f9h'
+      end function shrinkarray_int
+      
+      function shrinkarray_r4( array, delete, shrunken ) result(newsize)
+        real(r4), dimension(:), intent(in)    :: array
+        ! Local variables
+        real(r4), dimension(:), intent(out)   :: shrunken
+        ! Executable
+        include 'shrinkArray.f9h'
+      end function shrinkarray_r4
+      
+      function shrinkarray_r8( array, delete, shrunken ) result(newsize)
+        real(r8), dimension(:), intent(in)    :: array
+        ! Local variables
+        real(r8), dimension(:), intent(out)   :: shrunken
+        ! Executable
+        include 'shrinkArray.f9h'
+      end function shrinkarray_r8
 
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
@@ -898,6 +1011,9 @@ end module MLSStats1
 
 !
 ! $Log$
+! Revision 2.8  2006/03/08 01:13:38  pwagner
+! Added median as statistical component
+!
 ! Revision 2.7  2006/02/01 23:44:37  pwagner
 ! Added doDump option to allStats
 !
