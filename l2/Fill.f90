@@ -6214,12 +6214,12 @@ contains ! =====     Public Procedures     =============================
       case ( 'sign(a)' )
         if ( .not. associated ( quantity%mask ) ) then
           where ( a%values /= 0._rv )
-            quantity%values = sign(1., a%values)
+            quantity%values = sign(1._rv, a%values)
           end where
         else
           where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 .and. &
             & ( a%values /= 0._rv ) )
-            quantity%values = sign(1., a%values)
+            quantity%values = sign(1._rv, a%values)
           end where
         end if
       case ( 'log(a)' )
@@ -7113,6 +7113,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.324  2006/03/09 16:25:01  pwagner
+! Fixed a bug only NAG caught
+!
 ! Revision 2.323  2006/03/08 21:30:32  pwagner
 ! Added new manipulations: a/b, 1/a, -a, abs(a), sign(a), log(a)
 !
