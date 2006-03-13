@@ -67,6 +67,7 @@ Boolean
 boundarypressure
 boxCarMethod
 
+c
 centerVertically
 climatology
 cloud_der
@@ -420,6 +421,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.160  2006/03/13 23:42:37  pwagner
+# Added c=numeric type field to Fill via manipulation
+#
 # Revision 2.159  2006/03/07 00:49:42  pwagner
 # May dump Booleans
 #
