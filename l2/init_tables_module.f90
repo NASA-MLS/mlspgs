@@ -792,6 +792,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_boundaryPressure, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
              begin, f+f_boxCarMethod, t+t_boxCarMethod, n+n_field_type, &
+             begin, f+f_c, t+t_numeric, n+n_field_type, &
              begin, f+f_channel, t+t_numeric, n+n_field_type, &
              begin, f+f_centerVertically, t+t_boolean, n+n_field_type, &
              begin, f+f_dontMask, t+t_boolean, n+n_field_type, &
@@ -1435,6 +1436,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.427  2006/03/13 23:41:53  pwagner
+! Added c=numeric type field to Fill via manipulation
+!
 ! Revision 2.426  2006/03/07 00:50:59  pwagner
 ! May change already-set Booleans via reevaluate command
 !
