@@ -13,6 +13,9 @@
 module Fill                     ! Create vectors and fill them.
   !=============================================================================
 
+  use MLSCommon, only: MLSFile_T, R4, R8, RM, RV, &
+    & DEFAULTUNDEFINEDVALUE
+
   ! This module performs the Fill operation in the Level 2 software.
   ! This takes a vector template, and creates and fills an appropriate vector
 
@@ -42,6 +45,12 @@ module Fill                     ! Create vectors and fill them.
   logical, parameter :: DONTPAD = .false.
   logical, parameter :: USEREICHLER = .false.
 
+  type arrayTemp_T
+     real(rv), dimension(:,:), pointer :: VALUES => NULL() ! shaped like a
+  end type arrayTemp_T
+  
+  type(arrayTemp_T), dimension(:), save, pointer :: primitives => null()
+
 contains ! =====     Public Procedures     =============================
 
   !---------------------------------------------------  MLSL2Fill  -----
@@ -66,7 +75,7 @@ contains ! =====     Public Procedures     =============================
       & F_APRIORIPRECISION, F_AVOIDBRIGHTOBJECTS, &
       & F_B, F_BADRANGE, F_BASELINEQUANTITY, F_BIN, F_BOUNDARYPRESSURE, &
       & F_BOXCARMETHOD, &
-      & F_CENTERVERTICALLY, F_CHANNEL, F_COLUMNS, &
+      & F_C, F_CENTERVERTICALLY, F_CHANNEL, F_COLUMNS, &
       & F_DESTINATION, F_DIAGONAL, F_DONTMASK,&
       & F_ECRTOFOV, F_EARTHRADIUS, F_EXCLUDEBELOWBOTTOM, F_EXPLICITVALUES, &
       & F_EXTINCTION, F_FIELDECR, F_FILE, F_FORCE, &
@@ -148,8 +157,6 @@ contains ! =====     Public Procedures     =============================
       & Matrix_T, NullifyMatrix, UpdateDiagonal
     ! NOTE: If you ever want to include defined assignment for matrices, please
     ! carefully check out the code around the call to snoop.
-    use MLSCommon, only: MLSFile_T, R4, R8, RM, RV, &
-      & DEFAULTUNDEFINEDVALUE
     use MLSFiles, only: GetMLSFileByType
     use MLSL2Options, only: RESTARTWARNINGS, SPECIALDUMPFILE
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, &
@@ -161,9 +168,10 @@ contains ! =====     Public Procedures     =============================
     use MLSSets, only: FindFirst
     use MLSSignals_m, only: GetFirstChannel, GetSignalName, GetModuleName, IsModuleSpacecraft, &
       & GetSignal, Signal_T
-    use MLSStringLists, only: catLists, PutHashElement, NumStringElements, &
-      & StringElement, StringElementNum, switchDetail
-    use MLSStrings, only: lowerCase
+    use MLSStringLists, only: catLists, GetStringElement, NumStringElements, &
+      & PutHashElement, &
+      & ReplaceSubString, StringElement, StringElementNum, switchDetail
+    use MLSStrings, only: lowerCase, SplitNest
     use Molecules, only: L_H2O
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
     use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, revertoutput, switchOutput
@@ -319,6 +327,7 @@ contains ! =====     Public Procedures     =============================
     integer :: BQTYINDEX                ! Index of a quantity in vector
     integer :: BVECINDEX                ! Index of a vector
     integer :: BOXCARMETHOD             ! l_min, l_max, l_mean
+    real(rv) :: C                       ! constant "c" in manipulation
     logical :: CENTERVERTICALLY         ! For bin based fills
     integer :: CHANNEL                  ! For spreadChannels fill
     integer :: COLMABUNITS              ! l_DOBSONUNITS, or l_MOLCM2
@@ -520,6 +529,7 @@ contains ! =====     Public Procedures     =============================
       additional = .false.
       allowMissing = .false.
       boxCarMethod = l_mean
+      c = 0.
       channel = 0
       colmabunits = l_molcm2 ! default units for column abundances
       dontMask = .false.
@@ -777,6 +787,9 @@ contains ! =====     Public Procedures     =============================
           case ( f_boundaryPressure )     ! For special fill of columnAbundance
             bndPressVctrIndex = decoration(decoration(subtree(1,gson)))
             bndPressQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case(f_c)
+            call expr ( gson , unitAsArray, valueAsArray )
+            c = valueAsArray(1)
           case ( f_channel )
             call expr_check ( gson , unitAsArray, valueAsArray, &
               & (/PHYQ_Dimensionless/), unitsError )
@@ -1449,7 +1462,7 @@ contains ! =====     Public Procedures     =============================
             nullify ( bQuantity )
           end if
           call FillQuantityByManipulation ( quantity, aQuantity, bQuantity, &
-            & manipulation, key, force )
+            & manipulation, key, force, c )
 
         case ( l_magAzEl ) ! -- Magnetic Explicit from stren, azim, elev --
           if ( .not. got(f_explicitValues) ) &
@@ -6007,7 +6020,8 @@ contains ! =====     Public Procedures     =============================
     end subroutine FillQuantityFromLosGrid
 
     ! --------------------------------------------- FillQuantityByManipulation ---
-    subroutine FillQuantityByManipulation ( quantity, a, b, manipulation, key, force )
+    subroutine FillQuantityByManipulation ( quantity, a, b, manipulation, &
+      & key, force, c )
       use String_table, only: GET_STRING
       type (VectorValue_T), intent(inout) :: QUANTITY
       type (VectorValue_T), pointer :: A
@@ -6015,6 +6029,7 @@ contains ! =====     Public Procedures     =============================
       integer, intent(in) :: MANIPULATION
       integer, intent(in) :: KEY        ! Tree node
       logical, intent(in) :: FORCE      ! If set throw caution to the wind
+      real(rv) :: C                     ! constant "c" in manipulation
       ! Local parameters
       integer, parameter :: NO2WAYMANIPULATIONS = 8
       character(len=7), parameter :: VALID2WAYMANIPULATIONS ( NO2WAYMANIPULATIONS ) = (/ &
@@ -6026,12 +6041,13 @@ contains ! =====     Public Procedures     =============================
         & 'a<b    ', &
         & 'a|b    ', &
         & 'a/b    ' /)
-      integer, parameter :: NO1WAYMANIPULATIONS = 5
+      integer, parameter :: NO1WAYMANIPULATIONS = 6
       character(len=7), parameter :: VALID1WAYMANIPULATIONS ( NO1WAYMANIPULATIONS ) = (/ &
         & '-a     ', &
         & '1/a    ', &
         & 'abs(a) ', &
         & 'sign(a)', &
+        & 'exp(a) ', &
         & 'log(a) ' /)
       ! Local variables
       character (len=128) :: MSTR
@@ -6039,7 +6055,9 @@ contains ! =====     Public Procedures     =============================
       logical :: OKSOFAR
       logical :: OneWay
       logical :: TwoWay
+      logical :: USESC
       integer :: I
+      logical :: NEEDSB
       integer :: NUMWAYS ! 1 or 2
       type (VectorValue_T), pointer :: AORB
       ! Executable code
@@ -6047,16 +6065,21 @@ contains ! =====     Public Procedures     =============================
       ! Currently we have a rather brain dead approach to this, so
       ! check that what the user has asked for, we can supply.
       call get_string ( manipulation, mstr, strip=.true. )
+      mstr = lowercase(mstr)
       
       OneWay = any ( mstr == valid1WayManipulations )
       TwoWay = any ( mstr == valid2WayManipulations )
-      if ( .not. ( OneWay .or. TwoWay ) ) then
+      usesc  = .not. ( OneWay .or. TwoWay ) .and. &
+        & index(mstr, 'c') > 0
+      if ( .not. ( OneWay .or. TwoWay .or. usesc ) ) then
         call Announce_Error ( key, no_error_code, 'Invalid manipulation' )
         return
       end if
+      
+      needsB = TwoWay .or. (usesC .and. (index(mstr, 'b') > 0) )
 
       ! Now check the sanity of the request.
-      if ( OneWay ) then
+      if ( OneWay .or. usesc ) then
         numWays = 1
         if ( .not. associated ( a ) ) then
           call Announce_Error ( key, no_error_code, &
@@ -6222,6 +6245,14 @@ contains ! =====     Public Procedures     =============================
             quantity%values = sign(1._rv, a%values)
           end where
         end if
+      case ( 'exp(a)'  )
+        if ( .not. associated ( quantity%mask ) ) then
+            quantity%values = exp(a%values)
+        else
+          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0  )
+            quantity%values = exp(a%values)
+          end where
+        end if
       case ( 'log(a)' )
         if ( .not. associated ( quantity%mask ) ) then
           where ( a%values > 0._rv )
@@ -6233,9 +6264,344 @@ contains ! =====     Public Procedures     =============================
             quantity%values = log(a%values)
           end where
         end if
+      case default
+        ! This should be one of the cases which use the constant "c"
+        call SimpleExprWithC( quantity, a, b, c, mstr )
       end select
 
     end subroutine FillQuantityByManipulation
+
+      subroutine SimpleExprWithC( quantity, a, b, c, mstr )
+      type (VectorValue_T), intent(inout) :: QUANTITY
+      type (VectorValue_T), pointer :: A
+      type (VectorValue_T), pointer :: B
+      real(rv) :: C                     ! constant "c" in manipulation
+      character (len=128) :: MSTR
+        ! Evaluate mstr assuming it's of the form
+        ! expr1 [op1 expr2]
+        ! where each expr is either a primitive 'x' (one of {a, b, or c})
+        ! or else ['('] 'x op y' [')']
+        ! where 'op' is one of {+, -, *, /}
+
+        ! Method:
+        ! Progressively collapse all the '(..)' pairs into their values
+        ! (stored in primitives database)
+        ! until only primitives remain
+        ! Then evaluate the primitives
+        !
+        ! Limitations:
+        ! Does not check for unmatched parens or other illegal syntax
+        integer, parameter :: MAXSTRLISTLENGTH = 128
+        integer, parameter :: MAXNESTINGS=64 ! Max number of '(..)' pairs
+        character(len=MAXSTRLISTLENGTH) :: collapsedstr
+        integer :: level
+        integer :: np ! number of primitives
+        character(len=MAXSTRLISTLENGTH) :: part1
+        character(len=MAXSTRLISTLENGTH) :: part2
+        character(len=MAXSTRLISTLENGTH) :: part3
+        character(len=4) :: vchar
+        logical, parameter :: DEEBUG = .false.
+        ! Executable
+        if ( DeeBUG ) print *, 'mstr: ', trim(mstr)
+        nullify(primitives)
+        np = 0
+        quantity%values = 0.
+        ! 1st--make sure spaces surround each operator
+        ! (It takes two steps for each to avoid threat of infinite loop)
+        call ReplaceSubString( mstr, collapsedstr, '+', ' & ', &
+          & which='all', no_trim=.true. )
+        call ReplaceSubString( collapsedstr, mstr, '&', '+', &
+          & which='all', no_trim=.false. )
+
+        call ReplaceSubString( mstr, collapsedstr, '*', ' & ', &
+          & which='all', no_trim=.true. )
+        call ReplaceSubString( collapsedstr, mstr, '&', '*', &
+          & which='all', no_trim=.false. )
+
+        call ReplaceSubString( mstr, collapsedstr, '-', ' & ', &
+          & which='all', no_trim=.true. )
+        call ReplaceSubString( collapsedstr, mstr, '&', '-', &
+          & which='all', no_trim=.false. )
+
+        call ReplaceSubString( mstr, collapsedstr, '/', ' & ', &
+          & which='all', no_trim=.true. )
+        call ReplaceSubString( collapsedstr, mstr, '&', '/', &
+          & which='all', no_trim=.false. )
+
+        collapsedstr = lowerCase(mstr)
+        ! Collapse every sub-formula nested within parentheses
+        do level =1, MAXNESTINGS ! To prevent endlessly looping if ill-formed
+          if ( index( collapsedstr, '(' ) < 1 ) exit
+          call SplitNest ( collapsedstr, part1, part2, part3 )
+          ! Now evaluate the part2
+          if ( DeeBUG ) then
+            print *, 'part1 ', part1
+            print *, 'part2 ', part2
+            print *, 'part3 ', part3
+          endif
+          if ( part2 == ' ' ) then
+            ! This should never happen with well-formed formulas
+            collapsedstr = part1
+            cycle
+          else
+            np = evaluatePrimitive( trim(part2), &
+              & a, b, c )
+            write(vChar, '(i4)') np
+          endif
+          ! And substitute its value for the spaces it occupied
+          if (  part1 == ' ' ) then
+            collapsedstr = trim(vChar) // ' ' // part3
+          elseif ( part3 == ' ' ) then
+            collapsedstr = trim(part1) // ' ' // vChar
+          else
+            collapsedstr = trim(part1) // ' ' // trim(vChar) // &
+              & ' ' // part3
+          endif
+          if ( DeeBUG ) then
+            print *, 'collapsedstr ', collapsedstr
+          endif
+        enddo
+        ! Presumably we have collapsed all the nested '(..)' pairs by now
+        np = evaluatePrimitive( trim(collapsedstr), &
+              & a, b, c )
+        if ( DeeBUG ) then
+          print *, 'np ', np
+          print *, 'size(database) ', size(primitives)
+        endif
+        if ( np < 1 .or. np > size(primitives) ) then
+          print *, 'np ', np
+          print *, 'size(database) ', size(primitives)
+          call Announce_Error ( key, no_error_code, &
+            & 'Illegal index for primitives array' )
+        return
+        endif
+        if ( .not. associated ( quantity%mask ) ) then
+          quantity%values = primitives(np)%values
+        else
+          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 )
+            quantity%values = primitives(np)%values
+          end where
+        end if
+        if ( DeeBUG ) call dumpPrimitives(primitives)
+        call destroyPrimitives(primitives)
+      end subroutine SimpleExprWithC
+
+      subroutine destroyPrimitives(primitives)
+        ! deallocate all the arrays we created
+        type(arrayTemp_T), dimension(:), pointer :: primitives
+        integer :: i
+        if ( .not. associated(primitives) ) return
+        if ( size(primitives) < 1 ) return
+        do i=1, size(primitives)
+          call deallocate_test( primitives(i)%values, &
+            & 'values', ModuleName // '/destroyPrimitives' )
+        enddo
+      end subroutine destroyPrimitives
+
+      subroutine dumpAPrimitive(primitive)
+        ! dump all the values in the array
+        type(arrayTemp_T), intent(in) :: primitive
+        if ( .not. associated(primitive%values) ) then
+          call output( 'values not associated ', advance='yes' )
+          return
+        endif
+        if ( size(primitive%values) < 1 ) then
+          call output( 'values array is of 0 size ', advance='yes' )
+          return
+        endif
+        call dump( primitive%values, 'values' )
+      end subroutine dumpAPrimitive
+
+      subroutine dumpPrimitives(primitives)
+        ! dump all the arrays we created
+        type(arrayTemp_T), dimension(:), pointer :: primitives
+        integer :: i
+        if ( .not. associated(primitives) ) then
+          call output( 'database not associated ', advance='yes' )
+          return
+        endif
+        if ( size(primitives) < 1 ) then
+          call output( 'empty database ', advance='yes' )
+          return
+        endif
+        call output( 'size of primitives database: ', advance='no' )
+        call output( size(primitives), advance='yes' )
+        do i=1, size(primitives)
+          call output ( ' index of primitive: ', advance='no' )
+          call output ( i, advance='yes' )
+          call dumpAPrimitive( primitives(i) )
+        enddo
+      end subroutine dumpPrimitives
+
+      integer function AddPrimitiveToDatabase( DATABASE, ITEM )
+
+        ! This function adds a primitive data type to a database of said types,
+        ! creating a new database if it doesn't exist.  The result value is
+        ! the size -- where it was put.
+
+        ! Dummy arguments
+        type (arrayTemp_T), dimension(:), pointer :: DATABASE
+        type (arrayTemp_T), intent(in) :: ITEM
+
+        ! Local variables
+        type (arrayTemp_T), dimension(:), pointer :: tempDatabase
+        !This include causes real trouble if you are compiling in a different
+        !directory.
+        include "addItemToDatabase.f9h" 
+
+        AddPrimitiveToDatabase = newSize
+      end function AddPrimitiveToDatabase
+
+      function evaluatePrimitive( str, a, b, c ) result(value)
+        ! Evaluate an expression composed entirely of
+        ! (0) constants ('c')
+        ! (1) primitives (e.g., '2')
+        ! (2) unary operators ('-')
+        ! (3) binary operators {'+', '-', '*', '/'}
+        ! Dummy args
+        character(len=*)                :: str
+        integer                         :: value
+        type (VectorValue_T), pointer   :: A
+        type (VectorValue_T), pointer   :: B
+        real(rv) :: C                     ! constant "c" in manipulation
+        ! Internal variables
+        logical                         :: done
+        integer                         :: elem
+        logical                         :: hit
+        character(len=3)                :: lastOp ! {'+', '-', '*', '/'}
+        integer                         :: n
+        logical                         :: negating
+        integer                         :: partID
+        integer, dimension(2)           :: shp
+        character(len=32)               :: variable
+        type (arrayTemp_T)              :: newone
+        type (arrayTemp_T)              :: part
+        logical, parameter              :: DEEBUG = .false.
+        ! Executable
+        shp = shape(a%values)
+        call allocate_test( newone%values, shp(1), shp(2), &
+          & 'newone', ModuleName // '/evaluatePrimitive' )
+        call allocate_test( part%values, shp(1), shp(2), &
+          & 'part', ModuleName // '/evaluatePrimitive' )
+
+        if ( deeBug ) then
+          print *, 'Complete dump of database'
+          call dumpPrimitives(primitives)
+        endif
+
+        done = .false.
+        negating = .false.
+        elem = 0
+        lastOp = 'nul' ! 'or'
+        newone%values = 0.
+        n = NumStringElements( trim(str), countEmpty=.false., &
+          & inseparator=' ' )
+        do
+          ! go through the elements, re-evaluating every time we "hit" a primitive
+          ! Otherwise revising our lastOp or negating status
+          elem = elem + 1
+          call GetStringElement ( trim(str), variable, elem, &
+            & countEmpty=.false., inseparator=' ' )
+          select case( trim(variable) )
+          case ('a')
+            partID = -1
+            part%values = a%values
+            hit = .true.
+          case ('b')
+            partID = -2
+            part%values = b%values
+            hit = .true.
+          case ('c')
+            partID = -3
+            part%values = c
+            hit = .true.
+          case ('+')
+            lastOp = '+'
+            hit = .false.
+          case ('*')
+            lastOp = '*'
+            hit = .false.
+          case ('/')
+            lastOp = '/'
+            hit = .false.
+          case ('-') ! could be unary or binary; how do we tell?
+            if ( hit ) then ! already have a primitive; looking for an op
+              lastOp = '-'
+              hit = .false.
+            else
+              ! case ('not', '~')
+              negating = .true.
+              hit = .false.
+            endif
+          case default
+            read( variable, * ) partID
+            if ( partID < 1 ) then
+              print *, 'partID: ', partID
+              call Announce_Error ( key, no_error_code, 'partID too small' )
+              return
+            elseif( partID > size(primitives) ) then
+              print *, 'partID: ', partID
+              call Announce_Error ( key, no_error_code, 'partID too big' )
+              return
+            endif
+            part%values = primitives(partID)%values
+            hit = .true.
+            if ( deeBug ) then
+              print *, 'part"s values after ' // trim(lastOp) // trim(variable)
+              call dumpAPrimitive(part)
+              print *, 'based on'
+              call dumpAPrimitive(primitives(partID))
+            endif
+          end select
+          if ( hit ) then
+            if ( negating ) part%values = -part%values
+            select case(lastOp)
+            case ('nul')
+                newone%values = part%values
+            case ('+')
+                newone%values = newone%values + part%values
+            case ('-')
+                newone%values = newone%values - part%values
+            case ('*')
+                newone%values = newone%values * part%values
+            case ('/')
+              where ( part%values /= 0._rv )
+                newone%values = newone%values / part%values
+              end where
+            case default
+              ! How could this happen?
+                call MLSMessage( MLSMSG_Error, ModuleName, &
+                  & lastOp // ' not a legal binary op in evaluatePrimitive' )
+            end select
+            negating = .false.
+            if ( deeBug ) then
+              print *, 'newone"s values after ' // trim(lastOp) // trim(variable)
+              call dumpAPrimitive(newone)
+            endif
+          endif
+          if ( DeeBUG ) then
+            print *, 'variable ', variable
+            print *, 'partID ', partID
+            print *, 'hit ', hit
+            print *, 'negating ', negating
+            print *, 'lastOp ', lastOp
+          endif
+          done = ( elem >= n )
+          if ( done ) exit
+        enddo
+        value = AddPrimitiveToDatabase( primitives, newone )
+!         call deallocate_test( newone%values, &
+!           & 'newone', ModuleName // '/evaluatePrimitive' )
+        call deallocate_test( part%values, &
+          & 'part', ModuleName // '/evaluatePrimitive' )
+        if ( .not. DEEBUG ) return
+        print *, 'value ', value
+        print *, 'newone"s values ' // trim(str)
+        call dumpAPrimitive(newone)
+        
+        print *, 'values stored in db '
+        call dumpAPrimitive(primitives(value))
+      end function evaluatePrimitive
 
     ! ----------------------------------------- FillWithReflectorTemperature ---
     subroutine FillWithReflectorTemperature ( key, quantity, phiZero, termsNode )
@@ -6280,7 +6646,6 @@ contains ! =====     Public Procedures     =============================
     ! ----------------------------------------- FillQtyWithReichlerWMOTP -------------
     subroutine FillQtyWithReichlerWMOTP ( tpPres, temperature, refGPH )
       use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-      use MLSCommon, only: DEFAULTUNDEFINEDVALUE
       use MLSFillValues, only: IsFillValue, RemoveFillValues
       use wmoTropopause, only: ExtraTropics, twmo
       ! Implements the algorithm published in GRL
@@ -7113,6 +7478,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.325  2006/03/13 23:42:37  pwagner
+! Added c=numeric type field to Fill via manipulation
+!
 ! Revision 2.324  2006/03/09 16:25:01  pwagner
 ! Fixed a bug only NAG caught
 !
