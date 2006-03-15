@@ -70,7 +70,7 @@ contains
     use INIT_TABLES_MODULE, only: F_FILE, F_TYPE, &
       & L_TRUE, L_L2GP, L_L2DGG, L_L2FWM, &
       & P_BRIGHTOBJECTS, &
-      & P_CYCLE, P_ENDTIME, P_INPUT_VERSION_STRING, P_INSTRUMENT, &
+      & P_CYCLE, P_ENDTIME, P_INSTRUMENT, &
       & P_LEAPSECFILE, P_OUTPUT_VERSION_STRING, P_PFAFILE, P_STARTTIME, &
       & S_BINSELECTOR, S_DIRECTWRITEFILE, S_DUMP, S_EMPIRICALGEOMETRY, &
       & S_FGRID, S_FORWARDMODEL, S_FORWARDMODELGLOBAL, S_L1BOA, S_L1BRAD, &
@@ -138,7 +138,7 @@ contains
     type (MLSFile_T) :: DirectFile
     logical :: GOT(3)              ! Used non-canonically--a bad practice
     integer :: I, J                ! Index of son, grandson of root
-    integer :: INPUT_VERSION_STRING  ! Sub_rosa index
+    ! integer :: INPUT_VERSION_STRING  ! Sub_rosa index
     logical ::  ItExists
     type (L1BData_T) :: l1bField   ! L1B data
     integer :: L1BFLAG
@@ -195,20 +195,19 @@ contains
       if ( node_id(son) == n_equal ) then
         sub_rosa_index = sub_rosa(subtree(2,son))
         select case ( decoration(subtree(1,son)) )
-!         case ( p_allow_climatology_overloads )
-!           allow_climatology_overloads = decoration(subtree(2,son)) == l_true
         ! This will allow us to use different names from the toolkit
         ! (Now why would you want to do that?)
         case ( p_brightObjects )
           call get_string ( sub_rosa_index, brightObjects, strip=.true. )
           got(3) = .true.
-        case ( p_input_version_string )
-          input_version_string = sub_rosa_index
-          call get_string ( input_version_string, l2pcf%inputVersion, strip=.true. )
-          if ( TOOLKIT ) &
-            & call announce_error(0, &
-            & '*** l2cf overrides pcf for input version ***', &
-            & just_a_warning = .true.)
+        ! case ( p_input_version_string )
+          ! input_version_string = sub_rosa_index
+          ! call get_string ( input_version_string, l2pcf%inputVersion, &
+          !   & strip=.true. )
+          ! if ( TOOLKIT ) &
+          !   & call announce_error(0, &
+          !   & '*** l2cf overrides pcf for input version ***', &
+          !   & just_a_warning = .true.)
         case ( p_output_version_string )
           output_version_string = sub_rosa_index
           call get_string ( output_version_string, l2pcf%PGEVersion, strip=.true. )
@@ -216,8 +215,6 @@ contains
             & call announce_error(0, &
             & '*** l2cf overrides pcf for PGE version ***', &
             & just_a_warning = .true.)
-!         case ( p_version_comment )
-!           version_comment = sub_rosa_index
         case ( p_instrument )
           instrument = decoration(subtree(2,son))
         case ( p_cycle )
@@ -784,8 +781,8 @@ contains
       call output ( 'PGE version:   ' )
       call output ( l2pcf%PGEVersion, advance='yes' )
 
-      call output ( 'input version:   ' )
-      call output ( l2pcf%InputVersion, advance='yes' )
+      ! call output ( 'input version:   ' )
+      ! call output ( l2pcf%InputVersion, advance='yes' )
 
       call output ( 'cycle:   ' )
       call output ( l2pcf%cycle, advance='yes' )
@@ -810,9 +807,6 @@ contains
         call output ( TRIM(stringElement(brightObjects, i, .true.)), &
           & advance='yes' )
       enddo
-
-!       call output ( 'Allow climatology overloads?:   ' )
-!       call output ( allow_climatology_overloads, advance='yes' )
 
       call output ( ' ', advance='yes' )
       call dump(ForwardModelConfigDatabase, details=9, skipPFA=.true.)
@@ -959,6 +953,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.113  2006/02/15 00:02:05  pwagner
+! Moved revertOutput call
+!
 ! Revision 2.112  2006/02/10 21:16:43  pwagner
 ! dumps may go to special dumpfile
 !
