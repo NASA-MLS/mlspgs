@@ -40,6 +40,9 @@
     myWholeArray = .not. (myStats .or. myRMS)
     if ( present(wholeArray) ) myWholeArray = wholeArray
     
+    NaNsIn1 = any(.not. ieee_is_finite(array1))
+    NaNsIn2 = any(.not. ieee_is_finite(array2))
+
     if ( len_trim(name2) < 1 ) then
       DiffName = trim(name1) // ' (diff)'
     else
@@ -49,6 +52,14 @@
       & call output('About to filter n-d ' // trim(name1) // ' ' &
       & // trim(name2), advance='yes')
     call filterValues(array1, filtered1, array2, filtered2, warn, FillValue)
+    if ( NaNsIn1 ) call output( &
+      & '*** NaNs found in ' // trim(name1), advance='yes')
+    if ( NaNsIn2 ) call output( &
+      & '*** NaNs found in ' // trim(name2), advance='yes')
+    if ( warn ) call output( &
+      & '*** non-matched NaNs diffing ' // trim(DiffName), &
+      & advance='yes')
+
     if ( present(FillValue) ) then
       call ReplaceFillValues( filtered1, FillValue, newFill=real(0., kind(FillValue)) )
       call ReplaceFillValues( filtered2, FillValue, newFill=real(0., kind(FillValue)) )
@@ -72,32 +83,67 @@
       call output(maxval(filtered2), advance='yes')
     endif
     if ( myRMS ) then
-      call allstats(filtered1, &
-        & addedData=.false., min=refmin, max=refmax, rms=refrms)
-      call allstats(filtered2, &
-        & addedData=.true., min=refmin, max=refmax, rms=refrms)
+      if( present(FillValue) ) then
+        ! We want to make sure we remove values from both arrays where either is fill
+        filtered1 = array1
+        filtered2 = array2
+        where (array1 == FillValue)
+          filtered2 = FillValue
+        end where
+        where (array2 == FillValue)
+          filtered1 = FillValue
+        end where
+        numNonFill = count(filtered1 /= FillValue)
+        call RemoveFillValues ( filtered1, FillValue, prestats1 )
+        call RemoveFillValues ( filtered2, FillValue, prestats2 )
+        if ( DEEBUG ) then
+          call output('min, max of array1 ', advance='no')
+          call output(minval(prestats1(1:numNonFill)), advance='no')
+          call blanks(2)
+          call output(maxval(prestats1(1:numNonFill)), advance='yes')
+          call output('min, max of array2 ', advance='no')
+          call output(minval(prestats2(1:numNonFill)), advance='no')
+          call blanks(2)
+          call output(maxval(prestats2(1:numNonFill)), advance='yes')
+        endif
+        call allstats(prestats1(1:numNonFill), &
+          & addedData=.false., min=refmin, max=refmax, rms=refrms)
+        call allstats(prestats2(1:numNonFill), &
+          & addedData=.true., min=refmin, max=refmax, rms=refrms)
+        call printRMSetc ( 'Reference values', refmin, refmax, refrms )
+        if ( myWholeArray ) then
+          call dump(filtered1-filtered2, trim(DiffName), &
+          & real(0.,kind(array1)), CLEAN, WIDTH, FORMAT, &
+          & WHOLEARRAY, STATS, RMS, LBOUND )
+        else
+          if ( DEEBUG ) then
+            call output('min, max of array1-array2 ', advance='no')
+            call output(minval(prestats1(1:numNonFill)-prestats2(1:numNonFill)), &
+              & advance='no')
+            call blanks(2)
+            call output(maxval(prestats1(1:numNonFill)-prestats2(1:numNonFill)), &
+              & advance='yes')
+          endif
+          call dump( prestats1(1:numNonFill)-prestats2(1:numNonFill), &
+            & trim(DiffName), real(0.,kind(array1)), CLEAN, WIDTH, FORMAT, &
+            & WHOLEARRAY, STATS, RMS, LBOUND )
+        endif
+        return
+      else
+        call allstats(filtered1, &
+          & addedData=.false., min=refmin, max=refmax, rms=refrms)
+        call allstats(filtered2, &
+          & addedData=.true., min=refmin, max=refmax, rms=refrms)
+      endif
       call printRMSetc ( 'Reference values', refmin, refmax, refrms )
     endif
-    ! if ( myStats ) then
-    !   nEqual = count( filtered1 == filtered2 )
-    !   nUnEqual = count( filtered1 /= filtered2 )
-    !   call printPercentages( trim(DiffName), nEqual, nUnEqual )
-    ! endif
-    NaNsIn1 = any(.not. ieee_is_finite(array1))
-    NaNsIn2 = any(.not. ieee_is_finite(array2))
-    if ( DEEBUG ) &
-      & call output('About to dump n-d ' // trim(DiffName), advance='yes')
     call dump(filtered1-filtered2, trim(DiffName), &
       & real(0.,kind(array1)), CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
-    if ( NaNsIn1 ) call output( &
-      & '*** NaNs found in ' // trim(name1), advance='yes')
-    if ( NaNsIn2 ) call output( &
-      & '*** NaNs found in ' // trim(name2), advance='yes')
-    if ( warn ) call output( &
-      & '*** non-matched NaNs diffing ' // trim(DiffName), &
-      & advance='yes')
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.6  2006/03/15 17:34:38  pwagner
+! Fixed bug causing incorrect rms when diffing with fill values
+!
 ! Revision 2.5  2006/02/28 21:42:29  pwagner
 ! Replace fillvalues with 0 before computing rms (should actually remove)
 !
