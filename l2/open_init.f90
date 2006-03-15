@@ -39,7 +39,6 @@ module Open_Init
 ! CCSDSLen                        Max length of coded start, end times
 
 !     (subroutines and functions)
-! DestroyL1BInfo                  Called when the l1bInfo is finished with
 ! OpenAndInitialize               Gets run parameters from pcf
 ! === (end of toc) ===
 
@@ -108,10 +107,6 @@ contains ! =====     Public Procedures     =============================
    ! The following parameters will only be needed if PCF ids are missing
     character(len=*), parameter :: DEFAULTANTEXT= &
       & 'PCF file number missing from PCF--add this line'
-! character(len=*), parameter :: DEFAULT_SPEC_KEYS= &
-!   & 'temp,gph,h2o,hno3,o3,hcl,clo,co,n2o,oh,rhi,so2,ho2,bro,hocl,hcn,cirrus-ice,others'
-! character(len=*), parameter :: DEFAULT_SPEC_HASH= &
-!   & 't,z,h2o,hno3,o3,hcl,clo,co,n2o,oh,rhi,so2,ho2,bro,hocl,hcn,ice,oth'
 
     character(len=CCSDSlen)      :: CCSDSEndTime
     character(len=CCSDSlen)      :: CCSDSStartTime
@@ -170,7 +165,7 @@ contains ! =====     Public Procedures     =============================
    l2pcf%startutc = '(undefined)'
    l2pcf%endutc = '(undefined)'
    l2pcf%cycle = ' '
-   l2pcf%InputVersion = ' '
+   ! l2pcf%InputVersion = ' '
    l2pcf%PGEVersion = ' '
    l2pcf%logGranID = '(not applicable)'      ! will not create a Log file
    l2pcf%spec_keys = '(not applicable)'      ! will not create metadata
@@ -288,11 +283,12 @@ contains ! =====     Public Procedures     =============================
 
     ! Here's where we define the non-time components of l2pcf
 
-    returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_inputVersion, &
-                                          l2pcf%inputVersion)
-    if ( returnstatus /= PGS_S_SUCCESS ) then
-      call announce_error ( 0, "Missing pcf param: input version" )
-    end if
+    ! returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_inputVersion, &
+    !                                       l2pcf%inputVersion)
+    ! if ( returnstatus /= PGS_S_SUCCESS ) then
+    !   call announce_error ( 0, "Missing pcf param: input version", &
+    !     & forgiveable=.true. )
+    ! end if
 
     returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_PGEVersion, &
                                           l2pcf%PGEVersion)
@@ -575,8 +571,8 @@ contains ! =====     Public Procedures     =============================
     call output ( 'PGE version:   ' )
     call output ( l2pcf%PGEVersion, advance='yes' )
 
-    call output ( 'input version:   ' )
-    call output ( l2pcf%InputVersion, advance='yes' )
+    ! call output ( 'input version:   ' )
+    ! call output ( l2pcf%InputVersion, advance='yes' )
 
     call output ( 'cycle:   ' )
     call output ( l2pcf%cycle, advance='yes' )
@@ -680,6 +676,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.92  2006/03/15 23:52:24  pwagner
+! Removed InputVersion component from PCF, l2cf
+!
 ! Revision 2.91  2006/02/16 00:16:01  pwagner
 ! switchDetail instead of index
 !
