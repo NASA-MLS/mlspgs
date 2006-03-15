@@ -145,7 +145,7 @@ program l2gpdiff ! show diffs between swaths in two different files
       & rms=options%rms, ignoreBadChunks=options%ignoreBadChunks, &
       & showMissing=options%showMissing, fields=options%fields, &
       & force=options%force, swaths1=options%swaths1, swaths2=options%swaths2, &
-      & silent=options%silent, numDiffs=numDiffs )
+      & silent=options%silent, verbose=options%verbose, numDiffs=numDiffs )
     else
       call ExpandStringRange(options%chunks, chunks, nchunks)
       if ( nchunks < 1 ) cycle
@@ -155,7 +155,7 @@ program l2gpdiff ! show diffs between swaths in two different files
       & rms=options%rms, ignoreBadChunks=options%ignoreBadChunks, &
       & showMissing=options%showMissing, fields=options%fields, &
       & force=options%force, swaths1=options%swaths1, swaths2=options%swaths2, &
-      & silent=options%silent, numDiffs=numDiffs )
+      & silent=options%silent, verbose=options%verbose, numDiffs=numDiffs )
     endif
     options%numDiffs = options%numDiffs + numDiffs
     call sayTime('diff these files: ' // trim(filenames(i-1)) // &
@@ -312,6 +312,9 @@ end program l2gpdiff
 !==================
 
 ! $Log$
+! Revision 1.7  2006/01/14 00:59:12  pwagner
+! Added -silent, -chunks options
+!
 ! Revision 1.6  2005/09/23 21:01:13  pwagner
 ! use_wall_clock now a component of time_config
 !
