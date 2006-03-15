@@ -446,7 +446,9 @@ contains ! =====     Public Procedures     =============================
           ! print *, 'Before writing attributes'
           ! print *, 'noGapsHGIndex: ', noGapsHGIndex
           ! call dump(hGrids(noGapsHGIndex))
-          call writeHGridComponents( trim(PhysicalFilename), HGrids(noGapsHGIndex) )
+          if ( noGapsHGIndex > 0 ) &
+            & call writeHGridComponents( trim(PhysicalFilename), &
+            & HGrids(noGapsHGIndex) )
         case default
         end select
         
@@ -1518,6 +1520,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.121  2006/03/15 23:47:53  pwagner
+! Fixed bug causing crashes when no gapless HGrid declared
+!
 ! Revision 2.120  2006/03/04 00:23:30  pwagner
 ! Will not attempt copy unless input file contains swath
 !
