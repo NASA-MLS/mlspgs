@@ -18,7 +18,8 @@ module DUMP_0
 
   use ieee_arithmetic, only: ieee_is_finite
   use MLSCommon, only: DEFAULTUNDEFINEDVALUE
-  use MLSFillValues, only : FilterValues, IsFinite, ReplaceFillValues
+  use MLSFillValues, only : FilterValues, IsFinite, &
+    & RemoveFillValues, ReplaceFillValues
   use MLSSets, only: FindAll
   use MLSStats1, only: ALLSTATS
   use MLSStringLists, only: GetStringElement, NumStringElements
@@ -146,6 +147,8 @@ contains
 
     double precision, dimension(size(array1)) :: filtered1
     double precision, dimension(size(array2)) :: filtered2
+    double precision, dimension(size(array1)) :: prestats1
+    double precision, dimension(size(array2)) :: prestats2
     double precision :: refmin, refmax, refrms
     include "diff.f9h"
   end subroutine DIFF_1D_DOUBLE
@@ -198,6 +201,8 @@ contains
 
     real, dimension(size(array1)) :: filtered1
     real, dimension(size(array2)) :: filtered2
+    real, dimension(size(array1)) :: prestats1
+    real, dimension(size(array2)) :: prestats2
     real :: refmin, refmax, refrms
     include "diff.f9h"
   end subroutine DIFF_1D_REAL
@@ -219,6 +224,8 @@ contains
     !
     double precision, dimension(size(array1,1), size(array1,2)) :: filtered1
     double precision, dimension(size(array2,1), size(array2,2)) :: filtered2
+    double precision, dimension(product(shape(array1))) :: prestats1
+    double precision, dimension(product(shape(array2))) :: prestats2
     double precision :: refmin, refmax, refrms
     include "diff.f9h"
   end subroutine DIFF_2D_DOUBLE
@@ -240,6 +247,8 @@ contains
     !
     real, dimension(size(array1,1), size(array1,2)) :: filtered1
     real, dimension(size(array2,1), size(array2,2)) :: filtered2
+    real, dimension(product(shape(array1))) :: prestats1
+    real, dimension(product(shape(array2))) :: prestats2
     real :: refmin, refmax, refrms
     include "diff.f9h"
   end subroutine DIFF_2D_REAL
@@ -261,6 +270,8 @@ contains
 
     double precision, dimension(size(array1,1), size(array1,2), size(array1,3)) :: filtered1
     double precision, dimension(size(array2,1), size(array2,2), size(array2,3)) :: filtered2
+    double precision, dimension(product(shape(array1))) :: prestats1
+    double precision, dimension(product(shape(array2))) :: prestats2
     double precision :: refmin, refmax, refrms
     include "diff.f9h"
   end subroutine DIFF_3D_DOUBLE
@@ -282,6 +293,8 @@ contains
 
     real, dimension(size(array1,1), size(array1,2), size(array1,3)) :: filtered1
     real, dimension(size(array2,1), size(array2,2), size(array2,3)) :: filtered2
+    real, dimension(product(shape(array1))) :: prestats1
+    real, dimension(product(shape(array2))) :: prestats2
     real :: refmin, refmax, refrms
     include "diff.f9h"
   end subroutine DIFF_3D_REAL
@@ -1961,6 +1974,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.55  2006/03/15 17:34:28  pwagner
+! Fixed bug causing incorrect rms when diffing with fill values
+!
 ! Revision 2.54  2006/03/03 23:04:55  pwagner
 ! May dump logical-valued hashes
 !
