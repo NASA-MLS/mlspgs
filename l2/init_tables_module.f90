@@ -187,8 +187,7 @@ module INIT_TABLES_MODULE
 ! Parameter names:
   ! In GlobalSettings section:
   integer, parameter :: FIRST_PARM = spec_last + 1
-  integer, parameter :: P_INPUT_VERSION_STRING        = first_parm
-  integer, parameter :: P_OUTPUT_VERSION_STRING       = p_input_version_string + 1
+  integer, parameter :: P_OUTPUT_VERSION_STRING       = first_parm
   integer, parameter :: P_CYCLE                       = p_output_version_string + 1
   integer, parameter :: P_STARTTIME                   = p_cycle + 1
   integer, parameter :: P_ENDTIME                     = p_starttime + 1
@@ -288,7 +287,6 @@ contains ! =====     Public procedures     =============================
     ! based on the file lit_names.txt
     include 'lit_add.f9h'    
     ! Put parameter names into the symbol table:
-    parm_indices(p_input_version_string) = add_ident ( 'InputVersionString' )
     parm_indices(p_ignoreL1B) =            add_ident ( 'IgnoreL1B' )
     parm_indices(p_output_version_string) =add_ident ( 'OutputVersionString' )
     parm_indices(p_cycle) =                add_ident ( 'Cycle' )
@@ -1363,7 +1361,6 @@ contains ! =====     Public procedures     =============================
       begin, z+z_spectroscopy, s+s_line, s+s_readSpectroscopy, s+s_spectra, &
                              s+s_time, s+s_writeSpectroscopy, n+n_section, &
       begin, z+z_globalsettings, &
-             begin, p+p_input_version_string, t+t_string, n+n_name_def, &
              begin, p+p_output_version_string, t+t_string, n+n_name_def, &
              begin, p+p_instrument, t+t_instrument, n+n_name_def,&
              begin, p+p_leapsecfile, t+t_string, n+n_name_def,&
@@ -1436,6 +1433,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.428  2006/03/15 23:52:24  pwagner
+! Removed InputVersion component from PCF, l2cf
+!
 ! Revision 2.427  2006/03/13 23:41:53  pwagner
 ! Added c=numeric type field to Fill via manipulation
 !
