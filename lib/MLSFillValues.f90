@@ -99,8 +99,8 @@ module MLSFillValues              ! Some FillValue-related stuff
   interface RemoveFillValues
     module procedure RemoveFill1d_r4, RemoveFill1d_r8, RemoveFill1d_int
     ! I'm not certain it makes sense to do this except in 1-d
-    ! module procedure RemoveFill2d_r4, RemoveFill2d_r8, RemoveFill2d_int
-    ! module procedure RemoveFill3d_r4, RemoveFill3d_r8, RemoveFill3d_int
+    module procedure RemoveFill2d_r4, RemoveFill2d_r8, RemoveFill2d_int
+    module procedure RemoveFill3d_r4, RemoveFill3d_r8, RemoveFill3d_int
   end interface
 
   interface ReplaceFillValues
@@ -452,6 +452,132 @@ contains
     ! More local variables and executable
     include 'RemoveFillValues.f9h'
   end subroutine RemoveFill1d_r8
+
+  subroutine RemoveFill2d_int ( array, FillValue, newArray, second, newSecond )
+    integer, dimension(:,:), intent(in) :: array
+    integer, intent(in) :: FillValue
+    integer, dimension(:) :: newArray
+    integer, dimension(:,:), optional, intent(in) :: second
+    integer, dimension(:), optional :: newSecond
+    !
+    ! Local variables
+    integer, parameter       :: rank = 2
+    integer, dimension(rank) :: shp
+    ! More local variables and executable
+    shp = shape(array)
+    if ( .not. present(second) .or. .not. present(newSecond) ) then
+      call RemoveFillValues( reshape(array, (/product(shp)/) ), &
+        & FillValue, newArray )
+    else
+      call RemoveFillValues( reshape(array, (/product(shp)/) ), &
+        & FillValue, newArray, reshape(second, (/product(shp)/) ), newSecond )
+      endif
+  end subroutine RemoveFill2d_int
+
+  subroutine RemoveFill2d_r4 ( array, FillValue, newArray, second, newSecond )
+    real(r4), dimension(:,:), intent(in) :: array
+    real(r4), intent(in) :: FillValue
+    real(r4), dimension(:) :: newArray
+    real(r4), dimension(:,:), optional, intent(in) :: second
+    real(r4), dimension(:), optional :: newSecond
+    !
+    ! Local variables
+    integer, parameter       :: rank = 2
+    integer, dimension(rank) :: shp
+    ! More local variables and executable
+    shp = shape(array)
+    if ( .not. present(second) .or. .not. present(newSecond) ) then
+      call RemoveFillValues( reshape(array, (/product(shp)/) ), &
+        & FillValue, newArray )
+    else
+      call RemoveFillValues( reshape(array, (/product(shp)/) ), &
+        & FillValue, newArray, reshape(second, (/product(shp)/) ), newSecond )
+      endif
+  end subroutine RemoveFill2d_r4
+
+  subroutine RemoveFill2d_r8 ( array, FillValue, newArray, second, newSecond )
+    real(r8), dimension(:,:), intent(in) :: array
+    real(r8), intent(in) :: FillValue
+    real(r8), dimension(:) :: newArray
+    real(r8), dimension(:,:), optional, intent(in) :: second
+    real(r8), dimension(:), optional :: newSecond
+    !
+    ! Local variables
+    integer, parameter       :: rank = 2
+    integer, dimension(rank) :: shp
+    ! More local variables and executable
+    shp = shape(array)
+    if ( .not. present(second) .or. .not. present(newSecond) ) then
+      call RemoveFillValues( reshape(array, (/product(shp)/) ), &
+        & FillValue, newArray )
+    else
+      call RemoveFillValues( reshape(array, (/product(shp)/) ), &
+        & FillValue, newArray, reshape(second, (/product(shp)/) ), newSecond )
+      endif
+  end subroutine RemoveFill2d_r8
+
+  subroutine RemoveFill3d_int ( array, FillValue, newArray, second, newSecond )
+    integer, dimension(:,:,:), intent(in) :: array
+    integer, intent(in) :: FillValue
+    integer, dimension(:) :: newArray
+    integer, dimension(:,:,:), optional, intent(in) :: second
+    integer, dimension(:), optional :: newSecond
+    !
+    ! Local variables
+    integer, parameter       :: rank = 3
+    integer, dimension(rank) :: shp
+    ! More local variables and executable
+    shp = shape(array)
+    if ( .not. present(second) .or. .not. present(newSecond) ) then
+      call RemoveFillValues( reshape(array, (/product(shp)/) ), &
+        & FillValue, newArray )
+    else
+      call RemoveFillValues( reshape(array, (/product(shp)/) ), &
+        & FillValue, newArray, reshape(second, (/product(shp)/) ), newSecond )
+      endif
+  end subroutine RemoveFill3d_int
+
+  subroutine RemoveFill3d_r4 ( array, FillValue, newArray, second, newSecond )
+    real(r4), dimension(:,:,:), intent(in) :: array
+    real(r4), intent(in) :: FillValue
+    real(r4), dimension(:) :: newArray
+    real(r4), dimension(:,:,:), optional, intent(in) :: second
+    real(r4), dimension(:), optional :: newSecond
+    !
+    ! Local variables
+    integer, parameter       :: rank = 3
+    integer, dimension(rank) :: shp
+    ! More local variables and executable
+    shp = shape(array)
+    if ( .not. present(second) .or. .not. present(newSecond) ) then
+      call RemoveFillValues( reshape(array, (/product(shp)/) ), &
+        & FillValue, newArray )
+    else
+      call RemoveFillValues( reshape(array, (/product(shp)/) ), &
+        & FillValue, newArray, reshape(second, (/product(shp)/) ), newSecond )
+      endif
+  end subroutine RemoveFill3d_r4
+
+  subroutine RemoveFill3d_r8 ( array, FillValue, newArray, second, newSecond )
+    real(r8), dimension(:,:,:), intent(in) :: array
+    real(r8), intent(in) :: FillValue
+    real(r8), dimension(:) :: newArray
+    real(r8), dimension(:,:,:), optional, intent(in) :: second
+    real(r8), dimension(:), optional :: newSecond
+    !
+    ! Local variables
+    integer, parameter       :: rank = 3
+    integer, dimension(rank) :: shp
+    ! More local variables and executable
+    shp = shape(array)
+    if ( .not. present(second) .or. .not. present(newSecond) ) then
+      call RemoveFillValues( reshape(array, (/product(shp)/) ), &
+        & FillValue, newArray )
+    else
+      call RemoveFillValues( reshape(array, (/product(shp)/) ), &
+        & FillValue, newArray, reshape(second, (/product(shp)/) ), newSecond )
+      endif
+  end subroutine RemoveFill3d_r8
 
 ! -------------------------------------  ReplaceFillValues  -----
 
@@ -997,6 +1123,9 @@ end module MLSFillValues
 
 !
 ! $Log$
+! Revision 2.8  2006/03/15 17:32:35  pwagner
+! Can removeFillValues from multi-dimensional arrays if results are rank 1
+!
 ! Revision 2.7  2006/02/28 21:43:31  pwagner
 ! Improve comments regarding FilterValues
 !
