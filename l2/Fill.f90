@@ -6306,6 +6306,18 @@ contains ! =====     Public Procedures     =============================
         nullify(primitives)
         np = 0
         quantity%values = 0.
+        
+        ! We're unable to ensure operator precedence
+        ! so we'll attempt to identify multiplications and divisions
+        ! and surround such subexpressions with extra parentheses
+        
+        call reorderPrecedence(mstr, collapsedstr)
+        if ( DeeBUG ) then
+          print *, 'incoming ', mstr
+          print *, 'after reordering precedence ', collapsedstr
+        endif
+        mstr = collapsedstr
+        
         ! 1st--make sure spaces surround each operator
         ! (It takes two steps for each to avoid threat of infinite loop)
         call ReplaceSubString( mstr, collapsedstr, '+', ' & ', &
@@ -6385,6 +6397,54 @@ contains ! =====     Public Procedures     =============================
         if ( DeeBUG ) call dumpPrimitives(primitives)
         call destroyPrimitives(primitives)
       end subroutine SimpleExprWithC
+
+      subroutine reorderPrecedence(mstr, collapsedstr)
+        ! Identify all the terms where each term are separated by
+        ! the lower-precedence operators {+, -}
+        ! If any terms contain higher-precedence operators {*, /}
+        ! then surround them by parentheses
+        character(len=*), intent(in)  :: mstr
+        character(len=*), intent(out) :: collapsedstr
+        ! Internal variables
+        logical, parameter :: COUNTEMPTY = .true.
+        integer :: i
+        integer :: n
+        character(len=(len(mstr)+3)) :: element
+        character(len=(len(mstr)+3)) :: temp
+        ! Executable
+        ! 1st -- replace each '-' with '+-'
+        ! (Don't worry--we'll undo this before returning)
+        ! (It takes two steps for each to avoid threat of infinite loop)
+        call ReplaceSubString( mstr, collapsedstr, '-', '&', &
+          & which='all', no_trim=.true. )
+        call ReplaceSubString( collapsedstr, temp, '&', '+-', &
+          & which='all', no_trim=.false. )
+        ! Now loop over terms
+        n = NumStringElements( temp, COUNTEMPTY, inseparator='+' )
+        if ( n < 1 ) then
+          call ReplaceSubString( temp, collapsedstr, '+-', '-', &
+            & which='all', no_trim=.false. )
+          return
+        endif
+        collapsedstr = ' '
+        do i=1, n
+          call GetStringElement ( temp, element, i, countEmpty, inseparator='+' )
+          ! Surround term with parentheses if it's a product or quotient
+          ! but not if it's not simple
+          if ( ( index(element, '*') > 0 .or. index(element, '/') > 0 ) .and. &
+            & index(element, ')')  < 1 ) then
+            element = '(' // trim(element) // ')'
+          endif
+          collapsedstr = catLists( collapsedstr, element, inseparator='+' )
+        enddo
+        
+        ! Now undo change by reverting all '+-'
+        ! (including any that may have been split by parentheses
+        call ReplaceSubString( collapsedstr, temp, '+-', '-', &
+          & which='all', no_trim=.false. )
+        call ReplaceSubString( temp, collapsedstr, '+(-', '-(', &
+          & which='all', no_trim=.false. )
+      end subroutine reorderPrecedence
 
       subroutine destroyPrimitives(primitives)
         ! deallocate all the arrays we created
@@ -7478,6 +7538,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.326  2006/03/15 23:55:11  pwagner
+! Use reorderPrecedence to ensure higher precedes lower in manipulations
+!
 ! Revision 2.325  2006/03/13 23:42:37  pwagner
 ! Added c=numeric type field to Fill via manipulation
 !
