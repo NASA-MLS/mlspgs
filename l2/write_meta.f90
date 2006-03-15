@@ -59,10 +59,6 @@ module WriteMetadata ! Populate metadata and write it out
 
     character (len=4) :: cycle
 
-    ! version string in PCF input file names
-
-    character (len=15) :: InputVersion ! input files (but which?)
-
     ! version string in PCF output file names
 
     character (len=15) :: PGEVersion   ! add to output files
@@ -1369,6 +1365,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.61  2006/03/15 23:52:24  pwagner
+! Removed InputVersion component from PCF, l2cf
+!
 ! Revision 2.60  2006/02/21 19:12:00  pwagner
 ! GetHashElement is now a generic
 !
