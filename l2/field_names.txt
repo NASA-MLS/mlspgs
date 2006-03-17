@@ -35,8 +35,6 @@ allHGrids
 allLines
 allLinesForRadiometer
 allLinesInCatalog
-allowPostOverlaps
-allowPriorOverlaps
 allPFA
 allQuantityTemplates
 allSignals
@@ -121,6 +119,8 @@ eigenVectors
 exact
 exclude
 excludeBelowBottom
+excludePostOverlaps
+excludePriorOverlaps
 extendedAverage
 explicitValues
 extinction
@@ -421,6 +421,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.161  2006/03/17 00:06:31  pwagner
+# Change default to allowing overlaps outside processingRange
+#
 # Revision 2.160  2006/03/13 23:42:37  pwagner
 # Added c=numeric type field to Fill via manipulation
 #
