@@ -24,17 +24,21 @@ module ChunkDivide_m
 ! === (start of toc) ===                                                 
 !     c o n t e n t s                                                    
 !     - - - - - - - -                                                    
-
+! any_good_signaldata      Return TRUE if and only if any good data in signal
 ! ChunkDivide              Divide MAFs in processing range among chunks  
 ! DestroyChunkDatabase     Deallocate memory taken by chunk database     
 ! ReduceChunkDatabase      Reduce chunk database to [first, last] chunks
 ! === (end of toc) ===                                                   
 ! === (start of api) ===
+! log any_good_signaldata ( int signal, int sideband, 
+!  *MLSFile_T filedatabase(:), [int maf], [int maf2], &
+!    & [log good_buffer(:)], [int mafRange(2)] )
 ! ChunkDivide (int root, TAI93_Range_T processingRange,
 !    *MLSFile_T filedatabase(:), *mlSChunk_T Chunks(:) )      
 ! DestroyChunkDatabase (*mlSChunk_T Chunks(:) )      
 ! === (end of api) ===
-  public :: DestroyChunkDatabase, ChunkDivide, ReduceChunkDatabase
+  public :: ChunkDivide, &
+    & DestroyChunkDatabase, ReduceChunkDatabase
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -70,8 +74,8 @@ module ChunkDivide_m
     real(rp)  :: maxGap = 0.0           ! Length of time/MAFs/orbits allowed for gap
     integer   :: maxGapFamily = PHYQ_Invalid ! PHYQ_MAF, PHYQ_Time etc.
     logical   :: skipL1BCheck = .false. ! Don't check for l1b data probs
-    logical   :: allowPriorOverlaps = .false. ! Use MAFs before start time
-    logical   :: allowPostOverlaps = .false. ! Use MAFs after end time
+    logical   :: allowPriorOverlaps = .true. ! Use MAFs before start time
+    logical   :: allowPostOverlaps = .true. ! Use MAFs after end time
     logical   :: saveObstructions = .false. ! Save obstructions for Output_Close
     logical   :: DACSDeconvolved = .true. ! Don't need to do this in level 2
   end type ChunkDivideConfig_T
@@ -173,8 +177,8 @@ contains ! ===================================== Public Procedures =====
     use Chunks_m, only: DUMP, MLSCHUNK_T
     use Dump_0, only: DUMP
     use EXPR_M, only: EXPR
-    use Init_Tables_Module, only: F_ALLOWPOSTOVERLAPS, F_ALLOWPRIOROVERLAPS, &
-      & F_CRITICALMODULES, F_CRITICALSIGNALS, &
+    use Init_Tables_Module, only: F_CRITICALMODULES, F_CRITICALSIGNALS, &
+      & F_EXCLUDEPOSTOVERLAPS, F_EXCLUDEPRIOROVERLAPS, &
       & F_HOMEMODULE, F_HOMEGEODANGLE, &
       & F_MAXLENGTH, F_MAXORBY, F_METHOD, F_NOCHUNKS, F_NOSLAVES, &
       & F_OVERLAP, F_LOWEROVERLAP, &
@@ -1097,6 +1101,16 @@ contains ! ===================================== Public Procedures =====
             call get_string ( sub_rosa ( subtree (j, signalsNode) ), &
               & ChunkDivideConfig%criticalSignals(j-1), strip=.true. )
           end do
+        case ( f_excludePostOverlaps )
+          ChunkDivideConfig%allowPostOverlaps = .not. get_boolean ( fieldValue )
+          if ( .not. ChunkDivideConfig%allowPostOverlaps ) &
+            & call MLSMessage(MLSMSG_Warning, ModuleName, &
+            & 'You have elected to exclude MAFs after to time range' )
+        case ( f_excludePriorOverlaps )
+          ChunkDivideConfig%allowPriorOverlaps = .not. get_boolean ( fieldValue )
+          if ( .not. ChunkDivideConfig%allowPriorOverlaps ) &
+            & call MLSMessage(MLSMSG_Warning, ModuleName, &
+            & 'You have elected to exclude MAFs prior to time range' )
         case ( f_maxGap )
           ChunkDivideConfig%maxGap = value(1)
           ChunkDivideConfig%maxGapFamily = units(1)
@@ -1105,16 +1119,6 @@ contains ! ===================================== Public Procedures =====
           if ( ChunkDivideConfig%skipL1BCheck ) &
             & call MLSMessage(MLSMSG_Warning, ModuleName, &
             & 'You have elected to skip checking the l1b data for problems' )
-        case ( f_allowPriorOverlaps )
-          ChunkDivideConfig%allowPriorOverlaps = get_boolean ( fieldValue )
-          if ( ChunkDivideConfig%allowPriorOverlaps ) &
-            & call MLSMessage(MLSMSG_Warning, ModuleName, &
-            & 'You have elected to allow MAFs prior to time range' )
-        case ( f_allowPostOverlaps )
-          ChunkDivideConfig%allowPostOverlaps = get_boolean ( fieldValue )
-          if ( ChunkDivideConfig%allowPostOverlaps ) &
-            & call MLSMessage(MLSMSG_Warning, ModuleName, &
-            & 'You have elected to allow MAFs after to time range' )
         case ( f_saveObstructions )
           ChunkDivideConfig%saveObstructions = get_boolean ( fieldValue )
           if ( ChunkDivideConfig%saveObstructions ) &
@@ -2128,15 +2132,6 @@ contains ! ===================================== Public Procedures =====
     call output ( 'max Gap Family ' )
     call display_string ( phyq_indices(Config%maxGapFamily), &
       &             strip=.true., advance='yes' )
-    ! call output ( Config%maxGapFamily )
-    ! call blanks ( 3 )
-    ! call output ( PHYQ_Invalid )
-    ! call blanks ( 3 )
-    ! call output ( PHYQ_MAFs )
-    ! call blanks ( 3 )
-    ! call output ( PHYQ_Angle )
-    ! call blanks ( 3 )
-    ! call output ( PHYQ_Time, advance='yes' )
     call output ( 'skip check of l1b files ' )
     call output ( config%skipL1BCheck, advance='yes' )
     call output ( 'allow overlaps to prior day?' )
@@ -2358,6 +2353,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.70  2006/03/17 00:06:31  pwagner
+! Change default to allowing overlaps outside processingRange
+!
 ! Revision 2.69  2006/02/10 21:19:24  pwagner
 ! dumps may go to special dumpfile
 !
