@@ -617,8 +617,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_upperOverlap, t+t_numeric, n+n_field_type, &
              begin, f+f_maxLength, t+t_numeric, n+n_field_type, &
              begin, f+f_maxOrbY, t+t_numeric, n+n_field_type, &
-             begin, f+f_allowPostOverlaps, t+t_boolean, n+n_field_type, &
-             begin, f+f_allowPriorOverlaps, t+t_boolean, n+n_field_type, &
+             begin, f+f_excludePostOverlaps, t+t_boolean, n+n_field_type, &
+             begin, f+f_excludePriorOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_noSlaves, t+t_numeric, n+n_field_type, &
              begin, f+f_homeModule, t+t_module, n+n_field_type, &
              begin, f+f_homeGeodAngle, t+t_numeric, n+n_field_type, &
@@ -1433,6 +1433,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.429  2006/03/17 00:06:31  pwagner
+! Change default to allowing overlaps outside processingRange
+!
 ! Revision 2.428  2006/03/15 23:52:24  pwagner
 ! Removed InputVersion component from PCF, l2cf
 !
