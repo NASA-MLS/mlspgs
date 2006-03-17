@@ -88,7 +88,7 @@ contains
 
     i_stop = size(indices_c)
 
-    do sps_i = 1, size(grids_f%l_v)
+    do sps_i = 1, ubound(grids_f%l_v,1)
 
       do sv_i = Grids_f%l_v(sps_i-1)+1, Grids_f%l_v(sps_i)
 
@@ -507,6 +507,9 @@ contains
 end module Get_D_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.30  2006/03/17 00:41:12  vsnyder
+! Use ubound instead of size for grids_f%l_v
+!
 ! Revision 2.29  2005/06/22 18:08:19  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
