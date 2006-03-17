@@ -244,6 +244,18 @@ contains ! ===================================== Public Procedures =====
     if ( specialDumpFile /= ' ' ) &
       & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
 
+    ! Do we have any l2gp files in our database that we may have to fill from?
+    ! (If so, we will change default behavior so that we won't allow
+    ! overlaps outside the processing range)
+    if ( associated(filedatabase) ) then
+      if ( size(filedatabase) > 0 ) then
+        if ( any(filedatabase%content == 'l2gp') ) then
+          ChunkDivideConfig%allowPriorOverlaps = .false.
+          ChunkDivideConfig%allowPostOverlaps = .false.
+        endif
+      endif
+    endif
+
     ! First decode the l2cf instructions
     call ChunkDivideL2CF ( root )
 
@@ -2353,6 +2365,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.71  2006/03/17 21:57:43  pwagner
+! Adjust default behavior to exclude overlaps outside processing if sids run
+!
 ! Revision 2.70  2006/03/17 00:06:31  pwagner
 ! Change default to allowing overlaps outside processingRange
 !
