@@ -411,6 +411,10 @@ note_failures()
 clusternames="lightspeed scramjet speedracer"
 shows="yes yes yes"
 debug="no"
+dontprintemptydates="yes"
+#                      ^------ skip printing from where sips removed l1b files
+maxobituaries="24"
+#               ^------ stop printing dead chunks, nodes past this
 me="$0"
 my_name=sipsl2
 I=sipsl2
@@ -546,8 +550,9 @@ do
   machine=""
   for name in $clusternames
   do
-    testl=`head $dir/exec_log/process.stdout | grep -i $name`
+    testl=`head $dir/exec_log/process.stdout | grep -i executing | grep -i $name`
     # testl=`grep -i pvm_hosts_info $dir/exec_log/process.stdout | grep -i $name`
+    # echo "testl: $testl"
     if [ "$testl" != "" ]
     then
       machine="$name"
@@ -591,6 +596,10 @@ do
     echo "date: $date"
     echo "bugs: $bugs"
     echo "list: $list"
+  fi
+  if [ "$dontprintemptydates" = "yes" -a "$date" = "" ]
+  then
+    machine=""
   fi
   if [ "$machine" != "" ]
   then
@@ -643,7 +652,13 @@ do
     then
 	   chunks=`grep -i 'died,' $dir/exec_log/process.stdout | awk '{print $7}'`
 	   nodes=`grep -i 'died,' $dir/exec_log/process.stdout | awk '{print $9}'`
-      list="$list \t $chunks \t $nodes"
+      ndied=`echo $chunks | wc | awk '{print $2}'`
+      if [ "$ndied" -gt "$maxobituaries" ]
+      then
+        list="$list \t ($ndied chunks) \t ($ndied nodes)"
+      else
+        list="$list \t $chunks \t $nodes"
+      fi
     fi
     if [ "$running" = "yes" -a "$skipifrestricting" = "no" ]
     then
@@ -696,6 +711,9 @@ do
 done
 exit 0
 # $Log$
+# Revision 1.8  2005/07/15 22:42:43  pwagner
+# Will handle empty date fields more gracefully
+#
 # Revision 1.7  2005/06/23 22:20:46  pwagner
 # Reworded Copyright statement
 #
