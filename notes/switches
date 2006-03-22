@@ -74,6 +74,7 @@ Switches (set by -S option in mlsl2's command line):
   qtmp =>   Quantity templates being constructed
   rad =>    Radiances in ForwardModelInterface
   reg =>    Dump regularization matrix
+  rtv =>    Dump retrieval configuration
   sca =>    Scalars of interest to the Newton method
   seez =>   Turn on some of Zvi's debugging output in FullForwardModel
   sig =>    MLS Signals
@@ -146,6 +147,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.58  2006/03/03 23:07:15  pwagner
+ May dump runtime Boolean flags
+
  Revision 1.57  2006/02/16 21:51:30  pwagner
  Add phase[n]; reveal switchDetail function
 
