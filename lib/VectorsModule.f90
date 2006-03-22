@@ -1197,7 +1197,7 @@ contains ! =====     Public Procedures     =============================
   contains
     ! - - - - - - - - - - -  OutputNiceSurface
     subroutine OutputNiceSurface ( value, coordinate )
-      use intrinsic, only: L_ANGLE, L_GEODALTITUDE, L_GPH, L_INTEGER, L_NONE, &
+      use intrinsic, only: L_ANGLE, L_GEODALTITUDE, L_GPH, L_NONE, &
         & L_PRESSURE, L_THETA, L_ZETA
       real(r8), intent(in) :: VALUE
       integer, intent(in) :: COORDINATE
@@ -1472,7 +1472,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine Dump_Vectors
 
   ! ---------------------------------------  Dump_Vector_Quantity  -----
-  subroutine Dump_Vector_Quantity ( Qty, Details, Name, Clean )
+  subroutine Dump_Vector_Quantity ( Qty, Details, Name, Clean, Vector )
 
     type (VectorValue_T), intent(in) :: QTY
     integer, intent(in), optional :: DETAILS ! <0  => Name only
@@ -1482,8 +1482,10 @@ contains ! =====     Public Procedures     =============================
     !                                        ! Default 1
     character(len=*), intent(in), optional :: NAME
     logical, intent(in), optional :: CLEAN   ! Passed through to dump_0%dump
+    type (Vector_T), intent(in), optional :: Vector ! Only to get its name
 
     integer :: myDetails
+    logical :: Dot ! Use vector.quantity notation
 
     myDetails = 1
     if ( present(details) ) myDetails = details
@@ -1491,11 +1493,27 @@ contains ! =====     Public Procedures     =============================
     if ( present(name) ) then
       call output ( name ); call output ( ', ' )
     end if
-    call output ( ' Qty_Template_Name = ' )
-    if ( qty%template%name /= 0 ) then
-      call display_string ( qty%template%name )
+    dot = .false.
+    if ( present(vector) ) dot = vector%name /= 0
+    if ( dot ) then
+      call output ( ' Vector quantity name = ' )
+      if ( vector%name /= 0 ) then
+        call display_string ( vector%name )
+      else
+        call output ( '<none given>' )
+      end if
+      if ( qty%template%name /= 0 ) then
+        call display_string ( qty%template%name, before='.' )
+      else
+        call output ( '.<none given>' )
+      end if
     else
-      call output ( ' <none given>' )
+      call output ( ' Qty_Template_Name = ' )
+      if ( qty%template%name /= 0 ) then
+        call display_string ( qty%template%name )
+      else
+        call output ( '<none given>' )
+      end if
     end if
     if ( myDetails < -1 ) return
     call newLine
@@ -2427,6 +2445,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.120  2006/02/23 00:55:28  vsnyder
+! Add NoErr optional argument to GetVectorQuantityIndexByName
+!
 ! Revision 2.119  2006/01/21 00:03:12  livesey
 ! Added DumpNiceMaskSummary
 !
