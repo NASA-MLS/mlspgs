@@ -939,7 +939,7 @@ contains
       use lexer_core, only: PRINT_SOURCE
       use VectorsModule, only: DUMPNICEMASKSUMMARY, m_tikhonov, m_fullderivatives
       ! Local variables
-      integer :: Q, I, J                ! Loop counters
+      integer :: Q                ! Loop counter
       ! Executable code
       call output ( '---------------------------- Begin retrieval configuration dump', advance='yes' )
       call output ( 'Dumping retrieval configuration for retrieve statement at ' )
@@ -2475,6 +2475,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.267  2006/03/22 23:47:14  vsnyder
+! Decruftification
+!
 ! Revision 2.266  2006/02/10 21:17:09  pwagner
 ! dumps may go to special dumpfile
 !
