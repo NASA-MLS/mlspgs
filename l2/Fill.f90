@@ -93,6 +93,7 @@ contains ! =====     Public Procedures     =============================
       & F_QUADRATURE, F_QUANTITY, F_RADIANCEQUANTITY, F_RATIOQUANTITY, &
       & F_REFRACT, F_REFGPHQUANTITY, F_REFGPHPRECISIONQUANTITY, F_RESETSEED, &
       & F_RHIQUANTITY, F_ROWS, F_SCALE, &
+      & F_SCALEINSTS, F_SCALERATIO, F_SCALESURFS, &
       & F_SCECI, F_SCVEL, F_SCVELECI, F_SCVELECR, F_SEED, F_SKIPMASK, &
       & F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, F_SOURCEL2GP, &
       & F_SOURCEQUANTITY, F_SOURCEVGRID, F_SPREAD, F_STATUS, F_SUFFIX, F_SUPERDIAGONAL, &
@@ -115,6 +116,7 @@ contains ! =====     Public Procedures     =============================
       & L_IWCFROMEXTINCTION, L_KRONECKER, &
       & L_L1B, L_L1BMAFBASELINE, L_L1BMIF_TAI, L_L2GP, L_L2AUX, &
       & L_LIMBSIDEBANDFRACTION, L_LOSVEL, &
+      & L_LSGLOBAL, L_LSLOCAL, L_LSWEIGHTED, &
       & L_MAGAZEL, L_MAGNETICFIELD, L_MAGNETICMODEL, &
       & L_MANIPULATE, L_MAX, L_MEAN, L_MIN, L_MOLCM2, L_NEGATIVEPRECISION, &
       & L_NOISEBANDWIDTH, L_NONE, &
@@ -158,7 +160,7 @@ contains ! =====     Public Procedures     =============================
     ! NOTE: If you ever want to include defined assignment for matrices, please
     ! carefully check out the code around the call to snoop.
     use MLSFiles, only: GetMLSFileByType
-    use MLSL2Options, only: RESTARTWARNINGS, SPECIALDUMPFILE
+    use MLSL2Options, only: SPECIALDUMPFILE
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, &
       & addPhaseToPhaseNames, fillTimings, finishTimings
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
@@ -446,6 +448,9 @@ contains ! =====     Public Procedures     =============================
     logical :: RESETSEED                ! Let mls_random_seed choose new seed
     integer :: ROWVECTOR                ! Vector defining rows of Matrix
     real(r8) :: SCALE                   ! Scale factor
+    real(r8) :: SCALEINSTANCES          ! Scale factor for weighted LS fill
+    real(r8) :: SCALERATIO              ! Scale factor for weighted LS fill
+    real(r8) :: SCALESURFS              ! Scale factor for weighted LS fill
     integer :: SCECIQUANTITYINDEX       ! In the quantities database
     integer :: SCECIVECTORINDEX         ! In the vector database
     integer :: SCVELQUANTITYINDEX       ! In the quantities database
@@ -554,6 +559,9 @@ contains ! =====     Public Procedures     =============================
       resetSeed = .false.
       refract = .false.
       scale = 0.0
+      scaleInstances = -1.0
+      scaleRatio = 1.0
+      scaleSurfs = -1.0
       spreadFlag = .false.
       switch2intrinsic = .false.
       suffix = 0
@@ -982,12 +990,21 @@ contains ! =====     Public Procedures     =============================
           case ( f_rhiQuantity ) ! For h2o from rhi
             sourceVectorIndex = decoration(decoration(subtree(1,gson)))
             sourceQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
-          case ( f_scale )
+          case ( f_scale, f_scaleInsts, f_scaleRatio, f_scaleSurfs )
             call expr_check ( gson , unitAsArray, valueAsArray, &
               & (/PHYQ_Dimensionless/), unitsError )
             if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
               & extraInfo=(/unitAsArray(1), PHYQ_Dimensionless/) )
-            scale = valueAsArray(1)
+            select case ( fieldIndex )
+            case ( f_scale )
+              scale = valueAsArray(1)
+            case ( f_scaleInsts )
+              scaleInstances = valueAsArray(1)
+            case ( f_scaleRatio )
+              scaleRatio = valueAsArray(1)
+            case ( f_scaleSurfs )
+              scaleSurfs = valueAsArray(1)
+            end select
           case ( f_scECI )                ! For special fill of losVel
             scECIVectorIndex = decoration(decoration(subtree(1,gson)))
             scECIQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -1159,10 +1176,11 @@ contains ! =====     Public Procedures     =============================
             call FillQuantityFromASCIIFile ( key, quantity, filename )
           end if
 
-        case ( l_binMax, l_binMean, l_binMin, l_binTotal )
+        case ( l_binMax, l_binMean, l_binMin, l_binTotal, &
+             & l_lsLocal, l_lsGlobal, l_lsWeighted )
           if ( .not. got ( f_sourceQuantity ) ) &
             & call Announce_Error ( key, no_Error_Code, &
-            & 'Need source quantity for bin max/min fill' )
+            & 'Need source quantity for bin fill or least-squares fill' )
           sourceQuantity => GetVectorQtyByTemplateIndex( &
             & vectors(sourceVectorIndex), sourceQuantityIndex )
           if ( got ( f_ptanQuantity ) ) then
@@ -1176,22 +1194,32 @@ contains ! =====     Public Procedures     =============================
             & quantity%template%verticalCoordinate ) then
             if ( .not. sourceQuantity%template%minorFrame .or. &
               &  .not. got ( f_ptanQuantity ) .or. &
-              &  quantity%template%verticalCoordinate /= l_zeta ) &
-              & call Announce_Error ( key, no_Error_Code, &
-              & 'Vertical coordinate mismatch, perhaps supply tangent pressure?' )
-            if ( ptanQuantity%template%instrumentModule .ne. &
-              & sourceQuantity%template%instrumentModule ) &
-              & call Announce_Error ( key, no_Error_Code, &
-              & 'Instrument module mismatch between ptan and source quantity' )
+              &  quantity%template%verticalCoordinate /= l_zeta ) then
+                call Announce_Error ( key, no_Error_Code, &
+                & ' vertical coordinates mismatch, perhaps supply tangent pressure?' )
+            else
+              if ( ptanQuantity%template%instrumentModule .ne. &
+                & sourceQuantity%template%instrumentModule ) &
+                & call Announce_Error ( key, no_Error_Code, &
+                & 'Instrument module mismatch between ptan and source quantity' )
+            end if
           end if
 
-          call FillWithBinResults ( key, quantity, sourceQuantity, ptanQuantity, &
-            & channel, fillMethod, additional, excludeBelowBottom, centerVertically )
+          if ( error == 0 ) then
+            select case ( fillMethod )
+            case ( l_binMax, l_binMean, l_binMin, l_binTotal )
+              call FillWithBinResults ( key, quantity, sourceQuantity, ptanQuantity, &
+                & channel, fillMethod, additional, excludeBelowBottom, centerVertically )
+            case default
+              call FillUsingLeastSquares ( key, quantity, sourceQuantity, ptanQuantity, &
+                & channel, fillMethod, scaleInstances, scaleRatio, scaleSurfs )
+            end select
+          end if
 
         case ( l_boxcar )
           if ( .not. got ( f_sourceQuantity ) ) &
             & call Announce_Error ( key, no_Error_Code, &
-            & 'Need source quantity for bin max/min fill' )
+            & 'Need source quantity for boxcar fill' )
           sourceQuantity => GetVectorQtyByTemplateIndex( &
             & vectors(sourceVectorIndex), sourceQuantityIndex )
           if ( .not. got ( f_width ) ) call Announce_Error ( key, no_Error_Code, &
@@ -1300,7 +1328,7 @@ contains ! =====     Public Procedures     =============================
                 & trim(StringElement(avoidObjects, iBO, .true.)), &
                 & .true.)
               if ( BOnum > 0 ) BOMask = ibset( BOMask, BOnum )
-            enddo
+            end do
             ! Special case: moon in space port
             if ( index(avoidObjects, 'mooninsp') > 0 ) &
               & BOMask = ibset( BOMask, 0 )
@@ -1505,7 +1533,7 @@ contains ! =====     Public Procedures     =============================
           else
             call FillTimings ( quantity%values(:,1), 'phases', 'all', .true. )
             ! call dump( quantity%values(:,1), 'phases' )
-          endif
+          end if
 
         case ( l_sectionTiming ) ! ---------  Fill timings for sections  -----
           call finishTimings('sections', returnStatus=status)
@@ -1671,7 +1699,7 @@ contains ! =====     Public Procedures     =============================
             call Announce_Error ( key, no_error_code, &
               & 'Must supply multipler for scaleOverlaps fill' )
           else
-            call ScaleOverlaps ( key, quantity, multiplierNode, dontMask )
+            call ScaleOverlaps ( quantity, multiplierNode, dontMask )
           end if
 
         case ( l_special ) ! -  Special fills for some quantities  -----
@@ -1733,7 +1761,7 @@ contains ! =====     Public Procedures     =============================
                 ! print *,col_species_hash
                 ! call dump( .true., col_species_keys, col_species_hash, &
                 !   & 'column species units' )
-              endif
+              end if
               call FillColAbundance ( key, quantity, &
                 & bndPressQty, vmrQty, colmAbUnits )
             end if
@@ -1855,7 +1883,7 @@ contains ! =====     Public Procedures     =============================
             call FillStatusQuantity ( key, quantity, &
               & sourceQuantity, statusValue, &
               & minValue, maxValue, heightNode, additional )
-          endif
+          end if
 
         case ( l_vector ) ! ---------------- Fill from another qty.
           ! This is VERY PRELIMINARY, A more fancy one needs to be written
@@ -1951,7 +1979,7 @@ contains ! =====     Public Procedures     =============================
           else
             call FillQtyWithReichlerWMOTP ( quantity, &
             & temperatureQuantity, refGPHQuantity )
-          endif
+          end if
         case (-1)
           ! We must have decided to skip this fill
         case default
@@ -3820,7 +3848,6 @@ contains ! =====     Public Procedures     =============================
       use Geometry, only: EarthRadA, EarthRadB, GEODTOGEOCLAT
       use Hydrostatic_M, only: HYDROSTATIC
       use MLSKinds, only: RP
-      use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
       use MLSNumerics, only: InterpolateValues
       use Phi_Refractive_Correction_m, only: Phi_Refractive_Correction_Up
       use Refraction_m, only: REFRACTIVE_INDEX
@@ -4780,7 +4807,7 @@ contains ! =====     Public Procedures     =============================
           &   quantity%template%noInstances) ) then
           call Announce_Error ( key, nonConformingHydrostatic, &
             & "case l_gph failed first test" )
-	       if ( toggle(gen) .and. levels(gen) > 0 ) &
+          if ( toggle(gen) .and. levels(gen) > 0 ) &
             & call trace_end ( "FillVectorQtyHydrostatically")
           return
         end if
@@ -4789,7 +4816,7 @@ contains ! =====     Public Procedures     =============================
           & (any(quantity%template%phi /= refGPHQuantity%template%phi)) ) then
           call Announce_Error ( key, nonConformingHydrostatic, &
             &  "case l_gph failed second test" )
-	       if ( toggle(gen) .and. levels(gen) > 0 ) &
+          if ( toggle(gen) .and. levels(gen) > 0 ) &
             & call trace_end ( "FillVectorQtyHydrostatically")
           return
         end if
@@ -4801,7 +4828,7 @@ contains ! =====     Public Procedures     =============================
           &   h2oQuantity%template%noInstances) ) then
           call Announce_Error ( key, nonConformingHydrostatic, &
             & "case l_ptan failed first test" )
-	       if ( toggle(gen) .and. levels(gen) > 0 ) &
+          if ( toggle(gen) .and. levels(gen) > 0 ) &
             & call trace_end ( "FillVectorQtyHydrostatically")
           return
         end if
@@ -4809,7 +4836,7 @@ contains ! =====     Public Procedures     =============================
           & (any(h2oQuantity%template%phi /= temperatureQuantity%template%phi)) ) then
           call Announce_Error ( key, nonConformingHydrostatic, &
             & "case l_ptan failed second test" )
-	       if ( toggle(gen) .and. levels(gen) > 0 )&
+          if ( toggle(gen) .and. levels(gen) > 0 )&
             &  call trace_end ( "FillVectorQtyHydrostatically")
           return
         end if
@@ -4842,7 +4869,7 @@ contains ! =====     Public Procedures     =============================
            call output( &
            & geocAltitudeQuantity%template%instrumentModule, &
            & advance='yes')
-	        if ( toggle(gen) .and. levels(gen) > 0 ) &
+           if ( toggle(gen) .and. levels(gen) > 0 ) &
             & call trace_end ( "FillVectorQtyHydrostatically")
           return
         end if
@@ -5078,7 +5105,7 @@ contains ! =====     Public Procedures     =============================
           &   quantity%template%noInstances) ) then
           call Announce_Error ( key, nonConformingHydrostatic, &
             & "case l_gph failed first test" )
-	  if ( toggle(gen) .and. levels(gen) > 0 ) &
+          if ( toggle(gen) .and. levels(gen) > 0 ) &
             & call trace_end ( "FillGPHPrecision")
           return
         end if
@@ -5087,7 +5114,7 @@ contains ! =====     Public Procedures     =============================
           & (any(quantity%template%phi /= refGPHPrecisionQuantity%template%phi)) ) then
           call Announce_Error ( key, nonConformingHydrostatic, &
             &  "case l_gph failed second test" )
-	  if ( toggle(gen) .and. levels(gen) > 0 ) &
+          if ( toggle(gen) .and. levels(gen) > 0 ) &
             & call trace_end ( "FillGPHPrecision")
           return
         end if
@@ -5338,7 +5365,7 @@ contains ! =====     Public Procedures     =============================
         whichToReplace = '=='
       elseif ( index(myOptions, 'n') > 0 ) then
         whichToReplace = '/='
-      endif
+      end if
       verbose = ( index(myOptions, 'v') > 0 )
       ! Check the dimensions work out OK
       if ( myAzEl .and. mod(noValues,3) /= 0 ) &
@@ -5398,7 +5425,7 @@ contains ! =====     Public Procedures     =============================
         call newline
         call output(values)
         call newline
-      endif
+      end if
       ! Now loop through the quantity
       k = 0
       do i = 1, quantity%template%noInstances
@@ -5420,7 +5447,7 @@ contains ! =====     Public Procedures     =============================
       if ( verbose ) then
         call output(quantity%values(1,:))
         call newline
-      endif
+      end if
       ! Tidy up
       call Deallocate_test ( values, 'values', ModuleName )
 
@@ -5535,7 +5562,7 @@ contains ! =====     Public Procedures     =============================
           & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
           & NeverFail= .false., &
           & dontPad=DONTPAD )
-      endif
+      end if
 
       if ( present ( suffix ) ) then
         if ( suffix /= 0 ) then
@@ -5596,7 +5623,7 @@ contains ! =====     Public Procedures     =============================
           l1bData%dpField = NegativeIfBitPatternSet(l1bData%dpField, &
             & BO_stat%intField(:, 1:maxMIFs, 1:noMAFs), myBOMask)
           call DeallocateL1BData(BO_stat)
-        endif
+        end if
 
         quantity%values = RESHAPE(l1bData%dpField, &
           & (/ quantity%template%instanceLen, quantity%template%noInstances /) )
@@ -5765,7 +5792,7 @@ contains ! =====     Public Procedures     =============================
         return
       end if
 
-      ! Two cases here, one where we have to interpolate verticall (has to be
+      ! Two cases here, one where we have to interpolate vertically (has to be
       ! single channel quantity).  The other where we don't.  Most of the latter
       ! cases can be handled by the code that calls this routine.  The exception
       ! is when we've used the force option to e.g. copy one band into another.
@@ -6717,7 +6744,6 @@ contains ! =====     Public Procedures     =============================
       type (VectorValue_T), intent(in) :: TEMPERATURE
       type (VectorValue_T), intent(in) :: REFGPH
       ! Local variables
-      integer :: i
       integer :: instance
       integer :: invert
       real :: MISSINGVALUE
@@ -6752,7 +6778,7 @@ contains ! =====     Public Procedures     =============================
           invert=0
           p=refGPH%values(:,instance)*100.         ! hPa > Pa
           t = temperature%values(:,instance)
-        endif
+        end if
         where ( t < 0. .or. t > 100000. )
           t = MissingValue
         end where
@@ -6994,7 +7020,7 @@ contains ! =====     Public Procedures     =============================
 
 !      call dump ( surfs, 'surfs' )
 
-      ! Work out the horizontal mapping, a function of height for unstakced quantities.
+      ! Work out the horizontal mapping, a function of height for unstacked quantities.
       ! Bin to the center of the profiles rather than the edges.
       if ( quantity%template%noInstances > 1 ) then
         ! Setup and work out the phiBoundaries
@@ -7241,7 +7267,245 @@ contains ! =====     Public Procedures     =============================
       end where
     end subroutine FillQualityFromChisq
 
-    ! ----------------------------------------------- offsetradiancequantity ---
+    ! ------------------------------------------ FillUsingLeastSquares -----
+    subroutine FillUsingLeastSquares  ( key, Quantity, SourceQuantity, ptanQuantity, &
+      & channel, method, scaleInstances, scaleRatio, scaleSurfs )
+      ! This fills a coherent Quantity from a a typically incoherent
+      ! SourceQuantity using a least-squares approximation to a first-order
+      ! Taylor series.
+
+      use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+      use MLSKinds, only: R8
+
+      integer, intent(in) :: KEY        ! Tree node
+      type (VectorValue_T), intent(inout) :: QUANTITY
+      type (VectorValue_T), intent(in) :: SOURCEQUANTITY
+      type (VectorValue_T), pointer :: PTANQUANTITY
+      integer, intent(in) :: CHANNEL
+      integer, intent(in) :: METHOD
+      real(r8), intent(inout) :: ScaleInstances, ScaleRatio, ScaleSurfs
+
+      ! Local variables
+      real(r8), dimension(:,:), pointer :: INSTS ! Instance coordinates for source
+      real(r8), dimension(:,:), pointer :: LSMatrix ! Least Squares problem matrix
+      real(r8), dimension(:), pointer :: RHS
+      real(r8), dimension(:,:), pointer :: SOURCEHEIGHTS ! might be ptan.
+      real(r8), dimension(:,:), pointer :: SURFS ! Surface coordinates for source
+      real(r8) :: W, WMAX               ! Weight if method == l_lsWeighted
+      integer :: QS, QI, SS, SI                  ! Loop counters
+      integer :: MYCHANNEL              ! Channel or 1
+      integer :: NRows
+      integer :: NSourceQuant  ! Number of values in SourceQuantity
+
+      ! Executable code
+
+      ! Check the output quantity
+      if ( .not. ValidateVectorQuantity ( quantity, &
+        & coherent=.true., stacked=.true. ) ) &
+        & call Announce_Error ( key, no_error_code, &
+        & 'Quantity for least-squares fill must be stacked and coherent' )
+
+      ! Also should have the condition:
+      !  quantityType = (/ sourceQuantity%template%quantityType /)
+      ! However, the code does not yet really support the ability to do that.
+
+      ! Work out source vertical coordinate
+      if ( associated ( ptanQuantity ) .and. sourceQuantity%template%minorFrame ) then
+        nullify ( sourceHeights )
+        call Allocate_test ( sourceHeights, sourceQuantity%template%nosurfs, &
+          & sourceQuantity%template%noinstances, 'sourceHeights', ModuleName )
+        sourceHeights = ptanQuantity%values
+        if ( quantity%template%verticalCoordinate /= l_zeta ) &
+          & call Announce_Error ( key, no_error_code, &
+          & 'Vertical coordinate in quantity to fill is not zeta' )
+      else
+        sourceHeights => sourceQuantity%template%surfs
+        if ( sourceQuantity%template%verticalCoordinate /= quantity%template%verticalCoordinate ) &
+          & call Announce_Error ( key, no_error_code, &
+          & 'Vertical coordinates in least-squares fill do not match' )
+      end if
+
+      ! Get the channel number
+      if ( sourceQuantity%template%frequencyCoordinate /= l_none .and. &
+        & channel == 0 ) then
+        call Announce_Error ( key, no_error_code, &
+          & 'Must supply channel for this least-squares fill' )
+        return
+      end if
+      myChannel = max(channel,1)
+
+      ! Setup coordinate arrays
+      nullify ( surfs, insts )
+      call Allocate_test ( surfs, sourceQuantity%template%nosurfs, &
+        & sourceQuantity%template%noinstances, 'surfs', ModuleName )
+      call Allocate_test ( insts, sourceQuantity%template%nosurfs, &
+        & sourceQuantity%template%noinstances, 'insts', ModuleName )
+
+      ! Get the vertical coordinates, a function of instance for
+      ! incoherent quantities
+      do ss = 1, sourceQuantity%template%noSurfs
+        if ( sourceQuantity%template%coherent ) then
+          surfs(ss,:) = sourceHeights(ss,1)
+        else
+          surfs(ss,:) = sourceHeights(ss,:)
+        end if
+      end do
+
+!      call dump ( surfs, 'surfs' )
+
+      ! Get the horizontal coordinates, a function of height for unstacked quantities.
+      do si = 1, sourceQuantity%template%noInstances
+        if ( sourceQuantity%template%coherent ) then
+          insts(:,si) = sourceQuantity%template%phi(1,si)
+        else
+          insts(:,si) = sourceQuantity%template%phi(:,si)
+        end if
+      end do
+
+!      call dump ( insts, 'insts' )
+
+      ! Allocate the arrays
+      nullify ( lsMatrix, RHS )
+      if ( sourceQuantity%template%regular ) then
+        nSourceQuant = sourceQuantity%template%noInstances * &
+          &            sourceQuantity%template%noSurfs
+      else
+        nSourceQuant = sourceQuantity%template%noInstances * &
+          &                sourceQuantity%template%instanceLen
+      end if
+      call allocate_test ( lsMatrix, nSourceQuant, 4, 'LSMatrix', moduleName )
+      call allocate_test ( RHS, nSourceQuant, 'RHS', moduleName )
+
+      if ( method == l_lsWeighted ) then
+        if ( scaleInstances < 0.0 ) scaleInstances = &
+          ( quantity%template%phi(1,quantity%template%noInstances) - &
+            quantity%template%phi(1,1) ) / &
+          ( quantity%template%noInstances - 1 )
+        if ( scaleSurfs < 0.0 ) scaleSurfs = &
+          ( quantity%template%surfs(quantity%template%noSurfs,1) - &
+            quantity%template%surfs(1,1) ) / &
+          ( quantity%template%noSurfs - 1 )
+        scaleSurfs = scaleSurfs * scaleRatio
+      end if
+      ! Now loop over the output quantity points and set up the least-squares
+      ! problem.
+      do qi = 1, quantity%template%noInstances
+        do qs = 1, quantity%template%noSurfs
+          nRows = 0
+          wMax = -1.0
+          do si = 1, sourceQuantity%template%noInstances
+            do ss = 1, sourceQuantity%template%noSurfs
+              if ( method == l_lslocal ) then
+                if ( surfs(ss,si) < quantity%template%surfs(max(qs-1,1),1) ) cycle
+                if ( surfs(ss,si) > quantity%template%surfs(min(qs+1,quantity%template%noSurfs),1) ) cycle
+                if ( insts(ss,si) < quantity%template%phi(1,max(qi-1,1)) ) cycle
+                if ( insts(ss,si) > quantity%template%phi(1,min(qi+1,quantity%template%noInstances)) ) cycle
+              end if
+              nRows = nRows + 1
+              lsMatrix(nRows,:3) = (/ 1.0_r8, &
+                & insts(ss,si) - quantity%template%phi(1,qi), &
+                & surfs(ss,si) - quantity%template%surfs(qs,1) /)
+              lsMatrix(nRows,4) = 0.5 * lsMatrix(nRows,2) * lsMatrix(nRows,3)
+              rhs(nRows) = sourceQuantity%values(myChannel+(ss-1)*sourceQuantity%template%noChans,si)
+              if ( method == l_lsWeighted ) then
+                w = exp( - (lsMatrix(nRows,2)/scaleInstances)**2 &
+                       & - (lsMatrix(nRows,3)/scaleSurfs)**2 )
+                if ( w > wMax ) then
+                  wMax = w
+                else if ( w < sqrt(epsilon(w))*wMax ) then
+                  nRows = nRows - 1
+                  cycle
+                end if
+                lsMatrix(nRows,:) = lsMatrix(nRows,:) * w
+                rhs(nRows) = rhs(nRows) * w
+              end if
+            end do
+          end do
+          if ( nRows < 4 ) then
+            quantity%values(qs,qi) = quantity%template%badValue
+          else
+            ! Solve the least squares problem locally
+            call solveLS ( lsMatrix(:nRows,:), rhs(:nRows), &
+              & quantity%values(qs,qi), quantity%template%badValue )
+          end if
+        end do
+      end do
+
+      ! Now tidy up
+      call deallocate_test ( surfs,    'surfs',    moduleName )
+      call deallocate_test ( insts,    'insts',    moduleName )
+      call deallocate_test ( lsMatrix, 'LSMatrix', moduleName )
+      call deallocate_test ( RHS,      'RHS',      moduleName )
+      if ( associated ( ptanQuantity ) .and. sourceQuantity%template%minorFrame ) &
+        & call Deallocate_test ( sourceHeights, 'sourceHeights', ModuleName )
+
+    end subroutine FillUsingLeastSquares
+
+    ! -------------------------------------------------------- SolveLS -----
+    subroutine SolveLS ( LSMatrix, RHS, Result, Bad )
+    ! Solve a least-squares problem for FillUsingLeastSquares
+
+    !{ Given the least-squares problem $A x \simeq b$, form normal equations
+    !  $A^T A x = A^T b$ (if the condition number might be far from 1.0, we
+    !  should really use householder).  Decompose $A^T A$ using Cholesky
+    !  decomposition giving $A^T A x = C^T C x = A^T b$, where $C$ is upper
+    !  triangular.  Then backsolve once to get $C x = C^{-T} A^T b$ and
+    !  again to get $x = C^{-1} C^{-T} A^T b$.
+
+      use MatrixModule_0, only: DenseCholesky
+      use MLSKinds, only: R8, RM
+      real(r8), intent(in) :: LSMatrix(:,:), RHS(:)
+      real(r8), intent(out) :: Result
+      real(r8), intent(in) :: Bad
+      real(rm), dimension(4,4) :: NormalMatrix
+      real(rm), dimension(4) :: NormalRHS, X
+      real(rm) :: D ! Diagonal of factored normalMatrix
+      integer :: I, J, Stat
+
+      !{ Form normal equations $A^T A x \simeq A^T b$ -- yeah, we really
+      !  should use Householder....  $A^T A$ is in {\tt NormalMatrix} and
+      !  $A^T b$ is in {\tt NormalRHS}.
+      do i = 1, size(lsMatrix,2)
+        normalRHS(i) = dot_product(lsMatrix(:,i),rhs)
+        do j = i, size(lsMatrix,2)
+          normalMatrix(i,j) = dot_product(lsMatrix(:,i),lsMatrix(:,j))
+        end do
+      end do
+      !{ Factor the normal equations' matrix $C^T C = A^T A$ leaving $C$ in
+      !  {\tt NormalMatrix}.
+      call denseCholesky ( normalMatrix, normalMatrix, stat )
+      if ( stat == 0 ) then
+        !{ Backsolve $C^T (C x) = A^T b$ for $C x$, storing
+        !  $C x = C^{-T} A^T b$ in {\tt x}.
+        do i = 1, size(lsMatrix,2)
+          d = normalMatrix(i,i)
+          if ( abs(d) > tiny(0.0_r8) ) then
+            x(i) = ( normalRHS(i) - dot_product(normalMatrix(:i-1,i), x(:i-1)) ) / d
+          else
+            result = bad
+            return
+          end if
+        end do
+        !{ Backsolve $C x = C^{-T} A^T b$ storing $C^{-1} C^{-T} A^T b$ in
+        !  {\tt x}.
+        do i = size(lsMatrix,2), 1, -1
+          d = normalMatrix(i,i)
+          if ( abs(d) > tiny(0.0_r8) ) then
+            x(i) = ( x(i) - dot_product(normalMatrix(i,i+1:), x(i+1:)) ) / d
+          else
+            result = bad
+            return
+          end if
+        end do
+      else
+        result = bad
+        return
+      end if
+      result = x(1)
+
+    end subroutine SolveLS
+
+    ! ----------------------------------------- offsetradiancequantity -----
     subroutine OffsetRadianceQuantity ( quantity, radianceQuantity, amount )
       type (VectorValue_T), intent(inout) :: QUANTITY
       type (VectorValue_T), intent(in) :: RADIANCEQUANTITY
@@ -7281,8 +7545,7 @@ contains ! =====     Public Procedures     =============================
     end subroutine ResetUnusedRadiances
 
     ! ---------------------------------------------- ScaleOverlaps -------
-    subroutine ScaleOverlaps ( key, quantity, multiplierNode, dontMask )
-      integer, intent(in) :: KEY        ! Tree node for command
+    subroutine ScaleOverlaps ( quantity, multiplierNode, dontMask )
       type (VectorValue_T), intent(inout) :: QUANTITY
       integer, intent(in) :: MULTIPLIERNODE ! Tree node for factors
       logical :: DONTMASK               ! Flag
@@ -7538,6 +7801,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.327  2006/03/22 23:47:37  vsnyder
+! More work on least-squares fill
+!
 ! Revision 2.326  2006/03/15 23:55:11  pwagner
 ! Use reorderPrecedence to ensure higher precedes lower in manipulations
 !
