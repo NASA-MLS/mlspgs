@@ -42,7 +42,8 @@ module ForwardModelSupport
   integer, parameter :: IncompleteFullFwm      = IncompleteBinSelectors + 1
   integer, parameter :: IncompleteLinearFwm    = IncompleteFullFwm + 1
   integer, parameter :: IrrelevantFwmParameter = IncompleteLinearFwm + 1
-  integer, parameter :: LinearSidebandHasUnits = IrrelevantFwmParameter + 1
+  integer, parameter :: LBLandPFA              = IrrelevantFwmParameter + 1
+  integer, parameter :: LinearSidebandHasUnits = LBLandPFA + 1
   integer, parameter :: LineNotMolecule        = LinearSidebandHasUnits + 1
   integer, parameter :: LineParamTwice         = LineNotMolecule + 1
   integer, parameter :: NeedBothXYStar         = LineParamTwice + 1
@@ -379,14 +380,15 @@ contains ! =====     Public Procedures     =============================
       & F_DEFAULT_spectroscopy, F_DIFFERENTIALSCAN, F_DO_BASELINE, F_DO_CONV, &
       & F_DO_FREQ_AVG, F_DO_1D, F_FREQUENCY, F_I_SATURATION, F_INCL_CLD, &
       & F_FORCESIDEBANDFRACTION, F_INTEGRATIONGRID, F_LINEARSIDEBAND, &
-      & F_LINECENTER, F_LINEWIDTH, F_LINEWIDTH_TDEP, &
-      & F_LOCKBINS, F_LSBPFAMOLECULES, F_MODULE, F_MOLECULES, &
+      & F_LINECENTER, F_LINEWIDTH, F_LINEWIDTH_TDEP, F_LOCKBINS, &
+      & F_LSBLBLMOLECULES, F_LSBPFAMOLECULES, F_MODULE, F_MOLECULES, &
       & F_MOLECULEDERIVATIVES, F_NABTERMS, F_NAZIMUTHANGLES, &
       & F_NCLOUDSPECIES, F_NMODELSURFS, F_NSCATTERINGANGLES, &
       & F_NSIZEBINS, F_PHIWINDOW, F_POLARIZED, F_REFRACT, F_SCANAVERAGE, &
       & F_SIGNALS, F_SKIPOVERLAPS, F_SPECIFICQUANTITIES, F_SPECT_DER, &
       & F_SWITCHINGMIRROR, F_TANGENTGRID, &
-      & F_TEMP_DER, F_TOLERANCE, F_TYPE, F_USBPFAMOLECULES, F_XSTAR, F_YSTAR
+      & F_TEMP_DER, F_TOLERANCE, F_TYPE, F_USBLBLMOLECULES, F_USBPFAMOLECULES, &
+      & F_XSTAR, F_YSTAR
     use Intrinsic, only: L_NONE, L_CLEAR, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, &
       & PHYQ_PROFILES, PHYQ_TEMPERATURE
     use L2PC_m, only: BINSELECTORS, DEFAULTSELECTOR_LATITUDE, CREATEDEFAULTBINSELECTORS
@@ -418,6 +420,7 @@ contains ! =====     Public Procedures     =============================
     logical :: Got(field_first:field_last)   ! "Got this field already"
     integer :: GSON                     ! Son of son
     integer :: I, J, K                  ! Subscript and loop inductor.
+    integer :: LBLTrees(2)              ! Tree indices of f_[lu]sbLBLMolecules
     type(spectroParam_t), pointer :: LineStru(:)
     integer :: LineTrees(3)             ! Tree indices of f_line...
     integer :: M                        ! Max LBL molecules in either sideband
@@ -435,6 +438,7 @@ contains ! =====     Public Procedures     =============================
     integer :: STATUS                   ! From allocates etc.
     integer :: TANGENT                  ! Loop counter
     integer, pointer :: TempLBL(:), TempPFA(:) ! Used to separate LBL and PFA
+    integer :: TheTree                  ! Either pfaTrees(s) or lblTrees(s)
     integer :: THISMOLECULE             ! Tree index.
     integer :: type                     ! Type of value returned by EXPR
     real (r8) :: Value(2)               ! Value returned by EXPR
@@ -495,6 +499,7 @@ contains ! =====     Public Procedures     =============================
 
     got = .false.
     info%tolerance = -1.0 ! Kelvins, in case the tolerance field is absent
+    lblTrees = null_tree
     lineTrees = null_tree
     pfaTrees = null_tree
     do i = 2, nsons(root)
@@ -549,6 +554,8 @@ contains ! =====     Public Procedures     =============================
         lineTrees(lineWidth_TDep) = son
       case ( f_lockBins )
         info%lockBins = get_boolean(son)
+      case ( f_lsbLBLMolecules )
+        LBLTrees(1) = son
       case ( f_lsbPFAMolecules )
         PFATrees(1) = son
       case ( f_module )
@@ -652,6 +659,8 @@ contains ! =====     Public Procedures     =============================
           & call AnnounceError ( toleranceNotK, root )
       case ( f_type )
         info%fwmType = decoration(subtree(2,son))
+      case ( f_usbLBLMolecules )
+        LBLTrees(2) = son
       case ( f_usbPFAMolecules )
         PFATrees(2) = son
       case ( f_xStar )
@@ -663,6 +672,12 @@ contains ! =====     Public Procedures     =============================
       end select
 
     end do ! i = 2, nsons(root)
+
+    if ( ( got(f_lsbPFAMolecules) .and. got(f_lsbLBLMolecules) ) ) &
+      & call announceError ( LBLandPFA, lblTrees(1) )
+    if ( ( got(f_usbPFAMolecules) .and. got(f_usbLBLMolecules) ) ) &
+      & call announceError ( LBLandPFA, lblTrees(2) )
+
     s1 = (info%sidebandStart+3)/2; s2 = (info%sidebandStop+3)/2
 
     ! Now the molecule lists.
@@ -670,7 +685,7 @@ contains ! =====     Public Procedures     =============================
     if ( got(f_molecules) ) then
       ! Create the Beta_Group structure.  Temporarily assume all the
       ! molecules are LBL.  We'll separate them later, when processing
-      ! the PFA Molecules trees.
+      ! the LBL or PFA Molecules trees.
       allocate ( info%beta_group(nsons(moleculeTree)-1), stat = status )
       if ( status /= 0 ) call announceError( AllocateError, moleculeTree )
       do b = 1, nsons(moleculeTree) - 1
@@ -707,11 +722,12 @@ contains ! =====     Public Procedures     =============================
           info%beta_group(b)%lbl(2)%molecules(1) = info%beta_group(b)%molecule
         end if
         do s = s1, s2 ! both sidebands
-          if ( pfaTrees(s) /= null_tree ) then
+          if ( max(pfaTrees(s),lblTrees(s)) /= null_tree ) then
             ! Allocate PFA_Molecules temporarily for a "this is a PFA molecule" flag
+            ! If it turns out to be an LBL molecules list, we'll swap them later.
             call allocate_test ( info%beta_group(b)%pfa(s)%molecules, &
-              & size(info%beta_group(b)%lbl(s)%molecules), 'PFA Molecules', moduleName )
-            info%beta_group(b)%pfa(s)%molecules = 0
+              & size(info%beta_group(b)%lbl(s)%molecules), 'PFA Molecules', &
+              & moduleName, fill=0 )
           else
             call allocate_test ( info%beta_group(b)%pfa(s)%molecules, 0, &
               & 'PFA Molecules', moduleName )
@@ -749,13 +765,14 @@ contains ! =====     Public Procedures     =============================
       end do
     end do
 
-    ! Now the PFAMolecules lists
+    ! Now the LBLMolecules or PFAMolecules lists
     do s = s1, s2
-      if ( pfaTrees(s) /= null_tree ) then
-        ! Verify that the PFA molecules are all listed molecules.  Mark the
-        ! ones that are PFA.
-op:     do j = 2, nsons(PFATrees(s))
-          son = subtree( j, PFATrees(s) )
+      theTree = merge(lblTrees(s),pfaTrees(s),lblTrees(s)/=null_tree)
+      if ( theTree /= null_tree ) then
+        ! Verify that the LBL or PFA molecules are all listed molecules.
+        ! Mark the ones that are LBL or PFA.
+op:     do j = 2, nsons(theTree)
+          son = subtree( j, theTree )
           if ( node_id(son) == n_array ) then
             call announceError ( NoArray, son )
             cycle
@@ -772,21 +789,31 @@ op:     do j = 2, nsons(PFATrees(s))
             end do ! k = 1, size(info%beta_group(b)%lbl(s)%molecules)
           end do ! b = 1, size(info%beta_group)
           call announceError ( PFANotMolecule, son )
-        end do op ! j = 2, nsons(PFATrees(s))
+        end do op ! j = 2, nsons(theTree)
         ! Divide the LBL and PFA molecules into separate lists
         do b = 1, size(info%beta_group)
           tempLBL => info%beta_group(b)%lbl(s)%molecules
           tempPFA => info%beta_group(b)%pfa(s)%molecules
-          numLBL = count(tempPFA == 0)
-          numPFA = size(tempPFA) - numLBL
+          if ( pfaTrees(s) /= null_tree ) then
+            numLBL = count(tempPFA == 0)
+            numPFA = size(tempPFA) - numLBL
+          else
+            numPFA = count(tempPFA == 0)
+            numLBL = size(tempPFA) - numPFA
+          end if
           nullify ( info%beta_group(b)%lbl(s)%molecules, &
             &       info%beta_group(b)%pfa(s)%molecules )
           call allocate_test ( info%beta_group(b)%lbl(s)%molecules, numLBL, &
             & 'LBL Molecules', moduleName )
           call allocate_test ( info%beta_group(b)%pfa(s)%molecules, numPFA, &
             & 'PFA Molecules', moduleName )
-          info%beta_group(b)%lbl(s)%molecules = pack(tempLBL,tempPFA == 0)
-          info%beta_group(b)%pfa(s)%molecules = pack(tempLBL,tempPFA /= 0)
+          if ( pfaTrees(s) /= null_tree ) then
+            info%beta_group(b)%lbl(s)%molecules = pack(tempLBL,tempPFA == 0)
+            info%beta_group(b)%pfa(s)%molecules = pack(tempLBL,tempPFA /= 0)
+          else
+            info%beta_group(b)%lbl(s)%molecules = pack(tempLBL,tempPFA /= 0)
+            info%beta_group(b)%pfa(s)%molecules = pack(tempLBL,tempPFA == 0)
+          end if
           call deallocate_test ( tempLBL, 'TempLBL', moduleName )
           call deallocate_test ( tempPFA, 'TempPFA', moduleName )
           if ( numLBL /= 0 ) info%anyLBL(s) = .true.
@@ -1187,9 +1214,9 @@ op:     do j = 2, nsons(PFATrees(s))
     call output ( ' ForwardModelSupport complained: ' )
     select case ( code )
     case ( AllocateError )
-      call output ( 'allocation error.', advance='yes' )
+      call output ( 'Allocation error.', advance='yes' )
     case ( BadBinSelectors )
-      call output ('cannot have a fieldAzimuth binSelector for polarlinear model', &
+      call output ('Cannot have a fieldAzimuth binSelector for polarlinear model', &
         & advance='yes' )
     case ( BadHeightUnit )
       call output ( 'Inappropriate units for height in binSelector', &
@@ -1218,17 +1245,20 @@ op:     do j = 2, nsons(PFATrees(s))
       call display_string ( lit_indices(what), before='Duplicate molecule ', &
         & advance='yes' )
     case ( IncompleteBinSelectors )
-      call output ('must have some binSelectors for the polarlinear model',advance='yes' )
+      call output ('Must have some binSelectors for the polarlinear model',advance='yes' )
     case ( IncompleteFullFwm )
-      call output ('incomplete full foward model specification',advance='yes' )
+      call output ('Incomplete full foward model specification',advance='yes' )
     case ( IncompleteLinearFwm )
-      call output ( 'incomplete linear foward model specification', &
+      call output ( 'Incomplete linear foward model specification', &
+        & advance='yes' )
+    case ( LBLandPFA )
+      call output ( 'Cannot have both LBL and PFA molecule lists for one sideband', &
         & advance='yes' )
     case ( IrrelevantFwmParameter )
-      call output ( 'irrelevant parameter for this forward model type', &
+      call output ( 'Irrelevant parameter for this forward model type', &
         & advance='yes' )
     case ( LinearSidebandHasUnits )
-      call output ( 'irrelevant units for this linear sideband', &
+      call output ( 'Irrelevant units for this linear sideband', &
         & advance='yes' )
     case ( LineNotMolecule )
       call display_string ( lit_indices(decoration(where)), &
@@ -1238,12 +1268,12 @@ op:     do j = 2, nsons(PFATrees(s))
       call display_string ( lit_indices(decoration(where)), before='Molecule '  )
       call output ( ' listed twice for spectral parameter', advance='yes' )
     case ( NeedBothXYStar )
-      call output ( 'x/yStar must either be both present or both absent', &
+      call output ( 'X/YStar must either be both present or both absent', &
         & advance='yes' )
     case ( Nested )
       call output ( 'Group within group is not allowed', advance='yes' )
     case ( NoArray )
-      call output ( "Nested array not allowed here", advance='yes' )
+      call output ( 'Nested array not allowed here', advance='yes' )
     case ( NoBetaGroup )
       call output ( 'Beta grouping allowed only for full clear-sky model', &
         & advance='yes' )
@@ -1258,21 +1288,21 @@ op:     do j = 2, nsons(PFATrees(s))
         & 'Frequency averaging must be specified if there are both PFA and LBL molecules', &
         & advance='yes' )
     case ( PFANotMolecule )
-      call output ( 'PFA requested for ' )
+      call output ( 'LBL or PFA requested for ' )
       call display_string ( lit_indices(decoration(where)) )
       call output ( ' but it is not in the molecule list', advance='yes' )
     case ( PFATwice )
       call display_string ( lit_indices(decoration(where)), &
         & before='Molecule ' )
-      call output ( ' listed twice for PFA', advance='yes' )
+      call output ( ' listed twice for LBL or PFA', advance='yes' )
     case ( PolarizedAndAllLines )
-      call output ( 'cannot specify both polarized and allLinesInCatalog', &
+      call output ( 'Cannot specify both polarized and allLinesInCatalog', &
         & advance='yes' )
     case ( TangentNotSubset )
-      call output ('non subsurface tangent grid not a subset of integration&
+      call output ('Non subsurface tangent grid not a subset of integration&
         & grid', advance='yes' )
     case ( ToleranceNotK )
-      call output ( 'tolerance does not have dimensions of temperature/radiance', &
+      call output ( 'Tolerance does not have dimensions of temperature/radiance', &
         & advance='yes' )
     case ( TooManyHeights )
       call output ( 'Bin Selectors can only refer to one height range', &
@@ -1281,7 +1311,7 @@ op:     do j = 2, nsons(PFATrees(s))
       call output ( 'Bin Selectors can only have one cost', &
         & advance='yes' )
     case ( WrongUnitsForWindow )
-      call output ( 'phiWindow must be in degrees or profiles', &
+      call output ( 'PhiWindow must be in degrees or profiles', &
         & advance='yes' )
     case default
       call output ( '(no specific description of this error)', advance='yes' )
@@ -1301,6 +1331,9 @@ op:     do j = 2, nsons(PFATrees(s))
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.128  2006/03/22 02:23:46  vsnyder
+! Add lsbLBLmolecules, useLBLmolecules
+!
 ! Revision 2.127  2006/02/23 00:52:09  vsnyder
 ! Make sure instrumentModule has a value, report all errors before quitting
 !
