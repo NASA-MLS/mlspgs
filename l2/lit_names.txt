@@ -104,6 +104,9 @@ l2pc
 linalg
 logarithmic
 lowcloud
+lsGlobal     # Fill method for incoherent-to-coherent
+lsLocal      # Fill method for incoherent-to-coherent
+lsWeighted   # Fill method for incoherent-to-coherent
 
 manipulate
 max
@@ -158,6 +161,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.54  2006/03/22 02:22:09  vsnyder
+# Add lsGlobal, lsLocal and lsWeighted fill methods
+#
 # Revision 2.53  2004/10/16 17:24:59  livesey
 # Added ASCIIFile
 #
