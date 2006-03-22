@@ -433,6 +433,7 @@ contains ! =====     Public procedures     =============================
              l+l_boxcar, l+l_combineChannels, l+l_gridded, l+l_estimatedNoise, l+l_explicit, &
              l+l_extractChannel, l+l_gphPrecision, l+l_hydrostatic, l+l_addnoise, l+l_refract, &
              l+l_isotope, l+l_iwcfromextinction, l+l_l1b, l+l_l2aux, l+l_l2gp, &
+             l+l_lsGlobal, l+l_lsLocal, l+l_lsWeighted, &
              l+l_manipulate, l+l_magneticModel, l+l_magAzEl, &
              l+l_negativePrecision, l+l_offsetRadiance, l+l_profile, &
              l+l_phaseTiming, l+l_sectionTiming, l+l_fwdModelTiming, &
@@ -880,6 +881,9 @@ contains ! =====     Public procedures     =============================
              continue = .true. )
     call make_tree ( (/ & ! STILL Continuing for s_fill...
              begin, f+f_scale, t+t_numeric, n+n_field_type, &
+             begin, f+f_scaleInsts, t+t_numeric, n+n_field_type, &
+             begin, f+f_scaleRatio, t+t_numeric, n+n_field_type, &
+             begin, f+f_scaleSurfs, t+t_numeric, n+n_field_type, &
              begin, f+f_scVel, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
              begin, f+f_scVelECI, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
              begin, f+f_scVelECR, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
@@ -1134,6 +1138,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_lineWidth, t+t_molecule, n+n_field_type, &
              begin, f+f_lineWidth_TDep, t+t_molecule, n+n_field_type, &
              begin, f+f_lockBins, t+t_boolean, n+n_field_type, &
+             begin, f+f_lsbLBLMolecules, t+t_molecule, n+n_field_type, &
              begin, f+f_lsbPFAMolecules, t+t_molecule, n+n_field_type, &
              begin, f+f_module, s+s_module, n+n_field_spec, &
              begin, f+f_moleculeDerivatives, t+t_molecule, n+n_field_type, &
@@ -1158,6 +1163,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_temp_der, t+t_boolean, n+n_field_type, &
              begin, f+f_tolerance, t+t_numeric, n+n_field_type, &
              begin, f+f_type, t+t_fwmType, nr+n_field_type, &
+             begin, f+f_usbLBLMolecules, t+t_molecule, n+n_field_type, &
              begin, f+f_usbPFAMolecules, t+t_molecule, n+n_field_type, &
              begin, f+f_xStar, s+s_vector, n+n_field_spec, &
              begin, f+f_yStar, s+s_vector, n+n_field_spec, &
@@ -1433,6 +1439,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.430  2006/03/22 02:23:26  vsnyder
+! Add lsbLBLmolecules, useLBLmolecules, lsGlobal, lsLocal, lsWeighted
+!
 ! Revision 2.429  2006/03/17 00:06:31  pwagner
 ! Change default to allowing overlaps outside processingRange
 !
