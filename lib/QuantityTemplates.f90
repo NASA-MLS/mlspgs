@@ -102,7 +102,10 @@ module QuantityTemplates         ! Quantities within vectors
     real(r8), dimension(:,:), pointer :: surfs => NULL()
 
     ! This is dimensioned (noSurfs,1) for coherent quantities and
-    ! (noSurfs, noInstances) for incoherent ones.
+    ! (noSurfs, noInstances) for incoherent ones.  Pretending the values
+    ! are dimensioned (noChans, noSurfs, noInstances), the SURFS coordinate
+    ! for the (:,i,j) values is surfs(i,1) for a coherent quantity or surfs(i,j)
+    ! for an incoherent one.
 
     ! Horizontal coordinates
     logical :: sharedHGrid              ! Set if horiz coords a pointer not a copy
@@ -113,7 +116,9 @@ module QuantityTemplates         ! Quantities within vectors
     real(r8), dimension(:,:), pointer :: phi => NULL()
 
     ! This is dimensioned (1, noInstances) for stacked quantities and
-    ! (noSurfs, noInstances) for unstacked ones.
+    ! (noSurfs, noInstances) for unstacked ones.  The PHI coordinate for the
+    ! (i,j) value is phi(1,j) for a stacked quantity and phi(i,j) for an
+    ! unstacked one.
     
     ! These other coordinates are dimensioned in the same manner:
     real(r8), dimension(:,:), pointer :: geodLat => NULL()
@@ -530,14 +535,18 @@ contains ! =====     Public Procedures     =============================
   ! -------------------------------------  DUMP_QUANTITY_TEMPLATE  -----
   subroutine DUMP_QUANTITY_TEMPLATE ( QUANTITY_TEMPLATE, DETAILS, NOL2CF )
 
+    use Intrinsic, only: lit_indices
     use MLSSignals_m, only: Signals, DUMP, GetRadiometerName, GetModuleName
     use Output_m, only: NewLine
+    use String_Table, only: Display_String
 
     type(QuantityTemplate_T), intent(in) :: QUANTITY_TEMPLATE
     integer, intent(in), optional :: DETAILS ! <= 0 => Don't dump arrays
-    !                                        ! >0   => Do dump arrays
-    !                                        ! Default 1
-    logical, intent(in), optional :: NOL2CF  ! if TRUE => Don't dump l2-specific
+                                             ! >0   => Do signal, phi, surfs
+                                             !         and frequency
+                                             ! >1   => Dump all arrays
+                                             ! Default 1
+    logical, intent(in), optional :: NOL2CF  ! if TRUE => Don't dump L2-specific
                                              !  stuff
     integer :: MyDetails
     character (len=80) :: Str
@@ -598,10 +607,10 @@ contains ! =====     Public Procedures     =============================
     call output ( quantity_template%sharedVGrid, advance='no' )
     if ( quantity_template%sharedVGrid ) then
       call output ( ' vGridIndex = ' )
-      call output ( quantity_template%vGridIndex, advance='yes' )
-    else
-      call newline
+      call output ( quantity_template%vGridIndex )
     end if
+    call display_string ( lit_indices(quantity_template%verticalCoordinate), &
+      & before=' vertical coordinate = ', advance='yes' )
     call output ( '      sharedFGrid = ' )
     call output ( quantity_template%sharedFGrid, advance='no' )
     if ( quantity_template%sharedFGrid ) then
@@ -609,21 +618,6 @@ contains ! =====     Public Procedures     =============================
       call output ( quantity_template%fGridIndex, advance='yes' )
     else
       call newline
-    end if
-    if ( myDetails < 0 ) then
-      call dump ( quantity_template%surfs, '  Surfs = ' )
-      call dump ( quantity_template%phi, '      Phi = ' )
-      call dump ( quantity_template%geodLat, '      GeodLat = ' )
-      call dump ( quantity_template%lon, '      Lon = ' )
-      call dump ( quantity_template%time, '      Time = ' )
-      call dump ( quantity_template%solarTime, '      SolarTime = ' )
-      call dump ( quantity_template%solarZenith, '      SolarZenith = ' )
-      call dump ( quantity_template%losAngle, '      LosAngle = ' )
-      if ( associated(quantity_template%frequencies) ) then
-        call output ( '      FrequencyCoordinate = ' )
-        call output ( quantity_template%frequencyCoordinate )
-        call dump ( quantity_template%frequencies, ' Frequencies = ' )
-      end if
     end if
     if ( quantity_template%radiometer /= 0 .and. .not. myNoL2CF ) then
       call output ( '      Radiometer = ' )
@@ -651,16 +645,33 @@ contains ! =====     Public Procedures     =============================
         call output ( ':', advance='yes' )
         call dump ( signals(quantity_template%signal) )
       end if
-      if ( quantity_template%radiometer + &
-        &  quantity_template%molecule /= 0 ) call newLine
       if ( associated(quantity_template%phi) ) &
         & call dump ( quantity_template%phi, '      Phi = ' )
       if ( associated(quantity_template%surfs) ) &
         & call dump ( quantity_template%surfs, '      Surfs = ' )
-      if ( associated(quantity_template%surfIndex) ) &
-        & call dump ( quantity_template%surfIndex, '      SurfIndex = ' )
-      if ( associated(quantity_template%chanIndex) ) &
-        & call dump ( quantity_template%chanIndex, '      ChanIndex = ' )
+      if ( myDetails > 1 ) then
+        if ( associated(quantity_template%surfIndex) ) &
+          & call dump ( quantity_template%surfIndex, '      SurfIndex = ' )
+        if ( associated(quantity_template%chanIndex) ) &
+          & call dump ( quantity_template%chanIndex, '      ChanIndex = ' )
+        if ( associated(quantity_template%geodLat) ) &
+          & call dump ( quantity_template%geodLat, '      GeodLat = ' )
+        if ( associated(quantity_template%lon) ) &
+          & call dump ( quantity_template%lon, '      Lon = ' )
+        if ( associated(quantity_template%time) ) &
+          & call dump ( quantity_template%time, '      Time = ' )
+        if ( associated(quantity_template%solarTime) ) &
+          & call dump ( quantity_template%solarTime, '      SolarTime = ' )
+        if ( associated(quantity_template%solarZenith) ) &
+          & call dump ( quantity_template%solarZenith, '      SolarZenith = ' )
+        if ( associated(quantity_template%losAngle) ) &
+          & call dump ( quantity_template%losAngle, '      LosAngle = ' )
+      end if
+      if ( associated(quantity_template%frequencies) ) then
+        call display_string ( lit_indices(quantity_template%frequencyCoordinate), &
+          & before='      FrequencyCoordinate = ', advance='yes' )
+        call dump ( quantity_template%frequencies, ' Frequencies = ' )
+      end if
     end if
   end subroutine DUMP_QUANTITY_TEMPLATE
 
@@ -898,6 +909,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.42  2006/01/05 03:47:28  vsnyder
+! Add some stuff to the dump
+!
 ! Revision 2.41  2005/08/04 02:57:27  vsnyder
 ! Cannonball polishing
 !
