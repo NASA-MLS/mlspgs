@@ -264,7 +264,8 @@ contains
           vectorIndex = decoration(decoration(subtree(1,gson)))
           quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           call dump ( GetVectorQtyByTemplateIndex( &
-            & vectors(vectorIndex), quantityIndex), details=details )
+            & vectors(vectorIndex), quantityIndex), details=details, &
+            & vector=vectors(vectorIndex) )
         end do
       case ( f_signals )
         do i = 2, nsons(son)
@@ -461,6 +462,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.27  2006/03/22 02:19:48  vsnyder
+! Add Vector argument to quantity dump to get its name
+!
 ! Revision 2.26  2006/03/07 16:23:52  pwagner
 ! Fixed bug only NAG caught
 !
