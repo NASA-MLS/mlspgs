@@ -730,11 +730,14 @@ contains ! =====     Public Procedures     =============================
   end subroutine myDisplayString
 
   ! ----------------------------------------NullifyQuantityTemplate -----
-  subroutine NullifyQuantityTemplate ( Q )
-    ! Given a quantity template, nullify all the pointers associated with it
-    type ( QuantityTemplate_T ), intent(out) :: Q
+  subroutine NullifyQuantityTemplate ( IntentionallyNotUsed )
+    ! Given a quantity template, nullify all the pointers within it
+    type ( QuantityTemplate_T ), intent(out) :: IntentionallyNotUsed
 
-    ! Executable code not needed because Q is intent(out)
+    ! Executable code not needed because IntentionallyNotUsed is intent(out),
+    ! and therefore undergoes default initialization as a consequence of
+    ! argument association. Since all pointers within it have default
+    ! initialization, they therefore become nullified.
 
   end subroutine NullifyQuantityTemplate
 
@@ -909,6 +912,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.43  2006/03/22 02:15:18  vsnyder
+! Spiff up a dump
+!
 ! Revision 2.42  2006/01/05 03:47:28  vsnyder
 ! Add some stuff to the dump
 !
