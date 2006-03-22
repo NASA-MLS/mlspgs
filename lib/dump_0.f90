@@ -1949,7 +1949,7 @@ contains
     call say_subs_only ( subs )
     call output ( ' ' )
     call output ( numZeroRows )
-    call output ( ' rows of ', advance='no' )
+    call output ( ' lines of ', advance='no' )
   end subroutine Say_Subs
 
   ! -----------------------------------------------  Say_Subs_Only -----
@@ -1974,6 +1974,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.56  2006/03/22 23:48:52  vsnyder
+! Print 'lines ... not printed' instead of 'rows...' to avoid confusion with matrices
+!
 ! Revision 2.55  2006/03/15 17:34:28  pwagner
 ! Fixed bug causing incorrect rms when diffing with fill values
 !
