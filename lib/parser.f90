@@ -94,6 +94,10 @@ contains ! ====     Public Procedures     ==============================
   recursive subroutine ARRAY ( HOW_MANY ) ! [ <expr> ( , <expr> )* ]
     integer, intent(inout) :: HOW_MANY  ! Incremented once for each expr
     call get_token     ! Consume the left bracket
+    if ( next%class == t_right_bracket ) then
+      call get_token ! Consume the right bracket
+  return
+    end if
     do
       call expr
       how_many = how_many + 1
@@ -462,21 +466,15 @@ o:  do
 ! --------------------------------------------------------  VALUE  -----
   subroutine VALUE ( HOW_MANY )
     integer, intent(inout) :: HOW_MANY  ! Incremented once for each expr
-    if ( next%class == t_left_bracket ) then
+    select case ( next%class )
+    case ( t_left_bracket )
       call array ( how_many )
-    else
+    case ( t_comma, t_end_of_stmt )
+    case default
       call expr
       how_many = how_many + 1
-    end if
+    end select
   end subroutine VALUE
-  logical function not_used_here()
-!---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
-       "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
-!---------------------------------------------------------------------------
-    not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
 ! --------------------------------------------------------  WHERE  -----
   subroutine WHERE ( WHAT, ADVANCE )
     character(len=*), intent(in) :: WHAT, ADVANCE
@@ -485,9 +483,21 @@ o:  do
     call print_source ( next%source, advance=advance )
   end subroutine WHERE
 
+  logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module PARSER
 
 ! $Log$
+! Revision 2.16  2006/03/22 03:04:00  vsnyder
+! Allow empty spec field values
+!
 ! Revision 2.15  2005/06/22 17:25:50  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
