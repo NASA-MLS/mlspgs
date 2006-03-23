@@ -7457,8 +7457,8 @@ contains ! =====     Public Procedures     =============================
       real(r8), intent(in) :: LSMatrix(:,:), RHS(:)
       real(r8), intent(out) :: Result
       real(r8), intent(in) :: Bad
-      real(rm), dimension(4,4) :: NormalMatrix
-      real(rm), dimension(4) :: NormalRHS, X
+      real(rm), dimension(size(lsMatrix,2),size(lsMatrix,2)) :: NormalMatrix
+      real(rm), dimension(size(lsMatrix,2)) :: NormalRHS, X
       real(rm) :: D ! Diagonal of factored normalMatrix
       integer :: I, J, Stat
 
@@ -7801,6 +7801,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.328  2006/03/23 00:38:57  vsnyder
+! Make SolveLS a little more general, in case somebody else wants to use it
+!
 ! Revision 2.327  2006/03/22 23:47:37  vsnyder
 ! More work on least-squares fill
 !
