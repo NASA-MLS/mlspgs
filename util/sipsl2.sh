@@ -6,7 +6,9 @@
 #    O p t i o n s
 # -h[elp]     print brief help message; exit
 # -m cluster  show jobs only for cluster named cluster
+# -vn version show jobs only for version (e.g., V01-51)
 # -bug        show chunks lost to level 2 bug "list out of order in hunt"
+# -debug      print lots of extra debugging inof
 # -c          convert dates from yyyydoy to yyyy Month day
 # -d          show directory names
 # -x          show chunks, nodes that died
@@ -427,6 +429,7 @@ fail="no"
 running="no"
 full="no"
 time="no"
+version=""
 more_opts="yes"
 DATECONVERTER=`which dateconverter 2>/dev/null`
 REECHO=`which reecho.sh 2>/dev/null`
@@ -445,6 +448,10 @@ while [ "$more_opts" = "yes" ] ; do
     -bug )
 	    shift
        bug="yes"
+       ;;
+    -debug )
+	    shift
+       debug="yes"
        ;;
     -c )
 	    shift
@@ -476,6 +483,11 @@ while [ "$more_opts" = "yes" ] ; do
     -m )
 	    shift
        clusternames="$1"
+	    shift
+       ;;
+    -vn )
+	    shift
+       version="$1"
 	    shift
        ;;
     -t )
@@ -550,7 +562,8 @@ do
   machine=""
   for name in $clusternames
   do
-    testl=`head $dir/exec_log/process.stdout | grep -i executing | grep -i $name`
+    testl=`grep -i executing $dir/exec_log/process.stdout | grep -i $name`
+    # testl=`head $dir/exec_log/process.stdout | grep -i executing | grep -i $name`
     # testl=`grep -i pvm_hosts_info $dir/exec_log/process.stdout | grep -i $name`
     # echo "testl: $testl"
     if [ "$testl" != "" ]
@@ -558,6 +571,7 @@ do
       machine="$name"
     fi
   done
+  theversion=`grep -i pgeversion $dir/job.PCF | awk -F"|" '{print $3}'`
   statbad=`tail $dir/exec_log/process.stdout | grep -i "ended badly"`
   statnochunks=`tail $dir/exec_log/process.stdout | grep -i "No chunks were processed"`
   statpvmtrouble=`tail $dir/exec_log/process.stdout | grep -i "probably pvm trouble"`
@@ -588,6 +602,8 @@ do
   if [ "$debug" = "yes" ]
   then
     echo "machine: $machine"
+    echo "version sought: $version"
+    echo "version found: $theversion"
     echo "statbad: $statbad"
     echo "statnochunks: $statnochunks"
     echo "statpvmtrouble: $statpvmtrouble"
@@ -598,6 +614,10 @@ do
     echo "list: $list"
   fi
   if [ "$dontprintemptydates" = "yes" -a "$date" = "" ]
+  then
+    machine=""
+  fi
+  if [ "$version" != "" -a "$version" != "$theversion" ]
   then
     machine=""
   fi
@@ -711,6 +731,9 @@ do
 done
 exit 0
 # $Log$
+# Revision 1.9  2006/03/18 00:06:45  pwagner
+# Avoids printing empty dates, limits printing dead chunks
+#
 # Revision 1.8  2005/07/15 22:42:43  pwagner
 # Will handle empty date fields more gracefully
 #

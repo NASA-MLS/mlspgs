@@ -5,13 +5,17 @@
 # Usage:
 # clusterstatus.sh [options]
 #    O p t i o n s
-# -dryrun     don't run the sipsl2.sh script
-# -R list     change RECIPIENTS to list
-# -mail       mail the file to RECIPIENTS
-# -scp        scp the file to me
-# -[n]sort    [don't] sort the initial table according to machine (sort by default)
-# -temp       don't save the resulting clusterstatus file
-# -h[elp]     print brief help message; exit
+# -debug        print lots of extra stuff
+# -dryrun       don't run the sipsl2.sh script
+# -vn versions  show separate listings for versions
+#                (e.g., "V01-51,V01-52")
+# -R list       change RECIPIENTS to list
+# -mail         mail the file to RECIPIENTS
+# -scp          scp the file to me
+# -[n]sort      [don't] sort the initial table according to machine
+#                (sort by default)
+# -temp         don't save the resulting clusterstatus file
+# -h[elp]       print brief help message; exit
 #
 # Note:
 # (1) see notes for /home/pwagner/bin/sipsl2.sh
@@ -52,6 +56,7 @@ mail="no"
 scp="no"
 sort="yes"
 temp="no"
+versions="(none)"
 more_opts="yes"
 while [ "$more_opts" = "yes" ] ; do
 
@@ -61,9 +66,18 @@ while [ "$more_opts" = "yes" ] ; do
 	    shift
        dryrun="yes$dryrun"
        ;;
+    -debug )
+	    shift
+       debug="yes"
+       ;;
     -R )
 	    shift
        RECIPIENTS="$1"
+       shift
+       ;;
+    -vn )
+	    shift
+       versions="$1"
        shift
        ;;
     -mail )
@@ -104,7 +118,14 @@ then
 else
   OUTPUT=/home/pwagner/clusterstatus/"$TODAY".txt
 fi
-mustrun="yes"
+
+versions=`echo $versions | sed 's/,/ /g'`
+if [ "$dryrun" != "" ]
+then
+  mustrun="no"
+else
+  mustrun="yes"
+fi
 if [ -f "$OUTPUT" ]
 then
   if [ "$dryrun" != "" ]
@@ -114,44 +135,97 @@ then
     mv "$OUTPUT" "$OUTPUT.1"
   fi
 fi
+options="-c -bug -x"
+
+if [ "$debug" = "yes" ]
+then
+  echo "dryrun $dryrun"
+  echo "mail $mail"
+  echo "sort $sort"
+  echo "TODAY $TODAY"
+  echo "OUTPUT $OUTPUT"
+  echo "mustrun $mustrun"
+  echo "options $options"
+  echo "versions $versions"
+  echo "clusternames $clusternames"
+  echo "MAILER $MAILER"
+  echo "RECIPIENTS $RECIPIENTS"
+fi
+
 if [ "$mustrun" = "yes" ]
 then
   echo "Cluster status for $TODAY" > "$OUTPUT"
-  if [ "$sort" = "yes" ]
+fi
+
+for version in $versions
+do
+  sipsoptions="$options"
+
+  if [ "$mustrun" = "yes" ]
   then
-    for name in $clusternames
-    do
-      /home/pwagner/bin/sipsl2.sh -c -bug -x -m $name >> "$OUTPUT"
+    if [ "$version" != "(none)" ]
+    then
+      echo "(version $version)" >> "$OUTPUT"
+      sipsoptions="-vn $version $options"
+    fi
+    if [ "$sort" = "yes" ]
+    then
+      for name in $clusternames
+      do
+        machoptions="-m $name $sipsoptions"
+        # echo "/home/pwagner/bin/sipsl2.sh $machoptions"
+        /home/pwagner/bin/sipsl2.sh $machoptions >> "$OUTPUT"
+        # /home/pwagner/bin/sipsl2.sh -c -bug -x -m $name >> "$OUTPUT"
+        echo "" >> "$OUTPUT"
+      done
+    else
+      # echo "/home/pwagner/bin/sipsl2.sh $sipsoptions"
+      /home/pwagner/bin/sipsl2.sh $sipsoptions >> "$OUTPUT"
+      # /home/pwagner/bin/sipsl2.sh -c -bug -x >> "$OUTPUT"
       echo "" >> "$OUTPUT"
-    done
+    fi
   else
-    /home/pwagner/bin/sipsl2.sh -c -bug -x >> "$OUTPUT"
-    echo "" >> "$OUTPUT"
+    echo "Cluster status for $TODAY $OUTPUT"
+    if [ "$version" != "(none)" ]
+    then
+      echo "(version $version)"
+      sipsoptions="-vn $version $sipsoptions"
+    fi
+    if [ "$sort" = "yes" ]
+    then
+      for name in $clusternames
+      do
+        machoptions="-m $name $sipsoptions"
+        echo "/home/pwagner/bin/sipsl2.sh $machoptions"
+        # echo "/home/pwagner/bin/sipsl2.sh -c -bug -x $name"
+        echo ""
+      done
+    else
+      echo "/home/pwagner/bin/sipsl2.sh $sipsoptions"
+      # echo "/home/pwagner/bin/sipsl2.sh -c -bug -x"
+      echo ""
+    fi
   fi
+
+done
+
+if [ "$mustrun" = "yes" ]
+then
   echo "Status of running jobs:" >> "$OUTPUT"
+  # echo "/home/pwagner/bin/sipsl2.sh -c -full -t >> $OUTPUT"
   /home/pwagner/bin/sipsl2.sh -c -full -t >> "$OUTPUT"
   echo "" >> "$OUTPUT"
   echo "Nodes showing pvm failures:" >> "$OUTPUT"
+  # echo "/home/pwagner/bin/sipsl2.sh -fail >> $OUTPUT"
   /home/pwagner/bin/sipsl2.sh -fail >> "$OUTPUT"
 else
-  echo "Cluster status for $TODAY $OUTPUT"
-  if [ "$sort" = "yes" ]
-  then
-    for name in $clusternames
-    do
-      echo "/home/pwagner/bin/sipsl2.sh -c -bug -x $name"
-      echo ""
-    done
-  else
-    echo "/home/pwagner/bin/sipsl2.sh -c -bug -x"
-    echo ""
-  fi
   echo "Status of running jobs: >> $OUTPUT"
   echo "/home/pwagner/bin/sipsl2.sh -c -full -t"
   echo ""
   echo "Nodes showing pvm failures: >> $OUTPUT"
   echo "/home/pwagner/bin/sipsl2.sh -fail"
 fi
+
 if [ "$mail" = "yes" -a "$dryrun" != "yesyes" ]
 then
   $MAILER -r /home/pwagner/maillogs -s "clusterstatus $TODAY" \
@@ -171,6 +245,9 @@ else
 fi
 exit 0
 # $Log$
+# Revision 1.6  2005/10/29 00:19:48  pwagner
+# Changes to have mesgs show Return-path we want
+#
 # Revision 1.5  2005/09/09 16:43:20  pwagner
 # Changed args to MAILER to forge return address to jpl address
 #
