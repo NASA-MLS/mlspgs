@@ -18,6 +18,8 @@
 #                          (Otherwise replace any existing file)
 #    -dryrun              Merely echo the commands that would be executed
 #    -unique              Save results to a uniquely-named new file
+#    -c1 cycle1           Insist on cycle number c"cycle1" in dir1
+#    -c2 cycle2           Insist on cycle number c"cycle2" in dir2
 #    -l2gpdiff command    Use command instead of l2gpdiff
 #  (and all the normal l2gpdiff options; e.g. -rms -ignore are wise choices)
 #
@@ -34,7 +36,10 @@
 #     $HOME/mlspgs/bin/LF95.Linux
 # (2) The l2gp file names are assumed to match the pattern
 #      MLS-Aura_L2GP-xxxx_*.he5
-# (3) Why don't you just make "-rms -ignore" the default options, either
+# (3) If multiple matches, we try always to pick out the last
+#      in alphabetical order (which may or may not have the highest cycle num:
+#      which is why we have the -c1 and -c2)
+# (4) Why don't you just make "-rms -ignore" the default options, either
 #      here or in l2gpdiff itself?
 # --------------- End batch_l2gpdiff.sh help
 # Copyright 2005, by the California Institute of Technology. ALL
@@ -143,6 +148,8 @@ reecho="`echo $0 | sed 's/'$I'/reecho/'`"
 l2gpdiff_opts=""
 list=""
 append="no"
+cycle1=""
+cycle2=""
 dryrun="no"
 unique="no"
 more_opts="yes"
@@ -158,6 +165,16 @@ while [ "$more_strs" = "yes" ] ; do
        ;;
     -append )
 	    append="yes"
+	    shift
+       ;;
+    -c1 )
+	    cycle1="$2"
+	    shift
+	    shift
+       ;;
+    -c2 )
+	    cycle2="$2"
+	    shift
 	    shift
        ;;
     -dryrun )
@@ -224,6 +241,8 @@ then
   echo "list $list"
   echo "unique $unique"
   echo "append $append"
+  echo "cycle1 $cycle1"
+  echo "cycle2 $cycle2"
   echo "dir1 $dir1"
   echo "dir2 $dir2"
 fi
@@ -242,10 +261,30 @@ then
 fi
 for i in $list
 do
-  extant_files $dir1/MLS-Aura_L2GP-${i}_*.he5
-  file1="$extant_files_result"
-  extant_files $dir2/MLS-Aura_L2GP-${i}_*.he5
-  file2="$extant_files_result"
+  extant_files $dir1/MLS-Aura_L2GP-${i}_*c${cycle1}*.he5
+  nfiles=`echo "$extant_files_result" | wc | awk '{print $2}'`
+  if [ "$nfiles" -gt 1 ]
+  then
+    file1=`echo $extant_files_result | sed 's/ /\n/g' | tail -1`
+  elif [ "$nfiles" -lt 1 ]
+  then
+    echo "Sorry--no matching files for species $i in $dir1"
+  else
+    file1="$extant_files_result"
+  fi
+
+  extant_files $dir2/MLS-Aura_L2GP-${i}_*c${cycle1}*.he5
+  nfiles=`echo "$extant_files_result" | wc | awk '{print $2}'`
+  if [ "$nfiles" -gt 1 ]
+  then
+    file2=`echo $extant_files_result | sed 's/ /\n/g' | tail -1`
+  elif [ "$nfiles" -lt 1 ]
+  then
+    echo "Sorry--no matching files for species $i in $dir2"
+  else
+    file2="$extant_files_result"
+  fi
+
   if [ "$debug" = 1 ]
   then
     echo "species $i"
@@ -289,6 +328,9 @@ do
 done
 exit
 # $Log$
+# Revision 1.4  2005/06/23 22:20:45  pwagner
+# Reworded Copyright statement
+#
 # Revision 1.3  2005/04/01 00:06:47  pwagner
 # StdProd species name expands to all stndard products
 #
