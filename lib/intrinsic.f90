@@ -28,10 +28,11 @@ module INTRINSIC
   integer, parameter :: NO_DUP = 1        ! Duplicate fields prohibited
   integer, parameter :: ALL_FIELDS = 2    ! All fields required
   integer, parameter :: NO_POSITIONAL = 4 ! Positional fields prohibited
-! A "field_type", "field_spec" or "dot" vertex may be decorated with the
-! following flag:
+! A "field_type", "field_spec" or "dot" vertex may be decorated with (sums of)
+! the following flags:
   integer, parameter :: NO_ARRAY = 1      ! Field must be scalar
   integer, parameter :: REQ_FLD = 2       ! Required field
+  integer, parameter :: EMPTY_OK = 4      ! Field can have empty value
 ! A "section" vertex may be decorated with the following flag:
   integer, parameter :: NO_CHECK_EQ = 1   ! Don't check whether the section's
                                           ! A=B contents are allowed.
@@ -259,6 +260,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.60  2006/03/23 01:50:12  vsnyder
+! Add Empty_OK parameter
+!
 ! Revision 2.59  2006/01/11 16:59:36  pwagner
 ! Abstract phys quant now colmabundance
 !
