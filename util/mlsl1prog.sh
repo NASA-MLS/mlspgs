@@ -47,6 +47,9 @@ NORMAL_STATUS=2
 # Use the following line to add extra options to MLSPROG
 EXTRA_OPTIONS=mlseexxttrraa
 
+GZIPLEVEL="1"
+#          ^^^---- compression level ("" means none)
+
 MLSPROG_1=mlsxxyyzz_1
 MLSPROG_2=mlsxxyyzz_2
 MLSPROG_3=mlsxxyyzz_3
@@ -135,8 +138,14 @@ if [ -x "$H5REPACK" ]
     if [ -r "$file" ]
     then
       packed="$file".p
+      if [ "$GZIPLEVEL" != "" ] then
+        filter="-f GZIP=$GZIPLEVEL"
+      else
+        filter=""
+      fi
       echo "Packing $file into $packed"
-      echo $H5REPACK -i "$file" -o "$packed"
+      echo $H5REPACK -i "$file" -o "$packed" $filter
+      $H5REPACK -i "$file" -o "$packed" $filter
       # Here we could insert some check involving l1bdiff if we were dubious
       mv "$packed" "$file"
     fi
@@ -152,6 +161,9 @@ else
 fi
 
 # $Log$
+# Revision 1.5  2005/12/22 19:07:09  pwagner
+# Restored idea of h5repacking l1b files
+#
 # Revision 1.4  2005/06/23 22:20:45  pwagner
 # Reworded Copyright statement
 #
