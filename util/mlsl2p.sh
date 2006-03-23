@@ -32,7 +32,7 @@
 # foreign countries or providing access to foreign persons.
 
 # Now if the tool h5repack in PGE_BINARY_DIR
-# and if the current working directory houses the forward model files,
+# and if the current working directory houses the product files,
 # then as a final step repack them
 
 # usage: see (1) above
@@ -42,6 +42,9 @@ CHECKPATHS="yes"
 
 CHECKIDENTS="yes"
 #            ^^^---- "yes" if each slave to check its ident against master
+
+GZIPLEVEL="1"
+#          ^^^---- compression level ("" means none)
 
 # In addition to whatever options and switches may be set by the environment
 # variable OTHEROPTS, the following are set:
@@ -180,16 +183,22 @@ then
   mv "$LOGFILE".1 "$LOGFILE"
 fi
 
-# repack level 2 forward model files to speed things up
+# repack level 2 product files to speed things up
 if [ -x "$H5REPACK" ]
-  files=`echo *L2FWM*.h5`
+  files=`echo *L2FWM*.h5 *L2GP-[A-CE-Z]*.he5 *L2GP-DGG_*.he5 *L2AUX-[A-C]*.h5 *L2AUX-DGM_*.h5`
   for file in $files
   do
     if [ -r "$file" ]
     then
       packed="$file".p
+      if [ "$GZIPLEVEL" != "" ] then
+        filter="-f GZIP=$GZIPLEVEL"
+      else
+        filter=""
+      fi
       echo "Packing $file into $packed"
-      echo $H5REPACK -i "$file" -o "$packed"
+      echo $H5REPACK -i "$file" -o "$packed" $filter
+      $H5REPACK -i "$file" -o "$packed" $filter
       # Here we could insert some check involving h5diff if we were dubious
       mv "$packed" "$file"
     fi
@@ -204,6 +213,9 @@ else
 fi
 
 # $Log$
+# Revision 1.10  2005/12/22 19:07:58  pwagner
+# Imitated l1b repacking to defragment forward model files
+#
 # Revision 1.9  2005/06/23 22:20:45  pwagner
 # Reworded Copyright statement
 #
