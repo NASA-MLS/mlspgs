@@ -33,7 +33,7 @@ contains
 
     !{ Solve $A X \simeq B$.
 
-    use ERMSG_M, only: ERMOR, ERMSG, IERV1
+    use ERMSG_M, only: ERMOR, ERMSG, ERM1, ERV1
     use HT_M, only: HTGEN
     use NRM2_M, only: NRM2
 
@@ -52,7 +52,7 @@ contains
 
     !{ Solve $A x \simeq b$.
 
-    use ERMSG_M, only: ERMOR, ERMSG, IERV1
+    use ERMSG_M, only: ERMOR, ERMSG, ERM1, ERV1
     use HT_M, only: HTGEN
     use NRM2_M, only: NRM2
 
@@ -71,7 +71,7 @@ contains
 
     !{ Solve $A X \simeq B$.
 
-    use ERMSG_M, only: ERMOR, ERMSG, IERV1
+    use ERMSG_M, only: ERMOR, ERMSG, ERM1, ERV1
     use HT_M, only: HTGEN
     use NRM2_M, only: NRM2
 
@@ -90,7 +90,7 @@ contains
 
     !{ Solve $A x \simeq b$.
 
-    use ERMSG_M, only: ERMOR, ERMSG, IERV1
+    use ERMSG_M, only: ERMOR, ERMSG, ERM1, ERV1
     use HT_M, only: HTGEN
     use NRM2_M, only: NRM2
 
@@ -118,6 +118,9 @@ contains
 end module HFTI_M
 
 ! $Log$
+! Revision 2.2  2006/03/23 03:04:33  vsnyder
+! OOPS, need to get ER[VM]1 from ermsg_m
+!
 ! Revision 2.1  2006/03/22 02:07:04  vsnyder
 ! Initial commit
 !

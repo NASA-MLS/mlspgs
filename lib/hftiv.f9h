@@ -90,14 +90,14 @@
          call ERMSG ( 'HFTI',1,0, &
      &   'Bad argument values.  Require size(A,1) >= 1, size(A,2) >= 0,', ',' )
          call ERMOR ( 'and size(B,1) >= size(A,1)', ',' )
-         call IERV1 ( 'size(A,1)', m, ',' )
-         call IERV1 ( 'size(A,2)', n, ',' )
-         call IERV1 ( 'size(B,1)', ldb, ',' )
-         call IERV1 ( 'size(B,2)', kb, '.' )
+         call ERV1 ( 'size(A,1)', m, ',' )
+         call ERV1 ( 'size(A,2)', n, ',' )
+         call ERV1 ( 'size(B,1)', ldb, ',' )
+         call ERV1 ( 'size(B,2)', kb, '.' )
          if ( present(krank) ) KRANK = 0
          return
       else if ( ldb < max(m,n) ) then
-         call IERM1 ( 'HFTI',3,0, &
+         call ERM1 ( 'HFTI',3,0, &
      &      'Require size(B,1) >= max(size(A,1),size(A,2))', &
      &      'size(B,1)', ldb, '.' )
          if ( present(krank) ) KRANK = 0
@@ -105,9 +105,9 @@
       end if
       if ( present(ip) ) then
         if ( size(ip) < n ) then
-          call ierm1 ( 'HFTI',3,0, &
+          call ERM1 ( 'HFTI',3,0, &
      &      'Require size(IP) >= size(A,2)', 'size(IP)', size(ip), ',' )
-          call ierv1 ( 'size(A,2)', n, '.' )
+          call ERV1 ( 'size(A,2)', n, '.' )
         end if
       end if
 
@@ -260,6 +260,9 @@
 !     end subroutine *hftiv
 
 ! $Log$
+! Revision 2.2  2006/03/23 03:04:33  vsnyder
+! OOPS, need to get ER[VM]1 from ermsg_m
+!
 ! Revision 2.1  2006/03/22 02:07:04  vsnyder
 ! Initial commit
 !
