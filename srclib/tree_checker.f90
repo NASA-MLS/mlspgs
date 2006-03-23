@@ -30,8 +30,8 @@ module TREE_CHECKER
     &                           FIELD_LAST, LIT_INDICES, PHYQ_DIMENSIONLESS, &
     &                           SECTION_FIRST,SECTION_INDICES, SECTION_LAST, &
     &                           SECTION_ORDERING, T_BOOLEAN
-  use INTRINSIC, only: ALL_FIELDS, NO_ARRAY, NO_CHECK_EQ, NO_DUP, NO_POSITIONAL, &
-    &                  PHYQ_INVALID, REQ_FLD
+  use INTRINSIC, only: ALL_FIELDS, EMPTY_OK, NO_ARRAY, NO_CHECK_EQ, NO_DUP, &
+    &                  NO_POSITIONAL, PHYQ_INVALID, REQ_FLD
   use LEXER_CORE, only: PRINT_SOURCE
   use MoreTree, only: Scalar, StartErrorMessage
   use OUTPUT_M, only: NEWLINE, OUTPUT
@@ -53,7 +53,8 @@ module TREE_CHECKER
 ! Error codes for "announce_error"
   integer, private, parameter :: ALREADY_DECLARED = 1
   integer, private, parameter :: ARRAY_NOT_ALLOWED = ALREADY_DECLARED + 1
-  integer, private, parameter :: INCONSISTENT_TYPES = ARRAY_NOT_ALLOWED + 1
+  integer, private, parameter :: EMPTY_NOT_ALLOWED = ARRAY_NOT_ALLOWED + 1
+  integer, private, parameter :: INCONSISTENT_TYPES = EMPTY_NOT_ALLOWED + 1
   integer, private, parameter :: INCONSISTENT_UNITS = INCONSISTENT_TYPES + 1
   integer, private, parameter :: MISSING_FIELD = INCONSISTENT_UNITS + 1
   integer, private, parameter :: NO_CODE_FOR = MISSING_FIELD + 1
@@ -175,6 +176,10 @@ contains ! ====     Public Procedures     ==============================
     case ( array_not_allowed )
       call display_string ( field_indices(fields(1)), &
         & before='an array value is not allowed for the "' )
+      call output ( '" field.', advance='yes' )
+    case ( empty_not_allowed )
+      call display_string ( field_indices(fields(1)), &
+        & before='an empty value is not allowed for the "' )
       call output ( '" field.', advance='yes' )
     case ( inconsistent_types )
       call output ( 'types are not consistent.', advance = 'yes' )
@@ -324,6 +329,8 @@ contains ! ====     Public Procedures     ==============================
         end if
         got(field_lit) = .true.
         call decorate ( son1, field_lit )
+        if ( mod(decoration(field)/empty_ok,2) == 0 .and. nsons(root) == 1 ) &
+          & call announce_error ( root, empty_not_allowed, fields=(/ field_lit /) )
         do i = 2, nsons(root)
           son = subtree(i,root)
           call assignBody ( son )
@@ -1014,6 +1021,9 @@ m:          do j = 3, nsons(field)
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.26  2005/06/22 20:03:55  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 1.25  2004/12/31 02:11:34  vsnyder
 ! Simplify constructing some error messages
 !
