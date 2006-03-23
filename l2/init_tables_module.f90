@@ -243,6 +243,8 @@ contains ! =====     Public procedures     =============================
     use TREE_TYPES, only: N_DOT, N_DT_DEF, N_FIELD_SPEC, N_FIELD_TYPE, &
                           N_NAME_DEF, N_SECTION, N_SPEC_DEF
 
+    integer, parameter :: E = d*empty_OK ! Decoration for empty_ok field specs
+
   ! Put intrinsic predefined identifiers into the symbol table.
     call init_Spectroscopy ( t_last, field_last, last_lit, &
     & first_parm, last_parm, section_last, spec_last )
@@ -1138,8 +1140,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_lineWidth, t+t_molecule, n+n_field_type, &
              begin, f+f_lineWidth_TDep, t+t_molecule, n+n_field_type, &
              begin, f+f_lockBins, t+t_boolean, n+n_field_type, &
-             begin, f+f_lsbLBLMolecules, t+t_molecule, n+n_field_type, &
-             begin, f+f_lsbPFAMolecules, t+t_molecule, n+n_field_type, &
+             begin, f+f_lsbLBLMolecules, t+t_molecule, n+e+n_field_type, &
+             begin, f+f_lsbPFAMolecules, t+t_molecule, n+e+n_field_type, &
              begin, f+f_module, s+s_module, n+n_field_spec, &
              begin, f+f_moleculeDerivatives, t+t_molecule, n+n_field_type, &
              begin, f+f_molecules, t+t_molecule, n+n_field_type, &
@@ -1163,8 +1165,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_temp_der, t+t_boolean, n+n_field_type, &
              begin, f+f_tolerance, t+t_numeric, n+n_field_type, &
              begin, f+f_type, t+t_fwmType, nr+n_field_type, &
-             begin, f+f_usbLBLMolecules, t+t_molecule, n+n_field_type, &
-             begin, f+f_usbPFAMolecules, t+t_molecule, n+n_field_type, &
+             begin, f+f_usbLBLMolecules, t+t_molecule, n+e+n_field_type, &
+             begin, f+f_usbPFAMolecules, t+t_molecule, n+e+n_field_type, &
              begin, f+f_xStar, s+s_vector, n+n_field_spec, &
              begin, f+f_yStar, s+s_vector, n+n_field_spec, &
              ndp+n_spec_def /), continue=.true. )
@@ -1439,6 +1441,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.431  2006/03/23 01:51:32  vsnyder
+! Allow only [UL]SBPFAMolecules and [UL]SBLBLMolecules fields to be empty
+!
 ! Revision 2.430  2006/03/22 02:23:26  vsnyder
 ! Add lsbLBLmolecules, useLBLmolecules, lsGlobal, lsLocal, lsWeighted
 !
