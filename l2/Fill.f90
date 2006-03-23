@@ -7275,6 +7275,7 @@ contains ! =====     Public Procedures     =============================
       ! Taylor series.
 
       use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+      use HFTI_M, only: HFTI
       use MLSKinds, only: R8
 
       integer, intent(in) :: KEY        ! Tree node
@@ -7292,7 +7293,8 @@ contains ! =====     Public Procedures     =============================
       real(r8), dimension(:,:), pointer :: SOURCEHEIGHTS ! might be ptan.
       real(r8), dimension(:,:), pointer :: SURFS ! Surface coordinates for source
       real(r8) :: W, WMAX               ! Weight if method == l_lsWeighted
-      integer :: QS, QI, SS, SI                  ! Loop counters
+      integer :: QS, QI, SS, SI         ! Loop counters
+      integer :: KRANK                  ! Rank of least-squares solution
       integer :: MYCHANNEL              ! Channel or 1
       integer :: NRows
       integer :: NSourceQuant  ! Number of values in SourceQuantity
@@ -7424,9 +7426,13 @@ contains ! =====     Public Procedures     =============================
           if ( nRows < 4 ) then
             quantity%values(qs,qi) = quantity%template%badValue
           else
-            ! Solve the least squares problem locally
-            call solveLS ( lsMatrix(:nRows,:), rhs(:nRows), &
-              & quantity%values(qs,qi), quantity%template%badValue )
+            ! Solve the least squares problem
+            call hfti ( lsMatrix(:nRows,:), rhs(:nRows), krank=krank )
+            if ( krank < 4 ) then
+              quantity%values(qs,qi) = quantity%template%badValue
+            else
+              quantity%values(qs,qi) = rhs(1)
+            end if
           end if
         end do
       end do
@@ -7440,70 +7446,6 @@ contains ! =====     Public Procedures     =============================
         & call Deallocate_test ( sourceHeights, 'sourceHeights', ModuleName )
 
     end subroutine FillUsingLeastSquares
-
-    ! -------------------------------------------------------- SolveLS -----
-    subroutine SolveLS ( LSMatrix, RHS, Result, Bad )
-    ! Solve a least-squares problem for FillUsingLeastSquares
-
-    !{ Given the least-squares problem $A x \simeq b$, form normal equations
-    !  $A^T A x = A^T b$ (if the condition number might be far from 1.0, we
-    !  should really use householder).  Decompose $A^T A$ using Cholesky
-    !  decomposition giving $A^T A x = C^T C x = A^T b$, where $C$ is upper
-    !  triangular.  Then backsolve once to get $C x = C^{-T} A^T b$ and
-    !  again to get $x = C^{-1} C^{-T} A^T b$.
-
-      use MatrixModule_0, only: DenseCholesky
-      use MLSKinds, only: R8, RM
-      real(r8), intent(in) :: LSMatrix(:,:), RHS(:)
-      real(r8), intent(out) :: Result
-      real(r8), intent(in) :: Bad
-      real(rm), dimension(size(lsMatrix,2),size(lsMatrix,2)) :: NormalMatrix
-      real(rm), dimension(size(lsMatrix,2)) :: NormalRHS, X
-      real(rm) :: D ! Diagonal of factored normalMatrix
-      integer :: I, J, Stat
-
-      !{ Form normal equations $A^T A x \simeq A^T b$ -- yeah, we really
-      !  should use Householder....  $A^T A$ is in {\tt NormalMatrix} and
-      !  $A^T b$ is in {\tt NormalRHS}.
-      do i = 1, size(lsMatrix,2)
-        normalRHS(i) = dot_product(lsMatrix(:,i),rhs)
-        do j = i, size(lsMatrix,2)
-          normalMatrix(i,j) = dot_product(lsMatrix(:,i),lsMatrix(:,j))
-        end do
-      end do
-      !{ Factor the normal equations' matrix $C^T C = A^T A$ leaving $C$ in
-      !  {\tt NormalMatrix}.
-      call denseCholesky ( normalMatrix, normalMatrix, stat )
-      if ( stat == 0 ) then
-        !{ Backsolve $C^T (C x) = A^T b$ for $C x$, storing
-        !  $C x = C^{-T} A^T b$ in {\tt x}.
-        do i = 1, size(lsMatrix,2)
-          d = normalMatrix(i,i)
-          if ( abs(d) > tiny(0.0_r8) ) then
-            x(i) = ( normalRHS(i) - dot_product(normalMatrix(:i-1,i), x(:i-1)) ) / d
-          else
-            result = bad
-            return
-          end if
-        end do
-        !{ Backsolve $C x = C^{-T} A^T b$ storing $C^{-1} C^{-T} A^T b$ in
-        !  {\tt x}.
-        do i = size(lsMatrix,2), 1, -1
-          d = normalMatrix(i,i)
-          if ( abs(d) > tiny(0.0_r8) ) then
-            x(i) = ( x(i) - dot_product(normalMatrix(i,i+1:), x(i+1:)) ) / d
-          else
-            result = bad
-            return
-          end if
-        end do
-      else
-        result = bad
-        return
-      end if
-      result = x(1)
-
-    end subroutine SolveLS
 
     ! ----------------------------------------- offsetradiancequantity -----
     subroutine OffsetRadianceQuantity ( quantity, radianceQuantity, amount )
@@ -7801,6 +7743,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.329  2006/03/23 03:06:35  vsnyder
+! Use HFTI instead of Cholesky for FillUsingLeastSquares, for stability
+!
 ! Revision 2.328  2006/03/23 00:38:57  vsnyder
 ! Make SolveLS a little more general, in case somebody else wants to use it
 !
