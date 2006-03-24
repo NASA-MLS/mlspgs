@@ -1,4 +1,4 @@
-! Copyright 2005, by the California Institute of Technology. ALL
+! Copyright 2006, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
 ! at the California Institute of Technology.
@@ -19,9 +19,9 @@ MODULE L0_sci_tbls  ! Define L0 science tables
   IMPLICIT NONE
 
 !---------------------------- RCS Module Info ------------------------------
-  character (len=*), private, parameter :: ModuleName= &
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  PRIVATE :: not_used_here 
 !---------------------------------------------------------------------------
 
 ! Level 0 Raw Science Packet #1 (sized for 1 MIF)
@@ -307,7 +307,6 @@ MODULE L0_sci_tbls  ! Define L0 science tables
      TYPE (BankLogical_T) :: MaxAtten  ! Whether in maximum attenuation
      TYPE (BankLogical_T) :: DeltaAtten  ! Whether attenuation changed
      LOGICAL :: AttenMaxed             ! Some attenuation is maximum
-     LOGICAL :: LimbAltFlag            ! Flag for "L"imb greater than min alt
      LOGICAL :: CRC_good
   END TYPE Sci_pkt_T
 
@@ -593,17 +592,20 @@ CONTAINS
 
   END SUBROUTINE InitSciPointers
 
-  logical function not_used_here()
+  LOGICAL FUNCTION not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
+  CHARACTER (len=*), PARAMETER :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  END FUNCTION not_used_here
 END MODULE L0_sci_tbls
 
 ! $Log$
+! Revision 2.13  2006/03/24 15:08:20  perun
+! Remove LimbAltFlag
+!
 ! Revision 2.12  2005/12/06 19:23:59  perun
 ! Added LimbAltFlag to mark minimum altitude limb views
 !

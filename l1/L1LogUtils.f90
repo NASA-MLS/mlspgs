@@ -1,4 +1,4 @@
-! Copyright 2005, by the California Institute of Technology. ALL
+! Copyright 2006, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
 ! at the California Institute of Technology.
@@ -480,14 +480,6 @@ CONTAINS
 
     unit = L1BFileInfo%LogId
 
-    WRITE (unit, *) ''
-    WRITE (unit, *) '################## Begin MLSL1log ####################'
-    WRITE (unit, *) ''
-    WRITE (unit, *) 'PCF filename: '//TRIM (L1PCF%PCF_filename)
-    WRITE (unit, *) 'L1CF filename: '//TRIM (L1PCF%L1CF_filename)
-    WRITE (unit, *) 'Input Start/End UTC: '// &
-         TRIM (L1PCF%StartUTC)//' to '//TRIM (L1PCF%EndUTC)
-
 ! Determine TAI/MAF range to read:
 
     window_MAFs = L1Config%Calib%CalWindow
@@ -569,6 +561,9 @@ END MODULE L1LogUtils
 !=============================================================================
 
 ! $Log$
+! Revision 2.13  2006/03/24 15:08:45  perun
+! Removed startup message to log file
+!
 ! Revision 2.12  2005/10/14 18:41:41  perun
 ! Expanded start and end times to scan data
 !
