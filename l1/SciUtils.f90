@@ -1,4 +1,4 @@
-! Copyright 2005, by the California Institute of Technology. ALL
+! Copyright 2006, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
 ! at the California Institute of Technology.
@@ -30,9 +30,9 @@ MODULE SciUtils ! L0 science utilities
   PUBLIC :: NextSciMAF, SwMirPos, GetScAngles
 
 !---------------------------- RCS Module Info ------------------------------
-  character (len=*), private, parameter :: ModuleName= &
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  PRIVATE :: not_used_here 
 !---------------------------------------------------------------------------
 
   TYPE (BankLogical_T) :: MaxAtten = & ! initialize to NOT Max Atten
@@ -192,7 +192,6 @@ MODULE SciUtils ! L0 science utilities
     ENDDO
     Sci_pkt%THzSw = ICHAR (sci_cptr(tindex)%THzSw%ptr)
     CALL Band_switch (5, Sci_pkt%THzSw, Sci_pkt%BandSwitch(5))
-
     DO i = 1, 5
        IF (Sci_pkt%BandSwitch(i) == 0) THEN
           Sci_pkt%BandSwitch(i) = BandSwitch(i)  ! use current value
@@ -333,6 +332,8 @@ MODULE SciUtils ! L0 science utilities
 
     SciMAF%MAFno = no_data
     SciMAF%MIFno = no_data
+    THzSciMAF%MAFno = no_data
+    THzSciMAF%MIFno = no_data
     last_MIF = L1Config%Calib%MIFsPerMAF - 1
     DO i = 0, (MaxMIFs - 1); DACS_MAF(i)%D = 0; ENDDO
     APE_pos = QNan(); ASA_pos = QNan(); GSM_pos = QNan(); TSSM_pos = QNan()
@@ -749,8 +750,8 @@ MODULE SciUtils ! L0 science utilities
              END WHERE
              swBanks = COUNT (SwitchMask)
              IF (swBanks > 0) THEN
-                BankIndx(1) = SwitchBank(MinVal (BandIndx(1:5), SwitchMask))
-                BankIndx(2) = SwitchBank(MaxVal (BandIndx(1:5), SwitchMask))
+                BankIndx(1) = SwitchBank(MINVAL (BandIndx(1:5), SwitchMask))
+                BankIndx(2) = SwitchBank(MAXVAL (BandIndx(1:5), SwitchMask))
                 IF (IsSwitchFB) THEN
                    nBanks = swBanks
                 ELSE
@@ -864,17 +865,20 @@ MODULE SciUtils ! L0 science utilities
 
   END SUBROUTINE Save_THz_pkt
 
-  logical function not_used_here()
+  LOGICAL FUNCTION not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
+  CHARACTER (len=*), PARAMETER :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  END FUNCTION not_used_here
 END MODULE SciUtils
 
 ! $Log$
+! Revision 2.14  2006/03/24 15:17:40  perun
+! Initialize THzSciMAF MAF and MIF numbers to no data
+!
 ! Revision 2.13  2005/08/24 15:53:18  perun
 ! Save pos1/pos2 prime data for the L1BOA file
 !
@@ -909,6 +913,9 @@ END MODULE SciUtils
 ! moved parameter statement to data statement for LF/NAG compatitibility
 !
 ! $Log$
+! Revision 2.14  2006/03/24 15:17:40  perun
+! Initialize THzSciMAF MAF and MIF numbers to no data
+!
 ! Revision 2.13  2005/08/24 15:53:18  perun
 ! Save pos1/pos2 prime data for the L1BOA file
 !
