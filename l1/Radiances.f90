@@ -1,4 +1,4 @@
-! Copyright 2005, by the California Institute of Technology. ALL
+! Copyright 2006, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
 ! at the California Institute of Technology.
@@ -20,7 +20,7 @@ MODULE Radiances ! Determine radiances for the GHz module
   USE MLSL1Utils, ONLY : GetIndexedAvg, Finite
   USE EngTbls, ONLY : Eng_MAF_T, CalTgtIndx, ReflecIndx, Reflec
   USE Calibration, ONLY : CalWin, limb_cnts, space_interp, target_interp, &
-       space_err, target_err, Tsys, Cgain
+       space_err, target_err, Tsys, Cgain, slimb_interp, slimb_err, slimb_type
   USE MLSL1Rad, ONLY : FBrad, MBrad, WFrad, DACSrad, RadPwr
 
   IMPLICIT NONE
@@ -30,9 +30,9 @@ MODULE Radiances ! Determine radiances for the GHz module
   PUBLIC :: CalcLimbRads
 
 !---------------------------- RCS Module Info ------------------------------
-  character (len=*), private, parameter :: ModuleName= &
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  PRIVATE :: not_used_here 
 !---------------------------------------------------------------------------
 
 CONTAINS
@@ -40,30 +40,35 @@ CONTAINS
 !=============================================================================
   SUBROUTINE CalcRadiance (limb_counts, space_counts, target_counts, &
        zero_counts, sum_w2, sum_wg2, space_P, target_P, baffle_P, bandwidth, &
-       radNum, rad, rad_err, deflt_gain, use_deflt_gain, Tsys, gain, dacs)
+       radNum, bandNo, chanNo, rad, rad_err, deflt_gain, use_deflt_gain, Tsys, &
+       gain, slimb_type, slimb_counts, P_offset, dacs)
 !=============================================================================
 
-    INTEGER :: radNum
-    REAL(r8) :: limb_counts, space_counts, target_counts, zero_counts
+    USE BandTbls, ONLY: GetEta_TSL
+
+    INTEGER, INTENT (IN) :: bandNo, chanNo, radNum
+    REAL(r8) :: limb_counts, space_counts, target_counts, zero_counts, &
+         slimb_counts
     REAL(r8) :: sum_w2, sum_wg2
-    REAL :: space_P, target_P, baffle_P, bandwidth, deflt_gain
+    REAL :: space_P, target_P, baffle_P, bandwidth, deflt_gain, P_offset
     REAL :: rad, rad_err, gain, Tsys, TsysD
-    LOGICAL :: use_deflt_gain
+    LOGICAL :: use_deflt_gain, slimb_type
     INTEGER, OPTIONAL :: dacs
 
     REAL :: baffle_L, baffle_S, baffle_T   ! Baffle radiances
+    REAL :: eta_TSL(3)                     ! Target, Space and Limb eta values
 
-    TYPE Eta_T
+    TYPE Rho_T
        CHARACTER(len=3) :: Name
-       REAL(r4) :: Limb, Space, Target
-    END TYPE Eta_T
+       REAL(r4) :: Limb
+    END TYPE Rho_T
 
-    TYPE (Eta_T), PARAMETER :: Eta(0:4) = (/ &
-         Eta_T ("R1A", 0.99598, 0.99587, 0.99575), &  ! Index '0'
-         Eta_T ("R1B", 0.99344, 0.99317, 0.99274), &
-         Eta_T ("R2 ", 0.99878, 0.99874, 0.99868), &
-         Eta_T ("R3 ", 0.99915, 0.99912, 0.99910), &
-         Eta_T ("R4 ", 0.99894, 0.99892, 0.99890)  /)
+    TYPE (Rho_T), PARAMETER :: Rho(0:4) = (/ &
+         Rho_T ("R1A", 0.9938 * 0.9800), &  ! Index '0'
+         Rho_T ("R1B", 0.9795 * 0.9753), &
+         Rho_T ("R2 ", 0.9914 * 0.9945), &
+         Rho_T ("R3 ", 0.9746 * 0.9953), &
+         Rho_T ("R4 ", 0.9802 * 0.9888)  /)
 
     rad = 0.0        ! nothing yet
     rad_err = -1.0   ! nothing yet
@@ -74,16 +79,18 @@ CONTAINS
     baffle_S = baffle_P
     baffle_T = baffle_P
 
+    CALL GetEta_TSL (bandNo, chanNO, eta_TSL)
+
     IF (limb_counts == 0.0d0 .OR. space_counts == target_counts) RETURN
 
     IF (use_deflt_gain) THEN
        gain = deflt_gain
     ELSE
        gain =  (target_counts - space_counts) / &
-            (Eta(radNum)%Target * target_P - Eta(radNum)%Space * space_P &
-            - (1.0 - Eta(radNum)%Target) * baffle_T &
-            + (1.0 - Eta(radNum)%Space) * baffle_S)
-    ENDIF
+            (eta_TSL(1) * target_P - eta_TSL(2) * space_P &
+            - (1.0 - eta_TSL(1)) * baffle_T &
+            + (1.0 - eta_TSL(2)) * baffle_S)
+     ENDIF
 
     IF (gain == 0.0) RETURN  ! GAINS can be NEGATIVE!!!
 
@@ -91,9 +98,18 @@ CONTAINS
 
     IF (Tsys == 0.0) Tsys = (space_counts - zero_counts) / gain - space_P
 
-    rad =  ((limb_counts - space_counts) / gain + Eta(radNum)%Space * space_P &
-         - (1.0 - Eta(radNum)%Limb) * baffle_L + (1.0 - Eta(radNum)%Space) * &
-         baffle_S) / Eta(radNum)%Limb
+    IF (slimb_type) THEN
+       rad = ((limb_counts - slimb_counts) / gain) / eta_TSL(3) + &
+            Rho(radNum)%Limb * space_P
+       P_offset = ((limb_counts - space_counts) / gain - space_P * &
+            (eta_TSL(3) * Rho(radNum)%Limb - eta_TSL(2)) - &
+            (1.0 - eta_TSL(3)) * baffle_L + (1.0 - eta_TSL(2)) * &
+            baffle_S) / eta_TSL(2)
+    ELSE
+       rad = ((limb_counts - space_counts) / gain + eta_TSL(2)*space_P &
+            - (1.0 - eta_TSL(3))*baffle_L + (1.0 - eta_TSL(2)) * &
+            baffle_S) / eta_TSL(3)
+    ENDIF
 
     IF (PRESENT (dacs)) THEN
        TsysD = Tsys / 0.87
@@ -101,11 +117,19 @@ CONTAINS
             ((target_P + TsysD) / target_P)**2 + (1.0 + sum_w2) * sum_wg2
        rad_err = SQRT (rad_err / (bandwidth * tau))
     ELSE
-       rad_err = &
-            (limb_counts - zero_counts)**2 + (space_counts - zero_counts)**2 &
-            * sum_w2 + (limb_counts - space_counts)**2 * &
-            ((target_counts - zero_counts) / (target_counts-space_counts))**2 &
-            * (1.0 + sum_w2) * sum_wg2
+       IF (slimb_type) THEN
+          rad_err = &
+               (limb_counts-zero_counts)**2 + (slimb_counts-zero_counts)**2 &
+               * sum_w2 + (limb_counts-slimb_counts)**2 * &
+               ((target_counts-zero_counts) / (target_counts-slimb_counts))**2 &
+               * (1.0+sum_w2) * sum_wg2
+       ELSE
+          rad_err = &
+               (limb_counts-zero_counts)**2 + (space_counts-zero_counts)**2 &
+               * sum_w2 + (limb_counts-space_counts)**2 * &
+               ((target_counts-zero_counts) / (target_counts-space_counts))**2 &
+               * (1.0+sum_w2) * sum_wg2
+       ENDIF
        IF (rad_err < 0.0) THEN
           rad_err = -1.0
           RETURN
@@ -315,26 +339,31 @@ CONTAINS
                 CALL CalcRadiance (limb_cnts%FB(time_index,chan,bank), &
                      space_interp(MIF_index)%FB(chan,bank), &
                      target_interp(MIF_index)%FB(chan,bank), C_zero, &
-                     space_err(MIF_index)%FB(chan,bank), &
+                     slimb_err(MIF_index)%FB(chan,bank), &
                      target_err(MIF_index)%FB(chan,bank), &
                      space_P, target_P, baffle_P, BandWidth%FB(chan,bank), &
-                     radNum, FBrad(bank)%value(chan,MIF_index+1), &
+                     radNum, BandNo, chan,FBrad(bank)%value(chan,MIF_index+1), &
                      rad_prec, deflt_gain%FB(chan,bank), use_deflt_gains, &
-                     Tsys%FB(chan,bank), gain)
+                     Tsys%FB(chan,bank), gain, slimb_type%FB(chan,bank), &
+                     slimb_interp(MIF_index)%FB(chan,bank), &
+                     FBrad(bank)%Poffset(chan,MIF_index+1))
 
                 IF (rad_prec > 0.0) rad_prec = rad_prec * MIN ( &
                      MIFprecSign(MIF_index), BandChanBad%Sign(Bandno, chan))
+                FBrad(bank)%precision(chan,MIF_index+1) = rad_prec
 
                 CALL CalcNonLimbRad (BandNo, chan, radNum, ReflecAvg, &
                      NonLimbRad)
+                FBrad(bank)%ModelOffset(chan,MIF_index+1) = NonLimbRad
 
-                IF (Finite (NonLimbRad)) THEN
-                   FBrad(bank)%value(chan,MIF_index+1) = &
-                        FBrad(bank)%value(chan,MIF_index+1) - NonLimbRad
-                   FBrad(bank)%precision(chan,MIF_index+1) = rad_prec
-                ELSE
-                   FBrad(bank)%value(chan,MIF_index+1) = 0.0
-                   FBrad(bank)%precision(chan,MIF_index+1) = -1.0
+                IF (.NOT. slimb_type%FB(chan,bank)) THEN
+                   IF (Finite (NonLimbRad)) THEN
+                      FBrad(bank)%value(chan,MIF_index+1) = &
+                           FBrad(bank)%value(chan,MIF_index+1) - NonLimbRad
+                   ELSE
+                      FBrad(bank)%value(chan,MIF_index+1) = 0.0
+                      FBrad(bank)%precision(chan,MIF_index+1) = -1.0
+                   ENDIF
                 ENDIF
 
                 IF (do_chi2_err) FBrad(bank)%precision(chan,MIF_index+1) = &
@@ -368,26 +397,31 @@ CONTAINS
                 CALL CalcRadiance (limb_cnts%MB(time_index,chan,bank), &
                      space_interp(MIF_index)%MB(chan,bank), &
                      target_interp(MIF_index)%MB(chan,bank), C_zero, &
-                     space_err(MIF_index)%MB(chan,bank), &
+                     slimb_err(MIF_index)%MB(chan,bank), &
                      target_err(MIF_index)%MB(chan,bank), &
                      space_P, target_P, baffle_P, BandWidth%MB(chan,bank), &
-                     radNum, MBrad(bank)%value(chan,MIF_index+1), &
+                     radNum, BandNo, chan,MBrad(bank)%value(chan,MIF_index+1), &
                      rad_prec, deflt_gain%MB(chan,bank), use_deflt_gains, &
-                     Tsys%MB(chan,bank), gain)
+                     Tsys%MB(chan,bank), gain, slimb_type%MB(chan,bank), &
+                     slimb_interp(MIF_index)%MB(chan,bank), &
+                     MBrad(bank)%Poffset(chan,MIF_index+1))
 
                 IF (rad_prec > 0.0) rad_prec = rad_prec * MIN ( &
                      MIFprecSign(MIF_index),  BandChanBad%Sign(Bandno, chan))
+                MBrad(bank)%precision(chan,MIF_index+1) = rad_prec
 
                 CALL CalcNonLimbRad (BandNo, chan, radNum, ReflecAvg, &
                      NonLimbRad)
+                MBrad(bank)%ModelOffset(chan,MIF_index+1) = NonLimbRad
 
-                IF (Finite (NonLimbRad)) THEN
-                   MBrad(bank)%value(chan,MIF_index+1) = &
-                        MBrad(bank)%value(chan,MIF_index+1) - NonLimbRad
-                   MBrad(bank)%precision(chan,MIF_index+1) = rad_prec
-                ELSE
-                   MBrad(bank)%value(chan,MIF_index+1) = 0.0
-                   MBrad(bank)%precision(chan,MIF_index+1) = -1.0
+                IF (.NOT. slimb_type%MB(chan,bank)) THEN
+                   IF (Finite (NonLimbRad)) THEN
+                      MBrad(bank)%value(chan,MIF_index+1) = &
+                           MBrad(bank)%value(chan,MIF_index+1) - NonLimbRad
+                   ELSE
+                      MBrad(bank)%value(chan,MIF_index+1) = 0.0
+                      MBrad(bank)%precision(chan,MIF_index+1) = -1.0
+                   ENDIF
                 ENDIF
 
                 IF (do_chi2_err) MBrad(bank)%precision(chan,MIF_index+1) = &
@@ -416,26 +450,31 @@ CONTAINS
                 CALL CalcRadiance (limb_cnts%WF(time_index,chan,bank), &
                      space_interp(MIF_index)%WF(chan,bank), &
                      target_interp(MIF_index)%WF(chan,bank), C_zero, &
-                     space_err(MIF_index)%WF(chan,bank), &
+                     slimb_err(MIF_index)%WF(chan,bank), &
                      target_err(MIF_index)%WF(chan,bank), &
                      space_P, target_P, baffle_P, BandWidth%WF(chan,bank), &
-                     radNum, WFrad(bank)%value(chan,MIF_index+1), &
+                     radNum, BandNo, chan,WFrad(bank)%value(chan,MIF_index+1), &
                      rad_prec, deflt_gain%WF(chan,bank), use_deflt_gains, &
-                     Tsys%WF(chan,bank), gain)
+                     Tsys%WF(chan,bank), gain, slimb_type%WF(chan,bank), &
+                     slimb_interp(MIF_index)%WF(chan,bank), &
+                     WFrad(bank)%Poffset(chan,MIF_index+1))
 
                 IF (rad_prec > 0.0) rad_prec = rad_prec * MIN ( &
                      MIFprecSign(MIF_index), BandChanBad%Sign(Bandno, chan))
+                WFrad(bank)%precision(chan,MIF_index+1) = rad_prec
 
                 CALL CalcNonLimbRad (BandNo, chan, radNum, ReflecAvg, &
                      NonLimbRad)
+                WFrad(bank)%ModelOffset(chan,MIF_index+1) = NonLimbRad
 
-                IF (Finite (NonLimbRad)) THEN
-                   WFrad(bank)%value(chan,MIF_index+1) = &
-                        WFrad(bank)%value(chan,MIF_index+1) - NonLimbRad
-                   WFrad(bank)%precision(chan,MIF_index+1) = rad_prec
-                ELSE
-                   WFrad(bank)%value(chan,MIF_index+1) = 0.0
-                   WFrad(bank)%precision(chan,MIF_index+1) = -1.0
+                IF (.NOT. slimb_type%WF(chan,bank)) THEN
+                   IF (Finite (NonLimbRad)) THEN
+                      WFrad(bank)%value(chan,MIF_index+1) = &
+                           WFrad(bank)%value(chan,MIF_index+1) - NonLimbRad
+                   ELSE
+                      WFrad(bank)%value(chan,MIF_index+1) = 0.0
+                      WFrad(bank)%precision(chan,MIF_index+1) = -1.0
+                   ENDIF
                 ENDIF
 
                 IF (do_chi2_err) WFrad(bank)%precision(chan,MIF_index+1) = &
@@ -473,28 +512,33 @@ CONTAINS
                    CALL CalcRadiance (limb_cnts%DACS(time_index,chan,bank), &
                         space_interp(MIF_index)%DACS(chan,bank), &
                         target_interp(MIF_index)%DACS(chan,bank), C_zero, &
-                        space_err(MIF_index)%DACS(chan,bank), &
+                        slimb_err(MIF_index)%DACS(chan,bank), &
                         target_err(MIF_index)%DACS(chan,bank), &
                         space_P, target_P, baffle_P, &
-                        BandWidth%DACS(chan,bank), radNum, &
+                        BandWidth%DACS(chan,bank), radNum, BandNo, chan, &
                         DACSrad(bank)%value(chan,MIF_index+1), &
                         rad_prec, deflt_gain%DACS(chan,bank), use_deflt_gains, &
-                        Tsys%DACS(chan,bank), gain, dacs=1)
+                        Tsys%DACS(chan,bank), gain, slimb_type%DACS(chan,bank),&
+                        slimb_interp(MIF_index)%DACS(chan,bank), &
+                        DACSrad(bank)%Poffset(chan,MIF_index+1), dacs=1)
 
                    IF (rad_prec > 0.0) rad_prec = rad_prec * MIN ( &
                       MIFprecSign(MIF_index), BandChanBad%Sign(Bandno, chan))
+                   DACSrad(bank)%precision(chan,MIF_index+1) = rad_prec
 
                    CALL CalcNonLimbRad (BandNo, chan, radNum, ReflecAvg, &
                         NonLimbRad)
+                   DACSrad(bank)%ModelOffset(chan,MIF_index+1) = NonLimbRad
 
-                   IF (Finite (NonLimbRad)) THEN
-                      DACSrad(bank)%value(chan,MIF_index+1) = &
-                           DACSrad(bank)%value(chan,MIF_index+1) - NonLimbRad
-                      DACSrad(bank)%precision(chan,MIF_index+1) = rad_prec
-                   ELSE
-                      DACSrad(bank)%value(chan,MIF_index+1) = 0.0
-                      DACSrad(bank)%precision(chan,MIF_index+1) = -1.0
-                  ENDIF
+                   IF (.NOT. slimb_type%DACS(chan,bank)) THEN
+                      IF (Finite (NonLimbRad)) THEN
+                         DACSrad(bank)%value(chan,MIF_index+1) = &
+                              DACSrad(bank)%value(chan,MIF_index+1) - NonLimbRad
+                      ELSE
+                         DACSrad(bank)%value(chan,MIF_index+1) = 0.0
+                         DACSrad(bank)%precision(chan,MIF_index+1) = -1.0
+                      ENDIF
+                   ENDIF
 
                 ENDDO
              ENDDO
@@ -511,18 +555,22 @@ CONTAINS
   END SUBROUTINE CalcLimbRads
 
 !=============================================================================
-  logical function not_used_here()
+  LOGICAL FUNCTION not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
+  CHARACTER (len=*), PARAMETER :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  END FUNCTION not_used_here
+
 END MODULE Radiances
 !=============================================================================
 
 ! $Log$
+! Revision 2.16  2006/03/24 15:17:06  perun
+! Add calculation of radiances using the Space/Limb view interpolations
+!
 ! Revision 2.15  2005/12/09 16:39:58  perun
 ! Update port baffle transmission values
 !
