@@ -1,4 +1,4 @@
-! Copyright 2005, by the California Institute of Technology. ALL
+! Copyright 2006, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
 ! at the California Institute of Technology.
@@ -33,9 +33,9 @@ MODULE INIT_TABLES_MODULE
   PRIVATE :: ADD_IDENT, INIT_INTRINSIC, MAKE_TREE
 
 !---------------------------- RCS Module Info ------------------------------
-  character (len=*), private, parameter :: ModuleName= &
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  PRIVATE :: not_used_here 
 !---------------------------------------------------------------------------
 
 ! Enumeration types:
@@ -50,8 +50,7 @@ MODULE INIT_TABLES_MODULE
   INTEGER, PARAMETER :: F_MIFS = last_BrightObject_Field + 1
   INTEGER, PARAMETER :: F_USE = f_mifs + 1
   INTEGER, PARAMETER :: F_SECONDARY = f_use + 1
-  INTEGER, PARAMETER :: F_S = f_secondary + 1
-  INTEGER, PARAMETER :: F_BANDNO = f_s + 1
+  INTEGER, PARAMETER :: F_BANDNO = f_secondary + 1
   INTEGER, PARAMETER :: F_CHAN = f_bandno + 1
   INTEGER, PARAMETER :: FIELD_LAST = f_chan + 1
 
@@ -75,8 +74,7 @@ MODULE INIT_TABLES_MODULE
   INTEGER, PARAMETER :: S_TARGETMIFS = s_spaceMIFs + 1
   INTEGER, PARAMETER :: S_LIMBMIFS = s_targetMIFs + 1
   INTEGER, PARAMETER :: S_DISCARDMIFS = s_limbMIFs + 1
-  INTEGER, PARAMETER :: S_SWITCH = s_discardMIFs + 1
-  INTEGER, PARAMETER :: S_CHI2ERR = s_switch + 1
+  INTEGER, PARAMETER :: S_CHI2ERR = s_discardMIFs + 1
   INTEGER, PARAMETER :: S_MARKCHANBAD = s_chi2err + 1
   INTEGER, PARAMETER :: SPEC_LAST = s_markchanbad
 
@@ -91,28 +89,32 @@ MODULE INIT_TABLES_MODULE
   ! In Calibration section:
 
   INTEGER, PARAMETER :: P_CALWINDOW = p_simoa + 1
-  INTEGER, PARAMETER :: P_USEDEFAULTGAINS = p_calwindow + 1
+  INTEGER, PARAMETER :: P_MAFexpandNum = p_calwindow + 1
+  INTEGER, PARAMETER :: P_USEDEFAULTGAINS = p_MAFexpandNum + 1
   INTEGER, PARAMETER :: P_CALIBDACS = p_usedefaultgains + 1
   INTEGER, PARAMETER :: P_GHZSPACETEMP = p_calibdacs + 1
   INTEGER, PARAMETER :: P_GHZTARGETTEMP = p_GHzSpaceTemp + 1
   INTEGER, PARAMETER :: P_THZSPACETEMP = p_GHzTargetTemp + 1
   INTEGER, PARAMETER :: P_THZTARGETTEMP = p_THzSpaceTemp + 1
   INTEGER, PARAMETER :: P_THZSpaceAngle = p_THzTargetTemp + 1
-  INTEGER, PARAMETER :: P_MIF_DURATION = p_THzSpaceAngle + 1
+  INTEGER, PARAMETER :: P_THZColdCal = p_THzSpaceAngle + 1
+  INTEGER, PARAMETER :: P_MIF_DURATION = p_THzColdCal + 1
   INTEGER, PARAMETER :: P_MIF_DEAD_TIME = p_mif_duration + 1
   INTEGER, PARAMETER :: P_MIFsPerMAF = p_mif_dead_time + 1
   INTEGER, PARAMETER :: P_THzMaxBias = p_MIFsPerMAF + 1
   INTEGER, PARAMETER :: P_MoonToSpaceAngle = p_THzMaxBias + 1
   INTEGER, PARAMETER :: P_DACSWINDOW = p_MoonToSpaceAngle + 1
   INTEGER, PARAMETER :: P_UseAntOffsets = p_DACSWINDOW + 1
+  INTEGER, PARAMETER :: P_MinSpaceLimbs = p_UseAntOffsets + 1
 
   ! In Output section:
 
-  INTEGER, PARAMETER :: P_REMOVEBASELINE = P_UseAntOffsets + 1
+  INTEGER, PARAMETER :: P_REMOVEBASELINE = P_MinSpaceLimbs + 1
   INTEGER, PARAMETER :: P_DECONVOLVEDACS = P_RemoveBaseline + 1
+  INTEGER, PARAMETER :: P_WriteDiagOffsets = P_DeconvolveDACS + 1
 
   INTEGER, PARAMETER :: FIRST_PARM = P_OUTPUT_VERSION_STRING
-  INTEGER, PARAMETER :: LAST_PARM = P_DECONVOLVEDACS
+  INTEGER, PARAMETER :: LAST_PARM = P_WriteDiagOffsets
 
 ! Table for section ordering:
 
@@ -127,7 +129,6 @@ MODULE INIT_TABLES_MODULE
            0,   OK,  0,    & ! GlobalSettings
            0,   OK,  OK,   & ! Calibration
            0,    0,  OK /) & ! Output
-!       , shape(section_ordering) )
         , (/ section_last-section_first+1, section_last-section_first+2 /) )
 
 CONTAINS ! =====     Public procedures     =============================
@@ -148,7 +149,6 @@ CONTAINS ! =====     Public procedures     =============================
     ! Put enumeration type names into the symbol table
 
     data_type_indices(t_use) =              add_ident ( 'use' )
-!    data_type_indices(t_module) =           add_ident ( 'module' )
     data_type_indices(t_units) =            add_ident ( 'units' )
 
     ! Put enumeration literals into the symbol table:
@@ -161,13 +161,14 @@ CONTAINS ! =====     Public procedures     =============================
     field_indices(f_mifs) =                 add_ident ( 'MIFs' )
     field_indices(f_use) =                  add_ident ( 'use' )
     field_indices(f_secondary) =            add_ident ( 'secondary' )
-    field_indices(f_s) =                    add_ident ( 's' )
     field_indices(f_bandno) =               add_ident ( 'bandno' )
     field_indices(f_chan) =                 add_ident ( 'chan' )
  
     ! Put parameter names into the symbol table
 
     parm_indices(p_calwindow)=              add_ident ( 'CalWindow' )
+    parm_indices(p_MAFexpandNum)=           add_ident ( 'MAFexpandNum' )
+    parm_indices(p_MinSpaceLimbs)=          add_ident ( 'MinSpaceLimbs' )
     parm_indices(p_usedefaultgains)=        add_ident ( 'UseDefaultGains' )
     parm_indices(p_calibDACS)=              add_ident ( 'CalibDACS' )
     parm_indices(p_GHzSpaceTemp)=           add_ident ( 'GHzSpaceTemp' )
@@ -175,6 +176,7 @@ CONTAINS ! =====     Public procedures     =============================
     parm_indices(p_THzSpaceTemp)=           add_ident ( 'THzSpaceTemp' )
     parm_indices(p_THzTargetTemp)=          add_ident ( 'THzTargetTemp' )
     parm_indices(p_THzSpaceAngle)=          add_ident ( 'THzSpaceAngle' )
+    parm_indices(p_THzColdCal)=             add_ident ( 'THzColdCal' )
     parm_indices(p_THzMaxBias)=             add_ident ( 'THzMaxBias' )
     parm_indices(p_mif_duration)=           add_ident ( 'MIF_Duration' )
     parm_indices(p_mif_dead_time)=          add_ident ( 'MIF_DeadTime' )
@@ -187,6 +189,7 @@ CONTAINS ! =====     Public procedures     =============================
     parm_indices(p_dacswindow)=             add_ident ( 'DACSwindow' )
     parm_indices(p_UseAntOffsets)=          add_ident ( 'UseAntOffsets' )
     parm_indices(p_DeconvolveDACS)=         add_ident ( 'DeconvolveDACS' )
+    parm_indices(p_WriteDiagOffsets)=       add_ident ( 'WriteDiagOffsets' )
 
     ! Put section names into the symbol table
 
@@ -200,7 +203,6 @@ CONTAINS ! =====     Public procedures     =============================
     spec_indices(s_targetMIFs) =              add_ident ( 'targetMIFs' )
     spec_indices(s_limbMIFs) =                add_ident ( 'limbMIFs' )
     spec_indices(s_discardMIFs) =             add_ident ( 'discardMIFs' )
-    spec_indices(s_switch) =                  add_ident ( 'switch' )
     spec_indices(s_chi2err) =                 add_ident ( 'EnableChi2Err' )
     spec_indices(s_markchanbad) =             add_ident ( 'MarkChanBad' )
 
@@ -291,12 +293,6 @@ CONTAINS ! =====     Public procedures     =============================
              nadp+n_spec_def /) )
 
     CALL make_tree ( (/ &
-      begin, s+s_switch, &
-             begin, f+f_s, t+t_numeric, n+n_field_type, &
-             begin, f+f_bandno, t+t_numeric, n+n_field_type, &
-             nadp+n_spec_def /) )
-
-    CALL make_tree ( (/ &
       begin, s+s_markchanbad, &
              begin, f+f_chan, t+t_numeric, n+n_field_type, &
              begin, f+f_bandno, t+t_numeric, n+n_field_type, &
@@ -322,6 +318,8 @@ CONTAINS ! =====     Public procedures     =============================
              n+n_section, &
       begin, z+z_calibration, &
              begin, p+p_calwindow, t+t_numeric, n+n_name_def, &
+             begin, p+p_MAFexpandNum, t+t_numeric, n+n_name_def, &
+             begin, p+p_MinSpaceLimbs, t+t_numeric, n+n_name_def, &
              begin, p+p_GHzSpaceTemp, t+t_numeric, n+n_name_def, &
              begin, p+p_GHzTargetTemp, t+t_numeric, n+n_name_def, &
              begin, p+p_THzSpaceTemp, t+t_numeric, n+n_name_def, &
@@ -336,11 +334,13 @@ CONTAINS ! =====     Public procedures     =============================
              begin, p+p_usedefaultgains, t+t_boolean, n+n_name_def, &
              begin, p+p_UseAntOffsets, t+t_boolean, n+n_name_def, &
              begin, p+p_calibDACS, t+t_boolean, n+n_name_def, &
+             begin, p+p_THzColdCal, t+t_boolean, n+n_name_def, &
              s+s_spaceMIFs, s+s_targetMIFs, s+s_limbMIFS, s+s_discardMIFs, &
-             s+s_switch, s+s_markchanbad, s+s_brightobject, n+n_section, &
+             s+s_markchanbad, s+s_brightobject, n+n_section, &
       begin, z+z_output, &
              begin, p+p_removebaseline, t+t_boolean, n+n_name_def, &
              begin, p+p_DeconvolveDACS, t+t_boolean, n+n_name_def, &
+             begin, p+p_WriteDiagOffsets, t+t_boolean, n+n_name_def, &
              s+s_chi2err, n+n_section/) )
 
   END SUBROUTINE INIT_TABLES
@@ -348,17 +348,20 @@ CONTAINS ! =====     Public procedures     =============================
   ! --------------------------------------------------  MAKE_TREE  -----
   INCLUDE "make_tree.f9h"
 
-  logical function not_used_here()
+  LOGICAL FUNCTION not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
+  CHARACTER (len=*), PARAMETER :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  END FUNCTION not_used_here
 END MODULE INIT_TABLES_MODULE
   
 ! $Log$
+! Revision 2.25  2006/03/24 15:07:48  perun
+! Add MAFexpandNum, MinSpaceLimbs, THzColdCal, WriteDiagOffsets and remove Switch
+!
 ! Revision 2.24  2005/12/06 19:23:25  perun
 ! Removed MoonToLimbAngles fields and added Bright Object fields
 !
@@ -393,6 +396,9 @@ END MODULE INIT_TABLES_MODULE
 ! Version 1.2 commit
 !
 ! $Log$
+! Revision 2.25  2006/03/24 15:07:48  perun
+! Add MAFexpandNum, MinSpaceLimbs, THzColdCal, WriteDiagOffsets and remove Switch
+!
 ! Revision 2.24  2005/12/06 19:23:25  perun
 ! Removed MoonToLimbAngles fields and added Bright Object fields
 !
