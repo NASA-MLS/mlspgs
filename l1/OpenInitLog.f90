@@ -1,4 +1,4 @@
-! Copyright 2005, by the California Institute of Technology. ALL
+! Copyright 2006, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
 ! at the California Institute of Technology.
@@ -26,9 +26,9 @@ MODULE OpenInitLog ! Opens input L0 files and output log file
   PUBLIC :: OpenAndInitializeLog
 
 !---------------------------- RCS Module Info ------------------------------
-  character (len=*), private, parameter :: ModuleName= &
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  PRIVATE :: not_used_here 
 !---------------------------------------------------------------------------
 
 CONTAINS
@@ -46,16 +46,21 @@ CONTAINS
          mlspcf_dacsconst_start, mlspcf_defltzeros_start
     USE L0_sci_tbls, ONLY: InitSciPointers
     USE EngTbls, ONLY: Load_Eng_tbls, Eng_tbl, maxtlm
-    USE MLSL1Common, ONLY: L1BFileInfo, deflt_zero
+    USE MLSL1Common, ONLY: L1BFileInfo, deflt_zero, BandSwitch
     USE THzUtils, ONLY: LLO_Label
     USE DACSUtils, ONLY: InitDACS_FFT
+    USE BandSwitches, ONLY: GetBandSwitches
 
     CHARACTER (LEN=132) :: PhysicalFilename
+    CHARACTER (LEN=28) :: asciiUTC_A
 
     INTEGER :: eng_tbl_unit, ios, log_unit, tbl_unit
     INTEGER :: returnStatus, version
 
-    INTEGER, EXTERNAL :: PGS_TD_UTCtoTAI, PGS_IO_Gen_Track_LUN
+    REAL :: MAF_dur
+
+    INTEGER, EXTERNAL :: PGS_TD_UTCtoTAI,  PGS_TD_TAItoUTC, &
+         PGS_TD_ASCIItime_AtoB, PGS_IO_Gen_Track_LUN
 
     TYPE (TAI93_Range_T) :: procRange
 
@@ -88,12 +93,24 @@ CONTAINS
 
 !! TAI Processing range
 
+    MAF_dur = L1Config%Calib%MIF_duration * L1Config%Calib%MIFsPerMAF
+
     returnStatus = PGS_TD_UTCtoTAI (L1PCF%startUTC, procRange%startTime)
     returnStatus = PGS_TD_UTCtoTAI (L1PCF%endUTC, procRange%endTime)
 
+    procRange%startTime = procRange%startTime - MAF_dur * (0.5 + &
+         L1Config%Calib%MAFexpandNum)
+    procRange%endTime = procRange%endTime +  MAF_dur * (0.5 + &
+         L1Config%Calib%MAFexpandNum)
+
+    returnStatus = PGS_TD_TAItoUTC (procRange%startTime, asciiUTC_A)
+    returnStatus = PGS_TD_ASCIItime_AtoB (asciiUTC_A, L1PCF%startUTC)
+    returnStatus = PGS_TD_TAItoUTC (procRange%endTime, asciiUTC_A)
+    returnStatus = PGS_TD_ASCIItime_AtoB (asciiUTC_A, L1PCF%endUTC)
+
     L1Config%Input_TAI = procRange
 
-    L1Config%Expanded_TAI = L1Config%Input_TAI
+    L1Config%Expanded_TAI = procRange
 
 !! Expand time range!!!
 
@@ -203,6 +220,19 @@ CONTAINS
 
     L1BFileInfo%LogId = log_unit
     L1BFileInfo%LogFilename = PhysicalFilename
+
+    WRITE (log_unit, *) ''
+    WRITE (log_unit, *) '################## Begin MLSL1log ####################'
+    WRITE (log_unit, *) ''
+    WRITE (log_unit, *) 'PCF filename: '//TRIM (L1PCF%PCF_filename)
+    WRITE (log_unit, *) 'L1CF filename: '//TRIM (L1PCF%L1CF_filename)
+    WRITE (log_unit, *) 'Input Start/End UTC: '// &
+         TRIM (L1PCF%StartUTC)//' to '//TRIM (L1PCF%EndUTC)
+
+!! Init BandSwitches:
+
+    CALL GetBandSwitches (L1Config%Expanded_TAI%startTime, BandSwitch)
+    WRITE (log_unit, *) 'Initial BandSwitches: ', BandSwitch
 
 !! Open and initialize default zeros table:
 
@@ -393,18 +423,21 @@ CONTAINS
    END SUBROUTINE LoadDACSconsts
 
 !=============================================================================
-  logical function not_used_here()
+  LOGICAL FUNCTION not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
+  CHARACTER (len=*), PARAMETER :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  END FUNCTION not_used_here
 END MODULE OpenInitLog
 !=============================================================================
 
 ! $Log$
+! Revision 2.6  2006/03/24 15:15:22  perun
+! Expand processing times, iniut Band Switches and write startup message to log file
+!
 ! Revision 2.5  2005/06/23 18:41:36  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
