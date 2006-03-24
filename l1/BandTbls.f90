@@ -1,4 +1,4 @@
-! Copyright 2005, by the California Institute of Technology. ALL
+! Copyright 2006, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
 ! at the California Institute of Technology.
@@ -13,20 +13,23 @@
 MODULE BandTbls   ! Tables for all bands
 !=============================================================================
 
-  USE MLSL1Common, ONLY: FBchans, MBchans, WFchans, R4, R8, DACSchans, NumBands
+  USE MLSL1Common, ONLY: FBchans, MBchans, WFchans, R4, R8, DACSchans, &
+       MaxAlts, NumBands
 
   IMPLICIT NONE
 
   PRIVATE
 
-  PUBLIC :: Load_Band_Tbls, LoadSidebandFracs, LoadSpilloverLoss, LoadDefltChi2
+  PUBLIC :: Load_Band_Tbls, LoadSidebandFracs, LoadSpilloverLoss, &
+       LoadBandAlts, LoadDefltChi2, GetEta_TSL
   PUBLIC :: BandLowerUpper_T, SideBandFrac, SpilloverLoss_T, SpilloverLoss, &
-       RadiometerLoss_T, RadiometerLoss, BandFreq
+     RadiometerLoss_T, RadiometerLoss, BandFreq, BandAlt_T, BandAlt, nAlts, &
+     minAlt
 
 !---------------------------- RCS Module Info ------------------------------
-  character (len=*), private, parameter :: ModuleName= &
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  PRIVATE :: not_used_here 
 !---------------------------------------------------------------------------
 
   TYPE BandLowerUpper_T
@@ -36,7 +39,7 @@ MODULE BandTbls   ! Tables for all bands
   TYPE (BandLowerUpper_T) :: SideBandFrac(NumBands), BandFreq(NumBands)
 
   TYPE SpilloverLoss_T
-     REAL(r4), DIMENSION(:,:), POINTER :: lower, upper
+     REAL(r4), DIMENSION(:,:), POINTER :: lower, upper, eta_TSL
   END TYPE SpilloverLoss_T
 
   TYPE (SpilloverLoss_T) :: SpilloverLoss(NumBands)
@@ -53,6 +56,16 @@ MODULE BandTbls   ! Tables for all bands
        RadiometerLoss_T ("R3 ", 0.9746, 0.9987, 150.0), &
        RadiometerLoss_T ("R4 ", 0.9802, 0.9916, 150.0)  /)
 
+  TYPE BandAlt_T
+     REAL(r4), DIMENSION(:), POINTER :: Meters
+     INTEGER, DIMENSION(:), POINTER :: indx
+  END TYPE BandAlt_T
+
+  TYPE (BandAlt_T) :: BandAlt(NumBands)
+
+  INTEGER :: nAlts
+  REAL :: MinAlt(MaxAlts)
+
 CONTAINS
 
 !=============================================================================
@@ -61,31 +74,39 @@ CONTAINS
 
     INTEGER :: i
 
-!! Allocate Sideband fraction and Band frequency arrays:
+!! Allocate Sideband fraction and Band frequency and altitude arrays:
 
     DO i = 1, 21
        ALLOCATE (SideBandFrac(i)%lower(FBchans))
        ALLOCATE (SideBandFrac(i)%upper(FBchans))
        ALLOCATE (BandFreq(i)%lower(FBchans))
        ALLOCATE (BandFreq(i)%upper(FBchans))
+       ALLOCATE (BandAlt(i)%Meters(FBchans))
+       ALLOCATE (BandAlt(i)%indx(FBchans))
     ENDDO
     DO i = 22, 26
        ALLOCATE (SideBandFrac(i)%lower(DACSchans))
        ALLOCATE (SideBandFrac(i)%upper(DACSchans))
        ALLOCATE (BandFreq(i)%lower(DACSchans))
        ALLOCATE (BandFreq(i)%upper(DACSchans))
+       ALLOCATE (BandAlt(i)%Meters(DACSchans))
+       ALLOCATE (BandAlt(i)%indx(DACSchans))
     ENDDO
     DO i = 27, 31
        ALLOCATE (SideBandFrac(i)%lower(MBchans))
        ALLOCATE (SideBandFrac(i)%upper(MBchans))
        ALLOCATE (BandFreq(i)%lower(MBchans))
        ALLOCATE (BandFreq(i)%upper(MBchans))
+       ALLOCATE (BandAlt(i)%Meters(MBchans))
+       ALLOCATE (BandAlt(i)%indx(MBchans))
     ENDDO
     DO i = 32, 34
        ALLOCATE (SideBandFrac(i)%lower(WFchans))
        ALLOCATE (SideBandFrac(i)%upper(WFchans))
        ALLOCATE (BandFreq(i)%lower(WFchans))
        ALLOCATE (BandFreq(i)%upper(WFchans))
+       ALLOCATE (BandAlt(i)%Meters(WFchans))
+       ALLOCATE (BandAlt(i)%indx(WFchans))
     ENDDO
 
 !! Allocate and Initialize Spillover Loss
@@ -93,18 +114,22 @@ CONTAINS
     DO i = 1, 31
        ALLOCATE (SpilloverLoss(i)%lower(3,1))
        ALLOCATE (SpilloverLoss(i)%upper(3,1))
+       ALLOCATE (SpilloverLoss(i)%eta_TSL(3,1))
        SpilloverLoss(i)%lower = 0.0
        SpilloverLoss(i)%upper = 0.0
+       SpilloverLoss(i)%eta_TSL = 0.0
     ENDDO
 
     DO i = 32, 34
        ALLOCATE (SpilloverLoss(i)%lower(3,4))
        ALLOCATE (SpilloverLoss(i)%upper(3,4))
+       ALLOCATE (SpilloverLoss(i)%eta_TSL(3,4))
        SpilloverLoss(i)%lower = 0.0
        SpilloverLoss(i)%upper = 0.0
+       SpilloverLoss(i)%eta_TSL = 0.0
     ENDDO
 
-    DO i = 1, 34
+    DO i = 1, NumBands
        CALL BandFreqs (i, BandFreq(i)%lower, BandFreq(i)%upper)
     ENDDO
 
@@ -126,7 +151,7 @@ CONTAINS
        IF (line(1:1) /= ";") EXIT
     ENDDO
 
-    DO i = 1, 34
+    DO i = 1, NumBands
        READ (unit, '(A)') line
        READ (unit, *) SideBandFrac(i)%lower
        READ (unit, '(A)') line
@@ -136,6 +161,60 @@ CONTAINS
   END SUBROUTINE LoadSidebandFracs
 
 !=============================================================================
+  SUBROUTINE LoadBandAlts (unit)
+!=============================================================================
+
+    INTEGER :: unit
+
+    CHARACTER (len=80) :: line
+    INTEGER :: band, i, n
+    REAL :: alt
+
+    nAlts = 0; MinAlt = -1.0    ! No altitudes yet
+
+! Read comments until start of data
+
+    DO
+       READ (unit, '(A)') line
+       IF (line(1:1) /= ";") EXIT
+    ENDDO
+
+    DO band = 1, NumBands
+       READ (unit, '(A)') line
+       READ (unit, *) BandAlt(band)%Meters
+       BandAlt(band)%Meters = BandAlt(band)%Meters * 1.0e03   ! Input is in Km
+       BandAlt(Band)%indx = 0
+       DO n = 1, SIZE (BandAlt(band)%Meters)
+          alt = BandAlt(band)%Meters(n)
+          IF (alt > 0.0) THEN       ! Good altitude
+             IF (nAlts > 0) THEN    ! Check if already there or add to table
+                IF (COUNT(MinAlt(1:nAlts) == alt) == 0) THEN  ! New entry
+                   nAlts = nAlts + 1
+                   IF (nAlts > MaxAlts) THEN
+                      PRINT *, 'Increase MaxAlts!'
+                      STOP
+                   ENDIF
+                   MinAlt(nAlts) = alt
+                ENDIF
+             ELSE
+                nAlts = 1
+                MinAlt(nAlts) = alt
+             ENDIF
+             DO i = 1, nAlts
+                IF (alt == MinAlt(i)) THEN
+                   BandAlt(band)%indx(n) = i
+                   EXIT
+                ENDIF
+             ENDDO
+          ELSE
+             BandAlt(band)%Meters(n) = HUGE (1.0)   ! Huge value for tests
+          ENDIF
+       ENDDO
+    ENDDO
+
+  END SUBROUTINE LoadBandAlts
+
+!=============================================================================
   SUBROUTINE LoadSpilloverLoss (unit)
 !=============================================================================
 
@@ -143,7 +222,7 @@ CONTAINS
 
     CHARACTER (len=80) :: line
     INTEGER :: bandno, chan, ios
-    REAL :: h(3)
+    REAL :: h(3), eta(3)
 
     READ (unit, '(A)') line
 
@@ -153,15 +232,31 @@ CONTAINS
        chan = 1
        READ (line(1:2), *) bandno
        READ (line(4:4), *, iostat=ios) chan
-       READ (line(25:), *) h
+       READ (line(25:), *) h, eta
        IF (INDEX (line, "L") /= 0) THEN
           SpilloverLoss(bandno)%lower(:,chan) = h
        ELSE
           SpilloverLoss(bandno)%upper(:,chan) = h
        ENDIF
+       SpilloverLoss(bandno)%eta_TSL(:,chan) = eta
     ENDDO
 
   END SUBROUTINE LoadSpilloverLoss
+
+!=============================================================================
+  SUBROUTINE GetEta_TSL (bandno, channo, eta_TSL)
+!=============================================================================
+
+    INTEGER, INTENT (IN) :: bandno, channo
+    REAL, INTENT (OUT) :: eta_TSL(3)
+
+    IF (bandno < 32) THEN    ! All channels have same ets values
+       eta_TSL = SpilloverLoss(bandno)%eta_TSL(:,1)
+    ELSE
+       eta_TSL = SpilloverLoss(bandno)%eta_TSL(:,channo)
+    ENDIF
+
+  END SUBROUTINE
 
 !=============================================================================
   SUBROUTINE BandFreqs (band, lsbf, usbf)
@@ -343,17 +438,20 @@ CONTAINS
 
   END SUBROUTINE LoadDefltChi2
 
-  logical function not_used_here()
+  LOGICAL FUNCTION not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
+  CHARACTER (len=*), PARAMETER :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  END FUNCTION not_used_here
 END MODULE BandTbls
 
 ! $Log$
+! Revision 2.7  2006/03/24 15:06:25  perun
+! Add Band Altitudes table and routines
+!
 ! Revision 2.6  2005/06/23 18:41:35  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
