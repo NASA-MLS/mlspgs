@@ -1,4 +1,4 @@
-! Copyright 2005, by the California Institute of Technology. ALL
+! Copyright 2006, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
 ! at the California Institute of Technology.
@@ -13,7 +13,8 @@
 MODULE SpectralBaseline ! Determine Spectral baseline radiances 
 !=============================================================================
 
-  USE MLSL1Common, ONLY: BandChans, NumBands
+  USE MLSL1Common, ONLY: BandChans, NumBands, L1BFileInfo, FBchans, MBchans, &
+       WFchans, DACSchans, Bandwidth, LO1
   USE L1BData, ONLY: L1BData_T, ReadL1BData, DeallocateL1BData
   USE MLSL1Rad, ONLY: Rad_name
 
@@ -25,13 +26,13 @@ MODULE SpectralBaseline ! Determine Spectral baseline radiances
   PUBLIC :: Baseline_T, Baseline, BaselineAC, BaselineDC 
 
 !---------------------------- RCS Module Info ------------------------------
-  character (len=*), private, parameter :: ModuleName= &
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  PRIVATE :: not_used_here 
 !---------------------------------------------------------------------------
 
   TYPE Baseline_T
-     REAL, DIMENSION(:), POINTER :: offset, precision
+     REAL, DIMENSION(:), POINTER :: offset, PRECISION
   END TYPE Baseline_T
 
   TYPE (Baseline_T) :: Baseline(NumBands), BaselineAC(NumBands), &
@@ -134,7 +135,6 @@ CONTAINS
        rad, prec)
 !=============================================================================
 
-    USE MLSL1Common, ONLY: Bandwidth, DACSchans, FBchans, MBchans, WFchans, LO1
     USE MLSL1Rad, ONLY : RadPwr
     USE MLSL1Config, ONLY: L1Config
 
@@ -204,16 +204,16 @@ CONTAINS
 !=============================================================================
 
     USE MLSL1Config, ONLY: MIFsGHz
-    USE Calibration, ONLY: CalWin, MAFdata_T
+    USE Calibration, ONLY: CalWin, MAFdata_T, slimb_type
     USE MLSL1Rad, ONLY : L1Brad
 
-    INTEGER :: i, bandno, chans, radNum
+    INTEGER :: i, bandno, chans, radNum, spectNum
     LOGICAL :: MIFmatch(MIFsGHz)   ! "good" matching MIF altitudes for non-DACS
     LOGICAL :: MIFmatchDACS(MIFsGHz, 5) ! "good" matching MIF altitudes for DACS
     TYPE (MAFdata_T), POINTER :: CurMAFdata
     REAL :: alt(MIFsGHz)
 
-print *, 'doing baseline...'
+PRINT *, 'doing baseline...'
 
     CurMAFdata => CalWin%MAFdata(CalWin%central)
     alt = CurMAFdata%SciPkt(0:(MIFsGHz-1))%altg
@@ -239,26 +239,52 @@ print *, 'doing baseline...'
        bandno = L1Brad(i)%bandno
        chans = SIZE (L1Brad(i)%value(:,1))
        radNum = l1brad(i)%signal%radiometerNumber
+       spectNum = l1brad(i)%signal%spectrometerNumber
 
        CALL CalcBaselineDC (bandno, radNum, chans, MIFmatch, MIFmatchDACS, &
             L1Brad(i)%value, L1Brad(i)%precision)
 
        CALL CalcBaselineAC (bandno)
 
+! Clear AC/DC baselines for slimb_types:
+
+       SELECT CASE (Chans)
+       CASE (FBchans)
+          WHERE (slimb_type%FB(:,spectNum))
+             BaselineAC(bandno)%offset = 0.0
+             BaselineDC(bandno)%offset = 0.0
+          END WHERE
+       CASE (MBchans)
+          WHERE (slimb_type%MB(:,spectNum))
+             BaselineAC(bandno)%offset = 0.0
+             BaselineDC(bandno)%offset = 0.0
+          END WHERE
+       CASE (WFchans)
+          WHERE (slimb_type%WF(:,spectNum))
+             BaselineAC(bandno)%offset = 0.0
+             BaselineDC(bandno)%offset = 0.0
+          END WHERE
+       CASE (DACSchans)
+          WHERE (slimb_type%DACS(:,spectNum))
+             BaselineAC(bandno)%offset = 0.0
+             BaselineDC(bandno)%offset = 0.0
+          END WHERE
+       END SELECT
+
 ! Combine AC/DC and make baseline negative:
 
        Baseline(bandno)%offset = -BaselineDC(bandno)%offset - &
             BaselineAC(bandno)%offset
+       Baseline(bandno)%offset = 0.0
 
     ENDDO
 
-  END SUBROUTINE CalcBaseline
+ END SUBROUTINE CalcBaseline
 
 !=============================================================================
   SUBROUTINE UpdateBaselines
 !=============================================================================
 
-    USE MLSL1Common, ONLY: L1BFileInfo, FBchans, MBchans, WFchans, DACSchans
     USE MLSCommon, ONLY: DEFAULTUNDEFINEDVALUE
     USE MLSL1Config, ONLY: L1Config
     USE MLSL1Rad, ONLY: Rad_name
@@ -287,7 +313,7 @@ print *, 'doing baseline...'
     TYPE (L1BData_T) :: L1BData
     TYPE (DataProducts_T) :: baselineDS  
 
-print *, 'Updating baselines...'
+PRINT *, 'Updating baselines...'
 
 ! Set up for HDF output:
 
@@ -478,14 +504,14 @@ print *, 'Updating baselines...'
                 resid = 0.0
                 rms_mask = .FALSE.    ! assume all bad
                 WHERE (baselineDC(i,w1:w2) /= FILLVALUE)   ! check for FILLs
-                   rms_mask = .TRUE.
+                   rms_mask(1:nwin) = .TRUE.
                 ENDWHERE
                 ngood = COUNT (rms_mask)
                 IF (ngood > 1) THEN
                    DCmean = SUM (baselineDC(i,w1:w2), rms_mask(1:nwin)) &
                         / ngood
-                   WHERE (rms_mask)
-                      resid = baselineDC(i,w1:w2) - DCmean
+                   WHERE (rms_mask(w1:w2))
+                      resid(1:nwin) = baselineDC(i,w1:w2) - DCmean
                    ENDWHERE
                    DC_rms(i) = ((SUM (resid**2) - SUM (resid)**2 / ngood) / &
                         (ngood - 1))**0.5
@@ -499,8 +525,16 @@ print *, 'Updating baselines...'
           IF (ANY (baselineAC(:,mindx) == FILLVALUE)) THEN
              Baseline(bandno)%offset = FILLVALUE
           ELSE
+
              Baseline(bandno)%offset = -baselineAC(1:noChans,mindx) - &
                   DC_avg(1:noChans)
+
+! Reset possible "slimb" type data channels (AC and DC both 0.0):
+
+             WHERE (baselineAC(1:noChans,mindx) == 0.0 .AND. &
+                  baselineDC(1:noChans,mindx) == 0.0)
+                Baseline(bandno)%offset = 0.0
+             END WHERE
           ENDIF
           baselineDS%name = BaseName
           CALL Build_MLSAuxData (sd_id, baselineDS, &
@@ -579,17 +613,21 @@ print *, 'Updating baselines...'
   END SUBROUTINE LoadBaselineAC
 
 !=============================================================================
-  logical function not_used_here()
+  LOGICAL FUNCTION not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
+  CHARACTER (len=*), PARAMETER :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  END FUNCTION not_used_here
+
 END MODULE SpectralBaseline
 !=============================================================================
 ! $Log$
+! Revision 2.5  2006/03/24 15:19:20  perun
+! Set Space/Limb data baselines to 0.0
+!
 ! Revision 2.4  2005/06/23 18:41:36  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
