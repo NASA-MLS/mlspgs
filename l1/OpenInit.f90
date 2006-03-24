@@ -1,4 +1,4 @@
-! Copyright 2005, by the California Institute of Technology. ALL
+! Copyright 2006, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
 ! at the California Institute of Technology.
@@ -30,9 +30,9 @@ MODULE OpenInit ! Opens input L0 files and output L1 files
   CHARACTER (LEN=1), POINTER :: anTextPCF(:), anTextCF(:)
 
 !---------------------------- RCS Module Info ------------------------------
-  character (len=*), private, parameter :: ModuleName= &
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  PRIVATE :: not_used_here 
 !---------------------------------------------------------------------------
 
 CONTAINS
@@ -48,25 +48,28 @@ CONTAINS
          mlspcf_defltzeros_start, mlspcf_defltzeros_end, &
          mlspcf_defltgains_start, mlspcf_sidebandfrac_start, &
          mlspcf_spilloverloss_start, mlspcf_defltchi2_start, &
-         mlspcf_defltbaselineAC_start, mlspcf_l1b_log_start
+         mlspcf_defltbaselineAC_start, mlspcf_l1b_log_start, &
+         mlspcf_bandalts_start
     USE PCFHdr, ONLY: CreatePCFAnnotation, GlobalAttributes, FillTAI93Attribute
     USE dates_module, ONLY: utc_to_yyyymmdd
     USE L0_sci_tbls, ONLY: InitSciPointers
     USE MLSL1Common, ONLY: L1BFileInfo, deflt_gain, deflt_zero, L1ProgType, &
-         THzType, THz_SwMir_Range, THzTol
+         THzType, THz_SwMir_Range, THzTol, BandSwitch
     USE Orbit, ONLY: Orbit_init, altG, altT, ascTAI, dscTAI, numOrb, &
          orbIncline, orbitNumber, scanRate, scanRateT
     USE Calibration, ONLY: InitCalibWindow
     USE EngTbls, ONLY: Load_Eng_tbls
     USE BandTbls, ONLY: Load_Band_tbls, LoadSidebandFracs, LoadSpilloverLoss, &
-         LoadDefltChi2
+         LoadDefltChi2, LoadBandAlts
     USE MLSL1Rad, ONLY: InitRad
     USE MLSSignalNomenclature, ONLY: ReadSignalsDatabase
     USE OutputL1B, ONLY: OutputL1BOA_create
     USE FOV, ONLY: InitFOVconsts
     USE SpectralBaseline, ONLY: InitBaseline, LoadBaselineAC
+    USE BandSwitches, ONLY: GetBandSwitches
 
     CHARACTER (LEN=132) :: PhysicalFilename
+    CHARACTER (LEN=28) :: asciiUTC_A
 
     INTEGER :: ios, lid, noMAFS, returnStatus, version, tbl_unit
 
@@ -74,7 +77,8 @@ CONTAINS
 
     REAL :: MAF_dur
 
-    INTEGER, EXTERNAL :: PGS_TD_UTCtoTAI, PGS_IO_Gen_Track_LUN
+    INTEGER, EXTERNAL :: PGS_TD_UTCtoTAI,  PGS_TD_TAItoUTC, &
+         PGS_TD_ASCIItime_AtoB, PGS_IO_Gen_Track_LUN
 
     TYPE (TAI93_Range_T) :: procRange
 
@@ -164,14 +168,25 @@ CONTAINS
 
 !! TAI Processing range
 
+    MAF_dur = L1Config%Calib%MIF_duration * L1Config%Calib%MIFsPerMAF
+
     returnStatus = PGS_TD_UTCtoTAI (L1PCF%startUTC, procRange%startTime)
     returnStatus = PGS_TD_UTCtoTAI (L1PCF%endUTC, procRange%endTime)
+
+    procRange%startTime = procRange%startTime - MAF_dur * (0.5 + &
+         L1Config%Calib%MAFexpandNum)
+    procRange%endTime = procRange%endTime +  MAF_dur * (0.5 + &
+         L1Config%Calib%MAFexpandNum)
+
+    returnStatus = PGS_TD_TAItoUTC (procRange%startTime, asciiUTC_A)
+    returnStatus = PGS_TD_ASCIItime_AtoB (asciiUTC_A, L1PCF%startUTC)
+    returnStatus = PGS_TD_TAItoUTC (procRange%endTime, asciiUTC_A)
+    returnStatus = PGS_TD_ASCIItime_AtoB (asciiUTC_A, L1PCF%endUTC)
 
     L1Config%Input_TAI = procRange
 
 !! Store appropriate user inputs as global attributes
 
-    ! GlobalAttributes%InputVersion = L1PCF%OutputVersion
     GlobalAttributes%StartUTC = L1PCF%StartUTC
     GlobalAttributes%EndUTC = L1PCF%EndUTC
     GlobalAttributes%ProcessLevel = '1'
@@ -180,8 +195,6 @@ CONTAINS
       & GlobalAttributes%GranuleYear, GlobalAttributes%GranuleMonth, &
       & GlobalAttributes%GranuleDay) 
     CALL FillTAI93Attribute
-
-    MAF_dur = L1Config%Calib%MIF_duration * L1Config%Calib%MIFsPerMAF
 
 !! Will determine the expanded time later!!!
 
@@ -200,6 +213,11 @@ CONTAINS
        L1Config%Expanded_TAI%endTime = L1Config%Expanded_TAI%endTime + &
             MAF_dur*1.1
     ENDIF
+
+!! Init BandSwitches:
+
+    CALL GetBandSwitches (L1Config%Expanded_TAI%startTime, BandSwitch)
+    WRITE (L1BFileInfo%LogId, *) 'Initial BandSwitches: ', BandSwitch
 
 !! Init orbit data:
 
@@ -550,6 +568,39 @@ CONTAINS
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & "Closed Default BaselineAC table file")
 
+!! Open and initialize Band Altitudes table:
+
+    version = 1
+    returnStatus = PGS_PC_getReference (mlspcf_bandalts_start, version, &
+          & PhysicalFilename)
+
+    version = 1
+    returnStatus = PGS_IO_Gen_openF (mlspcf_bandalts_start, &
+         PGSd_IO_Gen_RSeqFrm, 0, tbl_unit, version)
+    IF (returnstatus /= PGS_S_SUCCESS) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not open Band Altitudes table file: " // &
+            PhysicalFilename)
+    ENDIF
+
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & "Opened Band Altitudes table file: " // PhysicalFilename)
+
+    CALL LoadBandAlts (tbl_unit)
+
+    returnStatus = PGS_IO_Gen_CloseF (tbl_unit)
+
+    IF (ios /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName, &
+         & "Error reading Band Altitudes table file")
+
+    IF (returnstatus /= PGS_S_SUCCESS) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not close Band Altitudes table file")
+    ENDIF
+
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & "Closed Band Altitudes table file")
+
   END SUBROUTINE OpenAndInitialize
 
 !=============================================================================
@@ -726,7 +777,7 @@ CONTAINS
     USE MLSPCF1, ONLY: mlspcf_l1b_radf_start, mlspcf_l1b_radd_start, &
          mlspcf_l1b_oa_start, mlspcf_l1b_diag_start, mlspcf_l1b_radt_start, &
          mlspcf_l1b_diagT_start
-    USE MLSL1Common, ONLY: L1BFileInfo, HDFversion
+    USE MLSL1Common, ONLY: L1BFileInfo, HDFversion, SC_YPR, THz_GeodAlt, MaxMIFs
     USE MLSFiles, ONLY: MLS_openFile, MLS_closeFile
     USE MLSHDF5, ONLY: MLS_h5open
     USE L1BData, ONLY: L1BData_T, ReadL1BData, DeallocateL1BData
@@ -741,6 +792,9 @@ CONTAINS
     INTEGER :: firstMAF = 0, lastMAF = 0
     CHARACTER (LEN=*), PARAMETER :: counterMAFname = "counterMAF"
     CHARACTER (LEN=*), PARAMETER :: BO_stat_name = "/THz/BO_stat"
+    CHARACTER (LEN=*), PARAMETER :: ypr_name = "/sc/ypr"
+    CHARACTER (LEN=*), PARAMETER :: THz_GeodAlt_name = "/THz/GeodAlt"
+    CHARACTER (LEN=*), PARAMETER :: THz_GeodAltX_name = "/THz/GeodAltX"
     TYPE (L1BData_T) :: L1BOAData
 
     INTEGER, EXTERNAL :: PGS_IO_Gen_Track_LUN
@@ -837,7 +891,28 @@ CONTAINS
           CALL ReadL1BData (L1BFileInfo%OAid, BO_stat_name, L1BOAData, &
                noMAFs, Flag, firstMAF, NeverFail=.TRUE., HDFversion=5)
           ALLOCATE (THz_BO_stat(MIFsTHz,noMAFs))
-          THz_BO_stat = L1BOAData%IntField(1,:,:)
+
+          THz_BO_stat = L1BOAData%IntField(1,1:MIFsTHz,:)
+          CALL DeallocateL1BData (L1BOAData)
+
+          CALL ReadL1BData (L1BFileInfo%OAid, ypr_name, L1BOAData, &
+               noMAFs, Flag, firstMAF, NeverFail=.TRUE., HDFversion=5)
+          ALLOCATE (SC_YPR(3,0:(MaxMIFs-1),noMAFs))
+          SC_YPR(:,0:147,:) = L1BOAData%DpField(:,:,:)
+          SC_YPR(:,148,:) = SC_YPR(:,147,:)  ! extend to end MIFs
+          SC_YPR(:,149,:) = SC_YPR(:,147,:)
+          CALL DeallocateL1BData (L1BOAData)
+
+          CALL ReadL1BData (L1BFileInfo%OAid, THz_GeodAlt_name, L1BOAData, &
+               noMAFs, Flag, firstMAF, NeverFail=.TRUE., HDFversion=5)
+          ALLOCATE (THz_GeodAlt(0:(MaxMIFs-1),noMAFs))
+          THz_GeodAlt(0:124,:) = L1BOAData%DpField(1,:,:)
+          CALL DeallocateL1BData (L1BOAData)
+          CALL ReadL1BData (L1BFileInfo%OAid, THz_GeodAltX_name, L1BOAData, &
+               noMAFs, Flag, firstMAF, NeverFail=.TRUE., HDFversion=5)
+          THz_GeodAlt(125:147,:) = L1BOAData%DpField(1,:,:)
+          THz_GeodAlt(148,:) = THz_GeodAlt(147,:)  ! extend to end MIFs
+          THz_GeodAlt(149,:) = THz_GeodAlt(147,:)  ! extend to end MIFs
           CALL DeallocateL1BData (L1BOAData)
 
           CALL MLS_closeFile (L1BFileInfo%OAid, HDFversion=HDFversion)
@@ -1017,18 +1092,21 @@ CONTAINS
   END SUBROUTINE LoadChanDefaults
 
 !=============================================================================
-  logical function not_used_here()
+  LOGICAL FUNCTION not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
+  CHARACTER (len=*), PARAMETER :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  END FUNCTION not_used_here
 END MODULE OpenInit
 !=============================================================================
 
 ! $Log$
+! Revision 2.25  2006/03/24 15:14:55  perun
+! Expand processing times, init Band Altitudes table, init Band Switches and read SC_YPR and THz GeodAlts
+!
 ! Revision 2.24  2005/12/06 19:28:04  perun
 ! Added reading BO_stat for use in THz processing
 !
