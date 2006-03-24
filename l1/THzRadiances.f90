@@ -1,4 +1,4 @@
-! Copyright 2005, by the California Institute of Technology. ALL
+! Copyright 2006, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
 ! at the California Institute of Technology.
@@ -15,7 +15,7 @@ MODULE THzRadiances ! Determine radiances for the THz module
 
   USE MLSCommon, ONLY: r8
   USE MLSL1Common, ONLY: THzNum, THzChans, Deflt_chi2, BandChanBad
-  USE THzCalibration, ONLY : CalBuf, Chisq, dLlo, yTsys, nvBounds
+  USE THzCalibration, ONLY : CalBuf, nvBounds, ColdCnts, HotCnts
   USE MLSL1Rad, ONLY : THzRad
 
   IMPLICIT NONE
@@ -25,14 +25,16 @@ MODULE THzRadiances ! Determine radiances for the THz module
   PUBLIC :: ProcessLimbData
 
 !---------------------------- RCS Module Info ------------------------------
-  character (len=*), private, parameter :: ModuleName= &
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  PRIVATE :: not_used_here 
 !---------------------------------------------------------------------------
 
 CONTAINS
 
+!=============================================================================
   SUBROUTINE CalcLimbRads (nMAF, ibgn)
+!=============================================================================
 
     USE THzCalibration, ONLY : Kelvins => Cnts, VarK => VarCnts !Already Kelvins
     USE MLSL1Config, ONLY: MIFsTHz, L1Config
@@ -42,6 +44,7 @@ CONTAINS
 
     INTEGER :: i, iend, calindx, mindx, nBank, nChan, MIF_end, BandNo
     INTEGER :: limb_sw_err(MIFsTHz)
+    REAL :: MIFprecSign(MIFsTHz)
     CHARACTER(LEN=1) :: SwMirPos(MIFsTHz)
     LOGICAL :: do_chi2_err
 
@@ -57,6 +60,7 @@ CONTAINS
     ELSEWHERE
        limb_sw_err = -1
     ENDWHERE
+    MIFprecSign = CalBuf%MAFdata(calindx)%MIFprecSign(0:(MIFsTHz-1))
 
     DO nBank = 1, THzNum
 
@@ -77,7 +81,7 @@ CONTAINS
                       ! type and kind type parameter
                       THzRad(nBank)%precision(nChan,mindx) = &
                            VarK(nChan,nBank,i) * MIN ( &
-                           REAL(limb_sw_err(mindx)), &
+                           REAL(limb_sw_err(mindx)), MIFprecSign(mindx), &
                            BandChanBad%Sign(Bandno, nChan))
                    ELSE
                       THzRad(nBank)%precision(nChan,mindx) = &
@@ -96,7 +100,9 @@ CONTAINS
 
   END SUBROUTINE CalcLimbRads
 
+!=============================================================================
   SUBROUTINE ProcessLimbData
+!=============================================================================
 
     USE MLSL1Common, ONLY: L1BFileInfo, OA_counterMAF, OA_counterIndex
     USE OutputL1B, ONLY: OutputL1B_rad, OutputL1B_DiagsT
@@ -105,12 +111,13 @@ CONTAINS
     INTEGER :: MAFno, counterMAF, ibgn, nv
     REAL(r8) :: TAI
     TYPE (Reflec_T) :: Reflec
-    INTEGER, SAVE :: OrbNo = 1, MAFindex = 1
+    INTEGER, SAVE :: MAFindex = 1
 
-    print *, 'ProcessLimbData'
+    PRINT *, 'ProcessLimbData'
 
     nv = 1
     ibgn = 0
+
     DO MAFno = CalBuf%Cal_start, CalBuf%Cal_end
 
        counterMAF = CalBuf%MAFdata(MAFno)%EMAF%TotalMAF
@@ -120,7 +127,7 @@ CONTAINS
           MAFindex = MAFno
        ELSE
           IF (counterMAF < OA_counterMAF(1)) THEN
-             print *, 'counterMAF earlier than OA counterMAF!'
+             PRINT *, 'counterMAF earlier than OA counterMAF!'
              CalBuf%Cal_start = CalBuf%Cal_start + 1
              CYCLE
           ENDIF
@@ -132,39 +139,37 @@ CONTAINS
 
        CALL CalcLimbRads (MAFno, ibgn)
 
-print *, "Outputting rad for MAFno: ", MAFindex
+PRINT *, "Outputting rad for MAFno: ", MAFindex
        CALL OutputL1B_rad (MAFindex, L1BFileInfo, counterMAF, Reflec, TAI, &
             THzrad)
 
 ! Write MAF dimensioned Diags
 
        CALL OutputL1B_DiagsT (L1BFileInfo%DiagTid, MAFno=MAFindex, &
-            counterMAF=counterMAF, MAFStartTimeTAI=TAI, nvBounds=nvBounds(nv))
+            counterMAF=counterMAF, MAFStartTimeTAI=TAI, nvBounds=nvBounds(nv), &
+            ColdCnts=ColdCnts(:,:,nv), HotCnts=HotCnts(:,:,nv))
        nv = nv + 1
 
     ENDDO
 
-! Write orbit no. dimensioned Diags
-
-    CALL OutputL1B_DiagsT (L1BFileInfo%DiagTid, OrbNo=OrbNo, Chisq=Chisq, &
-         dLlo=dLlo, yTsys=yTsys)
-    OrbNo = OrbNo + 1
-
   END SUBROUTINE ProcessLimbData
 
 !=============================================================================
-  logical function not_used_here()
+  LOGICAL FUNCTION not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
+  CHARACTER (len=*), PARAMETER :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  END FUNCTION not_used_here
 END MODULE THzRadiances
 !=============================================================================
 
 ! $Log$
+! Revision 2.11  2006/03/24 15:20:25  perun
+! Pass "C"old and "H"ot counts to output routine for DIAGT file
+!
 ! Revision 2.10  2005/06/23 18:41:36  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
