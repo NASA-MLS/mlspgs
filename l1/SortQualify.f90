@@ -1,4 +1,4 @@
-! Copyright 2005, by the California Institute of Technology. ALL
+! Copyright 2006, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
 ! at the California Institute of Technology.
@@ -15,7 +15,7 @@ MODULE SortQualify ! Sort and qualify the L0 data
 
   USE MLSCommon, ONLY: r8
   USE MLSL1Common, ONLY: L1BFileInfo, MAFinfo, MaxMIFs, OA_counterMAF, &
-       OA_counterIndex
+       OA_counterIndex, ChanLogical_T
   USE L0_sci_tbls, ONLY: SciMAF
   USE EngTbls, ONLY: EngMAF
   USE Calibration, ONLY: CalWin, MAFdata_T, UpdateCalVectors, WeightsFlags_T
@@ -32,7 +32,9 @@ MODULE SortQualify ! Sort and qualify the L0 data
   PRIVATE :: not_used_here 
 !---------------------------------------------------------------------------
 
-  TYPE (MAFdata_T), POINTER :: CurMAFdata
+  TYPE (MAFdata_T), POINTER :: CurMAFdata => NULL()
+
+  REAL, PARAMETER :: BaselineAlt = 80.0e3  !!! TEMPORARY (will add to CF?)
 
 CONTAINS
 
@@ -54,6 +56,7 @@ CONTAINS
     REAL :: MAF_dur, MIF_dur
     INTEGER :: nom_MIFs
     TYPE (WeightsFlags_T) :: WeightsFlags
+    TYPE (ChanLogical_T) :: EmptyLimbAltFlag(0:(MaxMIFs-1))
     INTEGER, PARAMETER :: last_GHz_indx = MIFsGHz - 1
 
     nom_MIFs = L1Config%Calib%MIFsPerMAF
@@ -71,6 +74,25 @@ CONTAINS
     EmptyMAFdata%CalType = .FALSE.   ! Not a calibration type MAF
     EmptyMAFdata%EMAF%MIFsPerMAF = nom_MIFs
     EmptyMAFdata%WeightsFlags%recomp_MAF = .TRUE.
+
+    DO i = 0, (SIZE (EmptyLimbAltFlag) - 1)
+       EmptyLimbAltFlag(i)%FB = .FALSE.
+       EmptyLimbAltFlag(i)%MB = .FALSE.
+       EmptyLimbAltFlag(i)%WF = .FALSE.
+       EmptyLimbAltFlag(i)%DACS = .FALSE.
+    ENDDO
+
+! Clear Limb Alts numbers and minimum CalFlags :
+
+    EmptyMAFdata%LimbAltNo%FB = 0
+    EmptyMAFdata%LimbAltNo%MB = 0
+    EmptyMAFdata%LimbAltNo%WF = 0
+    EmptyMAFdata%LimbAltNo%DACS = 0
+
+    EmptyMAFdata%MinCalFlag%FB = .FALSE.
+    EmptyMAFdata%MinCalFlag%MB = .FALSE.
+    EmptyMAFdata%MinCalFlag%WF = .FALSE.
+    EmptyMAFdata%MinCalFlag%DACS = .FALSE.
 
 !! Get the next MAF's worth of data:
 
@@ -130,11 +152,19 @@ PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
        IF (CalWin%current > CalWin%size) THEN  ! Beyond the end of the window
           CalWin%MAFdata = EOSHIFT (CalWin%MAFdata, &
                (CalWin%current-CalWin%size), EmptyMAFdata)
+          CalWin%LimbAltFlag = EOSHIFT (CalWin%LimbAltFlag, &
+              (CalWin%current-CalWin%size), EmptyLimbAltFlag, dim=2)
           CalWin%current = CalWin%size
        ENDIF
     ELSE
        CalWin%MAFdata = EOSHIFT (CalWin%MAFdata, dif_MAFno, EmptyMAFdata)
+       CalWin%LimbAltFlag = EOSHIFT (CalWin%LimbAltFlag, dif_MAFno, &
+            EmptyLimbAltFlag, dim=2)
     ENDIF
+
+    DO i = 1, CalWin%current
+       CalWin%MAFdata(i)%LimbAltFlag => CalWin%LimbAltFlag(:,i)
+    ENDDO
 
     CurMAFdata => CalWin%MAFdata(CalWin%current)
 
@@ -156,6 +186,7 @@ PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
 
     CurMAFdata%SciPkt(0:last_GHz_indx)%altG = GHz_GeodAlt
     CurMAFdata%SciPkt(0:last_GHz_indx)%latG = GHz_GeodLat
+!    CurMAFdata%LimbAltFlag => CalWin%LimbAltFlag(0:,CalWin%current)
 
 ! Save GHz BO_stat for further tests:
 
@@ -186,20 +217,23 @@ PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
 !=============================================================================
 
     USE MLSL1Config, ONLY: GHz_seq, GHz_seq_use, THz_seq, THz_seq_use
-    USE MLSL1Common, ONLY: SwitchBank
+    USE MLSL1Common, ONLY: SwitchBank, MaxMIFs, L1BFileInfo, MBnum, WFnum, &
+         DACSnum, GHzNum
     USE MLSL1Rad, ONLY: BandToBanks
     USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Warning
     USE SDPToolkit, ONLY: PGS_TD_TAItoUTC
     USE OutputL1B_DataTypes, ONLY: lenG
     USE MLSStrings, ONLY: Capitalize
     USE BrightObjects_m, ONLY: Test_BO_stat, BO_Match
+    USE BandTbls, ONLY: BandAlt
  
 !! Qualify the Current MAF data in the cal window
 
     CHARACTER(len=1) :: GHz_sw_pos, THz_sw_pos
     CHARACTER(len=80) :: msg
     CHARACTER(len=27) :: asciiUTC
-    INTEGER :: MIF, last_MIF, i, band(2), bank(2), n, bno, stat, sw
+    INTEGER :: MIF, last_MIF, i, band(2), bandno, bank(2), bankno, n, bno, &
+         stat, sw
     LOGICAL :: bandMask(150)   ! large enough for the maximum MIFs
     CHARACTER(len=1), PARAMETER :: TargetType = "T" !! Primary target type
     CHARACTER(len=1), PARAMETER :: discard = "D"
@@ -209,6 +243,7 @@ PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
     INTEGER, PARAMETER :: MaxMIFno = (MaxMIFs - 1)
 
     CurMAFdata => CalWin%MAFdata(CalWin%current)
+
 PRINT *, 'Data:', CurMAFdata%SciPkt%GHz_sw_pos
 
 !! Initialize MIF Rad Precision signs:
@@ -284,9 +319,9 @@ PRINT *, 'Data:', CurMAFdata%SciPkt%GHz_sw_pos
              GHz_sw_pos = discard
           ENDIF
        ELSE IF (GHz_seq_use == override) THEN   ! Type Override
-          IF (GHz_sw_pos /= discard) THEN       ! Override if not a discard
+          !IF (GHz_sw_pos /= discard) THEN       ! Override if not a discard
              GHz_sw_pos = GHz_seq(MIF)
-          ENDIF
+          !ENDIF
        ENDIF
 
        IF (THz_seq_use == match) THEN           ! Type Match
@@ -294,9 +329,9 @@ PRINT *, 'Data:', CurMAFdata%SciPkt%GHz_sw_pos
              THz_sw_pos = discard
           ENDIF
        ELSE IF (THz_seq_use == override) THEN   ! Type Override
-          IF (THz_sw_pos /= discard) THEN       ! Override if not a discard
+          !IF (THz_sw_pos /= discard) THEN       ! Override if not a discard
              THz_sw_pos = THz_seq(MIF)
-          ENDIF
+          !ENDIF
        ENDIF
 
        !! GHz Module:
@@ -389,7 +424,7 @@ PRINT *, 'Sort:', CurMAFdata%ChanType(0:149)%FB(1,1)
        CALL MLSMessage (MLSMSG_Warning, ModuleName, TRIM(msg)//' at '//asciiUTC)
        WRITE (L1BFileInfo%LogId, *) ''
        WRITE (L1BFileInfo%LogId, *) TRIM(msg)//' at MAF UTC '//asciiUTC
-       WHERE (BO_Match%InFOV(:,n))
+       WHERE (BO_Match%InFOV(:,n) .AND. CurMAFdata%MIFprecSign > 0.0)
           CurMAFdata%MIFprecSign = BO_Match%PrecScale(n)   ! sign of precision
        ENDWHERE
     ENDDO
@@ -453,19 +488,108 @@ PRINT *, 'switch MAF: ', CurMAFdata%SciPkt(0)%MAFno
        ENDIF
     ENDDO
 
+! Set Limb alt flags
+
+    DO MIF = 0, last_MIF !! Check each packet
+
+       DO bankno = 1, GHzNum
+
+          SELECT CASE (bankno)
+          CASE (3)
+             bandno = CurMAFdata%SciPkt(MIF)%BandSwitch(2)
+          CASE (8)
+             bandno = CurMAFdata%SciPkt(MIF)%BandSwitch(3)
+          CASE (12)
+             bandno = CurMAFdata%SciPkt(MIF)%BandSwitch(4)
+          CASE default
+             bandno = bankno
+          END SELECT
+
+          WHERE (CurMAFdata%SciPkt(MIF)%altG > BandAlt(bandno)%Meters .AND. &
+               (CurMAFdata%MIFprecSign(MIF) > 0.0))
+             CurMAFdata%LimbAltFlag(MIF)%FB(:,bankno) = .TRUE.
+             WHERE (CurMAFdata%LimbAltFlag(MIF)%FB(:,bankno))
+                CurMAFdata%LimbAltNo%FB(:,bankno) = &
+                     CurMAFdata%LimbAltNo%FB(:,bankno) + 1
+             ENDWHERE
+          ELSEWHERE
+             CurMAFdata%LimbAltFlag(MIF)%FB(:,bankno) = .FALSE.
+          ENDWHERE
+          CurMAFdata%LimbAltIndx%FB(:,bankno) = BandAlt(bandno)%indx
+
+       ENDDO
+
+       DO bankno = 1, MBnum
+          bandno = bankno + 26
+
+          WHERE (CurMAFdata%SciPkt(MIF)%altG > BandAlt(bandno)%Meters .AND. &
+               (CurMAFdata%MIFprecSign(MIF) > 0.0))
+             CurMAFdata%LimbAltFlag(MIF)%MB(:,bankno) = .TRUE.
+             WHERE (CurMAFdata%LimbAltFlag(MIF)%MB(:,bankno))
+                CurMAFdata%LimbAltNo%MB(:,bankno) = &
+                     CurMAFdata%LimbAltNo%MB(:,bankno) + 1
+             ENDWHERE
+          ELSEWHERE
+             CurMAFdata%LimbAltFlag(MIF)%MB(:,bankno) = .FALSE.
+          ENDWHERE
+          CurMAFdata%LimbAltIndx%MB(:,bankno) = BandAlt(bandno)%indx
+
+       ENDDO
+
+       DO bankno = 1, WFnum
+          bandno = bankno + 31
+
+          WHERE (CurMAFdata%SciPkt(MIF)%altG > BandAlt(bandno)%Meters .AND. &
+               (CurMAFdata%MIFprecSign(MIF) > 0.0))
+             CurMAFdata%LimbAltFlag(MIF)%WF(:,bankno) = .TRUE.
+             WHERE (CurMAFdata%LimbAltFlag(MIF)%WF(:,bankno))
+                CurMAFdata%LimbAltNo%WF(:,bankno) = &
+                     CurMAFdata%LimbAltNo%WF(:,bankno) + 1
+             ENDWHERE
+          ELSEWHERE
+             CurMAFdata%LimbAltFlag(MIF)%WF(:,bankno) = .FALSE.
+          ENDWHERE
+          CurMAFdata%LimbAltIndx%WF(:,bankno) = BandAlt(bandno)%indx
+
+       ENDDO
+
+       DO bankno = 1, DACSnum
+          IF (bankno == 4) THEN
+             bandno = CurMAFdata%SciPkt(MIF)%BandSwitch(1)
+          ELSE
+             bandno = bankno + 21
+          ENDIF
+
+          WHERE (CurMAFdata%SciPkt(MIF)%altG > BandAlt(bandno)%Meters .AND. &
+               (CurMAFdata%MIFprecSign(MIF) > 0.0))
+             CurMAFdata%LimbAltFlag(MIF)%DACS(:,bankno) = .TRUE.
+             WHERE (CurMAFdata%LimbAltFlag(MIF)%DACS(:,bankno))
+                CurMAFdata%LimbAltNo%DACS(:,bankno) = &
+                     CurMAFdata%LimbAltNo%DACS(:,bankno) + 1
+             ENDWHERE
+          ELSEWHERE
+             CurMAFdata%LimbAltFlag(MIF)%DACS(:,bankno) = .FALSE.
+          ENDWHERE
+          CurMAFdata%LimbAltIndx%DACS(:,bankno) = BandAlt(bandno)%indx
+
+       ENDDO
+    ENDDO
+
   END SUBROUTINE QualifyCurrentMAF
 
 !=============================================================================
   SUBROUTINE QualifyWindow
 !=============================================================================
 
-  USE MLSL1Common, ONLY: MBnum, WFnum, DACSnum, GHzNum
+  USE MLSL1Common, ONLY: MBnum, WFnum, DACSnum, GHzNum, FBchans, MBchans, &
+       WFchans, DACSchans
+  USE MLSL1Config, ONLY: L1Config
 
 !! Qualify the calibration window for spikes, walls, etc.
 
     INTEGER, PARAMETER :: MaxWin = 10
     INTEGER :: i, indx(MaxWin) = (/ (i, i=1, MaxWin) /), wallindx(MaxWin)
-    INTEGER :: bank, MIF, minwall, maxwall
+    INTEGER :: bank, MIF, minwall, maxwall, mincals
     INTEGER :: cal_range(2), central, current
 
 !! Update start/end indexes of each MAF in the calibration window
@@ -475,6 +599,7 @@ PRINT *, 'switch MAF: ', CurMAFdata%SciPkt(0)%MAFno
     cal_range(1) = CalWin%MAFdata(1)%start_index
     cal_range(2) = CalWin%MAFdata(current)%end_index
     central = CalWin%central
+    mincals = L1Config%Calib%MinSpaceLimbs
 
     DO bank = 1, GHzNum
 
@@ -513,6 +638,14 @@ PRINT *, 'bank, wall: ', bank, CalWin%MAFdata%BankWall%FB(bank)
        ELSE
           CalWin%MAFdata(central)%BankCalInd%FB(bank) = cal_range
        ENDIF
+
+       CalWin%MAFdata(current)%MinCalFlag%FB(:,bank) = .FALSE.
+       DO i = 1, FBchans
+          IF (ALL (CalWin%MAFdata%LimbAltNo%FB(i,bank) > mincals)) THEN
+             CalWin%MAFdata%MinCalFlag%FB(i,bank) = .TRUE.
+          ENDIF
+       ENDDO
+
     ENDDO
 
     DO bank = 1, MBnum
@@ -547,6 +680,14 @@ PRINT *, 'bank, wall: ', bank, CalWin%MAFdata%BankWall%FB(bank)
        ELSE
           CalWin%MAFdata(central)%BankCalInd%MB(bank) = cal_range
        ENDIF
+
+       CalWin%MAFdata(current)%MinCalFlag%MB(:,bank) = .FALSE.
+       DO i = 1, MBchans
+          IF (ALL (CalWin%MAFdata%LimbAltNo%MB(i,bank) > mincals)) THEN
+             CalWin%MAFdata%MinCalFlag%MB(i,bank) = .TRUE.
+          ENDIF
+       ENDDO
+
     ENDDO
 
     DO bank = 1, WFnum
@@ -581,6 +722,14 @@ PRINT *, 'bank, wall: ', bank, CalWin%MAFdata%BankWall%FB(bank)
        ELSE
           CalWin%MAFdata(central)%BankCalInd%WF(bank) = cal_range
        ENDIF
+
+       CalWin%MAFdata(current)%MinCalFlag%WF(:,bank) = .FALSE.
+       DO i = 1, WFchans
+          IF (ALL (CalWin%MAFdata%LimbAltNo%WF(i,bank) > mincals)) THEN
+             CalWin%MAFdata%MinCalFlag%WF(i,bank) = .TRUE.
+          ENDIF
+       ENDDO
+
     ENDDO
 
     DO bank = 1, DACSnum
@@ -616,7 +765,15 @@ PRINT *, 'DACS, wall: ', bank, CalWin%MAFdata%BankWall%DACS(bank)
        ELSE
           CalWin%MAFdata(central)%BankCalInd%DACS(bank) = cal_range
        ENDIF
-    ENDDO
+ 
+       CalWin%MAFdata(current)%MinCalFlag%DACS(:,bank) = .FALSE.
+       DO i = 1, DACSchans
+          IF (ALL (CalWin%MAFdata%LimbAltNo%DACS(i,bank) > mincals)) THEN
+             CalWin%MAFdata%MinCalFlag%DACS(i,bank) = .TRUE.
+          ENDIF
+       ENDDO
+
+   ENDDO
 
   END SUBROUTINE QualifyWindow
 
@@ -654,10 +811,14 @@ PRINT *, 'DACS, wall: ', bank, CalWin%MAFdata%BankWall%DACS(bank)
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
   END FUNCTION not_used_here
+
 END MODULE SortQualify
 !=============================================================================
 
 ! $Log$
+! Revision 2.19  2006/03/24 15:18:20  perun
+! Add sorting based on limb altitudes and remove criteria regarding overriding "discard" MIFs
+!
 ! Revision 2.18  2005/12/06 19:29:22  perun
 ! Removed call to Flag_Bright_Objects and added testing BO_stat
 !

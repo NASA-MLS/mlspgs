@@ -1,4 +1,4 @@
-! Copyright 2005, by the California Institute of Technology. ALL
+! Copyright 2006, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
 ! at the California Institute of Technology.
@@ -28,9 +28,9 @@ MODULE OutputL1B
        OutputL1B_DiagsT, OutputL1B_Chi2
 
 !---------------------------- RCS Module Info ------------------------------
-  character (len=*), private, parameter :: ModuleName= &
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  PRIVATE :: not_used_here 
 !---------------------------------------------------------------------------
 
   REAL(r8), PARAMETER :: TAItoGIRD = 1104537627.0d00
@@ -290,6 +290,9 @@ CONTAINS
     dataset%name      = 'THz/GeodAlt       '
     dataset%data_type = 'double            '
     CALL Build_MLSAuxData (sd_id, dataset, tp%tpGeodAlt, lastIndex=noMAF)
+    dataset%name      = 'THz/GeodAltX      '
+    dataset%data_type = 'double            '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%tpGeodAltX, lastIndex=noMAF)
     dataset%name      = 'THz/GeodLat       '
     dataset%data_type = 'real              '
     CALL Build_MLSAuxData (sd_id, dataset, tp%tpGeodLat, lastIndex=noMAF)
@@ -519,6 +522,17 @@ CONTAINS
           CALL Build_MLSAuxData (sd_id, dataset, rad(i)%precision, &
                lastIndex=noMAF, dims=dims, fill_value=RAD_ERR_FILL)
 !-----------------------------------------------------------------------------
+
+! Output diagnostic offsets:
+
+          IF (L1Config%Output%WriteDiagOffsets) THEN
+             dataset%name = TRIM(name) // ' Poffset'
+             CALL Build_MLSAuxData (sdId%DiagId, dataset, rad(i)%Poffset, &
+                  lastIndex=noMAF, dims=dims, fill_value=RAD_FILL)
+             dataset%name = TRIM(name) // ' ModelOffset'
+             CALL Build_MLSAuxData (sdId%DiagId, dataset, rad(i)%ModelOffset, &
+                  lastIndex=noMAF, dims=dims, fill_value=RAD_FILL)
+          ENDIF
 
 ! Output baselines
 
@@ -777,7 +791,7 @@ CONTAINS
 
 !=============================================================================
   SUBROUTINE OutputL1B_diagsT (sd_Id, MAFno, counterMAF, MAFStartTimeTAI, &
-       nvBounds, OrbNo, Chisq, dLlo, yTsys)
+       nvBounds, OrbNo, Chisq, dLlo, yTsys, ColdCnts, HotCnts)
 !=============================================================================
 
     USE MLSL1Common, ONLY: THzchans, THzNum
@@ -786,6 +800,7 @@ CONTAINS
     INTEGER, INTENT(IN), OPTIONAL :: counterMAF, MAFno, nvBounds, OrbNo
     REAL(r8), INTENT (IN), OPTIONAL :: MAFStartTimeTAI
     REAL(r8), DIMENSION(:,:), INTENT (IN), OPTIONAL :: Chisq, dLlo, yTsys
+    REAL, DIMENSION(:,:), INTENT (IN), OPTIONAL :: ColdCnts, HotCnts
 
     INTEGER :: dims(3), status
     TYPE (DataProducts_T) :: dataset
@@ -830,6 +845,35 @@ CONTAINS
 
     ENDIF
 
+    IF (PRESENT (ColdCnts) .AND. PRESENT (MAFno)) THEN
+
+       DEALLOCATE (dataset%Dimensions, stat=status)
+       ALLOCATE (dataset%Dimensions(3), stat=status)
+       dataset%name      = 'ColdCnts          '
+       dataset%data_type = 'real              '
+       dataset%Dimensions(1) = 'THzChan'
+       dataset%Dimensions(2) = 'THzBand'
+       dataset%Dimensions(3) = 'MAF'
+       CALL Build_MLSAuxData (sd_Id, dataset, ColdCnts, lastIndex=MAFno, &
+            dims=dims)
+
+    ENDIF
+
+    IF (PRESENT (HotCnts) .AND. PRESENT (MAFno)) THEN
+
+       DEALLOCATE (dataset%Dimensions, stat=status)
+       ALLOCATE (dataset%Dimensions(3), stat=status)
+       dataset%name      = 'HotCnts           '
+       dataset%data_type = 'real              '
+       dataset%Dimensions(1) = 'THzChan'
+       dataset%Dimensions(2) = 'THzBand'
+       dataset%Dimensions(3) = 'MAF'
+       CALL Build_MLSAuxData (sd_Id, dataset, HotCnts, lastIndex=MAFno, &
+            dims=dims)
+
+    ENDIF
+
+
     IF (PRESENT (Chisq) .AND. PRESENT (OrbNo)) THEN
 
        DEALLOCATE (dataset%Dimensions, stat=status)
@@ -855,7 +899,6 @@ CONTAINS
        CALL Build_MLSAuxData (sd_Id, dataset, dLlo, lastIndex=OrbNo, dims=dims)
 
     ENDIF
-
  
     IF (PRESENT (yTsys) .AND. PRESENT (OrbNo)) THEN
 
@@ -896,18 +939,21 @@ CONTAINS
  END SUBROUTINE OutputL1B_Chi2
 
 !=============================================================================
-  logical function not_used_here()
+  LOGICAL FUNCTION not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
+  CHARACTER (len=*), PARAMETER :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  END FUNCTION not_used_here
 END MODULE OutputL1B
 !=============================================================================
 
 ! $Log$
+! Revision 2.19  2006/03/24 15:16:37  perun
+! Add THz/GeodAltX to L1BOA, Poffset and ModelOffset to DIAG and ColdCnts and HotCnts to DIAGT
+!
 ! Revision 2.18  2005/12/06 19:28:55  perun
 ! Added outputting BO_stat for both GHz and THz tangent point records
 !
