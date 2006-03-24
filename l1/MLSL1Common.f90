@@ -1,4 +1,4 @@
-! Copyright 2005, by the California Institute of Technology. ALL
+! Copyright 2006, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
 ! at the California Institute of Technology.
@@ -90,6 +90,10 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
 
   INTEGER, PARAMETER :: LimbMIFs = 125
 
+  ! Maximum number of Limb altitudes for "S"pace view
+
+  INTEGER, PARAMETER :: MaxAlts = 10
+
   ! MAF information data type (start time, integration time, etc.)
 
   TYPE MAFinfo_T
@@ -126,6 +130,24 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
      REAL :: WF(WFchans,WFnum)         ! wide filters
      REAL :: DACS(DACSchans,DACSnum)   ! DACS filters
   END TYPE Chan_R_T
+
+  ! Logical type for all channels
+
+  TYPE ChanLogical_T
+     LOGICAL :: FB(FBchans,FBnum)         ! standard filter banks
+     LOGICAL :: MB(MBchans,MBnum)         ! mid-band filter banks
+     LOGICAL :: WF(WFchans,WFnum)         ! wide filters
+     LOGICAL :: DACS(DACSchans,DACSnum)   ! DACS filters
+  END TYPE ChanLogical_T
+
+  ! Integer type for all channels
+
+  TYPE ChanInt_T
+     INTEGER :: FB(FBchans,FBnum)         ! standard filter banks
+     INTEGER :: MB(MBchans,MBnum)         ! mid-band filter banks
+     INTEGER :: WF(WFchans,WFnum)         ! wide filters
+     INTEGER :: DACS(DACSchans,DACSnum)   ! DACS filters
+  END TYPE ChanInt_T
 
   TYPE Chan_R8_T
      REAL(r8) :: FB(FBchans,FBnum)         ! standard filter banks
@@ -164,6 +186,14 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
   INTEGER, DIMENSION(:), ALLOCATABLE :: OA_counterMAF
   INTEGER :: OA_counterIndex = 0     ! Nothing yet
 
+!! Spacecraft YPR used to qualify data pointing:
+
+  REAL, DIMENSION(:,:,:), ALLOCATABLE :: SC_YPR
+
+!! THz Geod Altitude use to qualify "space" views:
+
+  REAL(r8), DIMENSION(:,:), ALLOCATABLE :: THz_GeodAlt
+
 !! Factor to convert 23 bit encoder angle data (shifted by 1 bit) into degrees:
 
   REAL, PARAMETER :: DEG24 = 360.0 * 2.0**(-24)
@@ -191,7 +221,6 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
        SwMir_Range_T ("T", 59.599-GHzTol, 59.599+GHzTol), &   ! Primary target
        SwMir_Range_T ("t", 239.599-GHzTol, 239.599+GHzTol) /) ! Secondary target
   TYPE (SwMir_Range_T), TARGET :: THz_SwMir_Range(3) = (/ &
-!       SwMir_Range_T ("L", 359.39-THzTol, 359.39+THzTol), &
        SwMir_Range_T ("L", 357.0, 360.0), &
        SwMir_Range_T ("T", 178.75-THzTol, 178.75+THzTol), &
        SwMir_Range_T ("S", 356.8-THzTol, 356.8+THzTol) /)
@@ -263,6 +292,9 @@ END MODULE MLSL1Common
 !=============================================================================
 
 ! $Log$
+! Revision 2.17  2005/12/14 17:00:14  perun
+! Reset GHz switching mirror tolerance to original value
+!
 ! Revision 2.16  2005/12/06 19:25:36  perun
 ! Removed BrightObjects_T
 !
