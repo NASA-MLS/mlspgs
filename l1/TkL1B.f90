@@ -1,4 +1,4 @@
-! Copyright 2005, by the California Institute of Technology. ALL
+! Copyright 2006, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
 ! at the California Institute of Technology.
@@ -261,7 +261,8 @@ CONTAINS
     REAL, INTENT(IN) :: scAngle(numValues), encoderAngle(numValues)
     REAL(r8), INTENT(IN) :: asciiTAI
     REAL(r8), INTENT(IN) :: offsets(numValues)
-    REAL(r8), INTENT(IN) :: posECR(3,lenG), posECI(3,lenG), velECI(3,lenG)
+    REAL(r8), INTENT(IN) :: posECR(3,numValues), posECI(3,numValues), &
+         velECI(3,numValues)
     REAL, INTENT(IN) :: ecrtosc(3,3,numValues), BO_angle(:)
     REAL, INTENT(IN), OPTIONAL :: MoonToSpaceAngle
 
@@ -276,7 +277,7 @@ CONTAINS
 
     ! Variables
     CHARACTER (LEN=27) :: time
-    INTEGER :: flag, flagQ, i, returnStatus
+    INTEGER :: flag, flagQ, i, returnStatus, Xnum
     LOGICAL :: MIFbad(lenG)
     REAL(r8) :: declination, deltaAlt, deltaLat, deltaLon
     REAL(r8) :: greenwich, localApparent(lenG), rightAscension, tai
@@ -290,7 +291,7 @@ CONTAINS
     REAL(r8) :: fov_sc(3,numValues), fov_orb(3,numValues)
     REAL(r8) :: eciV(6,lenG), ecrV(6,lenG)
     REAL(r8) :: tngtVel(3), los_vec(3)
-    REAL(r8) :: MountsToFOV(3,3), ECRtoFOV(3,3), FOV_eci(3,lenG)
+    REAL(r8) :: MountsToFOV(3,3), ECRtoFOV(3,3), FOV_eci(3,numValues)
     REAL(r8) :: GroundMountsToFOV(3,3), ScToFOV(3,3)
     CHARACTER (LEN=32) :: mnemonic
     CHARACTER (LEN=480) :: msg, msr
@@ -339,16 +340,39 @@ CONTAINS
        RETURN
     ENDIF
 
+    ! Do geodetic altitude extension (MIFs after limb views) first:
+
+    Xnum = numValues - lenG   ! extra number of MIFs
+
+    ! Convert s/c vector to ECR
+    returnStatus = Pgs_csc_scToECI (spacecraftId, Xnum, asciiUTC, &
+      offsets(lenG+1:), fov_sc(:,lenG+1:), fov_eci(:,1:Xnum))
+    eciV(1:3,1:Xnum) = fov_eci(:,1:Xnum)
+    eciV(4:6,1:Xnum) = 0.0
+    returnStatus = Pgs_csc_eciToECR (xNum, asciiUTC, offsets(lenG+1:), &
+         eciV(:,1:Xnum), ecrV(:,1:Xnum))
+    CALL ReportTKStatus (returnStatus, ModuleName, errmsg)
+    ecr(:,1:Xnum) = ecrV(1:3,1:Xnum)
+
+    DO i = 1, Xnum
+      returnStatus = Pgs_csc_grazingRay (earthModel, posECR(:,i+lenG), &
+           ecr(:,i), latD(i), lon(i), tp%tpGeodAltX(i), &
+           slantRange(i), tp%tpECR(:,i), posSurf(:,i))
+      IF (returnStatus /= PGS_S_SUCCESS .AND. &
+           returnStatus /= PGSCSC_W_HIT_EARTH) tp%tpGeodAltX(i) = 0.0 ! Special?
+    ENDDO
+
     tp%scanAngle = 90.0 - ACOS (MAX (MIN (fov_orb(3,:), 1.0d0), -1.0d0)) * &
          Rad2Deg
     tp%scanRate(1) = 0.0
-    tp%scanRate(2:) = ABS(tp%scanAngle(2:) - tp%scanAngle(1:)) / offsets(2)
+    tp%scanRate(2:) = ABS(tp%scanAngle(2:) - tp%scanAngle(1:(numValues-1))) &
+         / offsets(2)
     tp%azimAngle = ATAN2 (fov_orb(2,:), fov_orb(1,:)) * Rad2Deg
 
     ! Convert s/c vector to ECR
     returnStatus = Pgs_csc_scToECI (spacecraftId, lenG, asciiUTC, &
-      offsets(1:lenG), fov_sc(:,1:lenG), fov_eci)
-    eciV(1:3,:) = fov_eci
+      offsets(1:lenG), fov_sc(:,1:lenG), fov_eci(:,1:lenG))
+    eciV(1:3,:) = fov_eci(:,1:lenG)
     eciV(4:6,:) = 0.0
     returnStatus = Pgs_csc_eciToECR (lenG, asciiUTC, offsets(1:lenG), eciV, &
          ecrV)
@@ -483,6 +507,8 @@ CONTAINS
 
     ! Determine Bright Object status:
 
+    returnStatus = Pgs_csc_scToECI (spacecraftId, numValues, asciiUTC, &
+      offsets, fov_sc, fov_eci)
     CALL Set_BO_stat (asciiUTC, offsets, BO_def, BO_angle, BO_Negate, FOV_eci, &
          tp%tpBO_stat, MoonToSpaceAngle)
 
@@ -869,6 +895,14 @@ CONTAINS
        ENDIF
     ENDIF
 
+    IF (.NOT. ASSOCIATED(tp%tpGeodAltX)) THEN   ! GeodAlt extension MIFs 125-147
+       ALLOCATE (tp%tpGeodAltX(148-lenG), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  GHz tp quantities: GeodAltX'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
+
     IF (.NOT. ASSOCIATED(tp%tpGeodLat)) THEN
        ALLOCATE (tp%tpGeodLat(lenG), STAT=error)
        IF (error /= 0) THEN
@@ -934,7 +968,7 @@ CONTAINS
     ENDIF
 
     IF (.NOT. ASSOCIATED(tp%tpBO_stat)) THEN
-       ALLOCATE (tp%tpBO_stat(lenG), STAT=error)
+       ALLOCATE (tp%tpBO_stat(nv), STAT=error)
        IF (error /= 0) THEN
           msr = MLSMSG_Allocate // '  GHz tp quantities: BO_stat'
           CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
@@ -954,22 +988,22 @@ CONTAINS
     ! Calculate GHZ tan pt record
 
     gtindx = 1
-    CALL TkL1B_tp (mafTAI, mafTime, lenG, nV, offsets, sc%scECR(:,1:lenG), &
-         sc%scECI(:,1:lenG), sc%scVelECI(:,1:lenG), scAngleG, encAngleG, tp, &
+    CALL TkL1B_tp (mafTAI, mafTime, lenG, nV, offsets, sc%scECR, &
+         sc%scECI, sc%scVelECI, scAngleG, encAngleG, tp, &
          ecrtosc, GroundToFlightMountsGHz, ScToGroundMountsGHz, &
          BO_Index_GHz(1:BO_NumGHz), BO_Angle_GHz, BO_Negate_GHz, gtindx, &
          L1Config%Calib%MoonToSpaceAngle)
     IF (L1Config%Globals%SimOA) THEN   ! correct nominal scan angles for sim
        angle_del = tp%tpGeodAlt(1) / 5200.0 * 0.1
        scAngleG = scAngleG + angle_del
-       CALL TkL1B_tp (mafTAI, mafTime, lenG, nV, offsets, sc%scECR(:,1:lenG), &
-            sc%scECI(:,1:lenG), sc%scVelECI(:,1:lenG), scAngleG, encAngleG, &
+       CALL TkL1B_tp (mafTAI, mafTime, lenG, nV, offsets, sc%scECR, &
+            sc%scECI, sc%scVelECI, scAngleG, encAngleG, &
             tp, ecrtosc, GroundToFlightMountsGHz, ScToGroundMountsGHz, &
             BO_Index_GHz(1:BO_NumGHz), BO_Angle_GHz, BO_Negate_GHz, gtindx)
        angle_del = tp%tpGeodAlt(1) / 5200.0 * 0.1
        scAngleG = scAngleG + angle_del
-       CALL TkL1B_tp (mafTAI, mafTime, lenG, nV, offsets, sc%scECR(:,1:lenG), &
-            sc%scECI(:,1:lenG), sc%scVelECI(:,1:lenG), scAngleG, encAngleG, &
+       CALL TkL1B_tp (mafTAI, mafTime, lenG, nV, offsets, sc%scECR, &
+            sc%scECI, sc%scVelECI, scAngleG, encAngleG, &
             tp, ecrtosc, GroundToFlightMountsGHz, ScToGroundMountsGHz, &
             BO_Index_GHz(1:BO_NumGHz), BO_Angle_GHz, BO_negate_GHz, gtindx)
     ENDIF
@@ -987,7 +1021,7 @@ CONTAINS
 
     ! Save for Bright Object testing:
 
-    GHz_BO_stat = tp%tpBO_stat
+    GHz_BO_stat = tp%tpBO_stat(1:lenG)
 
     ! Save pos1/pos2 prime data:
 
@@ -1012,21 +1046,21 @@ CONTAINS
     ! Calculate THz tan pt record
 
     gtindx = 2
-    CALL TkL1B_tp (mafTAI, mafTime, lenT, nV, offsets, sc%scECR(:,1:lenT), &
-         sc%scECI(:,1:lenG), sc%scVelECI(:,1:lenG), scAngleT, encAngleT, tp, &
+    CALL TkL1B_tp (mafTAI, mafTime, lenT, nV, offsets, sc%scECR, &
+         sc%scECI, sc%scVelECI, scAngleT, encAngleT, tp, &
          ecrtosc, GroundToFlightMountsTHz, ScToGroundMountsTHz, &
          BO_Index_THz(1:BO_NumTHz), BO_Angle_THz, BO_Negate_THz, gtindx)
     IF (L1Config%Globals%SimOA) THEN   ! correct nominal scan angles for sim
        angle_del = tp%tpGeodAlt(1) / 5200.0 * 0.1
        scAngleT = scAngleT + angle_del
-       CALL TkL1B_tp (mafTAI, mafTime, lenT, nV, offsets, sc%scECR(:,1:lenT), &
-            sc%scECI(:,1:lenG), sc%scVelECI(:,1:lenG), scAngleT, encAngleT, &
+       CALL TkL1B_tp (mafTAI, mafTime, lenT, nV, offsets, sc%scECR, &
+            sc%scECI, sc%scVelECI, scAngleT, encAngleT, &
             tp, ecrtosc, GroundToFlightMountsTHz, ScToGroundMountsTHz, &
             BO_Index_THz(1:BO_NumTHz), BO_Angle_THz, BO_negate_THz, gtindx)
        angle_del = tp%tpGeodAlt(1) / 5200.0 * 0.1
        scAngleT = scAngleT + angle_del
-       CALL TkL1B_tp (mafTAI, mafTime, lenG, nV, offsets, sc%scECR(:,1:lenT), &
-            sc%scECI(:,1:lenT), sc%scVelECI(:,1:lenT), scAngleT, encAngleT, &
+       CALL TkL1B_tp (mafTAI, mafTime, lenG, nV, offsets, sc%scECR, &
+            sc%scECI, sc%scVelECI, scAngleT, encAngleT, &
             tp, ecrtosc, GroundToFlightMountsTHz, ScToGroundMountsTHz, &
             BO_Index_THz(1:BO_NumTHz), BO_Angle_THz, BO_Negate_THz, gtindx)
     ENDIF
@@ -1437,17 +1471,18 @@ CONTAINS
     USE BrightObjects_m, ONLY: GC_def
 
     CHARACTER (LEN=27), INTENT(in) :: asciiUTC
-    REAL(r8), INTENT(in) :: offset(:), FOV_eci(3,0:(lenG-1))
+    REAL(r8), INTENT(in) :: offset(:), FOV_eci(3,0:(MAFinfo%MIFsPerMAF-1))
     REAL, INTENT(in) :: BO_angle(:) !ScAngle(0:)
     REAL, INTENT(in), OPTIONAL :: MoonToSpaceAngle
     INTEGER, INTENT(in) :: BO_def(:)
     LOGICAL, INTENT(in) :: BO_Negate(:)
     INTEGER, INTENT(out) :: BO_stat(0:)
 
-    INTEGER :: i, j, MIF, returnStatus
+    INTEGER :: i, j, MIF, returnStatus, nv
     REAL :: limb_angle, space_angle
-    REAL(r8) :: sc_frame_vector(3,0:(lenG-1))  ! start at MIF 0
-    REAL(r8) :: sc_unit_vector(3,0:(lenG-1)), eci_unit_vector(3,0:(lenG-1))
+    REAL(r8) :: sc_frame_vector(3,0:(MAFinfo%MIFsPerMAF-1)), &
+         sc_unit_vector(3,0:(MAFinfo%MIFsPerMAF-1)), &
+         eci_unit_vector(3,0:(MAFinfo%MIFsPerMAF-1))
     LOGICAL :: HasSpaceView
 
 ! Galactic center variables:
@@ -1483,28 +1518,29 @@ CONTAINS
     INTEGER, EXTERNAL :: PGS_CBP_Sat_CB_Vector, PGS_CSC_SCtoECI
 
     HasSpaceView = PRESENT (MoonToSpaceAngle)
+    nv = MAFinfo%MIFsPerMAF
 
     BO_stat = 0   ! Nothing in FOV
 
     DO i = 1, SIZE (BO_def)   ! For each Bright Object
 
        IF (BO_def(i) /= GC_def) THEN    ! Not Galactic Center BO
-          returnStatus = PGS_CBP_Sat_CB_Vector (spacecraftId, lenG, asciiUTC, &
-               offset(1:lenG), BO_def(i), sc_frame_vector)
+          returnStatus = PGS_CBP_Sat_CB_Vector (spacecraftId, nv, asciiUTC, &
+               offset(1:nv), BO_def(i), sc_frame_vector)
           IF (returnStatus /= 0) CYCLE
  
-          DO MIF = 0, (lenG - 1)
+          DO MIF = 0, (nv - 1)
              sc_unit_vector(:,MIF) = sc_frame_vector(:,MIF) / &
                   SQRT (sc_frame_vector(1,MIF)**2 + sc_frame_vector(2,MIF)**2 &
                   + sc_frame_vector(3,MIF)**2)
           ENDDO
 
-          returnStatus = PGS_CSC_SCtoECI (spacecraftId, lenG, asciiUTC, &
-               offset(1:lenG), sc_unit_vector, eci_unit_vector)
+          returnStatus = PGS_CSC_SCtoECI (spacecraftId, nv, asciiUTC, &
+               offset(1:nv), sc_unit_vector, eci_unit_vector)
 
        ENDIF
 
-       DO MIF = 0, (lenG - 1)
+       DO MIF = 0, (nv - 1)
 
     ! Limb port angle check
 
@@ -1572,6 +1608,9 @@ CONTAINS
 END MODULE TkL1B
 
 ! $Log$
+! Revision 2.29  2006/03/24 15:21:17  perun
+! Resized tp arrays to numValues from lenG and add GeodAltX calculation
+!
 ! Revision 2.28  2005/12/14 17:01:21  perun
 ! Incorporate ReportTKStatus call for reporting errors
 !
