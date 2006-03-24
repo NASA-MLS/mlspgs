@@ -39,7 +39,8 @@ MODULE MLSL1Rad     ! Radiance data types and routines for the MLSL1 program
   TYPE Radiance_T
      TYPE (MLSSignal_T) :: signal
      INTEGER :: BandNo
-     REAL(r4), DIMENSION (:,:), POINTER :: value, precision
+     REAL(r4), DIMENSION (:,:), POINTER :: value, precision, &
+          Poffset, ModelOffset
   END TYPE Radiance_T
 
   TYPE (Radiance_T), DIMENSION(:), POINTER :: L1Brad, FBrad, MBrad, WFrad, &
@@ -106,6 +107,12 @@ CONTAINS
           ALLOCATE (L1Brad(i)%precision(THzchans,MIFsTHz), STAT=status)
           IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
                & MLSMSG_Allocate//"FBprecision")
+          ALLOCATE (L1Brad(i)%Poffset(THzchans,MIFsTHz), STAT=status)
+          IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
+               & MLSMSG_Allocate//"FBpOffset")
+          ALLOCATE (L1Brad(i)%ModelOffset(THzchans,MIFsTHz), STAT=status)
+          IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
+               & MLSMSG_Allocate//"FBmodelOffset")
 
           BankNo = i + 14   !start at 15
           SELECT CASE (i)
@@ -145,6 +152,12 @@ CONTAINS
        ALLOCATE (L1Brad(i)%precision(FBchans,MIFsGHz), STAT=status)
        IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
             & MLSMSG_Allocate//"FBprecision")
+       ALLOCATE (L1Brad(i)%Poffset(FBchans,MIFsGHz), STAT=status)
+       IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
+            & MLSMSG_Allocate//"FBpOffset")
+       ALLOCATE (L1Brad(i)%ModelOffset(FBchans,MIFsGHz), STAT=status)
+       IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
+            & MLSMSG_Allocate//"FBmodelOffset")
 
        SELECT CASE (i)
        CASE (3)
@@ -178,6 +191,12 @@ CONTAINS
        ALLOCATE (L1BRad(i+GHzNum)%precision(MBchans,MIFsGHz), STAT=status)
        IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
             & MLSMSG_Allocate//"MBprecision")
+       ALLOCATE (L1Brad(i+GHzNum)%Poffset(MBchans,MIFsGHz), STAT=status)
+       IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
+            & MLSMSG_Allocate//"MBpOffset")
+       ALLOCATE (L1Brad(i+GHzNum)%ModelOffset(MBchans,MIFsGHz), STAT=status)
+       IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
+            & MLSMSG_Allocate//"MBmodelOffset")
        WRITE (request, '("B",i2.2,".MB11-",i1)') (i+26), i
        CALL ParseMLSSignalRequest (request, signal, .FALSE.)
        L1Brad(i+GHzNum)%signal = signal(1)
@@ -198,6 +217,13 @@ CONTAINS
        ALLOCATE (L1BRad(i+GHzNum+MBnum)%precision(WFchans,MIFsGHz), STAT=status)
        IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
             & MLSMSG_Allocate//"WFprecision")
+       ALLOCATE (L1Brad(i+GHzNum+MBnum)%Poffset(WFchans,MIFsGHz), STAT=status)
+       IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
+            & MLSMSG_Allocate//"WFpOffset")
+       ALLOCATE (L1Brad(i+GHzNum+MBnum)%ModelOffset(WFchans,MIFsGHz), &
+            STAT=status)
+       IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
+            & MLSMSG_Allocate//"WFmodelOffset")
        WRITE (request, '("B",i2.2,".WF4-",i1)') (i+31), i
        CALL ParseMLSSignalRequest (request, signal, .FALSE.)
        L1Brad(i+GHzNum+MBnum)%signal = signal(1)
@@ -220,6 +246,14 @@ CONTAINS
             STAT=status)
        IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
             & MLSMSG_Allocate//"DACSprecision")
+       ALLOCATE (L1Brad(i+GHzNum+MBnum+WFnum)%Poffset(DACSchans,MIFsGHz), &
+            STAT=status)
+       IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
+            & MLSMSG_Allocate//"DACSpOffset")
+       ALLOCATE (L1Brad(i+GHzNum+MBnum+WFnum)%ModelOffset(DACSchans,MIFsGHz), &
+            STAT=status)
+       IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
+            & MLSMSG_Allocate//"DACSmodelOffset")
        IF (i == 1) THEN
           BandNo = BandSwitch(1)
        ELSE
@@ -345,6 +379,9 @@ END MODULE MLSL1Rad
 
 !
 ! $Log$
+! Revision 2.8  2006/03/24 15:12:41  perun
+! Add Poffset and ModelOffset
+!
 ! Revision 2.7  2005/06/23 18:41:36  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
