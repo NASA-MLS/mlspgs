@@ -181,20 +181,21 @@ CONTAINS
     LOGICAL :: BO_Flag(0:15)         ! Flag for each B.O.
     REAL :: BO_scale(0:15)           ! Scale for precisions (+/- 1.0)
 
-    INTEGER :: i, bitno, bo_bit, matchno
+    INTEGER :: i, bitno, bo_bit, matchno, last_MIF
 
     BO_Match%Num = 0                 ! No matches yet
     IF (ALL (BO_stat <= 1)) RETURN   ! Nothing in limb FOV
 
     PRINT *, 'BO in FOV...'
 
+    last_MIF = SIZE (BO_stat) - 1    ! BO_stat starts at 1
     BO_Flag = .FALSE.        ! Nothing yet
     BOinFOV = .FALSE.        ! Nothing yet
     BO_scale = 1.0
     DO i = 1, SIZE (BO_stat)
        DO bitno = 1, 15      ! test for BO in FOV (skip bit 0 since it's space)
           IF (BTEST (BO_stat(i), bitno)) THEN
-             BOinFOV(i-1,bitno) = .TRUE.
+             BOinFOV(i,bitno) = .TRUE.
              BO_Flag(bitno) = .TRUE.
              IF (BTEST (BO_stat(i), (bitno+16))) THEN   ! test for negating
                 BO_scale(bitno) = -1.0                  ! negative scale factor
@@ -209,7 +210,7 @@ CONTAINS
        IF (BO_Flag(i)) THEN
           BO_Match%Name(matchno) = BO_Name(i)
           BO_Match%PrecScale(matchno) = BO_scale(i)
-          BO_Match%InFov(:,matchno)= BOinFOV(:,i)
+          BO_Match%InFov(0:last_MIF,matchno)= BOinFOV(:,i)
           matchno = matchno + 1
        ENDIF
     ENDDO
@@ -228,6 +229,9 @@ CONTAINS
 END MODULE BrightObjects_m
 
 ! $Log$
+! Revision 2.2  2006/03/24 15:06:53  perun
+! Corrected bit number index for BOinFOV
+!
 ! Revision 2.1  2005/12/06 19:32:36  perun
 ! Initial release for bright object CF fields and for testing
 !
