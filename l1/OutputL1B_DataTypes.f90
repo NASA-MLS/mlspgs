@@ -1,4 +1,4 @@
-! Copyright 2005, by the California Institute of Technology. ALL
+! Copyright 2006, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
 ! at the California Institute of Technology.
@@ -18,9 +18,9 @@ MODULE OutputL1B_DataTypes
 
   PUBLIC :: LENG, LENT, LENCOORD, LENUTC, L1BOAINDEX_T, L1BOASC_T, L1BOATP_T
 !---------------------------- RCS Module Info ------------------------------
-  character (len=*), private, parameter :: ModuleName= &
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  PRIVATE :: not_used_here 
 !---------------------------------------------------------------------------
   INTEGER, PARAMETER :: lenCoord =   3
   INTEGER, PARAMETER :: lenUTC   =  27
@@ -65,7 +65,7 @@ MODULE OutputL1B_DataTypes
     REAL(r8), DIMENSION(:), POINTER :: encoderAngle => NULL() ! boresight wrt instr.
     REAL(r8), DIMENSION(:), POINTER :: scAngle => NULL() ! boresight wrt s/c +x
     REAL(r8), DIMENSION(:), POINTER :: scanAngle  => NULL() ! boresight wrt orbit +x
-    REAL,     DIMENSION(:), POINTER :: scanRate  => NULL() ! of change of scanAngle
+    REAL,     DIMENSION(:), POINTER :: scanRate  => NULL() ! rate of scanAngle
     REAL(r8), DIMENSION(:), POINTER :: azimAngle  => NULL() ! azimuth wrt orbit +x
     ! dimensioned (xyz,mod.MIF)
     REAL(r8), DIMENSION(:,:), POINTER :: tpECI => NULL()    ! tp location in ECI
@@ -74,12 +74,13 @@ MODULE OutputL1B_DataTypes
     REAL, DIMENSION(:,:), POINTER :: tpPos_P => NULL()  ! tp Pos Prime vals
     ! dimensioned (mod.MIF)
     REAL(r8), DIMENSION(:), POINTER :: tpGeodAlt => NULL()  ! geod alt of tp 
+    REAL(r8), DIMENSION(:), POINTER :: tpGeodAltX => NULL() ! geod alt extension
     REAL(r8), DIMENSION(:), POINTER :: tpGeocAlt  => NULL() ! geoc alt of tp
     REAL,     DIMENSION(:), POINTER :: tpOrbY => NULL()	    ! out-of-plane dist.
     REAL,     DIMENSION(:), POINTER :: tpGeocLat  => NULL() ! geoc lat of tp
-    REAL,     DIMENSION(:), POINTER :: tpGeocAltRate => NULL() ! of change of tpGeocAlt
+    REAL,     DIMENSION(:), POINTER :: tpGeocAltRate => NULL() ! rate of tpGeocAlt
     REAL,     DIMENSION(:), POINTER :: tpGeodLat => NULL()     ! geod lat of tp
-    REAL,     DIMENSION(:), POINTER :: tpGeodAltRate => NULL() ! of change of tpGeodAlt
+    REAL,     DIMENSION(:), POINTER :: tpGeodAltRate => NULL() ! rate of tpGeodAlt
     REAL,     DIMENSION(:), POINTER :: tpLon => NULL()	      ! longitude of tp
     REAL,     DIMENSION(:), POINTER :: tpGeodAngle => NULL()  ! tp master coord
     REAL,     DIMENSION(:), POINTER :: tpSolarTime => NULL()  ! solar time coord
@@ -89,18 +90,21 @@ MODULE OutputL1B_DataTypes
     INTEGER,  DIMENSION(:), POINTER :: tpBO_stat => NULL()  ! Bright Obj Status of tp
   END TYPE L1BOAtp_T
 
-contains
-  logical function not_used_here()
+CONTAINS
+  LOGICAL FUNCTION not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
+  CHARACTER (len=*), PARAMETER :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  END FUNCTION not_used_here
 END MODULE OutputL1B_DataTypes
 
 ! $Log$
+! Revision 2.7  2006/03/24 15:16:01  perun
+! Add tpGeodAltX for BOA to extend the altitude range for the THz coverage
+!
 ! Revision 2.6  2005/12/06 19:28:30  perun
 ! Added BO_stat for each tp record structure
 !
