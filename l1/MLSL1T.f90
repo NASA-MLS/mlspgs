@@ -1,4 +1,4 @@
-! Copyright 2005, by the California Institute of Technology. ALL
+! Copyright 2006, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
 ! at the California Institute of Technology.
@@ -24,15 +24,14 @@ PROGRAM MLSL1T      ! MLS Level 1 software for the THz module
   IMPLICIT NONE
 
 !---------------------------- RCS Ident Info ------------------------------
-  character (len=*), parameter :: ModuleName= &
+  CHARACTER (len=*), PARAMETER :: ModuleName= &
        "$RCSfile$"
-  character (len=*), parameter :: IdParm = &
+  CHARACTER (len=*), PARAMETER :: IdParm = &
        "$Id$"
-  character (len=len(idParm)) :: Id = idParm
+  CHARACTER (len=LEN(idParm)) :: Id = idParm
 !---------------------------------------------------------------------------
 
   INTEGER, PARAMETER :: NORMAL_EXIT_STATUS = 2
-  LOGICAL :: more_data = .TRUE.
 
   CALL MLSMessage (MLSMSG_Info, ModuleName, &
        & "Start EOS MLS Level 1 THz processing.")
@@ -43,15 +42,9 @@ PROGRAM MLSL1T      ! MLS Level 1 software for the THz module
 
   CALL SortAndQualifyTHz
 
-  DO
+  CALL CalibrateTHz
 
-     CALL CalibrateTHz (more_data)
-
-     CALL ProcessLimbData
-
-     IF (.NOT. more_data) EXIT   !all done
-
-  ENDDO
+  CALL ProcessLimbData
 
   CALL CloseFiles
 
@@ -66,6 +59,9 @@ END PROGRAM MLSL1T
 !=============================================================================
 
 ! $Log$
+! Revision 2.3  2006/03/24 15:13:35  perun
+! Remove DO processing for CalibrateTHz and ProcessLimbData
+!
 ! Revision 2.2  2005/06/23 18:41:36  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
