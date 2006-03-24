@@ -1,4 +1,4 @@
-! Copyright 2005, by the California Institute of Technology. ALL
+! Copyright 2006, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
 ! at the California Institute of Technology.
@@ -46,12 +46,11 @@ CONTAINS
 
     LOGICAL :: more_data
 
-    INTEGER :: sci_MAFno, MIFsPerMAF, CalMAFs, CalMAFno
+    INTEGER :: sci_MAFno, CalMAFs, CalMAFno
     REAL :: MAF_dur, MIF_dur
 
-    MIFsPerMAF = L1Config%Calib%MIFsPerMAF
     MIF_dur = L1Config%Calib%MIF_duration
-    MAF_dur = MIF_dur * MIFsPerMAF   !Nominal duration of MAF
+    MAF_dur = MIF_dur * L1Config%Calib%MIFsPerMAF   !Nominal duration of MAF
     calMAFs = NINT ((L1Config%Expanded_TAI%endTime - &
          L1Config%Expanded_TAI%startTime) / MAF_dur) + 10
 
@@ -65,15 +64,8 @@ CONTAINS
 
        IF (.NOT. more_data) EXIT    !! Nothing more to do
 
-       DO    ! Read sci data until after start time
+       CALL NextSciMAF (more_data)
 
-          CALL NextSciMAF (more_data)
-
-          IF (.NOT. more_data) EXIT    !! Nothing more to do
-
-          IF (THzSciMAF(2)%secTAI >= L1Config%Expanded_TAI%startTime) EXIT
-
-       ENDDO
        IF (.NOT. more_data) EXIT    !! Nothing more to do
 
        sci_MAFno = THzSciMAF(0)%MAFno
@@ -102,7 +94,7 @@ PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
        CurMAFdata => CalBuf%MAFdata(CalMAFno)
        CurMAFdata%SciMIF = THzSciMAF
        CurMAFdata%EMAF = EngMAF
-       CurMAFdata%last_MIF = MIFsPerMAF - 1
+       CurMAFdata%last_MIF = MAXVAL (THzSciMAF%MIFno)
        CurMAFdata%BandSwitch(4:5) =  &
             CurMAFdata%SciMIF(CurMAFdata%last_MIF)%BandSwitch
        CurMAFdata%CalTgtTemp = &
@@ -126,10 +118,11 @@ PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
 !=============================================================================
 
     USE MLSL1Config, ONLY: THz_seq, THz_seq_use
-    USE MLSL1Common, ONLY: L1BFileInfo
+    USE MLSL1Common, ONLY: L1BFileInfo, SC_YPR, THz_GeodAlt
     USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Warning
     USE SDPToolkit, ONLY: PGS_TD_TAItoUTC
     USE BrightObjects_m, ONLY:Test_BO_stat, BO_Match
+    USE Units, ONLY: Rad2Deg
 
     INTEGER :: MAF, MIF, n, stat
     CHARACTER(len=80) :: msg
@@ -143,12 +136,19 @@ PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
     CHARACTER(len=1), PARAMETER :: override = "O"
     CHARACTER(len=1), PARAMETER :: undefined = "U"
     REAL, PARAMETER :: BadLimbRange(2) = (/ 6.0, 354.0 /)
+    REAL, PARAMETER :: SpaceAltRange(2) = (/ 120.0e03, 250.0e03 /)
+    REAL, PARAMETER :: good_yaw = 1.0   ! good YAW value in degrees
+    REAL, PARAMETER :: bad_bias = 9.0   ! special "bad" bias value
 
     PRINT *, 'qualifying all the MAFs'
 
     DO MAF = 1, CalBuf%MAFs
 
        CurMAFdata => CalBuf%MAFdata(MAF)
+
+!! Initialize MIF Rad Precision signs:
+
+       CurMAFdata%MIFprecSign = 1.0
 
        DO MIF = 0, CurMAFdata%last_MIF
 
@@ -194,9 +194,9 @@ PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
                 SwMirPos = discard
              ENDIF
           ELSE IF (THz_seq_use == override) THEN   ! Type Override
-             IF (SwMirPos /= discard) THEN       ! Override if not a discard
+             !IF (SwMirPos /= discard) THEN       ! Override if not a discard
                 SwMirPos = THz_seq(MIF)
-             ENDIF
+             !ENDIF
           ENDIF
 
           WHERE (CurMAFdata%ChanType(MIF)%FB == undefined)
@@ -210,6 +210,18 @@ PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
              encoder =  CurMAFdata%SciMIF(MIF)%TSSM_pos
              IF (ANY (encoder > BadLimbRange(1) .AND. &
                   encoder < BadLimbRange(2))) SwMirPos = discard
+
+!! Discard if "S"pace altitude out of "good" alt range:
+
+          ELSE IF (SwMirPos == 'S') THEN
+             IF (THz_GeodAlt(MIF, MAF) < SpaceAltRange(1) .OR. &
+                  THz_GeodAlt(MIF, MAF) > SpaceAltRange(2)) SwMirPos = discard
+          ENDIF
+
+!! Mark bias if out of "good" YAW position:
+
+          IF (ABS(SC_YPR(1,MIF,MAF) * Rad2Deg) >= good_yaw) THEN
+             CurMAFdata%SciMIF(MIF)%LLO_Bias = bad_bias
           ENDIF
 
 ! Reset Sw Pos
@@ -224,7 +236,7 @@ PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
             (COUNT (CurMAFdata%SciMIF%SwMirPos == 'S') == 0)) &
             CurMAFdata%SciMIF%SwMirPos = discard
 
-!! Check for bright objects in Limb FOV and mark as "D"iscards
+!! Check for bright objects in Limb FOV and mark "S"pace views as "D"iscards
 
        CALL Test_BO_stat (CurMAFdata%BO_stat)
 
@@ -235,8 +247,11 @@ PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
                TRIM(msg)//' at '//asciiUTC)
           WRITE (L1BFileInfo%LogId, *) ''
           WRITE (L1BFileInfo%LogId, *) TRIM(msg)//' at MAF UTC '//asciiUTC
-          WHERE (BO_Match%InFOV(:,n))
+          WHERE (BO_Match%InFOV(:,n) .AND. CurMAFdata%SciMIF%SwMirPos == 'S')
              CurMAFdata%SciMIF%SwMirPos = discard
+          ENDWHERE
+          WHERE (BO_Match%InFOV(:,n))
+             CurMAFdata%MIFprecSign = BO_Match%PrecScale(n)  ! sign of precision
           ENDWHERE
        ENDDO
 
@@ -267,6 +282,9 @@ END MODULE SortQualifyTHz
 !=============================================================================
 
 ! $Log$
+! Revision 2.12  2006/03/24 15:18:51  perun
+! Add sorting based on "good" altitude range and YAW positions
+!
 ! Revision 2.11  2005/12/06 19:29:51  perun
 ! Removed call to Flag_Bright_Objects and added testing BO_stat
 !

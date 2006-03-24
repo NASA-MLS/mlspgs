@@ -1,4 +1,4 @@
-! Copyright 2005, by the California Institute of Technology. ALL
+! Copyright 2006, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
 ! at the California Institute of Technology.
@@ -19,9 +19,9 @@ MODULE MLSPCF1
   PUBLIC
 
 !---------------------------- RCS Module Info ------------------------------
-  character (len=*), private, parameter :: ModuleName= &
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  PRIVATE :: not_used_here 
 !---------------------------------------------------------------------------
 
   INTEGER, PARAMETER :: mlspcf_l1_param_StartUTC = 1001
@@ -89,6 +89,12 @@ MODULE MLSPCF1
   INTEGER, PARAMETER :: mlspcf_defltbaselineAC_start = 911
   INTEGER, PARAMETER :: mlspcf_defltbaselineAC_end = 911
 !
+  INTEGER, PARAMETER :: mlspcf_bandalts_start = 912
+  INTEGER, PARAMETER :: mlspcf_bandalts_end = 912
+!
+  INTEGER, PARAMETER :: mlspcf_bandsw_start = 913
+  INTEGER, PARAMETER :: mlspcf_bandsw_end = 913
+!
   INTEGER, PARAMETER :: mlspcf_sciMAF_start = 920
   INTEGER, PARAMETER :: mlspcf_sciMAF_end = 920
 !
@@ -137,18 +143,22 @@ MODULE MLSPCF1
   INTEGER, PARAMETER :: mlspcf_mcf_l1bradt_start = 4004
   INTEGER, PARAMETER :: mlspcf_mcf_l1bradt_end = 4004
 
-contains
-  logical function not_used_here()
+CONTAINS
+
+  LOGICAL FUNCTION not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
+  CHARACTER (len=*), PARAMETER :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  END FUNCTION not_used_here
 END MODULE MLSPCF1
 
 ! $Log$
+! Revision 2.12  2006/03/24 15:14:13  perun
+! Add pcf numbers for BandAlts and BandSwitches tables
+!
 ! Revision 2.11  2005/06/23 18:41:36  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
