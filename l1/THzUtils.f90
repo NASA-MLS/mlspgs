@@ -1,4 +1,4 @@
-! Copyright 2005, by the California Institute of Technology. ALL
+! Copyright 2006, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
 ! at the California Institute of Technology.
@@ -20,9 +20,9 @@ MODULE THzUtils
   PUBLIC :: LLO_Bias, Bias_err, LLO_Label, ConvertLLO
 
 !---------------------------- RCS Module Info ------------------------------
-  character (len=*), private, parameter :: ModuleName= &
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  PRIVATE :: not_used_here 
 !---------------------------------------------------------------------------
 
   REAL, PARAMETER :: Bias_err = 10.0
@@ -52,21 +52,21 @@ CONTAINS
          CHAR(1)//CHAR(28)
     CHARACTER (LEN=5), PARAMETER :: msg02 = CHAR(250)//CHAR(250)//CHAR(35)//&
          CHAR(2)//CHAR(7)
+    INTEGER :: dindx
 
     DN = LLO_DN
     Bias = Bias_err
 
-    IF (MIF == 141) THEN    ! Could be re-optimizing
-
-       IF (DN(7:11) == msg01 .AND. DN(16:16) == CHAR(1) .AND. &
-            DN(27:31) == msg02) DN = DN(21:80)
-
-    ENDIF
+    dindx = 0
     IF (DN(1:5) == ack7) THEN
-
-       Bias = (ICHAR(DN(28:28)) + 256 * ICHAR(DN(29:29))) / 409.6
-
+       dindx = 28
+    ELSE
+       IF (DN(7:11) == msg01 .AND. DN(16:16) == CHAR(1) .AND. &
+            DN(27:31) == msg02) dindx = 48
     ENDIF
+
+    IF (dindx > 0) Bias = (ICHAR(DN(dindx:dindx)) + 256 * &
+         ICHAR(DN(dindx+1:dindx+1))) / 409.6
 
   END FUNCTION LLO_Bias
 
@@ -121,17 +121,20 @@ CONTAINS
 
   END SUBROUTINE ConvertLLO
 
-  logical function not_used_here()
+  LOGICAL FUNCTION not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
+  CHARACTER (len=*), PARAMETER :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  END FUNCTION not_used_here
 END MODULE THzUtils
 
 ! $Log$
+! Revision 2.6  2006/03/24 15:20:53  perun
+! Remove MIF 141 test for re-optimizing
+!
 ! Revision 2.5  2005/06/23 18:41:36  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
