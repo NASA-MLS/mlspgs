@@ -816,10 +816,13 @@ contains
     sigmaX1 = sigma * x1
     y2 = y*y
     d = 1.0_rp / ( sigmaX1**2 + y2 )
-    sb = slabs1 * real(nu / v0,rp) * tanh1
-    sa = sb * u
-    sb = sb * OneOvSPi * y * d
-    Slabs = sa + sb
+    sa = slabs1 * real(nu / v0,rp) * tanh1
+    sb = sa * OneOvSPi * y * d
+!   sb = slabs1 * real(nu / v0,rp) * tanh1
+!   sa = sb * u
+!   sb = sb * OneOvSPi * y * d
+    Slabs = sa * u + sb
+!   Slabs = sa + sb
 
 !{ The Fadeeva function $w(z)$, where $z = a + i y$, can be written as $V(a,y) +
 !  i L(a,y)$.  $V(a,y)$ is frequently called the Voigt function ({\tt u}
@@ -853,7 +856,8 @@ contains
 !   \delta \frac{\partial x_1}{\partial T}$ and $\frac{\partial y}{\partial T}$.
 
     c = dSlabs1_dT + dtanh_dT
-    dSlabs_dT = sa * ( c + du / u ) + &
+    dSlabs_dT = sa * ( c * u + du ) + &
+!   dSlabs_dT = sa * ( c + du / u ) + &
       &         sb * ( c + dy_dT - 2.0_rp * D * &
       &           ( sigmaX1 * ( x1 * dv0s_dT + sigmaX1 * dx1_dT ) + y2 * dy_dT ) )
 
@@ -932,7 +936,8 @@ contains
     ! Temperature derivative
 
     c = dSlabs1_dT + dtanh_dT
-    dSlabs_dT = sa * ( c + du / u ) + &
+    dSlabs_dT = g * ( c * u + du ) + &
+!   dSlabs_dT = sa * ( c + du / u ) + &
       &         sb * ( c + dy_dT - 2.0_rp * d * &
       &           ( sigmaX1 * ( x1 * dv0s_dT + sigmaX1 * dx1_dT ) + y2 * dy_dT ) )
 
@@ -1010,7 +1015,8 @@ contains
   end function Slabs_Lines
 
   ! ---------------------------------------------  Slabs_Lines_dT  -----
-  elemental subroutine Slabs_Lines_dT ( Nu, Slabs, Tanh1, dTanh_dT, &
+  elemental &
+  subroutine Slabs_Lines_dT ( Nu, Slabs, Tanh1, dTanh_dT, &
     &                         Beta, dBeta_dT, NoPolarized )
 
   ! Compute single-line absorption and its derivative w.r.t. temperature
@@ -1070,14 +1076,18 @@ contains
       sigmaX1 = sigma * x1
       y2 = y * y
       d = 1.0_rp / ( sigmaX1**2 + y2 )
-      sb = slabs%slabs1(l) * real(nu / lines(slabs%catalog%lines(l))%v0,rp) * tanh1
-      sa = sb * u
-      sb = sb * OneOvSPi * y * d
-      beta = beta + sa + sb
+      sa = slabs%slabs1(l) * real(nu / lines(slabs%catalog%lines(l))%v0,rp) * tanh1
+!     sb = slabs%slabs1(l) * real(nu / lines(slabs%catalog%lines(l))%v0,rp) * tanh1
+!     sa = sb * u
+!     sb = sb * OneOvSPi * y * d
+      sb = sa * OneOvSPi * y * d
+      beta = beta + sa * u + sb
+!     beta = beta + sa + sb
 
       c = slabs%dSlabs1_dT(l) + dtanh_dT
 
-      dBeta_dT = dBeta_dT + sa * ( c + du / u ) &
+      dBeta_dT = dBeta_dT + sa * ( u * c + du ) &
+!     dBeta_dT = dBeta_dT + sa * ( c + du / u ) &
         &                 + sb * ( c + dy_dT - 2.0_rp * d * &            
         &                          ( sigmaX1 * ( x1 * dv0s_dT + &        
         &                            sigmaX1 * dx1_dT ) + y2 * dy_dT ) )
@@ -1191,7 +1201,8 @@ contains
       ! Temperature derivative
 
       dbeta_dT = dbeta_dT &
-        &      + sa * ( c + du / u ) &
+!       &      + sa * ( c + du / u ) &
+        &      + g * ( u * c + du ) &
         &      + sd * ( c + dy_dT &
         &      - 2.0_rp * d * ( sigmaX1 * ( x1 * dv0s_dT + sigmaX1 * dx1_dT ) + y2 * dy_dT )  )
 
@@ -1473,17 +1484,21 @@ contains
     c = g * denom
     h2 = y * denom
     sa = g * u
-    sb = g * yi * v
+    sb = g * yi
+!   sb = g * yi * v
     sc = c * yi * sigmaX1
     sd = g * h2
-    Slabswint = sa + sb - sc + sd
+    Slabswint = sa + sb * v - sc + sd
+!   Slabswint = sa + sb - sc + sd
 
     ! Temperature derivative
 
     c = dSlabs1_dT + dtanh_dT
     dd = -2.0_rp * d * ( sigmaX1 * ( x1 * dv0S_dT + sigmaX1 * dx1_dT ) + y2 * dy_dT )
-    dSlabS_dT = sa * ( c + du / u ) &
-      &       + sb * ( c + dv / v ) &
+    dSlabS_dT = g * ( u * c + du ) &
+!   dSlabS_dT = sa * ( c + du / du ) &
+      &       + sb * ( c * v + dv ) &
+!     &       + sb * ( c + dv / v ) &
       &       - sc * ( c + dd + dyi_dT + dx1_dT + dv0S_dT / sigma ) &
       &       + sd * ( c + dd + dy_dT )
 
@@ -1882,15 +1897,19 @@ contains
 
       if ( abs(yi) > 1.0e-6_rp ) then
 
-        sb = g * yi * v
+        sb = g * yi
+!       sb = g * yi * v
         sc = c2 * yi * sigmaX1
-        beta_up = sa + sb - sc + sd
+        beta_up = sa + sb * v - sc + sd
+!       beta_up = sa + sb - sc + sd
 
         ! Temperature derivative
 
         dBeta_dT = dBeta_dT &
-          &      + sa * ( c3 + du / u ) &
-          &      + sb * ( c3 + dv / v ) &
+          &      + g * ( c3 * u + du ) &
+!         &      + sa * ( c3 + du / u ) &
+          &      + sb * ( c3 * v + dv ) &
+!         &      + sb * ( c3 + dv / v ) &
           &      - sc * ( c3 + dd + dyi_dT + dx1_dT + dv0S_dT / sigma ) &
           &      + sd * ( c3 + dd + dy_dT )
 
@@ -1915,7 +1934,8 @@ contains
         ! Temperature derivative
 
         dbeta_dT = dbeta_dT &
-          &      + sa * ( c3 + du / u ) &
+          &      + g * ( c3 * u + du ) &
+!         &      + sa * ( c3 + du / u ) &
           &      + sd * ( c3 + dd + dy_dT )
 
         ! Spectroscopy derivatives
@@ -2659,6 +2679,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.49  2006/01/26 03:05:51  vsnyder
+! Avoid dividing by zero
+!
 ! Revision 2.48  2005/09/17 00:48:09  vsnyder
 ! Don't look at an array that might not be there, plus some cannonball polishing
 !
