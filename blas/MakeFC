@@ -93,6 +93,23 @@ libmlspack.a:
 #OMIT_SRCS := -d xerbla.f
 OMIT_SRCS := $(OMIT) xerbla.f
 
+#CASCADE determines whether to create/use .mod dependencies:
+#if CASCADE, use older .o dependencies, which entail cascades
+#of massive recompilation
+#These are configurations for which I have tested CASCADE-avoidance
+CAN_AVOID="NAG.Linux LF95.Linux NAG.Sun Sun.Sun"
+#CAN_AVOID=""
+ifndef CASCADE
+  WE_CAN := $(shell echo $(CAN_AVOID) | grep $(MLSF95).$(MLSPLAT))
+ifndef WE_CAN
+  CASCADE := yes
+endif
+endif
+
+ifdef WE_CAN
+NOHUNTING := yes
+endif
+
 ifdef BLAS
 #   OMIT_SRCS := $(OMIT_SRCS) -d dot_intrinsic.f90 -d sdot.f -d ddot.f
 #   OMIT_SRCS := $(OMIT_SRCS) dot_intrinsic.f90 sdot.f ddot.f
@@ -117,6 +134,13 @@ endif
 
 OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 
+
+ifeq ($(MLSF95),Abs)
+  UP_OR_LOW := -mod UPPER
+else
+  UP_OR_LOW := -mod lower
+endif
+
 #NOCLEANING determines value of RECFG passed to mlsconfigure script
 #RECFG determines whether changing .configure triggers deleting
 #existing sub-directory, and thus recompiling every source file
@@ -137,6 +161,12 @@ $(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG)
 		;; \
 	*) \
 		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) ; \
+        return_status=`expr $$?` ; \
+        if [ $$return_status != "0" ]; then \
+		     exit 2 ; \
+        elif [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+		     $(MAKE) mark_all_as_uptodate ;\
+         fi ; \
 		;; \
 	esac 
 
@@ -149,6 +179,12 @@ $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
 		;; \
 	*) \
 		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) ; \
+        return_status=`expr $$?` ; \
+        if [ $$return_status != "0" ]; then \
+		     exit 2 ; \
+        elif [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+		     $(MAKE) mark_all_as_uptodate ;\
+         fi ; \
 		;; \
 	esac 
 
@@ -173,15 +209,20 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
           $(RECFG)
 
 depends:
-#	$(MLSBIN)/makemakedep.sh -nodep $(OMIT_PREFXD) ; \
-#     mv Makefile.dep Makefile.nodep
+ifdef CASCADE
 	temp_name_1=`${UNIQUE_NAME} 1` ;\
 	$(MLSBIN)/makemakedep.sh -nodep -p $$temp_name_1 $(OMIT_PREFXD) ; \
      mv $$temp_name_1 Makefile.nodep
-#	$(MLSBIN)/makemakedep.sh $(OMIT_PREFXD)
 	temp_name_1=`${UNIQUE_NAME} 1` ;\
 	$(MLSBIN)/makemakedep.sh -p $$temp_name_1 $(OMIT_PREFXD) ; \
      mv $$temp_name_1 Makefile.dep
+else
+	$(MAKE) depends--mod
+endif
+
+depends--mod:
+	$(MLSBIN)/makemakedep.sh -p $(PLATFORMS)/$(MLSCONFG)/Makefile.dep \
+   $(OMIT_PREFXD) $(UP_OR_LOW)
 
 ghostbuster:
 	$(MLSBIN)/ghostbuster.sh -lib $(OMIT_PREFXD) \
@@ -242,6 +283,9 @@ targ:
 	$(TAR) hcvzf ../libmlspack.tgz * --exclude \*.o --exclude \*.mod
 
 # $Log$
+# Revision 1.8  2005/06/23 23:02:30  pwagner
+# Reworded Copyright statement
+#
 # Revision 1.7  2003/04/30 23:04:55  pwagner
 # Now lets you make update in each subdirectory
 #
