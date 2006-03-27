@@ -14,13 +14,15 @@
 # foreign countries or providing access to foreign persons.
 
 # run separate programs specified as the variables
-# MLSPROG_1, MLSPROG_2, MLSPROG_3
+# MLSPROG_0, MLSPROG_1, MLSPROG_2, MLSPROG_3
 # assuming that they're in directory MLSBIN
 # Then return an exit status of ( for each program):
 # 1 if program's exit status is different from
 # the variable specified as NORMAL_STATUS; otherwise
 # 0
-# Then assemble the sequence of status for the three programs as follows:
+# Now if MLSPROG_0 fails, let's bail out immediately--
+# no sense trying with any of the others
+# Then assemble the sequence of status for three of the programs as follows:
 # MLSPROG_1  MLSPROG_2  MLSPROG_3
 #  (0 or 1)   (0 or 1)   (0 or 1)
 # in a binary string of length three; e.g. '001' means
@@ -32,7 +34,7 @@ Successful_codes="000 001"
 # "000"     ==> returns error-free status only if all three programs do
 # "000 001" ==> returns error-free status even if 3rd program fails
 # We're assuming MLSPROG_2 only runs if MLSPROG_1 succeeds
-# SImilarly, MLSPROG_3 only runs if MLSPROG_2 succeeds
+# Similarly, MLSPROG_3 only runs if MLSPROG_2 succeeds
 # Used by mlspgs/MakeFC to install script versions of each mls program
 # MLSPROG. The script version returns a status of 0 only if 
 # the MLSPROG goes past some "finish" line in the code
@@ -50,6 +52,7 @@ EXTRA_OPTIONS=mlseexxttrraa
 GZIPLEVEL="1"
 #          ^^^---- compression level ("" means none)
 
+MLSPROG_0=mlsxxyyzz_0
 MLSPROG_1=mlsxxyyzz_1
 MLSPROG_2=mlsxxyyzz_2
 MLSPROG_3=mlsxxyyzz_3
@@ -62,6 +65,24 @@ MLSHOME=mlshhoommee
 # (in other words is it absolute or relative?)
 
 is_absolute=`echo "$MLSBIN" | grep '^\/'`
+
+if [ "$is_absolute" = "" ]
+then
+   echo $MLSHOME/$MLSBIN/$MLSPROG_0 $EXTRA_OPTIONS "$@"
+   $MLSHOME/$MLSBIN/$MLSPROG_0 $EXTRA_OPTIONS "$@"
+else
+   echo $MLSBIN/$MLSPROG_0 $EXTRA_OPTIONS "$@"
+   $MLSBIN/$MLSPROG_0 $EXTRA_OPTIONS "$@"
+fi
+
+return_status_0=`expr $?`
+
+if [ $return_status_0 != $NORMAL_STATUS ]
+then
+   exit 1
+else
+   return_status_0=0
+fi
 
 if [ "$is_absolute" = "" ]
 then
@@ -161,6 +182,9 @@ else
 fi
 
 # $Log$
+# Revision 1.6  2006/03/23 19:21:18  pwagner
+# Add gzip compression when repacking hdf5 files
+#
 # Revision 1.5  2005/12/22 19:07:09  pwagner
 # Restored idea of h5repacking l1b files
 #
