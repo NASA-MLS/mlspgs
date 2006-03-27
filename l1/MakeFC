@@ -56,6 +56,9 @@ srclib=../srclib
 # where sources (but not OBJS) shared with l3, etc. are stored
 blaslib=../blas
 
+# where blas objects and libmlspack.a are stored
+libblas_objs=$(blaslib)/$(MLSCONFG)
+
 # where sources (but not OBJS) used for hdf5 file versions are stored
 he5lib=../he5lib
 
@@ -129,27 +132,22 @@ ifdef HDFVERSIONS
 endif
 
 ifndef DONTBUILDPREQS
-ifdef BLAS
-   LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
+BLAS_PREQS := $(blaslib_f) $(libblas_objs)
+LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
    $(machine_f) \
-   $(REECHO) $(libmls_objs)
-else
-   LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
-   $(machine_f) \
-   $(blaslib_f) $(REECHO) $(libmls_objs)
-endif
+   $(libblas_objs)/libmlspack.a $(REECHO) $(libmls_objs)/Makefile
 HE5_LIB_prereqs=$(libmls_objs)/libmls.a $(he5lib_f)
 endif
 
 #Any sources to explicitly exclude from dependency list?
 OMIT_SRCS := $(OMIT) MLSL1.f90
 
-PROG=mlsl1log mlsl1g mlsl1t
+PROG=mlsl1log mlsl1g mlsl1t mlsl0sn
 
 OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 
 #These are the source files for the drivers; they should be excluded from OBJS
-DRIVERS=MLSL1G.f90 MLSL1log.f90 MLSL1T.f90
+DRIVERS=MLSL1G.f90 MLSL1log.f90 MLSL1T.f90 MLSL0SN.f90
 DRIVERS_PREFXD := $(shell ${REECHO} -prefix=-do $(DRIVERS))
 
 #CASCADE determines whether to create/use .mod dependencies:
@@ -219,6 +217,12 @@ $(PLATFORMS)/$(MLSCONFG)/mlsl1t : $(PROG)
            UNPREFXDPTHS="$(ADD2PATHS)" MARK_ALL_AS_UPTODATE= ;\
          fi
 
+$(libblas_objs)/libmlspack.a: $(BLAS_PREQS)
+	@if [ "$(NOHUNTING)" != "" ] ; then \
+	   rm -f $(libblas_objs)/libmlspack.a ; \
+	fi ; \
+	$(MAKE) -f $(MakeFName) libmlspack.a -C $(blaslib) DONTBUILDPREQS=TRUE
+
 $(libmls_objs)/libmls.a: $(LIB_prereqs)
 	@if [ "$(NOHUNTING)" != "" ] ; then \
 	   rm -f $(libmls_objs)/libmls.a ; \
@@ -237,7 +241,7 @@ $(INSTALLDIR)/libutctotai.a:
 	$(MAKE) -f $(MakeFName) utctotai -C $(CONFDIR)
 
 .PHONY: clean configure depends depends--mod ghostbuster install \
-  internalsaymake internalupdate mlsl1log mlsl1g mlsl1t mostlyclean \
+  internalsaymake internalupdate mlsl0sn mlsl1log mlsl1g mlsl1t mostlyclean \
   tar targ tarz update
 
 tar:
@@ -318,6 +322,9 @@ install: $(PROG)
 	if [ ! -d $(INSTALLDIR) ] ; then \
 	   $(MLSBIN)/mkpath.sh $(INSTALLDIR) ; \
 	fi ; \
+	if [ -f $(PLATFORMS)/$(MLSCONFG)/mlsl0sn ] ; then \
+	   mv $(PLATFORMS)/$(MLSCONFG)/mlsl0sn $(INSTALLDIR) ; \
+	fi ; \
 	if [ -f $(PLATFORMS)/$(MLSCONFG)/mlsl1log ] ; then \
 	   mv $(PLATFORMS)/$(MLSCONFG)/mlsl1log $(INSTALLDIR) ; \
 	fi ; \
@@ -329,7 +336,7 @@ install: $(PROG)
       rm -f $(INSTALLDIR)/mlsl1.sh ; \
 	   sed "s=mlsxxyyzz_1=mlsl1log=; s=mlsxxyyzz_2=mlsl1g=; \
         s=mlsxxyyzz_3=mlsl1t=; s=mlsbbiinn=$(INSTALLDIR)=; \
-        s=mlshhoommee=$(MLSHOME)=; s=mlseexxttrraa==" \
+        s=mlsxxyyzz_0=mlsl0sn=; s=mlshhoommee=$(MLSHOME)=; s=mlseexxttrraa==" \
         $(MLSBIN)/mlsl1prog.sh > $(INSTALLDIR)/mlsl1.sh ; \
       chmod a+x $(INSTALLDIR)/mlsl1.sh ; \
 	fi
@@ -350,6 +357,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
 
 # $Log$
+# Revision 2.50  2006/03/27 19:18:30  pwagner
+# Added new pge mlsl0sn to store switch settings
+#
 # Revision 2.49  2005/08/25 19:21:58  pwagner
 # Removed MLSL1BOA as target
 #
