@@ -129,7 +129,7 @@ H$_{2}^{18}$O$(\nu_{2})$                H2O_18_V2                H2O-18-v2   0
            N$_{2}^{17}$O                   N2O_17                   N2O-17   0
            N$_{2}^{18}$O                   N2O_18                   N2O-18   0
                       NO                       NO                       NO   0
-                     NO+                  NO_PLUS                  NO-PLUS   0
+                     NO+                  NO_PLUS                  NO-plus   0
                 NO$_{2}$                      NO2                      NO2   0
                        O                        O                        O  -2
                 $^{17}$O                     O_17                     O-17   0
