@@ -781,8 +781,9 @@ op:     do j = 2, nsons(theTree)
           do b = 1, size(info%beta_group)
             do k = 1, size(info%beta_group(b)%lbl(s)%molecules)
               if ( thisMolecule == info%beta_group(b)%lbl(s)%molecules(k) ) then
-                if ( info%beta_group(b)%pfa(s)%molecules(k) /= 0 ) &
-                  & call announceError ( PFATwice, son )
+                ! Duplicate in list is warning, not error.
+!                 if ( info%beta_group(b)%pfa(s)%molecules(k) /= 0 ) &
+!                   & call announceError ( PFATwice, son, warn=.true. )
                 info%beta_group(b)%pfa(s)%molecules(k) = -1
                 cycle op
               end if
@@ -1331,6 +1332,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.129  2006/03/30 18:58:47  vsnyder
+! Allow duplicates in [LU]SBpfaMolecules and [LU]SBlblMolecules lists
+!
 ! Revision 2.128  2006/03/22 02:23:46  vsnyder
 ! Add lsbLBLmolecules, useLBLmolecules
 !
