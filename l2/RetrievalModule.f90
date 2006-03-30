@@ -1652,7 +1652,7 @@ contains
                 ! diagonal), i.e. ${\bf W}^T {\bf W} = {\bf S}_m^{-1}$. Row
                 ! scale the part of the least-squares problem that arises
                 ! from the measurements, i.e. the least-squares problem
-                ! becomes $\mathbf{W J \delta \hat x -\simeq W f}$ (actually,
+                ! becomes $\mathbf{W J \delta \hat x \simeq - W f}$ (actually,
                 ! we only row scale ${\bf f}$ here, and scale ${\bf J}$
                 ! below).
                 if ( got(f_measurementSD) ) then
@@ -2475,6 +2475,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.268  2006/03/30 18:57:01  vsnyder
+! Allow duplicates in [LU]SBpfaMolecules and [LU]SBlblMolecules lists
+!
 ! Revision 2.267  2006/03/22 23:47:14  vsnyder
 ! Decruftification
 !
