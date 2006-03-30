@@ -75,7 +75,8 @@ CONTAINS
              mindx = i-ibgn+1        ! index from 1 to MIFsTHz
              DO nChan = 1, THzChans
                 THzRad(nBank)%value(nChan,mindx) = Kelvins(nChan,nBank,i)
-                IF (THzRad(nBank)%value(nChan,mindx) > -100.0) THEN
+                IF (THzRad(nBank)%value(nChan,mindx) > -100.0 .AND. &
+                     VarK(nChan,nBank,i) > 0.01) THEN
                    IF (VarK(nChan,nBank,i) > 0.0) THEN
                       ! All args to intrinsic min must have same
                       ! type and kind type parameter
@@ -167,6 +168,9 @@ END MODULE THzRadiances
 !=============================================================================
 
 ! $Log$
+! Revision 2.12  2006/03/30 15:30:31  perun
+! Test for minimum VarK to determine good radiances
+!
 ! Revision 2.11  2006/03/24 15:20:25  perun
 ! Pass "C"old and "H"ot counts to output routine for DIAGT file
 !
