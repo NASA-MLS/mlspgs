@@ -2475,8 +2475,11 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.269  2006/03/30 19:00:50  vsnyder
+! Correct CVS log comment
+!
 ! Revision 2.268  2006/03/30 18:57:01  vsnyder
-! Allow duplicates in [LU]SBpfaMolecules and [LU]SBlblMolecules lists
+! Correct some TeXnicalities
 !
 ! Revision 2.267  2006/03/22 23:47:14  vsnyder
 ! Decruftification
