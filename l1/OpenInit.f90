@@ -69,7 +69,6 @@ CONTAINS
     USE BandSwitches, ONLY: GetBandSwitches
 
     CHARACTER (LEN=132) :: PhysicalFilename
-    CHARACTER (LEN=28) :: asciiUTC_A
 
     INTEGER :: ios, lid, noMAFS, returnStatus, version, tbl_unit
 
@@ -77,8 +76,7 @@ CONTAINS
 
     REAL :: MAF_dur
 
-    INTEGER, EXTERNAL :: PGS_TD_UTCtoTAI,  PGS_TD_TAItoUTC, &
-         PGS_TD_ASCIItime_AtoB, PGS_IO_Gen_Track_LUN
+    INTEGER, EXTERNAL :: PGS_TD_UTCtoTAI,  PGS_IO_Gen_Track_LUN
 
     TYPE (TAI93_Range_T) :: procRange
 
@@ -177,11 +175,6 @@ CONTAINS
          L1Config%Calib%MAFexpandNum)
     procRange%endTime = procRange%endTime +  MAF_dur * (0.5 + &
          L1Config%Calib%MAFexpandNum)
-
-    returnStatus = PGS_TD_TAItoUTC (procRange%startTime, asciiUTC_A)
-    returnStatus = PGS_TD_ASCIItime_AtoB (asciiUTC_A, L1PCF%startUTC)
-    returnStatus = PGS_TD_TAItoUTC (procRange%endTime, asciiUTC_A)
-    returnStatus = PGS_TD_ASCIItime_AtoB (asciiUTC_A, L1PCF%endUTC)
 
     L1Config%Input_TAI = procRange
 
@@ -1104,6 +1097,9 @@ END MODULE OpenInit
 !=============================================================================
 
 ! $Log$
+! Revision 2.26  2006/03/31 16:26:40  perun
+! Remove expanded UTC from Global Attributes
+!
 ! Revision 2.25  2006/03/24 15:14:55  perun
 ! Expand processing times, init Band Altitudes table, init Band Switches and read SC_YPR and THz GeodAlts
 !
