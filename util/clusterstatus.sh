@@ -5,11 +5,17 @@
 # Usage:
 # clusterstatus.sh [options]
 #    O p t i o n s
+# -C names      create status for clusters in names
+#                (e.g., "lightspeed speedracer")
+# -Cf file      choose clusters named in file
 # -debug        print lots of extra stuff
 # -dryrun       don't run the sipsl2.sh script
 # -vn versions  show separate listings for versions
 #                (e.g., "V01-51,V01-52")
+# -vf file      choose versions named in file
+#                (if file empty, don't show separate listings)
 # -R list       change RECIPIENTS to list
+# -Rf file      change RECIPIENTS to list of addresses found in file
 # -mail         mail the file to RECIPIENTS
 # -scp          scp the file to me
 # -[n]sort      [don't] sort the initial table according to machine
@@ -38,12 +44,36 @@
 
 # "$Id$"
 
+#---------------------------- read_file_into_array
+#
+# read each line of stdin
+# catenating them into an array which we will return
+# Ignore any entries beginning with '#' character
+# In fact, only first entry in each line is kept
+# Possible improvements:
+#   Other comment signifiers
+#   Choose field number other than 1
+
+read_file_into_array()
+{
+  array_result=''
+  while read line; do
+    element=`echo $line | awk '$1 !~ /^#/ {print $1}'`
+    if [ "$element" != "" ]
+    then
+      array_result="$array_result $element"
+    fi
+  done
+  echo $array_result
+}
+      
 # ************
 # Main Program
 # ************
 # 
 #RECIPIENTS="pwagner David.T.Cuddy@jpl.nasa.gov ahanzel@mls.jpl.nasa.gov sysadmin@sdsio.jpl.nasa.gov eparaiso@sdsio-mail.jpl.nasa.gov bsaha@sdsio-mail.jpl.nasa.gov dromo@sdsio.jpl.nasa.gov cvuu@mls.jpl.nasa.gov Brian.W.Knosp@jpl.nasa.gov"
-RECIPIENTS="pwagner David.T.Cuddy@jpl.nasa.gov ahanzel@mls.jpl.nasa.gov sysadmin@sdsio.jpl.nasa.gov mliukis@sdsio-mail.jpl.nasa.gov bsaha@sdsio-mail.jpl.nasa.gov dromo@sdsio.jpl.nasa.gov cvuu@mls.jpl.nasa.gov Brian.W.Knosp@jpl.nasa.gov"
+#RECIPIENTS="pwagner David.T.Cuddy@jpl.nasa.gov ahanzel@mls.jpl.nasa.gov sysadmin@sdsio.jpl.nasa.gov mliukis@sdsio-mail.jpl.nasa.gov bsaha@sdsio-mail.jpl.nasa.gov dromo@sdsio.jpl.nasa.gov cvuu@mls.jpl.nasa.gov Brian.W.Knosp@jpl.nasa.gov"
+RECIPIENTS="pwagner David.T.Cuddy@jpl.nasa.gov ahanzel@mls.jpl.nasa.gov sysadmin@sdsio.jpl.nasa.gov mliukis@sdsio-mail.jpl.nasa.gov bsaha@sdsio-mail.jpl.nasa.gov rbarrios@sdsio-mail.jpl.nasa.gov cvuu@mls.jpl.nasa.gov Brian.W.Knosp@jpl.nasa.gov"
 MAILER="/home/pwagner/bin/mailtome.sh"
 # clusternames="lightspeed scramjet speedracer"
 clusternames="lightspeed speedracer"
@@ -62,6 +92,16 @@ while [ "$more_opts" = "yes" ] ; do
 
     case "$1" in
 
+    -C )
+	    shift
+       clusternames="$1"
+       shift
+       ;;
+    -Cf )
+	    shift
+       clusternames=`cat $1 | uniq | read_file_into_array`
+       shift
+       ;;
     -dryrun )
 	    shift
        dryrun="yes$dryrun"
@@ -75,9 +115,20 @@ while [ "$more_opts" = "yes" ] ; do
        RECIPIENTS="$1"
        shift
        ;;
+    -Rf )
+	    shift
+       # RECIPIENTS=`cat $1`
+       RECIPIENTS=`cat $1 | uniq | read_file_into_array`
+       shift
+       ;;
     -vn )
 	    shift
        versions="$1"
+       shift
+       ;;
+    -vf )
+	    shift
+       versions=`cat $1 | uniq | read_file_into_array`
        shift
        ;;
     -mail )
@@ -119,7 +170,13 @@ else
   OUTPUT=/home/pwagner/clusterstatus/"$TODAY".txt
 fi
 
-versions=`echo $versions | sed 's/,/ /g'`
+if [ "$versions" = "" ]
+then
+  versions="(none)"
+else
+  versions=`echo $versions | sed 's/,/ /g'`
+fi
+
 if [ "$dryrun" != "" ]
 then
   mustrun="no"
@@ -245,6 +302,9 @@ else
 fi
 exit 0
 # $Log$
+# Revision 1.7  2006/03/23 19:17:26  pwagner
+# Handles multiple pge versions explicitly
+#
 # Revision 1.6  2005/10/29 00:19:48  pwagner
 # Changes to have mesgs show Return-path we want
 #
