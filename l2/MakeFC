@@ -65,12 +65,6 @@ libcloud_sources=../cloudfwdm
 # where forward model objects and libfwdmdl.a are stored
 libcloud_objs=$(libcloud_sources)/$(MLSCONFG)
 
-# where sources (but not OBJS) used for hdf5 file versions are stored
-he5lib=../he5lib
-
-# where he5 objects and libhe5.a are stored
-he5lib_objs=$(he5lib)/$(MLSCONFG)
-
 # where the platforms directory is
 PLATFORMS = .
 
@@ -131,7 +125,6 @@ libcloud_f90 := $(shell ${REECHO} $(libcloud_sources)/*.c \
   $(libcloud_sources)/*.f $(libcloud_sources)/*.f90 $(libcloud_sources)/*.f9h)
 blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90 \
   $(blaslib)/*.f9h $(srclib)/*.f9h)
-he5lib_f := $(shell ${REECHO} $(he5lib)/*.c $(he5lib)/*.f $(he5lib)/*.f90)
 machinelib := $(libmls_sources)/machines/$(MLSCONFG)/
 machine_f := $(shell ${REECHO} $(machinelib)/*.c $(machinelib)/*.f \
   $(machinelib)/*.f90)
@@ -145,19 +138,19 @@ PROG_prereqs := $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
      $(INSTALLDIR)/libutctotai.a
 
 ifdef HDFVERSIONS
-   PROG_prereqs := $(PROG_prereqs) $(he5lib_objs)/libhe5.a
-   ADD2PATHS := $(ADD2PATHS) ../$(he5lib)/$(MLSCONFG) \
+   PROG_prereqs := $(PROG_prereqs)
+   ADD2PATHS := $(ADD2PATHS) \
    $(HDF5)/../fortran/src $(HDF5)/../include
 endif
 
 ifndef DONTBUILDPREQS
-BLAS_PREQS := $(blaslib_f) $(libblas_objs)
+# BLAS_PREQS := $(blaslib_f) $(libblas_objs)
+BLAS_PREQS := $(blaslib_f) $(libblas_objs)/Makefile
 LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
    $(machine_f) \
-   $(libblas_objs)/libmlspack.a $(REECHO) $(libmls_objs)
-FM_LIB_prereqs=$(libfwdmdl_f90) $(libmls_objs)/libmls.a $(libfwdmdl_objs)
-CLD_LIB_prereqs=$(libcloud_f90) $(libfwdmdl_objs)/libfwdmdl.a $(libcloud_objs)
-HE5_LIB_prereqs=$(libmls_objs)/libmls.a $(he5lib_f)
+   $(libblas_objs)/libmlspack.a $(REECHO) $(libmls_objs)/Makefile
+FM_LIB_prereqs=$(libfwdmdl_f90) $(libmls_objs)/libmls.a $(libfwdmdl_objs)/Makefile
+CLD_LIB_prereqs=$(libcloud_f90) $(libfwdmdl_objs)/libfwdmdl.a $(libcloud_objs)/Makefile
 endif
 
 
@@ -277,13 +270,6 @@ $(libcloud_objs)/libcloud.a: $(CLD_LIB_prereqs)
 	$(MAKE) -f $(MakeFName) libcloud.a -C $(libcloud_sources) \
      MARK_ALL_AS_UPTODATE=no DONTBUILDPREQS=TRUE
 
-$(he5lib_objs)/libhe5.a: $(HE5_LIB_prereqs)
-	@if [ "$(NOHUNTING)" != "" ] ; then \
-	   rm -f $(he5lib_objs)/libhe5.a ; \
-	fi ; \
-	$(MAKE) -f $(MakeFName) libhe5.a -C $(he5lib) \
-     MARK_ALL_AS_UPTODATE=no DONTBUILDPREQS=TRUE
-
 $(INSTALLDIR)/libutctotai.a:
 	$(MAKE) -f $(MakeFName) utctotai -C $(CONFDIR)
 
@@ -364,21 +350,6 @@ internalupdate: internalsaymake
          -cf "$(MLSCFILE)" -nc -nd $$m_option; \
       m_option=""
 
-# install $(PROG) into $(INSTALLDIR)
-#install: $(PROG)
-#	@echo "Installing $(PROG) into $(INSTALLDIR)"; \
-#	if [ ! -d $(INSTALLDIR) ] ; then \
-#	   $(MLSBIN)/mkpath.sh $(INSTALLDIR) ; \
-#	fi ; \
-#	if [ -f $(PLATFORMS)/$(MLSCONFG)/mlsl2 ] ; then \
-#     mv $(PLATFORMS)/$(MLSCONFG)/mlsl2 $(INSTALLDIR) ; \
-#      rm -f $(INSTALLDIR)/mlsl2.sh ; \
-#	   sed "s=mlsxxyyzz=mlsl2=; s=mlsbbiinn=$(INSTALLDIR)=; \
-#        s=mlshhoommee=$(MLSHOME)=; s=mlseexxttrraa==" \
-#        $(MLSBIN)/mlsprog.sh > $(INSTALLDIR)/mlsl2.sh ; \
-#      chmod a+x $(INSTALLDIR)/mlsl2.sh ; \
-#	fi
-
 install:
 	@cd .. ; \
    $(MAKE) install LEVELS=l2
@@ -397,6 +368,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.65  2006/04/01 01:14:02  pwagner
+# Removed obsolete references to libhe5.a
+#
 # Revision 2.64  2005/06/23 23:02:30  pwagner
 # Reworded Copyright statement
 #
