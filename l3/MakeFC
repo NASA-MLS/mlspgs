@@ -56,12 +56,6 @@ srclib=../srclib
 # where sources (but not OBJS) shared with l3, etc. are stored
 blaslib=../blas
 
-# where sources (but not OBJS) used for hdf5 file versions are stored
-he5lib=../he5lib
-
-# where he5 objects and libhe5.a are stored
-he5lib_objs=$(he5lib)/$(MLSCONFG)
-
 # where the platforms directory is
 PLATFORMS = .
 
@@ -112,7 +106,6 @@ libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.f90 \
   $(libmls_sources)/lit_names.txt)
 blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90 \
   $(blaslib)/*.f9h $(srclib)/*.f9h)
-he5lib_f := $(shell ${REECHO} $(he5lib)/*.c $(he5lib)/*.f $(he5lib)/*.f90)
 machinelib := $(libmls_sources)/machines/$(MLSCONFG)/
 machine_f := $(shell ${REECHO} $(machinelib)/*.c $(machinelib)/*.f \
   $(machinelib)/*.f90)
@@ -124,7 +117,7 @@ PROG_prereqs := $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
      $(INSTALLDIR)/libutctotai.a
 
 ifdef HDFVERSIONS
-   PROG_prereqs := $(PROG_prereqs) $(he5lib_objs)/libhe5.a
+   PROG_prereqs := $(PROG_prereqs)
 endif
 
 ifndef DONTBUILDPREQS
@@ -137,7 +130,6 @@ else
    $(machine_f) \
    $(blaslib_f) $(REECHO) $(libmls_objs)
 endif
-HE5_LIB_prereqs=$(libmls_objs)/libmls.a $(he5lib_f)
 endif
 
 #Any sources to explicitly exclude from dependency list?
@@ -227,13 +219,6 @@ $(libmls_objs)/libmls.a: $(LIB_prereqs)
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources) \
      MARK_ALL_AS_UPTODATE=no DONTBUILDPREQS=TRUE
 
-$(he5lib_objs)/libhe5.a: $(HE5_LIB_prereqs)
-	@if [ "$(NOHUNTING)" != "" ] ; then \
-	   rm -f $(he5lib_objs)/libhe5.a ; \
-	fi ; \
-	$(MAKE) -f $(MakeFName) libhe5.a -C $(he5lib) \
-     MARK_ALL_AS_UPTODATE=no DONTBUILDPREQS=TRUE
-
 $(INSTALLDIR)/libutctotai.a:
 	$(MAKE) -f $(MakeFName) utctotai -C $(CONFDIR)
 
@@ -313,18 +298,8 @@ internalupdate: internalsaymake
 
 # install $(PROG) into $(INSTALLDIR)
 install: $(PROG)
-	@echo "Installing $(PROG) into $(INSTALLDIR)"; \
-	if [ ! -d $(INSTALLDIR) ] ; then \
-	   $(MLSBIN)/mkpath.sh $(INSTALLDIR) ; \
-	fi ; \
-	if [ -f $(PLATFORMS)/$(MLSCONFG)/mlsl3d ] ; then \
-	   mv $(PLATFORMS)/$(MLSCONFG)/mlsl3d $(INSTALLDIR) ; \
-      rm -f $(INSTALLDIR)/mlsl3d.sh ; \
-	   sed "s=mlsxxyyzz=mlsl3d=; s=mlsbbiinn=$(INSTALLDIR)=; \
-        s=mlshhoommee=$(MLSHOME)=; s=mlseexxttrraa==" \
-        $(MLSBIN)/mlsprog.sh > $(INSTALLDIR)/mlsl3d.sh ; \
-      chmod a+x $(INSTALLDIR)/mlsl3d.sh ; \
-	fi
+	@cd .. ; \
+   $(MAKE) install LEVELS=l3
 
 # install mlsl3d and mlsl3m into $(INSTALLDIR)
 install-l3:
@@ -347,6 +322,9 @@ targ:
    --exclude \*.mod --exclude $(PROG)
 
 # $Log$
+# Revision 1.49  2005/06/23 23:02:30  pwagner
+# Reworded Copyright statement
+#
 # Revision 1.48  2004/03/30 00:21:50  pwagner
 # Take care that lib is rebuilt after changes in machines directory
 #
