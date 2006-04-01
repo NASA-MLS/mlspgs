@@ -59,12 +59,6 @@ blaslib=../blas
 # where blas objects and libmlspack.a are stored
 libblas_objs=$(blaslib)/$(MLSCONFG)
 
-# where sources (but not OBJS) used for hdf5 file versions are stored
-he5lib=../he5lib
-
-# where he5 objects and libhe5.a are stored
-he5lib_objs=$(he5lib)/$(MLSCONFG)
-
 # where the platforms directory is
 PLATFORMS = .
 
@@ -115,7 +109,6 @@ libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.f90 \
   $(libmls_sources)/lit_names.txt)
 blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90 \
   $(blaslib)/*.f9h $(srclib)/*.f9h)
-he5lib_f := $(shell ${REECHO} $(he5lib)/*.c $(he5lib)/*.f $(he5lib)/*.f90)
 machinelib := $(libmls_sources)/machines/$(MLSCONFG)/
 machine_f := $(shell ${REECHO} $(machinelib)/*.c $(machinelib)/*.f \
   $(machinelib)/*.f90)
@@ -125,10 +118,9 @@ PROG_prereqs := $(CONFDIR)/$(MLSCFILE) \
    $(INSTALLDIR)/libutctotai.a
 
 ifdef HDFVERSIONS
-   PROG_prereqs := $(PROG_prereqs) $(he5lib_objs)/libhe5.a
-   ADD2PATHS := $(ADD2PATHS) ../$(he5lib)/$(MLSCONFG) \
+   PROG_prereqs := $(PROG_prereqs)
+   ADD2PATHS := $(ADD2PATHS) \
    $(HDF5)/../fortran/src $(HDF5)/../include
-#   ADD2PATHS := $(ADD2PATHS) ../$(he5lib)/$(MLSCONFG)
 endif
 
 ifndef DONTBUILDPREQS
@@ -136,7 +128,6 @@ BLAS_PREQS := $(blaslib_f) $(libblas_objs)
 LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
    $(machine_f) \
    $(libblas_objs)/libmlspack.a $(REECHO) $(libmls_objs)/Makefile
-HE5_LIB_prereqs=$(libmls_objs)/libmls.a $(he5lib_f)
 endif
 
 #Any sources to explicitly exclude from dependency list?
@@ -176,12 +167,6 @@ else
   UP_OR_LOW := -mod lower
 endif
 
-#MARK_ALL_AS_UPTODATE determines whether, on rebuilding any module,
-#all modules, rebuilt or not, should be marked as up to date
-#ifndef MARK_ALL_AS_UPTODATE
-#  MARK_ALL_AS_UPTODATE := $(shell echo $(CAN_AVOID) | grep $(MLSF95).$(MLSPLAT))
-#endif
-
 #NOCLEANING determines value of RECFG passed to mlsconfigure script
 #RECFG determines whether changing .configure triggers deleting
 #existing sub-directory, and thus recompiling every source file
@@ -205,6 +190,7 @@ $(PROG):  $(PROG_prereqs)
          fi
 
 # $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
+$(PLATFORMS)/$(MLSCONFG)/mlsl0sn \
 $(PLATFORMS)/$(MLSCONFG)/mlsl1log \
 $(PLATFORMS)/$(MLSCONFG)/mlslg \
 $(PLATFORMS)/$(MLSCONFG)/mlsl1t : $(PROG)
@@ -229,13 +215,6 @@ $(libmls_objs)/libmls.a: $(LIB_prereqs)
 	   rm -f $(libmls_objs)/libmls.a ; \
 	fi ; \
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources) \
-     MARK_ALL_AS_UPTODATE=no DONTBUILDPREQS=TRUE
-
-$(he5lib_objs)/libhe5.a: $(HE5_LIB_prereqs)
-	@if [ "$(NOHUNTING)" != "" ] ; then \
-	   rm -f $(he5lib_objs)/libhe5.a ; \
-	fi ; \
-	$(MAKE) -f $(MakeFName) libhe5.a -C $(he5lib) \
      MARK_ALL_AS_UPTODATE=no DONTBUILDPREQS=TRUE
 
 $(INSTALLDIR)/libutctotai.a:
@@ -319,28 +298,8 @@ internalupdate: internalsaymake
 
 # install $(PROG) into $(INSTALLDIR)
 install: $(PROG)
-	@echo "Installing $(PROG) into $(INSTALLDIR)"; \
-	if [ ! -d $(INSTALLDIR) ] ; then \
-	   $(MLSBIN)/mkpath.sh $(INSTALLDIR) ; \
-	fi ; \
-	if [ -f $(PLATFORMS)/$(MLSCONFG)/mlsl0sn ] ; then \
-	   mv $(PLATFORMS)/$(MLSCONFG)/mlsl0sn $(INSTALLDIR) ; \
-	fi ; \
-	if [ -f $(PLATFORMS)/$(MLSCONFG)/mlsl1log ] ; then \
-	   mv $(PLATFORMS)/$(MLSCONFG)/mlsl1log $(INSTALLDIR) ; \
-	fi ; \
-	if [ -f $(PLATFORMS)/$(MLSCONFG)/mlsl1t ] ; then \
-	   mv $(PLATFORMS)/$(MLSCONFG)/mlsl1t $(INSTALLDIR) ; \
-	fi ; \
-	if [ -f $(PLATFORMS)/$(MLSCONFG)/mlsl1g ] ; then \
-	   mv $(PLATFORMS)/$(MLSCONFG)/mlsl1g $(INSTALLDIR) ; \
-      rm -f $(INSTALLDIR)/mlsl1.sh ; \
-	   sed "s=mlsxxyyzz_1=mlsl1log=; s=mlsxxyyzz_2=mlsl1g=; \
-        s=mlsxxyyzz_3=mlsl1t=; s=mlsbbiinn=$(INSTALLDIR)=; \
-        s=mlsxxyyzz_0=mlsl0sn=; s=mlshhoommee=$(MLSHOME)=; s=mlseexxttrraa==" \
-        $(MLSBIN)/mlsl1prog.sh > $(INSTALLDIR)/mlsl1.sh ; \
-      chmod a+x $(INSTALLDIR)/mlsl1.sh ; \
-	fi
+	@cd .. ; \
+   $(MAKE) install LEVELS=l1
 
 tar:
 	rm -f ../$(PROG).tar
@@ -358,6 +317,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
 
 # $Log$
+# Revision 2.52  2006/04/01 01:11:58  pwagner
+# Moved installation commands to ../MakeFC
+#
 # Revision 2.51  2006/03/28 21:54:33  pwagner
 # Must turn off optimization to work around Lahey bug
 #
