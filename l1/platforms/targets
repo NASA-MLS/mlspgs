@@ -145,7 +145,7 @@ clean:
 
 mark_all_as_uptodate:
 		@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
-		 $(UTILDIR)/mark_as_uptodate.sh -T mlsl1log -T mlsl1g -T mlsl1t \
+		 $(UTILDIR)/mark_as_uptodate.sh -T mlsl0sn -T mlsl1log -T mlsl1g -T mlsl1t \
        -M $(MAKE) $(MARKING_ARG) \
        $(libdir) ; \
 		fi
@@ -163,6 +163,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.35  2006/03/27 19:18:45  pwagner
+# Added new pge mlsl0sn to store switch settings
+#
 # Revision 1.34  2005/08/25 19:21:32  pwagner
 # Removed MLSL1BOA as target
 #
