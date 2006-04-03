@@ -157,7 +157,7 @@ then
   files=`echo *L1*.h5`
   for file in $files
   do
-    if [ -r "$file" ]
+    if [ -w "$file" ]
     then
       packed="$file".p
       if [ "$GZIPLEVEL" != "" ] 
@@ -184,6 +184,9 @@ else
 fi
 
 # $Log$
+# Revision 1.8  2006/04/03 22:14:41  pwagner
+# Fixed serious syntax errors, oyther bugs
+#
 # Revision 1.7  2006/03/27 19:21:15  pwagner
 # Added new pge mlsl0sn to store switch settings
 #
