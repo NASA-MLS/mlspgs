@@ -26,6 +26,13 @@
 # causing it to exit with status=NORMAL_STATUS
 # MakeFC sed's this file to replace xxyyzz, hhoommee, etc. as appropriate
 
+# Now if the tool h5repack in the same directory as MLSPROG
+# and if the current working directory houses the product files
+# then as a final step repack them
+
+# For this final step to operate we must be able to recognize the product files
+# A regular expression rreeggeexx will be sed-ed by the install script
+
 NORMAL_STATUS=2
 # Use the following line to add extra options to MLSPROG
 EXTRA_OPTIONS=mlseexxttrraa
@@ -35,6 +42,9 @@ MLSPROG=mlsxxyyzz
 MLSBIN=mlsbbiinn
 # If relative, it must be relative to the following absolute path
 MLSHOME=mlshhoommee
+
+GZIPLEVEL="1"
+#          ^^^---- compression level ("" means none)
 
 # Does MLSBIN start with "/" or not?
 # (in other words is it absolute or relative?)
@@ -52,6 +62,30 @@ fi
 
 return_status=`expr $?`
 
+# repack level 2 product files to speed things up
+if [ -x "$H5REPACK" ]
+then
+  files=`echo rreeggeexx`
+  for file in $files
+  do
+    if [ -w "$file" ]
+    then
+      packed="$file".p
+      if [ "$GZIPLEVEL" != "" ] 
+      then
+        filter="-f GZIP=$GZIPLEVEL"
+      else
+        filter=""
+      fi
+      echo "Packing $file into $packed"
+      echo $H5REPACK -i "$file" -o "$packed" $filter
+      $H5REPACK -i "$file" -o "$packed" $filter
+      # Here we could insert some check involving h5diff if we were dubious
+      mv "$packed" "$file"
+    fi
+  done
+fi
+
 if [ $return_status != $NORMAL_STATUS ]
 then
    exit 1
@@ -60,6 +94,9 @@ else
 fi
 
 # $Log$
+# Revision 1.3  2005/06/23 22:20:45  pwagner
+# Reworded Copyright statement
+#
 # Revision 1.2  2002/02/21 21:57:40  pwagner
 # EXTRA_OPTIONS now settable
 #
