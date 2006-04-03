@@ -185,13 +185,15 @@ fi
 
 # repack level 2 product files to speed things up
 if [ -x "$H5REPACK" ]
+then
   files=`echo *L2FWM*.h5 *L2GP-[A-CE-Z]*.he5 *L2GP-DGG_*.he5 *L2AUX-[A-C]*.h5 *L2AUX-DGM_*.h5`
   for file in $files
   do
-    if [ -r "$file" ]
+    if [ -w "$file" ]
     then
       packed="$file".p
-      if [ "$GZIPLEVEL" != "" ] then
+      if [ "$GZIPLEVEL" != "" ] 
+      then
         filter="-f GZIP=$GZIPLEVEL"
       else
         filter=""
@@ -202,7 +204,7 @@ if [ -x "$H5REPACK" ]
       # Here we could insert some check involving h5diff if we were dubious
       mv "$packed" "$file"
     fi
-then
+  done
 fi
 
 if [ $return_status != $NORMAL_STATUS ]
@@ -213,6 +215,9 @@ else
 fi
 
 # $Log$
+# Revision 1.11  2006/03/23 19:22:42  pwagner
+# repack with gzip compression all hdf5/hdfeos5 product files
+#
 # Revision 1.10  2005/12/22 19:07:58  pwagner
 # Imitated l1b repacking to defragment forward model files
 #
