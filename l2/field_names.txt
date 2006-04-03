@@ -375,6 +375,7 @@ status
 # step already in MLSSignals field set, so can't put it here, too
 stop
 superDiagonal
+surface
 swath
 switchingMirror
 systemTemperature
@@ -426,6 +427,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.163  2006/04/03 23:51:13  livesey
+# Added surface
+#
 # Revision 2.162  2006/03/22 02:22:50  vsnyder
 # Add lsbLBLmolecules, useLBLmolecules
 #
