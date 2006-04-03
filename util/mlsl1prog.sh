@@ -88,14 +88,14 @@ if [ "$is_absolute" = "" ]
 then
    echo $MLSHOME/$MLSBIN/$MLSPROG_1 $EXTRA_OPTIONS "$@"
    $MLSHOME/$MLSBIN/$MLSPROG_1 $EXTRA_OPTIONS "$@"
+   return_status_1=`expr $?`
    H5REPACK=$MLSHOME/$MLSBIN/h5repack
 else
    echo $MLSBIN/$MLSPROG_1 $EXTRA_OPTIONS "$@"
    $MLSBIN/$MLSPROG_1 $EXTRA_OPTIONS "$@"
+   return_status_1=`expr $?`
    H5REPACK=$MLSBIN/h5repack
 fi
-
-return_status_1=`expr $?`
 
 if [ $return_status_1 != $NORMAL_STATUS ]
 then
@@ -153,13 +153,15 @@ done
 
 # repack level 1 files to speed things up
 if [ -x "$H5REPACK" ]
+then
   files=`echo *L1*.h5`
   for file in $files
   do
     if [ -r "$file" ]
     then
       packed="$file".p
-      if [ "$GZIPLEVEL" != "" ] then
+      if [ "$GZIPLEVEL" != "" ] 
+      then
         filter="-f GZIP=$GZIPLEVEL"
       else
         filter=""
@@ -170,7 +172,7 @@ if [ -x "$H5REPACK" ]
       # Here we could insert some check involving l1bdiff if we were dubious
       mv "$packed" "$file"
     fi
-then
+  done
 fi
 
 # Exit with status according to whether we succeeded or failed
@@ -182,6 +184,9 @@ else
 fi
 
 # $Log$
+# Revision 1.7  2006/03/27 19:21:15  pwagner
+# Added new pge mlsl0sn to store switch settings
+#
 # Revision 1.6  2006/03/23 19:21:18  pwagner
 # Add gzip compression when repacking hdf5 files
 #
