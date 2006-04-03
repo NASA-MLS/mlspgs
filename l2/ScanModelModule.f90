@@ -40,7 +40,7 @@ module ScanModelModule          ! Scan model and associated calculations
     & M_FULL, UpdateDiagonal
   use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T, &
     & CREATEEMPTYMATRIX, DESTROYMATRIX, CLEARMATRIX
-  use MLSCommon, ONLY: R8, rp
+  use MLSCommon, ONLY: R8, rp, rv
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
        MLSMSG_ERROR, MLSMSG_WARNING
   use MLSNumerics, only : HUNT, INTERPOLATEVALUES
@@ -275,6 +275,8 @@ contains ! =============== Subroutines and functions ==========================
 !    real (r8) :: BASISCUTOFF            ! Threshold level for gas constant
     real (r8) :: REFLOGP                ! Log p of pressure reference surface
     real (r8) :: BASISGAP               ! Space between adjacent surfaces
+    integer, dimension( size(GPHPREC, 1), size(GPHPREC, 2) ) &
+      &       :: ITSSIGN                ! < 0 if tempprec or refgphprec are
 
     ! Check that we get the right kinds of quantities
     if ( ( .not. ValidateVectorQuantity( tempPrec,&
@@ -352,6 +354,7 @@ contains ! =============== Subroutines and functions ==========================
 
     !  Transform the temperature, refGPH precision to GPH precision
     GPHPrec2 = 0.0
+    ITSSIGN  = 1
     do instance = 1, tempPrec%template%noInstances
       do surf = 1, tempPrec%template%noSurfs
         GPHPrec2(:,instance) = GPHPrec2(:,instance) + &
@@ -359,6 +362,25 @@ contains ! =============== Subroutines and functions ==========================
       end do
       GPHPrec2(:,instance) = GPHPrec2(:,instance) + &
         & ( dgph_drefGPH(:,instance) * refGPHPrec%values(1,instance) )**2
+      if ( refGPHPrec%values(1,instance) < 0._rv ) then
+        ITSSIGN(:, instance) = -1
+      else
+        do surf = 1, tempPrec%template%noSurfs
+          ! On which side of the reference surface are we?
+          if ( surf < myBelowRef ) then
+            if ( any( tempPrec%values(surf:myBelowRef, instance) < 0._rv ) ) &
+              & ITSSIGN(surf, instance) = -1
+          elseif ( &
+            & any( tempPrec%values(myBelowRef:surf, instance) < 0._rv ) ) then
+            ITSSIGN(surf, instance) = -1
+          endif
+        end do
+      endif
+
+    ! This displayed excessive zeal--it turned all precisions negative
+    ! if ( refGPHPrec%values(1,instance) < 0._rv .or. &
+    !   & any( tempPrec%values(1:tempPrec%template%noSurfs,instance) < 0._rv ) ) &
+    !   & ITSSIGN(:, instance) = -1
     end do
     do surf = 1, tempPrec%template%noSurfs
       GPHPrec2a(surf,:) = sum ( &
@@ -369,7 +391,7 @@ contains ! =============== Subroutines and functions ==========================
         & dgph_drefGPH(surf,:) * refGPHPrec%values(1,:) * &
         & refGPHPrec%values(1,:) * dgph_drefGPH(surf,:)
     end do
-    GPHPrec = sqrt ( GPHPrec2 )
+    GPHPrec = ITSSIGN * sqrt ( GPHPrec2 )
      
     ! That's it  
   end subroutine GetGPHPrecision
@@ -2137,6 +2159,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.63  2006/04/03 20:23:46  pwagner
+! Preserve correct sign for GPH Precision
+!
 ! Revision 2.62  2005/06/22 18:57:02  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
