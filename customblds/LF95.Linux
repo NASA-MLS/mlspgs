@@ -32,7 +32,7 @@ L1LogUtils.o: l1logutils.mod
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
    -T L1LogUtils.o l1logutils.mod
 l1logutils.mod:
-	$(UTILDIR)/newAifBdiff.sh -a calibweightsflags.mod $(FC) -c $(BUGGY) \
+	$(UTILDIR)/newAifBdiff.sh -a l1logutils.mod $(FC) -c $(BUGGY) \
    $(INC_PATHS) $(S)/L1LogUtils.f90 $(FAFTER)
 OutputL1B.o: outputl1b.mod
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
@@ -374,6 +374,9 @@ ncep_dao.o:
 
 endif
 # $Log$
+# Revision 1.21  2006/04/01 01:14:50  pwagner
+# Fixed error in build command for L1LogUtils
+#
 # Revision 1.20  2006/03/28 21:54:58  pwagner
 # Must turn off optimization to work around Lahey bug
 #

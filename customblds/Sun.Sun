@@ -5,15 +5,35 @@
 # Should put this elsewhere--but in a hurry
 TABLES_DIR=../../tables
 
+# split_path.sh can split off a file name from any prefixed paths
+SPLIT_PATH=$(UTILDIR)/split_path.sh
+
+# FC_NAME may be something like f95 if we need a real compiler, or
+# mark_as_uptodate.sh if we're being asked just to touch targets
+FC_NAME := $(shell ${SPLIT_PATH} -f $(FC))
+
+BUGGY := $(shell echo ${FOPTS} | sed 's/-O[0-9]*//')
 ifndef CASCADE
 #	l1
 
+CalibWeightsFlags.o: calibweightsflags.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T CalibWeightsFlags.o calibweightsflags.mod
+calibweightsflags.mod:
+	$(UTILDIR)/newAifBdiff.sh -a calibweightsflags.mod $(FC) -c $(BUGGY) \
+   $(INC_PATHS) $(S)/CalibWeightsFlags.f90 $(FAFTER)
 EngTbls.o: engtbls.mod
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
    -T EngTbls.o engtbls.mod 
 engtbls.mod:
 	$(UTILDIR)/newAifBdiff.sh -a engtbls.mod $(FC) -c $(DUSTY) \
    $(INC_PATHS) $(S)/EngTbls.f90 $(FAFTER)
+L1LogUtils.o: l1logutils.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T L1LogUtils.o l1logutils.mod
+l1logutils.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l1logutils.mod $(FC) -c $(BUGGY) \
+   $(INC_PATHS) $(S)/L1LogUtils.f90 $(FAFTER)
 OutputL1B.o: outputl1b.mod
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
    -T OutputL1B.o outputl1b.mod 
@@ -163,7 +183,6 @@ intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
 
 endif
 
-BUGGY := $(shell echo ${FOPTS} | sed 's/-O[0-9]*//')
 NOUNASS := $(shell echo ${FOPTS} | sed 's/\(--chk [aesx,]*\),u\([aesx,]*\)/\1\2/')
 
 DUSTY_NO_OPT := $(shell echo ${DUSTY} | sed 's/-O[0-9]*//')
@@ -190,8 +209,12 @@ ncep_dao.o: ncep_dao.mod
 else
 #	l1
 
+CalibWeightsFlags.o: $(S)/CalibWeightsFlags.f90
+	$(FC) -c $(BUGGY) $(INC_PATHS) $(S)/CalibWeightsFlags.f90 $(FAFTER)
 EngTbls.o: $(S)/EngTbls.f90
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/EngTbls.f90 $(FAFTER)
+L1LogUtils.o: $(S)/L1LogUtils.f90
+	$(FC) -c $(BUGGY) $(INC_PATHS) $(S)/L1LogUtils.f90 $(FAFTER)
 OutputL1B.o: $(S)/OutputL1B.f90
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B.f90 $(FAFTER)
 OutputL1B_HDF4.o: $(S)/OutputL1B_HDF4.f90
@@ -325,6 +348,9 @@ ncep_dao.o:
 
 endif
 # $Log$
+# Revision 1.15  2005/09/08 00:25:01  pwagner
+# Fixed bug is build command for l1/EngTbls.o
+#
 # Revision 1.14  2004/08/19 00:07:46  pwagner
 # Fixed missing mod dependencies for machine.o
 #
