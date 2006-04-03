@@ -583,8 +583,8 @@ contains ! ========= Public Procedures ============================
             call expr ( son, units, value, type )
             if ( any ( units /= phyq_dimensionless ) ) &
               & call AnnounceError ( key, WrongUnits, f_surface )
-            s1(1) = value(1)
-            s2(1) = value(2)
+            s1(1) = max ( min ( value(1), qty%template%noSurfs ), 1 )
+            s2(1) = max ( min ( value(2), qty%template%noSurfs ), 1 )
           end if
           ! Now consider the open range issue
           select case ( rangeId )
@@ -1179,6 +1179,9 @@ contains ! ========= Public Procedures ============================
 end module SubsetModule
  
 ! $Log$
+! Revision 2.15  2006/04/03 23:54:33  livesey
+! Added range guards
+!
 ! Revision 2.14  2006/04/03 23:51:42  livesey
 ! Added f_surface capability to subset
 !
