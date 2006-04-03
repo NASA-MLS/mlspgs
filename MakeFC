@@ -590,7 +590,8 @@ install:
       	  mv $$dir/$(MLSCONFG)/mls$$dir $(INSTALLDIR) ; \
             rm -f $(INSTALLDIR)/mls$$dir.sh ; \
 	         sed "s=mlsxxyyzz=mls$$dir=; s=mlsbbiinn=$(INSTALLDIR)=; \
-              s=mlshhoommee=$(MLSHOME)=; s=mlseexxttrraa==" \
+              s=mlshhoommee=$(MLSHOME)=; s=mlseexxttrraa==; \
+              s=rreeggeexx=\*L2FWM\*.h5 \*L2GP-[A-CE-Z]\*.he5 \*L2GP-DGG_\*.he5 \*L2AUX-[A-C]\*.h5 \*L2AUX-DGM_\*.h5=" \
               $(MLSBIN)/mlsprog.sh > $(INSTALLDIR)/mls$$dir.sh ; \
             chmod a+x $(INSTALLDIR)/mls$$dir.sh ; \
 			fi ; \
@@ -609,9 +610,21 @@ install:
 	         mv $$dir/$(MLSCONFG)/mlsl3d $(INSTALLDIR) ; \
             rm -f $(INSTALLDIR)/mlsl3d.sh ; \
 	         sed "s=mlsxxyyzz=mlsl3d=; s=mlsbbiinn=$(INSTALLDIR)=; \
-              s=mlshhoommee=$(MLSHOME)=; s=mlseexxttrraa==" \
+              s=mlshhoommee=$(MLSHOME)=; s=mlseexxttrraa==; \
+              s=rreeggeexx=\*L3DM*.he5 \*L3SP\*.he5=" \
               $(MLSBIN)/mlsprog.sh > $(INSTALLDIR)/mlsl3d.sh ; \
             chmod a+x $(INSTALLDIR)/mlsl3d.sh ; \
+			fi ; \
+		;; \
+	"l3m") \
+			if [ -f $$dir/$(MLSCONFG)/mlsl3m ] ; then \
+	         mv $$dir/$(MLSCONFG)/mlsl3m $(INSTALLDIR) ; \
+            rm -f $(INSTALLDIR)/mlsl3m.sh ; \
+	         sed "s=mlsxxyyzz=mlsl3m=; s=mlsbbiinn=$(INSTALLDIR)=; \
+              s=mlshhoommee=$(MLSHOME)=; s=mlseexxttrraa==; \
+              s=rreeggeexx=\*L3MM*.he5 \*L3MZ\*.he5 \*L3DZ\*.he5=" \
+              $(MLSBIN)/mlsprog.sh > $(INSTALLDIR)/mlsl3m.sh ; \
+            chmod a+x $(INSTALLDIR)/mlsl3m.sh ; \
 			fi ; \
 		;; \
 	*) \
@@ -1114,6 +1127,9 @@ tools: chunktimes checkpvmup compare heconvert h5subset h5cat hl killmaster \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.97  2006/04/01 01:11:07  pwagner
+# Moved l1 installation commands here
+#
 # Revision 1.96  2005/06/23 22:23:45  pwagner
 # Reworded Copyright statement
 #
