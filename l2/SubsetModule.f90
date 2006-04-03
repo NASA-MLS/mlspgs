@@ -274,7 +274,7 @@ contains ! ========= Public Procedures ============================
     use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
     use Init_Tables_Module, only: F_QUANTITY, F_PTANQUANTITY, F_CHANNELS, F_HEIGHT, &
       & F_MASK, F_OPTICALDEPTH, F_OPTICALDEPTHCUTOFF, F_MAXVALUE, F_MINVALUE, &
-      & F_IGNORE, F_RESET, F_ADDITIONAL
+      & F_IGNORE, F_RESET, F_SURFACE, F_ADDITIONAL
     use Init_Tables_Module, only: L_RADIANCE, L_OPTICALDEPTH, L_NONE, L_ZETA, L_PRESSURE
     use Tree_Types, only: N_COLON_LESS, N_LESS_COLON, &
       & N_LESS_COLON_LESS, N_NAMED
@@ -303,6 +303,7 @@ contains ! ========= Public Procedures ============================
     integer :: INSTANCEOR1            ! For coherent quantities
     integer :: MaskBit                ! Bits corresponding to Mask
     integer :: MAINVECTORINDEX        ! Vector index of quantity to subset
+    integer :: NODE                   ! Either heightNode or surfaceNode
     integer :: NROWS                  ! Loop limit dumping mask
     integer :: ODCUTOFFHEIGHT         ! `First' index optically thick
     integer :: QUANTITYINDEX          ! Index
@@ -313,6 +314,7 @@ contains ! ========= Public Procedures ============================
     integer :: SCANDIRECTION          ! +/-1 for up or down
     integer :: SON                    ! Tree node
     integer :: STATUS                 ! Flag
+    integer :: SURFNODE               ! Tree node
     integer :: TESTUNIT               ! Either vector%globalUnit or qty tmplt unit
     integer :: TYPE                   ! Type of value returned by expr
     integer :: UNITS(2)               ! Units returned by expr
@@ -388,6 +390,8 @@ contains ! ========= Public Procedures ============================
         ignore = Get_Boolean ( son )
       case ( f_reset )
         reset = Get_Boolean ( son )
+      case ( f_surface )
+        surfNode = son
       case ( f_additional )
         additional = Get_Boolean ( son )
       case default
@@ -407,7 +411,10 @@ contains ! ========= Public Procedures ============================
       if ( qty%template%signal /= opticalDepth%template%signal .or. &
         &  qty%template%sideband /= opticalDepth%template%sideband ) &
         & call AnnounceError ( key, 'Optical depth does not match subsetted quantity' )
-    endif
+    end if
+    if ( all ( got ( (/ f_height, f_surface /) ) ) ) then
+      call AnnounceError ( key, 'Height and Surface are mutually exclusive in Subset' )
+    end if
 
     if ( vectors(mainVectorIndex)%globalUnit /= phyq_invalid ) then
       testUnit = vectors(mainVectorIndex)%globalUnit
@@ -434,8 +441,8 @@ contains ! ========= Public Procedures ============================
     end if
 
     ! Check that got one of ignore, height, reset
-    if ( count ( got ( (/ f_ignore, f_height, f_reset /) ) ) /= 1 ) &
-      & call announceError ( key, 'Subset must be one o ignore, height or reset' )
+    if ( count ( got ( (/ f_ignore, f_height, f_reset, f_surface /) ) ) /= 1 ) &
+      & call announceError ( key, 'Subset must be one of ignore, height, surface or reset' )
 
     ! Preprocess the height stuff.  
     heightUnit = phyq_dimensionless
@@ -504,7 +511,7 @@ contains ! ========= Public Procedures ============================
       ! Now, make sure for the channels we're considering that the
       ! default is to ignore all, unless we've not got a heights or ignore
       ! in which case we default to use all
-      if ( got(f_height) .or. ignore ) then
+      if ( any ( (/ got(f_height), got(f_surface), ignore /) ) ) then
         do channel = 1, qty%template%noChans
           doThisChannel = .true.
           if ( associated(channels) ) doThisChannel = channels(channel)
@@ -541,42 +548,55 @@ contains ! ========= Public Procedures ============================
       ! quantities we can simply loop over the indices of each height range.
       ! For incoherent ones we have to go through and mark each point
       ! appropriately.
-      if ( got(f_height) ) then
-        do j = 2, nsons(heightNode)
-          ! Get values for this ragne
-          son = subtree ( j, heightNode )
+      if ( got(f_height) .or. got(f_surface) ) then
+        if ( got ( f_height ) ) then
+          node = heightNode
+        else
+          node = surfNode
+        end if
+        do j = 2, nsons(node)
+          son = subtree ( j, node )
           rangeId = node_id ( son )
-          call expr ( son, units, value, type )
-          ! Now maybe do something nasty to value to get in right units.
-          if ( coordinate == l_zeta .and. heightUnit == phyq_pressure ) then
-            value = -log10(value)
-          else
-            if ( coordinate /= qty%template%verticalCoordinate ) &
-              & call AnnounceError ( key, WrongUnits, f_height )
-          end if
-
-          ! Do special things for coherent quantities
-          if ( qty%template%coherent ) then
-            if ( coordinate == l_pressure ) then
-              s1 = minloc ( abs ( -log10(theseHeights) + log10(value(1)) ) )
-              s2 = minloc ( abs ( -log10(theseHeights) + log10(value(2)) ) )
+          if ( got ( f_height ) ) then
+            ! Get values for this ragne
+            call expr ( son, units, value, type )
+            ! Now maybe do something nasty to value to get in right units.
+            if ( coordinate == l_zeta .and. heightUnit == phyq_pressure ) then
+              value = -log10(value)
             else
-              s1 = minloc ( abs ( theseHeights - value(1) ) )
-              s2 = minloc ( abs ( theseHeights - value(2) ) )
+              if ( coordinate /= qty%template%verticalCoordinate ) &
+                & call AnnounceError ( key, WrongUnits, f_height )
             end if
 
-            ! Now consider the open range issue
-            select case ( rangeId )
-            case ( n_colon_less )
-              s1 = min ( s1 + 1, qty%template%noSurfs )
-            case ( n_less_colon )
-              s2 = max ( s2 - 1, 1 )
-            case ( n_less_colon_less )
-              s1 = min ( s1 + 1, qty%template%noSurfs )
-              s2 = max ( s2 - 1, 1 )
-            end select
+            ! Do special things for coherent quantities
+            if ( qty%template%coherent ) then
+              if ( coordinate == l_pressure ) then
+                s1 = minloc ( abs ( -log10(theseHeights) + log10(value(1)) ) )
+                s2 = minloc ( abs ( -log10(theseHeights) + log10(value(2)) ) )
+              else
+                s1 = minloc ( abs ( theseHeights - value(1) ) )
+                s2 = minloc ( abs ( theseHeights - value(2) ) )
+              end if
+            end if
+          else
+            ! Subset by surface (i.e. MIF) instead, much easier
+            call expr ( son, units, value, type )
+            if ( any ( units /= phyq_dimensionless ) ) &
+              & call AnnounceError ( key, WrongUnits, f_surface )
+            s1(1) = value(1)
+            s2(1) = value(2)
           end if
-
+          ! Now consider the open range issue
+          select case ( rangeId )
+          case ( n_colon_less )
+            s1 = min ( s1 + 1, qty%template%noSurfs )
+          case ( n_less_colon )
+            s2 = max ( s2 - 1, 1 )
+          case ( n_less_colon_less )
+            s1 = min ( s1 + 1, qty%template%noSurfs )
+            s2 = max ( s2 - 1, 1 )
+          end select
+          
           scanDirection = 0
           do channel = 1, qty%template%noChans
             doThisChannel = .true.
@@ -619,8 +639,8 @@ contains ! ========= Public Procedures ============================
                 end if
               end if
 
-              if ( qty%template%coherent ) then
-                ! For coherent quantities simply do a loop over a range.
+              if ( qty%template%coherent .or. got ( f_surface ) ) then
+                ! For coherent quantities and/or spefified surfaces simply do a loop over a range.
                 do height = s1(1), s2(1)
                   !??? Make sure mask bit numbers begin at 1, even when
                   !??? channel numbers don't.
@@ -1159,6 +1179,9 @@ contains ! ========= Public Procedures ============================
 end module SubsetModule
  
 ! $Log$
+! Revision 2.14  2006/04/03 23:51:42  livesey
+! Added f_surface capability to subset
+!
 ! Revision 2.13  2005/06/22 18:57:02  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
