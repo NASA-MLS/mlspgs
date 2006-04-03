@@ -1073,6 +1073,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_additional, t+t_boolean, n+n_field_type, &
              begin, f+f_channels, t+t_numeric, t+t_numeric_range, n+n_field_type, &
              begin, f+f_height, t+t_numeric_range, n+n_field_type, &
+             begin, f+f_surface, t+t_numeric_range, n+n_field_type, &
              begin, f+f_ignore, t+t_boolean, n+n_field_type, &
              begin, f+f_mask, t+t_masks, n+n_field_type, &
              begin, f+f_maxValue, t+t_numeric, n+n_field_type, &
@@ -1441,6 +1442,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.432  2006/04/03 23:51:21  livesey
+! Added f_surface to subset
+!
 ! Revision 2.431  2006/03/23 01:51:32  vsnyder
 ! Allow only [UL]SBPFAMolecules and [UL]SBLBLMolecules fields to be empty
 !
