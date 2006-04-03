@@ -250,6 +250,10 @@ contains ! ===================================== Public Procedures =====
     if ( associated(filedatabase) ) then
       if ( size(filedatabase) > 0 ) then
         if ( any(filedatabase%content == 'l2gp') ) then
+          call output( 'count(filedatabase%content == l2gp)', advance='no' )
+          call output( count(filedatabase%content == 'l2gp'), advance='yes' )
+          call output( '(Resetting defaults to exclude overlaps outside '&
+            & // 'processingRange', advance='yes' )
           ChunkDivideConfig%allowPriorOverlaps = .false.
           ChunkDivideConfig%allowPostOverlaps = .false.
         endif
@@ -2365,6 +2369,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.72  2006/04/03 20:26:08  pwagner
+! More verbose notice when using l2gp a priori exclude outside overlaps
+!
 ! Revision 2.71  2006/03/17 21:57:43  pwagner
 ! Adjust default behavior to exclude overlaps outside processing if sids run
 !
