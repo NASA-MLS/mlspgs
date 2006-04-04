@@ -583,8 +583,8 @@ contains ! ========= Public Procedures ============================
             call expr ( son, units, value, type )
             if ( any ( units /= phyq_dimensionless ) ) &
               & call AnnounceError ( key, WrongUnits, f_surface )
-            s1(1) = max ( min ( value(1), qty%template%noSurfs ), 1 )
-            s2(1) = max ( min ( value(2), qty%template%noSurfs ), 1 )
+            s1(1) = max ( min ( value(1), real(qty%template%noSurfs, r8) ), 1._r8 )
+            s2(1) = max ( min ( value(2), real(qty%template%noSurfs, r8) ), 1._r8 )
           end if
           ! Now consider the open range issue
           select case ( rangeId )
@@ -1179,6 +1179,9 @@ contains ! ========= Public Procedures ============================
 end module SubsetModule
  
 ! $Log$
+! Revision 2.16  2006/04/04 15:59:48  pwagner
+! NAG caught us mixing variable types in min, max
+!
 ! Revision 2.15  2006/04/03 23:54:33  livesey
 ! Added range guards
 !
