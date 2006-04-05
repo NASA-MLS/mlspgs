@@ -13,8 +13,7 @@
 MODULE CalibWeightsFlags
 !=============================================================================
 
-  USE MLSL1Common, ONLY: R8, FBnum, FBchans, MBnum, MBchans, WFnum, WFchans, &
-       DACSnum, DACSchans, MaxMIFs
+  USE MLSL1Common, ONLY: MaxMIFs
   USE Calibration, ONLY: WeightsFlags_T
 
   IMPLICIT NONE
@@ -39,7 +38,7 @@ CONTAINS
   SUBROUTINE ProcessMAFdata
 !=============================================================================
 
-    USE MLSL1Config, ONLY: GHz_seq, GHz_seq_use
+    USE MLSL1Config, ONLY: GHz_seq
     USE MLSL1Common, ONLY: L1BFileInfo
     USE EngTbls, ONLY: EngMAF, EngPkt
     USE L0_sci_tbls, ONLY: SciMAF
@@ -52,7 +51,6 @@ CONTAINS
     INTEGER, PARAMETER :: GHz_sw_indx(0:(MaxMIFs-1)) = (/ (i, i=1,MaxMIFs) /)
     CHARACTER(len=1) :: GHz_sw_pos(0:(MaxMIFs-1))
     CHARACTER(len=70) :: PLL_DN(0:(MaxMIFs-1)), PLL_dflt_DN(0:(MaxMIFs-1))
-    LOGICAL :: recompute
     REAL :: LLO_EU(16,0:(MaxMIFs-1)), LLO_dflt_EU(16,0:(MaxMIFs-1))
 
     TYPE Sci_pos_T
@@ -231,6 +229,9 @@ print *, 'flags: ', WeightsFlags(i)
 END MODULE CalibWeightsFlags
 !=============================================================================
 ! $Log$
+! Revision 2.6  2006/04/05 18:10:08  perun
+! Remove unused variables
+!
 ! Revision 2.5  2005/06/23 18:41:35  pwagner
 ! Reworded Copyright statement, moved rcs id
 !

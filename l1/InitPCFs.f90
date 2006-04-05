@@ -13,7 +13,7 @@
 MODULE InitPCFs ! Init PCF data used by MLSL1 program
 !=============================================================================
 
-  USE SDPToolkit, ONLY: PGS_PC_GetReference, PGS_S_SUCCESS
+  USE SDPToolkit, ONLY: PGS_S_SUCCESS
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error
 
   IMPLICIT NONE
@@ -107,6 +107,9 @@ CONTAINS
 END MODULE InitPCFs
 
 ! $Log$
+! Revision 2.6  2006/04/05 18:11:02  perun
+! Remove unused variables
+!
 ! Revision 2.5  2005/06/23 18:41:35  pwagner
 ! Reworded Copyright statement, moved rcs id
 !

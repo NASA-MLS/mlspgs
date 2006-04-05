@@ -16,7 +16,6 @@ MODULE SpectralBaseline ! Determine Spectral baseline radiances
   USE MLSL1Common, ONLY: BandChans, NumBands, L1BFileInfo, FBchans, MBchans, &
        WFchans, DACSchans, Bandwidth, LO1
   USE L1BData, ONLY: L1BData_T, ReadL1BData, DeallocateL1BData
-  USE MLSL1Rad, ONLY: Rad_name
 
   IMPLICIT NONE
 
@@ -625,6 +624,9 @@ PRINT *, 'Updating baselines...'
 END MODULE SpectralBaseline
 !=============================================================================
 ! $Log$
+! Revision 2.6  2006/04/05 18:10:47  perun
+! Remove unused variables
+!
 ! Revision 2.5  2006/03/24 15:19:20  perun
 ! Set Space/Limb data baselines to 0.0
 !
