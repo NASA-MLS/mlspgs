@@ -14,7 +14,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
 !=============================================================================
 
   USE MLSCommon, ONLY: TAI93_Range_T
-  USE MLSL1Common, ONLY: MaxMIFs, BandSwitch, NumBands, BandChanBad
+  USE MLSL1Common, ONLY: MaxMIFs, NumBands, BandChanBad
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Info
   USE Init_tables_module, ONLY: First_Parm, Last_Parm
   USE INTRINSIC, ONLY: parm_indices
@@ -262,9 +262,8 @@ MODULE MLSL1Config  ! Level 1 Configuration
       USE EXPR_M, ONLY: Expr
       USE INIT_TABLES_MODULE, ONLY: p_removebaseline, p_deconvolveDACS, &
            s_chi2err, f_bandno, p_WriteDiagOffsets
-      USE TREE, ONLY: Decoration, Nsons, Subtree, Sub_rosa, Node_id
+      USE TREE, ONLY: Decoration, Nsons, Subtree, Node_id
       USE TREE_TYPES
-      USE MLSStrings, ONLY: lowercase
       USE MoreTree, ONLY: Get_Boolean
 
       INTEGER :: root, i, j, k, son, key, spec
@@ -377,7 +376,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
       CHARACTER(LEN=1), POINTER, DIMENSION(:) :: scan_seq
       CHARACTER(LEN=1), POINTER :: scan_use
       CHARACTER(LEN=80) :: identifier
-      INTEGER :: i, j, k, son, key, spec, swno, bandno, channo
+      INTEGER :: i, j, k, son, key, spec, bandno, channo
       INTEGER :: expr_units(2), BO_index
       REAL :: BO_angle
       DOUBLE PRECISION :: expr_value(2)
@@ -797,6 +796,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
 END MODULE MLSL1Config
 
 ! $Log$
+! Revision 2.23  2006/04/05 18:10:57  perun
+! Remove unused variables
+!
 ! Revision 2.22  2006/03/24 15:12:19  perun
 ! Add MAFexpandNum, MinSpaceLimbs, THzColdCal, WriteDiagOffsets and remove Switch
 !
