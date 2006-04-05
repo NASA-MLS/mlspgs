@@ -17,10 +17,10 @@ MODULE Radiances ! Determine radiances for the GHz module
   USE MLSL1Common, ONLY: GHzNum, FBchans, MBnum, MBchans, WFnum, WFchans, tau, &
        DACSnum, DACSchans, deflt_gain, deflt_zero, absZero_C, BandWidth, LO1, &
        MaxMIFs, BandChanBad
-  USE MLSL1Utils, ONLY : GetIndexedAvg, Finite
+  USE MLSL1Utils, ONLY : GetIndexedAvg
   USE EngTbls, ONLY : Eng_MAF_T, CalTgtIndx, ReflecIndx, Reflec
   USE Calibration, ONLY : CalWin, limb_cnts, space_interp, target_interp, &
-       space_err, target_err, Tsys, Cgain, slimb_interp, slimb_err, slimb_type
+       target_err, Tsys, Cgain, slimb_interp, slimb_err, slimb_type
   USE MLSL1Rad, ONLY : FBrad, MBrad, WFrad, DACSrad, RadPwr
 
   IMPLICIT NONE
@@ -188,14 +188,14 @@ CONTAINS
 !=============================================================================
 
     USE MLSL1Config, ONLY: MIFsGHz, L1Config
-    USE MLSL1Common, ONLY: L1BFileInfo, Deflt_chi2
+    USE MLSL1Common, ONLY: Deflt_chi2
     USE MLSL1Utils, ONLY: Finite
     USE SpectralBaseline, ONLY: CalcBaseline
 
     TYPE (Eng_MAF_T) :: EMAF
 
     CHARACTER(LEN=1) :: GHz_Cal_Type
-    INTEGER :: bank, chan, MIF_index, MIF_index_MAX, radNum, bandNo, i
+    INTEGER :: bank, chan, MIF_index, MIF_index_MAX, radNum, bandNo
     INTEGER :: time_index, start_index, end_index, windex, CalWin_end
     REAL :: GHz_T1, GHz_T2, space_T, target_T, GHz_target_T, gain, rad_prec
     REAL :: ReflecAvg, NonLimbRad, Scf, Tcf, MIFprecSign(0:(MaxMIFs-1))
@@ -568,6 +568,9 @@ END MODULE Radiances
 !=============================================================================
 
 ! $Log$
+! Revision 2.17  2006/04/05 18:09:32  perun
+! Remove unused variables
+!
 ! Revision 2.16  2006/03/24 15:17:06  perun
 ! Add calculation of radiances using the Space/Limb view interpolations
 !
