@@ -222,7 +222,6 @@ PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
     USE MLSL1Rad, ONLY: BandToBanks
     USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Warning
     USE SDPToolkit, ONLY: PGS_TD_TAItoUTC
-    USE OutputL1B_DataTypes, ONLY: lenG
     USE MLSStrings, ONLY: Capitalize
     USE BrightObjects_m, ONLY: Test_BO_stat, BO_Match
     USE BandTbls, ONLY: BandAlt
@@ -816,6 +815,9 @@ END MODULE SortQualify
 !=============================================================================
 
 ! $Log$
+! Revision 2.20  2006/04/05 18:09:44  perun
+! Remove unused variables
+!
 ! Revision 2.19  2006/03/24 15:18:20  perun
 ! Add sorting based on limb altitudes and remove criteria regarding overriding "discard" MIFs
 !

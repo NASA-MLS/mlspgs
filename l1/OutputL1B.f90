@@ -921,7 +921,7 @@ CONTAINS
 
     ! This subroutine writes the default chi2 data
 
-    USE MLSL1Common, ONLY: NumBands, BandChi2, BandChans
+    USE MLSL1Common, ONLY: BandChi2, BandChans
     USE MLSHDF5, ONLY: SaveAsHDF5DS, MakeHDF5Attribute
 
     INTEGER, INTENT(IN) :: sd_id
@@ -951,6 +951,9 @@ END MODULE OutputL1B
 !=============================================================================
 
 ! $Log$
+! Revision 2.20  2006/04/05 18:10:40  perun
+! Remove unused variables
+!
 ! Revision 2.19  2006/03/24 15:16:37  perun
 ! Add THz/GeodAltX to L1BOA, Poffset and ModelOffset to DIAG and ColdCnts and HotCnts to DIAGT
 !
