@@ -92,7 +92,8 @@ contains
       fwdModelConf%beta_group(b)%qty%qty => getQuantityForForwardModel ( &
         &  fwdModelIn, fwdModelExtra, quantityType=l_vmr, molIndex=b,    &
         &  config=fwdModelConf, radiometer=fwdModelConf%signals(1)%radiometer, &
-        &  foundInFirst=fwdModelConf%beta_group(b)%qty%foundInFirst )
+        &  foundInFirst=fwdModelConf%beta_group(b)%qty%foundInFirst, &
+        &  noError=.true. )
     end do ! b
 
     ! Get state vector quantities for spectral parameters
@@ -158,6 +159,9 @@ contains
 end module Get_Species_Data_m
 
 ! $Log$
+! Revision 2.29  2005/09/07 23:07:26  vsnyder
+! Find spectral parameters in FwdModelIn or FwdModelExtra
+!
 ! Revision 2.28  2005/09/03 01:21:33  vsnyder
 ! Spectral parameter offsets stuff
 !

@@ -84,7 +84,7 @@ contains
     type (qtyStuff_t), intent(in), optional , target :: QtyStuffIn(:)
 ! Local variables:
 
-    integer :: kk, no_mol, mol, my_ext_ind, my_h2o_ind
+    integer :: kk, mol, my_ext_ind, my_h2o_ind, no_mol, no_qty
 
     type (qtyStuff_t), pointer :: QtyStuff(:)
 
@@ -95,6 +95,12 @@ contains
 
     no_mol = size( qtyStuff )
 
+    ! Get number of molecules that appear in the state vector
+    no_qty = 0
+    do mol = 1, no_mol
+      if ( associated(qtyStuff(mol)%qty) ) no_qty = no_qty + 1
+    end do
+
     call create_grids_1 ( Grids_x, no_mol )
 
     grids_x%min_val = -huge(0.0_r8)
@@ -104,6 +110,8 @@ contains
     my_h2o_ind = 0
 
     do mol = 1, no_mol
+
+      if ( .not. associated(qtyStuff(mol)%qty) ) cycle
 
       if ( .not. present(qtyStuffIn) ) then
         kk = FwdModelConf%molecules(mol)
@@ -122,10 +130,10 @@ contains
 
     do mol = 1, no_mol
       ! Fill the zeta, phi, freq. basis and value components.
-      call fill_grids_2 ( grids_x, mol, qtyStuff(mol)%qty, &
-        & fwdModelConf%moleculeDerivatives(mol) .and. &
-        & qtyStuff(mol)%foundInFirst )
-
+      if ( associated(qtyStuff(mol)%qty) ) &
+        & call fill_grids_2 ( grids_x, mol, qtyStuff(mol)%qty, &
+          & fwdModelConf%moleculeDerivatives(mol) .and. &
+          & qtyStuff(mol)%foundInFirst )
     end do
 
 ! ** ZEBUG - Simulate qty%values for EXTINCTION, using the N2 function
@@ -535,6 +543,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.65  2006/01/05 03:26:09  vsnyder
+! Remove unused variable
+!
 ! Revision 2.64  2005/09/16 23:41:45  vsnyder
 ! Spiff up a dump
 !
