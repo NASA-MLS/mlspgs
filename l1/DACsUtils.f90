@@ -440,7 +440,7 @@ CONTAINS
   SUBROUTINE FinalizeDACSdata
 !=============================================================================
 
-    USE MLSL1Common, ONLY: L1BFileInfo, DACSchans, DACSnum
+    USE MLSL1Common, ONLY: L1BFileInfo, DACSchans
     USE MLSCommon, ONLY: rm
     USE MLSL1Config, ONLY: MIFsGHz, L1Config
     USE MLS_DataProducts, ONLY: DataProducts_T, Deallocate_DataProducts
@@ -705,6 +705,9 @@ CONTAINS
 END MODULE DACsUtils
 
 ! $Log$
+! Revision 2.12  2006/04/05 18:10:32  perun
+! Remove unused variables
+!
 ! Revision 2.11  2005/10/10 19:08:40  perun
 ! Test DeconvolveDACS flag and add appropriate attribute to output file
 !
