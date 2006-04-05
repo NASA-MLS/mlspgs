@@ -20,8 +20,7 @@ MODULE WriteMetaL1 ! Populate metadata and write it out
   USE PCFHdr, ONLY: WriteInputPointer, h5_writeglobalattr
   USE SDPToolkit, only: PGSD_PC_FILE_PATH_MAX, PGSD_MET_GROUP_NAME_L, &
     & PGSD_MET_NUM_OF_GROUPS, PGS_S_SUCCESS, PGSMET_W_METADATA_NOT_SET, &
-    & PGS_PC_GETREFERENCE, &
-    & WARNIFCANTPGSMETREMOVE
+    & PGS_PC_GETREFERENCE
   USE MLSPCF1
   USE Orbit, ONLY: orbitNumber, numOrb
 
@@ -43,7 +42,6 @@ CONTAINS
 
     USE InitPCFs, ONLY: L1PCF
     USE MLSFiles, ONLY: mls_sfstart, mls_sfend
-    USE MLSL1Config, ONLY: L1Config
     USE MLSL1Common, ONLY: HDFversion
 
     !Arguments
@@ -60,7 +58,7 @@ CONTAINS
     CHARACTER (LEN=PGSd_PC_FILE_PATH_MAX) :: physical_filename
     CHARACTER (LEN=PGSd_PC_FILE_PATH_MAX) :: sval
     CHARACTER (LEN=132) :: attrname, errmsg
-    INTEGER :: version, ival, indx, error
+    INTEGER :: version, ival, indx
     CHARACTER (LEN=*), PARAMETER :: METAWR_ERR = &
          'Error writing metadata attribute '
 
@@ -433,6 +431,9 @@ CONTAINS
 END MODULE WriteMetaL1 
 
 ! $Log$
+! Revision 2.18  2006/04/05 18:09:52  perun
+! Remove unused variables
+!
 ! Revision 2.17  2005/06/23 18:41:36  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
