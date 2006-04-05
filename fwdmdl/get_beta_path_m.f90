@@ -90,7 +90,7 @@ contains
     real(rp), pointer :: dBdn(:), dBdT(:), dBdv(:), dBdw(:) ! slices of dBeta_d*_path
     real(rp) :: ES(size(t_path)) ! Used for RHi calculation
     integer(ip) :: I, N, NP
-    logical, save :: DumpAll, DumpBeta, DumpStop
+    logical, save :: Clean, DumpAll, DumpBeta, DumpStop
     logical, save :: First = .true. ! Fist-time flag
 
 ! begin the code
@@ -100,6 +100,7 @@ contains
       dumpStop = index(switches,'LBLB') > 0
       dumpAll = dumpStop .or. index(switches,'lblB') > 0
       dumpBeta = dumpAll .or. ( index(switches,'lblb') > 0 )
+      clean = index(switches,'clean') > 0
     end if
 
     nullify ( dBdn, dBdT, dBdv, dBdw ) ! Disassociated means "Don't compute it"
@@ -135,10 +136,10 @@ contains
 
         if ( dumpBeta ) then
           call display_string ( lit_indices(beta_group(i)%lbl(sx)%molecules(1:n)), &
-            & before='LBL Betas for ' )
+            & before='LBL Betas for' )
           call output ( frq, before=', FRQ = ', advance='yes' )
-          call dump ( beta_path(:,i), name='Beta' )
-          if ( associated(dBdT) ) call dump ( dBdT, name='dBdT' )
+          call dump ( beta_path(:,i), name='Beta', clean=clean )
+          if ( associated(dBdT) ) call dump ( dBdT, name='dBdT', clean=clean )
         end if
       end do
 
@@ -150,19 +151,19 @@ contains
           & dBdT = es * dBdT + RHb / t_path**2 * beta_path(:,i)
 
         if ( dumpBeta ) then
-          call display_string ( lit_indices(beta_group(i)%molecule), &
-          & before='LBL Betas for ' )
-          call output ( frq, before=', FRQ = ', advance='yes' )
-          call dump ( beta_path(:,i), name='Beta' )
-          if ( associated(dBdT) ) call dump ( dBdT, name='dBdT' )
+          call display_string ( lit_indices(l_rhi), before='LBL Betas for ' )
+          call display_string ( lit_indices(beta_group(i)%lbl(sx)%molecules), &
+            & before=' using' )
+          call dump ( beta_path(:,i), name='Beta', clean=clean )
+          if ( associated(dBdT) ) call dump ( dBdT, name='dBdT', clean=clean )
         end if
       end if
 
     end do ! i = 1, size(beta_group)
 
     if ( dumpAll ) then
-      call dump ( p_path(path_inds), name='Pressures' )
-      call dump ( t_path, name='Temperatures' )
+      call dump ( p_path(path_inds), name='Pressures', clean=clean )
+      call dump ( t_path, name='Temperatures', clean=clean )
     end if
     if ( dumpStop ) stop
 
@@ -214,7 +215,7 @@ contains
     real(rp), pointer :: dBdn(:), dBdT(:), dBdv(:), dBdw(:) ! slices of dBeta_d*_path
     real(rp) :: ES(size(t_path)) ! Used for RHi calculation
     integer :: I, N
-    logical, save :: DumpAll, DumpBeta, DumpStop
+    logical, save :: Clean, DumpAll, DumpBeta, DumpStop
     logical, save :: First = .true. ! First-time flag
 
     if ( first ) then
@@ -222,6 +223,7 @@ contains
       dumpStop = index(switches,'PFAB') > 0
       dumpAll = dumpStop .or. index(switches,'pfaB') > 0
       dumpBeta = dumpAll .or. ( index(switches,'pfab') > 0 )
+      clean = index(switches,'clean') > 0
     end if
 
     nullify ( dBdT, dBdn, dBdv, dBdw )
@@ -255,10 +257,10 @@ contains
 
           if ( dumpBeta ) then
             call display_string ( lit_indices(beta_group(i)%pfa(sx)%molecules(1:n)), &
-            & before='PFA Betas for ' )
+            & before='PFA Betas for' )
             call output ( frq, before=', FRQ = ', advance='yes' )
-            call dump ( beta_path(:,i), name='Beta' )
-            if ( associated(dBdT) ) call dump ( dBdT, name='dBdT' )
+            call dump ( beta_path(:,i), name='Beta', clean=clean )
+            if ( associated(dBdT) ) call dump ( dBdT, name='dBdT', clean=clean )
           end if
         end if
       end do ! n = 1, size(beta_group(i)%pfa(sx)%molecules)
@@ -271,19 +273,19 @@ contains
           & dBdT = es * dBdT + RHb / t_path**2 * beta_path(:,i)
 
         if ( dumpBeta ) then
-          call display_string ( lit_indices(beta_group(i)%molecule), &
-          & before='PFA Betas for ' )
-          call output ( frq, before=', FRQ = ', advance='yes' )
-          call dump ( beta_path(:,i), name='Beta' )
-          if ( associated(dBdT) ) call dump ( dBdT, name='dBdT' )
+          call display_string ( lit_indices(l_rhi), before='PFA Betas for ' )
+          call display_string ( lit_indices(beta_group(i)%pfa(sx)%molecules), &
+            & before=' using' )
+          call dump ( beta_path(:,i), name='Beta', clean=clean )
+          if ( associated(dBdT) ) call dump ( dBdT, name='dBdT', clean=clean )
         end if
       end if
 
     end do ! i = 1, size(beta_group)
 
     if ( dumpAll ) then
-      call dump ( p_path(path_inds), name='Pressures' )
-      call dump ( t_path, name='Temperatures' )
+      call dump ( p_path(path_inds), name='Pressures', clean=clean )
+      call dump ( t_path, name='Temperatures', clean=clean )
     end if
     if ( dumpStop ) stop
 
@@ -1158,6 +1160,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.85  2006/02/23 01:00:17  vsnyder
+! Give spectroscopy vector pointers correct upper bounds
+!
 ! Revision 2.84  2006/02/10 21:50:33  vsnyder
 ! Move RHi conversion to correct place, spiff up some dumps
 !
