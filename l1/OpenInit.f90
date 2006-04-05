@@ -782,7 +782,7 @@ CONTAINS
     CHARACTER (LEN=132) :: PhysicalFilename
     INTEGER :: error, returnStatus, sd_id, version
     INTEGER :: noMAFs, Flag
-    INTEGER :: firstMAF = 0, lastMAF = 0
+    INTEGER :: firstMAF = 0
     CHARACTER (LEN=*), PARAMETER :: counterMAFname = "counterMAF"
     CHARACTER (LEN=*), PARAMETER :: BO_stat_name = "/THz/BO_stat"
     CHARACTER (LEN=*), PARAMETER :: ypr_name = "/sc/ypr"
@@ -1097,6 +1097,9 @@ END MODULE OpenInit
 !=============================================================================
 
 ! $Log$
+! Revision 2.27  2006/04/05 18:09:38  perun
+! Remove unused variables
+!
 ! Revision 2.26  2006/03/31 16:26:40  perun
 ! Remove expanded UTC from Global Attributes
 !
