@@ -13,11 +13,9 @@
 MODULE BandSwitchesUpdate   ! Update Band switches database using L0 data
 !=============================================================================
 
-  USE SDPToolkit, ONLY: PGS_PC_GetReference, PGS_S_SUCCESS, PGS_IO_Gen_closeF, &
-       PGS_TD_TAItoUTC
+  USE SDPToolkit, ONLY: PGS_IO_Gen_closeF, PGS_TD_TAItoUTC
   USE MLSCommon, ONLY: TAI93_Range_T, r8
-  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
-       MLSMSG_Info
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Warning, MLSMSG_Info
   USE BandSwitches, ONLY: bsw_unit, BandSwFmt, OpenBandSwitchesFile
 
   IMPLICIT NONE
@@ -188,6 +186,9 @@ CONTAINS
 END MODULE BandSwitchesUpdate
 !=============================================================================
 ! $Log$
+! Revision 2.2  2006/04/05 18:10:24  perun
+! Remove unused variables
+!
 ! Revision 2.1  2006/03/24 15:05:50  perun
 ! Initial release for reading L0 data and updating band switches in the Switch Network database
 !

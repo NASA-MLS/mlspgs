@@ -14,7 +14,7 @@ MODULE BandSwitches   ! Deal with Band switches in L0 data
 !=============================================================================
 
   USE SDPToolkit, ONLY: PGS_PC_GetReference, PGS_S_SUCCESS, PGS_IO_Gen_closeF
-  USE MLSCommon, ONLY: TAI93_Range_T, r8
+  USE MLSCommon, ONLY: r8
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
        MLSMSG_Info
 
@@ -138,6 +138,9 @@ CONTAINS
 END MODULE BandSwitches
 !=============================================================================
 ! $Log$
+! Revision 2.2  2006/04/05 18:11:12  perun
+! Remove unused variables
+!
 ! Revision 2.1  2006/03/24 15:04:27  perun
 ! Initial release for opening and getting band switches from Switch Network database file
 !
