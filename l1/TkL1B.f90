@@ -250,7 +250,7 @@ CONTAINS
     ! This subroutine fills the tangent point record.
 
     USE FOV, ONLY: CalcMountsToFOV
-    USE SDPToolkit, ONLY: PGS_S_SUCCESS, PGSCSC_W_LOOK_AWAY, PGSCSC_W_HIT_EARTH 
+    USE SDPToolkit, ONLY: PGS_S_SUCCESS, PGSCSC_W_HIT_EARTH 
 
     ! Arguments
     TYPE (L1BOAtp_T) :: tp
@@ -283,7 +283,6 @@ CONTAINS
     REAL(r8) :: greenwich, localApparent(lenG), rightAscension, tai
     REAL(r8) :: dot(lenG), latD(lenG), localMean(lenG), lon(lenG), los(lenG)
     REAL(r8) :: ecr_sign(lenG), slantRange(lenG)
-    REAL(r8) :: angleRad(numValues)
     REAL(r8) :: eci(3,lenG), ecr(3,lenG), hECR(3,lenG), nts(3,lenG)
     REAL(r8) :: posSurf(3,lenG), sc_frame_vector(3,lenG), sc_sun(3,lenG)
     REAL(r8) :: sc_tp(3,lenG), tp_sun(3,lenG), tpOrb(3,lenG), unitAlt(3,lenG)
@@ -1608,6 +1607,9 @@ CONTAINS
 END MODULE TkL1B
 
 ! $Log$
+! Revision 2.30  2006/04/05 18:09:58  perun
+! Remove unused variables
+!
 ! Revision 2.29  2006/03/24 15:21:17  perun
 ! Resized tp arrays to numValues from lenG and add GeodAltX calculation
 !
