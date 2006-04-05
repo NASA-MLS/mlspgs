@@ -135,8 +135,8 @@ CONTAINS ! =====     Public procedures     =============================
 ! --------------------------------------------------  INIT_TABLES  -----
   SUBROUTINE INIT_TABLES
 
-    USE TREE_TYPES, ONLY: N_DOT, N_DT_DEF, N_FIELD_SPEC, N_FIELD_TYPE, &
-         N_NAME_DEF, N_SECTION, N_SPEC_DEF, N_PLUS
+    USE TREE_TYPES, ONLY: N_DT_DEF, N_FIELD_TYPE, N_NAME_DEF, N_SECTION, &
+     N_SPEC_DEF
     USE Units, ONLY: Init_units
 
   ! Put intrinsic predefined identifiers into the symbol table.
@@ -359,6 +359,9 @@ CONTAINS ! =====     Public procedures     =============================
 END MODULE INIT_TABLES_MODULE
   
 ! $Log$
+! Revision 2.26  2006/04/05 18:09:17  perun
+! Remove unused variables
+!
 ! Revision 2.25  2006/03/24 15:07:48  perun
 ! Add MAFexpandNum, MinSpaceLimbs, THzColdCal, WriteDiagOffsets and remove Switch
 !
@@ -396,6 +399,9 @@ END MODULE INIT_TABLES_MODULE
 ! Version 1.2 commit
 !
 ! $Log$
+! Revision 2.26  2006/04/05 18:09:17  perun
+! Remove unused variables
+!
 ! Revision 2.25  2006/03/24 15:07:48  perun
 ! Add MAFexpandNum, MinSpaceLimbs, THzColdCal, WriteDiagOffsets and remove Switch
 !
