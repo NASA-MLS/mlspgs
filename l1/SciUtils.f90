@@ -21,7 +21,7 @@ MODULE SciUtils ! L0 science utilities
        Finite
   USE DACsUtils, ONLY: ExtractDACSdata, UncompressDACSdata, ProcessDACSdata
   USE MLSL1Common, ONLY: FBnum, MBnum, WFnum, WFchans, deg24, BankLogical_T, &
-       DACSchans, BandSwitch, L1ProgType, THzType, MaxMIFs, NumBands, BankInt_T
+       DACSchans, BandSwitch, L1ProgType, THzType, MaxMIFs, BankInt_T
 
   IMPLICIT NONE
 
@@ -319,7 +319,6 @@ MODULE SciUtils ! L0 science utilities
     INTEGER, SAVE :: prev_MAF = no_data
     INTEGER :: i, last_MIF, MIFno, m
     REAL :: pos1, pos2, dif
-    CHARACTER(len=1) :: mir_pos
     REAL :: APE_pos(0:(MaxMIFs-1),2), ASA_pos(0:(MaxMIFs-1),2)
     REAL :: GSM_pos(0:(MaxMIFs-1),2), TSSM_pos(0:(MaxMIFs-1),2)
     REAL :: APE_theta(0:(MaxMIFs-1)), GSM_theta(0:(MaxMIFs-1)), &
@@ -859,7 +858,7 @@ MODULE SciUtils ! L0 science utilities
     THz_Sci_pkt%TSSM_pos = Sci_pkt%TSSM_pos
     THz_Sci_pkt%TSSM_theta = Sci_pkt%TSSM_theta
     THz_Sci_pkt%SwMirPos = Sci_pkt%THz_sw_pos
-    THz_Sci_pkt%LLO_bias = LLO_Bias (Sci_pkt%LLO_DN, Sci_pkt%MIFno)
+    THz_Sci_pkt%LLO_bias = LLO_Bias (Sci_pkt%LLO_DN)
     THz_Sci_pkt%BandSwitch = Sci_pkt%BandSwitch(4:5)  !Only need sw #4 & #5
     THz_Sci_pkt%CRC_good = Sci_pkt%CRC_good
 
@@ -876,6 +875,9 @@ MODULE SciUtils ! L0 science utilities
 END MODULE SciUtils
 
 ! $Log$
+! Revision 2.15  2006/04/05 18:09:02  perun
+! Remove unused variables
+!
 ! Revision 2.14  2006/03/24 15:17:40  perun
 ! Initialize THzSciMAF MAF and MIF numbers to no data
 !
@@ -913,6 +915,9 @@ END MODULE SciUtils
 ! moved parameter statement to data statement for LF/NAG compatitibility
 !
 ! $Log$
+! Revision 2.15  2006/04/05 18:09:02  perun
+! Remove unused variables
+!
 ! Revision 2.14  2006/03/24 15:17:40  perun
 ! Initialize THzSciMAF MAF and MIF numbers to no data
 !
