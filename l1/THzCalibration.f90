@@ -58,7 +58,7 @@ MODULE THzCalibration ! Calibration data and routines for the THz module
      TYPE (MAFdata_T), DIMENSION(:), ALLOCATABLE :: MAFdata
   END TYPE CalBuf_T
 
-  TYPE (CalBuf_T), TARGET :: CalBuf
+  TYPE (CalBuf_T), TARGET, SAVE :: CalBuf
 
   INTEGER :: Cal_start = 1
   INTEGER :: Cal_end, ntot
@@ -107,12 +107,12 @@ CONTAINS
   SUBROUTINE BuildCalVectors
 !=============================================================================
 
-    USE THzUtils, ONLY: Bias_err
+!    USE THzUtils, ONLY: Bias_err
     USE MLSL1Config, ONLY: L1Config
     USE MLSL1Rad, ONLY: UpdateRadSignals, RadPwr
 
-    INTEGER :: i, j, last_MIF, mindx, MIF0, MIFno, ibgn, iend, iMAF, ibound
-    INTEGER :: nBank, nChan, numMIFs, nMIFsM1, nBounds, status, Switch5
+    INTEGER :: i, last_MIF, mindx, MIF0, MIFno
+    INTEGER :: nBank, numMIFs, nMIFsM1, status, Switch5
     TYPE (MAFdata_T), POINTER :: CurMAFdata => NULL()
     INTEGER, PARAMETER :: Cal_size = 240   ! Nominal orbit
     REAL, PARAMETER :: LO1R5 = LO1(5)  ! Radiometer 5 1st LO frequency
@@ -280,8 +280,6 @@ CONTAINS
 !=============================================================================
   SUBROUTINE THzBound (ibgn, iend, iorbit, fillnvbounds)
 !=============================================================================
-
-    USE MLSL1Config, ONLY: L1Config
 
     INTEGER, INTENT (in) :: ibgn, iend, iorbit
     LOGICAL, INTENT (in), OPTIONAL :: fillnvbounds
@@ -790,7 +788,6 @@ CONTAINS
 
     INTEGER :: mindx, n, ncold, nhot, lbad
     INTEGER, PARAMETER :: limbMIF = 116
-    REAL :: cmatch(THzChans,THzNum)
     REAL :: avg, wt2(THzChans,THzNum), norm
     LOGICAL :: ChanGood(THzChans,THzNum), cold_type, hot_type, limb_type
     REAL, PARAMETER :: cmax = 10.0
@@ -1090,6 +1087,9 @@ END MODULE THzCalibration
 !=============================================================================
 
 ! $Log$
+! Revision 2.11  2006/04/05 18:08:40  perun
+! Add SAVE for NAG compiler and remove unused variables
+!
 ! Revision 2.10  2006/03/24 15:19:57  perun
 ! Rewrote most of this module to do "C"old calibrations for entire day instead of per orbit
 !
