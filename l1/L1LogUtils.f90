@@ -473,8 +473,6 @@ CONTAINS
   SUBROUTINE ExamineData
 !=============================================================================
 
-    USE InitPCFs, ONLY: L1PCF
-
     CHARACTER(LEN=80) :: message
     INTEGER :: window_MAFs
 
@@ -561,6 +559,9 @@ END MODULE L1LogUtils
 !=============================================================================
 
 ! $Log$
+! Revision 2.14  2006/04/05 18:10:15  perun
+! Remove unused variables
+!
 ! Revision 2.13  2006/03/24 15:08:45  perun
 ! Removed startup message to log file
 !
