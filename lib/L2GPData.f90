@@ -312,6 +312,9 @@ contains ! =====     Public Procedures     =============================
     ! These last tasks aren't too difficult, since we could define
     ! myTimes and myLevels based on HuntRange.
 
+    ! A tricky point: invalid ranges (i.e. upper limit < 1) will
+    ! be treated as if they were omitted
+
     ! Dummy arguments
     type (L2GPData_T), intent(in)   :: ol2gp
     type (L2GPData_T), intent(out)  :: l2gp
@@ -322,21 +325,37 @@ contains ! =====     Public Procedures     =============================
     integer, dimension(2) :: myFreqs  ! subscript range
     integer, dimension(2) :: myLevels ! subscript range
     integer, dimension(2) :: myTimes  ! subscript range
+
+    logical :: useFreqs  
+    logical :: useLevels 
+    logical :: useTimes  
     
     ! Executable
+    useFreqs   = .false.
+    useLevels  = .false.
+    useTimes   = .false.
     if ( present(rFreqs) ) then
+      useFreqs = rFreqs(2) > 0
+    endif
+    if ( present(rLevels) ) then
+      useLevels = rLevels(2) > 0
+    endif
+    if ( present(rTimes) ) then
+      useTimes = rTimes(2) > 0
+    endif
+    if ( useFreqs ) then
       myFreqs = rFreqs
     else
       myFreqs(1) = 1
       myFreqs(2) = ol2gp%nFreqs
     endif
-    if ( present(rLevels) ) then
+    if ( useLevels ) then
       myLevels = rLevels
     else
       myLevels(1) = 1
       myLevels(2) = ol2gp%nLevels
     endif
-    if ( present(rTimes) ) then
+    if ( useTimes ) then
       myTimes = rTimes
     else
       myTimes(1) = 1
@@ -2324,7 +2343,7 @@ contains ! =====     Public Procedures     =============================
 
   subroutine cpL2GPData_fileID(file1, file2, swathList, &
     & hdfVersion1, hdfVersion2, notUnlimited, rename, ReadStatus, &
-    & HGrid, options)
+    & HGrid, rFreqs, rLevels, rTimes, options)
     !------------------------------------------------------------------------
 
     ! Given file names file1 and file2,
@@ -2343,12 +2362,19 @@ contains ! =====     Public Procedures     =============================
     logical, optional, intent(in) :: ReadStatus
     character (len=*), optional, intent(in) :: rename
     type (HGrid_T), optional, intent(in)    :: HGrid
+    integer, dimension(2), intent(in), optional :: rFreqs  ! subscript range
+    integer, dimension(2), intent(in), optional :: rLevels ! subscript range
+    integer, dimension(2), intent(in), optional :: rTimes  ! subscript range
     character (len=*), optional, intent(in) :: options ! E.g., '-v'
 
     ! Local variables
     logical, parameter            :: countEmpty = .true.
     integer :: i
     type (L2GPData_T) :: l2gp
+    type (L2GPData_T) :: reducedl2gp
+    integer, dimension(2) :: myFreqs  ! subscript range
+    integer, dimension(2) :: myLevels ! subscript range
+    integer, dimension(2) :: myTimes  ! subscript range
     character (len=8) :: myOptions
     integer :: noSwaths
     logical :: renameSwaths
@@ -2405,9 +2431,36 @@ contains ! =====     Public Procedures     =============================
       endif
       ! Possibly repair l2gp
       if ( repair ) call RepairL2GP(l2gp, HGrid, options=options)
+      ! Possibly extract a reduced l2pg
+      if ( present(rFreqs) .or. present(rLevels) .or. present(rTimes) ) then
+        if ( present(rFreqs) ) then
+          myFreqs = rFreqs
+        else
+          myFreqs(1) = 1
+          myFreqs(2) = l2gp%nFreqs
+        endif
+        if ( present(rLevels) ) then
+          myLevels = rLevels
+        else
+          myLevels(1) = 1
+          myLevels(2) = l2gp%nLevels
+        endif
+        if ( present(rTimes) ) then
+          myTimes = rTimes
+        else
+          myTimes(1) = 1
+          myTimes(2) = l2gp%nTimes
+        endif
+        call ExtractL2GPRecord ( l2gp, reducedl2gp, myFreqs, myLevels, myTimes )
+        call WriteL2GPData(reducedl2gp, file2, trim(swath2), &
+          & hdfVersion=hdfVersion2, &
+          & notUnlimited=notUnlimited)
+        call DestroyL2GPContents ( reducedl2gp )
+      else
       ! Write the filled l2gp to file2
-      call WriteL2GPData(l2gp, file2, trim(swath2), hdfVersion=hdfVersion2, &
-        & notUnlimited=notUnlimited)
+        call WriteL2GPData(l2gp, file2, trim(swath2), hdfVersion=hdfVersion2, &
+          & notUnlimited=notUnlimited)
+      endif
       call DestroyL2GPContents ( l2gp )
     enddo
        
@@ -2417,7 +2470,8 @@ contains ! =====     Public Procedures     =============================
 
   subroutine cpL2GPData_fileName(file1, file2, &
     & create2, hdfVersion1, hdfVersion2, swathList, rename, exclude, &
-    & notUnlimited, andGlAttributes, ReadStatus, HGrid, options)
+    & notUnlimited, andGlAttributes, ReadStatus, HGrid, &
+    & rFreqs, rLevels, rTimes, options)
     !------------------------------------------------------------------------
 
     ! Given file names file1 and file2,
@@ -2443,6 +2497,9 @@ contains ! =====     Public Procedures     =============================
     logical, optional, intent(in)           :: notUnlimited
     logical, optional, intent(in)           :: ReadStatus
     type (HGrid_T), optional, intent(in)    :: HGrid
+    integer, dimension(2), intent(in), optional :: rFreqs  ! subscript range
+    integer, dimension(2), intent(in), optional :: rLevels ! subscript range
+    integer, dimension(2), intent(in), optional :: rTimes  ! subscript range
     character (len=*), optional, intent(in) :: options ! E.g., '-v'
 
     ! Local
@@ -2566,7 +2623,8 @@ contains ! =====     Public Procedures     =============================
     call cpL2GPData_fileID(File1Handle, File2Handle, &
       & mySwathList, the_hdfVersion1, the_hdfVersion2, &
       & notUnlimited=notUnlimited, rename=rename, &
-      & ReadStatus=ReadStatus, HGrid=HGrid, options=options )
+      & ReadStatus=ReadStatus, HGrid=HGrid, &
+      & rFreqs=rFreqs, rLevels=rlevels, rTimes=rTimes, options=options )
     if ( DEEBUG ) print *, 'About to close File1Handle: ', File1Handle
     status = mls_io_gen_closeF(l_swath, File1Handle, FileName=File1, &
       & hdfVersion=the_hdfVersion1, debugOption=.false.)
@@ -2590,7 +2648,8 @@ contains ! =====     Public Procedures     =============================
 
   subroutine cpL2GPData_MLSFile(L2GPfile1, L2GPfile2, &
     & create2, swathList, rename, exclude, &
-    & notUnlimited, andGlAttributes, ReadStatus, HGrid, options)
+    & notUnlimited, andGlAttributes, ReadStatus, HGrid, &
+    & rFreqs, rLevels, rTimes, options)
     !------------------------------------------------------------------------
 
     ! Given MLSFiles L2GPfile1 and L2GPfile2,
@@ -2611,6 +2670,9 @@ contains ! =====     Public Procedures     =============================
     logical, optional, intent(in)           :: notUnlimited
     logical, optional, intent(in)           :: ReadStatus
     type (HGrid_T), optional, intent(in)    :: HGrid
+    integer, dimension(2), intent(in), optional :: rFreqs  ! subscript range
+    integer, dimension(2), intent(in), optional :: rLevels ! subscript range
+    integer, dimension(2), intent(in), optional :: rTimes  ! subscript range
     character (len=*), optional, intent(in) :: options ! E.g., '-v'
     ! Local
     logical :: L1alreadyOpen
@@ -2647,7 +2709,8 @@ contains ! =====     Public Procedures     =============================
     call cpL2GPData_fileName(L2GPFile1%Name, L2GPFile2%Name, &
       & create2, L2GPFile1%hdfVersion, L2GPFile2%hdfVersion, &
       & SwathList, rename, exclude, &
-      & notUnlimited, andGLAttributes, ReadStatus, HGrid, options)
+      & notUnlimited, andGLAttributes, ReadStatus, HGrid, &
+      & rFreqs, rLevels, rTimes, options)
 
     if ( L1alreadyOpen )  call mls_openFile(L2GPFile1, Status)
     L2GPFile1%errorCode = status
@@ -4079,6 +4142,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.141  2006/03/13 23:40:28  pwagner
+! verbose now an optional arg to diff
+!
 ! Revision 2.140  2006/02/28 21:44:44  pwagner
 ! Diff works better, added IsL2GPSetUp
 !

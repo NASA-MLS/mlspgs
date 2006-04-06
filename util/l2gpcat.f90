@@ -53,10 +53,13 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
 ! LF95.Linux/test [options] [input files] -o [output file]
   type options_T
     logical     :: verbose = .false.
-    character(len=255) :: outputFile= 'default.he5'        ! output filename
-    logical ::          columnsOnly = .false.
-    logical ::          noDupSwaths = .false.              ! cp 1st, ignore rest
-    character(len=3) :: convert= ' '                       ! e.g., '425'
+    character(len=255) ::    outputFile= 'default.he5'  ! output filename       
+    logical ::               columnsOnly = .false.
+    logical ::               noDupSwaths = .false.      ! cp 1st, ignore rest   
+    character(len=3) ::      convert= ' '               ! e.g., '425'           
+    integer, dimension(2) :: freqs = 0                  ! Keep range of freqs   
+    integer, dimension(2) :: levels = 0                 ! Keep range of levels   
+    integer, dimension(2) :: profiles = 0               ! Keep range of profiles   
   end type options_T
   
   type ( options_T ) :: options
@@ -185,19 +188,39 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
             print *, trim(swathList)
           endif
         endif
-        call cpL2GPData(trim(filenames(i)), &
+        if ( any( (/options%freqs(2), options%levels(2), &
+          & options%profiles(2)/) > 0 ) &
+          & ) then
+          call cpL2GPData(trim(filenames(i)), &
+          & trim(options%outputFile), create2=(i==1), &
+          & hdfVersion1=hdfVersion1, hdfVersion2=hdfVersion2, &
+          & swathList=trim(swathList), &
+          & notUnlimited=.true., andGlAttributes=.true., &
+          & rFreqs=options%freqs, rLevels=options%levels, rTimes=options%profiles)
+        else
+          call cpL2GPData(trim(filenames(i)), &
           & trim(options%outputFile), create2=(i==1), &
           & hdfVersion1=hdfVersion1, hdfVersion2=hdfVersion2, &
           & swathList=trim(swathList), &
           & notUnlimited=.true., andGlAttributes=.true.)
+        endif
         swathList1 = swathListAll
         swathListAll = catlists(swathList1, swathList)
         numswathssofar = NumStringElements(swathListAll, countEmpty)
       else
-        call cpL2GPData(trim(filenames(i)), &
+        if ( any( (/options%freqs(2), options%levels(2), options%profiles(2)/) &
+          & > 0 ) ) then
+          call cpL2GPData(trim(filenames(i)), &
+          & trim(options%outputFile), create2=(i==1), &
+          & hdfVersion1=hdfVersion1, hdfVersion2=hdfVersion2, &
+          & notUnlimited=.true., andGlAttributes=.true., &
+          & rFreqs=options%freqs, rLevels=options%levels, rTimes=options%profiles)
+        else
+          call cpL2GPData(trim(filenames(i)), &
           & trim(options%outputFile), create2=(i==1), &
           & hdfVersion1=hdfVersion1, hdfVersion2=hdfVersion2, &
           & notUnlimited=.true., andGlAttributes=.true.)
+        endif
       endif
       call sayTime('copying this file', tFile)
     enddo
@@ -245,6 +268,24 @@ contains
         call getarg ( i+1+hp, filename )
         i = i + 1
         exit
+      elseif ( filename(1:5) == '-freq' ) then
+        call igetarg ( i+1+hp, options%freqs(1) )
+        i = i + 1
+        call igetarg ( i+1+hp, options%freqs(2) )
+        i = i + 1
+        exit
+      elseif ( filename(1:6) == '-level' ) then
+        call igetarg ( i+1+hp, options%levels(1) )
+        i = i + 1
+        call igetarg ( i+1+hp, options%levels(2) )
+        i = i + 1
+        exit
+      elseif ( filename(1:5) == '-prof' ) then
+        call igetarg ( i+1+hp, options%profiles(1) )
+        i = i + 1
+        call igetarg ( i+1+hp, options%profiles(2) )
+        i = i + 1
+        exit
       else
         call print_help
       end if
@@ -270,14 +311,17 @@ contains
       & 'Usage:l2gpcat [options] [filenames]'
       write (*,*) &
       & ' If no filenames supplied, you will be prompted to supply one'
-      write (*,*) ' Options: -f filename => add filename to list of filenames'
-      write (*,*) '                         (can do the same w/o the -f)'
-      write (*,*) '          -o ofile    => copy swaths to ofile'
-      write (*,*) '          -425        => convert from hdf4 to hdf5'
-      write (*,*) '          -524        => convert from hdf5 to hdf4'
-      write (*,*) '          -v          => switch on verbose mode'
-      write (*,*) '          -nodup      => if dup swath names, cp 1st only'
-      write (*,*) '          -h          => print brief help'
+      write (*,*) ' Options: -f filename   => add filename to list of filenames'
+      write (*,*) '                           (can do the same w/o the -f)'
+      write (*,*) '          -o ofile      => copy swaths to ofile'
+      write (*,*) '          -425          => convert from hdf4 to hdf5'
+      write (*,*) '          -524          => convert from hdf5 to hdf4'
+      write (*,*) '          -v            => switch on verbose mode'
+      write (*,*) '          -nodup        => if dup swath names, cp 1st only'
+      write (*,*) '          -freqs m n    => keep only freqs in range m n'
+      write (*,*) '          -levels m n   => keep only levels in range m n'
+      write (*,*) '          -profiles m n => keep only profiles in range m n'
+      write (*,*) '          -h            => print brief help'
       stop
   end subroutine print_help
 !------------------------- SayTime ---------------------
@@ -294,12 +338,23 @@ contains
     call output ( "Timing for " // what // " = " )
     call output ( dble(t2 - myt1), advance = 'yes' )
   end subroutine SayTime
+!------------------------- igetarg ---------------------
+  subroutine igetarg ( pos, iarg )
+   integer, intent(in) :: pos
+   integer, intent(out) :: iarg
+   character(len=16) :: arg
+   call getarg ( pos, arg )
+   read(arg, *) iarg
+  end subroutine igetarg
 
 !==================
 end program L2GPcat
 !==================
 
 ! $Log$
+! Revision 1.7  2005/10/29 00:13:56  pwagner
+! Removed unused procedures from use statements
+!
 ! Revision 1.6  2005/09/23 21:01:13  pwagner
 ! use_wall_clock now a component of time_config
 !
