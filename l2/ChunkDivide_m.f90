@@ -78,6 +78,8 @@ module ChunkDivide_m
     logical   :: allowPostOverlaps = .true. ! Use MAFs after end time
     logical   :: saveObstructions = .false. ! Save obstructions for Output_Close
     logical   :: DACSDeconvolved = .true. ! Don't need to do this in level 2
+    integer   :: numPriorOverlaps = 0     ! How many profiles before processingRanges
+    integer   :: numPostOverlaps = 0     ! How many profiles after processingRanges
   end type ChunkDivideConfig_T
 
   ! The chunk divide methods are:
@@ -243,22 +245,6 @@ contains ! ===================================== Public Procedures =====
     if ( timing ) call time_now ( t1 )
     if ( specialDumpFile /= ' ' ) &
       & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
-
-    ! Do we have any l2gp files in our database that we may have to fill from?
-    ! (If so, we will change default behavior so that we won't allow
-    ! overlaps outside the processing range)
-    if ( associated(filedatabase) ) then
-      if ( size(filedatabase) > 0 ) then
-        if ( any(filedatabase%content == 'l2gp') ) then
-          call output( 'count(filedatabase%content == l2gp)', advance='no' )
-          call output( count(filedatabase%content == 'l2gp'), advance='yes' )
-          call output( '(Resetting defaults to exclude overlaps outside '&
-            & // 'processingRange', advance='yes' )
-          ChunkDivideConfig%allowPriorOverlaps = .false.
-          ChunkDivideConfig%allowPostOverlaps = .false.
-        endif
-      endif
-    endif
 
     ! First decode the l2cf instructions
     call ChunkDivideL2CF ( root )
@@ -1908,6 +1894,7 @@ contains ! ===================================== Public Procedures =====
     ! ---------------------------------------------- SurveyL1BData -----
     subroutine SurveyL1BData ( processingRange, filedatabase, mafRange )
       ! This goes through the L1B data files and tries to spot possible
+      use L1BData, only: DUMP
       ! obstructions.
       type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
       type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
@@ -2369,6 +2356,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.73  2006/04/10 23:45:18  pwagner
+! Reset defaults in read_apriori, not ChunkDivide
+!
 ! Revision 2.72  2006/04/03 20:26:08  pwagner
 ! More verbose notice when using l2gp a priori exclude outside overlaps
 !
