@@ -86,6 +86,7 @@ contains ! =====     Public Procedures     =============================
   subroutine Read_apriori ( Root, L2GPDatabase, L2auxDatabase, GriddedDatabase, &
     & fileDataBase)
 
+  use ChunkDivide_m, only: ChunkDivideConfig
   use GriddedData, only: rgr, GriddedData_T, v_is_pressure, &
     & AddGriddedDataToDatabase, Dump, SetupNewGriddedData
   use L2AUXData, only: L2AUXData_T, AddL2AUXToDatabase, &
@@ -343,6 +344,14 @@ contains ! =====     Public Procedures     =============================
         call decorate ( key, AddL2GPToDatabase( L2GPDatabase, l2gp ) )
         ! Don't call destroy contents as the AddL2GPToDatabase has done a shallow
         ! copy.
+        ! l2gp files in our database means               
+        ! change default behavior so that we won't allow 
+        ! overlaps outside the processing range)         
+        call output( '(Resetting defaults to exclude overlaps outside '&
+          & // 'processingRange', advance='yes' )
+        ChunkDivideConfig%allowPriorOverlaps = .false.
+        ChunkDivideConfig%allowPostOverlaps = .false.
+
       case ( s_l2aux )
 
         if ( TOOLKIT ) then
@@ -832,6 +841,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.65  2006/04/10 23:45:18  pwagner
+! Reset defaults in read_apriori, not ChunkDivide
+!
 ! Revision 2.64  2006/02/10 21:15:55  pwagner
 ! dumps may go to special dumpfile
 !
