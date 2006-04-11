@@ -2007,7 +2007,7 @@ contains ! =====     Public Procedures     =============================
     integer :: GSON                     ! son of son
     integer :: KEY                      ! Tree node
     type(HGrid_T) :: DUMMYHGRID         ! A temporary hGrid
-
+    integer, dimension(:), pointer :: LowerOverlaps => null()
     ! Executable code
     if ( toggle(gen) ) call trace_begin ( "ComputeAllHGridOffsets", root )
     if ( specialDumpFile /= ' ' ) &
@@ -2039,12 +2039,26 @@ contains ! =====     Public Procedures     =============================
                 else
                   dummyHGrid = CreateHGridFromMLSCFInfo ( 0, key, filedatabase, l2gpDatabase, &
                     & processingRange, chunks(chunk), suppressGeometryDump=.true. )
-                  if ( chunk /= 1 .or. .not. ChunkDivideConfig%allowPriorOverlaps ) then
-                    chunks(chunk)%hGridOffsets(hGrid) = dummyHGrid%noProfs - &
-                    & dummyHGrid%noProfsLowerOverlap - dummyHGrid%noProfsUpperOverlap
+                  LowerOverlaps(hGrid) = dummyHGrid%noProfsLowerOverlap
+                  if ( chunk == 1 ) then
+                    if ( ChunkDivideConfig%allowPriorOverlaps ) then
+                      chunks(chunk)%hGridOffsets(hGrid) = dummyHGrid%noProfs - &
+                      & dummyHGrid%noProfsUpperOverlap
+                    else
+                      chunks(chunk)%hGridOffsets(hGrid) = dummyHGrid%noProfs - &
+                      & dummyHGrid%noProfsLowerOverlap - dummyHGrid%noProfsUpperOverlap
+                    endif
+                  elseif ( chunk == size(chunks) ) then
+                    if ( ChunkDivideConfig%allowPostOverlaps ) then
+                      chunks(chunk)%hGridOffsets(hGrid) = dummyHGrid%noProfs - &
+                      & dummyHGrid%noProfsLowerOverlap - dummyHGrid%noProfsUpperOverlap
+                    else
+                      chunks(chunk)%hGridOffsets(hGrid) = dummyHGrid%noProfs - &
+                      & dummyHGrid%noProfsLowerOverlap - dummyHGrid%noProfsUpperOverlap
+                    endif
                   else
                     chunks(chunk)%hGridOffsets(hGrid) = dummyHGrid%noProfs - &
-                    & dummyHGrid%noProfsUpperOverlap
+                    & dummyHGrid%noProfsLowerOverlap - dummyHGrid%noProfsUpperOverlap
                   endif
                   if ( switchDetail(switches, 'hgrid') >= 0 .and. DEEBUG ) &
                     & call dump(dummyHGrid)
@@ -2071,6 +2085,8 @@ contains ! =====     Public Procedures     =============================
             & 'chunks(?)%hGridOffsets', ModuleName )
           call Allocate_Test ( chunks(c)%hGridTotals, noHGrids, &
             & 'chunks(?)%hGridTotals', ModuleName )
+          call Allocate_Test ( LowerOverlaps, noHGrids, &
+            & 'LowerOverlaps', ModuleName )
         end do
       else
         ! Otherwise, at least check we got the same number of hGrids each chunk
@@ -2116,7 +2132,13 @@ contains ! =====     Public Procedures     =============================
     do chunk = size ( chunks ), 2, -1
       chunks(chunk)%hGridOffsets = chunks(chunk-1)%hGridOffsets
     end do
-    chunks(1)%hGridOffsets = 0
+    call output ( 'chunks(1)%hGridOffsets: ', advance='no' )
+    call output ( chunks(1)%hGridOffsets, advance='yes' )
+    if ( ChunkDivideConfig%allowPriorOverlaps ) then
+      chunks(1)%hGridOffsets = LowerOverlaps
+    else
+      chunks(1)%hGridOffsets = 0
+    endif
     
     if ( switchDetail(switches, 'pro') >= 0 .or. DEEBUG ) then
       call output ( "Dumping offsets, hgridTotals for all chunks: " , &
@@ -2130,6 +2152,8 @@ contains ! =====     Public Procedures     =============================
       end do
     endif
 
+   call Allocate_Test ( LowerOverlaps, noHGrids, &
+     & 'LowerOverlaps', ModuleName )
     if ( specialDumpFile /= ' ' ) &
       & call revertOutput
     if ( toggle(gen) ) call trace_end ( "MLSL2Fill" )
@@ -2289,6 +2313,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.86  2006/04/11 23:33:51  pwagner
+! Fixed bug which added excess profiles
+!
 ! Revision 2.85  2006/03/07 23:23:28  vsnyder
 ! Crash gently if there's bo L1BOA file
 !
