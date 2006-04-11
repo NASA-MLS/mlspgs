@@ -24,8 +24,8 @@ contains
 
 ! ------------------------------------------  Get_D_Deltau_Pol_DF  -----
   subroutine Get_D_Deltau_Pol_DF ( CT, STCP, STSP, indices_c, del_zeta, Grids_f, &
-               &  beta_path_pol, eta_zxp_f, do_calc_f, sps_path, Del_S, &
-               &  incoptdepth, ref_cor, &
+               &  beta_path_pol, tanh1_c, eta_zxp_f, do_calc_f, sps_path, &
+               &  Del_S, incoptdepth, ref_cor, &
                &  d_delta_df, D_Deltau_Pol_DF  )
 
     use DExdT_m, only: dExdT
@@ -51,6 +51,7 @@ contains
     complex(rp), intent(in) :: beta_path_pol(:,:,:) ! -1:1 x path x species.
 !                                              cross section for each species
 !                                              on coarse grid.
+    real(rp), intent(in) :: Tanh1_c(:)       ! tanh(h nu / k T) on coarse path
     real(rp), intent(in) :: eta_zxp_f(:,:)   ! fine path x sve
 !                                              representation basis function.
     logical, intent(in) :: do_calc_f(:,:)    ! A logical indicating where
@@ -80,6 +81,7 @@ contains
     complex(rp) :: D_Delta_DF_Pol(-1:1,size(indices_c))
     complex(rp) :: D_Incoptdepth_df(2,2,size(indices_c))
     integer :: I_Stop                        ! Length of coarse path
+    integer :: II                            ! inds(p_i)
     integer :: Inds(size(indices_c))         ! Where on the path to calc
     integer :: N_Inds                        ! Effective size of Inds
     integer :: P_I                           ! Path index
@@ -94,7 +96,10 @@ contains
 
 ! Skip the masked derivatives, according to the l2cf inputs
 
-        if ( .not. Grids_f%deriv_flags(sv_i) ) cycle
+        if ( .not. Grids_f%deriv_flags(sv_i) ) then
+          d_deltau_pol_df(:,:,:,sv_i) = 0.0_rp
+          cycle
+        end if
 
         n_inds = count(do_calc_f(indices_c,sv_i))
         if ( n_inds == 0 ) cycle
@@ -107,9 +112,10 @@ contains
 
           do p_i = 1, n_inds
 
-            d_delta_df_pol(:,inds(p_i)) = beta_path_pol(:,inds(p_i),sps_i) &
-                      & * sps_path(indices_c(inds(p_i)),sps_i) &
-                      & / exp(grids_f%values(sv_i))
+            ii = inds(p_i)
+            d_delta_df_pol(:,ii) = beta_path_pol(:,ii,sps_i) &
+                      & * sps_path(indices_c(ii),sps_i) &
+                      & * exp(-grids_f%values(sv_i))
 
           end do ! p_i
 
@@ -119,11 +125,13 @@ contains
 
         end if
 
-        ! Finish the integration
+        ! Finish the integration.  Include the factor of tanh(h nu / k T)
+        ! that was not included in the beta computation.
         do p_i = 1, n_inds
-          d_delta_df_pol(:,inds(p_i)) = d_delta_df_pol(:,inds(p_i)) * &
-            & eta_zxp_f(indices_c(inds(p_i)),sv_i) * del_s(inds(p_i)) * &
-            & ref_cor(inds(p_i))
+          ii = inds(p_i)
+          d_delta_df_pol(:,ii) = d_delta_df_pol(:,ii) * &
+            & ( eta_zxp_f(indices_c(ii),sv_i) * del_s(ii) * &
+            &   ref_cor(ii) * tanh1_c(ii) )
         end do ! p_i
 
         ! Now add in contribution from scalar model, 0.25 for +/- sigma,
@@ -147,8 +155,8 @@ contains
           else
             d_deltau_pol_df(:,:,p_i,sv_i) = 0.0_rp
           end if
-        end do ! p_i
 
+        end do ! p_i
       end do ! sv_i
 
     end do ! sps_i
@@ -323,8 +331,10 @@ contains
         cycle
       end if
 
-! do the absorption part
-! combine non zeros flags for both the main and gl parts
+      ! do the absorption part
+      ! combine non zeros flags for both the main and gl parts
+      ! Add in contribution from scalar model, 0.25 for +/- sigma,
+      ! 0.5 for pi.
 
       call get_do_calc ( do_calc_t_c(:,sv_i), do_calc_t_f(:,sv_i), do_gl, &
         & do_calc )
@@ -445,8 +455,6 @@ contains
       ! Do GL for hydrostatic for any panels that need it; the singularity
       ! correction is alpha_path_c.
       ! Apply refraction correction.
-      ! Add in contribution from scalar model, 0.25 for +/- sigma,
-      ! 0.5 for pi.
       a = 1
       do p_i = 1, i_stop             ! along the path
         if ( do_gl(p_i) ) then
@@ -507,6 +515,9 @@ contains
 end module Get_D_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.31  2006/04/11 18:36:21  vsnyder
+! Include missing factor of tanh(h nu / k T)
+!
 ! Revision 2.30  2006/03/17 00:41:12  vsnyder
 ! Use ubound instead of size for grids_f%l_v
 !
