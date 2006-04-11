@@ -12,6 +12,7 @@
 program MLSL2
   use Allocate_Deallocate, only: SET_GARBAGE_COLLECTION, TRACKALLOCATES, &
     & CLEARONALLOCATE
+  use ChunkDivide_m, only: ChunkDivideConfig
   use DECLARATION_TABLE, only: ALLOCATE_DECL, DEALLOCATE_DECL, DUMP_DECL
   use Hdf, only: DFACC_RDONLY
   use INIT_TABLES_MODULE, only: INIT_TABLES
@@ -386,6 +387,9 @@ program MLSL2
         clearonallocate = switch
       else if ( lowercase(line(3+n:11+n)) == 'memtrack ' ) then
         trackAllocates = switch
+      else if ( line(3+n:7+n) == 'overl' ) then
+        ChunkDivideConfig%allowPriorOverlaps = switch
+        ChunkDivideConfig%allowPostOverlaps = switch
       else if ( line(3+n:8+n) == 'patch ' ) then
         patch = switch
       else if ( lowercase(line(3+n:5+n)) == 'pge ' ) then
@@ -649,7 +653,8 @@ program MLSL2
   ! If doing a range of chunks, the avoidance of unlimited dimensions
   ! in directwrites of l2gp files currently fails 
   ! (when will this be fixed?)
-  if ( max(singleChunk, lastChunk) /= 0 ) avoidUnlimitedDims = .false.
+  if ( max(singleChunk, lastChunk) /= 0 .or. parallel%chunkRange /= ' ' ) &
+    & avoidUnlimitedDims = .false.
   ! Setup the parallel stuff.  Register our presence with the master if we're a
   ! slave.
   if ( parallel%master .and. parallel%myTid <= 0 ) &
@@ -932,6 +937,9 @@ contains
       call output(' Avoiding unlimited dimensions in directwrites?: ', advance='no')
       call blanks(4, advance='no')
       call output(avoidUnlimitedDims, advance='yes')
+      call output(' Allow overlaps outside proc. range?:            ', advance='no')
+      call blanks(4, advance='no')
+      call output(ChunkDivideConfig%allowPriorOverlaps, advance='yes')
       call output(' Catenate split dgg/dgm after run completes?:    ', advance='no')
       call blanks(4, advance='no')
       call output(catenateSplits, advance='yes')
@@ -964,6 +972,9 @@ contains
       call blanks(5, advance='no')                                                   
       call output(parallel%delay, advance='yes')
       call output(' Range of chunks run in parallel:                ', advance='no') 
+      else
+      call output(' Range of chunks run serially:                   ', advance='no') 
+      endif
       call blanks(4, advance='no')
       if ( max(singleChunk, lastChunk) /= 0 ) then
         call output(singleChunk, advance='no')
@@ -975,7 +986,6 @@ contains
       else
         call output(trim(parallel%chunkRange), insteadofblank='(all)', advance='yes')
       endif
-      endif                      
       call output(' Is this a slave task in pvm?:                   ', advance='no')
       call blanks(4, advance='no')
       call output(parallel%slave, advance='yes')
@@ -1066,6 +1076,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.147  2006/04/11 23:28:49  pwagner
+! Whether to allow overlaps outside of processing range
+!
 ! Revision 2.146  2006/03/04 00:17:20  pwagner
 ! May skip retrieval, directWrites depending on runtime Booleans
 !
