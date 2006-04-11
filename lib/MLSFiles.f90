@@ -1767,6 +1767,8 @@ contains
     call output ( trim(MLSFile%content), advance='yes')                                  
     call output ( '    last Operatn : ')                                
     call output ( trim(MLSFile%lastOperation), advance='yes')                                  
+    call output ( '    still open? : ')                                
+    call output ( MLSFile%stillOpen, advance='yes')                                  
     if ( myDetails < 1 ) return
     call output ( '    File ID      : ')                                
     call output ( MLSFile%FileId%f_id, advance='yes')
@@ -1794,8 +1796,6 @@ contains
       call output ( '    record length: ')                              
       call output ( MLSFile%recordLength, advance='yes')                                
     endif
-    call output ( '    Open?        : ')                                
-    call output ( MLSFile%StillOpen, advance='yes')                                  
     call output ( '    error code   : ')                                
     call output ( MLSFile%errorCode, advance='yes')                                  
   end subroutine Dump_MLSFile
@@ -2641,6 +2641,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.73  2006/04/11 23:15:34  pwagner
+! Disclose whether MLSFile still open as part of default dump
+!
 ! Revision 2.72  2006/02/21 19:07:58  pwagner
 ! Removed references to unused stuff
 !
