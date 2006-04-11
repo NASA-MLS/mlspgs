@@ -43,10 +43,11 @@ contains ! =====     Public Procedures     =============================
   ! through the tree and dispatches work to other routines.
 
   subroutine MLSL2Join ( root, vectors, l2gpDatabase, l2auxDatabase, &
-    & DirectDataBase, chunkNo, chunks, FWModelConfig, filedatabase )
+    & DirectDataBase, chunkNo, chunks, FWModelConfig, filedatabase, HGrids )
     ! Imports
     use Chunks_m, only: MLSChunk_T
     use DirectWrite_m, only: DirectData_T
+    use HGridsDatabase, only: HGrid_T
     use Init_Tables_Module, only: S_L2GP, S_L2AUX, S_TIME, S_DIRECTWRITE, S_LABEL
     use ForwardModelConfig, only: ForwardModelConfig_T
     use L2GPData, only: L2GPDATA_T
@@ -76,6 +77,7 @@ contains ! =====     Public Procedures     =============================
     type (MLSChunk_T), dimension(:), intent(in) :: chunks
     type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    type (HGrid_T), dimension(:), pointer ::     HGrids
 
     ! Local parameters
     integer, parameter :: DELAY = 500000  ! For Usleep, no. microsecs
@@ -205,7 +207,7 @@ contains ! =====     Public Procedures     =============================
                     & trim(DirectDataBase(dbIndex)%fileNameBase)
                   call DirectWriteCommand ( son, ticket, vectors, &
                     & DirectdataBase, filedatabase, &
-                    & chunkNo, chunks, FWModelConfig, &
+                    & chunkNo, chunks, FWModelConfig, HGrids, &
                     & theFile=DirectDataBase(dbIndex)%fileNameBase, &
                     & namedFile=namedFile )
                   if ( namedFile ) exit
@@ -213,7 +215,7 @@ contains ! =====     Public Procedures     =============================
               else
                 call DirectWriteCommand ( son, ticket, vectors, &
                   & DirectdataBase, filedatabase, &
-                  & chunkNo, chunks, FWModelConfig )
+                  & chunkNo, chunks, FWModelConfig, HGrids )
               end if
               call add_to_directwrite_timing ( 'writing', dwt2)
             end if
@@ -225,7 +227,7 @@ contains ! =====     Public Procedures     =============================
             if(DEEBUG)print*,'Calling direct write to do a setup'
             call DirectWriteCommand ( son, ticket, vectors, &
               & DirectdataBase, fileDatabase,  &
-              & chunkNo, chunks, FWModelConfig, makeRequest=.true., &
+              & chunkNo, chunks, FWModelConfig, HGrids, makeRequest=.true., &
 	           & NoExtraWrites=noExtraWrites)
             noDirectWrites = noDirectWrites + noExtraWrites
           else
@@ -238,7 +240,7 @@ contains ! =====     Public Procedures     =============================
               if(DEEBUG)print*,'Calling direct write to do the write'
               call DirectWriteCommand ( son, ticket, vectors, &
                 & DirectdataBase, filedatabase, &
-                & chunkNo, chunks, FWModelConfig, create=createFile, &
+                & chunkNo, chunks, FWModelConfig, HGrids, create=createFile, &
 		          & theFile=theFile )
               call time_now(dwt22)
               if ( dwt22-dwt2 > timeReasonable .and. index(switches,'dwreq') /= 0 ) then
@@ -330,7 +332,7 @@ contains ! =====     Public Procedures     =============================
   !     i.e., swaths go to DGG files, hdf datasets to DGM files
   subroutine DirectWriteCommand ( node, ticket, vectors, &
     & DirectDataBase, fileDatabase, &
-    & chunkNo, chunks, FWModelConfig, makeRequest, create, theFile, &
+    & chunkNo, chunks, FWModelConfig, HGrids, makeRequest, create, theFile, &
     & noExtraWrites, namedFile)
     ! Imports
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
@@ -341,6 +343,7 @@ contains ! =====     Public Procedures     =============================
     use Expr_m, only: EXPR
     use ForwardModelConfig, only: ForwardModelConfig_T
     use Hdf, only: DFACC_CREATE, DFACC_RDWR
+    use HGridsDatabase, only: HGrid_T
     use Init_tables_module, only: F_SOURCE, F_PRECISION, F_HDFVERSION, F_FILE, &
       & f_QUALITY, F_STATUS, F_TYPE
     use Init_tables_module, only: L_L2GP, L_L2AUX, L_L2DGG, L_L2FWM, &
@@ -378,6 +381,7 @@ contains ! =====     Public Procedures     =============================
     type (DirectData_T), dimension(:), pointer :: DirectDatabase
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
     type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
+    type (HGrid_T), dimension(:), pointer ::     HGrids
     integer, intent(in) :: CHUNKNO
     type (MLSChunk_T), dimension(:), intent(in) :: CHUNKS
     ! The next 3 args are used in the multi-pass followed by each slave:
@@ -1032,8 +1036,13 @@ contains ! =====     Public Procedures     =============================
           ! into the l2gp swath named 'hdfName' starting at profile 
           ! qty%template%instanceOffset + 1
           ! May optionally supply first, last profiles
+          if ( DEEBUG) then
+            call dump(directFile, details=1)
+            call output('createSwath: ', advance='no')
+            call output(.not. createThisSource(source), advance='yes')
+          endif
           call DirectWrite_l2GP ( directFile, qty, precQty, qualityQty, statusQty, &
-            & hdfName, chunkNo, &
+            & hdfName, chunkNo, HGrids, &
             & createSwath=(.not. createThisSource(source)) )
           NumOutput= NumOutput + 1
           if ( outputType == l_l2dgg ) then
@@ -1987,6 +1996,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.127  2006/04/11 23:34:27  pwagner
+! Fixed bug which added excess profiles
+!
 ! Revision 2.126  2006/03/04 00:20:13  pwagner
 ! Account for directdatabase even if skipping directWrites
 !
