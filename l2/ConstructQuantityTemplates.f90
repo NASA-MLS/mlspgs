@@ -67,6 +67,7 @@ contains ! ============= Public procedures ===================================
     & result ( QTY )
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Chunks_m, only: MLSChunk_T
+    use ChunkDivide_m, only: ChunkDivideConfig
     use EXPR_M, only: EXPR
     use FGrid, only: fGrid_T
     use HGridsDatabase, only: hGrid_T
@@ -323,7 +324,7 @@ contains ! ============= Public procedures ===================================
       frequencyCoordinate = l_none
     end if
 
-    ! Now deal with the fleixbleVHGrid quantities
+    ! Now deal with the flexibleVHGrid quantities
     if ( properties(p_flexibleVHGrid) ) then
       if ( got ( f_hGrid ) .neqv. got ( f_vGrid ) ) &
         & call Announce_Error ( root, 'Must supply both or neither vGrid and hGrid' )
@@ -367,6 +368,13 @@ contains ! ============= Public procedures ===================================
         if ( got ( f_hGrid )  ) then
           qty%instanceOffset = chunk%hGridOffsets(hGridIndex)
           qty%grandTotalInstances = chunk%hGridTotals(hGridIndex)
+          ! Subtract any instances outside processing range
+          !   if ( ChunkDivideConfig%allowPriorOverlaps ) &
+          !     & qty%grandTotalInstances = qty%grandTotalInstances - &
+          !     & hGrids(hGridIndex)%noProfsLowerOverlap
+          !   if ( ChunkDivideConfig%allowPostOverlaps ) &
+          !     & qty%grandTotalInstances = qty%grandTotalInstances - &
+          !     & hGrids(hGridIndex)%noProfsUpperOverlap
         else
           ! Must have a single instance per chunk
           qty%instanceOffset = chunk%chunkNumber - 1
@@ -950,8 +958,8 @@ contains ! ============= Public procedures ===================================
     qty%losAngle => hGrid%losAngle
     qty%noInstancesLowerOverlap = hGrid%noProfsLowerOverlap
     qty%noInstancesUpperOverlap = hGrid%noProfsUpperOverlap
-    if ( ChunkDivideConfig%allowPriorOverlaps .and. chunk%chunkNumber == 1 ) &
-      & qty%noInstancesLowerOverlap = 0
+    ! if ( ChunkDivideConfig%allowPriorOverlaps .and. chunk%chunkNumber == 1 ) &
+    !  & qty%noInstancesLowerOverlap = 0
 
   end subroutine PointQuantityToHGrid
 
@@ -1278,6 +1286,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.130  2006/04/11 23:32:08  pwagner
+! Fixed bug which added excess profiles
+!
 ! Revision 2.129  2006/03/04 00:18:02  pwagner
 ! AnyGoodSignalData made public
 !
