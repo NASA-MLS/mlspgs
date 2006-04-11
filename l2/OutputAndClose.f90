@@ -197,7 +197,15 @@ contains ! =====     Public Procedures     =============================
     ! (Shouldn't you test and report an error if it's not?)
     if ( CATENATESPLITS .and. associated(DirectDatabase) &
       & .and. .not. SKIPDIRECTWRITES ) then
+      call output( ' unsplitting dgg/dgm files', advance='yes' )
       call unsplitFiles ( DirectDatabase, FileDatabase, usingSubmit, debug )
+    else
+      call output( 'catenatesplits: ', advance='no' )
+      call output( catenatesplits, advance='yes' )
+      call output( 'associated(DirectDatabase): ', advance='no' )
+      call output( associated(DirectDatabase), advance='yes' )
+      call output( 'skipdirectwrites: ', advance='no' )
+      call output( skipdirectwrites, advance='yes' )
     end if
 
     
@@ -1520,6 +1528,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.122  2006/04/11 23:35:38  pwagner
+! More info why unable to unsplit dgg/dgm files
+!
 ! Revision 2.121  2006/03/15 23:47:53  pwagner
 ! Fixed bug causing crashes when no gapless HGrid declared
 !
