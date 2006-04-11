@@ -2892,7 +2892,7 @@ contains
             ! into DE_DF.
             call Get_D_Deltau_Pol_DF ( ct, stcp, stsp, c_inds(1:p_stop),   &
               &  del_zeta, Grids_f, beta_path_polarized(:,1:p_stop,:),     &
-              &  eta_fzp, do_calc_fzp, sps_path, del_s,                    &
+              &  tanh1_c(:npc), eta_fzp, do_calc_fzp, sps_path, del_s,     &
               &  incoptdepth_pol(:,:,1:p_stop), ref_corr(1:p_stop),        &
               &  d_delta_df(1:npc,:), de_df(:,:,1:p_stop,:) )
 
@@ -3100,14 +3100,18 @@ contains
         min_ch_freq_grid =  huge(min_ch_freq_grid)
         max_ch_freq_grid = -huge(min_ch_freq_grid)
         do i = 1, noUsedChannels
+          shapeInd = channels(i)%shapeInds(sx)
           if ( channels(i)%dacs == 0 ) then
-            shapeInd = channels(i)%shapeInds(sx)
             k = Size(FilterShapes(shapeInd)%FilterGrid)
             r1 = FilterShapes(shapeInd)%FilterGrid(1)
             r2 = FilterShapes(shapeInd)%FilterGrid(k)
-            min_ch_freq_grid = MIN(r1, r2, min_ch_freq_grid)
-            max_ch_freq_grid = MAX(r1, r2, max_ch_freq_grid)
+          else
+            k = Size(dacsFilterShapes(shapeInd)%FilterGrid)
+            r1 = dacsFilterShapes(shapeInd)%FilterGrid(1)
+            r2 = dacsFilterShapes(shapeInd)%FilterGrid(k)
           end if
+          min_ch_freq_grid = MIN(r1, r2, min_ch_freq_grid)
+          max_ch_freq_grid = MAX(r1, r2, max_ch_freq_grid)
         end do
 
         if ( FwdModelConf%anyPFA(sx) ) call get_channel_centers ( channelCenters )
@@ -3328,6 +3332,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.257  2006/03/06 20:44:06  vsnyder
+! Avoid appearance of out-of-bounds subscript during frequency averaging
+!
 ! Revision 2.256  2006/02/08 21:38:18  vsnyder
 ! Add relative humidity (RHi) calculation
 !
