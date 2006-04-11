@@ -34,6 +34,7 @@ contains ! ====     Public Procedures     ==============================
     & COUNTCHUNKS, SINGLECHUNK, LASTCHUNKIN, FILEDATABASE )
 
     use Algebra_M, only: Algebra
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use AntennaPatterns_m, only: Destroy_Ant_Patterns_Database
     use ChunkDivide_m, only: ChunkDivide, DestroyChunkDatabase, &
       & ReduceChunkDatabase
@@ -76,7 +77,7 @@ contains ! ====     Public Procedures     ==============================
       & DestroyRadiometerDatabase, DestroySignalDatabase, &
       & DestroySpectrometerTypeDatabase, MLSSignals, Modules, Radiometers, &
       & Signals, SpectrometerTypes
-    use MLSStringLists, only: SwitchDetail
+    use MLSStringLists, only: ExpandStringRange, SwitchDetail
     use MLSL2Options, only: SKIPDIRECTWRITES, SKIPDIRECTWRITESORIGINAL
     use MLSL2Timings, only: add_to_section_timing, TOTAL_TIMES
     use Open_Init, only: OpenAndInitialize
@@ -108,6 +109,7 @@ contains ! ====     Public Procedures     ==============================
     ! Internal variables
     integer ::                                   chunkNo ! Index of Chunks
     type (MLSChunk_T), dimension(:), pointer ::  Chunks  ! of data
+    logical, dimension(:), pointer :: CHUNKSSKIPPED=> null() ! Don't do these
     integer                                   :: details
     type (DirectData_T), dimension(:), pointer :: DirectDatabase
     type (FGrid_T), dimension(:), pointer ::     FGrids
@@ -290,8 +292,17 @@ contains ! ====     Public Procedures     ==============================
           end if
         else
         ! Otherwise, this is the 'standard' work for these sections.
+          nullify(chunksSkipped)
+          call allocate_test( chunksSkipped, size(chunks), 'chunksSkipped', ModuleName )
+          chunksSkipped = .false.
+          if ( parallel%chunkRange /= '' ) then
+            chunksSkipped = .true.
+            call ExpandStringRange(trim(parallel%chunkRange), chunksSkipped, &
+              & sense=.false.)
+          endif  
           do chunkNo = firstChunk, lastChunk ! ----------------------- Chunk loop
             call resumeOutput ! In case the last phase was  silent
+            if ( chunksSkipped(chunkNo) ) cycle
             call time_now ( tChunk )
             if ( switchDetail(switches,'chu') > -1 ) then
               call output ( " ================ Starting processing for chunk " )
@@ -324,7 +335,7 @@ subtrees:   do while ( j <= howmany )
               case ( z_join )
                 call MLSL2Join ( son, vectors, l2gpDatabase, &
                   & l2auxDatabase, DirectDatabase, chunkNo, chunks, &
-		            & forwardModelConfigDatabase, fileDatabase )
+		            & forwardModelConfigDatabase, fileDatabase, HGrids )
                 call add_to_section_timing ( 'join', t1)
               case ( z_retrieve )
                 if ( .not. checkPaths) &
@@ -376,6 +387,8 @@ subtrees:   do while ( j <= howmany )
           end do ! ---------------------------------- End of chunk loop
           ! Clear any locked l2pc bins out.
           call FlushLockedBins
+          ! Done with the chunksSkipped array
+          call deallocate_test( chunksSkipped, 'chunksSkipped', ModuleName )
           i = j - 1 ! one gets added back in at the end of the outer loop
         end if
 
@@ -511,6 +524,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.139  2006/03/04 00:22:04  pwagner
+! Restore original skipDirectWrites after chunkLoop ends
+!
 ! Revision 2.138  2006/02/16 00:16:32  pwagner
 ! switchDetail instead of index
 !
