@@ -80,6 +80,7 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
   --maxFailuresPerMachine[ ]<amount> mark bad any machine after <amount> failures
       scf default is 1; sips default is 2; 1 means allow no failures
   --[n]memTrack: Do [not] keep track of memory usage (simple arrays only).
+  --[n]overlap: Do [not] allow overlaps outside of processing range
   --[n]patch: Don't [do] let run create file, swath on first directWrite
     by default, the 1st directwrite obliterates an existing file
     turning this option on will let you merely patch it instead
@@ -134,6 +135,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will not be printed in response to mlsl2 -?)
 
  $Log$
+ Revision 1.40  2006/02/10 21:24:02  pwagner
+ --dump specialDumpFile explained
+
  Revision 1.39  2005/03/12 00:45:19  pwagner
  -w option added; changed note onconcatenating options
 
