@@ -336,7 +336,17 @@ contains
                   & call MLSMessage ( MLSMSG_Error, ModuleName, &
                   &    "No matching channel shape information" )
               end do
-            end if ! not DACS
+            else
+              do thisSideband = fwdModelConf%sidebandStart, fwdModelConf%sidebandStop, 2
+                sx = (thisSideband +3) / 2
+                channels(channel)%shapeInds(sx) = MatchSignal ( &
+                  & DACSFilterShapes%signal, fwdModelConf%signals(sigInd), &
+                  & sideband = thisSideband, channel=channels(channel)%used )
+                if ( channels(channel)%shapeInds(sx) == 0 ) &
+                  & call MLSMessage ( MLSMSG_Error, ModuleName, &
+                  &    "No matching DACS channel shape information" )
+              end do
+            end if ! filter bank or DACS
           end if
         end do
       end do
@@ -1163,7 +1173,7 @@ contains
 
     ! Local variables
     logical :: dumpPFA
-    integer :: J                             ! Loop counter
+    integer :: J, S                          ! Loop counters
     integer :: S1, S2                        ! Sideband limits
     character (len=MaxSigLen) :: SignalName  ! A line of text
 
@@ -1292,8 +1302,12 @@ contains
         call output ( config%channels(j)%used, before='    Used: ' )
         call output ( config%channels(j)%origin, before='    Origin: ' )
         call output ( config%channels(j)%signal, before='    Signal: ' )
-        call output ( config%channels(j)%DACS, before='    DACS: ', &
-          & advance='yes' )
+        call output ( config%channels(j)%DACS, before='    DACS: ' )
+        call output ( '    Shape Inds:' )
+        do s = s1, s2
+          call output ( config%channels(j)%shapeInds(s), before=' ' )
+        end do
+        call newLine
       end do ! j = 1, size(config%channels)
     end if
     if ( associated(config%IntegrationGrid) ) then
@@ -1331,6 +1345,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.88  2006/02/23 00:58:58  vsnyder
+! Don't crash while dumping config if the signal can't be parsed
+!
 ! Revision 2.87  2006/02/08 21:37:36  vsnyder
 ! Delay halting on error until all possible error messages are emitted.
 ! Add descriptive titles to integration grid and tangent grid dumps.
