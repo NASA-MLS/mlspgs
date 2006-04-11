@@ -56,7 +56,7 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
   end interface
 
   interface DirectWrite_L2GP
-    module procedure DirectWrite_L2GP_FH
+    ! module procedure DirectWrite_L2GP_FH
     module procedure DirectWrite_L2GP_MF
   end interface
 
@@ -129,80 +129,18 @@ contains ! ======================= Public Procedures =========================
     end if
   end subroutine DestroyDirectDatabase
 
-  ! ------------------------------------------ DirectWrite_L2GP_FH --------
-  subroutine DirectWrite_L2GP_FH ( L2gpFileHandle, &
-    & quantity, precision, quality, status, &
-    & sdName, chunkNo, hdfVersion, fileName, createSwath )
-
-    ! Purpose:
-    ! Write standard hdfeos-formatted files ala l2gp for datasets that
-    ! are too big to keep all chunks stored in memory
-    ! so instead write them out profile-by-profile
-    use L2GPData, only: L2GPData_T, L2GPNameLen, &
-      & AppendL2GPData, DestroyL2GPContents, DUMP
-
-    integer, intent(in) :: L2gpFileHandle
-    type (VectorValue_T), intent(in) :: QUANTITY
-    type (VectorValue_T), pointer :: precision
-    type (VectorValue_T), pointer :: quality
-    type (VectorValue_T), pointer :: status
-    ! integer, intent(in) :: SDNAME       ! Name of sd in output file
-    character(len=*), intent(in) :: SDNAME       ! Name of sd in output file
-    integer, intent(in) :: HDFVERSION   ! Version of HDF file to write out
-    integer, intent(in)              :: chunkNo
-    character(len=*), intent(in), optional :: FILENAME
-    logical, intent(in), optional :: createSwath
-    ! Local variables
-    type (L2GPData_T) :: l2gp
-    integer :: OFFSET
-    integer :: FIRSTINSTANCE
-    integer :: LASTINSTANCE
-    integer :: TOTALPROFS
-    integer :: NOTOWRITE
-
-    ! Executable code
-    ! Size the problem
-    firstInstance = quantity%template%noInstancesLowerOverlap + 1
-    lastInstance = quantity%template%noInstances - &
-      & quantity%template%noInstancesUpperOverlap
-    noToWrite = lastInstance - firstInstance + 1
-!     if ( noToWrite <= 0 ) then
-!       call MLSMessage ( MLSMSG_Warning, 'No profiles in chunk to write' )
-!       return
-!     end if
-    offset = quantity%template%instanceOffset
-    totalProfs = quantity%template%grandTotalInstances
-
-    ! Check sanity
-    if ( offset + noToWrite - 1 > totalProfs .and. totalProfs > 0 ) then
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & 'last profile > grandTotalInstances for ' // trim(sdName) )
-      ! Last-ditch effort resets offset
-      offset = max(0, min(offset, totalProfs - noToWrite))
-    endif
-    ! Convert vector quantity to l2gp
-    call vectorValue_to_l2gp(quantity, precision, quality, status, l2gp, &
-      & sdname, chunkNo, offset=0, &
-      & firstInstance=firstInstance, lastInstance=lastInstance)
-    ! Output the l2gp into the file
-    call AppendL2GPData(l2gp, l2gpFileHandle, &
-      & sdName, filename, offset, lastprofile=lastInstance, &
-      & TotNumProfs=TotalProfs, hdfVersion=hdfVersion, createSwath=createSwath)
-    if ( index(switches, 'l2gp') /= 0 ) call dump(l2gp)
-    ! Clear up our temporary l2gp
-    call DestroyL2GPContents(l2gp)
-  end subroutine DirectWrite_L2GP_FH
-
   ! ------------------------------------------ DirectWrite_L2GP_MF --------
   subroutine DirectWrite_L2GP_MF ( L2gpFile, &
     & quantity, precision, quality, status, &
-    & sdName, chunkNo, createSwath )
+    & sdName, chunkNo, HGrids, createSwath )
 
     ! Purpose:
     ! Write standard hdfeos-formatted files ala l2gp for datasets that
     ! are too big to keep all chunks stored in memory
     ! so instead write them out profile-by-profile
+    use ChunkDivide_m, only: ChunkDivideConfig
     use Hdf, only: DFACC_CREATE, DFACC_RDONLY
+    use HGridsDatabase, only: HGrid_T
     use L2GPData, only: L2GPData_T, L2GPNameLen, &
       & AppendL2GPData, DestroyL2GPContents, DUMP
     use readApriori, only: writeAPrioriAttributes
@@ -211,15 +149,16 @@ contains ! ======================= Public Procedures =========================
     type (VectorValue_T), pointer :: precision
     type (VectorValue_T), pointer :: quality
     type (VectorValue_T), pointer :: status
-    ! integer, intent(in) :: SDNAME       ! Name of sd in output file
     character(len=*), intent(in) :: SDNAME       ! Name of sd in output file
     integer, intent(in)              :: chunkNo
+    type (HGrid_T), dimension(:), pointer ::     HGrids
     logical, intent(in), optional :: createSwath
     ! Local variables
     logical :: alreadyOpen
     type (L2GPData_T) :: l2gp
     integer :: OFFSET
     integer :: FIRSTINSTANCE
+    integer :: GRANDTOTALINSTANCES
     integer :: LASTINSTANCE
     integer :: NOTOWRITE
     integer :: TOTALPROFS
@@ -231,22 +170,37 @@ contains ! ======================= Public Procedures =========================
       & quantity%template%noInstancesUpperOverlap
     noToWrite = lastInstance - firstInstance + 1
     offset = quantity%template%instanceOffset
-    totalProfs = quantity%template%grandTotalInstances
-
+    grandtotalinstances = quantity%template%grandTotalInstances
+    totalProfs = grandtotalinstances
+    if ( ChunkDivideConfig%allowPriorOverlaps ) then
+      offset = offset - &
+        & hGrids(quantity%template%hGridIndex)%noProfsLowerOverlap
+      totalProfs = totalProfs - &
+        & hGrids(quantity%template%hGridIndex)%noProfsLowerOverlap
+    endif
+    if ( ChunkDivideConfig%allowPostOverlaps ) &
+      & totalProfs = totalProfs - &
+      & hGrids(quantity%template%hGridIndex)%noProfsUpperOverlap
     ! Check sanity
-    if ( offset + noToWrite - 1 > totalProfs .and. totalProfs > 0 ) then
+    if ( offset + noToWrite - 1 > grandTotalInstances .and. grandTotalInstances > 0 ) then
+      call output('offset: ', advance='no')
+      call output(offset, advance='no')
+      call output('   noToWrite: ', advance='no')
+      call output(noToWrite, advance='no')
+      call output('   grandTotalInstances: ', advance='no')
+      call output(grandTotalInstances, advance='yes')
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & 'last profile > grandTotalInstances for ' // trim(sdName), &
         & MLSFile=L2GPFile )
       ! Last-ditch effort resets offset
-      offset = max(0, min(offset, totalProfs - noToWrite))
+      offset = max(0, min(offset, grandTotalInstances - noToWrite))
     endif
     if ( L2GPFile%access == DFACC_RDONLY )  &
       & call MLSMessage(MLSMSG_Error, ModuleName, &
       & 'l2gp file is rdonly', MLSFile=L2GPFile)
     ! Convert vector quantity to l2gp
     call vectorValue_to_l2gp(quantity, precision, quality, status, l2gp, &
-      & sdname, chunkNo, offset=0, &
+      & sdname, chunkNo, HGrids, offset=0, &
       & firstInstance=firstInstance, lastInstance=lastInstance)
     ! Output the l2gp into the file
     call AppendL2GPData(l2gp, l2gpFile, &
@@ -254,6 +208,19 @@ contains ! ======================= Public Procedures =========================
       & TotNumProfs=TotalProfs, createSwath=createSwath)
     if ( l2gpFile%access == DFACC_CREATE ) call writeAPrioriAttributes(l2gpFile)
     if ( index(switches, 'l2gp') /= 0 ) call dump(l2gp)
+    if ( l2gp%name == 'Temperature-Core' .and. deebug ) then
+    call output('firstInstance: ', advance='no')
+    call output(firstInstance, advance='no')
+    call output('  lastInstance: ', advance='no')
+    call output(lastInstance, advance='no')
+    call output('  TotalProfs: ', advance='no')
+    call output(TotalProfs, advance='yes')
+    if ( present(createSwath) ) then
+    call output('  createSwath: ', advance='no')
+    call output(createSwath, advance='yes')
+    endif
+    call dump(l2gp, Details=-1)
+    endif
     ! Clear up our temporary l2gp
     call DestroyL2GPContents(l2gp)
   end subroutine DirectWrite_L2GP_MF
@@ -1205,7 +1172,9 @@ contains ! ======================= Public Procedures =========================
 ! =====     Private Procedures     =====================================
   ! ---------------------------------------------  vectorValue_to_l2gp  -----
   subroutine vectorValue_to_l2gp (QUANTITY, precision, quality, status, l2gp, &
-    & name, chunkNo, offset, firstInstance, lastInstance)
+    & name, chunkNo, HGrids, offset, firstInstance, lastInstance)
+    use ChunkDivide_m, only: ChunkDivideConfig
+    use HGridsDatabase, only: HGrid_T
     use Intrinsic, only: L_None
     use L2GPData, only: L2GPData_T, RGP, &
       & SetupNewl2gpRecord, &
@@ -1216,8 +1185,8 @@ contains ! ======================= Public Procedures =========================
     type (VectorValue_T), pointer :: status
     type (L2GPData_T)                :: l2gp
     character(len=*), intent(in)     :: name
-    ! integer, intent(in)            :: nameIndex
     integer, intent(in)              :: chunkNo
+    type (HGrid_T), dimension(:), pointer ::     HGrids
     integer, intent(in), optional    :: offset
     integer, intent(in), optional    :: firstInstance
     integer, intent(in), optional    :: lastInstance
@@ -1291,6 +1260,12 @@ contains ! ======================= Public Procedures =========================
 
     ! Now copy the information from the quantity to the l2gpData
     L2GP%nTimesTotal = quantity%template%grandTotalInstances
+    if ( ChunkDivideConfig%allowPriorOverlaps ) &
+      & L2GP%nTimesTotal = L2GP%nTimesTotal - &
+      & hGrids(quantity%template%hGridIndex)%noProfsLowerOverlap
+    if ( ChunkDivideConfig%allowPostOverlaps ) &
+      & L2GP%nTimesTotal = L2GP%nTimesTotal - &
+      & hGrids(quantity%template%hGridIndex)%noProfsUpperOverlap
 
     ! name is an integer, but L2GP%name is Character data
     l2gp%nameIndex = 0
@@ -1388,6 +1363,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.35  2006/04/11 23:33:14  pwagner
+! Fixed bug which added excess profiles
+!
 ! Revision 2.34  2006/01/26 00:34:50  pwagner
 ! demoted more use statements from module level to speed Lahey compiles
 !
