@@ -380,9 +380,10 @@ contains
           else
 
             do i = 1, n_inds ! Don't trust the compiler to fuse loops
-              singularity(inds(i)) = beta_path_c(inds(i),sps_i) &
-                        & * eta_zxp_f(indices_c(inds(i)),sv_i)
-              d_delta_df(inds(i),sv_i) = singularity(inds(i)) * del_s(inds(i))
+              ii = inds(i)
+              singularity(ii) = beta_path_c(ii,sps_i) &
+                        & * eta_zxp_f(indices_c(ii),sv_i)
+              d_delta_df(ii,sv_i) = singularity(ii) * del_s(ii)
             end do ! i
 
       !{ Apply Gauss-Legendre quadrature to the panels indicated by
@@ -1027,6 +1028,9 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.49  2006/02/08 01:02:01  vsnyder
+! More stuff for spectroscopy derivatives
+!
 ! Revision 2.48  2005/11/21 22:57:27  vsnyder
 ! PFA derivatives stuff
 !
