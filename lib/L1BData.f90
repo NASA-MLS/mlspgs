@@ -706,7 +706,7 @@ contains ! ============================ MODULE PROCEDURES ======================
 
     if ( myDetails < 0 ) return
     if ( associated(l1bData%counterMAF) ) then
-      call dump ( l1bData%counterMAF, 'l1bData%counterMAF' )
+      call dump ( l1bData%counterMAF, 'l1bData%counterMAF', format='(i8)' )
     else
       call output('(CounterMAF array not associated)', advance='yes')
     end if
@@ -3143,6 +3143,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.70  2006/04/11 23:13:29  pwagner
+! More room needed in dumping counterMAF array
+!
 ! Revision 2.69  2006/02/06 22:54:51  pwagner
 ! Should print warnings, not bomb if l1b files not found
 !
