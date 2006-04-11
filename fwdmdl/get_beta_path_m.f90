@@ -164,6 +164,7 @@ contains
     if ( dumpAll ) then
       call dump ( p_path(path_inds), name='Pressures', clean=clean )
       call dump ( t_path, name='Temperatures', clean=clean )
+      call dump ( tanh_path, name='tanh(h nu / k T)', clean=clean )
     end if
     if ( dumpStop ) stop
 
@@ -295,14 +296,19 @@ contains
   subroutine Get_Beta_Path_Polarized ( Frq, H, Beta_group, GL_slabs, &
                                      & Path_inds, Beta_path, dBeta_path_dT )
 
+    use Dump_0, only: Dump
     use ForwardModelConfig, only: LBL_T
+    use Intrinsic, only: L_RHi, Lit_Indices
     use MLSCommon, only: R8, RP, IP
     use O2_Abs_CS_m, only: O2_Abs_CS, D_O2_Abs_CS_dT
+    use Output_m, only: Output
     use Slabs_SW_m, only: SLABS_STRUCT
+    use String_Table, only: Display_String
+    use Toggles, only: Switches
 
 ! Inputs:
 
-    real(r8), intent(in) :: Frq ! frequency in MHz
+    real(r8), intent(in) :: Frq       ! frequency in MHz
     real(rp), intent(in) :: H(:)      ! Magnetic field component in instrument
                                       ! polarization on the path
     type (slabs_struct), dimension(:,:), intent(in) :: GL_slabs
@@ -328,6 +334,15 @@ contains
     real(rp) :: RATIO ! Isotope ratio, not mixing ratio
     complex(rp) :: Sigma_m, Pi, Sigma_p
     complex(rp) :: dSigma_m_dT, dPi_dT, dSigma_p_dT
+    logical, save :: Clean, DumpBeta, DumpStop
+    logical, save :: First = .true. ! First-time flag
+
+    if ( first ) then
+      first = .false.
+      dumpStop = index(switches,'POLB') > 0
+      dumpBeta = dumpStop .or. ( index(switches,'polb') > 0 )
+      clean = index(switches,'clean') > 0
+    end if
 
 ! begin the code
 
@@ -359,8 +374,21 @@ contains
           beta_path( 0,j,i) = beta_path( 0,j,i) + ratio * pi
           beta_path(+1,j,i) = beta_path(+1,j,i) + ratio * sigma_p
         end do ! j
+
+        if ( dumpBeta ) then
+          call display_string ( lit_indices(beta_group(i)%molecules(1:n)), &
+            & before='Polarized Betas for' )
+          call output ( frq, before=', FRQ = ', advance='yes' )
+          call dump ( beta_path(:,:,i), name='Beta', clean=clean )
+          if ( associated(dBeta_path_dT) ) then
+            call dump ( real(dBeta_path_dT), name='real(dBeta_path_dT)', clean=clean )
+            call dump ( aimag(dBeta_path_dT), name='aimag(dBeta_path_dT)', clean=clean )
+          end if
+        end if
       end do ! n
     end do ! i
+    if ( dumpStop ) stop
+
   end subroutine Get_Beta_Path_Polarized
 
   ! ----------------------------------------  Get_Beta_Path_Cloud  -----
@@ -1160,6 +1188,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.86  2006/04/05 19:16:49  vsnyder
+! Use the 'clean' switch in some dumps
+!
 ! Revision 2.85  2006/02/23 01:00:17  vsnyder
 ! Give spectroscopy vector pointers correct upper bounds
 !
