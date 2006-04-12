@@ -55,12 +55,14 @@ if [ "$is_absolute" = "" ]
 then
    echo $MLSHOME/$MLSBIN/$MLSPROG $EXTRA_OPTIONS "$@"
    $MLSHOME/$MLSBIN/$MLSPROG $EXTRA_OPTIONS "$@"
+   return_status=`expr $?`
+   H5REPACK=$MLSHOME/$MLSBIN/h5repack
 else
    echo $MLSBIN/$MLSPROG $EXTRA_OPTIONS "$@"
    $MLSBIN/$MLSPROG $EXTRA_OPTIONS "$@"
+   return_status=`expr $?`
+   H5REPACK=$MLSBIN/h5repack
 fi
-
-return_status=`expr $?`
 
 # repack level 2 product files to speed things up
 if [ -x "$H5REPACK" ]
@@ -94,6 +96,9 @@ else
 fi
 
 # $Log$
+# Revision 1.4  2006/04/03 23:09:09  pwagner
+# Added repacking
+#
 # Revision 1.3  2005/06/23 22:20:45  pwagner
 # Reworded Copyright statement
 #
