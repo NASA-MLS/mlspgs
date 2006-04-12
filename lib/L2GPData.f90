@@ -2217,7 +2217,6 @@ contains ! =====     Public Procedures     =============================
     ! Local
     integer :: actual_ntimes
     logical :: alreadyOpen
-    ! integer :: myhdfVersion !Not used in this function
     integer :: status
     logical :: swath_exists
     integer :: swathid
@@ -2226,11 +2225,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
     status = 0
-    ! Optional args should _ONLY_ appear like this, inside an IF 
-    ! block that checks if they are present. HCP replaced one occurance
-    ! of TotNumProfs with myLastProfile as they are equal if TotNumProfs
-    ! is present and cause a crash if it is not. Another occurrance seemed 
-    ! wrong anyway, so I commented it out.
+
     if (present(lastProfile)) then
       myLastProfile = lastProfile 
     elseif (present(TotNumProfs)) then
@@ -2289,7 +2284,6 @@ contains ! =====     Public Procedures     =============================
         call OutputL2GP_createFile_MF (l2gp, L2GPFile, &
           & myswathName,&
           & notUnlimited=(avoidUnlimitedDims .and. present(totNumProfs)) )
-          ! & myswathName, filename, notUnlimited=present(totNumProfs))
       case default
         call MLSMessage ( MLSMSG_Error, ModuleName, &
          & 'Illegal hdf version in AppendL2GPData_fileID', MLSFile=L2GPFile)
@@ -2306,9 +2300,6 @@ contains ! =====     Public Procedures     =============================
         "size(l2gp%l2gpValue,3)=",size(l2gp%l2gpValue,3)
       endif
     endif
-    ! This line caused an error because TotNumProfs is optional and 
-    ! is not here checked for present-ness. 
-    ! if ( offset == TotNumProfs .or. size(l2gp%l2gpValue,3) == 0 ) then
     if ( size(l2gp%l2gpValue,3) == 0 ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & "No profiles in this chunk", MLSFile=L2GPFile )
@@ -3566,6 +3557,8 @@ contains
     if ( showMe(myDetails > -2, myFields, 'ntimes') ) then
       call output ( 'nTimes: ')
       call output ( l2gp%nTimes, 5)
+      call output ( '  nTimesTotal: ')
+      call output ( l2gp%nTimesTotal, 5)
       call output ( '  nLevels: ')
       call output ( l2gp%nLevels, 3)
       call output ( '  nFreqs: ')
@@ -4142,6 +4135,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.142  2006/04/06 23:04:52  pwagner
+! Optionally cp only ranges of freq, level, profile
+!
 ! Revision 2.141  2006/03/13 23:40:28  pwagner
 ! verbose now an optional arg to diff
 !
