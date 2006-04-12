@@ -51,12 +51,10 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
 !---------------------------------------------------------------------------
 
   interface DirectWrite_L2Aux
-    module procedure DirectWrite_L2Aux_FH
     module procedure DirectWrite_L2Aux_MF
   end interface
 
   interface DirectWrite_L2GP
-    ! module procedure DirectWrite_L2GP_FH
     module procedure DirectWrite_L2GP_MF
   end interface
 
@@ -224,368 +222,6 @@ contains ! ======================= Public Procedures =========================
     ! Clear up our temporary l2gp
     call DestroyL2GPContents(l2gp)
   end subroutine DirectWrite_L2GP_MF
-
-  ! ------------------------------------------- DirectWrite_L2Aux_FH --------
-  subroutine DirectWrite_L2Aux_FH ( fileID, quantity, precision, sdName, &
-    & hdfVersion, chunkNo, chunks, FWModelConfig )
-
-    ! Purpose:
-    ! Write plain hdf-formatted files ala l2aux for datasets that
-    ! are too big to keep all chunks stored in memory
-    ! so instead write them out chunk-by-chunk
-    
-    ! Despite the name the routine takes vector quantities, not l2aux ones
-    use Chunks_m, only: MLSChunk_T
-    use ForwardModelConfig, only: ForwardModelConfig_T
-    use MLSFiles, only: HDFVERSION_4, HDFVERSION_5
-    use VectorsModule, only: VectorValue_T, Dump
-
-    type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
-    type (VectorValue_T), intent(in) :: QUANTITY
-    type (VectorValue_T), pointer :: PRECISION
-    ! integer, intent(in) :: SDNAME       ! Name of sd in output file
-    character(len=*), intent(in) :: SDNAME       ! Name of sd in output file
-    integer, intent(in) :: FILEID       ! ID of output file
-    integer, intent(in) :: HDFVERSION   ! Version of HDF file to write out
-    integer, intent(in) :: CHUNKNO      ! Index into chunks
-    type (MLSChunk_T), dimension(:), intent(in) :: CHUNKS
-    ! Local parameters
-    logical, parameter :: DEEBUG = .FALSE.
-    integer, parameter :: MAXFILES = 100             ! Set for an internal array
-    ! executable code
-
-    if ( (lastProfTooBigWarns <= MAXNUMWARNS) &
-      & .and. &
-      & (quantity%template%instanceOffset+quantity%template%noInstances - &
-      & quantity%template%noInstancesLowerOverlap - &
-      & quantity%template%noInstancesUpperOverlap) &
-      & > &
-      & quantity%template%grandTotalInstances &
-      & .and. &
-      & quantity%template%grandTotalInstances > 0 ) then
-      lastProfTooBigWarns = lastProfTooBigWarns + 1
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          & 'last profile > grandTotalInstances for ' // trim(sdName))
-      call output('instanceOffset: ', advance='no')
-      call output(quantity%template%instanceOffset, advance='yes')
-      call output('noInstances: ', advance='no')
-      call output(quantity%template%noInstances, advance='yes')
-      call output('noInstancesLowerOverlap: ', advance='no')
-      call output(quantity%template%noInstancesLowerOverlap, advance='yes')
-      call output('noInstancesUpperOverlap: ', advance='no')
-      call output(quantity%template%noInstancesUpperOverlap, advance='yes')
-      call output('last profile: ', advance='no')
-      call output((quantity%template%instanceOffset+quantity%template%noInstances - &
-        & quantity%template%noInstancesLowerOverlap - &
-        & quantity%template%noInstancesUpperOverlap), advance='yes')
-      call output('grandTotalInstances: ', advance='no')
-      call output(quantity%template%grandTotalInstances, advance='yes')
-      if ( lastProfTooBigWarns > MAXNUMWARNS ) &
-          & call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          & 'Max no. of warnings reached--suppressing further ones')
-    endif
-    select case (hdfversion)
-    case (HDFVERSION_4)
-      call DirectWrite_L2Aux_FH_hdf4 ( quantity, sdName, fileID, &
-        & chunkNo, chunks )
-      if ( associated(precision) ) & 
-        & call DirectWrite_L2Aux_FH_hdf4 ( precision, &
-        & trim(sdName) // 'precision', fileID, chunkNo, chunks )
-    case (HDFVERSION_5)
-      call DirectWrite_L2Aux_FH_hdf5 ( quantity, sdName, fileID, &
-        & chunkNo, chunks, FWModelConfig )
-      if ( associated(precision) ) & 
-        & call DirectWrite_L2Aux_FH_hdf5 ( precision, &
-        & trim(sdName) // 'precision', fileID, chunkNo, chunks, FWModelConfig )
-    case default
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unsupported hdfVersion for DirectWrite_L2Aux (currently only 4 or 5)' )
-    end select
-    if ( index(switches, 'l2aux') == 0 ) return
-    call dump(quantity)
-    if ( associated(precision) ) call dump(precision)
-  end subroutine DirectWrite_L2Aux_FH
-
-  ! ------------------------------------------ DirectWrite_L2Aux_FH_hdf4 --------
-  subroutine DirectWrite_L2Aux_FH_hdf4 ( quantity, sdName, fileID, &
-    & chunkNo, chunks )
-
-    use Chunks_m, only: MLSChunk_T
-    use Hdf, only: SFN2INDEX, SFSELECT, SFCREATE, &
-      & SFENDACC, DFNT_FLOAT32, SFWDATA_F90
-    use Intrinsic, only: L_None
-    use MLSCommon, only: R4, R8
-    use MLSFiles, only: HDFVERSION_4
-    use VectorsModule, only: VectorValue_T
-
-    type (VectorValue_T), intent(in) :: QUANTITY
-    ! integer, intent(in) :: SDNAME       ! Name of sd in output file
-    character(len=*), intent(in) :: SDNAME       ! Name of sd in output file
-    integer, intent(in) :: FILEID       ! ID of output file
-    integer, intent(in) :: CHUNKNO      ! Index into chunks
-    type (MLSChunk_T), dimension(:), intent(in) :: CHUNKS
-
-    ! Local parameters
-    integer, parameter :: MAXFILES = 100             ! Set for an internal array
-    integer, parameter :: HDFVERSION = HDFVERSION_4
-
-    ! Local variables
-    integer :: SDINDEX                  ! Index of sd
-    integer :: SDID                     ! Handle for sd
-    integer :: STATUS                   ! Status flag
-    integer :: START(3)                 ! HDF array starting position
-    integer :: STRIDE(3)                ! HDF array stride
-    integer :: SIZES(3)                 ! HDF array sizes
-    integer :: NODIMS                   ! Also index of maf dimension
-    type ( MLSChunk_T ) :: LASTCHUNK    ! The last chunk in the file
-    real (r8) :: HUGER4
-
-    ! executable code
-
-    hugeR4 = real ( huge(0.0_r4), r8 )
-
-    if ( quantity%template%frequencyCoordinate == L_None ) then
-      noDims = 2
-    else
-      noDims = 3
-    end if
-
-    ! Create or access the SD
-    sdIndex = sfn2index ( fileID, trim(sdName) )
-    if ( sdIndex == -1 ) then
-      lastChunk = chunks(size(chunks))
-      sizes(noDims) = lastChunk%lastMAFIndex - lastChunk%noMAFSUpperOverlap + 1
-      sizes(noDims-1) = quantity%template%noSurfs
-      if ( noDims == 3 ) sizes(1) = quantity%template%noChans
-      sdId  = sfCreate ( fileID, trim(sdName), DFNT_FLOAT32, &
-        & noDims, sizes )
-    else
-      sdId = sfSelect ( fileID, sdIndex )
-    end if
-    if ( sdId == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-     & 'Error accessing SD '//trim(sdName) // ' (hdf4)')
-
-    ! What exactly will be our contribution
-    stride = 1
-    start = 0
-    sizes = 1
-    sizes(noDims) = quantity%template%noInstances - &
-      & quantity%template%noInstancesLowerOverlap - &
-      & quantity%template%noInstancesUpperOverlap
-    sizes(noDims-1) = quantity%template%noSurfs
-    if ( noDims == 3 ) sizes(1) = quantity%template%noChans
-    ! start(noDims) = quantity%template%mafIndex ( &
-    !  & 1+quantity%template%noInstancesLowerOverlap )
-    start(noDims) = quantity%template%instanceOffset
-    ! if ( quantity%template%minorFrame ) &
-    !  & start(noDims) = quantity%template%instanceOffset + 1
-
-    ! Now write it out
-    status = 0
-    if ( sizes(noDims) > 0 ) &
-      & status = SFWDATA_F90(sdId, start(1:noDims), &
-      & stride(1:noDims), sizes(1:noDims), &
-      & real ( max ( -hugeR4, min ( hugeR4, &
-      &   quantity%values ( :, &
-      &   1+quantity%template%noInstancesLowerOverlap : &
-      &    quantity%template%noInstances - quantity%template%noInstancesUpperOverlap &
-      &  ) ) ) ) )
-    if ( status /= 0 ) then
-      call announce_error (0,&
-        & "Error writing SDS data " // trim(sdName) // " to l2aux file:  " )
-    end if
-    if ( DEEBUG ) then
-      call output('noDims: ', advance='no')
-      call output(noDims, advance='yes')
-      call output('start: ', advance='no')
-      call output(start, advance='yes')
-      call output('stride: ', advance='no')
-      call output(stride, advance='yes')
-      call output('sizes: ', advance='no')
-      call output(sizes, advance='yes')
-      call output('shape(values): ', advance='no')
-      call output(shape(quantity%values), advance='yes')
-      call output('first instance: ', advance='no')
-      call output(1+quantity%template%noInstancesLowerOverlap, advance='yes')
-      call output('last instance: ', advance='no')
-      call output(quantity%template%noInstances &
-        & - quantity%template%noInstancesUpperOverlap, advance='yes')
-    end if
-
-    ! End access to the SD and close the file
-    status = sfEndAcc ( sdId )
-    if ( status == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Error ending access to direct write sd (hdf4)' )
-
-  end subroutine DirectWrite_L2Aux_FH_hdf4
-
-  ! ------------------------------------------ DirectWrite_L2Aux_FH_hdf5 --------
-  subroutine DirectWrite_L2Aux_FH_hdf5 ( quantity, sdName, fileID, &
-    & chunkNo, chunks, FWModelConfig )
-
-    use Chunks_m, only: MLSChunk_T
-    use ForwardModelConfig, only: ForwardModelConfig_T
-    use ForwardModelSupport, only: ShowFwdModelNames
-    use HDF5, only: h5gclose_f, h5gopen_f
-    use Intrinsic, only: L_None
-    use L2AUXData, only:  L2AUXData_T, PHASENAMEATTRIBUTES, &
-      & DestroyL2AUXContents, &
-      & SetupNewL2AUXRecord, WriteL2AUXAttributes
-    use MLSFiles, only: HDFVERSION_5
-    use MLSHDF5, only: IsHDF5AttributePresent, ISHDF5DSPRESENT, &
-      & MakeHDF5Attribute, SaveAsHDF5DS, GetHDF5Attribute
-    use MLSL2Timings, only: showTimingNames
-    use PCFHdr, only: h5_writeglobalattr
-    use VectorsModule, only: VectorValue_T
-
-    type (VectorValue_T), intent(in) :: QUANTITY
-    ! integer, intent(in) :: SDNAME       ! Name of sd in output file
-    character(len=*), intent(in) :: SDNAME       ! Name of sd in output file
-    integer, intent(in) :: FILEID       ! ID of output file
-    integer, intent(in) :: CHUNKNO      ! Index into chunks
-    type (MLSChunk_T), dimension(:), intent(in) :: CHUNKS
-    type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
-
-    ! Local parameters
-    integer, parameter :: MAXFILES = 100             ! Set for an internal array
-    integer, parameter :: HDFVERSION = HDFVERSION_5
-
-    ! Local variables
-    logical :: already_there
-    integer :: first_maf
-    integer :: grp_id
-    type (L2AUXData_T) :: l2aux
-    integer :: last_maf
-    type ( MLSChunk_T ) :: LASTCHUNK    ! The last chunk in the file
-    integer :: NODIMS                   ! Also index of maf dimension
-    integer :: Num_qty_values
-    integer :: returnStatus
-    integer :: SIZES(3)                 ! HDF array sizes
-    integer :: START(3)                 ! HDF array starting position
-    integer :: STRIDE(3)                ! HDF array stride
-    integer :: total_DS_size
-    logical, parameter :: MAYCOLLAPSEDIMS = .false.
-    character (len=2000) :: value1
-
-    ! executable code
-    Num_qty_values = size(quantity%values, 1)*size(quantity%values, 2)
-
-    if ( quantity%template%frequencyCoordinate == L_None &
-      & .and. MAYCOLLAPSEDIMS) then
-      noDims = 2
-    else
-      noDims = 3
-    end if
-
-    ! Create or access the SD
-    already_there = IsHDF5DSPresent(fileID, trim(sdName))
-    if ( .not. already_there ) then
-      lastChunk = chunks(size(chunks))
-      sizes(noDims) = lastChunk%lastMAFIndex - lastChunk%noMAFSUpperOverlap + 1
-      sizes(noDims-1) = quantity%template%noSurfs
-      if ( noDims == 3 ) sizes(1) = quantity%template%noChans
-    end if
-
-    ! What exactly will be our contribution
-    stride = 1
-    start = 0
-    sizes = 1
-    sizes(noDims) = quantity%template%noInstances - &
-      & quantity%template%noInstancesLowerOverlap - &
-      & quantity%template%noInstancesUpperOverlap
-    sizes(noDims-1) = quantity%template%noSurfs
-    if ( noDims == 3 ) sizes(1) = quantity%template%noChans
-    ! start(noDims) = quantity%template%mafIndex ( &
-    !  & 1+quantity%template%noInstancesLowerOverlap )
-    start(noDims) = quantity%template%instanceOffset
-    ! if ( quantity%template%minorFrame ) &
-    !  & start(noDims) = quantity%template%instanceOffset + 1
-    first_maf = 1+quantity%template%noInstancesLowerOverlap
-    last_maf = quantity%template%noInstances &
-      &       - quantity%template%noInstancesUpperOverlap
-
-    if ( DEEBUG ) then
-      print *, 'sdname ', trim(sdName)
-      print *, 'already_there ', already_there
-      print *, 'noDims ', noDims
-      print *, 'instanceOffset ', quantity%template%instanceOffset
-      print *, 'minorFrame ', quantity%template%minorFrame
-      print *, 'start ', start
-      print *, 'sizes ', sizes
-      print *, 'shape(quantity%values) ', shape(quantity%values)
-      print *, 'first_maf ', first_maf
-      print *, 'last_maf ', last_maf
-    endif
-    ! Make certain things will fit
-    if ( noDims == 3 ) then
-      total_DS_size = sizes(1)*sizes(2)*sizes(3)
-      if ( DEEBUG ) then
-        print *, 'total_DS_size ', total_DS_size
-        print *, 'Num_qty_values ', Num_qty_values
-      endif
-      if ( total_DS_size > Num_qty_values ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Number of 3d array elements to write > number stored in qty values' )
-      call SaveAsHDF5DS( fileID, trim(sdName), &
-        & real( &
-        &   reshape(quantity%values(:,first_maf:last_maf), sizes(1:3)) &
-        & ), start, sizes, may_add_to=.true., adding_to=already_there, &
-        & fillValue=DEFAULTUNDEFINEDVALUE )
-    else
-      total_DS_size = sizes(1)*sizes(2)
-      if ( DEEBUG ) then
-        print *, 'total_DS_size ', total_DS_size
-        print *, 'Num_qty_values ', Num_qty_values
-      endif
-      if ( total_DS_size > Num_qty_values ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Number of 2d array elements to write > number stored in qty values' )
-      call SaveAsHDF5DS( fileID, trim(sdName), &
-        & real( &
-        &   reshape(quantity%values(:,first_maf:last_maf), sizes(1:2)) &
-        & ), start, sizes, may_add_to=.true., adding_to=already_there, &
-        & fillValue=DEFAULTUNDEFINEDVALUE)
-    endif
-
-    ! Now some attribute stuff
-    if ( PHASENAMEATTRIBUTES ) then
-      call h5gopen_f(fileID, '/', grp_id, returnstatus)
-      if ( associated ( FWModelConfig ) ) then
-        call MakeHDF5Attribute(grp_id, &
-          & 'ForwardModel Names', trim(ShowFwdModelNames(FWModelConfig)), .false.)
-      end if
-      call MakeHDF5Attribute(grp_id, &
-        & 'Phase Names', trim(showTimingNames('phases', .true.)), .false.)
-      call h5gclose_f(grp_id, returnstatus)
-    endif
-
-    if ( already_there ) return
-    ! sd-level attributes
-    call SetupNewL2AUXRecord ( L2AUX, quantity%template, &
-      & first_MAF, last_MAF-first_MAF+1 )
-    if ( DEEBUG ) then
-      call output('Writing attributes to: ', advance='no')
-      call output(trim(sdName), advance='yes')
-    endif
-    call WriteL2AUXAttributes(fileID, l2aux, trim(sdName))
-    ! Deallocate memory used by the l2aux
-    call DestroyL2AUXContents ( l2aux )
-    ! file-level attributes
-    call h5_writeglobalattr(fileID, skip_if_already_there=.true.)
-    if ( PHASENAMEATTRIBUTES ) then
-      call h5gopen_f(fileID, '/', grp_id, returnstatus)
-      !if ( .not. &
-      !  & IsHDF5AttributePresent('/', fileID, 'Phase Names') ) &
-      !  & call MakeHDF5Attribute(grp_id, &
-      !  & 'Phase Names', trim(showTimingNames('phases', .true.)), .true.)
-      if ( .not. &
-        & IsHDF5AttributePresent('/', fileID, 'Section Names') ) &
-        & call MakeHDF5Attribute(grp_id, &
-        & 'Section Names', trim(showTimingNames('sections', .true.)), .true.)
-      call h5gclose_f(grp_id, returnstatus)
-    endif
-
-  end subroutine DirectWrite_L2Aux_FH_hdf5
 
   ! ------------------------------------------- DirectWrite_L2Aux_MF --------
   subroutine DirectWrite_L2Aux_MF ( L2AUXFile, quantity, precision, sdName, &
@@ -810,7 +446,7 @@ contains ! ======================= Public Procedures =========================
     use L2AUXData, only:  L2AUXData_T, PHASENAMEATTRIBUTES, &
       & DestroyL2AUXContents, &
       & SetupNewL2AUXRecord, WriteL2AUXAttributes
-    use MLSFiles, only: HDFVERSION_5
+    use MLSFiles, only: HDFVERSION_5, Dump
     use MLSHDF5, only: IsHDF5AttributePresent, ISHDF5DSPRESENT, &
       & MakeHDF5Attribute, SaveAsHDF5DS, GetHDF5Attribute
     use MLSL2Timings, only: showTimingNames
@@ -831,6 +467,7 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     logical :: already_there
+    ! logical :: attributes_there
     integer :: first_maf
     integer :: grp_id
     type (L2AUXData_T) :: l2aux
@@ -845,6 +482,7 @@ contains ! ======================= Public Procedures =========================
     integer :: total_DS_size
     logical, parameter :: MAYCOLLAPSEDIMS = .false.
     character (len=2000) :: value1
+    ! logical, parameter :: DEEBUG = .true.
 
     ! executable code
     Num_qty_values = size(quantity%values, 1)*size(quantity%values, 2)
@@ -924,15 +562,26 @@ contains ! ======================= Public Procedures =========================
         & fillValue=DEFAULTUNDEFINEDVALUE)
     endif
 
+    ! call mls_CloseFile(L2AUXFILE)
+    ! attributes_there = IsHDF5AttributeInFile( L2AUXFile%name, 'Phase Names' )
+    ! call mls_OpenFile(L2AUXFILE)
+    ! attributes_there = .false.
     ! Now some attribute stuff
     if ( PHASENAMEATTRIBUTES ) then
+      if ( DeeBUG ) call dump(L2AUXFile, details=1)
       call h5gopen_f(L2AUXFile%fileID%f_id, '/', grp_id, returnstatus)
+      if ( returnstatus /= 0 ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to open group "/" to write attribute', &
+        & MLSFile=L2AUXFile )
       if ( associated ( FWModelConfig ) ) then
         call MakeHDF5Attribute(grp_id, &
-          & 'ForwardModel Names', trim(ShowFwdModelNames(FWModelConfig)), .false.)
+          & 'ForwardModel Names', ShowFwdModelNames(FWModelConfig), &
+          & skip_if_already_there=.false., dont_trim=.true.)
       end if
       call MakeHDF5Attribute(grp_id, &
-        & 'Phase Names', trim(showTimingNames('phases', .true.)), .false.)
+        & 'Phase Names', showTimingNames('phases', .true.), &
+        & skip_if_already_there=.false., dont_trim=.true.)
       call h5gclose_f(grp_id, returnstatus)
     endif
 
@@ -1363,6 +1012,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.36  2006/04/12 22:20:42  pwagner
+! Attempted workaround for hdf5-1.6.5 bugs rewriting string attributes
+!
 ! Revision 2.35  2006/04/11 23:33:14  pwagner
 ! Fixed bug which added excess profiles
 !
