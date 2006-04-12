@@ -563,23 +563,28 @@ contains ! ======================= Public Procedures =========================
 
   ! -----------------------------------  MakeHDF5Attribute_string  -----
   subroutine MakeHDF5Attribute_string ( itemID, name, value , &
-   & skip_if_already_there )
+   & skip_if_already_there, DONT_TRIM )
     integer, intent(in) :: ITEMID       ! Group etc. to make attr to.
     character (len=*), intent(in) :: NAME ! Name of attribute
     character (len=*), intent(in) :: VALUE ! Value of attribute
-    logical, intent(in), optional :: skip_if_already_there
+    logical, intent(in), optional :: SKIP_IF_ALREADY_THERE
+    logical, intent(in), optional :: DONT_TRIM
 
     ! Local variables
     integer :: ATTRID                   ! ID for attribute
     integer :: DSID                     ! ID for dataspace
     integer :: STATUS                   ! Flag from HDF5
     integer :: STRINGTYPE               ! Type for string
+    logical :: my_dont_trim
     logical :: my_skip
     logical :: is_present
+    logical, parameter :: NEVERDELETE = .true.
 
     ! Executable code
     my_skip = .false.
     if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
+    my_dont_trim = .false.
+    if ( present(DONT_TRIM) ) my_dont_trim=DONT_TRIM
     is_present = IsHDF5AttributePresent_in_DSID(itemID, name)
     if ( my_skip .and. is_present ) return
     ! Setup
@@ -587,18 +592,19 @@ contains ! ======================= Public Procedures =========================
     call h5tcopy_f ( H5T_NATIVE_CHARACTER, stringtype, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create stringtype ' // trim(name) )
-    call h5tset_size_f(stringtype, max(len_trim(value), 1), status )
+    if ( my_dont_trim) then
+      call h5tset_size_f(stringtype, max(len(value), 1), status )
+    else
+      call h5tset_size_f(stringtype, max(len_trim(value), 1), status )
+    endif
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to set size for stringtype ' // trim(name) )
     ! Create dataspace and attribute
     !call h5sCreate_F ( h5s_scalar_f, dsID, status )
     !if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
     !  & 'Unable to create dataspace for attribute ' // trim(name) )
-    ! print *, 'itemID: ', itemID
-    ! print *, 'stringtype: ', stringtype
-    ! print *, 'dsID: ', dsID
-    ! print *, 'name: ', trim(name)
-    if ( is_present ) then
+    if ( is_present .and. .not. NEVERDELETE ) then
+      print *, 'Deleting ' // trim(name)
       call h5adelete_f(itemID, trim(name), status)
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to delete ' )
@@ -606,9 +612,21 @@ contains ! ======================= Public Procedures =========================
     call h5sCreate_F ( h5s_scalar_f, dsID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create dataspace for attribute ' // trim(name) )
-    call h5aCreate_f ( itemID, trim(name), stringtype, dsID, attrID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to create attribute ' // trim(name) )
+    ! print *, 'itemID: ', itemID
+    ! print *, 'stringtype: ', stringtype
+    ! print *, 'dsID: ', dsID
+    ! print *, 'name: ', trim(name)
+    ! print *, 'was there: ', is_present
+    ! print *, 'value: ', trim(value)
+    if ( .not. ( is_present .and. NEVERDELETE ) ) then
+      call h5aCreate_f ( itemID, trim(name), stringtype, dsID, attrID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to create attribute ' // trim(name) )
+    else
+      call h5aopen_name_f ( itemID, trim(name), attrID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to open attribute ' // trim(name) )
+    endif
     ! print *, 'attrID: ', attrID
     ! print *, 'status: ', status
     ! Write
@@ -619,7 +637,7 @@ contains ! ======================= Public Procedures =========================
     call h5aClose_f ( attrID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close attribute ' // trim(name) )
-    if ( .not. is_present ) then
+    if ( .not. is_present .or. .true. ) then
       call h5sClose_f ( dsID, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to close attribute dataspace ' // trim(name) )
@@ -5073,6 +5091,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.64  2006/04/12 20:51:24  pwagner
+! Attempts to work around hdf5-1.6.5 bugs rewriting string attributes
+!
 ! Revision 2.63  2006/01/25 00:57:39  pwagner
 ! Removed some troublesome, superfluous calls from IsHDF5ItemPresent
 !
