@@ -348,15 +348,15 @@ CONTAINS
 	      &	GlobalAttributes%OrbNumDays(1:1,1)
        GlobalAttributes%OrbNumDays(2:2,numDays+mis_numDays) = &
 	      &	maxval(GlobalAttributes%OrbNumDays(:,numDays+mis_numDays-1))
-       call output('OrbNum_last =', advance='no')
-       call output(GlobalAttributes%OrbNumDays(:,numDays+mis_numDays), advance='yes')
+!       call output('OrbNum_last =', advance='no')
+!       call output(GlobalAttributes%OrbNumDays(:,numDays+mis_numDays), advance='yes')
        GlobalAttributes%OrbPeriodDays(:,numDays+mis_numDays) = -1.0
        GlobalAttributes%OrbPeriodDays(1:1,numDays+mis_numDays) = &
 	      &	GlobalAttributes%OrbPeriodDays(1:1,1)
        GlobalAttributes%OrbPeriodDays(2:2,numDays+mis_numDays) = &
 	      &	maxval(GlobalAttributes%OrbPeriodDays(:,numDays+mis_numDays-1))
-       call output('OrbNum_last =', advance='no')
-       call output(GlobalAttributes%OrbPeriodDays(:,numDays+mis_numDays), advance='yes')
+!       call output('OrbNum_last =', advance='no')
+!       call output(GlobalAttributes%OrbPeriodDays(:,numDays+mis_numDays), advance='yes')
     end if
 
   !-------------------------------
@@ -711,6 +711,9 @@ END MODULE L2Interface
 !=====================
 
 !# $Log$
+!# Revision 1.19  2006/02/28 17:56:56  cvuu
+!# V2.00 commit
+!#
 !# Revision 1.18  2005/06/23 19:07:38  pwagner
 !# Reworded Copyright statement, moved rcs id
 !#
