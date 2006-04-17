@@ -105,6 +105,7 @@ CONTAINS
     CHARACTER (LEN=17) :: range 
 
     INTEGER ::  indx, mlspcf_log, returnStatus, version
+    INTEGER ::  l2startInt, l2endInt, diffDays
 
     ! Functions
 
@@ -133,6 +134,13 @@ CONTAINS
 
     l3pcf%l2StartDay = range(1:8)
     l3pcf%l2EndDay = range(10:17)
+    read(range(6:8),'(i3)')l2startInt
+    read(range(15:17),'(i3)')l2endInt
+   
+    print *,'l2StartInt: ',l2startInt 
+    print *,'l2endInt: ',l2endInt 
+    diffDays = l2endInt - l2startInt 
+    print *,'diffDays: ',diffDays 
     
     returnStatus = pgs_pc_getConfigData(mlspcf_l3_param_RangDays, range)
     IF (returnStatus /= PGS_S_SUCCESS) THEN
@@ -155,7 +163,12 @@ CONTAINS
     l3pcf%logGranID = name(indx+1:)
 
     ! Store appropriate user input as global attributes
-    GlobalAttributes%ProcessLevel = '3-daily'
+    if (diffDays == 6) then
+    	GlobalAttributes%ProcessLevel = '3-weekly'
+    else
+        GlobalAttributes%ProcessLevel = '3-daily'
+    endif
+
     !GlobalAttributes%InputVersion = l3pcf%outputVersion
     GlobalAttributes%StartUTC = l3pcf%l3StartDay // &
       & 'T00:00:00.000000Z'
@@ -514,6 +527,9 @@ END MODULE OpenInit
 !==================
 
 ! $Log$
+! Revision 1.20  2006/02/28 17:56:56  cvuu
+! V2.00 commit
+!
 ! Revision 1.19  2005/09/22 23:40:49  pwagner
 ! date conversion procedures and functions all moved into dates module
 !
