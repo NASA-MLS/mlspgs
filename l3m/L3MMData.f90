@@ -22,7 +22,7 @@ MODULE L3MMData
    USE MLSL3Common, ONLY: INVENTORYMETADATA, DATE_LEN, HDFE_NOMERGE, MIN_MAX, &
         & GEO_FIELD1, GEO_FIELD2, GEO_FIELD3, GEO_FIELD9, DIM_ERR, DIM_NAME2, &
         & maxWindow, GridNameLen, DATE_LEN, GCTP_GEO, DIMR_NAME, &
-        & DIMX_NAME, DIMY_NAME, DIMZ_NAME, DIMT_NAME, DIM_ERR, DIMXYZ_NAME, &
+        & DIMX_NAME, DIMY_NAME, DIMZ_NAME, DIMT_NAME, DIM_ERR, DIMZYX_NAME, &
         & DG_FIELD2, GEO_ERR, DAT_ERR, GD_ERR, SW_ERR, WR_ERR, &
         & GRID_ORIGIN, GRID_NAME, NAMEPROJ, HE5_HDFE_NOMERGE, &
         & GRID_SPACING, GSPACING_VALUE, GRID_SPACING_UNIT, GSPACING_UNIT, &
@@ -272,14 +272,14 @@ CONTAINS
 
 ! Define the "data" fields
 
-      status = he5_gddeffld(gdId, DATA_FIELDMV, DIMXYZ_NAME, "",& 
+      status = he5_gddeffld(gdId, DATA_FIELDMV, DIMZYX_NAME, "",& 
            & HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
       IF (status /= 0) THEN
           msr = DAT_ERR // DATA_FIELDMV
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = he5_gddeffld(gdId, DATA_FIELDMP, DIMXYZ_NAME, "",& 
+      status = he5_gddeffld(gdId, DATA_FIELDMP, DIMZYX_NAME, "",& 
            & HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
       IF (status /= 0) THEN
           msr = DAT_ERR // DATA_FIELDMP
@@ -361,7 +361,7 @@ CONTAINS
 
 ! Pressure, latitude, & longitude
 
-      status = he5_gdwrfld( gdId, GEO_FIELD9, start(1), stride(1), edge(1), &
+      status = he5_gdwrfld( gdId, GEO_FIELD9, start(3), stride(3), edge(3), &
            & REAL(l3mm%pressure) )
       IF (status /= 0) THEN
           msr = 'Failed to write field ' //  GEO_FIELD9 // ' to grid ' & 
@@ -377,7 +377,7 @@ CONTAINS
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = he5_gdwrfld( gdId, GEO_FIELD2, start(3), stride(3), edge(3), &
+      status = he5_gdwrfld( gdId, GEO_FIELD2, start(1), stride(1), edge(1), &
            & REAL(l3mm%longitude) )
       IF (status /= 0) THEN
           msr = 'Failed to write field ' //  GEO_FIELD2 // ' to grid ' & 
@@ -929,6 +929,12 @@ CONTAINS
            status = he5_gdwrlattr(gdId, theTitles(field), &
              & 'UniqueFieldDefinition', MLS_CHARTYPE, len_trim(AURA_FIELD), &
              & AURA_FIELD)
+        else if (theTitles(field) == 'Time') then
+           status = he5_gdwrlattr(gdId, theTitles(field), 'Unit', &
+             & MLS_CHARTYPE, 1, 's')
+           status = he5_gdwrlattr(gdId, theTitles(field), &
+             & 'UniqueFieldDefinition', MLS_CHARTYPE, len_trim(MLS_FIELD), &
+             & MLS_FIELD)
         else
            status = he5_gdwrlattr(gdId, theTitles(field), 'Unit', &
              & MLS_CHARTYPE, 3, 'deg')
@@ -1604,6 +1610,9 @@ END MODULE L3MMData
 !==================
 
 !# $Log$
+!# Revision 1.22  2006/02/28 20:36:33  cvuu
+!# V2.00 commit
+!#
 !# Revision 1.21  2005/06/23 19:17:58  pwagner
 !# Reworded Copyright statement, moved rcs id
 !#
