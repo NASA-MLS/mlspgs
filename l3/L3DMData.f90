@@ -56,6 +56,7 @@ MODULE L3DMData
 !                DeallocateL3DM
 !                DestroyL3DMDatabase
 !                WriteAttributeGrid_HE5
+!                WriteAttributeSwath_HE5
 !                SetAliasGrid_HE5
                                                                             
 ! Remarks:  This module contains the definition of the L3DMData type, as well
@@ -845,7 +846,10 @@ CONTAINS
               & ' after writing.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
-      
+    
+      ! Write Attribute 
+      CALL WriteAttributeSwath_HE5( trim(physicalFilename), dg) 
+
       msr = 'Swath ' // TRIM(dgName) // ' successfully written to file ' // &
            & trim(physicalFilename)
       CALL MLSMessage(MLSMSG_Info, ModuleName, msr)
@@ -947,10 +951,10 @@ CONTAINS
       ! Parameters
                                                                             
       integer, parameter :: CHARATTRLEN = 255
-      integer, parameter :: NumOfGridFields = 3
+      integer, parameter :: NumOfGridFields = 4
       integer, parameter :: NumOfDataFields = 2
       character (len=*), parameter :: GridFieldTitles = &
-        & 'Latitude,Longitude,Pressure'
+        & 'Latitude,Longitude,Pressure,Time'
       character (len=*), parameter :: GridDataTitles = &
         & 'L3dmPrecision,L3dmValue'       
       character(len=CHARATTRLEN), dimension(NumOfGridFields) :: theTitles
@@ -1002,6 +1006,12 @@ CONTAINS
            status = he5_gdwrlattr(gdId, theTitles(field), &
              & 'UniqueFieldDefinition', MLS_CHARTYPE, len_trim(AURA_FIELD), &
              & AURA_FIELD)
+        else if (theTitles(field) == 'Time') then
+           status = he5_gdwrlattr(gdId, theTitles(field), 'Unit', &
+             & MLS_CHARTYPE, 1, 's')
+           status = he5_gdwrlattr(gdId, theTitles(field), &
+             & 'UniqueFieldDefinition', MLS_CHARTYPE, len_trim(MLS_FIELD), &
+             & MLS_FIELD)
         else
            status = he5_gdwrlattr(gdId, theTitles(field), 'Unit', &
              & MLS_CHARTYPE, 3, 'deg')
@@ -1051,6 +1061,149 @@ CONTAINS
                                                                             
     !----------------------------------------------
     END SUBROUTINE WriteAttributeGrid_HE5
+    !----------------------------------------------
+                                                                            
+    !----------------------------------------------
+    SUBROUTINE WriteAttributeSwath_HE5(physicalFilename, dg)
+    !----------------------------------------------
+    USE HDF5, ONLY: HID_T
+    USE HDFEOS5, ONLY: HE5T_NATIVE_FLOAT, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE, &
+       & HE5F_ACC_RDWR, HE5F_ACC_TRUNC, MLS_charType
+    USE MLSStrings, only: lowercase
+    USE MLSStringLists, only: list2array
+                                                                            
+    ! Brief description of subroutine
+    ! This subroutine writes attributes to each swath field
+                                                                            
+    ! Arguments
+                                                                            
+      CHARACTER (LEN=*), INTENT(IN) :: physicalFilename
+                                                                            
+      TYPE (L3DMData_T), INTENT(IN) :: dg
+                                                                            
+      ! Parameters
+                                                                            
+      integer, parameter :: CHARATTRLEN = 255
+      integer, parameter :: NumOfSwathFields = 3
+      integer, parameter :: NumOfDataFields = 5
+      character (len=GridNameLen) :: dgName
+      character (len=*), parameter :: SwathFieldTitles = &
+        & 'Latitude,Pressure,Time'
+      character (len=*), parameter :: SwathDataTitles = &
+        & 'GRss,LatRss,MaxDiff,MaxDiffTime,PerMisPoints'       
+      character (len=*), parameter :: NoUnits = 'NoUnits' 
+      character(len=CHARATTRLEN), dimension(NumOfSwathFields) :: theTitles
+      character(len=CHARATTRLEN), dimension(NumOfDataFields) :: dataTitles
+      character(len=CHARATTRLEN) :: units_name, field_name
+      real, parameter    :: UNDEFINED_VALUE =  -999.999
+                                                                            
+      ! Variables
+                                                                            
+      CHARACTER (LEN=480) :: msr
+      CHARACTER (len=*), parameter :: AURA_FIELD = 'Aura-shared '
+      CHARACTER (len=*), parameter :: MLS_SHARED_FIELD = 'HIRDL-MLS-TES-shared '
+      CHARACTER (len=*), parameter :: MLS_FIELD = 'MLS-Specific '
+      INTEGER (HID_T) :: swfID, swId
+      INTEGER :: status, n, m, field
+                                                                            
+      ! Functions
+                                                                            
+      INTEGER, EXTERNAL :: he5_swattach, he5_swclose, he5_swwrattr, &
+           & he5_swwrlattr, he5_swdetach, he5_swopen
+
+      dgName = TRIM(dg%name) // 'Diagnostics'
+
+      call List2Array(SwathFieldTitles, theTitles, .true.)
+      call List2Array(SwathDataTitles, dataTitles, .true.)
+                                                                            
+      swfID = he5_swopen(trim(physicalFilename), HE5F_ACC_RDWR)
+                                                                            
+      IF (swfID == -1) THEN          
+	 msr = MLSMSG_Fileopen // trim(physicalFilename) //' for writing swath'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+                                                                            
+      swId = he5_swattach(swfID, dgName)
+      IF (swId == -1) THEN
+         msr = 'Failed to attach to swath ' // trim(dgName)
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+                                                                            
+      ! Write attributes for swath (geolocation) fields
+                                                                            
+      do field=1, NumOfSwathFields
+        status = he5_swwrlattr(swId, theTitles(field), 'Missing Value', &
+           & HE5T_NATIVE_FLOAT, 1, UNDEFINED_VALUE)
+        status = he5_swwrlattr(swId, theTitles(field), 'Title', &
+           & MLS_CHARTYPE, len_trim(theTitles(field)), theTitles(field))
+        if (theTitles(field) == 'Pressure') then
+           status = he5_swwrlattr(swId, theTitles(field), 'Unit', &
+             & MLS_CHARTYPE, 3, 'hPa')
+           status = he5_swwrlattr(swId, theTitles(field), &
+             & 'UniqueFieldDefinition', MLS_CHARTYPE, len_trim(AURA_FIELD), &
+             & AURA_FIELD)
+        else if (theTitles(field) == 'Time') then
+           status = he5_swwrlattr(swId, theTitles(field), 'Unit', &
+             & MLS_CHARTYPE, 1, 's')
+           status = he5_swwrlattr(swId, theTitles(field), &
+             & 'UniqueFieldDefinition', MLS_CHARTYPE, len_trim(MLS_FIELD), &
+             & MLS_FIELD)
+        else
+           status = he5_swwrlattr(swId, theTitles(field), 'Unit', &
+             & MLS_CHARTYPE, 3, 'deg')
+           status = he5_swwrlattr(swId, theTitles(field), &
+             & 'UniqueFieldDefinition', MLS_CHARTYPE, len_trim(MLS_SHARED_FIELD), &
+             & MLS_SHARED_FIELD)
+        endif
+      enddo
+                                                                            
+      ! Write attributes for data fields
+                                                                            
+        select case (trim(lowercase(dgName)))
+        case ('temperature')
+           units_name = 'K'
+        case ('gph')
+           units_name = 'm'
+        case ('rhi')
+           units_name = '%rhi'
+        case default
+           units_name = 'vmr'
+        end select
+                                                                            
+      do field=1, NumOfDataFields
+        field_name = trim(dgName)//dataTitles(field)
+        status = he5_swwrlattr(swId, dataTitles(field), 'Missing Value', &
+           & HE5T_NATIVE_FLOAT, 1, UNDEFINED_VALUE)
+        status = he5_swwrlattr(swId, dataTitles(field), 'Title', &
+           & MLS_CHARTYPE, len_trim(field_name), field_name)
+        if ((dataTitles(field) == 'PerMisPoints') .OR. &
+          (dataTitles(field) == 'MaxDiffTime') .OR. & 
+          & (dataTitles(field) == 'MaxDiff')) then
+           status = he5_swwrlattr(swId, dataTitles(field), 'Unit', &
+              & MLS_CHARTYPE, len_trim(NoUnits), NoUnits )
+	else
+           status = he5_swwrlattr(swId, dataTitles(field), 'Unit', &
+              & MLS_CHARTYPE, len_trim(units_name), units_name )
+	endif
+        status = he5_swwrlattr(swId, dataTitles(field), &
+           & 'UniqueFieldDefinition', MLS_CHARTYPE, len_trim(MLS_FIELD), &
+           & MLS_FIELD)
+      enddo
+                                                                            
+      status = he5_swdetach(swID)
+      IF (status == -1) THEN
+         msr = 'Failed to deattach to swath ' // trim(dgName)
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+                                                                            
+      status = he5_swclose(swfID)
+      IF (status == -1) THEN
+         msr = 'Failed to close swath ' // trim(dgName)
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF                                                               
+                                                                            
+    !----------------------------------------------
+    END SUBROUTINE WriteAttributeSwath_HE5
     !----------------------------------------------
                                                                             
     !-----------------------------------------------------
@@ -1830,6 +1983,9 @@ CONTAINS
 !==================
 
 !# $Log$
+!# Revision 1.43  2006/02/28 17:56:56  cvuu
+!# V2.00 commit
+!#
 !# Revision 1.42  2005/09/22 23:40:49  pwagner
 !# date conversion procedures and functions all moved into dates module
 !#
