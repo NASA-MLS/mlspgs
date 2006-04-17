@@ -573,10 +573,13 @@ do
   done
   theversion=`grep -i pgeversion $dir/job.PCF | awk -F"|" '{print $3}'`
   statbad=`tail $dir/exec_log/process.stdout | grep -i "ended badly"`
+  if [ "$statbad" = "" ]
+  then
+    statbad=`tail $dir/exec_log/process.stderr | grep -i "connection lost"`
+  fi
   statnochunks=`tail $dir/exec_log/process.stdout | grep -i "No chunks were processed"`
   statpvmtrouble=`tail $dir/exec_log/process.stdout | grep -i "probably pvm trouble"`
   statgood=`tail $dir/exec_log/process.stdout | grep -i "catenating slave"`
-  # l1boa=`echo $dir/*L1BOA_*`
   l1boa=`$REECHO $dir/*L1BOA_*`
   date=`echo $l1boa | sed "s/_/\n/g;s/.h5//" | tail -1`
   bugs=`grep -ic 'list out of order' $dir/pvmlog/mlsl2.log 2>/dev/null`
@@ -731,6 +734,9 @@ do
 done
 exit 0
 # $Log$
+# Revision 1.10  2006/03/23 19:18:01  pwagner
+# Handles multiple pge versions explicitly
+#
 # Revision 1.9  2006/03/18 00:06:45  pwagner
 # Avoids printing empty dates, limits printing dead chunks
 #
