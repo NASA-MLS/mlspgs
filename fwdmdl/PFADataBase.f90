@@ -14,7 +14,7 @@ module PFADataBase_m
   ! Read PFA data.  Build a database.  Provide for access to it.
   ! Write PFA data.
 
-  use MLSCommon, only: R4
+  use MLSCommon, only: R4, FileNameLen
   use MLSSignals_m, only: MaxSigLen, Signal_T
   use Molecules, only: First_Molecule, Last_Molecule
   use VGridsDatabase, only: VGrid_t
@@ -37,6 +37,11 @@ module PFADataBase_m
   interface Dump
     module procedure Dump_PFADatum, Dump_PFAFileDatum
   end interface Dump
+
+  interface Process_PFA_File
+    module procedure Process_PFA_File_datum
+    module procedure Process_PFA_File_node, Process_PFA_File_name
+  end interface Process_PFA_File
 
   integer, parameter :: RK = r4 ! Kind of real fields in PFAData_t
 
@@ -69,7 +74,8 @@ module PFADataBase_m
   type(PFAData_t), pointer, save :: PFAData(:) => NULL()
 
   type PFAFile_T ! For all the PFA tables in one HDF file
-    integer :: FileName                ! Sub-rosa index of file name
+    integer :: FileName  = 0           ! Sub-rosa index of file name
+    character(len=FileNameLen) :: nameString
     integer(hid_t) :: HDF5_FileID      ! HDF5 file ID if open
     logical :: Open = .false.          ! "HDF5 file is open"
     integer, pointer :: Ix(:) => NULL() ! Indices in PFAData
@@ -370,7 +376,13 @@ contains ! =====     Public Procedures     =============================
     myDetails = 0
     if ( present(details) ) myDetails = details
 
-    call display_string ( PFAFileDatum%fileName, before='PFA File ', strip=.true. )
+    if ( PFAFileDatum%fileName > 0 ) then
+      call display_string ( PFAFileDatum%fileName, before='PFA File ', &
+        & strip=.true. )
+    else
+      call output ( 'PFA file: ', advance='no' )
+      call output ( trim(PFAFileDatum%nameString), advance='yes' )
+    endif
     if ( myDetails > -4 ) then
       call output ( ' has groups:', advance='yes' )
       if ( associated(PFAFileDatum%ix) ) then
@@ -549,10 +561,35 @@ contains ! =====     Public Procedures     =============================
   end function HookTableToFindPFA
 
   ! -------------------------------------------  Process_PFA_File  -----
-  integer function Process_PFA_File ( PFAFileIndex, Where )
   ! Process a PFA file name from the PFAFile parameter in GlobalSettings
   ! Open the HDF5 file, read the Signals and Molecules groups, allocate
   ! the groups, but don't open the groups.  Leave the file open.
+  integer function Process_PFA_File_node ( PFAFileIndex, Where )
+
+    integer, intent(in) :: PFAFileIndex ! Sub-rosa index for file name
+    integer, intent(in) :: Where  ! Source_ref field, for error messages
+
+    type(PFAFile_t) :: PFAFileDatum
+    ! Open the file
+    PFAFileDatum%fileName = PFAFileIndex
+    Process_PFA_File_node = Process_PFA_File ( PFAFileDatum, where )
+
+  end function Process_PFA_File_node
+
+  integer function Process_PFA_File_name ( PFAFileName, Where )
+
+    character(len=*), intent(in) :: PFAFileName ! Actual path/name
+    integer, intent(in) :: Where  ! Source_ref field, for error messages
+
+    type(PFAFile_t) :: PFAFileDatum
+    ! Open the file
+    PFAFileDatum%fileName = 0
+    PFAFileDatum%NameString = PFAFileName
+    Process_PFA_File_name = Process_PFA_File ( PFAFileDatum, where )
+
+  end function Process_PFA_File_name
+
+  integer function Process_PFA_File_datum ( PFAFileDatum, Where )
 
     use Allocate_Deallocate, only: Deallocate_Test
     use MLSHDF5, only: LoadPtrFromHDF5DS
@@ -565,7 +602,7 @@ contains ! =====     Public Procedures     =============================
     ! HDF5 intentionally last to avoid long LF95 compiles
     use HDF5, only: H5GClose_f, H5GOpen_F
 
-    integer, intent(in) :: PFAFileIndex ! Sub-rosa index for file name
+    type(PFAFile_t) :: PFAFileDatum
     integer, intent(in) :: Where  ! Source_ref field, for error messages
 
     logical, pointer :: Channels(:)
@@ -575,13 +612,11 @@ contains ! =====     Public Procedures     =============================
     integer :: IPFA                    ! Index in PFA database
     character(len=molNameLen), pointer :: MyMolecules(:)
     character(len=maxSigLen), pointer :: MySignalStrings(:) ! From the HDF5
-    type(PFAFile_t) :: PFAFileDatum
     integer :: SB                      ! Sideband, from the signal
     integer, pointer :: SignalIndices(:)
     integer :: STAT                    ! From HDF5 open or read, or allocate
 
     ! Open the file
-    PFAFileDatum%fileName = PFAFileIndex
     call OpenPFAFile ( PFAFileDatum, where )
 
     ! Open the Index group and read the Molecules and Signals data sets
@@ -645,9 +680,9 @@ contains ! =====     Public Procedures     =============================
     if ( error ) call MLSMessage ( MLSMSG_Error, moduleName, &
       & 'Errors while hooking up and finding PFA tables' )
 
-    process_PFA_File = f
+    Process_PFA_File_datum = f
 
-  contains
+  end function Process_PFA_File_datum
 
     ! ................................  AddPFAFileDatumToDatabase  .....
     integer function AddPFAFileDatumToDatabase ( DATABASE, ITEM )
@@ -668,8 +703,6 @@ contains ! =====     Public Procedures     =============================
 
       AddPFAFileDatumToDatabase = newSize
     end function AddPFAFileDatumToDatabase
-
-  end function Process_PFA_File
 
   ! -------------------------------------------  Read_PFADatabase  -----
   subroutine Read_PFADatabase ( FileNameIndex, FileTypeIndex, TheMolecules, &
@@ -1071,8 +1104,12 @@ contains ! =====     Public Procedures     =============================
     character(len=1023) :: PFAFileName
     integer :: Stat ! from Open
     if ( PFAFileDatum%open ) return
-    call get_string ( PFAFileDatum%fileName, PFAFileName, strip=.true. )
-    if ( PFAFileDatum%open ) return
+    if ( PFAFileDatum%fileName > 0 ) then
+      call get_string ( PFAFileDatum%fileName, PFAFileName, strip=.true. )
+      PFAFileDatum%nameString = PFAFileName
+    else
+      PFAFileName = PFAFileDatum%nameString
+    endif
     call h5fopen_f ( trim(PFAFileName), H5F_ACC_RDONLY_F, &
       & PFAFileDatum%HDF5_fileID, stat )
     if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1247,6 +1284,9 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.33  2006/04/18 00:07:35  pwagner
+! May call Process_PFA_File with filenamestring
+!
 ! Revision 2.32  2006/01/26 03:06:52  vsnyder
 ! Accumulate all errors before crashing
 !
