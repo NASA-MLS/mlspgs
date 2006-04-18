@@ -84,7 +84,8 @@ contains ! =====     Public Procedures     =============================
     use MLSCommon, only: MLSFile_T
     use MLSPCF2, only: MLSPCF_antpats_start, MLSPCF_filtshps_start, &
       &          mlspcf_dacsfltsh_start, MLSPCF_ptggrids_start, &
-      &          mlspcf_l2pc_start, mlspcf_l2pc_end
+      &          mlspcf_l2pc_start, mlspcf_l2pc_end, &
+      &          mlspcf_pfa_start, mlspcf_pfa_end
     use MoreTree, only: Get_Field_ID
     use PFADataBase_m, only: Process_PFA_File
     use PointingGrid_m, only: Close_Pointing_Grid_File, &
@@ -108,6 +109,7 @@ contains ! =====     Public Procedures     =============================
     integer :: Son                      ! Some subtree of root.
     integer :: Version
     integer, save :: last_l2pc = mlspcf_l2pc_start - 1
+    integer, save :: last_pfa  = mlspcf_pfa_start  - 1
 
     ! Error message codes
 
@@ -170,9 +172,15 @@ contains ! =====     Public Procedures     =============================
           end if
         end do
       case ( f_PFAFiles )
+        last_pfa = last_pfa + 1
         do j = 2, nsons(son)
-          if ( process_PFA_File ( sub_rosa(subtree(j,son)), &
+          call get_file_name ( last_pfa, &
+            & get_field_id(son), filedatabase, MLSFile, &
+            & 'PFA File not found in PCF', mlspcf_pfa_end )
+          if ( index ( fileName, '.h5' ) /= 0 ) then
+            if ( process_PFA_File ( filename, &
             & source_ref(subtree(j,son)) ) /= 0 ) continue
+          endif
         end do
       case ( f_pointingGrids )
         do j = 2, nsons(son)
@@ -1332,6 +1340,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.130  2006/04/18 00:08:45  pwagner
+! Allow abbreviated, pathless PFA files with PCF
+!
 ! Revision 2.129  2006/03/30 18:58:47  vsnyder
 ! Allow duplicates in [LU]SBpfaMolecules and [LU]SBlblMolecules lists
 !
