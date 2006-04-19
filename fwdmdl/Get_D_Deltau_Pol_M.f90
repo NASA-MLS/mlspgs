@@ -89,17 +89,15 @@ contains
     integer :: SV_I                          ! State vector index
 
     i_stop = size(indices_c)
-
+! initiallize entire array to zero
+    d_deltau_pol_df = 0.0_rp
     do sps_i = 1, ubound(grids_f%l_v,1)
 
       do sv_i = Grids_f%l_v(sps_i-1)+1, Grids_f%l_v(sps_i)
 
 ! Skip the masked derivatives, according to the l2cf inputs
 
-        if ( .not. Grids_f%deriv_flags(sv_i) ) then
-          d_deltau_pol_df(:,:,:,sv_i) = 0.0_rp
-          cycle
-        end if
+        if ( .not. Grids_f%deriv_flags(sv_i) ) cycle
 
         n_inds = count(do_calc_f(indices_c,sv_i))
         if ( n_inds == 0 ) cycle
@@ -147,9 +145,13 @@ contains
         call opacity ( ct, stcp, stsp, d_delta_df_pol, d_incoptdepth_df )
 
         do p_i = 1, i_stop             ! along the path
-          if ( eta_zxp_f(indices_c(p_i),sv_i) /= 0.0 &
-            & .or. d_delta_df(p_i,sv_i) /= 0.0 &
-            & .or. do_calc_f(indices_c(p_i),sv_i) ) then
+! I think these are mostly redundant to each other so WGR has
+! replaced them with only one (left original uncommented in case I
+! am wrong)
+!          if ( eta_zxp_f(indices_c(p_i),sv_i) /= 0.0 &
+!            & .or. d_delta_df(p_i,sv_i) /= 0.0 &
+!            & .or. do_calc_f(indices_c(p_i),sv_i) ) then
+          if (do_calc_f(indices_c(p_i),sv_i) ) then
             call dExdT ( incoptdepth(:,:,p_i), -d_incoptdepth_df(:,:,p_i), &
                        & d_deltau_pol_df(:,:,p_i,sv_i) ) ! d exp(incoptdepth) / df
           else
@@ -515,6 +517,9 @@ contains
 end module Get_D_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.32  2006/04/19 23:00:48  bill
+! I think I fixed the vmr derivative bug
+!
 ! Revision 2.31  2006/04/11 18:36:21  vsnyder
 ! Include missing factor of tanh(h nu / k T)
 !
