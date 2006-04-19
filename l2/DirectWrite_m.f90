@@ -170,7 +170,7 @@ contains ! ======================= Public Procedures =========================
     offset = quantity%template%instanceOffset
     grandtotalinstances = quantity%template%grandTotalInstances
     totalProfs = grandtotalinstances
-    if ( ChunkDivideConfig%allowPriorOverlaps ) then
+    if ( ChunkDivideConfig%allowPriorOverlaps .and. .false. ) then
       offset = offset - &
         & hGrids(quantity%template%hGridIndex)%noProfsLowerOverlap
       totalProfs = totalProfs - &
@@ -206,7 +206,7 @@ contains ! ======================= Public Procedures =========================
       & TotNumProfs=TotalProfs, createSwath=createSwath)
     if ( l2gpFile%access == DFACC_CREATE ) call writeAPrioriAttributes(l2gpFile)
     if ( index(switches, 'l2gp') /= 0 ) call dump(l2gp)
-    if ( l2gp%name == 'Temperature-Core' .and. deebug ) then
+    if ( l2gp%name == 'Temperature-InitPtan' .and. deebug ) then
     call output('firstInstance: ', advance='no')
     call output(firstInstance, advance='no')
     call output('  lastInstance: ', advance='no')
@@ -1012,6 +1012,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.37  2006/04/19 20:48:13  pwagner
+! Undid most of the changes regarding extra MAFs; perhaps fixed bugs
+!
 ! Revision 2.36  2006/04/12 22:20:42  pwagner
 ! Attempted workaround for hdf5-1.6.5 bugs rewriting string attributes
 !
