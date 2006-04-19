@@ -1186,7 +1186,8 @@ contains ! =====     Public Procedures     =============================
         call output ( '    processingRange%startTime: ' )
         call output ( processingRange%startTime, advance='yes' )
       end if
-      if ( firstProfInRun > 0 .and. .not. ChunkDivideConfig%allowPriorOverlaps ) then
+      ! if ( firstProfInRun > 0 .and. .not. ChunkDivideConfig%allowPriorOverlaps ) then
+      if ( firstProfInRun > 0 ) then
         if ( switchDetail(switches, 'hgrid') >= 0  .or. deebughere ) &
           & call output ( 'hGrid starts before run trimming start.', &
           & advance='yes' )
@@ -1201,7 +1202,8 @@ contains ! =====     Public Procedures     =============================
         call output ( '    processingRange%endTime: ' )
         call output ( processingRange%endTime, advance='yes' )
       end if
-      if ( lastProfInRun < hGrid%noProfs .and. .not. ChunkDivideConfig%allowPostOverlaps ) then
+      ! if ( lastProfInRun < hGrid%noProfs .and. .not. ChunkDivideConfig%allowPostOverlaps ) then
+      if ( lastProfInRun < hGrid%noProfs ) then
         if ( switchDetail(switches, 'hgrid') >= 0  .or. deebughere ) &
           & call output ( 'hGrid ends after run trimming end.',&
           & advance='yes' )
@@ -1971,7 +1973,7 @@ contains ! =====     Public Procedures     =============================
   subroutine ComputeAllHGridOffsets ( root, treeindex, chunks, filedatabase, &
     & l2gpDatabase, processingRange )
     ! This routine goes through the L1 file and works out how big each HGrid is going to be
-    use Allocate_Deallocate, only: ALLOCATE_TEST
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use Chunks_m, only: MLSChunk_T
     use ChunkDivide_m, only: ChunkDivideConfig
     use HGridsDatabase, only: HGRID_T, DESTROYHGRIDCONTENTS, DUMP
@@ -2039,9 +2041,9 @@ contains ! =====     Public Procedures     =============================
                 else
                   dummyHGrid = CreateHGridFromMLSCFInfo ( 0, key, filedatabase, l2gpDatabase, &
                     & processingRange, chunks(chunk), suppressGeometryDump=.true. )
-                  LowerOverlaps(hGrid) = dummyHGrid%noProfsLowerOverlap
                   if ( chunk == 1 ) then
-                    if ( ChunkDivideConfig%allowPriorOverlaps ) then
+                    LowerOverlaps(hGrid) = dummyHGrid%noProfsLowerOverlap
+                    if ( ChunkDivideConfig%allowPriorOverlaps .and. .false. ) then
                       chunks(chunk)%hGridOffsets(hGrid) = dummyHGrid%noProfs - &
                       & dummyHGrid%noProfsUpperOverlap
                     else
@@ -2115,7 +2117,7 @@ contains ! =====     Public Procedures     =============================
       call output ( sum3 , advance='yes' )
     endif
     ! Now accumulate hGridOffsets which currently contains the number
-    ! of profiles each chunk/hGrid.  After this it will contain
+    ! of non-overlap profiles each chunk/hGrid.  After this it will contain
     ! the accumulated number.  This is equivalent to storing the
     ! index of the last profile in each chunk.
     do chunk = 2, size ( chunks )
@@ -2128,14 +2130,17 @@ contains ! =====     Public Procedures     =============================
     end do
     ! Now move hGridOffsets back one to get the offsets we want.
     ! Each hGridOffsets will now contain the last profile index in the preceeding
-    ! chunk, which is the offeset we desire.
+    ! chunk, which is the offset we desire.
     do chunk = size ( chunks ), 2, -1
       chunks(chunk)%hGridOffsets = chunks(chunk-1)%hGridOffsets
     end do
     call output ( 'chunks(1)%hGridOffsets: ', advance='no' )
     call output ( chunks(1)%hGridOffsets, advance='yes' )
     if ( ChunkDivideConfig%allowPriorOverlaps ) then
-      chunks(1)%hGridOffsets = LowerOverlaps
+      chunks(1)%hGridOffsets = 0
+      do chunk=1, size(chunks)
+        chunks(chunk)%hGridOffsets = chunks(chunk)%hGridOffsets + LowerOverlaps
+      enddo
     else
       chunks(1)%hGridOffsets = 0
     endif
@@ -2152,7 +2157,7 @@ contains ! =====     Public Procedures     =============================
       end do
     endif
 
-   call Allocate_Test ( LowerOverlaps, noHGrids, &
+   call deAllocate_Test ( LowerOverlaps, &
      & 'LowerOverlaps', ModuleName )
     if ( specialDumpFile /= ' ' ) &
       & call revertOutput
@@ -2313,6 +2318,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.87  2006/04/19 20:48:13  pwagner
+! Undid most of the changes regarding extra MAFs; perhaps fixed bugs
+!
 ! Revision 2.86  2006/04/11 23:33:51  pwagner
 ! Fixed bug which added excess profiles
 !
