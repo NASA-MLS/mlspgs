@@ -54,6 +54,8 @@ module MLSSignals_M
 ! DestroySpectrometerType         ...
 ! DestroySpectrometerTypeDatabase ...
 ! DisplaySignalName               ...
+! DisplaySignalName_index         ... given a signal index
+! DisplaySignalName_signal        ... given a signal structure
 ! Dump                            ...
 ! Dump_Bands                      ...
 ! Dump_Radiometers                ...
@@ -86,7 +88,7 @@ module MLSSignals_M
   public :: DestroyBandDatabase, DestroyModuleDatabase
   public :: DestroyRadiometerDatabase, DestroySignal, DestroySignalDatabase
   public :: DestroySpectrometerType, DestroySpectrometerTypeDatabase
-  public :: DisplaySignalName
+  public :: DisplaySignalName, DisplaySignalName_index, DisplaySignalName_signal
   public :: Dump, Dump_Bands, Dump_Radiometers, Dump_Signal, Dump_Signals
   public :: Dump_Spectrometertypes
   public :: GetAllModules, GetBandName, GetFirstChannel, GetModuleFromRadiometer
@@ -98,6 +100,10 @@ module MLSSignals_M
   public :: PVMPackSignal, PVMUnpackSignal
 
   integer, public, parameter :: MaxSigLen = 80 ! Maximum length of a signal name
+
+  interface DisplaySignalName
+    module procedure DisplaySignalName_index, DisplaySignalName_signal
+  end interface
 
   interface MatchSignal
     module procedure MatchSignals, MatchSignalPair
@@ -785,8 +791,18 @@ contains
     end if
   end subroutine DestroySpectrometerTypeDatabase
 
-  ! ------------------------------------------  DisplaySignalName  -----
-  subroutine DisplaySignalName ( Signal, Advance, Before, Sideband, Channel )
+  ! ------------------------------------  DisplaySignalName_index  -----
+  subroutine DisplaySignalName_index ( Signal, Advance, Before, Sideband, Channel )
+    ! Given a signal object, this routine displays a full signal name.
+    integer, intent(in) :: SIGNAL
+    character(len=*), intent(in), optional :: Advance, Before
+    integer, intent(in), optional :: Sideband ! Use this instead of Signal's
+    integer, intent(in), optional :: Channel  ! Use this instead of Signal's
+    call displaySignalName ( signals(signal), advance, before, sideband, channel )
+   end subroutine DisplaySignalName_index
+
+  ! -----------------------------------  DisplaySignalName_signal  -----
+  subroutine DisplaySignalName_signal ( Signal, Advance, Before, Sideband, Channel )
     ! Given a signal object, this routine displays a full signal name.
     use String_Table, only: Display_String
     type(signal_T), intent(in) :: SIGNAL
@@ -845,7 +861,7 @@ oc:     do
       end if
     end if
     call output ( '', advance=advance )
-  end subroutine DisplaySignalName
+  end subroutine DisplaySignalName_signal
 
   ! -------------------------------------------------  Dump_Bands  -----
   subroutine DUMP_BANDS ( BANDS )
@@ -1779,6 +1795,9 @@ oc:     do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.81  2006/04/20 01:07:57  vsnyder
+! Display a signal name given either a signal structure or an index
+!
 ! Revision 2.80  2005/06/22 17:25:50  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
