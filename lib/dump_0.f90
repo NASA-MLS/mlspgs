@@ -739,6 +739,8 @@ contains
     logical :: myClean
     integer :: I, J, K
     integer :: myWidth
+    integer :: NumZeroRows
+    real(rk), parameter :: MyFillValue = 0.0_rk
     character(len=64) :: MyFormat
 
     myClean = .false.
@@ -750,6 +752,7 @@ contains
     myFormat = MyFormatDefaultCmplx
     if ( present(format) ) myFormat = format
 
+    numZeroRows = 0
     if ( size(array) == 0 ) then
       call empty ( name )
     else if ( size(array) == 1 ) then
@@ -764,28 +767,38 @@ contains
         do i = 1, size(array,1)
           do j = 1, size(array,2), myWidth
             if (.not. myClean) then
-              call output ( i, places=max(4,ilog10(size(array,1))+1) )
-              call output ( j, places=max(4,ilog10(size(array,2))+1) )
-              call output ( afterSub )
+              if ( any(array(i,j:min(j+myWidth-1, size(array,2))) /= myFillValue) ) then
+                call say_fill ( (/ i, size(array,1), j-1, size(array,2) /), &
+                  & numZeroRows, myFillValue, inc=3 )
+              else
+                numZeroRows = numZeroRows + 1
+              end if
             end if
-            do k = j, min(j+myWidth-1, size(array,2))
-              call output ( array(i,k), format=myFormat )
-            end do
-            call output ( '', advance='yes' )
+            if ( myClean .or. any(array(i,j:min(j+myWidth-1, size(array,2))) /= myFillValue) ) then
+              do k = j, min(j+myWidth-1, size(array,2))
+                call output ( array(i,k), myFormat )
+              end do
+              call output ( '', advance='yes' )
+            end if
           end do
         end do
       else ! Dump the transpose
         if ( present(name) ) call output ( ' ' )
         call output ( '(transposed)', advance='yes' )
         do j = 1, size(array,2)
-          do i = 1, size(array,1), width
-            call output ( i, places=max(4,ilog10(size(array,1))+1) )      
-            call output ( j, places=max(4,ilog10(size(array,2))+1) )      
-            call output ( afterSub )                                      
-            do k = i, min(i+width-1, size(array,1))
-              call output ( array(k,j), format=myFormat )
-            end do
-            call output ( '', advance='yes' )
+          do i = 1, size(array,1), myWidth
+            if ( any(array(i:min(i+myWidth-1, size(array,1)),j) /= myFillValue) ) then  
+              call say_fill ( (/ i, size(array,1), j-1, size(array,2) /), &
+                & numZeroRows, myFillValue, inc=3 )
+            else                                                            
+              numZeroRows = numZeroRows + 1                                 
+            end if                                                          
+            if ( myClean .or. any(array(i:min(i+myWidth-1, size(array,1)),j) /= myFillValue) ) then
+              do k = i, min(i+myWidth-1, size(array,1))
+                call output ( array(k,j), myFormat )
+              end do
+              call output ( '', advance='yes' )
+            end if                                                          
           end do
         end do
       end if
@@ -804,6 +817,8 @@ contains
     logical :: myClean
     integer :: I, J, K
     integer :: myWidth
+    integer :: NumZeroRows
+    real(rk), parameter :: MyFillValue = 0.0_rk
     character(len=64) :: MyFormat
 
     myClean = .false.
@@ -815,6 +830,7 @@ contains
     myFormat = MyFormatDefaultCmplx
     if ( present(format) ) myFormat = format
 
+    numZeroRows = 0
     if ( size(array) == 0 ) then
       call empty ( name )
     else if ( size(array) == 1 ) then
@@ -829,28 +845,38 @@ contains
         do i = 1, size(array,1)
           do j = 1, size(array,2), myWidth
             if (.not. myClean) then
-              call output ( i, places=max(4,ilog10(size(array,1))+1) )
-              call output ( j, places=max(4,ilog10(size(array,2))+1) )
-              call output ( afterSub )
+              if ( any(array(i,j:min(j+myWidth-1, size(array,2))) /= myFillValue) ) then
+                call say_fill ( (/ i, size(array,1), j-1, size(array,2) /), &
+                  & numZeroRows, myFillValue, inc=3 )
+              else
+                numZeroRows = numZeroRows + 1
+              end if
             end if
-            do k = j, min(j+myWidth-1, size(array,2))
-              call output ( array(i,k), format=myFormat )
-            end do
-            call output ( '', advance='yes' )
+            if ( myClean .or. any(array(i,j:min(j+myWidth-1, size(array,2))) /= myFillValue) ) then
+              do k = j, min(j+myWidth-1, size(array,2))
+                call output ( array(i,k), myFormat )
+              end do
+              call output ( '', advance='yes' )
+            end if
           end do
         end do
       else ! Dump the transpose
         if ( present(name) ) call output ( ' ' )
         call output ( '(transposed)', advance='yes' )
         do j = 1, size(array,2)
-          do i = 1, size(array,1), width
-            call output ( i, places=max(4,ilog10(size(array,1))+1) )      
-            call output ( j, places=max(4,ilog10(size(array,2))+1) )      
-            call output ( afterSub )                                      
-            do k = i, min(i+width-1, size(array,1))
-              call output ( array(k,j), format=myFormat )
-            end do
-            call output ( '', advance='yes' )
+          do i = 1, size(array,1), myWidth
+            if ( any(array(i:min(i+myWidth-1, size(array,1)),j) /= myFillValue) ) then  
+              call say_fill ( (/ i, size(array,1), j-1, size(array,2) /), &
+                & numZeroRows, myFillValue, inc=3 )
+            else                                                            
+              numZeroRows = numZeroRows + 1                                 
+            end if                                                          
+            if ( myClean .or. any(array(i:min(i+myWidth-1, size(array,1)),j) /= myFillValue) ) then
+              do k = i, min(i+myWidth-1, size(array,1))
+                call output ( array(k,j), myFormat )
+              end do
+              call output ( '', advance='yes' )
+            end if
           end do
         end do
       end if
@@ -1974,6 +2000,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.57  2006/04/20 01:09:30  vsnyder
+! Don't print lines of zeroes in complex dumps
+!
 ! Revision 2.56  2006/03/22 23:48:52  vsnyder
 ! Print 'lines ... not printed' instead of 'rows...' to avoid confusion with matrices
 !
