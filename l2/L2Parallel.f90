@@ -19,7 +19,9 @@ module L2Parallel
   ! awaits their results in the Join section.
 
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use BitStuff, only: BitsToBooleans, BooleansToBits
   use Chunks_m, only: DUMP, MLSChunk_T
+  use ChunkDivide_m, only: ChunkDivideConfig
   use Dump_0, only: DUMP
   use Init_Tables_Module, only: S_L2GP, S_L2AUX
   use Join, only: JOINL2GPQUANTITIES, JOINL2AUXQUANTITIES
@@ -41,7 +43,7 @@ module L2Parallel
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE, &
     & MLSMSG_Deallocate, MLSMSG_WARNING, PVMERRORMESSAGE
   use MLSSets, only: FINDFIRST
-  use MLSStringLists, only: catLists, ExpandStringRange
+  use MLSStringLists, only: catLists, ExpandStringRange, switchDetail
   use MorePVM, only: PVMUNPACKSTRINGINDEX, PVMPACKSTRINGINDEX
   use MoreTree, only: Get_Spec_ID
   use Output_m, only: BLANKS, Output, TimeStamp
@@ -111,8 +113,11 @@ contains ! ================================ Procedures ======================
     integer :: BUFFERID                 ! ID for buffer to send
     integer :: INFO                     ! Flag from PVM
     integer :: CHUNK                    ! Loop counter
+    integer :: BITS
 
     ! Executable code
+    call BooleansToBits( (/ ChunkDivideConfig%allowPriorOverlaps, &
+      & ChunkDivideConfig%allowPostOverlaps /), Bits )
     call PVMFInitSend ( PvmDataDefault, bufferID )
     call PVMF90Pack ( (/ size(chunks), chunkNo /), info )
     if ( info /= 0 ) &
@@ -154,6 +159,9 @@ contains ! ================================ Procedures ======================
       end if
 
     end do
+    call PVMF90Pack ( Bits, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'packing overlaps outside proc. rnge' )
     call PVMFSend ( slaveTid, ChunkTag, info )
     if ( info /= 0 ) &
       & call PVMErrorMessage ( info, 'sending chunk' )
@@ -171,6 +179,7 @@ contains ! ================================ Procedures ======================
     integer, parameter :: noChunkTerms = 5 ! Number of components in MLSChunk_T
 
     ! Local variables
+    integer :: BITS
     integer :: BUFFERID                 ! ID for buffer for receive
     integer :: CHUNK                    ! Loop counter
     ! character(len=16) :: CHUNKSTR
@@ -179,6 +188,7 @@ contains ! ================================ Procedures ======================
     integer :: NOCHUNKS                 ! Size.
     integer :: NOHGRIDS                 ! Size of hGrid information
     integer, dimension(2) :: HEADER     ! No chunks, chunkNo
+    logical, dimension(2) :: LOGICALS   ! Allow overlaps outside proc. rnge?
     integer, dimension(noChunkTerms) :: VALUES ! Chunk as integer array
 
     ! Executable code
@@ -235,7 +245,24 @@ contains ! ================================ Procedures ======================
 
     end do
 
-    if ( index(switches,'chu') /=0 ) call dump ( chunks )
+    call PVMF90Unpack ( bits, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'unpacking overlaps outside proc. rnge')
+    call BitsToBooleans( Bits, logicals )
+    ChunkDivideConfig%allowPriorOverlaps = logicals(1)
+    ChunkDivideConfig%allowPostOverlaps  = logicals(2)
+    if( switchDetail(switches, 'opt') > -1 ) then
+      call output(' (chunk info received from master) ', advance='yes')
+      call output(' Chunk number                       :            ', advance='no')
+      call blanks(4, advance='no')
+      call output(chunkno, advance='yes')
+      call output(' Allow overlaps outside proc. range?:            ', advance='no')
+      call blanks(4, advance='no')
+      call output(ChunkDivideConfig%allowPriorOverlaps, advance='no')
+      call blanks(4, advance='no')
+      call output(ChunkDivideConfig%allowPostOverlaps, advance='yes')
+    endif
+    if ( switchDetail(switches,'chu') >=0 ) call dump ( chunks )
 
   end subroutine GetChunkInfoFromMaster
 
@@ -381,7 +408,7 @@ contains ! ================================ Procedures ======================
       & 'No machines available for master to assign to slave tasks' )
       if ( .not. any(machines%OK) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'No machines OK for master to assign to slave tasks' )
-      if ( index(switches,'mach') /=0 ) call dump ( machines )
+      if ( switchDetail(switches,'mach') > -1 ) call dump ( machines )
     elseif ( .not. usingSubmit ) then
       call GetMachines ( machines )
       noMachines = size(machines)
@@ -389,7 +416,7 @@ contains ! ================================ Procedures ======================
       & 'No machines available for master to assign to slave tasks' )
       if ( .not. any(machines%OK) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'No machines OK for master to assign to slave tasks' )
-      if ( index(switches,'mach') /=0 ) call dump ( machines )
+      if ( switchDetail(switches,'mach') > -1 ) call dump ( machines )
     else
       noMachines = 0
     end if
@@ -414,12 +441,14 @@ contains ! ================================ Procedures ======================
     ! by pre-abandoning the others right off the bat
     ! Note that this leaves output files possibly as big
     ! as if you ran all the chunks anyway
+    
+    ! Mostly superseded by commandline options like chunkRange
     if ( size(chunks) < 3 ) then
-    elseif ( index(switches,'runfirstlast') /=0 ) then
+    elseif ( switchDetail(switches,'runfirstlast') > -1 ) then
       chunksAbandoned(2:size(chunks)-1) = .true.
-    elseif ( index(switches,'runfirst') /=0 ) then
+    elseif ( switchDetail(switches,'runfirst') > -1 ) then
       chunksAbandoned(2:size(chunks)) = .true.
-    elseif ( index(switches,'runlast') /=0 ) then
+    elseif ( switchDetail(switches,'runlast') > -1 ) then
       chunksAbandoned(1:size(chunks)-1) = .true.
     elseif ( parallel%chunkRange /= '' ) then
       chunksAbandoned = .true.
@@ -455,7 +484,7 @@ contains ! ================================ Procedures ======================
           chunksStarted(nextChunk) = .true.
           skipDeathWatch = .true.
           ! We'll have to wait for it to come one line later
-          if ( index(switches,'mas') /= 0 ) then
+          if ( switchDetail(switches,'mas') > -1 ) then
             call output ( 'Submitted chunk ' )
             call TimeStamp ( nextChunk, advance='yes' )
           end if
@@ -465,14 +494,14 @@ contains ! ================================ Procedures ======================
         else ! ------------------------------------- Start job using pvmspawn
           ! machine = FindFirst(machineFree .and. machineOK)
           commandLine = trim(parallel%pgeName)   ! was 'mlsl2'
-          if ( index(switches,'slv') /= 0 ) then
+          if ( switchDetail(switches,'slv') > -1 ) then
             call PVMFCatchOut ( 1, info )
             if ( info /= 0 ) call PVMErrorMessage ( info, "calling catchout" )
           end if
           info = myPVMSpawn ( trim(commandLine), PvmTaskHost, &
             & trim(machines(machine)%Name), &
             & 1, tidarr )
-          if ( index(switches,'mas') /= 0 ) then
+          if ( switchDetail(switches,'mas') > -1 ) then
             call output ( 'Tried to spawn ' )
             call TimeStamp ( trim(commandLine), advance='yes' )
             call output ( 'PvmTaskHost ' )
@@ -495,8 +524,8 @@ contains ! ================================ Procedures ======================
             chunkTids(nextChunk) = tidArr(1)
             chunkNiceTids(nextChunk) = GetNiceTidString(chunkTids(nextChunk))
             chunksStarted(nextChunk) = .true.
-            if ( index(switches,'mas') /= 0 ) then
-              if ( index(switches,'l2q') /= 0 ) then
+            if ( switchDetail(switches,'mas') > -1 ) then
+              if ( switchDetail(switches,'l2q') > -1 ) then
                 call output ( tidArr(1) )
                 call output ( ' ' )
               endif
@@ -511,7 +540,7 @@ contains ! ================================ Procedures ======================
             skipDeathWatch = .true.
           else
             ! Couldn't start this job, mark this machine as unreliable
-            if ( index(switches,'mas') /= 0 ) then
+            if ( switchDetail(switches,'mas') > -1 ) then
               call output ( 'Unable to start slave task on ' // &
                 & trim(machines(machine)%Name) // ' info=' )
               if ( info < 0 ) then
@@ -613,7 +642,7 @@ contains ! ================================ Procedures ======================
               & call MLSMessage ( MLSMSG_Error, ModuleName, &
               & 'Unable to get machine name from tid' )
             call WelcomeSlave ( chunk, slaveTid )
-            if ( index(switches,'mas') /= 0 ) then
+            if ( switchDetail(switches,'mas') > -1 ) then
               call output ( 'Welcomed task ' // &
                 & trim(GetNiceTidString(slaveTid)) // &
                 & ' running chunk ' )
@@ -663,7 +692,7 @@ contains ! ================================ Procedures ======================
           call time_now(request%whenMade)
           nextTicket = nextTicket + 1
 
-          if ( index ( switches, 'mas' ) /= 0 ) then
+          if ( switchDetail ( switches, 'mas' ) > -1 ) then
             call output ( 'Direct write request from ' )
             if ( .not. USINGOLDSUBMIT ) &
               & call output ( trim(machines(machine)%Name) // ', ' )
@@ -694,7 +723,7 @@ contains ! ================================ Procedures ======================
           directWriteFileBusy ( fileIndex ) = .false.
           chunksWriting ( chunk ) = .false.
           noDirectWriteChunks ( fileIndex ) = noDirectWriteChunks ( fileIndex ) + 1
-          if ( index ( switches, 'mas' ) /= 0 ) then
+          if ( switchDetail ( switches, 'mas' ) > -1 ) then
             call output ( 'Direct write finished from ' )
             if ( .not. USINGOLDSUBMIT ) &
               & call output ( trim(machines(machine)%Name) // ', ' )
@@ -708,7 +737,7 @@ contains ! ================================ Procedures ======================
           end if
 
         case ( sig_finished ) ! -------------- Got a finish message ----
-          if ( index(switches,'mas') /= 0 ) then
+          if ( switchDetail(switches,'mas') > -1 ) then
             call output ( 'Got a finished message from ' )
             if ( .not. USINGOLDSUBMIT ) &
               & call output ( trim(machines(machine)%Name) // ' ' )
@@ -727,7 +756,7 @@ contains ! ================================ Procedures ======================
           call PVMFSend ( slaveTid, InfoTag, info )
           if ( info /= 0 ) &
             & call PVMErrorMessage ( info, 'sending finish ack.' )
-          if ( index(switches,'mas') /= 0 ) &
+          if ( switchDetail(switches,'mas') > -1 ) &
             & call TimeStamp ( 'Acknowledgment sent', advance='yes')
 
           ! Now update our information
@@ -742,7 +771,7 @@ contains ! ================================ Procedures ======================
             chunkMachines(chunk) = 0
           end if
           parallel%numCompletedChunks = parallel%numCompletedChunks + 1
-          if ( index(switches,'mas') /= 0 ) then
+          if ( switchDetail(switches,'mas') > -1 ) then
             call printMasterStatus
           end if
           ! Send news back to l2 queue manager
@@ -766,7 +795,7 @@ contains ! ================================ Procedures ======================
       ! Listen out for any message telling us to quit now
       call PVMFNRecv ( -1, GiveUpTag, bufferIDRcv )
       if ( bufferIDRcv > 0 ) then
-        if ( index(switches,'mas') /= 0 ) then
+        if ( switchDetail(switches,'mas') > -1 ) then
           call TimeStamp ( 'Received an external message to give up, so finishing now', &
             & advance='yes' )
         end if
@@ -786,7 +815,7 @@ contains ! ================================ Procedures ======================
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & 'Got unexpected MachineFixed message but using submit method' )
         else
-          if ( index(switches,'mas') /= 0 ) then
+          if ( switchDetail(switches,'mas') > -1 ) then
             call TimeStamp ( 'Received an external message to trust ' // &
               & trim(thisName) // ' again.' , advance='yes' )
           end if
@@ -842,8 +871,8 @@ contains ! ================================ Procedures ======================
               deadChunk = machines(deadMachine)%chunk
               machines(deadMachine)%free = .true.
             end if
-            if ( index(switches,'mas') /= 0 ) then
-              if ( index(switches,'l2q') /= 0 ) then
+            if ( switchDetail(switches,'mas') > -1 ) then
+              if ( switchDetail(switches,'l2q') > -1 ) then
                 call output ( deadTID )
                 call output ( ' ' )
               endif
@@ -873,7 +902,7 @@ contains ! ================================ Procedures ======================
             if ( requestIndex /= 0 ) then
               request => directWriteRequests(requestIndex)
               directWriteFileBusy ( request%fileIndex ) = .false.
-              if ( index(switches,'mas') /= 0 ) then
+              if ( switchDetail(switches,'mas') > -1 ) then
                 call output ( 'Direct write died from ' )
                 if ( .not. USINGOLDSUBMIT ) &
                   & call output ( trim(machines(deadMachine)%Name) // ', ' )
@@ -895,7 +924,7 @@ contains ! ================================ Procedures ======================
             if ( chunkFailures(deadChunk) >= &
               & parallel%maxFailuresPerChunk ) then
               chunksAbandoned(deadChunk) = .true.
-              if ( index(switches,'mas') /= 0 ) then
+              if ( switchDetail(switches,'mas') > -1 ) then
                 call output ( 'Chunk ' )
                 call output ( deadChunk )
                 call TimeStamp ( ' keeps dying.  Giving up on it.', &
@@ -910,7 +939,7 @@ contains ! ================================ Procedures ======================
             if ( .not. USINGOLDSUBMIT ) then
               if ( machines(deadMachine)%jobsKilled >= &
                 & parallel%maxFailuresPerMachine ) then
-                if ( index(switches,'mas') /= 0 ) &
+                if ( switchDetail(switches,'mas') > -1 ) &
                   & call TimeStamp ('The machine ' // &
                   & trim(machines(deadMachine)%Name) // &
                   & ' keeps killing things, marking it bad', &
@@ -930,7 +959,7 @@ contains ! ================================ Procedures ======================
           else
             ! Otherwise we'd already forgotten about this slave, it told
             ! us it had finished.
-            if ( index(switches,'mas') /= 0 .and. NOTFORGOTTEN ) call TimeStamp ( &
+            if ( switchDetail(switches,'mas') > -1 .and. NOTFORGOTTEN ) call TimeStamp ( &
               & "A slave task died after giving results, " // &
               & "we won't worry about it.", &
               & advance='yes' )
@@ -950,7 +979,7 @@ contains ! ================================ Procedures ======================
                & 'Dead slave tid doesnt match machine tid' )
           endif
           call TellL2QMachineDied( machines(deadMachine), L2Qtid )
-          if ( index(switches,'l2q') /= 0 ) then
+          if ( switchDetail(switches,'l2q') > -1 ) then
             call output ( 'Bad news about chunk ' )
             call output ( deadChunk )
             call TimeStamp ( ' on slave ' // trim(machines(deadMachine)%name) // &
@@ -958,7 +987,7 @@ contains ! ================================ Procedures ======================
               & advance='yes' )
           end if
         elseif ( usingL2Q ) then
-          if ( index(switches,'l2q') /= 0 ) then
+          if ( switchDetail(switches,'l2q') > -1 ) then
             call output ( 'tID ' )
             call output ( deadTID )
             call TimeStamp ( ' finished normally ', advance='yes' )
@@ -1017,7 +1046,7 @@ contains ! ================================ Procedures ======================
         else
           createFile = 0
         end if
-        if ( index(switches,'mas') /= 0 ) then
+        if ( switchDetail(switches,'mas') > -1 ) then
           call output ( 'Direct write granted to ' )
           if ( .not. USINGOLDSUBMIT ) &
             & call output ( trim(machines(request%machine)%Name) // ' ' )
@@ -1057,7 +1086,7 @@ contains ! ================================ Procedures ======================
 
       ! Perhaps compact the direct write request database
       if ( count ( directWriteRequests%status /= DW_Completed ) < &
-        & noDirectWriteRequests / 2 .and. index(switches,'dwreq') == 0 ) then
+        & noDirectWriteRequests / 2 .and. switchDetail(switches,'dwreq') == -1 ) then
         call CompactDirectWriteRequestDB ( directWriteRequests, noDirectWriteRequests )
         skipDelay = .true. ! This may take time so don't hang around later
       end if
@@ -1068,7 +1097,7 @@ contains ! ================================ Procedures ======================
 
       ! If we're done then exit
       if (all(chunksCompleted .or. chunksAbandoned)) then
-        if ( index(switches,'mas') /= 0 ) &
+        if ( switchDetail(switches,'mas') > -1 ) &
           & call TimeStamp ( 'All chunks either processed or abandoned', advance='yes' )
         exit masterLoop
       end if
@@ -1082,7 +1111,7 @@ contains ! ================================ Procedures ======================
       if ( .not. USINGOLDSUBMIT ) then
         if ( .not. any(machines%OK) .and. &
           &  all ( chunksStarted .eqv. chunksCompleted ) ) then
-          if ( index(switches,'mas') /= 0 ) &
+          if ( switchDetail(switches,'mas') > -1 ) &
             & call TimeStamp ( 'No machines left to do the remaining work', &
             & advance='yes' )
           exit masterLoop
@@ -1121,7 +1150,7 @@ contains ! ================================ Procedures ======================
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'No chunks were processed successfully.' )
 
-    if ( index(switches,'mas') /= 0 ) then
+    if ( switchDetail(switches,'mas') > -1 ) then
       call TimeStamp ( 'All chunks processed, starting join task', advance='yes' )
     endif
     ! Now we join up all our results into l2gp and l2aux quantities
@@ -1139,7 +1168,7 @@ contains ! ================================ Procedures ======================
     if ( associated ( storedResults ) ) then
       do resInd = 1, size ( storedResults )
         hdfNameIndex = enter_terminal ( trim(storedResults(resInd)%hdfName), t_string )
-        if ( index(switches,'mas') /= 0 ) then
+        if ( switchDetail(switches,'mas') > -1 ) then
           call TimeStamp ( 'Joining ' // trim ( storedResults(resInd)%hdfName ), &
             & advance='yes' )
         endif
@@ -1236,11 +1265,11 @@ contains ! ================================ Procedures ======================
     end if
 
     finished = .true.
-    if ( index(switches,'mas') /= 0 ) then
+    if ( switchDetail(switches,'mas') > -1 ) then
       call TimeStamp ( 'All chunks joined', advance='yes' )
     endif
-    dumpfulldwreqs = index(switches,'dwreq1') /= 0
-    if ( index(switches,'dwreq') /= 0 ) &
+    dumpfulldwreqs = switchDetail(switches,'dwreq1') > -1
+    if ( switchDetail(switches,'dwreq') > -1 ) &
       & call dump(directWriteRequests, statsOnly=.not. dumpfulldwreqs)
     if ( toggle(gen) ) call trace_end ( "L2MasterTask")
 
@@ -1291,7 +1320,7 @@ contains ! ================================ Procedures ======================
           if ( machine < 1 ) then
             thisMachine%name = machineName
             machine = AddMachineToDataBase(machines, thisMachine)
-            if ( index(switches,'l2q') /=0 ) &
+            if ( switchDetail(switches,'l2q') > -1 ) &
               & call output('Added machine to db', advance='yes')
             ! machine = AddMachineNameToDataBase(machines%Name, machineName)
           endif
@@ -1620,7 +1649,7 @@ contains ! ================================ Procedures ======================
     integer :: INFO                     ! From PVM
     integer :: BUFFERIDRCV              ! From PVM
     ! Identify ourselves
-    if ( index(switches,'l2q') /=0 ) &
+    if ( switchDetail(switches,'l2q') > -1 ) &
       & call TimeStamp('Requesting host from l2q', advance='yes')
     call PVMFInitSend ( PvmDataDefault, bufferID )
     call PVMF90Pack ( sig_requestHost, info )
@@ -1669,7 +1698,7 @@ contains ! ================================ Procedures ======================
       if ( bufferIDRcv < 0 ) then
         call PVMErrorMessage ( info, "checking for Granted message" )
       else if ( bufferIDRcv > 0 ) then
-        if ( index(switches,'l2q') /=0 ) &
+        if ( switchDetail(switches,'l2q') > -1 ) &
           & call TimeStamp('Weve been granted a host', advance='yes')
         ! Granted us a machine
         call PVMF90Unpack ( machineName, info )
@@ -1684,14 +1713,11 @@ contains ! ================================ Procedures ======================
         if ( beat < max(NBEATS, 1)) call usleep ( parallel%delay )
       endif
     enddo
-    if ( index(switches,'l2q') /=0 .and. len_trim(machineName) > 0 ) &
+    if ( switchDetail(switches,'l2q') > -1 .and. len_trim(machineName) > 0 ) &
       & call TimeStamp('Received from l2q ' // trim(machineName), advance='yes')
   end subroutine ReceiveMachineFromL2Q
 
-  ! subroutine TellL2QMachineDied(tid, L2Qtid)
   subroutine TellL2QMachineDied(machine, L2Qtid)
-    ! character(len=MACHINENAMELEN)        :: MACHINENAME
-    ! integer, intent(in)                                 :: tid
     type(machine_T), intent(in)                         :: machine
     integer, intent(in)                                 :: L2Qtid
     !
@@ -1717,7 +1743,7 @@ contains ! ================================ Procedures ======================
     call PVMFSend ( L2Qtid, petitionTag, info )
     if ( info /= 0 ) &
       & call PVMErrorMessage ( info, 'sending finish packet' )
-    if ( index(switches, 'l2q') > 0 ) then
+    if ( switchDetail(switches, 'l2q') > -1 ) then
       call output('Telling l2q host died ', advance='no')
       call output(trim(machine%name), advance='no')
       call blanks(2)
@@ -1794,7 +1820,7 @@ contains ! ================================ Procedures ======================
     call PVMFSend ( L2Qtid, petitionTag, info )
     if ( info /= 0 ) &
       & call PVMErrorMessage ( info, 'sending finish packet' )
-    if ( index(switches, 'l2q') > 0 ) then
+    if ( switchDetail(switches, 'l2q') > -1 ) then
       call output('Thanking l2q for host', advance='no')
       call TimeStamp(machine%tid, advance='yes')
     endif
@@ -1813,6 +1839,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.75  2006/04/20 23:21:37  pwagner
+! Pass more chunk info from master to slave
+!
 ! Revision 2.74  2005/06/22 18:57:02  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
