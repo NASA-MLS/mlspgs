@@ -176,7 +176,7 @@ contains ! ======================= Public Procedures =========================
       totalProfs = totalProfs - &
         & hGrids(quantity%template%hGridIndex)%noProfsLowerOverlap
     endif
-    if ( ChunkDivideConfig%allowPostOverlaps ) &
+    if ( ChunkDivideConfig%allowPostOverlaps .and. .false. ) &
       & totalProfs = totalProfs - &
       & hGrids(quantity%template%hGridIndex)%noProfsUpperOverlap
     ! Check sanity
@@ -201,24 +201,24 @@ contains ! ======================= Public Procedures =========================
       & sdname, chunkNo, HGrids, offset=0, &
       & firstInstance=firstInstance, lastInstance=lastInstance)
     ! Output the l2gp into the file
+    if ( l2gp%name == 'Temperature-InitPtan' .and. deebug ) then
+      call output('firstInstance: ', advance='no')
+      call output(firstInstance, advance='no')
+      call output('  lastInstance: ', advance='no')
+      call output(lastInstance, advance='no')
+      call output('  TotalProfs: ', advance='no')
+      call output(TotalProfs, advance='yes')
+      if ( present(createSwath) ) then
+        call output('  createSwath: ', advance='no')
+        call output(createSwath, advance='yes')
+      endif
+      call dump(l2gp, Details=-1)
+    endif
     call AppendL2GPData(l2gp, l2gpFile, &
       & sdName, offset, lastprofile=lastInstance, &
       & TotNumProfs=TotalProfs, createSwath=createSwath)
     if ( l2gpFile%access == DFACC_CREATE ) call writeAPrioriAttributes(l2gpFile)
     if ( index(switches, 'l2gp') /= 0 ) call dump(l2gp)
-    if ( l2gp%name == 'Temperature-InitPtan' .and. deebug ) then
-    call output('firstInstance: ', advance='no')
-    call output(firstInstance, advance='no')
-    call output('  lastInstance: ', advance='no')
-    call output(lastInstance, advance='no')
-    call output('  TotalProfs: ', advance='no')
-    call output(TotalProfs, advance='yes')
-    if ( present(createSwath) ) then
-    call output('  createSwath: ', advance='no')
-    call output(createSwath, advance='yes')
-    endif
-    call dump(l2gp, Details=-1)
-    endif
     ! Clear up our temporary l2gp
     call DestroyL2GPContents(l2gp)
   end subroutine DirectWrite_L2GP_MF
@@ -909,10 +909,10 @@ contains ! ======================= Public Procedures =========================
 
     ! Now copy the information from the quantity to the l2gpData
     L2GP%nTimesTotal = quantity%template%grandTotalInstances
-    if ( ChunkDivideConfig%allowPriorOverlaps ) &
+    if ( ChunkDivideConfig%allowPriorOverlaps .and. .false. ) &
       & L2GP%nTimesTotal = L2GP%nTimesTotal - &
       & hGrids(quantity%template%hGridIndex)%noProfsLowerOverlap
-    if ( ChunkDivideConfig%allowPostOverlaps ) &
+    if ( ChunkDivideConfig%allowPostOverlaps .and. .false. ) &
       & L2GP%nTimesTotal = L2GP%nTimesTotal - &
       & hGrids(quantity%template%hGridIndex)%noProfsUpperOverlap
 
@@ -1012,6 +1012,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.38  2006/04/20 23:24:12  pwagner
+! More bugs squashed related to extra-range MAFs; one crashed final chunk
+!
 ! Revision 2.37  2006/04/19 20:48:13  pwagner
 ! Undid most of the changes regarding extra MAFs; perhaps fixed bugs
 !
