@@ -157,7 +157,7 @@ contains
     nd = 1
     i = 1
     l = 1
-    do
+    do while ( i <= n )
       line(l:l) = message(i:i)
       if ( i >= n ) exit
       if ( (message(i:i+1) == '%d' .or. message(i:i+1) == '%D') .and. &
@@ -241,6 +241,9 @@ contains
 end module MoreMessage
 
 ! $Log$
+! Revision 2.3  2006/04/20 01:08:32  vsnyder
+! Don't look past the end of the input
+!
 ! Revision 2.2  2005/06/03 01:52:30  vsnyder
 ! New copyright notice, move Id to not_used_here to avoid cascades,
 ! %g switch to dump signals.
