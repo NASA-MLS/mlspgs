@@ -939,7 +939,9 @@ contains
       call output(avoidUnlimitedDims, advance='yes')
       call output(' Allow overlaps outside proc. range?:            ', advance='no')
       call blanks(4, advance='no')
-      call output(ChunkDivideConfig%allowPriorOverlaps, advance='yes')
+      call output(ChunkDivideConfig%allowPriorOverlaps, advance='no')
+      call blanks(4, advance='no')
+      call output(ChunkDivideConfig%allowPostOverlaps, advance='yes')
       call output(' Catenate split dgg/dgm after run completes?:    ', advance='no')
       call blanks(4, advance='no')
       call output(catenateSplits, advance='yes')
@@ -1076,6 +1078,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.148  2006/04/20 23:22:39  pwagner
+! Show both kinds of allowed extra-range overlaps
+!
 ! Revision 2.147  2006/04/11 23:28:49  pwagner
 ! Whether to allow overlaps outside of processing range
 !
