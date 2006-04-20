@@ -307,7 +307,8 @@ contains ! ===================================== Public Procedures =====
     endif
 
     ! Tidy up
-    if ( switchDetail(switches, 'chu') > -1 ) call dump(ChunkDivideConfig)
+    if ( switchDetail(switches, 'chu') > -1 .or. &
+      & switchDetail(switches, 'opt') > -1 ) call dump(ChunkDivideConfig)
     if ( associated(obstructions) ) then
       if ( index(switches, 'chu') /= 0 ) call Dump_Obstructions ( obstructions )
       if ( .not. ChunkDivideConfig%saveObstructions ) &
@@ -2356,6 +2357,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.74  2006/04/20 23:22:54  pwagner
+! Show both kinds of allowed extra-range overlaps
+!
 ! Revision 2.73  2006/04/10 23:45:18  pwagner
 ! Reset defaults in read_apriori, not ChunkDivide
 !
