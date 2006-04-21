@@ -2898,10 +2898,10 @@ contains
 
             ! Compute D radiance / Df from Tau, Prod, T_Script
             ! and DE / Df.
-
-            call mcrt_der ( t_script(:,frq_i), sqrt(e_rflty), deltau_pol(:,:,1:npc), &
-              & de_df(:,:,1:npc,:), prod_pol(:,:,1:npc), tau_pol(:,:,1:npc), &
-              & p_stop, d_rad_pol_df )
+            call mcrt_der ( t_script(:,frq_i), sqrt(e_rflty),    &
+              & deltau_pol(:,:,1:npc), de_df(:,:,1:npc,:),       &
+              & prod_pol(:,:,1:npc), tau_pol(:,:,1:npc), p_stop, &
+              & d_rad_pol_df )
 
             if ( radiometers(firstSignal%radiometer)%polarization == l_a ) then
               k_atmos_frq(frq_i,:) = real(d_rad_pol_df(1,1,:))
@@ -3332,6 +3332,10 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.258  2006/04/11 18:34:37  vsnyder
+! Add tanh(h nu / k T) to Get_D_Deltau_Pol.  Use DACS frequencies in
+! Frequency_Setup_1.
+!
 ! Revision 2.257  2006/03/06 20:44:06  vsnyder
 ! Avoid appearance of out-of-bounds subscript during frequency averaging
 !
