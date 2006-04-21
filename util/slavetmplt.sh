@@ -122,12 +122,17 @@ get_unique_name()
 do_the_call()
 {
 
+LASTDITCHPGSBIN="/software/toolkit/LF6.1/toolkit/bin/linux"
 PGE_ROOT=ppggeerroott
-if [ ! -r "$PGE_ROOT/science_env.sh"  ]
+if [ -r "$PGE_ROOT/science_env.sh"  ]
+then
+. ${PGE_ROOT}/science_env.sh
+elif [ -r "$PGSBIN/pgs-env.ksh" ]
 then
 . $PGSBIN/pgs-env.ksh
 else
-. ${PGE_ROOT}/science_env.sh
+#Last ditch--if this doens't work we're outta here
+. $LASTDITCHPGSBIN/pgs-env.ksh
 fi
 export
 PGS_PC_INFO_FILE=ppccff
@@ -278,6 +283,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.10  2005/06/23 22:20:46  pwagner
+# Reworded Copyright statement
+#
 # Revision 1.9  2004/03/05 19:09:33  pwagner
 # Passes --cat option to mlsl2
 #
