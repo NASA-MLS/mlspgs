@@ -37,13 +37,35 @@ contains ! =====     Public Procedures     =============================
   ! capability to flush selectively by signals, molecules, or the Cartesian
   ! product.
 
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use init_tables_module, only: F_Molecules
     use PFADataBase_m, only: Flush_PFADatabase
+    use MoreTree, only: Get_Field_ID
+    use Tree, only: Decoration, NSons, Subtree
 
     integer, intent(in) :: Root            ! of the pfaData subtree in the l2cf
     integer, intent(out) :: Error          ! 0 => OK, else trouble
 
-    ! For now, just flush everything
-    call Flush_PFADatabase ( null(), null(), error )
+    integer :: I, J, Son
+    integer, pointer :: Molecules(:)
+
+    ! Gather the molecules, if any
+    nullify ( molecules )
+    do i = 2, nsons(root)
+      son = subtree(i,root)
+      select case ( get_field_id(son) )
+      case ( f_molecules )
+        call allocate_test ( molecules, nsons(son)-1, 'Molecules', moduleName )
+        do j = 2, nsons(son)
+          molecules(j-1) = decoration(subtree(j,son))
+        end do
+      end select
+    end do
+
+    ! For now, just flush all signals
+    call Flush_PFADatabase ( null(), molecules, error )
+
+    call deallocate_test ( molecules, 'Molecules', moduleName )
 
   end subroutine Flush_PFAData
 
@@ -641,6 +663,9 @@ contains ! =====     Public Procedures     =============================
 end module PFAData_m
 
 ! $Log$
+! Revision 2.23  2006/04/21 22:28:01  vsnyder
+! Flush specified molecules
+!
 ! Revision 2.22  2005/06/03 02:09:19  vsnyder
 ! New copyright notice, move Id to not_used_here to avoid cascades,
 ! get VGrids from VGridsDatabase instead of a dummy argument.
