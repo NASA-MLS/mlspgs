@@ -72,6 +72,7 @@ contains ! =====     Public Procedures     =============================
                         !   one if > 1.
     logical :: Error
     integer :: I        ! Index for signals associated with a line, or lines in catalog
+    integer :: Ix       ! Position in PFAData of a sought PFADatum if nonzero
     integer :: L        ! Index for lines in catalog
     logical, pointer :: LINEFLAG(:) ! Use this line
     integer :: M        ! Index for Molecules
@@ -117,7 +118,7 @@ contains ! =====     Public Procedures     =============================
     velRel = losVel / speedOfLight ! losVel & speedOfLight both M/s
     velCor = 1.0_rp - velRel
 
-    ! Work out the signal/channel combinations.  Flatten the represenation.
+    ! Work out the signal/channel combinations.  Flatten the representation.
     ! Check for duplicate signals
     numChannels = 0
     do s = 1, size(signals)
@@ -226,14 +227,17 @@ contains ! =====     Public Procedures     =============================
           end do ! px
         end do ! tx
 
-        ! Put it away
-        create_PFAData = AddPFADatumToDatabase ( PFAData, PFADatum )
-        call deallocate_test ( myCatalog%lines, 'myCatalog%lines', moduleName )
+        ! Look for it
+        ix = HookTableToFindPFA ( 0, 0, PFADatum, 0, replace=.true. )
 
-        ! Report all errors instead of quitting on the first one
-        MLSMSG_Severity_to_quit = MLSMSG_Error + 1
-        error = error .or. HookTableToFindPFA ( 0, 0, create_PFAData )
-        MLSMSG_Severity_to_quit = MLSMSG_Error
+        ! Put it away
+        if ( ix /= 0 ) then
+          PFAData(ix) = PFADatum
+        else
+          create_PFAData = AddPFADatumToDatabase ( PFAData, PFADatum )
+          call deallocate_test ( myCatalog%lines, 'myCatalog%lines', moduleName )
+          ix = HookTableToFindPFA ( 0, 0, PFADatum, create_PFAData )
+        end if
 
         if ( progress .or. dumpIt > 0 ) then
           call output ( 'Created PFA for ' )
@@ -401,6 +405,9 @@ contains ! =====     Public Procedures     =============================
 end module Create_PFAData_m
 
 ! $Log$
+! Revision 2.15  2006/04/21 22:24:19  vsnyder
+! Stuff for updating PFA
+!
 ! Revision 2.14  2006/01/26 03:08:05  vsnyder
 ! Accumulate all errors before crashing, detect duplicate signals early
 !
