@@ -704,7 +704,9 @@ contains ! =====     Public procedures     =============================
              begin, f+f_file, t+t_string, nr+n_field_type, &
              begin, f+f_pfaData, s+s_pfaData, s+s_makePFA, n+n_field_spec, &
              ndp+n_spec_def, &
-      begin, s+s_flushPFA, ndp+n_spec_def /) )
+      begin, s+s_flushPFA, &
+             begin, f+f_molecules, t+t_molecule, n+n_field_type, &
+             ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_phase, & ! Ignores rest of stuff
              begin, f+f_comment, t+t_string, n+n_field_type, &
@@ -1379,7 +1381,7 @@ contains ! =====     Public procedures     =============================
              begin, p+p_starttime, t+t_string, n+n_name_def, &
              begin, p+p_endtime, t+t_string, n+n_name_def, &
              s+s_binSelector, s+s_directWriteFile, s+s_dump, &
-             s+s_empiricalGeometry, s+s_fGrid, s+s_forwardModel, &
+             s+s_empiricalGeometry, s+s_fGrid, s+s_flushPFA, s+s_forwardModel, &
              s+s_forwardModelGlobal, s+s_l1brad, s+s_l1boa, &
              s+s_l2parsf, s+s_makePFA, s+s_pfaData, s+s_readPFA, &
              s+s_tGrid, s+s_time, s+s_vGrid, s+s_writePFA, n+n_section, &
@@ -1442,6 +1444,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.433  2006/04/21 22:29:38  vsnyder
+! Allow FlushPFA in global settings section, allow molecules field on FlushPFA
+!
 ! Revision 2.432  2006/04/03 23:51:21  livesey
 ! Added f_surface to subset
 !
