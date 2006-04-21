@@ -73,9 +73,9 @@ contains
       & P_CYCLE, P_ENDTIME, P_INSTRUMENT, &
       & P_LEAPSECFILE, P_OUTPUT_VERSION_STRING, P_PFAFILE, P_STARTTIME, &
       & S_BINSELECTOR, S_DIRECTWRITEFILE, S_DUMP, S_EMPIRICALGEOMETRY, &
-      & S_FGRID, S_FORWARDMODEL, S_FORWARDMODELGLOBAL, S_L1BOA, S_L1BRAD, &
-      & S_L2PARSF, S_MAKEPFA, S_PFADATA, S_READPFA, S_TGRID, S_TIME, S_VGRID, &
-      & S_WRITEPFA
+      & S_FGRID, S_FLUSHPFA, S_FORWARDMODEL, S_FORWARDMODELGLOBAL, &
+      & S_L1BOA, S_L1BRAD, S_L2PARSF, S_MAKEPFA, S_PFADATA, S_READPFA, &
+      & S_TGRID, S_TIME, S_VGRID, S_WRITEPFA
     use intrinsic, only: l_hdf, l_swath
     use L1BData, only: L1BData_T, NAME_LEN, PRECISIONSUFFIX, &
       & AssembleL1BQtyName, DeallocateL1BData, Dump, FindMaxMAF, &
@@ -101,7 +101,7 @@ contains
     use MLSSignals_m, only: INSTRUMENT
     use MoreTree, only: GET_FIELD_ID, GET_SPEC_ID
     use OUTPUT_M, only: BLANKS, OUTPUT, revertoutput, switchOutput
-    use PFAData_m, only: Get_PFAdata_from_l2cf, Make_PFAData, &
+    use PFAData_m, only: Get_PFAdata_from_l2cf, Flush_PFAData, Make_PFAData, &
       & Read_PFAData, Write_PFAData
     use PFADataBase_m, only: Process_PFA_File
     use PCFHdr, only: GlobalAttributes, FillTAI93Attribute
@@ -154,6 +154,7 @@ contains
     integer :: The_HDF_version     ! 4 or 5 (corresp. to hdf4 or hdf5)
     logical :: TIMING              ! For S_Time
     logical :: StartTimeIsAbsolute, stopTimeIsAbsolute
+    integer :: Status
     real :: T1, T2                 ! For S_Time
     real(r8) :: Start_time_from_1stMAF, End_time_from_1stMAF
     logical :: wasAlreadyOpen
@@ -305,6 +306,9 @@ contains
           end if
         case ( s_empiricalGeometry )
           call InitEmpiricalGeometry ( son )
+        case ( s_flushPFA )
+          call flush_PFAData ( son, status )
+          error = max(error,status)
         case ( s_fgrid )
           call decorate ( son, AddFGridToDatabase ( fGrids, &
             & CreateFGridFromMLSCFInfo ( name, son ) ) )
@@ -953,6 +957,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.114  2006/03/15 23:52:24  pwagner
+! Removed InputVersion component from PCF, l2cf
+!
 ! Revision 2.113  2006/02/15 00:02:05  pwagner
 ! Moved revertOutput call
 !
