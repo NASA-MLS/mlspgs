@@ -89,8 +89,10 @@ contains
     integer :: SV_I                          ! State vector index
 
     i_stop = size(indices_c)
-! initiallize entire array to zero
+
+! initialize entire array to zero
     d_deltau_pol_df = 0.0_rp
+
     do sps_i = 1, ubound(grids_f%l_v,1)
 
       do sv_i = Grids_f%l_v(sps_i-1)+1, Grids_f%l_v(sps_i)
@@ -159,13 +161,12 @@ contains
           end if
 
         end do ! p_i
+
       end do ! sv_i
 
     end do ! sps_i
 
   end subroutine Get_D_Deltau_Pol_DF
-
-!{\newpage
 
 ! ------------------------------------------  Get_D_Deltau_Pol_DT  -----
 
@@ -500,6 +501,7 @@ contains
           d_deltau_pol_dT(:,:,p_i,sv_i) = 0.0_rp
         end if
       end do ! p_i
+
     end do ! sv_i
 
   end subroutine Get_D_Deltau_Pol_DT
@@ -517,6 +519,9 @@ contains
 end module Get_D_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.33  2006/04/21 22:12:31  vsnyder
+! Fix final bug in mixing ratio derivatives
+!
 ! Revision 2.32  2006/04/19 23:00:48  bill
 ! I think I fixed the vmr derivative bug
 !
