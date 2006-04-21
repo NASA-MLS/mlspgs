@@ -43,7 +43,8 @@ contains
 !  \text{ where {\bf I} is {\tt Radiance} (output), }
 !        \Delta B \text{ is {\tt T\_script} (input)},\\
 !  {\bf \tau}_i =& {\bf P}_i {\bf P}_i^\dagger,~
-!    {\bf \tau} \text{ is {\tt Tau} (output), {\bf P} is {\tt Prod} (output),}\\
+!    {\bf \tau} \text{ is {\tt Tau} (output), {\bf P} is {\tt Prod} (output), }
+!    \dagger\text{ means conjugate transpose,}\\
 !  {\bf P}_i = & \prod_{k=2}^{i} {\bf E}_k \text{ and } {\bf E} \text{ is
 !    {\tt Del\_tau} (input), which is}\\
 !  {\bf E}_i = & \exp \left( - \int_{s_i}^{s_{i-1}} {\bf G} (s^\prime)
@@ -194,7 +195,10 @@ contains
 
   !{\begin{equation*}
   ! \begin{split}
-  !  \frac{\partial \mathbf{I}}{\partial x} = &\sum_{i=1}^n
+  !  \frac{\partial \mathbf{I}}{\partial x} = &
+  !   \sum_{i=1}^n
+  !   \frac{\partial (\mathbf{\tau}_i \Delta B_i)}{\partial x} =
+  !   \sum_{i=1}^n
   !   \left [ \frac{\partial \mathbf{\tau}_i}{\partial x} \Delta B_i +
   !           \mathbf{\tau}_i \frac{\partial \Delta B_i}{\partial x}
   !   \right ],\text{ where}
@@ -205,7 +209,7 @@ contains
   !  \mathbf{P}_i \frac{\partial\mathbf{P}_i^\dagger}{\partial x}
   != \frac{\partial\mathbf{P}_i}{\partial x}\mathbf{P}_i^\dagger +
   !  \left( \frac{\partial\mathbf{P}_i}{\partial x}\mathbf{P}_i^\dagger \right )^\dagger
-  !  \text{.}
+  !  \text{ (}\dagger\text{ = conjugate transpose).}
   ! \end{split}
   ! \end{equation*}
   !
@@ -286,6 +290,7 @@ contains
                         &        - aimag(dPdx(2,1)) *  real(prod(1,1,i_p))  &
                         &        +  real(dPdx(2,2)) * aimag(prod(1,2,i_p))  &
                         &        - aimag(dPdx(2,2)) *  real(prod(1,2,i_p)) )
+          ! dTauDx(2,1) = conjg(dTauDx(1,2))
             dTauDx(2,2) = 2.0_rk * (real(dPdx(2,1)) *  real(prod(2,1,i_p)) + &
                         &          aimag(dPdx(2,1)) * aimag(prod(2,1,i_p)) + &
                         &           real(dPdx(2,2)) *  real(prod(2,2,i_p)) + &
@@ -302,7 +307,7 @@ contains
           d_radiance(1,2,i_sv) = d_radiance(1,2,i_sv) + &
                                & dTauDx(1,2) * t_script(i_p) + &
                                & tau(1,2,i_p) * d_t_script(i_p,i_sv)
-          d_radiance(2,1,i_sv) = conjg(d_radiance(1,2,i_sv))
+!       ! d_radiance(2,1,i_sv) = conjg(d_radiance(1,2,i_sv)) ! not needed 'til end
           d_radiance(2,2,i_sv) = d_radiance(2,2,i_sv) + &
                                & dTauDx(2,2) * t_script(i_p) + &
                                & tau(2,2,i_p) * d_t_script(i_p,i_sv)
@@ -327,6 +332,7 @@ contains
             end if
           end if
         end do ! i_p
+        d_radiance(2,1,i_sv) = conjg(d_radiance(1,2,i_sv))
       end do ! i_sv
     else
       do i_sv = 1, size(d_radiance,3)      ! state vector elements
@@ -357,6 +363,7 @@ contains
                         &        - aimag(dPdx(2,1)) *  real(prod(1,1,i_p))  &
                         &        +  real(dPdx(2,2)) * aimag(prod(1,2,i_p))  &
                         &        - aimag(dPdx(2,2)) *  real(prod(1,2,i_p)) )
+          ! dTauDx(2,1) = conjg(dTauDx(1,2))
             dTauDx(2,2) = 2.0_rk * (real(dPdx(2,1)) *  real(prod(2,1,i_p)) + &
                         &          aimag(dPdx(2,1)) * aimag(prod(2,1,i_p)) + &
                         &           real(dPdx(2,2)) *  real(prod(2,2,i_p)) + &
@@ -365,12 +372,12 @@ contains
             dTauDx = earth_ref * dTauDx
           end if
         ! d_radiance(1:2,1:2,i_sv) = d_radiance(1:2,1:2,i_sv) + &
-        !                          & dTauDx * t_script(i_p)
+        !                          & dTauDx * t_script(i_p)      
           d_radiance(1,1,i_sv) = d_radiance(1,1,i_sv) + &
                                & dTauDx(1,1) * t_script(i_p)
           d_radiance(1,2,i_sv) = d_radiance(1,2,i_sv) + &
                                & dTauDx(1,2) * t_script(i_p)
-          d_radiance(2,1,i_sv) = conjg(d_radiance(1,2,i_sv))
+!       ! d_radiance(2,1,i_sv) = conjg(d_radiance(1,2,i_sv)) ! not needed 'til end
           d_radiance(2,2,i_sv) = d_radiance(2,2,i_sv) + &
                                & dTauDx(2,2) * t_script(i_p)
           if ( i_p < p_stop ) then
@@ -393,6 +400,7 @@ contains
             end if
           end if
         end do ! i_p
+        d_radiance(2,1,i_sv) = conjg(d_radiance(1,2,i_sv))
       end do ! i_sv
     end if
 
@@ -410,6 +418,9 @@ contains
 end module MCRT_m
 
 ! $Log$
+! Revision 2.20  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.19  2004/04/20 00:47:51  vsnyder
 ! Make sure dTau_dT always has an initial value
 !
