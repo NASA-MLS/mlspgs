@@ -116,7 +116,7 @@ module MLSStringLists               ! Module to treat string lists
 !   i4 nElement, log countEmpty, [char inseparator])
 ! int StringElementNum(strlist inList, char* test_string, log countEmpty, &
 !    & [char inseparator], [log part_match])
-! int SwitchDetail(strlist inList, char* test_switch)
+! int SwitchDetail(strlist inList, char* test_switch, [char* options])
 ! char* unquote (char* str, [char* quotes], [char* cquotes], [log strict])
 
 ! in the above, a string list is a string of elements (usu. comma-separated)
@@ -2581,6 +2581,9 @@ contains
   
   ! The behavior may be modified by options flag
   ! For which see comment above
+  !
+  ! If the string list contains a "*" and one of the options is "w" then
+  ! the test switch is automatically present
   
   function SwitchDetail(inList, test_switch, options) RESULT (detail)
     ! Dummy arguments
@@ -2601,13 +2604,11 @@ contains
     ! Executable code
     myOptions = ''
     if ( present(options) ) myOptions = lowercase(options)
+    detail = -1
 
 	nElements = NumStringElements(inList, countEmpty)
 	
-	IF ( nElements <= 0 .or. test_switch == "" ) THEN
-		detail = -1
-		RETURN
-	ENDIF
+	IF ( nElements <= 0 .or. test_switch == "" ) Return
    
    if ( index(myOptions, 'c') > 0 ) then
      switch = lowercase(test_switch)
@@ -2629,11 +2630,8 @@ contains
       endif
 	ENDDO
 
-  	if ( index(myOptions, 'w') > 0 .and. index(inList, '*') > 0 ) then
-     detail = 0
-   else
-     detail = -1
-   endif
+  	if ( index(myOptions, 'w') > 0 .and. index(inList, '*') > 0 ) &
+     & detail = max(detail, 0)
 
   end function SwitchDetail
 
@@ -2870,6 +2868,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.22  2006/04/21 23:57:05  pwagner
+! Small correction to comments on api for SwitchDetail
+!
 ! Revision 2.21  2006/03/03 23:06:35  pwagner
 ! Added Intersection function
 !
