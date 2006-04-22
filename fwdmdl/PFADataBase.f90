@@ -1238,16 +1238,17 @@ contains ! =====     Public Procedures     =============================
     call getHDF5Attribute ( groupID, 'signal', signalText )
     call getHDF5Attribute ( groupID, 'sideband', sb )
     call parse_signal ( signalText, signalIndices, channels=channels )
-    PFADatum%signalIndex = signalIndices(1)
-    call getSignalName ( PFADatum%signalIndex, signalText, sideband=sb )
-    PFADatum%signal = getStringIndexFromString ( trim(signalText), .true. )
-    PFADatum%theSignal = signals(PFADatum%signalIndex)
-    PFADatum%theSignal%channels => channels
-    PFADatum%theSignal%sideband = sb
     do j = lbound(channels,1), ubound(channels,1)
       if ( channels(j) ) exit
     end do
     PFADatum%channel = j
+    PFADatum%signalIndex = signalIndices(1)
+    call getSignalName ( PFADatum%signalIndex, signalText, sideband=sb, &
+      & channel=PFADatum%channel )
+    PFADatum%signal = getStringIndexFromString ( trim(signalText), .true. )
+    PFADatum%theSignal = signals(PFADatum%signalIndex)
+    PFADatum%theSignal%channels => channels
+    PFADatum%theSignal%sideband = sb
     nullify ( channels ) ! so as not to clobber PFADatum%theSignal%channels
       ! in next iteration of the loop
     call getHDF5Attribute ( groupID, 'vel_rel', PFADatum%vel_rel )
@@ -1313,6 +1314,9 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.35  2006/04/22 01:30:46  vsnyder
+! Get channel number into signal read by read_PFADatum_H5
+!
 ! Revision 2.34  2006/04/21 22:23:27  vsnyder
 ! Allow to flush specific molecules, other stuff for updating PFA
 !
