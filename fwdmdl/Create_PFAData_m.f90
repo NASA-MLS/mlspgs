@@ -28,13 +28,15 @@ contains ! =====     Public Procedures     =============================
     & Pressures, LosVel, WhichLines, Where )
 
     ! Create PFAData tables for the specified molecules, signals, temperatures
-    ! and pressures.  Add them to PFADataBase%PFAData.  Sort PFAData.  Return
-    ! the index of the last created PFA datum.
+    ! and pressures.  Tables for DACS are calculated using unpolarized betas
+    ! (we have no provision for magnetic field in the PFA tables).  Add the
+    ! tables to PFADataBase%PFAData.  Return the index of the last created PFA
+    ! datum.
 
     use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
     use DSIMPSON_MODULE, only: SIMPS
     use Dump_0, only: Dump
-    use FilterShapes_m, only: FilterShapes
+    use FilterShapes_m, only: DACSFilterShapes, FilterShapes, FilterShape_T
     use Intrinsic, only: LIT_INDICES, L_NONE
     use MLSCommon, only: RP, R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
@@ -54,7 +56,9 @@ contains ! =====     Public Procedures     =============================
     use Trace_M, only: Trace_begin, Trace_end
     use VGridsDatabase, only: VGrid_t
 
+    type(filterShape_t), pointer :: Filters(:)
     integer, intent(in) :: Molecules(:)
+    type(filterShape_t), pointer :: MyFilter
     type(signal_t), intent(in), target :: Signals(:) ! Derived signals, not from database
     type(vGrid_t), intent(in) :: Temperatures
     type(vGrid_t), intent(in) :: Pressures
@@ -170,18 +174,21 @@ contains ! =====     Public Procedures     =============================
       pfaDatum%vGrid = pressures
       pfaDatum%whichLines = whichLines
       ! Get the filter shape for the signal
-      shapeInd = matchSignal ( filterShapes%signal, signal, &
+      filters => filterShapes
+      if ( signal%dacs ) filters => DACSFilterShapes%filter
+      shapeInd = matchSignal ( filters%signal, signal, &
         & sideband=signal%sideband, channel=channel(c) )
       if ( shapeInd == 0 ) then
         call announce_error ( where, noFilter, signalText )
         cycle
       end if
-      pfaDatum%filterFile = filterShapes(shapeInd)%file
-      nfp = size(filterShapes(shapeInd)%filterGrid)
-      df = filterShapes(shapeInd)%filterGrid(2) - filterShapes(shapeInd)%filterGrid(1)
+      myFilter => filters(shapeInd)
+      pfaDatum%filterFile = myFilter%file
+      nfp = size(myFilter%filterGrid)
+      df = myFilter%filterGrid(2) - myFilter%filterGrid(1)
       ! Compute integral of filter shape, for normalization.  Should be 1.0,
       ! but maybe the input file didn't get normalized....
-      call simps ( filterShapes(shapeInd)%filterShape, df, nfp, norm )
+      call simps ( myFilter%filterShape, df, nfp, norm )
 
       ! Now, for all the molecules....
       do m = 1, size(molecules)
@@ -310,31 +317,31 @@ contains ! =====     Public Procedures     =============================
       ! Frequency average them.
       use Get_Beta_Path_m, only: Create_Beta
       real(r8) :: Avg, dAvg
-      real(rp), dimension(size(filterShapes(shapeInd)%filterGrid)) :: &
+      real(rp), dimension(size(myFilter%filterGrid)) :: &
         & Beta, dBeta_dw, dBeta_dn, dBeta_dv
       integer :: F    ! Index for frequencies
       real(r8) :: FRQ ! Frequency from filter grid
       real(rp), parameter :: h_over_2K = 0.5 * h_over_K
-      real(r8) :: Temp(size(filterShapes(shapeInd)%filterGrid))
+      real(r8) :: Temp(size(myFilter%filterGrid))
       ! Compute Beta and its derivatives
       do f = 1, nfp
-        frq = filterShapes(shapeInd)%filterGrid(f)
+        frq = myFilter%filterGrid(f)
         beta(f) = 0.0
         call create_beta ( p, T, frq, slabs, &
           & real(tanh(h_over_2K * frq / T),rp), beta(f), noPolarized=.false., &
           & dBeta_dw=dBeta_dw(f), dBeta_dn=dBeta_dn(f), dBeta_dv=dBeta_dv(f) )
       end do ! f
       ! Average.  Assumes filter grid's frequencies are evenly spaced.
-      temp = beta * filterShapes(shapeInd)%filterShape
+      temp = beta * myFilter%filterShape
       call simps ( temp, df, nfp, avg )
       pfaDatum%Absorption(tx,px) = log( avg / norm )
-      temp = dBeta_dw * filterShapes(shapeInd)%filterShape
+      temp = dBeta_dw * myFilter%filterShape
       call simps ( temp, df, nfp, dAvg )  ! normalization cancels for derivs
       pfaDatum%dAbsDwc(tx,px) = dAvg / avg ! d ln beta / d w = 1 / beta d beta / d w
-      temp = dBeta_dn * filterShapes(shapeInd)%filterShape
+      temp = dBeta_dn * myFilter%filterShape
       call simps ( temp, df, nfp, dAvg )
       pfaDatum%dAbsDnc(tx,px) = dAvg / avg ! d ln beta / d n = 1 / beta d beta / d n
-      temp = dBeta_dv * filterShapes(shapeInd)%filterShape
+      temp = dBeta_dv * myFilter%filterShape
       call simps ( temp, df, nfp, dAvg )
       pfaDatum%dAbsDnu(tx,px) = dAvg / avg ! d ln beta / d v = 1 / beta d beta / d v
     end subroutine Get_Beta_Etc
@@ -405,6 +412,9 @@ contains ! =====     Public Procedures     =============================
 end module Create_PFAData_m
 
 ! $Log$
+! Revision 2.16  2006/04/25 23:25:36  vsnyder
+! Revise DACS filter shape data structure
+!
 ! Revision 2.15  2006/04/21 22:24:19  vsnyder
 ! Stuff for updating PFA
 !
