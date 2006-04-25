@@ -50,13 +50,12 @@ module FilterShapes_m
     & FilterShapes => NULL()
 
   type, public :: DACSFilterShape_T
-    integer :: File          ! Index of file name in string table
+  ! DACS-specific filter shape stuff
     integer :: LogApod, LogFilter, LogNorm
-    real(r8), dimension(:), pointer :: FilterGrid => NULL()  ! Abscissae, 2**logFilter+1
-    real(r8), dimension(:), pointer :: FilterShape => NULL() ! Ordinates, ditto
     real(r8), dimension(:), pointer :: LO_Apod(:) => NULL()  ! Apodization, ditto
     real(r8), dimension(:), pointer :: CH_Norm(:) => NULL()  ! Normalization, 2**logNorm+1
-    type (Signal_T) :: Signal
+  ! Ordinary filter shape stuff
+    type(filterShape_T) :: Filter
   end type DACSFilterShape_T
 
   type(DACSFilterShape_T), dimension(:), pointer, public, save :: &
@@ -301,7 +300,7 @@ contains
       call read_a_line ( lun, line, status ) ! Read the signal
       if ( status < 0 ) exit
       n = n + 1
-      DACSfilterShapes(n)%file = fileIndex
+      DACSfilterShapes(n)%filter%file = fileIndex
       sigName = line
       nullify ( channels, signal_indices ) 
       call parse_signal ( sigName, signal_indices, sideband=sideband, &
@@ -311,9 +310,9 @@ contains
         call MLSMessage ( MLSMSG_Error, moduleName, &
           & trim(sigName) // " is not a valid signal." )
       ! Just take the first one.
-      DACSfilterShapes(n)%signal = signals(signal_indices(1))
-      DACSfilterShapes(n)%signal%sideband = sideband
-      DACSfilterShapes(n)%signal%channels => channels
+      DACSfilterShapes(n)%filter%signal = signals(signal_indices(1))
+      DACSfilterShapes(n)%filter%signal%sideband = sideband
+      DACSfilterShapes(n)%filter%signal%channels => channels
       call deallocate_test ( signal_indices, "Signal_Indices", moduleName )
 
       ! Read the lhs, rhs and number_shape
@@ -324,17 +323,17 @@ contains
       DACSfilterShapes(n)%logNorm = logNorm
       number_shape = 2 ** logFilt + 1
 
-      call allocate_test ( DACSfilterShapes(n)%filterGrid,&
-        & number_shape, 'DACSfilterShapes(n)%filterGrid', ModuleName )
-      call allocate_test ( DACSfilterShapes(n)%filterShape,&
-        & number_shape, 'DACSfilterShapes(n)%filterShape', ModuleName )
+      call allocate_test ( DACSfilterShapes(n)%filter%filterGrid,&
+        & number_shape, 'DACSfilterShapes(n)%filter%filterGrid', ModuleName )
+      call allocate_test ( DACSfilterShapes(n)%filter%filterShape,&
+        & number_shape, 'DACSfilterShapes(n)%filter%filterShape', ModuleName )
 
       ! Read the shape array and calculate the associated abscissae
       dx = ( rhs - lhs ) / (number_shape - 1)
       do i = 1, number_shape
-        DACSfilterShapes(n)%filterGrid(i) = lhs + (i-1) * dx
+        DACSfilterShapes(n)%filter%filterGrid(i) = lhs + (i-1) * dx
       end do ! i
-      read ( lun, * ) DACSfilterShapes(n)%filterShape
+      read ( lun, * ) DACSfilterShapes(n)%filter%filterShape
 
       ! Read the LO_Apod and CH_Norm arrays
       number_apod = 2 ** logApod + 1
@@ -429,12 +428,12 @@ contains
     integer :: I, Status
     if ( .not. associated(DACSfilterShapes) ) return
     do i = 1, size(filterShapes)
-      call deallocate_test ( DACSfilterShapes(i)%filterGrid, &
-        & "DACSFilterShapes(?)%filterGrid", moduleName )
-      call deallocate_test ( DACSfilterShapes(i)%filterShape, &
-        & "DACSFilterShapes(?)%filterShape", moduleName )
-      call deallocate_test ( DACSfilterShapes(i)%signal%channels, &
-        & "DACSFilterShapes(?)%signal%channels", moduleName )
+      call deallocate_test ( DACSfilterShapes(i)%filter%filterGrid, &
+        & "DACSFilterShapes(?)%filter%filterGrid", moduleName )
+      call deallocate_test ( DACSfilterShapes(i)%filter%filterShape, &
+        & "DACSFilterShapes(?)%filter%filterShape", moduleName )
+      call deallocate_test ( DACSfilterShapes(i)%filter%signal%channels, &
+        & "DACSFilterShapes(?)%signal%filter%channels", moduleName )
       call deallocate_test ( DACSfilterShapes(i)%lo_apod, &
         & "DACSFilterShapes(?)%lo_apod", moduleName )
       call deallocate_test ( DACSfilterShapes(i)%ch_norm, &
@@ -450,6 +449,7 @@ contains
     use Dump_0, only: Dump
     use MoreTree, only: StartErrorMessage
     use Output_m, only: Output
+    use String_Table, only: Display_String
 
     integer, intent(in), optional :: Where   ! Tree node index
 
@@ -462,7 +462,9 @@ contains
         call output ( i, 4 )
         call output ( ':    Signal = ' )
         call GetNameOfSignal ( filterShapes(i)%signal, sigName )
-        call output ( sigName, advance='yes' )
+        call output ( trim(sigName) )
+        call display_string ( filterShapes(i)%file, before=' from file ', &
+          & advance='yes' )
         call dump ( filterShapes(i)%filterShape, name='FilterShape' )
         call dump ( filterShapes(i)%filterGrid, name='FilterGrid', &
           & width=4, format='(1x,1pg18.11)' )
@@ -474,19 +476,23 @@ contains
   end subroutine Dump_Filter_Shapes_Database
 
   ! -------------------------------------------  Dump_DACS_Filter  -----
-  subroutine Dump_DACS_Filter ( Filter )
+  subroutine Dump_DACS_Filter ( DACSFilter )
     use Dump_0, only: Dump
     use Output_m, only: Output
-    type (DACSFilterShape_T), intent(in) :: Filter
+    use String_Table, only: Display_String
+
+    type (DACSFilterShape_T), intent(in) :: DACSFilter
     character(len=MaxSigLen) :: sigName
 
     call output ( 'Signal = ' )
-    call GetNameOfSignal ( filter%signal, sigName )
-    call output ( trim(sigName), advance='yes' )
-    call dump ( filter%filterShape, name='FilterShape' )
-    call dump ( filter%filterGrid, name='FilterGrid', width=5, format='(f14.5)' )
-    call dump ( filter%lo_apod, name='LO_Apod', width=7, format='(f10.6)' )
-    call dump ( filter%ch_norm, name='CH_Norm' )
+    call GetNameOfSignal ( DACSfilter%filter%signal, sigName )
+    call output ( trim(sigName) )
+    call display_string ( DACSfilter%filter%file, before=' from file ', &
+      & advance='yes' )
+    call dump ( DACSfilter%filter%filterShape, name='FilterShape' )
+    call dump ( DACSfilter%filter%filterGrid, name='FilterGrid', width=5, format='(f14.5)' )
+    call dump ( DACSfilter%lo_apod, name='LO_Apod', width=7, format='(f10.6)' )
+    call dump ( DACSfilter%ch_norm, name='CH_Norm' )
   end subroutine Dump_DACS_Filter
 
   ! ----------------------------------  Dump_DACS_Filter_Database  -----
@@ -544,6 +550,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 2.20  2005/06/22 18:08:18  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.19  2004/12/13 20:32:27  vsnyder
 ! Put the filter shape file names in the string table.  Put the string indices
 ! in the FilterShape_T and DACSFilterShape_T structures.  This is ultimately

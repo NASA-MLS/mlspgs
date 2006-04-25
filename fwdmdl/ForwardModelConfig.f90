@@ -340,7 +340,7 @@ contains
               do thisSideband = fwdModelConf%sidebandStart, fwdModelConf%sidebandStop, 2
                 sx = (thisSideband +3) / 2
                 channels(channel)%shapeInds(sx) = MatchSignal ( &
-                  & DACSFilterShapes%signal, fwdModelConf%signals(sigInd), &
+                  & DACSFilterShapes%filter%signal, fwdModelConf%signals(sigInd), &
                   & sideband = thisSideband, channel=channels(channel)%used )
                 if ( channels(channel)%shapeInds(sx) == 0 ) &
                   & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1345,6 +1345,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.89  2006/04/11 18:37:21  vsnyder
+! Check for DACS channel information
+!
 ! Revision 2.88  2006/02/23 00:58:58  vsnyder
 ! Don't crash while dumping config if the signal can't be parsed
 !

@@ -99,9 +99,9 @@ contains
     integer :: L_Sines                  ! Log_2 of sine table length
 
     integer(i4) :: I, Khi, Klo, N, Nfilter, Nnorm
-    real(r8) :: Fmax, Fmin, Rmax, Rmin, Tmpary(size(DACSFilter%filterGrid))
+    real(r8) :: Fmax, Fmin, Rmax, Rmin, Tmpary(size(DACSFilter%filter%filterGrid))
 
-    nFilter = size(DACSFilter%filterGrid)
+    nFilter = size(DACSFilter%filter%filterGrid)
     nNorm = size(DACSFilter%ch_norm)
     i = nFilter / 2
 
@@ -113,12 +113,12 @@ contains
     ! Allocate sine table.  CreateSineTable stores l_sines + 1 into n_sine.
     if ( l_sines + 1 > n_sine ) call createSineTable ( l_sines - 1 )
 
-    if ( DACSFilter%filterGrid(i+1) > DACSFilter%filterGrid(i) ) then
-      Fmin = DACSFilter%filterGrid(001)
-      Fmax = DACSFilter%filterGrid(nFilter)
+    if ( DACSFilter%filter%filterGrid(i+1) > DACSFilter%filter%filterGrid(i) ) then
+      Fmin = DACSFilter%filter%filterGrid(001)
+      Fmax = DACSFilter%filter%filterGrid(nFilter)
     else
-      Fmin = DACSFilter%filterGrid(nFilter)
-      Fmax = DACSFilter%filterGrid(001)
+      Fmin = DACSFilter%filter%filterGrid(nFilter)
+      Fmax = DACSFilter%filter%filterGrid(001)
     end if
 
     n = size(f_grid)
@@ -129,18 +129,19 @@ contains
     rmin = minval(Rad(klo:khi))
     rmax = maxval(Rad(klo:khi))
 
-    ! Interpolate from (x=F_grid, y=Rad) to (x=DACSFilter%filterGrid, y=tmpary)
-    call Cspline ( F_grid, DACSFilter%filterGrid, Rad, tmpary, n, nFilter, Rmin, Rmax )
+    ! Interpolate from (x=F_grid, y=Rad) to (x=DACSFilter%filter%filterGrid, y=tmpary)
+    call Cspline ( F_grid, DACSFilter%filter%filterGrid, Rad, tmpary, n, &
+      & nFilter, Rmin, Rmax )
 
     if ( l_apod == l_filter ) then
       call dtcst ( tmpary, 'C', 'A', (/ l_filter /), 1, n_sine, sines )
       tmpary = tmpary * DACSFilter%lo_apod
       call dtcst ( tmpary, 'C', 'S', (/ l_filter /), 1, n_sine, sines )
-      tmpary = tmpary * DACSFilter%filterShape
+      tmpary = tmpary * DACSFilter%filter%filterShape
       call dtcst ( tmpary, 'C', 'A', (/ l_filter /), 1, n_sine, sines )
       call dtcst ( tmpary(:nNorm), 'C', 'S', (/ l_norm /), 1, n_sine, sines )
     else
-      tmpary = tmpary * DACSFilter%filterShape
+      tmpary = tmpary * DACSFilter%filter%filterShape
       call dtcst ( tmpary, 'C', 'A', (/ l_filter /), 1, n_sine, sines )
       tmpary(:nNorm) = tmpary(:nNorm) * DACSFilter%lo_apod
       call dtcst ( tmpary(:nNorm), 'C', 'S', (/ l_norm /), 1, n_sine, sines )
@@ -198,6 +199,9 @@ contains
 end module Freq_Avg_m
 
 ! $Log$
+! Revision 2.13  2005/10/24 20:24:55  vsnyder
+! Insert Euler-Maclaurin idea as a comment.  Why doesn't it work?
+!
 ! Revision 2.12  2005/06/22 18:08:19  pwagner
 ! Reworded Copyright statement, moved rcs id
 !

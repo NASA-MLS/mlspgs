@@ -2220,7 +2220,7 @@ contains
       select case ( frq_avg_sel )
       case ( 10 : 15 )
         do c = 1, noUsedDACS
-          shapeInd = MatchSignal ( dacsFilterShapes%signal, &
+          shapeInd = MatchSignal ( dacsFilterShapes%filter%signal, &
             & fwdModelConf%signals(usedDacsSignals(c)), sideband = thisSideband )
           call Freq_Avg_DACS ( frequencies, DACSFilterShapes(shapeInd), &
             & RadV(:noFreqs), DACsStaging(:,c) )
@@ -2308,7 +2308,7 @@ contains
       case ( 11, 15 ) ! See Frequency_Average.
         ! Do DACs stuff for all DACs channels first
         do c = 1, noUsedDACS
-          shapeInd = MatchSignal ( dacsFilterShapes%signal, &
+          shapeInd = MatchSignal ( dacsFilterShapes%filter%signal, &
             & fwdModelConf%signals(usedDacsSignals(c)), sideband = thisSideband )
           do sv_i = grids%l_v(mol-1)+1, grids%l_v(mol)
             call Freq_Avg_DACS ( frequencies, DACSFilterShapes(shapeInd), &
@@ -3106,9 +3106,9 @@ contains
             r1 = FilterShapes(shapeInd)%FilterGrid(1)
             r2 = FilterShapes(shapeInd)%FilterGrid(k)
           else
-            k = Size(dacsFilterShapes(shapeInd)%FilterGrid)
-            r1 = dacsFilterShapes(shapeInd)%FilterGrid(1)
-            r2 = dacsFilterShapes(shapeInd)%FilterGrid(k)
+            k = Size(dacsFilterShapes(shapeInd)%filter%FilterGrid)
+            r1 = dacsFilterShapes(shapeInd)%filter%FilterGrid(1)
+            r2 = dacsFilterShapes(shapeInd)%filter%FilterGrid(k)
           end if
           min_ch_freq_grid = MIN(r1, r2, min_ch_freq_grid)
           max_ch_freq_grid = MAX(r1, r2, max_ch_freq_grid)
@@ -3332,6 +3332,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.259  2006/04/21 22:25:20  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.258  2006/04/11 18:34:37  vsnyder
 ! Add tanh(h nu / k T) to Get_D_Deltau_Pol.  Use DACS frequencies in
 ! Frequency_Setup_1.
