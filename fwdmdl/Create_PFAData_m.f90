@@ -174,8 +174,14 @@ contains ! =====     Public Procedures     =============================
       pfaDatum%vGrid = pressures
       pfaDatum%whichLines = whichLines
       ! Get the filter shape for the signal
-      filters => filterShapes
-      if ( signal%dacs ) filters => DACSFilterShapes%filter
+      nullify ( filters )
+      if ( signal%dacs ) then
+        if (  associated(DACSFilterShapes)) filters => DACSFilterShapes%filter
+      else
+        filters => filterShapes
+      end if
+      if ( .not. associated(filters) ) &
+        & call announce_error ( where, noFilter, signalText )
       shapeInd = matchSignal ( filters%signal, signal, &
         & sideband=signal%sideband, channel=channel(c) )
       if ( shapeInd == 0 ) then
@@ -412,6 +418,9 @@ contains ! =====     Public Procedures     =============================
 end module Create_PFAData_m
 
 ! $Log$
+! Revision 2.17  2006/04/26 00:39:26  vsnyder
+! Need either ordinary or DACS filters
+!
 ! Revision 2.16  2006/04/25 23:25:36  vsnyder
 ! Revise DACS filter shape data structure
 !
