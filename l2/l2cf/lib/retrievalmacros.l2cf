@@ -546,6 +546,14 @@ Begin Fill
     sourceQuantity=standardDiagnostics.statusTemperature, /force
   Fill, quantity=standardDiagnostics.qualityGPH, method=vector, $
     sourceQuantity=standardDiagnostics.qualityTemperature, /force
+End Fill
+
+;; Because we clobbered our outputPrecision.gph, let's fill it again
+Begin Fill
+  Fill, quantity=outputPrecision.gph, method=gphPrecision, $
+    refGPHPrecisionquantity=outputPrecision.refGPH, $
+    tempPrecisionQuantity=outputPrecision.temperature
+
 }, $1,{RHI}, {
   ;; Do fancy things to make RHI agree with H2O and temperature
   Fill, quantity=state.rhi, h2oQuantity=state.h2o, $
@@ -674,6 +682,9 @@ Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusL
 })})
 
 ; $Log$
+; Revision 1.105  2005/10/28 23:29:04  pwagner
+; Added macros for storing standard products to the split dgg files
+;
 ; Revision 1.104  2005/07/21 23:47:14  pwagner
 ; Added statusInform statusMissingGMAO bits; fill status if missingGMAO
 ;
