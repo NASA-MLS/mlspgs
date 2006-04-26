@@ -314,7 +314,7 @@ contains ! =====     Public Procedures     =============================
     use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
     use Create_PFAData_m, only: Create_PFAData
     use Expr_m, only: Expr
-    use FilterShapes_m, only: FilterShapes
+    use FilterShapes_m, only: DACSFilterShapes, FilterShapes
     use Init_Tables_Module, only: F_AllLinesForRadiometer, F_AllLinesInCatalog, &
       & F_LOSVEL, F_Molecules, F_Signals, F_Temperatures, F_VGrid, L_Zeta
     use Intrinsic, only: PHYQ_Velocity
@@ -433,7 +433,8 @@ contains ! =====     Public Procedures     =============================
           & call announce_error ( subtree(1,son), notZeta )
       end select
     end do ! i
-    if ( .not. associated(filterShapes) ) call announce_error ( root, noFilterShapes )
+    if ( .not. associated(filterShapes) .and. &
+         .not. associated(DACSfilterShapes) ) call announce_error ( root, noFilterShapes )
     if ( error /= 0 ) return
 
     call decorate ( root, &
@@ -663,6 +664,9 @@ contains ! =====     Public Procedures     =============================
 end module PFAData_m
 
 ! $Log$
+! Revision 2.24  2006/04/26 00:39:09  vsnyder
+! Need either ordinary or DACS filters
+!
 ! Revision 2.23  2006/04/21 22:28:01  vsnyder
 ! Flush specified molecules
 !
