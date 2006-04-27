@@ -43,13 +43,14 @@ begin Fill
 
   ;; Get RHI from H2O
   Fill, quantity=apriori.rhi, h2oQuantity=apriori.h2o, $
-    temperatureQuantity=apriori.temperature, method=RHIFromH2O, /dontMask
+    temperatureQuantity=apriori.temperature, method=RHIFromH2O
+  Fill, quantity=aprioriPrecision.rhi, h2oQuantity=aprioriPrecision.h2o, $
+    temperatureQuantity=apriori.temperature, method=RHIFromH2O
 
-   Fill, quantity=apriori.RHiVmr, method=profile, $
-     profileValues = [ 1000mb: 50, 500mb : 10, 150mb : 10 , 100mb : 0.0001 ]
-   Fill, quantity=aprioriPrecision.RHiVmr, method=profile, profileValues = $
-    [ 1000mb : 100, 464mb : 100, 316mb : 50, 215mb : 20, 147mb : 5, $
-        100mb : 0.01, 68mb : 0.000001]
+  Fill, quantity=apriori.rhivmrsngl,sourcequantity=apriori.rhi, $
+        method = vector,/interpolate,/force
+  Fill, quantity=apriori.rhivmr,sourcequantity=apriori.rhi,method = vector, $
+        /interpolate,/force
 
   ;; --------------------------------------------- tpPressure
   !ifdef(tpPressure,{
@@ -182,7 +183,8 @@ begin Fill
   Fill, quantity=aprioriPrecision.o3,   method=profile, $
     profileValues = [ 464mb : 500ppbv, 316mb : 4 ppmv ]
   ;; 1 ppbv is too small for OH.  Better with a profile?
-  Fill, quantity=aprioriPrecision.oh,   method=explicit, /spread, explicitValues= 10 ppbv
+  Fill, quantity=aprioriPrecision.oh,   method=profile, $
+    profileValues = [ 10mb : 0.1ppbv, 1mb : 1 ppbv, 0.1mb : 5 ppbv, 0.01mb : 10 ppbv ]
   ;; 100pptv is far too small for so2
   Fill, quantity=aprioriPrecision.so2,  method=explicit, /spread, explicitValues= 2 ppbv
 
@@ -197,6 +199,21 @@ begin Fill
     tempPrecisionQuantity=aprioriPrecision.temperature, $
     h2oQuantity=apriori.h2o, temperatureQuantity=apriori.temperature, $
     method=RHIFromH2O, /dontMask
+
+  Fill, quantity=aprioriPrecision.rhivmrsngl, $
+        sourcequantity=aprioriPrecision.rhi,method = vector,/interpolate, $
+        /force
+  Subset, quantity=aprioriPrecision.rhivmrsngl, height=[147mb:147mb], $
+          mask=fill
+  Fill, quantity=aprioriPrecision.rhivmrsngl, method=explicit,  $
+        explicitValues=100, /spread
+  Subset, quantity=aprioriPrecision.rhivmrsngl, mask=fill, /reset
+  Fill, quantity=aprioriPrecision.rhivmr,sourcequantity=aprioriPrecision.rhi,$
+        method = vector,/interpolate, /force
+  Subset, quantity=aprioriPrecision.rhivmr, height=[681mb:147mb], mask=fill
+  Fill, quantity=aprioriPrecision.rhivmr, method=explicit,  $
+        explicitValues=100, /spread
+  Subset, quantity=aprioriPrecision.rhivmr, mask=fill, /reset
 
   ;; This macro interpolates standard resolution quantities to the
   ;; hiRes equivalents. 
@@ -260,10 +277,26 @@ begin Fill
   Fill, quantity=highBound.temperature, method=explicit, explicitValues=550K, /spread
 
   Fill, quantity=lowBound.h2o, method=explicit, explicitValues=0.1ppmv, /spread
-  Fill, quantity=highBound.h2o, method=explicit, explicitValues=0.01, /spread
+  Fill, quantity=highBound.h2o, method=explicit, explicitValues=0.06, /spread
 
-  Fill, quantity=lowBound.RHiVmr, method=explicit, explicitValues=0.1, /spread
-  Fill, quantity=highBound.RHiVmr, method=explicit, explicitValues=200, /spread
+  Fill, quantity=lowBound.RHiVmrsngl, method=profile, profileValues=[147mb:2, 100mb:0.0001]
+  Fill, quantity=highBound.RHiVmrsngl, method=explicit, explicitValues=200, /spread
+
+;; ensure that apriori between lowbound and highbound
+   Fill, quantity=apriori.RHiVmrsngl, method=manipulate,a=apriori.RHiVmrsngl,b=lowBound.RHiVmrsngl,$
+        manipulation='a>b'
+   Fill, quantity=apriori.RHiVmrsngl, method=manipulate,a=apriori.RHiVmrsngl,b=highBound.RHiVmrsngl,$
+        manipulation='a<b'
+
+   Fill, quantity=lowBound.RHiVmr, method=explicit, explicitValues=0.1, /spread
+   Fill, quantity=highBound.RHiVmr, method=explicit, explicitValues=200, /spread
+
+;; ensure that apriori between lowbound and highbound
+   Fill, quantity=apriori.RHiVmr, method=manipulate,a=apriori.RHiVmr,b=lowBound.RHiVmr,$
+        manipulation='a>b'
+   Fill, quantity=apriori.RHiVmr, method=manipulate,a=apriori.RHiVmr,b=highBound.RHiVmr,$
+        manipulation='a<b'
+
 
   !interpolateToHiRes(lowBound.temperature_HR)
   !interpolateToHiRes(highBound.temperature_HR)
@@ -302,29 +335,29 @@ begin Fill
     [ 10mb:30ppbv, 1mb:300ppbv, 0.1mb:3ppmv, 0.046mb:0ppmv ]
 
   Fill, quantity=vReg.h2o, method=profile, profileValues= $
-    [ 1000mb:20ppmv, 300:2ppmv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.046mb:0ppmv ], logSpace=false
-;   Fill, quantity=vReg.h2o_hr, method=profile, profileValues= $
-;    [ 178mb:0ppmv, 146mb: 5.0ppmv, 121mb: 2.5ppmv, 100mb:1.5ppmv ], logSpace=false
+    [ 1000mb:500ppmv, 300mb:50ppmv, 215mb:20ppmv, 121mb:2ppmv, 100mb:0.6ppmv, $
+	0.1mb:0.3ppmv, 0.001mb:0ppmv ], logSpace=false
   Fill, quantity=vReg.h2o_hr, method=profile, profileValues= $
-   [ 178mb:0ppmv, 146mb: 2.0ppmv, 121mb: 1ppmv, 100mb:0.5ppmv ], logSpace=false
-
+    [ 1000mb:50ppmv, 300mb:20ppmv, 215mb:10ppmv, 121mb: 5ppmv, 100mb:0.6ppmv ], logSpace=false
+  Fill, quantity=vReg.RHiVmr, method=profile, profileValues= [ $
+        681mb:10.0, 316mb:10.0, 215mb:10.0, 147mb:10.0]
   Fill, quantity=vReg.hcl, method=profile, $
     profileValues= [ 0.1mb:0.3ppbv, 0.046mb:0ppbv ]
   Fill, quantity=vReg.hcn, method=profile, $
-    profileValues= [ 1mb:100pptv, 0.68mb:0pptv ]
+    profileValues= [ 1mb:20pptv, 0.1mb:0pptv ]
   Fill, quantity=vReg.hno3, method=profile, $
-    profileValues= [ 1mb:10ppbv, 0.68mb:0ppbv ]
+    profileValues= [ 200mb:0.2ppbv, 100mb:1ppbv, 1mb:3ppbv, 0.68mb:0ppbv ]
   Fill, quantity=vReg.ho2, method=profile, $
     profileValues=[ 100mb:10pptv, 1mb:10ppbv ], /logSpace
   Fill, quantity=vReg.hocl, method=profile, $
     profileValues= [ 1mb:0.3ppbv, 0.68mb:0ppbv ]
   Fill, quantity=vReg.n2o, method=profile, $
-    profileValues= [ 1mb:30ppbv, 0.68mb:0ppbv ]
+    profileValues= [ 200mb:10ppbv, 100mb:20ppbv, 1mb:20ppbv, 0.1mb:0ppbv ]
 
   Fill, quantity=vReg.o3, method=profile, $
-    profileValues= [ 0.1mb:1ppmv, 0.046mb:0ppmv ]
+    profileValues= [ 200mb:0.2ppmv, 100mb:0.5ppmv, 0.1mb:1ppmv, 0.046mb:0ppmv ]
   Fill, quantity=vReg.o3_HR, method=profile, $
-    profileValues=[ 10mb:0ppmv ]
+    profileValues=[ 10mb:0.2ppmv ]
 
   Fill, quantity=vReg.oh, method=profile, $
     profileValues=[ 100mb:10pptv, 1mb:10ppbv ], /logSpace
@@ -362,15 +395,14 @@ begin Fill
 
   Fill, quantity=hReg.h2o, method=profile, $
     profileValues=[ 146mb:0ppmv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.046mb:0ppmv ], logSpace=false
-;   Fill, quantity=hReg.h2o_HR, method=profile, $
-;     profileValues=[ 146mb:0ppmv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.046mb:0ppmv ], logSpace=false
+
   Fill, quantity=hReg.h2o_HR, method=profile, $
     profileValues=[ 146mb:0ppmv, 100mb:1.0ppmv, 0.1mb:1.0ppmv, 0.046mb:0ppmv ], logSpace=false
 
   Fill, quantity=hReg.hcl, method=profile, $
     profileValues= [ 0.1mb:0.3ppbv, 0.046mb:0ppbv ]
   Fill, quantity=hReg.hcn, method=profile, $
-    profileValues= [ 1mb:100pptv, 0.68mb:0pptv ]
+    profileValues= [ 1mb:20pptv, 0.1mb:0pptv ]
   Fill, quantity=hReg.hno3, method=profile, $
     profileValues= [ 1mb:0.3ppbv, 0.68mb:0ppbv ]
   Fill, quantity=hReg.ho2, method=profile, $
@@ -378,12 +410,12 @@ begin Fill
   Fill, quantity=hReg.hocl, method=profile, $
     profileValues= [ 1mb:0.3ppbv, 0.68mb:0ppbv ]
   Fill, quantity=hReg.n2o, method=profile, $
-    profileValues= [ 1mb:10ppbv, 0.68mb:0ppbv ]
+    profileValues= [ 1mb:10ppbv, 0.1mb:0ppbv ]
 
   Fill, quantity=hReg.o3, method=profile, $
     profileValues= [ 146mb:30ppbv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.046mb:0ppmv ]
   Fill, quantity=hReg.o3_HR, method=profile, $
-    profileValues= [ 10mb:0ppmv ]
+    profileValues= [ 10mb:0.2ppmv ]
 
   Fill, quantity=hReg.oh, method=profile, $
     profileValues=[ 100mb:10pptv, 1mb:10ppbv ], /logSpace
