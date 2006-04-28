@@ -82,7 +82,7 @@ contains ! =====     Public Procedures     =============================
     use L2PC_m, only: WRITEONEL2PC, OUTPUTHDF5L2PC
     use L2ParInfo, only: parallel
     use MatrixModule_1, only: MATRIX_DATABASE_T, MATRIX_T, GETFROMMATRIXDATABASE
-    use MLSCommon, only: MLSFile_T, TAI93_Range_T
+    use MLSCommon, only: MLSFile_T, TAI93_Range_T, FileNameLen
     use MLSFiles, only: &
       & AddInitializeMLSFile, Dump, GetMLSFileByName, &
       & MLS_INQSWATH, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
@@ -127,7 +127,7 @@ contains ! =====     Public Procedures     =============================
     integer :: FIELD_INDEX              ! F_... field code
     integer :: FIELD_NO                 ! Index of assign vertex sons of Key
     integer :: FIELDVALUE               ! For get_boolean
-    character (len=132) :: FILE_BASE    ! From the FILE= field
+    character (len=FileNameLen) :: FILE_BASE    ! From the FILE= field
     integer :: FORMATTYPE               ! l_hdf or l_swath
     logical, dimension(field_first:field_last) :: GOT ! Fields
     integer :: GSON                     ! Son of Son -- an assign node
@@ -135,8 +135,8 @@ contains ! =====     Public Procedures     =============================
     integer :: HGridIndex
     type (HGrid_T), dimension(:), pointer :: HGrids => null()
     integer :: IN_FIELD_NO              ! Index of sons of assign vertex
-    character (len=132) :: INPUTFILE_BASE    ! From the inputfile= field
-    character (len=132) :: inputPhysicalFilename
+    character (len=FileNameLen) :: INPUTFILE_BASE    ! From the inputfile= field
+    character (len=FileNameLen) :: inputPhysicalFilename
     integer :: INPUT_TYPE              ! L_L2AUX, L_L2GP, L_PC, L_L2DGG
     type(MLSFile_T), pointer :: inputFile
     integer :: KEY                      ! Index of spec_args node
@@ -154,7 +154,7 @@ contains ! =====     Public Procedures     =============================
     type(MLSFile_T), pointer :: outputFile
     character(len=8) :: OUTPUTTYPESTR   ! 'l2gp', 'l2aux', etc.
     logical :: PACKED                   ! Do we pack this l2pc?
-    character (len=132) :: PhysicalFilename
+    character (len=FileNameLen) :: PhysicalFilename
     integer :: QUANTITIESNODE           ! A tree node
     integer :: RECLEN                   ! For file stuff
     character (len=MAXSWATHNAMESBUFSIZE) :: rename
@@ -967,7 +967,7 @@ contains ! =====     Public Procedures     =============================
     use Intrinsic, only: l_hdf
     use L2AUXData, only: L2AUXDATA_T, WriteL2AUXData
     use L2GPData, only: L2GPNameLen
-    use MLSCommon, only: MLSFile_T
+    use MLSCommon, only: MLSFile_T, FileNameLen
     use MLSL2Options, only: checkPaths, TOOLKIT
     use MLSFiles, only: AddInitializeMLSFile, GetMLSFileByName, &
       & GetPCFromRef, split_path_name
@@ -986,7 +986,7 @@ contains ! =====     Public Procedures     =============================
     ! Local variables
     integer :: DB_index
     integer :: FIELD_NO                 ! Index of assign vertex sons of Key
-    character (len=132) :: FullFilename
+    character (len=FileNameLen) :: FullFilename
     integer :: FileHandle
     integer :: GSON                     ! Son of Son -- an assign node
     integer :: hdfVersion               ! 4 or 5 (corresp. to hdf4 or hdf5)
@@ -1092,7 +1092,7 @@ contains ! =====     Public Procedures     =============================
     use INIT_TABLES_MODULE, only: F_OVERLAPS, F_QUANTITIES
     use Intrinsic, only: l_swath, Lit_indices
     use L2GPData, only: L2GPData_T, L2GPNameLen, WriteL2GPData
-    use MLSCommon, only: MLSFile_T
+    use MLSCommon, only: MLSFile_T, FileNameLen
     use MLSL2Options, only: checkPaths, TOOLKIT
     use MLSFiles, only: AddInitializeMLSFile, GetMLSFileByName, &
       & GetPCFromRef, split_path_name
@@ -1113,7 +1113,7 @@ contains ! =====     Public Procedures     =============================
     ! Local variables
     integer :: DB_index
     integer :: FIELD_NO                 ! Index of assign vertex sons of Key
-    character (len=132) :: FullFilename
+    character (len=FileNameLen) :: FullFilename
     integer :: FileHandle
     integer :: GSON                     ! Son of Son -- an assign node
     integer :: hdfVersion               ! 4 or 5 (corresp. to hdf4 or hdf5)
@@ -1288,7 +1288,7 @@ contains ! =====     Public Procedures     =============================
     use L2GPData, only: AVOIDUNLIMITEDDIMS, &
       & MAXSWATHNAMESBUFSIZE, cpL2GPData
     use L2ParInfo, only: parallel
-    use MLSCommon, only: I4, MLSFile_T
+    use MLSCommon, only: I4, MLSFile_T, FileNameLen
     use MLSFiles, only: HDFVERSION_5, &
       & AddInitializeMLSFile, GetMLSFileByName, GetPCFromRef, mls_exists, &
       & MLS_SFSTART, MLS_SFEND, &
@@ -1312,12 +1312,12 @@ contains ! =====     Public Procedures     =============================
     ! Local variables
     logical :: create2
     integer :: DB_index
-    character (len=132) :: FILE_BASE    ! From the FILE= field
+    character (len=FileNameLen) :: FILE_BASE    ! From the FILE= field
     integer :: GRP_ID
     type(MLSFile_T), pointer :: inputFile
-    character (len=132) :: L2auxPhysicalFilename
+    character (len=FileNameLen) :: L2auxPhysicalFilename
     integer :: L2gpFileHandle, L2gp_Version
-    character (len=132) :: L2gpPhysicalFilename
+    character (len=FileNameLen) :: L2gpPhysicalFilename
     logical :: madeFile
     type(MLSFile_T), pointer :: outputFile
     integer :: ReturnStatus
@@ -1528,6 +1528,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.123  2006/04/28 00:46:28  pwagner
+! Overcome namelength (132) limitation for file= field
+!
 ! Revision 2.122  2006/04/11 23:35:38  pwagner
 ! More info why unable to unsplit dgg/dgm files
 !
