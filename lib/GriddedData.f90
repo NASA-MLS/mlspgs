@@ -11,13 +11,15 @@
 
 module GriddedData ! Contains the derived TYPE GriddedData_T
 
+  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use intrinsic, only: L_ANGLE, L_GEODALTITUDE, L_GPH, L_ETA, L_PRESSURE, &
+    & L_THETA
   use MLSCommon, only: RGR=>R4, R8, LINELEN, NAMELEN, DEFAULTUNDEFINEDVALUE
   ! r4 corresponds to sing. prec. :: same as stored in files
   ! (except for dao dimensions)
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR, &
     & MLSMSG_DEALLOCATE
   use Output_m, only: OUTPUT
-  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
 
   implicit NONE
   private
@@ -28,7 +30,8 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
-  public :: AddGriddedDataToDatabase, ConcatenateGriddedData, CopyGrid, &
+  public :: AddGriddedDataToDatabase, &
+    & ConcatenateGriddedData, ConvertFromEtaLevelGrids, CopyGrid, &
     & DestroyGriddedData, DestroyGriddedDataDatabase, Dump, GriddedData_T, &
     & NullifyGriddedData, RGR, SetupNewGriddedData, SliceGriddedData, &
     & WrapGriddedData
@@ -44,11 +47,11 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
   ! work in l3ascii_read_field
   public :: V_is_pressure, V_is_altitude, V_is_GPH, V_is_theta, V_is_eta
 
-  integer, parameter :: V_is_pressure = 1
-  integer, parameter :: V_is_altitude = v_is_pressure+1
-  integer, parameter :: V_is_GPH      = v_is_altitude+1
-  integer, parameter :: V_is_theta    = v_is_gph+1
-  integer, parameter :: V_is_eta      = V_is_theta+1
+  integer, parameter :: V_is_pressure = L_PRESSURE ! 1
+  integer, parameter :: V_is_altitude = L_GEODALTITUDE ! v_is_pressure+1
+  integer, parameter :: V_is_GPH      = L_GPH ! v_is_altitude+1
+  integer, parameter :: V_is_theta    = L_THETA ! v_is_gph+1
+  integer, parameter :: V_is_eta      = L_ETA ! V_is_theta+1
   
   ! If dumping gridded data, always give some details of any matching these
   character(len=*), parameter :: ALWAYSDUMPTHESE = 'dao,ncep' ! -> ' '
@@ -177,6 +180,57 @@ contains
     x%field ( :, :, :, :, :, 1:a%noDates ) = a%field
     x%field ( :, :, :, :, :, a%noDates+1:x%noDates ) = b%field
   end subroutine ConcatenateGriddedData
+
+  ! ---------------------------------------- ConvertFromEtaLevelGrids ------------------
+  subroutine ConvertFromEtaLevelGrids ( TGrid, PGrid, VGrid, OutGrid )
+    ! Converts two eta-level grids, one of them pressures, 
+    ! to a pressure-level Grid
+    use MLSNumerics, only: InterpolateValues
+    use VGridsDatabase, only: VGrid_T, ConvertVGrid
+    type ( GriddedData_T ), intent(in)  :: TGrid  ! E.g., T on eta surfaces
+    type ( GriddedData_T ), intent(in)  :: PGrid  ! Pressures on eta surfaces
+    type ( VGrid_T ), intent(in)        :: VGrid  ! What surfaces to use
+    type ( GriddedData_T ), intent(out) :: OutGrid ! T on pressure level
+    ! Internal variables
+    integer :: iDate, iSza, iLst, iLon, iLat
+    real(rgr), dimension(:), pointer    :: pEta => null()
+    real(rgr), dimension(:), pointer    :: pVGrid => null()
+    ! Executable code
+    nullify( pEta, pVGrid )
+    call allocate_test( pEta, TGrid%noHeights, 'pEta', moduleName )
+    call allocate_test( pVGrid, VGrid%noSurfs, 'pVGrid', moduleName )
+    call DestroyGriddedData ( OutGrid )
+    call SetupNewGriddedData ( OutGrid, source=TGrid, noHeights=VGrid%NoSurfs )
+    ! Copy the information over
+    OutGrid%verticalCoordinate = VGrid%VerticalCoordinate
+    OutGrid%heights = VGrid%surfs(:,1)
+    OutGrid%lats = TGrid%lats
+    OutGrid%lons = TGrid%lons
+    OutGrid%lsts = TGrid%lsts
+    OutGrid%szas = TGrid%szas
+    OutGrid%dateStarts = TGrid%dateStarts
+    OutGrid%dateEnds = TGrid%dateEnds
+    ! Now we'll interpolate to the VGrid surfaces
+    ! pVGrid = vGrid%Surfs
+    do idate=1, TGrid%noDates
+      do iSza=1, TGrid%noSzas
+        do iLst=1, TGrid%noLsts
+          do iLon=1, TGrid%noLons
+            do iLat=1, TGrid%noLats
+              pEta = PGrid%field( :, iLat, iLon, iLst, iSza, iDate )
+              call convertVGrid( VGrid, l_pressure, pVGrid )
+              call InterpolateValues( &
+                & pEta, TGrid%field( :, iLat, iLon, iLst, iSza, iDate ), &
+                & pVGrid, OutGrid%field( :, iLat, iLon, iLst, iSza, iDate ), &
+                & 'L', 'B', TGrid%missingValue )
+            enddo
+          enddo
+        enddo
+      enddo
+    enddo
+    call deallocate_test( pEta,   'pEta', moduleName )
+    call deallocate_test( pVGrid, 'pVGrid', moduleName )
+  end subroutine ConvertFromEtaLevelGrids
 
   ! ---------------------------------------- CopyGrid ------------------
   subroutine CopyGrid ( Z, X )
@@ -958,6 +1012,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.37  2006/05/02 19:00:42  pwagner
+! Added ConvertFromEtaLevelGrids; preliminary, untested
+!
 ! Revision 2.36  2006/02/10 21:21:20  pwagner
 ! Added V_is_eta verticalCoordinate
 !
