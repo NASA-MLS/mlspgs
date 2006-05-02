@@ -14,6 +14,10 @@ module VGridsDatabase
 !=============================================================================
 
   use Allocate_Deallocate, only: Deallocate_Test
+  use intrinsic, only: L_ANGLE, L_ETA, L_GEODALTITUDE, L_GPH, L_INTEGER, &
+    & L_NONE, L_PRESSURE, L_THETA, L_ZETA, &
+    & PHYQ_Dimensionless, PHYQ_Pressure, PHYQ_Zeta, PHYQ_Temperature, &
+    & PHYQ_Length, PHYQ_Angle, PHYQ_Invalid
   use MLSCommon, only: RS => R8 ! Real kind for Surfs
   use MLSMessageModule, only: & ! Message logging
     & MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Error, &
@@ -39,6 +43,10 @@ module VGridsDatabase
   type(VGrid_t), pointer, save, public :: VGrids(:) => NULL()
 
   ! Public procedures:
+  interface ConvertVGrid
+    module procedure ConvertVGrid_inout, ConvertVGrid_sngl, ConvertVGrid_dbl
+  end interface ConvertVGrid
+
   interface DoVGridsMatch
     module procedure DoVGridsMatch_VG
   end interface
@@ -48,6 +56,7 @@ module VGridsDatabase
   end interface Dump
 
   public :: AddVgridIfNecessary, AddVGridToDatabase
+  public :: ConvertVGrid
   public :: DestroyVGridContents, DestroyVGridDatabase
   public :: DoVGridsMatch, DoVGridsMatch_VG
   public :: Dump, Dump_a_VGrid, Dump_VGrids, GetUnitForVerticalCoordinate
@@ -124,6 +133,117 @@ contains
     call deallocate_test ( vGrid%surfs, "vGrid%surfs", ModuleName )
 
   end subroutine DestroyVGridContents
+
+  !----------------------------------------  ConvertVGrid_inout  -----
+  subroutine ConvertVGrid_inout ( vGrid, newVerticalCoordinate )
+
+  ! This routine converts the surfaces of a VGrid between vertical coordinates
+
+    ! Dummy arguments
+
+    type (vGrid_T), intent(inout) :: vGrid
+    integer, intent(in)           :: newVerticalCoordinate
+
+    ! Executable code
+    if ( VGrid%verticalCoordinate == newVerticalCoordinate ) return
+    select case (newVerticalCoordinate)
+    case (l_GeodAltitude)
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--not able to convert VGrids between vertical coordinates' )
+    case (l_GPH)
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--not able to convert VGrids between vertical coordinates' )
+    case (l_eta)
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--not able to convert VGrids between vertical coordinates' )
+    case (l_theta)
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--not able to convert VGrids between vertical coordinates' )
+    case (l_pressure)
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--not able to convert VGrids between vertical coordinates' )
+    case default
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--not able to convert VGrids between vertical coordinates' )
+    end select      
+
+  end subroutine ConvertVGrid_inout
+
+  !----------------------------------------  ConvertVGrid_sngl  -----
+  subroutine ConvertVGrid_sngl ( vGrid, newVerticalCoordinate, surfs )
+
+  ! This routine converts the surfaces of a VGrid between vertical coordinates
+
+    ! Dummy arguments
+
+    type (vGrid_T), intent(in) :: vGrid
+    integer, intent(in)        :: newVerticalCoordinate
+    real, dimension(:)         :: surfs
+    
+
+    ! Executable code
+    surfs = vGrid%surfs(:,1)
+    if ( VGrid%verticalCoordinate == newVerticalCoordinate ) return
+    select case (newVerticalCoordinate)
+    case (l_GeodAltitude)
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--not able to convert VGrids between vertical coordinates' )
+    case (l_GPH)
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--not able to convert VGrids between vertical coordinates' )
+    case (l_eta)
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--not able to convert VGrids between vertical coordinates' )
+    case (l_theta)
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--not able to convert VGrids between vertical coordinates' )
+    case (l_pressure)
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--not able to convert VGrids between vertical coordinates' )
+    case default
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--not able to convert VGrids between vertical coordinates' )
+    end select      
+
+  end subroutine ConvertVGrid_sngl
+
+  !----------------------------------------  ConvertVGrid_dbl  -----
+  subroutine ConvertVGrid_dbl ( vGrid, newVerticalCoordinate, surfs )
+
+  ! This routine converts the surfaces of a VGrid between vertical coordinates
+
+    ! Dummy arguments
+
+    type (vGrid_T), intent(in)     :: vGrid
+    integer, intent(in)            :: newVerticalCoordinate
+    double precision, dimension(:) :: surfs
+    
+
+    ! Executable code
+    surfs = vGrid%surfs(:,1)
+    if ( VGrid%verticalCoordinate == newVerticalCoordinate ) return
+    select case (newVerticalCoordinate)
+    case (l_GeodAltitude)
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--not able to convert VGrids between vertical coordinates' )
+    case (l_GPH)
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--not able to convert VGrids between vertical coordinates' )
+    case (l_eta)
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--not able to convert VGrids between vertical coordinates' )
+    case (l_theta)
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--not able to convert VGrids between vertical coordinates' )
+    case (l_pressure)
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--not able to convert VGrids between vertical coordinates' )
+    case default
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--not able to convert VGrids between vertical coordinates' )
+    end select      
+
+  end subroutine ConvertVGrid_dbl
 
   ! ---------------------------------------  DestroyVGridDatabase  -----
   subroutine DestroyVGridDatabase ( DATABASE )
@@ -231,10 +351,6 @@ contains
 
   ! ----------------------------------  GetUnitForVerticalCoordinate  -----
   integer function GetUnitForVerticalCoordinate ( coordinate )
-    use intrinsic, only: L_ANGLE, L_GEODALTITUDE, L_GPH, L_INTEGER, L_NONE, &
-      & L_PRESSURE, L_THETA, L_ZETA, &
-      & PHYQ_Dimensionless, PHYQ_Pressure, PHYQ_Zeta, PHYQ_Temperature, &
-      & PHYQ_Length, PHYQ_Angle, PHYQ_Invalid
     integer, intent(in) :: coordinate
     ! Excutable code
     select case ( coordinate )
@@ -338,6 +454,9 @@ contains
 end module VGridsDatabase
 
 ! $Log$
+! Revision 2.22  2006/05/02 18:59:50  pwagner
+! Added ConvertVGrid, though mostly non-functional for now
+!
 ! Revision 2.21  2006/02/08 21:34:46  vsnyder
 ! Add a 'what' argument, that just prints, to Dump_a_VGrid
 !
