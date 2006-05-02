@@ -66,6 +66,7 @@ earthRefl
 effectiveOpticalDepth
 elevOffset
 emls
+eta
 
 false
 fieldAzimuth
@@ -219,6 +220,9 @@ zeta
 zonalavg
 
 # $Log$
+# Revision 2.45  2006/05/02 18:51:42  pwagner
+# Added eta for leta-level gmao files
+#
 # Revision 2.44  2006/01/26 00:30:35  pwagner
 # DU synonym for DobsonUnits
 #
