@@ -1164,7 +1164,8 @@ contains ! =====     Public Procedures     =============================
             & 'Need baselineQuantity for applyBaseline fill' )
           baselineQuantity => GetVectorQtyByTemplateIndex( &
             & vectors(baselineVctrIndex), baselineQtyIndex )
-          call ApplyBaseline ( key, quantity, baselineQuantity, quadrature )
+          call ApplyBaseline ( key, quantity, baselineQuantity, &
+            & quadrature, dontmask )
 
         case ( l_asciiFile )
           if ( .not. got ( f_file ) ) &
@@ -2299,16 +2300,23 @@ contains ! =====     Public Procedures     =============================
     end subroutine addGaussianNoise
 
     ! ------------------------------------------- ApplyBaseline ----------
-    subroutine ApplyBaseline ( key, quantity, baselineQuantity, quadrature )
+    subroutine ApplyBaseline ( key, quantity, baselineQuantity, &
+      & quadrature, dontmask )
+      ! use output_m, only: blanks, output
       integer, intent(in) :: KEY        ! Tree node
       type (VectorValue_T), intent(inout) :: QUANTITY ! Radiance quantity to modify
       type (VectorValue_T), intent(in) :: BASELINEQUANTITY ! L1B MAF baseline to use
       logical, intent(in) :: QUADRATURE ! If set add in quadrature (for noise)
+      logical, intent(in) :: DONTMASK ! If set ignore baselinequantity mask
       ! Local variables
       integer :: MIF
       integer :: CHAN
       integer :: IND                    ! Combined MIF/CHAN
+      integer :: i
+      integer :: numProfs
+      logical :: skipMe
       ! Executable code
+      ! call output( 'Now in applyBaseline', advance='yes' )
       if ( quantity%template%quantityType /= l_radiance ) &
         & call Announce_Error ( key, no_Error_Code, &
         &   'Quantity to fill must be a radiance' )
@@ -2320,19 +2328,42 @@ contains ! =====     Public Procedures     =============================
         & call Announce_Error ( key, no_Error_Code, &
         &   'Quantity and baselineQuantity must have matching signal/sideband' )
       ind = 1
+      numProfs = size( quantity%values ( ind, : ) )
       if ( quadrature ) then
         do mif = 1, quantity%template%noSurfs
           do chan = 1, quantity%template%noChans
-            quantity%values ( ind, : ) = sqrt ( quantity%values ( ind, : )**2 + &
-              & baselineQuantity%values ( chan, : )**2 )
+            if ( .not. dontMask .and. associated(baselineQuantity%mask) ) then
+              do i=1, numProfs
+                skipMe = .not. dontMask .and. &
+                  &  isVectorQtyMasked(baselineQuantity, chan, i)
+                if ( .not. skipMe )  &
+                & quantity%values ( ind, i ) = sqrt ( &
+                  & quantity%values ( ind, i )**2 + &
+                  & baselineQuantity%values ( chan, i )**2 )
+              enddo
+            else
+              quantity%values ( ind, : ) = sqrt ( quantity%values ( ind, : )**2 + &
+                & baselineQuantity%values ( chan, : )**2 )
+            endif
             ind = ind + 1
           end do
         end do
       else
         do mif = 1, quantity%template%noSurfs
           do chan = 1, quantity%template%noChans
-            quantity%values ( ind, : ) = quantity%values ( ind, : ) + &
-              & baselineQuantity%values ( chan, : )
+            if ( .not. dontMask .and. associated(baselineQuantity%mask) ) then
+              do i=1, numProfs
+                skipMe = .not. dontMask .and. &
+                  &  isVectorQtyMasked(baselineQuantity, chan, i)
+                if ( .not. skipMe )  &
+                & quantity%values ( ind, i ) = &
+                  & quantity%values ( ind, i ) + &
+                  & baselineQuantity%values ( chan, i )
+              enddo
+            else
+              quantity%values ( ind, : ) = quantity%values ( ind, : ) + &
+                & baselineQuantity%values ( chan, : )
+            endif
             ind = ind + 1
           end do
         end do
@@ -4253,11 +4284,6 @@ contains ! =====     Public Procedures     =============================
                & H2OofZeta(s) &
                & * &
                & RHIFromH2O_Factor(T, zeta(qIndex), vmr_unit_cnv, invert)
-! >                & exp(invs*( &
-! >                & (C(T)+zeta(qIndex)+vmr_unit_cnv) * log(10.) &
-! >                & + &
-! >                & 3.56654*log(T/273.16) &
-! >                & ))
             end if
             wereAnySkipped = wereAnySkipped .or. skipMe
           end do
@@ -4389,10 +4415,8 @@ contains ! =====     Public Procedures     =============================
       integer ::                          QINDEX
       real (r8) ::                        rhi_precision
       integer ::                          S           ! Surface loop counter
-!     integer ::                          S_H2OPrecision       ! Instance num for surfs
       integer ::                          S_H2O       ! Instance num for surfs
       integer ::                          S_RHI       ! Instance num for surfs
-!     integer ::                          S_TPrecision         ! Instance num for surfs
       integer ::                          S_T         ! Instance num for surfs
       logical ::                          skipMe
       character(len=*), parameter ::      VMR_UNITS = 'vmr'
@@ -4488,16 +4512,6 @@ contains ! =====     Public Procedures     =============================
         else
           s_rhi = i
         end if
-!         if ( sourcePrecisionQuantity%template%coherent ) then
-!           s_h2oPrecision = 1
-!         else
-!           s_h2oPrecision = i
-!         end if
-!         if ( tempPrecisionquantity%template%coherent ) then
-!           s_tPrecision = 1
-!         else
-!           s_tPrecision = i
-!         end if
         if ( sourceQuantity%template%coherent ) then
           s_h2o = 1
         else
@@ -5458,6 +5472,8 @@ contains ! =====     Public Procedures     =============================
       & isPrecision, suffix, PrecisionQuantity, BOMask )
       use BitStuff, only: NegativeIfBitPatternSet
       use MLSFiles, only: HDFVERSION_5
+      use MLSStrings, only: lowercase
+      use output_m, only: blanks, output
       integer, intent(in) :: root
       type (VectorValue_T), INTENT(INOUT) ::        QUANTITY
       type (MLSChunk_T), INTENT(IN) ::              CHUNK
@@ -5578,6 +5594,18 @@ contains ! =====     Public Procedures     =============================
       end if
 
       ! If the quantity exists (or it doesn't exist but it's not a radiance)
+      if ( index(lowercase(namestring), 'baseline') > 0 .and. .false. ) then
+        call output('namestring: ', advance='no')
+        call output(trim(namestring), advance='yes')
+        call output('associated(L1BFile): ', advance='no')
+        call output(associated(L1BFile), advance='yes')
+        call output('qty type: ', advance='no')
+        call output(quantity%template%quantityType, advance='no')
+        call blanks(3)
+        call output(l_radiance, advance='no')
+        call blanks(3)
+        call output(l_L1BMAFBaseline, advance='yes')
+      endif
       if ( associated(L1BFile) .or. ( quantity%template%quantityType /= l_radiance .and. &
         & quantity%template%quantityType /= l_L1BMAFBaseline ) ) then
         if ( isPrecision ) nameString = trim(nameString) // PRECISIONSUFFIX
@@ -5648,7 +5676,7 @@ contains ! =====     Public Procedures     =============================
         call DeallocateL1BData(l1bData)
       else
         ! This is the case where it's a radiance we're after and it's missing
-        quantity%values = -1.0
+        quantity%values = DEFAULTUNDEFINEDVALUE ! -1.0
         do column=1, size(quantity%values(1,:))
           do row=1, size(quantity%values(:,1))
             call MaskVectorQty ( quantity, row, column )
@@ -7743,6 +7771,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.330  2006/05/03 22:18:26  pwagner
+! Sets mask reading quantities missing from l1b file
+!
 ! Revision 2.329  2006/03/23 03:06:35  vsnyder
 ! Use HFTI instead of Cholesky for FillUsingLeastSquares, for stability
 !
