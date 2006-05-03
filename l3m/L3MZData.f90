@@ -55,7 +55,6 @@ MODULE L3MZData
 
 ! Definition -- L3MZData_T
 ! Subroutines -- OutputL3MZ
-!                OutputMZDiag
 !                WriteMetaL3MZ
 !                WriteAttributeMZ
 !                SetAliasMZ
@@ -274,6 +273,12 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
+      status = he5_zadefine(swID, DG_FIELD2, DIMLL_NAME, "", HE5T_NATIVE_INT)
+      IF (status == -1) THEN
+         msr = DAT_ERR // DG_FIELD2
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
 ! Write the data
 
       start = 0
@@ -357,6 +362,13 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
+      status = he5_zawrite( swID, DG_FIELD2, start, stride, edge, & 
+           & mz%perMisPoints )
+      IF (status == -1) THEN
+         msr = WR_ERR // DG_FIELD2
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
 ! After writing, detach from zonal interface
 
       status = he5_zadetach(swID)
@@ -366,10 +378,6 @@ CONTAINS
       msr = 'Zonal ' // TRIM(mz%name) // ' successfully written to file ' & 
            & // trim(file)
       CALL MLSMessage(MLSMSG_Info, ModuleName, msr)
-
-! Create & write the diagnostic zonal
-
-      CALL OutputMZDiag_HE5(file, swfID, mz)
 
 ! Close the file
 
@@ -498,11 +506,11 @@ CONTAINS
                                                                         
       integer, parameter :: CHARATTRLEN = 255
       integer, parameter :: NumOfZonalFields = 5
-      integer, parameter :: NumOfDataFields = 4
+      integer, parameter :: NumOfDataFields = 5
       character (len=*), parameter :: ZonalFieldTitles = &
         & 'Latitude,Pressure,Time,LocalSolarTime,LocalSolarZenithAngle'
       character (len=*), parameter :: ZonalDataTitles = &
-        & 'L3mzStdDeviation,L3mzValue,L3mzPrecision,L3mzDataCount'
+        & 'L3mzStdDeviation,L3mzValue,L3mzPrecision,L3mzDataCount,PerMisPoints'
       character(len=CHARATTRLEN), dimension(NumOfZonalFields) :: theTitles
       character(len=CHARATTRLEN), dimension(NumOfDataFields) :: dataTitles
       character(len=CHARATTRLEN) :: units_name, field_name
@@ -586,6 +594,12 @@ CONTAINS
            status = he5_zawrlattr(zaId, theTitles(field), &
              & 'UniqueFieldDefinition', MLS_CHARTYPE, len_trim(AURA_FIELD), &
              & AURA_FIELD)
+        else if (theTitles(field) == 'LocalSolarTime') then
+           status = he5_zawrlattr(zaId, theTitles(field), 'Unit', &
+             & MLS_CHARTYPE, 1, 'h')
+           status = he5_zawrlattr(zaId, theTitles(field), &
+             & 'UniqueFieldDefinition', MLS_CHARTYPE, len_trim(MLS_FIELD), &
+             & MLS_FIELD)
         else
            status = he5_zawrlattr(zaId, theTitles(field), 'Unit', &
              & MLS_CHARTYPE, 3, 'deg')
@@ -614,8 +628,14 @@ CONTAINS
            & HE5T_NATIVE_FLOAT, 1, UNDEFINED_VALUE)
         status = he5_zawrlattr(zaId, dataTitles(field), 'Title', &
            & MLS_CHARTYPE, len_trim(field_name), field_name)
-        status = he5_zawrlattr(zaId, dataTitles(field), 'Unit', &
-           & MLS_CHARTYPE, len_trim(units_name), units_name )
+        if ((dataTitles(field) == 'L3mzDataCount') .or. &
+           & (dataTitles(field) == 'PerMisPoints')) then
+           status = he5_zawrlattr(zaId, dataTitles(field), 'Unit', &
+              & MLS_CHARTYPE, 7, 'NoUnits' )
+	else
+           status = he5_zawrlattr(zaId, dataTitles(field), 'Unit', &
+              & MLS_CHARTYPE, len_trim(units_name), units_name )
+        endif
         status = he5_zawrlattr(zaId, dataTitles(field), &
            & 'UniqueFieldDefinition', MLS_CHARTYPE, len_trim(MLS_FIELD), &
              & MLS_FIELD)
@@ -637,171 +657,6 @@ CONTAINS
   END SUBROUTINE WriteAttributeMZ
 !----------------------------------------------
                                                                         
-!-------------------------------------------
-   SUBROUTINE OutputMZDiag_HE5 (file, swfID, mz)
-!-------------------------------------------
-   USE HDFEOS5, ONLY: HE5T_NATIVE_FLOAT, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE, &
-       & HE5F_ACC_RDWR, HE5F_ACC_TRUNC, HE5T_NATIVE_CHAR
-
-! Brief description of subroutine
-! This subroutine creates and writes to the diagnostic swaths in an l3mz file.
-
-! Arguments
-
-      CHARACTER (LEN=*), INTENT(IN) :: file
-
-      INTEGER, INTENT(IN) :: swfID
-
-      TYPE( L3MZData_T ), INTENT(IN) :: mz
-
-! Parameters
-
-! Functions
-
-      INTEGER, EXTERNAL :: he5_zaattach, he5_zacreate, he5_zadefine, & 
-           & he5_zadefdim, he5_zadetach, he5_zawrite
-
-! Variables
-
-      CHARACTER (LEN=480) :: msr
-      CHARACTER (LEN=GridNameLen) :: dgName
-
-      INTEGER :: start(2), stride(2), edge(2)
-      INTEGER :: status, swID
-
-! Create a zonal of the appropriate name
-
-      dgName = TRIM(mz%name) // 'Diagnostics'
-
-      swID = he5_zacreate(swfID, trim(dgName) )
-      IF (swID == -1) THEN
-         msr = 'Failed to create zonal ' // trim(dgName)
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-! Define the zonal dimensions
-
-      status = he5_zadefdim(swID, DIMR_NAME, MIN_MAX)
-      IF (status == -1) THEN
-         msr = DIM_ERR // DIMR_NAME
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-      status = he5_zadefdim(swID, DIM_NAME2, mz%nLevels)
-      IF (status == -1) THEN
-         msr = DIM_ERR // DIM_NAME2
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-      status = he5_zadefdim(swID, DIML_NAME, mz%nLats)
-      IF (status == -1) THEN
-         msr = DIM_ERR // DIML_NAME
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-! Define the swath geolocation fields using the above dimensions
-
-      status = he5_zadefine(swID, GEO_FIELD3, DIMR_NAME, "", HE5T_NATIVE_DOUBLE)
-      IF (status == -1) THEN
-         msr = GEO_ERR // GEO_FIELD3
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-!      status = he5_zadefine(swID, GEO_FIELD9, DIM_NAME2, "", HE5T_NATIVE_FLOAT)
-!      IF (status == -1) THEN
-!         msr = GEO_ERR // GEO_FIELD9
-!         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-!      ENDIF
-
-!      status = he5_zadefine(swID, GEO_FIELD1, DIML_NAME, "", HE5T_NATIVE_FLOAT)
-!      IF (status == -1) THEN
-!         msr = GEO_ERR // GEO_FIELD1
-!         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-!      ENDIF
-
-! Define the zonal data fields using the above dimensions
-
-      status = he5_zadefine(swID, DG_FIELD1, DIMLL_NAME, "", HE5T_NATIVE_FLOAT)
-      IF (status == -1) THEN
-         msr = DAT_ERR // DG_FIELD1
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-      status = he5_zadefine(swID, DG_FIELD2, DIMLL_NAME, "", HE5T_NATIVE_INT)
-      IF (status == -1) THEN
-         msr = DAT_ERR // DG_FIELD2
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-! Write the data
-
-      start = 0
-      stride = 1
-      edge(1) = mz%nLevels
-      edge(2) = mz%nLats
-
-! Geolocation fields
-
-      status = he5_zawrite(swID, GEO_FIELD3, start(1), stride(1), stride(1), &
-           & mz%startTime)
-      IF (status == -1) THEN
-          msr = WR_ERR // GEO_FIELD3
-          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-      status = he5_zawrite(swID, GEO_FIELD3, stride(1), stride(1), stride(1), &
-           & mz%endTime)
-      IF (status == -1) THEN
-          msr = WR_ERR // GEO_FIELD3
-          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-!      status = he5_zawrite( swID, GEO_FIELD9, start(1), stride(1), edge(1), &
-!           & REAL(mz%pressure) )
-!      IF (status == -1) THEN
-!         msr = WR_ERR // GEO_FIELD9
-!         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-!      ENDIF
-
-!      status = he5_zawrite( swID, GEO_FIELD1, start(2), stride(2), edge(2), &
-!           & REAL(mz%latitude) )
-!      IF (status == -1) THEN
-!         msr = WR_ERR // GEO_FIELD1
-!         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-!      ENDIF
-
-! Data fields
-
-      status = he5_zawrite( swID, DG_FIELD1, start, stride, edge, & 
-           & REAL(mz%latRss) )
-      IF (status == -1) THEN
-         msr = WR_ERR // DG_FIELD1
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-      status = he5_zawrite( swID, DG_FIELD2, start, stride, edge, & 
-           & mz%perMisPoints)
-      IF (status == -1) THEN
-         msr = WR_ERR // DG_FIELD2
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-! After writing, detach from zonal interface
-
-      status = he5_zadetach(swID)
-      IF (status /= 0) THEN
-          msr = SW_ERR // TRIM(dgName) // ' after writing.'
-          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-      msr = 'Zonal '// TRIM(dgName) // ' successfully written to file ' // & 
-           & trim(file)
-      CALL MLSMessage(MLSMSG_Info, ModuleName, msr)
-
-!-----------------------------
-   END SUBROUTINE OutputMZDiag_HE5
-!-----------------------------
-
 !----------------------------------------------------------
    SUBROUTINE WriteMetaL3MZ (fileName, mcfNum, pcf, anText, nFiles, hdfVersion)
 !----------------------------------------------------------
@@ -1480,6 +1335,9 @@ END MODULE L3MZData
 !==================
 
 ! $Log$
+! Revision 1.21  2006/02/28 20:36:33  cvuu
+! V2.00 commit
+!
 ! Revision 1.20  2005/06/23 19:17:58  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
