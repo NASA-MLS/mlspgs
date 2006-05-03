@@ -16,8 +16,7 @@ MODULE mon_Out
 
    USE L3DZData, ONLY: L3DZData_T, OutputL3DZ, DestroyL3DZDatabase, &
         & WriteMetaL3DZ
-   USE L3MMData, ONLY: L3MMData_T, OutputMMGrids, OutputMMDiags, &
-        & DeallocateL3MM, WriteMetaL3MM
+   USE L3MMData, ONLY: L3MMData_T, OutputMMGrids,& DeallocateL3MM, WriteMetaL3MM
    USE L3MZData, ONLY: L3MZData_T, OutputL3MZ, DeallocateL3MZ, &
         & WriteMetaL3MZ
    USE MLSCF, ONLY: MLSCF_T
@@ -216,7 +215,6 @@ CONTAINS
 
       IF ( (mode == 'com') .OR. (mode == 'all') ) THEN
          CALL OutputMMGrids(pcf%msName, mm, flag%createMS, hdfVersion)
-         CALL OutputMMDiags(pcf%msName, mm, hdfVersion)
       ENDIF
       CALL DeallocateL3MM(mm)
 
@@ -224,7 +222,6 @@ CONTAINS
 
       IF ( INDEX(mode,'a') /= 0) THEN
          CALL OutputMMGrids(pcf%msName, mmA, flag%createMS, hdfVersion)
-         CALL OutputMMDiags(pcf%msName, mmA, hdfVersion)
       ENDIF
       CALL DeallocateL3MM(mmA)
 
@@ -232,7 +229,6 @@ CONTAINS
 
       IF ( (INDEX(mode,'d') /= 0) .OR. (mode == 'all') )THEN
          CALL OutputMMGrids(pcf%msName, mmD, flag%createMS, hdfVersion)
-         CALL OutputMMDiags(pcf%msName, mmD, hdfVersion)
       ENDIF
       CALL DeallocateL3MM(mmD)
 
@@ -297,7 +293,6 @@ CONTAINS
 ! Output the monthly map (combined mode)
 
       CALL OutputMMGrids(pcf%mdName, mm, flag%createMD, hdfVersion)
-      CALL OutputMMDiags(pcf%mdName, mm, hdfVersion)
       CALL DeallocateL3MM(mm)
 
 !-------------------------
@@ -456,6 +451,9 @@ END MODULE mon_Out
 !=================
 
 !$Log$
+!Revision 1.13  2006/02/28 20:39:04  cvuu
+!V2.00 commit
+!
 !Revision 1.12  2005/06/23 19:17:59  pwagner
 !Reworded Copyright statement, moved rcs id
 !
