@@ -16,7 +16,7 @@ MODULE mon_Out
 
    USE L3DZData, ONLY: L3DZData_T, OutputL3DZ, DestroyL3DZDatabase, &
         & WriteMetaL3DZ
-   USE L3MMData, ONLY: L3MMData_T, OutputMMGrids,& DeallocateL3MM, WriteMetaL3MM
+   USE L3MMData, ONLY: L3MMData_T, OutputMMGrids, DeallocateL3MM, WriteMetaL3MM
    USE L3MZData, ONLY: L3MZData_T, OutputL3MZ, DeallocateL3MZ, &
         & WriteMetaL3MZ
    USE MLSCF, ONLY: MLSCF_T
@@ -451,6 +451,9 @@ END MODULE mon_Out
 !=================
 
 !$Log$
+!Revision 1.14  2006/05/03 14:35:16  cvuu
+!Remove call OutputMMDiag, move datasets to Grid group
+!
 !Revision 1.13  2006/02/28 20:39:04  cvuu
 !V2.00 commit
 !
