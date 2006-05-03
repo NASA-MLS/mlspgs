@@ -50,10 +50,11 @@ contains
       & S_VectorTemplate
     use Intrinsic, only: PHYQ_Dimensionless
     use MLSL2Options, only: runTimeValues
-    use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSSignals_m, only: Dump, Signals
     use MLSStrings, only: lowerCase
     use MLSStringLists, only: BooleanValue
+    use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
     use Output_M, only: Output
     use PFADataBase_m, only: Dump, Dump_PFADataBase, Dump_PFAFileDataBase, &
       & Dump_PFAStructure, PFAData
@@ -85,6 +86,7 @@ contains
     integer :: GSON, I, J, K, L, Look
     logical :: HaveQuantityTemplatesDB, HaveVectorTemplates, HaveVectors, &
       &        HaveForwardModelConfigs, HaveHGrids
+    logical :: mustStop
     integer :: QuantityIndex
     integer :: Son
     integer :: Source ! column*256 + line
@@ -127,9 +129,32 @@ contains
     if ( haveHGrids ) haveHGrids = associated(hGrids)
 
     details = 0
+    mustStop = .false.
+
+    ! We have to parse the line twice: once merely to pick up the details
     do j = 2, nsons(root)
       son = subtree(j,root) ! The argument
       fieldIndex = get_field_id(son)
+      gson = son
+      if (nsons(son) > 1) gson = subtree(2,son) ! Now value of said argument
+      select case ( fieldIndex )
+      case ( f_details )
+        call expr ( gson, units, values, type )
+        if ( units(1) /= phyq_dimensionless ) call AnnounceError ( gson, dimless )
+        if ( type /= num_value ) call announceError ( gson, numeric )
+        details = nint(values(1))
+      case ( f_stop )
+        mustStop = get_boolean(son)
+      case default
+        ! We'll do these on the next traveral
+      end select
+    enddo
+
+    ! then the second time to do the actual dumps
+    do j = 2, nsons(root)
+      son = subtree(j,root) ! The argument
+      fieldIndex = get_field_id(son)
+      gson = son
       if (nsons(son) > 1) gson = subtree(2,son) ! Now value of said argument
       select case ( fieldIndex )
       case ( f_allBooleans, f_allForwardModels, f_allHGrids, f_allLines, &
@@ -305,6 +330,9 @@ contains
       case ( f_text )
         do k = 2, nsons(son)
           call get_string ( sub_rosa(subtree(k,son)), text, strip=.true. )
+          ! Special text causing intentional error (this is a dubious hack)
+          ! if ( index(lowercase(text), 'error condition alpha') > 0 ) &
+          !   & call MLSMessage ( MLSMSG_Error, moduleName, trim(text) )
           ! Replace format marks: %[Cc] => CPU time in YyDdHH:MM:SS.SSS format
           !                       %[Dd] => date and time of day
           !                       %[Ss] => CPU time in seconds
@@ -405,6 +433,8 @@ contains
           call dump ( vGRids(decoration(decoration(subtree(i,son)))), details=details )
         end do
       end select
+      if ( mustStop ) call MLSMessage ( MLSMSG_Error, moduleName, &
+        & 'Stopping after Dump command with /stop argument' )
     end do
 
   contains
@@ -462,6 +492,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.28  2006/05/03 20:14:05  pwagner
+! details and /stop properly implemented
+!
 ! Revision 2.27  2006/03/22 02:19:48  vsnyder
 ! Add Vector argument to quantity dump to get its name
 !
