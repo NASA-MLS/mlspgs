@@ -42,7 +42,6 @@ MODULE L3DZData
 
 ! Definition -- L3DZData_T
 ! Subroutines -- OutputL3DZ
-!                OutputDZDiag
 !                ReadL3DZData
 !                WriteMetaL3DZ
 !		 WriteAttributes_l3dz
@@ -107,9 +106,9 @@ MODULE L3DZData
 
  CONTAINS
 
-   !------------------------------------------
-   SUBROUTINE OutputL3DZ(type, dzm, zFiles, creationFlag, hdfVersion)
-   !------------------------------------------
+!------------------------------------------
+ SUBROUTINE OutputL3DZ(type, dzm, zFiles, creationFlag, hdfVersion)
+!------------------------------------------
 
      ! Brief description of subroutine
      ! This subroutine creates and writes to the swaths in an l3dz file.
@@ -132,13 +131,13 @@ MODULE L3DZData
         CALL MLSMessage(MLSMSG_Error, ModuleName, 'Wrong hdfVersion')
      ENDIF
 
-    !---------------------------
-   END SUBROUTINE OutputL3DZ
-    !---------------------------
+!---------------------------
+ END SUBROUTINE OutputL3DZ
+!---------------------------
      
-   !------------------------------------------
-   SUBROUTINE OutputL3DZ_HE5(type, dzm, zFiles, creationFlag)
-   !------------------------------------------
+!------------------------------------------
+ SUBROUTINE OutputL3DZ_HE5(type, dzm, zFiles, creationFlag)
+!------------------------------------------
    USE HDFEOS5, ONLY: HE5T_NATIVE_FLOAT, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE, &
        & HE5F_ACC_RDWR, HE5F_ACC_TRUNC, HE5T_NATIVE_CHAR
    USE MLSPCF3, only : mlspcf_l3dz_start, mlspcf_l3dz_end
@@ -304,6 +303,12 @@ MODULE L3DZData
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
+         status = he5_zadefine(swID, DG_FIELD2, DIMLL_NAME, "", HE5T_NATIVE_INT)
+         IF (status == -1) THEN
+            msr = DAT_ERR // DATA_COUNT
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
          ! Write the data
 
          start = 0
@@ -325,6 +330,7 @@ MODULE L3DZData
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
          
+
          status = he5_zawrite( swID, GEO_FIELD9, start(1), stride(1), edge(1),&
               & REAL(dzm(i)%pressure) )
          IF (status == -1) THEN
@@ -386,6 +392,13 @@ MODULE L3DZData
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
+         status = he5_zawrite( swID, DG_FIELD2, start, stride, edge,&
+              & REAL(dzm(i)%perMisPoints) )
+         IF (status == -1) THEN
+            msr = WR_ERR // DG_FIELD2
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
          ! After writing, detach from zonal interface
 
          status = he5_zadetach(swID)
@@ -405,14 +418,6 @@ MODULE L3DZData
             msr = 'Failed to close file ' // trim(file) // ' after writing.'
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
-
-         ! Define & write the diagnostic zonal
-         CALL OutputDZDiag_HE5( file, dzm(i) )
-
-         ! Write Level File attributes 
-         !IF (.not. creationFlag) THEN
-         !    CALL WriteFileLevelAttr_l3dz( trim(file), dzm(i) )
-	 !ENDIF
 
          ! Write local attributes and set alias
                                                                                 
@@ -507,13 +512,13 @@ MODULE L3DZData
           msr = 'Failed to close file ' // trim(file) // ' after writing.'
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
        ENDIF
-    !----------------------------
-    END SUBROUTINE SetAlias_l3dz
-    !----------------------------
+!----------------------------
+ END SUBROUTINE SetAlias_l3dz
+!----------------------------
                                                                                 
-    !----------------------------------------------
-    SUBROUTINE WriteAttributes_l3dz(file, dzm)
-    !----------------------------------------------
+!----------------------------------------------
+ SUBROUTINE WriteAttributes_l3dz(file, dzm)
+!----------------------------------------------
     USE HDF5, ONLY: HID_T
     USE HDFEOS5, ONLY: HE5T_NATIVE_FLOAT, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE, &
        & HE5F_ACC_RDWR, HE5F_ACC_TRUNC, MLS_CHARTYPE
@@ -532,11 +537,11 @@ MODULE L3DZData
                                                                                 
       integer, parameter :: CHARATTRLEN = 255
       integer, parameter :: NumOfZonalFields = 5
-      integer, parameter :: NumOfDataFields = 4
+      integer, parameter :: NumOfDataFields = 5
       character (len=*), parameter :: ZonalFieldTitles = &
         & 'Latitude,Pressure,Date,LocalSolarTime,LocalSolarZenithAngle'
       character (len=*), parameter :: ZonalDataTitles = &
-        & 'L3dzStdDeviation,L3dzValue,L3dzPrecision,L3dzDataCount'
+        & 'L3dzStdDeviation,L3dzValue,L3dzPrecision,L3dzDataCount,PerMisPoints'
       character(len=CHARATTRLEN), dimension(NumOfZonalFields) :: theTitles
       character(len=CHARATTRLEN), dimension(NumOfDataFields) :: dataTitles
       character(len=CHARATTRLEN) :: units_name, field_name
@@ -621,6 +626,18 @@ MODULE L3DZData
            status = he5_zawrlattr(zaId, trim(theTitles(field)), &
              & 'UniqueFieldDefinition', MLS_CHARTYPE, len_trim(AURA_FIELD), &
              & AURA_FIELD)
+        else if (trim(theTitles(field)) == 'Date') then
+           status = he5_zawrlattr(zaId, trim(theTitles(field)), 'Unit', &
+             & MLS_CHARTYPE, 7, 'NoUnits')
+           status = he5_zawrlattr(zaId, trim(theTitles(field)), &
+             & 'UniqueFieldDefinition', MLS_CHARTYPE, len_trim(MLS_FIELD), &
+             & MLS_FIELD)
+        else if (trim(theTitles(field)) == 'LocalSolarTime') then
+           status = he5_zawrlattr(zaId, trim(theTitles(field)), 'Unit', &
+             & MLS_CHARTYPE, 1, 'h')
+           status = he5_zawrlattr(zaId, trim(theTitles(field)), &
+             & 'UniqueFieldDefinition', MLS_CHARTYPE, len_trim(MLS_FIELD), &
+             & MLS_FIELD)
         else
            status = he5_zawrlattr(zaId, trim(theTitles(field)), 'Unit', &
              & MLS_CHARTYPE, 3, 'deg')
@@ -649,8 +666,14 @@ MODULE L3DZData
            & HE5T_NATIVE_FLOAT, 1, UNDEFINED_VALUE)
         status = he5_zawrlattr(zaId, trim(dataTitles(field)), 'Title', &
            & MLS_CHARTYPE, len_trim(field_name), field_name)
-        status = he5_zawrlattr(zaId, trim(dataTitles(field)), 'Unit', &
-           & MLS_CHARTYPE, len_trim(units_name), units_name )
+        if ((trim(dataTitles(field)) == 'L3dzDataCount') .or. &
+           & (trim(dataTitles(field)) == 'PerMisPoints')) then
+           status = he5_zawrlattr(zaId, trim(dataTitles(field)), 'Unit', &
+              & MLS_CHARTYPE, 7, 'NoUnits')
+	else 
+           status = he5_zawrlattr(zaId, trim(dataTitles(field)), 'Unit', &
+              & MLS_CHARTYPE, len_trim(units_name), units_name )
+        endif 
         status = he5_zawrlattr(zaId, trim(dataTitles(field)), &
            & 'UniqueFieldDefinition', MLS_CHARTYPE, len_trim(MLS_FIELD), &
              & MLS_FIELD)
@@ -668,190 +691,10 @@ MODULE L3DZData
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
        ENDIF
                                                                                 
-    !----------------------------------------------
-    END SUBROUTINE WriteAttributes_l3dz
-    !----------------------------------------------
+!----------------------------------------------
+  END SUBROUTINE WriteAttributes_l3dz
+!----------------------------------------------
                                                                                 
-    !-------------------------------------------
-    SUBROUTINE OutputDZDiag_HE5(file, dz)
-    !-------------------------------------------
-   USE HDFEOS5, ONLY: HE5T_NATIVE_FLOAT, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE, &
-       & HE5F_ACC_RDWR, HE5F_ACC_TRUNC, HE5T_NATIVE_CHAR
-
-      ! Brief description of subroutine
-      ! This subroutine creates and writes to the diagnostic swaths 
-      ! in an l3dz file.
-
-      ! Arguments
-
-      CHARACTER (LEN=FileNameLen), INTENT(IN) :: file
-
-      TYPE( L3DZData_T ), INTENT(IN) :: dz
-
-      ! Parameters
-
-      ! Functions
-
-      INTEGER, EXTERNAL :: he5_zaattach, he5_zacreate, he5_zadefine, &
-           & he5_zadefdim, he5_zadetach, he5_zawrite, &
-	   & he5_zaopen, he5_zaclose
-
-      ! Variables
-
-      CHARACTER (LEN=480) :: msr
-      CHARACTER (LEN=GridNameLen) :: dgName
-      CHARACTER (LEN=7) :: dateChar
-
-      INTEGER :: start(2), stride(2), edge(2)
-      INTEGER :: i, status, swID, zafID, dateInt
-
-      ! open the file
-      zafID = he5_zaopen(trim(file), HE5F_ACC_RDWR)
-                                                                                
-      IF (zafID == -1) THEN
-            msr = MLSMSG_Fileopen // trim(file)
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-      ! Create a zonal of the appropriate name
-
-      dgName = TRIM(dz%name) // 'Diagnostics'
-
-      swID = he5_zacreate(zafID, trim(dgName))
-      IF (swID == -1) THEN
-         msr = 'Failed to create zonal ' // trim(dgName)
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-      ! Define the zonal dimensions
-
-      status = he5_zadefdim(swID, DIMT_NAME, 1)
-      IF (status == -1) THEN
-         msr = DIM_ERR // DIMT_NAME
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-      
-      status = he5_zadefdim(swID, DIM_NAME2, dz%nLevels)
-      IF (status == -1) THEN
-         msr = DIM_ERR // DIM_NAME2
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-      status = he5_zadefdim(swID, DIML_NAME, dz%nLats)
-      IF (status == -1) THEN
-         msr = DIM_ERR // DIML_NAME
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-! Define the zonal geolocation fields using the above dimensions
-
-      status = he5_zadefine(swID,GEO_FIELD11, DIMT_NAME, " ", HE5T_NATIVE_INT)
-      IF (status == -1) THEN
-         msr = GEO_ERR // GEO_FIELD11
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-!      status = he5_zadefine(swID,GEO_FIELD9,DIM_NAME2, "", HE5T_NATIVE_FLOAT)
-!      IF (status == -1) THEN
-!         msr = GEO_ERR // GEO_FIELD9
-!         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-!      ENDIF
-
-!      status = he5_zadefine(swID,GEO_FIELD1, DIML_NAME, "", HE5T_NATIVE_FLOAT)
-!      IF (status == -1) THEN
-!         msr = GEO_ERR // GEO_FIELD1
-!         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-!      ENDIF
-
-! Define the zonal data fields using the above dimensions
-
-      status = he5_zadefine(swID,DG_FIELD1, DIMLL_NAME, "", HE5T_NATIVE_FLOAT)
-      IF (status == -1) THEN
-         msr = DAT_ERR // DG_FIELD1
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-      status = he5_zadefine(swID, DG_FIELD2, DIMLL_NAME, "", HE5T_NATIVE_INT)
-      IF (status == -1) THEN
-         msr = DAT_ERR // DG_FIELD2
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-! Write the data
-
-      start = 0
-      stride = 1
-      edge(1) = 1
-      edge(2) = 1 
-
-! Convert the date from char to int.  There is problem using char string from
-! toolkit from version 5.2.10
-                                                                                           
-      dateChar = dz%date(1:4) // dz%date(6:8)
-      read (dateChar, '(i7)') dateInt
-                                                                                           
-! Geolocation fields
-
-      status = he5_zawrite(swID, GEO_FIELD11, start(1), stride(1), edge(1), dateInt)
-      IF (status == -1) THEN
-         msr = WR_ERR // GEO_FIELD11
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-      edge(1) = dz%nLevels
-      edge(2) = dz%nLats
-!      status = he5_zawrite( swID, GEO_FIELD9, start(1), stride(1), edge(1), &
-!           & REAL(dz%pressure) )
-!      IF (status == -1) THEN
-!         msr = WR_ERR // GEO_FIELD9
-!         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-!      ENDIF
-
-!      status = he5_zawrite( swID, GEO_FIELD1, start(2), stride(2), edge(2), &
-!           & REAL(dz%latitude) )
-!      IF (status == -1) THEN
-!         msr = WR_ERR // GEO_FIELD1
-!         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-!      ENDIF
-
-! Data fields
-
-      status = he5_zawrite( swID, DG_FIELD1, start, stride, edge, & 
-           & REAL(dz%latRss) )
-      IF (status == -1) THEN
-         msr = WR_ERR // DG_FIELD1
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-      status = he5_zawrite(swID, DG_FIELD2, start, stride, edge, & 
-           & dz%perMisPoints)
-      IF (status == -1) THEN
-         msr = WR_ERR // DG_FIELD2
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-! After writing, detach from zonal interface
-
-      status = he5_zadetach(swID)
-      IF (status /= 0) THEN
-         msr = SW_ERR // TRIM(dgName) // ' after L3DZ dg definition.'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-      status = he5_zaclose(zafID)
-      IF (status /= 0) THEN
-         msr = 'Failed to close file ' // trim(file) // ' after writing.'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-                                                                                
-      msr = 'Zonal '// TRIM(dgName) // ' successfully written to file '// & 
-           & trim(file)
-      CALL MLSMessage(MLSMSG_Info, ModuleName, msr)
-
-!-----------------------------
-   END SUBROUTINE OutputDZDiag_HE5
-!-----------------------------
-
 !------------------------------------------------
    SUBROUTINE ReadL3DZData (swfid, swathName, dz, hdfVersion)
 !------------------------------------------------
@@ -871,13 +714,9 @@ MODULE L3DZData
       INTEGER, INTENT(IN), OPTIONAL :: hdfVersion
 
       IF ( PRESENT(hdfVersion) ) THEN 
-         IF (hdfVersion == HDFVERSION_4) THEN 
-            CALL ReadL3DZData_HE2(swfid, swathName, dz)
-         ELSE IF (hdfVersion == HDFVERSION_5) THEN
-            CALL ReadL3DZData_HE5(swfid, swathName, dz)
-         ENDIF        
+         CALL ReadL3DZData_HE5(swfid, swathName, dz)
       ELSE
-         CALL ReadL3DZData_HE2(swfid, swathName, dz)
+         CALL MLSMessage(MLSMSG_Error, ModuleName, 'no hdfversion')
       ENDIF
 
 !------------------------------------------------
@@ -1100,13 +939,13 @@ MODULE L3DZData
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
       
-    !-----------------------------
-    END SUBROUTINE ReadL3DZData_HE5
-    !-----------------------------
+!-----------------------------
+ END SUBROUTINE ReadL3DZData_HE5
+!-----------------------------
 
-    !-------------------------------------------------------
-    SUBROUTINE WriteMetaL3DZ (pcf, mcfNum, files, anText, hdfVersion)
-    !-------------------------------------------------------
+!-------------------------------------------------------
+ SUBROUTINE WriteMetaL3DZ (pcf, mcfNum, files, anText, hdfVersion)
+!-------------------------------------------------------
    USE Hdf, ONLY: DFNT_FLOAT32, DFNT_CHAR8, DFNT_INT32, &
         & DFACC_RDWR
    USE HDFEOS5, ONLY: HE5F_ACC_RDWR, HE5_GDCLOSE, HE5_GDOPEN 
@@ -1648,13 +1487,13 @@ MODULE L3DZData
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
       
-    !-----------------------------
-    END SUBROUTINE AllocateL3DZ
-    !-----------------------------
+!-----------------------------
+ END SUBROUTINE AllocateL3DZ
+!-----------------------------
 
-    !----------------------------------
-    SUBROUTINE DeallocateL3DZ (l3dz)
-    !----------------------------------
+!----------------------------------
+ SUBROUTINE DeallocateL3DZ (l3dz)
+!----------------------------------
 
       ! Brief description of subroutine
       ! This subroutine deallocates the internal field pointers of L3DZData_T
@@ -1755,13 +1594,13 @@ MODULE L3DZData
          ENDIF
       ENDIF
 
-    !-------------------------------
-    END SUBROUTINE DeallocateL3DZ
-    !-------------------------------
+!-------------------------------
+ END SUBROUTINE DeallocateL3DZ
+!-------------------------------
 
-    !-----------------------------------------
-   SUBROUTINE DestroyL3DZDatabase (l3dzdb)
-    !-----------------------------------------
+!-----------------------------------------
+ SUBROUTINE DestroyL3DZDatabase (l3dzdb)
+!-----------------------------------------
 
      ! Brief description of subroutine
      ! This subroutine deallocates the internal structures of an l3dz database,
@@ -1802,9 +1641,9 @@ MODULE L3DZData
 
      ENDIF
 
-   !------------------------------------
-   END SUBROUTINE DestroyL3DZDatabase
-   !------------------------------------
+!------------------------------------
+ END SUBROUTINE DestroyL3DZDatabase
+!------------------------------------
 
  !==================
   logical function not_used_here()
@@ -1819,6 +1658,9 @@ MODULE L3DZData
  !==================
 
 ! $Log$
+! Revision 1.22  2006/02/28 20:36:33  cvuu
+! V2.00 commit
+!
 ! Revision 1.21  2005/09/22 23:41:14  pwagner
 ! date conversion procedures and functions all moved into dates module
 !
