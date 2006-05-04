@@ -194,6 +194,38 @@ begin Construct
   !forall(constructBaseline, !allRadiometers )
   !define(allBaselines, {!makelist({baseline},{},!allRadiometers)})
 
+; these are the MAF baselines
+; radiometers
+
+  !define(constructMAFBaseline,{baselineMAF$1: Quantity, type=baseline, $
+    radiometer=$1, hGrid=hGridStandard, vGrid=vGridMAFBaseline, $
+    fGrid=fGridBaseline$1!nl})
+
+  !forall(constructMAFBaseline, !allRadiometers )
+  !define(allMAFBaselines, {!makelist({baselineMAF},{},!allRadiometers)})
+
+; DACS
+
+  baselineMAFDACS22: Quantity, type=baseline,radiometer=R1A, $
+                      hgrid = hGridStandard, vgrid = vGridMAFBaseline, $
+                      fGrid=fGridBaselineDACS22
+  baselineMAFDACS23: Quantity, type=baseline, radiometer=R2,  $
+                      hgrid = hGridStandard, vgrid = vGridMAFBaseline, $
+                      fGrid=fGridBaselineDACS23
+  baselineMAFDACS24: Quantity, type=baseline, radiometer=R3, $
+                      hgrid = hGridStandard, vgrid = vGridMAFBaseline, $
+                      fGrid=fGridBaselineDACS24
+  baselineMAFDACS25: Quantity, type=baseline, radiometer=R3, $
+                      hgrid = hGridStandard, vgrid = vGridMAFBaseline, $
+                      fGrid=fGridBaselineDACS25
+  baselineMAFDACS26: Quantity, type=baseline, radiometer=R1B, $
+                      hgrid = hGridStandard, vgrid = vGridMAFBaseline, $
+                      fGrid=fGridBaselineDACS26
+
+  !define(allMAFDACSBaselines, {!makelist({baselineMAF},{},!allDACS)})
+
+; MIF baselines
+
   !define(constructMIFBaseline,{baselineMIF$1: Quantity, type=baseline, $
     radiometer=$1, fGrid=fGridBaseline$1!nl})
 
@@ -205,6 +237,21 @@ begin Construct
     radiometer=R4, fGrid=fGridBaselineR4!nl})
   !forall(constructR4GroupedBaseline,1,2,3)
   !define(allGroupedBaselines,{!makelist({baselineR4Group},{},1,2,3)})
+; need to define separate dacs baselines
+; to use froall it needs to take two arguments I think which I do not
+; know how to do so I will hard wire this in for now
+
+  baselineMIFDACS22: Quantity, type=baseline,radiometer=R1A, $
+                      fGrid=fGridBaselineDACS22
+  baselineMIFDACS23: Quantity, type=baseline, radiometer=R2,  $
+                      fGrid=fGridBaselineDACS23
+  baselineMIFDACS24: Quantity, type=baseline, radiometer=R3, $
+                      fGrid=fGridBaselineDACS24
+  baselineMIFDACS25: Quantity, type=baseline, radiometer=R3, $
+                      fGrid=fGridBaselineDACS25
+  baselineMIFDACS26: Quantity, type=baseline, radiometer=R1B, $
+                      fGrid=fGridBaselineDACS26
+  !define(allMIFDACSBaselines, {!makelist({baselineMIF},{},!allDACS)})
 
   ;; ----------------------------------------- Extinctions
 
@@ -212,8 +259,16 @@ begin Construct
   extinction$1: Quantity, type=vmr, molecule=extinction, $
     radiometer=$1, hGrid=hGridStandard, vGrid=vGridExtinction, $
     fGrid=fGridExtinctionConstant!nl})
+
   !forall(constructExtinction, !allRadiometers)
   !define(allExtinctions,{!makelist({extinction},{},!allRadiometers)})
+
+  !define(constructTOTALExtinction,{!dnl
+    totalextinction$1: Quantity, type=vmr, molecule=extinction, $
+    radiometer=$1, hGrid=hGridStandard, vGrid=vGridStandard, $
+    fGrid=fGridExtinctionConstant!nl})
+  !forall(constructTOTALExtinction, !allRadiometers)
+  !define(alltotalExtinctions,{!makelist({totalextinction},{},!allRadiometers)})
   
   ;; ----------------------------------------- Isotope ratios
   
@@ -445,9 +500,13 @@ begin Construct
     !allColumns, $
     !allBaselines, $
     !allBaselinesFine, $
+    !allMAFBaselines, $
+    !allMAFDACSBaselines, $
     !allMIFBaselines, $
+    !allMIFDACSBaselines, $
     !allGroupedBaselines, $
     !allExtinctions, $
+    !alltotalExtinctions, $
     !allIsotopeRatios, $
     !allSidebandFractions, $
     !ifdef(flagSIDS,{!allFoldedSystemTemperatures, !allUnfoldedSystemTemperatures, $

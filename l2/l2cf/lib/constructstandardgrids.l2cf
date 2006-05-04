@@ -15,6 +15,8 @@ vGridrhiprfl: vGrid, type=Logarithmic, coordinate=Zeta, $
 
 vGridBaseline: vGrid, type=Logarithmic, coordinate=Zeta, $
   start=1000mb, formula=[25:12,4:1]
+vGridMAFBaseline: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1mb, formula=[1:1]
 vGridExtinction: vGrid, type=Logarithmic, coordinate=Zeta, $
   start=1000mb, formula=[21:12,14:6,12:3]
 vGridRefGPH: vGrid, type=Explicit, coordinate=Zeta, values=100mb
@@ -24,8 +26,10 @@ vGridRefIWC: vGrid, type=Explicit, coordinate=Zeta, values=32mb
   vGridTangent: vGrid, type=Logarithmic, coordinate=Zeta, $
     start=1000mb, formula=[73:12]
 },{
+;  vGridTangent: vGrid, type=Logarithmic, coordinate=Zeta, $
+;    start=1000mb, formula=[3:6,10:12]
   vGridTangent: vGrid, type=Logarithmic, coordinate=Zeta, $
-    start=1000mb, formula=[3:6,10:12]
+    start=1000mb, formula=[2:6,12:12,41:6]
 })
 vGridTangentSids: vGrid, type=Logarithmic, coordinate=Zeta, $
   start=1000mb, formula=[19:12]
@@ -73,6 +77,9 @@ vGridWMO: VGrid, type=Logarithmic, coordinate=Zeta, $
   start=1000mb, formula=[97:48]
 
 ; $Log$
+; Revision 1.27  2006/04/27 23:19:35  lambert
+; additions for RHi
+;
 ; Revision 1.26  2004/11/24 21:59:05  livesey
 ; Added flagSkipVGridStandard
 ;
