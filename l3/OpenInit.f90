@@ -136,11 +136,7 @@ CONTAINS
     l3pcf%l2EndDay = range(10:17)
     read(range(6:8),'(i3)')l2startInt
     read(range(15:17),'(i3)')l2endInt
-   
-    print *,'l2StartInt: ',l2startInt 
-    print *,'l2endInt: ',l2endInt 
     diffDays = l2endInt - l2startInt 
-    print *,'diffDays: ',diffDays 
     
     returnStatus = pgs_pc_getConfigData(mlspcf_l3_param_RangDays, range)
     IF (returnStatus /= PGS_S_SUCCESS) THEN
@@ -251,12 +247,19 @@ CONTAINS
        ENDIF
 
        ! Concatenate them into a date
-
-       dates(i+1) = cYr // '-' // cDOY
+       
+       if (i < maxWindow) then 
+         dates(i+1) = cYr // '-' // cDOY
+       endif
 
     ENDDO
 
-    numDays = i
+    if (i > maxWindow) then
+       numDays = maxWindow
+    else
+       numDays = i
+    endif
+ 
     dates(1) = start
     dates(numDays) = end
 
@@ -527,6 +530,9 @@ END MODULE OpenInit
 !==================
 
 ! $Log$
+! Revision 1.21  2006/04/17 15:40:00  cvuu
+! Add L3-weekly product for attribute ProcessLevel
+!
 ! Revision 1.20  2006/02/28 17:56:56  cvuu
 ! V2.00 commit
 !
