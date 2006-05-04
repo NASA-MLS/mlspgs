@@ -31,13 +31,15 @@ contains ! =================================== Public procedures
 
   ! ----------------------------------------- MergeGrid
 
-  subroutine MergeGrids ( root, griddedDataBase )
+  subroutine MergeGrids ( root, griddedDataBase, l2gpDatabase )
 
-    use GriddedData, only: GRIDDEDDATA_T, RGR, SETUPNEWGRIDDEDDATA, &
-      & ADDGRIDDEDDATATODATABASE, NULLIFYGRIDDEDDATA, &
-      & WRAPGRIDDEDDATA, CONCATENATEGRIDDEDDATA, COPYGRID
-    use Init_tables_module, only: S_MERGE, S_CONCATENATE, S_DELETE, &
-      & S_WMOTROP
+    use GriddedData, only: GRIDDEDDATA_T, RGR, &
+      & ADDGRIDDEDDATATODATABASE, &
+      & CONCATENATEGRIDDEDDATA, CONVERTFROMETALEVELGRIDS, COPYGRID, &
+      & NULLIFYGRIDDEDDATA, SETUPNEWGRIDDEDDATA, WRAPGRIDDEDDATA
+    use Init_tables_module, only: S_CONCATENATE, S_CONVERTETATOP, &
+      & S_DELETE, S_MERGE, S_VGRID, S_WMOTROP
+    use L2GPData, only: L2GPDATA_T
     use MLSCommon, only: R8
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
     use MoreTree, only: GET_SPEC_ID
@@ -45,12 +47,16 @@ contains ! =================================== Public procedures
     use Tree, only: NSONS, SUBTREE, DECORATE, DECORATION, NODE_ID, SUB_ROSA
     use Tree_Types, only: N_NAMED
     use Toggles, only: GEN, TOGGLE
+    use VGridsDatabase, only: AddVGridToDatabase, VGrid_T, VGrids
+    use VGrid, only: CREATEVGRIDFROMMLSCFINFO
 
     integer, intent(in) :: ROOT         ! Tree root
     type (griddedData_T), dimension(:), pointer :: griddedDataBase ! Database
+    type ( l2gpData_T), dimension(:), pointer :: L2GPDATABASE
 
     ! Local variables
     integer :: I                        ! Loop counter
+    integer :: returnStatus
     integer :: SON                      ! Tree node
     integer :: KEY                      ! Another node
     integer :: NAME                     ! Index into string table
@@ -73,8 +79,14 @@ contains ! =================================== Public procedures
       case ( s_concatenate )
         call decorate ( key, AddgriddedDataToDatabase ( griddedDataBase, &
           & Concatenate ( key, griddedDataBase ) ) )
+      case ( s_ConvertEtaToP )
+        call decorate ( key, AddgriddedDataToDatabase ( griddedDataBase, &
+          & ConvertEtaToP ( key, griddedDataBase ) ) )
       case ( s_delete )
         call DeleteGriddedData ( key, griddedDatabase )
+      case ( s_vGrid )
+        call decorate ( son, AddVGridToDatabase ( vGrids, &
+          & CreateVGridFromMLSCFInfo ( name, son, l2gpDatabase, returnStatus ) ) )
       case ( s_wmoTrop )
         call decorate ( key, AddgriddedDataToDatabase ( griddedDataBase, &
           & wmoTropFromGrid ( key, griddedDataBase ) ) )
@@ -87,6 +99,60 @@ contains ! =================================== Public procedures
     if ( toggle(gen) ) call trace_end ( "MergeGrids" )
 
   end subroutine MergeGrids
+
+  ! ---------------------------------------- ConvertEtaToP --
+  type (griddedData_T) function ConvertEtaToP ( root, griddedDataBase ) &
+    & result ( newGrid )
+    use GriddedData, only: GRIDDEDDATA_T, NULLIFYGRIDDEDDATA, &
+      & CONVERTFROMETALEVELGRIDS
+    use Init_tables_module, only: F_A, F_B, F_VGRID
+    use Toggles, only: GEN, TOGGLE
+    use Trace_M, only: TRACE_BEGIN, TRACE_END
+    use Tree, only: NSONS, SUBTREE, DECORATION
+    use VGridsDatabase, only: VGrid_T, VGrids, ConvertVGrid
+    
+    integer, intent(in) :: ROOT         ! Tree node
+    type (griddedData_T), dimension(:), pointer :: griddedDataBase ! Database
+    ! This routine parses the l2cf instructions that
+    ! convert two gridded data on eta surfaces, one of them pressures,
+    ! to pressure surfaces
+
+    ! Local variables
+    ! Local variables
+    integer :: SON                    ! Tree node
+    integer :: FIELD                  ! Another tree node
+    integer :: FIELD_INDEX            ! Type of tree node
+    integer :: VALUE                  ! Tree node
+    integer :: I                      ! Loop counter
+
+    type (griddedData_T), pointer :: A ! Temperatures on eta surfaces
+    type (griddedData_T), pointer :: B ! Pressures on eta surfaces
+    type (VGrid_T), pointer       :: V ! Desired pressure surfaces
+
+    ! Executable code
+    call nullifyGriddedData ( newGrid ) ! for Sun's still useless compiler
+    if ( toggle(gen) ) call trace_begin ( "Concatenate", root )
+
+    ! Get the information from the l2cf    
+    ! Note that init_tables_module has insisted that we have all
+    ! arguments so we don't need a 'got' type arrangement
+    do i = 2, nsons(root)
+      son = subtree(i,root)
+      field = subtree(1,son)
+      value = subtree(2,son)
+      field_index = decoration(field)
+      select case ( field_index )
+      case ( f_a ) 
+        a => griddedDataBase ( decoration ( decoration ( value ) ) )
+      case ( f_b )
+        b => griddedDataBase ( decoration ( decoration ( value ) ) )
+      case ( f_VGrid )
+        v => VGrids ( decoration ( decoration ( value ) ) )
+      end select
+    end do
+    call ConvertFromEtaLevelGrids ( a, b, V, newGrid )
+
+  end function ConvertEtaToP
 
   ! ---------------------------------------- Concatenate --
   type (griddedData_T) function Concatenate ( root, griddedDataBase ) &
@@ -588,6 +654,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.17  2006/05/04 23:04:59  pwagner
+! May convertEtaToP and create a VGrid in MergeGrids section
+!
 ! Revision 2.16  2006/02/11 00:14:08  pwagner
 ! May calculate wmoTropopause in this section directly
 !
