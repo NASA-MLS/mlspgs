@@ -123,7 +123,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_COLUMNSCALE        = s_chunkDivide + 1
   integer, parameter :: S_COMBINECHANNELS    = s_columnScale + 1
   integer, parameter :: S_CONCATENATE        = s_combineChannels + 1
-  integer, parameter :: S_COPY               = s_concatenate + 1
+  integer, parameter :: S_CONVERTETATOP      = s_concatenate + 1
+  integer, parameter :: S_COPY               = s_ConvertEtaToP + 1
   integer, parameter :: S_CYCLICJACOBI       = s_copy + 1
   integer, parameter :: S_DELETE             = s_cyclicJacobi + 1
   integer, parameter :: S_DESTROY            = s_delete + 1
@@ -334,6 +335,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_columnScale) =          add_ident ( 'columnScale' )
     spec_indices(s_combineChannels) =      add_ident ( 'combineChannels' )
     spec_indices(s_concatenate) =          add_ident ( 'concatenate' )
+    spec_indices(s_ConvertEtaToP) =        add_ident ( 'ConvertEtaToP' )
     spec_indices(s_copy)   =               add_ident ( 'copy' )
     spec_indices(s_cyclicJacobi) =         add_ident ( 'cyclicJacobi' )
     spec_indices(s_empiricalGeometry) =    add_ident ( 'EmpiricalGeometry' )
@@ -597,19 +599,27 @@ contains ! =====     Public procedures     =============================
              begin, f+f_b, s+s_gridded, n+n_field_spec, &
              nadp+n_spec_def /) )
     call make_tree ( (/ &
+      begin, s+s_ConvertEtaToP, &  ! Must be AFTER S_Gridded
+             begin, f+f_a, s+s_gridded, n+n_field_spec, &
+             begin, f+f_b, s+s_gridded, n+n_field_spec, &
+             begin, f+f_vGrid, s+s_vGrid, n+n_field_spec, &
+             nadp+n_spec_def /) )
+    call make_tree ( (/ &
       begin, s+s_wmoTrop, &  ! Must be AFTER S_Gridded
              begin, f+f_grid, s+s_gridded, n+n_field_spec, &
              nadp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_merge, &  ! Must be AFTER S_Gridded
-             begin, f+f_operational, s+s_gridded, s+s_concatenate, n+n_field_spec, &
+             begin, f+f_operational, s+s_gridded, s+s_concatenate, &
+             s+s_ConvertEtaToP, s+s_vgrid, n+n_field_spec, &
              begin, f+f_climatology, s+s_gridded, s+s_concatenate, n+n_field_spec, &
              begin, f+f_height, t+t_numeric, n+n_field_type, &
              begin, f+f_scale, t+t_numeric, n+n_field_type, &
              nadp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_delete, &
-             begin, f+f_grid, s+s_gridded, s+s_concatenate, s+s_merge, n+n_field_spec, &
+             begin, f+f_grid, s+s_gridded, s+s_concatenate, s+s_merge, &
+             s+s_ConvertEtaToP, n+n_field_spec, &
              nadp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_chunkDivide, &
@@ -897,15 +907,18 @@ contains ! =====     Public procedures     =============================
                     n+n_dot, &
              begin, f+f_sourceL2GP, s+s_l2gp, n+n_field_spec, &
              begin, f+f_sourceL2AUX, s+s_l2aux, n+n_field_spec, &
-             begin, f+f_sourceGrid, s+s_gridded, s+s_merge, s+s_concatenate, n+n_field_spec, &
+             begin, f+f_sourceGrid, s+s_gridded, s+s_merge, s+s_concatenate, &
+                    s+s_ConvertEtaToP, n+n_field_spec, &
              begin, f+f_sourceSGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_sourceVGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_spread, t+t_boolean, n+n_field_type, &
              begin, f+f_status, t+t_numeric, n+n_field_type, &
-             begin, f+f_suffix, t+t_string, n+n_field_type, &
-             begin, f+f_tngtECI, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
+             begin, f+f_suffix, t+t_string, n+n_field_type , &
              begin, f+f_systemTemperature, s+s_vector, f+f_template, &
-                    f+f_quantities, n+n_dot, &
+                    f+f_quantities, n+n_dot /), &
+             continue = .true. )
+    call make_tree ( (/ & ! STILL Continuing for s_fill...
+             begin, f+f_tngtECI, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
              begin, f+f_temperatureQuantity, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
              begin, f+f_tempPrecisionQuantity, s+s_vector, f+f_template, &
@@ -1388,7 +1401,7 @@ contains ! =====     Public procedures     =============================
       begin, z+z_readapriori, s+s_time, s+s_gridded, s+s_l2gp, &
              s+s_l2aux, s+s_snoop, n+n_section, &
       begin, z+z_mergegrids, s+s_time, s+s_merge, s+s_concatenate, s+s_delete, &
-             s+s_wmoTrop, &
+             s+s_ConvertEtaToP, s+s_vgrid, s+s_wmoTrop, &
              n+n_section /) )
     call make_tree ( (/ &
       begin, z+z_chunkdivide, &
@@ -1444,6 +1457,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.434  2006/05/04 23:04:59  pwagner
+! May convertEtaToP and create a VGrid in MergeGrids section
+!
 ! Revision 2.433  2006/04/21 22:29:38  vsnyder
 ! Allow FlushPFA in global settings section, allow molecules field on FlushPFA
 !
