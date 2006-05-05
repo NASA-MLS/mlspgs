@@ -1108,9 +1108,6 @@ contains
     use SpectroscopyCatalog_m, only: Lines
     use Voigt_m, only: Simple_Voigt
 
-    use SpectroscopyCatalog_m, only: Lines
-    use Voigt_m, only: Simple_Voigt
-
     real(r8), intent(in) :: Nu         ! Measurement frequency
     type(slabs_struct), intent(in) :: Slabs ! Frequency-independent stuff
     real(rp), intent(in) :: T          ! Temperature, K
@@ -2679,6 +2676,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.50  2006/03/25 00:27:46  vsnyder
+! Avoid dividing by zeroes that weren't avoided in the previous revision
+!
 ! Revision 2.49  2006/01/26 03:05:51  vsnyder
 ! Avoid dividing by zero
 !
