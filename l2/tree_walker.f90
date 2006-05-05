@@ -193,7 +193,8 @@ contains ! ====     Public Procedures     ==============================
           & l2gpDatabase, l2auxDatabase, griddedDataBase, fileDataBase )
         call add_to_section_timing ( 'read_apriori', t1)
       case ( z_mergeGrids )
-        if ( .not. stopearly ) call mergeGrids ( son, griddedDataBase )
+        if ( .not. stopearly ) &
+          & call mergeGrids ( son, griddedDataBase, l2gpDatabase )
 
         ! --------------------------------------------------------- Chunk divide
         ! Chunk divide can be a special one, in slave mode, we just listen out
@@ -524,6 +525,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.140  2006/04/11 23:30:00  pwagner
+! chunkRange option effective in serial runs, too
+!
 ! Revision 2.139  2006/03/04 00:22:04  pwagner
 ! Restore original skipDirectWrites after chunkLoop ends
 !
