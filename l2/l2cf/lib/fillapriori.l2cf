@@ -308,10 +308,12 @@ begin Fill
   Fill, quantity=aprioriPrecision.baselineMAF$1, method=explicit, $
         explicitvalues = 5K, /spread !nl})
   !forall({fillBaselineMAFApriori},!allRadiometers)
-  !define(fillBaselineMAFDACSApriori,{
-  Fill, quantity=aprioriPrecision.baselineMAF$1, method=explicit, $
-        explicitvalues = 5K, /spread !nl})
-  !forall({fillBaselineMAFDACSApriori},!allDACS)
+; dacs baseline
+  !forall({fillBaselineMAFApriori},!allDACS)
+; MB baseline
+  !forall({fillBaselineMAFApriori},!allMBs)
+
+; MIF baselines
 
   !define(fillBaselineMIFApriori,{
   Fill, quantity=aprioriPrecision.baselineMIF$1, method=explicit, $
@@ -319,6 +321,8 @@ begin Fill
   !forall({fillBaselineMIFApriori},!allRadiometers)
 ; dacs baseline
   !forall({fillBaselineMIFApriori},!allDACS)
+; MB baseline
+  !forall({fillBaselineMIFApriori},!allMBs)
 
   !define(fillBaselineGroupApriori,{
   Fill, quantity=aprioriPrecision.baselineR4Group$1, method=explicit, $

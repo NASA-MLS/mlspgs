@@ -224,6 +224,27 @@ begin Construct
 
   !define(allMAFDACSBaselines, {!makelist({baselineMAF},{},!allDACS)})
 
+; MB
+
+  baselineMAFMB27: Quantity, type=baseline,radiometer=R2, $
+                      hgrid = hGridStandard, vgrid = vGridMAFBaseline, $
+                      fGrid=fGridBaselineMB27
+  baselineMAFMB28: Quantity, type=baseline, radiometer=R4,  $
+                      hgrid = hGridStandard, vgrid = vGridMAFBaseline, $
+                      fGrid=fGridBaselineMB28
+  baselineMAFMB29: Quantity, type=baseline, radiometer=R4, $
+                      hgrid = hGridStandard, vgrid = vGridMAFBaseline, $
+                      fGrid=fGridBaselineMB29
+  baselineMAFMB30: Quantity, type=baseline, radiometer=R4, $
+                      hgrid = hGridStandard, vgrid = vGridMAFBaseline, $
+                      fGrid=fGridBaselineMB30
+  baselineMAFMB31: Quantity, type=baseline, radiometer=R4, $
+                      hgrid = hGridStandard, vgrid = vGridMAFBaseline, $
+                      fGrid=fGridBaselineMB31
+
+  !define(allMAFMBBaselines, {!makelist({baselineMAF},{},!allMBs)})
+
+
 ; MIF baselines
 
   !define(constructMIFBaseline,{baselineMIF$1: Quantity, type=baseline, $
@@ -241,6 +262,8 @@ begin Construct
 ; to use froall it needs to take two arguments I think which I do not
 ; know how to do so I will hard wire this in for now
 
+; DACS
+
   baselineMIFDACS22: Quantity, type=baseline,radiometer=R1A, $
                       fGrid=fGridBaselineDACS22
   baselineMIFDACS23: Quantity, type=baseline, radiometer=R2,  $
@@ -252,6 +275,20 @@ begin Construct
   baselineMIFDACS26: Quantity, type=baseline, radiometer=R1B, $
                       fGrid=fGridBaselineDACS26
   !define(allMIFDACSBaselines, {!makelist({baselineMIF},{},!allDACS)})
+
+; MB
+
+  baselineMIFMB27: Quantity, type=baseline,radiometer=R2, $
+                      fGrid=fGridBaselineMB27
+  baselineMIFMB28: Quantity, type=baseline, radiometer=R4,  $
+                      fGrid=fGridBaselineMB28
+  baselineMIFMB29: Quantity, type=baseline, radiometer=R4, $
+                      fGrid=fGridBaselineMB29
+  baselineMIFMB30: Quantity, type=baseline, radiometer=R4, $
+                      fGrid=fGridBaselineMB30
+  baselineMIFMB31: Quantity, type=baseline, radiometer=R4, $
+                      fGrid=fGridBaselineMB31
+  !define(allMIFMBBaselines, {!makelist({baselineMIF},{},!allMBs)})
 
   ;; ----------------------------------------- Extinctions
 
@@ -502,8 +539,10 @@ begin Construct
     !allBaselinesFine, $
     !allMAFBaselines, $
     !allMAFDACSBaselines, $
+    !allMAFMBBaselines, $
     !allMIFBaselines, $
     !allMIFDACSBaselines, $
+    !allMIFMBBaselines, $
     !allGroupedBaselines, $
     !allExtinctions, $
     !alltotalExtinctions, $
