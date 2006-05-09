@@ -97,6 +97,7 @@ kronecker
 
 l1b
 l2aux
+l2cf
 l2dgg
 l2fwm
 l2gp
@@ -161,6 +162,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.55  2006/05/09 16:39:58  pwagner
+# Added writing l2cf to dgm
+#
 # Revision 2.54  2006/03/22 02:22:09  vsnyder
 # Add lsGlobal, lsLocal and lsWeighted fill methods
 #
