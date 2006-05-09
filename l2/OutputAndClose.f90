@@ -73,7 +73,7 @@ contains ! =====     Public Procedures     =============================
       & F_QUANTITIES, F_RENAME, F_REPAIRGEOLOCATIONS, &
       & F_SWATH, F_TYPE, F_WRITECOUNTERMAF, &
       & FIELD_FIRST, FIELD_LAST, &
-      & L_L2AUX, L_L2DGG, L_L2GP, L_L2PC, &
+      & L_L2AUX, L_L2CF, L_L2DGG, L_L2GP, L_L2PC, &
       & S_COPY, S_HGrid, S_OUTPUT, S_TIME
     use Intrinsic, only: l_ascii, l_swath, l_hdf, Lit_indices, PHYQ_Dimensionless
     use L2AUXData, only: L2AUXDATA_T, cpL2AUXData
@@ -526,11 +526,22 @@ contains ! =====     Public Procedures     =============================
               & call Announce_error ( gson, &
               & 'No units allowed for hdfVersion: just integer 4 or 5')
             hdfVersion = value(1)
+          ! case ( f_quantities )
           case default                  ! Everything else processed later
           end select
         end do
+
+        ! Unless outputting l2cf, you must have supplied a quantities fild
+        ! (parser used to catch this)
+        if ( .not. got(f_quantities) .and. output_type /= l_l2cf ) &
+          & call MLSMessage(MLSMSG_Error, ModuleName, &
+          & 'No quantities field in Output command' )
         ! Otherwise--normal output commands
         select case ( output_type )
+        case ( l_l2cf ) ! ------------------------------ Writing l2cf file ---
+          call OutputL2CF ( key, file_base, DEBUG, filedatabase )
+          cycle
+
         case ( l_l2gp ) ! --------------------- Writing l2gp files -----
         if ( noGapsHGIndex > 0 ) newHGridp => HGrids(noGapsHGIndex)
           call OutputL2GP ( key, file_base, DEBUG, &
@@ -1083,6 +1094,114 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine OutputL2AUX
 
+  ! ---------------------------------------------  OutputL2CF  -----
+  subroutine OutputL2CF ( key, fileName, DEBUG, filedatabase )
+    ! Do the work of outputting the l2cf to a named file
+    use dump_0, only: dump
+    use Intrinsic, only: l_hdf
+    use MLSCommon, only: MLSFile_T, FileNameLen
+    use MLSL2Options, only: checkPaths, TOOLKIT
+    use MLSFiles, only: AddInitializeMLSFile, Dump, &
+      & GetMLSFileByName, GetMLSFileByType, GetPCFromRef, &
+      & mls_closeFile, mls_openFile, split_path_name
+    use MLSStrings, only: Replace
+    use MLSHDF5, only: SaveAsHDF5DS
+    use MLSPCF2, only: mlspcf_l2dgm_start, mlspcf_l2dgm_end
+    ! Args
+    integer, intent(in)                     :: key ! tree node
+    character(len=*), intent(inout)         :: fileName ! according to l2cf
+    logical, intent(in)                     :: DEBUG ! Print lots?
+    type(MLSFile_T), dimension(:), pointer  :: filedatabase
+    ! Internal variables
+    integer, parameter                      :: MAXL2CFSIZE = 2000000
+    character(LEN=MAXL2CFSIZE)              :: L2CFTEXT
+    character(len=1), dimension(MAXL2CFSIZE) :: l2cfarray
+    type(MLSFile_T), pointer                :: MLSL2CF
+    integer                                 :: status
+    integer :: FileHandle
+    character (len=FileNameLen) :: FullFilename
+    integer :: hdfVersion               ! 4 or 5 (corresp. to hdf4 or hdf5)
+    integer :: length
+    type(MLSFile_T), pointer :: outputFile
+    character(len=8) :: OUTPUTTYPESTR   ! 'l2gp', 'l2aux', etc.
+    character (len=132) :: path
+    integer :: ReturnStatus
+    integer :: SON                      ! Of Root -- spec_args or named node
+    integer :: Version
+    ! Executable
+    nullify ( MLSL2CF )
+    MLSL2CF => GetMLSFileByType(filedatabase, content='l2cf')
+    if ( .not. associated(MLSL2CF) ) then
+      call MLSMessage(MLSMSG_Warning, ModuleName, &
+        & 'Unable to write dataset--no entry in filedatabase for l2cf' )
+      return
+    endif
+    ! call dump(MLSL2CF, details=1)
+    if ( MLSL2CF%stillOpen ) call mls_closeFile( MLSL2CF, status )
+    if ( MLSL2CF%name == '<STDIN>' ) then
+      call MLSMessage(MLSMSG_Warning, ModuleName, &
+        & 'Unable to write dataset--stdin has been used for l2cf' )
+      return
+    endif
+    !call mls_openFile(MLSL2CF, status)
+    !call dump(MLSL2CF, details=1)
+    open(UNIT=MLSL2CF%FileID%f_id, access='direct', recl=2000000, &
+      & file=trim(MLSL2CF%name), status='old', iostat=status )
+    if ( status /= 0 ) then
+      call MLSMessage(MLSMSG_Warning, ModuleName, &
+        & 'Unable to write dataset--failed to open l2cf' )
+      return
+    endif
+    read(UNIT=MLSL2CF%FileID%f_id, REC=1, IOSTAT=status) l2cftext
+    if ( status /= 0 ) then
+      call MLSMessage(MLSMSG_Warning, ModuleName, &
+        & 'Unable to read l2cf' )
+      return
+    endif
+    ! Unfortunately, a lot of null characters sneak into this
+    l2cftext = Replace( l2cftext, char(0), char(32) ) ! Replace null with space
+    !call mls_closeFile(MLSL2CF, status)
+    close( UNIT=MLSL2CF%FileID%f_id, iostat=status )
+    length = len_trim(l2cftext)
+    ! print *, 'Length: ', length
+    ! print *, '1st char: ', l2cftext(1:1), ichar( l2cftext(1:1) )
+    ! print *, 'last char: ', l2cftext(length:length), ichar( l2cftext(length:length) )
+    ! call dump( transfer(l2cftext, l2cfarray) )
+
+    Version = 1
+    OUTPUTTYPESTR = 'l2aux'
+    ! Get the l2gp file name from the PCF
+
+    if ( TOOLKIT ) then
+      call split_path_name(fileName, path, fileName)
+
+      FileHandle = GetPCFromRef(fileName, mlspcf_l2dgm_start, &
+        & mlspcf_l2dgm_end, &
+        & TOOLKIT, returnStatus, Version, DEBUG, &
+        & exactName=FullFilename)
+    else
+      FullFilename = fileName
+      returnStatus = 0
+    end if
+
+    if ( returnStatus == 0 .and. .not. checkPaths ) then
+      ! Open the HDF file and write l2cf
+      outputFile => GetMLSFileByName(filedatabase, FullFilename)
+      if ( .not. associated(outputFile) ) then
+        if(DEBUG) call MLSMessage(MLSMSG_Warning, ModuleName, &
+          & 'No entry in filedatabase for ' // trim(FullFilename) )
+        outputFile => AddInitializeMLSFile(filedatabase, &
+          & content=outputTypeStr, &
+          & name=FullFilename, shortName=fileName, &
+          & type=l_hdf, access=DFACC_RDWR, HDFVersion=hdfVersion, &
+          & PCBottom=mlspcf_l2dgm_start, PCTop=mlspcf_l2dgm_end)
+      endif
+      if ( .not. outputFile%stillOpen ) call mls_openFile( outputFile, status )
+      call SaveAsHDF5DS ( outputFile%FileID%f_id, 'l2cf', l2cftext )
+      call mls_closeFile( outputFile, status )
+    endif
+  end subroutine OutputL2CF
+
   ! ---------------------------------------------  OutputL2GP  -----
   subroutine OutputL2GP ( key, fileName, DEBUG, &
     & output_type, pcf_start, pcf_end, &
@@ -1528,6 +1647,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.124  2006/05/09 16:40:41  pwagner
+! Added writing l2cf to dgm
+!
 ! Revision 2.123  2006/04/28 00:46:28  pwagner
 ! Overcome namelength (132) limitation for file= field
 !
