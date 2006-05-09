@@ -1,0 +1,352 @@
+#!/bin/sh
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# $Id$
+
+# --------------- newmlsl2path.sh help
+# This shell script prints the name of the desired directory 
+# for a given file type supplied as an arg
+
+# Used when expanding l2cf files
+# see also getmlsl2path.sh and setupcalfiles.l2cf
+#
+# Usage:
+# newmlsl2path.sh [opt] ..  [filetype]
+#
+#    O p t i o n s
+# -l2cf file          look for file instead of overridepaths.l2cf
+# -sh file            look for file instead of overridepaths.sh
+# -v                  print lots of bebugging-type info
+# -example            print brief example of how to use; exit
+# -h[elp]             print brief help message; exit
+#
+#    F i l e t y p e
+# gmao          Where to find the gmao files (including year)
+# l1boa         Where to find the level 1B OA file
+# l1brad        Where to find the level 1B radiance files
+# l2cal         Where to find the signals, spectroscopy, etc. (calpath)
+# l2pc          Where to find the l2pc
+# leapsec       Where to find the leapsec file
+# output        Where to put the output files
+# tmp           Where to put any temporary files
+#
+# Note:
+# (1) The option(s) marked with "-" or "--", if present,
+#     must precede any filetype on the command line
+# Result:
+# A directory is written to stdout where it picked up by an m4 assignment
+# --------------- End newmlsl2path.sh help
+# --------------- newmlsl2path.sh example
+# Example:
+# Place the following lines in your unexpanded l2cf file:
+#;;; Start of stuff defining directories
+#; Now define our directories
+#!define(getdir,{!TrimLastChar(!esyscmd(!home/mlspgs/scripts/newmlsl2path.sh \
+# $1))})
+#
+# !define(inpathl1boa,!getdir(l1bvsp))
+# !define(inpathl1brad,!getdir(l1bvsp))
+# !define(outpathl2gp,!getdir(output))
+# !define(outpathl2aux,!getdir(output))
+# !define(outpathl2fwm,!getdir(output))
+# !define(inpathl2pc,!getdir(l2pc))
+# !define(calpath,!getdir(l2cal))
+# !define(inpathdao,!getdir(gmao))
+# !define(inpathleapsec,!getdir(leapsec))
+# !define(outpathl1brad,!getdir(output))
+# !define(outpathtmp,!getdir(tmp))
+#;;; End of stuff defining directories
+# To have these paths set correctly you can choose one of three methods:
+# (1) Place an m4-formatted file named overridepaths.l2cf in the your
+#     working directory giving values to the named filetypes
+#    Example contents:
+#  !ifdef(l1broot,{},{!define(l1broot,{/data/emls/l1b/v01.51})})
+#  !ifdef(inpathl1boa,{},{!define(inpathl1boa,{!l1broot/!YYYY/!DOY})})
+#  !ifdef(inpathl1brad,{},{!define(inpathl1brad,{!l1broot/!YYYY/!DOY})})
+#  !ifdef(inpathcore,{},{!define(inpathcore,{/bigdata/livesey/!version})})
+# (2) Place a Bourne shell file named overridepaths.sh in the your
+#     working directory giving values to the named filetypes
+#    Example contents:
+#   YYYY=2006
+#   DOY=153
+#   l1broot=/data/emls/l1b/v01.51
+#   inpathl1boa=!l1broot/!YYYY/!DOY
+#   inpathl1brad=!l1broot/!YYYY/!DOY
+#   inpathcore=/bigdata/livesey/!version
+# (3) Set environmental variables. These may be named either the same as
+#   the filetypes or named after the filetype+'path'
+#   E.g., you could type either of the following commands to set l1broot
+#   export l1broot=/data/emls/l1b/v01.51
+#   export l1brootpath=/data/emls/l1b/v01.51
+# --------------- End newmlsl2path.sh example
+
+#---------------------------- get_unique_name
+#
+# Function returns a unique name based on arg, PID and HOSTNAME
+# e.g.,
+#           temp_file_name=`get_unique_name foo`
+#           echo $temp_file_name
+# might print foo.colossus.21455
+# if no arg, defaults to "temp" (very original name)
+# if two args present, assumes second is punctuation to
+# use in pace of "."
+
+get_unique_name()
+{
+
+   # How many args?
+      if [ $# -gt 1 ]
+      then
+        pt="$2"
+        temp="$1"
+      elif [ $# -gt 0 ]
+      then
+        pt="."
+        temp="$1"
+      else
+        pt="."
+        temp="temp"
+      fi
+   # Is $HOST defined?
+      if [ "$HOST" != "" ]
+      then
+         our_host_name="$HOST"
+      elif [ "$HOSTNAME" != "" ]
+      then
+         our_host_name="$HOSTNAME"
+      else
+         our_host_name="host"
+      fi
+   # if in form host.moon.planet.star.. extract host
+      our_host_name=`echo $our_host_name | sed 's/\./,/g'`
+      our_host_name=`perl -e '@parts=split(",","$ARGV[0]"); print $parts[0]' $our_host_name`
+      echo $temp${pt}$our_host_name${pt}$$
+}
+      
+#------------------------------- mega_buck ------------
+#
+# Function to force multiple-evaluation of its second arg
+# i.e., $$..$color (where the number of $ signs is n)
+# usage: mega_buck n color
+
+# (uses PID to generate unique name) 
+
+mega_buck()
+{
+
+   # Trivial case (n is 0)
+   if [ "$1" -lt 1 ]
+      then
+         mega_buck_result="$2"
+   elif [ "$2" = "" ]
+      then
+         mega_buck_result="$2"
+   # Do we have write permission in ./?
+   #elif [ ! -w "./" ]
+   #   then
+   #      echo "Sorry--need write permission in ./ to operate"
+   #      exit 1
+   else
+      
+      unique_name=$HOME/`get_unique_name`
+      rm -f $unique_name
+
+      number=0
+      mega_buck_result=$2
+      while [ "$number" -lt "$1" ]
+      do
+         #echo "mega_buck_result: $mega_buck_result"
+         echo "echo \$arg" | sed 's:arg:'$mega_buck_result':' > $unique_name
+         mega_buck_result=`. $unique_name`
+         rm -f $unique_name
+         number=`expr $number + 1`
+      done
+   fi
+   if [ "$mega_buck_result" != '$' ]
+   then
+     echo $mega_buck_result
+   fi
+}
+
+#---------------------------- read_file_into_array
+#
+# read each line of stdin
+# catenating them into an array which we will return
+# Ignore any entries beginning with '#' character
+# In fact, only first entry in each line is kept
+# Possible improvements:
+#   Other comment signifiers
+#   Choose field number other than 1
+
+read_file_into_array()
+{
+  array_result=''
+  while read line; do
+    element=`echo $line | awk '$1 !~ /^#/ {print $1}'`
+    if [ "$element" != "" ]
+    then
+      array_result="$array_result $element"
+    fi
+  done
+  echo $array_result
+}
+      
+#------------------------------- Main Program ------------
+
+#****************************************************************
+#                                                               *
+#                  * * * Main Program  * * *                    *
+#                                                               *
+#                                                               *
+#	The entry point where control is given to the script         *
+#****************************************************************
+
+me="$0"
+my_name=newmlsl2path.sh
+I=newmlsl2path
+debug="no"
+opl2cf="overridepaths.l2cf"
+opsh="overridepaths.sh"
+if [ "$HOSTOPL2CF" != "" ]
+then
+  opl2cf="$HOSTOPL2CF"
+fi
+if [ "$HOSTOPSH" != "" ]
+then
+  opsh="$HOSTOPSH"
+fi
+#variables="doy year fwmVerssion l1bVersion l2pcName simulation version"
+#values="(default) (default) (default) (default) (default) (default) (default)"
+# settings_file will hold all the options and override.l2cf file settings
+settings_file=$HOME/`get_unique_name set`
+echo '#!/bin/sh' > $settings_file
+echo "# settings_file will hold all the options and override.l2cf file settings" >> $settings_file
+
+more_opts="yes"
+while [ "$more_opts" = "yes" ] ; do
+
+    case "$1" in
+
+   --* )
+      variable=`echo $1 | sed 's/=.*//g;s/-//g'`
+      value=`echo $1 | sed 's/.*=//g'`
+      if [ "$debug" = "yes" ]
+      then
+        echo variable: $variable
+        echo value: $value
+      fi
+      #echo values="$variables" "$values" $variable $value
+      #set_hash "$variables" "$values" $variable $value
+      echo "$variable=$value" >> $settings_file
+      shift
+      ;;
+    -h | -help )
+       sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
+           | sed -n 's/^.//p' | sed '1 d; $ d'
+       rm -f $settings_file
+       exit
+       ;;
+    -example )
+       sed -n '/'$my_name' example/,/End '$my_name' example/ p' $me \
+           | sed -n 's/^.//p' | sed '1 d; $ d'
+       rm -f $settings_file
+       exit
+       ;;
+    -v )
+       debug="yes"
+       shift
+       ;;
+    -l2cf )
+       shift
+       opl2cf="$1"
+       shift
+       ;;
+    -sh )
+       shift
+       opsh="$1"
+       shift
+       ;;
+    * )
+       more_opts="no"
+       ;;
+    esac
+done
+
+if [ "$debug" = "yes" ]
+then
+  # echo variables: $variables
+  # echo values: $values
+  echo settings file: $settings_file
+  # cat $settings_file
+  echo filetype: $1
+fi
+
+if [ "$1" = "" ]
+then
+  echo "Sorry--no filetype found among args"
+  rm -f $settings_file
+  exit 1
+fi
+
+# 3 levels of trying to set these paths
+# (in descending order of priority)
+# (1) An l2cf file named overridepaths.l2cf in the current directory
+# (2) A shell file named overridepaths.sh in the current directory
+# (3) Environmental variables named filetype+'path'
+
+foundit="no"
+if [ -f "$opl2cf" ]
+then
+  l2cflines==`cat $opl2cf | uniq | read_file_into_array`
+  for line in $l2cflines
+  do
+  # a=`grep -i define\($1\, $opl2cf | sed 's/}/{/g' | awk -F '{' '{print $5}'`
+  # a=`grep -i define\($1\, $opl2cf | sed 's/.*define(//g'`
+  # echo "line: $line"
+  a=`echo "$line" | grep define\( | sed 's/.*define(//g'`
+  # echo path after $opl2cf: $a
+  if [ "$a" != "" ]
+  then
+    variable=`echo $a | sed 's/,.*//g'`
+    has_brace=`echo $a | grep '{'`
+    if [ "$has_brace" = "" ]
+    then
+      b=`echo $a | sed 's/.*,//; s/)//'`
+    else
+      b=`echo $a | sed 's/.*,//g' | sed 's/}/{/g' | awk -F '{' '{print $2}'`
+    fi
+    # Now beware if the value we found is itself in terms of another variable
+    # e.g., expressed as "!another"
+    # if it is, we have to substitute for bang(!) with buck($)
+    value=`echo $b | sed 's/!/$/g'`
+    echo "$variable=$value" >> $settings_file
+  fi
+  done
+fi
+# echo "Whew .. done with loop"
+  . $settings_file
+rm -f $settings_file
+path=`mega_buck 1 $1`
+# echo "Whew .. done with 1st try"
+if [ -f "$opsh" -a "$path" = "" ]
+then
+  . $opsh
+fi
+path=`mega_buck 1 $1`
+# echo path after $opsh: $path
+if [ "$path" = "" ]
+then
+  path=`mega_buck 1 ${1}path`
+fi
+
+echo $path
+# $Log$
