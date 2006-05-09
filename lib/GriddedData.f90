@@ -19,6 +19,7 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
   ! (except for dao dimensions)
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR, &
     & MLSMSG_DEALLOCATE
+  use MLSStrings, only: LOWERCASE
   use Output_m, only: OUTPUT
 
   implicit NONE
@@ -30,9 +31,9 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
-  public :: AddGriddedDataToDatabase, &
+  public :: GriddedData_T, AddGriddedDataToDatabase, &
     & ConcatenateGriddedData, ConvertFromEtaLevelGrids, CopyGrid, &
-    & DestroyGriddedData, DestroyGriddedDataDatabase, Dump, GriddedData_T, &
+    & DestroyGriddedData, DestroyGriddedDataDatabase, DoGriddeddataMatch, Dump, &
     & NullifyGriddedData, RGR, SetupNewGriddedData, SliceGriddedData, &
     & WrapGriddedData
 
@@ -78,6 +79,7 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
     integer :: noHeights         ! Number of surfaces
     real (rgr), pointer, dimension(:) :: heights  => NULL()
     ! Surfaces (e.g. pressures etc.) [noHeights]
+    character (LEN=NameLen) :: heightsUnits ! Units for heights, e.g. 'Pa'
 
     ! Now the latitudinal coordinate
     logical :: equivalentLatitude       ! If set, coordinate is equivalent latitude
@@ -197,6 +199,11 @@ contains
     real(rgr), dimension(:), pointer    :: pVGrid => null()
     ! Executable code
     nullify( pEta, pVGrid )
+    ! GriddedData must match
+    if ( .not. DoGriddeddataMatch( PGrid, TGrid ) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Gridded T,P data must match' )
+    nullify( pEta, pVGrid )
     call allocate_test( pEta, TGrid%noHeights, 'pEta', moduleName )
     call allocate_test( pVGrid, VGrid%noSurfs, 'pVGrid', moduleName )
     call DestroyGriddedData ( OutGrid )
@@ -310,6 +317,39 @@ contains
     end if
   end subroutine DestroyGriddedDataDatabase
 
+  ! ----------------------------------------  DoGriddeddataMatch  -----
+  function DoGriddeddataMatch ( a, b ) result( match )
+    ! Test whether two griddeddata have same shapes, are on same geolocations
+    ! and so on
+    ! They may have different name, description, and unit information
+    ! And the field values may differ
+    type(GriddedData_T), intent(in) :: a
+    type(GriddedData_T), intent(in) :: b
+    logical                         :: match
+    ! local variables
+    ! Executable
+    match = .false.
+    if ( any( shape(a%field) /= shape(b%field) ) ) return
+    if ( a%verticalCoordinate /= b%verticalcoordinate ) return
+    if ( a%noHeights /= b%noHeights ) return
+    if ( any( a%Heights /= b%Heights ) ) return
+    if ( lowercase(a%heightsUnits) /= lowercase(b%heightsUnits) ) return
+    ! if ( lowercase(a%Units) /= lowercase(b%Units) ) return
+    if ( a%noLats /= b%noLats ) return
+    if ( a%noLons /= b%noLons ) return
+    if ( a%noLsts /= b%noLsts ) return
+    if ( a%noSzas /= b%noSzas ) return
+    if ( a%noDates /= b%noDates ) return
+    if ( a%missingValue /= b%missingValue ) return
+    if ( any( a%Lats /= b%Lats ) ) return
+    if ( any( a%Lons /= b%Lons ) ) return
+    if ( any( a%Lsts /= b%Lsts ) ) return
+    if ( any( a%Szas /= b%Szas ) ) return
+    if ( any( a%DateStarts /= b%DateStarts ) ) return
+    if ( any( a%DateEnds /= b%DateEnds ) ) return
+    match = .true.
+  end function DoGriddeddataMatch
+
   ! ----------------------------------------  DumpGriddedDatabase  -----
   subroutine DumpGriddedDatabase ( GriddedData, Details )
 
@@ -375,7 +415,7 @@ contains
     call output('Gridded quantity name ' // GriddedData%quantityName, advance='yes')
       if ( myDetails < -1 ) return
     call output('description ' // GriddedData%description, advance='yes')
-    call output('units ' // GriddedData%units, advance='yes')
+    call output('units ' // trim(GriddedData%units), advance='yes')
     call output('missing value ', advance='no')
     call output(GriddedData%missingValue, advance='yes')
 
@@ -383,6 +423,7 @@ contains
 
     call output ( ' Vertical coordinate = ' )
     call output ( GriddedData%verticalCoordinate, advance='yes' )
+    call output('heights units ' // trim(GriddedData%heightsUnits), advance='yes')
     call output ( ' No. of heights = ' )
     call output ( GriddedData%noHeights, advance='yes' )
     if ( myDetails >= 0 ) call dump ( GriddedData%heights, &
@@ -460,8 +501,8 @@ contains
 
   ! ----------------------------------------  SetupNewGriddedData  -----
   subroutine SetupNewGriddedData ( Qty, Source, NoHeights, NoLats, &
-    & NoLons, NoLsts, NoSzas, NoDates, missingValue, &
-    & Empty )
+    & NoLons, NoLsts, NoSzas, NoDates, missingValue, verticalCoordinate, &
+    & units, heightsUnits, Empty )
   ! This first routine sets up a new quantity template according to the user
   ! input.  This may be based on a previously supplied template (with possible
   ! modifications), or created from scratch.
@@ -469,6 +510,9 @@ contains
     type (GriddedData_T) :: QTY ! Result
     type (GriddedData_T), optional, intent(in) :: SOURCE ! Template
     integer, optional, intent(in) :: NOHEIGHTS, NOLATS, NOLONS, NOLSTS, NOSZAS, NODATES
+    integer, optional, intent(in) :: verticalCoordinate
+    character(len=*), optional, intent(in) :: units
+    character(len=*), optional, intent(in) :: heightsUnits
     logical, optional, intent(in) :: EMPTY
     real(rgr), optional, intent(in) :: missingValue
     ! Local parameters
@@ -506,6 +550,8 @@ contains
         qty%noYear = source%noYear
         qty%missingValue = source%missingValue
         qty%verticalCoordinate = source%verticalCoordinate
+        qty%units = source%units
+        qty%heightsUnits = source%heightsUnits
       else ! We have no template, setup a very bare quantity
         qty%noHeights = 1
         qty%noLats = 1
@@ -516,6 +562,9 @@ contains
         qty%equivalentLatitude = .false.
         qty%noYear = .false.
         qty%missingValue = defaultMissingValue
+        qty%verticalCoordinate = -1
+        qty%units = '(unknown)'
+        qty%heightsUnits = '(unknown)'
       endif
       
       ! Now, see if the user asked for modifications to this
@@ -526,6 +575,9 @@ contains
       if (present(noSzas)) qty%noSzas = noSzas
       if (present(noDates)) qty%noDates = noDates
       if ( present ( missingValue ) ) qty%missingValue = missingValue
+      if ( present ( verticalCoordinate ) ) qty%verticalCoordinate = verticalCoordinate
+      if ( present ( units ) ) qty%units = units
+      if ( present ( heightsunits ) ) qty%heightsunits = heightsunits
     end if
 
     ! First the vertical/horizontal coordinates
@@ -1012,6 +1064,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.38  2006/05/09 00:13:32  pwagner
+! Added DoGriddeddataMatch; heightsUnits as component of GriddedData_T
+!
 ! Revision 2.37  2006/05/02 19:00:42  pwagner
 ! Added ConvertFromEtaLevelGrids; preliminary, untested
 !
