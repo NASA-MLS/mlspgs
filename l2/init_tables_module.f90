@@ -471,8 +471,8 @@ contains ! =====     Public procedures     =============================
       begin, t+t_rowsOrColumns, l+l_rows, l+l_columns, n+n_dt_def, &
       begin, t+t_reflector, l+l_primary, l+l_secondary, l+l_tertiary, &
              l+l_complete, n+n_dt_def, &
-      begin, t+t_outputType, l+l_l2aux, l+l_l2gp, l+l_l2dgg, l+l_l2fwm, l+l_l2pc, &
-             n+n_dt_def /) )
+      begin, t+t_outputType, l+l_l2aux, l+l_l2cf, l+l_l2dgg, l+l_l2fwm, &
+             l+l_l2gp, l+l_l2pc, n+n_dt_def /) )
     call make_tree ( (/ &
       begin, t+t_quantityType, l+l_adopted, l+l_baseline, l+l_boundarypressure, l+l_calSidebandFraction, &
              l+l_chisqbinned, l+l_chisqchan, l+l_chisqmmaf, l+l_chisqmmif, l+l_cloudIce, &
@@ -607,7 +607,9 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ &
       begin, s+s_wmoTrop, &  ! Must be AFTER S_Gridded
              begin, f+f_grid, s+s_gridded, n+n_field_spec, &
-             nadp+n_spec_def /) )
+             begin, f+f_a, s+s_gridded, n+n_field_spec, &
+             begin, f+f_b, s+s_gridded, n+n_field_spec, &
+             ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_merge, &  ! Must be AFTER S_Gridded
              begin, f+f_operational, s+s_gridded, s+s_concatenate, &
@@ -1069,7 +1071,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_type, t+t_outputType, nr+n_field_type, &
              begin, f+f_file, t+t_string, nr+n_field_type, &
              begin, f+f_quantities, s+s_l2aux, s+s_l2gp, s+s_matrix, &
-                    s+s_directWrite, nr+n_field_spec, &
+                    s+s_directWrite, n+n_field_spec, &
              begin, f+f_overlaps, s+s_l2aux, s+s_l2gp, n+n_field_spec, &
              begin, f+f_ascii, t+t_boolean, n+n_field_type, &
              begin, f+f_packed, t+t_boolean, n+n_field_type, &
@@ -1457,6 +1459,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.435  2006/05/09 16:39:58  pwagner
+! Added writing l2cf to dgm
+!
 ! Revision 2.434  2006/05/04 23:04:59  pwagner
 ! May convertEtaToP and create a VGrid in MergeGrids section
 !
