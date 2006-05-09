@@ -146,7 +146,7 @@ begin Construct
   !define(cloudBandForR1B,34) !define(cloudChannelForR1B,1)
   !define(cloudBandForR2,5)   !define(cloudChannelForR2,1)
   !define(cloudBandForR3,33)  !define(cloudChannelForR3,3)
-  !define(cloudBandForR4,10)  !define(cloudChannelForR4,3)
+  !define(cloudBandForR4,11)  !define(cloudChannelForR4,25)
   !define(cloudBandForR5H,15) !define(cloudChannelForR5H,25)
   !define(cloudBandForR5V,18) !define(cloudChannelForR5V,25)
   ;; Some macros to invoke them
