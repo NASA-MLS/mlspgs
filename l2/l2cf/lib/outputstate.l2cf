@@ -43,7 +43,7 @@ Output, quantities=[joined_iwc, joined_iwcFine], type=l2gp, $
 
 !define(copyStandardProductWithColumn, {Copy, $
   type=l2gp, hdfVersion=5, $
-    inputFile='DGG', swath='$1-StdProd column,$1-StdProd', inputtype=l2dgg, $
+    inputFile='!DGGFileName', swath='$1-StdProd column,$1-StdProd', inputtype=l2dgg, $
     file='!l2gpFileName($1)', rename='$1 column,$1', $
     /create
 })
@@ -51,7 +51,7 @@ Output, quantities=[joined_iwc, joined_iwcFine], type=l2gp, $
 
 !define(copyStandardProductWithoutColumn, {Copy, $
   type=l2gp, hdfVersion=5, $
-    inputFile='DGG', swath='$1-StdProd', inputtype=l2dgg, $
+    inputFile='!DGGFileName', swath='$1-StdProd', inputtype=l2dgg, $
     file='!l2gpFileName($1)', rename='$1', $
     /create
 })
@@ -60,7 +60,7 @@ Output, quantities=[joined_iwc, joined_iwcFine], type=l2gp, $
 ;; --------------------------------- Other files ---
 ;; The IWC file is a somewhat special case
 Copy, type=l2gp, hdfVersion=!hdfVersion, $
-    inputFile='DGG', swath='IWC-StdProd', inputtype=l2dgg, $
+    inputFile='!DGGFileName', swath='IWC-StdProd', inputtype=l2dgg, $
     file='!l2gpFileName(IWC)', rename='IWC', $
     /create
 
@@ -68,7 +68,7 @@ Copy, type=l2gp, hdfVersion=!hdfVersion, $
 ;; to repair its geolocations
 ;; (Perhaps we will in a later improvement)
 Copy, type=l2gp, hdfVersion=!hdfVersion, $
-    inputFile='DGG', swath='IWC3-StdProd', inputtype=l2dgg, $
+    inputFile='!DGGFileName', swath='IWC3-StdProd', inputtype=l2dgg, $
     file='!l2gpFileName(IWC)', rename='IWC3'
 
 })
@@ -85,6 +85,13 @@ Output, quantities=[ !undivert(!joinedDGGDivert) ], type=l2dgg, $
 !ifdef(flagGotJoinedDGMs,{
 Output, quantities=[ !undivert(!joinedDGMDivert) ], type=l2aux, $
   hdfVersion=!hdfVersion, $
+  file='!DGMFileName'})
+
+})
+
+;; Now output the L2CF (but only if asked)
+!ifdef(flagWriteL2CFToDGM,{
+Output, type=l2cf, $
   file='!DGMFileName'})
 
 })
