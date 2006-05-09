@@ -1,30 +1,110 @@
-; This l2cf fragment identifies the various calibration files we might
-; be using.  It's a replacement for clarifypaths.l2cf which also served
-; this role, but tried to do other, unnecessary things.
+;$Id$
 
 ; The first are l2cfs for an include, so unquoted
-!define(signalsL2cf,{!calpath/MLS-Aura_L2Cal-Signals_v1-5-0_0000d000.l2cf})
-!define(spectroscopyL2cf,{!calpath/MLS-Aura_L2Cal-Spectroscopy_v1-5-7_0000d000.l2cf})
-!define(spectroscopyRtvlL2cf,{!calpath/MLS-Aura_L2Cal-Spectroscopy-rtvl_v1-5-7_0000d000.l2cf})
-!define(sidebandL2cf,{!calpath/MLS-Aura_L2Cal-SBFraction_v1-5-3_0000d000.l2cf})
-!define(fovdirL2cf,{!calpath/MLS-Aura_L2Cal-FOV-Directions_v1-5-0_0000d000.l2cf})
-!define(systempL2cf,{!calpath/MLS-Aura_L2Cal-Tsys_v1-5-0_0000d000.l2cf})
-!define(nbwL2cf,{!calpath/MLS-Aura_L2Cal-NBW_v1-5-0_0000d000.l2cf})
+!ifdef(includecalpath, {}, {
+!define(includecalpath,{!calpath})
+})
+!ifdef(signalsPath, {}, {
+!define(signalsPath,{!includecalpath})
+})
+!ifdef(spectroscopyPath, {}, {
+!define(spectroscopyPath,{!includecalpath})
+})
+!ifdef(sidebandPath, {}, {
+!define(sidebandPath,{!includecalpath})
+})
+!ifdef(fovdirPath, {}, {
+!define(fovdirPath,{!includecalpath})
+})
+!ifdef(systempPath, {}, {
+!define(systempPath,{!includecalpath})
+})
+!ifdef(nbw, {}, {
+!define(nbw,{!includecalpath})
+})
+!ifdef(antennaPath, {}, {
+!define(antennaPath,{!calpath})
+})
+!ifdef(climatologyPath, {}, {
+!define(climatologyPath,{!calpath})
+})
+!ifdef(filterPath, {}, {
+!define(filterPath,{!calpath})
+})
+!ifdef(pfaPath, {}, {
+!define(pfaPath,{!calpath})
+})
+!ifdef(pfgPath, {}, {
+!define(pfgPath,{!calpath})
+})
 
-; The next lot are arguments to fowardModelGlobal, so quoted.
+
+!ifdef(signalsL2cf, {}, {
+!define(signalsL2cf, {!signalsPath/MLS-Aura_L2Cal-Signals_v1-5-0_0000d000.l2cf})
+})
+!ifdef(spectroscopyL2cf, {}, {
+!define(spectroscopyL2cf, {!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v2-0-5_0000d000.l2cf})
+})
+!ifdef(spectroscopyRtvlL2cf, {}, {
+!define(spectroscopyRtvlL2cf,{!spectroscopyL2cf})
+})
+!ifdef(sidebandL2cf, {}, {
+!define(sidebandL2cf, {!sidebandPath/MLS-Aura_L2Cal-SBFraction_v2-0-0_0000d000.l2cf})
+})
+!ifdef(fovdirL2cf, {}, {
+!define(fovdirL2cf, {!fovdirPath/MLS-Aura_L2Cal-FOV-Directions_v1-5-0_0000d000.l2cf})
+})
+!ifdef(systempL2cf, {}, {
+!define(systempL2cf, {!systempPath/MLS-Aura_L2Cal-Tsys_v1-5-0_0000d000.l2cf})
+})
+!ifdef(nbwL2cf, {}, {
+!define(nbwL2cf, {!nbwPath/MLS-Aura_L2Cal-NBW_v1-5-0_0000d000.l2cf})
+})
+
+; The next lot are arguments to forwardModelGlobal, so quoted.
 !ifdef(flagUsingPCF,{
   !define(antennaFile,'AAAP')
   !define(climatologyFile,'Climatologies')
   !define(dacsFilterFile,'DACSFilters')
   !define(filterFile,'-Filters')        ; Include - to avoid getting the DACSFilters file
   !define(pfgFile,'PFG_')               ; Include _ to avoid getting the PFG-rtvl file
-  !define(pfgRtvlFile,'PFG-rtvl')
+  !define(pfgRtvlFile,'PFG')
+  !define(pfaFiles, {
+  'R1A', $
+  'R1B', $
+  'R2', $
+  'R3', $
+  'R4', $
+  'R5H',$
+  'R5V']})
 },{
-  !define(antennaFile,'!calpath/MLS-Aura_L2Cal-AAAP_v1-5-0_0000d000.txt')
-  !define(climatologyFile,'!calpath/MLS-Aura_L2Cal-Climatologies_v1-5-2_0000d000.txt')
-  !define(filterFile,'!calpath/MLS-Aura_L2Cal-Filters_v1-5-0_0000d000.txt')
-  !define(dacsFilterFile,'!calpath/MLS-Aura_L2Cal-DACSFilters_v1-5-1_0000d000.txt')
-  !define(pfgFile,'!calpath/MLS-Aura_L2Cal-PFG_v1-5-0_0000d000.txt')
-  !define(pfgRtvlFile,'!calpath/MLS-Aura_L2Cal-PFG-rtvl_v1-5-0_0000d000.txt')
+  !ifdef(antennaFile, {}, {
+  !define(antennaFile, {'!antennaPath/MLS-Aura_L2Cal-AAAP_v2-0-0_0000d000.txt'})
+  })
+  !ifdef(climatologyFile, {}, {
+  !define(climatologyFile, {'!climatologyPath/MLS-Aura_L2Cal-Climatologies_v1-5-2_0000d000.txt'})
+  })
+  !ifdef(filterFile, {}, {
+  !define(filterFile, {'!filterPath/MLS-Aura_L2Cal-Filters_v1-5-0_0000d000.txt'})
+  })
+  !ifdef(dacsFilterFile, {}, {
+  !define(dacsFilterFile, {'!filterPath/MLS-Aura_L2Cal-DACSFilters_v1-5-1_0000d000.txt'})
+  })
+  !ifdef(pfgFile, {}, {
+  !define(pfgFile, {'!pfgPath/MLS-Aura_L2Cal-PFG_v2-0-4_0000d000.txt'})
+  })
+  !ifdef(pfgRtvlFile, {}, {
+  !define(pfgRtvlFile,{!pfgFile})
+  })
+  !ifdef(pfaFiles, {}, {
+  !define(pfaFiles, 
+  {['!pfaPath/PFAData_R1A_v2-0-5.h5', $
+  '!pfaPath/PFAData_R1B_v2-0-5.h5', $
+  '!pfaPath/PFAData_R2_v2-0-5.h5', $
+  '!pfaPath/PFAData_R3_v2-0-5.h5', $
+  '!pfaPath/PFAData_R4_v2-0-5.h5', $
+  '!pfaPath/PFAData_R5H_v2-0-5.h5',$
+  '!pfaPath/PFAData_R5V_v2-0-5.h5']})
+  })
 })
 
