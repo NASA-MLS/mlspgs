@@ -47,6 +47,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! ReadCompleteLineWithoutComments     
 !                    Knits continuations, snips comments
 ! ReadIntsFromChars  Converts an array of strings to ints using Fortran read
+! Replace            Replaces every instance of oldChar with newChar
 ! Reverse            Turns 'a string' -> 'gnirts a'
 ! Reverse_trim       (Reverses after trimming its argument)
 ! SplitNest          Splits 'part 1 (part 2) part 3' -> 'part 1', 'part 2', 'part 3'
@@ -73,6 +74,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! readIntsFromChars (char* strs(:), int ints(:), char* forbiddens)
 ! ReadCompleteLineWithoutComments (int unit, char* fullLine, [log eof], &
 !       & [char commentChar], [char continuationChar])
+! char* Replace (char* str, char oldChar, char newChar)
 ! char* Reverse (char* str)
 ! char* Reverse_trim (char* str)
 ! SplitNest ( char *str, char* part1, char* part2, char* part3, [char* parens] )
@@ -133,7 +135,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
    & indexes, ints2Strings, IsRepeat, &
    & LinearSearchStringArray, LowerCase, NCopies, &
    & ReadCompleteLineWithoutComments, readIntsFromChars, &
-   & Reverse, Reverse_trim, &
+   & Replace, Reverse, Reverse_trim, &
    & SplitNest, SplitWords, streq, strings2Ints, trim_safe, &
    & writeIntsToChars
 
@@ -926,6 +928,28 @@ contains
 
   END SUBROUTINE readIntArrayFromChars
 
+   ! --------------------------------------------------  Replace  -----
+  function Replace (str, oldChar, newchar) RESULT (outstr)
+    ! takes a string and returns one with oldChar replaced by newChar
+    ! E.g., to replace every char(0), which is the NUL character, with a blank
+	 ! arg = Replace( arg, char(0), char(32) )
+    character(len=*), intent(in) :: str
+    character(len=1), intent(in) :: oldChar
+    character(len=1), intent(in) :: newChar
+    character(len=len(str))      :: outstr
+    ! Internal variables
+    integer :: i, n
+    ! Executable
+    outstr = str
+    if ( len(str) < 1 ) return
+    if ( index(str, oldChar) < 1 ) return
+    n = len(str)
+    do i=1, n
+      if ( str(i:i) == oldChar ) outstr(i:i) = newChar
+    enddo
+  end function Replace
+
+	 !
    ! --------------------------------------------------  Reverse  -----
   elemental function Reverse (str) RESULT (outstr)
     ! takes a string and returns one with chars in reversed order
@@ -1575,6 +1599,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.62  2006/05/09 00:14:23  pwagner
+! Added Replace; useful to replace null chars with blanks
+!
 ! Revision 2.61  2006/02/24 01:14:02  pwagner
 ! Added SplitNest (is this the best name)
 !
