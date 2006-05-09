@@ -304,7 +304,14 @@ contains ! ===================================== Public Procedures =====
       call GetHDF5Attribute( DACSFile, 'DACsDeconvolved', &
       & ChunkDivideConfig%DACSDeconvolved )
       call h5gclose_f ( DACSFile%fileID%grp_id, status )
+    else
+      ChunkDivideConfig%DACSDeconvolved = .false.
     endif
+
+    if ( .not. ChunkDivideConfig%DACSDeconvolved ) &
+      & call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      & 'Failed to confirm that level 1 performed DACS deconvolution--hope' // &
+      & ' you are OK with that' )
 
     ! Tidy up
     if ( switchDetail(switches, 'chu') > -1 .or. &
@@ -2357,6 +2364,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.75  2006/05/09 23:41:41  pwagner
+! Warn if not assured DACS deconvolution performed by level 1
+!
 ! Revision 2.74  2006/04/20 23:22:54  pwagner
 ! Show both kinds of allowed extra-range overlaps
 !
