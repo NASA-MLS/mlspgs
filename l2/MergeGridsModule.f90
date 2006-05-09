@@ -252,8 +252,9 @@ contains ! =================================== Public procedures
     & result ( newGrid )
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use Expr_m, only: EXPR
-    use GriddedData, only: GRIDDEDDATA_T, NULLIFYGRIDDEDDATA, COPYGRID, &
-      & WRAPGRIDDEDDATA, SETUPNEWGRIDDEDDATA, RGR, V_IS_PRESSURE, SLICEGRIDDEDDATA
+    use GriddedData, only: GRIDDEDDATA_T, RGR, V_IS_PRESSURE, &
+      & COPYGRID, NULLIFYGRIDDEDDATA, &
+      & SETUPNEWGRIDDEDDATA, SLICEGRIDDEDDATA, WRAPGRIDDEDDATA
     use Init_tables_module, only: F_CLIMATOLOGY, F_HEIGHT, F_OPERATIONAL, &
       & F_SCALE
     use Intrinsic, only: PHYQ_Length, PHYQ_Pressure
@@ -485,12 +486,15 @@ contains ! =================================== Public procedures
   type (griddedData_T) function wmoTropFromGrid ( root, griddedDataBase ) &
     & result ( newGrid )
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use GriddedData, only: GRIDDEDDATA_T, NULLIFYGRIDDEDDATA, COPYGRID, &
-      & WRAPGRIDDEDDATA, SETUPNEWGRIDDEDDATA, RGR, V_IS_PRESSURE, SLICEGRIDDEDDATA
-    use Init_tables_module, only: F_GRID
+    use GriddedData, only: GRIDDEDDATA_T, RGR, V_IS_PRESSURE, V_IS_ETA, &
+      & COPYGRID, NULLIFYGRIDDEDDATA, &
+      & DOGRIDDEDDATAMATCH, &
+      & SETUPNEWGRIDDEDDATA, SLICEGRIDDEDDATA, WRAPGRIDDEDDATA
+    use Init_tables_module, only: F_A, F_B, F_GRID
     use MLSCommon, only: DEFAULTUNDEFINEDVALUE
     use MLSFillValues, only: IsFillValue, RemoveFillValues
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
+    use MLSStrings, only: LOWERCASE
     use Toggles, only: GEN, TOGGLE
     use Trace_M, only: TRACE_BEGIN, TRACE_END
     use Tree, only: NSONS, SUBTREE, DECORATION
@@ -500,10 +504,20 @@ contains ! =================================== Public procedures
     integer, intent(in) :: ROOT         ! Tree node
     type (griddedData_T), dimension(:), pointer :: griddedDataBase ! Database
 
-    ! This routine creates a new grid by finding wmo Tropopause
-    ! pressure levels among the temperatures of another grid.
-    ! The new "grid" has only one "level" per horizontal grid point
+    ! This routine creates a new gridded data by finding wmo Tropopause
+    ! pressure levels among the temperatures of another gridded data,
+    ! possibly using the vertical coords of that gridded data
+    ! (if entered via the "grid=" field) 
+    ! or else using the corresponding pressures stored
+    ! as the field values of a second gridded data
+    ! (if entered via "a=first_gridded, b=second_gridded")
+    ! The new gridded has only one "level" per horizontal grid point
     ! with tropopause pressures stored in the values field
+    
+    ! We'll assume some things:
+    ! (1) verticalCoordinate is either pressure or eta
+    ! (2) If Pressures grid supplied, grids match
+    !     and Pressures units either Pa or hPa
     
     ! Local variables
     integer :: field
@@ -523,9 +537,12 @@ contains ! =================================== Public procedures
     real, parameter :: pliml = 65.*100 ! in Pa
     real, parameter :: plimlex = 65.*100 ! in Pa
     real, parameter :: plimu = 550.*100 ! in Pa
+    type (griddedData_T), pointer :: Placeholder    => null()
+    type (griddedData_T), pointer :: Pressures    => null()
     integer :: son
     real, dimension(:), pointer :: t
     type (griddedData_T), pointer :: Temperatures => null()
+    real :: scale
     real :: trp
     integer :: value
     real, dimension(:), pointer :: xyTemp, xyPress
@@ -544,11 +561,29 @@ contains ! =================================== Public procedures
       value = subtree(2,son)
       field_index = decoration(field)
       select case ( field_index )
+      case ( f_a ) 
+        Temperatures => griddedDataBase ( decoration ( decoration ( value ) ) )
+      case ( f_b ) 
+        Pressures    => griddedDataBase ( decoration ( decoration ( value ) ) )
       case ( f_grid ) 
         Temperatures => griddedDataBase ( decoration ( decoration ( value ) ) )
       end select
     end do
 
+    if ( associated(Temperatures) .and. associated(Pressures) ) then
+    ! What if you reversed the sense of a (Temperatures) and b (Pressures)?
+    ! We must switch them
+      if ( index( 'hpa,mb', lowercase(trim(Temperatures%units)) ) > 0 .and. &
+        &  index( 'hpa,mb', lowercase(trim(Pressures%units)) ) < 1 ) then
+        Placeholder  => Pressures
+        Pressures    => Temperatures
+        Temperatures => Placeholder
+      endif
+    ! What if Temperatures and Pressures don't match
+      if ( .not. doGriddeddataMatch( Temperatures, Pressures ) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Gridded T,P data must match to calculate wmo Tropopause' )
+    endif
     if ( .not. associated(Temperatures) ) then
       call MLSMessage ( MLSMSG_Warning, moduleName, &
         & 'No associated Temperatures grid for calculating wmo tropopause' )
@@ -560,29 +595,37 @@ contains ! =================================== Public procedures
         & 'Too few levels on Temperatures grid for calculating wmo tropopause' )
       return
     endif
+    ! Right now we can't read eta levels, only pressures
+    ! but when we move to GOES5 GMAO we'll have no choice:
+    ! Must read eta-level files
+    if ( .not. any( &
+      & Temperatures%verticalCoordinate == (/ v_is_pressure, v_is_eta /) ) ) &
+      & call MLSMessage ( MLSMSG_Error, moduleName, &
+        & 'Temperatures must be on eta or pressure calculating wmo tropopause' )
+    if (  Temperatures%verticalCoordinate /= v_is_pressure  .and. &
+      & .not. associated(Pressures) ) &
+      & call MLSMessage ( MLSMSG_Error, moduleName, &
+        & 'Temperatures illegal verticalcoordinate calculating wmo tropopause' )
+    ! For now, just crudely assume the heights is in units of Pa
+    ! If not, we'll need to check heightsUnits
+    if ( lowercase(Temperatures%heightsUnits) /= 'pa' .and. &
+      & .not. associated(Pressures) ) &
+      & call MLSMessage ( MLSMSG_Error, moduleName, &
+        & 'Temperatures illegal heightsUnits calculating wmo tropopause' )
+
     call Allocate_test (h, nlev, 'h', ModuleName )
     call Allocate_test (p, nlev, 'p', ModuleName )
     call Allocate_test (t, nlev, 't', ModuleName )
     ! check vertical orientation of data
     ! (twmo expects ordered from top downward)
 
-    ! Right now we can't read eta levels, only pressures
-    ! but when we move to GOES5 GMAO we'll have no choice:
-    ! Must read eta-level files
-    ! if ( .not. any( &
-    !   & Temperatures%verticalCoordinate == (/ v_is_pressure, v_is_eta /) &
-    !   & ) ) then
-    if (  Temperatures%verticalCoordinate /= v_is_pressure ) then
-      call MLSMessage ( MLSMSG_Error, moduleName, &
-        & 'Temperatures illegal verticalcoordinate calculating wmo tropopause' )
-    endif
     h = Temperatures%heights
     if (h(1) .gt. h(2)) then
       invert=1
-      p=h(nlev:1:-1)*100.  ! hPa > Pa
+      p = h(nlev:1:-1)*100.  ! hPa > Pa
     else
       invert=0
-      p=h(:)*100.         ! hPa > Pa
+      p = h(:)*100.         ! hPa > Pa
     endif
     
     call SetupNewGriddedData ( newGrid, source=Temperatures, &
@@ -591,7 +634,7 @@ contains ! =================================== Public procedures
     newGrid%sourceFileName     = 'Gridded Temperatures'
     newGrid%quantityName       = 'wmo Tropopause'
     newGrid%description        = 'wmo Tropopause'
-    newGrid%units              = 'hPa'
+    newGrid%units              = 'hPa' ! If we want 'Pa', restore /100 below
     newGrid%verticalCoordinate = v_is_pressure
     newGrid%equivalentLatitude = Temperatures%equivalentLatitude
     newGrid%heights            = Temperatures%missingValue
@@ -609,6 +652,26 @@ contains ! =================================== Public procedures
         do iLst=1, size( Temperatures%field, 4 )
           do lon=1, size( Temperatures%field, 3 )
             do lat=1, size( Temperatures%field, 2 )
+              ! Do we have a second, pressure, gridded data?
+              if ( associated(Pressures) ) then
+                select case (lowercase(Pressures%units))
+                case ('pa', 'b')
+                  scale = 100. ! To convert Pa to hPa
+                case ('hpa', 'mb')
+                  scale = 1.
+                case default
+                  call MLSMessage ( MLSMSG_Error, moduleName, &
+                    & 'Pressures units must be Pa, hPa, or mb calculating wmo tropopause' )
+                end select
+                h = Pressures%field(nlev:1:-1,lat,lon,iLst,iSza,idate)
+                if (h(1) .gt. h(2)) then
+                  invert=1
+                  p = Pressures%field(nlev:1:-1,lat,lon,iLst,iSza,idate) * scale
+                else
+                  invert=0
+                  p = Pressures%field(nlev:1:-1,lat,lon,iLst,iSza,idate) * scale
+                endif
+              endif
               if ( invert == 1 ) then
                 t = temperatures%field(nlev:1:-1,lat,lon,iLst,iSza,idate)
               else
@@ -629,7 +692,7 @@ contains ! =================================== Public procedures
                 & extraTropics(temperatures%lats(lat)) )  &
                 & trp = MISSINGVALUE
               if ( trp > 0. .and. trp < 100000000. ) &
-                & newGrid%field(1, lat,lon,iLst,iSza,idate) = trp/100
+                & newGrid%field(1, lat,lon,iLst,iSza,idate) = trp ! /100 for 'Pa'
               call Deallocate_test ( xyTemp, 'xyTemp', ModuleName )
               call Deallocate_test ( xyPress, 'xyPress', ModuleName )
             enddo ! Lats
@@ -654,6 +717,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.18  2006/05/09 16:42:02  pwagner
+! May find wmo p trop with two eta-level grids
+!
 ! Revision 2.17  2006/05/04 23:04:59  pwagner
 ! May convertEtaToP and create a VGrid in MergeGrids section
 !
