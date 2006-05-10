@@ -19,8 +19,8 @@
 !ifdef(systempPath, {}, {
 !define(systempPath,{!includecalpath})
 })
-!ifdef(nbw, {}, {
-!define(nbw,{!includecalpath})
+!ifdef(nbwPath, {}, {
+!define(nbwPath,{!includecalpath})
 })
 !ifdef(antennaPath, {}, {
 !define(antennaPath,{!calpath})
