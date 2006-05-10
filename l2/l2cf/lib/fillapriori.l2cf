@@ -386,14 +386,13 @@ begin Fill
   ;; different phases, I'm quoting there the one for the 'standard' product.
 
   ;; Vertical
+  Fill, quantity=vReg.totalextinctionR2, method=explicit,/spread,explicitValues=1.0e-3
+  Fill, quantity=vReg.totalextinctionR3, method=explicit,/spread,explicitValues=1.0e-3
+
   Fill, quantity=vReg.extinctionR1A, method=explicit,/spread,explicitValues=1.0e-3
   Fill, quantity=vReg.extinctionR1B, method=explicit,/spread,explicitValues=1.0e-3
   Fill, quantity=vReg.extinctionR2, method=explicit,/spread,explicitValues=1.0e-4
   Fill, quantity=vReg.extinctionR3, method=explicit,/spread,explicitValues=1.0e-4
-  Fill, quantity=hReg.extinctionR1A, method=explicit,/spread,explicitValues=1.0e-3
-  Fill, quantity=hReg.extinctionR1B, method=explicit,/spread,explicitValues=1.0e-3
-  Fill, quantity=hReg.extinctionR2, method=explicit,/spread,explicitValues=1.0e-4
-  Fill, quantity=hReg.extinctionR3, method=explicit,/spread,explicitValues=1.0e-4
 
   Fill, quantity=vReg.baselineR1A, method=profile, profileValues=[921mb:0K, 100mb:2K ]
   Fill, quantity=vReg.baselineR1B, method=profile, profileValues=[921mb:0K, 100mb:2K ]
@@ -456,6 +455,14 @@ begin Fill
     profileValues=[ 1mb:1000ppmv ]
 
   ;; Horizontal
+  Fill, quantity=hReg.totalextinctionR2, method=explicit,/spread,explicitValues=1.0e-3
+  Fill, quantity=hReg.totalextinctionR3, method=explicit,/spread,explicitValues=1.0e-3
+
+  Fill, quantity=hReg.extinctionR1A, method=explicit,/spread,explicitValues=1.0e-3
+  Fill, quantity=hReg.extinctionR1B, method=explicit,/spread,explicitValues=1.0e-3
+  Fill, quantity=hReg.extinctionR2, method=explicit,/spread,explicitValues=1.0e-4
+  Fill, quantity=hReg.extinctionR3, method=explicit,/spread,explicitValues=1.0e-4
+
   Fill, quantity=hReg.baselineR1A, method=profile, profileValues=[100mb:0K, 68mb:2K ]
   Fill, quantity=hReg.baselineR1B, method=profile, profileValues=[100mb:0K, 68mb:2K ]
   Fill, quantity=hReg.baselineR2, method=profile, profileValues=[100mb:0K, 68mb:2K ]
