@@ -622,7 +622,10 @@ contains ! ======================= Public Procedures =========================
     integer :: i
     call output ( '========== DirectWrite Data Base ==========', advance='yes' )
     call output ( ' ', advance='yes' )
-    if ( size(directDB) < 1 ) then
+    if ( .not. associated(directDB) ) then
+      call output ( '**** directWrite Database empty ****', advance='yes' )
+      return
+    elseif ( size(directDB) < 1 ) then
       call output ( '**** directWrite Database empty ****', advance='yes' )
       return
     endif
@@ -1012,6 +1015,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.39  2006/05/11 19:39:19  pwagner
+! Should not segment fault if dumping empty DB
+!
 ! Revision 2.38  2006/04/20 23:24:12  pwagner
 ! More bugs squashed related to extra-range MAFs; one crashed final chunk
 !
