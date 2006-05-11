@@ -391,7 +391,7 @@ contains ! =====     Public Procedures     =============================
       & F_LINECENTER, F_LINEWIDTH, F_LINEWIDTH_TDEP, F_LOCKBINS, &
       & F_LSBLBLMOLECULES, F_LSBPFAMOLECULES, F_MODULE, F_MOLECULES, &
       & F_MOLECULEDERIVATIVES, F_NABTERMS, F_NAZIMUTHANGLES, &
-      & F_NCLOUDSPECIES, F_NMODELSURFS, F_NSCATTERINGANGLES, &
+      & F_NCLOUDSPECIES, F_NMODELSURFS, F_NO_DUP_MOL, F_NSCATTERINGANGLES, &
       & F_NSIZEBINS, F_PHIWINDOW, F_POLARIZED, F_REFRACT, F_SCANAVERAGE, &
       & F_SIGNALS, F_SKIPOVERLAPS, F_SPECIFICQUANTITIES, F_SPECT_DER, &
       & F_SWITCHINGMIRROR, F_TANGENTGRID, &
@@ -406,6 +406,7 @@ contains ! =====     Public Procedures     =============================
     use MLSSignals_M, only: Signals
     use MoreTree, only: Get_Boolean, Get_Field_ID
     use Parse_Signal_m, only: PARSE_SIGNAL
+    use output_m, only: output
     use String_Table, only: Get_String
     use Toggles, only: Gen, Levels, Switches, Toggle
     use Trace_M, only: Trace_begin, Trace_end
@@ -485,6 +486,7 @@ contains ! =====     Public Procedures     =============================
     info%linearSideband = 0
     info%name = name
     info%no_cloud_species = 2
+    info%no_dup_mol = .false.
     info%no_model_surfs = 640
     info%num_ab_terms = 50
     info%num_azimuth_angles = 8
@@ -583,6 +585,10 @@ contains ! =====     Public Procedures     =============================
       case ( f_nmodelsurfs )
         call expr ( subtree(2,son), expr_units, value, type )
         info%no_model_surfs = nint( value(1) )
+      case ( f_no_dup_mol )
+        info%no_dup_mol = get_boolean(son)
+!         call output('Setting no_dup_mol: ', advance='no')
+!         call output(info%no_dup_mol, advance='yes')
       case ( f_nscatteringangles )
         call expr ( subtree(2,son), expr_units, value, type )
         info%NUM_SCATTERING_ANGLES = nint( value(1) )
@@ -681,6 +687,8 @@ contains ! =====     Public Procedures     =============================
 
     end do ! i = 2, nsons(root)
 
+    ! call dump(info)
+
     if ( ( got(f_lsbPFAMolecules) .and. got(f_lsbLBLMolecules) ) ) &
       & call announceError ( LBLandPFA, lblTrees(1) )
     if ( ( got(f_usbPFAMolecules) .and. got(f_usbLBLMolecules) ) ) &
@@ -749,6 +757,7 @@ contains ! =====     Public Procedures     =============================
     info%molecules => info%beta_group%molecule
 
     ! Announce duplicate molecules, but don't make it an error.
+    ! (unless we have specifically disallowed them with no_dup_mol)
     ! All of the molecules are in ...%lbl(1) at this moment.
     do b = 1, size(info%beta_group)
       do i = 1, size(info%beta_group(b)%lbl(1)%molecules)
@@ -757,7 +766,8 @@ contains ! =====     Public Procedures     =============================
           if ( info%beta_group(b)%lbl(1)%molecules(i) == &
             &  info%beta_group(b)%lbl(1)%molecules(j) ) then
             call announceError ( duplicateMolecule, moleculeTree, &
-              what=info%beta_group(b)%lbl(1)%molecules(i), warn=.true. )
+              what=info%beta_group(b)%lbl(1)%molecules(i), &
+              warn=.not. info%no_dup_mol)
           end if
         end do
         ! Now in other groups
@@ -766,7 +776,8 @@ contains ! =====     Public Procedures     =============================
             if ( info%beta_group(b)%lbl(1)%molecules(i) == &
               &  info%beta_group(k)%lbl(1)%molecules(j) ) then
               call announceError ( duplicateMolecule, moleculeTree, &
-                what=info%beta_group(b)%lbl(1)%molecules(i), warn=.true. )
+                what=info%beta_group(b)%lbl(1)%molecules(i), &
+                warn=.not. info%no_dup_mol )
             end if
           end do
         end do
@@ -1216,9 +1227,14 @@ op:     do j = 2, nsons(theTree)
     integer, intent(in) :: where      ! Where in the tree did the error occur?
     character (LEN=*), optional, intent(in) :: extraMessage
     integer, intent(in), optional :: What ! Optional extra, usually string index
-    logical, optional, intent(in) :: Warn ! Warning if present, no matter what value
-
-    if ( .not. present(warn) ) error = max(error,1)
+    logical, optional, intent(in) :: Warn ! Warning if TRUE
+    ! Internal variables
+    logical :: onlyWarn
+    ! Executable
+    onlyWarn = .false.
+    if ( present(warn) ) onlyWarn = warn
+    if ( .not. onlyWarn ) error = max(error,1)
+    ! if ( .not. present(warn) ) error = max(error,1)
     call startErrorMessage ( where )
     call output ( ' ForwardModelSupport complained: ' )
     select case ( code )
@@ -1326,6 +1342,8 @@ op:     do j = 2, nsons(theTree)
       call output ( '(no specific description of this error)', advance='yes' )
     end select
     if ( present(extraMessage) ) call output ( extraMessage, advance='yes' )
+    if ( .not. onlyWarn ) &
+      & call output ( '(Set to stop due to error)', advance='yes' )
   end subroutine AnnounceError
 
   logical function NOT_USED_HERE()
@@ -1340,6 +1358,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.131  2006/05/11 19:37:32  pwagner
+! Added option to disallow duplicate molecules
+!
 ! Revision 2.130  2006/04/18 00:08:45  pwagner
 ! Allow abbreviated, pathless PFA files with PCF
 !
