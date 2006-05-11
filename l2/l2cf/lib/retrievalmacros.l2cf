@@ -590,6 +590,10 @@ begin Join
     status=otherDiagnostics.status$1, quality=otherDiagnostics.quality$1
   DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=state.tpPressure
+}, $1,{Temperature_HR}, {
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=state.$1, precision=outputPrecision.$1, $
+    status=otherDiagnostics.status$1, quality=otherDiagnostics.quality$1
 }, $1,{IWC}, {
 ; IWC is somewhat special
   Label, quantity=state.iwcFine, label='IWC3-StdProd'
@@ -691,6 +695,9 @@ Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusL
 })})
 
 ; $Log$
+; Revision 1.109  2006/05/11 04:33:33  dwu
+; add rhi_hr in the completePhase
+;
 ; Revision 1.108  2006/05/08 21:32:50  bill
 ; added mb baselines
 ;
