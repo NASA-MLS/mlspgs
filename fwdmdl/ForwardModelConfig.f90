@@ -166,6 +166,7 @@ module ForwardModelConfig
     logical :: GlobalConfig           ! If set is shared between all chunks
     logical :: Incl_cld ! Include cloud extinction calculation in Bill's forward model
     logical :: LockBins               ! Use same l2pc bin for whole chunk
+    logical :: No_dup_mol             ! Quit if duplicate molecules found
     logical :: Polarized              ! Use polarized model for Zeeman-split lines
     logical :: Refract                ! Compute refractive correction for PhiTan
     logical :: ScanAverage            ! Average scan over MIF
@@ -738,7 +739,8 @@ contains
       & config%differentialScan, config%do_1d, config%do_baseline, &
       & config%do_conv, config%do_freq_avg,  config%forceFoldedOutput, &
       & config%forceSidebandFraction,  config%globalConfig, config%incl_cld, &
-      & config%lockBins, config%polarized, config%refract, config%skipOverlaps, &
+      & config%lockBins, config%no_dup_mol, &
+      & config%polarized, config%refract, config%skipOverlaps, &
       & config%spect_Der, config%switchingMirror,  config%temp_Der /), &
       & msg ="Packing fwmConfig logicals" )
 
@@ -812,7 +814,7 @@ contains
     ! Local variables
     integer :: INFO                     ! Flag from PVM
     logical :: FLAG                     ! A flag from the sender
-    logical, dimension(24) :: LS        ! Temporary array, for logical scalars
+    logical, dimension(25) :: LS        ! Temporary array, for logical scalars
     integer, dimension(10) :: IS        ! Temporary array, for integer scalars
     real(r8), dimension(2) :: RS        ! Temporary array, for real scalars
     integer :: I                        ! Loop counter
@@ -863,6 +865,7 @@ contains
     config%globalConfig          = ls(i) ; i = i + 1
     config%incl_cld              = ls(i) ; i = i + 1
     config%lockBins              = ls(i) ; i = i + 1
+    config%no_dup_mol            = ls(i) ; i = i + 1
     config%polarized             = ls(i) ; i = i + 1
     config%refract               = ls(i) ; i = i + 1
     config%skipOverlaps          = ls(i) ; i = i + 1
@@ -1212,6 +1215,7 @@ contains
     call output ( config%globalConfig, before='  GlobalConfig: ', advance='yes' )
     call output ( config%incl_cld, before='  Incl_Cld: ', advance='yes' )
     call output ( config%lockBins, before='  LockBins: ', advance='yes' )
+    call output ( config%no_dup_mol, before='  No_dup_mol: ', advance='yes' )
     call output ( config%polarized, before='  Polarized: ', advance='yes' )
     call output ( config%refract, before='  Refract: ', advance='yes' )
     call output ( config%scanAverage, before='  ScanAverage: ', advance='yes' )
@@ -1345,6 +1349,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.90  2006/04/25 23:25:36  vsnyder
+! Revise DACS filter shape data structure
+!
 ! Revision 2.89  2006/04/11 18:37:21  vsnyder
 ! Check for DACS channel information
 !
