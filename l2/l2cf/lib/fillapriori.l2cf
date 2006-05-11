@@ -268,8 +268,8 @@ begin Fill
       0.00001mb:1.0e-6]
    Fill, quantity=aprioriPrecision.totalextinctionr3,method=profile, $
         profileValues = $
-      [ 1000mb: 0.006, 681mb:0.009, 464mb : 0.009, 316mb : 0.006, $
-      215mb : 0.001, 147mb : 0.0006, 100mb : 0.0003, 68mb:0.0001, $
+      [ 1000mb: 0.0001, 681mb:0.001, 464mb : 0.0005, 316mb : 0.0005, $
+      215mb : 0.0005, 147mb : 0.0002, 100mb : 0.0001, 68mb:0.0001, $
       46mb: 7.0e-5, 32mb:4.0e-5,22mb:2.0e-5,15mb:5.0e-6,10mb:2.0e-6, $
       0.00001mb:1.0e-6]
    Fill, quantity=aprioriPrecision.totalextinctionr4,method=profile, $
