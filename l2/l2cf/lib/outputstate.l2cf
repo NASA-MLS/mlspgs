@@ -94,8 +94,6 @@ Output, quantities=[ !undivert(!joinedDGMDivert) ], type=l2aux, $
 Output, type=l2cf, $
   file='!DGMFileName'})
 
-})
-
 ;; These days pretty well everything is written with directWrite
 ;; statements
 
