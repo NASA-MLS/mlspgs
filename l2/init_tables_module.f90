@@ -1167,6 +1167,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_nazimuthangles, t+t_numeric, n+n_field_type, &
              begin, f+f_ncloudspecies, t+t_numeric, n+n_field_type, &
              begin, f+f_nmodelsurfs, t+t_numeric, n+n_field_type, &
+             begin, f+f_no_dup_mol, t+t_boolean, n+n_field_type, &
              begin, f+f_nscatteringangles, t+t_numeric, n+n_field_type, &
              begin, f+f_nsizebins, t+t_numeric, n+n_field_type, &
              begin, f+f_phiWindow, t+t_numeric, n+n_field_type, &
@@ -1459,6 +1460,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.436  2006/05/11 19:37:32  pwagner
+! Added option to disallow duplicate molecules
+!
 ! Revision 2.435  2006/05/09 16:39:58  pwagner
 ! Added writing l2cf to dgm
 !
