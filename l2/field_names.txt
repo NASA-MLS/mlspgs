@@ -245,6 +245,7 @@ negateSD
 nmodelsurfs
 noAbsent # Don't dump absent blocks
 noChunks
+no_dup_mol
 noFineGrid
 noiseBandwidth
 noise
@@ -427,6 +428,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.164  2006/05/11 19:37:32  pwagner
+# Added option to disallow duplicate molecules
+#
 # Revision 2.163  2006/04/03 23:51:13  livesey
 # Added surface
 #
