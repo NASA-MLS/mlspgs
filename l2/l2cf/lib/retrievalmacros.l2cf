@@ -161,9 +161,16 @@ begin Fill
     refGPHPrecisionquantity=outputPrecision.refGPH, $
     tempPrecisionQuantity=outputPrecision.temperature
   ;; Compute RHI from H2O
+  Fill, quantity=state.rhi_hr, h2oQuantity=state.h2o_hr, $
+    temperatureQuantity=state.temperature_hr, method=RHIFromH2O, /dontMask
   Fill, quantity=state.rhi, h2oQuantity=state.h2o, $
     temperatureQuantity=state.temperature, method=RHIFromH2O, /dontMask
   ;; And RHI precision
+  Fill, quantity=outputPrecision.rhi_hr, $
+    h2oPrecisionQuantity=outputPrecision.h2o_hr, $
+    tempPrecisionQuantity=outputPrecision.temperature_hr, $
+    h2oQuantity=state.h2o_hr, temperatureQuantity=state.temperature_hr, $
+    method=RHIPrecisionFromH2O, /dontMask
   Fill, quantity=outputPrecision.rhi, $
     h2oPrecisionQuantity=outputPrecision.h2o, $
     tempPrecisionQuantity=outputPrecision.temperature, $
@@ -684,6 +691,9 @@ Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusL
 })})
 
 ; $Log$
+; Revision 1.108  2006/05/08 21:32:50  bill
+; added mb baselines
+;
 ; Revision 1.107  2006/05/04 19:51:59  bill
 ; added DACS baselines
 ;
