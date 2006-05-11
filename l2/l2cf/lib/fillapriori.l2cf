@@ -59,7 +59,7 @@ begin Fill
       10mb:5.8e-7,0.00001mb:1.0e-7]
 ; r3 extinction
    Fill, quantity=apriori.totalextinctionr3,method=profile, profileValues = $
-      [ 1000mb: 0.01, 681mb:0.01, 464mb : 0.008, 316mb : 0.004, $
+      [ 1000mb:1.0E-5, 681mb:1.0E-4, 464mb : 0.008, 316mb : 0.004, $
       215mb : 0.001, 147mb : 0.0005, 100mb : 0.0003, 68mb:0.0002, $
       46mb: 0.0001, 32mb:7.0e-5,22mb:4.0e-5,15mb:9.3e-6, $
       10mb:2.7e-6,0.00001mb:1.0e-7]
