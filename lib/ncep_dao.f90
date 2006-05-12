@@ -51,7 +51,7 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   integer :: ERROR
 
   ! First we'll define some global parameters and data types.
-  character (len=*), parameter :: DEFAULTDAODIMLIST = 'XDim,YDim,Height,TIME'
+  character (len=*), parameter :: DEFAULTDAODIMLIST = 'XDim,YDim,Height,Time'
   character (len=*), parameter :: DEFAULTDAOFIELDNAME = 'TMPU'
   character (len=*), parameter :: DEFAULTNCEPDIMLIST = 'YDim,XDim'
   character (len=*), parameter :: DEFAULTNCEPGRIDNAME = 'TMP_3'
@@ -99,7 +99,7 @@ contains
 
     ! Local Variables
     character ( len=NameLen) :: my_description   ! In case mixed case
-    logical, parameter :: DEEBUG = .true.
+    logical, parameter :: DEEBUG = .false.
     ! Executable code
     
     my_description = lowercase(description)
@@ -119,9 +119,10 @@ contains
         & the_g_data, GeoDimList, fieldName)
       if ( DEEBUG ) then
         print *, '(Returned from read_dao)'
-        print *, 'Quantity Name ' // trim(the_g_data%QuantityName)
-        print *, 'Description   ' // trim(the_g_data%description)
-        print *, 'Units         ' // trim(the_g_data%units)
+        print *, 'Quantity Name   ' // trim(the_g_data%QuantityName)
+        print *, 'Description     ' // trim(the_g_data%description)
+        print *, 'Units           ' // trim(the_g_data%units)
+        print *, 'Vertical Coord  ', the_g_data%verticalCoordinate, v_type, v_is_pressure
       endif
     case ('ncep')
       ! These are ncep global assimilation model data
@@ -332,15 +333,21 @@ contains
     if(DEEBUG) print *, 'our quantity name ', the_g_data%quantityName
     if(DEEBUG) print *, 'our description ', the_g_data%description
     if(DEEBUG) print *, 'our units ', the_g_data%units
+    if(DEEBUG) print *, 'our vertical coord ', the_g_data%verticalCoordinate
+    if(DEEBUG) print *, 'v_type ', v_type
 
     call nullifyGriddedData ( the_g_data ) ! for Sun's still useless compiler
     ! Setup the grid
     call SetupNewGriddedData ( the_g_data, noHeights=nlev, noLats=nlat, &
-      & noLons=nlon, noLsts=1, noSzas=1, noDates=ntime, missingValue=FILLVALUE )
+      & noLons=nlon, noLsts=1, noSzas=1, noDates=ntime, &
+      & missingValue=FILLVALUE, units='K', verticalCoordinate=v_type, &
+      & heightsunits='hPa' )
       ! & noLons=nlon, noLsts=ntime, noSzas=1, noDates=1, missingValue=FILLVALUE )
     if(DEEBUG) print *, '(Again) our quantity name ', the_g_data%quantityName
     if(DEEBUG) print *, 'our description ', the_g_data%description
     if(DEEBUG) print *, 'our units ', the_g_data%units
+    if(DEEBUG) print *, 'our vertical coord ', the_g_data%verticalCoordinate
+    if(DEEBUG) print *, 'v_type ', v_type
     allocate(all_the_fields(dims(1), dims(2), dims(3), dims(4)), stat=status)
     all_the_fields = the_g_data%missingValue
     if ( status /= 0 ) &
@@ -869,7 +876,7 @@ contains
 	     & "Could not inquire gridlist "// trim(NCEPFile%name))
     elseif ( strbufsize > MAXLISTLENGTH ) then
        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
-          & 'list size too big in Read_dao ' // trim(NCEPFile%name), MLSFile=NCEPFile )
+          & 'list size too big in Read_ncep ' // trim(NCEPFile%name), MLSFile=NCEPFile )
     elseif ( strbufsize < MAXLISTLENGTH .and. strbufsize > 0 ) then
       gridlist = gridlist(1:strbufsize) // ' '
     endif
@@ -1537,6 +1544,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.41  2006/05/12 21:25:56  pwagner
+! verticalCoordinate now correctly set by read_dao
+!
 ! Revision 2.40  2006/01/25 00:58:44  pwagner
 ! Cleared out some commented-out stuff
 !
