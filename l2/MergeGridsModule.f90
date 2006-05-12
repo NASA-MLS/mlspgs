@@ -262,6 +262,7 @@ contains ! =================================== Public procedures
     use MLSCommon, only: R8
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE
     use MLSNumerics, only: ESSENTIALLYEQUAL
+    use output_m, only: BLANKS, OUTPUT
     use Toggles, only: GEN, TOGGLE
     use Trace_M, only: TRACE_BEGIN, TRACE_END
     use Tree, only: NSONS, SUBTREE, DECORATION
@@ -286,6 +287,7 @@ contains ! =================================== Public procedures
 
     ! Local variables
     integer :: DAY                      ! Loop counter
+    logical, parameter :: DEEBUG = .false.
     integer :: FIELD                    ! Another tree node
     integer :: FIELD_INDEX              ! Type of tree node
     integer :: I                        ! Loop inductor
@@ -359,7 +361,16 @@ contains ! =================================== Public procedures
       call CopyGrid ( newGrid, climatology )
       return
     end if
-
+    if ( DEEBUG ) then
+    call output( 'operational%verticalCoordinate: ', advance='no' )
+    call output( operational%verticalCoordinate, advance='no' )
+    call blanks(3)
+    call output( v_is_pressure, advance='yes' )
+    call output( 'climatology%verticalCoordinate: ', advance='no' )
+    call output( climatology%verticalCoordinate, advance='no' )
+    call blanks(3)
+    call output( v_is_pressure, advance='yes' )
+    endif
     ! Do some final sanity checks
     if ( operational%verticalCoordinate /= v_is_pressure ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -717,6 +728,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.19  2006/05/12 21:26:37  pwagner
+! Added extra debugging statements
+!
 ! Revision 2.18  2006/05/09 16:42:02  pwagner
 ! May find wmo p trop with two eta-level grids
 !
