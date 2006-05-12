@@ -20,7 +20,7 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR, &
     & MLSMSG_DEALLOCATE
   use MLSStrings, only: LOWERCASE
-  use Output_m, only: OUTPUT
+  use Output_m, only: BLANKS, OUTPUT
 
   implicit NONE
   private
@@ -136,7 +136,7 @@ contains
     type ( GriddedData_T ), intent(in) :: B
     type ( GriddedData_T ), intent(inout) :: X ! inout to let us deallocate it
     ! Local variables
-
+    logical, parameter :: DEEBUG = .false.
     ! Executable code
     ! First, check that the grids A and B are conformable.
     if ( a%verticalCoordinate /= b%verticalCoordinate .or. &
@@ -170,6 +170,16 @@ contains
     ! OK, now we're ready
     call DestroyGriddedData ( X )
     call SetupNewGriddedData ( X, source=A, noDates= a%noDates + b%noDates )
+    if ( DEEBUG ) then
+    call output( 'source%verticalCoordinate: ', advance='no' )
+    call output( a%verticalCoordinate, advance='no' )
+    call blanks(3)
+    call output( v_is_pressure, advance='yes' )
+    call output( 'result%verticalCoordinate: ', advance='no' )
+    call output( x%verticalCoordinate, advance='no' )
+    call blanks(3)
+    call output( v_is_pressure, advance='yes' )
+    endif
     ! Copy over the unchanged position data
     x%heights = a%heights
     x%lats = a%lats
@@ -1064,6 +1074,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.39  2006/05/12 21:24:13  pwagner
+! Added extra debugging statements
+!
 ! Revision 2.38  2006/05/09 00:13:32  pwagner
 ! Added DoGriddeddataMatch; heightsUnits as component of GriddedData_T
 !
