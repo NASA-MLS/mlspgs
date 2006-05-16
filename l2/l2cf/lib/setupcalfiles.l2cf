@@ -55,10 +55,10 @@
 !define(fovdirL2cf, {!fovdirPath/MLS-Aura_L2Cal-FOV-Directions_v1-5-0_0000d000.l2cf})
 })
 !ifdef(systempL2cf, {}, {
-!define(systempL2cf, {!systempPath/MLS-Aura_L2Cal-Tsys_v1-5-0_0000d000.l2cf})
+!define(systempL2cf, {!systempPath/MLS-Aura_L2Cal-Tsys_v2-0-0_0000d000.l2cf})
 })
 !ifdef(nbwL2cf, {}, {
-!define(nbwL2cf, {!nbwPath/MLS-Aura_L2Cal-NBW_v1-5-0_0000d000.l2cf})
+!define(nbwL2cf, {!nbwPath/MLS-Aura_L2Cal-NBW_v2-0-0_0000d000.l2cf})
 })
 
 ; The next lot are arguments to forwardModelGlobal, so quoted.
