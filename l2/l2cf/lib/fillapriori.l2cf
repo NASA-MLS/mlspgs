@@ -262,21 +262,33 @@ begin Fill
 ; r2-4 extinction based on 3-sigma of off-line retrieval
    Fill, quantity=aprioriPrecision.totalextinctionr2,method=profile, $
         profileValues = $
-      [ 1000mb: 0.006, 681mb:0.006, 464mb : 0.006, 316mb : 0.006, $
-      215mb : 0.0026, 147mb : 0.0006, 100mb : 0.0003, 68mb:9.0e-5, $
+;      [ 1000mb: 0.006, 681mb:0.006, 464mb : 0.006, 316mb : 0.006, $
+;      215mb : 0.0026, 147mb : 0.0006, 100mb : 0.0003, 68mb:9.0e-5, $
+;      46mb: 3.8e-5, 32mb:2.0e-5,22mb:9.2e-6,15mb:1.9e-6,10mb:1.0e-6, $
+;      0.00001mb:1.0e-6]
+      [ 1000mb: 0.0001, 681mb:0.0001, 464mb : 0.0001, 316mb : 0.0001, $
+      215mb : 0.0001, 147mb : 0.0001, 100mb : 0.0001, 68mb:9.0e-5, $
       46mb: 3.8e-5, 32mb:2.0e-5,22mb:9.2e-6,15mb:1.9e-6,10mb:1.0e-6, $
       0.00001mb:1.0e-6]
    Fill, quantity=aprioriPrecision.totalextinctionr3,method=profile, $
         profileValues = $
+;      [ 1000mb: 0.006, 681mb:0.009, 464mb : 0.009, 316mb : 0.006, $
+;      215mb : 0.001, 147mb : 0.0006, 100mb : 0.0003, 68mb:0.0001, $
+;      46mb: 7.0e-5, 32mb:4.0e-5,22mb:2.0e-5,15mb:5.0e-6,10mb:2.0e-6, $
+;      0.00001mb:1.0e-6]
       [ 1000mb: 1.0E-7, 681mb:0.0005, 464mb : 0.0005, 316mb : 0.0005, $
       215mb : 0.0005, 147mb : 0.0002, 100mb : 0.0001, 68mb:0.0001, $
       46mb: 7.0e-5, 32mb:4.0e-5,22mb:2.0e-5,15mb:5.0e-6,10mb:2.0e-6, $
       0.00001mb:1.0e-6]
    Fill, quantity=aprioriPrecision.totalextinctionr4,method=profile, $
         profileValues = $
-      [ 1000mb: 0.004, 681mb:0.004, 464mb : 0.004, 316mb : 0.004, $
-      215mb : 0.004, 147mb : 0.004, 100mb : 0.0008, 68mb:0.0005, $
-      46mb: 0.0002, 32mb:0.0001,22mb:0.0001,15mb:4.0e-5,10mb:7.0e-6, $
+;      [ 1000mb: 0.004, 681mb:0.004, 464mb : 0.004, 316mb : 0.004, $
+;      215mb : 0.004, 147mb : 0.004, 100mb : 0.0008, 68mb:0.0005, $
+;      46mb: 0.0002, 32mb:0.0001,22mb:0.0001,15mb:4.0e-5,10mb:7.0e-6, $
+;      0.00001mb:1.0e-6]
+      [ 1000mb: 0.0001, 681mb:0.0001, 464mb : 0.0001, 316mb : 0.0001, $
+      215mb : 0.0001, 147mb : 0.0001, 100mb : 0.0001, 68mb:0.0001, $
+      46mb: 0.0001, 32mb:0.0001,22mb:0.0001,15mb:4.0e-5,10mb:7.0e-6, $
       0.00001mb:1.0e-6]
 
 ; r1a,r1b r5v, r5h need to be updated later
@@ -423,7 +435,8 @@ begin Fill
     [ 1000mb:500ppmv, 300mb:50ppmv, 215mb:20ppmv, 121mb:2ppmv, 100mb:0.6ppmv, $
 	0.1mb:0.3ppmv, 0.001mb:0ppmv ], logSpace=false
   Fill, quantity=vReg.h2o_hr, method=profile, profileValues= $
-    [ 1000mb:50ppmv, 300mb:20ppmv, 215mb:10ppmv, 121mb: 5ppmv, 100mb:0.6ppmv ], logSpace=false
+    [ 1000mb:50ppmv, 300mb:20ppmv, 215mb:10ppmv, 121mb: 1ppmv, 100mb:0.3ppmv, $
+        83mb:0.3ppmv, 0.1mb:0.3ppmv, 0.001mb:0ppmv ], logSpace=false
   Fill, quantity=vReg.RHiVmr, method=profile, profileValues= [ $
         681mb:10.0, 316mb:10.0, 215mb:10.0, 147mb:10.0]
   Fill, quantity=vReg.hcl, method=profile, $
@@ -492,9 +505,7 @@ begin Fill
     profileValues=[ 146mb:0ppmv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.046mb:0ppmv ], logSpace=false
 
   Fill, quantity=hReg.h2o_HR, method=profile, $
-     profileValues=[ 146mb:0ppmv, 100mb:0.6ppmv, 0.1mb:0.6ppmv, 0.001mb:0ppmv ], logSpace=false
-;  Fill, quantity=hReg.h2o_HR, method=profile, profileValues= $
-;    [ 1000:500ppmv, 215mb:50ppmv, 121mb:4ppmv, 100mb:1ppmv], logSpace=false
+     profileValues=[ 146mb:0ppmv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.046mb:0ppmv ], logSpace=false
 
   Fill, quantity=hReg.hcl, method=profile, $
     profileValues= [ 0.1mb:0.3ppbv, 0.046mb:0ppbv ]
@@ -520,7 +531,7 @@ begin Fill
   Fill, quantity=hReg.temperature, method=profile, $
     profileValues=[ 1mb:1K ]
   Fill, quantity=hReg.temperature_hr, method=profile, $
-    profileValues=[ 1mb:3K ]
+    profileValues=[ 1mb:1K ]
 
   Fill, quantity=hReg.refGPH, method=explicit, explicitValues=10m, /spread
 
@@ -544,6 +555,9 @@ begin Join
 end Join
   })
 ;$Log$
+;Revision 1.103  2006/05/12 23:24:19  pwagner
+;Can directwrite a priori quantities to dgg files
+;
 ;Revision 1.102  2006/05/12 19:31:10  lambert
 ;corrected apriori.totalextinctionr3 and aprioriPrecision.totalextinctionr3 values
 ;
