@@ -11,7 +11,7 @@ begin Construct
     BrO, CH3Cl, CH3CN, CH3COCH3, CH3OH, CO, ClO, H2CO, H2O2, H2S, $
     HCN, HCl, HNO3, HO2, HOCl, N2, N2O, NO, NO2, O2, O3, OCS, OH, SO2)})
   !define(allLogMolecules,{H2O})
-  !define(allLinearHRMolecules,{O3})
+  !define(allLinearHRMolecules,{O3,CO})
   !define(allLogHRMolecules,{H2O})
 
   ;; Most users can pretty much ignore the stuff below here.
