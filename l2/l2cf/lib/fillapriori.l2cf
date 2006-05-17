@@ -96,6 +96,7 @@ begin Fill
   !fillWithClimatologyHR(Temperature)
   !fillWithClimatologyHR(H2O)
   !fillWithClimatologyHR(O3)
+  !fillWithClimatologyHR(CO)
   ;; Get RHI_HR from RHI.  Not sure if this should really be from
   ;; H2O_HR and temperature_HR
   !interpolateToHiRes(apriori.RHI_HR)
@@ -251,6 +252,12 @@ begin Fill
     [ 1000mb: 10000ppmv, 464mb : 10000ppmv, 316mb : 1500ppmv, $
       215mb : 300ppmv, 147mb : 300ppmv, 100mb : 6.0ppmv ]
 
+  Fill, quantity=aprioriPrecision.co_hr, method=profile,$
+    profileValues= [ 100mb:50ppbv, 50mb : 0.1ppmv, 0.001mb : 3ppmv ]
+
+  Fill, quantity=aprioriPrecision.o3_hr, method=profile,$
+    profileValues=[ 500hPa:0.05ppmv, 316hPa:0.1ppmv, 215hPa:0.1ppmv, $
+	147hPa:0.2ppmv, 46hPa:0.5ppmv, 22hPa:1.5ppmv] 
 
   ;; ------------------------------ A priori extinction precisions
 
@@ -430,6 +437,8 @@ begin Fill
     profileValues= [ 1mb:0.3ppbv, 0.68mb:0ppbv ]
   Fill, quantity=vReg.co, method=profile, profileValues= $
     [ 10mb:30ppbv, 1mb:300ppbv, 0.1mb:3ppmv, 0.046mb:0ppmv ]
+  Fill, quantity=vReg.co_hr, method=profile, profileValues= $
+    [ 10mb:40ppbv, 1mb:0.1ppmv, 0.1mb:0.1ppmv, 0.01mb:0.3ppmv]
 
   Fill, quantity=vReg.h2o, method=profile, profileValues= $
     [ 1000mb:500ppmv, 300mb:50ppmv, 215mb:20ppmv, 121mb:2ppmv, 100mb:0.6ppmv, $
@@ -555,6 +564,9 @@ begin Join
 end Join
   })
 ;$Log$
+;Revision 1.104  2006/05/16 22:27:36  bill
+;some smoothing changes for t and h2o
+;
 ;Revision 1.103  2006/05/12 23:24:19  pwagner
 ;Can directwrite a priori quantities to dgg files
 ;
