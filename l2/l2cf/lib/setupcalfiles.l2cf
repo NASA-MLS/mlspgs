@@ -104,7 +104,8 @@
   '!pfaPath/PFAData_R3_v2-0-5.h5', $
   '!pfaPath/PFAData_R4_v2-0-5.h5', $
   '!pfaPath/PFAData_R5H_v2-0-5.h5',$
-  '!pfaPath/PFAData_R5V_v2-0-5.h5']})
+  '!pfaPath/PFAData_R5V_v2-0-5.h5',$
+  '!pfaPath/PFAData_DACS_v2-0-5.h5']})
   })
 })
-
+;$Log$
