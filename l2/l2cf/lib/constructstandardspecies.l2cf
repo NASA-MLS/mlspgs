@@ -97,6 +97,12 @@ begin Construct
   earthradius: Quantity, hGrid=hGridStandard, type=earthradius
   surfaceType: Quantity, hGrid=hGridStandard, type=surfaceType
 
+  IWP:  Quantity, vGrid=vGridRefIWP, hGrid=hGridStandard, type=CloudIce
+  IWPR1A:  Quantity, vGrid=vGridRefIWP, hGrid=hGridStandard, type=CloudIce
+  IWPR2:  Quantity, vGrid=vGridRefIWP, hGrid=hGridStandard, type=CloudIce
+  IWPR3:  Quantity, vGrid=vGridRefIWP, hGrid=hGridStandard, type=CloudIce
+  IWPR4:  Quantity, vGrid=vGridRefIWP, hGrid=hGridStandard, type=CloudIce
+
   IWC:  Quantity, vGrid=vGridBaseline, hGrid=hGridStandard, type=CloudIce
   LWC:  Quantity, vGrid=vGridBaseline, hGrid=hGridStandard, type=CloudWater
 
