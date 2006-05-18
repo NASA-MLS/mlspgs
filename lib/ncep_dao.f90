@@ -53,6 +53,7 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   ! First we'll define some global parameters and data types.
   character (len=*), parameter :: DEFAULTDAODIMLIST = 'XDim,YDim,Height,Time'
   character (len=*), parameter :: DEFAULTDAOFIELDNAME = 'TMPU'
+  character (len=*), parameter :: DEFAULTGEOS5FIELDNAME = 'T'
   character (len=*), parameter :: DEFAULTNCEPDIMLIST = 'YDim,XDim'
   character (len=*), parameter :: DEFAULTNCEPGRIDNAME = 'TMP_3'
   character (len=*), parameter :: DEFAULTNCEPSTRATFIELDNAME = 'Temperature'
@@ -65,6 +66,7 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   character (len=*), parameter :: lit_ncep = 'ncep'
   character (len=*), parameter :: lit_strat = 'strat'
   character (len=*), parameter :: lit_clim = 'clim'
+  character (len=*), parameter :: lit_geos5 = 'geos5'
   integer, parameter :: MAXLISTLENGTH=Linelen ! Max length list of grid names
   integer, parameter :: NENTRIESMAX=200 ! Max num of entries
 
@@ -114,6 +116,16 @@ contains
     endif
     ! According to the kinds of gridded data files we can read
     select case ( trim(my_description) )
+    case ('geos5')
+      call Read_geos5(GriddedFile, lcf_where, v_type, &
+        & the_g_data, GeoDimList, fieldName)
+      if ( DEEBUG ) then
+        print *, '(Returned from read_dao)'
+        print *, 'Quantity Name   ' // trim(the_g_data%QuantityName)
+        print *, 'Description     ' // trim(the_g_data%description)
+        print *, 'Units           ' // trim(the_g_data%units)
+        print *, 'Vertical Coord  ', the_g_data%verticalCoordinate, v_type, v_is_pressure
+      endif
     case ('dao', 'gmao')
       call Read_dao(GriddedFile, lcf_where, v_type, &
         & the_g_data, GeoDimList, fieldName)
@@ -152,6 +164,302 @@ contains
     end select
 
   end subroutine ReadGriddedData
+
+  ! ----------------------------------------------- Read_geos5
+  subroutine Read_geos5(GEOS5File, lcf_where, v_type, &
+    & the_g_data, GeoDimList, fieldName)
+    use Dump_0, only: Dump
+
+    ! This routine reads a gmao geos5 file, named something like
+    ! DAS.ops.asm.tavg3d_prs_v.GEOS500.20060320_0000.V01 (pressure with
+    ! fieldname='PL') or 
+    ! DAS.ops.asm.tavg3d_dyn_v.GEOS500.20060320_0000.V01 (temperature
+    ! with fieldname='T') 
+    ! returning a filled data
+    ! structure appropriate for newer style gmao geos5
+    ! (And just how does it differ from the older style? 
+    !  For one thing it holds 4-d, not 3-d fields)
+
+    ! FileName and the_g_data are required args
+    ! GeoDimList, if present, should be the Dimensions' short names
+    ! as a comma-delimited character string in the order:
+    ! longitude, latitude, vertical level, time
+
+    ! fieldName, if present, should be the rank 4
+    ! like temperature
+
+    ! This file is formatted in the following way:
+    ! At each gridded quantity, e.g. EOSGRID,
+    ! a rank 4 field, e.g. T, is given with dimensions
+    ! 'Time, Height, YDim, XDim'
+    ! We'll simply copy it into a single gridded data type
+
+    ! Arguments
+    type(MLSFile_T)                :: GEOS5 file
+    integer, intent(IN) :: lcf_where    ! node of the lcf that provoked me
+    integer, intent(IN) :: v_type       ! vertical coordinate; an 'enumerated' type
+    type( GriddedData_T ) :: the_g_data ! Result
+    character (LEN=*), optional, intent(IN) :: GeoDimList ! Comma-delimited dim names
+    character (LEN=*), optional, intent(IN) :: fieldName ! Name of gridded field
+
+    ! Local Variables
+    integer :: file_id, gd_id
+    integer :: inq_success
+    integer :: nentries, ngrids, ndims, nfields
+    integer :: strbufsize
+    logical,  parameter       :: CASESENSITIVE = .false.
+    integer, parameter :: GRIDORDER=1   ! What order grid written to file
+    character (len=MAXLISTLENGTH) :: gridlist
+    character (len=MAXLISTLENGTH) :: dimlist, actual_dim_list
+    character (len=MAXLISTLENGTH), dimension(1) :: dimlists
+    character (len=16), dimension(NENTRIESMAX) :: dimNames
+    character (len=MAXLISTLENGTH) :: fieldlist
+    integer, parameter :: MAXNAMELENGTH=NameLen		! Max length of grid name
+    character (len=MAXNAMELENGTH) :: gridname, actual_field_name
+    integer, dimension(NENTRIESMAX) :: dims, rank, numberTypes
+    integer                        :: our_rank, numberType
+
+    integer :: start(4), stride(4), edge(4)
+    integer :: status
+    !                                  These start out initialized to one
+    integer                        :: nlon=1, nlat=1, nlev=1, ntime=1
+    integer, parameter             :: i_longitude=1
+    integer, parameter             :: i_latitude=i_longitude+1
+    integer, parameter             :: i_vertical=i_latitude+1
+    integer, parameter             :: i_time=i_vertical+1
+    integer, external :: GDRDFLD
+    logical, parameter :: COUNTEMPTY=.true.
+    real(r4), parameter :: FILLVALUE = 1.e15
+    real(r4), dimension(:,:,:,:), pointer :: all_the_fields
+    real(r8), dimension(:), pointer :: dim_field
+    logical, parameter :: DEEBUG = .false.
+    ! Executable code
+    ! Find list of grid names on this file (This has been core dumping on me)
+    if(DEEBUG) print *, 'About to find grid list of file ', trim(GEOS5File%Name)
+    gridlist = ''
+    inq_success = gdinqgrid(GEOS5File%Name, gridlist, strbufsize)
+    if (inq_success < 0) then
+      call announce_error(lcf_where, "Could not inquire gridlist "// &
+        & trim(GEOS5File%Name))
+    elseif ( strbufsize > MAXLISTLENGTH ) then
+       CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'list size too big in Read_geos5 ' // trim(GEOS5File%Name), MLSFile=GEOS5File )
+    elseif ( strbufsize < MAXLISTLENGTH .and. strbufsize > 0 ) then
+      gridlist = gridlist(1:strbufsize) // ' '
+    endif
+    if(DEEBUG) print *, 'grid list ', trim(gridlist)
+
+    error = 0
+    file_id = gdopen(GEOS5File%Name, DFACC_RDONLY)
+
+    if (file_id < 0) then
+      call announce_error(lcf_where, "Could not open "// GEOS5File%Name)
+    end if
+
+    ! Find grid name corresponding to the GRIDORDER'th one
+    ngrids = NumStringElements(gridlist, COUNTEMPTY)
+
+    if(ngrids <= 0) then
+      call announce_error(lcf_where, "NumStringElements of gridlist <= 0")
+    elseif(ngrids /= inq_success) then
+      call announce_error(lcf_where, "NumStringElements of gridlist /= inq_success")
+    elseif(ngrids < GRIDORDER) then
+      call announce_error(lcf_where, "NumStringElements of gridlist < GRIDORDER")
+    endif
+
+    call GetStringElement(gridlist, gridname, GRIDORDER, COUNTEMPTY)
+
+    gd_id = gdattach(file_id, gridname)
+    if (gd_id < 0) then
+      call announce_error(lcf_where, "Could not attach "//trim(gridname))
+    end if
+
+    ! Now find dimsize(), dimname(), etc.
+    nentries = gdnentries(gd_id, HDFE_NENTDIM, strbufsize)
+
+    if(nentries <= 0) then
+      call announce_error(lcf_where, "nentries of gd_id <= 0")
+    elseif(nentries > NENTRIESMAX) then
+      call announce_error(lcf_where, "nentries of gd_id > NENTRIESMAX")
+    endif
+
+    dimlist = ''
+    ndims = gdinqdims(gd_id, dimlist, dims)
+
+    if(ndims <= 0) then
+      call announce_error(lcf_where, "ndims of gd_id <= 0")
+    elseif(ndims > NENTRIESMAX) then
+      call announce_error(lcf_where, "ndims of gd_id > NENTRIESMAX")
+    endif
+
+    fieldlist = ''
+    nfields = gdinqflds(gd_id, fieldlist, rank, numberTypes)
+
+    if(nfields <= 0) then
+      call announce_error(lcf_where, "nfields of gd_id <= 0")
+    elseif(nfields > NENTRIESMAX) then
+      call announce_error(lcf_where, "nfields of gd_id > NENTRIESMAX")
+    endif
+
+    if(.not. CASESENSITIVE) then
+      fieldlist = Capitalize(fieldlist)
+    endif
+
+    if(present(fieldName)) then
+      actual_field_name=fieldName
+    else
+      actual_field_name=DEFAULTGEOS5FIELDNAME
+    endif
+
+    actual_dim_list = ' '
+    if(present(GeoDimList)) then
+      actual_dim_list=GeoDimList
+    endif
+    if ( actual_dim_list == ' ' ) then
+      actual_dim_list = DEFAULTDAODIMLIST
+    endif
+    call List2Array (actual_dim_list, dimNames, countEmpty)
+
+    ! Now find the rank of our field
+    inq_success = gdfldinfo(gd_id, trim(actual_field_name), our_rank, dims, &
+      & numbertype, dimlists(1))
+
+    dimlist = trim(dimlists(1))
+    if(DEEBUG) print *, 'our_rank ', our_rank
+    if(DEEBUG) print *, 'dims ', dims(1:our_rank)
+    if(DEEBUG) print *, 'dimlist ', dimlist
+
+    nlon = dims(1)
+    nlat = dims(2)
+    nlev = dims(3)
+    ntime = dims(4)
+
+    the_g_data%quantityName = actual_field_name
+    the_g_data%description = lit_geos5
+    the_g_data%verticalCoordinate = v_type
+
+    the_g_data%noLons = nlon
+    the_g_data%noLats = nlat
+    the_g_data%noHeights = nlev
+    ! the_g_data%noLsts = ntime
+    the_g_data%noDates = ntime
+    the_g_data%units = 'K'
+    if(DEEBUG) print *, 'our quantity name ', the_g_data%quantityName
+    if(DEEBUG) print *, 'our description ', the_g_data%description
+    if(DEEBUG) print *, 'our units ', the_g_data%units
+    if(DEEBUG) print *, 'our vertical coord ', the_g_data%verticalCoordinate
+    if(DEEBUG) print *, 'v_type ', v_type
+
+    call nullifyGriddedData ( the_g_data ) ! for Sun's still useless compiler
+    ! Setup the grid
+    call SetupNewGriddedData ( the_g_data, noHeights=nlev, noLats=nlat, &
+      & noLons=nlon, noLsts=1, noSzas=1, noDates=ntime, &
+      & missingValue=FILLVALUE, units='K', verticalCoordinate=v_type, &
+      & heightsunits='hPa' )
+      ! & noLons=nlon, noLsts=ntime, noSzas=1, noDates=1, missingValue=FILLVALUE )
+    if(DEEBUG) print *, '(Again) our quantity name ', the_g_data%quantityName
+    if(DEEBUG) print *, 'our description ', the_g_data%description
+    if(DEEBUG) print *, 'our units ', the_g_data%units
+    if(DEEBUG) print *, 'our vertical coord ', the_g_data%verticalCoordinate
+    if(DEEBUG) print *, 'v_type ', v_type
+    allocate(all_the_fields(dims(1), dims(2), dims(3), dims(4)), stat=status)
+    all_the_fields = the_g_data%missingValue
+    if ( status /= 0 ) &
+        & call announce_error(lcf_where, "failed to allocate field_data")
+    start = 0                                                             
+    stride = 1                                                               
+    edge = dims(1:4)                                                        
+    if(DEEBUG) print *, 'About to read ' // trim(actual_field_name)
+    if(DEEBUG) print *, 'Start ', Start
+    if(DEEBUG) print *, 'Stride ', Stride
+    if(DEEBUG) print *, 'Edge ', Edge
+    status = gdrdfld(gd_id, trim(actual_field_name), start, stride, edge, &  
+      & all_the_fields)                                                          
+    if(status /= 0) &
+      & call announce_error(lcf_where, "failed to read field " &
+      & //trim(actual_field_name))
+    ! The actual dimlist is this                    XDim,YDim,Height,TIME
+    ! Need to reshape it so that the order becomes: Height,YDim,XDim,TIME
+    if ( DEEBUG) then
+      print *, 'dao Before reshaping'
+      call dump(all_the_fields(:,1,1,1), 'x-slice')
+      call dump(all_the_fields(1,:,1,1), 'y-slice')
+      call dump(all_the_fields(1,1,:,1), 'p-slice')
+      call dump(all_the_fields(1,1,1,:), 't-slice')
+    endif
+    ! the_g_data%field(:,:,:,:,1,1) = reshape( all_the_fields, &
+    the_g_data%field(:,:,:,1,1,:) = reshape( all_the_fields, &
+      & shape=(/nLev, nlat, nlon, ntime/), order=(/3,2,1,4/) &
+      & )
+    if ( DEEBUG ) then
+      print *, 'dao After reshaping'
+      call dump(the_g_data%field(1,1,:,1,1,1), 'x-slice')
+      call dump(the_g_data%field(1,:,1,1,1,1), 'y-slice')
+      call dump(the_g_data%field(:,1,1,1,1,1), 'p-slice')
+      call dump(the_g_data%field(1,1,1,:,1,1), 't-slice')
+    endif
+    deallocate(all_the_fields)
+    ! Now read the dims
+    nullify(dim_field)
+    ! call read_the_dim(gd_id, 'XDim', dims(1), dim_field)
+    call read_the_dim(gd_id, trim(dimNames(1)), dims(1), dim_field)
+    the_g_data%lons = dim_field
+    ! call read_the_dim(gd_id, 'YDim', dims(2), dim_field)
+    call read_the_dim(gd_id, trim(dimNames(2)), dims(2), dim_field)
+    the_g_data%lats = dim_field
+    ! call read_the_dim(gd_id, 'Height', dims(3), dim_field)
+    call read_the_dim(gd_id, trim(dimNames(3)), dims(3), dim_field)
+    the_g_data%Heights = dim_field
+    ! call read_the_dim(gd_id, 'Time', dims(4), dim_field)
+    call read_the_dim(gd_id, trim(dimNames(4)), dims(4), dim_field)
+    ! the_g_data%lsts = dim_field
+    the_g_data%dateStarts = dim_field
+    the_g_data%dateEnds = dim_field
+    deallocate(dim_field)        ! Before leaving, some light housekeeping
+    ! Have not yet figured out how to assign these
+    ! Probably will have to read metadata
+    the_g_data%Szas = the_g_data%missingValue
+    ! the_g_data%DateStarts = the_g_data%missingValue
+    ! the_g_data%DateEnds = the_g_data%missingValue
+    the_g_data%lsts = the_g_data%missingValue
+    ! Close grid
+    status = gddetach(gd_id)
+    if(status /= 0) &
+      & call announce_error(lcf_where, "failed to detach from grid " &
+      & //trim(gridname))
+    status = gdclose(file_id)
+    if(status /= 0) &
+      & call announce_error(lcf_where, "failed to close file " //trim(GEOS5File%Name))
+    contains 
+       subroutine read_the_dim(gd_id, field_name, field_size, values)
+         ! Arguments
+         integer, intent(in) :: gd_id
+         character(len=*), intent(in) :: field_name
+         integer, intent(in) :: field_size
+         real(r8), dimension(:), pointer :: values
+         ! Local variables
+         integer :: status
+         integer, dimension(1) :: start, stride, edge
+         ! Executable
+         if ( associated(values) ) then
+           deallocate(values, stat=status)
+           if ( status /= 0 ) &
+             & call announce_error(lcf_where, "failed to deallocate dim field")
+         endif
+         allocate(values(field_size), stat=status)
+         if ( status /= 0 ) &
+           & call announce_error(lcf_where, "failed to allocate dim field")
+         start = 0                                                             
+         stride = 1                                                             
+         edge = field_size                                                       
+         values = the_g_data%missingValue
+         status = gdrdfld(gd_id, trim(field_name), start, stride, edge, &
+           & values)                                                     
+         if ( status /= 0 ) &
+           & call announce_error(lcf_where, "failed to read dim field " &
+           & // trim(field_name))
+       end subroutine read_the_dim
+  end subroutine Read_geos5
 
   ! ----------------------------------------------- Read_dao
   subroutine Read_dao(DAOFile, lcf_where, v_type, &
@@ -1544,6 +1852,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.42  2006/05/18 18:39:32  cvuu
+! Add subroutine Read_geos5
+!
 ! Revision 2.41  2006/05/12 21:25:56  pwagner
 ! verticalCoordinate now correctly set by read_dao
 !
