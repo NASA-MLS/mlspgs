@@ -534,6 +534,7 @@ begin Construct
     refGPH, GPH, GPH_HR, $
     tpPressure, oneHundredHPa, $
     iwc, iwcFine, iwcR1A, iwcR2, iwcR3, iwcR4, lwc, $
+    iwp, iwpR1A, iwpR2, iwpR3, iwpR4, $
     surfaceType, psd, earthRadius, $
     trans, cext, cextFine, $
     massMeanDiameterIce, massMeanDiameterWater, $
