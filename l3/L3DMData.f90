@@ -474,15 +474,13 @@ CONTAINS
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      DO x=1,l3dmData(i)%nLons
-         DO y=1,l3dmData(i)%nLats
-            DO z=1,l3dmData(i)%nLevels
-                tempL3Value(x,y,z)=l3dmData(i)%l3dmValue(z,y,x)
-                tempL3Prec(x,y,z)=l3dmData(i)%l3dmPrecision(z,y,x)
-            ENDDO
-         ENDDO
-      ENDDO
-                                                                          
+      tempL3Value(:,:,:) = reshape(l3dmData(i)%l3dmValue,&
+	& shape=(/l3dmData(i)%nLons,l3dmData(i)%nLats,l3dmData(i)%nLevels/), &
+	& order=(/3,2,1/))
+      tempL3Prec(:,:,:) = reshape(l3dmData(i)%l3dmPrecision,&
+	& shape=(/l3dmData(i)%nLons,l3dmData(i)%nLats,l3dmData(i)%nLevels/), &
+	& order=(/3,2,1/))
+
       status = he5_gdwrfld(gdId, GEO_FIELD3, start(1), stride(1), edge(1), &
            & l3dmData(i)%time)
       IF (status /=0) THEN
@@ -1983,6 +1981,9 @@ CONTAINS
 !==================
 
 !# $Log$
+!# Revision 1.44  2006/04/17 15:42:06  cvuu
+!# Add the local attributes to the diagnostic swath fields
+!#
 !# Revision 1.43  2006/02/28 17:56:56  cvuu
 !# V2.00 commit
 !#

@@ -315,14 +315,12 @@ CONTAINS
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      DO x=1,l3mm%nLons
-        DO y=1,l3mm%nLats
-           DO z=1,l3mm%nLevels
-                tempL3Value(x,y,z)=l3mm%l3mmValue(z,y,x)
-                tempL3Prec(x,y,z)=l3mm%l3mmPrecision(z,y,x)
-           ENDDO
-        ENDDO
-      ENDDO
+      tempL3Value(:,:,:) = reshape(l3mm%l3mmValue,&
+        & shape=(/l3mm%nLons,l3mm%nLats,l3mm%nLevels/), &
+        & order=(/3,2,1/))
+      tempL3Prec(:,:,:) = reshape(l3mm%l3mmPrecision,&
+        & shape=(/l3mm%nLons,l3mm%nLats,l3mm%nLevels/), &
+        & order=(/3,2,1/))
 
 ! Write to fields
 
@@ -1412,6 +1410,9 @@ END MODULE L3MMData
 !==================
 
 !# $Log$
+!# Revision 1.24  2006/05/03 14:38:01  cvuu
+!# Remove subroutine OutputMMDiag, move datasets to Grid group
+!#
 !# Revision 1.23  2006/04/17 19:34:32  cvuu
 !# fixed bugs
 !#
