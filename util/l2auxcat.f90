@@ -23,8 +23,9 @@ program L2AUXcat ! catenates split L2AUX files, e.g. dgm
    use MLSFiles, only: HDFVERSION_5
    use MLSHDF5, only: GetAllHDF5DSNames, mls_h5open, mls_h5close
    use MLSMessageModule, only: MLSMessageConfig
-   use MLSStringLists, only: catLists, GetStringElement, NumStringElements, &
-     & RemoveElemFromList
+   use MLSStringLists, only: catLists, GetStringElement, &
+     & Intersection, NumStringElements, &
+     & RemoveElemFromList, StringElement, StringElementNum
    use output_m, only: output
    use PCFHdr, only: GlobalAttributes
    use Time_M, only: Time_Now, time_config
@@ -57,20 +58,25 @@ program L2AUXcat ! catenates split L2AUX files, e.g. dgm
     character(len=255) :: outputFile= 'default.h5'        ! output filename
     logical ::          noDupDSNames = .false.            ! cp 1st, ignore rest
     logical     :: list = .false.
+    character(len=255) ::    DSNames = ' '              ! which datasets to copy
+    character(len=255) ::    rename = ' '               ! how to rename them
     character(len=255), dimension(MAXFILES) :: filenames
   end type options_T
   
   type ( options_T ) :: options
 
   logical, parameter :: COUNTEMPTY = .false.
+  logical     :: createdYet
   logical, parameter :: DEEBUG = .false.
   character(len=255) :: filename          ! input filename
   integer            :: n_filenames
   integer     ::  i, j, status, error ! Counting indices & Error flags
+  integer     :: elem
   logical     :: is_hdf5
   character (len=MAXSDNAMESBUFSIZE) :: mySdList
   integer :: numdsets
   integer :: numdsetssofar
+  character(len=255) ::    rename = ' '               ! how to rename them
   character(len=MAXSDNAMESBUFSIZE) :: sdListAll
   character(len=255) :: sdName
   character (len=MAXSDNAMESBUFSIZE) :: tempSdList
@@ -95,6 +101,7 @@ program L2AUXcat ! catenates split L2AUX files, e.g. dgm
      n_filenames = n_filenames + 1
      options%filenames(n_filenames) = filename
   enddo
+  createdYet = .false.
   if ( n_filenames == 0 ) then
     if ( options%verbose ) print *, 'Sorry no input files supplied'
   else
@@ -112,10 +119,21 @@ program L2AUXcat ! catenates split L2AUX files, e.g. dgm
         if ( options%verbose ) then
           print *, 'Copying from: ', trim(options%filenames(i))
         endif
-        if ( options%noDupDSNames) then
+        if ( options%noDupDSNames.or. options%DSNames /= ' ' ) then
           call GetAllHDF5DSNames (trim(options%filenames(i)), '/', mysdList)
           numdsets = NumStringElements(trim(mysdList), COUNTEMPTY)
-          if ( numdsetssofar > 0 ) then
+          if ( options%DSNames /= ' ' ) then
+            tempSdList = mysdList
+            mysdList = Intersection( options%DSNames, tempSdList )
+            if ( mysdList == ' ' ) cycle
+            rename = ' '
+            do j=1, NumStringElements( mysdList, countEmpty )
+              call GetStringElement( mysdList, sdName, j, countEmpty )
+              elem = StringElementNum( options%DSNames, sdName, countEmpty )
+              rename = catLists( rename, &
+                & StringElement( options%rename, elem, countempty ) )
+            enddo
+          elseif ( numdsetssofar > 0 ) then
             ! Remove any duplicates
             do j=1, numdsetssofar
               call GetStringElement(sdListAll, sdName, j, countEmpty)
@@ -127,18 +145,19 @@ program L2AUXcat ! catenates split L2AUX files, e.g. dgm
               print *, trim(mysdList)
             endif
           endif
-          call cpL2AUXData(trim(options%filenames(i)), &
-          & trim(options%outputFile), create2=(i==1), &
-          & hdfVersion=HDFVERSION_5, sdList=mysdList)
+          call cpL2AUXData( trim(options%filenames(i)), &
+          & trim(options%outputFile), create2=.not. createdYet, &
+          & hdfVersion=HDFVERSION_5, sdList=mysdList, rename=rename )
           tempSdList = sdListAll
           sdListAll = catlists(tempSdList, mysdList)
           numdsetssofar = NumStringElements(sdListAll, countEmpty)
         else
           call cpL2AUXData(trim(options%filenames(i)), &
-          & trim(options%outputFile), create2=(i==1), &
+          & trim(options%outputFile), create2=.not. createdYet, &
           & hdfVersion=HDFVERSION_5)
         endif
         call sayTime('copying this file', tFile)
+        createdYet = .true.
       endif
     enddo
     if ( .not. options%list ) call sayTime('copying all files')
@@ -176,6 +195,14 @@ contains
       elseif ( filename(1:3) == '-no' ) then
         options%noDupDSNames = .true.
         exit
+      else if ( filename(1:3) == '-s ' ) then
+        call getarg ( i+1+hp, options%DSNames )
+        i = i + 1
+        exit
+      else if ( filename(1:3) == '-r ' ) then
+        call getarg ( i+1+hp, options%rename )
+        i = i + 1
+        exit
       else if ( filename(1:3) == '-f ' ) then
         call getarg ( i+1+hp, filename )
         i = i + 1
@@ -212,6 +239,10 @@ contains
       write (*,*) '          -l          => just list l2aux names in files'
       write (*,*) '          -nodup      => if dup dataset names, cp 1st only'
       write (*,*) '          -h          => print brief help'
+      write (*,*) '          -s name1,name2,..'
+      write (*,*) '             => copy only datasets so named; otherwise all'
+      write (*,*) '          -r rename1,rename2,..'
+      write (*,*) '             => if and how to rename the copied datasets'
       stop
   end subroutine print_help
 !------------------------- SayTime ---------------------
@@ -234,6 +265,9 @@ end program L2AUXcat
 !==================
 
 ! $Log$
+! Revision 1.3  2005/09/23 21:01:13  pwagner
+! use_wall_clock now a component of time_config
+!
 ! Revision 1.2  2005/06/22 19:27:33  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
