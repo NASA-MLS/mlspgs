@@ -51,7 +51,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
   use MLSSignals_m, only: GETMODULENAME, MODULES
   use MLSStrings, only: LowerCase
   use MLSStringLists, only: Array2List, GetStringElement, List2Array, &
-    & NumStringElements
+    & NumStringElements, StringElement
   use Output_M, only: OUTPUT
   use QuantityTemplates, only: QuantityTemplate_T
   use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
@@ -193,7 +193,7 @@ contains ! =====     Public Procedures     =============================
   ! ------------------------------------------------- cpL2AUXData_MLSFile  -----
 
   subroutine cpL2AUXData_MLSFile(L2AUXFile1, L2AUXFile2, &
-    & create2, sdList, options)
+    & create2, sdList, rename, options)
     use Hdf, only: DFACC_READ, DFACC_CREATE, DFACC_RDWR
     use HDF5, only: H5GCLOSE_F, H5GOPEN_F, H5DOPEN_F, H5DCLOSE_F
     use MLSFILES, only: FILENOTFOUND, WILDCARDHDFVERSION, &
@@ -212,6 +212,7 @@ contains ! =====     Public Procedures     =============================
     type(MLSFile_T), pointer      :: L2AUXfile2 ! file 2
     logical, optional, intent(in) :: create2 ! Force creation of new file2
     character (len=*), optional, intent(in) :: sdList ! Copy only these, unless
+    character (len=*), optional, intent(in) :: rename
     character (len=*), optional, intent(in) :: options ! E.g., '-v'
 
     ! Local
@@ -225,6 +226,7 @@ contains ! =====     Public Procedures     =============================
     integer :: noSds
     integer :: originalAccess
     integer :: QuantityType
+    logical :: renameSwaths
     character (len=80) :: sdName
     integer :: status
     logical :: verbose
@@ -232,6 +234,8 @@ contains ! =====     Public Procedures     =============================
     myOptions = ' '
     if ( present(options) ) myOptions = options
     verbose = ( index(myOptions, 'v') > 0 )
+    renameSwaths  = present(rename)
+    if ( renameSwaths ) renameSwaths = ( rename /= ' ' )
     myCreate2 = .false.
     if ( present(create2) ) myCreate2 = create2
     originalAccess = L2AUXFile2%access
@@ -280,6 +284,7 @@ contains ! =====     Public Procedures     =============================
            & checkDimNames=.false. )
       ! Write the filled l2aux to file2
       ! print *, 'writing ', trim(sdName)
+      if ( renameSwaths ) sdName = StringElement ( rename, i, countEmpty )
       call WriteL2AUXData( l2aux, L2AUXFile2, status, trim(sdName) )
       ! Deallocate memory used by the l2aux
       call DestroyL2AUXContents ( l2aux )
@@ -289,7 +294,8 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------------- cpL2AUXData_Name  -----
 
-  subroutine cpL2AUXData_Name(file1, file2, create2, hdfVersion, sdList, options)
+  subroutine cpL2AUXData_Name(file1, file2, create2, hdfVersion, sdList, rename, &
+    & options)
     use Hdf, only: DFACC_READ, DFACC_CREATE, DFACC_RDWR
     use HDF5, only: H5GCLOSE_F, H5GOPEN_F, H5DOPEN_F, H5DCLOSE_F
     use MLSFILES, only: FILENOTFOUND, WILDCARDHDFVERSION, &
@@ -309,6 +315,7 @@ contains ! =====     Public Procedures     =============================
     logical, optional, intent(in) :: create2 ! Force creation of new file2
     integer, optional, intent(in) :: hdfVersion       !                      '*'
     character (len=*), optional, intent(in) :: sdList ! Copy only these, unless
+    character (len=*), optional, intent(in) :: rename
     character (len=*), optional, intent(in) :: options ! E.g., '-v'
 
     ! Local
@@ -323,10 +330,12 @@ contains ! =====     Public Procedures     =============================
     character (len=MAXSDNAMESBUFSIZE) :: mySdList
     integer :: noSds
     integer :: QuantityType
+    logical :: renameSwaths
     integer :: sd_id
     integer :: sdfid1
     integer :: sdfid2
     character (len=80) :: sdName
+    character (len=80) :: sdNameNew
     integer :: status
     integer :: the_hdfVersion
     logical :: verbose
@@ -337,6 +346,8 @@ contains ! =====     Public Procedures     =============================
     myOptions = ' '
     if ( present(options) ) myOptions = options
     verbose = ( index(myOptions, 'v') > 0 )
+    renameSwaths  = present(rename)
+    if ( renameSwaths ) renameSwaths = ( rename /= ' ' )
     file_exists = ( mls_exists(trim(File1)) == 0 )
     if ( .not. file_exists ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -428,6 +439,7 @@ contains ! =====     Public Procedures     =============================
       end if
       call ReadL2AUXData ( sdfid1, trim(sdName), QuantityType, l2aux, &
            & checkDimNames=.false., hdfVersion=hdfVersion )
+      if ( renameSwaths ) sdName = StringElement ( rename, i, countEmpty )
       ! Write the filled l2aux to file2
       call WriteL2AUXData(l2aux, sdfid2, status, trim(sdName), &
         & hdfVersion=hdfVersion)
@@ -1987,6 +1999,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.80  2006/05/19 22:49:15  pwagner
+! May rename copied SDs
+!
 ! Revision 2.79  2006/01/26 00:34:50  pwagner
 ! demoted more use statements from module level to speed Lahey compiles
 !
