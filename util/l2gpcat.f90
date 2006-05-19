@@ -69,6 +69,7 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
 
   integer, parameter ::          MAXFILES = 100
   logical, parameter ::          countEmpty = .true.
+  logical     :: createdYet
   logical, parameter ::          DEEBUG = .false.
   ! logical ::          columnsOnly
   character(len=255) :: filename          ! input filename
@@ -123,6 +124,7 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
      n_filenames = n_filenames + 1
      filenames(n_filenames) = filename
   enddo
+  createdYet = .false.
   if ( n_filenames == 0 ) then
     if ( options%verbose ) print *, 'Sorry no input files to copy'
   else
@@ -208,14 +210,14 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
           & options%profiles(2)/) > 0 ) &
           & ) then
           call cpL2GPData(trim(filenames(i)), &
-          & trim(options%outputFile), create2=(i==1), &
+          & trim(options%outputFile), create2=.not. createdYet, &
           & hdfVersion1=hdfVersion1, hdfVersion2=hdfVersion2, &
           & swathList=trim(swathList), rename=rename, &
           & notUnlimited=.true., andGlAttributes=.true., &
           & rFreqs=options%freqs, rLevels=options%levels, rTimes=options%profiles)
         else
           call cpL2GPData(trim(filenames(i)), &
-          & trim(options%outputFile), create2=(i==1), &
+          & trim(options%outputFile), create2=.not. createdYet, &
           & hdfVersion1=hdfVersion1, hdfVersion2=hdfVersion2, &
           & swathList=trim(swathList), rename=rename, &
           & notUnlimited=.true., andGlAttributes=.true.)
@@ -227,18 +229,19 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
         if ( any( (/options%freqs(2), options%levels(2), options%profiles(2)/) &
           & > 0 ) ) then
           call cpL2GPData(trim(filenames(i)), &
-          & trim(options%outputFile), create2=(i==1), &
+          & trim(options%outputFile), create2=.not. createdYet, &
           & hdfVersion1=hdfVersion1, hdfVersion2=hdfVersion2, &
           & notUnlimited=.true., andGlAttributes=.true., &
           & rFreqs=options%freqs, rLevels=options%levels, rTimes=options%profiles)
         else
           call cpL2GPData(trim(filenames(i)), &
-          & trim(options%outputFile), create2=(i==1), &
+          & trim(options%outputFile), create2=.not. createdYet, &
           & hdfVersion1=hdfVersion1, hdfVersion2=hdfVersion2, &
           & notUnlimited=.true., andGlAttributes=.true.)
         endif
       endif
       call sayTime('copying this file', tFile)
+      createdYet = .true.
     enddo
     call sayTime('copying all files')
   endif
@@ -380,6 +383,9 @@ end program L2GPcat
 !==================
 
 ! $Log$
+! Revision 1.9  2006/05/19 20:55:36  pwagner
+! May rename copied swaths
+!
 ! Revision 1.8  2006/04/06 23:04:21  pwagner
 ! Optionally cp only ranges of freq, level, profile
 !
