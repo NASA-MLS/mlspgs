@@ -25,7 +25,8 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
    use MLSHDF5, only: mls_h5open, mls_h5close
    use MLSMessageModule, only: MLSMessageConfig
    use MLSStringLists, only: catLists, GetStringElement, GetUniqueList, &
-     & NumStringElements, RemoveElemFromList
+     & Intersection, NumStringElements, RemoveElemFromList, &
+     & StringElement, StringElementNum
    use output_m, only: output
    use PCFHdr, only: GlobalAttributes
    use Time_M, only: Time_Now, time_config
@@ -56,7 +57,9 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
     character(len=255) ::    outputFile= 'default.he5'  ! output filename       
     logical ::               columnsOnly = .false.
     logical ::               noDupSwaths = .false.      ! cp 1st, ignore rest   
-    character(len=3) ::      convert= ' '               ! e.g., '425'           
+    character(len=3) ::      convert= ' '               ! e.g., '425'
+    character(len=255) ::    swathNames = ' '           ! which swaths to copy
+    character(len=255) ::    rename = ' '               ! how to rename them
     integer, dimension(2) :: freqs = 0                  ! Keep range of freqs   
     integer, dimension(2) :: levels = 0                 ! Keep range of levels   
     integer, dimension(2) :: profiles = 0               ! Keep range of profiles   
@@ -73,6 +76,7 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
   character(len=255), dimension(MAXFILES) :: filenames
   integer            :: n_filenames
   integer     ::  i, j, status, error ! Counting indices & Error flags
+  integer     :: elem
   integer     ::  hdfversion1
   integer     ::  hdfversion2
   logical     :: is_hdf5
@@ -80,6 +84,7 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
   real        :: t1
   real        :: t2
   real        :: tFile
+  character(len=255) ::    rename = ' '               ! how to rename them
   character(len=L2GPNameLen)          :: swath
   character(len=MAXSWATHNAMESBUFSIZE) :: swathList
   character(len=MAXSWATHNAMESBUFSIZE) :: swathList1
@@ -155,12 +160,12 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
     enddo
     call time_now ( t1 )
     swathListAll = ''
-    NUMSWATHSSOFAR = 0
+    numswathssofar = 0
     if ( options%verbose ) print *, 'Copy l2gp data to: ', trim(options%outputFile)
     do i=1, n_filenames
       call time_now ( tFile )
       if ( options%verbose ) print *, 'Copying from: ', trim(filenames(i))
-      if ( options%noDupSwaths) then
+      if ( options%noDupSwaths .or. options%swathNames /= ' ' ) then
         numswathsperfile = mls_InqSwath ( trim(filenames(i)), &
           & swathList, listSize, hdfVersion=hdfVersion1)
         if ( DEEBUG ) then
@@ -171,7 +176,18 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
           print *, 'all swaths'
           print *, trim(swathListAll)
         endif
-        if ( numswathssofar > 0 ) then
+        if ( options%swathNames /= ' ' ) then
+          swathList1 = swathList
+          swathList = Intersection( options%swathNames, swathList1 )
+          if ( swathList == ' ' ) cycle
+          rename = ' '
+          do j=1, NumStringElements( swathList, countEmpty )
+            call GetStringElement( swathList, swath, j, countEmpty )
+            elem = StringElementNum( options%swathNames, swath, countEmpty )
+            rename = catLists( rename, &
+              & StringElement( options%rename, elem, countempty ) )
+          enddo
+        elseif ( numswathssofar > 0 ) then
           ! Remove any duplicates
           do j=1, numswathssofar
             call GetStringElement(swathListAll, swath, j, countEmpty)
@@ -194,14 +210,14 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
           call cpL2GPData(trim(filenames(i)), &
           & trim(options%outputFile), create2=(i==1), &
           & hdfVersion1=hdfVersion1, hdfVersion2=hdfVersion2, &
-          & swathList=trim(swathList), &
+          & swathList=trim(swathList), rename=rename, &
           & notUnlimited=.true., andGlAttributes=.true., &
           & rFreqs=options%freqs, rLevels=options%levels, rTimes=options%profiles)
         else
           call cpL2GPData(trim(filenames(i)), &
           & trim(options%outputFile), create2=(i==1), &
           & hdfVersion1=hdfVersion1, hdfVersion2=hdfVersion2, &
-          & swathList=trim(swathList), &
+          & swathList=trim(swathList), rename=rename, &
           & notUnlimited=.true., andGlAttributes=.true.)
         endif
         swathList1 = swathListAll
@@ -268,6 +284,14 @@ contains
         call getarg ( i+1+hp, filename )
         i = i + 1
         exit
+      else if ( filename(1:3) == '-s ' ) then
+        call getarg ( i+1+hp, options%swathNames )
+        i = i + 1
+        exit
+      else if ( filename(1:3) == '-r ' ) then
+        call getarg ( i+1+hp, options%rename )
+        i = i + 1
+        exit
       elseif ( filename(1:5) == '-freq' ) then
         call igetarg ( i+1+hp, options%freqs(1) )
         i = i + 1
@@ -321,6 +345,10 @@ contains
       write (*,*) '          -freqs m n    => keep only freqs in range m n'
       write (*,*) '          -levels m n   => keep only levels in range m n'
       write (*,*) '          -profiles m n => keep only profiles in range m n'
+      write (*,*) '          -s name1,name2,..'
+      write (*,*) '             => copy only swaths so named; otherwise all'
+      write (*,*) '          -r rename1,rename2,..'
+      write (*,*) '             => if and how to rename the copied swaths'
       write (*,*) '          -h            => print brief help'
       stop
   end subroutine print_help
@@ -352,6 +380,9 @@ end program L2GPcat
 !==================
 
 ! $Log$
+! Revision 1.8  2006/04/06 23:04:21  pwagner
+! Optionally cp only ranges of freq, level, profile
+!
 ! Revision 1.7  2005/10/29 00:13:56  pwagner
 ! Removed unused procedures from use statements
 !
