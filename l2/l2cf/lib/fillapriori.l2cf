@@ -371,8 +371,8 @@ begin Fill
    Fill, quantity=apriori.RHiVmrsngl, method=manipulate,a=apriori.RHiVmrsngl,b=highBound.RHiVmrsngl,$
         manipulation='a<b'
 
-   Fill, quantity=lowBound.RHiVmr, method=explicit, explicitValues=0.1, /spread
-   Fill, quantity=highBound.RHiVmr, method=explicit, explicitValues=200, /spread
+   Fill, quantity=lowBound.RHiVmr, method=explicit, explicitValues=0.00001, /spread
+   Fill, quantity=highBound.RHiVmr, method=explicit, explicitValues=110, /spread
 
 ;; ensure that apriori between lowbound and highbound
    Fill, quantity=apriori.RHiVmr, method=manipulate,a=apriori.RHiVmr,b=lowBound.RHiVmr,$
@@ -564,6 +564,9 @@ begin Join
 end Join
   })
 ;$Log$
+;Revision 1.105  2006/05/17 17:00:10  dwu
+;add aprioriPrecision for o3_hr and co_hr
+;
 ;Revision 1.104  2006/05/16 22:27:36  bill
 ;some smoothing changes for t and h2o
 ;
