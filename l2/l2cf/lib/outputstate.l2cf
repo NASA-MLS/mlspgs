@@ -23,7 +23,7 @@ begin Output
 
 ;; --------------------------------- Other files ---
 ;; The IWC file is a somewhat special case
-Output, quantities=[joined_iwc, joined_iwcFine], type=l2gp, $
+Output, quantities=[joined_iwc, joined_iwp, joined_iwcFine], type=l2gp, $
   hdfVersion=!hdfVersion, $
   file='!l2gpFileName(IWC)'
 },{
