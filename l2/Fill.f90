@@ -6087,23 +6087,24 @@ contains ! =====     Public Procedures     =============================
       real(rv) :: C                     ! constant "c" in manipulation
       ! Local parameters
       integer, parameter :: NO2WAYMANIPULATIONS = 8
-      character(len=7), parameter :: VALID2WAYMANIPULATIONS ( NO2WAYMANIPULATIONS ) = (/ &
-        & 'a+b    ', &
-        & '(a+b)/2', &
-        & 'a-b    ', &
-        & 'a*b    ', &
-        & 'a>b    ', &
-        & 'a<b    ', &
-        & 'a|b    ', &
-        & 'a/b    ' /)
-      integer, parameter :: NO1WAYMANIPULATIONS = 6
-      character(len=7), parameter :: VALID1WAYMANIPULATIONS ( NO1WAYMANIPULATIONS ) = (/ &
-        & '-a     ', &
-        & '1/a    ', &
-        & 'abs(a) ', &
-        & 'sign(a)', &
-        & 'exp(a) ', &
-        & 'log(a) ' /)
+      character(len=*), parameter :: VALID2WAYMANIPULATIONS ( NO2WAYMANIPULATIONS ) = (/ &
+        & 'a+b     ', &
+        & '(a+b)/2 ', &
+        & 'a-b     ', &
+        & 'a*b     ', &
+        & 'a>b     ', &
+        & 'a<b     ', &
+        & 'a|b     ', &
+        & 'a/b     ' /)
+      integer, parameter :: NO1WAYMANIPULATIONS = 7
+      character(len=*), parameter :: VALID1WAYMANIPULATIONS ( NO1WAYMANIPULATIONS ) = (/ &
+        & '-a      ', &
+        & '1/a     ', &
+        & 'abs(a)  ', &
+        & 'sign(a) ', &
+        & 'exp(a)  ', &
+        & 'log(a)  ', &
+        & 'log10(a)' /)
       ! Local variables
       character (len=128) :: MSTR
       character (len=1) :: ABNAME
@@ -6319,6 +6320,17 @@ contains ! =====     Public Procedures     =============================
             quantity%values = log(a%values)
           end where
         end if
+      case ( 'log10(a)' )
+        if ( .not. associated ( quantity%mask ) ) then
+          where ( a%values > 0._rv )
+            quantity%values = log10(a%values)
+          end where
+        else
+          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 .and. &
+            & ( a%values > 0._rv ) )
+            quantity%values = log10(a%values)
+          end where
+        end if
       case default
         ! This should be one of the cases which use the constant "c"
         call SimpleExprWithC( quantity, a, b, c, mstr )
@@ -6336,7 +6348,7 @@ contains ! =====     Public Procedures     =============================
         ! expr1 [op1 expr2]
         ! where each expr is either a primitive 'x' (one of {a, b, or c})
         ! or else ['('] 'x op y' [')']
-        ! where 'op' is one of {+, -, *, /}
+        ! where 'op' is one of {+, -, *, /,<,>}
 
         ! Method:
         ! Progressively collapse all the '(..)' pairs into their values
@@ -6393,6 +6405,16 @@ contains ! =====     Public Procedures     =============================
         call ReplaceSubString( mstr, collapsedstr, '/', ' & ', &
           & which='all', no_trim=.true. )
         call ReplaceSubString( collapsedstr, mstr, '&', '/', &
+          & which='all', no_trim=.false. )
+
+        call ReplaceSubString( mstr, collapsedstr, '<', ' & ', &
+          & which='all', no_trim=.true. )
+        call ReplaceSubString( collapsedstr, mstr, '&', '<', &
+          & which='all', no_trim=.false. )
+
+        call ReplaceSubString( mstr, collapsedstr, '>', ' & ', &
+          & which='all', no_trim=.true. )
+        call ReplaceSubString( collapsedstr, mstr, '&', '>', &
           & which='all', no_trim=.false. )
 
         collapsedstr = lowerCase(mstr)
@@ -6455,7 +6477,7 @@ contains ! =====     Public Procedures     =============================
 
       subroutine reorderPrecedence(mstr, collapsedstr)
         ! Identify all the terms where each term are separated by
-        ! the lower-precedence operators {+, -}
+        ! the lower-precedence operators {+, -,<,>}
         ! If any terms contain higher-precedence operators {*, /}
         ! then surround them by parentheses
         character(len=*), intent(in)  :: mstr
@@ -6474,10 +6496,24 @@ contains ! =====     Public Procedures     =============================
           & which='all', no_trim=.true. )
         call ReplaceSubString( collapsedstr, temp, '&', '+-', &
           & which='all', no_trim=.false. )
+
+        call ReplaceSubString( temp, collapsedstr, '<', '&', &
+          & which='all', no_trim=.true. )
+        call ReplaceSubString( collapsedstr, temp, '&', '+<', &
+          & which='all', no_trim=.false. )
+
+        call ReplaceSubString( temp, collapsedstr, '>', '&', &
+          & which='all', no_trim=.true. )
+        call ReplaceSubString( collapsedstr, temp, '&', '+>', &
+          & which='all', no_trim=.false. )
         ! Now loop over terms
         n = NumStringElements( temp, COUNTEMPTY, inseparator='+' )
         if ( n < 1 ) then
           call ReplaceSubString( temp, collapsedstr, '+-', '-', &
+            & which='all', no_trim=.false. )
+          call ReplaceSubString( collapsedstr, temp, '+<', '<', &
+            & which='all', no_trim=.false. )
+          call ReplaceSubString( temp, collapsedstr, '+>', '>', &
             & which='all', no_trim=.false. )
           return
         endif
@@ -6498,6 +6534,16 @@ contains ! =====     Public Procedures     =============================
         call ReplaceSubString( collapsedstr, temp, '+-', '-', &
           & which='all', no_trim=.false. )
         call ReplaceSubString( temp, collapsedstr, '+(-', '-(', &
+          & which='all', no_trim=.false. )
+
+        call ReplaceSubString( collapsedstr, temp, '+<', '<', &
+          & which='all', no_trim=.false. )
+        call ReplaceSubString( temp, collapsedstr, '+(<', '<(', &
+          & which='all', no_trim=.false. )
+
+        call ReplaceSubString( collapsedstr, temp, '+>', '>', &
+          & which='all', no_trim=.false. )
+        call ReplaceSubString( temp, collapsedstr, '+(>', '>(', &
           & which='all', no_trim=.false. )
       end subroutine reorderPrecedence
 
@@ -6572,7 +6618,7 @@ contains ! =====     Public Procedures     =============================
         ! (0) constants ('c')
         ! (1) primitives (e.g., '2')
         ! (2) unary operators ('-')
-        ! (3) binary operators {'+', '-', '*', '/'}
+        ! (3) binary operators {'+', '-', '*', '/','<','>'}
         ! Dummy args
         character(len=*)                :: str
         integer                         :: value
@@ -6611,12 +6657,18 @@ contains ! =====     Public Procedures     =============================
         newone%values = 0.
         n = NumStringElements( trim(str), countEmpty=.false., &
           & inseparator=' ' )
+          if ( DeeBUG ) then
+            print *, n, ' str: ', trim(str)
+          endif
         do
           ! go through the elements, re-evaluating every time we "hit" a primitive
           ! Otherwise revising our lastOp or negating status
           elem = elem + 1
           call GetStringElement ( trim(str), variable, elem, &
             & countEmpty=.false., inseparator=' ' )
+          if ( DeeBUG ) then
+            print *, elem, ' variable: ', trim(variable)
+          endif
           select case( trim(variable) )
           case ('a')
             partID = -1
@@ -6648,6 +6700,12 @@ contains ! =====     Public Procedures     =============================
               negating = .true.
               hit = .false.
             endif
+          case ('<')
+            lastOp = '<'
+            hit = .false.
+          case ('>')
+            lastOp = '>'
+            hit = .false.
           case default
             read( variable, * ) partID
             if ( partID < 1 ) then
@@ -6683,6 +6741,10 @@ contains ! =====     Public Procedures     =============================
               where ( part%values /= 0._rv )
                 newone%values = newone%values / part%values
               end where
+            case ('<')
+                newone%values = min( newone%values, part%values )
+            case ('>')
+                newone%values = max( newone%values, part%values )
             case default
               ! How could this happen?
                 call MLSMessage( MLSMSG_Error, ModuleName, &
@@ -7771,6 +7833,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.331  2006/05/19 00:00:13  pwagner
+! Added min, max operators ('<', '>') to manipulation fills with c
+!
 ! Revision 2.330  2006/05/03 22:18:26  pwagner
 ! Sets mask reading quantities missing from l1b file
 !
