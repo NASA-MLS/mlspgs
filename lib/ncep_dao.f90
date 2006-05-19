@@ -195,7 +195,7 @@ contains
     ! We'll simply copy it into a single gridded data type
 
     ! Arguments
-    type(MLSFile_T)                :: GEOS5 file
+    type(MLSFile_T)                :: GEOS5file
     integer, intent(IN) :: lcf_where    ! node of the lcf that provoked me
     integer, intent(IN) :: v_type       ! vertical coordinate; an 'enumerated' type
     type( GriddedData_T ) :: the_g_data ! Result
@@ -1852,6 +1852,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.43  2006/05/19 19:55:07  pwagner
+! Corrected a misspelling Lahey missed
+!
 ! Revision 2.42  2006/05/18 18:39:32  cvuu
 ! Add subroutine Read_geos5
 !
