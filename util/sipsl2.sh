@@ -573,6 +573,13 @@ do
   done
   theversion=`grep -i pgeversion $dir/job.PCF | awk -F"|" '{print $3}'`
   statbad=`tail $dir/exec_log/process.stdout | grep -i "ended badly"`
+  # Some other signs that the job ended badly are that it was killed or
+  # the network went down
+  if [ "$statbad" = "" ]
+  then
+    statbad=`tail $dir/exec_log/process.stderr | \
+      grep -i "/home/sips/ops/bin/dispatch_l2" | grep -i killed`
+  fi
   if [ "$statbad" = "" ]
   then
     statbad=`tail $dir/exec_log/process.stderr | grep -i "connection lost"`
@@ -629,7 +636,13 @@ do
     skipifrestricting="$restrict"
     if [ "$statbad" != "" ]
     then
-      newlist=`cat_args "$list" "ended badly" "\t"`
+      statkilled=`echo "$statbad" | grep -i killed`
+      if [ "$statkilled" != "" ]
+      then
+        newlist=`cat_args "$list" "killed" "\t"`
+      else
+        newlist=`cat_args "$list" "ended badly" "\t"`
+      fi
     elif [ "$statnochunks" != "" ]
     then
       newlist=`cat_args "$list" "failed (no chunks)" "\t"`
@@ -734,6 +747,9 @@ do
 done
 exit 0
 # $Log$
+# Revision 1.11  2006/04/17 23:22:31  pwagner
+# Tests for another condition indicating ended badly
+#
 # Revision 1.10  2006/03/23 19:18:01  pwagner
 # Handles multiple pge versions explicitly
 #
