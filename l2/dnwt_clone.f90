@@ -66,7 +66,13 @@ contains
 
 ! *************************************************     DNWTDB     *****
 
-  subroutine DNWTDB
+  subroutine DNWTDB ( AJ, WIDTH, LEVEL, WHY )
+    type (NWT_T), intent(in), optional :: AJ
+    integer, intent(in), optional :: WIDTH
+    integer, intent(in), optional :: LEVEL ! Absent, do everything
+    ! Present and 1 do everything
+    ! Present and 0 do CDXDXL, CGDX, DXN, FN, FNMIN, INC, SP, SQ, SQRT(FNXE)
+    character(len=*), intent(in), optional :: WHY ! printed if present
   end subroutine DNWTDB
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
@@ -80,6 +86,9 @@ contains
 end module DNWT_CLONE
 
 ! $Log$
+! Revision 2.5  2006/05/20 02:17:23  vsnyder
+! Make DNWTDB compatible with dnwt_module
+!
 ! Revision 2.4  2005/06/22 18:57:01  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
