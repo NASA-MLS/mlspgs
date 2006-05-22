@@ -6372,7 +6372,6 @@ contains ! =====     Public Procedures     =============================
         if ( DeeBUG ) print *, 'mstr: ', trim(mstr)
         nullify(primitives)
         np = 0
-        quantity%values = 0.
         
         ! We're unable to ensure operator precedence
         ! so we'll attempt to identify multiplications and divisions
@@ -6457,12 +6456,13 @@ contains ! =====     Public Procedures     =============================
           print *, 'np ', np
           print *, 'size(database) ', size(primitives)
         endif
+        quantity%values = 0.
         if ( np < 1 .or. np > size(primitives) ) then
           print *, 'np ', np
           print *, 'size(database) ', size(primitives)
           call Announce_Error ( key, no_error_code, &
             & 'Illegal index for primitives array' )
-        return
+          return
         endif
         if ( .not. associated ( quantity%mask ) ) then
           quantity%values = primitives(np)%values
@@ -7833,6 +7833,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.332  2006/05/22 21:56:00  pwagner
+! Fixed bug besetting manipulation fills
+!
 ! Revision 2.331  2006/05/19 00:00:13  pwagner
 ! Added min, max operators ('<', '>') to manipulation fills with c
 !
