@@ -1351,9 +1351,18 @@ contains ! =====     Public Procedures     =============================
   ! --------------------------------------  GetMatrixFromDatabase  -----
   subroutine GetMatrixFromDatabase ( DatabaseElement, Matrix )
   ! Get a POINTER to a matrix object from DatabaseElement.
+    use MLSMessageModule, only: MLSMSG_Crash
     type(matrix_Database_T), intent(in) :: DatabaseElement
     type(matrix_T), pointer :: Matrix
     matrix => databaseElement%matrix
+    if ( associated(matrix) ) return
+    if ( associated(databaseElement%Cholesky) ) matrix => databaseElement%Cholesky%m
+    if ( associated(matrix) ) return
+    if ( associated(databaseElement%Kronecker) ) matrix => databaseElement%Kronecker%m
+    if ( associated(matrix) ) return
+    if ( associated(databaseElement%SPD) ) matrix => databaseElement%SPD%m
+    if ( associated(matrix) ) return
+    call MLSMessage ( MLSMSG_Crash, moduleName, "No matrix to get from database" )
   end subroutine GetMatrixFromDatabase
 
   ! -----------------------------------------  GetSPDFromDatabase  -----
@@ -2336,12 +2345,13 @@ contains ! =====     Public Procedures     =============================
   end subroutine Dump_Linf
 
   ! ------------------------------------------------  Dump_Matrix  -----
-  subroutine Dump_Matrix ( Matrix, Name, Details )
+  subroutine Dump_Matrix ( Matrix, Name, Details, clean )
     type(Matrix_T), intent(in) :: Matrix
     character(len=*), intent(in), optional :: Name
     integer, intent(in), optional :: Details   ! Print details, default 1
     !  <= Zero => no details, == One => Details of matrix but not its blocks,
     !  >One => Details of the blocks, too.
+    logical, intent(in), optional :: Clean     ! Print zeroes, count
 
     integer :: I, J                ! Subscripts, loop inductors
     integer :: MY_DETAILS          ! True if DETAILS is absent, else DETAILS
@@ -2362,26 +2372,32 @@ contains ! =====     Public Procedures     =============================
     do j = 1, matrix%col%nb
       do i = 1, matrix%row%nb
         if ( my_details < 1 .and. matrix%block(i,j)%kind == m_absent ) cycle
-        call output ( 'Block at row ' )
-        call output ( i )
-        call output ( ' and column ' )
-        call output ( j )
+        call output ( i, before='Block at row ' )
+        call output ( j, before=' and column ' )
         call output ( ' ( ' )
-        call display_string ( &
-          & matrix%row%vec%quantities(matrix%row%quant(i))%template%name )
-        call output ( ':' )
+        if ( matrix%row%vec%quantities(matrix%row%quant(i))%template%name /= 0 ) then
+          call display_string ( &
+            & matrix%row%vec%quantities(matrix%row%quant(i))%template%name )
+          call output ( ':' )
+        else
+          call output ( '<No template>' )
+        end if
         call output ( matrix%row%Inst(i) )
         call output (' , ')
-        call display_string ( &
-          & matrix%col%vec%quantities(matrix%col%quant(j))%template%name )
-        call output ( ':' )
+        if ( matrix%col%vec%quantities(matrix%col%quant(j))%template%name /= 0 ) then
+          call display_string ( &
+            & matrix%col%vec%quantities(matrix%col%quant(j))%template%name )
+          call output ( ':' )
+        else
+          call output ( '<No template>' )
+        end if
         call output ( matrix%col%Inst(j) )
         call output ( ' )' )
         if ( matrix%block(i,j)%kind == m_absent ) then
           call output ( ' [absent]', advance='yes' )
         else
           call output ( '', advance='yes' )
-          call dump ( matrix%block(i,j), details=my_details )
+          call dump ( matrix%block(i,j), details=my_details, clean=clean )
         end if
       end do
     end do
@@ -2560,6 +2576,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.107  2006/05/23 21:43:34  vsnyder
+! Add CLEAR option to some dumps
+!
 ! Revision 2.106  2005/12/16 23:25:58  pwagner
 ! dumpSize moved from dump0 to output_m
 !
