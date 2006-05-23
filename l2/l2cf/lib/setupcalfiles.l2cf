@@ -76,7 +76,8 @@
   'R3', $
   'R4', $
   'R5H',$
-  'R5V']})
+  'R5V',$
+  'DACS']})
 },{
   !ifdef(antennaFile, {}, {
   !define(antennaFile, {'!antennaPath/MLS-Aura_L2Cal-AAAP_v2-0-0_0000d000.txt'})
@@ -109,6 +110,9 @@
   })
 })
 ;$Log$
+;Revision 1.30  2006/05/19 17:02:56  lambert
+;updated climatology file to v1-7-2
+;
 ;Revision 1.29  2006/05/17 22:32:25  lambert
 ;updated climatology file to v1-7-1
 ;
