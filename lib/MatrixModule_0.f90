@@ -3365,7 +3365,8 @@ contains ! =====     Public Procedures     =============================
         call dump ( matrix_block%values(bounds(1):bounds(2),bounds(3):bounds(4)), &
           & clean=clean )
       else
-        call output ( size(matrix_block%values), advance='yes' )
+        if ( my_clean ) &
+          & call output ( size(matrix_block%values), advance='yes' )
         call dump ( matrix_block%values, clean=clean )
       end if
     else
@@ -3461,6 +3462,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.109  2006/05/23 22:37:25  vsnyder
+! Dump the block size only if CLEAN
+!
 ! Revision 2.108  2006/05/23 21:43:34  vsnyder
 ! Add CLEAR option to some dumps
 !
