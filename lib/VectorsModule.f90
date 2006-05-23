@@ -1306,7 +1306,7 @@ contains ! =====     Public Procedures     =============================
   subroutine Dump_Vector ( VECTOR, DETAILS, NAME, &
     & QUANTITYTYPES, INSTRUMENTMODULES, SIGNAL_IDS, &
     & COHERENT, STACKED, REGULAR, MINORFRAME, MAJORFRAME, &
-    & THENDITCHAFTERDUMP )
+    & THENDITCHAFTERDUMP, CLEAN )
 
     ! dump quantities in vector according to whether they match
     ! all of the optional args: name, ..,majorframe
@@ -1329,6 +1329,7 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in), optional                :: MINORFRAME
     logical, intent(in), optional                :: MAJORFRAME
     logical, intent(in), optional                :: THENDITCHAFTERDUMP
+    logical, intent(in), optional                :: CLEAN
 
     ! Local parameters
     integer :: J    ! Loop inductor, subscript
@@ -1376,7 +1377,7 @@ contains ! =====     Public Procedures     =============================
         & (vector%quantities(j)%template%majorFrame .eqv. majorFrame)
       if ( dumpThisQty ) then
         call output ( j, 4, after="~" )
-        call dump ( vector%quantities(j), details )
+        call dump ( vector%quantities(j), details, clean=clean )
         if ( myditchafterdump ) return
       end if
     end do ! j
@@ -2445,6 +2446,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.121  2006/03/22 02:16:28  vsnyder
+! Add Vector argument to DumpVectorQuantity just to get its name
+!
 ! Revision 2.120  2006/02/23 00:55:28  vsnyder
 ! Add NoErr optional argument to GetVectorQuantityIndexByName
 !
