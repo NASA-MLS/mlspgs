@@ -3315,7 +3315,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine CreateEmptyBlock
 
   ! ------------------------------------------  DUMP_MATRIX_BLOCK  -----
-  subroutine DUMP_MATRIX_BLOCK ( MATRIX_BLOCK, NAME, DETAILS, BOUNDS )
+  subroutine DUMP_MATRIX_BLOCK ( MATRIX_BLOCK, NAME, DETAILS, BOUNDS, CLEAN )
     type(MatrixElement_T), intent(in) :: MATRIX_BLOCK
     character(len=*), intent(in), optional :: NAME
     integer, intent(in), optional :: DETAILS   ! Print details, 0 => minimal,
@@ -3323,9 +3323,13 @@ contains ! =====     Public Procedures     =============================
                                                !  default 1.
     integer, intent(in), optional :: BOUNDS(4) ! Dump only Bounds(1):Bounds(2)
                                                !        X  Bounds(3):Bounds(4)
+    logical, intent(in), optional :: CLEAN     ! print \size
     integer :: MY_DETAILS
+    logical :: My_Clean
     my_details = 1
     if ( present(details) ) my_details = details
+    my_clean = .false.
+    if ( present(clean) ) my_clean = clean
     if ( present(name) ) call output ( name, advance='yes' )
     call output ( '  ' )
     call output ( matrix_block%nRows ); call output ( " Rows, " )
@@ -3354,10 +3358,15 @@ contains ! =====     Public Procedures     =============================
       call output ( 'Absent', advance='yes' )
     else if ( my_details > 1 ) then
       call output ( ' Values =', advance='yes' )
+      if ( my_clean )  call output ( trim(" \ ") )
       if ( present(bounds) ) then
-        call dump ( matrix_block%values(bounds(1):bounds(2),bounds(3):bounds(4)) )
+        if ( my_clean ) &
+          & call output ( (bounds(2)-bounds(1))*(bounds(4)-bounds(3)), advance='yes' )
+        call dump ( matrix_block%values(bounds(1):bounds(2),bounds(3):bounds(4)), &
+          & clean=clean )
       else
-        call dump ( matrix_block%values )
+        call output ( size(matrix_block%values), advance='yes' )
+        call dump ( matrix_block%values, clean=clean )
       end if
     else
       call output ( ' ' )
@@ -3452,6 +3461,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.108  2006/05/23 21:43:34  vsnyder
+! Add CLEAR option to some dumps
+!
 ! Revision 2.107  2005/06/22 20:45:29  pwagner
 ! Use optional arg FORGIVEZEROS to UpdateDiagonalVec
 !
