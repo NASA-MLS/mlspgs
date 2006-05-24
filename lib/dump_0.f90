@@ -106,8 +106,11 @@ module DUMP_0
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
+  ! These public parameters can be reconfigured outside the module
   character, public, parameter :: AfterSub = '#'
   logical, public, save ::   STATSONONELINE = .true.
+  character(len=1), public, save ::   RELATIONFORPCTAGES = '=' ! {'=','<','>'}
+
   logical, parameter ::   DEEBUG = .false.
   logical :: myStats, myRMS, myWholeArray
   integer :: numNonFill, numFill
@@ -1786,7 +1789,11 @@ contains
     integer, intent(in) :: unequal
     if ( equal+unequal < 1 ) return
       call output ( trim(name), advance='no' )
-      call output ( ' =, != (%) ', advance='no' )
+      call blanks( 1, advance='no' )
+      call output( RelationForPctages, advance='no' )
+      call output ( ', !', advance='no' )
+      call output( RelationForPctages, advance='no' )
+      call output ( ' (%) ', advance='no' )
       call output ( equal, advance='no' )
       call output ( ': ', advance='no' )
       call output ( unequal, advance='no' )
@@ -2000,6 +2007,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.58  2006/05/24 20:38:14  pwagner
+! Allow any of 3 ordering relations for dumping pct
+!
 ! Revision 2.57  2006/04/20 01:09:30  vsnyder
 ! Don't print lines of zeroes in complex dumps
 !
