@@ -20,6 +20,7 @@
 #    -unique              Save results to a uniquely-named new file
 #    -c1 cycle1           Insist on cycle number c"cycle1" in dir1
 #    -c2 cycle2           Insist on cycle number c"cycle2" in dir2
+#    -profiles m n        Keep only profiles in range m n
 #    -l2gpdiff command    Use command instead of l2gpdiff
 #  (and all the normal l2gpdiff options; e.g. -rms -ignore are wise choices)
 #
@@ -137,19 +138,25 @@ extant_files()
 #****************************************************************
 #
 stdprods='BrO CH3CN ClO CO GPH H2O HCl HCN HNO3 HO2 HOCl IWC N2O O3 OH RHI Temperature'
-debug=1
+debug=0
 #     ^  -- set this to 1 if worried
+keep=1
+#    ^  -- set this to 1 to keep temp files (else delete)
 me="$0"
 my_name=batch_l2gpdiff.sh
 I=batch_l2gpdiff
 L2GPDIFF=~/mlspgs/bin/LF95.Linux/l2gpdiff
 # $reecho is reecho with me's path prepended
 reecho="`echo $0 | sed 's/'$I'/reecho/'`"
+# $the_splitter is split_path with me's path prepended
+the_splitter="`echo $0 | sed 's/'$I'/split_path/'`"
 l2gpdiff_opts=""
 list=""
 append="no"
 cycle1=""
 cycle2=""
+profile1=""
+profile2=""
 dryrun="no"
 unique="no"
 more_opts="yes"
@@ -181,6 +188,13 @@ while [ "$more_strs" = "yes" ] ; do
 	    dryrun="yes"
 	    shift
        ;;
+    -prof* )
+	    profile1="$2"
+	    shift
+	    profile2="$2"
+	    shift
+	    shift
+       ;;
     -unique )
 	    unique="yes"
 	    shift
@@ -202,7 +216,10 @@ while [ "$more_strs" = "yes" ] ; do
        else
 	       l2gpdiff_opts="$l2gpdiff_opts $1"
        fi
-       if [ "$1" = "-d" -o "$1" = "-f" ]
+       opt_takes_args=`echo "-d,-f,-chunks,-fields,-s1,-s2" | grep -e "$1"`
+       # if [ "$1" = "-d" -o "$1" = "-f" ]
+       echo opt_takes_args: $opt_takes_args
+       if [ "$opt_takes_args" != "" ]
        then
 	       l2gpdiff_opts="$l2gpdiff_opts $2"
           shift
@@ -234,6 +251,13 @@ then
 fi
 dir1="$1"
 dir2="$2"
+if [ "$profile1" != "" -a "$profile2" != "" ]
+then
+  frstdir=~/`get_unique_name frst`
+  scnddir=~/`get_unique_name scnd`
+  mkdir $frstdir
+  mkdir $scnddir
+fi
 if [ "$debug" = 1 ]
 then
   echo "L2GPDIFF $L2GPDIFF"
@@ -243,8 +267,12 @@ then
   echo "append $append"
   echo "cycle1 $cycle1"
   echo "cycle2 $cycle2"
+  echo "profile1 $profile1"
+  echo "profile2 $profile2"
   echo "dir1 $dir1"
   echo "dir2 $dir2"
+  echo "frstdir $frstdir"
+  echo "scnddir $scnddir"
 fi
 if [ "$dir1" = "$dir2" ]
 then
@@ -291,6 +319,23 @@ do
     echo "file1 $file1"
     echo "file2 $file2"
   fi
+  if [ "$profile1" != "" -a "$profile2" != "" ]
+  then
+    fname1=`perl -e '$reverse=reverse("$ARGV[0]"); @parts=split("/",$reverse); $reverse=$parts[0]; $reverse=reverse($reverse); print $reverse' $file1`
+    fname2=`perl -e '$reverse=reverse("$ARGV[0]"); @parts=split("/",$reverse); $reverse=$parts[0]; $reverse=reverse($reverse); print $reverse' $file2`
+    newfile1=$frstdir/$fname1
+    newfile2=$scnddir/$fname2
+    if [ "$dryrun" = "yes" ]
+    then
+      echo "l2gpcat -v -o $newfile1 -profiles $profile1 $profile2 $file1"
+      echo "l2gpcat -v -o $newfile2 -profiles $profile1 $profile2 $file2"
+    else
+      l2gpcat -v -o $newfile1 -profiles $profile1 $profile2 $file1
+      l2gpcat -v -o $newfile2 -profiles $profile1 $profile2 $file2
+    fi
+    file1=$newfile1
+    file2=$newfile2
+  fi
   if [ "$unique" = "yes" ]
   then
      outfile=`get_unique_name $i`
@@ -326,8 +371,16 @@ do
     $L2GPDIFF $l2gpdiff_opts $file1 $file2 >> "$outfile"
   fi
 done
+if [ "$profile1" != "" -a "$profile2" != "" -a "$keep" != 1 ]
+then
+  /bin/rm -fr $frstdir
+  /bin/rm -fr $scnddir
+fi
 exit
 # $Log$
+# Revision 1.5  2006/03/23 19:15:37  pwagner
+# Better handling of multiple cycle numbers
+#
 # Revision 1.4  2005/06/23 22:20:45  pwagner
 # Reworded Copyright statement
 #
