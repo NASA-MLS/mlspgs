@@ -65,7 +65,7 @@ program l2auxchi ! dumps chi^sq read from L2AUX files
   type ( options_T ) :: options
 
 
-  integer, parameter ::          MAXDS = 50
+  integer, parameter ::          MAXDS = 500
   integer, parameter ::          MAXSDNAMESBUFSIZE = MAXDS*NAME_LEN
   integer, parameter ::          MAXFILES = 100
   logical ::          columnsOnly
@@ -368,3 +368,6 @@ end program l2auxchi
 !==================
 
 ! $Log$
+! Revision 1.1  2006/05/24 20:39:41  pwagner
+! First commit
+!
