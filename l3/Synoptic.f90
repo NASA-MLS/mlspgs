@@ -15,7 +15,7 @@ MODULE Synoptic
   USE MLSCommon, ONLY: r8, r4
   USE MLSL3Common, ONLY: DATE_LEN, maxWindow
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_ALLOCATE, & 
-       & MLSMSG_DEALLOCATE
+       & MLSMSG_DEALLOCATE, MLSMSG_Warning
   USE Dump_0, only: DUMP
 
   Implicit none
@@ -3898,15 +3898,14 @@ end if
              If( l3r(iD)%time(I) < startTime .OR. & 
                   !& l3r(iD)%time(I) > l3r_temp(iD)%time(l3r(iD)%nTimes) ) Then
                   & l3r(iD)%time(I) > endTime ) Then
-                l3r(iD)%l2gpValue(0,iP, I) = -999.99 
+                l3r(iD)%l2gpValue(1,iP, I) = -999.99 
                 EXIT
              ELSE IF (J .LT. l3r_temp(iD)%nTimes) THEN
                 If(   (l3r(iD)%time(I) > 0 .AND. l3r_temp(iD)%time(J) > 0 .AND. l3r_temp(iD)%time(J+1) > 0 ) .AND. &
                     & l3r(iD)%time(I) > l3r_temp(iD)%time(J) .AND. & 
                     & l3r(iD)%time(I) < l3r_temp(iD)%time(J+1) ) Then
                    
-                   !l3r(iD)%l2gpValue(1, iP, I) =  & 
-                   l3r(iD)%l2gpValue(0,iP, I) =  & 
+                   l3r(iD)%l2gpValue(1, iP, I) =  & 
                         & l3r_temp(iD)%l2gpValue(1, iN, J) + &
                         & (l3r(iD)%time(I) - l3r_temp(iD)%time(J))*&
                         & (l3r_temp(iD)%l2gpValue(1, iN, J+1) - & 
@@ -3946,6 +3945,9 @@ end if
 !===================
 
 ! $Log$
+! Revision 1.39  2006/02/28 17:56:56  cvuu
+! V2.00 commit
+!
 ! Revision 1.37  2004/09/30 17:53:10  cvuu
 ! bug fixes
 !

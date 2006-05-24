@@ -427,7 +427,7 @@ CONTAINS
         
        DO i = 1, numDays
           ! Read information from the L2GP file
-          CALL SetupNewL2GPRecord(l3Res(i), nFreqs=0, nLevels=totalIndex, &
+          CALL SetupNewL2GPRecord(l3Res(i), nFreqs=1, nLevels=totalIndex, &
 	     & nTimes=l3rtemp(i)%nTimes)
           l3Res(i)%chunkNumber = l3rtemp(i)%chunkNumber
           l3Res(i)%solarTime = l3rtemp(i)%solarTime
@@ -548,6 +548,7 @@ CONTAINS
    CHARACTER (LEN=8) :: date
    REAL(r8) :: validTime
    INTEGER :: i, j, match, numDays, file_id, hdfVersion, record_length, status 
+   LOGICAL :: notUnlimited 
 
    ! For each element of the database,
    
@@ -584,7 +585,7 @@ CONTAINS
 
       ! call dump (real(l3r(i)%l2gpValue, r8), 'l2gpValue: ')
       call WriteL2GPData(l3r(i), file_id, l3r(i)%name, & 
-           & hdfVersion=hdfVersion)
+           & hdfVersion=hdfVersion,notUnlimited=.true.)
 
       status = mls_io_gen_closeF(l_swath, file_id, l3File, & 
            & hdfVersion=hdfVersion)
@@ -711,6 +712,9 @@ END MODULE L2Interface
 !=====================
 
 !# $Log$
+!# Revision 1.20  2006/04/17 15:43:04  cvuu
+!# Remove the print statements
+!#
 !# Revision 1.19  2006/02/28 17:56:56  cvuu
 !# V2.00 commit
 !#
