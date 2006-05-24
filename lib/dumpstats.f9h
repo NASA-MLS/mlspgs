@@ -32,12 +32,25 @@
       endif
     endif
     if ( myStats ) then
-      numNonFill = count(array /= myFillValue)
+      ! Count how many meet our desired relationship w.r.t. FillValue
+      select case ( RelationForPctages )
+      case ( '=' )
+        numNonFill = count(array /= myFillValue)
+      case ( '<' )
+        numNonFill = count(array >= myFillValue)
+      case ( '>' )
+        numNonFill = count(array <= myFillValue)
+      case default
+        numNonFill = count(array /= myFillValue)
+      end select
       numFill = size(array) - numNonFill
       call printPercentages ( name, numFill, numNonFill  )
     endif
     if ( .not. myWholeArray ) return
 ! $Log$
+! Revision 2.8  2006/05/24 20:38:32  pwagner
+! Allow any of 3 ordering relations for dumping pct
+!
 ! Revision 2.7  2006/02/28 21:40:10  pwagner
 ! Reordered printing of rms, stats
 !
