@@ -102,6 +102,9 @@ begin Fill
   !interpolateToHiRes(apriori.RHI_HR)
   }) ;; End if flagGotClimatology
 
+  ;; Possibly overwrite temperature with the merged product
+  !ifdef(flagUseOperationalTemperature,{Fill, quantity=apriori.temperature_hr,$
+    method=gridded, sourceGrid=mergedTemperature})
 end Fill
 
 ;; ----------------------------------- Lesser state
@@ -564,6 +567,9 @@ begin Join
 end Join
   })
 ;$Log$
+;Revision 1.106  2006/05/19 17:39:13  dwu
+;change RHiVmr upper and lower bounds
+;
 ;Revision 1.105  2006/05/17 17:00:10  dwu
 ;add aprioriPrecision for o3_hr and co_hr
 ;
