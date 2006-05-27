@@ -67,6 +67,7 @@ boxCarMethod
 
 c
 centerVertically
+clean
 climatology
 cloud_der
 cloudChannels
@@ -428,6 +429,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.165  2006/05/27 03:00:08  vsnyder
+# Add a 'clean' option to the 'dump' command
+#
 # Revision 2.164  2006/05/11 19:37:32  pwagner
 # Added option to disallow duplicate molecules
 #
