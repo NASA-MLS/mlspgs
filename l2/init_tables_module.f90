@@ -1205,6 +1205,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_allVGrids, t+t_boolean, n+n_field_type, &
              begin, f+f_antennaPatterns, t+t_boolean, n+n_field_type, &
              begin, f+f_Boolean, s+s_Boolean, n+n_field_spec, &
+             begin, f+f_Clean, t+t_boolean, n+n_field_type, &
              begin, f+f_DACSfilterShapes, t+t_boolean, n+n_field_type, &
              begin, f+f_details, t+t_numeric, n+n_field_type, &
              begin, f+f_forwardModel, s+s_forwardModel, n+n_field_spec, &
@@ -1460,6 +1461,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.437  2006/05/27 02:59:08  vsnyder
+! Add a 'clean' option to the 'dump' command
+!
 ! Revision 2.436  2006/05/11 19:37:32  pwagner
 ! Added option to disallow duplicate molecules
 !
