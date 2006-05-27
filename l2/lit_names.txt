@@ -120,7 +120,9 @@ newtonian
 noRadsBinned
 noRadsPerMIF
 norm
-numJ # Number of Jacobian values used by the Newtonian solver
+numGrad # Number of gradient moves made by the Newtonian solver
+numJ    # Number of Jacobian values used by the Newtonian solver
+numNewt # Number of Newton moves made by the Newtonian solver
 
 offsetRadiance
 orMasks
@@ -162,6 +164,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.56  2006/05/27 02:58:25  vsnyder
+# add numGrad and numNewt
+#
 # Revision 2.55  2006/05/09 16:39:58  pwagner
 # Added writing l2cf to dgm
 #
