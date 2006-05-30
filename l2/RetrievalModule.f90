@@ -65,7 +65,7 @@ contains
       & L_dnwt_sq,  L_dnwt_sqt, &
       & L_highcloud, L_Jacobian_Cols, L_Jacobian_Rows, &
       & L_lowcloud, L_newtonian, L_none, L_norm, &
-      & L_numJ, &
+      & L_NumGrad, L_numJ, L_NumNewt, &
       & S_dump, S_dumpBlocks, S_flagCloud, S_flushPFA, S_matrix, &
       & S_restrictRange, S_retrieve, S_sids, S_snoop, S_subset, S_time, &
       & S_updateMask
@@ -286,7 +286,7 @@ contains
 
       select case ( spec )
       case ( s_dump )
-        call dumpCOmmand ( key, forwardModelConfigs=configDatabase, &
+        call dumpCommand ( key, forwardModelConfigs=configDatabase, &
           & vectors=vectorDatabase )
       case ( s_dumpblocks )
         call DumpBlocks ( key, matrixDatabase )
@@ -1056,12 +1056,14 @@ contains
     end subroutine FillDiagQty
 
     ! ----------------------------------------------  FillDiagVec ------
-    subroutine FillDiagVec ( diagnostics, aj, numJ, nwt_flag, &
+    subroutine FillDiagVec ( diagnostics, aj, numGrad, numJ, numNewt, nwt_flag, &
       & jacobian_rows, jacobian_cols )
       use DNWT_Module, only: NWT_T
       type(Vector_T), intent(inout) :: DIAGNOSTICS
       type(Nwt_T), intent(in) :: AJ
+      integer, intent(in), optional :: NUMGrad
       integer, intent(in), optional :: NUMJ
+      integer, intent(in), optional :: NUMNewt
       integer, intent(in), optional :: NWT_FLAG
       integer, intent(in), optional :: JACOBIAN_ROWS
       integer, intent(in), optional :: JACOBIAN_COLS
@@ -1083,14 +1085,18 @@ contains
       call fillDiagQty ( diagnostics,  l_dnwt_gradn, aj%gradn )
       call fillDiagQty ( diagnostics,  l_dnwt_sq, aj%sq )
       call fillDiagQty ( diagnostics,  l_dnwt_sqt, aj%sqt )
+      if ( present ( numGrad ) ) &
+        & call fillDiagQty ( diagnostics,  l_numGrad, real(numGrad, rv) )
       if ( present ( numJ ) ) &
-        & call fillDiagQty ( diagnostics,  l_numJ, real(numJ, r8) )
+        & call fillDiagQty ( diagnostics,  l_numJ, real(numJ, rv) )
+      if ( present ( numNewt ) ) &
+        & call fillDiagQty ( diagnostics,  l_numNewt, real(numNewt, rv) )
       if ( present ( nwt_flag ) ) &
-        & call fillDiagQty ( diagnostics,  l_dnwt_flag, real(nwt_flag,r8) )
+        & call fillDiagQty ( diagnostics,  l_dnwt_flag, real(nwt_flag,rv) )
       if ( present ( jacobian_rows ) ) &
-        & call fillDiagQty ( diagnostics,  l_jacobian_rows, real(jacobian_rows,r8) )
+        & call fillDiagQty ( diagnostics,  l_jacobian_rows, real(jacobian_rows,rv) )
       if ( present ( jacobian_cols ) ) &
-        & call fillDiagQty ( diagnostics,  l_jacobian_cols, real(jacobian_cols,r8) )
+        & call fillDiagQty ( diagnostics,  l_jacobian_cols, real(jacobian_cols,rv) )
     end subroutine FillDiagVec
     
     ! ----------------------------------------------  GetInBounds  -----
@@ -1156,7 +1162,9 @@ contains
       use DNWT_Module, only: FlagName, NF_AITKEN, NF_BEST, NF_DX, &
       & NF_DX_AITKEN, NF_EVALF, NF_EVALJ, NF_FANDJ, NF_GMOVE, NF_LEV, &
       & NF_NEWX, NF_SMALLEST_FLAG, NF_SOLVE, NF_START, NF_TOLX, NF_TOLF, &
-      & NF_TOLX_BEST, NF_TOO_SMALL, NWT, NWTA, NWTDB, NWTOP, NWT_T, RK
+      & NF_TOLX_BEST, NF_TOO_SMALL, NWT_T, RK
+      use DNWT_Module, only: NWT, NWTA, NWTDB, NWTOP
+!     use DNWT_clone, only: NWT, NWTA, NWTDB, NWTOP
       use Dump_0, only: Dump
       use ForwardModelWrappers, only: ForwardModel
       use ForwardModelIntermediate, only: ForwardModelIntermediate_T, &
@@ -1187,6 +1195,33 @@ contains
                                         ! set values negative.
       type(nwt_T) :: BestAJ             ! AJ at Best Fnorm so far.
       real(r8) :: Cosine                ! Of an angle between two vectors
+      ! Dump switches
+      logical :: D_ATB    ! 'atb' A^T b -- RHS of system
+      logical :: D_Col    ! 'col' Column scale vector
+      logical :: D_Cov    ! 'cov' Covariance
+      logical :: D_Diag   ! 'diag' Diagonal of factored normal equations
+      logical :: D_Dvec   ! 'dvec' DX vector
+      logical :: D_Fac_F  ! 'FAC' Full factored normal equations (if you dare)
+      logical :: D_Fac_N  ! 'fac' L_Infty norms of factored normal equations blocks
+      logical :: D_Fnorm  ! 'fnorm' Contributions to | F |
+      logical :: D_Gvec   ! 'gvec' Gradient vector
+      logical :: D_Jac_F  ! 'JAC' Full Jacobian (if you dare)
+      logical :: D_Jac_N  ! 'jac' L_Infty norms of Jacobian blocks
+      logical :: D_Mas    ! 'mas' Announce master triggering slaves
+      logical :: D_Mst    ! 'mst' Block causing factoring abnormal status
+      logical :: D_Ndb_0  ! 'ndb' Minimum Newton method debugging output
+      logical :: D_Ndb_1  ! 'Ndb' Medium Newton method debugging output
+      logical :: D_Ndb_2  ! 'Ndb' Maximium Newton method debugging output
+      logical :: D_Neq_F  ! 'NEQ' Full normal equations (if you dare)
+      logical :: D_Neq_N  ! 'neq' L_Infty norms of Normal equation blocks
+      logical :: D_Nin    ! 'nin' Newton method's internal output
+      logical :: D_Nwt    ! 'nwt' Commands from Newton method
+      logical :: D_Reg    ! 'reg' Tikhonov regularization
+      logical :: D_Sca    ! 'sca' Newton method's scalars
+      logical :: D_Spa    ! 'spa' Sparsity structure of matrices
+      logical :: D_Svec   ! 'svec' Final state vector
+      logical :: D_Vir    ! 'vir' Virgin matrix, before KTK
+      logical :: D_Xvec   ! 'xvec' Current state vector
 
       type(matrix_Cholesky_T) :: Factored ! Cholesky-factored normal equations
       type (ForwardModelStatus_T) :: FmStat ! Status for forward model
@@ -1210,7 +1245,9 @@ contains
       integer, parameter :: NF_GetJ = NF_Smallest_Flag - 1 ! Take an extra loop
                                         ! to get J.
       type(matrix_SPD_T), target :: NormalEquations  ! Jacobian**T * Jacobian
+      integer :: NumGrad                ! Number of gradient moves
       integer :: NumJ                   ! Number of Jacobian evaluations
+      integer :: NumNewt                ! Number of Newton moves
       integer :: NWT_Flag               ! Signal from NWT, q.v., indicating
                                         ! the action to take.
       integer :: NWT_Opt(20)            ! Options for NWT, q.v.
@@ -1232,6 +1269,34 @@ contains
       type(matrix_cholesky_T) :: TempC   ! For negateSD caseXoXo
       character(len=10) :: TheFlagName  ! Name of NWTA's flag argument
       integer :: TikhonovRows           ! How many rows of Tiknonov regularization?
+
+      ! Set flags from switches
+      d_atb = index ( switches, 'atb' ) /= 0
+      d_col = index(switches,'col') /= 0
+      d_cov = index(switches,'cov') /= 0
+      d_diag = index(switches,'diag') /= 0
+      d_dvec = index(switches,'dvec') /= 0
+      d_fac_f = index(switches,'FAC') /= 0
+      d_fac_n = index(switches,'fac') /= 0
+      d_fnorm = index ( switches, 'fnorm' ) /= 0
+      d_gvec = index(switches,'gvec') /= 0
+      d_jac_f = index(switches,'JAC') /= 0
+      d_jac_n = index(switches,'jac') /= 0
+      d_mas = index ( switches, 'mas' ) /= 0
+      d_mst = index(switches,'mst') /= 0
+      d_ndb_0 = index(switches,'ndb') /= 0
+      d_ndb_1 = index(switches,'Ndb') /= 0
+      d_ndb_2 = index(switches,'NDB') /= 0
+      d_neq_f = index(switches,'NEQ') /= 0
+      d_neq_n = index(switches,'neq') /= 0
+      d_nin = index(switches,'nin') /= 0
+      d_nwt = index(switches,'nwt') /= 0
+      d_reg = index(switches,'reg') /= 0
+      d_sca = index(switches,'sca') /= 0
+      d_spa = index(switches,'spa') /= 0
+      d_svec = index(switches,'svec') /= 0
+      d_vir = index(switches,'vir') /=0
+      d_xvec = index(switches,'xvec') /= 0
 
       call time_now ( t1 )
       call allocate_test ( fmStat%rows, jacobian%row%nb, 'fmStat%rows', &
@@ -1296,15 +1361,17 @@ contains
             & ( 1.0_r8 + fuzz * ( fuzzState%quantities(j)%values - 0.5 ) )
         end do
       end if
-        if ( index(switches,'xvec') /= 0 ) call dump ( v(x), name='Original X' )
+        if ( d_xvec ) call dump ( v(x), name='Original X' )
+      numGrad = 0
       numJ = 0
+      numNewt = 0
       aj%axmax = 0.0
         call time_now ( t0 ) ! time base for Newtonian iteration
       do k = 1, size(v(x)%quantities)
         aj%axmax = max(aj%axmax, maxval(abs(v(x)%quantities(k)%values)))
       end do
 
-        if ( index(switches,'sca') /= 0 ) then
+        if ( d_sca ) then
           if ( got(f_apriori) ) then
             call output ( ' apriori scale = ' )
             call output ( aprioriScale )
@@ -1321,7 +1388,7 @@ contains
       call copyVector ( v(bestX), v(x) ) ! bestX := x to start things off
       prev_nwt_flag = huge(0)
       loopCounter = 0
-      do ! Newtonian iteration
+NEWT: do ! Newtonian iteration
         loopCounter = loopCOunter + 1
         if ( loopCounter > max(50, 50 * maxJacobians) ) then
           abandoned = .true.
@@ -1330,15 +1397,11 @@ contains
           exit
         end if
         if ( nwt_flag /= nf_getJ ) then ! not taking a special iteration to get J
-            if ( index(switches,'nin') /= 0 ) & ! Turn on NWTA's internal output
+            if ( d_nin ) & ! Turn on NWTA's internal output
               & call nwtop ( (/ 1, 1, 0 /), nwt_xopt )
           call nwta ( nwt_flag, aj )
-          if ( nwt_flag == nf_evalj .and. prev_nwt_flag == nf_evalf ) then
-            prev_nwt_flag = nf_evalj
-            cycle
-          end if
         end if
-          if ( index(switches,'nwt') /= 0 ) then
+          if ( d_nwt ) then
             call FlagName ( nwt_flag, theFlagName )
             if ( nwt_flag == nf_getJ ) theFlagName = 'GETJ'
             call output ( 'Newton method flag = ' )
@@ -1348,6 +1411,10 @@ contains
             call output ( ' at ' )
             call time_now ( t3 )
             call output ( t3-t0, advance='yes' )
+          end if
+          if ( nwt_flag == nf_evalj .and. prev_nwt_flag == nf_evalf ) then
+            prev_nwt_flag = nf_evalj
+            cycle
           end if
         select case ( nwt_flag )
         ! The EVALF case is now subsumed into the EVALJ case, so that FNORM
@@ -1416,9 +1483,9 @@ contains
         !   \item[AJ\%GRADN] = L2 norm of Gradient = $|| {\bf J^T f}||_2$.
         !   \end{description}
           numJ = numJ + 1
-          if ( index(switches,'dst') /= 0 ) call dump ( v(x), details=2, name='State' )
+            if ( d_xvec ) call dump ( v(x), details=2, name='State' )
           if ( numJ > maxJacobians .and. nwt_flag /= nf_getJ ) then
-              if ( index(switches,'nwt') /= 0 ) then
+              if ( d_nwt ) then
                 call output ( &
                   & 'Newton iteration terminated because Jacobian evaluations (' )
                 call output ( numJ )
@@ -1478,10 +1545,8 @@ contains
             ! ( a - x_n )^T F^T F ( a - x_n ) = ( a - x_n )^T \left [ 
             ! C ( a - x_n ) \right ] }$
             aj%fnorm = v(aprioriMinusX) .mdot. v(covarianceXapriori)
-            if ( index ( switches, 'fnorm' ) /= 0 ) then
-              call output ( 'A priori contribution to | F | = ' )
-              call output ( aj%fnorm, advance='yes' )
-            end if
+              if ( d_fnorm ) call output ( aj%fnorm, &
+                  & before='A priori contribution to | F | = ', advance='yes' )
             !{ Using Apriori requires adding equations of the form ${\bf F
             !  x}_{n+1} \simeq {\bf F a}$ where ${\bf F}$ is the Cholesky
             !  factor of $\bf C$, the inverse of the apriori covariance ${\bf
@@ -1507,7 +1572,7 @@ contains
             end if
           else
             aj%fnorm = 0.0_r8
-            if ( index ( switches, 'fnorm' ) /= 0 ) then
+            if ( d_fnorm ) then
               call output ( 'No a priori so setting | F | to zero.', advance='yes' )
             end if
             call clearMatrix ( normalEquations%m ) ! start with zero
@@ -1543,7 +1608,7 @@ contains
                 call multiplyMatrixVectorNoT ( tikhonov, v(x), v(reg_X_x) )
                 call scaleVector ( v(reg_X_x), -1.0_r8 )   ! -R x_n
               end if
-                if ( index(switches,'reg') /= 0 ) then
+                if ( d_reg ) then
                   if ( t == 1 ) then
                     call output ( 'Dumping Tikhonov for vertical regularization', &
                       & advance='yes' )
@@ -1560,7 +1625,7 @@ contains
               call clearMatrix ( tikhonov )           ! free the space
               ! aj%fnorm is still the square of the norm of f
               aj%fnorm = aj%fnorm + ( v(reg_X_x) .dot. v(reg_X_x) )
-              if ( index ( switches, 'fnorm' ) /= 0 ) then
+              if ( d_fnorm ) then
                 if ( t == 1 ) then
                   call output ( 'Vertical Regularization contribution to | F | = ' )
                 else
@@ -1578,14 +1643,14 @@ contains
             tikhonovRows = 0
           end if
 
-          ! Copy the normal equations formed thus far into a temporary matrix for the
-          ! negateSD case
+          ! Copy the normal equations formed thus far into a temporary matrix
+          ! for the negateSD case
           if ( negateSD ) call copyMatrix ( aPlusRegNEQ%m, normalEquations%m )
 
           fmStat%maf = 0
           fmStat%newScanHydros = .true.
 
-          if ( index(switches,'vir') /=0 ) call dump ( normalEquations%m, details=2 )
+          if ( d_vir ) call dump ( normalEquations%m, details=2 )
 
           ! Include the part of the normal equations due to the Jacobian matrix
           ! and the measurements
@@ -1600,8 +1665,8 @@ contains
 
           ! If in fwm parallel mode, get all slaves computing the forward models
           if ( parallelMode ) then
-            if ( index ( switches, 'mas' ) /= 0 ) &
-              & call output ( "Triggering slave forward model runs", advance='yes' )
+              if ( d_mas ) &
+                & call output ( "Triggering slave forward model runs", advance='yes' )
             latestMAFStarted = min ( parallel%noFwmSlaves, &
               & chunk%lastMAFIndex-chunk%firstMAFIndex+1 )
             do t = 1, latestMAFStarted
@@ -1638,6 +1703,8 @@ contains
               ! Forward model calls add_to_retrieval_timing
             end if
             call time_now ( t1 )
+              if ( d_jac_f ) &
+                & call dump ( jacobian, name='Jacobian', details=9, clean=.true. )
             do rowBlock = 1, size(fmStat%rows)
               if ( fmStat%rows(rowBlock) ) then
                  ! Store what we've just got in v(f) ie fwdModelOut
@@ -1676,17 +1743,16 @@ contains
               call add_to_retrieval_timing( 'newton_solver', t1 )
             call formNormalEquations ( jacobian, kTk, rhs_in=v(f_rowScaled), &
               & rhs_out=v(aTb), update=update, useMask=.true. )
-              if ( index ( switches, 'atb' ) /= 0 ) call dump ( v(aTb) )
+              if ( d_atb ) call dump ( v(aTb) )
               call add_to_retrieval_timing( 'form_normeq', t1 )
             if ( got(f_average) .and. extendedAverage ) then
               call MultiplyMatrix_XTY ( jacobian, jacobian, kTkStar, update=update, &
                 & maskX=.true., maskY=.false. )
             end if
             update = .true.
-              if ( index(switches,'jac') /= 0 ) &
+              if ( d_jac_n ) &
                 call dump_Linf ( jacobian, 'L_infty norms of Jacobian blocks:' )
-              if ( index(switches,'spa') /= 0 ) &
-                & call dump_struct ( jacobian, &
+              if ( d_spa ) call dump_struct ( jacobian, &
                   & 'Sparseness structure of Jacobian blocks:' )
             call clearMatrix ( jacobian )  ! free the space
           end do ! mafs
@@ -1701,10 +1767,9 @@ contains
 
           ! aj%fnorm is still the square of the function norm
           aj%fnorm = aj%fnorm + ( v(f_rowScaled) .mdot. v(f_rowScaled) )
-          if ( index ( switches, 'fnorm' ) /= 0 ) then
-            call output ( 'Measurement contribution to | F | = ' )
-            call output ( v(f_rowScaled) .mdot. v(f_rowScaled), advance='yes' )
-          end if
+            if ( d_fnorm ) &
+              & call output ( v(f_rowScaled) .mdot. v(f_rowScaled), &
+                & before='Measurement contribution to | F | = ', advance='yes' )
 
           ! Add Tikhonov regularization if requested.  We do it here instead
           ! of before adding the Jacobian so that we can scale it up by the
@@ -1765,7 +1830,7 @@ contains
                 call columnScale ( tikhonov, v(columnScaleVector) )
               end if
 
-                if ( index(switches,'reg') /= 0 ) then
+                if ( d_reg ) then
                   call dump_struct ( tikhonov, 'Tikhonov' )
                   call dump ( tikhonov, name='Tikhonov', details=2 )
                 end if
@@ -1775,7 +1840,7 @@ contains
               call clearMatrix ( tikhonov )           ! free the space
               ! aj%fnorm is still the square of the norm of f
               aj%fnorm = aj%fnorm + ( v(reg_X_x) .dot. v(reg_X_x) )
-              if ( index ( switches, 'fnorm' ) /= 0 ) then
+              if ( d_fnorm ) then
                 if ( t == 1 ) then
                   call output ( 'Vertical Regularization contribution to | F | = ' )
                 else
@@ -1817,7 +1882,7 @@ contains
                   & sqrt( v(columnScaleVector)%quantities(j)%values )
               end where
             end forall
-              if ( index(switches,'col') /= 0 ) &
+              if ( d_col ) &
                 & call dump ( v(columnScaleVector), name='Column scale vector' )
             !{Scale in normal equations form: ${\bf \Sigma}^T {\bf  J}^T {\bf
             ! W}^T {\bf W J \Sigma \Sigma}^{-1} {\bf \delta \hat x} = {\bf
@@ -1837,8 +1902,7 @@ contains
           ! aTb may have non zero values in masked places where x/=a.
           call copyVectorMask ( v(gradient), v(x) )
           call clearUnderMask ( v(gradient) )
-            if ( index(switches,'gvec') /= 0 ) &
-              & call dump ( v(gradient), name='gradient' )
+            if ( d_gvec ) call dump ( v(gradient), name='gradient' )
           
           !{Compute the Cholesky factor of the LHS of the normal equations:
           ! ${\bf U}^T {\bf U} {\bf \delta \hat x} = {\bf\Sigma}^T {\bf J}^T
@@ -1849,42 +1913,45 @@ contains
           ! Can't do the above because we need to keep the normal
           ! equations around, in order to subtract Levenberg-Marquardt and
           ! apriori covariance, in order to compute a posteriori covariance
-            if ( index(switches,'neq') /= 0 ) &
+            if ( d_neq_n ) &
               call dump_Linf ( normalEquations%m, &
                 & 'L_infty norms of Normal Equations blocks after scaling:', &
                 & upper=.true. )
-            if ( index(switches,'spa') /= 0 ) &
-              & call dump_struct ( normalEquations%m, &
+            if ( d_spa ) call dump_struct ( normalEquations%m, &
                 & 'Sparseness structure of Normal equations blocks:', &
                 & upper=.true. )
             call add_to_retrieval_timing ( 'newton_solver', t1 )
-            call choleskyFactor ( factored, normalEquations, status=matrixStatus )
+          call choleskyFactor ( factored, normalEquations, status=matrixStatus )
             call add_to_retrieval_timing ( 'cholesky_factor', t1 )
-            if ( any ( matrixStatus /= 0 ) ) then
-              abandoned = .true.
-              call dump ( matrixStatus, 'matrixStatus' )
-              call MLSMessage ( MLSMSG_Warning, ModuleName, &
-                & 'Retrieval abandoned due to problem factoring normalEquations in evalJ' )
-              exit
-            end if
-            if ( index(switches,'diag') /= 0 ) then
+          if ( any ( matrixStatus /= 0 ) ) then
+            abandoned = .true.
+            call dump ( matrixStatus, 'matrixStatus' )
+            if ( d_mst ) &
+              & call dump ( normalEquations%m%block(matrixStatus(1),matrixStatus(1)), &
+              & name='Offending block', details=9 )
+            call MLSMessage ( MLSMSG_Warning, ModuleName, &
+              & 'Retrieval abandoned due to problem factoring normalEquations in evalJ' )
+            exit NEWT
+          end if
+            if ( d_neq_f ) &
+              & call dump ( normalEquations%m, 'Normal Equations', 2, clean=.true. )
+            if ( d_diag ) then
               call getDiagonal ( factored%m, v(dxUnscaled) )
               call dump ( v(dxUnscaled), &
                 & name='Diagonal of factored normal equations:' )
             end if
-            if ( index(switches,'fac') /= 0 ) &
-              call dump_Linf ( factored%m, 'L_infty norms of blocks of factor:', &
-                & upper=.true. )
-            if ( index(switches,'spa') /= 0 ) &
-              & call dump_struct ( factored%m, &
+            if ( d_fac_n ) call dump_Linf ( factored%m, &
+              & 'L_infty norms of blocks of factor:', upper=.true. )
+            if ( d_spa ) call dump_struct ( factored%m, &
               & 'Sparseness structure of blocks of factor:', upper=.true. )
-            if ( nwt_flag == nf_getJ ) then ! taking a special iteration to get J
-              aj%chiSqNorm = aj%fnorm / max ( jacobian_rows - jacobian_cols, 1 )
-              aj%fnorm = sqrt(aj%fnorm)
-                if ( index(switches,'sca') /= 0 ) &
-                  & call dump ( (/ aj%fnorm, aj%chiSqNorm /) , &
-                  & ' | F |       chi^2/n ', clean=.true. )
-              exit
+            if ( d_fac_f ) call dump ( factored%m, 'Factor', 2, clean=.true. )
+          if ( nwt_flag == nf_getJ ) then ! taking a special iteration to get J
+            aj%chiSqNorm = aj%fnorm / max ( jacobian_rows - jacobian_cols, 1 )
+            aj%fnorm = sqrt(aj%fnorm)
+              if ( d_sca ) &
+                & call dump ( (/ aj%fnorm, aj%chiSqNorm /) , &
+                & '     | F |       chi^2/n ', clean=.true. )
+            exit
           end if
           aj%diag = minDiag ( factored ) ! element on diagonal with
             !       smallest absolute value, after triangularization
@@ -1894,6 +1961,7 @@ contains
           call solveCholesky ( factored, v(candidateDX), v(aTb), &
             & transpose=.true., status=matrixStatus )
             call add_to_retrieval_timing ( 'cholesky_solver', t1 )
+            if ( d_dvec ) call dump ( v(candidateDX), name='CandidateDX' )
           if ( any ( matrixStatus /= 0 ) ) then
             abandoned = .true.
             call dump ( matrixStatus, 'matrixStatus' )
@@ -1948,7 +2016,7 @@ contains
           aj%fnmin = sqrt(aj%fnmin)
           aj%fnorm = sqrt(aj%fnorm)
           aj%gradn = sqrt(v(gradient) .dot. v(gradient)) ! L2Norm(gradient)
-            if ( index(switches,'sca') /= 0 ) then
+            if ( d_sca ) then
               call dump ( (/ aj%fnorm, aj%ajn, aj%diag, aj%fnmin, aj%gradn /), &
                 & '     | F |       L1| FAC |     aj%diag        aj%fnmin       | G |', &
                 & clean=.true. )
@@ -1968,10 +2036,8 @@ contains
             exit
           end if
           aj%qnsq = q .dot. q
-            if ( index(switches,'sca') /= 0 ) then
-              call output ( 'QN^2 = ' )
-              call output ( aj%qnsq, advance='yes' )
-            end if
+            if ( d_sca ) &
+              & call output ( aj%qnsq, before='QN^2 = ' , advance='yes')
         case ( nf_solve ) ! ..............................  SOLVE  .....
         !{Apply Levenberg-Marquardt stabilization with parameter
         ! $\lambda =$ {\bf AJ\%SQ}.  I.e., form $({\bf \Sigma}^T {\bf J}^T
@@ -1990,31 +2056,31 @@ contains
           ! Can't do the above because we need to keep the normal equations
           ! around, in order to subtract Levenberg-Marquardt and apriori
           ! covariance, in order to compute a posteriori covariance
-            if ( index(switches,'neq') /= 0 ) &
-              call dump_Linf ( normalEquations%m, &
+            if ( d_neq_f ) &
+              & call dump ( normalEquations%m, 'Normal Equations', 2, clean=.true. )
+            if ( d_neq_n ) call dump_Linf ( normalEquations%m, &
                 & 'L1 norms of Normal Equations blocks after Marquardt:', &
                 & upper=.true. )
-            if ( index(switches,'spa') /= 0 ) &
-              & call dump_struct ( normalEquations%m, &
+            if ( d_spa ) call dump_struct ( normalEquations%m, &
                 & 'Sparseness structure of Normal equations blocks:', &
                 & upper=.true. )
             call add_to_retrieval_timing( 'newton_solver', t1 )
           call choleskyFactor ( factored, normalEquations, status=matrixStatus )
             call add_to_retrieval_timing( 'cholesky_factor', t1 )
-            if ( any ( matrixStatus /= 0 ) ) then
-              abandoned = .true.
-              call dump ( matrixStatus, 'matrixStatus' )
-              call MLSMessage ( MLSMSG_Warning, ModuleName, &
-                & 'Retrieval abandoned due to problem factoring normal equations in solve' )
-              exit
-            end if
-            if ( index(switches,'fac') /= 0 ) &
-              call dump_Linf ( factored%m, &
+          if ( any ( matrixStatus /= 0 ) ) then
+            abandoned = .true.
+            call dump ( matrixStatus, 'matrixStatus' )
+            call MLSMessage ( MLSMSG_Warning, ModuleName, &
+              & 'Retrieval abandoned due to problem factoring normal equations in solve' )
+            exit
+          end if
+            if ( d_fac_n ) call dump_Linf ( factored%m, &
                 & 'L1 norms of blocks of factor after Marquardt:', &
                 & upper=.true. )
-            if ( index(switches,'spa') /= 0 ) &
-              & call dump_struct ( factored%m, &
+            if ( d_spa ) call dump_struct ( factored%m, &
                 & 'Sparseness structure of blocks of factor:', upper=.true. )
+            if ( d_fac_f ) call dump ( factored%m, &
+                & name='Factored, after Marquardt', details=2, clean=.true. )
           !{Solve for ``candidate DX'' = ${\bf \delta \hat x} = -({\bf J}^T {\bf
           ! J})^{-1} {\bf J}^T {\bf F} = -({\bf U}^T {\bf U})^{-1} {\bf J}^T 
           ! {\bf F}$ using two back solves.  First solve ${\bf U}^T {\bf y} =
@@ -2093,15 +2159,18 @@ contains
             & call boundMove ( mu, highBound, v(x), v(dxUnScaled), 'high', muMin )
           ! dxUnScaled = mu * dxUnScaled -- may shorten vector in problem space
           call scaleVector ( v(dxUnScaled), mu )
-          ! candidateDX = dxUnScaled / columnScaleVector -- Scale into solver's space
-          call divideVectors ( v(dxUnScaled), v(columnScaleVector), &
-            & v(candidateDX) ) 
+          if ( columnScaling /= l_none ) then
+            ! candidateDX = dxUnScaled / columnScaleVector -- Scale into solver's space
+            call divideVectors ( v(dxUnScaled), v(columnScaleVector), &
+              & v(candidateDX) )
+          else
+            call copyVector ( v(candidateDX), v(dxUnScaled) ) ! dx = dxUnscaled
+          end if
           aj%dxn = sqrt(v(candidateDX) .dot. v(candidateDX)) ! L2Norm(dx)
           aj%gdx = v(gradient) .dot. v(candidateDX)
           if ( .not. aj%starting ) aj%dxdxl = v(dx) .dot. v(candidateDX)
-            if ( index(switches,'dvec') /= 0 ) &
-              & call dump ( v(candidateDX), name='CandidateDX' )
-            if ( index(switches,'sca') /= 0 ) then
+            if ( d_dvec ) call dump ( v(candidateDX), name='CandidateDX' )
+            if ( d_sca ) then
               cosine = -2.0_r8
               if ( aj%dxn > 0.0_r8 .and. aj%gradn > 0.0_r8 ) &
                 cosine = aj%gdx/(aj%dxn*aj%gradn)
@@ -2111,17 +2180,16 @@ contains
               if ( .not. aj%starting ) then
                 call output ( ' cos(DX, DXL) = ' )
                 cosine = -2.0_r8
-                if ( aj%dxdxl > 0.0_r8 .and. aj%dxnl > 0.0_r8 ) &
+                if ( aj%dxn > 0.0_r8 .and. aj%dxnl > 0.0_r8 ) &
                   cosine = aj%dxdxl / (aj%dxn*aj%dxnl)
                 call output ( cosine, format='(1pe14.7)', advance='yes' )
               ! call output ( ',  DX . DXL = ' )
               ! call output ( aj%dxdxl, format='(1pe14.7)', advance='yes' )
               end if
             end if
-            if ( index(switches,'ndb') /= 0 ) &
-              & call nwtdb ( width=9, level=0, why='After Solve' )
-            if ( index(switches,'Ndb') /= 0 ) then
-              if ( index(switches,'sca') /= 0 ) then
+            if ( d_ndb_0 ) call nwtdb ( width=9, level=0, why='After Solve' )
+            if ( d_ndb_1 ) then
+              if ( d_sca ) then
                 call nwtdb ( width=9, why='After Solve' )
               else
                 call nwtdb ( aj, width=9, why='After Solve' )
@@ -2135,8 +2203,8 @@ contains
           ! \delta x}$ above, so multiply by $\Sigma$ (which is our
           ! variable {\tt columnScaleVector}):
           if ( got(f_diagnostics) ) call FillDiagVec ( diagnostics, aj, &
-            & numJ=numJ, nwt_flag=nwt_flag, jacobian_rows=jacobian_rows, &
-            & jacobian_cols=jacobian_cols )
+            & numGrad=numGrad, numJ=numJ, numNewt=numNewt, nwt_flag=nwt_flag, &
+            & jacobian_rows=jacobian_rows, jacobian_cols=jacobian_cols )
           call copyVector ( v(dxUnScaled), v(dx) ) ! dxUnscaled = dx
           if ( columnScaling /= l_none ) then
             ! dxUnScaled = dxUnScaled # columnScaleVector:
@@ -2150,10 +2218,7 @@ contains
             & call boundMove ( mu, highBound, v(x), v(dxUnscaled), 'high', muMin )
           if ( mu < 1.0_rv ) call scaleVector ( v(dxUnscaled), mu )
           call addToVector ( v(x), v(dxUnScaled) ) ! x = x + dxUnScaled
-            if ( index(switches,'dvec') /= 0 ) &
-              & call dump ( v(dxUnScaled), name='dX Unscaled' )
-            if ( index(switches,'xvec') /= 0 ) &
-              & call dump ( v(x), name='New X' )
+            if ( d_dvec ) call dump ( v(dxUnScaled), name='dX Unscaled' )
           aj%axmax = 0.0
           aj%big = .false.
           do j = 1, size(v(x)%quantities)
@@ -2162,13 +2227,13 @@ contains
               & 10.0 * epsilon(aj%axmax) * abs(v(x)%quantities(j)%values) ) ) &
               & aj%big = .true.
           end do
-            if ( index(switches,'sca') /= 0 ) then
+            if ( d_sca ) then
               call output ( ' aj%axmax = ' )
               call output ( aj%axmax, format='(1pe14.7)' )
               if ( .not. aj%starting ) then
                 call output ( ' cos(DX, DXL) = ' )
                 cosine = -2.0_r8
-                if ( aj%dxdxl > 0.0_r8 .and. aj%dxnl > 0.0_r8 ) &
+                if ( aj%dxn > 0.0_r8 .and. aj%dxnl > 0.0_r8 ) &
                   cosine = aj%dxdxl / (aj%dxn*aj%dxnl)
                 call output ( cosine, format='(1pe14.7)' )
               ! call output ( ', DX . DXL = ' )
@@ -2180,19 +2245,19 @@ contains
         case ( nf_gmove ) ! ..............................  GMOVE  .....
         ! Set X = "Best X"
         !     DX = AJ%GFAC * "Best Gradient"
+          numGrad = numGrad + 1
           call copyVector ( v(x), v(bestX) ) ! x = bestX
           if ( .not. aj%starting ) aj%dxdxl = &
             & aj%gfac * ( v(dx) .dot. v(bestGradient) )
           ! dx = aj%gfac * "Best Gradient":
           call scaleVector ( v(bestGradient), aj%gfac, v(dx) )
-            if ( index(switches,'dvec') /= 0 ) &
-              & call dump ( v(dx), name='Gradient move from best X' )
-            if ( index(switches,'sca') /= 0 ) then
+            if ( d_sca ) then
               call output ( ' aj%gfac = ' )
               call output ( aj%gfac, format='(1pe14.7)' )
               call output ( ' |DX| = ' )
               call output ( aj%gradnb * aj%gfac, advance='yes' )
             end if
+            if ( d_gvec ) call dump ( v(dx), name='Gradient move from best X' )
         case ( nf_best ) ! ................................  BEST  .....
         ! Set "Best X" = X, "Best Gradient" = Gradient
           foundBetterState = .true.
@@ -2207,29 +2272,28 @@ contains
           call subtractFromVector ( v(dx), v(candidateDX) ) ! dx = dx - candidateDX
           aj%dxdx = v(dx) .dot. v(dx)
           if ( aj%dxdx > 0.0 ) aj%dxdxl = v(dx) .dot. v(candidateDX)
-            if ( index(switches,'dvec') /= 0 ) &
-              & call dump ( v(dx), name='dx after Aitken' )
-            if ( index(switches,'sca') /= 0 ) then
+            if ( d_dvec ) call dump ( v(dx), name='dx after Aitken' )
+            if ( d_sca ) then
               call output ( ' aj%dxdx = ' )
               call output ( aj%dxdx, format='(1pe14.7)' )
               call output ( ', cos(DX, DXL) = ' )
               cosine = -2.0_r8
-              if ( aj%dxdxl > 0.0_r8 .and. aj%dxnl > 0.0_r8 ) &
+              if ( aj%dxn > 0.0_r8 .and. aj%dxnl > 0.0_r8 ) &
                 cosine = aj%dxdxl / (aj%dxn*aj%dxnl)
               call output ( cosine, format='(1pe14.7)', advance='yes' )
             end if
         case ( nf_dx ) ! ....................................  DX  .....
+          numNewt = numNewt + 1
           if ( .not. aj%starting ) aj%dxdxl = v(dx) .dot. v(candidateDX)
           call copyVector ( v(dx), v(candidateDX) ) ! dx = candidateDX
         case ( nf_dx_aitken ) ! ......................  DX_AITKEN  .....
           ! dx = aj%cait * candidateDX:
           call scaleVector ( v(candidateDX), aj%cait, v(dx) )
-            if ( index(switches,'dvec') /= 0 ) &
-              & call dump ( v(dx), name='dx after dx Aitken' )
-            if ( index(switches,'sca') /= 0 ) then
+            if ( d_sca ) then
               call output ( ' aj%cait = ' )
               call output ( aj%cait, format='(1pe14.7)', advance='yes' )
             end if
+            if ( d_dvec ) call dump ( v(dx), name='dx after dx Aitken' )
         case ( nf_tolx, nf_tolx_best, nf_tolf, nf_too_small ) ! ........
           ! IF ( NWT_FLAG == NF_TOO_SMALL ) THEN
           !   Take special action if requested accuracy is critical
@@ -2241,7 +2305,7 @@ contains
             aj = bestAJ
           end if
           if ( .not. got(f_apriori) .or. .not. diagonal ) then
-              if ( index(switches,'nwt') /= 0 ) then
+              if ( d_nwt ) then
                 call output ( &
                   & 'Newton iteration terminated because of convergence at ' )
                 call time_now ( t3 )
@@ -2270,14 +2334,14 @@ contains
             & matrixDatabase=(/ factored%m, normalEquations%m /) )
 
         end if
-          if ( index(switches,'NDB') /= 0 ) call nwtdb ( aj, width=9 )
+          if ( d_ndb_2 ) call nwtdb ( aj, width=9 )
         prev_nwt_flag = nwt_flag
-      end do ! Newton iteration
-      
-        if ( index(switches,'NDB') /= 0 ) then
+      end do NEWT ! Newton iteration
+
+        if ( d_ndb_2 ) then
           call nwtdb ( aj, width=9 )
-        else if ( index(switches,'Ndb') /= 0 ) then
-          if ( index(switches,'sca') /= 0 ) then
+        else if ( d_ndb_1 ) then
+          if ( d_sca ) then
             call nwtdb ( width=9 )
           else
             call nwtdb ( aj, width=9 )
@@ -2285,8 +2349,8 @@ contains
         end if
 
       if ( got(f_diagnostics) ) call FillDiagVec ( diagnostics, aj, &
-        & numJ=numJ, nwt_flag=nwt_flag, jacobian_rows=jacobian_rows, &
-        & jacobian_cols=jacobian_cols )
+        & numGrad=numGrad, numJ=numJ, numNewt=numNewt, nwt_flag=nwt_flag, &
+        & jacobian_rows=jacobian_rows, jacobian_cols=jacobian_cols )
 
       if ( abandoned ) then
         foundBetterState = .false.
@@ -2315,7 +2379,7 @@ contains
           print *, 'BUG in Retrieval module -- should need to getJ to quit'
           stop
         end if
-          if ( index(switches,'cov') /= 0 ) then
+          if ( d_cov ) then
             call output ( 'Begin covariance calculation at ' )
             call time_now ( t3 )
             call output ( t3-t0, advance='yes' )
@@ -2328,18 +2392,18 @@ contains
             call output ( t3-t0, advance='yes' )
           end if
           call time_now ( t1 )
-          call createEmptyMatrix ( temp, 0, state, state )
-          call invertCholesky ( factored, temp ) ! U^{-1}
-          if ( index(switches,'cov') /= 0 ) then
+        call createEmptyMatrix ( temp, 0, state, state )
+        call invertCholesky ( factored, temp ) ! U^{-1}
+          if ( d_cov ) then
             call output ( &
               & 'Inverted the Cholesky factor of the normal equations at ' )
             call time_now ( t3 )
             call output ( t3-t0, advance='yes' )
           end if
-          preserveMatrixName = outputCovariance%m%name
-          call multiplyMatrix_XY_T ( temp, temp, outputCovariance%m, &
-            & diagonalOnly = .not. any ( got ( (/ f_outputCovariance, f_average/) ) ) ) ! U^{-1} U^{-T}
-          if ( index(switches,'cov') /= 0 ) then
+        preserveMatrixName = outputCovariance%m%name
+        call multiplyMatrix_XY_T ( temp, temp, outputCovariance%m, &
+          & diagonalOnly = .not. any ( got ( (/ f_outputCovariance, f_average/) ) ) ) ! U^{-1} U^{-T}
+          if ( d_cov ) then
             call output ( 'Computed ' )
             if ( .not. any ( got ( (/ f_outputCovariance, f_average /) ) ) ) &
               & call output ( 'diagonal blocks of ' )
@@ -2347,76 +2411,74 @@ contains
             call time_now ( t3 )
             call output ( t3-t0, advance='yes' )
           end if
-          call destroyMatrix ( temp )
-          call add_to_retrieval_timing( 'cholesky_invert', t1 )
-          ! Scale the covariance
-          if ( columnScaling /= l_none ) then
-            call columnScale ( outputCovariance%m, v(columnScaleVector) )
-            call rowScale ( v(columnScaleVector), outputCovariance%m )
-            if ( index(switches,'cov') /= 0 ) then
+        call destroyMatrix ( temp )
+        call add_to_retrieval_timing( 'cholesky_invert', t1 )
+        ! Scale the covariance
+        if ( columnScaling /= l_none ) then
+          call columnScale ( outputCovariance%m, v(columnScaleVector) )
+          call rowScale ( v(columnScaleVector), outputCovariance%m )
+            if ( d_cov ) then
               call output ( 'Scaled the Covariance matrix at ' )
               call time_now ( t3 )
               call output ( t3-t0, advance='yes' )
             end if
-          end if
-          outputCovariance%m%name = preserveMatrixName
-          if ( associated(outputSD) ) &
-            & call GetDiagonal ( outputCovariance%m, outputSD, squareRoot=.true. )
-
-          ! Deal with possibly setting the error bar negative
-          if ( negateSD ) then
-            ! We need to compute what just the a priori and regularization would give for
-            ! the output covariance.
-
-            ! Firstly, we need to do some gymnastics to avoid singular matrices.  This
-            ! will happen with the ptan terms which have neither a priori or smoothing.
-            ! Set these such that our answer is the same as the outputSD
-            call cloneVector ( v(diagFlagA), state )
-            call GetDiagonal ( aPlusRegNEQ%m, v(diagFlagA) )
-            do qty = 1, v(diagFlagA)%template%noQuantities
-              where ( v(diagFlagA)%quantities(qty)%values <= 0.0_rv )
-                ! Choose a value to let it invert properly
-                v(diagFlagA)%quantities(qty)%values = outputSD%quantities(qty)%values ** (-2)
-              elsewhere
-                v(diagFlagA)%quantities(qty)%values = 0.0_rv
-              end where
-
-            end do
-            call UpdateDiagonal ( aPlusRegNEQ, v(diagFlagA) )
-            
-            ! Now decompose it
-            call createEmptyMatrix ( tempC%m, &
-              & enter_terminal('_tempC', t_identifier), &
-              & state, state, .not. aPlusRegNEQ%m%row%instFirst, .not. aPlusRegNEQ%m%col%instFirst )
-            call CholeskyFactor ( tempC, aPlusRegNEQ, status=matrixStatus )
-            if ( any ( matrixStatus /= 0 ) ) then
-              call MLSMessage ( MLSMSG_Error, 'aPlusRegNEQ', &
-                & 'Non SPD matrix to be factored: aPlusRegNEQ' )
-            end if
-
-            ! Now invert it
-            call createEmptyMatrix ( temp, &
-              & enter_terminal('_temp', t_identifier), &
-              & state, state, .not. aPlusRegNEQ%m%row%instFirst, .not. aPlusRegNEQ%m%col%instFirst )
-            call InvertCholesky ( tempC, temp )
-            call MultiplyMatrix_XY_T ( temp, temp, aPlusRegCov%m, diagonalOnly=.true. )
-
-            ! Destroy works in progress
-            call DestroyMatrix ( tempC%m )
-            call DestroyMatrix ( temp )
-
-            ! Go through and set error bar negative if appropriate
-            call cloneVector ( v(diagFlagB), state )
-            call GetDiagonal ( aPlusRegcov%m, v(diagFlagB), squareRoot=.true. )
-            do qty = 1, v(diagFlagA)%template%noQuantities
-              where ( outputSD%quantities(qty)%values > &
-                &     precisionFactor * v(diagFlagB)%quantities(qty)%values .and. &
-                & v(diagFlagA)%quantities(qty)%values == 0.0_rv )
-                outputSD%quantities(qty)%values = - outputSD%quantities(qty)%values
-              end where
-            end do
-          end if
         end if
+        outputCovariance%m%name = preserveMatrixName
+        if ( associated(outputSD) ) &
+          & call GetDiagonal ( outputCovariance%m, outputSD, squareRoot=.true. )
+
+        ! Deal with possibly setting the error bar negative
+        if ( negateSD ) then
+          ! We need to compute what just the a priori and regularization would give for
+          ! the output covariance.
+          ! Firstly, we need to do some gymnastics to avoid singular matrices.  This
+          ! will happen with the ptan terms which have neither a priori or smoothing.
+          ! Set these such that our answer is the same as the outputSD
+          call cloneVector ( v(diagFlagA), state )
+          call GetDiagonal ( aPlusRegNEQ%m, v(diagFlagA) )
+          do qty = 1, v(diagFlagA)%template%noQuantities
+            where ( v(diagFlagA)%quantities(qty)%values <= 0.0_rv )
+              ! Choose a value to let it invert properly
+              v(diagFlagA)%quantities(qty)%values = outputSD%quantities(qty)%values ** (-2)
+            elsewhere
+              v(diagFlagA)%quantities(qty)%values = 0.0_rv
+            end where
+          end do
+          call UpdateDiagonal ( aPlusRegNEQ, v(diagFlagA) )
+            
+          ! Now decompose it
+          call createEmptyMatrix ( tempC%m, &
+            & enter_terminal('_tempC', t_identifier), &
+            & state, state, .not. aPlusRegNEQ%m%row%instFirst, .not. aPlusRegNEQ%m%col%instFirst )
+          call CholeskyFactor ( tempC, aPlusRegNEQ, status=matrixStatus )
+          if ( any ( matrixStatus /= 0 ) ) then
+            call MLSMessage ( MLSMSG_Error, 'aPlusRegNEQ', &
+              & 'Non SPD matrix to be factored: aPlusRegNEQ' )
+          end if
+
+          ! Now invert it
+          call createEmptyMatrix ( temp, &
+            & enter_terminal('_temp', t_identifier), &
+            & state, state, .not. aPlusRegNEQ%m%row%instFirst, .not. aPlusRegNEQ%m%col%instFirst )
+          call InvertCholesky ( tempC, temp )
+          call MultiplyMatrix_XY_T ( temp, temp, aPlusRegCov%m, diagonalOnly=.true. )
+
+          ! Destroy works in progress
+          call DestroyMatrix ( tempC%m )
+          call DestroyMatrix ( temp )
+
+          ! Go through and set error bar negative if appropriate
+          call cloneVector ( v(diagFlagB), state )
+          call GetDiagonal ( aPlusRegcov%m, v(diagFlagB), squareRoot=.true. )
+          do qty = 1, v(diagFlagA)%template%noQuantities
+            where ( outputSD%quantities(qty)%values > &
+              &     precisionFactor * v(diagFlagB)%quantities(qty)%values .and. &
+              & v(diagFlagA)%quantities(qty)%values == 0.0_rv )
+              outputSD%quantities(qty)%values = - outputSD%quantities(qty)%values
+            end where
+          end do
+        end if
+      end if
 
       ! Compute the averaging kernel
       if ( foundBetterState .and. got(f_average) ) then
@@ -2430,13 +2492,12 @@ contains
           call ClearMatrix ( outputAverage )
           call MultiplyMatrix_XTY ( outputCovariance%m, ktk%m, outputAverage, update=.true. )
         end if
-        if ( index(switches,'cov') /= 0 ) call output ( &
+        if ( d_cov ) call output ( &
           & 'Computed the Averaging Kernel from the Covariance', advance='yes' )
       end if
 
       call copyVector ( state, v(x) )
-      if ( index(switches,'svec') /= 0 ) &
-        & call dump ( state, name='Final state' )
+      if ( d_svec ) call dump ( state, name='Final state' )
       ! Clean up the temporaries, so we don't have a memory leak.
       if ( got(f_fuzz) ) call destroyVectorInfo ( fuzzState )
       call destroyMatrix ( normalEquations%m )
@@ -2475,6 +2536,11 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.270  2006/05/30 22:51:21  vsnyder
+! Precompute dump flags.  Add NumGrad and NumNewt counters.  Compute
+! cosine of angles between moves correctly for printing (it's already
+! done correctly inside dnwt_module).
+!
 ! Revision 2.269  2006/03/30 19:00:50  vsnyder
 ! Correct CVS log comment
 !
