@@ -144,8 +144,10 @@ module DNWT_MODULE
     real(rk) :: CHISQMINNORM ! FNMIN^2 / no degrees of freedom
     real(rk) :: CHISQNORM  ! FNORM^2 / no degrees of freedom
     real(rk) :: DIAG       ! Smallest | diagonal element | after factoring
+    real(rk) :: DXBAD      ! This size for DX is likely a disaster (Temporary)
     real(rk) :: DXDX       ! dot_product( DX, DX )
     real(rk) :: DXDXL      ! dot_product( "candidate DX", DX )
+    real(rk) :: DXFAIL     ! Like DXINC, but more so.  (Temporary)
     real(rk) :: DXN        ! L2 Norm of candidate DX
     real(rk) :: DXNL = 0.0 ! L2 Norm of last candidate DX -- intent(out)
     real(rk) :: FNMIN      ! L2 Norm of F not in column space of the Jacobian
@@ -157,6 +159,8 @@ module DNWT_MODULE
     real(rk) :: QNSQ       ! Square of norm of solution of U^T q = x
     real(rk) :: SQ = 0.0   ! Levenberg-Marquardt parameter -- intent(out)
     real(rk) :: SQT        ! Total Levenberg-Marquardt stabilization -- intent(out)
+    integer :: KFAIL       ! Failure count: 0 nofailures; k > 0 we have successfully
+                           ! taken k - 1 steps of size DXBAD. (Temporary)
     logical :: BIG         ! ANY( DX > 10.0 * epsilon(X) * X )
     logical :: STARTING = .true. ! NWTA is still in "starting up" phase -- intent(out)
   end type NWT_T
@@ -390,7 +394,7 @@ contains
 ! DXINC    Largest value for DXN currently allowed
 ! DXMAXI   Largest value permitted for DXINC at any time
 ! DXN      Norm of current DX (=stepsize)
-! DXNBIG   Value of DXN that resulted in a larger FN
+! DXNBIG   A move of size that should be safe.
 ! DXNL     Last value of DXN
 ! DXNOIS   C1PXM4 * largest move that gives a new best X (used to
 !          see if increase in FN might be due to too small a step)
@@ -511,6 +515,9 @@ contains
       dxnl = c1
       aj%dxnl = c1
       fnb = sqrt(huge(fnb))
+      aj%dxfail = huge(aj%dxfail)
+      aj%dxbad = aj%dxfail
+      aj%kfail = 0
       fnl = c0
       inc = -1
       iter = 0
@@ -532,9 +539,13 @@ contains
 
 ! Test if a retreat to a previous -- best -- X should be made
 
-      tp = spl*ajn*cp9
-      if ( fn < fnl ) then
-        if ( fn >= fnb ) then
+      tp = spl*ajn*cp9 ! .9 time sql on previous iteration
+      if ( fn < fnl ) then ! Things are getting better
+        if ( fn >= fnb ) then ! But no better than the best x
+! If our Marquardt parameter is small and fn does not appear to be
+! getting close to smaller than fnb, and we are not making a move
+! in a quite different direction we give up and go back to previous best.
+
           if ( (max(tp, sql) <= sqmin) .and. &
                ((fn*(fn/fnl)**2) > fnb) .and. (cdxdxl >= cp25) ) go to 222
         end if
@@ -544,10 +555,11 @@ contains
 ! Test for convergence
 
       if ( x_converge() ) return
-      if ( inc >= 0 ) then
+      if ( inc >= 0 ) then ! We are not starting
         if ( inc == 0 ) then ! Last X == Best X
           dxnbig = max(dxnl, dxnois)
-        else      ! INC > 0 -- Last X not Best X
+          
+        else      ! inc > 0 -- Last X not Best X
           if ( kb == 0 ) then
             if ( fn < fnb ) then
                gfac = -gfac
@@ -572,6 +584,9 @@ contains
 ! Retreat to a previous -- best -- X
 
   222 kb = -1
+      aj%dxbad = 0.75_rk * min(aj%dxn, aj%dxbad)
+      aj%dxfail = 0.125_rk * aj%dxbad
+      aj%kfail = 1
   224 kb = kb - 1
       if ( kb == (-4) ) then ! Four consecutive gradient moves !
 
@@ -647,7 +662,24 @@ contains
 
 ! New best X
 
-      dxinc = dxmaxi
+      if (aj%kfail /= 0) then
+         if (kb == 0) then ! Got new best immediately
+            if (aj%dxn >= 0.9_rk * aj%dxbad) then
+               aj%dxbad = aj%dxbad * (1.25_rk ** aj%kfail)
+               aj%dxfail = aj%dxbad
+               aj%kfail = aj%kfail + 1
+            else
+               aj%dxfail = 0.75_rk * aj%dxfail + 0.25_rk * aj%dxbad
+               aj%kfail = 1
+            end if
+         else
+            aj%dxfail = min(1.0625_rk * aj%dxfail, aj%dxbad)
+         end if
+         dxinc = min(dxmaxi, aj%dxfail)
+      else
+         dxinc = dxmaxi
+      end if
+
       spinc = min(spinc, max(spmini, abs(ajscal)/ajn))
       sqmin = c0
       spb = spl
@@ -656,8 +688,8 @@ contains
       if ( inc /= 0 ) then
         if ( kb < 0 ) then
           dxi = cp25
-        else if ( kb == 1 ) then
-          dxi = cp25*dxnl/dxnbig
+        else if ( kb == 1 ) then ! We had a function increase
+          dxi = cp25*dxnl/dxnbig ! prior to getting a new best.
         end if
         kb = 0
         inc = 0
@@ -692,7 +724,7 @@ contains
       ! spfac = tp*(fn**2)/fnxe
       ! if ( cdxdxl >= cp9) spfac = min(spfac,cp5)
       ! On 2002/07/25, FTK recommended:
-        spfac = min(tp*(fn**2)/fnxe, 32.D0*(1.025D0 - cdxdxl)**2)
+        spfac = min(tp*(fn**2)/fnxe, 32.0_rk*(1.025_rk - cdxdxl)**2)
         dxi = c1
       end if
   515 if ( gradn > gradnl ) spfac = spfac*gradnl/gradn
@@ -890,9 +922,9 @@ contains
 
 ! Re-enter after computing new X
 
-  850 if ( .not. aj%big ) then
+  850 if ( .not. aj%big ) then ! All dx's are very small
          if ( (spl <= spmini).or.(sq == c0) ) go to 870
-         dxnois = max(dxnois, c10*dxn)
+         dxnois = max(dxnois, c10*dxn) ! Set so steps don't get too small.
       end if
       axmax = aj%axmax
       go to 20
@@ -918,9 +950,11 @@ contains
     logical function X_CONVERGE ( )
     ! Test whether convergence has occurred due to very small \delta X
       x_converge = .false.
-      if ( fnl > c0 ) then
+      if ( fnl > c0 ) then ! Not doing gradient moves from the best X
         if ( dxn <= tolxa .or. &
           & ((sq == c0).or.(spl <= spmini)) .and. dxn <= tolxr * axmax ) then
+! Convergence if dxn is small enough or we have a suffiently small
+! Levenberg-Marquardt parameter and we had a very small move.
           nfl = nf_tolx
           if ( kb /= 0 ) then
             aj%fnorm = fnb
@@ -1070,8 +1104,8 @@ contains
       & '       IFL        INC    ITER   ITKEN    K1IT      KB       NFL' )
     if ( present(why) ) call output ( '  WHY' )
     call output ( '', advance='yes' )
-    write ( output_line, '(1x,a9,i11,4i8,1x,a9)' ) adjustr(iflName), INC, ITER, ITKEN, &
-      & K1IT, KB, adjustr(nflName)
+    write ( output_line, '(1x,a9,i11,4i8,1x,a9)' ) adjustr(iflName), INC, ITER, &
+      & ITKEN, K1IT, KB, adjustr(nflName)
     call output ( trim(output_line) )
     if ( present(why) ) call output ( '  ' // trim(why) )
     call output ( '', advance='yes' )
@@ -1131,21 +1165,24 @@ contains
       call output ( output_line(1:14*myWidth), advance='yes' )
       output_line = ''
 
-      call add_to_line ( aj%ajn,   'AJN' )
-      call add_to_line ( aj%axmax, 'AXMAX' )
-      call add_to_line ( aj%cait,  'CAIT' )
-      call add_to_line ( aj%diag,  'DIAG' )
-      call add_to_line ( aj%dxdx,  'DXDX' )
-      call add_to_line ( aj%dxdxl, 'DXDXL' )
-      call add_to_line ( aj%dxn,   'DXN' )
-      call add_to_line ( aj%dxnl,  'DXNL' )
-      call add_to_line ( aj%fnmin, 'FNMIN' )
-      call add_to_line ( aj%fnorm, 'FNORM' )
-      call add_to_line ( aj%gdx,   'GDX' )
-      call add_to_line ( aj%gfac,  'GFAC' )
-      call add_to_line ( aj%gradn, 'GRADN' )
-      call add_to_line ( aj%sq,    'SQ' )
-      call add_to_line ( aj%sqt,   'SQT' )
+      call add_to_line ( aj%ajn,    'AJN' )
+      call add_to_line ( aj%axmax,  'AXMAX' )
+      call add_to_line ( aj%cait,   'CAIT' )
+      call add_to_line ( aj%diag,   'DIAG' )
+      call add_to_line ( aj%dxbad,  'DXBAD' )
+      call add_to_line ( aj%dxfail, 'DXFAIL' )
+      call add_to_line ( aj%dxdx,   'DXDX' )
+      call add_to_line ( aj%dxdxl,  'DXDXL' )
+      call add_to_line ( aj%dxn,    'DXN' )
+      call add_to_line ( aj%dxnl,   'DXNL' )
+      call add_to_line ( aj%fnmin,  'FNMIN' )
+      call add_to_line ( aj%fnorm,  'FNORM' )
+      call add_to_line ( aj%gdx,    'GDX' )
+      call add_to_line ( aj%gfac,   'GFAC' )
+      call add_to_line ( aj%gradn,  'GRADN' )
+      call add_to_line ( aj%sq,     'SQ' )
+      call add_to_line ( aj%sqt,    'SQT' )
+      call add_to_line_I ( aj%kfail,    'KFAIL' )
       call add_to_line_L ( aj%big,      'BIG' )
       call add_to_line_L ( aj%starting, 'STARTING' )
       if ( i /= 1 ) call print_lines
@@ -1165,6 +1202,15 @@ contains
       i = i + 1
       if ( i > myWidth ) call print_lines
     end subroutine Add_To_Line
+    subroutine Add_To_Line_I ( Value, Name )
+      integer, intent(in) :: Value
+      character(len=*), intent(in) :: Name
+      name_line(1+14*(i-1):10+14*(i-1)) = name
+      name_line(1+14*(i-1):10+14*(i-1)) = adjustr(name_line(1+14*(i-1):10+14*(i-1)))
+      write ( output_line(1+14*(i-1):10+14*(i-1)), '(I10)' ) value
+      i = i + 1
+      if ( i > myWidth ) call print_lines
+    end subroutine Add_To_Line_I
     subroutine Add_To_Line_L ( Value, Name )
       logical, intent(in) :: Value
       character(len=*), intent(in) :: Name
@@ -1299,6 +1345,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.43  2006/05/30 22:44:36  vsnyder
+! Handle Newton moves after gradient moves better
+!
 ! Revision 2.42  2005/06/22 18:57:01  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
