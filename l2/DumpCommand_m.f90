@@ -43,7 +43,8 @@ contains
     use Init_Tables_Module, only: F_AllBooleans, F_AllForwardModels, F_AllHGrids, &
       & F_AllLines, F_AllPFA, F_AllQuantityTemplates, F_AllSignals, F_AllSpectra, &
       & F_AllVectors, F_AllVectorTemplates, F_AllVGrids, F_AntennaPatterns, &
-      & F_Boolean, F_Details, F_DACSFilterShapes, F_FilterShapes, F_ForwardModel, &
+      & F_Boolean, F_Clean, F_Details, F_DACSFilterShapes, &
+      & F_FilterShapes, F_ForwardModel, &
       & F_HGrid, F_Lines, F_Mark, F_PfaData, F_PfaFiles, F_PFANum, F_PFAStru, &
       & F_PointingGrids, F_Quantity, F_Signals,  F_Spectroscopy, F_Stop, &
       & F_Template, F_Text, F_TGrid, F_Vector, F_VGrid, S_Quantity, &
@@ -77,6 +78,7 @@ contains
     type (HGrid_T), dimension(:), pointer, optional :: HGrids
 
     character(len=80) :: BOOLEANSTRING  ! E.g., 'BAND13_OK'
+    logical :: Clean
     logical, parameter :: countEmpty = .true.
     real(tk) :: CPUTime, CPUTimeBase = 0.0_tk
     character(8) :: Date
@@ -86,7 +88,6 @@ contains
     integer :: GSON, I, J, K, L, Look
     logical :: HaveQuantityTemplatesDB, HaveVectorTemplates, HaveVectors, &
       &        HaveForwardModelConfigs, HaveHGrids
-    logical :: mustStop
     integer :: QuantityIndex
     integer :: Son
     integer :: Source ! column*256 + line
@@ -128,27 +129,27 @@ contains
     haveHGrids = present(hGrids)
     if ( haveHGrids ) haveHGrids = associated(hGrids)
 
+    clean = .false.
     details = 0
-    mustStop = .false.
 
-    ! We have to parse the line twice: once merely to pick up the details
-    do j = 2, nsons(root)
-      son = subtree(j,root) ! The argument
-      fieldIndex = get_field_id(son)
-      gson = son
-      if (nsons(son) > 1) gson = subtree(2,son) ! Now value of said argument
-      select case ( fieldIndex )
-      case ( f_details )
-        call expr ( gson, units, values, type )
-        if ( units(1) /= phyq_dimensionless ) call AnnounceError ( gson, dimless )
-        if ( type /= num_value ) call announceError ( gson, numeric )
-        details = nint(values(1))
-      case ( f_stop )
-        mustStop = get_boolean(son)
-      case default
-        ! We'll do these on the next traveral
-      end select
-    enddo
+    ! We have to parse the line twice: once merely to pick up the details.
+    ! This results in using the last details field.  Van prefers to process
+    ! left-to-right to allow different details levels for different dumps.
+!     do j = 2, nsons(root)
+!       son = subtree(j,root) ! The argument
+!       fieldIndex = get_field_id(son)
+!       gson = son
+!       if (nsons(son) > 1) gson = subtree(2,son) ! Now value of said argument
+!       select case ( fieldIndex )
+!       case ( f_details )
+!         call expr ( gson, units, values, type )
+!         if ( units(1) /= phyq_dimensionless ) call AnnounceError ( gson, dimless )
+!         if ( type /= num_value ) call announceError ( gson, numeric )
+!         details = nint(values(1))
+!       case default
+!         ! We'll do these on the next traveral
+!       end select
+!     end do
 
     ! then the second time to do the actual dumps
     do j = 2, nsons(root)
@@ -239,6 +240,8 @@ contains
         tvalue = BooleanValue ( lowercase(booleanString), &
           & runTimeValues%lkeys, runTimeValues%lvalues)
         call output( tvalue, advance='yes' )
+      case ( f_clean )
+        clean = get_boolean(son)
       case ( f_details )
         call expr ( gson, units, values, type )
         if ( units(1) /= phyq_dimensionless ) call AnnounceError ( gson, dimless )
@@ -290,7 +293,7 @@ contains
           quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           call dump ( GetVectorQtyByTemplateIndex( &
             & vectors(vectorIndex), quantityIndex), details=details, &
-            & vector=vectors(vectorIndex) )
+            & vector=vectors(vectorIndex), clean=clean )
         end do
       case ( f_signals )
         do i = 2, nsons(son)
@@ -422,7 +425,8 @@ contains
         if ( haveVectors ) then
           do i = 2, nsons(son)
             call output ( ' Vector ' )
-            call dump ( vectors(decoration(decoration(subtree(i,son)))), details=details )
+            call dump ( vectors(decoration(decoration(subtree(i,son)))), &
+              & details=details, clean=clean )
           end do
         else
           call announceError ( gson, noVectors )
@@ -433,8 +437,6 @@ contains
           call dump ( vGRids(decoration(decoration(subtree(i,son)))), details=details )
         end do
       end select
-      if ( mustStop ) call MLSMessage ( MLSMSG_Error, moduleName, &
-        & 'Stopping after Dump command with /stop argument' )
     end do
 
   contains
@@ -492,6 +494,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.29  2006/05/31 22:38:17  vsnyder
+! Revert to details= semantics that Van prefers
+!
 ! Revision 2.28  2006/05/03 20:14:05  pwagner
 ! details and /stop properly implemented
 !
