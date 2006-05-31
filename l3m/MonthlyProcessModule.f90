@@ -76,8 +76,9 @@ CONTAINS
     
     INTEGER, DIMENSION(cfProd%nLats, l2gp(1)%nLevels) :: anlats, dnlats 
 
-    INTEGER ::  error, l2Days, nlev, pEndIndex, pStartIndex, j, iD
-    
+    INTEGER ::  error, l2Days, nlev, pEndIndex, pStartIndex, j, iD, x, y
+    INTEGER ::  pcfdate_int   
+ 
     !*** Initialize variables
 
     nlev = 0
@@ -116,12 +117,23 @@ CONTAINS
     dzA%name = TRIM(cfProd%l3prodName) // 'Ascending'
     dzD%name = TRIM(cfProd%l3prodName) // 'Descending'
 
+    ! Filter the missing date for the L3DZ
+
+    y = 0
     DO j = 1, l2Days
-       l3dz(j)%date = pcf%dates(j) 
-       dzA(j)%date  = pcf%dates(j) 
-       dzD(j)%date  = pcf%dates(j) 
+       y = y + 1
+       do x = 1, mis_l2Days
+	  read((pcf%dates(y)(6:8)), '(i3)') pcfdate_int
+	  if (pcfdate_int == mis_Days(x)) then
+	     y = y + 1
+	  endif
+       enddo
+       l3dz(j)%date = pcf%dates(y) 
+       dzA(j)%date  = pcf%dates(y) 
+       dzD(j)%date  = pcf%dates(y) 
     ENDDO
 
+    
     DO j = 1, l2Days
 
        CALL AllocateL3DZ( nlev, cfDef%nNom, l3dz(j) )
