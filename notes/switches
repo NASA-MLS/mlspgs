@@ -5,6 +5,7 @@ Switches (set by -S option in mlsl2's command line):
 ========================= mlsl2 =========================
   (where [n] appears, you may optionally suffix an integer specifying how
    detailed you want the extra printing to be: higher the n, more the info)
+  0sl =>    Warn about no lines or continuua, else it's an error
   ant =>    Antenna patterns
   apr[n] => apriori file info 
   atb =>    Dump ATb vector
@@ -148,6 +149,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.60  2006/04/05 19:16:27  vsnyder
+ Add 'clean' switch
+
  Revision 1.59  2006/03/22 20:47:00  vsnyder
  Add rtv
 
