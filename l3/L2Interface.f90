@@ -76,16 +76,11 @@ CONTAINS
     ! Arguments
     
     CHARACTER (LEN=8), INTENT(IN) :: endDOY, startDOY
-    
     CHARACTER (LEN=*), INTENT(IN) :: template
-    
     INTEGER, INTENT(IN) :: mlspcf_end, mlspcf_start
-    
     INTEGER, INTENT(OUT) :: numFiles, mis_numFiles
-    
     INTEGER, INTENT(OUT) :: mis_Days(:)
     CHARACTER (LEN=FileNameLen) :: pcfNames(:)
-!    CHARACTER (LEN=DATE_LEN), INTENT(OUT) :: mis_Days(:)
    
     ! Parameters
     
@@ -98,8 +93,9 @@ CONTAINS
     CHARACTER (LEN=7) :: dateChar
     CHARACTER (LEN=3) :: startChar, endChar, dayChar
     
-    INTEGER :: i, indx, returnStatus, version, size, err
+    INTEGER :: i, j, indx, returnStatus, version, err
     INTEGER :: startInt, endInt, dateInt, dayInt
+    INTEGER :: doy_current, doy_prev, day_diff
     LOGICAL, parameter :: DEBUG = .false. 
   
     ! Expand the level/species template
@@ -114,14 +110,21 @@ CONTAINS
     numFiles = 0
     mis_numFiles = 0
     mis_Days = 0
- 
+    doy_current = 0 
+    doy_prev = 0 
+    day_diff = 0 
+
     ! Loop through all the PCF numbers for L2GP files
    
-    DO i = mlspcf_start, mlspcf_end
-       
+    do i = mlspcf_start, mlspcf_end
        version = 1
        returnStatus = Pgs_pc_getReference(i, version, physicalFilename)
-      
+
+       if (i == mlspcf_start) then
+           indx = INDEX(physicalFilename, '.', .TRUE.)
+           read((physicalFilename(indx-3:indx-1)),'(i3)') doy_current
+	   doy_prev = doy_current
+       endif 
        if (DEBUG) then
          call output( 'physicalFilename = ', advance='no')
          call output( trim(physicalFilename), advance='yes')
@@ -131,23 +134,20 @@ CONTAINS
 
        ! If no file name was returned, go on to the next PCF number
     
-       IF(returnStatus /= PGS_S_SUCCESS) THEN
-          
-          IF ( INDEX(physicalFilename, TRIM(type)) /= 0 ) THEN
-       
+       if(returnStatus /= PGS_S_SUCCESS) THEN
+          if ( INDEX(physicalFilename, TRIM(type)) /= 0 ) THEN
                 ! Extract the date from the file name
-             
                 indx = INDEX(physicalFilename, '.', .TRUE.)
                 date = physicalFilename(indx-8:indx-5)//'-'//physicalFilename(indx-3:indx-1)
                 ! Check that the date is within the desired boundaries for reading
              
-                IF ( (date .GE. startDOY) .AND. (date .LE. endDOY) ) THEN
+                if ( (date .GE. startDOY) .AND. (date .LE. endDOY) ) THEN
 	           startChar = startDOY(6:8)
                    read (startChar, '(i3)') startInt
 	           endChar = endDOY(6:8)
                    read (endChar, '(i3)') endInt
 		   
-		   IF (numFiles <= (endInt - startInt)) then 
+		   if (numFiles <= (endInt - startInt)) then 
                
                    ! Save the name in an array of files for the species
                        mis_numFiles = mis_numFiles + 1
@@ -158,22 +158,15 @@ CONTAINS
                       read (dateChar, '(i7)') dateInt
 		      dateInt = dateInt + 1
                       mis_Days(mis_numFiles) = dateInt
-		   ENDIF
-                
-                ENDIF
-             
-          ENDIF
-          
+		   endif
+                endif
+          endif
           CYCLE
-          
-       ENDIF
+       endif 
        
        ! Check that the returned file name is for the proper species
-      
-       IF ( INDEX(physicalFilename, TRIM(type)) /= 0 ) THEN
-          
+       if ( INDEX(physicalFilename, TRIM(type)) /= 0 ) THEN
           ! Extract the date from the file name
-           
           indx = INDEX(physicalFilename, '.', .TRUE.)
           date = physicalFilename(indx-8:indx-5)//'-'//physicalFilename(indx-3:indx-1)
           
@@ -183,10 +176,8 @@ CONTAINS
 	     call output( date, advance='yes')
 	  end if
 
-          IF ( (date .GE. startDOY) .AND. (date .LE. endDOY) ) THEN
-             
+          if ( (date .GE. startDOY) .AND. (date .LE. endDOY) ) THEN
              ! Save the name in an array of files for the species
-            
              numFiles = numFiles + 1
              pcfNames(numFiles) = physicalFilename
 	     if (DEBUG) then
@@ -194,13 +185,29 @@ CONTAINS
    	     	call output(numFiles, advance ='yes')          
    	     	call output('pcfNames = ', advance ='no')          
    	     	call output(pcfNames(numFiles), advance ='yes')          
-	     end if
-          ENDIF
-          
-       ENDIF
+	     endif
+          endif
        
-    ENDDO
-    
+	  ! Check missing days that are not in the PCF
+
+          read((physicalFilename(indx-3:indx-1)),'(i3)') doy_current
+	  if (DEBUG) then
+             print *,' doy_current: ', doy_current
+             print *,' filename here: ', trim(physicalFilename)
+             print *,' type: ', trim(type)
+             print *,' i: ',i 
+	  endif
+	  day_diff = doy_current - doy_prev
+	  if (day_diff > 1) then
+	     do j = 1, day_diff - 1 
+		mis_numFiles = mis_numFiles + 1
+	        mis_Days(mis_numFiles) = doy_prev + j
+	     enddo
+	  endif
+          doy_prev = doy_current
+       endif
+    enddo
+   
   !-------------------------------
   END SUBROUTINE GetL2GPfromPCF
   !-------------------------------
@@ -220,19 +227,18 @@ CONTAINS
 
     ! Arguments
 
-    CHARACTER (LEN=*), INTENT(IN) :: l3StartDay, l3EndDay, tempfile
+    character (LEN=*), INTENT(IN) :: l3StartDay, l3EndDay, tempfile
     Integer, intent(out) :: nDays
-    Integer, intent(in), optional :: L3MFlag
+    integer, intent(in), optional :: L3MFlag
     
     ! Local variables
 
-    CHARACTER (LEN=FileNameLen) :: pcfNames(40)
-    !CHARACTER (LEN=DATE_LEN) :: mis_Days(maxMisDays)
-    INTEGER :: mis_Days(maxMisDays), misDInt
-    INTEGER :: numDays, mis_numDay, the_hdfVersion, file_id
-    INTEGER :: record_length, i, status, aID, mis_numDays, n=1 
-    INTEGER :: Flag = 0, size, err=0, indx, j, k, l3DayInt, m=1
-    INTEGER, external :: HE5_EHrdglatt
+    character (LEN=FileNameLen) :: pcfNames(40)
+    integer :: mis_Days(maxMisDays), misDInt
+    integer :: numDays, mis_numDay, the_hdfVersion, file_id
+    integer :: record_length, i, status, mis_numDays, n=1 
+    integer :: indx, j, k, l3DayInt, m=1
+    integer, external :: HE5_EHrdglatt
     character (len=20) :: name
     character (len=3) :: date, misD 
     character (len=7) :: misDchar 
@@ -243,45 +249,87 @@ CONTAINS
 
     if (present(L3MFlag)) then
 	numDays = numDays + 1
-    endif
+        call Allocate_test (GlobalAttributes%OrbNumDays, max_orbits, &
+	   & numDays,'GlobalAttributes%OrbNumDays', ModuleName)
+        call Allocate_test (GlobalAttributes%OrbPeriodDays, max_orbits, &
+	   & numDays,'GlobalAttributes%OrbPeriodDays', ModuleName)
+        do i = 1, numDays-1
+           the_hdfVersion = mls_hdf_version(trim(pcfNames(i)))
+           file_id = mls_io_gen_openF(l_swath, .TRUE., status, &
+              & record_length, DFACC_READ, pcfNames(i), &
+              & hdfVersion=the_hdfVersion, debugOption=.false. )
+           if ( status /= 0 ) &
+              call MLSMessage ( MLSMSG_Error, ModuleName, &
+                & "Unable to open L2gp file: " &
+                & // trim(pcfNames(i))//' for reading')
+              status = HE5_EHrdglatt(file_id, 'OrbitNumber', &
+                & GlobalAttributes%OrbNumDays(:,i))
+              if (status /= 0) then
+                call MLSMessage ( MLSMSG_Warning, ModuleName, &
+                  & "Unable to read attribute OrbitNumber for " &
+                  & //trim(pcfNames(i)))
+                GlobalAttributes%OrbNumDays(:,i) = -1
+              end if
 
-    call Allocate_test (GlobalAttributes%OrbNumDays, max_orbits, &
-	& numDays+mis_numDays,'GlobalAttributes%OrbNumDays', ModuleName)
-    call Allocate_test (GlobalAttributes%OrbPeriodDays, max_orbits, &
-	& numDays+mis_numDays,'GlobalAttributes%OrbPeriodDays', ModuleName)
+              status = HE5_EHrdglatt(file_id, 'OrbitPeriod', &
+                & GlobalAttributes%OrbPeriodDays(:,i))
+              if (status /= 0) then
+                call MLSMessage ( MLSMSG_Warning, ModuleName, &
+                   & "Unable to read attribute OrbitPeriod for "&
+                   & //trim(pcfNames(i)))
+                GlobalAttributes%OrbPeriodDays(:,i) = -1.0
+              end if
+         enddo
 
-    DO i = 1, numDays
+         GlobalAttributes%OrbNumDays(:,numDays) = -1
+         GlobalAttributes%OrbNumDays(1:1,numDays) = &
+	      &	GlobalAttributes%OrbNumDays(1:1,1)
+         GlobalAttributes%OrbNumDays(2:2,numDays) = &
+	      &	maxval(GlobalAttributes%OrbNumDays(:,numDays-1))
+!        call output('OrbNum_last =', advance='no')
+!        call output(GlobalAttributes%OrbNumDays(:,numDays), advance='yes')
+         GlobalAttributes%OrbPeriodDays(:,numDays) = -1.0
+         GlobalAttributes%OrbPeriodDays(1:1,numDays) = &
+	      &	GlobalAttributes%OrbPeriodDays(1:1,1)
+         GlobalAttributes%OrbPeriodDays(2:2,numDays) = &
+	      &	maxval(GlobalAttributes%OrbPeriodDays(:,numDays-1))
+!       call output('OrbNum_last =', advance='no')
+!       call output(GlobalAttributes%OrbPeriodDays(:,numDays), advance='yes')
+    else 
+        call Allocate_test (GlobalAttributes%OrbNumDays, max_orbits, &
+	   & numDays+mis_numDays,'GlobalAttributes%OrbNumDays', ModuleName)
+        call Allocate_test (GlobalAttributes%OrbPeriodDays, max_orbits, &
+	   & numDays+mis_numDays,'GlobalAttributes%OrbPeriodDays', ModuleName)
 
-       m = n
-       if (present(L3MFLag) .and. i==numDays ) exit
-
-       the_hdfVersion = mls_hdf_version(trim(pcfNames(i)))
-       pcfFileNames = trim(pcfNames(i))
-       indx = INDEX(pcfFileNames, '.', .TRUE.)
-       date = pcfFileNames(indx-3:indx-1)
-       read(date, '(i3)')l3DayInt 
-       l3DayInt = l3DayInt - 1
+        DO i = 1, numDays
+       	   m = n
+           the_hdfVersion = mls_hdf_version(trim(pcfNames(i)))
+           pcfFileNames = trim(pcfNames(i))
+           indx = INDEX(pcfFileNames, '.', .TRUE.)
+           date = pcfFileNames(indx-3:indx-1)
+           read(date, '(i3)')l3DayInt 
+           l3DayInt = l3DayInt - 1
        
-       do j = 1, mis_numDays
-	   write(misDchar, '(I7)') mis_Days(j)
-	   misD = misDchar(5:7)
-           read(misD, '(i3)')misDInt 
-	   if (l3DayInt == misDInt) then
-	       do k = 1, 16
-	          GlobalAttributes%OrbNumDays(k,m) = &
+           do j = 1, mis_numDays
+	      write(misDchar, '(I7)') mis_Days(j)
+	      misD = misDchar(5:7)
+              read(misD, '(i3)')misDInt 
+	      if (l3DayInt == misDInt) then
+	         do k = 1, 16
+	           GlobalAttributes%OrbNumDays(k,m) = &
 		     & GlobalAttributes%OrbNumDays(15,m-1)+k
-	          GlobalAttributes%OrbPeriodDays(k,m) = 5930.5056 
-	       enddo  
-	       n = n+1
-	       m = m+1
-	    endif
-       enddo
+	           GlobalAttributes%OrbPeriodDays(k,m) = 5930.5056 
+	         enddo  
+	         n = n+1
+	         m = m+1
+	      endif
+          enddo
 
-       ! file_id = mls_io_gen_openF('swopen', .TRUE., status, &
-       file_id = mls_io_gen_openF(l_swath, .TRUE., status, &
+          ! file_id = mls_io_gen_openF('swopen', .TRUE., status, &
+          file_id = mls_io_gen_openF(l_swath, .TRUE., status, &
             & record_length, DFACC_READ, pcfNames(i), &
             & hdfVersion=the_hdfVersion, debugOption=.false. )
-       if ( status /= 0 ) &
+          if ( status /= 0 ) &
             call MLSMessage ( MLSMSG_Error, ModuleName, &
 		& "Unable to open L2gp file: " &
 		& // trim(pcfNames(i))//' for reading')
@@ -340,23 +388,7 @@ CONTAINS
             if ( status /= 0 ) &
            	call MLSMessage ( MLSMSG_Error, ModuleName, &
        	      	   & "Unable to close L2gp file:"//trim(pcfNames(i)))
-    END DO
-
-    if (present(L3MFlag)) then
-       GlobalAttributes%OrbNumDays(:,numDays+mis_numDays) = -1
-       GlobalAttributes%OrbNumDays(1:1,numDays+mis_numDays) = &
-	      &	GlobalAttributes%OrbNumDays(1:1,1)
-       GlobalAttributes%OrbNumDays(2:2,numDays+mis_numDays) = &
-	      &	maxval(GlobalAttributes%OrbNumDays(:,numDays+mis_numDays-1))
-!       call output('OrbNum_last =', advance='no')
-!       call output(GlobalAttributes%OrbNumDays(:,numDays+mis_numDays), advance='yes')
-       GlobalAttributes%OrbPeriodDays(:,numDays+mis_numDays) = -1.0
-       GlobalAttributes%OrbPeriodDays(1:1,numDays+mis_numDays) = &
-	      &	GlobalAttributes%OrbPeriodDays(1:1,1)
-       GlobalAttributes%OrbPeriodDays(2:2,numDays+mis_numDays) = &
-	      &	maxval(GlobalAttributes%OrbPeriodDays(:,numDays+mis_numDays-1))
-!       call output('OrbNum_last =', advance='no')
-!       call output(GlobalAttributes%OrbPeriodDays(:,numDays+mis_numDays), advance='yes')
+        END DO
     end if
 
   !-------------------------------
@@ -510,7 +542,6 @@ CONTAINS
           msr = MLSMSG_Allocate // ' l2gp array for ' // product
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
        ENDIF
-         
 
        DO i = 1, numDays
           ! Read information from the L2GP file
@@ -712,6 +743,9 @@ END MODULE L2Interface
 !=====================
 
 !# $Log$
+!# Revision 1.21  2006/05/24 19:14:30  cvuu
+!# Fix the deallocate problem
+!#
 !# Revision 1.20  2006/04/17 15:43:04  cvuu
 !# Remove the print statements
 !#
