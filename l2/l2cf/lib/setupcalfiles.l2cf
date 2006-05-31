@@ -43,7 +43,7 @@
 !define(signalsL2cf, {!signalsPath/MLS-Aura_L2Cal-Signals_v1-5-0_0000d000.l2cf})
 })
 !ifdef(spectroscopyL2cf, {}, {
-!define(spectroscopyL2cf, {!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v2-0-5_0000d000.l2cf})
+!define(spectroscopyL2cf, {!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v2-0-6_0000d000.l2cf})
 })
 !ifdef(spectroscopyRtvlL2cf, {}, {
 !define(spectroscopyRtvlL2cf,{!spectroscopyL2cf})
@@ -110,6 +110,9 @@
   })
 })
 ;$Log$
+;Revision 1.32  2006/05/26 16:51:39  lambert
+;updated climatology file to v1-7-3
+;
 ;Revision 1.31  2006/05/23 00:16:08  pwagner
 ;Added DACS PFA file for PCF-using runs
 ;
