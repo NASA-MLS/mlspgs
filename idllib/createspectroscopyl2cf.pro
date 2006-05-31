@@ -98,7 +98,7 @@ if instrument eq 'emls' then begin
     AllLBLMolecules = MoleculesAlwaysPresent
     FOR ib = 0,N_TAGS(SIDSMandatoryLBLMoleculesBands)-1 DO $ 
       BEGIN
-        AllLBLMolecules = [AllLBLMolecules, SIDSMandatoryLBLMoleculesBands.(ib).lsb, SIDSMandatoryLBLMoleculesBands.(ib).lsb]
+        AllLBLMolecules = [AllLBLMolecules, SIDSMandatoryLBLMoleculesBands.(ib).lsb, SIDSMandatoryLBLMoleculesBands.(ib).usb]
     ENDFOR;;ib
 
     ;; tidy up the list
