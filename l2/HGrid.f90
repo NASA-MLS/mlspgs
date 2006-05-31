@@ -2136,7 +2136,8 @@ contains ! =====     Public Procedures     =============================
     end do
     call output ( 'chunks(1)%hGridOffsets: ', advance='no' )
     call output ( chunks(1)%hGridOffsets, advance='yes' )
-    if ( ChunkDivideConfig%allowPriorOverlaps ) then
+    if ( ChunkDivideConfig%allowPriorOverlaps .and. &
+      & chunks(1)%noMAFsLowerOverlap > 0 ) then
       chunks(1)%hGridOffsets = 0
       do chunk=1, size(chunks)
         chunks(chunk)%hGridOffsets = chunks(chunk)%hGridOffsets + LowerOverlaps
@@ -2318,6 +2319,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.88  2006/05/31 17:48:49  pwagner
+! Another bug fix relating to extra profiles
+!
 ! Revision 2.87  2006/04/19 20:48:13  pwagner
 ! Undid most of the changes regarding extra MAFs; perhaps fixed bugs
 !
