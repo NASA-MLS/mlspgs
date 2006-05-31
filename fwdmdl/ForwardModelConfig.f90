@@ -243,7 +243,8 @@ contains
   subroutine DeriveFromForwardModelConfig ( FwdModelConf )
 
     use Allocate_Deallocate, only: Allocate_Test
-    use MLSMessageModule, only: MLSMessage,  MLSMSG_Allocate, MLSMSG_Error
+    use MLSMessageModule, only: MLSMessage,  MLSMSG_Allocate, MLSMSG_Error, &
+      & MLSMSG_Warning
     use MLSSets, only: FindFirst
 !   use Output_m, only: Output
     use PFADataBase_m, only: Dump
@@ -461,7 +462,7 @@ contains
       use MoreTree, only: StartErrorMessage
       use SpectroscopyCatalog_m, only: Catalog, Empty_Cat, Line_t, &
         & Lines, MostLines
-      use String_table, only: Display_String
+      use String_table, only: Display_String, Get_String
       use Toggles, only: Switches
       use Tree, only: Source_Ref
 
@@ -476,14 +477,17 @@ contains
       integer :: N         ! Molecule index, L_... from Intrinsic
       integer :: NoLinesMsg = -1 ! From switches
       integer, target :: MaxLineFlag(mostLines)
+      character(len=32) :: MoleculeName ! for error message
       integer :: Polarized ! -1 => One of the selected lines is Zeeman split
                            ! +1 => None of the selected lines is Zeeman split
       integer :: S, SX     ! Indices for sidebands
+      logical :: SawNoLines ! Saw a species without lines or continuum
       integer :: STAT      ! Status from allocate or deallocate
       type (line_T), pointer :: ThisLine
       integer :: Z         ! Index for fwdModelConf%Signals
 
       if ( noLinesMsg < 0 ) noLinesMsg = index(switches, '0sl') ! Done once
+      sawNoLines = .false.
 
       ! Allocate the spectroscopy catalog extract
       c = maxval(fwdModelConf%cat_size)
@@ -585,10 +589,11 @@ contains
               l = count(lineFlag /= 0)
               if ( l == 0 .and. all ( fwdModelConf%catalog(s,c)%continuum == 0.0 ) &
                 & .and. noLinesMsg > 0 ) then
+                sawNoLines = .true.
                 if ( source_ref(fwdModelConf%where) /= 0 ) &
                 call startErrorMessage ( fwdModelConf%where )
                 call display_string ( lit_indices(n), &
-                  & before='No relevant lines or continuum for ' )
+                  & before='No relevant lines or continuum for ', advance='yes' )
               end if
               call allocate_test ( fwdModelConf%catalog(s,c)%lines, l, &
                 & 'fwdModelConf%catalog(?,?)%lines', moduleName )
@@ -597,21 +602,34 @@ contains
               fwdModelConf%catalog(s,c)%lines = pack ( catalog(n)%lines, lineFlag /= 0 )
               fwdModelConf%catalog(s,c)%polarized = pack ( lineFlag < 0, lineFlag /= 0 )
 
-            else
+            else if ( any(catalog(n)%continuum /= 0.0) ) then
 
               ! No lines for this specie.  However, its continuum is still
               ! valid so don't set it to empty.
-              ! Don't bother checking that continuum /= 0 as if it were then
-              ! presumably having no continuum and no lines it wouldn't be in
-              ! the catalog!
               call allocate_test ( fwdModelConf%catalog(s,c)%lines, 0, &
                 & 'fwdModelConf%catalog(?,?)%lines(0)', moduleName )
               call allocate_test ( fwdModelConf%catalog(s,c)%polarized, 0, &
                 & 'fwdModelConf%catalog(?,?)%polarized(0)', moduleName )
+            else if ( noLinesMsg > 0 ) then ! just warn
+                sawNoLines = .true.
+              if ( source_ref(fwdModelConf%where) /= 0 ) &
+              call startErrorMessage ( fwdModelConf%where )
+              call display_string ( lit_indices(n), &
+                & before='No lines or continuum for ', advance='yes' )
+!             else ! it's an error to have no lines or continuum
+!             ! DON'T DO THIS! it catches radiometer-dependent species
+!             ! such as O3_R1A that intentionally have no lines or continuum
+!               call get_string ( lit_indices(n), moleculeName )
+!               call MLSMessage ( MLSMSG_Error, moduleName, &
+!                 & 'No lines or continuum for ' // trim(moleculeName) )
             end if
           end do ! m Molecules in fwdModelConf
         end do ! b Beta groups
       end do ! s Sidebands
+
+      if ( sawNoLines .and. noLinesMsg > 0 ) &
+        & call MLSMessage ( MLSMSG_Warning, moduleName, &
+        & 'At least one specie has no lines or continuum' )
 
     end subroutine SpectroscopyCatalogExtract
 
@@ -1349,6 +1367,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.91  2006/05/11 19:36:14  pwagner
+! Added option to disallow duplicate molecules
+!
 ! Revision 2.90  2006/04/25 23:25:36  vsnyder
 ! Revise DACS filter shape data structure
 !
