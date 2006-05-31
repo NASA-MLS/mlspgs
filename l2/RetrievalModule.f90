@@ -1169,6 +1169,7 @@ contains
       use ForwardModelWrappers, only: ForwardModel
       use ForwardModelIntermediate, only: ForwardModelIntermediate_T, &
         & ForwardModelStatus_T
+      use MatrixModule_0, only: Dump
       use MatrixModule_1, only: AddToMatrix, CholeskyFactor, ClearMatrix, &
         & ColumnScale, CopyMatrixValue, CreateEmptyMatrix, &
         & DestroyMatrix, Dump, Dump_Linf, Dump_struct, &
@@ -2536,6 +2537,9 @@ NEWT: do ! Newtonian iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.271  2006/05/31 18:22:26  pwagner
+! Fixed bug only NAG complained about: needed Dump from MatrixModule_0
+!
 ! Revision 2.270  2006/05/30 22:51:21  vsnyder
 ! Precompute dump flags.  Add NumGrad and NumNewt counters.  Compute
 ! cosine of angles between moves correctly for printing (it's already
