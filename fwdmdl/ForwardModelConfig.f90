@@ -602,26 +602,26 @@ contains
               fwdModelConf%catalog(s,c)%lines = pack ( catalog(n)%lines, lineFlag /= 0 )
               fwdModelConf%catalog(s,c)%polarized = pack ( lineFlag < 0, lineFlag /= 0 )
 
-            else if ( any(catalog(n)%continuum /= 0.0) ) then
+            else
 
-              ! No lines for this specie.  However, its continuum is still
-              ! valid so don't set it to empty.
+              ! No lines for this specie.  However, its continuum may still
+              ! be valid so don't set it to empty.
               call allocate_test ( fwdModelConf%catalog(s,c)%lines, 0, &
                 & 'fwdModelConf%catalog(?,?)%lines(0)', moduleName )
               call allocate_test ( fwdModelConf%catalog(s,c)%polarized, 0, &
                 & 'fwdModelConf%catalog(?,?)%polarized(0)', moduleName )
-            else if ( noLinesMsg > 0 ) then ! just warn
+              if ( all(catalog(n)%continuum == 0.0) .and. noLinesMsg > 0 ) then
                 sawNoLines = .true.
-              if ( source_ref(fwdModelConf%where) /= 0 ) &
-              call startErrorMessage ( fwdModelConf%where )
-              call display_string ( lit_indices(n), &
-                & before='No lines or continuum for ', advance='yes' )
-!             else ! it's an error to have no lines or continuum
-!             ! DON'T DO THIS! it catches radiometer-dependent species
-!             ! such as O3_R1A that intentionally have no lines or continuum
-!               call get_string ( lit_indices(n), moleculeName )
-!               call MLSMessage ( MLSMSG_Error, moduleName, &
-!                 & 'No lines or continuum for ' // trim(moleculeName) )
+                if ( source_ref(fwdModelConf%where) /= 0 ) &
+                call startErrorMessage ( fwdModelConf%where )
+                call display_string ( lit_indices(n), &
+                  & before='No lines or continuum for ', advance='yes' )
+!               ! DON'T DO THIS! it catches radiometer-dependent species
+!               ! such as O3_R1A that intentionally have no lines or continuum
+!                 call get_string ( lit_indices(n), moleculeName )
+!                 call MLSMessage ( MLSMSG_Error, moduleName, &
+!                   & 'No lines or continuum for ' // trim(moleculeName) )
+              end if
             end if
           end do ! m Molecules in fwdModelConf
         end do ! b Beta groups
@@ -1367,6 +1367,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.92  2006/05/31 22:02:13  vsnyder
+! Display 'no lines or continuum' msg if none in the catalog
+!
 ! Revision 2.91  2006/05/11 19:36:14  pwagner
 ! Added option to disallow duplicate molecules
 !
