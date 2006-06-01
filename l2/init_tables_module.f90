@@ -496,7 +496,8 @@ contains ! =====     Public procedures     =============================
              l+l_massMeanDiameterIce, l+l_massMeanDiameterWater, l+l_magneticField, &
              l+l_MIFDeadTime, &
              l+l_noiseBandwidth, l+l_noRadsPerMIF, l+l_noRadsBinned, &
-             l+l_numJ, l+l_opticalDepth, l+l_orbitInclination, &
+             l+l_numGrad, l+l_numJ, l+l_numNewt, &
+             l+l_opticalDepth, l+l_orbitInclination, &
              l+l_phaseTiming, l+l_phiTan, l+l_ptan, &
              l+l_quality, l+l_radiance, l+l_earthradius,&
              l+l_refGPH, l+l_refltemp, l+l_refltrans, l+l_reflrefl, l+l_reflspill, &
@@ -1461,6 +1462,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.438  2006/06/01 03:06:18  vsnyder
+! Define numGrad and numNewt
+!
 ! Revision 2.437  2006/05/27 02:59:08  vsnyder
 ! Add a 'clean' option to the 'dump' command
 !
