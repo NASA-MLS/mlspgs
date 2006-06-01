@@ -1036,7 +1036,7 @@ contains ! ============= Public procedures ===================================
       L_MASSMEANDIAMETERICE, L_MASSMEANDIAMETERWATER, L_MAGNETICFIELD, &
       L_MIFDEADTIME, &
       L_NOISEBANDWIDTH, L_NORADSPERMIF, L_NORADSBINNED, &
-      L_NUMJ, L_OPTICALDEPTH, L_ORBITINCLINATION, &
+      L_NUMGRAD, L_NUMJ, L_NUMNEWT, L_OPTICALDEPTH, L_ORBITINCLINATION, &
       L_PHASETIMING, L_PHITAN, L_PTAN, L_QUALITY, L_RADIANCE, &
       L_REFGPH, L_REFLTEMP, L_REFLTRANS, L_REFLREFL, L_REFLSPILL, &
       L_RHI, L_SINGLECHANNELRADIANCE, L_SIZEDISTRIBUTION, &
@@ -1141,7 +1141,9 @@ contains ! ============= Public procedures ===================================
       l_noRadsPerMIF, phyq_dimensionless, p_minorFrame, p_signal, &
                       p_suppressChannels, next, &
       l_noiseBandwidth, phyq_frequency, p_signal, next, &
+      l_numGrad, phyq_dimensionless, p_vGrid, next, &
       l_numJ, phyq_dimensionless, p_vGrid, next, &
+      l_numNewt, phyq_dimensionless, p_vGrid, next, &
       l_opticalDepth, phyq_dimensionless, p_minorFrame, p_signal, next, &
       l_orbitInclination, phyq_angle, p_minorFrame, p_scModule, next, &
       l_phiTan, phyq_angle, p_minorFrame, p_module, next, & 
@@ -1286,6 +1288,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.131  2006/06/01 03:06:46  vsnyder
+! Define numGrad and numNewt
+!
 ! Revision 2.130  2006/04/11 23:32:08  pwagner
 ! Fixed bug which added excess profiles
 !
