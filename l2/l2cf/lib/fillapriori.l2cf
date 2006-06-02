@@ -365,7 +365,7 @@ begin Fill
   Fill, quantity=lowBound.h2o, method=explicit, explicitValues=0.1ppmv, /spread
   Fill, quantity=highBound.h2o, method=explicit, explicitValues=0.06, /spread
 
-  Fill, quantity=lowBound.oh, method=explicit, explicitValues=-20pptv, /spread
+  Fill, quantity=lowBound.oh, method=explicit, explicitValues= -20pptv, /spread
 
   Fill, quantity=lowBound.RHiVmrsngl, method=profile, profileValues=[100mb:2, 68mb:0.0001]
   Fill, quantity=highBound.RHiVmrsngl, method=profile, profileValues=[100mb:200, 68mb:0.0001], /spread
@@ -400,15 +400,15 @@ begin Fill
         explicitValues=0.01, /spread
 
   Fill, quantity=lowBound.totalextinctionR2, method=explicit, $
-        explicitValues=-4.0e-4, /spread
+        explicitValues= -4.0e-4, /spread
   Fill, quantity=highBound.totalextinctionR2, method=explicit, $
         explicitValues=0.1, /spread
   Fill, quantity=lowBound.totalextinctionR3, method=explicit, $
-        explicitValues=-4.0e-4, /spread
+        explicitValues= -4.0e-4, /spread
   Fill, quantity=highBound.totalextinctionR3, method=explicit, $
         explicitValues=0.1, /spread
   Fill, quantity=lowBound.totalextinctionR4, method=explicit, $
-        explicitValues=-4.0e-4, /spread
+        explicitValues= -4.0e-4, /spread
   Fill, quantity=highBound.totalextinctionR4, method=explicit, $
         explicitValues=0.1, /spread
 
@@ -582,6 +582,9 @@ begin Join
 end Join
   })
 ;$Log$
+;Revision 1.108  2006/06/02 22:44:05  bill
+;put low stop limits for totalextinction and oh
+;
 ;Revision 1.107  2006/05/25 18:28:41  bill
 ;put GMAO into temperature_hr apriori
 ;
