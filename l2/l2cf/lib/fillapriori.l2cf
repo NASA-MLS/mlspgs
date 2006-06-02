@@ -365,6 +365,8 @@ begin Fill
   Fill, quantity=lowBound.h2o, method=explicit, explicitValues=0.1ppmv, /spread
   Fill, quantity=highBound.h2o, method=explicit, explicitValues=0.06, /spread
 
+  Fill, quantity=lowBound.oh, method=explicit, explicitValues=-20pptv, /spread
+
   Fill, quantity=lowBound.RHiVmrsngl, method=profile, profileValues=[100mb:2, 68mb:0.0001]
   Fill, quantity=highBound.RHiVmrsngl, method=profile, profileValues=[100mb:200, 68mb:0.0001], /spread
 
@@ -396,6 +398,19 @@ begin Fill
         explicitValues=1.0e-7, /spread
   Fill, quantity=highBound.extinctionR4, method=explicit, $
         explicitValues=0.01, /spread
+
+  Fill, quantity=lowBound.totalextinctionR2, method=explicit, $
+        explicitValues=-4.0e-4, /spread
+  Fill, quantity=highBound.totalextinctionR2, method=explicit, $
+        explicitValues=0.1, /spread
+  Fill, quantity=lowBound.totalextinctionR3, method=explicit, $
+        explicitValues=-4.0e-4, /spread
+  Fill, quantity=highBound.totalextinctionR3, method=explicit, $
+        explicitValues=0.1, /spread
+  Fill, quantity=lowBound.totalextinctionR4, method=explicit, $
+        explicitValues=-4.0e-4, /spread
+  Fill, quantity=highBound.totalextinctionR4, method=explicit, $
+        explicitValues=0.1, /spread
 
   !interpolateToHiRes(lowBound.temperature_HR)
   !interpolateToHiRes(highBound.temperature_HR)
@@ -567,6 +582,9 @@ begin Join
 end Join
   })
 ;$Log$
+;Revision 1.107  2006/05/25 18:28:41  bill
+;put GMAO into temperature_hr apriori
+;
 ;Revision 1.106  2006/05/19 17:39:13  dwu
 ;change RHiVmr upper and lower bounds
 ;
