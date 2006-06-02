@@ -8,7 +8,7 @@ Switches (set by -S option in mlsl2's command line):
   0sl =>    Warn about no lines or continuua, else it's an error
   ant =>    Antenna patterns
   apr[n] => apriori file info 
-  atb =>    Dump ATb vector
+  atb =>    Dump ATb vector during Newton iteration
   binsel => L2PC bin selection motivation
   bool[n]=> Dump runtime Boolean flags
   cab =>    Column Abundance-containing l2gp swaths dumped
@@ -18,12 +18,14 @@ Switches (set by -S option in mlsl2's command line):
   clean =>  Some dumps in the forward model use this to turn on the CLEAN option
   col =>    Column scale vector for Newton iteration
   column => Extra diagnostics while integrating column abundances
+  cov =>    Report details of a posteriori covariance calculation
   dacsfil => Dump DACS filter shapes after reading them
   diag =>   diagonal of factored normal equations
   dvec =>   'DX' vector during Newton iteration
   dwreq[n] => Dump directwrite requests processed by master
                *Warning--may use more memory
-  fac =>    Factors of normal equations during retriever iterations
+  fac =>    L_infty norms of blocks of factors of normal equations during Newton iterations
+  FAC =>    Factors of normal equations during Newton iterations
   filt =>   Dump filter shapes after reading them
   fmt2 =>   mean & standard deviation for timing FullForwardModel at each chunk
   fmt1 =>   mean & standard deviation for timing FullForwardModel at last chunk
@@ -40,7 +42,8 @@ Switches (set by -S option in mlsl2's command line):
   gvec =>   Gradient vector during Newton iteration
   help =>   Display this screen (or "?")
   hgrid =>  Information on HGrid construction (at least for regular)
-  jac =>    Jacobian during retriever iterations
+  jac =>    L_infty norms of blocks Jacobian during Newton iterations
+  JAC =>    Jacobian during Newton iterations
   l1b =>    l1b quantities dumped (only when filled from)
   l2aux =>  l2aux quantities (all) dumped
   l2gp =>   l2gp swaths (all) dumped
@@ -53,10 +56,12 @@ Switches (set by -S option in mlsl2's command line):
   mach =>   Machine names (that can be enslaved by master task)
   mas =>    Activities of the PVM master task
   msk =>    Mask set up by subset command in Retrieve
+  mst =>    Dump interesting stuff if normal equations cannot be factored
   ndb =>    Dump 12 interesting Newton method internal variables after every SOLVE step
   Ndb =>    Dump all the Newton method's internal variables after every SOLVE step
   NDB =>    Dump all the Newton method's internal variables before every call
-  neq =>    Normal equations during retriever iterations
+  neq =>    L_infty norms of blocks of normal equations during Newton iterations
+  NEQ =>    Normal equations during Newton iterations
   nin =>    Turn on Newton Method's internal output
   nodb =>   Subvert the DumpBlocks command
   norf =>   Default for Phi refractive correction in forward model is .false.
@@ -149,6 +154,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.61  2006/05/31 21:01:19  vsnyder
+ Add 0sl switch description
+
  Revision 1.60  2006/04/05 19:16:27  vsnyder
  Add 'clean' switch
 
