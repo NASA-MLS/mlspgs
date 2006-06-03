@@ -371,7 +371,7 @@ contains ! =====     Public Procedures     =============================
     integer :: H2OVECTORINDEX           ! In the vector database
     integer :: H2OPRECISIONQUANTITYINDEX         ! in the quantities database
     integer :: H2OPRECISIONVECTORINDEX           ! In the vector database
-    integer :: I, J                     ! Loop indices for section, spec, expr
+    integer :: I, J, K                  ! Loop indices for section, spec, expr
     integer :: GLOBALUNIT               ! To go into the vector
     integer :: IBO
     logical :: IGNOREZERO               ! Don't sum chi^2 at values of noise = 0
@@ -2049,7 +2049,6 @@ contains ! =====     Public Procedures     =============================
         ! Here we're to try to shrink the vector database by destroying a vector
         ! or the matrix database database by destroying a matrix
         ! Loop over the instructions
-        ! (Shall we allow multiple vectors on a single line? Maybe later)
         do j = 2, nsons(key)
           son = subtree(j,key)  ! The argument
           fieldIndex = get_field_id(son)
@@ -2061,44 +2060,45 @@ contains ! =====     Public Procedures     =============================
           end if
           select case ( fieldIndex )
           case ( f_matrix )
-            matrixToKill = decoration(decoration(subtree(2,son)))
+            do k = 2, nsons(son)
+              matrixToKill = decoration(decoration(subtree(k,son)))
+              if ( DEEBUG ) then
+                ! if ( matrices(matrixToKill)%matrix%name /= 0 ) then
+                 ! call output ( '   Matrix Name = ' )
+                 ! call display_string ( matrices(matrixToKill)%matrix%name )
+                 call dump(matrices(matrixToKill), -1)
+                ! end if
+              end if
+
+              call DestroyMatrix ( matrices(matrixToKill) )
+            end do
           case ( f_vector )
-            sourceVectorIndex = decoration(decoration(subtree(2,son)))
+            do k = 2, nsons(son)
+              sourceVectorIndex = decoration(decoration(subtree(k,son)))
+              if ( DEEBUG ) then
+                if ( vectors(sourceVectorIndex)%name /= 0 ) then
+                  call output ( '   Vector Name = ' )
+                  call display_string ( vectors(sourceVectorIndex)%name )
+                end if
+                if ( vectors(sourceVectorIndex)%template%name /= 0 ) then
+                  call output ( ' Template_Name = ' )
+                  call display_string ( vectors(sourceVectorIndex)%template%name )
+                  call output ( ' ', advance='yes' )
+                end if
+                call output ( ' -- vector database before removal --', advance='yes' )
+                call dump(vectors, details=-2)
+              end if
+
+              call DestroyVectorInfo ( vectors(sourceVectorIndex) )
+         !    vectorindex = rmVectorFromDatabase ( vectors, vectors(sourceVectorIndex) )
+              if ( DEEBUG ) then
+                call output ( ' -- vector database after removal --', advance='yes' )
+                call dump(vectors, details=-2)
+              end if
+            end do
           case default ! Can't get here if type checker worked
           end select
         end do
-        if ( got(f_vector) ) then
-          if ( DEEBUG ) then
-            if ( vectors(sourceVectorIndex)%name /= 0 ) then
-              call output ( '   Vector Name = ' )
-              call display_string ( vectors(sourceVectorIndex)%name )
-            end if
-            if ( vectors(sourceVectorIndex)%template%name /= 0 ) then
-              call output ( ' Template_Name = ' )
-              call display_string ( vectors(sourceVectorIndex)%template%name )
-              call output ( ' ', advance='yes' )
-            end if
-            call output ( ' -- vector database before removal --', advance='yes' )
-            call dump(vectors, details=-2)
-          end if
-
-          call DestroyVectorInfo ( vectors(sourceVectorIndex) )
-     !    vectorindex = rmVectorFromDatabase ( vectors, vectors(sourceVectorIndex) )
-          if ( DEEBUG ) then
-            call output ( ' -- vector database after removal --', advance='yes' )
-            call dump(vectors, details=-2)
-          end if
-        else if ( got(f_matrix) ) then
-          if ( DEEBUG ) then
-            ! if ( matrices(matrixToKill)%matrix%name /= 0 ) then
-             ! call output ( '   Matrix Name = ' )
-             ! call display_string ( matrices(matrixToKill)%matrix%name )
-             call dump(matrices(matrixToKill), -1)
-            ! end if
-          end if
-
-          call DestroyMatrix ( matrices(matrixToKill) )
-        end if
 
       case ( s_negativePrecision ) ! =======================  negativePrecision ==
         ! Here we're on a setNegative instruction
@@ -7833,6 +7833,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.333  2006/06/03 01:43:36  vsnyder
+! Allow multiple fields and multiple vectors/matrices per field on destroy
+!
 ! Revision 2.332  2006/05/22 21:56:00  pwagner
 ! Fixed bug besetting manipulation fills
 !
