@@ -436,6 +436,7 @@ contains ! =====     Public Procedures     =============================
     integer :: MoleculeTree             ! Tree index of f_molecules
     integer, dimension(:), pointer :: Molecules ! In a LineTree
     integer :: NELTS                    ! Number of elements of an array tree
+    logical :: No_Dup_Mol               ! Duplicate molecules => error
     integer :: NumPFA, NumLBL           ! Numbers of such molecules in a beta group
     integer :: PFATrees(2)              ! Tree indices of f_[lu]sbPFAMolecules
     integer :: S                        ! Sideband index, for PFAtrees
@@ -486,7 +487,6 @@ contains ! =====     Public Procedures     =============================
     info%linearSideband = 0
     info%name = name
     info%no_cloud_species = 2
-    info%no_dup_mol = .false.
     info%no_model_surfs = 640
     info%num_ab_terms = 50
     info%num_azimuth_angles = 8
@@ -511,6 +511,7 @@ contains ! =====     Public Procedures     =============================
     info%tolerance = -1.0 ! Kelvins, in case the tolerance field is absent
     lblTrees = null_tree
     lineTrees = null_tree
+    no_dup_mol = .false.
     pfaTrees = null_tree
     do i = 2, nsons(root)
       son = subtree(i,root)
@@ -586,9 +587,7 @@ contains ! =====     Public Procedures     =============================
         call expr ( subtree(2,son), expr_units, value, type )
         info%no_model_surfs = nint( value(1) )
       case ( f_no_dup_mol )
-        info%no_dup_mol = get_boolean(son)
-!         call output('Setting no_dup_mol: ', advance='no')
-!         call output(info%no_dup_mol, advance='yes')
+        no_dup_mol = get_boolean(son)
       case ( f_nscatteringangles )
         call expr ( subtree(2,son), expr_units, value, type )
         info%NUM_SCATTERING_ANGLES = nint( value(1) )
@@ -767,7 +766,7 @@ contains ! =====     Public Procedures     =============================
             &  info%beta_group(b)%lbl(1)%molecules(j) ) then
             call announceError ( duplicateMolecule, moleculeTree, &
               what=info%beta_group(b)%lbl(1)%molecules(i), &
-              warn=.not. info%no_dup_mol)
+              warn=.not. no_dup_mol)
           end if
         end do
         ! Now in other groups
@@ -777,7 +776,7 @@ contains ! =====     Public Procedures     =============================
               &  info%beta_group(k)%lbl(1)%molecules(j) ) then
               call announceError ( duplicateMolecule, moleculeTree, &
                 what=info%beta_group(b)%lbl(1)%molecules(i), &
-                warn=.not. info%no_dup_mol )
+                warn=.not. no_dup_mol )
             end if
           end do
         end do
@@ -1358,6 +1357,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.132  2006/06/03 01:46:20  vsnyder
+! Remove no_dup_mol flag from config structure
+!
 ! Revision 2.131  2006/05/11 19:37:32  pwagner
 ! Added option to disallow duplicate molecules
 !
