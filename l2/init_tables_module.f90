@@ -992,7 +992,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_destroy, &
              begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
              begin, f+f_vector, s+s_vector, n+n_field_spec, &
-             ndp+n_spec_def /) )
+             np+n_spec_def /) )
     call make_tree( (/ &
       begin, s+s_transfer, &
              begin, f+f_source, s+s_vector, nr+n_field_spec, &
@@ -1462,6 +1462,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.439  2006/06/03 01:43:10  vsnyder
+! Allow duplicate fields on destroy command
+!
 ! Revision 2.438  2006/06/01 03:06:18  vsnyder
 ! Define numGrad and numNewt
 !
