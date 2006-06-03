@@ -1956,7 +1956,7 @@ NEWT: do ! Newtonian iteration
             aj%fnorm = sqrt(aj%fnorm)
               if ( d_sca ) &
                 & call dump ( (/ aj%fnorm, aj%chiSqNorm /) , &
-                & '     | F |       chi^2/n ', clean=.true. )
+                & '     | F |    chi^2/DOF ', clean=.true. )
             exit
           end if
           aj%diag = minDiag ( factored ) ! element on diagonal with
@@ -2555,6 +2555,9 @@ NEWT: do ! Newtonian iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.273  2006/06/03 01:04:59  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.272  2006/06/03 00:15:20  vsnyder
 ! Correct updating of Levenberg-Marquardt parameter during More' and
 ! Sorensen iteration.  Polish up some dumps.
