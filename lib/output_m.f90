@@ -313,7 +313,8 @@ contains
 
     my_dont_log = SKIPMLSMSGLOGGING ! .false.
     if ( present(dont_log) ) my_dont_log = dont_log
-    n_stamp = len(chars) + len_trim(stamped_chars) - len_trim(chars)
+    n_stamp = len_trim(stamped_chars)
+    if ( my_adv == 'no' ) n_stamp = n_stamp + len(chars) - len_trim(chars)
     ! Special case: if chars is blank (chars are blank?)
     ! we'll want to print anyway
     if ( len_trim(chars) < 1 ) n_stamp = max(n_stamp, 1)
@@ -1125,6 +1126,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.49  2006/06/03 00:17:29  vsnyder
+! Eliminate trailing blanks sometimes
+!
 ! Revision 2.48  2006/02/21 19:08:36  pwagner
 ! Removed two unused declarations
 !
