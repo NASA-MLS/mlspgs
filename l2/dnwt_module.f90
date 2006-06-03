@@ -519,7 +519,8 @@ contains
       aj%dxbad = aj%dxfail
       aj%kfail = 0
       fnl = c0
-      inc = -1
+      inc = -1 ! Starting
+!     inc = 0  ! Pretend we're at a "best"
       iter = 0
       itken = 0
       kb = 2
@@ -629,7 +630,7 @@ contains
       gradn = aj%gradn   ! L2 norm of gradient
       if ( gradn <= c0 ) then
          gradn = c1
-         if ( ajn <= c0) ajn = c1
+         if ( ajn <= c0 ) ajn = c1
       end if
       condai = max(min(condai, diag/ajn), (diag/ajn)**2)
       spact = cp25*condai
@@ -662,9 +663,9 @@ contains
 
 ! New best X
 
-      if (aj%kfail /= 0) then
-         if (kb == 0) then ! Got new best immediately
-            if (aj%dxn >= 0.9_rk * aj%dxbad) then
+      if ( aj%kfail /= 0 ) then
+         if ( kb == 0 ) then ! Got new best immediately
+            if ( aj%dxn >= 0.9_rk * aj%dxbad ) then
                aj%dxbad = aj%dxbad * (1.25_rk ** aj%kfail)
                aj%dxfail = aj%dxbad
                aj%kfail = aj%kfail + 1
@@ -699,7 +700,7 @@ contains
 
   460 if ( inc == 0 ) then
         tp = fn - (c1+relsf)*fnmin
-        if ( (tp < c0) .and. &
+        if ( (tp < c0 ) .and. &
            & ( (sq == c0) .or. (spl <= spmini) .or. &
            &   (tp <= -(c1+relsf)*spl*fn) ) ) go to 465
       end if
@@ -718,7 +719,7 @@ contains
 
       if ( fn**2 < 1.125_rk * fnxe ) then ! F appears almost linear.
         spfac = cp125*(c1p025-cdxdxl)*tp**2
-        if ( spl <= spinc) spinc = cp25*spinc
+        if ( spl <= spinc ) spinc = cp25*spinc
         dxi = min(dxi,cp25)
       else ! F not linear over last step
       ! spfac = tp*(fn**2)/fnxe
@@ -734,7 +735,7 @@ contains
       spl = sp
       sq = sp*ajn
       aj%sqt = sq
-      if ( sp < spact) sq = sqmin
+      if ( sp < spact .and. inc >= 0 ) sq = sqmin
       gradnl = gradn
 
 ! Do Levenberg-Marquardt stabilization, solve for "Candidate DX"
@@ -753,7 +754,7 @@ contains
       cgdx = aj%gdx/(gradn*dxn) ! Cosine ( gradient, dx )
       condai = min(cgdx, gradn/(dxn*ajn**2), diag/ajn)
       fnxe = fnmin**2
-      if ( sq /= c0) fnxe = fnxe - (sq*dxn)**2
+      if ( sq /= c0 ) fnxe = fnxe - (sq*dxn)**2
       if ( inc < 0 ) then
         if ( dxn <= dxinc ) then
           inc = incbig
@@ -794,20 +795,20 @@ contains
 !  The last Marquardt parameter used was SQ, which means that SQ**2 was
 !  added to the diagonal of the normal equations.  A little bit of 
 !  derivation so you have some idea of what is going on.  Start with
-!%
+!
 !  $({\bf H} + \lambda {\bf I}) {\delta\bf x} = -{\bf g}$,
-!%
+!
 !  where ${\bf H}$ is the Hessian matrix.  In our case, ${\bf A}^T {\bf A}$
 !  is an approximate Hessian.  Differentiating both sides with respect to
 !  $\lambda$ gives
-!%
+!
 !  $({\bf H} + \lambda {\bf I}) \frac{\text{d}{\delta\bf x}}{\text{d}\lambda}
 !  = -{\delta\bf x}$.
-!%
+!
 !  Or, using the Cholesky factor of $({\bf H} + \lambda {\bf I})$, we have
 !  ${\bf U}^T {\bf U} \frac{\text{d}{\delta\bf x}}{\text{d}\lambda} =
 !  -{\delta\bf x}$.
-!%
+!
 !  The ${\bf q}$ we want is ${\bf U}^{-T} {\delta\bf x}$.  Thus from
 !  $\frac{\text{d}{\delta\bf x}}{\text{d}\lambda}^T {\bf U}^T {\bf U}
 !   \frac{\text{d}{\delta\bf x}}{\text{d}\lambda}
@@ -889,7 +890,7 @@ contains
             nflag = ifl
             return
          end if
-         if ( itken < iter) cait = tp
+         if ( itken < iter ) cait = tp
       end if
 
 ! End of logic for Aitken acceleration
@@ -1008,14 +1009,14 @@ contains
         select case ( ka )
 !****************** Change *DATA* values *******************
         case ( 1, 2 ) ! Set K1IT
-          if ( k > 0) iopts(ka) = nopt(i+1)
+          if ( k > 0 ) iopts(ka) = nopt(i+1)
           k1it = max(iopts(1),iopts(2))
         case ( 3, 4, 7, 8 ) ! Change XSCAL and FSCAL indexes in data
                             ! or set up bounds option in data
-          if ( k > 0) iopts(ka) = nopt(i+1)
+          if ( k > 0 ) iopts(ka) = nopt(i+1)
         case ( 5, 6 ) ! Set flags in data for reverse communi-
                       ! cation and special matrix operations
-          if ( k > 0) iopts(ka) = 1
+          if ( k > 0 ) iopts(ka) = 1
           i = i - 1
         case ( 9, 10 ) ! Set to default values
           iopts = 0
@@ -1025,7 +1026,7 @@ contains
         case ( 11:19 ) ! Set in data SPSTRT, SPMINI, AJSCAL,
                        ! DXMAXI, RELSF, and DXNOIS
           values(ka-10) = valnom(ka-10) ! Reset to nominal value
-          if ( k > 0) & ! If indicated, set to user input value
+          if ( k > 0 ) & ! If indicated, set to user input value
             values(ka-10) = xopt(nopt(i+1))
         case default
           indic = 1
@@ -1345,6 +1346,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.44  2006/06/03 00:15:59  vsnyder
+! Respect initial Levenberg-Marquardt parameter
+!
 ! Revision 2.43  2006/05/30 22:44:36  vsnyder
 ! Handle Newton moves after gradient moves better
 !
