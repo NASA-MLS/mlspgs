@@ -1169,7 +1169,7 @@ contains
       use ForwardModelWrappers, only: ForwardModel
       use ForwardModelIntermediate, only: ForwardModelIntermediate_T, &
         & ForwardModelStatus_T
-      use MatrixModule_0, only: Dump
+      use MatrixModule_0, only: Dump ! The one from MatrixModule_1 ought to work ???
       use MatrixModule_1, only: AddToMatrix, CholeskyFactor, ClearMatrix, &
         & ColumnScale, CopyMatrixValue, CreateEmptyMatrix, &
         & DestroyMatrix, Dump, Dump_Linf, Dump_struct, &
@@ -1238,7 +1238,8 @@ contains
                                         ! normal equations if an averaging kernel
                                         ! is requested.
       type(matrix_T), target :: KTKStar ! The kTkStar contrbution to the averaging
-                                        
+      real(rk) :: Lambda                ! Levenberg-Marquardt stabilization
+                                        ! last applied to normal equations
       integer :: LATESTMAFSTARTED       ! For FWMParallel stuff
       integer :: LoopCounter            ! Abandon after 50 * maxJ loop iterations
       integer, dimension(2) :: MATRIXSTATUS ! Flag from matrix calculations
@@ -1407,11 +1408,9 @@ NEWT: do ! Newtonian iteration
             if ( nwt_flag == nf_getJ ) theFlagName = 'GETJ'
             call output ( 'Newton method flag = ' )
             call output ( trim(theFlagName) )
-            call output ( ', numJ = ' )
-            call output ( numJ )
-            call output ( ' at ' )
+            call output ( numJ, before=', numJ = ' )
             call time_now ( t3 )
-            call output ( t3-t0, advance='yes' )
+            call output ( t3-t0, advance='yes', before=' at ', after=' seconds' )
           end if
           if ( nwt_flag == nf_evalj .and. prev_nwt_flag == nf_evalf ) then
             prev_nwt_flag = nf_evalj
@@ -1487,12 +1486,12 @@ NEWT: do ! Newtonian iteration
             if ( d_xvec ) call dump ( v(x), details=2, name='State' )
           if ( numJ > maxJacobians .and. nwt_flag /= nf_getJ ) then
               if ( d_nwt ) then
-                call output ( &
+                call output ( numJ, before= &
                   & 'Newton iteration terminated because Jacobian evaluations (' )
-                call output ( numJ )
-                call output ( ') > maxJacobians (' )
-                call output ( maxJacobians )
-                call output ( ')', advance='yes' )
+                call output ( maxJacobians, before=') > maxJacobians (', &
+                  & after=')', advance='yes' )
+                call time_now ( t3 )
+                call output ( t3-t0, before=' at ', after=' seconds', advance='yes' )
             if ( .not. foundBetterState ) exit
               end if
             ! Restore BestX, run the forward model one more time to get a new
@@ -1505,6 +1504,7 @@ NEWT: do ! Newtonian iteration
             nwt_flag = nf_getJ
           end if
 
+          lambda = 0.0
           update = got(f_apriori)
           if ( update ) then ! start normal equations with apriori
             ! Destroy (i.e. clean up) the previous contents of
@@ -1926,10 +1926,15 @@ NEWT: do ! Newtonian iteration
             call add_to_retrieval_timing ( 'cholesky_factor', t1 )
           if ( any ( matrixStatus /= 0 ) ) then
             abandoned = .true.
-            call dump ( matrixStatus, 'matrixStatus' )
-            if ( d_mst ) &
-              & call dump ( normalEquations%m%block(matrixStatus(1),matrixStatus(1)), &
+            call dump ( matrixStatus, 'matrixStatus [block, row in trouble] = ' )
+            if ( d_mst ) then
+              call dump ( normalEquations%m%block(matrixStatus(1),matrixStatus(1)), &
               & name='Offending block', details=9 )
+              call dump ( v(columnScaleVector), name='Column scale', details=9 )
+              call dump ( v(x), name='Current state', details=9 )
+              if ( got(f_lowBound) ) call dump ( lowBound, name='Low Bound', details=9 )
+              if ( got(f_highBound) ) call dump ( highBound, name='High Bound', details=9 )
+            end if
             call MLSMessage ( MLSMSG_Warning, ModuleName, &
               & 'Retrieval abandoned due to problem factoring normalEquations in evalJ' )
             exit NEWT
@@ -1965,7 +1970,15 @@ NEWT: do ! Newtonian iteration
             if ( d_dvec ) call dump ( v(candidateDX), name='CandidateDX' )
           if ( any ( matrixStatus /= 0 ) ) then
             abandoned = .true.
-            call dump ( matrixStatus, 'matrixStatus' )
+            call dump ( matrixStatus, 'matrixStatus [block, row in trouble] = ' )
+            if ( d_mst ) then
+              call dump ( normalEquations%m%block(matrixStatus(1),matrixStatus(1)), &
+              & name='Offending block', details=9 )
+              call dump ( v(columnScaleVector), name='Column scale', details=9 )
+              call dump ( v(x), name='Current state', details=9 )
+              if ( got(f_lowBound) ) call dump ( lowBound, name='Low Bound', details=9 )
+              if ( got(f_highBound) ) call dump ( highBound, name='High Bound', details=9 )
+            end if
             call MLSMessage ( MLSMSG_Warning, ModuleName, &
               & 'Retrieval abandoned due to problem solving normalEquations in evalJ' )
             exit
@@ -1975,21 +1988,21 @@ NEWT: do ! Newtonian iteration
           ! {\bf S}_m^{-1} {\bf J \Sigma \Sigma}^{-1} {\bf \delta \hat x} +
           ! {\bf \Sigma}^T {\bf J}^T {\bf S}_m^{-1} {\bf f}||$ where
           ! $\bf\delta \hat x$ is the ``Candidate DX'' that may not get
-          ! used. This can be gotten without saving $\bf J$ as ${\bf \hat f}^T
-          ! {\bf \hat f} - {\bf y}^T {\bf y}$ where ${\bf\hat f} = {\bf
-          ! \Sigma}^T {\bf J}^T {\bf S}_m^{-1} {\bf f}$ and ${\bf y} = {\bf
-          ! U}^{-T} {\bf \hat f}$. The variable {\tt candidateDX} is a
-          ! temp here = $\bf y$.
+          ! used. This can be gotten without saving $\bf J$ as ${\bf f}^T
+          ! {\bf f} - {\bf v}^T {\bf v}$ where ${\bf v} = {\bf U}^{-T}
+          ! {\bf \Sigma}^T {\bf J}^T {\bf S}_m^{-1} {\bf f}$. The variable
+          ! {\tt candidateDX} is a temp here = $\bf v$.  See {\bf wvs-011}
+          ! for derivation.
           aj%fnmin = aj%fnorm - (v(candidateDX) .dot. v(candidateDX))
           if ( aj%fnmin < 0.0 ) then
-            call output ( 'How can aj%fnmin be negative?  aj%fnmin = ' )
-            call output ( aj%fnmin, advance='yes' )
-            call output ( 'aj%fnorm = ' )
-            call output ( aj%fnorm, advance='yes' )
-            call output ( 'norm(candidateDX) = ' )
-            call output ( v(candidateDX) .dot. v(candidateDX), advance='yes' )
-            call MLSMessage ( MLSMSG_Warning, ModuleName, &
-              & 'Norm of residual is imaginary!' )
+            call output ( aj%fnmin, before='How can aj%fnmin be negative?  aj%fnmin = ', &
+              & advance='yes' )
+            call output ( aj%fnorm, before='aj%fnorm**2 = ', advance='yes' )
+            call output ( v(candidateDX) .dot. v(candidateDX), &
+              & before='norm(candidateDX)**2 = ', advance='yes' )
+            if ( aj%fnmin < -10.0 * aj%fnorm * sqrt(epsilon(aj%fnorm)) ) &
+              & call MLSMessage ( MLSMSG_Warning, ModuleName, &
+                & "Norm of residual not in Jacobian's column space is imaginary!" )
             aj%fnmin = tiny ( aj%fnmin )
           end if
           ! Compute number of rows of Jacobian actually used.  Don't count
@@ -2019,10 +2032,10 @@ NEWT: do ! Newtonian iteration
           aj%gradn = sqrt(v(gradient) .dot. v(gradient)) ! L2Norm(gradient)
             if ( d_sca ) then
               call dump ( (/ aj%fnorm, aj%ajn, aj%diag, aj%fnmin, aj%gradn /), &
-                & '     | F |       L1| FAC |     aj%diag        aj%fnmin       | G |', &
+                & '     | F |      L1| FAC |      aj%diag      aj%fnmin         | G |', &
                 & clean=.true. )
               call dump ( (/ aj%chiSqNorm, aj%chiSqMinNorm /), &
-                & '  chi^2/n      chimin^2/n ', clean=.true. )
+                & ' chi^2/DOF  chimin^2/DOF ', clean=.true. )
             end if
         case ( nf_lev ) ! ..................................  LEV  .....
         ! Solve U^T q = dx, then compute ||q||**2, which is used to
@@ -2031,7 +2044,7 @@ NEWT: do ! Newtonian iteration
             & transpose=.true., status=matrixStatus ) ! q := factored^{-T} v(candidateDX)
           if ( any ( matrixStatus /= 0 ) ) then
             abandoned = .true.
-            call dump ( matrixStatus, 'matrixStatus' )
+            call dump ( matrixStatus, 'matrixStatus [block, row in trouble] = ' )
             call MLSMessage ( MLSMSG_Warning, ModuleName, &
               & 'Retrieval abandoned due to problem solving for q in levenberg' )
             exit
@@ -2047,12 +2060,12 @@ NEWT: do ! Newtonian iteration
         ! ${\bf \Sigma}^{-1} {\bf \delta \hat x}$.  Set
         ! \begin{description}
         !   \item[AJ\%FNMIN] as for NWT\_FLAG = NF\_EVALJ, but taking
-        !     account of Levenberg-Marquardt stabilization.  Actually,
-        !     we don't have to compute this, because we did it at NF\_EVALF;
+        !     account of Levenberg-Marquardt stabilization;
         !   \item[AJ\%DXN] = L2 norm of ``candidate DX'';
         !   \item[AJ\%GDX] = (Gradient) .dot. (``candidate DX'')
         ! \end{description}
-          call updateDiagonal ( normalEquations, aj%sq**2 )
+          call updateDiagonal ( normalEquations, aj%sq**2 - lambda**2 )
+          lambda = aj%sq
           ! factored%m%block => normalEquations%m%block ! to save space
           ! Can't do the above because we need to keep the normal equations
           ! around, in order to subtract Levenberg-Marquardt and apriori
@@ -2070,7 +2083,15 @@ NEWT: do ! Newtonian iteration
             call add_to_retrieval_timing( 'cholesky_factor', t1 )
           if ( any ( matrixStatus /= 0 ) ) then
             abandoned = .true.
-            call dump ( matrixStatus, 'matrixStatus' )
+            call dump ( matrixStatus, 'matrixStatus [block, row in trouble] = ' )
+            if ( d_mst ) then
+              call dump ( normalEquations%m%block(matrixStatus(1),matrixStatus(1)), &
+              & name='Offending block', details=9 )
+              call dump ( v(columnScaleVector), name='Column scale', details=9 )
+              call dump ( v(x), name='Current state', details=9 )
+              if ( got(f_lowBound) ) call dump ( lowBound, name='Low Bound', details=9 )
+              if ( got(f_highBound) ) call dump ( highBound, name='High Bound', details=9 )
+            end if
             call MLSMessage ( MLSMSG_Warning, ModuleName, &
               & 'Retrieval abandoned due to problem factoring normal equations in solve' )
             exit
@@ -2097,9 +2118,9 @@ NEWT: do ! Newtonian iteration
             call add_to_retrieval_timing( 'cholesky_solver', t1 )
           if ( any ( matrixStatus /= 0 ) ) then
             abandoned = .true.
-            call dump ( matrixStatus, 'matrixStatus' )
+            call dump ( matrixStatus, 'matrixStatus [block, row in trouble] = ' )
             call MLSMessage ( MLSMSG_Warning, ModuleName, &
-              & 'Retrieval abandoned due to problem solving aTb in solve' )
+              & 'Retrieval abandoned due to problem solving for aTb in solve' )
             exit
           end if
 
@@ -2124,14 +2145,14 @@ NEWT: do ! Newtonian iteration
           end if
 
           if ( aj%fnmin < 0.0 ) then
-            call output ( 'How can aj%fnmin be negative?  aj%fnmin = ' )
-            call output ( aj%fnmin, advance='yes' )
-            call output ( 'aj%fnorm**2 = ' )
-            call output ( aj%fnorm**2, advance='yes' )
-            call output ( 'norm(candidateDX) = ' )
-            call output ( v(candidateDX) .dot. v(candidateDX), advance='yes' )
-            call MLSMessage ( MLSMSG_Warning, ModuleName, &
-              & "Norm of residual not in Jacobian's column space is imaginary!" )
+            call output ( aj%fnmin, before='How can aj%fnmin be negative?  aj%fnmin = ', &
+              & advance='yes' )
+            call output ( aj%fnorm**2, before='aj%fnorm**2 = ', advance='yes' )
+            call output ( v(candidateDX) .dot. v(candidateDX), &
+              & before='norm(candidateDX)**2 = ', advance='yes' )
+            if ( aj%fnmin < -10.0 * aj%fnorm * sqrt(epsilon(aj%fnorm)) ) &
+              & call MLSMessage ( MLSMSG_Warning, ModuleName, &
+                & "Norm of residual not in Jacobian's column space is imaginary!" )
             aj%fnmin = tiny ( aj%fnmin )
           end if
           aj%fnmin = sqrt(aj%fnmin)
@@ -2139,7 +2160,7 @@ NEWT: do ! Newtonian iteration
           call solveCholesky ( factored, v(candidateDX), status=matrixStatus )
           if ( any ( matrixStatus /= 0 ) ) then
             abandoned = .true.
-            call dump ( matrixStatus, 'matrixStatus' )
+            call dump ( matrixStatus, 'matrixStatus [block, row in trouble] = ' )
             call MLSMessage ( MLSMSG_Warning, ModuleName, &
               & 'Retrieval abandoned due to problem solving normal equations in solve' )
             exit
@@ -2175,9 +2196,9 @@ NEWT: do ! Newtonian iteration
               cosine = -2.0_r8
               if ( aj%dxn > 0.0_r8 .and. aj%gradn > 0.0_r8 ) &
                 cosine = aj%gdx/(aj%dxn*aj%gradn)
-              call dump ( (/ aj%dxn, aj%fnmin, cosine, aj%sq /), &
+              call dump ( (/ aj%dxn, aj%fnmin, cosine, aj%sq, mu /), &
                 & '    | DX |      aj%fnmin    ' // &
-                & 'cos(G, DX)        lambda', clean=.true. )
+                & 'cos(G, DX)        lambda            mu', clean=.true. )
               if ( .not. aj%starting ) then
                 call output ( ' cos(DX, DXL) = ' )
                 cosine = -2.0_r8
@@ -2307,10 +2328,9 @@ NEWT: do ! Newtonian iteration
           end if
           if ( .not. got(f_apriori) .or. .not. diagonal ) then
               if ( d_nwt ) then
-                call output ( &
-                  & 'Newton iteration terminated because of convergence at ' )
                 call time_now ( t3 )
-                call output ( t3-t0, advance='yes' )
+                call output ( t3-t0, after=' seconds', advance='yes', &
+                  & before='Newton iteration terminated because of convergence at ' )
               end if
             nwt_flag = nf_getJ
             if ( ( got(f_outputCovariance) .or. got(f_outputSD) .or. &
@@ -2381,16 +2401,14 @@ NEWT: do ! Newtonian iteration
           stop
         end if
           if ( d_cov ) then
-            call output ( 'Begin covariance calculation at ' )
             call time_now ( t3 )
-            call output ( t3-t0, advance='yes' )
-            call output ( 'Counted ' )
-            call output ( jacobian_rows )
-            call output ( ' rows and ' )
-            call output ( jacobian_cols )
-            call output ( ' in the Jacobian matrix at ' )
+            call output ( t3-t0, before='Begin covariance calculation at ', &
+              & after=' seconds', advance='yes' )
+            call output ( jacobian_rows, before='Counted ' )
+            call output ( jacobian_cols, before=' rows and ' )
             call time_now ( t3 )
-            call output ( t3-t0, advance='yes' )
+            call output ( t3-t0, before=' in the Jacobian matrix at ', &
+              & after=' seconds', advance='yes' )
           end if
           call time_now ( t1 )
         call createEmptyMatrix ( temp, 0, state, state )
@@ -2408,9 +2426,9 @@ NEWT: do ! Newtonian iteration
             call output ( 'Computed ' )
             if ( .not. any ( got ( (/ f_outputCovariance, f_average /) ) ) ) &
               & call output ( 'diagonal blocks of ' )
-            call output ( 'U^{-1} U^{-T} at ' )
             call time_now ( t3 )
-            call output ( t3-t0, advance='yes' )
+            call output ( t3-t0, before='U^{-1} U^{-T} at ', after=' seconds', &
+              & advance='yes' )
           end if
         call destroyMatrix ( temp )
         call add_to_retrieval_timing( 'cholesky_invert', t1 )
@@ -2419,9 +2437,9 @@ NEWT: do ! Newtonian iteration
           call columnScale ( outputCovariance%m, v(columnScaleVector) )
           call rowScale ( v(columnScaleVector), outputCovariance%m )
             if ( d_cov ) then
-              call output ( 'Scaled the Covariance matrix at ' )
               call time_now ( t3 )
-              call output ( t3-t0, advance='yes' )
+              call output ( t3-t0, before='Scaled the Covariance matrix at ', &
+                & after=' seconds', advance='yes' )
             end if
         end if
         outputCovariance%m%name = preserveMatrixName
@@ -2537,6 +2555,10 @@ NEWT: do ! Newtonian iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.272  2006/06/03 00:15:20  vsnyder
+! Correct updating of Levenberg-Marquardt parameter during More' and
+! Sorensen iteration.  Polish up some dumps.
+!
 ! Revision 2.271  2006/05/31 18:22:26  pwagner
 ! Fixed bug only NAG complained about: needed Dump from MatrixModule_0
 !
