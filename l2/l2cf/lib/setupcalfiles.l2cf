@@ -45,6 +45,9 @@
 !ifdef(spectroscopyL2cf, {}, {
 !define(spectroscopyL2cf, {!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v2-0-6_0000d000.l2cf})
 })
+!ifdef(spectroscopyFullL2cf, {}, {
+!define(spectroscopyFullL2cf, {!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy_v2-0-6_0000d000.l2cf})
+})
 !ifdef(spectroscopyRtvlL2cf, {}, {
 !define(spectroscopyRtvlL2cf,{!spectroscopyL2cf})
 })
@@ -103,13 +106,16 @@
   '!pfaPath/PFAData_R1B_v2-0-5.h5', $
   '!pfaPath/PFAData_R2_v2-0-5.h5', $
   '!pfaPath/PFAData_R3_v2-0-5.h5', $
-  '!pfaPath/PFAData_R4_v2-0-5.h5', $
+  '!pfaPath/PFAData_R4_v2-0-6.h5', $
   '!pfaPath/PFAData_R5H_v2-0-5.h5',$
   '!pfaPath/PFAData_R5V_v2-0-5.h5',$
   '!pfaPath/PFAData_DACS_v2-0-5.h5']})
   })
 })
 ;$Log$
+;Revision 1.33  2006/05/31 02:02:05  lambert
+;updated spectroscopy file to v2-0-6
+;
 ;Revision 1.32  2006/05/26 16:51:39  lambert
 ;updated climatology file to v1-7-3
 ;
