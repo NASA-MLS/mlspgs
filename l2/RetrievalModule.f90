@@ -188,9 +188,10 @@ contains
     integer :: Status
     real :: T0, T1, T2, T3              ! for timing
     type(matrix_T) :: Tikhonov          ! Matrix for Tikhonov regularization
-    logical :: TikhonovApriori          ! Regularization is to aproiri, not
+    logical :: TikhonovApriori          ! Regularization is to apriori, not
                                         ! zero -- default false
     logical :: TikhonovBefore           ! "Do Tikhonov before column scaling"
+    logical :: TikhonovNeeded           ! got(f_hRegOrders) .or. got(f_vRegOrders)
     logical :: Timing
     double precision :: ToleranceA      ! convergence tolerance for NWT,
                                         ! norm of move
@@ -336,6 +337,7 @@ contains
         parallelMode = parallel%fwmParallel .and. parallel%master
         tikhonovApriori = .false.
         tikhonovBefore = .true.
+        tikhonovNeeded = .false.
         nullify ( vRegWeightVec )
         do i_key = 2, nsons(key) ! fields of the "retrieve" specification
           son = subtree(i_key, key)
@@ -376,6 +378,7 @@ contains
             highBound => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_hRegOrders )
             hRegOrders = son
+            tikhonovNeeded = .true.
           case ( f_hRegQuants )
             hRegQuants = son
           case ( f_hRegWeights )
@@ -440,6 +443,7 @@ contains
             end select
           case ( f_vRegOrders )
             vRegOrders = son
+            tikhonovNeeded = .true.
           case ( f_vRegQuants )
             vRegQuants = son
           case ( f_vRegWeights )
@@ -568,7 +572,7 @@ contains
 
           ! Create the matrix for adding the Tikhonov regularization to the
           ! normal equations
-          if ( got(f_hRegOrders) .or. got(f_vRegOrders) ) then
+          if ( tikhonovNeeded ) then
             call createEmptyMatrix ( tikhonov, 0, state, state, text='_Tikhonov' )
             k = addToMatrixDatabase( matrixDatabase, tikhonov )
           end if
@@ -1269,7 +1273,7 @@ contains
       integer :: T                      ! Which Tikhonov: 1 -> V, 2 -> H
       real :: T1
       type(matrix_T) :: Temp            ! Because we can't do X := X * Y
-      type(matrix_cholesky_T) :: TempC   ! For negateSD caseXoXo
+      type(matrix_cholesky_T) :: TempC  ! For negateSD caseXoXo
       character(len=10) :: TheFlagName  ! Name of NWTA's flag argument
       integer :: TikhonovRows           ! How many rows of Tiknonov regularization?
 
@@ -1504,8 +1508,12 @@ NEWT: do ! Newtonian iteration
             ! a posteriori covariance is consistent with BestX.
             aj = bestAJ
             call copyVector ( v(x), v(bestX) ) ! x := bestX
+            ! Do we need to get a fresh Jacobian, uncontaminated by Tikhonov
+            ! regularization and Levenberg-Marquardt stabilization, in order
+            ! to compute a posteriori covariance or standard deviation, or
+            ! an averaging kernel?
             if ( .not. (got(f_outputCovariance) .or. got(f_outputSD) .or. &
-              & got(f_average)) ) exit
+              &         got(f_average)) ) exit ! no
             nwt_flag = nf_getJ
           end if
 
@@ -1586,8 +1594,7 @@ NEWT: do ! Newtonian iteration
           end if
 
           ! Add Tikhonov regularization if requested.
-          if ( (got(f_hRegOrders) .or. got(f_vRegOrders)) .and. &
-            & tikhonovBefore .and. &
+          if ( tikhonovNeeded .and. tikhonovBefore .and. &
             & ( ( nwt_flag /= nf_getj ) .or. .not. covSansReg ) ) then
               call add_to_retrieval_timing( 'newton_solver', t1 )
 
@@ -1784,8 +1791,7 @@ NEWT: do ! Newtonian iteration
           ! place (roughly) on the column-scaled problem, and if scaling by
           ! the column norm is requested, it's still makes the column norms
           ! all 1.0.
-          if ( (got(f_hRegOrders) .or. got(f_vRegOrders)) .and. &
-            & .not. tikhonovBefore .and. &
+          if ( tikhonovNeeded .and. .not. tikhonovBefore .and. &
             & ( ( nwt_flag /= nf_getj ) .or. .not. covSansReg ) ) then
               call add_to_retrieval_timing( 'newton_solver', t1 )
 
@@ -2027,8 +2033,7 @@ NEWT: do ! Newtonian iteration
           if ( got(f_apriori) ) &
             & jacobian_rows = jacobian_rows + jacobian_cols
           ! Correct for Tikhonov information.
-          if ( any ( got( (/f_hRegOrders, f_vRegOrders /) ) ) ) &
-            & jacobian_rows = jacobian_rows + tikhonovRows
+          if ( tikhonovNeeded ) jacobian_rows = jacobian_rows + tikhonovRows
           ! Compute the normalised chiSquared statistics etc.
           aj%chiSqMinNorm = aj%fnmin / max ( jacobian_rows - jacobian_cols, 1 )
           aj%chiSqNorm = aj%fnorm / max ( jacobian_rows - jacobian_cols, 1 )
@@ -2341,16 +2346,23 @@ NEWT: do ! Newtonian iteration
             call copyVector ( v(x), v(bestX) )
             aj = bestAJ
           end if
-          if ( .not. got(f_apriori) .or. .not. diagonal ) then
+          if ( .not. (got(f_apriori) .and. diagonal) ) then
               if ( d_nwt ) then
                 call time_now ( t3 )
                 call output ( t3-t0, after=' seconds', advance='yes', &
                   & before='Newton iteration terminated because of convergence at ' )
               end if
             nwt_flag = nf_getJ
-            if ( ( got(f_outputCovariance) .or. got(f_outputSD) .or. &
-              &  got(f_average) ) .and. nwt_flag == nf_tolx_best ) cycle
-            exit
+            ! Do we need to get a fresh Jacobian, uncontaminated by Tikhonov
+            ! regularization and Levenberg-Marquardt stabilization, in order
+            ! to compute a posteriori covariance or standard deviation, or
+            ! an averaging kernel?
+            if ( ( got(f_outputCovariance) .or. got(f_outputSD) .or.  &
+              &    got(f_average) ) .and.                             &
+              &  ( nwt_flag == nf_tolx_best .or.                      &
+              &    nwt_flag == nf_tolx .and. aj%sq /= 0.0 .or.        &
+              &    tikhonovNeeded .and. covSansReg ) ) cycle ! yes
+            exit ! no
           end if
           diagonal = .false.
           nwt_flag = nf_start
@@ -2571,6 +2583,9 @@ NEWT: do ! Newtonian iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.276  2006/06/06 18:54:21  vsnyder
+! Sharpen criteria for fresh Jacobian at the end
+!
 ! Revision 2.275  2006/06/06 00:51:23  vsnyder
 ! Move diagnostic output from NEWX to DX, DX_Aitken, and GMOVE
 !
