@@ -1159,8 +1159,8 @@ contains
     ! ------------------------------------------  NewtonianSolver  -----
     subroutine NewtonianSolver
 
-      use DNWT_Module, only: FlagName, NF_AITKEN, NF_BEST, NF_DX, &
-      & NF_DX_AITKEN, NF_EVALF, NF_EVALJ, NF_FANDJ, NF_GMOVE, NF_LEV, &
+      use DNWT_Module, only: FlagName, NF_AITKEN, NF_BEST, NF_BIGGEST_FLAG, &
+      & NF_DX, NF_DX_AITKEN, NF_EVALF, NF_EVALJ, NF_FANDJ, NF_GMOVE, NF_LEV, &
       & NF_NEWX, NF_SMALLEST_FLAG, NF_SOLVE, NF_START, NF_TOLX, NF_TOLF, &
       & NF_TOLX_BEST, NF_TOO_SMALL, NWT_T, RK
       use DNWT_Module, only: NWT, NWTA, NWTDB, NWTOP
@@ -1246,6 +1246,7 @@ contains
       real(rv) :: MU                    ! Move Length = scale for DX
       integer, parameter :: NF_GetJ = NF_Smallest_Flag - 1 ! Take an extra loop
                                         ! to get J.
+      integer, parameter :: NF_Too_Many = NF_Biggest_Flag + 1 ! Max iterations
       type(matrix_SPD_T), target :: NormalEquations  ! Jacobian**T * Jacobian
       integer :: NumGrad                ! Number of gradient moves
       integer :: NumJ                   ! Number of Jacobian evaluations
@@ -1398,7 +1399,11 @@ NEWT: do ! Newtonian iteration
             & 'Retrieval abandoned because DNWT appears to be looping.' )
           exit
         end if
-        if ( nwt_flag /= nf_getJ ) then ! not taking a special iteration to get J
+        if ( nwt_flag == nf_getJ ) then
+          if ( got(f_diagnostics) ) call FillDiagVec ( diagnostics, aj, &
+            & numGrad=numGrad, numJ=numJ, numNewt=numNewt, nwt_flag=nwt_flag, &
+            & jacobian_rows=jacobian_rows, jacobian_cols=jacobian_cols )
+        else ! not taking a special iteration to get J
             if ( d_nin ) & ! Turn on NWTA's internal output
               & call nwtop ( (/ 1, 1, 0 /), nwt_xopt )
           call nwta ( nwt_flag, aj )
@@ -1492,8 +1497,8 @@ NEWT: do ! Newtonian iteration
                   & after=')', advance='yes' )
                 call time_now ( t3 )
                 call output ( t3-t0, before=' at ', after=' seconds', advance='yes' )
-            if ( .not. foundBetterState ) exit
               end if
+            if ( .not. foundBetterState ) exit
             ! Restore BestX, run the forward model one more time to get a new
             ! Jacobian, and form normal equations -- the last two so that the
             ! a posteriori covariance is consistent with BestX.
@@ -2322,6 +2327,9 @@ NEWT: do ! Newtonian iteration
           ! END IF
           ! Convergence to desired solution.  Do whatever you want to
           ! with the solution.
+          if ( got(f_diagnostics) ) call FillDiagVec ( diagnostics, aj, &
+            & numGrad=numGrad, numJ=numJ, numNewt=numNewt, nwt_flag=nwt_flag, &
+            & jacobian_rows=jacobian_rows, jacobian_cols=jacobian_cols )
           if ( nwt_flag == nf_tolx_best ) then
             call copyVector ( v(x), v(bestX) )
             aj = bestAJ
@@ -2369,8 +2377,9 @@ NEWT: do ! Newtonian iteration
           end if
         end if
 
-      if ( got(f_diagnostics) ) call FillDiagVec ( diagnostics, aj, &
-        & numGrad=numGrad, numJ=numJ, numNewt=numNewt, nwt_flag=nwt_flag, &
+      if ( got(f_diagnostics) .and. numJ > maxJacobians ) &
+        & call FillDiagVec ( diagnostics, aj, &
+        & numGrad=numGrad, numJ=numJ, numNewt=numNewt, nwt_flag=nf_too_many, &
         & jacobian_rows=jacobian_rows, jacobian_cols=jacobian_cols )
 
       if ( abandoned ) then
@@ -2555,6 +2564,9 @@ NEWT: do ! Newtonian iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.274  2006/06/06 00:31:20  vsnyder
+! Add more diagnostic output
+!
 ! Revision 2.273  2006/06/03 01:04:59  vsnyder
 ! Cannonball polishing
 !
