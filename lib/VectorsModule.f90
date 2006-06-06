@@ -1259,7 +1259,7 @@ contains ! =====     Public Procedures     =============================
     if ( .not. associated ( vectorQuantity%mask ) ) then
       call output ( ' has no mask.', advance='yes' )
     else
-      call output ( '', advance='yes' )
+      call newLine
       do i = 1, vectorQuantity%template%noInstances
         call output ( 'Instance: ' )
         call output ( i, advance='yes' )
@@ -1271,7 +1271,7 @@ contains ! =====     Public Procedures     =============================
           w = 13
           do c = 1, vectorQuantity%template%noChans
             if ( w > 74 ) then
-              call output ( '', advance='yes' )
+              call newLine
               call output ( '      ' )
               w = 6
             end if
@@ -1280,7 +1280,7 @@ contains ! =====     Public Procedures     =============================
             call output ( ichar(vectorQuantity%mask(j,i)), &
               & format='(z3.2)' )
           end do
-          call output ( '', advance='yes' )
+          call newLine
         end do                        ! Surface loop
       end do                          ! Instance loop
     end if                            ! Has a mask
@@ -1548,7 +1548,7 @@ contains ! =====     Public Procedures     =============================
       call newLine
       call dump ( qty%values, '  Elements = ', clean=clean )
       if ( associated(qty%mask) ) then
-        call dump ( ichar(qty%mask), name='Mask=', &
+        call dump ( ichar(qty%mask), name='  Mask =', &
           & format='(z3.2)', width = 20 )
 !           call dumpQuantityMask ( qty )
       else
@@ -2446,6 +2446,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.122  2006/05/23 21:43:34  vsnyder
+! Add CLEAR option to some dumps
+!
 ! Revision 2.121  2006/03/22 02:16:28  vsnyder
 ! Add Vector argument to DumpVectorQuantity just to get its name
 !
