@@ -77,6 +77,7 @@ fwdModelStdDev
 fractional
 full_derivatives
 
+geos5
 gloria
 gridded
 gphPrecision
@@ -164,6 +165,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.57  2006/06/06 21:55:48  pwagner
+# May specify geos5 apriori files instead of dao (geos4)
+#
 # Revision 2.56  2006/05/27 02:58:25  vsnyder
 # add numGrad and numNewt
 #
