@@ -456,7 +456,7 @@ contains ! =====     Public procedures     =============================
              l+l_clear_110rh_below_tropopause, l+l_cloudy_110rh_below_top, &
              l+l_cloudy_110rh_in_cloud, l+l_cloudy_nearside_only, n+n_dt_def /) )
     call make_tree ( (/ &
-      begin, t+t_griddedOrigin, l+l_climatology, l+l_dao, l+l_ncep, &
+      begin, t+t_griddedOrigin, l+l_climatology, l+l_dao, l+l_geos5, l+l_ncep, &
              l+l_strat, l+l_gloria, n+n_dt_def, &
       begin, t+t_hGridType, l+l_explicit, l+l_fixed, l+l_fractional, &
              l+l_height, l+l_regular, l+l_l2gp, n+n_dt_def, &
@@ -1462,6 +1462,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.440  2006/06/06 21:55:48  pwagner
+! May specify geos5 apriori files instead of dao (geos4)
+!
 ! Revision 2.439  2006/06/03 01:43:10  vsnyder
 ! Allow duplicate fields on destroy command
 !
