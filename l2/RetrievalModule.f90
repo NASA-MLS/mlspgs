@@ -2229,9 +2229,6 @@ NEWT: do ! Newtonian iteration
           !{Account for column scaling.  We solved for $\mathbf{\Sigma^{-1}
           ! \delta x}$ above, so multiply by $\Sigma$ (which is our
           ! variable {\tt columnScaleVector}):
-          if ( got(f_diagnostics) ) call FillDiagVec ( diagnostics, aj, &
-            & numGrad=numGrad, numJ=numJ, numNewt=numNewt, nwt_flag=nwt_flag, &
-            & jacobian_rows=jacobian_rows, jacobian_cols=jacobian_cols )
           call copyVector ( v(dxUnScaled), v(dx) ) ! dxUnscaled = dx
           if ( columnScaling /= l_none ) then
             ! dxUnScaled = dxUnScaled # columnScaleVector:
@@ -2273,6 +2270,9 @@ NEWT: do ! Newtonian iteration
         ! Set X = "Best X"
         !     DX = AJ%GFAC * "Best Gradient"
           numGrad = numGrad + 1
+          if ( got(f_diagnostics) ) call FillDiagVec ( diagnostics, aj, &
+            & numGrad=numGrad, numJ=numJ, numNewt=numNewt, nwt_flag=nwt_flag, &
+            & jacobian_rows=jacobian_rows, jacobian_cols=jacobian_cols )
           call copyVector ( v(x), v(bestX) ) ! x = bestX
           if ( .not. aj%starting ) aj%dxdxl = &
             & aj%gfac * ( v(dx) .dot. v(bestGradient) )
@@ -2311,10 +2311,17 @@ NEWT: do ! Newtonian iteration
             end if
         case ( nf_dx ) ! ....................................  DX  .....
           numNewt = numNewt + 1
+          if ( got(f_diagnostics) ) call FillDiagVec ( diagnostics, aj, &
+            & numGrad=numGrad, numJ=numJ, numNewt=numNewt, nwt_flag=nwt_flag, &
+            & jacobian_rows=jacobian_rows, jacobian_cols=jacobian_cols )
           if ( .not. aj%starting ) aj%dxdxl = v(dx) .dot. v(candidateDX)
           call copyVector ( v(dx), v(candidateDX) ) ! dx = candidateDX
         case ( nf_dx_aitken ) ! ......................  DX_AITKEN  .....
           ! dx = aj%cait * candidateDX:
+          numNewt = numNewt + 1
+          if ( got(f_diagnostics) ) call FillDiagVec ( diagnostics, aj, &
+            & numGrad=numGrad, numJ=numJ, numNewt=numNewt, nwt_flag=nwt_flag, &
+            & jacobian_rows=jacobian_rows, jacobian_cols=jacobian_cols )
           call scaleVector ( v(candidateDX), aj%cait, v(dx) )
             if ( d_sca ) then
               call output ( ' aj%cait = ' )
@@ -2564,6 +2571,9 @@ NEWT: do ! Newtonian iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.275  2006/06/06 00:51:23  vsnyder
+! Move diagnostic output from NEWX to DX, DX_Aitken, and GMOVE
+!
 ! Revision 2.274  2006/06/06 00:31:20  vsnyder
 ! Add more diagnostic output
 !
