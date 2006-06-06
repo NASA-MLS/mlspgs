@@ -17,7 +17,7 @@ module ReadAPriori
   use INIT_TABLES_MODULE, only: F_AURAINSTRUMENT, F_DIMLIST, F_FIELD, F_FILE, &
     & F_HDFVERSION, F_missingValue, F_ORIGIN, F_SDNAME, F_SWATH, &
     & FIELD_FIRST, FIELD_LAST, L_CLIMATOLOGY, L_DAO, L_NCEP, S_GRIDDED, &
-    & L_GLORIA, L_STRAT, S_L2AUX, S_L2GP, F_QUANTITYTYPE
+    & L_GLORIA, L_STRAT, L_GEOS5, S_L2AUX, S_L2GP, F_QUANTITYTYPE
   use Intrinsic, only: l_ascii, l_grid, l_hdf, l_swath, PHYQ_Dimensionless
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: FileNameLen, MLSFile_T
@@ -35,6 +35,7 @@ module ReadAPriori
     & mlspcf_l2dao_start, mlspcf_l2dao_end, &
     & mlspcf_l2clim_start, mlspcf_l2clim_end
   use MLSStringLists, only: catLists
+  use MLSStrings, only: lowercase
   use MoreTree, only: Get_Spec_ID
   use OUTPUT_M, only: BLANKS, OUTPUT, revertoutput, switchOutput
   use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS
@@ -53,6 +54,8 @@ module ReadAPriori
   private ::  announce_error
   integer, private :: ERROR
   integer, private, parameter :: MAXNUMFILES = 10
+  integer, private, parameter :: mlspcf_geos5_start = mlspcf_l2ncep_start
+  integer, private, parameter :: mlspcf_geos5_end   = mlspcf_l2ncep_end
 
    ! What a priori files did we read? 
   type APrioriFiles_T
@@ -60,6 +63,7 @@ module ReadAPriori
     character (len=MAXNUMFILES*FileNameLen) :: l2aux = ''
     character (len=MAXNUMFILES*FileNameLen) :: ncep = ''
     character (len=MAXNUMFILES*FileNameLen) :: dao = ''
+    character (len=MAXNUMFILES*FileNameLen) :: geos5 = ''
   end type APrioriFiles_T
 
   type (APrioriFiles_T), save :: APrioriFiles
@@ -87,7 +91,7 @@ contains ! =====     Public Procedures     =============================
     & fileDataBase)
 
   use ChunkDivide_m, only: ChunkDivideConfig
-  use GriddedData, only: rgr, GriddedData_T, v_is_pressure, &
+  use GriddedData, only: rgr, GriddedData_T, V_is_eta, v_is_pressure, &
     & AddGriddedDataToDatabase, Dump, SetupNewGriddedData
   use L2AUXData, only: L2AUXData_T, AddL2AUXToDatabase, &
     &                  ReadL2AUXData, Dump
@@ -138,6 +142,7 @@ contains ! =====     Public Procedures     =============================
     integer :: LastAprioriPCF      ! l2gp or l2aux  apriori
     integer :: LastClimPCF         ! l3ascii or gloria format
     integer :: LastDAOPCF
+    integer :: LastGEOS5PCF
     integer :: LastNCEPPCF
     integer :: LISTSIZE                 ! Size of string from SWInqSwath
     real(rgr) ::    missingValue = 0.
@@ -158,6 +163,7 @@ contains ! =====     Public Procedures     =============================
     integer :: Type                     ! Type of value returned by EXPR
     integer :: Units(2)                 ! Units of value returned by EXPR
     double precision :: Value(2)        ! Value returned by EXPR
+    integer :: v_type                   ! E.g., v_is_eta
 
     character(len=MAXSWATHNAMESBUFSIZE) :: ALLSWATHNAMES ! Buffer to get info back.
     character(len=8) :: description
@@ -185,6 +191,7 @@ contains ! =====     Public Procedures     =============================
     lastClimPCF = mlspcf_l2clim_start - 1
     lastDAOPCF = mlspcf_l2dao_start - 1
     lastNCEPPCF = mlspcf_l2ncep_start - 1
+    lastGEOS5PCF = mlspcf_geos5_start - 1
 
     do i = 2, nsons(root)-1 ! Skip the section name at begin and end
       hdfVersion = DEFAULT_HDFVERSION_READ
@@ -464,7 +471,7 @@ contains ! =====     Public Procedures     =============================
             call announce_success(FilenameString, 'ncep not found--carry on', &                    
                & fieldNameString, MLSFile=GriddedFile)
           endif
-        case ( l_dao ) ! ---------------------------- DAO Data
+        case ( l_dao ) ! ---------------------------- GMAO Data (GEOS4)
           if ( TOOLKIT .and. got(f_file) ) then
             call split_path_name(FileNameString, path, SubString)
             LastDAOPCF = GetPCFromRef(SubString, mlspcf_l2dao_start, &
@@ -497,8 +504,21 @@ contains ! =====     Public Procedures     =============================
           ! so it can be merged w/o segment faulting
           gridIndex = AddGriddedDataToDatabase( GriddedDatabase, GriddedData1 )
           call decorate ( key, gridIndex )
+
+          ! We will decide whether it's geos4 or geos5 based on the field name
+          select case ( lowercase(fieldNameString) )
+          case ( 'tmpu' )
+            description = 'dao'
+            v_type = v_is_pressure
+          case ( 'pl', 't' )
+            description = 'geos5'
+            v_type = V_is_eta
+          case default
+            description = 'geos5'
+            v_type = V_is_eta
+          end select
           if ( returnStatus == PGS_S_SUCCESS) then
-            call ReadGriddedData ( GriddedFile, son, 'dao', v_is_pressure, &
+            call ReadGriddedData ( GriddedFile, son, description, v_type, &
               & GriddedDatabase(gridIndex), returnStatus, &
               & dimListString, TRIM(fieldNameString), &
               & missingValue )
@@ -509,9 +529,77 @@ contains ! =====     Public Procedures     =============================
             if(index(switches, 'pro') /= 0) &
               & call announce_success(FilenameString, 'dao', &                    
                & fieldNameString, MLSFile=GriddedFile)    
-            apriorifiles%dao = catlists(apriorifiles%dao, trim(FilenameString))
+            if ( description == 'dao' ) then
+              apriorifiles%dao = catlists(apriorifiles%dao, trim(FilenameString))
+            else
+              apriorifiles%geos5 = catlists(apriorifiles%geos5, trim(FilenameString))
+            endif
           else
             call announce_success(FilenameString, 'dao not found--carry on', &                    
+               & fieldNameString, MLSFile=GriddedFile)
+          endif
+        case ( l_geos5 ) ! ---------------------------- GMAO Data (GEOS5)
+          if ( TOOLKIT .and. got(f_file) ) then
+            call split_path_name(FileNameString, path, SubString)
+            LastGEOS5PCF = GetPCFromRef(SubString, mlspcf_geos5_start, &
+            & mlspcf_geos5_end, &                                     
+            & TOOLKIT, returnStatus, l2apriori_Version, DEBUG, &  
+            & exactName=FileNameString)                             
+          elseif ( TOOLKIT ) then
+            do pcf_indx = LastGEOS5PCF+1, mlspcf_geos5_end
+              returnStatus = Pgs_pc_getReference(pcf_indx, L2apriori_version, &
+                & fileNameString)
+              if ( returnStatus == PGS_S_SUCCESS) exit
+            end do
+            if ( returnStatus /= PGS_S_SUCCESS ) then
+              call announce_success('geos5', 'no entry in PCF',  ' ')
+            else
+              LastGEOS5PCF = pcf_indx
+            end if
+          endif
+          gridIndex = InitializeMLSFile(GriddedFile, content = 'gridded', &
+            & name=FilenameString, shortName=shortFileName, &
+            & type=l_grid, access=DFACC_RDONLY, hdfVersion=HDFVERSION_4, &
+            & PCBottom=mlspcf_geos5_start, PCTop=mlspcf_geos5_end)
+          GriddedFile%PCFId = LastGEOS5PCF
+          gridIndex = AddFileToDataBase(filedatabase, GriddedFile)
+          ! The gridded data needs to part of the database, even if the file
+          ! won't be found and the gridded data empty,
+          ! so it can be merged w/o segment faulting
+          gridIndex = AddGriddedDataToDatabase( GriddedDatabase, GriddedData1 )
+          call decorate ( key, gridIndex )
+
+          ! We will decide whether it's geos4 or geos5 based on the field name
+          select case ( lowercase(fieldNameString) )
+          case ( 'tmpu' )
+            description = 'dao'
+            v_type = v_is_pressure
+          case ( 'pl', 't' )
+            description = 'geos5'
+            v_type = V_is_eta
+          case default
+            description = 'geos5'
+            v_type = V_is_eta
+          end select
+          if ( returnStatus == PGS_S_SUCCESS) then
+            call ReadGriddedData ( GriddedFile, son, description, v_type, &
+              & GriddedDatabase(gridIndex), returnStatus, &
+              & dimListString, TRIM(fieldNameString), &
+              & missingValue )
+          else
+            call SetupNewGriddedData ( GriddedDatabase(gridIndex), empty=.true. )
+          endif
+          if ( returnStatus == 0 ) then
+            if(index(switches, 'pro') /= 0) &
+              & call announce_success(FilenameString, 'geos5', &                    
+               & fieldNameString, MLSFile=GriddedFile)    
+            if ( description == 'dao' ) then
+              apriorifiles%dao = catlists(apriorifiles%dao, trim(FilenameString))
+            else
+              apriorifiles%geos5 = catlists(apriorifiles%geos5, trim(FilenameString))
+            endif
+          else
+            call announce_success(FilenameString, 'geos5 not found--carry on', &                    
                & fieldNameString, MLSFile=GriddedFile)
           endif
         case ( l_gloria ) ! ------------------------- Data in Gloria's UARS format
@@ -841,6 +929,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.66  2006/06/06 21:56:52  pwagner
+! May specify geos5 apriori files instead of dao (geos4)
+!
 ! Revision 2.65  2006/04/10 23:45:18  pwagner
 ! Reset defaults in read_apriori, not ChunkDivide
 !
