@@ -374,7 +374,6 @@ contains
 ! C1       Constant 1
 ! C10      Constant 10
 ! C100     Constant 100
-! C1P025   Constant 1.025
 ! C1PXM4   Constant 1.E-4
 ! C4       Constant 4
 ! CAIT     Candidate factor for Aitken acceleration
@@ -478,7 +477,6 @@ contains
     real(rk), parameter :: C1 = 1.0_rk
     real(rk), parameter :: C10 = 10.0_rk
     real(rk), parameter :: C100 = 100.0_rk
-    real(rk), parameter :: C1P025 = 1.025_rk
     real(rk), parameter :: C1PXM4 = 1.0E-4_rk
     real(rk), parameter :: C4 = 4.0_rk
     real(rk), parameter :: CBIG = huge(1.0_rk)
@@ -550,31 +548,38 @@ contains
           if ( (max(tp, sql) <= sqmin) .and. &
                ((fn*(fn/fnl)**2) > fnb) .and. (cdxdxl >= cp25) ) go to 222
         end if
-        go to 219
-      end if
+      else ! ( fn >= fnl )
 
-! Test for convergence
+! FNL will have been set to zero if there are four consecutive gradient moves
+! Test for X convergence
 
-      if ( x_converge() ) return
-      if ( inc >= 0 ) then ! We are not starting
-        if ( inc == 0 ) then ! Last X == Best X
-          dxnbig = max(dxnl, dxnois)
-          
-        else      ! inc > 0 -- Last X not Best X
-          if ( kb == 0 ) then
-            if ( fn < fnb ) then
-               gfac = -gfac
-               if ( gfac >=  0 ) go to 927
+        if ( x_converge() ) return
+        if ( inc >= 0 ) then ! We are not starting
+          if ( inc == 0 ) then ! Last X == Best X
+            dxnbig = max(dxnl, dxnois)
+
+          else      ! inc > 0 -- Not starting, Last X not Best X
+            if ( kb == 0 ) then
+              if ( fn < fnb ) then
+                gfac = -gfac
+                if ( gfac >=  0 ) then
+                  ! Error processing
+                  call ermsg ( me, 2, 0, 'J or F may be in error', '.' )
+                  nfl = nf_fandj
+                  nflag = nfl
+                  return
+                end if
+              end if
+              go to 228
             end if
-            go to 228
+            if ( dxnl <= dxnois ) go to 219 ! Last Newton move tiny?
+            if ( kb < 0 ) go to 224 ! Gradient move last time?
+            if ( (tp >= min(sql,sqb+sqb)) .or. (inc >= incbig) ) go to 222
           end if
-          if ( dxnl <= dxnois ) go to 219
-          if ( kb < 0 ) go to 224
-          if ( (tp >= min(sql,sqb+sqb)) .or. (inc >= incbig) ) go to 222
+          sqmin = min(sqb, max(spl, spact)*ajn*c4)
+          dxinc = max(dxnl*cp5, dxnois)
+          inc = inc + 1
         end if
-        sqmin = min(sqb, max(spl, spact)*ajn*c4)
-        dxinc = max(dxnl*cp5, dxnois)
-        inc = inc + 1
       end if
 
   219 sql = tp
@@ -589,7 +594,7 @@ contains
       aj%dxfail = 0.125_rk * aj%dxbad
       aj%kfail = 1
   224 kb = kb - 1
-      if ( kb == (-4) ) then ! Four consecutive gradient moves !
+      if ( kb <= (-4) ) then ! Four consecutive gradient moves !
 
 ! Test if Jacobian matrix is being computed properly
 
@@ -718,7 +723,7 @@ contains
 ! Test if F appears almost linear over last step
 
       if ( fn**2 < 1.125_rk * fnxe ) then ! F appears almost linear.
-        spfac = cp125*(c1p025-cdxdxl)*tp**2
+        spfac = cp125*(1.025_rk-cdxdxl)*tp**2
         if ( spl <= spinc ) spinc = cp25*spinc
         dxi = min(dxi,cp25)
       else ! F not linear over last step
@@ -756,10 +761,10 @@ contains
       fnxe = fnmin**2
       if ( sq /= c0 ) fnxe = fnxe - (sq*dxn)**2
       if ( inc < 0 ) then
-        if ( dxn <= dxinc ) then
+        if ( dxn <= dxinc ) then ! Move length OK?
           inc = incbig
-          cdxdxl = c0
-          go to 735
+          cdxdxl = c0 ! Don't think about Aitken
+          go to 735   ! Go save best X, then use Newton's DX
         end if
       else
         cdxdxl = aj%dxdxl/(dxn*dxnl)
@@ -780,7 +785,7 @@ contains
         end if
       end if
 
-! Step length is too large or too small
+! Newton step length is too large or too small
 
       if ( k1it /= 0 ) call nwtdb ( width=9, level=0, why='Step length' )
 
@@ -930,18 +935,11 @@ contains
       axmax = aj%axmax
       go to 20
 
-  870 if ( (inc > 0) .and. (kb /= 0) ) go to 222
+  870 if ( (inc > 0) .and. (kb /= 0) ) go to 222 ! Go do gradient move
 
 ! Convergence -- move too small
 
       nfl = nf_too_small
-      nflag = nfl
-      return
-
-! Error processing
-
-  927 call ermsg ( me, 2, 0, 'J or F may be in error', '.' )
-      nfl = nf_fandj
       nflag = nfl
       return
 
@@ -1346,6 +1344,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.45  2006/06/06 15:22:51  vsnyder
+! Some code restructuring and commenting
+!
 ! Revision 2.44  2006/06/03 00:15:59  vsnyder
 ! Respect initial Levenberg-Marquardt parameter
 !
