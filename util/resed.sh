@@ -298,9 +298,11 @@ then
   new_slashed=`echo "$new_string" | grep '/'`
   if [ "$old_slashed" = "" -a "$new_slashed" = "" ]
   then
-    the_opt='s/'$old_string'/'$new_string'/'
+    the_command='s/'$old_string'/'$new_string'/'
+    # the_opt='s/'$old_string'/'$new_string'/'
   else
-    the_opt='s:'$old_string':'$new_string':'
+    the_command='s:'$old_string':'$new_string':'
+    # the_opt='s:'$old_string':'$new_string':'
   fi
 elif [ "$the_command" = "" ]
 then
@@ -455,6 +457,9 @@ do
 done                                                       
 exit
 # $Log$
+# Revision 1.7  2005/06/23 22:20:46  pwagner
+# Reworded Copyright statement
+#
 # Revision 1.6  2005/04/27 23:32:48  pwagner
 # Many new options
 #
