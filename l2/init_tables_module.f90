@@ -1288,6 +1288,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_serial, t+t_boolean, n+n_field_type, &
              begin, f+f_sparseQuantities, s+s_quantity, n+n_field_spec, &
              begin, f+f_state, s+s_vector, nr+n_field_spec, &
+             begin, f+f_switches, t+t_string, n+n_field_type, &
              begin, f+f_toleranceA, t+t_numeric, n+n_field_type, &
              begin, f+f_toleranceF, t+t_numeric, n+n_field_type, &
              begin, f+f_toleranceR, t+t_numeric, n+n_field_type, &
@@ -1462,6 +1463,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.441  2006/06/08 23:54:51  vsnyder
+! Add switches field to retrieve
+!
 ! Revision 2.440  2006/06/06 21:55:48  pwagner
 ! May specify geos5 apriori files instead of dao (geos4)
 !
