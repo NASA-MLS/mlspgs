@@ -54,7 +54,7 @@ contains
       & F_outputCovariance, F_outputSD, &
       & F_phaseName, F_precisionFactor, &
       & F_regAfter, F_regApriori, F_serial, F_SparseQuantities, &
-      & F_state, F_toleranceA, F_toleranceF, &
+      & F_state, F_switches, F_toleranceA, F_toleranceF, &
       & F_toleranceR, f_vRegOrders, f_vRegQuants, &
       & f_vRegWeights, f_vRegWeightVec, Field_first, Field_last, &
       & L_apriori, L_covariance, &
@@ -171,6 +171,7 @@ contains
     type(matrix_SPD_T), target :: MyCovariance    ! for OutputCovariance to point at
     type(matrix_T), target :: MyJacobian          ! for Jacobian to point at
     real(rv) :: MuMin                   ! Smallest shrinking of dx before change direction
+    character(len=2*len(switches)) :: MySwitches
     logical :: NegateSD                 ! Flip output error negative for poor information
     type(matrix_T), pointer :: OutputAverage      ! Averaging Kernel
     type(matrix_SPD_T), pointer :: OutputCovariance    ! Covariance of the sol'n
@@ -239,7 +240,8 @@ contains
     integer, parameter :: BadOpticalDepthQuantities = BadOpticalDepthSignal + 1
     ! Only one of two required fields supplied
     integer, parameter :: BothOrNeither = BadOpticalDepthQuantities + 1
-    integer, parameter :: IfAThenB = BothOrNeither + 1
+    integer, parameter :: DiagNoCov = BothOrNeither + 1
+    integer, parameter :: IfAThenB = DiagNoCov + 1
     integer, parameter :: IfUnitsAThenB = IfAThenB + 1
     integer, parameter :: Inconsistent = IfUnitsAThenB + 1  ! Inconsistent fields
     integer, parameter :: InconsistentUnits = Inconsistent + 1
@@ -327,6 +329,7 @@ contains
         maxJacobians = defaultMaxJ
         method = defaultMethod
         muMin = defaultMuMin
+        mySwitches = ''
         negateSD = .false.
         precisionFactor = 0.5_rv
         toleranceA = defaultToleranceA
@@ -418,6 +421,8 @@ contains
             end do
           case ( f_state )
             state => vectorDatabase(decoration(decoration(subtree(2,son))))
+          case ( f_switches )
+            call get_string ( sub_rosa(subtree(2,son)), mySwitches, strip=.true. )
           case ( f_aprioriScale, f_fuzz, f_lambda, f_maxJ, f_muMin, &
             &    f_toleranceA, f_toleranceF, f_toleranceR )
             call expr ( subtree(2,son), units, value, type )
@@ -455,8 +460,11 @@ contains
           end select
         end do ! i_key = 2, nsons(key)
 
+        mySwitches = trim(mySwitches) // ',' // switches
         if ( got(f_apriori) .neqv. got(f_covariance) ) &
           & call announceError ( bothOrNeither, f_apriori, f_covariance )
+        if ( diagonal .and. .not. got(f_covariance) ) &
+          & call announceError ( diagNoCov )
         if ( got(f_regApriori) .and. .not. got(f_apriori) ) &
           & call announceError ( ifAThenB, f_regApriori, f_apriori )
         if ( got(f_hRegOrders) .neqv. &
@@ -505,7 +513,7 @@ contains
         end if
         if ( error == 0 ) then
 
-          if ( index ( switches, 'rtv' ) /= 0 ) call DumpRetrievalConfig
+          if ( index ( mySwitches, 'rtv' ) /= 0 ) call DumpRetrievalConfig
 
           ! Create the Jacobian matrix
           if ( got(f_jacobian) ) then
@@ -702,6 +710,9 @@ contains
         call output ( ' or ' )
         call display_string ( field_indices(anotherFieldIndex) )
         call output ( ' appears, but the other does not.', advance='yes' )
+      case ( diagNoCov )
+        call output ( 'If the diagonal field is true, covariance shall appear', &
+          & advance='yes' )
       case ( ifAThenB )
         call output ( 'If the ' )
         call display_string ( field_indices(fieldIndex) )
@@ -1277,33 +1288,33 @@ contains
       character(len=10) :: TheFlagName  ! Name of NWTA's flag argument
       integer :: TikhonovRows           ! How many rows of Tiknonov regularization?
 
-      ! Set flags from switches
-      d_atb = index ( switches, 'atb' ) /= 0
-      d_col = index(switches,'col') /= 0
-      d_cov = index(switches,'cov') /= 0
-      d_diag = index(switches,'diag') /= 0
-      d_dvec = index(switches,'dvec') /= 0
-      d_fac_f = index(switches,'FAC') /= 0
-      d_fac_n = index(switches,'fac') /= 0
-      d_fnorm = index ( switches, 'fnorm' ) /= 0
-      d_gvec = index(switches,'gvec') /= 0
-      d_jac_f = index(switches,'JAC') /= 0
-      d_jac_n = index(switches,'jac') /= 0
-      d_mas = index ( switches, 'mas' ) /= 0
-      d_mst = index(switches,'mst') /= 0
-      d_ndb_0 = index(switches,'ndb') /= 0
-      d_ndb_1 = index(switches,'Ndb') /= 0
-      d_ndb_2 = index(switches,'NDB') /= 0
-      d_neq_f = index(switches,'NEQ') /= 0
-      d_neq_n = index(switches,'neq') /= 0
-      d_nin = index(switches,'nin') /= 0
-      d_nwt = index(switches,'nwt') /= 0
-      d_reg = index(switches,'reg') /= 0
-      d_sca = index(switches,'sca') /= 0
-      d_spa = index(switches,'spa') /= 0
-      d_svec = index(switches,'svec') /= 0
-      d_vir = index(switches,'vir') /=0
-      d_xvec = index(switches,'xvec') /= 0
+      ! Set flags from mySwitches
+      d_atb = index ( mySwitches, 'atb' ) /= 0
+      d_col = index(mySwitches,'col') /= 0
+      d_cov = index(mySwitches,'cov') /= 0
+      d_diag = index(mySwitches,'diag') /= 0
+      d_dvec = index(mySwitches,'dvec') /= 0
+      d_fac_f = index(mySwitches,'FAC') /= 0
+      d_fac_n = index(mySwitches,'fac') /= 0
+      d_fnorm = index ( mySwitches, 'fnorm' ) /= 0
+      d_gvec = index(mySwitches,'gvec') /= 0
+      d_jac_f = index(mySwitches,'JAC') /= 0
+      d_jac_n = index(mySwitches,'jac') /= 0
+      d_mas = index ( mySwitches, 'mas' ) /= 0
+      d_mst = index(mySwitches,'mst') /= 0
+      d_ndb_0 = index(mySwitches,'ndb') /= 0
+      d_ndb_1 = index(mySwitches,'Ndb') /= 0
+      d_ndb_2 = index(mySwitches,'NDB') /= 0
+      d_neq_f = index(mySwitches,'NEQ') /= 0
+      d_neq_n = index(mySwitches,'neq') /= 0
+      d_nin = index(mySwitches,'nin') /= 0
+      d_nwt = index(mySwitches,'nwt') /= 0
+      d_reg = index(mySwitches,'reg') /= 0
+      d_sca = index(mySwitches,'sca') /= 0
+      d_spa = index(mySwitches,'spa') /= 0
+      d_svec = index(mySwitches,'svec') /= 0
+      d_vir = index(mySwitches,'vir') /=0
+      d_xvec = index(mySwitches,'xvec') /= 0
 
       call time_now ( t1 )
       call allocate_test ( fmStat%rows, jacobian%row%nb, 'fmStat%rows', &
@@ -1333,7 +1344,7 @@ contains
       call createEmptyMatrix ( kTkStar, &
         & enter_terminal ('_kTkStar', t_identifier), state, state )
       ! Create the vectors we need.
-      call copyVector ( v(x), state, vectorNameText='_x', clone=.true. ) ! x := state
+      call copyVector ( v(x), state, vectorNameText='_x', clone=.true. ) ! x = state
       call cloneVector ( v(aTb), v(x), vectorNameText='_ATb' )
       call cloneVector ( v(bestGradient), v(x), vectorNameText='_bestGradient' )
       call cloneVector ( v(bestX), v(x), vectorNameText='_bestX' )
@@ -1392,7 +1403,7 @@ contains
         end if
         call add_to_retrieval_timing( 'newton_solver', t1 )
 
-      call copyVector ( v(bestX), v(x) ) ! bestX := x to start things off
+      call copyVector ( v(bestX), v(x) ) ! bestX = x to start things off
       prev_nwt_flag = huge(0)
       loopCounter = 0
 NEWT: do ! Newtonian iteration
@@ -1507,7 +1518,7 @@ NEWT: do ! Newtonian iteration
             ! Jacobian, and form normal equations -- the last two so that the
             ! a posteriori covariance is consistent with BestX.
             aj = bestAJ
-            call copyVector ( v(x), v(bestX) ) ! x := bestX
+            call copyVector ( v(x), v(bestX) ) ! x = bestX
             ! Do we need to get a fresh Jacobian, uncontaminated by Tikhonov
             ! regularization and Levenberg-Marquardt stabilization, in order
             ! to compute a posteriori covariance or standard deviation, or
@@ -1586,9 +1597,8 @@ NEWT: do ! Newtonian iteration
             end if
           else
             aj%fnorm = 0.0_r8
-            if ( d_fnorm ) then
-              call output ( 'No a priori so setting | F | to zero.', advance='yes' )
-            end if
+            if ( d_fnorm ) &
+              & call output ( 'No a priori so setting | F | to zero.', advance='yes' )
             call clearMatrix ( normalEquations%m ) ! start with zero
             call clearVector ( v(aTb) ) ! Clear the RHS vector
           end if
@@ -1752,7 +1762,7 @@ NEWT: do ! Newtonian iteration
             ! ${\bf J}^T {\bf W}^T {\bf W J \delta \hat x} =
             ! {\bf J}^T {\bf S}_m^{-1} {\bf J \delta \hat x} =
             ! -{\bf J}^T {\bf W}^T {\bf W f} =
-            ! -{\bf J}^T {\bf S}_m^{-1} {\bf f}$:
+            ! -{\bf J}^T {\bf S}_m^{-1} {\bf f}$.
               call add_to_retrieval_timing( 'newton_solver', t1 )
             call formNormalEquations ( jacobian, kTk, rhs_in=v(f_rowScaled), &
               & rhs_out=v(aTb), update=update, useMask=.true. )
@@ -1904,8 +1914,8 @@ NEWT: do ! Newtonian iteration
             call columnScale ( normalEquations%m, v(columnScaleVector) )
             call rowScale ( v(columnScaleVector), normalEquations%m )
             call multiply ( v(aTb), v(columnScaleVector) )
-  
           end if
+
           !{The (negative of the) gradient $= -{\bf \Sigma}^T {\bf J}^T
           ! {\bf S}_m^{-1} {\bf f}$
           ! is the right-hand side of the normal equations.  Save it.
@@ -1917,9 +1927,10 @@ NEWT: do ! Newtonian iteration
             if ( d_gvec ) call dump ( v(gradient), name='gradient' )
           
           !{Compute the Cholesky factor of the LHS of the normal equations:
-          ! ${\bf U}^T {\bf U} {\bf \delta \hat x} = {\bf\Sigma}^T {\bf J}^T
-          ! {\bf S}_m^{-1} {\bf J \Sigma \Sigma}^{-1} {\bf \delta \hat x} =
-          ! -{\bf \Sigma}^T {\bf J}^T {\bf S}_m^{-1} {\bf f}$.
+          ! ${\bf U}^T {\bf U} {\bf \Sigma}^{-1} {\bf \delta \hat x} =
+          ! ({\bf\Sigma}^T {\bf J}^T {\bf S}_m^{-1} {\bf J \Sigma})
+          ! {\bf \Sigma}^{-1} {\bf \delta \hat x} = -{\bf \Sigma}^T {\bf J}^T
+          ! {\bf S}_m^{-1} {\bf f}$.
 
           ! factored%m%block => normalEquations%m%block ! to save space
           ! Can't do the above because we need to keep the normal
@@ -1975,6 +1986,11 @@ NEWT: do ! Newtonian iteration
           aj%ajn = maxL1 ( factored%m ) ! maximum L1 norm of
           !       column in upper triangle after triangularization
             call add_to_retrieval_timing ( 'newton_solver', t1 )
+
+          !{Solve ${\bf U}^T {\bf U} {\bf \Sigma}^{-1} {\bf \delta \hat x} =
+          ! -{\bf \Sigma}^T {\bf J}^T {\bf S}_m^{-1} {\bf f}$ for
+          ! ${\bf U} {\bf \Sigma}^{-1} {\bf \delta \hat x} = {\bf v}$.
+
           call solveCholesky ( factored, v(candidateDX), v(aTb), &
             & transpose=.true., status=matrixStatus )
             call add_to_retrieval_timing ( 'cholesky_solver', t1 )
@@ -1998,11 +2014,11 @@ NEWT: do ! Newtonian iteration
           !{AJ\%FNMIN = $L_2$ norm of residual, $||{\bf\Sigma}^T {\bf J}^T
           ! {\bf S}_m^{-1} {\bf J \Sigma \Sigma}^{-1} {\bf \delta \hat x} +
           ! {\bf \Sigma}^T {\bf J}^T {\bf S}_m^{-1} {\bf f}||$ where
-          ! $\bf\delta \hat x$ is the ``Candidate DX'' that may not get
-          ! used. This can be gotten without saving $\bf J$ as ${\bf f}^T
-          ! {\bf f} - {\bf v}^T {\bf v}$ where ${\bf v} = {\bf U}^{-T}
+          ! $\bf\delta \hat x$ is the ``Candidate DX'' that might not get
+          ! used. This can be gotten without saving $\bf J$ as $\sqrt{{\bf f}^T
+          ! {\bf f} - {\bf v}^T {\bf v}}$ where ${\bf v} = {\bf U}^{-T}
           ! {\bf \Sigma}^T {\bf J}^T {\bf S}_m^{-1} {\bf f}$. The variable
-          ! {\tt candidateDX} is a temp here = $\bf v$.  See {\bf wvs-011}
+          ! {\tt v(candidateDX)} is a temp here = $\bf v$.  See {\bf wvs-011}
           ! for derivation.
           aj%fnmin = aj%fnorm - (v(candidateDX) .dot. v(candidateDX))
           if ( aj%fnmin < 0.0 ) then
@@ -2041,15 +2057,16 @@ NEWT: do ! Newtonian iteration
           aj%fnorm = sqrt(aj%fnorm)
           aj%gradn = sqrt(v(gradient) .dot. v(gradient)) ! L2Norm(gradient)
             if ( d_sca ) then
-              call dump ( (/ aj%fnorm, aj%ajn, aj%diag, aj%fnmin, aj%gradn /), &
-                & '     | F |      L1| FAC |      aj%diag      aj%fnmin         | G |', &
+              call dump ( (/ aj%fnorm, aj%fnmin, aj%diag, aj%ajn, aj%gradn /), &
+                & '     | F |      aj%fnmin       aj%diag      L1| FAC |        | G |', &
                 & clean=.true. )
               call dump ( (/ aj%chiSqNorm, aj%chiSqMinNorm /), &
                 & ' chi^2/DOF  chimin^2/DOF ', clean=.true. )
             end if
         case ( nf_lev ) ! ..................................  LEV  .....
-        ! Solve U^T q = dx, then compute ||q||**2, which is used to
-        ! compute the Levenberg-Marquardt stabilization parameter.
+        !{Solve ${\bf U}^T {\bf q} = {\bf \delta \hat x}$, then compute
+        ! $||{\bf q}||^2$, which is used to compute the Levenberg-Marquardt
+        ! stabilization parameter.
           call solveCholesky ( factored, q, v(candidateDX), &
             & transpose=.true., status=matrixStatus ) ! q := factored^{-T} v(candidateDX)
           if ( any ( matrixStatus /= 0 ) ) then
@@ -2113,15 +2130,17 @@ NEWT: do ! Newtonian iteration
                 & 'Sparseness structure of blocks of factor:', upper=.true. )
             if ( d_fac_f ) call dump ( factored%m, &
                 & name='Factored, after Marquardt', details=2, clean=.true. )
-          !{Solve for ``candidate DX'' = ${\bf \delta \hat x} = -({\bf J}^T {\bf
-          ! J})^{-1} {\bf J}^T {\bf F} = -({\bf U}^T {\bf U})^{-1} {\bf J}^T 
-          ! {\bf F}$ using two back solves.  First solve ${\bf U}^T {\bf y} =
-          ! -{\bf J}^T {\bf F}$, then $\mathbf{U \delta \hat x}$ =
-          ! $\mathbf{y}$. Meanwhile, set AJ\%FNMIN as for NWT\_FLAG =
-          ! NF\_EVALJ, but taking account of Levenberg-Marquardt stabilization
-          ! (actually, ``taking account of Levenberg-Marquardt stabilization''
-          ! means ``not including Levenberg-Marquardt stabilization,'' which
-          ! is how we did it at NF\_EVALF, so we don't need to do it now).
+
+          !{Solve ${\bf U}^T {\bf U} {\bf \Sigma}^{-1} {\bf \delta \hat x} =
+          ! ({\bf\Sigma}^T {\bf J}^T {\bf S}_m^{-1} {\bf J \Sigma}) {\bf
+          ! \Sigma}^{-1} {\bf \delta \hat x} = -{\bf \Sigma}^T {\bf J}^T {\bf
+          ! S}_m^{-1} {\bf f}$ for ``candidate DX'' = ${\bf \Sigma}^{-1} {\bf
+          ! \delta \hat x}$ using two back solves.  First solve ${\bf U}^T {\bf v}
+          ! = -{\bf \Sigma}^T {\bf J}^T {\bf S}_m^{-1} {\bf f}$ for ${\bf v}$,
+          ! then solve ${\bf U \Sigma}^{-1} {\bf \delta \hat x}$ = ${\bf v}$ for
+          ! ${\bf \Sigma}^{-1} {\bf \delta \hat x}$. Meanwhile, set AJ\%FNMIN =
+          ! $\sqrt{{\bf f}^T {\bf f} - {\bf v}^T {\bf v}}$ as when NWT\_FLAG is
+          ! NF\_EVALJ, but taking account of Levenberg-Marquardt stabilization.
             call add_to_retrieval_timing( 'newton_solver', t1 )
           call solveCholesky ( factored, v(candidateDX), v(aTb), &
             & transpose=.true., status=matrixStatus ) ! v(candidateDX) := factored^{-T} v(aTb)
@@ -2176,11 +2195,13 @@ NEWT: do ! Newtonian iteration
             exit
           end if
 
-          ! Shorten candidateDX if necessary to stay within the bounds.
-          ! We aren't ready to take the move, but NWTA needs an accurate
-          ! value for the norm of candidateDX.
+          !{Shorten $\delta {\bf \hat x} =$ {\tt dxUnScaled} to stay within
+          ! the bounds. We aren't ready to take the move, but NWTA needs an
+          ! accurate value for the norm of {\tt candidateDX}.  We don't simply
+          ! put out-of-bounds variables onto their bounds, as this could
+          ! change the direction away from the Newton direction.
           call copyVector ( v(dxUnScaled), v(candidateDX) ) ! dxUnscaled = dx
-          if ( columnScaling /= l_none ) then
+          if ( columnScaling /= l_none ) then ! Scale into problem's space
             ! dxUnScaled = dxUnScaled # columnScaleVector:
             call multiply ( v(dxUnScaled), v(columnScaleVector) )
           end if
@@ -2191,13 +2212,7 @@ NEWT: do ! Newtonian iteration
             & call boundMove ( mu, highBound, v(x), v(dxUnScaled), 'high', muMin )
           ! dxUnScaled = mu * dxUnScaled -- may shorten vector in problem space
           call scaleVector ( v(dxUnScaled), mu )
-          if ( columnScaling /= l_none ) then
-            ! candidateDX = dxUnScaled / columnScaleVector -- Scale into solver's space
-            call divideVectors ( v(dxUnScaled), v(columnScaleVector), &
-              & v(candidateDX) )
-          else
-            call copyVector ( v(candidateDX), v(dxUnScaled) ) ! dx = dxUnscaled
-          end if
+          call scaleVector ( v(candidateDX), mu )
           aj%dxn = sqrt(v(candidateDX) .dot. v(candidateDX)) ! L2Norm(dx)
           aj%gdx = v(gradient) .dot. v(candidateDX)
           if ( .not. aj%starting ) aj%dxdxl = v(dx) .dot. v(candidateDX)
@@ -2231,15 +2246,16 @@ NEWT: do ! Newtonian iteration
         ! Set X = X + DX
         !     AJ%AXMAX = MAXVAL(ABS(X)),
         !     AJ%BIG = ANY ( DX > 10.0 * epsilon(X) * X )
-          !{Account for column scaling.  We solved for $\mathbf{\Sigma^{-1}
-          ! \delta x}$ above, so multiply by $\Sigma$ (which is our
-          ! variable {\tt columnScaleVector}):
-          call copyVector ( v(dxUnScaled), v(dx) ) ! dxUnscaled = dx
-          if ( columnScaling /= l_none ) then
-            ! dxUnScaled = dxUnScaled # columnScaleVector:
-            call multiply ( v(dxUnScaled), v(columnScaleVector) )
-          end if
-          ! Shorten dxUnscaled if necessary to stay within the bounds
+          !{Set $\delta {\bf x} := \delta {\bf \hat x}$ and then ${\bf x} :=
+          ! {\bf x} + \delta {\bf x}$.  We already accounted for column scaling
+          ! when a candidate Newton move or gradient move was put into {\tt
+          ! v(dxUnscaled)}, i.e., we're now dealing with $\delta {\bf \hat x}$,
+          ! not ${\bf \Sigma}^{-1} \delta {\bf \hat x}$. Shorten {\tt
+          ! dxUnscaled} if necessary to stay within the bounds.  We did this
+          ! when we solved for $\delta {\bf \hat x}$ as a Newton move because
+          ! DNWT needed the norm of the actual candidate move, but if this move
+          ! is a gradient or Aitken-accelerated move, we still need to stay in
+          ! bounds.
           mu = 1.0
           if ( got(f_lowBound) ) &
             & call boundMove ( mu, lowBound, v(x), v(dxUnscaled), 'low', muMin )
@@ -2281,15 +2297,20 @@ NEWT: do ! Newtonian iteration
           call copyVector ( v(x), v(bestX) ) ! x = bestX
           if ( .not. aj%starting ) aj%dxdxl = &
             & aj%gfac * ( v(dx) .dot. v(bestGradient) )
+          call copyVector ( v(dxUnscaled), v(bestGradient) ) ! dxUnscaled := bestGradient
+          if ( columnScaling /= l_none ) & ! dxUnscaled = bestGradient / scale
+            ! The saved gradient is in scaled coordinates.
+            ! Put it back into the problem coordinates.
+            & call multiply ( v(dxUnscaled), v(columnScaleVector) )
           ! dx = aj%gfac * "Best Gradient":
-          call scaleVector ( v(bestGradient), aj%gfac, v(dx) )
+          call scaleVector ( v(dxUnscaled), aj%gfac )
             if ( d_sca ) then
               call output ( ' aj%gfac = ' )
               call output ( aj%gfac, format='(1pe14.7)' )
               call output ( ' |DX| = ' )
               call output ( aj%gradnb * aj%gfac, advance='yes' )
             end if
-            if ( d_gvec ) call dump ( v(dx), name='Gradient move from best X' )
+            if ( d_gvec ) call dump ( v(dxUnscaled), name='Gradient move from best X' )
         case ( nf_best ) ! ................................  BEST  .....
         ! Set "Best X" = X, "Best Gradient" = Gradient
           foundBetterState = .true.
@@ -2321,13 +2342,18 @@ NEWT: do ! Newtonian iteration
             & jacobian_rows=jacobian_rows, jacobian_cols=jacobian_cols )
           if ( .not. aj%starting ) aj%dxdxl = v(dx) .dot. v(candidateDX)
           call copyVector ( v(dx), v(candidateDX) ) ! dx = candidateDX
+          ! v(dxUnscaled) was computed during nf_solve
         case ( nf_dx_aitken ) ! ......................  DX_AITKEN  .....
-          ! dx = aj%cait * candidateDX:
           numNewt = numNewt + 1
           if ( got(f_diagnostics) ) call FillDiagVec ( diagnostics, aj, &
             & numGrad=numGrad, numJ=numJ, numNewt=numNewt, nwt_flag=nwt_flag, &
             & jacobian_rows=jacobian_rows, jacobian_cols=jacobian_cols )
+          ! dx = aj%cait * dxUnscaled:
+          call scaleVector ( v(dxUnscaled), aj%cait, v(dx) )
           call scaleVector ( v(candidateDX), aj%cait, v(dx) )
+          ! We don't need to compute aj%dxdxl because we only take Aitken
+          ! accelerated moves when there is no Levenberg-Marquardt
+          ! stabilization, in which case NWTA doesn't use aj%dxdxl.
             if ( d_sca ) then
               call output ( ' aj%cait = ' )
               call output ( aj%cait, format='(1pe14.7)', advance='yes' )
@@ -2346,7 +2372,7 @@ NEWT: do ! Newtonian iteration
             call copyVector ( v(x), v(bestX) )
             aj = bestAJ
           end if
-          if ( .not. (got(f_apriori) .and. diagonal) ) then
+          if ( .not. diagonal ) then
               if ( d_nwt ) then
                 call time_now ( t3 )
                 call output ( t3-t0, after=' seconds', advance='yes', &
@@ -2421,7 +2447,14 @@ NEWT: do ! Newtonian iteration
         end do
       end if
 
-      ! Compute the covariance of the solution
+      !{Compute the covariance of the solution = ${\bf S}_s = ({\bf J}^T
+      ! {\bf S}_m^{-1} {\bf J})^{-1}$, where ${\bf J}$ does not include
+      ! Levenberg-Marquardt stabilization, and might or might not include
+      ! Tikhonov regularization.  Start by computing ${\bf U}^{-T}$, then
+      ! $({\bf U}^T {\bf U})^{-1} = {\bf U}^{-1} {\bf U}^{-T} =
+      ! ({\bf \Sigma}^T {\bf J}^T {\bf S}_m^{-1} {\bf J \Sigma}^T)^{-1}$.
+      ! Then unscale it to ${\bf \Sigma}^T ({\bf \Sigma}^T {\bf J}^T
+      ! {\bf S}_m^{-1} {\bf J \Sigma}^T)^{-1} {\bf \Sigma}^T$.
       if ( foundBetterState .and. ( got(f_outputCovariance) .or. got(f_outputSD) .or. &
         &  got(f_average) ) ) then
         if ( nwt_flag /= nf_getJ ) then
@@ -2479,7 +2512,7 @@ NEWT: do ! Newtonian iteration
           ! We need to compute what just the a priori and regularization would give for
           ! the output covariance.
           ! Firstly, we need to do some gymnastics to avoid singular matrices.  This
-          ! will happen with the ptan terms which have neither a priori or smoothing.
+          ! will happen with ptan terms that have neither a priori nor smoothing.
           ! Set these such that our answer is the same as the outputSD
           call cloneVector ( v(diagFlagA), state )
           call GetDiagonal ( aPlusRegNEQ%m, v(diagFlagA) )
@@ -2527,11 +2560,11 @@ NEWT: do ! Newtonian iteration
         end if
       end if
 
-      ! Compute the averaging kernel
+      !{Compute the averaging kernel = ${\bf S}_s {\bf K}^T {\bf K}$.
       if ( foundBetterState .and. got(f_average) ) then
         if ( extendedAverage ) then
           call ClearMatrix ( outputAverage )
-          call MultiplyMatrix_XTY ( outputCovariance%m, ktkStar, outputAverage, update=.true. )
+          call MultiplyMatrix_XTY ( outputCovariance%m, kTkStar, outputAverage, update=.true. )
         else
           ! Make sure kTk is symmetrical 
           !  (outputCovariance is by virtue of its creation method as U^T U)
@@ -2583,6 +2616,9 @@ NEWT: do ! Newtonian iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.277  2006/06/08 23:59:46  vsnyder
+! Simplify column scaling, add switches field, TeXnicalities
+!
 ! Revision 2.276  2006/06/06 18:54:21  vsnyder
 ! Sharpen criteria for fresh Jacobian at the end
 !
