@@ -1850,9 +1850,18 @@ contains ! =====     Public Procedures     =============================
             & lsbFraction, usbFraction, spreadFlag, usb, channel, key )
 
         case ( l_spreadChannel )
-          if ( .not. got ( f_channel ) ) call Announce_Error ( key, &
-            & no_error_code, 'Must supply channel for spreadChannel fill' )
-          call SpreadChannelFill ( quantity, channel, dontMask, key )
+          if ( .not. got ( f_channel ) .and. .not. got( f_sourceQuantity ) ) &
+            & call Announce_Error ( key, &
+            & no_error_code, 'Must supply channel or sourcequantity for spreadChannel fill' )
+          if ( got(f_sourceQuantity) ) then
+          sourceQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(sourceVectorIndex), sourceQuantityIndex )
+            if ( .not. got(f_channel) ) channel = 1
+            call SpreadChannelFill ( quantity, channel, dontMask, key, &
+              & sourceQuantity )
+          else
+            call SpreadChannelFill ( quantity, channel, dontMask, key )
+          endif
 
         case ( l_status )
           if ( got(f_ifMissingGMAO) ) then
@@ -7630,11 +7639,13 @@ contains ! =====     Public Procedures     =============================
     end subroutine ScaleOverlaps
 
     ! ----------------------------------------- SpreadChannelFill --------
-    subroutine SpreadChannelFill ( quantity, channel, dontMask, key )
+    subroutine SpreadChannelFill ( quantity, channel, dontMask, key, &
+      & sourceQuantity )
       type(VectorValue_T), intent(inout) :: QUANTITY
       integer, intent(in) :: CHANNEL
       logical, intent(in) :: DONTMASK
       integer, intent(in) :: KEY
+      type(VectorValue_T), intent(in), optional :: SOURCEQUANTITY
       ! Local variables
       integer :: I                      ! Instance loop counter
       integer :: C                      ! Channel loop counter
@@ -7644,6 +7655,21 @@ contains ! =====     Public Procedures     =============================
       type (Signal_T) ::  signal        ! Signal for this quantity
 
       ! Exectuable code
+      if ( present(sourceQuantity) ) then
+        do i = 1, quantity%template%noInstances
+          do s = 1, quantity%template%noSurfs
+            do c = 1, quantity%template%noChans
+              j = (s-1)*quantity%template%noChans + c
+              if ( associated ( quantity%mask ) .and. .not. dontMask ) then
+                if ( iand ( ichar(quantity%mask(j,i)), m_Fill ) == 1 ) cycle
+              end if
+              quantity%values ( j, i ) = &
+                & sourceQuantity%values ( s, i )
+            end do
+          end do
+        end do
+        return
+      endif
       ! Deal with any channel numbering issues.
       signal = GetSignal ( quantity%template%signal )
       myChannel = channel - lbound ( signal%frequencies, 1 ) + 1
@@ -7833,6 +7859,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.334  2006/06/08 17:29:27  dwu
+! add option to allow sourceQuantity in spreadChannel
+!
 ! Revision 2.333  2006/06/03 01:43:36  vsnyder
 ! Allow multiple fields and multiple vectors/matrices per field on destroy
 !
