@@ -77,8 +77,8 @@ module DNWT_MODULE
 !           AJ%GRADN = L2 norm of Gradient.
 !       CASE ( NF_LEV )
 !         Compute quantities necessary to determine the Levenberg-Marquardt
-!         stabilization parameter:
-! FRED: You need to tell me what to do here.
+!         stabilization parameter: Solve U^T q = dX where U is the Cholesky
+!         factor of J^T J, compute |q|**2
 !       CASE ( NF_SOLVE )
 !         Apply Levenberg-Marquardt stabilization with parameter = AJ%SQ,
 !         and solve (Jacobian) * "candidate DX" ~ -F for "candidate DX".
@@ -587,7 +587,11 @@ contains
       nflag = ifl
       return
 
-! Retreat to a previous -- best -- X
+! Retreat to a previous -- best -- X and step in gradient direction.  An
+! alternative is to use the gradients at the best X and the current X to
+! compute the directional derivatives along the line from the best X to the
+! current X, fit a cubic polynomial to F using Hermite interpolation, and
+! go to the minimum of that polynomial if it's less than the best F.
 
   222 kb = -1
       aj%dxbad = 0.75_rk * min(aj%dxn, aj%dxbad)
@@ -596,7 +600,7 @@ contains
   224 kb = kb - 1
       if ( kb <= (-4) ) then ! Four consecutive gradient moves !
 
-! Test if Jacobian matrix is being computed properly
+! Setup to test if Jacobian matrix is being computed properly
 
         kb = 0
         fnl = c0
@@ -772,8 +776,8 @@ contains
           if ( k1it /= 0 ) call nwtdb ( width=9, level=0, why='Give up' )
           go to 222 ! Go do a gradient move
         end if
-        if ( dxn < 1.25_rk * dxinc )  then
-          if ( sq <= c0 .or. dxn > cp5 * dxinc ) then
+        if ( dxn < 1.1_rk * dxinc )  then
+          if ( sq <= c0 .or. dxn > 0.90_rk * dxinc ) then
              if ( inc == 0 ) then
                if ( x_converge() ) return
                go to 735 ! Go save best X, then either DX or Aitken
@@ -789,8 +793,12 @@ contains
 
       if ( k1it /= 0 ) call nwtdb ( width=9, level=0, why='Step length' )
 
-!{ Calculate qn$^2$ necessary to determine Levenberg-Marquardt parameter.
-!  qn = $|| {\bf q} ||$ where ${\bf U}^T {\bf q} = {\delta\bf x}$.
+!{ Calculate {\tt qn}$^2 = {\bf q}^T{\bf q} = ||{\bf q}||^2$, used to
+!  determine the Levenberg-Marquardt parameter $\lambda$, where ${\bf q} =
+!  {\bf U}^{-T} {\delta\bf x}$ and ${\delta\bf x}$ is the Newton step
+!  computed with the current value of $\lambda$.  The method to determine
+!  $\lambda$ and the reason for being interested in ${\bf q}^T{\bf q}$ are
+!  explained below.
 
       ifl = nf_lev
       nflag = ifl
@@ -803,33 +811,40 @@ contains
 !
 !  $({\bf H} + \lambda {\bf I}) {\delta\bf x} = -{\bf g}$,
 !
-!  where ${\bf H}$ is the Hessian matrix.  In our case, ${\bf A}^T {\bf A}$
-!  is an approximate Hessian.  Differentiating both sides with respect to
-!  $\lambda$ gives
+!  where ${\bf H}$ is the Hessian matrix.  In our case, ${\bf J}^T {\bf J}$,
+!  where ${\bf J}$ is the Jacobian matrix, is an approximate Hessian. 
+!  Differentiating both sides with respect to $\lambda$ gives
 !
+!  $({\bf H} + \lambda {\bf I}) \frac{\text{d}{\delta\bf x}}{\text{d}\lambda}
+!  + {\bf I}\, {\delta\bf x} = 0$ or
 !  $({\bf H} + \lambda {\bf I}) \frac{\text{d}{\delta\bf x}}{\text{d}\lambda}
 !  = -{\delta\bf x}$.
 !
-!  Or, using the Cholesky factor of $({\bf H} + \lambda {\bf I})$, we have
+!  Cholesky factoring $({\bf H} + \lambda {\bf I})$, we have
 !  ${\bf U}^T {\bf U} \frac{\text{d}{\delta\bf x}}{\text{d}\lambda} =
-!  -{\delta\bf x}$.
+!  -{\delta\bf x}$ or ${\bf U} \frac{\text{d}{\delta\bf x}}{\text{d}\lambda} =
+!  -{\bf U}^{-T} {\delta\bf x} = -{\bf q}$.
 !
-!  The ${\bf q}$ we want is ${\bf U}^{-T} {\delta\bf x}$.  Thus from
+!  Multiplying ${\bf U}^T {\bf U} \frac{\text{d}{\delta\bf x}}{\text{d}\lambda} =
+!  -{\delta\bf x}$ on the left by $\frac{\text{d}{\delta\bf x}}{\text{d}\lambda}^T$
+!  and substituting
+!  ${\bf U} \frac{\text{d}{\delta\bf x}}{\text{d}\lambda} = - {\bf q}$ we have
 !  $\frac{\text{d}{\delta\bf x}}{\text{d}\lambda}^T {\bf U}^T {\bf U}
 !   \frac{\text{d}{\delta\bf x}}{\text{d}\lambda}
-!  = -\frac{\text{d}{\delta\bf x}}{\text{d}\lambda}^T {\delta\bf x}$ we have
-!  ${\bf q}^T {\bf q} =
-!  -\frac{\text{d}{\delta\bf x}}{\text{d}\lambda}^T {\delta\bf x}$.
+!  = -\frac{\text{d}{\delta\bf x}}{\text{d}\lambda}^T {\delta\bf x} =
+!  {\bf q}^T {\bf q}$.
 !
 !  We intend to find a zero of
-!  $\phi = \frac1{|| {\delta\bf x} ||} - \frac1{\rho}$, where $\rho$ is the desired
-!  step length ${\delta\bf x}$,
+!  $\phi = \frac1{|| {\delta\bf x} ||} - \frac1{\rho}$, where $\rho$ is the
+!  desired step length for ${\delta\bf x}$,
 !  treating ${\delta\bf x}$ as a function of $\lambda$.
 !
 !  $\frac{\text{d}\phi}{\text{d}\lambda} =
 !  \frac{\partial ( (|| {\delta\bf x} ||^2)^{-1/2}
 !   - \frac1{\rho})}{\partial{\delta\bf x}}
-!  {\delta\bf x}^T \frac{\partial{\delta\bf x}}{\partial\lambda}
+!  \frac{\text{d}{\delta\bf x}}{\text{d}\lambda}
+!  = \frac{-1}{|| {\delta\bf x} ||^{3}} {\delta\bf x}^T
+!    \frac{\text{d}{\delta\bf x}}{\text{d}\lambda}
 !  = \frac{-1}{|| {\delta\bf x} ||^{3}} (- {\bf q}^T {\bf q})$
 !
 !  The Newton method gives us
@@ -841,9 +856,23 @@ contains
 !    = \lambda_{\text{old}} - \frac{|| {\delta\bf x} ||^2}{|| {\bf q} ||^2}
 !      \left(1 - \frac{|| {\bf \delta x} ||}{\rho}\right)$
 !
-! (If you have been looking at Mor\'e and Sorensen, this update is the 
+! If you have been looking at Mor\'e and Sorensen, this update is the 
 ! negative of theirs since they define $\lambda$ as the negative of the 
-! $\lambda$ above.)
+! $\lambda$ above.  Also, Mor\'e and Sorensen write $\lambda$ as the quantity
+! added to the diagonal of the normal equations, which we call $\lambda^2$, so
+! the iteration above and the code below are really iterating on what we call
+! $\lambda^2$.  I.e., from a least-squares point of view we write
+!%
+! \begin{equation*}
+! \left[ \begin{array}{c} {\bf J} \\
+!                 \lambda {\bf I} \\
+! \end{array} \right] {\delta \bf x} \simeq
+! \left[ \begin{array}{c} -{\bf f} \\
+!                          {\bf 0} \\
+! \end{array} \right]
+! \end{equation*}
+! which, in normal-equations form is $({\bf J}^T {\bf J} + \lambda^2 {\bf I})
+! {\delta\bf x} = -{\bf J}^T {\bf f} = -{\bf g}$.
 
   600 continue
       sq = sqrt(max( 0.0_rk, sq**2 - (dxn**2 / aj%qnsq) * (1.0_rk - dxn / dxinc) ))
@@ -1344,6 +1373,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.46  2006/06/08 23:55:59  vsnyder
+! Tighten More' Sorensen convergence criteria, TeXnicalities
+!
 ! Revision 2.45  2006/06/06 15:22:51  vsnyder
 ! Some code restructuring and commenting
 !
