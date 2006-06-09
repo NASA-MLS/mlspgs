@@ -47,7 +47,22 @@
       call printPercentages ( name, numFill, numNonFill  )
     endif
     if ( .not. myWholeArray ) return
+
+    ! Avoid dumping the entire array if all its elements are equal
+    if ( DONTDUMPIFALLEQUAL .and. product(shape(array)) > 5 ) then
+      if ( minval(array) == maxval(array) ) then
+        call output( trim(name), advance='no' )
+        call output( ': all ', advance='no' )
+        call output( trim(arrayShapeToString(shape(array))), advance='no' )
+        call output( ' values are ', advance='no' )
+        call output( minval(array), advance='yes' )
+        return
+      endif
+    endif
 ! $Log$
+! Revision 2.9  2006/06/09 18:50:12  pwagner
+! Avoid dumping an entire array if all elements the same
+!
 ! Revision 2.8  2006/05/24 20:38:32  pwagner
 ! Allow any of 3 ordering relations for dumping pct
 !
