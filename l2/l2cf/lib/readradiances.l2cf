@@ -68,7 +68,19 @@ begin Fill
 
 end Fill
 
+;; Band13OK and Band13OFF will be used to decide which of two
+;; versions of Core+R4a phase to go through
+begin Construct
+  Band13OK: Boolean, formula="true"
+  anyGoodValues, quantity=measurement.band13, precision=measurementNoise.band13, Boolean=Band13OK
+  Band13OFF: Boolean, formula="not Band13OK"
+end Construct
+
+
 ; $Log$
+; Revision 1.10  2004/10/02 00:36:49  livesey
+; Removed snoops
+;
 ; Revision 1.9  2004/09/29 19:24:50  livesey
 ; Bug fix in reading L1BMAFBaselines
 ;
