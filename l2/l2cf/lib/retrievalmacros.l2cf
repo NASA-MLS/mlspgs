@@ -31,7 +31,7 @@
 
 ; These macros define the MLS standard products
 ; IWC is somewhat special
-!define(allStandardProductsWithColumns,{BrO,CH3CN,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,O3,OH})
+!define(allStandardProductsWithColumns,{BrO,CH3CN,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,O3,OH,SO2})
 !define(allStandardProductsWithoutColumns,{Temperature,GPH,RHI})
 !define(allStandardProducts,{!tidyList(!allStandardProductsWithColumns, $
   !allStandardProductsWithoutColumns)})
@@ -695,6 +695,9 @@ Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusL
 })})
 
 ; $Log$
+; Revision 1.110  2006/05/11 20:16:36  pwagner
+; Added special case for DirectWriteDGG of Temperature_HR
+;
 ; Revision 1.109  2006/05/11 04:33:33  dwu
 ; add rhi_hr in the completePhase
 ;
