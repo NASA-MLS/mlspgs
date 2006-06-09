@@ -22,7 +22,7 @@ module DUMP_0
     & RemoveFillValues, ReplaceFillValues
   use MLSSets, only: FindAll
   use MLSStats1, only: ALLSTATS
-  use MLSStringLists, only: GetStringElement, NumStringElements
+  use MLSStringLists, only: catLists, GetStringElement, NumStringElements
   use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
 
   implicit none
@@ -108,6 +108,7 @@ module DUMP_0
 
   ! These public parameters can be reconfigured outside the module
   character, public, parameter :: AfterSub = '#'
+  logical, public, save ::   DONTDUMPIFALLEQUAL = .true.
   logical, public, save ::   STATSONONELINE = .true.
   character(len=1), public, save ::   RELATIONFORPCTAGES = '=' ! {'=','<','>'}
 
@@ -1745,6 +1746,22 @@ contains
   end subroutine SELFDIFF_REAL
 
   ! ------------------------------------------------------  Empty  -----
+  function arrayShapeToString ( arrayShape ) result ( string )
+    ! Given an array of integers return the shape as a string
+    ! E.g., given (/4,2,6/) return '4*2*6'
+    integer, dimension(:), intent(in) :: arrayShape
+    character(len=16) :: string
+    ! Internal variables
+    integer :: i
+    ! Executable
+    string = ' '
+    if ( size(arrayShape) < 1 ) return
+    do i=1, size( arrayshape )
+      string = catLists( string, arrayShape(i), inseparator='*' )
+    enddo
+    
+  end function arrayShapeToString
+  ! ------------------------------------------------------  Empty  -----
   subroutine Empty ( Name )
     character(len=*), intent(in), optional :: Name
 
@@ -2007,6 +2024,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.59  2006/06/09 18:50:12  pwagner
+! Avoid dumping an entire array if all elements the same
+!
 ! Revision 2.58  2006/05/24 20:38:14  pwagner
 ! Allow any of 3 ordering relations for dumping pct
 !
