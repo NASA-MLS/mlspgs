@@ -323,7 +323,7 @@ subtrees:   do while ( j <= howmany )
                 & call MLSL2Construct ( son, filedatabase, processingRange, &
                   & chunks(chunkNo), qtyTemplates, vectorTemplates, vectors, &
                   & fGrids, hGrids, l2gpDatabase, forwardModelConfigDatabase, &
-                  & mifGeolocation )
+                  & griddedDataBase, mifGeolocation )
                 call add_to_section_timing ( 'construct', t1)
               case ( z_fill )
                 if ( .not. checkPaths ) then 
@@ -525,6 +525,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.141  2006/05/05 16:49:23  pwagner
+! May convertEtaToP and create a VGrid in MergeGrids section
+!
 ! Revision 2.140  2006/04/11 23:30:00  pwagner
 ! chunkRange option effective in serial runs, too
 !
