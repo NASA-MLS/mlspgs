@@ -201,14 +201,6 @@ contains
         case ( p_brightObjects )
           call get_string ( sub_rosa_index, brightObjects, strip=.true. )
           got(3) = .true.
-        ! case ( p_input_version_string )
-          ! input_version_string = sub_rosa_index
-          ! call get_string ( input_version_string, l2pcf%inputVersion, &
-          !   & strip=.true. )
-          ! if ( TOOLKIT ) &
-          !   & call announce_error(0, &
-          !   & '*** l2cf overrides pcf for input version ***', &
-          !   & just_a_warning = .true.)
         case ( p_output_version_string )
           output_version_string = sub_rosa_index
           call get_string ( output_version_string, l2pcf%PGEVersion, strip=.true. )
@@ -503,7 +495,6 @@ contains
 
     if ( .not. TOOLKIT ) then
       ! Store appropriate user input as global attributes
-      ! GlobalAttributes%InputVersion = l2pcf%inputVersion
       GlobalAttributes%StartUTC = l2pcf%StartUTC
       GlobalAttributes%EndUTC = l2pcf%EndUTC
       GlobalAttributes%PGEVersion = l2pcf%PGEVersion
@@ -549,12 +540,13 @@ contains
       & call dump_global_settings( processingRange, filedatabase, DirectDatabase, &
       & ForwardModelConfigDatabase, LeapSecFileName, details )
 
-    if ( APrioriFiles%dao // AprioriFiles%ncep == ' ' ) then
+    if ( APrioriFiles%dao // AprioriFiles%ncep // AprioriFiles%geos5 &
+      &  == ' ' ) then
       GlobalAttributes%MiscNotes = catLists(GlobalAttributes%MiscNotes, &
-        & 'No dao or ncep files--falling back to climatology', '\')
-    elseif ( APrioriFiles%dao == ' ' ) then
+        & 'No gmao or ncep files--falling back to climatology', '\')
+    elseif ( APrioriFiles%dao // AprioriFiles%geos5 == ' ' ) then
       GlobalAttributes%MiscNotes = catLists(GlobalAttributes%MiscNotes, &
-        & 'No dao files--falling back to ncep', '\')
+        & 'No gmao files--falling back to ncep', '\')
     endif
 
     if ( error /= 0 ) &
@@ -957,6 +949,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.115  2006/04/21 22:28:45  vsnyder
+! Allow FlushPFA in global settings section
+!
 ! Revision 2.114  2006/03/15 23:52:24  pwagner
 ! Removed InputVersion component from PCF, l2cf
 !
