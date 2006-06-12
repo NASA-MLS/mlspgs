@@ -854,7 +854,8 @@ contains ! =====     Public Procedures     =============================
             ignoreNegative = get_boolean ( gson )
           case ( f_ifMissingGMAO )
             MissingGMAO = get_boolean ( gson ) .and. &
-              & ( APrioriFiles%dao // AprioriFiles%ncep == ' ' )
+              & ( APrioriFiles%dao // AprioriFiles%ncep  // AprioriFiles%geos5 &
+              &   == ' ' )
           case ( f_instances )
             instancesNode = subtree(j,key)
           case ( f_integrationTime )
@@ -1258,8 +1259,6 @@ contains ! =====     Public Procedures     =============================
         case ( l_explicit ) ! ---------  Explicitly fill from l2cf  -----
           if ( .not. got(f_explicitValues) ) &
             & call Announce_Error ( key, noExplicitValuesGiven )
-          ! if ( .not. ifMissingGMAO .or. APrioriFiles%dao // AprioriFiles%ncep == ' ') &
-          !  & call ExplicitFillVectorQuantity ( quantity, valuesNode, spreadFlag, &
           call ExplicitFillVectorQuantity ( quantity, valuesNode, spreadFlag, &
             & vectors(vectorIndex)%globalUnit, dontmask )
 
@@ -7859,6 +7858,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.335  2006/06/12 19:28:52  pwagner
+! Fallback to climatology noted only if all of ncep, goes4/5 missing
+!
 ! Revision 2.334  2006/06/08 17:29:27  dwu
 ! add option to allow sourceQuantity in spreadChannel
 !
