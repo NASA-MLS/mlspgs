@@ -342,7 +342,8 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------------------------------  MLSL2Construct  -----
   subroutine MLSL2Construct ( root, filedatabase, processingRange, chunk, &
        & quantityTemplatesBase, vectorTemplates, vectors, FGrids, HGrids, &
-       & l2gpDatabase, ForwardModelConfigDatabase, mifGeolocation )
+       & l2gpDatabase, ForwardModelConfigDatabase, griddedDataBase, &
+       & mifGeolocation )
 
   ! This is the `main' subroutine for this module
 
@@ -355,6 +356,7 @@ contains ! =====     Public Procedures     =============================
     use ForwardModelConfig, only: AddForwardModelConfigToDatabase, &
       & ForwardModelConfig_T
     use ForwardModelSupport, only: ConstructForwardModelConfig
+    use GriddedData, only: GriddedData_T
     use HGridsDatabase, only: ADDHGRIDTODATABASE, HGRID_T
     use HGrid, only: CREATEHGRIDFROMMLSCFINFO
     use INIT_TABLES_MODULE, only: S_ANYGOODVALUES, S_ANYGOODRADIANCES, &
@@ -390,6 +392,7 @@ contains ! =====     Public Procedures     =============================
     type (HGrid_T), dimension(:), pointer :: HGrids
     type (L2GPData_T), dimension(:), pointer :: L2GPDatabase
     type (ForwardModelConfig_T), dimension(:), pointer :: ForwardModelConfigDatabase
+    type (GriddedData_T), dimension(:), pointer        :: griddedDataBase
     type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
 
     ! Local variables
@@ -398,7 +401,7 @@ contains ! =====     Public Procedures     =============================
     integer :: KEY              ! S_... from Init_Tables_Module.
     integer :: NAME             ! Sub-rosa index of name
     integer :: SON              ! Son or grandson of Root
-    REAL :: T1, T2              ! for timing
+    real :: T1, T2              ! for timing
     logical :: TIMING
 
     ! Executable code
@@ -437,7 +440,7 @@ contains ! =====     Public Procedures     =============================
       case ( s_dump )
         call dumpCommand ( key, quantityTemplatesBase, &
           & vectorTemplates, forwardModelConfigs=forwardModelConfigDatabase, &
-          & hGrids=hGrids )
+          & hGrids=hGrids, griddedDataBase=griddedDataBase )
       case ( s_forge )
         call ForgeMinorFrames ( key, chunk, mifGeolocation )
       case ( s_forwardModel )
@@ -530,6 +533,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.58  2006/06/12 16:28:56  pwagner
+! Added ability to dump Gridded Data
+!
 ! Revision 2.57  2006/03/07 00:51:32  pwagner
 ! May change already-set Booleans via reevaluate command
 !
