@@ -27,7 +27,7 @@ module DumpCommand_M
 contains
 
   subroutine DumpCommand ( Root, QuantityTemplatesDB, &
-    & VectorTemplates, Vectors, ForwardModelConfigs, HGrids )
+    & VectorTemplates, Vectors, ForwardModelConfigs, HGrids, griddedDataBase )
 
   ! Process a "dump" command
 
@@ -39,12 +39,14 @@ contains
     use FilterShapes_m, only: Dump_Filter_Shapes_Database, &
       & Dump_DACS_Filter_Database
     use ForwardModelConfig, only: Dump, ForwardModelConfig_T
+    use GriddedData, only: Dump, GriddedData_T
     use HGridsDatabase, only: Dump, HGRID_T
-    use Init_Tables_Module, only: F_AllBooleans, F_AllForwardModels, F_AllHGrids, &
+    use Init_Tables_Module, only: F_AllBooleans, F_AllForwardModels, &
+      & f_AllGriddedData, F_AllHGrids, &
       & F_AllLines, F_AllPFA, F_AllQuantityTemplates, F_AllSignals, F_AllSpectra, &
       & F_AllVectors, F_AllVectorTemplates, F_AllVGrids, F_AntennaPatterns, &
       & F_Boolean, F_Clean, F_Details, F_DACSFilterShapes, &
-      & F_FilterShapes, F_ForwardModel, &
+      & F_FilterShapes, F_ForwardModel, F_GRID, &
       & F_HGrid, F_Lines, F_Mark, F_PfaData, F_PfaFiles, F_PFANum, F_PFAStru, &
       & F_PointingGrids, F_Quantity, F_Signals,  F_Spectroscopy, F_Stop, &
       & F_Template, F_Text, F_TGrid, F_Vector, F_VGrid, S_Quantity, &
@@ -71,11 +73,12 @@ contains
 
     integer, intent(in) :: Root ! Root of the parse tree for the dump command
     ! Databases:
-    type (quantityTemplate_t), dimension(:), pointer, optional :: QuantityTemplatesDB
-    type (vectorTemplate_T), dimension(:), pointer, optional :: VectorTemplates
-    type (vector_T), dimension(:), pointer, optional :: Vectors
+    type (quantityTemplate_t), dimension(:), pointer, optional   :: QuantityTemplatesDB
     type (forwardModelConfig_t), dimension(:), pointer, optional :: ForwardModelConfigs
-    type (HGrid_T), dimension(:), pointer, optional :: HGrids
+    type (vectorTemplate_T), dimension(:), pointer, optional     :: VectorTemplates
+    type (vector_T), dimension(:), pointer, optional             :: Vectors
+    type (HGrid_T), dimension(:), pointer, optional              :: HGrids
+    type (GriddedData_T), dimension(:), pointer, optional        :: griddedDataBase
 
     character(len=80) :: BOOLEANSTRING  ! E.g., 'BAND13_OK'
     logical :: Clean
@@ -87,7 +90,7 @@ contains
     logical :: GotOne ! of something -- used to test loop completion
     integer :: GSON, I, J, K, L, Look
     logical :: HaveQuantityTemplatesDB, HaveVectorTemplates, HaveVectors, &
-      &        HaveForwardModelConfigs, HaveHGrids
+      &        HaveForwardModelConfigs, HaveGriddedData, HaveHGrids
     integer :: QuantityIndex
     integer :: Son
     integer :: Source ! column*256 + line
@@ -104,7 +107,8 @@ contains
     ! Error codes
     integer, parameter :: Dimless = 1
     integer, parameter :: NoFWM = dimless + 1
-    integer, parameter :: NoHGrid = NoFWM + 1
+    integer, parameter :: noGriddedData = NoFWM + 1
+    integer, parameter :: NoHGrid = noGriddedData + 1
     integer, parameter :: NoLines = noHGrid + 1
     integer, parameter :: NoQT = noLines + 1
     integer, parameter :: NoSignals = noQT + 1
@@ -128,6 +132,8 @@ contains
       & haveForwardModelConfigs = associated(forwardModelConfigs)
     haveHGrids = present(hGrids)
     if ( haveHGrids ) haveHGrids = associated(hGrids)
+    haveGriddedData = present(griddedDataBase)
+    if ( haveGriddedData ) haveGriddedData = associated(griddedDataBase)
 
     clean = .false.
     details = 0
@@ -158,7 +164,8 @@ contains
       gson = son
       if (nsons(son) > 1) gson = subtree(2,son) ! Now value of said argument
       select case ( fieldIndex )
-      case ( f_allBooleans, f_allForwardModels, f_allHGrids, f_allLines, &
+      case ( f_allBooleans, f_allForwardModels, f_allGriddedData, &
+        & f_allHGrids, f_allLines, &
         & f_allPFA, f_allQuantityTemplates, f_allSignals, f_allSpectra, &
         & f_allVectors, f_allVectorTemplates, f_allVGrids, f_antennaPatterns, &
         & f_DACSfilterShapes, f_filterShapes, f_pfaFiles, f_pfaStru, &
@@ -173,6 +180,12 @@ contains
               call dump ( forwardModelConfigs, where=son )
             else
               call announceError ( son, noFWM )
+            end if
+          case ( f_allGriddedData )
+            if ( haveGriddedData ) then
+              call dump ( griddedDataBase, details )
+            else
+              call announceError ( son, noGriddedData )
             end if
           case ( f_allHGrids )
             if ( haveHGrids ) then
@@ -255,6 +268,16 @@ contains
           end do
         else
           call announceError ( gson, noFWM )
+        end if
+      case ( f_Grid )    ! Dump Griddeddata
+        if ( haveGriddedData ) then
+          do i = 2, nsons(son)
+            call output ( ' GriddedData ' )
+            call dump ( & ! has no details switch
+              & griddedDataBase(decoration(decoration(subtree(i,son)))), details )
+          end do
+        else
+          call announceError ( gson, noGriddedData )
         end if
       case ( f_hGrid )    ! Dump HGrids
         if ( haveHGrids ) then
@@ -454,6 +477,8 @@ contains
         call output ( "The field is not unitless." )
       case ( noFWM )
         call output ( "Can't dump Forward Model Configs here." )
+      case ( noGriddedData )
+        call output ( "Can't dump GriddedData here." )
       case ( noHGrid )
         call output ( "Can't dump HGrids here." )
       case ( noLines )
@@ -494,6 +519,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.30  2006/06/12 16:28:25  pwagner
+! Added ability to dump Gridded Data
+!
 ! Revision 2.29  2006/05/31 22:38:17  vsnyder
 ! Revert to details= semantics that Van prefers
 !
