@@ -33,7 +33,8 @@ module ReadAPriori
   use MLSPCF2, only: mlspcf_l2apriori_start, mlspcf_l2apriori_end, &
     & mlspcf_l2ncep_start, mlspcf_l2ncep_end, &
     & mlspcf_l2dao_start, mlspcf_l2dao_end, &
-    & mlspcf_l2clim_start, mlspcf_l2clim_end
+    & mlspcf_l2clim_start, mlspcf_l2clim_end, &
+    & mlspcf_geos5_start, mlspcf_geos5_end
   use MLSStringLists, only: catLists
   use MLSStrings, only: lowercase
   use MoreTree, only: Get_Spec_ID
@@ -50,12 +51,9 @@ module ReadAPriori
   implicit none
   private
   public ::  APrioriFiles, APrioriFiles_T, read_apriori, writeAPrioriAttributes
-  ! integer, public, parameter :: CLIMATOLOGYFALLBACKSTATUS = 1024
   private ::  announce_error
   integer, private :: ERROR
   integer, private, parameter :: MAXNUMFILES = 10
-  integer, private, parameter :: mlspcf_geos5_start = mlspcf_l2ncep_start
-  integer, private, parameter :: mlspcf_geos5_end   = mlspcf_l2ncep_end
 
    ! What a priori files did we read? 
   type APrioriFiles_T
@@ -929,6 +927,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.67  2006/06/13 18:19:08  pwagner
+! Added pcfids for geos5; moved ncep pcfids backwards to make room
+!
 ! Revision 2.66  2006/06/06 21:56:52  pwagner
 ! May specify geos5 apriori files instead of dao (geos4)
 !
