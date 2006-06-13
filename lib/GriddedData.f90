@@ -55,7 +55,7 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
   integer, parameter :: V_is_eta      = L_ETA ! V_is_theta+1
   
   ! If dumping gridded data, always give some details of any matching these
-  character(len=*), parameter :: ALWAYSDUMPTHESE = 'dao,ncep' ! -> ' '
+  character(len=*), parameter :: ALWAYSDUMPTHESE = 'dao,ncep,geos5' ! -> ' '
   ! and for these automatically dumped ones, this level of detail for multi-dim
   integer, parameter :: AUTOMATICDETAILS = 0 ! 1 means dump, 0 means no
 
@@ -194,51 +194,45 @@ contains
   end subroutine ConcatenateGriddedData
 
   ! ---------------------------------------- ConvertFromEtaLevelGrids ------------------
-  subroutine ConvertFromEtaLevelGrids ( TGrid, PGrid, VGrid, OutGrid )
+  subroutine ConvertFromEtaLevelGrids ( TGrid, PGrid, NGrid, OutGrid )
     ! Converts two eta-level grids, one of them pressures, 
     ! to a pressure-level Grid
     use MLSNumerics, only: InterpolateValues
-    use VGridsDatabase, only: VGrid_T, ConvertVGrid
     type ( GriddedData_T ), intent(in)  :: TGrid  ! E.g., T on eta surfaces
     type ( GriddedData_T ), intent(in)  :: PGrid  ! Pressures on eta surfaces
-    type ( VGrid_T ), intent(in)        :: VGrid  ! What surfaces to use
+    type ( GriddedData_T ), intent(in)  :: NGrid  ! What surfaces to use
     type ( GriddedData_T ), intent(out) :: OutGrid ! T on pressure level
     ! Internal variables
     integer :: iDate, iSza, iLst, iLon, iLat
     real(rgr), dimension(:), pointer    :: pEta => null()
-    real(rgr), dimension(:), pointer    :: pVGrid => null()
     ! Executable code
-    nullify( pEta, pVGrid )
+    nullify( pEta )
     ! GriddedData must match
     if ( .not. DoGriddeddataMatch( PGrid, TGrid ) ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Gridded T,P data must match' )
-    nullify( pEta, pVGrid )
     call allocate_test( pEta, TGrid%noHeights, 'pEta', moduleName )
-    call allocate_test( pVGrid, VGrid%noSurfs, 'pVGrid', moduleName )
     call DestroyGriddedData ( OutGrid )
-    call SetupNewGriddedData ( OutGrid, source=TGrid, noHeights=VGrid%NoSurfs )
+    call SetupNewGriddedData ( OutGrid, source=TGrid, noHeights=NGrid%noHeights )
     ! Copy the information over
-    OutGrid%verticalCoordinate = VGrid%VerticalCoordinate
-    OutGrid%heights = VGrid%surfs(:,1)
+    OutGrid%verticalCoordinate = NGrid%VerticalCoordinate
+    OutGrid%heights = NGrid%heights
     OutGrid%lats = TGrid%lats
     OutGrid%lons = TGrid%lons
     OutGrid%lsts = TGrid%lsts
     OutGrid%szas = TGrid%szas
     OutGrid%dateStarts = TGrid%dateStarts
     OutGrid%dateEnds = TGrid%dateEnds
-    ! Now we'll interpolate to the VGrid surfaces
-    ! pVGrid = vGrid%Surfs
+    ! Now we'll interpolate to the NGrid surfaces
     do idate=1, TGrid%noDates
       do iSza=1, TGrid%noSzas
         do iLst=1, TGrid%noLsts
           do iLon=1, TGrid%noLons
             do iLat=1, TGrid%noLats
               pEta = PGrid%field( :, iLat, iLon, iLst, iSza, iDate )
-              call convertVGrid( VGrid, l_pressure, pVGrid )
               call InterpolateValues( &
                 & pEta, TGrid%field( :, iLat, iLon, iLst, iSza, iDate ), &
-                & pVGrid, OutGrid%field( :, iLat, iLon, iLst, iSza, iDate ), &
+                & NGrid%heights, OutGrid%field( :, iLat, iLon, iLst, iSza, iDate ), &
                 & 'L', 'B', TGrid%missingValue )
             enddo
           enddo
@@ -246,7 +240,6 @@ contains
       enddo
     enddo
     call deallocate_test( pEta,   'pEta', moduleName )
-    call deallocate_test( pVGrid, 'pVGrid', moduleName )
   end subroutine ConvertFromEtaLevelGrids
 
   ! ---------------------------------------- CopyGrid ------------------
@@ -393,6 +386,7 @@ contains
   ! --------------------------------------------  DumpGriddedData  -----
   subroutine DumpGriddedData ( GriddedData, Details )
     use Dump_0, only: Dump
+    use ieee_arithmetic, only: ieee_is_finite, ieee_is_nan
 
     ! Imitating what dump_pointing_grid_database does, but for gridded data
     ! which may come from climatology, ncep, dao
@@ -468,6 +462,14 @@ contains
     if ( myDetails >= 0 ) call dump ( GriddedData%dateEnds, &
       & '    ending dates =' )
 
+    if ( .not. all(ieee_is_finite(GriddedData%field)) ) &
+      & call output ( '*** Gridded Data contains non-finite values', advance='yes' )
+    if ( any(ieee_is_nan(GriddedData%field)) ) &
+      & call output ( '*** Gridded Data contains nans', advance='yes' )
+    if ( .not. associated(GriddedData%field) ) then
+      call output ( ' Gridded Data field values empty', advance='yes' )
+      return
+    endif
     if ( MAYDUMPFIELDVALUES .and. fieldvaluesdetails > 0 ) then
       call output ( ' ************ tabulated field values ********** ' ,advance='yes')
      ! May dump a 3-d slice of 6-d array
@@ -1074,6 +1076,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.40  2006/06/13 22:10:19  pwagner
+! changed interface to ConvertFromEtaLevelGrids
+!
 ! Revision 2.39  2006/05/12 21:24:13  pwagner
 ! Added extra debugging statements
 !
