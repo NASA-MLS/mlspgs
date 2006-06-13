@@ -600,16 +600,16 @@ contains ! =====     Public procedures     =============================
              begin, f+f_b, s+s_gridded, n+n_field_spec, &
              nadp+n_spec_def /) )
     call make_tree ( (/ &
-      begin, s+s_ConvertEtaToP, &  ! Must be AFTER S_Gridded
-             begin, f+f_a, s+s_gridded, n+n_field_spec, &
-             begin, f+f_b, s+s_gridded, n+n_field_spec, &
-             begin, f+f_vGrid, s+s_vGrid, n+n_field_spec, &
+      begin, s+s_ConvertEtaToP, &  ! Must be AFTER S_Gridded, V_Gridded
+             begin, f+f_a, s+s_gridded, s+s_concatenate, n+n_field_spec, &
+             begin, f+f_b, s+s_gridded, s+s_concatenate, n+n_field_spec, &
+             begin, f+f_Grid, s+s_Gridded, n+n_field_spec, &
              nadp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_wmoTrop, &  ! Must be AFTER S_Gridded
-             begin, f+f_grid, s+s_gridded, n+n_field_spec, &
-             begin, f+f_a, s+s_gridded, n+n_field_spec, &
-             begin, f+f_b, s+s_gridded, n+n_field_spec, &
+             begin, f+f_grid, s+s_gridded, s+s_concatenate, n+n_field_spec, &
+             begin, f+f_a, s+s_gridded, s+s_concatenate, n+n_field_spec, &
+             begin, f+f_b, s+s_gridded, s+s_concatenate, n+n_field_spec, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_merge, &  ! Must be AFTER S_Gridded
@@ -1191,10 +1191,11 @@ contains ! =====     Public procedures     =============================
              begin, f+f_yStar, s+s_vector, n+n_field_spec, &
              ndp+n_spec_def /), continue=.true. )
     call make_tree ( (/ & ! Must be AFTER s_forwardModel, s_hGrid, s_pfaData,
-                          ! s_makePFA, s_vector, and s_vectorTemplate
+                          ! s_makePFA, s_vector, s_vectorTemplate, etc.
       begin, s+s_dump, &
              begin, f+f_allBooleans, t+t_boolean, n+n_field_type, &
              begin, f+f_allForwardModels, t+t_boolean, n+n_field_type, &
+             begin, f+f_allGriddedData, t+t_boolean, n+n_field_type, &
              begin, f+f_allHGrids, t+t_boolean, n+n_field_type, &
              begin, f+f_allLines, t+t_boolean, n+n_field_type, &
              begin, f+f_allPFA, t+t_boolean, n+n_field_type, &
@@ -1211,7 +1212,10 @@ contains ! =====     Public procedures     =============================
              begin, f+f_details, t+t_numeric, n+n_field_type, &
              begin, f+f_forwardModel, s+s_forwardModel, n+n_field_spec, &
              begin, f+f_filterShapes, t+t_boolean, n+n_field_type, &
-             begin, f+f_hGrid, s+s_hgrid, n+n_field_spec, &
+             begin, f+f_Grid, s+s_gridded, s+s_merge, s+s_Concatenate, &
+                    s+s_ConvertEtaToP, s+s_wmoTrop, n+n_field_spec, &
+             begin, f+f_hGrid, s+s_hgrid, n+n_field_spec/) )
+    call make_tree ( (/ & ! Continuing for s_dump...
              begin, f+f_lines, s+s_line, n+n_field_spec, &
              begin, f+f_mark, t+t_boolean, n+n_field_type, &
              begin, f+f_pfaData, s+s_makePFA, s+s_pfaData, s+s_readPFA, &
@@ -1230,7 +1234,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_tGrid, s+s_tGrid, n+n_field_spec, &
              begin, f+f_vector, s+s_vector, n+n_field_spec, &
              begin, f+f_vGrid, s+s_vGrid, n+n_field_spec, &
-             np+n_spec_def/) )
+             np+n_spec_def/), continue=.true. )
     call make_tree ( (/ &
       begin, s+s_forwardModelGlobal, &
              begin, f+f_antennaPatterns, t+t_string, n+n_field_type, &
@@ -1463,6 +1467,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.442  2006/06/13 22:13:12  pwagner
+! changed interface to ConvertFromEtaLevelGrids
+!
 ! Revision 2.441  2006/06/08 23:54:51  vsnyder
 ! Add switches field to retrieve
 !
