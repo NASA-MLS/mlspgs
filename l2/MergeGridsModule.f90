@@ -38,7 +38,7 @@ contains ! =================================== Public procedures
       & CONCATENATEGRIDDEDDATA, CONVERTFROMETALEVELGRIDS, COPYGRID, &
       & NULLIFYGRIDDEDDATA, SETUPNEWGRIDDEDDATA, WRAPGRIDDEDDATA
     use Init_tables_module, only: S_CONCATENATE, S_CONVERTETATOP, &
-      & S_DELETE, S_MERGE, S_VGRID, S_WMOTROP
+      & S_DELETE, S_MERGE, S_WMOTROP
     use L2GPData, only: L2GPDATA_T
     use MLSCommon, only: R8
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
@@ -84,9 +84,9 @@ contains ! =================================== Public procedures
           & ConvertEtaToP ( key, griddedDataBase ) ) )
       case ( s_delete )
         call DeleteGriddedData ( key, griddedDatabase )
-      case ( s_vGrid )
-        call decorate ( son, AddVGridToDatabase ( vGrids, &
-          & CreateVGridFromMLSCFInfo ( name, son, l2gpDatabase, returnStatus ) ) )
+!       case ( s_vGrid )
+!         call decorate ( son, AddVGridToDatabase ( vGrids, &
+!           & CreateVGridFromMLSCFInfo ( name, son, l2gpDatabase, returnStatus ) ) )
       case ( s_wmoTrop )
         call decorate ( key, AddgriddedDataToDatabase ( griddedDataBase, &
           & wmoTropFromGrid ( key, griddedDataBase ) ) )
@@ -103,13 +103,14 @@ contains ! =================================== Public procedures
   ! ---------------------------------------- ConvertEtaToP --
   type (griddedData_T) function ConvertEtaToP ( root, griddedDataBase ) &
     & result ( newGrid )
-    use GriddedData, only: GRIDDEDDATA_T, NULLIFYGRIDDEDDATA, &
+    use GriddedData, only: GRIDDEDDATA_T, DUMP, NULLIFYGRIDDEDDATA, &
       & CONVERTFROMETALEVELGRIDS
-    use Init_tables_module, only: F_A, F_B, F_VGRID
+    use Init_tables_module, only: F_A, F_B, F_GRID
+    use output_m, only: output
     use Toggles, only: GEN, TOGGLE
     use Trace_M, only: TRACE_BEGIN, TRACE_END
     use Tree, only: NSONS, SUBTREE, DECORATION
-    use VGridsDatabase, only: VGrid_T, VGrids, ConvertVGrid
+    ! use VGridsDatabase, only: VGrid_T, VGrids, ConvertVGrid
     
     integer, intent(in) :: ROOT         ! Tree node
     type (griddedData_T), dimension(:), pointer :: griddedDataBase ! Database
@@ -127,11 +128,12 @@ contains ! =================================== Public procedures
 
     type (griddedData_T), pointer :: A ! Temperatures on eta surfaces
     type (griddedData_T), pointer :: B ! Pressures on eta surfaces
-    type (VGrid_T), pointer       :: V ! Desired pressure surfaces
+    type (griddedData_T), pointer :: V ! Grid with proper pressure surfaces
+!    type (VGrid_T), pointer       :: V ! Desired pressure surfaces
 
     ! Executable code
     call nullifyGriddedData ( newGrid ) ! for Sun's still useless compiler
-    if ( toggle(gen) ) call trace_begin ( "Concatenate", root )
+    if ( toggle(gen) ) call trace_begin ( "ConvertEtaToP", root )
 
     ! Get the information from the l2cf    
     ! Note that init_tables_module has insisted that we have all
@@ -146,11 +148,25 @@ contains ! =================================== Public procedures
         a => griddedDataBase ( decoration ( decoration ( value ) ) )
       case ( f_b )
         b => griddedDataBase ( decoration ( decoration ( value ) ) )
-      case ( f_VGrid )
-        v => VGrids ( decoration ( decoration ( value ) ) )
+      case ( f_grid )
+        v => griddedDataBase ( decoration ( decoration ( value ) ) )
+!       case ( f_VGrid )
+!         v => VGrids ( decoration ( decoration ( value ) ) )
       end select
     end do
+    call output( 'a grid', advance='yes' )
+    call dump( a, details=0 )
+    call output( 'b grid', advance='yes' )
+    call dump( b, details=0 )
+    call output( 'v grid', advance='yes' )
+    call dump( v, details=0 )
     call ConvertFromEtaLevelGrids ( a, b, V, newGrid )
+    newGrid%sourceFileName      = a%sourceFileName
+    newGrid%quantityName        = a%quantityName
+    newGrid%description         = a%description
+    newGrid%units               = a%units
+    newGrid%verticalCoordinate  = v%verticalCoordinate
+    newGrid%missingValue        = a%missingValue
 
   end function ConvertEtaToP
 
@@ -210,6 +226,12 @@ contains ! =================================== Public procedures
       ! Otherwise a must be full, b empty
       call CopyGrid ( newGrid, a )
     end if
+    newGrid%sourceFileName      = a%sourceFileName
+    newGrid%quantityName        = a%quantityName
+    newGrid%description         = a%description
+    newGrid%units               = a%units
+    newGrid%verticalCoordinate  = a%verticalCoordinate
+    newGrid%missingValue        = a%missingValue
 
     if ( toggle(gen) ) call trace_end ( "Concatenate" )
   end function Concatenate
@@ -497,7 +519,7 @@ contains ! =================================== Public procedures
   type (griddedData_T) function wmoTropFromGrid ( root, griddedDataBase ) &
     & result ( newGrid )
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use GriddedData, only: GRIDDEDDATA_T, RGR, V_IS_PRESSURE, V_IS_ETA, &
+    use GriddedData, only: GRIDDEDDATA_T, DUMP, RGR, V_IS_PRESSURE, V_IS_ETA, &
       & COPYGRID, NULLIFYGRIDDEDDATA, &
       & DOGRIDDEDDATAMATCH, &
       & SETUPNEWGRIDDEDDATA, SLICEGRIDDEDDATA, WRAPGRIDDEDDATA
@@ -506,6 +528,7 @@ contains ! =================================== Public procedures
     use MLSFillValues, only: IsFillValue, RemoveFillValues
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
     use MLSStrings, only: LOWERCASE
+    use output_m, only: output
     use Toggles, only: GEN, TOGGLE
     use Trace_M, only: TRACE_BEGIN, TRACE_END
     use Tree, only: NSONS, SUBTREE, DECORATION
@@ -595,6 +618,10 @@ contains ! =================================== Public procedures
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Gridded T,P data must match to calculate wmo Tropopause' )
     endif
+    call output( 'Temperatures grid', advance='yes' )
+    call dump( Temperatures, details=0 )
+    call output( 'Pressures grid', advance='yes' )
+    call dump( Pressures, details=0 )
     if ( .not. associated(Temperatures) ) then
       call MLSMessage ( MLSMSG_Warning, moduleName, &
         & 'No associated Temperatures grid for calculating wmo tropopause' )
@@ -607,7 +634,7 @@ contains ! =================================== Public procedures
       return
     endif
     ! Right now we can't read eta levels, only pressures
-    ! but when we move to GOES5 GMAO we'll have no choice:
+    ! but when we move to GEOS5 GMAO we'll have no choice:
     ! Must read eta-level files
     if ( .not. any( &
       & Temperatures%verticalCoordinate == (/ v_is_pressure, v_is_eta /) ) ) &
@@ -671,6 +698,8 @@ contains ! =================================== Public procedures
                 case ('hpa', 'mb')
                   scale = 1.
                 case default
+                  call output( 'Pressures%units: ', advance='no' )
+                  call output( trim(Pressures%units), advance='yes' )
                   call MLSMessage ( MLSMSG_Error, moduleName, &
                     & 'Pressures units must be Pa, hPa, or mb calculating wmo tropopause' )
                 end select
@@ -728,6 +757,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.20  2006/06/13 22:13:12  pwagner
+! changed interface to ConvertFromEtaLevelGrids
+!
 ! Revision 2.19  2006/05/12 21:26:37  pwagner
 ! Added extra debugging statements
 !
