@@ -11,7 +11,8 @@
 
 module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 
-  use GriddedData, only: GriddedData_T, rgr, v_is_pressure, &
+  use GriddedData, only: GriddedData_T, rgr, v_is_altitude, v_is_gph, &
+    & v_is_pressure, v_is_theta, &
     & AddGriddedDataToDatabase, Dump, SetupNewGriddedData, NullifyGriddedData
   use HDFEOS, only: HDFE_NENTDIM, &
     & gdopen, gdattach, gddetach, gdclose, gdfldinfo, &
@@ -221,6 +222,7 @@ contains
 
     integer :: start(4), stride(4), edge(4)
     integer :: status
+    character(len=16) :: the_units
     !                                  These start out initialized to one
     integer                        :: nlon=1, nlat=1, nlev=1, ntime=1
     integer, parameter             :: i_longitude=1
@@ -311,6 +313,13 @@ contains
       actual_field_name=DEFAULTGEOS5FIELDNAME
     endif
 
+    if(DEEBUG) print *, 'nentries ', nentries
+    if(DEEBUG) print *, 'ndims ', ndims
+    if(DEEBUG) print *, 'dimlist ', dimlist
+    if(DEEBUG) print *, 'nfields ', nfields
+    if(DEEBUG) print *, 'fieldlist ', fieldlist
+    if(DEEBUG) print *, 'actual_field_name ', actual_field_name
+
     actual_dim_list = ' '
     if(present(GeoDimList)) then
       actual_dim_list=GeoDimList
@@ -343,10 +352,19 @@ contains
     the_g_data%noHeights = nlev
     ! the_g_data%noLsts = ntime
     the_g_data%noDates = ntime
-    the_g_data%units = 'K'
+    ! The following is an awful hack
+    ! to prevent me from the having to read the units attribute
+    select case ( lowercase(actual_field_name) )
+    case ( 'pl' )
+      the_units = 'Pa'
+    case ( 't' )
+      the_units = 'K'
+    case default
+      the_units = 'Pa'
+    end select
     if(DEEBUG) print *, 'our quantity name ', the_g_data%quantityName
     if(DEEBUG) print *, 'our description ', the_g_data%description
-    if(DEEBUG) print *, 'our units ', the_g_data%units
+    if(DEEBUG) print *, 'our units ', the_units
     if(DEEBUG) print *, 'our vertical coord ', the_g_data%verticalCoordinate
     if(DEEBUG) print *, 'v_type ', v_type
 
@@ -354,7 +372,7 @@ contains
     ! Setup the grid
     call SetupNewGriddedData ( the_g_data, noHeights=nlev, noLats=nlat, &
       & noLons=nlon, noLsts=1, noSzas=1, noDates=ntime, &
-      & missingValue=FILLVALUE, units='K', verticalCoordinate=v_type, &
+      & missingValue=FILLVALUE, units=the_units, verticalCoordinate=v_type, &
       & heightsunits='hPa' )
       ! & noLons=nlon, noLsts=ntime, noSzas=1, noDates=1, missingValue=FILLVALUE )
     if(DEEBUG) print *, '(Again) our quantity name ', the_g_data%quantityName
@@ -1689,6 +1707,18 @@ contains
       do while (.not. end_of_file)
         if(debug) call output('reading l3ascii file', advance = 'yes')
         call l3ascii_read_field ( CliUnit, gddata, end_of_file, ErrType)
+        select case ( gddata%verticalCoordinate )
+        case ( v_is_pressure )
+          gddata%heightsUnits = 'hPa'
+        case ( v_is_altitude )
+          gddata%heightsUnits = 'km'
+        case ( v_is_gph )
+          gddata%heightsUnits = 'km'
+        case ( v_is_theta )
+          gddata%heightsUnits = 'K'
+        case default
+          gddata%heightsUnits = 'hPa'
+        end select
         if(ErrType == 0) then
           if(debug) then
             call output('adding to grid database', advance='yes')
@@ -1852,6 +1882,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.44  2006/06/13 22:11:45  pwagner
+! Correctly sets units, heightsUnits
+!
 ! Revision 2.43  2006/05/19 19:55:07  pwagner
 ! Corrected a misspelling Lahey missed
 !
