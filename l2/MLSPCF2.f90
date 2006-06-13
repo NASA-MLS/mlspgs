@@ -66,8 +66,11 @@ MODULE MLSPCF2
    INTEGER, PARAMETER :: mlspcf_l1b_oa_start = 21110
    INTEGER, PARAMETER :: mlspcf_l1b_oa_end = 21139
    !
-   INTEGER, PARAMETER :: mlspcf_l2ncep_start = 22000
-   INTEGER, PARAMETER :: mlspcf_l2ncep_end = 22099
+   INTEGER, PARAMETER :: mlspcf_l2ncep_start = 21900
+   INTEGER, PARAMETER :: mlspcf_l2ncep_end = 21999
+   !
+   INTEGER, PARAMETER :: mlspcf_l2geos5_start = 22000
+   INTEGER, PARAMETER :: mlspcf_l2geos5_end = 22099
    !
    INTEGER, PARAMETER :: mlspcf_l2dao_start = 22100
    INTEGER, PARAMETER :: mlspcf_l2dao_end = 22199
@@ -115,6 +118,9 @@ contains
 END MODULE MLSPCF2
 
 ! $Log$
+! Revision 2.18  2006/06/13 18:19:08  pwagner
+! Added pcfids for geos5; moved ncep pcfids backwards to make room
+!
 ! Revision 2.17  2006/01/19 00:31:02  pwagner
 ! Set aside range for pfa files, col_spec_keys and _hash
 !
