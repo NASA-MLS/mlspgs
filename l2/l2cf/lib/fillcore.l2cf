@@ -36,5 +36,9 @@ begin Fill
   Fill, quantity=stateCore.h2o_hr, method=vector, sourceQuantity=stateCore.h2o, /interpolate
   Fill, quantity=stateCore.o3_hr, method=vector, sourceQuantity=stateCore.o3, /interpolate
   Fill, quantity=stateCore.temperature_hr, method=vector, sourceQuantity=stateCore.temperature, /interpolate
+  
+  ;; Transfer stateCore into standard products for those phases where we
+  ;; 'restore' things
+  Transfer, source=stateCore, destination=standardProducts
 
 end Fill
