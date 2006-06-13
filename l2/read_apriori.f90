@@ -34,7 +34,7 @@ module ReadAPriori
     & mlspcf_l2ncep_start, mlspcf_l2ncep_end, &
     & mlspcf_l2dao_start, mlspcf_l2dao_end, &
     & mlspcf_l2clim_start, mlspcf_l2clim_end, &
-    & mlspcf_geos5_start, mlspcf_geos5_end
+    & mlspcf_l2geos5_start, mlspcf_l2geos5_end
   use MLSStringLists, only: catLists
   use MLSStrings, only: lowercase
   use MoreTree, only: Get_Spec_ID
@@ -189,7 +189,7 @@ contains ! =====     Public Procedures     =============================
     lastClimPCF = mlspcf_l2clim_start - 1
     lastDAOPCF = mlspcf_l2dao_start - 1
     lastNCEPPCF = mlspcf_l2ncep_start - 1
-    lastGEOS5PCF = mlspcf_geos5_start - 1
+    lastGEOS5PCF = mlspcf_l2geos5_start - 1
 
     do i = 2, nsons(root)-1 ! Skip the section name at begin and end
       hdfVersion = DEFAULT_HDFVERSION_READ
@@ -539,12 +539,12 @@ contains ! =====     Public Procedures     =============================
         case ( l_geos5 ) ! ---------------------------- GMAO Data (GEOS5)
           if ( TOOLKIT .and. got(f_file) ) then
             call split_path_name(FileNameString, path, SubString)
-            LastGEOS5PCF = GetPCFromRef(SubString, mlspcf_geos5_start, &
-            & mlspcf_geos5_end, &                                     
+            LastGEOS5PCF = GetPCFromRef(SubString, mlspcf_l2geos5_start, &
+            & mlspcf_l2geos5_end, &                                     
             & TOOLKIT, returnStatus, l2apriori_Version, DEBUG, &  
             & exactName=FileNameString)                             
           elseif ( TOOLKIT ) then
-            do pcf_indx = LastGEOS5PCF+1, mlspcf_geos5_end
+            do pcf_indx = LastGEOS5PCF+1, mlspcf_l2geos5_end
               returnStatus = Pgs_pc_getReference(pcf_indx, L2apriori_version, &
                 & fileNameString)
               if ( returnStatus == PGS_S_SUCCESS) exit
@@ -558,7 +558,7 @@ contains ! =====     Public Procedures     =============================
           gridIndex = InitializeMLSFile(GriddedFile, content = 'gridded', &
             & name=FilenameString, shortName=shortFileName, &
             & type=l_grid, access=DFACC_RDONLY, hdfVersion=HDFVERSION_4, &
-            & PCBottom=mlspcf_geos5_start, PCTop=mlspcf_geos5_end)
+            & PCBottom=mlspcf_l2geos5_start, PCTop=mlspcf_l2geos5_end)
           GriddedFile%PCFId = LastGEOS5PCF
           gridIndex = AddFileToDataBase(filedatabase, GriddedFile)
           ! The gridded data needs to part of the database, even if the file
@@ -927,6 +927,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.68  2006/06/13 20:56:43  pwagner
+! Fixed bug in pcfid names for geos5 files
+!
 ! Revision 2.67  2006/06/13 18:19:08  pwagner
 ! Added pcfids for geos5; moved ncep pcfids backwards to make room
 !
