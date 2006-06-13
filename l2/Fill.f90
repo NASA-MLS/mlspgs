@@ -5492,6 +5492,7 @@ contains ! =====     Public Procedures     =============================
       integer, intent(in), optional :: BOMask ! A pattern of bits--
                                               ! set prec. neg. if matched
       ! Local variables
+      integer                               :: BO_error
       type (l1bData_T)                      :: BO_stat
       character (len=132)                   :: MODULENAMESTRING
       character (len=132)                   :: NAMESTRING
@@ -5582,9 +5583,9 @@ contains ! =====     Public Procedures     =============================
         call GetModuleName ( quantity%template%instrumentModule, moduleNameString )
         moduleNameString = AssembleL1BQtyName('BO_stat', this_hdfVersion, .TRUE., &
           & trim(moduleNameString))
-        call ReadL1BData ( L1BOAFile, moduleNameString, BO_stat, noMAFs, flag, &
-          & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
-          & NeverFail= .false., &
+        call ReadL1BData ( L1BOAFile, moduleNameString, BO_stat, noMAFs, &
+          & flag=BO_error, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+          & NeverFail= .true., &
           & dontPad=DONTPAD )
       end if
 
@@ -5653,7 +5654,7 @@ contains ! =====     Public Procedures     =============================
           return
         end if
 
-        if ( isPrecision .and. myBOMask /= 0 ) then
+        if ( isPrecision .and. myBOMask /= 0 .and. BO_error == 0 ) then
           noMAFs = size(l1bData%dpField, 3)
           maxMIFs = l1bData%maxMIFs
           l1bData%dpField = NegativeIfBitPatternSet(l1bData%dpField, &
@@ -7858,6 +7859,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.336  2006/06/13 22:14:18  pwagner
+! Recover gracefully if l1boa file lacks BO_stat dataset
+!
 ! Revision 2.335  2006/06/12 19:28:52  pwagner
 ! Fallback to climatology noted only if all of ncep, goes4/5 missing
 !
