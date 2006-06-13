@@ -47,7 +47,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! Update these lines before delivery to sips     
   ! id to print out in response to "--version" command-line option       
   character(LEN=*), dimension(2), parameter :: CURRENT_VERSION_ID = (/ &    
-    & 'v2.xx swdev team              ', &       
+    & 'v2.00 swdev team              ', &       
     & 'Copyright statement omitted   '/)
      
   ! Set the following to 1 before delivering to sips;                       
@@ -107,7 +107,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! Whether to do only a pre-flight checkout of paths
   logical            :: CHECKPATHS = .false.         
   ! Whether to catenate split autoDirectWrites
-  logical            :: CATENATESPLITS = .false.         
+  logical            :: CATENATESPLITS = .true.         
 
   logical            :: TOOLKIT =                SIPS_VERSION 
   ! --------------------------------------------------------------------------
@@ -143,6 +143,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.36  2006/06/13 00:16:27  pwagner
+! catenating split dgg/dgm files now on by default
+!
 ! Revision 2.35  2006/02/21 19:19:27  pwagner
 ! New things to create, refer to run time booleans in l2cf
 !
