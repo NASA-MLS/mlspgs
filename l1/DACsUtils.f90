@@ -1,4 +1,4 @@
-! Copyright 2005, by the California Institute of Technology. ALL
+! Copyright 2006, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
 ! at the California Institute of Technology.
@@ -26,9 +26,9 @@ MODULE DACsUtils
   INTEGER :: plan129
 
 !---------------------------- RCS Module Info ------------------------------
-  character (len=*), private, parameter :: ModuleName= &
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  PRIVATE :: not_used_here 
 !---------------------------------------------------------------------------
 
 CONTAINS
@@ -194,7 +194,9 @@ CONTAINS
                   nchans, R2a)
              CALL ProcessUnpackedDACS (DACS_MAF(MIFno)%D(:,DACSno), R2a, &
                   nchans, DACS_MAF(MIFno)%TP(DACSno), &
+                  SciMAF(MIFno)%TPdigP(DACSno), SciMAF(MIFno)%TPdigN(DACSno), &
                   SciMAF(MIFno)%DACS(:,DACSno))
+             SciMAF(MIFno)%TP(DACSno) = DACS_MAF(MIFno)%TP(DACSno)         
           ENDIF
        ENDDO
     ENDDO
@@ -374,15 +376,16 @@ CONTAINS
   END SUBROUTINE UnpackUncompDACS
 
 !=============================================================================
-  SUBROUTINE ProcessUnpackedDACS (D, R2a, nchans, TP, DACS_dat)
+  SUBROUTINE ProcessUnpackedDACS (D, R2a, nchans, TP, TPdigP, TPdigN, DACS_dat)
 !=============================================================================
 
     USE MLSL1Common, ONLY: r8, DACSchans
     USE MathUtils, ONLY: derfi
     
-    REAL :: R2a(DACSchans)
-    INTEGER :: D(4), TP, nchans
-    REAL :: DACS_dat(DACSchans)
+    REAL, INTENT (IN) :: R2a(DACSchans)
+    INTEGER, INTENT (IN) :: D(4), TP, nchans
+    real(r8), intent (OUT) :: TPdigP, TPdigN
+    REAL, INTENT (OUT) :: DACS_dat(DACSchans)
 
     INTEGER :: Dtot, i
     REAL(r8) :: rho(DACSchans), P_thold, N_thold, Z_thold
@@ -405,11 +408,15 @@ CONTAINS
     Dtot = SUM (D)
     IF (Dtot > 0.0) THEN
        P_thold = sqrt2 * derfi (1.0d0 - 2.0d0 * D(1) / Dtot)
+       TPdigP = 1.0 / (P_thold * P_thold)
        N_thold = sqrt2 * derfi (1.0d0 - 2.0d0 * D(4) / Dtot)
+       TPdigN = 1.0 / (N_thold * N_thold)
        Z_thold = sqrt2 * derfi (1.0d0 - 2.0d0 * (D(1) + D(2))/ Dtot)
     ELSE
        P_thold = 0.0
+       TPdigP= 0.0
        N_thold = 0.0
+       TPdigN = 0.0
        Z_thold = 0.0
     ENDIF
     A = P_thold - N_thold
@@ -432,7 +439,7 @@ CONTAINS
 
   CALL rfftw_f77_one (plan129, R, R_FFT)
 
-  DACS_dat = R_FFT(1:129) * TP
+  DACS_dat = R_FFT(1:129)   ! Moved scaling to SortQualify routine
 
   END SUBROUTINE ProcessUnpackedDACS
 
@@ -694,17 +701,20 @@ CONTAINS
 
   END SUBROUTINE DeconvolveRads
 
-  logical function not_used_here()
+  LOGICAL FUNCTION not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
+  CHARACTER (len=*), PARAMETER :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  END FUNCTION not_used_here
 END MODULE DACsUtils
 
 ! $Log$
+! Revision 2.13  2006/06/14 13:44:55  perun
+! Add TP digital and moved scaling DACS_dat to SortQualify routine
+!
 ! Revision 2.12  2006/04/05 18:10:32  perun
 ! Remove unused variables
 !

@@ -95,6 +95,9 @@ MODULE MLSPCF1
   INTEGER, PARAMETER :: mlspcf_bandsw_start = 913
   INTEGER, PARAMETER :: mlspcf_bandsw_end = 913
 !
+  INTEGER, PARAMETER :: mlspcf_strayrad_start = 914
+  INTEGER, PARAMETER :: mlspcf_strayrad_end = 914
+!
   INTEGER, PARAMETER :: mlspcf_sciMAF_start = 920
   INTEGER, PARAMETER :: mlspcf_sciMAF_end = 920
 !
@@ -156,6 +159,9 @@ CONTAINS
 END MODULE MLSPCF1
 
 ! $Log$
+! Revision 2.13  2006/06/14 13:47:23  perun
+! Add pcf numbers for stray radiance table
+!
 ! Revision 2.12  2006/03/24 15:14:13  perun
 ! Add pcf numbers for BandAlts and BandSwitches tables
 !

@@ -103,7 +103,9 @@ PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
             GetIndexedAvg (EngMAF%eng%value, CalTgtIndx%THzLimb) - absZero_C
        CurMAFdata%BO_stat = THz_BO_stat(:,CalMAFno)
 
-       more_data =  THzSciMAF(0)%secTAI <= L1Config%Input_TAI%endTime
+       more_data =  THzSciMAF(0)%secTAI <= L1Config%Input_TAI%endTime .AND. &
+            (CalMAFno < SIZE (OA_counterMAF))
+       IF (.NOT. more_data) EXIT    !! Nothing more to do
 
     ENDDO
 
@@ -282,6 +284,9 @@ END MODULE SortQualifyTHz
 !=============================================================================
 
 ! $Log$
+! Revision 2.13  2006/06/14 13:49:29  perun
+! Protect reading beyond OA data size
+!
 ! Revision 2.12  2006/03/24 15:18:51  perun
 ! Add sorting based on "good" altitude range and YAW positions
 !
