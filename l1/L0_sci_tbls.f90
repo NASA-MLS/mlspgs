@@ -290,6 +290,8 @@ MODULE L0_sci_tbls  ! Define L0 science tables
      INTEGER :: MB(MBchans,MBnum)
      INTEGER :: WF(WFchans,WFnum)
      REAL :: DACS(DACSchans,DACSnum)
+     REAL :: TP(DACSnum)               ! DACS Total Power (analog)
+     REAL(r8) :: TPdigP(DACSnum), TPdigN(DACSnum)  ! DACS Total Power (digital)
      REAL :: APE_pos(2), ASA_pos(2), GSM_pos(2), TSSM_pos(2)
      REAL :: APE_pos_P(2), TSSM_pos_P(2)
      REAL :: APE_theta, ASA_theta, GSM_theta, TSSM_theta
@@ -603,6 +605,9 @@ CONTAINS
 END MODULE L0_sci_tbls
 
 ! $Log$
+! Revision 2.14  2006/06/14 13:46:09  perun
+! Add TP variables to sci_pkt definition
+!
 ! Revision 2.13  2006/03/24 15:08:20  perun
 ! Remove LimbAltFlag
 !
