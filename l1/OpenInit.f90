@@ -49,7 +49,7 @@ CONTAINS
          mlspcf_defltgains_start, mlspcf_sidebandfrac_start, &
          mlspcf_spilloverloss_start, mlspcf_defltchi2_start, &
          mlspcf_defltbaselineAC_start, mlspcf_l1b_log_start, &
-         mlspcf_bandalts_start
+         mlspcf_bandalts_start, mlspcf_strayrad_start
     USE PCFHdr, ONLY: CreatePCFAnnotation, GlobalAttributes, FillTAI93Attribute
     USE dates_module, ONLY: utc_to_yyyymmdd
     USE L0_sci_tbls, ONLY: InitSciPointers
@@ -60,7 +60,7 @@ CONTAINS
     USE Calibration, ONLY: InitCalibWindow
     USE EngTbls, ONLY: Load_Eng_tbls
     USE BandTbls, ONLY: Load_Band_tbls, LoadSidebandFracs, LoadSpilloverLoss, &
-         LoadDefltChi2, LoadBandAlts
+         LoadDefltChi2, LoadBandAlts, LoadFourierCoeffs
     USE MLSL1Rad, ONLY: InitRad
     USE MLSSignalNomenclature, ONLY: ReadSignalsDatabase
     USE OutputL1B, ONLY: OutputL1BOA_create
@@ -492,6 +492,38 @@ CONTAINS
 
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & "Closed Spillover Loss table file")
+
+!! Open and initialize Fourier Coefficients table:
+
+    version = 1
+    returnStatus = PGS_PC_getReference (mlspcf_strayrad_start, version, &
+          & PhysicalFilename)
+
+    version = 1
+    returnStatus = PGS_IO_Gen_openF (mlspcf_strayrad_start, &
+         PGSd_IO_Gen_RSeqFrm, 0, tbl_unit, version)
+    IF (returnstatus /= PGS_S_SUCCESS) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not open Stray Radiance Coefficients table file: " // &
+            PhysicalFilename)
+    ENDIF
+
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & "Opened Stray Radiances Coefficients table file: " // &
+         PhysicalFilename)
+
+    CALL LoadFourierCoeffs (tbl_unit, L1PCF%StartUTC)
+
+    IF (ios /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName, &
+         & "Error reading Stray Radiances Coefficients table file")
+
+    IF (returnstatus /= PGS_S_SUCCESS) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not close Stray Radiances Coefficients table file")
+    ENDIF
+
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & "Closed Stray Radiances Coefficients table file")
 
 !! Open and initialize Default Chi2 table:
 
@@ -1097,6 +1129,9 @@ END MODULE OpenInit
 !=============================================================================
 
 ! $Log$
+! Revision 2.28  2006/06/14 13:47:47  perun
+! Open stray radiance file and read Fourier coefficients
+!
 ! Revision 2.27  2006/04/05 18:09:38  perun
 ! Remove unused variables
 !
