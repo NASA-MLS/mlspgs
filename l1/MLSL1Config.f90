@@ -58,6 +58,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
      REAL :: AntOffsetsScale = 1.0       ! scale factor for antenna offsets
      LOGICAL :: UseDefaultGains = .FALSE.
      LOGICAL :: CalibDACS = .TRUE.
+     LOGICAL :: TPdigital = .TRUE.
      LOGICAL :: THzColdCal = .TRUE.
      CHARACTER(LEN=1) :: GHz_seq(0:MaxMIFs-1), THz_seq(0:MaxMIFs-1)
      CHARACTER(LEN=1) :: GHz_seq_use, THz_seq_use
@@ -361,7 +362,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
            p_mif_dead_time, p_mifspermaf, p_calibDACS, p_THzMaxBias, &
            p_thzspaceangle, f_bandno, f_chan, s_markchanbad, p_thzcoldcal, &
            p_MoonToSpaceAngle, p_DACSwindow, p_UseAntOffsets, p_MinSpaceLimbs, &
-           p_MAFexpandNum
+           p_MAFexpandNum, p_TPdigital
       USE BrightObjects_m, ONLY: s_BrightObject, f_angle, f_name, f_negate, &
            l_mercury, BO_Angle_GHz, BO_Angle_THz, BO_NumGHz, BO_NumTHz, &
            BO_Index_GHz, BO_Index_THz, BO_Negate_GHz, BO_Negate_THz
@@ -574,6 +575,10 @@ MODULE MLSL1Config  ! Level 1 Configuration
             CASE (p_calibDACS)
 
                L1Config%Calib%calibDACS = Get_Boolean (son)
+
+            CASE (p_TPdigital)
+
+               L1Config%Calib%TPdigital = Get_Boolean (son)
 
             END SELECT
 
@@ -796,6 +801,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
 END MODULE MLSL1Config
 
 ! $Log$
+! Revision 2.24  2006/06/14 13:47:00  perun
+! Handle TPdigital input
+!
 ! Revision 2.23  2006/04/05 18:10:57  perun
 ! Remove unused variables
 !
