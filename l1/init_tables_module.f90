@@ -104,7 +104,8 @@ MODULE INIT_TABLES_MODULE
   INTEGER, PARAMETER :: P_THzMaxBias = p_MIFsPerMAF + 1
   INTEGER, PARAMETER :: P_MoonToSpaceAngle = p_THzMaxBias + 1
   INTEGER, PARAMETER :: P_DACSWINDOW = p_MoonToSpaceAngle + 1
-  INTEGER, PARAMETER :: P_UseAntOffsets = p_DACSWINDOW + 1
+  INTEGER, PARAMETER :: P_TPdigital = p_DACSWINDOW + 1
+  INTEGER, PARAMETER :: P_UseAntOffsets = p_TPdigital + 1
   INTEGER, PARAMETER :: P_MinSpaceLimbs = p_UseAntOffsets + 1
 
   ! In Output section:
@@ -187,6 +188,7 @@ CONTAINS ! =====     Public procedures     =============================
     parm_indices(p_removebaseline)=         add_ident ( 'RemoveBaseline' )
     parm_indices(p_MoonToSpaceAngle)=       add_ident ( 'MoonToSpaceAngle' )
     parm_indices(p_dacswindow)=             add_ident ( 'DACSwindow' )
+    parm_indices(p_TPdigital)=              add_ident ( 'TPdigital' )
     parm_indices(p_UseAntOffsets)=          add_ident ( 'UseAntOffsets' )
     parm_indices(p_DeconvolveDACS)=         add_ident ( 'DeconvolveDACS' )
     parm_indices(p_WriteDiagOffsets)=       add_ident ( 'WriteDiagOffsets' )
@@ -333,6 +335,7 @@ CONTAINS ! =====     Public procedures     =============================
              begin, p+p_mifspermaf, t+t_numeric, n+n_name_def, &
              begin, p+p_usedefaultgains, t+t_boolean, n+n_name_def, &
              begin, p+p_UseAntOffsets, t+t_boolean, n+n_name_def, &
+             begin, p+p_TPdigital, t+t_boolean, n+n_name_def, &
              begin, p+p_calibDACS, t+t_boolean, n+n_name_def, &
              begin, p+p_THzColdCal, t+t_boolean, n+n_name_def, &
              s+s_spaceMIFs, s+s_targetMIFs, s+s_limbMIFS, s+s_discardMIFs, &
@@ -359,6 +362,9 @@ CONTAINS ! =====     Public procedures     =============================
 END MODULE INIT_TABLES_MODULE
   
 ! $Log$
+! Revision 2.27  2006/06/14 13:45:27  perun
+! Add TPdigital parameter
+!
 ! Revision 2.26  2006/04/05 18:09:17  perun
 ! Remove unused variables
 !
@@ -399,6 +405,9 @@ END MODULE INIT_TABLES_MODULE
 ! Version 1.2 commit
 !
 ! $Log$
+! Revision 2.27  2006/06/14 13:45:27  perun
+! Add TPdigital parameter
+!
 ! Revision 2.26  2006/04/05 18:09:17  perun
 ! Remove unused variables
 !
