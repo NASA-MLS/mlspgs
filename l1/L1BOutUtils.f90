@@ -1,4 +1,4 @@
-! Copyright 2005, by the California Institute of Technology. ALL
+! Copyright 2006, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
 ! at the California Institute of Technology.
@@ -20,9 +20,9 @@ MODULE L1BOutUtils
   PUBLIC :: OutputL1Bdata, OutputL1BOA, WriteHdrAnnots
 
 !---------------------------- RCS Module Info ------------------------------
-  character (len=*), private, parameter :: ModuleName= &
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  PRIVATE :: not_used_here 
 !---------------------------------------------------------------------------
 
 CONTAINS
@@ -76,14 +76,18 @@ CONTAINS
 !=============================================================================
 
     USE MLSL1Common, ONLY: L1BFileInfo, MAFinfo, OA_counterMAF, &
-         OA_counterIndex
+         OA_counterIndex, MaxMIFs, DACSnum
     USE OutputL1B, ONLY: OutputL1B_rad, OutputL1B_diags
     USE MLSL1Rad, ONLY: L1Brad
     USE EngTbls, ONLY: Reflec
     USE Calibration, ONLY: CalWin, MAFdata_T
 
     INTEGER, SAVE :: MAFno = 0, counterMAF, MAFindex = 1
+    INTEGER :: bank, MIF
     TYPE (MAFdata_T), POINTER :: CurMAFdata
+    INTEGER, PARAMETER :: last_MIF = MaxMIFs - 3
+    REAL :: TP(0:last_MIF,DACSnum), TPdigP(0:last_MIF,DACSnum), &
+         TPdigN(0:last_MIF,DACSnum)
 
     CurMAFdata => CalWin%MAFdata(CalWin%central)
     counterMAF = CurMAFdata%EMAF%TotalMAF
@@ -101,8 +105,18 @@ CONTAINS
     CALL OutputL1B_rad (MAFno, L1BFileInfo, counterMAF, Reflec, &
          MAFinfo%startTAI, L1Brad)
 
+! Save DACS TP values:
+
+    DO bank = 1, DACSnum
+       DO MIF = 0, last_MIF
+          TP(MIF,bank) = CurMAFdata%SciPkt(MIF)%TP(bank)
+          TPdigP(MIF,bank) = CurMAFdata%SciPkt(MIF)%TPdigP(bank)
+          TPdigN(MIF,bank) = CurMAFdata%SciPkt(MIF)%TPdigN(bank)
+       ENDDO
+    ENDDO
+
     CALL OutputL1B_diags (L1BFileInfo%DiagId, MAFno, counterMAF, &
-         MAFinfo%startTAI)
+         MAFinfo%startTAI, TP=TP, TPdigP=TPdigP, TPdigN=TPdigN)
 
     PRINT *, "outputting l1b for MAF no ", MAFno
 
@@ -112,7 +126,7 @@ CONTAINS
   SUBROUTINE WriteHdrAnnots (FileName, HDFversion)
 !=============================================================================
 
-    USE Intrinsic, ONLY: l_hdf
+    USE INTRINSIC, ONLY: l_hdf
     USE OpenInit, ONLY: antextPCF, antextCF
     USE PCFHdr, ONLY: WritePCF2Hdr
 
@@ -126,17 +140,20 @@ CONTAINS
 
   END SUBROUTINE WriteHdrAnnots
 
-  logical function not_used_here()
+  LOGICAL FUNCTION not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
+  CHARACTER (len=*), PARAMETER :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  END FUNCTION not_used_here
 END MODULE L1BOutUtils
 
 ! $Log$
+! Revision 2.15  2006/06/14 13:46:34  perun
+! Assemble TP data for output to the DIAG file
+!
 ! Revision 2.14  2005/08/24 15:50:57  perun
 ! Assemble and pass APE and TSSM pos_P for output
 !
