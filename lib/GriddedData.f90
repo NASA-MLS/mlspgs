@@ -12,7 +12,7 @@
 module GriddedData ! Contains the derived TYPE GriddedData_T
 
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use intrinsic, only: L_ANGLE, L_GEODALTITUDE, L_GPH, L_ETA, L_PRESSURE, &
+  use intrinsic, only: L_GEODALTITUDE, L_GPH, L_ETA, L_PRESSURE, &
     & L_THETA
   use MLSCommon, only: RGR=>R4, R8, LINELEN, NAMELEN, DEFAULTUNDEFINEDVALUE
   ! r4 corresponds to sing. prec. :: same as stored in files
@@ -39,6 +39,11 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
 
   logical, private, parameter :: MAYDUMPFIELDVALUES = .true.
 
+  interface ConcatenateGriddedData
+    module procedure ConcatenateGriddedData_2
+    module procedure ConcatenateGriddedData_array
+  end interface
+
   interface DUMP
     module procedure DumpGriddedData
     module procedure DumpGriddedDatabase
@@ -55,7 +60,7 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
   integer, parameter :: V_is_eta      = L_ETA ! V_is_theta+1
   
   ! If dumping gridded data, always give some details of any matching these
-  character(len=*), parameter :: ALWAYSDUMPTHESE = 'dao,ncep,geos5' ! -> ' '
+  character(len=*), parameter :: ALWAYSDUMPTHESE = ' ' ! 'dao,ncep,geos5'
   ! and for these automatically dumped ones, this level of detail for multi-dim
   integer, parameter :: AUTOMATICDETAILS = 0 ! 1 means dump, 0 means no
 
@@ -128,7 +133,7 @@ contains
   end function AddGriddedDataToDatabase
 
   ! -------------------------------------------- ConcatenateGriddedData
-  subroutine ConcatenateGriddedData ( A, B, X )
+  subroutine ConcatenateGriddedData_2 ( A, B, X )
     ! This routine takes two grids A and B, B dated after A and tries
     ! to produce a third grid which is a combination of A and B
     use MLSNumerics, only: EssentiallyEqual
@@ -163,9 +168,16 @@ contains
       & 'Grids for Concatenate have different missing values' )
 
     ! Check that the dates are going to work out
-    if ( maxval ( a%dateEnds ) > minval ( b%dateStarts ) ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+    if ( maxval ( a%dateEnds ) > minval ( b%dateStarts ) ) then
+      call output( 'Ending date of a: ', advance='no' )
+      call output( maxval ( a%dateEnds ), format='(1pe16.9)', advance='yes' )
+      call output( 'Starting date of b: ', advance='no' )
+      call output( minval ( b%dateStarts ), format='(1pe16.9)', advance='yes' )
+      call output( 'Difference: ', advance='no' )
+      call output( maxval ( a%dateEnds ) - minval ( b%dateStarts ), format='(1pe16.9)', advance='yes' )
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Grids for concatenation are not in correct time order' )
+    endif
 
     ! OK, now we're ready
     call DestroyGriddedData ( X )
@@ -191,7 +203,93 @@ contains
 
     x%field ( :, :, :, :, :, 1:a%noDates ) = a%field
     x%field ( :, :, :, :, :, a%noDates+1:x%noDates ) = b%field
-  end subroutine ConcatenateGriddedData
+  end subroutine ConcatenateGriddedData_2
+
+  subroutine ConcatenateGriddedData_array ( Database, indices, X )
+    ! This routine takes an array of grids and a set of index values
+    ! to produce a third grid which is a combination database elements
+    ! at the index values
+    use MLSNumerics, only: EssentiallyEqual
+    type ( GriddedData_T ), dimension(:), intent(in) :: database
+    integer, dimension(:), intent(in) :: indices ! index values
+    type ( GriddedData_T ), intent(inout) :: X ! inout to let us deallocate it
+    ! Local variables
+    logical, parameter :: DEEBUG = .false.
+    integer :: i
+    integer, dimension(size(indices)) :: i1
+    integer, dimension(size(indices)) :: i2
+    integer :: index1
+    integer :: noDates
+    ! Executable code
+    call DestroyGriddedData ( X )
+    if ( size(indices) < 1 .or. size(database) < 1 ) return
+    index1 = indices(1)
+    if ( index1 < 1 .or. index1 > size(Database) ) return
+    if ( size(indices) < 2 ) then
+      call CopyGrid ( X, Database(index1) )
+      return
+    endif
+    noDates = 0
+    do i=1, size(indices)
+      i1(i) = noDates + 1
+      noDates = noDates + Database(indices(i))%noDates
+      i2(i) = noDates
+    enddo
+    call SetupNewGriddedData ( X, source=Database(index1), noDates= noDates )
+    ! Copy over the unchanged position data
+    x%heights = Database(index1)%heights
+    x%lats = Database(index1)%lats
+    x%lons = Database(index1)%lons
+    x%lsts = Database(index1)%lsts
+    x%szas = Database(index1)%szas
+
+    x%dateStarts(1:i2(1)) = Database(index1)%dateStarts
+    x%dateEnds  (1:i2(1)) = Database(index1)%dateEnds
+
+    x%field ( :, :, :, :, :, 1:i2(1) ) = Database(index1)%field
+    do i=2, size(indices)
+      index1 = indices(i)
+      if ( index1 < 1 .or. index1 > size(database) ) cycle
+      ! First, check that the grids A and B are conformable.
+      if ( Database(index1)%verticalCoordinate /= x%verticalCoordinate .or. &
+        & Database(index1)%equivalentLatitude .neqv. x%equivalentLatitude &
+        & .or. &
+        & Database(index1)%noYear .neqv. x%noYear ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Grids for Concatenate are not compatible' )
+      if ( .not. all ( EssentiallyEqual &
+        & ( Database(index1)%heights, x%heights ) ) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Grids for Concatenate do not share heights' )
+      if ( .not. all ( EssentiallyEqual ( Database(index1)%lats, x%lats ) ) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Grids for Concatenate do not share lats' )
+      if ( .not. all ( EssentiallyEqual ( Database(index1)%lons, x%lons ) ) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Grids for Concatenate do not share lons' )
+      if ( .not. all ( EssentiallyEqual ( Database(index1)%lsts, x%lsts ) ) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Grids for Concatenate do not share lsts' )
+      if ( .not. all ( EssentiallyEqual ( Database(index1)%szas, x%szas ) ) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Grids for Concatenate do not share szas' )
+      if ( .not. EssentiallyEqual &
+        & ( Database(index1)%missingValue, x%missingValue ) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Grids for Concatenate have different missing values' )
+
+      ! Check that the dates are going to work out
+      if ( maxval ( x%dateEnds(:i1(i)-1) ) > &
+        & minval ( Database(index1)%dateStarts ) ) then
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Grids for concatenation are not in correct time order' )
+      endif
+
+      x%dateStarts(i1(i):i2(i)) = Database(index1)%dateStarts
+      x%dateEnds(i1(i):i2(i)) = Database(index1)%dateEnds
+      x%field ( :, :, :, :, :, i1(i):i2(i) ) = Database(index1)%field
+    enddo
+  end subroutine ConcatenateGriddedData_array
 
   ! ---------------------------------------- ConvertFromEtaLevelGrids ------------------
   subroutine ConvertFromEtaLevelGrids ( TGrid, PGrid, NGrid, OutGrid )
@@ -457,9 +555,11 @@ contains
 
     call output ( ' No. of dates = ' )
     call output ( GriddedData%noDates, advance='yes' )
-    if ( myDetails >= 0 ) call dump ( GriddedData%dateStarts, &
+    if ( myDetails >= 0 .or. GriddedData%noDates < 6 )&
+      &  call dump ( GriddedData%dateStarts, &
       & '    starting dates =' )
-    if ( myDetails >= 0 ) call dump ( GriddedData%dateEnds, &
+    if ( myDetails >= 0 .or. GriddedData%noDates < 6 ) &
+      & call dump ( GriddedData%dateEnds, &
       & '    ending dates =' )
 
     if ( .not. all(ieee_is_finite(GriddedData%field)) ) &
@@ -1076,6 +1176,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.41  2006/06/14 23:58:46  pwagner
+! Concatenate can take array of grids
+!
 ! Revision 2.40  2006/06/13 22:10:19  pwagner
 ! changed interface to ConvertFromEtaLevelGrids
 !
