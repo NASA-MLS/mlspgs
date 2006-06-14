@@ -140,14 +140,14 @@ CONTAINS
   END SUBROUTINE CalcRadiance
 
 !=============================================================================
-  SUBROUTINE CalcNonLimbRad (Band, chan, RadNum, ReflecK, NonLimbRad)
+  SUBROUTINE CalcNonLimbRad (Band, chan, RadNum, ReflecK, delrad, NonLimbRad)
 !=============================================================================
 
     USE MLSL1Config, ONLY: L1Config
     USE BandTbls, ONLY: SideBandFrac, SpilloverLoss, RadiometerLoss, BandFreq
 
     INTEGER, INTENT (IN) :: Band, chan, RadNum
-    REAL, INTENT (IN) :: ReflecK
+    REAL, INTENT (IN) :: ReflecK, delrad
     REAL, INTENT (OUT) :: NonLimbRad
 
     REAL :: POA_L, POA_U, Spillover_L, Spillover_U
@@ -172,10 +172,12 @@ CONTAINS
 
     NonLimbRad = NonLimbRad + SideBandFrac(Band)%Lower(chan) * &
          (1.0 - Spillover_L) * &
-         RadiometerLoss(RadNum)%Ohmic * RadiometerLoss(RadNum)%Radiance
+         RadiometerLoss(RadNum)%Ohmic * (RadiometerLoss(RadNum)%Radiance + &
+         delrad)
     NonLimbRad = NonLimbRad + SideBandFrac(Band)%Upper(chan) * &
          (1.0 - Spillover_U) * &
-         RadiometerLoss(RadNum)%Ohmic * RadiometerLoss(RadNum)%Radiance
+         RadiometerLoss(RadNum)%Ohmic * (RadiometerLoss(RadNum)%Radiance + &
+         delrad)
 
 ! Scale based in user input in the cf file:
 
@@ -191,6 +193,7 @@ CONTAINS
     USE MLSL1Common, ONLY: Deflt_chi2
     USE MLSL1Utils, ONLY: Finite
     USE SpectralBaseline, ONLY: CalcBaseline
+    USE BandTbls, ONLY: GetDeltaRads, delrad_1_31, delrad_32_34
 
     TYPE (Eng_MAF_T) :: EMAF
 
@@ -213,6 +216,8 @@ CONTAINS
     EMAF = CalWin%MAFdata(windex)%EMAF
     MIFprecSign = CalWin%MAFdata(windex)%MIFprecSign
 
+    CALL GetDeltaRads (CalWin%MAFdata(windex)%scGeodAngle)
+
     IF (ANY (INDEX (CalWin%MAFdata(windex)%scipkt(0:147)%GHz_sw_pos, "T") == &
          1)) THEN
        GHz_Cal_Type = "Primary"
@@ -231,9 +236,9 @@ CONTAINS
     !    if (finite (GHZ_T2)) print *, "GHzCntl avg: ", GHz_T2
 
     !  Temperature combinations for S and T from cf file:
-!
+    !
     !    Note: no input T is same as "-"  and all final temps will be absolutes.
-!
+    !
     !   Scf   Tcf   S   T
     !--------------------
     !    +     -    S   A
@@ -353,7 +358,7 @@ CONTAINS
                 FBrad(bank)%precision(chan,MIF_index+1) = rad_prec
 
                 CALL CalcNonLimbRad (BandNo, chan, radNum, ReflecAvg, &
-                     NonLimbRad)
+                     delrad_1_31(BandNo), NonLimbRad)
                 FBrad(bank)%ModelOffset(chan,MIF_index+1) = NonLimbRad
 
                 IF (.NOT. slimb_type%FB(chan,bank)) THEN
@@ -411,7 +416,7 @@ CONTAINS
                 MBrad(bank)%precision(chan,MIF_index+1) = rad_prec
 
                 CALL CalcNonLimbRad (BandNo, chan, radNum, ReflecAvg, &
-                     NonLimbRad)
+                     delrad_1_31(BandNo), NonLimbRad)
                 MBrad(bank)%ModelOffset(chan,MIF_index+1) = NonLimbRad
 
                 IF (.NOT. slimb_type%MB(chan,bank)) THEN
@@ -464,7 +469,7 @@ CONTAINS
                 WFrad(bank)%precision(chan,MIF_index+1) = rad_prec
 
                 CALL CalcNonLimbRad (BandNo, chan, radNum, ReflecAvg, &
-                     NonLimbRad)
+                     delrad_32_34(BandNo,chan), NonLimbRad)
                 WFrad(bank)%ModelOffset(chan,MIF_index+1) = NonLimbRad
 
                 IF (.NOT. slimb_type%WF(chan,bank)) THEN
@@ -527,7 +532,7 @@ CONTAINS
                    DACSrad(bank)%precision(chan,MIF_index+1) = rad_prec
 
                    CALL CalcNonLimbRad (BandNo, chan, radNum, ReflecAvg, &
-                        NonLimbRad)
+                        delrad_1_31(BandNo), NonLimbRad)
                    DACSrad(bank)%ModelOffset(chan,MIF_index+1) = NonLimbRad
 
                    IF (.NOT. slimb_type%DACS(chan,bank)) THEN
@@ -568,6 +573,9 @@ END MODULE Radiances
 !=============================================================================
 
 ! $Log$
+! Revision 2.18  2006/06/14 13:48:44  perun
+! Adjust radiances using the delrad values from the BandTbls
+!
 ! Revision 2.17  2006/04/05 18:09:32  perun
 ! Remove unused variables
 !
