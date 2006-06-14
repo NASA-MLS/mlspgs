@@ -21,10 +21,11 @@ MODULE BandTbls   ! Tables for all bands
   PRIVATE
 
   PUBLIC :: Load_Band_Tbls, LoadSidebandFracs, LoadSpilloverLoss, &
-       LoadBandAlts, LoadDefltChi2, GetEta_TSL
+       LoadBandAlts, LoadDefltChi2, GetEta_TSL, LoadFourierCoeffs, &
+       GetDeltaRads
   PUBLIC :: BandLowerUpper_T, SideBandFrac, SpilloverLoss_T, SpilloverLoss, &
      RadiometerLoss_T, RadiometerLoss, BandFreq, BandAlt_T, BandAlt, nAlts, &
-     minAlt
+     minAlt,delrad_1_31, delrad_32_34
 
 !---------------------------- RCS Module Info ------------------------------
   CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
@@ -63,8 +64,14 @@ MODULE BandTbls   ! Tables for all bands
 
   TYPE (BandAlt_T) :: BandAlt(NumBands)
 
+  TYPE Fourier_T
+     REAL(r4), DIMENSION(:,:), POINTER :: Coeff
+  END TYPE Fourier_T
+
+  TYPE (Fourier_T), SAVE :: aSA(NumBands), bSA(NumBands)
+
   INTEGER :: nAlts
-  REAL :: MinAlt(MaxAlts)
+  REAL :: MinAlt(MaxAlts), delrad_1_31(31), delrad_32_34(32:34,4)
 
 CONTAINS
 
@@ -109,7 +116,7 @@ CONTAINS
        ALLOCATE (BandAlt(i)%indx(WFchans))
     ENDDO
 
-!! Allocate and Initialize Spillover Loss
+!! Allocate and Initialize Spillover Loss and allocate Fourier Coeffs
 
     DO i = 1, 31
        ALLOCATE (SpilloverLoss(i)%lower(3,1))
@@ -118,6 +125,8 @@ CONTAINS
        SpilloverLoss(i)%lower = 0.0
        SpilloverLoss(i)%upper = 0.0
        SpilloverLoss(i)%eta_TSL = 0.0
+       ALLOCATE (aSA(i)%Coeff(4,1))
+       ALLOCATE (bSA(i)%Coeff(4,1))
     ENDDO
 
     DO i = 32, 34
@@ -127,6 +136,8 @@ CONTAINS
        SpilloverLoss(i)%lower = 0.0
        SpilloverLoss(i)%upper = 0.0
        SpilloverLoss(i)%eta_TSL = 0.0
+       ALLOCATE (aSA(i)%Coeff(4,4))
+       ALLOCATE (bSA(i)%Coeff(4,4))
     ENDDO
 
     DO i = 1, NumBands
@@ -438,6 +449,143 @@ CONTAINS
 
   END SUBROUTINE LoadDefltChi2
 
+!=============================================================================
+  SUBROUTINE LoadFourierCoeffs (unit, asciiUTC)
+!=============================================================================
+
+    USE SDPToolkit, ONLY: spacecraftId, PGSd_SUN
+    USE Units, ONLY: Rad2Deg, Deg2Rad
+
+    INTEGER, INTENT(IN) :: unit
+    CHARACTER (LEN=27), INTENT(IN) :: asciiUTC
+
+    CHARACTER (len=80) :: line
+    INTEGER :: b, m, chan, returnStatus
+    REAL(r8) :: sc_frame_vector(3), orb(3)
+    REAL(r8) :: meanSolTimG, meanSolTimL, apparSolTimL, solRA, solDec
+    REAL :: xSA, ySA, rSA, kSA, thSA, Beta, cd1, sd1
+    INTEGER, PARAMETER :: nchans(32:34) = (/ 4, 1, 4 /)
+    REAL(r8), PARAMETER :: offset = 0.0d0
+    REAL, PARAMETER :: si = 0.3979486, b0 = 25.9252, dSA = 0.42958, &
+         eSA = -7.94452
+
+! Externals
+
+    INTEGER, EXTERNAL :: Pgs_cbp_sat_cb_vector, Pgs_csc_scToORB
+    INTEGER, EXTERNAL :: PGS_CBP_SolarTimeCoords
+
+! Determine Solor Beta Angle at start of day:
+
+    returnStatus = Pgs_cbp_sat_cb_vector (spacecraftId, 1, asciiUTC, &
+         offset, PGSd_SUN, sc_frame_vector)
+    returnStatus = Pgs_csc_scToORB (spacecraftId, 1, asciiUTC, &
+         offset, sc_frame_vector, orb)
+    returnStatus = PGS_CBP_SolarTimeCoords (asciiUTC, 0.0d0, meanSolTimG, &
+         meanSolTimL, apparSolTimL, solRA, solDec)
+
+    sd1 = sin (solDec) / si
+    cd1 = sqrt ((1.0 - sd1*sd1))
+    if (abs (solRA*Rad2Deg - 180.0) < 90.0) cd1 = -cd1
+    Beta = b0 + dSA * cd1 + eSA * sd1
+    Beta = Beta * Deg2Rad                 ! back to radians
+print *, 'cd1, sd1, beta: ', cd1, sd1, beta
+!    Beta = ASIN (-orb(2) / SQRT (orb(1)**2 + orb(2)**2 + orb(3)**2))
+
+! Read first line as comment:
+
+    READ (unit, '(A)') line
+
+    DO b = 1, 14
+       DO m = 1, 4
+
+          READ (unit, '(A)') line
+          READ (line(10:), *) xSA, ySA, rSA, kSA, thSA
+
+          aSA(b)%coeff(m,1) = rSA * (xSA + COS (thSA + m * kSA * Beta))
+          bSA(b)%coeff(m,1) = rSA * (ySA + SIN (thSA + m * kSA * Beta))
+       ENDDO
+    ENDDO
+
+    DO b = 21, 31
+       DO m = 1, 4
+
+          READ (unit, '(A)') line
+          READ (line(10:), *) xSA, ySA, rSA, kSA, thSA
+
+          aSA(b)%coeff(m,1) = rSA * (xSA + COS (thSA + m * kSA * Beta))
+          bSA(b)%coeff(m,1) = rSA * (ySA + SIN (thSA + m * kSA * Beta))
+       ENDDO
+    ENDDO
+
+    DO b = 32, 34
+       DO m = 1, 4
+
+          DO chan = 1, nchans(b)
+
+             READ (unit, '(A)') line
+             READ (line(10:), *) xSA, ySA, rSA, kSA, thSA
+
+             aSA(b)%coeff(m,chan) = rSA * (xSA + COS (thSA + m * kSA * Beta))
+             bSA(b)%coeff(m,chan) = rSA * (ySA + SIN (thSA + m * kSA * Beta))
+             IF (b == 33) THEN   ! since band 33 has only 1 channel
+                aSA(b)%coeff(m,2:) = aSA(b)%coeff(m,1)
+                bSA(b)%coeff(m,2:) = bSA(b)%coeff(m,1)
+             ENDIF
+          ENDDO
+       ENDDO
+    ENDDO
+
+  END SUBROUTINE LoadFourierCoeffs
+
+!=============================================================================
+  FUNCTION DeltaRadiance (phi, band, chan) RESULT (delrad)
+!=============================================================================
+
+    INTEGER, INTENT (IN) :: band, chan
+    REAL, INTENT (IN) :: phi               ! in radians
+
+    REAL :: delrad
+
+    INTEGER :: channo, m
+
+    IF (band < 32) THEN
+       channo = 1         ! only 1 channel needed
+    ELSE
+       channo = chan      ! 1 of 4 wide band channels
+    ENDIF
+
+    delrad = 0.0
+    DO m = 1, 4
+       delrad = delrad + aSA(band)%coeff(m,channo) * COS(m*phi) + &
+            bSA(band)%coeff(m,channo) * SIN(m*phi)
+    ENDDO
+
+  END FUNCTION DeltaRadiance
+
+!=============================================================================
+  SUBROUTINE GetDeltaRads (phi)
+!=============================================================================
+
+    REAL, INTENT (IN) :: phi               ! in radians
+
+    INTEGER :: b, chan
+
+    DO b = 1, 14
+       delrad_1_31(b) = DeltaRadiance (phi, b, 1)
+    ENDDO
+
+    DO b = 21, 31
+       delrad_1_31(b) = DeltaRadiance (phi, b, 1)
+    ENDDO
+
+    DO b = 32, 34
+       DO chan = 1, 4
+          delrad_32_34(b,chan) = DeltaRadiance (phi, b, chan)
+       ENDDO
+    ENDDO
+
+  END SUBROUTINE GetDeltaRads
+
   LOGICAL FUNCTION not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   CHARACTER (len=*), PARAMETER :: IdParm = &
@@ -446,9 +594,13 @@ CONTAINS
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
   END FUNCTION not_used_here
+
 END MODULE BandTbls
 
 ! $Log$
+! Revision 2.8  2006/06/14 13:43:47  perun
+! Add LoadFourierCoeffs and GetDeltaRads routines
+!
 ! Revision 2.7  2006/03/24 15:06:25  perun
 ! Add Band Altitudes table and routines
 !
