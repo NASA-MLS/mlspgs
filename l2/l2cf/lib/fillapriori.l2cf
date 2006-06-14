@@ -209,7 +209,7 @@ begin Fill
   Fill, quantity=aprioriPrecision.oh,   method=profile, $
     profileValues = [ 10mb : 0.1ppbv, 1mb : 1 ppbv, 0.1mb : 5 ppbv, 0.01mb : 10 ppbv ]
   ;; 100pptv is far too small for so2
-  Fill, quantity=aprioriPrecision.so2,  method=explicit, /spread, explicitValues= 2 ppbv
+  Fill, quantity=aprioriPrecision.so2,  method=explicit, /spread, explicitValues= 10 ppbv
 
   Fill, quantity=aprioriPrecision.temperature, method=profile, $
     profileValues= [ 1000mb:5K, 220mb:10K, 68mb:20K ]
@@ -582,6 +582,9 @@ begin Join
 end Join
   })
 ;$Log$
+;Revision 1.109  2006/06/02 23:46:37  lambert
+;explicitValues require a space before the minus sign
+;
 ;Revision 1.108  2006/06/02 22:44:05  bill
 ;put low stop limits for totalextinction and oh
 ;
