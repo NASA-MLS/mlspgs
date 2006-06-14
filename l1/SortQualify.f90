@@ -43,7 +43,7 @@ CONTAINS
 !=============================================================================
 
     USE MLSL1Config, ONLY: L1Config, MIFsGHz
-    USE TkL1B, ONLY: GHz_GeodAlt, GHz_GeodLat, GHz_BO_stat
+    USE TkL1B, ONLY: GHz_GeodAlt, GHz_GeodLat, GHz_BO_stat, scGeodAngle
     USE L1BOutUtils, ONLY: OutputL1BOA
 
     LOGICAL, INTENT (OUT) :: more_data
@@ -192,6 +192,10 @@ PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
 
     CurMAFdata%BO_stat = GHz_BO_stat
 
+! Save scGeodAngle for calculating stray radiances:
+
+    CurMAFdata%scGeodAngle = scGeodAngle
+
 !! Update MAFinfo from central MAF
 
     MAFinfo%startTAI = CalWin%MAFdata(CalWin%central)%SciPkt(0)%secTAI
@@ -216,7 +220,7 @@ PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
   SUBROUTINE QualifyCurrentMAF
 !=============================================================================
 
-    USE MLSL1Config, ONLY: GHz_seq, GHz_seq_use, THz_seq, THz_seq_use
+    USE MLSL1Config, ONLY: GHz_seq, GHz_seq_use, THz_seq, THz_seq_use, L1Config
     USE MLSL1Common, ONLY: SwitchBank, MaxMIFs, L1BFileInfo, MBnum, WFnum, &
          DACSnum, GHzNum
     USE MLSL1Rad, ONLY: BandToBanks
@@ -232,18 +236,24 @@ PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
     CHARACTER(len=80) :: msg
     CHARACTER(len=27) :: asciiUTC
     INTEGER :: MIF, last_MIF, i, band(2), bandno, bank(2), bankno, n, bno, &
-         stat, sw
-    LOGICAL :: bandMask(150)   ! large enough for the maximum MIFs
+         ngood, stat, sw
+    LOGICAL :: bandMask(MaxMIFs)
     CHARACTER(len=1), PARAMETER :: TargetType = "T" !! Primary target type
     CHARACTER(len=1), PARAMETER :: discard = "D"
     CHARACTER(len=1), PARAMETER :: match = "M"
     CHARACTER(len=1), PARAMETER :: override = "O"
     CHARACTER(len=1), PARAMETER :: undefined = "U"
     INTEGER, PARAMETER :: MaxMIFno = (MaxMIFs - 1)
+    REAL :: swFac(0:MaxMIFno)
+    REAL(r8) :: TP_ana(0:MaxMIFno), TP_dig(0:MaxMIFno), TPz
+
+    LOGICAL :: TPisDig = .FALSE.
 
     CurMAFdata => CalWin%MAFdata(CalWin%current)
 
 PRINT *, 'Data:', CurMAFdata%SciPkt%GHz_sw_pos
+
+    TPisDig = L1Config%Calib%TPdigital
 
 !! Initialize MIF Rad Precision signs:
 
@@ -394,6 +404,35 @@ PRINT *, 'Data:', CurMAFdata%SciPkt%GHz_sw_pos
     ENDIF
 
 PRINT *, 'Sort:', CurMAFdata%ChanType(0:149)%FB(1,1)
+
+! Scale DACS data based on appropriate TP values:
+
+   swFac = 1.0        ! init to non-discard MIFs
+   WHERE (CurMAFdata%SciPkt%GHz_sw_pos == discard)   ! Don't use discards
+      swFac = 0.0
+   ENDWHERE
+   ngood = COUNT (swFac == 1.0)
+
+   DO bankno = 1, DACSnum
+      TP_ana = CurMAFdata%SciPkt%TP(bankno) * swFac
+      TP_dig = (CurMAFdata%SciPkt%TPdigP(bankno) + &
+           CurMAFdata%SciPkt%TPdigN(bankno)) * swFac
+      IF (TPisDig) THEN
+         DO MIF = 0, MaxMIFno
+            CurMAFdata%SciPkt(MIF)%DACS(:,bankno) = &
+                 CurMAFdata%SciPkt(MIF)%DACS(:,bankno) * TP_dig(MIF)
+         ENDDO
+      ELSE
+         TPz = ((SUM (TP_dig*TP_dig) / ngood * SUM (TP_ana) / ngood) - &
+              (SUM (TP_dig*TP_ana) / ngood * SUM (TP_dig) / ngood)) / &
+              (SUM (TP_dig*TP_dig) / ngood - (SUM (TP_dig) / ngood)**2)
+         DO MIF = 0, MaxMIFno
+            CurMAFdata%SciPkt(MIF)%DACS(:,bankno) = &
+                 CurMAFdata%SciPkt(MIF)%DACS(:,bankno) * (TP_ana(MIF) - TPz)
+         ENDDO
+      ENDIF
+
+   ENDDO
 
 !! Rule #6: Discard based on other qualifications such as commanded "W"alls
 
@@ -815,6 +854,9 @@ END MODULE SortQualify
 !=============================================================================
 
 ! $Log$
+! Revision 2.21  2006/06/14 13:49:04  perun
+! Scale DACS data based on appropriate TP (digital or analog)
+!
 ! Revision 2.20  2006/04/05 18:09:44  perun
 ! Remove unused variables
 !

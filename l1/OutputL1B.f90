@@ -693,19 +693,21 @@ CONTAINS
   END SUBROUTINE OutputL1B_LatBinData
 
 !=============================================================================
-  SUBROUTINE OutputL1B_diags (sd_id, noMAF, counterMAF, MAFStartTimeTAI, Zeros)
+  SUBROUTINE OutputL1B_diags (sd_id, noMAF, counterMAF, MAFStartTimeTAI, &
+       TP, TPdigP, TPdigN, Zeros)
 !=============================================================================
 
     ! This subroutine writes an MAF's worth of diagnostic data
 
     USE MLSL1Common, ONLY: FBchans, GHzNum, MBchans, MBnum, WFchans, WFnum, &
-         deflt_zero
+         deflt_zero, MaxMIFs, DACSnum
     USE Calibration, ONLY: Chi2, Tsys, Cgain
     USE MLSHDF5, ONLY: SaveAsHDF5DS, MakeHDF5Attribute
 
     INTEGER, INTENT(IN) :: sd_id
     INTEGER, INTENT(IN), OPTIONAL :: counterMAF, noMAF
     REAL(r8), INTENT(IN), OPTIONAL :: MAFStartTimeTAI
+    REAL, INTENT(IN), OPTIONAL :: TP(:,:), TPdigP(:,:), TPdigN(:,:)
     LOGICAL, INTENT(IN), OPTIONAL :: Zeros
 
     CHARACTER(LEN=16) :: DimName(2)
@@ -784,6 +786,18 @@ CONTAINS
     CALL Build_MLSAuxData (sd_id, dataset, Chi2%WF, lastIndex=noMAF, dims=dims)
     dataset%name = 'ChanGain WF'
     CALL Build_MLSAuxData (sd_id, dataset, Cgain%WF, lastIndex=noMAF, dims=dims)
+
+    dims(1) = MaxMIFs - 2
+    dims(2) = DACSnum
+    dataset%Dimensions(1) = 'MIF                 '
+    dataset%Dimensions(2) = 'DACSnum             '
+
+    dataset%name = 'TP'
+    CALL Build_MLSAuxData (sd_id, dataset, TP, lastIndex=noMAF, dims=dims)
+    dataset%name = 'TPdigP'
+    CALL Build_MLSAuxData (sd_id, dataset, TPdigP, lastIndex=noMAF, dims=dims)
+    dataset%name = 'TPdigN'
+    CALL Build_MLSAuxData (sd_id, dataset, TPdigN, lastIndex=noMAF, dims=dims)
 
     CALL Deallocate_DataProducts (dataset)
 
@@ -951,6 +965,9 @@ END MODULE OutputL1B
 !=============================================================================
 
 ! $Log$
+! Revision 2.21  2006/06/14 13:48:18  perun
+! Output TP data in the DIAG file
+!
 ! Revision 2.20  2006/04/05 18:10:40  perun
 ! Remove unused variables
 !
