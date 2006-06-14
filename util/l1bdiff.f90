@@ -58,6 +58,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
     logical     :: list = .false.
     logical     :: stats = .false.
     logical     :: rms = .false.
+    logical     :: direct = .false.
     integer     :: numDiffs = 0
     character(len=255) :: referenceFileName= 'default.h5'  ! reference filename
   end type options_T
@@ -72,7 +73,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
   character(len=255) :: filename          ! input filename
   character(len=255), dimension(MAXFILES) :: filenames
   integer            :: n_filenames
-  integer     ::  i, count, status, error ! Counting indices & Error flags
+  integer     ::  i, status, error ! Counting indices & Error flags
   logical     :: is_hdf5
   character (len=MAXSDNAMESBUFSIZE) :: mySdList
   character(len=16) :: string
@@ -343,19 +344,34 @@ contains
         if ( status /= 0 ) then
 	       call MLSMessage ( MLSMSG_Warning, ModuleName, &
           	& 'Unable to find ' // trim(sdName) // ' in ' // trim(File1) )
+          call DeallocateL1BData ( l1bData )
           cycle
         endif
+      ! if ( options%verbose ) print *, 'About to read ', trim(sdName), ' (2nd)'
         call ReadL1BData ( sdfid2, trim(sdName), L1bData2, NoMAFs, status, &
           & hdfVersion=the_hdfVersion, NEVERFAIL=.true. )
         if ( status /= 0 ) then
 	       call MLSMessage ( MLSMSG_Warning, ModuleName, &
           	& 'Unable to find ' // trim(sdName) // ' in ' // trim(File1) )
           call DeallocateL1BData ( l1bData )
+          call DeallocateL1BData ( l1bData2 )
           cycle
         endif
-        call diff(L1bData, L1bData2, &
-          & stats=options%stats, rms=options%rms, &
-          & silent=options%silent, numDiffs=numDiffs )
+      ! if ( options%verbose ) print *, 'About to diff'
+        if ( options%direct .or. .not. associated(L1bData%dpField) ) then
+          call diff(L1bData, L1bData2, &
+            & stats=options%stats, rms=options%rms, &
+            & silent=options%silent, numDiffs=numDiffs )
+        else
+          call diff(L1bData, L1bData2, details=0, &
+            & stats=options%stats, rms=options%rms, &
+            & silent=options%silent, numDiffs=numDiffs )
+          numDiffs = numDiffs + count( L1bData%dpField /= L1bData2%dpField )
+          L1bData%dpField = L1bData%dpField - L1bData2%dpField
+          if ( .not. options%silent ) call dump( L1bData%dpField, &
+            & 'l1bData%dpField', &
+            & stats=options%stats, rms=options%rms )
+        endif
         call DeallocateL1BData ( l1bData )
         call DeallocateL1BData ( l1bData2 )
         options%numDiffs = options%numDiffs + numDiffs
@@ -386,6 +402,9 @@ end program l1bdiff
 !==================
 
 ! $Log$
+! Revision 1.4  2006/01/14 00:58:31  pwagner
+! Added -silent option
+!
 ! Revision 1.3  2005/10/29 00:13:56  pwagner
 ! Removed unused procedures from use statements
 !
