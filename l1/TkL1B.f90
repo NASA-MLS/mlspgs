@@ -29,9 +29,10 @@ MODULE TkL1B
 
   PRIVATE
 
-  PUBLIC :: L1BOA_MAF, GHz_GeodAlt, GHz_GeodLat, GHz_GeodAngle, GHz_BO_stat
+  PUBLIC :: L1BOA_MAF, GHz_GeodAlt, GHz_GeodLat, GHz_GeodAngle, GHz_BO_stat, &
+       scGeodAngle
 
-  REAL :: GHz_GeodAlt(LENG), GHz_GeodLat(LENG), GHz_GeodAngle(LENG)
+  REAL :: GHz_GeodAlt(LENG), GHz_GeodLat(LENG), GHz_GeodAngle(LENG), scGeodAngle
   INTEGER :: GHz_BO_stat(LENG)
 
   CHARACTER (len=*), PARAMETER :: errmsg = "Check LogStatus file for error(s)"
@@ -813,6 +814,8 @@ CONTAINS
 
        CALL TkL1B_mc (ascTAI, dscTAI, sc%scECR, nV, numOrb, &
             q, mafTAI, offsets, sc%scGeodAngle, sc%scOrbIncl)
+
+       scGeodAngle = Deg2Rad * sc%scGeodAngle(1)   ! save 1st scGeodAngle
 
     ENDIF
 
@@ -1607,6 +1610,9 @@ CONTAINS
 END MODULE TkL1B
 
 ! $Log$
+! Revision 2.31  2006/06/14 13:50:02  perun
+! Save spacecraft Geod Angle to use for stray radiance estimations
+!
 ! Revision 2.30  2006/04/05 18:09:58  perun
 ! Remove unused variables
 !
