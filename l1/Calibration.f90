@@ -74,6 +74,7 @@ MODULE Calibration ! Calibration data and routines
      INTEGER :: last_MIF = 0
      INTEGER :: BandSwitch(5) = 0      ! band switch positions
      LOGICAL :: CalType                ! calibration type MAF
+     REAL :: scGeodAngle               ! Spacecraft Geod Angle (MIF 0, radians)
      TYPE (ChanLogical_T), DIMENSION(:), POINTER :: LimbAltFlag
   END TYPE MAFdata_T
 
@@ -950,6 +951,9 @@ END MODULE Calibration
 !=============================================================================
 
 ! $Log$
+! Revision 2.17  2006/06/14 13:44:24  perun
+! Add Spacecraft Geod Angle
+!
 ! Revision 2.16  2006/03/24 15:07:20  perun
 ! Add Space in Limb calibration based on limb altitude
 !
