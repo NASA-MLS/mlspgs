@@ -55,7 +55,7 @@ MODULE MLSPCF2
    INTEGER, PARAMETER :: mlspcf_pfa_end = 20034
    !
    INTEGER, PARAMETER :: mlspcf_l2pc_start = 20035
-   INTEGER, PARAMETER :: mlspcf_l2pc_end = 20064
+   INTEGER, PARAMETER :: mlspcf_l2pc_end = 20099
    !
    INTEGER, PARAMETER :: mlspcf_l2apriori_start = 21000
    INTEGER, PARAMETER :: mlspcf_l2apriori_end = 21049
@@ -118,6 +118,9 @@ contains
 END MODULE MLSPCF2
 
 ! $Log$
+! Revision 2.19  2006/06/15 17:35:32  pwagner
+! Increased max num of l2pc from 30 to 65
+!
 ! Revision 2.18  2006/06/13 18:19:08  pwagner
 ! Added pcfids for geos5; moved ncep pcfids backwards to make room
 !
