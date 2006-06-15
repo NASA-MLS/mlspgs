@@ -316,8 +316,9 @@ contains ! =====     Public Procedures     =============================
     use Expr_m, only: Expr
     use FilterShapes_m, only: DACSFilterShapes, FilterShapes
     use Init_Tables_Module, only: F_AllLinesForRadiometer, F_AllLinesInCatalog, &
-      & F_LOSVEL, F_Molecules, F_Signals, F_Temperatures, F_VGrid, L_Zeta
-    use Intrinsic, only: PHYQ_Velocity
+      & F_LOSVEL, F_Molecules, F_Oversample, F_Signals, F_Temperatures, &
+      & F_VGrid, L_Zeta
+    use Intrinsic, only: PHYQ_Dimensionless, PHYQ_Velocity
     use MLSCommon, only: RP
     use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
       & MLSMSG_Error
@@ -339,6 +340,7 @@ contains ! =====     Public Procedures     =============================
     real(rp) :: LosVel
     integer, pointer :: Molecules(:)
     type(signal_t), pointer :: MySignals(:), SignalsTemp(:)
+    integer :: Oversample
     integer :: Sideband
     character(127) :: Signal
     integer, pointer :: SignalIndices(:)
@@ -352,13 +354,14 @@ contains ! =====     Public Procedures     =============================
     integer, parameter :: NoFilterShapes = DuplicateMolecule + 1
     integer, parameter :: NoFolded = noFilterShapes + 1
     integer, parameter :: NoGroup = noFolded + 1
-    integer, parameter :: NotVelocity = noGroup + 1
-    integer, parameter :: NotZeta = notVelocity + 1
+    integer, parameter :: NotZeta = noGroup + 1
     integer, parameter :: SignalParse = notZeta + 1
+    integer, parameter :: WrongDimensions = signalParse + 1
 
     ! Gather the data from the command
     error = 0
     lines = 0
+    oversample = 1
     nullify ( signalIndices )
     allocate ( mySignals(0), stat=stat )
     if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
@@ -373,7 +376,8 @@ contains ! =====     Public Procedures     =============================
         if ( get_boolean(son) ) lines = 2
       case ( f_losvel )
         call expr ( subtree(2,son), units, values ) ! can't be a range
-        if ( units(1) /= phyq_velocity ) call announce_error ( son, notVelocity )
+        if ( units(1) /= phyq_velocity ) &
+          & call announce_error ( son, wrongDimensions, 'velocity' )
         losVel = values(1)
       case ( f_molecules )
         nullify ( molecules )
@@ -385,6 +389,11 @@ contains ! =====     Public Procedures     =============================
           if ( any(molecules(:j-2) == molecules(j-1)) ) &
             & call announce_error ( k, duplicateMolecule, stringIndex=sub_rosa(k) )
         end do
+      case ( f_oversample )
+        call expr ( subtree(2,son), units, values ) ! can't be a range
+        if ( units(1) /= phyq_dimensionless ) &
+          & call announce_error ( son, wrongDimensions, 'dimensionless' )
+        oversample = max(nint(values(1)),1)
       case ( f_signals )
         nullify ( channels )
         do j = 2, nsons(son)
@@ -439,7 +448,7 @@ contains ! =====     Public Procedures     =============================
 
     call decorate ( root, &
       & create_PFAData ( molecules, mySignals, vGrids(tGrid), vGrids(vGrid), &
-      & losVel, lines, root ) )
+      & losVel, lines, oversample, root ) )
 
   contains
 
@@ -465,14 +474,14 @@ contains ! =====     Public Procedures     =============================
         call output ( trim(string), advance='yes' )
       case ( noGroup )
         call output ( 'Molecule groups not allowed.', advance='yes' )
-      case ( notVelocity )
-        call output ( 'Units are not velocity.', advance='yes' )
       case ( notZeta )
         call output ( 'Vertical coordinate for pressure grid must be Zeta.', &
           & advance='yes' )
       case ( signalParse )
         call output ( 'Unable to parse signal ' )
         call output ( trim(string), advance='yes' )
+      case ( wrongDimensions )
+        call output ( 'Units are not '//trim(string)//'.', advance='yes' )
       end select
     end subroutine Announce_Error
 
@@ -664,6 +673,9 @@ contains ! =====     Public Procedures     =============================
 end module PFAData_m
 
 ! $Log$
+! Revision 2.25  2006/06/15 20:39:59  vsnyder
+! Add PFA oversampling
+!
 ! Revision 2.24  2006/04/26 00:39:09  vsnyder
 ! Need either ordinary or DACS filters
 !
