@@ -269,6 +269,7 @@ outputOverlaps
 outputSD
 overlap
 overlaps
+oversample # oversampling factor for filter grid for PFA generation
 
 packed
 perturbation
@@ -431,6 +432,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.168  2006/06/15 20:39:59  vsnyder
+# Add PFA oversampling
+#
 # Revision 2.167  2006/06/12 16:28:25  pwagner
 # Added ability to dump Gridded Data
 #
