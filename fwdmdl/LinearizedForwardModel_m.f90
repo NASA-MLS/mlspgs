@@ -382,7 +382,7 @@ contains ! =====     Public Procedures     =============================
           end do
           if ( anyBlocks ) then
             call get_string ( l2pcQ%template%name, word, strip=.true. )
-            call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            call MLSMessage ( MLSMSG_Error, ModuleName, &
               &  "No quantity in state vectors found to match "//trim(word) )
           end if
           cycle quantityLoop            ! Go to next l2pc quantity
@@ -1146,6 +1146,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.58  2005/06/30 22:42:34  livesey
+! Bug fix for split sideband case
+!
 ! Revision 2.57  2005/06/22 18:08:19  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
