@@ -17,6 +17,7 @@ module MLSFillValues              ! Some FillValue-related stuff
   use MLSCommon, only: r4, r8, DEFAULTUNDEFINEDVALUE
   use MLSKinds ! Everything
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use MLSSets, only: findFirst, findLast
   use MLSStrings, only: Lowercase
 
   implicit none
@@ -28,7 +29,7 @@ module MLSFillValues              ! Some FillValue-related stuff
   public :: IsFillValue
   public :: IsFinite
   public :: IsMonotonic, Monotonize
-  public :: RemoveFillValues, ReplaceFillValues
+  public :: RemoveFillValues, ReorderFillValues, ReplaceFillValues
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -56,6 +57,7 @@ module MLSFillValues              ! Some FillValue-related stuff
 ! Monotonize                   Replace any non-monotonic elements
 ! RemoveFillValues             Removes FillValues from an array
 !                                returning a new array smaller in size
+! ReorderFillValues            Reorders FillValue entries at the end of an array
 ! ReplaceFillValues            Replaces FillValue entries in an array
 
   interface BridgeMissingValues
@@ -103,6 +105,10 @@ module MLSFillValues              ! Some FillValue-related stuff
     module procedure RemoveFill3d_r4, RemoveFill3d_r8, RemoveFill3d_int
   end interface
 
+  interface ReorderFillValues
+    module procedure ReorderFillValues_r4, ReorderFillValues_r8, ReorderFillValues_int
+  end interface
+
   interface ReplaceFillValues
     module procedure ReplaceFill1d_r4, ReplaceFill1d_r8, ReplaceFill1d_int
     module procedure ReplaceFill2d_r4, ReplaceFill2d_r8, ReplaceFill2d_int
@@ -117,6 +123,10 @@ module MLSFillValues              ! Some FillValue-related stuff
     module procedure Monotonize_1dr4, Monotonize_1dr8, Monotonize_1dint
     module procedure Monotonize_2dr4, Monotonize_2dr8, Monotonize_2dint
     module procedure Monotonize_3dr4, Monotonize_3dr8, Monotonize_3dint
+  end interface
+
+  interface swap
+    module procedure swap_int, swap_r4, swap_r8
   end interface
 
   ! This tolerance won't work w/o a little fudging 
@@ -578,6 +588,40 @@ contains
         & FillValue, newArray, reshape(second, (/product(shp)/) ), newSecond )
       endif
   end subroutine RemoveFill3d_r8
+
+! -------------------------------------  ReorderFillValues  -----
+
+  ! This family of routines reorders fillvalues in an array so they
+  ! appear at the end
+  ! E.g., given (/ 1, 4, -999, 6, -999, -1 /)
+  ! returns (/ 1, 4, 6, -1, -999, -999 /)
+
+  subroutine ReorderFillValues_r4 ( values, FillValue )
+    real(r4), dimension(:), intent(inout) :: values
+    real(r4), intent(in)                  :: FillValue
+    !
+    ! Local variables
+    ! More local variables and executable
+    include 'ReorderFillValues.f9h'
+  end subroutine ReorderFillValues_r4
+
+  subroutine ReorderFillValues_r8 ( values, FillValue )
+    real(r8), dimension(:), intent(inout) :: values
+    real(r8), intent(in)                  :: FillValue
+    !
+    ! Local variables
+    ! More local variables and executable
+    include 'ReorderFillValues.f9h'
+  end subroutine ReorderFillValues_r8
+
+  subroutine ReorderFillValues_int ( values, FillValue )
+    integer, dimension(:), intent(inout) :: values
+    integer, intent(in)                  :: FillValue
+    !
+    ! Local variables
+    ! More local variables and executable
+    include 'ReorderFillValues.f9h'
+  end subroutine ReorderFillValues_int
 
 ! -------------------------------------  ReplaceFillValues  -----
 
@@ -1108,6 +1152,39 @@ contains
     end do
 
   end subroutine DUMP_NAME_V_PAIRS
+  
+  subroutine swap_int( first, second )
+    ! Swap first and second args
+    integer, intent(inout) :: first
+    integer, intent(inout) :: second
+    integer :: temp
+    ! Executable
+    temp = first
+    first = second
+    second = temp
+  end subroutine swap_int
+
+  subroutine swap_r4( first, second )
+    ! Swap first and second args
+    real(r4), intent(inout) :: first
+    real(r4), intent(inout) :: second
+    real(r4) :: temp
+    ! Executable
+    temp = first
+    first = second
+    second = temp
+  end subroutine swap_r4
+
+  subroutine swap_r8( first, second )
+    ! Swap first and second args
+    real(r8), intent(inout) :: first
+    real(r8), intent(inout) :: second
+    real(r8) :: temp
+    ! Executable
+    temp = first
+    first = second
+    second = temp
+  end subroutine swap_r8
 
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
@@ -1123,6 +1200,9 @@ end module MLSFillValues
 
 !
 ! $Log$
+! Revision 2.9  2006/06/15 17:31:30  pwagner
+! Added ReorderFillValues
+!
 ! Revision 2.8  2006/03/15 17:32:35  pwagner
 ! Can removeFillValues from multi-dimensional arrays if results are rank 1
 !
@@ -1146,4 +1226,3 @@ end module MLSFillValues
 !
 ! Revision 2.1  2005/12/16 00:00:23  pwagner
 ! Created to hold fillValue-related stuff
-!
