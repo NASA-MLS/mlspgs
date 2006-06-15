@@ -693,6 +693,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_allLinesInCatalog, t+t_boolean, nd+n_field_type, &
              begin, f+f_losvel, t+t_numeric, nrs+n_field_type, &
              begin, f+f_molecules, t+t_molecule, nr+n_field_type, &
+             begin, f+f_oversample, t+t_numeric, ns+n_field_type, &
              begin, f+f_signals, t+t_string, nr+n_field_type, &
              begin, f+f_temperatures, s+s_tGrid, nrs+n_field_spec, &
              begin, f+f_vGrid, s+s_vGrid, nrs+n_field_spec, &
@@ -1468,6 +1469,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.444  2006/06/15 20:39:59  vsnyder
+! Add PFA oversampling
+!
 ! Revision 2.443  2006/06/15 00:01:42  pwagner
 ! Should work with geos5: convert then concatenate
 !
