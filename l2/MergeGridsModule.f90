@@ -131,6 +131,7 @@ contains ! =================================== Public procedures
     type (griddedData_T), pointer :: V ! Grid with proper pressure surfaces
 !    type (VGrid_T), pointer       :: V ! Desired pressure surfaces
 
+    logical, parameter :: DEEBUG = .false.
     ! Executable code
     call nullifyGriddedData ( newGrid ) ! for Sun's still useless compiler
     if ( toggle(gen) ) call trace_begin ( "ConvertEtaToP", root )
@@ -154,12 +155,14 @@ contains ! =================================== Public procedures
 !         v => VGrids ( decoration ( decoration ( value ) ) )
       end select
     end do
+    if ( DEEBUG ) then
     call output( 'a grid', advance='yes' )
     call dump( a, details=0 )
     call output( 'b grid', advance='yes' )
     call dump( b, details=0 )
     call output( 'v grid', advance='yes' )
     call dump( v, details=0 )
+    endif
     call ConvertFromEtaLevelGrids ( a, b, V, newGrid )
     newGrid%sourceFileName      = a%sourceFileName
     newGrid%quantityName        = a%quantityName
@@ -171,37 +174,41 @@ contains ! =================================== Public procedures
   end function ConvertEtaToP
 
   ! ---------------------------------------- Concatenate --
-  type (griddedData_T) function Concatenate ( root, griddedDataBase ) &
+  function Concatenate ( root, griddedDataBase ) &
     & result ( newGrid )
-    use Tree, only: NSONS, SUBTREE, DECORATION
-    use GriddedData, only: GRIDDEDDATA_T, NULLIFYGRIDDEDDATA, &
-      & CONCATENATEGRIDDEDDATA, COPYGRID
-    use Trace_M, only: TRACE_BEGIN, TRACE_END
-    use Init_tables_module, only: F_A, F_B
+    use GriddedData, only: GRIDDEDDATA_T, DUMP, &
+      & CONCATENATEGRIDDEDDATA, COPYGRID, DestroyGriddedData, NULLIFYGRIDDEDDATA
+    use Init_tables_module, only: F_A, F_B, F_GRID
     use Toggles, only: GEN, TOGGLE
+    use Trace_M, only: TRACE_BEGIN, TRACE_END
+    use Tree, only: NSONS, SUBTREE, DECORATION
     
     integer, intent(in) :: ROOT         ! Tree node
     type (griddedData_T), dimension(:), pointer :: griddedDataBase ! Database
+    type (griddedData_T), target :: newGrid
     ! This routine parses the l2cf instructions that request
     ! a grid concatenation, and then performs the concatenation
 
     ! Local variables
-    integer :: SON                    ! Tree node
-    integer :: FIELD                  ! Another tree node
-    integer :: FIELD_INDEX            ! Type of tree node
-    integer :: VALUE                  ! Tree node
-    integer :: I                      ! Loop counter
-
     type (griddedData_T), pointer :: A
     type (griddedData_T), pointer :: B
+    integer :: db_index
+    logical, parameter            :: DEEBUG = .false.
+    integer :: FIELD                  ! Another tree node
+    integer :: FIELD_INDEX            ! Type of tree node
+    integer :: GRIDS_NODE
+    integer :: I                      ! Loop counter
+    integer :: SON                    ! Tree node
+    type (griddedData_T), target :: Intermediate
+    integer :: VALUE                  ! Tree node
 
     ! Executable code
     call nullifyGriddedData ( newGrid ) ! for Sun's still useless compiler
+    call nullifyGriddedData ( Intermediate ) ! for Sun's still useless compiler
     if ( toggle(gen) ) call trace_begin ( "Concatenate", root )
 
     ! Get the information from the l2cf    
-    ! Note that init_tables_module has insisted that we have all
-    ! arguments so we don't need a 'got' type arrangement
+    grids_node = 0
     do i = 2, nsons(root)
       son = subtree(i,root)
       field = subtree(1,son)
@@ -212,11 +219,42 @@ contains ! =================================== Public procedures
         a => griddedDataBase ( decoration ( decoration ( value ) ) )
       case ( f_b )
         b => griddedDataBase ( decoration ( decoration ( value ) ) )
+      case ( f_Grid )
+        grids_node = son
       end select
     end do
 
     ! Do the concatenation unless one or other is empty
-    if ( .not. a%empty .and. .not. b%empty ) then
+    if ( grids_node > 0 ) then
+      ! Method:
+      ! At any step let the result of all prior steps be held in "Intermediate"
+      ! Then at each step concatenate the next gridded data with Intermediate
+      ! When done, copy Intermediate into result
+      do i=2, nsons(grids_node)
+        db_index = decoration(decoration(subtree(i, grids_node )))
+        b => griddedDataBase ( db_index )
+        if ( DEEBUG ) then
+          print *, ' '
+          print *, 'db_index: ', db_index
+          call dump( b, details=-1 )
+        endif
+        if ( i == 2 ) then
+          call CopyGrid ( Intermediate, b )
+        else
+          call ConcatenateGriddedData ( A, B, Intermediate )
+          if ( DEEBUG ) then
+            print *, ' '
+            print *, 'Result of intermediate concatenate'
+            call dump( Intermediate, details=-1 )
+          endif
+        endif
+        call CopyGrid ( newGrid, Intermediate )
+        a => newGrid
+      enddo
+      ! call CopyGrid ( newGrid, Intermediate )
+      call DestroyGriddedData ( Intermediate )
+      if ( DEEBUG ) call dump( newGrid, details=-1 )
+    elseif ( .not. a%empty .and. .not. b%empty ) then
       call ConcatenateGriddedData ( A, B, newGrid )
     else if ( a%empty ) then
       ! Copy B into the result, of course, that may be empty too
@@ -614,9 +652,25 @@ contains ! =================================== Public procedures
         Temperatures => Placeholder
       endif
     ! What if Temperatures and Pressures don't match
-      if ( .not. doGriddeddataMatch( Temperatures, Pressures ) ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      if ( .not. doGriddeddataMatch( Temperatures, Pressures ) ) then
+        call output( 'Vert. coords match? ', advance='no' )
+        call output( Temperatures%verticalCoordinate==Pressures%verticalcoordinate, &
+          & advance='yes' )
+        call output( 'starting dates match? ', advance='no' )
+        call output( any( Temperatures%DateStarts==Pressures%DateStarts ), &
+          & advance='yes' )
+        call output( 'ending dates match? ', advance='no' )
+        call output( any( Temperatures%DateEnds==Pressures%DateEnds ), &
+          & advance='yes' )
+        call output( 'Lsts match? ', advance='no' )
+        call output( any( Temperatures%Lsts==Pressures%Lsts ), &
+          & advance='yes' )
+        call output( 'Szas match? ', advance='no' )
+        call output( any( Temperatures%Szas==Pressures%Szas ), &
+          & advance='yes' )
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Gridded T,P data must match to calculate wmo Tropopause' )
+      endif
     endif
     call output( 'Temperatures grid', advance='yes' )
     call dump( Temperatures, details=0 )
@@ -667,7 +721,7 @@ contains ! =================================== Public procedures
     endif
     
     call SetupNewGriddedData ( newGrid, source=Temperatures, &
-      & noHeights=1 )
+      & noHeights=1, noDates=1 )
     ! Setup the rest of the quantity
     newGrid%sourceFileName     = 'Gridded Temperatures'
     newGrid%quantityName       = 'wmo Tropopause'
@@ -680,12 +734,12 @@ contains ! =================================== Public procedures
     newGrid%lons               = Temperatures%lons
     newGrid%lsts               = Temperatures%lsts
     newGrid%szas               = Temperatures%szas
-    newGrid%dateEnds           = Temperatures%dateEnds
-    newGrid%dateStarts         = Temperatures%dateStarts
+    newGrid%dateEnds           = Temperatures%dateEnds(1)
+    newGrid%dateStarts         = Temperatures%dateStarts(1)
     newGrid%field              = MISSINGVALUE
     ! Now actually calculate the tropopause
     ! for every "horizontal" point
-    do idate=1, size( Temperatures%field, 6 )
+    do idate=1, 1 ! size( Temperatures%field, 6 )
       do iSza=1, size( Temperatures%field, 5 )
         do iLst=1, size( Temperatures%field, 4 )
           do lon=1, size( Temperatures%field, 3 )
@@ -757,6 +811,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.21  2006/06/15 00:02:33  pwagner
+! Should work with geos5: convert then concatenate
+!
 ! Revision 2.20  2006/06/13 22:13:12  pwagner
 ! changed interface to ConvertFromEtaLevelGrids
 !
