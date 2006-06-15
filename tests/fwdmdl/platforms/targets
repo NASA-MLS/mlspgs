@@ -101,7 +101,7 @@ $(PROG_NAME): $(ALLOBJS) $(PVM_OBJS) $(ourdir)/libfwdmdl.a \
 		-L${HDF} -lmfhdf \
         -ldf \
         -lz \
-        -ljpeg \
+        -ljpeg -lsz \
 		-L${GCTP} -lGctp \
         $(pvm_linker_line) \
         $(blas_linker_line) \
@@ -121,6 +121,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.20  2005/03/04 19:13:31  pwagner
+# Utilizes targets.h from srclib
+#
 # Revision 1.19  2003/03/03 22:59:32  pwagner
 # Removed troublesome customblds includes
 #

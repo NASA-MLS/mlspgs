@@ -103,7 +103,7 @@ l2_test: libcloud.a l2_test.o $(libdir)/libmls.a
 	-L${HDF} -lmfhdf \
         -ldf \
         -lz \
-        -ljpeg \
+        -ljpeg -lsz \
 	-L${GCTP} -lGctp \
         $(pvm_linker_line) \
         $(blas_linker_line) \
@@ -131,6 +131,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.11  2005/03/04 19:13:31  pwagner
+# Utilizes targets.h from srclib
+#
 # Revision 1.10  2002/09/04 18:10:21  pwagner
 # LIB_BLAS may be multiple libraries (e.g., f77blas atlas)
 #

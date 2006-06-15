@@ -128,7 +128,7 @@ mlsl3m: $(mlsl3m_prereqs)
 		-L${HDF} -lmfhdf \
         -ldf \
         -lz \
-        -ljpeg \
+        -ljpeg -lsz \
 		-L${GCTP} -lGctp \
         $(pvm_linker_line) \
         $(blas_linker_line) \
@@ -157,6 +157,9 @@ tar:
 # ========================================================================
 
 # $Log$
+# Revision 1.20  2005/08/17 17:45:05  pwagner
+# Moved more definitions to srclib/targets.h
+#
 # Revision 1.19  2005/03/04 19:13:31  pwagner
 # Utilizes targets.h from srclib
 #

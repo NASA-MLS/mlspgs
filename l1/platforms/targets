@@ -129,7 +129,7 @@ MLSL0SN MLSL1log MLSL1G MLSL1T: $(ALLOBJS) \
 	-L${HDF} -lmfhdf \
         -ldf \
         -lz \
-        -ljpeg \
+        -ljpeg -lsz \
 	-L${GCTP} -lGctp \
         $(pvm_linker_line) \
         $(blas_linker_line) \
@@ -163,6 +163,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.36  2006/04/01 01:12:42  pwagner
+# Added mlsl0sn as arg to mark_as_uptodate
+#
 # Revision 1.35  2006/03/27 19:18:45  pwagner
 # Added new pge mlsl0sn to store switch settings
 #

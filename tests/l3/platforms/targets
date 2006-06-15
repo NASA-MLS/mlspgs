@@ -112,7 +112,7 @@ $(PROG_NAME): $(ALLOBJS) $(itmdir)/libmlsl3.a $(libdir)/libmls.a \
 		-L${HDF} -lmfhdf \
         -ldf \
         -lz \
-        -ljpeg \
+        -ljpeg -lsz \
 		-L${GCTP} -lGctp \
         $(pvm_linker_line) \
         $(blas_linker_line) \
@@ -132,6 +132,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.23  2005/03/04 19:13:31  pwagner
+# Utilizes targets.h from srclib
+#
 # Revision 1.22  2004/03/17 19:06:45  pwagner
 # Extra static object to fix building static Lahey executables when Red Hat>8
 #

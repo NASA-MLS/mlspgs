@@ -126,7 +126,7 @@ $(PROG_NAME): $(ALLOBJS) \
 		-L${HDF} -lmfhdf \
         -ldf \
         -lz \
-        -ljpeg \
+        -ljpeg -lsz \
 		-L${GCTP} -lGctp \
         $(pvm_linker_line) \
         $(blas_linker_line) \
@@ -154,6 +154,9 @@ Sd.o:
 
 # ========================================================================
 # $Log$
+# Revision 1.27  2005/03/04 19:13:31  pwagner
+# Utilizes targets.h from srclib
+#
 # Revision 1.26  2004/12/14 23:31:51  pwagner
 # Made blas available for compiling, mlspack for linking
 #
