@@ -1,0 +1,108 @@
+; ----------------------------------------------- Read / merge geos5
+
+; A note of caution.  If !inpathdao includes the year (as it will at the
+; SCF), then expect this to fail when the first day is 31 December, as
+; the second day will be in the next year.  It will get the filename
+; right though.
+
+; This L2CF fragment reads and merges the geos5 data.
+begin ReadApriori
+  !ifdef(flagUsingGEOS4,
+  {
+  !ifdef(flagUsingPCF,
+    {!define(daoFile1,{})!define(daoFile2,{})},
+    {
+    !ifdef(daoVersion,{},{!define(daoVersion,{GEOS403})})
+    !define(daoDay1,!ccsdsbtodao(!day))
+    !define(daoDay2,!ccsdsbtodao(!ccsdsbadd(!day,1)))
+    !define(daoFile1,{, file='!inpathdao/DAS.flk.asm.tsyn3d_mis_p.!daoVersion.!daoDay1{}00.!daoDay1{}18.V01'})
+    !define(daoFile2,{, file='!inpathdao/DAS.flk.asm.tsyn3d_mis_p.!daoVersion.!daoDay2{}00.!daoDay2{}18.V01'})})
+
+  daoTemperatureInputThis: gridded, origin=dao, field='TMPU', $
+    dimList='XDim,YDim,Height,Time' !daoFile1
+  daoTemperatureInputNext: gridded, origin=dao, field='TMPU', $
+    dimList='XDim,YDim,Height,Time' !daoFile2
+  },{
+
+  !ifdef(flagUsingPCF,
+    {!define(geos5TFile1,{})!define(geos5TFile2,{})!define(geos5TFile3,{})!define(geos5TFile4,{})
+     !define(geos5PFile1,{})!define(geos5PFile2,{})!define(geos5PFile3,{})!define(geos5PFile4,{})
+     !define(geos5TFileN,{})!define(geos5PFileN,{})},
+    {
+    !ifdef(geos5Version,{},{!define(geos5Version,{GEOS500})})
+    !define(geos5Day1,!ccsdsbtodao(!day))
+    !define(geos5Day2,!ccsdsbtodao(!ccsdsbadd(!day,1)))
+    !define(geos5TFile1,{, file='!inpathdao/DAS.ops.asm.tavg3d_dyn_v.!geos5Version.!geos5Day1_0000.V01'})
+    !define(geos5TFile2,{, file='!inpathdao/DAS.ops.asm.tavg3d_dyn_v.!geos5Version.!geos5Day1_0600.V01'})
+    !define(geos5TFile3,{, file='!inpathdao/DAS.ops.asm.tavg3d_dyn_v.!geos5Version.!geos5Day1_1200.V01'})
+    !define(geos5TFile4,{, file='!inpathdao/DAS.ops.asm.tavg3d_dyn_v.!geos5Version.!geos5Day1_1800.V01'})
+    !define(geos5TFileN,{, file='!inpathdao/DAS.ops.asm.tavg3d_dyn_v.!geos5Version.!geos5Day2_0000.V01'})
+    !define(geos5PFile1,{, file='!inpathdao/DAS.ops.asm.tavg3d_prs_v.!geos5Version.!geos5Day1_0000.V01'})
+    !define(geos5PFile2,{, file='!inpathdao/DAS.ops.asm.tavg3d_prs_v.!geos5Version.!geos5Day1_0600.V01'})
+    !define(geos5PFile3,{, file='!inpathdao/DAS.ops.asm.tavg3d_prs_v.!geos5Version.!geos5Day1_1200.V01'})
+    !define(geos5PFile4,{, file='!inpathdao/DAS.ops.asm.tavg3d_prs_v.!geos5Version.!geos5Day1_1800.V01'})
+    !define(geos5PFileN,{, file='!inpathdao/DAS.ops.asm.tavg3d_prs_v.!geos5Version.!geos5Day2_0000.V01'})})
+
+  geos5TemperatureInput1: gridded, origin=geos5, field='T', $
+    dimList='XDim,YDim,Height,Time' !geos5TFile1
+  geos5TemperatureInput2: gridded, origin=geos5, field='T', $
+    dimList='XDim,YDim,Height,Time' !geos5TFile2
+  geos5TemperatureInput3: gridded, origin=geos5, field='T', $
+    dimList='XDim,YDim,Height,Time' !geos5TFile3
+  geos5TemperatureInput4: gridded, origin=geos5, field='T', $
+    dimList='XDim,YDim,Height,Time' !geos5TFile4
+  geos5TemperatureInputNext: gridded, origin=geos5, field='T', $
+    dimList='XDim,YDim,Height,Time' !geos5TFileN
+  geos5PressureInput1: gridded, origin=geos5, field='PL', $
+    dimList='XDim,YDim,Height,Time' !geos5PFile1
+  geos5PressureInput2: gridded, origin=geos5, field='PL', $
+    dimList='XDim,YDim,Height,Time' !geos5PFile2
+  geos5PressureInput3: gridded, origin=geos5, field='PL', $
+    dimList='XDim,YDim,Height,Time' !geos5PFile3
+  geos5PressureInput4: gridded, origin=geos5, field='PL', $
+    dimList='XDim,YDim,Height,Time' !geos5PFile4
+  geos5PressureInputNext: gridded, origin=geos5, field='PL', $
+    dimList='XDim,YDim,Height,Time' !geos5PFileN
+  })
+end ReadApriori
+
+!define(convertEtaToP,{!dnl
+  geos5Converted$1: ConvertEtaToP, $
+    a=geos5TemperatureInput$1, b=geos5PressureInput$1, Grid=gridTemperature
+    delete, grid=geos5TemperatureInput$1
+    delete, grid=geos5PressureInput$1
+})
+begin MergeGrids
+  !ifdef(flagUsingGEOS4,
+  {
+  daoTemperatureInput: Concatenate, $
+    a=daoTemperatureInputThis, b=daoTemperatureInputNext
+  delete, grid=daoTemperatureInputThis
+  delete, grid=daoTemperatureInputNext
+  mergedTemperature: Merge, operational=daoTemperatureInput, $
+    climatology=gridTemperature, height=1mb, scale=5km
+  !define(flagUseOperationalTemperature,{yes})
+  delete, grid=daoTemperatureInput
+  },{
+  ;; wmo p trop (using the values from mid-day)
+  geos5EtaWMOPTrop: wmoTrop, $
+    a=geos5TemperatureInput3, b=geos5PressureInput3
+    
+  ;; to save memory convert before catenating, not after
+  !forall( convertEtaToP,1,2,3,4,Next)
+
+  geos5Concatenate: Concatenate, $
+    grid=[geos5Converted1, geos5Converted2, $
+    geos5Converted3, geos5Converted4, geos5ConvertedNext]
+  delete, grid=geos5Converted1
+  delete, grid=geos5Converted2
+  delete, grid=geos5Converted3
+  delete, grid=geos5Converted4
+  delete, grid=geos5ConvertedNext
+  mergedTemperature: Merge, operational=geos5Concatenate, $
+    climatology=gridTemperature, height=1mb, scale=5km
+  !define(flagUseOperationalTemperature,{yes})
+  delete, grid=geos5Concatenate
+  })
+end MergeGrids
+
