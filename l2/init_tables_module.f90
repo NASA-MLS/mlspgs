@@ -595,16 +595,17 @@ contains ! =====     Public procedures     =============================
              begin, f+f_iterations, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
-      begin, s+s_concatenate, &  ! Must be AFTER S_Gridded
-             begin, f+f_a, s+s_gridded, n+n_field_spec, &
-             begin, f+f_b, s+s_gridded, n+n_field_spec, &
-             nadp+n_spec_def /) )
-    call make_tree ( (/ &
       begin, s+s_ConvertEtaToP, &  ! Must be AFTER S_Gridded, V_Gridded
              begin, f+f_a, s+s_gridded, s+s_concatenate, n+n_field_spec, &
              begin, f+f_b, s+s_gridded, s+s_concatenate, n+n_field_spec, &
              begin, f+f_Grid, s+s_Gridded, n+n_field_spec, &
              nadp+n_spec_def /) )
+    call make_tree ( (/ &
+      begin, s+s_concatenate, &  ! Must be AFTER S_Gridded
+             begin, f+f_a, s+s_gridded, s+s_convertetatop, n+n_field_spec, &
+             begin, f+f_b, s+s_gridded, s+s_convertetatop, n+n_field_spec, &
+             begin, f+f_grid, s+s_gridded, s+s_convertetatop, n+n_field_spec, &
+             ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_wmoTrop, &  ! Must be AFTER S_Gridded
              begin, f+f_grid, s+s_gridded, s+s_concatenate, n+n_field_spec, &
@@ -614,7 +615,7 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ &
       begin, s+s_merge, &  ! Must be AFTER S_Gridded
              begin, f+f_operational, s+s_gridded, s+s_concatenate, &
-             s+s_ConvertEtaToP, s+s_vgrid, n+n_field_spec, &
+             s+s_convertetatop, s+s_vgrid, n+n_field_spec, &
              begin, f+f_climatology, s+s_gridded, s+s_concatenate, n+n_field_spec, &
              begin, f+f_height, t+t_numeric, n+n_field_type, &
              begin, f+f_scale, t+t_numeric, n+n_field_type, &
@@ -1467,6 +1468,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.443  2006/06/15 00:01:42  pwagner
+! Should work with geos5: convert then concatenate
+!
 ! Revision 2.442  2006/06/13 22:13:12  pwagner
 ! changed interface to ConvertFromEtaLevelGrids
 !
