@@ -13,8 +13,18 @@ begin Fill
   ;; ------------------------------------------ Read radiances -----
   ;; Define a macro to read one bands worth of radiances
   !define(readRadiances,{!dnl
+!ifelse($1,{9}, {!dnl
+; Band 9 affected by the Galactic core
+  Fill, quantity=measurementNoise.band$1, avoidBrightObjects="GalacticCenter", $
+    method=l1b, /isPrecision
+  Fill, quantity=measurement.band$1, method=l1b, precision=measurementNoise.band$1
+},{!dnl
+!divert(-1)
+; All the other bands
+!divert!dnl
   Fill, quantity=measurementNoise.band$1, method=l1b, /isPrecision
   Fill, quantity=measurement.band$1, method=l1b, precision=measurementNoise.band$1!nl})
+})
   ;; Read all the relevant bands
   !forall( {readRadiances}, !relevantBands)
 
@@ -78,6 +88,9 @@ end Construct
 
 
 ; $Log$
+; Revision 1.11  2006/06/09 20:46:41  pwagner
+; Defines Boolean flags regarding Band 13 radiances
+;
 ; Revision 1.10  2004/10/02 00:36:49  livesey
 ; Removed snoops
 ;
