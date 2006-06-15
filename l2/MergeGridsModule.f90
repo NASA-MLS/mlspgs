@@ -230,6 +230,14 @@ contains ! =================================== Public procedures
       ! At any step let the result of all prior steps be held in "Intermediate"
       ! Then at each step concatenate the next gridded data with Intermediate
       ! When done, copy Intermediate into result
+      ! 1st--check if any are empty; bail out if they are
+      newGrid%empty = .true.
+      do i=2, nsons(grids_node)
+        db_index = decoration(decoration(subtree(i, grids_node )))
+        b => griddedDataBase ( db_index )
+        if ( b%empty ) return
+      enddo
+      newGrid%empty = .false.
       do i=2, nsons(grids_node)
         db_index = decoration(decoration(subtree(i, grids_node )))
         b => griddedDataBase ( db_index )
@@ -811,6 +819,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.22  2006/06/15 17:36:30  pwagner
+! Bail out of Concatenating if geos5 files missing
+!
 ! Revision 2.21  2006/06/15 00:02:33  pwagner
 ! Should work with geos5: convert then concatenate
 !
