@@ -33,7 +33,7 @@ contains
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use ForwardModelConfig, only: ForwardModelConfig_t, QtyStuff_T
-    use GLnp, only: NG, GX
+    use GLnp, only: GX, NG, NGP1
     use Make_Z_Grid_M, only: Make_Z_Grid
     use MLSCommon, only: RP
     use VectorsModule, only: VectorValue_T
@@ -56,7 +56,6 @@ contains
 
   ! Local variables
     integer :: I, J
-    integer, parameter :: Ngp1 = Ng+1  ! NG + 1
     integer :: NLM1                               ! NLVL - 1
     integer :: No_Tan_Hts
     integer :: SPS_I
@@ -172,6 +171,9 @@ contains
 end module Compute_GL_Grid_M
 
 ! $Log$
+! Revision 2.12  2006/06/16 20:32:30  vsnyder
+! Define NGP1 in glnp
+!
 ! Revision 2.11  2005/08/25 00:49:01  vsnyder
 ! Don't look at the size of integration grid if it's not associated
 !
