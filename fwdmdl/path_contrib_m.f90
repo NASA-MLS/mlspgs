@@ -182,7 +182,7 @@ contains
   subroutine Get_GL_inds ( Do_GL, GL_Inds, CG_Inds, NGL, NCG )
   ! Fill the arrays that control application of GL
 
-    use GLnp, only: NG
+    use GLnp, only: NG, NGP1
     use MLSCommon, only: IP
 
     logical, intent(inout) :: DO_GL(:)         ! Set true for indicies to do
@@ -196,7 +196,6 @@ contains
 
     integer :: I, N_PATH
 
-    integer, parameter :: NGP1 = NG + 1
     integer, parameter :: GLIR(ng) = (/ (i, i = 2-ng, 1) /) ! for > n_path/2
     integer, parameter :: GLIL(ng) = (/ (i ,i = 1-ng, 0) /) ! for <= n_path/2
 
@@ -236,6 +235,9 @@ contains
 end module Path_Contrib_M
 
 ! $Log$
+! Revision 2.18  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.17  2003/11/04 02:49:13  vsnyder
 ! Calculate coarse-path indices where GL is needed
 !

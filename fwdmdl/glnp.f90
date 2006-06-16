@@ -15,8 +15,11 @@ module GLNP
   use MLSCommon, only: R8
   implicit NONE
   private
-  public :: NG, GX, GW
+  public :: GW, GX, Legendre, Lobatto, NG, NGP1
   integer, parameter :: Ng = 3
+  integer, parameter :: Legendre = +1     ! +1 for Legendre, -1 for Lobatto
+  logical, parameter :: Lobatto = legendre < 0 ! Lobatto or Legendre?
+  integer, parameter :: NGP1 = ng + legendre
 !
 ! These are the 3-point-Gauss-Legendre abscissae (X-axis) values in [-1,1]:
 !
@@ -49,6 +52,9 @@ contains
 end module GLNP
 
 ! $Log$
+! Revision 2.4  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.3  2003/09/17 19:59:56  vsnyder
 ! Correct a comment
 !

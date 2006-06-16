@@ -58,7 +58,7 @@ contains
     use Get_Chi_Angles_m, only: Get_Chi_Angles
     use Get_Chi_Out_m, only: Get_Chi_Out
     use Get_Species_Data_M, only:  Get_Species_Data
-    use GLnp, only: GW, NG, Lobatto
+    use GLnp, only: GW, Lobatto, NG, NGP1
     use Intrinsic, only: L_A, L_BOUNDARYPRESSURE, L_CLEAR, L_CLOUDICE, &
       & L_CLOUDWATER, L_EARTHREFL, L_ECRtoFOV, &
       & L_ELEVOFFSET, L_GPH, L_L1BMIF_TAI, &
@@ -105,9 +105,6 @@ contains
     real(r8), dimension(:), pointer :: gph_prof
     integer, dimension(:), pointer :: IPSD
     !--------------------------------------------
-
-    ! Define local parameters
-    integer, parameter :: Ngp1 = Ng+1         ! NG + 1
 
     ! Now define local variables, group by type and then
     ! alphabetically
@@ -3373,6 +3370,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.261  2006/06/16 00:49:10  vsnyder
+! Improved non-GL correction, add TeXnicalities
+!
 ! Revision 2.260  2006/04/25 23:25:36  vsnyder
 ! Revise DACS filter shape data structure
 !
