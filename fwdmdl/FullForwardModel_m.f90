@@ -58,7 +58,7 @@ contains
     use Get_Chi_Angles_m, only: Get_Chi_Angles
     use Get_Chi_Out_m, only: Get_Chi_Out
     use Get_Species_Data_M, only:  Get_Species_Data
-    use GLnp, only: GW, NG
+    use GLnp, only: GW, NG, Lobatto
     use Intrinsic, only: L_A, L_BOUNDARYPRESSURE, L_CLEAR, L_CLOUDICE, &
       & L_CLOUDWATER, L_EARTHREFL, L_ECRtoFOV, &
       & L_ELEVOFFSET, L_GPH, L_L1BMIF_TAI, &
@@ -252,6 +252,7 @@ contains
     real(rp), dimension(:), pointer :: DEL_ZETA     ! Integration lengths in Zeta coords
     real(rp), dimension(:), pointer :: DHDZ_PATH    ! dH/dZ on path
     real(rp), dimension(:), pointer :: DHDZ_GW_PATH ! dH/dZ * GW on path
+    real(rp), dimension(:), pointer :: DSDZ_C       ! ds/dH * dH/dZ on coarse path
     real(rp), dimension(:), pointer :: DSDZ_GW_PATH ! ds/dH * dH/dZ * GW on path
     real(rp), dimension(:), pointer :: DTanh_DT_C   ! 1/tanh1_c d/dT tanh1_c
     real(rp), dimension(:), pointer :: DTanh_DT_F   ! 1/tanh1_f d/dT tanh1_f
@@ -516,7 +517,7 @@ contains
       & do_calc_iwc, do_calc_iwc_zp, do_calc_Salb, do_calc_Salb_zp, &
       & do_calc_t, do_calc_t_c, do_calc_t_f, do_calc_tscat, &
       & do_calc_tscat_zp, do_calc_zp, do_gl, &
-      & d_rad_pol_df, d_rad_pol_dt, dsdz_gw_path, dTanh_dT_c, &
+      & d_rad_pol_df, d_rad_pol_dt, dsdz_c, dsdz_gw_path, dTanh_dT_c, &
       & dTanh_dT_f, d_t_scr_dt )
     nullify ( dx_dh_out, dx_dt, dxdt_surface, dxdt_tan, eta_cext, eta_cext_zp, &
       & eta_fzp, eta_iwc, eta_iwc_zp, eta_mag_zp, eta_salb, eta_salb_zp, &
@@ -882,10 +883,24 @@ contains
                       &  Req+one_tan_ht(1), del_s(:npc), ref_corr(:npc), ier )
         if ( ier /= 0 ) fmStat%flags = ior(fmStat%flags,b_refraction)
 
-        path_dsdh(f_inds(:nglMax)) = h_path(f_inds(:nglMax)) / &
-          & ( sqrt( h_path(f_inds(:nglMax))**2 - (Req+one_tan_ht(1))**2 ) )
+        ! We need path_dsdh on the entire grid except at the tangent point
+        ! for trapezoidal quadrature on the coarse grid, or for Lobatto
+        ! quadrature on the fine grid.  Besides, it's probably faster not
+        ! to use a vector subscript to restrict it to the fine grid.
+        path_dsdh(:no_ele/2-1) = h_path(:no_ele/2-1) / &
+          & ( sqrt(h_path(:no_ele/2-1)**2 - (Req+one_tan_ht(1))**2 ) )
+        path_dsdh(no_ele/2+2:) = h_path(no_ele/2+2:) / &
+          & ( sqrt(h_path(no_ele/2+2:)**2 - (Req+one_tan_ht(1))**2 ) )
+        path_dsdh(no_ele/2:no_ele/2+1) = 0.0
+
+!         path_dsdh(f_inds(:nglMax)) = h_path(f_inds(:nglMax)) / &
+!           & ( sqrt( h_path(f_inds(:nglMax))**2 - (Req+one_tan_ht(1))**2 ) )
         dsdz_gw_path(f_inds(:nglMax)) = path_dsdh(f_inds(:nglMax)) * &
           & dhdz_gw_path(f_inds(:nglMax))
+
+        ! We need dsdz = ds/dh * dh/dz, not multiplied by GW, for
+        ! trapezoidal quadrature on the coarse grid.
+        dsdz_c(:npc) = path_dsdh(c_inds) * dhdz_path(c_inds)
 
         ! Compute ALL the slabs_prep entities over the path's GL grid for this
         ! pointing & mmaf:
@@ -1221,6 +1236,7 @@ contains
     call deallocate_test ( dhdz_gw_path,     'dhdz_gw_path',     moduleName )
     call deallocate_test ( dhdz_path,        'dhdz_path',        moduleName )
     call deallocate_test ( do_gl,            'do_gl',            moduleName )
+    call deallocate_test ( dsdz_c,           'dsdz_c',           moduleName )
     call deallocate_test ( dsdz_gw_path,     'dsdz_gw_path',     moduleName )
     call deallocate_test ( f_inds,           'f_inds',           moduleName )
     call deallocate_test ( gl_inds_b,        'gl_inds_b',        moduleName )
@@ -1710,6 +1726,7 @@ contains
       call allocate_test ( dhdz_gw_path,    max_ele, 'dhdz_gw_path',     moduleName )
       call allocate_test ( dhdz_path,       max_ele, 'dhdz_path',        moduleName )
       call allocate_test ( do_gl,               npc, 'do_gl',            moduleName )
+      call allocate_test ( dsdz_c,              npc, 'dsdz_c',           moduleName )
       call allocate_test ( dsdz_gw_path,    max_ele, 'dsdz_gw_path',     moduleName )
       call allocate_test ( f_inds,         ng * npc, 'f_inds',           moduleName )
       call allocate_test ( gl_inds_b,       max_ele, 'gl_inds_b',        moduleName )
@@ -2668,11 +2685,10 @@ contains
           call deallocate_test ( eta_cext_zp,      'eta_cext_zp',      moduleName )
           call deallocate_test ( cext_path,        'cext_path',        moduleName )
 
-          do j = 1, npc
+          do j = 1, npc ! Don't trust compilers to fuse loops
             alpha_path_c(j) = dot_product( sps_path(c_inds(j),:), &
                                   &        beta_path_c(j,:) )     &
                                   & + beta_path_cloud_c(j)
-
             incoptdepth(j) = alpha_path_c(j) * del_s(j)
           end do
 
@@ -2682,12 +2698,19 @@ contains
 
         else ! Not cloud model
 
+          !{ {\tt incoptdepth} is $\Delta \delta_{s\rightarrow s-1} =
+          !  \int_{\zeta_i}^{\zeta_{i-1}} G(\zeta) \frac{\text{d}s}{\text{d}h}
+          !    \frac{\text{d}h}{\text{d}\zeta} \text{d} \zeta$ where
+          !  $G(\zeta)$ is {\tt alpha\_path\_c}, which is approximated
+          !  here by the rectangle rule, \emph{viz.}
+          !  $\Delta \delta_{i\rightarrow i-1} \approx G(\zeta_i) \delta s_i$.
+
           do j = 1, npc ! Don't trust compilers to fuse loops
             alpha_path_c(j) = dot_product( sps_path(c_inds(j),:), &
                                          & beta_path_c(j,:) )
             incoptdepth(j) = alpha_path_c(j) * del_s(j)
           end do
-  
+
           ! Needed to compute inc_rad_path_slice and by rad_tran_pol
           call two_d_t_script ( t_path_c, &  
             & spaceRadiance%values(1,1), frq, t_script(:,frq_i), B(:npc) )
@@ -2710,6 +2733,7 @@ contains
           ! a constant extent.
           ! Add contributions from nonpolarized molecules 1/4 1/2 1/4
           ! to alpha here
+
           do j = 1, npc
             alpha_path_polarized(-1:1,j) = &
               & matmul( beta_path_polarized(-1:1,j,:),       &
@@ -2730,7 +2754,7 @@ contains
           ! need 0.5 factors to scale unpolarized "power absorption" to
           ! get "field absorption"
 
-          do j = 1, npc
+          do j = 2, npc-1
             incoptdepth_pol(1,1,j) = - incoptdepth_pol(1,1,j) * del_s(j)
             incoptdepth_pol(2,1,j) = - incoptdepth_pol(2,1,j) * del_s(j)
             incoptdepth_pol(1,2,j) = - incoptdepth_pol(1,2,j) * del_s(j)
@@ -2746,12 +2770,29 @@ contains
 
         end if
 
-        ! Where we don't do GL, replace the rectangle rule by the trapezoid
-        ! rule.
-        do j = 1, npc - 1
+        !{ We want $\Delta \delta_{s\rightarrow s-1} =
+        ! \int_{\zeta_i}^{\zeta_{i-1}} G(\zeta) \frac{\text{d}s}{\text{d}h}
+        !   \frac{\text{d}h}{\text{d}\zeta} \text{d} \zeta$ where
+        ! $G(\zeta)$ is {\tt alpha\_path\_c}, but $\frac{\text{d}s}{\text{d}h}$
+        ! is singular at the tangent point, so we compute
+        ! $\Delta \delta_{s\rightarrow s-1} = G(\zeta_i) \delta s_i +
+        ! \int_{\zeta_i}^{\zeta_{i-1}} \left(G(\zeta)-G(\zeta_i)\right)
+        ! \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
+        ! \text{d} \zeta$.
+        !
+        ! Where we do GL, the second integral is approximated using GL (in
+        ! {\tt Get\_Tau}).  Where we don't do GL, approximate it using the
+        ! trapezoid rule (here).
+
+        do j = 2, npc/2
           if ( .not. do_gl(j) ) &
-            & incoptdepth(j) = &
-              & 0.5 * ( alpha_path_c(j) + alpha_path_c(j+1) ) * del_s(j)
+            & incoptdepth(j) = incoptdepth(j) + &
+              & 0.5 * ( alpha_path_c(j-1) - alpha_path_c(j) ) * dsdz_c(j-1)*del_zeta(j)
+        end do
+        do j = npc/2+1, npc-1
+          if ( .not. do_gl(j) ) &
+            & incoptdepth(j) = incoptdepth(j) + &
+              & 0.5 * ( alpha_path_c(j+1) - alpha_path_c(j) ) * dsdz_c(j+1)*del_zeta(j)
         end do
 
         call get_GL_inds ( do_gl, gl_inds_b, cg_inds, ngl, ncg )
@@ -3332,6 +3373,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.260  2006/04/25 23:25:36  vsnyder
+! Revise DACS filter shape data structure
+!
 ! Revision 2.259  2006/04/21 22:25:20  vsnyder
 ! Cannonball polishing
 !
