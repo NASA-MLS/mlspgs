@@ -109,7 +109,7 @@ CONTAINS
     USE OutputL1B, ONLY: OutputL1B_rad, OutputL1B_DiagsT
     USE EngTbls, ONLY: Reflec_T
 
-    INTEGER :: MAFno, counterMAF, ibgn, nv
+    INTEGER :: MAFno, counterMAF, ibgn, nv, last_OA_counterMAF
     REAL(r8) :: TAI
     TYPE (Reflec_T) :: Reflec
     INTEGER, SAVE :: MAFindex = 1
@@ -118,6 +118,8 @@ CONTAINS
 
     nv = 1
     ibgn = 0
+
+    last_OA_counterMAF = OA_counterMAF(UBOUND(OA_counterMAF,1))
 
     DO MAFno = CalBuf%Cal_start, CalBuf%Cal_end
 
@@ -150,6 +152,7 @@ PRINT *, "Outputting rad for MAFno: ", MAFindex
             counterMAF=counterMAF, MAFStartTimeTAI=TAI, nvBounds=nvBounds(nv), &
             ColdCnts=ColdCnts(:,:,nv), HotCnts=HotCnts(:,:,nv))
        nv = nv + 1
+       IF (counterMAF >= last_OA_counterMAF) EXIT
 
     ENDDO
 
@@ -168,6 +171,9 @@ END MODULE THzRadiances
 !=============================================================================
 
 ! $Log$
+! Revision 2.13  2006/06/16 19:24:46  perun
+! Protect THz counterMAF from going beyond OA counterMAF
+!
 ! Revision 2.12  2006/03/30 15:30:31  perun
 ! Test for minimum VarK to determine good radiances
 !
