@@ -504,11 +504,18 @@ contains ! =====     Public Procedures     =============================
                   if ( doElement .and. associated ( radiance%mask ) ) &
                     & doElement = iand ( ichar ( radiance%mask(i,maf)), m_linAlg ) == 0
                   if ( doElement ) then
-                    jBlock%values ( i , : ) = &
-                      & jBlock%values ( i , : ) + &
-                      &   thisFraction(chan) * ( &
-                      &     lowerWeight(mif) * kBit( lower, : ) + &
-                      &     upperWeight(mif) * kBit( upper, : ) )
+                    if ( sideband == sidebandStart ) then
+                      jBlock%values ( i , : ) = &
+                        &   thisFraction(chan) * ( &
+                        &     lowerWeight(mif) * kBit( lower, : ) + &
+                        &     upperWeight(mif) * kBit( upper, : ) )
+                    else
+                      jBlock%values ( i , : ) = &
+                        & jBlock%values ( i , : ) + &
+                        &   thisFraction(chan) * ( &
+                        &     lowerWeight(mif) * kBit( lower, : ) + &
+                        &     upperWeight(mif) * kBit( upper, : ) )
+                    end if
                   end if
                   i = i + 1
                   lower = lower + 1
@@ -1146,6 +1153,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.59  2006/06/15 17:40:33  pwagner
+! Stops with err instead of continuing with warning if xStar qty not in statevectors
+!
 ! Revision 2.58  2005/06/30 22:42:34  livesey
 ! Bug fix for split sideband case
 !
