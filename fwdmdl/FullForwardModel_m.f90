@@ -648,8 +648,8 @@ contains
           &                                z_path(c_inds(mid+1:npc-1)) )
         del_zeta((/1,npc/)) = 0.0_rp
 
-        p_path(1:no_ele) = (/(p_glgrid(i),i=MaxVert,tan_inds(ptg_i),-1), &
-                           & (p_glgrid(i),i=tan_inds(ptg_i),MaxVert)/)
+        p_path(1:no_ele) = (/p_glgrid(MaxVert:tan_inds(ptg_i):-1), &
+                           & p_glgrid(tan_inds(ptg_i):MaxVert)/)
 
         ! Compute the h_path, t_path, dhdz_path, phi_path, dhdt_path
 
@@ -880,18 +880,19 @@ contains
                       &  Req+one_tan_ht(1), del_s(:npc), ref_corr(:npc), ier )
         if ( ier /= 0 ) fmStat%flags = ior(fmStat%flags,b_refraction)
 
-        ! We need path_dsdh on the entire grid except at the tangent point
-        ! for trapezoidal quadrature on the coarse grid, or for Lobatto
-        ! quadrature on the fine grid.  Besides, it's probably faster not
-        ! to use a vector subscript to restrict it to the fine grid.
+        ! We need path_dsdh on the fine grid for Gauss-Legendre or Gauss-
+        ! Lobatto quadrature, and on the coarse grid except at the tangent
+        ! point for trapezoidal quadrature and Gauss-Lobatto quadrature, so
+        ! compute it everywhere except at the tangent point.  Besides, it's
+        ! probably faster not to use a vector subscript to restrict it to
+        ! the fine grid.
+
         path_dsdh(:no_ele/2-1) = h_path(:no_ele/2-1) / &
           & ( sqrt(h_path(:no_ele/2-1)**2 - (Req+one_tan_ht(1))**2 ) )
-        path_dsdh(no_ele/2+2:) = h_path(no_ele/2+2:) / &
-          & ( sqrt(h_path(no_ele/2+2:)**2 - (Req+one_tan_ht(1))**2 ) )
+        path_dsdh(no_ele/2+2:no_ele) = h_path(no_ele/2+2:no_ele) / &
+          & ( sqrt(h_path(no_ele/2+2:no_ele)**2 - (Req+one_tan_ht(1))**2 ) )
         path_dsdh(no_ele/2:no_ele/2+1) = 0.0
 
-!         path_dsdh(f_inds(:nglMax)) = h_path(f_inds(:nglMax)) / &
-!           & ( sqrt( h_path(f_inds(:nglMax))**2 - (Req+one_tan_ht(1))**2 ) )
         dsdz_gw_path(f_inds(:nglMax)) = path_dsdh(f_inds(:nglMax)) * &
           & dhdz_gw_path(f_inds(:nglMax))
 
@@ -3370,6 +3371,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.262  2006/06/16 20:32:30  vsnyder
+! Define NGP1 in glnp
+!
 ! Revision 2.261  2006/06/16 00:49:10  vsnyder
 ! Improved non-GL correction, add TeXnicalities
 !
