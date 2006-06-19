@@ -504,18 +504,15 @@ contains ! =====     Public Procedures     =============================
                   if ( doElement .and. associated ( radiance%mask ) ) &
                     & doElement = iand ( ichar ( radiance%mask(i,maf)), m_linAlg ) == 0
                   if ( doElement ) then
-                    if ( sideband == sidebandStart ) then
-                      jBlock%values ( i , : ) = &
-                        &   thisFraction(chan) * ( &
-                        &     lowerWeight(mif) * kBit( lower, : ) + &
-                        &     upperWeight(mif) * kBit( upper, : ) )
-                    else
-                      jBlock%values ( i , : ) = &
-                        & jBlock%values ( i , : ) + &
-                        &   thisFraction(chan) * ( &
-                        &     lowerWeight(mif) * kBit( lower, : ) + &
-                        &     upperWeight(mif) * kBit( upper, : ) )
-                    end if
+                    ! It's tempting to think we need a if sideband==sidebandStart 
+                    ! case here where we ensure we zero out jBlock the first time.
+                    ! However! The 2D computation makes that a mistake as at the chunk
+                    ! edges, all the derivatives need to be piled up on each other.
+                    jBlock%values ( i , : ) = &
+                      & jBlock%values ( i , : ) + &
+                      &   thisFraction(chan) * ( &
+                      &     lowerWeight(mif) * kBit( lower, : ) + &
+                      &     upperWeight(mif) * kBit( upper, : ) )
                   end if
                   i = i + 1
                   lower = lower + 1
@@ -1153,6 +1150,10 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.60  2006/06/16 23:41:57  livesey
+! Bug fix, if called twice on same band species derivatives doubled rather
+! than rewritten
+!
 ! Revision 2.59  2006/06/15 17:40:33  pwagner
 ! Stops with err instead of continuing with warning if xStar qty not in statevectors
 !
