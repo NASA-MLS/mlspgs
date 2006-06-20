@@ -74,6 +74,7 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
     character(len=1024) :: fileName ! E.g., '/data/../MLS..H2O...he5'
   end type DirectData_T
   logical, parameter :: DEEBUG = .false.
+  logical, parameter :: MAYWRITEPOSTOVERLAPS = .true.
   ! For Announce_Error
   integer :: ERROR
   integer, save :: lastProfTooBigWarns = 0
@@ -234,6 +235,7 @@ contains ! ======================= Public Procedures =========================
     
     ! Despite the name the routine takes vector quantities, not l2aux ones
     use Chunks_m, only: MLSChunk_T
+    use ChunkDivide_m, only: ChunkDivideConfig
     use ForwardModelConfig, only: ForwardModelConfig_T
     use Hdf, only: DFACC_CREATE, DFACC_RDONLY
     use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, &
@@ -251,11 +253,22 @@ contains ! ======================= Public Procedures =========================
     ! Local parameters
     logical :: alreadyOpen
     logical, parameter :: DEEBUG = .false.
+    logical :: deebughere
+    integer :: lastMAF
     integer, parameter :: MAXFILES = 100             ! Set for an internal array
     integer :: returnStatus
+    character(len=*), parameter :: sdDebug = "R1A:118.B1F:PT.S0.FB25-1 Core"
     ! executable code
 
     alreadyOpen = L2AUXFile%stillOpen
+    deebughere = ( deebug .or. sdname == sdDebug ) .and. .false.
+    lastMAF = (quantity%template%instanceOffset+quantity%template%noInstances - &
+        & quantity%template%noInstancesLowerOverlap - &
+        & quantity%template%noInstancesUpperOverlap)
+    if ( chunkNo == size(chunks) .and. MAYWRITEPOSTOVERLAPS .and. &
+      & ChunkDivideConfig%allowPostOverlaps ) &
+      & lastMAF = quantity%template%instanceOffset + &
+      & quantity%template%noInstances - quantity%template%noInstancesLowerOverlap
     if ( .not. alreadyOpen ) then
       call mls_openFile(L2AUXFile, returnStatus)
       if ( returnStatus /= 0 ) &
@@ -286,19 +299,29 @@ contains ! ======================= Public Procedures =========================
       call output(quantity%template%noInstancesLowerOverlap, advance='yes')
       call output('noInstancesUpperOverlap: ', advance='no')
       call output(quantity%template%noInstancesUpperOverlap, advance='yes')
-      call output('last profile: ', advance='no')
-      call output((quantity%template%instanceOffset+quantity%template%noInstances - &
-        & quantity%template%noInstancesLowerOverlap - &
-        & quantity%template%noInstancesUpperOverlap), advance='yes')
+      call output('last instance: ', advance='no')
+      call output(lastMAF, advance='yes')
       call output('grandTotalInstances: ', advance='no')
       call output(quantity%template%grandTotalInstances, advance='yes')
       if ( lastProfTooBigWarns > MAXNUMWARNS ) &
           & call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Max no. of warnings reached--suppressing further ones')
     endif
-    if ( DEEBUG ) then
+    if ( deebughere ) then
       print *, 'Direct Writing to ', trim(L2AUXFile%name)
       print *, 'hdfVersion ', L2AUXFile%hdfVersion
+      call output('instanceOffset: ', advance='no')
+      call output(quantity%template%instanceOffset, advance='yes')
+      call output('noInstances: ', advance='no')
+      call output(quantity%template%noInstances, advance='yes')
+      call output('noInstancesLowerOverlap: ', advance='no')
+      call output(quantity%template%noInstancesLowerOverlap, advance='yes')
+      call output('noInstancesUpperOverlap: ', advance='no')
+      call output(quantity%template%noInstancesUpperOverlap, advance='yes')
+      call output('last profile: ', advance='no')
+      call output(lastMAF, advance='yes')
+      call output('grandTotalInstances: ', advance='no')
+      call output(quantity%template%grandTotalInstances, advance='yes')
     endif
     select case (l2AUXFile%hdfversion)
     case (HDFVERSION_4)
@@ -439,6 +462,7 @@ contains ! ======================= Public Procedures =========================
     & chunkNo, chunks, FWModelConfig )
 
     use Chunks_m, only: MLSChunk_T
+    use ChunkDivide_m, only: ChunkDivideConfig
     use ForwardModelConfig, only: ForwardModelConfig_T
     use ForwardModelSupport, only: ShowFwdModelNames
     use HDF5, only: h5gclose_f, h5gopen_f
@@ -499,6 +523,8 @@ contains ! ======================= Public Procedures =========================
     if ( .not. already_there ) then
       lastChunk = chunks(size(chunks))
       sizes(noDims) = lastChunk%lastMAFIndex - lastChunk%noMAFSUpperOverlap + 1
+      if ( MAYWRITEPOSTOVERLAPS .and. ChunkDivideConfig%allowPostOverlaps ) &
+        & sizes(noDims) = lastChunk%lastMAFIndex + 1
       sizes(noDims-1) = quantity%template%noSurfs
       if ( noDims == 3 ) sizes(1) = quantity%template%noChans
     end if
@@ -510,12 +536,19 @@ contains ! ======================= Public Procedures =========================
     sizes(noDims) = quantity%template%noInstances - &
       & quantity%template%noInstancesLowerOverlap - &
       & quantity%template%noInstancesUpperOverlap
+    if ( MAYWRITEPOSTOVERLAPS .and. ChunkDivideConfig%allowPostOverlaps .and. &
+      & chunkNo == size(chunks) ) &
+      & sizes(noDims) = quantity%template%noInstances - &
+      & quantity%template%noInstancesLowerOverlap
     sizes(noDims-1) = quantity%template%noSurfs
     if ( noDims == 3 ) sizes(1) = quantity%template%noChans
     start(noDims) = quantity%template%instanceOffset
     first_maf = 1+quantity%template%noInstancesLowerOverlap
     last_maf = quantity%template%noInstances &
       &       - quantity%template%noInstancesUpperOverlap
+    if ( MAYWRITEPOSTOVERLAPS .and. ChunkDivideConfig%allowPostOverlaps .and. &
+      & chunkNo == size(chunks) ) &
+      & last_maf = quantity%template%noInstances
 
     if ( DEEBUG ) then
       print *, 'sdname ', trim(sdName)
@@ -1015,6 +1048,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.40  2006/06/20 00:13:34  pwagner
+! Fwm files should haves MAFs matching radiance files
+!
 ! Revision 2.39  2006/05/11 19:39:19  pwagner
 ! Should not segment fault if dumping empty DB
 !
