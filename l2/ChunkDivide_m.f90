@@ -263,11 +263,11 @@ contains ! ===================================== Public Procedures =====
         call output ( mafRange%L2Cover(1) )              
         call output ( ' : ' )
         call output ( mafRange%L2Cover(2), advance='yes' )
-        call output ( 'MAF range in L1B files' )          
+        call output ( 'MAF range in L1B files ' )          
         call output ( mafRange%L1BCover(1) )              
         call output ( ' : ' )
         call output ( mafRange%L1BCover(2), advance='yes' )
-        call output ( 'including overlapped days' )          
+        call output ( 'including overlapped days ' )          
         call output ( mafRange%Expanded(1) )              
         call output ( ' : ' )
         call output ( mafRange%Expanded(2), advance='yes' )
@@ -2364,6 +2364,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.76  2006/06/20 00:12:30  pwagner
+! Improved two printed formats
+!
 ! Revision 2.75  2006/05/09 23:41:41  pwagner
 ! Warn if not assured DACS deconvolution performed by level 1
 !
