@@ -646,8 +646,13 @@ contains ! =====     Public Procedures     =============================
         & ( outputType == l_l2fwm .and. expectedType == l_l2aux ) ) then
         call output ( "Offending quantity " )
         call display_string ( qty%template%name, strip=.true., advance='yes' )
+        call output ( "Expected type " )
+        call display_string ( lit_indices(expectedType) )
+        call output ( "Output file type " )
+        call display_string ( lit_indices(outputType) )
         call Announce_Error ( son, no_error_code, &
-          & "Inappropriate quantity for this file type in direct write" )
+          & "Inappropriate quantity for this file type in direct write", &
+          & Penalty=0 )
       end if
     end do
     end if
@@ -1996,6 +2001,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.128  2006/06/21 22:06:56  pwagner
+! Downgraded inappropriate quantity output to warning mesg
+!
 ! Revision 2.127  2006/04/11 23:34:27  pwagner
 ! Fixed bug which added excess profiles
 !
