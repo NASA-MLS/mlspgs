@@ -14,7 +14,8 @@
 #include "/usr/share/pvm3/include/pvm3.h"
 
 /* Compile me with:
-cc -o killmaster killmaster.c -L/usr/share/pvm3/lib/LINUX -lpvm3
+cc -o killmaster killmaster.c -L/usr/share/pvm3/lib/LINUX -L/usr/share/pvm3/lib/LINUXI386 -lpvm3
+invoke as 'killmaster 0x<tid>' where the master <tid> is obtained from the pvm "ps -a" command 
 */
 
 main ( int argc, void *argv[] )
