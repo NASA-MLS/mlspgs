@@ -170,6 +170,7 @@ contains ! =================================== Public procedures
     newGrid%units               = a%units
     newGrid%verticalCoordinate  = v%verticalCoordinate
     newGrid%missingValue        = a%missingValue
+    if ( toggle(gen) ) call trace_end ( "ConvertEtaToP" )
 
   end function ConvertEtaToP
 
@@ -235,7 +236,10 @@ contains ! =================================== Public procedures
       do i=2, nsons(grids_node)
         db_index = decoration(decoration(subtree(i, grids_node )))
         b => griddedDataBase ( db_index )
-        if ( b%empty ) return
+        if ( b%empty ) then
+          if ( toggle(gen) ) call trace_end ( "Concatenate" )
+          return
+        endif
       enddo
       newGrid%empty = .false.
       do i=2, nsons(grids_node)
@@ -427,6 +431,7 @@ contains ! =================================== Public procedures
     if ( operational%empty ) then
       ! If no operational data, then just use climatology
       call CopyGrid ( newGrid, climatology )
+      if ( toggle(gen) ) call trace_end ( "MergeOneGrid" )
       return
     end if
     if ( DEEBUG ) then
@@ -629,7 +634,7 @@ contains ! =================================== Public procedures
 
     ! Executable code
     call nullifyGriddedData ( newGrid ) ! for Sun's still useless compiler
-    if ( toggle(gen) ) call trace_begin ( "MergeOneGrid", root )
+    if ( toggle(gen) ) call trace_begin ( "wmoTropFromGrid", root )
     MISSINGVALUE = REAL( DEFAULTUNDEFINEDVALUE )
 
     ! Get the information from the l2cf    
@@ -687,12 +692,14 @@ contains ! =================================== Public procedures
     if ( .not. associated(Temperatures) ) then
       call MLSMessage ( MLSMSG_Warning, moduleName, &
         & 'No associated Temperatures grid for calculating wmo tropopause' )
+      if ( toggle(gen) ) call trace_end ( "wmoTropFromGrid" )
       return
     endif
     nlev = Temperatures%noHeights
     if ( nlev < 2 ) then
       call MLSMessage ( MLSMSG_Warning, moduleName, &
         & 'Too few levels on Temperatures grid for calculating wmo tropopause' )
+      if ( toggle(gen) ) call trace_end ( "wmoTropFromGrid" )
       return
     endif
     ! Right now we can't read eta levels, only pressures
@@ -805,6 +812,7 @@ contains ! =================================== Public procedures
     call Deallocate_test ( h, 'h', ModuleName )
     call Deallocate_test ( p, 'p', ModuleName )
     call Deallocate_test ( t, 't', ModuleName )
+    if ( toggle(gen) ) call trace_end ( "wmoTropFromGrid" )
   end function wmoTropFromGrid
 
   logical function not_used_here()
@@ -819,6 +827,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.23  2006/06/22 00:20:46  pwagner
+! Repair cosmetic blemishes when tracing
+!
 ! Revision 2.22  2006/06/15 17:36:30  pwagner
 ! Bail out of Concatenating if geos5 files missing
 !
