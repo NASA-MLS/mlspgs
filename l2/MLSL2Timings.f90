@@ -29,7 +29,7 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
   USE MLSStringLists, only: BooleanValue, catLists, GetStringElement, &
     & NumStringElements, StringElementNum, SwitchDetail
   use MoreTree, only: Get_Boolean
-  use OUTPUT_M, only: BLANKS, OUTPUT, PRUNIT, &
+  use OUTPUT_M, only: BLANKS, OUTPUT, &
     & RESUMEOUTPUT, SETSTAMP, SUSPENDOUTPUT
   use String_Table, only: get_string
   use Time_M, only: Time_Now
@@ -872,6 +872,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.34  2006/06/24 23:10:17  pwagner
+! Remove unneeded thing from output_m
+!
 ! Revision 2.33  2006/06/12 18:44:25  pwagner
 ! Must always obey if originally told to skip
 !
