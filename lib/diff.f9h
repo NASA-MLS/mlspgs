@@ -28,30 +28,39 @@
 ! 
 !     double precision, dimension(size(array1)) :: filtered1
 !     double precision, dimension(size(array2)) :: filtered2
-    logical :: warn, NaNsIn1, NaNsIn2
+    logical :: warn, NaNsIn1, NaNsIn2, alreadySbtrcted
     character(len(name1) + len(name2) + 8) :: DiffName
     integer :: nEqual, nUnEqual
 
     ! Executable
+    alreadySbtrcted = .false.
     myStats = .false.
     if ( present(stats) ) myStats = stats
     myRMS = .false.
     if ( present(RMS) ) myRMS = RMS
-    myWholeArray = .not. (myStats .or. myRMS)
-    if ( present(wholeArray) ) myWholeArray = wholeArray
-    
-    NaNsIn1 = any(.not. ieee_is_finite(array1))
-    NaNsIn2 = any(.not. ieee_is_finite(array2))
 
     if ( len_trim(name2) < 1 ) then
       DiffName = trim(name1) // ' (diff)'
     else
       DiffName = trim(name1) // ' - ' // trim(name2)
     endif
-    if ( DEEBUG ) &
-      & call output('About to filter n-d ' // trim(name1) // ' ' &
-      & // trim(name2), advance='yes')
-    call filterValues(array1, filtered1, array2, filtered2, warn, FillValue)
+
+    myWholeArray = .not. (myStats .or. myRMS)
+    if ( myWholeArray ) then
+      call dump(array1-array2, trim(DiffName), &
+      & real(0.,kind(array1)), CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+      return
+    endif
+    if ( present(wholeArray) ) myWholeArray = wholeArray
+    
+    NaNsIn1 = any(.not. ieee_is_finite(array1))
+    NaNsIn2 = any(.not. ieee_is_finite(array2))
+
+    call filterValues(reshape( array1, (/ product(shape(array1)) /) ), &
+      & filtered1, &
+      & reshape( array2, (/ product(shape(array2)) /) ), &
+      & filtered2, &
+      & warn, FillValue)
     if ( NaNsIn1 ) call output( &
       & '*** NaNs found in ' // trim(name1), advance='yes')
     if ( NaNsIn2 ) call output( &
@@ -64,67 +73,34 @@
       call ReplaceFillValues( filtered1, FillValue, newFill=real(0., kind(FillValue)) )
       call ReplaceFillValues( filtered2, FillValue, newFill=real(0., kind(FillValue)) )
     endif
-    if ( DEEBUG ) then
-      call output('min, max array1 before filtering ', advance='no')
-      call output(minval(array1), advance='no')
-      call blanks(2)
-      call output(maxval(array1), advance='no')
-      call output('  min, max array2 before filtering ', advance='no')
-      call output(minval(array2), advance='no')
-      call blanks(2)
-      call output(maxval(array2), advance='yes')
-      call output('min, max array1 after filtering ', advance='no')
-      call output(minval(filtered1), advance='no')
-      call blanks(2)
-      call output(maxval(filtered1), advance='no')
-      call output('  min, max array2 after filtering ', advance='no')
-      call output(minval(filtered2), advance='no')
-      call blanks(2)
-      call output(maxval(filtered2), advance='yes')
-    endif
     if ( myRMS ) then
       if( present(FillValue) ) then
         ! We want to make sure we remove values from both arrays where either is fill
-        filtered1 = array1
-        filtered2 = array2
-        where (array1 == FillValue)
+        filtered1 = reshape( array1, (/ product(shape(array1)) /) )
+        filtered2 = reshape( array2, (/ product(shape(array2)) /) )
+        where (filtered1 == FillValue)
           filtered2 = FillValue
         end where
-        where (array2 == FillValue)
+        where (filtered2 == FillValue)
           filtered1 = FillValue
         end where
         numNonFill = count(filtered1 /= FillValue)
-        call RemoveFillValues ( filtered1, FillValue, prestats1 )
-        call RemoveFillValues ( filtered2, FillValue, prestats2 )
-        if ( DEEBUG ) then
-          call output('min, max of array1 ', advance='no')
-          call output(minval(prestats1(1:numNonFill)), advance='no')
-          call blanks(2)
-          call output(maxval(prestats1(1:numNonFill)), advance='yes')
-          call output('min, max of array2 ', advance='no')
-          call output(minval(prestats2(1:numNonFill)), advance='no')
-          call blanks(2)
-          call output(maxval(prestats2(1:numNonFill)), advance='yes')
-        endif
-        call allstats(prestats1(1:numNonFill), &
+        call ReorderFillValues ( filtered1, FillValue )
+        call ReorderFillValues ( filtered2, FillValue )
+        call allstats(filtered1(1:numNonFill), &
           & addedData=.false., min=refmin, max=refmax, rms=refrms)
-        call allstats(prestats2(1:numNonFill), &
+        call allstats(filtered2(1:numNonFill), &
           & addedData=.true., min=refmin, max=refmax, rms=refrms)
         call printRMSetc ( 'Reference values', refmin, refmax, refrms )
+        ! Avoid another automatic array
+        filtered1 = filtered1 - filtered2
+        alreadySbtrcted = .true.
         if ( myWholeArray ) then
-          call dump(filtered1-filtered2, trim(DiffName), &
+          call dump(filtered1, trim(DiffName), &
           & real(0.,kind(array1)), CLEAN, WIDTH, FORMAT, &
           & WHOLEARRAY, STATS, RMS, LBOUND )
         else
-          if ( DEEBUG ) then
-            call output('min, max of array1-array2 ', advance='no')
-            call output(minval(prestats1(1:numNonFill)-prestats2(1:numNonFill)), &
-              & advance='no')
-            call blanks(2)
-            call output(maxval(prestats1(1:numNonFill)-prestats2(1:numNonFill)), &
-              & advance='yes')
-          endif
-          call dump( prestats1(1:numNonFill)-prestats2(1:numNonFill), &
+          call dump( filtered1(1:numNonFill), &
             & trim(DiffName), real(0.,kind(array1)), CLEAN, WIDTH, FORMAT, &
             & WHOLEARRAY, STATS, RMS, LBOUND )
         endif
@@ -137,10 +113,14 @@
       endif
       call printRMSetc ( 'Reference values', refmin, refmax, refrms )
     endif
-    call dump(filtered1-filtered2, trim(DiffName), &
+    if ( .not. alreadySbtrcted ) filtered1 = filtered1 - filtered2
+    call dump(filtered1, trim(DiffName), &
       & real(0.,kind(array1)), CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.7  2006/06/24 23:07:55  pwagner
+! Changes to reduce memory footprint computing statistics
+!
 ! Revision 2.6  2006/03/15 17:34:38  pwagner
 ! Fixed bug causing incorrect rms when diffing with fill values
 !
