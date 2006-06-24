@@ -215,7 +215,6 @@ contains ! ==================================================================
 
   ! ---------------------------------------------- InitParallel -------------
   subroutine InitParallel ( chunkNo, MAFNo )
-    use Output_m, only: PRUNIT
     ! This routine initialises the parallel code
     integer, intent(in) :: chunkNo      ! Chunk number asked to do.
     integer, intent(in) :: MAFNo        ! MAF number asked to do in fwmParallel mode.
@@ -835,6 +834,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.47  2006/06/24 23:10:00  pwagner
+! Remove unneeded thing from output_m
+!
 ! Revision 2.46  2005/06/22 18:57:02  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
