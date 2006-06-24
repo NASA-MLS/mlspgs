@@ -1,0 +1,49 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id$
+
+!  subroutine output_nvp_character ( name, value, &
+!    & ADVANCE, colon, TABN, TABC, DONT_STAMP )
+!    character(len=*), intent(in)          :: name
+!    character(len=*), intent(in)          :: value
+    character(len=*), intent(in), optional :: ADVANCE
+    character(len=1), intent(in), optional :: COLON
+    character(len=1), intent(in), optional :: fillChar
+    integer, intent(in), optional :: TABN
+    integer, intent(in), optional :: TABC
+    logical, intent(in), optional :: DONT_STAMP
+    ! Local variables
+    integer :: leftPadding
+    integer :: rightPadding
+    character(len=3) :: my_advance
+    character(len=1) :: myColon
+    ! Executable
+    my_advance = 'yes'
+    if ( present(advance) ) my_advance = advance
+    leftPadding = 0
+    if ( present(tabn) ) then
+      leftPadding = tabn - 1
+      if ( tabn > 1 ) call blanks ( tabn-1, fillChar=fillChar, advance='no' )
+    endif
+    call output ( trim(name), advance='no' )
+    rightPadding = 0
+    if ( present(tabc) ) then
+      ! leftpadding + len_trim(name) + rightpadding + 1 = tabc
+      rightpadding = tabc - leftpadding - len_trim(name) - 1
+      if ( rightpadding > 0 ) call blanks ( rightpadding, fillChar=fillChar, advance='no' )
+    endif
+    call output ( myColon, advance='no' )
+    call output ( value, advance=my_advance, dont_stamp=dont_stamp )
+! $Log$
+! Revision 2.1  2006/06/24 23:16:21  pwagner
+! First commit
+!
