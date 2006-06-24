@@ -46,7 +46,8 @@ program MLSL2
   use MLSStrings, only: lowerCase, readIntsFromChars
   use MLSStringLists, only: catLists, GetStringElement, GetUniqueList, &
     & NumStringElements, RemoveElemFromList, SwitchDetail, unquote
-  use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUT_DATE_AND_TIME, PRUNIT
+  use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUT_DATE_AND_TIME, &
+    & OutputOptions
   use PARSER, only: CONFIGURATION
   use PVM, only: ClearPVMArgs, FreePVMArgs
   use SDPToolkit, only: UseSDPToolkit
@@ -215,7 +216,7 @@ program MLSL2
   FILESTRINGTABLE = .true.
   !---------------- Task (2) ------------------
 ! Where to send output, how severe an error to quit
-   prunit = OUTPUT_PRINT_UNIT
+   outputOptions%prunit = OUTPUT_PRINT_UNIT
    MLSMSG_Severity_to_quit = MAX(QUIT_ERROR_THRESHOLD, MLSMSG_Debug+1)
 
 ! Clear the command line arguments we're going to accumulate to pass
@@ -534,8 +535,8 @@ program MLSL2
         case ( 'K' ); capIdentifiers = .true.
         case ( 'k' ); capIdentifiers = .false.
         case ( 'l' ); toggle(lex) = .true.
-        case ( 'M' ); prunit = -2
-        case ( 'm' ); prunit = -1
+        case ( 'M' ); outputOptions%prunit = -2
+        case ( 'm' ); outputOptions%prunit = -1
         case ( 'p' ); toggle(par) = .true.
         case ( 'R' ) ! This does the opposite of what S does
           removeSwitches = catLists(trim(removeSwitches), line(j+1:))
@@ -619,11 +620,11 @@ program MLSL2
 ! (waited til here in case any were (re)set on command line)
 
   if ( .not. toolkit .or. showDefaults ) then
-     prunit = max(-1, prunit)   ! stdout or Fortran unit
+     outputOptions%prunit = max(-1, outputOptions%prunit)   ! stdout or Fortran unit
   elseif (parallel%master) then
-     prunit = -2          ! output both logged and sent to stdout
+     outputOptions%prunit = -2          ! output both logged and sent to stdout
   elseif (parallel%slave) then
-     prunit = -1          ! output sent only to stdout, not logged
+     outputOptions%prunit = -1          ! output sent only to stdout, not logged
   end if
 
   if( SwitchDetail(switches, 'log') >= 0 .or. .not. toolkit ) then
@@ -1025,7 +1026,7 @@ contains
       endif
       call output(' Standard output unit:                           ', advance='no')
       call blanks(4, advance='no')
-      call output(PrUnit, advance='yes')
+      call output(outputOptions%prunit, advance='yes')
       call output(' Log file unit:                                  ', advance='no')
       call blanks(4, advance='no')
       call output(MLSMessageConfig%LogFileUnit, advance='yes')
@@ -1078,6 +1079,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.149  2006/06/24 23:11:29  pwagner
+! prunit now a component of outputOptions
+!
 ! Revision 2.148  2006/04/20 23:22:39  pwagner
 ! Show both kinds of allowed extra-range overlaps
 !
