@@ -22,6 +22,7 @@ module OUTPUT_M
 !     - - - - - - - -
 !     (data types and parameters)
 ! MLSMSG_Level             MLSMessage level if so logged
+! outputOptions            where to send output and how to format it
 ! PrUnit                   How to direct output:
 !                          -2 :: logged via MLSMessage
 !                          -1 :: print stdout
@@ -39,6 +40,7 @@ module OUTPUT_M
 ! newline                  print a newline
 ! output                   print argument
 ! output_date_and_time     print nicely formatted date and time
+! output_name_value_pair   print nicely formatted name and value
 ! revertOutput             revert output to file used before switchOutput
 !                           if you will revert, keepOldUnitOpen when switching
 ! resumeOutput             resume output
@@ -66,6 +68,9 @@ module OUTPUT_M
 !       where value can be any numerical type, either scalar or 1-d array
 ! output_date_and_time ( [log date], [log time], [char* from_where], 
 !          [char* msg], [char* dateFormat], [char* timeFormat], [char* advance] )
+! output_name_v_pair ( char* name, value, [char* advance],
+!          [char colon], [char fillChar], [integer tabn], [integer tabc], 
+!          log dont_stamp] )
 ! resumeOutput
 ! revertOutput
 ! setStamp ( [char* textCode], [log post], [int interval],
@@ -93,7 +98,7 @@ module OUTPUT_M
   integer, save, public :: LINE_WIDTH = 120 ! Not used here, but a convenient
                                          ! place to store it
   ! Where to output?
-  integer, save, public :: PRUNIT = -1   ! Unit for output.  
+!  integer, save, public :: PRUNIT = -1   ! Unit for output.  
                                          ! -1 means "printer" unit, *
                                          ! -2 means MLSMessage if 
                                          ! < -2, both printer and MLSMSG
@@ -102,10 +107,12 @@ module OUTPUT_M
   integer, save, private :: OLDUNIT = -1 ! Previous Unit for output.
   logical, save, private :: OLDUNITSTILLOPEN = .TRUE.
 
-  public :: BLANKS, DUMPSIZE, GETSTAMP, NEWLINE, OUTPUT, OUTPUT_DATE_AND_TIME, &
+  public :: BLANKS, DUMPSIZE, GETSTAMP, NEWLINE, &
+    & OUTPUT, OUTPUT_DATE_AND_TIME, OUTPUT_NAME_V_PAIR, &
     & RESUMEOUTPUT, revertOutput, &
     & SETSTAMP, SUSPENDOUTPUT, switchOutput, TIMESTAMP
 
+  public :: outputOptions_T
   public :: stampOptions_T
 
   interface DUMPSIZE
@@ -120,10 +127,42 @@ module OUTPUT_M
     module procedure output_string
   end interface
 
+  interface OUTPUT_NAME_V_PAIR
+    module procedure output_nvp_character
+    module procedure output_nvp_complex
+    module procedure output_nvp_double
+    module procedure output_nvp_integer
+    module procedure output_nvp_logical
+    module procedure output_nvp_single
+  end interface
+
   interface TIMESTAMP
     module procedure timestamp_char, timestamp_integer
   end interface
   
+  ! This is the type for configuring how to automatically format
+  ! lines and whether they should be sent to stdout or elsewhere
+  type outputOptions_T
+    integer :: PRUNIT = -1
+    integer :: MLSMSG_Level = MLSMSG_Info ! What level if logging
+    logical :: SKIPMLSMSGLOGGING = .false.
+    logical :: usePatternedBlanks = .true. ! Use patterns for special fillChars
+    character(len=9) :: specialFillChars = '123456789'
+    character(len=16), dimension(9) :: patterns = (/ &
+      &  '(. )            ' , &
+      &  '(. .)           ' , &
+      &  '(.  .)          ' , &
+      &  '(.   .)         ' , &
+      &  '(.. ..)         ' , &
+      &  '(- )            ' , &
+      &  '(- -)           ' , &
+      &  '(-  -)          ' , &
+      &  '(- .. )         ' /)
+      !   12345678901234567890
+  end type
+  
+  type(outputOptions_T), public, save :: outputOptions
+
   ! This is the type for configuring whether and how to automatically stamp
   ! lines sent to stdout
   ! If interval > 1 only a fraction of lines will be stamped
@@ -138,14 +177,15 @@ module OUTPUT_M
     character(len=16) :: dateFormat = ' '
     character(len=16) :: timeFormat = 'hh:mm'
     integer :: interval = 1 ! 1 means stamp every line; n means every nth line
+    character(len=8) :: TIMESTAMPSTYLE = 'post' ! 'pre' or 'post'
   end type
   
   type(stampOptions_T), public, save :: stampOptions ! Could leave this private
 
-  integer, save, public :: MLSMSG_Level = MLSMSG_Info ! What level if logging
+  ! integer, save, public :: MLSMSG_Level = MLSMSG_Info ! What level if logging
   logical, save, private:: SILENTRUNNING = .false. ! Suspend all further output
-  logical, save, public :: SKIPMLSMSGLOGGING = .false.
-  character(len=8), save, public :: TIMESTAMPSTYLE = 'post' ! 'pre' or 'post'
+  ! logical, save, public :: SKIPMLSMSGLOGGING = .false.
+  ! character(len=8), save, public :: TIMESTAMPSTYLE = 'post' ! 'pre' or 'post'
   ! Private parameters
   logical, save, private :: ATLINESTART = .true.  ! Whether to stamp if notpost
   integer, save, private :: LINESSINCELASTSTAMP = 0
@@ -160,6 +200,63 @@ contains
 
   ! -----------------------------------------------------  BLANKS  -----
   subroutine BLANKS ( N_BLANKS, FILLCHAR, ADVANCE )
+  ! Output N_BLANKS blanks to PRUNIT.
+  ! (or optionally that many copies of fillChar)
+    integer, intent(in) :: N_BLANKS
+    character(len=*), intent(in), optional :: ADVANCE
+    character(len=1), intent(in), optional :: FILLCHAR  ! default is ' '
+    character(len=3) :: ADV
+    character(len=*), parameter :: BLANKSPACE = &
+    '                                                                    '
+    character(len=len(BlankSpace)) :: b
+    integer :: I    ! Blanks to write in next WRITE statement
+    integer :: ntimes
+    integer :: numSoFar
+    character(len=16) :: pattern
+    integer :: patternLength
+    integer :: patternNum
+    integer :: theRest
+    integer :: xtraBlanks
+    ! Executable
+    if ( present(fillChar) ) then
+      if ( outputOptions%usePatternedBlanks .and. &
+        & index(outputOptions%specialFillChars, FILLCHAR) > 0 ) then
+        ! We need to try to fit our called-for pattern into n_blanks
+        ! The 1st question is, how many times could it be done?
+        read(fillChar, *) patternNum
+        pattern = outputOptions%patterns(patternNum)
+        ! The pattern length (adjusted for enclosing parentheses)
+        patternLength = len_trim(pattern) - 2
+        ! Now we assume we'll always want the first and blanks of n_blanks to be
+        ! purely blank
+        if ( patternLength > n_blanks - 2 ) then
+          ! n_blanks too short--just print blanks
+          call pr_blanks ( n_blanks, advance=advance )
+          return
+        endif
+        ntimes = (n_blanks-2)/patternLength
+        ! In case repeating pattern ends with one or more blanks
+        ! xtraBlanks = patternLength - len_trim( pattern(2:patternLength+1) )
+        ! 1st--print single blank
+        ! call output(fillchar // ' ' // trim(pattern), advance='yes')
+        ! call output('patternLength: ', advance='yes')
+        call pr_blanks ( 1, advance='no' )
+        numSoFar = 1
+        do i=1, ntimes
+          call output ( pattern(2:patternLength+1), advance='no' )
+          ! if ( xtraBlanks > 0 ) call pr_blanks ( xtraBlanks, advance='no' )
+          numSoFar = numSoFar + patternLength
+        enddo
+        theRest = n_blanks - numSoFar
+        if ( theRest > 0 ) call pr_blanks ( theRest, advance=advance )
+        return
+      endif
+    endif
+    call pr_blanks ( n_blanks, advance=advance )
+  end subroutine BLANKS
+
+  ! -----------------------------------------------------  PR_BLANKS  -----
+  subroutine PR_BLANKS ( N_BLANKS, FILLCHAR, ADVANCE )
   ! Output N_BLANKS blanks to PRUNIT.
   ! (or optionally that many copies of fillChar)
     integer, intent(in) :: N_BLANKS
@@ -190,7 +287,7 @@ contains
       call output ( b(:i), advance=adv )
       if ( n < 1 ) exit   ! was if n == 0, but this should be safer
     end do
-  end subroutine BLANKS
+  end subroutine PR_BLANKS
 
   ! --------------------------------------------- DumpSize_integer -----
   subroutine DumpSize_integer ( n, advance, units )
@@ -311,16 +408,16 @@ contains
       stamped = .true.
     endif
 
-    my_dont_log = SKIPMLSMSGLOGGING ! .false.
+    my_dont_log = outputOptions%skipmlsmsglogging ! .false.
     if ( present(dont_log) ) my_dont_log = dont_log
     n_stamp = len_trim(stamped_chars)
     if ( my_adv == 'no' ) n_stamp = n_stamp + len(chars) - len_trim(chars)
     ! Special case: if chars is blank (chars are blank?)
     ! we'll want to print anyway
     if ( len_trim(chars) < 1 ) n_stamp = max(n_stamp, 1)
-    if ( (prunit == -1 .or. prunit < -2) .and. n_stamp > 0 ) &
+    if ( (outputOptions%prunit == -1 .or. outputOptions%prunit < -2) .and. n_stamp > 0 ) &
       & write ( *, '(a)', advance=my_adv ) stamped_chars(1:n_stamp)
-    if ( prunit < -1 .and. .not. my_dont_log  ) then
+    if ( outputOptions%prunit < -1 .and. .not. my_dont_log  ) then
       the_chars = chars // ' '
       n_chars = max(len(chars), 1)
       if ( present(log_chars) ) then
@@ -336,20 +433,20 @@ contains
       if ( my_adv == 'no' ) n_chars = n_chars+1
       n_chars = min(n_chars, len(my_chars))
       if ( present(from_where)  ) then
-        call MLSMessage ( MLSMSG_Level, from_where, my_chars(1:n_chars), &
+        call MLSMessage ( outputOptions%MLSMSG_Level, from_where, my_chars(1:n_chars), &
           & advance=my_adv )
       else
-        call MLSMessage ( MLSMSG_Level, ModuleName, my_chars(1:n_chars), &
+        call MLSMessage ( outputOptions%MLSMSG_Level, ModuleName, my_chars(1:n_chars), &
           & advance=my_adv )
       end if
     end if
     
-    if ( prunit < 0  ) then
+    if ( outputOptions%prunit < 0  ) then
       ! Already logged; no output to stdout
     else if ( stamped_chars == ' ' .and. present(insteadofblank)  ) then
-      write ( prunit, '(a)', advance=my_adv ) trim(insteadofblank)
+      write ( outputOptions%prunit, '(a)', advance=my_adv ) trim(insteadofblank)
     else
-      write ( prunit, '(a)', advance=my_adv ) stamped_chars(1:n_stamp)
+      write ( outputOptions%prunit, '(a)', advance=my_adv ) stamped_chars(1:n_stamp)
     end if
     atLineStart = (my_adv == 'yes')
     if ( atLineStart ) then
@@ -357,10 +454,10 @@ contains
         ! Time to add stamp as a page header on its own line
         stamped_chars = stamp(' ')
         stamped = .true.
-        if ( prunit == -1 .or. prunit < -2 ) then
+        if ( outputOptions%prunit == -1 .or. outputOptions%prunit < -2 ) then
           write ( *, '(a)', advance='yes' ) trim(stamped_chars)
-        elseif( prUnit > 0 ) then
-          write ( prunit, '(a)', advance='yes' ) trim(stamped_chars)
+        elseif( outputOptions%prunit > 0 ) then
+          write ( outputOptions%prunit, '(a)', advance='yes' ) trim(stamped_chars)
         endif
       endif
       if ( stamped ) then
@@ -387,11 +484,12 @@ contains
   end subroutine OUTPUT_CHAR_ARRAY
 
   ! ---------------------------------------------  OUTPUT_COMPLEX  -----
-  subroutine OUTPUT_COMPLEX ( VALUE, Format, ADVANCE, Before, After )
+  subroutine OUTPUT_COMPLEX ( VALUE, Format, ADVANCE, Before, After, dont_stamp )
     complex, intent(in) :: VALUE
     character(len=*), intent(in), optional :: Format    ! How to print
     character(len=*), intent(in), optional :: ADVANCE
     character(len=*), intent(in), optional :: Before, After ! text to print
+    logical, intent(in), optional :: DONT_STAMP
     character(len=60) :: LINE
 
     if ( present(Format)  ) then
@@ -402,9 +500,11 @@ contains
     if ( present(before) ) call output ( before, dont_log = .true. )
     if ( present(after)  ) then
       call output ( trim(line), dont_log = .true. )
-      call output ( after, advance=advance, dont_log = .true. )
+      call output ( after, advance=advance, dont_log = .true., &
+        & dont_stamp=dont_stamp )
     else
-      call output ( trim(line), advance=advance, dont_log = .true. )
+      call output ( trim(line), advance=advance, dont_log = .true., &
+        & dont_stamp=dont_stamp )
     end if
   end subroutine OUTPUT_COMPLEX
 
@@ -487,7 +587,8 @@ contains
   end subroutine OUTPUT_DCOMPLEX
 
   ! ----------------------------------------------  OUTPUT_DOUBLE  -----
-  subroutine OUTPUT_DOUBLE ( VALUE, Format, LogFormat, ADVANCE, Before, After )
+  subroutine OUTPUT_DOUBLE ( VALUE, Format, LogFormat, ADVANCE, &
+    & Before, After, dont_stamp )
   ! Output "double" to "prunit" using * format, trimmed of insignificant
   ! trailing zeroes, and trimmed of blanks at both ends.
     double precision, intent(in) :: VALUE
@@ -495,6 +596,7 @@ contains
     character(len=*), intent(in), optional :: LogFormat ! How to post to Log
     character(len=*), intent(in), optional :: ADVANCE
     character(len=*), intent(in), optional :: Before, After ! text to print
+    logical, intent(in), optional :: DONT_STAMP
     integer :: I, J, K
     character(len=30) :: LINE, LOG_CHARS
 
@@ -535,9 +637,10 @@ contains
     if ( present(before) ) call output ( before )
     if ( present(after)  ) then
       call output ( line(:k), log_chars=log_chars )
-      call output ( after, advance=advance )
+      call output ( after, advance=advance, dont_stamp=dont_stamp )
     else
-      call output ( line(:k), advance=advance, log_chars=log_chars )
+      call output ( line(:k), advance=advance, log_chars=log_chars, &
+        & dont_stamp=dont_stamp )
     end if
 
   end subroutine OUTPUT_DOUBLE
@@ -557,12 +660,12 @@ contains
       call blanks ( 3, advance='no' )
     end do
     if ( present(advance)  ) then
-      if ( prunit == -1 .or. prunit < -2 ) &
+      if ( outputOptions%prunit == -1 .or. outputOptions%prunit < -2 ) &
         & write ( *, '(a)', advance=my_adv )
-      if ( prunit < -1 ) &
-        & call MLSMessage ( MLSMSG_Level, ModuleName, '', advance=my_adv )
-      if ( prunit >= 0 ) &
-        & write ( prunit, '(a)', advance=my_adv )
+      if ( outputOptions%prunit < -1 ) &
+        & call MLSMessage ( outputOptions%MLSMSG_Level, ModuleName, '', advance=my_adv )
+      if ( outputOptions%prunit >= 0 ) &
+        & write ( outputOptions%prunit, '(a)', advance=my_adv )
     end if
   end subroutine OUTPUT_DOUBLE_ARRAY
 
@@ -625,12 +728,12 @@ contains
       call blanks ( 3, advance='no' )
     end do
     if ( present(advance)  ) then
-      if ( prunit == -1 .or. prunit < -2 ) &
+      if ( outputOptions%prunit == -1 .or. outputOptions%prunit < -2 ) &
         & write ( *, '(a)', advance=my_adv )
-      if ( prunit < -1 ) &
-        & call MLSMessage ( MLSMSG_Level, ModuleName, '', advance=my_adv )
-      if ( prunit >= 0 ) &
-        & write ( prunit, '(a)', advance=my_adv )
+      if ( outputOptions%prunit < -1 ) &
+        & call MLSMessage ( outputOptions%MLSMSG_Level, ModuleName, '', advance=my_adv )
+      if ( outputOptions%prunit >= 0 ) &
+        & write ( outputOptions%prunit, '(a)', advance=my_adv )
     end if
   end subroutine OUTPUT_INTEGER_ARRAY
 
@@ -724,12 +827,12 @@ contains
       call blanks ( 3, advance='no' )
     end do
     if ( present(advance)  ) then
-      if ( prunit == -1 .or. prunit < -2 ) &
+      if ( outputOptions%prunit == -1 .or. outputOptions%prunit < -2 ) &
         & write ( *, '(a)', advance=my_adv )
-      if ( prunit < -1 ) &
-        & call MLSMessage ( MLSMSG_Level, ModuleName, '', advance=my_adv )
-      if ( prunit >= 0 ) &
-        & write ( prunit, '(a)', advance=my_adv )
+      if ( outputOptions%prunit < -1 ) &
+        & call MLSMessage ( outputOptions%MLSMSG_Level, ModuleName, '', advance=my_adv )
+      if ( outputOptions%prunit >= 0 ) &
+        & write ( outputOptions%prunit, '(a)', advance=my_adv )
     end if
   end subroutine OUTPUT_SINGLE_ARRAY
 
@@ -755,6 +858,62 @@ contains
     end if
   end subroutine OUTPUT_STRING
 
+  ! ----------------------------------------------  OUTPUT_NAME_V_PAIR  -----
+  ! This family of routines outputs a paired name and value
+  ! (Basically saving you a few lines over the idiom
+  !  call output ( trim(name), advance='no' )
+  !  call output ( ': ', advance='no' )
+  !  call output ( value, advance='yes' )
+  
+  ! to print following line to stdout
+  !  name: value
+  ! Optional args control
+  ! tabc: column number where colon appears (to line up 2 mor more lines)
+  ! tabn: column number where name begins
+  ! advance: whether to advance after printing pair (by default we WILL advance)
+  ! dont_stamp: override setting to stamp end of each line
+  subroutine output_nvp_character ( name, value, &
+    & ADVANCE, fillChar, colon, TABN, TABC, DONT_STAMP )
+    character(len=*), intent(in)          :: name
+    character(len=*), intent(in)          :: value
+    include 'output_name_value_pair.f9h'
+  end subroutine output_nvp_character
+
+  subroutine output_nvp_complex ( name, value, &
+    & ADVANCE, fillChar, colon, TABN, TABC, DONT_STAMP )
+    character(len=*), intent(in)          :: name
+    complex, intent(in)                   :: value
+    include 'output_name_value_pair.f9h'
+  end subroutine output_nvp_complex
+
+  subroutine output_nvp_double ( name, value, &
+    & ADVANCE, fillChar, colon, TABN, TABC, DONT_STAMP )
+    character(len=*), intent(in)          :: name
+    double precision, intent(in)                   :: value
+    include 'output_name_value_pair.f9h'
+  end subroutine output_nvp_double
+
+  subroutine output_nvp_integer ( name, value, &
+    & ADVANCE, fillChar, colon, TABN, TABC, DONT_STAMP )
+    character(len=*), intent(in)          :: name
+    integer, intent(in)                   :: value
+    include 'output_name_value_pair.f9h'
+  end subroutine output_nvp_integer
+
+  subroutine output_nvp_logical ( name, value, &
+    & ADVANCE, fillChar, colon, TABN, TABC, DONT_STAMP )
+    character(len=*), intent(in)          :: name
+    logical, intent(in)                   :: value
+    include 'output_name_value_pair.f9h'
+  end subroutine output_nvp_logical
+
+  subroutine output_nvp_single ( name, value, &
+    & ADVANCE, fillChar, colon, TABN, TABC, DONT_STAMP )
+    character(len=*), intent(in)          :: name
+    real, intent(in)                      :: value
+    include 'output_name_value_pair.f9h'
+  end subroutine output_nvp_single
+
   ! ----------------------------------------------  resumeOutput  -----
   subroutine resumeOutput 
   ! resume outputting to PRUNIT.
@@ -774,13 +933,13 @@ contains
     endif
     call output( 'Reverting output to unit: ', advance='no' )
     call output( OLDUNIT, advance='yes' )
-    if ( PRUNIT > 0 ) then
-      inquire( unit=PRUNIT, opened=itsOpen )
+    if ( outputOptions%prunit > 0 ) then
+      inquire( unit=outputOptions%prunit, opened=itsOpen )
       if ( itsOpen ) then
-        close(PRUNIT)
+        close(outputOptions%prunit)
       endif
     endif
-    PRUNIT = OLDUNIT    
+    outputOptions%prunit = OLDUNIT    
 
   end subroutine revertOutput
 
@@ -823,7 +982,7 @@ contains
     ! Executable
     dontCloseOldUnit = .false.
     if ( present(keepOldUnitOpen) ) dontCloseOldUnit = keepOldUnitOpen
-    oldUnit = prUnit
+    oldUnit = outputOptions%prunit
     switchUnit = DEFAULTSWITCHUNIT
     call resumeOutput
     if ( present(unit) ) then
@@ -837,9 +996,9 @@ contains
       call output(trim(filename), advance='yes')
       ! if ( PRUNIT > 0 ) switchUnit = PRUNIT
     endif
-    if ( PRUNIT > 0 .and. .not. dontCloseOldUnit ) then
-      close(PRUNIT)
-      OLDUNIT = PRUNIT
+    if ( outputOptions%prunit > 0 .and. .not. dontCloseOldUnit ) then
+      close(outputOptions%prunit)
+      OLDUNIT = outputOptions%prunit
       OLDUNITSTILLOPEN = .false.
     endif
     if ( NeedToAppend ) then
@@ -847,7 +1006,7 @@ contains
     else
       open( unit=switchUnit, file=filename, status='replace' )
     endif
-    PRUNIT = SwitchUnit
+    outputOptions%prunit = SwitchUnit
     NeedToAppend = .true.
   end subroutine switchOutput
 
@@ -875,9 +1034,9 @@ contains
     character(len=3) :: MY_ADV
     !
     my_adv = Advance_is_yes_or_no(advance)
-    my_dont_log = SKIPMLSMSGLOGGING ! .false.
+    my_dont_log = outputOptions%skipmlsmsglogging ! .false.
     if ( present(dont_log) ) my_dont_log = dont_log
-    my_style = TIMESTAMPSTYLE
+    my_style = stampOptions%Timestampstyle
     if ( present(style) ) my_style = lowercase(style)
     if ( my_style == 'post' ) then
       call output_char( CHARS, &
@@ -923,7 +1082,7 @@ contains
     character(len=3) :: MY_ADV
     !
     my_adv = Advance_is_yes_or_no(advance)
-    my_style = TIMESTAMPSTYLE
+    my_style = stampOptions%Timestampstyle
     if ( present(style) ) my_style = lowercase(style)
     if ( my_style == 'post' ) then
       call output_integer( INT, PLACES, &
@@ -1126,6 +1285,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.50  2006/06/24 23:05:07  pwagner
+! Added output_name_v_pair, special blank fills
+!
 ! Revision 2.49  2006/06/03 00:17:29  vsnyder
 ! Eliminate trailing blanks sometimes
 !
