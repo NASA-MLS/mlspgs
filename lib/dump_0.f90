@@ -19,7 +19,7 @@ module DUMP_0
   use ieee_arithmetic, only: ieee_is_finite
   use MLSCommon, only: DEFAULTUNDEFINEDVALUE
   use MLSFillValues, only : FilterValues, IsFinite, &
-    & RemoveFillValues, ReplaceFillValues
+    & ReorderFillValues, ReplaceFillValues
   use MLSSets, only: FindAll
   use MLSStats1, only: ALLSTATS
   use MLSStringLists, only: catLists, GetStringElement, NumStringElements
@@ -151,8 +151,6 @@ contains
 
     double precision, dimension(size(array1)) :: filtered1
     double precision, dimension(size(array2)) :: filtered2
-    double precision, dimension(size(array1)) :: prestats1
-    double precision, dimension(size(array2)) :: prestats2
     double precision :: refmin, refmax, refrms
     include "diff.f9h"
   end subroutine DIFF_1D_DOUBLE
@@ -205,8 +203,6 @@ contains
 
     real, dimension(size(array1)) :: filtered1
     real, dimension(size(array2)) :: filtered2
-    real, dimension(size(array1)) :: prestats1
-    real, dimension(size(array2)) :: prestats2
     real :: refmin, refmax, refrms
     include "diff.f9h"
   end subroutine DIFF_1D_REAL
@@ -226,10 +222,8 @@ contains
     logical, intent(in), optional :: RMS
     integer, intent(in), optional :: LBOUND
     !
-    double precision, dimension(size(array1,1), size(array1,2)) :: filtered1
-    double precision, dimension(size(array2,1), size(array2,2)) :: filtered2
-    double precision, dimension(product(shape(array1))) :: prestats1
-    double precision, dimension(product(shape(array2))) :: prestats2
+    double precision, dimension(product(shape(array1))) :: filtered1
+    double precision, dimension(product(shape(array2))) :: filtered2
     double precision :: refmin, refmax, refrms
     include "diff.f9h"
   end subroutine DIFF_2D_DOUBLE
@@ -249,10 +243,8 @@ contains
     logical, intent(in), optional :: RMS
     integer, intent(in), optional :: LBOUND
     !
-    real, dimension(size(array1,1), size(array1,2)) :: filtered1
-    real, dimension(size(array2,1), size(array2,2)) :: filtered2
-    real, dimension(product(shape(array1))) :: prestats1
-    real, dimension(product(shape(array2))) :: prestats2
+    real, dimension(product(shape(array1))) :: filtered1
+    real, dimension(product(shape(array2))) :: filtered2
     real :: refmin, refmax, refrms
     include "diff.f9h"
   end subroutine DIFF_2D_REAL
@@ -272,10 +264,8 @@ contains
     logical, intent(in), optional :: RMS
     integer, intent(in), optional :: LBOUND
 
-    double precision, dimension(size(array1,1), size(array1,2), size(array1,3)) :: filtered1
-    double precision, dimension(size(array2,1), size(array2,2), size(array2,3)) :: filtered2
-    double precision, dimension(product(shape(array1))) :: prestats1
-    double precision, dimension(product(shape(array2))) :: prestats2
+    double precision, dimension(product(shape(array1))) :: filtered1
+    double precision, dimension(product(shape(array2))) :: filtered2
     double precision :: refmin, refmax, refrms
     include "diff.f9h"
   end subroutine DIFF_3D_DOUBLE
@@ -295,10 +285,8 @@ contains
     logical, intent(in), optional :: RMS
     integer, intent(in), optional :: LBOUND
 
-    real, dimension(size(array1,1), size(array1,2), size(array1,3)) :: filtered1
-    real, dimension(size(array2,1), size(array2,2), size(array2,3)) :: filtered2
-    real, dimension(product(shape(array1))) :: prestats1
-    real, dimension(product(shape(array2))) :: prestats2
+    real, dimension(product(shape(array1))) :: filtered1
+    real, dimension(product(shape(array2))) :: filtered2
     real :: refmin, refmax, refrms
     include "diff.f9h"
   end subroutine DIFF_3D_REAL
@@ -975,18 +963,29 @@ contains
   end subroutine DUMP_2D_DOUBLE
 
   ! --------------------------------------------  DUMP_2D_INTEGER  -----
-  subroutine DUMP_2D_INTEGER ( ARRAY, NAME, CLEAN, FORMAT, WIDTH )
+  subroutine DUMP_2D_INTEGER ( ARRAY, NAME, &
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
     integer, intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
+    integer, intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
     character(len=*), intent(in), optional :: FORMAT
     integer, intent(in), optional :: WIDTH ! How many numbers per line (10)?
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, optional, intent(in) :: STATS
+    logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND
 
     integer :: I, J, K
     logical :: MyClean
     integer :: MyWidth
     integer :: NumZeroRows
-
+    integer :: myFillValue
+    character(len=64) :: MyFormat
+    ! Executable
+    myFillValue = 0
+    if ( present(FillValue) ) myFillValue = FillValue
+    include 'dumpstats.f9h'
     myClean = .false.
     if ( present(clean) ) myClean = clean
     myWidth = 10
@@ -999,21 +998,22 @@ contains
       call name_and_size ( name, myClean, 1 )
       call output ( array(1,1), advance='yes' )
     else if ( size(array,2) == 1 ) then
-      call dump ( array(:,1), name, clean=clean, format=format, width=width )
+      call dump ( array(:,1), name, &
+        & fillvalue=fillvalue, clean=clean, format=format, width=width )
     else
       call name_and_size ( name, myClean, size(array) )
       if ( present(name) ) call output ( '', advance='yes' )
       do i = 1, size(array,1)
         do j = 1, size(array,2), myWidth
           if (.not. myClean) then
-            if ( any(array(i,j:min(j+myWidth-1, size(array,2))) /= 0) ) then
+            if ( any(array(i,j:min(j+myWidth-1, size(array,2))) /= myFillValue) ) then
               call say_fill ( (/ i, size(array,1), j-1, size(array,2) /), &
-                & numZeroRows, 0, inc=3 )
+                & numZeroRows, myFillValue, inc=3 )
             else
               numZeroRows = numZeroRows + 1
             end if
           end if
-          if ( myClean .or. any(array(i,j:min(j+myWidth-1, size(array,2))) /= 0) ) then
+          if ( myClean .or. any(array(i,j:min(j+myWidth-1, size(array,2))) /= myFillValue) ) then
             do k = j, min(j+myWidth-1, size(array,2))
               if ( present(format) ) then
                 call output ( array(i,k), format=format )
@@ -1026,7 +1026,7 @@ contains
         end do ! j
       end do ! i
       call say_fill ( (/ i-1, size(array,1), j-myWidth, size(array,2) /), &
-        & numZeroRows, 0 )
+        & numZeroRows, myFillValue )
     end if
   end subroutine DUMP_2D_INTEGER
 
@@ -2024,6 +2024,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.60  2006/06/24 23:07:04  pwagner
+! Changes to reduce memory footprint computing statistics
+!
 ! Revision 2.59  2006/06/09 18:50:12  pwagner
 ! Avoid dumping an entire array if all elements the same
 !
