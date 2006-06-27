@@ -20,12 +20,14 @@ module MLSHDF5
   ! procedures that need them. Otherwise, Lahey will take nearly forever
   ! to finish compiling the highest modules.
 
+  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use DUMP_0, only: DUMP, DUMP_NAME_V_PAIRS
   use hdf, only: DFACC_RDONLY
   use intrinsic, only: l_hdf
   use MLSCommon, only: MLSFile_T
   use MLSDataInfo, only: MLSDataInfo_T, Query_MLSData
   use MLSFiles, only: HDFVERSION_5, INITIALIZEMLSFILE
+  use MLSStringLists, only: NumStringElements, StringElement
   ! To switch to/from hdfeos5.1.6(+) uncomment next line
   use H5LIB, ONLY: h5open_f, h5close_f
   ! Lets break down our use, parameters first
@@ -33,14 +35,14 @@ module MLSHDF5
     & H5P_DATASET_CREATE_F, &
     & H5SIS_SIMPLE_F, & ! H5SOFFSET_SIMPLE_F, &
     & H5S_SCALAR_F, H5S_SELECT_SET_F, H5S_UNLIMITED_F, &
-    & H5T_IEEE_F32LE, H5T_IEEE_F64LE, &
+    & H5T_IEEE_F32LE, H5T_IEEE_F64LE, H5T_IEEE_F64LE, &
     & H5T_NATIVE_DOUBLE, H5T_NATIVE_REAL, H5T_STD_I32LE, &
-    & H5T_NATIVE_CHARACTER, H5T_NATIVE_INTEGER, H5T_STRING, &
+    & H5T_NATIVE_CHARACTER, H5T_NATIVE_INTEGER, H5T_STRING, H5T_STRING_F, &
     & HID_T, HSIZE_T ! , HSSIZE_T
   ! Now routines
   use HDF5, only: H5ACLOSE_F, H5ACREATE_F, &
     & H5AGET_NAME_F, H5AGET_NUM_ATTRS_F, &
-    & H5AGET_TYPE_F, H5AOPEN_IDX_F, H5AOPEN_NAME_F, &
+    & H5AGET_SPACE_F, H5AGET_TYPE_F, H5AOPEN_IDX_F, H5AOPEN_NAME_F, &
     & H5AREAD_F, H5AWRITE_F, H5ADELETE_F, &
     & H5DCREATE_F, H5DEXTEND_F, H5DGET_SPACE_F, H5DGET_TYPE_F, H5DOPEN_F, &
     & H5DREAD_F, H5DWRITE_F, H5DCLOSE_F, H5DGET_CREATE_PLIST_F, &
@@ -52,14 +54,17 @@ module MLSHDF5
     & H5SCLOSE_F, &
     & H5SCREATE_F, H5SCREATE_SIMPLE_F, H5SGET_SIMPLE_EXTENT_NDIMS_F, &
     & H5SGET_SIMPLE_EXTENT_DIMS_F, H5SSELECT_HYPERSLAB_F, &
-    & H5TCLOSE_F, H5TCOPY_F, H5TEQUAL_F, H5TGET_SIZE_F, H5TSET_SIZE_F
+    & H5TCLOSE_F, H5TCOPY_F, H5TEQUAL_F, H5TGET_CLASS_F, H5TGET_SIZE_F, &
+    & H5TSET_SIZE_F
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
   use MLSStringLists, only: catLists, IsInList
+  use output_m, only: output, OUTPUT_NAME_V_PAIR
 
   implicit NONE
   private
 
   public :: CpHDF5Attribute, CpHDF5GlAttribute, &
+    & DumpHDF5Attributes, DumpHDF5DS, &
     & GetAllHDF5AttrNames, GetAllHDF5DSNames, &
     & GetHDF5Attribute, GetHDF5AttributePtr, GetHDF5AttrDims, &
     & GetHDF5DSRank, GetHDF5DSDims, GetHDF5DSQType, &
@@ -82,6 +87,8 @@ module MLSHDF5
 
 ! CpHDF5Attribute      Copies an attribute
 ! CpHDF5GlAttribute    Copies a global attribute
+! DumpHDF5Attributes   Dumps attributes
+! DumpHDF5DS           Dumps datasets
 ! GetAllHDF5AttrNames  Retrieves names of all attributes under itemID
 ! GetAllHDF5DSNames    Retrieves names of all DS in file (under group name)
 ! GetHDF5Attribute     Retrieves an attribute
@@ -104,6 +111,10 @@ module MLSHDF5
 !    [log skip_if_already_there])
 ! CpHDF5GlAttribute (char fromFile, char toFile, char name,
 !    [log skip_if_already_there])
+! DumpHDF5Attributes (int locID, [char names], [char groupName], [char DSName],
+!    [log stats], [log rms])
+! DumpHDF5DS (int locID, char groupame, [char names],
+!    [log stats], [log rms])
 ! GetAllHDF5AttrNames (int itemID, char DSNames)
 ! GetAllHDF5DSNames (file, char gname, char DSNames)
 !     file can be one of:
@@ -248,10 +259,12 @@ module MLSHDF5
 
   ! Local parameters
   integer(kind=hsize_t), dimension(7) :: ones = (/1,1,1,1,1,1,1/)
+  logical, parameter    :: countEmpty = .true.
   logical, parameter    :: DEEBUG = .false.
   integer, save :: cantGetDataspaceDims = 0
   integer, parameter :: MAXNUMWARNS = 40
   integer, parameter :: MAXNDSNAMES = 1000   ! max number of DS names in a file
+  integer, parameter :: MAXCHFIELDLENGTH = 2000000 ! max number of chars in l2cf
   ! Local variables
   integer(hid_t) :: cparms
 
@@ -328,16 +341,263 @@ contains ! ======================= Public Procedures =========================
     call h5fclose_f ( toFileID, status )
   end subroutine CpHDF5GlAttribute_string
 
+  ! -------------------------------  DumpHDF5Attributes  -----
+  subroutine DumpHDF5Attributes ( locID, names, groupName, DSName, stats, rms )
+    ! Dump attributes of locID (possibly followed by a group or DS name)
+    ! All of them or only those in names string list
+    integer, intent(in)                     :: locID ! attributes of what
+    character (len=*), intent(in), optional :: NAMES  ! only these names
+    character(len=*), intent(in), optional  :: groupName
+    character(len=*), intent(in), optional  :: DSName
+    logical, intent(in), optional           :: stats ! Show % = fill
+    logical, intent(in), optional           :: rms ! Show rms, min, max
+
+    ! Local variables
+    integer :: attrID
+    integer :: classID
+    character(len=1024) :: chValue ! len may become MAXCHFIELDLENGTH
+    ! logical, parameter :: DEEBUG = .false.
+    integer, dimension(7) :: dims
+    double precision, dimension(1024) :: dValue
+    integer(kind=hSize_t), dimension(7) :: hdims
+    integer :: i
+    integer :: itemID
+    integer, dimension(1024) :: iValue
+    character(len=1024) :: myNames
+    character(len=128) :: name
+    integer :: numAttrs
+    character(len=16) :: Qtype
+    integer :: rank
+    integer :: spaceID
+    integer :: status
+    integer :: type_id
+    integer :: type_size
+    ! Executable
+    myNames = '*' ! Wildcard means 'all'
+    if ( present(names) ) myNames = names
+    if ( present(groupName) ) then
+      call h5gOpen_f ( locID, '/', itemID, status )
+    elseif(present(DSName) ) then
+      call h5dOpen_f ( locID, trim(DSname), itemID, status )
+    else
+      itemID = locID
+    endif
+    if ( myNames == '*' ) call GetAllHDF5AttrNames ( itemID, myNames )
+    numAttrs = NumStringElements ( myNames, countEmpty )
+    do i = 1, numAttrs
+      name = StringElement(myNames, i, countEmpty)
+      call h5aopen_name_f ( itemID, trim(name), attrID, status )
+      if ( status /= 0 ) then
+        call output ( trim(name), advance='no' )
+        call output ( '  (not found)', advance='yes' )
+        cycle
+      endif
+      call h5aGet_type_f ( attrID, type_id, status )
+      call h5tGet_size_f ( type_id, type_size, status )
+      call h5tget_class_f ( type_id, classID, status )
+      call h5aget_space_f ( attrID, spaceID, status )
+      call h5sget_simple_extent_ndims_f ( spaceID, rank, status )
+      if ( DEEBUG ) then
+        call output_name_v_pair ( 'name', name )
+        call output_name_v_pair ( 'attrID', attrID )
+        call output_name_v_pair ( 'type_id', type_id )
+        call output_name_v_pair ( 'type_size', type_size )
+        call output_name_v_pair ( 'classID', classID )
+        call output_name_v_pair ( 'H5T_STRING_F', H5T_STRING_F )
+        call output_name_v_pair ( 'spaceID', spaceID )
+        call output_name_v_pair ( 'rank', rank )
+      endif
+      call h5aClose_f ( attrID, status )
+      call GetHDF5AttrDims ( ItemID, name, hdims )
+      dims = hdims
+      dims(1) = max(dims(1), 1)
+      Qtype = WhatTypeAmI ( type_id )
+      if ( Qtype == 'unknown' .and. classID == H5T_STRING_F ) QType='character'
+      if ( DEEBUG ) then
+        call output_name_v_pair ( 'dims', dims )
+        call output_name_v_pair ( 'Qtype', Qtype )
+      endif
+      select case ( QType )
+      case ( 'integer' )
+        call GetHDF5Attribute ( itemID, name, iValue(1:dims(1)) )
+        call dump ( iValue(1:dims(1)), trim(name), stats=stats, rms=rms )
+      case ( 'double', 'real' )
+        call GetHDF5Attribute ( itemID, name, dValue(1:dims(1)) )
+        call dump ( dValue(1:dims(1)), trim(name), stats=stats, rms=rms )
+      case ( 'character' )
+        call GetHDF5Attribute ( itemID, name, chValue )
+        call dump ( trim(chValue), trim(name) )
+      case default
+        call output ( trim(name), advance='no' )
+        call output ( '  (unrecognized type)', advance='yes' )
+      end select
+      
+    enddo
+    if ( present(groupName) ) then
+      call h5gClose_f ( itemID, status )
+    elseif(present(DSName) ) then
+      call h5dClose_f ( itemID, status )
+    endif
+  end subroutine DumpHDF5Attributes
+  
+  ! -------------------------------  DumpHDF5DS  -----
+  subroutine DumpHDF5DS ( locID, groupName, names, stats, rms )
+    ! Dump datasets in groupID
+    ! All of them or only those in names string list
+    integer, intent(in)                     :: locID ! file or groupID
+    character(len=*), intent(in)            :: groupName ! datasets in group
+    character (len=*), intent(in), optional :: NAMES   ! only these names
+    logical, intent(in), optional           :: stats ! Show % = fill
+    logical, intent(in), optional           :: rms ! Show rms, min, max
+
+    ! Local variables
+    integer :: classID
+    character(len=MAXCHFIELDLENGTH), dimension(1) :: chValue
+    character(len=1), dimension(:,:,:), pointer :: chArray
+    ! logical, parameter :: DEEBUG = .false.
+    integer, dimension(7) :: dims
+    double precision, dimension(:,:,:), pointer :: dValue => null()
+    integer :: groupID
+    integer(kind=hSize_t), dimension(7) :: hdims
+    integer :: i
+    integer :: ItemID
+    integer, dimension(:,:,:), pointer :: iValue => null()
+    character(len=1024) :: myNames
+    character(len=128) :: name
+    integer :: numDS
+    character(len=16) :: Qtype
+    integer :: rank
+    integer :: spaceID
+    integer :: status
+    integer :: type_id
+    integer :: type_size
+    ! Executable
+    myNames = '*' ! Wildcard means 'all'
+    if ( present(names) ) myNames = names
+    if ( myNames == '*' ) call GetAllHDF5DSNames ( locID, groupName, myNames )
+    numDS = NumStringElements ( myNames, countEmpty )
+    call h5gOpen_f ( locid, '/', groupID, status )
+    do i = 1, numDS
+      name = StringElement(myNames, i, countEmpty)
+      call h5dopen_f ( groupID, trim(name), ItemID, status )
+      if ( status /= 0 ) then
+        call output ( trim(name), advance='no' )
+        call output ( '  (not found)', advance='yes' )
+        cycle
+      endif
+      call h5dGet_type_f ( ItemID, type_id, status )
+      call h5tGet_size_f ( type_id, type_size, status )
+      call h5tget_class_f ( type_id, classID, status )
+      call h5dget_space_f ( itemID, spaceID, status )
+      call h5sget_simple_extent_ndims_f ( spaceID, rank, status )
+      if ( DEEBUG ) then
+        call output_name_v_pair ( 'name', name )
+        call output_name_v_pair ( 'ItemID', ItemID )
+        call output_name_v_pair ( 'type_id', type_id )
+        call output_name_v_pair ( 'type_size', type_size )
+        call output_name_v_pair ( 'classID', classID )
+        call output_name_v_pair ( 'H5T_STRING_F', H5T_STRING_F )
+        call output_name_v_pair ( 'spaceID', spaceID )
+        call output_name_v_pair ( 'rank', rank )
+      endif
+      call h5dClose_f ( ItemID, status )
+      call GetHDF5DSDims ( groupID, name, hdims )
+      dims = hdims
+      dims(1) = max(dims(1), 1)
+      Qtype = WhatTypeAmI ( type_id )
+      if ( Qtype == 'unknown' .and. classID == H5T_STRING_F ) QType='character'
+      if ( DEEBUG ) then
+        call output_name_v_pair ( 'dims', dims )
+        call output_name_v_pair ( 'Qtype', Qtype )
+      endif
+      select case ( QType )
+      case ( 'integer' )
+        select case ( rank )
+        case ( 3 )
+          call allocate_test( iValue, dims(1), dims(2), dims(3), 'iValue', ModuleName )
+          call LoadFromHDF5DS ( groupID, name, iValue )
+          call dump ( iValue, trim(name), stats=stats, rms=rms )
+          call deallocate_test( iValue, 'iValue', ModuleName )
+        case ( 2 )
+          call allocate_test( iValue, dims(1), dims(2), 1, 'iValue', ModuleName )
+          call LoadFromHDF5DS ( groupID, name, iValue(:,:,1) )
+          call dump ( iValue(:,:,1), trim(name), stats=stats, rms=rms )
+          call deallocate_test( iValue, 'iValue', ModuleName )
+        case default
+          call allocate_test( iValue, dims(1), 1, 1, 'iValue', ModuleName )
+          call LoadFromHDF5DS ( groupID, name, iValue(:,1,1) )
+          call dump ( iValue(:,1,1), trim(name), stats=stats, rms=rms )
+          call deallocate_test( iValue, 'iValue', ModuleName )
+         end select
+      case ( 'double', 'real' )
+        select case ( rank )
+        case ( 3 )
+          call allocate_test( dValue, dims(1), dims(2), dims(3), 'dValue', ModuleName )
+          call LoadFromHDF5DS ( groupID, name, dValue )
+          call dump ( dValue, trim(name), stats=stats, rms=rms )
+          call deallocate_test( dValue, 'dValue', ModuleName )
+        case ( 2 )
+          call allocate_test( dValue, dims(1), dims(2), 1, 'dValue', ModuleName )
+          call LoadFromHDF5DS ( groupID, name, dValue(:,:,1) )
+          call dump ( dValue(:,:,1), trim(name), stats=stats, rms=rms )
+          call deallocate_test( dValue, 'dValue', ModuleName )
+        case default
+          call allocate_test( dValue, dims(1), 1, 1, 'dValue', ModuleName )
+          call LoadFromHDF5DS ( groupID, name, dValue(:,1,1) )
+          call dump ( dValue(:,1,1), trim(name), stats=stats, rms=rms )
+          call deallocate_test( dValue, 'dValue', ModuleName )
+         end select
+      case ( 'character' )
+        select case ( rank )
+        case ( 3 )
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Unable to dump 3d character-valued DS ' // trim(name) )
+          !call allocate_test( chArray, dims(1), dims(2), dims(3), 'chArray', ModuleName )
+          !call LoadFromHDF5DS ( groupID, name, chArray )
+          !call dump ( chArray, trim(name) )
+          !call deallocate_test( chArray, 'chArray', ModuleName )
+        case ( 2 )
+          call allocate_test( chArray, dims(1), dims(2), 1, 'chArray', ModuleName )
+          call LoadFromHDF5DS ( groupID, name, chArray(:,:,1) )
+          call dump ( chArray(:,:,1), trim(name) )
+          call deallocate_test( chArray, 'chArray', ModuleName )
+        case default
+          if ( dims(1) < 2 ) then
+            ! In case we have a very long dataset, e.g. the l2cf
+            call LoadFromHDF5DS ( groupID, Name, chvalue )
+            ! call dump ( trim(chValue(1)), trim(name) )
+            call output( 'name: ' // trim(name), advance='yes' )
+            call output( trim(chValue(1)), advance='yes' )
+          else
+            call allocate_test( chArray, dims(1), 1, 1, 'chArray', ModuleName )
+            call LoadFromHDF5DS ( groupID, name, chArray(:,1,1) )
+            call dump ( chArray(:,1,1), trim(name) )
+            call deallocate_test( chArray, 'chArray', ModuleName )
+          endif
+         end select
+      case default
+        call output ( trim(name), advance='no' )
+        call output ( '  (unrecognized type)', advance='yes' )
+      end select
+      
+    enddo
+    call h5gClose_f ( groupID, status )
+  end subroutine DumpHDF5DS
+
   ! -------------------------------  GetAllHDF5AttrNames  -----
-  subroutine GetAllHDF5AttrNames ( itemID, names )
-    ! Get all attribute names attributes of itemID
+  subroutine GetAllHDF5AttrNames ( locID, names, groupName, DSName )
+    ! Get all attribute names attributes of locID 
+    ! (possibly followed by a group or DS name)
     ! returns string list names
-    integer, intent(in)            :: itemID ! attributes of what
+    integer, intent(in)            :: locID ! attributes of what
     character (len=*), intent(out) :: NAMES ! Names of attribute
+    character(len=*), intent(in), optional  :: groupName
+    character(len=*), intent(in), optional  :: DSName
 
     ! Local variables
     integer :: attr_id
     integer :: i
+    integer :: itemID
     character(len=128) :: name
     integer :: namelength
     integer :: num
@@ -349,6 +609,13 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before looking for all attr names' )
+    if ( present(groupName) ) then
+      call h5gOpen_f ( locID, '/', itemID, status )
+    elseif(present(DSName) ) then
+      call h5dOpen_f ( locID, trim(DSname), itemID, status )
+    else
+      itemID = locID
+    endif
     Names = ' '
     ! print *, 'About to read num of attributes'
     call h5aget_num_attrs_f( itemID, num, status )
@@ -367,11 +634,16 @@ contains ! ======================= Public Procedures =========================
       names = tempnames
       call h5aclose_f( attr_id, status )
     enddo
+    if ( present(groupName) ) then
+      call h5gClose_f ( itemID, status )
+    elseif(present(DSName) ) then
+      call h5dClose_f ( itemID, status )
+    endif
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for all attr names' )
   end subroutine GetAllHDF5AttrNames
-
+  
   ! -----------------------------------  GetAllHDF5DSNames_fileID  -----
   subroutine GetAllHDF5DSNames_fileID ( FileID, gname, DSNames, andSlash )
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
@@ -1795,20 +2067,7 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to turn error messages off before getting rank ' // trim(name) )
     call h5dOpen_f ( FileID, trim(name), setID, status )
     call h5dget_type_f(setID,type_id,status)
-    if ( AreThe2TypesEqual(type_id, H5T_STD_I32LE) .or. &
-      &  AreThe2TypesEqual(type_id, H5T_STD_I32LE) ) then
-      Qtype = 'integer'
-    else if ( AreThe2TypesEqual(type_id, H5T_NATIVE_CHARACTER) ) then
-      Qtype = 'character'
-    else if ( AreThe2TypesEqual(type_id, H5T_STRING) ) then
-      Qtype = 'character'
-    else if ( AreThe2TypesEqual(type_id, H5T_NATIVE_REAL) .or. &
-      &      AreThe2TypesEqual(type_id, H5T_IEEE_F32LE) ) then
-      Qtype = 'real'
-    else if ( AreThe2TypesEqual(type_id, H5T_NATIVE_DOUBLE) .or. &
-      &      AreThe2TypesEqual(type_id, H5T_IEEE_F64LE) ) then
-      Qtype = 'double'
-    end if
+    Qtype = WhatTypeAmI ( type_id )
     call h5dClose_f ( setID, status )
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -5079,6 +5338,33 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to create attribute ' // trim(name) )
   end function StartMakeAttrib
 
+! --------------------------------------------  WhatTypeAmI  -----
+  function WhatTypeAmI ( me ) result ( Qtype )
+    ! This routine returns the type of a type_id
+    ! as an easily-recognized string
+    ! E.g., 'character', 'real', 'double', or 'integer'
+    integer, intent(in) :: me
+    character(len=16)   :: Qtype
+    ! Local variables
+    integer :: status
+    ! Initialize in case something goes wrong with hdf5 routines
+    Qtype = 'unknown'
+    if ( AreThe2TypesEqual(me, H5T_NATIVE_INTEGER) .or. &
+      &  AreThe2TypesEqual(me, H5T_STD_I32LE) ) then
+      Qtype = 'integer'
+    else if ( AreThe2TypesEqual(me, H5T_NATIVE_CHARACTER) ) then
+      Qtype = 'character'
+    else if ( AreThe2TypesEqual(me, H5T_STRING) ) then
+      Qtype = 'character'
+    else if ( AreThe2TypesEqual(me, H5T_NATIVE_REAL) .or. &
+      &      AreThe2TypesEqual(me, H5T_IEEE_F32LE) ) then
+      Qtype = 'real'
+    else if ( AreThe2TypesEqual(me, H5T_NATIVE_DOUBLE) .or. &
+      &      AreThe2TypesEqual(me, H5T_IEEE_F64LE) ) then
+      Qtype = 'double'
+    end if
+  end function WhatTypeAmI
+
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -5091,6 +5377,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.65  2006/06/27 23:59:05  pwagner
+! May dump attributes, datasets
+!
 ! Revision 2.64  2006/04/12 20:51:24  pwagner
 ! Attempts to work around hdf5-1.6.5 bugs rewriting string attributes
 !
