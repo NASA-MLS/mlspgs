@@ -40,7 +40,7 @@ module OUTPUT_M
 ! newline                  print a newline
 ! output                   print argument
 ! output_date_and_time     print nicely formatted date and time
-! output_name_value_pair   print nicely formatted name and value
+! output_name_v_pair       print nicely formatted name and value
 ! revertOutput             revert output to file used before switchOutput
 !                           if you will revert, keepOldUnitOpen when switching
 ! resumeOutput             resume output
@@ -69,8 +69,8 @@ module OUTPUT_M
 ! output_date_and_time ( [log date], [log time], [char* from_where], 
 !          [char* msg], [char* dateFormat], [char* timeFormat], [char* advance] )
 ! output_name_v_pair ( char* name, value, [char* advance],
-!          [char colon], [char fillChar], [integer tabn], [integer tabc], 
-!          log dont_stamp] )
+!          [char colon], [char fillChar], [char* Before], [char* After], 
+!          [integer tabn], [integer tabc], [integer taba], log dont_stamp] )
 ! resumeOutput
 ! revertOutput
 ! setStamp ( [char* textCode], [log post], [int interval],
@@ -122,7 +122,8 @@ module OUTPUT_M
   interface OUTPUT
     module procedure output_char, output_char_array, output_complex
     module procedure output_dcomplex, output_double
-    module procedure output_integer, output_integer_array, output_logical
+    module procedure output_integer, output_integer_array
+    module procedure output_logical, output_logical_array
     module procedure output_single, output_double_array, output_single_array
     module procedure output_string
   end interface
@@ -132,7 +133,9 @@ module OUTPUT_M
     module procedure output_nvp_complex
     module procedure output_nvp_double
     module procedure output_nvp_integer
+    module procedure output_nvp_int_array
     module procedure output_nvp_logical
+    module procedure output_nvp_log_array
     module procedure output_nvp_single
   end interface
 
@@ -148,7 +151,8 @@ module OUTPUT_M
     logical :: SKIPMLSMSGLOGGING = .false.
     logical :: usePatternedBlanks = .true. ! Use patterns for special fillChars
     character(len=9) :: specialFillChars = '123456789'
-    character(len=16), dimension(9) :: patterns = (/ &
+    character(len=9) :: lineupFillChars =  'ynnnnynnn' ! whether they line up
+    character(len=16), dimension(9) :: patterns = (/ & ! on consecutive lines
       &  '(. )            ' , &
       &  '(. .)           ' , &
       &  '(.  .)          ' , &
@@ -187,6 +191,7 @@ module OUTPUT_M
   ! logical, save, public :: SKIPMLSMSGLOGGING = .false.
   ! character(len=8), save, public :: TIMESTAMPSTYLE = 'post' ! 'pre' or 'post'
   ! Private parameters
+  integer, save, private :: ATCOLUMNNUMBER = 1  ! Where we'll print next
   logical, save, private :: ATLINESTART = .true.  ! Whether to stamp if notpost
   integer, save, private :: LINESSINCELASTSTAMP = 0
 
@@ -199,24 +204,25 @@ module OUTPUT_M
 contains
 
   ! -----------------------------------------------------  BLANKS  -----
-  subroutine BLANKS ( N_BLANKS, FILLCHAR, ADVANCE )
+  subroutine BLANKS ( N_BLANKS, FILLCHAR, ADVANCE, DONT_STAMP )
   ! Output N_BLANKS blanks to PRUNIT.
   ! (or optionally that many copies of fillChar)
     integer, intent(in) :: N_BLANKS
     character(len=*), intent(in), optional :: ADVANCE
     character(len=1), intent(in), optional :: FILLCHAR  ! default is ' '
+    logical, intent(in), optional          :: DONT_STAMP ! Prevent double-stamping
     character(len=3) :: ADV
     character(len=*), parameter :: BLANKSPACE = &
     '                                                                    '
     character(len=len(BlankSpace)) :: b
     integer :: I    ! Blanks to write in next WRITE statement
+    logical :: lineup
     integer :: ntimes
     integer :: numSoFar
     character(len=16) :: pattern
     integer :: patternLength
     integer :: patternNum
     integer :: theRest
-    integer :: xtraBlanks
     ! Executable
     if ( present(fillChar) ) then
       if ( outputOptions%usePatternedBlanks .and. &
@@ -231,37 +237,47 @@ contains
         ! purely blank
         if ( patternLength > n_blanks - 2 ) then
           ! n_blanks too short--just print blanks
-          call pr_blanks ( n_blanks, advance=advance )
+          call pr_blanks ( n_blanks, advance=advance, dont_stamp=dont_stamp )
           return
         endif
         ntimes = (n_blanks-2)/patternLength
-        ! In case repeating pattern ends with one or more blanks
-        ! xtraBlanks = patternLength - len_trim( pattern(2:patternLength+1) )
-        ! 1st--print single blank
-        ! call output(fillchar // ' ' // trim(pattern), advance='yes')
-        ! call output('patternLength: ', advance='yes')
-        call pr_blanks ( 1, advance='no' )
-        numSoFar = 1
+        ! In case we want latterns on consecutive lines to line up; viz
+        ! a: . . . . . . Something
+        ! xy:. . . . . . Something else
+        lineup = ( outputOptions%lineupFillChars(patternNum:patternNum) == 'y' )
+        if ( lineup ) then
+          numSoFar = 0
+          ! Make sure that we always begin on an even-numbered column
+          ! (This only works for patterns like '. . . ' or '- - - '
+          if ( mod(atColumnNumber, 2) /= 0 ) then
+            call pr_blanks ( 1, advance='no' )
+            numSoFar = 1
+          endif
+        else
+          call pr_blanks ( 1, advance='no' )
+          numSoFar = 1
+        endif
         do i=1, ntimes
           call output ( pattern(2:patternLength+1), advance='no' )
           ! if ( xtraBlanks > 0 ) call pr_blanks ( xtraBlanks, advance='no' )
           numSoFar = numSoFar + patternLength
         enddo
         theRest = n_blanks - numSoFar
-        if ( theRest > 0 ) call pr_blanks ( theRest, advance=advance )
+        if ( theRest > 0 ) call pr_blanks ( theRest, advance=advance, dont_stamp=dont_stamp )
         return
       endif
     endif
-    call pr_blanks ( n_blanks, advance=advance )
+    call pr_blanks ( n_blanks, fillChar=fillChar, advance=advance, dont_stamp=dont_stamp )
   end subroutine BLANKS
 
   ! -----------------------------------------------------  PR_BLANKS  -----
-  subroutine PR_BLANKS ( N_BLANKS, FILLCHAR, ADVANCE )
+  subroutine PR_BLANKS ( N_BLANKS, FILLCHAR, ADVANCE, DONT_STAMP )
   ! Output N_BLANKS blanks to PRUNIT.
   ! (or optionally that many copies of fillChar)
     integer, intent(in) :: N_BLANKS
     character(len=*), intent(in), optional :: ADVANCE
     character(len=1), intent(in), optional :: FILLCHAR  ! default is ' '
+    logical, intent(in), optional          :: DONT_STAMP ! Prevent double-stamping
     character(len=3) :: ADV
     character(len=*), parameter :: BLANKSPACE = &
     '                                                                    '
@@ -271,6 +287,12 @@ contains
     character(len=3) :: MY_ADV
     ! Executable
     my_adv = Advance_is_yes_or_no(advance)
+    if ( n_blanks < 1 .and. my_adv == 'yes' ) then
+      ! This does not yet prevent us from printing a space before newline
+      ! but someday we may achieve that goal
+      call output ( '', advance='yes', dont_stamp=dont_stamp )
+      return
+    endif
     n = max(n_blanks, 1)
     if ( present(fillChar)  ) then
       do i=1, min(n, len(BlankSpace))
@@ -408,6 +430,7 @@ contains
       stamped = .true.
     endif
 
+    n_chars = max(len(chars), 1)
     my_dont_log = outputOptions%skipmlsmsglogging ! .false.
     if ( present(dont_log) ) my_dont_log = dont_log
     n_stamp = len_trim(stamped_chars)
@@ -466,6 +489,8 @@ contains
         linesSinceLastStamp = linesSinceLastStamp + 1
       endif
     endif
+    atColumnNumber = atColumnNumber + n_chars
+    if ( atLineStart ) atColumnNumber = 1
   end subroutine OUTPUT_CHAR
 
   ! ------------------------------------------  OUTPUT_CHAR_ARRAY  -----
@@ -715,11 +740,12 @@ contains
   end subroutine OUTPUT_INTEGER
 
   ! ---------------------------------------  OUTPUT_INTEGER_ARRAY  -----
-  subroutine OUTPUT_INTEGER_ARRAY ( INTEGERS, ADVANCE, FORMAT )
+  subroutine OUTPUT_INTEGER_ARRAY ( INTEGERS, ADVANCE, FORMAT, DONT_STAMP )
   ! Output INTEGERS to PRUNIT.
     integer, intent(in) :: INTEGERS(:)
     character(len=*), intent(in), optional :: ADVANCE
     character(len=*), intent(in), optional :: FORMAT
+    logical, optional, intent(in) :: DONT_STAMP
     character(len=3) :: MY_ADV
     integer :: I ! loop inductor
     my_adv = Advance_is_yes_or_no(advance)
@@ -728,12 +754,16 @@ contains
       call blanks ( 3, advance='no' )
     end do
     if ( present(advance)  ) then
-      if ( outputOptions%prunit == -1 .or. outputOptions%prunit < -2 ) &
-        & write ( *, '(a)', advance=my_adv )
-      if ( outputOptions%prunit < -1 ) &
-        & call MLSMessage ( outputOptions%MLSMSG_Level, ModuleName, '', advance=my_adv )
-      if ( outputOptions%prunit >= 0 ) &
-        & write ( outputOptions%prunit, '(a)', advance=my_adv )
+      ! Why all this needless complication?
+      ! if ( outputOptions%prunit == -1 .or. outputOptions%prunit < -2 ) &
+      !   & write ( *, '(a)', advance=my_adv )
+      ! if ( outputOptions%prunit < -1 ) &
+      !   & call MLSMessage ( outputOptions%MLSMSG_Level, ModuleName, '', advance=my_adv )
+      ! if ( outputOptions%prunit >= 0 ) &
+      !   & write ( outputOptions%prunit, '(a)', advance=my_adv )
+      
+      ! Just do it the easy way
+      call output ( '', advance=advance, DONT_STAMP=DONT_STAMP )
     end if
   end subroutine OUTPUT_INTEGER_ARRAY
 
@@ -753,6 +783,22 @@ contains
     if ( present(before) ) call output ( before, DONT_STAMP=DONT_STAMP )
     call output ( line, advance=advance, DONT_STAMP=DONT_STAMP )
   end subroutine OUTPUT_LOGICAL
+
+  ! ---------------------------------------------  OUTPUT_LOGICAL  -----
+  subroutine OUTPUT_LOGICAL_ARRAY ( logs, ADVANCE, BEFORE, DONT_STAMP )
+  ! Output LOG to PRUNIT using at most PLACES (default zero) places
+    logical, dimension(:), intent(in) :: logs
+    character(len=*), intent(in), optional :: ADVANCE
+    character(len=*), intent(in), optional :: BEFORE
+    logical, optional, intent(in) :: DONT_STAMP
+    integer :: I ! loop inductor
+    if ( present(before) ) call output ( before, DONT_STAMP=DONT_STAMP )
+    do i = 1, size(logs)
+      call output ( logs(i), advance='no' )
+      call blanks ( 3, advance='no' )
+    end do
+    if ( present(advance) ) call output ( '', advance=advance, DONT_STAMP=DONT_STAMP )
+  end subroutine OUTPUT_LOGICAL_ARRAY
 
   ! ----------------------------------------------  OUTPUT_SINGLE  -----
   subroutine OUTPUT_SINGLE ( VALUE, FORMAT, LogFormat, ADVANCE, &
@@ -868,47 +914,65 @@ contains
   ! to print following line to stdout
   !  name: value
   ! Optional args control
-  ! tabc: column number where colon appears (to line up 2 mor more lines)
+  ! before: what extra to print at start of each line
+  ! after: what extra to print at end of each line
+  ! colon: what to print instead of ':'
   ! tabn: column number where name begins
+  ! tabc: column number where colon occurs
+  ! taba: column number where after begins
   ! advance: whether to advance after printing pair (by default we WILL advance)
   ! dont_stamp: override setting to stamp end of each line
   subroutine output_nvp_character ( name, value, &
-    & ADVANCE, fillChar, colon, TABN, TABC, DONT_STAMP )
+   & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP )
     character(len=*), intent(in)          :: name
     character(len=*), intent(in)          :: value
     include 'output_name_value_pair.f9h'
   end subroutine output_nvp_character
 
   subroutine output_nvp_complex ( name, value, &
-    & ADVANCE, fillChar, colon, TABN, TABC, DONT_STAMP )
+   & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP )
     character(len=*), intent(in)          :: name
     complex, intent(in)                   :: value
     include 'output_name_value_pair.f9h'
   end subroutine output_nvp_complex
 
   subroutine output_nvp_double ( name, value, &
-    & ADVANCE, fillChar, colon, TABN, TABC, DONT_STAMP )
+   & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP )
     character(len=*), intent(in)          :: name
     double precision, intent(in)                   :: value
     include 'output_name_value_pair.f9h'
   end subroutine output_nvp_double
 
+  subroutine output_nvp_int_array ( name, value, &
+   & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP )
+    character(len=*), intent(in)          :: name
+    integer, dimension(:), intent(in)     :: value
+    include 'output_name_value_pair.f9h'
+  end subroutine output_nvp_int_array
+
   subroutine output_nvp_integer ( name, value, &
-    & ADVANCE, fillChar, colon, TABN, TABC, DONT_STAMP )
+   & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP )
     character(len=*), intent(in)          :: name
     integer, intent(in)                   :: value
     include 'output_name_value_pair.f9h'
   end subroutine output_nvp_integer
 
+  subroutine output_nvp_log_array ( name, value, &
+   & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP )
+    character(len=*), intent(in)          :: name
+    logical, dimension(:), intent(in)     :: value
+    include 'output_name_value_pair.f9h'
+  end subroutine output_nvp_log_array
+
   subroutine output_nvp_logical ( name, value, &
-    & ADVANCE, fillChar, colon, TABN, TABC, DONT_STAMP )
+   & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP )
     character(len=*), intent(in)          :: name
     logical, intent(in)                   :: value
     include 'output_name_value_pair.f9h'
   end subroutine output_nvp_logical
 
   subroutine output_nvp_single ( name, value, &
-    & ADVANCE, fillChar, colon, TABN, TABC, DONT_STAMP )
+   & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP )
     character(len=*), intent(in)          :: name
     real, intent(in)                      :: value
     include 'output_name_value_pair.f9h'
@@ -1285,6 +1349,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.51  2006/06/27 23:58:01  pwagner
+! name_v_value works much better
+!
 ! Revision 2.50  2006/06/24 23:05:07  pwagner
 ! Added output_name_v_pair, special blank fills
 !
