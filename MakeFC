@@ -222,6 +222,7 @@ SHELL = /bin/sh
 # l1h5subset     -- build and install this prog
 # l2auxcat       -- build and install this prog
 # l2auxchi       -- build and install this prog
+# l2auxdump      -- build and install this prog
 # l2gpcat        -- build and install this prog
 # l2gpdiff       -- build and install this prog
 # l2q            -- build and install this prog
@@ -779,6 +780,11 @@ l2auxchi: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2auxchi.f90 l2
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m l2 \
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
+l2auxdump: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2auxdump.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
 l2gpcat: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2gpcat.f90 l1--itm
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
@@ -1112,7 +1118,8 @@ update:
 
 # Make most the souce-file tools in the util directory
 tools: chunktimes checkpvmup compare heconvert h5subset h5cat hl killmaster \
-  l1bdiff l1h5subset l2auxcat l2auxchi l2gpcat l2q l2gpdiff machineok WordSplit
+  l1bdiff l1h5subset l2auxcat l2auxchi l2audump l2gpcat l2q l2gpdiff \
+  machineok WordSplit
 
 .PHONY: all configure clean clean_config\
   configure_pvm configure_fopts configure_full configure_help configure_subdirs\
@@ -1127,12 +1134,15 @@ tools: chunktimes checkpvmup compare heconvert h5subset h5cat hl killmaster \
   tar substar tarz substarz targ substarg substars update\
   checkpvmup chunktimes CondenseLeakLog end_stmts f90tex heconvert init_gen \
   h5subset h5cat hl killmaster \
-  l1bdiff l1h5subset l2auxcat l2auxchi l2gpcat l2gpdiff l2q \
+  l1bdiff l1h5subset l2auxcat l2auxchi l2auxdump l2gpcat l2gpdiff l2q \
   machineok MLS_h5ls utctotai WordSplit tools
   
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.99  2006/05/24 20:42:30  pwagner
+# Added l2auxchi tool
+#
 # Revision 1.98  2006/04/03 23:08:18  pwagner
 # Improvements to install commands
 #
