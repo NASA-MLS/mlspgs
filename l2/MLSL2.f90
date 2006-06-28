@@ -23,7 +23,7 @@ program MLSL2
   use LEXER_CORE, only: INIT_LEXER
   use LEXER_M, only: CapIdentifiers
   use MACHINE, only: GETARG, HP, IO_ERROR, NEVERCRASH
-  use MLSCOMMON, only: FILENAMELEN, MLSFile_T
+  use MLSCOMMON, only: MLSFile_T
   use MLSFiles, only: FILESTRINGTABLE, &
     & HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
     & ADDFILETODATABASE, Deallocate_filedatabase, dump, &
@@ -46,14 +46,14 @@ program MLSL2
   use MLSStrings, only: lowerCase, readIntsFromChars
   use MLSStringLists, only: catLists, GetStringElement, GetUniqueList, &
     & NumStringElements, RemoveElemFromList, SwitchDetail, unquote
-  use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUT_DATE_AND_TIME, &
-    & OutputOptions
+  use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUT_DATE_AND_TIME, &
+    & OUTPUT_Name_V_Pair, OutputOptions
   use PARSER, only: CONFIGURATION
   use PVM, only: ClearPVMArgs, FreePVMArgs
   use SDPToolkit, only: UseSDPToolkit
   use SnoopMLSL2, only: SNOOPINGACTIVE, SNOOPNAME
   use STRING_TABLE, only: DESTROY_CHAR_TABLE, DESTROY_HASH_TABLE, &
-    & DESTROY_STRING_TABLE, DISPLAY_STRING, DO_LISTING, INUNIT
+    & DESTROY_STRING_TABLE, DO_LISTING, GET_STRING, INUNIT
   use SYMBOL_TABLE, only: DESTROY_SYMBOL_TABLE
   use Time_M, only: Time_Now, time_config
   use TOGGLES, only: CON, EMIT, GEN, LEVELS, LEX, PAR, SYN, SWITCHES, TAB, &
@@ -150,7 +150,6 @@ program MLSL2
   logical :: garbage_collection_by_dt = .false. ! Collect garbage after each deallocate_test?
   integer :: I                     ! counter for command line arguments
   integer :: J                     ! index within option
-  ! character(len=FILENAMELEN) :: L2CF_file       ! Some text
   integer :: LastCHUNK = 0         ! Just run range [SINGLECHUNK-LastCHUNK]
   character(len=2048) :: LINE      ! Into which is read the command args
   integer :: N                     ! Offset for start of --'s text
@@ -898,166 +897,113 @@ contains
   subroutine Dump_settings
   ! Show current run-time settings resulting from
   ! command-line, MLSL2Options, etc.
+    character(len=1), parameter :: fillChar = '1' ! fill blanks with '. .'
+    character(len=8) :: string
     call output(' mlsl2 called with command line options: ', advance='no')
     call output(trim(command_line), advance='yes')
     call output(' l2cf file:', advance='no')  
     call blanks(4, advance='no')                                     
     call output(trim(MLSL2CF%name), advance='yes')                            
     if( SwitchDetail(switches, 'opt1') > 0 .or. showDefaults ) then                                 
+      call blanks(70, fillChar='-', advance='yes')
       call output(' -------------- Summary of run time options'      , advance='no')
       call output(' -------------- ', advance='yes')
-      call output(' Use toolkit panoply:                            ', advance='no')
-      call blanks(4, advance='no')
-      call output(toolkit, advance='yes')
-      call output(' Error threshold before halting:                 ', advance='no')
-      call blanks(5, advance='no')
-      call output(quit_error_threshold, advance='yes')
-      call output(' Status on normal exit:                          ', advance='no')
-      call blanks(5, advance='no')
-      call output(normal_exit_status, advance='yes')
-      call output(' Default hdf version for l1b files:              ', advance='no')
-      call blanks(5, advance='no')
-      call output(level1_hdfversion, advance='yes')
-      call output(' Default hdfeos version on reads:                ', advance='no')
-      call blanks(5, advance='no')
-      call output(default_hdfversion_read, advance='yes')
-      call output(' Default hdfeos version on writes:               ', advance='no')
-      call blanks(5, advance='no')
-      call output(default_hdfversion_write, advance='yes')
+      call output_name_v_pair ( 'Use toolkit panoply', toolkit, advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      call output_name_v_pair ( 'Error threshold before halting', quit_error_threshold, advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      call output_name_v_pair ( 'Status on normal exit', normal_exit_status, advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      call output_name_v_pair ( 'Default hdf version for l1b files', level1_hdfversion, advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      call output_name_v_pair ( 'Default hdfeos version on reads', default_hdfversion_read, advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      call output_name_v_pair ( 'Default hdfeos version on writes', default_hdfversion_write, advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       if ( singleChunk /= 0 .and. lastChunk == 0 ) then
-      call output(' Compute only the single chunk:                  ', advance='no') 
-      call blanks(5, advance='no')                                                   
-      call output(singleChunk, advance='yes')
+      call output_name_v_pair ( 'Compute only the single chunk', singleChunk, advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       elseif ( singleChunk /= 0 .and. lastChunk /= 0 ) then
-      call output(' Compute chunks in range:                        ', advance='no') 
-      call blanks(5, advance='no')                                                   
-      call output(singleChunk, advance='no')
-      call blanks(1, advance='no')                                                   
-      call output(lastChunk, advance='yes')
+      call output_name_v_pair ( 'Compute chunks in range', (/singleChunk, lastChunk/), advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       endif                      
-      call output(' Avoiding unlimited dimensions in directwrites?: ', advance='no')
-      call blanks(4, advance='no')
-      call output(avoidUnlimitedDims, advance='yes')
-      call output(' Allow overlaps outside proc. range?:            ', advance='no')
-      call blanks(4, advance='no')
-      call output(ChunkDivideConfig%allowPriorOverlaps, advance='no')
-      call blanks(4, advance='no')
-      call output(ChunkDivideConfig%allowPostOverlaps, advance='yes')
-      call output(' Catenate split dgg/dgm after run completes?:    ', advance='no')
-      call blanks(4, advance='no')
-      call output(catenateSplits, advance='yes')
-      call output(' Is this run in forward model parallel?:         ', advance='no')
-      call blanks(4, advance='no')
-      call output(parallel%fwmParallel, advance='yes')
-      call output(' Avoid creating file on first directWrite?:      ', advance='no')
-      call blanks(4, advance='no')
-      call output(patch, advance='yes')
-      call output(' Is this the master task in pvm?:                ', advance='no')
-      call blanks(4, advance='no')
-      call output(parallel%master, advance='yes')
+      call output_name_v_pair ( 'Avoiding unlimited dimensions in directwrites?', &
+        & avoidUnlimitedDims, advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      call output_name_v_pair ( 'Allow overlaps outside proc. range?', &
+        & (/ChunkDivideConfig%allowPriorOverlaps, ChunkDivideConfig%allowPostOverlaps/), advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      call output_name_v_pair ( 'Catenate split dgg/dgm after run completes?', catenateSplits, advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      call output_name_v_pair ( 'Is this run in forward model parallel?', parallel%fwmParallel, advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      call output_name_v_pair ( 'Avoid creating file on first directWrite?', patch, advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      call output_name_v_pair ( 'Is this the master task in pvm?', parallel%master, advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       if ( parallel%master .or. showDefaults ) then
-      call output(' Master task number:                             ', advance='no') 
-      call blanks(4, advance='no')                                                   
-      call output(parallel%myTid, advance='yes')
-      call output(' Command line sent to slaves:                    ', advance='no') 
-      call blanks(4, advance='no')                                                   
-      call output(trim(parallel%pgeName), insteadofblank='(none)', advance='yes')
-      call output(' Command to queue slave tasks:                   ', advance='no') 
-      call blanks(4, advance='no')                                                   
-      call output(trim(parallel%submit), insteadofblank='(none)', advance='yes')
-      call output(' Maximum failures per chunk:                     ', advance='no') 
-      call blanks(5, advance='no')                                                   
-      call output(parallel%maxFailuresPerChunk, advance='yes')
-      call output(' Maximum failures per machine:                   ', advance='no') 
-      call blanks(5, advance='no')                                                   
-      call output(parallel%maxFailuresPerMachine, advance='yes')
-      call output(' Sleep time in masterLoop (mus):                 ', advance='no') 
-      call blanks(5, advance='no')                                                   
-      call output(parallel%delay, advance='yes')
-      call output(' Range of chunks run in parallel:                ', advance='no') 
+      call output_name_v_pair ( 'Master task number', parallel%myTid, advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      call output_name_v_pair ( 'Command line sent to slaves', trim(parallel%pgeName), advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      call output_name_v_pair ( 'Command to queue slave tasks', trim(parallel%submit), advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      call output_name_v_pair ( 'Maximum failures per chunk', parallel%maxFailuresPerChunk, advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      call output_name_v_pair ( 'Maximum failures per machine', parallel%maxFailuresPerMachine, advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      call output_name_v_pair ( 'Sleep time in masterLoop (mus)', parallel%delay, advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      call output_name_v_pair ( 'Range of chunks run in parallel', parallel%chunkRange, advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       else
-      call output(' Range of chunks run serially:                   ', advance='no') 
+      call output_name_v_pair ( 'Range of chunks run serially', (/singleChunk, lastChunk/), advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       endif
-      call blanks(4, advance='no')
-      if ( max(singleChunk, lastChunk) /= 0 ) then
-        call output(singleChunk, advance='no')
-        if ( lastChunk /= 0 ) then
-          call output(lastChunk, advance='yes')
-        else
-          call newLine
-        endif
-      else
-        call output(trim(parallel%chunkRange), insteadofblank='(all)', advance='yes')
-      endif
-      call output(' Is this a slave task in pvm?:                   ', advance='no')
-      call blanks(4, advance='no')
-      call output(parallel%slave, advance='yes')
+      call output_name_v_pair ( 'Is this a slave task in pvm?', parallel%slave, advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       if ( parallel%slave ) then
-      call output(' Master task number:                             ', advance='no') 
-      call blanks(4, advance='no')                                                   
-      call output(parallel%masterTid, advance='yes')
+      call output_name_v_pair ( 'Master task number', parallel%masterTid, advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       endif                      
-      call output(' Preflight check paths?:                         ', advance='no')
-      call blanks(4, advance='no')
-      call output(checkPaths, advance='yes')
-      call output(' Skip all direct writes?:                        ', advance='no')
-      call blanks(4, advance='no')
-      call output(SKIPDIRECTWRITES, advance='yes')
-      call output(' Skip all retrievals?:                           ', advance='no')
-      call blanks(4, advance='no')
-      call output(SKIPRETRIEVAL, advance='yes')
-      call output(' Stage in memory instead of a file?:             ', advance='no')
-      call blanks(4, advance='no')
-      call output(parallel%stageInMemory, advance='yes')
-      call output(' Using wall clock instead of cpu time?:          ', advance='no')
-      call blanks(4, advance='no')
-      call output(time_config%use_wall_clock, advance='yes')
-      call output(' Summarize time in what units?:                   ', advance='no')
-      call blanks(4, advance='no')
-      call display_string ( lit_indices(sectionTimingUnits), &
-        &             strip=.true., advance='yes' )
-      call output(' Number of switches set:                         ', advance='no')
-      call blanks(5, advance='no')
-      call output(numSwitches, advance='yes')
+      call output_name_v_pair ( 'Preflight check paths?', checkPaths, advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      call output_name_v_pair ( 'Skip all direct writes?', SKIPDIRECTWRITES, advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      call output_name_v_pair ( 'Skip all retrievals?', SKIPRETRIEVAL, advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      call output_name_v_pair ( 'Stage in memory instead of a file?', parallel%stageInMemory, advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      call output_name_v_pair ( 'Using wall clock instead of cpu time?', time_config%use_wall_clock, advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      call get_string ( lit_indices(sectionTimingUnits), string, strip=.true. )
+      call output_name_v_pair ( 'Summarize time in what units', trim(string), advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      call output_name_v_pair ( 'Number of switches set', numSwitches, advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       if ( switches /= ' ' ) then
-        call output(' (All switches)', advance='no')
-        call blanks(4, advance='no')
-        call output(trim(switches), insteadofblank='(none)', advance='yes')
+        call output_name_v_pair ( '(All switches)', trim(switches), advance='yes', &
+          & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       endif
-      call output(' Standard output unit:                           ', advance='no')
-      call blanks(4, advance='no')
-      call output(outputOptions%prunit, advance='yes')
-      call output(' Log file unit:                                  ', advance='no')
-      call blanks(4, advance='no')
-      call output(MLSMessageConfig%LogFileUnit, advance='yes')
-      call output(' Crash on any error:                             ', advance='no')
-      call blanks(4, advance='no')
-      call output(MLSMessageConfig%crashOnAnyError, advance='yes')
-      call output(' Ever crash:                                     ', advance='no')
-      call blanks(4, advance='no')
-      call output(.not. neverCrash, advance='yes')
-      call output(' Suppress identical warnings after:               ', advance='no')
-      call blanks(4, advance='no')
-      call output(MLSMessageConfig%limitWarnings, advance='yes')
-      call output(' Restart counting warnings at each phase:        ', advance='no')
-      call blanks(4, advance='no')
-      call output(restartWarnings, advance='yes')
-      call output(' Stop after Chunk Divide:                        ', advance='no')
-      call blanks(4, advance='no')
-      call output(StopAfterChunkDivide, advance='yes')
-      call output(' Stop after global settings:                     ', advance='no')
-      call blanks(4, advance='no')
-      call output(StopAfterGlobal, advance='yes')
-      call output(' Set error before stopping:                      ', advance='no')
-      call blanks(4, advance='no')
-      call output(StopWithError, advance='yes')
+      call output_name_v_pair ( 'Standard output unit', outputOptions%prunit, advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      call output_name_v_pair ( 'Log file unit', MLSMessageConfig%LogFileUnit, advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      call output_name_v_pair ( 'Crash on any error?', MLSMessageConfig%crashOnAnyError, advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      call output_name_v_pair ( 'Ever crash?', .not. neverCrash, advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      call output_name_v_pair ( 'Suppress identical warnings after', MLSMessageConfig%limitWarnings, advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      call output_name_v_pair ( 'Restart counting warnings at each phase?', restartWarnings, advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      call output_name_v_pair ( 'Set error before stopping?', StopWithError, advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       if ( specialDumpFile /= ' ' ) then
-      call output(' Save special dumps to:                          ', advance='no')
-      call blanks(4, advance='no')
-      call output(trim(specialDumpFile), advance='yes')
+      call output_name_v_pair ( 'Save special dumps to', trim(specialDumpFile), advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       endif
-      call output(' ----------------------------------------------------------', &
-        & advance='yes')
+      call blanks(70, fillChar='-', advance='yes')
     endif
   end subroutine Dump_settings
 
@@ -1079,6 +1025,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.150  2006/06/28 00:00:18  pwagner
+! Uses new output_name_v_pair
+!
 ! Revision 2.149  2006/06/24 23:11:29  pwagner
 ! prunit now a component of outputOptions
 !
