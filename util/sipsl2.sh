@@ -584,6 +584,10 @@ do
   then
     statbad=`tail $dir/exec_log/process.stderr | grep -i "connection lost"`
   fi
+  if [ "$statbad" = "" ]
+  then
+    statbad=`tail $dir/exec_log/process.stderr | grep -i "terminated"`
+  fi
   statnochunks=`tail $dir/exec_log/process.stdout | grep -i "No chunks were processed"`
   statpvmtrouble=`tail $dir/exec_log/process.stdout | grep -i "probably pvm trouble"`
   statgood=`tail $dir/exec_log/process.stdout | grep -i "catenating slave"`
@@ -637,9 +641,13 @@ do
     if [ "$statbad" != "" ]
     then
       statkilled=`echo "$statbad" | grep -i killed`
+      statterminated=`echo "$statbad" | grep -i terminated`
       if [ "$statkilled" != "" ]
       then
         newlist=`cat_args "$list" "killed" "\t"`
+      elif [ "$statterminated" != "" ]
+      then
+        newlist=`cat_args "$list" "terminated" "\t"`
       else
         newlist=`cat_args "$list" "ended badly" "\t"`
       fi
@@ -747,6 +755,9 @@ do
 done
 exit 0
 # $Log$
+# Revision 1.12  2006/05/19 19:56:25  pwagner
+# Catches sign that a job was killed
+#
 # Revision 1.11  2006/04/17 23:22:31  pwagner
 # Tests for another condition indicating ended badly
 #
