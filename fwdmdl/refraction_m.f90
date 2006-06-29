@@ -254,7 +254,7 @@ contains
   ! Page 16, Eqn. 26 & 27
 
     use MLSCommon, only: RP, IP
-    use GLNP, only: NG, GX, GW
+    use GLNP, only: NG, GX=>gx_all, GW=>gw_all
     use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
 
     real(rp), intent(in) :: H_PATH(:)
@@ -448,6 +448,9 @@ jl:   do j = j1+1, j2
 
 END module REFRACTION_M
 ! $Log$
+! Revision 2.24  2005/12/22 20:58:22  vsnyder
+! Added more ranks and H2O update
+!
 ! Revision 2.23  2005/12/07 00:33:48  vsnyder
 ! Update references to ATBD in comments
 !
