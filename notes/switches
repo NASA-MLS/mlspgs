@@ -55,6 +55,8 @@ Switches (set by -S option in mlsl2's command line):
   log =>    Log file messages
   mach =>   Machine names (that can be enslaved by master task)
   mas =>    Activities of the PVM master task
+  metd =>   Dump nonoptional outputs from metrics
+  metD =>   Dump nonoptional outputs from metrics, then stop
   msk =>    Mask set up by subset command in Retrieve
   mst =>    Dump interesting stuff if normal equations cannot be factored
   ndb =>    Dump 12 interesting Newton method internal variables after every SOLVE step
@@ -154,6 +156,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.62  2006/06/02 23:29:05  vsnyder
+ Complete descriptions of retriever's switches
+
  Revision 1.61  2006/05/31 21:01:19  vsnyder
  Add 0sl switch description
 
