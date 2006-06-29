@@ -33,9 +33,9 @@ contains
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use ForwardModelConfig, only: ForwardModelConfig_t, QtyStuff_T
-    use GLnp, only: GX, NG, NGP1
+    use GLnp, only: GX, NG=>ngnew, NGP1
     use Make_Z_Grid_M, only: Make_Z_Grid
-    use MLSCommon, only: RP
+    use MLSCommon, only: RP, R8
     use VectorsModule, only: VectorValue_T
 
   ! Inputs:
@@ -65,6 +65,9 @@ contains
     real(rp), dimension(:), pointer :: Z_psig ! recommended PSIG for
       !                                  radiative transfer calculations
       ! THIS VARIABLE REPLACES FwdModelConf%integrationGrid%surfs
+
+    ! New Gauss points (excluding Lobatto end points) with -1 on the left:
+    real(kind(gx)), parameter :: G_Grid(ngp1) = (/ -1.0_r8, gx /)
 
     nullify ( p_glgrid, tan_inds, tan_press, z_all, z_glgrid, z_psig )
 
@@ -104,7 +107,7 @@ contains
       z_all_prev = z_all_size
     end if
 
-    do sps_i = 1 , size(qtys)
+    do sps_i = 1, size(qtys)
       z_all_size = z_all_size + qtys(sps_i)%qty%template%nosurfs
       z_all(z_all_prev+1:z_all_size) = qtys(sps_i)%qty%template%surfs(:,1)
       z_all_prev = z_all_size
@@ -132,8 +135,8 @@ contains
       & spread(0.5_rp * (z_psig(2:Nlvl) + z_psig(1:Nlm1)),1,Ngp1) + &
       ! Half length of integration grid intervals:
       & spread(0.5_rp * (z_psig(2:Nlvl) - z_psig(1:Nlm1)),1,Ngp1) * &
-      ! Gauss points (with -1 at front):
-      & spread((/-1.0_rp,Gx(1:Ng)/),2,NLm1), (/maxVert-1/))
+      ! New Gauss points (excludes Lobatto end points) with -1 at front:
+      & spread(g_grid,2,NLm1), (/maxVert-1/))
     z_glgrid(maxVert) = z_psig(Nlvl)
     p_glgrid = 10.0_rp**(-z_glgrid)
 
@@ -171,6 +174,10 @@ contains
 end module Compute_GL_Grid_M
 
 ! $Log$
+! Revision 2.13  2006/06/29 19:33:44  vsnyder
+! Base grid calculations on interior (i.e., new) points in quadrature
+! formula in case of Lobatto.
+!
 ! Revision 2.12  2006/06/16 20:32:30  vsnyder
 ! Define NGP1 in glnp
 !
