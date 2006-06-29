@@ -11,13 +11,18 @@
 ;; the spectroscopy l2cf defs file
 !define(ExpandRTVLMandatoryLBLMoleculesFor, {!makelist(!RTVLMandatoryLBLMoleculesFor,{},$@)})
 
-;; system call to python routine to remove duplicate names and tidy-up before returning
+;; system call to python routine
 !define(PyCatLBLMolecules, {!DropLastChar(!esyscmd(!home/mlspgs/scripts/pycatlblmolecules.py {$*}))})
 !define(CatLBL, {!PyCatLBLMolecules(!TransLitContinueLineChar({$*}))})
 
 ;; e.g. call as !lblMolecules(2L, 3L) to get the required lbl
 ;; molecules for these sidebands
 !define(lblMolecules, {!CatLBL(!ExpandRTVLMandatoryLBLMoleculesFor($@))})
+
+;; system call to python routine 
+!define(PyDiff, {!DropLastChar(!esyscmd(!home/mlspgs/scripts/pydiff.py {$*}))})
+!define(lblMoleculesR3Ext, {!PyDiff('!lblMolecules($*)' 'H2O, H2O_R3, N2, O2')})
+
 ;; =======================lblMoleculesforpfafwm================================
 
 !define(LbandsForRadiometer,{!dnl
@@ -39,3 +44,6 @@
 !ifelse($1,R5V,{18U,19U,20U})})
 
 ;$Log$
+;Revision 1.1  2006/04/27 23:40:01  lambert
+;handles mandatory lbl molecules for PFA forward models
+;
