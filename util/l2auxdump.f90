@@ -118,10 +118,10 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
     if ( options%la ) then
       sdfid1 = mls_sfstart(filenames(i), DFACC_READ, hdfVersion=hdfVersion)
       print *, 'Attribute Names in: ', trim(filenames(i)), ' ', &
-        & trim(options%root)//trim(options%DSName)
+        & trim(options%root) // '/' // trim(options%DSName)
       if ( options%DSName /= ' ' ) then
         call GetAllHDF5AttrNames ( sdfid1, mysdList, &
-          & DSName=trim(options%root)//trim(options%DSName) )
+          & DSName=trim(options%root) // '/' // trim(options%DSName) )
       else
         call GetAllHDF5AttrNames ( sdfid1, mysdList, &
           & groupName=trim(options%root) )
@@ -144,7 +144,7 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
     if ( options%attributes /= ' ' ) then
       if ( options%DSName /= ' ' ) then
         call DumpHDF5Attributes ( sdfid1, trim(options%attributes), &
-          & DSName=trim(options%root)//trim(options%DSName), &
+          & DSName=trim(options%root) // '/' // trim(options%DSName), &
           & rms=options%rms, stats=options%stats )
       else
         call DumpHDF5Attributes ( sdfid1, trim(options%attributes), &
@@ -171,6 +171,7 @@ contains
      print *, 'stats  ?            ', options%stats  
      print *, 'rms    ?            ', options%rms    
      print *, 'root                ', options%root
+     print *, 'DSName              ', options%DSName
      print *, 'attributes          ', options%attributes
      print *, 'datasets            ', options%datasets
      print *, 'num files           ', n_filenames
@@ -200,6 +201,7 @@ contains
         call print_help
       elseif ( filename(1:3) == '-A ' ) then
         options%attributes = '*'
+        options%datasets = ''
         exit
       elseif ( filename(1:3) == '-D ' ) then
         options%datasets = '*'
@@ -213,6 +215,7 @@ contains
       else if ( filename(1:3) == '-a ' ) then
         call getarg ( i+1+hp, options%attributes )
         i = i + 1
+        options%datasets = ''
         exit
       else if ( filename(1:3) == '-d ' ) then
         call getarg ( i+1+hp, options%datasets )
@@ -231,6 +234,10 @@ contains
         exit
       else if ( filename(1:3) == '-r ' ) then
         call getarg ( i+1+hp, options%root )
+        i = i + 1
+        exit
+      else if ( filename(1:3) == '-rd ' ) then
+        call getarg ( i+1+hp, options%DSName )
         i = i + 1
         exit
       else if ( filename(1:5) == '-rms ' ) then
@@ -276,6 +283,8 @@ contains
       write (*,*) '          -nD             => do not dump datasets'
       write (*,*) '          -r root         => limit to group based at root'
       write (*,*) '                             (default is "/")'
+      write (*,*) '          -rd DSName      => limit attributes to root/DSName'
+      write (*,*) '                             (default is group attributes at root)'
       write (*,*) '          -a a1,a2,..     => dump just attributes named a1,a2,..'
       write (*,*) '          -d d1,d2,..     => dump just datasets named a1,a2,..'
       write (*,*) '          -la             => just list attribute names in files'
@@ -305,3 +314,6 @@ end program l2auxdump
 !==================
 
 ! $Log$
+! Revision 1.1  2006/06/28 00:06:54  pwagner
+! First commit
+!
