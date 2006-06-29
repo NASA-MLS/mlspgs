@@ -45,7 +45,8 @@ contains
     use Output_m, only: Output
     use Slabs_SW_m, only: SLABS_STRUCT
     use String_Table, only: Display_String
-    use Toggles, only: Switches
+    use Toggles, only: Emit, Levels, Switches, Toggle
+    use Trace_M, only: Trace_begin, Trace_end
 
 ! Inputs:
 
@@ -102,6 +103,9 @@ contains
       dumpBeta = dumpAll .or. ( index(switches,'lblb') > 0 )
       clean = index(switches,'clean') > 0
     end if
+
+    if ( toggle(emit) .and. levels(emit) > 6 ) &
+      & call Trace_Begin ( 'ForwardModel.Get_Beta_Path_Scalar' )
 
     nullify ( dBdn, dBdT, dBdv, dBdw ) ! Disassociated means "Don't compute it"
 
@@ -160,6 +164,9 @@ contains
       end if
 
     end do ! i = 1, size(beta_group)
+
+    if ( toggle(emit) .and. levels(emit) > 6 ) &
+      & call Trace_End ( 'ForwardModel.Get_Beta_Path_Scalar' )
 
     if ( dumpAll ) then
       call dump ( p_path(path_inds), name='Pressures', clean=clean )
@@ -1188,6 +1195,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.87  2006/04/11 18:32:41  vsnyder
+! Add more dumps
+!
 ! Revision 2.86  2006/04/05 19:16:49  vsnyder
 ! Use the 'clean' switch in some dumps
 !
