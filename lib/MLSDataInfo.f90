@@ -48,7 +48,9 @@
 ! -------------------------------------------------  Query_MLSData ----
   recursive subroutine Query_MLSData(loc_id, loc_name, dataset_info)
 !
-    use HDF5, only: hid_t, h5gn_members_f,h5gget_obj_info_idx_f
+    ! use output_m, only: output_name_v_pair
+    use HDF5, only: hid_t, H5G_DATASET_F, H5G_LINK_F, &
+      & h5gn_members_f,h5gget_obj_info_idx_f
 ! This subroutine lists entries in the HDF5 file.
 !
 ! define external variables
@@ -62,8 +64,12 @@
     integer :: i, nmembers, h5error, count, type_id
     character(len=name_len) :: name_buffer, path_name
     logical :: dataset_found
+    ! call output_name_v_pair( 'loc_id', loc_id )
+    ! call output_name_v_pair( 'loc_name', loc_name )
 
     call h5gn_members_f(loc_id,loc_name,nmembers,h5error)
+    ! call output_name_v_pair( 'loc_id', loc_id )
+    ! call output_name_v_pair( 'loc_name', loc_name )
     if (h5error /= 0) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Group member access of ' // loc_name // ' failed.')
 
@@ -79,20 +85,33 @@
 
           path_name = loc_name
 
-         if (type_id .EQ. 2) then  ! H5G_DATASET_F
+         ! if (type_id .EQ. 2) then  ! H5G_DATASET_F
+        if (type_id .EQ. H5G_DATASET_F) then  ! H5G_DATASET_F
+
+          dataset_found = .TRUE.
+          count = dataset_info%number_of_entries + 1
+          if (trim(path_name) /= "/") then                                         
+            dataset_info%name(count) = trim(path_name) // "/" // trim(name_buffer) 
+          else                                                                     
+            dataset_info%name(count) = trim(path_name) // trim(name_buffer)        
+          endif                                                                    
+
+          dataset_info%number_of_entries = count
+
+        elseif (type_id .EQ. H5G_LINK_F) then  ! H5G_LINK_F
 
           dataset_found = .TRUE.
           count = dataset_info%number_of_entries + 1
 
-       if (trim(path_name) /= "/") then 
-         dataset_info%name(count) = trim(path_name) // "/" // trim(name_buffer)
-       else 
-         dataset_info%name(count) = trim(path_name) // trim(name_buffer)
-       endif
+          if (trim(path_name) /= "/") then 
+            dataset_info%name(count) = trim(path_name) // "/" // trim(name_buffer)
+          else 
+            dataset_info%name(count) = trim(path_name) // trim(name_buffer)
+          endif
 
           dataset_info%number_of_entries = count
 
-         else 
+        else 
 
            dataset_found = .FALSE.
  
@@ -104,9 +123,9 @@
  
            call Query_MLSData(loc_id,trim(path_name),dataset_info)
 
-         endif ! H5G_DATASET_F     
+        endif ! type_id     
 
-       endif ! h5error
+    endif ! h5error
 
       end do ! nmembers
 
@@ -126,6 +145,9 @@
 end module MLSDataInfo
 
 ! $Log$
+! Revision 2.6  2006/06/29 20:36:55  pwagner
+! Fixed bug besetting symbolic links
+!
 ! Revision 2.5  2005/06/22 17:25:49  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
