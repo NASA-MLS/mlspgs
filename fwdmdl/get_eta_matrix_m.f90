@@ -315,9 +315,10 @@ contains
 
 ! last basis calculation
 
-      do j = n_grid, i, -1
-        if ( basis(n_coeffs) >= grid(p(j)) ) exit
-        eta(p(j),n_coeffs) = 1.0_rp
+      do i = i, n_grid
+        if ( basis(n_coeffs) >= grid(p(i)) ) exit
+        eta(p(i),n_coeffs) = 1.0_rp
+        not_zero(p(i),n_coeffs) = .true.
       end do
 
     else ! not_zero is not present; this is just eta_func inlined
@@ -345,9 +346,9 @@ contains
 
 ! last basis calculation
 
-      do j = n_grid, i, -1
-        if ( basis(n_coeffs) >= grid(p(j)) ) exit
-        eta(p(j),n_coeffs) = 1.0_rp
+      do i = i, n_grid
+        if ( basis(n_coeffs) >= grid(p(i)) ) exit
+        eta(p(i),n_coeffs) = 1.0_rp
       end do
 
     end if
@@ -366,6 +367,9 @@ contains
 end module Get_Eta_Matrix_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.10  2006/06/29 01:44:02  vsnyder
+! Make the 1d stuff work.  It wasn't used until metrics was revised
+!
 ! Revision 2.9  2005/12/23 03:12:42  vsnyder
 ! Simplify last basis calculation
 !
