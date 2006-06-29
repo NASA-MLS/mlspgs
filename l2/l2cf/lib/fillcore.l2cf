@@ -16,13 +16,23 @@ begin Fill
 ;  !forall(fillFromOneCoreL2GP,!coreL2GPSpecies)
 
 
-       ;; Also do temperature_hr
+  ;; temperature_hr
   Fill, quantity=stateCore.Temperature_hr, method=l2gp, $
     sourceL2GP=l2gpCoreTemperatureInput
 
-  ;; Also do GPH_hr
+  ;; totalextinctionr3
+  Fill, quantity=stateCore.totalextinctionr3, method=l2gp, $
+    sourceL2GP=l2gpCoreExtinctionR3Input, /interpolate ;; lowres to highres (remove when extinction is put back to vGridGxtinction)
+
+  ;; H2O_hr
+  Fill, quantity=stateCore.H2O_hr, method=l2gp, $
+    sourceL2GP=l2gpCoreH2OInput
+  
+
+  ;; GPH_hr
   Fill, quantity=stateCore.GPH_hr, method=hydrostatic, refGPHQuantity=stateCore.refGPH, $
     temperatureQuantity=stateCore.temperature_hr
+
   ;; Also do ptan
   Fill, quantity=stateCore.ptanGHz, method=l2aux, sourceL2AUX=l2auxCorePtanInput
 
