@@ -4,7 +4,7 @@
 # handle (R1A,R1B) and (R5H,R5V) duplicate definitions
 
 import sys
-from uniq import uniq
+from pyutils import uniq 
 
 # read the args
 s = sys.argv[1:]
