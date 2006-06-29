@@ -2134,8 +2134,10 @@ contains ! =====     Public Procedures     =============================
     do chunk = size ( chunks ), 2, -1
       chunks(chunk)%hGridOffsets = chunks(chunk-1)%hGridOffsets
     end do
-    call output ( 'chunks(1)%hGridOffsets: ', advance='no' )
-    call output ( chunks(1)%hGridOffsets, advance='yes' )
+    if ( switchDetail(switches, 'pro') >= 0 .or. DEEBUG ) then
+      call output ( 'chunks(1)%hGridOffsets: ', advance='no' )
+      call output ( chunks(1)%hGridOffsets, advance='yes' )
+    endif
     if ( ChunkDivideConfig%allowPriorOverlaps .and. &
       & chunks(1)%noMAFsLowerOverlap > 0 ) then
       chunks(1)%hGridOffsets = 0
@@ -2319,6 +2321,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.89  2006/06/29 21:56:25  pwagner
+! Some debugging stuff removed from routine processing
+!
 ! Revision 2.88  2006/05/31 17:48:49  pwagner
 ! Another bug fix relating to extra profiles
 !
