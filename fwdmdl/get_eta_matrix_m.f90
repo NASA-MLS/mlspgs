@@ -16,7 +16,12 @@ module Get_Eta_Matrix_m
   implicit NONE
 
   private
+  public :: Eta_Func, Eta_Func_1d, Eta_Func_2d
   public :: Get_Eta_Sparse, Get_Eta_Sparse_1d, Get_Eta_Sparse_2d
+
+  interface Eta_Func
+    module procedure Eta_Func_1d, Eta_Func_2d
+  end interface Eta_Func
 
   interface Get_Eta_Sparse
     module procedure Get_Eta_Sparse_1d, Get_Eta_Sparse_2d
@@ -28,6 +33,208 @@ module Get_Eta_Matrix_m
   private :: not_used_here 
 !---------------------------------------------------------------------------
 contains
+
+!---------------------------------------------------  Eta_Func_1d  -----
+  pure function Eta_Func_1d ( Basis, Grid_Pt ) result ( Eta )
+
+! Compute the eta matrix
+
+! Inputs
+
+    real(rp), intent(in) :: Basis(:) ! basis break points
+    real(rp), intent(in) :: Grid_pt  ! grid point
+
+! Outputs
+
+    real(rp) :: Eta(size(basis))
+
+! Internals
+
+    integer(ip) :: J, N_coeffs
+    real(rp) :: Del_basis
+
+! The first coefficient is one for all values of grid_pt below basis(1)
+! until grid_pt = basis(1),then it ramps down in the usual triangular sense.
+! J is the coefficient index.
+
+    n_coeffs = size(basis)
+    eta = 0.0_rp
+
+! first basis calculation
+
+    if ( grid_pt <= basis(1) ) eta(1) = 1.0_rp
+
+! Normal triangular function for j=2 to j=n_coeffs-1
+
+    do j = 2 , n_coeffs
+      del_basis = basis(j) - basis(j-1)
+      if ( grid_pt <= basis(j) .and. &
+        &  basis(j-1) <= grid_pt ) then
+        eta(j-1) = (basis(j) - grid_pt) / del_basis
+        eta(j) =   (grid_pt - basis(j-1)) / del_basis
+      end if
+    end do
+
+! last basis calculation
+
+    if ( grid_pt > basis(n_coeffs) ) eta(n_coeffs) = 1.0_rp
+
+  end function Eta_Func_1d
+
+!---------------------------------------------------  Eta_Func_2d  -----
+  function Eta_Func_2d ( Basis, Grid, Sorted ) result ( Eta )
+
+! Compute the eta matrix
+
+    use Sort_m, only: SortP
+! Inputs
+
+    real(rp), intent(in) :: Basis(:) ! basis break points
+    real(rp), intent(in) :: Grid(:)  ! grid values
+    logical, optional, intent(in) :: Sorted ! "Grid is sorted"
+
+! Outputs
+
+    real(rp) :: Eta(size(grid),size(basis))
+
+! Internals
+
+    integer(ip) :: I, J, N_coeffs, N_Grid, P(size(grid))
+    real(rp) :: Del_basis
+    logical :: MySorted
+
+! Things below go more efficiently if Grid is sorted
+
+    mySorted = .false.
+    if ( present(sorted) ) mySorted = sorted
+
+    n_grid = size(grid)
+    if ( mySorted ) then
+      do i = 1, n_grid
+        p(i) = i
+      end do
+    else
+      call sortp ( grid, 1, n_grid, p ) ! grid(p(:)) are now sorted
+    end if
+
+! The first coefficient is one for all values of grid_pt below basis(1)
+! until grid_pt = basis(1),then it ramps down in the usual triangular sense.
+! J is the coefficient index.
+
+    n_coeffs = size(basis)
+    eta = 0.0_rp
+
+! first basis calculation
+
+    do i = 1, n_grid
+      if ( grid(p(i)) > basis(1) ) exit
+      eta(p(i),1) = 1.0_rp
+    end do
+
+! Normal triangular function for j=2 to j=n_coeffs-1
+
+    do j = 2 , n_coeffs
+      del_basis = 1.0 / (basis(j) - basis(j-1))
+      do while ( i <= n_grid )
+        if ( grid(p(i)) > basis(j) ) exit
+        if ( basis(j-1) <= grid(p(i)) ) then
+          eta(p(i),j-1) = (basis(j) - grid(p(i))) * del_basis
+          eta(p(i),j) =   (grid(p(i)) - basis(j-1)) * del_basis
+        end if
+        i = i + 1
+      end do
+    end do
+
+! last basis calculation
+
+    do j = n_grid, i, -1
+      if ( basis(n_coeffs) >= grid(p(j)) ) exit
+      eta(p(j),n_coeffs) = 1.0_rp
+    end do
+
+  end function Eta_Func_2d
+
+!---------------------------------------------  Get_Eta_Sparse_1d  -----
+  subroutine Get_Eta_Sparse_1d ( Basis, Grid_Pt, Eta, Not_zero )
+
+! Compute the eta matrix
+
+! Inputs
+
+    real(rp), intent(in) :: Basis(:) ! basis break points
+    real(rp), intent(in) :: Grid_pt  ! grid point
+
+! Outputs
+
+    real(rp), intent(out) :: Eta(:)  ! representation basis function
+    logical, optional, intent(out) :: Not_zero(:) ! where the above is not zero
+
+! Internals
+
+    integer(ip) :: J, N_coeffs
+    real(rp) :: Del_basis
+
+! The first coefficient is one for all values of grid_pt below basis(1)
+! until grid_pt = basis(1),then it ramps down in the usual triangular sense.
+! J is the coefficient index.
+    n_coeffs = size(basis)
+    eta = 0.0_rp
+    if ( present(not_zero) ) then
+
+      ! not_zero(:,:n_coeffs) = .false.
+      not_zero = .false.
+
+! first basis calculation
+
+      if ( grid_pt <= basis(1) ) then
+        eta(1) = 1.0
+        not_zero(1) = .true.
+      end if
+
+! Normal triangular function for j=2 to j=n_coeffs-1.  Basis is sorted.
+
+      do j = 2 , n_coeffs
+        del_basis = 1.0 / (basis(j) - basis(j-1))
+         if ( grid_pt <= basis(j) .and. &
+           &  basis(j-1) <= grid_pt ) then
+           eta(j-1) = (basis(j) - grid_pt) * del_basis
+           eta(j) =   (grid_pt - basis(j-1)) * del_basis
+           not_zero(j-1) = .true.
+           not_zero(j) = .true.
+         end if
+      end do
+
+! last basis calculation
+
+      if ( basis(n_coeffs) < grid_pt ) then
+        eta(n_coeffs) = 1.0_rp
+        not_zero(n_coeffs) = .true.
+      end if
+
+    else ! not_zero is not present; this is just eta_func inlined
+
+! first basis calculation
+
+      if ( grid_pt <= basis(1) ) eta(1) = 1.0_rp
+
+! Normal triangular function for j=2 to j=n_coeffs-1
+
+      do j = 2 , n_coeffs
+        del_basis = 1.0 / (basis(j) - basis(j-1))
+         if ( grid_pt <= basis(j) .and. &
+           &  basis(j-1) <= grid_pt ) then
+          eta(j-1) = (basis(j) - grid_pt) * del_basis
+          eta(j) =   (grid_pt - basis(j-1)) * del_basis
+        end if
+      end do
+
+! last basis calculation
+
+      if ( basis(n_coeffs) < grid_pt ) eta(n_coeffs) = 1.0_rp
+
+    end if
+
+  end subroutine Get_Eta_Sparse_1d
 
 !---------------------------------------------  Get_Eta_Sparse_2d  -----
   subroutine Get_Eta_Sparse_2d ( Basis, Grid, Eta, Not_zero, Sorted )
@@ -91,7 +298,7 @@ contains
 ! Normal triangular function for j=2 to j=n_coeffs-1.  Both Basis and
 ! Grid(p(:)) are sorted, so we don't need to start from i=1.
 
-      do j = 2 , n_coeffs
+      do j = 2, n_coeffs
         del_basis = 1.0_rp / ( basis(j) - basis(j-1) )
         do while ( i <= n_grid )
           pi = p(i)
@@ -108,15 +315,12 @@ contains
 
 ! last basis calculation
 
-      do while ( i <= n_grid )
-        if ( basis(n_coeffs) < grid(p(i)) ) then
-          eta(p(i),n_coeffs) = 1.0_rp
-          not_zero(p(i),n_coeffs) = .true.
-        end if
-        i = i + 1
+      do j = n_grid, i, -1
+        if ( basis(n_coeffs) >= grid(p(j)) ) exit
+        eta(p(j),n_coeffs) = 1.0_rp
       end do
 
-    else ! not_zero is not present
+    else ! not_zero is not present; this is just eta_func inlined
 
 ! first basis calculation
 
@@ -128,12 +332,12 @@ contains
 ! Normal triangular function for j=2 to j=n_coeffs-1
 
       do j = 2 , n_coeffs
-        del_basis = basis(j) - basis(j-1)
+        del_basis = 1.0 / (basis(j) - basis(j-1))
         do while ( i <= n_grid )
           if ( grid(p(i)) > basis(j) ) exit
           if ( basis(j-1) <= grid(p(i)) ) then
-            eta(p(i),j-1) = (basis(j) - grid(p(i))) / del_basis
-            eta(p(i),j) =   (grid(p(i)) - basis(j-1)) / del_basis
+            eta(p(i),j-1) = (basis(j) - grid(p(i))) * del_basis
+            eta(p(i),j) =   (grid(p(i)) - basis(j-1)) * del_basis
           end if
           i = i + 1
         end do
@@ -150,89 +354,6 @@ contains
 
   end subroutine Get_Eta_Sparse_2d
 
-!---------------------------------------------  Get_Eta_Sparse_1d  -----
-  subroutine Get_Eta_Sparse_1d ( Basis, Grid_Pt, Eta, Not_zero )
-
-! Compute the eta matrix
-
-! Inputs
-
-    real(rp), intent(in) :: Basis(:) ! basis break points
-    real(rp), intent(in) :: Grid_pt  ! grid point
-
-! Outputs
-
-    real(rp), intent(out) :: Eta(:)  ! representation basis function
-    logical, optional, intent(out) :: Not_zero(:) ! where the above is not zero
-
-! Internals
-
-    integer(ip) :: J, N_coeffs
-    real(rp) :: Del_basis
-
-! The first coefficient is one for all values of grid_pt below basis(1)
-! until grid_pt = basis(1),then it ramps down in the usual triangular sense.
-! J is the coefficient index.
-
-    n_coeffs = size(basis)
-    eta = 0.0_rp
-    if ( present(not_zero) ) then
-
-      ! not_zero(:,:n_coeffs) = .false.
-      not_zero = .false.
-
-! first basis calculation
-
-      if ( grid_pt <= basis(1) ) then
-        eta(1) = 1.0
-        not_zero(1) = .true.
-      end if
-
-! Normal triangular function for j=2 to j=n_coeffs-1.  Basis is sorted.
-
-      do j = 2 , n_coeffs
-        del_basis = basis(j) - basis(j-1)
-         if ( grid_pt > basis(j) ) exit
-         if ( basis(j-1) <= grid_pt ) then
-           eta(j-1) = (basis(j) - grid_pt) / del_basis
-           eta(j) =   (grid_pt - basis(j-1)) / del_basis
-           not_zero(j-1) = .true.
-           not_zero(j) = .true.
-         end if
-      end do
-
-! last basis calculation
-
-      if ( basis(n_coeffs) < grid_pt ) then
-        eta(n_coeffs) = 1.0_rp
-        not_zero(n_coeffs) = .true.
-      end if
-
-    else ! not_zero is not present
-
-! first basis calculation
-
-      if ( grid_pt <= basis(1) ) eta(1) = 1.0_rp
-
-! Normal triangular function for j=2 to j=n_coeffs-1
-
-      do j = 2 , n_coeffs
-        del_basis = basis(j) - basis(j-1)
-        if ( grid_pt > basis(j) ) exit
-        if ( basis(j-1) <= grid_pt ) then
-          eta(j-1) = (basis(j) - grid_pt) / del_basis
-          eta(j) =   (grid_pt - basis(j-1)) / del_basis
-        end if
-      end do
-
-! last basis calculation
-
-      if ( grid_pt > basis(n_coeffs) ) eta(n_coeffs) = 1.0_rp
-
-    end if
-
-  end subroutine Get_Eta_Sparse_1d
-
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -245,6 +366,9 @@ contains
 end module Get_Eta_Matrix_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.9  2005/12/23 03:12:42  vsnyder
+! Simplify last basis calculation
+!
 ! Revision 2.8  2005/12/22 20:55:16  vsnyder
 ! Improve handling of sorted grid, some cannonball polishing
 !
