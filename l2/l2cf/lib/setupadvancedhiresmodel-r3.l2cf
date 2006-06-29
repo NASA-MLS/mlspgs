@@ -17,13 +17,15 @@ begin Construct
     phiWindow=4 degrees, $
     molecules= [ extinction, [ O2, O_18_O ],[ SO2, S_32_O2 ],$
     [ O3, O3, O3_R3, O3_V1_3, O3_V2, O3_ASYM_O_18, O3_SYM_O_18 ]], $
-    ;LSBlblMolecules=[EXTINCTION,O3,O3_R3,O_18_O],$
-    ;USBlblMolecules=[EXTINCTION,O3,O3_R3],$
+    moleculeDerivatives = [EXTINCTION,O3,O2], $
+    LSBlblMolecules=[EXTINCTION,O3,O3_R3,O_18_O],$
+    USBlblMolecules=[EXTINCTION,O3,O3_R3],$
     specificquantities = [temperature_hr,totalextinctionr3], $
     integrationGrid=vGridTangent, $
     tangentGrid=vGridTangent, $
     tolerance= 0.05K,$
-    /do_conv, /temp_der, /do_freq_avg;; We skip the baseline deliberately
+    /do_conv, /atmos_der, /temp_der, /do_freq_avg 
+;; We skip the baseline deliberately
 
 end Construct
 
@@ -50,8 +52,8 @@ begin Construct
 
   advancedL2PCFwmR3B8: ForwardModel, type=linear, $
     signals= ['R3:240.B8F:PT'], $
-    molecules=[ O_18_O, HNO3, O3, SO2], $
-    moleculeDerivatives=[ HNO3, O3, SO2], $
+    molecules=[extinction, O_18_O, HNO3, O3, SO2], $
+    moleculeDerivatives=[extinction, HNO3, O3, SO2], $
     specificQuantities=[temperature_HR,totalextinctionr3], $
     /atmos_der, /temp_der, $
     phiWindow=100 profiles, /lockBins, $
@@ -60,8 +62,8 @@ begin Construct
 
   advancedL2PCFwmR3B33: ForwardModel, type=linear, $
     signals= ['R3:240.B33W:O3.C3'], $
-    molecules=[ O_18_O, HNO3, O3, SO2], $
-    moleculeDerivatives=[ HNO3, O3, SO2], $
+    molecules=[extinction, O_18_O, HNO3, O3, SO2], $
+    moleculeDerivatives=[extinction, HNO3, O3, SO2], $
     specificQuantities=[temperature_HR,totalextinctionr3], $
     /atmos_der, /temp_der, $
     phiWindow=100 profiles, /lockBins, $
@@ -71,6 +73,9 @@ begin Construct
 end Construct
 
 ;$Log$
+;Revision 1.2  2006/06/29 02:30:04  lambert
+;corrections to handle totalextinctionr3
+;
 ;Revision 1.1  2006/06/27 00:25:34  lambert
 ;advanced forward model for R3 bands 8 and 33
 ;
