@@ -566,22 +566,36 @@ end Fill
 
   ;; This is for the case where we wish to store the a priori quantities
   ;; in the dgg files
-  !define(WriteOneAPQuantity,{!dnl
+  !define(LabelOneAPQuantity,{!dnl
+!ifelse($1,{Temperature}, {
+  Label, quantity=aPriori.$1_HR, label='$1-APriori'
+  Label, quantity=aPrioriPrecision.$1_HR, label='$1-APrioriPrecision'},
+$1,{H2O}, {
+  Label, quantity=aPriori.$1_HR, label='$1-APriori'
+  Label, quantity=aPrioriPrecision.$1_HR, label='$1-APrioriPrecision'},
+{
   Label, quantity=aPriori.$1, label='$1-APriori'
-  Label, quantity=aPrioriPrecision.$1, label='$1-aPrioriPrecision'
+  Label, quantity=aPrioriPrecision.$1, label='$1-APrioriPrecision'})
 })
   !define(DirectWriteOneAPQuantity,{, $
-   source=aPriori.$1, precision=aPrioriPrecision.$1})
+!ifelse($1,{Temperature},
+   {  source=aPriori.$1_HR, precision=aPrioriPrecision.$1_HR}, 
+   $1,{H2O}, 
+   {  source=aPriori.$1_HR, precision=aPrioriPrecision.$1_HR},
+   {  source=aPriori.$1, precision=aPrioriPrecision.$1})})
   
   !ifdef(flagWriteAPrioriToDGG,{
 begin Join
-  !forall(WriteOneAPQuantity,!allStandardProducts)
+  !forall(LabelOneAPQuantity,!allStandardProducts)
   DirectWrite, hdfVersion=!hdfVersion, $
   type=l2dgg !forall(DirectWriteOneAPQuantity,!allStandardProducts)
   
 end Join
   })
 ;$Log$
+;Revision 1.110  2006/06/14 23:02:32  lambert
+;set aprioriPrecision.so2 = 10 ppbv
+;
 ;Revision 1.109  2006/06/02 23:46:37  lambert
 ;explicitValues require a space before the minus sign
 ;
