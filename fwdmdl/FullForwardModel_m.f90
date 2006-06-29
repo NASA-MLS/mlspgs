@@ -180,7 +180,6 @@ contains
     character (len=32) :: SigName       ! Name of a Signal
 
     logical :: Clean                    ! Used for dumping
-    logical, parameter :: dummy(2) = (/.FALSE.,.FALSE./)  ! dummy Flag array for Metrics
 
     integer, dimension(:), pointer :: C_INDS   ! Indices on coarse grid
     integer, dimension(:), pointer :: C_INDS_B ! Base array for C_INDS
@@ -228,14 +227,14 @@ contains
     real(rp), save :: E_Stop  = 1.0_rp ! X for which Exp(X) is too small to worry
     real(rp) :: NEG_TAN_HT    ! GP Height (in KM.) of tan. press.
                               ! below surface
+    real(rp) :: TAN_HT        ! Height at the tangent
+    real(rp) :: TAN_TEMP      ! Temperature at the tangent
     real(rp) :: R             ! real variable for various uses
     real(rp) :: REQ           ! Equivalent Earth Radius
     real(rp) :: ROT(3,3)      ! ECR-to-FOV rotation matrix
     real(rp) :: Vel_Cor       ! Velocity correction due to Vel_z, 1 - Vel_z/c
     real(rp) :: Vel_Rel       ! Vel_z / c
 
-    real(rp), dimension(1) :: ONE_TAN_HT ! ***
-    real(rp), dimension(1) :: ONE_TAN_TEMP ! ***
     real(rp), dimension(:), pointer :: ALPHA_PATH_C ! coarse grid abs coeff.
     real(rp), dimension(:), pointer :: ALPHA_PATH_F ! fine grid abs coeff.
     real(rp), dimension(:), pointer :: B            ! Planck radiation function
@@ -276,7 +275,7 @@ contains
       ! field vector, and the "instrument field of view plane polarized"
       ! (IFOVPP) X axis.
     real(rp), dimension(:), pointer :: STSP         ! Sin(Theta) Sin(Phi)
-    real(rp), dimension(:), pointer :: TAN_TEMP     ! ***
+    real(rp), dimension(:), pointer :: TAN_DH_DT    ! dH/dT at Tangent
     real(rp), dimension(:), pointer :: TANH1_C      ! tanh(0.5 h nu / k T)
     real(rp), dimension(:), pointer :: TANH1_F      ! tanh1_c on fine grid
     real(rp), dimension(:), pointer :: T_PATH       ! Temperatures on path
@@ -349,7 +348,6 @@ contains
     real(rp), dimension(:,:), pointer :: SPECT_V_PATH ! Line Center
     real(rp), dimension(:,:), pointer :: SPECT_W_PATH ! Line Width
     real(rp), dimension(:,:), pointer :: SPS_PATH     ! species on path
-    real(rp), dimension(:,:), pointer :: TAN_DH_DT    ! dH/dT at Tangent
     real(rp), dimension(:,:), pointer :: T_GLGRID     ! Temp on glGrid surfs
     real(rp), dimension(:,:), pointer :: T_SCRIPT_LBL ! Delta_B in some notes
     real(rp), dimension(:,:), pointer :: T_SCRIPT_PFA ! Delta_B in some notes
@@ -398,13 +396,13 @@ contains
     real(rp), dimension(:), pointer :: est_los_vel
     real(rp), dimension(:), pointer :: req_out
     real(rp), dimension(:), pointer :: tan_chi_out
+    real(rp), dimension(:), pointer :: tan_d2h_dhdt
     real(rp), dimension(:), pointer :: tan_phi
     real(rp), dimension(:), pointer :: tan_press
     real(rp), dimension(:,:), pointer :: d2xdxdt_surface
     real(rp), dimension(:,:), pointer :: d2xdxdt_tan
     real(rp), dimension(:,:), pointer :: dxdt_surface
     real(rp), dimension(:,:), pointer :: dxdt_tan
-    real(rp), dimension(:,:), pointer :: tan_d2h_dhdt
     real(rp), dimension(:,:,:), pointer :: ddhidhidtl0
 
     type (VectorValue_T), pointer :: BOUNDARYPRESSURE
@@ -448,8 +446,8 @@ contains
 
 !   Extra DEBUG for Nathaniel and Bill
 !   real(rp), dimension(:), pointer :: REQS         ! Accumulation of REQ
-!   real(rp), dimension(:), pointer :: TAN_HTS      ! Accumulation of ONE_TAN_HT
-!   real(rp), dimension(:), pointer :: TAN_TEMPS    ! Accumulation of ONE_TAN_TEMP
+!   real(rp), dimension(:), pointer :: TAN_HTS      ! Accumulation of TAN_HT
+!   real(rp), dimension(:), pointer :: TAN_TEMPS    ! Accumulation of TAN_TEMP
 
     ! ZVI's dumping ground for variables he's too busy to put in the right
     ! place, and doesn't want to write comments for
@@ -532,7 +530,7 @@ contains
       & salb_path, scat_alb%values, scat_ang, scat_src%values, &
       & spect_n_path, spect_v_path, spect_w_path, sps_path,  &
       & tan_chi_out, tan_d2h_dhdt, tan_dh_dt, tanh1_c, tanh1_f, &
-      & tan_phi, tan_temp, tau_pol, t_der_path_flags, t_glgrid, &
+      & tan_phi, tau_pol, t_der_path_flags, t_glgrid, &
       & t_path, t_path_c, t_path_f, tscat_path, &
       & t_script_lbl, t_script_pfa, tt_path, tt_path_c, &
       & usedDacsSignals, vmr, vmrarray, w0_path_c, wc, z_path )
@@ -554,24 +552,28 @@ contains
     ! Temperature's windowStart:windowFinish are correct here.
     ! RefGPH and temperature have the same horizontal basis.
     ! RefGPH is in meters, but Two_D_Hydrostatic wants it in km.
-    call two_d_hydrostatic ( Grids_tmp, &
-      &  (/ (refGPH%template%surfs(1,1), j=windowStart,windowFinish) /), &
-      &  0.001*refGPH%values(1,windowStart:windowFinish), z_glgrid, &
-      &  orbIncline%values(1,maf)*Deg2Rad, t_glgrid, h_glgrid, &
-      &  dhdz_glgrid, dh_dt_glgrid, DDHDHDTL0=ddhidhidtl0 )
+    if ( temp_der ) then
+      call two_d_hydrostatic ( Grids_tmp, &
+        &  (/ (refGPH%template%surfs(1,1), j=windowStart,windowFinish) /), &
+        &  0.001*refGPH%values(1,windowStart:windowFinish), z_glgrid, &
+        &  orbIncline%values(1,maf)*Deg2Rad, t_glgrid, h_glgrid, &
+        &  dhdz_glgrid, dh_dt_glgrid, DDHDHDTL0=ddhidhidtl0 )
+      call allocate_test ( dxdt_surface, 1, sv_t_len,  'dxdt_surface', moduleName )
+      call allocate_test ( d2xdxdt_surface, 1, sv_t_len,  'd2xdxdt_surface', &
+                       & moduleName )
+    else
+      call two_d_hydrostatic ( Grids_tmp, &
+        &  (/ (refGPH%template%surfs(1,1), j=windowStart,windowFinish) /), &
+        &  0.001*refGPH%values(1,windowStart:windowFinish), z_glgrid, &
+        &  orbIncline%values(1,maf)*Deg2Rad, t_glgrid, h_glgrid, &
+        &  dhdz_glgrid, dh_dt_glgrid )
+    end if
 
     !??? need to interpolate H2O from Grids_f basis to Grids_tmp basis
     ! Get index of refraction on the GL grid, not accounting for H2O
     call refractive_index ( p_glgrid, t_glgrid, n_glgrid )
 
     ! This is a lazy way to get the surface angle
-
-    if ( temp_der ) then
-      call allocate_test ( dxdt_surface, 1, sv_t_len,  'dxdt_surface', moduleName )
-      call allocate_test ( d2xdxdt_surface, 1, sv_t_len,  'd2xdxdt_surface', &
-                       & moduleName )
-    end if
-
     ! Temperature's windowStart:windowFinish are correct here.
     ! refGPH and temperature have the same horizontal basis.
     ! Grids_F is only needed for H2O, for calculating refractive index.
@@ -648,6 +650,7 @@ contains
           &                                z_path(c_inds(mid+1:npc-1)) )
         del_zeta((/1,npc/)) = 0.0_rp
 
+        ! p_path = 10.0 ** z_path
         p_path(1:no_ele) = (/p_glgrid(MaxVert:tan_inds(ptg_i):-1), &
                            & p_glgrid(tan_inds(ptg_i):MaxVert)/)
 
@@ -663,17 +666,18 @@ contains
 
           if ( temp_der ) then
             ! Set up temperature representation basis stuff
-            call metrics ( tan_phi(ptg_i:ptg_i), tan_inds(ptg_i:ptg_i),      &
+            call metrics ( tan_phi(ptg_i), tan_inds(ptg_i),                  &
               &  Grids_tmp%phi_basis, z_glgrid, n_glgrid, h_glgrid,          &
               &  t_glgrid, dhdz_glgrid, orbIncline%values(1,maf)*Deg2Rad,    &
-              &  Grids_tmp%deriv_flags, FwdModelConf%refract,                &
+              &  FwdModelConf%refract,                                       &
               &  h_path(1:no_ele), phi_path(1:no_ele),                       &
               &  t_path(1:no_ele), dhdz_path(1:no_ele), Req, ier,            &
-              &  TAN_PHI_H_GRID=one_tan_ht, TAN_PHI_T_GRID=one_tan_temp,     &
-              &  NEG_H_TAN = (/neg_tan_ht/),                                 &
+              &  TAN_PHI_H=tan_ht, TAN_PHI_T=tan_temp,                       &
+              &  NEG_H_TAN = neg_tan_ht,                                     &
               &  DHTDTL0 = tan_dh_dt, DDHIDHIDTL0 = ddhidhidtl0,             &
               &  DDHTDHTDTL0 = tan_d2h_dhdt, DHIDTLM = dh_dt_glgrid,         &
               &  DHITDTLM = dh_dt_path(1:no_ele,:),                          &
+              &  T_DERIV_FLAG = Grids_tmp%deriv_flags,                       &
               &  Z_BASIS = Grids_tmp%zet_basis,                              &
               &  ETA_ZXP = eta_zxp_t(1:no_ele,:),                            &
               &  DO_CALC_T = do_calc_t(1:no_ele,:),                          &
@@ -684,14 +688,14 @@ contains
             eta_zxp_t_c(1:npc,:) = eta_zxp_t(c_inds,:)
             t_der_path_flags(1:no_ele) = any(do_calc_t(1:no_ele,:),2)
           else
-            call metrics ( tan_phi(ptg_i:ptg_i), tan_inds(ptg_i:ptg_i),      &
+            call metrics ( tan_phi(ptg_i), tan_inds(ptg_i),                  &
               &  Grids_tmp%phi_basis, z_glgrid, n_glgrid, h_glgrid,          &
               &  t_glgrid, dhdz_glgrid, orbIncline%values(1,maf)*Deg2Rad,    &
-              &  dummy, FwdModelConf%refract,                                &
+              &  FwdModelConf%refract,                                       &
               &  h_path(1:no_ele), phi_path(1:no_ele),                       &
               &  t_path(1:no_ele), dhdz_path(1:no_ele), Req, ier,            &
-              &  TAN_PHI_H_GRID = one_tan_ht, TAN_PHI_T_GRID = one_tan_temp, &
-              &  NEG_H_TAN = (/neg_tan_ht/) )
+              &  TAN_PHI_H = tan_ht, TAN_PHI_T = tan_temp,                   &
+              &  NEG_H_TAN = neg_tan_ht )
           end if
 
 ! Tan heights for negative tan height from metrics is not correctly working.
@@ -700,16 +704,17 @@ contains
           e_rflty = 1.0_rp
           if ( temp_der ) then
             ! Set up temperature representation basis stuff
-            call metrics ( tan_phi(ptg_i:ptg_i), tan_inds(ptg_i:ptg_i),      &
+            call metrics ( tan_phi(ptg_i), tan_inds(ptg_i),                  &
               &  Grids_tmp%phi_basis, z_glgrid, n_glgrid, h_glgrid,          &
               &  t_glgrid, dhdz_glgrid, orbIncline%values(1,maf)*Deg2Rad,    &
-              &  Grids_tmp%deriv_flags, FwdModelConf%refract,                &
+              &  FwdModelConf%refract,                                       &
               &  h_path(1:no_ele), phi_path(1:no_ele),                       &
               &  t_path(1:no_ele), dhdz_path(1:no_ele), Req, ier,            &
-              &  TAN_PHI_H_GRID = one_tan_ht, TAN_PHI_T_GRID = one_tan_temp, &
+              &  TAN_PHI_H = tan_ht, TAN_PHI_T = tan_temp,                   &
               &  DHTDTL0 = tan_dh_dt, DDHIDHIDTL0 = ddhidhidtl0,             &
               &  DDHTDHTDTL0 = tan_d2h_dhdt, DHIDTLM = dh_dt_glgrid,         &
               &  DHITDTLM = dh_dt_path(1:no_ele,:),                          &
+              &  T_DERIV_FLAG = Grids_tmp%deriv_flags,                       &
               &  Z_BASIS = Grids_tmp%zet_basis,                              &
               &  ETA_ZXP = eta_zxp_t(1:no_ele,:),                            &
               &  DO_CALC_T = do_calc_t(1:no_ele,:),                          &
@@ -720,13 +725,13 @@ contains
             eta_zxp_t_c(1:npc,:) = eta_zxp_t(c_inds,:)
             t_der_path_flags(1:no_ele) = any(do_calc_t(1:no_ele,:),2)
           else
-            call metrics ( tan_phi(ptg_i:ptg_i), tan_inds(ptg_i:ptg_i),      &
+            call metrics ( tan_phi(ptg_i), tan_inds(ptg_i),                  &
               &  Grids_tmp%phi_basis, z_glgrid, n_glgrid, h_glgrid,          &
               &  t_glgrid, dhdz_glgrid, orbIncline%values(1,maf)*Deg2Rad,    &
-              &  dummy, FwdModelConf%refract,                                &
+              &  FwdModelConf%refract,                                       &
               &  h_path(1:no_ele), phi_path(1:no_ele),                       &
               &  t_path(1:no_ele), dhdz_path(1:no_ele), Req, ier,            &
-              &  TAN_PHI_H_GRID = one_tan_ht, TAN_PHI_T_GRID = one_tan_temp )
+              &  TAN_PHI_H = tan_ht, TAN_PHI_T = tan_temp )
           end if
         end if
         if ( ier /= 0 ) fmStat%flags = ior(fmStat%flags,b_metrics)
@@ -738,12 +743,9 @@ contains
         h_path_c(1:npc) = h_path(c_inds)
         t_path_c(1:npc) = t_path(c_inds)
         ! Fill the diagnostic arrays for Nathaniel and Bill
-!       tan_temps ( ptg_i ) = one_tan_temp ( 1 )
-!       tan_hts ( ptg_i ) = one_tan_ht ( 1 )
+!       tan_temps ( ptg_i ) = tan_temp
+!       tan_hts ( ptg_i ) = tan_ht
 !       reqs ( ptg_i ) = req
-
-        !??? This is never used for anything ???
-!       tan_temp(ptg_i) = one_tan_temp(1)
 
         ! Now compute the eta_zp & do_calc_zp (for Zeta & Phi only)
 
@@ -865,19 +867,19 @@ contains
         if ( temp_der ) then
          ! Ext_SCgeocAlt is in meters, but Get_Chi_Angles wants it in km.
           call get_chi_angles ( 0.001*est_scGeocAlt(ptg_i), n_path_c(npc/2),&
-             & one_tan_ht(1), tan_phi(ptg_i), Req, 0.0_rp,                  &
-             & ptg_angles(ptg_i), r, 1.0_rp, tan_dh_dt(1,:),                &
-             & tan_d2h_dhdt(1,:), dx_dt(ptg_i,:), d2x_dxdt(ptg_i,:) )
+             & tan_ht, tan_phi(ptg_i), Req, 0.0_rp, ptg_angles(ptg_i),      &
+             & r, 1.0_rp, tan_dh_dt, tan_d2h_dhdt,       &
+             & dx_dt(ptg_i,:), d2x_dxdt(ptg_i,:) )
         else
           call get_chi_angles ( 0.001*est_scGeocAlt(ptg_i), n_path_c(npc/2),&
-             & one_tan_ht(1), tan_phi(ptg_i), Req, 0.0_rp,                  &
-             & ptg_angles(ptg_i), r, 1.0_rp )
+             & tan_ht, tan_phi(ptg_i), Req, 0.0_rp, ptg_angles(ptg_i),      &
+             & r, 1.0_rp )
         end if
 
         n_path_c(1:npc) = n_path_c(1:npc) + 1.0_rp
 
         call comp_refcor ( h_path_c(:npc), n_path_c(:npc), &
-                      &  Req+one_tan_ht(1), del_s(:npc), ref_corr(:npc), ier )
+                      &  Req+tan_ht, del_s(:npc), ref_corr(:npc), ier )
         if ( ier /= 0 ) fmStat%flags = ior(fmStat%flags,b_refraction)
 
         ! We need path_dsdh on the fine grid for Gauss-Legendre or Gauss-
@@ -888,9 +890,9 @@ contains
         ! the fine grid.
 
         path_dsdh(:no_ele/2-1) = h_path(:no_ele/2-1) / &
-          & ( sqrt(h_path(:no_ele/2-1)**2 - (Req+one_tan_ht(1))**2 ) )
+          & ( sqrt(h_path(:no_ele/2-1)**2 - (Req+tan_ht)**2 ) )
         path_dsdh(no_ele/2+2:no_ele) = h_path(no_ele/2+2:no_ele) / &
-          & ( sqrt(h_path(no_ele/2+2:no_ele)**2 - (Req+one_tan_ht(1))**2 ) )
+          & ( sqrt(h_path(no_ele/2+2:no_ele)**2 - (Req+tan_ht)**2 ) )
         path_dsdh(no_ele/2:no_ele/2+1) = 0.0
 
         dsdz_gw_path(f_inds(:nglMax)) = path_dsdh(f_inds(:nglMax)) * &
@@ -1198,15 +1200,12 @@ contains
     call deallocate_test ( h_glgrid,     'h_glgrid',     moduleName )
     call deallocate_test ( t_glgrid,     't_glgrid',     moduleName )
     call deallocate_test ( dhdz_glgrid,  'dhdz_glgrid',  moduleName )
-    call deallocate_test ( dh_dt_glgrid, 'dh_dt_glgrid', moduleName )
-    call deallocate_test ( ddhidhidtl0,  'ddhidhidtl0',  moduleName )
 
     call deallocate_test ( tan_inds,      'tan_inds',      moduleName )
     call deallocate_test ( tan_press,     'tan_press',     moduleName )
     call deallocate_test ( tan_phi,       'tan_phi',       moduleName )
     call deallocate_test ( est_scgeocalt, 'est_scgeocalt', moduleName )
     call deallocate_test ( est_los_vel,   'est_los_vel',   moduleName )
-    call deallocate_test ( tan_temp,      'tan_temp',      moduleName )
 
     ! Extra DEBUG for Nathaniel and Bill
 !   call deallocate_test ( tan_hts,       'tan_hts',       moduleName )
@@ -1284,6 +1283,8 @@ contains
     end if
 
     if ( temp_der ) then
+      call deallocate_test ( dh_dt_glgrid,    'dh_dt_glgrid',    moduleName )
+      call deallocate_test ( ddhidhidtl0,     'ddhidhidtl0',     moduleName )
       call deallocate_test ( k_temp,          'k_temp',          moduleName )
       call deallocate_test ( d2xdxdt_tan,     'd2xdxdt_tan',     moduleName )
       call deallocate_test ( dAlpha_dT_path_c,'dAlpha_dT_path_c',moduleName )
@@ -1674,10 +1675,6 @@ contains
       call allocate_test ( t_glgrid,    maxVert, no_sv_p_t, 't_glgrid', moduleName )
       call allocate_test ( dhdz_glgrid, maxVert, no_sv_p_t, 'dhdz_glgrid', &
                         &  moduleName )
-      call allocate_test ( dh_dt_glgrid, maxVert,  n_t_zeta, no_sv_p_t, &
-                        &  'dh_dt_glgrid', moduleName )
-      call allocate_test ( ddhidhidtl0, maxVert, n_t_zeta, no_sv_p_t, &
-                        &  'ddhidhidtl0', moduleName )
 
       surfaceTangentIndex = COUNT(tan_inds == 1)
 
@@ -1698,8 +1695,6 @@ contains
       if ( toggle(emit) .and. levels(emit) > 0 ) then
         call Trace_Begin ( 'ForwardModel.Allocate' )
       end if
-
-      call allocate_test ( tan_temp, no_tan_hts, 'tan_temp', moduleName )
 
       ! Allocate path quantities -----------------------------------------------
 
@@ -1773,7 +1768,13 @@ contains
       end if
 
       if ( temp_der ) then ! Temperature derivatives
+        ! GL grid stuff
+        call allocate_test ( ddhidhidtl0, maxVert, n_t_zeta, no_sv_p_t, &
+                          &  'ddhidhidtl0', moduleName )
+        call allocate_test ( dh_dt_glgrid, maxVert,  n_t_zeta, no_sv_p_t, &
+                          &  'dh_dt_glgrid', moduleName )
 
+        ! Path stuff
         call allocate_test ( dAlpha_dT_path_c,     npc, 'dAlpha_dT_path_c', moduleName )
         call allocate_test ( dAlpha_dT_path_f, max_ele, 'dAlpha_dT_path_f', moduleName )
 
@@ -1810,8 +1811,8 @@ contains
                                                                 & moduleName )
         call allocate_test ( eta_zxp_t_f,     max_ele, sv_t_len, 'eta_zxp_t_f', &
                                                                 & moduleName )
-        call allocate_test ( tan_dh_dt,    1, sv_t_len, 'tan_dh_dt',    moduleName )
-        call allocate_test ( tan_d2h_dhdt, 1, sv_t_len, 'tan_d2h_dhdt', moduleName )
+        call allocate_test ( tan_dh_dt,      sv_t_len, 'tan_dh_dt',    moduleName )
+        call allocate_test ( tan_d2h_dhdt,   sv_t_len, 'tan_d2h_dhdt', moduleName )
         call allocate_test ( t_der_path_flags, max_ele,          't_der_path_flags', &
                                                                 & moduleName )
       end if ! temp_der
@@ -2973,7 +2974,7 @@ contains
               & dh_dt_path_c(1:npc,:), alpha_path_c,                        &
               & dAlpha_dT_path_c(:npc), eta_zxp_t_c(1:npc,:),               &
               & do_calc_t_c(1:npc,:), do_calc_hyd_c(1:npc,:), del_s,        &
-              & ref_corr, Req + one_tan_ht(1), dh_dt_path(brkpt,:),         &
+              & ref_corr, Req + tan_ht, dh_dt_path(brkpt,:),                &
               & do_gl, gl_inds, h_path_f(:ngl), t_path_f(:ngl),             &
               & dh_dt_path_f(:ngl,:), alpha_path_f(1:ngl),                  &
               & dAlpha_dT_path_f(:ngl), eta_zxp_t_f(:ngl,:),                &
@@ -3020,7 +3021,7 @@ contains
               & dhdz_gw_path, dsdz_gw_path, incoptdepth_pol(:,:,1:p_stop),  &
               & ref_corr(1:p_stop), h_path_c, h_path_f(:ngl),               &
               & dh_dt_path_c(1:p_stop,:),dh_dt_path_f(:ngl,:),              &
-              & Req + one_tan_ht(1), dh_dt_path(brkpt,:),                   &
+              & Req + tan_ht, dh_dt_path(brkpt,:),                          &
               & do_calc_hyd_c(1:p_stop,:), grids_tmp%deriv_flags,           &
               & de_dt(:,:,1:p_stop,:) )
 
@@ -3371,6 +3372,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.263  2006/06/19 19:26:56  vsnyder
+! OOPS, out of bounds subscript possible in path_dsdh
+!
 ! Revision 2.262  2006/06/16 20:32:30  vsnyder
 ! Define NGP1 in glnp
 !
