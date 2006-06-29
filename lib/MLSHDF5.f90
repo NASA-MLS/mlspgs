@@ -377,8 +377,14 @@ contains ! ======================= Public Procedures =========================
     if ( present(names) ) myNames = names
     if ( present(groupName) ) then
       call h5gOpen_f ( locID, '/', itemID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to open group' // trim(groupName) // &
+        & ' while dumping its attributes' )
     elseif(present(DSName) ) then
       call h5dOpen_f ( locID, trim(DSname), itemID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to open dataset' // trim(DSName) // &
+        & ' while dumping its attributes' )
     else
       itemID = locID
     endif
@@ -435,8 +441,14 @@ contains ! ======================= Public Procedures =========================
     enddo
     if ( present(groupName) ) then
       call h5gClose_f ( itemID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to close group' // trim(groupName) // &
+        & ' while dumping its attributes' )
     elseif(present(DSName) ) then
       call h5dClose_f ( itemID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to open dataset' // trim(DSName) // &
+        & ' while dumping its attributes' )
     endif
   end subroutine DumpHDF5Attributes
   
@@ -476,7 +488,10 @@ contains ! ======================= Public Procedures =========================
     if ( present(names) ) myNames = names
     if ( myNames == '*' ) call GetAllHDF5DSNames ( locID, groupName, myNames )
     numDS = NumStringElements ( myNames, countEmpty )
-    call h5gOpen_f ( locid, '/', groupID, status )
+    call h5gOpen_f ( locid, trim(groupName), groupID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open group' // trim(groupName) // &
+      & ' while dumping its datasets' )
     do i = 1, numDS
       name = StringElement(myNames, i, countEmpty)
       call h5dopen_f ( groupID, trim(name), ItemID, status )
@@ -582,6 +597,9 @@ contains ! ======================= Public Procedures =========================
       
     enddo
     call h5gClose_f ( groupID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close group' // trim(groupName) // &
+      & ' while dumping its datasets' )
   end subroutine DumpHDF5DS
 
   ! -------------------------------  GetAllHDF5AttrNames  -----
@@ -610,17 +628,25 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before looking for all attr names' )
     if ( present(groupName) ) then
-      call h5gOpen_f ( locID, '/', itemID, status )
+      call h5gOpen_f ( locID, trim(groupName), itemID, status )
+      ! call output_name_v_pair( 'groupName ', groupName )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to open group' // trim(groupName) // &
+        & ' while looking for all its attr names' )
     elseif(present(DSName) ) then
       call h5dOpen_f ( locID, trim(DSname), itemID, status )
+      ! call output_name_v_pair( 'DSname ', DSname )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to open DS ' // trim(DSname) // &
+        & ' while looking for all its attr names' )
     else
       itemID = locID
     endif
     Names = ' '
-    ! print *, 'About to read num of attributes'
+    ! call output( 'About to read num of attributes', advance='yes' )
     call h5aget_num_attrs_f( itemID, num, status )
     if ( status /= 0 ) return
-    ! print *, 'num ', num
+    ! call output_name_v_pair( 'num ', num )
     do i=1, num
       call h5aopen_idx_f( itemid, i-1, attr_id, status )
       ! print *, 'attr_id, status ', attr_id, status
@@ -636,8 +662,14 @@ contains ! ======================= Public Procedures =========================
     enddo
     if ( present(groupName) ) then
       call h5gClose_f ( itemID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to close group' // trim(groupName) // &
+        & ' while looking for all its attr names' )
     elseif(present(DSName) ) then
       call h5dClose_f ( itemID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to close DS' // trim(DSname) // &
+        & ' while looking for all its attr names' )
     endif
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -673,6 +705,8 @@ contains ! ======================= Public Procedures =========================
       & moduleName )
     dataset_info%name = ''
     dataset_info%number_of_entries = 0
+    ! call output_name_v_pair( 'fileid', fileid )
+    ! call output('About to check on ' // trim(gname), advance='yes' )
     call Query_MLSData ( fileid, trim(gname), dataset_info )
     if ( dataset_info%number_of_entries < 0 ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
@@ -5377,6 +5411,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.66  2006/06/29 20:38:20  pwagner
+! Added a few extra error checks
+!
 ! Revision 2.65  2006/06/27 23:59:05  pwagner
 ! May dump attributes, datasets
 !
