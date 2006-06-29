@@ -423,8 +423,8 @@ begin Fill
   ;; different phases, I'm quoting there the one for the 'standard' product.
 
   ;; Vertical
-  Fill, quantity=vReg.totalextinctionR2, method=explicit,/spread,explicitValues=1.0e-3
-  Fill, quantity=vReg.totalextinctionR3, method=explicit,/spread,explicitValues=1.0e-3
+  Fill, quantity=vReg.totalextinctionR2, method=explicit,/spread,explicitValues=0.5e-3
+  Fill, quantity=vReg.totalextinctionR3, method=explicit,/spread,explicitValues=0.5e-3
 
   Fill, quantity=vReg.extinctionR1A, method=explicit,/spread,explicitValues=1.0e-3
   Fill, quantity=vReg.extinctionR1B, method=explicit,/spread,explicitValues=1.0e-3
@@ -495,8 +495,8 @@ begin Fill
     profileValues=[ 1mb:1000ppmv ]
 
   ;; Horizontal
-  Fill, quantity=hReg.totalextinctionR2, method=explicit,/spread,explicitValues=1.0e-3
-  Fill, quantity=hReg.totalextinctionR3, method=explicit,/spread,explicitValues=1.0e-3
+  Fill, quantity=hReg.totalextinctionR2, method=explicit,/spread,explicitValues=0.5e-3
+  Fill, quantity=hReg.totalextinctionR3, method=explicit,/spread,explicitValues=0.5e-3
 
   Fill, quantity=hReg.extinctionR1A, method=explicit,/spread,explicitValues=1.0e-3
   Fill, quantity=hReg.extinctionR1B, method=explicit,/spread,explicitValues=1.0e-3
@@ -593,6 +593,9 @@ begin Join
 end Join
   })
 ;$Log$
+;Revision 1.111  2006/06/29 23:04:42  lambert
+;output HiRes quantities Temperature_HR and H2O_HR
+;
 ;Revision 1.110  2006/06/14 23:02:32  lambert
 ;set aprioriPrecision.so2 = 10 ppbv
 ;
