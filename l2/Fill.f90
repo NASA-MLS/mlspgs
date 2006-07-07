@@ -176,7 +176,8 @@ contains ! =====     Public Procedures     =============================
     use MLSStrings, only: lowerCase, SplitNest
     use Molecules, only: L_H2O
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
-    use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, revertoutput, switchOutput
+    use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, output_name_v_pair, &
+      & revertoutput, switchOutput
     use PFAData_m, only: Flush_PFAData
     use QuantityTemplates, only: Epoch, QuantityTemplate_T
     use readAPriori, only: APrioriFiles
@@ -1309,8 +1310,10 @@ contains ! =====     Public Procedures     =============================
         case ( l_gridded ) ! ------------  Fill from gridded data  -----
           if ( .not. got(f_sourceGrid) ) &
             & call Announce_Error ( key, noSourceGridGiven )
+          ! call output( 'Filling quantity from grid', advance='yes' )
           call FillVectorQuantityFromGrid &
             & ( quantity, griddedDataBase(gridIndex), allowMissing, errorCode )
+          ! call output_name_v_pair( 'error code', errorCode )
           if ( errorCode /= 0 ) call Announce_error ( key, errorCode )
 
         case ( l_l1b ) ! --------------------  Fill from L1B data  -----
@@ -2310,7 +2313,6 @@ contains ! =====     Public Procedures     =============================
     ! ------------------------------------------- ApplyBaseline ----------
     subroutine ApplyBaseline ( key, quantity, baselineQuantity, &
       & quadrature, dontmask )
-      ! use output_m, only: blanks, output
       integer, intent(in) :: KEY        ! Tree node
       type (VectorValue_T), intent(inout) :: QUANTITY ! Radiance quantity to modify
       type (VectorValue_T), intent(in) :: BASELINEQUANTITY ! L1B MAF baseline to use
@@ -2611,11 +2613,20 @@ contains ! =====     Public Procedures     =============================
       ! Executable code
       errorCode = 0
       if ( grid%empty ) then
-        errorCode=EmptyGridForFill
+        if ( index(lowercase(grid%description), 'tropopause') > 0 ) then
+          ! Must allow this as missing gmao files are a possibility
+          ! to be handled with grace and aplomb
+          call MLSMessage ( MLSMSG_Warning, moduleName, &
+            & 'No tropopause values in grid--filling with missing values' )
+          quantity%values = grid%missingValue
+        else
+          errorCode=EmptyGridForFill
+        end if
         return
       end if
 
-      if ( quantity%template%verticalCoordinate /= l_zeta ) then
+      if ( quantity%template%verticalCoordinate /= l_zeta .and. &
+        & quantity%template%noInstances > 1 .and. grid%noHeights > 1 ) then
         errorCode=NotZetaForGrid
         return
       end if
@@ -7800,7 +7811,7 @@ contains ! =====     Public Procedures     =============================
         call output ( " fill needs OrbitalInclination.", advance='yes' )
       case ( needTempREFGPH )
         call output ( " needs temperatureQuantity and refGPHquantity.", advance='yes' )
-      case ( no_Error_Code ) ! Handled at the botom
+      case ( no_Error_Code ) ! Handled at the bottom
       case ( noExplicitValuesGiven )
         call output ( " explicit fill requires explicit values.", advance='yes' )
       case ( nonConformingHydrostatic )
@@ -7820,6 +7831,8 @@ contains ! =====     Public Procedures     =============================
         call output ( " matrix is not a SPD matrix.", advance='yes' )
       case ( notPlain )
         call output ( " matrix is not a plain matrix.", advance='yes' )
+      case ( NotZetaForGrid )
+        call output ( " Quantity not on zeta surfaces.", advance='yes' )
       case ( wrongUnits )
         call display_string ( field_indices(Get_Field_Id(where)), &
           & before=" values of the " )
@@ -7836,6 +7849,7 @@ contains ! =====     Public Procedures     =============================
             & before="Units should be" )
         end if
       case default
+        call output_name_v_pair( ' error code', Code, advance='no' )
         call output ( " command caused an unrecognized programming error", advance='yes' )
       end select
       if ( present(ExtraMessage) )  call output(ExtraMessage, advance='yes')
@@ -7859,6 +7873,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.337  2006/07/07 23:08:53  pwagner
+! Fixed bug in filling from GEOS5-derived grid
+!
 ! Revision 2.336  2006/06/13 22:14:18  pwagner
 ! Recover gracefully if l1boa file lacks BO_stat dataset
 !
