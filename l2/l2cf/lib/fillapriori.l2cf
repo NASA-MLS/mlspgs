@@ -272,14 +272,14 @@ begin Fill
 ; r2-4 extinction based on 3-sigma of off-line retrieval
    Fill, quantity=aprioriPrecision.totalextinctionr2,method=profile, $
         profileValues = $
-;      [ 1000mb: 0.006, 681mb:0.006, 464mb : 0.006, 316mb : 0.006, $
-;      215mb : 0.0026, 147mb : 0.0006, 100mb : 0.0003, 68mb:9.0e-5, $
-;      46mb: 3.8e-5, 32mb:2.0e-5,22mb:9.2e-6,15mb:1.9e-6,10mb:1.0e-6, $
-;      0.00001mb:1.0e-6]
-      [ 1000mb: 0.0001, 681mb:0.0001, 464mb : 0.0001, 316mb : 0.0001, $
-      215mb : 0.0001, 147mb : 0.0001, 100mb : 0.0001, 68mb:9.0e-5, $
+      [ 1000mb: 0.006, 681mb:0.006, 464mb : 0.006, 316mb : 0.006, $
+      215mb : 0.0026, 147mb : 0.0006, 100mb : 0.0003, 68mb:9.0e-5, $
       46mb: 3.8e-5, 32mb:2.0e-5,22mb:9.2e-6,15mb:1.9e-6,10mb:1.0e-6, $
       0.00001mb:1.0e-6]
+;      [ 1000mb: 0.0001, 681mb:0.0001, 464mb : 0.0001, 316mb : 0.0001, $
+;      215mb : 0.0001, 147mb : 0.0001, 100mb : 0.0001, 68mb:9.0e-5, $
+;      46mb: 3.8e-5, 32mb:2.0e-5,22mb:9.2e-6,15mb:1.9e-6,10mb:1.0e-6, $
+;      0.00001mb:1.0e-6]
    Fill, quantity=aprioriPrecision.totalextinctionr3,method=profile, $
         profileValues = $
 ;      [ 1000mb: 0.006, 681mb:0.009, 464mb : 0.009, 316mb : 0.006, $
@@ -366,6 +366,7 @@ begin Fill
   Fill, quantity=highBound.h2o, method=explicit, explicitValues=0.06, /spread
 
   Fill, quantity=lowBound.oh, method=explicit, explicitValues= -20pptv, /spread
+  Fill, quantity=lowBound.n2o,method=explicit, explicitValues= -40ppbv, /spread
 
   Fill, quantity=lowBound.RHiVmrsngl, method=profile, profileValues=[100mb:2, 68mb:0.0001]
   Fill, quantity=highBound.RHiVmrsngl, method=profile, profileValues=[100mb:200, 68mb:0.0001], /spread
@@ -423,7 +424,7 @@ begin Fill
   ;; different phases, I'm quoting there the one for the 'standard' product.
 
   ;; Vertical
-  Fill, quantity=vReg.totalextinctionR2, method=explicit,/spread,explicitValues=0.5e-3
+  Fill, quantity=vReg.totalextinctionR2, method=explicit,/spread,explicitValues=5.0e-4
   Fill, quantity=vReg.totalextinctionR3, method=explicit,/spread,explicitValues=0.5e-3
 
   Fill, quantity=vReg.extinctionR1A, method=explicit,/spread,explicitValues=1.0e-3
@@ -462,8 +463,9 @@ begin Fill
     [ 1000mb:500ppmv, 300mb:50ppmv, 215mb:20ppmv, 121mb:2ppmv, 100mb:0.6ppmv, $
 	0.1mb:0.3ppmv, 0.001mb:0ppmv ], logSpace=false
   Fill, quantity=vReg.h2o_hr, method=profile, profileValues= $
-    [ 1000mb:50ppmv, 300mb:20ppmv, 215mb:10ppmv, 121mb: 1ppmv, 100mb:0.3ppmv, $
-        83mb:0.3ppmv, 0.1mb:0.3ppmv, 0.001mb:0ppmv ], logSpace=false
+    [ 1000mb:50ppmv, 300mb:100ppmv,215mb:50ppmv, 147mb:5ppmv,121mb: 1ppmv, $
+      100mb:0.3ppmv, 83mb:0.3ppmv, 0.1mb:0.3ppmv, 0.001mb:0ppmv ], $
+      logSpace=false
   Fill, quantity=vReg.RHiVmr, method=profile, profileValues= [ $
         681mb:10.0, 316mb:10.0, 215mb:10.0, 147mb:10.0]
   Fill, quantity=vReg.hcl, method=profile, $
@@ -490,12 +492,12 @@ begin Fill
   Fill, quantity=vReg.temperature, method=profile, $
     profileValues=[ 1mb:1K ]
   Fill, quantity=vReg.temperature_hr, method=profile, $
-    profileValues=[ 1mb:0.5K ]
+    profileValues=[ 1mb:2.0K ]
   Fill, quantity=vReg.o2, method=profile, $
     profileValues=[ 1mb:1000ppmv ]
 
   ;; Horizontal
-  Fill, quantity=hReg.totalextinctionR2, method=explicit,/spread,explicitValues=0.5e-3
+  Fill, quantity=hReg.totalextinctionR2, method=explicit,/spread,explicitValues=5.0e-4
   Fill, quantity=hReg.totalextinctionR3, method=explicit,/spread,explicitValues=0.5e-3
 
   Fill, quantity=hReg.extinctionR1A, method=explicit,/spread,explicitValues=1.0e-3
@@ -593,6 +595,9 @@ begin Join
 end Join
   })
 ;$Log$
+;Revision 1.112  2006/06/29 23:34:10  lambert
+;changed vReg and hReg for totalextinction species
+;
 ;Revision 1.111  2006/06/29 23:04:42  lambert
 ;output HiRes quantities Temperature_HR and H2O_HR
 ;
