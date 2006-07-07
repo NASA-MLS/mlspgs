@@ -84,9 +84,6 @@ contains ! =================================== Public procedures
           & ConvertEtaToP ( key, griddedDataBase ) ) )
       case ( s_delete )
         call DeleteGriddedData ( key, griddedDatabase )
-!       case ( s_vGrid )
-!         call decorate ( son, AddVGridToDatabase ( vGrids, &
-!           & CreateVGridFromMLSCFInfo ( name, son, l2gpDatabase, returnStatus ) ) )
       case ( s_wmoTrop )
         call decorate ( key, AddgriddedDataToDatabase ( griddedDataBase, &
           & wmoTropFromGrid ( key, griddedDataBase ) ) )
@@ -579,7 +576,7 @@ contains ! =================================== Public procedures
     use MLSFillValues, only: IsFillValue, RemoveFillValues
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
     use MLSStrings, only: LOWERCASE
-    use output_m, only: output
+    use output_m, only: output, output_name_v_pair
     use Toggles, only: GEN, TOGGLE
     use Trace_M, only: TRACE_BEGIN, TRACE_END
     use Tree, only: NSONS, SUBTREE, DECORATION
@@ -689,13 +686,42 @@ contains ! =================================== Public procedures
     call dump( Temperatures, details=0 )
     call output( 'Pressures grid', advance='yes' )
     call dump( Pressures, details=0 )
+    ! call output_name_v_pair( 'Temperatures grid empty?', Temperatures%empty )
+    ! call output_name_v_pair( 'Pressures grid empty?   ', Pressures%empty )
     if ( .not. associated(Temperatures) ) then
       call MLSMessage ( MLSMSG_Warning, moduleName, &
         & 'No associated Temperatures grid for calculating wmo tropopause' )
       if ( toggle(gen) ) call trace_end ( "wmoTropFromGrid" )
       return
     endif
+    call SetupNewGriddedData ( newGrid, source=Temperatures, &
+      & noHeights=1, noDates=1 )
+    ! Setup the rest of the quantity
+    newGrid%sourceFileName     = 'Gridded Temperatures'
+    newGrid%quantityName       = 'wmo Tropopause'
+    newGrid%description        = 'wmo Tropopause'
+    newGrid%units              = 'hPa' ! If we want 'Pa', restore /100 below
+    newGrid%verticalCoordinate = v_is_pressure
+    newGrid%equivalentLatitude = Temperatures%equivalentLatitude
+    newGrid%heights            = missingValue ! Temperatures%missingValue
+    newGrid%lats               = Temperatures%lats
+    newGrid%lons               = Temperatures%lons
+    newGrid%lsts               = Temperatures%lsts
+    newGrid%szas               = Temperatures%szas
+    newGrid%dateEnds           = Temperatures%dateEnds(1)
+    newGrid%dateStarts         = Temperatures%dateStarts(1)
+    newGrid%missingValue              = MISSINGVALUE
+    newGrid%field              = MISSINGVALUE
     nlev = Temperatures%noHeights
+    if ( Temperatures%empty .or. Pressures%empty ) then
+      newGrid%empty = .true.
+      call MLSMessage ( MLSMSG_Warning, moduleName, &
+        & 'Temperatures or Pressures grid was empty' )
+      if ( toggle(gen) ) call trace_end ( "wmoTropFromGrid" )
+      return
+    endif
+    ! call output_name_v_pair( 'Temperatures grid empty?', Temperatures%empty )
+    ! call output_name_v_pair( 'Pressures grid empty?   ', Pressures%empty )
     if ( nlev < 2 ) then
       call MLSMessage ( MLSMSG_Warning, moduleName, &
         & 'Too few levels on Temperatures grid for calculating wmo tropopause' )
@@ -735,23 +761,6 @@ contains ! =================================== Public procedures
       p = h(:)*100.         ! hPa > Pa
     endif
     
-    call SetupNewGriddedData ( newGrid, source=Temperatures, &
-      & noHeights=1, noDates=1 )
-    ! Setup the rest of the quantity
-    newGrid%sourceFileName     = 'Gridded Temperatures'
-    newGrid%quantityName       = 'wmo Tropopause'
-    newGrid%description        = 'wmo Tropopause'
-    newGrid%units              = 'hPa' ! If we want 'Pa', restore /100 below
-    newGrid%verticalCoordinate = v_is_pressure
-    newGrid%equivalentLatitude = Temperatures%equivalentLatitude
-    newGrid%heights            = Temperatures%missingValue
-    newGrid%lats               = Temperatures%lats
-    newGrid%lons               = Temperatures%lons
-    newGrid%lsts               = Temperatures%lsts
-    newGrid%szas               = Temperatures%szas
-    newGrid%dateEnds           = Temperatures%dateEnds(1)
-    newGrid%dateStarts         = Temperatures%dateStarts(1)
-    newGrid%field              = MISSINGVALUE
     ! Now actually calculate the tropopause
     ! for every "horizontal" point
     do idate=1, 1 ! size( Temperatures%field, 6 )
@@ -827,6 +836,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.24  2006/07/07 23:10:03  pwagner
+! Should handle missing GEOS5 files with greater grace
+!
 ! Revision 2.23  2006/06/22 00:20:46  pwagner
 ! Repair cosmetic blemishes when tracing
 !
