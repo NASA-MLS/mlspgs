@@ -512,7 +512,7 @@ Begin Fill
   Transfer, source=standardDiagnostics, destination=otherDiagnostics
 
 ; ------------------------------------------------- Fill, column abundances -----
-;; --------------------------------------------- tpPressure
+;; --------------------------------------------- tpPressure (using MLS profiles)
   
   Fill, quantity=state.tpPressure, method=wmoTropopause, $
     temperatureQuantity=state.temperature, refGPHQuantity=state.refGPH, $
@@ -525,6 +525,31 @@ Begin Fill
     boundaryPressure=state.tpPressure
 End Fill
 
+!ifdef(flagUseGEOS5PTrop,
+{!dnl
+begin Join
+  Label, quantity=state.$1, label='$1-StdProd'
+  Label, quantity=state.column_$1, label='$1-StdProd column-MLS'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=state.$1, precision=outputPrecision.$1, $
+    status=otherDiagnostics.status$1, quality=otherDiagnostics.quality$1, $
+    source=state.column_$1, precision=outputPrecision.column_$1
+End Join
+Begin Fill
+;; ------------------------------------------ tpPressure (using GEOS5 grids)
+  Fill, quantity=state.tpPressure, method=gridded, $
+    sourceGrid=geos5EtaWMOPTrop
+  Fill, quantity=state.column_$1, method=special, vmrQuantity=state.$1, $
+    boundaryPressure=state.tpPressure
+  Fill, quantity=outputPrecision.column_$1, method=special, vmrQuantity=outputPrecision.$1, $
+    boundaryPressure=state.tpPressure
+End Fill
+begin Join
+  Label, quantity=state.column_$1, label='$1-StdProd column-GEOS5'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=state.column_$1, precision=outputPrecision.column_$1
+End Join
+},{!dnl
 begin Join
   Label, quantity=state.$1, label='$1-StdProd'
   Label, quantity=state.column_$1, label='$1-StdProd column'
@@ -533,6 +558,7 @@ begin Join
     status=otherDiagnostics.status$1, quality=otherDiagnostics.quality$1, $
     source=state.column_$1, precision=outputPrecision.column_$1
 End Join
+})
 })
 
 ;; Perhaps all these special cases below means we shouldn't be
@@ -580,16 +606,38 @@ End Fill
 
 begin Join
   Label, quantity=state.$1, label='$1-StdProd'
-
-!ifelse($1,{Temperature}, {
-
-  ;; Also tpPressure; later to be copied into the temperature file
-  Label, quantity=state.tpPressure, label='TPPressureWMO-StdProd'
+!ifelse($1,{Temperature}, {!dnl
   DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=state.$1, precision=outputPrecision.$1, $
     status=otherDiagnostics.status$1, quality=otherDiagnostics.quality$1
+End Join
+Begin Fill
+  ;; Also tpPressure; later to be copied into the temperature file
+  Fill, quantity=state.tpPressure, method=wmoTropopause, $
+    temperatureQuantity=state.temperature, refGPHQuantity=state.refGPH, $
+    internalVgrid=vGridWMO
+End Fill
+begin Join
+!ifdef(flagUseGEOS5PTrop,
+{!dnl
+  Label, quantity=state.tpPressure, label='WMOTPPressure-StdProd-MLS'
   DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=state.tpPressure
+End Join
+Begin Fill
+;; ------------------------------------------ tpPressure (using GEOS5 grids)
+  Fill, quantity=state.tpPressure, method=gridded, $
+    sourceGrid=geos5EtaWMOPTrop
+End Fill
+begin Join
+  Label, quantity=state.tpPressure, label='WMOTPPressure-StdProd-GEOS5'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=state.tpPressure
+},{!dnl
+  Label, quantity=state.tpPressure, label='WMOTPPressure-StdProd'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=state.tpPressure
+})
 }, $1,{Temperature_HR}, {
   DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=state.$1, precision=outputPrecision.$1, $
@@ -607,7 +655,6 @@ begin Join
     status=otherDiagnostics.status$1, quality=otherDiagnostics.quality$1
 
 })
-
 End Join
 })
 
@@ -695,6 +742,9 @@ Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusL
 })})
 
 ; $Log$
+; Revision 1.111  2006/06/09 20:47:54  pwagner
+; Added SO2 to standard products (perhaps should be controlled by a flag)
+;
 ; Revision 1.110  2006/05/11 20:16:36  pwagner
 ; Added special case for DirectWriteDGG of Temperature_HR
 ;
