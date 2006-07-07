@@ -87,6 +87,7 @@ begin MergeGrids
   ;; wmo p trop (using the values from mid-day)
   geos5EtaWMOPTrop: wmoTrop, $
     a=geos5TemperatureInput3, b=geos5PressureInput3
+  !define(flagUseGEOS5PTrop,{yes})
     
   ;; to save memory convert before catenating, not after
   !forall( convertEtaToP,1,2,3,4,Next)
