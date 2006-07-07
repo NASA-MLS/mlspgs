@@ -913,7 +913,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_sourceL2GP, s+s_l2gp, n+n_field_spec, &
              begin, f+f_sourceL2AUX, s+s_l2aux, n+n_field_spec, &
              begin, f+f_sourceGrid, s+s_gridded, s+s_merge, s+s_concatenate, &
-                    s+s_ConvertEtaToP, n+n_field_spec, &
+                    s+s_ConvertEtaToP, s+s_WMOTrop, n+n_field_spec, &
              begin, f+f_sourceSGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_sourceVGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_spread, t+t_boolean, n+n_field_type, &
@@ -1469,6 +1469,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.445  2006/07/07 23:08:32  pwagner
+! Fixed bug in filling from GEOS5-derived grid
+!
 ! Revision 2.444  2006/06/15 20:39:59  vsnyder
 ! Add PFA oversampling
 !
