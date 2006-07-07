@@ -34,10 +34,6 @@ module Open_Init
 !     c o n t e n t s
 !     - - - - - - - -
 
-!     (data types and parameters)
-! MLSPCF_LOG                      PCF number of the log file
-! CCSDSLen                        Max length of coded start, end times
-
 !     (subroutines and functions)
 ! OpenAndInitialize               Gets run parameters from pcf
 ! === (end of toc) ===
@@ -65,8 +61,12 @@ contains ! =====     Public Procedures     =============================
 
     ! Opens L1 RAD files
     ! Opens L1OA file
-    ! Opens and reads the signal nomenclature file
     ! Gets the start and end times from the PCF
+    ! Gets other user parameters from PCF
+    
+    ! Note: toolkitless runs bypass all that, getting
+    ! the necessary inputs via the l2cf and
+    ! processing user inputs during global settings section
 
     use L1BData, only: FindMaxMAF, ReadL1BAttribute
     use L2GPData, only: col_species_keys, col_species_hash
@@ -165,7 +165,6 @@ contains ! =====     Public Procedures     =============================
    l2pcf%startutc = '(undefined)'
    l2pcf%endutc = '(undefined)'
    l2pcf%cycle = ' '
-   ! l2pcf%InputVersion = ' '
    l2pcf%PGEVersion = ' '
    l2pcf%logGranID = '(not applicable)'      ! will not create a Log file
    l2pcf%spec_keys = '(not applicable)'      ! will not create metadata
@@ -198,7 +197,6 @@ contains ! =====     Public Procedures     =============================
       if ( returnStatus == 0 ) then
         numFiles = addFileToDatabase(filedatabase, L1BFile)
         ifl1 = ifl1 + 1
-        ! L2pcf%L1BRADPCFIds(ifl1) = L1BFile%PCFID
       endif
 
     end do ! L1FileHandle = mlspcf_l1b_rad_start, mlspcf_l1b_rad_end
@@ -215,7 +213,6 @@ contains ! =====     Public Procedures     =============================
     call mls_openFile(L1BFile, returnStatus)
     if ( returnStatus == PGS_S_SUCCESS ) then
 
-        ! l2pcf%L1BOAPCFId = mlspcf_l1b_oa_start
         if( switchDetail(switches, 'pro') > -1 ) then  
           call announce_success(L1BFile%name, 'l1boa', &                     
           & hdfVersion=L1BFile%HDFVersion)                    
@@ -282,13 +279,6 @@ contains ! =====     Public Procedures     =============================
     l2pcf%endutc = CCSDSEndTime
 
     ! Here's where we define the non-time components of l2pcf
-
-    ! returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_inputVersion, &
-    !                                       l2pcf%inputVersion)
-    ! if ( returnstatus /= PGS_S_SUCCESS ) then
-    !   call announce_error ( 0, "Missing pcf param: input version", &
-    !     & forgiveable=.true. )
-    ! end if
 
     returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_PGEVersion, &
                                           l2pcf%PGEVersion)
@@ -359,7 +349,6 @@ contains ! =====     Public Procedures     =============================
     end if
  
     ! Store appropriate user input as global attributes
-    ! GlobalAttributes%InputVersion = l2pcf%inputVersion
     GlobalAttributes%StartUTC = l2pcf%StartUTC
     GlobalAttributes%EndUTC = l2pcf%EndUTC
     GlobalAttributes%PGEVersion = l2pcf%PGEVersion
@@ -452,7 +441,6 @@ contains ! =====     Public Procedures     =============================
     use WriteMetadata, only: L2PCF
 
     ! Arguments
-    ! integer, intent(in) :: num_l1b_files
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
     character(len=CCSDSlen) CCSDSEndTime
     character(len=CCSDSlen) CCSDSStartTime
@@ -476,7 +464,6 @@ contains ! =====     Public Procedures     =============================
     type (MLSFile_T), pointer ::     L1BFile
 
     ! Begin                                                                       
-    ! hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)  
     call output ( '============ Open Initialize ============', advance='yes' )
     call output ( '        (Data entered via pcf)', advance='yes' )
     call output ( ' ', advance='yes' )
@@ -534,8 +521,6 @@ contains ! =====     Public Procedures     =============================
       elseif ( L1BFile%content == 'l1boa' ) then
         call output ( 'L1OA file:', advance='yes' )
   
-        ! call output ( 'PCFid:   ' )
-        ! call output ( l2pcf%L1BOAPCFId, advance='yes' )
         call output ( 'PCFid:   ' )
         call output ( L1BFile%PCFId, advance='yes' )
         call output ( 'fileid:   ' )
@@ -570,9 +555,6 @@ contains ! =====     Public Procedures     =============================
 
     call output ( 'PGE version:   ' )
     call output ( l2pcf%PGEVersion, advance='yes' )
-
-    ! call output ( 'input version:   ' )
-    ! call output ( l2pcf%InputVersion, advance='yes' )
 
     call output ( 'cycle:   ' )
     call output ( l2pcf%cycle, advance='yes' )
@@ -676,6 +658,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.93  2006/07/07 23:11:19  pwagner
+! Removed already-commented-out souvenirs
+!
 ! Revision 2.92  2006/03/15 23:52:24  pwagner
 ! Removed InputVersion component from PCF, l2cf
 !
