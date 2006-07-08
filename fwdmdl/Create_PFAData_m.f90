@@ -39,8 +39,7 @@ contains ! =====     Public Procedures     =============================
     use FilterShapes_m, only: DACSFilterShapes, FilterShapes, FilterShape_T
     use Intrinsic, only: LIT_INDICES, L_NONE
     use MLSCommon, only: RP, R8
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
-      & MLSMSG_Severity_to_quit
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSSignals_m, only: GetNameOfSignal, MatchSignal, MaxSigLen, Signal_T
     use MoreTree, only: GetStringIndexFromString
     use Output_m, only: Output
@@ -324,7 +323,7 @@ contains ! =====     Public Procedures     =============================
       ! Frequency average them.
       use Get_Beta_Path_m, only: Create_Beta
       real(r8) :: Avg, dAvg
-      real(rp), dimension(nfp*oversample) :: &
+      real(rp), dimension((nfp-1)*oversample+1) :: &
         & Beta, dBeta_dw, dBeta_dn, dBeta_dv, Frqs, Shapes
       integer :: F    ! Index for frequencies
       real(r8) :: FRQ ! Frequency from filter grid
@@ -334,7 +333,7 @@ contains ! =====     Public Procedures     =============================
       ! Oversample the filter grid using linear interpolation
       frqs(1) = myFilter%filterGrid(1)
       shapes(1) = myFilter%filterShape(1)
-      do f = 1+oversample, nfp*oversample, oversample
+      do f = 1+oversample, size(frqs), oversample
         frqs(f) = myFilter%filterGrid((f+oversample-1)/oversample)
         shapes(f) = myFilter%filterShape((f+oversample-1)/oversample)
         do i = 1, oversample-1
@@ -345,7 +344,7 @@ contains ! =====     Public Procedures     =============================
         end do ! i
       end do ! f
       ! Compute Beta and its derivatives
-      do f = 1, nfp*oversample
+      do f = 1, size(frqs)
         frq = frqs(f)
         beta(f) = 0.0
         call create_beta ( p, T, frq, slabs, &
@@ -433,6 +432,9 @@ contains ! =====     Public Procedures     =============================
 end module Create_PFAData_m
 
 ! $Log$
+! Revision 2.19  2006/07/08 01:14:17  vsnyder
+! Don't create junk at end of oversampled arrays
+!
 ! Revision 2.18  2006/06/15 20:39:29  vsnyder
 ! Add oversampling
 !
