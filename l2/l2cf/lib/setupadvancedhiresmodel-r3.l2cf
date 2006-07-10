@@ -17,7 +17,6 @@ begin Construct
     phiWindow=4 degrees, $
     molecules= [ extinction, [ O2, O_18_O ],[ SO2, S_32_O2 ],$
     [ O3, O3, O3_R3, O3_V1_3, O3_V2, O3_ASYM_O_18, O3_SYM_O_18 ]], $
-    moleculeDerivatives = [EXTINCTION,O3,O2], $
     LSBlblMolecules=[EXTINCTION,O3,O3_R3,O_18_O],$
     USBlblMolecules=[EXTINCTION,O3,O3_R3],$
     specificquantities = [temperature_hr,totalextinctionr3], $
@@ -52,8 +51,8 @@ begin Construct
 
   advancedL2PCFwmR3B8: ForwardModel, type=linear, $
     signals= ['R3:240.B8F:PT'], $
-    molecules=[extinction, O_18_O, HNO3, O3, SO2], $
-    moleculeDerivatives=[extinction, HNO3, O3, SO2], $
+    molecules=[extinction, O_18_O, O3, SO2], $
+    moleculeDerivatives=[extinction, O3, SO2], $
     specificQuantities=[temperature_HR,totalextinctionr3], $
     /atmos_der, /temp_der, $
     phiWindow=100 profiles, /lockBins, $
@@ -62,8 +61,8 @@ begin Construct
 
   advancedL2PCFwmR3B33: ForwardModel, type=linear, $
     signals= ['R3:240.B33W:O3.C3'], $
-    molecules=[extinction, O_18_O, HNO3, O3, SO2], $
-    moleculeDerivatives=[extinction, HNO3, O3, SO2], $
+    molecules=[extinction, O_18_O, O3, SO2], $
+    moleculeDerivatives=[extinction, O3, SO2], $
     specificQuantities=[temperature_HR,totalextinctionr3], $
     /atmos_der, /temp_der, $
     phiWindow=100 profiles, /lockBins, $
@@ -73,6 +72,9 @@ begin Construct
 end Construct
 
 ;$Log$
+;Revision 1.3  2006/06/29 17:57:14  bill
+;tidied up the R3 model
+;
 ;Revision 1.2  2006/06/29 02:30:04  lambert
 ;corrections to handle totalextinctionr3
 ;
