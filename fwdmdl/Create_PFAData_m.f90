@@ -195,6 +195,7 @@ contains ! =====     Public Procedures     =============================
       ! Compute integral of filter shape, for normalization.  Should be 1.0,
       ! but maybe the input file didn't get normalized....
       call simps ( myFilter%filterShape, df, nfp, norm )
+      df = df / oversample
 
       ! Now, for all the molecules....
       do m = 1, size(molecules)
@@ -329,11 +330,13 @@ contains ! =====     Public Procedures     =============================
       real(r8) :: FRQ ! Frequency from filter grid
       real(rp), parameter :: h_over_2K = 0.5 * h_over_K
       integer :: I    ! Index for filling oversamples
-      real(r8) :: Temp(size(myFilter%filterGrid))
+      integer :: NQP  ! Number of quadrature points = (nfp-1)*oversample+1
+      real(r8) :: Temp(size(Shapes))
       ! Oversample the filter grid using linear interpolation
+      nqp = size(frqs)
       frqs(1) = myFilter%filterGrid(1)
       shapes(1) = myFilter%filterShape(1)
-      do f = 1+oversample, size(frqs), oversample
+      do f = 1+oversample, nqp, oversample
         frqs(f) = myFilter%filterGrid((f+oversample-1)/oversample)
         shapes(f) = myFilter%filterShape((f+oversample-1)/oversample)
         do i = 1, oversample-1
@@ -344,7 +347,7 @@ contains ! =====     Public Procedures     =============================
         end do ! i
       end do ! f
       ! Compute Beta and its derivatives
-      do f = 1, size(frqs)
+      do f = 1, nqp
         frq = frqs(f)
         beta(f) = 0.0
         call create_beta ( p, T, frq, slabs, &
@@ -353,16 +356,16 @@ contains ! =====     Public Procedures     =============================
       end do ! f
       ! Average.  Assumes filter grid's frequencies are evenly spaced.
       temp = beta * shapes
-      call simps ( temp, df, nfp, avg )
+      call simps ( temp, df, nqp, avg )
       pfaDatum%Absorption(tx,px) = log( avg / norm )
       temp = dBeta_dw * shapes
-      call simps ( temp, df, nfp, dAvg )  ! normalization cancels for derivs
+      call simps ( temp, df, nqp, dAvg )  ! normalization cancels for derivs
       pfaDatum%dAbsDwc(tx,px) = dAvg / avg ! d ln beta / d w = 1 / beta d beta / d w
       temp = dBeta_dn * shapes
-      call simps ( temp, df, nfp, dAvg )
+      call simps ( temp, df, nqp, dAvg )
       pfaDatum%dAbsDnc(tx,px) = dAvg / avg ! d ln beta / d n = 1 / beta d beta / d n
       temp = dBeta_dv * shapes
-      call simps ( temp, df, nfp, dAvg )
+      call simps ( temp, df, nqp, dAvg )
       pfaDatum%dAbsDnu(tx,px) = dAvg / avg ! d ln beta / d v = 1 / beta d beta / d v
     end subroutine Get_Beta_Etc
 
@@ -432,6 +435,9 @@ contains ! =====     Public Procedures     =============================
 end module Create_PFAData_m
 
 ! $Log$
+! Revision 2.20  2006/07/10 22:26:20  vsnyder
+! Integrate entire grid when oversampling
+!
 ! Revision 2.19  2006/07/08 01:14:17  vsnyder
 ! Don't create junk at end of oversampled arrays
 !
