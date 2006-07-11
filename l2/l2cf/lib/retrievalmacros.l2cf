@@ -503,7 +503,13 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 ;; These macros are used to fill a standard product's column abundance
 ;; (if required) and then directWrite both to the split DGG file for
 ;; later copying and reordering/repair
+;; As a special case, the H2O standard product will be stored at high resolution
 !define(storeStandardProductWithColumn,{!dnl
+!ifelse($1,{H2O}, {
+!define(theQuantity,{$1_hr})
+},{!dnl
+!define(theQuantity,{$1})
+})
 Begin Fill
 
   ;; Get our standard products back
@@ -517,31 +523,31 @@ Begin Fill
   Fill, quantity=state.tpPressure, method=wmoTropopause, $
     temperatureQuantity=state.temperature, refGPHQuantity=state.refGPH, $
     internalVgrid=vGridWMO
-  Fill, quantity=standardProducts.$1, method=vector, sourceQuantity=state.$1
-  Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1
-  Fill, quantity=state.column_$1, method=special, vmrQuantity=state.$1, $
+  Fill, quantity=standardProducts.!theQuantity, method=vector, sourceQuantity=state.!theQuantity
+  Fill, quantity=standardPrecision.!theQuantity, method=vector, sourceQuantity=outputPrecision.!theQuantity
+  Fill, quantity=state.column_$1, method=special, vmrQuantity=state.!theQuantity, $
     boundaryPressure=state.tpPressure
-  Fill, quantity=outputPrecision.column_$1, method=special, vmrQuantity=outputPrecision.$1, $
+  Fill, quantity=outputPrecision.column_$1, method=special, vmrQuantity=outputPrecision.!theQuantity, $
     boundaryPressure=state.tpPressure
 End Fill
 
 !ifdef(flagUseGEOS5PTrop,
 {!dnl
 begin Join
-  Label, quantity=state.$1, label='$1-StdProd'
+  Label, quantity=state.!theQuantity, label='$1-StdProd'
   Label, quantity=state.column_$1, label='$1-StdProd column-MLS'
   DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
-    source=state.$1, precision=outputPrecision.$1, $
-    status=otherDiagnostics.status$1, quality=otherDiagnostics.quality$1, $
+    source=state.!theQuantity, precision=outputPrecision.!theQuantity, $
+    status=otherDiagnostics.status!theQuantity, quality=otherDiagnostics.quality!theQuantity, $
     source=state.column_$1, precision=outputPrecision.column_$1
 End Join
 Begin Fill
 ;; ------------------------------------------ tpPressure (using GEOS5 grids)
   Fill, quantity=state.tpPressure, method=gridded, $
     sourceGrid=geos5EtaWMOPTrop
-  Fill, quantity=state.column_$1, method=special, vmrQuantity=state.$1, $
+  Fill, quantity=state.column_$1, method=special, vmrQuantity=state.!theQuantity, $
     boundaryPressure=state.tpPressure
-  Fill, quantity=outputPrecision.column_$1, method=special, vmrQuantity=outputPrecision.$1, $
+  Fill, quantity=outputPrecision.column_$1, method=special, vmrQuantity=outputPrecision.!theQuantity, $
     boundaryPressure=state.tpPressure
 End Fill
 begin Join
@@ -551,11 +557,11 @@ begin Join
 End Join
 },{!dnl
 begin Join
-  Label, quantity=state.$1, label='$1-StdProd'
+  Label, quantity=state.!theQuantity, label='$1-StdProd'
   Label, quantity=state.column_$1, label='$1-StdProd column'
   DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
-    source=state.$1, precision=outputPrecision.$1, $
-    status=otherDiagnostics.status$1, quality=otherDiagnostics.quality$1, $
+    source=state.!theQuantity, precision=outputPrecision.!theQuantity, $
+    status=otherDiagnostics.status!theQuantity, quality=otherDiagnostics.quality!theQuantity, $
     source=state.column_$1, precision=outputPrecision.column_$1
 End Join
 })
@@ -563,7 +569,16 @@ End Join
 
 ;; Perhaps all these special cases below means we shouldn't be
 ;; relying on a single definition here
+;;
+;; Certain standard products without columns will be stored
+;; at high resolutions
+;; in fact every one except IWC
 !define(storeStandardProductWithoutColumn,{!dnl
+!ifelse($1,{IWC}, {
+!define(theQuantity,{iwc})
+},{!dnl
+!define(theQuantity,{$1_hr})
+})
 Begin Fill
 
   ;; Get our standard products back
@@ -574,30 +589,31 @@ Begin Fill
 ; ---------------------------------------------- Perhaps do fancy stuff ----- 
 !ifelse($1,{GPH}, {
   ;; Do fancy things to make the GPH agree with the temperature
-  Fill, quantity=state.gph, method=hydrostatic, $
-    refGPHQuantity=standardProducts.refGPH, temperatureQuantity=state.temperature
+  Fill, quantity=state.!theQuantity, method=hydrostatic, $
+    refGPHQuantity=standardProducts.refGPH, temperatureQuantity=state.temperature_hr
   ;; Copy the flags over from temperature to GPH
-  Fill, quantity=standardDiagnostics.statusGPH, method=vector, $
-    sourceQuantity=standardDiagnostics.statusTemperature, /force
-  Fill, quantity=standardDiagnostics.qualityGPH, method=vector, $
-    sourceQuantity=standardDiagnostics.qualityTemperature, /force
+  Fill, quantity=standardDiagnostics.status!theQuantity, method=vector, $
+    sourceQuantity=standardDiagnostics.statusTemperature_hr, /force
+  Fill, quantity=standardDiagnostics.quality!theQuantity, method=vector, $
+    sourceQuantity=standardDiagnostics.qualityTemperature_hr, /force
 End Fill
 
 ;; Because we clobbered our outputPrecision.gph, let's fill it again
+;; (But did we clobber outputPrecision.gph_hr? Why not?)
 Begin Fill
-  Fill, quantity=outputPrecision.gph, method=gphPrecision, $
+  Fill, quantity=outputPrecision.!theQuantity, method=gphPrecision, $
     refGPHPrecisionquantity=outputPrecision.refGPH, $
-    tempPrecisionQuantity=outputPrecision.temperature
+    tempPrecisionQuantity=outputPrecision.temperature_hr
 
 }, $1,{RHI}, {
   ;; Do fancy things to make RHI agree with H2O and temperature
-  Fill, quantity=state.rhi, h2oQuantity=state.h2o, $
-    temperatureQuantity=state.temperature, method=RHIFromH2O, /dontMask
+  Fill, quantity=state.!theQuantity, h2oQuantity=state.h2o_hr, $
+    temperatureQuantity=state.temperature_hr, method=RHIFromH2O, /dontMask
   ;; And RHI precision
-  Fill, quantity=outputPrecision.rhi, $
-    h2oPrecisionQuantity=outputPrecision.h2o, $
-    tempPrecisionQuantity=outputPrecision.temperature, $
-    h2oQuantity=state.h2o, temperatureQuantity=state.temperature, $
+  Fill, quantity=outputPrecision.!theQuantity, $
+    h2oPrecisionQuantity=outputPrecision.h2o_hr, $
+    tempPrecisionQuantity=outputPrecision.temperature_hr, $
+    h2oQuantity=state.h2o_hr, temperatureQuantity=state.temperature_hr, $
     method=RHIPrecisionFromH2O, /dontMask
   ;; Keep the status and quality as they are, they should be identical
   ;; to those of H2O-190 which should be fine.
@@ -605,16 +621,16 @@ Begin Fill
 End Fill
 
 begin Join
-  Label, quantity=state.$1, label='$1-StdProd'
+  Label, quantity=state.!theQuantity, label='$1-StdProd'
 !ifelse($1,{Temperature}, {!dnl
   DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
-    source=state.$1, precision=outputPrecision.$1, $
-    status=otherDiagnostics.status$1, quality=otherDiagnostics.quality$1
+    source=state.!theQuantity, precision=outputPrecision.!theQuantity, $
+    status=otherDiagnostics.status!theQuantity, quality=otherDiagnostics.quality!theQuantity
 End Join
 Begin Fill
   ;; Also tpPressure; later to be copied into the temperature file
   Fill, quantity=state.tpPressure, method=wmoTropopause, $
-    temperatureQuantity=state.temperature, refGPHQuantity=state.refGPH, $
+    temperatureQuantity=state.temperature_hr, refGPHQuantity=state.refGPH, $
     internalVgrid=vGridWMO
 End Fill
 begin Join
@@ -651,8 +667,8 @@ begin Join
 },{
 ; RHI is the only normal stdProd without columns, which makes it special
   DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
-    source=state.$1, precision=outputPrecision.$1, $
-    status=otherDiagnostics.status$1, quality=otherDiagnostics.quality$1
+    source=state.!theQuantity, precision=outputPrecision.!theQuantity, $
+    status=otherDiagnostics.status!theQuantity, quality=otherDiagnostics.quality!theQuantity
 
 })
 End Join
@@ -742,6 +758,9 @@ Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusL
 })})
 
 ; $Log$
+; Revision 1.112  2006/07/07 23:14:12  pwagner
+; With flagUseGEOS5PTrop can directwrite two columns per speciesWithColumn
+;
 ; Revision 1.111  2006/06/09 20:47:54  pwagner
 ; Added SO2 to standard products (perhaps should be controlled by a flag)
 ;
