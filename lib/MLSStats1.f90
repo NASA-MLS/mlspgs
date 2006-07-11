@@ -90,6 +90,10 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
   
   type(Stat_T), save :: MLSStat
   
+  ! consider whether one of {"=" (default), "<", ">"}
+  ! when calculating %ages (and possibly rms, etc.)
+  character(len=1), public, save :: fillValueRelation = '='
+
   interface ALLSTATS
     module procedure allstats_d1r4, allstats_d2r4, allstats_d3r4
     module procedure allstats_d1r8, allstats_d2r8, allstats_d3r8
@@ -113,31 +117,37 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
   end interface
   
   interface mlsmin
+    module procedure mlsmin_d1int, mlsmin_d2int, mlsmin_d3int
     module procedure mlsmin_d1r4, mlsmin_d2r4, mlsmin_d3r4
     module procedure mlsmin_d1r8, mlsmin_d2r8, mlsmin_d3r8
   end interface
   
   interface mlsmax
+    module procedure mlsmax_d1int, mlsmax_d2int, mlsmax_d3int
     module procedure mlsmax_d1r4, mlsmax_d2r4, mlsmax_d3r4
     module procedure mlsmax_d1r8, mlsmax_d2r8, mlsmax_d3r8
   end interface
   
   interface mlsmean
+    module procedure mlsmean_d1int, mlsmean_d2int, mlsmean_d3int
     module procedure mlsmean_d1r4, mlsmean_d2r4, mlsmean_d3r4
     module procedure mlsmean_d1r8, mlsmean_d2r8, mlsmean_d3r8
   end interface
   
   interface mlsmedian
+    module procedure mlsmedian_d1int, mlsmedian_d2int, mlsmedian_d3int
     module procedure mlsmedian_d1r4, mlsmedian_d2r4, mlsmedian_d3r4
     module procedure mlsmedian_d1r8, mlsmedian_d2r8, mlsmedian_d3r8
   end interface
   
   interface mlsstddev
+    module procedure mlsstddev_d1int, mlsstddev_d2int, mlsstddev_d3int
     module procedure mlsstddev_d1r4, mlsstddev_d2r4, mlsstddev_d3r4
     module procedure mlsstddev_d1r8, mlsstddev_d2r8, mlsstddev_d3r8
   end interface
   
   interface mlsrms
+    module procedure mlsrms_d1int, mlsrms_d2int, mlsrms_d3int
     module procedure mlsrms_d1r4, mlsrms_d2r4, mlsrms_d3r4
     module procedure mlsrms_d1r8, mlsrms_d2r8, mlsrms_d3r8
   end interface
@@ -337,6 +347,276 @@ contains
             & doDump=doDump)
         endif
       end subroutine allstats_d3r8
+
+      ! ------------------- mlsmin_d1int -----------------------
+      function mlsmin_d1int(values, fillValue) result(iValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_MIN
+        ! Args
+        integer, dimension(:), intent(in)      :: values
+        integer                                :: iValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          iValue = mlsmin( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+        else
+          iValue = mlsmin( real(values, KINDVALUE) )
+        endif
+      end function mlsmin_d1int
+
+      ! ------------------- mlsmin_d2int -----------------------
+      function mlsmin_d2int(values, fillValue) result(iValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_MIN
+        ! Args
+        integer, dimension(:,:), intent(in)      :: values
+        integer                                :: iValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          iValue = mlsmin( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+        else
+          iValue = mlsmin( real(values, KINDVALUE) )
+        endif
+      end function mlsmin_d2int
+
+      ! ------------------- mlsmin_d3int -----------------------
+      function mlsmin_d3int(values, fillValue) result(iValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_MIN
+        ! Args
+        integer, dimension(:,:,:), intent(in)      :: values
+        integer                                :: iValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          iValue = mlsmin( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+        else
+          iValue = mlsmin( real(values, KINDVALUE) )
+        endif
+      end function mlsmin_d3int
+
+      ! ------------------- mlsmax_d1int -----------------------
+      function mlsmax_d1int(values, fillValue) result(iValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_max
+        ! Args
+        integer, dimension(:), intent(in)      :: values
+        integer                                :: iValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          iValue = mlsmax( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+        else
+          iValue = mlsmax( real(values, KINDVALUE) )
+        endif
+      end function mlsmax_d1int
+
+      ! ------------------- mlsmax_d2int -----------------------
+      function mlsmax_d2int(values, fillValue) result(iValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_max
+        ! Args
+        integer, dimension(:,:), intent(in)      :: values
+        integer                                :: iValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          iValue = mlsmax( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+        else
+          iValue = mlsmax( real(values, KINDVALUE) )
+        endif
+      end function mlsmax_d2int
+
+      ! ------------------- mlsmax_d3int -----------------------
+      function mlsmax_d3int(values, fillValue) result(iValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_max
+        ! Args
+        integer, dimension(:,:,:), intent(in)      :: values
+        integer                                :: iValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          iValue = mlsmax( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+        else
+          iValue = mlsmax( real(values, KINDVALUE) )
+        endif
+      end function mlsmax_d3int
+
+      ! ------------------- mlsmean_d1int -----------------------
+      function mlsmean_d1int(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_mean
+        ! Args
+        integer, dimension(:), intent(in)      :: values
+        real(KINDVALUE)                        :: rValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          rValue = mlsmean( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+        else
+          rValue = mlsmean( real(values, KINDVALUE) )
+        endif
+      end function mlsmean_d1int
+
+      ! ------------------- mlsmean_d2int -----------------------
+      function mlsmean_d2int(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_mean
+        ! Args
+        integer, dimension(:,:), intent(in)      :: values
+        real(KINDVALUE)                        :: rValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          rValue = mlsmean( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+        else
+          rValue = mlsmean( real(values, KINDVALUE) )
+        endif
+      end function mlsmean_d2int
+
+      ! ------------------- mlsmean_d3int -----------------------
+      function mlsmean_d3int(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_mean
+        ! Args
+        integer, dimension(:,:,:), intent(in)      :: values
+        real(KINDVALUE)                        :: rValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          rValue = mlsmean( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+        else
+          rValue = mlsmean( real(values, KINDVALUE) )
+        endif
+      end function mlsmean_d3int
+
+      ! ------------------- mlsstddev_d1int -----------------------
+      function mlsstddev_d1int(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_stddev
+        ! Args
+        integer, dimension(:), intent(in)      :: values
+        real(KINDVALUE)                        :: rValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          rValue = mlsstddev( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+        else
+          rValue = mlsstddev( real(values, KINDVALUE) )
+        endif
+      end function mlsstddev_d1int
+
+      ! ------------------- mlsstddev_d2int -----------------------
+      function mlsstddev_d2int(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_stddev
+        ! Args
+        integer, dimension(:,:), intent(in)      :: values
+        real(KINDVALUE)                        :: rValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          rValue = mlsstddev( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+        else
+          rValue = mlsstddev( real(values, KINDVALUE) )
+        endif
+      end function mlsstddev_d2int
+
+      ! ------------------- mlsstddev_d3int -----------------------
+      function mlsstddev_d3int(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_stddev
+        ! Args
+        integer, dimension(:,:,:), intent(in)      :: values
+        real(KINDVALUE)                        :: rValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          rValue = mlsstddev( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+        else
+          rValue = mlsstddev( real(values, KINDVALUE) )
+        endif
+      end function mlsstddev_d3int
+
+      ! ------------------- mlsmedian_d1int -----------------------
+      function mlsmedian_d1int(values, fillValue) result(iValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_median
+        ! Args
+        integer, dimension(:), intent(in)      :: values
+        integer                                :: iValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          iValue = mlsmedian( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+        else
+          iValue = mlsmedian( real(values, KINDVALUE) )
+        endif
+      end function mlsmedian_d1int
+
+      ! ------------------- mlsmedian_d2int -----------------------
+      function mlsmedian_d2int(values, fillValue) result(iValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_median
+        ! Args
+        integer, dimension(:,:), intent(in)      :: values
+        integer                                :: iValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          iValue = mlsmedian( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+        else
+          iValue = mlsmedian( real(values, KINDVALUE) )
+        endif
+      end function mlsmedian_d2int
+
+      ! ------------------- mlsmedian_d3int -----------------------
+      function mlsmedian_d3int(values, fillValue) result(iValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_median
+        ! Args
+        integer, dimension(:,:,:), intent(in)      :: values
+        integer                                :: iValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          iValue = mlsmedian( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+        else
+          iValue = mlsmedian( real(values, KINDVALUE) )
+        endif
+      end function mlsmedian_d3int
+
+      ! ------------------- mlsrms_d1int -----------------------
+      function mlsrms_d1int(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_rms
+        ! Args
+        integer, dimension(:), intent(in)      :: values
+        real(KINDVALUE)                        :: rValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          rValue = mlsrms( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+        else
+          rValue = mlsrms( real(values, KINDVALUE) )
+        endif
+      end function mlsrms_d1int
+
+      ! ------------------- mlsrms_d2int -----------------------
+      function mlsrms_d2int(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_rms
+        ! Args
+        integer, dimension(:,:), intent(in)      :: values
+        real(KINDVALUE)                        :: rValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          rValue = mlsrms( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+        else
+          rValue = mlsrms( real(values, KINDVALUE) )
+        endif
+      end function mlsrms_d2int
+
+      ! ------------------- mlsrms_d3int -----------------------
+      function mlsrms_d3int(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_rms
+        ! Args
+        integer, dimension(:,:,:), intent(in)      :: values
+        real(KINDVALUE)                        :: rValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          rValue = mlsrms( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+        else
+          rValue = mlsrms( real(values, KINDVALUE) )
+        endif
+      end function mlsrms_d3int
 
       ! ------------------- mlsmin_d1r4 -----------------------
       function mlsmin_d1r4(values, fillValue) result(rValue)
@@ -875,7 +1155,16 @@ contains
       nullify(xtab)
       if ( present(fillValue) ) then
         ! call findAll(values /= fillvalue, which, how_many=NX)
-        call findAll(.not. isFillValue(values, fillvalue), which, how_many=NX)
+        select case ( fillvaluerelation )
+        case ( '=' )
+          call findAll(.not. isFillValue(values, fillvalue), which, how_many=NX)
+        case ( '<' )
+          call findAll(values >= fillValue, which, how_many=NX)
+        case ( '>' )
+          call findAll(values <= fillValue, which, how_many=NX)
+        case default
+          call findAll(.not. isFillValue(values, fillvalue), which, how_many=NX)
+        end select
         if ( NX < 1 ) then
           call allocate_test(XTAB, 1, 'XTAB', moduleName)
           XTAB = fillValue
@@ -925,7 +1214,16 @@ contains
       nullify(xtab)
       if ( present(fillValue) ) then
         ! call findAll(values /= fillvalue, which, how_many=NX)
-        call findAll(.not. isFillValue(values, fillvalue), which, how_many=NX)
+        select case ( fillvaluerelation )
+        case ( '=' )
+          call findAll(.not. isFillValue(values, fillvalue), which, how_many=NX)
+        case ( '<' )
+          call findAll(values >= fillValue, which, how_many=NX)
+        case ( '>' )
+          call findAll(values <= fillValue, which, how_many=NX)
+        case default
+          call findAll(.not. isFillValue(values, fillvalue), which, how_many=NX)
+        end select
         if ( NX < 1 ) then
           call allocate_test(XTAB, 1, 'XTAB', moduleName)
           XTAB = fillValue
@@ -1011,6 +1309,9 @@ end module MLSStats1
 
 !
 ! $Log$
+! Revision 2.9  2006/07/11 00:22:16  pwagner
+! Most mls.. functions can take integer arrays
+!
 ! Revision 2.8  2006/03/08 01:13:38  pwagner
 ! Added median as statistical component
 !
