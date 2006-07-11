@@ -21,7 +21,8 @@ module DUMP_0
   use MLSFillValues, only : FilterValues, IsFinite, &
     & ReorderFillValues, ReplaceFillValues
   use MLSSets, only: FindAll
-  use MLSStats1, only: ALLSTATS
+  use MLSStats1, only: ALLSTATS, FILLVALUERELATION, &
+    & MLSMAX, MLSMEAN, MLSMIN, MLSSTDDEV
   use MLSStringLists, only: catLists, GetStringElement, NumStringElements
   use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
 
@@ -33,6 +34,10 @@ module DUMP_0
 
 !     (parameters)
 ! AfterSub                 character printed between row, col id and data
+! DONTDUMPIFALLEQUAL       don't dump every element of a constant array
+! FILTERFILLSFROMRMS       exclude fill values when calculating rms, etc.
+! FILLVALUERELATION        consider whether one of {"=" (default), "<", ">"}
+!                            when calculating %ages (and possibly rms, etc.)
 ! STATSONONELINE           stats, rms each printed on a single line
 
 !     (subroutines and functions)
@@ -110,7 +115,8 @@ module DUMP_0
   character, public, parameter :: AfterSub = '#'
   logical, public, save ::   DONTDUMPIFALLEQUAL = .true.
   logical, public, save ::   STATSONONELINE = .true.
-  character(len=1), public, save ::   RELATIONFORPCTAGES = '=' ! {'=','<','>'}
+  ! character(len=1), public, save ::   FILLVALUERELATION = '=' ! {'=','<','>'}
+  logical, public, save ::   FILTERFILLSFROMRMS = .false.
 
   logical, parameter ::   DEEBUG = .false.
   logical :: myStats, myRMS, myWholeArray
@@ -1807,9 +1813,9 @@ contains
     if ( equal+unequal < 1 ) return
       call output ( trim(name), advance='no' )
       call blanks( 1, advance='no' )
-      call output( RelationForPctages, advance='no' )
+      call output( fillvaluerelation, advance='no' )
       call output ( ', !', advance='no' )
-      call output( RelationForPctages, advance='no' )
+      call output( fillvaluerelation, advance='no' )
       call output ( ' (%) ', advance='no' )
       call output ( equal, advance='no' )
       call output ( ': ', advance='no' )
@@ -2024,6 +2030,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.61  2006/07/11 00:24:04  pwagner
+! use fillValue properly when computing rms etc.
+!
 ! Revision 2.60  2006/06/24 23:07:04  pwagner
 ! Changes to reduce memory footprint computing statistics
 !
