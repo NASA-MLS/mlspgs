@@ -492,7 +492,7 @@ begin Fill
   Fill, quantity=vReg.temperature, method=profile, $
     profileValues=[ 1mb:1K ]
   Fill, quantity=vReg.temperature_hr, method=profile, $
-    profileValues=[ 1mb:2.0K ]
+    profileValues=[ 1mb:0.5K ]
   Fill, quantity=vReg.o2, method=profile, $
     profileValues=[ 1mb:1000ppmv ]
 
@@ -595,6 +595,9 @@ begin Join
 end Join
   })
 ;$Log$
+;Revision 1.113  2006/07/07 00:02:36  bill
+;initial stab at H2O_HR smoothing
+;
 ;Revision 1.112  2006/06/29 23:34:10  lambert
 ;changed vReg and hReg for totalextinction species
 ;
