@@ -25,6 +25,14 @@
       if ( .not. all(isfinite(array)) ) then
         call output(trim(name) //'   (NaNs found in array--skipped) ', &
           & advance='yes')
+      elseif ( filterFillsFromRMS ) then
+        call output(trim(name) //'   (NaNs found in array--skipped) ', &
+          & advance='yes')
+      elseif ( present(fillValue) ) then
+        call printRMSetc ( Name, mlsmin(array, fillValue), &
+          & mlsmax(array, fillValue), &
+          & mlsstddev(array, fillValue), &
+          & mlsmean(array, fillValue)  )
       else
         call printRMSetc ( Name, minval(array), maxval(array), &
           & sqrt(sum(array*array)/(size(array)+0.)), &
@@ -33,7 +41,7 @@
     endif
     if ( myStats ) then
       ! Count how many meet our desired relationship w.r.t. FillValue
-      select case ( RelationForPctages )
+      select case ( fillvaluerelation )
       case ( '=' )
         numNonFill = count(array /= myFillValue)
       case ( '<' )
@@ -60,6 +68,9 @@
       endif
     endif
 ! $Log$
+! Revision 2.10  2006/07/11 00:23:28  pwagner
+! use fillValue properly when computing rms etc.
+!
 ! Revision 2.9  2006/06/09 18:50:12  pwagner
 ! Avoid dumping an entire array if all elements the same
 !
