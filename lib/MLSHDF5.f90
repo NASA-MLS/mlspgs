@@ -27,6 +27,7 @@ module MLSHDF5
   use MLSCommon, only: MLSFile_T
   use MLSDataInfo, only: MLSDataInfo_T, Query_MLSData
   use MLSFiles, only: HDFVERSION_5, INITIALIZEMLSFILE
+  use MLSKinds, only: r8
   use MLSStringLists, only: NumStringElements, StringElement
   ! To switch to/from hdfeos5.1.6(+) uncomment next line
   use H5LIB, ONLY: h5open_f, h5close_f
@@ -114,7 +115,7 @@ module MLSHDF5
 ! DumpHDF5Attributes (int locID, [char names], [char groupName], [char DSName],
 !    [log stats], [log rms])
 ! DumpHDF5DS (int locID, char groupame, [char names],
-!    [log stats], [log rms])
+!    [real fillValue], [log stats], [log rms])
 ! GetAllHDF5AttrNames (int itemID, char DSNames)
 ! GetAllHDF5DSNames (file, char gname, char DSNames)
 !     file can be one of:
@@ -453,12 +454,13 @@ contains ! ======================= Public Procedures =========================
   end subroutine DumpHDF5Attributes
   
   ! -------------------------------  DumpHDF5DS  -----
-  subroutine DumpHDF5DS ( locID, groupName, names, stats, rms )
+  subroutine DumpHDF5DS ( locID, groupName, names, fillValue, stats, rms )
     ! Dump datasets in groupID
     ! All of them or only those in names string list
     integer, intent(in)                     :: locID ! file or groupID
     character(len=*), intent(in)            :: groupName ! datasets in group
     character (len=*), intent(in), optional :: NAMES   ! only these names
+    real, intent(in), optional              :: fillValue ! Show % = fill
     logical, intent(in), optional           :: stats ! Show % = fill
     logical, intent(in), optional           :: rms ! Show rms, min, max
 
@@ -531,17 +533,29 @@ contains ! ======================= Public Procedures =========================
         case ( 3 )
           call allocate_test( iValue, dims(1), dims(2), dims(3), 'iValue', ModuleName )
           call LoadFromHDF5DS ( groupID, name, iValue )
-          call dump ( iValue, trim(name), stats=stats, rms=rms )
+          if ( present(fillvalue) ) then
+            call dump ( iValue, trim(name), fillValue=int(fillvalue), stats=stats, rms=rms )
+          else
+            call dump ( iValue, trim(name), stats=stats, rms=rms )
+          endif
           call deallocate_test( iValue, 'iValue', ModuleName )
         case ( 2 )
           call allocate_test( iValue, dims(1), dims(2), 1, 'iValue', ModuleName )
           call LoadFromHDF5DS ( groupID, name, iValue(:,:,1) )
-          call dump ( iValue(:,:,1), trim(name), stats=stats, rms=rms )
+          if ( present(fillvalue) ) then
+            call dump ( iValue(:,:,1), trim(name), fillValue=int(fillvalue), stats=stats, rms=rms )
+          else
+            call dump ( iValue(:,:,1), trim(name), stats=stats, rms=rms )
+          endif
           call deallocate_test( iValue, 'iValue', ModuleName )
         case default
           call allocate_test( iValue, dims(1), 1, 1, 'iValue', ModuleName )
           call LoadFromHDF5DS ( groupID, name, iValue(:,1,1) )
-          call dump ( iValue(:,1,1), trim(name), stats=stats, rms=rms )
+          if ( present(fillvalue) ) then
+            call dump ( iValue(:,1,1), trim(name), fillValue=int(fillvalue), stats=stats, rms=rms )
+          else
+            call dump ( iValue(:,1,1), trim(name), stats=stats, rms=rms )
+          endif
           call deallocate_test( iValue, 'iValue', ModuleName )
          end select
       case ( 'double', 'real' )
@@ -549,17 +563,29 @@ contains ! ======================= Public Procedures =========================
         case ( 3 )
           call allocate_test( dValue, dims(1), dims(2), dims(3), 'dValue', ModuleName )
           call LoadFromHDF5DS ( groupID, name, dValue )
-          call dump ( dValue, trim(name), stats=stats, rms=rms )
+          if ( present(fillvalue) ) then
+            call dump ( dValue, trim(name), fillValue=real(fillvalue, r8), stats=stats, rms=rms )
+          else
+            call dump ( dValue, trim(name), stats=stats, rms=rms )
+          endif
           call deallocate_test( dValue, 'dValue', ModuleName )
         case ( 2 )
           call allocate_test( dValue, dims(1), dims(2), 1, 'dValue', ModuleName )
           call LoadFromHDF5DS ( groupID, name, dValue(:,:,1) )
-          call dump ( dValue(:,:,1), trim(name), stats=stats, rms=rms )
+          if ( present(fillvalue) ) then
+            call dump ( dValue(:,:,1), trim(name), fillValue=real(fillvalue, r8), stats=stats, rms=rms )
+          else
+            call dump ( dValue(:,:,1), trim(name), stats=stats, rms=rms )
+          endif
           call deallocate_test( dValue, 'dValue', ModuleName )
         case default
           call allocate_test( dValue, dims(1), 1, 1, 'dValue', ModuleName )
           call LoadFromHDF5DS ( groupID, name, dValue(:,1,1) )
-          call dump ( dValue(:,1,1), trim(name), stats=stats, rms=rms )
+          if ( present(fillvalue) ) then
+            call dump ( dValue(:,1,1), trim(name), fillValue=real(fillvalue, r8), stats=stats, rms=rms )
+          else
+            call dump ( dValue(:,1,1), trim(name), stats=stats, rms=rms )
+          endif
           call deallocate_test( dValue, 'dValue', ModuleName )
          end select
       case ( 'character' )
@@ -5411,6 +5437,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.67  2006/07/11 00:24:36  pwagner
+! use fillValue properly when computing rms etc.
+!
 ! Revision 2.66  2006/06/29 20:38:20  pwagner
 ! Added a few extra error checks
 !
