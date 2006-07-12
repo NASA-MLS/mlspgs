@@ -235,7 +235,7 @@ contains
     ! Dummy arguments
     CHARACTER (LEN=*), INTENT(OUT)                :: outList
     CHARACTER (LEN=*), DIMENSION(:), INTENT(IN)   :: inArray
-    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)       :: inseparator
+    character (len=*), optional, intent(in)       :: inseparator
     INTEGER, DIMENSION(:), OPTIONAL, INTENT(IN)   :: ordering
     CHARACTER (LEN=1), OPTIONAL, INTENT(IN)       :: leftRight
 
@@ -452,7 +452,7 @@ contains
     !--------Argument--------!
     character (len=*), intent(in) :: STR1
     integer, intent(in)           :: INT
-    character (len=1), optional, intent(in)       :: inseparator
+    character (len=*), optional, intent(in)       :: inseparator
     character (len=len(str1)+9) :: OUTSTR
 
     !----------Local vars----------!
@@ -485,7 +485,7 @@ contains
     !--------Argument--------!
     character (len=*), intent(in)                 :: STR1
     integer, dimension(:), intent(in)             :: INTS
-    character (len=1), optional, intent(in)       :: inseparator
+    character (len=*), optional, intent(in)       :: inseparator
     character (len=len(str1)+8*size(ints))        :: OUTSTR, TMPSTR
 
     !----------Local vars----------!
@@ -511,7 +511,7 @@ contains
     !--------Argument--------!
     character (len=*), intent(in) :: STR1
     character (len=*), intent(in) :: STR2
-    character (len=1), optional, intent(in)       :: inseparator
+    character (len=*), optional, intent(in)       :: inseparator
     character (len=len(str1)+len(str2)+1) :: OUTSTR
 
     !----------Local vars----------!
@@ -848,7 +848,7 @@ contains
     CHARACTER (LEN=*), INTENT(OUT)  :: outElement
     INTEGER(i4), INTENT(IN)         :: nElement 	! Entry number to return
     LOGICAL, INTENT(IN)   :: countEmpty
-    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)   :: inseparator
+    character (len=*), optional, intent(in)       :: inseparator
 
     ! Local variables
     INTEGER(i4) :: i           ! Loop counters
@@ -933,7 +933,7 @@ contains
     character (len=*), intent(in)             :: key
     integer, intent(out)                      :: value
     logical, intent(in)                       :: countEmpty
-    character (len=1), optional, intent(in)   :: inseparator
+    character (len=*), optional, intent(in)       :: inseparator
     logical, optional, intent(in)             :: part_match
 
     ! Local variables
@@ -972,7 +972,7 @@ contains
     character (len=*), intent(in)             :: key
     logical, intent(out)                      :: value
     logical, intent(in)                       :: countEmpty
-    character (len=1), optional, intent(in)   :: inseparator
+    character (len=*), optional, intent(in)       :: inseparator
     logical, optional, intent(in)             :: part_match
 
     ! Local variables
@@ -1031,7 +1031,7 @@ contains
     CHARACTER (LEN=*), INTENT(IN)   :: key
     CHARACTER (LEN=*), INTENT(OUT)  :: outElement
     LOGICAL, INTENT(IN)   :: countEmpty
-    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)   :: inseparator
+    character (len=*), optional, intent(in)       :: inseparator
     LOGICAL, OPTIONAL, INTENT(IN)             :: part_match
 
     ! Local variables
@@ -1172,7 +1172,7 @@ contains
     CHARACTER (LEN=*), intent(out) :: outstr
     INTEGER :: noUnique ! Number of unique entries
     LOGICAL, INTENT(IN)                           :: countEmpty
-    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)       :: inseparator
+    character (len=*), optional, intent(in)       :: inseparator
     LOGICAL, OPTIONAL, INTENT(IN)       :: IgnoreLeadingSpaces
     CHARACTER (LEN=*), OPTIONAL, INTENT(IN)       :: str2
     CHARACTER (LEN=*), OPTIONAL, INTENT(IN)       :: fillValue
@@ -1445,7 +1445,7 @@ contains
     CHARACTER (LEN=*), INTENT(IN)                 :: inList
     CHARACTER (LEN=*), DIMENSION(:), INTENT(OUT)  :: outArray
     LOGICAL, INTENT(IN)                           :: countEmpty
-    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)       :: inseparator
+    character (len=*), optional, intent(in)       :: inseparator
     LOGICAL, OPTIONAL, INTENT(IN)                 :: IgnoreLeadingSpaces
 
     ! Local variables
@@ -1504,7 +1504,7 @@ contains
     CHARACTER (LEN=*), INTENT(IN)             :: inList
     LOGICAL, INTENT(IN)                       :: countEmpty
 	 INTEGER                                   :: nElements
-    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)   :: inseparator
+    character (len=*), optional, intent(in)       :: inseparator
     INTEGER, OPTIONAL, INTENT(OUT)            :: LongestLen  ! Length of longest
 
     ! Local variables
@@ -1566,7 +1566,7 @@ contains
     character (len=*), intent(in)             :: key
     integer, intent(in)                       :: value
     logical, intent(in)                       :: countEmpty
-    character (len=1), optional, intent(in)   :: inseparator
+    character (len=*), optional, intent(in)       :: inseparator
     logical, optional, intent(in)             :: part_match
 
     ! Local variables
@@ -1604,7 +1604,7 @@ contains
     character (len=*), intent(in)             :: key
     logical, intent(in)                       :: value
     logical, intent(in)                       :: countEmpty
-    character (len=1), optional, intent(in)   :: inseparator
+    character (len=*), optional, intent(in)       :: inseparator
     logical, optional, intent(in)             :: part_match
 
     ! Local variables
@@ -1666,7 +1666,7 @@ contains
     character (len=*), intent(in)      :: key
     character (len=*), intent(in)      :: elem
     logical, intent(in)   :: countEmpty
-    character (len=1), optional, intent(in)   :: inseparator
+    character (len=*), optional, intent(in)       :: inseparator
     logical, optional, intent(in)             :: part_match
 
     ! Local variables
@@ -1704,7 +1704,7 @@ contains
     CHARACTER (LEN=*), INTENT(IN) :: inList
     CHARACTER (LEN=*), INTENT(IN) :: elem
     CHARACTER (LEN=*), INTENT(OUT)                :: outList
-    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)       :: inseparator
+    character (len=*), optional, intent(in)       :: inseparator
     ! Method:
     ! Prepend elem onto start of list, make it unique,
     ! Then snip it back off
@@ -1744,7 +1744,7 @@ contains
     CHARACTER (LEN=*), INTENT(IN) :: inList
     CHARACTER (LEN=*), INTENT(IN) :: exclude ! What to exclude
     CHARACTER (LEN=*), INTENT(OUT)                :: outList
-    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)       :: inseparator
+    character (len=*), optional, intent(in)       :: inseparator
     ! Method:
     ! Repeatedly call RemoveElemFromList for each elem of exclude
     !----------Local vars----------!
@@ -1776,7 +1776,7 @@ contains
     character (len=*), intent(in) :: inlist
     integer          , intent(in) :: nElement
     character (len=*), intent(out)                :: outList
-    character (len=1), optional, intent(in)       :: inseparator
+    character (len=*), optional, intent(in)       :: inseparator
     ! Method:
     ! Loop through list, forming new one
     !----------Local vars----------!
@@ -2015,7 +2015,7 @@ contains
     !--------Argument--------!
     CHARACTER (LEN=*), INTENT(IN) :: str
     CHARACTER (LEN=LEN(str)) :: outstr
-    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)   :: inseparator
+    character (len=*), optional, intent(in)       :: inseparator
 
     !----------Local vars----------!
     INTEGER(i4) :: i, istr, irev, elem, iBuf
@@ -2386,7 +2386,7 @@ contains
     INTEGER, DIMENSION(:), INTENT(OUT)            :: outArray
     LOGICAL, INTENT(IN)                           :: CaseSensitive
     LOGICAL, INTENT(IN)                           :: countEmpty
-    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)       :: inseparator
+    character (len=*), optional, intent(in)       :: inseparator
     CHARACTER (LEN=*), OPTIONAL, INTENT(OUT)      :: sortedList
     LOGICAL, OPTIONAL, INTENT(IN)                 :: IgnoreLeadingSpaces
     CHARACTER (LEN=1), OPTIONAL, INTENT(IN)       :: leftRight
@@ -2468,7 +2468,7 @@ contains
     CHARACTER (LEN=*), INTENT(IN)   :: inList
     INTEGER(i4), INTENT(IN)         :: nElement 	! Entry number to return
     LOGICAL, INTENT(IN)   :: countEmpty
-    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)   :: inseparator
+    character (len=*), optional, intent(in)       :: inseparator
     CHARACTER (LEN=len(inList))  :: outElement
 
     ! Local variables
@@ -2529,7 +2529,7 @@ contains
     CHARACTER (LEN=*), INTENT(IN)             :: test_string
     LOGICAL, INTENT(IN)                       :: countEmpty
 	 INTEGER                                   :: elem
-    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)   :: inseparator
+    character (len=*), optional, intent(in)       :: inseparator
     LOGICAL, OPTIONAL, INTENT(IN)             :: part_match
 
     ! Local variables
@@ -2868,6 +2868,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.23  2006/07/12 20:37:44  pwagner
+! inseparator may be any length; even 0
+!
 ! Revision 2.22  2006/04/21 23:57:05  pwagner
 ! Small correction to comments on api for SwitchDetail
 !
