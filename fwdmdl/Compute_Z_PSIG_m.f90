@@ -54,7 +54,6 @@ contains
     real(rp), dimension(:), pointer :: Tan_Press  ! Pressures at tangent points in z_psig
 
   ! Local variables
-    integer :: I, J
     integer :: SPS_I
     integer :: Z_All_Prev, Z_All_Size
     real(rp), dimension(:), pointer :: Z_all  ! mass storage of representation
@@ -139,6 +138,9 @@ contains
 end module Compute_Z_PSIG_m
 
 ! $Log$
+! Revision 2.2  2006/07/12 20:52:57  vsnyder
+! Remove declarations for unused variables
+!
 ! Revision 2.1  2006/07/07 17:54:56  vsnyder
 ! Initial commit
 !
