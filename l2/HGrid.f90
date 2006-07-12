@@ -51,7 +51,7 @@ contains ! =====     Public Procedures     =============================
   ! -----------------------------------  CreateHGridFromMLSCFInfo  -----
   type(hGrid_T) function CreateHGridFromMLSCFInfo &
     & ( name, root, filedatabase, l2gpDatabase, processingRange, chunk, &
-    & suppressGeometryDump ) result ( hGrid )
+    & onlyComputingOffsets ) result ( hGrid )
 
     use Chunks_m, only: MLSChunk_T
     use EXPR_M, only: EXPR
@@ -84,7 +84,8 @@ contains ! =====     Public Procedures     =============================
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
     type (L2GPData_T), pointer, dimension(:) :: L2GPDATABASE
     type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
-    logical, intent(in), optional :: SUPPRESSGEOMETRYDUMP
+    ! logical, intent(in), optional :: SUPPRESSGEOMETRYDUMP
+    logical, intent(in), optional :: onlyComputingOffsets
     type (MLSChunk_T), intent(in) :: CHUNK ! The chunk
 
     ! Local variables
@@ -133,7 +134,8 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
     mySuppressGeometryDump = .false.
-    if ( present ( suppressGeometryDump ) ) mySuppressGeometryDump = suppressGeometryDump
+    if ( present ( onlyComputingOffsets ) ) &
+      & mySuppressGeometryDump = onlyComputingOffsets
 
     L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
     if ( .not. associated(L1BFile) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -261,7 +263,8 @@ contains ! =====     Public Procedures     =============================
       else
         call CreateRegularHGrid ( filedatabase, processingRange, chunk, &
           & spacing, origin, trim(instrumentModuleName), forbidOverspill, &
-          & maxLowerOverlap, maxUpperOverlap, insetOverlaps, single, hGrid )
+          & maxLowerOverlap, maxUpperOverlap, insetOverlaps, single, hGrid, &
+          & onlyComputingOffsets )
       end if
 
     case ( l_l2gp) ! -------------------- L2GP ------------------------
@@ -695,7 +698,8 @@ contains ! =====     Public Procedures     =============================
   ! -----------------------------------------  CreateRegularHGrid  -----
   subroutine CreateRegularHGrid ( filedatabase, processingRange, chunk, &
     & spacing, origin, instrumentModuleName, forbidOverspill, &
-    & maxLowerOverlap, maxUpperOverlap, insetOverlaps, single, hGrid )
+    & maxLowerOverlap, maxUpperOverlap, insetOverlaps, single, hGrid, &
+    & onlyComputingOffsets )
 
     ! Creates an HGrid with coordinates laid out in
     ! a regular spacing w.r.t. master coordinate, phi, aka Geodetic Angle
@@ -739,6 +743,7 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in) :: INSETOVERLAPS
     logical, intent(in) :: SINGLE
     type (HGrid_T), intent(inout) :: HGRID ! Needs inout as name set by caller
+    logical, intent(in), optional :: onlyComputingOffsets
 
     ! Local variables/parameters
     real(rk), dimension(:,:), pointer :: ALLGEODANGLE ! For every mif
@@ -775,6 +780,8 @@ contains ! =====     Public Procedures     =============================
     logical :: PreV2Oh                  ! Old way (mean) or new (apparent)?
     integer :: RIGHT                     ! How many profiles to delete from the RHS in single
     real(rk), dimension(:), pointer :: TMPANGLE ! A temporary array for the single case
+    logical :: verbose
+    logical :: warnIfNoProfs
 
     real(rk) :: a
     real(rk) :: b
@@ -785,7 +792,13 @@ contains ! =====     Public Procedures     =============================
     ! Executable code
     nullify(OldMethodValues)
     deebughere = deebug .or. ( switchDetail(switches, 'hgrid') > 0 ) ! e.g., 'hgrid1' 
-
+    warnIfNoProfs = .false.
+    verbose = deebughere
+    if ( present(onlyComputingOffsets) ) then
+      verbose = .not. onlyComputingOffsets
+      warnIfNoProfs = onlyComputingOffsets
+      deebughere = deebug .or. ( switchDetail(switches, 'hgrid') > 1 ) ! e.g., 'hgrid2' 
+    endif
     if ( deebughere .and. .false.) then
       print *, 'Checking quadratic solution'
       do i=1, 10
@@ -943,7 +956,7 @@ contains ! =====     Public Procedures     =============================
       hGrid%phi(1,i) = first + (i-1)*spacing
     end do
 
-    if ( switchDetail(switches, 'hgrid') >= 0 .or. deebughere ) then
+    if ( verbose ) then
       call output ( 'Constructing regular hGrid ' )
       if ( hgrid%name /= 0 ) call display_string ( hgrid%name )
       call output ( '', advance='yes' )
@@ -1160,7 +1173,7 @@ contains ! =====     Public Procedures     =============================
     ! So we do a subtraction to get the number in the overlap.
     hGrid%noProfsUpperOverlap = hGrid%noProfs - hGrid%noProfsUpperOverlap
 
-    if ( switchDetail(switches, 'hgrid') >= 0 .or. deebughere ) then
+    if ( verbose ) then
       call output ( 'Initial Hgrid size: ' )
       call output ( hGrid%noProfs ) 
       call output ( ', overlaps: ' )
@@ -1188,7 +1201,7 @@ contains ! =====     Public Procedures     =============================
       end if
       ! if ( firstProfInRun > 0 .and. .not. ChunkDivideConfig%allowPriorOverlaps ) then
       if ( firstProfInRun > 0 ) then
-        if ( switchDetail(switches, 'hgrid') >= 0  .or. deebughere ) &
+        if ( verbose ) &
           & call output ( 'hGrid starts before run trimming start.', &
           & advance='yes' )
         call TrimHGrid ( hGrid, -1, firstProfInRun )
@@ -1204,7 +1217,7 @@ contains ! =====     Public Procedures     =============================
       end if
       ! if ( lastProfInRun < hGrid%noProfs .and. .not. ChunkDivideConfig%allowPostOverlaps ) then
       if ( lastProfInRun < hGrid%noProfs ) then
-        if ( switchDetail(switches, 'hgrid') >= 0  .or. deebughere ) &
+        if ( verbose ) &
           & call output ( 'hGrid ends after run trimming end.',&
           & advance='yes' )
         call TrimHGrid ( hGrid, 1, hGrid%noProfs-lastProfInRun )
@@ -1215,7 +1228,7 @@ contains ! =====     Public Procedures     =============================
     ! overlap regions around if necessary to deal with overspill.
     if ( hGrid%noProfsLowerOverlap+1 <= hGrid%noProfs ) then
       if ( hGrid%time(1,hGrid%noProfsLowerOverlap+1) < processingRange%startTime ) then
-        if ( switchDetail(switches, 'hgrid') >= 0  .or. deebughere ) &
+        if ( verbose ) &
           & call output ( &
           & 'Non overlapped part of hGrid starts before run, extending overlap.', &
           & advance='yes' )
@@ -1227,7 +1240,7 @@ contains ! =====     Public Procedures     =============================
     if ( hGrid%noProfs-hGrid%noProfsUpperOverlap >= 1 ) then
       if ( hGrid%time(1,hGrid%noProfs-hGrid%noProfsUpperOverlap) > &
         & processingRange%endTime ) then
-        if ( switchDetail(switches, 'hgrid') >= 0  .or. deebughere ) &
+        if ( verbose ) &
           & call output ( &
           & 'Non overlapped part of hGrid end after run, extending overlap.', &
           & advance='yes' )
@@ -1258,11 +1271,15 @@ contains ! =====     Public Procedures     =============================
     end if
 
     if ( hGrid%noProfs == 0 ) then
-      call MLSMessage ( MLSMSG_Warning, ModuleName, 'No profiles in hGrid' )
+      if ( warnIfNoProfs ) then
+        call MLSMessage ( MLSMSG_Warning, ModuleName, 'No profiles in hGrid' )
+      else
+        call MLSMessage ( MLSMSG_Error, ModuleName, 'No profiles in hGrid' )
+      end if
     end if
 
     ! Finally we're done.
-    if ( switchDetail(switches, 'hgrid') >= 0  .or. deebughere ) then
+    if ( verbose ) then
       call output ( 'Final Hgrid size: ' )
       call output ( hGrid%noProfs )
       call output ( ', overlaps: ' )
@@ -2040,7 +2057,7 @@ contains ! =====     Public Procedures     =============================
                   noHGrids = noHGrids + 1
                 else
                   dummyHGrid = CreateHGridFromMLSCFInfo ( 0, key, filedatabase, l2gpDatabase, &
-                    & processingRange, chunks(chunk), suppressGeometryDump=.true. )
+                    & processingRange, chunks(chunk), onlyComputingOffsets=.true. )
                   if ( chunk == 1 ) then
                     LowerOverlaps(hGrid) = dummyHGrid%noProfsLowerOverlap
                     if ( ChunkDivideConfig%allowPriorOverlaps .and. .false. ) then
@@ -2321,6 +2338,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.90  2006/07/12 20:42:30  pwagner
+! 0 profiles in an HGrid will stop unless computing offsets
+!
 ! Revision 2.89  2006/06/29 21:56:25  pwagner
 ! Some debugging stuff removed from routine processing
 !
