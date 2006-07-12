@@ -5505,6 +5505,7 @@ contains ! =====     Public Procedures     =============================
       ! Local variables
       integer                               :: BO_error
       type (l1bData_T)                      :: BO_stat
+      integer                               :: channel
       character (len=132)                   :: MODULENAMESTRING
       character (len=132)                   :: NAMESTRING
       integer                               :: FLAG, NOMAFS, maxMIFs
@@ -5668,8 +5669,31 @@ contains ! =====     Public Procedures     =============================
         if ( isPrecision .and. myBOMask /= 0 .and. BO_error == 0 ) then
           noMAFs = size(l1bData%dpField, 3)
           maxMIFs = l1bData%maxMIFs
-          l1bData%dpField = NegativeIfBitPatternSet(l1bData%dpField, &
-            & BO_stat%intField(:, 1:maxMIFs, 1:noMAFs), myBOMask)
+          if ( switchDetail(switches, 'glob') > 0 ) then ! e.g., 'glob1'
+            call output ( 'Quantity shape:' )
+            call output ( quantity%template%instanceLen )
+            call output ( ' ( ' )
+            call output ( quantity%template%noChans )
+            call output ( ', ' )
+            call output ( quantity%template%noSurfs )
+            call output ( ' ), ' )
+            call output ( quantity%template%noInstances, advance='yes' )
+            call output ( 'L1B shape:' )
+            call output ( size ( l1bData%dpField, 1 ) )
+            call output ( ', ' )
+            call output ( size ( l1bData%dpField, 2 ) )
+            call output ( ', ' )
+            call output ( size ( l1bData%dpField, 3 ), advance='yes' )
+            call output_name_v_pair( 'shape' // trim(namestring), shape(l1bData%dpField) )
+            call output_name_v_pair( 'shape(BO_stat)', shape(BO_stat%intField) )
+            call output_name_v_pair( 'noMAFs', noMAFs )
+            call output_name_v_pair( 'maxMIFs', maxMIFs )
+          endif
+          do channel = 1, quantity%template%noChans
+          l1bData%dpField(channel,:,:) = &
+            & NegativeIfBitPatternSet( l1bData%dpField(channel,:,:), &
+            & BO_stat%intField(1, 1:maxMIFs, 1:noMAFs), myBOMask )
+          enddo
           call DeallocateL1BData(BO_stat)
         end if
 
@@ -7873,6 +7897,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.338  2006/07/12 20:41:16  pwagner
+! Fixed BO size mismatch that only NAG caught
+!
 ! Revision 2.337  2006/07/07 23:08:53  pwagner
 ! Fixed bug in filling from GEOS5-derived grid
 !
