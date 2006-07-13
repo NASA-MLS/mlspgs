@@ -12,6 +12,8 @@
 # -c          convert dates from yyyydoy to yyyy Month day
 # -d          show directory names
 # -x          show chunks, nodes that died
+# -D d1,d2,   ignore jobs in directories d1, d2 (declared "legally dead")
+# -Df file,   jobs in directories named in file are declared "legally dead"
 #   The following options carry an automatic restriction to running jobs
 # -r          show how many chunks running
 # -full       show full stats: running, completed, crashed, on deck, total
@@ -403,6 +405,29 @@ note_failures()
   done
 }
 
+#---------------------------- read_file_into_array
+#
+# read each line of stdin
+# catenating them into an array which we will return
+# Ignore any entries beginning with '#' character
+# In fact, only first entry in each line is kept
+# Possible improvements:
+#   Other comment signifiers
+#   Choose field number other than 1
+
+read_file_into_array()
+{
+  array_result=''
+  while read line; do
+    element=`echo $line | awk '$1 !~ /^#/ {print $1}'`
+    if [ "$element" != "" ]
+    then
+      array_result="$array_result $element"
+    fi
+  done
+  echo $array_result
+}
+      
 # ************
 # Main Program
 # ************
@@ -422,6 +447,7 @@ my_name=sipsl2
 I=sipsl2
 bug="no"
 convert="no"
+corpses=""
 dirnames="no"
 died="no"
 restrict="no"
@@ -460,6 +486,16 @@ while [ "$more_opts" = "yes" ] ; do
     -d )
 	    shift
        dirnames="yes"
+       ;;
+    -D )
+	    shift
+       corpses="$1"
+       shift
+       ;;
+    -Df )
+	    shift
+       corpses=`cat $1 | uniq | read_file_into_array`
+       shift
        ;;
     -x )
 	    shift
@@ -588,6 +624,14 @@ do
   then
     statbad=`tail $dir/exec_log/process.stderr | grep -i "terminated"`
   fi
+  if [ "$statbad" = "" -a "$corpses" != "" ]
+  then
+    statbad=`echo "$corpses" | grep -i "$dir"`
+    if [ "$statbad" != "" ]
+    then
+      statbad="legally dead"
+    fi
+  fi
   statnochunks=`tail $dir/exec_log/process.stdout | grep -i "No chunks were processed"`
   statpvmtrouble=`tail $dir/exec_log/process.stdout | grep -i "probably pvm trouble"`
   statgood=`tail $dir/exec_log/process.stdout | grep -i "catenating slave"`
@@ -642,12 +686,16 @@ do
     then
       statkilled=`echo "$statbad" | grep -i killed`
       statterminated=`echo "$statbad" | grep -i terminated`
+      statlegallydead=`echo "$statbad" | grep -i legally`
       if [ "$statkilled" != "" ]
       then
         newlist=`cat_args "$list" "killed" "\t"`
       elif [ "$statterminated" != "" ]
       then
         newlist=`cat_args "$list" "terminated" "\t"`
+      elif [ "$statlegallydead" != "" ]
+      then
+        newlist=`cat_args "$list" "legally dead" "\t"`
       else
         newlist=`cat_args "$list" "ended badly" "\t"`
       fi
@@ -755,6 +803,9 @@ do
 done
 exit 0
 # $Log$
+# Revision 1.13  2006/06/28 00:03:40  pwagner
+# Notes when jobs are terminated rather than completed normally
+#
 # Revision 1.12  2006/05/19 19:56:25  pwagner
 # Catches sign that a job was killed
 #

@@ -8,6 +8,8 @@
 # -C names      create status for clusters in names
 #                (e.g., "lightspeed speedracer")
 # -Cf file      choose clusters named in file
+# -D d1,d2,     ignore jobs in directories d1, d2 (declared "legally dead")
+# -Df file,     jobs in directories named in file are declared "legally dead"
 # -debug        print lots of extra stuff
 # -dryrun       don't run the sipsl2.sh script
 # -vn versions  show separate listings for versions
@@ -77,6 +79,8 @@ RECIPIENTS="pwagner David.T.Cuddy@jpl.nasa.gov ahanzel@mls.jpl.nasa.gov sysadmin
 MAILER="/home/pwagner/bin/mailtome.sh"
 # clusternames="lightspeed scramjet speedracer"
 clusternames="lightspeed speedracer"
+corpses=""
+corpsefile=""
 debug="no"
 me="$0"
 my_name=clusterstatus
@@ -100,6 +104,16 @@ while [ "$more_opts" = "yes" ] ; do
     -Cf )
 	    shift
        clusternames=`cat $1 | uniq | read_file_into_array`
+       shift
+       ;;
+    -D )
+	    shift
+       corpses="$1"
+       shift
+       ;;
+    -Df )
+	    shift
+       corpsefile="$1"
        shift
        ;;
     -dryrun )
@@ -193,6 +207,8 @@ then
   fi
 fi
 options="-c -bug -x"
+runningoptions="-c -full"
+pvmfailedoptions="-fail"
 
 if [ "$debug" = "yes" ]
 then
@@ -203,10 +219,26 @@ then
   echo "OUTPUT $OUTPUT"
   echo "mustrun $mustrun"
   echo "options $options"
+  echo "runningoptions $runningoptions"
+  echo "pvmfailedoptions $pvmfailedoptions"
   echo "versions $versions"
   echo "clusternames $clusternames"
+  echo "corpses $corpses"
+  echo "corpsefile $corpsefile"
   echo "MAILER $MAILER"
   echo "RECIPIENTS $RECIPIENTS"
+fi
+
+if [ "$corpses" != "" ]
+then
+  options="$options -D $corpses"
+  runningoptions="$runningoptions -D $corpses"
+  pvmfailedoptions="$pvmfailedoptions -D $corpses"
+elif [ "$corpsefile" != "" ]
+then
+  options="$options -Df $corpsefile"
+  runningoptions="$runningoptions -Df $corpsefile"
+  pvmfailedoptions="$pvmfailedoptions -Df $corpsefile"
 fi
 
 if [ "$mustrun" = "yes" ]
@@ -270,27 +302,29 @@ if [ "$mustrun" = "yes" ]
 then
   echo "Status of running jobs:" >> "$OUTPUT"
   # echo "/home/pwagner/bin/sipsl2.sh -c -full -t >> $OUTPUT"
-  /home/pwagner/bin/sipsl2.sh -c -full -t >> "$OUTPUT"
+  /home/pwagner/bin/sipsl2.sh $runningoptions >> "$OUTPUT"
   echo "" >> "$OUTPUT"
   echo "Nodes showing pvm failures:" >> "$OUTPUT"
   # echo "/home/pwagner/bin/sipsl2.sh -fail >> $OUTPUT"
-  /home/pwagner/bin/sipsl2.sh -fail >> "$OUTPUT"
+  /home/pwagner/bin/sipsl2.sh $pvmfailedoptions >> "$OUTPUT"
 else
   echo "Status of running jobs: >> $OUTPUT"
-  echo "/home/pwagner/bin/sipsl2.sh -c -full -t"
+  echo "/home/pwagner/bin/sipsl2.sh $runningoptions"
   echo ""
   echo "Nodes showing pvm failures: >> $OUTPUT"
-  echo "/home/pwagner/bin/sipsl2.sh -fail"
+  echo "/home/pwagner/bin/sipsl2.sh $pvmfailedoptions"
 fi
 
 if [ "$mail" = "yes" -a "$dryrun" != "yesyes" ]
 then
   $MAILER -r /home/pwagner/maillogs -s "clusterstatus $TODAY" \
-   -f "Paul Wagner <paul.a.wagner@jpl.nasa.gov>" -F -R "$RECIPIENTS" "$OUTPUT"
+   -F -R "$RECIPIENTS" "$OUTPUT"
+   # -f "Paul Wagner <paul.a.wagner@jpl.nasa.gov>" -F -R "$RECIPIENTS" "$OUTPUT"
 elif [ "$mail" = "yes" ]
 then
   $MAILER -r /home/pwagner/maillogs -s "clusterstatus $TODAY" \
-   -f "Paul Wagner <paul.a.wagner@jpl.nasa.gov>" -F -R "$RECIPIENTS" -dryrun "$OUTPUT"
+   -F -R "$RECIPIENTS" -dryrun "$OUTPUT"
+   # -f "Paul Wagner <paul.a.wagner@jpl.nasa.gov>" -F -R "$RECIPIENTS" -dryrun "$OUTPUT"
 elif [ "$scp" = "no" ]
 then
   exit 0
@@ -302,6 +336,9 @@ else
 fi
 exit 0
 # $Log$
+# Revision 1.8  2006/03/31 18:40:10  pwagner
+# Now able to read clusternames, RECIPIENTS, and versions from files
+#
 # Revision 1.7  2006/03/23 19:17:26  pwagner
 # Handles multiple pge versions explicitly
 #
