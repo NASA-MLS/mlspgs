@@ -13,25 +13,21 @@
 program l2auxdump ! dumps datasets, attributes from L2AUX files
 !=================================
 
-   use Dump_0, only: DUMP, RELATIONFORPCTAGES
-   use Hdf, only: DFACC_CREATE, DFACC_READ
-   use HDF5, only: h5fis_hdf5_f, &
-     & H5GCLOSE_F, H5GOPEN_F, H5DOPEN_F, H5DCLOSE_F, h5gcreate_f
-   use L1BData, only: L1BData_T, NAME_LEN, &
-     & DeallocateL1BData, Diff, ReadL1BData
-   use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
-   use MLSCommon, only: R8
-   use MLSFiles, only: FILENOTFOUND, WILDCARDHDFVERSION, &
-     & mls_exists, mls_hdf_version, mls_sfstart, mls_sfend, &
-     & HDFVERSION_4, HDFVERSION_5
+   use Dump_0, only: DUMP
+   use Hdf, only: DFACC_READ
+   use HDF5, only: h5fis_hdf5_f
+   use L1BData, only: NAME_LEN
+   use MACHINE, only: HP, GETARG
+   use MLSFiles, only: &
+     & mls_sfstart, mls_sfend, &
+     & HDFVERSION_5
    use MLSHDF5, only: DumpHDF5Attributes, DumpHDF5DS, &
      & GetAllHDF5AttrNames, GetAllHDF5DSNames, &
-     & IsHDF5AttributePresent, mls_h5open, mls_h5close
-   use MLSMessageModule, only: MLSMessageConfig, MLSMSG_Error, MLSMSG_Warning, &
+     & mls_h5open, mls_h5close
+   use MLSMessageModule, only: MLSMessageConfig, MLSMSG_Error, &
      & MLSMessage
-   use MLSStringLists, only: GetStringElement, NumStringElements
-   use MLSStrings, only: LOWERCASE, WriteIntsToChars
-   use output_m, only: resumeOutput, suspendOutput, output
+   use MLSStats1, only: fillValueRelation
+   use output_m, only: output
    use Time_M, only: Time_Now, time_config
    
    implicit none
@@ -54,15 +50,18 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
 ! LF95.Linux/test [options] [input files]
 
   type options_T
-    logical     :: verbose            = .false.
-    logical     :: la                 = .false.
-    logical     :: ls                 = .false.
-    logical     :: stats              = .false.
-    logical     :: rms                = .false.
-    character(len=128) :: DSName      = '' ! Extra dataset if attributes under one
-    character(len=128) :: root        = '/'
+    logical             :: verbose            = .false.
+    logical             :: la                 = .false.
+    logical             :: ls                 = .false.
+    logical             :: stats              = .false.
+    logical             :: rms                = .false.
+    logical             :: useFillValue       = .false.
+    character(len=128)  :: DSName      = '' ! Extra dataset if attributes under one
+    character(len=128)  :: root        = '/'
     character(len=1024) :: attributes = ''
     character(len=1024) :: datasets   = '*'
+    character(len=1)    :: fillValueRelation = '='
+    real                :: fillValue  = 0.e0
   end type options_T
   
   type ( options_T ) :: options
@@ -75,11 +74,10 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
   character(len=255) :: filename          ! input filename
   character(len=255), dimension(MAXFILES) :: filenames
   integer            :: n_filenames
-  integer     ::  i, count, status, error ! Counting indices & Error flags
+  integer     ::  i, status, error ! Counting indices & Error flags
   logical     :: is_hdf5
   character (len=MAXSDNAMESBUFSIZE) :: mySdList
   integer     :: sdfid1
-  character(len=16) :: string
   real        :: t1
   real        :: t2
   real        :: tFile
@@ -87,7 +85,7 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
   MLSMessageConfig%useToolkit = .false.
   MLSMessageConfig%logFileUnit = -1
   time_config%use_wall_clock = .true.
-  relationforpctages = '<' ! we want to know % chi^2 are < 1 (or whatever)
+  ! relationforpctages = '<' ! we want to know % chi^2 are < 1 (or whatever)
   CALL mls_h5open(error)
   n_filenames = 0
   do      ! Loop over filenames
@@ -107,6 +105,9 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
     stop
   endif
   if ( options%verbose ) call dumpSettings ( options, n_filenames, filenames ) 
+  if ( options%useFillValue ) then
+    fillValueRelation = options%fillValueRelation
+  endif
   call time_now ( t1 )
   do i=1, n_filenames
     call time_now ( tFile )
@@ -138,9 +139,15 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
       call MLSMessage ( MLSMSG_Error, ModuleName, &
       &  'Failed to open l2aux file ' // trim(filenames(i)) )
     end if
-    if ( options%datasets /= ' ' ) &
-      & call DumpHDF5DS ( sdfid1, trim(options%root), trim(options%datasets), &
-      & rms=options%rms, stats=options%stats )
+    if ( options%datasets /= ' ' ) then
+      if ( options%useFillValue ) then
+        call DumpHDF5DS ( sdfid1, trim(options%root), trim(options%datasets), &
+          & fillValue=options%fillValue, rms=options%rms, stats=options%stats )
+      else
+        call DumpHDF5DS ( sdfid1, trim(options%root), trim(options%datasets), &
+          & rms=options%rms, stats=options%stats )
+      endif
+    endif
     if ( options%attributes /= ' ' ) then
       if ( options%DSName /= ' ' ) then
         call DumpHDF5Attributes ( sdfid1, trim(options%attributes), &
@@ -170,7 +177,10 @@ contains
      print *, 'list datasets  ?    ', options%ls
      print *, 'stats  ?            ', options%stats  
      print *, 'rms    ?            ', options%rms    
+     print *, 'useFillValue  ?     ', options%rms    
      print *, 'root                ', options%root
+     print *, 'fillValue           ', options%fillValue
+     print *, 'fillValueRelation   ', options%fillValueRelation
      print *, 'DSName              ', options%DSName
      print *, 'attributes          ', options%attributes
      print *, 'datasets            ', options%datasets
@@ -236,6 +246,17 @@ contains
         call getarg ( i+1+hp, options%root )
         i = i + 1
         exit
+      else if ( filename(1:4) == '-fv ' ) then
+        call getarg ( i+1+hp, number )
+        read(number, *) options%fillValue
+        options%useFillValue = .true.
+        i = i + 1
+        exit
+      else if ( filename(1:5) == '-fvr ' ) then
+        call getarg ( i+1+hp, options%fillValueRelation )
+        options%useFillValue = .true.
+        i = i + 1
+        exit
       else if ( filename(1:3) == '-rd ' ) then
         call getarg ( i+1+hp, options%DSName )
         i = i + 1
@@ -287,6 +308,10 @@ contains
       write (*,*) '                             (default is group attributes at root)'
       write (*,*) '          -a a1,a2,..     => dump just attributes named a1,a2,..'
       write (*,*) '          -d d1,d2,..     => dump just datasets named a1,a2,..'
+      write (*,*) '          -fv value       => filter rms, % around value'
+      write (*,*) '          -fvr relation   => one of {"=","<",">"}'
+      write (*,*) '                              we filter values standing in'
+      write (*,*) '                              this relation with fillValue'
       write (*,*) '          -la             => just list attribute names in files'
       write (*,*) '          -ls             => just list sd names in files'
       write (*,*) '          -rms            => just print mean, rms'
@@ -314,6 +339,9 @@ end program l2auxdump
 !==================
 
 ! $Log$
+! Revision 1.2  2006/06/29 20:39:45  pwagner
+! Repaired a few bugs
+!
 ! Revision 1.1  2006/06/28 00:06:54  pwagner
 ! First commit
 !
