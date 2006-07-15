@@ -187,8 +187,10 @@ begin Fill
 
   ;; 500 ppbv too small in meso/thermosphere, 1 ppmv needed for extremes
   ;; in troposphere.  Was 500 ppbv everywhere.
-  Fill, quantity=aprioriPrecision.co,   method=profile, $
-    profileValues= [ 464mb : 500ppbv, 316mb : 1ppmv, 100mb : 1ppmv, 0.001mb : 100ppmv ]
+  Fill, quantity=aprioriPrecision.co, method=profile,$
+    profileValues= [ 100mb:50ppbv, 50mb : 0.1ppmv, 0.001mb : 3ppmv ]
+  ;Fill, quantity=aprioriPrecision.co,   method=profile, $
+  ;  profileValues= [ 464mb : 500ppbv, 316mb : 1ppmv, 100mb : 1ppmv, 0.001mb : 100ppmv ]
   Fill, quantity=aprioriPrecision.h2o, method=profile, profileValues = $
     [ 1000mb: 10000ppmv, 464mb : 10000ppmv, 316mb : 1500ppmv, $
       215mb : 300ppmv, 147mb : 300ppmv, 100mb : 3.0ppmv ]
@@ -454,8 +456,10 @@ begin Fill
     profileValues= [ 146mb:500pptv, 100mb:30pptv, 1mb:30pptv, 0.68mb:0pptv ]
   Fill, quantity=vReg.clo, method=profile, $
     profileValues= [ 1mb:0.3ppbv, 0.68mb:0ppbv ]
+;  Fill, quantity=vReg.co, method=profile, profileValues= $
+;    [ 10mb:30ppbv, 1mb:300ppbv, 0.1mb:3ppmv, 0.046mb:0ppmv ]
   Fill, quantity=vReg.co, method=profile, profileValues= $
-    [ 10mb:30ppbv, 1mb:300ppbv, 0.1mb:3ppmv, 0.046mb:0ppmv ]
+    [ 10mb:40ppbv, 1mb:0.1ppmv, 0.1mb:0.1ppmv, 0.01mb:0.3ppmv  ]
   Fill, quantity=vReg.co_hr, method=profile, profileValues= $
     [ 10mb:40ppbv, 1mb:0.1ppmv, 0.1mb:0.1ppmv, 0.01mb:0.3ppmv]
 
@@ -463,8 +467,8 @@ begin Fill
     [ 1000mb:500ppmv, 300mb:50ppmv, 215mb:20ppmv, 121mb:2ppmv, 100mb:0.6ppmv, $
 	0.1mb:0.3ppmv, 0.001mb:0ppmv ], logSpace=false
   Fill, quantity=vReg.h2o_hr, method=profile, profileValues= $
-    [ 1000mb:50ppmv, 300mb:100ppmv,215mb:50ppmv, 147mb:5ppmv,121mb: 1ppmv, $
-      100mb:0.3ppmv, 83mb:0.3ppmv, 0.1mb:0.3ppmv, 0.001mb:0ppmv ], $
+    [ 1000mb:50ppmv, 316mb:100ppmv,215mb:50ppmv, 147mb:5ppmv,121mb: 1ppmv, $
+      100mb:0.5ppmv, 83mb:0.3ppmv, 0.1mb:0.3ppmv, 0.001mb:0ppmv ], $
       logSpace=false
   Fill, quantity=vReg.RHiVmr, method=profile, profileValues= [ $
         681mb:10.0, 316mb:10.0, 215mb:10.0, 147mb:10.0]
@@ -595,6 +599,9 @@ begin Join
 end Join
   })
 ;$Log$
+;Revision 1.114  2006/07/11 17:05:40  lambert
+;reset vreg.temperature_hr=0.5K
+;
 ;Revision 1.113  2006/07/07 00:02:36  bill
 ;initial stab at H2O_HR smoothing
 ;
