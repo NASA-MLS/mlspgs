@@ -93,6 +93,7 @@ contains
     myNoError = .false.
     if ( present ( noError ) ) myNoError = noError
     if ( present ( wasSpecific ) ) wasSpecific = .false.
+    if ( present ( foundInFirst ) ) foundInFirst = .false.
     nullify ( GetQuantityForForwardModel )
 
     ! First see if we can simply revert to the simpler GetVectorQuantityByType
@@ -293,6 +294,9 @@ contains
 end module ForwardModelVectorTools
 
 ! $Log$
+! Revision 2.15  2006/07/17 20:06:37  livesey
+! Added initialization of foundInFirst
+!
 ! Revision 2.14  2005/06/22 18:08:18  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
