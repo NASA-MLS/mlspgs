@@ -116,7 +116,7 @@ module OUTPUT_M
   public :: stampOptions_T
 
   interface DUMPSIZE
-    module procedure DUMPSIZE_INTEGER, DUMPSIZE_REAL
+    module procedure DUMPSIZE_DOUBLE, DUMPSIZE_INTEGER, DUMPSIZE_REAL
   end interface
 
   interface OUTPUT
@@ -211,10 +211,8 @@ contains
     character(len=*), intent(in), optional :: ADVANCE
     character(len=1), intent(in), optional :: FILLCHAR  ! default is ' '
     logical, intent(in), optional          :: DONT_STAMP ! Prevent double-stamping
-    character(len=3) :: ADV
     character(len=*), parameter :: BLANKSPACE = &
     '                                                                    '
-    character(len=len(BlankSpace)) :: b
     integer :: I    ! Blanks to write in next WRITE statement
     logical :: lineup
     integer :: ntimes
@@ -239,7 +237,7 @@ contains
           ! n_blanks too short--just print blanks
           call pr_blanks ( n_blanks, advance=advance, dont_stamp=dont_stamp )
           return
-        endif
+        end if
         ntimes = (n_blanks-2)/patternLength
         ! In case we want latterns on consecutive lines to line up; viz
         ! a: . . . . . . Something
@@ -252,11 +250,11 @@ contains
           if ( mod(atColumnNumber, 2) /= 0 ) then
             call pr_blanks ( 1, advance='no' )
             numSoFar = 1
-          endif
+          end if
         else
           call pr_blanks ( 1, advance='no' )
           numSoFar = 1
-        endif
+        end if
         do i=1, ntimes
           call output ( pattern(2:patternLength+1), advance='no' )
           ! if ( xtraBlanks > 0 ) call pr_blanks ( xtraBlanks, advance='no' )
@@ -265,8 +263,8 @@ contains
         theRest = n_blanks - numSoFar
         if ( theRest > 0 ) call pr_blanks ( theRest, advance=advance, dont_stamp=dont_stamp )
         return
-      endif
-    endif
+      end if
+    end if
     call pr_blanks ( n_blanks, fillChar=fillChar, advance=advance, dont_stamp=dont_stamp )
   end subroutine BLANKS
 
@@ -292,7 +290,7 @@ contains
       ! but someday we may achieve that goal
       call output ( '', advance='yes', dont_stamp=dont_stamp )
       return
-    endif
+    end if
     n = max(n_blanks, 1)
     if ( present(fillChar)  ) then
       do i=1, min(n, len(BlankSpace))
@@ -311,6 +309,43 @@ contains
     end do
   end subroutine PR_BLANKS
 
+  ! ---------------------------------------------- DumpSize_double -----
+  subroutine DumpSize_double ( n, advance, units )
+    double precision, intent(in) :: N
+    character(len=*), intent(in), optional :: ADVANCE
+    real, intent(in), optional :: units
+    ! Local parameters
+    real, parameter :: KB = 1024.0
+    real, parameter :: MB = KB * 1024.0
+    real, parameter :: GB = MB * 1024.0
+    real, parameter :: TB = GB * 1024.0
+    real            :: myUnits
+    ! Make a 'nice' output
+    myUnits = 1.0
+    if ( present(units) ) myUnits = units
+    if ( myUnits == 0.0 ) then
+      call output ( n, format='(e12.1)' )
+      call output ( ' (illegal units)', advance=advance )
+      return
+    end if
+    if ( n < kb/myUnits ) then
+      call output ( n*myUnits, format='(f6.1)' )
+      call output ( ' bytes', advance=advance )
+    else if ( n < Mb/myUnits ) then
+      call output ( n*myUnits/kb, format='(f6.1)' )
+      call output ( ' kb', advance=advance )
+    else if ( n < Gb/myUnits ) then
+      call output ( n*myUnits/Mb, format='(f6.1)' )
+      call output ( ' Mb', advance=advance )
+    else if ( n < Tb/myUnits ) then
+      call output ( n*myUnits/Gb, format='(f6.1)' )
+      call output ( ' Gb', advance=advance )
+    else
+      call output ( n*myUnits/Tb, format='(f6.1)' )
+      call output ( ' Tb', advance=advance )
+    end if
+  end subroutine DumpSize_double
+
   ! --------------------------------------------- DumpSize_integer -----
   subroutine DumpSize_integer ( n, advance, units )
     integer, intent(in) :: N
@@ -321,7 +356,7 @@ contains
       call dumpSize ( n*1.0, advance=advance, units=units*1.0 )
     else
       call dumpSize ( n*1.0, advance=advance )
-    endif
+    end if
   end subroutine DumpSize_integer
 
   ! ------------------------------------------------ DumpSize_real -----
@@ -342,7 +377,7 @@ contains
       call output ( n, format='(e12.1)' )
       call output ( ' (illegal units)', advance=advance )
       return
-    endif
+    end if
     if ( n < kb/myUnits ) then
       call output ( n*myUnits, format='(f6.1)' )
       call output ( ' bytes', advance=advance )
@@ -424,11 +459,11 @@ contains
       if ( my_adv == 'yes' ) then
         stamped_chars = stamp(chars)
         stamped = .true.
-      endif
+      end if
     elseif( ATLINESTART ) then
       stamped_chars = stamp(chars)
       stamped = .true.
-    endif
+    end if
 
     n_chars = max(len(chars), 1)
     my_dont_log = outputOptions%skipmlsmsglogging ! .false.
@@ -481,14 +516,14 @@ contains
           write ( *, '(a)', advance='yes' ) trim(stamped_chars)
         elseif( outputOptions%prunit > 0 ) then
           write ( outputOptions%prunit, '(a)', advance='yes' ) trim(stamped_chars)
-        endif
-      endif
+        end if
+      end if
       if ( stamped ) then
         linesSinceLastStamp = 0
       else
         linesSinceLastStamp = linesSinceLastStamp + 1
-      endif
-    endif
+      end if
+    end if
     atColumnNumber = atColumnNumber + n_chars
     if ( atLineStart ) atColumnNumber = 1
   end subroutine OUTPUT_CHAR
@@ -563,7 +598,7 @@ contains
     if ( .not. present(msg) ) then
       my_adv = 'yes'
       if ( present(advance) ) my_adv = advance
-    endif
+    end if
     call date_and_time ( date=dateString, time=timeString )
     dateString = reFormatDate(trim(dateString), toForm=dateFormat)
     timeString = reFormatTime(trim(timeString), timeFormat)
@@ -994,15 +1029,15 @@ contains
     if ( .not. OLDUNITSTILLOPEN ) then
       call output( 'Unable to Revert output--old unit not open', advance='yes' )
       return
-    endif
+    end if
     call output( 'Reverting output to unit: ', advance='no' )
     call output( OLDUNIT, advance='yes' )
     if ( outputOptions%prunit > 0 ) then
       inquire( unit=outputOptions%prunit, opened=itsOpen )
       if ( itsOpen ) then
         close(outputOptions%prunit)
-      endif
-    endif
+      end if
+    end if
     outputOptions%prunit = OLDUNIT    
 
   end subroutine revertOutput
@@ -1059,17 +1094,17 @@ contains
       call output('Switching further output to: ', advance='no')
       call output(trim(filename), advance='yes')
       ! if ( PRUNIT > 0 ) switchUnit = PRUNIT
-    endif
+    end if
     if ( outputOptions%prunit > 0 .and. .not. dontCloseOldUnit ) then
       close(outputOptions%prunit)
       OLDUNIT = outputOptions%prunit
       OLDUNITSTILLOPEN = .false.
-    endif
+    end if
     if ( NeedToAppend ) then
       open( unit=switchUnit, file=filename, status='old', position='append' )
     else
       open( unit=switchUnit, file=filename, status='replace' )
-    endif
+    end if
     outputOptions%prunit = SwitchUnit
     NeedToAppend = .true.
   end subroutine switchOutput
@@ -1110,17 +1145,17 @@ contains
         call output_char(' (', ADVANCE='no', DONT_LOG=DONT_LOG, DONT_STAMP=DONT_STAMP)
         call OUTPUT_DATE_AND_TIME(date=.false., advance='no')
         call output_char(')', ADVANCE='yes', DONT_LOG=DONT_LOG, DONT_STAMP=DONT_STAMP)
-      endif
+      end if
     else
       if ( ATLINESTART ) then
         call output_char('(', ADVANCE='no', DONT_LOG=DONT_LOG, DONT_STAMP=DONT_STAMP)
         call OUTPUT_DATE_AND_TIME(date=.false., advance='no')
         call output_char(')', ADVANCE='no', DONT_LOG=DONT_LOG, DONT_STAMP=DONT_STAMP)
-      endif
+      end if
       call output_char( CHARS, &
         & ADVANCE, FROM_WHERE, DONT_LOG, &
         & LOG_CHARS, INSTEADOFBLANK, DONT_STAMP=DONT_STAMP )
-    endif
+    end if
   end subroutine timeStamp_char
 
   ! ------------------------------------------------  timeStamp_integer  -----
@@ -1156,16 +1191,16 @@ contains
         call output_char(' (', ADVANCE='no', DONT_STAMP=DONT_STAMP )
         call OUTPUT_DATE_AND_TIME(date=.false., advance='no')
         call output_char(')', ADVANCE='yes', DONT_STAMP=DONT_STAMP)
-      endif
+      end if
     else
       if ( ATLINESTART ) then
         call output_char('(', ADVANCE='no', DONT_STAMP=DONT_STAMP)
         call OUTPUT_DATE_AND_TIME(date=.false., advance='no')
         call output_char(')', ADVANCE='no', DONT_STAMP=DONT_STAMP)
-      endif
+      end if
       call output_integer( INT, PLACES, &
         & ADVANCE, FILL, FORMAT, BEFORE, AFTER, DONT_STAMP=DONT_STAMP )
-    endif
+    end if
   end subroutine timeStamp_integer
 
   ! Internal procedures
@@ -1238,7 +1273,7 @@ contains
         call MLSMessage ( MLSMSG_Error, ModuleName, &                     
           & 'Bad conversion to n in OUTPUT_xxxLE (format not "{defg}"' )  
       end if                                                              
-    endif                                                                 
+    end if                                                                 
     nplusm = n + m                                                        
   end function nCharsinFormat
 
@@ -1295,7 +1330,7 @@ contains
     else
       call MLSMessage ( MLSMSG_Error, ModuleName, &              
       & 'Not yet able to replace shorter substring with longer' ) 
-    endif
+    end if
   end subroutine ourReplaceSubString
 
   ! ----------------------------------------------  stamp  -----
@@ -1316,10 +1351,10 @@ contains
       & stamp = catStrings( stamp, dateString )
       if ( stampOptions%timeFormat /= ' ' ) &
       & stamp = catStrings( stamp, timeString )
-    endif
+    end if
     if ( stampOptions%textCode /= ' ' ) &
         & stamp = catStrings( stamp, stampOptions%textCode )
-    contains
+  contains
     function catStrings(a, b) result(c)
       ! Catenates strings a and b with intervening space
       ! if post then a before b
@@ -1331,7 +1366,7 @@ contains
         c = trim(a) // ' ' // b
       else
         c = trim(b) // ' ' // a
-      endif
+      end if
     end function catStrings
     
   end function stamp 
@@ -1349,6 +1384,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.52  2006/07/19 22:25:14  vsnyder
+! Add Dumpsize_Double, plus some cannonball polishing
+!
 ! Revision 2.51  2006/06/27 23:58:01  pwagner
 ! name_v_value works much better
 !
