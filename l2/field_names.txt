@@ -36,6 +36,7 @@ allHGrids
 allLines
 allLinesForRadiometer
 allLinesInCatalog
+allMatrices
 allPFA
 allQuantityTemplates
 allSignals
@@ -378,6 +379,7 @@ state
 status
 # step already in MLSSignals field set, so can't put it here, too
 stop
+structure
 superDiagonal
 surface
 swath
@@ -432,6 +434,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.169  2006/07/19 22:27:47  vsnyder
+# Add allMatrices and Structure fields
+#
 # Revision 2.168  2006/06/15 20:39:59  vsnyder
 # Add PFA oversampling
 #
