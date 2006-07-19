@@ -27,7 +27,11 @@ begin Fill
   ;; H2O_hr
   Fill, quantity=stateCore.H2O_hr, method=l2gp, $
     sourceL2GP=l2gpCoreH2OInput
-  
+
+  ;; O3
+  Fill, quantity=stateCore.O3, method=l2gp, $
+    sourceL2GP=l2gpCoreO3Input
+   
 
   ;; GPH_hr
   Fill, quantity=stateCore.GPH_hr, method=hydrostatic, refGPHQuantity=stateCore.refGPH, $
