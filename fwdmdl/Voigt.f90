@@ -101,8 +101,8 @@ contains
     real(rp), parameter :: FDer6(26) = (hn*FDer5+FDer4)/ri(6)
 
     ! For 2-pt Gauss-Hermite (we divide GW by Pi here)
-    real(rp), parameter :: gx = 0.70710678118655_rp ! 1.0/sqrt(2.0)
-    real(rp), parameter :: gw = 0.5_rp / sqrtPi
+!   real(rp), parameter :: gx = 0.70710678118655_rp ! 1.0/sqrt(2.0)
+!   real(rp), parameter :: gw = 0.5_rp / sqrtPi
 
     ! For 3-pt Gauss-Hermite (we divide GW3 by Pi here)
     real(rp), parameter :: gx3 = 1.22474487139158904909864203735_rp ! sqrt(6)/2
@@ -1071,6 +1071,9 @@ contains
 end module Voigt_M
 
 ! $Log$
+! Revision 2.8  2006/07/19 22:29:56  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.7  2005/07/06 02:12:44  vsnyder
 ! Added capability to compute derivatives in Simple_Voigt.  Added W_Asymp.
 !
