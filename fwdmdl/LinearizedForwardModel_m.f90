@@ -50,11 +50,10 @@ contains ! =====     Public Procedures     =============================
     use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T, &
       & FORWARDMODELINTERMEDIATE_T
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
-    use Intrinsic, only: LIT_INDICES
-    use Intrinsic, only: L_NONE, L_RADIANCE, L_TEMPERATURE, L_PTAN, L_VMR, &
+    use Intrinsic, only: L_RADIANCE, L_TEMPERATURE, L_PTAN, L_VMR, &
       & L_LIMBSIDEBANDFRACTION, L_ZETA, L_OPTICALDEPTH, L_LATITUDE, L_FIELDSTRENGTH, &
       & L_FIELDELEVATION, L_FIELDAZIMUTH
-    use L2PC_m, only: L2PCDATABASE, BINSELECTORS, POPULATEL2PCBIN
+    use L2PC_m, only: L2PCDATABASE, POPULATEL2PCBIN
     use ManipulateVectorQuantities, only: FINDONECLOSESTINSTANCE, &
       & DOHGRIDSMATCH, DOVGRIDSMATCH, DOFGRIDSMATCH
     use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
@@ -64,7 +63,7 @@ contains ! =====     Public Procedures     =============================
     use MLSCommon, only: r8, rm
     use MLSSignals_m, only: Signal_T, GetSidebandLoop, GetSignalName
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
-      & MLSMSG_Allocate, MLSMSG_Deallocate, MLSMSG_WARNING
+      & MLSMSG_Allocate
     use MLSNumerics, only: HUNT, INTERPOLATEVALUES
     use Molecules, only: L_EXTINCTION
     use Output_m, only: Output
@@ -73,9 +72,9 @@ contains ! =====     Public Procedures     =============================
     use Toggles, only: Emit, Levels, Toggle
     use Trace_m, only: Trace_begin, Trace_end
     use VectorsModule, only: assignment(=), OPERATOR(-), OPERATOR(+), &
-      & CLONEVECTOR, CONSTRUCTVECTORTEMPLATE, COPYVECTOR, CREATEVECTOR,&
+      & CLONEVECTOR,&
       & DESTROYVECTORINFO, GETVECTORQUANTITYBYTYPE, VECTOR_T, &
-      & VECTORVALUE_T, VECTORTEMPLATE_T, DUMP, &
+      & VECTORVALUE_T, DUMP, &
       & VALIDATEVECTORQUANTITY, M_LINALG, GETVECTORQUANTITYINDEXBYNAME
     use Sort_m, only: SORTP
 
@@ -128,7 +127,6 @@ contains ! =====     Public Procedures     =============================
 
     logical, dimension(:), pointer :: doChannel ! Do this channel?
 
-    real (r8) :: BESTCOST               ! Output from SelectL2PCBin
     real (r8) :: DELTAPHI               ! Difference in geod Angle in l2pc
 
     character (len=80) :: WORD          ! A word to output
@@ -180,7 +178,13 @@ contains ! =====     Public Procedures     =============================
     type(VectorValue_T), pointer :: THISYSTARQ ! Quantitiy from supplied YStar vector
 
     ! Executable code
-    if ( toggle(emit) ) call trace_begin ( 'LinearizedForwardModel' )
+
+    ! Identify the band/maf we're looking for
+
+    maf = fmStat%maf
+
+    if ( toggle(emit) ) &
+      & call trace_begin ( 'LinearizedForwardModel, MAF=', index=maf )
 
     nullify ( yPmapped, resultMapped, dyByDX )
     nullify ( dense, mifPointingsLower, mifPointingsUpper )
@@ -188,14 +192,6 @@ contains ! =====     Public Procedures     =============================
     nullify ( thisFraction, doChannel )
     nullify ( tangentTemperature )
 
-    ! Identify the band/maf we're looking for
-
-    maf = fmStat%maf
-
-    if ( toggle(emit) .and. levels(emit) > 0 ) then
-      call output ( 'Linear model doing maf: ' )
-      call output ( maf, advance='yes' )
-    end if
     if ( size ( fmConf%signals ) /= 1 ) call MLSMessage ( &
       & MLSMSG_Error, ModuleName, &
       & 'Can only have one signal for linearized models')
@@ -1150,6 +1146,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.61  2006/06/19 15:53:35  livesey
+! My first 'bug fix' was a mistake
+!
 ! Revision 2.60  2006/06/16 23:41:57  livesey
 ! Bug fix, if called twice on same band species derivatives doubled rather
 ! than rewritten

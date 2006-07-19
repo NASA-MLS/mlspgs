@@ -305,7 +305,7 @@ contains
 
     use Dump_0, only: Dump
     use ForwardModelConfig, only: LBL_T
-    use Intrinsic, only: L_RHi, Lit_Indices
+    use Intrinsic, only: Lit_Indices
     use MLSCommon, only: R8, RP, IP
     use O2_Abs_CS_m, only: O2_Abs_CS, D_O2_Abs_CS_dT
     use Output_m, only: Output
@@ -1195,6 +1195,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.88  2006/06/29 01:44:42  vsnyder
+! Add tracing
+!
 ! Revision 2.87  2006/04/11 18:32:41  vsnyder
 ! Add more dumps
 !
