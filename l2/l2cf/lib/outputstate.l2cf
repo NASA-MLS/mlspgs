@@ -80,6 +80,10 @@ Copy, type=l2gp, hdfVersion=!hdfVersion, $
     inputFile='!DGGFileName', swath='IWC3-StdProd', inputtype=l2dgg, $
     file='!l2gpFileName(IWC)', rename='IWC3'
 
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='IWP', inputtype=l2dgg, $
+    file='!l2gpFileName(IWC)'
+
 !ifdef(flagUseGEOS5PTrop,
 {!dnl
 Copy, type=l2gp, hdfVersion=!hdfVersion, $
