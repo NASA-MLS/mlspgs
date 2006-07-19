@@ -34,6 +34,12 @@ begin Join
   !directWriteDGGNoDiag(iwcR3,IWC-240)
   !directWriteDGGNoDiag(iwcR4,IWC-640)
 
+  ;; Write the IWP products
+  !directWriteDGGNoDiag(iwpR1A,IWP-118)
+  !directWriteDGGNoDiag(iwpR2,IWP-190)
+  !directWriteDGGNoDiag(iwpR3,IWP-240)
+  !directWriteDGGNoDiag(iwpR4,IWP-640)
+
   !flushDGGDGMFiles
 end Join
 
