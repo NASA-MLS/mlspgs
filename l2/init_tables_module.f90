@@ -1368,22 +1368,25 @@ contains ! =====     Public procedures     =============================
              begin, f+f_stamp, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_dumpblocks, &
-             begin, f+f_matrix, s+s_matrix, nr+n_field_spec, &
-             begin, f+f_rowQuantity, s+s_quantity, n+n_field_spec, &
-             begin, f+f_colQuantity, s+s_quantity, n+n_field_spec, &
-             begin, f+f_noAbsent, t+t_boolean, n+n_field_type, &
-             begin, f+f_rowSurfaces, t+t_numeric, t+t_numeric_range, &
-                    n+n_field_type, &
-             begin, f+f_colSurfaces, t+t_numeric, t+t_numeric_range, &
-                    n+n_field_type, &
-             begin, f+f_rowInstances, t+t_numeric, t+t_numeric_range, &
+             begin, f+f_allMatrices, t+t_boolean, n+n_field_type, &
+             begin, f+f_colChannels, t+t_numeric, t+t_numeric_range, &
                     n+n_field_type, &
              begin, f+f_colInstances, t+t_numeric, t+t_numeric_range, &
                     n+n_field_type, &
+             begin, f+f_colQuantity, s+s_quantity, n+n_field_spec, &
+             begin, f+f_colSurfaces, t+t_numeric, t+t_numeric_range, &
+                    n+n_field_type, &
+             begin, f+f_details, t+t_numeric, n+n_field_type, &
+             begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
+             begin, f+f_noAbsent, t+t_boolean, n+n_field_type, &
              begin, f+f_rowChannels, t+t_numeric, t+t_numeric_range, &
                     n+n_field_type, &
-             begin, f+f_colChannels, t+t_numeric, t+t_numeric_range, &
+             begin, f+f_rowInstances, t+t_numeric, t+t_numeric_range, &
                     n+n_field_type, &
+             begin, f+f_rowQuantity, s+s_quantity, n+n_field_spec, &
+             begin, f+f_rowSurfaces, t+t_numeric, t+t_numeric_range, &
+                    n+n_field_type, &
+             begin, f+f_structure, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def /) )
     ! Define the relations between sections and specs.  These are
     ! represented by trees of the form
@@ -1469,6 +1472,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.446  2006/07/19 22:28:17  vsnyder
+! Add /allMatrices, details= and /Structure fields to DumpBlocks
+!
 ! Revision 2.445  2006/07/07 23:08:32  pwagner
 ! Fixed bug in filling from GEOS5-derived grid
 !
