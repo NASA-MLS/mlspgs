@@ -11,17 +11,13 @@
 
 module TRACE_M
 
-  use LEXER_CORE, only: PRINT_SOURCE
-  use OUTPUT_M, only: OUTPUT
-  use TIME_M, only: TIME_NOW
-  use TREE, only: DUMP_TREE_NODE, SOURCE_REF
-
   private
   public :: Trace_Begin, Trace_End
   integer, public, save :: DEPTH   ! Depth in tree.  Used for trace printing.
 
   integer, parameter :: ClockStackMax = 100
   real :: ClockStack(0:clockStackMax) = 0.0
+  double precision :: Memory(0:clockStackMax) = 0.0d0
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -34,15 +30,22 @@ contains ! ====     Public Procedures     ==============================
   subroutine TRACE_BEGIN ( NAME, ROOT, INDEX )
   ! Print "ENTER NAME with ROOT = <node_id(root)>" with DEPTH dots in
   ! front.  Increment DEPTH.
+
+    use Allocate_Deallocate, only: NoBytesAllocated
+    use LEXER_CORE, only: PRINT_SOURCE
+    use OUTPUT_M, only: NewLine, OUTPUT
+    use TIME_M, only: TIME_NOW
+    use TREE, only: DUMP_TREE_NODE, SOURCE_REF
+
     character(len=*), intent(in) :: NAME
     integer, intent(in), optional :: ROOT
     integer, intent(in), optional :: INDEX
     integer :: I              ! Loop inductor
     character(len=10) :: Now  ! For Date_and_time
     if ( present(root) ) then
-      call output ( root, 4 ); call output ( ': ' )
+      call output ( root, 6 ); call output ( ': ' )
     else
-      call output ( '      ' )
+      call output ( '        ' )
     end if
     do i = 1, depth
       call output ( '.' )
@@ -56,26 +59,32 @@ contains ! ====     Public Procedures     ==============================
       call dump_tree_node ( root, 0 )
       call output ( ' at ' )
       call print_source ( source_ref(root), advance='yes' )
-    else
-      call output ( '', advance='yes' )
     end if
     if ( depth >= 0 .and. depth < clockStackMax ) then
       call time_now ( clockStack(depth) )
       clockStack(depth+1) = 0.0
+      memory(depth) = NoBytesAllocated
     end if
+    call newLine
     depth = depth + 1
   end subroutine TRACE_BEGIN
 ! --------------------------------------------------    TRACE_END  -----
   subroutine TRACE_END ( NAME, INDEX )
-  ! Decrement DEPTH.  Print "EXIT NAME with DEPTH dots in front.
+  ! Decrement DEPTH.  Print "EXIT NAME" with DEPTH dots in front.
+
+    use Allocate_Deallocate, only: Memory_Units, NoBytesAllocated
+    use OUTPUT_M, only: NewLine, OUTPUT
+    use TIME_M, only: TIME_NOW
+
     character(len=*), intent(in) :: NAME
     integer, intent(in), optional :: INDEX
     integer :: I              ! Loop inductor
     character(len=10) :: Now  ! For Date_and_time
     integer :: Values(8)      ! For Date_and_time
     real :: T                 ! For timing
+    double precision :: Delta ! memory
     depth = depth - 1
-    call output ( '      ' )
+    call output ( '        ' )
     do i = 1, depth
       call output ( '.' )
     end do
@@ -90,8 +99,16 @@ contains ! ====     Public Procedures     ==============================
 !     call output ( dble(clockStack(depth) - clockStack(depth+1)), &
 !       & format='(g10.3)' )
       call output ( dble(clockStack(depth)), format='(g10.3)' )
+      if ( memory(depth) /= noBytesAllocated ) then
+        delta = Memory_Units * (noBytesAllocated-memory(depth))
+        if ( abs(delta) < huge(1) ) then
+          call output ( int(delta), before=' Memory changed by ' )
+        else
+          call output ( delta, before=' Memory changed by ' )
+        end if
+      end if
     end if
-    call output ( '', advance='yes' )
+    call newLine
   end subroutine TRACE_END
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
@@ -105,6 +122,9 @@ contains ! ====     Public Procedures     ==============================
 end module TRACE_M
 
 ! $Log$
+! Revision 2.13  2006/07/19 22:26:04  vsnyder
+! Report memory size changes in trace_end, plus some cannonball polishing
+!
 ! Revision 2.12  2005/06/22 17:25:51  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
