@@ -81,8 +81,9 @@ module Allocate_Deallocate
 
   integer, save :: DEALLOC_STATUS = 0
 
-  logical, public :: TRACKALLOCATES = .false. ! If true keep track of memory allocated
   logical, public :: CLEARONALLOCATE = .false. ! If true, zero all allocated stuff
+  logical, public :: TRACKALLOCATES = .false. ! If true keep track of memory allocated
+                                              ! and print every transaction
   ! and report on it.
 
   ! Element sizes (bytes)
@@ -96,7 +97,7 @@ module Allocate_Deallocate
   ! The next two used for tracking allocated memory
   ! (The 1st is public to enable reporting finer or coarser grains)
   real, save, public  :: MEMORY_UNITS = 1024. ! Report nothing smaller than KB
-  real, save, private :: NoBytesAllocated=0. ! Number of MEMORY_UNITS allocated.
+  double precision, save, public :: NoBytesAllocated=0.0d0 ! Number of MEMORY_UNITS allocated.
 
 
   !------------------------------- RCS Ident Info ------------------------------
@@ -141,7 +142,7 @@ contains
     ! print *, 'noBytes: ', noBytes
     noBytesAllocated = noBytesAllocated + noBytes
     call output ( 'Tracking: ' )
-    if ( noBytes < 0. ) then
+    if ( noBytes < 0.0 ) then
       call output ( 'Dea' )
     else
       call output ( 'A' )
@@ -175,6 +176,7 @@ contains
     character(len=*), intent(in) :: ModuleNameIn, ItsName
     integer, intent(in) :: Lbounds(:), Ubounds(:)
     integer, intent(in), optional :: ElementSize ! Bytes, <= 0 for no tracking
+    real :: Amount
     character(127) :: Bounds
     integer :: I, L
 
@@ -188,10 +190,15 @@ contains
         & MLSMSG_Allocate // ItsName  // bounds(:l) )
     end if
 
-    if ( trackAllocates .and. present(elementSize) ) then
-      if ( elementSize > 0 ) &
-        & call ReportAllocateDeallocate ( itsName, moduleNameIn, &
-          & memproduct(elementSize, ubounds-lbounds+1) )
+    if ( .not. present(elementSize) ) return
+
+    if ( elementSize > 0 ) then
+      amount = memproduct(elementSize, ubounds-lbounds+1)
+      if ( trackAllocates .and. present(elementSize) ) then
+        call ReportAllocateDeallocate ( itsName, moduleNameIn, amount )
+      else
+        noBytesAllocated = noBytesAllocated + amount
+      end if
     end if
 
   end subroutine Test_Allocate
@@ -223,9 +230,14 @@ contains
     else if ( collect_garbage_each_time ) then
       call mls_gc_now
     end if
-    if ( status == 0 .and. trackAllocates .and. present(size) ) then
-      if ( size > 0. ) &
-        & call ReportAllocateDeallocate ( itsName, moduleNameIn, -size )
+    if ( status == 0 .and. present(size) ) then
+      if ( size > 0.0 ) then
+        if ( trackAllocates ) then
+          call ReportAllocateDeallocate ( itsName, moduleNameIn, -size )
+        else
+          noBytesAllocated = noBytesAllocated - size
+        end if
+      end if
     end if
 
   end subroutine Test_Deallocate_real_s
@@ -657,6 +669,9 @@ contains
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.28  2006/07/19 22:24:18  vsnyder
+! Track memory usage even if not reporting, for trace_m
+!
 ! Revision 2.27  2005/12/16 23:25:37  pwagner
 ! dumpSize moved from dump0 to output_m
 !
