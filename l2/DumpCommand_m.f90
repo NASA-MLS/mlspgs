@@ -53,7 +53,7 @@ contains
       & S_VectorTemplate
     use Intrinsic, only: PHYQ_Dimensionless
     use MLSL2Options, only: runTimeValues
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+!   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSSignals_m, only: Dump, Signals
     use MLSStrings, only: lowerCase
     use MLSStringLists, only: BooleanValue
@@ -519,6 +519,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.31  2006/07/19 22:26:40  vsnyder
+! Comment out unused USE
+!
 ! Revision 2.30  2006/06/12 16:28:25  pwagner
 ! Added ability to dump Gridded Data
 !
