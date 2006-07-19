@@ -1196,7 +1196,7 @@ contains
       use Regularization, only: Regularize
       use Symbol_Table, only: ENTER_TERMINAL
       use Symbol_Types, only: T_IDENTIFIER
-      use VectorsModule, only: AddToVector, DestroyVectorInfo, DivideVectors, &
+      use VectorsModule, only: AddToVector, DestroyVectorInfo, &
         & Dump, Multiply, operator(.DOT.), operator(.MDOT.), operator(-), &
         & ScaleVector, SubtractFromVector
       use L2FWMParallel, only: SETUPFWMSLAVES, TRIGGERSLAVERUN, &
@@ -1214,11 +1214,11 @@ contains
       ! Dump switches
       logical :: D_ATB    ! 'atb' A^T b -- RHS of system
       logical :: D_Col    ! 'col' Column scale vector
-      logical :: D_Cov    ! 'cov' Covariance
-      logical :: D_Diag   ! 'diag' Diagonal of factored normal equations
+      logical :: D_Cov    ! 'cov' Solution covariance
+      logical :: D_Diag   ! 'diag' Diagonal of normal equations factor
       logical :: D_Dvec   ! 'dvec' DX vector
-      logical :: D_Fac_F  ! 'FAC' Full factored normal equations (if you dare)
-      logical :: D_Fac_N  ! 'fac' L_Infty norms of factored normal equations blocks
+      logical :: D_Fac_F  ! 'FAC' Full normal equations factor (if you dare)
+      logical :: D_Fac_N  ! 'fac' L_Infty norms of blocks of normal equations factor
       logical :: D_Fnorm  ! 'fnorm' Contributions to | F |
       logical :: D_Gvec   ! 'gvec' Gradient vector
       logical :: D_Jac_F  ! 'JAC' Full Jacobian (if you dare)
@@ -1227,7 +1227,7 @@ contains
       logical :: D_Mst    ! 'mst' Block causing factoring abnormal status
       logical :: D_Ndb_0  ! 'ndb' Minimum Newton method debugging output
       logical :: D_Ndb_1  ! 'Ndb' Medium Newton method debugging output
-      logical :: D_Ndb_2  ! 'Ndb' Maximium Newton method debugging output
+      logical :: D_Ndb_2  ! 'NDB' Maximum Newton method debugging output
       logical :: D_Neq_F  ! 'NEQ' Full normal equations (if you dare)
       logical :: D_Neq_N  ! 'neq' L_Infty norms of Normal equation blocks
       logical :: D_Nin    ! 'nin' Newton method's internal output
@@ -2616,6 +2616,9 @@ NEWT: do ! Newtonian iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.278  2006/07/19 22:28:59  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.277  2006/06/08 23:59:46  vsnyder
 ! Simplify column scaling, add switches field, TeXnicalities
 !
