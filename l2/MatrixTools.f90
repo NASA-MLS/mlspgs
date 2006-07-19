@@ -14,14 +14,14 @@ module MatrixTools                      ! Various tools for matrices
   ! This module provides some tools for dealing matrices not already present in
   ! MatrixModule_0 and MatrixModule_1.  In particular the DumpBlocks subroutine.
 
-  use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMFSEND
-  use PVMIDL, only: PVMIDLPACK
-  use MatrixModule_1, only: MATRIX_T, MATRIX_DATABASE_T, &
-    & FINDBLOCK, GETFROMMATRIXDATABASE, RC_INFO
-  use MatrixModule_0, only: MATRIXELEMENT_T, DENSIFY, &
-    & M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL
+  use MatrixModule_0, only: DENSIFY, &
+    & M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, MATRIXELEMENT_T
+  use MatrixModule_1, only: Dump_Struct, FINDBLOCK, GETFROMMATRIXDATABASE, &
+    & MATRIX_DATABASE_T, MATRIX_T, RC_INFO
   use MLSCommon, only: R8, RM
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, PVMERRORMESSAGE
+  use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMFSEND
+  use PVMIDL, only: PVMIDLPACK
 
   implicit none
   private
@@ -51,15 +51,20 @@ contains ! =====  Public procedures  ===================================
     ! not dump absent blocks.
 
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use Declaration_table, only: Num_Value
     use DUMP_0, only: DUMP
-    use Init_Tables_Module, only: F_COLCHANNELS, F_COLINSTANCES, F_COLQUANTITY, &
-      & F_COLSURFACES, F_MATRIX, F_NOABSENT, &
-      & F_ROWCHANNELS, F_ROWINSTANCES, F_ROWQUANTITY, F_ROWSURFACES
+    use Expr_m, only: Expr
+    use Init_Tables_Module, only: F_AllMatrices, &
+      & F_COLCHANNELS, F_COLINSTANCES, F_COLQUANTITY, F_COLSURFACES, &
+      & F_Details, F_MATRIX, F_NOABSENT, &
+      & F_ROWCHANNELS, F_ROWINSTANCES, F_ROWQUANTITY, F_ROWSURFACES, &
+      & F_Structure
+    use Intrinsic, only: PHYQ_Dimensionless
     use MoreTree, only: GET_BOOLEAN, GET_FIELD_ID
     use Output_M, only: NewLine, OUTPUT
     use String_Table, only: DISPLAY_STRING
     use Toggles, only: Switches
-    use Tree, only: NSONS, SUBTREE, DECORATION
+    use Tree, only: DECORATION, NSONS, SUBTREE
     use VectorsModule, only: GETVECTORQTYBYTEMPLATEINDEX, VECTORVALUE_T
 
     ! Dummy arguments
@@ -75,9 +80,11 @@ contains ! =====  Public procedures  ===================================
     integer :: COLQuantityIx            ! Index in ColQIs array
     integer :: COLQuantityNode          ! Tree node
     integer :: COLSURFACESNODE          ! Tree node
+    integer :: Details                  ! 0 => just shapes, >0 => values, default 1
     logical :: DoAny                    ! Any non-absent blocks?
     integer :: FIELDINDEX               ! Type for tree node
     integer :: MATRIXINDEX              ! Matrix database index
+    integer :: Matrix1, MatrixEnd       ! Range for MatrixIndex
     integer :: NColQ                    ! How many column quantities?
     logical :: NoAbsent                 ! Don't dump absent blocks
     integer :: NODE                     ! Loop counter
@@ -91,11 +98,17 @@ contains ! =====  Public procedures  ===================================
     integer :: ROWQuantityNode          ! Tree node
     integer :: ROWSURFACESNODE          ! Tree node
     integer :: SON                      ! Tree node
+    integer :: Type     ! of the Details expr -- has to be num_value
+    integer :: Units(2) ! of the Details expr -- has to be phyq_dimensionless
+    double precision :: Values(2) ! of the Details expr
 
     integer, dimension(:), pointer :: ColInds ! Which column instances?
     integer, dimension(:), pointer :: ColQIs  ! Which column quantities?
     integer, dimension(:), pointer :: RowInds ! Which row instances?
     integer, dimension(:), pointer :: RowQIs  ! Which row quantities?
+
+    logical :: AllMatrices   ! Dump all matrices
+    logical :: Stru          ! Dump sparsity structure instead of values
 
     type (VectorValue_T), pointer :: COLQ ! Row quantity
     type (VectorValue_T), pointer :: ROWQ ! Row quantity
@@ -103,8 +116,12 @@ contains ! =====  Public procedures  ===================================
     type (MatrixElement_T), pointer :: MB ! A block from the matrix
 
     ! Error codes for Announce_Error
-    integer, parameter :: Duplicate = 1   ! Duplicate quantity name specified
-    integer, parameter :: OutOfRange = duplicate + 1 ! Index out of range
+    integer, parameter :: Dimless = 1     ! Details has to be dimensionless
+    integer, parameter :: Duplicate = dimless + 1     ! Duplicate quantity name specified
+    integer, parameter :: NeedMatrix = duplicate + 1  ! Need /all or matrix
+    integer, parameter :: Numeric = needMatrix + 1    ! Details can't be range
+    integer, parameter :: OutOfRange = numeric + 1    ! Index out of range
+    integer, parameter :: Redundant = outOfRange + 1  ! Both /all and matrix
 
     ! Executable code
 
@@ -112,15 +129,20 @@ contains ! =====  Public procedures  ===================================
     if ( index(switches, 'nodb') /= 0 ) return
 
     ! Set defaults
-    rowChannelsNode = 0
+
+    allMatrices = .false.
     colChannelsNode = 0
-    rowQuantityNode = 0
-    colQuantityNode = 0
-    rowSurfacesNode = 0
-    colSurfacesNode = 0
-    rowInstancesNode = 0
     colInstancesNode = 0
+    colQuantityNode = 0
+    colSurfacesNode = 0
+    details = 1
+    matrixIndex = -1
     noAbsent = .false.
+    rowChannelsNode = 0
+    rowInstancesNode = 0
+    rowQuantityNode = 0
+    rowSurfacesNode = 0
+    stru = .false.
 
     nullify ( colInds, colQIs, rowInds, rowQIs )
 
@@ -129,6 +151,13 @@ contains ! =====  Public procedures  ===================================
       son = subtree(node,key)              ! This argument
       fieldIndex = get_field_id(son)       ! ID for this field
       select case ( fieldIndex )
+      case ( f_allMatrices )
+        allMatrices = get_Boolean ( son )
+      case ( f_details )
+        call expr ( son, units, values, type )
+        if ( units(1) /= phyq_dimensionless ) call announce_error ( son, dimless )
+        if ( type /= num_value ) call announce_error ( son, numeric )
+        details = nint(values(1))
       case ( f_matrix )
         matrixIndex = decoration(decoration(subtree(2,son)))
       case ( f_rowQuantity )
@@ -149,56 +178,80 @@ contains ! =====  Public procedures  ===================================
         colInstancesNode = son
       case ( f_noAbsent )
         noAbsent = get_Boolean ( son )
+      case ( f_structure )
+        stru = get_Boolean ( son )
       case default ! shouldn't get here if the type checker worked
       end select
     end do
 
-    ! Identify the matrix
-    call GetFromMatrixDatabase ( matrices(matrixIndex), matrix )
-    call output ( 'Dump of ' )
-    call display_string ( matrix%name, advance='yes' )
+    ! Was a matrix specified?
+    if ( .not. allMatrices .and. matrixIndex < 0 ) then
+      call announce_error ( needMatrix, key )
+      return
+    end if
 
-    ! Get the row and column quantities
-    call allocate_test ( colQIs, matrix%col%nb, 'colQIs', moduleName )
-    call allocate_test ( rowQIs, matrix%row%nb, 'rowQIs', moduleName )
+    if ( allMatrices ) then
+      if ( matrixIndex > 0 ) call announce_error ( redundant, key )
+      matrix1 = 1
+      matrixEnd = size(matrices)
+    else
+      matrix1 = matrixIndex
+      matrixEnd = matrixIndex
+    end if
 
-    call getQuantities ( matrix%col, colQIs, nColQ, colQuantityNode, 'column' )
-    call getQuantities ( matrix%row, rowQIs, nRowQ, rowQuantityNode, 'row' )
+    do matrixIndex = matrix1, matrixEnd
+      ! Identify the matrix
+      call GetFromMatrixDatabase ( matrices(matrixIndex), matrix )
+      call output ( 'Dump of ' )
+      call display_string ( matrix%name, advance='yes' )
+      if ( stru ) then
+        call dump_struct ( matrix )
+      else
 
-    ! Dump the specified blocks
-    do rowQuantityIx = 1, nRowQ
-      rowQI = rowQIs(rowQuantityIx)
-      rowQ => matrix%row%vec%quantities(rowQI)
-      do colQuantityIx = 1, nColQ
-        colQI = colQIs(colQuantityIx)
-        colQ => matrix%col%vec%quantities(colQI)
+        ! Get the row and column quantities
+        call allocate_test ( colQIs, matrix%col%nb, 'colQIs', moduleName )
+        call allocate_test ( rowQIs, matrix%row%nb, 'rowQIs', moduleName )
 
-        ! Fill some flags arrays
-        call FillIndicesArray ( rowInstancesNode, rowQ%template%noInstances, &
-          & rowInds )
-        call FillIndicesArray ( colInstancesNode, colQ%template%noInstances, &
-          & colInds )
+        call getQuantities ( matrix%col, colQIs, nColQ, colQuantityNode, 'column' )
+        call getQuantities ( matrix%row, rowQIs, nRowQ, rowQuantityNode, 'row' )
 
-        doAny = .not. noAbsent
-        if ( noAbsent ) then
-  o:      do colInstance = 1, size(colInds)
-            do rowInstance = 1, size(rowInds)
-              row = FindBlock ( matrix%row, rowQI, rowInds(rowInstance) )
-              col = FindBlock ( matrix%col, colQI, colInds(colInstance) )
-              mb => matrix%block ( row, col )
-              doAny = mb%kind /= m_absent
-              if ( doAny ) exit o
-            end do
-          end do o
-        end if
+        ! Dump the specified blocks
+        do rowQuantityIx = 1, nRowQ
+          rowQI = rowQIs(rowQuantityIx)
+          rowQ => matrix%row%vec%quantities(rowQI)
+          do colQuantityIx = 1, nColQ
+            colQI = colQIs(colQuantityIx)
+            colQ => matrix%col%vec%quantities(colQI)
 
-        if ( doAny ) call DumpOneBlock
+            ! Fill some flags arrays
+            call FillIndicesArray ( rowInstancesNode, rowQ%template%noInstances, &
+              & rowInds )
+            call FillIndicesArray ( colInstancesNode, colQ%template%noInstances, &
+              & colInds )
 
-        call deallocate_test ( rowInds, 'rowInds', ModuleName )
-        call deallocate_test ( colInds, 'colInds', ModuleName )
+            doAny = .not. noAbsent
+            if ( noAbsent ) then
+      o:      do colInstance = 1, size(colInds)
+                do rowInstance = 1, size(rowInds)
+                  row = FindBlock ( matrix%row, rowQI, rowInds(rowInstance) )
+                  col = FindBlock ( matrix%col, colQI, colInds(colInstance) )
+                  mb => matrix%block ( row, col )
+                  doAny = mb%kind /= m_absent
+                  if ( doAny ) exit o
+                end do
+              end do o
+            end if
 
-      end do
-    end do
+            if ( doAny ) call DumpOneBlock
+
+            call deallocate_test ( rowInds, 'rowInds', ModuleName )
+            call deallocate_test ( colInds, 'colInds', ModuleName )
+
+          end do ! colQuantityIx
+        end do ! rowQuantityIx
+      end if
+
+    end do ! matrixIndex
 
     call deallocate_test ( colQIs, 'colQIs', moduleName )
     call deallocate_test ( rowQIs, 'rowQIs', moduleName )
@@ -206,21 +259,29 @@ contains ! =====  Public procedures  ===================================
   contains
     ! ...........................................  Announce_Error  .....
     subroutine Announce_Error ( What, Where, Number )
-      use LEXER_CORE, only: PRINT_SOURCE
-      use TREE, only: SOURCE_REF, SUB_ROSA
+      use MoreTree, only: StartErrorMessage
+      use TREE, only: SUB_ROSA
       integer, intent(in) :: What      ! Error code
       integer, intent(in) :: Where     ! Tree node
-      integer, intent(in) :: Number    ! Stuff to stick into message
+      integer, intent(in), optional :: Number    ! Stuff to stick into message
 
-      call output ( '***** At ' )
-      call print_source ( source_ref(where) )
+      call startErrorMessage ( where )
       select case ( what )
+      case ( dimless )
+        call output ( "The field is not unitless." )
       case ( duplicate )
-        call output ( ': Duplicate quantity ' )
-        call display_string ( sub_rosa(where) )
+        call display_string ( sub_rosa(where), before=': Duplicate quantity ' )
         call output ( ' not used.', advance='yes' )
+      case ( needMatrix )
+        call output ( ': Either /all or a matrix must be specified', &
+          & advance='yes' )
+      case ( numeric )
+        call output ( "The field is not numeric." )
       case ( outOfRange )
         call output ( number, before=': Index ', after=' is out of range.', &
+          & advance='yes' )
+      case ( redundant )
+        call output ( ': Both /all and a matrix specified.  /all used.', &
           & advance='yes' )
       end select
     end subroutine Announce_Error
@@ -309,7 +370,7 @@ contains ! =====  Public procedures  ===================================
           call output ( mb%nRows )
           call output ( mb%nCols, before='x', after='.  ' )
 
-          if ( mb%kind /= m_absent ) then
+          if ( mb%kind /= m_absent .and. details > 0 ) then
             do cs = 1, noColSurfaces
               do cc = 1, noColChannels
                 do rs = 1, noRowSurfaces
@@ -650,6 +711,9 @@ contains ! =====  Public procedures  ===================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.19  2005/06/22 18:57:02  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 1.18  2005/03/15 23:50:16  pwagner
 ! PVMERRORMESSAGE now part of MLSMessageModule
 !
