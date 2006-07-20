@@ -308,7 +308,10 @@ contains
 
 ! Skip the masked derivatives, according to the l2cf inputs
 
-        if ( .not. Grids_f%deriv_flags(sv_i) ) cycle
+        if ( .not. Grids_f%deriv_flags(sv_i) ) then
+          drad_df(sv_i) = 0.0
+          cycle
+        end if
 
         call get_do_calc_indexed ( do_calc_f(:,sv_i), indices_c, gl_inds, &
           & do_gl, do_calc )
@@ -1028,6 +1031,9 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.50  2006/04/11 18:31:58  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.49  2006/02/08 01:02:01  vsnyder
 ! More stuff for spectroscopy derivatives
 !
