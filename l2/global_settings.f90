@@ -68,7 +68,7 @@ contains
     use ForwardModelSupport, only: ConstructForwardModelConfig, &
       & ForwardModelGlobalSetup, CreateBinSelectorFromMLSCFInfo
     use INIT_TABLES_MODULE, only: F_FILE, F_TYPE, &
-      & L_TRUE, L_L2GP, L_L2DGG, L_L2FWM, &
+      & L_L2GP, L_L2DGG, L_L2FWM, &
       & P_BRIGHTOBJECTS, &
       & P_CYCLE, P_ENDTIME, P_INSTRUMENT, &
       & P_LEAPSECFILE, P_OUTPUT_VERSION_STRING, P_PFAFILE, P_STARTTIME, &
@@ -949,6 +949,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.116  2006/06/12 19:28:52  pwagner
+! Fallback to climatology noted only if all of ncep, goes4/5 missing
+!
 ! Revision 2.115  2006/04/21 22:28:45  vsnyder
 ! Allow FlushPFA in global settings section
 !
