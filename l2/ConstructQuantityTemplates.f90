@@ -67,7 +67,7 @@ contains ! ============= Public procedures ===================================
     & result ( QTY )
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Chunks_m, only: MLSChunk_T
-    use ChunkDivide_m, only: ChunkDivideConfig
+!   use ChunkDivide_m, only: ChunkDivideConfig
     use EXPR_M, only: EXPR
     use FGrid, only: fGrid_T
     use HGridsDatabase, only: hGrid_T
@@ -884,7 +884,8 @@ contains ! ============= Public procedures ===================================
     use Chunks_m, only: MLSChunk_T
     use Allocate_Deallocate, only: Deallocate_Test
     use L1BData, only: L1BData_T, READL1BDATA, GetL1BFile, &
-      & FindL1BData, AssembleL1BQtyName, PRECISIONSUFFIX
+      & AssembleL1BQtyName, PRECISIONSUFFIX
+!   use L1BData, only: FindL1BData
     use MLSCommon, only: MLSFile_T, RK => R8
     use MLSFiles, only: GetMLSFileByType
     use MLSSignals_m, only: GetSignalName
@@ -933,7 +934,7 @@ contains ! ============= Public procedures ===================================
   ! This routine copies HGrid information into an already defined quantity
 
     use Chunks_m, only: MLSChunk_T
-    use ChunkDivide_m, only: ChunkDivideConfig
+!   use ChunkDivide_m, only: ChunkDivideConfig
     use HGridsDatabase, only: hGrid_T
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use QuantityTemplates, only: QuantityTemplate_T
@@ -1288,6 +1289,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.132  2006/07/20 23:39:53  vsnyder
+! Remove unused declarations and USEs
+!
 ! Revision 2.131  2006/06/01 03:06:46  vsnyder
 ! Define numGrad and numNewt
 !
