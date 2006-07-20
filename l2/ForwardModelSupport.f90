@@ -406,7 +406,6 @@ contains ! =====     Public Procedures     =============================
     use MLSSignals_M, only: Signals
     use MoreTree, only: Get_Boolean, Get_Field_ID
     use Parse_Signal_m, only: PARSE_SIGNAL
-    use output_m, only: output
     use String_Table, only: Get_String
     use Toggles, only: Gen, Levels, Switches, Toggle
     use Trace_M, only: Trace_begin, Trace_end
@@ -1357,6 +1356,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.133  2006/07/20 23:39:53  vsnyder
+! Remove unused declarations and USEs
+!
 ! Revision 2.132  2006/06/03 01:46:20  vsnyder
 ! Remove no_dup_mol flag from config structure
 !
