@@ -25,8 +25,8 @@ module TREE_WALKER
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
-  logical :: GLOBALSETTINGSONLY = .false.
-  logical :: CHUNKDIVIDEONLY = .false.
+  ! logical :: GLOBALSETTINGSONLY = .false.
+  ! logical :: CHUNKDIVIDEONLY = .false.
 
 contains ! ====     Public Procedures     ==============================
   ! -------------------------------------  WALK_TREE_TO_DO_MLS_L2  -----
@@ -66,18 +66,18 @@ contains ! ====     Public Procedures     ==============================
     use L2ParInfo, only: PARALLEL, CLOSEPARALLEL
     use L2PC_m, only: DestroyL2PCDatabase, DestroyBinSelectorDatabase
     use LinearizedForwardModel_m, only: FLUSHLOCKEDBINS
-    use MACHINE, only: MLS_HOWMANY_GC
     use MatrixModule_1, only: DestroyMatrixDatabase, Matrix_Database_T
     use MergeGridsModule, only: MergeGrids
     use MLSCommon, only: TAI93_RANGE_T, MLSFile_T
     use MLSL2Options, only: CHECKPATHS, &
-      & SKIPRETRIEVAL, SPECIALDUMPFILE, STOPAFTERCHUNKDIVIDE, STOPAFTERGLOBAL
+      & SKIPRETRIEVAL, SPECIALDUMPFILE, STOPAFTERSECTION
     use MLSMessageModule, only: MLSMessage, MLSMSG_Info, MLSMSG_Error
     use MLSSignals_M, only: Bands, DestroyBandDatabase, DestroyModuleDatabase, &
       & DestroyRadiometerDatabase, DestroySignalDatabase, &
       & DestroySpectrometerTypeDatabase, MLSSignals, Modules, Radiometers, &
       & Signals, SpectrometerTypes
     use MLSStringLists, only: ExpandStringRange, SwitchDetail
+    use MLSStrings, only: lowerCase
     use MLSL2Options, only: SKIPDIRECTWRITES, SKIPDIRECTWRITESORIGINAL
     use MLSL2Timings, only: add_to_section_timing, TOTAL_TIMES
     use Open_Init, only: OpenAndInitialize
@@ -127,11 +127,12 @@ contains ! ====     Public Procedures     ==============================
     type (L2GPData_T), dimension(:), pointer  :: L2GPDatabase
     type (Matrix_Database_T), dimension(:), &
       & pointer ::                               Matrices
+    logical ::                                   now_stop
     type (TAI93_Range_T) ::                      ProcessingRange  ! Data processing range
     logical ::                                   REDUCEDCHUNKS
     logical ::                                   showTime
     integer ::                                   SON              ! Son of Root
-    logical ::                                   STOPEARLY
+    logical ::                                   STOPBEFORECHUNKLOOP
     real    ::                                   t1, t2, tChunk
     character(len=24) ::                         textCode
     type (Vector_T), dimension(:), pointer ::    Vectors
@@ -145,16 +146,22 @@ contains ! ====     Public Procedures     ==============================
       & directDatabase, hGrids, l2auxDatabase, l2gpDatabase, matrices, mifGeolocation, &
       & qtyTemplates, vectors, vectorTemplates, fGrids, vGrids )
 
-    globalsettingsonly = STOPAFTERGLOBAL
-    chunkdivideonly    = STOPAFTERCHUNKDIVIDE
-    stopearly          = globalsettingsonly .or. chunkdivideonly
+    ! globalsettingsonly = STOPAFTERGLOBAL
+    ! chunkdivideonly    = STOPAFTERCHUNKDIVIDE
+    stopBeforeChunkLoop          = ( &
+      & index('global_setting,chunk_divide', &
+      & lowercase( trim(stopAfterSection) ) ) > 0 )
     reducedChunks      = .false.
     depth = 0
     if ( toggle(gen) ) call trace_begin ( 'WALK_TREE_TO_DO_MLS_L2', &
       & subtree(first_section,root) )
     call time_now ( t1 )
     call OpenAndInitialize ( processingRange, filedatabase )
-    call add_to_section_timing ( 'open_init', t1)
+    call add_to_section_timing ( 'open_init', t1, now_stop )
+    if ( now_stop ) then
+      call finishUp(.true.)
+      return
+    end if
     i = first_section
     howmany = nsons(root)
 
@@ -172,8 +179,8 @@ contains ! ====     Public Procedures     ==============================
       case ( z_globalsettings )
         call set_global_settings ( son, forwardModelConfigDatabase, fGrids, &
           & l2gpDatabase, DirectDatabase, processingRange, filedatabase )
-        call add_to_section_timing ( 'global_settings', t1)
-        if ( GLOBALSETTINGSONLY .and. .not. parallel%slave ) then
+        call add_to_section_timing ( 'global_settings', t1, now_stop )
+        if ( now_stop .and. .not. parallel%slave ) then
           call finishUp(.true.)
           return
         end if
@@ -184,21 +191,38 @@ contains ! ====     Public Procedures     ==============================
             call MLSMessage ( MLSMSG_Info, ModuleName, &
               & 'Go back and uncomment the previous line in tree_walker' )
         end if
-        call add_to_section_timing ( 'signals', t1)
+        call add_to_section_timing ( 'signals', t1, now_stop )
+        if ( now_stop ) then
+          call finishUp(.true.)
+          return
+        end if
       case ( z_spectroscopy )
         call spectroscopy ( son )
-        call add_to_section_timing ( 'spectroscopy', t1)
+        call add_to_section_timing ( 'spectroscopy', t1, now_stop )
+        if ( now_stop ) then
+          call finishUp(.true.)
+          return
+        end if
       case ( z_readapriori )
-        if ( .not. stopearly ) call read_apriori ( son , &
+        if ( .not. stopBeforeChunkLoop ) call read_apriori ( son , &
           & l2gpDatabase, l2auxDatabase, griddedDataBase, fileDataBase )
-        call add_to_section_timing ( 'read_apriori', t1)
+        call add_to_section_timing ( 'read_apriori', t1, now_stop )
+        if ( now_stop ) then
+          call finishUp(.true.)
+          return
+        end if
       case ( z_mergeGrids )
-        if ( .not. stopearly ) &
+        if ( .not. stopBeforeChunkLoop ) &
           & call mergeGrids ( son, griddedDataBase, l2gpDatabase )
 
         ! --------------------------------------------------------- Chunk divide
         ! Chunk divide can be a special one, in slave mode, we just listen out
         ! for instructions.
+        call add_to_section_timing ( 'merge_grids', t1, now_stop )
+        if ( now_stop ) then
+          call finishUp(.true.)
+          return
+        end if
       case ( z_chunkdivide )
         if ( parallel%slave .and. .not. parallel%fwmParallel ) then
           call GetChunkInfoFromMaster ( chunks, chunkNo )
@@ -244,12 +268,11 @@ contains ! ====     Public Procedures     ==============================
           end if
         end if
         if ( toggle(gen) .and. levels(gen) > 0 ) call dump ( chunks )
-        call add_to_section_timing ( 'chunk_divide', t1)
-        if ( CHUNKDIVIDEONLY .or. GLOBALSETTINGSONLY ) then
+        call add_to_section_timing ( 'chunk_divide', t1, now_stop )
+        if ( now_stop ) then
           call finishUp(.true.)
           return
         end if
-
       case ( z_algebra )
         call algebra ( son, vectors, matrices, chunks(1), forwardModelConfigDatabase )
         ! --------------------------------------------------------- Chunk processing
@@ -275,15 +298,15 @@ contains ! ====     Public Procedures     ==============================
           ! Sort out the timings
           select case ( decoration(subtree(1,son)) ) ! section index
           case ( z_algebra )
-            call add_to_section_timing ( 'algebra', t1)
+            call add_to_section_timing ( 'algebra', t1, now_stop )
           case ( z_construct )
-            call add_to_section_timing ( 'construct', t1)
+            call add_to_section_timing ( 'construct', t1, now_stop )
           case ( z_fill )
-            call add_to_section_timing ( 'fill', t1)
+            call add_to_section_timing ( 'fill', t1, now_stop )
           case ( z_join )
-            call add_to_section_timing ( 'join', t1)
+            call add_to_section_timing ( 'join', t1, now_stop )
           case ( z_retrieve )
-            call add_to_section_timing ( 'retrieve', t1)
+            call add_to_section_timing ( 'retrieve', t1, now_stop )
           end select
           ! print the timing for FullForwardModel, the following return
 	  ! if fmt1 or fmt2 is true
@@ -324,7 +347,7 @@ subtrees:   do while ( j <= howmany )
                   & chunks(chunkNo), qtyTemplates, vectorTemplates, vectors, &
                   & fGrids, hGrids, l2gpDatabase, forwardModelConfigDatabase, &
                   & griddedDataBase, mifGeolocation )
-                call add_to_section_timing ( 'construct', t1)
+                call add_to_section_timing ( 'construct', t1, now_stop )
               case ( z_fill )
                 if ( .not. checkPaths ) then 
                   call MLSL2Fill ( son, filedatabase, griddedDataBase, &
@@ -332,17 +355,17 @@ subtrees:   do while ( j <= howmany )
                   & l2gpDatabase, l2auxDatabase, forwardModelConfigDatabase, &
 		            & chunks, chunkNo )
 		          end if
-                call add_to_section_timing ( 'fill', t1)
+                call add_to_section_timing ( 'fill', t1, now_stop )
               case ( z_join )
                 call MLSL2Join ( son, vectors, l2gpDatabase, &
                   & l2auxDatabase, DirectDatabase, chunkNo, chunks, &
 		            & forwardModelConfigDatabase, fileDatabase, HGrids )
-                call add_to_section_timing ( 'join', t1)
+                call add_to_section_timing ( 'join', t1, now_stop )
               case ( z_retrieve )
                 if ( .not. checkPaths) &
                 & call retrieve ( son, vectors, matrices, forwardModelConfigDatabase, &
                   & chunks(chunkNo) )
-                call add_to_section_timing ( 'retrieve', t1)
+                call add_to_section_timing ( 'retrieve', t1, now_stop )
               case default
                 exit subtrees
               end select
@@ -384,6 +407,10 @@ subtrees:   do while ( j <= howmany )
             call StripForwardModelConfigDatabase ( forwardModelConfigDatabase )
             if ( switchDetail(switches,'chu') > -1 ) then
               call sayTime('processing this chunk', tChunk)
+            end if
+            if ( now_stop ) then
+              call finishUp(.true.)
+              return
             end if
           end do ! ---------------------------------- End of chunk loop
           ! Clear any locked l2pc bins out.
@@ -525,6 +552,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.142  2006/06/12 16:28:25  pwagner
+! Added ability to dump Gridded Data
+!
 ! Revision 2.141  2006/05/05 16:49:23  pwagner
 ! May convertEtaToP and create a VGrid in MergeGrids section
 !

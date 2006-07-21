@@ -89,14 +89,14 @@ contains
       & AddFileToDataBase, GetPCFromRef, GetMLSFileByName, GetMLSFileByType, &
       & InitializeMLSFile, mls_CloseFile, mls_OpenFile, split_path_name
     use MLSL2Options, only: LEVEL1_HDFVERSION, SPECIALDUMPFILE, &
-      & STOPAFTERGLOBAL, STOPAFTERCHUNKDIVIDE, Toolkit
+      & STOPAFTERSECTION, Toolkit
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MLSPCF2, only: mlspcf_l2gp_start, mlspcf_l2gp_end, &
       & mlspcf_l2dgm_start, mlspcf_l2dgm_end, mlspcf_l2fwm_full_start, &
       & mlspcf_l2fwm_full_end, &
       & mlspcf_l2dgg_start, mlspcf_l2dgg_end
-    use MLSStrings, only: hhmmss_value
+    use MLSStrings, only: hhmmss_value, lowerCase
     use MLSStringLists, only: Array2List, catLists
     use MLSSignals_m, only: INSTRUMENT
     use MoreTree, only: GET_FIELD_ID, GET_SPEC_ID
@@ -170,8 +170,9 @@ contains
 
     timing = section_times
     if ( timing ) call time_now ( t1 )
-    stopEarly = STOPAFTERCHUNKDIVIDE .or. STOPAFTERGLOBAL
-
+    stopEarly = ( &
+      & index('global_setting,chunk_divide', &
+      & lowercase( trim(stopAfterSection) ) ) > 0 )
     error = 0
     got = .false.
     startTimeIsAbsolute = .false.
@@ -949,6 +950,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.117  2006/07/20 23:39:53  vsnyder
+! Remove unused declarations and USEs
+!
 ! Revision 2.116  2006/06/12 19:28:52  pwagner
 ! Fallback to climatology noted only if all of ncep, goes4/5 missing
 !
