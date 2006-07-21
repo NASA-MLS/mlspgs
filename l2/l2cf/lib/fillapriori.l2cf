@@ -180,15 +180,17 @@ begin Fill
   
   ;; -------------------------------- Apriori precisions for species
 
-  Fill, quantity=aprioriPrecision.bro,  method=explicit, /spread, explicitValues= 10 ppbv
+  Fill, quantity=aprioriPrecision.bro,  method=explicit, /spread, explicitValues= 1 ppbv
   Fill, quantity=aprioriPrecision.ch3cn,method=explicit, /spread, explicitValues= 2 ppbv
   ;; CH3CN was 500 pptv
   Fill, quantity=aprioriPrecision.clo,  method=explicit, /spread, explicitValues= 3 ppbv
 
   ;; 500 ppbv too small in meso/thermosphere, 1 ppmv needed for extremes
   ;; in troposphere.  Was 500 ppbv everywhere.
-  Fill, quantity=aprioriPrecision.co, method=profile,$
-    profileValues= [ 100mb:200ppbv, 50mb : 0.1ppmv, 0.001mb : 3ppmv ]
+  Fill, quantity=aprioriPrecision.co,   method=profile, $
+    profileValues= [ 464mb : 500ppbv, 316mb : 1ppmv, 100mb : 1ppmv, 0.001mb : 100ppmv ]
+  Fill, quantity=aprioriPrecision.co_hr,   method=profile, $
+    profileValues= [ 464mb : 500ppbv, 316mb : 1ppmv, 100mb : 1ppmv, 0.001mb : 100ppmv ]
   Fill, quantity=aprioriPrecision.h2o, method=profile, profileValues = $
     [ 1000mb: 10000ppmv, 464mb : 10000ppmv, 316mb : 1500ppmv, $
       215mb : 300ppmv, 147mb : 300ppmv, 100mb : 3.0ppmv ]
@@ -255,8 +257,8 @@ begin Fill
     [ 1000mb: 10000ppmv, 464mb : 10000ppmv, 316mb : 1500ppmv, $
       215mb : 300ppmv, 147mb : 300ppmv, 100mb : 6.0ppmv ]
 
-  Fill, quantity=aprioriPrecision.co_hr, method=profile,$
-    profileValues= [ 100mb:200ppbv, 50mb : 0.1ppmv, 0.001mb : 3ppmv ]
+  Fill, quantity=vReg.co_hr, method=profile, profileValues= $
+    [ 10mb:30ppbv, 1mb:300ppbv, 0.1mb:3ppmv, 0.046mb:0ppmv ]
 
   Fill, quantity=aprioriPrecision.o3_hr, method=profile,$
     profileValues=[ 500hPa:0.05ppmv, 316hPa:0.1ppmv, 215hPa:0.1ppmv, $
@@ -449,16 +451,15 @@ begin Fill
   Fill, quantity=vReg.baselineFineR5V, method=profile, profileValues=[121mb:0K, 100mb:5K ]
 
   Fill, quantity=vReg.bro, method=profile, $
-    profileValues= [ 1mb:1ppbv, 0.68mb:0ppbv ]
+    profileValues= [ 1mb:0.1ppbv]
   Fill, quantity=vReg.ch3cn, method=profile, $
     profileValues= [ 146mb:500pptv, 100mb:30pptv, 1mb:30pptv, 0.68mb:0pptv ]
   Fill, quantity=vReg.clo, method=profile, $
     profileValues= [ 1mb:0.3ppbv, 0.68mb:0ppbv ]
   Fill, quantity=vReg.co, method=profile, profileValues= $
-    [ 10mb:100ppbv, 1mb:0.1ppmv, 0.1mb:0.1ppmv, 0.01mb:0.3ppmv  ]
+    [ 10mb:30ppbv, 1mb:300ppbv, 0.1mb:3ppmv, 0.046mb:0ppmv ] 
   Fill, quantity=vReg.co_hr, method=profile, profileValues= $
-    [ 10mb:100ppbv, 1mb:0.1ppmv, 0.1mb:0.1ppmv, 0.01mb:0.3ppmv]
-
+    [ 10mb:30ppbv, 1mb:300ppbv, 0.1mb:3ppmv, 0.046mb:0ppmv ] 
   Fill, quantity=vReg.h2o, method=profile, profileValues= $
     [ 1000mb:500ppmv, 300mb:50ppmv, 215mb:20ppmv, 121mb:2ppmv, 100mb:0.6ppmv, $
 	0.1mb:0.3ppmv, 0.001mb:0ppmv ], logSpace=false
@@ -522,16 +523,15 @@ begin Fill
   Fill, quantity=hReg.baselineFineR5V, method=profile, profileValues=[121mb:0K, 100mb:5K ]
 
   Fill, quantity=hReg.bro, method=profile, $
-    profileValues= [  1mb:3ppbv, 0.68mb:0ppbv ]
+    profileValues= [ 1mb:0.3ppbv ]
   Fill, quantity=hReg.ch3cn, method=profile, $
     profileValues= [ 146mb:500pptv, 100mb:30pptv, 1mb:30pptv, 0.68mb:0pptv ]
   Fill, quantity=hReg.clo, method=profile, $
     profileValues= [  1mb:0.1ppbv, 0.68:0pptv ]
   Fill, quantity=hReg.co, method=profile, profileValues= $
-    [ 10mb:100ppbv, 1mb:100ppbv, 0.1mb:1ppmv, 0.01mb:3ppmv, 0.0068mb:0ppmv ]
+    [ 10mb:10ppbv, 1mb:100ppbv, 0.1mb:1ppmv, 0.01mb:3ppmv, 0.0068mb:0ppmv ] 
   Fill, quantity=hReg.co_hr, method=profile, profileValues= $
-    [ 10mb:100ppbv, 1mb:100ppbv, 0.1mb:1ppmv, 0.01mb:3ppmv, 0.0068mb:0ppmv ]
-
+    [ 10mb:10ppbv, 1mb:100ppbv, 0.1mb:1ppmv, 0.01mb:3ppmv, 0.0068mb:0ppmv ] 
   Fill, quantity=hReg.h2o, method=profile, $
     profileValues=[ 146mb:0ppmv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.046mb:0ppmv ], logSpace=false
 
@@ -597,6 +597,9 @@ begin Join
 end Join
   })
 ;$Log$
+;Revision 1.116  2006/07/18 22:30:31  lambert
+;modified aprioriPrecision.CO and vReg.
+;
 ;Revision 1.115  2006/07/15 00:15:54  lambert
 ;modified aprioriPrecision.CO and vReg.
 ;
