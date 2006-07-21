@@ -98,10 +98,11 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   logical            :: SKIPRETRIEVALORIGINAL = .false. ! May skip for some phases
   ! In case special dumps are to go to a special dumpfile
   character(len=255) :: SPECIALDUMPFILE = ' '
-  ! Whether to stop after the chunk division section
-  logical            :: STOPAFTERCHUNKDIVIDE = .false.         
-  ! Whether to stop after doing the global settings section
-  logical            :: STOPAFTERGLOBAL = .false.         
+  ! What to fill state, outputSD with if skipping retrieval
+  real               :: STATEFILLEDBYSKIPPEDRETRIEVALS = 0.
+  ! Whether to stop after a certain section: which section it is
+  character(len=16)  :: STOPAFTERSECTION = ' ' ! Blank means 'no'
+
   ! Whether to exit with status 1 no matter what
   logical            :: STOPWITHERROR = .false.         
   ! Whether to do only a pre-flight checkout of paths
@@ -143,6 +144,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.37  2006/07/21 20:09:56  pwagner
+! Can fill state even if skipping retrievals; select what section to stop after
+!
 ! Revision 2.36  2006/06/13 00:16:27  pwagner
 ! catenating split dgg/dgm files now on by default
 !
