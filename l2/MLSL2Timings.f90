@@ -23,7 +23,7 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
   USE MLSL2Options, only: RESTARTWARNINGS, RUNTIMEVALUES, &
     & SECTIONTIMINGUNITS, SKIPDIRECTWRITES, SKIPDIRECTWRITESORIGINAL, &
     & SKIPRETRIEVAL, SKIPRETRIEVALORIGINAL, &
-    & STOPAFTERCHUNKDIVIDE, STOPAFTERGLOBAL
+    & STOPAFTERSECTION
   USE MLSMessageModule, only: MLSMessage, MLSMessageReset, MLSMSG_Error
   USE MLSStrings, only: LowerCase 
   USE MLSStringLists, only: BooleanValue, catLists, GetStringElement, &
@@ -67,7 +67,6 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
   logical, save    :: FINISHEDSECTIONTIMES = .false.  ! times in each section done
 
   logical, private   :: COUNTEMPTY = .false.     ! Any sections named ' '?
-  logical, private   :: ALLOWUNKNOWNNAMES = .false.  ! Any unknown section names
   ! dimension of the following is big enough to allow adding unknown
   ! section names and unknown retrieval names
   integer, parameter :: MAXNUMSECTIONTIMES = 60
@@ -81,18 +80,14 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
 
   character*(*), parameter           :: section_names = &
     & 'main,open_init,global_settings,signals,spectroscopy,' // &
-    & 'read_apriori,chunk_divide,construct,fill,retrieve,join,' // &
+    & 'read_apriori,merge_grids,chunk_divide,construct,fill,retrieve,join,' // &
     & 'directwrite,algebra,output'
-  ! This should be the number of elements in the above ---------------
-  ! integer, parameter                 :: num_section_times = 14    ! <--|
 
   character*(*), parameter           :: retrieval_names = &
     & 'newton_solver,cholesky_factor,cholesky_solver,cholesky_invert,' // &
     & 'baseline,hybrid,polar_linear,switching_mirror,' // &
     & 'full_fwm,fullcloud_fwm,scan_fwm,twod_scan_fwm,linear_fwm,' // &
     & 'low_cloud,high_cloud,sids,form_normeq,tikh_reg'
-  ! This should be the number of elements in the above -----------------
-  ! integer, parameter                 :: num_retrieval_times = 18  ! <--|
 
   character*(*), parameter           :: directwrite_names = &
     & 'writing,waiting'
@@ -232,13 +227,14 @@ contains ! =====     Public Procedures     =============================
   end subroutine add_to_retrieval_timing
 
   ! -----------------------------------------------  add_to_section_timing  -----
-  subroutine add_to_section_timing( section_name, t1 )
+  subroutine add_to_section_timing( section_name, t1, now_stop )
   ! Add current elapsed section time to total so far for section_name
   ! (or possibly, one of the retrieval sections)
 
   ! Formal arguments
     character(LEN=*), intent(in):: section_name   ! One of the section_names
     real, optional, intent(inout)  :: t1          ! Prior time_now, then current
+    logical, intent(out), optional :: now_stop
 
   ! Private
     integer                     :: elem
@@ -264,6 +260,9 @@ contains ! =====     Public Procedures     =============================
     endif
     myLastTime = t2
     if ( present(t1) ) call time_now ( t1 )
+    if ( present(now_stop) ) then
+      now_stop = ( lowerCase(section_name) == lowercase(stopAfterSection) )
+    endif
   end subroutine add_to_section_timing
 
   ! -----------------------------------  addPhaseToPhaseNames  -----
@@ -375,8 +374,6 @@ contains ! =====     Public Procedures     =============================
     character(LEN=*), parameter     :: PCTFORM='(F10.0)'
     logical, parameter              :: PRINTCHUNKNUMWITHPHASES=.true.
     integer                         :: elem
-    integer                         :: joinElem
-    integer                         :: dwElem
     integer                         :: retrElem
     character(LEN=16)               :: section_name   ! One of the section_names
     real                            :: final
@@ -390,7 +387,6 @@ contains ! =====     Public Procedures     =============================
     real                            :: elem_time
     character(LEN=LEN(TIMEFORMBIG)) :: TIMEFORM
     logical                         :: Unknown_nonzero
-    integer                         :: num_elems
     integer                         :: timeDivisor
 
   ! Executable
@@ -468,7 +464,7 @@ contains ! =====     Public Procedures     =============================
     call blanks ( 4, advance='no' )
     call printTaskType
     ! Subdivision of Retrieval section
-    if ( STOPAFTERCHUNKDIVIDE .or. STOPAFTERGLOBAL ) then
+    if ( STOPAFTERSECTION /= ' ' ) then
       call output ( '(Some sections skipped) ', advance='yes' )
       return
     endif
@@ -789,9 +785,6 @@ contains ! =====     Public Procedures     =============================
   character(len=*), intent(in) :: which ! phases, sections, or all
   ! Internal variables
   logical :: sections, phases
-  integer :: dwElem
-  integer :: Elem
-  integer :: joinElem
   ! Executable
     num_section_times = NumStringElements(section_names, countEmpty)
     num_retrieval_times = NumStringElements(retrieval_names, countEmpty)
@@ -872,6 +865,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.35  2006/07/21 20:11:54  pwagner
+! Can select what section to stop after
+!
 ! Revision 2.34  2006/06/24 23:10:17  pwagner
 ! Remove unneeded thing from output_m
 !
