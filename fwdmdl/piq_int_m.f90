@@ -23,7 +23,7 @@ module Piq_int_m
   contains
 !---------------------------------------------------------------------------
 
-  SUBROUTINE Piq_int ( z_grid, t_basis, z_ref, piq, z_mass, c_mass)
+  subroutine Piq_int ( z_grid, t_basis, z_ref, piq, z_mass, c_mass)
 
 ! Compute the piq (sans mass) used in the L2PC
 ! hydrostatic function
@@ -33,18 +33,18 @@ module Piq_int_m
 ! argument z_ref allows a reference pressure that is /= z_grid(1)
 ! however adding this feature will cause program to run twice as slow
 
-    use MLSCommon, only: RP, IP
+    use MLSCommon, only: RP
 
     real(rp), intent(in) :: z_grid(:), t_basis(:), z_ref
     real(rp), intent(out) :: piq(:,:)
-    REAL(rp), OPTIONAL, intent(in) :: z_mass
-    REAL(rp), OPTIONAL, intent(in) :: c_mass
+    real(rp), optional, intent(in) :: z_mass
+    real(rp), optional, intent(in) :: c_mass
 
 ! inside code variables
 
-    REAL(rp) :: a,c,aa,cc, zm, mc
-    REAL(rp), DIMENSION(1:SIZE(z_grid)) :: b, d, bb, dd, ee, ff
-    INTEGER(ip) :: n_coeffs, i, ind(1)
+    real(rp) :: a,c,aa,cc, zm, mc
+    real(rp), dimension(1:size(z_grid)) :: b, d, bb, dd, ee, ff
+    integer :: n_coeffs, i, ind(1)
 
 ! begin code
   if (present(z_mass)) then
@@ -65,17 +65,15 @@ module Piq_int_m
 ! method derived from idl's ind_scl routine
 
     ind = min(max(pack((/(i,i=0,n_coeffs)/), &
-                       (/minval((/z_ref,(t_basis(i),i=1,n_coeffs)/))-1.0_rp, &
-                          (t_basis(i),i=1,n_coeffs)/) <= z_ref .and. &
-                          z_ref < (/(t_basis(i),i=1,n_coeffs), &
-                       maxval((/z_ref,(t_basis(i),i=1,n_coeffs)/))+1.0_rp/)), &
+                       (/minval((/z_ref,t_basis/))-1.0_rp, t_basis/) <= z_ref &
+                          .and. &
+                       z_ref < (/t_basis, maxval((/z_ref,t_basis/))+1.0_rp/)), &
                   2), &
                n_coeffs-2)
 
 ! NOTE it seems like MIN/MAX need to be done in pairs when comparing
-! against arrays and scalers.
-! for all coeffients below ind use
-! initial coefficient
+! against arrays and scalars.
+! for all coeffients below ind use initial coefficient
 
     a = max(t_basis(1),z_ref)
     b = max(min(max(z_grid,t_basis(1)),t_basis(2)),z_ref)
@@ -233,6 +231,9 @@ module Piq_int_m
 end module Piq_int_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.4  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.3  2003/02/08 00:58:42  bill
 ! improved high altitude mass reduction calculation
 !
