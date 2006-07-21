@@ -876,8 +876,11 @@ contains ! =====  Public Procedures  ===================================
             else
               lines(i)%signals(j) = sigInds(1)
             end if
-            nullify ( sigInds )
+            ! We can wait to deallocate sigInds until after the loop because
+            ! parse_signal does allocate_test, which deallocates it first
+            ! if it's allocated.
           end do ! j = 1, size(lines(i)%signals)
+          call deallocate_test ( sigInds, 'SigInds', moduleName )
           call allocate_test ( lines(i)%sidebands, signalIndices(i)-signalIndices(i-1), &
             & 'Lines(i)%Sidebands', moduleName )
           lines(i)%sidebands = sidebandList(signalIndices(i-1)+1:signalIndices(i))
@@ -1385,6 +1388,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.42  2006/02/03 01:54:04  vsnyder
+! Don't crash while trying to write error message
+!
 ! Revision 2.41  2005/06/22 18:08:20  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
