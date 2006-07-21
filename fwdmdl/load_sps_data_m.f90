@@ -65,12 +65,8 @@ contains
     & Grids_x, h2o_ind, ext_ind, QtyStuffIn )
 
     use ForwardModelConfig, only: ForwardModelConfig_t, QtyStuff_T
-    use ForwardModelVectorTools, only: GetQuantityForForwardModel
-    use Intrinsic, only: L_Phitan, L_VMR
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Deallocate, &
-      & MLSMSG_Error
     use Molecules, only: l_extinction, l_h2o
-    use VectorsModule, only: Vector_T, VectorValue_T
+    use VectorsModule, only: VectorValue_T
 
     type (forwardModelConfig_T), intent(in) :: fwdModelConf
     type (VectorValue_T), intent(in) ::  PHITAN  ! Tangent geodAngle component of
@@ -543,6 +539,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.66  2006/04/05 21:46:44  vsnyder
+! Allow state vector not to include all molecules
+!
 ! Revision 2.65  2006/01/05 03:26:09  vsnyder
 ! Remove unused variable
 !
