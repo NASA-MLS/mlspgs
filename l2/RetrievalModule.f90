@@ -77,7 +77,8 @@ contains
       & Sparsify, MultiplyMatrix_XTY
     use MatrixTools, only: DumpBlocks
     use MLSCommon, only: R8, RV
-    use MLSL2Options, only: SKIPRETRIEVAL, SPECIALDUMPFILE
+    use MLSL2Options, only: SKIPRETRIEVAL, SPECIALDUMPFILE, &
+      & STATEFILLEDBYSKIPPEDRETRIEVALS
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, Add_To_Retrieval_Timing
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
@@ -315,7 +316,7 @@ contains
         if ( toggle(gen) .and. levels(gen) > 0 ) &
           & call trace_end ( "Retrieve.RestrictRange" )
       case ( s_retrieve )
-        if ( SKIPRETRIEVAL ) cycle
+        if ( SKIPRETRIEVAL .and. STATEFILLEDBYSKIPPEDRETRIEVALS == 0. ) cycle
         if ( toggle(gen) ) call trace_begin ( "Retrieve.retrieve", root )
         aprioriScale = 1.0
         columnScaling = l_none
@@ -458,7 +459,25 @@ contains
           case default
             ! Shouldn't get here if the type checker worked
           end select
-        end do ! i_key = 2, nsons(key)
+        end do ! ! fields of the "retrieve" specification
+
+        if ( skipRetrieval ) then
+          if ( got(f_state) ) then
+            call ClearVector( state, real(statefilledbyskippedretrievals, rv) )
+            call output ( 'Clearing retrieval state vector name: ' )
+            call display_string ( state%name )
+            call output ( ', template name: ' )
+            call display_string ( state%template%name, advance='yes' )
+          endif
+          if ( got(f_outputSD) ) then
+            call ClearVector( outputSD, real(statefilledbyskippedretrievals, rv) )
+            call output ( 'Clearing retrieval precision vector name: ' )
+            call display_string ( state%name )
+            call output ( ', template name: ' )
+            call display_string ( state%template%name, advance='yes' )
+          endif
+          cycle
+        endif
 
         mySwitches = trim(mySwitches) // ',' // switches
         if ( got(f_apriori) .neqv. got(f_covariance) ) &
@@ -2616,6 +2635,9 @@ NEWT: do ! Newtonian iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.279  2006/07/21 20:13:29  pwagner
+! Can fill state even if skipping retrievals
+!
 ! Revision 2.278  2006/07/19 22:28:59  vsnyder
 ! Cannonball polishing
 !
