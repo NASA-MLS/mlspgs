@@ -461,7 +461,7 @@ contains
       use MoreTree, only: StartErrorMessage
       use SpectroscopyCatalog_m, only: Catalog, Empty_Cat, Line_t, &
         & Lines, MostLines
-      use String_table, only: Display_String, Get_String
+      use String_table, only: Display_String ! , Get_String
       use Toggles, only: Switches
       use Tree, only: Source_Ref
 
@@ -472,11 +472,10 @@ contains
       integer :: L         ! Index for lines, or number of lines
       integer, pointer :: LINEFLAG(:) ! /= 0 => Use this line
       integer :: M         ! Index for beta_group's molecule-size stuff
-      character(len=32) :: MolName ! For messages
       integer :: N         ! Molecule index, L_... from Intrinsic
       integer :: NoLinesMsg = -1 ! From switches
       integer, target :: MaxLineFlag(mostLines)
-      character(len=32) :: MoleculeName ! for error message
+!     character(len=32) :: MoleculeName ! for error message
       integer :: Polarized ! -1 => One of the selected lines is Zeeman split
                            ! +1 => None of the selected lines is Zeeman split
       integer :: S, SX     ! Indices for sidebands
@@ -996,7 +995,6 @@ contains
   subroutine DestroyOneForwardModelConfig ( Config, Deep )
     use Allocate_Deallocate, only: Deallocate_Test, Test_Deallocate
     use MLSSignals_M, only: DestroySignalDatabase
-    use MLSMessageModule, only: MLSMSG_Deallocate, MLSMSG_Error, MLSMessage
 
     ! Dummy arguments
     type ( ForwardModelConfig_T), intent(inout) :: config
@@ -1178,7 +1176,7 @@ contains
   subroutine Dump_ForwardModelConfig ( Config, Where, Details, SkipPFA )
 
     use Dump_0, only: DUMP
-    use Intrinsic, only: Lit_indices, PHYQ_Indices, Spec_Indices
+    use Intrinsic, only: Lit_indices, PHYQ_Indices
     use Lexer_Core, only: Print_Source
     use MLSSignals_M, only: GetNameOfSignal, MaxSigLen, Modules
     use Output_M, only: NewLine, Output
@@ -1364,6 +1362,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.94  2006/06/03 01:46:10  vsnyder
+! Remove no_dup_mol flag from config structure
+!
 ! Revision 2.93  2006/06/01 02:55:21  vsnyder
 ! Make sure config%lines is associated
 !
