@@ -36,7 +36,8 @@ program MLSL2
     & SECTIONTIMINGUNITS, SIPS_VERSION, &
     & SKIPDIRECTWRITES, SKIPDIRECTWRITESORIGINAL, &
     & SKIPRETRIEVAL, SKIPRETRIEVALORIGINAL, &
-    & SPECIALDUMPFILE, STOPAFTERCHUNKDIVIDE, STOPAFTERGLOBAL, STOPWITHERROR, &
+    & SPECIALDUMPFILE, STATEFILLEDBYSKIPPEDRETRIEVALS, &
+    & STOPAFTERSECTION, STOPWITHERROR, &
     & TOOLKIT
   use MLSL2Timings, only: RUN_START_TIME, SECTION_TIMES, TOTAL_TIMES, &
     & ADD_TO_SECTION_TIMING, DUMP_SECTION_TIMINGS
@@ -457,12 +458,27 @@ program MLSL2
         call getarg ( i, line )
         command_line = trim(command_line) // ' ' // trim(line)
         snoopName = line
+      else if ( line(3+n:7+n) == 'state' ) then
+        if ( line(8+n:) /= ' ' ) then
+          line(:7+n) = ' '
+        else
+          i = i + 1
+          call AccumulateSlaveArguments ( line )
+          call getarg ( i, line )
+          command_line = trim(command_line) // ' ' // trim(adjustl(line))
+        end if
+        read ( line, *, iostat=status ) stateFilledBySkippedRetrievals
+        if ( status /= 0 ) then
+          call io_error ( "After --state option", status, line )
+          stop
+        end if
       else if ( lowercase(line(3+n:9+n)) ==  'stgmem ' ) then
         parallel%stageInMemory = .true.
-      else if ( lowercase(line(3+n:12+n)) ==  'stopafterc' ) then
-        stopAfterChunkDivide = switch
-      else if ( lowercase(line(3+n:12+n)) ==  'stopafterg' ) then
-        stopAfterGlobal = switch
+      else if ( lowercase(line(3+n:12+n)) ==  'stopafter ' ) then
+        call AccumulateSlaveArguments ( line )
+        i = i + 1
+        call getarg ( i, stopAfterSection )
+        command_line = trim(command_line) // ' ' // trim(adjustl(stopAfterSection))
       else if ( lowercase(line(3+n:12+n)) ==  'stopwither' ) then
         stopWithError = switch
       else if ( lowercase(line(3+n:11+n)) == 'subblock ' ) then
@@ -795,10 +811,8 @@ program MLSL2
     if ( error == 0 .and. first_section /= 0 .and. .not. checkl2cf ) then
       ! Now do the L2 processing.
       ! stop-early flags => no writing, no retrieval
-      skipDirectwrites = (skipDirectwrites .or. stopAfterChunkDivide .or. &
-        & stopAfterGlobal)
-      skipRetrieval = (skipRetrieval .or. stopAfterChunkDivide .or. &
-        & stopAfterGlobal)
+      skipDirectwrites = ( skipDirectwrites .or. stopAfterSection /= ' ' )
+      skipRetrieval = ( skipRetrieval .or.  stopAfterSection /= ' ' )
       skipDirectwritesOriginal = skipDirectwrites
       skipRetrievalOriginal = skipRetrieval
       call time_now ( t1 )
@@ -972,6 +986,8 @@ contains
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       call output_name_v_pair ( 'Skip all retrievals?', SKIPRETRIEVAL, advance='yes', &
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      call output_name_v_pair ( 'Unretrieved states fill', STATEFILLEDBYSKIPPEDRETRIEVALS, advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       call output_name_v_pair ( 'Stage in memory instead of a file?', parallel%stageInMemory, advance='yes', &
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       call output_name_v_pair ( 'Using wall clock instead of cpu time?', time_config%use_wall_clock, advance='yes', &
@@ -1025,6 +1041,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.151  2006/07/21 20:10:37  pwagner
+! Can fill state even if skipping retrievals; select what section to stop after
+!
 ! Revision 2.150  2006/06/28 00:00:18  pwagner
 ! Uses new output_name_v_pair
 !
