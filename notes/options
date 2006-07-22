@@ -101,6 +101,9 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
     an IDL diagnostics process)
   --snoopname <name>: Distinguishing name to send to snooper (for use when
     using the stand alone logger)
+  --state <value>: Fill state vectors with <value> if retrievals skipped
+  --stopAfter <section>: Stop run after <section>; e.g., 'chunk_divide'
+     (see also 'Dump, /stop' in l2cf)
   --stgmem: Tell parallel master task to stage in memory, as opposed to a file.
   --subblock <number>: Set the number of reals to consider when subblocking
     the matrix multiply
@@ -135,6 +138,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will not be printed in response to mlsl2 -?)
 
  $Log$
+ Revision 1.41  2006/04/11 23:12:31  pwagner
+ Whether to allow overlaps outside of processing range
+
  Revision 1.40  2006/02/10 21:24:02  pwagner
  --dump specialDumpFile explained
 
