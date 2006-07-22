@@ -476,7 +476,7 @@ begin Fill
   Fill, quantity=vReg.hno3, method=profile, $
     profileValues= [ 200mb:0.2ppbv, 100mb:1ppbv, 1mb:3ppbv, 0.68mb:0ppbv ]
   Fill, quantity=vReg.ho2, method=profile, $
-    profileValues=[ 100mb:10pptv, 1mb:10ppbv ], /logSpace
+    profileValues=[ 32mb:100pptv, 10mb:200pptv, 3.2mb:500pptv, 1mb:500pptv, 0.32mb:2000pptv, 0.15mb:10000pptv ], /logSpace
   Fill, quantity=vReg.hocl, method=profile, $
     profileValues= [ 1mb:0.3ppbv, 0.68mb:0ppbv ]
   Fill, quantity=vReg.n2o, method=profile, $
@@ -545,7 +545,7 @@ begin Fill
   Fill, quantity=hReg.hno3, method=profile, $
     profileValues= [ 1mb:0.3ppbv, 0.68mb:0ppbv ]
   Fill, quantity=hReg.ho2, method=profile, $
-    profileValues=[ 100mb:10pptv, 1mb:10ppbv ], /logSpace
+    profileValues=[ 32mb:50pptv, 10mb:50pptv, 3.2mb:100pptv, 1mb:50pptv, 0.32mb:500pptv, 0.15mb:1000pptv ], /logSpace
   Fill, quantity=hReg.hocl, method=profile, $
     profileValues= [ 1mb:0.3ppbv, 0.68mb:0ppbv ]
   Fill, quantity=hReg.n2o, method=profile, $
@@ -597,6 +597,9 @@ begin Join
 end Join
   })
 ;$Log$
+;Revision 1.117  2006/07/21 23:49:56  lambert
+;changed CO and BrO apriori and hReg/vReg
+;
 ;Revision 1.116  2006/07/18 22:30:31  lambert
 ;modified aprioriPrecision.CO and vReg.
 ;
