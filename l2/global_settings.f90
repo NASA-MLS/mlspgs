@@ -173,6 +173,7 @@ contains
     stopEarly = ( &
       & index('global_setting,chunk_divide', &
       & lowercase( trim(stopAfterSection) ) ) > 0 )
+    stopEarly = ( stopearly .and. stopAfterSection /= ' ' )
     error = 0
     got = .false.
     startTimeIsAbsolute = .false.
@@ -950,6 +951,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.118  2006/07/21 20:12:48  pwagner
+! Can select what section to stop after
+!
 ! Revision 2.117  2006/07/20 23:39:53  vsnyder
 ! Remove unused declarations and USEs
 !

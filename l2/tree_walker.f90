@@ -151,6 +151,9 @@ contains ! ====     Public Procedures     ==============================
     stopBeforeChunkLoop          = ( &
       & index('global_setting,chunk_divide', &
       & lowercase( trim(stopAfterSection) ) ) > 0 )
+    stopBeforeChunkLoop = ( stopBeforeChunkLoop .and. stopAfterSection /= ' ' )
+    ! print *, 'trim(stopAfterSection): ', trim(stopAfterSection)
+    ! print *, 'stopBeforeChunkLoop: ', stopBeforeChunkLoop
     reducedChunks      = .false.
     depth = 0
     if ( toggle(gen) ) call trace_begin ( 'WALK_TREE_TO_DO_MLS_L2', &
@@ -552,6 +555,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.143  2006/07/21 20:12:26  pwagner
+! Can select what section to stop after
+!
 ! Revision 2.142  2006/06/12 16:28:25  pwagner
 ! Added ability to dump Gridded Data
 !
