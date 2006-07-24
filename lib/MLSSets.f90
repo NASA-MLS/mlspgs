@@ -34,6 +34,14 @@ module MLSSets
     module procedure FindAllInteger, FindAllLogical, FindAllCharacter
   end interface
 
+  interface Intersection
+    module procedure IntersectionInteger, IntersectionCharacter
+  end interface
+
+  interface Union
+    module procedure UnionInteger, UnionCharacter
+  end interface
+
 ! === (start of toc) ===                                                 
 !     c o n t e n t s                                                    
 !     - - - - - - - -                                                    
@@ -485,9 +493,10 @@ contains ! =====     Public Procedures     =============================
   end function Intersect
 
   ! -----------------------------------------------  Intersection  -----
-  function Intersection ( A, B ) result ( C )
   ! Compute the intersection C of the sets A and B, each represented by
-  ! arrays of integers.
+  ! arrays of integers, characters
+
+  function IntersectionInteger ( A, B ) result ( C )
 
     use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
     use Sort_M, only: Sort
@@ -517,15 +526,51 @@ contains ! =====     Public Procedures     =============================
     nullify ( c )
     allocate ( c(k), stat=stat )
     if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      MLSMSG_Allocate // 'C in Intersection' )
+      MLSMSG_Allocate // 'C in IntersectionInteger' )
     c = tc(:k)
 
-  end function Intersection
+  end function IntersectionInteger
+
+  function IntersectionCharacter ( A, B ) result ( C )
+    ! method:
+    ! Go though a, checking for each element whether a match is found in (b)
+    ! If  so found, add the element
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
+
+    character(len=*), dimension(:), intent(in) :: A(:), B(:)
+    character(len=len(a)), dimension(:), pointer :: C(:) ! Intent(out) -- nullified and then allocated here
+    ! Local variables
+    integer :: i, j, size_c, status
+    character(len=len(a)), dimension(size(a)+size(b)) :: TC
+    
+    ! Executable
+    size_c = 0
+    do i=1, size(a)
+      ! Don't redo a repeated element
+      if ( i > 1 ) then
+        j = findFirst( a(:i-1), a(i) )
+        if ( j > 0 ) cycle
+      endif
+      j = findFirst( b, a(i) )
+      if ( j > 0 ) then
+        size_c = size_c + 1
+        TC(size_c) = a(i)
+      endif
+    enddo
+    ! print *, 'size(c): ', size_c    
+    ! print *, 'tc: ', tc(1:size_c)
+    nullify(c)
+    if ( size_c < 1 ) return
+    allocate ( c(size_c), stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      MLSMSG_Allocate // 'C in IntersectionCharacter' )
+    c = tc(:size_c)
+  end function IntersectionCharacter
 
   ! ------------------------------------------------------  Union  -----
-  function Union ( A, B ) result ( C )
   ! Compute the union C of the sets A and B, each represented by
-  ! arrays of integers.
+  ! arrays of integers, characters
+  function UnionInteger ( A, B ) result ( C )
 
     use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
     use Sort_M, only: Sort
@@ -555,7 +600,54 @@ contains ! =====     Public Procedures     =============================
       MLSMSG_Allocate // 'C in Intersection' )
     c = t(:i)
 
-  end function Union
+  end function UnionInteger
+
+  function UnionCharacter ( A, B ) result ( C )
+    ! Method:
+    ! 1st go through a, adding all non-repeated elements
+    ! Then go through b, adding any that haven't been added already
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
+
+    character(len=*), dimension(:), intent(in) :: A(:), B(:)
+    character(len=len(a)), dimension(:), pointer :: C(:) ! Intent(out) -- nullified and then allocated here
+    ! Local variables
+    integer :: i, j, size_c, status
+    character(len=len(a)), dimension(size(a)+size(b)) :: TC
+    
+    ! Executable
+    ! print *, 'size(a): ', size(a)    
+    ! print *, 'a: ', a(1:size(a))
+    size_c = 0
+    do i=1, size(a)
+      ! Don't redo a repeated element
+      if ( i > 1 ) then
+        j = findFirst( a(:i-1), a(i) )
+        if ( j > 0 ) cycle
+      endif
+      size_c = size_c + 1
+      TC(size_c) = a(i)
+    enddo
+
+    ! print *, 'size(b): ', size(b)    
+    ! print *, 'b: ', b(1:size(b))
+    do i=1, size(b)
+      ! Don't redo an already-added element
+      if ( size_c > 0 ) then
+        j = findFirst( tc(:size_c), b(i) )
+        if ( j > 0 ) cycle
+      endif
+      size_c = size_c + 1
+      TC(size_c) = b(i)
+    enddo
+    ! print *, 'size(c): ', size_c    
+    ! print *, 'tc: ', tc(1:size_c)
+    nullify(c)
+    if ( size_c < 1 ) return
+    allocate ( c(size_c), stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      MLSMSG_Allocate // 'C in UnionCharacter' )
+    c = tc(:size_c)
+  end function UnionCharacter
 
   ! --------------------------------------------------  UnionSize  -----
   integer function UnionSize ( A, B )
@@ -601,6 +693,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSSets
 
 ! $Log$
+! Revision 2.12  2006/07/24 20:36:22  pwagner
+! Union, Inersection may take character arrays
+!
 ! Revision 2.11  2006/01/14 00:51:39  pwagner
 ! Added FindLast functions
 !
