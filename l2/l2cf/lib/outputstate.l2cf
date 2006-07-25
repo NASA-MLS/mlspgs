@@ -23,7 +23,8 @@ begin Output
 
 ;; --------------------------------- Other files ---
 ;; The IWC file is a somewhat special case
-Output, quantities=[joined_iwc, joined_iwp, joined_iwcFine], type=l2gp, $
+;;;Output, quantities=[joined_iwc, joined_iwp, joined_iwcFine], type=l2gp, $
+Output, quantities=[joined_iwc, joined_iwp], type=l2gp, $
   hdfVersion=!hdfVersion, $
   file='!l2gpFileName(IWC)'
 },{
@@ -76,9 +77,9 @@ Copy, type=l2gp, hdfVersion=!hdfVersion, $
     file='!l2gpFileName(IWC)', rename='IWC', $
     /create
 
-Copy, type=l2gp, hdfVersion=!hdfVersion, $
-    inputFile='!DGGFileName', swath='IWC3-StdProd', inputtype=l2dgg, $
-    file='!l2gpFileName(IWC)', rename='IWC3'
+;;;Copy, type=l2gp, hdfVersion=!hdfVersion, $
+;;;    inputFile='!DGGFileName', swath='IWC3-StdProd', inputtype=l2dgg, $
+;;;    file='!l2gpFileName(IWC)', rename='IWC3'
 
 Copy, type=l2gp, hdfVersion=!hdfVersion, $
     inputFile='!DGGFileName', swath='IWP-StdProd', inputtype=l2dgg, $

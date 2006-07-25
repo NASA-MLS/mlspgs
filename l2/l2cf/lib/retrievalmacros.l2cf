@@ -660,12 +660,14 @@ begin Join
     status=otherDiagnostics.status$1, quality=otherDiagnostics.quality$1
 }, $1,{IWC}, {
 ; IWC is somewhat special
-  Label, quantity=state.iwcFine, label='IWC3-StdProd'
+  ;;;Label, quantity=state.iwcFine, label='IWC3-StdProd'
   Label, quantity=state.iwp, label='IWP-StdProd'
   DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=state.iwc, precision=outputPrecision.iwc, $
-    source=state.iwcFine, precision=outputPrecision.iwcFine, $
     source=state.iwp, precision=outputPrecision.iwp
+
+    ;;;source=state.iwcFine, precision=outputPrecision.iwcFine, $
+    ;;;source=state.iwp, precision=outputPrecision.iwp
 },{
 ; RHI is the only normal stdProd without columns, which makes it special
   DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
@@ -760,6 +762,9 @@ Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusL
 })})
 
 ; $Log$
+; Revision 1.114  2006/07/24 23:14:56  pwagner
+; Repaired bug preventing copying IWP swath to IWC file
+;
 ; Revision 1.113  2006/07/11 00:06:32  pwagner
 ; Some standard products now stored at _hr; ptrop computed using Temperature_hr
 ;
