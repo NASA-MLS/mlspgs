@@ -40,17 +40,12 @@ begin Fill
   !define(flaggingBands,{10,11,12,13,14,28,29,30,31})
   !makeFlagsForOneProduct(product=CH3CN,radiometer=R4,chisqScale=1.0,minRads=4000,cloudMax=10K,cloudMin= -10K)
 
-  ;; ------------------------------------- Temperature-CorePlusR4
-  !define(flaggingBands,{1,22,32})
-  !makeFlagsForOneProduct(product=Temperature,radiometer=R2,chisqScale=1.0,minRads=1000,cloudMax=5K,cloudMin= -10K)
-
-  ;; ------------------------------------- GPH-CorePlusR4
-  !define(flaggingBands,{1,22,32})
-  !makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=1.0,minRads=1000,cloudMax=5K,cloudMin= -10K)
-
 end Fill
 
 ; $Log$
+; Revision 1.8  2004/09/21 23:02:59  livesey
+; Changed chiSqWeights to 1.0 for everything.
+;
 ; Revision 1.7  2004/05/04 01:05:46  livesey
 ; Added flags for CH3CN-640 and HNO3-640.
 ;
