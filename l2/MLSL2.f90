@@ -20,6 +20,7 @@ program MLSL2
     & LIT_INDICES
   use L2GPData, only: avoidUnlimitedDims
   use L2PARINFO, only: PARALLEL, INITPARALLEL, ACCUMULATESLAVEARGUMENTS
+  use LeakCheck_m, only: LeakCheck
   use LEXER_CORE, only: INIT_LEXER
   use LEXER_M, only: CapIdentifiers
   use MACHINE, only: GETARG, HP, IO_ERROR, NEVERCRASH
@@ -144,6 +145,7 @@ program MLSL2
   logical :: COPYARG               ! Copy this argument to parallel command line
   logical :: COUNTCHUNKS = .false. ! Just count the chunks and quit
   logical :: CHECKL2CF = .false.   ! Just check the l2cf and quit
+  logical :: CheckLeak = .false.   ! Check parse tree for potential memory leaks
   logical :: DO_DUMP = .false.     ! Dump declaration table
   logical :: DUMP_TREE = .false.   ! Dump tree after parsing
   integer :: ERROR                 ! Error flag from check_tree
@@ -190,7 +192,7 @@ program MLSL2
   if (error /= 0) then
       call MLSMessage ( MLSMSG_Error, moduleName, &
         & "Unable to mls_open" )
-  endif
+  end if
   ! Before looking at command-line options, TOOLKIT is set to SIPS_VERSION
   ! So here's a good place to put any SIPS-specific settings overriding defaults
   if ( SIPS_VERSION ) then
@@ -205,7 +207,7 @@ program MLSL2
     ! SCF_VERSION
     switches='0sl'
     NeverCrash = .false.
-  endif
+  end if
   time_config%use_wall_clock = SIPS_VERSION
 ! Initialize the lexer, symbol table, and tree checker's tables:
 !  ( Under some circumstances, you may need to increase these )
@@ -343,6 +345,8 @@ program MLSL2
         case default
           DEFAULT_HDFVERSION_WRITE = HDFVERSION_5
         end select
+      else if ( line(3+n:7+n) == 'leak' ) then
+        checkLeak = .true.
       else if ( line(3+n:9+n) == 'master ' ) then
         copyArg = .false.
         parallel%master = .true.
@@ -571,15 +575,15 @@ program MLSL2
                 & .and. &
                 & switchDetail(switches, 'time') /= 1
               total_times = section_times .and. switchDetail(switches, 'time') /= 2
-            elseif ( lowercase(line(j+1:j+1)) == 's' ) then
+            else if ( lowercase(line(j+1:j+1)) == 's' ) then
               sectionTimingUnits = l_seconds
-            elseif ( lowercase(line(j+1:j+1)) == 'm' ) then
+            else if ( lowercase(line(j+1:j+1)) == 'm' ) then
               sectionTimingUnits = l_minutes
-            elseif ( lowercase(line(j+1:j+1)) == 'h' ) then
+            else if ( lowercase(line(j+1:j+1)) == 'h' ) then
               sectionTimingUnits = l_hours
             end if
             j = j + 1
-          enddo
+          end do
         case ( 't' ); toggle(tab) = .true.
         case ( 'v' ); do_listing = .true.
         case ( 'w' )
@@ -587,7 +591,7 @@ program MLSL2
           if ( line(j+1:j+1) == 'p' ) then
             RESTARTWARNINGS = .false.
             j = j + 1
-          endif
+          end if
           if ( j < len_trim(line) ) then
             call readIntsFromChars(line(j+1:), MLSMessageConfig%limitWarnings)
             j = j + len_trim(line(j+1:))
@@ -622,12 +626,12 @@ program MLSL2
     call GetStringElement(trim(removeSwitches), aSwitch, i, countEmpty=.true.)
     call RemoveElemFromList(switches, tempSwitches, trim(aSwitch))
     switches = tempSwitches
-  enddo
+  end do
   if ( parallel%slave ) then
   ! Don't dump all the chunks again and again for each slave's chunk
     call RemoveElemFromList(switches, tempSwitches, 'chu')
     switches = tempSwitches
-  endif
+  end if
   ! The following no longer does anything
   call Set_garbage_collection(garbage_collection_by_dt)
 
@@ -636,9 +640,9 @@ program MLSL2
 
   if ( .not. toolkit .or. showDefaults ) then
      outputOptions%prunit = max(-1, outputOptions%prunit)   ! stdout or Fortran unit
-  elseif (parallel%master) then
+  else if (parallel%master) then
      outputOptions%prunit = -2          ! output both logged and sent to stdout
-  elseif (parallel%slave) then
+  else if (parallel%slave) then
      outputOptions%prunit = -1          ! output sent only to stdout, not logged
   end if
 
@@ -665,7 +669,7 @@ program MLSL2
     call MLSMessage ( MLSMSG_Warning, ModuleName, &
     & 'checkPaths will fail if l2pc files only on local disks but master runs' &
     & // ' on front end' )
-  endif
+  end if
   ! If doing a range of chunks, the avoidance of unlimited dimensions
   ! in directwrites of l2gp files currently fails 
   ! (when will this be fixed?)
@@ -690,7 +694,7 @@ program MLSL2
     if ( parallel%myTid <= 0 ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'slave Tid <= 0; probably pvm trouble' )
-  endif
+  end if
   !---------------- Task (4) ------------------
   ! Open the L2CF
   status = 0
@@ -709,7 +713,7 @@ program MLSL2
       call io_error ( "While opening L2CF", status, line )
       call MLSMessage ( MLSMSG_Error, moduleName, &
         & "Unable to open L2CF file: " // trim(line), MLSFile=MLSL2CF )
-    elseif(switchDetail(switches, 'pro') >= 0) then                            
+    else if(switchDetail(switches, 'pro') >= 0) then                            
       call announce_success(MLSL2CF%name, l2cf_unit)               
     end if
     inunit = l2cf_unit
@@ -725,7 +729,7 @@ program MLSL2
       call output(status, advance='yes')
       call MLSMessage ( MLSMSG_Error, moduleName, &
         & "Unable to open L2CF file named in pcf", MLSFile=MLSL2CF )
-    elseif(switchDetail(switches, 'pro') >= 0) then                            
+    else if(switchDetail(switches, 'pro') >= 0) then                            
       call announce_success(MLSL2CF%name, inunit)               
     end if
   end if
@@ -734,7 +738,7 @@ program MLSL2
     MLSL2CF%FileID%f_id = -1
   else
     inunit = MLSL2CF%FileID%f_id
-  endif
+  end if
   numfiles = AddFileToDataBase(filedatabase, MLSL2CF)
   
   call time_now ( t1 )
@@ -748,7 +752,7 @@ program MLSL2
       call output('S I P S', advance='yes')
     else
       call output('S C F', advance='yes')
-    endif
+    end if
     call dump_settings
   end if
   if ( showDefaults ) stop
@@ -759,7 +763,7 @@ program MLSL2
     call configuration ( root )
   else
     root = -1
-  endif
+  end if
   if ( timing ) call sayTime ( 'Parsing the L2CF' )
 
   !---------------- Task (6) ------------------
@@ -807,6 +811,13 @@ program MLSL2
        & 'error in check_tree: probably need to repair l2cf ' )
     end if
 
+    if ( checkLeak ) then
+      call time_now ( t1 )
+      call leakCheck ( root )
+      t2 = t0
+      call add_to_section_timing( 'main', t2 )
+    end if
+
   !---------------- Task (7) ------------------
     if ( error == 0 .and. first_section /= 0 .and. .not. checkl2cf ) then
       ! Now do the L2 processing.
@@ -841,25 +852,25 @@ program MLSL2
     & (SKIPDIRECTWRITES .or. SKIPRETRIEVAL) ) then
     ! call mls_h5close(error)
     ! call MLSMessageExit 
-  elseif ( error == 0 ) then
+  else if ( error == 0 ) then
     call Deallocate_filedatabase(filedatabase)
     call mls_h5close(error)
     if (error /= 0) then
        call MLSMessage ( MLSMSG_Error, moduleName, &
         & "Unable to mls_close" )
-    endif    
-  endif    
+    end if    
+  end if    
   if ( timing ) call sayTime ( 'Closing and deallocating' )
   call add_to_section_timing( 'main', t0 )
   if ( switchDetail(switches, 'time') >= 0 ) call dump_section_timings
   call output_date_and_time(msg='ending mlsl2')
   if( error /= 0 .or. STOPWITHERROR ) then
      call MLSMessageExit(1)
-  elseif(NORMAL_EXIT_STATUS /= 0 .and. .not. parallel%slave) then
+  else if(NORMAL_EXIT_STATUS /= 0 .and. .not. parallel%slave) then
      call MLSMessageExit(NORMAL_EXIT_STATUS)
   else                  
      call MLSMessageExit 
-  endif                 
+  end if                 
 
 contains
   subroutine SayTime ( What )
@@ -869,7 +880,7 @@ contains
       call output ( "Total time = " )
       call output ( dble(t2), advance = 'no' )
       call blanks ( 4, advance = 'no' )
-    endif
+    end if
     call output ( "Timing for " // what // " = " )
     call output ( dble(t2 - t1), advance = 'yes' )
   end subroutine SayTime
@@ -937,10 +948,10 @@ contains
       if ( singleChunk /= 0 .and. lastChunk == 0 ) then
       call output_name_v_pair ( 'Compute only the single chunk', singleChunk, advance='yes', &
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
-      elseif ( singleChunk /= 0 .and. lastChunk /= 0 ) then
+      else if ( singleChunk /= 0 .and. lastChunk /= 0 ) then
       call output_name_v_pair ( 'Compute chunks in range', (/singleChunk, lastChunk/), advance='yes', &
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
-      endif                      
+      end if                      
       call output_name_v_pair ( 'Avoiding unlimited dimensions in directwrites?', &
         & avoidUnlimitedDims, advance='yes', &
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
@@ -973,13 +984,13 @@ contains
       else
       call output_name_v_pair ( 'Range of chunks run serially', (/singleChunk, lastChunk/), advance='yes', &
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
-      endif
+      end if
       call output_name_v_pair ( 'Is this a slave task in pvm?', parallel%slave, advance='yes', &
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       if ( parallel%slave ) then
       call output_name_v_pair ( 'Master task number', parallel%masterTid, advance='yes', &
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
-      endif                      
+      end if                      
       call output_name_v_pair ( 'Preflight check paths?', checkPaths, advance='yes', &
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       call output_name_v_pair ( 'Skip all direct writes?', SKIPDIRECTWRITES, advance='yes', &
@@ -1000,7 +1011,7 @@ contains
       if ( switches /= ' ' ) then
         call output_name_v_pair ( '(All switches)', trim(switches), advance='yes', &
           & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
-      endif
+      end if
       call output_name_v_pair ( 'Standard output unit', outputOptions%prunit, advance='yes', &
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       call output_name_v_pair ( 'Log file unit', MLSMessageConfig%LogFileUnit, advance='yes', &
@@ -1018,9 +1029,9 @@ contains
       if ( specialDumpFile /= ' ' ) then
       call output_name_v_pair ( 'Save special dumps to', trim(specialDumpFile), advance='yes', &
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
-      endif
+      end if
       call blanks(70, fillChar='-', advance='yes')
-    endif
+    end if
   end subroutine Dump_settings
 
   ! ---------------------------------------------  announce_success  -----
@@ -1041,6 +1052,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.152  2006/07/27 03:49:12  vsnyder
+! Detect --leak option, attach leak checker
+!
 ! Revision 2.151  2006/07/21 20:10:37  pwagner
 ! Can fill state even if skipping retrievals; select what section to stop after
 !
