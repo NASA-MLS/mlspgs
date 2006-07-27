@@ -70,6 +70,7 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
   --l1b=n:   Assume hdfn when reading l1b files
   --l2gpr=n: Assume hdfeosn when reading l2gp files
   --l2gpw=n: Assume hdfeosn when writing l2gp files
+  --leak:    Check parse tree for potential leaks
   --master <filename>[:a:b]: This is the master task in a PVM setup
     filename contains simply ascii list of slave host names
     can list a machine more than once (e.g. for SMP slaves)
@@ -138,6 +139,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will not be printed in response to mlsl2 -?)
 
  $Log$
+ Revision 1.42  2006/07/22 00:22:06  pwagner
+ new state and stopAfter options
+
  Revision 1.41  2006/04/11 23:12:31  pwagner
  Whether to allow overlaps outside of processing range
 
