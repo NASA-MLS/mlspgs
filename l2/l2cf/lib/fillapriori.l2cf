@@ -470,7 +470,7 @@ begin Fill
   Fill, quantity=vReg.RHiVmr, method=profile, profileValues= [ $
         681mb:10.0, 316mb:10.0, 215mb:10.0, 147mb:10.0]
   Fill, quantity=vReg.hcl, method=profile, $
-    profileValues= [ 0.1mb:1.0ppbv, 0.046mb:0ppbv ]
+    profileValues= [ 0.1mb:2.0ppbv, 0.046mb:0ppbv ]
   Fill, quantity=vReg.hcn, method=profile, $
     profileValues= [ 1mb:20pptv, 0.1mb:0pptv ]
   Fill, quantity=vReg.hno3, method=profile, $
@@ -597,6 +597,9 @@ begin Join
 end Join
   })
 ;$Log$
+;Revision 1.119  2006/07/27 01:00:21  lambert
+;changed vReg.hclfillapriori.l2cf
+;
 ;Revision 1.118  2006/07/22 01:24:07  lambert
 ;updated HO2 vReg and hReg
 ;
