@@ -170,8 +170,8 @@ contains ! =====     Public Procedures     =============================
     use MLSSets, only: FindFirst
     use MLSSignals_m, only: GetFirstChannel, GetSignalName, GetModuleName, IsModuleSpacecraft, &
       & GetSignal, Signal_T
-    use MLSStringLists, only: catLists, GetStringElement, NumStringElements, &
-      & PutHashElement, &
+    use MLSStringLists, only: catLists, GetHashElement, GetStringElement, &
+      & NumStringElements, PutHashElement, &
       & ReplaceSubString, StringElement, StringElementNum, switchDetail
     use MLSStrings, only: lowerCase, SplitNest
     use Molecules, only: L_H2O
@@ -1765,7 +1765,15 @@ contains ! =====     Public Procedures     =============================
                 ! print *,col_species_hash
                 ! call dump( .true., col_species_keys, col_species_hash, &
                 !   & 'column species units' )
+              else
+                call get_string( lit_indices(quantity%template%molecule), mol, &
+                  & strip=.true. )
+                call GetHashElement (col_species_keys, &
+                  & col_species_hash, trim(lowercase(mol)), &
+                  & ExplicitUnit, .true.)
+                if ( index(lowerCase(ExplicitUnit), 'd') > 0 ) colmabunits = l_DU
               end if
+              ! print *, 'species, column unit: ', mol, ExplicitUnit
               call FillColAbundance ( key, quantity, &
                 & bndPressQty, vmrQty, colmAbUnits )
             end if
@@ -7898,6 +7906,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.340  2006/07/27 23:07:38  pwagner
+! Attempt to enforce conformity between column unit attributes and how we compute them
+!
 ! Revision 2.339  2006/07/27 03:54:11  vsnyder
 ! Include source_ref in created vectors and matrices
 !
