@@ -617,7 +617,8 @@ contains ! =====     Public Procedures     =============================
         ! Create the vector, and add it to the database.
         call decorate ( key, AddVectorToDatabase ( vectors, &
           & CreateVector ( vectorName, vectorTemplates(templateIndex), &
-          & qtyTemplates, globalUnit=globalUnit, highBound=highBound, lowBound=lowBound ) ) )
+          & qtyTemplates, globalUnit=globalUnit, highBound=highBound, lowBound=lowBound, &
+          & where=source_ref(key) ) ) )
 
         ! That's the end of the create operation
 
@@ -654,22 +655,22 @@ contains ! =====     Public Procedures     =============================
           case ( l_cholesky )
             call NullifyMatrix ( matrixCholesky%m )
             call createEmptyMatrix ( matrixCholesky%m, vectorName, &
-              & vectors(rowVector), vectors(colVector) )
+              & vectors(rowVector), vectors(colVector), where=source_ref(key) )
             call decorate ( key, addToMatrixDatabase(matrices, matrixCholesky) )
           case ( l_kronecker )
             call NullifyMatrix ( matrixKronecker%m )
             call createEmptyMatrix ( matrixKronecker%m, vectorName, &
-              & vectors(rowVector), vectors(colVector) )
+              & vectors(rowVector), vectors(colVector), where=source_ref(key) )
             call decorate ( key, addToMatrixDatabase(matrices, matrixKronecker) )
           case ( l_plain )
             call NullifyMatrix ( matrixPlain )
             call createEmptyMatrix ( matrixPlain, vectorName, vectors(rowVector), &
-              vectors(colVector) )
+              vectors(colVector), where=source_ref(key) )
             call decorate ( key, addToMatrixDatabase(matrices, matrixPlain) )
           case ( l_spd )
             call NullifyMatrix ( matrixSPD%m )
             call createEmptyMatrix ( matrixSPD%m, vectorName, &
-              & vectors(colVector), vectors(colVector) )
+              & vectors(colVector), vectors(colVector), where=source_ref(key) )
             call decorate ( key, addToMatrixDatabase(matrices, matrixSPD) )
           end select
         else
@@ -7897,6 +7898,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.339  2006/07/27 03:54:11  vsnyder
+! Include source_ref in created vectors and matrices
+!
 ! Revision 2.338  2006/07/12 20:41:16  pwagner
 ! Fixed BO size mismatch that only NAG caught
 !
