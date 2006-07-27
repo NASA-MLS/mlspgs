@@ -217,13 +217,13 @@ contains
             call dump ( catalog, details=details )
           case ( f_allVectors )
             if ( haveVectors ) then
-              call dump ( vectors )
+              call dump ( vectors, details=details )
             else
               call announceError ( son, noVectors )
             end if
           case ( f_allVectorTemplates )
             if ( haveVectorTemplates ) then
-              call dump ( vectorTemplates )
+              call dump ( vectorTemplates, details=details )
             else
               call announceError ( son, noVT )
             end if
@@ -519,6 +519,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.32  2006/07/27 03:52:41  vsnyder
+! Pass details to dumps for vectors and vector templates
+!
 ! Revision 2.31  2006/07/19 22:26:40  vsnyder
 ! Comment out unused USE
 !
