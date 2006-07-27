@@ -60,6 +60,7 @@ contains ! =====  Public procedures  ===================================
       & F_ROWCHANNELS, F_ROWINSTANCES, F_ROWQUANTITY, F_ROWSURFACES, &
       & F_Structure
     use Intrinsic, only: PHYQ_Dimensionless
+    use MatrixModule_1, only: Dump
     use MoreTree, only: GET_BOOLEAN, GET_FIELD_ID
     use Output_M, only: NewLine, OUTPUT
     use String_Table, only: DISPLAY_STRING
@@ -119,7 +120,8 @@ contains ! =====  Public procedures  ===================================
     integer, parameter :: Dimless = 1     ! Details has to be dimensionless
     integer, parameter :: Duplicate = dimless + 1     ! Duplicate quantity name specified
     integer, parameter :: NeedMatrix = duplicate + 1  ! Need /all or matrix
-    integer, parameter :: Numeric = needMatrix + 1    ! Details can't be range
+    integer, parameter :: NeedMatrixDatabase = needMatrix + 1 ! Need some matrix!
+    integer, parameter :: Numeric = needMatrixDatabase + 1 ! Details can't be range
     integer, parameter :: OutOfRange = numeric + 1    ! Index out of range
     integer, parameter :: Redundant = outOfRange + 1  ! Both /all and matrix
 
@@ -127,6 +129,11 @@ contains ! =====  Public procedures  ===================================
 
     ! Don't do it if the "nodb" switch is set.
     if ( index(switches, 'nodb') /= 0 ) return
+
+    if ( .not. associated(matrices) ) then
+      call announce_error ( needMatrixDatabase, key )
+      return
+    end if
 
     ! Set defaults
 
@@ -154,7 +161,7 @@ contains ! =====  Public procedures  ===================================
       case ( f_allMatrices )
         allMatrices = get_Boolean ( son )
       case ( f_details )
-        call expr ( son, units, values, type )
+        call expr ( subtree(2,son), units, values, type )
         if ( units(1) /= phyq_dimensionless ) call announce_error ( son, dimless )
         if ( type /= num_value ) call announce_error ( son, numeric )
         details = nint(values(1))
@@ -192,6 +199,10 @@ contains ! =====  Public procedures  ===================================
 
     if ( allMatrices ) then
       if ( matrixIndex > 0 ) call announce_error ( redundant, key )
+      if ( details < 0 ) then
+        call dump ( matrices, details=details )
+        return
+      end if
       matrix1 = 1
       matrixEnd = size(matrices)
     else
@@ -273,8 +284,10 @@ contains ! =====  Public procedures  ===================================
         call display_string ( sub_rosa(where), before=': Duplicate quantity ' )
         call output ( ' not used.', advance='yes' )
       case ( needMatrix )
-        call output ( ': Either /all or a matrix must be specified', &
+        call output ( 'Either /all or a matrix must be specified', &
           & advance='yes' )
+      case ( needMatrixDatabase )
+        call output ( 'There is no matrix database', advance='yes' )
       case ( numeric )
         call output ( "The field is not numeric." )
       case ( outOfRange )
@@ -711,6 +724,9 @@ contains ! =====  Public procedures  ===================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.20  2006/07/19 22:27:24  vsnyder
+! Add /allMatrices, details= and /structure fields
+!
 ! Revision 1.19  2005/06/22 18:57:02  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
