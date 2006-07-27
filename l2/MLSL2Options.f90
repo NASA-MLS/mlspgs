@@ -47,7 +47,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! Update these lines before delivery to sips     
   ! id to print out in response to "--version" command-line option       
   character(LEN=*), dimension(2), parameter :: CURRENT_VERSION_ID = (/ &    
-    & 'v2.00 swdev team              ', &       
+    & 'v2.10 swdev team              ', &       
     & 'Copyright statement omitted   '/)
      
   ! Set the following to 1 before delivering to sips;                       
@@ -144,6 +144,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.38  2006/07/27 23:06:17  pwagner
+! update CURRENT_VERSION_ID
+!
 ! Revision 2.37  2006/07/21 20:09:56  pwagner
 ! Can fill state even if skipping retrievals; select what section to stop after
 !
