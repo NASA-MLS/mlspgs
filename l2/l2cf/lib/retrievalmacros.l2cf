@@ -510,6 +510,12 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 },{!dnl
 !define(theQuantity,{$1})
 })
+
+!ifelse($1,{O3}, {
+!define(theUnits,{, unit=DU})
+},{!dnl
+!define(theUnits,{})
+})
 Begin Fill
 
   ;; Get our standard products back
@@ -521,14 +527,14 @@ Begin Fill
 ;; --------------------------------------------- tpPressure (using MLS profiles)
   
   Fill, quantity=state.tpPressure, method=wmoTropopause, $
-    temperatureQuantity=state.temperature, refGPHQuantity=state.refGPH, $
+    temperatureQuantity=state.temperature_hr, refGPHQuantity=state.refGPH, $
     internalVgrid=vGridWMO
   Fill, quantity=standardProducts.!theQuantity, method=vector, sourceQuantity=state.!theQuantity
   Fill, quantity=standardPrecision.!theQuantity, method=vector, sourceQuantity=outputPrecision.!theQuantity
   Fill, quantity=state.column_$1, method=special, vmrQuantity=state.!theQuantity, $
-    boundaryPressure=state.tpPressure
+    boundaryPressure=state.tpPressure !theUnits
   Fill, quantity=outputPrecision.column_$1, method=special, vmrQuantity=outputPrecision.!theQuantity, $
-    boundaryPressure=state.tpPressure
+    boundaryPressure=state.tpPressure !theUnits
 End Fill
 
 !ifdef(flagUseGEOS5PTrop,
@@ -546,9 +552,9 @@ Begin Fill
   Fill, quantity=state.tpPressure, method=gridded, $
     sourceGrid=geos5EtaWMOPTrop
   Fill, quantity=state.column_$1, method=special, vmrQuantity=state.!theQuantity, $
-    boundaryPressure=state.tpPressure
+    boundaryPressure=state.tpPressure !theUnits
   Fill, quantity=outputPrecision.column_$1, method=special, vmrQuantity=outputPrecision.!theQuantity, $
-    boundaryPressure=state.tpPressure
+    boundaryPressure=state.tpPressure !theUnits
 End Fill
 begin Join
   Label, quantity=state.column_$1, label='$1-StdProd column-GEOS5'
@@ -762,6 +768,9 @@ Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusL
 })})
 
 ; $Log$
+; Revision 1.115  2006/07/25 21:37:45  pwagner
+; Do not write (currently unused) IWC3 swath
+;
 ; Revision 1.114  2006/07/24 23:14:56  pwagner
 ; Repaired bug preventing copying IWP swath to IWC file
 ;
