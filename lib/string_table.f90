@@ -736,7 +736,7 @@ contains
     return
   end function STRING_LENGTH
   ! ====================================     STRING_TABLE_SIZE     =====
-  integer function STRING_TABLE_SIZE ()
+  pure integer function STRING_TABLE_SIZE ()
   ! Return the allocated size of the string table.
     string_table_size = ubound(strings, 1)
     return
@@ -862,6 +862,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.22  2006/07/27 03:56:27  vsnyder
+! Make String_Table_Size pure, so it can be a specification function
+!
 ! Revision 2.21  2005/06/22 17:25:50  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
