@@ -187,6 +187,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
      
     ! Administrative stuff
     integer :: Name = 0        ! Sub-rosa index of name, if any, else zero
+    integer :: Where = 0       ! Source_ref for creation if by L2CF
 
     ! General information about the vector
 
@@ -231,6 +232,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 
   type Vector_T
     integer :: Name = 0        ! Sub-rosa index of the vector name
+    integer :: Where = 0       ! Source_ref for creation if by L2CF
     integer :: GlobalUnit = PHYQ_Invalid ! Alternative units for whole vector
     type (VectorTemplate_T) :: TEMPLATE ! Template for this vector
     type (VectorValue_T), dimension(:), pointer :: QUANTITIES => NULL() ! The
@@ -690,7 +692,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------  ConstructVectorTemplate  -----
   subroutine ConstructVectorTemplate ( name, quantities, selected, &
-    & vectorTemplate )
+    & vectorTemplate, where )
 
   ! This subroutine creates a vectorTemplate from a list of quantities.
   ! The default ordering is currently by quantity.  Later versions may
@@ -701,6 +703,7 @@ contains ! =====     Public Procedures     =============================
     type (QuantityTemplate_T), intent(in) :: quantities(:)
     integer, intent(in) :: selected(:)  ! Which quantities are selected?
     type (VectorTemplate_T), intent(out) :: vectorTemplate
+    integer, intent(in), optional :: where ! source_ref if created by L2CF
 
     ! Local variables
     integer :: status
@@ -715,6 +718,7 @@ contains ! =====     Public Procedures     =============================
     vectorTemplate%totalInstances = SUM(quantities(selected)%noInstances)
     vectorTemplate%totalElements = &
       & SUM(quantities(selected)%noInstances*quantities(selected)%instanceLen)
+    if ( present(where) ) vectorTemplate%where = where
     
     ! Allocate some arrays
 
@@ -840,7 +844,7 @@ contains ! =====     Public Procedures     =============================
   ! -----------------------------------------------  CreateVector  -----
   type(Vector_T) function CreateVector &
     & ( vectorName, vectorTemplate, quantities, VectorNameText, globalUnit, &
-    & highBound, lowBound, noValues ) &
+    & highBound, lowBound, noValues, where ) &
     & result ( vector )
 
   ! This routine creates an empty vector according to a given template
@@ -855,6 +859,7 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in), optional :: highBound
     logical, intent(in), optional :: lowBound
     logical, intent(in), optional :: noValues ! Don't create values for it.
+    integer, intent(in), optional :: where    ! source_ref
 
     ! Local variables
     integer :: QUANTITY                 ! Loop index
@@ -880,6 +885,7 @@ contains ! =====     Public Procedures     =============================
     if ( present ( noValues ) ) myNoValues = noValues
     if ( .not. myNoValues) &
       & call createValues ( vector, highBound, lowBound )
+    if ( present(where) ) vector%where = where
   end function CreateVector
 
   ! --------------------------------------  DestroyVectorDatabase  -----
@@ -917,6 +923,7 @@ contains ! =====     Public Procedures     =============================
     ! Executable code
 
     vector%name = 0
+    vector%where = 0
     ! Let the destruction of the vector template take care of
     ! vector%template%quantities
     nullify ( vector%template%quantities )
@@ -982,6 +989,7 @@ contains ! =====     Public Procedures     =============================
     vectorTemplate%totalInstances = 0
     vectorTemplate%totalElements = 0
     vectorTemplate%name = 0
+    vectorTemplate%where = 0
   end subroutine DestroyVectorTemplateInfo
 
   ! -----------------------------------------  DestroyVectorValue  -----
@@ -1308,6 +1316,8 @@ contains ! =====     Public Procedures     =============================
     & COHERENT, STACKED, REGULAR, MINORFRAME, MAJORFRAME, &
     & THENDITCHAFTERDUMP, CLEAN )
 
+    use Lexer_Core, only: Print_Source
+
     ! dump quantities in vector according to whether they match
     ! all of the optional args: name, ..,majorframe
     ! if thenditchafterdump is present and TRUE,
@@ -1315,7 +1325,9 @@ contains ! =====     Public Procedures     =============================
     type(Vector_T), intent(in) :: VECTOR
     integer, intent(in), optional :: DETAILS ! <=0 => Don't dump quantity values
     !                                        ! -1 Skip quantity details beyond names
-    !                                        ! -2 Skip all quantity details
+    !                                        ! -2 Skip all quantity details but
+                                             !    print a size summary
+                                             ! <= -3 => no output
     !                                        ! >0 Do dump quantity values
     !                                        ! Default 1
     character(len=*), intent(in), optional :: NAME
@@ -1336,14 +1348,20 @@ contains ! =====     Public Procedures     =============================
     integer :: MyDetails
     logical :: dumpThisQty
     logical :: myditchafterdump
+    integer :: TotalSize
     
+    myDetails = 1
+    if ( present(details) ) myDetails = details
+    if ( myDetails <= -3 ) return
+
     if ( present(thenditchafterdump) ) then
       myditchafterdump = thenditchafterdump
     else
       myditchafterdump = .false.
     end if
-    myDetails = 1
-    if ( present(details) ) myDetails = details
+
+    totalSize = 0
+
     if ( present(name) ) then
       call output ( name ); call output ( ', ' )
     end if
@@ -1351,14 +1369,19 @@ contains ! =====     Public Procedures     =============================
       call output ( 'Name = ' )
       call display_string ( vector%name )
     end if
+    if ( vector%where /= 0 ) then
+      call output ( ' created at ' )
+      call print_source ( vector%where )
+    end if
     if ( vector%template%name /= 0 ) then
       call output ( ' Template_Name = ' )
       call display_string ( vector%template%name )
     end if
     call newline
-    if ( myDetails < -1 ) return
     do j = 1, size(vector%quantities)
-      dumpThisQty = .true.
+      dumpThisQty = myDetails > -2
+      if ( associated(vector%quantities(j)%values) ) &
+        & totalSize = totalSize + size(vector%quantities(j)%values)
       if ( present (quantitytypes) ) dumpThisQty = &
         & any(vector%quantities(j)%template%quantitytype == quantitytypes)
       if ( present (instrumentmodules) ) dumpThisQty = &
@@ -1381,6 +1404,11 @@ contains ! =====     Public Procedures     =============================
         if ( myditchafterdump ) return
       end if
     end do ! j
+    if ( myDetails == -2 ) then
+      call output ( size(vector%quantities), before='      having ' )
+      call output ( totalSize, before=' quantities and ' )
+      call output ( ' elements.', advance='yes' )
+    end if
   end subroutine Dump_Vector
 
   ! -----------------------------------------------  Dump_Vectors  -----
@@ -1396,6 +1424,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in), optional :: DETAILS ! <=0 => Don't dump quantity values
     !                                        ! -1 Skip quantity details beyond names
     !                                        ! -2 Skip all quantity details
+    !                                        ! -3 Just summarize the database
     !                                        ! >0 Do dump quantity values
     !                                        ! Default 1
     character(len=*), intent(in), optional :: NAME
@@ -1415,22 +1444,27 @@ contains ! =====     Public Procedures     =============================
     logical :: dumpThisQty
     logical :: dumpThisVector
     integer :: J
-    logical :: myditchafterdump
+    integer :: MyDetails
+    logical :: MyDitchAfterDump
+    integer :: TotalSize ! of vector quantities
 
+    myDetails = 1
+    if ( present(details) ) myDetails = details
     if ( present(thenditchafterdump) ) then
       myditchafterdump = thenditchafterdump
     else
       myditchafterdump = .false.
     end if
-    if ( size(vectors) > 1 ) then
-      call output ( 'VECTORS: SIZE = ' )
-      call output ( size(vectors), advance='yes' )
-    end if
+    if ( size(vectors) > 1 ) &
+      & call output ( size(vectors), before='VECTORS: SIZE = ', advance='yes' )
+
+    totalSize = 0
+
     do i = 1, size(vectors)
       ! Presume do not need to dump vector; hence preset to FALSE -- 
       ! becomes TRUE if wish to dump one or more quantities
       dumpThisVector = .false.
-      if ( .not. associated(vectors(i)%quantities) ) then
+      if ( .not. associated(vectors(i)%quantities) .and. myDetails > -3 ) then
         call output ( '(entry  ', advance='no' )
         call output ( i, advance='no' )
         call output ( '  in the vector database had been destroyed)  ', &
@@ -1438,9 +1472,11 @@ contains ! =====     Public Procedures     =============================
         cycle
       end if
       do j=1, size(vectors(i)%quantities)
+        if ( associated(vectors(i)%quantities(j)%values) ) &
+          totalSize = totalSize + size(vectors(i)%quantities(j)%values)
         ! Presume need to dump quantity; hence preset to TRUE --
         ! becomes FALSE if fails to match a requirement
-        dumpThisQty = .true.
+        dumpThisQty = myDetails > -3
         ! Check on requirements
         if ( present (quantitytypes) ) dumpThisQty = &
           & any(vectors(i)%quantities(j)%template%quantitytype == quantitytypes)
@@ -1470,6 +1506,9 @@ contains ! =====     Public Procedures     =============================
         if ( myditchafterdump ) return
       end if
     end do ! i
+    call output ( size(vectors), before='Vectors database has ' )
+    call output ( totalSize, before=' vectors with ' )
+    call output ( ' elements.', advance='yes' )
   end subroutine Dump_Vectors
 
   ! ---------------------------------------  Dump_Vector_Quantity  -----
@@ -2446,6 +2485,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.123  2006/06/06 18:54:48  vsnyder
+! Spiff up a dump
+!
 ! Revision 2.122  2006/05/23 21:43:34  vsnyder
 ! Add CLEAR option to some dumps
 !
