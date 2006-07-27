@@ -115,7 +115,7 @@ contains ! =====     Public Procedures     =============================
     else if ( got ( f_quantities ) ) then
       ! Not an adoption, just a regular template construction
       call ConstructVectorTemplate ( name, quantityTemplates, quantities, &
-        & vectorTemplate )
+        & vectorTemplate, where=source_ref(root) )
       call deallocate_test ( quantities, "quantities", ModuleName )
     else
       ! User didn't give appropriate command
@@ -170,6 +170,9 @@ END MODULE ConstructVectorTemplates
 
 !
 ! $Log$
+! Revision 2.13  2006/07/27 03:52:06  vsnyder
+! Pass source_ref to ConstructVectorTemplate
+!
 ! Revision 2.12  2005/06/22 18:57:01  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
