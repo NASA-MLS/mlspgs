@@ -33,7 +33,7 @@ contains
     use Output_m, only: Output
     use String_Table, only: Display_String, String_Table_Size
     use Tree, only: Node_id, Nsons, Source_ref, Sub_Rosa, Subtree
-    use Tree_Types, only: N_cf, N_Named
+    use Tree_Types, only: N_CF, N_Named, N_Spec_Args
     integer, intent(in) :: Root ! of the parse tree
 
     type Record_t
@@ -59,15 +59,20 @@ contains
           key = gson
           name = 0
         end if
+        if ( node_id(key) /= n_spec_args ) cycle ! Skip parameter settings
         select case ( get_spec_id(key) )
         case ( s_destroy )
-          do k = 2, nsons(gson)
-            ggson = subtree(k, gson)
+          do k = 2, nsons(key)
+            ggson = subtree(k, key)
             select case ( get_field_id(ggson) )
             case ( f_matrix )
-              call delete ( 'matrix', sub_rosa(subtree(l,ggson)), ggson )
+              do l = 2, nsons(ggson)
+                call delete ( 'matrix', sub_rosa(subtree(l,ggson)), ggson )
+              end do
             case ( f_vector )
-              call delete ( 'vector', sub_rosa(subtree(l,ggson)), ggson )
+              do l = 2, nsons(ggson)
+                call delete ( 'vector', sub_rosa(subtree(l,ggson)), ggson )
+              end do
             end select
           end do
         case ( s_matrix )
@@ -148,6 +153,9 @@ contains
 end module LeakCheck_m
 
 ! $Log$
+! Revision 2.2  2006/07/27 03:48:11  vsnyder
+! Skip parameter settings
+!
 ! Revision 2.1  2006/07/27 03:09:28  vsnyder
 ! Initial commit
 !
