@@ -241,6 +241,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 
   type Matrix_T
     integer :: Name = 0  ! Sub-rosa index of matrix name, if any, else zero
+    integer :: Where = 0       ! Source_ref for creation if by L2CF
     type(RC_Info) :: Col, Row  ! Column and row info
     type(matrixElement_T), dimension(:,:), pointer :: BLOCK => NULL()
   end type Matrix_T
@@ -842,7 +843,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------  CreateEmptyMatrix  -----
   subroutine CreateEmptyMatrix ( Z, Name, Row, Col &
-    &,                           Row_Quan_First, Col_Quan_First, Text )
+    &,                           Row_Quan_First, Col_Quan_First, Text, where )
     type(Matrix_T), intent(inout) :: Z  ! The matrix to create -- inout so
       !                                   destroyMatrix makes sense
     integer, intent(in) :: Name         ! Sub-rosa index of its name, or zero
@@ -858,6 +859,7 @@ contains ! =====     Public Procedures     =============================
       ! instance is the minor order.
     character(len=*), intent(in), optional :: Text     ! A name to use
       ! instead of "Name."
+    integer, intent(in), optional :: Where             ! source_ref
 
     integer :: I, J      ! Subscripts, loop inductors
     integer :: STATUS    ! From ALLOCATE
@@ -867,6 +869,7 @@ contains ! =====     Public Procedures     =============================
     if ( present(text) ) z%name = enter_terminal ( text, t_identifier )
     call defineInfo ( z%row, row, row_Quan_First )
     call defineInfo ( z%col, col, col_Quan_First )
+    if ( present(where) ) z%where = where
     allocate ( z%block(z%row%nb,z%col%nb), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // "Z%Block in CreateEmptyMatrix" )
@@ -1120,6 +1123,7 @@ contains ! =====     Public Procedures     =============================
     call destroyBlock ( a )
     call destroyRCInfo ( a%row )
     call destroyRCInfo ( a%col )
+    a%where = 0
   end subroutine DestroyMatrix
 
   ! ------------------------------------  DestroyMatrixInDatabase  -----
@@ -2346,32 +2350,46 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------------  Dump_Matrix  -----
   subroutine Dump_Matrix ( Matrix, Name, Details, clean )
+    use Lexer_core, only: Print_Source
+    use Output_m, only: newLine
     type(Matrix_T), intent(in) :: Matrix
     character(len=*), intent(in), optional :: Name
     integer, intent(in), optional :: Details   ! Print details, default 1
-    !  <= Zero => no details, == One => Details of matrix but not its blocks,
+    !  <= -3 => no details,
+    !  -2..0 => Just the name, size and where created
+    !  == One => Details of matrix but not its blocks,
     !  >One => Details of the blocks, too.
     logical, intent(in), optional :: Clean     ! Print zeroes, count
 
     integer :: I, J                ! Subscripts, loop inductors
     integer :: MY_DETAILS          ! True if DETAILS is absent, else DETAILS
+    integer :: TotalSize           ! of all blocks
 
     my_details = 1
     if ( present(details) ) my_details = details
+    if ( my_details <= -3 ) return
     if ( present(name) ) call output ( name )
     if ( matrix%name > 0 ) then
       if ( present(name) ) call output ( ', ' )
       call output ( 'Name = ' )
-      call display_string ( matrix%name, advance='yes' )
-    else
-      if ( present(name) ) call output ( '', advance='yes' )
+      call display_string ( matrix%name )
     end if
-    if ( my_details < 0 ) return
-    call dump_rc ( matrix%row, 'row', my_details>0 )
-    call dump_rc ( matrix%col, 'column', my_details>0 )
+    if ( matrix%where > 0 ) then
+      call output ( ', created at ' )
+      call print_source ( matrix%where )
+    end if
+    call newLine
+    totalSize = 0
+    if ( my_details > 0 ) then
+      call dump_rc ( matrix%row, 'row', my_details>0 )
+      call dump_rc ( matrix%col, 'column', my_details>0 )
+    end if
+    if ( .not. associated(matrix%block) ) return
     do j = 1, matrix%col%nb
       do i = 1, matrix%row%nb
-        if ( my_details < 1 .and. matrix%block(i,j)%kind == m_absent ) cycle
+        if ( associated(matrix%block(i,j)%values) ) &
+          totalSize = totalSize + size(matrix%block(i,j)%values)
+        if ( my_details < 1 ) cycle
         call output ( i, before='Block at row ' )
         call output ( j, before=' and column ' )
         call output ( ' ( ' )
@@ -2401,31 +2419,61 @@ contains ! =====     Public Procedures     =============================
         end if
       end do
     end do
+    call output ( matrix%row%nb, before='      having ' )
+    call output ( matrix%col%nb, before=' rows and ' )
+    call output ( totalSize, before=' columns with ', after=' elements.', advance='yes' )
   end subroutine Dump_Matrix
 
   ! ---------------------------------------  Dump_Matrix_Database  -----
   subroutine Dump_Matrix_Database ( MatrixDatabase, Details )
     type(Matrix_Database_T), dimension(:), pointer :: MatrixDatabase
     integer, intent(in), optional :: Details   ! Print details, default 1
-    !  <= Zero => no details, == One => Details of matrix but not its blocks,
+    !  <= -4 => no output
+    !  <= -3 => no details, just summarize the database 
+    !  -2..0 => size of each matrix
+    !  == One => Details of matrix but not its blocks,
     !  >One => Details of the blocks, too.
 
-    integer :: I
+    integer :: I, MyDetails, TotalSize
 
+    myDetails = 1
+    if ( present(details) ) myDetails = details
+    if ( myDetails <= -4 ) return
     if ( .not. associated(MatrixDatabase) ) return
+    if ( size(matrixDatabase) > 0 ) &
+      & call output ( size(matrixDatabase), before='MATRICES: SIZE = ', advance='yes' )
+    totalSize = 0
     do i = 1, size(MatrixDatabase)
-      call output ( i, 4 )
-      call output ( ': ' )
+      if ( myDetails > -3 ) call output ( i, 4, after=': ' )
       if ( associated(matrixDatabase(i)%matrix) ) then
+        call addSize ( matrixDatabase(i)%matrix )
         call dump ( matrixDatabase(i)%matrix, 'Plain', details )
       else if ( associated(matrixDatabase(i)%cholesky) ) then
+        call addSize ( matrixDatabase(i)%cholesky%m )
         call dump ( matrixDatabase(i)%cholesky%m, 'Cholesky', details )
       else if ( associated(matrixDatabase(i)%kronecker) ) then
+        call addSize ( matrixDatabase(i)%kronecker%m )
         call dump ( matrixDatabase(i)%kronecker%m, 'Kronecker', details )
       else if ( associated(matrixDatabase(i)%spd) ) then
+        call addSize ( matrixDatabase(i)%spd%m )
         call dump ( matrixDatabase(i)%spd%m, 'SPD', details )
       end if
     end do
+    call output ( size(matrixDatabase), before='Matrix database has ' )
+    call output ( totalSize, before=' matrices with ' )
+    call output ( ' values.', advance='yes' )
+  contains
+    subroutine AddSize ( TheMatrix )
+      type(matrix_t), intent(in) :: TheMatrix
+      integer :: J, K
+      if ( .not. associated(theMatrix%block) ) return
+      do j = 1, size(theMatrix%block,1)
+        do k = 1, size(theMatrix%block,2)
+          if ( associated(theMatrix%block(i,j)%values) ) &
+            totalSize = totalSize + size(theMatrix%block(i,j)%values)
+        end do
+      end do
+    end subroutine AddSize
   end subroutine Dump_Matrix_Database
 
   ! ---------------------------------------  Dump_Matrix_in_Database  -----
@@ -2576,6 +2624,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.108  2006/07/27 03:55:56  vsnyder
+! Print summaries if negative details levels, for leak detection
+!
 ! Revision 2.107  2006/05/23 21:43:34  vsnyder
 ! Add CLEAR option to some dumps
 !
