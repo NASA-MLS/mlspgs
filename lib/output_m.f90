@@ -310,17 +310,21 @@ contains
   end subroutine PR_BLANKS
 
   ! ---------------------------------------------- DumpSize_double -----
-  subroutine DumpSize_double ( n, advance, units )
+  subroutine DumpSize_double ( n, advance, units, Before, After )
     double precision, intent(in) :: N
     character(len=*), intent(in), optional :: ADVANCE
     real, intent(in), optional :: units
+    character(len=*), intent(in), optional :: Before, After
     ! Local parameters
     real, parameter :: KB = 1024.0
     real, parameter :: MB = KB * 1024.0
     real, parameter :: GB = MB * 1024.0
     real, parameter :: TB = GB * 1024.0
+    double precision :: Amount ! N * MyUnits
     real            :: myUnits
+    character(len=6) :: Suffix
     ! Make a 'nice' output
+    if ( present(before) ) call output ( before )
     myUnits = 1.0
     if ( present(units) ) myUnits = units
     if ( myUnits == 0.0 ) then
@@ -328,72 +332,55 @@ contains
       call output ( ' (illegal units)', advance=advance )
       return
     end if
+    amount = n*myUnits
     if ( n < kb/myUnits ) then
-      call output ( n*myUnits, format='(f6.1)' )
-      call output ( ' bytes', advance=advance )
+      suffix = ' bytes'
     else if ( n < Mb/myUnits ) then
-      call output ( n*myUnits/kb, format='(f6.1)' )
-      call output ( ' kb', advance=advance )
+      amount = amount/kb
+      suffix = ' kB'
     else if ( n < Gb/myUnits ) then
-      call output ( n*myUnits/Mb, format='(f6.1)' )
-      call output ( ' Mb', advance=advance )
+      amount = amount/Mb
+      suffix = ' MB'
     else if ( n < Tb/myUnits ) then
-      call output ( n*myUnits/Gb, format='(f6.1)' )
-      call output ( ' Gb', advance=advance )
+      amount = amount/Gb
+      suffix = ' GB'
     else
-      call output ( n*myUnits/Tb, format='(f6.1)' )
-      call output ( ' Tb', advance=advance )
+      amount = amount/Tb
+      suffix = ' TB'
     end if
+    if ( amount == int(amount) ) then
+      call output ( int(amount), format='(i6)' )
+    else
+      call output ( amount, format='(f6.1)' )
+    end if
+    call output ( trim(suffix) )
+    if ( present(after) ) call output ( after )
+    call output ( '', advance=advance )
   end subroutine DumpSize_double
 
   ! --------------------------------------------- DumpSize_integer -----
-  subroutine DumpSize_integer ( n, advance, units )
+  subroutine DumpSize_integer ( n, advance, units, Before, After )
     integer, intent(in) :: N
     character(len=*), intent(in), optional :: ADVANCE
     integer, intent(in), optional :: units ! E.g., 1024 for kB
+    character(len=*), intent(in), optional :: Before, After
     ! Executable
     if ( present(units) ) then
-      call dumpSize ( n*1.0, advance=advance, units=units*1.0 )
+      call dumpSize ( dble(n), advance=advance, units=real(units), &
+        & before=before, after=after )
     else
-      call dumpSize ( n*1.0, advance=advance )
+      call dumpSize ( dble(n), advance=advance, before=before, after=after )
     end if
   end subroutine DumpSize_integer
 
   ! ------------------------------------------------ DumpSize_real -----
-  subroutine DumpSize_real ( n, advance, units )
+  subroutine DumpSize_real ( n, advance, units, Before, After )
     real, intent(in) :: N
     character(len=*), intent(in), optional :: ADVANCE
     real, intent(in), optional :: units
-    ! Local parameters
-    real, parameter :: KB = 1024.0
-    real, parameter :: MB = KB * 1024.0
-    real, parameter :: GB = MB * 1024.0
-    real, parameter :: TB = GB * 1024.0
-    real            :: myUnits
+    character(len=*), intent(in), optional :: Before, After
     ! Make a 'nice' output
-    myUnits = 1.0
-    if ( present(units) ) myUnits = units
-    if ( myUnits == 0.0 ) then
-      call output ( n, format='(e12.1)' )
-      call output ( ' (illegal units)', advance=advance )
-      return
-    end if
-    if ( n < kb/myUnits ) then
-      call output ( n*myUnits, format='(f6.1)' )
-      call output ( ' bytes', advance=advance )
-    else if ( n < Mb/myUnits ) then
-      call output ( n*myUnits/kb, format='(f6.1)' )
-      call output ( ' kb', advance=advance )
-    else if ( n < Gb/myUnits ) then
-      call output ( n*myUnits/Mb, format='(f6.1)' )
-      call output ( ' Mb', advance=advance )
-    else if ( n < Tb/myUnits ) then
-      call output ( n*myUnits/Gb, format='(f6.1)' )
-      call output ( ' Gb', advance=advance )
-    else
-      call output ( n*myUnits/Tb, format='(f6.1)' )
-      call output ( ' Tb', advance=advance )
-    end if
+    call dumpsize ( dble(n), advance, units, before, after )
   end subroutine DumpSize_real
 
   ! ----------------------------------------------  getStamp  -----
@@ -1384,6 +1371,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.53  2006/07/28 01:58:53  vsnyder
+! Cannonball polishing in dumpSize routines
+!
 ! Revision 2.52  2006/07/19 22:25:14  vsnyder
 ! Add Dumpsize_Double, plus some cannonball polishing
 !
