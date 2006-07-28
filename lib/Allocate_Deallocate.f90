@@ -126,7 +126,7 @@ contains
     character (len=*), intent(in) :: MODULENAME ! Module that allocated it
     integer, intent(in) :: noBytes      ! No bytes allocated (or deallocated if -ve)
     !
-    call ReportAllocateDeallocate( name, moduleName, noBytes*1.0 )
+    call ReportAllocateDeallocate( name, moduleName, real(noBytes) )
   end subroutine ReportAllocateDeallocate_ints
 
   !-----------------------------------   ReportAllocateDeallocate_real  -----
@@ -211,7 +211,7 @@ contains
     integer, intent(in) :: Status
     character(len=*), intent(in) :: ModuleNameIn, ItsName
     integer, intent(in) :: Size ! in MEMORY_UNITS, <= 0 for no tracking
-    call Test_Deallocate( Status, ModuleNameIn, ItsName, Size*1.0 )
+    call Test_Deallocate( Status, ModuleNameIn, ItsName, real(Size) )
   end subroutine Test_DeAllocate_int_s
 
   ! --------------------------------------------  Test_Deallocate_real_s  -----
@@ -652,7 +652,7 @@ contains
     integer, intent(in)               :: elementSize
     real                              :: p
     !
-    p = ( elementSize / MEMORY_UNITS ) * product(dimensions*1.0)
+    p = ( elementSize / MEMORY_UNITS ) * product(real(dimensions))
     ! print *, 'p ', p
   end function memproduct
 
@@ -669,6 +669,9 @@ contains
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.29  2006/07/28 01:57:25  vsnyder
+! Use real() instead of *1.0 to convert to real
+!
 ! Revision 2.28  2006/07/19 22:24:18  vsnyder
 ! Track memory usage even if not reporting, for trace_m
 !
