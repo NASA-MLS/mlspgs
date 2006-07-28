@@ -9,9 +9,16 @@ begin Fill
   !define(flaggingBands,{12})
   !makeFlagsForOneProduct(product=N2O,radiometer=R4,chisqScale=1.0,minRads=800,cloudMax=10K,cloudMin= -10K)
 
+  ;; ------------------------------------ SO2-640
+  !define(flaggingBands,{12})
+  !makeFlagsForOneProduct(product=SO2,radiometer=R4,chisqScale=1.0,minRads=800,cloudMax=10K,cloudMin= -10K)
+
 end Fill
 
 ; $Log$
+; Revision 1.1  2006/07/28 18:50:15  dwu
+; *** empty log message ***
+;
 ; Revision 1.9  2006/07/26 21:13:54  dwu
 ; modified for v2.0 clouds
 ;
