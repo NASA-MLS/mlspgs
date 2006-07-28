@@ -2384,7 +2384,10 @@ contains ! =====     Public Procedures     =============================
       call dump_rc ( matrix%row, 'row', my_details>0 )
       call dump_rc ( matrix%col, 'column', my_details>0 )
     end if
-    if ( .not. associated(matrix%block) ) return
+    if ( .not. associated(matrix%block) ) then
+      call output ( '      (the matrix has been destroyed)', advance='yes' )
+      return
+    end if
     do j = 1, matrix%col%nb
       do i = 1, matrix%row%nb
         if ( associated(matrix%block(i,j)%values) ) &
@@ -2434,7 +2437,8 @@ contains ! =====     Public Procedures     =============================
     !  == One => Details of matrix but not its blocks,
     !  >One => Details of the blocks, too.
 
-    integer :: I, MyDetails, TotalSize
+    integer :: I, MyDetails
+    double precision :: TotalSize
 
     myDetails = 1
     if ( present(details) ) myDetails = details
@@ -2442,7 +2446,7 @@ contains ! =====     Public Procedures     =============================
     if ( .not. associated(MatrixDatabase) ) return
     if ( size(matrixDatabase) > 0 ) &
       & call output ( size(matrixDatabase), before='MATRICES: SIZE = ', advance='yes' )
-    totalSize = 0
+    totalSize = 0.0
     do i = 1, size(MatrixDatabase)
       if ( myDetails > -3 ) call output ( i, 4, after=': ' )
       if ( associated(matrixDatabase(i)%matrix) ) then
@@ -2460,7 +2464,11 @@ contains ! =====     Public Procedures     =============================
       end if
     end do
     call output ( size(matrixDatabase), before='Matrix database has ' )
-    call output ( totalSize, before=' matrices with ' )
+    if ( totalSize <= huge(1) ) then
+      call output ( int(totalSize), before=' matrices with ' )
+    else
+      call output ( totalSize, before=' matrices with ' )
+    end if
     call output ( ' values.', advance='yes' )
   contains
     subroutine AddSize ( TheMatrix )
@@ -2469,8 +2477,8 @@ contains ! =====     Public Procedures     =============================
       if ( .not. associated(theMatrix%block) ) return
       do j = 1, size(theMatrix%block,1)
         do k = 1, size(theMatrix%block,2)
-          if ( associated(theMatrix%block(i,j)%values) ) &
-            totalSize = totalSize + size(theMatrix%block(i,j)%values)
+          if ( associated(theMatrix%block(j,k)%values) ) &
+            totalSize = totalSize + size(theMatrix%block(j,k)%values)
         end do
       end do
     end subroutine AddSize
@@ -2624,6 +2632,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.109  2006/07/28 01:58:17  vsnyder
+! Correct a bug in size accumulation, plus cannonball polishing
+!
 ! Revision 2.108  2006/07/27 03:55:56  vsnyder
 ! Print summaries if negative details levels, for leak detection
 !
