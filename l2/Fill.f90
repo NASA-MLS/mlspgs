@@ -62,7 +62,7 @@ contains ! =====     Public Procedures     =============================
     ! This is the main routine for the module.  It parses the relevant lines
     ! of the l2cf and works out what to do.
 
-    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, Test_Allocate
     use Chunks_m, only: MLSChunk_T
     use DumpCommand_m, only: DumpCommand
     use Expr_M, only: EXPR, EXPR_CHECK, GetIndexFlagsFromList
@@ -626,10 +626,11 @@ contains ! =====     Public Procedures     =============================
         ! Handle disassociated pointers by allocating them with zero size
         status = 0
         if ( .not. associated(qtyTemplates) ) allocate ( qtyTemplates(0), stat=status )
+        call test_allocate ( status, moduleName, 'QtyTemplates', (/0/), (/0/) )
         if ( .not. associated(vectorTemplates) ) allocate ( vectorTemplates(0), stat=status )
+        call test_allocate ( status, moduleName, 'VectorTemplates', (/0/), (/0/) )
         if ( .not. associated(vectors) ) allocate ( vectors(0), stat=status )
-        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-          & MLSMSG_Allocate // 'one of QtyTemplates, VectorTemplates or Vectors' )
+        call test_allocate ( status, moduleName, 'Vectors', (/0/), (/0/) )
         call dumpCommand ( key, qtyTemplates, vectorTemplates, vectors )
 
       case ( s_matrix ) ! ===============================  Matrix  =====
@@ -2235,14 +2236,15 @@ contains ! =====     Public Procedures     =============================
       call MLSMessage ( MLSMSG_Error, ModuleName, 'Problem with Fill section' )
     end if
 
-    if ( toggle(gen) ) then
-      if ( levels(gen) > 0 ) then
-        call dump ( vectors, details=levels(gen)-1 )
-        call dump ( matrices, details=levels(gen)-1 )
-      end if
-    end if
-    if ( specialDumpFile /= ' ' ) &
-      & call revertOutput
+!   User can put dumpBlocks, details=whatever, /allMatrices
+!   and dump, details=whatever, /allVectors at the end of the Fill section.
+!     if ( toggle(gen) ) then
+!       if ( levels(gen) > 0 ) then
+!         call dump ( vectors, details=levels(gen)-1 )
+!         call dump ( matrices, details=levels(gen)-1 )
+!       end if
+!     end if
+    if ( specialDumpFile /= ' ' ) call revertOutput
     if ( toggle(gen) ) call trace_end ( "MLSL2Fill" )
     math77_ran_pack = old_math77_ran_pack
     if ( timing ) call sayTime
@@ -7906,6 +7908,12 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.341  2006/07/28 01:55:20  vsnyder
+! Improve error detection and reporting for some allocations.
+! Comment out matrix and vector dumps conditioned on the -g level since
+! these dumps can be gotten by dump and dumpBlocks commands.  Inserted
+! a comment to that effect.
+!
 ! Revision 2.340  2006/07/27 23:07:38  pwagner
 ! Attempt to enforce conformity between column unit attributes and how we compute them
 !
