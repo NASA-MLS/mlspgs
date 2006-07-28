@@ -16,17 +16,24 @@ begin Fill
   !define(flaggingBands,{7,8,9,33})
   !makeFlagsForOneProduct(product=HNO3,radiometer=R3,chisqScale=1.0,minRads=2000,cloudMax=10K,cloudMin= -20K)
 
+  ;; ------------------------------------- SO2-240
+  !define(flaggingBands,{8,33})
+  !makeFlagsForOneProduct(product=SO2,radiometer=R3,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -20K)
+
   ;; ------------------------------------- Temperature-CorePlusR3
-  !define(flaggingBands,{1,8,22,32})
-  !makeFlagsForOneProduct(product=Temperature,radiometer=R3,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -20K)
+  !define(flaggingBands,{1,22,32})
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R1A,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -20K)
 
   ;; ------------------------------------- GPH-CorePlusR3
-  !define(flaggingBands,{1,8,22,32})
-  !makeFlagsForOneProduct(product=GPH,radiometer=R3,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -20K)
+  !define(flaggingBands,{1,22,32})
+  !makeFlagsForOneProduct(product=GPH,radiometer=R1A,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -20K)
 
 end Fill
 
 ; $Log$
+; Revision 1.9  2006/07/26 21:13:50  dwu
+; modified for v2.0 clouds
+;
 ; Revision 1.8  2004/09/21 23:02:59  livesey
 ; Changed chiSqWeights to 1.0 for everything.
 ;

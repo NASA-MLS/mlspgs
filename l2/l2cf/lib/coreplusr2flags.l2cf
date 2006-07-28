@@ -6,12 +6,12 @@
 
 begin Fill
   ;; ------------------------------------- H2O-190
-  !define(flaggingBands,{2,3,4,5,6})
-  !makeFlagsForOneProduct(product=H2O,radiometer=R2,chisqScale=1.0,minRads=3300,cloudMax=15K,cloudMin= -30K)
+  !define(flaggingBands,{2,3,4,5,6,23,27})
+  !makeFlagsForOneProduct(product=H2O,radiometer=R2,chisqScale=1.0,minRads=8300,cloudMax=15K,cloudMin= -30K)
 
   ;; ------------------------------------- RHI-190
-  !define(flaggingBands,{2,3,4,5,6})
-  !makeFlagsForOneProduct(product=RHI,radiometer=R2,chisqScale=1.0,minRads=3300,cloudMax=15K,cloudMin= -30K)
+  !define(flaggingBands,{2,3,4,5,6,23,27})
+  !makeFlagsForOneProduct(product=RHI,radiometer=R2,chisqScale=1.0,minRads=8300,cloudMax=15K,cloudMin= -30K)
 
   ;; --------------------------------------- N2O-190
   !define(flaggingBands,{3})
@@ -37,10 +37,16 @@ begin Fill
   !define(flaggingBands,{4})
   !makeFlagsForOneProduct(product=CH3CN,radiometer=R2,chisqScale=1.0,minRads=1200,cloudMax=15K,cloudMin= -30K)
 
+  ;; ----------------------------------------- SO2-190
+  !define(flaggingBands,{2,3,5})
+  !makeFlagsForOneProduct(product=SO2,radiometer=R2,chisqScale=1.0,minRads=3600,cloudMax=15K,cloudMin= -30K)
 
 end Fill
 
 ; $Log$
+; Revision 1.12  2006/07/26 21:13:22  dwu
+; modified for v2.0 clouds
+;
 ; Revision 1.3  2004/12/07 18:59:17  livesey
 ; Removed the DACs from H2O/RHI
 ;
