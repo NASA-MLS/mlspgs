@@ -13,7 +13,7 @@ module TREE
 
   use ERROR_HANDLER, only: COMPILER, ERROR_INTRO
   use MACHINE, only: IO_ERROR
-  use OUTPUT_M, only: OUTPUT
+  use OUTPUT_M, only: NewLine, OUTPUT
   use STRING_TABLE, only: DISPLAY_STRING, LOOKUP_AND_INSERT
   use SYMBOL_TABLE, only: SET_SYMBOL, SYMBOL
   use SYMBOL_TYPES, only: T_NULL
@@ -273,7 +273,7 @@ contains
       call output ( the_tree(where)%source/256, before=' line ' )
       call output ( mod(the_tree(where)%source,256), before=' column ' )
     end if
-    call output ( '', advance )
+    call output ( '', advance=advance )
     return
   end subroutine DUMP_TREE_NODE
 
@@ -371,7 +371,7 @@ contains
         call output ( ') ')
       end if
     end if
-    call output ( '', advance='yes' )
+    call newLine
     if ( the_tree(myRoot)%kind == internal ) then
       do i = 1, nsons(myRoot)
         call print_subtree ( subtree(i,myRoot), depth+1, dump_decor )
@@ -633,6 +633,9 @@ contains
 end module TREE
 
 ! $Log$
+! Revision 2.10  2006/07/28 02:00:17  vsnyder
+! Pure cannonball polishing
+!
 ! Revision 2.9  2006/02/23 00:56:43  vsnyder
 ! Add source line and column to tree node dump
 !
