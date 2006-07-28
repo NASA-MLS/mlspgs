@@ -1,0 +1,72 @@
+; $Id$
+
+; This l2cf fragment does all the quality flagging for the Core+R4
+; products.
+
+begin Fill
+  ;; ------------------------------------ ClO-640
+  !define(flaggingBands,{10})
+  !makeFlagsForOneProduct(product=ClO,radiometer=R4,chisqScale=1.0,minRads=600,cloudMax=10K,cloudMin= -10K)
+
+  ;; ------------------------------------ BrO-640
+  !define(flaggingBands,{11,31})
+  !makeFlagsForOneProduct(product=BrO,radiometer=R4,chisqScale=1.0,minRads=1000,cloudMax=10K,cloudMin= -10K)
+
+  ;; ------------------------------------ HOCl-640
+  !define(flaggingBands,{10,11,28,29})
+  !makeFlagsForOneProduct(product=HOCl,radiometer=R4,chisqScale=1.0,minRads=2000,cloudMax=10K,cloudMin= -10K)
+
+  ;; ------------------------------------ HCl-640
+  !define(flaggingBands,{14})
+  !makeFlagsForOneProduct(product=HCl,radiometer=R4,chisqScale=1.0,minRads=1000,cloudMax=10K,cloudMin= -10K)
+
+  ;; ------------------------------------ O3-640
+  !define(flaggingBands,{14,30,31})
+  !makeFlagsForOneProduct(product=O3,radiometer=R4,chisqScale=1.0,minRads=2000,cloudMax=10K,cloudMin= -10K)
+
+  ;; ------------------------------------ HO2-640
+  !define(flaggingBands,{31})
+  !makeFlagsForOneProduct(product=HO2,radiometer=R4,chisqScale=1.0,minRads=200,cloudMax=10K,cloudMin= -10K)
+
+  ;; ------------------------------------ HNO3-640
+  !define(flaggingBands,{10,11,12,14,28,29,30,31})
+  !makeFlagsForOneProduct(product=HNO3,radiometer=R4,chisqScale=1.0,minRads=4000,cloudMax=10K,cloudMin= -10K)
+
+  ;; ------------------------------------ CH3CN-640
+  !define(flaggingBands,{10,11,12,14,28,29,30,31})
+  !makeFlagsForOneProduct(product=CH3CN,radiometer=R4,chisqScale=1.0,minRads=4000,cloudMax=10K,cloudMin= -10K)
+
+  ;; ------------------------------------ SO2-640
+  !define(flaggingBands,{10,11,14})
+  !makeFlagsForOneProduct(product=SO2,radiometer=R4,chisqScale=1.0,minRads=200,cloudMax=10K,cloudMin= -10K)
+
+end Fill
+
+; $Log$
+; Revision 1.9  2006/07/26 21:13:54  dwu
+; modified for v2.0 clouds
+;
+; Revision 1.8  2004/09/21 23:02:59  livesey
+; Changed chiSqWeights to 1.0 for everything.
+;
+; Revision 1.7  2004/05/04 01:05:46  livesey
+; Added flags for CH3CN-640 and HNO3-640.
+;
+; Revision 1.6  2004/04/28 23:06:50  livesey
+; Changes to cloud flags.
+;
+; Revision 1.5  2004/04/28 00:32:11  livesey
+; Bug fix
+;
+; Revision 1.4  2004/04/27 23:50:38  livesey
+; Added low cloud flagging for temperature/GPH
+;
+; Revision 1.3  2004/04/27 23:46:26  livesey
+; Added GPH
+;
+; Revision 1.2  2004/04/17 05:47:37  livesey
+; Backed off the number of radiances missing flags
+;
+; Revision 1.1  2004/04/06 01:18:19  livesey
+; First version
+;
