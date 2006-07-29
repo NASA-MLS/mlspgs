@@ -80,11 +80,12 @@ contains
 !---------------------------------------------------------------------------
 
   ! -------------------------------------------  AllocateOneSlabs  -----
-  subroutine AllocateOneSlabs ( Slabs, Catalog, TempDer )
+  subroutine AllocateOneSlabs ( Slabs, Catalog, InName, TempDer )
     ! Allocates the items in a slabs structure
     use Allocate_Deallocate, only: ALLOCATE_TEST
     type (slabs_struct), intent(inout) :: slabs ! Slabs to allocate
     type (catalog_t), target, intent(in) :: Catalog
+    character(len=*), intent(in) :: InName
     logical, intent(in), optional :: TempDer    ! "Allocate temperature
                                                 !  derivative fields"
 
@@ -102,18 +103,18 @@ contains
     end if
 
     slabs%catalog => catalog
-    call Allocate_test ( slabs%v0s,         nl, 'v0s',         ModuleName )
-    call Allocate_test ( slabs%x1,          nl, 'x1',          ModuleName )
-    call Allocate_test ( slabs%y,           nl, 'y',           ModuleName )
-    call Allocate_test ( slabs%yi,          nl, 'yi',          ModuleName )
-    call Allocate_test ( slabs%slabs1,      nl, 'slabs1',      ModuleName )
-    call Allocate_test ( slabs%dslabs1_dv0, nl, 'dslabs1_dv0', ModuleName )
+    call Allocate_test ( slabs%v0s,         nl, 'v0s',         inName )
+    call Allocate_test ( slabs%x1,          nl, 'x1',          inName )
+    call Allocate_test ( slabs%y,           nl, 'y',           inName )
+    call Allocate_test ( slabs%yi,          nl, 'yi',          inName )
+    call Allocate_test ( slabs%slabs1,      nl, 'slabs1',      inName )
+    call Allocate_test ( slabs%dslabs1_dv0, nl, 'dslabs1_dv0', inName )
     if ( myDer ) then
-      call Allocate_test ( slabs%dv0s_dT,    nl, 'dv0s_dT',    ModuleName )
-      call Allocate_test ( slabs%dx1_dT,     nl, 'dx1_dT',     ModuleName )
-      call Allocate_test ( slabs%dy_dT,      nl, 'dy_dT',      ModuleName )
-      call Allocate_test ( slabs%dyi_dT,     nl, 'dyi_dT',     ModuleName )
-      call Allocate_test ( slabs%dslabs1_dT, nl, 'dslabs1_dT', ModuleName )
+      call Allocate_test ( slabs%dv0s_dT,    nl, 'dv0s_dT',    inName )
+      call Allocate_test ( slabs%dx1_dT,     nl, 'dx1_dT',     inName )
+      call Allocate_test ( slabs%dy_dT,      nl, 'dy_dT',      inName )
+      call Allocate_test ( slabs%dyi_dT,     nl, 'dyi_dT',     inName )
+      call Allocate_test ( slabs%dslabs1_dT, nl, 'dslabs1_dT', inName )
     end if
     if ( nl /= 0 ) then
       slabs%v0s = 0.0_r8
@@ -152,7 +153,7 @@ contains
 
     do i = 1, size(catalog)
       do j = 1, no_ele
-        call AllocateOneSlabs ( slabs(j,i), catalog(i), TempDer )
+        call AllocateOneSlabs ( slabs(j,i), catalog(i), caller, TempDer )
       end do
     end do
 
@@ -2676,6 +2677,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.51  2006/05/05 22:20:58  vsnyder
+! Remove duplicate USE statements
+!
 ! Revision 2.50  2006/03/25 00:27:46  vsnyder
 ! Avoid dividing by zeroes that weren't avoided in the previous revision
 !
