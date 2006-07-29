@@ -712,8 +712,9 @@ Fill, quantity=cloudOutput.DTband$1, method=manipulate, $
   a=measurement.band$1, b=cloudOutput.band$1, manipulation='a-b'!nl})
 
 ; ------------------ High level macros for status and quality filling
+;; ( HRQuantity same as MFproduct except for H2O which is which is H2O_hr )
 !define(addInOneChisq,{!dnl
-Fill, quantity=temporaryDiagnostics.chisqTmp, method=manipulate, manipulation='(a+b)/2', $
+Fill, quantity=temporaryDiagnostics.chisqTmp, method=manipulate, manipulation='a+b', $
   a=temporaryDiagnostics.chisqTmp, b=otherDiagnostics.chisqProfile$1, /force!nl})
 !define(addInOneNoRads,{!dnl
 Fill, quantity=temporaryDiagnostics.noRadsTmp, method=manipulate, manipulation='a+b', $
@@ -727,20 +728,28 @@ Fill, quantity=temporaryDiagnostics.noRadsTmp, method=manipulate, manipulation='
 !undefine(MFcloudmax)!dnl
 !undefine(MFcloudmin)!dnl
 !ProcessParVal(MF,$@)!dnl
+!undefine(HRQuantity)!dnl
+!ifelse(!MFproduct,{H2O}, {!dnl
+!define(HRQuantity,{!MFproduct_hr})!dnl
+},{!dnl
+!define(HRQuantity,{!MFproduct})!dnl
+})!dnl
 ;; Quality
 Fill, quantity=temporaryDiagnostics.chisqTmp, method=explicit, explicitValues=0, /spread
 !forall(addInOneChisq,!flaggingBands)
+Fill, quantity=temporaryDiagnostics.chisqTmp, method=manipulate, manipulation='a/c', $
+  a=temporaryDiagnostics.chisqTmp, c=!nargs(!flaggingBands)
 ;; Run a boxcar over this
 Fill, quantity=temporaryDiagnostics.chisqTmp, method=boxcar, sourceQuantity=temporaryDiagnostics.chisqTmp, $
   boxCarMethod=max, width=3
 ;; Now fill quality from this.
-Fill, quantity=otherDiagnostics.quality!MFproduct, method=quality, $
+Fill, quantity=otherDiagnostics.quality!HRQuantity, method=quality, $
   sourceQuantity=temporaryDiagnostics.chisqTmp, scale=!MFchisqscale
 
 ;; Status
-Fill, quantity=otherDiagnostics.status!MFproduct, method=explicit, explicitValues=0, /spread
+Fill, quantity=otherDiagnostics.status!HRQuantity, method=explicit, explicitValues=0, /spread
 
-Fill, quantity=otherDiagnostics.status!MFproduct, method=status, $
+Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
   status=!statusMissingGMAO+!statusInform, $
   /additional, /ifMissingGMAO
 
@@ -752,22 +761,25 @@ Fill, quantity=temporaryDiagnostics.noRadsTmp, method=explicit, explicitValues=0
 Fill, quantity=temporaryDiagnostics.noRadsTmp, method=boxcar, sourceQuantity=temporaryDiagnostics.noRadsTmp, $
   boxCarMethod=min, width=3
 ;; Set status based on this
-Fill, quantity=otherDiagnostics.status!MFproduct, method=status, $
+Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
   status=!statusTooFewRadiances+!statusDoNotUse, $
   sourceQuantity=temporaryDiagnostics.noRadsTmp, minValue=!MFminrads, /additional})
 
 !ifdef(MFcloudmax,{
 ;; Status - cloudy radiances - don't do a box car.
-Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusHighCloud+!statusBeWary, $
+Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, status=!statusHighCloud+!statusBeWary, $
   sourceQuantity=otherDiagnostics.highCloudSummary!MFradiometer, maxValue=!MFcloudmax, /additional
 })
 !ifdef(MFcloudmin,{
 ;; Status - cloudy radiances - don't do a boxcar.
-Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusLowCloud+!statusBeWary, $
+Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, status=!statusLowCloud+!statusBeWary, $
   sourceQuantity=otherDiagnostics.lowCloudSummary!MFradiometer, minValue=!MFcloudmin, /additional
 })})
 
 ; $Log$
+; Revision 1.116  2006/07/27 22:41:28  pwagner
+; Specify unit=DU for O3; be consistent in using temperature_hr to compute PTrop
+;
 ; Revision 1.115  2006/07/25 21:37:45  pwagner
 ; Do not write (currently unused) IWC3 swath
 ;
