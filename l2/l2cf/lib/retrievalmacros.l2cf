@@ -731,6 +731,8 @@ Fill, quantity=temporaryDiagnostics.noRadsTmp, method=manipulate, manipulation='
 !undefine(HRQuantity)!dnl
 !ifelse(!MFproduct,{H2O}, {!dnl
 !define(HRQuantity,{!MFproduct_hr})!dnl
+}, !MFproduct,{RHI}, {!dnl
+!define(HRQuantity,{!MFproduct_hr})!dnl
 },{!dnl
 !define(HRQuantity,{!MFproduct})!dnl
 })!dnl
@@ -777,6 +779,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, status=!status
 })})
 
 ; $Log$
+; Revision 1.117  2006/07/29 00:30:04  pwagner
+; More fixes for H2O being _hr; corrected adding up quality by bands
+;
 ; Revision 1.116  2006/07/27 22:41:28  pwagner
 ; Specify unit=DU for O3; be consistent in using temperature_hr to compute PTrop
 ;
