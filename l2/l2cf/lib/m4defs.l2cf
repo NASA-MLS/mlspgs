@@ -124,3 +124,7 @@ changesyntax({@!})
 ;; This one clears diversions (taken from the m4 manual)
 !define(clearDivert,
 {!pushdef({num},!divnum)!divert(-1)!undivert($@)!divert(!num)!popdef(num)})
+
+;; Just count how many args we're given
+;; (for things like flaggingBands)
+!define(nargs, {$#})
