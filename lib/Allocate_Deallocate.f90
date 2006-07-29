@@ -31,6 +31,7 @@ module Allocate_Deallocate
   use MACHINE, only: MLS_GC_NOW
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Warning
+  use Track_m, only: TrackAllocate, TrackDeallocate
 
   implicit NONE
   private
@@ -82,9 +83,9 @@ module Allocate_Deallocate
   integer, save :: DEALLOC_STATUS = 0
 
   logical, public :: CLEARONALLOCATE = .false. ! If true, zero all allocated stuff
-  logical, public :: TRACKALLOCATES = .false. ! If true keep track of memory allocated
-                                              ! and print every transaction
-  ! and report on it.
+  integer, public :: TRACKALLOCATES = 0 ! <= 0 => No tracking
+                                        ! 1    => Track using the Track_m module
+                                        ! >= 2 => 1 + report all transactions
 
   ! Element sizes (bytes)
   integer, parameter, public :: E_Ch = 1 ! Character
@@ -138,7 +139,7 @@ contains
     real, intent(in) :: noBytes      ! No bytes allocated (or deallocated if -ve)
 
     ! Executable code
-    if ( .not. trackAllocates ) return        ! Most probably will not be called anyway
+    if ( trackAllocates <= 0 ) return        ! Most probably will not be called anyway
     ! print *, 'noBytes: ', noBytes
     noBytesAllocated = noBytesAllocated + noBytes
     call output ( 'Tracking: ' )
@@ -170,7 +171,7 @@ contains
   subroutine Test_Allocate ( Status, ModuleNameIn, ItsName, lBounds, uBounds, &
     & ElementSize )
   ! Test the status from an allocate.  If it's nonzero, issue a message.
-  ! Track allocations if TrackAllocates is true and ElementSize is present
+  ! Track allocations if TrackAllocates is >= 2 and ElementSize is present
   ! and > 0.  
     integer, intent(in) :: Status
     character(len=*), intent(in) :: ModuleNameIn, ItsName
@@ -194,7 +195,7 @@ contains
 
     if ( elementSize > 0 ) then
       amount = memproduct(elementSize, ubounds-lbounds+1)
-      if ( trackAllocates .and. present(elementSize) ) then
+      if ( trackAllocates >= 2 .and. present(elementSize) ) then
         call ReportAllocateDeallocate ( itsName, moduleNameIn, amount )
       else
         noBytesAllocated = noBytesAllocated + amount
@@ -206,8 +207,6 @@ contains
   ! --------------------------------------------  Test_DeAllocate_int_s  -----
   subroutine Test_DeAllocate_int_s ( Status, ModuleNameIn, ItsName, Size )
   ! Test the status from a deallocate.  If it's nonzero, issue a message.
-  ! Do garbage collection if Collect_garbage_each_time is true.
-  ! Track deallocations if TrackAllocates is true and Size is present and > 0.
     integer, intent(in) :: Status
     character(len=*), intent(in) :: ModuleNameIn, ItsName
     integer, intent(in) :: Size ! in MEMORY_UNITS, <= 0 for no tracking
@@ -218,7 +217,7 @@ contains
   subroutine Test_Deallocate_real_s ( Status, ModuleNameIn, ItsName, Size )
   ! Test the status from a deallocate.  If it's nonzero, issue a message.
   ! Do garbage collection if Collect_garbage_each_time is true.
-  ! Track deallocations if TrackAllocates is true and Size is present and > 0.
+  ! Track deallocations if TrackAllocates >= 2 and Size is present and > 0.
     integer, intent(in) :: Status
     character(len=*), intent(in) :: ModuleNameIn, ItsName
     real, intent(in), optional :: Size ! in MEMORY_UNITS, <= 0 for no tracking
@@ -232,7 +231,7 @@ contains
     end if
     if ( status == 0 .and. present(size) ) then
       if ( size > 0.0 ) then
-        if ( trackAllocates ) then
+        if ( trackAllocates >= 2 ) then
           call ReportAllocateDeallocate ( itsName, moduleNameIn, -size )
         else
           noBytesAllocated = noBytesAllocated - size
@@ -669,6 +668,9 @@ contains
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.30  2006/07/29 03:01:07  vsnyder
+! Use track_m stuff
+!
 ! Revision 2.29  2006/07/28 01:57:25  vsnyder
 ! Use real() instead of *1.0 to convert to real
 !
