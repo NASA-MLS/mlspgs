@@ -60,6 +60,7 @@ program MLSL2
   use Time_M, only: Time_Now, time_config
   use TOGGLES, only: CON, EMIT, GEN, LEVELS, LEX, PAR, SYN, SWITCHES, TAB, &
     & TOGGLE
+  use Track_m, only: ReportLeaks
   use TREE, only: ALLOCATE_TREE, DEALLOCATE_TREE, PRINT_SUBTREE
   use TREE_CHECKER, only: CHECK_TREE
   use TREE_WALKER, only: WALK_TREE_TO_DO_MLS_L2
@@ -170,6 +171,7 @@ program MLSL2
   real :: T0, T1, T2               ! For timing
   character(len=len(switches)) :: tempSwitches
   logical :: Timing = .false.      ! -T option is set
+  integer :: V                     ! Numeric value after an option
   character(len=2048) :: WORD      ! Some text
 
 !---------------------------- RCS Ident Info ------------------------------
@@ -390,8 +392,29 @@ program MLSL2
         end if
       else if ( lowercase(line(3+n:18+n)) == 'clearonallocate ' ) then
         clearonallocate = switch
-      else if ( lowercase(line(3+n:11+n)) == 'memtrack ' ) then
-        trackAllocates = switch
+      else if ( lowercase(line(3+n:10+n)) == 'memtrack' ) then
+        v = 1
+        if ( line(11+n:) /= ' ' ) then
+          copyArg = .false.
+          read ( line(11+n:), *, iostat=status ) v
+          if ( status /= 0 ) then
+            call io_error ( "After --memtrack option", status, line )
+            stop
+          end if
+        else
+          call getarg ( i+1, line )
+          read ( line, *, iostat=status ) j
+          if ( status == 0 ) then
+            i = i + 1
+            command_line = trim(command_line) // ' ' // trim(line)
+            v = j
+          end if
+        end if
+        if ( switch ) then
+          trackAllocates = v
+        else
+          trackAllocates = 0
+        end if
       else if ( line(3+n:7+n) == 'overl' ) then
         ChunkDivideConfig%allowPriorOverlaps = switch
         ChunkDivideConfig%allowPostOverlaps = switch
@@ -863,6 +886,7 @@ program MLSL2
   if ( timing ) call sayTime ( 'Closing and deallocating' )
   call add_to_section_timing( 'main', t0 )
   if ( switchDetail(switches, 'time') >= 0 ) call dump_section_timings
+  if ( trackAllocates > 0 ) call ReportLeaks
   call output_date_and_time(msg='ending mlsl2')
   if( error /= 0 .or. STOPWITHERROR ) then
      call MLSMessageExit(1)
@@ -1052,6 +1076,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.153  2006/07/29 03:42:09  vsnyder
+! New --memtrack interpretation
+!
 ! Revision 2.152  2006/07/27 03:49:12  vsnyder
 ! Detect --leak option, attach leak checker
 !
