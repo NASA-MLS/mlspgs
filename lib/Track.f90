@@ -65,90 +65,93 @@ module Track_m
     module procedure TrackDeallocate_L3
   end interface
 
+  integer, parameter :: WhereLen = 48
+
   type :: Track_C1_t
     character, pointer :: P(:) => NULL()
-    character(32) :: Where
+    character(len=whereLen) :: Where
   end type Track_C1_t
   type :: Track_C2_t
     character, pointer :: P(:,:) => NULL()
-    character(32) :: Where
+    character(len=whereLen) :: Where
   end type Track_C2_t
   type :: Track_C3_t
     character, pointer :: P(:,:,:) => NULL()
-    character(32) :: Where
+    character(len=whereLen) :: Where
   end type Track_C3_t
   type :: Track_X1_t
     complex, pointer :: P(:) => NULL()
-    character(32) :: Where
+    character(len=whereLen) :: Where
   end type Track_X1_t
   type :: Track_X2_t
     complex, pointer :: P(:,:) => NULL()
-    character(32) :: Where
+    character(len=whereLen) :: Where
   end type Track_X2_t
   type :: Track_X3_t
     complex, pointer :: P(:,:,:) => NULL()
-    character(32) :: Where
+    character(len=whereLen) :: Where
   end type Track_X3_t
   type :: Track_Z1_t
     complex(kind(0.0d0)), pointer :: P(:) => NULL()
-    character(32) :: Where
+    character(len=whereLen) :: Where
   end type Track_Z1_t
   type :: Track_Z2_t
     complex(kind(0.0d0)), pointer :: P(:,:) => NULL()
-    character(32) :: Where
+    character(len=whereLen) :: Where
   end type Track_Z2_t
   type :: Track_Z3_t
     complex(kind(0.0d0)), pointer :: P(:,:,:) => NULL()
-    character(32) :: Where
+    character(len=whereLen) :: Where
   end type Track_Z3_t
   type :: Track_I1_t
     integer, pointer :: P(:) => NULL()
-    character(32) :: Where
+    character(len=whereLen) :: Where
   end type Track_I1_t
   type :: Track_I2_t
     integer, pointer :: P(:,:) => NULL()
-    character(32) :: Where
+    character(len=whereLen) :: Where
   end type Track_I2_t
   type :: Track_I3_t
     integer, pointer :: P(:,:,:) => NULL()
-    character(32) :: Where
+    character(len=whereLen) :: Where
   end type Track_I3_t
   type :: Track_R1_t
     real, pointer :: P(:) => NULL()
-    character(32) :: Where
+    character(len=whereLen) :: Where
   end type Track_R1_t
   type :: Track_R2_t
     real, pointer :: P(:,:) => NULL()
-    character(32) :: Where
+    character(len=whereLen) :: Where
   end type Track_R2_t
   type :: Track_R3_t
     real, pointer :: P(:,:,:) => NULL()
-    character(32) :: Where
+    character(len=whereLen) :: Where
   end type Track_R3_t
   type :: Track_D1_t
     double precision, pointer :: P(:) => NULL()
-    character(32) :: Where
+    character(len=whereLen) :: Where
   end type Track_D1_t
   type :: Track_D2_t
     double precision, pointer :: P(:,:) => NULL()
-    character(32) :: Where
+    character(len=whereLen) :: Where
   end type Track_D2_t
   type :: Track_D3_t
     double precision, pointer :: P(:,:,:) => NULL()
-    character(32) :: Where
+    character(len=whereLen) :: Where
   end type Track_D3_t
   type :: Track_L1_t
     logical, pointer :: P(:) => NULL()
-    character(32) :: Where
+    character(len=whereLen) :: Where
   end type Track_L1_t
   type :: Track_L2_t
     logical, pointer :: P(:,:) => NULL()
-    character(32) :: Where
+    character(len=whereLen) :: Where
   end type Track_L2_t
   type :: Track_L3_t
     logical, pointer :: P(:,:,:) => NULL()
-    character(32) :: Where
+    character(len=whereLen) :: Where
   end type Track_L3_t
+
   type(Track_C1_t), pointer, save :: Track_C1(:) => NULL()
   type(Track_C2_t), pointer, save :: Track_C2(:) => NULL()
   type(Track_C3_t), pointer, save :: Track_C3(:) => NULL()
@@ -170,6 +173,7 @@ module Track_m
   type(Track_L1_t), pointer, save :: Track_L1(:) => NULL()
   type(Track_L2_t), pointer, save :: Track_L2(:) => NULL()
   type(Track_L3_t), pointer, save :: Track_L3(:) => NULL()
+
   integer, save :: Num_C1 = 0
   integer, save :: Num_C2 = 0
   integer, save :: Num_C3 = 0
@@ -207,6 +211,7 @@ contains
     character(len=*), intent(in) :: Where, Module
     integer :: I
     type(track_c1_t), pointer :: temp(:)
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_c1
       if ( .not. associated(track_c1(i)%p) ) go to 9 ! Found empty one
     end do
@@ -227,6 +232,7 @@ contains
     character(len=*), intent(in) :: Where, Module
     integer :: I
     type(track_c2_t), pointer :: temp(:)
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_c2
       if ( .not. associated(track_c2(i)%p) ) go to 9 ! Found empty one
     end do
@@ -247,6 +253,7 @@ contains
     character(len=*), intent(in) :: Where, Module
     integer :: I
     type(track_c3_t), pointer :: temp(:)
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_c3
       if ( .not. associated(track_c3(i)%p) ) go to 9 ! Found empty one
     end do
@@ -268,6 +275,7 @@ contains
     character(len=*), intent(in) :: Where, Module
     integer :: I
     type(track_x1_t), pointer :: temp(:)
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_x1
       if ( .not. associated(track_x1(i)%p) ) go to 9 ! Found empty one
     end do
@@ -288,6 +296,7 @@ contains
     character(len=*), intent(in) :: Where, Module
     integer :: I
     type(track_x2_t), pointer :: temp(:)
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_x2
       if ( .not. associated(track_x2(i)%p) ) go to 9 ! Found empty one
     end do
@@ -308,6 +317,7 @@ contains
     character(len=*), intent(in) :: Where, Module
     integer :: I
     type(track_x3_t), pointer :: temp(:)
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_x3
       if ( .not. associated(track_x3(i)%p) ) go to 9 ! Found empty one
     end do
@@ -329,6 +339,7 @@ contains
     character(len=*), intent(in) :: Where, Module
     integer :: I
     type(track_z1_t), pointer :: temp(:)
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_z1
       if ( .not. associated(track_z1(i)%p) ) go to 9 ! Found empty one
     end do
@@ -349,6 +360,7 @@ contains
     character(len=*), intent(in) :: Where, Module
     integer :: I
     type(track_z2_t), pointer :: temp(:)
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_z2
       if ( .not. associated(track_z2(i)%p) ) go to 9 ! Found empty one
     end do
@@ -369,6 +381,7 @@ contains
     character(len=*), intent(in) :: Where, Module
     integer :: I
     type(track_z3_t), pointer :: temp(:)
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_z3
       if ( .not. associated(track_z3(i)%p) ) go to 9 ! Found empty one
     end do
@@ -390,6 +403,7 @@ contains
     character(len=*), intent(in) :: Where, Module
     integer :: I
     type(track_i1_t), pointer :: temp(:)
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_i1
       if ( .not. associated(track_i1(i)%p) ) go to 9 ! Found empty one
     end do
@@ -410,6 +424,7 @@ contains
     character(len=*), intent(in) :: Where, Module
     integer :: I
     type(track_i2_t), pointer :: temp(:)
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_i2
       if ( .not. associated(track_i2(i)%p) ) go to 9 ! Found empty one
     end do
@@ -430,6 +445,7 @@ contains
     character(len=*), intent(in) :: Where, Module
     integer :: I
     type(track_i3_t), pointer :: temp(:)
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_i3
       if ( .not. associated(track_i3(i)%p) ) go to 9 ! Found empty one
     end do
@@ -451,6 +467,7 @@ contains
     character(len=*), intent(in) :: Where, Module
     integer :: I
     type(track_r1_t), pointer :: temp(:)
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_r1
       if ( .not. associated(track_r1(i)%p) ) go to 9 ! Found empty one
     end do
@@ -471,6 +488,7 @@ contains
     character(len=*), intent(in) :: Where, Module
     integer :: I
     type(track_r2_t), pointer :: temp(:)
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_r2
       if ( .not. associated(track_r2(i)%p) ) go to 9 ! Found empty one
     end do
@@ -491,6 +509,7 @@ contains
     character(len=*), intent(in) :: Where, Module
     integer :: I
     type(track_r3_t), pointer :: temp(:)
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_r3
       if ( .not. associated(track_r3(i)%p) ) go to 9 ! Found empty one
     end do
@@ -512,6 +531,7 @@ contains
     character(len=*), intent(in) :: Where, Module
     integer :: I
     type(track_d1_t), pointer :: temp(:)
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_d1
       if ( .not. associated(track_d1(i)%p) ) go to 9 ! Found empty one
     end do
@@ -532,6 +552,7 @@ contains
     character(len=*), intent(in) :: Where, Module
     integer :: I
     type(track_d2_t), pointer :: temp(:)
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_d2
       if ( .not. associated(track_d2(i)%p) ) go to 9 ! Found empty one
     end do
@@ -552,6 +573,7 @@ contains
     character(len=*), intent(in) :: Where, Module
     integer :: I
     type(track_d3_t), pointer :: temp(:)
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_d3
       if ( .not. associated(track_d3(i)%p) ) go to 9 ! Found empty one
     end do
@@ -573,6 +595,7 @@ contains
     character(len=*), intent(in) :: Where, Module
     integer :: I
     type(track_l1_t), pointer :: temp(:)
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_l1
       if ( .not. associated(track_l1(i)%p) ) go to 9 ! Found empty one
     end do
@@ -593,6 +616,7 @@ contains
     character(len=*), intent(in) :: Where, Module
     integer :: I
     type(track_l2_t), pointer :: temp(:)
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_l2
       if ( .not. associated(track_l2(i)%p) ) go to 9 ! Found empty one
     end do
@@ -613,6 +637,7 @@ contains
     character(len=*), intent(in) :: Where, Module
     integer :: I
     type(track_l3_t), pointer :: temp(:)
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_l3
       if ( .not. associated(track_l3(i)%p) ) go to 9 ! Found empty one
     end do
@@ -633,6 +658,7 @@ contains
     character(len=*), pointer :: What(:)
     character(len=*), intent(in) :: Where, Module
     integer :: I, J
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_c1
       if ( associated(track_c1(i)%p, what(:)(1:1)) ) then
         nullify ( track_c1(i)%p )  ! Mark it free
@@ -654,6 +680,7 @@ contains
     character(len=*), pointer :: What(:,:)
     character(len=*), intent(in) :: Where, Module
     integer :: I, J
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_c2
       if ( associated(track_c2(i)%p, what(:,:)(1:1)) ) then
         nullify ( track_c2(i)%p )  ! Mark it free
@@ -675,6 +702,7 @@ contains
     character(len=*), pointer :: What(:,:,:)
     character(len=*), intent(in) :: Where, Module
     integer :: I, J
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_c3
       if ( associated(track_c3(i)%p, what(:,:,:)(1:1)) ) then
         nullify ( track_c3(i)%p )  ! Mark it free
@@ -697,8 +725,9 @@ contains
     complex, pointer :: What(:)
     character(len=*), intent(in) :: Where, Module
     integer :: I, J
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_x1
-      if ( associated(track_x1(i)%p, what(:)) ) then
+      if ( associated(track_x1(i)%p, what) ) then
         nullify ( track_x1(i)%p )  ! Mark it free
         if ( i == num_x1 ) then    ! Reduce count to speed searches
           do j = num_x1-1, 1, -1
@@ -718,8 +747,9 @@ contains
     complex, pointer :: What(:,:)
     character(len=*), intent(in) :: Where, Module
     integer :: I, J
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_x2
-      if ( associated(track_x2(i)%p, what(:,:)) ) then
+      if ( associated(track_x2(i)%p, what) ) then
         nullify ( track_x2(i)%p )  ! Mark it free
         if ( i == num_x2 ) then    ! Reduce count to speed searches
           do j = num_x2-1, 1, -1
@@ -739,8 +769,9 @@ contains
     complex, pointer :: What(:,:,:)
     character(len=*), intent(in) :: Where, Module
     integer :: I, J
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_x3
-      if ( associated(track_x3(i)%p, what(:,:,:)) ) then
+      if ( associated(track_x3(i)%p, what) ) then
         nullify ( track_x3(i)%p )  ! Mark it free
         if ( i == num_x3 ) then    ! Reduce count to speed searches
           do j = num_x3-1, 1, -1
@@ -761,8 +792,9 @@ contains
     complex(kind(0.0d0)), pointer :: What(:)
     character(len=*), intent(in) :: Where, Module
     integer :: I, J
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_z1
-      if ( associated(track_z1(i)%p, what(:)) ) then
+      if ( associated(track_z1(i)%p, what) ) then
         nullify ( track_z1(i)%p )  ! Mark it free
         if ( i == num_z1 ) then    ! Reduce count to speed searches
           do j = num_z1-1, 1, -1
@@ -782,8 +814,9 @@ contains
     complex(kind(0.0d0)), pointer :: What(:,:)
     character(len=*), intent(in) :: Where, Module
     integer :: I, J
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_z2
-      if ( associated(track_z2(i)%p, what(:,:)) ) then
+      if ( associated(track_z2(i)%p, what) ) then
         nullify ( track_z2(i)%p )  ! Mark it free
         if ( i == num_z2 ) then    ! Reduce count to speed searches
           do j = num_z2-1, 1, -1
@@ -803,8 +836,9 @@ contains
     complex(kind(0.0d0)), pointer :: What(:,:,:)
     character(len=*), intent(in) :: Where, Module
     integer :: I, J
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_z3
-      if ( associated(track_z3(i)%p, what(:,:,:)) ) then
+      if ( associated(track_z3(i)%p, what) ) then
         nullify ( track_z3(i)%p )  ! Mark it free
         if ( i == num_z3 ) then    ! Reduce count to speed searches
           do j = num_z3-1, 1, -1
@@ -825,8 +859,9 @@ contains
     integer, pointer :: What(:)
     character(len=*), intent(in) :: Where, Module
     integer :: I, J
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_i1
-      if ( associated(track_i1(i)%p, what(:)) ) then
+      if ( associated(track_i1(i)%p, what) ) then
         nullify ( track_i1(i)%p )  ! Mark it free
         if ( i == num_i1 ) then    ! Reduce count to speed searches
           do j = num_i1-1, 1, -1
@@ -846,8 +881,9 @@ contains
     integer, pointer :: What(:,:)
     character(len=*), intent(in) :: Where, Module
     integer :: I, J
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_i2
-      if ( associated(track_i2(i)%p, what(:,:)) ) then
+      if ( associated(track_i2(i)%p, what) ) then
         nullify ( track_i2(i)%p )  ! Mark it free
         if ( i == num_i2 ) then    ! Reduce count to speed searches
           do j = num_i2-1, 1, -1
@@ -867,8 +903,9 @@ contains
     integer, pointer :: What(:,:,:)
     character(len=*), intent(in) :: Where, Module
     integer :: I, J
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_i3
-      if ( associated(track_i3(i)%p, what(:,:,:)) ) then
+      if ( associated(track_i3(i)%p, what) ) then
         nullify ( track_i3(i)%p )  ! Mark it free
         if ( i == num_i3 ) then    ! Reduce count to speed searches
           do j = num_i3-1, 1, -1
@@ -889,8 +926,9 @@ contains
     real, pointer :: What(:)
     character(len=*), intent(in) :: Where, Module
     integer :: I, J
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_r1
-      if ( associated(track_r1(i)%p, what(:)) ) then
+      if ( associated(track_r1(i)%p, what) ) then
         nullify ( track_r1(i)%p )  ! Mark it free
         if ( i == num_r1 ) then    ! Reduce count to speed searches
           do j = num_r1-1, 1, -1
@@ -910,8 +948,9 @@ contains
     real, pointer :: What(:,:)
     character(len=*), intent(in) :: Where, Module
     integer :: I, J
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_r2
-      if ( associated(track_r2(i)%p, what(:,:)) ) then
+      if ( associated(track_r2(i)%p, what) ) then
         nullify ( track_r2(i)%p )  ! Mark it free
         if ( i == num_r2 ) then    ! Reduce count to speed searches
           do j = num_r2-1, 1, -1
@@ -931,8 +970,9 @@ contains
     real, pointer :: What(:,:,:)
     character(len=*), intent(in) :: Where, Module
     integer :: I, J
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_r3
-      if ( associated(track_r3(i)%p, what(:,:,:)) ) then
+      if ( associated(track_r3(i)%p, what) ) then
         nullify ( track_r3(i)%p )  ! Mark it free
         if ( i == num_r3 ) then    ! Reduce count to speed searches
           do j = num_r3-1, 1, -1
@@ -953,8 +993,9 @@ contains
     double precision, pointer :: What(:)
     character(len=*), intent(in) :: Where, Module
     integer :: I, J
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_d1
-      if ( associated(track_d1(i)%p, what(:)) ) then
+      if ( associated(track_d1(i)%p, what) ) then
         nullify ( track_d1(i)%p )  ! Mark it free
         if ( i == num_d1 ) then    ! Reduce count to speed searches
           do j = num_d1-1, 1, -1
@@ -974,8 +1015,9 @@ contains
     double precision, pointer :: What(:,:)
     character(len=*), intent(in) :: Where, Module
     integer :: I, J
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_d2
-      if ( associated(track_d2(i)%p, what(:,:)) ) then
+      if ( associated(track_d2(i)%p, what) ) then
         nullify ( track_d2(i)%p )  ! Mark it free
         if ( i == num_d2 ) then    ! Reduce count to speed searches
           do j = num_d2-1, 1, -1
@@ -995,8 +1037,9 @@ contains
     double precision, pointer :: What(:,:,:)
     character(len=*), intent(in) :: Where, Module
     integer :: I, J
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_d3
-      if ( associated(track_d3(i)%p, what(:,:,:)) ) then
+      if ( associated(track_d3(i)%p, what) ) then
         nullify ( track_d3(i)%p )  ! Mark it free
         if ( i == num_d3 ) then    ! Reduce count to speed searches
           do j = num_d3-1, 1, -1
@@ -1017,8 +1060,9 @@ contains
     logical, pointer :: What(:)
     character(len=*), intent(in) :: Where, Module
     integer :: I, J
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_l1
-      if ( associated(track_l1(i)%p, what(:)) ) then
+      if ( associated(track_l1(i)%p, what) ) then
         nullify ( track_l1(i)%p )  ! Mark it free
         if ( i == num_l1 ) then    ! Reduce count to speed searches
           do j = num_l1-1, 1, -1
@@ -1038,8 +1082,9 @@ contains
     logical, pointer :: What(:,:)
     character(len=*), intent(in) :: Where, Module
     integer :: I, J
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_l2
-      if ( associated(track_l2(i)%p, what(:,:)) ) then
+      if ( associated(track_l2(i)%p, what) ) then
         nullify ( track_l2(i)%p )  ! Mark it free
         if ( i == num_l2 ) then    ! Reduce count to speed searches
           do j = num_l2-1, 1, -1
@@ -1059,8 +1104,9 @@ contains
     logical, pointer :: What(:,:,:)
     character(len=*), intent(in) :: Where, Module
     integer :: I, J
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_l3
-      if ( associated(track_l3(i)%p, what(:,:,:)) ) then
+      if ( associated(track_l3(i)%p, what) ) then
         nullify ( track_l3(i)%p )  ! Mark it free
         if ( i == num_l3 ) then    ! Reduce count to speed searches
           do j = num_l3-1, 1, -1
@@ -1078,6 +1124,7 @@ contains
   end subroutine TrackDeallocate_L3
 
   subroutine ReportLeaks
+    write ( *, '(a)' ) "Checking for leaks..."
     call reportLeaks_c1
     call reportLeaks_c2
     call reportLeaks_c3
@@ -1299,6 +1346,9 @@ contains
 end module Track_m
 
 ! $Log$
+! Revision 2.2  2006/07/29 03:42:34  vsnyder
+! Can't track zero-size allocations
+!
 ! Revision 2.1  2006/07/29 03:00:54  vsnyder
 ! Initial commit
 !
