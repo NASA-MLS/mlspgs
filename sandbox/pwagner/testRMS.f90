@@ -7,7 +7,6 @@ program testRMS
   implicit none
   integer, parameter :: N=10
   real, dimension(N, N) :: array
-  real, dimension(N, N) :: array2
   real :: min, max, mean, stddev, rms
   double precision, dimension(N, N) :: dblarray
   double precision :: dblmin, dblmax, dblmean, dblstddev, dblrms, eta
@@ -23,39 +22,30 @@ program testRMS
   array = 1.
   call dump ( array, &
     & 'all ones', stats=.true., rms=.true. )
-  call allstats(array, max=max, min=min, mean=mean, stddev=stddev, rms=rms)
+  call allstats(array, max=max, min=min, mean=mean, stddev=stddev, rms=rms, doDump=.true.)
   call dumpstats(max, min, mean, stddev, rms)
   array(:,1:5) = 0.
   call dump ( array, &
     & 'half ones', stats=.true., rms=.true. )
-  call allstats(array, max=max, min=min, mean=mean, stddev=stddev, rms=rms)
+  call allstats(array, max=max, min=min, mean=mean, stddev=stddev, rms=rms, doDump=.true.)
   call dumpstats(max, min, mean, stddev, rms)
   array(:,1:5) = -1.
   call dump ( array, &
     & 'half +/-', stats=.true., rms=.true. )
-  call allstats(array, max=max, min=min, mean=mean, stddev=stddev, rms=rms)
+  call allstats(array, max=max, min=min, mean=mean, stddev=stddev, rms=rms, doDump=.true.)
   call dumpstats(max, min, mean, stddev, rms)
   array(:,6:10) = -999.99
   call dump ( array, &
     & 'half +/-', stats=.true., rms=.true., fillValue=-999.99 )
   call allstats(array, max=max, min=min, mean=mean, stddev=stddev, rms=rms, &
-    & fillValue=-999.99)
+    & fillValue=-999.99, doDump=.true.)
   call dumpstats(max, min, mean, stddev, rms)
-
-  array = 1.
-  array2(:,1:5) = 1./2
-  array2(:,6:) = -1./2
-  call dump ( array-array2, &
-    & '1/2,3/2', stats=.true., rms=.true. )
-  call allstats(array-array2, max=max, min=min, mean=mean, stddev=stddev, rms=rms)
-  call dumpstats(max, min, mean, stddev, rms)
-
   dblarray = array
   dblarray(:,6:10) = -999.99d0
   call dump ( real(dblarray), &
     & 'half +/-', stats=.true., rms=.true., fillValue=-999.99 )
   call allstats(dblarray, max=dblmax, min=dblmin, mean=dblmean, &
-    & stddev=dblstddev, rms=dblrms, fillValue=-999.99d0)
+    & stddev=dblstddev, rms=dblrms, fillValue=-999.99d0, doDump=.true.)
   call dumpstats(real(dblmax), real(dblmin), real(dblmean), real(dblstddev), &
     & real(dblrms))
   call output('mlsmin: ')
