@@ -234,7 +234,7 @@ contains ! =====     Public Procedures     =============================
           t = exp(temperatures%surfs(tx,1))
           do px = 1, pressures%noSurfs
             p = 10.0_rp**(-pressures%surfs(px,1))
-            call allocateOneSlabs ( slabs, myCatalog, .false. )
+            call allocateOneSlabs ( slabs, myCatalog, moduleName, .false. )
             call slabs_prep_struct ( t, p, myCatalog, velCor, .false., slabs )
             call get_beta_etc
             call deallocateOneSlabs ( slabs, moduleName )
@@ -435,6 +435,9 @@ contains ! =====     Public Procedures     =============================
 end module Create_PFAData_m
 
 ! $Log$
+! Revision 2.21  2006/07/29 03:01:41  vsnyder
+! Send module name to AllocateOneSlabs
+!
 ! Revision 2.20  2006/07/10 22:26:20  vsnyder
 ! Integrate entire grid when oversampling
 !
