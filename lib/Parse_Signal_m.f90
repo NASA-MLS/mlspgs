@@ -333,7 +333,7 @@ contains
     numChannelNums = 0
     radiometer_i = -1
     sawWhat = sawNothing
-    call deallocate_test ( signal_indices, moduleName, "Signal_Indices" )
+    call deallocate_test ( signal_indices, "Signal_Indices", moduleName )
     spectrometer_i = -1
     spectrometer_n = -1
     switch = -1
@@ -641,8 +641,8 @@ o:  do
         where = 1
         call announce_error ( invalid, signal_string, tree_index )
       else if ( .not. present(onlyCountEm) ) then
-        call allocate_test ( signal_indices, howMany, moduleName, &
-          & 'signal_indices' )
+        call allocate_test ( signal_indices, howMany, 'Signal_Indices', &
+          & moduleName )
         howMany = 0
         do i = 1, size(signals)
           if ( bandMatch(i) .and. channelMatch(i) .and. radiometerMatch(i) &
@@ -669,6 +669,9 @@ o:  do
 end module Parse_Signal_M
 
 ! $Log$
+! Revision 2.24  2006/07/29 01:36:33  vsnyder
+! Put the arguments to [de]Allocate_Test in the correct order
+!
 ! Revision 2.23  2005/06/22 17:25:50  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
