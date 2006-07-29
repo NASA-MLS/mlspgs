@@ -15,20 +15,22 @@ PROGRAM L2GPDump ! dumps L2GPData files
 
    use dump_0, only: dump
    use Hdf, only: DFACC_CREATE, DFACC_RDWR, DFACC_READ
-   use HDF5, only: h5fopen_f, h5fclose_f, h5fis_hdf5_f   
+   use HDF5, only: h5fopen_f, h5fclose_f, h5gopen_f, h5gclose_f, h5fis_hdf5_f   
    use HDFEOS5, only: HE5T_NATIVE_CHAR
+   use intrinsic, only: l_swath
    use L2GPData, only: Dump, L2GPData_T, ReadL2GPData, DestroyL2GPContents, &
      & L2GPNameLen, MAXSWATHNAMESBUFSIZE
    use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
    use MLSCommon, only: R8
-   use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, MLS_INQSWATH
+   use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, MLS_INQSWATH, &
+     & mls_io_gen_closeF, mls_io_gen_openF, split_path_name
    use MLSHDF5, only: mls_h5open, mls_h5close
-   use MLSMessageModule, only: MLSMessageConfig, MLSMSG_Warning, &
+   use MLSMessageModule, only: MLSMessageConfig, MLSMSG_Error, MLSMSG_Warning, &
      & MLSMessage
    use MLSStringLists, only: ExpandStringRange, &
      & GetStringElement, NumStringElements, &
      & stringElementNum
-   use OUTPUT_M, only: OUTPUT
+   use OUTPUT_M, only: OUTPUT, resumeOutput, suspendOutput
    use PCFHdr, only: GlobalAttributes
    
    IMPLICIT NONE
@@ -56,9 +58,12 @@ PROGRAM L2GPDump ! dumps L2GPData files
   type options_T
     character(len=255) ::   chunks = '*' ! wild card means 'all'
      logical ::             verbose = .false.
+     logical ::             senseInquiry = .true.
      integer ::             details = 1
      logical ::             columnsOnly = .false.
      logical ::             attributesToo = .false.
+     character(len=255) ::  dsInquiry = ''
+     character(len=255) ::  attrInquiry = ''
      character(len=255) ::  fields = ''
      character(len=255) ::  swaths = '*' ! wildcard, meaning all swaths
   end type options_T
@@ -68,6 +73,7 @@ PROGRAM L2GPDump ! dumps L2GPData files
   integer            :: n_filenames
   integer     ::  i, count, status, error ! Counting indices & Error flags
   logical     :: is_hdf5
+  logical     :: is_present
   ! 
   MLSMessageConfig%useToolkit = .false.   
   MLSMessageConfig%logFileUnit = -1       
@@ -81,8 +87,21 @@ PROGRAM L2GPDump ! dumps L2GPData files
      if ( .not. is_hdf5 ) then
        print *, 'Sorry--not recognized as hdf5 file: ', trim(filename)
      endif
-     if ( options%verbose ) print *, 'Dumping swaths in ', trim(filename)
-     call dump_one_file(trim(filename), options)
+     if ( options%dsInquiry /= ' ' ) then
+       call suspendOutput
+       is_present = IsDSInFile( trim(filename), trim(options%dsInquiry) )
+       call Respond( options%senseInquiry, is_present, &
+         & trim(filename), trim(options%dsInquiry) )
+     elseif ( options%attrInquiry /= ' ' ) then
+       call suspendOutput
+       is_present = IsAttributeInFile( trim(filename), trim(options%attrInquiry) )
+       call Respond( options%senseInquiry, is_present, &
+         & trim(filename), trim(options%attrInquiry) )
+     else
+       if ( options%verbose ) print *, 'Dumping swaths in ', trim(filename)
+       call dump_one_file(trim(filename), options)
+     endif
+     call resumeOutput
   enddo
   call mls_h5close(error)
 contains
@@ -119,6 +138,20 @@ contains
         options%columnsOnly = .true.
       else if ( filename(1:6) == '-chunk' ) then
         call getarg ( i+1+hp, options%chunks )
+        i = i + 1
+      else if ( filename(1:6) == '-inqat' ) then
+        call getarg ( i+1+hp, options%attrInquiry )
+        i = i + 1
+      else if ( filename(1:6) == '-inqds' ) then
+        call getarg ( i+1+hp, options%dsInquiry )
+        i = i + 1
+      else if ( filename(1:7) == '-ninqat' ) then
+        options%senseInquiry = .false.
+        call getarg ( i+1+hp, options%attrInquiry )
+        i = i + 1
+      else if ( filename(1:7) == '-ninqds' ) then
+        options%senseInquiry = .false.
+        call getarg ( i+1+hp, options%dsInquiry )
         i = i + 1
       else if ( filename(1:3) == '-l ' ) then
         call getarg ( i+1+hp, options%fields )
@@ -161,6 +194,10 @@ contains
       write (*,*) ' Options: -f filename => use filename'
       write (*,*) '          -h          => print brief help'
       write (*,*) '          -chunks cl  => dump only chunks named in cl'
+      write (*,*) '          -[n]inqattr attr'
+      write (*,*) '                      => print only if attribute attr [not] present'
+      write (*,*) '          -[n]inqds ds'
+      write (*,*) '                      => print only if dataset ds [not] present'
       write (*,*) '          -l list     => dump only fields named in list'
       write (*,*) '          -s slist    => dump only swaths named in slist'
       write (*,*) '          -c          => dump only column abundances'
@@ -177,6 +214,82 @@ contains
       write (*,*) ' (4) the list of chunks may include the range operator "-"'
       stop
   end subroutine print_help
+  
+  function IsAttributeInFile( file, attribute ) result(sooDesu)
+    use MLSHDF5, only: IsHDF5ItemPresent
+    use HDF5, only: h5fopen_f, H5F_ACC_RDONLY_F
+    ! Dummy args
+    character(len=*), intent(in) :: file
+    character(len=*), intent(in) :: attribute
+    logical :: sooDesu
+    ! Local variables
+    integer :: fileID
+    integer :: grpID
+    integer :: status
+    character(len=len(attribute)) :: path, name
+    ! TRUE if attribute in file
+    call h5fopen_f ( trim(file), H5F_ACC_RDONLY_F, fileID, status )
+    if ( status /= 0 ) call defeat('Opening file')
+    call split_path_name ( attribute, path, name )
+    call h5gopen_f( fileID, trim(path), grpID, status )
+    if ( status /= 0 ) call defeat('Opening group')
+    sooDesu = IsHDF5ItemPresent ( grpID, name, '-a' )
+    call h5gclose_f(grpID, status)
+    if ( status /= 0 ) call defeat('Closing group')
+    call h5fclose_f(fileID, status)
+    if ( status /= 0 ) call defeat('Closing file')
+  end function IsAttributeInFile
+
+  function IsDSInFile( file, DS ) result(sooDesu)
+    use MLSHDF5, only: IsHDF5ItemPresent
+    use HDF5, only: h5fopen_f, H5F_ACC_RDONLY_F
+    ! Dummy args
+    character(len=*), intent(in) :: file
+    character(len=*), intent(in) :: DS
+    logical :: sooDesu
+    ! Local variables
+    integer :: fileID
+    integer :: status
+    integer :: grpID
+    character(len=len(DS)) :: path, name
+    ! TRUE if DS in file
+    call h5fopen_f ( trim(file), H5F_ACC_RDONLY_F, fileID, status )
+    call split_path_name ( DS, path, name )
+    call h5gopen_f( fileID, trim(path), grpID, status )
+    sooDesu = IsHDF5ItemPresent ( grpID, name, '-d' )
+    call h5gclose_f(grpID, status)
+    call h5fclose_f(fileID, status)
+  end function IsDSInFile
+  
+  subroutine Defeat(msg)
+    character(len=*), intent(in) :: msg
+    call resumeOutput
+    call output('Serious error: ' // msg, advance='yes')
+    call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'stopping' )
+  end subroutine Defeat
+  
+  subroutine Respond( sense, test, file, name )
+    ! print only if sense matches test
+    ! Dummy args
+    logical, intent(in)          :: sense
+    logical, intent(in)          :: test
+    character(len=*), intent(in) :: file
+    character(len=*), intent(in) :: name
+    character(len=*), parameter  :: Found = 'found'
+    character(len=*), parameter  :: notFound = 'not found'
+    character(len=16)            :: answer
+    ! Executable
+    if ( sense .neqv. test ) return
+    if ( sense ) then
+      answer = found
+    else
+      answer = notfound
+    endif
+    call resumeOutput
+    call output(trim(name) // ' ' // trim(answer) &
+      & // ' in ' // trim(file), advance='yes' )
+  end subroutine Respond
 
    subroutine dump_one_file(filename, options)
     ! Dummy args
@@ -234,8 +347,16 @@ contains
       ! print *, 'l2gp%nTimes:  ', l2gp%nTimes
       ! print *, 'shape(l2gp%l2gpvalue):  ', shape(l2gp%l2gpvalue)
       ! Dump the swath- and file-level attributes
-      if ( options%attributesToo ) call dump(file1, l2gp)
+      if ( options%attributesToo ) then
+        File1 = mls_io_gen_openF(l_swath, .TRUE., status, &
+         & record_length, DFACC_READ, FileName=trim(filename), &
+         & hdfVersion=HDFVERSION_5, debugOption=.false. )
+        call dump(file1, l2gp)
+        status = mls_io_gen_closeF(l_swath, File1, FileName=Filename, &
+        & hdfVersion=HDFVERSION_5, debugOption=.false.)
+      endif
       ! Dump the actual swath
+      if ( options%verbose ) print *, 'swath: ', trim(swath)
       if ( options%chunks == '*' ) then
         call dump(l2gp, options%columnsOnly, options%details, options%fields)
       else
@@ -254,6 +375,9 @@ END PROGRAM L2GPDump
 !==================
 
 ! $Log$
+! Revision 1.9  2006/01/24 23:57:43  pwagner
+! May optionally restrict dumps to specific chunks
+!
 ! Revision 1.8  2005/09/27 17:06:16  pwagner
 ! Added -s option; changed to conform with new MLSFiles module
 !
