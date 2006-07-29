@@ -207,7 +207,7 @@ then
   fi
 fi
 options="-c -bug -x"
-runningoptions="-c -full"
+runningoptions="-c -full -t"
 pvmfailedoptions="-fail"
 
 if [ "$debug" = "yes" ]
@@ -336,6 +336,9 @@ else
 fi
 exit 0
 # $Log$
+# Revision 1.9  2006/07/13 18:12:41  pwagner
+# Accepts that certain jobs (corpses) may be legally declared dead
+#
 # Revision 1.8  2006/03/31 18:40:10  pwagner
 # Now able to read clusternames, RECIPIENTS, and versions from files
 #
