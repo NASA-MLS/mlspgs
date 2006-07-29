@@ -623,6 +623,13 @@ Begin Fill
     method=RHIPrecisionFromH2O, /dontMask
   ;; Keep the status and quality as they are, they should be identical
   ;; to those of H2O-190 which should be fine.
+
+  ;; we want to overwrite RHi precision at pressures > 464mb with RHiVmr values
+  Subset, quantity=outputPrecision.!theQuantity, mask=fill, height=[ 1000mb : 383mb ]
+  Fill, quantity=outputPrecision.!theQuantity, sourceQuantity=outputPrecision.RHiVmr, $
+    method=vector,/force,/interpolate
+  Subset, quantity=outputPrecision.!theQuantity, mask=fill, /reset
+
 })
 End Fill
 
@@ -779,6 +786,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, status=!status
 })})
 
 ; $Log$
+; Revision 1.118  2006/07/29 01:19:34  pwagner
+; Treat rhi quality like H2O quality
+;
 ; Revision 1.117  2006/07/29 00:30:04  pwagner
 ; More fixes for H2O being _hr; corrected adding up quality by bands
 ;
