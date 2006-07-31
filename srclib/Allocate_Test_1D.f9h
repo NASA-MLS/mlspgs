@@ -29,8 +29,12 @@
         to_allocate = default
       end if
     end if
+    if ( trackallocates > 0 ) call trackAllocate ( to_allocate, itsName, moduleName )
 
 ! $Log$
+! Revision 1.2  2005/09/14 01:19:18  vsnyder
+! Can't inquire bounds if allocate failed
+!
 ! Revision 1.1  2005/07/20 01:29:46  vsnyder
 ! Initial commit
 !
