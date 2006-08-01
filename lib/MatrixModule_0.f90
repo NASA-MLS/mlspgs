@@ -48,7 +48,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   public :: MultiplyMatrixVector
   public :: MultiplyMatrixVectorNoT
   public :: NullifyMatrix, NullifyMatrix_0
-  public :: operator(+), operator(.TX.), ReflectMatrix, RowScale
+  public :: operator(+), ReflectMatrix, RowScale
   public :: ScaleBlock, SolveCholesky, SolveCholeskyM_0
   public :: Sparsify, Spill, Spill_0, SubBlockLength
   public :: TransposeMatrix, UpdateDiagonal
@@ -160,21 +160,12 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
     module procedure MultiplyMatrix_XTY_0
   end interface
 
-  interface NewMultiplyMatrixVector_0 ! (see .tx. below)
-    module procedure NewMultiplyMatrixVector_0_r4, NewMultiplyMatrixVector_0_r8
-  end interface
-
   interface NullifyMatrix
     module procedure NullifyMatrix_0
   end interface
 
   interface operator (+)
     module procedure Add_Matrix_Blocks_Unscaled
-  end interface
-
-  interface operator ( .TX. ) ! A^T * B
-    module procedure NewMultiplyMatrix_XTY_0, &
-      & NewMultiplyMatrixVector_0_r4, NewMultiplyMatrixVector_0_r8
   end interface
 
   interface ReflectMatrix
@@ -314,7 +305,7 @@ contains ! =====     Public Procedures     =============================
         ! Now we'll compromise, if the structures are identical then
         ! do it quickly, otherwise do it slowly
         if ( all ( x%r1 == y%r1 ) .and. all ( x%r2 == y%r2 ) ) then
-          call cloneBlock ( zb, x )
+          call cloneBlock ( zb, x, "Add_Matrix_Blocks" )
           zb%values = x%values + s * y%values
         else
           ! Do it the slow way for now.
@@ -404,7 +395,7 @@ contains ! =====     Public Procedures     =============================
       case ( M_Column_sparse )                   ! X col sparse, Y col sparse
         ! In the case where the blocks are identical in structure, add it the quick way
         if ( all ( x%r1 == y%r1 ) .and. all ( x%r2 == y%r2 ) ) then
-          call cloneBlock ( zb, x )
+          call cloneBlock ( zb, x, "Add_Matrix_Blocks" )
           zb%values = x%values + s* y%values
         else
           ! Make a full matrix, then sparsify it.  There _must_ be a better
@@ -435,7 +426,7 @@ contains ! =====     Public Procedures     =============================
 !     case ( M_Banded )        ! Not needed because of commuted arguments
 !     case ( M_Column_sparse ) ! Not needed because of commuted arguments
       case ( M_Full )                            ! X full, Y full
-        call CloneBlock ( zb, y )                ! Zb = y, except the values
+        call CloneBlock ( zb, y, "Add_Matrix_Blocks") ! Zb = y, except the values
         zb%values = x%values + s * y%values
       end select
     end select
@@ -962,12 +953,13 @@ contains ! =====     Public Procedures     =============================
   end subroutine ClearRows_0
 
   ! -------------------------------------------------  CloneBlock  -----
-  subroutine CloneBlock ( Z, X ) ! Z = X, except the values
+  subroutine CloneBlock ( Z, X, ForWhom ) ! Z = X, except the values
   ! Duplicate a matrix block, including copying all of its structural
   ! descriptive information, but not its values.
     type(MatrixElement_T), intent(inout) :: Z ! intent(inout) so that
       !                            destroyBlock gets a chance to clean up surds
     type(MatrixElement_T), intent(in) :: X
+    character(len=*), intent(in) :: ForWhom
     call destroyBlock ( z )
     if ( x%kind == M_absent ) then
       call CreateEmptyBlock ( z )
@@ -980,7 +972,7 @@ contains ! =====     Public Procedures     =============================
         lowBound=lbound(x%r2,1) )
       z%r2 = x%r2
       call allocate_test ( z%values, size(x%values,1), size(x%values,2), &
-        & "z%values", ModuleName )
+        & "z%values for " // trim(forWhom), ModuleName )
     end if
     z%nRows = x%nRows; z%nCols = x%nCols
   end subroutine CloneBlock
@@ -1045,7 +1037,7 @@ contains ! =====     Public Procedures     =============================
       !                            destroyBlock in cloneBlock gets a chance
       !                            to clean up surds
     type(MatrixElement_T), intent(in) :: X
-    call CloneBlock ( Z, X )
+    call CloneBlock ( Z, X, "CopyBlock" )
     if ( x%kind /= m_absent ) z%values = x%values
   end subroutine CopyBlock
 
@@ -3462,6 +3454,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.110  2006/08/01 02:49:08  vsnyder
+! Remove unused .TX. defined operator, which leaks memory anyway
+!
 ! Revision 2.109  2006/05/23 22:37:25  vsnyder
 ! Dump the block size only if CLEAN
 !

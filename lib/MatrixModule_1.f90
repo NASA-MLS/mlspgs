@@ -25,7 +25,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
     & InvertCholesky, M_Absent, M_Column_Sparse, M_Banded, M_Full, M_Unknown, &            
     & MatrixElement_T, MaxAbsVal, MinDiag, Multiply, MultiplyMatrix_XTY, MultiplyMatrix_XY, &       
     & MultiplyMatrix_XY_T, MultiplyMatrixVectorNoT, NullifyMatrix, operator(+), &              
-    & operator(.TX.), ReflectMatrix, RowScale, ScaleBlock, SolveCholesky, &     
+    & ReflectMatrix, RowScale, ScaleBlock, SolveCholesky, &     
     & Sparsify, Spill, TransposeMatrix, UpdateDiagonal                                    
   use MLSCommon, only: RM, RV, R8, R4
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
@@ -62,7 +62,6 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   public :: MultiplyMatrixVectorSPD_1
   public :: Negate, Negate_1
   public :: NewMultiplyMatrixVector, NormalEquations, NullifyMatrix, NullifyMatrix_1
-  public :: operator(.TX.)
   public :: operator(+), ReflectMatrix, RC_Info, RowScale, RowScale_1, ScaleMatrix
   public :: SolveCholesky, SolveCholesky_1, Spill, Spill_1
   public :: Sparsify_1, Sparsify, TransposeMatrix
@@ -183,10 +182,6 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 
   interface NullifyMatrix
     module procedure NullifyMatrix_1
-  end interface
-
-  interface operator ( .TX. )      ! A^T B
-    module procedure MultiplyMatrix_XTY_1_OP, NewMultiplyMatrixVector
   end interface
 
   interface ReflectMatrix
@@ -1620,13 +1615,6 @@ contains ! =====     Public Procedures     =============================
     end do ! j = 1, y%col%nb
   end subroutine MultiplyMatrix_XTY_1
 
-  ! ---------------------------------------  MultiplyMatrix_XTY_1_OP  -----
-  function MultiplyMatrix_XTY_1_OP ( X, Y ) result ( Z ) ! Z = X^T Y
-    type(Matrix_T), intent(in) :: X, Y
-    type(Matrix_T) :: Z
-    call MultiplyMatrix_XTY_1 ( X, Y, Z )
-  end function MultiplyMatrix_XTY_1_OP
-
   ! ----------------------------------------  MultiplyMatrix_XY_1  -----
   subroutine MultiplyMatrix_XY_1 ( X, Y, Z ) ! Z = X Y
     type(Matrix_T), intent(in) :: X, Y
@@ -2632,6 +2620,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.110  2006/08/01 02:49:08  vsnyder
+! Remove unused .TX. defined operator, which leaks memory anyway
+!
 ! Revision 2.109  2006/07/28 01:58:17  vsnyder
 ! Correct a bug in size accumulation, plus cannonball polishing
 !
