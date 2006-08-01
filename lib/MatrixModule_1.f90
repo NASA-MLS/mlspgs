@@ -784,7 +784,7 @@ contains ! =====     Public Procedures     =============================
       & MLSMSG_Allocate // "Z%Block in CreateEmptyMatrix" )
     do j = 1, x%col%nb
       do i = 1, x%row%nb
-        call createBlock ( z, i, j, m_absent ) ! Create block w/correct size
+        call createBlock ( z, i, j, m_absent, forWhom="CopyMatrix" ) ! Create block w/correct size
         call copyBlock ( z%block(i,j), x%block(i,j) )
       end do ! i = 1, x%row%nb
     end do ! j = 1, x%col%nb
@@ -816,7 +816,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ----------------------------------------------  CreateBlock_1  -----
   subroutine CreateBlock_1 ( Z, RowNum, ColNum, Kind, NumNonzeros, BandHeight, &
-    &                        Init )
+    &                        Init, ForWhom )
   ! Create the matrix block Z%Block(RowNum,ColNum), which sprang into
   ! existence with kind M_Absent.  Create it with the specified Kind.
   ! See MatrixModule_0 for a list of the kinds.  If the Kind is
@@ -831,9 +831,10 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: Kind         ! Kind of block, see MatrixModule_0
     integer, intent(in), optional :: NumNonzeros  ! Number of nonzeros
     real(rm), intent(in), optional :: Init   ! Initial value
+    character(len=*), intent(in), optional :: ForWhom ! for allocation
     call createBlock ( z%block(rowNum,colNum), &
       & z%row%nelts(rowNum), z%col%nelts(colNum), kind, numNonzeros, &
-      & bandHeight=bandHeight, init=init )
+      & bandHeight=bandHeight, init=init, forWhom=forWhom )
   end subroutine CreateBlock_1
 
   ! ------------------------------------------  CreateEmptyMatrix  -----
@@ -870,7 +871,7 @@ contains ! =====     Public Procedures     =============================
       & MLSMSG_Allocate // "Z%Block in CreateEmptyMatrix" )
     do i = 1, z%row%nb ! Now create absent blocks with the correct sizes
       do j = 1, z%col%nb
-        call createBlock ( z, i, j, m_absent )
+        call createBlock ( z, i, j, m_absent, forWhom="CreateEmptyMatrix" )
       end do
     end do
 
@@ -2620,6 +2621,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.111  2006/08/01 03:18:27  vsnyder
+! Add ForWhom argument to CreateBlock for leak checking
+!
 ! Revision 2.110  2006/08/01 02:49:08  vsnyder
 ! Remove unused .TX. defined operator, which leaks memory anyway
 !

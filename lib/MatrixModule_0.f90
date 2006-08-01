@@ -851,7 +851,7 @@ contains ! =====     Public Procedures     =============================
       do i = 2, nc
         j = j + i + 1 - r1(i)
       end do
-      call createBlock ( z, nc, nc, M_Banded, j )
+      call createBlock ( z, nc, nc, M_Banded, j, forWhom="CholeskyFactor_0" )
       z%r1 = r1
       do i = 1, nc
         z%r2(i) = z%r2(i-1) + i + 1 - r1(i)
@@ -875,7 +875,7 @@ contains ! =====     Public Procedures     =============================
       call deallocate_test ( xin, "XIN in CholeskyFactor", ModuleName )
     case ( M_Full )
       if ( .not. associated(x,z) ) then
-        call createBlock ( z, nc, nc, M_Full )
+        call createBlock ( z, nc, nc, M_Full, forWhom="CholeskyFactor_0" )
       end if
       call denseCholesky ( z%values, x%values, status )
     end select
@@ -1043,7 +1043,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ----------------------------------------------  CreateBlock_0  -----
   subroutine CreateBlock_0 ( Z, nRows, nCols, Kind, NumberNonzero, NoValues, &
-    & BandHeight, Init )
+    & BandHeight, Init, ForWhom )
   ! Create a matrix block, but don't fill any elements or structural
   ! information, except if the Values field is created and Init is present,
   ! Values is filled from Init.  The "NumberNonzero" is required if and only
@@ -1079,12 +1079,16 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in), optional :: NoValues
     integer, intent(in), optional :: BandHeight
     real(rm), intent(in), optional :: Init         ! Initial value for z%values
+    character(len=*), intent(in), optional :: ForWhom ! for allocation
 
     integer :: I
     logical :: Values
+    character(len=63) :: What
 
     values = .true.
     if ( present(noValues) ) values = .not. noValues
+    what = "z%values"
+    if ( present(forWhom) ) what = "z%values for " // forWhom
     call destroyBlock ( z )
     select case ( kind )
     case ( M_Absent, M_Unknown )
@@ -1100,18 +1104,18 @@ contains ! =====     Public Procedures     =============================
         end do
       end if
       if ( values ) &
-        & call allocate_test ( z%values, numberNonzero, 1, "z%values", ModuleName )
+        & call allocate_test ( z%values, numberNonzero, 1, what, ModuleName )
     case ( M_Column_sparse )
       call allocate_test ( z%r1, nCols, "z%r1", ModuleName, lowBound=0 )
       z%r1(0) = 0
       call allocate_test ( z%r2, numberNonzero, "z%r2", ModuleName )
       if ( values ) &
-        & call allocate_test ( z%values, NumberNonzero, 1, "z%values", ModuleName )
+        & call allocate_test ( z%values, NumberNonzero, 1, what, ModuleName )
     case ( M_Full )
       call allocate_test ( z%r1, 0, "z%r1", ModuleName )
       call allocate_test ( z%r2, 0, "z%r2", ModuleName )
       if ( values ) &
-        & call allocate_test ( z%values, nRows, nCols, "z%values", ModuleName )
+        & call allocate_test ( z%values, nRows, nCols, what, ModuleName )
     case default
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "Invalid matrix block kind in CreateBlock" )
@@ -1528,7 +1532,7 @@ contains ! =====     Public Procedures     =============================
     case ( M_Full )
       if ( UI%kind /= M_Full .or. &
         & UI%nRows /= u%nRows .or. UI%nCols /= u%nCols ) then
-        call createBlock ( UI, u%nRows, u%nCols, M_Full )
+        call createBlock ( UI, u%nRows, u%nCols, M_Full, forWhom="InvertCholesky_0" )
       end if
       call invertDenseCholesky ( u%values, UI%values, square, .true., myStatus )
       if ( myStatus == 0 .and. mySquare < 0 ) then ! just computing the diagonal
@@ -1545,7 +1549,7 @@ contains ! =====     Public Procedures     =============================
     subroutine StoreDiag
       integer :: I
       call createBlock ( UI, u%nRows, u%nCols, M_banded, &
-        & numberNonzero = u%nRows, bandHeight = 1 )
+        & numberNonzero = u%nRows, bandHeight = 1, forWhom="InvertCholesky_0" )
       do i = 1, u%nRows
         ui%values(i,1) = myUI(i,i)
       end do
@@ -1768,7 +1772,8 @@ contains ! =====     Public Procedures     =============================
     end if
     
     if ( xb%kind == M_Absent .or. yb%kind == M_Absent ) then
-      if ( abs(beta) < 0.5_rm ) call createBlock ( zb, xb%nRows, yb%nCols, M_Absent )
+      if ( abs(beta) < 0.5_rm ) &
+        & call createBlock ( zb, xb%nRows, yb%nCols, M_Absent, forWhom="MultiplyMatrix_XY_0" )
       return
     end if
 
@@ -1812,7 +1817,8 @@ contains ! =====     Public Procedures     =============================
     if ( myX .and. myY ) then
       call sparsify ( z, zb, 'Z in MultiplyMatrix_XY_0', moduleName ) ! Zb := Z
     else
-      call createBlock ( zb, xb%nRows, yb%nCols, m_full, noValues=.true. )
+      call createBlock ( zb, xb%nRows, yb%nCols, m_full, noValues=.true., &
+        & forWhom="MultiplyMatrix_XY_0" )
       zb%values => z
     end if
     if ( myX ) call deallocate_test ( x, 'X in MultiplyMatrix_XY_0', moduleName )
@@ -1847,7 +1853,8 @@ contains ! =====     Public Procedures     =============================
     end if
     
     if ( xb%kind == M_Absent .or. yb%kind == M_Absent ) then
-      if ( abs(beta) < 0.5_rm ) call createBlock ( zb, xb%nRows, yb%nRows, M_Absent )
+      if ( abs(beta) < 0.5_rm ) &
+        & call createBlock ( zb, xb%nRows, yb%nRows, M_Absent, forWhom="MultiplyMatrix_XY_T_0" )
       return
     end if
 
@@ -1891,7 +1898,8 @@ contains ! =====     Public Procedures     =============================
     if ( myX .and. myY ) then
       call sparsify ( z, zb, 'Z in MultiplyMatrix_XY_T_0', moduleName ) ! Zb := Z
     else
-      call createBlock ( zb, xb%nRows, yb%nRows, M_Full, noValues=.true. )
+      call createBlock ( zb, xb%nRows, yb%nRows, M_Full, noValues=.true., &
+        & forWhom="MultiplyMatrix_XY_T_0" )
       zb%values => z
     endif
     if ( myX ) call deallocate_test ( x, 'X in MultiplyMatrix_XY_T_0', moduleName )
@@ -1959,7 +1967,8 @@ contains ! =====     Public Procedures     =============================
         & "XB and YB Matrix sizes incompatible in MultiplyMatrix_XTY_0" )
 
     if ( xb%kind == M_Absent .or. yb%kind == M_Absent ) then
-      if ( .not. my_upd) call createBlock ( zb, xb%nCols, yb%nCols, M_Absent )
+      if ( .not. my_upd) &
+        & call createBlock ( zb, xb%nCols, yb%nCols, M_Absent, forWhom="MultiplyMatrix_XTY_0" )
       return
     end if
 
@@ -2100,7 +2109,8 @@ contains ! =====     Public Procedures     =============================
           call allocate_test ( z, xb%nCols, yb%nCols, &
             & "Z for banded X full in MultiplyMatrix_XTY_0", ModuleName )
           if ( my_upd ) call densify ( z, zb )
-          call createBlock ( zb, xb%nCols, yb%nCols, M_Full, novalues=.true. )
+          call createBlock ( zb, xb%nCols, yb%nCols, M_Full, novalues=.true., &
+            & forWhom="MultiplyMatrix_XTY_0" )
           zb%values => z
         end if
         if ( .not. my_upd ) zb%values = 0.0_rm
@@ -2237,7 +2247,8 @@ contains ! =====     Public Procedures     =============================
           call allocate_test ( z, xb%nCols, yb%nCols, &
             & "Z for sparse X full in MultiplyMatrix_XTY_0", ModuleName )
           if ( my_upd ) call densify ( z, zb )
-          call createBlock ( zb, xb%nCols, yb%nCols, M_Full, novalues=.true. )
+          call createBlock ( zb, xb%nCols, yb%nCols, M_Full, novalues=.true., &
+            & forWhom="MultiplyMatrix_XTY_0" )
           zb%values => z
         end if
         if ( .not. my_upd ) zb%values = 0.0_rm
@@ -2268,7 +2279,8 @@ contains ! =====     Public Procedures     =============================
         call allocate_test ( z, xb%nCols, yb%nCols, &
           & "Z for full X <anything> in MultiplyMatrix_XTY_0", ModuleName )
         if ( my_upd ) call densify ( z, zb )
-        call createBlock ( zb, xb%nCols, yb%nCols, M_Full, novalues=.true. )
+        call createBlock ( zb, xb%nCols, yb%nCols, M_Full, novalues=.true., &
+          & forWhom="MultiplyMatrix_XTY_0" )
         zb%values => z
       end if
       if ( .not. my_upd ) zb%values = 0.0_rm
@@ -2955,7 +2967,7 @@ contains ! =====     Public Procedures     =============================
     end do ! j
     nnz = sum(nnzc)
     if ( nnz == 0 ) then ! Empty
-      call createBlock ( b, size(z,1), size(z,2), M_Absent )
+      call createBlock ( b, size(z,1), size(z,2), M_Absent, forWhom="SparsifyA" )
     else if ( nnz <= int(sparsity * size(z)) ) then ! sparse
       kind = M_Banded
       do j = 1, size(z,2)
@@ -2976,7 +2988,8 @@ contains ! =====     Public Procedures     =============================
         nnzc(j) = max(i2 - i1 + 1,0)
       end do ! j
       if ( kind == M_Banded ) then
-        call createBlock ( b, size(z,1), size(z,2), M_Banded, sum(nnzc) )
+        call createBlock ( b, size(z,1), size(z,2), M_Banded, sum(nnzc), &
+          & forWhom="SparsifyA" )
         b%r1 = r1        ! Row number of first nonzero in the column
         do j = 1, size(z,2)
           b%r2(j) = nnzc(j) + b%r2(j-1) ! Subscript of last nonzero in the
@@ -2985,7 +2998,8 @@ contains ! =====     Public Procedures     =============================
             & z(b%r1(j):b%r1(j)+b%r2(j)-b%r2(j-1)-1,j)
         end do
       else
-        call createBlock ( b, size(z,1), size(z,2), M_Column_Sparse, nnz )
+        call createBlock ( b, size(z,1), size(z,2), M_Column_Sparse, nnz, &
+          & forWhom="SparsifyA" )
         i1 = 0
         do j = 1, size(z,2)
           do i2 = 1, size(z,1)
@@ -3001,11 +3015,12 @@ contains ! =====     Public Procedures     =============================
     else ! full
       if ( present(why) .or. present(callingModule) ) then
         ! Don't worry, create block still deallocates b%values even with noValues set
-        call createBlock ( b, size(z,1), size(z,2), M_Full, noValues=.true. )
+        call createBlock ( b, size(z,1), size(z,2), M_Full, noValues=.true., &
+          & forWhom="SparsifyA" )
         b%values => z
         nullify ( z )
       else
-        call createBlock ( b, size(z,1), size(z,2), M_Full )
+        call createBlock ( b, size(z,1), size(z,2), M_Full, forWhom="SparsifyA" )
         b%values = z
       end if
     end if
@@ -3125,7 +3140,7 @@ contains ! =====     Public Procedures     =============================
     select case ( a%kind )
     case ( m_absent )
     case ( m_full )
-      call CreateBlock ( z, a%nCols, a%nRows, m_full )
+      call CreateBlock ( z, a%nCols, a%nRows, m_full, forWhom="TransposeMatrix_0" )
       z%values = transpose ( a%values )
     case ( m_banded, m_column_sparse )
       nullify ( D, DT )
@@ -3454,6 +3469,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.111  2006/08/01 03:18:27  vsnyder
+! Add ForWhom argument to CreateBlock for leak checking
+!
 ! Revision 2.110  2006/08/01 02:49:08  vsnyder
 ! Remove unused .TX. defined operator, which leaks memory anyway
 !
