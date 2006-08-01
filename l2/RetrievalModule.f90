@@ -73,7 +73,7 @@ contains
     use L2ParInfo, only: PARALLEL
     use MatrixModule_1, only: AddToMatrixDatabase, CopyMatrix, CreateEmptyMatrix, &
       & DestroyMatrix, GetFromMatrixDatabase, Matrix_T, Matrix_Database_T, &
-      & Matrix_SPD_T, MultiplyMatrixVectorNoT, operator(.TX.), ReflectMatrix, &
+      & Matrix_SPD_T, MultiplyMatrixVectorNoT, ReflectMatrix, &
       & Sparsify, MultiplyMatrix_XTY
     use MatrixTools, only: DumpBlocks
     use MLSCommon, only: R8, RV
@@ -2635,6 +2635,9 @@ NEWT: do ! Newtonian iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.280  2006/08/01 02:48:33  vsnyder
+! Remove unused USE for .TX.
+!
 ! Revision 2.279  2006/07/21 20:13:29  pwagner
 ! Can fill state even if skipping retrievals
 !
