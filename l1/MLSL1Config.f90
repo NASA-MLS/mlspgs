@@ -18,7 +18,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Info
   USE Init_tables_module, ONLY: First_Parm, Last_Parm
   USE INTRINSIC, ONLY: parm_indices
-  USE Output_m, ONLY: prunit, Output
+  USE Output_m, ONLY: OutputOptions, Output
   USE STRING_TABLE, ONLY: Get_string
 
   IMPLICIT NONE
@@ -162,7 +162,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
 !! Check tree syntax
 
-      prunit = -9                  ! to output to MLSMessage (and terminal)
+      OutputOptions%prunit = -9                  ! to output to MLSMessage (and terminal)
 
       CALL Check_tree (root, error, first_section)
 
@@ -811,6 +811,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
 END MODULE MLSL1Config
 
 ! $Log$
+! Revision 2.26  2006/08/02 19:23:50  pwagner
+! prunit now a component of OutputOptions
+!
 ! Revision 2.25  2006/08/02 18:55:22  perun
 ! Added SubtractBinnedBaseline field
 !
