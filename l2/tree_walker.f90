@@ -436,7 +436,7 @@ subtrees:   do while ( j <= howmany )
         call resumeOutput ! In case the last phase was  silent
         if ( .not. parallel%slave ) then
           call Output_Close ( son, l2gpDatabase, l2auxDatabase, DirectDatabase, &
-	         & matrices, fileDataBase, chunks, processingRange, &
+	         & matrices, vectors, fileDataBase, chunks, processingRange, &
             & size(chunks)==1 .or. singleChunk /= 0 )
         end if
 
@@ -555,6 +555,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.144  2006/07/24 20:35:04  pwagner
+! Fixed bug when stopAfterSection is blank
+!
 ! Revision 2.143  2006/07/21 20:12:26  pwagner
 ! Can select what section to stop after
 !
