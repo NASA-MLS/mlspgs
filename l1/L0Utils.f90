@@ -1,4 +1,4 @@
-! Copyright 2005, by the California Institute of Technology. ALL
+! Copyright 2006, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
 ! at the California Institute of Technology.
@@ -27,9 +27,9 @@ MODULE L0Utils ! Utilities to read L0 data
   PUBLIC :: ReadL0Sci, ReadL0Eng, CheckSum
 
 !---------------------------- RCS Module Info ------------------------------
-  character (len=*), private, parameter :: ModuleName= &
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  PRIVATE :: not_used_here 
 !---------------------------------------------------------------------------
 
 CONTAINS
@@ -127,6 +127,12 @@ CONTAINS
           CALL OpenL0File (L0FileInfo%sci_pcf(sindx), &
                L0FileInfo%sci_unit(sindx), L0FileInfo%SciFilename(sindx), &
                "Science")
+       ENDIF
+
+       IF (ret_len /= SciLen) THEN   ! incorrect length
+          CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+               'Incorrect Sci packet length')
+          CYCLE                      ! try again
        ENDIF
 
        MIF(sindx) = ICHAR (SciPkt(sindx)(17:17))
@@ -278,18 +284,21 @@ CONTAINS
   END FUNCTION CheckSum
 
 !=============================================================================
-  logical function not_used_here()
+  LOGICAL FUNCTION not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
+  CHARACTER (len=*), PARAMETER :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  END FUNCTION not_used_here
 END MODULE L0Utils
 !=============================================================================
 
 ! $Log$
+! Revision 2.10  2006/08/02 18:54:58  perun
+! Warn if science packet of incorrect length is read and continue processing
+!
 ! Revision 2.9  2005/08/11 19:03:11  perun
 ! Write bad checksum message to log file
 !
