@@ -68,6 +68,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
      LOGICAL :: WriteDiagOffsets = .FALSE.          ! For P/Model Offsets
      LOGICAL :: RemoveBaseline = .TRUE.             ! For GHz Baseline removal
      LOGICAL :: DeconvolveDACS = .FALSE.            ! For DACS deconvolution
+     LOGICAL :: SubtractBinnedBaseline(NumBands) = .FALSE. ! To adjust baseline
      LOGICAL :: EnableChi2Err(NumBands) = .FALSE.   ! For RadErr calculation
   END TYPE Output_T
 
@@ -262,7 +263,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
       USE EXPR_M, ONLY: Expr
       USE INIT_TABLES_MODULE, ONLY: p_removebaseline, p_deconvolveDACS, &
-           s_chi2err, f_bandno, p_WriteDiagOffsets
+           s_chi2err, f_bandno, p_WriteDiagOffsets, s_subtractbinnedbaseline
       USE TREE, ONLY: Decoration, Nsons, Subtree, Node_id
       USE TREE_TYPES
       USE MoreTree, ONLY: Get_Boolean
@@ -307,9 +308,13 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
             SELECT CASE (spec)
 
-            CASE (s_chi2err)
+            CASE (s_chi2err, s_subtractbinnedbaseline)
 
-               chi2entry = .TRUE.
+               IF (spec == s_chi2err) THEN
+                  chi2entry = .TRUE.
+               ELSE
+                  chi2entry = .FALSE.
+               ENDIF
 
                DO j = 2, nsons (key)
 
@@ -326,8 +331,13 @@ MODULE MLSL1Config  ! Level 1 Configuration
                            CALL MLSMessage (MLSMSG_Error, ModuleName, &
                             'Input band number out of range!')
                         ENDIF
-                        L1Config%Output%EnableChi2Err(INT(expr_value(1)): &
-                             INT(expr_value(2))) = .TRUE.
+                        IF (chi2entry) THEN
+                           L1Config%Output%EnableChi2Err(INT(expr_value(1)): &
+                            INT(expr_value(2))) = .TRUE.
+                        ELSE
+                           L1Config%Output%SubtractBinnedBaseline &
+                            (INT(expr_value(1)): INT(expr_value(2))) = .TRUE.
+                        ENDIF
                      ENDDO
 
                   END SELECT
@@ -801,6 +811,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
 END MODULE MLSL1Config
 
 ! $Log$
+! Revision 2.25  2006/08/02 18:55:22  perun
+! Added SubtractBinnedBaseline field
+!
 ! Revision 2.24  2006/06/14 13:47:00  perun
 ! Handle TPdigital input
 !
