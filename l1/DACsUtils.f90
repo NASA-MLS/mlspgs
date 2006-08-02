@@ -15,15 +15,17 @@ MODULE DACsUtils
 
   USE MLSL1Utils, ONLY: BigEndianStr
   USE L1BData, ONLY: L1BData_T, ReadL1BData, DeallocateL1BData
+  USE MLSL1Common, ONLY: R8, DACSnum
 
   IMPLICIT NONE
 
   PRIVATE
 
   PUBLIC :: ExtractDACSdata, UncompressDACSdata, ProcessDACSdata, InitDACS_FFT
-  PUBLIC :: FinalizeDACSdata
+  PUBLIC :: FinalizeDACSdata, TPz
 
   INTEGER :: plan129
+  REAL(r8) :: TPz(DACSnum)
 
 !---------------------------- RCS Module Info ------------------------------
   CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
@@ -712,6 +714,9 @@ CONTAINS
 END MODULE DACsUtils
 
 ! $Log$
+! Revision 2.14  2006/08/02 18:53:09  perun
+! Define and make public TPz
+!
 ! Revision 2.13  2006/06/14 13:44:55  perun
 ! Add TP digital and moved scaling DACS_dat to SortQualify routine
 !
