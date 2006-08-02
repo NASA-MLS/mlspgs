@@ -76,7 +76,8 @@ MODULE INIT_TABLES_MODULE
   INTEGER, PARAMETER :: S_DISCARDMIFS = s_limbMIFs + 1
   INTEGER, PARAMETER :: S_CHI2ERR = s_discardMIFs + 1
   INTEGER, PARAMETER :: S_MARKCHANBAD = s_chi2err + 1
-  INTEGER, PARAMETER :: SPEC_LAST = s_markchanbad
+  INTEGER, PARAMETER :: S_SUBTRACTBINNEDBASELINE = s_markchanbad + 1
+  INTEGER, PARAMETER :: SPEC_LAST = s_subtractbinnedbaseline
 
 ! Parameter names:
 
@@ -207,6 +208,8 @@ CONTAINS ! =====     Public procedures     =============================
     spec_indices(s_discardMIFs) =             add_ident ( 'discardMIFs' )
     spec_indices(s_chi2err) =                 add_ident ( 'EnableChi2Err' )
     spec_indices(s_markchanbad) =             add_ident ( 'MarkChanBad' )
+    spec_indices(s_subtractbinnedbaseline) =  &
+         add_ident ( 'SubtractBinnedBaseline' )
 
     ! Init Bright Objects symbol table entries:
 
@@ -301,6 +304,11 @@ CONTAINS ! =====     Public procedures     =============================
              nadp+n_spec_def /) )
 
     CALL make_tree ( (/ &
+      begin, s+s_subtractbinnedbaseline, &
+             begin, f+f_bandno, t+t_numeric, n+n_field_type, &
+             nadp+n_spec_def /) )
+
+    CALL make_tree ( (/ &
       begin, s+s_chi2err, &
              begin, f+f_bandno, t+t_numeric_range, t+t_numeric, n+n_field_type,&
              nadp+n_spec_def /) )
@@ -344,7 +352,7 @@ CONTAINS ! =====     Public procedures     =============================
              begin, p+p_removebaseline, t+t_boolean, n+n_name_def, &
              begin, p+p_DeconvolveDACS, t+t_boolean, n+n_name_def, &
              begin, p+p_WriteDiagOffsets, t+t_boolean, n+n_name_def, &
-             s+s_chi2err, n+n_section/) )
+             s+s_subtractbinnedbaseline, s+s_chi2err, n+n_section/) )
 
   END SUBROUTINE INIT_TABLES
     
@@ -362,6 +370,9 @@ CONTAINS ! =====     Public procedures     =============================
 END MODULE INIT_TABLES_MODULE
   
 ! $Log$
+! Revision 2.28  2006/08/02 18:54:31  perun
+! Added SubtractBinnedBaseline field
+!
 ! Revision 2.27  2006/06/14 13:45:27  perun
 ! Add TPdigital parameter
 !
@@ -405,6 +416,9 @@ END MODULE INIT_TABLES_MODULE
 ! Version 1.2 commit
 !
 ! $Log$
+! Revision 2.28  2006/08/02 18:54:31  perun
+! Added SubtractBinnedBaseline field
+!
 ! Revision 2.27  2006/06/14 13:45:27  perun
 ! Add TPdigital parameter
 !
