@@ -102,6 +102,7 @@ DACSfilterShapes
 date
 default_spectroscopy
 destination
+destroy
 destroyJacobian
 details
 diagnostics
@@ -434,6 +435,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.170  2006/08/02 19:52:08  vsnyder
+# Add destroy field for output command
+#
 # Revision 2.169  2006/07/19 22:27:47  vsnyder
 # Add allMatrices and Structure fields
 #
