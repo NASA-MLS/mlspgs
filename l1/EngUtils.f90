@@ -1,4 +1,4 @@
-! Copyright 2005, by the California Institute of Technology. ALL
+! Copyright 2006, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
 ! at the California Institute of Technology.
@@ -23,9 +23,9 @@ MODULE EngUtils   ! Engineering utilities
   PUBLIC :: NextEngMAF
 
 !---------------------------- RCS Module Info ------------------------------
-  character (len=*), private, parameter :: ModuleName= &
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  PRIVATE :: not_used_here 
 !---------------------------------------------------------------------------
 
 CONTAINS
@@ -88,7 +88,7 @@ CONTAINS
     ELSE IF (rin <= 0.0) THEN   ! under the minimum ohms
        T = 500.0                ! maximum possible temperature
     ELSE
-       rth_log = log ((rmax * rin) / (rmax - rin))
+       rth_log = LOG ((rmax * rin) / (rmax - rin))
        T = 1.0 / (a + rth_log * (b + rth_log * (c + rth_log * d))) + abs_zero
     ENDIF
 
@@ -153,7 +153,7 @@ CONTAINS
        ENDIF
     ELSE IF (INDEX (mnemonic, "R4_IF_voltage") /= 0) THEN
        IF (tval > 0.0) THEN
-          val = 8.4459 * log (tval) - 47.755  ! R4 IF Voltage
+          val = 8.4459 * LOG (tval) - 47.755  ! R4 IF Voltage
        ELSE
           val = QNan()
        ENDIF
@@ -285,7 +285,7 @@ CONTAINS
 
           CASE DEFAULT
 
-             print *, "Unknown tlm type!"  !! use standard routine here
+             PRINT *, "Unknown tlm type!"  !! use standard routine here
 
           END SELECT
 
@@ -311,6 +311,10 @@ CONTAINS
     DATA maskbit3 / z'8' /
     DATA maskbit7 / z'80' /
 
+! Save last A/B side readbacks ("A" side default):
+
+    CHARACTER(len=1), SAVE :: ASE_Side = "A", GSM_Side = "A"
+
     CALL ReadL0Eng (EngPkt, EngMAF%MAFno, EngMAF%TotalMAF, &
          EngMAF%MIFsPerMAF, EngMAF%secTAI, data_OK, more_data)
 
@@ -332,8 +336,9 @@ CONTAINS
     ELSE IF (.NOT. GMAB_ON(1) .AND. GMAB_ON(2)) THEN
        EngMAF%ASE_Side = "B"
     ELSE
-       EngMAF%ASE_Side = "U"
+       EngMAF%ASE_Side = ASE_Side    ! "U" - use previous known position instead
     ENDIF
+    ASE_Side = EngMAF%ASE_Side
 
     ! Determine which side GSM (GM03/GM04) is on:
 
@@ -342,8 +347,9 @@ CONTAINS
     ELSE IF (.NOT. GMAB_ON(3) .AND. GMAB_ON(4)) THEN
        EngMAF%GSM_Side = "B"
     ELSE
-       EngMAF%GSM_Side = "U"
+       EngMAF%GSM_Side = GSM_Side    ! "U" - use previous known position instead
     ENDIF
+    GSM_Side = EngMAF%GSM_Side
 
     ! Convert engineering counts
 
@@ -357,18 +363,21 @@ CONTAINS
   END SUBROUTINE NextEngMAF
 
 !=============================================================================
-  logical function not_used_here()
+  LOGICAL FUNCTION not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
+  CHARACTER (len=*), PARAMETER :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  END FUNCTION not_used_here
 END MODULE EngUtils
 !=============================================================================
 
 ! $Log$
+! Revision 2.11  2006/08/02 18:53:41  perun
+! Define default A/B side reading and use if none available during reading
+!
 ! Revision 2.10  2005/06/23 18:41:35  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
