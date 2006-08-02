@@ -309,7 +309,7 @@ MODULE SciUtils ! L0 science utilities
 !=============================================================================
 
     USE MLSL1Config, ONLY: L1Config
-    USE MLSL1Common, ONLY : L1ProgType, LogType
+    USE MLSL1Common, ONLY : L1ProgType, LogType, MAFinfo
 
     !! Get the next MAF's science data
 
@@ -344,15 +344,25 @@ MODULE SciUtils ! L0 science utilities
     !! Save previously read packet (if available):
 
     IF (prev_MAF /= no_data) THEN
-       SciMAF(Sci_pkt%MIFno) = Sci_pkt
-       DACS_MAF(Sci_pkt%MIFno) = DACS_pkt
+       MIFno = Sci_pkt%MIFno
+       SciMAF(MIFno) = Sci_pkt
+       DACS_MAF(MIFno) = DACS_pkt
        IF (L1ProgType == THzType) THEN
-          CALL Save_THz_pkt (SciMAF(Sci_pkt%MIFno), THzSciMAF(Sci_pkt%MIFno))
+          CALL Save_THz_pkt (SciMAF(MIFno), THzSciMAF(MIFno))
        ENDIF
        APE_pos(MIFno,:) = SciMAF(MIFno)%APE_pos
        ASA_pos(MIFno,:) = SciMAF(MIFno)%ASA_pos
        GSM_pos(MIFno,:) = SciMAF(MIFno)%GSM_pos
        TSSM_pos(MIFno,:) = SciMAF(MIFno)%TSSM_pos
+
+! Adjust time in MIF 0, if not available
+
+       IF (MIFno /= 0) THEN
+          SciMAF(0)%secTAI = SciMAF(MIFno)%secTAI - MIFno * &
+               L1Config%Calib%MIF_duration
+          SciMAF(0)%MAFno = SciMAF(MIFno)%MAFno
+       ENDIF
+
     ENDIF
 
     DO
@@ -362,13 +372,7 @@ MODULE SciUtils ! L0 science utilities
           MIFno = Sci_pkt%MIFno
           IF ((prev_MAF /= no_data) .AND. (Sci_pkt%MAFno /= prev_MAF)) THEN
              prev_MAF = Sci_pkt%MAFno
-             IF (SciMAF(0)%MIFno /= no_data .AND. &
-                  SciMAF(last_MIF)%MIFno /= no_data) THEN
-                EXIT      ! Already got a full MAF's worth
-             ELSE
-                SciMAF%MAFno = no_data
-                SciMAF%MIFno = no_data
-             ENDIF
+             EXIT                      ! Previous MAF is done
           ENDIF
 
           SciMAF(MIFno) = Sci_pkt  ! save current packet
@@ -875,6 +879,9 @@ MODULE SciUtils ! L0 science utilities
 END MODULE SciUtils
 
 ! $Log$
+! Revision 2.16  2006/08/02 18:57:51  perun
+! Allow MAF buffer to fill without all expected MIFs and fillin MIF 0 time data, if necessary
+!
 ! Revision 2.15  2006/04/05 18:09:02  perun
 ! Remove unused variables
 !
@@ -915,6 +922,9 @@ END MODULE SciUtils
 ! moved parameter statement to data statement for LF/NAG compatitibility
 !
 ! $Log$
+! Revision 2.16  2006/08/02 18:57:51  perun
+! Allow MAF buffer to fill without all expected MIFs and fillin MIF 0 time data, if necessary
+!
 ! Revision 2.15  2006/04/05 18:09:02  perun
 ! Remove unused variables
 !
