@@ -25,9 +25,9 @@ MODULE Close_files ! Close the production files
   PUBLIC :: CloseFiles
 
 !---------------------------- RCS Module Info ------------------------------
-  character (len=*), private, parameter :: ModuleName= &
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  PRIVATE :: not_used_here 
 !---------------------------------------------------------------------------
 
 CONTAINS
@@ -45,6 +45,7 @@ CONTAINS
     USE Orbit, ONLY: OrbitNumber, OrbPeriod
     USE PCFHdr, ONLY: h5_writeglobalattr
     USE BrightObjects_m, ONLY: BO_name, BO_Angle_GHz, BO_Angle_THz
+    USE DACsUtils, ONLY: TPz
 
     CHARACTER(LEN=132) :: filename
     INTEGER :: i, returnStatus, error, grp_id
@@ -99,6 +100,14 @@ CONTAINS
        CLOSE (L1BFileInfo%sciMAF_unit, status="DELETE")
        CALL MLSMessage (MLSMSG_Info, ModuleName, &
             & 'Closed sciMAF file: '//filename)
+
+    ! Write TPz Annotations and Close L1BRADD file
+
+       CALL H5gOpen_f (L1BFileInfo%RADDid, '/', grp_id, returnStatus)
+       CALL MakeHDF5Attribute (grp_id, 'TPz', TPz, .TRUE.)
+       CALL MLS_closeFile (L1BFileInfo%RADDid, HDFversion=HDFversion)
+       CALL MLSMessage (MLSMSG_Info, ModuleName, &
+            & 'Closed L1BRAD D file: '//L1BFileInfo%RADDFileName)
 
        RETURN
 
@@ -172,14 +181,14 @@ CONTAINS
 
     ! Orbit attributes:
 
-    CALL MakeHDF5Attribute (grp_id, 'OrbitNumber', OrbitNumber, .true.)
-    CALL MakeHDF5Attribute (grp_id, 'OrbitPeriod', OrbPeriod, .true.)
+    CALL MakeHDF5Attribute (grp_id, 'OrbitNumber', OrbitNumber, .TRUE.)
+    CALL MakeHDF5Attribute (grp_id, 'OrbitPeriod', OrbPeriod, .TRUE.)
 
     ! Bright Object attributes:
 
-    CALL MakeHDF5Attribute (grp_id, 'BO_name', BO_name, .true.)
-    CALL MakeHDF5Attribute (grp_id, 'BO_Angle_GHz', BO_Angle_GHz, .true.)
-    CALL MakeHDF5Attribute (grp_id, 'BO_Angle_THz', BO_Angle_THz, .true.)
+    CALL MakeHDF5Attribute (grp_id, 'BO_name', BO_name, .TRUE.)
+    CALL MakeHDF5Attribute (grp_id, 'BO_Angle_GHz', BO_Angle_GHz, .TRUE.)
+    CALL MakeHDF5Attribute (grp_id, 'BO_Angle_THz', BO_Angle_THz, .TRUE.)
     CALL H5gClose_f (grp_id, returnStatus)
 
     CALL WriteHdrAnnots (L1BFileInfo%OAFileName, HDFversion)
@@ -218,17 +227,20 @@ CONTAINS
   END SUBROUTINE CloseFiles
 
 !=============================================================================
-  logical function not_used_here()
+  LOGICAL FUNCTION not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
+  CHARACTER (len=*), PARAMETER :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  END FUNCTION not_used_here
 END MODULE Close_files
 !=============================================================================
 ! $Log$
+! Revision 2.20  2006/08/02 18:52:46  perun
+! Write TPz Annotations to RADD file
+!
 ! Revision 2.19  2005/12/06 19:22:56  perun
 ! Output Bright Object attributes to BOA file
 !
