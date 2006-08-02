@@ -1071,18 +1071,19 @@ contains ! =====     Public procedures     =============================
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_output, &  ! Must be AFTER s_l2aux and s_l2gp
-             begin, f+f_type, t+t_outputType, nr+n_field_type, &
+             begin, f+f_ascii, t+t_boolean, n+n_field_type, &
+             begin, f+f_destroy, t+t_boolean, n+n_field_type, &
+             begin, f+f_dontPack, s+s_quantity, n+n_field_spec, &
              begin, f+f_file, t+t_string, nr+n_field_type, &
+             begin, f+f_hdfVersion, t+t_numeric, n+n_field_type, &
+             begin, f+f_metaDataOnly, t+t_boolean, n+n_field_type, &
+             begin, f+f_metaName, t+t_string, n+n_field_type, &
+             begin, f+f_overlaps, s+s_l2aux, s+s_l2gp, n+n_field_spec, &
+             begin, f+f_packed, t+t_boolean, n+n_field_type, &
              begin, f+f_quantities, s+s_l2aux, s+s_l2gp, s+s_matrix, &
                     s+s_directWrite, n+n_field_spec, &
-             begin, f+f_overlaps, s+s_l2aux, s+s_l2gp, n+n_field_spec, &
-             begin, f+f_ascii, t+t_boolean, n+n_field_type, &
-             begin, f+f_packed, t+t_boolean, n+n_field_type, &
-             begin, f+f_dontPack, s+s_quantity, n+n_field_spec, &
-             begin, f+f_hdfVersion, t+t_numeric, n+n_field_type, &
-             begin, f+f_metaName, t+t_string, n+n_field_type, &
+             begin, f+f_type, t+t_outputType, nr+n_field_type, &
              begin, f+f_writeCounterMAF, t+t_boolean, n+n_field_type, &
-             begin, f+f_metaDataOnly, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_subset, &  ! Must be AFTER s_vector
@@ -1449,9 +1450,10 @@ contains ! =====     Public procedures     =============================
       begin, z+z_join, s+s_time, s+s_label, s+s_l2gp, s+s_l2aux, &
                        s+s_directWrite, n+n_section, &
       begin, z+z_algebra, s+s_columnScale, s+s_combineChannels, s+s_cyclicJacobi, &
-             s+s_disjointEquations, s+s_normalEquations, &
-             s+s_reflect, s+s_regularization, s+s_rowScale, n+n_section+d*no_check_eq, &
-      begin, z+z_output, s+s_time, s+s_output, s+s_copy, s+s_hgrid, n+n_section /) )
+             s+s_disjointEquations, s+s_normalEquations, s+s_reflect, &
+             s+s_regularization, s+s_rowScale, n+n_section+d*no_check_eq, &
+      begin, z+z_output, s+s_copy, s+s_destroy, s+s_hgrid, s+s_output, &
+             s+s_time, n+n_section /) )
 
   contains
 
@@ -1472,6 +1474,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.447  2006/08/02 19:53:50  vsnyder
+! Add destroy command and field for output
+!
 ! Revision 2.446  2006/07/19 22:28:17  vsnyder
 ! Add /allMatrices, details= and /Structure fields to DumpBlocks
 !
