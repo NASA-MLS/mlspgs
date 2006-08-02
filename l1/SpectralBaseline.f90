@@ -22,7 +22,8 @@ MODULE SpectralBaseline ! Determine Spectral baseline radiances
   PRIVATE
 
   PUBLIC :: InitBaseline, CalcBaseline, UpdateBaselines, LoadBaselineAC
-  PUBLIC :: Baseline_T, Baseline, BaselineAC, BaselineDC 
+  PUBLIC :: Baseline_T, Baseline, BaselineAC, BaselineDC, BaselineInclude, &
+       BaselineInclude_T
 
 !---------------------------- RCS Module Info ------------------------------
   CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
@@ -45,7 +46,14 @@ MODULE SpectralBaseline ! Determine Spectral baseline radiances
 
   REAL, PARAMETER :: BaselineAlt = 80.0e3   ! Minimum baseline altitude (m)
   REAL, PARAMETER :: BaselineAltDACS(5) = &
-       (/ 82.0e3, 80.0e3, 72.0e3, 72.0e3, 82.0e3 /) 
+       (/ 82.0e3, 80.0e3, 72.0e3, 72.0e3, 82.0e3 /)
+
+! Bandwidths:
+
+  REAL, PARAMETER :: FB_BW(FBchans) = Bandwidth%FB(:,1) * 1.0e-06
+  REAL, PARAMETER :: MB_BW(MBchans) = Bandwidth%MB(:,1) * 1.0e-06
+  REAL, PARAMETER :: DACS_BW = Bandwidth%DACS(1,1) * 1.0e-06
+  REAL :: BW(FBchans)
 
 CONTAINS
 
@@ -144,10 +152,7 @@ CONTAINS
     INTEGER :: i, nmatch
     INTEGER :: MIFindx(SIZE(MIFmatch))
     LOGICAL :: match(SIZE(MIFmatch)), AltMatch(SIZE(MIFmatch))
-    REAL :: rad_sum, bw_sum, BW(FBchans), space_P
-    REAL, PARAMETER :: FB_BW(FBchans) = Bandwidth%FB(:,1) * 1.0e-06
-    REAL, PARAMETER :: MB_BW(MBchans) = Bandwidth%MB(:,1) * 1.0e-06
-    REAL, PARAMETER :: DACS_BW = Bandwidth%DACS(1,1) * 1.0e-06
+    REAL :: rad_sum, bw_sum, space_P
 
     BaselineDC(bandno)%offset = 0.0     ! Clear this band
 
@@ -197,6 +202,63 @@ CONTAINS
     IF (bw_sum > 0.0) BaselineDC(bandno)%offset = rad_sum / bw_sum - space_P
 
   END SUBROUTINE CalcBaselineDC
+
+!=============================================================================
+  SUBROUTINE CalcSlimbOffsets (chans, MIFs, baseline, bandwidth, rad, prec)
+!=============================================================================
+
+    INTEGER, INTENT(IN) :: chans, MIFs
+    REAL, INTENT(IN) :: baseline(chans), bandwidth(chans)
+    REAL, INTENT(IN) :: rad(chans,MIFs), prec(chans,MIFs)
+
+    integer :: MIFno, nslimbs, channo
+    logical :: slimb_type(chans)
+    real :: slimb_sum, sw_sum, slimb_bw, sw_bw
+
+    print *, 'slimb offsets'
+    slimb_type = .false.
+    where (baseline == 0.0)
+       slimb_type = .true.
+    end where
+    nslimbs = count (slimb_type)
+    if (nslimbs == chans) return         ! Nothing to do
+
+    if (nslimbs > 0) then
+       print *, 'rad: ', rad(:,10)
+       print *, 'prec: ',  prec(:,10)
+       print *, 'baseline', baseline
+       print *, 'bandwidth: ', bandwidth
+       print *, 'nslimbs, MIFs ', nslimbs, MIFs
+       slimb_sum = 0.0
+       slimb_bw = 0.0
+       sw_sum = 0.0
+       sw_bw = 0.0
+       do MIFno = 1, MIFs
+!!$          slimb_sum = slimb_sum + sum (rad(:,MIFno) * bandwidth(:), &
+!!$               mask=(slimb_type .and. (prec(:,MIFno) >= 0.0)))
+!!$          slimb_bw = slimb_bw + sum (bandwidth(:), &
+!!$               mask=(slimb_type .and. (prec(:,MIFno) >= 0.0)))
+!!$
+!!$          sw_sum = sw_sum + sum ((rad(:,MIFno)+baseline(:)) * bandwidth(:), &
+!!$               mask=(.not. slimb_type .and. (prec(:,MIFno) >= 0.0)))
+!!$          sw_bw = sw_bw + sum (bandwidth(:), &
+!!$               mask=(.not. slimb_type .and. (prec(:,MIFno) >= 0.0)))
+
+          do channo = 1, chans
+             if (slimb_type(channo) .and. prec(channo,MIFno) >= 0.0) &
+                  slimb_sum = slimb_sum + rad(channo,MIFno)*bandwidth(channo)
+             if (slimb_type(channo) .and. prec(channo,MIFno) >= 0.0) &
+                  slimb_bw = slimb_bw + bandwidth(channo)
+             if (.not. slimb_type(channo) .and. prec(channo,MIFno) >= 0.0) &
+                  sw_sum = sw_sum + (rad(channo,MIFno)+baseline(channo)) * &
+                  bandwidth(channo)
+             if (.not. slimb_type(channo) .and. prec(channo,MIFno) >= 0.0) &
+                  sw_bw = sw_bw + bandwidth(channo)
+          enddo
+       enddo
+    endif
+
+  END SUBROUTINE CalcSlimbOffsets
 
 !=============================================================================
   SUBROUTINE CalcBaseline
@@ -285,7 +347,7 @@ PRINT *, 'doing baseline...'
 !=============================================================================
 
     USE MLSCommon, ONLY: DEFAULTUNDEFINEDVALUE
-    USE MLSL1Config, ONLY: L1Config
+    USE MLSL1Config, ONLY: L1Config, MIFsGHz
     USE MLSL1Rad, ONLY: Rad_name
     USE MLSL1Config, ONLY: L1Config
     USE MLS_DataProducts, ONLY: DataProducts_T, Deallocate_DataProducts
@@ -308,6 +370,7 @@ PRINT *, 'doing baseline...'
          baselineDCavg => NULL()
     REAL DC_avg(FBchans), DC_rms(FBchans), DCmean
     REAL, POINTER, DIMENSION(:) :: resid
+    REAL, POINTER, DIMENSION(:,:,:) :: rad => NULL(), prec => NULL()
 
     TYPE (L1BData_T) :: L1BData
     TYPE (DataProducts_T) :: baselineDS  
@@ -416,6 +479,8 @@ PRINT *, 'Updating baselines...'
     ALLOCATE (baselineAC(FBchans,noMAFs))
     ALLOCATE (baselineACprec(FBchans,noMAFs))
     ALLOCATE (baselineDC(FBchans,noMAFs))
+    ALLOCATE (rad(FBchans,MIFsGHz,noMAFs))
+    ALLOCATE (prec(FBchans,MIFsGHz,noMAFs))
 
 ! Get the GHz baselines and adjust
 
@@ -462,13 +527,27 @@ PRINT *, 'Updating baselines...'
        SELECT CASE (noChans)
        CASE (FBchans)
           baselineDS%Dimensions(1) = 'chanFB'
+          BW = FB_BW
        CASE (MBchans)
           baselineDS%Dimensions(1) = 'chanMB'
+          BW(1:MBchans) = MB_BW
        CASE (WFchans)
           baselineDS%Dimensions(1) = 'chanWF'
        CASE (DACSchans)
           baselineDS%Dimensions(1) = 'chanDACS'
        END SELECT
+
+! Get Radiances:
+
+       CALL ReadL1BData (sd_id, name, L1BData, noMAFs, Flag, &
+            NeverFail=.TRUE., HDFversion=5)
+       rad = L1BData%DpField
+       CALL DeallocateL1BData (L1BData)
+
+       CALL ReadL1BData (sd_id, TRIM(name)//' precision', L1BData, noMAFs, &
+            Flag, NeverFail=.TRUE., HDFversion=5)
+       prec = L1BData%DpField
+       CALL DeallocateL1BData (L1BData)
 
        DO mindx = 1, noMAFs   ! calculate and output baselines
 
@@ -509,13 +588,12 @@ PRINT *, 'Updating baselines...'
                 IF (ngood > 1) THEN
                    DCmean = SUM (baselineDC(i,w1:w2), rms_mask(1:nwin)) &
                         / ngood
-                   WHERE (rms_mask(w1:w2))
+                   WHERE (rms_mask(1:nwin))
                       resid(1:nwin) = baselineDC(i,w1:w2) - DCmean
                    ENDWHERE
                    DC_rms(i) = ((SUM (resid**2) - SUM (resid)**2 / ngood) / &
                         (ngood - 1))**0.5
                 ENDIF
-
              ENDDO
           ENDIF
 
@@ -535,6 +613,10 @@ PRINT *, 'Updating baselines...'
                 Baseline(bandno)%offset = 0.0
              END WHERE
           ENDIF
+
+!          CALL CalcSlimbOffsets (noChans, MIFsGHz, baseline(bandno)%offset, &
+!               BW(1:noChans), rad(1:noChans,:,mindx), prec(1:noChans,:,mindx))
+
           baselineDS%name = BaseName
           CALL Build_MLSAuxData (sd_id, baselineDS, &
                Baseline(bandno)%offset, lastIndex=mindx, &
@@ -563,12 +645,13 @@ PRINT *, 'Updating baselines...'
                disable_attrib=.TRUE.)
 
        ENDDO
-
     ENDDO
 
     DEALLOCATE (baselineAC)
     DEALLOCATE (baselineACprec)
     DEALLOCATE (baselineDC)
+    DEALLOCATE (rad)
+    DEALLOCATE (prec)
 
   END SUBROUTINE UpdateBaselines
 
@@ -624,6 +707,9 @@ PRINT *, 'Updating baselines...'
 END MODULE SpectralBaseline
 !=============================================================================
 ! $Log$
+! Revision 2.7  2006/08/02 18:59:10  perun
+! Do not calculation slimb offsets
+!
 ! Revision 2.6  2006/04/05 18:10:47  perun
 ! Remove unused variables
 !

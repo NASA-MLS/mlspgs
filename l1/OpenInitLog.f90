@@ -43,10 +43,12 @@ CONTAINS
     USE MLSPCF1, ONLY: mlspcf_engtbl_start, mlspcf_l1b_log_start, &
          mlspcf_pcf_start, mlspcf_l1cf_start, mlspcf_sciMAF_start, &
          mlspcf_engMAF_start, mlspcf_MAF_data_start, mlspcf_l1b_eng_start, &
-         mlspcf_dacsconst_start, mlspcf_defltzeros_start
+         mlspcf_dacsconst_start, mlspcf_defltzeros_start, mlspcf_l1b_radd_start
     USE L0_sci_tbls, ONLY: InitSciPointers
     USE EngTbls, ONLY: Load_Eng_tbls, Eng_tbl, maxtlm
-    USE MLSL1Common, ONLY: L1BFileInfo, deflt_zero, BandSwitch
+    USE MLSL1Common, ONLY: L1BFileInfo, deflt_zero, BandSwitch, HDFversion
+    USE MLSFiles, ONLY: MLS_openFile, MLS_closeFile
+    USE MLSHDF5, ONLY: MLS_h5open
     USE THzUtils, ONLY: LLO_Label
     USE DACSUtils, ONLY: InitDACS_FFT
     USE BandSwitches, ONLY: GetBandSwitches
@@ -54,7 +56,7 @@ CONTAINS
     CHARACTER (LEN=132) :: PhysicalFilename
     CHARACTER (LEN=28) :: asciiUTC_A
 
-    INTEGER :: eng_tbl_unit, ios, log_unit, tbl_unit
+    INTEGER :: eng_tbl_unit, error, ios, log_unit, tbl_unit, sd_id
     INTEGER :: returnStatus, version
 
     REAL :: MAF_dur
@@ -379,6 +381,36 @@ CONTAINS
     WRITE (L1BFileInfo%MAF_data_unit) L1PCF%PCF_filename
     WRITE (L1BFileInfo%MAF_data_unit) L1PCF%L1CF_filename
 
+!! Open the HDF 5 Fortran Interface based on CF file
+
+    error = 0
+    CALL MLS_h5open (error)
+    IF (error /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName, &
+         "Fortran HDF 5 API error on opening.")
+
+    ! Open L1BRADD File
+
+    version = 1
+    returnStatus = PGS_PC_getReference (mlspcf_l1b_radd_start, version, &
+     PhysicalFilename)
+
+    IF (returnStatus == PGS_S_SUCCESS) THEN
+
+       ! Open the HDF file and initialize the SD interface
+
+       CALL MLS_openFile (PhysicalFilename, 'create', sd_id, hdfVersion)
+       CALL MLSMessage (MLSMSG_Info, &
+            & ModuleName, "Opened L1BRADD file: "//PhysicalFilename)
+       L1BFileInfo%RADDID = sd_id
+       L1BFileInfo%RADDFileName = PhysicalFilename
+
+    ELSE
+
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not find L1BRADD file entry")
+
+    ENDIF
+
   END SUBROUTINE OpenAndInitializeLog
 
 !=============================================================================
@@ -435,6 +467,9 @@ END MODULE OpenInitLog
 !=============================================================================
 
 ! $Log$
+! Revision 2.7  2006/08/02 18:56:35  perun
+! Added creation of RADD file in anticipation of writing TPz attribute
+!
 ! Revision 2.6  2006/03/24 15:15:22  perun
 ! Expand processing times, iniut Band Switches and write startup message to log file
 !

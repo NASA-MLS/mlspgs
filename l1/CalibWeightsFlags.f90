@@ -1,4 +1,4 @@
-! Copyright 2005, by the California Institute of Technology. ALL
+! Copyright 2006, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
 ! at the California Institute of Technology.
@@ -13,7 +13,7 @@
 MODULE CalibWeightsFlags
 !=============================================================================
 
-  USE MLSL1Common, ONLY: MaxMIFs
+  USE MLSL1Common, ONLY: MaxMIFs, R8, DACSnum
   USE Calibration, ONLY: WeightsFlags_T
 
   IMPLICIT NONE
@@ -23,9 +23,9 @@ MODULE CalibWeightsFlags
   PUBLIC :: DetermineWeightsFlags
 
 !---------------------------- RCS Module Info ------------------------------
-  character (len=*), private, parameter :: ModuleName= &
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  PRIVATE :: not_used_here 
 !---------------------------------------------------------------------------
 
   TYPE (WeightsFlags_T), DIMENSION(:), POINTER :: WeightsFlags
@@ -44,14 +44,21 @@ CONTAINS
     USE L0_sci_tbls, ONLY: SciMAF
     USE SciUtils, ONLY: SwMirPos, GetScAngles
     USE MLSL1Utils, ONLY: QNan
+    USE DACsUtils, ONLY: TPz
 
-    INTEGER :: i, ios, sci_MAFno, n, sum_S, sum_T
+    INTEGER :: i, ios, sci_MAFno, n, ngood, sum_S, sum_T
     INTEGER :: EngMAF_unit, SciMAF_unit, MAF_data_unit
     INTEGER :: mindx(0:(MaxMIFs-1))
     INTEGER, PARAMETER :: GHz_sw_indx(0:(MaxMIFs-1)) = (/ (i, i=1,MaxMIFs) /)
     CHARACTER(len=1) :: GHz_sw_pos(0:(MaxMIFs-1))
     CHARACTER(len=70) :: PLL_DN(0:(MaxMIFs-1)), PLL_dflt_DN(0:(MaxMIFs-1))
     REAL :: LLO_EU(16,0:(MaxMIFs-1)), LLO_dflt_EU(16,0:(MaxMIFs-1))
+    INTEGER, PARAMETER :: MaxMIFno = (MaxMIFs - 1)
+    REAL :: swFac(0:MaxMIFno)
+    REAL(r8) :: TP_ana(0:MaxMIFno), TP_dig(0:MaxMIFno)
+    REAL(r8) :: Sum_ana(DACSnum) = 0.0, Sum_dig(DACSnum) = 0.0, &
+         Sum_dig_dig(DACSnum) = 0.0, Sum_dig_ana(DACSnum) = 0.0
+    CHARACTER(len=1), PARAMETER :: discard = "D"
 
     TYPE Sci_pos_T
        REAL :: APE(2,0:(MaxMIFs-1))
@@ -62,7 +69,7 @@ CONTAINS
 
     TYPE (Sci_pos_T) :: Sci_pos, Sci_dflt_pos
 
-    print *, ' Reading MAFdata...'
+    PRINT *, ' Reading MAFdata...'
 
 ! Init default positions:
 
@@ -98,6 +105,7 @@ CONTAINS
     ENDWHERE
     sum_T = SUM (mindx)
 
+    ngood = 0
     i = 0
 
     outer: DO
@@ -157,6 +165,22 @@ CONTAINS
           GHz_sw_pos(n) = SciMAF(n)%GHz_sw_pos
        ENDDO
 
+! Accumulate DACS TPs to calculate daily TP zeros:
+
+       swFac = 1.0        ! init to non-discard MIFs
+       WHERE (SciMAF%GHz_sw_pos == discard)   ! Don't use discards
+          swFac = 0.0
+       ENDWHERE
+       ngood = ngood + COUNT (swFac == 1.0)
+       DO n = 1, DACSNUM
+          TP_ana = SciMAF%TP(n) * swFac
+          TP_dig = (SciMAF%TPdigP(n) + SciMAF%TPdigN(n)) * swFac
+          Sum_dig(n) = Sum_dig(n) + SUM (TP_dig)
+          Sum_ana(n) = Sum_ana(n) + SUM (TP_ana)
+          Sum_dig_dig(n) = Sum_dig_dig(n) + SUM (TP_dig*TP_dig)
+          Sum_dig_ana(n) = Sum_dig_ana(n) + SUM (TP_dig*TP_ana)
+       ENDDO
+
 ! Reset scAngles to be used for L1BOA
 
        CALL GetScAngles
@@ -183,8 +207,8 @@ CONTAINS
        ENDWHERE
        WeightsFlags%recomp_T  = (SUM (mindx) /= sum_T)
 
-print *, 'i, MAFno, GHz_sw_pos: ', i, EngMAF%MAFno, SciMAF%GHz_sw_pos
-print *, 'flags: ', WeightsFlags(i)
+PRINT *, 'i, MAFno, GHz_sw_pos: ', i, EngMAF%MAFno, SciMAF%GHz_sw_pos
+PRINT *, 'flags: ', WeightsFlags(i)
 
        WRITE (MAF_data_unit) WeightsFlags(i)
        WRITE (MAF_data_unit) EngMAF
@@ -192,8 +216,16 @@ print *, 'flags: ', WeightsFlags(i)
     ENDDO outer
 
     TotalMAFs = i
-    print *, 'MAFs: ', TotalMAFs
+    PRINT *, 'MAFs: ', TotalMAFs
     ENDFILE MAF_data_unit
+
+! Calculate TPz values to pass on the MLSL1G program:
+
+    DO i = 1, DACSNUM
+       TPz(i) = ((Sum_dig_dig(i) / ngood * Sum_ana(i) / ngood) - &
+            (SUM_dig_ana(i) / ngood * SUM_dig(i) / ngood)) / &
+            (SUM_dig_dig(i) / ngood - (SUM_dig(i) / ngood)**2)
+    ENDDO
 
   END SUBROUTINE ProcessMAFdata
 
@@ -206,7 +238,7 @@ print *, 'flags: ', WeightsFlags(i)
 
     INTEGER :: maxMAFs
 
-    print *, 'Determining weights flags...'
+    PRINT *, 'Determining weights flags...'
 
     nom_MIFs = L1Config%Calib%MIFsPerMAF
 
@@ -218,17 +250,20 @@ print *, 'flags: ', WeightsFlags(i)
   END SUBROUTINE DetermineWeightsFlags
 
 !=============================================================================
-  logical function not_used_here()
+  LOGICAL FUNCTION not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), parameter :: IdParm = &
+  CHARACTER (len=*), PARAMETER :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), save :: Id = idParm
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  END FUNCTION not_used_here
 END MODULE CalibWeightsFlags
 !=============================================================================
 ! $Log$
+! Revision 2.7  2006/08/02 18:52:17  perun
+! Accumulate DACS TPs to calculate daily TP zeros
+!
 ! Revision 2.6  2006/04/05 18:10:08  perun
 ! Remove unused variables
 !
