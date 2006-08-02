@@ -44,7 +44,7 @@ contains ! =====     Public Procedures     =============================
 
   ! -----------------------------------------------  Output_Close  -----
   subroutine Output_Close ( root, l2gpDatabase, l2auxDatabase, DirectDatabase, &
-    & matrices, fileDataBase, chunks, processingRange, canWriteL2PC )
+    & matrices, vectors, fileDataBase, chunks, processingRange, canWriteL2PC )
 
     ! Hard-wired assumptions:
 
@@ -61,27 +61,29 @@ contains ! =====     Public Procedures     =============================
     use Allocate_Deallocate, only: Deallocate_Test, Allocate_test
     use Chunks_m, only: MLSChunk_T, dump
     use ChunkDivide_m, only: ChunkDivideConfig, OBSTRUCTIONS
+    use DestroyCommand_m, only: DestroyCommand
     use DirectWrite_m, only: DirectData_T, Dump
     use Expr_M, only: Expr
     use HGrid, only: CREATEHGRIDFROMMLSCFINFO, DEALWITHOBSTRUCTIONS
     use HGridsDatabase, only: HGRID_T, &
       & ADDHGRIDTODATABASE, Dump
-    use INIT_TABLES_MODULE, only: F_ASCII, F_CREATE, F_DONTPACK, F_EXCLUDE, &
-      & F_FILE, F_HDFVERSION, F_HGRID, &
+    use INIT_TABLES_MODULE, only: F_ASCII, F_CREATE, F_DESTROY, F_DONTPACK, &
+      & F_EXCLUDE, F_FILE, F_HDFVERSION, F_HGRID, &
       & F_IFANYCRASHEDCHUNKS, F_INPUTFILE, F_INPUTTYPE, &
       & F_METADATAONLY, F_METANAME, F_OVERLAPS, F_PACKED, &
       & F_QUANTITIES, F_RENAME, F_REPAIRGEOLOCATIONS, &
       & F_SWATH, F_TYPE, F_WRITECOUNTERMAF, &
       & FIELD_FIRST, FIELD_LAST, &
       & L_L2AUX, L_L2CF, L_L2DGG, L_L2GP, L_L2PC, &
-      & S_COPY, S_HGrid, S_OUTPUT, S_TIME
+      & S_COPY, S_Destroy, S_HGrid, S_OUTPUT, S_TIME
     use Intrinsic, only: l_ascii, l_swath, l_hdf, Lit_indices, PHYQ_Dimensionless
     use L2AUXData, only: L2AUXDATA_T, cpL2AUXData
     use L2GPData, only: AVOIDUNLIMITEDDIMS, L2GPData_T, &
       & MAXSWATHNAMESBUFSIZE, cpL2GPData
     use L2PC_m, only: WRITEONEL2PC, OUTPUTHDF5L2PC
     use L2ParInfo, only: parallel
-    use MatrixModule_1, only: MATRIX_DATABASE_T, MATRIX_T, GETFROMMATRIXDATABASE
+    use MatrixModule_1, only: DestroyMatrix, GETFROMMATRIXDATABASE, &
+      & MATRIX_DATABASE_T, MATRIX_T
     use MLSCommon, only: MLSFile_T, TAI93_Range_T, FileNameLen
     use MLSFiles, only: &
       & AddInitializeMLSFile, Dump, GetMLSFileByName, &
@@ -102,6 +104,7 @@ contains ! =====     Public Procedures     =============================
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SUBTREE, SUB_ROSA
     use TREE_TYPES, only: N_NAMED
+    use VectorsModule, only: Vector_T
     use WriteMetadata, only: L2PCF, WriteMetaLog
 
     ! Arguments
@@ -109,6 +112,7 @@ contains ! =====     Public Procedures     =============================
     type (L2GPData_T), dimension(:), pointer :: L2GPDATABASE ! L2GP products
     type (L2AUXData_T), dimension(:), pointer :: L2AUXDATABASE ! L2AUX products
     type (Matrix_Database_T), dimension(:), pointer :: MATRICES ! Matrix database (for l2pcs)
+    type (Vector_T), dimension(:), pointer :: Vectors ! Vectors database
     type (DirectData_T), dimension(:), pointer :: DirectDatabase
     type (MLSChunk_T), dimension(:), pointer ::  Chunks  ! of data
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
@@ -120,6 +124,7 @@ contains ! =====     Public Procedures     =============================
     type (MLSChunk_T) ::  AllChunks     ! in one
     logical :: ASCII                    ! Is this l2pc ascii?
     integer :: DB_index
+    logical :: Destroy                  ! matrices after outputting them
     logical :: create
     integer, dimension(:), pointer :: DONTPACK ! Quantities not to pack
     logical, parameter :: DEBUG = .false.
@@ -247,8 +252,8 @@ contains ! =====     Public Procedures     =============================
         name = 0
       end if
 
-      select case( get_spec_id(key) )
-      case (s_copy)
+      select case ( get_spec_id(key) )
+      case ( s_copy )
         do field_no = 2, nsons(key)       ! Skip the command name
           gson = subtree(field_no, key)   ! An assign node
           if ( nsons(gson) > 1 ) then
@@ -465,7 +470,9 @@ contains ! =====     Public Procedures     =============================
           & outputfile%hdfVersion, formattype, metadata_error )
         endif
 
-      case (s_HGrid)
+      case ( s_Destroy )
+        call destroyCommand ( key, matrices, vectors )
+      case ( s_HGrid )
         ! call announce_error ( spec_no, &
         !   &  "Error--HGrid not implemented yet")
         if ( specialDumpFile /= ' ' ) &
@@ -531,7 +538,7 @@ contains ! =====     Public Procedures     =============================
           end select
         end do
 
-        ! Unless outputting l2cf, you must have supplied a quantities fild
+        ! Unless outputting l2cf, you must have supplied a quantities field
         ! (parser used to catch this)
         if ( .not. got(f_quantities) .and. output_type /= l_l2cf ) &
           & call MLSMessage(MLSMSG_Error, ModuleName, &
@@ -562,24 +569,27 @@ contains ! =====     Public Procedures     =============================
           if ( .not. canWriteL2PC ) call MLSMessage(MLSMSG_Error,ModuleName,&
             & "Cannot write l2pc files with multi chunk l2cf's")
           recLen = 0
-          packed = .false.
           ascii = .false.
+          destroy = .false.
+          packed = .false.
           do field_no = 2, nsons(key) ! Skip "output" name
             gson = subtree(field_no,key)
             select case ( decoration(subtree(1,gson)) )
-            case ( f_quantities )
-              quantitiesNode = gson
-            case ( f_overlaps )
-              ! ??? More work needed here
-            case ( f_packed )
-              packed = get_boolean ( gson )
+            case ( f_ascii )
+              ascii = get_boolean ( gson )
+            case ( f_destroy )
+              destroy = get_boolean ( gson )
             case ( f_dontPack )
               call Allocate_Test ( dontPack, nsons(gson)-1, 'dontPack', ModuleName )
               do node = 2, nsons(gson)
                 dontPack(node-1) = decoration(decoration(subtree(node,gson)))
               end do
-            case ( f_ascii )
-              ascii = get_boolean ( gson )
+            case ( f_overlaps )
+              ! ??? More work needed here
+            case ( f_packed )
+              packed = get_boolean ( gson )
+            case ( f_quantities )
+              quantitiesNode = gson
             end select
           end do ! field_no = 2, nsons(key)
 
@@ -595,6 +605,7 @@ contains ! =====     Public Procedures     =============================
               db_index = decoration(decoration(subtree(in_field_no, quantitiesNode )))
               call GetFromMatrixDatabase ( matrices(db_index), tmpMatrix )
               call writeOneL2PC ( tmpMatrix, l2pcUnit, packed )
+              if ( destroy ) call DestroyMatrix ( matrices(db_index) )
             end do ! in_field_no = 2, nsons(gson)
 
             error = mls_io_gen_closef ( l_ascii, l2pcUnit)
@@ -608,6 +619,11 @@ contains ! =====     Public Procedures     =============================
             ! For the moment call a routine
             call OutputHDF5L2PC ( trim(file_base), matrices, quantitiesNode, packed, &
               & dontPack )
+
+            do in_field_no = 2, nsons(quantitiesNode)
+              db_index = decoration(decoration(subtree(in_field_no, quantitiesNode )))
+              if ( destroy ) call DestroyMatrix ( matrices(db_index) )
+            end do ! in_field_no = 2, nsons(gson)
 
           end if
           call Deallocate_test ( dontPack, 'dontPack', ModuleName )
@@ -1647,6 +1663,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.125  2006/08/02 19:52:55  vsnyder
+! Add destroy command and destroy field for output command
+!
 ! Revision 2.124  2006/05/09 16:40:41  pwagner
 ! Added writing l2cf to dgm
 !
