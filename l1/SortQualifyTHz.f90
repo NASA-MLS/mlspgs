@@ -138,7 +138,7 @@ PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
     CHARACTER(len=1), PARAMETER :: override = "O"
     CHARACTER(len=1), PARAMETER :: undefined = "U"
     REAL, PARAMETER :: BadLimbRange(2) = (/ 6.0, 354.0 /)
-    REAL, PARAMETER :: SpaceAltRange(2) = (/ 120.0e03, 250.0e03 /)
+    REAL, PARAMETER :: SpaceAltRange(2) = (/ 120.0e03, 600.0e03 /)
     REAL, PARAMETER :: good_yaw = 1.0   ! good YAW value in degrees
     REAL, PARAMETER :: bad_bias = 9.0   ! special "bad" bias value
 
@@ -213,7 +213,8 @@ PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
              IF (ANY (encoder > BadLimbRange(1) .AND. &
                   encoder < BadLimbRange(2))) SwMirPos = discard
 
-!! Discard if "S"pace altitude out of "good" alt range:
+
+!! Discard if "S"pace altitude out of "good" alt range (pitch maneuver):
 
           ELSE IF (SwMirPos == 'S') THEN
              IF (THz_GeodAlt(MIF, MAF) < SpaceAltRange(1) .OR. &
@@ -284,6 +285,9 @@ END MODULE SortQualifyTHz
 !=============================================================================
 
 ! $Log$
+! Revision 2.14  2006/08/02 18:58:45  perun
+! Change maximum SpaceAltRange value to 600 km from 250 km
+!
 ! Revision 2.13  2006/06/14 13:49:29  perun
 ! Protect reading beyond OA data size
 !
