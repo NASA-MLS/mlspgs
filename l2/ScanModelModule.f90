@@ -197,13 +197,13 @@ contains ! =============== Subroutines and functions ==========================
     if ( present(R) ) then
        R=>myR
     else
-       deallocate ( myR )
+       call deallocate_test ( myR, 'myR', moduleName )
     end if
 
     if ( present(rt) ) then
        rt=>myRT
     else
-       deallocate ( myRT )
+        call deallocate_test ( myRT, 'myRT', moduleName )
     end if
 
     if ( present(belowRef) ) belowRef = myBelowRef
@@ -2159,6 +2159,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.64  2006/08/02 20:10:56  vsnyder
+! Use deallocate_test for myR and myRT, for leak tracking
+!
 ! Revision 2.63  2006/04/03 20:23:46  pwagner
 ! Preserve correct sign for GPH Precision
 !
