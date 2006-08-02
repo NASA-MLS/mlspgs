@@ -616,11 +616,11 @@ o:          do while ( c2 <= ni )
         if ( ord /= 0 .and. wt > 0.0_r8 .and. error == 0 ) then
           if ( noChans == 1 ) then
             call createBlock ( a%block(ib,ib), nrow, ncol, m_banded, &
-              & (ncol-ord)*(ord+1) )
+              & (ncol-ord)*(ord+1), forWhom="Regularization" )
             a%block(ib,ib)%r1 = 0         ! in case there's a mask
             a%block(ib,ib)%r2 = 0
           else
-            call createBlock ( a%block(ib,ib), nrow, ncol, m_full )
+            call createBlock ( a%block(ib,ib), nrow, ncol, m_full, forWhom="Regularization" )
           end if
           a%block(ib,ib)%values = 0.0_r8
 
@@ -697,6 +697,9 @@ o:          do while ( c2 <= ni )
 end module Regularization
 
 ! $Log$
+! Revision 2.38  2006/08/02 19:54:15  vsnyder
+! Tell CreateBlock it's regularization needing one for leak tracking
+!
 ! Revision 2.37  2005/06/22 18:57:02  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
