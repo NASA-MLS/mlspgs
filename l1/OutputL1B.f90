@@ -627,21 +627,22 @@ CONTAINS
 
 !=============================================================================
   SUBROUTINE OutputL1B_LatBinData (noMAF, sd_id, AscDescIndx, LatBinIndx, &
-       LatBinChanAvg, BaselineAlt, LatBin)
+       LatBinChanAvg, BaselineAlt, LatBin, BaselineBandNo, BinnedBaseline, &
+       Name)
 !=============================================================================
 
     USE MLSHDF5, ONLY: SaveAsHDF5DS, MakeHDF5Attribute
 
     INTEGER, INTENT(IN) :: noMAF
     INTEGER(HID_T), INTENT(IN) :: sd_id
-    INTEGER, DIMENSION(:), OPTIONAL :: AscDescIndx
-    INTEGER, DIMENSION(:), OPTIONAL :: LatBinIndx
-    REAL, DIMENSION(:,:,:,:), OPTIONAL :: LatBinChanAvg
-    REAL, DIMENSION(:,:,:), OPTIONAL :: LatBin
+    INTEGER, DIMENSION(:), OPTIONAL :: AscDescIndx, LatBinIndx, BaselineBandNo
+    REAL, DIMENSION(:,:,:), OPTIONAL :: LatBinChanAvg
+    REAL, DIMENSION(:,:), OPTIONAL :: LatBin, BinnedBaseline
     REAL, DIMENSION(:,:), OPTIONAL :: BaselineAlt
+    CHARACTER(len=*), OPTIONAL :: Name
 
     TYPE( DataProducts_T ) :: dataset
-    CHARACTER(LEN=16) :: DimName(4)
+    CHARACTER(LEN=16) :: DimName(3)
     INTEGER :: dims(3), status
 
     CALL Deallocate_DataProducts (dataset)
@@ -663,12 +664,18 @@ CONTAINS
 
     ENDIF
 
+    IF (PRESENT (BinnedBaseline) .AND. PRESENT (Name)) THEN
+       CALL SaveAsHDF5DS (sd_id, Name, BinnedBaseline)
+       DimName(1) = 'Chan'
+       DimName(2) = 'LatBin'
+       CALL MakeHDF5Attribute (sd_id, Name, 'Dimensions', DimName(1:2))
+    ENDIF
+
     IF (PRESENT (LatBinChanAvg)) THEN
        CALL SaveAsHDF5DS (sd_id, 'LatBinChanAvg', LatBinChanAvg)
        DimName(1) = 'FBChan'
-       DimName(2) = 'GHzBand'
+       DimName(2) = 'BandNo'
        DimName(3) = 'LatBin'
-       DimName(4) = 'AscDesc'
        CALL MakeHDF5Attribute (sd_id, 'LatBinChanAvg', 'Dimensions', DimName)
     ENDIF
 
@@ -676,16 +683,22 @@ CONTAINS
        CALL SaveAsHDF5DS (sd_id, 'BaselineLatBin', LatBin)
        DimName(1) = 'Min/Max lat'
        DimName(2) = 'LatBin'
-       DimName(3) = 'AscDesc'
        CALL MakeHDF5Attribute (sd_id, 'BaselineLatBin', 'Dimensions', &
-            DimName(1:3))
+            DimName(1:2))
     ENDIF
 
     IF (PRESENT (BaselineAlt)) THEN
        CALL SaveAsHDF5DS (sd_id, 'BaselineAlt', BaselineAlt)
        DimName(1) = 'FBchan'
-       DimName(2) = 'GHzBand'
+       DimName(2) = 'BandNo'
        CALL MakeHDF5Attribute (sd_id, 'BaselineAlt', 'Dimensions', DimName(1:2))
+    ENDIF
+
+    IF (PRESENT (BaselineBandNo)) THEN
+       CALL SaveAsHDF5DS (sd_id, 'BaselineBandNo', BaselineBandNo)
+       DimName(1) = 'BandNo'
+       CALL MakeHDF5Attribute (sd_id, 'BaselineBandNo', 'Dimensions', &
+            DimName(1:1))
     ENDIF
 
     CALL Deallocate_DataProducts (dataset)
@@ -700,7 +713,7 @@ CONTAINS
     ! This subroutine writes an MAF's worth of diagnostic data
 
     USE MLSL1Common, ONLY: FBchans, GHzNum, MBchans, MBnum, WFchans, WFnum, &
-         deflt_zero, MaxMIFs, DACSnum
+         deflt_zero, MaxMIFs, DACSnum, DACSchans
     USE Calibration, ONLY: Chi2, Tsys, Cgain
     USE MLSHDF5, ONLY: SaveAsHDF5DS, MakeHDF5Attribute
 
@@ -786,6 +799,18 @@ CONTAINS
     CALL Build_MLSAuxData (sd_id, dataset, Chi2%WF, lastIndex=noMAF, dims=dims)
     dataset%name = 'ChanGain WF'
     CALL Build_MLSAuxData (sd_id, dataset, Cgain%WF, lastIndex=noMAF, dims=dims)
+
+!    dims(1) = DACSchans
+    dims(1) = DACSnum
+    dims(2) = 1
+!    dataset%Dimensions(1) = 'DACSchan            '
+    dataset%Dimensions(1) = 'DACSnum             '
+    dataset%name = 'Tsys DACS'
+
+! Use channel 1 since all channels are the same (for now):
+
+    CALL Build_MLSAuxData (sd_id, dataset, Tsys%DACS(1,:), lastIndex=noMAF, &
+         dims=dims(1:2))
 
     dims(1) = MaxMIFs - 2
     dims(2) = DACSnum
@@ -965,6 +990,9 @@ END MODULE OutputL1B
 !=============================================================================
 
 ! $Log$
+! Revision 2.22  2006/08/02 18:56:59  perun
+! Removed AscDesc dimension and added Tsys for DACS in DIAG file
+!
 ! Revision 2.21  2006/06/14 13:48:18  perun
 ! Output TP data in the DIAG file
 !

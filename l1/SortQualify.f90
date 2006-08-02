@@ -132,7 +132,7 @@ CONTAINS
 
 PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
 
-    MIF_dur = (SUM(SciMAF(1:100)%secTAI - SciMAF(0:99)%secTAI)/100.0)
+    MIF_dur = L1Config%Calib%MIF_duration
     MAF_dur = MIF_dur * nom_MIFs   !Nominal duration of MAF
 
     IF (CalWin%current > 0) THEN
@@ -229,6 +229,7 @@ PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
     USE MLSStrings, ONLY: Capitalize
     USE BrightObjects_m, ONLY: Test_BO_stat, BO_Match
     USE BandTbls, ONLY: BandAlt
+    USE DACsUtils, ONLY: TPz
  
 !! Qualify the Current MAF data in the cal window
 
@@ -245,7 +246,7 @@ PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
     CHARACTER(len=1), PARAMETER :: undefined = "U"
     INTEGER, PARAMETER :: MaxMIFno = (MaxMIFs - 1)
     REAL :: swFac(0:MaxMIFno)
-    REAL(r8) :: TP_ana(0:MaxMIFno), TP_dig(0:MaxMIFno), TPz
+    REAL(r8) :: TP_ana(0:MaxMIFno), TP_dig(0:MaxMIFno)
 
     LOGICAL :: TPisDig = .FALSE.
 
@@ -423,12 +424,13 @@ PRINT *, 'Sort:', CurMAFdata%ChanType(0:149)%FB(1,1)
                  CurMAFdata%SciPkt(MIF)%DACS(:,bankno) * TP_dig(MIF)
          ENDDO
       ELSE
-         TPz = ((SUM (TP_dig*TP_dig) / ngood * SUM (TP_ana) / ngood) - &
-              (SUM (TP_dig*TP_ana) / ngood * SUM (TP_dig) / ngood)) / &
-              (SUM (TP_dig*TP_dig) / ngood - (SUM (TP_dig) / ngood)**2)
+!!$         TPz = ((SUM (TP_dig*TP_dig) / ngood * SUM (TP_ana) / ngood) - &
+!!$              (SUM (TP_dig*TP_ana) / ngood * SUM (TP_dig) / ngood)) / &
+!!$              (SUM (TP_dig*TP_dig) / ngood - (SUM (TP_dig) / ngood)**2)
          DO MIF = 0, MaxMIFno
             CurMAFdata%SciPkt(MIF)%DACS(:,bankno) = &
-                 CurMAFdata%SciPkt(MIF)%DACS(:,bankno) * (TP_ana(MIF) - TPz)
+                 CurMAFdata%SciPkt(MIF)%DACS(:,bankno) * (TP_ana(MIF) - &
+                 TPz(bankno))
          ENDDO
       ENDIF
 
@@ -854,6 +856,9 @@ END MODULE SortQualify
 !=============================================================================
 
 ! $Log$
+! Revision 2.22  2006/08/02 18:58:17  perun
+! Remove calculation of TPz for current MAF and use daily TPz data from RADD
+!
 ! Revision 2.21  2006/06/14 13:49:04  perun
 ! Scale DACS data based on appropriate TP (digital or analog)
 !
