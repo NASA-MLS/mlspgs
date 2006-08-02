@@ -518,9 +518,8 @@ print *, 'cd1, sd1, beta: ', cd1, sd1, beta
     ENDDO
 
     DO b = 32, 34
-       DO m = 1, 4
-
-          DO chan = 1, nchans(b)
+       DO chan = 1, nchans(b)
+          DO m = 1, 4
 
              READ (unit, '(A)') line
              READ (line(10:), *) xSA, ySA, rSA, kSA, thSA
@@ -598,6 +597,9 @@ print *, 'cd1, sd1, beta: ', cd1, sd1, beta
 END MODULE BandTbls
 
 ! $Log$
+! Revision 2.9  2006/08/02 18:51:45  perun
+! Corrected nested loops in reading wide filters
+!
 ! Revision 2.8  2006/06/14 13:43:47  perun
 ! Add LoadFourierCoeffs and GetDeltaRads routines
 !
