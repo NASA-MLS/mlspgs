@@ -562,12 +562,20 @@ contains
     use MatrixModule_1, only: CREATEBLOCK, MATRIX_T
     use MLSCommon, only: RM
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use String_Table, only: Get_String
     type (Matrix_t), intent(inout) :: Jacobian
     integer, intent(in) :: Row, Col, NoChans, NoPtan
+    character(len=63) :: ForWhom
+    if ( jacobian%name /= 0 ) then
+      call get_string ( jacobian%name, forWhom )
+      forWhom = trim(forWhom) // " in GetBandedBlock"
+    else
+      forWhom = "GetBandedBlock"
+    end if
     select case (jacobian%block(Row,col)%kind)
       case (m_absent)
         call CreateBlock ( Jacobian, row, col, m_banded, noPtan*noChans, &
-                         & bandHeight=noChans, init=0.0_rm )
+                         & bandHeight=noChans, init=0.0_rm, forWhom=forWhom )
       case (m_banded)
         call CheckForSimpleBandedLayout ( jacobian%block(row,col), noChans, &
           & 'd[radiance]/d[ptan] in convolution' )
@@ -582,12 +590,20 @@ contains
     use MatrixModule_1, only: CREATEBLOCK, MATRIX_T
     use MLSCommon, only: RM
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use String_Table, only: Get_String
     type (Matrix_t), intent(inout) :: Jacobian
     integer, intent(in) :: Row, Col
     character(len=*), intent(in) :: What
+    character(len=63) :: ForWhom
+    if ( jacobian%name /= 0 ) then
+      call get_string ( jacobian%name, forWhom )
+      forWhom = trim(forWhom) // " in GetBandedBlock"
+    else
+      forWhom = "GetBandedBlock"
+    end if
     select case ( Jacobian%block(row,col)%kind )
       case ( m_absent )
-        call CreateBlock ( Jacobian, row, col, m_full, init=0.0_rm )
+        call CreateBlock ( Jacobian, row, col, m_full, init=0.0_rm, forWhom=forWhom )
       case ( m_full )
       case default
         call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -641,6 +657,9 @@ contains
 end module Convolve_All_m
 
 ! $Log$
+! Revision 2.5  2006/08/02 19:55:33  vsnyder
+! Tell CreateBlock that Convolve creates it, for leak tracking
+!
 ! Revision 2.4  2005/08/06 01:40:45  vsnyder
 ! ScanAverage doesn't need coeffs
 !
