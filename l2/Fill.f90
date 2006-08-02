@@ -64,6 +64,7 @@ contains ! =====     Public Procedures     =============================
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, Test_Allocate
     use Chunks_m, only: MLSChunk_T
+    use DestroyCommand_m, only: DestroyCommand
     use DumpCommand_m, only: DumpCommand
     use Expr_M, only: EXPR, EXPR_CHECK, GetIndexFlagsFromList
     use ForwardModelConfig, only: ForwardModelConfig_T
@@ -153,7 +154,7 @@ contains ! =====     Public Procedures     =============================
       & DOVGRIDSMATCH, DOQTYSDESCRIBESAMETHING, FILLWITHCOMBINEDCHANNELS
     use MatrixModule_0, only: Sparsify, MatrixInversion
     use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
-      & DestroyMatrix, Dump, GetActualMatrixFromDatabase, GetDiagonal, &
+      & Dump, GetActualMatrixFromDatabase, GetDiagonal, &
       & FindBlock, GetKindFromMatrixDatabase, GetFromMatrixDatabase, K_Plain, K_SPD, &
       & Matrix_Cholesky_T, Matrix_Database_T, Matrix_Kronecker_T, Matrix_SPD_T, &
       & Matrix_T, NullifyMatrix, UpdateDiagonal
@@ -372,7 +373,7 @@ contains ! =====     Public Procedures     =============================
     integer :: H2OVECTORINDEX           ! In the vector database
     integer :: H2OPRECISIONQUANTITYINDEX         ! in the quantities database
     integer :: H2OPRECISIONVECTORINDEX           ! In the vector database
-    integer :: I, J, K                  ! Loop indices for section, spec, expr
+    integer :: I, J                     ! Loop indices for section, spec, expr
     integer :: GLOBALUNIT               ! To go into the vector
     integer :: IBO
     logical :: IGNOREZERO               ! Don't sum chi^2 at values of noise = 0
@@ -405,7 +406,6 @@ contains ! =====     Public Procedures     =============================
     integer :: MANIPULATION             ! String index
     type(matrix_T), pointer :: MATRIX
     integer :: MATRIXTOFILL             ! Index in database
-    integer :: MATRIXTOKILL             ! Index in database
     integer :: MATRIXTYPE               ! Type of matrix, L_... from init_tables
     integer :: MAXITERATIONS            ! For hydrostatic fill
     character(len=80) :: MESSAGE        ! Possible error message
@@ -2065,61 +2065,7 @@ contains ! =====     Public Procedures     =============================
       ! End of fill operations
 
       case ( s_destroy ) ! ===============================  Destroy ==
-        if ( DEEBUG) call output('Destroy vector/matrix instruction', &
-        &  advance='no')
-        ! Here we're to try to shrink the vector database by destroying a vector
-        ! or the matrix database database by destroying a matrix
-        ! Loop over the instructions
-        do j = 2, nsons(key)
-          son = subtree(j,key)  ! The argument
-          fieldIndex = get_field_id(son)
-          got(fieldIndex)=.true.
-          if ( nsons(son) > 1 ) then
-            fieldValue = decoration(subtree(2,son)) ! The field's value
-          else
-            fieldValue = son
-          end if
-          select case ( fieldIndex )
-          case ( f_matrix )
-            do k = 2, nsons(son)
-              matrixToKill = decoration(decoration(subtree(k,son)))
-              if ( DEEBUG ) then
-                ! if ( matrices(matrixToKill)%matrix%name /= 0 ) then
-                 ! call output ( '   Matrix Name = ' )
-                 ! call display_string ( matrices(matrixToKill)%matrix%name )
-                 call dump(matrices(matrixToKill), -1)
-                ! end if
-              end if
-
-              call DestroyMatrix ( matrices(matrixToKill) )
-            end do
-          case ( f_vector )
-            do k = 2, nsons(son)
-              sourceVectorIndex = decoration(decoration(subtree(k,son)))
-              if ( DEEBUG ) then
-                if ( vectors(sourceVectorIndex)%name /= 0 ) then
-                  call output ( '   Vector Name = ' )
-                  call display_string ( vectors(sourceVectorIndex)%name )
-                end if
-                if ( vectors(sourceVectorIndex)%template%name /= 0 ) then
-                  call output ( ' Template_Name = ' )
-                  call display_string ( vectors(sourceVectorIndex)%template%name )
-                  call output ( ' ', advance='yes' )
-                end if
-                call output ( ' -- vector database before removal --', advance='yes' )
-                call dump(vectors, details=-2)
-              end if
-
-              call DestroyVectorInfo ( vectors(sourceVectorIndex) )
-         !    vectorindex = rmVectorFromDatabase ( vectors, vectors(sourceVectorIndex) )
-              if ( DEEBUG ) then
-                call output ( ' -- vector database after removal --', advance='yes' )
-                call dump(vectors, details=-2)
-              end if
-            end do
-          case default ! Can't get here if type checker worked
-          end select
-        end do
+        call destroyCommand ( key, matrices, vectors )
 
       case ( s_negativePrecision ) ! =======================  negativePrecision ==
         ! Here we're on a setNegative instruction
@@ -7908,6 +7854,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.342  2006/08/02 19:52:29  vsnyder
+! Move destroy processing to DestroyCommand_m
+!
 ! Revision 2.341  2006/07/28 01:55:20  vsnyder
 ! Improve error detection and reporting for some allocations.
 ! Comment out matrix and vector dumps conditioned on the -g level since
