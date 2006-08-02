@@ -804,15 +804,17 @@ CONTAINS
          mlspcf_l1b_diagT_start
     USE MLSL1Common, ONLY: L1BFileInfo, HDFversion, SC_YPR, THz_GeodAlt, MaxMIFs
     USE MLSFiles, ONLY: MLS_openFile, MLS_closeFile
-    USE MLSHDF5, ONLY: MLS_h5open
+    USE MLSHDF5, ONLY: MLS_h5open, GetHDF5Attribute
+    USE HDF5, ONLY: H5gOpen_f, H5gClose_f
     USE L1BData, ONLY: L1BData_T, ReadL1BData, DeallocateL1BData
     USE MLSL1Config, ONLY: MIFsTHz
     USE BrightObjects_m, ONLY: THz_BO_stat
+    USE DACsUtils, ONLY: TPz
 
     LOGICAL :: THz
 
     CHARACTER (LEN=132) :: PhysicalFilename
-    INTEGER :: error, returnStatus, sd_id, version
+    INTEGER :: error, returnStatus, grp_id, sd_id, version
     INTEGER :: noMAFs, Flag
     INTEGER :: firstMAF = 0
     CHARACTER (LEN=*), PARAMETER :: counterMAFname = "counterMAF"
@@ -966,12 +968,17 @@ CONTAINS
 
        ! Open the HDF file and initialize the SD interface
 
-       CALL MLS_openFile (PhysicalFilename, 'create', sd_id, hdfVersion)
+       CALL MLS_openFile (PhysicalFilename, 'update', sd_id, hdfVersion)
        CALL MLSMessage (MLSMSG_Info, &
             & ModuleName, "Opened L1BRADD file: "//PhysicalFilename)
        L1BFileInfo%RADDID = sd_id
        L1BFileInfo%RADDFileName = PhysicalFilename
 
+       ! Get TPz attribute:
+
+       CALL H5gOpen_f (sd_id, '/', grp_id, returnStatus)
+       CALL GetHDF5Attribute (grp_id, 'TPz', TPz)
+       CALL H5gClose_f (grp_id, returnStatus )
     ELSE
 
        CALL MLSMessage (MLSMSG_Error, ModuleName, &
@@ -1129,6 +1136,9 @@ END MODULE OpenInit
 !=============================================================================
 
 ! $Log$
+! Revision 2.29  2006/08/02 18:56:04  perun
+! Open RADD file in update mode and get TPz attribute from it
+!
 ! Revision 2.28  2006/06/14 13:47:47  perun
 ! Open stray radiance file and read Fourier coefficients
 !
