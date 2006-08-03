@@ -258,6 +258,8 @@ contains ! ================================== Module procedures ============
     if ( info /= 0 ) call PVMErrorMessage ( info, &
       & "unpacking quantity flags" )
 
+    call PVMUnpackStringIndex ( qt%name, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking name" )
     call SetupNewQuantityTemplate ( qt, &
       & noInstances  = i4(1), &
       & noSurfs      = i4(2), &
@@ -294,8 +296,6 @@ contains ! ================================== Module procedures ============
     if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking reflector" )
     call PVMUnpackLitIndex ( qt%molecule, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking molecule" )
-    call PVMUnpackStringIndex ( qt%name, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking name" )
 
     call PVMIDLUnpack ( word, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, &
@@ -433,6 +433,9 @@ contains ! ================================== Module procedures ============
 end module QuantityPVM
 
 ! $Log$
+! Revision 2.21  2006/08/03 01:10:06  vsnyder
+! Put l2cf names in leak track database
+!
 ! Revision 2.20  2005/06/22 17:25:50  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
