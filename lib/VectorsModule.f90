@@ -2451,16 +2451,28 @@ contains ! =====     Public Procedures     =============================
     integer :: QTY
     logical :: MYHIGHBOUND, MYLOWBOUND
     real(rv), parameter :: MYHUGE = 1.0e15
+    character(63) :: What1, What2
+    if ( vector%name == 0 ) then
+      What1 = "Vector%"
+    else
+      call get_string ( vector%name, what1 )
+      what1 = trim(what1) // "."
+    end if
     myHighBound = .false.
     myLowBound = .false.
     if ( present ( highBound ) ) myHighBound = highBound
     if ( present ( lowBound ) ) myLowBound = lowBound
     do qty = 1, size(vector%quantities)
+      if ( vector%quantities(qty)%template%name == 0 ) then
+        what2 = "quantities(qty)"
+      else
+        call get_string ( vector%quantities(qty)%template%name, what2 )
+      end if
       call allocate_test ( vector%quantities(qty)%values, &
         & vector%quantities(qty)%template%noChans * &
         & vector%quantities(qty)%template%noSurfs, &
         & vector%quantities(qty)%template%noInstances, &
-        & "Vector%quantities(qty)%values", ModuleName )
+        & trim(what1) // trim(what2) // "%values", ModuleName )
       if ( myHighBound ) then
         vector%quantities(qty)%values = myHuge
       else if ( myLowBound ) then
@@ -2485,6 +2497,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.124  2006/07/27 03:55:56  vsnyder
+! Print summaries if negative details levels, for leak detection
+!
 ! Revision 2.123  2006/06/06 18:54:48  vsnyder
 ! Spiff up a dump
 !

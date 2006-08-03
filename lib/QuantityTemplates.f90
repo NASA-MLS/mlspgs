@@ -442,11 +442,11 @@ contains ! =====     Public Procedures     =============================
     ! Destroy result
     call DestroyQuantityTemplateContents ( z )
     ! Setup result
+    z%name = a%name
     call SetupNewquantityTemplate ( z, a%noInstances, a%noSurfs, a%noChans, &
       & a%coherent, a%stacked, a%regular, a%instanceLen, a%minorFrame, a%majorFrame )
     ! Copy each other component -- tedious, but can't do a shallow copy
     ! as would lose newly allocated arrays
-    z%name = a%name
     z%quantityType = a%quantityType
     z%logBasis = a%logBasis
     z%minValue = a%minValue
@@ -489,28 +489,36 @@ contains ! =====     Public Procedures     =============================
     ! Dummy argument
     type (QuantityTemplate_T), intent(inout) :: QTY
 
+    character(63) :: What
+
     ! Executable code
+    if ( qty%name == 0 ) then
+      what = "qty"
+    else
+      call get_string ( qty%name, what )
+    end if
+
     if ( .not. qty%sharedVGrid ) then
-      call deallocate_test ( qty%surfs, "qty%surfs", ModuleName )
+      call deallocate_test ( qty%surfs, trim(what) // "%surfs", ModuleName )
     end if
 
     if ( .not. qty%sharedHGrid ) then
-      call deallocate_test ( qty%phi, "qty%phi", ModuleName )
-      call deallocate_test ( qty%geodLat, "qty%geodLat", ModuleName )
-      call deallocate_test ( qty%lon, "qty%lon", ModuleName )
-      call deallocate_test ( qty%time, "qty%time", ModuleName )
-      call deallocate_test ( qty%solarTime, "qty%solarTime", ModuleName )
-      call deallocate_test ( qty%solarZenith, "qty%solarZenith", ModuleName )
-      call deallocate_test ( qty%losAngle, "qty%losAngle", ModuleName )
+      call deallocate_test ( qty%phi, trim(what) // "%phi", ModuleName )
+      call deallocate_test ( qty%geodLat, trim(what) // "%geodLat", ModuleName )
+      call deallocate_test ( qty%lon, trim(what) // "%lon", ModuleName )
+      call deallocate_test ( qty%time, trim(what) // "%time", ModuleName )
+      call deallocate_test ( qty%solarTime, trim(what) // "%solarTime", ModuleName )
+      call deallocate_test ( qty%solarZenith, trim(what) // "%solarZenith", ModuleName )
+      call deallocate_test ( qty%losAngle, trim(what) // "%losAngle", ModuleName )
     end if
     
     if ( .not. qty%sharedFGrid ) then
-      call deallocate_test ( qty%frequencies, "qty%frequencies", ModuleName )
+      call deallocate_test ( qty%frequencies, trim(what) // "%frequencies", ModuleName )
     end if
 
     if ( .not. qty%regular ) then
-      call deallocate_test ( qty%surfIndex, "qty%surfIndex", ModuleName )
-      call deallocate_test ( qty%chanIndex, "qty%chanIndex", ModuleName )
+      call deallocate_test ( qty%surfIndex, trim(what) // "%surfIndex", ModuleName )
+      call deallocate_test ( qty%chanIndex, trim(what) // "%chanIndex", ModuleName )
     end if
   end subroutine DestroyQuantityTemplateContents
 
@@ -748,7 +756,8 @@ contains ! =====     Public Procedures     =============================
 
   ! Set up a new quantity template according to the user input.  This may
   ! be based on a previously supplied template (with possible
-  ! modifications), or created from scratch.
+  ! modifications), or created from scratch.  The name isn't set here; the
+  ! caller is expected to do it.
 
     ! Dummy arguments
     type (QuantityTemplate_T), intent(inout) :: qty ! Result
@@ -770,8 +779,15 @@ contains ! =====     Public Procedures     =============================
     integer :: noSurfsToAllocate        ! For allocations
     integer :: noInstancesToAllocate    ! For allocations
 
+    character(63) :: What
+
     ! Executable code
-    qty%name = 0
+    if ( qty%name == 0 ) then
+      what = "qty"
+    else
+      call get_string ( qty%name, what )
+    end if
+
     qty%quantityType = 0
     qty%noInstances = 1
     qty%noSurfs = 1
@@ -861,7 +877,7 @@ contains ! =====     Public Procedures     =============================
       nullify ( qty%surfs )
     else
       call allocate_test ( qty%surfs, qty%noSurfs, noInstancesToAllocate, &
-        & "qty%surfs", ModuleName )
+        & trim(what) // "%surfs", ModuleName )
     end if
 
     ! Now the horizontal coordinates
@@ -871,26 +887,26 @@ contains ! =====     Public Procedures     =============================
         & qty%solarZenith, qty%losAngle )
     else
       call allocate_test ( qty%phi, noSurfsToAllocate, qty%noInstances, &
-        & "qty%phi", ModuleName )
+        & trim(what) // "%phi", ModuleName )
       call allocate_test ( qty%geodLat, noSurfsToAllocate, qty%noInstances, &
-        & "qty%geodLat", ModuleName )
+        & trim(what) // "%geodLat", ModuleName )
       call allocate_test ( qty%lon, noSurfsToAllocate, qty%noInstances, &
-        & "qty%lon", ModuleName )
+        & trim(what) // "%lon", ModuleName )
       call allocate_test ( qty%time, noSurfsToAllocate, qty%noInstances, &
-        & "qty%time", ModuleName )
+        & trim(what) // "%time", ModuleName )
       call allocate_test ( qty%solarTime, noSurfsToAllocate, qty%noInstances, &
-        & "qty%solarTime", ModuleName )
+        & trim(what) // "%solarTime", ModuleName )
       call allocate_test ( qty%solarZenith, noSurfsToAllocate, qty%noInstances, &
-        & "qty%solarZenith", ModuleName )
+        & trim(what) // "%solarZenith", ModuleName )
       call allocate_test ( qty%losAngle, noSurfsToAllocate, qty%noInstances, &
-        & "qty%losAngle", ModuleName )
+        & trim(what) // "%losAngle", ModuleName )
     end if
 
     if ( .not. qty%regular ) then        !
       call allocate_test ( qty%surfIndex, qty%instanceLen, qty%noInstances, &
-        & "qty%surfIndex", ModuleName )
+        & trim(what) // "%surfIndex", ModuleName )
       call allocate_test ( qty%chanIndex, qty%instanceLen, qty%noInstances, &
-        & "qty%chanIndex", ModuleName )
+        & trim(what) // "%chanIndex", ModuleName )
     else
       nullify ( qty%surfIndex, qty%chanIndex )
     end if
@@ -912,6 +928,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.44  2006/03/22 23:49:20  vsnyder
+! Change the name of a dummy argument, add some comments
+!
 ! Revision 2.43  2006/03/22 02:15:18  vsnyder
 ! Spiff up a dump
 !
