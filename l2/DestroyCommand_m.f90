@@ -28,11 +28,13 @@ contains
 
   subroutine DestroyCommand ( Key, Matrices, Vectors )
 
-    use Init_Tables_Module, only: F_Matrix, F_Vector
+    use Init_Tables_Module, only: F_AllMatrices, F_AllVectors, F_Matrix, F_Vector
     use MatrixModule_1, only: DestroyMatrix, Dump, Matrix_Database_T
-    use MoreTree, only: Get_Field_ID
+    use MoreTree, only: Get_Boolean, Get_Field_ID
     use Output_m, only: Output
     use String_Table, only: Display_String
+    use Toggles, only: Toggle, Gen
+    use Trace_m, only: Trace_begin, Trace_end
     use Tree, only: Decoration, NSons, Subtree
     use VectorsModule, only: DestroyVectorInfo, Dump, Vector_T
 
@@ -41,22 +43,27 @@ contains
     type (vector_T), dimension(:), pointer :: Vectors
 
     logical :: DEEBUG = .false.
-    integer :: FieldIndex, FieldValue, J, K, MatrixToKill, Son, SourceVectorIndex
+    integer :: J, K, MatrixToKill, Son, SourceVectorIndex
 
-    if ( DEEBUG) call output('Destroy vector/matrix instruction', &
-    &  advance='no')
+    if ( toggle(gen) ) call trace_begin ( 'DestroyCommand' )
     ! Here we're to try to shrink the vector database by destroying a vector
-    ! or the matrix database database by destroying a matrix
+    ! or the matrix database by destroying a matrix
     ! Loop over the instructions
     do j = 2, nsons(key)
       son = subtree(j,key)  ! The argument
-      fieldIndex = get_field_id(son)
-      if ( nsons(son) > 1 ) then
-        fieldValue = decoration(subtree(2,son)) ! The field's value
-      else
-        fieldValue = son
-      end if
-      select case ( fieldIndex )
+      select case ( get_field_id(son) )
+      case ( f_allMatrices )
+        if ( get_boolean(son) ) then
+          do k = 1, size(matrices)
+            call DestroyMatrix ( matrices(k) )
+          end do
+        end if
+      case ( f_allVectors )
+        if ( get_boolean(son) ) then
+          do k = 1, size(vectors)
+            call DestroyVectorInfo ( vectors(k) )
+          end do
+        end if
       case ( f_matrix )
         do k = 2, nsons(son)
           matrixToKill = decoration(decoration(subtree(k,son)))
@@ -98,6 +105,7 @@ contains
       case default ! Can't get here if type checker worked
       end select
     end do
+    if ( toggle(gen) ) call trace_end ( 'DestroyCommand' )
 
   end subroutine DestroyCommand
 
@@ -114,6 +122,9 @@ contains
 end module DestroyCommand_m
 
 ! $Log$
+! Revision 2.2  2006/08/03 20:06:56  vsnyder
+! Added /allvectors and /allmatrices
+!
 ! Revision 2.1  2006/08/02 19:51:43  vsnyder
 ! Move from Fill module
 !
