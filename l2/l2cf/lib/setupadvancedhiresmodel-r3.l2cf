@@ -1,14 +1,8 @@
 ;$Id$
-;; setupadvancedhiresmodel
-;; updates version of setupadvancedmodel for R3
-
+;; setupadvancedhiresmodel-r3
 ;; This L2CF fragment is for use when we wish to setup an 'advanced'
 ;; linear forward model (one that is linearised about a different state
 ;; from the one in the l2pc files).
-
-;; This simply takes the current 'state' and produces a full forward
-;; model estimtate of bands 8, 33
-
 
 begin Construct
 
@@ -16,7 +10,7 @@ begin Construct
     signals=['R3:240.B8F:PT.C1:11+15:25','R3:240.B33W:O3.C3'], $
     phiWindow=4 degrees, $
     molecules= [ extinction, [ O2, O_18_O ],[ SO2, S_32_O2 ],$
-    [ O3, O3, O3_R3, O3_V1_3, O3_V2, O3_ASYM_O_18, O3_SYM_O_18 ]], $
+    [ O3, O3, O3_R3, O3_V1_3, O3_V2, O3_ASYM_O_18, O3_SYM_O_18 ], [HNO3, HNO3]], $
     LSBlblMolecules=[EXTINCTION,O3,O3_R3,O_18_O],$
     USBlblMolecules=[EXTINCTION,O3,O3_R3],$
     specificquantities = [temperature_hr,totalextinctionr3], $
@@ -36,23 +30,15 @@ end Construct
 begin Fill
   r3X_HR: Vector, template=stateTemplate
   r3Y_HR: Vector, template=r3YTemplate_HR
-  Transfer, source=state, destination=r3X_HR
 end Fill
-
-;; Do a sids calculation
-begin Retrieve
-  !ifdef(flagSkipAdvancedSids,{},{
-  sids, fwdModelIn=state, fwdModelOut=[r3Y_HR], $
-        forwardModel=[r3SetupModel_HR]})
-end Retrieve
 
 ;; Now we construct the advanced linear models to use these
 begin Construct
 
   advancedL2PCFwmR3B8: ForwardModel, type=linear, $
     signals= ['R3:240.B8F:PT'], $
-    molecules=[extinction, O_18_O, O3, SO2], $
-    moleculeDerivatives=[extinction, O3, SO2], $
+    molecules=[extinction, O_18_O, O3, SO2, HNO3], $
+    moleculeDerivatives=[extinction, O3, SO2, HNO3], $
     specificQuantities=[temperature_HR,totalextinctionr3], $
     /atmos_der, /temp_der, $
     phiWindow=100 profiles, /lockBins, $
@@ -61,8 +47,8 @@ begin Construct
 
   advancedL2PCFwmR3B33: ForwardModel, type=linear, $
     signals= ['R3:240.B33W:O3.C3'], $
-    molecules=[extinction, O_18_O, O3, SO2], $
-    moleculeDerivatives=[extinction, O3, SO2], $
+    molecules=[extinction, O_18_O, O3, SO2, HNO3], $
+    moleculeDerivatives=[extinction, O3, SO2, HNO3], $
     specificQuantities=[temperature_HR,totalextinctionr3], $
     /atmos_der, /temp_der, $
     phiWindow=100 profiles, /lockBins, $
@@ -72,15 +58,3 @@ begin Construct
 end Construct
 
 ;$Log$
-;Revision 1.4  2006/07/10 19:29:12  lambert
-;removed moleculederivatives from  r3SetupModel_HR
-;
-;Revision 1.3  2006/06/29 17:57:14  bill
-;tidied up the R3 model
-;
-;Revision 1.2  2006/06/29 02:30:04  lambert
-;corrections to handle totalextinctionr3
-;
-;Revision 1.1  2006/06/27 00:25:34  lambert
-;advanced forward model for R3 bands 8 and 33
-;
