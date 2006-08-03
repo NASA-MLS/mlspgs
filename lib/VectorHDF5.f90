@@ -232,6 +232,7 @@ contains ! ========================================= Module procedures =======
     call GetHDF5Attribute ( qID, 'minorFrame', minorFrame )
     call GetHDF5Attribute ( qID, 'majorFrame', majorFrame )
     
+    call ReadStringIndexFromHDF5Attr ( qID, 'name', qt%name )
     call SetupNewQuantityTemplate ( qt, noChans=noChans, noSurfs=noSurfs, &
       & noInstances=noInstances, coherent=coherent, stacked=stacked, &
       & regular=regular, minorFrame=minorFrame, majorFrame=majorFrame, &
@@ -239,7 +240,6 @@ contains ! ========================================= Module procedures =======
 
     ! Get the remaining stuff
     ! Write the low level stuff as attributes
-    call ReadStringIndexFromHDF5Attr ( qID, 'name', qt%name )
     call ReadLitIndexFromHDF5Attr ( qID, 'quantityType', qt%quantityType )
     call GetHDF5Attribute ( qID, 'noChans', qt%noChans )
     call GetHDF5Attribute ( qID, 'noSurfs', qt%noSurfs )
@@ -461,6 +461,9 @@ contains ! ========================================= Module procedures =======
 end module VectorHDF5
 
 ! $Log$
+! Revision 2.7  2006/08/03 01:10:06  vsnyder
+! Put l2cf names in leak track database
+!
 ! Revision 2.6  2005/06/22 17:25:51  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
