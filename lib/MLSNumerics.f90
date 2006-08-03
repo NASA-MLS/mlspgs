@@ -18,7 +18,7 @@ module MLSNumerics              ! Some low level numerical stuff
   use MatrixModule_0, only: CreateBlock, M_Absent, MatrixElement_T, Sparsify
   use MLSCommon, only : DEFAULTUNDEFINEDVALUE, R4, R8, Rm
   use MLSFillValues, only: filterValues, IsFillValue
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use MLSSets, only: FindFirst, FindLast
   use MLSStrings, only: Capitalize, lowercase
 
@@ -358,7 +358,7 @@ contains
   ! values.
 
   subroutine HuntArray_r4 ( list, values, indices, start, allowTopValue, &
-    & allowBelowValue, nearest, logSpace )
+    & allowBelowValue, nearest, logSpace, fail )
     integer, parameter :: RK = R4
 
     ! Dummy arguments
@@ -370,14 +370,15 @@ contains
     logical, optional, intent(in) :: allowBelowValue ! Can return 0
     logical, optional, intent(in) :: nearest ! Choose nearest value not one below
     logical, optional, intent(in) :: logSpace ! Choose nearest based on log space
+    logical, optional, intent(out) :: Fail    ! True for failure
 
     include "HuntArray.f9h"
   end subroutine HuntArray_r4
 
 ! -------------------------------------------------  HuntArray_r8  -----
 
-  subroutine HuntArray_r8 ( list, values, indices, start, allowTopValue, allowBelowValue, &
-    & nearest, logSpace )
+  subroutine HuntArray_r8 ( list, values, indices, start, allowTopValue, &
+    & allowBelowValue, nearest, logSpace, fail )
     integer, parameter :: RK = R8
 
     ! Dummy arguments
@@ -389,6 +390,7 @@ contains
     logical, optional, intent(in) :: allowBelowValue ! Can return 0
     logical, optional, intent(in) :: nearest ! Choose nearest value not one below
     logical, optional, intent(in) :: logSpace ! Choose nearest based on log space
+    logical, optional, intent(out) :: Fail    ! True for failure
 
     include "HuntArray.f9h"
   end subroutine HuntArray_r8
@@ -971,6 +973,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.44  2006/08/03 01:57:22  vsnyder
+! Return an optional status flag from Hunt
+!
 ! Revision 2.43  2006/01/14 00:53:05  pwagner
 ! Added HuntRange
 !
