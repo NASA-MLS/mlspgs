@@ -187,7 +187,7 @@ begin Fill
 
 
   Fill, quantity=aprioriPrecision.co,   method=profile, $
-    profileValues= [ 100mb : 0.5ppmv, 150mb : 0.1ppmv, 10mb : 0.2ppmv, 1mb : 0.7ppmv, 0.1mb : 5ppmv, 0.01mb : 10ppmv,  0.001mb : 20ppmv ]
+    profileValues= [ 100mb : 0.5ppmv, 50mb : 0.1ppmv, 10mb : 0.2ppmv, 1mb : 0.7ppmv, 0.1mb : 5ppmv, 0.01mb : 10ppmv,  0.001mb : 20ppmv ]
   Fill, quantity=aprioriPrecision.co_hr,   method=profile, $
     profileValues= [ 464mb : 500ppbv, 316mb : 1ppmv, 100mb : 1ppmv, 0.001mb : 100ppmv ]
   Fill, quantity=aprioriPrecision.h2o, method=profile, profileValues = $
@@ -598,6 +598,9 @@ begin Join
 end Join
   })
 ;$Log$
+;Revision 1.122  2006/08/03 00:52:03  lambert
+;updated vreg.HCN and apriori precisions for HCl and CO
+;
 ;Revision 1.121  2006/07/28 23:34:46  dwu
 ;change co, o3, and hno3 apriori precisions
 ;
