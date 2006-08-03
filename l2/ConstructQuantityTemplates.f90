@@ -146,6 +146,7 @@ contains ! ============= Public procedures ===================================
     ! Set appropriate defaults
     call NullifyQuantityTemplate ( qty ) ! for Sun's rubbish compiler
     nullify ( signalInds )
+    qty%name = name
     fGridIndex = 0
     hGridIndex = 0
     instrumentModule = 0
@@ -426,7 +427,6 @@ contains ! ============= Public procedures ===================================
     qty%logBasis = logBasis
     qty%minValue = minValue
     qty%molecule = molecule
-    qty%name = name
     qty%quantityType = quantityType
     qty%radiometer = radiometer
     qty%reflector = reflector
@@ -571,7 +571,8 @@ contains ! ============= Public procedures ===================================
         & l1bFlag, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
       if ( l1bFlag==-1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_L1BRead//l1bItemName )
-      
+
+      qty%name = 0
       call SetupNewQuantityTemplate ( qty, noInstances=noMAFs, &
         & noSurfs=l1bField%maxMIFs, noChans=noChans, coherent=.false., &
         & stacked=.false., regular=regular, instanceLen=instanceLen, &
@@ -770,6 +771,7 @@ contains ! ============= Public procedures ===================================
 
     ! Setup the minor frame quantity template
     ! Note this will destroy the old ones contents bit by bit.
+    mifGeolocation(instrumentModule)%name = 0
     call SetupNewQuantityTemplate ( mifGeolocation(instrumentModule), &
       & noInstances=noMAFs, noSurfs=noMIFs, noChans=1,&
       & coherent=.false., stacked=.false., regular=.true.,&
@@ -990,6 +992,7 @@ contains ! ============= Public procedures ===================================
     
     ! Executable code
     source => mifGeolocation(instrumentModule)
+    qty%name = 0
     call SetupNewQuantityTemplate ( qty, noInstances=source%noInstances, &
       & noSurfs=1, coherent=.true., stacked=.true., regular=.true., &
       & noChans=noChans, sharedHGrid=.true., sharedVGrid=.true. )
@@ -1289,6 +1292,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.133  2006/08/03 01:57:42  vsnyder
+! Make sure qty%name is defined
+!
 ! Revision 2.132  2006/07/20 23:39:53  vsnyder
 ! Remove unused declarations and USEs
 !
