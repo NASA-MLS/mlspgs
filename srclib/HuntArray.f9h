@@ -82,7 +82,7 @@
       call dump(values, 'values')
       call dump(list, 'list')
       if ( present(fail) ) then
-        call MLSMessage ( MLSMSG_Warning, &ModuleName, &
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & "Result array is too small" )
         fail = .true.
         return
@@ -287,6 +287,9 @@
 ! end subroutine HuntArray_r*
 
 ! $Log$
+! Revision 1.11  2006/08/03 01:56:54  vsnyder
+! Return a status flag if it's present
+!
 ! Revision 1.10  2006/01/04 20:49:19  vsnyder
 ! Handle ListLen==1 for secant-method startup
 !
