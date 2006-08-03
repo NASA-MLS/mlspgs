@@ -39,6 +39,7 @@
 
 
     ! Executable code
+    if ( present(fail) ) fail = .false. ! Assume it will work
     listLen = size(list)
     valuesLen = size(values)
 
@@ -69,11 +70,23 @@
     if ( useNearest .and. useAllowBelowValue ) then
       call dump(values, 'values')
       call dump(list, 'list')
+      if ( present(fail) ) then
+        call MLSMessage ( MLSMSG_Warning, &
+          & ModuleName, "Can't set nearest and allowBelowValue in Hunt" )
+        fail = .true.
+        return
+      end if
       call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "Can't set nearest and allowBelowValue in Hunt" )
     elseif ( size(indices) < valuesLen ) then
       call dump(values, 'values')
       call dump(list, 'list')
+      if ( present(fail) ) then
+        call MLSMessage ( MLSMSG_Warning, &ModuleName, &
+        & "Result array is too small" )
+        fail = .true.
+        return
+      end if
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "Result array is too small" )
     endif
@@ -164,6 +177,12 @@
           ! The list is really screwey
           call dump(values, 'values')
           call dump(list, 'list')
+          if ( present(fail) ) then
+            call MLSMessage ( MLSMSG_Warning, ModuleName, &
+              & 'List out of order in Hunt (case 1)' )
+            fail = .true.
+            return
+          end if
           call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'List out of order in Hunt (case 1)' )
         end if
@@ -203,6 +222,12 @@
            ! print*, 'list(oldindex) ', list(oldindex)
            ! print*, 'index ', index
            ! print*, 'list(index) ', list(index)
+           if ( present(fail) ) then
+             call MLSMessage ( MLSMSG_Warning, ModuleName, &
+               & 'List out of order in Hunt (case 2)' )
+             fail = .true.
+             return
+           end if
            call MLSMessage ( MLSMSG_Error, ModuleName, &
              & 'List out of order in Hunt (case 2)' )
         endif
@@ -225,6 +250,12 @@
             &                    <= 0.0 ) ) then
             call dump(values, 'values')
             call dump(list, 'list')
+            if ( present(fail) ) then
+              call MLSMessage ( MLSMSG_Warning, ModuleName, &
+                & 'Non positive value in logSpace nearest hunt' )
+              fail = .true.
+              return
+            end if
             call MLSMessage ( MLSMSG_Error, ModuleName, &
               & 'Non positive value in logSpace nearest hunt' )
           endif
@@ -256,6 +287,9 @@
 ! end subroutine HuntArray_r*
 
 ! $Log$
+! Revision 1.10  2006/01/04 20:49:19  vsnyder
+! Handle ListLen==1 for secant-method startup
+!
 ! Revision 1.9  2006/01/04 02:10:39  vsnyder
 ! Use secant method to get start if start not specified
 !
