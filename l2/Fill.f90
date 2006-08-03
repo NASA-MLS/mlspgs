@@ -2801,8 +2801,9 @@ contains ! =====     Public Procedures     =============================
       integer :: S                      ! Surface loop counter
       integer :: STATUS                 ! Flag
       integer :: TESTUNIT               ! Unit for value
-      logical :: MYLOGSPACE             ! Interpolate in log space?
+      logical :: Fail                   ! Status from Hunt
       logical :: LOCALOUTHEIGHTS ! Set if out heights is our own variable
+      logical :: MYLOGSPACE             ! Interpolate in log space?
       real (r8), dimension(:), pointer :: HEIGHTS ! Heights for the points
       real (r8), dimension(:), pointer :: VALUES ! Values for the points
       real (r8), dimension(:), pointer :: OUTHEIGHTS ! Heights for output
@@ -2885,7 +2886,12 @@ contains ! =====     Public Procedures     =============================
         nullify ( inInds )
         call allocate_test ( inInds, noPoints, 'inInds', ModuleName )
         call hunt ( outHeights, heights, inInds, &
-          & nearest=.true., allowTopValue=.true. )
+          & nearest=.true., allowTopValue=.true., fail=fail )
+        if ( fail ) then
+          call Announce_Error ( valuesNode, no_error_code, &
+          & 'Problem in Hunt' )
+        return
+      end if
         duplicated = .false.
         do i = 1, noPoints - 1
           do j = i + 1, noPoints
@@ -7854,6 +7860,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.343  2006/08/03 01:58:03  vsnyder
+! Better error message if profile is out of order
+!
 ! Revision 2.342  2006/08/02 19:52:29  vsnyder
 ! Move destroy processing to DestroyCommand_m
 !
