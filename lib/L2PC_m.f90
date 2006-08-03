@@ -1610,11 +1610,11 @@ contains ! ============= Public Procedures ==========================
       call GetHDF5Attribute ( MLSFile, 'coherent', coherent )
       call GetHDF5Attribute ( MLSFile, 'stacked', stacked )
 
+      qt%quantityType = quantityType
       call SetupNewQuantityTemplate ( qt, &
         & noInstances=noInstances, noSurfs=noSurfs, noChans=noChans, &
         & coherent=coherent, stacked=stacked )
 
-      qt%quantityType = quantityType
       qt%name = nameIndex
       qt%molecule = molecule
       qt%radiometer = radiometer
@@ -1803,6 +1803,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.76  2006/08/03 01:10:06  vsnyder
+! Put l2cf names in leak track database
+!
 ! Revision 2.75  2005/06/29 00:42:35  pwagner
 ! Passes MLSFiles to GetHDF5Attribute, LoadFromHDF5DS
 !
