@@ -37,10 +37,12 @@ contains
   ! The ``Retrieve'' section can have ForwardModel, Matrix, Sids, Subset or
   ! Retrieve specifications.
 
-    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, TrackAllocates
     use BitStuff, only: CountBits
     use Chunks_m, only: MLSChunk_T
+    use CloudRetrievalModule, only: CloudRetrieval
     use DumpCommand_m, only: DumpCommand
+    use IEEE_Arithmetic, only: IEEE_IS_NAN
     use Expr_M, only: Expr
     use ForwardModelConfig, only: ForwardModelConfig_T
     use Init_Tables_Module, only: F_apriori, F_aprioriScale, F_Average, &
@@ -66,7 +68,7 @@ contains
       & L_highcloud, L_Jacobian_Cols, L_Jacobian_Rows, &
       & L_lowcloud, L_newtonian, L_none, L_norm, &
       & L_NumGrad, L_numJ, L_NumNewt, &
-      & S_dump, S_dumpBlocks, S_flagCloud, S_flushPFA, S_matrix, &
+      & S_dump, S_dumpBlocks, S_flagCloud, S_flushPFA, S_LeakCheck, S_matrix, &
       & S_restrictRange, S_retrieve, S_sids, S_snoop, S_subset, S_time, &
       & S_updateMask
     use Intrinsic, only: PHYQ_Dimensionless
@@ -91,6 +93,7 @@ contains
     use Time_M, only: Time_Now
     use Toggles, only: Gen, Switches, Toggle, Levels
     use Trace_M, only: Trace_begin, Trace_end
+    use Track_m, only: ReportLeaks
     use Tree, only: Decorate, Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, &
       & Subtree
     use Tree_Types, only: N_named
@@ -98,8 +101,6 @@ contains
       & ClearVector, CloneVector, CopyVector, CopyVectorMask, CreateMask, &
       & DestroyVectorInfo, GetVectorQuantityByType, M_LinAlg, &
       & Vector_T, VectorValue_T
-    use CloudRetrievalModule, only: CloudRetrieval
-    use IEEE_Arithmetic, only: IEEE_IS_NAN
 
     ! Dummy arguments:
     integer, intent(in) :: Root         ! Of the relevant subtree of the AST;
@@ -209,6 +210,7 @@ contains
     integer :: VRegQuants                ! Regularization quantities
     integer :: VRegWeights               ! Weight of regularization conditions
     type(vector_T), pointer :: VRegWeightVec  ! Weight vector for regularization
+    character(len=63) :: WhereLeakCheck   ! From LeakCheck command, else default
 
     ! Indexes in the private vectors database
     integer, parameter :: FirstVec = 1
@@ -303,6 +305,15 @@ contains
       case ( s_flushPFA )
         call flush_PFAData ( key, status )
         error = max(error,status)
+      case ( s_leakCheck )
+        if ( trackAllocates > 0 ) then
+          whereLeakCheck = "In retrieval module..."
+          if ( nsons(key) > 1 ) then
+            call get_string ( sub_rosa(subtree(2,subtree(2,key))), whereLeakCheck, &
+              & strip=.true. )
+          end if
+          call reportLeaks ( whereLeakCheck )
+        end if
       case ( s_matrix )
         if ( toggle(gen) ) call trace_begin ( "Retrieve.matrix/vector", root )
         if ( nsons(key) /= 1 ) call announceError ( noFields, spec )
@@ -2635,6 +2646,9 @@ NEWT: do ! Newtonian iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.281  2006/08/04 18:11:33  vsnyder
+! Add LeakCheck command
+!
 ! Revision 2.280  2006/08/01 02:48:33  vsnyder
 ! Remove unused USE for .TX.
 !
