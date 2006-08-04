@@ -783,9 +783,9 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
     if ( qty%name > 0 ) then
-      what = "qty"
-    else
       call get_string ( qty%name, what )
+    else
+      what = "qty"
     end if
 
     qty%quantityType = 0
@@ -928,6 +928,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.46  2006/08/04 01:54:16  vsnyder
+! Use >0 instead of ==0 to test the name string
+!
 ! Revision 2.45  2006/08/03 01:10:06  vsnyder
 ! Put l2cf names in leak track database
 !
