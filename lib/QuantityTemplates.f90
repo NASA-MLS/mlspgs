@@ -227,7 +227,7 @@ contains ! =====     Public Procedures     =============================
       noSurfsOr1 = qty%noSurfs
     end if
 
-    if ( qty%name /= 0 ) then
+    if ( qty%name > 0 ) then
       call get_string ( qty%name, name, strip=.true. )
     else
       name = '<no name>'
@@ -782,7 +782,7 @@ contains ! =====     Public Procedures     =============================
     character(63) :: What
 
     ! Executable code
-    if ( qty%name == 0 ) then
+    if ( qty%name > 0 ) then
       what = "qty"
     else
       call get_string ( qty%name, what )
@@ -928,6 +928,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.45  2006/08/03 01:10:06  vsnyder
+! Put l2cf names in leak track database
+!
 ! Revision 2.44  2006/03/22 23:49:20  vsnyder
 ! Change the name of a dummy argument, add some comments
 !
