@@ -426,6 +426,7 @@ vRegQuants
 vRegWeights
 vRegWeightVec
 
+where
 whereFill
 whereNotFill
 writeCounterMAF
@@ -435,6 +436,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.171  2006/08/04 18:08:48  vsnyder
+# Add where field
+#
 # Revision 2.170  2006/08/02 19:52:08  vsnyder
 # Add destroy field for output command
 #
