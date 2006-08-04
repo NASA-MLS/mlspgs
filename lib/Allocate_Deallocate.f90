@@ -121,22 +121,24 @@ contains
   ! =====     Public Procedures      ===================================
 
   !-----------------------------------   ReportAllocateDeallocate_ints  -----
-  subroutine ReportAllocateDeallocate_ints ( name, moduleName, noBytes )
+  subroutine ReportAllocateDeallocate_ints ( name, moduleName, noBytes, bounds )
     ! Dummy arguments
     character (len=*), intent(in) :: NAME ! Name of thing allocated
     character (len=*), intent(in) :: MODULENAME ! Module that allocated it
     integer, intent(in) :: noBytes      ! No bytes allocated (or deallocated if -ve)
-    !
+    character (len=*), intent(in), optional :: Bounds ! for allocation
+
     call ReportAllocateDeallocate( name, moduleName, real(noBytes) )
   end subroutine ReportAllocateDeallocate_ints
 
   !-----------------------------------   ReportAllocateDeallocate_real  -----
-  subroutine ReportAllocateDeallocate_real ( name, moduleName, noBytes )
+  subroutine ReportAllocateDeallocate_real ( name, moduleName, noBytes, bounds )
     use Output_m, only: OUTPUT, DUMPSIZE
     ! Dummy arguments
     character (len=*), intent(in) :: NAME ! Name of thing allocated
     character (len=*), intent(in) :: MODULENAME ! Module that allocated it
     real, intent(in) :: noBytes      ! No bytes allocated (or deallocated if -ve)
+    character (len=*), intent(in), optional :: Bounds ! for allocation
 
     ! Executable code
     if ( trackAllocates <= 0 ) return        ! Most probably will not be called anyway
@@ -150,7 +152,9 @@ contains
     end if
     call output ( 'llocated ' )
     call DumpSize ( abs ( noBytes ), units=MEMORY_UNITS )
-    call output ( ' for ' // trim ( name ) // ' in ' )
+    call output ( ' for ' // trim ( name ) )
+    if ( present(bounds) ) call output ( trim(bounds) )
+    call output ( ' in ' )
     if ( moduleName(1:1) == '$' ) then
       ! The moduleNameIn is <dollar>RCSFile: <filename>,v <dollar>
       call output ( moduleName(11:(len_trim(moduleName)-8)) )
@@ -181,24 +185,27 @@ contains
     character(127) :: Bounds
     integer :: I, L
 
-    if ( status /= 0 ) then
+    if ( status /= 0 .or. present(elementSize) .and. trackAllocates >= 2 ) then
       ! print *, 'status ', status
       write ( bounds, '("(",i0,":",i0, 2(:",",i0,":",i0))' ) &
         & ( lBounds(i), uBounds(i), i = 1, size(lBounds) )
       l = len_trim(bounds)+1
       bounds(l:l)= ')'
-      call MLSMessage ( MLSMSG_Error, moduleNameIn, &
-        & MLSMSG_Allocate // ItsName  // bounds(:l) )
+      if ( status /= 0 ) &
+        & call MLSMessage ( MLSMSG_Error, moduleNameIn, &
+          & MLSMSG_Allocate // ItsName  // bounds(:l) )
     end if
 
     if ( .not. present(elementSize) ) return
 
-    if ( elementSize > 0 ) then
-      amount = memproduct(elementSize, ubounds-lbounds+1)
-      if ( trackAllocates >= 2 .and. present(elementSize) ) then
-        call ReportAllocateDeallocate ( itsName, moduleNameIn, amount )
-      else
-        noBytesAllocated = noBytesAllocated + amount
+    if ( present(elementSize) ) then
+      if ( elementSize > 0 ) then
+        amount = memproduct(elementSize, ubounds-lbounds+1)
+        if ( trackAllocates >= 2 ) then
+          call ReportAllocateDeallocate ( itsName, moduleNameIn, amount, bounds )
+        else
+          noBytesAllocated = noBytesAllocated + amount
+        end if
       end if
     end if
 
@@ -668,6 +675,9 @@ contains
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.31  2006/08/04 18:12:56  vsnyder
+! Add 'bounds' to ReportAlllocateDeallocate, don't look at ElementSize if it's not present
+!
 ! Revision 2.30  2006/07/29 03:01:07  vsnyder
 ! Use track_m stuff
 !
