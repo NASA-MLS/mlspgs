@@ -29,14 +29,16 @@ contains
   subroutine DestroyCommand ( Key, Matrices, Vectors )
 
     use Init_Tables_Module, only: F_AllMatrices, F_AllVectors, F_Matrix, F_Vector
-    use MatrixModule_1, only: DestroyMatrix, Dump, Matrix_Database_T
+    use MatrixModule_1, only: DestroyMatrixDatabase, DestroyMatrix, Dump, &
+      & Matrix_Database_T
     use MoreTree, only: Get_Boolean, Get_Field_ID
     use Output_m, only: Output
     use String_Table, only: Display_String
     use Toggles, only: Toggle, Gen
     use Trace_m, only: Trace_begin, Trace_end
     use Tree, only: Decoration, NSons, Subtree
-    use VectorsModule, only: DestroyVectorInfo, Dump, Vector_T
+    use VectorsModule, only: DestroyVectorDatabase, DestroyVectorInfo, Dump, &
+      & Vector_T
 
     integer, intent(in) :: Key ! Root of parse subtree
     type (matrix_database_T), dimension(:), pointer :: Matrices
@@ -53,17 +55,9 @@ contains
       son = subtree(j,key)  ! The argument
       select case ( get_field_id(son) )
       case ( f_allMatrices )
-        if ( get_boolean(son) ) then
-          do k = 1, size(matrices)
-            call DestroyMatrix ( matrices(k) )
-          end do
-        end if
+        if ( get_boolean(son) ) call destroyMatrixDatabase ( matrices )
       case ( f_allVectors )
-        if ( get_boolean(son) ) then
-          do k = 1, size(vectors)
-            call DestroyVectorInfo ( vectors(k) )
-          end do
-        end if
+        if ( get_boolean(son) ) call destroyVectorDatabase ( vectors )
       case ( f_matrix )
         do k = 2, nsons(son)
           matrixToKill = decoration(decoration(subtree(k,son)))
@@ -122,6 +116,9 @@ contains
 end module DestroyCommand_m
 
 ! $Log$
+! Revision 2.3  2006/08/04 18:08:23  vsnyder
+! Simplify /allMatrices and /allVectors
+!
 ! Revision 2.2  2006/08/03 20:06:56  vsnyder
 ! Added /allvectors and /allmatrices
 !
