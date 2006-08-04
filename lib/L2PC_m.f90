@@ -1610,12 +1610,12 @@ contains ! ============= Public Procedures ==========================
       call GetHDF5Attribute ( MLSFile, 'coherent', coherent )
       call GetHDF5Attribute ( MLSFile, 'stacked', stacked )
 
-      qt%quantityType = quantityType
+      qt%name = nameIndex
       call SetupNewQuantityTemplate ( qt, &
         & noInstances=noInstances, noSurfs=noSurfs, noChans=noChans, &
         & coherent=coherent, stacked=stacked )
 
-      qt%name = nameIndex
+      qt%quantityType = quantityType
       qt%molecule = molecule
       qt%radiometer = radiometer
       qt%signal = signal
@@ -1803,6 +1803,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.77  2006/08/04 01:53:43  vsnyder
+! Need to set the name, not quantityType before SetupNewQuantityTemplate
+!
 ! Revision 2.76  2006/08/03 01:10:06  vsnyder
 ! Put l2cf names in leak track database
 !
