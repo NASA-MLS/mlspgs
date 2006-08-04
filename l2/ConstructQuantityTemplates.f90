@@ -422,6 +422,7 @@ contains ! ============= Public procedures ===================================
     end if
 
     ! Set up the remaining stuff
+    qty%name = name
     qty%frequencyCoordinate = frequencyCoordinate
     qty%instrumentmodule = instrumentmodule
     qty%logBasis = logBasis
@@ -1292,6 +1293,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.134  2006/08/04 20:52:20  pwagner
+! Restore quantity name (if clobbered by SetUp..)
+!
 ! Revision 2.133  2006/08/03 01:57:42  vsnyder
 ! Make sure qty%name is defined
 !
