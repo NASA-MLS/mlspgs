@@ -198,6 +198,8 @@ module Track_m
 
   integer, parameter :: InitSize = 100
 
+  integer, parameter :: CharsPerInt = 4 ! Characters per integer
+
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
@@ -662,15 +664,9 @@ contains
     do i = 1, num_c1
       if ( associated(track_c1(i)%p, what(:)(1:1)) ) then
         nullify ( track_c1(i)%p )  ! Mark it free
-        if ( i == num_c1 ) then    ! Reduce count to speed searches
-          do j = num_c1-1, 1, -1
-            if ( associated(track_c1(j)%p) ) then
-              num_c1 = j
-              return
-            end if
-          end do
-          num_c1 = 0
-        end if
+        do num_c1 = num_c1, 1, -1  ! Reduce count to speed searches
+          if ( associated(track_c1(num_c1)%p) ) return
+        end do
         return
       end if
     end do
@@ -684,15 +680,9 @@ contains
     do i = 1, num_c2
       if ( associated(track_c2(i)%p, what(:,:)(1:1)) ) then
         nullify ( track_c2(i)%p )  ! Mark it free
-        if ( i == num_c2 ) then    ! Reduce count to speed searches
-          do j = num_c2-1, 1, -1
-            if ( associated(track_c2(j)%p) ) then
-              num_c2 = j
-              return
-            end if
-          end do
-          num_c2 = 0
-        end if
+        do num_c2 = num_c2, 1, -1  ! Reduce count to speed searches
+          if ( associated(track_c2(num_c2)%p) ) return
+        end do
         return
       end if
     end do
@@ -706,15 +696,9 @@ contains
     do i = 1, num_c3
       if ( associated(track_c3(i)%p, what(:,:,:)(1:1)) ) then
         nullify ( track_c3(i)%p )  ! Mark it free
-        if ( i == num_c3 ) then    ! Reduce count to speed searches
-          do j = num_c3-1, 1, -1
-            if ( associated(track_c3(j)%p) ) then
-              num_c3 = j
-              return
-            end if
-          end do
-          num_c3 = 0
-        end if
+        do num_c3 = num_c3, 1, -1  ! Reduce count to speed searches
+          if ( associated(track_c3(num_c3)%p) ) return
+        end do
         return
       end if
     end do
@@ -729,15 +713,9 @@ contains
     do i = 1, num_x1
       if ( associated(track_x1(i)%p, what) ) then
         nullify ( track_x1(i)%p )  ! Mark it free
-        if ( i == num_x1 ) then    ! Reduce count to speed searches
-          do j = num_x1-1, 1, -1
-            if ( associated(track_x1(j)%p) ) then
-              num_x1 = j
-              return
-            end if
-          end do
-          num_x1 = 0
-        end if
+        do num_x1 = num_x1, 1, -1  ! Reduce count to speed searches
+          if ( associated(track_x1(num_x1)%p) ) return
+        end do
         return
       end if
     end do
@@ -751,15 +729,9 @@ contains
     do i = 1, num_x2
       if ( associated(track_x2(i)%p, what) ) then
         nullify ( track_x2(i)%p )  ! Mark it free
-        if ( i == num_x2 ) then    ! Reduce count to speed searches
-          do j = num_x2-1, 1, -1
-            if ( associated(track_x2(j)%p) ) then
-              num_x2 = j
-              return
-            end if
-          end do
-          num_x2 = 0
-        end if
+        do num_x2 = num_x2, 1, -1  ! Reduce count to speed searches
+          if ( associated(track_x2(num_x2)%p) ) return
+        end do
         return
       end if
     end do
@@ -773,15 +745,9 @@ contains
     do i = 1, num_x3
       if ( associated(track_x3(i)%p, what) ) then
         nullify ( track_x3(i)%p )  ! Mark it free
-        if ( i == num_x3 ) then    ! Reduce count to speed searches
-          do j = num_x3-1, 1, -1
-            if ( associated(track_x3(j)%p) ) then
-              num_x3 = j
-              return
-            end if
-          end do
-          num_x3 = 0
-        end if
+        do num_x3 = num_x3, 1, -1  ! Reduce count to speed searches
+          if ( associated(track_x3(num_x3)%p) ) return
+        end do
         return
       end if
     end do
@@ -796,15 +762,9 @@ contains
     do i = 1, num_z1
       if ( associated(track_z1(i)%p, what) ) then
         nullify ( track_z1(i)%p )  ! Mark it free
-        if ( i == num_z1 ) then    ! Reduce count to speed searches
-          do j = num_z1-1, 1, -1
-            if ( associated(track_z1(j)%p) ) then
-              num_z1 = j
-              return
-            end if
-          end do
-          num_z1 = 0
-        end if
+        do num_z1 = num_z1, 1, -1  ! Reduce count to speed searches
+          if ( associated(track_z1(num_z1)%p) ) return
+        end do
         return
       end if
     end do
@@ -818,15 +778,9 @@ contains
     do i = 1, num_z2
       if ( associated(track_z2(i)%p, what) ) then
         nullify ( track_z2(i)%p )  ! Mark it free
-        if ( i == num_z2 ) then    ! Reduce count to speed searches
-          do j = num_z2-1, 1, -1
-            if ( associated(track_z2(j)%p) ) then
-              num_z2 = j
-              return
-            end if
-          end do
-          num_z2 = 0
-        end if
+        do num_z2 = num_z2, 1, -1  ! Reduce count to speed searches
+          if ( associated(track_z2(num_z2)%p) ) return
+        end do
         return
       end if
     end do
@@ -840,15 +794,9 @@ contains
     do i = 1, num_z3
       if ( associated(track_z3(i)%p, what) ) then
         nullify ( track_z3(i)%p )  ! Mark it free
-        if ( i == num_z3 ) then    ! Reduce count to speed searches
-          do j = num_z3-1, 1, -1
-            if ( associated(track_z3(j)%p) ) then
-              num_z3 = j
-              return
-            end if
-          end do
-          num_z3 = 0
-        end if
+        do num_z3 = num_z3, 1, -1  ! Reduce count to speed searches
+          if ( associated(track_z3(num_z3)%p) ) return
+        end do
         return
       end if
     end do
@@ -863,15 +811,9 @@ contains
     do i = 1, num_i1
       if ( associated(track_i1(i)%p, what) ) then
         nullify ( track_i1(i)%p )  ! Mark it free
-        if ( i == num_i1 ) then    ! Reduce count to speed searches
-          do j = num_i1-1, 1, -1
-            if ( associated(track_i1(j)%p) ) then
-              num_i1 = j
-              return
-            end if
-          end do
-          num_i1 = 0
-        end if
+        do num_i1 = num_i1, 1, -1  ! Reduce count to speed searches
+          if ( associated(track_i1(num_i1)%p) ) return
+        end do
         return
       end if
     end do
@@ -885,15 +827,9 @@ contains
     do i = 1, num_i2
       if ( associated(track_i2(i)%p, what) ) then
         nullify ( track_i2(i)%p )  ! Mark it free
-        if ( i == num_i2 ) then    ! Reduce count to speed searches
-          do j = num_i2-1, 1, -1
-            if ( associated(track_i2(j)%p) ) then
-              num_i2 = j
-              return
-            end if
-          end do
-          num_i2 = 0
-        end if
+        do num_i2 = num_i2, 1, -1  ! Reduce count to speed searches
+          if ( associated(track_i2(num_i2)%p) ) return
+        end do
         return
       end if
     end do
@@ -907,15 +843,9 @@ contains
     do i = 1, num_i3
       if ( associated(track_i3(i)%p, what) ) then
         nullify ( track_i3(i)%p )  ! Mark it free
-        if ( i == num_i3 ) then    ! Reduce count to speed searches
-          do j = num_i3-1, 1, -1
-            if ( associated(track_i3(j)%p) ) then
-              num_i3 = j
-              return
-            end if
-          end do
-          num_i3 = 0
-        end if
+        do num_i3 = num_i3, 1, -1  ! Reduce count to speed searches
+          if ( associated(track_i3(num_i3)%p) ) return
+        end do
         return
       end if
     end do
@@ -930,15 +860,9 @@ contains
     do i = 1, num_r1
       if ( associated(track_r1(i)%p, what) ) then
         nullify ( track_r1(i)%p )  ! Mark it free
-        if ( i == num_r1 ) then    ! Reduce count to speed searches
-          do j = num_r1-1, 1, -1
-            if ( associated(track_r1(j)%p) ) then
-              num_r1 = j
-              return
-            end if
-          end do
-          num_r1 = 0
-        end if
+        do num_r1 = num_r1, 1, -1  ! Reduce count to speed searches
+          if ( associated(track_r1(num_r1)%p) ) return
+        end do
         return
       end if
     end do
@@ -952,15 +876,9 @@ contains
     do i = 1, num_r2
       if ( associated(track_r2(i)%p, what) ) then
         nullify ( track_r2(i)%p )  ! Mark it free
-        if ( i == num_r2 ) then    ! Reduce count to speed searches
-          do j = num_r2-1, 1, -1
-            if ( associated(track_r2(j)%p) ) then
-              num_r2 = j
-              return
-            end if
-          end do
-          num_r2 = 0
-        end if
+        do num_r2 = num_r2, 1, -1  ! Reduce count to speed searches
+          if ( associated(track_r2(num_r2)%p) ) return
+        end do
         return
       end if
     end do
@@ -974,15 +892,9 @@ contains
     do i = 1, num_r3
       if ( associated(track_r3(i)%p, what) ) then
         nullify ( track_r3(i)%p )  ! Mark it free
-        if ( i == num_r3 ) then    ! Reduce count to speed searches
-          do j = num_r3-1, 1, -1
-            if ( associated(track_r3(j)%p) ) then
-              num_r3 = j
-              return
-            end if
-          end do
-          num_r3 = 0
-        end if
+        do num_r3 = num_r3, 1, -1  ! Reduce count to speed searches
+          if ( associated(track_r3(num_r3)%p) ) return
+        end do
         return
       end if
     end do
@@ -997,15 +909,9 @@ contains
     do i = 1, num_d1
       if ( associated(track_d1(i)%p, what) ) then
         nullify ( track_d1(i)%p )  ! Mark it free
-        if ( i == num_d1 ) then    ! Reduce count to speed searches
-          do j = num_d1-1, 1, -1
-            if ( associated(track_d1(j)%p) ) then
-              num_d1 = j
-              return
-            end if
-          end do
-          num_d1 = 0
-        end if
+        do num_d1 = num_d1, 1, -1  ! Reduce count to speed searches
+          if ( associated(track_d1(num_d1)%p) ) return
+        end do
         return
       end if
     end do
@@ -1019,15 +925,9 @@ contains
     do i = 1, num_d2
       if ( associated(track_d2(i)%p, what) ) then
         nullify ( track_d2(i)%p )  ! Mark it free
-        if ( i == num_d2 ) then    ! Reduce count to speed searches
-          do j = num_d2-1, 1, -1
-            if ( associated(track_d2(j)%p) ) then
-              num_d2 = j
-              return
-            end if
-          end do
-          num_d2 = 0
-        end if
+        do num_d2 = num_d2, 1, -1  ! Reduce count to speed searches
+          if ( associated(track_d2(num_d2)%p) ) return
+        end do
         return
       end if
     end do
@@ -1041,15 +941,9 @@ contains
     do i = 1, num_d3
       if ( associated(track_d3(i)%p, what) ) then
         nullify ( track_d3(i)%p )  ! Mark it free
-        if ( i == num_d3 ) then    ! Reduce count to speed searches
-          do j = num_d3-1, 1, -1
-            if ( associated(track_d3(j)%p) ) then
-              num_d3 = j
-              return
-            end if
-          end do
-          num_d3 = 0
-        end if
+        do num_d3 = num_d3, 1, -1  ! Reduce count to speed searches
+          if ( associated(track_d3(num_d3)%p) ) return
+        end do
         return
       end if
     end do
@@ -1064,15 +958,9 @@ contains
     do i = 1, num_l1
       if ( associated(track_l1(i)%p, what) ) then
         nullify ( track_l1(i)%p )  ! Mark it free
-        if ( i == num_l1 ) then    ! Reduce count to speed searches
-          do j = num_l1-1, 1, -1
-            if ( associated(track_l1(j)%p) ) then
-              num_l1 = j
-              return
-            end if
-          end do
-          num_l1 = 0
-        end if
+        do num_l1 = num_l1, 1, -1  ! Reduce count to speed searches
+          if ( associated(track_l1(num_l1)%p) ) return
+        end do
         return
       end if
     end do
@@ -1086,15 +974,9 @@ contains
     do i = 1, num_l2
       if ( associated(track_l2(i)%p, what) ) then
         nullify ( track_l2(i)%p )  ! Mark it free
-        if ( i == num_l2 ) then    ! Reduce count to speed searches
-          do j = num_l2-1, 1, -1
-            if ( associated(track_l2(j)%p) ) then
-              num_l2 = j
-              return
-            end if
-          end do
-          num_l2 = 0
-        end if
+        do num_l2 = num_l2, 1, -1  ! Reduce count to speed searches
+          if ( associated(track_l2(num_l2)%p) ) return
+        end do
         return
       end if
     end do
@@ -1108,218 +990,284 @@ contains
     do i = 1, num_l3
       if ( associated(track_l3(i)%p, what) ) then
         nullify ( track_l3(i)%p )  ! Mark it free
-        if ( i == num_l3 ) then    ! Reduce count to speed searches
-          do j = num_l3-1, 1, -1
-            if ( associated(track_l3(j)%p) ) then
-              num_l3 = j
-              return
-            end if
-          end do
-          num_l3 = 0
-        end if
+        do num_l3 = num_l3, 1, -1  ! Reduce count to speed searches
+          if ( associated(track_l3(num_l3)%p) ) return
+        end do
         return
       end if
     end do
     write ( *, '("No allocation found for ", a, " in ", a)' ) trim(where), trim(trimModule(module))
   end subroutine TrackDeallocate_L3
 
-  subroutine ReportLeaks
-    write ( *, '(a)' ) "Checking for leaks..."
-    call reportLeaks_c1
-    call reportLeaks_c2
-    call reportLeaks_c3
-    call reportLeaks_x1
-    call reportLeaks_x2
-    call reportLeaks_x3
-    call reportLeaks_z1
-    call reportLeaks_z2
-    call reportLeaks_z3
-    call reportLeaks_i1
-    call reportLeaks_i2
-    call reportLeaks_i3
-    call reportLeaks_r1
-    call reportLeaks_r2
-    call reportLeaks_r3
-    call reportLeaks_d1
-    call reportLeaks_d2
-    call reportLeaks_d3
-    call reportLeaks_l1
-    call reportLeaks_l2
-    call reportLeaks_l3
+  subroutine ReportLeaks ( Where )
+    use output_m, only: DumpSize
+    character(len=*), intent(in), optional :: Where
+    double precision :: Total ! memory still allocated that we could find
+    if ( present(where) )  write ( *, '(a)' ) trim(where)
+    write ( *, '(a)' ) "Checking for leaks involving arrays of one, two, or three dimensions", &
+                     & "of type character, complex, double precision complex, integer, real", &
+                     & "double precision, and logical.  Other types and ranks not tracked."
+    total = 0
+    call reportLeaks_c1 ( total )
+    call reportLeaks_c2 ( total )
+    call reportLeaks_c3 ( total )
+    call reportLeaks_x1 ( total )
+    call reportLeaks_x2 ( total )
+    call reportLeaks_x3 ( total )
+    call reportLeaks_z1 ( total )
+    call reportLeaks_z2 ( total )
+    call reportLeaks_z3 ( total )
+    call reportLeaks_i1 ( total )
+    call reportLeaks_i2 ( total )
+    call reportLeaks_i3 ( total )
+    call reportLeaks_r1 ( total )
+    call reportLeaks_r2 ( total )
+    call reportLeaks_r3 ( total )
+    call reportLeaks_d1 ( total )
+    call reportLeaks_d2 ( total )
+    call reportLeaks_d3 ( total )
+    call reportLeaks_l1 ( total )
+    call reportLeaks_l2 ( total )
+    call reportLeaks_l3 ( total )
+    call dumpsize ( total, advance='yes', before='At least ', &
+      & after=' total still allocated.' )
   end subroutine ReportLeaks
 
-  subroutine ReportLeaks_c1
+  subroutine ReportLeaks_c1 ( Total )
+    double precision, intent(inout) :: Total
     integer :: I
     do i = 1, num_c1
-      if ( associated(track_c1(i)%p) ) &
-        & write ( *, '(a," Still allocated with ", i0, " elements")' ) &
-            & track_c1(i)%where, size(track_c1(i)%p)
+      if ( associated(track_c1(i)%p) ) then
+        write ( *, '(a," Still allocated with ", i0, " elements")' ) &
+         &  track_c1(i)%where, size(track_c1(i)%p)
+        total = total + len(track_c1(i)%p) * size(track_c1(i)%p)
+      end if
     end do
   end subroutine ReportLeaks_c1
-  subroutine ReportLeaks_c2
+  subroutine ReportLeaks_c2 ( Total )
+    double precision, intent(inout) :: Total
     integer :: I
     do i = 1, num_c2
-      if ( associated(track_c2(i)%p) ) &
-        & write ( *, '(a," Still allocated with ", i0, " elements")' ) &
-            & track_c2(i)%where, size(track_c2(i)%p)
+      if ( associated(track_c2(i)%p) ) then
+        write ( *, '(a," Still allocated with ", i0, " elements")' ) &
+          & track_c2(i)%where, size(track_c2(i)%p)
+        total = total + len(track_c2(i)%p) * size(track_c2(i)%p)
+      end if
     end do
   end subroutine ReportLeaks_c2
-  subroutine ReportLeaks_c3
+  subroutine ReportLeaks_c3 ( Total )
+    double precision, intent(inout) :: Total
     integer :: I
     do i = 1, num_c3
-      if ( associated(track_c3(i)%p) ) &
-        & write ( *, '(a," Still allocated with ", i0, " elements")' ) &
-            & track_c3(i)%where, size(track_c3(i)%p)
+      if ( associated(track_c3(i)%p) ) then
+        write ( *, '(a," Still allocated with ", i0, " elements")' ) &
+          & track_c3(i)%where, size(track_c3(i)%p)
+        total = total + len(track_c3(i)%p) * size(track_c3(i)%p)
+      end if
     end do
   end subroutine ReportLeaks_c3
 
-  subroutine ReportLeaks_x1
+  subroutine ReportLeaks_x1 ( Total )
+    double precision, intent(inout) :: Total
     integer :: I
     do i = 1, num_x1
-      if ( associated(track_x1(i)%p) ) &
-        & write ( *, '(a," Still allocated with ", i0, " elements")' ) &
-            & track_x1(i)%where, size(track_x1(i)%p)
+      if ( associated(track_x1(i)%p) ) then
+        write ( *, '(a," Still allocated with ", i0, " elements")' ) &
+          & track_x1(i)%where, size(track_x1(i)%p)
+        total = total + 2 * charsPerInt * size(track_x1(i)%p)
+      end if
     end do
   end subroutine ReportLeaks_x1
-  subroutine ReportLeaks_x2
+  subroutine ReportLeaks_x2 ( Total )
+    double precision, intent(inout) :: Total
     integer :: I
     do i = 1, num_x2
-      if ( associated(track_x2(i)%p) ) &
-        & write ( *, '(a," Still allocated with ", i0, " elements")' ) &
-            & track_x2(i)%where, size(track_x2(i)%p)
+      if ( associated(track_x2(i)%p) ) then
+        write ( *, '(a," Still allocated with ", i0, " elements")' ) &
+          & track_x2(i)%where, size(track_x2(i)%p)
+        total = total + 2 * charsPerInt * size(track_x2(i)%p)
+      end if
     end do
   end subroutine ReportLeaks_x2
-  subroutine ReportLeaks_x3
+  subroutine ReportLeaks_x3 ( Total )
+    double precision, intent(inout) :: Total
     integer :: I
     do i = 1, num_x3
-      if ( associated(track_x3(i)%p) ) &
-        & write ( *, '(a," Still allocated with ", i0, " elements")' ) &
-            & track_x3(i)%where, size(track_x3(i)%p)
+      if ( associated(track_x3(i)%p) ) then
+        write ( *, '(a," Still allocated with ", i0, " elements")' ) &
+          & track_x3(i)%where, size(track_x3(i)%p)
+        total = total + 2 * charsPerInt * size(track_x3(i)%p)
+      end if
     end do
   end subroutine ReportLeaks_x3
 
-  subroutine ReportLeaks_z1
+  subroutine ReportLeaks_z1 ( Total )
+    double precision, intent(inout) :: Total
     integer :: I
     do i = 1, num_z1
-      if ( associated(track_z1(i)%p) ) &
-        & write ( *, '(a," Still allocated with ", i0, " elements")' ) &
-            & track_z1(i)%where, size(track_z1(i)%p)
+      if ( associated(track_z1(i)%p) ) then
+        write ( *, '(a," Still allocated with ", i0, " elements")' ) &
+          & track_z1(i)%where, size(track_z1(i)%p)
+        total = total + 4 * charsPerInt * size(track_z1(i)%p)
+      end if
     end do
   end subroutine ReportLeaks_z1
-  subroutine ReportLeaks_z2
+  subroutine ReportLeaks_z2 ( Total )
+    double precision, intent(inout) :: Total
     integer :: I
     do i = 1, num_z2
-      if ( associated(track_z2(i)%p) ) &
-        & write ( *, '(a," Still allocated with ", i0, " elements")' ) &
-            & track_z2(i)%where, size(track_z2(i)%p)
+      if ( associated(track_z2(i)%p) ) then
+        write ( *, '(a," Still allocated with ", i0, " elements")' ) &
+          & track_z2(i)%where, size(track_z2(i)%p)
+        total = total + 4 * charsPerInt * size(track_z2(i)%p)
+      end if
     end do
   end subroutine ReportLeaks_z2
-  subroutine ReportLeaks_z3
+  subroutine ReportLeaks_z3 ( Total )
+    double precision, intent(inout) :: Total
     integer :: I
     do i = 1, num_z3
-      if ( associated(track_z3(i)%p) ) &
-        & write ( *, '(a," Still allocated with ", i0, " elements")' ) &
-            & track_z3(i)%where, size(track_z3(i)%p)
+      if ( associated(track_z3(i)%p) ) then
+        write ( *, '(a," Still allocated with ", i0, " elements")' ) &
+          & track_z3(i)%where, size(track_z3(i)%p)
+        total = total + 4 * charsPerInt * size(track_z3(i)%p)
+      end if
     end do
   end subroutine ReportLeaks_z3
 
-  subroutine ReportLeaks_i1
+  subroutine ReportLeaks_i1 ( Total )
+    double precision, intent(inout) :: Total
     integer :: I
     do i = 1, num_i1
-      if ( associated(track_i1(i)%p) ) &
-        & write ( *, '(a," Still allocated with ", i0, " elements")' ) &
-            & track_i1(i)%where, size(track_i1(i)%p)
+      if ( associated(track_i1(i)%p) ) then
+        write ( *, '(a," Still allocated with ", i0, " elements")' ) &
+          & track_i1(i)%where, size(track_i1(i)%p)
+        total = total + charsPerInt * size(track_i1(i)%p)
+      end if
     end do
   end subroutine ReportLeaks_i1
-  subroutine ReportLeaks_i2
+  subroutine ReportLeaks_i2 ( Total )
+    double precision, intent(inout) :: Total
     integer :: I
     do i = 1, num_i2
-      if ( associated(track_i2(i)%p) ) &
-        & write ( *, '(a," Still allocated with ", i0, " elements")' ) &
-            & track_i2(i)%where, size(track_i2(i)%p)
+      if ( associated(track_i2(i)%p) ) then
+        write ( *, '(a," Still allocated with ", i0, " elements")' ) &
+          & track_i2(i)%where, size(track_i2(i)%p)
+        total = total + charsPerInt * size(track_i2(i)%p)
+      end if
     end do
   end subroutine ReportLeaks_i2
-  subroutine ReportLeaks_i3
+  subroutine ReportLeaks_i3 ( Total )
+    double precision, intent(inout) :: Total
     integer :: I
     do i = 1, num_i3
-      if ( associated(track_i3(i)%p) ) &
-        & write ( *, '(a," Still allocated with ", i0, " elements")' ) &
-            & track_i3(i)%where, size(track_i3(i)%p)
+      if ( associated(track_i3(i)%p) ) then
+        write ( *, '(a," Still allocated with ", i0, " elements")' ) &
+          & track_i3(i)%where, size(track_i3(i)%p)
+        total = total + charsPerInt * size(track_i3(i)%p)
+      end if
     end do
   end subroutine ReportLeaks_i3
 
-  subroutine ReportLeaks_r1
+  subroutine ReportLeaks_r1 ( Total )
+    double precision, intent(inout) :: Total
     integer :: I
     do i = 1, num_r1
-      if ( associated(track_r1(i)%p) ) &
-        & write ( *, '(a," Still allocated with ", i0, " elements")' ) &
-            & track_r1(i)%where, size(track_r1(i)%p)
+      if ( associated(track_r1(i)%p) ) then
+        write ( *, '(a," Still allocated with ", i0, " elements")' ) &
+          & track_r1(i)%where, size(track_r1(i)%p)
+        total = total + charsPerInt * size(track_r1(i)%p)
+      end if
     end do
   end subroutine ReportLeaks_r1
-  subroutine ReportLeaks_r2
+  subroutine ReportLeaks_r2 ( Total )
+    double precision, intent(inout) :: Total
     integer :: I
     do i = 1, num_r2
-      if ( associated(track_r2(i)%p) ) &
-        & write ( *, '(a," Still allocated with ", i0, " elements")' ) &
-            & track_r2(i)%where, size(track_r2(i)%p)
+      if ( associated(track_r2(i)%p) ) then
+        write ( *, '(a," Still allocated with ", i0, " elements")' ) &
+          & track_r2(i)%where, size(track_r2(i)%p)
+        total = total + charsPerInt * size(track_r2(i)%p)
+      end if
     end do
   end subroutine ReportLeaks_r2
-  subroutine ReportLeaks_r3
+  subroutine ReportLeaks_r3 ( Total )
+    double precision, intent(inout) :: Total
     integer :: I
     do i = 1, num_r3
-      if ( associated(track_r3(i)%p) ) &
-        & write ( *, '(a," Still allocated with ", i0, " elements")' ) &
-            & track_r3(i)%where, size(track_r3(i)%p)
+      if ( associated(track_r3(i)%p) ) then
+        write ( *, '(a," Still allocated with ", i0, " elements")' ) &
+          & track_r3(i)%where, size(track_r3(i)%p)
+        total = total + charsPerInt * size(track_r3(i)%p)
+      end if
     end do
   end subroutine ReportLeaks_r3
 
-  subroutine ReportLeaks_d1
+  subroutine ReportLeaks_d1 ( Total )
+    double precision, intent(inout) :: Total
     integer :: I
     do i = 1, num_d1
-      if ( associated(track_d1(i)%p) ) &
-        & write ( *, '(a," Still allocated with ", i0, " elements")' ) &
-            & track_d1(i)%where, size(track_d1(i)%p)
+      if ( associated(track_d1(i)%p) ) then
+        write ( *, '(a," Still allocated with ", i0, " elements")' ) &
+          & track_d1(i)%where, size(track_d1(i)%p)
+        total = total + 2 * charsPerInt * size(track_d1(i)%p)
+      end if
     end do
   end subroutine ReportLeaks_d1
-  subroutine ReportLeaks_d2
+  subroutine ReportLeaks_d2 ( Total )
+    double precision, intent(inout) :: Total
     integer :: I
     do i = 1, num_d2
-      if ( associated(track_d2(i)%p) ) &
-        & write ( *, '(a," Still allocated with ", i0, " elements")' ) &
-            & track_d2(i)%where, size(track_d2(i)%p)
+      if ( associated(track_d2(i)%p) ) then
+        write ( *, '(a," Still allocated with ", i0, " elements")' ) &
+          & track_d2(i)%where, size(track_d2(i)%p)
+        total = total + 2 * charsPerInt * size(track_d2(i)%p)
+      end if
     end do
   end subroutine ReportLeaks_d2
-  subroutine ReportLeaks_d3
+  subroutine ReportLeaks_d3 ( Total )
+    double precision, intent(inout) :: Total
     integer :: I
     do i = 1, num_d3
-      if ( associated(track_d3(i)%p) ) &
-        & write ( *, '(a," Still allocated with ", i0, " elements")' ) &
-            & track_d3(i)%where, size(track_d3(i)%p)
+      if ( associated(track_d3(i)%p) ) then
+        write ( *, '(a," Still allocated with ", i0, " elements")' ) &
+          & track_d3(i)%where, size(track_d3(i)%p)
+        total = total + 2 * charsPerInt * size(track_d3(i)%p)
+      end if
     end do
   end subroutine ReportLeaks_d3
 
-  subroutine ReportLeaks_l1
+  subroutine ReportLeaks_l1 ( Total )
+    double precision, intent(inout) :: Total
     integer :: I
     do i = 1, num_l1
-      if ( associated(track_l1(i)%p) ) &
-        & write ( *, '(a," Still allocated with ", i0, " elements")' ) &
-            & track_l1(i)%where, size(track_l1(i)%p)
+      if ( associated(track_l1(i)%p) ) then
+        write ( *, '(a," Still allocated with ", i0, " elements")' ) &
+          & track_l1(i)%where, size(track_l1(i)%p)
+        total = total + charsPerInt * size(track_l1(i)%p)
+      end if
     end do
   end subroutine ReportLeaks_l1
-  subroutine ReportLeaks_l2
+  subroutine ReportLeaks_l2 ( Total )
+    double precision, intent(inout) :: Total
     integer :: I
     do i = 1, num_l2
-      if ( associated(track_l2(i)%p) ) &
-        & write ( *, '(a," Still allocated with ", i0, " elements")' ) &
-            & track_l2(i)%where, size(track_l2(i)%p)
+      if ( associated(track_l2(i)%p) ) then
+        write ( *, '(a," Still allocated with ", i0, " elements")' ) &
+          & track_l2(i)%where, size(track_l2(i)%p)
+        total = total + charsPerInt * size(track_l2(i)%p)
+      end if
     end do
   end subroutine ReportLeaks_l2
-  subroutine ReportLeaks_l3
+  subroutine ReportLeaks_l3 ( Total )
+    double precision, intent(inout) :: Total
     integer :: I
     do i = 1, num_l3
-      if ( associated(track_l3(i)%p) ) &
-        & write ( *, '(a," Still allocated with ", i0, " elements")' ) &
-            & track_l3(i)%where, size(track_l3(i)%p)
+      if ( associated(track_l3(i)%p) ) then
+        write ( *, '(a," Still allocated with ", i0, " elements")' ) &
+          & track_l3(i)%where, size(track_l3(i)%p)
+        total = total + charsPerInt * size(track_l3(i)%p)
+      end if
     end do
   end subroutine ReportLeaks_l3
 
@@ -1346,6 +1294,9 @@ contains
 end module Track_m
 
 ! $Log$
+! Revision 2.3  2006/08/04 18:14:15  vsnyder
+! Add size tracking to ReportLeaks, simplify TrackDeallocate
+!
 ! Revision 2.2  2006/07/29 03:42:34  vsnyder
 ! Can't track zero-size allocations
 !
