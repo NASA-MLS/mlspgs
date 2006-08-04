@@ -153,7 +153,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_L2GP               = s_l2aux + 1
   integer, parameter :: S_L2PARSF            = s_l2gp + 1
   integer, parameter :: S_LABEL              = s_l2parsf + 1
-  integer, parameter :: S_LOAD               = s_label + 1
+  integer, parameter :: S_LEAKCHECK          = s_label + 1
+  integer, parameter :: S_LOAD               = s_leakcheck + 1
   integer, parameter :: S_MAKEPFA            = s_load + 1
   integer, parameter :: S_MATRIX             = s_makepfa + 1
   integer, parameter :: S_MERGE              = s_matrix + 1
@@ -365,6 +366,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_l2gp) =                 add_ident ( 'l2gp' )
     spec_indices(s_l2parsf) =              add_ident ( 'l2parsf' )
     spec_indices(s_label) =                add_ident ( 'label' )
+    spec_indices(s_leakcheck) =            add_ident ( 'leakcheck' )
     spec_indices(s_load) =                 add_ident ( 'load' )
     spec_indices(s_makepfa) =              add_ident ( 'makePFA' )
     spec_indices(s_matrix) =               add_ident ( 'matrix' )
@@ -950,6 +952,11 @@ contains ! =====     Public procedures     =============================
              begin, f+f_bin, t+t_string, n+n_field_type, &
              nadp+n_spec_def /) )
 
+    call make_tree ( (/ &
+      begin, s+s_leakCheck, &
+             begin, f+f_where, t+t_string, n+n_field_type, &
+             ndp+n_spec_def /) )
+
     call make_tree( (/ &
       begin, s+s_load, &
              begin, f+f_bin, t+t_string, nr+n_field_type, &
@@ -992,6 +999,8 @@ contains ! =====     Public procedures     =============================
 
     call make_tree( (/ &
       begin, s+s_destroy, &
+             begin, f+f_allMatrices, t+t_boolean, n+n_field_type, &
+             begin, f+f_allVectors, t+t_boolean, n+n_field_type, &
              begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
              begin, f+f_vector, s+s_vector, n+n_field_spec, &
              np+n_spec_def /) )
@@ -1445,8 +1454,9 @@ contains ! =====     Public procedures     =============================
              s+s_populateL2PCBin, s+s_restrictRange, s+s_snoop, s+s_subset, &
              s+s_time, s+s_transfer, s+s_updateMask, s+s_vector, n+n_section, &
       begin, z+z_retrieve, s+s_dump, s+s_dumpBlocks, s+s_flagCloud, s+s_flushPFA, &
-             s+s_matrix, s+s_restrictRange, s+s_retrieve, s+s_sids, s+s_snoop, &
-             s+s_subset, s+s_time, s+s_updateMask, n+n_section, &
+             s+s_leakcheck, s+s_matrix, s+s_restrictRange, s+s_retrieve, &
+             s+s_sids, s+s_snoop, s+s_subset, s+s_time, s+s_updateMask, &
+             n+n_section, &
       begin, z+z_join, s+s_time, s+s_label, s+s_l2gp, s+s_l2aux, &
                        s+s_directWrite, n+n_section, &
       begin, z+z_algebra, s+s_columnScale, s+s_combineChannels, s+s_cyclicJacobi, &
@@ -1474,6 +1484,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.448  2006/08/04 18:09:46  vsnyder
+! Add LeakCheck command, /allMatrices and /allVectors fields to Destroy command
+!
 ! Revision 2.447  2006/08/02 19:53:50  vsnyder
 ! Add destroy command and field for output
 !
