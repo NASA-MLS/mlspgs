@@ -115,7 +115,7 @@ contains ! =====     Public Procedures     =============================
     else if ( got ( f_quantities ) ) then
       ! Not an adoption, just a regular template construction
       call ConstructVectorTemplate ( name, quantityTemplates, quantities, &
-        & vectorTemplate, where=source_ref(root) )
+        & vectorTemplate, where=source_ref(root), forWhom=moduleName )
       call deallocate_test ( quantities, "quantities", ModuleName )
     else
       ! User didn't give appropriate command
@@ -132,24 +132,17 @@ contains ! =====     Public Procedures     =============================
   ! -----------------------------------------------  Announce_Error  -----
   subroutine Announce_Error ( where, message, extra )
 
-    use LEXER_CORE, only: PRINT_SOURCE
-    use OUTPUT_M, only: OUTPUT
-    use TREE, only: SOURCE_REF
     use Intrinsic, only: LIT_INDICES
-    use String_Table, only: DISPLAY_STRING
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+    use MoreTree, only: StartErrorMessage
+    use OUTPUT_M, only: OUTPUT
+    use String_Table, only: DISPLAY_STRING
 
     integer, intent(in) :: WHERE   ! Tree node where error was noticed
     character (LEN=*), intent(in) :: MESSAGE
     integer, intent(in), optional :: EXTRA
 
-    call output ( '***** At ' )
-    if ( where > 0 ) then
-      call print_source ( source_ref(where) )
-    else
-      call output ( '(no lcf tree available)' )
-    end if
-    call output ( ': ' )
+    call startErrorMessage ( where )
     call output ( message )
     if ( present ( extra ) ) call display_string ( lit_indices ( extra ), strip=.true. )
     call output ( '', advance='yes' )
@@ -170,6 +163,9 @@ END MODULE ConstructVectorTemplates
 
 !
 ! $Log$
+! Revision 2.14  2006/08/05 02:12:27  vsnyder
+! Add ForWhom argument to ConstructVectorTemplate
+!
 ! Revision 2.13  2006/07/27 03:52:06  vsnyder
 ! Pass source_ref to ConstructVectorTemplate
 !
