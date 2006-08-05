@@ -1185,7 +1185,7 @@ contains ! ============= Public Procedures ==========================
     end do                            ! First Loop over quantities
     
     ! Now create a vector template with these quantities
-    call ConstructVectorTemplate ( 0, l2pcQTs, qtInds, vt )
+    call ConstructVectorTemplate ( 0, l2pcQTs, qtInds, vt, forWhom=moduleName )
     vtIndex = AddVectorTemplateToDatabase ( l2pcVTs, vt )
     
     call deallocate_test ( qtInds, 'qtInds', ModuleName )
@@ -1666,7 +1666,7 @@ contains ! ============= Public Procedures ==========================
     end do
 
     ! Now create a vector template with these quantities
-    call ConstructVectorTemplate ( 0, l2pcQTs, qtInds, vt )
+    call ConstructVectorTemplate ( 0, l2pcQTs, qtInds, vt, forWhom=moduleName )
     vtIndex = AddVectorTemplateToDatabase ( l2pcVTs, vt )
     
     call deallocate_test ( qtInds, 'qtInds', ModuleName )
@@ -1803,6 +1803,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.78  2006/08/05 02:11:58  vsnyder
+! Add ForWhom argument to ConstructVectorTemplate
+!
 ! Revision 2.77  2006/08/04 01:53:43  vsnyder
 ! Need to set the name, not quantityType before SetupNewQuantityTemplate
 !
