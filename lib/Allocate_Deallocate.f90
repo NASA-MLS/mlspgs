@@ -128,7 +128,7 @@ contains
     integer, intent(in) :: noBytes      ! No bytes allocated (or deallocated if -ve)
     character (len=*), intent(in), optional :: Bounds ! for allocation
 
-    call ReportAllocateDeallocate( name, moduleName, real(noBytes) )
+    call ReportAllocateDeallocate( name, moduleName, real(noBytes), bounds )
   end subroutine ReportAllocateDeallocate_ints
 
   !-----------------------------------   ReportAllocateDeallocate_real  -----
@@ -675,6 +675,9 @@ contains
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.32  2006/08/05 02:36:57  vsnyder
+! Pass bounds argument of ReportAllocateDeallocate_ints forward
+!
 ! Revision 2.31  2006/08/04 18:12:56  vsnyder
 ! Add 'bounds' to ReportAlllocateDeallocate, don't look at ElementSize if it's not present
 !
