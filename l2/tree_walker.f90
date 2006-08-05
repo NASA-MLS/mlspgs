@@ -45,7 +45,6 @@ contains ! ====     Public Procedures     ==============================
     use EmpiricalGeometry, only: ForgetOptimumLon0
     use FGrid, only: FGrid_T, DestroyFGridDatabase, DUMP
     use Fill, only: MLSL2Fill
-    use FilterShapes_m, only: Destroy_Filter_Shapes_Database
     use ForwardModelConfig, only: ForwardModelConfig_T, &
       & DestroyFWMConfigDatabase, &
       & StripForwardModelConfigDatabase
@@ -387,6 +386,9 @@ subtrees:   do while ( j <= howmany )
               if ( specialDumpFile /= ' ' ) &
                 & call revertOutput
             end if
+call output ( size(chunks), before='Size(chunks) = ' )
+call output ( singleChunk, before=', SingleChunk = ' )
+call output ( lastChunkIn, before=', LastChunkIn = ', advance='yes' )
 
             ! Now, if we're dealing with more than one chunk destroy stuff
             ! Otherwise, we'll save them as we may need to output them as l2pc files.
@@ -439,16 +441,18 @@ subtrees:   do while ( j <= howmany )
 	         & matrices, vectors, fileDataBase, chunks, processingRange, &
             & size(chunks)==1 .or. singleChunk /= 0 )
         end if
-
+call output ( size(chunks), before='size(chunks) = ' )
+call output ( singleChunk, before=', singleChunk = ' )
+call output ( lastChunk, before=', lastChunk = ', advance='yes' )
         ! For case where there was one chunk, destroy vectors etc.
         ! This is to guard against destroying stuff needed by l2pc writing
-        if ( size(chunks) == 1 .or. &
-          & (singleChunk /= 0 .and. lastChunk == 0) ) then
+!        if ( size(chunks) == 1 .or. &
+!          & (singleChunk /= 0 .and. lastChunk == 0) ) then
           call MLSL2DeConstruct ( qtyTemplates, vectorTemplates, &
             & mifGeolocation, hGrids )
           call DestroyVectorDatabase ( vectors )
           call DestroyMatrixDatabase ( matrices )
-        end if
+!        end if
 
         if ( specialDumpFile /= ' ' ) &
           & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
@@ -491,6 +495,8 @@ subtrees:   do while ( j <= howmany )
 
   contains
     subroutine FinishUp ( Early )
+      use FilterShapes_m, only: Destroy_DACS_Filter_Database, &
+        & Destroy_Filter_Shapes_Database
       logical, intent(in), optional :: Early
       logical :: myEarly
       integer :: numChunks
@@ -500,20 +506,24 @@ subtrees:   do while ( j <= howmany )
       if ( associated(Chunks) ) numChunks = size(Chunks)
       call CloseParallel(numChunks, early)
       if ( .not. (myEarly .or. skipRetrieval) ) then
-        call DestroyChunkDatabase ( chunks )
-        call destroy_ant_patterns_database
-        call DestroyBinSelectorDatabase
-        call DestroyL2PCDatabase
+        call destroyChunkDatabase ( chunks )
+        call destroy_Ant_Patterns_database
+!??? Inscrutably, destroying these databases causes memory management crashes
+!??? Someday we should find out why
+!        call destroy_DACS_Filter_Database
+!        call destroy_Filter_Shapes_Database
+        call destroyBinSelectorDatabase
+        call destroyL2PCDatabase
         call destroy_filter_shapes_database
-        call DestroyFWMConfigDatabase ( forwardModelConfigDatabase )
+        call destroyFWMConfigDatabase ( forwardModelConfigDatabase )
         call destroy_line_database
         call destroy_pointing_grid_database
         call destroy_spectcat_database
-        call DestroyBandDatabase ( Bands )
-        call DestroyModuleDatabase ( Modules )
-        call DestroyRadiometerDatabase ( Radiometers )
-        call DestroySpectrometerTypeDatabase ( SpectrometerTypes )
-        call DestroySignalDatabase ( Signals )
+        call destroyBandDatabase ( Bands )
+        call destroyModuleDatabase ( Modules )
+        call destroyRadiometerDatabase ( Radiometers )
+        call destroySpectrometerTypeDatabase ( SpectrometerTypes )
+        call destroySignalDatabase ( Signals )
         call destroyVGridDatabase ( vGrids )
         call destroyFGridDatabase ( fGrids )
         ! call dump(fGrids, destroy=.true.)
@@ -555,6 +565,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.145  2006/08/02 19:53:26  vsnyder
+! Send Vectors database to outputClose for destroy command
+!
 ! Revision 2.144  2006/07/24 20:35:04  pwagner
 ! Fixed bug when stopAfterSection is blank
 !
