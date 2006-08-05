@@ -16,11 +16,11 @@ module MLSNumerics              ! Some low level numerical stuff
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use DUMP_0, only : DUMP, SELFDIFF
   use MatrixModule_0, only: CreateBlock, M_Absent, MatrixElement_T, Sparsify
-  use MLSCommon, only : DEFAULTUNDEFINEDVALUE, R4, R8, Rm
+  use MLSCommon, only : R4, R8, Rm
   use MLSFillValues, only: filterValues, IsFillValue
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use MLSSets, only: FindFirst, FindLast
-  use MLSStrings, only: Capitalize, lowercase
+  use MLSStrings, only: Capitalize
 
   implicit none
 
@@ -944,7 +944,6 @@ contains
     integer :: k
     integer :: N
     integer, parameter :: OFFSET = 1 ! at what index do arrays start?
-    integer :: targ
     !
     N = size(shp)
     if ( N < 2 ) then
@@ -973,6 +972,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.45  2006/08/05 02:36:36  vsnyder
+! Delete unused symbols
+!
 ! Revision 2.44  2006/08/03 01:57:22  vsnyder
 ! Return an optional status flag from Hunt
 !
