@@ -692,7 +692,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------  ConstructVectorTemplate  -----
   subroutine ConstructVectorTemplate ( name, quantities, selected, &
-    & vectorTemplate, where )
+    & vectorTemplate, where, ForWhom )
 
   ! This subroutine creates a vectorTemplate from a list of quantities.
   ! The default ordering is currently by quantity.  Later versions may
@@ -704,9 +704,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: selected(:)  ! Which quantities are selected?
     type (VectorTemplate_T), intent(out) :: vectorTemplate
     integer, intent(in), optional :: where ! source_ref if created by L2CF
-
-    ! Local variables
-    integer :: status
+    character(len=*), intent(in), optional :: ForWhom ! use instead of ModuleName
 
     ! Executable code
 !   Don't do the following.  The caller puts the actual argument into a database
@@ -721,16 +719,13 @@ contains ! =====     Public Procedures     =============================
     if ( present(where) ) vectorTemplate%where = where
     
     ! Allocate some arrays
-
-    if ( associated(vectorTemplate%quantities) ) then
-      deallocate ( vectorTemplate%quantities, STAT=status )
-      if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_DeAllocate//"Vector quantities" )
+    if ( present(forWhom) ) then
+      call allocate_test ( vectorTemplate%quantities, vectorTemplate%noQuantities, &
+        & 'vectorTemplate%quantities', forWhom )
+    else
+      call allocate_test ( vectorTemplate%quantities, vectorTemplate%noQuantities, &
+        & 'vectorTemplate%quantities', moduleName )
     end if
-    allocate ( vectorTemplate%quantities(vectorTemplate%noQuantities), &
-      & STAT=status )
-    if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate//"Vector quantities" )
 
     ! Copy quantities over
     vectorTemplate%quantities = selected
@@ -2497,6 +2492,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.125  2006/08/03 01:10:06  vsnyder
+! Put l2cf names in leak track database
+!
 ! Revision 2.124  2006/07/27 03:55:56  vsnyder
 ! Print summaries if negative details levels, for leak detection
 !
