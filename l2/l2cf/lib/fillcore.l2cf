@@ -4,9 +4,6 @@
 ;; of the `core' retrievals.
 
 begin Fill
-  ;; Define our stateCore and outputPrecisionCore vectors
-  stateCore: Vector, template=stateTemplate
-  outputPrecisionCore: Vector, template=stateTemplate
   Transfer, source=apriori, destination=stateCore
   Transfer, source=aprioriPrecision, destination=outputPrecisionCore
 
@@ -22,7 +19,7 @@ begin Fill
 
   ;; totalextinctionr3
   Fill, quantity=stateCore.totalextinctionr3, method=l2gp, $
-    sourceL2GP=l2gpCoreExtinctionR3Input, /interpolate ;; lowres to highres (remove when extinction is put back to vGridGxtinction)
+    sourceL2GP=l2gpCoreExtinctionR3Input
 
   ;; H2O_hr
   Fill, quantity=stateCore.H2O_hr, method=l2gp, $
@@ -31,6 +28,10 @@ begin Fill
   ;; O3
   Fill, quantity=stateCore.O3, method=l2gp, $
     sourceL2GP=l2gpCoreO3Input
+
+  ;; HNO3
+  Fill, quantity=stateCore.HNO3, method=l2gp, $
+    sourceL2GP=l2gpCoreHNO3Input
    
 
   ;; GPH_hr
