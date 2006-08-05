@@ -886,7 +886,7 @@ program MLSL2
   if ( timing ) call sayTime ( 'Closing and deallocating' )
   call add_to_section_timing( 'main', t0 )
   if ( switchDetail(switches, 'time') >= 0 ) call dump_section_timings
-  if ( trackAllocates > 0 ) call ReportLeaks
+  if ( trackAllocates > 0 ) call ReportLeaks ( "At end of program execution..." )
   call output_date_and_time(msg='ending mlsl2')
   if( error /= 0 .or. STOPWITHERROR ) then
      call MLSMessageExit(1)
@@ -1076,6 +1076,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.154  2006/08/05 02:13:33  vsnyder
+! Add 'where' argument for ReportLeaks
+!
 ! Revision 2.153  2006/07/29 03:42:09  vsnyder
 ! New --memtrack interpretation
 !
