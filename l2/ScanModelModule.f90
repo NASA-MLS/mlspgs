@@ -481,11 +481,11 @@ contains ! =============== Subroutines and functions ==========================
       & geocAlt%template, scanResidual /) 
     ! Now create the vector templates
     ! state: ptan
-    call ConstructVectorTemplate ( 0, myQTs, (/1/), stateTemplate )
+    call ConstructVectorTemplate ( 0, myQTs, (/1/), stateTemplate, forWhom=moduleName )
     ! extra: temp, refGPH, h2o, geocAlt
-    call ConstructVectorTemplate ( 0, myQTs, (/2,3,4,5,6,7/),  extraTemplate )
+    call ConstructVectorTemplate ( 0, myQTs, (/2,3,4,5,6,7/),  extraTemplate, forWhom=moduleName )
     ! residual
-    call ConstructVectorTemplate ( 0, myQTs, (/8/), residualTemplate )
+    call ConstructVectorTemplate ( 0, myQTs, (/8/), residualTemplate, forWhom=moduleName )
 
     ! Now create the vectors
     state = CreateVector ( 0, stateTemplate, myQTs )
@@ -2159,6 +2159,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.65  2006/08/05 02:12:27  vsnyder
+! Add ForWhom argument to ConstructVectorTemplate
+!
 ! Revision 2.64  2006/08/02 20:10:56  vsnyder
 ! Use deallocate_test for myR and myRT, for leak tracking
 !
