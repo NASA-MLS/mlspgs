@@ -1500,7 +1500,7 @@ contains ! ================================ Procedures ======================
         
         ! Now make a vector template up for this
         call ConstructVectorTemplate ( 0, joinedQuantities, &
-          & (/ noQuantitiesAccumulated /), vt )
+          & (/ noQuantitiesAccumulated /), vt, forWhom=moduleName )
         joinedVectorTemplates ( noQuantitiesAccumulated ) = vt
         
         ! Now make a vector up for this
@@ -1508,7 +1508,7 @@ contains ! ================================ Procedures ======================
           & joinedQuantities, vectorNameText='joined' )
       else ! ------------------- Staging in a file
 
-        call ConstructVectorTemplate ( 0, (/ qt /), (/ 1 /), vt )
+        call ConstructVectorTemplate ( 0, (/ qt /), (/ 1 /), vt, forWhom=moduleName )
         v = CreateVector ( 0, vt, (/ qt /), vectorNameText='joined', noValues=.true. )
       end if
       
@@ -1839,6 +1839,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.76  2006/08/05 02:12:27  vsnyder
+! Add ForWhom argument to ConstructVectorTemplate
+!
 ! Revision 2.75  2006/04/20 23:21:37  pwagner
 ! Pass more chunk info from master to slave
 !
