@@ -33,22 +33,21 @@ module ScanModelModule          ! Scan model and associated calculations
   use Init_Tables_Module, only: L_REFGPH, L_ZETA
   use intrinsic, only: L_HEIGHTOFFSET, L_NONE, L_PTAN, L_SCANRESIDUAL, &
     & L_TEMPERATURE, L_TNGTGEOCALT, L_VMR, L_PHITAN, L_ORBITINCLINATION, &
-    & PHYQ_Length, PHYQ_Profiles
+    & PHYQ_Length
   use ManipulateVectorQuantities, ONLY: FINDCLOSESTINSTANCES, &
     & FindInstanceWindow
-  use MatrixModule_0, only: DESTROYBLOCK, MATRIXELEMENT_T, M_ABSENT, M_BANDED, &
+  use MatrixModule_0, only: DESTROYBLOCK, MATRIXELEMENT_T, M_ABSENT, &
     & M_FULL, UpdateDiagonal
   use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T, &
     & CREATEEMPTYMATRIX, DESTROYMATRIX, CLEARMATRIX
   use MLSCommon, ONLY: R8, rp, rv
-  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
-       MLSMSG_ERROR, MLSMSG_WARNING
+  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
   use MLSNumerics, only : HUNT, INTERPOLATEVALUES
   use Molecules, only: L_H2O
   use Refraction_m, only: Refractive_index, RefrAterm, RefrBterm
   use Toggles, only: EMIT, TOGGLE, SWITCHES
   use Trace_M, only: TRACE_BEGIN, TRACE_END
-  use VectorsModule, ONLY : GETVECTORQUANTITYBYTYPE, VALIDATEVECTORQUANTITY, &
+  use VectorsModule, ONLY : VALIDATEVECTORQUANTITY, &
     & VECTOR_T, VECTORTEMPLATE_T, VECTORVALUE_T, CREATEVECTOR, &
     & CONSTRUCTVECTORTEMPLATE, DESTROYVECTORINFO
   USE Units, ONLY: Deg2Rad, LN10, PI
@@ -241,8 +240,8 @@ contains ! =============== Subroutines and functions ==========================
 
     real (r8), dimension(tempPrec%template%noSurfs) :: LOGP ! -log10 pressure
     real (r8), dimension(tempPrec%template%noSurfs) :: MODIFIEDBASIS ! noSurfs
-    real (r8), dimension(tempPrec%template%noInstances) :: CURRENTREFGPH ! From 1st calc
-    real (r8), dimension(tempPrec%template%noInstances) :: CORRECTION ! To apply to gph
+!   real (r8), dimension(tempPrec%template%noInstances) :: CURRENTREFGPH ! From 1st calc
+!   real (r8), dimension(tempPrec%template%noInstances) :: CORRECTION ! To apply to gph
     real (r8), dimension(tempPrec%template%noInstances) :: DELTAGEOPOT ! noInstances
 
     ! The derivatives are effectively 1D at each instance
@@ -2159,6 +2158,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.66  2006/08/05 02:36:06  vsnyder
+! Delete unused symbols
+!
 ! Revision 2.65  2006/08/05 02:12:27  vsnyder
 ! Add ForWhom argument to ConstructVectorTemplate
 !
