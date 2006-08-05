@@ -296,7 +296,7 @@ contains
           call PVMUnpackStringIndex ( name, info )
           if ( info /= 0 ) call PVMErrorMessage ( info, 'vector template name' )
           call ConstructVectorTemplate ( name, quantities, qtInds, &
-            & vectorTemplates ( i ) )
+            & vectorTemplates ( i ), forWhom=moduleName )
           ! Create the vector
           call PVMUnpackStringIndex ( name, info )
           if ( info /= 0 ) call PVMErrorMessage ( info, 'vector name' )
@@ -777,6 +777,9 @@ contains
 end module L2FWMParallel
 
 ! $Log$
+! Revision 2.21  2006/08/05 02:12:27  vsnyder
+! Add ForWhom argument to ConstructVectorTemplate
+!
 ! Revision 2.20  2005/06/22 18:57:02  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
