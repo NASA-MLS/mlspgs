@@ -386,9 +386,6 @@ subtrees:   do while ( j <= howmany )
               if ( specialDumpFile /= ' ' ) &
                 & call revertOutput
             end if
-call output ( size(chunks), before='Size(chunks) = ' )
-call output ( singleChunk, before=', SingleChunk = ' )
-call output ( lastChunkIn, before=', LastChunkIn = ', advance='yes' )
 
             ! Now, if we're dealing with more than one chunk destroy stuff
             ! Otherwise, we'll save them as we may need to output them as l2pc files.
@@ -441,9 +438,7 @@ call output ( lastChunkIn, before=', LastChunkIn = ', advance='yes' )
 	         & matrices, vectors, fileDataBase, chunks, processingRange, &
             & size(chunks)==1 .or. singleChunk /= 0 )
         end if
-call output ( size(chunks), before='size(chunks) = ' )
-call output ( singleChunk, before=', singleChunk = ' )
-call output ( lastChunk, before=', lastChunk = ', advance='yes' )
+
         ! For case where there was one chunk, destroy vectors etc.
         ! This is to guard against destroying stuff needed by l2pc writing
 !        if ( size(chunks) == 1 .or. &
@@ -565,6 +560,9 @@ call output ( lastChunk, before=', lastChunk = ', advance='yes' )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.146  2006/08/05 00:41:50  vsnyder
+! Comment out filter database destruction -- causes memory trouble
+!
 ! Revision 2.145  2006/08/02 19:53:26  vsnyder
 ! Send Vectors database to outputClose for destroy command
 !
