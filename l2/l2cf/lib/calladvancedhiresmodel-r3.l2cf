@@ -1,7 +1,7 @@
 ;$Id$
 ;; calladvancedhiresmodel-r3
 ;; Take the current 'state' and produces a full forward
-;; model estimate of bands 8, 33
+;; model estimate of band 8
 
 ;; Setup the vectors
 begin Fill
@@ -16,3 +16,6 @@ begin Retrieve
 end Retrieve
 
 ;$Log$
+;Revision 1.1  2006/08/03 00:53:51  lambert
+;used with setupadvancedhiresmodel
+;
