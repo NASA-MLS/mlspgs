@@ -41,9 +41,20 @@ begin Fill
   !define(flaggingBands,{2,3,5})
   !makeFlagsForOneProduct(product=SO2,radiometer=R2,chisqScale=1.0,minRads=3600,cloudMax=15K,cloudMin= -30K)
 
+  ;; ----------------------------------------- Temperature-190
+  !define(flaggingBands,{8})
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R3,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -888K)
+
+  ;; ----------------------------------------- GPH-190
+  !define(flaggingBands,{8})
+  !makeFlagsForOneProduct(product=GPH,radiometer=R3,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -888K)
+
 end Fill
 
 ; $Log$
+; Revision 1.13  2006/07/28 18:56:24  dwu
+; add so2
+;
 ; Revision 1.12  2006/07/26 21:13:22  dwu
 ; modified for v2.0 clouds
 ;

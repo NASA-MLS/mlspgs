@@ -13,16 +13,23 @@ begin Fill
   !makeFlagsForOneProduct(product=O3,radiometer=R5,chisqScale=1.0,minRads=2000)
 
   ;; ------------------------------------- Temperature-CorePlusR5
-  !define(flaggingBands,{1,17,22})
-  !makeFlagsForOneProduct(product=Temperature,radiometer=R2,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -10K)
+  ;;; !define(flaggingBands,{1,17,22})
+  ;;; !makeFlagsForOneProduct(product=Temperature,radiometer=R2,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -10K)
+  !define(flaggingBands,{1})
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R1A,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -10K)
 
   ;; ------------------------------------- GPH-CorePlusR5
-  !define(flaggingBands,{1,17,22})
-  !makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -10K)
+  ;;; !define(flaggingBands,{1,17,22})
+  ;;; !makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -10K)
+  !define(flaggingBands,{1})
+  !makeFlagsForOneProduct(product=GPH,radiometer=R1A,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -10K)
 
 end Fill
 
 ; $Log$
+; Revision 1.8  2004/09/21 23:02:59  livesey
+; Changed chiSqWeights to 1.0 for everything.
+;
 ; Revision 1.7  2004/07/06 21:54:05  livesey
 ; Added cloud flags for Temperature and GPH
 ;

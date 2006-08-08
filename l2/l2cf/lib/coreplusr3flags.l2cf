@@ -21,16 +21,23 @@ begin Fill
   !makeFlagsForOneProduct(product=SO2,radiometer=R3,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -20K)
 
   ;; ------------------------------------- Temperature-CorePlusR3
-  !define(flaggingBands,{1,22,32})
-  !makeFlagsForOneProduct(product=Temperature,radiometer=R1A,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -20K)
+  ;;; !define(flaggingBands,{1,22,32})
+  ;;; !makeFlagsForOneProduct(product=Temperature,radiometer=R1A,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -20K)
+  !define(flaggingBands,{8})
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R3,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -888K)
 
   ;; ------------------------------------- GPH-CorePlusR3
-  !define(flaggingBands,{1,22,32})
-  !makeFlagsForOneProduct(product=GPH,radiometer=R1A,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -20K)
+  ;;; !define(flaggingBands,{1,22,32})
+  ;;; !makeFlagsForOneProduct(product=GPH,radiometer=R1A,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -20K)
+  !define(flaggingBands,{8})
+  !makeFlagsForOneProduct(product=GPH,radiometer=R3,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -888K)
 
 end Fill
 
 ; $Log$
+; Revision 1.10  2006/07/28 18:56:20  dwu
+; add so2
+;
 ; Revision 1.9  2006/07/26 21:13:50  dwu
 ; modified for v2.0 clouds
 ;
