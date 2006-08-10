@@ -25,13 +25,11 @@ module TREE_WALKER
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
-  ! logical :: GLOBALSETTINGSONLY = .false.
-  ! logical :: CHUNKDIVIDEONLY = .false.
 
 contains ! ====     Public Procedures     ==============================
   ! -------------------------------------  WALK_TREE_TO_DO_MLS_L2  -----
   subroutine WALK_TREE_TO_DO_MLS_L2 ( ROOT, ERROR_FLAG, FIRST_SECTION, &
-    & COUNTCHUNKS, SINGLECHUNK, LASTCHUNKIN, FILEDATABASE )
+    & COUNTCHUNKS, FILEDATABASE )
 
     use Algebra_M, only: Algebra
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
@@ -102,13 +100,12 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(out) ::    ERROR_FLAG  ! Nonzero means failure
     integer, intent(in) ::     FIRST_SECTION! Index of son of root of first n_cf
     logical, intent(in) ::     COUNTCHUNKS ! Just count the chunks, print them out and quit
-    integer, intent(in) ::     SINGLECHUNK ! Just run this one chunk (0 if all)
-    integer, intent(in) ::     LASTCHUNKIN ! Just run range [single,last]
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
     ! Internal variables
+    logical ::                                   canWriteL2PC
     integer ::                                   chunkNo ! Index of Chunks
     type (MLSChunk_T), dimension(:), pointer ::  Chunks  ! of data
-    logical, dimension(:), pointer :: CHUNKSSKIPPED=> null() ! Don't do these
+    logical, dimension(:), pointer :: CHUNKSSKIPPED => null() ! Don't do these
     integer                                   :: details
     type (DirectData_T), dimension(:), pointer :: DirectDatabase
     type (FGrid_T), dimension(:), pointer ::     FGrids
@@ -121,6 +118,7 @@ contains ! ====     Public Procedures     ==============================
     type (HGrid_T), dimension(:), pointer ::     HGrids
     integer ::                                   HOWMANY  ! Nsons(Root)
     integer ::                                   I, J     ! Loop inductors
+    integer, dimension(1) :: ICHUNKS
     integer ::                                   LASTCHUNK ! For chunk loop
     type (L2AUXData_T), dimension(:), pointer :: L2AUXDatabase
     type (L2GPData_T), dimension(:), pointer  :: L2GPDatabase
@@ -141,18 +139,17 @@ contains ! ====     Public Procedures     ==============================
     type (QuantityTemplate_T), dimension(:), pointer :: QtyTemplates
     type (VectorTemplate_T), dimension(:), pointer :: VectorTemplates
 
+    ! Executable
     nullify ( chunks, forwardModelConfigDatabase, griddedDataBase, &
       & directDatabase, hGrids, l2auxDatabase, l2gpDatabase, matrices, mifGeolocation, &
       & qtyTemplates, vectors, vectorTemplates, fGrids, vGrids )
 
-    ! globalsettingsonly = STOPAFTERGLOBAL
-    ! chunkdivideonly    = STOPAFTERCHUNKDIVIDE
+    nullify(chunksSkipped)
+    canWriteL2PC = .false.
     stopBeforeChunkLoop          = ( &
       & index('global_setting,chunk_divide', &
       & lowercase( trim(stopAfterSection) ) ) > 0 )
     stopBeforeChunkLoop = ( stopBeforeChunkLoop .and. stopAfterSection /= ' ' )
-    ! print *, 'trim(stopAfterSection): ', trim(stopAfterSection)
-    ! print *, 'stopBeforeChunkLoop: ', stopBeforeChunkLoop
     reducedChunks      = .false.
     depth = 0
     if ( toggle(gen) ) call trace_begin ( 'WALK_TREE_TO_DO_MLS_L2', &
@@ -232,7 +229,7 @@ contains ! ====     Public Procedures     ==============================
           lastChunk = chunkNo
           parallel%ChunkNo = chunkNo
         else
-          if ( .not. checkPaths ) then
+          if ( .not. checkPaths .or. parallel%chunkRange /= '' ) then
             call ChunkDivide ( son, processingRange, filedatabase, chunks )
             call ComputeAllHGridOffsets ( root, i+1, chunks, filedatabase, &
             & l2gpDatabase, processingRange )
@@ -241,28 +238,8 @@ contains ! ====     Public Procedures     ==============================
             if ( error_flag /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
               & 'unable to allocate chunks' )
           end if
-          if ( singleChunk /= 0 ) then
-            if ( singleChunk < 0 ) then
-              call output ( " single chunk " )
-              call output ( singleChunk, advance='yes' )
-              call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & 'single chunk number < 0' )
-            else if ( singleChunk > size(chunks) ) then
-              call output ( " single chunk " )
-              call output ( singleChunk, advance='yes' )
-              call output ( " size(chunks) " )
-              call output ( size(chunks), advance='yes' )
-              call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & 'single chunk number > size(chunks)' )
-            end if
-            firstChunk = singleChunk
-            lastChunk = singleChunk
-            if ( lastChunkIn > firstChunk ) &
-              & lastChunk = min(lastChunkIn, size(chunks))
-          else
-            firstChunk = 1
-            lastChunk = size(chunks)
-          end if
+          firstChunk = 1
+          lastChunk = size(chunks)
           if ( countChunks ) then
             error_flag = 0
             call output ( size(chunks) )
@@ -286,15 +263,12 @@ contains ! ====     Public Procedures     ==============================
           & ( parallel%master .and. .not. parallel%fwmParallel ) .or. &
           & ( parallel%slave .and. parallel%fwmParallel ) ) then
           if ( parallel%master .and. .not. parallel%fwmParallel ) then
-            if ( singleChunk /= 0 .and. .not. reducedChunks ) then
-              call ReduceChunkDatabase(chunks, singleChunk, lastChunk )
-              reducedChunks = .true.  ! So we don't try this more than once
-            end if
             call L2MasterTask ( chunks, l2gpDatabase, l2auxDatabase )
           end if
           if ( parallel%slave .and. parallel%fwmParallel ) then
+            call ExpandStringRange( parallel%chunkRange, iChunks )
             call ConstructMIFGeolocation ( mifGeolocation, filedatabase, &
-              & chunks(singleChunk) ) 
+              & chunks(iChunks(1)) ) 
             call L2FWMSlaveTask ( mifGeolocation )
           end if
           ! Sort out the timings
@@ -316,9 +290,9 @@ contains ! ====     Public Procedures     ==============================
 	     & associated(forwardModelConfigDatabase)) then
                   call printForwardModelTiming ( forwardModelConfigDatabase )
           end if
+          canWriteL2PC = .true.
         else
         ! Otherwise, this is the 'standard' work for these sections.
-          nullify(chunksSkipped)
           call allocate_test( chunksSkipped, size(chunks), 'chunksSkipped', ModuleName )
           chunksSkipped = .false.
           if ( parallel%chunkRange /= '' ) then
@@ -326,6 +300,7 @@ contains ! ====     Public Procedures     ==============================
             call ExpandStringRange(trim(parallel%chunkRange), chunksSkipped, &
               & sense=.false.)
           endif  
+          canWriteL2PC = ( count(.not. chunksSkipped) < 2 )
           do chunkNo = firstChunk, lastChunk ! ----------------------- Chunk loop
             call resumeOutput ! In case the last phase was  silent
             if ( chunksSkipped(chunkNo) ) cycle
@@ -389,8 +364,7 @@ subtrees:   do while ( j <= howmany )
 
             ! Now, if we're dealing with more than one chunk destroy stuff
             ! Otherwise, we'll save them as we may need to output them as l2pc files.
-            if ( size(chunks) > 1 .and. &
-              & ( singleChunk == 0 .or. lastChunkIn /= 0 ) ) then
+            if ( .not. canWriteL2PC ) then
               call MLSL2DeConstruct ( qtyTemplates, vectorTemplates, &
                 & mifGeolocation, hGrids )
               call DestroyVectorDatabase ( vectors )
@@ -436,18 +410,15 @@ subtrees:   do while ( j <= howmany )
         if ( .not. parallel%slave ) then
           call Output_Close ( son, l2gpDatabase, l2auxDatabase, DirectDatabase, &
 	         & matrices, vectors, fileDataBase, chunks, processingRange, &
-            & size(chunks)==1 .or. singleChunk /= 0 )
+            & canWriteL2PC )
         end if
 
         ! For case where there was one chunk, destroy vectors etc.
         ! This is to guard against destroying stuff needed by l2pc writing
-!        if ( size(chunks) == 1 .or. &
-!          & (singleChunk /= 0 .and. lastChunk == 0) ) then
           call MLSL2DeConstruct ( qtyTemplates, vectorTemplates, &
             & mifGeolocation, hGrids )
           call DestroyVectorDatabase ( vectors )
           call DestroyMatrixDatabase ( matrices )
-!        end if
 
         if ( specialDumpFile /= ' ' ) &
           & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
@@ -521,7 +492,6 @@ subtrees:   do while ( j <= howmany )
         call destroySignalDatabase ( Signals )
         call destroyVGridDatabase ( vGrids )
         call destroyFGridDatabase ( fGrids )
-        ! call dump(fGrids, destroy=.true.)
       end if
       error_flag = 0
       if ( toggle(gen) ) call trace_end ( 'WALK_TREE_TO_DO_MLS_L2' )
@@ -560,6 +530,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.147  2006/08/05 02:10:46  vsnyder
+! Delete some debugging print I shouldn't have left at the last check-in
+!
 ! Revision 2.146  2006/08/05 00:41:50  vsnyder
 ! Comment out filter database destruction -- causes memory trouble
 !
