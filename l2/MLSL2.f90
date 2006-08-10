@@ -46,7 +46,8 @@ program MLSL2
     & MLSMSG_Error, MLSMSG_Severity_to_quit, MLSMSG_Warning, MLSMessageExit
   use MLSPCF2, only: MLSPCF_L2CF_START
   use MLSStrings, only: lowerCase, readIntsFromChars
-  use MLSStringLists, only: catLists, GetStringElement, GetUniqueList, &
+  use MLSStringLists, only: catLists, ExpandStringRange, &
+    & GetStringElement, GetUniqueList, &
     & NumStringElements, RemoveElemFromList, SwitchDetail, unquote
   use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUT_DATE_AND_TIME, &
     & OUTPUT_Name_V_Pair, OutputOptions
@@ -153,8 +154,9 @@ program MLSL2
   integer :: FIRST_SECTION         ! Index of son of root of first n_cf node
   logical :: garbage_collection_by_dt = .false. ! Collect garbage after each deallocate_test?
   integer :: I                     ! counter for command line arguments
+  integer, dimension(1) :: ICHUNKS
   integer :: J                     ! index within option
-  integer :: LastCHUNK = 0         ! Just run range [SINGLECHUNK-LastCHUNK]
+  ! integer :: LastCHUNK = 0         ! Just run range [SINGLECHUNK-LastCHUNK]
   character(len=2048) :: LINE      ! Into which is read the command args
   integer :: N                     ! Offset for start of --'s text
   integer :: NUMFILES
@@ -164,7 +166,6 @@ program MLSL2
   character(len=len(switches)) :: removeSwitches = ''
   integer :: ROOT                  ! of the abstract syntax tree
   logical :: showDefaults = .false. ! Just print default opts and quit
-  integer :: SINGLECHUNK = 0       ! Just run one chunk; unless lastChunk nonzero
   integer :: SLAVEMAF = 0          ! Slave MAF for fwmParallel mode
   integer :: STATUS                ! From OPEN
   logical :: SWITCH                ! "First letter after -- was not n"
@@ -185,6 +186,7 @@ program MLSL2
   type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
   type (MLSFile_T)                        ::     MLSL2CF
   character(len=2) :: quotes
+  ! Executable
   quotes = char(34) // char(39)   ! {'"}
   nullify (filedatabase)
   !---------------- Task (1) ------------------
@@ -259,24 +261,11 @@ program MLSL2
       ! (single-letter options are case-sensitive)
       else if ( lowercase(line(3+n:8+n)) == 'checkp' ) then
         checkPaths = switch
-      else if ( line(3+n:8+n) == 'chunk ' ) then
-        call AccumulateSlaveArguments ( line )
+      else if ( lowercase(line(3+n:7)) == 'chunk' ) then
         i = i + 1
-        call getarg ( i, line )
-        command_line = trim(command_line) // ' ' // trim(line)
-        if ( singleChunk == 0 ) then
-          read ( line, *, iostat=status ) singleChunk
-          if ( status /= 0 ) then
-            call io_error ( "After --chunk option", status, line )
-            stop
-          end if
-        else
-          read ( line, *, iostat=status ) lastChunk
-          if ( status /= 0 ) then
-            call io_error ( "After --chunk option", status, line )
-            stop
-          end if
-        end if
+        call getarg ( i, parallel%chunkRange )
+        command_line = trim(command_line) // ' ' // trim(parallel%chunkRange)
+        call output_name_v_pair('chunkRange', trim(parallel%chunkRange) )
       else if ( lowercase(line(3+n:7+n)) == 'ckbk ' ) then
         checkBlocks = switch
       else if ( lowercase(line(3+n:14+n)) == 'countchunks ' ) then
@@ -438,10 +427,6 @@ program MLSL2
           call io_error ( "After --recl option", status, line )
           stop
         end if
-      else if ( lowercase(line(3+n:8)) == 'chunkr' ) then
-        i = i + 1
-        call getarg ( i, parallel%chunkRange )
-        command_line = trim(command_line) // ' ' // trim(parallel%chunkRange)
       else if ( lowercase(line(3+n:9+n))  == 'skipdir' ) then
         SKIPDIRECTWRITES = switch
       else if ( lowercase(line(3+n:10+n)) == 'skipretr' ) then
@@ -686,8 +671,7 @@ program MLSL2
   if ( checkPaths ) then
     parallel%master = .false.
     parallel%slave = .false.
-    singleChunk = 1
-    lastChunk = 0
+    parallel%chunkRange = '1'
     ! Issue warning about l2pc files
     call MLSMessage ( MLSMSG_Warning, ModuleName, &
     & 'checkPaths will fail if l2pc files only on local disks but master runs' &
@@ -696,14 +680,18 @@ program MLSL2
   ! If doing a range of chunks, the avoidance of unlimited dimensions
   ! in directwrites of l2gp files currently fails 
   ! (when will this be fixed?)
-  if ( max(singleChunk, lastChunk) /= 0 .or. parallel%chunkRange /= ' ' ) &
-    & avoidUnlimitedDims = .false.
+  if ( parallel%chunkRange /= ' ' ) then
+    avoidUnlimitedDims = .false.
+    call ExpandStringRange( parallel%chunkRange, iChunks )
+  else
+    iChunks = 0
+  endif
   ! Setup the parallel stuff.  Register our presence with the master if we're a
   ! slave.
   if ( parallel%master .and. parallel%myTid <= 0 ) &
     & call MLSMessage ( MLSMSG_Error, ModuleName, &
     & 'master Tid <= 0; probably pvm trouble' )
-  if ( parallel%fwmParallel .and. parallel%master .and. singleChunk == 0 ) &
+  if ( parallel%fwmParallel .and. parallel%master .and. parallel%chunkRange == ' ' ) &
     & call MLSMessage ( MLSMSG_Error, ModuleName, &
     & 'fwmParallel mode can only be run for a single chunk' )
   if ( parallel%fwmParallel ) &
@@ -713,7 +701,7 @@ program MLSL2
     if ( parallel%masterTid <= 0 ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'masterTid of this slave <= 0' )
-    call InitParallel ( singleChunk, slaveMAF )
+    call InitParallel ( iChunks(1), slaveMAF )
     if ( parallel%myTid <= 0 ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'slave Tid <= 0; probably pvm trouble' )
@@ -853,7 +841,7 @@ program MLSL2
       if ( timing ) &
         & call output ( "-------- Processing Begun ------ ", advance='yes' )
       call walk_tree_to_do_MLS_L2 ( root, error, first_section, countChunks, &
-        & singleChunk, lastChunk, filedatabase )
+        & filedatabase )
       if ( timing ) then
         call output ( "-------- Processing Ended ------ ", advance='yes' )
         call sayTime ( 'Processing' )
@@ -969,13 +957,8 @@ contains
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       call output_name_v_pair ( 'Default hdfeos version on writes', default_hdfversion_write, advance='yes', &
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
-      if ( singleChunk /= 0 .and. lastChunk == 0 ) then
-      call output_name_v_pair ( 'Compute only the single chunk', singleChunk, advance='yes', &
+      call output_name_v_pair ( 'Range of chunks', parallel%chunkRange, advance='yes', &
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
-      else if ( singleChunk /= 0 .and. lastChunk /= 0 ) then
-      call output_name_v_pair ( 'Compute chunks in range', (/singleChunk, lastChunk/), advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
-      end if                      
       call output_name_v_pair ( 'Avoiding unlimited dimensions in directwrites?', &
         & avoidUnlimitedDims, advance='yes', &
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
@@ -1002,11 +985,6 @@ contains
       call output_name_v_pair ( 'Maximum failures per machine', parallel%maxFailuresPerMachine, advance='yes', &
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       call output_name_v_pair ( 'Sleep time in masterLoop (mus)', parallel%delay, advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
-      call output_name_v_pair ( 'Range of chunks run in parallel', parallel%chunkRange, advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
-      else
-      call output_name_v_pair ( 'Range of chunks run serially', (/singleChunk, lastChunk/), advance='yes', &
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       end if
       call output_name_v_pair ( 'Is this a slave task in pvm?', parallel%slave, advance='yes', &
@@ -1076,6 +1054,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.155  2006/08/10 21:46:49  pwagner
+! --chunk commandline option now synonym for --chunkRange
+!
 ! Revision 2.154  2006/08/05 02:13:33  vsnyder
 ! Add 'where' argument for ReportLeaks
 !
