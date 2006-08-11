@@ -468,7 +468,8 @@ contains ! =====     Public procedures     =============================
              n+n_dt_def, &
       begin, t+t_matrix, l+l_plain, l+l_cholesky, l+l_kronecker, l+l_spd, &
              n+n_dt_def, &
-      begin, t+t_method, l+l_highcloud,l+l_lowcloud, l+l_newtonian, n+n_dt_def, &
+      begin, t+t_method, l+l_highcloud,l+l_lowcloud, l+l_newtonian, &
+             l+l_simple, n+n_dt_def, &
       begin, t+t_module, l+l_ghz, l+l_thz, n+n_dt_def, &
       begin, t+t_rowsOrColumns, l+l_rows, l+l_columns, n+n_dt_def, &
       begin, t+t_reflector, l+l_primary, l+l_secondary, l+l_tertiary, &
@@ -1484,6 +1485,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.449  2006/08/11 20:58:38  vsnyder
+! Add 'simple' method to use alternate Newton solver
+!
 ! Revision 2.448  2006/08/04 18:09:46  vsnyder
 ! Add LeakCheck command, /allMatrices and /allVectors fields to Destroy command
 !
