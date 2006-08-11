@@ -67,7 +67,7 @@ contains
       & L_dnwt_sq,  L_dnwt_sqt, &
       & L_highcloud, L_Jacobian_Cols, L_Jacobian_Rows, &
       & L_lowcloud, L_newtonian, L_none, L_norm, &
-      & L_NumGrad, L_numJ, L_NumNewt, &
+      & L_NumGrad, L_numJ, L_NumNewt, l_Simple, &
       & S_dump, S_dumpBlocks, S_flagCloud, S_flushPFA, S_LeakCheck, S_matrix, &
       & S_restrictRange, S_retrieve, S_sids, S_snoop, S_subset, S_time, &
       & S_updateMask
@@ -631,7 +631,7 @@ contains
                & measurements,MeasurementSD, state, OutputSD, Covariance, &
                & jacobian, chunk,maxJacobians,initlambda)
             call add_to_retrieval_timing( 'low_cloud', t1 )
-          case ( l_newtonian ) 
+          case ( l_newtonian, l_simple ) 
             call newtonianSolver
           case default
             call MLSMessage ( MLSMSG_Error, moduleName, &
@@ -1201,6 +1201,20 @@ contains
       end if
     end subroutine GetInBounds
 
+    ! -------------------------------------------------  My_NWTDB  -----
+    subroutine My_NWTDB ( AJ, WIDTH, LEVEL, WHY )
+      use DNWT_Module, only: NWT_T, NWTDB
+      use DNWT_Clone, only: ALT_NWTDB
+      type (NWT_T), intent(in), optional :: AJ
+      integer, intent(in), optional :: WIDTH
+      integer, intent(in), optional :: LEVEL
+      character(len=*), intent(in), optional :: WHY
+      if ( method == l_newtonian ) then
+        call nwtdb ( aj, width, level, why )
+      else
+        call alt_nwtdb ( aj, width, level, why )
+      end if
+    end subroutine My_NWTDB
     ! ------------------------------------------  NewtonianSolver  -----
     subroutine NewtonianSolver
 
@@ -1208,8 +1222,8 @@ contains
       & NF_DX, NF_DX_AITKEN, NF_EVALF, NF_EVALJ, NF_FANDJ, NF_GMOVE, NF_LEV, &
       & NF_NEWX, NF_SMALLEST_FLAG, NF_SOLVE, NF_START, NF_TOLX, NF_TOLF, &
       & NF_TOLX_BEST, NF_TOO_SMALL, NWT_T, RK
-      use DNWT_Module, only: NWT, NWTA, NWTDB, NWTOP
-!     use DNWT_clone, only: NWT, NWTA, NWTDB, NWTOP
+      use DNWT_Module, only: NWT, NWTA, NWTOP
+      use DNWT_clone, only: ALT_NWT, ALT_NWTA, ALT_NWTOP ! Simple
       use Dump_0, only: Dump
       use ForwardModelWrappers, only: ForwardModel
       use ForwardModelIntermediate, only: ForwardModelIntermediate_T, &
@@ -1358,7 +1372,11 @@ contains
       ! Set options for NWT
       nwt_opt(1:9) = (/  15, 1,      17, 2,      18, 3,      11, 4, 0 /)
       nwt_xopt(1:4) = (/ toleranceF, toleranceA, toleranceR, initLambda /)
-      call nwt ( nwt_flag, nwt_xopt, nwt_opt )
+      if ( method == l_newtonian ) then
+        call nwt ( nwt_flag, nwt_xopt, nwt_opt )
+      else
+        call alt_nwt ( nwt_flag, nwt_xopt, nwt_opt )
+      end if
       ! Create the matrix for the Cholesky factor of the normal equations
       call createEmptyMatrix ( factored%m, &
         & enter_terminal('_factored', t_identifier), &
@@ -1449,9 +1467,18 @@ NEWT: do ! Newtonian iteration
             & numGrad=numGrad, numJ=numJ, numNewt=numNewt, nwt_flag=nwt_flag, &
             & jacobian_rows=jacobian_rows, jacobian_cols=jacobian_cols )
         else ! not taking a special iteration to get J
-            if ( d_nin ) & ! Turn on NWTA's internal output
-              & call nwtop ( (/ 1, 1, 0 /), nwt_xopt )
-          call nwta ( nwt_flag, aj )
+            if ( d_nin ) then ! Turn on NWTA's internal output
+              if ( method == l_newtonian ) then
+                call nwtop ( (/ 1, 1, 0 /), nwt_xopt )
+              else
+                call alt_nwtop ( (/ 1, 1, 0 /), nwt_xopt )
+              end if
+            end if
+          if ( method == l_newtonian ) then
+            call nwta ( nwt_flag, aj )
+          else
+            call alt_nwta ( nwt_flag, aj )
+          end if
         end if
           if ( d_nwt ) then
             call FlagName ( nwt_flag, theFlagName )
@@ -2264,12 +2291,13 @@ NEWT: do ! Newtonian iteration
               ! call output ( aj%dxdxl, format='(1pe14.7)', advance='yes' )
               end if
             end if
-            if ( d_ndb_0 ) call nwtdb ( width=9, level=0, why='After Solve' )
+            if ( d_ndb_0 ) &
+              & call my_nwtdb ( width=9, level=0, why='After Solve' )
             if ( d_ndb_1 ) then
               if ( d_sca ) then
-                call nwtdb ( width=9, why='After Solve' )
+                call my_nwtdb ( width=9, why='After Solve' )
               else
-                call nwtdb ( aj, width=9, why='After Solve' )
+                call my_nwtdb ( aj, width=9, why='After Solve' )
               end if
             end if
         case ( nf_newx ) ! ................................  NEWX  .....
@@ -2438,17 +2466,17 @@ NEWT: do ! Newtonian iteration
             & matrixDatabase=(/ factored%m, normalEquations%m /) )
 
         end if
-          if ( d_ndb_2 ) call nwtdb ( aj, width=9 )
+          if ( d_ndb_2 ) call my_nwtdb ( aj, width=9 )
         prev_nwt_flag = nwt_flag
       end do NEWT ! Newton iteration
 
         if ( d_ndb_2 ) then
-          call nwtdb ( aj, width=9 )
+          call my_nwtdb ( aj, width=9 )
         else if ( d_ndb_1 ) then
           if ( d_sca ) then
-            call nwtdb ( width=9 )
+            call my_nwtdb ( width=9 )
           else
-            call nwtdb ( aj, width=9 )
+            call my_nwtdb ( aj, width=9 )
           end if
         end if
 
@@ -2646,6 +2674,9 @@ NEWT: do ! Newtonian iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.282  2006/08/11 20:58:38  vsnyder
+! Add 'simple' method to use alternate Newton solver
+!
 ! Revision 2.281  2006/08/04 18:11:33  vsnyder
 ! Add LeakCheck command
 !
