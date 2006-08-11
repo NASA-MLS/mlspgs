@@ -147,6 +147,7 @@ scaleOverlaps
 scan
 scan2d
 sectionTiming
+simple # Nathaniel's simple replacement for DNWT
 # spaceRadiance -- in lib/lit_names
 spare
 spd
@@ -165,6 +166,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.58  2006/08/11 20:58:38  vsnyder
+# Add 'simple' method to use alternate Newton solver
+#
 # Revision 2.57  2006/06/06 21:55:48  pwagner
 # May specify geos5 apriori files instead of dao (geos4)
 #
