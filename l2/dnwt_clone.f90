@@ -11,8 +11,7 @@
 
 module DNWT_CLONE
 
-! Really simple Newton-method with DNWT's interface.  It doesn't even
-! have a convergence test, so you need to limit the number of iterations.
+! Really simple Newton-method with DNWT's interface.
 
   use DNWT_TYPE, only: RK
   use DNWT_MODULE, only: NF_DX, NF_EVALF, NF_EVALJ, NF_NEWX, &
@@ -23,12 +22,12 @@ module DNWT_CLONE
 
   private
 
-  public NWT, NWTA, NWTDB, NWTOP
+  public ALT_NWT, ALT_NWTA, ALT_NWTDB, ALT_NWTOP
 
-  interface NWT; module procedure DNWT; end interface
-  interface NWTA; module procedure DNWTA; end interface
-  interface NWTDB; module procedure DNWTDB; end interface
-  interface NWTOP; module procedure DNWTOP; end interface
+  interface ALT_NWT; module procedure DNWT; end interface
+  interface ALT_NWTA; module procedure DNWTA; end interface
+  interface ALT_NWTDB; module procedure DNWTDB; end interface
+  interface ALT_NWTOP; module procedure DNWTOP; end interface
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -55,8 +54,8 @@ contains
     real(rk), intent(in) :: XOPT(*)
     integer, intent(in), optional :: NOPT(*)
     nflag = nf_start
-    if ( present(nopt) ) call nwtop ( nopt, xopt )
-    call nwtop ( ) ! default initialization
+    if ( present(nopt) ) call alt_nwtop ( nopt, xopt )
+    call alt_nwtop ( ) ! default initialization
     return
   end subroutine DNWT
 
@@ -202,6 +201,9 @@ contains
 end module DNWT_CLONE
 
 ! $Log$
+! Revision 2.7  2006/08/11 20:58:38  vsnyder
+! Add 'simple' method to use alternate Newton solver
+!
 ! Revision 2.6  2006/05/27 02:59:36  vsnyder
 ! Add convergence test
 !
