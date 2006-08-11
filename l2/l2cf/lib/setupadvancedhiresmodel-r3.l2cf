@@ -7,12 +7,11 @@
 begin Construct
 
   r3SetupModel_HR: ForwardModel, type=full, $
-    signals=['R3:240.B8F:PT.C1:11+15:25'], $
+    signals=['R3:240.B8F:PT.C1:11+15:25','R3:240.B33W:O3.C3'], $
     phiWindow=4 degrees, $
-    molecules= [ extinction, [ O2, O_18_O ], [HNO3, HNO3], $
-               [ O3, O3, O3_R3, O3_V1_3, O3_V2, O3_ASYM_O_18, O3_SYM_O_18 ]], $
-    moleculeDerivatives=[EXTINCTION], /atmos_der, $
-    LSBlblMolecules=[EXTINCTION,O_18_O,O3,O3_R3,O_18_O],$
+    molecules= [ extinction, [ O2, O_18_O ],[ SO2, S_32_O2 ],$
+    [ O3, O3, O3_R3, O3_V1_3, O3_V2, O3_ASYM_O_18, O3_SYM_O_18 ], [HNO3, HNO3]], $
+    LSBlblMolecules=[EXTINCTION,O3,O3_R3,O_18_O],$
     USBlblMolecules=[EXTINCTION,O3,O3_R3],$
     specificquantities = [temperature_hr,totalextinctionr3], $
     integrationGrid=vGridTangent, $
@@ -24,7 +23,7 @@ begin Construct
 end Construct
 
 begin Construct
-  r3YTemplate_HR: VectorTemplate, quantities=[band8]
+  r3YTemplate_HR: VectorTemplate, quantities=[band8, band33]
 end Construct
 
 ;; Setup the vectors
@@ -38,20 +37,22 @@ begin Construct
 
   advancedL2PCFwmR3B8: ForwardModel, type=linear, $
     signals= ['R3:240.B8F:PT'], $
-    molecules=[extinction, O_18_O, HNO3, O3], $
-    moleculeDerivatives=[EXTINCTION], /atmos_der, $
+    molecules=[extinction, O_18_O, O3, SO2, HNO3], $
     specificQuantities=[temperature_HR,totalextinctionr3], $
     /temp_der, $
     phiWindow=100 profiles, /lockBins, $
     binSelectors=[latBin,scalarbin, hrBin, latCost], $
     xStar=r3X_HR, yStar=r3Y_HR
- 
+
+  advancedL2PCFwmR3B33: ForwardModel, type=linear, $
+    signals= ['R3:240.B33W:O3.C3'], $
+    molecules=[extinction, O_18_O, O3, SO2, HNO3], $
+    specificQuantities=[temperature_HR,totalextinctionr3], $
+    /temp_der, $
+    phiWindow=100 profiles, /lockBins, $
+    binSelectors=[latBin,scalarbin, hrBin, latCost], $
+    xStar=r3X_HR, yStar=r3Y_HR
+
 end Construct
 
 ;$Log$
-;Revision 1.7  2006/08/05 01:57:58  lambert
-;removed atmos_der
-;
-;Revision 1.6  2006/08/03 00:55:04  lambert
-;used once before calladvancedhiresmodel
-;
