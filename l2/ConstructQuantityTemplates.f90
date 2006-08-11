@@ -986,7 +986,7 @@ contains ! ============= Public procedures ===================================
     type (MLSChunk_T), intent(in) :: CHUNK
     integer, intent(in) :: INSTRUMENTMODULE
     type (QuantityTemplate_T), intent(out) :: QTY
-    type (QuantityTemplate_T), dimension(:), target :: MIFGEOLOCATION
+    type (QuantityTemplate_T), dimension(:), intent(in), target :: MIFGEOLOCATION
     integer, intent(in) :: NOCHANS
     ! Local variables
     type (QuantityTemplate_T), pointer :: source
@@ -1293,6 +1293,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.135  2006/08/11 20:36:24  vsnyder
+! Add INTENT(IN) to MIFGeolocation
+!
 ! Revision 2.134  2006/08/04 20:52:20  pwagner
 ! Restore quantity name (if clobbered by SetUp..)
 !
