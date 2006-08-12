@@ -20,10 +20,12 @@ module MLSSets
 
   interface FindFirst
     module procedure FindFirstInteger, FindFirstLogical, FindFirstCharacter
+    module procedure FindFirstLogical2D
   end interface
 
   interface FindLast
     module procedure FindLastInteger, FindLastLogical, FindLastCharacter
+    module procedure FindLastLogical2D
   end interface
 
   interface FindNext
@@ -285,6 +287,49 @@ contains ! =====     Public Procedures     =============================
     FindFirstLogical = 0
   end function FindFirstLogical
 
+  ! -------------------------------------------  FindFirstLogical2D  -----
+  integer function FindFirstLogical2D ( condition, options )
+    ! Find the first logical in index 1 of the array that is true
+    ! for all (any) of the 2nd indexes
+    logical, dimension(:,:), intent(in)           :: CONDITION
+    character(len=*), optional, intent(in)        :: options
+    ! options is a character-valued parameter in the form
+    ! '-[t][n][l]'    with the following effect
+    !
+    !      t   transpose 1st and 2nd indices of array
+    !      n   choose sense 'any' while testing condition
+    !      l   choose sense 'all' while testing condition (default)
+    character(len=3) :: myOptions
+
+    ! Executable code
+    myOptions = '-l'
+    if ( present(options) ) then
+      if ( index(options, 'n') > 0 ) myOptions = '-n'
+      if ( index(options, 't') > 0 ) myOptions = myOptions(:2) // 't'
+    endif
+    select case(myOptions)
+    case ( '-l' )
+      do FindFirstLogical2D = 1, size(condition, 1)
+        if ( all(condition(FindFirstLogical2D, :)) ) return
+      end do
+    case ( '-n' )
+      do FindFirstLogical2D = 1, size(condition, 1)
+        if ( any(condition(FindFirstLogical2D, :)) ) return
+      end do
+    case ( '-lt' )
+      do FindFirstLogical2D = 1, size(condition, 2)
+        if ( all(condition(:, FindFirstLogical2D)) ) return
+      end do
+    case ( '-nt' )
+      do FindFirstLogical2D = 1, size(condition, 2)
+        if ( any(condition(:, FindFirstLogical2D)) ) return
+      end do
+    case default
+      ! This should never occur--treat it as if no matching condition found
+    end select
+    FindFirstLogical2D = 0
+  end function FindFirstLogical2D
+
   ! These next could be done by reversing the list order and
   ! calling findFirst
   ! -------------------------------------------  FindLastCharacter  -----
@@ -325,6 +370,49 @@ contains ! =====     Public Procedures     =============================
     end do
     FindLastLogical = 0
   end function FindLastLogical
+
+  ! -------------------------------------------  FindLastLogical2D  -----
+  integer function FindLastLogical2D ( condition, options )
+    ! Find the first logical in index 1 of the array that is true
+    ! for all (any) of the 2nd indexes
+    logical, dimension(:,:), intent(in)           :: CONDITION
+    character(len=*), optional, intent(in)        :: options
+    ! options is a character-valued parameter in the form
+    ! '-[t][n][l]'    with the following effect
+    !
+    !      t   transpose 1st and 2nd indices of array
+    !      n   choose sense 'any' while testing condition
+    !      l   choose sense 'all' while testing condition (default)
+    character(len=3) :: myOptions
+
+    ! Executable code
+    myOptions = '-l'
+    if ( present(options) ) then
+      if ( index(options, 'n') > 0 ) myOptions = '-n'
+      if ( index(options, 't') > 0 ) myOptions = myOptions(:2) // 't'
+    endif
+    select case(myOptions)
+    case ( '-l' )
+      do FindLastLogical2D = size(condition, 1), 1 -1
+        if ( all(condition(FindLastLogical2D, :)) ) return
+      end do
+    case ( '-n' )
+      do FindLastLogical2D = size(condition, 1), 1, -1
+        if ( any(condition(FindLastLogical2D, :)) ) return
+      end do
+    case ( '-lt' )
+      do FindLastLogical2D = size(condition, 2), 1, -1
+        if ( all(condition(:, FindLastLogical2D)) ) return
+      end do
+    case ( '-nt' )
+      do FindLastLogical2D = size(condition, 2), 1, -1
+        if ( any(condition(:, FindLastLogical2D)) ) return
+      end do
+    case default
+      ! This should never occur--treat it as if no matching condition found
+    end select
+    FindLastLogical2D = 0
+  end function FindLastLogical2D
 
   ! --------------------------------------------  FindNextCharacter  -----
   integer function FindNextCharacter ( Set, Probe, Current, Wrap, Repeat )
@@ -693,6 +781,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSSets
 
 ! $Log$
+! Revision 2.13  2006/08/12 00:07:43  pwagner
+! Added 2d findFirst, Last
+!
 ! Revision 2.12  2006/07/24 20:36:22  pwagner
 ! Union, Inersection may take character arrays
 !
