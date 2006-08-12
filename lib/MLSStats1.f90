@@ -993,7 +993,7 @@ contains
             & nbins, bounds, addeddata, fillValue, precision, &
             & count=statistic%count, min=statistic%min, max=statistic%max, &
             & mean=statistic%mean, &
-            & stddev=statistic%stddev, rms=statistic%rms, median=statistic%rms )
+            & stddev=statistic%stddev, rms=statistic%rms, median=statistic%median )
         endif
       end subroutine statistics
       
@@ -1309,6 +1309,9 @@ end module MLSStats1
 
 !
 ! $Log$
+! Revision 2.10  2006/08/12 00:08:21  pwagner
+! Corrected bug in filling median
+!
 ! Revision 2.9  2006/07/11 00:22:16  pwagner
 ! Most mls.. functions can take integer arrays
 !
