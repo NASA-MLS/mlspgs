@@ -23,7 +23,7 @@ program chunktimes ! Reads chunk times from l2aux file(s)
    use MLSHDF5, only: CpHDF5Attribute, GetHDF5Attribute, GetHDF5DSDims, &
      & IsHDF5AttributePresent, LoadFromHDF5DS, mls_h5open, mls_h5close
    use MLSMessageModule, only: MLSMessageConfig
-   use MLSSets, only: FindAll, FindFirst, FindNext
+   use MLSSets, only: FindAll, FindFirst, FindLast, FindNext
    use MLSStats1, only: STAT_T, &
      & ALLSTATS, DUMPSTAT=>DUMP, MLSMIN, MLSMAX, MLSMEAN, MLSSTDDEV, MLSRMS, STATISTICS
    use MLSStringLists, only: catLists, GetStringElement, GetUniqueList, &
@@ -60,6 +60,7 @@ program chunktimes ! Reads chunk times from l2aux file(s)
     logical            :: showFailed = .false.      ! show howmany, which failed
     logical            :: showStats = .true.        ! show max, min, mean, etc.
     logical            :: showQManager = .false.    ! show QManager performance
+    logical            :: guessFinalPhase = .true.  ! guess how many phases
     character(len=255) :: DSName= 'phase timing'    ! Dataset name
     character(len=255) :: binopts= ' '              ! 'nbins,X1,X2'
     character(len=255) :: details= ' '              ! prnt only detailed params
@@ -189,6 +190,14 @@ program chunktimes ! Reads chunk times from l2aux file(s)
         allocate(timings(dims(3)), stat=status)
         l2auxValue = UNDEFINEDVALUE
         call LoadFromHDF5DS (fileID, trim(options%DSname), l2auxValue)
+        ! New special feature:
+        ! Try to guess how phases there were by scanning
+        ! data for lasst phase with values > 0
+        if ( options%guessFinalPhase ) then
+          ! print *, 'dims: ', dims
+          options%finalPhase = FindLast(l2auxValue(1,:,:) > 0.d0, options='-n' )
+          ! print *, 'finalPhase: ', options%finalPhase
+        endif
         select case (lowercase(options%convert))
         case ('s2h')
           where (l2auxValue > 0.0)
@@ -222,7 +231,7 @@ program chunktimes ! Reads chunk times from l2aux file(s)
           endif
         endif
         if ( .not. options%merge ) then
-          if ( options%showStats) call dumpstat(statistic)
+          if ( options%showStats ) call dumpstat(statistic)
           if ( options%longChunks > 0._r4 ) &
             & call dump(longChunkList, 'list of long chunks')
           longChunkList = ' '
@@ -671,6 +680,9 @@ end program chunktimes
 !==================
 
 ! $Log$
+! Revision 1.12  2005/09/23 21:01:13  pwagner
+! use_wall_clock now a component of time_config
+!
 ! Revision 1.11  2005/07/20 20:38:00  pwagner
 ! Made defaults consistent with v1.51 (final phase is 12th)
 !
