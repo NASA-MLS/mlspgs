@@ -415,10 +415,12 @@ subtrees:   do while ( j <= howmany )
 
         ! For case where there was one chunk, destroy vectors etc.
         ! This is to guard against destroying stuff needed by l2pc writing
+        if ( canWriteL2PC ) then
           call MLSL2DeConstruct ( qtyTemplates, vectorTemplates, &
             & mifGeolocation, hGrids )
           call DestroyVectorDatabase ( vectors )
           call DestroyMatrixDatabase ( matrices )
+        endif
 
         if ( specialDumpFile /= ' ' ) &
           & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
@@ -530,6 +532,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.148  2006/08/10 21:46:50  pwagner
+! --chunk commandline option now synonym for --chunkRange
+!
 ! Revision 2.147  2006/08/05 02:10:46  vsnyder
 ! Delete some debugging print I shouldn't have left at the last check-in
 !
