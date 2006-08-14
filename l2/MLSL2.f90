@@ -262,8 +262,10 @@ program MLSL2
       else if ( lowercase(line(3+n:8+n)) == 'checkp' ) then
         checkPaths = switch
       else if ( lowercase(line(3+n:7)) == 'chunk' ) then
+        call AccumulateSlaveArguments ( line )
         i = i + 1
-        call getarg ( i, parallel%chunkRange )
+        call getarg ( i, line )
+        parallel%chunkRange = line
         command_line = trim(command_line) // ' ' // trim(parallel%chunkRange)
         call output_name_v_pair('chunkRange', trim(parallel%chunkRange) )
       else if ( lowercase(line(3+n:7+n)) == 'ckbk ' ) then
@@ -1054,6 +1056,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.156  2006/08/14 16:21:22  pwagner
+! pass chunk range correctly to slave tasks
+!
 ! Revision 2.155  2006/08/10 21:46:49  pwagner
 ! --chunk commandline option now synonym for --chunkRange
 !
