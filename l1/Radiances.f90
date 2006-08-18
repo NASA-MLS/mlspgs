@@ -20,7 +20,7 @@ MODULE Radiances ! Determine radiances for the GHz module
   USE MLSL1Utils, ONLY : GetIndexedAvg
   USE EngTbls, ONLY : Eng_MAF_T, CalTgtIndx, ReflecIndx, Reflec
   USE Calibration, ONLY : CalWin, limb_cnts, space_interp, target_interp, &
-       target_err, Tsys, Cgain, slimb_interp, slimb_err, slimb_type
+       target_err, Tsys, Cgain, slimb_interp, slimb_err, slimb_type, space_err
   USE MLSL1Rad, ONLY : FBrad, MBrad, WFrad, DACSrad, RadPwr
 
   IMPLICIT NONE
@@ -344,7 +344,7 @@ CONTAINS
                 CALL CalcRadiance (limb_cnts%FB(time_index,chan,bank), &
                      space_interp(MIF_index)%FB(chan,bank), &
                      target_interp(MIF_index)%FB(chan,bank), C_zero, &
-                     slimb_err(MIF_index)%FB(chan,bank), &
+                     space_err(MIF_index)%FB(chan,bank), &
                      target_err(MIF_index)%FB(chan,bank), &
                      space_P, target_P, baffle_P, BandWidth%FB(chan,bank), &
                      radNum, BandNo, chan,FBrad(bank)%value(chan,MIF_index+1), &
@@ -402,7 +402,7 @@ CONTAINS
                 CALL CalcRadiance (limb_cnts%MB(time_index,chan,bank), &
                      space_interp(MIF_index)%MB(chan,bank), &
                      target_interp(MIF_index)%MB(chan,bank), C_zero, &
-                     slimb_err(MIF_index)%MB(chan,bank), &
+                     space_err(MIF_index)%MB(chan,bank), &
                      target_err(MIF_index)%MB(chan,bank), &
                      space_P, target_P, baffle_P, BandWidth%MB(chan,bank), &
                      radNum, BandNo, chan,MBrad(bank)%value(chan,MIF_index+1), &
@@ -455,7 +455,7 @@ CONTAINS
                 CALL CalcRadiance (limb_cnts%WF(time_index,chan,bank), &
                      space_interp(MIF_index)%WF(chan,bank), &
                      target_interp(MIF_index)%WF(chan,bank), C_zero, &
-                     slimb_err(MIF_index)%WF(chan,bank), &
+                     space_err(MIF_index)%WF(chan,bank), &
                      target_err(MIF_index)%WF(chan,bank), &
                      space_P, target_P, baffle_P, BandWidth%WF(chan,bank), &
                      radNum, BandNo, chan,WFrad(bank)%value(chan,MIF_index+1), &
@@ -517,7 +517,7 @@ CONTAINS
                    CALL CalcRadiance (limb_cnts%DACS(time_index,chan,bank), &
                         space_interp(MIF_index)%DACS(chan,bank), &
                         target_interp(MIF_index)%DACS(chan,bank), C_zero, &
-                        slimb_err(MIF_index)%DACS(chan,bank), &
+                        space_err(MIF_index)%DACS(chan,bank), &
                         target_err(MIF_index)%DACS(chan,bank), &
                         space_P, target_P, baffle_P, &
                         BandWidth%DACS(chan,bank), radNum, BandNo, chan, &
@@ -573,8 +573,11 @@ END MODULE Radiances
 !=============================================================================
 
 ! $Log$
+! Revision 2.19  2006/08/18 15:53:19  perun
+! Replace slimb_err with space_err to correct rad_err calculation
+!
 ! Revision 2.18  2006/06/14 13:48:44  perun
-! Adjust radiances using the delrad values from the BandTbls
+!  Adjust radiances using the delrad values from the BandTbls
 !
 ! Revision 2.17  2006/04/05 18:09:32  perun
 ! Remove unused variables
