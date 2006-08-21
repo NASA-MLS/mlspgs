@@ -384,10 +384,7 @@ note_failures()
   echo -e "machine \t failure with"
   for line_number in $1
   do
-    #echo "line number $line_number of $2"
-    #sed -n ''$line_number' p' "$2"
     machine_info=`sed -n ''$line_number' p' "$2" | awk '{print $9, $11}'`
-    #echo "machine_info: $machine_info"
     machine=`echo $machine_info | awk '{print $1}'`
     info=`echo $machine_info | awk '{print $2}'`
     case "$info" in
@@ -593,15 +590,10 @@ for dir in $dirs
 do
   # These are pretty quick (at least compared with grepping the whole
   # file as later tests require)
-  #testl=`head $dir/exec_log/process.stdout | grep -i lightspeed`
-  #tests=`head $dir/exec_log/process.stdout | grep -i scramjet`
   machine=""
   for name in $clusternames
   do
     testl=`grep -i executing $dir/exec_log/process.stdout | grep -i $name`
-    # testl=`head $dir/exec_log/process.stdout | grep -i executing | grep -i $name`
-    # testl=`grep -i pvm_hosts_info $dir/exec_log/process.stdout | grep -i $name`
-    # echo "testl: $testl"
     if [ "$testl" != "" ]
     then
       machine="$name"
@@ -634,7 +626,7 @@ do
   fi
   statnochunks=`tail $dir/exec_log/process.stdout | grep -i "No chunks were processed"`
   statpvmtrouble=`tail $dir/exec_log/process.stdout | grep -i "probably pvm trouble"`
-  statgood=`tail $dir/exec_log/process.stdout | grep -i "catenating slave"`
+  statgood=`tail $dir/exec_log/process.stdout | grep -i "catenating chunk"`
   l1boa=`$REECHO $dir/*L1BOA_*`
   date=`echo $l1boa | sed "s/_/\n/g;s/.h5//" | tail -1`
   bugs=`grep -ic 'list out of order' $dir/pvmlog/mlsl2.log 2>/dev/null`
@@ -803,6 +795,9 @@ do
 done
 exit 0
 # $Log$
+# Revision 1.14  2006/07/13 18:12:18  pwagner
+# Accepts that certain jobs (corpses) may be legally declared dead
+#
 # Revision 1.13  2006/06/28 00:03:40  pwagner
 # Notes when jobs are terminated rather than completed normally
 #
