@@ -15,10 +15,12 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
   use Allocate_Deallocate, only: allocate_Test, Deallocate_Test
   use MLSCommon, only: r4, r8
   use MLSFillValues, only: isFillValue
-  use MLSSets, only: findAll
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use MLSSets, only: findAll, findFirst, findLast
   use MLSStringLists, only: catLists
   use MLSStrings, only: lowerCase
   use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
+  use SORT_M, only: sort
 
   implicit none
   private
@@ -26,6 +28,7 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
   public :: STAT_T             ! The data type
   public :: ALLSTATS, DUMP, STATISTICS  ! subroutines
   public :: MLSMIN, MLSMAX, MLSMEAN, MLSMEDIAN, MLSSTDDEV, MLSRMS ! functions
+  public :: pdf
   public :: STATFUNCTION
   
 !---------------------------- RCS Module Info ------------------------------
@@ -94,6 +97,9 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
   ! when calculating %ages (and possibly rms, etc.)
   character(len=1), public, save :: fillValueRelation = '='
 
+  ! Which of two medianmethods to utilize
+  integer, private, save         :: medianMethod = 2 ! 1 is too slow
+
   interface ALLSTATS
     module procedure allstats_d1r4, allstats_d2r4, allstats_d3r4
     module procedure allstats_d1r8, allstats_d2r8, allstats_d3r8
@@ -150,6 +156,10 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
     module procedure mlsrms_d1int, mlsrms_d2int, mlsrms_d3int
     module procedure mlsrms_d1r4, mlsrms_d2r4, mlsrms_d3r4
     module procedure mlsrms_d1r8, mlsrms_d2r8, mlsrms_d3r8
+  end interface
+  
+  interface pdf
+    module procedure pdf_1, pdf_2
   end interface
   
   interface shrinkarray
@@ -942,6 +952,136 @@ contains
         include 'stats0.f9h'
       end function mlsrms_d3r8
       
+      ! ------------------- pdf -----------------------
+      ! This family of functions finds the probability density function
+      ! for distribution of values saved in the data type statistic
+      ! There are two modes of operation:
+      ! 1-arg
+      ! -----
+      ! returns pdf(x, statistic) = f(x)
+
+      ! 2-arg
+      ! -----
+      ! returns pdf(x1, x2, statistic) = Integral( f(x) dx, [x1, x2] )
+      ! (which is actually cdf(x2) - cdf(x1))s
+
+      ! Method:
+      ! Let the bincount of the cell containing x be bincount(x)
+      ! the width of that cell be h
+      ! and the total counts over all bins be count
+      ! Then
+      ! pdf(x) = bincount(x) / (h count)
+
+      ! Notes:
+      ! (1) You must have first called the statistics subroutine
+      ! to create the statistics data type
+      ! (2) Statistics%nbins must be > 0
+      function pdf_1(x, statistic) result(pdf)
+        ! Given a value x and a statistic data type 
+        ! (for which see statistics subroutine below)
+        ! returns the probablility density function
+        !
+        ! Args
+        real(r8), intent(in)     :: x
+        type(Stat_T), intent(in) :: statistic
+        real(r8)                 :: pdf
+        ! Internal variables
+        integer                         :: i
+        real(r8)                        :: eta
+        real(r8)                        :: h
+        real(r8), dimension(:), pointer :: xbins
+        ! Executable
+        if ( statistic%nbins < 3 .or. .not. associated(statistic%bincount) ) then
+          call MLSMessage ( MLSMSG_Error, moduleName,  &
+            & "You must have binned the data before calling pdf" )
+        endif
+        nullify (xbins)
+        call allocate_test(xbins, statistic%nbins-1, 'xbins', moduleName)
+        xbins(1) = statistic%bounds(1)
+        h = ( statistic%bounds(2) - statistic%bounds(1) ) / (statistic%nbins-2)
+        do i=2, statistic%nbins-1
+          eta = (i-1._r8) / (statistic%nbins-2)
+          xbins(i) = (1._r8 - eta)*statistic%bounds(1) + eta*statistic%bounds(2)
+        enddo
+        i = FindFirst( x < xbins )
+        i = max(i, 1)
+        pdf = statistic%bincount(i) / (h*statistic%count)
+        call deallocate_test(xbins, 'xbins', moduleName)
+      end function pdf_1
+      
+      function pdf_2(x1, x2, statistic) result(pdf)
+        ! Given values x1, x2,  and a statistic data type 
+        ! (for which see statistics subroutine below)
+        ! returns an integrated probablility density function
+        !
+        ! We want 
+        !   Sum ( pdf(x) h, [x1 < x < x2] )
+        !
+        ! Args
+        real(r8), intent(in)     :: x1
+        real(r8), intent(in)     :: x2
+        type(Stat_T), intent(in) :: statistic
+        real(r8)                 :: pdf
+        ! Internal variables
+        integer                         :: i
+        integer                         :: i1
+        integer                         :: i2
+        real(r8)                        :: eta
+        real(r8)                        :: h
+        real(r8)                        :: hi
+        real(r8)                        :: pdfi
+        real(r8), dimension(:), pointer :: xbins
+        real(r8)                        :: xL
+        real(r8)                        :: xR
+        ! Executable
+        if ( statistic%nbins < 3 .or. .not. associated(statistic%bincount) ) then
+          call MLSMessage ( MLSMSG_Error, moduleName,  &
+            & "You must have binned the data before calling pdf" )
+        endif
+        nullify (xbins)
+        call allocate_test(xbins, statistic%nbins-1, 'xbins', moduleName)
+        xbins(1) = statistic%bounds(1)
+        h = ( statistic%bounds(2) - statistic%bounds(1) ) / (statistic%nbins-2)
+        do i=2, statistic%nbins-1
+          eta = (i-1._r8) / (statistic%nbins-2)
+          xbins(i) = (1._r8 - eta)*statistic%bounds(1) + eta*statistic%bounds(2)
+        enddo
+        i1 = FindFirst( x1 < xbins )
+        i2 = FindLast( x1 < xbins )
+        i1 = max(i1, 1)
+        i2 = max(i2, i1)
+        pdf = 0.
+        xR = min(x1, x2) - 1000*max(abs(x1), abs(x2)) ! This means -Infinity
+        do i=i1, i2
+          xL = xR
+          if ( i < statistic%nbins ) then
+            xL = xbins(i)
+          else
+            xR = max(x1, x2) + 1000*max(abs(x1), abs(x2)) ! This means +Infinity
+          endif
+          ! There are 4 possible cases to consider:
+          ! (1) xL < x1 < xR < x2
+          ! (2) x1 < xL < x2 < xR
+          ! (3) x1 < xL < xR < x2
+          ! (4) xL < x1 < x2 < xR
+          hi = xR - xL
+          pdfi = statistic%bincount(i) / (hi*statistic%count)
+          if ( xL < x1 .and. xR < x2 ) then
+            pdf = pdf + (xR-x1)*pdfi
+          elseif ( x1 < xL .and. x2 < xR ) then
+            pdf = pdf + (x2-xL)*pdfi
+          elseif ( x1 < xL .and. xR < x2 ) then
+            pdf = pdf + (xR-xL)*pdfi
+          elseif ( xL < x1 .and. x2 < xR ) then
+            pdf = pdf + (x2-x1)*pdfi
+          else
+            call MLSMessage ( MLSMSG_Error, moduleName,  &
+            & "Unanticipated relation among xL, xR, x1, x2" )
+          endif
+        enddo
+        call deallocate_test(xbins, 'xbins', moduleName)
+      end function pdf_2
+      
       ! ------------------- statFunction -----------------------
       function statFunction(values, fillValue, precision) result(statistic)
         ! Given a 1-d set of dbl prec values, returns a Stat_t typed result
@@ -1309,6 +1449,9 @@ end module MLSStats1
 
 !
 ! $Log$
+! Revision 2.11  2006/08/21 23:38:41  pwagner
+! Added pdf function; speedier median algorithm
+!
 ! Revision 2.10  2006/08/12 00:08:21  pwagner
 ! Corrected bug in filling median
 !
