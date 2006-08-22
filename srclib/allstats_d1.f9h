@@ -145,6 +145,23 @@
 contains
   subroutine FindMedian( array, N, median )
     ! Find the median of the values contained in array
+    ! By either of two methods:
+    ! (1) deleting both max and mins on successive paths; or
+    ! (2) sorting the array
+    ! Dummy args
+    real(rk), dimension(:), intent(in) :: array
+    integer, intent(in)                :: N
+    real(r8), intent(out)              :: median
+    ! Executable
+    if ( medianmethod == 1 ) then
+      call FindMedian_1( array, N, median )
+    else
+      call FindMedian_2( array, N, median )
+    endif
+  end subroutine FindMedian
+
+  subroutine FindMedian_1( array, N, median )
+    ! Find the median of the values contained in array
     ! Method:
     ! At each step, delete the high and low values of the array
     ! Until left with an array of length either 2 or 1
@@ -180,10 +197,35 @@ contains
     median = xmed1(1)
     call deallocate_test(xmed1, 'xmed1', trim(Modulename) // '/FindMedian' )
     call deallocate_test(xmed2, 'xmed2', trim(Modulename) // '/FindMedian' )
-  end subroutine FindMedian
+  end subroutine FindMedian_1
+
+  subroutine FindMedian_2( array, N, median )
+    ! Find the median of the values contained in array
+    ! Method:
+    ! sort he array, then choose its middle element
+    
+    ! Dummy args
+    real(rk), dimension(:), intent(in) :: array
+    integer, intent(in)                :: N
+    real(r8), intent(out)              :: median
+    ! Local variables
+    real(rk), dimension(n)             :: sorted
+    ! Executable
+    if ( size(array) < 1 ) then
+      return
+    elseif ( size(array) < 3 ) then
+      median = array(1)
+    endif
+    sorted = array(1:n)
+    call sort(sorted, 1, n)
+    median = sorted(n/2)
+  end subroutine FindMedian_2
 ! end subroutine sllstats*
 
 ! $Log$
+! Revision 1.3  2006/07/11 00:25:44  pwagner
+! Show relation of ignored fill values
+!
 ! Revision 1.2  2006/03/08 17:10:48  pwagner
 ! Now finds median, too
 !
