@@ -1516,8 +1516,9 @@ contains
   end subroutine DUMP_HASH_LOG
 
   ! -----------------------------------------------  DUMP_STRLIST  -----
-  subroutine DUMP_STRLIST ( STRING, NAME, FILLVALUE, CLEAN )
+  subroutine DUMP_STRLIST ( STRING, SEPARATOR, NAME, FILLVALUE, CLEAN )
     ! Dumps a ','-separated list of strings
+    character(len=*), intent(in) :: SEPARATOR
     character(len=*), intent(in) :: STRING
     character(len=*), intent(in), optional :: NAME
     character(len=*), intent(in), optional :: FILLVALUE
@@ -1527,7 +1528,7 @@ contains
     logical :: MyClean
     integer :: NumElements
     character(len=len(string)) :: myFillValue
-    character(len=*), parameter :: SEPARATOR = ','
+    ! character(len=1), parameter :: SEPARATOR = ','
     logical, parameter :: COUNTEMPTY = .true.
 
     myFillValue = ' '
@@ -1535,7 +1536,13 @@ contains
 
     myClean = .false.
     if ( present(clean) ) myClean = clean
-
+    
+    if ( len(SEPARATOR) > 1 ) then
+      call output( 'Illegal args to DUMP_STRLIST', advance='yes' )
+      call output( 'expect ( char* STRING, char SEPARATOR, [NAME], [FILLVALUE], [CLEAN] )', advance='yes' )
+      return
+    endif
+    
     NumElements = NumStringElements(string, countEmpty, &
      & separator)
     if ( NumElements == 0 ) then
@@ -2030,6 +2037,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.62  2006/08/22 20:40:04  pwagner
+! Added required arg=separator to DUMP_STRLIST
+!
 ! Revision 2.61  2006/07/11 00:24:04  pwagner
 ! use fillValue properly when computing rms etc.
 !
