@@ -426,6 +426,7 @@ CONTAINS
     sv_buf = sv * CalFlag
 
     nBounds = SIZE (BoundsX)
+    tt = 0.0d0
     tt(0,0) = ntot / (819.2 * 819.2)
     DO i = 1, (nfit - 1)
        tt(i,i) = 0.5
@@ -1087,6 +1088,9 @@ END MODULE THzCalibration
 !=============================================================================
 
 ! $Log$
+! Revision 2.12  2006/08/22 18:39:40  perun
+! Initialize tt array to 0.0
+!
 ! Revision 2.11  2006/04/05 18:08:40  perun
 ! Add SAVE for NAG compiler and remove unused variables
 !
