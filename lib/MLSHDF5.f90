@@ -28,7 +28,7 @@ module MLSHDF5
   use MLSDataInfo, only: MLSDataInfo_T, Query_MLSData
   use MLSFiles, only: HDFVERSION_5, INITIALIZEMLSFILE
   use MLSKinds, only: r8
-  use MLSStringLists, only: NumStringElements, StringElement
+  use MLSStringLists, only: GetStringElement, NumStringElements, StringElement
   ! To switch to/from hdfeos5.1.6(+) uncomment next line
   use H5LIB, ONLY: h5open_f, h5close_f
   ! Lets break down our use, parameters first
@@ -356,8 +356,8 @@ contains ! ======================= Public Procedures =========================
     ! Local variables
     integer :: attrID
     integer :: classID
-    character(len=1024) :: chValue ! len may become MAXCHFIELDLENGTH
-    ! logical, parameter :: DEEBUG = .false.
+    character(len=MAXCHFIELDLENGTH) :: chValue ! 1024; len may become MAXCHFIELDLENGTH
+    ! logical, parameter :: DEEBUG = .true.
     integer, dimension(7) :: dims
     double precision, dimension(1024) :: dValue
     integer(kind=hSize_t), dimension(7) :: hdims
@@ -377,22 +377,37 @@ contains ! ======================= Public Procedures =========================
     myNames = '*' ! Wildcard means 'all'
     if ( present(names) ) myNames = names
     if ( present(groupName) ) then
-      call h5gOpen_f ( locID, '/', itemID, status )
+      ! call h5gOpen_f ( locID, '/', itemID, status )
+      call h5gOpen_f ( locID, trim(groupName), itemID, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to open group' // trim(groupName) // &
         & ' while dumping its attributes' )
+      if ( DEEBUG ) call output_name_v_pair ( 'groupName', groupName )
     elseif(present(DSName) ) then
       call h5dOpen_f ( locID, trim(DSname), itemID, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to open dataset' // trim(DSName) // &
         & ' while dumping its attributes' )
+      if ( DEEBUG ) call output_name_v_pair ( 'DSName', DSName )
     else
       itemID = locID
+      if ( DEEBUG ) call output_name_v_pair ( 'locID', locID )
     endif
-    if ( myNames == '*' ) call GetAllHDF5AttrNames ( itemID, myNames )
+    if ( myNames == '*' ) then
+      if ( present(groupName) ) then
+        call GetAllHDF5AttrNames ( locID, myNames, groupname=groupName )
+      else
+        call GetAllHDF5AttrNames ( itemID, myNames )
+      endif
+    endif
     numAttrs = NumStringElements ( myNames, countEmpty )
+    if ( DEEBUG ) call output_name_v_pair ( 'myNames', myNames )
+    if ( DEEBUG ) call output_name_v_pair ( 'numAttrs', numAttrs )
     do i = 1, numAttrs
-      name = StringElement(myNames, i, countEmpty)
+      if ( DEEBUG ) call output_name_v_pair ( 'i', i )
+      ! name = StringElement(myNames, i, countEmpty)
+      call GetStringElement( myNames, name, i, countEmpty )
+      if ( DEEBUG ) call output_name_v_pair ( 'name', name )
       call h5aopen_name_f ( itemID, trim(name), attrID, status )
       if ( status /= 0 ) then
         call output ( trim(name), advance='no' )
@@ -433,7 +448,7 @@ contains ! ======================= Public Procedures =========================
         call dump ( dValue(1:dims(1)), trim(name), stats=stats, rms=rms )
       case ( 'character' )
         call GetHDF5Attribute ( itemID, name, chValue )
-        call dump ( trim(chValue), trim(name) )
+        call dump ( (/ trim(chValue)/ ), trim(name) )
       case default
         call output ( trim(name), advance='no' )
         call output ( '  (unrecognized type)', advance='yes' )
@@ -5437,6 +5452,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.68  2006/08/22 20:41:23  pwagner
+! Fixed a bug in DumpHDF5Attributes
+!
 ! Revision 2.67  2006/07/11 00:24:36  pwagner
 ! use fillValue properly when computing rms etc.
 !
