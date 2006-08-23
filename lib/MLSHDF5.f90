@@ -448,7 +448,7 @@ contains ! ======================= Public Procedures =========================
         call dump ( dValue(1:dims(1)), trim(name), stats=stats, rms=rms )
       case ( 'character' )
         call GetHDF5Attribute ( itemID, name, chValue )
-        call dump ( (/ trim(chValue)/ ), trim(name) )
+        call dump ( (/ trim(chValue) /), trim(name) )
       case default
         call output ( trim(name), advance='no' )
         call output ( '  (unrecognized type)', advance='yes' )
@@ -5452,6 +5452,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.69  2006/08/23 18:04:23  pwagner
+! NAG hates splitting /) operator
+!
 ! Revision 2.68  2006/08/22 20:41:23  pwagner
 ! Fixed a bug in DumpHDF5Attributes
 !
