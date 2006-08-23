@@ -36,8 +36,6 @@ module DUMP_0
 ! AfterSub                 character printed between row, col id and data
 ! DONTDUMPIFALLEQUAL       don't dump every element of a constant array
 ! FILTERFILLSFROMRMS       exclude fill values when calculating rms, etc.
-! FILLVALUERELATION        consider whether one of {"=" (default), "<", ">"}
-!                            when calculating %ages (and possibly rms, etc.)
 ! STATSONONELINE           stats, rms each printed on a single line
 
 !     (subroutines and functions)
@@ -115,7 +113,6 @@ module DUMP_0
   character, public, parameter :: AfterSub = '#'
   logical, public, save ::   DONTDUMPIFALLEQUAL = .true.
   logical, public, save ::   STATSONONELINE = .true.
-  ! character(len=1), public, save ::   FILLVALUERELATION = '=' ! {'=','<','>'}
   logical, public, save ::   FILTERFILLSFROMRMS = .false.
 
   logical, parameter ::   DEEBUG = .false.
@@ -1516,20 +1513,31 @@ contains
   end subroutine DUMP_HASH_LOG
 
   ! -----------------------------------------------  DUMP_STRLIST  -----
-  subroutine DUMP_STRLIST ( STRING, SEPARATOR, NAME, FILLVALUE, CLEAN )
-    ! Dumps a ','-separated list of strings
-    character(len=*), intent(in) :: SEPARATOR
+  subroutine DUMP_STRLIST ( STRING, NAME, FILLVALUE, CLEAN, INSEPARATOR )
+    ! Dumps a ','-separated string list, one item per lines
+    ! (Unless it consists of multiple lines)
     character(len=*), intent(in) :: STRING
     character(len=*), intent(in), optional :: NAME
     character(len=*), intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
+    character(len=*), optional, intent(in) :: INSEPARATOR
 
     integer :: J
     logical :: MyClean
     integer :: NumElements
     character(len=len(string)) :: myFillValue
-    ! character(len=1), parameter :: SEPARATOR = ','
+    character(len=1), parameter :: CR = ACHAR(13) ! Carriage return
+    character(len=1), parameter :: LF = ACHAR(10) ! Line feed
+    character(len=1) :: SEPARATOR
     logical, parameter :: COUNTEMPTY = .true.
+    ! Executable
+    if( index(string, CR) > 0 ) then
+      call dump( (/ trim(string) /), name, fillvalue, clean )
+      return
+    elseif( index(string, LF) > 0 ) then
+      call dump( (/ trim(string) /), name, fillvalue, clean )
+      return
+    endif
 
     myFillValue = ' '
     if ( present(FillValue) ) myFillValue = FillValue
@@ -1537,11 +1545,8 @@ contains
     myClean = .false.
     if ( present(clean) ) myClean = clean
     
-    if ( len(SEPARATOR) > 1 ) then
-      call output( 'Illegal args to DUMP_STRLIST', advance='yes' )
-      call output( 'expect ( char* STRING, char SEPARATOR, [NAME], [FILLVALUE], [CLEAN] )', advance='yes' )
-      return
-    endif
+    SEPARATOR = ','
+    if ( present(INSEPARATOR) ) SEPARATOR = INSEPARATOR
     
     NumElements = NumStringElements(string, countEmpty, &
      & separator)
@@ -2037,6 +2042,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.63  2006/08/23 20:06:25  pwagner
+! Restored more backward-compatible arglist to DUMP_STRLIST
+!
 ! Revision 2.62  2006/08/22 20:40:04  pwagner
 ! Added required arg=separator to DUMP_STRLIST
 !
