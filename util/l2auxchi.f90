@@ -13,7 +13,7 @@
 program l2auxchi ! dumps chi^sq read from L2AUX files
 !=================================
 
-   use Dump_0, only: DUMP, RELATIONFORPCTAGES
+   use Dump_0, only: DUMP
    use Hdf, only: DFACC_CREATE, DFACC_READ
    use HDF5, only: h5fis_hdf5_f, &
      & H5GCLOSE_F, H5GOPEN_F, H5DOPEN_F, H5DCLOSE_F, h5gcreate_f
@@ -28,9 +28,10 @@ program l2auxchi ! dumps chi^sq read from L2AUX files
      & IsHDF5AttributePresent, mls_h5open, mls_h5close
    use MLSMessageModule, only: MLSMessageConfig, MLSMSG_Error, MLSMSG_Warning, &
      & MLSMessage
-   use MLSStringLists, only: GetStringElement, NumStringElements
+   use MLSStats1, only: FILLVALUERELATION, Stat_T, STATISTICS
+   use MLSStringLists, only: catLists, GetStringElement, NumStringElements
    use MLSStrings, only: LOWERCASE, WriteIntsToChars
-   use output_m, only: resumeOutput, suspendOutput, output
+   use output_m, only: blanks, newline, output, resumeOutput, suspendOutput
    use Time_M, only: Time_Now, time_config
    
    implicit none
@@ -54,6 +55,7 @@ program l2auxchi ! dumps chi^sq read from L2AUX files
 
   type options_T
     logical     :: silent  = .false. ! Not used
+    logical     :: tabulate = .false.        ! tabulate
     logical     :: verbose = .false.
     logical     :: list    = .false.
     logical     :: stats   = .true.
@@ -75,15 +77,17 @@ program l2auxchi ! dumps chi^sq read from L2AUX files
   integer     ::  i, count, status, error ! Counting indices & Error flags
   logical     :: is_hdf5
   character (len=MAXSDNAMESBUFSIZE) :: mySdList
+  character (len=MAXSDNAMESBUFSIZE) :: names
   character(len=16) :: string
   real        :: t1
   real        :: t2
+  real, dimension( MAXDS, MAXFILES ) :: table
   real        :: tFile
   ! 
   MLSMessageConfig%useToolkit = .false.
   MLSMessageConfig%logFileUnit = -1
   time_config%use_wall_clock = .true.
-  relationforpctages = '<' ! we want to know % chi^2 are < 1 (or whatever)
+  FILLVALUERELATION = '<' ! we want to know % chi^2 are < 1 (or whatever)
   CALL mls_h5open(error)
   n_filenames = 0
   do      ! Loop over filenames
@@ -120,13 +124,14 @@ program l2auxchi ! dumps chi^sq read from L2AUX files
       if ( options%verbose ) then
         print *, 'get chi^2 from: ', trim(filenames(i))
       endif
-      call dumpchisq(trim(filenames(i)), &
-      & HDFVERSION_5, options)
+      call dumpchisq( trim(filenames(i)), &
+      & HDFVERSION_5, options, table(:, i), names )
       call sayTime('reading this file', tFile)
     endif
   enddo
   if ( .not. options%list) call sayTime('dreading all files')
   call resumeOutput
+  if ( options%tabulate ) call tabulate ( table, names )
   if ( options%silent .and. options%numDiffs > 0 ) then
     ! write(string, '(i)') options%numDiffs
     call WriteIntsToChars ( options%numDiffs, string )
@@ -142,7 +147,8 @@ contains
      type ( options_T ), intent(in)   :: options
      ! Local variables
      integer :: i
-     print *, 'silent ?            ', options%silent 
+     ! print *, 'silent ?            ', options%silent 
+     print *, 'tabulate?           ', options%tabulate
      print *, 'verbose?            ', options%verbose
      print *, 'list   ?            ', options%list   
      print *, 'stats  ?            ', options%stats  
@@ -175,6 +181,9 @@ contains
         call print_help
       elseif ( filename(1:8) == '-silent ' ) then
         options%silent = .true.
+        exit
+      elseif ( filename(1:2) == '-t' ) then
+        options%tabulate = .true.
         exit
       elseif ( filename(1:3) == '-v ' ) then
         options%verbose = .true.
@@ -209,7 +218,7 @@ contains
     if (trim(filename) == ' ' .and. n_filenames == 0) then
 
     ! Last chance to enter filename
-      print *,  "Enter the name of the HDF5 l1b or l2aux file. "
+      print *,  "Enter the name of the HDF5 l2aux file. "
       read(*,'(a)') filename
     endif
     
@@ -230,6 +239,7 @@ contains
       write (*,*) '          -r value        => compare chi^2 against value'
       write (*,*) '          -rms            => just print mean, rms'
       write (*,*) '          -s              => just show % statistics'
+      write (*,*) '          -t[abulate]     => print data in tables (dont)'
       write (*,*) '          -h              => print brief help'
       stop
   end subroutine print_help
@@ -249,7 +259,7 @@ contains
   end subroutine SayTime
 
   ! ---------------------- dumpchisq  ---------------------------
-  subroutine dumpchisq(file1, hdfVersion, options)
+  subroutine dumpchisq( file1, hdfVersion, options, table, names )
   !------------------------------------------------------------------------
 
     ! Given file names file1,
@@ -260,6 +270,8 @@ contains
     character (len=*), intent(in) :: file1 ! Name of file
     integer, intent(in)           :: hdfVersion
     type ( options_T )            :: options
+    real, dimension( : ) :: table
+    character(len=*) :: names
 
     ! Local
     logical, parameter            :: countEmpty = .true.
@@ -269,6 +281,7 @@ contains
     integer :: i
     logical :: isl1boa
     type(l1bdata_t) :: L1BDATA  ! Result
+    type(Stat_T) :: L1BStat
     character (len=MAXSDNAMESBUFSIZE) :: mySdList
     integer :: NoMAFs
     integer :: noSds
@@ -276,6 +289,7 @@ contains
     integer :: sdfid1
     integer :: sdfid2
     character (len=80) :: sdName
+    integer, dimension(3) :: shp
     integer :: status
     integer :: the_hdfVersion
     
@@ -326,25 +340,30 @@ contains
         & 'No sdNames cp to file--unable to count sdNames in ' // trim(mysdList) )
     endif
     ! Loop over sdNames in file 1
+    names = ''
     do i = 1, noSds
       call GetStringElement (trim(mysdList), sdName, i, countEmpty )
       if ( index( lowercase(trim(sdName)), 'chisq' ) < 1 ) cycle
       ! Allocate and fill l2aux
       if ( options%verbose ) print *, 'About to read ', trim(sdName)
-        call ReadL1BData ( sdfid1, trim(sdName), L1bData, NoMAFs, status, &
-          & hdfVersion=the_hdfVersion, NEVERFAIL=.true., L2AUX=.true. )
-        if ( status /= 0 ) then
-	       call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          	& 'Unable to find ' // trim(sdName) // ' in ' // trim(File1) )
-          cycle
-        endif
-        call dump( L1bData%DpField, name=trim(sdName), &
-          & stats=.true., FillValue=options%referenceValue )
-!         call diff(L1bData, L1bData2, &
-!           & stats=options%stats, rms=options%rms, &
-!           & silent=options%silent, numDiffs=numDiffs )
-        call DeallocateL1BData ( l1bData )
-        options%numDiffs = options%numDiffs + numDiffs
+      call ReadL1BData ( sdfid1, trim(sdName), L1bData, NoMAFs, status, &
+        & hdfVersion=the_hdfVersion, NEVERFAIL=.true., L2AUX=.true. )
+      if ( status /= 0 ) then
+	     call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'Unable to find ' // trim(sdName) // ' in ' // trim(File1) )
+        cycle
+      endif
+      shp = shape(L1bData%DpField)
+      call dump( L1bData%DpField, name=trim(sdName), &
+        & stats=.true., FillValue=options%referenceValue )
+      L1BStat%count = 0
+      call statistics(&
+        & reshape( L1bData%DpField, (/ product(shp) /) ), &
+        & L1BStat, fillValue=options%referenceValue )
+      call DeallocateL1BData ( l1bData )
+      table( i ) = L1BStat%fillcount * 1.d0/L1BStat%count
+      options%numDiffs = options%numDiffs + L1BStat%fillcount
+      names = catlists(names, sdName)
     enddo
 	 call h5gClose_f (grpID, status)
     if ( status /= 0 ) then
@@ -363,11 +382,51 @@ contains
     write(*,'(a)') trim(string)
   end subroutine print_string
 
+!------------------------- tabulate ---------------------
+  subroutine tabulate ( table, phases )
+    ! Args
+    real, dimension(:,:), intent(in) :: table
+    character(len=*), optional, intent(in) :: phases
+    ! Internal variables
+    integer :: chunk
+    character(len=32) :: myPhase
+    integer :: numPhases
+    integer :: phase
+    ! Executable
+    numPhases = size(table, 1)
+    call blanks(30, fillchar='*', advance='yes')
+    call output('chunk', advance='no')
+    call blanks(3)
+    do phase=1, numPhases
+      if ( present(phases) ) then
+        call GetStringElement( phases, myPhase, phase, .FALSE.)
+        call output(trim(myPhase), advance='no')
+        call blanks(3)
+      else
+        call output('phase', advance='no')
+        call output(phase, advance='no')
+        call blanks(3)
+      endif
+    enddo
+    call newline
+    do chunk=1, size(table, 2)
+      if ( any(table(:, chunk) /= options%referenceValue) ) then
+        call output(chunk, advance='no')
+        call blanks(1)
+        call output(table(:, chunk), advance='no')
+        call newline
+      endif
+    enddo
+  end subroutine tabulate
+
 !==================
 end program l2auxchi
 !==================
 
 ! $Log$
+! Revision 1.2  2006/05/24 22:22:05  pwagner
+! Increased MAXDS to more realistic value
+!
 ! Revision 1.1  2006/05/24 20:39:41  pwagner
 ! First commit
 !
