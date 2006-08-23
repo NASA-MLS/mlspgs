@@ -1124,7 +1124,7 @@ update:
 
 # Make most the souce-file tools in the util directory
 tools: chunktimes checkpvmup compare heconvert h5subset h5cat hl killmaster \
-  l1bdiff l1h5subset l2auxcat l2auxchi l2audump l2gpcat l2q l2gpdiff l2gpdump \
+  l1bdiff l1h5subset l2auxcat l2auxchi l2auxdump l2gpcat l2q l2gpdiff l2gpdump \
   machineok WordSplit
 
 .PHONY: all configure clean clean_config\
@@ -1146,6 +1146,9 @@ tools: chunktimes checkpvmup compare heconvert h5subset h5cat hl killmaster \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.101  2006/08/10 23:05:43  pwagner
+# Added l2gpdump tool
+#
 # Revision 1.100  2006/06/28 00:17:05  pwagner
 # Added l2aucdump tool
 #
