@@ -393,6 +393,7 @@ contains
     integer(ip) :: sps_i  ! a species counter
 
     real(rp) :: earthradc ! minor axis of orbit plane projected Earth ellipse
+    real(rp) :: earthradc_sq ! earthradc**2
     real(rp) :: surf_angle(1), one_dhdz(1), one_dxdh(1)
 
     real(rp), dimension(:), pointer :: dh_dz_out
@@ -490,7 +491,7 @@ contains
 !   Print *, '** Enter ForwardModel, MAF =',fmstat%maf   ! ** ZEBUG
 
     if ( toggle(emit) ) & ! set by -f command-line switch
-      & call trace_begin ( 'ForwardModel, MAF=', index=fmstat%maf )
+      & call trace_begin ( 'Full ForwardModel, MAF=', index=fmstat%maf )
 
     ! Nullify all our pointers that are allocated because the first thing
     ! Allocate_Test does is ask if they're associated.  If we don't nullify
@@ -594,8 +595,10 @@ contains
     call deallocate_test ( d2xdxdt_surface, 'd2xdxdt_surface',moduleName )
     call deallocate_test ( req_out, 'req_out', moduleName )
 
-    if ( toggle(emit) .and. levels(emit) > 0 ) &
-      & call Trace_End ( 'ForwardModel.Hydrostatic' )
+    if ( toggle(emit) .and. levels(emit) > 0 ) then
+      call Trace_End ( 'ForwardModel.Hydrostatic' )
+      call Trace_Begin ( 'ForwardModel.SidebandLoop' )
+    end if
 
     ! Loop over sidebands ----------------------------------------------------
     do thisSideband = fwdModelConf%sidebandStart, fwdModelConf%sidebandStop, 2
@@ -676,7 +679,7 @@ contains
             ! Set up temperature representation basis stuff
             call metrics ( tan_phi(ptg_i), tan_ind, Grids_tmp%phi_basis,     &
               &  z_glgrid, n_glgrid, h_glgrid, t_glgrid, dhdz_glgrid,        &
-              &  orbIncline%values(1,maf)*Deg2Rad, FwdModelConf%refract,     &
+              &  earthradc_sq, FwdModelConf%refract,                         &
               &  h_path(1:no_ele), phi_path(1:no_ele),                       &
               &  t_path(1:no_ele), dhdz_path(1:no_ele), Req, ier,            &
               &  TAN_PHI_H=tan_ht, TAN_PHI_T=tan_temp, NEG_H_TAN=neg_tan_ht, &
@@ -697,7 +700,7 @@ contains
           else
             call metrics ( tan_phi(ptg_i), tan_ind, Grids_tmp%phi_basis,     &
               &  z_glgrid, n_glgrid, h_glgrid, t_glgrid, dhdz_glgrid,        &
-              &  orbIncline%values(1,maf)*Deg2Rad, FwdModelConf%refract,     &
+              &  earthradc_sq, FwdModelConf%refract,                         &
               &  h_path(1:no_ele), phi_path(1:no_ele),                       &
               &  t_path(1:no_ele), dhdz_path(1:no_ele), Req, ier,            &
               &  TAN_PHI_H=tan_ht, TAN_PHI_T=tan_temp, NEG_H_TAN=neg_tan_ht )
@@ -711,7 +714,7 @@ contains
             ! Set up temperature representation basis stuff
             call metrics ( tan_phi(ptg_i), tan_ind, Grids_tmp%phi_basis,     &
               &  z_glgrid, n_glgrid, h_glgrid, t_glgrid, dhdz_glgrid,        &
-              &  orbIncline%values(1,maf)*Deg2Rad, FwdModelConf%refract,     &
+              &  earthradc_sq, FwdModelConf%refract,                         &
               &  h_path(1:no_ele), phi_path(1:no_ele),                       &
               &  t_path(1:no_ele), dhdz_path(1:no_ele), Req, ier,            &
               &  TAN_PHI_H = tan_ht, TAN_PHI_T = tan_temp,                   &
@@ -732,7 +735,7 @@ contains
           else
             call metrics ( tan_phi(ptg_i), tan_ind, Grids_tmp%phi_basis,     &
               &  z_glgrid, n_glgrid, h_glgrid, t_glgrid, dhdz_glgrid,        &
-              &  orbIncline%values(1,maf)*Deg2Rad, FwdModelConf%refract,     &
+              &  earthradc_sq, FwdModelConf%refract,                         &
               &  h_path(1:no_ele), phi_path(1:no_ele),                       &
               &  t_path(1:no_ele), dhdz_path(1:no_ele), Req, ier,            &
               &  TAN_PHI_H = tan_ht, TAN_PHI_T = tan_temp )
@@ -1386,7 +1389,7 @@ contains
     call deallocate_test ( dx_dt,            'dx_dt',          moduleName )
     call deallocate_test ( d2x_dxdt,         'd2x_dxdt',       moduleName )
 
-    if ( toggle(emit) ) call trace_end ( 'ForwardModel MAF=', fmStat%maf )
+    if ( toggle(emit) ) call trace_end ( 'Full ForwardModel MAF=', fmStat%maf )
 
   contains
 
@@ -1621,10 +1624,11 @@ contains
 
       call allocate_test ( req_out, ptan%template%nosurfs, 'req_out', &
                          & moduleName )
-      earthradc = earthRadA*earthRadB / &
-            & SQRT((earthRadA**2-earthRadB**2) * &
+      earthradc_sq = (earthRadA*earthRadB)**2 / &
+            &     ((earthRadA**2-earthRadB**2) * &
                    &   SIN(orbIncline%values(1,maf)*Deg2Rad)**2 + &
                    & earthRadB**2)
+      earthradc = sqrt(earthradc_sq)
 
   !{\begin{equation*}\begin{split}
   ! R_{eq} =\;& \sqrt \frac{R_a^4 \sin^2 \phi + R_c^4 \cos^2 \phi}
@@ -1632,13 +1636,17 @@ contains
   !        =\;& \sqrt \frac{R_a^4 - (R_a^2+R_c^2)(R_a^2-R_c^2) \cos^2 \phi}
   !                       {R_c^2 +              (R_a^2-R_c^2) \cos^2 \phi}
   ! \end{split}\end{equation*}
+  !
+  ! Although this is the same mathematical formula as used in {\tt metrics},
+  ! the $\phi$ used here is different.  Therefore, we can't use these
+  ! values in {\tt metrics}, or where its output {\tt req} value is used.
 
       req_out = (earthrada-earthradc)*(earthrada+earthradc) * &
         & COS(phitan%values(:,maf)*Deg2Rad)**2
       ! Earthrad[abc] are in meters, but Req_Out needs to be in km.
       req_out = 0.001_rp * SQRT( &
-        & ( earthrada**4 - (earthrada**2+earthradc**2) * req_out ) / &
-        & ( earthradc**2 + req_out ) )
+        & ( earthrada**4 - (earthrada**2+earthradc_sq) * req_out ) / &
+        & ( earthradc_sq + req_out ) )
 
       call allocate_test ( tan_chi_out, ptan%template%nosurfs, 'tan_chi_out', &
                          & moduleName )
@@ -1913,11 +1921,11 @@ contains
         call allocate_test ( tau_pol, 2, 2, npc, 'tau_pol', moduleName )
         call allocate_test ( deltau_pol, 2, 2, npc, 'deltau_pol', moduleName )
         if ( atmos_der ) then
-          call allocate_test ( d_rad_pol_df, 2, 2, grids_f%l_v(ubound(grids_f%l_v,1)), &
+          call allocate_test ( d_rad_pol_df, 2, 2, size(grids_f%values), &
             & 'd_rad_pol_df', moduleName )
-          allocate ( de_df(2,2,npc,grids_f%l_v(ubound(grids_f%l_v,1))), stat=ier )
+          allocate ( de_df(2,2,npc,size(grids_f%values)), stat=ier )
           call test_allocate ( ier, moduleName, 'de_df', &
-            & (/1,1,1,1/), (/2,2,npc,grids_f%l_v(ubound(grids_f%l_v,1))/), e_rp )
+            & (/1,1,1,1/), (/2,2,npc,size(grids_f%values)/), e_rp )
         end if
         if ( temp_der ) then
           call allocate_test ( d_rad_pol_dt, 2, 2, sv_t_len, &
@@ -1947,7 +1955,6 @@ contains
 
       if ( toggle(emit) .and. levels(emit) > 0 ) then
         call Trace_End ( 'ForwardModel.Allocate' )
-        call Trace_Begin ( 'ForwardModel.SidebandLoop' )
       end if
 
       npcmax = npc
@@ -2928,7 +2935,6 @@ contains
             &  beta_path_f, do_gl, del_s, ref_corr, dsdz_gw_path, &
             &  inc_rad_path_slice, i_stop,                        &
             &  d_delta_df(1:npc,:), k_atmos_frq(frq_i,:) )
-
           if ( FwdModelConf%anyPFA(sx) ) then
 
           else if ( fwdModelConf%polarized ) then
@@ -3379,6 +3385,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.265  2006/07/06 23:16:19  vsnyder
+! Need to allocate dh_dt_glgrid even if no temperature derivatives
+!
 ! Revision 2.264  2006/06/29 19:34:43  vsnyder
 ! Changes due to metrics handling only one tangent
 !
