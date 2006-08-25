@@ -3385,6 +3385,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.266  2006/08/25 19:37:07  vsnyder
+! Earthradc_sq, etc.
+!
 ! Revision 2.265  2006/07/06 23:16:19  vsnyder
 ! Need to allocate dh_dt_glgrid even if no temperature derivatives
 !
