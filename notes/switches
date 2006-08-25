@@ -42,6 +42,8 @@ Switches (set by -S option in mlsl2's command line):
   gvec =>   Gradient vector during Newton iteration
   help =>   Display this screen (or "?")
   hgrid =>  Information on HGrid construction (at least for regular)
+  hphi =>   Trace H/Phi iteration in metrics
+  hphI =>   hphi, and stop if 1d approximation is used
   jac =>    L_infty norms of blocks Jacobian during Newton iterations
   JAC =>    Jacobian during Newton iterations
   l1b =>    l1b quantities dumped (only when filled from)
@@ -156,6 +158,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.63  2006/06/29 19:36:56  vsnyder
+ Add metd and metD switches
+
  Revision 1.62  2006/06/02 23:29:05  vsnyder
  Complete descriptions of retriever's switches
 
