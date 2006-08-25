@@ -718,6 +718,9 @@ contains
 end module Metrics_m
 
 ! $Log$
+! Revision 2.30  2006/08/25 19:37:07  vsnyder
+! Substantial revision
+!
 ! Revision 2.29  2006/06/29 19:34:17  vsnyder
 ! Remove capability to handle more than one tangent -- substantial simplification
 !
