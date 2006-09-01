@@ -141,7 +141,7 @@ contains
 
     type (slabs_struct), dimension(:,:), pointer :: Slabs
     integer, intent(in) :: No_Ele
-    type (catalog_t), dimension(:), intent(in) :: Catalog
+    type (catalog_t), dimension(:), target, intent(in) :: Catalog
     character(len=*), intent(in) :: Caller
     logical, intent(in), optional :: TempDer    ! "Allocate temperature
                                                 !  derivative fields"
@@ -2677,6 +2677,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.52  2006/07/29 03:02:11  vsnyder
+! Send callers module name from AllocateSlabs to AllocateOneSlabs
+!
 ! Revision 2.51  2006/05/05 22:20:58  vsnyder
 ! Remove duplicate USE statements
 !
