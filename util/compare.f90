@@ -124,8 +124,8 @@ program COMPARE
   end if
 
   if ( all ) then
-    print *, '  Max Absolute       Max Relative        Max Relative'
-    print *, '  Difference     At  Difference      At  Epsilons      After'
+    print *, '  Max Abs           Rel at Max  Max Rel           Abs at Max'
+    print *, '  Diff         At   Abs Diff    Diff         At   Rel Diff'
   end if
 
   do
@@ -218,10 +218,9 @@ program COMPARE
       rmaxe = rmax / eps
       if ( .not. ( rmaxe <= 0.0 .or. rmaxe >= 0.0 ) ) anyNaN(3) = .true.
       if ( all ) then
-        print '(1pg14.7,i6,1pg14.7,i6,1pg15.7,1x,a)', &
-          & amax, lamax, rmax, lrmax, rmaxe, trim(line1)
-!       print *, 'After ', trim(line1), ', Maximum difference =', amax, ' at', lamax
-!       print *, 'Relative =', rmax, ' =', rmaxe, ' epsilons', ' at', lrmax
+        print '(1p,g12.5,i6,g12.5,g12.5,i6,g12.5,1x,a)', &
+          & amax, lamax, 2.0 * abs(r1(lamax)-r2(lamax)) / abs(r1(lamax)+r2(lamax)), &
+          & rmax, lrmax, 2.0 * abs(r1(lrmax)-r2(lrmax)), trim(line1)
       end if
       if ( doStats ) then
         call stats ( r1, avg(1), stdev(1) )
@@ -313,6 +312,9 @@ contains
 end program
 
 ! $Log$
+! Revision 1.13  2005/06/22 19:27:32  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 1.12  2004/09/23 23:33:39  vsnyder
 ! More futzing with -i option
 !
