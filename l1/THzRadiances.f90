@@ -121,7 +121,7 @@ CONTAINS
 
     last_OA_counterMAF = OA_counterMAF(UBOUND(OA_counterMAF,1))
 
-    DO MAFno = CalBuf%Cal_start, CalBuf%Cal_end
+    outer: DO MAFno = CalBuf%Cal_start, CalBuf%Cal_end
 
        counterMAF = CalBuf%MAFdata(MAFno)%EMAF%TotalMAF
        TAI = CalBuf%MAFdata(MAFno)%SciMIF(0)%secTAI
@@ -135,7 +135,11 @@ CONTAINS
              CYCLE
           ENDIF
           DO
-             IF (counterMAF == OA_counterMAF(MAFindex)) EXIT
+             IF (counterMAF == OA_counterMAF(MAFindex)) THEN
+                EXIT           ! Aligned properly
+             ELSE IF (counterMAF < OA_counterMAF(MAFindex)) THEN
+                CYCLE outer    ! Get next counterMAF
+             ENDIF
              MAFindex = MAFindex + 1
           ENDDO
        ENDIF
@@ -154,7 +158,7 @@ PRINT *, "Outputting rad for MAFno: ", MAFindex
        nv = nv + 1
        IF (counterMAF >= last_OA_counterMAF) EXIT
 
-    ENDDO
+    ENDDO outer
 
   END SUBROUTINE ProcessLimbData
 
@@ -171,6 +175,9 @@ END MODULE THzRadiances
 !=============================================================================
 
 ! $Log$
+! Revision 2.14  2006/09/11 19:41:37  perun
+! Check for ENG counterMAF less than OA counterMAF for proper alignment
+!
 ! Revision 2.13  2006/06/16 19:24:46  perun
 ! Protect THz counterMAF from going beyond OA counterMAF
 !
