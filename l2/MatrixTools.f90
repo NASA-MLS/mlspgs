@@ -56,7 +56,7 @@ contains ! =====  Public procedures  ===================================
     use Expr_m, only: Expr
     use Init_Tables_Module, only: F_AllMatrices, &
       & F_COLCHANNELS, F_COLINSTANCES, F_COLQUANTITY, F_COLSURFACES, &
-      & F_Details, F_MATRIX, F_NOABSENT, &
+      & F_Details, F_Diagonal, F_MATRIX, F_NOABSENT, &
       & F_ROWCHANNELS, F_ROWINSTANCES, F_ROWQUANTITY, F_ROWSURFACES, &
       & F_Structure
     use Intrinsic, only: PHYQ_Dimensionless
@@ -82,6 +82,7 @@ contains ! =====  Public procedures  ===================================
     integer :: COLQuantityNode          ! Tree node
     integer :: COLSURFACESNODE          ! Tree node
     integer :: Details                  ! 0 => just shapes, >0 => values, default 1
+    logical :: Diagonal                 ! Dump only the diagonal
     logical :: DoAny                    ! Any non-absent blocks?
     integer :: FIELDINDEX               ! Type for tree node
     integer :: MATRIXINDEX              ! Matrix database index
@@ -143,6 +144,7 @@ contains ! =====  Public procedures  ===================================
     colQuantityNode = 0
     colSurfacesNode = 0
     details = 1
+    diagonal = .false.
     matrixIndex = -1
     noAbsent = .false.
     rowChannelsNode = 0
@@ -165,6 +167,8 @@ contains ! =====  Public procedures  ===================================
         if ( units(1) /= phyq_dimensionless ) call announce_error ( son, dimless )
         if ( type /= num_value ) call announce_error ( son, numeric )
         details = nint(values(1))
+      case ( f_diagonal )
+        diagonal = get_Boolean ( son )
       case ( f_matrix )
         matrixIndex = decoration(decoration(subtree(2,son)))
       case ( f_rowQuantity )
@@ -214,6 +218,7 @@ contains ! =====  Public procedures  ===================================
       ! Identify the matrix
       call GetFromMatrixDatabase ( matrices(matrixIndex), matrix )
       call output ( 'Dump of ' )
+      if ( diagonal ) call output ( 'diagonal of ' )
       call display_string ( matrix%name, advance='yes' )
       if ( stru ) then
         call dump_struct ( matrix )
@@ -246,9 +251,11 @@ contains ! =====  Public procedures  ===================================
                 do rowInstance = 1, size(rowInds)
                   row = FindBlock ( matrix%row, rowQI, rowInds(rowInstance) )
                   col = FindBlock ( matrix%col, colQI, colInds(colInstance) )
-                  mb => matrix%block ( row, col )
-                  doAny = mb%kind /= m_absent
-                  if ( doAny ) exit o
+                  if ( .not. diagonal .or. row == col ) then
+                    mb => matrix%block ( row, col )
+                    doAny = mb%kind /= m_absent
+                    if ( doAny ) exit o
+                  end if
                 end do
               end do o
             end if
@@ -302,6 +309,8 @@ contains ! =====  Public procedures  ===================================
     ! .............................................  DumpOneBlock  .....
     subroutine DumpOneBlock
 
+      use MatrixModule_0, only: GetDiagonal
+
       ! Local variables
       integer :: CC                       ! Loop counter
       integer :: CS                       ! Loop counter
@@ -318,11 +327,12 @@ contains ! =====  Public procedures  ===================================
       integer, dimension(:), pointer :: COLSURFINDS ! Indices
 
       real(rm), dimension(:,:), pointer :: VAL    ! The values from the block
+      real(rm), dimension(:), pointer :: VAL_1D   ! The diagonal
       real(r8), dimension(:,:), pointer :: TODUMP ! The 2D matrix to dump
 
       nullify ( rowChanInds, colChanInds )
       nullify ( rowSurfInds, colSurfInds )
-      nullify ( toDump )
+      nullify ( toDump, val_1d )
 
       ! Set up the index arrays
       call getSurfOrChanInds ( rowQ%template%noChans, rowChannelsNode, &
@@ -339,12 +349,12 @@ contains ! =====  Public procedures  ===================================
       noColChannels = size(colChanInds)
       noColSurfaces = size(colSurfInds)
 
-      call allocate_test ( toDump, &
-        & noRowChannels*noRowSurfaces, &
-        & noColChannels*noColSurfaces, &
-        & 'toDump', ModuleName )
+      if ( .not. diagonal ) &
+        & call allocate_test ( toDump, &
+          & noRowChannels*noRowSurfaces, &
+          & noColChannels*noColSurfaces, &
+          & 'toDump', ModuleName )
 
-      call newLine
       ! Loop over the row and column instances
       do colInstance = 1, size(colInds)
         do rowInstance = 1, size(rowInds)
@@ -361,46 +371,65 @@ contains ! =====  Public procedures  ===================================
           call output ( matrix%row%inst(row), before=':', after=', ' )
           call display_string ( &
             & matrix%col%vec%quantities(matrix%col%quant(col))%template%name )
-          call output ( matrix%col%inst(col), before=':' )
+          call output ( matrix%col%inst(col), before=':', after=' is ' )
           nullify ( val )
           select case ( mb%kind )
           case ( m_absent )
-            call output ( ' is absent ' )
+            call output ( ' absent' )
           case ( m_column_sparse, m_banded )
             if ( mb%kind == m_column_sparse ) then
-              call output ( ' is column sparse ' )
+              call output ( 'column sparse' )
             else
-              call output ( ' is banded ' )
+              call output ( 'banded' )
             end if
-            call allocate_test ( val, mb%nRows, mb%nCols, &
-              & 'val', ModuleName )
-            call densify ( val , mb )
+            if ( diagonal ) then
+              call allocate_test ( val_1d, min(mb%nRows, mb%nCols), 'val_1d', &
+                & moduleName )
+              call getDiagonal ( mb, val_1d )
+            else
+              call allocate_test ( val, mb%nRows, mb%nCols, 'val', &
+                & ModuleName )
+              call densify ( val , mb )
+            end if
           case ( m_full )
-            call output ( ' is full ' )
-            val => mb%values
+            call output ( 'full' )
+            if ( diagonal ) then
+              call allocate_test ( val_1d, min(mb%nRows, mb%nCols), 'val_1d', &
+                & moduleName )
+              call getDiagonal ( mb, val_1d )
+            else
+              val => mb%values
+            end if
           case default
           end select
-          call output ( mb%nRows )
-          call output ( mb%nCols, before='x', after='.  ' )
+          if ( .not. diagonal ) then
+            call output ( mb%nRows )
+            call output ( mb%nCols, before='x', after='.  ' )
+          end if
 
           if ( mb%kind /= m_absent .and. details > 0 ) then
-            do cs = 1, noColSurfaces
-              do cc = 1, noColChannels
-                do rs = 1, noRowSurfaces
-                  do rc = 1, noRowChannels
-                    todump ( rc + (rs-1)*noRowChannels, &
-                      &      cc + (cs-1)*noColChannels ) = &
-                      & val ( rowChanInds(rc) + &
-                      &      (rowSurfInds(rs)-1)*rowQ%template%noChans, &
-                      &       colChanInds(cc) + &
-                      &      (colSurfInds(cs)-1)*colQ%template%noChans )
+            if ( diagonal ) then
+              call dump ( val_1d, name=', number dumped:', clean=.true. )
+              call deallocate_test ( val_1d, 'val_1d', moduleName )
+            else
+              do cs = 1, noColSurfaces
+                do cc = 1, noColChannels
+                  do rs = 1, noRowSurfaces
+                    do rc = 1, noRowChannels
+                      todump ( rc + (rs-1)*noRowChannels, &
+                        &      cc + (cs-1)*noColChannels ) = &
+                        & val ( rowChanInds(rc) + &
+                        &      (rowSurfInds(rs)-1)*rowQ%template%noChans, &
+                        &       colChanInds(cc) + &
+                        &      (colSurfInds(cs)-1)*colQ%template%noChans )
+                    end do
                   end do
                 end do
               end do
-            end do
-            if ( mb%kind /= m_full ) &
-              & call deallocate_test ( val, 'val', ModuleName )
-            call dump ( toDump, name='Number dumped:', clean=.true. )
+              if ( mb%kind /= m_full ) &
+                & call deallocate_test ( val, 'val', ModuleName )
+              call dump ( toDump, name=', number dumped:', clean=.true. )
+            end if
           else
             call newLine
           end if
@@ -724,6 +753,9 @@ contains ! =====  Public procedures  ===================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.21  2006/07/27 03:53:28  vsnyder
+! Handle details field correctly
+!
 ! Revision 1.20  2006/07/19 22:27:24  vsnyder
 ! Add /allMatrices, details= and /structure fields
 !
