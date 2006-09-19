@@ -47,6 +47,7 @@ allVGrids
 allowMissing
 antennaPatterns
 apriori
+aprioriFraction # how much of result is apriori, in [0..1]
 aprioriPrecision
 aprioriScale
 ascii
@@ -436,6 +437,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.172  2006/09/19 20:34:37  vsnyder
+# Add aprioriFraction
+#
 # Revision 2.171  2006/08/04 18:08:48  vsnyder
 # Add where field
 #
