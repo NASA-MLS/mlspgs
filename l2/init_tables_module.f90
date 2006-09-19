@@ -1270,6 +1270,7 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ &
       begin, s+s_retrieve, & ! Must be AFTER s_vector and s_matrix
              begin, f+f_apriori, s+s_vector, n+n_field_spec, &
+             begin, f+f_aprioriFraction, s+s_vector, n+n_field_spec, &
              begin, f+f_aprioriScale, t+t_numeric, n+n_field_type, &
              begin, f+f_average, s+s_matrix, n+n_field_spec, &
              begin, f+f_columnScale, t+t_scale, n+n_field_type, &
@@ -1388,6 +1389,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_colSurfaces, t+t_numeric, t+t_numeric_range, &
                     n+n_field_type, &
              begin, f+f_details, t+t_numeric, n+n_field_type, &
+             begin, f+f_diagonal, t+t_boolean, n+n_field_type, &
              begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
              begin, f+f_noAbsent, t+t_boolean, n+n_field_type, &
              begin, f+f_rowChannels, t+t_numeric, t+t_numeric_range, &
@@ -1485,6 +1487,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.450  2006/09/19 20:37:46  vsnyder
+! Add aprioriFraction to retrieve
+!
 ! Revision 2.449  2006/08/11 20:58:38  vsnyder
 ! Add 'simple' method to use alternate Newton solver
 !
