@@ -14,7 +14,7 @@ module DNWT_CLONE
 ! Really simple Newton-method with DNWT's interface.
 
   use DNWT_TYPE, only: RK
-  use DNWT_MODULE, only: NF_DX, NF_EVALF, NF_EVALJ, NF_NEWX, &
+  use DNWT_MODULE, only: NF_BEST, NF_DX, NF_EVALF, NF_EVALJ, NF_NEWX, &
     & NF_SOLVE, NF_START, NWT_T, FLAGNAME, NF_GMOVE, NF_BEST, NF_AITKEN,&
     & NF_DX_AITKEN, NF_TOLX, NF_TOLF, NF_TOLX_BEST, NF_TOO_SMALL, NF_FANDJ
 
@@ -41,7 +41,7 @@ module DNWT_CLONE
   ! Some of these aren't used.  They're here so that the DNWTOP from the
   ! "real" DNWT can be used without modification.
 
-  real(rk) :: AJSCAL, DXMAXI, DXNOIS, RELSF, SPMINI, SPSTRT, TOLXA, TOLXR
+  real(rk) :: AJSCAL, DXMAXI, DXN_PREV, DXNOIS, RELSF, SPMINI, SPSTRT, TOLXA, TOLXR
   integer :: K1IT
 
   character(len=*), parameter :: ME = 'DNWT'
@@ -54,6 +54,7 @@ contains
     real(rk), intent(in) :: XOPT(*)
     integer, intent(in), optional :: NOPT(*)
     nflag = nf_start
+    dxn_prev = huge(dxn_prev)
     if ( present(nopt) ) call alt_nwtop ( nopt, xopt )
     call alt_nwtop ( ) ! default initialization
     return
@@ -80,9 +81,14 @@ contains
     case ( nf_solve )
       if ( aj%dxn <= tolxa .or. aj%dxn <= tolxr * aj%axmax ) then
         nflag = nf_tolx
+      else if ( aj%dxn < dxn_prev ) then
+        dxn_prev = aj%dxn
+        nflag = nf_best
       else
         nflag = nf_dx
       end if
+    case ( nf_best )
+      nflag = nf_dx
     case ( nf_dx )
       nflag = nf_newx
     case ( nf_newx )
@@ -201,6 +207,9 @@ contains
 end module DNWT_CLONE
 
 ! $Log$
+! Revision 2.8  2006/09/19 20:33:57  vsnyder
+! Add NF_BEST detector so caller's BEST actions get done
+!
 ! Revision 2.7  2006/08/11 20:58:38  vsnyder
 ! Add 'simple' method to use alternate Newton solver
 !
