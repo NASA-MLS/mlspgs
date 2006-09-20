@@ -403,8 +403,8 @@ contains ! =====  Public procedures  ===================================
           case default
           end select
           if ( .not. diagonal ) then
-            call output ( mb%nRows )
-            call output ( mb%nCols, before='x', after='.  ' )
+            call output ( mb%nRows, before=' ' )
+            call output ( mb%nCols, before='x' )
           end if
 
           if ( mb%kind /= m_absent .and. details > 0 ) then
@@ -753,6 +753,9 @@ contains ! =====  Public procedures  ===================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.22  2006/09/19 20:33:13  vsnyder
+! Add /diagonal field
+!
 ! Revision 1.21  2006/07/27 03:53:28  vsnyder
 ! Handle details field correctly
 !
