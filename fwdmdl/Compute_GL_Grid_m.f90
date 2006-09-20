@@ -23,7 +23,8 @@ module Compute_GL_Grid_M
 contains
 !-----------------------------------------------  Compute_GL_Grid  -----
 
-  subroutine Compute_GL_Grid ( Z_PSIG, NLVL, MaxVert, P_GLgrid, Z_GLgrid )
+  subroutine Compute_GL_Grid ( Z_PSIG, NLVL, MaxVert, P_GLgrid, Z_GLgrid, &
+    & allocate )
 
   ! Compute the pressure and zeta GL grids.
 
@@ -39,26 +40,33 @@ contains
   ! Outputs
     integer, intent(out) :: MaxVert               ! Levels in fine grid
 
-  ! Would be intent(out) if they weren't pointers.
-  ! First thing here is to nullify them.
+  ! Allocated here if allocate is absent or present and true
+  ! Would be intent(out) if they weren't pointers
     real(rp), dimension(:), pointer :: P_GLgrid   ! Pressure on glGrid surfs
     real(rp), dimension(:), pointer :: Z_GLgrid   ! Zeta on glGrid surfs
 
+  ! Optional inputs
+    logical, intent(in), optional :: Allocate
+
   ! Local variables
+    logical :: Alloc
     integer :: NLM1                               ! NLVL - 1
 
     ! New Gauss points (excluding Lobatto end points) with -1 on the left:
     real(kind(gx)), parameter :: G_Grid(ngp1) = (/ -1.0_r8, gx /)
 
-    nullify ( p_glgrid, z_glgrid )
+    alloc = .true.
+    if ( present(allocate) ) alloc = allocate
 
     NLm1 = Nlvl - 1
+    maxVert = NLm1 * Ngp1 + 1
 
 ! Allocate GL grid stuff
-
-    maxVert = NLm1 * Ngp1 + 1
-    call allocate_test ( z_glGrid, maxVert, 'z_glGrid', moduleName )
-    call allocate_test ( p_glGrid, maxVert, 'p_glGrid', moduleName )
+    if ( alloc ) then
+      nullify ( p_glgrid, z_glgrid )
+      call allocate_test ( z_glGrid, maxVert, 'z_glGrid', moduleName )
+      call allocate_test ( p_glGrid, maxVert, 'p_glGrid', moduleName )
+    end if
 
 ! From the selected integration grid pressures define the GL pressure grid:
 
@@ -86,6 +94,9 @@ contains
 end module Compute_GL_Grid_M
 
 ! $Log$
+! Revision 2.15  2006/09/20 01:39:09  vsnyder
+! Add an optional 'allocate' argument to control whether to allocate the result
+!
 ! Revision 2.14  2006/07/07 17:55:28  vsnyder
 ! Move some stuff to Compute_Z_PSIG_m
 !
