@@ -45,8 +45,8 @@ contains
     use IEEE_Arithmetic, only: IEEE_IS_NAN
     use Expr_M, only: Expr
     use ForwardModelConfig, only: ForwardModelConfig_T
-    use Init_Tables_Module, only: F_apriori, F_aprioriScale, F_Average, &
-      & F_columnScale, F_Comment, F_covariance, F_covSansReg, &
+    use Init_Tables_Module, only: F_apriori, F_aprioriFraction, F_aprioriScale, &
+      & F_Average, F_columnScale, F_Comment, F_covariance, F_covSansReg, &
       & F_diagnostics, F_diagonal, F_extendedAverage, &
       & F_forwardModel, F_fuzz, F_fwdModelExtra, F_fwdModelOut, &
       & F_highBound, F_hRegOrders, F_hRegQuants, F_hRegWeights, &
@@ -122,6 +122,7 @@ contains
 
     ! Local variables:
     type(vector_T), pointer :: Apriori  ! A priori estimate of state
+    type(vector_T), pointer :: AprioriFraction ! How much of result is apriori, in [0..1]
     real(r8) :: AprioriScale            ! Weight for apriori, default 1.0
     integer :: ColumnScaling            ! one of l_apriori, l_covariance,
                                         ! l_none or l_norm
@@ -206,11 +207,11 @@ contains
     integer :: Units(2)                 ! Units of value returned by EXPR
     logical :: Update                   ! "We are updating normal equations"
     double precision :: Value(2)        ! Value returned by EXPR
-    integer :: VRegOrders                ! Regularization orders
-    integer :: VRegQuants                ! Regularization quantities
-    integer :: VRegWeights               ! Weight of regularization conditions
+    integer :: VRegOrders               ! Regularization orders
+    integer :: VRegQuants               ! Regularization quantities
+    integer :: VRegWeights              ! Weight of regularization conditions
     type(vector_T), pointer :: VRegWeightVec  ! Weight vector for regularization
-    character(len=63) :: WhereLeakCheck   ! From LeakCheck command, else default
+    character(len=63) :: WhereLeakCheck ! From LeakCheck command, else default
 
     ! Indexes in the private vectors database
     integer, parameter :: FirstVec = 1
@@ -225,7 +226,7 @@ contains
     integer, parameter :: CovarianceXApriori = covarianceDiag + 1
     integer, parameter :: DiagFlagA = CovarianceXApriori + 1  ! for NWT
     integer, parameter :: DiagFlagB = DiagFlagA + 1  ! for NWT
-    integer, parameter :: DX = DiagFlagB + 1  ! for negateSD case
+    integer, parameter :: DX = DiagFlagB + 1       ! for negateSD case
     integer, parameter :: DXUnScaled = dX + 1      ! for NWT
     integer, parameter :: F = dXUnscaled + 1       ! Residual -- Model - Measurements
     integer, parameter :: F_rowScaled = f + 1      ! Either a copy of f, or f row-scaled
@@ -260,7 +261,7 @@ contains
     integer, parameter :: BadChannel = BadQuantities + 1
 
     error = 0
-    nullify ( apriori, configIndices, covariance, fwdModelOut )
+    nullify ( apriori, aprioriFraction, configIndices, covariance, fwdModelOut )
     nullify ( measurements, measurementSD, state, outputSD, sparseQuantities )
     phaseName = ' '              ! Default in case there's no field
     snoopComment = ' '           ! Ditto
@@ -361,6 +362,8 @@ contains
           select case ( field )
           case ( f_apriori )
             apriori => vectorDatabase(decoration(decoration(subtree(2,son))))
+          case ( f_aprioriFraction )
+            aprioriFraction => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_average )
             ixAverage = decoration(subtree(2,son)) ! averagingKernel matrix vertex
           case ( f_columnScale )
@@ -539,6 +542,10 @@ contains
           if ( got(f_measurementSD) ) then
             if ( measurementSD%template%name /= measurements%template%name ) &
               & call announceError ( inconsistent, f_measurementSD, f_measurements )
+          end if
+          if ( got(f_aprioriFraction) ) then
+            if ( aprioriFraction%template%name /= state%template%name ) &
+              & call announceError ( inconsistent, f_aprioriFraction, f_state )
           end if
         end if
         if ( error == 0 ) then
@@ -1235,8 +1242,8 @@ contains
         & FormNormalEquations => NormalEquations, &
         & GetDiagonal, InvertCholesky, Matrix_T, &
         & Matrix_Cholesky_T, Matrix_SPD_T, MaxL1, MinDiag, Multiply, &
-        & MultiplyMatrix_XY_T,  RowScale, ScaleMatrix, SolveCholesky, &
-        & UpdateDiagonal
+        & MultiplyMatrix_XY,  MultiplyMatrix_XY_T,  &
+        & RowScale, ScaleMatrix, SolveCholesky, UpdateDiagonal
       use Regularization, only: Regularize
       use Symbol_Table, only: ENTER_TERMINAL
       use Symbol_Types, only: T_IDENTIFIER
@@ -1251,8 +1258,9 @@ contains
       type(nwt_T) :: AJ                 ! "About the Jacobian", see NWT.
       type(matrix_SPD_T), target :: APlusRegCOV ! Covariance from a priori and Tikhnov alone
       type(matrix_SPD_T), target :: APlusRegNEQ ! Normal equations from a priori in Tikhnov alone.
-                                        ! Only used when computing solution covariance/sd and needing to
-                                        ! set values negative.
+                                        ! Only used when computing solution covariance/sd
+                                        ! and needing to set values negative, or when
+                                        ! computing the apriori fraction.
       type(nwt_T) :: BestAJ             ! AJ at Best Fnorm so far.
       real(r8) :: Cosine                ! Of an angle between two vectors
       ! Dump switches
@@ -1328,6 +1336,7 @@ contains
       integer :: T                      ! Which Tikhonov: 1 -> V, 2 -> H
       real :: T1
       type(matrix_T) :: Temp            ! Because we can't do X := X * Y
+      type(matrix_T) :: TempU           ! U**(-1)
       type(matrix_cholesky_T) :: TempC  ! For negateSD caseXoXo
       character(len=10) :: TheFlagName  ! Name of NWTA's flag argument
       integer :: TikhonovRows           ! How many rows of Tiknonov regularization?
@@ -1725,7 +1734,8 @@ NEWT: do ! Newtonian iteration
 
           ! Copy the normal equations formed thus far into a temporary matrix
           ! for the negateSD case
-          if ( negateSD ) call copyMatrix ( aPlusRegNEQ%m, normalEquations%m )
+          if ( negateSD .or. associated(aprioriFraction) ) &
+            & call copyMatrix ( aPlusRegNEQ%m, normalEquations%m )
 
           fmStat%maf = 0
           fmStat%newScanHydros = .true.
@@ -2486,6 +2496,7 @@ NEWT: do ! Newtonian iteration
         & jacobian_rows=jacobian_rows, jacobian_cols=jacobian_cols )
 
       if ( abandoned ) then
+          if ( d_cov ) call output ( "Abandoned; no covariance calculation", advance="yes" )
         foundBetterState = .false.
         ! We'll output our last good state, but set the error bar to
         ! the a priori error.
@@ -2505,16 +2516,17 @@ NEWT: do ! Newtonian iteration
         end do
       end if
 
-      !{Compute the covariance of the solution = ${\bf S}_s = ({\bf J}^T
-      ! {\bf S}_m^{-1} {\bf J})^{-1}$, where ${\bf J}$ does not include
+      !{Compute the covariance of the solution = ${\bf S}_s = ({\bf J}^T {\bf
+      ! S}_m^{-1} {\bf J})^{-1}$, where ${\bf J}$ does not include
       ! Levenberg-Marquardt stabilization, and might or might not include
-      ! Tikhonov regularization.  Start by computing ${\bf U}^{-T}$, then
-      ! $({\bf U}^T {\bf U})^{-1} = {\bf U}^{-1} {\bf U}^{-T} =
-      ! ({\bf \Sigma}^T {\bf J}^T {\bf S}_m^{-1} {\bf J \Sigma}^T)^{-1}$.
-      ! Then unscale it to ${\bf \Sigma}^T ({\bf \Sigma}^T {\bf J}^T
-      ! {\bf S}_m^{-1} {\bf J \Sigma}^T)^{-1} {\bf \Sigma}^T$.
+      ! Tikhonov regularization.  Start by computing the inverse transpose of
+      ! the Cholesky factor of the normal equations, ${\bf U}^{-T}$, then
+      ! $({\bf U}^T {\bf U})^{-1} = {\bf U}^{-1} {\bf U}^{-T} = ({\bf
+      ! \Sigma}^T {\bf J}^T {\bf S}_m^{-1} {\bf J \Sigma}^T)^{-1}$. Then
+      ! unscale it to ${\bf \Sigma}^T ({\bf \Sigma}^T {\bf J}^T {\bf
+      ! S}_m^{-1} {\bf J \Sigma}^T)^{-1} {\bf \Sigma}^T$.
       if ( foundBetterState .and. ( got(f_outputCovariance) .or. got(f_outputSD) .or. &
-        &  got(f_average) ) ) then
+        &  got(f_average) .or. got(f_aprioriFraction) ) ) then
         if ( nwt_flag /= nf_getJ ) then
           print *, 'BUG in Retrieval module -- should need to getJ to quit'
           stop
@@ -2524,22 +2536,31 @@ NEWT: do ! Newtonian iteration
             call output ( t3-t0, before='Begin covariance calculation at ', &
               & after=' seconds', advance='yes' )
             call output ( jacobian_rows, before='Counted ' )
-            call output ( jacobian_cols, before=' rows and ' )
+            call output ( jacobian_cols, before=' rows and ', after=' columns' )
             call time_now ( t3 )
             call output ( t3-t0, before=' in the Jacobian matrix at ', &
               & after=' seconds', advance='yes' )
           end if
           call time_now ( t1 )
-        call createEmptyMatrix ( temp, 0, state, state )
-        call invertCholesky ( factored, temp ) ! U^{-1}
+        call createEmptyMatrix ( tempU, 0, state, state )
+        call invertCholesky ( factored, tempU ) ! U^{-1}
           if ( d_cov ) then
             call output ( &
               & 'Inverted the Cholesky factor of the normal equations at ' )
             call time_now ( t3 )
             call output ( t3-t0, advance='yes' )
           end if
+        ! Scale the covariance
+        if ( columnScaling /= l_none ) then
+          call rowScale ( v(columnScaleVector), tempU )
+            if ( d_cov ) then
+              call time_now ( t3 )
+              call output ( t3-t0, before='Scaled the Covariance matrix at ', &
+                & after=' seconds', advance='yes' )
+            end if
+        end if
         preserveMatrixName = outputCovariance%m%name
-        call multiplyMatrix_XY_T ( temp, temp, outputCovariance%m, &
+        call multiplyMatrix_XY_T ( tempU, tempU, outputCovariance%m, &
           & diagonalOnly = .not. any ( got ( (/ f_outputCovariance, f_average/) ) ) ) ! U^{-1} U^{-T}
           if ( d_cov ) then
             call output ( 'Computed ' )
@@ -2549,26 +2570,15 @@ NEWT: do ! Newtonian iteration
             call output ( t3-t0, before='U^{-1} U^{-T} at ', after=' seconds', &
               & advance='yes' )
           end if
-        call destroyMatrix ( temp )
         call add_to_retrieval_timing( 'cholesky_invert', t1 )
-        ! Scale the covariance
-        if ( columnScaling /= l_none ) then
-          call columnScale ( outputCovariance%m, v(columnScaleVector) )
-          call rowScale ( v(columnScaleVector), outputCovariance%m )
-            if ( d_cov ) then
-              call time_now ( t3 )
-              call output ( t3-t0, before='Scaled the Covariance matrix at ', &
-                & after=' seconds', advance='yes' )
-            end if
-        end if
         outputCovariance%m%name = preserveMatrixName
         if ( associated(outputSD) ) &
           & call GetDiagonal ( outputCovariance%m, outputSD, squareRoot=.true. )
 
         ! Deal with possibly setting the error bar negative
-        if ( negateSD ) then
-          ! We need to compute what just the a priori and regularization would give for
-          ! the output covariance.
+        if ( negateSD .or. associated(aprioriFraction) ) then
+          ! We need to compute what just the a priori and regularization would
+          ! give for the output covariance.
           ! Firstly, we need to do some gymnastics to avoid singular matrices.  This
           ! will happen with ptan terms that have neither a priori nor smoothing.
           ! Set these such that our answer is the same as the outputSD
@@ -2594,28 +2604,31 @@ NEWT: do ! Newtonian iteration
               & 'Non SPD matrix to be factored: aPlusRegNEQ' )
           end if
 
-          ! Now invert it
-          call createEmptyMatrix ( temp, &
-            & enter_terminal('_temp', t_identifier), &
-            & state, state, .not. aPlusRegNEQ%m%row%instFirst, .not. aPlusRegNEQ%m%col%instFirst )
-          call InvertCholesky ( tempC, temp )
+          call MultiplyMatrix_XY ( tempC%m, tempU, temp ) ! Can't do C := C * U
+
           call MultiplyMatrix_XY_T ( temp, temp, aPlusRegCov%m, diagonalOnly=.true. )
 
           ! Destroy works in progress
           call DestroyMatrix ( tempC%m )
           call DestroyMatrix ( temp )
 
-          ! Go through and set error bar negative if appropriate
           call cloneVector ( v(diagFlagB), state )
           call GetDiagonal ( aPlusRegcov%m, v(diagFlagB), squareRoot=.true. )
-          do qty = 1, v(diagFlagA)%template%noQuantities
-            where ( outputSD%quantities(qty)%values > &
-              &     precisionFactor * v(diagFlagB)%quantities(qty)%values .and. &
-              & v(diagFlagA)%quantities(qty)%values == 0.0_rv )
-              outputSD%quantities(qty)%values = - outputSD%quantities(qty)%values
-            end where
-          end do
-        end if
+          if ( associated(aprioriFraction) ) &
+            call copyVector ( aprioriFraction, v(diagFlagB) )
+
+          if ( negateSD ) then
+            ! Go through and set error bar negative if appropriate
+            do qty = 1, v(diagFlagA)%template%noQuantities
+              where ( outputSD%quantities(qty)%values > &
+                &     precisionFactor * v(diagFlagB)%quantities(qty)%values .and. &
+                & v(diagFlagA)%quantities(qty)%values == 0.0_rv )
+                outputSD%quantities(qty)%values = - outputSD%quantities(qty)%values
+              end where
+            end do
+          end if
+        end if ! ( negateSD .or. associated(aprioriFraction) )
+        call DestroyMatrix ( tempU )
       end if
 
       !{Compute the averaging kernel = ${\bf S}_s {\bf K}^T {\bf K}$.
@@ -2674,6 +2687,9 @@ NEWT: do ! Newtonian iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.283  2006/09/20 00:43:38  vsnyder
+! Implemented Herb's apriori fraction calculation
+!
 ! Revision 2.282  2006/08/11 20:58:38  vsnyder
 ! Add 'simple' method to use alternate Newton solver
 !
