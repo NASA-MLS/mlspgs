@@ -71,7 +71,7 @@ contains ! =====     Public Procedures     =============================
     use L1BData, only: FindMaxMAF, ReadL1BAttribute
     use L2GPData, only: col_species_keys, col_species_hash
     use L2ParInfo, only: parallel
-    use MLSFiles, only: &
+    use MLSFiles, only: WILDCARDHDFVERSION, &
       & addFileToDatabase, InitializeMLSFile, mls_openFile
     use MLSL2Options, only: TOOLKIT, PENALTY_FOR_NO_METADATA
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
@@ -193,6 +193,7 @@ contains ! =====     Public Procedures     =============================
         & type=l_hdf, access=DFACC_RDONLY)
       L1BFile%PCFIDRange%Top = L1FileHandle
       L1BFile%PCFIDRange%Bottom = L1FileHandle
+      L1BFile%hdfVersion = WILDCARDHDFVERSION
       call mls_openFile(L1BFile, returnStatus)
       if ( returnStatus == 0 ) then
         numFiles = addFileToDatabase(filedatabase, L1BFile)
@@ -658,6 +659,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.94  2006/09/21 18:50:33  pwagner
+! Uncertain why or whether this was necessary but did it anyway
+!
 ! Revision 2.93  2006/07/07 23:11:19  pwagner
 ! Removed already-commented-out souvenirs
 !
