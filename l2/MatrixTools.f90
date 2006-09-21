@@ -61,6 +61,7 @@ contains ! =====  Public procedures  ===================================
       & F_Structure
     use Intrinsic, only: PHYQ_Dimensionless
     use MatrixModule_1, only: Dump
+    use MLSStringLists, only: SWITCHDETAIL
     use MoreTree, only: GET_BOOLEAN, GET_FIELD_ID
     use Output_M, only: NewLine, OUTPUT
     use String_Table, only: DISPLAY_STRING
@@ -81,6 +82,7 @@ contains ! =====  Public procedures  ===================================
     integer :: COLQuantityIx            ! Index in ColQIs array
     integer :: COLQuantityNode          ! Tree node
     integer :: COLSURFACESNODE          ! Tree node
+    integer :: DetailReduction
     integer :: Details                  ! 0 => just shapes, >0 => values, default 1
     logical :: Diagonal                 ! Dump only the diagonal
     logical :: DoAny                    ! Any non-absent blocks?
@@ -131,6 +133,14 @@ contains ! =====  Public procedures  ===================================
     ! Don't do it if the "nodb" switch is set.
     if ( index(switches, 'nodb') /= 0 ) return
 
+    ! Nor if we reduce the details level sufficiently
+    DetailReduction = switchDetail(switches, 'red')
+    if ( DetailReduction < 0 ) then ! The 'red' switch is absent
+      DetailReduction = 0
+    elseif ( DetailReduction == 0 ) then ! By default, reduce details level by 2
+      DetailReduction = 2
+    endif
+
     if ( .not. associated(matrices) ) then
       call announce_error ( needMatrixDatabase, key )
       return
@@ -143,7 +153,7 @@ contains ! =====  Public procedures  ===================================
     colInstancesNode = 0
     colQuantityNode = 0
     colSurfacesNode = 0
-    details = 1
+    details = 1 - detailReduction
     diagonal = .false.
     matrixIndex = -1
     noAbsent = .false.
@@ -166,7 +176,7 @@ contains ! =====  Public procedures  ===================================
         call expr ( subtree(2,son), units, values, type )
         if ( units(1) /= phyq_dimensionless ) call announce_error ( son, dimless )
         if ( type /= num_value ) call announce_error ( son, numeric )
-        details = nint(values(1))
+        details = nint(values(1)) - detailReduction
       case ( f_diagonal )
         diagonal = get_Boolean ( son )
       case ( f_matrix )
@@ -200,6 +210,8 @@ contains ! =====  Public procedures  ===================================
       call announce_error ( needMatrix, key )
       return
     end if
+    
+    if ( details < -1 ) return ! Don't do it if details too small
 
     if ( allMatrices ) then
       if ( matrixIndex > 0 ) call announce_error ( redundant, key )
@@ -753,6 +765,9 @@ contains ! =====  Public procedures  ===================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.23  2006/09/20 00:43:21  vsnyder
+! Cannonball polishing
+!
 ! Revision 1.22  2006/09/19 20:33:13  vsnyder
 ! Add /diagonal field
 !

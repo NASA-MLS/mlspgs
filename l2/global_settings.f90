@@ -97,7 +97,7 @@ contains
       & mlspcf_l2fwm_full_end, &
       & mlspcf_l2dgg_start, mlspcf_l2dgg_end
     use MLSStrings, only: hhmmss_value, lowerCase
-    use MLSStringLists, only: Array2List, catLists
+    use MLSStringLists, only: Array2List, catLists, SWITCHDETAIL
     use MLSSignals_m, only: INSTRUMENT
     use MoreTree, only: GET_FIELD_ID, GET_SPEC_ID
     use OUTPUT_M, only: BLANKS, OUTPUT, revertoutput, switchOutput
@@ -134,6 +134,7 @@ contains
 
     ! Local variables
     character(len=BO_NAMELEN), dimension(BO_NAMEDIMS) :: BO_names
+    integer :: DetailReduction
     integer :: Details             ! How much info about l1b files to dump
     type (MLSFile_T) :: DirectFile
     logical :: GOT(3)              ! Used non-canonically--a bad practice
@@ -192,6 +193,13 @@ contains
     else
       details = -4
     end if
+
+    DetailReduction = switchDetail(switches, 'red')
+    if ( DetailReduction < 0 ) then ! The 'red' switch is absent
+      DetailReduction = 0
+    elseif ( DetailReduction == 0 ) then ! By default, reduce details level by 2
+      DetailReduction = 2
+    endif
 
     do i = 2, nsons(root)-1 ! Skip names at beginning and end of section
       son = subtree(i,root)
@@ -540,7 +548,7 @@ contains
     ! Perhaps dump global settings
     if ( details > -4 ) &
       & call dump_global_settings( processingRange, filedatabase, DirectDatabase, &
-      & ForwardModelConfigDatabase, LeapSecFileName, details )
+      & ForwardModelConfigDatabase, LeapSecFileName, details-detailReduction )
 
     if ( APrioriFiles%dao // AprioriFiles%ncep // AprioriFiles%geos5 &
       &  == ' ' ) then
@@ -648,7 +656,7 @@ contains
     ! ------------------------------------------  dump_global_settings  -----
     subroutine dump_global_settings ( processingRange, &
       & filedatabase, DirectDatabase, ForwardModelConfigDatabase, &
-      & LeapSecFileName, dumpL1BDetails )
+      & LeapSecFileName, details )
 
       use MLSStringLists, only: NumStringElements, StringElement
       ! Dump info obtained during OpenAndInitialize and global_settings:
@@ -670,14 +678,13 @@ contains
       ! -1 Skip even counterMAF
       ! -2 Skip all but name (default)
       ! >0 Dump even multi-dim arrays
-      integer, optional, intent(in) :: dumpL1BDetails
+      integer, intent(in) :: details
       character(len=*) LeapSecFileName
 
       ! Local
       logical, parameter :: countEmpty = .true.
       type (L1BData_T) :: l1bData   ! L1B dataset
       integer ::                              i, version, NoMAFs, IERR
-      integer ::                              myL1BDetails
       character (len=*), parameter ::         TIME_FORMAT = '(1pD18.12)'
       ! This next is in case we're to dump at greatest possible detail
       character (len=NAME_LEN), parameter ::  BASE_QUANT_NAME = &
@@ -695,8 +702,6 @@ contains
       if ( hdfversion <= 0 ) &                                          
         & call MLSMessage ( MLSMSG_Error, ModuleName, &                    
         & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )  
-      myL1BDetails = -2
-      if ( present(dumpL1BDetails) ) myL1BDetails = dumpL1BDetails
       version = 1
 
       call output ( '============ Global Settings ============', advance='yes' )
@@ -711,13 +716,13 @@ contains
            call output ( L1BFile%FileID%f_id, advance='yes' )
            call output ( 'name:   ' )
     	     call output ( TRIM(L1BFile%name), advance='yes' )
-           if ( myL1BDetails > -2 ) then
+           if ( details > -2 ) then
              l1b_quant_name = BASE_QUANT_NAME
              l1bItemName = AssembleL1BQtyName ( l1b_quant_name, hdfVersion, .false. )
              call ReadL1BData ( L1BFile, l1bItemName, L1bData, &
               & NoMAFs, IERR, NeverFail=.true. )
              if ( IERR == 0 ) then
-               call Dump(l1bData, myL1BDetails )
+               call Dump(l1bData, details )
                call DeallocateL1BData ( l1bData )
              else
                call output ( 'Error number  ' )
@@ -726,13 +731,13 @@ contains
                call output ( trim(l1b_quant_name), advance='yes' )
              end if
            end if
-           if ( myL1BDetails > -2 .and. DUMPPRECISIONTOO ) then
+           if ( details > -2 .and. DUMPPRECISIONTOO ) then
              l1b_quant_name = trim(BASE_QUANT_NAME) // PRECISIONSUFFIX
              l1bItemName = AssembleL1BQtyName ( l1b_quant_name, hdfVersion, .false. )
              call ReadL1BData ( L1BFile, l1bItemName, L1bData, &
               & NoMAFs, IERR, NeverFail=.true. )
              if ( IERR == 0 ) then
-               call Dump(l1bData, myL1BDetails )
+               call Dump(l1bData, details )
                call DeallocateL1BData ( l1bData )
              else
                call output ( 'Error number  ' )
@@ -806,8 +811,10 @@ contains
           & advance='yes' )
       enddo
 
-      call output ( ' ', advance='yes' )
-      call dump(ForwardModelConfigDatabase, details=9, skipPFA=.true.)
+      if ( details > -2 ) then
+        call output ( ' ', advance='yes' )
+        call dump(ForwardModelConfigDatabase, details=9, skipPFA=.true.)
+      endif
       call output ( '============ End Global Settings ============', advance='yes' )
 
     end subroutine dump_global_settings
@@ -951,6 +958,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.119  2006/07/24 20:35:21  pwagner
+! Fixed bug when stopAfterSection is blank
+!
 ! Revision 2.118  2006/07/21 20:12:48  pwagner
 ! Can select what section to stop after
 !
