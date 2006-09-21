@@ -13,6 +13,7 @@
 module Join                     ! Join together chunk based data.
 !=============================================================================
 
+  use MLSStringLists, only: SwitchDetail
   ! This module performs the 'join' task in the MLS level 2 software.
 
   implicit none
@@ -55,7 +56,7 @@ contains ! =====     Public Procedures     =============================
     use L2ParInfo, only: PARALLEL, WAITFORDIRECTWRITEPERMISSION
     use LEXER_CORE, only: PRINT_SOURCE
     use MLSCommon, only: MLSFile_T
-    use MLSL2Options, only: CHECKPATHS, SPECIALDUMPFILE
+    use MLSL2Options, only: CHECKPATHS, SKIPDIRECTWRITES, SPECIALDUMPFILE
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, &
       & add_to_directwrite_timing, add_to_section_timing
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
@@ -110,7 +111,7 @@ contains ! =====     Public Procedures     =============================
     logical :: DEEBUG
     
     ! Executable code
-    DEEBUG = (index(switches, 'direct') /= 0)
+    DEEBUG = ( switchDetail(switches, 'direct') > -1 )
     if ( toggle(gen) ) call trace_begin ( "MLSL2Join", root )
     timing = section_times
     if ( timing ) call time_now ( t1 )
@@ -141,6 +142,7 @@ contains ! =====     Public Procedures     =============================
     passLoop: do
       ! For the later passes, we wait for permission to do one of the direct writes
       if ( pass > 2 ) then
+        if ( skipDirectWrites ) exit passLoop
         call time_now ( dwt2 )
         call WaitForDirectWritePermission ( directWriteNodeGranted, ticket, &
           & theFile, createFile )
@@ -243,7 +245,8 @@ contains ! =====     Public Procedures     =============================
                 & chunkNo, chunks, FWModelConfig, HGrids, create=createFile, &
 		          & theFile=theFile )
               call time_now(dwt22)
-              if ( dwt22-dwt2 > timeReasonable .and. index(switches,'dwreq') /= 0 ) then
+              if ( dwt22-dwt2 > timeReasonable .and. &
+                & switchDetail(switches,'dwreq') > -1 ) then
                 call output('Unreasonable time for directwritecommand', advance='yes')
                 call output('Chunk: ', advance='no')
                 call output(ChunkNo, advance='yes')
@@ -462,12 +465,12 @@ contains ! =====     Public Procedures     =============================
     type(DirectData_T), pointer :: thisDirect ! => null()
     real :: TimeIn, TimeSetUp, TimeWriting, timeToClose, TimeOut
     ! Executable code
-    DEEBUG = (index(switches, 'direct') /= 0)
-    SKIPDGG = (index(switches, 'skipdgg') /= 0)
-    SKIPDGM = (index(switches, 'skipdgm') /= 0)
+    DEEBUG = ( switchDetail(switches, 'direct') > -1 ) ! .or. SKIPDIRECTWRITES
+    SKIPDGG = ( switchDetail(switches, 'skipdgg') > -1 )
+    SKIPDGM = ( switchDetail(switches, 'skipdgm') > -1 )
     nullify(thisDirect)
 
-    if ( toggle(gen) .and. index(switches,'dwreq') /= 0) &
+    if ( toggle(gen) .and. switchDetail(switches,'dwreq') > -1 ) &
       & call trace_begin ( "DirectWriteCommand", node )
     call time_now ( timeIn )
     TimeSetUp = TimeIn
@@ -730,14 +733,14 @@ contains ! =====     Public Procedures     =============================
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
       & 'DirectWriteCommand skipping all dgg writes ' // trim(filename) )
       call DeallocateStuff
-      if ( toggle(gen) .and. index(switches,'dwreq') /= 0) &
+      if ( toggle(gen) .and. switchDetail(switches, 'dwreq') > -1 ) &
         & call trace_end ( "DirectWriteCommand" )
       return
     else if ( skipdgm .and. any ( outputType == (/ l_l2fwm, l_l2aux /) ) ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
       & 'DirectWriteCommand skipping all dgm/fwm writes ' // trim(filename) )
       call DeallocateStuff
-      if ( toggle(gen) .and. index(switches,'dwreq') /= 0) &
+      if ( toggle(gen) .and. switchDetail(switches, 'dwreq') > -1 ) &
         & call trace_end ( "DirectWriteCommand" )
       return
     else
@@ -753,7 +756,7 @@ contains ! =====     Public Procedures     =============================
         else if ( outputType /= DirectDataBase(myFile)%type ) then
           call DeallocateStuff
           if ( DeeBUG ) print *, 'Short-circuiting ' // trim(filename)
-          if ( toggle(gen) .and. index(switches,'dwreq') /= 0) &
+          if ( toggle(gen) .and. switchDetail(switches,'dwreq') > -1 ) &
             & call trace_end ( "DirectWriteCommand" )
           return
         end if
@@ -843,7 +846,7 @@ contains ! =====     Public Procedures     =============================
       ! Done what we wished to do if just checking paths or SKIPDIRECTWRITES
       if ( checkPaths ) then
       ! if ( SKIPDIRECTWRITES .or. checkPaths ) then
-        if ( toggle(gen) .and. index(switches,'dwreq') /= 0) &
+        if ( toggle(gen) .and. switchDetail(switches,'dwreq') > -1 ) &
         & call trace_end ( "DirectWriteCommand" )
         return
       endif
@@ -1027,7 +1030,7 @@ contains ! =====     Public Procedures     =============================
         end if
         call time_now ( timeSetup )
         if ( timeSetup-timeIn > timeReasonable .and. &
-          & index(switches,'dwreq') /= 0 ) then
+          & switchDetail(switches,'dwreq') > -1 ) then
           call output('Unreasonable set up time for ' // trim(hdfname), &
             & advance='yes')
         endif
@@ -1075,7 +1078,8 @@ contains ! =====     Public Procedures     =============================
         end select
       end do ! End loop over swaths/sds
       call time_now ( timeWriting )
-      if ( timeWriting-timeSetup > timeReasonable .and. index(switches,'dwreq') /= 0 ) then
+      if ( timeWriting-timeSetup > timeReasonable .and. &
+        & switchDetail(switches,'dwreq') > -1 ) then
         call output('Unreasonable writing time for ' //trim(hdfname), advance='yes')
       endif
       
@@ -1123,7 +1127,7 @@ contains ! =====     Public Procedures     =============================
         end select
         call time_now ( timeToClose )
         if ( timeToClose-timeWriting > timeReasonable .and. &
-          & index(switches,'dwreq') /= 0 ) then
+          & switchDetail(switches,'dwreq') > -1 ) then
           call output('Unreasonable closing time for ' // trim(hdfname), &
             & advance='yes')
         endif
@@ -1168,7 +1172,7 @@ contains ! =====     Public Procedures     =============================
       end select
       call time_now ( timeToClose )
       if ( timeToClose-timeWriting > timeReasonable .and. &
-        & index(switches,'dwreq') /= 0 ) then
+        & switchDetail(switches,'dwreq') > -1 ) then
         call output('Unreasonable closing time for ' // trim(hdfname), &
           & advance='yes')
       endif
@@ -1189,12 +1193,12 @@ contains ! =====     Public Procedures     =============================
       if ( parallel%slave ) call FinishedDirectWrite ( ticket )
       call time_now ( timeOut )
       if ( timeOut-timeToClose > timeReasonable .and. &
-        & index(switches,'dwreq') /= 0 ) then
+        & switchDetail(switches,'dwreq') > -1 ) then
         call output('Unreasonable time out ' //trim(hdfname), advance='yes')
       endif
     end if
 
-    if ( toggle(gen) .and. index(switches,'dwreq') /= 0) &
+    if ( toggle(gen) .and. switchDetail(switches,'dwreq') > -1 ) &
       & call trace_end ( "DirectWriteCommand" )
     call DeallocateStuff
 
@@ -1729,7 +1733,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
 
-    DEEBUG = (index(switches, 'join') /= 0)
+    DEEBUG = ( switchDetail(switches, 'join') > -1 )
     if ( toggle(gen) .and. levels(gen) > 0 ) &
       & call trace_begin ( "JoinL2AUXQuantities", key )
 
@@ -2001,6 +2005,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.129  2006/09/21 18:55:04  pwagner
+! Fixed bug causing freezes when band13 off; cosmetic changes too
+!
 ! Revision 2.128  2006/06/21 22:06:56  pwagner
 ! Downgraded inappropriate quantity output to warning mesg
 !
