@@ -24,7 +24,7 @@ module MLSFiles               ! Utility file routines
   use MLSCommon, only: i4, BareFNLen, FileNameLen,  MLSFile_T, Range_T, &
     & inRange
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
-    & MLSMSG_DeAllocate, MLSMSG_Error
+    & MLSMSG_DeAllocate, MLSMSG_Crash, MLSMSG_Error
   use MLSSets, only: findFirst
   use MLSStrings, only: Capitalize, LowerCase, streq
   use MLSStringLists, only: ExtractSubString, &
@@ -890,6 +890,16 @@ contains
    if (the_eff_mode == l_tkgen .or. the_eff_mode == l_open ) then
      myhdfVersion = WILDCARDHDFVERSION
    elseif ( .not. any( myhdfVersion == (/HDFVERSION_4, HDFVERSION_5/) ) ) then
+     if ( debug ) then
+       call output( 'myName: ', advance='no' )
+       call output( trim(myName), advance='yes' )
+       call output( 'FileAccessType: ', advance='no' )
+       call output( FileAccessType, advance='yes' )
+       if ( present(hdfVersion) ) then
+       call output( 'hdfVersion: ', advance='no' )
+       call output( hdfVersion, advance='yes' )
+       endif
+     endif
      myhdfVersion = mls_hdf_version(trim(myName), hdfVersion, FileAccessType)             
    endif
 
@@ -2231,6 +2241,8 @@ contains
        print *, 'returnStatus: ', returnStatus
        print *, 'hdf_version: ', hdf_version
        hdf_version = WRONGHDFVERSION
+       call MLSMessage (MLSMSG_Crash, ModuleName, & 
+        & "Who cares?")
    endif
   end function mls_hdf_version
 !-----------------------------------------------
@@ -2329,7 +2341,7 @@ contains
     PCBottom = MLSFile%PCFidRange%Bottom
     PCTop = MLSFile%PCFidRange%Top
     record_length = MLSFile%recordLength
-    ! call dump(MLSFile)
+    ! call dump(MLSFile, details=1)
     ! Fill in file name if blank and we're using the toolkit panoply
     if ( MLSFile%name == ' ' ) then
       if ( .not. UseSDPToolkit ) &
@@ -2344,11 +2356,11 @@ contains
    if ( &
      & any(MLSFile%type == (/l_hdf, l_swath, l_grid, l_zonalavg /) ) .and. &
      & (MLSFile%HDFVersion == 0 .or. MLSFile%HDFVersion == WILDCARDHDFVERSION) &
-     & ) then
+     & .and. (MLSFile%name /= ' ') ) then
      ! print *, 'MLSFile%type ' , MLSFile%type
-     ! print *, 'MLSFile%HDFVersion ' , MLSFile%HDFVersion
      ! print *, 'WILDCARDHDFVERSION ' , WILDCARDHDFVERSION
      MLSFile%HDFVersion = mls_hdf_version(trim(MLSFile%name))
+     ! print *, 'MLSFile%HDFVersion ' , MLSFile%HDFVersion
     endif
     neededPCF = .true.
 
@@ -2641,6 +2653,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.74  2006/09/21 18:45:52  pwagner
+! Fix bug causing PCFid-equipped inquiries to complain about missing filenames
+!
 ! Revision 2.73  2006/04/11 23:15:34  pwagner
 ! Disclose whether MLSFile still open as part of default dump
 !
