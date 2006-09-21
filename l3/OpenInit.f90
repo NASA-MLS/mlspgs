@@ -226,6 +226,7 @@ CONTAINS
        IF (iDOY > lastDOY) THEN
           iYr = iYr + 1
           iDOY = 1
+	  IF (i == 10) EXIT
        ENDIF
 
        ! Check that the incrementation hasn't crossed the window boundary
@@ -530,6 +531,9 @@ END MODULE OpenInit
 !==================
 
 ! $Log$
+! Revision 1.22  2006/05/04 18:18:30  cvuu
+! Fix bug in the subroutine SetProcessingWindow
+!
 ! Revision 1.21  2006/04/17 15:40:00  cvuu
 ! Add L3-weekly product for attribute ProcessLevel
 !
