@@ -84,6 +84,7 @@ Switches (set by -S option in mlsl2's command line):
   ptg =>    Dump full forward model pointing angles
   qtmp =>   Quantity templates being constructed
   rad =>    Radiances in ForwardModelInterface
+  red[n] => Reduce dumpCommand details level by n (n=2 by default)
   reg =>    Dump regularization matrix
   rtv =>    Dump retrieval configuration
   sca =>    Scalars of interest to the Newton method
@@ -158,6 +159,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.64  2006/08/25 19:36:52  vsnyder
+ add hphi and hphI switches
+
  Revision 1.63  2006/06/29 19:36:56  vsnyder
  Add metd and metD switches
 
