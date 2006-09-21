@@ -56,7 +56,7 @@ contains
 !   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSSignals_m, only: Dump, Signals
     use MLSStrings, only: lowerCase
-    use MLSStringLists, only: BooleanValue
+    use MLSStringLists, only: BooleanValue, SWITCHDETAIL
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
     use Output_M, only: Output
     use PFADataBase_m, only: Dump, Dump_PFADataBase, Dump_PFAFileDataBase, &
@@ -65,6 +65,7 @@ contains
     use QuantityTemplates, only: Dump, QuantityTemplate_T
     use SpectroscopyCatalog_m, only: Catalog, Dump, Dump_Lines_Database, Lines
     use String_Table, only: Get_String
+    use Toggles, only: Switches
     use Tree, only: Decoration, Node_Id, Nsons, Source_Ref, Sub_rosa, Subtree
     use Tree_Types, only: N_Spec_Args
     use VectorsModule, only: Dump, & ! for vectors, vector quantities and templates
@@ -85,6 +86,7 @@ contains
     logical, parameter :: countEmpty = .true.
     real(tk) :: CPUTime, CPUTimeBase = 0.0_tk
     character(8) :: Date
+    integer :: DetailReduction
     integer :: Details
     integer :: FieldIndex
     logical :: GotOne ! of something -- used to test loop completion
@@ -134,9 +136,16 @@ contains
     if ( haveHGrids ) haveHGrids = associated(hGrids)
     haveGriddedData = present(griddedDataBase)
     if ( haveGriddedData ) haveGriddedData = associated(griddedDataBase)
+    
+    DetailReduction = switchDetail(switches, 'red')
+    if ( DetailReduction < 0 ) then ! The 'red' switch is absent
+      DetailReduction = 0
+    elseif ( DetailReduction == 0 ) then ! By default, reduce details level by 2
+      DetailReduction = 2
+    endif
 
     clean = .false.
-    details = 0
+    details = 0 - DetailReduction
 
     ! We have to parse the line twice: once merely to pick up the details.
     ! This results in using the last details field.  Van prefers to process
@@ -182,6 +191,7 @@ contains
               call announceError ( son, noFWM )
             end if
           case ( f_allGriddedData )
+            if ( details < -1 ) cycle
             if ( haveGriddedData ) then
               call dump ( griddedDataBase, details )
             else
@@ -200,6 +210,7 @@ contains
               call announceError ( son, noLines )
             end if
           case ( f_allPFA )
+            if ( details < -1 ) cycle
             call Dump_PFADataBase ( details )
           case ( f_allQuantityTemplates )
             if ( haveQuantityTemplatesDB ) then
@@ -208,20 +219,24 @@ contains
               call announceError ( son, noQT )
             end if
           case ( f_allSignals )
+            if ( details < -1 ) cycle
             if ( associated(signals) ) then
               call dump ( signals, details=details>0 )
             else
               call announceError ( son, noSignals )
             end if
           case ( f_allSpectra )
+            if ( details < -1 ) cycle
             call dump ( catalog, details=details )
           case ( f_allVectors )
+            if ( details < -1 ) cycle
             if ( haveVectors ) then
               call dump ( vectors, details=details )
             else
               call announceError ( son, noVectors )
             end if
           case ( f_allVectorTemplates )
+            if ( details < -1 ) cycle
             if ( haveVectorTemplates ) then
               call dump ( vectorTemplates, details=details )
             else
@@ -259,8 +274,9 @@ contains
         call expr ( gson, units, values, type )
         if ( units(1) /= phyq_dimensionless ) call AnnounceError ( gson, dimless )
         if ( type /= num_value ) call announceError ( gson, numeric )
-        details = nint(values(1))
+        details = nint(values(1)) - DetailReduction
       case ( f_forwardModel ) ! Dump forward model configs
+        if ( details < -1 ) cycle
         if ( haveForwardModelConfigs ) then
           do i = 2, nsons(son)
             call dump ( & ! has no details switch
@@ -270,6 +286,7 @@ contains
           call announceError ( gson, noFWM )
         end if
       case ( f_Grid )    ! Dump Griddeddata
+        if ( details < -1 ) cycle
         if ( haveGriddedData ) then
           do i = 2, nsons(son)
             call output ( ' GriddedData ' )
@@ -280,6 +297,7 @@ contains
           call announceError ( gson, noGriddedData )
         end if
       case ( f_hGrid )    ! Dump HGrids
+        if ( details < -1 ) cycle
         if ( haveHGrids ) then
           do i = 2, nsons(son)
             call output ( ' HGrid ' )
@@ -310,6 +328,7 @@ contains
           call dump ( pfaData(nint(values(1))), details, nint(values(1)) )
         end do
       case ( f_quantity ) ! Dump vector quantities
+        if ( details < -1 ) cycle
         do i = 2, nsons(son)
           gson = subtree(i,son)
           vectorIndex = decoration(decoration(subtree(1,gson)))
@@ -331,6 +350,7 @@ contains
           call dump ( catalog(what), details=details )
         end do
       case ( f_template ) ! Dump vector templates or quantity templates
+        if ( details < -1 ) cycle
         do i = 2, nsons(son)
           gson = subtree(i,son)
           look = decoration(gson)
@@ -440,11 +460,13 @@ contains
           call output ( trim(text), advance='yes' )
         end do ! k
       case ( f_tGrid )
+        if ( details < -1 ) cycle
         do i = 2, nsons(son)
           call output ( ' TGrid ' )
           call dump ( vGRids(decoration(decoration(subtree(i,son)))), details=details )
         end do
       case ( f_vector ) ! Dump entire vectors
+        if ( details < -1 ) cycle
         if ( haveVectors ) then
           do i = 2, nsons(son)
             call output ( ' Vector ' )
@@ -455,6 +477,7 @@ contains
           call announceError ( gson, noVectors )
         end if
       case ( f_vGrid )
+        if ( details < -1 ) cycle
         do i = 2, nsons(son)
           call output ( ' VGrid ' )
           call dump ( vGRids(decoration(decoration(subtree(i,son)))), details=details )
@@ -519,6 +542,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.33  2006/09/21 18:48:33  pwagner
+! Reduce level of dumps in SIDS version
+!
 ! Revision 2.32  2006/07/27 03:52:41  vsnyder
 ! Pass details to dumps for vectors and vector templates
 !
