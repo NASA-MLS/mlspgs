@@ -204,7 +204,7 @@ program MLSL2
     parallel%maxFailuresPerMachine = 2
     parallel%maxFailuresPerChunk = 1
     removeSwitches='slv' ! Since slave output already saved to separate files
-    switches=''
+    switches='red'  ! Usually won't want to dump things looked for in testing
     DEFAULT_HDFVERSION_WRITE = HDFVERSION_5
     MLSMessageConfig%limitWarnings = 50 ! Why print all that stuff?
   else
@@ -1056,6 +1056,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.157  2006/09/21 18:46:49  pwagner
+! Reduce level of dumps in SIDS version
+!
 ! Revision 2.156  2006/08/14 16:21:22  pwagner
 ! pass chunk range correctly to slave tasks
 !
