@@ -293,10 +293,11 @@ contains
 
       select case ( spec )
       case ( s_dump )
-        call dumpCommand ( key, forwardModelConfigs=configDatabase, &
+        if ( .not. SKIPRETRIEVAL ) &
+          & call dumpCommand ( key, forwardModelConfigs=configDatabase, &
           & vectors=vectorDatabase )
       case ( s_dumpblocks )
-        call DumpBlocks ( key, matrixDatabase )
+        if ( .not. SKIPRETRIEVAL ) call DumpBlocks ( key, matrixDatabase )
       case ( s_flagCloud )
         if ( toggle(gen) .and. levels(gen) > 0 ) &
           & call trace_begin ( "Retrieve.flagCloud", root )
@@ -490,6 +491,8 @@ contains
             call output ( ', template name: ' )
             call display_string ( state%template%name, advance='yes' )
           endif
+          call output ( ' (skipping retrieval) ', advance='yes' )
+          if ( toggle(gen) )  call trace_end ( "Retrieve.retrieve" )
           cycle
         endif
 
@@ -2687,6 +2690,9 @@ NEWT: do ! Newtonian iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.284  2006/09/21 18:51:14  pwagner
+! Reduce level of dumps in SIDS version
+!
 ! Revision 2.283  2006/09/20 00:43:38  vsnyder
 ! Implemented Herb's apriori fraction calculation
 !
