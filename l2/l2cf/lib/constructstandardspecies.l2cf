@@ -596,3 +596,13 @@ begin Construct
   })
     
 end Construct
+
+  ; These temporary vectors, which must be declared
+  ; in a Fill section, will be used in every storeStandardProduct
+  ; invocation (rather trhan risk clobbering something more valuable)
+
+begin Fill
+  tempVectorState: Vector, template=stateTemplate
+  tempVectorPrecision: Vector, template=stateTemplate
+  tempVectorDiagnostics: Vector, template=otherDiagnosticsTemplate
+end Fill

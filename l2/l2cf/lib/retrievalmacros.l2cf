@@ -519,56 +519,56 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 Begin Fill
 
   ;; Get our standard products back
-  Transfer, source=standardProducts, destination=state
-  Transfer, source=standardPrecision, destination=outputPrecision
-  Transfer, source=standardDiagnostics, destination=otherDiagnostics
+  Transfer, source=standardProducts, destination=tempVectorState
+  Transfer, source=standardPrecision, destination=tempVectorPrecision
+  Transfer, source=standardDiagnostics, destination=tempVectorDiagnostics
 
 ; ------------------------------------------------- Fill, column abundances -----
 ;; --------------------------------------------- tpPressure (using MLS profiles)
   
-  Fill, quantity=state.tpPressure, method=wmoTropopause, $
-    temperatureQuantity=state.temperature_hr, refGPHQuantity=state.refGPH, $
+  Fill, quantity=tempVectorState.tpPressure, method=wmoTropopause, $
+    temperatureQuantity=tempVectorState.temperature_hr, refGPHQuantity=tempVectorState.refGPH, $
     internalVgrid=vGridWMO
-  Fill, quantity=standardProducts.!theQuantity, method=vector, sourceQuantity=state.!theQuantity
-  Fill, quantity=standardPrecision.!theQuantity, method=vector, sourceQuantity=outputPrecision.!theQuantity
-  Fill, quantity=state.column_$1, method=special, vmrQuantity=state.!theQuantity, $
-    boundaryPressure=state.tpPressure !theUnits
-  Fill, quantity=outputPrecision.column_$1, method=special, vmrQuantity=outputPrecision.!theQuantity, $
-    boundaryPressure=state.tpPressure !theUnits
+  Fill, quantity=standardProducts.!theQuantity, method=vector, sourceQuantity=tempVectorState.!theQuantity
+  Fill, quantity=standardPrecision.!theQuantity, method=vector, sourceQuantity=tempVectorPrecision.!theQuantity
+  Fill, quantity=tempVectorState.column_$1, method=special, vmrQuantity=tempVectorState.!theQuantity, $
+    boundaryPressure=tempVectorState.tpPressure !theUnits
+  Fill, quantity=tempVectorPrecision.column_$1, method=special, vmrQuantity=tempVectorPrecision.!theQuantity, $
+    boundaryPressure=tempVectorState.tpPressure !theUnits
 End Fill
 
 !ifdef(flagUseGEOS5PTrop,
 {!dnl
 begin Join
-  Label, quantity=state.!theQuantity, label='$1-StdProd'
-  Label, quantity=state.column_$1, label='$1-StdProd column-MLS'
+  Label, quantity=tempVectorState.!theQuantity, label='$1-StdProd'
+  Label, quantity=tempVectorState.column_$1, label='$1-StdProd column-MLS'
   DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
-    source=state.!theQuantity, precision=outputPrecision.!theQuantity, $
-    status=otherDiagnostics.status!theQuantity, quality=otherDiagnostics.quality!theQuantity, $
-    source=state.column_$1, precision=outputPrecision.column_$1
+    source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
+    status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity, $
+    source=tempVectorState.column_$1, precision=tempVectorPrecision.column_$1
 End Join
 Begin Fill
 ;; ------------------------------------------ tpPressure (using GEOS5 grids)
-  Fill, quantity=state.tpPressure, method=gridded, $
+  Fill, quantity=tempVectorState.tpPressure, method=gridded, $
     sourceGrid=geos5EtaWMOPTrop
-  Fill, quantity=state.column_$1, method=special, vmrQuantity=state.!theQuantity, $
-    boundaryPressure=state.tpPressure !theUnits
-  Fill, quantity=outputPrecision.column_$1, method=special, vmrQuantity=outputPrecision.!theQuantity, $
-    boundaryPressure=state.tpPressure !theUnits
+  Fill, quantity=tempVectorState.column_$1, method=special, vmrQuantity=tempVectorState.!theQuantity, $
+    boundaryPressure=tempVectorState.tpPressure !theUnits
+  Fill, quantity=tempVectorPrecision.column_$1, method=special, vmrQuantity=tempVectorPrecision.!theQuantity, $
+    boundaryPressure=tempVectorState.tpPressure !theUnits
 End Fill
 begin Join
-  Label, quantity=state.column_$1, label='$1-StdProd column-GEOS5'
+  Label, quantity=tempVectorState.column_$1, label='$1-StdProd column-GEOS5'
   DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
-    source=state.column_$1, precision=outputPrecision.column_$1
+    source=tempVectorState.column_$1, precision=tempVectorPrecision.column_$1
 End Join
 },{!dnl
 begin Join
-  Label, quantity=state.!theQuantity, label='$1-StdProd'
-  Label, quantity=state.column_$1, label='$1-StdProd column'
+  Label, quantity=tempVectorState.!theQuantity, label='$1-StdProd'
+  Label, quantity=tempVectorState.column_$1, label='$1-StdProd column'
   DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
-    source=state.!theQuantity, precision=outputPrecision.!theQuantity, $
-    status=otherDiagnostics.status!theQuantity, quality=otherDiagnostics.quality!theQuantity, $
-    source=state.column_$1, precision=outputPrecision.column_$1
+    source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
+    status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity, $
+    source=tempVectorState.column_$1, precision=tempVectorPrecision.column_$1
 End Join
 })
 })
@@ -588,15 +588,15 @@ End Join
 Begin Fill
 
   ;; Get our standard products back
-  Transfer, source=standardProducts, destination=state
-  Transfer, source=standardPrecision, destination=outputPrecision
-  Transfer, source=standardDiagnostics, destination=otherDiagnostics
+  Transfer, source=standardProducts, destination=tempVectorState
+  Transfer, source=standardPrecision, destination=tempVectorPrecision
+  Transfer, source=standardDiagnostics, destination=tempVectorDiagnostics
 
 ; ---------------------------------------------- Perhaps do fancy stuff ----- 
 !ifelse($1,{GPH}, {
   ;; Do fancy things to make the GPH agree with the temperature
-  Fill, quantity=state.!theQuantity, method=hydrostatic, $
-    refGPHQuantity=standardProducts.refGPH, temperatureQuantity=state.temperature_hr
+  Fill, quantity=tempVectorState.!theQuantity, method=hydrostatic, $
+    refGPHQuantity=standardProducts.refGPH, temperatureQuantity=tempVectorState.temperature_hr
   ;; Copy the flags over from temperature to GPH
   Fill, quantity=standardDiagnostics.status!theQuantity, method=vector, $
     sourceQuantity=standardDiagnostics.statusTemperature_hr, /force
@@ -607,85 +607,82 @@ End Fill
 ;; Because we clobbered our outputPrecision.gph, let's fill it again
 ;; (But did we clobber outputPrecision.gph_hr? Why not?)
 Begin Fill
-  Fill, quantity=outputPrecision.!theQuantity, method=gphPrecision, $
-    refGPHPrecisionquantity=outputPrecision.refGPH, $
-    tempPrecisionQuantity=outputPrecision.temperature_hr
+  Fill, quantity=tempVectorPrecision.!theQuantity, method=gphPrecision, $
+    refGPHPrecisionquantity=tempVectorPrecision.refGPH, $
+    tempPrecisionQuantity=tempVectorPrecision.temperature_hr
 
 }, $1,{RHI}, {
   ;; Do fancy things to make RHI agree with H2O and temperature
-  Fill, quantity=state.!theQuantity, h2oQuantity=state.h2o_hr, $
-    temperatureQuantity=state.temperature_hr, method=RHIFromH2O, /dontMask
+  Fill, quantity=tempVectorState.!theQuantity, h2oQuantity=tempVectorState.h2o_hr, $
+    temperatureQuantity=tempVectorState.temperature_hr, method=RHIFromH2O, /dontMask
   ;; And RHI precision
-  Fill, quantity=outputPrecision.!theQuantity, $
-    h2oPrecisionQuantity=outputPrecision.h2o_hr, $
-    tempPrecisionQuantity=outputPrecision.temperature_hr, $
-    h2oQuantity=state.h2o_hr, temperatureQuantity=state.temperature_hr, $
+  Fill, quantity=tempVectorPrecision.!theQuantity, $
+    h2oPrecisionQuantity=tempVectorPrecision.h2o_hr, $
+    tempPrecisionQuantity=tempVectorPrecision.temperature_hr, $
+    h2oQuantity=tempVectorState.h2o_hr, temperatureQuantity=tempVectorState.temperature_hr, $
     method=RHIPrecisionFromH2O, /dontMask
   ;; Keep the status and quality as they are, they should be identical
   ;; to those of H2O-190 which should be fine.
 
   ;; we want to overwrite RHi precision at pressures > 464mb with RHiVmr values
-  Subset, quantity=outputPrecision.!theQuantity, mask=fill, height=[ 1000mb : 383mb ]
-  Fill, quantity=outputPrecision.!theQuantity, sourceQuantity=outputPrecision.RHiVmr, $
+  Subset, quantity=tempVectorPrecision.!theQuantity, mask=fill, height=[ 1000mb : 383mb ]
+  Fill, quantity=tempVectorPrecision.!theQuantity, sourceQuantity=tempVectorPrecision.RHiVmr, $
     method=vector,/force,/interpolate
-  Subset, quantity=outputPrecision.!theQuantity, mask=fill, /reset
+  Subset, quantity=tempVectorPrecision.!theQuantity, mask=fill, /reset
 
 })
 End Fill
 
 begin Join
-  Label, quantity=state.!theQuantity, label='$1-StdProd'
+  Label, quantity=tempVectorState.!theQuantity, label='$1-StdProd'
 !ifelse($1,{Temperature}, {!dnl
   DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
-    source=state.!theQuantity, precision=outputPrecision.!theQuantity, $
-    status=otherDiagnostics.status!theQuantity, quality=otherDiagnostics.quality!theQuantity
+    source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
+    status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity
 End Join
 Begin Fill
   ;; Also tpPressure; later to be copied into the temperature file
-  Fill, quantity=state.tpPressure, method=wmoTropopause, $
-    temperatureQuantity=state.temperature_hr, refGPHQuantity=state.refGPH, $
+  Fill, quantity=tempVectorState.tpPressure, method=wmoTropopause, $
+    temperatureQuantity=tempVectorState.temperature_hr, refGPHQuantity=tempVectorState.refGPH, $
     internalVgrid=vGridWMO
 End Fill
 begin Join
 !ifdef(flagUseGEOS5PTrop,
 {!dnl
-  Label, quantity=state.tpPressure, label='WMOTPPressure-StdProd-MLS'
+  Label, quantity=tempVectorState.tpPressure, label='WMOTPPressure-StdProd-MLS'
   DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
-    source=state.tpPressure
+    source=tempVectorState.tpPressure
 End Join
 Begin Fill
 ;; ------------------------------------------ tpPressure (using GEOS5 grids)
-  Fill, quantity=state.tpPressure, method=gridded, $
+  Fill, quantity=tempVectorState.tpPressure, method=gridded, $
     sourceGrid=geos5EtaWMOPTrop
 End Fill
 begin Join
-  Label, quantity=state.tpPressure, label='WMOTPPressure-StdProd-GEOS5'
+  Label, quantity=tempVectorState.tpPressure, label='WMOTPPressure-StdProd-GEOS5'
   DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
-    source=state.tpPressure
+    source=tempVectorState.tpPressure
 },{!dnl
-  Label, quantity=state.tpPressure, label='WMOTPPressure-StdProd'
+  Label, quantity=tempVectorState.tpPressure, label='WMOTPPressure-StdProd'
   DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
-    source=state.tpPressure
+    source=tempVectorState.tpPressure
 })
 }, $1,{Temperature_HR}, {
   DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
-    source=state.$1, precision=outputPrecision.$1, $
-    status=otherDiagnostics.status$1, quality=otherDiagnostics.quality$1
+    source=tempVectorState.$1, precision=tempVectorPrecision.$1, $
+    status=tempVectorDiagnostics.status$1, quality=tempVectorDiagnostics.quality$1
 }, $1,{IWC}, {
 ; IWC is somewhat special
-  ;;;Label, quantity=state.iwcFine, label='IWC3-StdProd'
-  Label, quantity=state.iwp, label='IWP-StdProd'
+  Label, quantity=tempVectorState.iwp, label='IWP-StdProd'
   DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
-    source=state.iwc, precision=outputPrecision.iwc, $
-    source=state.iwp, precision=outputPrecision.iwp
+    source=tempVectorState.iwc, precision=tempVectorPrecision.iwc, $
+    source=tempVectorState.iwp, precision=tempVectorPrecision.iwp
 
-    ;;;source=state.iwcFine, precision=outputPrecision.iwcFine, $
-    ;;;source=state.iwp, precision=outputPrecision.iwp
 },{
 ; RHI is the only normal stdProd without columns, which makes it special
   DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
-    source=state.!theQuantity, precision=outputPrecision.!theQuantity, $
-    status=otherDiagnostics.status!theQuantity, quality=otherDiagnostics.quality!theQuantity
+    source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
+    status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity
 
 })
 End Join
@@ -790,6 +787,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, status=!status
 })})
 
 ; $Log$
+; Revision 1.120  2006/08/08 22:27:07  pwagner
+; Fills Quality, Status for Temperature, GPH; needs revision before v2.20
+;
 ; Revision 1.119  2006/07/29 04:56:03  dwu
 ; merge RHi precision from RHiVmr at pressures > 383hPa
 ;
