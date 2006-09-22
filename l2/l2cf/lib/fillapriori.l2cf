@@ -462,7 +462,7 @@ begin Fill
   Fill, quantity=vReg.co_hr, method=profile, profileValues= $
     [ 10mb:30ppbv, 1mb:300ppbv, 0.1mb:3ppmv, 0.046mb:0ppmv ] 
   Fill, quantity=vReg.h2o, method=profile, profileValues= $
-    [ 1000mb:500ppmv, 300mb:50ppmv, 215mb:20ppmv, 121mb:2ppmv, 100mb:0.6ppmv, $
+    [ 1000mb:500ppmv, 300mb:50ppmv, 215mb:20ppmv, 147mb:10ppmv, 100mb:1.0ppmv,$
 	0.1mb:0.3ppmv, 0.001mb:0ppmv ], logSpace=false
   Fill, quantity=vReg.h2o_hr, method=profile, profileValues= $
     [ 1000mb:50ppmv, 316mb:100ppmv,215mb:50ppmv, 147mb:5ppmv,121mb: 1ppmv, $
@@ -598,6 +598,9 @@ begin Join
 end Join
   })
 ;$Log$
+;Revision 1.123  2006/08/03 05:06:55  lambert
+;corrected typo in apriori precision for CO
+;
 ;Revision 1.122  2006/08/03 00:52:03  lambert
 ;updated vreg.HCN and apriori precisions for HCl and CO
 ;
