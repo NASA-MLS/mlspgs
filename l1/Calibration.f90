@@ -788,6 +788,32 @@ CONTAINS
        ENDDO
     ENDDO
 
+    chi2%DACS = 0.0      ! initial value
+    DO j = 1, DACSnum
+       DO i = 1, DACSchans
+          nvec = 0
+          difspace = 0.0
+          difzero = 0.0
+          WHERE (space_counts%DACS(start_index:end_index,i,j) /= 0.0)
+             nvec = 1
+             difspace = space_counts%DACS(start_index:end_index,i,j) - &
+                  space_interp%DACS(i,j)
+             difzero = space_counts%DACS(start_index:end_index,i,j)
+          END WHERE
+          nspace = SUM (nvec)
+          IF (nspace >= minmafs) THEN
+             SumDifS2 = SUM(difspace**2)
+             SumDifZ2 = SUM(difzero**2)
+             IF (SumDifS2 > 0.0 .AND. SumDifZ2 > 0.0) THEN
+                chi2%DACS(i,j) = (SumDifS2 / nspace - &
+                     (SUM (difspace) / nspace)**2) /((SumDifZ2 / nspace) &
+                     / (bandwidth%DACS(i,j) * tau))
+                chi2%DACS(i,j) = chi2%DACS(i,j) * nspace / (nspace - 1)
+             ENDIF
+          ENDIF
+       ENDDO
+    ENDDO
+
   END SUBROUTINE ChiSquare
 
 !=============================================================================
@@ -951,6 +977,9 @@ END MODULE Calibration
 !=============================================================================
 
 ! $Log$
+! Revision 2.18  2006/09/26 16:01:05  perun
+! Add DACS Chi2 calculation
+!
 ! Revision 2.17  2006/06/14 13:44:24  perun
 ! Add Spacecraft Geod Angle
 !
