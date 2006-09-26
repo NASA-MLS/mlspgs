@@ -812,6 +812,15 @@ CONTAINS
     CALL Build_MLSAuxData (sd_id, dataset, Tsys%DACS(1,:), lastIndex=noMAF, &
          dims=dims(1:2))
 
+    dims(1) = DACSchans
+    dims(2) = DACSnum
+    dataset%Dimensions(1) = 'DACSchan            '
+    dataset%Dimensions(2) = 'DACSnum             '
+    dataset%name = 'Chi2 DACS'
+
+    CALL Build_MLSAuxData (sd_id, dataset, Chi2%DACS, lastIndex=noMAF, &
+         dims=dims)
+
     dims(1) = MaxMIFs - 2
     dims(2) = DACSnum
     dataset%Dimensions(1) = 'MIF                 '
@@ -848,7 +857,6 @@ CONTAINS
     dims(1) = THzchans
     dims(2) = THzNum
     dims(3) = 1
-
     IF (PRESENT (counterMAF) .AND. PRESENT (MAFno)) THEN
 
        DEALLOCATE (dataset%Dimensions, stat=status)
@@ -990,6 +998,9 @@ END MODULE OutputL1B
 !=============================================================================
 
 ! $Log$
+! Revision 2.23  2006/09/26 16:02:27  perun
+! Output DACS Chi2 values to DIAG file
+!
 ! Revision 2.22  2006/08/02 18:56:59  perun
 ! Removed AscDesc dimension and added Tsys for DACS in DIAG file
 !

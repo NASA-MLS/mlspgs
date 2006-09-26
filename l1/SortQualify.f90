@@ -15,7 +15,8 @@ MODULE SortQualify ! Sort and qualify the L0 data
 
   USE MLSCommon, ONLY: r8
   USE MLSL1Common, ONLY: L1BFileInfo, MAFinfo, MaxMIFs, OA_counterMAF, &
-       OA_counterIndex, ChanLogical_T
+       OA_counterIndex, ChanLogical_T, BankInt_T, FBnum, MBnum, WFnum, &
+       DACSnum, GHzNum
   USE L0_sci_tbls, ONLY: SciMAF
   USE EngTbls, ONLY: EngMAF
   USE Calibration, ONLY: CalWin, MAFdata_T, UpdateCalVectors, WeightsFlags_T
@@ -34,7 +35,9 @@ MODULE SortQualify ! Sort and qualify the L0 data
 
   TYPE (MAFdata_T), POINTER :: CurMAFdata => NULL()
 
-  REAL, PARAMETER :: BaselineAlt = 80.0e3  !!! TEMPORARY (will add to CF?)
+  TYPE (BankInt_T) :: BankWallCnt
+  INTEGER, PARAMETER :: BankWallSize = 2    ! Initialize size of Wall
+  REAL, PARAMETER :: BaselineAlt = 80.0e3   !!! TEMPORARY (will add to CF?)
 
 CONTAINS
 
@@ -49,7 +52,7 @@ CONTAINS
     LOGICAL, INTENT (OUT) :: more_data
     LOGICAL, INTENT (OUT) :: CalWinFull
 
-    INTEGER :: sci_MAFno, dif_MAFno, i, ios, windx
+    INTEGER :: sci_MAFno, dif_MAFno, bankno, i, ios, windx
     INTEGER, SAVE :: prev_MAFno
     TYPE (MAFdata_T) :: EmptyMAFdata, MAFdata
     REAL(r8), SAVE :: prev_secTAI
@@ -57,6 +60,7 @@ CONTAINS
     INTEGER :: nom_MIFs
     TYPE (WeightsFlags_T) :: WeightsFlags
     TYPE (ChanLogical_T) :: EmptyLimbAltFlag(0:(MaxMIFs-1))
+    LOGICAL, SAVE :: InitBankWall = .TRUE.
     INTEGER, PARAMETER :: last_GHz_indx = MIFsGHz - 1
 
     nom_MIFs = L1Config%Calib%MIFsPerMAF
@@ -80,6 +84,49 @@ CONTAINS
        EmptyLimbAltFlag(i)%MB = .FALSE.
        EmptyLimbAltFlag(i)%WF = .FALSE.
        EmptyLimbAltFlag(i)%DACS = .FALSE.
+    ENDDO
+
+! Take care of BankWalls:
+
+    IF (InitBankWall) THEN   ! Init Wall counters
+       BankWallCnt%FB = 0
+       BankWallCnt%MB = 0
+       BankWallCnt%WF = 0
+       BankWallCnt%DACS = 0
+       InitBankWall = .FALSE.
+    ENDIF
+
+    DO i = 1, FBnum
+       IF (BankWallCnt%FB(i) == 0) THEN
+          EmptyMAFdata%BankWall%FB(i) = .FALSE.
+       ELSE
+          EmptyMAFdata%BankWall%FB(i) = .TRUE.
+          BankWallCnt%FB(i) = BankWallCnt%FB(i) - 1    ! decrement until 0
+       ENDIF
+    ENDDO
+    DO i = 1, MBnum
+       IF (BankWallCnt%MB(i) == 0) THEN
+          EmptyMAFdata%BankWall%MB(i) = .FALSE.
+       ELSE
+          EmptyMAFdata%BankWall%MB(i) = .TRUE.
+          BankWallCnt%MB(i) = BankWallCnt%MB(i) - 1    ! decrement until 0
+       ENDIF
+    ENDDO
+    DO i = 1, WFnum
+       IF (BankWallCnt%WF(i) == 0) THEN
+          EmptyMAFdata%BankWall%WF(i) = .FALSE.
+       ELSE
+          EmptyMAFdata%BankWall%WF(i) = .TRUE.
+          BankWallCnt%WF(i) = BankWallCnt%WF(i) - 1    ! decrement until 0
+       ENDIF
+    ENDDO
+    DO i = 1, DACSnum
+       IF (BankWallCnt%DACS(i) == 0) THEN
+          EmptyMAFdata%BankWall%DACS(i) = .FALSE.
+       ELSE
+          EmptyMAFdata%BankWall%DACS(i) = .TRUE.
+          BankWallCnt%DACS(i) = BankWallCnt%DACS(i) - 1    ! decrement until 0
+       ENDIF
     ENDDO
 
 ! Clear Limb Alts numbers and minimum CalFlags :
@@ -237,7 +284,7 @@ PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
     CHARACTER(len=80) :: msg
     CHARACTER(len=27) :: asciiUTC
     INTEGER :: MIF, last_MIF, i, band(2), bandno, bank(2), bankno, n, bno, &
-         ngood, stat, sw
+         ngood, stat, sw, sMIF, tMIF, CalDif
     LOGICAL :: bandMask(MaxMIFs)
     CHARACTER(len=1), PARAMETER :: TargetType = "T" !! Primary target type
     CHARACTER(len=1), PARAMETER :: discard = "D"
@@ -250,11 +297,15 @@ PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
 
     LOGICAL :: TPisDig = .FALSE.
 
+    INTEGER, PARAMETER :: MinCalDif = 500   ! Minimum calibration dif (T - S)
+
     CurMAFdata => CalWin%MAFdata(CalWin%current)
 
 PRINT *, 'Data:', CurMAFdata%SciPkt%GHz_sw_pos
 
     TPisDig = L1Config%Calib%TPdigital
+
+    sMIF = -1; tMIF = -1              ! init to nothing so far
 
 !! Initialize MIF Rad Precision signs:
 
@@ -382,6 +433,14 @@ PRINT *, 'Data:', CurMAFdata%SciPkt%GHz_sw_pos
 
        CurMAFdata%SciPkt(MIF)%GHz_sw_pos = GHz_sw_pos
 
+! Save last known S and T MIF nos;
+
+       IF (GHz_sw_pos == "S" .and. sMIF < 0) THEN
+          sMIF = MIF
+       ELSE IF (GHz_sw_pos == "T" .and. tMIF < 0) THEN
+          tMIF = MIF
+       ENDIF
+
     ENDDO
 
 ! Check if MAF data contains calibration data ("S"pace and "T"arget views):
@@ -403,6 +462,13 @@ PRINT *, 'Data:', CurMAFdata%SciPkt%GHz_sw_pos
        WRITE (L1BFileInfo%LogId, *) TRIM(msg)//' at MAF UTC '//asciiUTC
        WRITE (L1BFileInfo%LogId, *) 'WALL event at MAF UTC '//asciiUTC
     ENDIF
+
+    DO i = 1, FBnum
+       IF (ANY(CurMAFdata%SciPkt%MaxAtten%FB(i) .OR. &
+            CurMAFdata%SciPkt%DeltaAtten%FB(i))) THEN
+          BankWallCnt%FB(i) = BankWallSize
+       ENDIF
+    ENDDO
 
 PRINT *, 'Sort:', CurMAFdata%ChanType(0:149)%FB(1,1)
 
@@ -437,6 +503,56 @@ PRINT *, 'Sort:', CurMAFdata%ChanType(0:149)%FB(1,1)
    ENDDO
 
 !! Rule #6: Discard based on other qualifications such as commanded "W"alls
+
+! Check if bank is "OFF", i.e. Space and Target cnts close together:
+
+   DO bankno = 1, GHzNum
+      CalDif = CurMAFdata%SciPkt(tMIF)%FB(13,bankno) - &
+           CurMAFdata%SciPkt(sMIF)%FB(13,bankno)
+      IF (ABS (CalDif) < MinCalDif) THEN
+         DO MIF = 0, MaxMIFno
+            CurMAFdata%ChanType(MIF)%FB(:,bankno) = discard ! Clear channels
+            CurMAFdata%SciPkt(MIF)%FB(:,bankno) = 0
+         ENDDO
+         CurMAFdata%BankWall%FB(bankno) = .TRUE.
+      ENDIF
+   ENDDO
+
+   DO bankno = 1, MBnum
+      CalDif = CurMAFdata%SciPkt(tMIF)%MB(5,bankno) - &
+           CurMAFdata%SciPkt(sMIF)%MB(5,bankno)
+      IF (ABS (CalDif) < MinCalDif) THEN
+         DO MIF = 0, MaxMIFno
+            CurMAFdata%ChanType(MIF)%MB(:,bankno) = discard ! Clear channels
+            CurMAFdata%SciPkt(MIF)%MB(:,bankno) = 0
+         ENDDO
+         CurMAFdata%BankWall%MB(bankno) = .TRUE.
+      ENDIF
+   ENDDO
+
+   DO bankno = 1, WFnum
+      CalDif = CurMAFdata%SciPkt(tMIF)%WF(2,bankno) - &
+           CurMAFdata%SciPkt(sMIF)%WF(2,bankno)
+      IF (ABS (CalDif) < MinCalDif) THEN
+         DO MIF = 0, MaxMIFno
+            CurMAFdata%ChanType(MIF)%WF(:,bankno) = discard ! Clear channels
+            CurMAFdata%SciPkt(MIF)%WF(:,bankno) = 0
+         ENDDO
+         CurMAFdata%BankWall%WF(bankno) = .TRUE.
+      ENDIF
+   ENDDO
+
+   DO bankno = 1, DACSnum
+      CalDif = CurMAFdata%SciPkt(tMIF)%DACS(1,bankno) - &
+           CurMAFdata%SciPkt(sMIF)%DACS(1,bankno)
+      IF (ABS (CalDif) < MinCalDif) THEN
+         DO MIF = 0, MaxMIFno
+            CurMAFdata%ChanType(MIF)%DACS(:,bankno) = discard ! Clear channels
+            CurMAFdata%SciPkt(MIF)%DACS(:,bankno) = 0
+         ENDDO
+         CurMAFdata%BankWall%DACS(bankno) = .TRUE.
+      ENDIF
+   ENDDO
 
 !! Check for bright objects in Space FOV
 !! Will decide later how to handle Space Temperature
@@ -856,6 +972,9 @@ END MODULE SortQualify
 !=============================================================================
 
 ! $Log$
+! Revision 2.23  2006/09/26 16:03:04  perun
+! Increase Wall size to 3 MAFs and determine when filter bank is in OFF state
+!
 ! Revision 2.22  2006/08/02 18:58:17  perun
 ! Remove calculation of TPz for current MAF and use daily TPz data from RADD
 !
