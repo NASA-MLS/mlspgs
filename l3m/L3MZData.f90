@@ -23,7 +23,7 @@ MODULE L3MZData
         & DIML_NAME, SZ_ERR, DAT_ERR, GEO_ERR, SW_ERR, DG_FIELD1, DG_FIELD2, &
         & DIMLL_NAME, DATE_LEN, INVENTORYMETADATA, OutputFiles_T, &
         & GEO_FIELD1, GEO_FIELD3, GEO_FIELD4, GEO_FIELD9, GEO_FIELD11, & 
-        & GEO_FIELD12, &
+        & GEO_FIELD5, &
         & HDFE_NOMERGE, DIM_ERR, MIN_MAX, DIMRL_NAME, WR_ERR, METAWR_ERR, &
         & FILENAMELEN, FILEATTR_ERR
    USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Fileopen, &
@@ -78,7 +78,7 @@ MODULE L3MZData
      CHARACTER (LEN=GridNameLen) :: name	! name for the output quantity
 
      REAL(r8), DIMENSION(:,:), POINTER :: localSolarTime
-     REAL(r8), DIMENSION(:,:), POINTER :: localSolarZenithAngle
+     REAL(r8), DIMENSION(:,:), POINTER :: SolarZenithAngle
 	! dimensioned as (2, nLats)
 
      ! Now the data fields:
@@ -241,9 +241,9 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = he5_zadefine(swID, GEO_FIELD12, DIMRL_NAME, "", HE5T_NATIVE_FLOAT)
+      status = he5_zadefine(swID, GEO_FIELD5, DIMRL_NAME, "", HE5T_NATIVE_FLOAT)
       IF (status == -1) THEN
-         msr = GEO_ERR // GEO_FIELD12
+         msr = GEO_ERR // GEO_FIELD5
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
@@ -324,10 +324,10 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = he5_zawrite( swID, GEO_FIELD12, start, stride, edge, &
-           & REAL(mz%localSolarZenithAngle) )
+      status = he5_zawrite( swID, GEO_FIELD5, start, stride, edge, &
+           & REAL(mz%SolarZenithAngle) )
       IF (status == -1) THEN
-         msr = WR_ERR // GEO_FIELD12
+         msr = WR_ERR // GEO_FIELD5
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
@@ -445,25 +445,25 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = he5_zasetalias(zaId, L3VALUE, trim(mz%name//'Value'))
+      status = he5_zasetalias(zaId, L3VALUE, trim(mz%name))
       if (status /= PGS_S_SUCCESS) then
          msr = 'Failed to alias l3Value' // trim(mz%name)
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       endif
                                                                         
-      status = he5_zasetalias(zaId, L3PREC, trim(mz%name//'Precision'))
+      status = he5_zasetalias(zaId, L3PREC, trim(mz%name)//'Precision')
       if (status /= PGS_S_SUCCESS) then
          msr = 'Failed to alias l3Precision' // trim(mz%name)
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       endif
                                                                         
-      status = he5_zasetalias(zaId, L3STDDEV, trim(mz%name//'StdDeviation'))
+      status = he5_zasetalias(zaId, L3STDDEV, trim(mz%name)//'StdDeviation')
       if (status /= PGS_S_SUCCESS) then
          msr = 'Failed to alias l3StdDeviation' // trim(mz%name)
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       endif
                                                                         
-      status = he5_zasetalias(zaId, L3DCOUNT, trim(mz%name//'DataCount'))
+      status = he5_zasetalias(zaId, L3DCOUNT, trim(mz%name)//'DataCount')
       if (status /= PGS_S_SUCCESS) then
          msr = 'Failed to alias l3DataCount' // trim(mz%name)
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -508,7 +508,7 @@ CONTAINS
       integer, parameter :: NumOfZonalFields = 5
       integer, parameter :: NumOfDataFields = 5
       character (len=*), parameter :: ZonalFieldTitles = &
-        & 'Latitude,Pressure,Time,LocalSolarTime,LocalSolarZenithAngle'
+        & 'Latitude,Pressure,Time,LocalSolarTime,SolarZenithAngle'
       character (len=*), parameter :: ZonalDataTitles = &
         & 'L3mzStdDeviation,L3mzValue,L3mzPrecision,L3mzDataCount,PerMisPoints'
       character(len=CHARATTRLEN), dimension(NumOfZonalFields) :: theTitles
@@ -623,7 +623,7 @@ CONTAINS
         end select
                                                                         
       do field=1, NumOfDataFields
-        field_name = trim(mz%name)//dataTitles(field)
+        field_name = trim(mz%name)//'-'//dataTitles(field)
         status = he5_zawrlattr(zaId, dataTitles(field), 'Missing Value', &
            & HE5T_NATIVE_FLOAT, 1, UNDEFINED_VALUE)
         status = he5_zawrlattr(zaId, dataTitles(field), 'Title', &
@@ -1169,10 +1169,10 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      ALLOCATE(l3mz%localSolarZenithAngle(MIN_MAX,l3mz%nLats), &
+      ALLOCATE(l3mz%SolarZenithAngle(MIN_MAX,l3mz%nLats), &
                STAT=err)
       IF ( err /= 0 ) THEN
-         msr = MLSMSG_Allocate // ' local solar zenith angle pointer.'
+         msr = MLSMSG_Allocate // ' Solar zenith angle pointer.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
@@ -1266,10 +1266,10 @@ CONTAINS
          ENDIF
       ENDIF
 
-      IF ( ASSOCIATED(l3mz%localSolarZenithAngle) ) THEN
-         DEALLOCATE (l3mz%localSolarZenithAngle, STAT=err)
+      IF ( ASSOCIATED(l3mz%SolarZenithAngle) ) THEN
+         DEALLOCATE (l3mz%SolarZenithAngle, STAT=err)
          IF ( err /= 0 ) THEN
-            msr = MLSMSG_DeAllocate // '  local solar zenith angle pointer.'
+            msr = MLSMSG_DeAllocate // '  Solar zenith angle pointer.'
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
       ENDIF
@@ -1335,6 +1335,9 @@ END MODULE L3MZData
 !==================
 
 ! $Log$
+! Revision 1.22  2006/05/03 14:40:51  cvuu
+! Remove subroutine OutputMZDiag, move datasets from Swath group to Zonal Means group
+!
 ! Revision 1.21  2006/02/28 20:36:33  cvuu
 ! V2.00 commit
 !

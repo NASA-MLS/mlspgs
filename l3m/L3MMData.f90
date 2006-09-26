@@ -517,7 +517,7 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       endif
  
-      status = he5_gdsetalias(gdId, L3PRECISION, trim(dg%name//'Precision')) 
+      status = he5_gdsetalias(gdId, L3PRECISION, trim(dg%name)//'Precision') 
       if (status /= PGS_S_SUCCESS) then
          msr = 'Failed to alias l3Precision' // trim(dg%name)
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -758,7 +758,7 @@ CONTAINS
         end select
                                                                             
       do field=1, NumOfDataFields
-        field_name = trim(dg%name)//dataTitles(field)
+        field_name = trim(dg%name)//'-'//dataTitles(field)
         status = he5_gdwrlattr(gdId, dataTitles(field), 'Missing Value', &
            & HE5T_NATIVE_FLOAT, 1, UNDEFINED_VALUE)
         status = he5_gdwrlattr(gdId, dataTitles(field), 'Title', &
@@ -1410,6 +1410,9 @@ END MODULE L3MMData
 !==================
 
 !# $Log$
+!# Revision 1.25  2006/05/19 15:20:11  cvuu
+!# Use reshape to reordering the array
+!#
 !# Revision 1.24  2006/05/03 14:38:01  cvuu
 !# Remove subroutine OutputMMDiag, move datasets to Grid group
 !#

@@ -20,7 +20,7 @@ MODULE L3DZData
    USE MLSL3Common, ONLY: GridNameLen, DIMR_NAME, DIMT_NAME, DIM_NAME2, &
         & DIML_NAME, SZ_ERR, DAT_ERR, GEO_ERR, SW_ERR, DG_FIELD1, DG_FIELD2, &
         & DIMLL_NAME, DATE_LEN, INVENTORYMETADATA, OutputFiles_T, &
-        & GEO_FIELD1, GEO_FIELD4, GEO_FIELD9, GEO_FIELD11, GEO_FIELD12, &
+        & GEO_FIELD1, GEO_FIELD4, GEO_FIELD9, GEO_FIELD11, GEO_FIELD5, &
         & HDFE_NOMERGE, DIM_ERR, MIN_MAX, DIMRL_NAME, WR_ERR, METAWR_ERR, &
 	& FILEATTR_ERR
    USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Fileopen, &
@@ -71,7 +71,7 @@ MODULE L3DZData
       ! Other ancillary data
 
       REAL(r8), DIMENSION(:,:), POINTER :: localSolarTime
-      REAL(r8), DIMENSION(:,:), POINTER :: localSolarZenithAngle
+      REAL(r8), DIMENSION(:,:), POINTER :: SolarZenithAngle
 	! dimensioned as (2, nLats), where 1 = min, 2 = max in dim one
 
       ! Now the data fields:
@@ -271,9 +271,9 @@ MODULE L3DZData
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         status = he5_zadefine(swID, GEO_FIELD12, DIMRL_NAME, "", HE5T_NATIVE_FLOAT)
+         status = he5_zadefine(swID, GEO_FIELD5, DIMRL_NAME, "", HE5T_NATIVE_FLOAT)
          IF (status == -1) THEN
-            msr = GEO_ERR // GEO_FIELD12
+            msr = GEO_ERR // GEO_FIELD5
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
@@ -353,10 +353,10 @@ MODULE L3DZData
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         status = he5_zawrite( swID, GEO_FIELD12, start, stride, edge, &
-              & REAL(dzm(i)%localSolarZenithAngle) )
+         status = he5_zawrite( swID, GEO_FIELD5, start, stride, edge, &
+              & REAL(dzm(i)%SolarZenithAngle) )
          IF (status == -1) THEN
-            msr = WR_ERR // GEO_FIELD12
+            msr = WR_ERR // GEO_FIELD5
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
@@ -477,25 +477,25 @@ MODULE L3DZData
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = he5_zasetalias(zaId, L3VALUE, trim(dzm%name//'Value'))
+      status = he5_zasetalias(zaId, L3VALUE, trim(dzm%name))
       if (status /= PGS_S_SUCCESS) then
          msr = 'Failed to alias l3Value' // trim(dzm%name)
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       endif
 
-      status = he5_zasetalias(zaId, L3PREC, trim(dzm%name//'Precision'))
+      status = he5_zasetalias(zaId, L3PREC, trim(dzm%name)//'Precision')
       if (status /= PGS_S_SUCCESS) then
          msr = 'Failed to alias l3Precision' // trim(dzm%name)
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       endif
 
-      status = he5_zasetalias(zaId, L3STDDEV, trim(dzm%name//'StdDeviation'))
+      status = he5_zasetalias(zaId, L3STDDEV, trim(dzm%name)//'StdDeviation')
       if (status /= PGS_S_SUCCESS) then
          msr = 'Failed to alias l3StdDeviation' // trim(dzm%name)
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       endif
 
-      status = he5_zasetalias(zaId, L3DCOUNT, trim(dzm%name//'DataCount'))
+      status = he5_zasetalias(zaId, L3DCOUNT, trim(dzm%name)//'DataCount')
       if (status /= PGS_S_SUCCESS) then
          msr = 'Failed to alias l3DataCount' // trim(dzm%name)
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -539,7 +539,7 @@ MODULE L3DZData
       integer, parameter :: NumOfZonalFields = 5
       integer, parameter :: NumOfDataFields = 5
       character (len=*), parameter :: ZonalFieldTitles = &
-        & 'Latitude,Pressure,Date,LocalSolarTime,LocalSolarZenithAngle'
+        & 'Latitude,Pressure,Date,LocalSolarTime,SolarZenithAngle'
       character (len=*), parameter :: ZonalDataTitles = &
         & 'L3dzStdDeviation,L3dzValue,L3dzPrecision,L3dzDataCount,PerMisPoints'
       character(len=CHARATTRLEN), dimension(NumOfZonalFields) :: theTitles
@@ -661,7 +661,7 @@ MODULE L3DZData
         end select
                                                                                 
       do field=1, NumOfDataFields
-        field_name = trim(dzm%name)//dataTitles(field)
+        field_name = trim(dzm%name)//'-'//dataTitles(field)
         status = he5_zawrlattr(zaId, trim(dataTitles(field)), 'Missing Value', &
            & HE5T_NATIVE_FLOAT, 1, UNDEFINED_VALUE)
         status = he5_zawrlattr(zaId, trim(dataTitles(field)), 'Title', &
@@ -851,12 +851,12 @@ MODULE L3DZData
       ENDIF
       dz%localSolarTime = DBLE(r2)
 
-      status = he5_zaread(swid, GEO_FIELD12, start, stride, edge, r2)
+      status = he5_zaread(swid, GEO_FIELD5, start, stride, edge, r2)
       IF (status == -1) THEN
-         msr = RL3DZ_ERR // GEO_FIELD12
+         msr = RL3DZ_ERR // GEO_FIELD5
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
-      dz%localSolarZenithAngle = DBLE(r2)
+      dz%SolarZenithAngle = DBLE(r2)
 
       ! Read the data fields
 
@@ -1443,13 +1443,13 @@ MODULE L3DZData
 
       ALLOCATE(l3dz%localSolarTime(MIN_MAX,l3dz%nLats), STAT=err)
       IF ( err /= 0 ) THEN
-         msr = MLSMSG_Allocate // ' local solar time pointer.'
+         msr = MLSMSG_Allocate // 'Local solar time pointer.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
       
-      ALLOCATE(l3dz%localSolarZenithAngle(MIN_MAX,l3dz%nLats), STAT=err)
+      ALLOCATE(l3dz%SolarZenithAngle(MIN_MAX,l3dz%nLats), STAT=err)
       IF ( err /= 0 ) THEN
-         msr = MLSMSG_Allocate // ' local solar zenith angle  pointer.'
+         msr = MLSMSG_Allocate // 'Solar zenith angle  pointer.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
       
@@ -1543,10 +1543,10 @@ MODULE L3DZData
          ENDIF
       ENDIF
       
-      IF ( ASSOCIATED(l3dz%localSolarZenithAngle) ) THEN
-         DEALLOCATE (l3dz%localSolarZenithAngle, STAT=err)
+      IF ( ASSOCIATED(l3dz%SolarZenithAngle) ) THEN
+         DEALLOCATE (l3dz%SolarZenithAngle, STAT=err)
          IF ( err /= 0 ) THEN
-            msr = MLSMSG_DeAllocate //' l3dz local solar zenith angle pointer.'
+            msr = MLSMSG_DeAllocate //' l3dz solar zenith angle pointer.'
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
       ENDIF
@@ -1658,6 +1658,9 @@ MODULE L3DZData
  !==================
 
 ! $Log$
+! Revision 1.23  2006/05/03 14:42:30  cvuu
+! Remove subroutine OutputDZDiag, move datasets from Swath group to Zonal Means group
+!
 ! Revision 1.22  2006/02/28 20:36:33  cvuu
 ! V2.00 commit
 !

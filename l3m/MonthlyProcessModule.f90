@@ -903,8 +903,8 @@ CONTAINS
 
     DO iD = 1, l2Days
        DO J = 1, cfDef%nNom 
-          l3dz(iD)%localSolarZenithAngle(1, J) =  1.e20 
-          l3dz(iD)%localSolarZenithAngle(2, J) = -1.e20 
+          l3dz(iD)%SolarZenithAngle(1, J) =  1.e20 
+          l3dz(iD)%SolarZenithAngle(2, J) = -1.e20 
           l3dz(iD)%localSolarTime(1, J)        =  1.e20 
           l3dz(iD)%localSolarTime(2, J)        = -1.e20 
           DO I = 1, l3dz(iD)%nLevels 
@@ -912,8 +912,8 @@ CONTAINS
              l3dz(iD)%dataCount(I,J) = 0 
           ENDDO
 
-          dzA(iD)%localSolarZenithAngle(1, J) =  1.e20 
-          dzA(iD)%localSolarZenithAngle(2, J) = -1.e20 
+          dzA(iD)%SolarZenithAngle(1, J) =  1.e20 
+          dzA(iD)%SolarZenithAngle(2, J) = -1.e20 
           dzA(iD)%localSolarTime(1, J)        =  1.e20 
           dzA(iD)%localSolarTime(2, J)        = -1.e20 
           DO I = 1, dzA(iD)%nLevels 
@@ -921,8 +921,8 @@ CONTAINS
              dzA(iD)%dataCount(I,J) = 0 
           ENDDO
 
-          dzD(iD)%localSolarZenithAngle(1, J) =  1.e20 
-          dzD(iD)%localSolarZenithAngle(2, J) = -1.e20 
+          dzD(iD)%SolarZenithAngle(1, J) =  1.e20 
+          dzD(iD)%SolarZenithAngle(2, J) = -1.e20 
           dzD(iD)%localSolarTime(1, J)        =  1.e20 
           dzD(iD)%localSolarTime(2, J)        = -1.e20 
           DO I = 1, dzD(iD)%nLevels 
@@ -960,10 +960,10 @@ CONTAINS
              l3dz(iD)%l3dzPrecision(iP, iCom) = l3dz(iD)%l3dzPrecision(iP, iCom) + l2gp(iD)%l2gpPrecision(1, kP, iT)
              !** Solar Zenith Angle & Time
              if(iP == 1) then
-                if( l3dz(iD)%localSolarZenithAngle(2, iCom) <= l2gp(iD)%solarZenith(iT)) then
-                   l3dz(iD)%localSolarZenithAngle(2, iCom) = l2gp(iD)%solarZenith(iT)
-                else if(l3dz(iD)%localSolarZenithAngle(1, iCom) >= l2gp(iD)%solarZenith(iT)) then
-                   l3dz(iD)%localSolarZenithAngle(1, iCom) = l2gp(iD)%solarZenith(iT)
+                if( l3dz(iD)%SolarZenithAngle(2, iCom) <= l2gp(iD)%solarZenith(iT)) then
+                   l3dz(iD)%SolarZenithAngle(2, iCom) = l2gp(iD)%solarZenith(iT)
+                else if(l3dz(iD)%SolarZenithAngle(1, iCom) >= l2gp(iD)%solarZenith(iT)) then
+                   l3dz(iD)%SolarZenithAngle(1, iCom) = l2gp(iD)%solarZenith(iT)
                 end if
 
                 if(l3dz(iD)%localSolarTime(2, iCom) <= l2gp(iD)%solarTime(iT)) then
@@ -980,10 +980,10 @@ CONTAINS
                 iAscArr(iCom) = iAscArr(iCom) + 1 
                 ascFieldArr(iCom, iAscArr(iCom)) = l2gp(iD)%l2gpValue(1, kP, iT)
                 if(iP == 1) then
-                   if(dzA(iD)%localSolarZenithAngle(2, iCom) <= l2gp(iD)%solarZenith(iT)) then
-                      dzA(iD)%localSolarZenithAngle(2, iCom) = l2gp(iD)%solarZenith(iT)
-                   else if(dzA(iD)%localSolarZenithAngle(1, iCom) >= l2gp(iD)%solarZenith(iT)) then
-                      dzA(iD)%localSolarZenithAngle(1, iCom) = l2gp(iD)%solarZenith(iT)
+                   if(dzA(iD)%SolarZenithAngle(2, iCom) <= l2gp(iD)%solarZenith(iT)) then
+                      dzA(iD)%SolarZenithAngle(2, iCom) = l2gp(iD)%solarZenith(iT)
+                   else if(dzA(iD)%SolarZenithAngle(1, iCom) >= l2gp(iD)%solarZenith(iT)) then
+                      dzA(iD)%SolarZenithAngle(1, iCom) = l2gp(iD)%solarZenith(iT)
                    end if
 
                    if(dzA(iD)%localSolarTime(2, iCom) <= l2gp(iD)%solarTime(iT)) then
@@ -998,10 +998,10 @@ CONTAINS
                 iDesArr(iCom) = iDesArr(iCom) + 1 
                 desFieldArr(iCom, iDesArr(iCom)) = l2gp(iD)%l2gpValue(1, kP, iT)
                 if(iP == 1) then
-                   if(dzD(iD)%localSolarZenithAngle(2, iCom) <= l2gp(iD)%solarZenith(iT)) then
-                      dzD(iD)%localSolarZenithAngle(2, iCom) =  l2gp(iD)%solarZenith(iT)
-                   else if(dzD(iD)%localSolarZenithAngle(1, iCom) >= l2gp(iD)%solarZenith(iT)) then
-	              dzD(iD)%localSolarZenithAngle(1, iCom) = l2gp(iD)%solarZenith(iT)
+                   if(dzD(iD)%SolarZenithAngle(2, iCom) <= l2gp(iD)%solarZenith(iT)) then
+                      dzD(iD)%SolarZenithAngle(2, iCom) =  l2gp(iD)%solarZenith(iT)
+                   else if(dzD(iD)%SolarZenithAngle(1, iCom) >= l2gp(iD)%solarZenith(iT)) then
+	              dzD(iD)%SolarZenithAngle(1, iCom) = l2gp(iD)%solarZenith(iT)
 		   end if
 
 	           if(dzD(iD)%localSolarTime(2, iCom) <= l2gp(iD)%solarTime(iT)) then
@@ -1213,24 +1213,24 @@ CONTAINS
     END DO
 
     DO J = 1, cfDef%nNom 
-       l3mz%localSolarZenithAngle(1, J) =  1.e20 
-       l3mz%localSolarZenithAngle(2, J) = -1.e20 
+       l3mz%SolarZenithAngle(1, J) =  1.e20 
+       l3mz%SolarZenithAngle(2, J) = -1.e20 
        l3mz%localSolarTime(1, J)        =  1.e20 
        l3mz%localSolarTime(2, J)        = -1.e20 
        DO I = 1, l3mz%nLevels 
           l3mz%perMisPoints(I,J) = 0 
        ENDDO
 
-       mzA%localSolarZenithAngle(1, J) =  1.e20 
-       mzA%localSolarZenithAngle(2, J) = -1.e20 
+       mzA%SolarZenithAngle(1, J) =  1.e20 
+       mzA%SolarZenithAngle(2, J) = -1.e20 
        mzA%localSolarTime(1, J)        =  1.e20 
        mzA%localSolarTime(2, J)        = -1.e20 
        DO I = 1, mzA%nLevels 
           mzA%perMisPoints(I,J) = 0 
        ENDDO
 
-       mzD%localSolarZenithAngle(1, J) =  1.e20 
-       mzD%localSolarZenithAngle(2, J) = -1.e20 
+       mzD%SolarZenithAngle(1, J) =  1.e20 
+       mzD%SolarZenithAngle(2, J) = -1.e20 
        mzD%localSolarTime(1, J)        =  1.e20 
        mzD%localSolarTime(2, J)        = -1.e20 
        DO I = 1, mzD%nLevels 
@@ -1267,10 +1267,10 @@ CONTAINS
              l3mz%l3mzPrecision(iP, iCom) = l3mz%l3mzPrecision(iP, iCom) + l2gp(iD)%l2gpPrecision(1, kP, iT)
              !** Solar Zenith Angle & Time
              if(iP == 1) then
-                if(l3mz%localSolarZenithAngle(2, iCom) <= l2gp(iD)%solarZenith(iT)) then
-                   l3mz%localSolarZenithAngle(2, iCom) =  l2gp(iD)%solarZenith(iT)
-                else if(l3mz%localSolarZenithAngle(1, iCom) >= l2gp(iD)%solarZenith(iT)) then
-                   l3mz%localSolarZenithAngle(1, iCom) = l2gp(iD)%solarZenith(iT)
+                if(l3mz%SolarZenithAngle(2, iCom) <= l2gp(iD)%solarZenith(iT)) then
+                   l3mz%SolarZenithAngle(2, iCom) =  l2gp(iD)%solarZenith(iT)
+                else if(l3mz%SolarZenithAngle(1, iCom) >= l2gp(iD)%solarZenith(iT)) then
+                   l3mz%SolarZenithAngle(1, iCom) = l2gp(iD)%solarZenith(iT)
                 end if
                 
                 if(l3mz%localSolarTime(2, iCom) <= l2gp(iD)%solarTime(iT)) then
@@ -1287,10 +1287,10 @@ CONTAINS
                     iAscArr(iCom) = iAscArr(iCom) + 1 
                     ascFieldArr(iCom, iAscArr(iCom)) = l2gp(iD)%l2gpValue(1, kP, iT)
                     if(iP == 1) then
-                       if(mzA%localSolarZenithAngle(2, iCom) <= l2gp(iD)%solarZenith(iT)) then
-                          mzA%localSolarZenithAngle(2, iCom) = l2gp(iD)%solarZenith(iT)
-                       else if(mzA%localSolarZenithAngle(1, iCom) >= l2gp(iD)%solarZenith(iT)) then
-                          mzA%localSolarZenithAngle(1, iCom) = l2gp(iD)%solarZenith(iT)
+                       if(mzA%SolarZenithAngle(2, iCom) <= l2gp(iD)%solarZenith(iT)) then
+                          mzA%SolarZenithAngle(2, iCom) = l2gp(iD)%solarZenith(iT)
+                       else if(mzA%SolarZenithAngle(1, iCom) >= l2gp(iD)%solarZenith(iT)) then
+                          mzA%SolarZenithAngle(1, iCom) = l2gp(iD)%solarZenith(iT)
                        end if
                        
                        if(mzA%localSolarTime(2, iCom) <= l2gp(iD)%solarTime(iT)) then
@@ -1305,10 +1305,10 @@ CONTAINS
                     iDesArr(iCom) = iDesArr(iCom) + 1 
                     desFieldArr(iCom, iDesArr(iCom)) = l2gp(iD)%l2gpValue(1, kP, iT)
                     if(iP == 1) then
-                       if(mzD%localSolarZenithAngle(2, iCom) <= l2gp(iD)%solarZenith(iT)) then
-                          mzD%localSolarZenithAngle(2, iCom) = l2gp(iD)%solarZenith(iT)
-                       else if(mzD%localSolarZenithAngle(1, iCom) >= l2gp(iD)%solarZenith(iT)) then
-                          mzD%localSolarZenithAngle(1, iCom) = l2gp(iD)%solarZenith(iT)
+                       if(mzD%SolarZenithAngle(2, iCom) <= l2gp(iD)%solarZenith(iT)) then
+                          mzD%SolarZenithAngle(2, iCom) = l2gp(iD)%solarZenith(iT)
+                       else if(mzD%SolarZenithAngle(1, iCom) >= l2gp(iD)%solarZenith(iT)) then
+                          mzD%SolarZenithAngle(1, iCom) = l2gp(iD)%solarZenith(iT)
                        end if
                        
                        if(mzD%localSolarTime(2, iCom) <= l2gp(iD)%solarTime(iT)) then
