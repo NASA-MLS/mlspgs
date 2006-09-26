@@ -523,9 +523,10 @@ CONTAINS
                lastIndex=noMAF, dims=dims, fill_value=RAD_ERR_FILL)
 !-----------------------------------------------------------------------------
 
-! Output diagnostic offsets:
+! Output diagnostic offsets (GHz only!):
 
-          IF (L1Config%Output%WriteDiagOffsets) THEN
+          IF (L1Config%Output%WriteDiagOffsets .AND. &
+               (sd_id /= sdId%RADTID)) THEN
              dataset%name = TRIM(name) // ' Poffset'
              CALL Build_MLSAuxData (sdId%DiagId, dataset, rad(i)%Poffset, &
                   lastIndex=noMAF, dims=dims, fill_value=RAD_FILL)
@@ -998,6 +999,9 @@ END MODULE OutputL1B
 !=============================================================================
 
 ! $Log$
+! Revision 2.24  2006/09/26 17:11:01  perun
+! Attempt to write diagnostics offsets for GHz only!
+!
 ! Revision 2.23  2006/09/26 16:02:27  perun
 ! Output DACS Chi2 values to DIAG file
 !
