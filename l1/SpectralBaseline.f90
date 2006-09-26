@@ -563,7 +563,8 @@ PRINT *, 'Updating baselines...'
 ! CounterMAF must increment by 1 to be good
 
                avg_indx(2) = mindx
-             ELSE IF (ANY (baselineDC(1:noChans,mindx) == FILLVALUE)) THEN
+             ELSE IF (ANY (baselineDC(1:noChans,(mindx-1)) == FILLVALUE) .OR. &
+                  ANY (baselineDC(1:noChans,(mindx-1)) == 0.0)) THEN
 
 ! Fill value in previous can't be used for averaging
 
@@ -572,6 +573,7 @@ PRINT *, 'Updating baselines...'
              ENDIF
           ENDIF
           DC_avg = SUM (baselineDC(:,avg_indx),2) * 0.5
+          IF (ANY (DC_avg == FILLVALUE)) DC_avg = 0.0    ! Nothing available
 
 ! DC RMS
 
@@ -707,6 +709,9 @@ PRINT *, 'Updating baselines...'
 END MODULE SpectralBaseline
 !=============================================================================
 ! $Log$
+! Revision 2.8  2006/09/26 16:03:28  perun
+! Mark DC baseline values as 0.0 when not available
+!
 ! Revision 2.7  2006/08/02 18:59:10  perun
 ! Do not calculation slimb offsets
 !

@@ -45,6 +45,7 @@ CONTAINS
     USE SciUtils, ONLY: SwMirPos, GetScAngles
     USE MLSL1Utils, ONLY: QNan
     USE DACsUtils, ONLY: TPz
+    USE L1LogUtils, ONLY: MAF_dur
 
     INTEGER :: i, ios, sci_MAFno, n, ngood, sum_S, sum_T
     INTEGER :: EngMAF_unit, SciMAF_unit, MAF_data_unit
@@ -55,7 +56,7 @@ CONTAINS
     REAL :: LLO_EU(16,0:(MaxMIFs-1)), LLO_dflt_EU(16,0:(MaxMIFs-1))
     INTEGER, PARAMETER :: MaxMIFno = (MaxMIFs - 1)
     REAL :: swFac(0:MaxMIFno)
-    REAL(r8) :: TP_ana(0:MaxMIFno), TP_dig(0:MaxMIFno)
+    REAL(r8) :: TP_ana(0:MaxMIFno), TP_dig(0:MaxMIFno), engTAI, sciTAI
     REAL(r8) :: Sum_ana(DACSnum) = 0.0, Sum_dig(DACSnum) = 0.0, &
          Sum_dig_dig(DACSnum) = 0.0, Sum_dig_ana(DACSnum) = 0.0
     CHARACTER(len=1), PARAMETER :: discard = "D"
@@ -111,10 +112,12 @@ CONTAINS
     outer: DO
 
        READ (engMAF_unit, iostat=ios) EngMAF, EngPkt
+       engTAI = EngMAF%secTAI
        IF (ios /= 0) EXIT outer
        WRITE (L1BFileInfo%EngId, iostat=ios) EngPkt, EngMAF%Eng%value
 
        READ (sciMAF_unit, iostat=ios) SciMAF
+       sciTAI = sciMAF(2)%secTAI
        IF (ios /= 0) EXIT outer
        sci_MAFno = SciMAF(0)%MAFno
        DO n = 0, (MaxMIFs - 1)
@@ -127,25 +130,29 @@ CONTAINS
        ENDDO
 
        DO
-          IF (EngMAF%MAFno == sci_MAFno) THEN
+
+          IF (EngMAF%MAFno == sci_MAFno .AND. &
+               NINT(ABS(sciTAI - engTAI) / MAF_dur) == 1) THEN  ! Same MAF data
              WRITE (L1BFileInfo%EngId, iostat=ios) Sci_pos
              WRITE (L1BFileInfo%EngId, iostat=ios) PLL_DN
              WRITE (L1BFileInfo%EngId, iostat=ios) LLO_EU
              EXIT   ! Nothing more to read
           ENDIF
 
-          IF (EngMAF%secTAI <= SciMAF(2)%secTAI) THEN       ! Catch the Sci
+          IF (engTAI <= sciTAI) THEN       ! Catch the Sci
 
              WRITE (L1BFileInfo%EngId, iostat=ios) Sci_dflt_pos
              WRITE (L1BFileInfo%EngId, iostat=ios) PLL_dflt_DN
              WRITE (L1BFileInfo%EngId, iostat=ios) LLO_dflt_EU
              READ (engMAF_unit, iostat=ios) EngMAF, EngPkt
              IF (ios /= 0) EXIT outer
+             engTAI = EngMAF%secTAI
              WRITE (L1BFileInfo%EngId, iostat=ios) EngPkt, EngMAF%Eng%value
 
-          ELSE IF (EngMAF%secTAI > SciMAF(2)%secTAI) THEN   ! Catch the Eng
+          ELSE ! Catch the Eng
 
              READ (sciMAF_unit, iostat=ios) SciMAF
+             sciTAI = sciMAF(2)%secTAI
              IF (ios /= 0) EXIT outer
              sci_MAFno = SciMAF(0)%MAFno
              DO n = 0, (MaxMIFs - 1)
@@ -261,6 +268,9 @@ PRINT *, 'flags: ', WeightsFlags(i)
 END MODULE CalibWeightsFlags
 !=============================================================================
 ! $Log$
+! Revision 2.8  2006/09/26 16:01:33  perun
+! Correct testing to insure alignment of Eng and Sci data
+!
 ! Revision 2.7  2006/08/02 18:52:17  perun
 ! Accumulate DACS TPs to calculate daily TP zeros
 !
