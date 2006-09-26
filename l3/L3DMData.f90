@@ -1033,7 +1033,7 @@ CONTAINS
         end select
                                                                             
       do field=1, NumOfDataFields
-        field_name = trim(dg%name)//dataTitles(field)
+        field_name = trim(dg%name)//'-'//dataTitles(field)
         status = he5_gdwrlattr(gdId, dataTitles(field), 'Missing Value', &
            & HE5T_NATIVE_FLOAT, 1, UNDEFINED_VALUE)
         status = he5_gdwrlattr(gdId, dataTitles(field), 'Title', &
@@ -1981,6 +1981,9 @@ CONTAINS
 !==================
 
 !# $Log$
+!# Revision 1.45  2006/05/19 15:19:55  cvuu
+!# Use reshape to reordering the array
+!#
 !# Revision 1.44  2006/04/17 15:42:06  cvuu
 !# Add the local attributes to the diagnostic swath fields
 !#
