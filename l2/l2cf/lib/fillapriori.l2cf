@@ -372,7 +372,7 @@ begin Fill
   Fill, quantity=lowBound.n2o,method=explicit, explicitValues= -40ppbv, /spread
 
   Fill, quantity=lowBound.RHiVmrsngl, method=profile, profileValues=[100mb:2, 68mb:0.0001]
-  Fill, quantity=highBound.RHiVmrsngl, method=profile, profileValues=[100mb:200, 68mb:0.0001], /spread
+  Fill, quantity=highBound.RHiVmrsngl, method=profile, profileValues=[100mb:110, 68mb:0.0001], /spread
 
 ;; ensure that apriori between lowbound and highbound
    Fill, quantity=apriori.RHiVmrsngl, method=manipulate,a=apriori.RHiVmrsngl,b=lowBound.RHiVmrsngl,$
@@ -598,6 +598,9 @@ begin Join
 end Join
   })
 ;$Log$
+;Revision 1.124  2006/09/22 22:23:08  bill
+;made smoothing for h2o and h2o_hr consistent
+;
 ;Revision 1.123  2006/08/03 05:06:55  lambert
 ;corrected typo in apriori precision for CO
 ;
