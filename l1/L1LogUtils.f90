@@ -22,7 +22,7 @@ MODULE L1LogUtils
 
   PRIVATE
 
-  PUBLIC :: ExamineData, LogStatus, EngMAFs, SciMAFs
+  PUBLIC :: ExamineData, LogStatus, EngMAFs, SciMAFs, MAF_dur, MIF_dur
 
 !---------------------------- RCS Module Info ------------------------------
   CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
@@ -559,6 +559,9 @@ END MODULE L1LogUtils
 !=============================================================================
 
 ! $Log$
+! Revision 2.15  2006/09/26 16:02:00  perun
+! Make MAF_dur and MIF_dur public
+!
 ! Revision 2.14  2006/04/05 18:10:15  perun
 ! Remove unused variables
 !
