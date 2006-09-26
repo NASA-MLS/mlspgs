@@ -40,7 +40,6 @@ MODULE MLSL3Common
    CHARACTER (LEN=*), PARAMETER :: GEO_FIELD9 = 'Pressure'
    CHARACTER (LEN=*), PARAMETER :: GEO_FIELD10 = 'Frequency'
    CHARACTER (LEN=*), PARAMETER :: GEO_FIELD11 = 'Date'
-   CHARACTER (LEN=*), PARAMETER :: GEO_FIELD12 = 'LocalSolarZenithAngle'
 
    CHARACTER (LEN=*), PARAMETER :: DG_FIELD = 'GRss'
    CHARACTER (LEN=*), PARAMETER :: MD_FIELD = 'MaxDiff'
@@ -136,6 +135,9 @@ END MODULE MLSL3Common
 !=====================
 
 !# $Log$
+!# Revision 1.17  2006/02/28 17:56:56  cvuu
+!# V2.00 commit
+!#
 !# Revision 1.16  2005/06/23 19:07:39  pwagner
 !# Reworded Copyright statement, moved rcs id
 !#
