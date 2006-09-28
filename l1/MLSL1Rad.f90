@@ -1,4 +1,4 @@
-! Copyright 2005, by the California Institute of Technology. ALL
+! Copyright 2006, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
 ! at the California Institute of Technology.
@@ -39,8 +39,8 @@ MODULE MLSL1Rad     ! Radiance data types and routines for the MLSL1 program
   TYPE Radiance_T
      TYPE (MLSSignal_T) :: signal
      INTEGER :: BandNo
-     REAL(r4), DIMENSION (:,:), POINTER :: value, precision, &
-          Poffset, ModelOffset
+     REAL(r4), DIMENSION (:,:), POINTER :: value, precision, Poffset
+     REAL(r4), DIMENSION (:), POINTER :: ModelOffset
   END TYPE Radiance_T
 
   TYPE (Radiance_T), DIMENSION(:), POINTER :: L1Brad, FBrad, MBrad, WFrad, &
@@ -110,7 +110,7 @@ CONTAINS
           ALLOCATE (L1Brad(i)%Poffset(THzchans,MIFsTHz), STAT=status)
           IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
                & MLSMSG_Allocate//"FBpOffset")
-          ALLOCATE (L1Brad(i)%ModelOffset(THzchans,MIFsTHz), STAT=status)
+          ALLOCATE (L1Brad(i)%ModelOffset(THzchans), STAT=status)
           IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
                & MLSMSG_Allocate//"FBmodelOffset")
 
@@ -155,7 +155,7 @@ CONTAINS
        ALLOCATE (L1Brad(i)%Poffset(FBchans,MIFsGHz), STAT=status)
        IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
             & MLSMSG_Allocate//"FBpOffset")
-       ALLOCATE (L1Brad(i)%ModelOffset(FBchans,MIFsGHz), STAT=status)
+       ALLOCATE (L1Brad(i)%ModelOffset(FBchans), STAT=status)
        IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
             & MLSMSG_Allocate//"FBmodelOffset")
 
@@ -194,7 +194,7 @@ CONTAINS
        ALLOCATE (L1Brad(i+GHzNum)%Poffset(MBchans,MIFsGHz), STAT=status)
        IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
             & MLSMSG_Allocate//"MBpOffset")
-       ALLOCATE (L1Brad(i+GHzNum)%ModelOffset(MBchans,MIFsGHz), STAT=status)
+       ALLOCATE (L1Brad(i+GHzNum)%ModelOffset(MBchans), STAT=status)
        IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
             & MLSMSG_Allocate//"MBmodelOffset")
        WRITE (request, '("B",i2.2,".MB11-",i1)') (i+26), i
@@ -220,7 +220,7 @@ CONTAINS
        ALLOCATE (L1Brad(i+GHzNum+MBnum)%Poffset(WFchans,MIFsGHz), STAT=status)
        IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
             & MLSMSG_Allocate//"WFpOffset")
-       ALLOCATE (L1Brad(i+GHzNum+MBnum)%ModelOffset(WFchans,MIFsGHz), &
+       ALLOCATE (L1Brad(i+GHzNum+MBnum)%ModelOffset(WFchans), &
             STAT=status)
        IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
             & MLSMSG_Allocate//"WFmodelOffset")
@@ -250,7 +250,7 @@ CONTAINS
             STAT=status)
        IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
             & MLSMSG_Allocate//"DACSpOffset")
-       ALLOCATE (L1Brad(i+GHzNum+MBnum+WFnum)%ModelOffset(DACSchans,MIFsGHz), &
+       ALLOCATE (L1Brad(i+GHzNum+MBnum+WFnum)%ModelOffset(DACSchans), &
             STAT=status)
        IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
             & MLSMSG_Allocate//"DACSmodelOffset")
@@ -379,6 +379,9 @@ END MODULE MLSL1Rad
 
 !
 ! $Log$
+! Revision 2.9  2006/09/28 16:16:13  perun
+! Resize ModelOffset from Chans by MIFs to just Chans
+!
 ! Revision 2.8  2006/03/24 15:12:41  perun
 ! Add Poffset and ModelOffset
 !
