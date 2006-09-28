@@ -29,7 +29,7 @@ module Two_D_Hydrostatic_m
 
 ! Compute the 2 dimensional hydrostatic stuff
 
-  use Geometry, only: earthRadA, earthRadB, Earth_Axis_Ratio_Squared_m1
+  use Geometry, only: earthRadA, Earth_Axis_Ratio_Squared_m1
   use Hydrostatic_m, only: hydrostatic
   use Load_sps_data_m, ONLY: Grids_T
   use MLSCommon, only: RP, IP
@@ -121,6 +121,9 @@ module Two_D_Hydrostatic_m
 end module Two_D_Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.14  2006/09/28 21:00:47  vsnyder
+! Improved computation of csq again
+!
 ! Revision 2.13  2005/12/22 20:59:18  vsnyder
 ! Improved computation of csq
 !
