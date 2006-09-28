@@ -109,6 +109,7 @@ CONTAINS
        rad = ((limb_counts - space_counts) / gain + eta_TSL(2)*space_P &
             - (1.0 - eta_TSL(3))*baffle_L + (1.0 - eta_TSL(2)) * &
             baffle_S) / eta_TSL(3)
+       P_offset = 0.0    ! Not available in this method
     ENDIF
 
     IF (PRESENT (dacs)) THEN
@@ -198,10 +199,10 @@ CONTAINS
     TYPE (Eng_MAF_T) :: EMAF
 
     CHARACTER(LEN=1) :: GHz_Cal_Type
-    INTEGER :: bank, chan, MIF_index, MIF_index_MAX, radNum, bandNo
+    INTEGER :: bank, chan, MIF_index, MIF_index_MAX, radNum, bandNo, Pnum
     INTEGER :: time_index, start_index, end_index, windex, CalWin_end
     REAL :: GHz_T1, GHz_T2, space_T, target_T, GHz_target_T, gain, rad_prec
-    REAL :: ReflecAvg, NonLimbRad, Scf, Tcf, MIFprecSign(0:(MaxMIFs-1))
+    REAL :: ReflecAvg, NonLimbRad, Scf, Tcf, MIFprecSign(0:(MaxMIFs-1)), Pavg
     REAL :: space_P, target_P, baffle_P ! Power per unit bandwidth
     REAL(r8) :: C_zero
     LOGICAL :: use_deflt_gains, do_chi2_err, cntl_T
@@ -324,7 +325,7 @@ CONTAINS
        MIF_index = time_index - start_index  ! MIF # within the central MAF
 
        DO bank = 1, GHzNum
-
+! CalWin%MAFdata(windex)%LimbAltFlag(MIF_index)%FB(1,bank)
           BandNo = FBrad(bank)%bandno
           radNum = FBrad(bank)%signal%radiometerNumber
           IF (FBrad(bank)%signal%radiometerModifier == "A" .AND. &
@@ -359,7 +360,7 @@ CONTAINS
 
                 CALL CalcNonLimbRad (BandNo, chan, radNum, ReflecAvg, &
                      delrad_1_31(BandNo), NonLimbRad)
-                FBrad(bank)%ModelOffset(chan,MIF_index+1) = NonLimbRad
+                IF (MIF_index == 0) FBrad(bank)%ModelOffset(chan) = NonLimbRad
 
                 IF (.NOT. slimb_type%FB(chan,bank)) THEN
                    IF (Finite (NonLimbRad)) THEN
@@ -417,7 +418,7 @@ CONTAINS
 
                 CALL CalcNonLimbRad (BandNo, chan, radNum, ReflecAvg, &
                      delrad_1_31(BandNo), NonLimbRad)
-                MBrad(bank)%ModelOffset(chan,MIF_index+1) = NonLimbRad
+                IF (MIF_index == 0) MBrad(bank)%ModelOffset(chan) = NonLimbRad
 
                 IF (.NOT. slimb_type%MB(chan,bank)) THEN
                    IF (Finite (NonLimbRad)) THEN
@@ -470,7 +471,7 @@ CONTAINS
 
                 CALL CalcNonLimbRad (BandNo, chan, radNum, ReflecAvg, &
                      delrad_32_34(BandNo,chan), NonLimbRad)
-                WFrad(bank)%ModelOffset(chan,MIF_index+1) = NonLimbRad
+                IF (MIF_index == 0) WFrad(bank)%ModelOffset(chan) = NonLimbRad
 
                 IF (.NOT. slimb_type%WF(chan,bank)) THEN
                    IF (Finite (NonLimbRad)) THEN
@@ -533,7 +534,8 @@ CONTAINS
 
                    CALL CalcNonLimbRad (BandNo, chan, radNum, ReflecAvg, &
                         delrad_1_31(BandNo), NonLimbRad)
-                   DACSrad(bank)%ModelOffset(chan,MIF_index+1) = NonLimbRad
+                   IF (MIF_index == 0) DACSrad(bank)%ModelOffset(chan) = &
+                        NonLimbRad
 
                    IF (.NOT. slimb_type%DACS(chan,bank)) THEN
                       IF (Finite (NonLimbRad)) THEN
@@ -551,6 +553,88 @@ CONTAINS
           ENDIF
 
        ENDIF
+    ENDDO
+
+! Avg Poffsets:
+
+    DO bank = 1, GHzNum
+       DO chan = 1, FBchans
+          Pavg = 0.0
+          Pnum = 0
+          DO MIF_index = 0, (MaxMIFs-1)
+             IF (CalWin%MAFdata(windex)%LimbAltFlag(MIF_index)%FB(chan,bank) &
+                  .AND. FBrad(bank)%precision(chan,MIF_index+1) > 0.0) THEN
+                Pnum = Pnum + 1
+                Pavg = Pavg + FBrad(bank)%Poffset(chan,MIF_index+1)
+             ENDIF
+          ENDDO
+          IF (Pnum > 0) Pavg = Pavg / Pnum
+
+! Save avg in first MIF to output in DIAG file:
+
+          FBrad(bank)%Poffset(chan,1) = Pavg
+
+       ENDDO
+    ENDDO
+
+    DO bank = 1, MBnum
+       DO chan = 1, MBchans
+          Pavg = 0.0
+          Pnum = 0
+          DO MIF_index = 0, (MaxMIFs-1)
+             IF (CalWin%MAFdata(windex)%LimbAltFlag(MIF_index)%MB(chan,bank) &
+                  .AND. MBrad(bank)%precision(chan,MIF_index+1) > 0.0) THEN
+                Pnum = Pnum + 1
+                Pavg = Pavg + MBrad(bank)%Poffset(chan,MIF_index+1)
+             ENDIF
+          ENDDO
+          IF (Pnum > 0) Pavg = Pavg / Pnum
+
+! Save avg in first MIF to output in DIAG file:
+
+          MBrad(bank)%Poffset(chan,1) = Pavg
+
+       ENDDO
+    ENDDO
+
+    DO bank = 1, WFnum
+       DO chan = 1, WFchans
+          Pavg = 0.0
+          Pnum = 0
+          DO MIF_index = 0, (MaxMIFs-1)
+             IF (CalWin%MAFdata(windex)%LimbAltFlag(MIF_index)%WF(chan,bank) &
+                  .AND. WFrad(bank)%precision(chan,MIF_index+1) > 0.0) THEN
+                Pnum = Pnum + 1
+                Pavg = Pavg + WFrad(bank)%Poffset(chan,MIF_index+1)
+             ENDIF
+          ENDDO
+          IF (Pnum > 0) Pavg = Pavg / Pnum
+
+! Save avg in first MIF to output in DIAG file:
+
+          WFrad(bank)%Poffset(chan,1) = Pavg
+
+       ENDDO
+    ENDDO
+
+    DO bank = 1, DACSnum
+       DO chan = 1, DACSchans
+          Pavg = 0.0
+          Pnum = 0
+          DO MIF_index = 0, (MaxMIFs-1)
+             IF (CalWin%MAFdata(windex)%LimbAltFlag(MIF_index)%DACS(chan,bank) &
+                  .AND. DACSrad(bank)%precision(chan,MIF_index+1) > 0.0) THEN
+                Pnum = Pnum + 1
+                Pavg = Pavg + DACSrad(bank)%Poffset(chan,MIF_index+1)
+             ENDIF
+          ENDDO
+          IF (Pnum > 0) Pavg = Pavg / Pnum
+
+! Save avg in first MIF to output in DIAG file:
+
+          DACSrad(bank)%Poffset(chan,1) = Pavg
+
+       ENDDO
     ENDDO
 
 ! Spectral Baseline:
@@ -573,6 +657,9 @@ END MODULE Radiances
 !=============================================================================
 
 ! $Log$
+! Revision 2.20  2006/09/28 16:17:06  perun
+! Save only one ModelOffset per MAF and calculate average slimb view Poffsets
+!
 ! Revision 2.19  2006/08/18 15:53:19  perun
 ! Replace slimb_err with space_err to correct rad_err calculation
 !
