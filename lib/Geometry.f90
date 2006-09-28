@@ -19,7 +19,8 @@ module Geometry
   implicit NONE
   private
 
-  public :: Earth_Axis_Ratio_Squared, EarthRadA, EarthRadB, EarthSurfaceGPH
+  public :: Earth_Axis_Ratio_Squared, Earth_Axis_Ratio_Squared_m1 ! a^2/b^2, a^2/b^2-1
+  public :: EarthRadA, EarthRadB, EarthSurfaceGPH
   public :: GM, G0, J2, J4, SecPerYear, W, MaxRefraction
 
   public :: GeodToGeocLat
@@ -29,6 +30,8 @@ module Geometry
   real(r8), parameter :: EarthRadA = 6378137.0_r8    ! Major axis radius in m 
   real(r8), parameter :: EarthRadB = 6356752.3141_r8 ! Minor axis radius in m 
   real(r8), parameter :: Earth_Axis_Ratio_Squared = EarthRadA**2 / EarthRadB**2
+  real(r8), parameter :: Earth_Axis_Ratio_Squared_m1 = &
+    & (EarthRadA / EarthRadB - 1) * (EarthRadA / EarthRadB + 1)
 
   ! Gravity-related terms.
 
@@ -98,6 +101,9 @@ contains ! ------------------------------- Subroutines and functions ----
 end module Geometry
 
 ! $Log$
+! Revision 2.15  2006/09/28 20:51:46  vsnyder
+! Add Earth_Axis_Ratio_Squared_m1
+!
 ! Revision 2.14  2005/06/22 17:25:48  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
