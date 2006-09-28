@@ -525,14 +525,13 @@ CONTAINS
 
 ! Output diagnostic offsets (GHz only!):
 
-          IF (L1Config%Output%WriteDiagOffsets .AND. &
-               (sd_id /= sdId%RADTID)) THEN
+          IF (sd_id /= sdId%RADTID) THEN
              dataset%name = TRIM(name) // ' Poffset'
-             CALL Build_MLSAuxData (sdId%DiagId, dataset, rad(i)%Poffset, &
-                  lastIndex=noMAF, dims=dims, fill_value=RAD_FILL)
+             CALL Build_MLSAuxData (sdId%DiagId, dataset, rad(i)%Poffset(:,1), &
+                  lastIndex=noMAF, fill_value=RAD_FILL)  ! Only 1 per MAF
              dataset%name = TRIM(name) // ' ModelOffset'
              CALL Build_MLSAuxData (sdId%DiagId, dataset, rad(i)%ModelOffset, &
-                  lastIndex=noMAF, dims=dims, fill_value=RAD_FILL)
+                  lastIndex=noMAF, fill_value=RAD_FILL)
           ENDIF
 
 ! Output baselines
@@ -999,6 +998,9 @@ END MODULE OutputL1B
 !=============================================================================
 
 ! $Log$
+! Revision 2.25  2006/09/28 16:16:36  perun
+! Output ModelOffset and Poffset as just one value per MAF for the MLSL1G program
+!
 ! Revision 2.24  2006/09/26 17:11:01  perun
 ! Attempt to write diagnostics offsets for GHz only!
 !
