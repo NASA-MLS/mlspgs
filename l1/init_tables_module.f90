@@ -113,10 +113,9 @@ MODULE INIT_TABLES_MODULE
 
   INTEGER, PARAMETER :: P_REMOVEBASELINE = P_MinSpaceLimbs + 1
   INTEGER, PARAMETER :: P_DECONVOLVEDACS = P_RemoveBaseline + 1
-  INTEGER, PARAMETER :: P_WriteDiagOffsets = P_DeconvolveDACS + 1
 
   INTEGER, PARAMETER :: FIRST_PARM = P_OUTPUT_VERSION_STRING
-  INTEGER, PARAMETER :: LAST_PARM = P_WriteDiagOffsets
+  INTEGER, PARAMETER :: LAST_PARM = P_DeconvolveDACS
 
 ! Table for section ordering:
 
@@ -192,7 +191,6 @@ CONTAINS ! =====     Public procedures     =============================
     parm_indices(p_TPdigital)=              add_ident ( 'TPdigital' )
     parm_indices(p_UseAntOffsets)=          add_ident ( 'UseAntOffsets' )
     parm_indices(p_DeconvolveDACS)=         add_ident ( 'DeconvolveDACS' )
-    parm_indices(p_WriteDiagOffsets)=       add_ident ( 'WriteDiagOffsets' )
 
     ! Put section names into the symbol table
 
@@ -351,7 +349,6 @@ CONTAINS ! =====     Public procedures     =============================
       begin, z+z_output, &
              begin, p+p_removebaseline, t+t_boolean, n+n_name_def, &
              begin, p+p_DeconvolveDACS, t+t_boolean, n+n_name_def, &
-             begin, p+p_WriteDiagOffsets, t+t_boolean, n+n_name_def, &
              s+s_subtractbinnedbaseline, s+s_chi2err, n+n_section/) )
 
   END SUBROUTINE INIT_TABLES
@@ -370,6 +367,9 @@ CONTAINS ! =====     Public procedures     =============================
 END MODULE INIT_TABLES_MODULE
   
 ! $Log$
+! Revision 2.29  2006/09/28 16:15:01  perun
+! Remove WriteDiagOffsets
+!
 ! Revision 2.28  2006/08/02 18:54:31  perun
 ! Added SubtractBinnedBaseline field
 !
@@ -411,49 +411,6 @@ END MODULE INIT_TABLES_MODULE
 !
 ! Revision 2.15  2004/01/09 17:46:23  perun
 ! Version 1.4 commit
-!
-! Revision 2.14  2003/08/15 14:25:04  perun
-! Version 1.2 commit
-!
-! $Log$
-! Revision 2.28  2006/08/02 18:54:31  perun
-! Added SubtractBinnedBaseline field
-!
-! Revision 2.27  2006/06/14 13:45:27  perun
-! Add TPdigital parameter
-!
-! Revision 2.26  2006/04/05 18:09:17  perun
-! Remove unused variables
-!
-! Revision 2.25  2006/03/24 15:07:48  perun
-! Add MAFexpandNum, MinSpaceLimbs, THzColdCal, WriteDiagOffsets and remove Switch
-!
-! Revision 2.24  2005/12/06 19:23:25  perun
-! Removed MoonToLimbAngles fields and added Bright Object fields
-!
-! Revision 2.23  2005/10/10 19:05:32  perun
-! Add DeconvolveDACS field
-!
-! Revision 2.22  2005/06/23 18:41:35  pwagner
-! Reworded Copyright statement, moved rcs id
-!
-! Revision 2.21  2005/05/02 16:03:27  perun
-! Added UseAntOffsets field
-!
-! Revision 2.20  2005/01/28 16:58:47  perun
-! Split MoonToLimbAngle into GHz and THz
-!
-! Revision 2.19  2004/12/01 17:09:38  perun
-! Remove VersionComment and add DACSwindow
-!
-! Revision 2.18  2004/11/10 15:39:37  perun
-! Add MarkChandBad user input
-!
-! Revision 2.17  2004/08/12 13:51:51  perun
-! Version 1.44 commit
-!
-! Revision 2.16  2004/05/14 15:59:11  perun
-! Version 1.43 commit
 !
 ! Revision 2.14  2003/08/15 14:25:04  perun
 ! Version 1.2 commit
