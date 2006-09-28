@@ -10,7 +10,6 @@ module heights_module
 ! regulations. User has the responsibility to obtain export licenses, or other
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
-  ! acknowledged.
 
   ! This module provides conversions from geodetic (geometric height above
   ! earth surface) to geopotential height (above geoid). 
@@ -95,12 +94,16 @@ contains
 
   ! -------------------------------------------  lat_geod_to_geoc  -----
   pure function lat_geod_to_geoc ( lat_geod ) result (lat_geoc)
-    ! Converts geodetic latitude to geometric (geocentric) latitude
+    ! Converts geodetic latitude to geometric (geocentric) latitude,
+    ! both in degrees, not radians
     ! If I have got this right, the difference between the two latitudes 
     ! is 0 at equator and pole with a maximum of 0.2 degrees at midlatitudes
-    real(kind=r8),intent(in)::lat_geod
-    real(kind=r8)::lat_geoc
-    lat_geoc = rad2deg * atan( tan(lat_geod*deg2rad) / earth_axis_ratio_squared )
+    real(kind=r8), intent(in) :: lat_geod
+    real(kind=r8) :: lat_geoc
+!   The obvious implementation fails at the poles (tan 90 is infinite):
+!   lat_geoc = rad2deg * atan( tan(lat_geod*deg2rad) / earth_axis_ratio_squared )
+    lat_geoc = rad2deg * atan2( sin(lat_geod*deg2rad) , &
+      &                         cos(lat_geod*deg2rad) * earth_axis_ratio_squared )
   end function lat_geod_to_geoc
 
   ! ------------------------------------------------  gph_to_geom  -----
@@ -170,6 +173,9 @@ contains
 end module heights_module
 
 ! $Log$
+! Revision 2.4  2005/06/22 17:25:49  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.3  2002/10/08 00:09:10  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
