@@ -315,7 +315,7 @@ contains
         !
         ! This is Equation (5.24) in the 19 August 2004 ATBD JPL D-18130.
         p_grid(:n_path) = phi_offset(:n_path) + &
-          & phi_sign * Acos((req+h_tan)/h_grid(:n_path))
+          & phi_sign(:n_path) * Acos((req+h_tan)/h_grid(:n_path))
       end if
 
       if ( h_phi_dump > 0 ) then
@@ -373,7 +373,7 @@ contains
         ! This is Equation (5.24) in the 19 August 2004 ATBD JPL D-18130.
 
       p_grid(:n_path) = phi_offset(:n_path) + &
-        & phi_sign * Acos((req+h_tan)/h_grid(:n_path))
+        & phi_sign(:n_path) * Acos((req+h_tan)/h_grid(:n_path))
     end if
     if ( .not. present(neg_h_tan) ) then
       p_grid(n_vert - tan_ind + 1) = phi_offset(n_vert - tan_ind + 1)
@@ -482,7 +482,7 @@ contains
 
       integer :: J
       real(rp) :: G, R, Z
-
+return
       ! Determine whether to add a phi.  Don't add it at the end.
       if ( all(abs(new_phi-p_grid(:n_path)) > 0.01) .and. &
         & new_phi > p_grid(1) .and. new_phi < p_grid(n_path) ) then
@@ -718,6 +718,10 @@ contains
 end module Metrics_m
 
 ! $Log$
+! Revision 2.31  2006/08/25 19:39:20  vsnyder
+! Recomitted to get correct comment into the log:  Substantial revision,
+! and simplification, works only for one pointing now, repair ACOS bug.
+!
 ! Revision 2.30  2006/08/25 19:37:07  vsnyder
 ! Substantial revision
 !
