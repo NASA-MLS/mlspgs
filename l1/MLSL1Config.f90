@@ -65,7 +65,6 @@ MODULE MLSL1Config  ! Level 1 Configuration
   END TYPE Calib_T
 
   TYPE Output_T
-     LOGICAL :: WriteDiagOffsets = .FALSE.          ! For P/Model Offsets
      LOGICAL :: RemoveBaseline = .TRUE.             ! For GHz Baseline removal
      LOGICAL :: DeconvolveDACS = .FALSE.            ! For DACS deconvolution
      LOGICAL :: SubtractBinnedBaseline(NumBands) = .FALSE. ! To adjust baseline
@@ -263,7 +262,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
       USE EXPR_M, ONLY: Expr
       USE INIT_TABLES_MODULE, ONLY: p_removebaseline, p_deconvolveDACS, &
-           s_chi2err, f_bandno, p_WriteDiagOffsets, s_subtractbinnedbaseline
+           s_chi2err, f_bandno, s_subtractbinnedbaseline
       USE TREE, ONLY: Decoration, Nsons, Subtree, Node_id
       USE TREE_TYPES
       USE MoreTree, ONLY: Get_Boolean
@@ -294,10 +293,6 @@ MODULE MLSL1Config  ! Level 1 Configuration
             CASE (p_deconvolveDACS)
 
                L1Config%Output%DeconvolveDACS = Get_Boolean (son)
-
-            CASE (p_WriteDiagOffsets)
-
-               L1Config%Output%WriteDiagOffsets = Get_Boolean (son)
 
             END SELECT
 
@@ -811,6 +806,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
 END MODULE MLSL1Config
 
 ! $Log$
+! Revision 2.27  2006/09/28 16:15:37  perun
+! Remove WriteDiagOffsets
+!
 ! Revision 2.26  2006/08/02 19:23:50  pwagner
 ! prunit now a component of OutputOptions
 !
