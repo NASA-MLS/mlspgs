@@ -55,6 +55,7 @@ module dates_module
 ! ccsdsa2b           yyyy-mm-dd -> yyyy-DDD
 ! ccsdsb2a           yyyy-DDD -> yyyy-mm-dd
 ! dai_to_yyyymmdd    Converts days after Jan 1, 2001 to yyyymmdd
+! dateForm           Determines what format a date is in; e.g. 'yyyy-doy'
 ! daysince2eudtf     days since starting date -> eudtf
 ! days_in_year       how many days in (leap, normal) year
 ! eudtf2cal          yyyyddd -> cal date
@@ -121,7 +122,7 @@ module dates_module
   public:: daysince2eudtf,ccsds2tai,ccsds2eudtf,days_in_year
   public :: dai_to_yyyymmdd
   public :: utc_to_date, utc_to_time, utc_to_yyyymmdd, yyyymmdd_to_dai
-  public :: reformatDate, reformatTime
+  public :: dateForm, reformatDate, reformatTime
 
   interface dai_to_yyyymmdd
     module procedure dai_to_yyyymmdd_str, dai_to_yyyymmdd_ints
@@ -623,6 +624,82 @@ contains
     str(5:6) = adjustl(month)
     str(7:8) = adjustl(day  )
   end subroutine dai_to_yyyymmdd_str
+
+  function dateForm(date) result(form)
+    ! Determine what format the date is in
+    ! E.g., given '2004-d271' returns 'yyyy-doy'
+    ! Args
+    character(len=*), intent(in) :: date
+    character(len=len(date)+8) :: form
+    ! Internal variables
+    integer :: i
+    integer :: j
+    integer :: month
+    character(len=1)            :: s  ! The expected date field
+    character(len=1), parameter :: y = 'y'
+    character(len=1), parameter :: m = 'm'
+    character(len=1), parameter :: d = 'd'
+    ! Executable
+    form = 'unknown format'
+    if ( len_trim(date) < 1 ) return
+    form = ' '
+    s = 'y'
+    i = 0
+    j = 0
+    do
+      if ( j >= len_trim(date) ) exit
+      i = i + 1
+      j = j + 1
+      select case (date(j:j))
+      case ('d')
+        form(i:i+2) = 'doy'
+        i = i + 3
+        j = j + 3
+        ! print *, 'After d field: ', form
+      case ('J', 'F', 'M', 'A', 'S', 'O', 'N', 'D')
+        month = monthNameToNumber(date(j:))
+        if ( month < 1 .or. month > 12 ) then
+          form = 'month name uncrecognized in ' // trim(date(j:))
+          return
+        endif
+        j = j + len_trim(MONTHNAME(month)) - 1
+        form(i:i) = 'M'
+        s = 'd'
+        ! write(tempFormat(5:6),'(i2.2)') month
+        ! print *, 'After M field: ', form
+      case ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9')
+        select case (s)
+        case ('m')
+          ! Was yyyy, now mm
+          form(i:i+1) = 'mm'
+          s = 'd'
+          i = i + 1
+          j = j + 1
+          ! print *, 'After 0-9  m field: ', form
+        case ('d')
+          ! Was mm, now dd
+          form(i:i+1) = 'dd'
+          s = ' '
+          i = i + 1
+          j = j + 1
+          ! print *, 'After 0-9  d field: ', form
+        case ('y')
+          ! yyyy
+          form(i:i+3) = 'yyyy'
+          s = 'm'
+          i = i + 3
+          j = j + 3
+          ! print *, 'After 0-9  y field: ', form
+        case default
+          ! Huh? Already finished with dd
+          ! if ( options%verbose ) print *, 'Unexpected digit in dateForm'
+        end select
+      case default
+        form(i:i) = date(j:j)
+        ! print *, 'After default field: ', form
+      end select
+    enddo
+  end function dateForm
 
   ! --------------------------------------------------  reFormatDate  -----
   function reFormatDate(date, fromForm, toForm) result(reFormat)
@@ -1358,6 +1435,9 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.10  2005/09/23 20:43:45  pwagner
+! Removed a few redundancies, a few
+!
 ! Revision 2.9  2005/09/22 23:33:58  pwagner
 ! date conversion procedures and functions all moved into dates module
 !
