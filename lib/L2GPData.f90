@@ -4080,45 +4080,6 @@ contains
 
   end subroutine RepairL2GP_HGrid
 
-  ! ----------------------------------  GetGeolocUnits  -----
-  function GetGeolocUnits ( Title ) result( dim_string )
-
-  ! Given a dim name type, e.g. l_vmr,
-  ! returns corresponding units as a character string
-
-    ! Dummy arguments
-    character(len=*), intent(in)        :: Title
-    character(len=CHARATTRLEN)                   :: dim_string
-
-    ! Executable code
-    dim_string = 'none'
-    select case (Title)                                       
-    case ( 'Latitude' )  
-      dim_string = 'degrees'
-    case ( 'Longitude' )  
-      dim_string = 'degrees'
-    case ( 'SolarZenithAngle' )  
-      dim_string = 'degrees'
-    case ( 'Time' )  
-      dim_string = 'seconds'
-    case ( 'LocalSolarTime' )  
-      dim_string = 'seconds'
-    case ( 'LineOfSightAngle' )  
-      dim_string = 'degrees'
-    case ( 'OrbitGeodeticAngle' )  
-      dim_string = 'degrees'
-    case ( 'ChunkNumber' )
-      ! No units for this dimension
-    case ( 'Pressure' )  
-      dim_string = 'hPa'
-    case ( 'Frequency' )  
-      dim_string = 'GHz'
-
-    end select                                                       
-
-  end function GetGeolocUnits
-
-
 !=============================================================================
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
@@ -4135,6 +4096,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.143  2006/04/12 20:49:10  pwagner
+! nTimesTotal component now dumped, too
+!
 ! Revision 2.142  2006/04/06 23:04:52  pwagner
 ! Optionally cp only ranges of freq, level, profile
 !
