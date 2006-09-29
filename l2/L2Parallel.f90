@@ -43,7 +43,8 @@ module L2Parallel
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE, &
     & MLSMSG_Deallocate, MLSMSG_WARNING, PVMERRORMESSAGE
   use MLSSets, only: FINDFIRST
-  use MLSStringLists, only: catLists, ExpandStringRange, switchDetail
+  use MLSStringLists, only: catLists, ExpandStringRange, ReplaceSubString, &
+    & switchDetail
   use MorePVM, only: PVMUNPACKSTRINGINDEX, PVMPACKSTRINGINDEX
   use MoreTree, only: Get_Spec_ID
   use Output_m, only: BLANKS, Output, TimeStamp
@@ -292,6 +293,7 @@ contains ! ================================ Procedures ======================
     character(len=MachineNameLen) :: THISNAME
     character(len=8) :: CHUNKNOSTR
     character(len=2048) :: COMMANDLINE
+    character(len=16) :: DATESTRING
 
     integer :: BUFFERIDRCV              ! From PVM
     integer :: BUFFERIDSND              ! From PVM
@@ -518,8 +520,11 @@ contains ! ================================ Procedures ======================
             machines(machine)%tid = tidArr(1)
             machines(machine)%chunk = nextChunk
             indx = INDEX (L2PCF%startUTC, "T")
-            if ( indx > 0 ) &
-              & machines(machine)%master_Date = L2PCF%startUTC(1:indx-1)
+            if ( indx > 0 ) then
+              DateString = L2PCF%startUTC(1:indx-1)
+              call ReplaceSubString ( DateString, machines(machine)%master_Date, &
+                & '-', 'd' )
+            endif
             chunkMachines(nextChunk) = machine
             chunkTids(nextChunk) = tidArr(1)
             chunkNiceTids(nextChunk) = GetNiceTidString(chunkTids(nextChunk))
@@ -986,6 +991,9 @@ contains ! ================================ Procedures ======================
               & ' ' // trim(chunkNiceTids(deadChunk)), &
               & advance='yes' )
           end if
+          ! Must zero out its Tid 
+          ! (so we won't try to free it when we're finished)
+          chunkTids(deadChunk) = 0
         elseif ( usingL2Q ) then
           if ( switchDetail(switches,'l2q') > -1 ) then
             call output ( 'tID ' )
@@ -1614,6 +1622,8 @@ contains ! ================================ Procedures ======================
     integer, intent(out)                                 :: L2Qtid
     !
     integer :: BUFFERID                 ! From PVM
+    character(len=16) :: DATESTRING
+    integer :: INDX
     integer :: INFO                     ! From PVM
     character(len=*), parameter :: GROUPNAME = "mlsl2"
     !
@@ -1632,7 +1642,23 @@ contains ! ================================ Procedures ======================
     call PVMF90Pack ( noChunks, info )
     if ( info /= 0 ) &
       & call PVMErrorMessage ( info, 'packing number of chunks' )
+    ! Now send our data date as a string
+    ! (e.g., '2006d121')
+    indx = INDEX (L2PCF%startUTC, "T")
+    if ( indx > 0 ) then
+      call ReplaceSubString ( L2PCF%startUTC(1:indx-1), dateString, &
+        & '-', 'd' )
+    else
+      dateString = '(unknown)'
+    endif
+    call PVMF90Pack ( dateString, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'packing date' )
     call PVMFSend ( L2Qtid, petitionTag, info )
+    ! call PVMF90Pack ( noChunks, info )
+    ! if ( info /= 0 ) &
+    !   & call PVMErrorMessage ( info, 'packing L2QTid' )
+    ! call PVMFSend ( L2Qtid, petitionTag, info )
     if ( info /= 0 ) &
       & call PVMErrorMessage ( info, 'sending finish packet' )
   end subroutine RegisterWithL2Q
@@ -1839,6 +1865,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.77  2006/09/29 00:29:42  pwagner
+! Fixes bug where masters try to free dead hosts when finished
+!
 ! Revision 2.76  2006/08/05 02:12:27  vsnyder
 ! Add ForWhom argument to ConstructVectorTemplate
 !
