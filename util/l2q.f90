@@ -11,6 +11,7 @@
 
 program L2Q
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use dates_module, only: DATEFORM, REFORMATDATE
   use L2PARINFO, only: PARALLEL, INITPARALLEL, ACCUMULATESLAVEARGUMENTS
   use L2ParInfo, only: MACHINE_T, PARALLEL, &
     & PETITIONTAG, GIVEUPTAG, GRANTEDTAG, &
@@ -25,7 +26,8 @@ program L2Q
     & MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Debug, MLSMSG_Error, &
     & MLSMSG_Info, MLSMSG_Warning, PVMERRORMESSAGE
   use MLSSETS, only: FINDFIRST, FINDALL
-  use MLSSTRINGLISTS, only: CATLISTS, STRINGELEMENTNUM
+  use MLSSTRINGLISTS, only: CATLISTS, GETSTRINGELEMENT, NUMSTRINGELEMENTS, &
+    & STRINGELEMENTNUM
   use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS
   use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUT_DATE_AND_TIME, OutputOptions, &
     & TIMESTAMP
@@ -58,11 +60,13 @@ program L2Q
   character(len=1) :: arg_rhs       ! 'n' part of 'arg=n'
   integer :: BUFFERID
   character(len=2048) :: command_line ! All the opts
+  logical, parameter :: COUNTEMPTY = .true.
   integer :: ERROR
   integer :: INFO
   integer :: INUNIT = -1       ! Input unit, * if < 0
   character(len=2048) :: LINE      ! Into which is read the command args
   integer, parameter :: LIST_UNIT = 20  ! Unit # for hosts file if not stdin
+  integer, parameter :: MAXNUMMASTERS = 100 ! Mas num running simultaneously
   integer, parameter :: MAXNUMMULTIPROCS = 8 ! For some architectures > 1000 
   integer :: RECL = 10000          ! Record length for list
   integer :: RECORD_LENGTH
@@ -81,9 +85,12 @@ program L2Q
   integer, parameter          :: DUMPDBTAG = CLEANMASTERDBTAG - 1
   integer, parameter          :: DUMPMASTERSDBTAG = DUMPDBTAG - 1
   integer, parameter          :: DUMPHOSTSDBTAG = DUMPMASTERSDBTAG - 1
-  integer, parameter          :: SWITCHDUMPFILETAG = DUMPHOSTSDBTAG - 1
+  integer, parameter          :: KILLMASTERSTAG = DUMPHOSTSDBTAG - 1
+  integer, parameter          :: SUICIDETAG = KILLMASTERSTAG - 1
+  integer, parameter          :: SWITCHDUMPFILETAG = SUICIDETAG - 1
   integer, parameter          :: TURNREVIVALSONTAG = SWITCHDUMPFILETAG - 1
   integer, parameter          :: TURNREVIVALSOFFTAG = TURNREVIVALSONTAG - 1
+
   integer, parameter          :: DUMPUNIT = LIST_UNIT + 1
   integer, parameter          :: TEMPUNIT = DUMPUNIT + 1
 !---------------------------- RCS Ident Info ------------------------------
@@ -105,6 +112,7 @@ program L2Q
   ! Our data type for the master tasks we'll be communicating with via pvm
   type master_T
     character(len=MACHINENAMELEN) :: name = ' '
+    character(len=16            ) :: date = ' '
     integer                       :: tid = 0
     integer                       :: numChunks = 0
     integer                       :: numHosts = 0
@@ -132,8 +140,10 @@ program L2Q
     logical            :: reviveHosts = .false.   ! Regularly check for revivals
     character(len=16)  :: command = 'run'         ! {run, kill, dumphdb, dumpmdb
     logical            :: debug = .false.         !   dump, checkh, clean}
+    integer            :: errorLevel = MLSMSG_Warning
+    logical            :: exitOnError = .false.   ! quit if an error occurs
     character(len=FILENAMELEN) &
-      &                :: LIST_file               ! name of hosts file
+      &                :: LIST_file = '<STDIN>'   ! name of hosts file
     character(len=FILENAMELEN) &
       &                :: dump_file = '<STDIN>'   ! name of dump file
     logical :: Timing = .false.                   ! -T option is set
@@ -172,6 +182,9 @@ program L2Q
   case default
     t_conversion = 1.
   end select
+  ! By default we won't to quit if an error occurs
+  ! (unless you want us to)
+  if ( options%exitOnError ) options%errorLevel = MLSMSG_Error
   !---------------- Task (1) ------------------
   ! Is l2q already alive and running?
   call pvmfgettid(GROUPNAME, 0, tid)
@@ -201,18 +214,22 @@ program L2Q
       case ( 'dumpmdb' )
         tag = dumpMastersDBTag
       case ( 'kill' )
-        tag = GiveUpTag
+        tag = killMastersTag
       case ( 'revive=on' )
         tag = turnRevivalsOnTag
       case ( 'revive=off' )
         tag = turnRevivalsOffTag
+      case ( 'suicide' )
+        tag = suicideTag ! GiveUpTag
       case ( 'switch' )
         tag = switchDumpFileTag
       case default
         call MLSMessage( MLSMSG_Error, ModuleName, &
           & 'l2q would not recognize unknown command '//trim(options%command) )
       end select
-      if ( any(tag == (/avoidSelectedHostsTag, checkSelectedHostsTag/) )) then
+      if ( any(tag == &
+        & (/avoidSelectedHostsTag, checkSelectedHostsTag, killMastersTag/) )) &
+        & then
         call PVMF90Pack ( trim(options%selectedHosts), info )
       else
         call PVMF90Pack ( trim(options%dump_file), info )
@@ -222,9 +239,11 @@ program L2Q
       call output('Already-running l2q tid: ', advance='no')
       call timestamp(tid, advance='yes')
       call timestamp(' commanded: '//trim(options%command), advance='yes')
-      if ( any(tag == (/avoidSelectedHostsTag, checkSelectedHostsTag/) )) then
+      if ( any(tag == &
+        & (/avoidSelectedHostsTag, checkSelectedHostsTag, killMastersTag/) )) &
+        & then
         call timestamp(trim(options%selectedHosts), advance='yes')
-      elseif ( any(tag == (/dumpHostsDBTag,dumpMastersDBTag, dumpDBTag, &
+      elseif ( any(tag == (/dumpHostsDBTag, dumpMastersDBTag, dumpDBTag, &
         & switchDumpFileTag/) )) then
         call timestamp(trim(options%dump_file), advance='yes')
       endif
@@ -250,7 +269,7 @@ program L2Q
   ! Join (actually start) our group
   call PVMFJoinGroup ( GROUPNAME, status )
   if ( status < 0 ) &
-    & call PVMErrorMessage ( status, 'Joining '//GROUPNAME//' group' )
+    & call myPVMErrorMessage ( status, 'Joining '//GROUPNAME//' group' )
 ! Clear the command line arguments we're going to accumulate to pass
 ! to slave tasks
   call ClearPVMArgs
@@ -313,23 +332,6 @@ program L2Q
   if ( options%dump_file /= '<STDIN>' ) close(OutputOptions%prunit)
 
 contains
-!   integer function  addHostToDatabase( DATABASE, ITEM )
-!     ! This function adds a host data type to a database of said types,
-!     ! creating a new database if it doesn't exist.  The result value is
-!     ! the size -- where the new item is put.
-! 
-!     ! Dummy arguments
-!     type (Machine_T), dimension(:), pointer :: DATABASE
-!     type (Machine_T), intent(in) :: ITEM
-! 
-!     ! Local variables
-!     type (Machine_T), dimension(:), pointer :: tempDatabase
-!     !This include causes real trouble if you are compiling in a different 
-!     !directory.
-!     include "addItemToDatabase.f9h" 
-! 
-!     AddHostToDatabase = newSize
-!   end function  addHostToDatabase
 
   subroutine cure_host_database(hosts, silent, selectedHosts)
     ! cure any recovered hosts in database--declare them fit for action
@@ -469,6 +471,8 @@ contains
     type(Master_T), intent(in) :: Master
     call output('machine name: ', advance = 'no')
     call output(trim(Master%name), advance = 'yes')
+    call output('date: ', advance = 'no')
+    call output(trim(Master%date), advance = 'yes')
     call output('tid: ', advance = 'no')
     call output(Master%tid, advance = 'yes')
     call output('needs host?: ', advance = 'no')
@@ -580,14 +584,14 @@ contains
           enddo
         case ( 'v' ); options%verbose = .true.
         case ( 'd' ); options%debug = .true.
-        case ( 'k' ); options%command = 'kill' ! options%killer = .true.
+        case ( 'k' ); options%command = 'suicide' ! options%killer = .true.
         case ( 'c' )
           i = i + 1
           call getarg ( i, line )
           command_line = trim(command_line) // ' ' // trim(line)
           options%command = lowercase(line)
           ! Special commands take yet another arg
-          if ( index('check,avoid', trim(options%command)) > 0 ) then
+          if ( index('check,avoid,kill', trim(options%command)) > 0 ) then
             i = i + 1
             call getarg ( i, line )
             command_line = trim(command_line) // ' ' // trim(line)
@@ -645,10 +649,13 @@ contains
     integer :: BYTES                    ! Dummy from PVMFBufInfo
     logical :: CHECKREVIVEDHOSTS
     logical :: CLEANMASTERDB
-    logical :: DUMPDB
+    logical :: DUMPHOSTS
+    logical :: DUMPMASTERS
     integer :: grandMastersID           ! index into database of an older master
     integer :: host
     integer :: hostsID                  ! index into database of a host
+    integer :: i
+    integer, dimension(MAXNUMMASTERS) :: IDs
     integer :: INFO                     ! From PVM
     character(len=MachineNameLen)  :: MACHINENAME
     integer :: mastersID                ! index into database of a master
@@ -660,6 +667,7 @@ contains
     integer :: numHosts
     integer :: numMasters
     integer :: oldPrUnit
+    logical :: opened
     integer :: SIGNAL                   ! From a master
     character(len=16) :: SIGNALSTRING
     logical :: SIGNIFICANTEVENT
@@ -677,14 +685,15 @@ contains
     tLastMDBDump = 0.
     do
       checkrevivedhosts = .false.
-      dumpdb = .false.
+      dumpHosts = .false.
+      dumpMasters = .false.
       mayAssignAHost = .true.
       significantEvent = .false.
       skipDelay = .false.               ! Assume we're going to delay
       ! Listen out for pvm events
       call PVMFNRecv( -1, PETITIONTAG, bufferIDRcv )
       if ( bufferIDRcv < 0 ) then
-        call PVMErrorMessage ( info, "checking for Petition message" )
+        call myPVMErrorMessage ( info, "checking for Petition message" )
       else if ( bufferIDRcv > 0 ) then
         ! So we got a message.  There may be another one following on so don't 
         ! delay before going round this loop again.
@@ -692,10 +701,10 @@ contains
         ! Who sent this?
         call PVMFBufInfo ( bufferIDRcv, bytes, msgTag, masterTid, info )
         if ( info /= 0 ) &
-          & call PVMErrorMessage ( info, "calling PVMFBufInfo" )
+          & call myPVMErrorMessage ( info, "calling PVMFBufInfo" )
         call PVMF90Unpack ( signal, info )
         if ( info /= 0 ) then
-          call PVMErrorMessage ( info, "unpacking signal" )
+          call myPVMErrorMessage ( info, "unpacking signal" )
         endif
         ! if ( options%debug ) call proclaim('Master sent message', signal=signal)
         select case (signal) 
@@ -703,12 +712,16 @@ contains
         case ( sig_register ) ! ----------------- Master registering ------
           call PVMF90Unpack ( aMaster%NumChunks, info )
           if ( info /= 0 ) then
-            call PVMErrorMessage ( info, "unpacking number of chunks" )
+            call myPVMErrorMessage ( info, "unpacking number of chunks" )
+          endif
+          call PVMF90Unpack ( aMaster%date, info )
+          if ( info /= 0 ) then
+            call myPVMErrorMessage ( info, "unpacking date string" )
           endif
           aMaster%tid = masterTid
           call GetMachineNameFromTid ( masterTid, aMaster%Name, info )
           if ( info == -1 ) & 
-            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & call MLSMessage ( options%errorLevel, ModuleName, &
             & 'Unable to get machine name from tid' )
           aMaster%NumHosts = 0
           aMaster%needs_Host = .false.
@@ -719,7 +732,7 @@ contains
           ! masterName = catlists('m-', numMasters)
           ! Now ask to be notified when this master exits
           call PVMFNotify ( PVMTaskExit, NotifyTag, 1, (/ masterTid /), info )
-          if ( info /= 0 ) call PVMErrorMessage ( info, 'setting up notify' )
+          if ( info /= 0 ) call myPVMErrorMessage ( info, 'setting up notify' )
           if ( options%verbose ) then
             ! call proclaim('New Master', aMaster%Name, signal=MasterTid, advance='no')
             call proclaim('New Master', masterNameFun(masterTid), advance='no')
@@ -730,6 +743,7 @@ contains
             call timestamp(' total)', advance='yes')
           endif
           if ( options%dumpEachNewMaster ) call dump_master(aMaster)
+          dumpMasters = .true.
         case ( sig_requestHost ) ! ----------------- Request for host ------
           ! Find master's index into masters array
           mastersID = FindFirst(masters%tid, masterTid)
@@ -778,6 +792,7 @@ contains
             endif
             mayAssignAHost = .false. ! Don't assign to a later master
           endif
+          dumpHosts = .true.
         case ( sig_ThanksHost ) ! -------------- Happy with this host ------
           ! Find master's index into masters array
           mastersID = FindFirst(masters%tid, masterTid)
@@ -786,11 +801,11 @@ contains
           !   & call proclaim('Master thanks for host', signal=masterTid)
           call PVMF90Unpack ( tid, info )
           if ( info /= 0 ) then
-            call PVMErrorMessage ( info, "unpacking tid" )
+            call myPVMErrorMessage ( info, "unpacking tid" )
           endif
           call PVMF90Unpack ( machineName, info )
           if ( info /= 0 ) then
-            call PVMErrorMessage ( info, "unpacking machineName" )
+            call myPVMErrorMessage ( info, "unpacking machineName" )
           endif
           hostsID = FindFirst(  hosts%name==machineName .and. hosts%tid < 1 )
           if ( hostsID < 1 ) then
@@ -798,22 +813,19 @@ contains
             call output(mastersID , advance='yes')
             call output(' machineName ', advance='no')
             call output(trim(machineName) , advance='yes')
-            call MLSMessage( MLSMSG_Error, ModuleName, &
+            call MLSMessage( options%errorLevel, ModuleName, &
                & 'Master thanked us for unknown host' )
           endif
           hosts(hostsID)%tid = tid
           call PVMF90Unpack ( hosts(hostsID)%chunk, info )
           if ( info /= 0 ) then
-            call PVMErrorMessage ( info, "unpacking machine%chunk" )
+            call myPVMErrorMessage ( info, "unpacking machine%chunk" )
           endif
           call PVMF90Unpack ( hosts(hostsID)%master_date, info )
           if ( info /= 0 ) then
-            call PVMErrorMessage ( info, "unpacking machine%master_date" )
+            call myPVMErrorMessage ( info, "unpacking machine%master_date" )
           endif
-          ! call PVMF90Unpack ( hosts(hostsID)%master_name, info )
-          ! if ( info /= 0 ) then
-          !   call PVMErrorMessage ( info, "unpacking machine%master_name" )
-          ! endif
+          ! masters(mastersID)%date = hosts(hostsID)%master_date
           hosts(hostsID)%master_name = masterNameFun(masterTID)
           if ( options%verbose ) then
             call proclaim('Master ' // trim(masterNameFun(masterTID)) // &
@@ -822,6 +834,7 @@ contains
             call output(masters(mastersID)%numHosts, advance='no')
             call timestamp(' )', advance='yes')
           endif
+          dumpHosts = .true.
         case ( sig_HostDied ) ! -------------- Done away with this host ------
           ! Find master's index into masters array
           mastersID = FindFirst(masters%tid, masterTid)
@@ -844,19 +857,8 @@ contains
             elseif ( options%verbose ) then
               call proclaim('Host Died', hosts(hostsID)%Name)
             endif
-            ! The next snippet has been superseded by mark_hosts_database
-            ! Now see if any other hosts are associated with this machine name
-            ! (we'll assume the processors on amultiprocessor node are either 
-            !  all good or all bad)
-            ! if ( tid < 1 ) then
-            !   call FindAll(hosts%name, machineName, Tids, nTids)
-            !   if ( nTids > 1 ) then
-            !     do host=2, nTids
-            !       hosts(host)%OK = .false.
-            !     enddo
-            !   endif
-            ! endif
           endif
+          dumpHosts = .true.
         case ( sig_Finished ) ! ----------------- Done with this master ------
           ! Find master's index into masters array
           mastersID = FindFirst(masters%tid, masterTid)
@@ -883,19 +885,20 @@ contains
             call output(numMasters, advance='no')
             call timestamp(' total)', advance='yes')
           endif
+          dumpMasters = .true.
         case default
           write(SIGNALSTRING, *) signal
           if ( options%debug ) &
             & call proclaim( 'Unrecognized signal from Master ' // &
             & masterNameFun(masterTid) )
-          call MLSMessage( MLSMSG_Error, ModuleName, &
+          call MLSMessage( options%errorLevel, ModuleName, &
              & 'Unrecognized signal from master' )
         end select
         call PVMFFreeBuf ( bufferIDRcv, info )
         if ( options%debug .and. info /= 0 ) &
           & call timestamp('Trouble freeing buf', advance='yes')
         if ( info /= 0 ) &
-          & call PVMErrorMessage ( info, 'freeing receive buffer' )
+          & call myPVMErrorMessage ( info, 'freeing receive buffer' )
       endif
       ! ----------------------------------------------------- Master Task Died?
       ! Listen out for any message telling us one of our masters died
@@ -903,11 +906,11 @@ contains
       if ( bufferIDRcv > 0 ) then
         ! Get the TID for the dead task
         call PVMF90Unpack ( masterTid, info )
-        if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking dead masterTid' )
+        if ( info /= 0 ) call myPVMErrorMessage ( info, 'unpacking dead masterTid' )
         ! Now this may well be a legitimate exit, 
         ! in which case, master finished normally.  
         mastersID = FindFirst(masters%tid, masterTid)
-        if ( mastersID < 1 ) call MLSMessage( MLSMSG_Error, ModuleName, &
+        if ( mastersID < 1 ) call MLSMessage( options%errorLevel, ModuleName, &
            & 'Exit signal from unrecognized master' )
         if ( .not. masters(mastersID)%finished ) then
           ! Otherwise we need to tidy up.
@@ -933,10 +936,12 @@ contains
             call timestamp(' total)', advance='yes')
           endif
         endif
+        dumpMasters = .true.
       endif
       ! ----------------------------------------------------- Administrative messages?
       ! Listen out for any message telling *us* to quit now
-      call PVMFNRecv ( -1, GiveUpTag, bufferIDRcv )
+      ! call PVMFNRecv ( -1, GiveUpTag, bufferIDRcv )
+      call PVMFNRecv ( -1, suicideTag, bufferIDRcv )
       if ( bufferIDRcv > 0 ) then
         if ( options%timing ) call sayTime
         call timestamp ( 'Received an external message to give up, so finishing now', &
@@ -976,9 +981,9 @@ contains
       call PVMFNRecv ( -1, DumpDBTag, bufferIDRcv )
       if ( bufferIDRcv > 0 ) then
         call PVMF90Unpack ( machineName, info )
-        if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking GROUPNAME' )
+        if ( info /= 0 ) call myPVMErrorMessage ( info, 'unpacking GROUPNAME' )
         call PVMF90Unpack ( tempfile, info )
-        if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking dumpfile' )
+        if ( info /= 0 ) call myPVMErrorMessage ( info, 'unpacking dumpfile' )
         status = 0
         if ( tempfile /= '<STDIN>' ) then
           oldPrUnit = OutputOptions%prunit
@@ -1001,13 +1006,15 @@ contains
           close(OutputOptions%prunit)
           OutputOptions%prunit = oldPrUnit
         endif
+        dumpHosts = .true.
+        dumpMasters = .true.
       end if
       call PVMFNRecv ( -1, DumpHostsDBTag, bufferIDRcv )
       if ( bufferIDRcv > 0 ) then
         call PVMF90Unpack ( machineName, info )
-        if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking GROUPNAME' )
+        if ( info /= 0 ) call myPVMErrorMessage ( info, 'unpacking GROUPNAME' )
         call PVMF90Unpack ( tempfile, info )
-        if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking dumpfile' )
+        if ( info /= 0 ) call myPVMErrorMessage ( info, 'unpacking dumpfile' )
         status = 0
         if ( tempfile /= '<STDIN>' ) then
           oldPrUnit = OutputOptions%prunit
@@ -1029,13 +1036,14 @@ contains
           close(OutputOptions%prunit)
           OutputOptions%prunit = oldPrUnit
         endif
+        dumpHosts = .true.
       end if
       call PVMFNRecv ( -1, DumpMastersDBTag, bufferIDRcv )
       if ( bufferIDRcv > 0 ) then
         call PVMF90Unpack ( machineName, info )
-        if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking GROUPNAME' )
+        if ( info /= 0 ) call myPVMErrorMessage ( info, 'unpacking GROUPNAME' )
         call PVMF90Unpack ( tempfile, info )
-        if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking dumpfile' )
+        if ( info /= 0 ) call myPVMErrorMessage ( info, 'unpacking dumpfile' )
         status = 0
         if ( tempfile /= '<STDIN>' ) then
           oldPrUnit = OutputOptions%prunit
@@ -1057,51 +1065,79 @@ contains
           close(OutputOptions%prunit)
           OutputOptions%prunit = oldPrUnit
         endif
+        dumpMasters = .true.
+      end if
+      ! Listen out for any message telling us to kill selected masters
+      call PVMFNRecv ( -1, killMastersTag, bufferIDRcv )
+      ! Do it if so commanded
+      if ( bufferIDRcv > 0 ) then
+        call PVMF90Unpack ( machineName, info )
+        if ( info /= 0 ) call myPVMErrorMessage ( info, 'unpacking GROUPNAME' )
+        call PVMF90Unpack ( options%selectedHosts, info )
+        if ( info /= 0 ) call myPVMErrorMessage ( info, 'unpacking selectedHosts' )
+        call timestamp ( 'Received an external message to kill masters ' // &
+          & trim(options%selectedHosts), advance='yes' )
+        call IDMasterFromName( masters, options%selectedHosts, IDs )
+        do i = 1, count( IDs > 0 )
+          if ( Ids(i) < 1 .or. Ids(i) > size(masters) ) then
+            call timestamp ( 'DB lacks any master matching ' // &
+              & trim(options%selectedHosts), advance='yes' )
+          else
+            call timestamp ( 'killing master ' // &
+              & trim(masters(Ids(i))%name), advance='yes' )
+            call PVMFSend ( masters(Ids(i))%tid, giveUpTag, info )
+          endif
+        enddo
+        dumpMasters = .true.
       end if
       ! Listen out for any message telling us to avoid selected hosts
       call PVMFNRecv ( -1, avoidSelectedHostsTag, bufferIDRcv )
       ! Do it if so commanded
       if ( bufferIDRcv > 0 ) then
         call PVMF90Unpack ( machineName, info )
-        if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking GROUPNAME' )
+        if ( info /= 0 ) call myPVMErrorMessage ( info, 'unpacking GROUPNAME' )
         call PVMF90Unpack ( options%selectedHosts, info )
-        if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking selectedHosts' )
+        if ( info /= 0 ) call myPVMErrorMessage ( info, 'unpacking selectedHosts' )
         call timestamp ( 'Received an external message to avoid ' // &
           & trim(options%selectedHosts), advance='yes' )
         call mark_host_database(hosts, options%selectedHosts)
+        dumpHosts = .true.
       end if
       ! Listen out for any message telling us to check for revived hosts
       call PVMFNRecv ( -1, checkRevivedHostsTag, bufferIDRcv )
       ! Do it if so commanded, or if part of regular drill
       if ( bufferIDRcv > 0 ) call timestamp ( &
         & 'Received an external message to check for revivals', advance='yes' )
-      if ( bufferIDRcv > 0 .or. checkrevivedhosts ) &
-        & call cure_host_database(hosts)
+      if ( bufferIDRcv > 0 .or. checkrevivedhosts ) then
+        call cure_host_database(hosts)
+        dumpHosts = .true.
+      endif
       ! Listen out for any message telling us to revive selected hosts
       call PVMFNRecv ( -1, checkSelectedHostsTag, bufferIDRcv )
       ! Do it if so commanded
       if ( bufferIDRcv > 0 ) then
         call PVMF90Unpack ( machineName, info )
-        if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking GROUPNAME' )
+        if ( info /= 0 ) call myPVMErrorMessage ( info, 'unpacking GROUPNAME' )
         call PVMF90Unpack ( options%selectedHosts, info )
-        if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking selectedHosts' )
+        if ( info /= 0 ) call myPVMErrorMessage ( info, 'unpacking selectedHosts' )
         call timestamp ( 'Received an external message to check ' // &
           & trim(options%selectedHosts), advance='yes' )
         call cure_host_database(hosts, .true., options%selectedHosts)
+        dumpHosts = .true.
       end if
       ! Listen out for any message telling us to flush current dumpfile
       ! and switch future output to new one
       call PVMFNRecv ( -1, switchDumpFileTag, bufferIDRcv )
       if ( bufferIDRcv > 0 ) then
         call PVMF90Unpack ( machineName, info )
-        if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking GROUPNAME' )
+        if ( info /= 0 ) call myPVMErrorMessage ( info, 'unpacking GROUPNAME' )
         if ( OutputOptions%prunit == DUMPUNIT ) then
           if ( options%timing ) call sayTime
           tempfile = options%dump_file
           call output('Switching dump file from '//trim(options%dump_file))
           call output(' to ')
           call PVMF90Unpack ( options%dump_file, info )
-          if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking newdumpfile' )
+          if ( info /= 0 ) call myPVMErrorMessage ( info, 'unpacking newdumpfile' )
           call timestamp(trim(options%dump_file), advance='yes')
           close(DUMPUNIT)
           ! print *, 'Opening ', prunit, ' as ', trim(options%dump_file)
@@ -1114,7 +1150,7 @@ contains
             options%dump_file = tempfile
             open( OutputOptions%prunit, file=trim(options%dump_file), &
               & status='replace', form='formatted', iostat=status )
-            if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+            if ( status /= 0 ) call MLSMessage ( options%errorLevel, ModuleName, &
               & 'Now we cant even revert to old dumpfile; unable to open ' // &
               & trim(options%dump_file) )
           else
@@ -1150,7 +1186,7 @@ contains
       ! Perhaps a periodic dump of hosts
       if ( options%PHFile /= ' ' ) then
         call time_now ( t2 )
-        if ( t2-tLastHDBDump > options%HDBPeriod ) then
+        if ( (t2-tLastHDBDump > options%HDBPeriod) .or. dumpHosts ) then
           oldPrUnit = OutputOptions%prunit
           OutputOptions%prunit = tempUnit
           ! print *, 'Opening ', prunit, ' as ', trim(options%PHfile)
@@ -1168,12 +1204,19 @@ contains
           endif
           OutputOptions%prunit = oldPrUnit
           tLastHDBDump = t2
+          if ( options%debug ) then
+            inquire(unit=OutputOptions%prunit, opened=opened)
+            if ( .not. opened ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
+              & 'Miscellaneous dump file not opened ' // &
+              & trim(options%dump_file) )
+            call dump(hosts)
+          endif
         endif
       endif
       ! Perhaps a periodic dump of masters
       if ( options%PMFile /= ' ' ) then
         call time_now ( t2 )
-        if ( t2-tLastMDBDump > options%MDBPeriod ) then
+        if ( (t2-tLastMDBDump > options%MDBPeriod) .or. dumpMasters ) then
           oldPrUnit = OutputOptions%prunit
           OutputOptions%prunit = tempUnit
           ! print *, 'Opening ', prunit, ' as ', trim(options%PMfile)
@@ -1191,6 +1234,13 @@ contains
           endif
           OutputOptions%prunit = oldPrUnit
           tLastMDBDump = t2
+          if ( options%debug ) then
+            inquire(unit=OutputOptions%prunit, opened=opened)
+            if ( .not. opened ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
+              & 'Miscellaneous dump file not opened ' // &
+              & trim(options%dump_file) )
+            call dump_master_database(masters)
+          endif
         endif
       endif
       ! Now, rather than chew up cpu time on this machine, we'll wait a
@@ -1215,10 +1265,10 @@ contains
     if ( .not. (host%free .and. host%OK) ) then
       call dump(host)
       call dump_master(master)
-      call MLSMessage( MLSMSG_Error, ModuleName, &
+      call MLSMessage( options%errorLevel, ModuleName, &
       & 'Tried to assign an unqualified host to this master' )
     elseif( master%owes_thanks ) then
-      call MLSMessage( MLSMSG_Error, ModuleName, &
+      call MLSMessage( options%errorLevel, ModuleName, &
       & 'Tried to assign host to an ungrateful master' )
     endif      
     host%master_tid = master%tid
@@ -1246,12 +1296,9 @@ contains
     master%hosts(hcid) = hostsid
     ! Now use PVM to tell master he's got a new slave host
     call PVMFInitSend ( PvmDataDefault, bufferID )
-    ! call PVMF90Pack ( sig_requestHost, info )
-    ! if ( info /= 0 ) &
-    !   & call PVMErrorMessage ( info, 'packing registration' )
     call PVMF90Pack ( trim(host%name), info )
     if ( info /= 0 ) &
-      & call PVMErrorMessage ( info, 'packing host name' )
+      & call myPVMErrorMessage ( info, 'packing host name' )
     if ( options%debug ) &
       & call proclaim('Sending new host ' // trim(host%name), &
       & masterNameFun(master%Tid))
@@ -1275,11 +1322,11 @@ contains
     hostsID = 0
     call PVMF90Unpack ( tid, info )
     if ( info /= 0 ) then
-      call PVMErrorMessage ( info, "unpacking tid" )
+      call myPVMErrorMessage ( info, "unpacking tid" )
     endif
     call PVMF90Unpack ( machineName, info )
     if ( info /= 0 ) then
-      call PVMErrorMessage ( info, "unpacking machineName" )
+      call myPVMErrorMessage ( info, "unpacking machineName" )
     endif
     if ( tid < 1 ) then
       ! This means master couldn't start slave task on host
@@ -1317,6 +1364,80 @@ contains
       endif
     endif
   end subroutine IDHostFromMaster
+  
+  subroutine IDMasterFromName ( masters, names, IDs )
+    ! Find which masterIDs match given list of names
+    type(master_t), dimension(:)       :: masters
+    character(*), intent(in)           :: names
+    integer, dimension(:), intent(out) :: IDs
+    ! Internal variables
+    logical :: byName
+    integer :: i, ivalue, n
+    character(len=16) :: inputFormat
+    character(len=16) :: masterFormat
+    character(len=16) :: masDate
+    character(len=16) :: masName
+    ! Executable
+    call output(' len_trim(names) ', advance='no')
+    call output( len_trim(names) , advance='no')
+    call output(' size(IDs) ', advance='no')
+    call output( size(IDs) , advance='no')
+    call output('   size(masters) ', advance='no')
+    call output( size(masters) , advance='yes')
+    if ( size(IDs) < 1 ) return
+    IDs = 0
+    if ( size(masters) < 1 .or. len_trim(names) < 1 ) return
+    masterFormat = dateForm(masters(1)%date)
+    n = NumStringElements( names,  countEmpty )
+    n = min( n, size(IDs) )
+    call timestamp ( 'n: ', advance='no' )
+    call timestamp ( n, advance='yes' )
+    do i=1, n
+      call GetStringElement( names, masName, i, countEmpty )
+      ! Two possible formats:
+      ! master name (possibly prefixed by 'm-')
+      ! We assume that we'll never have more than 10^6 masters in our db
+      ! (a limitation, true, but unreasonable)
+      ! and that date formats require at least 8 characters
+      ! (which is captured by the next logical)
+      byName = (len_trim(masName) < 8)
+      if ( byName ) then
+        if ( index(lowerCase(masName), 'm-') > 0 ) then
+          ! e.g., 'm-1'
+          call readIntsFromChars ( trim(masName(3:)), ivalue )
+        else
+          !  e.g., '1'
+          call readIntsFromChars ( trim(masName), ivalue )
+        endif
+        if ( ivalue < 1 ) then
+          ! Already zero
+        elseif ( ivalue > size(masters) ) then
+          ! Already zero
+        elseif ( masters(ivalue)%finished ) then
+          ! Already zero
+        else
+          IDs(i) = ivalue
+        endif
+      else
+      ! master date; e.g. '2006-171'
+        inputFormat = dateForm(masName)
+        masDate = reFormatDate(masName, &
+          & fromForm=trim(inputFormat), toForm=masterFormat)
+        Ids(i) = findFirst( (masters%date == trim(masDate)) .and. &
+          & .not. masters%finished )
+        call output(' (inputFormat) ', advance='no')
+        call output( trim(inputFormat) , advance='no')
+        call output('   (masterFormat) ', advance='no')
+        call output( trim(masterFormat) , advance='yes')
+        call output(' (input) ', advance='no')
+        call output( trim(masName) , advance='no')
+        call output('   (reformatted) ', advance='no')
+        call output( trim(masDate) , advance='yes')
+      endif
+      call timestamp ( 'ID: ', advance='no' )
+      call timestamp ( Ids(i), advance='yes' )
+    enddo
+  end subroutine IDMasterFromName
 
   subroutine releaseHostFromMaster(host, master, hostsID)
     type(Machine_T) :: host
@@ -1332,10 +1453,10 @@ contains
         & 'master lacks any hosts' )
       return
     elseif ( hostsID < 1 ) then
-      call MLSMessage( MLSMSG_Error, ModuleName, &
+      call MLSMessage( options%errorLevel, ModuleName, &
         & 'Programming error--hostsID=0 in releaseHostFromMaster' )
     elseif ( hostsID > size(hosts) ) then
-      call MLSMessage( MLSMSG_Error, ModuleName, &
+      call MLSMessage( options%errorLevel, ModuleName, &
         & 'Programming error--hostsID>size(hosts) in releaseHostFromMaster' )
     elseif ( .not. associated(master%hosts) ) then
       ! call MLSMessage( MLSMSG_Warning, ModuleName, &
@@ -1466,9 +1587,7 @@ contains
     print *, ' --[n]revive: do [not] regularly check for revived hosts'
     print *, ' --version:   print version string; stop'
     print *, ' --wall:      show times according to wall clock (if T[0] set)'
-    ! print *, ' -g:          turn tracing on'
     print *, ' -k:          kill currently-running l2q'
-    print *, '               ( same as -c kill )'
     print *, ' -oph phfile: dump db of hosts periodically to phfile'
     print *, ' -opm pmfile: dump db of masters periodically to pmfile'
     print *, ' -o dumpfile: direct most other output to dumpfile'
@@ -1490,7 +1609,8 @@ contains
     print *, ' clean:       clean the db of finished master tasks'
     print *, ' revive=on:   begin regularly checking for revived hosts'
     print *, ' revive=off:  cease regularly checking for revived hosts'
-    print *, ' kill:        kill currently-running l2q'
+    print *, ' kill m1[,m2,..]:'
+    print *, '              kill selected masters cleanly'
     print *, ' switch:      flush current dumpfile'
     print *, '              ( switch to one specified by -o newfile )'
     print *, '  ( if the following commands are accompanied by the option'
@@ -1562,6 +1682,9 @@ contains
     call output(' Dump other output to:                           ', advance='no')
     call blanks(4, advance='no')
     call output(trim(options%dump_File), advance='yes')
+    call output(' Using unit number:                              ', advance='no')
+    call blanks(4, advance='no')
+    call output(OutputOptions%prunit, advance='yes')
     call output(' Time stamp each report:                         ', advance='no')
     call blanks(4, advance='no')
     call output(options%Timing, advance='yes')
@@ -1652,9 +1775,26 @@ contains
     name = catLists('m', mastersID, inseparator='-')
   end function masterNameFun
 
+  subroutine myPVMErrorMessage ( info, place )
+    ! This routine is called to log a PVM error
+    integer, intent(in) :: INFO
+    character (LEN=*) :: PLACE
+    character (LEN=132) :: LINE
+
+    write (line, * ) info
+    if ( options%exitOnError ) then
+      call PVMErrorMessage ( info, place )
+    else
+      call MLSMessage ( options%errorLevel, Place, &
+        & 'PVM Error:  Info='//trim(adjustl(line)))
+    endif
+  end subroutine myPVMErrorMessage
 end program L2Q
 
 ! $Log$
+! Revision 1.11  2006/08/02 22:48:22  pwagner
+! prunit now a component of OutputOptions
+!
 ! Revision 1.10  2005/11/15 22:39:58  pwagner
 ! More robust against failures while openeing dump files
 !
