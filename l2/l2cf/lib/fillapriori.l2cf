@@ -256,7 +256,7 @@ begin Fill
   ;; Actually we'll take a looser precision for H2O
   Fill, quantity=aprioriPrecision.h2o_hr, method=profile, profileValues = $
     [ 1000mb: 10000ppmv, 464mb : 10000ppmv, 316mb : 1500ppmv, $
-      215mb : 300ppmv, 147mb : 300ppmv, 100mb : 6.0ppmv ]
+      215mb : 300ppmv, 147mb : 20ppmv, 100mb : 6.0ppmv ]
 
   Fill, quantity=vReg.co_hr, method=profile, profileValues= $
     [ 10mb:30ppbv, 1mb:300ppbv, 0.1mb:3ppmv, 0.046mb:0ppmv ]
@@ -465,7 +465,7 @@ begin Fill
     [ 1000mb:500ppmv, 300mb:50ppmv, 215mb:20ppmv, 147mb:10ppmv, 100mb:1.0ppmv,$
 	0.1mb:0.3ppmv, 0.001mb:0ppmv ], logSpace=false
   Fill, quantity=vReg.h2o_hr, method=profile, profileValues= $
-    [ 1000mb:50ppmv, 316mb:100ppmv,215mb:50ppmv, 147mb:5ppmv,121mb: 1ppmv, $
+    [ 1000mb:50ppmv, 316mb:100ppmv,215mb:50ppmv, 147mb:5ppmv,121mb: 2ppmv, $
       100mb:0.5ppmv, 83mb:0.3ppmv, 0.1mb:0.3ppmv, 0.001mb:0ppmv ], $
       logSpace=false
   Fill, quantity=vReg.RHiVmr, method=profile, profileValues= [ $
@@ -537,7 +537,7 @@ begin Fill
     profileValues=[ 146mb:0ppmv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.046mb:0ppmv ], logSpace=false
 
   Fill, quantity=hReg.h2o_HR, method=profile, $
-     profileValues=[ 146mb:0ppmv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.046mb:0ppmv ], logSpace=false
+     profileValues=[ 147mb:0ppmv, 121mb:2ppmv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.046mb:0ppmv ], logSpace=false
 
   Fill, quantity=hReg.hcl, method=profile, $
     profileValues= [ 0.1mb:0.3ppbv, 0.046mb:0ppbv ]
@@ -598,6 +598,9 @@ begin Join
 end Join
   })
 ;$Log$
+;Revision 1.125  2006/09/26 23:41:21  bill
+;set high bound for rhivmrsngl=110
+;
 ;Revision 1.124  2006/09/22 22:23:08  bill
 ;made smoothing for h2o and h2o_hr consistent
 ;
