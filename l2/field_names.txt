@@ -134,6 +134,7 @@ fgrid
 field
 fieldECR
 filterShapes
+flags
 forbidOverspill
 force
 forceSidebandFraction
@@ -235,6 +236,7 @@ method
 model
 mif
 minChannels
+minNormQty
 minValue
 missingValue
 moleculeDerivatives
@@ -255,6 +257,7 @@ noFineGrid
 noiseBandwidth
 noise
 noMIFs
+normQty
 noSlaves
 nscatteringangles
 nsizebins
@@ -437,6 +440,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.173  2006/09/30 00:02:03  pwagner
+# Added new things for chi^2 ratio measuring convergence
+#
 # Revision 2.172  2006/09/19 20:34:37  vsnyder
 # Add aprioriFraction
 #
