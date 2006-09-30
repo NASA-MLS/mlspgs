@@ -30,6 +30,7 @@ chisqbinned
 chisqchan
 chisqmmaf
 chisqmmif
+chisqratio
 cholesky
 climatology
 cloud
@@ -166,6 +167,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.59  2006/09/30 00:02:03  pwagner
+# Added new things for chi^2 ratio measuring convergence
+#
 # Revision 2.58  2006/08/11 20:58:38  vsnyder
 # Add 'simple' method to use alternate Newton solver
 #
