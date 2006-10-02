@@ -79,15 +79,16 @@ contains ! =====     Public Procedures     =============================
       & F_C, F_CENTERVERTICALLY, F_CHANNEL, F_COLUMNS, &
       & F_DESTINATION, F_DIAGONAL, F_DONTMASK,&
       & F_ECRTOFOV, F_EARTHRADIUS, F_EXCLUDEBELOWBOTTOM, F_EXPLICITVALUES, &
-      & F_EXTINCTION, F_FIELDECR, F_FILE, F_FORCE, &
+      & F_EXTINCTION, F_FIELDECR, F_FILE, F_FLAGS, F_FORCE, &
       & F_FRACTION, F_FROMPRECISION, F_GEOCALTITUDEQUANTITY, F_GPHQUANTITY, &
       & F_HEIGHT, F_HIGHBOUND, F_H2OQUANTITY, F_H2OPRECISIONQUANTITY, &
       & F_IFMISSINGGMAO, F_IGNORENEGATIVE, F_IGNOREGEOLOCATION, F_IGNOREZERO, &
       & F_INSTANCES, F_INTEGRATIONTIME, F_INTERNALVGRID, &
       & F_INTERPOLATE, F_INVERT, F_INTRINSIC, F_ISPRECISION, &
       & F_LENGTHSCALE, F_LOGSPACE, F_LOSQTY, F_LOWBOUND, F_LSB, F_LSBFRACTION, &
-      & F_MANIPULATION, F_MATRIX, F_MAXITERATIONS, F_MAXVALUE, F_MEASUREMENTS, F_METHOD, &
-      & F_MINVALUE, F_MODEL, F_MULTIPLIER, F_NOFINEGRID, F_NOISE, F_NOISEBANDWIDTH, &
+      & F_MANIPULATION, F_MATRIX, F_MAXITERATIONS, F_MAXVALUE, F_MEASUREMENTS, &
+      & F_METHOD, F_MINNORMQTY, F_MINVALUE, F_MODEL, F_MULTIPLIER, &
+      & F_NOFINEGRID, F_NOISE, F_NOISEBANDWIDTH, F_NORMQTY, &
       & F_OFFSETAMOUNT, F_ORBITINCLINATION, F_PHITAN, &
       & F_PHIWINDOW, F_PHIZERO, F_PRECISION, F_PRECISIONFACTOR, &
       & F_PROFILE, F_PROFILEVALUES, F_PTANQUANTITY, &
@@ -107,9 +108,11 @@ contains ! =====     Public Procedures     =============================
     use INIT_TABLES_MODULE, only: L_ADDNOISE, L_APPLYBASELINE, L_ASCIIFILE, &
       & L_BINMAX, L_BINMEAN, L_BINMIN, L_BINTOTAL, &
       & L_BOUNDARYPRESSURE, L_BOXCAR, L_CHISQBINNED, L_CHISQCHAN, &
-      & L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, &
+      & L_CHISQMMAF, L_CHISQMMIF, L_CHISQRATIO, L_CHOLESKY, &
       & L_cloudice, L_cloudextinction, L_cloudInducedRADIANCE, &
-      & L_COMBINECHANNELS, L_COLUMNABUNDANCE, L_DOBSONUNITS, L_DU, &
+      & L_COMBINECHANNELS, L_COLUMNABUNDANCE, &
+      & l_dnwt_flag, l_dnwt_chiSqMinNorm, l_dnwt_chiSqNorm, l_dnwt_chiSqRatio, &
+      & L_DOBSONUNITS, L_DU, &
       & L_ECRTOFOV, L_ESTIMATEDNOISE, L_EXPLICIT, L_EXTRACTCHANNEL, L_FOLD, &
       & L_FWDMODELTIMING, L_FWDMODELMEAN, L_FWDMODELSTDDEV, &
       & L_GEOCALTITUDE, L_GEODALTITUDE, L_GPH, L_GPHPRECISION, L_GRIDDED, L_H2OFROMRHI, &
@@ -168,7 +171,7 @@ contains ! =====     Public Procedures     =============================
       & MLSMSG_Allocate, MLSMSG_Deallocate
     use MLSNumerics, only: InterpolateValues, Hunt
     use MLSRandomNumber, only: drang, mls_random_seed, MATH77_RAN_PACK
-    use MLSSets, only: FindFirst
+    use MLSSets, only: FindFirst, FindLast
     use MLSSignals_m, only: GetFirstChannel, GetSignalName, GetModuleName, IsModuleSpacecraft, &
       & GetSignal, Signal_T
     use MLSStringLists, only: catLists, GetHashElement, GetStringElement, &
@@ -279,6 +282,7 @@ contains ! =====     Public Procedures     =============================
     type (vectorValue_T), pointer :: EARTHRADIUSQTY
     type (vectorValue_T), pointer :: ECRTOFOV
     type (vectorValue_T), pointer :: FIELDECR
+    type (vectorValue_T), pointer :: FLAGQTY
     type (vectorValue_T), pointer :: GEOCALTITUDEQUANTITY
     type (vectorValue_T), pointer :: GPHQUANTITY
     type (vectorValue_T), pointer :: H2OPRECISIONQUANTITY
@@ -287,9 +291,11 @@ contains ! =====     Public Procedures     =============================
     type (vectorValue_T), pointer :: LSB
     type (vectorValue_T), pointer :: LSBFRACTION
     type (vectorValue_T), pointer :: MEASQTY
+    type (vectorValue_T), pointer :: MINNORMQTY
     type (vectorValue_T), pointer :: MODELQTY
     type (vectorValue_T), pointer :: NBWQUANTITY
     type (vectorValue_T), pointer :: NOISEQTY
+    type (vectorValue_T), pointer :: NORMQTY
     type (vectorValue_T), pointer :: ORBITINCLINATIONQUANTITY
     type (vectorValue_T), pointer :: PRECISIONQUANTITY
     type (vectorValue_T), pointer :: QUANTITY ! Quantity to be filled
@@ -357,6 +363,8 @@ contains ! =====     Public Procedures     =============================
     integer :: FIELDECRVECTORINDEX      ! Magnetic field
     integer :: FILLMETHOD               ! How will we fill this quantity
     integer :: FILENAME                 ! String index for ascii fill
+    integer :: FLAGQTYINDEX
+    integer :: FLAGVECTORINDEX
     logical :: FORCE                    ! Bypass checks on some operations
     integer :: FRACTION                 ! Index of fraction vector in database
     logical :: FROMPRECISION            ! Fill from l2gpPrecision not l2gpValue
@@ -408,7 +416,13 @@ contains ! =====     Public Procedures     =============================
     integer :: MATRIXTOFILL             ! Index in database
     integer :: MATRIXTYPE               ! Type of matrix, L_... from init_tables
     integer :: MAXITERATIONS            ! For hydrostatic fill
+    integer :: MEASQTYINDEX
+    integer :: MEASVECTORINDEX
     character(len=80) :: MESSAGE        ! Possible error message
+    integer :: MINNORMQTYINDEX
+    integer :: MINNORMVECTORINDEX
+    integer :: MODELQTYINDEX
+    integer :: MODELVECTORINDEX
     character(len=16)  :: MOL  ! E.g., H2O
     real, dimension(2) :: MULTIPLIER   ! To scale source,noise part of addNoise
     real(r8) :: MINVALUE                 ! Value of f_minValue field
@@ -420,8 +434,13 @@ contains ! =====     Public Procedures     =============================
     integer :: NBWQUANTITYINDEX         ! In vector database
     integer :: NEEDEDCOORDINATE         ! For vGrid fills
     integer :: NOFINEGRID               ! no of fine grids for cloud extinction calculation
+    integer :: NOISEQTYINDEX
+    integer :: NOISEVECTORINDEX
+    integer :: NORMQTYINDEX
+    integer :: NORMVECTORINDEX
     integer :: NOSNOOPEDMATRICES        ! No matrices to snoop
     real(rv) :: OFFSETAMOUNT            ! For offsetRadiance
+    logical :: OLD_MATH77_RAN_PACK      ! To restore math77_ran_pack
     integer :: ORBITINCLINATIONVECTORINDEX ! In the vector database
     integer :: ORBITINCLINATIONQUANTITYINDEX ! In the quantities database
     integer :: PHITANVECTORINDEX        ! In the vector database
@@ -499,13 +518,6 @@ contains ! =====     Public Procedures     =============================
     logical :: WHEREFILL                ! Replace only fill values
     logical :: WHERENOTFILL             ! Don't replace fill values
     integer :: WIDTH                    ! Width of boxcar
-    integer :: MEASQTYINDEX
-    integer :: MEASVECTORINDEX
-    integer :: MODELQTYINDEX
-    integer :: MODELVECTORINDEX
-    integer :: NOISEQTYINDEX
-    integer :: NOISEVECTORINDEX
-    logical :: OLD_MATH77_RAN_PACK      ! To restore math77_ran_pack
 
     ! Executable code
     timing = section_times
@@ -814,9 +826,6 @@ contains ! =====     Public Procedures     =============================
             earthRadiusQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_excludeBelowBottom )
             excludeBelowBottom = get_boolean ( gson )
-          case ( f_noise )   ! Only used for chi^2 special fills or addnoise
-            noiseVectorIndex = decoration(decoration(subtree(1,gson)))
-            noiseQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_ECRToFOV ) ! For hydrostatic
             ecrToFOVVectorIndex = decoration(decoration(subtree(1,gson)))
             ecrToFOVQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -829,6 +838,9 @@ contains ! =====     Public Procedures     =============================
             fieldECRQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_file ) ! For asciifile
             filename = sub_rosa ( gson )
+          case ( f_flags ) ! For chi^2 ratio
+            flagVectorIndex = decoration(decoration(subtree(1,gson)))
+            flagQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_force )
             force = get_boolean ( gson )
           case ( f_fromPrecision )
@@ -905,6 +917,9 @@ contains ! =====     Public Procedures     =============================
             measQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_method )   ! How are we going to fill it?
             fillMethod = decoration(gson)
+          case ( f_minNormQty )   ! Only used for chi^2 ratio fills
+            minNormVectorIndex = decoration(decoration(subtree(1,gson)))
+            minNormQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_minValue )      ! For status fill
             call expr ( gson, unitAsArray, valueAsArray )
             minValueUnit = unitAsArray(1)
@@ -920,9 +935,15 @@ contains ! =====     Public Procedures     =============================
             if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
               & extraInfo=(/unitAsArray(1), PHYQ_Dimensionless/) )
             noFineGrid = valueAsArray(1)
+          case ( f_noise )   ! Only used for chi^2 special fills or addnoise
+            noiseVectorIndex = decoration(decoration(subtree(1,gson)))
+            noiseQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_noiseBandwidth )
             nbwVectorIndex = decoration(decoration(subtree(1,gson)))
             nbwQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_normQty )   ! Only used for chi^2 ratio fills
+            normVectorIndex = decoration(decoration(subtree(1,gson)))
+            normQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_offsetAmount )    ! For marking unused radiances
             call expr_check ( gson , unitAsArray, valueAsArray, &
               & (/PHYQ_Temperature/), unitsError )
@@ -1231,6 +1252,20 @@ contains ! =====     Public Procedures     =============================
             & 'Must supply width for boxcar fill' )
           call FillWithBoxcarFunction ( key, quantity, sourceQuantity, width, &
             & boxCarMethod )
+
+        case ( l_chiSqRatio ) ! ----------- Fill with convergence ratio ---
+          if ( .not. all(got( (/ f_normQty, &
+            & f_minNormQty, f_flags /)))) &
+            & call Announce_Error ( key, no_Error_Code, &
+              & 'Missing required fields for chi^2 ratio' )
+          normQty => GetVectorQtyByTemplateIndex( &
+            & vectors(normVectorIndex), normQtyIndex )
+          minNormQty => GetVectorQtyByTemplateIndex( &
+            & vectors(minNormVectorIndex), minNormQtyIndex )
+          flagQty => GetVectorQtyByTemplateIndex( &
+            & vectors(flagVectorIndex), flagQtyIndex )
+          call FillChiSqRatio ( key, &
+            & quantity, normQty, minNormQty, flagQty, dontMask )
 
         case ( l_combineChannels )
           if ( .not. got ( f_sourceQuantity ) ) &
@@ -3542,6 +3577,104 @@ contains ! =====     Public Procedures     =============================
       call deallocate_test(values, &
         & 'chi^2 unsummed', ModuleName)
     end subroutine FillChiSqMMif
+
+    ! ------------------------------------------- FillChiSqRatio ---
+    subroutine FillChiSqRatio ( key, qty, normQty, minNormQty, flagQty, &
+    & dontMask, firstInstance, lastInstance )
+      ! A special fill of the ratio
+      !  chi squared Norm
+      ! ----------------     [iter_n, *]
+      ! chi squared Min Norm
+      ! where iter_n is the final iteration number
+      
+      ! Note the following tricks:
+      ! The number of surfaces is the maximum allowed number of iterations
+      ! The actual number of iterations will be less than this
+      ! After the last iteration, all "surfaces" above this are zero-filled
+      
+      ! The number of instances will be the number of chunks
+      ! (yes, an unfortunate fact)
+      integer, intent(in) :: KEY
+      type (VectorValue_T), intent(inout) :: QTY
+      type (VectorValue_T), intent(in) ::    normQty
+      type (VectorValue_T), intent(in) ::    minNormQty
+      type (VectorValue_T), intent(in) ::    flagQty
+      logical, intent(in)           ::       dontMask    ! Use even masked values
+
+      integer, intent(in), optional ::       firstInstance, lastInstance
+      ! The last two are set if only part (e.g. overlap regions) of the quantity
+      ! is to be stored in qty
+
+      ! Local variables
+      real(r8), dimension(:), pointer  ::    VALUES => NULL()
+      integer ::                             UseFirstInstance, UseLastInstance, &
+      &                                      NoOutputInstances
+      integer ::                             C           ! Channel loop counter
+      integer ::                             S           ! Surface loop counter
+      integer ::                             I           ! Instances
+      integer ::                             QINDEX
+      integer ::                             NOCHANS
+      integer ::                             N           ! Num. of summed values
+      logical ::                             skipMe
+      real                             ::    a, b
+
+      ! Executable code
+
+      ! First check that things are OK.
+      if ( .not. ValidateVectorQuantity ( qty, &
+        & quantityType=(/l_dnwt_chiSqRatio/) ) ) then
+        call Announce_error ( key, No_Error_code, &
+        & 'Attempting to fill wrong quantity with chi^2 ratio'  )
+        return
+      elseif ( .not. ValidateVectorQuantity ( normqty, &
+        & quantityType=(/l_dnwt_chiSqNorm/) ) ) then
+        call Announce_error ( key, No_Error_code, &
+        & 'Attempting to fill using wrong norm quantity with chi^2 ratio'  )
+        return
+      elseif ( .not. ValidateVectorQuantity ( minnormqty, &
+        & quantityType=(/l_dnwt_chiSqMinNorm/) ) ) then
+        call Announce_error ( key, No_Error_code, &
+        & 'Attempting to fill using wrong min norm quantity with chi^2 ratio'  )
+        return
+      elseif ( .not. ValidateVectorQuantity ( flagqty, &
+        & quantityType=(/l_dnwt_flag/) ) ) then
+        call Announce_error ( key, No_Error_code, &
+        & 'Attempting to fill using wrong flag quantity with chi^2 ratio'  )
+        return
+      end if
+
+      ! Work out what to do with the first and last Instance information
+
+      if ( PRESENT(firstInstance) ) then
+        useFirstInstance = firstInstance
+      else
+        useFirstInstance = 1
+      end if
+
+      if ( PRESENT(lastInstance) ) then
+        useLastInstance = lastInstance
+      else
+        useLastInstance = qty%template%noInstances
+      end if
+      noOutputInstances = useLastInstance-useFirstInstance+1
+      ! If we've not been asked to output anything then don't carry on
+      if ( noOutputInstances < 1 ) return
+
+      noChans = qty%template%noChans
+      do i=useFirstInstance, useLastInstance
+        ! Now find the iteration number
+        qIndex = findLast(flagQty%values(:,i) /= 0)
+        if ( qIndex == 0 .or. qIndex >= qty%template%noSurfs ) cycle
+        skipMe = &
+          & .not. dontMask .and. ( &
+          &   isVectorQtyMasked(normQty, qIndex, i) .or. &
+          &   isVectorQtyMasked(minNormQty, qIndex, i) .or. &
+          &   minNormQty%values(qIndex, i) == 0. &
+          & )
+          qty%values(:,i) = &
+            & normQty%values(qIndex, i) / minNormQty%values(qIndex, i)
+      end do
+    end subroutine FillChiSqRatio
 
     ! ------------------------------------------- FillColAbundance ---
     subroutine FillColAbundance ( key, qty, bndPressQty, vmrQty, colmAbUnits, &
@@ -7741,7 +7874,7 @@ contains ! =====     Public Procedures     =============================
 
       error = max(error,1)
       call StartErrorMessage ( where )
-      call output ( 'The' );
+      if ( code  > no_Error_Code ) call output ( 'The' );
 
       select case ( code )
       case ( badEstNoiseFill )
@@ -7860,6 +7993,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.344  2006/10/02 23:05:03  pwagner
+! May Fill chi^2 ratio to measure convergence
+!
 ! Revision 2.343  2006/08/03 01:58:03  vsnyder
 ! Better error message if profile is out of order
 !
