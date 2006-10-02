@@ -47,6 +47,7 @@ dnwt_axmax
 dnwt_cait
 dnwt_chiSqMinNorm
 dnwt_chiSqNorm
+dnwt_chiSqRatio
 dnwt_diag
 dnwt_dxdx
 dnwt_dxdxl
@@ -167,6 +168,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.60  2006/10/02 23:05:03  pwagner
+# May Fill chi^2 ratio to measure convergence
+#
 # Revision 2.59  2006/09/30 00:02:03  pwagner
 # Added new things for chi^2 ratio measuring convergence
 #
