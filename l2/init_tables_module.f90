@@ -435,7 +435,7 @@ contains ! =====     Public procedures     =============================
       begin, t+t_fGridCoord, l+l_channel, l+l_frequency, l+l_LSBFrequency, l+l_USBFrequency, &
              l+l_IntermediateFrequency, n+n_dt_def, &
       begin, t+t_fillMethod, l+l_applyBaseline, l+l_asciiFile, l+l_binMax, l+l_binMean, &
-             l+l_binMin, l+l_binTotal, &
+             l+l_binMin, l+l_binTotal, l+l_chiSqRatio, &
              l+l_boxcar, l+l_combineChannels, l+l_gridded, l+l_estimatedNoise, l+l_explicit, &
              l+l_extractChannel, l+l_gphPrecision, l+l_hydrostatic, l+l_addnoise, l+l_refract, &
              l+l_isotope, l+l_iwcfromextinction, l+l_l1b, l+l_l2aux, l+l_l2gp, &
@@ -482,7 +482,7 @@ contains ! =====     Public procedures     =============================
              l+l_cloudInducedRadiance, l+l_cloudExtinction, l+l_cloudMinMax, l+l_cloudRadSensitivity, &
              l+l_cloudWater, l+l_columnabundance, &
              l+l_dnwt_ajn, l+l_dnwt_axmax, l+l_dnwt_cait, &
-             l+l_dnwt_chiSqMinNorm, l+l_dnwt_chiSqNorm, &
+             l+l_dnwt_chiSqMinNorm, l+l_dnwt_chiSqNorm, l+l_dnwt_chiSqRatio, &
              l+l_dnwt_diag, l+l_dnwt_dxdx, l+l_dnwt_dxdxl, &
              l+l_dnwt_dxn, l+l_dnwt_dxnl, l+l_dnwt_flag, l+l_dnwt_fnmin, &
              l+l_dnwt_fnorm, l+l_dnwt_gdx, l+l_dnwt_gfac, &
@@ -796,7 +796,6 @@ contains ! =====     Public procedures     =============================
              begin, f+f_type, t+t_matrix, n+n_field_type, &
              begin, f+f_source, t+t_string, n+n_field_type, &
              ndp+n_spec_def /) )
-
     call make_tree( (/ &
       begin, s+s_fill, &  ! Must be AFTER s_vector, s_matrix and s_climatology
              begin, f+f_a, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
@@ -815,7 +814,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_boxCarMethod, t+t_boxCarMethod, n+n_field_type, &
              begin, f+f_c, t+t_numeric, n+n_field_type, &
              begin, f+f_channel, t+t_numeric, n+n_field_type, &
-             begin, f+f_centerVertically, t+t_boolean, n+n_field_type, &
+             begin, f+f_centerVertically, t+t_boolean, n+n_field_type/) )
+    call make_tree ( (/ & ! Continuing for s_fill...
              begin, f+f_dontMask, t+t_boolean, n+n_field_type, &
              begin, f+f_earthRadius, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
@@ -826,6 +826,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_extinction, t+t_boolean, n+n_field_type, &
              begin, f+f_fieldECR, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
              begin, f+f_file, t+t_string, n+n_field_type, &
+             begin, f+f_flags, s+s_vector, f+f_template, &
+                    f+f_quantities, n+n_dot, &
              begin, f+f_force, t+t_boolean, n+n_field_type, &
              begin, f+f_fromPrecision, t+t_boolean, n+n_field_type, &
              begin, f+f_geocAltitudeQuantity, s+s_vector, f+f_template, &
@@ -835,7 +837,8 @@ contains ! =====     Public procedures     =============================
                     n+n_dot, &
              begin, f+f_h2oPrecisionQuantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
-             begin, f+f_height, t+t_numeric, n+n_field_type /) )
+             begin, f+f_height, t+t_numeric, n+n_field_type /), &
+             continue=.true. )
     call make_tree ( (/ & ! Continuing for s_fill...
              begin, f+f_ifMissingGMAO, t+t_boolean, n+n_field_type, &
              begin, f+f_ignoreGeolocation, t+t_boolean, n+n_field_type, &
@@ -857,6 +860,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_manipulation, t+t_string, n+n_field_type, &
              begin, f+f_maxIterations, t+t_numeric, n+n_field_type, &
              begin, f+f_maxValue, t+t_numeric, n+n_field_type, &
+             begin, f+f_minNormQty, s+s_vector, f+f_template, &
+                    f+f_quantities, n+n_dot, &
              begin, f+f_minValue, t+t_numeric, n+n_field_type, &
              begin, f+f_measurements, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot /), &
@@ -871,9 +876,13 @@ contains ! =====     Public procedures     =============================
                     f+f_quantities, n+n_dot, &
              begin, f+f_noiseBandwidth, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
+             begin, f+f_normQty, s+s_vector, f+f_template, &
+                    f+f_quantities, n+n_dot, &
              begin, f+f_offsetAmount, t+t_numeric, n+n_field_type, &
              begin, f+f_orbitInclination, s+s_vector, f+f_template, &
-                    f+f_quantities, n+n_dot, &
+                    f+f_quantities, n+n_dot /), &
+             continue=.true. )
+    call make_tree ( (/ & ! Continuing for s_fill...
              begin, f+f_phiWindow, t+t_numeric, n+n_field_type, &
              begin, f+f_phiZero, t+t_numeric, n+n_field_type, &
              begin, f+f_precision, s+s_vector, f+f_template, &
@@ -1487,6 +1496,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.451  2006/10/02 23:05:03  pwagner
+! May Fill chi^2 ratio to measure convergence
+!
 ! Revision 2.450  2006/09/19 20:37:46  vsnyder
 ! Add aprioriFraction to retrieve
 !
