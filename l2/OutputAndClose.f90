@@ -172,6 +172,8 @@ contains ! =====     Public Procedures     =============================
     real :: T1, T2     ! for timing
     integer :: Type                     ! Type of value returned by EXPR
     integer :: Units(2)                 ! Units of value returned by EXPR
+    logical :: USINGL2Q                 ! Set if using the l2q queue manager
+    logical :: USINGOLDSUBMIT              ! Set if using the submit mechanism
     logical :: USINGSUBMIT              ! Set if using the submit mechanism
     double precision :: Value(2)        ! Value returned by EXPR
     type (Matrix_T), pointer :: TMPMATRIX ! A pointer to a matrix to write into l2pc
@@ -193,7 +195,9 @@ contains ! =====     Public Procedures     =============================
       call output ( ' ', advance='yes' )
     end if
 
+    usingL2Q = ( index(parallel%submit, 'l2q') > 0 )
     usingSubmit = trim_safe(parallel%submit) /= ''
+    usingOldSubmit = usingSubmit .and. .not. usingL2Q
 
     ! Before looping over lines in l2cf, do any automatic tasks
     ! Catenate any split Direct Writes
@@ -203,7 +207,7 @@ contains ! =====     Public Procedures     =============================
     if ( CATENATESPLITS .and. associated(DirectDatabase) &
       & .and. .not. SKIPDIRECTWRITES ) then
       call output( ' unsplitting dgg/dgm files', advance='yes' )
-      call unsplitFiles ( DirectDatabase, FileDatabase, usingSubmit, debug )
+      call unsplitFiles ( DirectDatabase, FileDatabase, usingOldSubmit, debug )
     else
       call output( 'catenatesplits: ', advance='no' )
       call output( catenatesplits, advance='yes' )
@@ -1663,6 +1667,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.126  2006/10/02 23:06:56  pwagner
+! Write FailedMachines attribute unless using old mlssubmit
+!
 ! Revision 2.125  2006/08/02 19:52:55  vsnyder
 ! Add destroy command and destroy field for output command
 !
