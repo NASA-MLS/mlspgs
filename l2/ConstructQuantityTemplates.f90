@@ -1025,7 +1025,7 @@ contains ! ============= Public procedures ===================================
       L_CLOUDINDUCEDRADIANCE, L_CLOUDEXTINCTION, L_CLOUDMINMAX, L_CLOUDRADSENSITIVITY, &
       L_CLOUDWATER, L_COLUMNABUNDANCE, &
       L_DNWT_AJN, L_DNWT_AXMAX, L_DNWT_CAIT, &
-      L_DNWT_CHISQMINNORM, L_DNWT_CHISQNORM, &
+      L_DNWT_CHISQMINNORM, L_DNWT_CHISQNORM, L_DNWT_CHISQRATIO, &
       L_DNWT_DIAG, L_DNWT_DXDX, L_DNWT_DXDXL, &
       L_DNWT_DXN, L_DNWT_DXNL, L_DNWT_FLAG, L_DNWT_FNMIN, &
       L_DNWT_FNORM, L_DNWT_GDX, L_DNWT_GFAC, &
@@ -1099,6 +1099,7 @@ contains ! ============= Public procedures ===================================
 
     call DefineQtyTypes ( (/ &
       l_dnwt_chisqnorm, phyq_dimensionless, p_vGrid, next, &
+      l_dnwt_chisqratio, phyq_dimensionless, p_vGrid, next, &
       l_dnwt_diag, phyq_dimensionless, p_vGrid, next, &
       l_dnwt_dxdx, phyq_dimensionless, p_vGrid, next, &
       l_dnwt_dxdxl, phyq_dimensionless, p_vGrid, next, &
@@ -1293,6 +1294,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.136  2006/10/02 23:05:31  pwagner
+! May Fill chi^2 ratio to measure convergence
+!
 ! Revision 2.135  2006/08/11 20:36:24  vsnyder
 ! Add INTENT(IN) to MIFGeolocation
 !
