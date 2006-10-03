@@ -178,6 +178,10 @@ begin Fill
     method=RHIPrecisionFromH2O, /dontMask
   ;; Set precision -ve when wose than 50% apriori precision
   NegativePrecision, precision=outputPrecision, aprioriPrecision=aprioriPrecision
+  ;; Compute chi^2 ratio as measure of convergence
+  Fill, quantity=diag$1.dnwt_chisqratio, method=chiSqRatio, $
+    normQty= diag$1.dnwt_chisqnorm, minNormQty=diag$1.dnwt_chisqminNorm, $
+    flags=diag$1.dnwt_flag
 end Fill
 
 !ifdef(flagSuppressRegularOutput,{},{
@@ -787,6 +791,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, status=!status
 })})
 
 ; $Log$
+; Revision 1.121  2006/09/22 18:54:36  pwagner
+; StoreStandardProduct macro should not clobber state vector
+;
 ; Revision 1.120  2006/08/08 22:27:07  pwagner
 ; Fills Quality, Status for Temperature, GPH; needs revision before v2.20
 ;
