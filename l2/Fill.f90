@@ -3596,9 +3596,9 @@ contains ! =====     Public Procedures     =============================
       ! (yes, an unfortunate fact)
       integer, intent(in) :: KEY
       type (VectorValue_T), intent(inout) :: QTY
-      type (VectorValue_T), intent(in) ::    normQty
-      type (VectorValue_T), intent(in) ::    minNormQty
-      type (VectorValue_T), intent(in) ::    flagQty
+      type (VectorValue_T), intent(inout) ::    normQty
+      type (VectorValue_T), intent(inout) ::    minNormQty
+      type (VectorValue_T), intent(inout) ::    flagQty
       logical, intent(in)           ::       dontMask    ! Use even masked values
 
       integer, intent(in), optional ::       firstInstance, lastInstance
@@ -3612,11 +3612,12 @@ contains ! =====     Public Procedures     =============================
       integer ::                             C           ! Channel loop counter
       integer ::                             S           ! Surface loop counter
       integer ::                             I           ! Instances
+      integer ::                             ITER        ! Instances
       integer ::                             QINDEX
       integer ::                             NOCHANS
       integer ::                             N           ! Num. of summed values
       logical ::                             skipMe
-      real                             ::    a, b
+      logical, parameter ::                  FakeData = .false.
 
       ! Executable code
 
@@ -3662,8 +3663,22 @@ contains ! =====     Public Procedures     =============================
 
       noChans = qty%template%noChans
       do i=useFirstInstance, useLastInstance
+        if ( FakeData ) then
+          ! Let's just fake up some data here
+          flagQty%values(:,i) = 0._rv
+          normQty%values(:,i) = 0._rv
+          minNormQty%values(:,i) = 0._rv
+          ! Say we converged at iteration number 5
+          qIndex = 5
+          flagQty%values(:qIndex,i) = -2._rv
+          minNormQty%values(:qIndex,i) = -2._rv
+          do iter = 1, qIndex
+            minNormQty%values(iter, i) = 1.1
+            normQty%values(iter, i) = 1.1 + 0.05*(qIndex+1-iter)
+          enddo
+        endif
         ! Now find the iteration number
-        qIndex = findLast(flagQty%values(:,i) /= 0)
+        qIndex = findLast( flagQty%values(:,i) /= 0._rv )
         if ( qIndex == 0 .or. qIndex >= qty%template%noSurfs ) cycle
         skipMe = &
           & .not. dontMask .and. ( &
@@ -7993,6 +8008,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.345  2006/10/03 20:24:11  pwagner
+! Optional test, tweaks to FillChiSqRatio
+!
 ! Revision 2.344  2006/10/02 23:05:03  pwagner
 ! May Fill chi^2 ratio to measure convergence
 !
