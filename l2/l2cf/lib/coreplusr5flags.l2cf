@@ -6,27 +6,34 @@
 begin Fill
   ;; ------------------------------------ OH-2T5
   !define(flaggingBands,{15,17,18,19})
-  !makeFlagsForOneProduct(product=OH,radiometer=R5,chisqScale=1.0,minRads=2000)
+  !define(flaggingRadiometers,{R5}) !dnl!dnl
+  !makeQualityForOneProduct(product=OH,chisqScale=1.0,minRads=2000)
+  !makeStatusForOneProduct(product=OH,chisqScale=1.0,minRads=2000)
 
   ;; ------------------------------------ O3-2T5
   !define(flaggingBands,{15,17,18,19})
-  !makeFlagsForOneProduct(product=O3,radiometer=R5,chisqScale=1.0,minRads=2000)
+  !define(flaggingRadiometers,{R5})!dnl
+  !makeQualityForOneProduct(product=O3,chisqScale=1.0,minRads=2000)
+  !makeStatusForOneProduct(product=O3,chisqScale=1.0,minRads=2000)
 
   ;; ------------------------------------- Temperature-CorePlusR5
-  ;;; !define(flaggingBands,{1,17,22})
-  ;;; !makeFlagsForOneProduct(product=Temperature,radiometer=R2,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -10K)
   !define(flaggingBands,{1})
-  !makeFlagsForOneProduct(product=Temperature,radiometer=R1A,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -10K)
+  !define(flaggingRadiometers,{R1A,R1B,R3})!dnl
+  !makeQualityForOneProduct(product=Temperature,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=Temperature,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -10K)
 
   ;; ------------------------------------- GPH-CorePlusR5
-  ;;; !define(flaggingBands,{1,17,22})
-  ;;; !makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -10K)
   !define(flaggingBands,{1})
-  !makeFlagsForOneProduct(product=GPH,radiometer=R1A,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -10K)
+  !define(flaggingRadiometers,{R1A,R1B,R3})!dnl
+  !makeQualityForOneProduct(product=GPH,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=GPH,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -10K)
 
 end Fill
 
 ; $Log$
+; Revision 1.9  2006/08/08 22:27:07  pwagner
+; Fills Quality, Status for Temperature, GPH; needs revision before v2.20
+;
 ; Revision 1.8  2004/09/21 23:02:59  livesey
 ; Changed chiSqWeights to 1.0 for everything.
 ;

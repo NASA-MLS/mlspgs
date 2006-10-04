@@ -6,35 +6,46 @@
 begin Fill
   ;; ------------------------------------ O3-240
   !define(flaggingBands,{7,24,33})
-  !makeFlagsForOneProduct(product=O3,radiometer=R3,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -20K)
+  !define(flaggingRadiometers,{R3})!dnl
+  !makeQualityForOneProduct(product=O3,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -20K)
+  !makeStatusForOneProduct(product=O3,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -20K)
 
   ;; ------------------------------------- CO-240
   !define(flaggingBands,{9,25,33})
-  !makeFlagsForOneProduct(product=CO,radiometer=R3,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -20K)
+  !define(flaggingRadiometers,{R3})!dnl
+  !makeQualityForOneProduct(product=CO,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -20K)
+  !makeStatusForOneProduct(product=CO,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -20K)
 
   ;; ------------------------------------- HNO3-240
   !define(flaggingBands,{7,8,9,33})
-  !makeFlagsForOneProduct(product=HNO3,radiometer=R3,chisqScale=1.0,minRads=2000,cloudMax=10K,cloudMin= -20K)
+  !define(flaggingRadiometers,{R3})!dnl
+  !makeQualityForOneProduct(product=HNO3,chisqScale=1.0,minRads=2000,cloudMax=10K,cloudMin= -20K)
+  !makeStatusForOneProduct(product=HNO3,chisqScale=1.0,minRads=2000,cloudMax=10K,cloudMin= -20K)
 
   ;; ------------------------------------- SO2-240
   !define(flaggingBands,{8,33})
-  !makeFlagsForOneProduct(product=SO2,radiometer=R3,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -20K)
+  !define(flaggingRadiometers,{R3})!dnl
+  !makeQualityForOneProduct(product=SO2,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -20K)
+  !makeStatusForOneProduct(product=SO2,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -20K)
 
   ;; ------------------------------------- Temperature-CorePlusR3
-  ;;; !define(flaggingBands,{1,22,32})
-  ;;; !makeFlagsForOneProduct(product=Temperature,radiometer=R1A,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -20K)
   !define(flaggingBands,{8})
-  !makeFlagsForOneProduct(product=Temperature,radiometer=R3,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -888K)
+  !define(flaggingRadiometers,{R3})!dnl
+  !makeQualityForOneProduct(product=Temperature,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -888K)
+  !makeStatusForOneProduct(product=Temperature,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -888K)
 
   ;; ------------------------------------- GPH-CorePlusR3
-  ;;; !define(flaggingBands,{1,22,32})
-  ;;; !makeFlagsForOneProduct(product=GPH,radiometer=R1A,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -20K)
   !define(flaggingBands,{8})
-  !makeFlagsForOneProduct(product=GPH,radiometer=R3,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -888K)
+  !define(flaggingRadiometers,{R3})!dnl
+  !makeQualityForOneProduct(product=GPH,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -888K)
+  !makeStatusForOneProduct(product=GPH,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -888K)
 
 end Fill
 
 ; $Log$
+; Revision 1.11  2006/08/08 22:27:07  pwagner
+; Fills Quality, Status for Temperature, GPH; needs revision before v2.20
+;
 ; Revision 1.10  2006/07/28 18:56:20  dwu
 ; add so2
 ;

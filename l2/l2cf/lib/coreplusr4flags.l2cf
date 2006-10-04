@@ -6,43 +6,64 @@
 begin Fill
   ;; ------------------------------------ ClO-640
   !define(flaggingBands,{10})
-  !makeFlagsForOneProduct(product=ClO,radiometer=R4,chisqScale=1.0,minRads=600,cloudMax=10K,cloudMin= -10K)
+  !define(flaggingRadiometers,{R4})!dnl
+  !makeQualityForOneProduct(product=ClO,chisqScale=1.0,minRads=600,cloudMax=10K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=ClO,chisqScale=1.0,minRads=600,cloudMax=10K,cloudMin= -10K)
 
   ;; ------------------------------------ BrO-640
   !define(flaggingBands,{11,31})
-  !makeFlagsForOneProduct(product=BrO,radiometer=R4,chisqScale=1.0,minRads=1000,cloudMax=10K,cloudMin= -10K)
+  !define(flaggingRadiometers,{R4})!dnl
+  !makeQualityForOneProduct(product=BrO,chisqScale=1.0,minRads=1000,cloudMax=10K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=BrO,chisqScale=1.0,minRads=1000,cloudMax=10K,cloudMin= -10K)
 
   ;; ------------------------------------ HOCl-640
   !define(flaggingBands,{10,11,28,29})
-  !makeFlagsForOneProduct(product=HOCl,radiometer=R4,chisqScale=1.0,minRads=2000,cloudMax=10K,cloudMin= -10K)
+  !define(flaggingRadiometers,{R4})!dnl
+  !makeQualityForOneProduct(product=HOCl,chisqScale=1.0,minRads=2000,cloudMax=10K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=HOCl,chisqScale=1.0,minRads=2000,cloudMax=10K,cloudMin= -10K)
 
   ;; ------------------------------------ N2O-640
   !define(flaggingBands,{12})
-  !makeFlagsForOneProduct(product=N2O,radiometer=R4,chisqScale=1.0,minRads=800,cloudMax=10K,cloudMin= -10K)
+  !define(flaggingRadiometers,{R4})!dnl
+  !makeQualityForOneProduct(product=N2O,chisqScale=1.0,minRads=800,cloudMax=10K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=N2O,chisqScale=1.0,minRads=800,cloudMax=10K,cloudMin= -10K)
 
   ;; ------------------------------------ HCl-640
   !define(flaggingBands,{13,14})
-  !makeFlagsForOneProduct(product=HCl,radiometer=R4,chisqScale=1.0,minRads=1000,cloudMax=10K,cloudMin= -10K)
+  !define(flaggingRadiometers,{R4})!dnl
+  !makeQualityForOneProduct(product=HCl,chisqScale=1.0,minRads=1000,cloudMax=10K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=HCl,chisqScale=1.0,minRads=1000,cloudMax=10K,cloudMin= -10K)
 
   ;; ------------------------------------ O3-640
   !define(flaggingBands,{13,14,30,31})
-  !makeFlagsForOneProduct(product=O3,radiometer=R4,chisqScale=1.0,minRads=2000,cloudMax=10K,cloudMin= -10K)
+  !define(flaggingRadiometers,{R4})!dnl
+  !makeQualityForOneProduct(product=O3,chisqScale=1.0,minRads=2000,cloudMax=10K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=O3,chisqScale=1.0,minRads=2000,cloudMax=10K,cloudMin= -10K)
 
   ;; ------------------------------------ HO2-640
   !define(flaggingBands,{31})
-  !makeFlagsForOneProduct(product=HO2,radiometer=R4,chisqScale=1.0,minRads=200,cloudMax=10K,cloudMin= -10K)
+  !define(flaggingRadiometers,{R4})!dnl
+  !makeQualityForOneProduct(product=HO2,chisqScale=1.0,minRads=200,cloudMax=10K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=HO2,chisqScale=1.0,minRads=200,cloudMax=10K,cloudMin= -10K)
 
   ;; ------------------------------------ HNO3-640
   !define(flaggingBands,{10,11,12,13,14,28,29,30,31})
-  !makeFlagsForOneProduct(product=HNO3,radiometer=R4,chisqScale=1.0,minRads=4000,cloudMax=10K,cloudMin= -10K)
+  !define(flaggingRadiometers,{R4})!dnl
+  !makeQualityForOneProduct(product=HNO3,chisqScale=1.0,minRads=4000,cloudMax=10K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=HNO3,chisqScale=1.0,minRads=4000,cloudMax=10K,cloudMin= -10K)
 
   ;; ------------------------------------ CH3CN-640
   !define(flaggingBands,{10,11,12,13,14,28,29,30,31})
-  !makeFlagsForOneProduct(product=CH3CN,radiometer=R4,chisqScale=1.0,minRads=4000,cloudMax=10K,cloudMin= -10K)
+  !define(flaggingRadiometers,{R4})!dnl
+  !makeQualityForOneProduct(product=CH3CN,chisqScale=1.0,minRads=4000,cloudMax=10K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=CH3CN,chisqScale=1.0,minRads=4000,cloudMax=10K,cloudMin= -10K)
 
 end Fill
 
 ; $Log$
+; Revision 1.9  2006/07/26 21:13:54  dwu
+; modified for v2.0 clouds
+;
 ; Revision 1.8  2004/09/21 23:02:59  livesey
 ; Changed chiSqWeights to 1.0 for everything.
 ;

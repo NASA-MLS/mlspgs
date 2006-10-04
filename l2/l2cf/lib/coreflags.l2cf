@@ -11,17 +11,24 @@ begin Fill
 ;;;  !makeFlagsForOneProduct(product=Temperature,radiometer=R1B,chisqScale=1.0,minRads=1500,cloudMax=5K,cloudMin= -10K)
 ;;;  !define(flaggingBands,{8,33})
   !define(flaggingBands,{8})
-  !makeFlagsForOneProduct(product=Temperature,radiometer=R3,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -888K)
+  !define(flaggingRadiometers,{R1A,R1B,R3})!dnl
+  !makeQualityForOneProduct(product=Temperature,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -888K)
+  !makeStatusForOneProduct(product=Temperature,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -888K)
 
   ;; ------------------------------------ GPH-Core
   ;;;!define(flaggingBands,{1,22,32})
   ;;;!makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=1.0,minRads=1500,cloudMax=5K,cloudMin= -30K)
   !define(flaggingBands,{8})
-  !makeFlagsForOneProduct(product=GPH,radiometer=R3,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -888K)
+  !define(flaggingRadiometers,{R1A,R1B,R3})!dnl
+  !makeQualityForOneProduct(product=GPH,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -888K)
+  !makeStatusForOneProduct(product=GPH,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -888K)
 
 end Fill
 
 ; $Log$
+; Revision 1.9  2006/08/08 22:27:07  pwagner
+; Fills Quality, Status for Temperature, GPH; needs revision before v2.20
+;
 ; Revision 1.8  2004/11/19 21:01:31  livesey
 ; Changed R1 to R1A
 ;
