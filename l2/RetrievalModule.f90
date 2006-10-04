@@ -2623,9 +2623,8 @@ NEWT: do ! Newtonian iteration
           if ( negateSD ) then
             ! Go through and set error bar negative if appropriate
             do qty = 1, v(diagFlagA)%template%noQuantities
-              where ( outputSD%quantities(qty)%values > &
-                &     precisionFactor * v(diagFlagB)%quantities(qty)%values .and. &
-                & v(diagFlagA)%quantities(qty)%values == 0.0_rv )
+              where ( v(diagFlagB)%quantities(qty)%values > precisionFactor &
+                &     .and. v(diagFlagA)%quantities(qty)%values == 0.0_rv )
                 outputSD%quantities(qty)%values = - outputSD%quantities(qty)%values
               end where
             end do
@@ -2690,6 +2689,9 @@ NEWT: do ! Newtonian iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.285  2006/10/04 19:39:38  vsnyder
+! Correct negateSD as recommended by Herb
+!
 ! Revision 2.284  2006/09/21 18:51:14  pwagner
 ! Reduce level of dumps in SIDS version
 !
