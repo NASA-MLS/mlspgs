@@ -2617,16 +2617,19 @@ NEWT: do ! Newtonian iteration
 
           call cloneVector ( v(diagFlagB), state )
           call GetDiagonal ( aPlusRegcov%m, v(diagFlagB), squareRoot=.true. )
+          ! Remove ones where we substituted aposteriori precision.
+          do qty = 1, v(diagFlagA)%template%noQuantities
+            where ( v(diagFlagA)%quantities(qty)%values /= 0.0_rv ) &
+              & v(diagFlagB)%quantities(qty)%values = 0.0_rv
+          end do
           if ( associated(aprioriFraction) ) &
             call copyVector ( aprioriFraction, v(diagFlagB) )
 
           if ( negateSD ) then
             ! Go through and set error bar negative if appropriate
             do qty = 1, v(diagFlagA)%template%noQuantities
-              where ( v(diagFlagB)%quantities(qty)%values > precisionFactor &
-                &     .and. v(diagFlagA)%quantities(qty)%values == 0.0_rv )
-                outputSD%quantities(qty)%values = - outputSD%quantities(qty)%values
-              end where
+              where ( v(diagFlagB)%quantities(qty)%values > precisionFactor ) &
+                & outputSD%quantities(qty)%values = - outputSD%quantities(qty)%values
             end do
           end if
         end if ! ( negateSD .or. associated(aprioriFraction) )
@@ -2689,6 +2692,10 @@ NEWT: do ! Newtonian iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.286  2006/10/04 22:52:48  vsnyder
+! Another change from Herb:  Make Apriori fraction zero where we had to
+! substitute aposteriori precision to calculate the apriori fraction.
+!
 ! Revision 2.285  2006/10/04 19:39:38  vsnyder
 ! Correct negateSD as recommended by Herb
 !
