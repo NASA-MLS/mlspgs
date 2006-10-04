@@ -727,10 +727,16 @@ Fill, quantity=temporaryDiagnostics.chisqTmp, method=manipulate, manipulation='a
 !define(addInOneNoRads,{!dnl
 Fill, quantity=temporaryDiagnostics.noRadsTmp, method=manipulate, manipulation='a+b', $
   a=temporaryDiagnostics.noRadsTmp, b=otherDiagnostics.noRadsProfile$1, /force!nl})
+!define(addInOneHighCloudContam,{!dnl
+Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, status=!statusHighCloud+!statusBeWary, $
+  sourceQuantity=otherDiagnostics.highCloudSummary$1, maxValue=!MFcloudmax, /additional!nl})
+!define(addInOneLowCloudContam,{!dnl
+Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, status=!statusLowCloud+!statusBeWary, $
+  sourceQuantity=otherDiagnostics.lowCloudSummary$1, minValue=!MFcloudmin, /additional!nl})
 
-!define(makeFlagsForOneProduct,{!dnl
+;; Fill Quality fields, plus set status bit based on too few radiances
+!define(makeQualityForOneProduct,{!dnl
 !undefine(MFproduct)!dnl
-!undefine(MFradiometer)!dnl
 !undefine(MFchisqscale)!dnl
 !undefine(MFminrads)!dnl
 !undefine(MFcloudmax)!dnl
@@ -779,18 +785,41 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
   status=!statusTooFewRadiances+!statusDoNotUse, $
   sourceQuantity=temporaryDiagnostics.noRadsTmp, minValue=!MFminrads, /additional})
 
-!ifdef(MFcloudmax,{
-;; Status - cloudy radiances - don't do a box car.
-Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, status=!statusHighCloud+!statusBeWary, $
-  sourceQuantity=otherDiagnostics.highCloudSummary!MFradiometer, maxValue=!MFcloudmax, /additional
 })
-!ifdef(MFcloudmin,{
+
+;; Set status bits based on clouds contaminating radiances in selected radiometers
+!define(makeStatusForOneProduct,{!dnl
+!undefine(MFproduct)!dnl
+!undefine(MFchisqscale)!dnl
+!undefine(MFminrads)!dnl
+!undefine(MFcloudmax)!dnl
+!undefine(MFcloudmin)!dnl
+!ProcessParVal(MF,$@)!dnl
+!undefine(HRQuantity)!dnl
+!ifelse(!MFproduct,{H2O}, {!dnl
+!define(HRQuantity,{!MFproduct_hr})!dnl
+}, !MFproduct,{GPH}, {!dnl
+!define(HRQuantity,{!MFproduct_hr})!dnl
+}, !MFproduct,{RHI}, {!dnl
+!define(HRQuantity,{!MFproduct_hr})!dnl
+}, !MFproduct,{Temperature}, {!dnl
+!define(HRQuantity,{!MFproduct_hr})!dnl
+},{!dnl
+!define(HRQuantity,{!MFproduct})!dnl
+})!dnl
+!dnl
 ;; Status - cloudy radiances - don't do a boxcar.
-Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, status=!statusLowCloud+!statusBeWary, $
-  sourceQuantity=otherDiagnostics.lowCloudSummary!MFradiometer, minValue=!MFcloudmin, /additional
+!ifdef(MFcloudmax,{!dnl
+!forall(addInOneHighCloudContam,!flaggingRadiometers)
+})
+!ifdef(MFcloudmin,{!dnl
+!forall(addInOneLowCloudContam,!flaggingRadiometers)!dnl
 })})
 
 ; $Log$
+; Revision 1.122  2006/10/03 20:26:55  pwagner
+; Added dnwt_chiSqRatio as measure of convergence
+;
 ; Revision 1.121  2006/09/22 18:54:36  pwagner
 ; StoreStandardProduct macro should not clobber state vector
 ;
