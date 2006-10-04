@@ -364,7 +364,8 @@ contains
     ! Dummy arguments
     real(rk), dimension(:), intent(in) :: list ! List to search
     real(rk), dimension(:), intent(in) :: values ! Values to search for
-    integer, dimension(:), intent(out) :: indices ! Result
+    integer, dimension(:), intent(out) :: indices ! list(indices) <= values
+      !                                               <= list(indices+1)
     integer, optional, intent(in) :: start ! Optional start index
     logical, optional, intent(in) :: allowTopValue ! Can return N
     logical, optional, intent(in) :: allowBelowValue ! Can return 0
@@ -384,7 +385,8 @@ contains
     ! Dummy arguments
     real(rk), dimension(:), intent(in) :: list ! List to search
     real(rk), dimension(:), intent(in) :: values ! Values to search for
-    integer, dimension(:), intent(out) :: indices ! Result
+    integer, dimension(:), intent(out) :: indices ! list(indices) <= values
+      !                                               <= list(indices+1)
     integer, optional, intent(in) :: start ! Optional start index
     logical, optional, intent(in) :: allowTopValue ! Can return N
     logical, optional, intent(in) :: allowBelowValue ! Can return 0
@@ -406,7 +408,7 @@ contains
     ! Dummy arguments
     real(rk), dimension(:), intent(in) :: list ! List to search
     real(rk), intent(in) :: value ! Value to search for
-    integer, intent(out) :: index ! Resulting index
+    integer, intent(out) :: index ! list(index) <= value <= list(index+1)
     integer, intent(in), optional :: start ! Optional start index
     logical, optional, intent(in) :: allowTopValue ! Can return N
     logical, optional, intent(in) :: allowBelowValue ! Can return 0
@@ -431,7 +433,7 @@ contains
     ! Dummy arguments
     real(rk), dimension(:), intent(in) :: list ! List to search
     real(rk), intent(in) :: value ! Value to search for
-    integer, intent(out) :: index ! Resulting index
+    integer, intent(out) :: index ! list(index) <= value <= list(index+1)
     integer, intent(in), optional :: start ! Optional start index
     logical, optional, intent(in) :: allowTopValue ! Can return N
     logical, optional, intent(in) :: allowBelowValue ! Can return 0
@@ -972,6 +974,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.46  2006/10/04 03:20:08  vsnyder
+! Better comments for HUNT results
+!
 ! Revision 2.45  2006/08/05 02:36:36  vsnyder
 ! Delete unused symbols
 !
