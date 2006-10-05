@@ -122,7 +122,15 @@ get_unique_name()
 do_the_call()
 {
 
+# Not sure why this isn't done automatcially
+if [ -r "$HOME/.bashrc" ]
+then
+. $HOME/.bashrc
+fi
+
+#This only works at the scf--change it when copying to the sips
 LASTDITCHPGSBIN="/software/toolkit/LF6.1/toolkit/bin/linux"
+#LASTDITCHPGSBIN="/science/pge/v0200-l2/toolkit5.2.14/bin/linux"
 PGE_ROOT=ppggeerroott
 if [ -r "$PGE_ROOT/science_env.sh"  ]
 then
@@ -131,7 +139,7 @@ elif [ -r "$PGSBIN/pgs-env.ksh" ]
 then
 . $PGSBIN/pgs-env.ksh
 else
-#Last ditch--if this doens't work we're outta here
+#Last ditch--if this doesn't work we're outta here
 . $LASTDITCHPGSBIN/pgs-env.ksh
 fi
 export
@@ -188,10 +196,26 @@ while [ "$more_opts" = "yes" ] ; do
        echo "$otheropts" >> $LOGFILE
        shift
        ;;
+    --skipS* )
+       otheropts=`add_option "$otheropts" --skipSections`
+       otheropts=`add_option "$otheropts" $2`
+       echo "Adding argument to skip certain sections: $1 $2" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       shift
+       shift
+       ;;
     --slave* )
 	   masterTid="$2"
 	   shift
 	   shift
+       ;;
+    --state* )
+       otheropts=`add_option "$otheropts" $1`
+       otheropts=`add_option "$otheropts" $2`
+       echo "Adding argument to fill skipped retrievals: $2" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       shift
+       shift
        ;;
     --tk )
        otheropts=`add_option "$otheropts" --tk`
@@ -283,6 +307,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.11  2006/04/21 23:58:39  pwagner
+# Ugly LASTDITCHPGSBIN set to overcome unknown problem with some scf hosts; remove later
+#
 # Revision 1.10  2005/06/23 22:20:46  pwagner
 # Reworded Copyright statement
 #
