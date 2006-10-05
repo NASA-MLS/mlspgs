@@ -1311,13 +1311,13 @@ contains
     if ( .not. wildcard ) then
       if ( ignorecase ) then
         if ( flushleft ) then
-          relation = (adjustl(lowercase(str1)) == adjustl(lowercase(str1)))
+          relation = (adjustl(lowercase(str1)) == adjustl(lowercase(str2)))
         else
-          relation = (lowercase(str1) == lowercase(str1))
+          relation = (lowercase(str1) == lowercase(str2))
         endif
       else
         if ( flushleft ) then
-          relation = (adjustl(str1) == adjustl(str1))
+          relation = (adjustl(str1) == adjustl(str2))
         ! else plain vanilla case already handled as special case above
         endif    
       endif    
@@ -1599,6 +1599,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.63  2006/10/05 23:34:13  pwagner
+! Fixed bug in streq making identity comparisons
+!
 ! Revision 2.62  2006/05/09 00:14:23  pwagner
 ! Added Replace; useful to replace null chars with blanks
 !
