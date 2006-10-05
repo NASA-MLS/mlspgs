@@ -45,7 +45,7 @@ program MLSL2
   use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMSG_Debug, &
     & MLSMSG_Error, MLSMSG_Severity_to_quit, MLSMSG_Warning, MLSMessageExit
   use MLSPCF2, only: MLSPCF_L2CF_START
-  use MLSStrings, only: lowerCase, readIntsFromChars
+  use MLSStrings, only: lowerCase, readIntsFromChars, trim_safe
   use MLSStringLists, only: catLists, ExpandStringRange, &
     & GetStringElement, GetUniqueList, &
     & NumStringElements, RemoveElemFromList, SwitchDetail, unquote
@@ -165,6 +165,7 @@ program MLSL2
 ! integer :: RECORD_LENGTH
   character(len=len(switches)) :: removeSwitches = ''
   integer :: ROOT                  ! of the abstract syntax tree
+  character(len=128) :: sectionsToSkip = ''
   logical :: showDefaults = .false. ! Just print default opts and quit
   integer :: SLAVEMAF = 0          ! Slave MAF for fwmParallel mode
   integer :: STATUS                ! From OPEN
@@ -433,6 +434,12 @@ program MLSL2
         SKIPDIRECTWRITES = switch
       else if ( lowercase(line(3+n:10+n)) == 'skipretr' ) then
         SKIPRETRIEVAL = switch
+      else if ( lowercase(line(3+n:9+n)) == 'skipsec' ) then
+        call AccumulateSlaveArguments ( line )
+        i = i + 1
+        call getarg ( i, line )
+        command_line = trim(command_line) // ' ' // trim(adjustl(line))
+        sectionsToSkip = lowercase(line)
       else if ( lowercase(line(3+n:10+n)) == 'slavemaf' ) then
         copyArg=.false.
         if ( line(11+n:) /= ' ' ) then
@@ -843,7 +850,7 @@ program MLSL2
       if ( timing ) &
         & call output ( "-------- Processing Begun ------ ", advance='yes' )
       call walk_tree_to_do_MLS_L2 ( root, error, first_section, countChunks, &
-        & filedatabase )
+        & filedatabase, sectionsToSkip )
       if ( timing ) then
         call output ( "-------- Processing Ended ------ ", advance='yes' )
         call sayTime ( 'Processing' )
@@ -862,7 +869,7 @@ program MLSL2
   call deallocate_tree
   call FreePVMArgs
   if ( parallel%slave .and. &
-    & (SKIPDIRECTWRITES .or. SKIPRETRIEVAL) ) then
+    & (SKIPDIRECTWRITES .or. SKIPRETRIEVAL .or. sectionsToSkip /= ' ' ) ) then
     ! call mls_h5close(error)
     ! call MLSMessageExit 
   else if ( error == 0 ) then
@@ -1001,6 +1008,8 @@ contains
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       call output_name_v_pair ( 'Skip all retrievals?', SKIPRETRIEVAL, advance='yes', &
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      call output_name_v_pair ( 'Skip these sections?', trim_safe(sectionsToSkip), advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       call output_name_v_pair ( 'Unretrieved states fill', STATEFILLEDBYSKIPPEDRETRIEVALS, advance='yes', &
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       call output_name_v_pair ( 'Stage in memory instead of a file?', parallel%stageInMemory, advance='yes', &
@@ -1056,6 +1065,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.158  2006/10/05 23:32:14  pwagner
+! skipSections can skip named sections
+!
 ! Revision 2.157  2006/09/21 18:46:49  pwagner
 ! Reduce level of dumps in SIDS version
 !
