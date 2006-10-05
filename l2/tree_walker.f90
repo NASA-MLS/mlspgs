@@ -29,7 +29,7 @@ module TREE_WALKER
 contains ! ====     Public Procedures     ==============================
   ! -------------------------------------  WALK_TREE_TO_DO_MLS_L2  -----
   subroutine WALK_TREE_TO_DO_MLS_L2 ( ROOT, ERROR_FLAG, FIRST_SECTION, &
-    & COUNTCHUNKS, FILEDATABASE )
+    & COUNTCHUNKS, FILEDATABASE, SECTIONSTOSKIP )
 
     use Algebra_M, only: Algebra
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
@@ -40,6 +40,7 @@ contains ! ====     Public Procedures     ==============================
     use Construct, only: MLSL2Construct, MLSL2DeConstruct, &
       & ConstructMIFGeolocation
     use DirectWrite_m, only: DirectData_T, DestroyDirectDatabase
+    use dump_0, only: dump
     use EmpiricalGeometry, only: ForgetOptimumLon0
     use FGrid, only: FGrid_T, DestroyFGridDatabase, DUMP
     use Fill, only: MLSL2Fill
@@ -52,9 +53,11 @@ contains ! ====     Public Procedures     ==============================
     use HGridsDatabase, only: HGrid_T
     use HGrid, only: COMPUTEALLHGRIDOFFSETS
     use Init_Tables_Module, only: L_CHISQCHAN, L_CHISQMMAF, L_CHISQMMIF,  &
+      & SECTION_FIRST, SECTION_LAST, &
       & Z_ALGEBRA, Z_CHUNKDIVIDE,  Z_CONSTRUCT, Z_FILL, Z_GLOBALSETTINGS, &
       & Z_JOIN, Z_MERGEGRIDS, Z_MLSSIGNALS, Z_OUTPUT, Z_READAPRIORI,      &
       & Z_RETRIEVE, Z_SPECTROSCOPY
+    use intrinsic, only: section_indices
     use JOIN, only: MLSL2Join
     use L2AUXData, only: DestroyL2AUXDatabase, L2AUXData_T, Dump
     use L2FWMParallel, only: L2FWMSlaveTask, LaunchFWMSlaves
@@ -73,13 +76,13 @@ contains ! ====     Public Procedures     ==============================
       & DestroyRadiometerDatabase, DestroySignalDatabase, &
       & DestroySpectrometerTypeDatabase, MLSSignals, Modules, Radiometers, &
       & Signals, SpectrometerTypes
-    use MLSStringLists, only: ExpandStringRange, SwitchDetail
+    use MLSStringLists, only: ExpandStringRange, isInList, SwitchDetail
     use MLSStrings, only: lowerCase
     use MLSL2Options, only: SKIPDIRECTWRITES, SKIPDIRECTWRITESORIGINAL
     use MLSL2Timings, only: add_to_section_timing, TOTAL_TIMES
     use Open_Init, only: OpenAndInitialize
     use OutputAndClose, only: Output_Close
-    use Output_m, only: BLANKS, getStamp, Output, &
+    use Output_m, only: BLANKS, getStamp, Output, output_name_v_pair, &
       & RESUMEOUTPUT, revertoutput, setStamp, switchOutput
     use PointingGrid_m, only: Destroy_Pointing_Grid_Database
     use QuantityTemplates, only: QuantityTemplate_T
@@ -87,7 +90,7 @@ contains ! ====     Public Procedures     ==============================
     use RetrievalModule, only: Retrieve
     use SpectroscopyCatalog_m, only: Destroy_Line_Database, &
       & Destroy_SpectCat_Database, Spectroscopy
-  ! use Test_Parse_Signals_m, only: Test_Parse_Signals
+    use STRING_TABLE, only: GET_STRING
     use Time_M, only: Time_Now
     use Toggles, only: GEN, LEVELS, SWITCHES, TOGGLE
     use Trace_m, only: DEPTH, TRACE_BEGIN, TRACE_END
@@ -101,6 +104,7 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(in) ::     FIRST_SECTION! Index of son of root of first n_cf
     logical, intent(in) ::     COUNTCHUNKS ! Just count the chunks, print them out and quit
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    character(len=*), intent(in) :: SECTIONSTOSKIP
     ! Internal variables
     logical ::                                   canWriteL2PC
     integer ::                                   chunkNo ! Index of Chunks
@@ -127,7 +131,10 @@ contains ! ====     Public Procedures     ==============================
     logical ::                                   now_stop
     type (TAI93_Range_T) ::                      ProcessingRange  ! Data processing range
     logical ::                                   REDUCEDCHUNKS
+    integer ::                                   section_index
+    character(len=32) ::                         section_name
     logical ::                                   showTime
+    logical, dimension(SECTION_FIRST:SECTION_LAST) :: skipSections
     integer ::                                   SON              ! Son of Root
     logical ::                                   STOPBEFORECHUNKLOOP
     real    ::                                   t1, t2, tChunk
@@ -152,6 +159,17 @@ contains ! ====     Public Procedures     ==============================
     stopBeforeChunkLoop = ( stopBeforeChunkLoop .and. stopAfterSection /= ' ' )
     reducedChunks      = .false.
     depth = 0
+    ! call output( 'Sections to skip: ' // trim(sectionsToSkip), advance='yes' )
+    skipSections = .false.
+    do i=section_first, section_last
+      call get_string ( section_indices(i), section_name, strip=.true. )
+      skipSections(i) = isInList( sectionstoskip, section_name, '-fc' )
+      ! call output_name_v_pair ( 'i', i, advance='no')
+      ! call output_name_v_pair ( '  section_name', section_name, advance='no')
+      ! call output_name_v_pair ( '  skip?', skipSections(i), advance='yes')
+    enddo
+    ! call dump( skipSections, 'skipping sections' )
+    ! stop
     if ( toggle(gen) ) call trace_begin ( 'WALK_TREE_TO_DO_MLS_L2', &
       & subtree(first_section,root) )
     call time_now ( t1 )
@@ -164,15 +182,22 @@ contains ! ====     Public Procedures     ==============================
     i = first_section
     howmany = nsons(root)
 
-    ! -------------------------------------------------------------
-    ! ------------------------------------------------------------- Loop over tree
+    ! -----------------------------------------------------
+    ! ----------------------------------------------------- Loop over tree
 
     ! Now loop over the sections in the tree
     do while ( i <= howmany )
       son = subtree(i,root)
-
+      section_index = decoration(subtree(1,son))
+      call get_string ( section_indices(section_index), section_name, &
+        & strip=.true. )
+      if ( section_index > SECTION_FIRST - 1 .and. &
+        & section_index < SECTION_LAST + 1 ) then
+        if( skipSections(section_index) ) &
+          & section_index = SECTION_FIRST - 1 ! skip
+      endif
       ! First those involved in 'preprocessing'
-      select case ( decoration(subtree(1,son)) ) ! section index
+      select case ( section_index )
 
         ! --------------------------------------------------------- Init sections
       case ( z_globalsettings )
@@ -272,7 +297,7 @@ contains ! ====     Public Procedures     ==============================
             call L2FWMSlaveTask ( mifGeolocation )
           end if
           ! Sort out the timings
-          select case ( decoration(subtree(1,son)) ) ! section index
+          select case ( section_index )
           case ( z_algebra )
             call add_to_section_timing ( 'algebra', t1, now_stop )
           case ( z_construct )
@@ -283,6 +308,10 @@ contains ! ====     Public Procedures     ==============================
             call add_to_section_timing ( 'join', t1, now_stop )
           case ( z_retrieve )
             call add_to_section_timing ( 'retrieve', t1, now_stop )
+          case default
+            ! This is one of the skipped sections
+            ! call output('Skipping ', advance='no')
+            ! call output(trim(section_name), advance='yes')
           end select
           ! print the timing for FullForwardModel, the following return
 	  ! if fmt1 or fmt2 is true
@@ -301,7 +330,7 @@ contains ! ====     Public Procedures     ==============================
               & sense=.false.)
           endif  
           canWriteL2PC = ( count(.not. chunksSkipped) < 2 )
-          do chunkNo = firstChunk, lastChunk ! ----------------------- Chunk loop
+          do chunkNo = firstChunk, lastChunk ! --------------------- Chunk loop
             call resumeOutput ! In case the last phase was  silent
             if ( chunksSkipped(chunkNo) ) cycle
             call time_now ( tChunk )
@@ -315,7 +344,12 @@ contains ! ====     Public Procedures     ==============================
             j = i
 subtrees:   do while ( j <= howmany )
               son = subtree(j,root)
-              select case ( decoration(subtree(1,son)) ) ! section index
+              section_index = decoration(subtree(1,son))
+              call get_string ( section_indices(section_index), section_name, &
+                & strip=.true. )
+              if( skipSections(section_index) ) &
+                & section_index = SECTION_FIRST - 1 ! skip
+              select case ( section_index ) ! section index
               case ( z_algebra )
                 call algebra ( son, vectors, matrices, chunks(chunkNo), forwardModelConfigDatabase )
               case ( z_construct )
@@ -344,7 +378,8 @@ subtrees:   do while ( j <= howmany )
                   & chunks(chunkNo) )
                 call add_to_section_timing ( 'retrieve', t1, now_stop )
               case default
-                exit subtrees
+                ! exit subtrees
+                ! This may simply be a skipped section
               end select
               j = j + 1
             end do subtrees
@@ -454,6 +489,12 @@ subtrees:   do while ( j <= howmany )
           & call revertOutput
         call add_to_section_timing ( 'output', t1)
 
+      case default
+        ! This is one of the skipped sections
+        if ( .not. parallel%master ) then
+          call output('Skipping ', advance='no')
+          call output(trim(section_name), advance='yes')
+        endif
       end select
       i = i + 1
     end do
@@ -532,6 +573,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.149  2006/08/14 16:22:28  pwagner
+! Should not double-deallocate if canWriteL2PC
+!
 ! Revision 2.148  2006/08/10 21:46:50  pwagner
 ! --chunk commandline option now synonym for --chunkRange
 !
