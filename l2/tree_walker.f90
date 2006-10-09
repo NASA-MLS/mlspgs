@@ -186,6 +186,7 @@ contains ! ====     Public Procedures     ==============================
     ! ----------------------------------------------------- Loop over tree
 
     ! Now loop over the sections in the tree
+    ! call output_name_v_pair( 'Output_Close index', z_output, advance='yes' )
     do while ( i <= howmany )
       son = subtree(i,root)
       section_index = decoration(subtree(1,son))
@@ -196,6 +197,10 @@ contains ! ====     Public Procedures     ==============================
         if( skipSections(section_index) ) &
           & section_index = SECTION_FIRST - 1 ! skip
       endif
+      ! call output_name_v_pair( 'tree section_index', section_index, advance='yes' )
+      ! if ( section_index == z_output ) then
+      !   call output("Now is our chance to go through output", advance='yes')
+      ! endif
       ! First those involved in 'preprocessing'
       select case ( section_index )
 
@@ -343,12 +348,14 @@ contains ! ====     Public Procedures     ==============================
               & call LaunchFWMSlaves ( chunks ( chunkNo ) )
             j = i
 subtrees:   do while ( j <= howmany )
+              ! call output( 'Now inside subtrees loop', advance='yes' )
               son = subtree(j,root)
               section_index = decoration(subtree(1,son))
               call get_string ( section_indices(section_index), section_name, &
                 & strip=.true. )
               if( skipSections(section_index) ) &
                 & section_index = SECTION_FIRST - 1 ! skip
+              ! call output_name_v_pair( 'subtree section_index', section_index, advance='yes' )
               select case ( section_index ) ! section index
               case ( z_algebra )
                 call algebra ( son, vectors, matrices, chunks(chunkNo), forwardModelConfigDatabase )
@@ -377,12 +384,15 @@ subtrees:   do while ( j <= howmany )
                 & call retrieve ( son, vectors, matrices, forwardModelConfigDatabase, &
                   & chunks(chunkNo) )
                 call add_to_section_timing ( 'retrieve', t1, now_stop )
+              case ( z_output )
+                exit subtrees
               case default
                 ! exit subtrees
                 ! This may simply be a skipped section
               end select
               j = j + 1
             end do subtrees
+            ! call output( 'Now outside subtrees loop', advance='yes' )
 
             if ( switchDetail(switches,'chi') > 0 .and. chunkNo > 1 ) then
               ! Dumps nothing after 1st chunk
@@ -441,8 +451,10 @@ subtrees:   do while ( j <= howmany )
       ! And resume directwrites
       skipDirectwrites = skipDirectwritesOriginal
       case ( z_output ) ! Write out the data
+        ! call output( 'Now our chance to call Output_Close', advance='yes' )
         call resumeOutput ! In case the last phase was  silent
         if ( .not. parallel%slave ) then
+          ! call output( 'Now calling Output_Close', advance='yes' )
           call Output_Close ( son, l2gpDatabase, l2auxDatabase, DirectDatabase, &
 	         & matrices, vectors, fileDataBase, chunks, processingRange, &
             & canWriteL2PC )
@@ -573,6 +585,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.150  2006/10/05 23:32:43  pwagner
+! skipSections can skip named sections
+!
 ! Revision 2.149  2006/08/14 16:22:28  pwagner
 ! Should not double-deallocate if canWriteL2PC
 !
