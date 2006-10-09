@@ -966,7 +966,7 @@ contains
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       call output_name_v_pair ( 'Default hdfeos version on writes', default_hdfversion_write, advance='yes', &
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
-      call output_name_v_pair ( 'Range of chunks', parallel%chunkRange, advance='yes', &
+      call output_name_v_pair ( 'Range of chunks', trim_safe(parallel%chunkRange), advance='yes', &
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       call output_name_v_pair ( 'Avoiding unlimited dimensions in directwrites?', &
         & avoidUnlimitedDims, advance='yes', &
@@ -1065,6 +1065,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.159  2006/10/09 18:38:41  pwagner
+! Trims parallel%chunkRange before outputting
+!
 ! Revision 2.158  2006/10/05 23:32:14  pwagner
 ! skipSections can skip named sections
 !
