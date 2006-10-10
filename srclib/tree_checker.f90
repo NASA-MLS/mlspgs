@@ -357,85 +357,94 @@ contains ! ====     Public Procedures     ==============================
 
       select case ( node_id(son) )
       case ( n_dot ) ! label_ref.field
-        gson = subtree(1,son)
-        type_decl = decoration(subtree(2,field)) ! Required spec
-        decl = get_decl(sub_rosa(gson),label)
-        do while ( decl%tree /= null_tree )
-          test_type = decoration(subtree(1,decl%tree)) ! spec's index
-          if ( test_type == type_decl ) then  ! right kind of spec
-            field_ref = decl%tree
-            call decorate ( gson, field_ref ) ! decorate label_ref with tree
-m:          do j = 3, nsons(field)
-            ! This loop assumes there is only one field of the required
-            ! name.  If it is desired to search through several fields,
-            ! it will be necessary to have a stack to keep track of the
-            ! subtree indices.  It goes through the field names that are
-            ! given by sons 3-n of the n_dot vertex of the definition,
-            ! looking for fields of the same name, starting at the first
-            ! son of the n_dot vertex in the input, and thence from the
-            ! decoration of the brother of the found field name.
-              field_look = decoration(subtree(j,field))
-              do k = 2, nsons(field_ref)
-                field_test = subtree(k,field_ref)
-                if ( node_id(field_test) == n_asg ) then
-                  if ( decoration(subtree(1,field_test)) == &
-                    &  field_look ) then
-                    ! Get the next n_spec_arg tree in the chain
-                    field_ref = decoration(subtree(2,field_test))
-            cycle m
+        if ( node_id(field) == n_dot ) then      ! dot allowed
+          gson = subtree(1,son)
+          type_decl = decoration(subtree(2,field)) ! Required spec
+          decl = get_decl(sub_rosa(gson),label)
+          do while ( decl%tree /= null_tree )
+            test_type = decoration(subtree(1,decl%tree)) ! spec's index
+            if ( test_type == type_decl ) then  ! right kind of spec
+              field_ref = decl%tree
+              call decorate ( gson, field_ref ) ! decorate label_ref with tree
+m:            do j = 3, nsons(field)
+              ! This loop assumes there is only one field of the required
+              ! name.  If it is desired to search through several fields,
+              ! it will be necessary to have a stack to keep track of the
+              ! subtree indices.  It goes through the field names that are
+              ! given by sons 3-n of the n_dot vertex of the definition,
+              ! looking for fields of the same name, starting at the first
+              ! son of the n_dot vertex in the input, and thence from the
+              ! decoration of the brother of the found field name.
+                field_look = decoration(subtree(j,field))
+                do k = 2, nsons(field_ref)
+                  field_test = subtree(k,field_ref)
+                  if ( node_id(field_test) == n_asg ) then
+                    if ( decoration(subtree(1,field_test)) == &
+                      &  field_look ) then
+                      ! Get the next n_spec_arg tree in the chain
+                      field_ref = decoration(subtree(2,field_test))
+              cycle m
+                    end if
                   end if
+                end do ! k
+                call announce_error ( gson, no_such_field, (/ field_look /) )
+    return
+              end do m ! j
+              ! The final field_test is the parent n_asg of the field
+              ! that should have the same name as the second son of the
+              ! n_dot vertex in the input.
+              gson = subtree(2,son)
+              field_look = sub_rosa(gson)
+              do k = 2, nsons(field_test)
+                if ( sub_rosa(subtree(k,field_test)) == field_look ) then
+                  call decorate ( gson, subtree(k,field_test) )
+    return
                 end if
               end do ! k
-              call announce_error ( gson, no_such_field, (/ field_look /) )
+              call announce_error ( gson, no_such_reference, &
+                & (/ subtree(1,field_test) /) )
     return
-            end do m ! j
-            ! The final field_test is the parent n_asg of the field
-            ! that should have the same name as the second son of the
-            ! n_dot vertex in the input.
-            gson = subtree(2,son)
-            field_look = sub_rosa(gson)
-            do k = 2, nsons(field_test)
-              if ( sub_rosa(subtree(k,field_test)) == field_look ) then
-                call decorate ( gson, subtree(k,field_test) )
-    return
-              end if
-            end do ! k
-            call announce_error ( gson, no_such_reference, &
-              & (/ subtree(1,field_test) /) )
-    return
-          end if
-          decl = prior_decl(decl,label)
-        end do
+            end if
+            decl = prior_decl(decl,label)
+          end do
+        end if
         call announce_error ( son, wrong_type, fields=(/son1/) )
       case ( n_identifier )
-        do j = 2, nsons(field)                 ! Try all of the types
-          type_decl = decoration(subtree(j,field))
-          decl = get_decl(sub_rosa(son),look_for)
-          do while ( decl%tree /= null_tree )
-            if ( node_id(type_decl) == n_spec_def ) then
-              test_type = decoration(subtree(1,decl%tree))
-            else
-              test_type = decl%tree
-            end if
-            if ( test_type == type_decl ) then  ! right type
-              if ( look_for == enum_value ) then
-                call decorate ( son, decl%units ) ! decorate son with lit#
+        if ( node_id(field) /= n_dot ) then      ! Field doesn't need x.y
+          do j = 2, nsons(field)                 ! Try all of the types
+            type_decl = decoration(subtree(j,field))
+            decl = get_decl(sub_rosa(son),look_for)
+            do while ( decl%tree /= null_tree )
+              if ( node_id(type_decl) == n_spec_def ) then
+                test_type = decoration(subtree(1,decl%tree))
               else
-                call decorate ( son, decl%tree )  ! decorate son with tree
+                test_type = decl%tree
               end if
+              if ( test_type == type_decl ) then  ! right type
+                if ( look_for == enum_value ) then
+                  call decorate ( son, decl%units ) ! decorate son with lit#
+                else
+                  call decorate ( son, decl%tree )  ! decorate son with tree
+                end if
     return
-            end if
-            decl = prior_decl(decl,look_for)
+              end if
+              decl = prior_decl(decl,look_for)
+            end do
           end do
-        end do
+        end if
+        ! Either field needs x.y, or an allowed type was not found
         call announce_error ( son, wrong_type, fields=(/son1/) )
       case ( n_array )
         do j = 1, nsons(son)
           call assignBody ( subtree(j,son) )
         end do
       case default
-        call expr ( son, type, units, value )
-        if ( .not. check_field_type(field,type_map(type)) ) then
+        if ( node_id(field) /= n_dot ) then ! Field doesn't need x.y
+          call expr ( son, type, units, value )
+          if ( .not. check_field_type(field,type_map(type)) ) then
+            call announce_error ( son1, wrong_type, fields = (/ son1 /) )
+          end if
+        else
           call announce_error ( son1, wrong_type, fields = (/ son1 /) )
         end if
       end select
@@ -1021,6 +1030,9 @@ m:          do j = 3, nsons(field)
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.27  2006/03/23 01:50:43  vsnyder
+! Check for empty fields
+!
 ! Revision 1.26  2005/06/22 20:03:55  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
