@@ -78,7 +78,7 @@ contains
       ! New Gauss points (excludes Lobatto end points) with -1 at front:
       & spread(g_grid,2,NLm1), (/maxVert-1/))
     z_glgrid(maxVert) = z_psig(Nlvl)
-    p_glgrid = 10.0_rp**(-z_glgrid)
+    p_glgrid(:maxVert) = 10.0_rp**(-z_glgrid(:maxVert))
 
   end subroutine Compute_GL_Grid
 
@@ -94,6 +94,9 @@ contains
 end module Compute_GL_Grid_M
 
 ! $Log$
+! Revision 2.16  2006/10/10 01:34:59  vsnyder
+! Compute p_glgrid correctly in non-allocate case
+!
 ! Revision 2.15  2006/09/20 01:39:09  vsnyder
 ! Add an optional 'allocate' argument to control whether to allocate the result
 !
