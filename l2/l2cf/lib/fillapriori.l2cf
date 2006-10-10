@@ -204,7 +204,9 @@ begin Fill
   Fill, quantity=aprioriPrecision.hocl, method=explicit, /spread, explicitValues= 3 ppbv
   ;; For N2O, 0.2 ppmv is too small for the troposphere, but we don't
   ;; have sensitivity there
-  Fill, quantity=aprioriPrecision.n2o,  method=explicit, /spread, explicitValues= 0.2 ppmv
+  ;Fill, quantity=aprioriPrecision.n2o,  method=explicit, /spread, explicitValues= 0.2 ppmv
+  Fill, quantity=aprioriPrecision.n2o, method=profile, profileValues = $
+    [ 147mb: 50ppbv, 100mb : 200ppbv ]
   Fill, quantity=aprioriPrecision.o2,  method=explicit, /spread, explicitValues= 20000.0 ppmv
   Fill, quantity=aprioriPrecision.o3,   method=profile, $
     profileValues = [ 316mb : 500ppbv, 100mb:2ppmv, 46mb : 4 ppmv ]
@@ -494,7 +496,7 @@ begin Fill
   Fill, quantity=vReg.temperature, method=profile, $
     profileValues=[ 1mb:1K ]
   Fill, quantity=vReg.temperature_hr, method=profile, $
-    profileValues=[ 1mb:0.5K ]
+    profileValues=[ 21.6mb:0.5K, 14.7mb:1K, 0.147mb:1K, 0.1mb:2K ]
   Fill, quantity=vReg.o2, method=profile, $
     profileValues=[ 1mb:1000ppmv ]
 
@@ -603,6 +605,9 @@ begin Join
 end Join
   })
 ;$Log$
+;Revision 1.127  2006/10/04 16:49:25  pwagner
+;Hi-res a priori GPH written to DGG file
+;
 ;Revision 1.126  2006/09/29 21:26:02  bill
 ;fixed error in vrag.h2o_hr and made some small adjustments to it
 ;
