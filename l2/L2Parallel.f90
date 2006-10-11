@@ -27,7 +27,7 @@ module L2Parallel
   use Join, only: JOINL2GPQUANTITIES, JOINL2AUXQUANTITIES
   use L2AUXData, only: L2AUXDATA_T
   use L2GPData, only: L2GPDATA_T
-  use L2ParInfo, only: L2PARALLELINFO_T, MACHINE_T, PARALLEL, &
+  use L2ParInfo, only: MACHINE_T, PARALLEL, &
     & CHUNKTAG, GIVEUPTAG, GRANTEDTAG, PETITIONTAG, &
     & SIG_TOJOIN, SIG_FINISHED, SIG_ACKFINISH, SIG_REGISTER, NOTIFYTAG, &
     & SIG_REQUESTDIRECTWRITE, &
@@ -49,12 +49,12 @@ module L2Parallel
   use MoreTree, only: Get_Spec_ID
   use Output_m, only: BLANKS, Output, TimeStamp
   use PVM, only: INFOTAG, &
-    & PVMDATADEFAULT, PVMFINITSEND, PVMF90PACK, PVMFKILL, PVMFMYTID, &
-    & PVMF90UNPACK, PVMTASKHOST, PVMFSPAWN, &
+    & PVMDATADEFAULT, PVMFINITSEND, PVMF90PACK, PVMFKILL, &
+    & PVMF90UNPACK, PVMTASKHOST, &
     & MYPVMSPAWN, PVMFCATCHOUT, PVMFSEND, PVMFNOTIFY, PVMTASKEXIT, &
     & GETMACHINENAMEFROMTID, PVMFFREEBUF, SIG_AboutToDie
-  use PVMIDL, only: PVMIDLPACK, PVMIDLUNPACK
-  use QuantityPVM, only: PVMSENDQUANTITY, PVMRECEIVEQUANTITY
+  use PVMIDL, only: PVMIDLUNPACK
+  use QuantityPVM, only: PVMRECEIVEQUANTITY
   use QuantityTemplates, only: QUANTITYTEMPLATE_T, &
     & DESTROYQUANTITYTEMPLATECONTENTS, INFLATEQUANTITYTEMPLATEDATABASE, &
     & NULLIFYQUANTITYTEMPLATE, DESTROYQUANTITYTEMPLATEDATABASE
@@ -270,7 +270,7 @@ contains ! ================================ Procedures ======================
   ! --------------------------------------------- L2MasterTask ----------
   subroutine L2MasterTask ( chunks, l2gpDatabase, l2auxDatabase )
     use HDF5, only: H5FCREATE_F, H5FCLOSE_F, H5FOPEN_F, H5F_ACC_RDONLY_F, H5F_ACC_TRUNC_F
-    use VectorHDF5, only: WRITEVECTORASHDF5, READVECTORFROMHDF5
+    use VectorHDF5, only: READVECTORFROMHDF5
     ! This is a `master' task for the l2 software
     type (MLSChunk_T), dimension(:), intent(in) :: CHUNKS
     type (L2GPData_T), dimension(:), pointer :: L2GPDATABASE
@@ -299,10 +299,8 @@ contains ! ================================ Procedures ======================
     integer :: BUFFERIDSND              ! From PVM
     integer :: BYTES                    ! Dummy from PVMFBufInfo
     integer :: CHUNK                    ! Loop counter
-    integer :: COMPLETEDFILE            ! String index from slave
     integer :: CREATEFILE               ! Flag for direct writes
     integer :: DEADCHUNK                ! A chunk from a dead task
-    integer :: DEADFILE                 ! ID of file writen by dead task
     integer :: DEADMACHINE              ! A machine for a dead task
     integer :: DEADTID                  ! A task that's died
     integer :: DUMMY                    ! From inflate database
@@ -353,7 +351,6 @@ contains ! ================================ Procedures ======================
     logical, dimension(size(chunks)) :: CHUNKSWRITING ! Which chunks are writing
 
     logical, save :: FINISHED = .false. ! This will be called multiple times
-    logical :: INTEGRITY
 
     type (Machine_T),dimension(:), pointer :: Machines
     type (Machine_T)                       :: thisMachine
@@ -1423,7 +1420,7 @@ contains ! ================================ Procedures ======================
   subroutine StoreSlaveQuantity ( joinedQuantities, joinedVectorTemplates, &
     & joinedVectors, storedResults, chunk, noChunks, tid, noQuantitiesAccumulated,&
     & stageFileID )
-    use VectorHDF5, only: WRITEVECTORASHDF5, READVECTORFROMHDF5
+    use VectorHDF5, only: WRITEVECTORASHDF5
     ! This routine reads a vector from a slave and stores it in
     ! an appropriate place.
 
@@ -1670,10 +1667,8 @@ contains ! ================================ Procedures ======================
     integer, intent(in)                               :: nextChunk
     character(len=MACHINENAMELEN), intent(out)        :: MACHINENAME
     !
-    integer :: BEAT
     integer :: BUFFERID                 ! From PVM
     integer :: INFO                     ! From PVM
-    integer :: BUFFERIDRCV              ! From PVM
     ! Identify ourselves
     if ( switchDetail(switches,'l2q') > -1 ) &
       & call TimeStamp('Requesting host from l2q', advance='yes')
@@ -1697,7 +1692,6 @@ contains ! ================================ Procedures ======================
     character(len=MACHINENAMELEN), intent(out)        :: MACHINENAME
     !
     integer :: BEAT
-    integer :: BUFFERID                 ! From PVM
     integer :: INFO                     ! From PVM
     integer :: BUFFERIDRCV              ! From PVM
     ! How many times to listen for queue manager's granting of request
@@ -1778,7 +1772,7 @@ contains ! ================================ Procedures ======================
   end subroutine TellL2QMachineDied
 
   subroutine TellL2QMachineFinished(machineName, tid, L2Qtid)
-    character(len=MACHINENAMELEN)        :: MACHINENAME
+    character(len=*), intent(in)                        :: MACHINENAME
     integer, intent(in)                                 :: tid
     integer, intent(in)                                 :: L2Qtid
     !
@@ -1865,6 +1859,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.78  2006/10/11 00:30:15  pwagner
+! Fixed bug in length of arg MACHINENAME
+!
 ! Revision 2.77  2006/09/29 00:29:42  pwagner
 ! Fixes bug where masters try to free dead hosts when finished
 !
