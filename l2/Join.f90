@@ -111,7 +111,7 @@ contains ! =====     Public Procedures     =============================
     logical :: DEEBUG
     
     ! Executable code
-    DEEBUG = ( switchDetail(switches, 'direct') > -1 )
+    DEEBUG = ( switchDetail(switches, 'direct') > -1 )!  .or. .true.
     if ( toggle(gen) ) call trace_begin ( "MLSL2Join", root )
     timing = section_times
     if ( timing ) call time_now ( t1 )
@@ -347,8 +347,8 @@ contains ! =====     Public Procedures     =============================
     use ForwardModelConfig, only: ForwardModelConfig_T
     use Hdf, only: DFACC_CREATE, DFACC_RDWR
     use HGridsDatabase, only: HGrid_T
-    use Init_tables_module, only: F_SOURCE, F_PRECISION, F_HDFVERSION, F_FILE, &
-      & f_QUALITY, F_STATUS, F_TYPE
+    use Init_tables_module, only: F_CONVERGENCE, F_FILE, F_HDFVERSION, &
+      & F_PRECISION, f_QUALITY, F_SOURCE, F_STATUS, F_TYPE
     use Init_tables_module, only: L_L2GP, L_L2AUX, L_L2DGG, L_L2FWM, &
       & L_PRESSURE, L_ZETA
     use intrinsic, only: L_NONE, L_HDF, L_SWATH, Lit_indices, PHYQ_DIMENSIONLESS
@@ -449,6 +449,8 @@ contains ! =====     Public Procedures     =============================
     integer :: SON                      ! A tree node
     integer :: SOURCE                   ! Loop counter
 
+    integer, dimension(:), pointer :: CONVERGVECTORS ! Indices
+    integer, dimension(:), pointer :: CONVERGQUANTITIES ! Indices
     integer, dimension(:), pointer :: SOURCEVECTORS ! Indices
     integer, dimension(:), pointer :: SOURCEQUANTITIES ! Indices
     integer, dimension(:), pointer :: PRECISIONVECTORS ! Indices
@@ -458,6 +460,7 @@ contains ! =====     Public Procedures     =============================
     integer, dimension(:), pointer :: STATUSVECTORS ! Indices
     integer, dimension(:), pointer :: STATUSQUANTITIES ! Indices
     integer, dimension(:), pointer :: DIRECTFILES ! Indices
+    type(VectorValue_T), pointer :: CONVERGQTY ! The quantities convergence ratio
     type(VectorValue_T), pointer :: QTY ! The quantity
     type(VectorValue_T), pointer :: PRECQTY ! The quantities precision
     type(VectorValue_T), pointer :: QUALITYQTY ! The quantities quality
@@ -537,6 +540,7 @@ contains ! =====     Public Procedures     =============================
     ! Now identify the quantities we're after
     nullify ( sourceVectors, sourceQuantities, &
       & qualityVectors, qualityQuantities, &
+      & convergQuantities, convergVectors, &
       & statusVectors, statusQuantities, &
       & precisionVectors, precisionQuantities, directFiles )
     call Allocate_test ( sourceVectors, noSources, 'sourceVectors', ModuleName )
@@ -547,6 +551,8 @@ contains ! =====     Public Procedures     =============================
     call Allocate_test ( qualityQuantities, noSources, 'qualityQuantities', ModuleName )
     call Allocate_test ( statusVectors, noSources, 'statusVectors', ModuleName )
     call Allocate_test ( statusQuantities, noSources, 'statusQuantities', ModuleName )
+    call Allocate_test ( convergVectors, noSources, 'convergVectors', ModuleName )
+    call Allocate_test ( convergQuantities, noSources, 'convergQuantities', ModuleName )
     call Allocate_test ( directFiles, noSources, 'directFiles', ModuleName )
     ! Go round again and identify each quantity, work out what kind of file
     ! we're talking about
@@ -556,6 +562,8 @@ contains ! =====     Public Procedures     =============================
     qualityQuantities = 0
     statusVectors = 0
     statusQuantities = 0
+    convergVectors = 0
+    convergQuantities = 0
     source = 0
     directFiles = 0
     do keyNo = 2, nsons(node)
@@ -568,6 +576,13 @@ contains ! =====     Public Procedures     =============================
         gson = subtree(2,son)
         sourceVectors(source) = decoration(decoration(subtree(1,gson)))
         sourceQuantities(source) = decoration(decoration(decoration(subtree(2,gson))))
+      case ( f_convergence )
+        if ( all ( outputType /= (/ l_l2gp, l_l2dgg /) ) ) &
+          & call Announce_Error ( son, no_error_code, &
+          & "Convergence only appropriate for l2gp files" )
+        gson = subtree(2,son)
+        convergVectors(source) = decoration(decoration(subtree(1,gson)))
+        convergQuantities(source) = decoration(decoration(decoration(subtree(2,gson))))
       case ( f_precision )
         if ( all ( outputType /= (/ l_l2gp, l_l2dgg /) ) ) &
           & call Announce_Error ( son, no_error_code, &
@@ -633,6 +648,17 @@ contains ! =====     Public Procedures     =============================
         & "Source and status not on matching HGrids" )
       else
         statusQty => NULL()
+      end if
+      if ( convergVectors(source) /= 0 ) then
+        convergQty => &
+          & GetVectorQtyByTemplateIndex ( vectors(convergVectors(source)), &
+          & convergQuantities(source) )
+        ! Check that value and convergence share same HGrid
+        if ( .not. DoHgridsMatch( qty, convergQty ) ) &
+        & call Announce_Error ( son, no_error_code, &
+        & "Source and convergence not on matching HGrids" )
+      else
+        convergQty => NULL()
       end if
       ! Now check that things make sense
       if ( ValidateVectorQuantity ( qty, &
@@ -1015,6 +1041,17 @@ contains ! =====     Public Procedures     =============================
         else
           statusQty => NULL()
         end if
+        if ( convergVectors(source) /= 0 ) then
+          convergQty => &
+            & GetVectorQtyByTemplateIndex ( vectors(convergVectors(source)), &
+            & convergQuantities(source) )
+          ! Check that value and convergence share same HGrid
+          if ( .not. DoHgridsMatch( qty, convergQty ) ) &
+          & call Announce_Error ( son, no_error_code, &
+          & "Source and convergence not on matching HGrids" )
+        else
+          convergQty => NULL()
+        end if
         
         if ( DeeBUG ) then
           call output('CreateFileFlag: ', advance='no')
@@ -1049,7 +1086,8 @@ contains ! =====     Public Procedures     =============================
             call output('createSwath: ', advance='no')
             call output(.not. createThisSource(source), advance='yes')
           endif
-          call DirectWrite_l2GP ( directFile, qty, precQty, qualityQty, statusQty, &
+          call DirectWrite_l2GP ( directFile, &
+            & qty, precQty, qualityQty, statusQty, convergQty, &
             & hdfName, chunkNo, HGrids, &
             & createSwath=(.not. createThisSource(source)) )
           NumOutput= NumOutput + 1
@@ -1262,6 +1300,8 @@ contains ! =====     Public Procedures     =============================
       call Deallocate_test ( qualityQuantities, 'qualityQuantities', ModuleName )
       call Deallocate_test ( statusVectors, 'statusVectors', ModuleName )
       call Deallocate_test ( statusQuantities, 'statusQuantities', ModuleName )
+      call Deallocate_test ( convergVectors, 'convergVectors', ModuleName )
+      call Deallocate_test ( convergQuantities, 'convergQuantities', ModuleName )
       call Deallocate_test ( directFiles, 'directFiles', ModuleName )
     end subroutine DeallocateStuff
   end subroutine DirectWriteCommand
@@ -1508,6 +1548,11 @@ contains ! =====     Public Procedures     =============================
 
   ! -----------------------------------------  JoinL2GPQuantities  -----
 
+  ! Warning: outmoded--may not work properly
+  ! We have not kept this subroutine up-to-date
+  ! as we have shifted almost entirely to doing things
+  ! by DirectWrite instead of the older Join then Output
+  
   ! This routine joins an l2gp line quantity to a database of such quantities.
   ! If this is the first time through, the database is created.
 
@@ -2005,6 +2050,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.130  2006/10/11 22:58:00  pwagner
+! Will write convergence ratio as another quality-like field of l2gp
+!
 ! Revision 2.129  2006/09/21 18:55:04  pwagner
 ! Fixed bug causing freezes when band13 off; cosmetic changes too
 !
