@@ -245,7 +245,7 @@ end Fill})
 ;; are applied to the label command
 !define(directWriteDGG,{!dnl
 Label, quantity=state.$1, label='$2'!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
-!noteDirectDGG({source=state.$1,precision=outputPrecision.$1,status=otherDiagnostics.status$1, quality=otherDiagnostics.quality$1})})
+!noteDirectDGG({source=state.$1,precision=outputPrecision.$1,status=otherDiagnostics.status$1, quality=otherDiagnostics.quality$1, convergence=otherDiagnostics.convergence$1})})
 ;; This macro is similar except that it skips status and quality
 !define(directWriteDGGNoDiag,{!dnl
 Label, quantity=state.$1, label='$2'!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
@@ -488,6 +488,7 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
   Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1
   Fill, quantity=standardDiagnostics.status$1, method=vector, sourceQuantity=otherDiagnostics.status$1
   Fill, quantity=standardDiagnostics.quality$1, method=vector, sourceQuantity=otherDiagnostics.quality$1
+  Fill, quantity=standardDiagnostics.convergence$1, method=vector, sourceQuantity=otherDiagnostics.convergence$1
 })
 !define(makeStandardProductMergeDiag,{!dnl
   Fill, quantity=standardProducts.$1, method=vector, sourceQuantity=state.$1
@@ -549,6 +550,7 @@ begin Join
   DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
     status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity, $
+    convergence=tempVectorDiagnostics.convergence!theQuantity, $
     source=tempVectorState.column_$1, precision=tempVectorPrecision.column_$1
 End Join
 Begin Fill
@@ -572,6 +574,7 @@ begin Join
   DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
     status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity, $
+    convergence=tempVectorDiagnostics.convergence!theQuantity, $
     source=tempVectorState.column_$1, precision=tempVectorPrecision.column_$1
 End Join
 })
@@ -642,7 +645,8 @@ begin Join
 !ifelse($1,{Temperature}, {!dnl
   DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
-    status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity
+    status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity, $
+    convergence=tempVectorDiagnostics.convergence!theQuantity
 End Join
 Begin Fill
   ;; Also tpPressure; later to be copied into the temperature file
@@ -674,7 +678,8 @@ begin Join
 }, $1,{Temperature_HR}, {
   DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.$1, precision=tempVectorPrecision.$1, $
-    status=tempVectorDiagnostics.status$1, quality=tempVectorDiagnostics.quality$1
+    status=tempVectorDiagnostics.status$1, quality=tempVectorDiagnostics.quality$1,$
+    convergence=tempVectorDiagnostics.convergence!theQuantity
 }, $1,{IWC}, {
 ; IWC is somewhat special
   Label, quantity=tempVectorState.iwp, label='IWP-StdProd'
@@ -686,7 +691,8 @@ begin Join
 ; RHI is the only normal stdProd without columns, which makes it special
   DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
-    status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity
+    status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity, $
+    convergence=tempVectorDiagnostics.convergence!theQuantity
 
 })
 End Join
@@ -766,6 +772,23 @@ Fill, quantity=temporaryDiagnostics.chisqTmp, method=boxcar, sourceQuantity=temp
 Fill, quantity=otherDiagnostics.quality!HRQuantity, method=quality, $
   sourceQuantity=temporaryDiagnostics.chisqTmp, scale=!MFchisqscale
 
+!divert(-1)
+; ----------- Phase name vs. retrieval name
+; Some phase(s) may not have Retrieve sections
+; and so we'll need to know the last one
+; (We may end up putting this in core*flags.l2cf)
+; !undefine(retrophase)!dnl
+; !ifelse(!phase,{Core}, {
+; !define(retrophase,{InitUTH})!dnl
+; },{!dnl
+; !define(retrophase,{!phase})!dnl
+; })
+
+!divert!dnl
+;; Convergence Ratio
+Fill, quantity=otherDiagnostics.convergence!HRQuantity, method=convergenceRatio, $
+  sourceQuantity=diag!retrophase.dnwt_chisqRatio, scale=!MFchisqscale
+
 ;; Status
 Fill, quantity=otherDiagnostics.status!HRQuantity, method=explicit, explicitValues=0, /spread
 
@@ -817,6 +840,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.123  2006/10/04 16:50:40  pwagner
+; May set status bits based on cloud-contaminated radiances from multiple radiometers
+;
 ; Revision 1.122  2006/10/03 20:26:55  pwagner
 ; Added dnwt_chiSqRatio as measure of convergence
 ;
