@@ -141,7 +141,9 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   integer, parameter :: CHARATTRLEN = 255   ! was GA_VALUE_LENGTH
   real, parameter    :: UNDEFINED_VALUE = DEFAULTUNDEFINEDVALUE !-999.99 ! Same as %template%badvalue
   integer, parameter :: L2GPNameLen = 80
+  integer, parameter :: NumDataFields = 5
   integer, parameter :: NumGeolocFields = 10
+  integer, parameter :: MAXFNFIELDS = NumGeolocFields + NumDataFields + 4
   integer, parameter :: MAXNLEVELS = 1000
 
    ! The following are the current data fields
@@ -149,9 +151,9 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
    character (len=*), parameter :: DATA_FIELD2 = 'L2gpPrecision'
    character (len=*), parameter :: DATA_FIELD3 = 'Status'
    character (len=*), parameter :: DATA_FIELD4 = 'Quality'
-   ! This is the above except for Status which has proved troublesome
+   character (len=*), parameter :: DATA_FIELD5 = 'Convergence'
    character (len=*), parameter :: DATA_FIELDS = &
-     & 'L2gpValue,L2gpPrecision,Quality,Status'
+     & 'L2gpValue,L2gpPrecision,Quality,Status,Convergence'
 
    ! The following are the current geolocation fields
    character (len=*), parameter :: GEO_FIELD1 = 'Latitude'
@@ -264,20 +266,13 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
      real (rgp), pointer, dimension(:,:,:) :: l2gpPrecision=>NULL()
      ! dimensioned (nFreqs, nLevels, nTimes)
 
-     ! We always write this data field
-     ! However, because some l2gp files were created incorrectly,
-     ! It takes a special forcing option to read it
-     ! character (len=1), pointer, dimension(:) :: status=>NULL()
      ! Now we've changed our minds: status will be a 4-byte integer
      integer(i4), pointer, dimension(:) :: status=>NULL()
      !                (status is a reserved word in F90)
      real (rgp), pointer, dimension(:) :: quality=>NULL()
-     ! Both the above dimensioned (nTimes)
+     real (rgp), pointer, dimension(:) :: convergence=>NULL()
+     ! All the above dimensioned (nTimes)
 
-     ! The dimensions for the quantity (if, e.g., coming from l2cf)
-     ! character(len=CHARATTRLEN)        :: DIM_Names = '' ! ','-separated
-     ! character(len=CHARATTRLEN)        :: DIM_Units = '' ! ','-separated
-     ! character(len=CHARATTRLEN)        :: VALUE_Units = '' 
      ! These are the fill/missing values for all arrays except status
      real (rgp)                        :: MissingValue = UNDEFINED_VALUE
      integer(i4)                       :: MissingStatus = 513 ! 512 + 1
@@ -391,6 +386,7 @@ contains ! =====     Public Procedures     =============================
     call ExtractArray ( l2gp%l2gpValue    , ol2gp%l2gpValue    , myFreqs, myLevels, myTimes )
     call ExtractArray ( l2gp%l2gpPrecision, ol2gp%l2gpPrecision, myFreqs, myLevels, myTimes )
     call ExtractArray ( l2gp%status       , ol2gp%status       , myTimes )
+    call ExtractArray ( l2gp%convergence  , ol2gp%convergence  , myTimes )
   end subroutine ExtractL2GPRecord
 
   !------------------------------------------  IsL2GPSetUp  -----
@@ -416,6 +412,7 @@ contains ! =====     Public Procedures     =============================
     sooDesu = sooDesu .and. ( size(l2gp%l2gpValue       )     > 0 )
     sooDesu = sooDesu .and. ( size(l2gp%l2gpPrecision   )     > 0 )
     sooDesu = sooDesu .and. ( size(l2gp%status          )     > 0 )
+    sooDesu = sooDesu .and. ( size(l2gp%convergence     )     > 0 )
   end function IsL2GPSetUp
 
   !------------------------------------------  SetupNewL2GPRecord  -----
@@ -512,6 +509,7 @@ contains ! =====     Public Procedures     =============================
 
     call allocate_test(l2gp%status, useNTimes,"l2gp%status", ModuleName)
     call allocate_test(l2gp%quality,useNTimes,"l2gp%quality",ModuleName)
+    call allocate_test(l2gp%convergence,useNTimes,"l2gp%convergence",ModuleName)
     if ( .not. myFillIn ) return
     l2gp%pressures    = l2gp%MissingValue
     l2gp%frequency    = l2gp%MissingValue
@@ -525,8 +523,8 @@ contains ! =====     Public Procedures     =============================
     l2gp%l2gpValue    = l2gp%MissingValue
     l2gp%l2gpPrecision= l2gp%MissingValue
     l2gp%status       = l2gp%MissingStatus ! l2gp%MissingValue
-    ! l2gp%status = ' '
-    l2gp%quality = l2gp%MissingValue
+    l2gp%quality      = l2gp%MissingValue
+    l2gp%convergence  = l2gp%MissingValue
 
   end subroutine SetupNewL2GPRecord
 
@@ -554,6 +552,7 @@ contains ! =====     Public Procedures     =============================
     call deallocate_test ( l2gp%l2gpPrecision,     "l2gp%l2gpPrecision",     ModuleName )
     call deallocate_test ( l2gp%status,            "l2gp%status",            ModuleName )
     call deallocate_test ( l2gp%quality,           "l2gp%quality",           ModuleName )
+    call deallocate_test ( l2gp%convergence,       "l2gp%convergence",       ModuleName )
     l2gp%nTimes = 0
     l2gp%nTimesTotal = 0
     l2gp%nLevels = 0
@@ -602,7 +601,7 @@ contains ! =====     Public Procedures     =============================
     nullify ( l2gp%pressures, l2gp%latitude, l2gp%longitude, l2gp%solarTime, &
       & l2gp%solarZenith, l2gp%losAngle, l2gp%losAngle, l2gp%geodAngle, &
       & l2gp%chunkNumber, l2gp%time, l2gp%frequency, l2gp%l2gpValue, &
-      & l2gp%l2gpPrecision, l2gp%status, l2gp%quality )
+      & l2gp%l2gpPrecision, l2gp%status, l2gp%quality, l2gp%convergence )
     
     tmpNFreqs = l2gp%nFreqs
     tmpNLevels = l2gp%nLevels
@@ -630,6 +629,7 @@ contains ! =====     Public Procedures     =============================
     
     l2gp%status(1:templ2gp%nTimes) = templ2gp%status(1:templ2gp%nTimes)
     l2gp%quality(1:templ2gp%nTimes) = templ2gp%quality(1:templ2gp%nTimes)
+    l2gp%convergence(1:templ2gp%nTimes) = templ2gp%convergence(1:templ2gp%nTimes)
     
     ! Deallocate the old arrays
     call DestroyL2GPContents(templ2gp)
@@ -847,20 +847,17 @@ contains ! =====     Public Procedures     =============================
   subroutine ReadL2GPData_MF_hdf(L2GPFile, swathname, l2gp, HMOT, &
     & numProfs, firstProf, lastProf, ReadStatus)
   use HDFEOS, only: SWINQDIMS
-  use HDFEOS5, only: HE5_SWINQDIMS, HE5_swfldinfo
+  use HDFEOS5, only: HE5_SWINQDIMS, HE5_SWINQDFLDS, HE5_swfldinfo
   use MLSHDFEOS, only: mls_swattach, mls_swdetach, mls_swdiminfo, mls_swrdfld
+  use MLSStringLists, only: isInList
     !------------------------------------------------------------------------
 
     ! This routine reads an L2GP file, returning a filled data structure and the !
     ! number of profiles read.
 
-    ! All the ReadStatus harrumphing is because
-    ! (1) An earlier version always core dumped
-    ! (2) Even this version dumps core while reading l2gp files which stored
-    !     the 'Status' field as 32-bit floats instead of chars
-    ! Therefore, unless you supply the optional arg ReadStatus=.true.,
-    ! it will skip reading the troublesome datafield
-    ! Naturally, you would do that only for correctly-formatted l2gp files
+    ! All the ReadStatus harrumphing is on its way out
+    ! All the ReadConvergence harrumphing is because convergence is newly added
+    ! (Some older files won't have this field)
     ! Arguments
 
     character (LEN=*), intent(IN) :: swathname ! Name of swath
@@ -880,17 +877,20 @@ contains ! =====     Public Procedures     =============================
     ! Local Variables
     character (len=80) :: DF_Name
     character (len=80) :: DF_Precision
-    character (LEN=80) :: list
     character (LEN=80) :: dimlist
+    character (LEN=80) :: fieldlist
+    character (LEN=80) :: list
     character (LEN=80) :: maxdimlist
     character (LEN=8)  :: maxdimName
     integer :: hdfVersion
     integer :: rank
+    integer, dimension(MAXFNFIELDS) :: ranks
+    integer, dimension(MAXFNFIELDS) :: types
     integer, dimension(7) :: numberType
     integer, dimension(7) :: flddims
     character (LEN=480) :: msr
 
-    integer :: first, freq, lev, nDims, size, swid, status
+    integer :: first, freq, lev, nDims, nFlds, size, swid, status
     integer :: start(3), stride(3), edge(3), dims(3)
     integer :: nFreqs, nLevels, nTimes, nFreqsOr1, nLevelsOr1, myNumProfs
     logical :: firstCheck, lastCheck
@@ -900,6 +900,7 @@ contains ! =====     Public Procedures     =============================
     real(r4), pointer, dimension(:) :: REALPROF
     real(r4), pointer, dimension(:,:,:) :: REAL3
     logical :: dontfail
+    logical :: ReadingConvergence
     logical :: ReadingStatus
     logical :: deeBugHere
 
@@ -911,6 +912,7 @@ contains ! =====     Public Procedures     =============================
     dontfail = (HMOT /= 'M')
     ReadingStatus = READINGSTATUSBYDEFAULT ! was .false.
     if ( present(ReadStatus) ) ReadingStatus = ReadStatus
+    ReadingConvergence = .false.
     ! Attach to the swath for reading
     l2gp%Name = swathname
     
@@ -939,6 +941,8 @@ contains ! =====     Public Procedures     =============================
       nDims = swinqdims(swid, list, dims)
     else
       nDims = HE5_SWinqdims(swid, list, dims)
+      nFlds = HE5_SWinqdflds( swid, fieldlist, ranks, types )
+      ReadingConvergence = isInList( lowerCase(fieldList), 'convergence', '-fc' )
     endif
     if ( deeBugHere ) print *, 'HMOT: ', HMOT
     if ( deeBugHere ) print *, 'swathName: ', l2gp%name
@@ -1163,8 +1167,7 @@ contains ! =====     Public Procedures     =============================
     ! Read the data fields that are 1-dimensional
 
     l2gp%status = l2gp%MissingStatus ! l2gp%MissingValue ! So it has a value.
-    ! l2gp%status = ' ' ! So it has a value.
-    if ( ReadingStatus) &
+    if ( ReadingStatus ) &
       & status = mls_swrdfld( swid, 'Status',start(3:3),stride(3:3),edge(3:3),&
       & l2gp%status, hdfVersion=hdfVersion, dontfail=.true. )
 
@@ -1173,6 +1176,11 @@ contains ! =====     Public Procedures     =============================
         edge(3:3),realProf, hdfVersion=hdfVersion, dontfail=dontfail)
       l2gp%quality = realProf
     endif
+
+    l2gp%Convergence = l2gp%MissingValue ! l2gp%MissingValue ! So it has a value.
+    if ( ReadingConvergence ) &
+      & status = mls_swrdfld( swid, 'Convergence',start(3:3),stride(3:3),edge(3:3),&
+      & l2gp%convergence, hdfVersion=hdfVersion, dontfail=.true. )
 
     ! Deallocate local variables
     call Deallocate_test ( realProf, 'realProf', ModuleName )
@@ -1460,12 +1468,17 @@ contains ! =====     Public Procedures     =============================
     & MYDIM1, &
     & DFNT_INT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
     & hdfVersion=hdfVersion, iFill=l2gp%MissingStatus)
-    ! & hdfVersion=hdfVersion, iFill=int(l2gp%MissingValue))
-    ! & DFNT_CHAR8, HDFE_NOMERGE, chunk_rank, chunk_dims, &
 
     chunk_rank=1
     chunk_dims(1)=CHUNKTIMES
     status = mls_dfldsetup(swid, 'Quality', 'nTimes', &
+    & MYDIM1, &
+    & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
+    & hdfVersion=hdfVersion, rFill=l2gp%MissingValue)
+
+    chunk_rank=1
+    chunk_dims(1)=CHUNKTIMES
+    status = mls_dfldsetup(swid, 'Convergence', 'nTimes', &
     & MYDIM1, &
     & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
     & hdfVersion=hdfVersion, rFill=l2gp%MissingValue)
@@ -1669,6 +1682,9 @@ contains ! =====     Public Procedures     =============================
 
     status = mls_SWwrfld(swid, 'Quality', start(3:3), stride(3:3), edge(3:3), &
          real(l2gp%quality), hdfVersion=hdfVersion)
+
+    status = mls_SWwrfld(swid, 'Convergence', start(3:3), stride(3:3), edge(3:3), &
+         real(l2gp%convergence), hdfVersion=hdfVersion)
 
     !     Detach from the swath interface.
     status = mls_SWdetach(swid, hdfVersion=hdfVersion)
@@ -1925,10 +1941,7 @@ contains ! =====     Public Procedures     =============================
       & MLS_CHARTYPE, 1, NOUNITS)
     status = he5_swwrlattr(swid, 'Status', 'MissingValue', &
       & HE5T_NATIVE_INT, 1, (/ l2gp%MissingStatus /) )
-      ! & HE5T_NATIVE_INT, 1, (/ int(l2gp%MissingValue) /) )
 
-    ! status = mls_swwrlattr(swid, 'Status', 'MissingValue', &
-    !   & MLS_CHARTYPE, 1, ' ' )
     status = mls_swwrlattr(swid, 'Status', &
       & 'UniqueFieldDefinition', &
       & MLS_CHARTYPE, 1, 'MLS-Specific')
@@ -1937,10 +1950,19 @@ contains ! =====     Public Procedures     =============================
       & MLS_CHARTYPE, 1, trim(field_name)//'Quality')
     status = mls_swwrlattr(swid, 'Quality', 'Units', &
       & MLS_CHARTYPE, 1, NOUNITS)
-      ! & MLS_CHARTYPE, 1, units_name)
     status = he5_swwrlattr(swid, 'Quality', 'MissingValue', &
       & rgp_type, 1, (/ real(l2gp%MissingValue, rgp) /) )
     status = mls_swwrlattr(swid, 'Quality', &
+      & 'UniqueFieldDefinition', &
+      & MLS_CHARTYPE, 1, 'MLS-Specific')
+    
+    status = mls_swwrlattr(swid, 'Convergence', 'Title', &
+      & MLS_CHARTYPE, 1, trim(field_name)//'Convergence')
+    status = mls_swwrlattr(swid, 'Convergence', 'Units', &
+      & MLS_CHARTYPE, 1, NOUNITS)
+    status = he5_swwrlattr(swid, 'Convergence', 'MissingValue', &
+      & rgp_type, 1, (/ real(l2gp%MissingValue, rgp) /) )
+    status = mls_swwrlattr(swid, 'Convergence', &
       & 'UniqueFieldDefinition', &
       & MLS_CHARTYPE, 1, 'MLS-Specific')
     
@@ -3019,6 +3041,7 @@ contains ! =====     Public Procedures     =============================
       l2gp2Temp%l2gpPrecision   = l2gp2%l2gpPrecision
       l2gp2Temp%status          = l2gp2%status
       l2gp2Temp%quality         = l2gp2%quality
+      l2gp2Temp%convergence     = l2gp2%convergence
       if ( badChunks ) then
         do instance=1, L2gp1%nTimes
           if ( l2gp1%geodAngle(instance) /= l2gp2%geodAngle(instance) &
@@ -3067,8 +3090,6 @@ contains ! =====     Public Procedures     =============================
         call diff ( l2gp1%status, 'l2gp%status', &
           &         l2gp2Temp%status, ' ', &
           & wholearray=wholearray, stats=stats, rms=rms )
-        ! call dump (l2gp1%status - l2gp2%status, &
-        !  & 'l2gp%status (diff)', stats=stats, rms=rms )
         myNumDiffs = myNumDiffs + count( l2gp1%status /= l2gp2Temp%status )
       elseif ( all(l2gp1%status == l2gp2Temp%status) .and. &
         & SwitchDetail(lowercase(myFields), 'status', '-c') > -1 .and. myVerbose ) then
@@ -3083,6 +3104,16 @@ contains ! =====     Public Procedures     =============================
       elseif ( all(l2gp1%quality == l2gp2Temp%quality) .and. &
         & SwitchDetail(lowercase(myFields), 'quality', '-c') > -1 .and. myVerbose ) then
         call output('(quality fields equal)', advance='yes')
+      endif
+      if ( any(l2gp1%convergence /= l2gp2Temp%convergence) .and. &
+        & SwitchDetail(lowercase(myFields), 'convergence', '-c') > -1 ) then
+        call diff ( l2gp1%convergence, 'l2gp%convergence', &
+          &         l2gp2Temp%convergence, ' ', &
+          & wholearray=wholearray, stats=stats, rms=rms )
+        myNumDiffs = myNumDiffs + count( l2gp1%convergence /= l2gp2Temp%convergence )
+      elseif ( all(l2gp1%convergence == l2gp2Temp%convergence) .and. &
+        & SwitchDetail(lowercase(myFields), 'convergence', '-c') > -1 .and. myVerbose ) then
+        call output('(convergence fields equal)', advance='yes')
       endif
 
       ! Done with the temporary, so deallocate it before returning
@@ -3616,6 +3647,9 @@ contains
     if ( showMe(myDetails > 0, myFields, 'quality') ) &
       & call dump ( l2gp%quality, 'Quality:' )
       
+    if ( showMe(myDetails > 0, myFields, 'convergence') ) &
+      & call dump ( l2gp%convergence, 'Convergence:' )
+      
   contains
     logical function showMe(detailsOK, fields, field)
       ! Determine whether this field should be dumped or not
@@ -3955,6 +3989,9 @@ contains
     if ( SwitchDetail(myFields, 'quality', '-wc') > -1 ) then
       call ReplaceFillValues ( l2gp1%quality, l2gp1%MissingValue, l2gp2%quality )
     endif
+    if ( SwitchDetail(myFields, 'convergence', '-wc') > -1 ) then
+      call ReplaceFillValues ( l2gp1%convergence, l2gp1%MissingValue, l2gp2%convergence )
+    endif
 
   end subroutine RepairL2GP_L2GP
 
@@ -4096,6 +4133,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.144  2006/09/29 23:56:49  pwagner
+! Got rid of unused GetGeolocUnits function
+!
 ! Revision 2.143  2006/04/12 20:49:10  pwagner
 ! nTimesTotal component now dumped, too
 !
