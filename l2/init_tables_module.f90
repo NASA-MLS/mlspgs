@@ -435,7 +435,7 @@ contains ! =====     Public procedures     =============================
       begin, t+t_fGridCoord, l+l_channel, l+l_frequency, l+l_LSBFrequency, l+l_USBFrequency, &
              l+l_IntermediateFrequency, n+n_dt_def, &
       begin, t+t_fillMethod, l+l_applyBaseline, l+l_asciiFile, l+l_binMax, l+l_binMean, &
-             l+l_binMin, l+l_binTotal, l+l_chiSqRatio, &
+             l+l_binMin, l+l_binTotal, l+l_chiSqRatio, l+l_convergenceRatio, &
              l+l_boxcar, l+l_combineChannels, l+l_gridded, l+l_estimatedNoise, l+l_explicit, &
              l+l_extractChannel, l+l_gphPrecision, l+l_hydrostatic, l+l_addnoise, l+l_refract, &
              l+l_isotope, l+l_iwcfromextinction, l+l_l1b, l+l_l2aux, l+l_l2gp, &
@@ -1069,6 +1069,8 @@ contains ! =====     Public procedures     =============================
                     n+n_dot, &
              begin, f+f_status, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
+             begin, f+f_convergence, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
              begin, f+f_file, t+t_string, nd+n_field_type, &
              begin, f+f_type, t+t_outputType, ndr+n_field_type, &
              begin, f+f_hdfVersion, t+t_numeric, ndr+n_field_type, &
@@ -1496,6 +1498,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.452  2006/10/11 00:18:17  pwagner
+! Changes to permit new convergence ratio field in L2GP
+!
 ! Revision 2.451  2006/10/02 23:05:03  pwagner
 ! May Fill chi^2 ratio to measure convergence
 !
