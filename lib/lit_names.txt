@@ -49,6 +49,7 @@ cloudy_nearside_only
 columnabundance
 columns
 complete
+convergenceRatio
 create
 
 days
@@ -220,6 +221,9 @@ zeta
 zonalavg
 
 # $Log$
+# Revision 2.46  2006/10/11 00:14:57  pwagner
+# Added convergenceRatio for new field in L2GP data type
+#
 # Revision 2.45  2006/05/02 18:51:42  pwagner
 # Added eta for leta-level gmao files
 #
