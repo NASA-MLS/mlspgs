@@ -1,5 +1,12 @@
+!divert(-1)
 ; $Id$
 
+; ----------- Phase name vs. retrieval name
+; Some phase(s) may not have Retrieve sections
+; and so we'll need to know the last one
+!define(retrophase,{!phase})
+
+!divert!dnl
 ; This l2cf fragment does all the quality flagging for the Core+R2
 ; products.
 
@@ -50,6 +57,9 @@ begin Fill
 end Fill
 
 ; $Log$
+; Revision 1.3  2006/10/04 16:51:47  pwagner
+; Compatible w/ status bits from multiple radiometers; needs review
+;
 ; Revision 1.2  2004/11/29 22:49:00  livesey
 ; New minRads threhsolds for new phasing
 ;

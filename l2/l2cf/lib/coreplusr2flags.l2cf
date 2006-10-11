@@ -1,5 +1,12 @@
+!divert(-1)
 ; $Id$
 
+; ----------- Phase name vs. retrieval name
+; Some phase(s) may not have Retrieve sections
+; and so we'll need to know the last one
+!define(retrophase,{!phase})
+
+!divert!dnl
 ; This l2cf fragment does all the quality flagging for the Core+R2
 ; products.
 
@@ -74,6 +81,9 @@ begin Fill
 end Fill
 
 ; $Log$
+; Revision 1.16  2006/10/04 17:55:50  dwu
+; change r2 cloud flag threshold from -30K to -20K
+;
 ; Revision 1.15  2006/10/04 16:51:47  pwagner
 ; Compatible w/ status bits from multiple radiometers; needs review
 ;

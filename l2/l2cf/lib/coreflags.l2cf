@@ -1,5 +1,12 @@
+!divert(-1)
 ; $Id$
 
+; ----------- Phase name vs. retrieval name
+; Some phase(s) may not have Retrieve sections
+; and so we'll need to know the last one
+!define(retrophase,{InitUTH})
+
+!divert!dnl
 ; This l2cf fragment does all the quality flagging for the Core
 ; products (temperature)
 
@@ -26,6 +33,9 @@ begin Fill
 end Fill
 
 ; $Log$
+; Revision 1.10  2006/10/04 16:51:47  pwagner
+; Compatible w/ status bits from multiple radiometers; needs review
+;
 ; Revision 1.9  2006/08/08 22:27:07  pwagner
 ; Fills Quality, Status for Temperature, GPH; needs revision before v2.20
 ;
