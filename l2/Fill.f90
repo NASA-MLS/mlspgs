@@ -110,7 +110,7 @@ contains ! =====     Public Procedures     =============================
       & L_BOUNDARYPRESSURE, L_BOXCAR, L_CHISQBINNED, L_CHISQCHAN, &
       & L_CHISQMMAF, L_CHISQMMIF, L_CHISQRATIO, L_CHOLESKY, &
       & L_cloudice, L_cloudextinction, L_cloudInducedRADIANCE, &
-      & L_COMBINECHANNELS, L_COLUMNABUNDANCE, &
+      & L_COMBINECHANNELS, L_COLUMNABUNDANCE, L_CONVERGENCERATIO, &
       & l_dnwt_flag, l_dnwt_chiSqMinNorm, l_dnwt_chiSqNorm, l_dnwt_chiSqRatio, &
       & L_DOBSONUNITS, L_DU, &
       & L_ECRTOFOV, L_ESTIMATEDNOISE, L_EXPLICIT, L_EXTRACTCHANNEL, L_FOLD, &
@@ -1276,6 +1276,14 @@ contains ! =====     Public Procedures     =============================
           call FillWithCombinedChannels ( quantity, sourceQuantity, message )
           if ( message /= '' ) call Announce_Error ( key, no_Error_Code, trim(message) )
 
+        case ( l_convergenceRatio )
+          if ( .not. all ( got ( (/ f_sourceQuantity, f_scale /) ) ) ) &
+            call Announce_error ( key, no_error_code, &
+            & 'Need sourceQuanitity and scale for quality fill' )
+          sourceQuantity => GetVectorQtyByTemplateIndex ( vectors(sourceVectorIndex), &
+            & sourceQuantityIndex )
+          call FillConvergenceFromChisq ( key, quantity, sourceQuantity, scale )
+
         case ( l_estimatedNoise ) ! ----------- Fill with estimated noise ---
           if ( .not. all(got( (/ f_radianceQuantity, &
             & f_systemTemperature, f_integrationTime /)))) &
@@ -1645,57 +1653,16 @@ contains ! =====     Public Procedures     =============================
             & noFineGrid, extinction, errorCode )
 
         case ( l_RHIfromH2O ) ! -------fill RHI from H2O quantity -------
-            if ( .not. any(got( &
-             & (/f_h2oquantity, f_temperatureQuantity/) &
-             & )) ) then
-              call Announce_error ( key, No_Error_code, &
-              & 'Missing a required field to fill rhi'  )
-            else ! value
-                h2oQuantity => GetVectorQtyByTemplateIndex( &
-                  & vectors(h2oVectorIndex), h2oQuantityIndex)
-                temperatureQuantity => GetVectorQtyByTemplateIndex( &
-                  & vectors(temperatureVectorIndex), temperatureQuantityIndex)
-                if ( .not. ValidateVectorQuantity(h2oQuantity, &
-                  & quantityType=(/l_vmr/), molecule=(/l_h2o/)) ) then
-                  call Announce_Error ( key, No_Error_code, &
-                    & 'The h2oQuantity is not a vmr for the H2O molecule'  )
-                else if ( .not. ValidateVectorQuantity(temperatureQuantity, &
-                  & quantityType=(/l_temperature/)) ) then
-                  call Announce_Error ( key, No_Error_code, &
-                    & 'The temperatureQuantity is not a temperature'  )
-                else
-                  call FillRHIFromH2O ( key, quantity, &
-                    & h2oQuantity, temperatureQuantity, &
-                    & dontMask, ignoreZero, ignoreNegative, interpolate, &
-                    & .true., &   ! Mark Undefined values?
-                    & invert )    ! invert rather than convert?
-                end if
-            end if
-
-          case ( l_quality )
-            if ( .not. all ( got ( (/ f_sourceQuantity, f_scale /) ) ) ) &
-              call Announce_error ( key, no_error_code, &
-              & 'Need sourceQuanitity and scale for quality fill' )
-            sourceQuantity => GetVectorQtyByTemplateIndex ( vectors(sourceVectorIndex), &
-              & sourceQuantityIndex )
-            call FillQualityFromChisq ( key, quantity, sourceQuantity, scale, heightNode )
-
-          case ( l_RHIPrecisionfromH2O ) ! --fill RHI prec. from H2O quantity --
-            if ( .not. any(got( &
-              & (/f_h2oquantity, f_temperatureQuantity, &
-              & f_h2oPrecisionquantity, f_tempPrecisionQuantity/) &
-              & )) ) then
-              call Announce_error ( key, No_Error_code, &
-                & 'Missing a required field to fill rhi precision'  )
-            else
+          if ( .not. any(got( &
+           & (/f_h2oquantity, f_temperatureQuantity/) &
+           & )) ) then
+            call Announce_error ( key, No_Error_code, &
+            & 'Missing a required field to fill rhi'  )
+          else ! value
               h2oQuantity => GetVectorQtyByTemplateIndex( &
                 & vectors(h2oVectorIndex), h2oQuantityIndex)
               temperatureQuantity => GetVectorQtyByTemplateIndex( &
                 & vectors(temperatureVectorIndex), temperatureQuantityIndex)
-              h2oPrecisionQuantity => GetVectorQtyByTemplateIndex( &
-                & vectors(h2oPrecisionVectorIndex), h2oPrecisionQuantityIndex)
-              tempPrecisionQuantity => GetVectorQtyByTemplateIndex( &
-                & vectors(tempPrecisionVectorIndex), tempPrecisionQuantityIndex)
               if ( .not. ValidateVectorQuantity(h2oQuantity, &
                 & quantityType=(/l_vmr/), molecule=(/l_h2o/)) ) then
                 call Announce_Error ( key, No_Error_code, &
@@ -1704,35 +1671,76 @@ contains ! =====     Public Procedures     =============================
                 & quantityType=(/l_temperature/)) ) then
                 call Announce_Error ( key, No_Error_code, &
                   & 'The temperatureQuantity is not a temperature'  )
-              else if ( .not. ValidateVectorQuantity(h2oPrecisionQuantity, &
-                & quantityType=(/l_vmr/), molecule=(/l_h2o/)) ) then
-                call Announce_Error ( key, No_Error_code, &
-                  & 'The h2oPrecisionQuantity is not a vmr for the H2O molecule'  )
-              else if ( .not. ValidateVectorQuantity(tempPrecisionQuantity, &
-                & quantityType=(/l_temperature/)) ) then
-                call Announce_Error ( key, No_Error_code, &
-                  & 'The tempPrecisionQuantity is not a temperature'  )
               else
-                call FillRHIPrecisionFromH2O ( key, quantity, &
-                  & h2oPrecisionQuantity, tempPrecisionQuantity, h2oQuantity, &
-                  & temperatureQuantity, dontMask, ignoreZero, &
-                  & ignoreNegative, interpolate, &
+                call FillRHIFromH2O ( key, quantity, &
+                  & h2oQuantity, temperatureQuantity, &
+                  & dontMask, ignoreZero, ignoreNegative, interpolate, &
                   & .true., &   ! Mark Undefined values?
                   & invert )    ! invert rather than convert?
               end if
-            end if
+          end if
 
-          case ( l_rotateField )
-            if ( .not. all ( got ( (/ f_fieldECR, f_ecrtofov /) ) ) ) then
-              call Announce_Error ( key, no_error_code, &
-                & 'Must supply field and ecrToFov for rotateField fill' )
+        case ( l_quality )
+          if ( .not. all ( got ( (/ f_sourceQuantity, f_scale /) ) ) ) &
+            call Announce_error ( key, no_error_code, &
+            & 'Need sourceQuanitity and scale for quality fill' )
+          sourceQuantity => GetVectorQtyByTemplateIndex ( vectors(sourceVectorIndex), &
+            & sourceQuantityIndex )
+          call FillQualityFromChisq ( key, quantity, sourceQuantity, scale, heightNode )
+
+        case ( l_RHIPrecisionfromH2O ) ! --fill RHI prec. from H2O quantity --
+          if ( .not. any(got( &
+            & (/f_h2oquantity, f_temperatureQuantity, &
+            & f_h2oPrecisionquantity, f_tempPrecisionQuantity/) &
+            & )) ) then
+            call Announce_error ( key, No_Error_code, &
+              & 'Missing a required field to fill rhi precision'  )
+          else
+            h2oQuantity => GetVectorQtyByTemplateIndex( &
+              & vectors(h2oVectorIndex), h2oQuantityIndex)
+            temperatureQuantity => GetVectorQtyByTemplateIndex( &
+              & vectors(temperatureVectorIndex), temperatureQuantityIndex)
+            h2oPrecisionQuantity => GetVectorQtyByTemplateIndex( &
+              & vectors(h2oPrecisionVectorIndex), h2oPrecisionQuantityIndex)
+            tempPrecisionQuantity => GetVectorQtyByTemplateIndex( &
+              & vectors(tempPrecisionVectorIndex), tempPrecisionQuantityIndex)
+            if ( .not. ValidateVectorQuantity(h2oQuantity, &
+              & quantityType=(/l_vmr/), molecule=(/l_h2o/)) ) then
+              call Announce_Error ( key, No_Error_code, &
+                & 'The h2oQuantity is not a vmr for the H2O molecule'  )
+            else if ( .not. ValidateVectorQuantity(temperatureQuantity, &
+              & quantityType=(/l_temperature/)) ) then
+              call Announce_Error ( key, No_Error_code, &
+                & 'The temperatureQuantity is not a temperature'  )
+            else if ( .not. ValidateVectorQuantity(h2oPrecisionQuantity, &
+              & quantityType=(/l_vmr/), molecule=(/l_h2o/)) ) then
+              call Announce_Error ( key, No_Error_code, &
+                & 'The h2oPrecisionQuantity is not a vmr for the H2O molecule'  )
+            else if ( .not. ValidateVectorQuantity(tempPrecisionQuantity, &
+              & quantityType=(/l_temperature/)) ) then
+              call Announce_Error ( key, No_Error_code, &
+                & 'The tempPrecisionQuantity is not a temperature'  )
             else
-              fieldECR => GetVectorQtyByTemplateIndex ( &
-                & vectors(fieldECRVectorIndex), fieldECRQuantityIndex )
-              ecrToFOV => GetVectorQtyByTemplateIndex ( &
-                & vectors(ecrToFOVVectorIndex), ecrToFovQuantityIndex )
-              call RotateMagneticField ( key, quantity, fieldECR, ecrToFov )
+              call FillRHIPrecisionFromH2O ( key, quantity, &
+                & h2oPrecisionQuantity, tempPrecisionQuantity, h2oQuantity, &
+                & temperatureQuantity, dontMask, ignoreZero, &
+                & ignoreNegative, interpolate, &
+                & .true., &   ! Mark Undefined values?
+                & invert )    ! invert rather than convert?
             end if
+          end if
+
+        case ( l_rotateField )
+          if ( .not. all ( got ( (/ f_fieldECR, f_ecrtofov /) ) ) ) then
+            call Announce_Error ( key, no_error_code, &
+              & 'Must supply field and ecrToFov for rotateField fill' )
+          else
+            fieldECR => GetVectorQtyByTemplateIndex ( &
+              & vectors(fieldECRVectorIndex), fieldECRQuantityIndex )
+            ecrToFOV => GetVectorQtyByTemplateIndex ( &
+              & vectors(ecrToFOVVectorIndex), ecrToFovQuantityIndex )
+            call RotateMagneticField ( key, quantity, fieldECR, ecrToFov )
+          end if
 
         case ( l_scaleOverlaps )
           if ( .not. got ( f_multiplier ) ) then
@@ -3606,16 +3614,12 @@ contains ! =====     Public Procedures     =============================
       ! is to be stored in qty
 
       ! Local variables
-      real(r8), dimension(:), pointer  ::    VALUES => NULL()
       integer ::                             UseFirstInstance, UseLastInstance, &
       &                                      NoOutputInstances
-      integer ::                             C           ! Channel loop counter
-      integer ::                             S           ! Surface loop counter
       integer ::                             I           ! Instances
       integer ::                             ITER        ! Instances
       integer ::                             QINDEX
       integer ::                             NOCHANS
-      integer ::                             N           ! Num. of summed values
       logical ::                             skipMe
       logical, parameter ::                  FakeData = .false.
 
@@ -7512,6 +7516,23 @@ contains ! =====     Public Procedures     =============================
       end where
     end subroutine FillQualityFromChisq
 
+    ! -------------------------------------------- FillConvergenceFromChisq --------
+    subroutine FillConvergenceFromChisq ( key, quantity, sourceQuantity, scale )
+      integer, intent(in) :: KEY        ! Tree node
+      type ( VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
+      type ( VectorValue_T), intent(in) :: SOURCEQUANTITY ! dnwt_ChisqRatio quantity on which it's based
+      real(r8), intent(in) :: SCALE     ! A scale factor
+      ! Local variables
+      ! Executable code
+      ! Do some sanity checking
+      if ( quantity%template%quantityType /= l_quality ) call Announce_error ( key, no_error_code, &
+        & 'Convergence quantity must be quality' )
+      if ( sourceQuantity%template%quantityType /= l_dnwt_chisqRatio ) call Announce_error ( &
+        & key, no_error_code, 'sourceQuantity must be of type chisqRatio' )
+
+      quantity%values(1,:) = scale * sourceQuantity%values(1,1)
+    end subroutine FillConvergenceFromChisq
+
     ! ------------------------------------------ FillUsingLeastSquares -----
     subroutine FillUsingLeastSquares  ( key, Quantity, SourceQuantity, ptanQuantity, &
       & channel, method, scaleInstances, scaleRatio, scaleSurfs )
@@ -8008,6 +8029,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.346  2006/10/11 22:56:11  pwagner
+! May fill convergence from dnwt_chisqRatio
+!
 ! Revision 2.345  2006/10/03 20:24:11  pwagner
 ! Optional test, tweaks to FillChiSqRatio
 !
