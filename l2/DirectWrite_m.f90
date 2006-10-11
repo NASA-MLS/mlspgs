@@ -24,7 +24,7 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
     ! or simply take too much time doing i/o
     ! so instead write them out chunk-by-chunk
 
-  use Allocate_Deallocate, only: Allocate_test, DeAllocate_test
+  use Allocate_Deallocate, only: Allocate_test
   use INIT_TABLES_MODULE, only: L_PRESSURE, L_ZETA, &
     & L_L2GP, L_L2AUX, L_L2DGG, L_L2FWM
   use MLSCommon, only: RV, DEFAULTUNDEFINEDVALUE, MLSFile_T
@@ -32,7 +32,6 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
     & MLSMSG_Error, MLSMSG_Warning
   use MLSSets, only: FindFirst
   use OUTPUT_M, only: blanks, OUTPUT
-  use STRING_TABLE, only: GET_STRING
   use TOGGLES, only: SWITCHES
   use VectorsModule, only: VectorValue_T
 
@@ -130,7 +129,7 @@ contains ! ======================= Public Procedures =========================
 
   ! ------------------------------------------ DirectWrite_L2GP_MF --------
   subroutine DirectWrite_L2GP_MF ( L2gpFile, &
-    & quantity, precision, quality, status, &
+    & quantity, precision, quality, status, Convergence, &
     & sdName, chunkNo, HGrids, createSwath )
 
     ! Purpose:
@@ -140,7 +139,7 @@ contains ! ======================= Public Procedures =========================
     use ChunkDivide_m, only: ChunkDivideConfig
     use Hdf, only: DFACC_CREATE, DFACC_RDONLY
     use HGridsDatabase, only: HGrid_T
-    use L2GPData, only: L2GPData_T, L2GPNameLen, &
+    use L2GPData, only: L2GPData_T, &
       & AppendL2GPData, DestroyL2GPContents, DUMP
     use readApriori, only: writeAPrioriAttributes
     type(MLSFile_T)               :: L2GPFile
@@ -148,12 +147,12 @@ contains ! ======================= Public Procedures =========================
     type (VectorValue_T), pointer :: precision
     type (VectorValue_T), pointer :: quality
     type (VectorValue_T), pointer :: status
+    type (VectorValue_T), pointer :: Convergence
     character(len=*), intent(in) :: SDNAME       ! Name of sd in output file
     integer, intent(in)              :: chunkNo
     type (HGrid_T), dimension(:), pointer ::     HGrids
     logical, intent(in), optional :: createSwath
     ! Local variables
-    logical :: alreadyOpen
     type (L2GPData_T) :: l2gp
     integer :: OFFSET
     integer :: FIRSTINSTANCE
@@ -198,7 +197,8 @@ contains ! ======================= Public Procedures =========================
       & call MLSMessage(MLSMSG_Error, ModuleName, &
       & 'l2gp file is rdonly', MLSFile=L2GPFile)
     ! Convert vector quantity to l2gp
-    call vectorValue_to_l2gp(quantity, precision, quality, status, l2gp, &
+    call vectorValue_to_l2gp( quantity, &
+      & precision, quality, status, convergence, l2gp, &
       & sdname, chunkNo, HGrids, offset=0, &
       & firstInstance=firstInstance, lastInstance=lastInstance)
     ! Output the l2gp into the file
@@ -237,7 +237,7 @@ contains ! ======================= Public Procedures =========================
     use Chunks_m, only: MLSChunk_T
     use ChunkDivide_m, only: ChunkDivideConfig
     use ForwardModelConfig, only: ForwardModelConfig_T
-    use Hdf, only: DFACC_CREATE, DFACC_RDONLY
+    use Hdf, only: DFACC_RDONLY
     use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, &
       & mls_closeFile, mls_openFile
     use VectorsModule, only: VectorValue_T, Dump
@@ -472,7 +472,7 @@ contains ! ======================= Public Procedures =========================
       & SetupNewL2AUXRecord, WriteL2AUXAttributes
     use MLSFiles, only: HDFVERSION_5, Dump
     use MLSHDF5, only: IsHDF5AttributePresent, ISHDF5DSPRESENT, &
-      & MakeHDF5Attribute, SaveAsHDF5DS, GetHDF5Attribute
+      & MakeHDF5Attribute, SaveAsHDF5DS
     use MLSL2Timings, only: showTimingNames
     use PCFHdr, only: h5_writeglobalattr
     use VectorsModule, only: VectorValue_T
@@ -505,7 +505,6 @@ contains ! ======================= Public Procedures =========================
     integer :: STRIDE(3)                ! HDF array stride
     integer :: total_DS_size
     logical, parameter :: MAYCOLLAPSEDIMS = .false.
-    character (len=2000) :: value1
     ! logical, parameter :: DEEBUG = .true.
 
     ! executable code
@@ -737,7 +736,6 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: dbID
-    character(len=80), dimension(:), pointer :: sdNames => null()
     type (DirectData_T)                      :: tempDirectData
     ! Begin executable
     isNew = .true.
@@ -856,18 +854,19 @@ contains ! ======================= Public Procedures =========================
 
 ! =====     Private Procedures     =====================================
   ! ---------------------------------------------  vectorValue_to_l2gp  -----
-  subroutine vectorValue_to_l2gp (QUANTITY, precision, quality, status, l2gp, &
+  subroutine vectorValue_to_l2gp (QUANTITY, &
+    & precision, quality, status, convergence,  l2gp, &
     & name, chunkNo, HGrids, offset, firstInstance, lastInstance)
     use ChunkDivide_m, only: ChunkDivideConfig
     use HGridsDatabase, only: HGrid_T
     use Intrinsic, only: L_None
     use L2GPData, only: L2GPData_T, RGP, &
-      & SetupNewl2gpRecord, &
-      & ExpandL2GPDataInPlace
+      & SetupNewl2gpRecord
     type (VectorValue_T), intent(in) :: QUANTITY
     type (VectorValue_T), pointer :: precision
     type (VectorValue_T), pointer :: quality
     type (VectorValue_T), pointer :: status
+    type (VectorValue_T), pointer :: convergence
     type (L2GPData_T)                :: l2gp
     character(len=*), intent(in)     :: name
     integer, intent(in)              :: chunkNo
@@ -999,6 +998,12 @@ contains ! ======================= Public Procedures =========================
     else
       l2gp%status(firstProfile:lastProfile) = 0
     endif
+    if (associated(convergence)) then
+      l2gp%convergence(firstProfile:lastProfile) = &
+        & convergence%values(1,useFirstInstance:useLastInstance)
+    else
+      l2gp%convergence(firstProfile:lastProfile) = 0.0
+    endif
     if ( DEEBUG ) print *, 'Vector converted to l2gp; name: ', trim(name)
     if ( DEEBUG ) print *, 'firstProfile, lastProfile: ', firstProfile, lastProfile
     if ( DEEBUG ) print *, 'useFirstInstance, useLastInstance: ', useFirstInstance, useLastInstance
@@ -1048,6 +1053,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.41  2006/10/11 22:58:00  pwagner
+! Will write convergence ratio as another quality-like field of l2gp
+!
 ! Revision 2.40  2006/06/20 00:13:34  pwagner
 ! Fwm files should haves MAFs matching radiance files
 !
