@@ -14,42 +14,45 @@ begin Fill
   ;; ------------------------------------ O3-240
   !define(flaggingBands,{7,24,33})
   !define(flaggingRadiometers,{R3})!dnl
-  !makeQualityForOneProduct(product=O3,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -20K)
-  !makeStatusForOneProduct(product=O3,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -20K)
+  !makeQualityForOneProduct(product=O3,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -999K)
+  !makeStatusForOneProduct(product=O3,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -999K)
 
   ;; ------------------------------------- CO-240
   !define(flaggingBands,{9,25,33})
   !define(flaggingRadiometers,{R3})!dnl
-  !makeQualityForOneProduct(product=CO,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -20K)
-  !makeStatusForOneProduct(product=CO,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -20K)
+  !makeQualityForOneProduct(product=CO,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -999K)
+  !makeStatusForOneProduct(product=CO,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -999K)
 
   ;; ------------------------------------- HNO3-240
   !define(flaggingBands,{7,8,9,33})
   !define(flaggingRadiometers,{R3})!dnl
-  !makeQualityForOneProduct(product=HNO3,chisqScale=1.0,minRads=2000,cloudMax=10K,cloudMin= -20K)
-  !makeStatusForOneProduct(product=HNO3,chisqScale=1.0,minRads=2000,cloudMax=10K,cloudMin= -20K)
+  !makeQualityForOneProduct(product=HNO3,chisqScale=1.0,minRads=2000,cloudMax=30K,cloudMin= -999K)
+  !makeStatusForOneProduct(product=HNO3,chisqScale=1.0,minRads=2000,cloudMax=30K,cloudMin= -999K)
 
   ;; ------------------------------------- SO2-240
   !define(flaggingBands,{8,33})
   !define(flaggingRadiometers,{R3})!dnl
-  !makeQualityForOneProduct(product=SO2,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -20K)
-  !makeStatusForOneProduct(product=SO2,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -20K)
+  !makeQualityForOneProduct(product=SO2,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -999K)
+  !makeStatusForOneProduct(product=SO2,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -999K)
 
   ;; ------------------------------------- Temperature-CorePlusR3
   !define(flaggingBands,{8})
   !define(flaggingRadiometers,{R3})!dnl
-  !makeQualityForOneProduct(product=Temperature,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -888K)
-  !makeStatusForOneProduct(product=Temperature,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -888K)
+  !makeQualityForOneProduct(product=Temperature,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -999K)
+  !makeStatusForOneProduct(product=Temperature,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -999K)
 
   ;; ------------------------------------- GPH-CorePlusR3
   !define(flaggingBands,{8})
   !define(flaggingRadiometers,{R3})!dnl
-  !makeQualityForOneProduct(product=GPH,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -888K)
-  !makeStatusForOneProduct(product=GPH,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -888K)
+  !makeQualityForOneProduct(product=GPH,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -999K)
+  !makeStatusForOneProduct(product=GPH,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -999K)
 
 end Fill
 
 ; $Log$
+; Revision 1.13  2006/10/11 23:04:55  pwagner
+; Special retrieval phase name retrophase needed for Convergence Ratio Fill
+;
 ; Revision 1.12  2006/10/04 16:51:47  pwagner
 ; Compatible w/ status bits from multiple radiometers; needs review
 ;
