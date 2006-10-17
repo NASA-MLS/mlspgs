@@ -4,7 +4,7 @@
 ; ----------- Phase name vs. retrieval name
 ; Some phase(s) may not have Retrieve sections
 ; and so we'll need to know the last one
-!define(retrophase,{InitUTH})
+!define(retrophase,{FinalPtan})
 
 !divert!dnl
 ; This l2cf fragment does all the quality flagging for the Core
@@ -33,6 +33,9 @@ begin Fill
 end Fill
 
 ; $Log$
+; Revision 1.11  2006/10/11 23:04:55  pwagner
+; Special retrieval phase name retrophase needed for Convergence Ratio Fill
+;
 ; Revision 1.10  2006/10/04 16:51:47  pwagner
 ; Compatible w/ status bits from multiple radiometers; needs review
 ;
