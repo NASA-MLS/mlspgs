@@ -493,12 +493,15 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 !define(makeStandardProductMergeDiag,{!dnl
   Fill, quantity=standardProducts.$1, method=vector, sourceQuantity=state.$1
   Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1
-  Fill, quantity=standardDiagnostics.status$1, method=manipulate, $
-    a=standardDiagnostics.status$1, b=otherDiagnostics.status$1, $
-    manipulation='a|b'
-  Fill, quantity=standardDiagnostics.quality$1, method=manipulate, $
-    a=standardDiagnostics.quality$1, b=otherDiagnostics.quality$1, $
-    manipulation='a<b'
+  ;;;Fill, quantity=standardDiagnostics.status$1, method=manipulate, $
+  ;;;  a=standardDiagnostics.status$1, b=otherDiagnostics.status$1, $
+  ;;;  manipulation='a|b'
+  ;;;Fill, quantity=standardDiagnostics.quality$1, method=manipulate, $
+  ;;;  a=standardDiagnostics.quality$1, b=otherDiagnostics.quality$1, $
+  ;;;  manipulation='a<b'
+  ;;;Fill, quantity=standardDiagnostics.convergence$1, method=manipulate, $
+  ;;;  a=standardDiagnostics.convergence$1, b=otherDiagnostics.convergence$1, $
+  ;;;  manipulation='a>b'
 })
 !define(makeStandardProductNoDiag,{!dnl
   Fill, quantity=standardProducts.$1, method=vector, sourceQuantity=state.$1
@@ -840,6 +843,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.124  2006/10/11 23:02:18  pwagner
+; Do Convergence Ratio Fill when filling Quality; write results to l2gp
+;
 ; Revision 1.123  2006/10/04 16:50:40  pwagner
 ; May set status bits based on cloud-contaminated radiances from multiple radiometers
 ;
