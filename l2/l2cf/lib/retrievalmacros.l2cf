@@ -508,17 +508,40 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
   Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1
 })
 
+;; These macros relate to storing standard products
+;; Special cases are handled by lists ending with 'StdProds' mostly
+;; Some are stored at high resolution: HiResStdProds
+;; Some are stored accompanied by a column abundance: ColumnStdProds
+;; In particular, this overrides the outmoded macros
+;; storeStandardProductWith[out]Column
+!define(HiResStdProds,{H2O, Temperature, RHI, GPH})!dnl
+;;  !define(ColumnStdProds,{O3,CO,SO2,HNO3,H2O,HCN,CH3CN,BrO,ClO,HCl,HO2,HOCl,N2O,OH})!dnl
+;; We're planning on only O3 accompanying its column
+!define(ColumnStdProds,{O3})!dnl
+
+!define(storeStandardProduct,{!dnl
+!ifelse(!index(!defn(ColumnStdProds),$1),{-1}, {!dnl
+!storeThisProductWithoutColumn($1)!dnl
+},{!dnl
+!storeThisProductWithColumn($1)!dnl
+})})
+
+!define(storeStandardProductWithColumn,{!dnl
+!storeStandardProduct($1)!dnl
+})
+!define(storeStandardProductWithoutColumn,{!dnl
+!storeStandardProduct($1)!dnl
+})
 ;; These macros are used to fill a standard product's column abundance
 ;; (if required) and then directWrite both to the split DGG file for
 ;; later copying and reordering/repair
 ;; As a special case, the H2O standard product will be stored at high resolution
-!define(storeStandardProductWithColumn,{!dnl
-!ifelse($1,{H2O}, {
-!define(theQuantity,{$1_hr})
-},{!dnl
+!define(storeThisProductWithColumn,{!dnl
+!ifelse(!index(!defn(HiResStdProds),$1),{-1},{
 !define(theQuantity,{$1})
+},{!dnl
+!define(theQuantity,{$1_hr})
 })
-
 !ifelse($1,{O3}, {
 !define(theUnits,{, unit=DU})
 },{!dnl
@@ -589,12 +612,13 @@ End Join
 ;; Certain standard products without columns will be stored
 ;; at high resolutions
 ;; in fact every one except IWC
-!define(storeStandardProductWithoutColumn,{!dnl
-!ifelse($1,{IWC}, {
-!define(theQuantity,{iwc})
+!define(storeThisProductWithoutColumn,{!dnl
+!ifelse(!index(!defn(HiResStdProds),$1),{-1},{
+!define(theQuantity,{$1})
 },{!dnl
 !define(theQuantity,{$1_hr})
 })
+!dnl
 Begin Fill
 
   ;; Get our standard products back
@@ -843,6 +867,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.125  2006/10/18 00:06:13  pwagner
+; Quality, Status, Convergence for Merged Product all come from later phase (Core+R3)
+;
 ; Revision 1.124  2006/10/11 23:02:18  pwagner
 ; Do Convergence Ratio Fill when filling Quality; write results to l2gp
 ;
