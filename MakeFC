@@ -603,8 +603,10 @@ install:
            echo "enter  make install L2PARALLEL=yes" ;\
 			else \
            echo "Installing level 2 parallel executables into $(INSTALLDIR)"; \
-           cp -a $(MLSBIN)/mlsl2p.sh $(MLSBIN)/slavetmplt.sh $(INSTALLDIR); \
-           chmod a+x "$(INSTALLDIR)/mlsl2p.sh"; \
+           cp -a $(MLSBIN)/jobstat-sips.sh $(MLSBIN)/mlsl2p.sh \
+            $(MLSBIN)/slavetmplt.sh $(MLSBIN)/../scripts/mlsqlog-scan-sips.py \
+            $(INSTALLDIR); \
+           chmod a+x $(INSTALLDIR)/*.sh $(INSTALLDIR)/*.py; \
            echo "(Don't forget to scp them to your cluster)"; \
          fi; \
 		;; \
@@ -1146,6 +1148,9 @@ tools: chunktimes checkpvmup compare heconvert h5subset h5cat hl killmaster \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.102  2006/08/23 00:01:07  pwagner
+# Corrected misspelled tool
+#
 # Revision 1.101  2006/08/10 23:05:43  pwagner
 # Added l2gpdump tool
 #
