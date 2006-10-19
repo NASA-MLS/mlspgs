@@ -6,7 +6,8 @@
 
 # (1) It has been called from PGS_PC_Shell.sh as the (pge) in
 #  PGS_PC_Shell.sh (pge) 0111 (PCF_file) 25 -v
-# (2) $PGE_BINARY_DIR contains mlsl2 and $PGE_SCRIPT_DIR slavetmplt.sh
+# (2) $PGE_BINARY_DIR contains mlsl2 and $PGE_SCRIPT_DIR contains
+#       slavetmplt.sh and jobstat-sips.sh
 #     (or else define an enviromental variable (PVM_EP) and put them there)
 # (3) PVM_HOSTS_INFO is defined as an environment variable
 #     It should be the path and name of the host file,
@@ -45,6 +46,9 @@ CHECKIDENTS="yes"
 
 GZIPLEVEL="1"
 #          ^^^---- compression level ("" means none)
+
+SAVEJOBSTATS="yes"
+#             ^^^---- "yes" if progress of chunks thru phases recorded
 
 # In addition to whatever options and switches may be set by the environment
 # variable OTHEROPTS, the following are set:
@@ -105,6 +109,12 @@ then
 fi
 
 H5REPACK=$PGE_BINARY_DIR/h5repack
+#EXTRA_SCRIPT_DIR="$PGE_SCRIPT_DIR/../scripts"
+masterlog="${JOBDIR}/exec_log/process.stdout"
+if [ "$MASTERLOG" != "" ]
+then
+  masterlog="$MASTERLOG"
+fi
 
 # The logs will be written as separate files into ${JOBDIR}/pvmlog
 # before being catenated at end of run
@@ -170,6 +180,23 @@ $PGE_BINARY --pge $slave_script --tk --master $PVM_HOSTS_INFO \
 # Save return status
 return_status=`expr $?`
 
+echo SAVEJOBSTATS $SAVEJOBSTATS
+echo masterlog $masterlog
+echo PGE_SCRIPT_DIR/jobstat-sips.sh $PGE_SCRIPT_DIR/jobstat-sips.sh
+# Save record of progress thru phases
+if [ "$SAVEJOBSTATS" = "yes" -a -x "$PGE_SCRIPT_DIR/jobstat-sips.sh" ]
+then
+  # This sleep is to give slave tasks extra time to complete stdout
+  sleep 20
+  JOBSTATSFILE="$JOBDIR/phases.stats"
+  l2cf=`grep -i l2cf $masterlog | head -1 | awk '{print $9}'`
+  $PGE_SCRIPT_DIR/jobstat-sips.sh -S $PGE_BINARY_DIR/mlsqlog-scan-sips.py \
+    -t $PGE_SCRIPT_DIR/split_path.sh ${JOBDIR}/pvmlog "$l2cf" "$masterlog" \
+    > "$JOBSTATSFILE"
+else
+  JOBSTATSFILE="none"
+fi
+
 # catenate each slave's log to a log file
 LOGFILE="${JOBDIR}/pvmlog/mlsl2.log"
 if [ ! -w "$LOGFILE"  ]
@@ -183,6 +210,11 @@ then
   mv "$LOGFILE".1 "$LOGFILE"
 fi
 
+if [ -f "$LOGFILE" -a -f "$JOBSTATSFILE" ]
+then
+  cat "$LOGFILE" "$JOBSTATSFILE" > "$LOGFILE".1
+  mv "$LOGFILE".1 "$LOGFILE"
+fi
 # repack level 2 product files to speed things up
 if [ -x "$H5REPACK" ]
 then
@@ -215,6 +247,9 @@ else
 fi
 
 # $Log$
+# Revision 1.12  2006/04/03 23:10:01  pwagner
+# Fixed serious and various bugs
+#
 # Revision 1.11  2006/03/23 19:22:42  pwagner
 # repack with gzip compression all hdf5/hdfeos5 product files
 #
