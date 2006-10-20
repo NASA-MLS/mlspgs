@@ -148,8 +148,10 @@ contains
     integer :: NOMAFS              ! Number of MAFs of L1B data read
     integer :: NUMFILES
     integer :: OUTPUT_VERSION_STRING  ! Sub_rosa index
+    integer :: param_id            ! e.g., p_brightObjects
     integer :: ReturnStatus        ! non-zero means trouble
     integer :: SON                 ! Son of root
+    integer :: spec_id             ! e.g., s_binSelector
     logical :: StopEarly
     integer :: Sub_rosa_index
     integer :: The_HDF_version     ! 4 or 5 (corresp. to hdf4 or hdf5)
@@ -205,7 +207,17 @@ contains
       son = subtree(i,root)
       if ( node_id(son) == n_equal ) then
         sub_rosa_index = sub_rosa(subtree(2,son))
-        select case ( decoration(subtree(1,son)) )
+        param_id = decoration(subtree(1,son))
+        if ( TOOLKIT .and. &
+          & any( param_id == &
+          & (/ p_output_version_string, p_cycle, p_starttime, p_endtime, &
+          & p_leapsecfile /) ) ) then
+          call announce_error(0, &
+            & '*** l2cf parameter global setting ignored ***', &
+            & just_a_warning = .true.)
+          cycle
+        endif
+        select case ( param_id )
         ! This will allow us to use different names from the toolkit
         ! (Now why would you want to do that?)
         case ( p_brightObjects )
@@ -214,18 +226,10 @@ contains
         case ( p_output_version_string )
           output_version_string = sub_rosa_index
           call get_string ( output_version_string, l2pcf%PGEVersion, strip=.true. )
-          if ( TOOLKIT ) &
-            & call announce_error(0, &
-            & '*** l2cf overrides pcf for PGE version ***', &
-            & just_a_warning = .true.)
         case ( p_instrument )
           instrument = decoration(subtree(2,son))
         case ( p_cycle )
           call get_string ( sub_rosa_index, l2pcf%cycle, strip=.true. )
-          if ( TOOLKIT ) &
-            & call announce_error(0, &
-            & '*** l2cf overrides pcf for cycle number ***', &
-            & just_a_warning = .true.)
         case ( p_starttime )
           got(1) = .true.
           call get_string ( sub_rosa_index, name_string, strip=.true. )
@@ -239,10 +243,6 @@ contains
             read ( name_string, * ) start_time_from_1stMAF
             startTimeIsAbsolute = .true.
           end if
-          if ( TOOLKIT ) &
-            & call announce_error(0, &
-            & '*** l2cf overrides pcf for start time ***', &
-            & just_a_warning = .true.)
         case ( p_endtime )
           got(2) = .true.
           call get_string ( sub_rosa_index, name_string, strip=.true. )
@@ -256,10 +256,6 @@ contains
             read ( name_string, * ) end_time_from_1stMAF
             stopTimeIsAbsolute = .true.
           end if
-          if ( TOOLKIT ) &
-            & call announce_error(0, &
-            & '*** l2cf overrides pcf for end time ***', &
-            & just_a_warning = .true.)
         case ( p_leapsecfile )
           call get_string ( sub_rosa_index, LeapSecFileName, strip=.true. )
           inquire(file=trim(LeapSecFileName), exist=itExists)
@@ -270,10 +266,6 @@ contains
             & just_a_warning = .false.)
             call MLSMessage ( MLSMSG_Error, ModuleName, &                      
             & '(Please check file name and path)' )    
-          else if ( TOOLKIT ) then
-            call announce_error(0, &
-            & '*** Leap Second File supplied global settings despite pcf ***', &
-            & just_a_warning = .true.)
           end if
         case ( p_PFAFile )
           do j = 2, nsons(son)
@@ -290,7 +282,16 @@ contains
         else
           name = 0
         end if
-        select case ( get_spec_id(son) )
+        spec_id = get_spec_id(son)
+        if ( TOOLKIT .and. &
+          & any( spec_id == &
+          & (/ s_l1boa, s_l1brad, s_l2parsf /) ) ) then
+          call announce_error(0, &
+            & '*** l2cf spec global setting ignored ***', &
+            & just_a_warning = .true.)
+          cycle
+        endif
+        select case ( spec_id )
         case ( s_binSelector )
           call decorate (son, AddBinSelectorToDatabase ( &
             & binSelectors, CreateBinSelectorFromMLSCFInfo ( son ) ) )
@@ -349,10 +350,6 @@ contains
                end if
             if ( details > -4 ) call output &
               & ('finished readL1BAttribute in global_setting', advance='yes')
-            if ( TOOLKIT ) &
-            & call announce_error(0, &
-            & '*** l2cf overrides pcf for L1BOA file ***', &
-            & just_a_warning = .true.)
           else
             call announce_error(0, &
             & '*** Unable to find L1BOA file ***', &
@@ -369,12 +366,7 @@ contains
             & hdfVersion=the_hdf_version) 
           end if
           L1BFile => GetMLSFileByName(filedatabase, FilenameString)
-          if ( associated(L1BFile) ) then
-            if ( TOOLKIT ) &
-            & call announce_error(0, &
-            & '*** l2cf overrides pcf for L1B Rad. file(s) ***', &
-            & just_a_warning = .true.)
-          else
+          if ( .not. associated(L1BFile) ) then
             call announce_error(0, &
             & '*** Unable to find L1BRAD file ***' // trim(FilenameString), &
             & just_a_warning = .true.)
@@ -386,10 +378,6 @@ contains
           if ( index(switches, 'pro') /= 0 ) then  
             call proclaim(FilenameString, 'l2 parallel staging file') 
           end if
-          if ( TOOLKIT ) &
-            & call announce_error(0, &
-            & '*** l2cf overrides pcf for L2 Parallel staging file ***', &
-            & just_a_warning = .true.)
         case ( s_makePFA )
           call Make_PFAData ( son, returnStatus )
           error = max(error, returnStatus)
@@ -958,6 +946,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.120  2006/09/21 18:48:07  pwagner
+! Reduce level of dumps in SIDS version
+!
 ! Revision 2.119  2006/07/24 20:35:21  pwagner
 ! Fixed bug when stopAfterSection is blank
 !
