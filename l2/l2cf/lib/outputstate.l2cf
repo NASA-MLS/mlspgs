@@ -29,6 +29,18 @@ Output, quantities=[joined_iwc, joined_iwp], type=l2gp, $
   file='!l2gpFileName(IWC)'
 },{
 
+;; These macros relate to storing standard products
+;; Special cases are handled by lists ending with 'StdProds' mostly
+;; Some are stored at high resolution: HiResStdProds
+;; Some are stored accompanied by a column abundance: ColumnStdProds
+;; Some are stored w/o a column abundance: NonColumnStdProds
+!define(HiResStdProds,{H2O, Temperature, RHI, GPH})!dnl
+;;  !define(ColumnStdProds,{O3,CO,SO2,HNO3,H2O,HCN,CH3CN,BrO,ClO,HCl,HO2,HOCl,N2O,OH})!dnl
+;; We're planning on only O3 accompanying its column
+!define(ColumnStdProds,{O3})!dnl
+;; (IWC will be handled separately)
+!define(NonColumnStdProds,{BrO,CH3CN,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,OH,SO2,Temperature,GPH,RHI})!dnl
+
 !ifdef(flagCopyStandardProducts,{
 
 ;; Here we carry out the idea of copying standard Products out of the
@@ -57,9 +69,9 @@ Output, quantities=[joined_iwc, joined_iwp], type=l2gp, $
     /create
 })
 !ifdef(flagUseGEOS5PTrop,{!dnl
-!forall(copyStandardProductWith2Columns,!allStandardProductsWithColumns)
+!forall(copyStandardProductWith2Columns,!ColumnStdProds)
 },{!dnl
-!forall(copyStandardProductWithColumn,!allStandardProductsWithColumns)
+!forall(copyStandardProductWithColumn,!ColumnStdProds)
 })
 
 !define(copyStandardProductWithoutColumn, {Copy, $
@@ -68,7 +80,7 @@ Output, quantities=[joined_iwc, joined_iwp], type=l2gp, $
     file='!l2gpFileName($1)', rename='$1', $
     /create
 })
-!forall(copyStandardProductWithoutColumn,!allStandardProductsWithoutColumns)
+!forall(copyStandardProductWithoutColumn,!NonColumnStdProds)
 
 ;; --------------------------------- Other files ---
 ;; The IWC file is a somewhat special case
