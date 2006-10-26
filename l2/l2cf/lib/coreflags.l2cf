@@ -12,27 +12,23 @@
 
 begin Fill
   ;; ------------------------------------ Temperature-Core
-;;;  !define(flaggingBands,{1,22,32})
-;;;  !makeFlagsForOneProduct(product=Temperature,radiometer=R1A,chisqScale=1.0,minRads=1500,cloudMax=5K,cloudMin= -10K)
-;;;  !define(flaggingBands,{34})
-;;;  !makeFlagsForOneProduct(product=Temperature,radiometer=R1B,chisqScale=1.0,minRads=1500,cloudMax=5K,cloudMin= -10K)
-;;;  !define(flaggingBands,{8,33})
   !define(flaggingBands,{8})
   !define(flaggingRadiometers,{R1A,R1B,R3})!dnl
-  !makeQualityForOneProduct(product=Temperature,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -888K)
-  !makeStatusForOneProduct(product=Temperature,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -888K)
+  !makeQualityForOneProduct(product=Temperature,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=Temperature,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -4K)
 
   ;; ------------------------------------ GPH-Core
-  ;;;!define(flaggingBands,{1,22,32})
-  ;;;!makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=1.0,minRads=1500,cloudMax=5K,cloudMin= -30K)
   !define(flaggingBands,{8})
   !define(flaggingRadiometers,{R1A,R1B,R3})!dnl
-  !makeQualityForOneProduct(product=GPH,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -888K)
-  !makeStatusForOneProduct(product=GPH,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -888K)
+  !makeQualityForOneProduct(product=GPH,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=GPH,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -4K)
 
 end Fill
 
 ; $Log$
+; Revision 1.12  2006/10/17 00:00:28  pwagner
+; The stdProd  Convergence should be taken from FinalPtan
+;
 ; Revision 1.11  2006/10/11 23:04:55  pwagner
 ; Special retrieval phase name retrophase needed for Convergence Ratio Fill
 ;
