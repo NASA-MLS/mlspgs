@@ -298,7 +298,7 @@ contains
     if (trim(date) == ' ' .and. n_dates == 0) then
 
     ! Last chance to enter date
-      print *,  "Enter the date you wish to convert."
+      ! print *,  "Enter the date you wish to convert."
       read(*,'(a)') date
     endif
     
@@ -332,6 +332,9 @@ END PROGRAM dateconverter
 !==================
 
 ! $Log$
+! Revision 1.5  2005/09/23 20:45:41  pwagner
+! Changes to conform with dates_module
+!
 ! Revision 1.4  2005/09/15 00:14:31  pwagner
 ! +/-number option added
 !
