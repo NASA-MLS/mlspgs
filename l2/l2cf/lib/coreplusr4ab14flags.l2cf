@@ -68,18 +68,21 @@ begin Fill
   ;; ------------------------------------- Temperature-640
   !define(flaggingBands,{1})
   !define(flaggingRadiometers,{R1A,R1B,R3})!dnl
-  !makeQualityForOneProduct(product=Temperature,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -999K)
-  !makeStatusForOneProduct(product=Temperature,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -999K)
+  !makeQualityForOneProduct(product=Temperature,chisqScale=1.0,minRads=800,cloudMax=30K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=Temperature,chisqScale=1.0,minRads=800,cloudMax=30K,cloudMin= -4K)
 
   ;; ------------------------------------- GPH-640
   !define(flaggingBands,{1})
   !define(flaggingRadiometers,{R1A,R1B,R3})!dnl
-  !makeQualityForOneProduct(product=GPH,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -999K)
-  !makeStatusForOneProduct(product=GPH,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -999K)
+  !makeQualityForOneProduct(product=GPH,chisqScale=1.0,minRads=800,cloudMax=30K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=GPH,chisqScale=1.0,minRads=800,cloudMax=30K,cloudMin= -4K)
 
 end Fill
 
 ; $Log$
+; Revision 1.5  2006/11/01 18:41:25  dwu
+; change r4 cloud flag thresholds
+;
 ; Revision 1.4  2006/10/11 23:04:55  pwagner
 ; Special retrieval phase name retrophase needed for Convergence Ratio Fill
 ;
