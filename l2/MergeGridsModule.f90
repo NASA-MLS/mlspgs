@@ -320,6 +320,7 @@ contains ! =================================== Public procedures
   type (griddedData_T) function MergeOneGrid ( root, griddedDataBase ) &
     & result ( newGrid )
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use Dump_0, only: dump
     use Expr_m, only: EXPR
     use GriddedData, only: GRIDDEDDATA_T, RGR, V_IS_PRESSURE, &
       & COPYGRID, NULLIFYGRIDDEDDATA, &
@@ -433,11 +434,15 @@ contains ! =================================== Public procedures
     end if
     if ( DEEBUG ) then
     call output( 'operational%verticalCoordinate: ', advance='no' )
-    call output( operational%verticalCoordinate, advance='no' )
+    call output( operational%verticalCoordinate, advance='yes' )
+    call dump( operational%field( :, 1, 1, 1, 1, 1 ), 'op T' )
+    call dump( operational%heights, 'op h' )
     call blanks(3)
     call output( v_is_pressure, advance='yes' )
     call output( 'climatology%verticalCoordinate: ', advance='no' )
-    call output( climatology%verticalCoordinate, advance='no' )
+    call output( climatology%verticalCoordinate, advance='yes' )
+    call dump( climatology%field( :, 1, 1, 1, 1, 1 ), 'cl T' )
+    call dump( climatology%heights, 'cl h' )
     call blanks(3)
     call output( v_is_pressure, advance='yes' )
     endif
@@ -575,6 +580,7 @@ contains ! =================================== Public procedures
     use MLSCommon, only: DEFAULTUNDEFINEDVALUE
     use MLSFillValues, only: IsFillValue, RemoveFillValues
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
+    use MLSStats1, only: MLSMIN, MLSMAX, MLSMEAN
     use MLSStrings, only: LOWERCASE
     use output_m, only: output, output_name_v_pair
     use Toggles, only: GEN, TOGGLE
@@ -628,6 +634,8 @@ contains ! =================================== Public procedures
     real :: trp
     integer :: value
     real, dimension(:), pointer :: xyTemp, xyPress
+    logical, parameter :: DEEBUG = .false.
+    integer, parameter :: hPa2Pa  = 100 ! Factor convert hPa to Pa
 
     ! Executable code
     call nullifyGriddedData ( newGrid ) ! for Sun's still useless compiler
@@ -682,10 +690,18 @@ contains ! =================================== Public procedures
         & 'Gridded T,P data must match to calculate wmo Tropopause' )
       endif
     endif
+    if ( DEEBUG ) then
     call output( 'Temperatures grid', advance='yes' )
     call dump( Temperatures, details=0 )
     call output( 'Pressures grid', advance='yes' )
     call dump( Pressures, details=0 )
+    call output('Max val', advance='no')
+    call output(mlsmax( Pressures%field(:,:,:,1,1,1), Pressures%missingValue ), advance='yes')
+    call output('Min val', advance='no')
+    call output(mlsmin( Pressures%field(:,:,:,1,1,1), Pressures%missingValue ), advance='yes')
+    call output('Mean val', advance='no')
+    call output(mlsmean( Pressures%field(:,:,:,1,1,1), Pressures%missingValue ), advance='yes')
+    endif
     ! call output_name_v_pair( 'Temperatures grid empty?', Temperatures%empty )
     ! call output_name_v_pair( 'Pressures grid empty?   ', Pressures%empty )
     if ( .not. associated(Temperatures) ) then
@@ -710,7 +726,7 @@ contains ! =================================== Public procedures
     newGrid%szas               = Temperatures%szas
     newGrid%dateEnds           = Temperatures%dateEnds(1)
     newGrid%dateStarts         = Temperatures%dateStarts(1)
-    newGrid%missingValue              = MISSINGVALUE
+    newGrid%missingValue       = MISSINGVALUE / hPa2Pa
     newGrid%field              = MISSINGVALUE
     nlev = Temperatures%noHeights
     if ( Temperatures%empty .or. Pressures%empty ) then
@@ -772,9 +788,9 @@ contains ! =================================== Public procedures
               if ( associated(Pressures) ) then
                 select case (lowercase(Pressures%units))
                 case ('pa', 'b')
-                  scale = 100. ! To convert Pa to hPa
+                  scale = 1. 
                 case ('hpa', 'mb')
-                  scale = 1.
+                  scale = 100. ! To convert hPa to Pa
                 case default
                   call output( 'Pressures%units: ', advance='no' )
                   call output( trim(Pressures%units), advance='yes' )
@@ -810,7 +826,7 @@ contains ! =================================== Public procedures
                 & extraTropics(temperatures%lats(lat)) )  &
                 & trp = MISSINGVALUE
               if ( trp > 0. .and. trp < 100000000. ) &
-                & newGrid%field(1, lat,lon,iLst,iSza,idate) = trp ! /100 for 'Pa'
+                & newGrid%field(1, lat,lon,iLst,iSza,idate) = trp/hPa2Pa !  for 'Pa'
               call Deallocate_test ( xyTemp, 'xyTemp', ModuleName )
               call Deallocate_test ( xyPress, 'xyPress', ModuleName )
             enddo ! Lats
@@ -821,6 +837,17 @@ contains ! =================================== Public procedures
     call Deallocate_test ( h, 'h', ModuleName )
     call Deallocate_test ( p, 'p', ModuleName )
     call Deallocate_test ( t, 't', ModuleName )
+    if ( DeeBug ) then
+      call output('scale: ', advance='no')
+      call output(scale, advance='no')
+    call output('Max val', advance='no')
+    call output(mlsmax( newGrid%field(:,:,:,1,1,1), newGrid%missingValue ), advance='yes')
+    call output('Min val', advance='no')
+    call output(mlsmin( newGrid%field(:,:,:,1,1,1), newGrid%missingValue ), advance='yes')
+    call output('Mean val', advance='no')
+    call output(mlsmean( newGrid%field(:,:,:,1,1,1), newGrid%missingValue ), advance='yes')
+      stop
+    endif
     if ( toggle(gen) ) call trace_end ( "wmoTropFromGrid" )
   end function wmoTropFromGrid
 
@@ -836,6 +863,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.25  2006/11/01 20:34:12  pwagner
+! hasty fix to wmo tropopause
+!
 ! Revision 2.24  2006/07/07 23:10:03  pwagner
 ! Should handle missing GEOS5 files with greater grace
 !
