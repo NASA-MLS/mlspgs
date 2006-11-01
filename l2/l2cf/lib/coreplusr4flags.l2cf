@@ -13,61 +13,64 @@
 begin Fill
   ;; ------------------------------------ ClO-640
   !define(flaggingBands,{10})
-  !define(flaggingRadiometers,{R4})!dnl
-  !makeQualityForOneProduct(product=ClO,chisqScale=1.0,minRads=600,cloudMax=999K,cloudMin= -999K)
-  !makeStatusForOneProduct(product=ClO,chisqScale=1.0,minRads=600,cloudMax=999K,cloudMin= -999K)
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=ClO,chisqScale=1.0,minRads=600,cloudMax=999K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=ClO,chisqScale=1.0,minRads=600,cloudMax=999K,cloudMin= -4K)
 
   ;; ------------------------------------ BrO-640
   !define(flaggingBands,{11,31})
-  !define(flaggingRadiometers,{R4})!dnl
-  !makeQualityForOneProduct(product=BrO,chisqScale=1.0,minRads=1000,cloudMax=999K,cloudMin= -999K)
-  !makeStatusForOneProduct(product=BrO,chisqScale=1.0,minRads=1000,cloudMax=999K,cloudMin= -999K)
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=BrO,chisqScale=1.0,minRads=1000,cloudMax=999K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=BrO,chisqScale=1.0,minRads=1000,cloudMax=999K,cloudMin= -4K)
 
   ;; ------------------------------------ HOCl-640
   !define(flaggingBands,{10,11,28,29})
-  !define(flaggingRadiometers,{R4})!dnl
-  !makeQualityForOneProduct(product=HOCl,chisqScale=1.0,minRads=2000,cloudMax=999K,cloudMin= -999K)
-  !makeStatusForOneProduct(product=HOCl,chisqScale=1.0,minRads=2000,cloudMax=999K,cloudMin= -999K)
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=HOCl,chisqScale=1.0,minRads=2000,cloudMax=999K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=HOCl,chisqScale=1.0,minRads=2000,cloudMax=999K,cloudMin= -4K)
 
   ;; ------------------------------------ N2O-640
   !define(flaggingBands,{12})
-  !define(flaggingRadiometers,{R4})!dnl
-  !makeQualityForOneProduct(product=N2O,chisqScale=1.0,minRads=800,cloudMax=999K,cloudMin= -999K)
-  !makeStatusForOneProduct(product=N2O,chisqScale=1.0,minRads=800,cloudMax=999K,cloudMin= -999K)
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=N2O,chisqScale=1.0,minRads=800,cloudMax=999K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=N2O,chisqScale=1.0,minRads=800,cloudMax=999K,cloudMin= -4K)
 
   ;; ------------------------------------ HCl-640
   !define(flaggingBands,{13,14})
-  !define(flaggingRadiometers,{R4})!dnl
-  !makeQualityForOneProduct(product=HCl,chisqScale=1.0,minRads=1000,cloudMax=999K,cloudMin= -999K)
-  !makeStatusForOneProduct(product=HCl,chisqScale=1.0,minRads=1000,cloudMax=999K,cloudMin= -999K)
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=HCl,chisqScale=1.0,minRads=1000,cloudMax=999K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=HCl,chisqScale=1.0,minRads=1000,cloudMax=999K,cloudMin= -4K)
 
   ;; ------------------------------------ O3-640
   !define(flaggingBands,{13,14,30,31})
-  !define(flaggingRadiometers,{R4})!dnl
-  !makeQualityForOneProduct(product=O3,chisqScale=1.0,minRads=2000,cloudMax=999K,cloudMin= -999K)
-  !makeStatusForOneProduct(product=O3,chisqScale=1.0,minRads=2000,cloudMax=999K,cloudMin= -999K)
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=O3,chisqScale=1.0,minRads=2000,cloudMax=999K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=O3,chisqScale=1.0,minRads=2000,cloudMax=999K,cloudMin= -4K)
 
   ;; ------------------------------------ HO2-640
   !define(flaggingBands,{31})
-  !define(flaggingRadiometers,{R4})!dnl
-  !makeQualityForOneProduct(product=HO2,chisqScale=1.0,minRads=200,cloudMax=999K,cloudMin= -999K)
-  !makeStatusForOneProduct(product=HO2,chisqScale=1.0,minRads=200,cloudMax=999K,cloudMin= -999K)
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=HO2,chisqScale=1.0,minRads=200,cloudMax=999K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=HO2,chisqScale=1.0,minRads=200,cloudMax=999K,cloudMin= -4K)
 
   ;; ------------------------------------ HNO3-640
   !define(flaggingBands,{10,11,12,13,14,28,29,30,31})
-  !define(flaggingRadiometers,{R4})!dnl
-  !makeQualityForOneProduct(product=HNO3,chisqScale=1.0,minRads=4000,cloudMax=999K,cloudMin= -999K)
-  !makeStatusForOneProduct(product=HNO3,chisqScale=1.0,minRads=4000,cloudMax=999K,cloudMin= -999K)
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=HNO3,chisqScale=1.0,minRads=4000,cloudMax=999K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=HNO3,chisqScale=1.0,minRads=4000,cloudMax=999K,cloudMin= -4K)
 
   ;; ------------------------------------ CH3CN-640
   !define(flaggingBands,{10,11,12,13,14,28,29,30,31})
-  !define(flaggingRadiometers,{R4})!dnl
-  !makeQualityForOneProduct(product=CH3CN,chisqScale=1.0,minRads=4000,cloudMax=999K,cloudMin= -999K)
-  !makeStatusForOneProduct(product=CH3CN,chisqScale=1.0,minRads=4000,cloudMax=999K,cloudMin= -999K)
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=CH3CN,chisqScale=1.0,minRads=4000,cloudMax=999K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=CH3CN,chisqScale=1.0,minRads=4000,cloudMax=999K,cloudMin= -4K)
 
 end Fill
 
 ; $Log$
+; Revision 1.12  2006/11/01 18:41:19  dwu
+; change r4 cloud flag thresholds
+;
 ; Revision 1.11  2006/10/11 23:04:55  pwagner
 ; Special retrieval phase name retrophase needed for Convergence Ratio Fill
 ;

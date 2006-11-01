@@ -14,21 +14,21 @@ begin Fill
 
   ;; ------------------------------------ HCl-640-B13
   !define(flaggingBands,{13,14})
-  !define(flaggingRadiometers,{R4})!dnl
-  !makeQualityForOneProduct(product=HCl,chisqScale=1.0,minRads=1000,cloudMax=999K,cloudMin= -999K)
-  !makeStatusForOneProduct(product=HCl,chisqScale=1.0,minRads=1000,cloudMax=999K,cloudMin= -999K)
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=HCl,chisqScale=1.0,minRads=1000,cloudMax=30K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=HCl,chisqScale=1.0,minRads=1000,cloudMax=30K,cloudMin= -4K)
 
   ;; ------------------------------------ O3-640-B13
   !define(flaggingBands,{13,14,30,31})
-  !define(flaggingRadiometers,{R4})!dnl
-  !makeQualityForOneProduct(product=O3,chisqScale=1.0,minRads=2000,cloudMax=999K,cloudMin= -999K)
-  !makeStatusForOneProduct(product=O3,chisqScale=1.0,minRads=2000,cloudMax=999K,cloudMin= -999K)
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=O3,chisqScale=1.0,minRads=2000,cloudMax=30K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=O3,chisqScale=1.0,minRads=2000,cloudMax=30K,cloudMin= -4K)
 
   ;; ------------------------------------ SO2-640-B13
   !define(flaggingBands,{13,14})
-  !define(flaggingRadiometers,{R4})!dnl
-  !makeQualityForOneProduct(product=SO2,chisqScale=1.0,minRads=200,cloudMax=999K,cloudMin= -999K)
-  !makeStatusForOneProduct(product=SO2,chisqScale=1.0,minRads=200,cloudMax=999K,cloudMin= -999K)
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=SO2,chisqScale=1.0,minRads=200,cloudMax=30K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=SO2,chisqScale=1.0,minRads=200,cloudMax=30K,cloudMin= -4K)
 
   ;; ------------------------------------- Temperature-CorePlusR4AB13
   !define(flaggingBands,{1})
@@ -45,6 +45,9 @@ begin Fill
 end Fill
 
 ; $Log$
+; Revision 1.8  2006/11/01 20:24:19  pwagner
+; Comments more accurately reflect T, GPH swath names
+;
 ; Revision 1.7  2006/11/01 19:12:29  pwagner
 ; Removed R3 as flagging radiometer
 ;
