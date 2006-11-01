@@ -15,18 +15,33 @@ begin Fill
   ;; ------------------------------------ N2O-640
   !define(flaggingBands,{12})
   !define(flaggingRadiometers,{R4})!dnl
-  !makeQualityForOneProduct(product=N2O,chisqScale=1.0,minRads=800,cloudMax=10K,cloudMin= -10K)
-  !makeStatusForOneProduct(product=N2O,chisqScale=1.0,minRads=800,cloudMax=10K,cloudMin= -10K)
+  !makeQualityForOneProduct(product=N2O,chisqScale=1.0,minRads=800,cloudMax=999K,cloudMin= -999K)
+  !makeStatusForOneProduct(product=N2O,chisqScale=1.0,minRads=800,cloudMax=999K,cloudMin= -999K)
 
   ;; ------------------------------------ SO2-640
   !define(flaggingBands,{12})
   !define(flaggingRadiometers,{R4})!dnl
-  !makeQualityForOneProduct(product=SO2,chisqScale=1.0,minRads=800,cloudMax=10K,cloudMin= -10K)
-  !makeStatusForOneProduct(product=SO2,chisqScale=1.0,minRads=800,cloudMax=10K,cloudMin= -10K)
+  !makeQualityForOneProduct(product=SO2,chisqScale=1.0,minRads=800,cloudMax=999K,cloudMin= -999K)
+  !makeStatusForOneProduct(product=SO2,chisqScale=1.0,minRads=800,cloudMax=999K,cloudMin= -999K)
+
+  ;; ------------------------------------- Temperature-CorePlusR4B
+  !define(flaggingBands,{1})
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=Temperature,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=Temperature,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -4K)
+
+  ;; ------------------------------------- GPH-CorePlusR4B
+  !define(flaggingBands,{1})
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=GPH,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=GPH,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -4K)
 
 end Fill
 
 ; $Log$
+; Revision 1.5  2006/10/11 23:04:55  pwagner
+; Special retrieval phase name retrophase needed for Convergence Ratio Fill
+;
 ; Revision 1.4  2006/10/04 16:51:47  pwagner
 ; Compatible w/ status bits from multiple radiometers; needs review
 ;
