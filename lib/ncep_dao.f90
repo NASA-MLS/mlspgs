@@ -78,6 +78,7 @@ contains
     & the_g_data, returnStatus, &
     & GeoDimList, fieldName, missingValue)
 
+    use MLSStats1, only: MLSMIN, MLSMAX, MLSMEAN
     ! This routine reads a Gridded Data file, returning a filled data
     ! structure and the  appropriate for 'ncep' or 'dao'
 
@@ -126,6 +127,9 @@ contains
         print *, 'Description     ' // trim(the_g_data%description)
         print *, 'Units           ' // trim(the_g_data%units)
         print *, 'Vertical Coord  ', the_g_data%verticalCoordinate, v_type, v_is_pressure
+        print *, 'max val  ', mlsmax( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue )
+        print *, 'min val  ', mlsmin( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue )
+        print *, 'meanval  ', mlsmean( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue )
       endif
     case ('dao', 'gmao')
       call Read_dao(GriddedFile, lcf_where, v_type, &
@@ -1882,6 +1886,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.45  2006/11/01 20:30:11  pwagner
+! More unused debugging prints
+!
 ! Revision 2.44  2006/06/13 22:11:45  pwagner
 ! Correctly sets units, heightsUnits
 !
