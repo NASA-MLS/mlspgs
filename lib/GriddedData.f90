@@ -296,6 +296,7 @@ contains
     ! Converts two eta-level grids, one of them pressures, 
     ! to a pressure-level Grid
     use MLSNumerics, only: InterpolateValues
+    use dump_0, only: dump
     type ( GriddedData_T ), intent(in)  :: TGrid  ! E.g., T on eta surfaces
     type ( GriddedData_T ), intent(in)  :: PGrid  ! Pressures on eta surfaces
     type ( GriddedData_T ), intent(in)  :: NGrid  ! What surfaces to use
@@ -303,6 +304,7 @@ contains
     ! Internal variables
     integer :: iDate, iSza, iLst, iLon, iLat
     real(rgr), dimension(:), pointer    :: pEta => null()
+    logical, parameter :: DEEBUG = .false.
     ! Executable code
     nullify( pEta )
     ! GriddedData must match
@@ -327,7 +329,20 @@ contains
         do iLst=1, TGrid%noLsts
           do iLon=1, TGrid%noLons
             do iLat=1, TGrid%noLats
-              pEta = PGrid%field( :, iLat, iLon, iLst, iSza, iDate )
+              ! But do we need to convert pressures from one system to another?
+              ! Because we're in a hurry, we won't use ConvertVGrid
+              ! but just do it by hand
+              ! What we'll do is assume
+              ! The grid we need NGrid is in 'hPa'
+              ! The eta-level pressures are either already in hPa or else in pa
+              if ( lowercase(PGrid%units) == 'hpa' ) then
+                pEta = PGrid%field( :, iLat, iLon, iLst, iSza, iDate )
+              elseif ( lowercase(PGrid%units) == 'pa' ) then
+                pEta = PGrid%field( :, iLat, iLon, iLst, iSza, iDate ) / 100
+              else
+                call MLSMessage(MLSMSG_Error, ModuleName, &
+                  & 'unrecognized quantity for eta-level pressures '// trim(PGrid%units) )
+              endif
               call InterpolateValues( &
                 & pEta, TGrid%field( :, iLat, iLon, iLst, iSza, iDate ), &
                 & NGrid%heights, OutGrid%field( :, iLat, iLon, iLst, iSza, iDate ), &
@@ -337,6 +352,13 @@ contains
         enddo
       enddo
     enddo
+    if ( DEEBUG ) then
+      call dump( TGrid%field( :, 1, 1, 1, 1, 1 ), 'T' )
+      call dump( PGrid%field( :, 1, 1, 1, 1, 1 ), 'P' )
+      call dump( NGrid%heights, 'heights' )
+      call dump( OutGrid%field( :, 1, 1, 1, 1, 1 ), 'T out' )
+      stop
+    endif
     call deallocate_test( pEta,   'pEta', moduleName )
   end subroutine ConvertFromEtaLevelGrids
 
@@ -1176,6 +1198,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.42  2006/11/01 20:27:05  pwagner
+! Hasty fix to units bug in eta-level conversion
+!
 ! Revision 2.41  2006/06/14 23:58:46  pwagner
 ! Concatenate can take array of grids
 !
