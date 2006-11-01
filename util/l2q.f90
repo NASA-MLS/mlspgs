@@ -859,11 +859,13 @@ contains
             endif
           endif
           dumpHosts = .true.
+          ! In case we were waiting for grateful acknowledgement
+          masters(mastersID)%owes_thanks = .false.
         case ( sig_Finished ) ! ----------------- Done with this master ------
           ! Find master's index into masters array
           mastersID = FindFirst(masters%tid, masterTid)
           numHosts = masters(mastersID)%numHosts
-          if ( numHosts > 0 ) then
+          if ( numHosts > 0 .and. associated(masters(mastersID)%hosts(host)) ) then
             do host = 1, numHosts
               hostsID = masters(mastersID)%hosts(host)
               if ( hostsID > 0 .and. hostsID <= size(hosts) ) &
@@ -1792,6 +1794,9 @@ contains
 end program L2Q
 
 ! $Log$
+! Revision 1.12  2006/09/29 00:31:21  pwagner
+! Many life-prolonging changes; may kill masters if so commanded
+!
 ! Revision 1.11  2006/08/02 22:48:22  pwagner
 ! prunit now a component of OutputOptions
 !
