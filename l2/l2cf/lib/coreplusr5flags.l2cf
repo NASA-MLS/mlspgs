@@ -25,19 +25,22 @@ begin Fill
 
   ;; ------------------------------------- Temperature-CorePlusR5
   !define(flaggingBands,{1})
-  !define(flaggingRadiometers,{R1A,R1B,R3})!dnl
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
   !makeQualityForOneProduct(product=Temperature,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -10K)
   !makeStatusForOneProduct(product=Temperature,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -10K)
 
   ;; ------------------------------------- GPH-CorePlusR5
   !define(flaggingBands,{1})
-  !define(flaggingRadiometers,{R1A,R1B,R3})!dnl
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
   !makeQualityForOneProduct(product=GPH,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -10K)
   !makeStatusForOneProduct(product=GPH,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -10K)
 
 end Fill
 
 ; $Log$
+; Revision 1.11  2006/10/11 23:04:55  pwagner
+; Special retrieval phase name retrophase needed for Convergence Ratio Fill
+;
 ; Revision 1.10  2006/10/04 16:51:47  pwagner
 ; Compatible w/ status bits from multiple radiometers; needs review
 ;

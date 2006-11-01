@@ -12,39 +12,42 @@
 
 begin Fill
 
-  ;; ------------------------------------ HCl-640
+  ;; ------------------------------------ HCl-640-B13
   !define(flaggingBands,{13,14})
   !define(flaggingRadiometers,{R4})!dnl
   !makeQualityForOneProduct(product=HCl,chisqScale=1.0,minRads=1000,cloudMax=999K,cloudMin= -999K)
   !makeStatusForOneProduct(product=HCl,chisqScale=1.0,minRads=1000,cloudMax=999K,cloudMin= -999K)
 
-  ;; ------------------------------------ O3-640
+  ;; ------------------------------------ O3-640-B13
   !define(flaggingBands,{13,14,30,31})
   !define(flaggingRadiometers,{R4})!dnl
   !makeQualityForOneProduct(product=O3,chisqScale=1.0,minRads=2000,cloudMax=999K,cloudMin= -999K)
   !makeStatusForOneProduct(product=O3,chisqScale=1.0,minRads=2000,cloudMax=999K,cloudMin= -999K)
 
-  ;; ------------------------------------ SO2-640
+  ;; ------------------------------------ SO2-640-B13
   !define(flaggingBands,{13,14})
   !define(flaggingRadiometers,{R4})!dnl
   !makeQualityForOneProduct(product=SO2,chisqScale=1.0,minRads=200,cloudMax=999K,cloudMin= -999K)
   !makeStatusForOneProduct(product=SO2,chisqScale=1.0,minRads=200,cloudMax=999K,cloudMin= -999K)
 
-  ;; ------------------------------------- Temperature-640
+  ;; ------------------------------------- Temperature-640-B13
   !define(flaggingBands,{1})
-  !define(flaggingRadiometers,{R1A,R1B,R3})!dnl
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
   !makeQualityForOneProduct(product=Temperature,chisqScale=1.0,minRads=800,cloudMax=30K,cloudMin= -4K)
   !makeStatusForOneProduct(product=Temperature,chisqScale=1.0,minRads=800,cloudMax=30K,cloudMin= -4K)
 
-  ;; ------------------------------------- GPH-640
+  ;; ------------------------------------- GPH-640-B13
   !define(flaggingBands,{1})
-  !define(flaggingRadiometers,{R1A,R1B,R3})!dnl
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
   !makeQualityForOneProduct(product=GPH,chisqScale=1.0,minRads=800,cloudMax=30K,cloudMin= -4K)
   !makeStatusForOneProduct(product=GPH,chisqScale=1.0,minRads=800,cloudMax=30K,cloudMin= -4K)
 
 end Fill
 
 ; $Log$
+; Revision 1.6  2006/11/01 18:43:59  dwu
+; change r4 cloud flag thresholds, correction for T and GPH
+;
 ; Revision 1.5  2006/11/01 18:41:29  dwu
 ; change r4 cloud flag thresholds
 ;
