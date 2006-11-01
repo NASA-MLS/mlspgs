@@ -77,7 +77,6 @@ module MLSCommon                ! Common definitions for the MLS software
   integer, public, parameter :: BareFNLen=64      ! Bare file name length (w/o path)
 
   real, public, parameter ::    DEFAULTUNDEFINEDVALUE = -999.99 ! Try to use in lib, l2
-! real, parameter, private :: FILLVALUETOLERANCE = 0.2 ! Poss. could make it 1
   ! --------------------------------------------------------------------------
   
   ! A type to hold the hdf ids
@@ -165,6 +164,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.28  2006/11/01 20:31:38  pwagner
+! House-cleaning
+!
 ! Revision 2.27  2005/12/16 00:02:05  pwagner
 ! FillValue-related stuff moved to new MLSFillValues module
 !
