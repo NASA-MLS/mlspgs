@@ -14,15 +14,15 @@ begin Fill
 
   ;; ------------------------------------ N2O-640
   !define(flaggingBands,{12})
-  !define(flaggingRadiometers,{R1A,R1B})!dnl
-  !makeQualityForOneProduct(product=N2O,chisqScale=1.0,minRads=800,cloudMax=30K,cloudMin= -4K)
-  !makeStatusForOneProduct(product=N2O,chisqScale=1.0,minRads=800,cloudMax=30K,cloudMin= -4K)
+  !define(flaggingRadiometers,{R4})!dnl
+  !makeQualityForOneProduct(product=N2O,chisqScale=1.0,minRads=800,cloudMax=10K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=N2O,chisqScale=1.0,minRads=800,cloudMax=10K,cloudMin= -10K)
 
   ;; ------------------------------------ SO2-640
   !define(flaggingBands,{12})
-  !define(flaggingRadiometers,{R1A,R1B})!dnl
-  !makeQualityForOneProduct(product=SO2,chisqScale=1.0,minRads=800,cloudMax=30K,cloudMin= -4K)
-  !makeStatusForOneProduct(product=SO2,chisqScale=1.0,minRads=800,cloudMax=30K,cloudMin= -4K)
+  !define(flaggingRadiometers,{R4})!dnl
+  !makeQualityForOneProduct(product=SO2,chisqScale=1.0,minRads=800,cloudMax=10K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=SO2,chisqScale=1.0,minRads=800,cloudMax=10K,cloudMin= -10K)
 
   ;; ------------------------------------- Temperature-CorePlusR4B
   !define(flaggingBands,{1})
@@ -39,6 +39,9 @@ begin Fill
 end Fill
 
 ; $Log$
+; Revision 1.7  2006/11/01 20:52:47  dwu
+; compute r4 status based on R1 cloud flags
+;
 ; Revision 1.6  2006/11/01 18:41:34  dwu
 ; change r4 cloud flag thresholds
 ;
