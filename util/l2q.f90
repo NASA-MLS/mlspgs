@@ -751,7 +751,8 @@ contains
             & .not. masters%owes_thanks)
           if ( options%deferToElders ) &
             grandMastersID = FindFirst(.not. masters%finished .and. &
-              & masters%numChunks > (masters%numHosts+masters%numFreed) )
+            &  masters%needs_host )
+              ! & masters%numChunks > (masters%numHosts+masters%numFreed) )
           if ( grandMastersID < 1 ) grandMastersID = size(masters) + 100
           if ( options%debug ) &
             & call proclaim('Master requested host', masterNameFun(masterTid))
@@ -788,7 +789,7 @@ contains
               call output(masters(mastersID)%numHosts, advance='no')
               call timestamp(' remaining)', advance='yes')
               call output ('Number of machines free: ', advance='no')
-              call timestamp (count(hosts%free), advance='yes')
+              call timestamp (count(hosts%free .and. hosts%OK), advance='yes')
             endif
             mayAssignAHost = .false. ! Don't assign to a later master
           endif
@@ -1172,7 +1173,8 @@ contains
         grandMastersID = mastersID
         if ( options%deferToElders ) &
           grandMastersID = FindFirst(.not. masters%finished .and. &
-            & masters%numChunks > (masters%numHosts+masters%numFreed) )
+            &  masters%needs_host )
+            ! & masters%numChunks > (masters%numHosts+masters%numFreed) )
         if ( grandMastersID < 1 ) grandMastersID = size(masters) + 100
         if ( mastersID > 0 .and. mastersID == grandMastersID ) then
           ! Find first free host
@@ -1450,7 +1452,7 @@ contains
     integer, dimension(:), pointer :: tempHosts
     integer :: i, status
     ! Executable
-    if( size(master%hosts) < 1 ) then
+    if( size(master%hosts) < 1 .and. .not. master%owes_thanks ) then
       call MLSMessage( MLSMSG_Warning, ModuleName, &
         & 'master lacks any hosts' )
       return
@@ -1460,6 +1462,9 @@ contains
     elseif ( hostsID > size(hosts) ) then
       call MLSMessage( options%errorLevel, ModuleName, &
         & 'Programming error--hostsID>size(hosts) in releaseHostFromMaster' )
+    elseif ( master%owes_thanks ) then
+      call MLSMessage( MLSMSG_Warning, ModuleName, &
+        & 'master still owes thanks' )
     elseif ( .not. associated(master%hosts) ) then
       ! call MLSMessage( MLSMSG_Warning, ModuleName, &
       !  & 'master lacks any hosts' )
@@ -1794,6 +1799,9 @@ contains
 end program L2Q
 
 ! $Log$
+! Revision 1.13  2006/11/01 20:45:29  pwagner
+! Fixed another freezing bug
+!
 ! Revision 1.12  2006/09/29 00:31:21  pwagner
 ! Many life-prolonging changes; may kill masters if so commanded
 !
