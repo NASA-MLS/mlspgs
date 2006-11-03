@@ -43,7 +43,7 @@ module Fill                     ! Create vectors and fill them.
 !---------------------------------------------------------------------------
 
   logical, parameter :: DONTPAD = .false.
-  logical, parameter :: USEREICHLER = .false.
+  logical, parameter :: USEREICHLER = .true.
 
   type arrayTemp_T
      real(rv), dimension(:,:), pointer :: VALUES => NULL() ! shaped like a
@@ -6982,7 +6982,10 @@ contains ! =====     Public Procedures     =============================
     ! ----------------------------------------- FillQtyWithReichlerWMOTP -------------
     subroutine FillQtyWithReichlerWMOTP ( tpPres, temperature, refGPH )
       use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+      use dump_0, only: dump
       use MLSFillValues, only: IsFillValue, RemoveFillValues
+      use output_m, only: output
+      
       use wmoTropopause, only: ExtraTropics, twmo
       ! Implements the algorithm published in GRL
       ! Loosely called the "Reichler" algorithm
@@ -6998,54 +7001,98 @@ contains ! =====     Public Procedures     =============================
       real :: MISSINGVALUE
       integer :: nlev
       integer :: nvalid
-      real, dimension(size(refGPH%values, 1)) :: p ! Pa
+      real, dimension( size(temperature%values, 1) ) :: p ! Pa
       real, parameter :: pliml = 65.*100 ! in Pa
       real, parameter :: plimlex = 65.*100 ! in Pa
       real, parameter :: plimu = 550.*100 ! in Pa
-      real, dimension(size(refGPH%values, 1)) :: t
+      real, dimension( size(temperature%values, 1) ) :: t
       real :: trp
       real, dimension(:), pointer :: xyTemp, xyPress
+      logical :: alreadyDumped
+      logical, parameter :: DEEBUG = .false.
       ! Executable
-      nlev = size(refGPH%values, 1)
+      nlev = size(temperature%values, 1)
       MISSINGVALUE = REAL( DEFAULTUNDEFINEDVALUE )
       ! Loop over the instances
       tpPres%values = MISSINGVALUE
+      if ( DEEBUG ) then
+      call output( 'num levels', advance='no' )
+      call output( nlev, advance='yes' )
+      call output( 'num instances', advance='no' )
+      call output( temperature%template%noInstances, advance='yes' )
+      call output( 'shape of tpPress values', advance='no' )
+      call output( shape(tpPres%values), advance='yes' )
+      endif
+      if ( -temperature%template%surfs(1,1) .gt.&
+        & -temperature%template%surfs(2,1) ) then
+        invert=1
+        ! p = refGPH%values(nlev:1:-1,instance)*100.  ! hPa > Pa
+        p = 10.0**(-temperature%template%surfs(nlev:1:-1,1))
+        p = p * 100.  ! hPa > Pa
+      else
+        invert=0
+        ! p=refGPH%values(:,instance)*100.         ! hPa > Pa
+        p = 10.0**(-temperature%template%surfs(:,1)) 
+        p = p * 100.  ! hPa > Pa
+      end if
       instanceLoop: do instance = 1, temperature%template%noInstances
+      alreadyDumped = .false.
         ! Check the temperatures are in a sensible range
         if ( any ( &
           & temperature%values(:,instance) < 10.0 .or. &
           & temperature%values(:,instance) > 1000.0 ) ) then
+          call output('invalid temperatures in this instance', advance='yes' )
           cycle instanceLoop
         end if
         ! check vertical orientation of data
         ! (twmo expects ordered from top downward)
-        if (refGPH%values(1,instance) .gt. refGPH%values(2,instance)) then
-          invert=1
-          p=refGPH%values(nlev:1:-1,instance)*100.  ! hPa > Pa
+        ! but surfs are -1.0 * log10(press)
+        if ( invert == 1 ) then
           t = temperature%values(nlev:1:-1,instance)
         else
-          invert=0
-          p=refGPH%values(:,instance)*100.         ! hPa > Pa
           t = temperature%values(:,instance)
         end if
         where ( t < 0. .or. t > 100000. )
           t = MissingValue
         end where
         nvalid = count( .not. isFillValue(t) )
-        if ( nvalid < 2 ) cycle
+        if ( nvalid < 2 ) then
+          if ( DEEBUG ) then
+          call output('not enough valid temperatures in this instance', advance='yes' )
+          call output(count( .not. isFillValue(t) ), advance='yes' )
+          call output(count( isFillValue(t) ), advance='yes' )
+          call dump(temperature%values(:,instance), 'temperature%values')
+          endif
+          cycle
+        endif
         call Allocate_test (xyTemp, nvalid, 'xyTemp', ModuleName )
         call Allocate_test (xyPress, nvalid, 'xyPress', ModuleName )
         call RemoveFillValues( t, MISSINGVALUE, xyTemp, &
           & p, xyPress )
         call twmo(nvalid, xyTemp, xyPress, plimu, pliml, trp)
+        if ( .not. alreadyDumped .and. DEEBUG ) then
+           alreadyDumped = .true.
+           call dump(p, 'p ')
+           call dump(t, 't ')
+           call dump(xyTemp, 'xyTemp')
+           call dump(xyPress, 'xyPress')
+           call output( 'plimu, pliml, trp', advance='no' )
+           call output( (/ plimu, pliml, trp /), advance='yes' )
+        endif
         ! Don't let tropopause sink too low in "extra tropics"
         if ( trp < plimlex .and. &
-          & extraTropics(temperature%template%geodLat(1, instance) ) ) &
-          & trp = MISSINGVALUE
+          & extraTropics(temperature%template%geodLat(1, instance) ) ) then
+          if ( DEEBUG ) then
+          call output( 'trp too low in extra tropics', advance='no' )
+          call output( (/ plimlex, trp /), advance='yes' )
+          endif
+          trp = MISSINGVALUE
+        endif
         if ( trp > 0. .and. trp < 100000000. ) tpPres%values(1, instance) = trp/100
         call Deallocate_test ( xyTemp, 'xyTemp', ModuleName )
         call Deallocate_test ( xyPress, 'xyPress', ModuleName )
       end do instanceLoop
+      if ( DEEBUG ) call dump( tpPres%values, 'tpPres%values' )
     end subroutine FillQtyWithReichlerWMOTP
 
     ! ----------------------------------------- FillQtyWithWMOTropopause ------
@@ -8029,6 +8076,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.347  2006/11/03 00:26:07  pwagner
+! Fixed bug in tropopause calculation
+!
 ! Revision 2.346  2006/10/11 22:56:11  pwagner
 ! May fill convergence from dnwt_chisqRatio
 !
