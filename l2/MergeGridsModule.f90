@@ -572,6 +572,7 @@ contains ! =================================== Public procedures
   type (griddedData_T) function wmoTropFromGrid ( root, griddedDataBase ) &
     & result ( newGrid )
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use dump_0, only: dump
     use GriddedData, only: GRIDDEDDATA_T, DUMP, RGR, V_IS_PRESSURE, V_IS_ETA, &
       & COPYGRID, NULLIFYGRIDDEDDATA, &
       & DOGRIDDEDDATAMATCH, &
@@ -797,13 +798,13 @@ contains ! =================================== Public procedures
                   call MLSMessage ( MLSMSG_Error, moduleName, &
                     & 'Pressures units must be Pa, hPa, or mb calculating wmo tropopause' )
                 end select
-                h = Pressures%field(nlev:1:-1,lat,lon,iLst,iSza,idate)
+                h = Pressures%field(1:nlev,lat,lon,iLst,iSza,idate)
                 if (h(1) .gt. h(2)) then
                   invert=1
                   p = Pressures%field(nlev:1:-1,lat,lon,iLst,iSza,idate) * scale
                 else
                   invert=0
-                  p = Pressures%field(nlev:1:-1,lat,lon,iLst,iSza,idate) * scale
+                  p = Pressures%field(1:nlev,lat,lon,iLst,iSza,idate) * scale
                 endif
               endif
               if ( invert == 1 ) then
@@ -821,6 +822,12 @@ contains ! =================================== Public procedures
               call RemoveFillValues( t, MISSINGVALUE, xyTemp, &
                 & p, xyPress )
               call twmo(nvalid, xyTemp, xyPress, plimu, pliml, trp)
+              if ( lon == 1 .and. lat == 1 .and. DEEBUG ) then
+                   call dump(xyTemp, 'xyTemp')
+                   call dump(xyPress, 'xyPress')
+                   call output( 'plimu, pliml, trp', advance='no' )
+                   call output( (/ plimu, pliml, trp /), advance='yes' )
+              endif
               ! Don't let tropopause sink too low in "extra tropics"
               if ( trp < plimlex .and. &
                 & extraTropics(temperatures%lats(lat)) )  &
@@ -863,6 +870,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.26  2006/11/03 00:25:47  pwagner
+! Fixed bug in tropopause calculation
+!
 ! Revision 2.25  2006/11/01 20:34:12  pwagner
 ! hasty fix to wmo tropopause
 !
