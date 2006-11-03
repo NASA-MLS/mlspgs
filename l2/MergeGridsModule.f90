@@ -639,6 +639,7 @@ contains ! =================================== Public procedures
     integer, parameter :: hPa2Pa  = 100 ! Factor convert hPa to Pa
 
     ! Executable code
+    nullify( xyTemp, xyPress, h, p, t )
     call nullifyGriddedData ( newGrid ) ! for Sun's still useless compiler
     if ( toggle(gen) ) call trace_begin ( "wmoTropFromGrid", root )
     MISSINGVALUE = REAL( DEFAULTUNDEFINEDVALUE )
@@ -870,6 +871,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.27  2006/11/03 19:40:30  pwagner
+! Fixed unassociated pointers NAG caught
+!
 ! Revision 2.26  2006/11/03 00:25:47  pwagner
 ! Fixed bug in tropopause calculation
 !
