@@ -7011,6 +7011,7 @@ contains ! =====     Public Procedures     =============================
       logical :: alreadyDumped
       logical, parameter :: DEEBUG = .false.
       ! Executable
+      nullify( xyTemp, xyPress )
       nlev = size(temperature%values, 1)
       MISSINGVALUE = REAL( DEFAULTUNDEFINEDVALUE )
       ! Loop over the instances
@@ -8076,6 +8077,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.348  2006/11/03 19:40:17  pwagner
+! Fixed unassociated pointers NAG caught
+!
 ! Revision 2.347  2006/11/03 00:26:07  pwagner
 ! Fixed bug in tropopause calculation
 !
