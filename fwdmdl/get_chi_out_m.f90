@@ -29,7 +29,6 @@ contains
 
 ! Compute the output angles to interpolate to
 
-    use Allocate_Deallocate, only: Allocate_test, Deallocate_test
     use Get_chi_angles_m, only: Get_chi_angles
     use Get_eta_matrix_m, only: Get_eta_sparse
     use Load_sps_data_m, only: Grids_T
@@ -62,9 +61,9 @@ contains
     real(rp), intent(out) :: dx_dh_out(:)   ! d(chi)/dh on the output grid
     real(rp), intent(out) :: dhdz_out(:)    ! dh/dz on the output grid
 
-! Outputs not computed if not associated
-    real(rp), pointer :: dxdt_tan(:,:)      ! computed dchi dt.
-    real(rp), pointer :: d2xdxdt_tan(:,:)   ! computed d2chi dxdt.
+! Outputs not computed if size zero
+    real(rp), intent(out) :: dxdt_tan(:,:)      ! computed dchi dt.
+    real(rp), intent(out) :: d2xdxdt_tan(:,:)   ! computed d2chi dxdt.
 !                                  ! at each phi value representation (km)
 
 
@@ -80,10 +79,12 @@ contains
     real(rp) :: d2hdhdt_tan(size(zetatan), grids_tmp%l_z(1), grids_tmp%l_p(1))
     real(rp) :: dhdt_tan(size(zetatan), grids_tmp%l_z(1), grids_tmp%l_p(1))
     real(rp) :: dhdz_tan(size(zetatan), grids_tmp%l_p(1))
-    real(rp), pointer :: eta_p(:,:)
+    real(rp) :: eta_p(size(zetatan),merge(grids_f%l_p(h2o_ind-1) + 1,1,h2o_ind>0): &
+                                    merge(grids_f%l_p(h2o_ind),0,h2o_ind>0))
     real(rp) :: eta_t(size(zetatan), grids_tmp%l_p(1))
-    real(rp), pointer :: eta_z(:,:)
-    real(rp), pointer :: h2o_tan_out(:)
+    real(rp) :: eta_z(size(zetatan),merge(grids_f%l_z(h2o_ind-1) + 1,1,h2o_ind>0): &
+                                    merge(grids_f%l_z(h2o_ind),0,h2o_ind>0))
+    real(rp) :: h2o_tan_out(merge(size(zetatan),0,h2o_ind>0))
     real(rp) :: height_tan(size(zetatan), grids_tmp%l_p(1))
     real(rp) :: h_tan_out(size(zetatan))
     real(rp) :: n_tan_out(size(zetatan))
@@ -95,8 +96,6 @@ contains
     n_out = size(zetatan)
     n_t_phi = grids_tmp%l_p(1)  ! Size of temperature phi basis
     n_t_zeta = grids_tmp%l_z(1) ! Size of temperature zeta basis
-
-    nullify ( eta_p, eta_z, h2o_tan_out )
 
     call two_d_hydrostatic ( grids_tmp, ref_zeta, ref_gph, zetatan, orb_inc, &
              & temp_tan, height_tan, dhdz_tan, dhdt_tan, d2hdhdt_tan )
@@ -117,10 +116,6 @@ contains
       beg_z = grids_f%l_z(h2o_ind-1) + 1
       end_p = grids_f%l_p(h2o_ind)
       beg_p = grids_f%l_p(h2o_ind-1) + 1
-
-      call allocate_test ( eta_p, n_out, end_p, 'eta_p', modulename, low2=beg_p )
-      call allocate_test ( eta_z, n_out, end_z, 'eta_z', modulename, low2=beg_z )
-      call allocate_test ( h2o_tan_out, n_out, 'h2o_tan_out', modulename )
 
       call get_eta_sparse ( grids_f%phi_basis(beg_p:end_p), phitan, eta_p )
       call get_eta_sparse ( grids_f%zet_basis(beg_z:end_z), zetatan, eta_z )
@@ -145,10 +140,6 @@ contains
                           & h2o_path=h2o_tan_out )
       n_tan_out = min ( n_tan_out, maxRefraction )
 
-      call deallocate_test ( h2o_tan_out, 'h2o_tan_out', modulename )
-      call deallocate_test ( eta_z, 'eta_z', modulename )
-      call deallocate_test ( eta_p, 'eta_p', modulename )
-
     else
 
 ! compute refractive index not depending on h2o
@@ -160,7 +151,7 @@ contains
 
 ! compute output angles to interpolate to
 
-    if ( associated(dxdt_tan) ) then
+    if ( size(dxdt_tan) > 0 ) then
 
       dhdt_tan = dhdt_tan  * spread(eta_t,2,n_t_zeta)
       d2hdhdt_tan = d2hdhdt_tan * spread(eta_t,2,n_t_zeta)
@@ -197,6 +188,9 @@ contains
 end module Get_Chi_Out_m
 
 ! $Log$
+! Revision 2.17  2006/11/11 03:44:13  vsnyder
+! Depointerize some variables
+!
 ! Revision 2.16  2005/12/22 20:53:29  vsnyder
 ! Simplify calcuation of water vapor
 !
