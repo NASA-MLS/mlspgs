@@ -59,6 +59,9 @@ program l1bdiff ! diffs two l1b or L2AUX files
     logical     :: stats = .false.
     logical     :: rms = .false.
     logical     :: direct = .false.
+    integer     :: maf1 = 0
+    integer     :: maf2 = 0
+    integer     :: moff = 0
     integer     :: numDiffs = 0
     character(len=255) :: referenceFileName= 'default.h5'  ! reference filename
   end type options_T
@@ -66,7 +69,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
   type ( options_T ) :: options
 
 
-  integer, parameter ::          MAXDS = 50
+  integer, parameter ::          MAXDS = 300
   integer, parameter ::          MAXSDNAMESBUFSIZE = MAXDS*NAME_LEN
   integer, parameter ::          MAXFILES = 100
   logical ::          columnsOnly
@@ -156,6 +159,16 @@ contains
       if ( filename(1:1) /= '-' ) exit
       if ( filename(1:3) == '-h ' ) then
         call print_help
+      elseif ( filename(1:5) == '-maf ' ) then
+        call getarg ( i+1+hp, number )
+        read(number, *) options%maf1, options%maf2
+        i = i + 1
+        exit
+      elseif ( filename(1:6) == '-moff ' ) then
+        call getarg ( i+1+hp, number )
+        read(number, *) options%moff
+        i = i + 1
+        exit
       elseif ( filename(1:3) == '-r ' ) then
         call getarg ( i+1+hp, options%referenceFileName )
         i = i + 1
@@ -210,6 +223,8 @@ contains
       write (*,*) '          -silent         => switch on silent mode'
       write (*,*) '                            (printing only if diffs found)'
       write (*,*) '          -l              => just list sd names in files'
+      write (*,*) '          -maf m1,m2      => just diff in the range [m1,m2]'
+      write (*,*) '          -moff offset    => 2nd data set starts after 1st'
       write (*,*) '          -rms            => just print mean, rms'
       write (*,*) '          -s              => just show statistics'
       write (*,*) '          -h              => print brief help'
@@ -337,6 +352,7 @@ contains
     ! Loop over sdNames in file 1
     do i = 1, noSds
       call GetStringElement (trim(mysdList), sdName, i, countEmpty )
+      ! if ( sdName /= 'R1A:118.B32W:PT.S0.WF4-1' ) cycle
       ! Allocate and fill l2aux
       if ( options%verbose ) print *, 'About to read ', trim(sdName)
         call ReadL1BData ( sdfid1, trim(sdName), L1bData, NoMAFs, status, &
@@ -359,18 +375,30 @@ contains
         endif
       ! if ( options%verbose ) print *, 'About to diff'
         if ( options%direct .or. .not. associated(L1bData%dpField) ) then
+          ! print *, 'About to do it direct'
           call diff(L1bData, L1bData2, &
             & stats=options%stats, rms=options%rms, &
             & silent=options%silent, numDiffs=numDiffs )
         else
+          ! print *, 'details=0'
           call diff(L1bData, L1bData2, details=0, &
             & stats=options%stats, rms=options%rms, &
             & silent=options%silent, numDiffs=numDiffs )
+          
           numDiffs = numDiffs + count( L1bData%dpField /= L1bData2%dpField )
-          L1bData%dpField = L1bData%dpField - L1bData2%dpField
-          if ( .not. options%silent ) call dump( L1bData%dpField, &
-            & 'l1bData%dpField', &
-            & stats=options%stats, rms=options%rms )
+          L1bData%dpField = L1bData%dpField - L1bData2%dpField(:,:,1+options%moff:)
+          if ( options%silent ) then
+          elseif ( options%maf1 /= 0 .and. options%maf2 /= 0 ) then
+            ! print *, shape( L1bData%dpField(:,:,options%maf1:options%maf2) )
+            call dump( L1bData%dpField(:,:,options%maf1:options%maf2), &
+              & 'l1bData%dpField', &
+              & stats=options%stats, rms=options%rms )
+          else
+            ! print *, shape( L1bData%dpField )
+            call dump( L1bData%dpField, &
+              & 'l1bData%dpField', &
+              & stats=options%stats, rms=options%rms )
+          endif
         endif
         call DeallocateL1BData ( l1bData )
         call DeallocateL1BData ( l1bData2 )
@@ -402,6 +430,9 @@ end program l1bdiff
 !==================
 
 ! $Log$
+! Revision 1.5  2006/06/14 16:42:38  pwagner
+! Should not run out of memory unless direct reset to TRUE
+!
 ! Revision 1.4  2006/01/14 00:58:31  pwagner
 ! Added -silent option
 !
