@@ -1129,21 +1129,37 @@ contains ! ================================ Procedures ======================
         & call usleep ( parallel%delay )
     end do masterLoop ! --------------------- End of master loop --------------
 
+    if ( switchDetail(switches,'l2q') > -1 ) then
+      call TimeStamp ( '   Finished', advance='yes' )
+      call dump(chunkNiceTids, 'chunkNiceTids', trim=.true.)
+      call dump(chunkTids, 'chunkTids')
+      call dump(machines%tid, 'machines%Tid')
+    endif
     ! First kill any children still running (only if we got a give up message).
     do chunk = 1, noChunks
       if ( chunkTids(chunk) /= 0 ) then
-        call pvmfkill ( chunkTids(chunk), info )
-        if ( info /= 0 ) &
-          & call PVMErrorMessage ( info, 'killing slave' )
         if ( usingL2Q ) then
           machine = chunkMachines(chunk)
           call TellL2QMachineFinished( &
             & trim(machines(machine)%name), machines(machine)%tid, L2Qtid )
+          if ( switchDetail(switches,'l2q') > -1 ) then
+            call output( 'tid: ', advance='no' )
+            call output( machines(machine)%tid, advance='no' )
+            call output( 'machine name: ', advance='no' )
+            call output( trim(machines(machine)%name), advance='no' )
+            call TimeStamp ( '   released', &
+            & advance='yes' )
+          endif
+          call usleep ( parallel%delay )
         endif
+        call pvmfkill ( chunkTids(chunk), info )
+        if ( info /= 0 ) &
+          & call PVMErrorMessage ( info, 'killing slave' )
       end if
     end do
 
     if ( usingL2Q ) then
+      call usleep ( parallel%delay )
       call TellL2QMasterFinished(L2Qtid)
     endif
     ! Now, we have to tidy some stuff up here to ensure we can join things
@@ -1779,6 +1795,11 @@ contains ! ================================ Procedures ======================
     integer :: BUFFERID                 ! From PVM
     integer :: INFO                     ! From PVM
     !
+    if ( switchDetail(switches,'l2q') > -1 ) then
+      call output( 'Releasing ' )
+      call output( tid )
+      call output( ' ' // trim(machinename), advance='yes' )
+    endif
     ! Identify ourselves
     call PVMFInitSend ( PvmDataDefault, bufferID )
     call PVMF90Pack ( SIG_RELEASEHOST, info )
@@ -1859,6 +1880,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.79  2006/11/22 18:11:04  pwagner
+! Help l2q track hosts freed by killed masters
+!
 ! Revision 2.78  2006/10/11 00:30:15  pwagner
 ! Fixed bug in length of arg MACHINENAME
 !
