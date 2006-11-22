@@ -496,7 +496,7 @@ contains ! ============================ MODULE PROCEDURES ======================
 
   !-------------------------------------------------  DiffL1BData  -----
   subroutine DiffL1BData ( l1bData1, l1bData2, &
-    & details, stats, rms, silent, numDiffs )
+    & details, stats, rms, silent, numDiffs, mafStart, mafEnd )
   use MLSNumerics, only: EssentiallyEqual
     ! Diff two l1brad quantities
     type( L1BData_T ), intent(inout) :: L1bData1
@@ -510,6 +510,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     logical, intent(in), optional :: RMS     ! if TRUE, just print mean, rms
     logical, intent(in), optional :: silent  ! don't print anything
     integer, intent(out), optional :: numDiffs  ! how many diffs
+    integer, intent(in), optional :: mafStart, mafEnd
     ! If either of stats or rms is present and TRUE, print much less
 
     ! Local variables
@@ -517,6 +518,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     logical :: l1b1NotFinite
     logical :: l1b2NotFinite
     integer :: MYDETAILS
+    integer :: mafStart1, mafStart2, mafEnd1, mafEnd2
     integer :: myNumDiffs
     logical :: mySilent
     logical :: prntAssocStatus  ! Whether to remark on association status
@@ -528,6 +530,20 @@ contains ! ============================ MODULE PROCEDURES ======================
     if ( present(stats) ) hideAssocStatus = stats
     if ( present(rms) ) hideAssocStatus = hideAssocStatus .or. rms
     prntAssocStatus = .not. hideAssocStatus
+    if ( present(mafStart) ) then
+      mafStart1 = mafStart
+      mafStart2 = mafStart
+    else
+      mafStart1 = 1
+      mafStart2 = 1
+    endif
+    if ( present(mafEnd) ) then
+      mafEnd1 = mafEnd
+      mafEnd2 = mafEnd
+    else
+      mafEnd1 = L1bData1%NoMAFs
+      mafEnd2 = L1bData1%NoMAFs
+    endif
     
     mySilent = .false.
     if ( present(silent) ) mySilent = silent
@@ -592,7 +608,16 @@ contains ! ============================ MODULE PROCEDURES ======================
       call output(L1bData2%LastMAFCtr, advance='yes')
       myNumDiffs = myNumDiffs + 1
     endif
-
+    if ( L1bData1%FirstMAFCtr < L1bData2%FirstMAFCtr ) then
+      mafStart1 = mafStart1 + L1bData2%FirstMAFCtr - L1bData1%FirstMAFCtr
+    elseif ( L1bData1%FirstMAFCtr > L1bData2%FirstMAFCtr ) then
+      mafStart2 = mafStart2 + L1bData1%FirstMAFCtr - L1bData2%FirstMAFCtr
+    endif
+    if ( L1bData1%LastMAFCtr < L1bData2%LastMAFCtr ) then
+      mafEnd2 = mafEnd2 - ( L1bData2%LastMAFCtr - L1bData1%LastMAFCtr )
+    elseif ( L1bData1%LastMAFCtr > L1bData2%LastMAFCtr ) then
+      mafEnd1 = mafEnd1 - ( L1bData1%LastMAFCtr - L1bData2%LastMAFCtr )
+    endif
     if ( myDetails < 0 ) then
       call doneHere
       return
@@ -650,8 +675,9 @@ contains ! ============================ MODULE PROCEDURES ======================
           call output('l1bData2%dpField array all NaNs', advance='yes')
       elseif ( .not. EssentiallyEqual(l1bData1%dpField, l1bData2%dpField, &
         & FillValue=REAL(DEFAULTUNDEFINEDVALUE, R8)) ) then
-          call diff ( l1bData1%dpField, 'l1bData%dpField', &
-        & l1bData2%dpField, 'l1bData%dpField', &
+          call diff ( &
+        & l1bData1%dpField(:,:,mafStart1:mafEnd1), 'l1bData%dpField', &
+        & l1bData2%dpField(:,:,mafStart2:mafEnd2), 'l1bData%dpField', &
         & FillValue=REAL(DEFAULTUNDEFINEDVALUE, R8), &
         & stats=stats, rms=rms )
         myNumDiffs = myNumDiffs + count(l1bData1%dpField /= l1bData2%dpField)
@@ -3143,6 +3169,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.71  2006/11/22 18:12:37  pwagner
+! New optional args to diff l1b files with different number MAFs
+!
 ! Revision 2.70  2006/04/11 23:13:29  pwagner
 ! More room needed in dumping counterMAF array
 !
