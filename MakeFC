@@ -329,8 +329,8 @@ SUBDIRS = blas lib $(LEVELS) $(OTHER_SUBDIRS)
 # so it will be bundled up by tar
 # Note that it does *not* include the Toolkit nor PVM nor FFTW 
 # because they are outside mlspgs
-EVERYTHING = $(SUBDIRS)  srclib\
-   util sids tables notes tests\
+EVERYTHING = $(SUBDIRS)  srclib \
+   util sids tables notes tests scripts \
    $(MakeFName) README.$(MakeFName) BEFORE.mls
      
 # This is in case tar doesn't summon GNU tar, you may still use it via
@@ -1148,6 +1148,9 @@ tools: chunktimes checkpvmup compare heconvert h5subset h5cat hl killmaster \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.103  2006/10/19 18:34:04  pwagner
+# Also copies scanner script into installdir to print chunk stats
+#
 # Revision 1.102  2006/08/23 00:01:07  pwagner
 # Corrected misspelled tool
 #
