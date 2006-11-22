@@ -61,6 +61,7 @@ program L2Q
   integer :: BUFFERID
   character(len=2048) :: command_line ! All the opts
   logical, parameter :: COUNTEMPTY = .true.
+  logical, parameter :: DUMPDBSONDEBUG = .false.
   integer :: ERROR
   integer :: INFO
   integer :: INUNIT = -1       ! Input unit, * if < 0
@@ -792,7 +793,10 @@ contains
               call timestamp (count(hosts%free .and. hosts%OK), advance='yes')
             endif
             mayAssignAHost = .false. ! Don't assign to a later master
+          else
+            call timestamp ( 'Unknown host freed by master', advance='yes')
           endif
+
           dumpHosts = .true.
         case ( sig_ThanksHost ) ! -------------- Happy with this host ------
           ! Find master's index into masters array
@@ -1208,7 +1212,7 @@ contains
           endif
           OutputOptions%prunit = oldPrUnit
           tLastHDBDump = t2
-          if ( options%debug ) then
+          if ( options%debug .and. DUMPDBSONDEBUG ) then
             inquire(unit=OutputOptions%prunit, opened=opened)
             if ( .not. opened ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
               & 'Miscellaneous dump file not opened ' // &
@@ -1238,7 +1242,7 @@ contains
           endif
           OutputOptions%prunit = oldPrUnit
           tLastMDBDump = t2
-          if ( options%debug ) then
+          if ( options%debug .and. DUMPDBSONDEBUG ) then
             inquire(unit=OutputOptions%prunit, opened=opened)
             if ( .not. opened ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
               & 'Miscellaneous dump file not opened ' // &
@@ -1332,6 +1336,17 @@ contains
     if ( info /= 0 ) then
       call myPVMErrorMessage ( info, "unpacking machineName" )
     endif
+    if ( options%debug  ) then
+       if ( signal == SIG_RELEASEHOST ) then
+         call output ('Freed host ', advance='no')
+       elseif ( signal == sig_HostDied ) then
+         call output ('Host died ', advance='no')
+       endif
+       call output ('tid: ', advance='no')
+       call output (tid, advance='no')
+       call output ('   machineName: ', advance='no')
+       call output (trim(machineName), advance='no')
+    endif
     if ( tid < 1 ) then
       ! This means master couldn't start slave task on host
       ! So we'll look at machineName
@@ -1382,20 +1397,24 @@ contains
     character(len=16) :: masDate
     character(len=16) :: masName
     ! Executable
+    if ( options%debug ) then
     call output(' len_trim(names) ', advance='no')
     call output( len_trim(names) , advance='no')
     call output(' size(IDs) ', advance='no')
     call output( size(IDs) , advance='no')
     call output('   size(masters) ', advance='no')
     call output( size(masters) , advance='yes')
+    endif
     if ( size(IDs) < 1 ) return
     IDs = 0
     if ( size(masters) < 1 .or. len_trim(names) < 1 ) return
     masterFormat = dateForm(masters(1)%date)
     n = NumStringElements( names,  countEmpty )
     n = min( n, size(IDs) )
+    if ( options%debug ) then
     call timestamp ( 'n: ', advance='no' )
     call timestamp ( n, advance='yes' )
+    endif
     do i=1, n
       call GetStringElement( names, masName, i, countEmpty )
       ! Two possible formats:
@@ -1452,6 +1471,7 @@ contains
     integer, dimension(:), pointer :: tempHosts
     integer :: i, status
     ! Executable
+    if ( options%debug ) call output( 'Releasing ' // trim(host%name) // '   ', advance='no')
     if( size(master%hosts) < 1 .and. .not. master%owes_thanks ) then
       call MLSMessage( MLSMSG_Warning, ModuleName, &
         & 'master lacks any hosts' )
@@ -1471,6 +1491,10 @@ contains
       call timestamp('master lacks any hosts', advance='yes' )
       return
     elseif ( host%master_tid /= master%tid ) then
+      call output('host%master_tid ', advance='no')
+      call output(host%master_tid, advance='no')
+      call output('   master%tid ', advance='no')
+      call output(master%tid, advance='no')
       call timestamp('Host not assigned to that master', advance='yes' )
       return
     elseif ( .not. any(master%hosts == hostsID) ) then
@@ -1799,6 +1823,9 @@ contains
 end program L2Q
 
 ! $Log$
+! Revision 1.14  2006/11/03 21:27:26  pwagner
+! Another last-minute freezing bug fixed (or so we hope)
+!
 ! Revision 1.13  2006/11/01 20:45:29  pwagner
 ! Fixed another freezing bug
 !
