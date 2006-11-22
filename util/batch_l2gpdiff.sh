@@ -19,7 +19,9 @@
 #    -dryrun              Merely echo the commands that would be executed
 #    -unique              Save results to a uniquely-named new file
 #    -c1 cycle1           Insist on cycle number c"cycle1" in dir1
+#                         (if cycle1 is "none" then file name may lack cycle number)
 #    -c2 cycle2           Insist on cycle number c"cycle2" in dir2
+#                         (if cycle2 is "none" then file name may lack cycle number)
 #    -profiles m n        Keep only profiles in range m n
 #    -l2gpdiff command    Use command instead of l2gpdiff
 #  (and all the normal l2gpdiff options; e.g. -rms -ignore are wise choices)
@@ -290,6 +292,10 @@ fi
 for i in $list
 do
   extant_files $dir1/MLS-Aura_L2GP-${i}_*c${cycle1}*.he5
+  if [ "$cycle1" = "none" ]
+  then
+    extant_files $dir1/MLS-Aura_L2GP-${i}_*.he5
+  fi
   nfiles=`echo "$extant_files_result" | wc | awk '{print $2}'`
   if [ "$nfiles" -gt 1 ]
   then
@@ -301,7 +307,11 @@ do
     file1="$extant_files_result"
   fi
 
-  extant_files $dir2/MLS-Aura_L2GP-${i}_*c${cycle1}*.he5
+  extant_files $dir2/MLS-Aura_L2GP-${i}_*c${cycle2}*.he5
+  if [ "$cycle2" = "none" ]
+  then
+    extant_files $dir2/MLS-Aura_L2GP-${i}_*.he5
+  fi
   nfiles=`echo "$extant_files_result" | wc | awk '{print $2}'`
   if [ "$nfiles" -gt 1 ]
   then
@@ -378,6 +388,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.6  2006/05/24 22:22:47  pwagner
+# Added -profiles option
+#
 # Revision 1.5  2006/03/23 19:15:37  pwagner
 # Better handling of multiple cycle numbers
 #
