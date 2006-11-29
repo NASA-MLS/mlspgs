@@ -13,21 +13,12 @@ module QuantityPVM                      ! Send and receive vector quantities usi
   ! This module provides functionality for sending and receiving vectors
   ! through a pvm connection.
 
-  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMFSEND, &
     & PVMFRECV
   use PVMIDL, only: PVMIDLPACK, PVMIDLUNPACK
   use MorePVM, only: PVMPackLitIndex, PVMPackStringIndex, &
     & PVMUnpackLitIndex, PVMUnpackStringIndex
-  use String_Table, only: GET_STRING, DISPLAY_STRING
-  use VectorsModule, only: VECTORVALUE_T
-  use MLSCommon, only: R8
-  use Intrinsic, only: LIT_INDICES
-  use MLSSignals_m, only: GETSIGNALNAME
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, PVMERRORMESSAGE
-  use QuantityTemplates, only: QUANTITYTEMPLATE_T, SETUPNEWQUANTITYTEMPLATE
-  use Dump_0, only: DUMP
-  use VectorsModule, only: CREATEMASKARRAY
 
   implicit none
   private
@@ -47,6 +38,10 @@ contains ! ================================== Module procedures ============
 
   ! ---------------------------------- PVMSendQuantity ---------------------
   subroutine PVMSendQuantity ( Q, tid, justPack, noValues, noMask, skipMIFGeolocation )
+    use Intrinsic, only: LIT_INDICES
+    use MLSSignals_m, only: GETSIGNALNAME
+    use String_Table, only: GET_STRING
+    use VectorsModule, only: VECTORVALUE_T
     type (VectorValue_T), intent(in) :: Q ! Quantity to send
     integer, intent(in), optional :: TID ! Task to send it to
     logical, intent(in), optional :: JUSTPACK ! Just pack it into an existing buffer
@@ -214,6 +209,10 @@ contains ! ================================== Module procedures ============
 
   ! ---------------------------------- PVMReceiveQuantity ---------------------
   subroutine PVMReceiveQuantity ( QT, values, tid, mask, justUnpack, mifGeolocation )
+    use Allocate_Deallocate, only: ALLOCATE_TEST
+    use MLSCommon, only: R8
+    use QuantityTemplates, only: QUANTITYTEMPLATE_T, SETUPNEWQUANTITYTEMPLATE
+    use VectorsModule, only: CREATEMASKARRAY
     type (QuantityTemplate_T), intent(out) :: QT ! Template for quantity
     ! It's not inout, because then setupNewQuantityTemplate would deallocate
     ! the pointer components.  But the actual argument is put into a database
@@ -232,7 +231,7 @@ contains ! ================================== Module procedures ============
     logical :: L2(2)                    ! Unpacked stuff
     logical :: L6(6)                    ! Unpacked stuff
     logical :: FLAG(1)                  ! To unpack
-    character(len=132) :: WORD          ! Result of get_string etc.
+    character(len=132) :: WORD          ! Result of PVMIDLUnpack etc.
     logical :: MYJUSTUNPACK             ! Copy of justUnPack
     logical :: NOVALUES                 ! No values sent
     logical :: NOMASK                   ! No mask sent
@@ -433,6 +432,9 @@ contains ! ================================== Module procedures ============
 end module QuantityPVM
 
 ! $Log$
+! Revision 2.22  2006/11/29 03:05:19  vsnyder
+! Remove unused USE names
+!
 ! Revision 2.21  2006/08/03 01:10:06  vsnyder
 ! Put l2cf names in leak track database
 !
