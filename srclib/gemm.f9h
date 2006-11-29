@@ -47,6 +47,9 @@
 ! end subroutine *GEMM
 
 ! $Log$
+! Revision 1.6  2006/11/29 19:55:43  vsnyder
+! gemm.f9h <- bogus comment due to brain cramp
+!
 ! Revision 1.5  2005/06/22 20:03:55  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
