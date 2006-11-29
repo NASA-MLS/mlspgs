@@ -74,7 +74,8 @@ contains
   ! column template for A.  For each quantity, the weight vector is averaged
   ! to the number of rows of regularization (i.e., (number of columns)~- $k$)
   ! using $|\mathbf{\Delta}^k|$.  Then it is used as the diagonal of the
-  ! row-scaling matrix $W$.  If {\tt WeightVec} is absent, one is used.
+  ! row-scaling matrix $\mathbf{W}$.  If {\tt WeightVec} is absent, one is
+  ! used.
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Expr_M, only: EXPR
@@ -273,10 +274,10 @@ contains
       !           1  0  0 -3  0  0   3  0  0 -1
       !                    1  0  0  -3  0  0  3  0  0 -1
       !                              1  0  0 -3  0  0  3  0  0  -1
-      ! This routine is called multiple times, once for each channel.
-      ! For simplicity such matrices are created full and later sparsified
-      ! any other approach prooves very difficult, not obvious by looking at
-      ! this routine alone, but in context when one realizes that the masks
+      ! This routine is called multiple times, once for each channel. For
+      ! simplicity such matrices are created full and later sparsified, as any
+      ! other approach proves very difficult, which is not obvious by looking
+      ! at this routine alone, but in context when one realizes that the masks
       ! may be different from channel to channel.
 
       ! I think I'll split the two possibilities out at the top level, rather
@@ -697,6 +698,9 @@ o:          do while ( c2 <= ni )
 end module Regularization
 
 ! $Log$
+! Revision 2.39  2006/11/29 01:07:31  vsnyder
+! Fix up some comments
+!
 ! Revision 2.38  2006/08/02 19:54:15  vsnyder
 ! Tell CreateBlock it's regularization needing one for leak tracking
 !
