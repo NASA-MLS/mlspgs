@@ -863,9 +863,8 @@ op:     do j = 2, nsons(theTree)
 
     ! Now the spectroscopy parameters.  They only make sense for LBL.
     do i = lineCenter, lineWidth_TDep
-      if ( lineTrees(i) == null_tree ) cycle
       ! Make a list of the molecules
-      allocate ( lineStru(nsons(lineTrees(i))-1), stat=status )
+      allocate ( lineStru(max(nsons(lineTrees(i))-1,0)), stat=status )
       if ( status /= 0 ) call announceError( AllocateError, lineTrees(i) )
       select case ( i )
       case ( lineCenter )
@@ -875,6 +874,7 @@ op:     do j = 2, nsons(theTree)
       case ( lineWidth_TDep )
         info%lineWidth_TDep => lineStru
       end select
+      if ( lineTrees(i) == null_tree ) cycle
       molecules => lineStru%molecule
       do j = 2, nsons(LineTrees(i))
         son = subtree( j, LineTrees(i) )
@@ -1356,6 +1356,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.134  2006/11/29 01:08:58  vsnyder
+! Allocate spectroscopy derivative stuff with zero size if not used
+!
 ! Revision 2.133  2006/07/20 23:39:53  vsnyder
 ! Remove unused declarations and USEs
 !
