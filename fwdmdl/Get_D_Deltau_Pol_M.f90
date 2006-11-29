@@ -239,8 +239,8 @@ contains
     real(rp), intent(in) :: T_Path_f(:)     ! path temperatures on GL grid
     complex(rp), intent(in) :: Alpha_Path_c(-1:,:) ! -1:1 x path on coarse grid
     complex(rp), intent(in) :: Alpha_Path_f(-1:,:) ! -1:1 x path on fine grid
-    complex(rp), pointer :: dAlpha_dT_polarized_path_c(:,:) ! -1:1 x path
-    complex(rp), pointer :: dAlpha_dT_polarized_path_f(:,:) ! -1:1 x path
+    complex(rp), intent(in) :: dAlpha_dT_polarized_path_c(:,:) ! -1:1 x path
+    complex(rp), intent(in) :: dAlpha_dT_polarized_path_f(:,:) ! -1:1 x path
     real(rp), intent(in) :: dAlpha_dT_path_c(:) ! nonpolarized dAlpha_dT
     real(rp), intent(in) :: dAlpha_dT_path_f(:) ! nonpolarized dAlpha_dT
     real(rp), intent(in) :: Eta_zxp(:,:)    ! representation basis function
@@ -519,6 +519,9 @@ contains
 end module Get_D_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.34  2006/11/29 01:04:24  vsnyder
+! Remove POINTER attribute from two dummy arguments
+!
 ! Revision 2.33  2006/04/21 22:12:31  vsnyder
 ! Fix final bug in mixing ratio derivatives
 !
