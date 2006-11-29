@@ -31,7 +31,6 @@ contains
   ! ------------------------------------------ PVMPackLitIndex ---
   subroutine PVMPackLitIndex ( index, info, msg )
     use Intrinsic, only: Lit_indices
-    use PVMIDL, only: PVMIDLPack
     ! Dummy arguments
     integer, intent(in) :: INDEX                  ! lit index
     integer, intent(out), optional :: INFO        ! Flag from pvm
@@ -121,6 +120,9 @@ contains
 end module MorePVM
 
 ! $Log$
+! Revision 2.10  2006/11/29 03:05:19  vsnyder
+! Remove unused USE names
+!
 ! Revision 2.9  2005/06/22 17:25:50  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
