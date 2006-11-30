@@ -1277,16 +1277,16 @@ contains
         end if
       end do
     end if
-    if ( associated(config%lineCenter) .or. associated(config%lineWidth) .or. &
-      &  associated(config%lineWidth_Tdep) ) then
+    if ( size(config%lineCenter) > 0 .or. size(config%lineWidth) > 0 .or. &
+      &  size(config%lineWidth_Tdep) > 0 ) then
       call output ( '  Spectroscopy parameters:', advance='yes')
-      if ( associated(config%lineCenter) ) &
+      if ( size(config%lineCenter) > 0 ) &
         & call display_string ( lit_indices(config%lineCenter%molecule), &
           & advance='yes', before='    Line centers:' )
-      if ( associated(config%lineWidth) ) &
+      if ( size(config%lineWidth) > 0 ) &
         & call display_string ( lit_indices(config%lineWidth%molecule), &
           & advance='yes', before='    Line widths:' )
-      if ( associated(config%lineWidth_Tdep) ) &
+      if ( size(config%lineWidth_Tdep) > 0 ) &
         & call display_string ( lit_indices(config%lineWidth%molecule), &
           & advance='yes', before='    Line width temperature dependencies:' )
     end if
@@ -1362,6 +1362,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.95  2006/07/21 00:17:39  vsnyder
+! Remove unused declarations and USEs
+!
 ! Revision 2.94  2006/06/03 01:46:10  vsnyder
 ! Remove no_dup_mol flag from config structure
 !
