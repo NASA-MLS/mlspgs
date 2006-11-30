@@ -1326,7 +1326,6 @@ contains
     if ( temp_der ) then
       call deallocate_test ( ddhidhidtl0,     'ddhidhidtl0',     moduleName )
       call deallocate_test ( k_temp,          'k_temp',          moduleName )
-      call deallocate_test ( d2xdxdt_tan,     'd2xdxdt_tan',     moduleName )
       call deallocate_test ( dAlpha_dT_path_c,'dAlpha_dT_path_c',moduleName )
       call deallocate_test ( dAlpha_dT_path_f,'dAlpha_dT_path_f',moduleName )
       call deallocate_test ( dBeta_dT_Path_c, 'dBeta_dT_Path_c', moduleName )
@@ -1342,8 +1341,6 @@ contains
       call deallocate_test ( dTanh_dT_c,      'dTanh_dT_c',      moduleName )
       call deallocate_test ( dTanh_dT_f,      'dTanh_dT_f',      moduleName )
       call deallocate_test ( d_t_scr_dt,      'd_t_scr_dt',      moduleName )
-      call deallocate_test ( dxdt_surface,    'dxdt_surface',    moduleName )
-      call deallocate_test ( dxdt_tan,        'dxdt_tan',        moduleName )
       call deallocate_test ( eta_zxp_t_c,     'eta_zxp_t_c',     moduleName )
       call deallocate_test ( eta_zxp_t,       'eta_zxp_t',       moduleName )
       call deallocate_test ( eta_zxp_t_f,     'eta_zxp_t_f',     moduleName )
@@ -1352,6 +1349,11 @@ contains
       call deallocate_test ( tan_dh_dt,       'tan_dh_dt',       moduleName )
       call deallocate_test ( t_der_path_flags,'t_der_path_flags',moduleName )
     end if
+    ! Nonzero size if temp_der set, zero size if temp_der not set
+    call deallocate_test ( dxdt_surface,    'dxdt_surface',    moduleName )
+    call deallocate_test ( d2xdxdt_surface, 'd2xdxdt_surface', moduleName )
+    call deallocate_test ( d2xdxdt_tan,     'd2xdxdt_tan',     moduleName )
+    call deallocate_test ( dxdt_tan,        'dxdt_tan',        moduleName )
 
     if ( atmos_der ) then
       call deallocate_test ( d_delta_df,      'd_delta_df',      moduleName )
@@ -1692,6 +1694,9 @@ contains
         call allocate_test ( d2xdxdt_tan, ptan%template%nosurfs, sv_t_len, &
                            & 'd2xdxdt_tan', moduleName )
         call allocate_test ( rad_fft, no_fft, 'Rad_FFT', moduleName )
+      else
+        call allocate_test ( dxdt_tan, 0, 0, 'dxdt_tan', moduleName )
+        call allocate_test ( d2xdxdt_tan, 0, 0, 'd2xdxdt_tan', moduleName )
       end if
 
       ! Temperature's windowStart:windowFinish are correct here.
@@ -1876,6 +1881,9 @@ contains
         call allocate_test ( dxdt_surface, 1, sv_t_len,  'dxdt_surface', moduleName )
         call allocate_test ( d2xdxdt_surface, 1, sv_t_len,  'd2xdxdt_surface', &
                            & moduleName )
+      else
+        call allocate_test ( dxdt_surface, 0, 0, 'dxdt_surface', moduleName )
+        call allocate_test ( d2xdxdt_surface, 0, 0, 'd2xdxdt_surface', moduleName )
       end if ! temp_der
 
       if ( atmos_der ) then
@@ -3447,6 +3455,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.268  2006/11/29 01:09:40  vsnyder
+! Use SIZE()==0 instead of ASSOCIATED to decide whether to compute spectroscopy derivatives
+!
 ! Revision 2.267  2006/08/25 19:42:31  vsnyder
 ! Recommited to get correct comment into the log: Compute earthradc_sq for
 ! metrics, since we both need it, more accurate tracing, cannonball polishing.
