@@ -10,7 +10,6 @@
 ! foreign countries or providing access to foreign persons.
 
 module HYDROSTATIC_INTRP
-  use D_SOLVE_QUAD_M, only: SOLVE_QUAD
   use MLSCommon, only: I4, R8
   use D_HUNT_M, only: HUNT
   implicit NONE
@@ -129,6 +128,9 @@ contains
 ! let delz=z-z1, given C for that interval (z1,z2),
 ! solve the quadratic in delz: 0.5*w*delz*delz+T1*delz-C*(Sin(a)-Sin(a1))
 ! and get z=z1+delz which goes with the given a.
+
+    use D_SOLVE_QUAD_M, only: SOLVE_QUAD
+
     character, intent(in) :: HA         ! ha='h' if v_grid=h_grid
                                         ! ha='a' if v_grid=ptg_angles
     real(r8), intent(in) :: V_GRID(:)   ! Input grid Angles or Heights
@@ -233,6 +235,9 @@ contains
 
 end module HYDROSTATIC_INTRP
 ! $Log$
+! Revision 2.4  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.3  2002/10/08 17:08:04  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
