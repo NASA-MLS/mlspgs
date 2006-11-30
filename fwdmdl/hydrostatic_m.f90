@@ -74,8 +74,9 @@ module Hydrostatic_m
     real(rp) :: P2, P4    ! Legendre polynomials, for oblateness model
 !   real(rp) :: dp2, dp4  ! Derivatives of P2 and P4
     real(rp) :: dh_dz_S, H_calc, Z_old
-    real(rp), dimension(size(z_grid),size(t_basis)) :: Eta, Piq
-    real(rp), dimension(1,size(t_basis)) :: Piqa, Piqb
+    real(rp), dimension(size(t_grid),size(t_basis)) :: Eta
+    real(rp), dimension(size(h_grid),size(t_basis)) :: Piq
+    real(rp), dimension(1,size(t_coeffs)) :: Piqa, Piqb
     real(rp), dimension(size(z_grid)) :: Mass_corr
 !
 ! begin the code
@@ -329,6 +330,9 @@ module Hydrostatic_m
 end module Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.18  2005/12/29 01:12:47  vsnyder
+! Move some misplaced comments to correct places
+!
 ! Revision 2.17  2005/12/22 20:57:10  vsnyder
 ! Added Hydrostatic_No_Der, some cannonball polishing
 !
