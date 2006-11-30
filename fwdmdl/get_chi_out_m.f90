@@ -79,10 +79,10 @@ contains
     real(rp) :: d2hdhdt_tan(size(zetatan), grids_tmp%l_z(1), grids_tmp%l_p(1))
     real(rp) :: dhdt_tan(size(zetatan), grids_tmp%l_z(1), grids_tmp%l_p(1))
     real(rp) :: dhdz_tan(size(zetatan), grids_tmp%l_p(1))
-    real(rp) :: eta_p(size(zetatan),merge(grids_f%l_p(max(h2o_ind-1,1)) + 1,1,h2o_ind>0): &
+    real(rp) :: eta_p(size(zetatan),merge(grids_f%l_p(max(h2o_ind-1,0)) + 1,1,h2o_ind>0): &
                                     merge(grids_f%l_p(h2o_ind),0,h2o_ind>0))
     real(rp) :: eta_t(size(zetatan), grids_tmp%l_p(1))
-    real(rp) :: eta_z(size(zetatan),merge(grids_f%l_z(max(h2o_ind-1,1)) + 1,1,h2o_ind>0): &
+    real(rp) :: eta_z(size(zetatan),merge(grids_f%l_z(max(h2o_ind-1,0)) + 1,1,h2o_ind>0): &
                                     merge(grids_f%l_z(h2o_ind),0,h2o_ind>0))
     real(rp) :: h2o_tan_out(merge(size(zetatan),0,h2o_ind>0))
     real(rp) :: height_tan(size(zetatan), grids_tmp%l_p(1))
@@ -188,6 +188,9 @@ contains
 end module Get_Chi_Out_m
 
 ! $Log$
+! Revision 2.19  2006/11/30 02:06:49  vsnyder
+! Clean up some surds of ASSOCIATED->SIZE transition
+!
 ! Revision 2.18  2006/11/30 01:29:28  vsnyder
 ! Clean up some surds of ASSOCIATED->SIZE transition
 !
