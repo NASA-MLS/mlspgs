@@ -23,50 +23,31 @@ module Compute_GL_Grid_M
 contains
 !-----------------------------------------------  Compute_GL_Grid  -----
 
-  subroutine Compute_GL_Grid ( Z_PSIG, NLVL, MaxVert, P_GLgrid, Z_GLgrid, &
-    & allocate )
+  subroutine Compute_GL_Grid ( Z_PSIG, P_GLgrid, Z_GLgrid )
 
   ! Compute the pressure and zeta GL grids.
 
-    use Allocate_Deallocate, only: Allocate_Test
     use GLnp, only: GX, NGP1
     use MLSCommon, only: RP, R8
 
   ! Inputs:
-    real(rp), dimension(:), intent(in) :: Z_psig  ! recommended PSIG for
-                                       ! radiative transfer calculations
-    integer, intent(in) :: NLVL                   ! size(z_psig)
+    real(rp), intent(in) :: Z_psig(:)  ! recommended PSIG for
 
   ! Outputs
-    integer, intent(out) :: MaxVert               ! Levels in fine grid
-
-  ! Allocated here if allocate is absent or present and true
-  ! Would be intent(out) if they weren't pointers
-    real(rp), dimension(:), pointer :: P_GLgrid   ! Pressure on glGrid surfs
-    real(rp), dimension(:), pointer :: Z_GLgrid   ! Zeta on glGrid surfs
-
-  ! Optional inputs
-    logical, intent(in), optional :: Allocate
+    real(rp), dimension(:), intent(out) :: P_GLgrid   ! Pressure on glGrid surfs
+    real(rp), dimension(:), intent(out) :: Z_GLgrid   ! Zeta on glGrid surfs
 
   ! Local variables
-    logical :: Alloc
-    integer :: NLM1                               ! NLVL - 1
+    integer :: MaxVert     ! Levels in fine grid
+    integer :: NLVL        ! size(z_psig)
+    integer :: NLM1        ! NLVL - 1
 
     ! New Gauss points (excluding Lobatto end points) with -1 on the left:
     real(kind(gx)), parameter :: G_Grid(ngp1) = (/ -1.0_r8, gx /)
 
-    alloc = .true.
-    if ( present(allocate) ) alloc = allocate
-
+    nlvl = size(z_psig)
     NLm1 = Nlvl - 1
-    maxVert = NLm1 * Ngp1 + 1
-
-! Allocate GL grid stuff
-    if ( alloc ) then
-      nullify ( p_glgrid, z_glgrid )
-      call allocate_test ( z_glGrid, maxVert, 'z_glGrid', moduleName )
-      call allocate_test ( p_glGrid, maxVert, 'p_glGrid', moduleName )
-    end if
+    maxVert = nlm1 * ngp1 + 1
 
 ! From the selected integration grid pressures define the GL pressure grid:
 
@@ -94,6 +75,11 @@ contains
 end module Compute_GL_Grid_M
 
 ! $Log$
+! Revision 2.17  2006/12/04 21:17:28  vsnyder
+! Reorganize FullForwardModel to use automatic arrays instead of allocating
+! pointer arrays.  Requires testing for zero size instead of testing for
+! associated in several subsidiary procedures.
+!
 ! Revision 2.16  2006/10/10 01:34:59  vsnyder
 ! Compute p_glgrid correctly in non-allocate case
 !
