@@ -519,11 +519,10 @@ contains
 end module Get_D_Deltau_Pol_M
 
 ! $Log$
-! Revision 2.35  2006/11/30 01:29:28  vsnyder
-! Clean up some surds of ASSOCIATED->SIZE transition
-!
-! Revision 2.34  2006/11/29 01:04:24  vsnyder
-! Remove POINTER attribute from two dummy arguments
+! Revision 2.36  2006/12/04 21:17:28  vsnyder
+! Reorganize FullForwardModel to use automatic arrays instead of allocating
+! pointer arrays.  Requires testing for zero size instead of testing for
+! associated in several subsidiary procedures.
 !
 ! Revision 2.33  2006/04/21 22:12:31  vsnyder
 ! Fix final bug in mixing ratio derivatives
