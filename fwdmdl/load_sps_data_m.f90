@@ -18,7 +18,7 @@ module LOAD_SPS_DATA_M
   private
   public :: Load_Sps_Data, Load_One_Item_Grid, Modify_Values_For_Supersat
   public :: Create_Grids_1, Create_Grids_2, Fill_Grids_1, Fill_Grids_2
-  public :: Destroygrids_t, Dump, Dump_Grids
+  public :: EmptyGrids_t, Destroygrids_t, Dump, Dump_Grids
 
   type, public :: Grids_T                 ! Fit all Gridding categories
     integer,  pointer :: l_f(:) => null() ! Last entry in frq. grid per sps
@@ -463,6 +463,30 @@ contains
 
   end subroutine Fill_Grids_2
 
+  ! -----------------------------------------------  EmptyGrids_t  -----
+  subroutine EmptyGrids_t ( grids_x )
+    ! Create a grids structure with all empty grids
+    use Allocate_Deallocate, only: Allocate_test
+
+    type (Grids_T), intent(inout) :: Grids_x
+
+    grids_x%p_len = 0
+    call allocate_test(grids_x%l_f,0,'grids_x%l_f',modulename)
+    call allocate_test(grids_x%l_z,0,'grids_x%l_z',modulename)
+    call allocate_test(grids_x%l_p,0,'grids_x%l_p',modulename)
+    call allocate_test(grids_x%l_v,0,'grids_x%l_v',modulename)
+    call allocate_test(grids_x%values,0,'grids_x%values',modulename)
+    call allocate_test(grids_x%lin_log,0,'grids_x%lin_log',modulename)
+    call allocate_test(grids_x%min_val,0,'grids_x%min_val',modulename)
+    call allocate_test(grids_x%frq_basis,0,'grids_x%frq_basis',modulename)
+    call allocate_test(grids_x%zet_basis,0,'grids_x%zet_basis',modulename)
+    call allocate_test(grids_x%phi_basis,0,'grids_x%phi_basis',modulename)
+    call allocate_test(grids_x%deriv_flags,0,'grids_x%deriv_flags',modulename)
+    call allocate_test(grids_x%windowstart,0,'grids_x%windowstart',modulename)
+    call allocate_test(grids_x%windowfinish,0,'grids_x%windowfinish',modulename)
+
+  end subroutine EmptyGrids_t
+
   ! ---------------------------------------------  DestroyGrids_t  -----
   subroutine DestroyGrids_t ( grids_x )
     use Allocate_Deallocate, only: Deallocate_test
@@ -483,7 +507,7 @@ contains
     call deallocate_test(grids_x%windowstart,'grids_x%windowstart',modulename)
     call deallocate_test(grids_x%windowfinish,'grids_x%windowfinish',modulename)
 
-  end subroutine Destroygrids_t
+  end subroutine DestroyGrids_t
 
   ! -------------------------------------------------  Dump_Grids  -----
   subroutine Dump_Grids ( The_Grid, Name, Details )
@@ -539,6 +563,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.67  2006/07/21 00:18:09  vsnyder
+! Remove unused USEs
+!
 ! Revision 2.66  2006/04/05 21:46:44  vsnyder
 ! Allow state vector not to include all molecules
 !

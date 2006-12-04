@@ -2560,7 +2560,7 @@ contains
     logical, intent(in) :: Do_1D
 
     ! Line parameter offsets from catalog (path x molecule) -- intent(in):
-    real(rp), optional, pointer :: LineCenter(:,:), LineWidth(:,:), &
+    real(rp), optional, intent(in) :: LineCenter(:,:), LineWidth(:,:), &
       & LineWidth_TDep(:,:)
     ! Which molecules are to be offset, and where are they in Line....  Zero
     ! means no offset, otherwise, second subscript for Line... above.
@@ -2583,11 +2583,11 @@ contains
 
     doCenter = .false.; doWidth = .false.; doWidth_TDep = .false.
     if ( present(lineCenter) .and. present(lineCenter_ix) ) &
-      & doCenter = associated(lineCenter) .and. associated(lineCenter_ix)
+      & doCenter = size(lineCenter) > 0 .and. associated(lineCenter_ix)
     if ( present(lineWidth) .and. present(lineWidth_ix) ) &
-      & doWidth = associated(lineWidth) .and. associated(lineWidth_ix)
+      & doWidth = size(lineWidth) > 0 .and. associated(lineWidth_ix)
     if ( present(lineWidth_TDep) .and. present(lineWidth_TDep_ix) ) &
-      & doWidth_TDep = associated(lineWidth_TDep) .and. associated(lineWidth_TDep_ix)
+      & doWidth_TDep = size(lineWidth_TDep) > 0 .and. associated(lineWidth_TDep_ix)
     offset = doCenter .or. doWidth .or. doWidth_TDep
 
     no_ele = size(p_path)
@@ -2677,6 +2677,10 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.53  2006/09/01 00:59:45  vsnyder
+! "Catalog" argument of AllocateSlabs needs TARGET attribute so that
+! slabs(i)%catalog does not become undefined when AllocateOneSlabs returns
+!
 ! Revision 2.52  2006/07/29 03:02:11  vsnyder
 ! Send callers module name from AllocateSlabs to AllocateOneSlabs
 !

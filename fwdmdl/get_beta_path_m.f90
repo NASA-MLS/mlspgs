@@ -62,13 +62,11 @@ contains
 
     logical, intent(in) :: NoPolarized   ! "Don't work on Zeeman-split lines"
 
-! Optional inputs.  GL_SLABS_* are pointers because the caller need not
-! allocate them if DBETA_D*_PATH aren't allocated.  They would be
-! INTENT(IN) if we could say so.
+! Optional inputs.
 
-    logical, pointer :: t_der_path_flags(:)     ! where temperature derivatives
+    logical, intent(in) :: t_der_path_flags(:)     ! where temperature derivatives
 !                               are needed. Only useful for subsetting.
-    real(rp), pointer :: dTanh_dT(:)    ! dTanh( (-h nu) / (k T) ) / dT on path
+    real(rp), intent(in) :: dTanh_dT(:)    ! dTanh( (-h nu) / (k T) ) / dT on path
 
 ! Input for spectroscopy derivatives
     real(rp), intent(in) :: VelCor
@@ -81,10 +79,10 @@ contains
 ! caller doesn't need multiple branches.  These would be INTENT(OUT) if
 ! we could say so.
 
-    real(rp), pointer :: dBeta_dT_path(:,:) ! Temperature
-    real(rp), pointer :: dBeta_dw_path(:,:) ! line width
-    real(rp), pointer :: dBeta_dn_path(:,:) ! line width t dep.
-    real(rp), pointer :: dBeta_dv_path(:,:) ! line position
+    real(rp), target :: dBeta_dT_path(:,:) ! Temperature
+    real(rp), target :: dBeta_dw_path(:,:) ! line width
+    real(rp), target :: dBeta_dn_path(:,:) ! line width t dep.
+    real(rp), target :: dBeta_dv_path(:,:) ! line position
 
 ! Local variables.
 
@@ -112,21 +110,21 @@ contains
     np = size(beta_path,1)
 
     do i = 1, size(beta_group)
-      if ( beta_group(i)%lbl(sx)%spect_der_ix(lineWidth_tDep) /= 0 .and. associated(dBeta_dn_path) ) then
+      if ( beta_group(i)%lbl(sx)%spect_der_ix(lineWidth_tDep) /= 0 .and. size(dBeta_dn_path) > 0 ) then
         dBdn => dBeta_dn_path(:np,beta_group(i)%lbl(sx)%spect_der_ix(lineWidth_tDep))
         dBdn = 0.0_rp
       end if
-      if ( beta_group(i)%lbl(sx)%spect_der_ix(lineCenter) /= 0 .and. associated(dBeta_dv_path) ) then
+      if ( beta_group(i)%lbl(sx)%spect_der_ix(lineCenter) /= 0 .and. size(dBeta_dv_path) > 0 ) then
         dBdv => dBeta_dv_path(:np,beta_group(i)%lbl(sx)%spect_der_ix (lineCenter))
         dBdv = 0.0_rp
       end if
-      if ( beta_group(i)%lbl(sx)%spect_der_ix(lineWidth) /= 0 .and. associated(dBeta_dw_path) ) then
+      if ( beta_group(i)%lbl(sx)%spect_der_ix(lineWidth) /= 0 .and. size(dBeta_dw_path) > 0 ) then
         dBdw => dBeta_dw_path(:np,beta_group(i)%lbl(sx)%spect_der_ix(lineWidth))
         dBdw = 0.0_rp
       end if
 
       beta_path(:,i) = 0.0_rp
-      if ( associated(dBeta_dt_path) ) then
+      if ( size(dBeta_dt_path) > 0 ) then
         dBdT => dBeta_dt_path(:np,i)
         dBdT = 0.0_rp
       end if
@@ -204,21 +202,19 @@ contains
 ! Output
     real(rp), intent(out) :: beta_path(:,:) ! path beta for each specie
 
-! Optional input.  We use ASSOCIATED instead of PRESENT so that the
-! caller doesn't need multiple branches.  This would be INTENT(IN) if
-! we could say so.
+! Optional input.
 
-    logical, pointer :: T_Der_Path_Flags(:) ! where temperature derivatives
+    logical, intent(in) :: T_Der_Path_Flags(:) ! where temperature derivatives
 !                               are needed. Only useful for subsetting.
 
 ! Optional outputs.  We use ASSOCIATED instead of PRESENT so that the
 ! caller doesn't need multiple branches.  These would be INTENT(OUT) if
 ! we could say so.
 
-    real(rp), pointer :: dBeta_dT_path(:,:) ! Temperature
-    real(rp), pointer :: dBeta_dw_path(:,:) ! line width
-    real(rp), pointer :: dBeta_dn_path(:,:) ! line width t dep.
-    real(rp), pointer :: dBeta_dv_path(:,:) ! line position
+    real(rp), target :: dBeta_dT_path(:,:) ! Temperature
+    real(rp), target :: dBeta_dw_path(:,:) ! line width
+    real(rp), target :: dBeta_dn_path(:,:) ! line width t dep.
+    real(rp), target :: dBeta_dv_path(:,:) ! line position
 
     real(rp), pointer :: dBdn(:), dBdT(:), dBdv(:), dBdw(:) ! slices of dBeta_d*_path
     real(rp) :: ES(size(t_path)) ! Used for RHi calculation
@@ -237,19 +233,19 @@ contains
     nullify ( dBdT, dBdn, dBdv, dBdw )
 
     do i = 1, size(beta_group)
-      if ( associated(dBeta_dt_path) ) then
+      if ( size(dBeta_dt_path) > 0 ) then
         dBdT => dBeta_dt_path(:,i)
         dBdT = 0.0_rp
       end if
-      if ( associated(dBeta_dn_path) ) then
+      if ( size(dBeta_dn_path) > 0 ) then
         dBdn => dBeta_dn_path(:,i)
         dBdn = 0.0_rp
       end if
-      if ( associated(dBeta_dv_path) ) then
+      if ( size(dBeta_dv_path) > 0 ) then
         dBdv => dBeta_dv_path(:,i)
         dBdv = 0.0_rp
       end if
-      if ( associated(dBeta_dw_path) ) then
+      if ( size(dBeta_dw_path) > 0 ) then
         dBdw => dBeta_dw_path(:,i)
         dBdw = 0.0_rp
       end if
@@ -333,7 +329,7 @@ contains
     ! beta_path(-1,:,:) is Sigma_m, beta_path(0,:,:) is Pi,
     ! beta_path(+1,:,:) is Sigma_p
 
-    complex(rp), pointer :: dBeta_path_dT(:,:,:)
+    complex(rp), intent(out) :: dBeta_path_dT(-1:,:,:)
 
 ! Local variables..
 
@@ -356,7 +352,7 @@ contains
     n_path = size(path_inds)
 
     beta_path = 0.0
-    if ( associated(dBeta_path_dT) ) dBeta_path_dT = 0.0
+    if ( size(dBeta_path_dT) > 0 ) dBeta_path_dT = 0.0
 
     do i = 1, size(beta_group)
       do n = 1, size(beta_group(i)%cat_index)
@@ -366,7 +362,7 @@ contains
         do j = 1, n_path
           k = path_inds(j)
 
-          if ( .not. associated(dBeta_path_dT) ) then
+          if ( size(dBeta_path_dT) == 0 ) then
             call o2_abs_cs ( frq, (/ ( -1, m=1,size(gl_slabs(k,ib)%catalog%lines) ) /),   &
               & h(k), gl_slabs(k,ib), sigma_p, pi, sigma_m )
           else
@@ -387,7 +383,7 @@ contains
             & before='Polarized Betas for' )
           call output ( frq, before=', FRQ = ', advance='yes' )
           call dump ( beta_path(:,:,i), name='Beta', clean=clean )
-          if ( associated(dBeta_path_dT) ) then
+          if ( size(dBeta_path_dT) > 0 ) then
             call dump ( real(dBeta_path_dT), name='real(dBeta_path_dT)', clean=clean )
             call dump ( aimag(dBeta_path_dT), name='aimag(dBeta_path_dT)', clean=clean )
           end if
@@ -689,8 +685,8 @@ contains
     real(rp), intent(inout) :: Beta_value(:)
 
 ! Optional inputs for temperature derivatives:
-    real(rp), pointer :: dTanh_dT(:) ! -h nu / (2 k T^2) 1/tanh(...) dTanh(...)/dT
-    logical, pointer :: Path_Flags(:) ! to do on fine path -- default true
+    real(rp), intent(in) :: dTanh_dT(:) ! -h nu / (2 k T^2) 1/tanh(...) dTanh(...)/dT
+    logical, intent(in) :: Path_Flags(:) ! to do on fine path -- default true
 
 ! Optional outputs
     real(rp), pointer :: dBeta_dT(:) ! temperature derivative
@@ -723,7 +719,7 @@ contains
     do j = 1, size(path_inds)
       k = path_inds(j)
       temp_der = associated(dBeta_dT)
-      if ( temp_der .and. associated(path_flags) ) temp_der = path_flags(k)
+      if ( temp_der .and. size(path_flags) > 0 ) temp_der = path_flags(k)
 
       select case ( slabs_0(k)%catalog%molecule )
       case ( l_n2 ) ! ...........................................  Dry Air
@@ -866,7 +862,7 @@ contains
     real(rp), intent(inout) :: Beta_Path(:)
 
 ! Optional inputs for temperature derivatives:
-    logical, pointer :: T_Der_Path(:)   ! To do on fine path -- default true
+    logical, intent(in) :: T_Der_Path(:)   ! To do on fine path -- default true
 
 ! Optional outputs
     real(rp), pointer :: dBdT(:) ! Temperature derivative
@@ -903,7 +899,7 @@ contains
 
       k = path_inds(j)
       temp_der = associated(dBdT)
-      if ( temp_der .and. associated(t_der_path) ) temp_der = t_der_path(k)
+      if ( temp_der .and. size(t_der_path) > 0 ) temp_der = t_der_path(k)
 
       ! Get interpolating factors
       logT = log(t_path(j))
@@ -1195,6 +1191,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.89  2006/07/19 22:30:17  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.88  2006/06/29 01:44:42  vsnyder
 ! Add tracing
 !
