@@ -27,15 +27,15 @@ contains
 
   subroutine Metrics ( &
           ! Input:
-          &  phi_t, tan_ind, p_basis, z_ref, n_ref, h_ref, t_ref,     &
-          &  dhidzij, csq, refract,                                   &
+          &  phi_t, tan_ind, p_basis, z_ref, n_ref, h_ref, t_ref,      &
+          &  dhidzij, csq, refract,                                    &
           ! Output:
-          &  h_grid, p_grid, t_grid, dhitdzi, req, status,            &
+          &  h_grid, p_grid, t_grid, dhitdzi, req, status,             &
           ! Optional inputs:
-          &  ddhidhidtl0, dhidtlm, neg_h_tan, t_deriv_flag, z_basis,  &
-          &  h_tol,                                                   &
+          &  ddhidhidtl0, dhidtlm, tan_press, surf_temp, t_deriv_flag, &
+          &  z_basis, h_tol,                                           &
           ! Optional outputs:
-          &  ddhtdhtdtl0, dhitdtlm, dhtdtl0, dhtdzt,                  &
+          &  ddhtdhtdtl0, dhitdtlm, dhtdtl0, dhtdzt,                   &
           &  do_calc_hyd, do_calc_t, eta_zxp, tan_phi_h, tan_phi_t )
 
     ! The goal of this subroutine is to return h_grid, p_grid
@@ -84,7 +84,8 @@ contains
     real(rp), optional, intent(inout) :: dhidtlm(:,:,:) ! reference temperature
     !   derivatives. This gets adjusted so that at ref_h(1,@tan phi)) is 0.0 for
     !   all temperature coefficients. This is height X zeta_basis X phi_basis
-    real(rp), optional, intent(in) :: neg_h_tan  ! sub earth tangent height
+    real(rp), optional, intent(in) :: Tan_press  ! Tangent pressure
+    real(rp), optional, intent(in) :: Surf_temp(:)    ! Surface temperature at phi_basis
     logical, optional, intent(in) :: t_deriv_flag(:)  ! User's deriv. flags for
     !   Temperature. needed only if present(dhidtlm).
     real(rp), optional, intent(in) :: z_basis(:) ! vertical temperature basis
@@ -138,6 +139,7 @@ contains
     real(rp) :: H_TAN      ! Either H_T or NEG_H_TAN
     real(rp) :: HTAN_R     ! H_Tan + req
     real(rp) :: My_H_Tol   ! Tolerance in kilometers for height convergence
+    real(rp) :: Neg_H_Tan  ! sub earth tangent height
     real(rp) :: P, Q       ! Tentative solutions for phi
     real(rp) :: P2         ! P**2
     real(rp) :: REQ_S      ! Req - H_Surf
@@ -234,9 +236,10 @@ contains
     ! The phi basis is wholly independent of phi_t
 
     phi_offset(:n_path) = phi_t
-    if ( present(neg_h_tan) ) then
-      phi_offset(n_vert+1:2*n_vert) = phi_t-2.0_rp*Acos((req+neg_h_tan)/req)
-      h_tan = neg_h_tan
+    if ( present(tan_press) ) then ! Earth intersecting ray
+      ! Compute GP height (in KM.) of tan. press. below surface
+      h_tan = dot_product(surf_temp,eta_t)*(tan_press-z_ref(1))/14.8
+      phi_offset(n_vert+1:2*n_vert) = phi_t-2.0_rp*Acos((req+h_tan)/req)
     end if
     htan_r = h_tan + req
 
@@ -687,3 +690,6 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.34  2006/12/08 22:50:55  vsnyder
+! Complete revision
+!

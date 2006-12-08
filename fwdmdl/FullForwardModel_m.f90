@@ -574,8 +574,6 @@ contains
 
     real(rp) :: E_RFLTY       ! Earth reflectivity at given tan. point
     real(rp), save :: E_Stop  = 1.0_rp ! X for which Exp(X) is too small to worry
-    real(rp) :: NEG_TAN_HT    ! GP Height (in KM.) of tan. press.
-                              ! below surface
     real(rp) :: TAN_HT        ! Height at the tangent
     real(rp) :: TAN_TEMP      ! Temperature at the tangent
     real(rp) :: R             ! real variable for various uses
@@ -790,16 +788,12 @@ contains
           & mif = minloc(abs(tan_press(ptg_i) - &
           &                  ptan%values(:ptan%template%nosurfs,maf)),1)
 
-        ! allocate the path stuff
         tan_pt_f = MaxVert + 1 - tan_ind  ! fine path tangent index
         tan_pt_c = (tan_pt_f + Ng) / Ngp1 ! coarse path tangent index
         npc = 2 * tan_pt_c
-        no_ele = 2*tan_pt_f
+        no_ele = 2 * tan_pt_f
 
-        ! Add temperature phi basis and minimum zeta to coarse grid
         if ( ptg_i < surfaceTangentIndex ) then
-          neg_tan_ht = temp%values(1,(windowstart+windowfinish)/2) *       &
-            &  (tan_press(ptg_i) - z_psig(1)) / 14.8_rp
           e_rflty = earthRefl%values(1,1)
           call metrics ( tan_phi(ptg_i), tan_ind_c, Grids_tmp%phi_basis,   &
             &  z_psig, n_psig, h_psig, t_psig, dhdz_psig,                  &
@@ -807,8 +801,8 @@ contains
             &  h_path(1:npc), phi_path(1:npc),                             &
             &  t_path(1:npc), dhdz_path(1:npc), Req, ier,                  &
             &  TAN_PHI_H = tan_ht, TAN_PHI_T=tan_temp,                     &
-!           &  Z_Grid = z_coarse, N_Path_Out = npc,                        &
-            &  NEG_H_TAN=neg_tan_ht )
+            &  Tan_Press=tan_press(ptg_i),                                 &
+            &  Surf_Temp=temp%values(1,windowstart:windowfinish) )
         else
           e_rflty = 1.0_rp
           call metrics ( tan_phi(ptg_i), tan_ind_c, Grids_tmp%phi_basis,   &
@@ -817,7 +811,6 @@ contains
             &  h_path(1:npc), phi_path(1:npc),                             &
             &  t_path(1:npc), dhdz_path(1:npc), Req, ier,                  &
             &  TAN_PHI_H = tan_ht, TAN_PHI_T = tan_temp                    &
-!           &, Z_Grid = z_coarse, N_Path_Out = npc                         &
             &  )
         end if
 
@@ -851,10 +844,7 @@ z_coarse(tan_pt_c+1:npc) = z_psig(tan_ind_c:nlvl)
           & call Trace_Begin ( 'ForwardModel.MetricsEtc' )
 
         if ( ptg_i < surfaceTangentIndex ) then
-          neg_tan_ht = temp%values(1,(windowstart+windowfinish)/2) * &
-            &  (tan_press(ptg_i) - z_glgrid(1)) / 14.8_rp
           e_rflty = earthRefl%values(1,1)
-
           if ( temp_der ) then
             ! Set up temperature representation basis stuff
             call metrics ( tan_phi(ptg_i), tan_ind, Grids_tmp%phi_basis,     &
@@ -862,7 +852,9 @@ z_coarse(tan_pt_c+1:npc) = z_psig(tan_ind_c:nlvl)
               &  earthradc_sq, FwdModelConf%refract,                         &
               &  h_path(1:no_ele), phi_path(1:no_ele),                       &
               &  t_path(1:no_ele), dhdz_path(1:no_ele), Req, ier,            &
-              &  TAN_PHI_H=tan_ht, TAN_PHI_T=tan_temp, NEG_H_TAN=neg_tan_ht, &
+              &  TAN_PHI_H=tan_ht, TAN_PHI_T=tan_temp,                       &
+              &  Tan_Press=tan_press(ptg_i),                                 &
+              &  Surf_Temp=temp%values(1,windowstart:windowfinish),          &
               !  Stuff for temperature derivatives:
               &  DHTDTL0 = tan_dh_dt, DDHIDHIDTL0 = ddhidhidtl0,             &
               &  DDHTDHTDTL0 = tan_d2h_dhdt, DHIDTLM = dh_dt_glgrid,         &
@@ -883,11 +875,10 @@ z_coarse(tan_pt_c+1:npc) = z_psig(tan_ind_c:nlvl)
               &  earthradc_sq, FwdModelConf%refract,                         &
               &  h_path(1:no_ele), phi_path(1:no_ele),                       &
               &  t_path(1:no_ele), dhdz_path(1:no_ele), Req, ier,            &
-              &  TAN_PHI_H=tan_ht, TAN_PHI_T=tan_temp, NEG_H_TAN=neg_tan_ht )
+              &  TAN_PHI_H=tan_ht, TAN_PHI_T=tan_temp,                       &
+              &  Tan_Press=tan_press(ptg_i),                                 &
+              &  Surf_Temp=temp%values(1,windowstart:windowfinish) )
           end if
-
-! Tan heights for negative tan height from metrics is not correctly working.
-
         else
           e_rflty = 1.0_rp
           if ( temp_der ) then
@@ -3058,6 +3049,11 @@ end if
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.270  2006/12/04 21:17:28  vsnyder
+! Reorganize FullForwardModel to use automatic arrays instead of allocating
+! pointer arrays.  Requires testing for zero size instead of testing for
+! associated in several subsidiary procedures.
+!
 ! Revision 2.267  2006/08/25 19:42:31  vsnyder
 ! Recommited to get correct comment into the log: Compute earthradc_sq for
 ! metrics, since we both need it, more accurate tracing, cannonball polishing.
