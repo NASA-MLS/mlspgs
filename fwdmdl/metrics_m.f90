@@ -114,10 +114,11 @@ contains
     real(rp), optional, intent(out) :: tan_phi_t ! temperature at the tangent
 
     ! Local variables.
-    integer :: Do_Dumps = -1  ! -1 = first time, 0 = no dump, >0 = dump
-    integer :: Dump_Stop = -1 ! -1 = first time, 0 = no dump, >0 = dump/stop
-    integer :: H_Phi_Dump = -1 ! -1 = first time, 0 = no dump, >0 = dump
-    integer :: H_Phi_Stop = -1 ! -1 = first time, 0 = no dump, >0 = dump/stop
+    integer :: Do_Dumps    ! 0 = no dump, >0 = dump
+    integer :: Dump_Stop   ! 0 = no dump, >0 = dump/stop
+    integer :: H_Phi_Dump  ! 0 = no dump, >0 = dump
+    integer :: H_Phi_Stop  ! 0 = no dump, >0 = dump/stop
+    integer :: First, Last ! Nonzeros in Eta_T
     integer :: I, I1, I2, J, K, N
     integer :: NO_BAD_FITS
     integer :: NO_GRID_FITS
@@ -139,7 +140,6 @@ contains
     real(rp) :: H_TAN      ! Either H_T or NEG_H_TAN
     real(rp) :: HTAN_R     ! H_Tan + req
     real(rp) :: My_H_Tol   ! Tolerance in kilometers for height convergence
-    real(rp) :: Neg_H_Tan  ! sub earth tangent height
     real(rp) :: P, Q       ! Tentative solutions for phi
     real(rp) :: P2         ! P**2
     real(rp) :: REQ_S      ! Req - H_Surf
@@ -155,12 +155,12 @@ contains
 
     logical :: NOT_ZERO_P(size(vert_inds),size(p_basis))
 
-    real(rp) :: ETA_P(size(p_grid),size(p_basis))
+    real(rp) :: ETA_P(size(vert_inds),size(p_basis))
     real(rp) :: ETA_T(size(p_basis))
-    real(rp) :: N_GRID(size(p_grid))        ! index of refraction
-    real(rp) :: PHI_CORR(size(p_grid))      ! the refractive correction
-    real(rp) :: PHI_OFFSET(size(p_grid))    ! PHI_T or a function of NEG_H_TAN
-    real(rp) :: PHI_SIGN(size(p_grid))      ! +/- 1.0
+    real(rp) :: N_GRID(size(vert_inds))     ! index of refraction
+    real(rp) :: PHI_CORR(size(vert_inds))   ! the refractive correction
+    real(rp) :: PHI_OFFSET(size(vert_inds)) ! PHI_T or a function of NEG_H_TAN
+    real(rp) :: PHI_SIGN(size(vert_inds))   ! +/- 1.0
 
     ! Coefficients in expansion of Sec(phi)-1 = c2*phi^2 + c4*phi^4 ...
     real(rp), parameter :: C2 = 0.5_rp, C4 = 5.0_rp/24, C6 = 61.0_rp/720.0
@@ -196,9 +196,9 @@ contains
     ! For simplicity, we set the surface reference at the input z_ref(1)
     ! and adjust the req and the h_t relative to this, and adjust h_ref
     ! accordingly
-    call get_eta_sparse ( p_basis, phi_t, eta_t )
-    h_surf = dot_product(h_ref(1,:),eta_t)
-    h_t = dot_product(h_ref(tan_ind,:),eta_t) - h_surf
+    call get_eta_sparse ( p_basis, phi_t, eta_t, first, last )
+    h_surf = dot_product(h_ref(1,first:last),eta_t(first:last))
+    h_t = dot_product(h_ref(tan_ind,first:last),eta_t(first:last)) - h_surf
     h_tan = h_t
 
     !{ Compute equivalent earth radius (REQ) at phi\_t(1) (nearest surface)
@@ -229,7 +229,7 @@ contains
     n_tan = n_path / 2
 
     ! sign of phi vector
-    phi_sign(:n_path) = (/ (-1, i=1, n_vert-tan_ind+1), (+1, i=n_vert+tan_ind, 2*n_vert) /)
+    phi_sign = (/ (-1, i=1, n_vert-tan_ind+1), (+1, i=n_vert+tan_ind, 2*n_vert) /)
 
     ! p_basis and p_grid are phi's in offset radians relative to phi_t, that
     ! is, the phi_t, p_basis or p_grid = 0.0 is phi_t.
@@ -238,8 +238,8 @@ contains
     phi_offset(:n_path) = phi_t
     if ( present(tan_press) ) then ! Earth intersecting ray
       ! Compute GP height (in KM.) of tan. press. below surface
-      h_tan = dot_product(surf_temp,eta_t)*(tan_press-z_ref(1))/14.8
-      phi_offset(n_vert+1:2*n_vert) = phi_t-2.0_rp*Acos((req+h_tan)/req)
+      h_tan = dot_product(surf_temp(first:last),eta_t(first:last))*(tan_press-z_ref(1))/14.8
+      phi_offset(n_tan+1:) = phi_t-2.0_rp*Acos((req+h_tan)/req)
     end if
     htan_r = h_tan + req
 
@@ -251,7 +251,7 @@ contains
       call output ( req, format='(f7.2)', before=', req = ', advance='yes' )
       call output ( tan_ind, before='tan_ind = ' )
       call output ( csq, before=', csq = ', advance='yes' )
-      call dump ( phi_offset(:n_path), name='phi_offset', clean=clean )
+      call dump ( phi_offset, name='phi_offset', clean=clean )
       call dump ( h_ref(tan_ind:n_vert,:), name='h_ref', clean=clean )
 !     call dump ( z_ref(tan_ind:n_vert), name='z_ref', clean=clean )
     end if
@@ -464,14 +464,14 @@ path: do i = i1, i2
     ! Interpolate the index of refraction (N_Ref) to the path (N_Grid)
     ! and correct phi for refraction.
     if ( refract ) then
-      call get_eta_sparse ( p_basis, p_grid(:n_path), eta_p(:n_path,:) )
+      call get_eta_sparse ( p_basis, p_grid(:n_path), eta_p(:,:) )
       do i = 1, n_path
         n_grid(i) = dot_product(n_ref(vert_inds(i),:), eta_p(i,:))
       end do
-      call phi_refractive_correction ( n_grid(:n_path), h_grid(:n_path), phi_corr(:n_path) )
-      p_grid(:n_path) = p_grid(:n_path) + phi_sign(:n_path) * phi_corr(:n_path)
+      call phi_refractive_correction ( n_grid, h_grid(:n_path), phi_corr )
+      p_grid(:n_path) = p_grid(:n_path) + phi_sign * phi_corr
       if ( h_phi_dump > 0 ) &
-        & call dump ( phi_corr(:n_path), format='(1pg14.6)', &
+        & call dump ( phi_corr, format='(1pg14.6)', &
         &             name='Refractive correction', clean=clean )
     end if
 
@@ -482,7 +482,7 @@ path: do i = i1, i2
     ! Interpolate Temperature (T_Ref) and the vertical height derivative
     ! (dhidzij) to the path (T_Grid and dhitdzi).
 
-    call get_eta_sparse ( p_basis, p_grid(:n_path), eta_p(:n_path,:), NOT_ZERO = not_zero_p )
+    call get_eta_sparse ( p_basis, p_grid(:n_path), eta_p, NOT_ZERO = not_zero_p )
     do i = 1, n_path
       t_grid(i) = dot_product(t_ref(vert_inds(i),:), eta_p(i,:))
       ! compute the vertical derivative grid
@@ -491,8 +491,10 @@ path: do i = i1, i2
 
     ! now for the optional tangent quantities.
     if ( present(tan_phi_h) ) tan_phi_h = h_tan
-    if ( present(tan_phi_t) ) tan_phi_t = dot_product(t_ref(tan_ind,:),eta_t)
-    if ( present(dhtdzt) ) dhtdzt = dot_product(dhidzij(tan_ind,:),eta_t)
+    if ( present(tan_phi_t) ) &
+      & tan_phi_t = dot_product(t_ref(tan_ind,first:last),eta_t(first:last))
+    if ( present(dhtdzt) ) &
+      & dhtdzt = dot_product(dhidzij(tan_ind,first:last),eta_t(first:last))
 
     ! compute tangent temperature derivatives
     if ( present(dhidtlm) ) call Tangent_Temperature_Derivatives
@@ -528,7 +530,8 @@ path: do i = i1, i2
       p_coeffs = size(p_basis)
       z_coeffs = size(z_basis)
       do i = 1, z_coeffs
-        dhidtlm(:,i,:) = dhidtlm(:,i,:) - dot_product(dhidtlm(1,i,:), eta_t)
+        dhidtlm(:,i,:) = dhidtlm(:,i,:) - &
+          & dot_product(dhidtlm(1,i,first:last),eta_t(first:last))
       end do
 
       j = z_coeffs * p_coeffs
@@ -549,14 +552,14 @@ path: do i = i1, i2
           if ( t_deriv_flag(sv_t) ) then
             do_calc_t(:,sv_t) = not_zero_t(:,sv_z) .and. not_zero_p(:,sv_p)
             where ( do_calc_t(:,sv_t) )
-              eta_zxp(:,sv_t) = eta_t2(:,sv_z) * eta_p(:n_path,sv_p)
+              eta_zxp(:,sv_t) = eta_t2(:,sv_z) * eta_p(:,sv_p)
             elsewhere
               eta_zxp(:,sv_t) = 0.0
             end where
             do_calc_hyd(:,sv_t) = not_zero_p(:,sv_p) .and. &
               &                   dhidtlm(vert_inds(:),sv_z,sv_p) > 0.0_rp
             where ( do_calc_hyd(:,sv_t) )
-              dhitdtlm(:,sv_t) = dhidtlm(vert_inds(:),sv_z,sv_p) * eta_p(:n_path,sv_p)
+              dhitdtlm(:,sv_t) = dhidtlm(vert_inds(:),sv_z,sv_p) * eta_p(:,sv_p)
             elsewhere
               dhitdtlm(:,sv_t) = 0.0
             end where
@@ -573,111 +576,6 @@ path: do i = i1, i2
 
   end subroutine Metrics
 
-  ! --------------------------  Tangent_Temperature_Derivatives  -----
-  subroutine Tangent_Temperature_Derivatives ( phi_t, tan_ind, p_basis, p_path, &
-    & z_basis, z_path, ddhidhidtl0, t_deriv_flag, dhitdtlm, ddhtdhtdtl0, &
-    & dhidtlm, dhtdtl0, do_calc_hyd, do_calc_t, eta_zxp )
-
-    use Get_Eta_Matrix_m, only: Get_Eta_Sparse
-    use MLSKinds, only: RP, IP
-
-    ! Inputs
-    real(rp), intent(in) :: phi_t      ! orbit projected tangent geodetic angle
-    integer(ip), intent(in) :: tan_ind ! tangent height index, 1 = center of
-    !                                    longest path
-    real(rp), intent(in) :: p_basis(:) ! horizontal temperature representation
-    !                                    basis
-    real(rp), intent(in) :: P_Path(:)  ! Phi on the path
-    real(rp), intent(in) :: z_basis(:) ! vertical temperature basis
-    real(rp), intent(in) :: z_path(:)  ! -log pressures (zetas) along the path.
-    real(rp), intent(in) :: ddhidhidtl0(:,:,:) ! second order reference
-    !   temperature derivatives. This is (height, phi_basis, zeta_basis).
-    logical, intent(in) :: t_deriv_flag(:)  ! User's deriv. flags for
-    !   Temperature. needed only if present(dhidtlm).
-
-    ! Inout
-    real(rp), intent(inout) :: dhidtlm(:,:,:) ! reference temperature
-    !   derivatives. This gets adjusted so that at ref_h(1,@tan phi)) is 0.0 for
-    !   all temperature coefficients. This is height X zeta_basis X phi_basis
-
-    ! Outputs
-    real(rp), intent(out) :: ddhtdhtdtl0(:) ! Second order  derivative at the
-    !          tangent only---used for antenna affects.
-    real(rp), intent(out) :: dhitdtlm(:,:)
-    !          derivative of path position wrt temperature
-    !          statevector (z_basis X phi_basis)
-    real(rp), intent(out) :: dhtdtl0(:)  ! First order derivative at
-    !          the tangent.
-    logical, intent(out) :: do_calc_hyd(:,:) ! nonzero locator for
-    !          hydrostatic calculations.
-    logical, intent(out) :: do_calc_t(:,:) ! nonzero locater for
-    !          temperature bases computations.
-    real(rp), intent(out) :: eta_zxp(:,:) ! eta matrix for temperature
-
-    real(rp) :: ETA_P(size(p_path),size(p_basis))
-    real(rp) :: ETA_T(size(p_basis))
-    real(rp) :: ETA_T2(size(z_path),size(z_basis))
-    integer :: I, J, SV_P, SV_T, SV_Z ! Loop inductors and subscripts
-    logical :: NOT_ZERO_P(size(p_path),size(p_basis))
-    logical :: NOT_ZERO_T(size(z_path),size(z_basis))
-    integer :: N_path                 ! size(z_path)
-    integer :: P_COEFFS               ! size(p_basis)
-    integer :: Z_COEFFS               ! size(z_basis)
-    integer :: Vert_Inds(size(z_path)) ! To access dhitdlm
-
-    call get_eta_sparse ( p_basis, p_path, eta_p, NOT_ZERO = not_zero_p )
-    call get_eta_sparse ( p_basis, phi_t, eta_t )
-
-    ! adjust the 2d hydrostatic relative to the surface
-    p_coeffs = size(p_basis)
-    z_coeffs = size(z_basis)
-    do i = 1, z_coeffs
-      dhidtlm(:,i,:) = dhidtlm(:,i,:) - dot_product(dhidtlm(1,i,:), eta_t)
-    end do
-
-    j = z_coeffs * p_coeffs
-    dhtdtl0 = RESHAPE(dhidtlm(tan_ind,:,:) * SPREAD(eta_t,1,z_coeffs),&
-                   & (/j/))
-
-    ddhtdhtdtl0 = RESHAPE( &
-                 ddhidhidtl0(tan_ind,:,:) * SPREAD(eta_t,1,z_coeffs), &
-                   & (/j/))
-
-    ! compute the path temperature noting where the zeros are
-    call get_eta_sparse ( z_basis, z_path, eta_t2, NOT_ZERO = not_zero_t )
-
-    n_path = size(z_path)
-    vert_inds = (/ (i, i = n_path/2, tan_ind, -1), (i, i = tan_ind, n_path/2) /)
-
-    sv_t = 0
-    do sv_p = 1 , p_coeffs
-      do sv_z = 1 , z_coeffs
-        sv_t = sv_t + 1
-        if ( t_deriv_flag(sv_t) ) then
-          do_calc_t(:,sv_t) = not_zero_t(:,sv_z) .and. not_zero_p(:,sv_p)
-          where ( do_calc_t(:,sv_t) )
-            eta_zxp(:,sv_t) = eta_t2(:,sv_z) * eta_p(:n_path,sv_p)
-          elsewhere
-            eta_zxp(:,sv_t) = 0.0
-          end where
-          do_calc_hyd(:,sv_t) = not_zero_p(:,sv_p) .and. &
-            &                   dhidtlm(vert_inds(:),sv_z,sv_p) > 0.0_rp
-          where ( do_calc_hyd(:,sv_t) )
-            dhitdtlm(:,sv_t) = dhidtlm(vert_inds(:),sv_z,sv_p) * eta_p(:n_path,sv_p)
-          elsewhere
-            dhitdtlm(:,sv_t) = 0.0
-          end where
-        else
-          do_calc_t(:,sv_t) = .false.
-          eta_zxp(:,sv_t) = 0.0
-          do_calc_hyd(:,sv_t) = .false.
-          dhitdtlm(:,sv_t) = 0.0
-        end if
-      end do
-    end do
-
-  end subroutine Tangent_Temperature_Derivatives
-
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -690,6 +588,9 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.35  2006/12/08 23:57:08  vsnyder
+! Revise earth-intersecting metrics
+!
 ! Revision 2.34  2006/12/08 22:50:55  vsnyder
 ! Complete revision
 !
