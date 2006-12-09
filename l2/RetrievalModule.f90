@@ -2043,6 +2043,24 @@ NEWT: do ! Newtonian iteration
             if ( d_spa ) call dump_struct ( factored%m, &
               & 'Sparseness structure of blocks of factor:', upper=.true. )
             if ( d_fac_f ) call dump ( factored%m, 'Factor', 2, clean=.true. )
+
+          ! Compute number of rows of Jacobian actually used.  Don't count
+          ! rows due to Levenberg-Marquardt stabilization.  Do count rows
+          ! due to a priori or regularization.
+          jacobian_cols = sum(jacobian%col%nelts)
+          jacobian_rows = sum(jacobian%row%nelts)
+          do j = 1, measurements%template%noQuantities
+            if ( associated(measurements%quantities(j)%mask) ) &
+              & jacobian_rows = jacobian_rows - &
+              &   countBits(measurements%quantities(j)%mask, what=m_linAlg )
+          end do
+          ! Correct for apriori information.  Note that there is an
+          ! approximation here: We don't take any account of whether the a
+          ! priori is used on an element by element basis.
+          if ( got(f_apriori) ) &
+            & jacobian_rows = jacobian_rows + jacobian_cols
+          ! Correct for Tikhonov information.
+          if ( tikhonovNeeded ) jacobian_rows = jacobian_rows + tikhonovRows
           if ( nwt_flag == nf_getJ ) then ! taking a special iteration to get J
             aj%chiSqNorm = aj%fnorm / max ( jacobian_rows - jacobian_cols, 1 )
             aj%fnorm = sqrt(aj%fnorm)
@@ -2102,24 +2120,6 @@ NEWT: do ! Newtonian iteration
                 & "Norm of residual not in Jacobian's column space is imaginary!" )
             aj%fnmin = tiny ( aj%fnmin )
           end if
-          ! Compute number of rows of Jacobian actually used.  Don't count
-          ! rows due to Levenberg-Marquardt stabilization.  Do count rows
-          ! due to a priori or regularization.  Put numbers of rows and
-          ! columns into diagnostic vector.
-          jacobian_cols = sum(jacobian%col%nelts)
-          jacobian_rows = sum(jacobian%row%nelts)
-          do j = 1, measurements%template%noQuantities
-            if ( associated(measurements%quantities(j)%mask) ) &
-              & jacobian_rows = jacobian_rows - &
-              &   countBits(measurements%quantities(j)%mask, what=m_linAlg )
-          end do
-          ! Correct for apriori information.  Note that there is an
-          ! approximation here: We don't take any account of whether the a
-          ! priori is used on an element by element basis.
-          if ( got(f_apriori) ) &
-            & jacobian_rows = jacobian_rows + jacobian_cols
-          ! Correct for Tikhonov information.
-          if ( tikhonovNeeded ) jacobian_rows = jacobian_rows + tikhonovRows
           ! Compute the normalised chiSquared statistics etc.
           aj%chiSqMinNorm = aj%fnmin / max ( jacobian_rows - jacobian_cols, 1 )
           aj%chiSqNorm = aj%fnorm / max ( jacobian_rows - jacobian_cols, 1 )
@@ -2692,6 +2692,10 @@ NEWT: do ! Newtonian iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.287  2006/12/09 00:45:35  vsnyder
+! Move calculation of size of Jacobian, so that ChiSqMin calculation works
+! correctly if zero Newton iterations are allowed.
+!
 ! Revision 2.286  2006/10/04 22:52:48  vsnyder
 ! Another change from Herb:  Make Apriori fraction zero where we had to
 ! substitute aposteriori precision to calculate the apriori fraction.
