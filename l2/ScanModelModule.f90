@@ -1571,6 +1571,7 @@ contains ! =============== Subroutines and functions ==========================
   logical :: H2OINSTATE            ! Set if H2O in state, not extra
   logical :: PTANINSTATE           ! Set if ptan in state, not extra
 !
+  integer :: First, Last           ! Nonzeros in Eta_at_one*
   INTEGER :: windowstart_t         ! first instance for temperature
   INTEGER :: windowfinish_t        ! last instance for temperature
   INTEGER :: windowstart_h2o       ! first instance for water vapor
@@ -1619,8 +1620,8 @@ contains ! =============== Subroutines and functions ==========================
   REAL(rp), POINTER :: eta_piqxp(:,:)
   REAL(rp), POINTER :: eta_zxp_t(:,:)
   REAL(rp), POINTER :: eta_zxp_h2o(:,:)
-  REAL(rp), POINTER :: eta_at_one_phi(:,:)
-  REAL(rp), POINTER :: eta_at_one_zeta(:,:)
+  REAL(rp), POINTER :: eta_at_one_phi(:)
+  REAL(rp), POINTER :: eta_at_one_zeta(:)
 !
   LOGICAL, POINTER :: not_zero_z(:,:)
   LOGICAL, POINTER :: not_zero_p_t(:,:)
@@ -1879,42 +1880,38 @@ contains ! =============== Subroutines and functions ==========================
   CALL refractive_index(10.0_rp**(-ptan%values(:,fmStat%maf)), tan_temp, &
   & tan_refr_indx,h2o_path = tan_h2o)
 ! compute surface pressure
-  CALL ALLOCATE_TEST(eta_at_one_phi,1,windowfinish_t-windowstart_t+1, &
+  CALL ALLOCATE_TEST(eta_at_one_phi,windowfinish_t-windowstart_t+1, &
   & 'eta_at_one_phi',modulename)
   CALL ALLOCATE_TEST(temp_at_surf_phi,temp%template%nosurfs, &
   & 'temp_at_surf_phi',modulename)
   CALL get_eta_sparse(temp%template%phi(1,windowstart_t:windowfinish_t), &
-  & (/phitan%values(1,fmStat%maf)/),eta_at_one_phi)
-  temp_at_surf_phi = SUM(temp%values(:, &
-  & windowstart_t:windowfinish_t)*SPREAD( &
-  & RESHAPE(eta_at_one_phi,(/windowfinish_t-windowstart_t+1/)),1, &
-  & temp%template%nosurfs),dim=2)
+  & phitan%values(1,fmStat%maf),eta_at_one_phi,first,last)
+  temp_at_surf_phi = SUM(temp%values(:,windowstart_t:windowfinish_t)* &
+  & SPREAD(eta_at_one_phi,1,temp%template%nosurfs),dim=2)
   z_surf = z_surface(temp%template%surfs(:,1),temp_at_surf_phi,g_ref(1), &
   & SUM(refgph%values(1,windowstart_t:windowfinish_t) * eta_p_t(1,:)), &
   & refGPH%template%surfs(1,1),boltz)
   CALL DEALLOCATE_TEST(eta_at_one_phi,'eta_at_one_phi',modulename)
 ! compute refractive index at the surface
-  CALL ALLOCATE_TEST(eta_at_one_zeta,1,temp%template%nosurfs, &
+  CALL ALLOCATE_TEST(eta_at_one_zeta,temp%template%nosurfs, &
   & 'eta_at_one_zeta',modulename)
-  CALL get_eta_sparse(temp%template%surfs(:,1), (/z_surf/),eta_at_one_zeta)
-  surf_temp = SUM(RESHAPE(eta_at_one_zeta,(/temp%template%nosurfs/)) &
-  & * temp_at_surf_phi)
+  CALL get_eta_sparse(temp%template%surfs(:,1),z_surf,eta_at_one_zeta,first,last)
+  surf_temp = dot_product(eta_at_one_zeta(first:last), temp_at_surf_phi(first:last))
   CALL DEALLOCATE_TEST(eta_at_one_zeta,'eta_at_one_zeta',modulename)
-  CALL ALLOCATE_TEST(eta_at_one_phi,1,windowfinish_h2o-windowstart_h2o+1, &
+  CALL DEALLOCATE_TEST(temp_at_surf_phi,'temp_at_surf_phi',modulename)
+  CALL ALLOCATE_TEST(eta_at_one_phi,windowfinish_h2o-windowstart_h2o+1, &
   & 'eta_at_one_phi',modulename)
-  CALL ALLOCATE_TEST(eta_at_one_zeta,1,h2o%template%nosurfs, &
+  CALL ALLOCATE_TEST(eta_at_one_zeta,h2o%template%nosurfs, &
   & 'eta_at_one_zeta',modulename)
   CALL get_eta_sparse(h2o%template%phi(1,windowstart_h2o:windowfinish_h2o), &
-  & (/phitan%values(1,fmStat%maf)/),eta_at_one_phi)
-  CALL get_eta_sparse(h2o%template%surfs(:,1),(/z_surf/),eta_at_one_zeta)
+  & phitan%values(1,fmStat%maf),eta_at_one_phi)
+  CALL get_eta_sparse(h2o%template%surfs(:,1),z_surf,eta_at_one_zeta,first,last)
   CALL refractive_index(10.0_rp**(-(/z_surf/)),(/surf_temp/),surf_refr_indx, &
-  & h2o_path = (/EXP(SUM(RESHAPE(eta_at_one_zeta,(/h2o%template%nosurfs/)) &
-  & * SUM(LOG(max(h2o%values(:,windowstart_h2o:windowfinish_h2o),1e-9_rp)) &
-  & * SPREAD(RESHAPE(eta_at_one_phi,(/windowfinish_h2o-windowstart_h2o+1/)), &
-  & 1,h2o%template%nosurfs),dim=2)))/))
+  & h2o_path = (/EXP(dot_product(eta_at_one_zeta(first:last), &
+  &   SUM(LOG(max(h2o%values(first:last,windowstart_h2o:windowfinish_h2o),1e-9_rp)) &
+  & * SPREAD(eta_at_one_phi,1,last-first+1),dim=2)))/))
   CALL DEALLOCATE_TEST(eta_at_one_zeta,'eta_at_one_zeta',modulename)
   CALL DEALLOCATE_TEST(eta_at_one_phi,'eta_at_one_phi',modulename)
-  CALL DEALLOCATE_TEST(temp_at_surf_phi,'temp_at_surf_phi',modulename)
 ! set all refr indicies below the surface to the surface value
   WHERE(ptan%values(:,fmStat%maf) < z_surf) 
     tan_refr_indx = surf_refr_indx(1)
@@ -2083,6 +2080,7 @@ contains ! =============== Subroutines and functions ==========================
   endif
 
   contains
+    ! ..................................................  SayTime  .....
     subroutine SayTime ( What )
       character(len=*), intent(in) :: What
       call time_now ( t2 )
@@ -2095,6 +2093,7 @@ contains ! =============== Subroutines and functions ==========================
       call output ( dble(t2 - t1), advance = 'yes' )
     end subroutine SayTime
 
+    ! ................................................  Z_surface  .....
     real(rp) function Z_surface ( z_basis, t_values, g_ref, h_ref, z_ref, boltz, &
     & threshold, maxiterations )
 ! finds the surface pressure
@@ -2112,10 +2111,11 @@ contains ! =============== Subroutines and functions ==========================
 ! This is a one dimensional calculation where g_ref is assumed to apply
 ! throughout the entire vertical range of t_basis.
 ! internals
+      integer :: First, Last             ! Nonzeros of Eta
       integer :: iter
       integer :: maxiter
 !
-      real(rp) :: eta(1,size(z_basis))
+      real(rp) :: eta(size(z_basis))
       real(rp) :: ghb                    ! g_ref * h_ref / boltz
       real(rp) :: piq(1,size(z_basis))
       real(rp) :: thresh
@@ -2134,10 +2134,10 @@ contains ! =============== Subroutines and functions ==========================
       iter = 0
       do
         call piq_int ( (/z_old/), z_basis, z_ref, piq )
-        call get_eta_sparse ( z_basis, (/z_old/), eta )
+        call get_eta_sparse ( z_basis, z_old, eta, first, last )
 ! correct
         z_surface = z_old - (ghb + dot_product(piq(1,:),t_values)) &
-                         & / dot_product(eta(1,:),t_values)
+                         & / dot_product(eta(first:last),t_values(first:last))
         iter = iter + 1
         if ( abs(z_surface - z_old) < thresh .or. iter >= maxiter ) exit
         z_old = z_surface
@@ -2158,6 +2158,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.67  2006/12/13 01:33:08  vsnyder
+! Use slightly faster get_eta_sparse
+!
 ! Revision 2.66  2006/08/05 02:36:06  vsnyder
 ! Delete unused symbols
 !
