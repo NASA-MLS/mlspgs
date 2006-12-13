@@ -35,14 +35,14 @@ contains
 
   ! ----------------------------------------------------  Get_Tau  -----
   subroutine Get_Tau ( Frq_i, gl_inds, more_inds, e_rflty, del_zeta, &
-                     &  alpha_path_c, ref_cor, incoptdepth, &
+                     &  alpha_path_c, ref_cor, incoptdepth, tan_pt, &
                      &  alpha_path_gl, ds_dz_gw, tau )
 
   ! Update IncOptDepth with its GL corrections.  Multiply it by the
   ! refraction correction Ref_Cor.  Compute Tau = exp(indefinite sum of
   ! IncOptDepth).  The half-path point is a zero-thickness layer that
-  ! doesn't have any IncOptDepth.  Instead, multiply tau(half_path) by
-  ! e_rflty to get tau(half_path+1).
+  ! doesn't have any IncOptDepth.  Instead, multiply tau(tan_pt) by
+  ! e_rflty to get tau(tan_pt+1).
 
   ! This is just Rad_Tran without Inc_Rad_Path and Radiance calculations
 
@@ -66,6 +66,7 @@ contains
     real(rp), intent(inout) :: incoptdepth(:) ! incremental path opacities
   !                            from one-sided layer calculation on output.
   !                            it is the full integrated layer opacity.
+    integer, intent(in) :: tan_pt            ! Tangent point index in IncOptDepth
     real(rp), intent(in) :: alpha_path_gl(:) ! absorption coefficient on gl
   !                                            grid.
     real(rp), intent(in) :: ds_dz_gw(:)      ! path length wrt zeta derivative * gw.
@@ -78,7 +79,7 @@ contains
 
   ! Internals
 
-    integer :: A, AA, Half_Path, I, I_Stop, N_Path
+    integer :: A, AA, I, I_Stop, N_Path
     real(rp) :: total_opacity
     real(rp), parameter :: black_out = -15.0_rp
 
@@ -120,7 +121,6 @@ contains
   ! Compute Tau = exp(indefinite sum of IncOptDepth)
 
     n_path = size(incoptdepth)
-    half_path = n_path / 2
     tau%tau(1,frq_i) = 1.0_rp
     total_opacity = 0.0_rp
 
@@ -129,7 +129,7 @@ contains
 !  $\Delta \delta_{j \rightarrow j-1}$ is given by incoptdepth and
 !  $- \sum_{j=2}^i \Delta \delta_{j \rightarrow j-1}$ is given by total\_opacity.
 
-    do i_stop = 2, half_path
+    do i_stop = 2, tan_pt
       total_opacity = total_opacity - incoptdepth(i_stop)
       tau%tau(i_stop,frq_i) = exp(total_opacity)
       if ( total_opacity < black_out ) go to 99
@@ -138,14 +138,14 @@ contains
 !{ Account for earth reflectivity at the tangent to the surface:
 !  $\tau_{2N - t + 1} = \Upsilon \tau_t$.
 
-    tau%tau(half_path+1,frq_i) = e_rflty * tau%tau(half_path,frq_i)
+    tau%tau(tan_pt+1,frq_i) = e_rflty * tau%tau(tan_pt,frq_i)
 
 !{ Compute $\tau_i$ for $i > 2 N - t + 1$, where $t$ is given by half\_path.\\
 !  $\tau_i = \tau_{2N - t + 1} \exp \left \{ - \sum_{j=2N - t + 1}^i
 !    \Delta \delta_{j-1 \rightarrow j} \right \}$.
 
 ! We don't reset total_opacity, so we compute e_rflty * exp(total_opacity)
-! instead of tau(half_path) * exp(total_opacity).  i_stop is half_path + 1 here.
+! instead of tau(tan_pt) * exp(total_opacity).  i_stop is tan_pt + 1 here.
 
     do while ( total_opacity >= black_out .and. i_stop < n_path )
       total_opacity = total_opacity - incoptdepth(i_stop)
@@ -199,6 +199,9 @@ contains
 end module Tau_M
 
 ! $Log$
+! Revision 2.7  2006/12/13 02:32:03  vsnyder
+! Drag the tangent point around instead of assuming it's the middle one
+!
 ! Revision 2.6  2005/11/01 23:02:21  vsnyder
 ! PFA Derivatives
 !
