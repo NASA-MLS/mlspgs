@@ -210,7 +210,7 @@ contains
 ! $\frac{\partial \Delta \delta_{i \rightarrow i-1}^k}{\partial T_m}$
 ! and the {\tt dExDt} routine.
 
-  subroutine Get_D_Deltau_Pol_DT ( CT, STCP, STSP, T_Path_F, &
+  subroutine Get_D_Deltau_Pol_DT ( CT, STCP, STSP, Tan_PT, T_Path_F, &
                 & Alpha_Path_C, Alpha_Path_F, &
                 & dAlpha_dT_path_c, dAlpha_dT_path_f, &
                 & dAlpha_dT_polarized_path_c, dAlpha_dT_polarized_path_f, &
@@ -236,6 +236,8 @@ contains
       ! field vector, and the "instrument field of view plane polarized"
       ! (IFOVPP) X axis.
     real(rp), intent(in) :: STSP(:)         ! Sin(Theta) Sin(Phi)
+    integer, intent(in) :: Tan_PT           ! tangent index along the coarse
+                                            ! path, usually N_Path/2
     real(rp), intent(in) :: T_Path_f(:)     ! path temperatures on GL grid
     complex(rp), intent(in) :: Alpha_Path_c(-1:,:) ! -1:1 x path on coarse grid
     complex(rp), intent(in) :: Alpha_Path_f(-1:,:) ! -1:1 x path on fine grid
@@ -312,7 +314,6 @@ contains
     integer :: H_Stop                ! Stop point for hydrostatic parts
     integer :: I_stop                ! Stop point, which may be before N_Path
     integer :: L
-    integer :: Mid                   ! tangent index along the path = N_Path/2
     integer :: N_Path                ! Total coarse path length.
     logical :: NeedFA                ! Need FA in hydrostatic calculation
     integer :: P_i                   ! Index on the path
@@ -323,7 +324,6 @@ contains
 
     i_stop = size(dAlpha_dT_path_c)
     n_path = size(del_zeta)
-    mid = n_path / 2
 
     a = 1
     b = 1 + ng
@@ -382,15 +382,15 @@ contains
 
       ! First combine boundary flags
       do_calc = do_calc_hyd_c(:,sv_i)
-      if ( i_stop < mid ) then           
-        do_calc(2:i_stop) =                   do_calc(2:i_stop) .or. do_calc(1:i_stop-1)
+      if ( i_stop < tan_pt ) then           
+        do_calc(2:i_stop) =                      do_calc(2:i_stop) .or. do_calc(1:i_stop-1)
         h_stop = i_stop
       else
-        do_calc(2:mid) =    do_calc(mid) .or. do_calc(2:mid)    .or. do_calc(1:mid-1)
-        h_stop = mid - 1
+        do_calc(2:tan_pt) = do_calc(tan_pt) .or. do_calc(2:tan_pt) .or. do_calc(1:tan_pt-1)
+        h_stop = tan_pt - 1
       end if
       do_calc(1) = .false.
-      s_del_s = sum(del_s(2:mid)) ! Yes, this goes to the midpoint of the coarse path
+      s_del_s = sum(del_s(2:tan_pt)) ! Yes, this goes to the midpoint of the coarse path
       needFA = .true.
       fa = 0.0_rp ! In case n_path <= 4
       do p_i = 2 , h_stop
@@ -412,32 +412,32 @@ contains
 
       ! special processing at tangent.  fb is zero
 
-      if ( i_stop >= mid ) then
-        if ( do_calc(mid) ) &
-          & d_alpha_dT_eta(:,mid) = d_alpha_dT_eta(:,mid) + alpha_path_c(:,mid) * fa
+      if ( i_stop >= tan_pt ) then
+        if ( do_calc(tan_pt) ) &
+          & d_alpha_dT_eta(:,tan_pt) = d_alpha_dT_eta(:,tan_pt) + alpha_path_c(:,tan_pt) * fa
       end if
-      if ( i_stop > mid + 1 ) then ! mid+1 instead of mid so that mid+2 will be
-                                   ! in bounds if i_stop == 2.
+      if ( i_stop > tan_pt + 1 ) then ! tan_pt+1 instead of tan_pt so that tan_pt+2 will be
+                                      ! in bounds if i_stop == 2.
 
-        do_calc(mid+1:i_stop-1) = do_calc(mid+1:i_stop-1) .or. do_calc(mid+2:i_stop) .or. do_calc(mid+1)
+        do_calc(tan_pt+1:i_stop-1) = do_calc(tan_pt+1:i_stop-1) .or. do_calc(tan_pt+2:i_stop) .or. do_calc(tan_pt+1)
         if ( i_stop == n_path ) then
           h_stop = i_stop - 1
           do_calc(i_stop) = .false.
         else
           h_stop = i_stop
-          do_calc(i_stop) = do_calc(i_stop) .or. do_calc(mid+1)
+          do_calc(i_stop) = do_calc(i_stop) .or. do_calc(tan_pt+1)
         end if
 
-        needFA = .not. do_calc(mid+1)
-        s_del_s = del_s(mid+1)
-        if ( do_calc(mid+1) ) then
-          fa = (h_path_c(mid+2) * dh_dt_path_c(mid+2,sv_i) &
+        needFA = .not. do_calc(tan_pt+1)
+        s_del_s = del_s(tan_pt+1)
+        if ( do_calc(tan_pt+1) ) then
+          fa = (h_path_c(tan_pt+2) * dh_dt_path_c(tan_pt+2,sv_i) &
             & - h_tan * dh_dt_tan(sv_i)) / s_del_s
-          d_alpha_dT_eta(:,mid+1) = d_alpha_dT_eta(:,mid+1) + alpha_path_c(:,mid+1) * fa
+          d_alpha_dT_eta(:,tan_pt+1) = d_alpha_dT_eta(:,tan_pt+1) + alpha_path_c(:,tan_pt+1) * fa
         end if
 
-        s_del_s = del_s(mid+1)
-        do p_i = mid + 2, h_stop
+        s_del_s = del_s(tan_pt+1)
+        do p_i = tan_pt + 2, h_stop
           if ( do_calc(p_i) ) then
             if ( needFA ) then
               fa = (h_path_c(p_i) * dh_dt_path_c(p_i,sv_i) &
@@ -519,6 +519,9 @@ contains
 end module Get_D_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.37  2006/12/13 02:32:02  vsnyder
+! Drag the tangent point around instead of assuming it's the middle one
+!
 ! Revision 2.36  2006/12/04 21:17:28  vsnyder
 ! Reorganize FullForwardModel to use automatic arrays instead of allocating
 ! pointer arrays.  Requires testing for zero size instead of testing for
