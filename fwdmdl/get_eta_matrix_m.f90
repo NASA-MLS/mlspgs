@@ -340,7 +340,7 @@ contains
 
 ! Internals
 
-    integer(ip) :: I, J, N_coeffs, N_Grid, P(size(grid)), PI
+    integer(ip) :: I, J, N_coeffs, N_Grid, P(size(grid))
     real(rp) :: Del_basis
     logical :: MySorted
 
@@ -491,6 +491,9 @@ contains
 end module Get_Eta_Matrix_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.12  2006/12/09 02:23:45  vsnyder
+! Use generic instead of optional, add First, Last
+!
 ! Revision 2.11  2006/06/29 02:51:30  vsnyder
 ! Correct a recently-introduced bug
 !
