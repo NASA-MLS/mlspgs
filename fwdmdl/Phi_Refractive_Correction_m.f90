@@ -29,8 +29,8 @@ contains
 !---------------------------------------------------------------------------
 
   ! -------------------------------  Phi_Refractive_Correction_GL  -----
-  subroutine Phi_Refractive_Correction_GL ( N_path, H_path, dHdz_gw, Z_path, &
-    &                                       Phi_Corr )
+  subroutine Phi_Refractive_Correction_GL ( Tan_Pt, N_path, H_path, dHdz_gw, &
+    &                                       Z_path, Phi_Corr )
 
   ! Compute the refractive correction for Phi using Gauss-Legendre quadrature,
   ! in zeta coordinates.
@@ -85,6 +85,7 @@ contains
     use MLSKinds, only: RP, R8
 
   ! Inputs
+    integer, intent(in) :: Tan_pt      ! Tangent point index in N_Path etc.
     real(rp), intent(in) :: N_Path(:)  ! Indices of refraction - 1 on the
                                        ! entire path.  Only the fine-grid (GL)
                                        ! part is used.
@@ -121,16 +122,14 @@ contains
     integer :: I, I1, I2   ! Subscript, loop limits
     integer :: M           ! Direction away from tangent point, +/- 1
     integer :: MNG         ! M * (NG + 1)
-    integer :: Mid         ! Tangent point index
 
-    mid = size(n_path) / 2
-    ht = h_path(mid)
-    nt = 1.0_r8 + n_path(mid)
+    ht = h_path(tan_pt)
+    nt = 1.0_r8 + n_path(tan_pt)
 
-    i1 = mid - (ng + 1)
+    i1 = tan_pt - (ng + 1)
     i2 = 1
-    phi_corr(mid) = 0.0
-    phi_corr(mid+1) = 0.0 ! Account for zero-thickness tangent layer
+    phi_corr(tan_pt) = 0.0
+    phi_corr(tan_pt+1) = 0.0 ! Account for zero-thickness tangent layer
 
     do m = -1, 1, 2
       mng = m * (ng + 1)
@@ -153,14 +152,14 @@ contains
         ! Linear interpolation from coarse to fine grid
         phi_corr(i-mng+m:i-m:m) = phi_corr(i-mng) + ii * gx01
       end do ! i
-      i1 = mid + ng + 2
+      i1 = tan_pt + ng + 2
       i2 = size(n_path)
     end do ! m
 
   end subroutine Phi_Refractive_Correction_GL
 
   ! --------------------------------  Phi_Refractive_Correction_T  -----
-  subroutine Phi_Refractive_Correction_T ( N_path, H_path, Phi_Corr )
+  subroutine Phi_Refractive_Correction_T ( Tan_Pt, N_path, H_path, Phi_Corr )
 
   ! Compute the refractive correction for Phi using trapezoidal quadrature,
   ! in H coordinates.
@@ -168,6 +167,7 @@ contains
     use MLSKinds, only: RP, R8
 
   ! Inputs
+    integer, intent(in) :: Tan_pt      ! Tangent point index in N_Path etc.
     real(rp), intent(in) :: N_Path(:)  ! Indices of refraction - 1 on the
                                        ! entire path.
     real(rp), intent(in) :: H_Path(:)  ! Equivalent circular earth heights on
@@ -189,15 +189,13 @@ contains
     real(r8) :: NT         ! N at tangent point
     integer :: I, I1, I2   ! Subscript, loop limits
     integer :: M           ! Direction away from tangent point, +/- 1
-    integer :: Mid         ! Tangent point index
 
-    mid = size(n_path) / 2
-    ht = h_path(mid)
-    nt = 1.0_r8 + n_path(mid)
+    ht = h_path(tan_pt)
+    nt = 1.0_r8 + n_path(tan_pt)
 
-    i1 = mid - 1
+    i1 = tan_pt - 1
     i2 = 1
-    phi_corr(mid:mid+1) = 0.0 ! Account for zero-thickness tangent layer
+    phi_corr(tan_pt:tan_pt+1) = 0.0 ! Account for zero-thickness tangent layer
 
     do m = -1, 1, 2
       ip = 0.0
@@ -218,7 +216,7 @@ contains
         ap = a
         ip = ii
       end do ! i
-      i1 = mid + 2
+      i1 = tan_pt + 2
       i2 = size(n_path)
     end do ! m
 
@@ -286,6 +284,9 @@ contains
 end module Phi_Refractive_Correction_m
 
 ! $Log$
+! Revision 2.3  2006/12/13 02:32:03  vsnyder
+! Drag the tangent point around instead of assuming it's the middle one
+!
 ! Revision 2.2  2006/03/06 20:45:34  vsnyder
 ! Avoid simgularities caused by temperature inversions
 !
