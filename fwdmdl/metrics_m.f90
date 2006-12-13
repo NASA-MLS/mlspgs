@@ -123,7 +123,7 @@ contains
     integer :: NO_BAD_FITS
     integer :: NO_GRID_FITS
     integer :: N_PATH      ! Path length = 2*(size(z_ref)+1-tan_ind)
-    integer :: N_Tan       ! Tangent index in path, usually N_Path/2
+    integer :: N_Tan       ! Tangent index in path, N_Path/2
     integer :: N_VERT      ! size(z_ref)
     integer :: P_COEFFS    ! Size(P_basis)
 
@@ -468,7 +468,7 @@ path: do i = i1, i2
       do i = 1, n_path
         n_grid(i) = dot_product(n_ref(vert_inds(i),:), eta_p(i,:))
       end do
-      call phi_refractive_correction ( n_grid, h_grid(:n_path), phi_corr )
+      call phi_refractive_correction ( n_tan, n_grid, h_grid(:n_path), phi_corr )
       p_grid(:n_path) = p_grid(:n_path) + phi_sign * phi_corr
       if ( h_phi_dump > 0 ) &
         & call dump ( phi_corr, format='(1pg14.6)', &
@@ -588,6 +588,10 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.36  2006/12/09 02:25:42  vsnyder
+! Size some arrays more accurately, use First:Last version of get_eta_matrix,
+! remove Tangent_Temperature_Derivatives module procedure since it isn't used
+!
 ! Revision 2.35  2006/12/08 23:57:08  vsnyder
 ! Revise earth-intersecting metrics
 !
