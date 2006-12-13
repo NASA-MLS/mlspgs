@@ -26,7 +26,8 @@ module MCRT_m
 contains
 
 ! ---------------------------------------------------------  Mcrt  -----
-  subroutine Mcrt ( T_script, Sqrt_earth_ref, Del_tau, P_Stop, Prod, Tau, Radiance )
+  subroutine Mcrt ( T_script, Sqrt_earth_ref, Del_tau, Tan_pt, P_Stop, Prod, &
+    &               Tau, Radiance )
 
 !       Magnetic    Condensed    Radiative    Transfer
 
@@ -63,6 +64,7 @@ contains
     complex(rk), intent(in) :: Del_tau(:,:,:)    ! 2 x 2 x path = exp(del_opcty).
                                                  ! Called P in some notes and
                                                  ! E in other notes.  It's E here.
+    integer, intent(in) :: Tan_pt                ! Tangent point index in T_Script
     integer, intent(in) :: P_Stop                ! Stop here
     complex(rk), intent(out) :: Prod(:,:,:)      ! 2 x 2 x path.  Called P in some
                                                  ! notes.  Prod(:,:,I) is the
@@ -73,7 +75,7 @@ contains
                                                  !  Prod(:,:,i), conjg(
                                                  !   transpose(Prod(:,:,i)))))
 
-    integer :: i, i_tan, n_path
+    integer :: i, n_path
 
     complex(rk), parameter :: Ident(2,2) = reshape( (/ 1.0, 0.0, &
                                                      & 0.0, 1.0 /), (/2,2/) )
@@ -97,8 +99,7 @@ contains
 ! the information for optimization.  Writing out the multiplies explicitly
 ! probably helps, too.
 
-    i_tan = n_path / 2
-    do i = 2, min(i_tan,p_stop)
+    do i = 2, min(tan_pt,p_stop)
     ! prod(1:2,1:2,i) = matmul ( prod(1:2,1:2,i-1), del_tau(1:2,1:2,i) )
       prod(1:2,1:2,i) = reshape ( (/ &
         & prod(1,1,i-1) * del_tau(1,1,i) + prod(1,2,i-1) * del_tau(2,1,i), &
@@ -112,15 +113,15 @@ contains
 ! Tangent point (or Earth intersecting) layer.  If it's not
 ! an Earth intersecting layer, sqrt_earth_ref will be 1.0.
 
-    if ( p_stop <= i_tan ) return
-    prod(1:2,1:2,i_tan+1) = sqrt_earth_ref * prod(1:2,1:2,i_tan)
+    if ( p_stop <= tan_pt ) return
+    prod(1:2,1:2,tan_pt+1) = sqrt_earth_ref * prod(1:2,1:2,tan_pt)
     call updaterad ( &
-      & radiance, t_script(i_tan+1), prod(1:2,1:2,i_tan+1), tau(1:2,1:2,i_tan+1) )
+      & radiance, t_script(tan_pt+1), prod(1:2,1:2,tan_pt+1), tau(1:2,1:2,tan_pt+1) )
 
 ! Proceed with third segment integration, which includes the
 ! space radiance contribution.
 
-    do i = i_tan+2, min(n_path,p_stop)
+    do i = tan_pt+2, min(n_path,p_stop)
     ! prod(1:2,1:2,i) = matmul ( prod(1:2,1:2,i-1) , del_tau(1:2,1:2,i-1) )
       prod(1:2,1:2,i) = reshape ( (/ &
         & prod(1,1,i-1) * del_tau(1,1,i-1) + prod(1,2,i-1) * del_tau(2,1,i-1), &
@@ -183,7 +184,7 @@ contains
 
 ! -----------------------------------------------------  Mcrt_Der  -----
   subroutine Mcrt_Der ( T_script, Sqrt_earth_ref, E, D_E, Prod, Tau, P_Stop, &
-    & D_Radiance, D_T_script )
+    & Tan_pt, D_Radiance, D_T_script )
 
 !       Magnetic    Condensed    Radiative    Transfer    Derivative
 
@@ -232,6 +233,7 @@ contains
     complex(rk), intent(in) :: Prod(:,:,:)  ! 2 x 2 x path.  Called P above.
     complex(rk), intent(in) :: Tau(:,:,:)   ! 2 x 2 x path. Matmul(Prod,conjg(Prod)).
     integer, intent(in) :: P_Stop           ! Where to stop on the path
+    integer, intent(in) :: Tan_pt           ! Tangent point index in T_Script
     complex(rk), intent(out) :: D_Radiance(:,:,:) ! 2 x 2 x sve
     real(rk), intent(in), optional :: D_T_script(:,:) ! path x sve. a.k.a D Delta B
     ! T script or Delta B depends only on temperature and frequency, so it's
@@ -241,9 +243,7 @@ contains
     complex(rk) :: DTauDx(2,2)              ! D (Tau_i) / D (x)
     real(rk) :: Earth_Ref
     integer :: I_P, I_pp, I_Sv              ! Path, State vector indices
-    integer :: I_Tan                        ! Tangent point
 
-    i_tan = size(t_script) / 2
     earth_ref = sqrt_earth_ref**2
 
     ! This is for the case of a two-element path, which has no layers,
@@ -269,7 +269,7 @@ contains
         do i_p = 2, p_stop                 ! path elements
         ! dTauDx = matmul(dPdx,conjg(transpose(prod(1:2,1:2,i_p))))
         ! dTauDx = dTauDx + conjg(transpose(dTauDx))
-          if ( i_p /= i_tan + 1 ) then
+          if ( i_p /= tan_pt + 1 ) then
             dTauDx(1,1) = 2.0_rk * (real(dPdx(1,1)) *  real(prod(1,1,i_p)) + &
                         &          aimag(dPdx(1,1)) * aimag(prod(1,1,i_p)) + &
                         &           real(dPdx(1,2)) *  real(prod(1,2,i_p)) + &
@@ -313,7 +313,7 @@ contains
                                & tau(2,2,i_p) * d_t_script(i_p,i_sv)
 
           if ( i_p < p_stop ) then
-            if ( i_p /= i_tan + 1 ) then
+            if ( i_p /= tan_pt + 1 ) then
               i_pp = i_pp + 1
             ! dPdx = matmul(dPdx,             e(1:2,1:2,i_pp)) + &
             !   &    matmul(prod(1:2,1:2,i_p),d_e(1:2,1:2,i_pp,i_sv))
@@ -340,7 +340,7 @@ contains
         i_pp = 2
         dPdx = d_e(1:2,1:2,2,i_sv)         ! D (P_2) / D (x) = D (E_2) / D (x)
         do i_p = 2, p_stop                 ! path elements
-          if ( i_p /= i_tan + 1 ) then
+          if ( i_p /= tan_pt + 1 ) then
           ! dTauDx = matmul(dPdx,conjg(transpose(prod(1:2,1:2,i_p))))
           ! dTauDx = dTauDx + conjg(transpose(dTauDx))
             dTauDx(1,1) = 2.0_rk * (real(dPdx(1,1)) *  real(prod(1,1,i_p)) + &
@@ -381,7 +381,7 @@ contains
           d_radiance(2,2,i_sv) = d_radiance(2,2,i_sv) + &
                                & dTauDx(2,2) * t_script(i_p)
           if ( i_p < p_stop ) then
-            if ( i_p /= i_tan + 1 ) then
+            if ( i_p /= tan_pt + 1 ) then
               i_pp = i_pp + 1
             ! dPdx = matmul(dPdx,             e(1:2,1:2,i_pp)) + &
             !   &    matmul(prod(1:2,1:2,i_p),d_e(1:2,1:2,i_pp,i_sv))
@@ -418,6 +418,9 @@ contains
 end module MCRT_m
 
 ! $Log$
+! Revision 2.21  2006/04/21 22:10:37  vsnyder
+! Spiff TeXnicalities, delete unused computations, some optimizations
+!
 ! Revision 2.20  2005/06/22 18:08:19  pwagner
 ! Reworded Copyright statement, moved rcs id
 !

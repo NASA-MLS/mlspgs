@@ -245,7 +245,7 @@ contains
 
 ! --------------------------------------------------  Comp_refcor  -----
 
-  subroutine Comp_refcor ( h_path, n_path, ht, del_s, ref_corr, status )
+  subroutine Comp_refcor ( tan_pt, h_path, n_path, ht, del_s, ref_corr, status )
 
   ! This routine computes the integral described in Eqn. 10.12 of the
   ! 19 August 2004 MLS ATBD, pg. 45, using the Gauss-Legendre method.
@@ -257,6 +257,7 @@ contains
     use GLNP, only: NG, GX=>gx_all, GW=>gw_all
     use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
 
+    integer, intent(in) :: Tan_pt      ! Tangent point index in H_Path etc.
     real(rp), intent(in) :: H_PATH(:)
     real(rp), intent(in) :: N_PATH(:)
 
@@ -268,7 +269,7 @@ contains
     integer, intent(out) :: Status ! 0 = OK, 1 = failed to bracket root,
                                    ! 2 = too many iterations
 
-    integer(ip) :: j, j1, j2, k, m, mid, no_ele
+    integer(ip) :: j, j1, j2, k, m, no_ele
 
     real(rp) :: INTEGRAND_GL(Ng)
 
@@ -280,7 +281,6 @@ contains
     status = 0
 
     no_ele = size(n_path)
-    mid = (no_ele + 1) / 2
 
   !  Initialize the ref_corr array:
 
@@ -289,11 +289,11 @@ contains
     Del_s = 0.0
 
     htan2 = ht * ht
-    Nt2Ht2 = (n_path(mid)*ht)**2
+    Nt2Ht2 = (n_path(tan_pt)*ht)**2
 
 
     j1 = 1
-    j2 = mid
+    j2 = tan_pt
     ys = 0.5_rp
     do m = 0, 1
       h2 = h_path(j1+m)
@@ -346,7 +346,7 @@ jl:   do j = j1+1, j2
 
       end do jl ! j
 
-      j1 = mid
+      j1 = tan_pt
       j2 = no_ele - 1
       ys = -0.5_rp
     end do ! m
@@ -448,6 +448,9 @@ jl:   do j = j1+1, j2
 
 END module REFRACTION_M
 ! $Log$
+! Revision 2.25  2006/06/29 19:31:59  vsnyder
+! Use entire integration formula, not just interior points, in case of Lobatto
+!
 ! Revision 2.24  2005/12/22 20:58:22  vsnyder
 ! Added more ranks and H2O update
 !

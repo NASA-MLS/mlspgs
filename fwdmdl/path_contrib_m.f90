@@ -33,13 +33,14 @@ contains
 ! where to do Gauss-Legendre quadrature.  Then allocate and fill
 ! arrays that control the Gauss-Legendre quadratures.
 
-  subroutine Path_Contrib_Scalar ( incoptdepth, e_rflty, tol, do_gl )
+  subroutine Path_Contrib_Scalar ( incoptdepth, tan_pt, e_rflty, tol, do_gl )
 
     use MLSCommon, only: RK => RP, IP
 
   ! inputs
 
-    real(rk), intent(in) :: incoptdepth(:) ! layer optical depth
+    real(rk), intent(in) :: IncOptDepth(:) ! layer optical depth
+    integer, intent(in) :: tan_pt          ! Tangent point index in IncOptDepth
     real(rk), intent(in) :: e_rflty        ! earth reflectivity
     real(rk), intent(in) :: tol            ! accuracy target in K
 
@@ -52,7 +53,7 @@ contains
 
     real(rk) :: dtaudn(size(incoptdepth))  ! path derivative of the
                                            ! transmission function
-    integer(ip) :: i, i_tan, n_path
+    integer(ip) :: i, n_path
 
     real(rk) :: MyTol
     real(rk), parameter :: temp = 250.0_rk
@@ -62,19 +63,18 @@ contains
   ! start code
 
     n_path = size(incoptdepth)
-    i_tan = n_path / 2
     myTol = - tolScale * tol ! Negative because we're summing -incoptdepth
 
   ! Compute the indefinite sum of (-incoptdepth).
 
     dtaudn(1) = 0.0_rk
-    do i = 2 , i_tan
+    do i = 2 , tan_pt
       dtaudn(i) = dtaudn(i-1) - incoptdepth(i)
     end do
 
-    dtaudn(i_tan+1) = dtaudn(i_tan)
+    dtaudn(tan_pt+1) = dtaudn(tan_pt)
 
-    do i = i_tan+2, n_path
+    do i = tan_pt+2, n_path
       dtaudn(i) = dtaudn(i-1) - incoptdepth(i-1)
     end do
 
@@ -83,7 +83,7 @@ contains
     dtaudn = (eoshift(dtaudn,1,dtaudn(n_path)) -             &
               eoshift(dtaudn,-1,dtaudn(1))) * exp(dtaudn)
 
-    dtaudn(i_tan+1:n_path) = dtaudn(i_tan+1:n_path) * e_rflty
+    dtaudn(tan_pt+1:n_path) = dtaudn(tan_pt+1:n_path) * e_rflty
 
   ! find where the tau derivative is large.  Remember, we've
   ! been subtracting, so "large" means "large and negative."
@@ -98,7 +98,7 @@ contains
 ! where to do Gauss-Legendre quadrature.  Then allocate and fill
 ! arrays that control the Gauss-Legendre quadratures.
 
-  subroutine Path_Contrib_Polarized ( deltau, e_rflty, tol, do_gl )
+  subroutine Path_Contrib_Polarized ( deltau, tan_pt, e_rflty, tol, do_gl )
 
 !   use CS_Expmat_M, only: CS_Expmat
     use MLSCommon, only: RK => RP, IP
@@ -108,6 +108,7 @@ contains
 !    complex(rk), intent(in) :: incoptdepth(:,:,:) ! layer optical depth
     complex(rk), intent(in) :: deltau(:,:,:)    ! = E == exp(-incoptdepth)
                                            ! (2,2,:)
+    integer, intent(in) :: tan_pt          ! Tangent point index in deltau
     real(rk), intent(in) :: e_rflty        ! earth reflectivity
     real(rk), intent(in) :: tol            ! accuracy target in K
 
@@ -125,7 +126,7 @@ contains
     real(rk) :: MyTol
     complex(rk) :: P(2,2,size(deltau,3)), Tau(2,2,size(deltau,3))
 
-    integer(ip) :: i, i_tan, n_path
+    integer(ip) :: i, n_path
 
     real(rk), parameter :: temp = 250.0_rk
     real(rk), parameter :: TolScale = 2.0_rk / temp ! 2.0 comes from centered
@@ -134,7 +135,6 @@ contains
   ! start code
 
     n_path = size(deltau,3)
-    i_tan = n_path / 2
     myTol = tolScale * tol
 
   ! Compute exp(incoptdepth) for all but the last level
@@ -152,7 +152,7 @@ contains
   !{ $\mathbf{P}_i = \prod_{j=1}^{i-1} \mathbf{E}_i$;
   !  $\mathbf{\tau}_i = \mathbf{P}_i \mathbf{P}_i^\dagger$.
 
-    do i = 2, i_tan
+    do i = 2, tan_pt
   !Note: Indexing of deltau changes at the tangent point because it is a "layer quantity"
   !      while P, Tau are defined at the boundary of a layer closest to the spacecraft  
 !      P(:,:,i) =  matmul ( P(1:2,1:2,i-1),  deltau(1:2,1:2,i-1) )
@@ -160,10 +160,10 @@ contains
       Tau(:,:,i) = matmul ( P(1:2,1:2,i), conjg(transpose(P(1:2,1:2,i))) )
     end do
 
-    P(:,:,i_tan+1) = P(:,:,i_tan) * sqrt(e_rflty)
-    Tau(:,:,i_tan+1) = Tau(:,:,i_tan) * e_rflty
+    P(:,:,tan_pt+1) = P(:,:,tan_pt) * sqrt(e_rflty)
+    Tau(:,:,tan_pt+1) = Tau(:,:,tan_pt) * e_rflty
 
-    do i = i_tan+2, n_path
+    do i = tan_pt+2, n_path
       P(:,:,i) =  matmul ( P(1:2,1:2,i-1),  deltau(1:2,1:2,i-1) )
       Tau(:,:,i) = matmul ( P(1:2,1:2,i), conjg(transpose(P(1:2,1:2,i))) )
     end do
@@ -179,7 +179,7 @@ contains
   end subroutine Path_Contrib_Polarized
 
   ! ------------------------------------------------  Get_GL_inds  -----
-  subroutine Get_GL_inds ( Do_GL, GL_Inds, CG_Inds, NGL, NCG )
+  subroutine Get_GL_inds ( Do_GL, Tan_pt, GL_Inds, CG_Inds, NGL, NCG )
   ! Fill the arrays that control application of GL
 
     use GLnp, only: NG, NGP1
@@ -188,6 +188,7 @@ contains
     logical, intent(inout) :: DO_GL(:)         ! Set true for indicies to do
                                                ! gl computation.  First and
                                                ! last are set false here.
+    integer, intent(in) :: Tan_Pt              ! Index of tangent point in Do_GL
     integer(ip), intent(out) :: GL_INDS(:)     ! Indices of where to do GL
     integer(ip), intent(out) :: CG_INDS(:)     ! Indices on coarse path of
                                                ! where to do GL
@@ -196,8 +197,8 @@ contains
 
     integer :: I, N_PATH
 
-    integer, parameter :: GLIR(ng) = (/ (i, i = 2-ng, 1) /) ! for > n_path/2
-    integer, parameter :: GLIL(ng) = (/ (i ,i = 1-ng, 0) /) ! for <= n_path/2
+    integer, parameter :: GLIR(ng) = (/ (i, i = 2-ng, 1) /) ! for > Tan_Pt 
+    integer, parameter :: GLIL(ng) = (/ (i ,i = 1-ng, 0) /) ! for <= Tan_Pt
 
     n_path = size(do_gl)
 
@@ -210,7 +211,7 @@ contains
     do i = 2, n_path-1 ! first and last elements of do_gl are false
       if ( do_gl(i) ) then
         ngl = ngl + ng
-        if ( i > n_path / 2 ) then
+        if ( i > tan_pt ) then
           gl_inds(ngl-ng+1:ngl) = Ngp1 * (i - 1) + glir
         else
           gl_inds(ngl-ng+1:ngl) = Ngp1 * (i - 1) + glil
@@ -235,6 +236,9 @@ contains
 end module Path_Contrib_M
 
 ! $Log$
+! Revision 2.19  2006/06/16 20:32:31  vsnyder
+! Define NGP1 in glnp
+!
 ! Revision 2.18  2005/06/22 18:08:19  pwagner
 ! Reworded Copyright statement, moved rcs id
 !

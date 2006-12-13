@@ -25,7 +25,7 @@ module SCRT_DN_M
 contains
 
   ! -------------------------------------------------------  SCRT  -----
-  subroutine SCRT ( T_SCRIPT, E_RFLTY, INCOPTDEPTH, TAU, RADIANCE, &
+  subroutine SCRT ( Tan_pt, T_SCRIPT, E_RFLTY, INCOPTDEPTH, TAU, RADIANCE, &
                   & INC_RAD_PATH, I_STOP )
     use MLSKinds, only: IP, RP
 
@@ -36,6 +36,7 @@ contains
 
 ! inputs:
 
+    integer, intent(in) :: Tan_pt          ! Tangent point index in t_script
     real(rp), intent(in) :: t_script(:)    ! differential temperatures (K).
     real(rp), intent(in) :: e_rflty        ! Earth surface reflectivity (0--1).
     real(rp), intent(in) :: incoptdepth(:) ! layer incremental optical depth,
@@ -50,14 +51,13 @@ contains
 
 ! internals
 
-    integer(ip) :: n_path, half_path
+    integer(ip) :: n_path
     real(rp) :: total_opacity
     real(rp), parameter :: black_out = -15.0_rp
 
 ! begin code
 
     n_path = size(t_script)
-    half_path = n_path / 2
     tau(1) = 1.0_rp
     inc_rad_path(1) = t_script(1)
     total_opacity = 0.0_rp
@@ -68,7 +68,7 @@ contains
 !  $\Delta \delta_{j \rightarrow j-1}$ is given by incoptdepth and
 !  $- \sum_{j=2}^i \Delta \delta_{j \rightarrow j-1}$ is given by total\_opacity.
 
-    do i_stop = 2, half_path
+    do i_stop = 2, tan_pt
       total_opacity = total_opacity - incoptdepth(i_stop)
       tau(i_stop) = exp(total_opacity)
       inc_rad_path(i_stop) = t_script(i_stop) * tau(i_stop)
@@ -83,16 +83,16 @@ contains
 !{ Account for earth reflectivity at the tangent to the surface:
 !  $\tau_{2N - t + 1} = \Upsilon \tau_t$.
 
-    tau(half_path+1) = e_rflty * tau(half_path)
-    inc_rad_path(half_path+1) = t_script(half_path+1) * tau(half_path+1)
-    radiance = radiance + inc_rad_path(half_path+1)
+    tau(tan_pt+1) = e_rflty * tau(tan_pt)
+    inc_rad_path(tan_pt+1) = t_script(tan_pt+1) * tau(tan_pt+1)
+    radiance = radiance + inc_rad_path(tan_pt+1)
 
 !{ Compute $\tau_i$ for $i > 2 N - t + 1$, where $t$ is given by half\_path.\\
 !  $\tau_i = \tau_{2N - t + 1} \exp \left \{ - \sum_{j=2N - t + 1}^i
 !    \Delta \delta_{j-1 \rightarrow j} \right \}$.
 
 ! We don't reset total_opacity, so we compute e_rflty * exp(total_opacity)
-! instead of tau(half_path) * exp(total_opacity).  i_stop is half_path + 1 here.
+! instead of tau(tan_pt) * exp(total_opacity).  i_stop is tan_pt + 1 here.
 
     do while ( total_opacity >= black_out .and. i_stop < n_path )
       total_opacity = total_opacity - incoptdepth(i_stop)
@@ -146,13 +146,14 @@ contains
 !------------------------------------------------------  DSCRT_DT  -----
 ! Compute the scalarized condensed radiative transfer derivatives.
 
-  subroutine DSCRT_DT ( D_DELTA_DT, TAU, INC_RAD_PATH, DT_SCRIPT_DT, &
+  subroutine DSCRT_DT ( TAN_PT, D_DELTA_DT, TAU, INC_RAD_PATH, DT_SCRIPT_DT, &
                       & I_START, I_END, DRAD_DT )
     use MLSKinds, only: IP, RP
 
 !{ $\frac{\text{d}I(\mathbf{x})}{\text{d}x_k} = \sum_{i=1}^{2N} Q_i \tau_i$,
 !  where $Q_i = \frac{\partial \Delta B_i}{\partial x_k} - \Delta B_i W_i$.
 
+    integer, intent(in) :: Tan_pt           ! Tangent point index in inc_rad_path
     integer(ip), intent(in) :: i_start      ! where non-zeros on the path begin
     integer(ip), intent(in) :: i_end        ! where non-zeros on the path end
     real(rp), intent(in) :: d_delta_dt(:)   ! path opacity derivatives wrt sve
@@ -162,35 +163,34 @@ contains
     real(rp), intent(in) :: dt_script_dt(:) ! derivatives of differential temps
     real(rp), intent(out) :: drad_dt        ! radiance derivative wrt temperature
 
-    integer(ip) :: i, n_path, half_path
+    integer(ip) :: i, n_path
     real(rp) :: w
 
     w = 0.0_rp
     drad_dt = dt_script_dt(1)
 
     n_path = size(inc_rad_path)
-    half_path = n_path/2
 
 !{ $-W_i = -\sum_{j=2}^i \frac{\partial \Delta \delta_{j \rightarrow j - 1}}
 !                           {\partial x_k}$,
 !  where the derivative is given by d_delta_dt.
 
-    do i = max(2,i_start), min(i_end,half_path)
+    do i = max(2,i_start), min(i_end,tan_pt)
       w = w - d_delta_dt(i)
       drad_dt = drad_dt + dt_script_dt(i) * tau(i) + inc_rad_path(i) * w
     end do
 
-    if ( i_end <= half_path ) return
+    if ( i_end <= tan_pt ) return
 
 ! Tangent point or bounce off the earth's surface
 
-    drad_dt = drad_dt + dt_script_dt(half_path+1) * tau(half_path+1)  &
-            + inc_rad_path(half_path+1) * w
+    drad_dt = drad_dt + dt_script_dt(tan_pt+1) * tau(tan_pt+1)  &
+            + inc_rad_path(tan_pt+1) * w
 
 ! Same as above, but don't add in the zero-emission layer at the 
 ! tangent point or earth's surface
 
-    do i = half_path+2, min(i_end,n_path)
+    do i = tan_pt+2, min(i_end,n_path)
       w = w - d_delta_dt(i-1)
       drad_dt = drad_dt + dt_script_dt(i) * tau(i) + inc_rad_path(i) * w
     end do
@@ -201,7 +201,7 @@ contains
 ! Compute the scalarized condensed radiative transfer derivatives,
 ! without derivatives of the differential Temperatures w.r.t. species.
 
-  subroutine DSCRT_DX ( D_DELTA_DX, INC_RAD_PATH, I_START, I_END, DRAD_DX )
+  subroutine DSCRT_DX ( TAN_PT, D_DELTA_DX, INC_RAD_PATH, I_START, I_END, DRAD_DX )
     use MLSKinds, only: IP, RP
 
 !{ $\frac{\partial I(\mathbf{x})}{\partial x_k} = \sum_{i=1}^{2N} Q_i \tau_i$,
@@ -211,6 +211,7 @@ contains
 
 ! Inputs
 
+    integer, intent(in) :: Tan_pt         ! Tangent point index in inc_rad_path
     real(rp), intent(in) :: d_delta_dx(:) ! path opacity derivatives
     real(rp), intent(in) :: inc_rad_path(:) ! incremental radiance along the
                                           ! path.  t_script * tau.
@@ -224,33 +225,32 @@ contains
 
 ! internals
 
-    integer(ip) :: i, n_path, half_path
+    integer(ip) :: i, n_path
     real(rp) :: w
 
     drad_dx = 0.0_rp
     w = 0.0_rp
     n_path = size(inc_rad_path)
-    half_path = n_path/2
 
 !{ $-W_i = -\sum_{j=2}^i \frac{\partial \Delta \delta_{j \rightarrow j - 1}}
 !                           {\partial x_k}$,
 !  where the derivative is given by d\_delta\_dx.
 
-    do i = max(2,i_start), min(i_end,half_path)
+    do i = max(2,i_start), min(i_end,tan_pt)
       w = w - d_delta_dx(i)
       drad_dx = drad_dx + inc_rad_path(i) * w
     end do
 
-    if ( i_end <= half_path ) return
+    if ( i_end <= tan_pt ) return
 
 ! Tangent point or bounce off the earth's surface
 
-    drad_dx = drad_dx + inc_rad_path(half_path+1) * w
+    drad_dx = drad_dx + inc_rad_path(tan_pt+1) * w
 
 ! Same as above, but don't add in the zero-emission layer at the 
 ! tangent point or earth's surface
 
-    do i = half_path+2 , min(n_path,i_end)
+    do i = tan_pt+2 , min(n_path,i_end)
       w = w - d_delta_dx(i-1)
       drad_dx = drad_dx + inc_rad_path(i) * w
     end do
@@ -268,6 +268,9 @@ contains
 
 end module SCRT_DN_M
 ! $Log$
+! Revision 2.11  2005/11/21 22:57:27  vsnyder
+! PFA derivatives stuff
+!
 ! Revision 2.10  2005/11/01 23:02:21  vsnyder
 ! PFA Derivatives
 !

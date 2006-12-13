@@ -816,10 +816,12 @@ contains
 
         tan_pt_c = npc / 2
 
-        ! Compute Gauss Legendre (GL) grid ----------------------------------
-z_coarse(:tan_pt_c) = z_psig(nlvl:tan_ind_c:-1)
-z_coarse(tan_pt_c+1:npc) = z_psig(tan_ind_c:nlvl)
+! This is where we need to insert the calculation of minimum Zeta.
 
+        z_coarse(:tan_pt_c) = z_psig(nlvl:tan_ind_c:-1)
+        z_coarse(tan_pt_c+1:npc) = z_psig(tan_ind_c:nlvl)
+
+        ! Compute Gauss Legendre (GL) grid ----------------------------------
         call compute_GL_grid ( z_coarse(:npc), p_path, z_path )
         ! Assumes path is symmetric
         z_path(tan_pt_f+1:2*tan_pt_f) = z_path(tan_pt_f:1:-1)
@@ -830,7 +832,7 @@ z_coarse(tan_pt_c+1:npc) = z_psig(tan_ind_c:nlvl)
         c_inds = (/(i*Ngp1-Ng,i=1,tan_pt_c),((i-1)*Ngp1-Ng+1,i=tan_pt_c+1,npc)/)
         ! And some fine path extraction indices
         do_gl(1:npc:npc-1) = .false.; do_gl(2:npc-1) = .true.
-        call get_gl_inds ( do_gl(:npc), f_inds, cg_inds, nglMax, ncg )
+        call get_gl_inds ( do_gl(:npc), tan_pt_c, f_inds, cg_inds, nglMax, ncg )
 
         del_zeta(1:npc:npc-1) = 0.0_rp ! First and last ones
         del_zeta(2:tan_pt_c) = 0.5_rp * ( z_path(c_inds(1:tan_pt_c-1)) - &
@@ -1045,19 +1047,19 @@ z_coarse(tan_pt_c+1:npc) = z_psig(tan_ind_c:nlvl)
 
         if ( temp_der ) then
          ! Ext_SCgeocAlt is in meters, but Get_Chi_Angles wants it in km.
-          call get_chi_angles ( 0.001*est_scGeocAlt(ptg_i), n_path_c(npc/2),&
+          call get_chi_angles ( 0.001*est_scGeocAlt(ptg_i), n_path_c(tan_pt_c),&
              & tan_ht, tan_phi(ptg_i), Req, 0.0_rp, ptg_angles(ptg_i),      &
              & r, 1.0_rp, tan_dh_dt, tan_d2h_dhdt,       &
              & dx_dt(ptg_i,:), d2x_dxdt(ptg_i,:) )
         else
-          call get_chi_angles ( 0.001*est_scGeocAlt(ptg_i), n_path_c(npc/2),&
+          call get_chi_angles ( 0.001*est_scGeocAlt(ptg_i), n_path_c(tan_pt_c),&
              & tan_ht, tan_phi(ptg_i), Req, 0.0_rp, ptg_angles(ptg_i),      &
              & r, 1.0_rp )
         end if
 
         n_path_c(1:npc) = n_path_c(1:npc) + 1.0_rp
 
-        call comp_refcor ( h_path_c(:npc), n_path_c(:npc), &
+        call comp_refcor ( tan_pt_c, h_path_c(:npc), n_path_c(:npc), &
                       &  Req+tan_ht, del_s(:npc), ref_corr(:npc), ier )
         if ( ier /= 0 ) fmStat%flags = ior(fmStat%flags,b_refraction)
 
@@ -1068,19 +1070,19 @@ z_coarse(tan_pt_c+1:npc) = z_psig(tan_ind_c:nlvl)
         ! probably faster not to use a vector subscript to restrict it to
         ! the fine grid.
 
-if ( any(h_path(:no_ele/2-1)**2 - (Req+tan_ht)**2 <= 0.0) ) then
-call dump ( h_path(:no_ele/2-1), name='h_path(:no_ele/2-1)' )
+if ( any(h_path(:tan_pt_f-1)**2 - (Req+tan_ht)**2 <= 0.0) ) then
+call dump ( h_path(:tan_pt_f-1), name='h_path(:tan_pt_f-1)' )
 call output ( Req+tan_ht, before='Req+tan_ht = ', advance='yes' )
 end if
-        path_dsdh(:no_ele/2-1) = h_path(:no_ele/2-1) / &
-          & ( sqrt(h_path(:no_ele/2-1)**2 - (Req+tan_ht)**2 ) )
-if ( any(h_path(no_ele/2+2:no_ele)**2 - (Req+tan_ht)**2 <= 0.0) ) then
-call dump ( h_path(no_ele/2+2:no_ele), name='h_path(no_ele/2+2:no_ele)' )
+        path_dsdh(:tan_pt_f-1) = h_path(:tan_pt_f-1) / &
+          & ( sqrt(h_path(:tan_pt_f-1)**2 - (Req+tan_ht)**2 ) )
+if ( any(h_path(tan_pt_f+2:no_ele)**2 - (Req+tan_ht)**2 <= 0.0) ) then
+call dump ( h_path(tan_pt_f+2:no_ele), name='h_path(tan_pt_f+2:no_ele)' )
 call output ( Req+tan_ht, before='Req+tan_ht = ', advance='yes' )
 end if
-        path_dsdh(no_ele/2+2:no_ele) = h_path(no_ele/2+2:no_ele) / &
-          & ( sqrt(h_path(no_ele/2+2:no_ele)**2 - (Req+tan_ht)**2 ) )
-        path_dsdh(no_ele/2:no_ele/2+1) = 0.0
+        path_dsdh(tan_pt_f+2:no_ele) = h_path(tan_pt_f+2:no_ele) / &
+          & ( sqrt(h_path(tan_pt_f+2:no_ele)**2 - (Req+tan_ht)**2 ) )
+        path_dsdh(tan_pt_f:tan_pt_f+1) = 0.0
 
         dsdz_gw_path(f_inds(:nglMax)) = path_dsdh(f_inds(:nglMax)) * &
           & dhdz_gw_path(f_inds(:nglMax))
@@ -2415,7 +2417,7 @@ end if
         if ( .not. fwdModelConf%polarized ) then
           ! Determine where to use Gauss-Legendre for scalar instead of a trapezoid.
 
-          call path_contrib ( incoptdepth, e_rflty, fwdModelConf%tolerance, &
+          call path_contrib ( incoptdepth, tan_pt_c, e_rflty, fwdModelConf%tolerance, &
             &                 do_gl )
 
         else ! extra stuff for polarized case
@@ -2460,7 +2462,7 @@ end if
           end do
 
           ! Determine where to do GL
-          call path_contrib ( deltau_pol(:,:,1:npc), e_rflty, &
+          call path_contrib ( deltau_pol(:,:,1:npc), tan_pt_c, e_rflty, &
              & fwdModelConf%tolerance, do_gl )
 
         end if
@@ -2479,18 +2481,18 @@ end if
         ! {\tt Get\_Tau}).  Where we don't do GL, approximate it using the
         ! trapezoid rule (here).
 
-        do j = 2, npc/2
+        do j = 2, tan_pt_c
           if ( .not. do_gl(j) ) &
             & incoptdepth(j) = incoptdepth(j) + &
               & 0.5 * ( alpha_path_c(j-1) - alpha_path_c(j) ) * dsdz_c(j-1)*del_zeta(j)
         end do
-        do j = npc/2+1, npc-1
+        do j = tan_pt_c+1, npc-1
           if ( .not. do_gl(j) ) &
             & incoptdepth(j) = incoptdepth(j) + &
               & 0.5 * ( alpha_path_c(j+1) - alpha_path_c(j) ) * dsdz_c(j+1)*del_zeta(j)
         end do
 
-        call get_GL_inds ( do_gl, gl_inds_b, cg_inds, ngl, ncg )
+        call get_GL_inds ( do_gl, tan_pt_c, gl_inds_b, cg_inds, ngl, ncg )
         gl_inds => gl_inds_b(:ngl)
         ! ngl is ng * count(do_gl)
         t_path_f(:ngl) = t_path(gl_inds)
@@ -2533,8 +2535,8 @@ end if
         ! Compute SCALAR radiative transfer --------------------------
 
           call get_tau ( frq_i, gl_inds, cg_inds(1:ncg), e_rflty, del_zeta, &
-            & alpha_path_c, ref_corr, incoptdepth, alpha_path_f(1:ngl),     &
-            & dsdz_gw_path, tau )
+            & alpha_path_c, ref_corr, incoptdepth, tan_pt_c,                &
+            & alpha_path_f(1:ngl), dsdz_gw_path, tau )
             i_stop = tau%i_stop(frq_i)
 
           ! Get incremental radiance and radiance from Tau and T_Script
@@ -2583,7 +2585,7 @@ end if
               & 0.25 * alpha_path_f(j)
           end do
 
-          call rad_tran_pol ( gl_inds, cg_inds(1:ncg), e_rflty, del_zeta,    &
+          call rad_tran_pol ( tan_pt_c, gl_inds, cg_inds(1:ncg), e_rflty, del_zeta, &
             & alpha_path_polarized(:,1:npc), ref_corr, incoptdepth_pol(:,:,1:npc),  &
             & deltau_pol(:,:,1:npc), alpha_path_polarized_f(:,1:ngl), dsdz_gw_path, &
             & ct, stcp, stsp, t_script(:,frq_i), prod_pol(:,:,1:npc),               &
@@ -2616,7 +2618,7 @@ end if
           call drad_tran_df ( c_inds, gl_inds, del_zeta, Grids_f, &
             &  beta_path_c, eta_fzp, sps_path, do_calc_fzp,       &
             &  beta_path_f, do_gl, del_s, ref_corr, dsdz_gw_path, &
-            &  inc_rad_path_slice, i_stop,                        &
+            &  inc_rad_path_slice, tan_pt_c, i_stop,              &
             &  d_delta_df(1:npc,:), k_atmos_frq(frq_i,:) )
           if ( FwdModelConf%anyPFA(sx) ) then
 
@@ -2636,7 +2638,7 @@ end if
             call mcrt_der ( t_script(:,frq_i), sqrt(e_rflty),    &
               & deltau_pol(:,:,1:npc), de_df(:,:,1:npc,:),       &
               & prod_pol(:,:,1:npc), tau_pol(:,:,1:npc), p_stop, &
-              & d_rad_pol_df )
+              & tan_pt_c, d_rad_pol_df )
 
             if ( radiometers(firstSignal%radiometer)%polarization == l_a ) then
               k_atmos_frq(frq_i,:) = real(d_rad_pol_df(1,1,:))
@@ -2665,17 +2667,17 @@ end if
 
           if ( pfa_or_not_pol ) then
 
-            call drad_tran_dt ( del_zeta, h_path_c,                         &
-              & dh_dt_path_c(1:npc,:), alpha_path_c,                        &
-              & dAlpha_dT_path_c(:npc), eta_zxp_t_c(1:npc,:),               &
-              & do_calc_t_c(1:npc,:), do_calc_hyd_c(1:npc,:), del_s,        &
-              & ref_corr, Req + tan_ht, dh_dt_path(tan_pt_f,:),             &
-              & do_gl, gl_inds, h_path_f(:ngl), t_path_f(:ngl),             &
-              & dh_dt_path_f(:ngl,:), alpha_path_f(1:ngl),                  &
-              & dAlpha_dT_path_f(:ngl), eta_zxp_t_f(:ngl,:),                &
-              & do_calc_t_f(:ngl,:), path_dsdh, dhdz_gw_path, dsdz_gw_path, &
-              & d_t_scr_dt(1:npc,:), tau%tau(:npc,frq_i),                   &
-              & inc_rad_path_slice, i_stop, grids_tmp%deriv_flags,          &
+            call drad_tran_dt ( del_zeta, h_path_c,                          &
+              & dh_dt_path_c(1:npc,:), alpha_path_c,                         &
+              & dAlpha_dT_path_c(:npc), eta_zxp_t_c(1:npc,:),                &
+              & do_calc_t_c(1:npc,:), do_calc_hyd_c(1:npc,:), del_s,         &
+              & ref_corr, Req + tan_ht, dh_dt_path(tan_pt_f,:),              &
+              & do_gl, gl_inds, h_path_f(:ngl), t_path_f(:ngl),              &
+              & dh_dt_path_f(:ngl,:), alpha_path_f(1:ngl),                   &
+              & dAlpha_dT_path_f(:ngl), eta_zxp_t_f(:ngl,:),                 &
+              & do_calc_t_f(:ngl,:), path_dsdh, dhdz_gw_path, dsdz_gw_path,  &
+              & d_t_scr_dt(1:npc,:), tau%tau(:npc,frq_i),                    &
+              & inc_rad_path_slice, tan_pt_c, i_stop, grids_tmp%deriv_flags, &
               & pfa .and. frq_avg_sel == 15, k_temp_frq(frq_i,:) )
 
           else ! pol and not pfa
@@ -2705,8 +2707,8 @@ end if
                 & alpha_path_polarized_f(l,:ngl) * dTanh_dT_f(:ngl)
             end do
 
-            call get_d_deltau_pol_dT ( ct, stcp, stsp, t_path_f(:ngl),      &
-              & alpha_path_polarized(:,1:p_stop),                           &
+            call get_d_deltau_pol_dT ( ct, stcp, stsp, tan_pt_c,            &
+              & t_path_f(:ngl), alpha_path_polarized(:,1:p_stop),           &
               & alpha_path_polarized_f(:,1:ngl),                            &
               & dAlpha_dT_path_c(:npc), dAlpha_dT_path_f(:ngl),             &
               & dAlpha_dT_polarized_path_c, dAlpha_dT_polarized_path_f,     &
@@ -2726,7 +2728,7 @@ end if
             call mcrt_der ( t_script(:,frq_i), sqrt(e_rflty),    &      
               & deltau_pol(:,:,1:npc), de_dt(:,:,1:npc,:),       &      
               & prod_pol(:,:,1:npc), tau_pol(:,:,1:npc), p_stop, &      
-              & d_rad_pol_dt, d_t_scr_dt(1:npc,:) )
+              & tan_pt_c, d_rad_pol_dt, d_t_scr_dt(1:npc,:) )
 
             if ( radiometers(firstSignal%radiometer)%polarization == l_a ) then
               k_temp_frq(frq_i,:) = real(d_rad_pol_dt(1,1,:))
@@ -2754,8 +2756,8 @@ end if
               & call drad_tran_dx ( c_inds, gl_inds, del_zeta, grids_w,      &
                 &  eta_zxp_w, sps_path, fwdModelConf%lineWidth%beta(sx),     &
                 &  do_calc_w, dbeta_dw_path_c, dbeta_dw_path_f, do_gl, del_s,&
-                &  ref_corr, dhdz_gw_path, inc_rad_path_slice, i_stop,       &
-                &  k_spect_dw_frq(frq_i,:) )
+                &  ref_corr, dhdz_gw_path, inc_rad_path_slice, tan_pt_c,     &
+                &  i_stop, k_spect_dw_frq(frq_i,:) )
 
             ! Spectroscopic derivative  wrt: N
 
@@ -2763,8 +2765,8 @@ end if
               & call drad_tran_dx ( c_inds, gl_inds, del_zeta, grids_n,      &
                 &  eta_zxp_n, sps_path, fwdModelConf%lineWidth_tDep%beta(sx),&
                 &  do_calc_n, dbeta_dn_path_c, dbeta_dn_path_f, do_gl, del_s,&
-                &  ref_corr, dhdz_gw_path, inc_rad_path_slice, i_stop,       &
-                &  k_spect_dn_frq(frq_i,:) )
+                &  ref_corr, dhdz_gw_path, inc_rad_path_slice, tan_pt_c,     &
+                &  i_stop, k_spect_dn_frq(frq_i,:) )
 
             ! Spectroscopic derivative  wrt: Nu0
 
@@ -2772,8 +2774,8 @@ end if
               & call drad_tran_dx ( c_inds, gl_inds, del_zeta, grids_v,      &
                 &  eta_zxp_v, sps_path, fwdModelConf%lineCenter%beta(sx),    &
                 &  do_calc_v, dbeta_dv_path_c, dbeta_dv_path_f, do_gl, del_s,&
-                &  ref_corr, dhdz_gw_path, inc_rad_path_slice, i_stop,       &
-                &  k_spect_dv_frq(frq_i,:) )
+                &  ref_corr, dhdz_gw_path, inc_rad_path_slice, tan_pt_c,     &
+                &  i_stop, k_spect_dv_frq(frq_i,:) )
 
           end if
 
@@ -3049,6 +3051,9 @@ end if
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.271  2006/12/08 23:57:08  vsnyder
+! Revise earth-intersecting metrics
+!
 ! Revision 2.270  2006/12/04 21:17:28  vsnyder
 ! Reorganize FullForwardModel to use automatic arrays instead of allocating
 ! pointer arrays.  Requires testing for zero size instead of testing for

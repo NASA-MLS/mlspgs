@@ -29,7 +29,7 @@ contains
 !------------------------------------------------------  Rad_tran  -----
 ! This is the radiative transfer model, radiances only !
 
-  subroutine Rad_tran ( gl_inds, more_inds, e_rflty, del_zeta, &
+  subroutine Rad_tran ( tan_pt, gl_inds, more_inds, e_rflty, del_zeta, &
                      &  alpha_path_c, ref_cor, incoptdepth, &
                      &  alpha_path_gl, ds_dz_gw, t_script, &
                      &  tau, inc_rad_path, rad, i_stop )
@@ -40,6 +40,7 @@ contains
 
   ! inputs
 
+    integer, intent(in) :: Tan_pt            ! Tangent point index in Del_Zeta
     integer(ip), intent(in) :: gl_inds(:)    ! Gauss-Legendre grid indices
     integer(ip), intent(in) :: more_inds(:)  ! Places in the coarse path
   !                                            where GL is needed
@@ -107,15 +108,16 @@ contains
 
     incoptdepth = ref_cor * incoptdepth
 
-    call scrt ( t_script, e_rflty, incoptdepth, tau, rad, inc_rad_path, i_stop )
+    call scrt ( tan_pt, t_script, e_rflty, incoptdepth, tau, rad, inc_rad_path, &
+      &         i_stop )
 
   end subroutine Rad_tran
 
 !--------------------------------------------------  Rad_Tran_Pol  -----
 
-  subroutine Rad_tran_Pol ( gl_inds, more_inds, e_rflty, del_zeta, alpha_path_c, &
-                     &  ref_cor, incoptdepth_pol, deltau_pol, alpha_path_gl, &
-                     &  ds_dz_gw, ct, stcp, stsp, t_script, &
+  subroutine Rad_tran_Pol ( tan_pt, gl_inds, more_inds, e_rflty, del_zeta, &
+                     &  alpha_path_c, ref_cor, incoptdepth_pol, deltau_pol, &
+                     &  alpha_path_gl, ds_dz_gw, ct, stcp, stsp, t_script, &
                      &  prod_pol, tau_pol, rad_pol, p_stop )
 
     ! Polarized radiative transfer.  Radiances only, no derivatives.
@@ -129,6 +131,7 @@ contains
 
   ! inputs
 
+    integer, intent(in) :: Tan_pt            ! Tangent point index in Del_Zeta
     integer(ip), intent(in) :: gl_inds(:)    ! Gauss-Legendre grid indices
     integer(ip), intent(in) :: more_inds(:)  ! Places in the coarse path
   !                                            where GL is needed
@@ -197,8 +200,8 @@ contains
 
     end if
 
-    ! At this point, incoptdepth_pol(:,:,1:npc/2) should be nearly
-    ! identical to incoptdepth_pol(:,:,1:npc/2+1) (npc/2 is the
+    ! At this point, incoptdepth_pol(:,:,1:tan_pt_c) should be nearly
+    ! identical to incoptdepth_pol(:,:,1:tan_pt_c+1) (tan_pt_c is the
     ! zero-thickness tangent layer).
 
     do p_stop = 0, n_path-1
@@ -217,7 +220,7 @@ contains
     end do
 
     call mcrt ( t_script, sqrt(e_rflty), deltau_pol, &
-      & p_stop, prod_pol, tau_pol, rad_pol )
+      & tan_pt, p_stop, prod_pol, tau_pol, rad_pol )
 
     return
 
@@ -229,10 +232,10 @@ contains
 !--------------------------------------------------  DRad_tran_df  -----
 ! This is the radiative transfer derivative wrt mixing ratio model
 
-  subroutine DRad_tran_df ( indices_c, gl_inds, del_zeta, Grids_f, &
+  subroutine DRad_tran_df ( indices_c, gl_inds, del_zeta, Grids_f,       &
                          &  beta_path_c, eta_zxp_f, sps_path, do_calc_f, &
-                         &  beta_path_f, do_gl, del_s, ref_cor,    &
-                         &  ds_dz_gw, inc_rad_path, i_stop,        &
+                         &  beta_path_f, do_gl, del_s, ref_cor,          &
+                         &  ds_dz_gw, inc_rad_path, tan_pt, i_stop,      &
                          &  d_delta_df, drad_df )
 
     use GLNP, only: NG
@@ -267,6 +270,7 @@ contains
       !              gw on the entire grid.  Only the gl_inds part is used.
     real(rp), intent(in) :: inc_rad_path(:)  ! incremental radiance along the
                                              ! path.  t_script * tau.
+    integer, intent(in) :: tan_pt            ! path stop index
     integer(ip), intent(in) :: i_stop        ! path stop index
 
 ! Outputs
@@ -424,8 +428,8 @@ contains
 
           i_start = MIN(inds(1),i_stop)
 
-          call dscrt_dx ( d_delta_df(:,sv_i), inc_rad_path, &
-                           &  i_start, i_stop, drad_df(sv_i))
+          call dscrt_dx ( tan_pt, d_delta_df(:,sv_i), inc_rad_path, &
+                       &  i_start, i_stop, drad_df(sv_i))
 
         else
           drad_df(sv_i) = 0.0
@@ -448,8 +452,8 @@ contains
                          &  alpha_path_f, dAlpha_dT_path_f, &
                          &  eta_zxp_f, do_calc_t_f, &
                          &  ds_dh, dh_dz_gw, ds_dz_gw, dt_scr_dt, &
-                         &  tau, inc_rad_path, i_stop, deriv_flags, pfa_update, &
-                         &  drad_dt )
+                         &  tau, inc_rad_path, tan_pt, i_stop, deriv_flags, &
+                         &  pfa_update, drad_dt )
 
     use GLNP, only: NG
     use MLSKinds, only: RP, IP
@@ -505,6 +509,7 @@ contains
     real(rp), intent(in) :: tau(:)          ! transmission function.
     real(rp), intent(in) :: inc_rad_path(:) ! incremental radiance along the
                                             ! path.  t_script * tau.
+    integer, intent(in) :: Tan_pt           ! Tangent point index in Del_Zeta
     integer(ip), intent(in) :: i_stop       ! path stop index
     logical, intent(in) :: deriv_flags(:)   ! Indicates which temperature
 !                                             derivatives to do
@@ -517,7 +522,7 @@ contains
 ! Internals
 
     integer(ip) :: A, AA, B, BB
-    integer(ip) :: i, j, i_start, mid, n_inds, n_path, no_to_gl, p_i, sv_i
+    integer(ip) :: i, j, i_start, n_inds, n_path, no_to_gl, p_i, sv_i
     integer(ip), target, dimension(1:Ng*size(inc_rad_path)) :: all_inds_B
     integer(ip), target, dimension(1:size(inc_rad_path)) :: inds_B, more_inds_B
     integer(ip), pointer :: all_inds(:)  ! all_inds => part of all_inds_B;
@@ -544,7 +549,6 @@ contains
 ! Begin code
 
     n_path = size(del_zeta)
-    mid = n_path / 2
 
 ! compute the opacity derivative singularity value
 
@@ -622,8 +626,8 @@ contains
 ! combine boundaries flags
 
       do_calc = do_calc_hyd_c(:,sv_i)
-      do_calc(2:mid) =          do_calc(mid)   .or. do_calc(2:mid)          .or. do_calc(1:mid-1)
-      do_calc(mid+1:n_path-1) = do_calc(mid+1) .or. do_calc(mid+1:n_path-1) .or. do_calc(mid+2:n_path)
+      do_calc(2:tan_pt) =          do_calc(tan_pt)   .or. do_calc(2:tan_pt)          .or. do_calc(1:tan_pt-1)
+      do_calc(tan_pt+1:n_path-1) = do_calc(tan_pt+1) .or. do_calc(tan_pt+1:n_path-1) .or. do_calc(tan_pt+2:n_path)
 
 ! since this is a layer boundary calculation we must require
 
@@ -638,8 +642,8 @@ contains
         inds => inds_B(1:n_inds)
         i = 1
         inds = 0
-        s_del_s = sum(del_s(2:mid))
-        do p_i = 2 , mid - 1
+        s_del_s = sum(del_s(2:tan_pt))
+        do p_i = 2 , tan_pt - 1
           if ( do_calc(p_i) ) then
             if ( needFA ) then ! only once in this loop
               fa = (h_path_c(p_i-1) * dh_dt_path_c(p_i-1,sv_i) - &
@@ -661,26 +665,26 @@ contains
 
 ! special processing at tangent.  fb is zero
 
-        if ( do_calc(mid) ) then
-          d_delta_dt(mid,sv_i) = d_delta_dt(mid,sv_i) + alpha_path_c(mid) * fa
-          inds(i) = mid
+        if ( do_calc(tan_pt) ) then
+          d_delta_dt(tan_pt,sv_i) = d_delta_dt(tan_pt,sv_i) + alpha_path_c(tan_pt) * fa
+          inds(i) = tan_pt
           i = i + 1
         end if
 
-        needFA = .not. do_calc(mid+1)
-        s_del_s = del_s(mid+1)
-        if ( do_calc(mid+1) ) then
-          fa = (h_path_c(mid+2) * dh_dt_path_c(mid+2,sv_i) - &
+        needFA = .not. do_calc(tan_pt+1)
+        s_del_s = del_s(tan_pt+1)
+        if ( do_calc(tan_pt+1) ) then
+          fa = (h_path_c(tan_pt+2) * dh_dt_path_c(tan_pt+2,sv_i) - &
               & h_tan * dh_dt_tan(sv_i)) / s_del_s
-          d_delta_dt(mid+1,sv_i) = d_delta_dt(mid+1,sv_i) + &
-            &                      alpha_path_c(mid+1) * fa
-          inds(i) = mid + 1
+          d_delta_dt(tan_pt+1,sv_i) = d_delta_dt(tan_pt+1,sv_i) + &
+            &                      alpha_path_c(tan_pt+1) * fa
+          inds(i) = tan_pt + 1
           i = i + 1
         end if
 
         ! Several subscripts in this loop are offset by 1 from the nearly-
         ! identical loop above, and we use (fb-fa) here instead of (fa-fb).
-        do p_i = mid + 2, n_path - 1
+        do p_i = tan_pt + 2, n_path - 1
           if ( do_calc(p_i) ) then
             if ( needFA ) then ! only once in this loop
               fa = (h_path_c(p_i) * dh_dt_path_c(p_i,sv_i) - &
@@ -735,12 +739,12 @@ contains
         ! If we're doing a PFA update, we do not want to include
         ! dt_scr_dt again.
 
-        call dscrt_dx ( d_delta_dt(:,sv_i), inc_rad_path, i_start, i_stop, &
-                         &  drad_dt(sv_i) )
+        call dscrt_dx ( tan_pt, d_delta_dt(:,sv_i), inc_rad_path, i_start, i_stop, &
+                     &  drad_dt(sv_i) )
       else
 
-        call dscrt_dt ( d_delta_dt(:,sv_i), tau, inc_rad_path, dt_scr_dt(:,sv_i), &
-                          & i_start, i_stop, drad_dt(sv_i) )
+        call dscrt_dt ( tan_pt, d_delta_dt(:,sv_i), tau, inc_rad_path, dt_scr_dt(:,sv_i), &
+                      & i_start, i_stop, drad_dt(sv_i) )
 
       end if
 
@@ -755,7 +759,8 @@ contains
   subroutine DRad_tran_dx ( indices_c, gl_inds, del_zeta, Grids_f,        &
                          &  eta_zxp_f, sps_path, sps_map, do_calc_f,      &
                          &  dbeta_path_c, dbeta_path_f, do_gl, del_s,     &
-                         &  ref_cor, ds_dz_gw, inc_rad_path, i_stop, drad_dx )
+                         &  ref_cor, ds_dz_gw, inc_rad_path, tan_pt,      &
+                         &  i_stop, drad_dx )
     use GLNP, only: NG
     use LOAD_SPS_DATA_M, ONLY: GRIDS_T
     use MLSKinds, only: RP, IP
@@ -788,6 +793,7 @@ contains
       !              gw on the entire grid.  Only the gl_inds part is used.
     real(rp), intent(in) :: inc_rad_path(:)  ! incremental radiance along the
                                              ! path.  t_script * tau.
+    integer, intent(in) :: Tan_pt            ! Tangent point index in inc_rad_path
     integer(ip), intent(in) :: i_stop        ! path stop index
 
 ! Outputs
@@ -896,7 +902,7 @@ contains
 
           i_start = min(inds(1),i_stop)
 
-          call dscrt_dx ( d_delta_dx, inc_rad_path, i_start, i_stop, &
+          call dscrt_dx ( tan_pt, d_delta_dx, inc_rad_path, i_start, i_stop, &
                        &  drad_dx(sv_i) )
 
         else
@@ -1031,6 +1037,9 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.51  2006/07/20 01:09:27  vsnyder
+! Make sure drad_df gets a value
+!
 ! Revision 2.50  2006/04/11 18:31:58  vsnyder
 ! Cannonball polishing
 !
