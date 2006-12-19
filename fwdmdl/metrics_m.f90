@@ -30,7 +30,7 @@ contains
           &  phi_t, tan_ind, p_basis, z_ref, n_ref, h_ref, t_ref,      &
           &  dhidzij, csq, refract,                                    &
           ! Output:
-          &  h_grid, p_grid, t_grid, dhitdzi, req, status,             &
+          &  h_grid, p_grid, t_grid, dhitdzi, req,                     &
           ! Optional inputs:
           &  ddhidhidtl0, dhidtlm, tan_press, surf_temp, t_deriv_flag, &
           &  z_basis, h_tol,                                           &
@@ -67,17 +67,18 @@ contains
     real(rp), intent(in) :: csq        ! (minor axis of orbit plane projected
     !                                    Earth ellipse)**2
     logical,  intent(in) :: refract    ! compute phi refractive correction
+
     ! outputs:
-    real(rp), intent(out) :: h_grid(:) ! computed heights
+
+    real(rp), intent(out) :: h_grid(:) ! computed heights, referenced to Earth center
     real(rp), intent(out) :: p_grid(:) ! computed phi's
     real(rp), intent(out) :: t_grid(:) ! computed temperatures
     real(rp), intent(out) :: dhitdzi(:)! derivative of height wrt zeta
     !                                    --may be useful in future computations
     real(rp), intent(out) :: req       ! equivalent elliptical earth radius
-    integer, intent(out) :: Status     ! 0 => No trouble, 1 => Convergence failed,
-    !                                    2 => Resorted to 1d
 
     ! optional inputs
+
     real(rp), optional, intent(in) :: ddhidhidtl0(:,:,:) ! second order reference
     !   temperature derivatives. This is (height, phi_basis, zeta_basis).
     !   Needed only if present(dhidtlm).
@@ -94,6 +95,7 @@ contains
     !   for convergence of phi/h iteration
 
     ! optional outputs.
+
     real(rp), optional, intent(out) :: ddhtdhtdtl0(:) ! Second order 
     !          derivative at the tangent only---used for antenna affects.
     !          Computed if present(dhidtlm)
@@ -114,6 +116,7 @@ contains
     real(rp), optional, intent(out) :: tan_phi_t ! temperature at the tangent
 
     ! Local variables.
+
     integer :: Do_Dumps    ! 0 = no dump, >0 = dump
     integer :: Dump_Stop   ! 0 = no dump, >0 = dump/stop
     integer :: H_Phi_Dump  ! 0 = no dump, >0 = dump
@@ -186,7 +189,6 @@ contains
       h_phi_dump = max(h_phi_stop,index(switches,'hphi'))
 !   end if
 
-    status = 0 ! assume it will work
     my_h_tol = 0.001_rp ! kilometers
     if ( present(h_tol) ) my_h_tol = h_tol ! H_Tol is in kilometers
     p_coeffs = size(p_basis)
@@ -229,7 +231,7 @@ contains
     n_tan = n_path / 2
 
     ! sign of phi vector
-    phi_sign = (/ (-1, i=1, n_vert-tan_ind+1), (+1, i=n_vert+tan_ind, 2*n_vert) /)
+    phi_sign = (/ (-1, i=n_vert,tan_ind,-1), (+1, i=tan_ind,n_vert) /)
 
     ! p_basis and p_grid are phi's in offset radians relative to phi_t, that
     ! is, the phi_t, p_basis or p_grid = 0.0 is phi_t.
@@ -475,10 +477,6 @@ path: do i = i1, i2
         &             name='Refractive correction', clean=clean )
     end if
 
-    ! The forward model wants H_grid referenced to the equivalent Earth
-    ! surface instead of its center.
-    h_grid(:n_path) = h_grid(:n_path) - req
-
     ! Interpolate Temperature (T_Ref) and the vertical height derivative
     ! (dhidzij) to the path (T_Grid and dhitdzi).
 
@@ -588,6 +586,9 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.37  2006/12/13 02:31:35  vsnyder
+! Polish up a comment
+!
 ! Revision 2.36  2006/12/09 02:25:42  vsnyder
 ! Size some arrays more accurately, use First:Last version of get_eta_matrix,
 ! remove Tangent_Temperature_Derivatives module procedure since it isn't used
