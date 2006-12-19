@@ -40,8 +40,7 @@ module ForwardModelIntermediate
   end type ForwardModelStatus_T
 
   ! Bits set in Flags:
-  integer, public, parameter :: B_Metrics = 1 ! Trouble with metrics
-  integer, public, parameter :: B_Ptg_Angles = 2*b_metrics ! Patched some
+  integer, public, parameter :: B_Ptg_Angles = 1              ! Patched some
     ! out-of-order pointing angles
   integer, public, parameter :: B_Refraction = 2*b_ptg_angles ! Computation of
     ! refraction coefficient failed or was not as accurate as desired.
@@ -83,6 +82,9 @@ contains
 end module ForwardModelIntermediate
 
 ! $Log$
+! Revision 2.6  2005/06/22 18:08:18  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.5  2004/09/01 01:47:41  vsnyder
 ! Add flag field to ForwardModelStatus_T
 !
