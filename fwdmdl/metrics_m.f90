@@ -13,7 +13,7 @@ module Metrics_m
 
   implicit NONE
   private
-  public :: Metrics
+  public :: Pure_Metrics, More_Metrics
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -23,31 +23,27 @@ module Metrics_m
 
 contains
 
-  ! ----------------------------------------------------  Metrics  -----
+  ! -----------------------------------------------  Pure_Metrics  -----
 
-  subroutine Metrics ( &
-          ! Input:
-          &  phi_t, tan_ind, p_basis, z_ref, n_ref, h_ref, t_ref,      &
-          &  dhidzij, csq, refract,                                    &
-          ! Output:
-          &  h_grid, p_grid, t_grid, dhitdzi, req,                     &
-          ! Optional inputs:
-          &  ddhidhidtl0, dhidtlm, tan_press, surf_temp, t_deriv_flag, &
-          &  z_basis, h_tol,                                           &
-          ! Optional outputs:
-          &  ddhtdhtdtl0, dhitdtlm, dhtdtl0, dhtdzt,                   &
-          &  do_calc_hyd, do_calc_t, eta_zxp, tan_phi_h, tan_phi_t )
+                            ! Inputs:
+  subroutine Pure_Metrics (    phi_t, tan_ind, p_basis, z_ref, h_ref, csq, &
+                            ! Outputs:
+                            &  h_grid, p_grid, req,                        &
+                            ! Optional inputs:
+                            &  h_tol, tan_press, surf_temp )
 
-    ! The goal of this subroutine is to return h_grid, p_grid
-    ! that define a 2 d integration path
+    !{ This subroutine computes {\tt h\_grid} and {\tt p\_grid} that define
+    !  a 2-d integration path.  These points are at the intersections of the
+    !  line of sight given by $H = H_\text{tan} \sec \phi$ and the heights of
+    !  surfaces of constant $\zeta$ represented in piecewise linear segments
+    !  by consecutive elements of each row of {\tt H\_ref}.
 
     use Dump_0, only: Dump
     use Geometry, only: EarthRadA
     use Get_Eta_Matrix_m, only: Get_Eta_Sparse
-    use MLSKinds, only: RP, IP
+    use MLSKinds, only: IP, RP, R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use Output_m, only: OUTPUT
-    use Phi_Refractive_Correction_m, only: Phi_Refractive_Correction
     use Toggles, only: Switches
 
     ! inputs:
@@ -60,63 +56,21 @@ contains
     real(rp), intent(in) :: z_ref(:)   ! -log pressures (zetas) for which
     !                                     heights/temps are needed.  Only the
     !                                     parts from the tangent outward are used
-    real(rp), intent(in) :: n_ref(:,:) ! Indices of refraction by t_phi_basis
     real(rp), intent(in) :: h_ref(:,:) ! heights by t_phi_basis
-    real(rp), intent(in) :: t_ref(:,:) ! temperatures by t_phi_basis
-    real(rp), intent(in) :: dhidzij(:,:)! vertical derivative by t_phi_basis
     real(rp), intent(in) :: csq        ! (minor axis of orbit plane projected
     !                                    Earth ellipse)**2
-    logical,  intent(in) :: refract    ! compute phi refractive correction
-
     ! outputs:
-
     real(rp), intent(out) :: h_grid(:) ! computed heights, referenced to Earth center
     real(rp), intent(out) :: p_grid(:) ! computed phi's
-    real(rp), intent(out) :: t_grid(:) ! computed temperatures
-    real(rp), intent(out) :: dhitdzi(:)! derivative of height wrt zeta
-    !                                    --may be useful in future computations
     real(rp), intent(out) :: req       ! equivalent elliptical earth radius
 
     ! optional inputs
-
-    real(rp), optional, intent(in) :: ddhidhidtl0(:,:,:) ! second order reference
-    !   temperature derivatives. This is (height, phi_basis, zeta_basis).
-    !   Needed only if present(dhidtlm).
-    real(rp), optional, intent(inout) :: dhidtlm(:,:,:) ! reference temperature
-    !   derivatives. This gets adjusted so that at ref_h(1,@tan phi)) is 0.0 for
-    !   all temperature coefficients. This is height X zeta_basis X phi_basis
-    real(rp), optional, intent(in) :: Tan_press  ! Tangent pressure
-    real(rp), optional, intent(in) :: Surf_temp(:)    ! Surface temperature at phi_basis
-    logical, optional, intent(in) :: t_deriv_flag(:)  ! User's deriv. flags for
-    !   Temperature. needed only if present(dhidtlm).
-    real(rp), optional, intent(in) :: z_basis(:) ! vertical temperature basis
-    !   Needed only if present(dhidtlm).
-    real(rp), optional, intent(in) :: H_Tol      ! Height tolerance in kilometers
-    !   for convergence of phi/h iteration
-
-    ! optional outputs.
-
-    real(rp), optional, intent(out) :: ddhtdhtdtl0(:) ! Second order 
-    !          derivative at the tangent only---used for antenna affects.
-    !          Computed if present(dhidtlm)
-    real(rp), optional, intent(out) :: dhitdtlm(:,:)
-    !                             derivative of path position wrt temperature
-    !                             statevector (z_basis X phi_basis)
-    real(rp), optional, intent(out) :: dhtdtl0(:)  ! First order derivative at
-    !           the tangent.  Computed if present(dhidtlm)
-    real(rp), optional, intent(out) :: dhtdzt      ! height derivative wrt
-    !                                                pressure at the tangent
-    logical, optional, intent(out) :: do_calc_hyd(:,:) ! nonzero locator for
-    !           hydrostatic calculations.  Computed if present(dhidtlm)
-    logical, optional, intent(out) :: do_calc_t(:,:) ! nonzero locater for
-    !           temperature bases computations.  Computed if present(dhidtlm)
-    real(rp), optional, intent(out) :: eta_zxp(:,:) ! eta matrix for temperature
-    !           Computed if present(dhidtlm)
-    real(rp), optional, intent(out) :: tan_phi_h ! height at the tangent
-    real(rp), optional, intent(out) :: tan_phi_t ! temperature at the tangent
+    real(rp), optional, intent(in) :: H_Tol ! Height tolerance in kilometers
+                                       !   for convergence of phi/h iteration
+    real(rp), optional, intent(in) :: Tan_press    ! Tangent pressure
+    real(rp), optional, intent(in) :: Surf_temp(:) ! Surface temperature at phi_basis
 
     ! Local variables.
-
     integer :: Do_Dumps    ! 0 = no dump, >0 = dump
     integer :: Dump_Stop   ! 0 = no dump, >0 = dump/stop
     integer :: H_Phi_Dump  ! 0 = no dump, >0 = dump
@@ -127,8 +81,15 @@ contains
     integer :: NO_GRID_FITS
     integer :: N_PATH      ! Path length = 2*(size(z_ref)+1-tan_ind)
     integer :: N_Tan       ! Tangent index in path, N_Path/2
-    integer :: N_VERT      ! size(z_ref)
+    integer :: N_VERT      ! Size(z_ref)
     integer :: P_COEFFS    ! Size(P_basis)
+
+    integer :: VERT_INDS(2*(size(z_ref)+1-tan_ind)) ! What to use in z_ref
+    integer :: Stat(size(vert_inds))
+    ! Values for stat:
+    integer, parameter :: No_sol = 0 ! No solution
+    integer, parameter :: Good = 1   ! Newton converged, tangent point, extrapolated
+    integer, parameter :: Grid = 2   ! Close to a grid point
 
     real(rp) :: A, B, C, D ! Polynomial coefficients used to solve for phi and H
     real(rp) :: DP         ! p_basis(j+1) - p_basis(j)
@@ -149,19 +110,7 @@ contains
     real(rp) :: SecM1      ! Taylor series for sec(phi)-1
     real(rp) :: SP2        ! Sin^2 phi_t
 
-    integer :: VERT_INDS(2*(size(z_ref)+1-tan_ind)) ! What to use in z_ref
-    integer :: Stat(size(vert_inds))
-    ! Values for stat:
-    integer, parameter :: No_sol = 0 ! No solution
-    integer, parameter :: Good = 1   ! Newton converged, tangent point, extrapolated
-    integer, parameter :: Grid = 2   ! Close to a grid point
-
-    logical :: NOT_ZERO_P(size(vert_inds),size(p_basis))
-
-    real(rp) :: ETA_P(size(vert_inds),size(p_basis))
     real(rp) :: ETA_T(size(p_basis))
-    real(rp) :: N_GRID(size(vert_inds))     ! index of refraction
-    real(rp) :: PHI_CORR(size(vert_inds))   ! the refractive correction
     real(rp) :: PHI_OFFSET(size(vert_inds)) ! PHI_T or a function of NEG_H_TAN
     real(rp) :: PHI_SIGN(size(vert_inds))   ! +/- 1.0
 
@@ -170,6 +119,7 @@ contains
     ! Coefficients in expansion of Sec(phi)*Tan(phi) = d/dPhi(sec(phi)-1)
     real(rp), parameter :: D1 = 2*c2, D3 = 4*c4, D5 = 6*c6 ! ... 2n * c_2n
 
+    real(r8), parameter :: EarthRadA_2 = EarthRadA**2, EarthRadA_4 = EarthRadA**4
     ! For debugging output format:
     logical, parameter :: clean = .false.
 
@@ -219,8 +169,8 @@ contains
 
     cp2 = cos(phi_t)**2
     sp2 = 1.0_rp - cp2
-    req_s = 0.001_rp*sqrt((earthrada**4*sp2 + csq**2*cp2) / &
-                        & (earthrada**2*cp2 + csq*sp2))
+    req_s = 0.001_rp*sqrt((earthrada_4*sp2 + csq**2*cp2) / &
+                        & (earthrada_2*cp2 + csq*sp2))
     req = req_s + h_surf
 
     ! Only use the parts of the reference grids that are germane to the
@@ -463,6 +413,147 @@ path: do i = i1, i2
     ! on constant-zeta surfaces, it is impossible for the heights not to be
     ! monotone increasing away from the tangent point.
 
+    if ( do_dumps > 0 ) then
+      call output ( h_tan, before='h_tan = ' )
+      call output ( req, before=', req = ', advance='yes' )
+      call dump ( p_grid(:n_path), name='p_grid before refractive correction', &
+        & format='(1pg14.6)', clean=clean )
+      call dump ( h_grid(:n_path), name='h_grid', format='(1pg14.6)', clean=clean )
+      if ( dump_stop > 0 ) stop
+    end if
+
+  end subroutine Pure_Metrics
+
+  ! -----------------------------------------------  More_Metrics  -----
+  subroutine More_Metrics ( &
+          ! Inputs:
+          & phi_t, tan_ind, n_tan, p_basis, z_ref, n_ref, t_ref,     &
+          & h_grid, dhidzij, refract,                                &
+          ! Inout:
+          & p_grid,                                                  &
+          ! Outputs:
+          & t_grid, dhitdzi,                                         &
+          ! Optional inputs:
+          & ddhidhidtl0, dhidtlm, t_deriv_flag, z_basis,             &
+          ! Optional outputs:
+          & ddhtdhtdtl0, dhitdtlm, dhtdtl0, dhtdzt,                  &
+          & do_calc_hyd, do_calc_t, eta_zxp, tan_phi_t )
+
+    ! This subroutine computes metrics-related things after H_Grid and
+    ! P_Grid are computed by Pure_Metrics, and then perhaps augmented
+    ! with, for example, the minimum Zeta point.
+
+    use Dump_0, only: Dump
+    use Get_Eta_Matrix_m, only: Get_Eta_Sparse
+    use MLSKinds, only: RP, IP
+    use Phi_Refractive_Correction_m, only: Phi_Refractive_Correction
+    use Toggles, only: Switches
+
+    ! inputs:
+
+    real(rp), intent(in) :: phi_t      ! orbit projected tangent geodetic angle
+    integer(ip), intent(in) :: tan_ind ! tangent height index, 1 = center of
+    !                                     longest path
+    integer(ip), intent(in) :: n_tan   ! tangent index in path, usually n_path/2
+    real(rp), intent(in) :: p_basis(:) ! horizontal temperature representation
+    !                                     basis
+    real(rp), intent(in) :: z_ref(:)   ! -log pressures (zetas) for which
+    !                                     heights/temps are needed.  Only the
+    !                                     parts from the tangent outward are used
+    real(rp), intent(in) :: n_ref(:,:) ! Indices of refraction by t_phi_basis
+    real(rp), intent(in) :: t_ref(:,:) ! temperatures by t_phi_basis
+    real(rp), intent(in) :: h_grid(:)  ! computed heights, referenced to Earth center
+    real(rp), intent(in) :: dhidzij(:,:)! vertical derivative by t_phi_basis
+    logical,  intent(in) :: refract    ! compute phi refractive correction
+
+    ! Inout:
+
+    real(rp), intent(inout) :: p_grid(:)  ! phi's on the path
+
+    ! outputs:
+
+    real(rp), intent(out) :: t_grid(:) ! computed temperatures
+    real(rp), intent(out) :: dhitdzi(:)! derivative of height wrt zeta
+    !                                    --may be useful in future computations
+
+    ! optional inputs
+
+    real(rp), optional, intent(in) :: ddhidhidtl0(:,:,:) ! second order reference
+    !   temperature derivatives. This is (height, phi_basis, zeta_basis).
+    !   Needed only if present(dhidtlm).
+    real(rp), optional, intent(inout) :: dhidtlm(:,:,:) ! reference temperature
+    !   derivatives. This gets adjusted so that at ref_h(1,@tan phi)) is 0.0 for
+    !   all temperature coefficients. This is height X zeta_basis X phi_basis
+    logical, optional, intent(in) :: t_deriv_flag(:)  ! User's deriv. flags for
+    !   Temperature. needed only if present(dhidtlm).
+    real(rp), optional, intent(in) :: z_basis(:) ! vertical temperature basis
+    !   Needed only if present(dhidtlm).
+
+    ! optional outputs.
+
+    real(rp), optional, intent(out) :: ddhtdhtdtl0(:) ! Second order 
+    !          derivative at the tangent only---used for antenna affects.
+    !          Computed if present(dhidtlm)
+    real(rp), optional, intent(out) :: dhitdtlm(:,:)
+    !                             derivative of path position wrt temperature
+    !                             statevector (z_basis X phi_basis)
+    real(rp), optional, intent(out) :: dhtdtl0(:)  ! First order derivative at
+    !           the tangent.  Computed if present(dhidtlm)
+    real(rp), optional, intent(out) :: dhtdzt      ! height derivative wrt
+    !                                                pressure at the tangent
+    logical, optional, intent(out) :: do_calc_hyd(:,:) ! nonzero locator for
+    !           hydrostatic calculations.  Computed if present(dhidtlm)
+    logical, optional, intent(out) :: do_calc_t(:,:) ! nonzero locater for
+    !           temperature bases computations.  Computed if present(dhidtlm)
+    real(rp), optional, intent(out) :: eta_zxp(:,:) ! eta matrix for temperature
+    !           Computed if present(dhidtlm)
+    real(rp), optional, intent(out) :: tan_phi_t ! temperature at the tangent
+
+    ! Local variables.
+
+    integer :: Do_Dumps    ! 0 = no dump, >0 = dump
+    integer :: Dump_Stop   ! 0 = no dump, >0 = dump/stop
+    integer :: First, Last ! Nonzeros in Eta_T
+    integer :: H_Phi_Dump  ! 0 = no dump, >0 = dump
+    integer :: I, J, SV_P, SV_T, SV_Z ! Loop inductors and subscripts
+    integer :: N_PATH      ! Path length = 2*(size(z_ref)+1-tan_ind)
+    integer :: N_VERT      ! size(z_ref)
+    integer :: P_COEFFS    ! size(p_basis)
+    integer :: VERT_INDS(2*(size(z_ref)+1-tan_ind)) ! What to use in z_ref
+    integer :: Z_COEFFS    ! size(z_basis)
+
+    logical :: NOT_ZERO_P(size(vert_inds),size(p_basis))
+    logical :: NOT_ZERO_T(size(vert_inds),size(z_basis))
+
+    real(rp) :: ETA_P(size(vert_inds),size(p_basis))
+    real(rp) :: ETA_T(size(p_basis))
+    real(rp) :: ETA_T2(size(vert_inds),size(z_basis))
+    real(rp) :: N_GRID(size(vert_inds))     ! index of refraction
+    real(rp) :: PHI_CORR(size(vert_inds))   ! the refractive correction
+    real(rp) :: PHI_SIGN(size(vert_inds))   ! +/- 1.0
+
+    ! For debugging output format:
+    logical, parameter :: clean = .false.
+
+!   It would be nice to do this the first time only, but the
+!   retrieve command in the L2CF can now change switches
+!   if ( do_dumps < 0 ) then ! First time only
+      dump_stop = index(switches,'metD')
+      do_dumps = max(dump_stop,index(switches,'metd'))
+      h_phi_dump = index(switches,'hphi')
+!   end if
+
+    n_vert = size(z_ref)
+
+    ! Only use the parts of the reference grids that are germane to the
+    ! present path
+
+    vert_inds = (/ (i, i=n_vert,tan_ind,-1), (i,  i=tan_ind,n_vert) /)
+    n_path = size(vert_inds)
+
+    ! sign of phi vector
+    phi_sign = (/ (-1, i=n_vert,tan_ind,-1), (+1, i=tan_ind,n_vert) /)
+
     ! Interpolate the index of refraction (N_Ref) to the path (N_Grid)
     ! and correct phi for refraction.
     if ( refract ) then
@@ -475,6 +566,9 @@ path: do i = i1, i2
       if ( h_phi_dump > 0 ) &
         & call dump ( phi_corr, format='(1pg14.6)', &
         &             name='Refractive correction', clean=clean )
+      if ( do_dumps > 0 ) &
+        & call dump ( p_grid(:n_path), name='p_grid after refractive correction', &
+          & format='(1pg14.6)', clean=clean )
     end if
 
     ! Interpolate Temperature (T_Ref) and the vertical height derivative
@@ -488,35 +582,13 @@ path: do i = i1, i2
     end do
 
     ! now for the optional tangent quantities.
-    if ( present(tan_phi_h) ) tan_phi_h = h_tan
     if ( present(tan_phi_t) ) &
       & tan_phi_t = dot_product(t_ref(tan_ind,first:last),eta_t(first:last))
     if ( present(dhtdzt) ) &
       & dhtdzt = dot_product(dhidzij(tan_ind,first:last),eta_t(first:last))
 
     ! compute tangent temperature derivatives
-    if ( present(dhidtlm) ) call Tangent_Temperature_Derivatives
-
-    if ( do_dumps > 0 ) then
-      call output ( h_tan, before='h_tan = ' )
-      call output ( req, before=', req = ', advance='yes' )
-      call dump ( p_grid(:n_path), name='p_grid', format='(1pg14.6)', clean=clean )
-      call dump ( h_grid(:n_path), name='h_grid', format='(1pg14.6)', clean=clean )
-      call dump ( t_grid(:n_path), name='t_grid', format='(1pg14.6)', clean=clean )
-      call dump ( dhitdzi(:n_path), name='dhitdzi', format='(1pg14.6)', clean=clean )
-      if ( dump_stop > 0 ) stop
-    end if
-
-  contains
-
-    ! --------------------------  Tangent_Temperature_Derivatives  -----
-    subroutine Tangent_Temperature_Derivatives
-
-      real(rp), dimension(n_path,size(z_basis)) :: ETA_T2
-      logical, dimension(n_path,size(z_basis)) :: NOT_ZERO_T
-      integer :: I, J, SV_P, SV_T, SV_Z ! Loop inductors and subscripts
-      integer :: P_COEFFS               ! size(p_basis)
-      integer :: Z_COEFFS               ! size(z_basis)
+    if ( present(dhidtlm) ) then
 
       ! Adjust the 2d hydrostatic relative to the surface. Even though
       ! this is updated on every invocation, that is, with a new phi_t, it
@@ -527,6 +599,7 @@ path: do i = i1, i2
       ! latest phi_t.  The algebra is horrible, but Maple has verified this.
       p_coeffs = size(p_basis)
       z_coeffs = size(z_basis)
+      call get_eta_sparse ( p_basis, phi_t, eta_t, first, last )
       do i = 1, z_coeffs
         dhidtlm(:,i,:) = dhidtlm(:,i,:) - &
           & dot_product(dhidtlm(1,i,first:last),eta_t(first:last))
@@ -570,9 +643,15 @@ path: do i = i1, i2
         end do
       end do
 
-    end subroutine Tangent_Temperature_Derivatives
+    end if
 
-  end subroutine Metrics
+    if ( do_dumps > 0 ) then
+      call dump ( t_grid(:n_path), name='t_grid', format='(1pg14.6)', clean=clean )
+      call dump ( dhitdzi(:n_path), name='dhitdzi', format='(1pg14.6)', clean=clean )
+      if ( dump_stop > 0 ) stop
+    end if
+
+  end subroutine More_Metrics
 
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
@@ -587,6 +666,10 @@ end module Metrics_m
 
 ! $Log$
 ! Revision 2.37  2006/12/13 02:31:35  vsnyder
+! Revision 2.38  2006/12/19 02:50:35  vsnyder
+! Get rid of STATUS, reference H_Grid to Earth center instead of surface,
+! some cannonball polishing.
+!
 ! Polish up a comment
 !
 ! Revision 2.36  2006/12/09 02:25:42  vsnyder

@@ -270,7 +270,7 @@ contains
     use Load_Sps_Data_m, only: DestroyGrids_t, Dump, Grids_T, &
       & Load_One_Item_Grid
     use MatrixModule_1, only: MATRIX_T
-    use Metrics_m, only: Metrics
+    use Metrics_m, only: Pure_Metrics, More_Metrics
     use MLSKinds, only: R4, R8, RP, RV
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MLSNumerics, only: Hunt, InterpolateValues
@@ -370,8 +370,8 @@ contains
     integer :: SIGIND                   ! Signal index, loop counter
     integer :: SV_I                     ! Loop index and other uses .
     integer :: SX                       ! 1 = LSB, 2 = USB
-    integer :: TAN_IND                  ! Index of tangent point in fine grid
     integer :: TAN_IND_C                ! Index of tangent point in coarse grid
+    integer :: TAN_IND_F                ! Index of tangent point in fine grid
     integer :: TAN_PT_C                 ! Index of tangent point in coarse path
     integer :: TAN_PT_F                 ! Index of tangent point in fine path
     integer :: THISSIDEBAND             ! Loop counter for sidebands, -1 = LSB, +1 = USB
@@ -496,11 +496,9 @@ contains
     real(rp) :: ETA_ZXP_V(max_f,size(grids_v%values)) ! Eta_z x Eta_p for V
     real(rp) :: ETA_ZXP_W(max_f,size(grids_w%values)) ! Eta_z x Eta_p for W
     real(rp) :: H_GLGRID(maxVert,no_sv_p_t)        ! H on glGrid surfs
-    real(rp) :: H_PSIG(nlvl,no_sv_p_t)             ! H on PSIG surfs
     real(rp) :: IWC_PATH(max_f,s_i)                ! IWC on path
     real(rp), target :: MAG_PATH(s_p*max_f,4)      ! Magnetic field on path
     real(rp) :: N_GLGRID(maxVert,no_sv_p_t)        ! N on glGrid surfs
-    real(rp) :: N_PSIG(nlvl,no_sv_p_t)             ! N on PSIG surfs
     real(rp), target :: RAD_AVG_PATH(max_c,s_pfa*noUsedChannels) ! Freq. Avgd.
                                                    ! LBL radiance along the path
     real(rp) :: RADIANCES(no_tan_hts,noUsedChannels) ! (Nptg,noChans)
@@ -509,7 +507,6 @@ contains
     real(rp) :: SPECT_W_PATH(max_f,size(fwdModelConf%lineWidth)) ! Line Width
     real(rp) :: SPS_PATH(max_f,no_mol)             ! species on path
     real(rp) :: T_GLGRID(maxVert,no_sv_p_t)        ! Temp on glGrid surfs
-    real(rp) :: T_PSIG(nlvl,no_sv_p_t)             ! Temp on PSIG surfs
     real(rp) :: T_SCRIPT_PFA(max_c,s_pfa*noUsedChannels) ! Delta_B in some notes
     real(rp) :: TT_PATH(max_f,s_i)                 ! TScat on path along the LOS
     real(r8) :: VMRARRAY(no_mol,s_i*n_t_zeta)      ! The VMRs
@@ -527,7 +524,6 @@ contains
       & size(fwdModelConf%usedDACSSignals) )
 
     real(rp) :: DH_DT_GLGRID(maxVert,n_t_zeta,no_sv_p_t) ! Needed even if no temperature derivatives
-    real(rp) :: DH_DT_PSIG(nlvl,n_t_zeta,no_sv_p_t)
 
     complex(rp) :: D_RAD_POL_DF(2,2,s_p*s_a*size(grids_f%values)) ! From mcrt_der
     complex(rp) :: D_RAD_POL_DT(2,2,s_p*s_t*sv_t_len) ! From mcrt_der
@@ -579,7 +575,7 @@ contains
 
     real(rp) :: E_RFLTY       ! Earth reflectivity at given tan. point
     real(rp), save :: E_Stop  = 1.0_rp ! X for which Exp(X) is too small to worry
-    real(rp) :: TAN_HT        ! Height at the tangent
+    real(rp) :: TAN_HT        ! Height at the tangent, from equivalent Earth center
     real(rp) :: TAN_TEMP      ! Temperature at the tangent
     real(rp) :: R             ! real variable for various uses
     real(rp) :: REQ           ! Equivalent Earth Radius
@@ -657,15 +653,6 @@ contains
     type (Grids_T) :: Grids_Salb ! All the coordinates for single scaterring albedo
     type (Grids_T) :: Grids_Cext ! All the coordinates for cloud extinction
 
-!   Extra DEBUG for Nathaniel and Bill
-!   real(rp), dimension(:), pointer :: REQS         ! Accumulation of REQ
-!   real(rp), dimension(:), pointer :: TAN_HTS      ! Accumulation of TAN_HT
-!   real(rp), dimension(:), pointer :: TAN_TEMPS    ! Accumulation of TAN_TEMP
-
-    ! ZVI's dumping ground for variables he's too busy to put in the right
-    ! place, and doesn't want to write comments for
-
-
 !  The 'all_radiometers grid file' approach variables declaration:
 
     real(rp) :: max_ch_freq_grid, min_ch_freq_grid
@@ -723,14 +710,7 @@ contains
     ! Temperature's windowStart:windowFinish are correct here.
     ! RefGPH and temperature have the same horizontal basis.
     ! RefGPH is in meters, but Two_D_Hydrostatic wants it in km.
-    ! On non-GL grids:
-    call two_d_hydrostatic ( Grids_tmp, &
-      &  (/ (refGPH%template%surfs(1,1), j=windowStart,windowFinish) /), &
-      &  0.001*refGPH%values(1,windowStart:windowFinish), z_psig, &
-      &  orbIncline%values(1,maf)*Deg2Rad, t_psig, h_psig, &
-      &  dhdz_psig, dh_dt_psig )
-    call refractive_index ( 10.0**(-z_psig), t_psig, n_psig )
-    ! On GL grids:
+
     if ( temp_der ) then
       call two_d_hydrostatic ( Grids_tmp, &
         &  (/ (refGPH%template%surfs(1,1), j=windowStart,windowFinish) /), &
@@ -787,39 +767,35 @@ contains
           & call Trace_Begin ( 'ForwardModel.Pointing ', index=ptg_i )
 
         tan_ind_c = max(1,ptg_i-surfaceTangentIndex+1) ! On coarse grid
-        tan_ind = (tan_ind_c-1) * ngp1 + 1             ! On fine GL grid
+        tan_ind_f = (tan_ind_c-1) * ngp1 + 1           ! On fine GL grid
 
         if ( FwdModelConf%polarized ) &
           & mif = minloc(abs(tan_press(ptg_i) - &
           &                  ptan%values(:ptan%template%nosurfs,maf)),1)
 
-        tan_pt_f = MaxVert + 1 - tan_ind  ! fine path tangent index
-        tan_pt_c = (tan_pt_f + Ng) / Ngp1 ! coarse path tangent index
+        tan_pt_f = MaxVert + 1 - tan_ind_f ! fine path tangent index
+        tan_pt_c = (tan_pt_f + Ng) / Ngp1  ! coarse path tangent index
         npc = 2 * tan_pt_c
         npf = 2 * tan_pt_f
 
+        if ( toggle(emit) .and. levels(emit) > 4 ) &
+          & call Trace_Begin ( 'ForwardModel.MetricsEtc' )
+
+        ! Get H_Path and Phi_Path on the fine grid.
         if ( ptg_i < surfaceTangentIndex ) then
           e_rflty = earthRefl%values(1,1)
-          call metrics ( tan_phi(ptg_i), tan_ind_c, Grids_tmp%phi_basis,   &
-            &  z_psig, n_psig, h_psig, t_psig, dhdz_psig,                  &
-            &  earthradc_sq, FwdModelConf%refract,                         &
-            &  h_path(1:npc), phi_path(1:npc),                             &
-            &  t_path(1:npc), dhdz_path(1:npc), Req,                       &
-            &  TAN_PHI_H = tan_ht, TAN_PHI_T=tan_temp,                     &
-            &  Tan_Press=tan_press(ptg_i),                                 &
+          call pure_metrics ( tan_phi(ptg_i), tan_ind_f, Grids_tmp%phi_basis, &
+            &  z_glgrid, h_glgrid, earthradc_sq,                              &
+            &  h_path(1:npf), phi_path(1:npf), Req,                           &
+            &  Tan_Press=tan_press(ptg_i),                                    &
             &  Surf_Temp=temp%values(1,windowstart:windowfinish) )
         else
           e_rflty = 1.0_rp
-          call metrics ( tan_phi(ptg_i), tan_ind_c, Grids_tmp%phi_basis,   &
-            &  z_psig, n_psig, h_psig, t_psig, dhdz_psig,                  &
-            &  earthradc_sq, FwdModelConf%refract,                         &
-            &  h_path(1:npc), phi_path(1:npc),                             &
-            &  t_path(1:npc), dhdz_path(1:npc), Req,                       &
-            &  TAN_PHI_H = tan_ht, TAN_PHI_T = tan_temp                    &
-            &  )
+          call pure_metrics ( tan_phi(ptg_i), tan_ind_f, Grids_tmp%phi_basis, &
+            &  z_glgrid, h_glgrid, earthradc_sq,                              &
+            &  h_path(1:npf), phi_path(1:npf), Req                   )
         end if
-
-        tan_pt_c = npc / 2
+        tan_ht = h_path(tan_pt_f)
 
 ! This is where we need to insert the calculation of minimum Zeta.
 
@@ -845,79 +821,36 @@ contains
         del_zeta(tan_pt_c+1:npc-1) = 0.5_rp * ( z_path(c_inds(tan_pt_c+2:npc)) - &
           &                                     z_path(c_inds(tan_pt_c+1:npc-1)) )
 
-        ! Compute h_path, t_path, dhdz_path, phi_path, dhdt_path
-
-        if ( toggle(emit) .and. levels(emit) > 4 ) &
-          & call Trace_Begin ( 'ForwardModel.MetricsEtc' )
-
-        if ( ptg_i < surfaceTangentIndex ) then
-          e_rflty = earthRefl%values(1,1)
-          if ( temp_der ) then
-            ! Set up temperature representation basis stuff
-            call metrics ( tan_phi(ptg_i), tan_ind, Grids_tmp%phi_basis,     &
-              &  z_glgrid, n_glgrid, h_glgrid, t_glgrid, dhdz_glgrid,        &
-              &  earthradc_sq, FwdModelConf%refract,                         &
-              &  h_path(1:npf), phi_path(1:npf),                             &
-              &  t_path(1:npf), dhdz_path(1:npf), Req,                       &
-              &  TAN_PHI_H=tan_ht, TAN_PHI_T=tan_temp,                       &
-              &  Tan_Press=tan_press(ptg_i),                                 &
-              &  Surf_Temp=temp%values(1,windowstart:windowfinish),          &
-              !  Stuff for temperature derivatives:
-              &  DHTDTL0 = tan_dh_dt, DDHIDHIDTL0 = ddhidhidtl0,             &
-              &  DDHTDHTDTL0 = tan_d2h_dhdt, DHIDTLM = dh_dt_glgrid,         &
-              &  DHITDTLM = dh_dt_path(1:npf,:),                             &
-              &  T_DERIV_FLAG = Grids_tmp%deriv_flags,                       &
-              &  Z_BASIS = Grids_tmp%zet_basis,                              &
-              &  ETA_ZXP = eta_zxp_t(1:npf,:),                               &
-              &  DO_CALC_T = do_calc_t(1:npf,:),                             &
-              &  DO_CALC_HYD = do_calc_hyd(1:npf,:) )
-            dh_dt_path_c(1:npc,:) = dh_dt_path(c_inds,:)
-            do_calc_hyd_c(1:npc,:) = do_calc_hyd(c_inds,:)
-            do_calc_t_c(1:npc,:) = do_calc_t(c_inds,:)
-            eta_zxp_t_c(1:npc,:) = eta_zxp_t(c_inds,:)
-            t_der_path_flags(1:npf) = any(do_calc_t(1:npf,:),2)
-          else
-            call metrics ( tan_phi(ptg_i), tan_ind, Grids_tmp%phi_basis,     &
-              &  z_glgrid, n_glgrid, h_glgrid, t_glgrid, dhdz_glgrid,        &
-              &  earthradc_sq, FwdModelConf%refract,                         &
-              &  h_path(1:npf), phi_path(1:npf),                             &
-              &  t_path(1:npf), dhdz_path(1:npf), Req,                       &
-              &  TAN_PHI_H=tan_ht, TAN_PHI_T=tan_temp,                       &
-              &  Tan_Press=tan_press(ptg_i),                                 &
-              &  Surf_Temp=temp%values(1,windowstart:windowfinish) )
-          end if
+        ! Now get other metrics-related quantities, t_path, dhdz_path, dhdt_path
+        if ( temp_der ) then
+          ! Set up temperature representation basis stuff
+          call more_metrics ( tan_phi(ptg_i), tan_ind_f, tan_pt_f,          &
+            &  Grids_tmp%phi_basis, z_glgrid, n_glgrid, t_glgrid,           &
+            &  h_path(1:npf), dhdz_glgrid, FwdModelConf%refract,            &
+            &  phi_path(1:npf),                                             &
+            &  t_path(1:npf), dhdz_path(1:npf),                             &
+            &  TAN_PHI_T=tan_temp,                                          &
+            !  Stuff for temperature derivatives:
+            &  DHTDTL0 = tan_dh_dt, DDHIDHIDTL0 = ddhidhidtl0,              &
+            &  DDHTDHTDTL0 = tan_d2h_dhdt, DHIDTLM = dh_dt_glgrid,          &
+            &  DHITDTLM = dh_dt_path(1:npf,:),                              &
+            &  T_DERIV_FLAG = Grids_tmp%deriv_flags,                        &
+            &  Z_BASIS = Grids_tmp%zet_basis,                               &
+            &  ETA_ZXP = eta_zxp_t(1:npf,:),                                &
+            &  DO_CALC_T = do_calc_t(1:npf,:),                              &
+            &  DO_CALC_HYD = do_calc_hyd(1:npf,:) )
+          dh_dt_path_c(1:npc,:) = dh_dt_path(c_inds,:)
+          do_calc_hyd_c(1:npc,:) = do_calc_hyd(c_inds,:)
+          do_calc_t_c(1:npc,:) = do_calc_t(c_inds,:)
+          eta_zxp_t_c(1:npc,:) = eta_zxp_t(c_inds,:)
+          t_der_path_flags(1:npf) = any(do_calc_t(1:npf,:),2)
         else
-          e_rflty = 1.0_rp
-          if ( temp_der ) then
-            ! Set up temperature representation basis stuff
-            call metrics ( tan_phi(ptg_i), tan_ind, Grids_tmp%phi_basis,     &
-              &  z_glgrid, n_glgrid, h_glgrid, t_glgrid, dhdz_glgrid,        &
-              &  earthradc_sq, FwdModelConf%refract,                         &
-              &  h_path(1:npf), phi_path(1:npf),                             &
-              &  t_path(1:npf), dhdz_path(1:npf), Req,                       &
-              &  TAN_PHI_H = tan_ht, TAN_PHI_T = tan_temp,                   &
-              !  Stuff for temperature derivatives:
-              &  DHTDTL0 = tan_dh_dt, DDHIDHIDTL0 = ddhidhidtl0,             &
-              &  DDHTDHTDTL0 = tan_d2h_dhdt, DHIDTLM = dh_dt_glgrid,         &
-              &  DHITDTLM = dh_dt_path(1:npf,:),                             &
-              &  T_DERIV_FLAG = Grids_tmp%deriv_flags,                       &
-              &  Z_BASIS = Grids_tmp%zet_basis,                              &
-              &  ETA_ZXP = eta_zxp_t(1:npf,:),                               &
-              &  DO_CALC_T = do_calc_t(1:npf,:),                             &
-              &  DO_CALC_HYD = do_calc_hyd(1:npf,:) )
-            dh_dt_path_c(1:npc,:) = dh_dt_path(c_inds,:)
-            do_calc_hyd_c(1:npc,:) = do_calc_hyd(c_inds,:)
-            do_calc_t_c(1:npc,:) = do_calc_t(c_inds,:)
-            eta_zxp_t_c(1:npc,:) = eta_zxp_t(c_inds,:)
-            t_der_path_flags(1:npf) = any(do_calc_t(1:npf,:),2)
-          else
-            call metrics ( tan_phi(ptg_i), tan_ind, Grids_tmp%phi_basis,     &
-              &  z_glgrid, n_glgrid, h_glgrid, t_glgrid, dhdz_glgrid,        &
-              &  earthradc_sq, FwdModelConf%refract,                         &
-              &  h_path(1:npf), phi_path(1:npf),                             &
-              &  t_path(1:npf), dhdz_path(1:npf), Req,                       &
-              &  TAN_PHI_H = tan_ht, TAN_PHI_T = tan_temp )
-          end if
+          call more_metrics ( tan_phi(ptg_i), tan_ind_f, tan_pt_f,          &
+            &  Grids_tmp%phi_basis, z_glgrid, n_glgrid, t_glgrid,           &
+            &  h_path(1:npf), dhdz_glgrid, FwdModelConf%refract,            &
+            &  phi_path(1:npf),                                             &
+            &  t_path(1:npf), dhdz_path(1:npf),                             &
+            &  TAN_PHI_T=tan_temp )
         end if
 
 !       dhdz_gw_path(f_inds) = dhdz_path(f_inds) * (/ ( gw, i = 1, nglMax/ng ) /)
@@ -926,10 +859,6 @@ contains
         end do
         h_path_c(1:npc) = h_path(c_inds)
         t_path_c(1:npc) = t_path(c_inds)
-        ! Fill the diagnostic arrays for Nathaniel and Bill
-!       tan_temps ( ptg_i ) = tan_temp
-!       tan_hts ( ptg_i ) = tan_ht
-!       reqs ( ptg_i ) = req
 
         ! Now compute the eta_zp & do_calc_zp (for Zeta & Phi only)
 
@@ -1051,19 +980,19 @@ contains
         if ( temp_der ) then
          ! Ext_SCgeocAlt is in meters, but Get_Chi_Angles wants it in km.
           call get_chi_angles ( 0.001*est_scGeocAlt(ptg_i), n_path_c(tan_pt_c),&
-             & tan_ht, tan_phi(ptg_i), Req, 0.0_rp, ptg_angles(ptg_i),      &
+             & tan_ht-Req, tan_phi(ptg_i), Req, 0.0_rp, ptg_angles(ptg_i),      &
              & r, 1.0_rp, tan_dh_dt, tan_d2h_dhdt,       &
              & dx_dt(ptg_i,:), d2x_dxdt(ptg_i,:) )
         else
           call get_chi_angles ( 0.001*est_scGeocAlt(ptg_i), n_path_c(tan_pt_c),&
-             & tan_ht, tan_phi(ptg_i), Req, 0.0_rp, ptg_angles(ptg_i),      &
+             & tan_ht-Req, tan_phi(ptg_i), Req, 0.0_rp, ptg_angles(ptg_i),      &
              & r, 1.0_rp )
         end if
 
         n_path_c(1:npc) = n_path_c(1:npc) + 1.0_rp
 
         call comp_refcor ( tan_pt_c, h_path_c(:npc), n_path_c(:npc), &
-                      &  Req+tan_ht, del_s(:npc), ref_corr(:npc), ier )
+                      &    tan_ht, del_s(:npc), ref_corr(:npc), ier )
         if ( ier /= 0 ) fmStat%flags = ior(fmStat%flags,b_refraction)
 
         ! We need path_dsdh on the fine grid for Gauss-Legendre or Gauss-
@@ -1074,9 +1003,9 @@ contains
         ! the fine grid.
 
         path_dsdh(:tan_pt_f-1) = h_path(:tan_pt_f-1) / &
-          & ( sqrt(h_path(:tan_pt_f-1)**2 - (Req+tan_ht)**2 ) )
+          & ( sqrt(h_path(:tan_pt_f-1)**2 - tan_ht**2 ) )
         path_dsdh(tan_pt_f+2:npf) = h_path(tan_pt_f+2:npf) / &
-          & ( sqrt(h_path(tan_pt_f+2:npf)**2 - (Req+tan_ht)**2 ) )
+          & ( sqrt(h_path(tan_pt_f+2:npf)**2 - tan_ht**2 ) )
         path_dsdh(tan_pt_f:tan_pt_f+1) = 0.0
 
         dsdz_gw_path(f_inds(:nglMax)) = path_dsdh(f_inds(:nglMax)) * &
@@ -1356,11 +1285,6 @@ contains
 
     ! **** End of Printing cycle ...
 
-    ! Extra DEBUG for Nathaniel and Bill
-!   call deallocate_test ( tan_hts,       'tan_hts',       moduleName )
-!   call deallocate_test ( tan_temps,     'tan_temps',     moduleName )
-!   call deallocate_test ( reqs,          'reqs',          moduleName )
-
     call destroygrids_t ( grids_tscat )
     call destroygrids_t ( grids_salb )
     call destroygrids_t ( grids_cext )
@@ -1408,9 +1332,6 @@ contains
         & ( spect_der_center .or. spect_der_width .or. spect_der_width_TDep )
 
       any_der = temp_der .or. atmos_der .or. spect_der
-
-      ! Extra DEBUG for Nathaniel and Bill
-  !   nullify ( reqs, tan_hts, tan_temps )
 
       ! Work out what we've been asked to do -----------------------------------
 
@@ -1569,11 +1490,6 @@ contains
   ! Compute Gauss Legendre (GL) grid ---------------------------------------
 
       call compute_GL_grid ( z_psig(:nlvl), p_glgrid, z_glgrid )
-
-      ! Extra DEBUG for Nathaniel and Bill
-  !   call allocate_test ( tan_hts,       no_tan_hts, 'tan_hts',       moduleName )
-  !   call allocate_test ( tan_temps,     no_tan_hts, 'tan_temps',     moduleName )
-  !   call allocate_test ( reqs,          no_tan_hts, 'reqs',          moduleName )
 
       ! estimate tan_phi and scgeocalt
       call estimate_tan_phi ( no_tan_hts, nlvl, maf, phitan, ptan, &
@@ -2652,7 +2568,7 @@ contains
               & dh_dt_path_c(1:npc,:), alpha_path_c,                         &
               & dAlpha_dT_path_c(:npc), eta_zxp_t_c(1:npc,:),                &
               & do_calc_t_c(1:npc,:), do_calc_hyd_c(1:npc,:), del_s,         &
-              & ref_corr, Req + tan_ht, dh_dt_path(tan_pt_f,:),              &
+              & ref_corr, tan_ht, dh_dt_path(tan_pt_f,:),                    &
               & do_gl, gl_inds, h_path_f(:ngl), t_path_f(:ngl),              &
               & dh_dt_path_f(:ngl,:), alpha_path_f(1:ngl),                   &
               & dAlpha_dT_path_f(:ngl), eta_zxp_t_f(:ngl,:),                 &
@@ -2699,7 +2615,7 @@ contains
               & dhdz_gw_path, dsdz_gw_path, incoptdepth_pol(:,:,1:p_stop),  &
               & ref_corr(1:p_stop), h_path_c, h_path_f(:ngl),               &
               & dh_dt_path_c(1:p_stop,:),dh_dt_path_f(:ngl,:),              &
-              & Req + tan_ht, dh_dt_path(tan_pt_f,:),                       &
+              & tan_ht, dh_dt_path(tan_pt_f,:),                             &
               & do_calc_hyd_c(1:p_stop,:), grids_tmp%deriv_flags,           &
               & de_dt(:,:,1:p_stop,:) )
 
@@ -3032,6 +2948,12 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.273  2006/12/19 02:53:15  vsnyder
+! Change some names, send max coarse path from FullForwardModel to
+! FullForwardModelAuto instead of using 2*NLVL, get rid of STATUS
+! argument from Metrics, reference H_Path from Earth center instead
+! of surface.
+!
 ! Revision 2.272  2006/12/13 02:32:02  vsnyder
 ! Drag the tangent point around instead of assuming it's the middle one
 !
