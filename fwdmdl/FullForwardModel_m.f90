@@ -260,7 +260,7 @@ contains
     use Freq_Avg_m, only: Freq_Avg, Freq_Avg_DACS
     use Geometry, only: Earth_Axis_Ratio_Squared_m1, EarthRadA, MaxRefraction
     use Get_Chi_Angles_m, only: Get_Chi_Angles
-    use GLnp, only: GW, GX, Lobatto, NG, NGP1
+    use GLnp, only: GW, GX, NG, NGP1
     use Intrinsic, only: L_A, L_BOUNDARYPRESSURE, L_CLEAR, &
       & L_CLOUDWATER, L_EARTHREFL, L_ECRtoFOV, &
       & L_ELEVOFFSET, L_GPH, &
@@ -505,7 +505,6 @@ contains
     real(rp) :: DH_DT_PATH_C(max_c,s_t*sv_t_len)   ! DH_DT_PATH on coarse grid
     real(rp) :: DH_DT_PATH_F(max_f,s_t*sv_t_len)   ! DH_DT_PATH on fine grid
     real(rp) :: DHDZ_GLGRID(maxVert,no_sv_p_t)     ! dH/dZ on glGrid surfs
-    real(rp) :: DHDZ_PSIG(nlvl,no_sv_p_t)          ! dH/dZ on PSIG surfs
     real(rp) :: DX_DT(no_tan_hts,s_t*sv_t_len)     ! (No_tan_hts, nz*np)
     real(rp) :: ETA_FZP(max_f,size(grids_f%values)) ! Eta_z x Eta_p * Eta_f
     real(rp) :: ETA_IWC(max_f,size(grids_iwc%values))
@@ -3025,6 +3024,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.275  2006/12/21 01:34:53  vsnyder
+! Finally implemented minimum Zeta
+!
 ! Revision 2.274  2006/12/20 21:22:16  vsnyder
 ! Split metrics into pure H-Phi calculation, and everything else, in
 ! preparation for inserting the minimum-Zeta point into the path.
