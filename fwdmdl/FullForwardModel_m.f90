@@ -260,7 +260,7 @@ contains
     use Freq_Avg_m, only: Freq_Avg, Freq_Avg_DACS
     use Geometry, only: Earth_Axis_Ratio_Squared_m1, EarthRadA, MaxRefraction
     use Get_Chi_Angles_m, only: Get_Chi_Angles
-    use GLnp, only: GW, Lobatto, NG, NGP1
+    use GLnp, only: GW, GX, Lobatto, NG, NGP1
     use Intrinsic, only: L_A, L_BOUNDARYPRESSURE, L_CLEAR, &
       & L_CLOUDWATER, L_EARTHREFL, L_ECRtoFOV, &
       & L_ELEVOFFSET, L_GPH, &
@@ -271,6 +271,7 @@ contains
       & Load_One_Item_Grid
     use MatrixModule_1, only: MATRIX_T
     use Metrics_m, only: Pure_Metrics, More_Metrics
+    use Min_Zeta_m, only: Get_Min_Zeta
     use MLSKinds, only: R4, R8, RP, RV
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MLSNumerics, only: Hunt, InterpolateValues
@@ -347,48 +348,63 @@ contains
     ! Now define local variables, group by type and then
     ! alphabetically
 
-    integer :: CHANNEL                  ! A Loop counter
-    integer :: Frq_Avg_Sel              ! Summarizes combinations of PFA, LBL,
-                                        ! Frequency averaging and derivatives.
-                                        ! See Frequency_Average below.
-    integer :: IER                      ! Status flag from allocates
-    integer :: I                        ! Loop index and other uses .
-    integer :: INST                     ! Relevant instance for temperature
-    integer :: J                        ! Loop index and other uses ..
-    integer :: K                        ! Loop index and other uses ..
-    integer :: MAF                      ! MAF under consideration
-    integer :: MIF                      ! MIF number for tan_press(ptg_i)
-    integer :: NCG                      ! Number of panels needing GL = Size(cg_inds)
-    integer :: NGLMAX                   ! NGL if all panels need GL
-    integer :: NGL                      ! Total # of GL points = Size(gl_inds)
-    integer :: NOFREQS                  ! Number of frequencies for a pointing
-    integer :: NOUSEDDACS               ! Number of different DACS in this run.
-    integer :: NPC                      ! Length of coarse path
-    integer :: NPF                      ! Length of a gl path
-    integer :: PTG_I                    ! Loop counter for the pointings
-    integer :: SIDEBAND                 ! Either zero or from firstSignal
-    integer :: SIGIND                   ! Signal index, loop counter
-    integer :: SV_I                     ! Loop index and other uses .
-    integer :: SX                       ! 1 = LSB, 2 = USB
-    integer :: TAN_IND_C                ! Index of tangent point in coarse grid
-    integer :: TAN_IND_F                ! Index of tangent point in fine grid
-    integer :: TAN_PT_C                 ! Index of tangent point in coarse path
-    integer :: TAN_PT_F                 ! Index of tangent point in fine path
-    integer :: THISSIDEBAND             ! Loop counter for sidebands, -1 = LSB, +1 = USB
-    integer :: WHICHPOINTINGGRID        ! Index into the pointing grids
-    integer :: WINDOWFINISH             ! End of temperature `window'
-    integer :: WINDOWSTART              ! Start of temperature `window'
+    integer :: CHANNEL            ! A Loop counter
+    integer :: Frq_Avg_Sel        ! Summarizes combinations of PFA, LBL,
+                                  ! Frequency averaging and derivatives.
+                                  ! See Frequency_Average below.
+    integer :: IER                ! Status flag from allocates
+    integer :: I                  ! Loop index and other uses .
+    integer :: INST               ! Relevant instance for temperature
+    integer :: J                  ! Loop index and other uses ..
+    integer :: K                  ! Loop index and other uses ..
+    integer :: MAF                ! MAF under consideration
+    integer :: MIF                ! MIF number for tan_press(ptg_i)
+    integer :: Min_Index          ! If > 0, P_Path(min_index) <= Min_Phi <=
+                                  ! P_Path(min_index+1), else min zeta is at
+                                  ! or too close to the tangent
+    integer :: Min_Index_c        ! If Min_Index > 0, P_Path(min_index_c) <=
+                                  ! Min_Phi <= P_Path(min_index_c+ng+1) and
+                                  ! min_index_c is a coarse path index.
+    integer :: NCG                ! Number of panels needing GL = Size(cg_inds)
+    integer :: NGLMAX             ! NGL if all panels need GL
+    integer :: NGL                ! Total # of GL points = Size(gl_inds)
+    integer :: NOFREQS            ! Number of frequencies for a pointing
+    integer :: NOUSEDDACS         ! Number of different DACS in this run.
+    integer :: NPC                ! Length of coarse path
+    integer :: NPF                ! Length of a gl path
+    integer :: PTG_I              ! Loop counter for the pointings
+    integer :: SIDEBAND           ! Either zero or from firstSignal
+    integer :: SIGIND             ! Signal index, loop counter
+    integer :: SV_I               ! Loop index and other uses .
+    integer :: SX                 ! 1 = LSB, 2 = USB
+    integer :: TAN_IND_C          ! Index of tangent point in coarse grid
+    integer :: TAN_IND_F          ! Index of tangent point in fine grid
+    integer :: TAN_PT_C           ! Index of tangent point in coarse path
+    integer :: TAN_PT_F           ! Index of tangent point in fine path
+    integer :: THISSIDEBAND       ! Loop counter for sidebands, -1 = LSB, +1 = USB
+    integer :: WHICHPOINTINGGRID  ! Index into the pointing grids
+    integer :: WINDOWFINISH       ! End of temperature `window'
+    integer :: WINDOWSTART        ! Start of temperature `window'
 
-    integer :: NoSurf                   ! Number of pressure levels
-    integer :: NovmrSurf                ! Number of vmr levels
-    integer :: Nspec                    ! No of species for cloud model
-    integer :: Ispec                    ! Species index in cloud model
+    integer :: NoSurf             ! Number of pressure levels
+    integer :: NovmrSurf          ! Number of vmr levels
+    integer :: Nspec              ! No of species for cloud model
+    integer :: Ispec              ! Species index in cloud model
 
-    logical :: Any_Der                  ! temp_der .or. atmos_der .or. spect_der
+    logical :: Any_Der            ! temp_der .or. atmos_der .or. spect_der
     logical :: cld_fine = .false.
-    logical :: Clean                    ! Used for dumping
+    logical :: Clean              ! Used for dumping
+    logical :: Do_Zmin            ! "Do minimum Zeta calculation"
     logical, parameter :: PFAFalse = .false.
     logical, parameter :: PFATrue = .true.
+    logical :: Print_Grids        ! For debugging
+    logical :: Print_Mag          ! For debugging
+    logical :: Print_Min_Zeta     ! For debugging
+    logical :: Print_Ptg          ! For debugging
+    logical :: Print_Rad          ! For debugging
+    logical :: Print_Seez         ! For debugging
+    logical :: Print_TauL         ! For debugging
+    logical :: Print_TauP         ! For debugging
     logical :: temp_der, atmos_der, spect_der ! Flags for various derivatives
     logical :: Spect_Der_Center, Spect_Der_Width, Spect_Der_Width_TDep
 
@@ -420,6 +436,13 @@ contains
     logical :: DO_CALC_W(max_f, size(grids_w%values) ) ! on entire grid
     logical :: DO_CALC_W_C(max_c, size(grids_w%values) ) ! on coarse grid
     logical :: DO_CALC_ZP(max_f, grids_f%p_len)
+
+    logical, pointer :: DO_CALC_Tscat(:,:)    ! 'Avoid zeros' indicator
+    logical, pointer :: DO_CALC_Salb(:,:)     ! 'Avoid zeros' indicator
+    logical, pointer :: DO_CALC_cext(:,:)     ! 'Avoid zeros' indicator
+    logical, pointer :: DO_CALC_Tscat_ZP(:,:) ! 'Avoid zeros' indicator
+    logical, pointer :: DO_CALC_Salb_ZP(:,:)  ! 'Avoid zeros' indicator
+    logical, pointer :: DO_CALC_Cext_ZP(:,:)  ! 'Avoid zeros' indicator
 
     real(r8) :: WC(s_i*fwdModelConf%no_cloud_species, max_f)
     real(r8) :: Scat_ang(s_i*fwdModelConf%num_scattering_angles)
@@ -558,23 +581,19 @@ contains
     real(r4) :: K_SPECT_DW(noUsedChannels,no_tan_hts,s_lw*size(grids_w%values))
     real(r4) :: K_TEMP(noUsedChannels,no_tan_hts,s_t*sv_t_len)
 
-    integer, dimension(:), pointer :: C_INDS   ! Indices on coarse grid
-    integer, dimension(:), pointer :: GL_INDS  ! Index of GL points -- subset of f_inds
-    integer, dimension(:), pointer :: LineCenter_IX ! Where are line center offsets?
-    integer, dimension(:), pointer :: LineWidth_IX  ! Where are line width offsets?
-    integer, dimension(:), pointer :: LineWidth_TDep_IX  ! Where are line width TDep offsets?
-    integer, dimension(:), pointer :: USEDDACSSIGNALS ! Indices in FwdModelConf
-                                               ! of signals for our dacs
-
-    logical, dimension(:,:), pointer :: DO_CALC_Tscat ! 'Avoid zeros' indicator
-    logical, dimension(:,:), pointer :: DO_CALC_Salb  ! 'Avoid zeros' indicator
-    logical, dimension(:,:), pointer :: DO_CALC_cext  ! 'Avoid zeros' indicator
-    logical, dimension(:,:), pointer :: DO_CALC_Tscat_ZP ! 'Avoid zeros' indicator
-    logical, dimension(:,:), pointer :: DO_CALC_Salb_ZP  ! 'Avoid zeros' indicator
-    logical, dimension(:,:), pointer :: DO_CALC_Cext_ZP  ! 'Avoid zeros' indicator
+    integer, pointer :: C_INDS(:)   ! Indices on coarse grid
+    integer, pointer :: GL_INDS(:)  ! Index of GL points -- subset of f_inds
+    integer, pointer :: LineCenter_IX(:) ! Where are line center offsets?
+    integer, pointer :: LineWidth_IX(:)  ! Where are line width offsets?
+    integer, pointer :: LineWidth_TDep_IX(:)  ! Where are line width TDep offsets?
+    integer, pointer :: USEDDACSSIGNALS(:) ! Indices in FwdModelConf of signals
+                                    ! for our dacs
 
     real(rp) :: E_RFLTY       ! Earth reflectivity at given tan. point
     real(rp), save :: E_Stop  = 1.0_rp ! X for which Exp(X) is too small to worry
+    real(rp) :: Min_Zeta      ! Minimum zeta along the path
+    real(rp) :: Min_Phi       ! Phi at which minimum zeta occurs
+    real(rp), parameter :: Min_Phi_Tol = 0.25 * gx(1)**2 ! First GL point
     real(rp) :: TAN_HT        ! Height at the tangent, from equivalent Earth center
     real(rp) :: TAN_TEMP      ! Temperature at the tangent
     real(rp) :: R             ! real variable for various uses
@@ -583,47 +602,46 @@ contains
     real(rp) :: Vel_Cor       ! Velocity correction due to Vel_z, 1 - Vel_z/c
     real(rp) :: Vel_Rel       ! Vel_z / c
 
-    real(rp), dimension(:), pointer :: CT           ! Cos(Theta), where theta
+    real(rp), pointer :: CT(:)           ! Cos(Theta), where theta
       ! is the angle between the line of sight and magnetic field vectors.
-    real(r8), dimension(:), pointer :: FREQUENCIES  ! Frequencies to compute for
-    real(rp), dimension(:), pointer :: H            ! Magnetic field on path, in
-                                                    ! IFOVPP
-    real(rp), dimension(:), pointer :: RADV         ! Radiances for 1 pointing on
-                                                    ! Freq_Grid
-    real(rp), dimension(:), pointer :: STCP         ! Sin(Theta) Cos(Phi) where
+    real(r8), pointer :: FREQUENCIES(:)  ! Frequencies to compute for
+    real(rp), pointer :: H(:)            ! Magnetic field on path, in
+                                         ! IFOVPP
+    real(rp), pointer :: RADV(:)         ! Radiances for 1 pointing on
+                                         ! Freq_Grid
+    real(rp), pointer :: STCP(:)         ! Sin(Theta) Cos(Phi) where
       ! theta is as for CT and phi (for this purpose only) is the angle
       ! between the plane defined by the line of sight and the magnetic
       ! field vector, and the "instrument field of view plane polarized"
       ! (IFOVPP) X axis.
-    real(rp), dimension(:), pointer :: STSP         ! Sin(Theta) Sin(Phi)
-    real(rp), dimension(:,:), pointer :: Cext_PATH    ! Cloud extinction on path
-    real(rp), dimension(:,:), pointer :: DACsStaging  ! Temporary space for DACS radiances
+    real(rp), pointer :: STSP(:)         ! Sin(Theta) Sin(Phi)
+    real(rp), pointer :: Cext_PATH(:,:)  ! Cloud extinction on path
+    real(rp), pointer :: DACsStaging(:,:) ! Temporary space for DACS radiances
 
     ! Incremental opacity derivatives, Path X SVE:
-    real(rp), dimension(:,:), pointer :: ETA_Tscat    !
-    real(rp), dimension(:,:), pointer :: ETA_Tscat_ZP !
-    real(rp), dimension(:,:), pointer :: ETA_Salb     !
-    real(rp), dimension(:,:), pointer :: ETA_Salb_ZP  !
-    real(rp), dimension(:,:), pointer :: ETA_Cext     !
-    real(rp), dimension(:,:), pointer :: ETA_Cext_ZP  !
-    real(rp), dimension(:,:), pointer :: INC_RAD_PATH ! Incremental radiance
-                                                      ! along the path
-    real(rp), dimension(:,:), pointer :: K_ATMOS_FRQ  ! dI/dVMR, ptg.frq X vmr-SV
-    real(rp), dimension(:,:), pointer :: K_SPECT_DN_FRQ ! ****
-    real(rp), dimension(:,:), pointer :: K_SPECT_DV_FRQ ! ****
-    real(rp), dimension(:,:), pointer :: K_SPECT_DW_FRQ ! ****
-    real(rp), dimension(:,:), pointer :: K_TEMP_FRQ   ! dI/dT, ptg.frq X T-SV
-    real(rp), dimension(:,:), pointer :: Salb_PATH    ! Single Scattering Albedo on path
-    real(rp), dimension(:,:), pointer :: T_SCRIPT_LBL ! Delta_B in some notes
-    real(rp), dimension(:,:), pointer :: Tscat_PATH   ! TScat on path
+    real(rp), pointer :: ETA_Tscat(:,:)    !
+    real(rp), pointer :: ETA_Tscat_ZP(:,:) !
+    real(rp), pointer :: ETA_Salb(:,:)     !
+    real(rp), pointer :: ETA_Salb_ZP(:,:)  !
+    real(rp), pointer :: ETA_Cext(:,:)     !
+    real(rp), pointer :: ETA_Cext_ZP(:,:)  !
+    real(rp), pointer :: INC_RAD_PATH(:,:) ! Incremental radiance along the path
+    real(rp), pointer :: K_ATMOS_FRQ(:,:)  ! dI/dVMR, ptg.frq X vmr-SV
+    real(rp), pointer :: K_SPECT_DN_FRQ(:,:) ! ****
+    real(rp), pointer :: K_SPECT_DV_FRQ(:,:) ! ****
+    real(rp), pointer :: K_SPECT_DW_FRQ(:,:) ! ****
+    real(rp), pointer :: K_TEMP_FRQ(:,:)   ! dI/dT, ptg.frq X T-SV
+    real(rp), pointer :: Salb_PATH(:,:)    ! Single Scattering Albedo on path
+    real(rp), pointer :: T_SCRIPT_LBL(:,:) ! Delta_B in some notes
+    real(rp), pointer :: Tscat_PATH(:,:)   ! TScat on path
 
     ! Used only to schlep from Both_Sidebands_Setup to Convolution
     real(rp) :: DH_DZ_OUT(ptan%template%nosurfs)
     real(rp) :: DX_DH_OUT(ptan%template%nosurfs)
     real(rp) :: DXDT_SURFACE(1,s_t*sv_t_len)
     real(rp) :: DXDT_TAN(ptan%template%nosurfs,sv_t_len)
-    real(rv), dimension(:,:), pointer :: L1BMIF_TAI   ! MIF Times
-    real(rv), dimension(:,:), pointer :: MIFDEADTIME  ! Not collecting data
+    real(rv), pointer :: L1BMIF_TAI(:,:)   ! MIF Times
+    real(rv), pointer :: MIFDEADTIME(:,:)  ! Not collecting data
     real(rp) :: surf_angle(1)
     real(rp) :: TAN_CHI_OUT(ptan%template%nosurfs)
 
@@ -677,6 +695,18 @@ contains
 
     if ( toggle(emit) ) & ! set by -f command-line switch
       & call trace_begin ( 'Full ForwardModel, MAF=', index=fmstat%maf )
+
+    ! Set flags from command-line switches
+    clean = index(switches, 'clean') /= 0
+    do_zmin = index(switches, 'nozm') == 0 ! Do minimum zeta unless told otherwise
+    print_Grids = index(switches, 'grids') /= 0
+    print_Mag = index(switches, 'mag') /= 0
+    print_Min_Zeta = index(switches, 'zmin') /= 0
+    print_Ptg = index(switches,'ptg') /= 0
+    print_Rad = index(switches, 'rad') /= 0
+    print_Seez = index(switches, 'seez') /= 0
+    print_TauL = index(switches, 'taul') /= 0
+    print_TauP = index(switches, 'taup') /= 0
 
     ! Nullify all our pointers that are allocated because the first thing
     ! Allocate_Test does is ask if they're associated.  If we don't nullify
@@ -797,16 +827,65 @@ contains
         end if
         tan_ht = h_path(tan_pt_f)
 
-! This is where we need to insert the calculation of minimum Zeta.
-
         z_coarse(:tan_pt_c) = z_psig(nlvl:tan_ind_c:-1)
         z_coarse(tan_pt_c+1:npc) = z_psig(tan_ind_c:nlvl)
 
+        if ( do_zmin ) then
+          ! Get minimum zeta on the path
+          call Get_Min_Zeta ( Grids_tmp%phi_basis, h_glgrid(tan_ind_f,:), &
+                            & t_glgrid(tan_ind_f,:), z_glgrid(tan_ind_f), &
+                            & phi_path, tan_ind_f, tan_ht,                &
+                            & min_zeta, min_phi, min_index )
+
+          ! Add minimum zeta to the path
+          if ( min_index > 0 ) then ! minimum zeta not at or near tangent point
+            min_index_c = min_index - mod(min_index-1,ngp1)
+            if ( min_index > tan_pt_f ) min_index_c = min_index_c + 1
+            if ( min(abs(min_phi-phi_path(min_index)), &
+              &      abs(min_phi-phi_path(min_index+1))) <= &
+              &  min_phi_tol * (phi_path(min_index_c+ngp1)-phi_path(min_index_c)) ) then
+              ! Min zeta very close to an existing point
+              if ( abs(min_phi-phi_path(min_index)) > abs(min_phi-phi_path(min_index+1)) ) &
+                & min_index = min_index+1
+              ! Min_index is now the index of the point
+              if ( min_index == min_index_c .or. min_index == min_index_c+ngp1 ) then
+                ! Min_index is at a coarse grid point.
+                ! All we need to do is change the zeta.
+                min_index_c = min_index
+                i = min_index / ngp1 + 1
+                if ( print_Min_Zeta ) then
+                  call output ( i, before='Replacing Z_Coarse(' )
+                  call output ( z_coarse(i), before=') = ' )
+                  call output ( min_zeta, before=' with minimum Zeta = ', advance='yes' )
+                end if
+                z_coarse(i) = min_zeta
+                min_index_c = 0 ! Indicate nothing more to do
+              end if
+            end if
+            if ( min_index_c > 0 ) then
+              ! Min zeta not near an existing coarse point: add one to the path
+              npc = npc + 1
+              npf = npf + ngp1
+              i = min_index_c / ngp1 + 1
+              z_coarse(i+1:npc) = z_coarse(i:npc-1) ! Make room
+              z_coarse(i) = min_zeta
+              if ( print_Min_Zeta ) then
+                call output ( min_zeta, before='Added minimum Zeta = ' )
+                call output ( i, before=' after ', advance='yes' )
+              end if
+              if ( min_index_c < tan_pt_f ) then
+                tan_pt_c = tan_pt_c + 1
+                tan_pt_f = tan_pt_f + ngp1
+              end if
+            end if
+          end if
+        end if
+
         ! Compute Gauss Legendre (GL) grid ----------------------------------
-        call compute_GL_grid ( z_coarse(:npc), p_path, z_path )
-        ! Assumes path is symmetric
-        z_path(tan_pt_f+1:2*tan_pt_f) = z_path(tan_pt_f:1:-1)
-        p_path(tan_pt_f+1:2*tan_pt_f) = p_path(tan_pt_f:1:-1)
+        call compute_GL_grid ( z_coarse(:tan_pt_c), p_path(:tan_pt_f), &
+          &                    z_path(:tan_pt_f) )
+        call compute_GL_grid ( z_coarse(tan_pt_c+1:npc), p_path(tan_pt_f+1:npf), &
+          &                    z_path(tan_pt_f+1:npf) )
 
         ! This is not pretty but we need some coarse path extraction indices
         c_inds => c_inds_b(:npc)
@@ -967,8 +1046,7 @@ contains
           stsp => mag_path(1:npf,2) ! sin(theta) sin(phi)
           h => mag_path(1:npf,4)    ! magnitude of magnetic field
 
-          if ( index(switches,'mag') /= 0 ) then
-            clean = index(switches,'clean') /= 0
+          if ( print_Mag ) then
             call dump ( h, 'H', clean=clean )
             call dump ( ct, 'Cos(theta)', clean=clean )
             call dump ( stcp, 'Sin(theta) Cos(phi)', clean=clean )
@@ -1150,7 +1228,7 @@ contains
             & p_path(:npf), pfaFalse, ref_corr(:npc), sps_path(:npf,:),           &
             & tau_lbl, t_path_c(:npc), t_script_lbl(:npc,:), tanh1_c(:npc),       &
             & tt_path_c(:s_i*npc), w0_path_c(:s_i*npc), z_path(:npf) )
-          if ( index(switches,'taul') /= 0 ) then
+          if ( print_TauL ) then
             call output ( thisSideband, before='Sideband ' )
             call output ( ptg_i, before=' Pointing ' )
             call dump ( tau_lbl, noFreqs, ' Tau_LBL:' )
@@ -1175,7 +1253,7 @@ contains
             & p_path(:npf), pfaTrue, ref_corr(:npc), sps_path(:npf,:),           &
             & tau_pfa, t_path_c(:npc), t_script_pfa(:npc,:), tanh1_c(:npc),      &
             & tt_path_c(:s_i*npc), w0_path_c(:s_i*npc), z_path(:npf) )
-          if ( index(switches,'taup') /= 0 ) then
+          if ( print_TauP ) then
             call output ( thisSideband, before='Sideband ' )
             call output ( ptg_i, before=' Pointing ' )
             call dump ( tau_pfa, noUsedChannels, ' Tau_PFA:' )
@@ -1242,7 +1320,7 @@ contains
 
 ! *** Create *seez* file for "nasty" purposes:
 
-    if ( index(switches, 'seez') /= 0 ) call dump_print_code
+    if ( print_Seez ) call dump_print_code
 
 ! *** End of include
 
@@ -1251,7 +1329,7 @@ contains
     j = index(sigName(i+2:), '.' )
     if ( j /= 0 ) sigName(i+j+1:) = ''
 
-    if ( index(switches, 'rad') /= 0 ) then
+    if ( print_Rad ) then
       if ( FwdModelConf%do_conv ) then
         print *, 'Convolution: ON'
       else
@@ -1593,9 +1671,8 @@ contains
       ! the infinite loop in the convolution (Hunt on angles) that
       ! results otherwise).
 
-      if ( index(switches,'ptg') /= 0 ) then
-        call Dump ( ptg_angles, 'ptg_angles (before any patch)', format='(1PG22.17)' )
-      end if
+      if ( print_Ptg ) &
+        & call Dump ( ptg_angles, 'ptg_angles (before any patch)', format='(1PG22.17)' )
       
       ! This code is needed to ensure that the ptg_angles are monotonic
       ! (and not flat even)
@@ -1654,7 +1731,7 @@ contains
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Had to patch some out-of-order ptg_angles' )
         fmStat%flags = ior(fmStat%flags,b_ptg_angles)
-        if ( index(switches,'ptg') /= 0 ) &
+        if ( print_Ptg ) &
           & call Dump ( ptg_angles, 'ptg_angles (after patching)', format='(1PG22.17)' )
       end if
 
@@ -2948,6 +3025,10 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.274  2006/12/20 21:22:16  vsnyder
+! Split metrics into pure H-Phi calculation, and everything else, in
+! preparation for inserting the minimum-Zeta point into the path.
+!
 ! Revision 2.273  2006/12/19 02:53:15  vsnyder
 ! Change some names, send max coarse path from FullForwardModel to
 ! FullForwardModelAuto instead of using 2*NLVL, get rid of STATUS
