@@ -515,19 +515,15 @@ path: do i = i1, i2
     integer :: Dump_Stop   ! 0 = no dump, >0 = dump/stop
     integer :: First, Last ! Nonzeros in Eta_T
     integer :: H_Phi_Dump  ! 0 = no dump, >0 = dump
-    integer :: I, J, SV_P, SV_T, SV_Z ! Loop inductors and subscripts
+    integer :: I           ! Subscript, loop inductor
     integer :: N_PATH      ! Path length = 2*(size(z_ref)+1-tan_ind)
     integer :: N_VERT      ! size(z_ref)
-    integer :: P_COEFFS    ! size(p_basis)
     integer :: VERT_INDS(2*(size(z_ref)+1-tan_ind)) ! What to use in z_ref
-    integer :: Z_COEFFS    ! size(z_basis)
 
     logical :: NOT_ZERO_P(size(vert_inds),size(p_basis))
-    logical :: NOT_ZERO_T(size(vert_inds),size(z_basis))
 
     real(rp) :: ETA_P(size(vert_inds),size(p_basis))
     real(rp) :: ETA_T(size(p_basis))
-    real(rp) :: ETA_T2(size(vert_inds),size(z_basis))
     real(rp) :: N_GRID(size(vert_inds))     ! index of refraction
     real(rp) :: PHI_CORR(size(vert_inds))   ! the refractive correction
     real(rp) :: PHI_SIGN(size(vert_inds))   ! +/- 1.0
@@ -582,13 +578,33 @@ path: do i = i1, i2
     end do
 
     ! now for the optional tangent quantities.
+    if ( present(tan_phi_t) .or. present(dhtdzt) .or. present(dhidtlm) ) &
+      & call get_eta_sparse ( p_basis, phi_t, eta_t, first, last )
     if ( present(tan_phi_t) ) &
       & tan_phi_t = dot_product(t_ref(tan_ind,first:last),eta_t(first:last))
     if ( present(dhtdzt) ) &
       & dhtdzt = dot_product(dhidzij(tan_ind,first:last),eta_t(first:last))
 
     ! compute tangent temperature derivatives
-    if ( present(dhidtlm) ) then
+    if ( present(dhidtlm) ) call Tangent_Temperature_Derivatives
+
+    if ( do_dumps > 0 ) then
+      call dump ( t_grid(:n_path), name='t_grid', format='(1pg14.6)', clean=clean )
+      call dump ( dhitdzi(:n_path), name='dhitdzi', format='(1pg14.6)', clean=clean )
+      if ( dump_stop > 0 ) stop
+    end if
+
+  contains
+
+    subroutine Tangent_Temperature_Derivatives
+      ! This is a subroutine instead of inline so that the references
+      ! to Z_Basis in the dimensions of automatic variables are only
+      ! attempted if Z_Basis is present.
+      real(rp) :: ETA_T2(size(vert_inds),size(z_basis))
+      logical :: NOT_ZERO_T(size(vert_inds),size(z_basis))
+      integer :: I, J, SV_P, SV_T, SV_Z ! Loop inductors and subscripts
+      integer :: P_COEFFS    ! size(p_basis)
+      integer :: Z_COEFFS    ! size(z_basis)
 
       ! Adjust the 2d hydrostatic relative to the surface. Even though
       ! this is updated on every invocation, that is, with a new phi_t, it
@@ -599,7 +615,6 @@ path: do i = i1, i2
       ! latest phi_t.  The algebra is horrible, but Maple has verified this.
       p_coeffs = size(p_basis)
       z_coeffs = size(z_basis)
-      call get_eta_sparse ( p_basis, phi_t, eta_t, first, last )
       do i = 1, z_coeffs
         dhidtlm(:,i,:) = dhidtlm(:,i,:) - &
           & dot_product(dhidtlm(1,i,first:last),eta_t(first:last))
@@ -643,13 +658,7 @@ path: do i = i1, i2
         end do
       end do
 
-    end if
-
-    if ( do_dumps > 0 ) then
-      call dump ( t_grid(:n_path), name='t_grid', format='(1pg14.6)', clean=clean )
-      call dump ( dhitdzi(:n_path), name='dhitdzi', format='(1pg14.6)', clean=clean )
-      if ( dump_stop > 0 ) stop
-    end if
+    end subroutine Tangent_Temperature_Derivatives
 
   end subroutine More_Metrics
 
@@ -665,6 +674,10 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.39  2006/12/20 21:22:16  vsnyder
+! Split metrics into pure H-Phi calculation, and everything else, in
+! preparation for inserting the minimum-Zeta point into the path.
+!
 ! Revision 2.37  2006/12/13 02:31:35  vsnyder
 ! Revision 2.38  2006/12/19 02:50:35  vsnyder
 ! Get rid of STATUS, reference H_Grid to Earth center instead of surface,
