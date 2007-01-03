@@ -43,6 +43,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! LinearSearchStringArray     
 !                    Finds string index of substring in array of strings
 ! LowerCase          tr[A-Z] -> [a-z]
+! NAppearances       The number of times each substring appears in string
 ! NCopies            How many copies of a substring in a string
 ! ReadCompleteLineWithoutComments     
 !                    Knits continuations, snips comments
@@ -84,6 +85,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! log streq (char* str1(:), char* str2, [char* options])
 ! log streq (char* str1, char* str2(:), [char* options])
 ! strings2Ints (char* strs(:), int ints(:,:))
+! int(:) NAppearances (char* string, char* substrings)
 ! char* trim_safe (char* str)
 ! writeIntsToChars (int ints(:), char* strs(:))
 ! Many of these routines take optional arguments that greatly modify
@@ -121,7 +123,8 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! indexes                   LowerCase
 ! isRepeat                  Reverse
 ! LinearSearchStringArray   strings2Ints
-! ncopies                   trim_safe
+! nappearances              trim_safe
+! ncopies
 ! readIntsFromChars         
 ! reFormatDate              
 ! reFormatTime              
@@ -133,7 +136,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
   public :: Capitalize, CatStrings, CompressString, count_words, &
    & depunctuate, hhmmss_value, &
    & indexes, ints2Strings, IsRepeat, &
-   & LinearSearchStringArray, LowerCase, NCopies, &
+   & LinearSearchStringArray, LowerCase, NAppearances, NCopies, &
    & ReadCompleteLineWithoutComments, readIntsFromChars, &
    & Replace, Reverse, Reverse_trim, &
    & SplitNest, SplitWords, streq, strings2Ints, trim_safe, &
@@ -415,6 +418,7 @@ contains
     !
     ! Notes:
     ! mode='wrap' does not return true middle value yet--do we care?
+    ! we trim each element of the sub-strings--should we allow an option not to?
      integer :: i
      integer :: ipos
      integer :: lpos
@@ -654,6 +658,37 @@ contains
     END DO
 
   END FUNCTION LowerCase
+
+  ! ---------------------------------------------------  NAppearances  -----
+  function NAppearances(str, substrings) result(array)
+    character(len=*), intent(in) :: str
+    character(len=*), intent(in), dimension(:) :: substrings
+    integer, dimension(size(substrings)) :: array
+    character(len=len(str)) :: substr
+    ! Returns the array of the number of times each element of substrings
+    ! appears in str
+    ! E.g., if str='ababababababa' and substrings = (/'a', 'ab', 'abab', 'b'/)
+    !      result
+    !      ------
+    !   (/7, 6, 3, 6/)
+    !
+    ! Note:
+    !     these are distinct, non-overlapping occurrences of each sub-string
+    !
+    ! Method:
+    ! Use indexes function to find successive indexes of a single substring
+    ! Internal variables
+    integer, dimension(len(str)) :: tmpArray
+    character(len=len(substrings)), dimension(len(str)) :: tmpSubs
+    integer :: i
+    ! Executable
+    do i=1, size(substrings)
+      tmpArray = 0
+      tmpSubs = substrings(i)
+      tmpArray = indexes(str, tmpSubs, 'left')
+      array(i) = count( tmpArray > 0 )
+    enddo
+  end function NAppearances
 
   ! ---------------------------------------------------  ncopies  -----
   integer function ncopies(str, substr, overlap)
@@ -1599,6 +1634,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.64  2007/01/03 20:40:25  pwagner
+! Added NAppearances
+!
 ! Revision 2.63  2006/10/05 23:34:13  pwagner
 ! Fixed bug in streq making identity comparisons
 !
