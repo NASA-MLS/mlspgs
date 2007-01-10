@@ -52,7 +52,13 @@ MODULE MLSPCF2
    INTEGER, PARAMETER :: mlspcf_ptggrids_end = 20004
    !
    INTEGER, PARAMETER :: mlspcf_pfa_start = 20005
-   INTEGER, PARAMETER :: mlspcf_pfa_end = 20034
+   INTEGER, PARAMETER :: mlspcf_pfa_end = 20032
+   !
+   INTEGER, PARAMETER :: mlspcf_spectroscopy_start = 20033
+   INTEGER, PARAMETER :: mlspcf_spectroscopy_end = 20033
+   !
+   INTEGER, PARAMETER :: mlspcf_surfaceHeight_start = 20034
+   INTEGER, PARAMETER :: mlspcf_surfaceHeight_end = 20034
    !
    INTEGER, PARAMETER :: mlspcf_l2pc_start = 20035
    INTEGER, PARAMETER :: mlspcf_l2pc_end = 20099
@@ -118,6 +124,9 @@ contains
 END MODULE MLSPCF2
 
 ! $Log$
+! Revision 2.20  2007/01/10 00:02:54  pwagner
+! Made PCF entries for spectroscopy and surfaceHeight files
+!
 ! Revision 2.19  2006/06/15 17:35:32  pwagner
 ! Increased max num of l2pc from 30 to 65
 !
