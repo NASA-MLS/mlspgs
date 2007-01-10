@@ -4,13 +4,30 @@
 CVN = lf95
 
 FC= lf95
-FOPTS= -g --chk --info --version
+FOPTS= -g --chk
 LDOPTS=
 PLATFORM= LF95.Linux.slow
-PGSLIB= /van1/vsnyder/mlspgs/SDPToolkit/LF95
+#PGSLIB= /van1/vsnyder/mlspgs/SDPToolkit/LF95
 CC=cc
-HDF5INC=/users/pwagner/apps/test/vrh9.0-lf95/hdf5-1.4.4/include
-HDF5LIB=/users/pwagner/apps/test/vrh9.0-lf95/hdf5-1.4.4/lib
+#HDF5INC=/users/pwagner/apps/test/vrh9.0-lf95/hdf5-1.4.4/include
+#HDF5LIB=/users/pwagner/apps/test/vrh9.0-lf95/hdf5-1.4.4/lib
+
+FAFTER=2>&1|hl
+LAFTER=2>&1|hl
+MLSF95=LF95
+MLSPLAT=Linux
+MLSCONFG=LF95.Linux
+
+PGSINC=/software/toolkit/E-LF6.1-tk5.2.11.A/toolkit5.2.11.A/include
+PGSTK=/software/toolkit/E-LF6.1-tk5.2.11.A/toolkit5.2.11.A/lib/linux
+HDFEOS=/software/toolkit/E-LF6.1-tk5.2.11.A/hdfeos/lib/linux
+HDFEOS5=/software/toolkit/E-LF6.1-tk5.2.11.A/hdfeos5/lib/linux
+HDF=/software/toolkit/E-LF6.1-tk5.2.11.A/HDF4.1r5/lib
+HDF5=/software/toolkit/E-LF6.1-tk5.2.11.A/hdf5-1.6.2/lib
+GCTP=/software/toolkit/E-LF6.1-tk5.2.11.A/hdfeos/lib/linux
+PGSLIB=/software/toolkit/E-LF6.1-tk5.2.11.A/toolkit5.2.11.A/lib/linux
+HDFEOS_LIB=/software/toolkit/E-LF6.1-tk5.2.11.A/hdfeos/lib/linux
+HDFLIB=/software/toolkit/E-LF6.1-tk5.2.11.A/HDF4.1r5/lib
 
 machine_$(CVN).o machine.mod: machine_$(CVN).f90
 	$(FC) $(FOPTS) -c machine_$(CVN).f90
@@ -30,6 +47,23 @@ convert_spectroscopy: convert_spectroscopy.f90
 	$(FC) $(FOPTS) -o convert_spectroscopy -I $(HOME)/mlspgs/lib/$(PLATFORM) \
           convert_spectroscopy.f90 -L $(HOME)/mlspgs/lib/$(PLATFORM) -lmls \
           -L $(PGSLIB) -lPGSTK
+
+CopyElevMap: CopyElevMap.f90
+	$(FC) $(FOPTS) -o CopyElevMap CopyElevMap.f90
+
+Dump_HDF5_Structure.o: Dump_HDF5_Structure.f90 MyMLSDataInfo.mod
+	$(FC) -c $(FOPTS) -I . -I ../lib/$(MLSCONFG) -I $(HDF5)/../fortran/src \
+          -I $(HDF5)/../include Dump_HDF5_Structure.f90 $(FAFTER)
+
+Dump_HDF5_Structure: Dump_HDF5_Structure.o MyMLSDataInfo.o
+	$(FC) $(LDOPTS) -o Dump_HDF5_Structure \
+         Dump_HDF5_Structure.o MyMLSDataInfo.o \
+         -L ../lib/$(MLSCONFG) -lmls \
+         -L $(PGSLIB) -lPGSTK \
+         -L $(HDF5) -lhdf5_fortran -lhdf5  \
+         -lz \
+         -ljpeg \
+         -lz -L/usr/lib/gcc-lib/i386-redhat-linux/3.2.3 -lgcc $(LAFTER)
 
 DumpPFAData: DumpPFAData.f90
 	$(FC) $(FOPTS) -o DumpPFAData -I $(HOME)/mlspgs/lib/$(PLATFORM) \
@@ -52,7 +86,16 @@ h5cat: h5cat.c
 	$(CC) -g -o h5cat -I $(HDF5INC) h5cat.c \
           -L $(HDF5LIB) -lz -lm -lhdf5
 
+MyMLSDataInfo.mod: MyMLSDataInfo.o
+
+MyMLSDataInfo.o: MyMLSDataInfo.f90
+	$(FC) -c $(FOPTS) -I . -I ../lib/$(MLSCONFG) -I $(HDF5)/../fortran/src \
+          -I $(HDF5)/../include MyMLSDataInfo.f90 $(FAFTER)
+
 # $Log$
+# Revision 1.7  2004/09/23 23:16:11  vsnyder
+# Simplify make for compare
+#
 # Revision 1.6  2004/09/22 19:22:50  vsnyder
 # Repair make for f90tex
 #
