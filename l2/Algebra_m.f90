@@ -55,7 +55,7 @@ contains
     use DECLARATION_TABLE, only: DECLARE, DECLS, EMPTY, EXPRN, EXPRN_M, &
       & EXPRN_V, GET_DECL, LABEL, NUM_VALUE, REDECLARE
     use ForwardModelConfig, only: FORWARDMODELCONFIG_T
-    use Init_Tables_Module, only: S_Matrix, S_Vector
+    use Init_Tables_Module, only: S_Matrix, S_Quantity, S_Vector
     use MatrixModule_1, only: AddToMatrix, AddToMatrixDatabase, AssignMatrix, &
       & CholeskyFactor, CreateEmptyMatrix, CopyMatrix, &
       & CopyMatrixValue, DestroyMatrix, Dump, GetActualMatrixFromDatabase, &
@@ -110,9 +110,11 @@ contains
     integer, parameter :: Ambiguous = 1                ! LHS is ambiguous
     integer, parameter :: CantInvertVector = ambiguous + 1    ! Can't invert vector
     integer, parameter :: Incompatible = cantInvertVector + 1 ! incompatible operands
-    integer, parameter :: NotPlain = incompatible + 1 ! Wrong kind of matrix
-    integer, parameter :: NotSupported = notPlain + 1 ! Wrong kind of matrix
-    integer, parameter :: Undefined = notSupported + 1 ! undefined operand
+    integer, parameter :: NotPlain = incompatible + 1  ! Wrong kind of matrix
+    integer, parameter :: NotQuantity = notPlain + 1   ! Right of dot not quantity
+    integer, parameter :: NotSupported = notQuantity + 1 ! Wrong kind of matrix
+    integer, parameter :: NotVector = notSupported + 1 ! Left of dot not vector
+    integer, parameter :: Undefined = notVector + 1    ! undefined operand
     integer, parameter :: UnknownFunc = undefined + 1  ! unknown function
     integer, parameter :: UnknownOp = UnknownFunc + 1  ! unknown operator
     integer, parameter :: WrongNumArgs = UnknownOp + 1 ! wrong number of args
@@ -517,8 +519,13 @@ contains
         call output ( 'Operands are incompatible.', advance='yes' )
       case ( notPlain )
         call output ( 'Matrix is not a plain matrix.', advance='yes' )
+      case ( notQuantity )
+        call output ( 'Right operand is not a quantity of the left operand.', &
+          & advance='yes' )
       case ( notSupported )
         call output ( 'Operation not (yet?) supported for this kind(s) of matrix.', advance='yes' )
+      case ( notVector )
+        call output ( 'Left operand of dot is not a vector.', advance='yes' )
       case ( undefined )
         call output ( 'Name in expression is undefined.', advance='yes' )
       case ( unknownFunc )
@@ -555,6 +562,7 @@ contains
       use STRING_TABLE, only: FLOAT_VALUE
       use TREE, only: NODE_ID, NSONS, SUB_ROSA, SUBTREE
       use TREE_TYPES ! Everything, especially everything beginning with N_
+      use VectorsModule, only: GetVectorQuantityIndexByName
 
       integer, intent(in) :: Root  ! Index in tree of root of expression subtree
       integer, intent(out) :: What  ! What is result (see its parameters above)
@@ -640,7 +648,36 @@ contains
       case ( n_number ) ! -------------------------------------------- Number
         dvalue = float_value(sub_rosa(root))
         what = w_number
-      case ( n_func_ref )
+      case ( n_dot ) ! -------------------------------------------------- Dot
+        son1 = subtree(1,root)
+        call expr ( son1, what, dvalue, vector, matrix, matrix_c, &
+          & matrix_k, matrix_s )
+        if ( what /= w_vector ) then
+          call announce_error ( son1, notVector )
+          what = w_nothing
+          return
+        end if
+        son2 = subtree(2,root)
+        decl = get_my_decl(son2)
+        if ( decl%type /= label ) then
+          call announce_error ( son1, notQuantity )
+          what = w_nothing
+          return
+        end if
+        if ( get_spec(decl%tree) /= s_quantity ) then
+          call announce_error ( son1, notQuantity )
+          what = w_nothing
+          return
+        end if
+        value = getVectorQuantityIndexByName ( vector, sub_rosa(son2) )
+        if ( value < 0 ) then
+          call announce_error ( son1, notQuantity )
+          what = w_nothing
+          return
+        end if
+        what = w_nothing
+        call announce_error ( root, notSupported )
+      case ( n_func_ref ) ! ---------------------------------------- Func_ref
         son1 = subtree(1,root)
         string = sub_rosa(son1)
         ! Look up the function name
@@ -1478,6 +1515,9 @@ contains
 end module ALGEBRA_M
 
 ! $Log$
+! Revision 2.23  2007/01/11 20:48:30  vsnyder
+! Add SurfaceHeight to gridded data, vector quantities, allow dump in ReadApriori
+!
 ! Revision 2.22  2005/08/31 19:40:03  livesey
 ! Added vector multiply capability
 !
