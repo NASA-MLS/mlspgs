@@ -1046,8 +1046,8 @@ contains ! ============= Public procedures ===================================
       L_REFGPH, L_REFLTEMP, L_REFLTRANS, L_REFLREFL, L_REFLSPILL, &
       L_RHI, L_SINGLECHANNELRADIANCE, L_SIZEDISTRIBUTION, &
       L_SCANRESIDUAL, L_SCECI, L_SCVEL, L_SCVELECI, &
-      L_SCVELECR, L_SCGEOCALT, L_SPACERADIANCE, &
-      L_STATUS, L_STRAYRADIANCE, L_SURFACETYPE, L_SYSTEMTEMPERATURE, &
+      L_SCVELECR, L_SCGEOCALT, L_SPACERADIANCE, L_STATUS, &
+      L_STRAYRADIANCE, L_SurfaceHeight, L_SURFACETYPE, L_SYSTEMTEMPERATURE, &
       L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, L_TNGTGEOCALT, &
       L_VMR
     use Init_Tables_Module, only: PHYQ_EXTINCTION, PHYQ_FREQUENCY,&
@@ -1176,6 +1176,7 @@ contains ! ============= Public procedures ===================================
       l_spaceRadiance, phyq_temperature, none, next, &
       l_status, phyq_dimensionless, p_hGrid, next, &
       l_strayRadiance, phyq_temperature, p_signal, p_majorFrame, next, &
+      l_surfaceHeight, phyq_length, p_hGrid, next, &
       l_surfaceType, phyq_dimensionless, p_hGrid, next, & 
       l_systemTemperature, phyq_temperature, p_signal, next, &
       l_temperature, phyq_temperature, p_hGrid, p_vGrid, p_mustbezeta, next, &
@@ -1294,6 +1295,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.137  2007/01/11 20:44:27  vsnyder
+! Add SurfaceHeight
+!
 ! Revision 2.136  2006/10/02 23:05:31  pwagner
 ! May Fill chi^2 ratio to measure convergence
 !
