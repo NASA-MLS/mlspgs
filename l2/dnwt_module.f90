@@ -78,7 +78,7 @@ module DNWT_MODULE
 !       CASE ( NF_LEV )
 !         Compute quantities necessary to determine the Levenberg-Marquardt
 !         stabilization parameter: Solve U^T q = dX where U is the Cholesky
-!         factor of J^T J, compute |q|**2
+!         factor of J^T J, compute |q|**2 and store it in AJ%QNSQ.
 !       CASE ( NF_SOLVE )
 !         Apply Levenberg-Marquardt stabilization with parameter = AJ%SQ,
 !         and solve (Jacobian) * "candidate DX" ~ -F for "candidate DX".
@@ -1373,6 +1373,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.47  2007/01/11 20:46:33  vsnyder
+! Correct a comment
+!
 ! Revision 2.46  2006/06/08 23:55:59  vsnyder
 ! Tighten More' Sorensen convergence criteria, TeXnicalities
 !

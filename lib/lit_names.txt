@@ -191,6 +191,7 @@ sizeDistribution
 spaceRadiance
 status
 strayRadiance
+surfaceHeight
 surfaceType
 swath
 systemTemperature
@@ -221,6 +222,9 @@ zeta
 zonalavg
 
 # $Log$
+# Revision 2.47  2007/01/11 20:41:49  vsnyder
+# Add SurfaceHeight
+#
 # Revision 2.46  2006/10/11 00:14:57  pwagner
 # Added convergenceRatio for new field in L2GP data type
 #
