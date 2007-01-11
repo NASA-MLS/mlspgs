@@ -458,8 +458,8 @@ contains ! =====     Public procedures     =============================
              l+l_clear_110rh_below_tropopause, l+l_cloudy_110rh_below_top, &
              l+l_cloudy_110rh_in_cloud, l+l_cloudy_nearside_only, n+n_dt_def /) )
     call make_tree ( (/ &
-      begin, t+t_griddedOrigin, l+l_climatology, l+l_dao, l+l_geos5, l+l_ncep, &
-             l+l_strat, l+l_gloria, n+n_dt_def, &
+      begin, t+t_griddedOrigin, l+l_climatology, l+l_dao, l+l_geos5, &
+             l+l_gloria, l+l_ncep, l+l_strat, l+l_surfaceHeight, n+n_dt_def, &
       begin, t+t_hGridType, l+l_explicit, l+l_fixed, l+l_fractional, &
              l+l_height, l+l_regular, l+l_l2gp, n+n_dt_def, &
       begin, t+t_masks, l+l_cloud, l+l_fill, l+l_full_derivatives, l+l_linalg, &
@@ -507,8 +507,8 @@ contains ! =====     Public procedures     =============================
              l+l_rhi, l+l_singleChannelRadiance, l+l_sizedistribution, &
              l+l_scanResidual, l+l_scECI, l+l_scVel, l+l_scVelECI, &
              l+l_scVelECR, l+l_scGeocAlt, &
-             l+l_spaceRadiance, l+l_status, l+l_strayRadiance, l+l_surfacetype, &
-             l+l_systemTemperature, &
+             l+l_spaceRadiance, l+l_status, l+l_strayRadiance, l+l_surfaceHeight, &
+             l+l_surfacetype, l+l_systemTemperature, &
              l+l_temperature, l+l_tngtECI, l+l_tngtGeodAlt, l+l_tngtGeocAlt, &
              l+l_totalExtinction, l+l_vmr, n+n_dt_def /) )
     call make_tree ( (/ &
@@ -1262,11 +1262,12 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ &
       begin, s+s_forwardModelGlobal, &
              begin, f+f_antennaPatterns, t+t_string, n+n_field_type, &
-             begin, f+f_l2pc, t+t_string, n+n_field_type, &
-             begin, f+f_filterShapes, t+t_string, n+n_field_type, &
              begin, f+f_DACSfilterShapes, t+t_string, n+n_field_type, &
+             begin, f+f_filterShapes, t+t_string, n+n_field_type, &
+             begin, f+f_l2pc, t+t_string, n+n_field_type, &
              begin, f+f_PFAFiles, t+t_string, n+n_field_type, &
-             begin, f+f_pointingGrids, t+t_string, n+n_field_type, np+n_spec_def /) )
+             begin, f+f_pointingGrids, t+t_string, n+n_field_type, &
+             np+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_directWriteFile, &
              begin, f+f_file, t+t_string, nr+n_field_type, &
@@ -1437,7 +1438,7 @@ contains ! =====     Public procedures     =============================
              s+s_forwardModelGlobal, s+s_l1brad, s+s_l1boa, &
              s+s_l2parsf, s+s_makePFA, s+s_pfaData, s+s_readPFA, &
              s+s_tGrid, s+s_time, s+s_vGrid, s+s_writePFA, n+n_section, &
-      begin, z+z_readapriori, s+s_time, s+s_gridded, s+s_l2gp, &
+      begin, z+z_readapriori, s+s_time, s+s_dump, s+s_gridded, s+s_l2gp, &
              s+s_l2aux, s+s_snoop, n+n_section, &
       begin, z+z_mergegrids, s+s_time, s+s_merge, s+s_concatenate, s+s_delete, &
              s+s_ConvertEtaToP, s+s_vgrid, s+s_wmoTrop, &
@@ -1498,6 +1499,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.453  2007/01/11 20:48:30  vsnyder
+! Add SurfaceHeight to gridded data, vector quantities, allow dump in ReadApriori
+!
 ! Revision 2.452  2006/10/11 00:18:17  pwagner
 ! Changes to permit new convergence ratio field in L2GP
 !
