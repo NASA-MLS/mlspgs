@@ -65,7 +65,8 @@ contains
     use QuantityTemplates, only: Dump, QuantityTemplate_T
     use SpectroscopyCatalog_m, only: Catalog, Dump, Dump_Lines_Database, Lines
     use String_Table, only: Get_String
-    use Toggles, only: Switches
+    use Toggles, only: Gen, Switches, Toggle
+    use Trace_m, only: Trace_begin, Trace_end
     use Tree, only: Decoration, Node_Id, Nsons, Source_Ref, Sub_rosa, Subtree
     use Tree_Types, only: N_Spec_Args
     use VectorsModule, only: Dump, & ! for vectors, vector quantities and templates
@@ -120,6 +121,8 @@ contains
     integer, parameter :: Numeric = noVT + 1
     integer, parameter :: Stop = numeric + 1
     integer, parameter :: Unknown = stop + 1 ! Unknown template
+
+    if ( toggle(gen) ) call trace_begin ( 'DumpCommand', root )
 
     haveQuantityTemplatesDB = present(quantityTemplatesDB)
     if ( haveQuantityTemplatesDB ) &
@@ -289,8 +292,8 @@ contains
         if ( details < -1 ) cycle
         if ( haveGriddedData ) then
           do i = 2, nsons(son)
-            call output ( ' GriddedData ' )
-            call dump ( & ! has no details switch
+            call output ( ' GriddedData: ' )
+            call dump ( &
               & griddedDataBase(decoration(decoration(subtree(i,son)))), details )
           end do
         else
@@ -485,6 +488,8 @@ contains
       end select
     end do
 
+    if ( toggle(gen) ) call trace_end ( 'DumpCommand' )
+
   contains
 
     subroutine AnnounceError ( where, what )
@@ -542,6 +547,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.34  2007/01/11 20:44:55  vsnyder
+! Add Tracing
+!
 ! Revision 2.33  2006/09/21 18:48:33  pwagner
 ! Reduce level of dumps in SIDS version
 !
