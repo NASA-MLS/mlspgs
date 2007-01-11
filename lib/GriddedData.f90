@@ -507,6 +507,8 @@ contains
   subroutine DumpGriddedData ( GriddedData, Details )
     use Dump_0, only: Dump
     use ieee_arithmetic, only: ieee_is_finite, ieee_is_nan
+    use Intrinsic, only: Lit_Indices
+    use String_Table, only: Display_String
 
     ! Imitating what dump_pointing_grid_database does, but for gridded data
     ! which may come from climatology, ncep, dao
@@ -538,16 +540,20 @@ contains
     endif
     call output('Gridded quantity name ' // GriddedData%quantityName, advance='yes')
       if ( myDetails < -1 ) return
-    call output('description ' // GriddedData%description, advance='yes')
-    call output('units ' // trim(GriddedData%units), advance='yes')
-    call output('missing value ', advance='no')
+    call output(' description ' // GriddedData%description, advance='yes')
+    call output(' units ' // trim(GriddedData%units), advance='yes')
+    call output(' missing value ', advance='no')
     call output(GriddedData%missingValue, advance='yes')
 
     call output ( ' ************ Geometry ********** ' ,advance='yes')
 
     call output ( ' Vertical coordinate = ' )
-    call output ( GriddedData%verticalCoordinate, advance='yes' )
-    call output('heights units ' // trim(GriddedData%heightsUnits), advance='yes')
+    if ( GriddedData%verticalCoordinate > 0 ) then
+      call display_string ( lit_indices(GriddedData%verticalCoordinate), advance='yes' )
+    else
+      call output ( GriddedData%verticalCoordinate, advance='yes' )
+    end if
+    call output(' heights units ' // trim(GriddedData%heightsUnits), advance='yes')
     call output ( ' No. of heights = ' )
     call output ( GriddedData%noHeights, advance='yes' )
     if ( myDetails >= 0 ) call dump ( GriddedData%heights, &
@@ -1198,6 +1204,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.43  2007/01/11 20:31:53  vsnyder
+! Spiff up the dump
+!
 ! Revision 2.42  2006/11/01 20:27:05  pwagner
 ! Hasty fix to units bug in eta-level conversion
 !
