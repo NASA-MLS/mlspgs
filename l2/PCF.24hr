@@ -75,20 +75,20 @@
 # Next non-comment line is the default location for PRODUCT INPUT FILES
 # WARNING! DO NOT MODIFY THIS LINE unless you have relocated these 
 # data set files to the location specified by the new setting.
-!  /bigdata/livesey/misc
+!  /users/vsnyder/l2
 #
 #-----------------
 # Test input files
 #-----------------
-21110|mls_l1b_oa_v0-01.2000-001|/bigdata/livesey/misc/||||1
-21050|mls_l1b_radf_v0-01.2000-001|/bigdata/livesey/misc/||||1
-21051|mls_l1b_radd_v0-01.2000-001|/bigdata/livesey/misc/||||1
-22081|mls_l1b_eng_v0-01.2000-001|/bigdata/livesey/misc/||||1
+21110|mls_l1b_oa_v0-01.2000-001|/users/vsnyder/l2/||||1
+21050|mls_l1b_radf_v0-01.2000-001|/users/vsnyder/l2/||||1
+21051|mls_l1b_radd_v0-01.2000-001|/users/vsnyder/l2/||||1
+22081|mls_l1b_eng_v0-01.2000-001|/users/vsnyder/l2/||||1
 901|sidstest.l2cf|/user1/livesey/mlspgs/l2/||||1
 20000|emls-signals.dat|/user1/livesey//mlspgs/tables||||1
-21600|a_llk_01.tsyn3d_mis_p.t19991006|/bigdata/livesey/misc||||1
-21500|GDASOZFH_Aug97.hdfeos|/bigdata/livesey/misc||||1
-21700|emls_clim_v0.1.dat|/bigdata/livesey/misc||||1
+21600|a_llk_01.tsyn3d_mis_p.t19991006|/users/vsnyder/l2||||1
+21500|GDASOZFH_Aug97.hdfeos|/users/vsnyder/l2||||1
+21700|emls_clim_v0.1.dat|/users/vsnyder/l2||||1
 # -----------------------------------------------------------------------
 # These are actual ancillary data set files - supplied by ECS or the
 # user.  The following are supplied for purposes of tests and as a useful
@@ -233,32 +233,32 @@
 #########################################################################
 #
 # Next line is the default location for PRODUCT OUTPUT FILES
-!  /bigdata/livesey/misc
+!  /users/vsnyder/l2
 #
 #------------------
 # Test output files
 #------------------
 #100|temp_metawrite|/home/ahanzel/mlspgs/l2||||1
-30000|mls_l2gp_temp_v0-5prelim1.2000-001|/bigdata/livesey/misc||||1
-30001|mls_l2gp_gph_v0-5prelim1.2000-001|/bigdata/livesey/misc||||1
-30002|mls_l2gp_h2o_v0-5prelim1.2000-001|/bigdata/livesey/misc||||1
-30003|mls_l2gp_hno3_v0-5prelim1.2000-001|/bigdata/livesey/misc||||1
-30004|mls_l2gp_o3_v0-5prelim1.2000-001|/bigdata/livesey/misc||||1
-30005|mls_l2gp_hcl_v0-5prelim1.2000-001|/bigdata/livesey/misc||||1
-30006|mls_l2gp_clo_v0-5prelim1.2000-001|/bigdata/livesey/misc||||1
-30007|mls_l2gp_n2o_v0-5prelim1.2000-001|/bigdata/livesey/misc||||1
-30008|mls_l2gp_co_v0-5prelim1.2000-001|/bigdata/livesey/misc||||1
-30009|mls_l2gp_oh_v0-5prelim1.2000-001|/bigdata/livesey/misc||||1
-30010|mls_l2gp_rhi_v0-5prelim1.2000-001|/bigdata/livesey/misc||||1
-30011|mls_l2gp_so2_v0-5prelim1.2000-001|/bigdata/livesey/misc||||1
-30012|mls_l2gp_ho2_v0-5prelim1.2000-001|/bigdata/livesey/misc||||1  
-30013|mls_l2gp_bro_v0-5prelim1.2000-001|/bigdata/livesey/misc||||1
-30014|mls_l2gp_hocl_v0-5prelim1.2000-001|/bigdata/livesey/misc||||1   
-30015|mls_l2gp_hcn_v0-5prelim1.2000-001|/bigdata/livesey/misc||||1
-30016|mls_l2gp_cirrus-ice_v0-5prelim1.2000-001|/bigdata/livesey/misc||||1  
-#22517|mls_l2gp_o3-strat-column_v0-5prelim1.2000-001|/bigdata/livesey/misc||||1
-30017|mls_l2gp_others_v0-5prelim1.2000-001|/bigdata/livesey/misc||||1
-30600|mls_l2aux_full_v0-5prelim1.2000-001|/bigdata/livesey/misc||||1
+30000|mls_l2gp_temp_v0-5prelim1.2000-001|/users/vsnyder/l2||||1
+30001|mls_l2gp_gph_v0-5prelim1.2000-001|/users/vsnyder/l2||||1
+30002|mls_l2gp_h2o_v0-5prelim1.2000-001|/users/vsnyder/l2||||1
+30003|mls_l2gp_hno3_v0-5prelim1.2000-001|/users/vsnyder/l2||||1
+30004|mls_l2gp_o3_v0-5prelim1.2000-001|/users/vsnyder/l2||||1
+30005|mls_l2gp_hcl_v0-5prelim1.2000-001|/users/vsnyder/l2||||1
+30006|mls_l2gp_clo_v0-5prelim1.2000-001|/users/vsnyder/l2||||1
+30007|mls_l2gp_n2o_v0-5prelim1.2000-001|/users/vsnyder/l2||||1
+30008|mls_l2gp_co_v0-5prelim1.2000-001|/users/vsnyder/l2||||1
+30009|mls_l2gp_oh_v0-5prelim1.2000-001|/users/vsnyder/l2||||1
+30010|mls_l2gp_rhi_v0-5prelim1.2000-001|/users/vsnyder/l2||||1
+30011|mls_l2gp_so2_v0-5prelim1.2000-001|/users/vsnyder/l2||||1
+30012|mls_l2gp_ho2_v0-5prelim1.2000-001|/users/vsnyder/l2||||1  
+30013|mls_l2gp_bro_v0-5prelim1.2000-001|/users/vsnyder/l2||||1
+30014|mls_l2gp_hocl_v0-5prelim1.2000-001|/users/vsnyder/l2||||1   
+30015|mls_l2gp_hcn_v0-5prelim1.2000-001|/users/vsnyder/l2||||1
+30016|mls_l2gp_cirrus-ice_v0-5prelim1.2000-001|/users/vsnyder/l2||||1  
+#22517|mls_l2gp_o3-strat-column_v0-5prelim1.2000-001|/users/vsnyder/l2||||1
+30017|mls_l2gp_others_v0-5prelim1.2000-001|/users/vsnyder/l2||||1
+30600|mls_l2aux_full_v0-5prelim1.2000-001|/users/vsnyder/l2||||1
 #
 #------------------------------------------------------------------------
 # This file is created when PGS_MET_Write is used with an intention
@@ -290,7 +290,7 @@
 #########################################################################
 #
 # Next line is the default location for SUPPORT INPUT FILES
-!  /bigdata/livesey/misc
+!  /users/vsnyder/l2
 #
 #  
 # -----------------------------------------------------------------------
@@ -427,7 +427,7 @@
 #########################################################################
 #
 # Next line is default location for SUPPORT OUTPUT FILES
-!  /bigdata/livesey/misc
+!  /users/vsnyder/l2
 #
 #
 # -----------------------------------------------------------------------
@@ -437,13 +437,13 @@
 # Remember: all executables within a PGE will contribute status data to 
 # the same batch of log files. (DO NOT REMOVE THESE ENTRIES)
 # -----------------------------------------------------------------------
-10100|LogStatus|/bigdata/livesey/misc||||1
-10101|LogReport|/bigdata/livesey/misc||||1
-10102|LogUser|/bigdata/livesey/misc||||1
-10103|TmpStatus|/bigdata/livesey/misc||||1
-10104|TmpReport|/bigdata/livesey/misc||||1
-10105|TmpUser|/bigdata/livesey/misc||||1
-10110|MailFile|/bigdata/livesey/misc||||1
+10100|LogStatus|/users/vsnyder/l2||||1
+10101|LogReport|/users/vsnyder/l2||||1
+10102|LogUser|/users/vsnyder/l2||||1
+10103|TmpStatus|/users/vsnyder/l2||||1
+10104|TmpReport|/users/vsnyder/l2||||1
+10105|TmpUser|/users/vsnyder/l2||||1
+10110|MailFile|/users/vsnyder/l2||||1
 #
 # -----------------------------------------------------------------------
 # ASCII file which stores pointers to runtime SMF files in lieu of 
@@ -583,7 +583,7 @@
 #########################################################################
 #
 # Next line is default location for INTERMEDIATE INPUT FILES
-!  /bigdata/livesey/misc
+!  /users/vsnyder/l2
 #
 #
 ?   INTERMEDIATE OUTPUT
@@ -599,7 +599,7 @@
 #########################################################################
 #
 # Next line is default location for INTERMEDIATE OUTPUT FILES
-!  /bigdata/livesey/misc
+!  /users/vsnyder/l2
 #
 #
 ?   TEMPORARY I/O
@@ -614,11 +614,11 @@
 #########################################################################
 #
 # Next line is default location for TEMPORARY FILES
-!  /bigdata/livesey/misc
+!  /users/vsnyder/l2
 #
 #
 ?   END
 
-# 7/18/00-ahanzel- Directed output & log files to /bigdata/livesey/misc
+# 7/18/00-ahanzel- Directed output & log files to /users/vsnyder/l2
 # 7/19/00-ahanzel- Directed files 10252 and 10254 (metadata output) 
-#			to /bigdata/livesey/misc.	 
+#			to /users/vsnyder/l2.	 

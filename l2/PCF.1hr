@@ -80,7 +80,7 @@
 #-----------------
 # Test input files
 #-----------------
-900|PCF.1hr|/van1/vsnyder/mlspgs/l2/||||1
+900|PCF.1hr|/users/vsnyder/mlspgs/l2/||||1
 901|sidstest.l2cf|/user5/zvi/mlspgs/l2/||||1
 20000|emls-signals.dat|/user1/livesey//mlspgs/tables||||1
 21050|mls_l1b_radf_v0-01.2000-001|/nas/bigdata/livesey/misc/||||1
@@ -472,13 +472,13 @@
 # Remember: all executables within a PGE will contribute status data to 
 # the same batch of log files. (DO NOT REMOVE THESE ENTRIES)
 # -----------------------------------------------------------------------
-10100|LogStatus|/van1/vsnyder/mlspgs/l2||||1
-10101|LogReport|/van1/vsnyder/mlspgs/l2||||1
-10102|LogUser|/van1/vsnyder/mlspgs/l2||||1
-10103|TmpStatus|/van1/vsnyder/mlspgs/l2||||1
-10104|TmpReport|/van1/vsnyder/mlspgs/l2||||1
-10105|TmpUser|/van1/vsnyder/mlspgs/l2||||1
-10110|MailFile|/van1/vsnyder/mlspgs/l2||||1
+10100|LogStatus|/users/vsnyder/mlspgs/l2||||1
+10101|LogReport|/users/vsnyder/mlspgs/l2||||1
+10102|LogUser|/users/vsnyder/mlspgs/l2||||1
+10103|TmpStatus|/users/vsnyder/mlspgs/l2||||1
+10104|TmpReport|/users/vsnyder/mlspgs/l2||||1
+10105|TmpUser|/users/vsnyder/mlspgs/l2||||1
+10110|MailFile|/users/vsnyder/mlspgs/l2||||1
 #
 # -----------------------------------------------------------------------
 # ASCII file which stores pointers to runtime SMF files in lieu of 
