@@ -53,7 +53,7 @@ module MLSFiles               ! Utility file routines
   & AddInitializeMLSFile, AreTheSameFile, &
   & close_MLSFile, &
   & Deallocate_filedatabase, Dump, &
-  & get_free_lun, GetMLSFileByName, GetMLSFileByType, GetPCFromRef, &
+  & GetMLSFileByName, GetMLSFileByType, GetPCFromRef, &
   & InitializeMLSFile, &
   & maskName, &
   & mls_closeFile, mls_exists, mls_hdf_version, mls_inqswath, &
@@ -103,7 +103,6 @@ module MLSFiles               ! Utility file routines
 ! Deallocate_filedatabase
 !                    Deallocates file database, closing any still-open files
 ! Dump               Dumps file info: type, access, name, etc.
-! get_free_lun       Gets a free logical unit number
 ! GetMLSFileByName   Returns pointer to MLSFile matching fileName
 ! GetMLSFileByType   Returns pointer to MLSFile matching fileType
 ! GetPCFromRef       Turns a FileName into the corresponding PC
@@ -636,21 +635,6 @@ contains
     Deallocate(nameArray, unsortedArray, intArray)
   end function GetPCFromRef
 
-! ---------------------------------------------- get_free_lun ------
-
-! This function returns a free logical unit number
-
-  INTEGER(i4) FUNCTION get_free_lun()
-  LOGICAL :: exist                    ! Flag from inquire
-  LOGICAL :: opened                   ! Flag from inquire
-  DO get_free_lun = bottom_unit_num, top_unit_num
-    INQUIRE(UNIT=get_free_lun, EXIST=exist, OPENED=opened)
-    IF(exist .and. .not. opened) EXIT
-  END DO
-  IF (opened .or. .not. exist) CALL MLSMessage ( MLSMSG_Error, moduleName,  &
-     "No logical unit numbers available" )
-  END FUNCTION get_free_lun
-
 ! ---------------------------------------------- GetMLSFileByName ------
 
 ! This function returns the MLSFile matching a given name
@@ -771,6 +755,8 @@ contains
     & hdfVersion, debugOption, inp_rec_length) &
     &  result (theFileHandle)
 
+    use IO_Stuff, only: Get_Lun
+
     ! Dummy arguments
     integer(i4),  intent(OUT)  :: ErrType
     integer(i4),  intent(IN)  :: record_length
@@ -799,7 +785,6 @@ contains
     character (LEN=MAXFILENAMELENGTH) :: myName
     integer(i4) :: myPC
     integer                       :: version, returnStatus, your_version
-    logical       :: tiedup
     character (LEN=KEYWORDLEN) :: access, action, form, position, status
     ! character (LEN=2) :: the_eff_mode
     integer :: the_eff_mode
@@ -1123,16 +1108,8 @@ contains
         return
       end select
 
-      tiedup = .true.
-
-      do unit = bottom_unit_num, top_unit_num
-      	inquire ( unit=unit, opened=tiedup )
-        if (.not. tiedup) then
-          exit
-        endif
-      enddo
-
-      if(tiedup) then
+      call get_lun ( unit, msg=.false. )
+      if( unit < 0 ) then
         ErrType = NOFREEUNITS
         if ( debug ) &
          & call output('No free io units available', advance='yes')
@@ -1212,6 +1189,8 @@ contains
 
   subroutine open_MLSFile(MLSFile, PCBottom, PCTop, inp_rec_length, unknown)
 
+    use IO_Stuff, only: Get_Lun
+
     ! Dummy arguments
     type (MLSFile_T)          :: MLSFile
     integer(i4),  optional, intent(IN)   :: PCBottom, PCTop
@@ -1228,7 +1207,6 @@ contains
     integer, parameter :: DEFAULTRECLEN=0
     integer, parameter :: KEYWORDLEN=12			! Max length of keywords in OPEN(...)
     integer                       :: version, returnStatus
-    logical       :: tiedup
     character (LEN=KEYWORDLEN) :: access, action, form, position, status
     integer                       :: record_length
     integer                       :: unit
@@ -1239,16 +1217,15 @@ contains
       if ( MLSFile%PCFId > 0 ) then
         returnStatus = Pgs_pc_getReference(MLSFile%PCFId, version, &
           & MLSFile%Name)
-      elseif ( MLSFile%Name /= '' ) then
-          MLSFile%PCFId = GetPCFromRef(trim(MLSFile%Name), PCBottom, PCTop, &
-            &  caseSensitive, returnStatus, version, &
-            & debugOption=.false.)
-
+      else if ( MLSFile%Name /= '' ) then
+        MLSFile%PCFId = GetPCFromRef(trim(MLSFile%Name), PCBottom, PCTop, &
+          & caseSensitive, returnStatus, version, &
+          & debugOption=.false.)
       else
-        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+        call MLSMessage ( MLSMSG_Error, moduleName,  &
          & 'You must supply either a name or a PCFid to open a file' )
-      endif
-    endif
+      end if
+    end if
 !     select case (MLSFile%access)
 !     case('rdonly')
 !       FileAccessType = DFACC_RDONLY
@@ -1344,33 +1321,33 @@ contains
         form = 'unformatted'
       endif
 
-      tiedup = .true.
-
-      do unit = bottom_unit_num, top_unit_num
-      	inquire ( unit=unit, opened=tiedup )
-        if (.not. tiedup) then
-          exit
-        endif
-      enddo
-
-      if(tiedup) then
+      call get_lun ( unit, msg=.false. )
+      if ( unit < 0 ) then
         ErrType = NOFREEUNITS
-      endif
+      end if
 
       if (present(unknown)) then
         if (unknown) status = 'unknown'
       end if
 
       if ( present(inp_rec_length) ) then
-        open(unit=unit, recl=inp_rec_length, form=form, &
-          & status=status, file=trim(MLSFile%Name), iostat=ErrType)
-      elseif(access /= 'direct') then
-        open(unit=unit, access=access, action=action, form=form, &
-          & position=position, status=status, file=trim(MLSFile%Name), iostat=ErrType)
+        if ( access /= 'direct' ) then
+          open ( unit=unit, access=access, action=action, form=form, &
+            & status=status, file=trim(MLSFile%Name), iostat=ErrType, &
+            & recl=inp_rec_length, position=position )
+        else
+          open ( unit=unit, access=access, action=action, form=form, &
+            & status=status, file=trim(MLSFile%Name), iostat=ErrType, &
+            & recl=inp_rec_length )
+        end if
+      else if ( access /= 'direct' ) then
+        open ( unit=unit, access=access, action=action, form=form, &
+          & status=status, file=trim(MLSFile%Name), iostat=ErrType, &
+          & position=position )
       else
-        open(unit=unit, access=access, action=action, form=form, &
-          & status=status, file=trim(MLSFile%Name), iostat=ErrType)
-      endif
+        open ( unit=unit, access=access, action=action, form=form, &
+          & status=status, file=trim(MLSFile%Name), iostat=ErrType )
+      end if
 
       if(ErrType /= 0) then
         call output( 'Fortran opening unit ', advance='no')
@@ -2653,6 +2630,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.75  2007/01/11 20:41:20  vsnyder
+! Remove get_free_lun, use Get_Lun, handle record length for sequential files
+!
 ! Revision 2.74  2006/09/21 18:45:52  pwagner
 ! Fix bug causing PCFid-equipped inquiries to complain about missing filenames
 !
