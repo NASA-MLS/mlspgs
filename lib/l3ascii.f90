@@ -61,30 +61,27 @@ contains
     ! opens a l3ascii file, reads, prints and discards the annoying
     ! header line and returns the unit it chose. No special close routine.
     ! just do close(unit=unit)
+    use IO_Stuff, only: Get_Lun
+    use Machine, only: IO_Error
     !--------- argument ----------!
     character(len=*),intent(in)::filename
     integer,intent(out)::unit
     !-------locals------!
-    logical:: tiedup, found
-    integer:: j
+    integer:: status
     !character(len=LineLen)::headerline
     !----executables----!
     !----- Find first unattached unit -----!
-    found = .false.
     error = 0
-    do j = 1, 30
-      inquire ( unit=j, opened=tiedup )
-      if ( .not. tiedup ) then
-        found = .true.
-        unit = j
-        open ( unit=unit, file=filename, status="old", action="read" )
-        exit
+    call get_lun ( unit, msg=.false. )
+    if ( unit < 0 ) then
+       call announce_error ( 0, "in subroutine l3ascii_open: No units left" )
+    else
+      open ( unit=unit, file=filename, status="old", action="read", iostat=status )
+      if ( status /= 0 ) then
+        call io_error ( "Unable to open l3ascii file ", status, filename )
+        call announce_error ( 0, "in subroutine l3ascii_open: Unable to open file" )
+        unit = -1
       end if
-    end do
-    if ( .not. found ) then
-      unit = -1
-      call announce_error ( 0,&
-           "in subroutine l3ascii_open: No units left" )
     end if
 
     !First line is not prefaced with ; nor is it of any use. 
@@ -148,7 +145,6 @@ contains
     ! Fix axis arrays: set to default values with length 1 and a sensible 
     ! value. These will be used if the file does not have variation 
     ! along that axis
-
 
     ! Automatically create a stub grid template with minimal size
     ! Each component will be deallocated && reallocated with correct sizes later
@@ -229,7 +225,7 @@ contains
       else
         end_of_file=.true.
         call announce_error(0,&
-          "in subroutine l3ascii_read_field,File"//trim(filename)//&
+          "in subroutine l3ascii_read_field, File "//trim(filename)//&
           " on unit"//trim(unitstring)//" contains coordinate"//&
           " of invalid type "//trim(axistype)//"for axis"//&
           trim(linetype))
@@ -864,6 +860,9 @@ end module L3ascii
 
 !
 ! $Log$
+! Revision 2.29  2007/01/11 20:39:50  vsnyder
+! Use Get_Lun instead of having the code here
+!
 ! Revision 2.28  2005/09/22 23:35:14  pwagner
 ! date conversion procedures and functions all moved into dates module
 !
