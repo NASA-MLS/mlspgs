@@ -583,7 +583,7 @@ contains ! =================================== Public procedures
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
     use MLSStats1, only: MLSMIN, MLSMAX, MLSMEAN
     use MLSStrings, only: LOWERCASE
-    use output_m, only: output, output_name_v_pair
+    use output_m, only: output, outputNamedValue
     use Toggles, only: GEN, TOGGLE
     use Trace_M, only: TRACE_BEGIN, TRACE_END
     use Tree, only: NSONS, SUBTREE, DECORATION
@@ -704,8 +704,8 @@ contains ! =================================== Public procedures
     call output('Mean val', advance='no')
     call output(mlsmean( Pressures%field(:,:,:,1,1,1), Pressures%missingValue ), advance='yes')
     endif
-    ! call output_name_v_pair( 'Temperatures grid empty?', Temperatures%empty )
-    ! call output_name_v_pair( 'Pressures grid empty?   ', Pressures%empty )
+    ! call outputNamedValue( 'Temperatures grid empty?', Temperatures%empty )
+    ! call outputNamedValue( 'Pressures grid empty?   ', Pressures%empty )
     if ( .not. associated(Temperatures) ) then
       call MLSMessage ( MLSMSG_Warning, moduleName, &
         & 'No associated Temperatures grid for calculating wmo tropopause' )
@@ -738,8 +738,8 @@ contains ! =================================== Public procedures
       if ( toggle(gen) ) call trace_end ( "wmoTropFromGrid" )
       return
     endif
-    ! call output_name_v_pair( 'Temperatures grid empty?', Temperatures%empty )
-    ! call output_name_v_pair( 'Pressures grid empty?   ', Pressures%empty )
+    ! call outputNamedValue( 'Temperatures grid empty?', Temperatures%empty )
+    ! call outputNamedValue( 'Pressures grid empty?   ', Pressures%empty )
     if ( nlev < 2 ) then
       call MLSMessage ( MLSMSG_Warning, moduleName, &
         & 'Too few levels on Temperatures grid for calculating wmo tropopause' )
@@ -871,6 +871,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.28  2007/01/12 00:34:04  pwagner
+! Renamed routine outputNamedValue
+!
 ! Revision 2.27  2006/11/03 19:40:30  pwagner
 ! Fixed unassociated pointers NAG caught
 !
