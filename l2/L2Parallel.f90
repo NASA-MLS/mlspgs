@@ -30,7 +30,7 @@ module L2Parallel
   use L2ParInfo, only: MACHINE_T, PARALLEL, &
     & CHUNKTAG, GIVEUPTAG, GRANTEDTAG, PETITIONTAG, &
     & SIG_TOJOIN, SIG_FINISHED, SIG_ACKFINISH, SIG_REGISTER, NOTIFYTAG, &
-    & SIG_REQUESTDIRECTWRITE, &
+    & SIG_REQUESTDIRECTWRITE, SIG_SWEARALLEGIANCE, SIG_SWITCHALLEGIANCE, &
     & SIG_DIRECTWRITEGRANTED, SIG_DIRECTWRITEFINISHED, &
     & SIG_HOSTDIED, SIG_RELEASEHOST, SIG_REQUESTHOST, SIG_THANKSHOST, &
     & GETNICETIDSTRING, SLAVEARGUMENTS, MACHINENAMELEN, GETMACHINES, &
@@ -46,6 +46,7 @@ module L2Parallel
   use MLSStringLists, only: catLists, ExpandStringRange, ReplaceSubString, &
     & switchDetail
   use MorePVM, only: PVMUNPACKSTRINGINDEX, PVMPACKSTRINGINDEX
+  use MLSStrings, only: NAppearances
   use MoreTree, only: Get_Spec_ID
   use Output_m, only: BLANKS, Output, TimeStamp
   use PVM, only: INFOTAG, &
@@ -84,6 +85,7 @@ module L2Parallel
 
   ! Parameters
   integer, parameter :: HDFNAMELEN = 132 ! Max length of name of swath/sd
+  character(len=*), parameter :: GROUPNAME = "mlsl2" ! Set by l2q
   logical, parameter :: NOTFORGOTTEN = .false. ! Note the death of forgottens
   ! integer, parameter :: MAXCHUNK = 10000
 
@@ -804,6 +806,33 @@ contains ! ================================ Procedures ======================
         exit masterLoop
       end if
 
+      ! Listen out for any message telling us to switch to a new l2q
+      call PVMFNRecv ( -1, sig_switchallegiance, bufferIDRcv )
+      if ( bufferIDRcv > 0 .and. usingL2Q ) then
+        if ( switchDetail(switches,'mas') > -1 ) then
+          call TimeStamp ( 'Received a message to switch to a new l2q', &
+            & advance='yes' )
+        end if
+        call pvmfgettid(GROUPNAME, 0, L2Qtid)
+        if ( L2Qtid < 1 ) then
+          call MLSMessage( MLSMSG_Error, ModuleName, &
+            & 'switch l2q queue manager not running--dead or not started yet?' )
+        else
+          call TimeStamp ( 'new l2q tid: ' )
+          call TimeStamp ( L2Qtid, advance='yes' )
+        endif
+        ! Send an acknowledgement, pack machineRequestQueued, swear allegiance
+        call PVMFInitSend ( PVMDataDefault, bufferIDSnd )
+        if ( bufferIdSnd < 0 ) &
+          & call PVMErrorMessage ( bufferIDSnd, 'setting up swearallegiance' )
+        call PVMF90Pack ( machineRequestQueued, info )
+        if ( info /= 0 ) &
+          & call PVMErrorMessage ( info, 'packing machineRequestQueued' )
+        call PVMFSend ( L2Qtid, SIG_swearAllegiance, info )
+        call TimeStamp ( 'Sending oath of allegiance; do we need host?: ' )
+        call TimeStamp ( machineRequestQueued, advance='yes' )
+      end if
+
       ! Listen out for any message telling us that a machine is OK again
       call PVMFNRecv ( -1, MachineFixedTag, bufferIDRcv )
       if ( bufferIDRcv > 0 ) then 
@@ -1161,6 +1190,9 @@ contains ! ================================ Procedures ======================
     if ( usingL2Q ) then
       call usleep ( parallel%delay )
       call TellL2QMasterFinished(L2Qtid)
+      if ( switchDetail(switches,'mas') > -1 ) &
+        & call TimeStamp ( 'Telling l2q we are finished', &
+        & advance='yes' )
     endif
     ! Now, we have to tidy some stuff up here to ensure we can join things
     where ( .not. chunksCompleted )
@@ -1638,12 +1670,16 @@ contains ! ================================ Procedures ======================
     character(len=16) :: DATESTRING
     integer :: INDX
     integer :: INFO                     ! From PVM
-    character(len=*), parameter :: GROUPNAME = "mlsl2"
+    character(len=16) :: L2QSTRING
     !
     call pvmfgettid(GROUPNAME, 0, L2Qtid)
     if ( L2Qtid < 1 ) then
       call MLSMessage( MLSMSG_Error, ModuleName, &
         & 'l2q queue manager not running--dead or not started yet?' )
+    else
+      write ( L2QSTRING, * ) L2QTID
+      call TimeStamp('Registering with l2q (l2qtid=' // &
+        & trim(L2QSTRING) // ')', advance='yes')
     endif
     call GetMachines ( machines )
     ! Register ourselves with the l2 queue manager
@@ -1656,11 +1692,18 @@ contains ! ================================ Procedures ======================
     if ( info /= 0 ) &
       & call PVMErrorMessage ( info, 'packing number of chunks' )
     ! Now send our data date as a string
+    ! We might reasonably expect one of two formats for startUTC:
+    ! 1996-051T00:00:00.000000Z (using yyyy-dayofyear)
+    ! 2006-05-07T00:00:00.000000Z (using yyyy-month-dayofmonth)
     ! (e.g., '2006d121')
     indx = INDEX (L2PCF%startUTC, "T")
     if ( indx > 0 ) then
-      call ReplaceSubString ( L2PCF%startUTC(1:indx-1), dateString, &
-        & '-', 'd' )
+      if ( all( NAppearances(L2PCF%startUTC(1:indx-1), (/'-'/)) > 1 ) ) then
+        dateString = L2PCF%startUTC(1:indx-1) ! it was yyyy-month-dayofmonth
+      else
+        call ReplaceSubString ( L2PCF%startUTC(1:indx-1), dateString, &
+        & '-', 'd' )  ! it was yyyy-dayofyear
+      endif
     else
       dateString = '(unknown)'
     endif
@@ -1764,7 +1807,7 @@ contains ! ================================ Procedures ======================
     call PVMFInitSend ( PvmDataDefault, bufferID )
     call PVMF90Pack ( SIG_HostDied, info )
     if ( info /= 0 ) &
-      & call PVMErrorMessage ( info, 'packing registration' )
+      & call PVMErrorMessage ( info, 'packing signal of dead machine' )
     ! call PVMF90Pack ( machineName, info )
     call PVMF90Pack ( machine%tid, info )
     if ( info /= 0 ) &
@@ -1804,7 +1847,7 @@ contains ! ================================ Procedures ======================
     call PVMFInitSend ( PvmDataDefault, bufferID )
     call PVMF90Pack ( SIG_RELEASEHOST, info )
     if ( info /= 0 ) &
-      & call PVMErrorMessage ( info, 'packing registration' )
+      & call PVMErrorMessage ( info, 'packing signal of finished machine' )
     call PVMF90Pack ( tid, info )
     if ( info /= 0 ) &
       & call PVMErrorMessage ( info, 'packing finished tid' )
@@ -1826,7 +1869,7 @@ contains ! ================================ Procedures ======================
     call PVMFInitSend ( PvmDataDefault, bufferID )
     call PVMF90Pack ( SIG_FINISHED, info )
     if ( info /= 0 ) &
-      & call PVMErrorMessage ( info, 'packing registration' )
+      & call PVMErrorMessage ( info, 'packing signal we finished' )
     call PVMFSend ( L2Qtid, petitionTag, info )
     if ( info /= 0 ) &
       & call PVMErrorMessage ( info, 'sending finish packet' )
@@ -1843,7 +1886,7 @@ contains ! ================================ Procedures ======================
     call PVMFInitSend ( PvmDataDefault, bufferID )
     call PVMF90Pack ( SIG_ThanksHost, info )
     if ( info /= 0 ) &
-      & call PVMErrorMessage ( info, 'packing registration' )
+      & call PVMErrorMessage ( info, 'packing signal of thanks for machine' )
     call PVMF90Pack ( machine%tid, info )
     if ( info /= 0 ) &
       & call PVMErrorMessage ( info, 'packing tid' )
@@ -1880,6 +1923,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.80  2007/01/12 00:38:57  pwagner
+! Switches allegiance to a replacement l2q
+!
 ! Revision 2.79  2006/11/22 18:11:04  pwagner
 ! Help l2q track hosts freed by killed masters
 !
