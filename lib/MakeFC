@@ -30,10 +30,10 @@ PLATFORMS = .
 # where sources (but not OBJS) shared with l3, etc. are stored
 srclib=../srclib
 
-# where sources for the forward model are stored
+# where sources for the mls-supplied blas are stored
 libblas_sources=../blas
 
-# where forward model objects and libfwdmdl.a are stored
+# where blas objects and libmlspack.a are stored
 libblas_objs=$(libblas_sources)/$(MLSCONFG)
 
 # This is the default name of the configure file
@@ -85,7 +85,8 @@ SHELL = /bin/sh
 ifndef DONTBUILDPREQS
 libblas_f90 := $(shell ${REECHO} $(libblas_sources)/*.c $(libblas_sources)/*.f \
   $(libblas_sources)/*.f90 $(libblas_sources)/*.f9h $(srclib)/*.f90)
-BLAS_PREQS := $(libblas_f90) $(libblas_objs)
+# BLAS_PREQS := $(libblas_f90) $(libblas_objs)
+BLAS_PREQS := $(libblas_f90) $(libblas_objs)/Makefile
 endif
 PROG=libmls.a
 #PROG=all
@@ -115,9 +116,9 @@ else
    OMIT_SRCS := $(OMIT_SRCS) PVM.f90 PVMIDL.f90 QuantityPVM.f90
 endif
 
-#Toolkit-free version requires SDPToolkitSubstitute
+#Toolkit-free version requires *Substitute.f90
 ifdef PGSTK
-   OMIT_SRCS := $(OMIT_SRCS) SDPToolkitSubstitute.f90
+   OMIT_SRCS := $(OMIT_SRCS) SDPToolkitSubstitute.f90 MLSMessageSubstitute.f90
 endif
 
 OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
@@ -311,6 +312,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.51  2007/01/12 00:23:02  pwagner
+# Made way for MLSMessageSubstitute
+#
 # Revision 2.50  2005/06/23 22:10:11  pwagner
 # Reworded Copyright statement
 #
