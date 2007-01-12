@@ -48,7 +48,7 @@
 ! -------------------------------------------------  Query_MLSData ----
   recursive subroutine Query_MLSData(loc_id, loc_name, dataset_info)
 !
-    ! use output_m, only: output_name_v_pair
+    ! use output_m, only: outputNamedValue
     use HDF5, only: hid_t, H5G_DATASET_F, H5G_LINK_F, &
       & h5gn_members_f,h5gget_obj_info_idx_f
 ! This subroutine lists entries in the HDF5 file.
@@ -64,12 +64,12 @@
     integer :: i, nmembers, h5error, count, type_id
     character(len=name_len) :: name_buffer, path_name
     logical :: dataset_found
-    ! call output_name_v_pair( 'loc_id', loc_id )
-    ! call output_name_v_pair( 'loc_name', loc_name )
+    ! call outputNamedValue( 'loc_id', loc_id )
+    ! call outputNamedValue( 'loc_name', loc_name )
 
     call h5gn_members_f(loc_id,loc_name,nmembers,h5error)
-    ! call output_name_v_pair( 'loc_id', loc_id )
-    ! call output_name_v_pair( 'loc_name', loc_name )
+    ! call outputNamedValue( 'loc_id', loc_id )
+    ! call outputNamedValue( 'loc_name', loc_name )
     if (h5error /= 0) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Group member access of ' // loc_name // ' failed.')
 
@@ -145,6 +145,9 @@
 end module MLSDataInfo
 
 ! $Log$
+! Revision 2.7  2007/01/12 00:29:28  pwagner
+! Renamed routine outputNamedValue
+!
 ! Revision 2.6  2006/06/29 20:36:55  pwagner
 ! Fixed bug besetting symbolic links
 !
