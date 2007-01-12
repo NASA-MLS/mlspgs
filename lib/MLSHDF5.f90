@@ -59,7 +59,7 @@ module MLSHDF5
     & H5TSET_SIZE_F
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
   use MLSStringLists, only: catLists, IsInList
-  use output_m, only: output, OUTPUT_NAME_V_PAIR
+  use output_m, only: output, outputNamedValue
 
   implicit NONE
   private
@@ -382,16 +382,16 @@ contains ! ======================= Public Procedures =========================
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to open group' // trim(groupName) // &
         & ' while dumping its attributes' )
-      if ( DEEBUG ) call output_name_v_pair ( 'groupName', groupName )
+      if ( DEEBUG ) call outputNamedValue ( 'groupName', groupName )
     elseif(present(DSName) ) then
       call h5dOpen_f ( locID, trim(DSname), itemID, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to open dataset' // trim(DSName) // &
         & ' while dumping its attributes' )
-      if ( DEEBUG ) call output_name_v_pair ( 'DSName', DSName )
+      if ( DEEBUG ) call outputNamedValue ( 'DSName', DSName )
     else
       itemID = locID
-      if ( DEEBUG ) call output_name_v_pair ( 'locID', locID )
+      if ( DEEBUG ) call outputNamedValue ( 'locID', locID )
     endif
     if ( myNames == '*' ) then
       if ( present(groupName) ) then
@@ -401,13 +401,13 @@ contains ! ======================= Public Procedures =========================
       endif
     endif
     numAttrs = NumStringElements ( myNames, countEmpty )
-    if ( DEEBUG ) call output_name_v_pair ( 'myNames', myNames )
-    if ( DEEBUG ) call output_name_v_pair ( 'numAttrs', numAttrs )
+    if ( DEEBUG ) call outputNamedValue ( 'myNames', myNames )
+    if ( DEEBUG ) call outputNamedValue ( 'numAttrs', numAttrs )
     do i = 1, numAttrs
-      if ( DEEBUG ) call output_name_v_pair ( 'i', i )
+      if ( DEEBUG ) call outputNamedValue ( 'i', i )
       ! name = StringElement(myNames, i, countEmpty)
       call GetStringElement( myNames, name, i, countEmpty )
-      if ( DEEBUG ) call output_name_v_pair ( 'name', name )
+      if ( DEEBUG ) call outputNamedValue ( 'name', name )
       call h5aopen_name_f ( itemID, trim(name), attrID, status )
       if ( status /= 0 ) then
         call output ( trim(name), advance='no' )
@@ -420,14 +420,14 @@ contains ! ======================= Public Procedures =========================
       call h5aget_space_f ( attrID, spaceID, status )
       call h5sget_simple_extent_ndims_f ( spaceID, rank, status )
       if ( DEEBUG ) then
-        call output_name_v_pair ( 'name', name )
-        call output_name_v_pair ( 'attrID', attrID )
-        call output_name_v_pair ( 'type_id', type_id )
-        call output_name_v_pair ( 'type_size', type_size )
-        call output_name_v_pair ( 'classID', classID )
-        call output_name_v_pair ( 'H5T_STRING_F', H5T_STRING_F )
-        call output_name_v_pair ( 'spaceID', spaceID )
-        call output_name_v_pair ( 'rank', rank )
+        call outputNamedValue ( 'name', name )
+        call outputNamedValue ( 'attrID', attrID )
+        call outputNamedValue ( 'type_id', type_id )
+        call outputNamedValue ( 'type_size', type_size )
+        call outputNamedValue ( 'classID', classID )
+        call outputNamedValue ( 'H5T_STRING_F', H5T_STRING_F )
+        call outputNamedValue ( 'spaceID', spaceID )
+        call outputNamedValue ( 'rank', rank )
       endif
       call h5aClose_f ( attrID, status )
       call GetHDF5AttrDims ( ItemID, name, hdims )
@@ -436,8 +436,8 @@ contains ! ======================= Public Procedures =========================
       Qtype = WhatTypeAmI ( type_id )
       if ( Qtype == 'unknown' .and. classID == H5T_STRING_F ) QType='character'
       if ( DEEBUG ) then
-        call output_name_v_pair ( 'dims', dims )
-        call output_name_v_pair ( 'Qtype', Qtype )
+        call outputNamedValue ( 'dims', dims )
+        call outputNamedValue ( 'Qtype', Qtype )
       endif
       select case ( QType )
       case ( 'integer' )
@@ -523,14 +523,14 @@ contains ! ======================= Public Procedures =========================
       call h5dget_space_f ( itemID, spaceID, status )
       call h5sget_simple_extent_ndims_f ( spaceID, rank, status )
       if ( DEEBUG ) then
-        call output_name_v_pair ( 'name', name )
-        call output_name_v_pair ( 'ItemID', ItemID )
-        call output_name_v_pair ( 'type_id', type_id )
-        call output_name_v_pair ( 'type_size', type_size )
-        call output_name_v_pair ( 'classID', classID )
-        call output_name_v_pair ( 'H5T_STRING_F', H5T_STRING_F )
-        call output_name_v_pair ( 'spaceID', spaceID )
-        call output_name_v_pair ( 'rank', rank )
+        call outputNamedValue ( 'name', name )
+        call outputNamedValue ( 'ItemID', ItemID )
+        call outputNamedValue ( 'type_id', type_id )
+        call outputNamedValue ( 'type_size', type_size )
+        call outputNamedValue ( 'classID', classID )
+        call outputNamedValue ( 'H5T_STRING_F', H5T_STRING_F )
+        call outputNamedValue ( 'spaceID', spaceID )
+        call outputNamedValue ( 'rank', rank )
       endif
       call h5dClose_f ( ItemID, status )
       call GetHDF5DSDims ( groupID, name, hdims )
@@ -539,8 +539,8 @@ contains ! ======================= Public Procedures =========================
       Qtype = WhatTypeAmI ( type_id )
       if ( Qtype == 'unknown' .and. classID == H5T_STRING_F ) QType='character'
       if ( DEEBUG ) then
-        call output_name_v_pair ( 'dims', dims )
-        call output_name_v_pair ( 'Qtype', Qtype )
+        call outputNamedValue ( 'dims', dims )
+        call outputNamedValue ( 'Qtype', Qtype )
       endif
       select case ( QType )
       case ( 'integer' )
@@ -670,13 +670,13 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to turn error messages off before looking for all attr names' )
     if ( present(groupName) ) then
       call h5gOpen_f ( locID, trim(groupName), itemID, status )
-      ! call output_name_v_pair( 'groupName ', groupName )
+      ! call outputNamedValue( 'groupName ', groupName )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to open group' // trim(groupName) // &
         & ' while looking for all its attr names' )
     elseif(present(DSName) ) then
       call h5dOpen_f ( locID, trim(DSname), itemID, status )
-      ! call output_name_v_pair( 'DSname ', DSname )
+      ! call outputNamedValue( 'DSname ', DSname )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to open DS ' // trim(DSname) // &
         & ' while looking for all its attr names' )
@@ -687,7 +687,7 @@ contains ! ======================= Public Procedures =========================
     ! call output( 'About to read num of attributes', advance='yes' )
     call h5aget_num_attrs_f( itemID, num, status )
     if ( status /= 0 ) return
-    ! call output_name_v_pair( 'num ', num )
+    ! call outputNamedValue( 'num ', num )
     do i=1, num
       call h5aopen_idx_f( itemid, i-1, attr_id, status )
       ! print *, 'attr_id, status ', attr_id, status
@@ -746,7 +746,7 @@ contains ! ======================= Public Procedures =========================
       & moduleName )
     dataset_info%name = ''
     dataset_info%number_of_entries = 0
-    ! call output_name_v_pair( 'fileid', fileid )
+    ! call outputNamedValue( 'fileid', fileid )
     ! call output('About to check on ' // trim(gname), advance='yes' )
     call Query_MLSData ( fileid, trim(gname), dataset_info )
     if ( dataset_info%number_of_entries < 0 ) then
@@ -5452,6 +5452,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.70  2007/01/12 00:29:28  pwagner
+! Renamed routine outputNamedValue
+!
 ! Revision 2.69  2006/08/23 18:04:23  pwagner
 ! NAG hates splitting /) operator
 !
