@@ -373,20 +373,32 @@ module PVM ! Interface to the f77 pvm library.
   end interface
 
   interface pvmf90pack
-     module procedure pvmf90packString, pvmf90packInteger, &
+     module procedure pvmf90packString, pvmf90packInteger, pvmf90packLogical, &
        & pvmf90packReal, pvmf90packChararr1, pvmf90packChararr2, &
        & pvmf90packIntarr1, pvmf90packIntarr2, pvmf90packIntarr3, &
        & pvmf90packRealarr1, pvmf90packRealarr2, pvmf90packRealarr3
   end interface
 
   interface pvmf90unpack
-     module procedure pvmf90unpackString, pvmf90unpackInteger, &
+     module procedure pvmf90unpackString, pvmf90unpackInteger, pvmf90unpackLogical, &
        & pvmf90unpackReal, pvmf90unpackChararr1, pvmf90unpackChararr2, &
        & pvmf90unpackIntarr1, pvmf90unpackIntarr2, pvmf90unpackIntarr3, &
        & pvmf90unpackRealarr1, pvmf90unpackRealarr2, pvmf90unpackRealarr3
   end interface
 
 contains
+
+  subroutine pvmf90packLogical(value,info)
+    logical, intent(in) :: value
+    integer, intent(out) :: info
+    integer :: ivalue
+    if ( value ) then
+      ivalue = 1
+    else
+      ivalue = 0
+    endif
+    call pvmf90packInteger(ivalue,info)
+  end subroutine pvmf90packLogical
 
   subroutine pvmf90packString(line,info)
     character (LEN=*), intent(in) :: line
@@ -458,6 +470,14 @@ contains
   end subroutine pvmf90packRealarr3
 
   ! ---------------------------------------------------------------------------
+
+  subroutine pvmf90unpackLogical(value,info)
+    logical, intent(out) :: value
+    integer, intent(out) :: info
+    integer :: ivalue
+    call pvmf90unpackInteger(ivalue,info)
+    value = ( ivalue == 1 )
+  end subroutine pvmf90unpackLogical
 
   subroutine pvmf90unpackString(line,info)
     character (LEN=*), intent(out) :: line
@@ -597,6 +617,9 @@ contains
 end module PVM
 
 ! $Log$
+! Revision 2.17  2007/01/12 00:26:16  pwagner
+! We can (un)pack logical, too
+!
 ! Revision 2.16  2005/06/22 17:25:50  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
