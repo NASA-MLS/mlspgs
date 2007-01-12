@@ -34,8 +34,7 @@ contains ! ====     Public Procedures     ==============================
     use Algebra_M, only: Algebra
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use AntennaPatterns_m, only: Destroy_Ant_Patterns_Database
-    use ChunkDivide_m, only: ChunkDivide, DestroyChunkDatabase, &
-      & ReduceChunkDatabase
+    use ChunkDivide_m, only: ChunkDivide, DestroyChunkDatabase
     use Chunks_m, only: Dump, MLSChunk_T
     use Construct, only: MLSL2Construct, MLSL2DeConstruct, &
       & ConstructMIFGeolocation
@@ -82,7 +81,7 @@ contains ! ====     Public Procedures     ==============================
     use MLSL2Timings, only: add_to_section_timing, TOTAL_TIMES
     use Open_Init, only: OpenAndInitialize
     use OutputAndClose, only: Output_Close
-    use Output_m, only: BLANKS, getStamp, Output, output_name_v_pair, &
+    use Output_m, only: BLANKS, getStamp, Output, &
       & RESUMEOUTPUT, revertoutput, setStamp, switchOutput
     use PointingGrid_m, only: Destroy_Pointing_Grid_Database
     use QuantityTemplates, only: QuantityTemplate_T
@@ -164,9 +163,9 @@ contains ! ====     Public Procedures     ==============================
     do i=section_first, section_last
       call get_string ( section_indices(i), section_name, strip=.true. )
       skipSections(i) = isInList( sectionstoskip, section_name, '-fc' )
-      ! call output_name_v_pair ( 'i', i, advance='no')
-      ! call output_name_v_pair ( '  section_name', section_name, advance='no')
-      ! call output_name_v_pair ( '  skip?', skipSections(i), advance='yes')
+      ! call outputNamedValue ( 'i', i, advance='no')
+      ! call outputNamedValue ( '  section_name', section_name, advance='no')
+      ! call outputNamedValue ( '  skip?', skipSections(i), advance='yes')
     enddo
     ! call dump( skipSections, 'skipping sections' )
     ! stop
@@ -186,7 +185,7 @@ contains ! ====     Public Procedures     ==============================
     ! ----------------------------------------------------- Loop over tree
 
     ! Now loop over the sections in the tree
-    ! call output_name_v_pair( 'Output_Close index', z_output, advance='yes' )
+    ! call outputNamedValue( 'Output_Close index', z_output, advance='yes' )
     do while ( i <= howmany )
       son = subtree(i,root)
       section_index = decoration(subtree(1,son))
@@ -197,7 +196,7 @@ contains ! ====     Public Procedures     ==============================
         if( skipSections(section_index) ) &
           & section_index = SECTION_FIRST - 1 ! skip
       endif
-      ! call output_name_v_pair( 'tree section_index', section_index, advance='yes' )
+      ! call outputNamedValue( 'tree section_index', section_index, advance='yes' )
       ! if ( section_index == z_output ) then
       !   call output("Now is our chance to go through output", advance='yes')
       ! endif
@@ -241,7 +240,7 @@ contains ! ====     Public Procedures     ==============================
           return
         end if
       case ( z_mergeGrids )
-        if ( .not. stopBeforeChunkLoop ) &
+        if ( .not. ( stopBeforeChunkLoop .or. checkPaths ) ) &
           & call mergeGrids ( son, griddedDataBase, l2gpDatabase )
 
         ! --------------------------------------------------------- Chunk divide
@@ -355,7 +354,7 @@ subtrees:   do while ( j <= howmany )
                 & strip=.true. )
               if( skipSections(section_index) ) &
                 & section_index = SECTION_FIRST - 1 ! skip
-              ! call output_name_v_pair( 'subtree section_index', section_index, advance='yes' )
+              ! call outputNamedValue( 'subtree section_index', section_index, advance='yes' )
               select case ( section_index ) ! section index
               case ( z_algebra )
                 call algebra ( son, vectors, matrices, chunks(chunkNo), forwardModelConfigDatabase )
@@ -516,8 +515,7 @@ subtrees:   do while ( j <= howmany )
 
   contains
     subroutine FinishUp ( Early )
-      use FilterShapes_m, only: Destroy_DACS_Filter_Database, &
-        & Destroy_Filter_Shapes_Database
+      use FilterShapes_m, only: Destroy_Filter_Shapes_Database
       logical, intent(in), optional :: Early
       logical :: myEarly
       integer :: numChunks
@@ -585,6 +583,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.151  2006/10/09 18:39:35  pwagner
+! Fixed bug preventing a call to Output_CLose
+!
 ! Revision 2.150  2006/10/05 23:32:43  pwagner
 ! skipSections can skip named sections
 !
