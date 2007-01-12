@@ -44,6 +44,8 @@ module GLOBAL_SETTINGS
     & 'MERCURY, VENUS, EARTH, MARS, JUPITER, SATURN, URANUS, NEPTUNE, PLUTO, ' // &
     & 'MOON, SUN, SOLAR-BARYCNTR, EARTH-BARYCNTR, GALACTICCENTER'
 
+  ! Do we check for the correct month's l2pc files during checkPaths preflight?
+  logical, parameter :: CHECKL2PCMONTHCORRECT = .true.
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
@@ -88,7 +90,7 @@ contains
     use MLSFiles, only: FILENOTFOUND, HDFVERSION_5, &
       & AddFileToDataBase, GetPCFromRef, GetMLSFileByName, GetMLSFileByType, &
       & InitializeMLSFile, mls_CloseFile, mls_OpenFile, split_path_name
-    use MLSL2Options, only: LEVEL1_HDFVERSION, SPECIALDUMPFILE, &
+    use MLSL2Options, only: CHECKPATHS, LEVEL1_HDFVERSION, SPECIALDUMPFILE, &
       & STOPAFTERSECTION, Toolkit
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
@@ -316,8 +318,9 @@ contains
           call decorate ( son, AddFGridToDatabase ( fGrids, &
             & CreateFGridFromMLSCFInfo ( name, son ) ) )
         case ( s_forwardModelGlobal ) !??? Begin temporary stuff for l2load
-          if ( .not. stopEarly ) call forwardModelGlobalSetup ( son, returnStatus, &
-            & fileDataBase )
+          if ( stopEarly .or. &
+            & ( checkPaths .and. .not. CHECKL2PCMONTHCORRECT ) ) cycle
+          call forwardModelGlobalSetup ( son, returnStatus, fileDataBase )
           error = max(error, returnStatus)
         case ( s_forwardModel )
           if ( .not. stopEarly ) call decorate (son, AddForwardModelConfigToDatabase ( &
@@ -829,14 +832,20 @@ contains
     end subroutine proclaim
 
     ! --------------------------------------------------  SayTime  -----
-    subroutine SayTime
+    subroutine SayTime ( msg )
+      use MLSStrings, only: trim_safe
+      character(len=*), optional, intent(in) :: msg
       call time_now ( t2 )
       if ( total_times ) then
         call output ( "Total time = " )
         call output ( dble(t2), advance = 'no' )
         call blanks ( 4, advance = 'no' )
       end if
-      call output ( "Timing for GlobalSettings = " )
+      if ( present(msg) ) then
+        call output ( trim_safe(msg) )
+      else
+        call output ( "Timing for GlobalSettings = " )
+      endif
       call output ( dble(t2 - t1), advance = 'yes' )
       timing = .false.
     end subroutine SayTime
@@ -946,6 +955,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.121  2006/10/20 16:52:26  pwagner
+! toolkit-using runs will warn but ignore unwanted global settings
+!
 ! Revision 2.120  2006/09/21 18:48:07  pwagner
 ! Reduce level of dumps in SIDS version
 !
