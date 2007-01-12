@@ -14,7 +14,9 @@ module Make_Z_Grid_m
   implicit NONE
 
   private
-  public :: Make_Z_Grid
+  public :: Make_Z_Grid, Default_Thresh
+
+  real, parameter :: Default_Thresh = 0.0001 ! Threshold for discarding dups
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -82,7 +84,7 @@ contains
     if ( present(logp_eq_th) ) then
       thresh = logp_eq_th
     else
-      thresh = 0.0001_rp
+      thresh = Default_Thresh
     end if
 
     mask = (cshift(z,1) - z) > thresh
@@ -153,6 +155,9 @@ contains
 end module Make_Z_Grid_m
 
 ! $Log$
+! Revision 2.8  2007/01/12 21:45:03  vsnyder
+! Make tolerance for discarding duplicates a parameter, publish it
+!
 ! Revision 2.7  2005/06/22 18:08:19  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
