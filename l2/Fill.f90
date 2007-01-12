@@ -180,7 +180,7 @@ contains ! =====     Public Procedures     =============================
     use MLSStrings, only: lowerCase, SplitNest
     use Molecules, only: L_H2O
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
-    use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, output_name_v_pair, &
+    use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, outputNamedValue, &
       & revertoutput, switchOutput
     use PFAData_m, only: Flush_PFAData
     use QuantityTemplates, only: Epoch, QuantityTemplate_T
@@ -1358,7 +1358,7 @@ contains ! =====     Public Procedures     =============================
           ! call output( 'Filling quantity from grid', advance='yes' )
           call FillVectorQuantityFromGrid &
             & ( quantity, griddedDataBase(gridIndex), allowMissing, errorCode )
-          ! call output_name_v_pair( 'error code', errorCode )
+          ! call outputNamedValue( 'error code', errorCode )
           if ( errorCode /= 0 ) call Announce_error ( key, errorCode )
 
         case ( l_l1b ) ! --------------------  Fill from L1B data  -----
@@ -5799,10 +5799,10 @@ contains ! =====     Public Procedures     =============================
             call output ( size ( l1bData%dpField, 2 ) )
             call output ( ', ' )
             call output ( size ( l1bData%dpField, 3 ), advance='yes' )
-            call output_name_v_pair( 'shape' // trim(namestring), shape(l1bData%dpField) )
-            call output_name_v_pair( 'shape(BO_stat)', shape(BO_stat%intField) )
-            call output_name_v_pair( 'noMAFs', noMAFs )
-            call output_name_v_pair( 'maxMIFs', maxMIFs )
+            call outputNamedValue( 'shape' // trim(namestring), shape(l1bData%dpField) )
+            call outputNamedValue( 'shape(BO_stat)', shape(BO_stat%intField) )
+            call outputNamedValue( 'noMAFs', noMAFs )
+            call outputNamedValue( 'maxMIFs', maxMIFs )
           endif
           do channel = 1, quantity%template%noChans
           l1bData%dpField(channel,:,:) = &
@@ -8053,7 +8053,7 @@ contains ! =====     Public Procedures     =============================
             & before="Units should be" )
         end if
       case default
-        call output_name_v_pair( ' error code', Code, advance='no' )
+        call outputNamedValue( ' error code', Code, advance='no' )
         call output ( " command caused an unrecognized programming error", advance='yes' )
       end select
       if ( present(ExtraMessage) )  call output(ExtraMessage, advance='yes')
@@ -8077,6 +8077,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.349  2007/01/12 00:34:04  pwagner
+! Renamed routine outputNamedValue
+!
 ! Revision 2.348  2006/11/03 19:40:17  pwagner
 ! Fixed unassociated pointers NAG caught
 !
