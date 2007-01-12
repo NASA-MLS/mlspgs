@@ -14,7 +14,6 @@ module MLSCommon                ! Common definitions for the MLS software
 !=============================================================================
 
   use MLSKinds ! Everything
-  use SDPTOOLKIT, only: PGSd_PC_FILE_PATH_MAX
 
   implicit none
   private
@@ -68,6 +67,10 @@ module MLSCommon                ! Common definitions for the MLS software
   public :: rp
   public :: ip
   public :: rv
+
+  ! Because we'd like not to always drag the SDPToolkit with us
+  ! everywhere we go
+  integer, private, parameter :: PGSd_PC_FILE_PATH_MAX = 1024
 
   ! Now we have the lengths for various strings
 
@@ -164,6 +167,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.29  2007/01/12 00:24:38  pwagner
+! Tore ourselves loose from SDPToolkit, hoping we left no shreds of flesh
+!
 ! Revision 2.28  2006/11/01 20:31:38  pwagner
 ! House-cleaning
 !
