@@ -37,18 +37,11 @@ module L2ParInfo
   public :: L2ParallelInfo_T, parallel, Machine_T
   public :: AddMachineNameToDataBase, AddMachineToDataBase
   public :: InitParallel, CloseParallel
-  public :: SIG_ToJoin, SIG_Finished, SIG_Register
-  public :: ChunkTag, GRANTEDTAG, SlaveJoin
-  public :: SIG_AckFinish, SIG_RequestDirectWrite, SIG_DirectWriteGranted
-  public :: SIG_DirectWriteFinished
-  public :: SIG_NewSetup, SIG_RunMAF, SIG_SendResults
-  public :: PETITIONTAG
-  public :: SIG_REQUESTHOST, SIG_RELEASEHOST, SIG_HOSTDIED, SIG_THANKSHOST
-  public :: NotifyTag, GetNiceTidString, GiveUpTag, SlaveArguments
+  public :: SlaveJoin
+  public :: GetNiceTidString, SlaveArguments
   public :: AccumulateSlaveArguments, LogDirectWriteRequest
   public :: FinishedDirectWrite, MachineNameLen, GetMachineNames, GetMachines
-  public :: FWMSlaveGroup, MachineFixedTag, DirectWriteRequest_T
-  public :: DW_Invalid, DW_Pending, DW_InProgress, DW_Completed
+  public :: FWMSlaveGroup, DirectWriteRequest_T
   public :: InflateDirectWriteRequestDB, WaitForDirectWritePermission
   public :: CompactDirectWriteRequestDB, Dump
   
@@ -65,27 +58,29 @@ module L2ParInfo
   ! To leave time for slaves to flush stdout before master closes pvm
   integer, parameter :: DELAYFOREACHSLAVESTDOUTBUFFER   = 500
   integer, parameter :: FIXDELAYFORSLAVESTDOUTBUFFER   = 500000
-  integer, parameter :: CHUNKTAG   = InfoTag + 1  ! Master => slave: chunkinfo
-  integer, parameter :: NOTIFYTAG  = ChunkTag + 1  ! pvm => master: Slave exited
-  integer, parameter :: PETITIONTAG  = NotifyTag + 1 ! master => l2q
-  integer, parameter :: GRANTEDTAG  = PetitionTag + 1 ! l2q => master
-  integer, parameter :: MACHINEFIXEDTAG = 800
-  integer, parameter :: GIVEUPTAG  = 999
+  integer, public, parameter :: CHUNKTAG   = InfoTag + 1  ! Master => slave: chunkinfo
+  integer, public, parameter :: NOTIFYTAG  = ChunkTag + 1  ! pvm => master: Slave exited
+  integer, public, parameter :: PETITIONTAG  = NotifyTag + 1 ! master => l2q
+  integer, public, parameter :: GRANTEDTAG  = PetitionTag + 1 ! l2q => master
+  integer, public, parameter :: MACHINEFIXEDTAG = 800
+  integer, public, parameter :: GIVEUPTAG  = 999
 
-  integer, parameter :: SIG_TOJOIN = SIG_AboutToDie + 1
-  integer, parameter :: SIG_FINISHED = SIG_toJoin + 1
-  integer, parameter :: SIG_ACKFINISH = SIG_finished + 1
-  integer, parameter :: SIG_REGISTER = SIG_AckFinish + 1
-  integer, parameter :: SIG_REQUESTDIRECTWRITE = SIG_Register + 1
-  integer, parameter :: SIG_DIRECTWRITEGRANTED = SIG_RequestDirectWrite + 1
-  integer, parameter :: SIG_DIRECTWRITEFINISHED = SIG_DirectWriteGranted + 1
-  integer, parameter :: SIG_NEWSETUP = SIG_DirectWriteFinished + 1
-  integer, parameter :: SIG_RUNMAF = SIG_NewSetup + 1
-  integer, parameter :: SIG_SENDRESULTS = SIG_RunMAF + 1
-  integer, parameter :: SIG_REQUESTHOST = SIG_SendResults + 1
-  integer, parameter :: SIG_RELEASEHOST = SIG_RequestHost + 1
-  integer, parameter :: SIG_HOSTDIED = SIG_ReleaseHost + 1
-  integer, parameter :: SIG_THANKSHOST = SIG_HostDied + 1
+  integer, public, parameter :: SIG_TOJOIN = SIG_AboutToDie + 1
+  integer, public, parameter :: SIG_FINISHED = SIG_toJoin + 1
+  integer, public, parameter :: SIG_ACKFINISH = SIG_finished + 1
+  integer, public, parameter :: SIG_REGISTER = SIG_AckFinish + 1
+  integer, public, parameter :: SIG_REQUESTDIRECTWRITE = SIG_Register + 1
+  integer, public, parameter :: SIG_DIRECTWRITEGRANTED = SIG_RequestDirectWrite + 1
+  integer, public, parameter :: SIG_DIRECTWRITEFINISHED = SIG_DirectWriteGranted + 1
+  integer, public, parameter :: SIG_NEWSETUP = SIG_DirectWriteFinished + 1
+  integer, public, parameter :: SIG_RUNMAF = SIG_NewSetup + 1
+  integer, public, parameter :: SIG_SENDRESULTS = SIG_RunMAF + 1
+  integer, public, parameter :: SIG_REQUESTHOST = SIG_SendResults + 1
+  integer, public, parameter :: SIG_RELEASEHOST = SIG_RequestHost + 1
+  integer, public, parameter :: SIG_HOSTDIED = SIG_ReleaseHost + 1
+  integer, public, parameter :: SIG_THANKSHOST = SIG_HostDied + 1
+  integer, public, parameter :: SIG_SWEARALLEGIANCE = SIG_ThanksHost + 1
+  integer, public, parameter :: SIG_SWITCHALLEGIANCE = SIG_SwearAllegiance + 1
 
   integer, parameter :: MACHINENAMELEN = 64 ! Max length of name of machine
 
@@ -126,10 +121,10 @@ module L2ParInfo
   end type L2ParallelInfo_T
 
   ! This enumerated type describes the state that directWrites can be in
-  integer, parameter :: DW_INVALID = 0
-  integer, parameter :: DW_PENDING = DW_INVALID + 1
-  integer, parameter :: DW_INPROGRESS = DW_PENDING + 1
-  integer, parameter :: DW_COMPLETED = DW_INPROGRESS + 1
+  integer, public, parameter :: DW_INVALID = 0
+  integer, public, parameter :: DW_PENDING = DW_INVALID + 1
+  integer, public, parameter :: DW_INPROGRESS = DW_PENDING + 1
+  integer, public, parameter :: DW_COMPLETED = DW_INPROGRESS + 1
 
   ! This datatype logs a directWrite request
   type DirectWriteRequest_T
@@ -834,6 +829,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.48  2007/01/12 00:38:57  pwagner
+! Switches allegiance to a replacement l2q
+!
 ! Revision 2.47  2006/06/24 23:10:00  pwagner
 ! Remove unneeded thing from output_m
 !
