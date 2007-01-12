@@ -87,7 +87,7 @@ MODULE PCFHdr
     real(r8), pointer, dimension(:,:) :: OrbPeriodDays => Null()
     character(len=GA_VALUE_LENGTH) :: InstrumentName = 'MLS Aura'
     character(len=GA_VALUE_LENGTH) :: ProcessLevel = ''
-    ! character(len=GA_VALUE_LENGTH) :: InputVersion = ''  ! may drop eventually
+    character(len=GA_VALUE_LENGTH) :: HostName = ''  ! E.g. 'lightspeed'
     character(len=GA_VALUE_LENGTH) :: PGEVersion = ''
     character(len=MiscNotesLENGTH) :: MiscNotes = ''
     character(len=GA_VALUE_LENGTH) :: StartUTC = ''
@@ -254,11 +254,11 @@ CONTAINS
       end if
       call MakeHDF5Attribute(grp_id, &
        & 'InstrumentName', GlobalAttributes%InstrumentName, .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'HostName', GlobalAttributes%HostName, .true.)
       ProcessLevel = ProcessLevelFun()
       call MakeHDF5Attribute(grp_id, &
        & 'ProcessLevel', ProcessLevel, .true.)
-!     call MakeHDF5Attribute(grp_id, &
-!      & 'InputVersion', GlobalAttributes%InputVersion, .true.)
       call MakeHDF5Attribute(grp_id, &
        & 'PGEVersion', GlobalAttributes%PGEVersion, .true.)
       call MakeHDF5Attribute(grp_id, &
@@ -326,13 +326,13 @@ CONTAINS
       status = mls_EHwrglatt(fileID, &
        & 'InstrumentName', MLS_CHARTYPE, 1, &
        &  GlobalAttributes%InstrumentName)
+      status = mls_EHwrglatt(fileID, &
+       & 'HostName', MLS_CHARTYPE, 1, &
+       &  GlobalAttributes%HostName)
       ProcessLevel = ProcessLevelFun()
       status = mls_EHwrglatt(fileID, &
        & 'ProcessLevel', MLS_CHARTYPE, 1, &
        &  ProcessLevel)
-!     status = he5_EHwrglatt(fileID, &
-!      & 'InputVersion', MLS_CHARTYPE, 1, &
-!      &  GlobalAttributes%InputVersion)
       status = mls_EHwrglatt(fileID, &
        & 'PGEVersion', MLS_CHARTYPE, 1, &
        &  GlobalAttributes%PGEVersion)
@@ -419,6 +419,9 @@ CONTAINS
       status = he5_EHrdglatt(fileID, &
        & 'InstrumentName', &
        &  gAttributes%InstrumentName)
+      status = he5_EHrdglatt(fileID, &
+       & 'HostName', &
+       &  gAttributes%HostName)
       status = he5_EHrdglatt(fileID, &
        & 'ProcessLevel', &
        &  gattributes%ProcessLevel)
@@ -583,13 +586,13 @@ CONTAINS
       status = he5_SWwrattr(swathID, &
        & 'InstrumentName', MLS_CHARTYPE, 1, &
        &  GlobalAttributes%InstrumentName)
+      status = he5_SWwrattr(swathID, &
+       & 'HostName', MLS_CHARTYPE, 1, &
+       &  GlobalAttributes%HostName)
       ProcessLevel = ProcessLevelFun()
       status = mls_SWwrattr(swathID, &
        & 'ProcessLevel', MLS_CHARTYPE, 1, &
        &  ProcessLevel)
-!     status = he5_SWwrattr(swathID, &
-!      & 'InputVersion', MLS_CHARTYPE, 1, &
-!      &  GlobalAttributes%InputVersion)
       status = mls_SWwrattr(swathID, &
        & 'PGEVersion', MLS_CHARTYPE, 1, &
        &  GlobalAttributes%PGEVersion)
@@ -1077,6 +1080,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.40  2007/01/12 00:27:10  pwagner
+!# New HostName global attribute written to product files
+!#
 !# Revision 2.39  2005/09/22 23:34:31  pwagner
 !# date conversion procedures and functions all moved into dates module
 !#
