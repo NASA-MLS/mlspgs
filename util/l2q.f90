@@ -14,11 +14,11 @@ program L2Q
   use dates_module, only: DATEFORM, REFORMATDATE
   use L2PARINFO, only: PARALLEL, INITPARALLEL, ACCUMULATESLAVEARGUMENTS
   use L2ParInfo, only: MACHINE_T, PARALLEL, &
-    & PETITIONTAG, GIVEUPTAG, GRANTEDTAG, &
-    & SIG_FINISHED, SIG_REGISTER, NOTIFYTAG, &
+    & PETITIONTAG, GIVEUPTAG, GRANTEDTAG, NOTIFYTAG, &
+    & SIG_FINISHED, SIG_REGISTER, SIG_SWEARALLEGIANCE, SIG_SWITCHALLEGIANCE, &
     & SIG_HOSTDIED, SIG_RELEASEHOST, SIG_REQUESTHOST, SIG_THANKSHOST, &
     & MACHINENAMELEN, GETMACHINENAMES, &
-    & DW_INVALID, DUMP, addMachineToDatabase
+    & DW_INVALID, DUMP, ADDMACHINETODATABASE
   use MACHINE ! At least HP for command lines, and maybe GETARG, too
   use MLSCOMMON, only: FILENAMELEN
   use MLSL2Options, only: CURRENT_VERSION_ID
@@ -28,7 +28,7 @@ program L2Q
   use MLSSETS, only: FINDFIRST, FINDALL
   use MLSSTRINGLISTS, only: CATLISTS, GETSTRINGELEMENT, NUMSTRINGELEMENTS, &
     & STRINGELEMENTNUM
-  use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS
+  use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS, STREQ
   use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUT_DATE_AND_TIME, OutputOptions, &
     & TIMESTAMP
   use PVM, only: PVMOK, &
@@ -55,18 +55,21 @@ program L2Q
   ! (i)  a file named on the command line w/o the '<' redirection
   ! (ii) stdin or a file redirected as stdin using '<'
 
-  implicit NONE
+  implicit none
 
   character(len=1) :: arg_rhs       ! 'n' part of 'arg=n'
   integer :: BUFFERID
   character(len=2048) :: command_line ! All the opts
   logical, parameter :: COUNTEMPTY = .true.
+  logical, parameter :: DEEBUG = .false.
   logical, parameter :: DUMPDBSONDEBUG = .false.
   integer :: ERROR
+  integer :: I
   integer :: INFO
   integer :: INUNIT = -1       ! Input unit, * if < 0
   character(len=2048) :: LINE      ! Into which is read the command args
   integer, parameter :: LIST_UNIT = 20  ! Unit # for hosts file if not stdin
+  character(len=MachineNameLen), dimension(:), pointer :: MACHINENAMES => null()
   integer, parameter :: MAXNUMMASTERS = 100 ! Mas num running simultaneously
   integer, parameter :: MAXNUMMULTIPROCS = 8 ! For some architectures > 1000 
   integer :: RECL = 10000          ! Record length for list
@@ -75,7 +78,8 @@ program L2Q
   logical :: SWITCH                ! "First letter after -- was not n"
   real :: T0, T1, T2, T_CONVERSION ! For timing
   integer :: TAG
-  integer :: TID
+  integer :: TID                   ! Our own TID
+  character(len=32) :: TIDSTR
 
   character(len=*), parameter :: GROUPNAME = "mlsl2"
   character(len=*), parameter :: LISTNAMEEXTENSION = ".txt"
@@ -86,7 +90,9 @@ program L2Q
   integer, parameter          :: DUMPDBTAG = CLEANMASTERDBTAG - 1
   integer, parameter          :: DUMPMASTERSDBTAG = DUMPDBTAG - 1
   integer, parameter          :: DUMPHOSTSDBTAG = DUMPMASTERSDBTAG - 1
-  integer, parameter          :: KILLMASTERSTAG = DUMPHOSTSDBTAG - 1
+  integer, parameter          :: FREEANYHOSTSTAG = DUMPHOSTSDBTAG - 1
+  integer, parameter          :: FREEHOSTSTAG = FREEANYHOSTSTAG - 1
+  integer, parameter          :: KILLMASTERSTAG = FREEHOSTSTAG - 1
   integer, parameter          :: SUICIDETAG = KILLMASTERSTAG - 1
   integer, parameter          :: SWITCHDUMPFILETAG = SUICIDETAG - 1
   integer, parameter          :: TURNREVIVALSONTAG = SWITCHDUMPFILETAG - 1
@@ -94,6 +100,8 @@ program L2Q
 
   integer, parameter          :: DUMPUNIT = LIST_UNIT + 1
   integer, parameter          :: TEMPUNIT = DUMPUNIT + 1
+  integer, parameter          :: HDBUNIT = TEMPUNIT + 1
+  integer, parameter          :: MDBUNIT = HDBUNIT + 1
 !---------------------------- RCS Ident Info ------------------------------
   character (len=*), parameter :: ModuleName= &
        "$RCSfile$"
@@ -140,13 +148,18 @@ program L2Q
     logical            :: verbose = .false.
     logical            :: reviveHosts = .false.   ! Regularly check for revivals
     character(len=16)  :: command = 'run'         ! {run, kill, dumphdb, dumpmdb
-    logical            :: debug = .false.         !   dump, checkh, clean}
+    logical            :: debug = DEEBUG          !   dump, checkh, clean}
     integer            :: errorLevel = MLSMSG_Warning
     logical            :: exitOnError = .false.   ! quit if an error occurs
     character(len=FILENAMELEN) &
       &                :: LIST_file = '<STDIN>'   ! name of hosts file
     character(len=FILENAMELEN) &
       &                :: dump_file = '<STDIN>'   ! name of dump file
+    character(len=FILENAMELEN) &
+      &                :: HDBfile = ''            ! name of hosts DB file
+    character(len=FILENAMELEN) &
+      &                :: MDBfile = ''            ! name of masters DB file
+    logical :: Rescue = .false.                   ! -R option is set
     logical :: Timing = .false.                   ! -T option is set
     logical :: date_and_times = .false.
     character(len=1)   :: timingUnits = 's'       ! l_s, l_m, l_h
@@ -214,6 +227,10 @@ program L2Q
         tag = dumpHostsDBTag
       case ( 'dumpmdb' )
         tag = dumpMastersDBTag
+      case ( 'free' )
+        tag = freeHostsTag
+      case ( 'freeany' )
+        tag = freeAnyHostsTag
       case ( 'kill' )
         tag = killMastersTag
       case ( 'revive=on' )
@@ -229,7 +246,8 @@ program L2Q
           & 'l2q would not recognize unknown command '//trim(options%command) )
       end select
       if ( any(tag == &
-        & (/avoidSelectedHostsTag, checkSelectedHostsTag, killMastersTag/) )) &
+        & (/avoidSelectedHostsTag, checkSelectedHostsTag, freeHostsTag, &
+        & killMastersTag/) )) &
         & then
         call PVMF90Pack ( trim(options%selectedHosts), info )
       else
@@ -241,7 +259,8 @@ program L2Q
       call timestamp(tid, advance='yes')
       call timestamp(' commanded: '//trim(options%command), advance='yes')
       if ( any(tag == &
-        & (/avoidSelectedHostsTag, checkSelectedHostsTag, killMastersTag/) )) &
+        & (/avoidSelectedHostsTag, checkSelectedHostsTag, freeHostsTag, &
+        & killMastersTag/) )) &
         & then
         call timestamp(trim(options%selectedHosts), advance='yes')
       elseif ( any(tag == (/dumpHostsDBTag, dumpMastersDBTag, dumpDBTag, &
@@ -267,10 +286,17 @@ program L2Q
   call time_now ( t0 )
 
   call InitParallel ( 0, 0 )
+  call GetMachineNames ( machineNames )
+  if ( .not. associated(machineNames) ) call MLSMessage( MLSMSG_Error, ModuleName, &
+      & 'unable to get machine names' )
+  if ( size(machineNames) < 1 ) call MLSMessage( MLSMSG_Error, ModuleName, &
+      & 'machine names array of zero size' )
   ! Join (actually start) our group
   call PVMFJoinGroup ( GROUPNAME, status )
   if ( status < 0 ) &
     & call myPVMErrorMessage ( status, 'Joining '//GROUPNAME//' group' )
+  ! Learn our own TID
+  call pvmfmyTID( tid )
 ! Clear the command line arguments we're going to accumulate to pass
 ! to slave tasks
   call ClearPVMArgs
@@ -304,8 +330,11 @@ program L2Q
     inunit = list_unit
   end if
   error = status
+  if ( .not. associated(machineNames) ) call MLSMessage( MLSMSG_Error, ModuleName, &
+      & 'unable to get machine names after reading list' )
   
-  call output_date_and_time(msg='starting l2q')
+  write( tidStr, * ) tid
+  call output_date_and_time( msg='starting l2q  TID=' // trim(tidStr) )
   call time_now ( t1 )
 
   if( options%verbose .or. .true. ) then
@@ -313,14 +342,57 @@ program L2Q
   end if
 
   call read_list
-  call cure_host_database(hosts, silent=.true.)
+  call cure_host_database(hosts, machineNames, silent=.true.)
+  if ( .not. associated(machineNames) ) call MLSMessage( MLSMSG_Error, ModuleName, &
+      & 'unable to get machine names after cure_host_database' )
+  ! Are we rescuing an older l2q that died?
+  if ( options%Rescue ) then
+    ! Read Masters db
+    open ( MDBUnit, file=options%MDBFile, status='old', &
+     & form='formatted', access='sequential', recl=recl, iostat=status )
+    if ( status /= 0 ) then
+      call io_error ( "While opening MDBFile", status, options%MDBFile )
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+        & "Unable to open MDB file: " // trim(options%MDBFile) )
+    elseif( options%verbose ) then                            
+      call announce_success( options%MDBFile, MDBUnit, 'rescued masters' ) 
+    end if
+    call read_master_database( Masters )
+    close ( MDBUnit )
+    ! Read Hosts db
+    open ( HDBUnit, file=options%HDBFile, status='old', &
+     & form='formatted', access='sequential', recl=recl, iostat=status )
+    if ( status /= 0 ) then
+      call io_error ( "While opening HDBFile", status, options%HDBFile )
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+        & "Unable to open HDB file: " // trim(options%HDBFile) )
+    elseif( options%verbose ) then                            
+      call announce_success( options%HDBFile, HDBUnit, 'rescued hosts'  )               
+    end if
+    call read_host_database( Hosts )
+    close ( HDBUnit )
+
+    ! This was just a test
+    ! call output_date_and_time(msg='ending l2q')
+    ! if ( options%dump_file /= '<STDIN>' ) close(OutputOptions%prunit)
+    ! stop
+
+    ! call dump_master_database( Masters )
+    do i=1, size(masters)
+      call SwitchMastersAllegiance( Masters(i) )
+    enddo
+  end if
   if ( options%checkList ) then
     call dump(hosts)
   !---------------- Task (4) ------------------
   elseif (error == 0) then
     call dump(hosts, details=0)
-    if( options%verbose ) call timestamp('Entering event loop', advance='yes')
-    call event_loop
+    if ( .not. associated(machineNames) ) call MLSMessage( MLSMSG_Error, ModuleName, &
+    & 'unable to get machine names before event_loop' )
+    if ( size(machineNames) < 1 ) call MLSMessage( MLSMSG_Error, ModuleName, &
+    & 'machine names array of zero size before event_loop' )
+    if( options%verbose .or. DEEBUG ) call timestamp('Entering event loop', advance='yes')
+    call event_loop( machineNames )
   else
     call MLSMessage( MLSMSG_Error, ModuleName, &
       & 'error reading list of hosts' )
@@ -334,57 +406,7 @@ program L2Q
 
 contains
 
-  subroutine cure_host_database(hosts, silent, selectedHosts)
-    ! cure any recovered hosts in database--declare them fit for action
-    ! If optional selectedHosts is present, cure only them
-    type(Machine_T), intent(inout), dimension(:) :: hosts
-    logical, optional, intent(in) :: silent
-    character(len=*), optional, intent(in) :: selectedHosts
-    ! Internal variables
-    character(len=MachineNameLen), dimension(:), pointer :: MACHINENAMES
-    logical :: mySilent
-    integer :: i
-    integer :: status
-    ! Executable
-    mySilent = .not. options%verbose
-    if ( present(silent) ) mySilent = silent .or. mySilent
-    ! No need to cure if none have died
-    if ( all(hosts%OK) ) return
-    call GetMachineNames ( machineNames )
-    do i=1, size(hosts)
-      if ( hosts(i)%OK ) cycle
-      ! Warning--following use of variable 'status' is non-standard
-      ! status is good if non-zero, bad if 0
-      status = 1
-      if ( present(selectedHosts) ) &
-        & status = StringElementNum(selectedHosts, trim(hosts(i)%name), .true.)
-      if ( status < 1 ) cycle
-      hosts(i)%OK = any( hosts(i)%name == machineNames )
-      if ( hosts(i)%OK .and. .not. mySilent ) &
-        & call proclaim('Host Cured', hosts(i)%Name)
-    enddo
-    call deAllocate_test(machineNames, 'machineNames', moduleName )
-  end subroutine cure_host_database
-
-  subroutine mark_host_database(hosts, selectedHosts)
-    ! mark selected hosts in database as not to be used
-    type(Machine_T), intent(inout), dimension(:) :: hosts
-    character(len=*), intent(in) :: selectedHosts
-    ! Internal variables
-    integer :: i
-    integer :: status
-    ! Executable
-    ! No need to mark if none can be used
-    if ( all(.not. hosts%OK) ) return
-    do i=1, size(hosts)
-      if ( .not. hosts(i)%OK ) cycle
-      ! Warning--following use of variable 'status' is non-standard
-      ! status is good if non-zero, bad if 0
-      status = StringElementNum(selectedHosts, trim(hosts(i)%name), .true.)
-      if ( status > 0 ) hosts(i)%OK = .false.
-    enddo
-  end subroutine mark_host_database
-
+  ! ---------------------------------------------  addMasterToDatabase  -----
   integer function  addMasterToDatabase( DATABASE, ITEM )
     ! This function adds a master data type to a database of said types,
     ! creating a new database if it doesn't exist.  The result value is
@@ -403,24 +425,86 @@ contains
     addMasterToDatabase = newSize
   end function  addMasterToDatabase
 
-  subroutine  rmMasterFromDatabase( DATABASE, ITEM )
-    ! This function removess a master data type from a database of said types,
-    ! creating a new database if it doesn't exist.  The result value is
-    ! the reduced size
+  ! ---------------------------------------------  announce_success  -----
+  subroutine announce_success ( Name, unit_number, items )
+    character(LEN=*), intent(in)             :: Name
+    integer, intent(in)                      :: unit_number
+    character(LEN=*), optional, intent(in)   :: items
 
-    ! Dummy arguments
-    type (master_t), dimension(:), pointer :: DATABASE
-    type (master_t), intent(in)            :: ITEM
+    call output ( 'List of ' )
+    if ( present(items) ) then
+      call output ( trim(items) )
+    else
+    call output ( 'hosts' )
+    endif
+    call output ( ' file name : ' )
+    call blanks(4)
+    call output ( trim(Name), advance='no')
+    call blanks(10)
+    call output ( 'unit number : ' )
+    call blanks(4)
+    call timestamp ( unit_number, advance='yes')
+  end subroutine announce_success
 
-    ! Local variables
-    type (Master_T), dimension(:), pointer :: tempDatabase
-    logical, parameter                     :: okToDeallocEmptyDB = .false.
-    !This include causes real trouble if you are compiling in a different 
-    !directory.
-    include "rmItemFromDatabase.f9h" 
-
-  end subroutine  rmMasterFromDatabase
-
+  ! ---------------------------------------------  assignHostToMaster  -----
+  subroutine assignHostToMaster(host, master, hostsID)
+    type(Machine_T) :: host
+    type(master_t) :: master
+    integer, intent(in) :: hostsID
+    ! Internal variables
+    integer :: bufferID
+    integer :: hcid
+    integer :: info
+    integer, dimension(:), pointer :: tempHosts
+    ! Executable
+    ! 1st--check that host is free and OK
+    if ( .not. (host%free .and. host%OK) ) then
+      call dump(host)
+      call dump_master(master)
+      call MLSMessage( options%errorLevel, ModuleName, &
+      & 'Tried to assign an unqualified host to this master' )
+    elseif( master%owes_thanks ) then
+      call MLSMessage( options%errorLevel, ModuleName, &
+      & 'Tried to assign host to an ungrateful master' )
+    endif      
+    host%master_tid = master%tid
+    host%free = .false.
+    host%tid = 0
+    if ( options%debug ) then
+       call output ('Number of machines free: ', advance='no')
+       call timestamp (count(hosts%free), advance='yes')
+    endif
+    hcid = 1
+    if ( .not. associated(master%hosts) ) then
+      nullify(master%hosts)
+      call allocate_test(master%hosts, 1, 'master%hosts', moduleName)
+    elseif( size(master%hosts) < 1 ) then
+      call allocate_test(master%hosts, 1, 'master%hosts', moduleName)
+    else
+      ! We'll need a larger hosts component in master, so ..
+      nullify(tempHosts)
+      hcid = size(master%hosts) + 1
+      call allocate_test(tempHosts, hcid, 'temphosts', moduleName)
+      tempHosts(1:hcid-1) = master%hosts
+      call deallocate_test(master%hosts, 'master%hosts', moduleName)
+      master%hosts => tempHosts
+    endif
+    master%hosts(hcid) = hostsid
+    ! Now use PVM to tell master he's got a new slave host
+    call PVMFInitSend ( PvmDataDefault, bufferID )
+    call PVMF90Pack ( trim(host%name), info )
+    if ( info /= 0 ) &
+      & call myPVMErrorMessage ( info, 'packing host name' )
+    if ( options%debug ) &
+      & call proclaim('Sending new host ' // trim(host%name), &
+      & masterNameFun(master%Tid))
+    call PVMFSend ( master%tid, grantedTag, info )
+    master%owes_thanks = .true.
+    master%needs_host = .false.
+    master%numHosts = master%numHosts + 1
+  end subroutine assignHostToMaster
+  
+  ! ---------------------------------------------  clean_master_database  -----
   subroutine clean_master_database(Masters)
     ! clean master database of finished tasks
     type(Master_T), dimension(:), pointer :: Masters
@@ -440,6 +524,69 @@ contains
     enddo
   end subroutine clean_master_database
 
+  ! ---------------------------------------------  cure_host_database  -----
+  subroutine cure_host_database(hosts, machineNames, silent, selectedHosts)
+    ! cure any recovered hosts in database--declare them fit for action
+    ! If optional selectedHosts is present, cure only them
+    type(Machine_T), intent(inout), dimension(:) :: hosts
+    character(len=MachineNameLen), dimension(:), pointer :: MACHINENAMES
+    logical, optional, intent(in) :: silent
+    character(len=*), optional, intent(in) :: selectedHosts
+    ! Internal variables
+    logical :: mySilent
+    integer :: i
+    integer :: status
+    ! Executable
+    mySilent = .not. options%verbose
+    if ( present(silent) ) mySilent = silent .or. mySilent
+    ! No need to cure if none have died
+    if ( all(hosts%OK) ) return
+    ! call GetMachineNames ( machineNames )
+    do i=1, size(hosts)
+      if ( hosts(i)%OK ) cycle
+      ! Warning--following use of variable 'status' is non-standard
+      ! status is good if non-zero, bad if 0
+      status = 1
+      if ( present(selectedHosts) ) &
+        & status = StringElementNum(selectedHosts, trim(hosts(i)%name), .true.)
+      if ( status < 1 ) cycle
+      ! hosts(i)%OK = any( hosts(i)%name == machineNames )
+      hosts(i)%OK = any( streq(hosts(i)%name, machineNames, '-f') )
+      if ( hosts(i)%OK .and. .not. mySilent ) &
+        & call proclaim('Host Cured', hosts(i)%Name)
+      if ( .not. hosts(i)%OK .and. DEEBUG ) then
+        call output( hosts(i)%name, advance='yes' )
+        call dump( machineNames, 'machinenames' )
+      endif
+    enddo
+    ! call deAllocate_test(machineNames, 'machineNames', moduleName )
+  end subroutine cure_host_database
+
+  ! ---------------------------------------------  dump_his_hosts  -----
+  subroutine dump_his_hosts( hostIDs, sortUs )
+    integer, dimension(:), intent(in)   :: hostIDs
+    logical, intent(in), optional   :: sortUs
+    ! Internal variables
+    integer :: i
+    integer, dimension(size(hostIDs)) :: myHostIDs
+    character(len=MACHINENAMELEN), dimension(size(hostIDs)) :: myHostNames
+    logical :: mySort
+    integer :: maxNameLength
+    ! Executable
+    mySort = .false.
+    if ( present(sortUs) ) mySort=sortUs
+    myHostIDs = hostIDs
+    if ( mySort ) call sort(myHostIDs, 1, size(hostIDs))
+    maxNameLength = 1
+    do i=1, size(hostIDs)
+      myHostNames(i) = hosts(myHostIDs(i))%name
+      maxNameLength = max(maxNameLength, len_trim(myHostNames(i)) + 1)
+    enddo
+    maxNameLength = min(maxNameLength, MACHINENAMELEN)
+    call dump( myHostNames(:)(1:maxNameLength) )
+  end subroutine dump_his_hosts
+
+  ! ---------------------------------------------  dump_master_database  -----
   subroutine dump_master_database(Masters, Details)
     ! dump data type
     type(Master_T), dimension(:), pointer :: Masters
@@ -466,6 +613,7 @@ contains
     enddo
   end subroutine dump_Master_database
 
+  ! ---------------------------------------------  dump_Master  -----
   subroutine dump_Master(Master)
     ! dump data type
     integer :: i
@@ -484,161 +632,78 @@ contains
     call output(Master%finished, advance = 'yes')
   end subroutine dump_Master
    
-  subroutine get_options
-    ! Internal variables
-    integer :: i
-    integer :: j
-    integer :: lineVal
-    integer :: n
-    character(len=3) :: subcase
-    ! Executable
-    i = 1+hp
-    command_line = ' '
-    do ! Process Lahey/Fujitsu run-time options; they begin with "-Wl,"
-      call getarg ( i, line )
-      if ( line(1:4) /= '-Wl,' ) exit
-      i = i + 1
-    end do
-    do ! Process the command line options to set toggles
-      call getarg ( i, line )
-      command_line = trim(command_line) // ' ' // trim(line)
-      if ( line(1:2) == '--' ) then       ! "word" options
-        n = 0
-        switch = .true.
-        if ( line(3:3) == 'n' .or. line(3:3) == 'N' ) then
-          switch = .false.
-          n = 1
-        end if
-        if ( line(3+n:7+n) == 'clean ' ) then
-          options%cleanMasterDB = switch
-        elseif ( line(3+n:7+n) == 'check ' ) then
-          options%checklist = switch
-        elseif ( line(3+n:7+n) == 'defer' ) then
-          options%deferToElders = switch
-        elseif ( line(3+n:5+n) == 'dhp' ) then
-          i = i + 1
-          call getarg ( i, line )
-          command_line = trim(command_line) // ' ' // trim(line)
-          call readIntsFromChars(line, lineVal)
-          options%HDBPeriod = lineVal
-        elseif ( line(3+n:5+n) == 'dmp' ) then
-          i = i + 1
-          call getarg ( i, line )
-          command_line = trim(command_line) // ' ' // trim(line)
-          call readIntsFromChars(line, lineVal)
-          options%MDBPeriod = lineVal
-        elseif ( lowerCase(line(3+n:10+n)) == 'dumpnewm' ) then
-          options%dumpEachNewMaster = switch
-        elseif ( lowerCase(line(3+n:10+n)) == 'help' ) then
-          call option_usage
-        elseif ( lowerCase(line(3+n:10+n)) == 'inquire' ) then
-          options%command = 'inquire'
-        else if ( line(3+n:10+n) == 'version ' ) then
-          do j=1, size(current_version_id)
-            print*, current_version_id(j)
-          enddo
-          stop
-        else if ( line(3+n:7+n) == 'reviv' ) then
-          options%reviveHosts = switch
-        else if ( line(3+n:7+n) == 'wall ' ) then
-          time_config%use_wall_clock = switch
-        else if ( line(3:) == ' ' ) then  ! "--" means "no more options"
-          i = i + 1
-          call getarg ( i, line )
-          command_line = trim(command_line) // ' ' // trim(line)
-          exit
-        else
-          print *, 'unrecognized option ', trim(line), ' ignored.'
-          call option_usage
-        end if
-      else if ( line(1:1) == '-' ) then   ! "letter" options
-        j = 1
-        j = j + 1
-        select case ( line(j:j) )
-        case ( ' ' )
-          exit
-        case ( 'g' )
-          toggle(gen) = .true.
-          levels(gen) = 0
-          if ( j < len(line) ) then
-            if ( line(j+1:j+1) >= '0' .and. line(j+1:j+1) <= '9' ) then
-              j = j + 1
-              levels(gen) = ichar(line(j:j)) - ichar('0')
-            end if
-          end if
-        case ( 'h', 'H', '?' )     ! Describe command line usage
-          call option_usage
-        case ( 'T' )
-          options%timing = .true.
-          do
-            if ( j >= len(line) ) exit
-            if ( line(j+1:j+1) > '0' .and. line(j+1:j+1) <= '9' ) then
-              options%date_and_times = .true.
-            elseif ( lowercase(line(j+1:j+1)) == 's' ) then
-              options%timingUnits = 's'  ! l_seconds
-            elseif ( lowercase(line(j+1:j+1)) == 'm' ) then
-              options%timingUnits = 'm'
-            elseif ( lowercase(line(j+1:j+1)) == 'h' ) then
-              options%timingUnits = 'h'
-            end if
-            j = j + 1
-          enddo
-        case ( 'v' ); options%verbose = .true.
-        case ( 'd' ); options%debug = .true.
-        case ( 'k' ); options%command = 'suicide' ! options%killer = .true.
-        case ( 'c' )
-          i = i + 1
-          call getarg ( i, line )
-          command_line = trim(command_line) // ' ' // trim(line)
-          options%command = lowercase(line)
-          ! Special commands take yet another arg
-          if ( index('check,avoid,kill', trim(options%command)) > 0 ) then
-            i = i + 1
-            call getarg ( i, line )
-            command_line = trim(command_line) // ' ' // trim(line)
-            options%selectedHosts = lowercase(line)
-          endif
-        case ( 'o' )
-          subcase = line(j:j+2)
-          i = i + 1
-          call getarg ( i, line )
-          ! print *, 'subcase: ', subcase
-          ! print *, 'file: ', trim(line)
-          command_line = trim(command_line) // ' ' // trim(line)
-          if ( subcase == 'o') then
-          options%dump_file = line
-        ! case ( 'oph' )
-          ! i = i + 1
-          ! call getarg ( i, line )
-          ! command_line = trim(command_line) // ' ' // trim(line)
-          elseif ( subcase == 'oph') then
-          options%PHFile = line
-        ! case ( 'opm' )
-          !  i = i + 1
-          !call getarg ( i, line )
-          !command_line = trim(command_line) // ' ' // trim(line)
-          elseif ( subcase == 'opm') then
-          options%PMFile = line
-          endif
-        case ( 's' )
-          options%command = 'switch'
-          i = i + 1
-          call getarg ( i, line )
-          command_line = trim(command_line) // ' ' // trim(line)
-          options%dump_file = line
-        case default
-          print *, 'Unrecognized option -', line(j:j), ' ignored.'
-          call option_usage
-        end select
-      else    
-        exit ! This must be the hosts filename
-      end if
-      i = i + 1
-    end do
+  ! ---------------------------------------------  Dump_settings  -----
+  subroutine Dump_settings
+  ! Show current run-time settings
+    call output(' l2q called with command line options: ', advance='no')
+    call output(trim(command_line), advance='yes')
+    call output(' LIST file:', advance='no')  
+    call blanks(4, advance='no')                                     
+    call output(trim(options%LIST_file), advance='yes')                            
+    call output(' -------------- Summary of run time options'      , advance='no')
+    call output(' -------------- ', advance='yes')
+    call output(' Just check the host list:                       ', advance='no')
+    call blanks(4, advance='no')
+    call output(options%checkList, advance='yes')
+    call output(' Debug               :                           ', advance='no')
+    call blanks(4, advance='no')
+    call output(options%debug, advance='yes')
+    call output(' Verbose             :                           ', advance='no')
+    call blanks(4, advance='no')
+    call output(options%verbose, advance='yes')
+    call output(' Dump each new master:                           ', advance='no')
+    call blanks(4, advance='no')
+    call output(options%dumpEachNewMaster, advance='yes')
+    call output(' Regularly check for revived hosts:              ', advance='no')
+    call blanks(4, advance='no')
+    call output(options%reviveHosts, advance='yes')
+    call output(' Regularly clean db of finished masters:         ', advance='no')
+    call blanks(4, advance='no')
+    call output(options%cleanMasterDB, advance='yes')
+    call output(' New masters defer to old:                       ', advance='no')
+    call blanks(4, advance='no')
+    call output(options%deferToElders, advance='yes')
+    if ( options%PMFile /= '') then
+    call output(' Periodically dump Master DB to:                 ', advance='no')
+    call blanks(4, advance='no')
+    call output(trim(options%PMFile), advance='yes')
+    call output(' Period (s):                                     ', advance='no')
+    call blanks(4, advance='no')
+    call output(options%MDBPeriod, advance='yes')
+    endif
+    if ( options%PHFile /= '') then
+    call output(' Periodically dump host DB to:                   ', advance='no')
+    call blanks(4, advance='no')
+    call output(trim(options%PHFile), advance='yes')
+    call output(' Period (s):                                     ', advance='no')
+    call blanks(4, advance='no')
+    call output(options%HDBPeriod, advance='yes')
+    endif
+    call output(' Dump other output to:                           ', advance='no')
+    call blanks(4, advance='no')
+    call output(trim(options%dump_File), advance='yes')
+    call output(' Using unit number:                              ', advance='no')
+    call blanks(4, advance='no')
+    call output(OutputOptions%prunit, advance='yes')
+    call output(' Time stamp each report:                         ', advance='no')
+    call blanks(4, advance='no')
+    call output(options%Timing, advance='yes')
+    call output(' Show date and times:                            ', advance='no')
+    call blanks(4, advance='no')
+    call output(options%date_and_times, advance='yes')
+    call output(' Stamp time in what units?:                       ', advance='no')
+    call blanks(4, advance='no')
+    call output(options%timingUnits, advance='yes' )
+    call output(' Using wall clock instead of cpu time?:          ', advance='no')
+    call blanks(4, advance='no')
+    call output(time_config%use_wall_clock, advance='yes')
+    call output(' ----------------------------------------------------------', &
+      & advance='yes')
+  end subroutine Dump_settings
 
-  end subroutine get_options
-   
-  subroutine event_loop
+  ! ---------------------------------------------  event_loop  -----
+  subroutine event_loop( machineNames )
+    character(len=MachineNameLen), dimension(:), pointer :: MACHINENAMES
     ! The main event loop
     ! l2q spends eternity circling endlessly, responding
     ! to the occasional promptings from master tasks via pvm
@@ -681,9 +746,14 @@ contains
     real    :: tLastMDBDump
     type(master_t) :: aMaster
     ! Executable
+    if ( .not. associated(machineNames) ) call MLSMessage( MLSMSG_Error, ModuleName, &
+    & 'unable to get machine names in event_loop' )
+    if ( size(machineNames) < 1 ) call MLSMessage( MLSMSG_Error, ModuleName, &
+    & 'machine names array of zero size in event_loop' )
     numMasters = 0
     tLastHDBDump = 0.
     tLastMDBDump = 0.
+    ! call timeStamp( 'Looping over events', advance='yes' )
     do
       checkrevivedhosts = .false.
       dumpHosts = .false.
@@ -947,7 +1017,6 @@ contains
       endif
       ! ----------------------------------------------------- Administrative messages?
       ! Listen out for any message telling *us* to quit now
-      ! call PVMFNRecv ( -1, GiveUpTag, bufferIDRcv )
       call PVMFNRecv ( -1, suicideTag, bufferIDRcv )
       if ( bufferIDRcv > 0 ) then
         if ( options%timing ) call sayTime
@@ -1110,13 +1179,34 @@ contains
         call mark_host_database(hosts, options%selectedHosts)
         dumpHosts = .true.
       end if
+      ! Listen out for any message telling us to free hosts
+      ! belonging to finished masters
+      call PVMFNRecv ( -1, freeAnyHostsTag, bufferIDRcv )
+      if ( bufferIDRcv > 0 ) then
+        call timestamp ( 'Received an external message to free hosts' &
+        &  // ' belonging to finished masters', advance='yes' )
+        call free_hosts( hosts, machineNames, masters=masters )
+        dumpHosts = .true.
+      endif
+      ! Listen out for any message telling us to free specified hosts 
+      call PVMFNRecv ( -1, freeHostsTag, bufferIDRcv )
+      if ( bufferIDRcv > 0 ) then
+        call PVMF90Unpack ( machineName, info )
+        if ( info /= 0 ) call myPVMErrorMessage ( info, 'unpacking GROUPNAME' )
+        call PVMF90Unpack ( options%selectedHosts, info )
+        if ( info /= 0 ) call myPVMErrorMessage ( info, 'unpacking selectedHosts' )
+        call timestamp ( 'Received an external message to free ' // &
+          & trim(options%selectedHosts), advance='yes' )
+        call free_hosts( hosts, machineNames )
+        dumpHosts = .true.
+      endif
       ! Listen out for any message telling us to check for revived hosts
       call PVMFNRecv ( -1, checkRevivedHostsTag, bufferIDRcv )
       ! Do it if so commanded, or if part of regular drill
       if ( bufferIDRcv > 0 ) call timestamp ( &
         & 'Received an external message to check for revivals', advance='yes' )
       if ( bufferIDRcv > 0 .or. checkrevivedhosts ) then
-        call cure_host_database(hosts)
+        call cure_host_database( hosts, machineNames )
         dumpHosts = .true.
       endif
       ! Listen out for any message telling us to revive selected hosts
@@ -1129,7 +1219,7 @@ contains
         if ( info /= 0 ) call myPVMErrorMessage ( info, 'unpacking selectedHosts' )
         call timestamp ( 'Received an external message to check ' // &
           & trim(options%selectedHosts), advance='yes' )
-        call cure_host_database(hosts, .true., options%selectedHosts)
+        call cure_host_database(hosts, machineNames, .true., options%selectedHosts)
         dumpHosts = .true.
       end if
       ! Listen out for any message telling us to flush current dumpfile
@@ -1202,7 +1292,7 @@ contains
             & status='replace', form='formatted', iostat=status )
           if ( status == 0 ) then
             call timestamp ( 'Performing periodic dump hostDB', &
-              & advance='yes' )
+              & advance='yes', date=.true. )
             call dump(hosts)
             close(OutputOptions%prunit)
           else
@@ -1232,7 +1322,7 @@ contains
             & status='replace', form='formatted', iostat=status )
           if ( status == 0 ) then
             call timestamp ( 'Performing periodic dump masterDB', &
-              & advance='yes' )
+              & advance='yes', date=.true. )
             call dump_master_database(masters)
             close(OutputOptions%prunit)
           else
@@ -1259,63 +1349,234 @@ contains
     enddo
   end subroutine event_loop
   
-  subroutine assignHostToMaster(host, master, hostsID)
-    type(Machine_T) :: host
-    type(master_t) :: master
-    integer, intent(in) :: hostsID
+  ! ---------------------------------------------  free_hosts  -----
+  subroutine free_hosts(hosts, machineNames, masters, silent)
+    ! free any hosts in database 
+    ! (1) specified in options%selectedHosts; or
+    ! (2) belonging to finished masters
+    type(Machine_T), intent(inout), dimension(:)       :: hosts
+    character(len=MachineNameLen), dimension(:), pointer :: MACHINENAMES
+    type(Master_T), optional, intent(in), dimension(:) :: masters
+    logical, optional, intent(in) :: silent
     ! Internal variables
-    integer :: bufferID
-    integer :: hcid
-    integer :: info
-    integer, dimension(:), pointer :: tempHosts
+    integer :: i
+    integer :: masterID
+    logical :: mySilent
+    integer :: selected
     ! Executable
-    ! 1st--check that host is free and OK
-    if ( .not. (host%free .and. host%OK) ) then
-      call dump(host)
-      call dump_master(master)
-      call MLSMessage( options%errorLevel, ModuleName, &
-      & 'Tried to assign an unqualified host to this master' )
-    elseif( master%owes_thanks ) then
-      call MLSMessage( options%errorLevel, ModuleName, &
-      & 'Tried to assign host to an ungrateful master' )
-    endif      
-    host%master_tid = master%tid
-    host%free = .false.
-    host%tid = 0
-    if ( options%debug) then
-       call output ('Number of machines free: ', advance='no')
-       call timestamp (count(hosts%free), advance='yes')
+    mySilent = .not. options%verbose
+    if ( present(silent) ) mySilent = silent .or. mySilent
+    if ( size(hosts) < 1 ) return
+    ! No need to free if all are
+    if ( all(hosts%free) ) return
+    if ( .not. present(masters) ) then
+      ! usage (1) 
+      ! call GetMachineNames ( machineNames )
+      if ( .not. associated(machineNames) ) call MLSMessage( MLSMSG_Error, ModuleName, &
+      & 'unable to get machine names in free_hosts' )
+      if ( size(machineNames) < 1 ) call MLSMessage( MLSMSG_Error, ModuleName, &
+      & 'machine names array of zero size in free_hosts' )
+      if ( DEEBUG ) call timeStamp('selected hosts to free: ' // trim(options%selectedHosts), advance='yes' )
+      do i=1, size(hosts)
+        if ( hosts(i)%free ) cycle
+        if ( DEEBUG ) call timeStamp('checking: '// trim(hosts(i)%name) // ' ' )
+        selected = StringElementNum(options%selectedHosts, trim(hosts(i)%name), .true.)
+        if ( DEEBUG ) call timeStamp(selected, advance='yes' )
+        if ( selected < 1 ) cycle
+        ! hosts(i)%free = any( hosts(i)%name == machineNames )
+        hosts(i)%free = any( streq(hosts(i)%name, machineNames, '-f') )
+        if ( hosts(i)%free .and. .not. mySilent ) &
+          & call proclaim('Host freed', hosts(i)%Name)
+        if ( .not. hosts(i)%free .and. DEEBUG ) then
+          call output( hosts(i)%name, advance='yes' )
+          call dump( machineNames, 'machinenames' )
+        endif
+      enddo
+      return
     endif
-    hcid = 1
-    if ( .not. associated(master%hosts) ) then
-      nullify(master%hosts)
-      call allocate_test(master%hosts, 1, 'master%hosts', moduleName)
-    elseif( size(master%hosts) < 1 ) then
-      call allocate_test(master%hosts, 1, 'master%hosts', moduleName)
-    else
-      ! We'll need a larger hosts component in master, so ..
-      nullify(tempHosts)
-      hcid = size(master%hosts) + 1
-      call allocate_test(tempHosts, hcid, 'temphosts', moduleName)
-      tempHosts(1:hcid-1) = master%hosts
-      call deallocate_test(master%hosts, 'master%hosts', moduleName)
-      master%hosts => tempHosts
-    endif
-    master%hosts(hcid) = hostsid
-    ! Now use PVM to tell master he's got a new slave host
-    call PVMFInitSend ( PvmDataDefault, bufferID )
-    call PVMF90Pack ( trim(host%name), info )
-    if ( info /= 0 ) &
-      & call myPVMErrorMessage ( info, 'packing host name' )
-    if ( options%debug ) &
-      & call proclaim('Sending new host ' // trim(host%name), &
-      & masterNameFun(master%Tid))
-    call PVMFSend ( master%tid, grantedTag, info )
-    master%owes_thanks = .true.
-    master%needs_host = .false.
-    master%numHosts = master%numHosts + 1
-  end subroutine assignHostToMaster
-  
+    ! usage (2) 
+    if ( size(masters) < 1 ) return
+    ! 
+    if ( .not. any(masters%finished) ) return
+    do i=1, size(hosts)
+      if ( hosts(i)%free ) cycle
+      masterID = findFirst( hosts(i)%master_tid == masters%tid )
+      if ( masterID > 0 ) &
+        & hosts(i)%free = masters(masterID)%finished
+    enddo
+  end subroutine free_hosts
+
+  ! ---------------------------------------------  get_options  -----
+  subroutine get_options
+    ! Internal variables
+    integer :: i
+    integer :: j
+    integer :: lineVal
+    integer :: n
+    character(len=8) :: subcase
+    ! Executable
+    i = 1+hp
+    command_line = ' '
+    do ! Process Lahey/Fujitsu run-time options; they begin with "-Wl,"
+      call getarg ( i, line )
+      if ( line(1:4) /= '-Wl,' ) exit
+      i = i + 1
+    end do
+    do ! Process the command line options to set toggles
+      call getarg ( i, line )
+      ! call output( 'Processing ' // trim(line), advance='yes' )
+      command_line = trim(command_line) // ' ' // trim(line)
+      if ( line(1:2) == '--' ) then       ! "word" options
+        n = 0
+        switch = .true.
+        if ( line(3:3) == 'n' .or. line(3:3) == 'N' ) then
+          switch = .false.
+          n = 1
+        end if
+        if ( line(3+n:7+n) == 'clean ' ) then
+          options%cleanMasterDB = switch
+        elseif ( line(3+n:7+n) == 'check ' ) then
+          options%checklist = switch
+        elseif ( line(3+n:7+n) == 'defer' ) then
+          options%deferToElders = switch
+        elseif ( line(3+n:5+n) == 'dhp' ) then
+          i = i + 1
+          call getarg ( i, line )
+          command_line = trim(command_line) // ' ' // trim(line)
+          call readIntsFromChars(line, lineVal)
+          options%HDBPeriod = lineVal
+        elseif ( line(3+n:5+n) == 'dmp' ) then
+          i = i + 1
+          call getarg ( i, line )
+          command_line = trim(command_line) // ' ' // trim(line)
+          call readIntsFromChars(line, lineVal)
+          options%MDBPeriod = lineVal
+        elseif ( lowerCase(line(3+n:10+n)) == 'dumpnewm' ) then
+          options%dumpEachNewMaster = switch
+        elseif ( lowerCase(line(3+n:10+n)) == 'help' ) then
+          call option_usage
+        elseif ( lowerCase(line(3+n:10+n)) == 'inquire' ) then
+          options%command = 'inquire'
+        else if ( line(3+n:10+n) == 'version ' ) then
+          do j=1, size(current_version_id)
+            print*, current_version_id(j)
+          enddo
+          stop
+        else if ( line(3+n:7+n) == 'reviv' ) then
+          options%reviveHosts = switch
+        else if ( line(3+n:7+n) == 'wall ' ) then
+          time_config%use_wall_clock = switch
+        else if ( line(3:) == ' ' ) then  ! "--" means "no more options"
+          i = i + 1
+          call getarg ( i, line )
+          command_line = trim(command_line) // ' ' // trim(line)
+          exit
+        else
+          print *, 'unrecognized option ', trim(line), ' ignored.'
+          call option_usage
+        end if
+      else if ( line(1:1) == '-' ) then   ! "letter" options
+        j = 1
+        j = j + 1
+        select case ( line(j:j) )
+        case ( ' ' )
+          exit
+        case ( 'g' )
+          toggle(gen) = .true.
+          levels(gen) = 0
+          if ( j < len(line) ) then
+            if ( line(j+1:j+1) >= '0' .and. line(j+1:j+1) <= '9' ) then
+              j = j + 1
+              levels(gen) = ichar(line(j:j)) - ichar('0')
+            end if
+          end if
+        case ( 'h', 'H', '?' )     ! Describe command line usage
+          call option_usage
+        case ( 'T' )
+          options%timing = .true.
+          do
+            if ( j >= len(line) ) exit
+            if ( line(j+1:j+1) > '0' .and. line(j+1:j+1) <= '9' ) then
+              options%date_and_times = .true.
+            elseif ( lowercase(line(j+1:j+1)) == 's' ) then
+              options%timingUnits = 's'  ! l_seconds
+            elseif ( lowercase(line(j+1:j+1)) == 'm' ) then
+              options%timingUnits = 'm'
+            elseif ( lowercase(line(j+1:j+1)) == 'h' ) then
+              options%timingUnits = 'h'
+            end if
+            j = j + 1
+          enddo
+        case ( 'v' ); options%verbose = .true.
+        case ( 'd' ); options%debug = .true.
+        case ( 'k' ); options%command = 'suicide' ! options%killer = .true.
+        case ( 'R' ); options%Rescue = .true.
+        case ( 'c' )
+          i = i + 1
+          call getarg ( i, line )
+          command_line = trim(command_line) // ' ' // trim(line)
+          options%command = lowercase(line)
+          ! Special commands take yet another arg
+          if ( index('check,avoid,kill,free', trim(options%command)) > 0 ) then
+            i = i + 1
+            call getarg ( i, line )
+            command_line = trim(command_line) // ' ' // trim(line)
+            options%selectedHosts = lowercase(line)
+          endif
+        case ( 'o' )
+          subcase = line(j:j+2)
+          i = i + 1
+          call getarg ( i, line )
+          ! print *, 'subcase: ', subcase
+          ! print *, 'file: ', trim(line)
+          command_line = trim(command_line) // ' ' // trim(line)
+          if ( subcase == 'o') then
+          options%dump_file = line
+          elseif ( subcase == 'oph') then
+          options%PHFile = line
+          elseif ( subcase == 'opm') then
+          options%PMFile = line
+          else
+          call option_usage
+          endif
+        case ( 'r' )
+          subcase = line(j:j+3)
+          i = i + 1
+          call getarg ( i, line )
+          ! print *, 'subcase: ', subcase
+          ! print *, 'file: ', trim(line)
+          command_line = trim(command_line) // ' ' // trim(line)
+          if ( subcase == 'r') then
+            ! We have no provision for a bare "r"
+          call option_usage
+          elseif ( subcase == 'rhdb') then
+          options%HDBFile = line
+          call output('Setting rescue HDB to: ' // trim(options%HDBFile), advance='yes' )
+          elseif ( subcase == 'rmdb') then
+          options%MDBFile = line
+          call output('Setting rescue MDB to: ' // trim(options%MDBFile), advance='yes' )
+          else
+          call option_usage
+          endif
+        case ( 's' )
+          options%command = 'switch'
+          i = i + 1
+          call getarg ( i, line )
+          command_line = trim(command_line) // ' ' // trim(line)
+          options%dump_file = line
+        case default
+          print *, 'Unrecognized option -', line(j:j), ' ignored.'
+          call option_usage
+        end select
+      else    
+        exit ! This must be the hosts filename
+      end if
+      i = i + 1
+    end do
+
+  end subroutine get_options
+   
+  ! ---------------------------------------------  IDHostFromMaster  -----
   subroutine IDHostFromMaster(signal, tid, mastersID, hostsID)
     ! Figure out which master is talking about
     ! Arguments
@@ -1384,6 +1645,7 @@ contains
     endif
   end subroutine IDHostFromMaster
   
+  ! ---------------------------------------------  IDMasterFromName  -----
   subroutine IDMasterFromName ( masters, names, IDs )
     ! Find which masterIDs match given list of names
     type(master_t), dimension(:)       :: masters
@@ -1462,6 +1724,371 @@ contains
     enddo
   end subroutine IDMasterFromName
 
+  ! ---------------------------------------------  mark_host_database  -----
+  subroutine mark_host_database(hosts, selectedHosts)
+    ! mark selected hosts in database as not to be used
+    type(Machine_T), intent(inout), dimension(:) :: hosts
+    character(len=*), intent(in) :: selectedHosts
+    ! Internal variables
+    integer :: i
+    integer :: status
+    ! Executable
+    ! No need to mark if none can be used
+    if ( all(.not. hosts%OK) ) return
+    do i=1, size(hosts)
+      if ( .not. hosts(i)%OK ) cycle
+      ! Warning--following use of variable 'status' is non-standard
+      ! status is good if non-zero, bad if 0
+      status = StringElementNum(selectedHosts, trim(hosts(i)%name), .true.)
+      if ( status > 0 ) hosts(i)%OK = .false.
+    enddo
+  end subroutine mark_host_database
+
+  ! ---------------------------------------------  masterNameFun  -----
+  function masterNameFun ( masterTid ) result(name)
+    character(LEN=MachineNameLen)  :: Name
+    integer, intent(in)            :: masterTid
+    ! Internal variables
+    integer :: mastersID
+    !
+    mastersID = FindFirst(masters%tid, masterTid)
+    name = catLists('m', mastersID, inseparator='-')
+  end function masterNameFun
+
+  ! ---------------------------------------------  myPVMErrorMessage  -----
+  subroutine myPVMErrorMessage ( info, place )
+    ! This routine is called to log a PVM error
+    integer, intent(in) :: INFO
+    character (LEN=*) :: PLACE
+    character (LEN=132) :: LINE
+
+    write (line, * ) info
+    if ( options%exitOnError ) then
+      call PVMErrorMessage ( info, place )
+    else
+      call MLSMessage ( options%errorLevel, Place, &
+        & 'PVM Error:  Info='//trim(adjustl(line)))
+    endif
+  end subroutine myPVMErrorMessage
+
+  ! ---------------------------------------------  Option_usage  -----
+  ! The following offer some information on the options
+  ! available either on the command-line or via the PCF
+  ! Note the unashamed use of 'print' statements which
+  ! are officially discouraged in favor of calls to MLSMessage.
+  ! Unfortunately, we have not yet decided which method to use
+  ! until *after* processing all the options.
+  
+  subroutine Option_usage
+    call getarg ( 0+hp, line )
+    print *, 'Usage: ', trim(line), ' [options] [--] [LIST-name]'
+    print *, ' Options:'
+    print *, ' --check:     check LIST of hosts'
+    print *, ' --[n]clean:  do [not] regularly clean db of finished masters'
+    print *, ' --defer:     new masters defer to oldest (has enough hosts)'
+    print *, ' --dhp n :    dump host db every n seconds (need phfile)'
+    print *, ' --dmp m :    dump master db every m seconds (need pmfile)'
+    print *, ' --dumpnewm:  dump each new master'
+    print *, ' --help:      show help; stop'
+    print *, ' --inquire:   show whether an instance of l2q already running'
+    print *, ' --[n]revive: do [not] regularly check for revived hosts'
+    print *, ' --version:   print version string; stop'
+    print *, ' --wall:      show times according to wall clock (if T[0] set)'
+    print *, ' -k:          kill currently-running l2q'
+    print *, ' -oph phfile: dump db of hosts periodically to phfile'
+    print *, ' -opm pmfile: dump db of masters periodically to pmfile'
+    print *, ' -o dumpfile: direct most other output to dumpfile'
+    print *, '               (if modifying an already-running l2q, direct only'
+    print *, '               the requested output to dumpfile)'
+    print *, ' -s newfile:  flush current dumpfile; direct later output'
+    print *, '                to newfile ( same as -o newfile -c switch )'
+    print *, ' -v:          verbose'
+    print *, ' -h:          show help; stop'
+    print *, ' -R:          Rescue: take over from a dead l2q'
+    print *, ' -rhdb file:  read db of hosts from file (required by a rescue)'
+    print *, ' -rmdb file:  read db of masters from file (required by a rescue)'
+    print *, ' -T[0][smh]:  show timing [in s, m, h]'
+    print *, ' -T1:         show dates with timing'
+    print *, ' -c command [arg]:  issue command to currently-running l2q'
+    print *, '        command may be one of'
+    print *, ' avoid h1[,h2,..]:'
+    print *, '              mark selected host[s] as unuseable'
+    print *, ' check h1[,h2,..]:'
+    print *, '              check for revival of selected host[s]'
+    print *, ' checkall:    check for all revived hosts'
+    print *, ' clean:       clean the db of finished master tasks'
+    print *, ' freeany:     free any hosts held by finished master tasks'
+    print *, ' free h1[,h2,..]:'
+    print *, '              free specified hosts'
+    print *, ' revive=on:   begin regularly checking for revived hosts'
+    print *, ' revive=off:  cease regularly checking for revived hosts'
+    print *, ' kill m1[,m2,..]:'
+    print *, '              kill selected masters cleanly'
+    print *, ' switch:      flush current dumpfile'
+    print *, '              ( switch to one specified by -o newfile )'
+    print *, '  ( if the following commands are accompanied by the option'
+    print *, '    -o newfile, the output requested will be dumped to newfile )'
+    print *, ' dumphdb:     dump host database'
+    print *, ' dumpmdb:     dump master database'
+    print *, ' dumpdb:      dump host and master databases'
+    print *, ' N o t e :'
+    print *, ' only the options:'
+    print *, ' -o, -v, -T, --check, --clean, --defer, '
+    print *, ' --dumpnewm, --[n]revive, --wall'
+    print *, ' are appropriate for l2q when first launched'
+    print *, ' all other options will modify an already-running l2q'
+    print *, ' (and will generate an error if l2q not already running)'
+    print *, ' '
+    print *, ' commanding an already-running l2q to dump output to a file'
+    print *, ' without specifying a path will select that working directory'
+    print *, ' in force when the original l2q was launched '
+    print *, ' (and not necessarily the current one)'
+    stop
+  end subroutine Option_usage
+
+  ! ---------------------------------------------  proclaim  -----
+  subroutine proclaim( Event, Name, Signal, advance )
+    character(LEN=*), intent(in)   :: Event
+    character(LEN=*), intent(in), optional   :: Name
+    character(LEN=*), intent(in), optional   :: ADVANCE
+    integer, intent(in), optional   :: Signal
+    ! Internal variables
+    character(len=3) :: myadvance
+    ! Executable
+    myadvance = 'yes'
+    if ( present(advance) ) myAdvance=advance
+    if ( options%timing ) call sayTime
+    call output(trim(event), advance='no')
+    if ( present(name) ) then
+      call output(' associated with ', advance='no')
+      call output(trim(name), advance='no')
+    endif
+    if ( present(signal) ) then
+      call output(' signal ', advance='no')
+      call output(signal, advance='no')
+    endif
+    if ( lowercase(myadvance) == 'yes' ) call newline
+  end subroutine proclaim
+
+  ! ---------------------------------------------  read_host_database  -----
+  subroutine read_host_database( Hosts )
+    type(machine_T), dimension(:), pointer :: Hosts
+    ! Internal variables
+    integer :: i
+    character(len=32) :: irrelevant
+    integer :: hostSize
+    integer :: status
+    ! Executable
+    deallocate( hosts, stat=status )
+    if ( status /= 0 ) call MLSMessage( MLSMSG_Error, ModuleName, &
+          & 'Unable to deallocate Hosts before reading db' )
+    hostSize = 0
+    ! 1st--we need to go past the 7 lines at the start of the file
+    if ( DEEBUG ) call timeStamp('1st--we need to go past the 7 lines at the start of the file', advance='yes')
+    call read_oneline ( HDBUnit, status, string=irrelevant )
+    if ( DEEBUG ) then
+    call timeStamp( 'Read irrelevant: ' // trim(irrelevant), advance='yes' )
+    call output( 'status after read_oneline' )
+    call blanks(4)
+    call timeStamp( status, advance='yes' )
+    endif
+    if ( status /= 0 ) then
+      call output('Hosts database still empty', advance='yes')
+      return
+    endif
+    call read_oneline ( HDBUnit, status, int=hostSize )
+    if ( DEEBUG )  then
+    call output( 'host size: ' )
+    call output( hostsize, advance='yes' )
+    endif
+    do i=1, 5
+      call read_oneline ( HDBUnit, status, string=irrelevant )
+    enddo
+    do i=1, hostSize
+      call read_host(Hosts)
+    enddo
+    if ( DEEBUG ) call dump( Hosts, Details=1 )
+  end subroutine read_host_database
+  
+  ! ---------------------------------------------  read_host  -----
+  subroutine read_host( hosts )
+    type(machine_T), dimension(:), pointer :: hosts
+    ! Internal variables
+    type(machine_t) :: ahost
+    integer :: numhosts
+    integer :: status
+    ! Executable
+    call read_oneline ( HDBUnit, status, ahost%Name )
+    if ( DEEBUG ) then
+    call timeStamp( 'Read aHost%name: ' // trim(aHost%name) )
+    call output( 'status after read_oneline' )
+    call blanks(4)
+    call timeStamp( status, advance='yes' )
+    endif
+    if ( status == 0 ) call read_oneline ( HDBUnit, status, int=ahost%master_tid )
+    if ( status == 0 ) call read_oneline ( HDBUnit, status, string=ahost%master_name )
+    if ( status == 0 ) call read_oneline ( HDBUnit, status, string=ahost%master_date )
+    if ( status == 0 ) call read_oneline ( HDBUnit, status, int=ahost%tid )
+    if ( status == 0 ) call read_oneline ( HDBUnit, status, int=ahost%chunk )
+    if ( status == 0 ) call read_oneline ( HDBUnit, status, log=ahost%OK )
+    if ( status == 0 ) call read_oneline ( HDBUnit, status, log=ahost%free )
+    if ( status == 0 ) numhosts = addMachineToDatabase(hosts, ahost)
+  end subroutine read_host
+
+  ! ---------------------------------------------  read_list  -----
+  subroutine read_list
+    type(Machine_T) :: newhost
+    integer :: iostat
+    integer :: nhosts
+    nhosts = 0
+    do
+        if ( inunit >= 0 ) then
+          read ( inunit, '(a)', advance='no', eor=100, end=200, err=400, &
+            iostat=iostat ) newhost%name
+        else
+          read ( *, '(a)', advance='no', eor=100, end=200, err=400, &
+            iostat=iostat ) newhost%name
+        end if
+100     if ( options%verbose ) &
+          & call output(trim(newhost%name) // ' added', advance='yes')
+      newhost%master_tid = -1
+      newhost%tid = -1
+      newhost%chunk = -1
+      newhost%OK = .false.
+      newhost%free = .true.
+      nhosts = addMachineToDatabase(hosts, newhost)
+    enddo
+200 if ( options%verbose ) then
+      call output(nhosts, advance='no')
+      call timestamp(' hosts read', advance='yes')
+    endif
+    return
+400 call MLSMessage( MLSMSG_Error, ModuleName, &
+      & 'error in reading list of hosts' )
+  end subroutine read_list
+
+  ! ---------------------------------------------  read_master_database  -----
+  subroutine read_master_database( Masters )
+    type(Master_T), dimension(:), pointer :: Masters
+    ! Internal variables
+    integer :: i
+    character(len=32) :: irrelevant
+    integer :: masterSize
+    integer :: status
+    ! Executable
+    masterSize = 0
+    ! 1st--we need to go past the 4 lines at the start of the file
+    if ( DEEBUG ) call timeStamp('1st--we need to go past the 4 lines at the start of the file', advance='yes')
+    call read_oneline ( MDBUnit, status, string=irrelevant )
+    if ( DEEBUG ) then
+    call timeStamp( 'Read irrelevant: ' // trim(irrelevant), advance='yes' )
+    call output( 'status after read_oneline' )
+    call blanks(4)
+    call timeStamp( status, advance='yes' )
+    endif
+    if ( status /= 0 ) then
+      call output('Master database still empty', advance='yes')
+      return
+    endif
+    call read_oneline ( MDBUnit, status, int=masterSize )
+    call read_oneline ( MDBUnit, status, string=irrelevant )
+    call read_oneline ( MDBUnit, status, string=irrelevant )
+    if ( DEEBUG ) then
+    call output( 'size of master db' )
+    call blanks(4)
+    call timeStamp( masterSize, advance='yes' )
+    endif
+    do i=1, masterSize
+      call read_master(Masters)
+    enddo
+    if ( DEEBUG ) call dump_master_database( Masters, Details=1 )
+  end subroutine read_master_database
+  
+  ! ---------------------------------------------  read_master  -----
+  subroutine read_master( Masters )
+    type(Master_T), dimension(:), pointer :: Masters
+    ! Internal variables
+    type(master_t) :: aMaster
+    character(len=128) :: machineName
+    integer :: numMasters
+    integer :: status
+    ! Executable
+    call read_oneline ( MDBUnit, status, aMaster%Name )
+    if ( DEEBUG ) then
+    call timeStamp( 'Read aMaster%name: ' // trim(aMaster%name) )
+    call output( 'status after read_oneline' )
+    call blanks(4)
+    call timeStamp( status, advance='yes' )
+    endif
+    if ( status == 0 ) call read_oneline ( MDBUnit, status, string=amaster%Date )
+    if ( status == 0 ) call read_oneline ( MDBUnit, status, int=amaster%tid )
+    if ( status == 0 ) call read_oneline ( MDBUnit, status, log=amaster%needs_host )
+    if ( status == 0 ) call read_oneline ( MDBUnit, status, log=amaster%owes_thanks )
+    if ( status == 0 ) call read_oneline ( MDBUnit, status, log=amaster%finished )
+    if ( status == 0 ) numMasters = addMasterToDatabase(masters, aMaster)
+  end subroutine read_master
+
+  ! ---------------------------------------------  read_oneline  -----
+  subroutine read_oneline ( unit, status, string, int, log )
+    ! Read one line from unit assuming it was formatted as
+    ! Something: value
+    ! returning value either as a string or as an int
+    !
+    ! status will be 0 unless EOR, ERROR, or somesuch
+    integer, intent(in)                     :: unit
+    integer, intent(out)                    :: status
+    character(len=*), optional, intent(out) :: string
+    integer, optional, intent(out)          :: int
+    logical, optional, intent(out)          :: log
+    ! Internal variables
+    integer :: iColon
+    character(len=256) :: last
+    character(len=256) :: line
+    ! logical, parameter :: DEEBUG = .false.
+    ! Executable
+    last = ' '
+    line = ' '
+    do
+    read ( unit, '(a)', advance='no', eor=100, end=200, err=400, &
+      & iostat=status ) line
+    if ( DEEBUG ) call output( 'oneline: ' // trim(line), advance='yes' )
+100 iColon = index ( line, ':' )
+    if ( iColon > 0 ) then
+      status = 0
+      last = line(iColon+1:)
+      if ( DEEBUG ) call output( 'value: ', advance='no' )
+      if ( present(string) ) string = adjustl(last)
+      if ( present(int) ) call readIntsFromChars( last, int )
+      if ( present(log) ) log = ( index( lowerCase(last), 't' ) > 0 )
+      if ( DEEBUG ) then
+      if ( present(string) ) call output( trim(string), advance='yes' )
+      if ( present(int) ) call output( int, advance='yes' )
+      if ( present(log) ) call output( log, advance='yes' )
+      endif
+    else
+      status = 1
+    endif
+    if ( DEEBUG ) then
+    call output(trim(line), advance='no')
+    call blanks(4)
+    call timestamp(status, advance='yes')
+    endif
+    return
+    enddo
+200 status = 99
+    if ( .not. DEEBUG ) return
+    call output(trim(line), advance='no')
+    call blanks(4)
+    call timestamp(status, advance='yes')
+    return
+400 status = 999
+    if ( .not. DEEBUG ) return
+    call output(trim(line), advance='no')
+    call blanks(4)
+    call timestamp(status, advance='yes')
+  end subroutine read_oneline
+  
+  ! ---------------------------------------------  releaseHostFromMaster  -----
   subroutine releaseHostFromMaster(host, master, hostsID)
     type(Machine_T) :: host
     type(master_t) :: master
@@ -1547,37 +2174,26 @@ contains
     master%numFreed = master%numFreed + 1
   end subroutine releaseHostFromMaster
   
-  subroutine read_list
-    type(Machine_T) :: newhost
-    integer :: iostat
-    integer :: nhosts
-    nhosts = 0
-    do
-        if ( inunit >= 0 ) then
-          read ( inunit, '(a)', advance='no', eor=100, end=200, err=400, &
-            iostat=iostat ) newhost%name
-        else
-          read ( *, '(a)', advance='no', eor=100, end=200, err=400, &
-            iostat=iostat ) newhost%name
-        end if
-100     if ( options%verbose ) &
-          & call output(trim(newhost%name) // ' added', advance='yes')
-      newhost%master_tid = -1
-      newhost%tid = -1
-      newhost%chunk = -1
-      newhost%OK = .false.
-      newhost%free = .true.
-      nhosts = addMachineToDatabase(hosts, newhost)
-    enddo
-200 if ( options%verbose ) then
-      call output(nhosts, advance='no')
-      call timestamp(' hosts read', advance='yes')
-    endif
-    return
-400 call MLSMessage( MLSMSG_Error, ModuleName, &
-      & 'error in reading list of hosts' )
-  end subroutine read_list
+  ! ---------------------------------------------  rmMasterFromDatabase  -----
+  subroutine  rmMasterFromDatabase( DATABASE, ITEM )
+    ! This function removess a master data type from a database of said types,
+    ! creating a new database if it doesn't exist.  The result value is
+    ! the reduced size
 
+    ! Dummy arguments
+    type (master_t), dimension(:), pointer :: DATABASE
+    type (master_t), intent(in)            :: ITEM
+
+    ! Local variables
+    type (Master_T), dimension(:), pointer :: tempDatabase
+    logical, parameter                     :: okToDeallocEmptyDB = .false.
+    !This include causes real trouble if you are compiling in a different 
+    !directory.
+    include "rmItemFromDatabase.f9h" 
+
+  end subroutine  rmMasterFromDatabase
+
+  ! ---------------------------------------------  SayTime  -----
   subroutine SayTime ( What )
     character(len=*), intent(in), optional :: What
     ! Internal variables
@@ -1596,233 +2212,55 @@ contains
     if ( present(What) ) call output ( trim(what), advance = 'yes' )
   end subroutine SayTime
 
-  ! The following offer some information on the options
-  ! available either on the command-line or via the PCF
-  ! Note the unashamed use of 'print' statements which
-  ! are officially discouraged in favor of calls to MLSMessage.
-  ! Unfortunately, we have not yet decided which method to use
-  ! until *after* processing all the options.
-  
-  subroutine Option_usage
-    call getarg ( 0+hp, line )
-    print *, 'Usage: ', trim(line), ' [options] [--] [LIST-name]'
-    print *, ' Options:'
-    print *, ' --check:     check LIST of hosts'
-    print *, ' --[n]clean:  do [not] regularly clean db of finished masters'
-    print *, ' --defer:     new masters defer to oldest (has enough hosts)'
-    print *, ' --dhp n :    dump host db every n seconds (need phfile)'
-    print *, ' --dmp m :    dump master db every m seconds (need pmfile)'
-    print *, ' --dumpnewm:  dump each new master'
-    print *, ' --help:      show help; stop'
-    print *, ' --inquire:   show whether an instance of l2q already running'
-    print *, ' --[n]revive: do [not] regularly check for revived hosts'
-    print *, ' --version:   print version string; stop'
-    print *, ' --wall:      show times according to wall clock (if T[0] set)'
-    print *, ' -k:          kill currently-running l2q'
-    print *, ' -oph phfile: dump db of hosts periodically to phfile'
-    print *, ' -opm pmfile: dump db of masters periodically to pmfile'
-    print *, ' -o dumpfile: direct most other output to dumpfile'
-    print *, '               (if modifying an already-running l2q, direct only'
-    print *, '               the requested output to dumpfile)'
-    print *, ' -s newfile:  flush current dumpfile; direct later output'
-    print *, '                to newfile ( same as -o newfile -c switch )'
-    print *, ' -v:          verbose'
-    print *, ' -h:          show help; stop'
-    print *, ' -T[0][smh]:  show timing [in s, m, h]'
-    print *, ' -T1:         show dates with timing'
-    print *, ' -c command [arg]:  issue command to currently-running l2q'
-    print *, '        command may be one of'
-    print *, ' avoid h1[,h2,..]:'
-    print *, '              mark selected host[s] as unuseable'
-    print *, ' check h1[,h2,..]:'
-    print *, '              check for revival of selected host[s]'
-    print *, ' checkall:    check for all revived hosts'
-    print *, ' clean:       clean the db of finished master tasks'
-    print *, ' revive=on:   begin regularly checking for revived hosts'
-    print *, ' revive=off:  cease regularly checking for revived hosts'
-    print *, ' kill m1[,m2,..]:'
-    print *, '              kill selected masters cleanly'
-    print *, ' switch:      flush current dumpfile'
-    print *, '              ( switch to one specified by -o newfile )'
-    print *, '  ( if the following commands are accompanied by the option'
-    print *, '    -o newfile, the output requested will be dumped to newfile )'
-    print *, ' dumphdb:     dump host database'
-    print *, ' dumpmdb:     dump master database'
-    print *, ' dumpdb:      dump host and master databases'
-    print *, ' N o t e :'
-    print *, ' only the options:'
-    print *, ' -o, -v, -T, --check, --clean, --defer, '
-    print *, ' --dumpnewm, --[n]revive, --wall'
-    print *, ' are appropriate for l2q when first launched'
-    print *, ' all other options will modify an already-running l2q'
-    print *, ' (and will generate an error if l2q not already running)'
-    print *, ' '
-    print *, ' commanding an already-running l2q to dump output to a file'
-    print *, ' without specifying a path will select that working directory'
-    print *, ' in force when the original l2q was launched '
-    print *, ' (and not necessarily the current one)'
-    stop
-  end subroutine Option_usage
-
-  subroutine Dump_settings
-  ! Show current run-time settings
-    call output(' l2q called with command line options: ', advance='no')
-    call output(trim(command_line), advance='yes')
-    call output(' LIST file:', advance='no')  
-    call blanks(4, advance='no')                                     
-    call output(trim(options%LIST_file), advance='yes')                            
-    call output(' -------------- Summary of run time options'      , advance='no')
-    call output(' -------------- ', advance='yes')
-    call output(' Just check the host list:                       ', advance='no')
-    call blanks(4, advance='no')
-    call output(options%checkList, advance='yes')
-    call output(' Debug               :                           ', advance='no')
-    call blanks(4, advance='no')
-    call output(options%debug, advance='yes')
-    call output(' Verbose             :                           ', advance='no')
-    call blanks(4, advance='no')
-    call output(options%verbose, advance='yes')
-    call output(' Dump each new master:                           ', advance='no')
-    call blanks(4, advance='no')
-    call output(options%dumpEachNewMaster, advance='yes')
-    call output(' Regularly check for revived hosts:              ', advance='no')
-    call blanks(4, advance='no')
-    call output(options%reviveHosts, advance='yes')
-    call output(' Regularly clean db of finished masters:         ', advance='no')
-    call blanks(4, advance='no')
-    call output(options%cleanMasterDB, advance='yes')
-    call output(' New masters defer to old:                       ', advance='no')
-    call blanks(4, advance='no')
-    call output(options%deferToElders, advance='yes')
-    if ( options%PMFile /= '') then
-    call output(' Periodically dump Master DB to:                 ', advance='no')
-    call blanks(4, advance='no')
-    call output(trim(options%PMFile), advance='yes')
-    call output(' Period (s):                                     ', advance='no')
-    call blanks(4, advance='no')
-    call output(options%MDBPeriod, advance='yes')
-    endif
-    if ( options%PHFile /= '') then
-    call output(' Periodically dump host DB to:                   ', advance='no')
-    call blanks(4, advance='no')
-    call output(trim(options%PHFile), advance='yes')
-    call output(' Period (s):                                     ', advance='no')
-    call blanks(4, advance='no')
-    call output(options%HDBPeriod, advance='yes')
-    endif
-    call output(' Dump other output to:                           ', advance='no')
-    call blanks(4, advance='no')
-    call output(trim(options%dump_File), advance='yes')
-    call output(' Using unit number:                              ', advance='no')
-    call blanks(4, advance='no')
-    call output(OutputOptions%prunit, advance='yes')
-    call output(' Time stamp each report:                         ', advance='no')
-    call blanks(4, advance='no')
-    call output(options%Timing, advance='yes')
-    call output(' Show date and times:                            ', advance='no')
-    call blanks(4, advance='no')
-    call output(options%date_and_times, advance='yes')
-    call output(' Stamp time in what units?:                       ', advance='no')
-    call blanks(4, advance='no')
-    call output(options%timingUnits, advance='yes' )
-    call output(' Using wall clock instead of cpu time?:          ', advance='no')
-    call blanks(4, advance='no')
-    call output(time_config%use_wall_clock, advance='yes')
-    call output(' ----------------------------------------------------------', &
-      & advance='yes')
-  end subroutine Dump_settings
-
-  ! ---------------------------------------------  dump_his_hosts  -----
-  subroutine dump_his_hosts( hostIDs, sortUs )
-    integer, dimension(:), intent(in)   :: hostIDs
-    logical, intent(in), optional   :: sortUs
+  ! ---------------------------------------------  SwitchMastersAllegiance  -----
+  subroutine SwitchMastersAllegiance( Master )
+    type(Master_T) :: Master
     ! Internal variables
+    integer :: bufferID
     integer :: i
-    integer, dimension(size(hostIDs)) :: myHostIDs
-    character(len=MACHINENAMELEN), dimension(size(hostIDs)) :: myHostNames
-    logical :: mySort
-    integer :: maxNameLength
+    integer :: info
     ! Executable
-    mySort = .false.
-    if ( present(sortUs) ) mySort=sortUs
-    myHostIDs = hostIDs
-    if ( mySort ) call sort(myHostIDs, 1, size(hostIDs))
-    maxNameLength = 1
-    do i=1, size(hostIDs)
-      myHostNames(i) = hosts(myHostIDs(i))%name
-      maxNameLength = max(maxNameLength, len_trim(myHostNames(i)) + 1)
+    ! call dump_master( master )
+    if ( master%finished ) then
+      call output(master%tid)
+      call timeStamp( ' This master already finished', advance='yes' )
+      ! Sometimes we can't trust this claim, so try to send msg anyway
+      ! return
+    endif
+    call PVMFInitSend ( PvmDataDefault, bufferID )
+    call PVMFSend ( master%tid, SIG_Switchallegiance, info )
+    call timeStamp( ' Sending notice to switch to master', advance='yes' )
+    do i=1, 1000
+      call PVMFNRecv ( master%tid, sig_swearallegiance, info )
+      if ( info > 0 ) exit
+      call usleep ( parallel%delay )
     enddo
-    maxNameLength = min(maxNameLength, MACHINENAMELEN)
-    call dump( myHostNames(:)(1:maxNameLength) )
-  end subroutine dump_his_hosts
-
-  ! ---------------------------------------------  proclaim  -----
-  subroutine proclaim( Event, Name, Signal, advance )
-    character(LEN=*), intent(in)   :: Event
-    character(LEN=*), intent(in), optional   :: Name
-    character(LEN=*), intent(in), optional   :: ADVANCE
-    integer, intent(in), optional   :: Signal
-    ! Internal variables
-    character(len=3) :: myadvance
-    ! Executable
-    myadvance = 'yes'
-    if ( present(advance) ) myAdvance=advance
-    if ( options%timing ) call sayTime
-    call output(trim(event), advance='no')
-    if ( present(name) ) then
-      call output(' associated with ', advance='no')
-      call output(trim(name), advance='no')
-    endif
-    if ( present(signal) ) then
-      call output(' signal ', advance='no')
-      call output(signal, advance='no')
-    endif
-    if ( lowercase(myadvance) == 'yes' ) call newline
-  end subroutine proclaim
-
-  ! ---------------------------------------------  announce_success  -----
-  subroutine announce_success ( Name, unit_number )
-    character(LEN=*), intent(in)   :: Name
-    integer, intent(in)            :: unit_number
-
-    call output ( 'List of hosts file ' )
-    call output ( 'name : ' )
-    call blanks(4)
-    call output ( trim(Name), advance='no')
-    call blanks(10)
-    call output ( 'unit number : ' )
-    call blanks(4)
-    call timestamp ( unit_number, advance='yes')
-  end subroutine announce_success
-
-  ! ---------------------------------------------  masterNameFun  -----
-  function masterNameFun ( masterTid ) result(name)
-    character(LEN=MachineNameLen)  :: Name
-    integer, intent(in)            :: masterTid
-    ! Internal variables
-    integer :: mastersID
-    !
-    mastersID = FindFirst(masters%tid, masterTid)
-    name = catLists('m', mastersID, inseparator='-')
-  end function masterNameFun
-
-  subroutine myPVMErrorMessage ( info, place )
-    ! This routine is called to log a PVM error
-    integer, intent(in) :: INFO
-    character (LEN=*) :: PLACE
-    character (LEN=132) :: LINE
-
-    write (line, * ) info
-    if ( options%exitOnError ) then
-      call PVMErrorMessage ( info, place )
+    if ( i > 1000 ) then
+      ! Here we face a choice:
+      ! (1) We could kill the unresponsive master; e.g.
+      !      call PVMFSend ( master%tid, giveUpTag, info )
+      ! (2) We could just mark it as finished, relieving us of further worry
+      ! (except that we haven't freed any hosts used by this master)
+      master%finished = .true.
+      call output(master%tid)
+      call timeStamp( ' Received no oath from this master; finished? ', advance='yes' )
     else
-      call MLSMessage ( options%errorLevel, Place, &
-        & 'PVM Error:  Info='//trim(adjustl(line)))
+      ! Got a response; was this master requesting a host?
+      call PVMF90Unpack ( master%needs_Host, info )
+      if ( info /= 0 ) &
+        & call myPVMErrorMessage ( info, "unpacking signal" )
+      call output(master%tid)
+      call output( ' Received oath of allegiance from master; needs host? ' )
+      call timeStamp( master%needs_Host, advance='yes' )
     endif
-  end subroutine myPVMErrorMessage
+  end subroutine SwitchMastersAllegiance
+
 end program L2Q
 
 ! $Log$
+! Revision 1.15  2006/11/22 18:34:24  pwagner
+! Tracks hosts freed by killed masters better
+!
 ! Revision 1.14  2006/11/03 21:27:26  pwagner
 ! Another last-minute freezing bug fixed (or so we hope)
 !
