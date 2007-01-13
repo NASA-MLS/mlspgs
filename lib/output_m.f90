@@ -13,7 +13,8 @@ module OUTPUT_M
 
   use dates_module, only:  reformatDate, reformatTime
   use MLSCommon, only: FileNameLen
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Info, MLSMSG_Error
+  use MLSMessageModule, only: MLSMessage, MLSMessageInternalFile, &
+    & MLSMSG_Info, MLSMSG_Error
   use MLSStrings, only: lowerCase
   implicit NONE
   private
@@ -209,6 +210,8 @@ module OUTPUT_M
   integer, save, private :: ATCOLUMNNUMBER = 1  ! Where we'll print next
   logical, save, private :: ATLINESTART = .true.  ! Whether to stamp if notpost
   integer, save, private :: LINESSINCELASTSTAMP = 0
+  
+  logical, private, parameter :: LOGEXTRABLANKS = .false.
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -300,10 +303,9 @@ contains
     character(len=3) :: MY_ADV
     ! Executable
     my_adv = Advance_is_yes_or_no(advance)
-    if ( n_blanks < 1 .and. my_adv == 'yes' ) then
-      ! This does not yet prevent us from printing a space before newline
-      ! but someday we may achieve that goal
-      call output ( '', advance='yes', dont_stamp=dont_stamp )
+    if ( n_blanks < 1 ) then
+      if ( my_adv == 'yes' ) &
+        & call output ( '', advance='yes', dont_stamp=dont_stamp )
       return
     end if
     n = max(n_blanks, 1)
@@ -334,7 +336,7 @@ contains
     call output(' -------------- ', advance='yes')
     call outputNamedValue ( 'unit number', options%prUnit, advance='yes', &
       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
-    call outputNamedValue ( 'file name', options%name, advance='yes', &
+    call outputNamedValue ( 'file name', trim(options%name), advance='yes', &
       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
     call outputNamedValue ( 'logging level', options%MLSMSG_Level, advance='yes', &
       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
@@ -344,9 +346,9 @@ contains
       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
     call outputNamedValue ( 'use patterned blanks?', options%usePatternedBlanks, advance='yes', &
       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
-    call outputNamedValue ( 'special fills', options%specialFillChars, advance='yes', &
+    call outputNamedValue ( 'special fills', trim(options%specialFillChars), advance='yes', &
       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
-    call outputNamedValue ( 'lineup fills', options%lineupFillChars, advance='yes', &
+    call outputNamedValue ( 'lineup fills', trim(options%lineupFillChars), advance='yes', &
       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
     call blanks(70, fillChar='-', advance='yes')
   end subroutine DumpOutputOptions
@@ -363,15 +365,15 @@ contains
        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
      call outputNamedValue ( 'show time', options%showTime, advance='yes', &
        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
-     call outputNamedValue ( 'extra text', options%textCode, advance='yes', &
+     call outputNamedValue ( 'extra text', trim(options%textCode), advance='yes', &
        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
-     call outputNamedValue ( 'date format', options%dateFormat, advance='yes', &
+     call outputNamedValue ( 'date format', trim(options%dateFormat), advance='yes', &
        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
-     call outputNamedValue ( 'time format', options%timeFormat, advance='yes', &
+     call outputNamedValue ( 'time format', trim(options%timeFormat), advance='yes', &
        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
      call outputNamedValue ( 'interval', options%interval, advance='yes', &
        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
-     call outputNamedValue ( 'style of timeStamps', options%timestampstyle, advance='yes', &
+     call outputNamedValue ( 'style of timeStamps', trim(options%timestampstyle), advance='yes', &
        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
      call blanks(70, fillChar='-', advance='yes')
   end subroutine DumpStampOptions
@@ -543,7 +545,8 @@ contains
       stamped = .true.
     end if
 
-    n_chars = max(len(chars), 1)
+    n_chars = len(chars)
+    if (LOGEXTRABLANKS) n_chars = max(len(chars), 1)
     my_dont_log = outputOptions%skipmlsmsglogging ! .false.
     if ( present(dont_log) ) my_dont_log = dont_log
     n_stamp = len_trim(stamped_chars)
@@ -555,20 +558,22 @@ contains
       & write ( *, '(a)', advance=my_adv ) stamped_chars(1:n_stamp)
     if ( outputOptions%prunit < -1 .and. .not. my_dont_log  ) then
       the_chars = chars // ' '
-      n_chars = max(len(chars), 1)
+      if (LOGEXTRABLANKS) n_chars = max(len(chars), 1)
       if ( present(log_chars) ) then
         n_chars = len_trim(log_chars) + 1
         the_chars = log_chars(:n_chars-1) // ' '
       end if
       if ( the_chars == ' ' .and. present(insteadofblank)  ) then
         my_chars = trim(insteadofblank) // ' '
-        n_chars = max(len(insteadofblank), 1)
+        if (LOGEXTRABLANKS) n_chars = max(len(insteadofblank), 1)
       else
         my_chars = the_chars
       end if
-      if ( my_adv == 'no' ) n_chars = n_chars+1
+      if ( my_adv == 'no' .and. LOGEXTRABLANKS ) n_chars = n_chars+1
       n_chars = min(n_chars, len(my_chars))
-      if ( present(from_where)  ) then
+      if ( my_adv == 'yes' ) n_chars = max(n_chars, 1)
+      if ( n_chars < 1 ) then
+      elseif ( present(from_where)  ) then
         call MLSMessage ( outputOptions%MLSMSG_Level, from_where, my_chars(1:n_chars), &
           & advance=my_adv )
       else
@@ -1477,6 +1482,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.55  2007/01/13 01:49:48  pwagner
+! Repaired long-standing bug blighting logged output
+!
 ! Revision 2.54  2007/01/12 00:31:00  pwagner
 ! May use unbuffered output ;renamed routine outputNamedValue
 !
