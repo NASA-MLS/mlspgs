@@ -76,6 +76,7 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
 ! MLSMessageSetup          routine interface to change some parts of MLSMessageConfig
 ! MLSMessageClose          close MLSMessage log file; but see MLSMessageExit
 ! MLSMessageExit           recommended way to finish main program
+! MLSMessageInternalFile   Returns the complete text that would be printed
 ! MLSMessageReset          reset flags, counters, etc. during runtime
 ! PVMErrorMessage          log a PVM error
 ! ReportTKStatus           converts SDP status to severity, prints if needed
@@ -88,6 +89,8 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
 ! MLSMessageSetup ( [log SuppressDebugs], [int LogFileUnit], [char* Prefix],
 !      [log useToolkit], [log CrashOnAnyError] )
 ! MLSMessageExit ( [int status], [char* farewell] )
+! char* MLSMessageInternalFile ( int Severity, char* ModuleNameIn, char* Message, 
+!      [char* Advance], [MLSFile_T MLSFile] ) 
 ! MLSMessageReset ( [int logFileUnit], [log CrashOnAnyError], [log Warnings] )
 ! PVMErrorMessage ( int INFO, char* PLACE  )
 ! ReportTKStatus( int status, char* ModuleNameIn, char* Message, 
@@ -178,13 +181,15 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   
   ! Public procedures
   public :: MLSMessage, MLSMessage_, MLSMessageSetup, MLSMessageClose
-  public :: MLSMessageExit, MLSMessageReset, PVMErrorMessage
+  public :: MLSMessageExit, MLSMessageInternalFile
+  public :: MLSMessageReset, PVMErrorMessage
   public :: ReportTKStatus
 
   interface MLSMessage
     module procedure MLSMessage_
   end interface
 
+  ! Private stuff
 contains
 
   ! ------------------------------------------------  MLSMessage_  -----
@@ -203,14 +208,14 @@ contains
     type(MLSFile_T), intent(in), optional :: MLSFile
 
     ! Local variables
-    character (len=512), save :: Line   ! Line to output, should be long enough
-    integer, save :: Line_len=0         ! Number of saved characters in line.
     !                                     If nonzero, do not insert prefix.
     integer :: msgLength                  
     logical :: My_adv
     logical :: nosubsequentwarnings
     logical :: newwarning
     integer :: warning_index
+    character (len=512), save :: Line   ! Line to output, should be long enough
+    integer, save :: Line_len=0         ! Number of saved characters in line.
 
     ! Executable code
 
@@ -254,38 +259,11 @@ contains
           & (timeswarned(warning_index) >= MLSMessageConfig%limitWarnings)
       end if
     end if
-      
+    call assembleFullLine( Severity, ModuleNameIn, Message, line, line_len, &
+      & nosubsequentwarnings )
     if ( (.not. MLSMessageConfig%suppressDebugs).OR. &
          & (severity /= MLSMSG_Debug) ) then
        
-       ! Assemble a full message line
-
-       if ( line_len == 0 ) then
-         if ( severity > MLSMSG_Success-1 .and. severity < MLSMSG_Crash+1 ) then
-           line = SeverityNames(severity)
-         else
-           line = 'Unknown'
-         end if
-         line_len = len_trim(line)
-         line(line_len+1:line_len+2) = ' ('
-         if ( moduleNameIn(1:1) == '$' ) then
-         ! The moduleNameIn is <dollar>RCSFile: <filename>,v <dollar>
-           line(line_len+3:) = moduleNameIn(11:(LEN_TRIM(moduleNameIn)-8))
-         else
-           line(line_len+3:) = moduleNameIn
-         end if
-         line_len = len_trim(line) + 3
-         line(line_len-2:line_len-1) = '):'
-       end if
-       if ( nosubsequentwarnings ) then
-         line(line_len+1:) = WARNINGSSUPPRESSED // message
-         line_len = line_len + len(WARNINGSSUPPRESSED) + len_trim(message)
-       else
-         line(line_len+1:) = message
-         line_len = line_len + len(message) ! Not len-trim, so we can get
-         ! trailing blanks into a part of a message.  If there are trailing
-         ! blanks remaining when my_adv is true, they'll be trimmed off.
-       end if
 
        ! Log the message using the toolkit routine
        ! (or its substitute )
@@ -294,7 +272,7 @@ contains
        ! rather than from output module )
 
        if ( my_adv ) then
-         call printitout(line, severity)
+         call printitout( line, severity, line_len )
          line_len = 0
          line = ' '
        end if
@@ -315,6 +293,21 @@ contains
       call exit_with_status ( 1  )
     end if
   end subroutine MLSMessage_
+
+  !-----------------------------------------  MLSMessageInternalFile  -----
+  function MLSMessageInternalFile( Severity, ModuleNameIn, Message ) result(line)
+    integer, intent(in) :: Severity ! e.g. MLSMSG_Error
+    character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
+    character (len=*), intent(in) :: Message ! Line of text
+    character (len=512)           :: Line   ! Line to output, should be long enough
+    integer                       :: Line_len
+    ! Internal variables
+    ! Executable
+    Line_len = 0
+    line = ' '
+    call assembleFullLine( Severity, ModuleNameIn, Message, line, line_len, &
+      & .false. )
+  end function MLSMessageInternalFile
 
   ! --------------------------------------------  MLSMessageSetup  -----
 
@@ -548,6 +541,45 @@ contains
       & call PVMErrorMessage ( info, 'sending last gasp'  )
   end subroutine LastGasp
 
+  !-----------------------------------------  assembleFullLine  -----
+  subroutine assembleFullLine( Severity, ModuleNameIn, Message, &
+    & line, line_len, nosubsequentwarnings )
+    integer, intent(in)           :: Severity ! e.g. MLSMSG_Error
+    character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
+    character (len=*), intent(in) :: Message ! Line of text
+    character(len=*) ::              Line
+    integer                       :: line_len
+    logical, intent(in)           :: nosubsequentwarnings
+    ! Assemble a full message line
+
+    if ( line_len == 0 ) then
+      if ( severity > MLSMSG_Success-1 .and. severity < MLSMSG_Crash+1 ) then
+        line = SeverityNames(severity)
+      else
+        line = 'Unknown'
+      end if
+      line_len = len_trim(line)
+      line(line_len+1:line_len+2) = ' ('
+      if ( moduleNameIn(1:1) == '$' ) then
+      ! The moduleNameIn is <dollar>RCSFile: <filename>,v <dollar>
+        line(line_len+3:) = moduleNameIn(11:(LEN_TRIM(moduleNameIn)-8))
+      else
+        line(line_len+3:) = moduleNameIn
+      end if
+      line_len = len_trim(line) + 3
+      line(line_len-2:line_len-1) = '):'
+    end if
+    if ( nosubsequentwarnings ) then
+      line(line_len+1:) = WARNINGSSUPPRESSED // message
+      line_len = line_len + len(WARNINGSSUPPRESSED) + len_trim(message)
+    else
+      line(line_len+1:) = message
+      line_len = line_len + len(message) ! Not len-trim, so we can get
+      ! trailing blanks into a part of a message.  If there are trailing
+      ! blanks remaining when my_adv is true, they'll be trimmed off.
+    end if
+  end subroutine assembleFullLine
+
   !-----------------------------------------  level2severity  -----
   function level2severity ( level ) result(severity)
 
@@ -598,20 +630,29 @@ contains
   end subroutine dump
 
   ! --------------------------------------------  PRINTITOUT  -----
-  subroutine PRINTITOUT ( LINE, SEVERITY  )
+  subroutine PRINTITOUT ( LINE, SEVERITY, LINE_LEN  )
     ! In any way we're asked
     character(len=*), intent(in) :: LINE
     integer, intent(in) :: SEVERITY
+    integer, optional, intent(in) :: LINE_LEN
     logical :: log_it
+    integer :: loggedLength
+    character(len=len(line)+len(MLSMessageConfig%prefix)) :: loggedLine
     integer :: ioerror
+    loggedLength = len_trim(line)
+    if ( present(line_len) ) loggedLength = line_len
+    loggedLine = line
+    if ( TRIM(MLSMessageConfig%prefix) /= ' ' ) then
+      loggedLength = loggedLength + len_trim(MLSMessageConfig%prefix)
+      loggedLine = TRIM(MLSMessageConfig%prefix) // &
+           & TRIM(line)
+    endif
       log_it = &
       & (MLSMessageConfig%useToolkit .and. UseSDPToolkit) &
       & .or. &
       & severity >= MLSMSG_Severity_to_quit
-      if( log_it ) &
-      & ioerror = PGS_SMF_GenerateStatusReport&
-      & (TRIM(MLSMessageConfig%prefix)// &
-           & TRIM(line) )
+      if( log_it .and. loggedLength > 0 ) &
+        & ioerror = PGS_SMF_GenerateStatusReport ( loggedLine(1:loggedLength) )
 
       ! Now, if we're also logging to a file then write to that too.
 
@@ -640,6 +681,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.29  2007/01/13 01:47:07  pwagner
+! Added MLSMessageInternalFile function to return what would be logged
+!
 ! Revision 2.28  2005/12/12 19:54:16  pwagner
 ! Correctly returns error when given PGS_SMF_MASK_LEV_E
 !
