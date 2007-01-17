@@ -51,10 +51,10 @@ module Two_D_Hydrostatic_m
   real(rp), intent(out):: t_grid(:,:)    ! Computed temperatures
   real(rp), intent(out):: h_grid(:,:)    ! Computed heights
   real(rp), intent(out):: dhidzij(:,:)   ! Derivative of height wrt zeta
-  real(rp), intent(out):: dhidtlm(:,:,:) ! Derivative of height wrt temps
-!                                     on output phi grid
-  real(rp), optional, intent(out):: ddhdhdtl0(:,:,:)!second order derivative
-!                             at the tangent only---used for antenna affects
+  real(rp), optional, intent(out):: dhidtlm(:,:,:) ! Derivative of height wrt
+                            ! temps on output phi grid
+  real(rp), optional, intent(out):: ddhdhdtl0(:,:,:) ! second order derivative
+                            ! at the tangent only---used for antenna affects
 ! Internal stuff
 
   integer(ip) :: I, J1, J2
@@ -96,14 +96,18 @@ module Two_D_Hydrostatic_m
 
     j1 = j2
     j2 = j1 + z_coeffs
-    if ( present(ddhdhdtl0) ) then
+    if ( present(ddhdhdtl0) ) then ! needs dhidtlm
       call hydrostatic ( lat, Grids_tmp%zet_basis, Grids_tmp%values(j1+1:j2), &
          & z_grid, z_refs(i), h_refs(i), t_grid(:,i), h_grid(:,i), &
-         & dhidtlm(:,:,i), dhidzij(:,i), ddhdhdtl0(:,:,i) )
+         & dhidzij(:,i), dhidtlm(:,:,i), ddhdhdtl0(:,:,i) )
+    else if ( present(dhidtlm) ) then
+      call hydrostatic ( lat, Grids_tmp%zet_basis, Grids_tmp%values(j1+1:j2), &
+         & z_grid, z_refs(i), h_refs(i), t_grid(:,i), h_grid(:,i), &
+         & dhidzij(:,i), dhidtlm(:,:,i) )
     else
       call hydrostatic ( lat, Grids_tmp%zet_basis, Grids_tmp%values(j1+1:j2), &
          & z_grid, z_refs(i), h_refs(i), t_grid(:,i), h_grid(:,i), &
-         & dhidtlm(:,:,i), dhidzij(:,i) )
+         & dhidzij(:,i) )
     end if
   end do
 
@@ -121,6 +125,9 @@ module Two_D_Hydrostatic_m
 end module Two_D_Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.15  2006/09/28 21:54:33  vsnyder
+! Remove unused symbols
+!
 ! Revision 2.14  2006/09/28 21:00:47  vsnyder
 ! Improved computation of csq again
 !
