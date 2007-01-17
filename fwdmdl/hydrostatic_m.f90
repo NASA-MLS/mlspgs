@@ -30,7 +30,7 @@ module Hydrostatic_m
 
   ! --------------------------------------------  Hydrostatic_All  -----
   subroutine Hydrostatic_All ( lat, t_basis, t_coeffs, z_grid, z_ref, h_ref, &
-                      &    t_grid, h_grid, dhidtq, dhidzi, ddhdhdtq, z_surface )
+                      &    t_grid, h_grid, dhidzi, dhidtq, ddhdhdtq, z_surface )
 
 ! Compute a hydrostatic function per L2PC method and return
 ! geometric heights. Reference height is now an input
@@ -54,11 +54,12 @@ module Hydrostatic_m
 
     real(rp), intent(out) :: t_grid(:)  ! temperatures on z_grid
     real(rp), intent(out) :: h_grid(:)  ! heights on z_grid
-    real(rp), intent(out) :: dhidtq(:,:) ! dh/dt on z_grid assuming dh/dt = 0.0
-!                 at the reference ellipse surface  equivalent to h_ref = 0.0
     real(rp), intent(out) :: dhidzi(:)  ! dh/dz on z_grid
 
-    real(rp), optional, intent(out) :: ddhdhdtq(:,:) ! ddh/dhdt on z_grid
+    real(rp), optional, intent(out) :: dhidtq(:,:) ! dh/dt on z_grid assuming
+      ! dh/dt = 0.0 at the reference ellipse surface  equivalent to h_ref = 0.0
+    real(rp), optional, intent(out) :: ddhdhdtq(:,:) ! ddh/dhdt on z_grid,
+      ! needs dhidtq
     real(rp), optional, intent(out) :: z_surface
 
 ! Internal stuff
@@ -174,14 +175,16 @@ module Hydrostatic_m
     h_grid = boltz * matmul(piq,t_coeffs)
     h_grid = r_eff * h_grid / (r_eff * g_ref - h_grid)
     dhidzi = (h_grid+r_eff)**2 * boltz / (g_ref * r_eff**2)
-    dhidtq = spread(dhidzi,2,n_coeffs) * piq
-    dhidzi = dhidzi * t_grid * mass_corr
 
+    if ( present(dhidtq) ) then
+      dhidtq = spread(dhidzi,2,n_coeffs) * piq
 ! this derivative is useful for antenna derivatives
+      if ( present(ddhdhdtq) ) &
+        & ddhdhdtq = (2.0_rp/(spread(h_grid,2,n_coeffs)+r_eff)) * dhidtq &
+                 & + eta / spread(t_grid,2,n_coeffs)
+    end if
 
-    if ( present(ddhdhdtq) ) &
-      & ddhdhdtq = (2.0_rp/(spread(h_grid,2,n_coeffs)+r_eff)) * dhidtq &
-               & + eta / spread(t_grid,2,n_coeffs)
+    dhidzi = dhidzi * t_grid * mass_corr
 
   end subroutine Hydrostatic_All
 
@@ -330,6 +333,9 @@ module Hydrostatic_m
 end module Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.19  2006/11/30 23:28:29  vsnyder
+! Correct some local array sizes
+!
 ! Revision 2.18  2005/12/29 01:12:47  vsnyder
 ! Move some misplaced comments to correct places
 !
