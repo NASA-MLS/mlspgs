@@ -111,17 +111,23 @@ contains
 ! note that z_psig(1) is the designated surface
     Nlvl = SIZE(z_psig)
 
-! Allocate tan_press.
+! Allocate tan_press and compute it from fwdModelConf%tangentGrid%surfs and
+! z_psig
 
-    surfaceTangentIndex = COUNT(fwdModelConf%tangentGrid%surfs < (z_psig(1) - 0.0001_rp)) + 1
+    if ( associated(FwdModelConf%tangentGrid) ) then
+      surfaceTangentIndex = COUNT(fwdModelConf%tangentGrid%surfs < (z_psig(1) - 0.0001_rp)) + 1
+    else
+      surfaceTangentIndex = 1
+    end if
     no_tan_hts = Nlvl + surfaceTangentIndex - 1
 
     call allocate_test ( tan_press, no_tan_hts, 'tan_press', moduleName )
 
 ! Compute tan_press from fwdModelConf%tangentGrid%surfs and z_psig
 
-    tan_press(1:surfaceTangentIndex-1) = &
-      & fwdModelConf%tangentGrid%surfs(1:surfaceTangentIndex-1,1)
+    if ( associated(FwdModelConf%tangentGrid) ) &
+      & tan_press(1:surfaceTangentIndex-1) = &
+        & fwdModelConf%tangentGrid%surfs(1:surfaceTangentIndex-1,1)
     tan_press(surfaceTangentIndex:no_tan_hts) = z_psig
 
   end subroutine Compute_Z_PSIG
@@ -138,6 +144,9 @@ contains
 end module Compute_Z_PSIG_m
 
 ! $Log$
+! Revision 2.3  2007/01/17 23:48:43  vsnyder
+! Don't look at FwdModelConf%tangentGrid if it's not associated
+!
 ! Revision 2.2  2006/07/12 20:52:57  vsnyder
 ! Remove declarations for unused variables
 !
