@@ -199,6 +199,16 @@ program L2Q
   ! By default we won't to quit if an error occurs
   ! (unless you want us to)
   if ( options%exitOnError ) options%errorLevel = MLSMSG_Error
+  ! Do we use buffered output?
+  if ( options%dump_file /= '<STDIN>' ) then
+    OutputOptions%prunit = DUMPUNIT
+    OutputOptions%buffered = .false.
+    OutputOptions%opened = .true.
+    OutputOptions%name = options%dump_file
+    ! print *, 'Opening ', prunit, ' as ', trim(options%dump_file)
+    open(OutputOptions%prunit, file=trim(options%dump_file), &
+      & status='replace', form='formatted')
+  endif
   !---------------- Task (1) ------------------
   ! Is l2q already alive and running?
   call pvmfgettid(GROUPNAME, 0, tid)
@@ -301,12 +311,6 @@ program L2Q
 ! to slave tasks
   call ClearPVMArgs
 
-  if ( options%dump_file /= '<STDIN>' ) then
-    OutputOptions%prunit = DUMPUNIT
-    ! print *, 'Opening ', prunit, ' as ', trim(options%dump_file)
-    open(OutputOptions%prunit, file=trim(options%dump_file), &
-      & status='replace', form='formatted')
-  endif
   !---------------- Task (3) ------------------
   ! Open the List of hosts
   status = 0
@@ -1060,28 +1064,8 @@ contains
         if ( info /= 0 ) call myPVMErrorMessage ( info, 'unpacking GROUPNAME' )
         call PVMF90Unpack ( tempfile, info )
         if ( info /= 0 ) call myPVMErrorMessage ( info, 'unpacking dumpfile' )
-        status = 0
-        if ( tempfile /= '<STDIN>' ) then
-          oldPrUnit = OutputOptions%prunit
-          OutputOptions%prunit = tempUnit
-          ! print *, 'Opening ', prunit, ' as ', trim(tempfile)
-          open( OutputOptions%prunit, file=trim(tempfile), &
-            & status='replace', form='formatted', iostat=status )
-        endif
-        call timestamp ( 'Received an external message to dump databases', &
-          & advance='yes' )
-        if ( status == 0 ) then
-          call dump_master_database(masters)
-          call dump(hosts)
-        else
-          call MLSMessage ( MLSMSG_Warning, ModuleName, &
-            & 'Ignoring message; unable to open ' // &
-            & trim(tempfile) )
-        endif
-        if ( tempfile /= '<STDIN>' ) then
-          close(OutputOptions%prunit)
-          OutputOptions%prunit = oldPrUnit
-        endif
+        call redumpHosts( hosts, tempFile, tempUnit )
+        call redumpMasters( masters, tempFile, tempUnit )
         dumpHosts = .true.
         dumpMasters = .true.
       end if
@@ -1091,27 +1075,7 @@ contains
         if ( info /= 0 ) call myPVMErrorMessage ( info, 'unpacking GROUPNAME' )
         call PVMF90Unpack ( tempfile, info )
         if ( info /= 0 ) call myPVMErrorMessage ( info, 'unpacking dumpfile' )
-        status = 0
-        if ( tempfile /= '<STDIN>' ) then
-          oldPrUnit = OutputOptions%prunit
-          OutputOptions%prunit = tempUnit
-          ! print *, 'Opening ', prunit, ' as ', trim(tempfile)
-          open( OutputOptions%prunit, file=trim(tempfile), &
-            & status='replace', form='formatted', iostat=status )
-        endif
-        call timestamp ( 'Received an external message to dump hostDB', &
-          & advance='yes' )
-        if ( status == 0 ) then
-          call dump(hosts)
-        else
-          call MLSMessage ( MLSMSG_Warning, ModuleName, &
-            & 'Ignoring message; unable to open ' // &
-            & trim(tempfile) )
-        endif
-        if ( tempfile /= '<STDIN>' ) then
-          close(OutputOptions%prunit)
-          OutputOptions%prunit = oldPrUnit
-        endif
+        call redumpHosts( hosts, tempFile, tempUnit )
         dumpHosts = .true.
       end if
       call PVMFNRecv ( -1, DumpMastersDBTag, bufferIDRcv )
@@ -1120,27 +1084,7 @@ contains
         if ( info /= 0 ) call myPVMErrorMessage ( info, 'unpacking GROUPNAME' )
         call PVMF90Unpack ( tempfile, info )
         if ( info /= 0 ) call myPVMErrorMessage ( info, 'unpacking dumpfile' )
-        status = 0
-        if ( tempfile /= '<STDIN>' ) then
-          oldPrUnit = OutputOptions%prunit
-          OutputOptions%prunit = tempUnit
-          ! print *, 'Opening ', prunit, ' as ', trim(tempfile)
-          open( OutputOptions%prunit, file=trim(tempfile), &
-            & status='replace', form='formatted', iostat=status )
-        endif
-        call timestamp ( 'Received an external message to dump masterDB', &
-          & advance='yes' )
-        if ( status == 0 ) then
-          call dump_master_database(masters)
-        else
-          call MLSMessage ( MLSMSG_Warning, ModuleName, &
-            & 'Ignoring message; unable to open ' // &
-            & trim(tempfile) )
-        endif
-        if ( tempfile /= '<STDIN>' ) then
-          close(OutputOptions%prunit)
-          OutputOptions%prunit = oldPrUnit
-        endif
+        call redumpMasters( masters, tempFile, tempUnit )
         dumpMasters = .true.
       end if
       ! Listen out for any message telling us to kill selected masters
@@ -1285,22 +1229,7 @@ contains
       if ( options%PHFile /= ' ' ) then
         call time_now ( t2 )
         if ( (t2-tLastHDBDump > options%HDBPeriod) .or. dumpHosts ) then
-          oldPrUnit = OutputOptions%prunit
-          OutputOptions%prunit = tempUnit
-          ! print *, 'Opening ', prunit, ' as ', trim(options%PHfile)
-          open( OutputOptions%prunit, file=trim(options%PHFile), &
-            & status='replace', form='formatted', iostat=status )
-          if ( status == 0 ) then
-            call timestamp ( 'Performing periodic dump hostDB', &
-              & advance='yes', date=.true. )
-            call dump(hosts)
-            close(OutputOptions%prunit)
-          else
-            call MLSMessage ( MLSMSG_Warning, ModuleName, &
-              & 'No periodic dump hostDB; unable to open ' // &
-              & trim(options%PHFile) )
-          endif
-          OutputOptions%prunit = oldPrUnit
+          call reDumpHosts ( hosts, options%PHFile, tempUnit )
           tLastHDBDump = t2
           if ( options%debug .and. DUMPDBSONDEBUG ) then
             inquire(unit=OutputOptions%prunit, opened=opened)
@@ -1315,22 +1244,7 @@ contains
       if ( options%PMFile /= ' ' ) then
         call time_now ( t2 )
         if ( (t2-tLastMDBDump > options%MDBPeriod) .or. dumpMasters ) then
-          oldPrUnit = OutputOptions%prunit
-          OutputOptions%prunit = tempUnit
-          ! print *, 'Opening ', prunit, ' as ', trim(options%PMfile)
-          open( OutputOptions%prunit, file=trim(options%PMFile), &
-            & status='replace', form='formatted', iostat=status )
-          if ( status == 0 ) then
-            call timestamp ( 'Performing periodic dump masterDB', &
-              & advance='yes', date=.true. )
-            call dump_master_database(masters)
-            close(OutputOptions%prunit)
-          else
-            call MLSMessage ( MLSMSG_Warning, ModuleName, &
-              & 'No periodic dump masterDB; unable to open ' // &
-              & trim(options%PMFile) )
-          endif
-          OutputOptions%prunit = oldPrUnit
+          call reDumpMasters( masters, options%PMFile, tempUnit )
           tLastMDBDump = t2
           if ( options%debug .and. DUMPDBSONDEBUG ) then
             inquire(unit=OutputOptions%prunit, opened=opened)
@@ -1606,7 +1520,7 @@ contains
        call output ('tid: ', advance='no')
        call output (tid, advance='no')
        call output ('   machineName: ', advance='no')
-       call output (trim(machineName), advance='no')
+       call output (trim(machineName), advance='yes')
     endif
     if ( tid < 1 ) then
       ! This means master couldn't start slave task on host
@@ -2088,6 +2002,104 @@ contains
     call timestamp(status, advance='yes')
   end subroutine read_oneline
   
+  ! ---------------------------------------------  reDumpHosts  -----
+  subroutine reDumpHosts(hosts, tempFile, tempUnit)
+    type(Machine_T), dimension(:), pointer :: hosts
+    character(len=*), intent(in)           :: tempFile
+    integer, intent(in)                    :: tempUnit
+    ! Internal variables
+    character(len=FILENAMELEN)             :: oldPrName
+    integer                                :: oldPrUnit
+    integer :: status
+    ! Executable
+    status = 0
+    ! call timeStamp( 'dumping Hosts DB', advance='yes' )
+    if ( tempfile /= '<STDIN>' ) then
+      if ( options%dump_file /= '<STDIN>' ) then
+        oldPrName = OutputOptions%name
+        close(outputOptions%prunit)
+        OutputOptions%opened = .false.
+        OutputOptions%name = tempFile
+      endif
+      oldPrUnit = OutputOptions%prunit
+      OutputOptions%prunit = tempUnit
+      ! print *, 'Opening ', prunit, ' as ', trim(tempfile)
+      open( OutputOptions%prunit, file=trim(tempfile), &
+        & status='replace', form='formatted', iostat=status )
+    endif
+    call timestamp ( 'Received an external message to dump hostDB', &
+      & advance='yes' )
+    if ( status == 0 ) then
+      call dump(hosts)
+    else
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'Ignoring message; unable to open ' // &
+        & trim(tempfile) )
+    endif
+    if ( tempfile /= '<STDIN>' ) then
+      close(OutputOptions%prunit)
+      if ( options%dump_file /= '<STDIN>' ) then
+        OutputOptions%name = oldPrName
+        OutputOptions%opened = .true.
+        open( OutputOptions%prunit, file=trim(options%dump_file), &
+          & position='append', &
+          & status='old', form='formatted', iostat=status )
+      endif
+      OutputOptions%prunit = oldPrUnit
+    endif
+    if ( options%dump_file /= '<STDIN>' ) &
+    & call timeStamp( 'Reverting to ' // trim(options%dump_file), advance='yes' )
+  end subroutine reDumpHosts
+
+  ! ---------------------------------------------  reDumpMasters  -----
+  subroutine reDumpMasters(masters, tempFile, tempUnit)
+    type(Master_T), dimension(:), pointer :: masters
+    character(len=*), intent(in)           :: tempFile
+    integer, intent(in)                    :: tempUnit
+    ! Internal variables
+    character(len=FILENAMELEN)             :: oldPrName
+    integer                                :: oldPrUnit
+    integer :: status
+    ! Executable
+    ! call timeStamp( 'Dumping masters DB', advance='yes' )
+    status = 0
+    if ( tempfile /= '<STDIN>' ) then
+      if ( options%dump_file /= '<STDIN>' ) then
+        oldPrName = OutputOptions%name
+        close(outputOptions%prunit)
+        OutputOptions%opened = .false.
+        OutputOptions%name = tempFile
+      endif
+      oldPrUnit = OutputOptions%prunit
+      OutputOptions%prunit = tempUnit
+      ! print *, 'Opening ', prunit, ' as ', trim(tempfile)
+      open( OutputOptions%prunit, file=trim(tempfile), &
+        & status='replace', form='formatted', iostat=status )
+    endif
+    call timestamp ( 'Received an external message to dump masterDB', &
+      & advance='yes' )
+    if ( status == 0 ) then
+      call dump_master_database(masters)
+    else
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'Ignoring message; unable to open ' // &
+        & trim(tempfile) )
+    endif
+    if ( tempfile /= '<STDIN>' ) then
+      close(OutputOptions%prunit)
+      if ( options%dump_file /= '<STDIN>' ) then
+        OutputOptions%name = oldPrName
+        OutputOptions%opened = .true.
+        open( OutputOptions%prunit, file=trim(options%dump_file), &
+          & position='append', &
+          & status='old', form='formatted', iostat=status )
+      endif
+      OutputOptions%prunit = oldPrUnit
+    endif
+    if ( options%dump_file /= '<STDIN>' ) &
+    & call timeStamp( 'Reverting to ' // trim(options%dump_file), advance='yes' )
+  end subroutine reDumpMasters
+
   ! ---------------------------------------------  releaseHostFromMaster  -----
   subroutine releaseHostFromMaster(host, master, hostsID)
     type(Machine_T) :: host
@@ -2098,7 +2110,8 @@ contains
     integer, dimension(:), pointer :: tempHosts
     integer :: i, status
     ! Executable
-    if ( options%debug ) call output( 'Releasing ' // trim(host%name) // '   ', advance='no')
+    if ( options%debug ) &
+      & call output( 'Releasing ' // trim(host%name) // '   ', advance='yes')
     if( size(master%hosts) < 1 .and. .not. master%owes_thanks ) then
       call MLSMessage( MLSMSG_Warning, ModuleName, &
         & 'master lacks any hosts' )
@@ -2258,6 +2271,9 @@ contains
 end program L2Q
 
 ! $Log$
+! Revision 1.16  2007/01/12 00:41:16  pwagner
+! May start a new l2q to rescue things if old one dies
+!
 ! Revision 1.15  2006/11/22 18:34:24  pwagner
 ! Tracks hosts freed by killed masters better
 !
