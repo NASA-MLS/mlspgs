@@ -21,7 +21,7 @@ module dates_module
   use MLSCommon, only: NameLen
   use MLSStringLists, only: GetStringElement, NumStringElements
   use MLSStrings, only: capitalize, depunctuate, lowerCase, writeIntsToChars
-  use MLSMessageModule, only: MLSMSG_Warning, MLSMessage
+  use MLSMessageModule, only: MLSMSG_Info, MLSMSG_Warning, MLSMessage
 
   implicit none
   private
@@ -49,6 +49,8 @@ module dates_module
 !     - - - - - - - -
 
 !     (subroutines and functions)
+! adddaystoutc       add specified number of days to a utc date-time format
+! addhourstoutc      add specified number of hours to a utc date-time format
 ! cal2eudtf          cal date -> yyyyddd
 ! ccsds2tai          ccsds -> tai (days, not s)
 ! ccsds2eudtf        ccsds -> eudtf
@@ -71,6 +73,8 @@ module dates_module
 ! === (end of toc) ===
 
 ! === (start of api) ===
+! char* adddaystoutc (char* utc, int days)
+! char* addhourstoutc (char* utc, int hours)
 ! dai_to_yyyymmdd (int dai, int yyyy, int mm, int dd, [char* startingDate])
 ! dai_to_yyyymmdd (int dai, char* str, [char* startingDate])
 ! char* ReformatDate (char* date, [char* fromForm], [char* toForm])
@@ -118,6 +122,7 @@ module dates_module
 ! === (end of api) ===
 
   !Here are the provided functions 
+  public:: adddaystoutc, addhourstoutc
   public:: eudtf2cal,cal2eudtf,lastday,ccsdsa2b,ccsdsb2a,eudtf2daysince
   public:: daysince2eudtf,ccsds2tai,ccsds2eudtf,days_in_year
   public :: dai_to_yyyymmdd
@@ -143,6 +148,9 @@ module dates_module
   ! utc_to_yyyymmdd
   integer, public, parameter :: INVALIDUTCSTRING = 1
 
+  integer, private, parameter :: SECONDSINADAY = 24*60*60
+  integer, private, parameter :: MAXUTCSTRLENGTH = 32
+
   ! These somewhat similar parameters are used in the separately-coded
   ! but redundant functions and procedures moved here from their
   ! original slots in MLSStrings
@@ -166,7 +174,50 @@ module dates_module
     & 'June     ', 'July     ', 'August   ', 'September', 'October  ', &
     & 'November ', 'December '/)
 
+  ! This is a private type to be used internally
+  ! Note we don't bother with leapsseconds
+  ! which rather limits its accuracy and usefulness
+  type MLSDATE_TIME_T
+    integer :: dai = 0                  ! days after 1 Jan 2001
+    real :: seconds = 0.00              ! seconds after midnight
+  end type MLSDATE_TIME_T
+  
 contains
+  ! ---------------------------------------------  adddaystoutc  -----
+  function adddaystoutc( utc, days ) result(after)
+    ! Given a utc return a date later (or earlier) by days
+    ! Args
+    character(len=*), intent(in) :: utc
+    integer, intent(in)          :: days
+    character(len=len(utc))      :: after
+    ! Internal
+    type(MLSDate_time_T)         :: datetime
+    ! Executable
+    datetime = utc2datetime(utc)
+    datetime%dai = datetime%dai + days
+    after = datetime2utc(datetime)
+  end function adddaystoutc
+
+  ! ---------------------------------------------  addhourstoutc  -----
+  function addhourstoutc( utc, hours ) result(after)
+    ! Given a utc return a date later (or earlier) by hours
+    ! Args
+    character(len=*), intent(in) :: utc
+    integer, intent(in)          :: hours
+    character(len=len(utc))      :: after
+    ! Internal
+    type(MLSDate_time_T)         :: datetime
+    integer                      :: days
+    ! Executable
+    days = 0
+    datetime = utc2datetime(utc)
+    datetime%seconds = datetime%seconds + 60*60*hours
+    ! call dumpDateTime(datetime)
+    call reducedatetime(datetime)
+    ! call dumpDateTime(datetime)
+    after = datetime2utc(datetime)
+  end function addhourstoutc
+
   function ccsds2eudtf(ccsds) result (eudtf)
     !Converts CCSDS dates to eudtf
     !----args----!
@@ -202,6 +253,52 @@ contains
     tai=eudtf2daysince(eudtf,1993001)
   end function ccsds2tai
 
+  ! ---------------------------------------------  datetime2utc  -----
+  function datetime2utc(datetime) result(utc)
+    ! Given an mlsDate_Time_T return a utc
+    ! Args
+    type(MLSDATE_TIME_T), intent(in)  :: datetime
+    character(len=MAXUTCSTRLENGTH)    :: utc
+    ! Internal
+    character(len=8)             :: day
+    integer                      :: ErrTyp
+    character(len=16)            :: hhmmss
+    character(len=8)             :: month
+    character(len=8)             :: year
+    character(len=16)            :: yyyymmdd
+    ! Executable
+    call reducedatetime(datetime)
+    ! Now convert to our internal representations
+    call dai_to_yyyymmdd( datetime%dai, yyyymmdd )
+    hhmmss = '00:00:00'
+    utc = yyyymmdd(1:4) // '-' // yyyymmdd(5:6) // '-' // yyyymmdd(7:8)
+    if ( datetime%seconds /= 0. ) then
+      hhmmss = s2hhmmss(datetime%seconds)
+      ! print *, 'hhmmss: ', hhmmss
+      ! print *, 'utc: ', utc
+    endif
+    utc = trim(utc) // 'T' // adjustl(hhmmss)
+  end function datetime2utc
+
+  subroutine dumpDateTime( dateTime, name )
+    ! Dump an MLSDate_Time_T
+    ! Args
+    type(MLSDate_time_T), intent(in)         :: datetime
+    character(len=*), optional, intent(in)   :: name
+    ! Internal variables
+    character(len=16)                         :: daiStr
+    character(len=16)                         :: secondsStr
+    ! Executable
+    print *, "MLSDate_Time: "
+    if ( present(name) ) then
+      print *, trim(name)
+    endif
+    write( daiStr, * ) datetime%dai
+    write( secondsStr, * ) datetime%seconds
+    print *,  'dai: ' // trim(daiStr)
+    print *, 'seconds: ' // trim(secondsStr)
+
+  end subroutine dumpDateTime
 
   function lastday(imonth) result (day)
     integer,intent(in)::imonth
@@ -700,6 +797,36 @@ contains
       end select
     enddo
   end function dateForm
+
+  ! ---------------------------------------------  reducedatetime  -----
+  subroutine reducedatetime(datetime)
+    ! Reduces the seconds field of a datetime to a permissible value
+    ! possibly adjusting the dai field in compensation
+    ! Args
+    type(MLSDate_time_t)         :: datetime
+    ! Internal
+    integer                      :: dai
+    integer                      :: extra  ! Extra days adjustment to dai
+    real                         :: seconds
+    ! Executable
+    seconds = datetime%seconds
+    dai = datetime%dai
+    if ( seconds < 0. ) then
+      extra = -1 + seconds/SECONDSINADAY
+      dai = dai + extra
+      seconds = seconds - extra*SECONDSINADAY
+    elseif ( seconds >= real(SECONDSINADAY) ) then
+      extra = seconds/SECONDSINADAY + 1.e-8
+      dai = dai + extra
+      seconds = seconds - extra*SECONDSINADAY
+      seconds = max( seconds, 0. )
+    else
+      ! No adjustment necessary
+      return
+    endif
+    datetime%seconds = seconds
+    datetime%dai = dai
+  end subroutine reducedatetime
 
   ! --------------------------------------------------  reFormatDate  -----
   function reFormatDate(date, fromForm, toForm) result(reFormat)
@@ -1243,7 +1370,7 @@ contains
     ! from a string of the form yyyymmdd
     !--------Argument--------!
     character(len=*),intent(in) :: str
-    integer,intent(out) :: dai
+    integer, intent(out) :: dai
     character(len=*),intent(in),optional :: startingDate  ! If not Jan 1 2001
     !----------Local vars----------!
     character(len=8) :: mystartingDate
@@ -1424,6 +1551,78 @@ contains
     x2 = x
   end subroutine switch_ints
 
+  ! ---------------------------------------------  secondsInDay  -----
+  function secondsInDay(time) result(seconds)
+    ! Given a time return the number of seconds after midnight
+    ! Args
+    character(len=*), intent(in)        :: time ! E.g., "11:20:33.000"
+    real                                :: seconds
+    ! Internal
+    integer                             :: hours
+    integer                             :: minutes
+    real                                :: sdotss
+    ! Executable
+    hours = 0
+    minutes = 0
+    sdotss = 0.
+    read( time(1:2), '(i2)' ) hours
+    if ( len_trim(time) > 3 ) read( time(4:5), '(i2)' ) minutes
+    if ( len_trim(time) > 6 ) read( time(7:), * ) sdotss
+    seconds = sdotss + 60.*( minutes + 60*hours )
+  end function secondsInDay
+
+  ! ---------------------------------------------  s2hhmmss  -----
+  function s2hhmmss(s) result(hhmmss)
+    ! Args
+    real, intent(in)        :: s
+    character(len=16)       :: hhmmss
+    ! Internal
+    integer                 :: hours
+    integer                 :: minutes
+    real                    :: seconds
+    character(len=2)        :: hh, mm
+    character(len=16)       :: ss
+    ! Executable
+    if ( s <= 0. ) then
+      hhmmss = '00:00:00'
+      return
+    endif
+    hours = s / (60*60)
+    minutes = (s - 60*60*hours) / 60
+    seconds = s - 60.*(minutes + 60*hours)
+    seconds = max(seconds, 0.)
+    write(hh, '(i2.2)') hours
+    write(mm, '(i2.2)') minutes
+    write(ss, '(f12.9)') seconds
+    hhmmss = hh // ':' // mm // ':' // adjustl(ss)
+  end function s2hhmmss
+
+  ! ---------------------------------------------  utc2datetime  -----
+  function utc2datetime(utc) result(datetime)
+    ! Given a utc return an mlsDate_Time_T
+    ! Args
+    character(len=*), intent(in) :: utc
+    type(MLSDATE_TIME_T)         :: datetime
+    ! Internal
+    character(len=8)             :: day
+    integer                      :: ErrTyp
+    character(len=16)            :: hhmmss
+    character(len=8)             :: month
+    character(len=8)             :: year
+    character(len=16)            :: yyyymmdd
+    ! Executable
+    ! print *, 'utc: ', trim(utc)
+    call utc_to_yyyymmdd_strs( utc, ErrTyp, year, month, day )
+    call utc_to_time( utc, ErrTyp, hhmmss )
+    ! print *, 'year, month, day: ', trim(year) // ',' // trim(month) // ',' // trim(day)
+    ! print *, 'hhmmss: ', trim(hhmmss)
+    ! Now convert to our internal representations
+    yyyymmdd = year(1:4) // month(1:2) // day(1:2)
+    ! print *, 'yyyymmdd: ', trim(yyyymmdd)
+    call yyyymmdd_to_dai_str( yyyymmdd, datetime%dai )
+    datetime%seconds = secondsinday(hhmmss)
+  end function utc2datetime
+
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -1435,6 +1634,9 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.11  2006/09/29 00:27:20  pwagner
+! Added dateForm to auto-recognize date formats
+!
 ! Revision 2.10  2005/09/23 20:43:45  pwagner
 ! Removed a few redundancies, a few
 !
