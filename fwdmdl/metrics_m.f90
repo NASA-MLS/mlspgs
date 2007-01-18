@@ -13,7 +13,7 @@ module Metrics_m
 
   implicit NONE
   private
-  public :: Pure_Metrics, More_Metrics
+  public :: Height_Metrics, More_Metrics, Tangent_Metrics
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -23,14 +23,180 @@ module Metrics_m
 
 contains
 
-  ! -----------------------------------------------  Pure_Metrics  -----
+  ! --------------------------------------------  Tangent_Metrics  -----
+                               ! Inputs
+  subroutine Tangent_Metrics ( Phi_T, P_Basis, Z_Ref, H_Ref, Csq, &
+                               ! Inout
+    &                          Tan_Ind_C, NZ, &
+                               ! Outputs
+    &                          Req, H_Surf, H_Tan, Z_Ref_New, &
+                               ! Optional inputs
+    &                          Tan_press, Surf_temp, Surf_height )
+
+  ! Compute the surface height, the tangent height, and the equivalent
+  ! spherical earth radius.
+  ! If the ray is an Earth-intersecting ray (H_TAN < 0) determine whether to
+  ! copy Z_Ref to Z_Ref_New and add a new Zeta to it, in which case NZ =
+  ! size(Z_Ref) + 1, else NZ = size(Z_Ref).
+
+    use Geometry, only: EarthRadA
+    use Get_Eta_Matrix_m, only: Get_Eta_Sparse
+    use GLNP, only: NG, NGP1
+    use Make_Z_Grid_m, only: Default_Thresh
+    use MLSKinds, only: IP, RP, R8
+    use Output_m, only: OUTPUT
+    use Toggles, only: Switches
+
+    ! inputs:
+
+    real(rp), intent(in) :: phi_t      ! orbit projected tangent geodetic angle
+    real(rp), intent(in) :: p_basis(:) ! horizontal temperature representation
+                                       ! basis
+    real(rp), intent(in) :: z_ref(:)   ! Coarse grid of -log pressures (zetas).
+    real(rp), intent(in) :: h_ref(:,:) ! heights by fine zeta and p_basis
+    real(rp), intent(in) :: csq        ! (minor axis of orbit plane projected
+                                       ! Earth ellipse)**2
+
+    ! inout
+    integer, intent(inout) :: tan_ind_c ! Index of tangent in Z_Ref.  For an
+                                       ! Earth-intersecting ray, it might be
+                                       ! changed to a value such that
+                                       ! Z_Ref_New(tan_ind_c) = Z_Tan.
+    integer, intent(inout) :: NZ       ! Effective size of Z_Ref_New, increased
+                                       ! by 1 if a new Earth-intersecting zeta
+                                       ! is inserted.
+
+    ! outputs:
+    real(rp), intent(out) :: req       ! equivalent elliptical earth radius
+    real(rp), intent(out) :: H_SURF    ! Height of the reference surface --
+                                       ! interpolated in Surf_Height if
+                                       ! present(Surf_Height) else interpolated
+                                       ! in row 1 of H_REF.
+    real(rp), intent(out) :: H_Tan     ! Tangent height above H_Surf (negative
+    !                                  ! for Earth-intersecting rays)
+    real(rp), intent(out) :: z_ref_new(:) ! Coarse grid of -log pressures (zetas).
+                                       ! If the ray intersects the Earth
+                                       ! surface, and the zeta of the
+                                       ! intersection is sufficiently different
+                                       ! from elements of Z_Ref, Z_Ref is copied
+                                       ! here and a new one is added.
+
+    ! optional inputs
+    ! We have Tan_Press and Surf_Temp if the pointing is below the surface
+    ! index (where zeta < -3) and we don't have Surf_Height.  Otherwise
+    ! we have Surf_Height.
+    real(rp), optional, intent(in) :: Tan_press    ! Tangent pressure
+    real(rp), optional, intent(in) :: Surf_temp(:) ! Surface temperature at phi_basis
+    real(rp), optional, intent(in) :: Surf_height(:) ! Surface height in km
+                                       ! above mean sea level (whatever that
+                                       ! means) on P_Basis.
+
+    real(r8), parameter :: EarthRadA_2 = EarthRadA**2, EarthRadA_4 = EarthRadA**4
+
+    integer :: Do_Dumps
+    integer :: First, Last ! Nonzeros in Eta_T
+    integer :: I
+    real(rp) :: CP2, SP2   ! Cos^2 phi_t, Sin^2 phi_t
+    real(rp) :: ETA_T(size(p_basis)) ! Interpolating coefficients
+    real(rp) :: H_T1, H_T2 ! Used to determine where H_Tan is in H_Ref
+    integer :: Tan_Ind_F   ! Tangent index in H_Ref, which is on fine Zeta grid
+    real(rp) :: Z_Tan      ! Zeta at H_Tan
+
+    do_dumps = max(index(switches,'metD'),index(switches,'metd'))
+
+    tan_ind_f = (tan_ind_c-1) * ngp1 + 1
+
+    ! Get interpolating coefficients (eta_t) from p_basis to phi_t
+    call get_eta_sparse ( p_basis, phi_t, eta_t, first, last )
+
+    if ( present(surf_height) ) then
+      ! We set the surface reference at the actual surface height if we
+      ! have it, and adjust the req and the h_tan relative to this, and
+      ! adjust h_ref accordingly.
+      h_surf = dot_product(surf_height(first:last), eta_t(first:last))
+    else
+      ! If we don't have the actual surface height, we set the surface
+      ! reference at the input z_ref(1) and adjust the req and the h_tan
+      ! relative to this, and adjust h_ref accordingly.
+      h_surf = dot_product(h_ref(1,first:last),eta_t(first:last))
+    end if
+
+    !{ Compute equivalent earth radius (REQ) at phi\_t(1) (nearest surface)
+    ! and adjust to the input z\_grid(1) using Equation (5.21) in the 19
+    ! August 2004 ATBD JPL D-18130.
+    !
+    ! $c^2 = \frac{a^2 b^2}{a^2 \sin^2 \beta + b^2 \cos^2 \beta}$.
+    ! This is Equation (5.3) in the 19 August 2004 ATBD JPL D-18130.
+    !
+    ! $R^\oplus_{\text{eq}} \equiv H^\oplus_t =
+    ! N(\phi_t) \sqrt{\sin^\phi_t + \frac{c^4}{a^4}\cos^2 \phi_t} + h_{\text{surf}} =
+    ! \sqrt{\frac{a^4 \sin^2 \phi_t + c^4 \cos^2 \phi_t}
+    !            {a^2 \cos^2 \phi_t + c^2 \sin^2 \phi_t}} + h_{\text{surf}}$
+    !
+    ! $a$ and $c$ are in meters; we want $R^\oplus_{\text{eq}}$ in kilometers.
+
+    cp2 = cos(phi_t)**2
+    sp2 = 1.0_rp - cp2
+    req = 0.001_rp*sqrt((earthrada_4*sp2 + csq**2*cp2) / &
+                      & (earthrada_2*cp2 + csq*sp2)) + h_surf
+
+    ! compute the tangent height distance above H_surf.
+    if ( present(tan_press) .and. .not. present(surf_height) ) then
+      ! Earth intersecting ray. Compute GP height (km) of tangent pressure
+      ! below surface. This will be negative because tan_press < z_ref(1).
+      h_tan = dot_product(surf_temp(first:last),eta_t(first:last)) * &
+        &     (tan_press-z_ref(1))/14.8
+    else
+      h_tan = dot_product(h_ref(tan_ind_f,first:last),eta_t(first:last)) - h_surf
+    end if
+
+    ! Determine whether the ray intersects the Earth surface
+    if ( h_tan < 0.0 ) then ! Earth intersecting ray
+      ! Find where h_tan is in h_ref
+      h_t1 = h_tan
+      do tan_ind_f = tan_ind_f, size(h_ref,1), ngp1
+        h_t2 = dot_product(h_ref(tan_ind_f+ngp1,first:last),eta_t(first:last)) &
+          &    - h_surf
+        if ( h_t2 >= 0 ) exit
+        h_t1 = h_t2
+      end do
+      tan_ind_c = tan_ind_f/ngp1 + 1
+      ! h_t1 < 0 <= h_t2 here, so z_ref(tan_ind_c) <= z_tan <= z_ref(tan_ind_c+1)
+      ! Interpolate linearly to get z_tan
+      z_tan = z_ref(tan_ind_c) + h_t2/(h_t2-h_t1)
+      if ( abs(z_tan-z_ref(tan_ind_c+1)) <= default_thresh ) then
+        ! Tangent zeta is at tan_ind_c + 1; there is no new zeta
+        tan_ind_c = tan_ind_c + 1
+      else if ( abs(z_tan-z_ref(tan_ind_c)) > default_thresh ) then
+        ! Add a new zeta
+        z_ref_new(:tan_ind_c-1) = z_ref(:tan_ind_c-1)
+        z_ref_new(tan_ind_c) = z_tan
+        z_ref_new(tan_ind_c+1:nz+1) = z_ref(tan_ind_c:nz)
+        nz = nz + 1
+      else
+        ! Tangent zeta is at tan_ind_c; nothing needs doing
+      end if
+      call output ( z_tan, before='Z_Tan = ', after=', ' )
+    end if
+
+    if ( do_dumps > 0 ) then
+      call output ( h_tan, before='H_Tan = ' )
+      call output ( h_surf, before=', H_Surf = ' )
+      call output ( tan_ind_c, before=', Tan_ind_c = ' )
+      call output ( tan_ind_f, before=', Tan_ind_f = ', advance='yes' )
+    end if
+
+  end subroutine Tangent_Metrics
+
+  ! ---------------------------------------------  Height_Metrics  -----
 
                             ! Inputs:
-  subroutine Pure_Metrics (    phi_t, tan_ind, p_basis, z_ref, h_ref, csq, &
+  subroutine Height_Metrics (  phi_t, tan_ind, p_basis, z_ref, h_ref, req, &
+                            &  h_surf, h_tan,                              &
                             ! Outputs:
-                            &  h_grid, p_grid, req,                        &
+                            &  h_grid, p_grid,                             &
                             ! Optional inputs:
-                            &  h_tol, tan_press, surf_temp )
+                            &  h_tol )
 
     !{ This subroutine computes {\tt h\_grid} and {\tt p\_grid} that define
     !  a 2-d integration path.  These points are at the intersections of the
@@ -48,27 +214,27 @@ contains
 
     ! inputs:
 
-    real(rp), intent(in) :: phi_t      ! orbit projected tangent geodetic angle
-    integer(ip), intent(in) :: tan_ind ! tangent height index, 1 = center of
+    real(rp), intent(in) :: phi_t      ! Orbit projected tangent geodetic angle
+    integer, intent(in) :: tan_ind     ! Tangent height index, 1 = center of
     !                                     longest path
-    real(rp), intent(in) :: p_basis(:) ! horizontal temperature representation
+    real(rp), intent(in) :: p_basis(:) ! Horizontal temperature representation
     !                                     basis
     real(rp), intent(in) :: z_ref(:)   ! -log pressures (zetas) for which
     !                                     heights/temps are needed.  Only the
     !                                     parts from the tangent outward are used
-    real(rp), intent(in) :: h_ref(:,:) ! heights by t_phi_basis
-    real(rp), intent(in) :: csq        ! (minor axis of orbit plane projected
-    !                                    Earth ellipse)**2
+    real(rp), intent(in) :: h_ref(:,:) ! Heights by z_ref and p_basis
+    real(rp), intent(in) :: req        ! Equivalent elliptical earth radius
+    real(rp), intent(in) :: H_Surf     ! Height at the Earth surface
+    real(rp), intent(in) :: H_Tan      ! Tangent height above H_Surf -- negative
+    !                                     for Earth-intersecting ray
+
     ! outputs:
     real(rp), intent(out) :: h_grid(:) ! computed heights, referenced to Earth center
     real(rp), intent(out) :: p_grid(:) ! computed phi's
-    real(rp), intent(out) :: req       ! equivalent elliptical earth radius
 
     ! optional inputs
     real(rp), optional, intent(in) :: H_Tol ! Height tolerance in kilometers
                                        !   for convergence of phi/h iteration
-    real(rp), optional, intent(in) :: Tan_press    ! Tangent pressure
-    real(rp), optional, intent(in) :: Surf_temp(:) ! Surface temperature at phi_basis
 
     ! Local variables.
     integer :: Do_Dumps    ! 0 = no dump, >0 = dump
@@ -97,11 +263,7 @@ contains
     real(rp) :: DPJ1       ! p_basis(j+1)-phi_t
     real(rp) :: CP2        ! Cos^2 phi_t
     real(rp) :: H          ! Tentative solution for H
-    real(rp) :: H_SURF     ! Height of the reference surface -- interpolated in
-                           ! row 1 of H_REF
-    real(rp) :: H_T        ! Tangent height -- interpolated in row TAN_IND
-                           ! of H_REF, then H_SURF is subtracted
-    real(rp) :: H_TAN      ! Either H_T or NEG_H_TAN
+    real(rp) :: H_T2       ! Used when searching for surface height in h_ref
     real(rp) :: HTAN_R     ! H_Tan + req
     real(rp) :: My_H_Tol   ! Tolerance in kilometers for height convergence
     real(rp) :: P, Q       ! Tentative solutions for phi
@@ -109,6 +271,9 @@ contains
     real(rp) :: REQ_S      ! Req - H_Surf
     real(rp) :: SecM1      ! Taylor series for sec(phi)-1
     real(rp) :: SP2        ! Sin^2 phi_t
+    real(rp) :: Z_Tan      ! Zeta at the tangent point, usually from
+                           ! z_ref(tan_ind), but solved here for earth-
+                           ! intersecting rays.
 
     real(rp) :: ETA_T(size(p_basis))
     real(rp) :: PHI_OFFSET(size(vert_inds)) ! PHI_T or a function of NEG_H_TAN
@@ -120,12 +285,12 @@ contains
     real(rp), parameter :: D1 = 2*c2, D3 = 4*c4, D5 = 6*c6 ! ... 2n * c_2n
 
     real(r8), parameter :: EarthRadA_2 = EarthRadA**2, EarthRadA_4 = EarthRadA**4
-    ! For debugging output format:
-    logical, parameter :: clean = .false.
 
     ! To control debugging
     logical, parameter :: Debug = .false.
     logical, parameter :: NewtonDetails = .true. .and. debug
+    ! For debugging output format:
+    logical, parameter :: clean = .false.
     ! For debugging output
     real(rp) :: DD(merge(10,0,debug))
     character(merge(10,0,debug)) :: OOPS
@@ -139,70 +304,37 @@ contains
       h_phi_dump = max(h_phi_stop,index(switches,'hphi'))
 !   end if
 
+    n_path = size(vert_inds)
+    n_tan = n_path / 2
+
     my_h_tol = 0.001_rp ! kilometers
     if ( present(h_tol) ) my_h_tol = h_tol ! H_Tol is in kilometers
     p_coeffs = size(p_basis)
     n_vert = size(z_ref)
 
-    ! compute the tangent height vertical.
-    ! For simplicity, we set the surface reference at the input z_ref(1)
-    ! and adjust the req and the h_t relative to this, and adjust h_ref
-    ! accordingly
+    ! Get interpolating coefficients (eta_t) from p_basis to phi_t
     call get_eta_sparse ( p_basis, phi_t, eta_t, first, last )
-    h_surf = dot_product(h_ref(1,first:last),eta_t(first:last))
-    h_t = dot_product(h_ref(tan_ind,first:last),eta_t(first:last)) - h_surf
-    h_tan = h_t
-
-    !{ Compute equivalent earth radius (REQ) at phi\_t(1) (nearest surface)
-    ! and adjust to the input z\_grid(1) using Equation (5.21) in the 19
-    ! August 2004 ATBD JPL D-18130.
-    !
-    ! $c^2 = \frac{a^2 b^2}{a^2 \sin^2 \beta + b^2 \cos^2 \beta}$.
-    ! This is Equation (5.3) in the 19 August 2004 ATBD JPL D-18130.
-    !
-    ! $R^\oplus_{\text{eq}} \equiv H^\oplus_t =
-    ! N(\phi_t) \sqrt{\sin^\phi_t + \frac{c^4}{a^4}\cos^2 \phi_t} + h_{\text{surf}} =
-    ! \sqrt{\frac{a^4 \sin^2 \phi_t + c^4 \cos^2 \phi_t}
-    !            {a^2 \cos^2 \phi_t + c^2 \sin^2 \phi_t}} + h_{\text{surf}}$
-    !
-    ! $a$ and $c$ are in meters; we want $R^\oplus_{\text{eq}}$ in kilometers.
-
-    cp2 = cos(phi_t)**2
-    sp2 = 1.0_rp - cp2
-    req_s = 0.001_rp*sqrt((earthrada_4*sp2 + csq**2*cp2) / &
-                        & (earthrada_2*cp2 + csq*sp2))
-    req = req_s + h_surf
-
-    ! Only use the parts of the reference grids that are germane to the
-    ! present path
-
-    vert_inds = (/ (i, i=n_vert,tan_ind,-1), (i, i=tan_ind,n_vert) /)
-    n_path = size(vert_inds)
-    n_tan = n_path / 2
-
-    ! sign of phi vector
-    phi_sign = (/ (-1, i=n_vert,tan_ind,-1), (+1, i=tan_ind,n_vert) /)
 
     ! p_basis and p_grid are phi's in offset radians relative to phi_t, that
     ! is, the phi_t, p_basis or p_grid = 0.0 is phi_t.
     ! The phi basis is wholly independent of phi_t
 
-    phi_offset(:n_path) = phi_t
-    if ( present(tan_press) ) then ! Earth intersecting ray
-      ! Compute GP height (in KM.) of tan. press. below surface
-      h_tan = dot_product(surf_temp(first:last),eta_t(first:last))*(tan_press-z_ref(1))/14.8
+    phi_offset(:n_tan) = phi_t
+    if ( h_tan < 0.0 ) then ! Earth-intersecting ray
       phi_offset(n_tan+1:) = phi_t-2.0_rp*Acos((req+h_tan)/req)
+    else
+      phi_offset(n_tan+1:) = phi_t
     end if
+
+    req_s = req - h_surf
     htan_r = h_tan + req
 
     if ( h_phi_dump > 0 ) then
       call dump ( p_basis, name='p_basis', format='(1pg14.6)', clean=clean )
       call output ( phi_t, before='phi_t = ', format='(1pg14.6)' )
-      call output ( h_t, format='(f7.2)', before=', h_t = ' )
       call output ( h_surf, format='(f7.2)', before =', h_surf = ' )
       call output ( req, format='(f7.2)', before=', req = ', advance='yes' )
       call output ( tan_ind, before='tan_ind = ' )
-      call output ( csq, before=', csq = ', advance='yes' )
       call dump ( phi_offset, name='phi_offset', clean=clean )
       call dump ( h_ref(tan_ind:n_vert,:), name='h_ref', clean=clean )
 !     call dump ( z_ref(tan_ind:n_vert), name='z_ref', clean=clean )
@@ -211,6 +343,14 @@ contains
       if ( debug ) &
         & print '(2a,f9.3,a,f7.3)', '   I J    phi  H(TAYLOR)',&
           & '  HREF(I,J) HREF(I,J+1)  H(TRIG)    H-HREF      N   Diffs'
+
+    ! Only use the parts of the reference grids that are germane to the
+    ! present path
+
+    vert_inds = (/ (i, i=n_vert,tan_ind,-1), (i, i=tan_ind,n_vert) /)
+
+    ! sign of phi vector
+    phi_sign = (/ (-1, i=n_vert,tan_ind,-1), (+1, i=tan_ind,n_vert) /)
 
     stat = no_sol ! No solutions
     ! The tangent point is special
@@ -422,7 +562,7 @@ path: do i = i1, i2
       if ( dump_stop > 0 ) stop
     end if
 
-  end subroutine Pure_Metrics
+  end subroutine Height_Metrics
 
   ! -----------------------------------------------  More_Metrics  -----
   subroutine More_Metrics ( &
@@ -440,7 +580,7 @@ path: do i = i1, i2
           & do_calc_hyd, do_calc_t, eta_zxp, tan_phi_t )
 
     ! This subroutine computes metrics-related things after H_Grid and
-    ! P_Grid are computed by Pure_Metrics, and then perhaps augmented
+    ! P_Grid are computed by Height_Metrics, and then perhaps augmented
     ! with, for example, the minimum Zeta point.
 
     use Dump_0, only: Dump
@@ -674,6 +814,9 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.40  2006/12/21 22:59:17  vsnyder
+! Don't reference optional arguments that aren't present
+!
 ! Revision 2.39  2006/12/20 21:22:16  vsnyder
 ! Split metrics into pure H-Phi calculation, and everything else, in
 ! preparation for inserting the minimum-Zeta point into the path.
