@@ -1423,7 +1423,7 @@ contains ! =====     Public Procedures     =============================
     use HDF5, only: h5gclose_f, h5gopen_f
     use INIT_TABLES_MODULE, only: L_L2AUX, L_L2DGG
     use Intrinsic, only: l_swath, l_hdf
-    use L2AUXData, only: cpL2AUXData
+    use L2AUXData, only: CPL2AUXDATA, PHASENAMEATTRIBUTES
     use L2GPData, only: AVOIDUNLIMITEDDIMS, &
       & MAXSWATHNAMESBUFSIZE, cpL2GPData
     use L2ParInfo, only: parallel
@@ -1533,6 +1533,10 @@ contains ! =====     Public Procedures     =============================
       end if
     end if
     ! Next we would do the same for any split dgm direct write files
+    ! We must not write the phase and forward model names
+    ! as held by us, the master, but instead
+    ! wait until we can copy the correct values known only to the slaves
+    PHASENAMEATTRIBUTES = .false.
     DB_index = findFirst( DirectDatabase%autoType, l_l2aux )
     if ( findNext(DirectDatabase%autoType, l_l2aux, DB_index) > 0 ) then
       if ( TOOLKIT ) then
@@ -1607,7 +1611,7 @@ contains ! =====     Public Procedures     =============================
           & outputFile, create2=create2 )
         end if
         if ( create2 ) then
-          ! print *, 'About to CpHDF5GlAttribute'
+          ! print *, 'About to CpHDF5GlAttribute from ' // trim(DirectDatabase(DB_index)%fileName)
           call CpHDF5GlAttribute ( DirectDatabase(DB_index)%fileName, &
             & l2auxPhysicalFilename, 'Phase Names' )
           call CpHDF5GlAttribute ( DirectDatabase(DB_index)%fileName, &
@@ -1653,6 +1657,7 @@ contains ! =====     Public Procedures     =============================
         returnStatus = mls_sfend(sdfid, hdfVersion=HDFVERSION_5)
       endif
     end if
+    PHASENAMEATTRIBUTES = .true.
   end subroutine unsplitFiles
     
   logical function not_used_here()
@@ -1667,6 +1672,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.127  2007/01/18 19:39:16  pwagner
+! Fixed bug causing Phase Names attribute to include only 1st phase
+!
 ! Revision 2.126  2006/10/02 23:06:56  pwagner
 ! Write FailedMachines attribute unless using old mlssubmit
 !
