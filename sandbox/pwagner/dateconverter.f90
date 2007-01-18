@@ -2,8 +2,10 @@
 PROGRAM dateconverter
 !=================================
 
-   use dates_module, ONLY: reFormatDate, dai_to_yyyymmdd, yyyymmdd_to_dai
+   use dates_module, ONLY: addhourstoutc, &
+     & dai_to_yyyymmdd, reFormatDate, yyyymmdd_to_dai
    use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
+   use MLSStringLists, ONLY: StringElement
    use MLSStrings, ONLY: lowerCase, readIntsFromChars
 
    IMPLICIT NONE
@@ -24,9 +26,11 @@ PROGRAM dateconverter
 
   type options_T
     integer     :: offset = 0                  ! How many days to add/subtract
+    integer     :: hoursOffset = 0             ! How many hours to add/subtract
     logical     :: verbose = .false.
     character(len=255) :: outputFormat= ' '    ! output format
     character(len=255) :: inputFormat= ' '     ! input format
+    character(len=255) :: inputTime= ' '       ! input time
   end type options_T
 
   type ( options_T ) :: options
@@ -55,11 +59,13 @@ PROGRAM dateconverter
    integer, parameter :: MAXLISTLENGTH=24
    integer, parameter ::          MAXDATES = 100
    character (LEN=MAXLISTLENGTH) :: converted_date
+   character (LEN=MAXLISTLENGTH) :: converted_time
    character (LEN=MAXLISTLENGTH) :: date
    character (LEN=MAXLISTLENGTH) :: intermediate_date
    character(len=MAXLISTLENGTH), dimension(MAXDATES) :: dates
    character (LEN=MAXLISTLENGTH) :: fromForm
    character (LEN=*), parameter  :: intermediateForm = 'yyyymmdd'
+   character (LEN=MAXLISTLENGTH) :: time
    character (LEN=MAXLISTLENGTH) :: toForm
    character(len=*), parameter   :: MFORMAT = 'yyyy M dd'
    character(len=*), parameter   :: DOYFORMAT = 'yyyy-doy'
@@ -92,11 +98,13 @@ PROGRAM dateconverter
     else
       toForm = DOYFORMAT
     endif
-    if ( options%verbose) then
+    if ( options%verbose ) then
       print *, 'Input was ', trim(date)
       print *, 'Input format was ', trim(fromForm)
       print *, 'Output format is ', trim(toForm)
-      print *, 'Offset is ', options%offset
+      print *, 'input time is ', trim(options%inputTime)
+      print *, 'Offset days is ', options%offset
+      print *, 'Offset hours is ', options%hoursoffset
     endif
     
     ! Process date
@@ -110,11 +118,33 @@ PROGRAM dateconverter
       call dai_to_yyyymmdd(dai, intermediate_date)
       converted_date = reFormatDate(intermediate_date, &
         fromForm=intermediateForm, toForm=trim(toForm))
+    elseif ( options%hoursoffset /= 0 ) then
+      converted_date = reFormatDate( date, &
+        & fromForm=trim(fromForm), toForm='yyyy-mm-dd' )
+      ! if ( options%verbose ) print *, '1st date: ', trim(converted_date)
+      if ( options%inputTime == ' ' ) options%inputTime = '00:00:00'
+      ! Mash date and time together in unholy union
+      intermediate_date = trim(converted_date) // 'T' // &
+        & adjustl(options%inputTime)
+      ! if ( options%verbose ) print *, 'mash date: ', trim(intermediate_date)
+      converted_date = addhourstoutc( intermediate_date, options%hoursoffset )
+      if ( options%verbose ) print *, 'advanced date: ', trim(converted_date)
+      ! Now split them asunder
+      intermediate_date = StringElement( converted_date, 1, countEmpty=.true., &
+        & inseparator='T' )
+      converted_time = StringElement( converted_date, 2, countEmpty=.true., &
+        & inseparator='T' )
+      converted_date = reFormatDate(intermediate_date, &
+        fromForm='yyyy-mm-dd', toForm=trim(toForm))
     else
       converted_date = reFormatDate(date, &
         & fromForm=trim(fromForm), toForm=trim(toForm))
     endif
-    call print_string(trim(converted_date))
+    if ( options%inputTime /= ' ' ) then
+      call print_string( trim(converted_date) // ' ' // trim(converted_time) )
+    else
+      call print_string( trim(converted_date) )
+    endif
    enddo
 contains
   subroutine advance ( values, dvalues )
@@ -261,6 +291,7 @@ contains
      integer, intent(in)             :: n_dates
      type ( options_T ), intent(inout) :: options
      ! Local variables
+     character(LEN=255) ::              arg
      integer ::                         error = 1
      integer, save ::                   i = 1
   ! Get inputfile name, process command-line args
@@ -272,8 +303,23 @@ contains
       if ( index('-+', date(1:1)) < 1 ) exit
       if ( date(1:3) == '-h ' ) then
         call print_help
+      elseif ( date(1:3) == '-H ' ) then
+        call getarg ( i+1+hp, arg )
+        call readIntsFromChars(arg, options%hoursOffset)
+        options%hoursOffset = - options%hoursOffset ! Because we will subtract
+        i = i + 1
+        exit
+      elseif ( date(1:3) == '+H ' ) then
+        call getarg ( i+1+hp, arg )
+        call readIntsFromChars(arg, options%hoursOffset)
+        i = i + 1
+        exit
       elseif ( date(1:3) == '-i ' ) then
         call getarg ( i+1+hp, options%inputFormat )
+        i = i + 1
+        exit
+      elseif ( date(1:3) == '-t ' ) then
+        call getarg ( i+1+hp, options%inputTime )
         i = i + 1
         exit
       elseif ( date(1:3) == '-o ' ) then
@@ -310,13 +356,19 @@ contains
       & 'Usage:dateconverter [options] [dates]'
       write (*,*) &
       & ' If no dates supplied, you will be prompted to supply one'
+      write (*,*) &
+      & ' If no time-of-day supplied, none will be output'
       write (*,*) ' Options: -o format   => output format to use (e.g. yyyymmdd)'
       write (*,*) '                        by default output will complement input'
       write (*,*) '                        e.g., "2004 October 01" <=> 2004-d275'
       write (*,*) '          -i format   => input format'
       write (*,*) '                        by default attempt to auto-recognize'
+      write (*,*) '          -t time     => optional time-of-day (military-style)'
+      write (*,*) '                        e.g., "06:53:10"'
       write (*,*) '          -number     => subtract "number" days'
       write (*,*) '          +number     => add "number" days'
+      write (*,*) '          -H number   => subtract "number" hours'
+      write (*,*) '          +H number   => add "number" hours'
       write (*,*) '          -v          => switch on verbose mode'
       write (*,*) '          -h          => print brief help'
       stop
@@ -332,6 +384,9 @@ END PROGRAM dateconverter
 !==================
 
 ! $Log$
+! Revision 1.6  2006/11/01 20:48:52  pwagner
+! Should not prompt for stdin; messes up comd sub; but maybe should remove stdin altogether?
+!
 ! Revision 1.5  2005/09/23 20:45:41  pwagner
 ! Changes to conform with dates_module
 !
