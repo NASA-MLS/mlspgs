@@ -85,7 +85,8 @@ contains
                                 ! (NLVL-1) * (NG+1) + 1, i.e., 1 + NG
                                 ! per level, except the last,
                                 ! where there's no GL space.
-    integer :: MAX_C            ! Length of longest possible coarse path
+    integer :: MAX_C            ! Length of longest possible coarse path,
+                                ! Z_PSIG & Min Zeta & surface Zeta
     integer :: MAX_F            ! Length of longest possible fine path
                                 ! (all npf<max_f)
     integer :: S_T  ! Multiplier for temp derivative sizes, 0 or 1
@@ -154,7 +155,7 @@ contains
     call compute_Z_PSIG ( fwdModelConf, temp, fwdModelConf%beta_group%qty, nlvl, &
       &                   no_tan_hts, surfaceTangentIndex, z_psig, tan_press )
 
-    max_c = 2*nlvl + 1 ! Maximum coarse path length, Z_PSIG & minimum Zeta point
+    max_c = 2*nlvl + 3 ! Maximum coarse path length
     maxVert = (nlvl-1) * ngp1 + 1
     max_f = 2 * maxVert + ngp1 ! Maximum fine path, including minimum Zeta panel
 
@@ -266,11 +267,11 @@ contains
       & L_ELEVOFFSET, L_GPH, &
       & L_LOSVEL, L_LIMBSIDEBANDFRACTION, &
       & L_ORBITINCLINATION, L_RADIANCE, L_REFGPH, L_SCGEOCALT, &
-      & L_SIZEDISTRIBUTION, L_SPACERADIANCE, L_VMR
+      & L_SIZEDISTRIBUTION, L_SPACERADIANCE, L_SurfaceHeight, L_VMR
     use Load_Sps_Data_m, only: DestroyGrids_t, Dump, Grids_T, &
       & Load_One_Item_Grid
     use MatrixModule_1, only: MATRIX_T
-    use Metrics_m, only: Pure_Metrics, More_Metrics
+    use Metrics_m, only: More_Metrics, Height_Metrics, Tangent_Metrics
     use Min_Zeta_m, only: Get_Min_Zeta
     use MLSKinds, only: R4, R8, RP, RV
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
@@ -292,6 +293,10 @@ contains
     use TWO_D_HYDROSTATIC_M, only: Two_D_Hydrostatic
     use Units, only: Deg2Rad
     use VectorsModule, only: GETVECTORQUANTITYBYTYPE, VECTOR_T, VECTORVALUE_T
+
+    ! Extra space in the ..._R variables:  Replacement for tangent Zeta,
+    ! new space for minimum Zeta, plus GL points around them.
+    integer, parameter :: NXG = 2 + 4 * NG
 
     type(forwardModelConfig_T), intent(inout) :: FwdModelConf
     type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
@@ -372,12 +377,15 @@ contains
     integer :: NOUSEDDACS         ! Number of different DACS in this run.
     integer :: NPC                ! Length of coarse path
     integer :: NPF                ! Length of a gl path
+    integer :: NZ_IF              ! Effective size of Z_GLgrid_o and cohorts
+    integer :: NZ_IG              ! Effective size of Z_IG, size(z_psig) <=
+                                  ! nz_ig <= size(z_psig)+2
     integer :: PTG_I              ! Loop counter for the pointings
     integer :: SIDEBAND           ! Either zero or from firstSignal
     integer :: SIGIND             ! Signal index, loop counter
     integer :: SV_I               ! Loop index and other uses .
     integer :: SX                 ! 1 = LSB, 2 = USB
-    integer :: TAN_IND_C          ! Index of tangent point in coarse grid
+    integer :: TAN_IND_C          ! Index of tangent point in coarse zeta grid
     integer :: TAN_IND_F          ! Index of tangent point in fine grid
     integer :: TAN_PT_C           ! Index of tangent point in coarse path
     integer :: TAN_PT_F           ! Index of tangent point in fine path
@@ -469,7 +477,8 @@ contains
     real(rp) :: N_PATH_C(max_c)       ! Refractivity on coarse path
     real(rp) :: PATH_DSDH(max_f)      ! dS/dH on path
     real(rp) :: PHI_PATH(max_f)       ! Phi's on path, Radians
-    real(rp) :: P_GLGRID(maxvert)     ! Pressure on glGrid surfs
+    real(rp), target :: P_GLGRID_O(maxvert) ! Pressure on glGrid surfs, original
+    real(rp), target :: P_GLGRID_R(maxvert+nxg) ! Pressure on glGrid surfs, revised
     real(rp) :: P_PATH(max_f)         ! Pressure on path
     real(rp) :: PTG_ANGLES(no_tan_hts)
     real(rp) :: REF_CORR(max_c)       ! Refraction correction
@@ -481,8 +490,10 @@ contains
     real(rp) :: T_PATH_F(max_f)       ! T_PATH on fine grid
     real(rp) :: TT_PATH_C(s_i*max_c)  ! tscat on path coarse
     real(rp) :: W0_PATH_C(s_i*max_c)  ! w0 on path coarse
-    real(rp) :: Z_COARSE(max_c)       ! Z_PSIG & Z_min
-    real(rp) :: Z_GLGRID(maxvert)     ! Zeta on initial glGrid surfs
+    real(rp) :: Z_COARSE(max_c)       ! Z_PSIG & Z_min & surface zeta
+    real(rp), target :: Z_GLGRID_O(maxvert) ! Zeta on initial glGrid surfs, original
+    real(rp), target :: Z_GLGRID_R(maxvert+nxg) ! Zeta on initial glGrid surfs, revised
+    real(rp) :: Z_IG(size(Z_PSIG)+2)  ! Z_PSIG + min Zeta + Earth intersection
     real(rp) :: Z_PATH(max_f)         ! Zeta on fine grid path tangent grid and
                                       ! species grids, sans duplicates.
     real(rp) :: BETA_PATH_C(max_c,no_mol)  ! Beta on path coarse
@@ -504,7 +515,8 @@ contains
     real(rp) :: DH_DT_PATH(max_f,s_t*sv_t_len)     ! dH/dT on path
     real(rp) :: DH_DT_PATH_C(max_c,s_t*sv_t_len)   ! DH_DT_PATH on coarse grid
     real(rp) :: DH_DT_PATH_F(max_f,s_t*sv_t_len)   ! DH_DT_PATH on fine grid
-    real(rp) :: DHDZ_GLGRID(maxVert,no_sv_p_t)     ! dH/dZ on glGrid surfs
+    real(rp), target :: DHDZ_GLGRID_O(maxVert,no_sv_p_t) ! dH/dZ on glGrid surfs, original
+    real(rp), target :: DHDZ_GLGRID_R(maxVert+nxg,no_sv_p_t) ! dH/dZ on glGrid surfs, revised
     real(rp) :: DX_DT(no_tan_hts,s_t*sv_t_len)     ! (No_tan_hts, nz*np)
     real(rp) :: ETA_FZP(max_f,size(grids_f%values)) ! Eta_z x Eta_p * Eta_f
     real(rp) :: ETA_IWC(max_f,size(grids_iwc%values))
@@ -517,7 +529,8 @@ contains
     real(rp) :: ETA_ZXP_T_F(max_f,s_t*sv_t_len)    ! ETA_ZXP_T on fine grid
     real(rp) :: ETA_ZXP_V(max_f,size(grids_v%values)) ! Eta_z x Eta_p for V
     real(rp) :: ETA_ZXP_W(max_f,size(grids_w%values)) ! Eta_z x Eta_p for W
-    real(rp) :: H_GLGRID(maxVert,no_sv_p_t)        ! H on glGrid surfs
+    real(rp), target :: H_GLGRID_O(maxVert,no_sv_p_t) ! H on glGrid surfs, original
+    real(rp), target :: H_GLGRID_R(maxVert+nxg,no_sv_p_t) ! H on glGrid surfs, revised
     real(rp) :: IWC_PATH(max_f,s_i)                ! IWC on path
     real(rp), target :: MAG_PATH(s_p*max_f,4)      ! Magnetic field on path
     real(rp) :: N_GLGRID(maxVert,no_sv_p_t)        ! N on glGrid surfs
@@ -528,7 +541,8 @@ contains
     real(rp) :: SPECT_V_PATH(max_f,size(fwdModelConf%lineCenter)) ! Line Center
     real(rp) :: SPECT_W_PATH(max_f,size(fwdModelConf%lineWidth)) ! Line Width
     real(rp) :: SPS_PATH(max_f,no_mol)             ! species on path
-    real(rp) :: T_GLGRID(maxVert,no_sv_p_t)        ! Temp on glGrid surfs
+    real(rp), target :: T_GLGRID_O(maxVert,no_sv_p_t) ! Temp on glGrid surfs, original
+    real(rp), target :: T_GLGRID_R(maxVert+nxg,no_sv_p_t) ! Temp on glGrid surfs, revised
     real(rp) :: T_SCRIPT_PFA(max_c,s_pfa*noUsedChannels) ! Delta_B in some notes
     real(rp) :: TT_PATH(max_f,s_i)                 ! TScat on path along the LOS
     real(r8) :: VMRARRAY(no_mol,s_i*n_t_zeta)      ! The VMRs
@@ -545,7 +559,8 @@ contains
       &       size(grids_w%values), size(grids_n%values), size(grids_v%values)), &
       & size(fwdModelConf%usedDACSSignals) )
 
-    real(rp) :: DH_DT_GLGRID(maxVert,n_t_zeta,no_sv_p_t) ! Needed even if no temperature derivatives
+    real(rp), target :: DH_DT_GLGRID_O(maxVert,n_t_zeta,s_t*no_sv_p_t)
+    real(rp), target :: DH_DT_GLGRID_R(maxVert+nxg,n_t_zeta,s_t*no_sv_p_t)
 
     complex(rp) :: D_RAD_POL_DF(2,2,s_p*s_a*size(grids_f%values)) ! From mcrt_der
     complex(rp) :: D_RAD_POL_DT(2,2,s_p*s_t*sv_t_len) ! From mcrt_der
@@ -572,7 +587,8 @@ contains
     real(rp) :: EST_LOS_VEL(no_tan_hts)   ! Est S/C line-of-sight velocity M/S
     real(rp) :: TAN_D2H_DHDT(s_t*sv_t_len)
     real(rp) :: TAN_PHI(no_tan_hts)
-    real(rp) :: DDHIDHIDTL0(maxVert,n_t_zeta,s_t*no_sv_p_t)
+    real(rp), target :: DDHIDHIDTL0_O(maxVert,n_t_zeta,s_t*no_sv_p_t) ! Original
+    real(rp), target :: DDHIDHIDTL0_R(maxVert+nxg,n_t_zeta,s_t*no_sv_p_t) ! Revised
     real(r4) :: K_ATMOS(noUsedChannels,no_tan_hts,s_a*size(grids_f%values))
     ! Channels x pointings x grid values == frequencies x surfaces x instances x molecules:
     real(r4) :: K_SPECT_DN(noUsedChannels,no_tan_hts,s_td*size(grids_n%values))
@@ -590,11 +606,11 @@ contains
 
     real(rp) :: E_RFLTY       ! Earth reflectivity at given tan. point
     real(rp), save :: E_Stop  = 1.0_rp ! X for which Exp(X) is too small to worry
+    real(rp) :: H_Surf, H_Tan ! Height at surface and tangent
     real(rp) :: Min_Zeta      ! Minimum zeta along the path
     real(rp) :: Min_Phi       ! Phi at which minimum zeta occurs
     real(rp), parameter :: Min_Phi_Tol = 0.25 * gx(1)**2 ! First GL point
     real(rp) :: TAN_HT        ! Height at the tangent, from equivalent Earth center
-    real(rp) :: TAN_TEMP      ! Temperature at the tangent
     real(rp) :: R             ! real variable for various uses
     real(rp) :: REQ           ! Equivalent Earth Radius
     real(rp) :: ROT(3,3)      ! ECR-to-FOV rotation matrix
@@ -616,6 +632,15 @@ contains
     real(rp), pointer :: STSP(:)         ! Sin(Theta) Sin(Phi)
     real(rp), pointer :: Cext_PATH(:,:)  ! Cloud extinction on path
     real(rp), pointer :: DACsStaging(:,:) ! Temporary space for DACS radiances
+
+    ! GL Grid quantities to/from Hydrostatic
+    real(rp), pointer :: DDHIDHIDTL0(:,:,:) ! Either DDHIDHIDTL0_O or DDHIDHIDTL0_R
+    real(rp), pointer :: DH_DT_GLGRID(:,:,:) ! Either DH_DT_GLgrid_O or DH_DT_GLgrid_R
+    real(rp), pointer :: DHDZ_GLGRID(:,:) ! Either DHDZ_GLgrid_O or DHDZ_GLgrid_R
+    real(rp), pointer :: P_GLGRID(:)     ! Either P_GLgrid_O or P_GLgrid_R
+    real(rp), pointer :: H_GLGRID(:,:)   ! Either H_GLgrid_O or H_GLgrid_R
+    real(rp), pointer :: T_GLGRID(:,:)   ! Either T_GLgrid_O or T_GLgrid_R
+    real(rp), pointer :: Z_GLGRID(:)     ! Either Z_GLgrid_O or Z_GLgrid_R
 
     ! Incremental opacity derivatives, Path X SVE:
     real(rp), pointer :: ETA_Tscat(:,:)    !
@@ -659,6 +684,7 @@ contains
     type (VectorValue_T), pointer :: SCGEOCALT     ! S/C geocentric altitude /m
     type (VectorValue_T), pointer :: SIZEDISTRIBUTION ! Integer really
     type (VectorValue_T), pointer :: SPACERADIANCE ! Emission from space
+    type (VectorValue_T), pointer :: SurfaceHeight ! km above mean sea level
     type (VectorValue_T), pointer :: THISRADIANCE  ! A radiance vector quantity
     type (VectorValue_T), pointer :: VMR           ! Quantity
 
@@ -751,7 +777,7 @@ contains
         &  (/ (refGPH%template%surfs(1,1), j=windowStart,windowFinish) /), &
         &  0.001*refGPH%values(1,windowStart:windowFinish), z_glgrid, &
         &  orbIncline%values(1,maf)*Deg2Rad, t_glgrid, h_glgrid, &
-        &  dhdz_glgrid, dh_dt_glgrid )
+        &  dhdz_glgrid )
     end if
 
     !??? need to interpolate H2O from Grids_f basis to Grids_tmp basis
@@ -795,39 +821,100 @@ contains
         if ( toggle(emit) .and. levels(emit) > 3 ) &
           & call Trace_Begin ( 'ForwardModel.Pointing ', index=ptg_i )
 
-        tan_ind_c = max(1,ptg_i-surfaceTangentIndex+1) ! On coarse grid
-        tan_ind_f = (tan_ind_c-1) * ngp1 + 1           ! On fine GL grid
-
         if ( FwdModelConf%polarized ) &
           & mif = minloc(abs(tan_press(ptg_i) - &
           &                  ptan%values(:ptan%template%nosurfs,maf)),1)
 
-        tan_pt_f = MaxVert + 1 - tan_ind_f ! fine path tangent index
-        tan_pt_c = (tan_pt_f + Ng) / Ngp1  ! coarse path tangent index
-        npc = 2 * tan_pt_c
-        npf = 2 * tan_pt_f
-
         if ( toggle(emit) .and. levels(emit) > 4 ) &
           & call Trace_Begin ( 'ForwardModel.MetricsEtc' )
 
-        ! Get H_Path and Phi_Path on the fine grid.
-        if ( ptg_i < surfaceTangentIndex ) then
-          e_rflty = earthRefl%values(1,1)
-          call pure_metrics ( tan_phi(ptg_i), tan_ind_f, Grids_tmp%phi_basis, &
-            &  z_glgrid, h_glgrid, earthradc_sq,                              &
-            &  h_path(1:npf), phi_path(1:npf), Req,                           &
-            &  Tan_Press=tan_press(ptg_i),                                    &
-            &  Surf_Temp=temp%values(1,windowstart:windowfinish) )
+        ! Compute where the tangent is, the equivalent Earth radius, tangent
+        ! height and surface height, and determine whether the ray
+        ! intersects the Earth surface
+        tan_ind_c = max(1,ptg_i-surfaceTangentIndex+1) ! On coarse grid
+        z_glgrid => z_glgrid_o
+        nz_ig = nlvl
+        if ( associated(surfaceHeight) ) then
+          call tangent_metrics ( tan_phi(ptg_i), Grids_tmp%phi_basis, z_psig, &
+            &                    h_glgrid, earthradc_sq,     & ! in
+            &                    tan_ind_c, nz_ig,           & ! inout
+            &                    req, h_surf, h_tan, z_ig,   & ! output
+            &                    surf_height=surfaceHeight%values(1,:) ) ! opt
+        else if ( ptg_i < surfaceTangentIndex ) then
+          call tangent_metrics ( tan_phi(ptg_i), Grids_tmp%phi_basis, z_psig, &
+            &                    h_glgrid, earthradc_sq,     & ! in
+            &                    tan_ind_c, nz_ig,           & ! inout
+            &                    req, h_surf, h_tan, z_ig,   & ! output
+            &                    Tan_Press=tan_press(ptg_i), & ! optional
+            &                    Surf_Temp=temp%values(1,windowstart:windowfinish) )
         else
-          e_rflty = 1.0_rp
-          call pure_metrics ( tan_phi(ptg_i), tan_ind_f, Grids_tmp%phi_basis, &
-            &  z_glgrid, h_glgrid, earthradc_sq,                              &
-            &  h_path(1:npf), phi_path(1:npf), Req                   )
+          call tangent_metrics ( tan_phi(ptg_i), Grids_tmp%phi_basis, z_psig, &
+            &                    h_glgrid, earthradc_sq,     & ! in
+            &                    tan_ind_c, nz_ig,           & ! inout
+            &                    req, h_surf, h_tan, z_ig )    ! output
         end if
-        tan_ht = h_path(tan_pt_f)
 
-        z_coarse(:tan_pt_c) = z_psig(nlvl:tan_ind_c:-1)
-        z_coarse(tan_pt_c+1:npc) = z_psig(tan_ind_c:nlvl)
+        nz_if = (nz_ig-1) * ngp1 + 1                ! On Z_GLgrid
+        tan_ind_f = (tan_ind_c-1) * ngp1 + 1        ! On Z_GLgrid
+        tan_pt_f = (nz_ig-1) * ngp1 + 2 - tan_ind_f ! fine path tangent index
+        tan_pt_c = (tan_pt_f + Ng) / Ngp1           ! coarse path tangent index
+        npc = 2 * tan_pt_c
+        npf = 2 * tan_pt_f
+
+        if ( nz_ig == nlvl ) then
+          z_coarse(:tan_pt_c) = z_psig(nlvl:tan_ind_c:-1)
+          z_coarse(tan_pt_c+1:npc) = z_psig(tan_ind_c:nlvl)
+        end if
+
+        ! Handle Earth-intersecting ray
+        if ( h_tan < 0.0 ) then
+          e_rflty = earthRefl%values(1,1)
+          if ( nz_ig > nlvl ) then ! Added a new zeta
+            z_coarse(:tan_pt_c) = z_ig(nz_ig:tan_ind_c:-1)
+            z_coarse(tan_pt_c+1:npc) = z_ig(tan_ind_c:nz_ig)
+            ! Use the "revised" GL-grid arrays, which depend upon the new zeta.
+            ddhidhidtl0 => ddhidhidtl0_r(:nz_if,:,:)
+            dh_dt_glgrid => dh_dt_glgrid_r(:nz_if,:,:)
+            dhdz_glgrid => dhdz_glgrid_r(:nz_if,:)
+            h_glgrid => h_glgrid_r(:nz_if,:)
+            p_glgrid => p_glgrid_r(:nz_if)
+            t_glgrid => t_glgrid_r(:nz_if,:)
+            z_glgrid => z_glgrid_r(:nz_if)
+            call compute_GL_grid ( z_ig(:nz_ig), p_glgrid, z_glgrid )
+            if ( temp_der ) then
+              call two_d_hydrostatic ( Grids_tmp, &
+                &  (/ (refGPH%template%surfs(1,1), j=windowStart,windowFinish) /), &
+                &  0.001*refGPH%values(1,windowStart:windowFinish), z_glgrid, &
+                &  orbIncline%values(1,maf)*Deg2Rad, t_glgrid, h_glgrid, &
+                &  dhdz_glgrid, dh_dt_glgrid, DDHDHDTL0=ddhidhidtl0 )
+            else
+              call two_d_hydrostatic ( Grids_tmp, &
+                &  (/ (refGPH%template%surfs(1,1), j=windowStart,windowFinish) /), &
+                &  0.001*refGPH%values(1,windowStart:windowFinish), z_glgrid, &
+                &  orbIncline%values(1,maf)*Deg2Rad, t_glgrid, h_glgrid, &
+                &  dhdz_glgrid )
+            end if
+          end if
+        else
+          e_rflty = 1.0
+          ! Use the "original" GL-grid arrays -- the ones filled before the
+          ! sideband loop.  These depend only upon the original Zetas
+          ! (Z_PSIG) derived from the L2CF using make_z_grid.
+          ddhidhidtl0 => ddhidhidtl0_o
+          dh_dt_glgrid => dh_dt_glgrid_o
+          dhdz_glgrid => dhdz_glgrid_o
+          h_glgrid => h_glgrid_o
+          p_glgrid => p_glgrid_o
+          t_glgrid => t_glgrid_o
+          z_glgrid => z_glgrid_o
+        end if
+
+        ! Get H_Path and Phi_Path on the fine grid.
+        call Height_Metrics ( tan_phi(ptg_i), tan_ind_f, Grids_tmp%phi_basis, &
+          &  z_glgrid, h_glgrid, req, h_surf, h_tan, & ! in
+          &  h_path(1:npf), phi_path(1:npf) )          ! out
+
+        tan_ht = h_path(tan_pt_f) ! Includes Earth radius
 
         if ( do_zmin ) then
           ! Get minimum zeta on the path
@@ -907,7 +994,6 @@ contains
             &  h_path(1:npf), dhdz_glgrid, FwdModelConf%refract,            &
             &  phi_path(1:npf),                                             &
             &  t_path(1:npf), dhdz_path(1:npf),                             &
-            &  TAN_PHI_T=tan_temp,                                          &
             !  Stuff for temperature derivatives:
             &  DHTDTL0 = tan_dh_dt, DDHIDHIDTL0 = ddhidhidtl0,              &
             &  DDHTDHTDTL0 = tan_d2h_dhdt, DHIDTLM = dh_dt_glgrid,          &
@@ -927,8 +1013,7 @@ contains
             &  Grids_tmp%phi_basis, z_glgrid, n_glgrid, t_glgrid,           &
             &  h_path(1:npf), dhdz_glgrid, FwdModelConf%refract,            &
             &  phi_path(1:npf),                                             &
-            &  t_path(1:npf), dhdz_path(1:npf),                             &
-            &  TAN_PHI_T=tan_temp )
+            &  t_path(1:npf), dhdz_path(1:npf) )
         end if
 
 !       dhdz_gw_path(f_inds) = dhdz_path(f_inds) * (/ ( gw, i = 1, nglMax/ng ) /)
@@ -1429,19 +1514,21 @@ contains
       ! Identify the appropriate state vector components
       ! VMRS are in beta_group%qty, gotten by get_species_data
       gph => GetVectorQuantityByType ( fwdModelExtra, quantityType=l_gph )
-      orbIncline => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-        & quantityType=l_orbitInclination, config=fwdModelConf )
-      spaceRadiance => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-        & quantityType=l_spaceRadiance, config=fwdModelConf )
       earthRefl => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
         & quantityType=l_earthRefl, config=fwdModelConf )
-      refGPH => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-        & quantityType=l_refGPH, config=fwdModelConf )
       losVel => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
         & quantityType=l_losVel, instrumentModule=firstSignal%instrumentModule, &
         & config=fwdModelConf )
+      orbIncline => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+        & quantityType=l_orbitInclination, config=fwdModelConf )
+      refGPH => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+        & quantityType=l_refGPH, config=fwdModelConf )
       scGeocAlt => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
         & quantityType=l_scGeocAlt )
+      spaceRadiance => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+        & quantityType=l_spaceRadiance, config=fwdModelConf )
+      surfaceHeight => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+        & quantityType=l_surfaceHeight, config=fwdModelConf, noError=.true. )
       if ( FwdModelConf%polarized ) then
         ECRtoFOV => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
           & quantityType=l_ECRtoFOV, config=fwdModelConf )
@@ -1564,7 +1651,17 @@ contains
         & ( earthrada**4 - (earthrada**2+earthradc_sq) * req_out ) / &
         & ( earthradc_sq + req_out ) )
 
-  ! Compute Gauss Legendre (GL) grid ---------------------------------------
+  ! Compute reference Gauss Legendre (GL) grid ------------------------------
+
+      ! Fill the "original" GL-grid arrays.  These depend only upon the
+      ! original Zetas (Z_PSIG) derived from the L2CF using make_z_grid.
+      ddhidhidtl0 => ddhidhidtl0_o
+      dh_dt_glgrid => dh_dt_glgrid_o
+      dhdz_glgrid => dhdz_glgrid_o
+      h_glgrid => h_glgrid_o
+      p_glgrid => p_glgrid_o
+      t_glgrid => t_glgrid_o
+      z_glgrid => z_glgrid_o
 
       call compute_GL_grid ( z_psig(:nlvl), p_glgrid, z_glgrid )
 
@@ -2978,6 +3075,7 @@ contains
     mif_vel = losvel%values(1:k,maf)
 
     ! Sort z_path.  Permute p_path, t_path and mif_vel the same way.
+    ! Use insertion sort since things may be nearly in order already.
     do i = 2, k ! Invariant: z_path(1:i-1) are sorted.
       r = z_path(i)
       if ( r < z_path(i-1) ) then
@@ -3024,6 +3122,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.276  2006/12/21 22:59:00  vsnyder
+! Get rid of some unused variables
+!
 ! Revision 2.275  2006/12/21 01:34:53  vsnyder
 ! Finally implemented minimum Zeta
 !
