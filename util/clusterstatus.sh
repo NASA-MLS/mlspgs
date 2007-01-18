@@ -1,7 +1,7 @@
 #!/bin/bash
 # --------------- clusterstatus help
 # Create status files for level 2 jobs running on mls clusters at the sips
-# Optionally, mail or scp it to me
+# Optionally, mail it to me
 # Usage:
 # clusterstatus.sh [options]
 #    O p t i o n s
@@ -73,12 +73,10 @@ read_file_into_array()
 # Main Program
 # ************
 # 
-#RECIPIENTS="pwagner David.T.Cuddy@jpl.nasa.gov ahanzel@mls.jpl.nasa.gov sysadmin@sdsio.jpl.nasa.gov eparaiso@sdsio-mail.jpl.nasa.gov bsaha@sdsio-mail.jpl.nasa.gov dromo@sdsio.jpl.nasa.gov cvuu@mls.jpl.nasa.gov Brian.W.Knosp@jpl.nasa.gov"
-#RECIPIENTS="pwagner David.T.Cuddy@jpl.nasa.gov ahanzel@mls.jpl.nasa.gov sysadmin@sdsio.jpl.nasa.gov mliukis@sdsio-mail.jpl.nasa.gov bsaha@sdsio-mail.jpl.nasa.gov dromo@sdsio.jpl.nasa.gov cvuu@mls.jpl.nasa.gov Brian.W.Knosp@jpl.nasa.gov"
-RECIPIENTS="pwagner David.T.Cuddy@jpl.nasa.gov ahanzel@mls.jpl.nasa.gov sysadmin@sdsio.jpl.nasa.gov mliukis@sdsio-mail.jpl.nasa.gov bsaha@sdsio-mail.jpl.nasa.gov rbarrios@sdsio-mail.jpl.nasa.gov cvuu@mls.jpl.nasa.gov Brian.W.Knosp@jpl.nasa.gov"
 MAILER="/home/pwagner/bin/mailtome.sh"
-# clusternames="lightspeed scramjet speedracer"
-clusternames="lightspeed speedracer"
+# These next will be routinely overriden by command-line options
+RECIPIENTS="pwagner David.T.Cuddy@jpl.nasa.gov sysadmin@sdsio.jpl.nasa.gov bsaha@sdsio-mail.jpl.nasa.gov rbarrios@sdsio-mail.jpl.nasa.gov cvuu@mls.jpl.nasa.gov Brian.W.Knosp@jpl.nasa.gov"
+clusternames="lightspeed scramjet speedracer"
 corpses=""
 corpsefile=""
 debug="no"
@@ -207,7 +205,8 @@ then
   fi
 fi
 options="-c -bug -x"
-runningoptions="-c -full -t"
+#runningoptions="-c -full -t"
+runningoptions="-c -full -finish -d"
 pvmfailedoptions="-fail"
 
 if [ "$debug" = "yes" ]
@@ -336,6 +335,9 @@ else
 fi
 exit 0
 # $Log$
+# Revision 1.10  2006/07/29 00:18:06  pwagner
+# Fixed bug preventing running jobs showing start time
+#
 # Revision 1.9  2006/07/13 18:12:41  pwagner
 # Accepts that certain jobs (corpses) may be legally declared dead
 #
