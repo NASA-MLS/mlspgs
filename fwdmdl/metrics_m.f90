@@ -567,10 +567,8 @@ path: do i = i1, i2
   ! -----------------------------------------------  More_Metrics  -----
   subroutine More_Metrics ( &
           ! Inputs:
-          & phi_t, tan_ind, n_tan, p_basis, z_ref, n_ref, t_ref,     &
-          & h_grid, dhidzij, refract,                                &
-          ! Inout:
-          & p_grid,                                                  &
+          & phi_t, tan_ind, n_tan, p_basis, z_ref, t_ref, h_grid,    &
+          & dhidzij, p_grid,                                         &
           ! Outputs:
           & t_grid, dhitdzi,                                         &
           ! Optional inputs:
@@ -586,7 +584,6 @@ path: do i = i1, i2
     use Dump_0, only: Dump
     use Get_Eta_Matrix_m, only: Get_Eta_Sparse
     use MLSKinds, only: RP, IP
-    use Phi_Refractive_Correction_m, only: Phi_Refractive_Correction
     use Toggles, only: Switches
 
     ! inputs:
@@ -600,15 +597,10 @@ path: do i = i1, i2
     real(rp), intent(in) :: z_ref(:)   ! -log pressures (zetas) for which
     !                                     heights/temps are needed.  Only the
     !                                     parts from the tangent outward are used
-    real(rp), intent(in) :: n_ref(:,:) ! Indices of refraction by t_phi_basis
     real(rp), intent(in) :: t_ref(:,:) ! temperatures by t_phi_basis
     real(rp), intent(in) :: h_grid(:)  ! computed heights, referenced to Earth center
     real(rp), intent(in) :: dhidzij(:,:)! vertical derivative by t_phi_basis
-    logical,  intent(in) :: refract    ! compute phi refractive correction
-
-    ! Inout:
-
-    real(rp), intent(inout) :: p_grid(:)  ! phi's on the path
+    real(rp), intent(in) :: p_grid(:)  ! phi's on the path
 
     ! outputs:
 
@@ -666,7 +658,6 @@ path: do i = i1, i2
     real(rp) :: ETA_T(size(p_basis))
     real(rp) :: N_GRID(size(vert_inds))     ! index of refraction
     real(rp) :: PHI_CORR(size(vert_inds))   ! the refractive correction
-    real(rp) :: PHI_SIGN(size(vert_inds))   ! +/- 1.0
 
     ! For debugging output format:
     logical, parameter :: clean = .false.
@@ -687,30 +678,11 @@ path: do i = i1, i2
     vert_inds = (/ (i, i=n_vert,tan_ind,-1), (i,  i=tan_ind,n_vert) /)
     n_path = size(vert_inds)
 
-    ! sign of phi vector
-    phi_sign = (/ (-1, i=n_vert,tan_ind,-1), (+1, i=tan_ind,n_vert) /)
-
-    ! Interpolate the index of refraction (N_Ref) to the path (N_Grid)
-    ! and correct phi for refraction.
-    if ( refract ) then
-      call get_eta_sparse ( p_basis, p_grid(:n_path), eta_p(:,:) )
-      do i = 1, n_path
-        n_grid(i) = dot_product(n_ref(vert_inds(i),:), eta_p(i,:))
-      end do
-      call phi_refractive_correction ( n_tan, n_grid, h_grid(:n_path), phi_corr )
-      p_grid(:n_path) = p_grid(:n_path) + phi_sign * phi_corr
-      if ( h_phi_dump > 0 ) &
-        & call dump ( phi_corr, format='(1pg14.6)', &
-        &             name='Refractive correction', clean=clean )
-      if ( do_dumps > 0 ) &
-        & call dump ( p_grid(:n_path), name='p_grid after refractive correction', &
-          & format='(1pg14.6)', clean=clean )
-    end if
-
     ! Interpolate Temperature (T_Ref) and the vertical height derivative
     ! (dhidzij) to the path (T_Grid and dhitdzi).
 
-    call get_eta_sparse ( p_basis, p_grid(:n_path), eta_p, NOT_ZERO = not_zero_p )
+    call get_eta_sparse ( p_basis, p_grid(:n_path), eta_p, &
+      & NOT_ZERO = not_zero_p, sorted=.true. )
     do i = 1, n_path
       t_grid(i) = dot_product(t_ref(vert_inds(i),:), eta_p(i,:))
       ! compute the vertical derivative grid
@@ -814,6 +786,9 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.41  2007/01/18 00:26:32  vsnyder
+! Split Pure_Metrics into Tangent_Metrics and Height_Metrics
+!
 ! Revision 2.40  2006/12/21 22:59:17  vsnyder
 ! Don't reference optional arguments that aren't present
 !

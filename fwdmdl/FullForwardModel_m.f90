@@ -246,7 +246,7 @@ contains
     use AntennaPatterns_m, only: ANTENNAPATTERNS
     use Comp_Eta_Docalc_No_Frq_m, only: Comp_Eta_Docalc_No_Frq
     use Comp_Sps_Path_Frq_m, only: Comp_Sps_Path, Comp_Sps_Path_Frq, &
-      & Comp_Sps_Path_No_Frq
+      & Comp_Sps_Path_No_Frq, Comp_1_Sps_Path_No_Frq
     use Compute_GL_Grid_m, only: Compute_GL_Grid
     use D_Hunt_m, only: Hunt
     use D_T_SCRIPT_DTNP_M, only: DT_SCRIPT_DT
@@ -281,6 +281,7 @@ contains
     use Molecules, only: L_H2O, L_N2O, L_O3
     use Output_m, only: Output
     use Path_Contrib_M, only: Get_GL_Inds
+    use Phi_Refractive_Correction_m, only: Phi_Refractive_Correction
     use Physics, only: H_OVER_K, SpeedOfLight
     use PointingGrid_m, only: POINTINGGRIDS
     use REFRACTION_M, only: REFRACTIVE_INDEX, COMP_REFCOR
@@ -293,6 +294,7 @@ contains
     use TWO_D_HYDROSTATIC_M, only: Two_D_Hydrostatic
     use Units, only: Deg2Rad
     use VectorsModule, only: GETVECTORQUANTITYBYTYPE, VECTOR_T, VECTORVALUE_T
+use Get_Eta_Matrix_m, only: Get_Eta_Sparse
 
     ! Extra space in the ..._R variables:  Replacement for tangent Zeta,
     ! new space for minimum Zeta, plus GL points around them.
@@ -433,7 +435,6 @@ contains
     ! 'Avoid zeros' indicators
     logical :: DO_CALC_FZP(max_f, size(grids_f%values))
     logical :: DO_CALC_IWC(max_f, size(grids_iwc%values))
-    logical :: DO_CALC_IWC_ZP(max_f, grids_iwc%p_len)
     logical :: DO_CALC_HYD(max_f, sv_t_len)
     logical :: DO_CALC_HYD_C(max_c, sv_t_len)  ! DO_CALC_HYD on coarse grid
     logical :: DO_CALC_N(max_f, size(grids_n%values) ) ! on entire grid
@@ -474,7 +475,8 @@ contains
     real(rp) :: H_PATH_C(max_c)       ! H_PATH on coarse grid
     real(rp) :: H_PATH_F(max_f)       ! H_PATH on fine grid
     real(rp) :: INCOPTDEPTH(max_c)    ! Incremental Optical depth on coarse grid
-    real(rp) :: N_PATH_C(max_c)       ! Refractivity on coarse path
+    real(rp) :: N_PATH_C(max_c)       ! Refractive index - 1 on coarse path
+    real(rp) :: N_PATH_F(max_f)       ! Refractive index - 1 on fine path
     real(rp) :: PATH_DSDH(max_f)      ! dS/dH on path
     real(rp) :: PHI_PATH(max_f)       ! Phi's on path, Radians
     real(rp), target :: P_GLGRID_O(maxvert) ! Pressure on glGrid surfs, original
@@ -519,7 +521,6 @@ contains
     real(rp), target :: DHDZ_GLGRID_R(maxVert+nxg,no_sv_p_t) ! dH/dZ on glGrid surfs, revised
     real(rp) :: DX_DT(no_tan_hts,s_t*sv_t_len)     ! (No_tan_hts, nz*np)
     real(rp) :: ETA_FZP(max_f,size(grids_f%values)) ! Eta_z x Eta_p * Eta_f
-    real(rp) :: ETA_IWC(max_f,size(grids_iwc%values))
     real(rp) :: ETA_IWC_ZP(max_f,grids_iwc%p_len)
     real(rp) :: ETA_Mag_ZP(max_f,grids_mag%p_len)  ! Eta_z x Eta_p
     real(rp) :: ETA_ZP(max_f,grids_f%p_len)        ! Eta_z x Eta_p
@@ -533,7 +534,6 @@ contains
     real(rp), target :: H_GLGRID_R(maxVert+nxg,no_sv_p_t) ! H on glGrid surfs, revised
     real(rp) :: IWC_PATH(max_f,s_i)                ! IWC on path
     real(rp), target :: MAG_PATH(s_p*max_f,4)      ! Magnetic field on path
-    real(rp) :: N_GLGRID(maxVert,no_sv_p_t)        ! N on glGrid surfs
     real(rp), target :: RAD_AVG_PATH(max_c,s_pfa*noUsedChannels) ! Freq. Avgd.
                                                    ! LBL radiance along the path
     real(rp) :: RADIANCES(no_tan_hts,noUsedChannels) ! (Nptg,noChans)
@@ -780,10 +780,6 @@ contains
         &  dhdz_glgrid )
     end if
 
-    !??? need to interpolate H2O from Grids_f basis to Grids_tmp basis
-    ! Get index of refraction on the GL grid, not accounting for H2O
-    call refractive_index ( p_glgrid, t_glgrid, n_glgrid )
-
     if ( toggle(emit) .and. levels(emit) > 0 ) then
       call Trace_End ( 'ForwardModel.Hydrostatic' )
       call Trace_Begin ( 'ForwardModel.SidebandLoop' )
@@ -832,7 +828,6 @@ contains
         ! height and surface height, and determine whether the ray
         ! intersects the Earth surface
         tan_ind_c = max(1,ptg_i-surfaceTangentIndex+1) ! On coarse grid
-        z_glgrid => z_glgrid_o
         nz_ig = nlvl
         if ( associated(surfaceHeight) ) then
           call tangent_metrics ( tan_phi(ptg_i), Grids_tmp%phi_basis, z_psig, &
@@ -866,8 +861,7 @@ contains
           z_coarse(tan_pt_c+1:npc) = z_psig(tan_ind_c:nlvl)
         end if
 
-        ! Handle Earth-intersecting ray
-        if ( h_tan < 0.0 ) then
+        if ( h_tan < 0.0 ) then ! Handle Earth-intersecting ray
           e_rflty = earthRefl%values(1,1)
           if ( nz_ig > nlvl ) then ! Added a new zeta
             z_coarse(:tan_pt_c) = z_ig(nz_ig:tan_ind_c:-1)
@@ -895,7 +889,7 @@ contains
                 &  dhdz_glgrid )
             end if
           end if
-        else
+        else ! Not an Earth-intersecting ray
           e_rflty = 1.0
           ! Use the "original" GL-grid arrays -- the ones filled before the
           ! sideband loop.  These depend only upon the original Zetas
@@ -986,13 +980,42 @@ contains
         del_zeta(tan_pt_c+1:npc-1) = 0.5_rp * ( z_path(c_inds(tan_pt_c+2:npc)) - &
           &                                     z_path(c_inds(tan_pt_c+1:npc-1)) )
 
+        ! Do phi refractive correction
+        if ( h2o_ind == 0 ) then
+          call refractive_index ( p_path(1:npf), t_path(1:npf), n_path_f(1:npf) )
+          n_path_c(:npc) = n_path_f(c_inds)
+        end if
+        if ( FwdModelConf%refract ) then
+          ! Get t_path (and dhdz_path, which we don't need yet)
+          call more_metrics ( tan_phi(ptg_i), tan_ind_f, tan_pt_f,          &
+            &  Grids_tmp%phi_basis, z_glgrid, t_glgrid, h_path(1:npf),      &
+            &  dhdz_glgrid, phi_path(1:npf),                                &
+            &  t_path(1:npf), dhdz_path(1:npf) )
+          ! Compute refractive index on the path.
+          if ( h2o_ind > 0 ) then
+            ! Compute eta_zp & do_calc_zp (Zeta & Phi only) for water
+            call comp_eta_docalc_no_frq ( Grids_f, z_path(1:npf), &
+              &  phi_path(1:npf), eta_zp(1:npf,:), do_calc_zp(1:npf,:) )
+            call comp_1_sps_path_no_frq ( Grids_f, h2o_ind, eta_zp(1:npf,:), &
+              & sps_path(1:npf,h2o_ind) )
+            call refractive_index ( p_path(1:npf), t_path(1:npf), &
+              &  n_path_f(1:npf),  &
+              &  h2o_path=sps_path(1:npf, h2o_ind) )
+          end if
+          ! Do the refractive correction.  Use t_path to store the correction,
+          ! since we're going to recompute t_path right away.
+          n_path_f(1:npf) = min ( n_path_f(1:npf), MaxRefraction )
+          call phi_refractive_correction ( tan_pt_f, n_path_f(1:npf), &
+            & h_path(1:npf), t_path(1:npf) )
+          phi_path(:tan_pt_f) = phi_path(:tan_pt_f) - t_path(:tan_pt_f)
+          phi_path(tan_pt_f+1:npf) = phi_path(tan_pt_f+1:npf) + t_path(tan_pt_f+1:npf)
+        end if
+
         ! Now get other metrics-related quantities, t_path, dhdz_path, dhdt_path
         if ( temp_der ) then
-          ! Set up temperature representation basis stuff
           call more_metrics ( tan_phi(ptg_i), tan_ind_f, tan_pt_f,          &
-            &  Grids_tmp%phi_basis, z_glgrid, n_glgrid, t_glgrid,           &
-            &  h_path(1:npf), dhdz_glgrid, FwdModelConf%refract,            &
-            &  phi_path(1:npf),                                             &
+            &  Grids_tmp%phi_basis, z_glgrid, t_glgrid, h_path(1:npf),      &
+            &  dhdz_glgrid, phi_path(1:npf),                                &
             &  t_path(1:npf), dhdz_path(1:npf),                             &
             !  Stuff for temperature derivatives:
             &  DHTDTL0 = tan_dh_dt, DDHIDHIDTL0 = ddhidhidtl0,              &
@@ -1010,9 +1033,8 @@ contains
           t_der_path_flags(1:npf) = any(do_calc_t(1:npf,:),2)
         else
           call more_metrics ( tan_phi(ptg_i), tan_ind_f, tan_pt_f,          &
-            &  Grids_tmp%phi_basis, z_glgrid, n_glgrid, t_glgrid,           &
-            &  h_path(1:npf), dhdz_glgrid, FwdModelConf%refract,            &
-            &  phi_path(1:npf),                                             &
+            &  Grids_tmp%phi_basis, z_glgrid, t_glgrid, h_path(1:npf),      &
+            &  dhdz_glgrid, phi_path(1:npf),                                &
             &  t_path(1:npf), dhdz_path(1:npf) )
         end if
 
@@ -1023,14 +1045,12 @@ contains
         h_path_c(1:npc) = h_path(c_inds)
         t_path_c(1:npc) = t_path(c_inds)
 
-        ! Now compute the eta_zp & do_calc_zp (for Zeta & Phi only)
-
-        ! Things you do whether or not you are doing magnetic or cloud
+        ! Compute the eta_zp & do_calc_zp (for Zeta & Phi only)
 
         call comp_eta_docalc_no_frq ( Grids_f, z_path(1:npf), &
           &  phi_path(1:npf), eta_zp(1:npf,:), do_calc_zp(1:npf,:) )
 
-        ! Now compute sps_path with a FAKE frequency, mainly to get the
+        ! Compute sps_path with a FAKE frequency, mainly to get the
         ! WATER (H2O) contribution for refraction calculations, but also
         ! to compute sps_path for all those with no frequency component
 
@@ -1041,12 +1061,11 @@ contains
           & do_calc_fzp(1:npf,:), eta_fzp(1:npf,:) )
 
         if ( h2o_ind > 0 ) then
+          ! Even if we did the refractive correction we need to do this,
+          ! because the refractive correction changes phi_path.
           call refractive_index ( p_path(c_inds), &
             &  t_path_c(1:npc), n_path_c(1:npc),  &
             &  h2o_path=sps_path(c_inds, h2o_ind) )
-        else
-          call refractive_index ( p_path(c_inds), &
-            &  t_path_c(1:npc), n_path_c(1:npc) )
         end if
 
         n_path_c(1:npc) = min ( n_path_c(1:npc), MaxRefraction )
@@ -1075,7 +1094,7 @@ contains
         end if
 
         ! Special path quantities for cloud model
-        if ( fwdModelConf%Incl_Cld ) then
+        if ( fwdModelConf%Incl_Cld ) then ! s_i == 1 here
 
           !set cloud parameters to zero
           iwc_path(1:npf,1) = 0.
@@ -1084,15 +1103,11 @@ contains
           IPSD(1:npf)=1000
 
           call comp_eta_docalc_no_frq ( Grids_Iwc, z_path(1:npf), &
-            &  phi_path(1:npf), eta_iwc_zp(1:npf,:), &
-            &  do_calc_iwc_zp(1:npf,:) )
+            &  phi_path(1:npf), eta_iwc_zp(1:npf,:) )
 
           ! Compute IWC_PATH
-        ! Frq = 0.0_r8
-          call comp_sps_path_frq ( Grids_iwc, firstSignal%lo, thisSideband, &
-            & 0.0_r8, eta_zp(1:npf,:), &
-            & do_calc_iwc_zp(1:npf,:), iwc_path(1:npf,:),      &
-            & do_calc_iwc(1:npf,:), eta_iwc(1:npf,:) )
+          call comp_sps_path_no_frq ( Grids_iwc, eta_iwc_zp(1:npf,:), &
+            & iwc_path(1:npf,:) )
           WC(1,1:npf)=iwc_path(1:npf,1)
         end if
 
@@ -3122,6 +3137,10 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.277  2007/01/18 00:27:10  vsnyder
+! Split Pure_Metrics into Tangent_Metrics and Height_Metrics, insert Earth
+! intersection into Zeta grid.
+!
 ! Revision 2.276  2006/12/21 22:59:00  vsnyder
 ! Get rid of some unused variables
 !
