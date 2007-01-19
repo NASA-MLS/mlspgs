@@ -77,7 +77,6 @@ module Comp_Sps_Path_Frq_m
 
     if ( frq <= 1.0_r8 ) then
       do_calc_fzp = .FALSE.
-      eta_f = 1.0_rp
       eta_fzp = 0.0_rp
       not_zero_f = .TRUE.
       sps_path = 0.0_rp
@@ -114,6 +113,8 @@ module Comp_Sps_Path_Frq_m
             call get_eta_sparse ( lo+Grids_x%frq_basis(f_inda+1:f_indb), &
               & (/Frq/), eta_f(1:1,1:n_f), not_zero_f(1:1,1:n_f) )
           end if
+        else
+          eta_f(1,1) = 1.0
         end if
 
 ! Compute Sps_Path
@@ -197,7 +198,8 @@ module Comp_Sps_Path_Frq_m
 ! -----------------------------------------  Comp_Sps_Path_No_Frq  -----
   subroutine Comp_Sps_Path_No_Frq ( Grids_x, Eta_zp, Sps_Path )
 
-! Compute the SPS path for species that don't use frequency
+! Compute the SPS path for species that don't use frequency.
+! Skip the ones that do.
 
     use MLSCommon, only: RP
     use Load_sps_data_m, only: Grids_T
@@ -220,6 +222,7 @@ module Comp_Sps_Path_Frq_m
 
 ! Internal declarations
 
+    integer :: f_inda, f_indb
     integer :: no_mol
     integer :: sps_i
     integer :: v_inda, v_indb
@@ -228,17 +231,22 @@ module Comp_Sps_Path_Frq_m
 
     no_mol = ubound(grids_x%l_z,1)
 
+    f_indb = 0
     v_indb = 0 ! = grids_x%l_v(0) ! Index of last one for species 0
     do sps_i = 1, no_mol
 
-      ! Compute Sps_Path
+      ! Compute Sps_Path only for sps that don't depend on frequency
+      f_inda = f_indb
+      f_indb = grids_x%l_f(sps_i) ! Index of last one for sps_i
       v_inda = v_indb
       v_indb = grids_x%l_v(sps_i) ! Index of last one for sps_i
-      sps_path(:,sps_i) = &
-        & matmul(eta_zp(:,v_inda+1:v_indb), grids_x%values(v_inda+1:v_indb))
+      if ( f_indb-f_inda == 1 ) then
+        sps_path(:,sps_i) = &
+          & matmul(eta_zp(:,v_inda+1:v_indb), grids_x%values(v_inda+1:v_indb))
 
-      if ( grids_x%lin_log(sps_i)) &
-        & sps_path(:,sps_i) = exp(sps_path(:,sps_i))
+        if ( grids_x%lin_log(sps_i)) &
+          & sps_path(:,sps_i) = exp(sps_path(:,sps_i))
+      end if
 
     end do
 
@@ -301,6 +309,9 @@ module Comp_Sps_Path_Frq_m
 end module Comp_Sps_Path_Frq_m
 !
 ! $Log$
+! Revision 2.24  2007/01/19 02:37:30  vsnyder
+! In Comp_Sps_Path_No_Frq compute only for species that have no freq coordinate
+!
 ! Revision 2.23  2005/12/22 20:51:46  vsnyder
 ! Added Comp_1_Sps_Path_No_Frq
 !
