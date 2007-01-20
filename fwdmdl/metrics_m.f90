@@ -41,9 +41,9 @@ contains
 
     use Geometry, only: EarthRadA
     use Get_Eta_Matrix_m, only: Get_Eta_Sparse
-    use GLNP, only: NG, NGP1
+    use GLNP, only: NGP1
     use Make_Z_Grid_m, only: Default_Thresh
-    use MLSKinds, only: IP, RP, R8
+    use MLSKinds, only: RP, R8
     use Output_m, only: OUTPUT
     use Toggles, only: Switches
 
@@ -95,7 +95,6 @@ contains
 
     integer :: Do_Dumps
     integer :: First, Last ! Nonzeros in Eta_T
-    integer :: I
     real(rp) :: CP2, SP2   ! Cos^2 phi_t, Sin^2 phi_t
     real(rp) :: ETA_T(size(p_basis)) ! Interpolating coefficients
     real(rp) :: H_T1, H_T2 ! Used to determine where H_Tan is in H_Ref
@@ -205,9 +204,8 @@ contains
     !  by consecutive elements of each row of {\tt H\_ref}.
 
     use Dump_0, only: Dump
-    use Geometry, only: EarthRadA
     use Get_Eta_Matrix_m, only: Get_Eta_Sparse
-    use MLSKinds, only: IP, RP, R8
+    use MLSKinds, only: RP
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use Output_m, only: OUTPUT
     use Toggles, only: Switches
@@ -261,19 +259,13 @@ contains
     real(rp) :: DP         ! p_basis(j+1) - p_basis(j)
     real(rp) :: DPJ0       ! p_basis(j  )-phi_t
     real(rp) :: DPJ1       ! p_basis(j+1)-phi_t
-    real(rp) :: CP2        ! Cos^2 phi_t
     real(rp) :: H          ! Tentative solution for H
-    real(rp) :: H_T2       ! Used when searching for surface height in h_ref
     real(rp) :: HTAN_R     ! H_Tan + req
     real(rp) :: My_H_Tol   ! Tolerance in kilometers for height convergence
     real(rp) :: P, Q       ! Tentative solutions for phi
     real(rp) :: P2         ! P**2
     real(rp) :: REQ_S      ! Req - H_Surf
     real(rp) :: SecM1      ! Taylor series for sec(phi)-1
-    real(rp) :: SP2        ! Sin^2 phi_t
-    real(rp) :: Z_Tan      ! Zeta at the tangent point, usually from
-                           ! z_ref(tan_ind), but solved here for earth-
-                           ! intersecting rays.
 
     real(rp) :: ETA_T(size(p_basis))
     real(rp) :: PHI_OFFSET(size(vert_inds)) ! PHI_T or a function of NEG_H_TAN
@@ -283,8 +275,6 @@ contains
     real(rp), parameter :: C2 = 0.5_rp, C4 = 5.0_rp/24, C6 = 61.0_rp/720.0
     ! Coefficients in expansion of Sec(phi)*Tan(phi) = d/dPhi(sec(phi)-1)
     real(rp), parameter :: D1 = 2*c2, D3 = 4*c4, D5 = 6*c6 ! ... 2n * c_2n
-
-    real(r8), parameter :: EarthRadA_2 = EarthRadA**2, EarthRadA_4 = EarthRadA**4
 
     ! To control debugging
     logical, parameter :: Debug = .false.
@@ -567,14 +557,13 @@ path: do i = i1, i2
   ! -----------------------------------------------  More_Metrics  -----
   subroutine More_Metrics ( &
           ! Inputs:
-          & phi_t, tan_ind, n_tan, p_basis, z_ref, t_ref, h_grid,    &
-          & dhidzij, p_grid,                                         &
+          & tan_ind, n_tan, p_basis, t_ref, dhidzij, p_grid,        &
           ! Outputs:
-          & t_grid, dhitdzi,                                         &
+          & t_grid, dhitdzi,                                        &
           ! Optional inputs:
-          & ddhidhidtl0, dhidtlm, t_deriv_flag, z_basis,             &
+          & ddhidhidtl0, dhidtlm, t_deriv_flag, z_basis, z_ref,     &
           ! Optional outputs:
-          & ddhtdhtdtl0, dhitdtlm, dhtdtl0, dhtdzt,                  &
+          & ddhtdhtdtl0, dhitdtlm, dhtdtl0, dhtdzt,                 &
           & do_calc_hyd, do_calc_t, eta_zxp, tan_phi_t )
 
     ! This subroutine computes metrics-related things after H_Grid and
@@ -583,23 +572,18 @@ path: do i = i1, i2
 
     use Dump_0, only: Dump
     use Get_Eta_Matrix_m, only: Get_Eta_Sparse
-    use MLSKinds, only: RP, IP
+    use MLSKinds, only: RP
     use Toggles, only: Switches
 
     ! inputs:
 
-    real(rp), intent(in) :: phi_t      ! orbit projected tangent geodetic angle
-    integer(ip), intent(in) :: tan_ind ! tangent height index, 1 = center of
+    integer, intent(in) :: tan_ind     ! tangent height index, 1 = center of
     !                                     longest path
-    integer(ip), intent(in) :: n_tan   ! tangent index in path, usually n_path/2
+    integer, intent(in) :: n_tan       ! tangent index in path, usually n_path/2
     real(rp), intent(in) :: p_basis(:) ! horizontal temperature representation
     !                                     basis
-    real(rp), intent(in) :: z_ref(:)   ! -log pressures (zetas) for which
-    !                                     heights/temps are needed.  Only the
-    !                                     parts from the tangent outward are used
-    real(rp), intent(in) :: t_ref(:,:) ! temperatures by t_phi_basis
-    real(rp), intent(in) :: h_grid(:)  ! computed heights, referenced to Earth center
-    real(rp), intent(in) :: dhidzij(:,:)! vertical derivative by t_phi_basis
+    real(rp), intent(in) :: t_ref(:,:) ! temperatures at z_ref X p_basis
+    real(rp), intent(in) :: dhidzij(:,:)! vertical derivative at z_ref X p_basis
     real(rp), intent(in) :: p_grid(:)  ! phi's on the path
 
     ! outputs:
@@ -620,6 +604,9 @@ path: do i = i1, i2
     !   Temperature. needed only if present(dhidtlm).
     real(rp), optional, intent(in) :: z_basis(:) ! vertical temperature basis
     !   Needed only if present(dhidtlm).
+    real(rp), optional, intent(in) :: z_ref(:)   ! -log pressures (zetas) for
+    !   which derivatives are needed.  Only the parts from the tangent outward
+    !   are used.  Needed only if present(dhidtlm).
 
     ! optional outputs.
 
@@ -645,19 +632,16 @@ path: do i = i1, i2
 
     integer :: Do_Dumps    ! 0 = no dump, >0 = dump
     integer :: Dump_Stop   ! 0 = no dump, >0 = dump/stop
-    integer :: First, Last ! Nonzeros in Eta_T
-    integer :: H_Phi_Dump  ! 0 = no dump, >0 = dump
     integer :: I           ! Subscript, loop inductor
     integer :: N_PATH      ! Path length = 2*(size(z_ref)+1-tan_ind)
     integer :: N_VERT      ! size(z_ref)
-    integer :: VERT_INDS(2*(size(z_ref)+1-tan_ind)) ! What to use in z_ref
+    integer :: VERT_INDS(2*(size(t_ref,1)+1-tan_ind)) ! What to use in [zt]_ref
 
     logical :: NOT_ZERO_P(size(vert_inds),size(p_basis))
+    integer :: col1(size(vert_inds))        ! First nonzero in rows of Eta_P
+    integer :: col2(size(vert_inds))        ! Last nonzero in rows of Eta_P
 
     real(rp) :: ETA_P(size(vert_inds),size(p_basis))
-    real(rp) :: ETA_T(size(p_basis))
-    real(rp) :: N_GRID(size(vert_inds))     ! index of refraction
-    real(rp) :: PHI_CORR(size(vert_inds))   ! the refractive correction
 
     ! For debugging output format:
     logical, parameter :: clean = .false.
@@ -667,35 +651,36 @@ path: do i = i1, i2
 !   if ( do_dumps < 0 ) then ! First time only
       dump_stop = index(switches,'metD')
       do_dumps = max(dump_stop,index(switches,'metd'))
-      h_phi_dump = index(switches,'hphi')
 !   end if
 
-    n_vert = size(z_ref)
+    n_vert = size(t_ref,1)
 
     ! Only use the parts of the reference grids that are germane to the
     ! present path
 
-    vert_inds = (/ (i, i=n_vert,tan_ind,-1), (i,  i=tan_ind,n_vert) /)
+    vert_inds = (/ (i, i=n_vert,tan_ind,-1), (i, i=tan_ind,n_vert) /)
     n_path = size(vert_inds)
 
     ! Interpolate Temperature (T_Ref) and the vertical height derivative
     ! (dhidzij) to the path (T_Grid and dhitdzi).
 
     call get_eta_sparse ( p_basis, p_grid(:n_path), eta_p, &
-      & NOT_ZERO = not_zero_p, sorted=.true. )
+      & not_zero = not_zero_p, first=col1, last=col2, sorted=.true. )
     do i = 1, n_path
-      t_grid(i) = dot_product(t_ref(vert_inds(i),:), eta_p(i,:))
+      t_grid(i) = dot_product(t_ref(vert_inds(i),col1(i):col2(i)), &
+        & eta_p(i,col1(i):col2(i)))
       ! compute the vertical derivative grid
-      dhitdzi(i) = dot_product(dhidzij(vert_inds(i),:), eta_p(i,:))
+      dhitdzi(i) = dot_product(dhidzij(vert_inds(i),col1(i):col2(i)), &
+        & eta_p(i,col1(i):col2(i)))
     end do
 
     ! now for the optional tangent quantities.
-    if ( present(tan_phi_t) .or. present(dhtdzt) .or. present(dhidtlm) ) &
-      & call get_eta_sparse ( p_basis, phi_t, eta_t, first, last )
     if ( present(tan_phi_t) ) &
-      & tan_phi_t = dot_product(t_ref(tan_ind,first:last),eta_t(first:last))
+      & tan_phi_t = dot_product(t_ref(tan_ind,col1(n_tan):col2(n_tan)), &
+        & eta_p(n_tan,col1(n_tan):col2(n_tan)))
     if ( present(dhtdzt) ) &
-      & dhtdzt = dot_product(dhidzij(tan_ind,first:last),eta_t(first:last))
+      & dhtdzt = dot_product(dhidzij(tan_ind,col1(n_tan):col2(n_tan)), &
+        & eta_p(n_tan,col1(n_tan):col2(n_tan)))
 
     ! compute tangent temperature derivatives
     if ( present(dhidtlm) ) call Tangent_Temperature_Derivatives
@@ -721,7 +706,7 @@ path: do i = i1, i2
       ! Adjust the 2d hydrostatic relative to the surface. Even though
       ! this is updated on every invocation, that is, with a new phi_t, it
       ! works as if the original value were updated with the current
-      ! phi_t, because the interpolation represented by eta_t is linear.
+      ! phi_t, because the interpolation represented by eta_p is linear.
       ! Thus, the effect of cumulative updates for each new phi_t are the
       ! same as starting from the original dhidtlm and updating with the
       ! latest phi_t.  The algebra is horrible, but Maple has verified this.
@@ -729,15 +714,16 @@ path: do i = i1, i2
       z_coeffs = size(z_basis)
       do i = 1, z_coeffs
         dhidtlm(:,i,:) = dhidtlm(:,i,:) - &
-          & dot_product(dhidtlm(1,i,first:last),eta_t(first:last))
+          & dot_product(dhidtlm(1,i,col1(n_tan):col2(n_tan)), &
+            & eta_p(n_tan,col1(n_tan):col2(n_tan)))
       end do
 
       j = z_coeffs * p_coeffs
-      dhtdtl0 = RESHAPE(dhidtlm(tan_ind,:,:) * SPREAD(eta_t,1,z_coeffs),&
+      dhtdtl0 = RESHAPE(dhidtlm(tan_ind,:,:) * SPREAD(eta_p(n_tan,:),1,z_coeffs),&
                      & (/j/))
 
       ddhtdhtdtl0 = RESHAPE( &
-                   ddhidhidtl0(tan_ind,:,:) * SPREAD(eta_t,1,z_coeffs), &
+                   ddhidhidtl0(tan_ind,:,:) * SPREAD(eta_p(n_tan,:),1,z_coeffs), &
                      & (/j/))
 
       ! compute the path temperature noting where the zeros are
@@ -749,15 +735,12 @@ path: do i = i1, i2
           sv_t = sv_t + 1
           if ( t_deriv_flag(sv_t) ) then
             do_calc_t(:,sv_t) = not_zero_t(:,sv_z) .and. not_zero_p(:,sv_p)
-            where ( do_calc_t(:,sv_t) )
-              eta_zxp(:,sv_t) = eta_t2(:,sv_z) * eta_p(:,sv_p)
-            elsewhere
-              eta_zxp(:,sv_t) = 0.0
-            end where
+            ! Don't bother with WHERE here since one multiply is faster
+            eta_zxp(:,sv_t) = eta_t2(:,sv_z) * eta_p(:,sv_p)
             do_calc_hyd(:,sv_t) = not_zero_p(:,sv_p) .and. &
-              &                   dhidtlm(vert_inds(:),sv_z,sv_p) > 0.0_rp
+              &                   dhidtlm(vert_inds,sv_z,sv_p) > 0.0_rp
             where ( do_calc_hyd(:,sv_t) )
-              dhitdtlm(:,sv_t) = dhidtlm(vert_inds(:),sv_z,sv_p) * eta_p(:,sv_p)
+              dhitdtlm(:,sv_t) = dhidtlm(vert_inds,sv_z,sv_p) * eta_p(:,sv_p)
             elsewhere
               dhitdtlm(:,sv_t) = 0.0
             end where
@@ -786,6 +769,9 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.42  2007/01/19 02:38:53  vsnyder
+! Include water in phi refractive correction
+!
 ! Revision 2.41  2007/01/18 00:26:32  vsnyder
 ! Split Pure_Metrics into Tangent_Metrics and Height_Metrics
 !
