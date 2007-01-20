@@ -38,14 +38,12 @@ contains ! =====     Public Procedures     =============================
     use ForwardModelConfig, only: FORWARDMODELCONFIG_T
     use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T, &
       & FORWARDMODELINTERMEDIATE_T
-    use Intrinsic, only: L_LINEAR, L_FULL, L_RADIANCE, L_FIELDAZIMUTH, L_OPTICALDEPTH
-    use FullForwardModel_m, only: FULLFORWARDMODEL
-    use L2PC_m, only: BINSELECTORS, DEFAULTSELECTOR_FIELDAZIMUTH
+    use Intrinsic, only: L_RADIANCE, L_FIELDAZIMUTH, L_OPTICALDEPTH
+    use L2PC_m, only: DEFAULTSELECTOR_FIELDAZIMUTH
     use LinearizedForwardModel_m, only: LINEARIZEDFORWARDMODEL
-    use MatrixModule_1, only: MATRIX_T, COPYMATRIX, ADDTOMATRIX, CLEARMATRIX, &
+    use MatrixModule_1, only: MATRIX_T, ADDTOMATRIX, CLEARMATRIX, &
       & CREATEEMPTYMATRIX, DESTROYMATRIX
     use MLSCommon, only: R8
-    use MLSSignals_M, only: SIGNAL_T
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use Units, only: DEG2RAD
     use ForwardModelVectorTools, only: GETQUANTITYFORFORWARDMODEL
@@ -68,7 +66,6 @@ contains ! =====     Public Procedures     =============================
     type(Matrix_T), target :: JACOBIANCONTRIBUTION
     type(VectorValue_T), pointer :: PHI
     type(VectorValue_T), pointer :: RADIANCE
-    type(VectorValue_T), pointer :: FIELDAZIMUTH
 
     integer :: PASS                     ! Which 'pass' of the linear model are we on
     integer :: MAF                      ! Which MAF are we computing for
