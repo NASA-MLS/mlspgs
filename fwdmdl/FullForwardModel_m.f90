@@ -74,7 +74,6 @@ contains
     integer :: NoUsedChannels   ! Number of channels used
     integer :: No_sv_p_T        ! number of phi basis for temperature
     integer :: N_T_zeta         ! Number of zetas for temperature
-    integer :: EXT_IND          ! Index of extinction inside f array
     integer :: H2O_IND          ! Index of h2o inside f array, else zero
     integer :: Sv_T_len         ! Number of t_phi*t_zeta in the window
     integer :: Nlvl             ! Number of levels in coarse zeta grid
@@ -129,7 +128,7 @@ contains
     sv_t_len = grids_tmp%p_len   ! zeta X phi == n_t_zeta * no_sv_p_t
 
     call load_sps_data ( FwdModelConf, phitan, fmStat%maf, grids_f, &
-      & h2o_ind, ext_ind )
+      & h2o_ind )
 
     if ( FwdModelConf%polarized ) then
       call load_one_item_grid ( grids_mag, &
@@ -193,17 +192,15 @@ contains
     s_pfa = merge(1,0,FwdModelConf%anyPFA(1) .or. FwdModelConf%anyPFA(2))
     s_i = merge(1,0,FwdModelConf%incl_cld)
 
-    call FullForwardModelAuto ( FwdModelConf, FwdModelIn, FwdModelExtra,     &
-                              & FwdModelOut, oldIfm, FmStat, z_psig,         &
-                              & tan_press, grids_tmp, grids_f, grids_mag,    &
-                              & grids_iwc, grids_n, grids_v, grids_w,        &
-                              & ptan, phitan, temp,                          &
-                              & no_mol, noUsedChannels, no_sv_p_t, n_t_zeta, &
-                              & sv_t_len, nlvl, no_tan_hts,                  &
-                              & surfaceTangentIndex,                         &
-                              & max_c, maxVert, max_f, EXT_ind, H2O_ind,     &
-                              & ptan_der,                                    &
-                              & s_t, s_a, s_lc, s_lw, s_td, s_p, s_pfa, s_i, &
+    call FullForwardModelAuto ( FwdModelConf, FwdModelIn, FwdModelExtra,       &
+                              & FwdModelOut, FmStat, z_psig, tan_press,        &
+                              & grids_tmp, grids_f, grids_mag, grids_iwc,      &
+                              & grids_n, grids_v, grids_w, ptan, phitan, temp, &
+                              & no_mol, noUsedChannels, no_sv_p_t, n_t_zeta,   &
+                              & sv_t_len, nlvl, no_tan_hts,                    &
+                              & surfaceTangentIndex,                           &
+                              & max_c, maxVert, max_f, H2O_ind, ptan_der,      &
+                              & s_t, s_a, s_lc, s_lw, s_td, s_p, s_pfa, s_i,   &
                               ! Optional:
                               & Jacobian )
 
@@ -223,17 +220,15 @@ contains
 
   ! ---------------------------------------- FullForwardModelAuto  -----
 
-  subroutine FullForwardModelAuto ( FwdModelConf, FwdModelIn, FwdModelExtra, &
-                              & FwdModelOut, oldIfm, FmStat, z_psig,         &
-                              & tan_press, grids_tmp,  grids_f, grids_mag,   &
-                              & grids_iwc, grids_n, grids_v, grids_w,        &
-                              & ptan, phitan, temp,                          &
-                              & no_mol, noUsedChannels, no_sv_p_t, n_t_zeta, &
-                              & sv_t_len, nlvl, no_tan_hts,                  &
-                              & surfaceTangentIndex,                         &
-                              & max_c, maxVert, max_f, EXT_ind, H2O_ind,     &
-                              & ptan_der,                                    &
-                              & s_t, s_a, s_lc, s_lw, s_td, s_p, s_pfa, s_i, &
+  subroutine FullForwardModelAuto ( FwdModelConf, FwdModelIn, FwdModelExtra,   &
+                              & FwdModelOut, FmStat, z_psig, tan_press,        &
+                              & grids_tmp,  grids_f, grids_mag, grids_iwc,     &
+                              & grids_n, grids_v, grids_w, ptan, phitan, temp, &
+                              & no_mol, noUsedChannels, no_sv_p_t, n_t_zeta,   &
+                              & sv_t_len, nlvl, no_tan_hts,                    &
+                              & surfaceTangentIndex,                           &
+                              & max_c, maxVert, max_f, H2O_ind, ptan_der,      &
+                              & s_t, s_a, s_lc, s_lw, s_td, s_p, s_pfa, s_i,   &
                               ! Optional:
                               & Jacobian )
 
@@ -254,8 +249,7 @@ contains
     use FilterShapes_m, only: DACSFilterShapes, FilterShapes
     use ForwardModelConfig, only: Beta_Group_T, Channels_T, &
       & ForwardModelConfig_t, LineCenter, LineWidth, LineWidth_TDep
-    use ForwardModelIntermediate, only: ForwardModelIntermediate_t, &
-                                    &   ForwardModelStatus_t, &
+    use ForwardModelIntermediate, only: ForwardModelStatus_t, &
                                     &   B_Ptg_Angles, B_Refraction
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Freq_Avg_m, only: Freq_Avg, Freq_Avg_DACS
@@ -294,7 +288,6 @@ contains
     use TWO_D_HYDROSTATIC_M, only: Two_D_Hydrostatic
     use Units, only: Deg2Rad
     use VectorsModule, only: GETVECTORQUANTITYBYTYPE, VECTOR_T, VECTORVALUE_T
-use Get_Eta_Matrix_m, only: Get_Eta_Sparse
 
     ! Extra space in the ..._R variables:  Replacement for tangent Zeta,
     ! new space for minimum Zeta, plus GL points around them.
@@ -303,7 +296,6 @@ use Get_Eta_Matrix_m, only: Get_Eta_Sparse
     type(forwardModelConfig_T), intent(inout) :: FwdModelConf
     type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
     type(vector_T), intent(inout) :: FwdModelOut  ! Radiances, etc.
-    type(forwardModelIntermediate_T), intent(inout) :: oldIfm ! Workspace
     type(forwardModelStatus_t), intent(inout) :: FmStat ! Reverse comm. stuff
     real(rp), intent(in) :: Z_PSIG(:)       ! Surfs from Temperature, tangent
                                             ! grid and species grids, sans
@@ -338,7 +330,6 @@ use Get_Eta_Matrix_m, only: Get_Eta_Sparse
                                             ! per level, except the last,
                                             ! where there's no GL space.
     integer, intent(in) :: MAX_F            ! Length of longest possible path (all npf<max_f)
-    integer, intent(in) :: EXT_IND          ! Index of extinction inside f array
     integer, intent(in) :: H2O_IND          ! Index of h2o inside f array, else zero
     logical, intent(in) :: PTAN_Der
     integer, intent(in) :: S_T  ! Multiplier for temp derivative sizes, 0 or 1
@@ -407,7 +398,6 @@ use Get_Eta_Matrix_m, only: Get_Eta_Sparse
     logical :: Do_Zmin            ! "Do minimum Zeta calculation"
     logical, parameter :: PFAFalse = .false.
     logical, parameter :: PFATrue = .true.
-    logical :: Print_Grids        ! For debugging
     logical :: Print_Mag          ! For debugging
     logical :: Print_Min_Zeta     ! For debugging
     logical :: Print_Ptg          ! For debugging
@@ -434,7 +424,6 @@ use Get_Eta_Matrix_m, only: Get_Eta_Sparse
 
     ! 'Avoid zeros' indicators
     logical :: DO_CALC_FZP(max_f, size(grids_f%values))
-    logical :: DO_CALC_IWC(max_f, size(grids_iwc%values))
     logical :: DO_CALC_HYD(max_f, sv_t_len)
     logical :: DO_CALC_HYD_C(max_c, sv_t_len)  ! DO_CALC_HYD on coarse grid
     logical :: DO_CALC_N(max_f, size(grids_n%values) ) ! on entire grid
@@ -443,7 +432,6 @@ use Get_Eta_Matrix_m, only: Get_Eta_Sparse
     logical :: DO_CALC_T_F(max_f, sv_t_len)    ! DO_CALC_T on fine grid
     logical :: DO_CALC_V(max_f, size(grids_v%values) ) ! on entire grid
     logical :: DO_CALC_W(max_f, size(grids_w%values) ) ! on entire grid
-    logical :: DO_CALC_W_C(max_c, size(grids_w%values) ) ! on coarse grid
     logical :: DO_CALC_ZP(max_f, grids_f%p_len)
 
     logical, pointer :: DO_CALC_Tscat(:,:)    ! 'Avoid zeros' indicator
@@ -724,7 +712,6 @@ use Get_Eta_Matrix_m, only: Get_Eta_Sparse
     ! Set flags from command-line switches
     clean = index(switches, 'clean') /= 0
     do_zmin = index(switches, 'nozm') == 0 ! Do minimum zeta unless told otherwise
-    print_Grids = index(switches, 'grids') /= 0
     print_Mag = index(switches, 'mag') /= 0
     print_Min_Zeta = index(switches, 'zmin') /= 0
     print_Ptg = index(switches,'ptg') /= 0
@@ -987,9 +974,8 @@ use Get_Eta_Matrix_m, only: Get_Eta_Sparse
         end if
         if ( FwdModelConf%refract ) then
           ! Get t_path (and dhdz_path, which we don't need yet)
-          call more_metrics ( tan_phi(ptg_i), tan_ind_f, tan_pt_f,          &
-            &  Grids_tmp%phi_basis, z_glgrid, t_glgrid, h_path(1:npf),      &
-            &  dhdz_glgrid, phi_path(1:npf),                                &
+          call more_metrics ( tan_ind_f, tan_pt_f, Grids_tmp%phi_basis, &
+            &  t_glgrid, dhdz_glgrid, phi_path(1:npf),        &
             &  t_path(1:npf), dhdz_path(1:npf) )
           ! Compute refractive index on the path.
           if ( h2o_ind > 0 ) then
@@ -1011,30 +997,26 @@ use Get_Eta_Matrix_m, only: Get_Eta_Sparse
           phi_path(tan_pt_f+1:npf) = phi_path(tan_pt_f+1:npf) + t_path(tan_pt_f+1:npf)
         end if
 
-        ! Now get other metrics-related quantities, t_path, dhdz_path, dhdt_path
+        ! Get other metrics-related quantities: t_path, dhdz_path, dh_dt_path...
         if ( temp_der ) then
-          call more_metrics ( tan_phi(ptg_i), tan_ind_f, tan_pt_f,          &
-            &  Grids_tmp%phi_basis, z_glgrid, t_glgrid, h_path(1:npf),      &
-            &  dhdz_glgrid, phi_path(1:npf),                                &
-            &  t_path(1:npf), dhdz_path(1:npf),                             &
+          call more_metrics ( tan_ind_f, tan_pt_f, Grids_tmp%phi_basis,    &
+            &  t_glgrid, dhdz_glgrid, phi_path(1:npf),                     &
+            &  t_path(1:npf), dhdz_path(1:npf),                            &
             !  Stuff for temperature derivatives:
-            &  DHTDTL0 = tan_dh_dt, DDHIDHIDTL0 = ddhidhidtl0,              &
-            &  DDHTDHTDTL0 = tan_d2h_dhdt, DHIDTLM = dh_dt_glgrid,          &
-            &  DHITDTLM = dh_dt_path(1:npf,:),                              &
-            &  T_DERIV_FLAG = Grids_tmp%deriv_flags,                        &
-            &  Z_BASIS = Grids_tmp%zet_basis,                               &
-            &  ETA_ZXP = eta_zxp_t(1:npf,:),                                &
-            &  DO_CALC_T = do_calc_t(1:npf,:),                              &
-            &  DO_CALC_HYD = do_calc_hyd(1:npf,:) )
+            &  DDHIDHIDTL0 = ddhidhidtl0, DHIDTLM = dh_dt_glgrid,          &
+            &  T_DERIV_FLAG = Grids_tmp%deriv_flags,                       &
+            &  Z_BASIS = Grids_tmp%zet_basis, Z_REF=z_glgrid,              &
+            &  DDHTDHTDTL0 = tan_d2h_dhdt, DHITDTLM = dh_dt_path(1:npf,:), &
+            &  DHTDTL0 = tan_dh_dt, DO_CALC_HYD = do_calc_hyd(1:npf,:),    &
+            &  DO_CALC_T = do_calc_t(1:npf,:), ETA_ZXP = eta_zxp_t(1:npf,:) )
           dh_dt_path_c(1:npc,:) = dh_dt_path(c_inds,:)
           do_calc_hyd_c(1:npc,:) = do_calc_hyd(c_inds,:)
           do_calc_t_c(1:npc,:) = do_calc_t(c_inds,:)
           eta_zxp_t_c(1:npc,:) = eta_zxp_t(c_inds,:)
           t_der_path_flags(1:npf) = any(do_calc_t(1:npf,:),2)
         else
-          call more_metrics ( tan_phi(ptg_i), tan_ind_f, tan_pt_f,          &
-            &  Grids_tmp%phi_basis, z_glgrid, t_glgrid, h_path(1:npf),      &
-            &  dhdz_glgrid, phi_path(1:npf),                                &
+          call more_metrics ( tan_ind_f, tan_pt_f, Grids_tmp%phi_basis, &
+            &  t_glgrid, dhdz_glgrid, phi_path(1:npf),        &
             &  t_path(1:npf), dhdz_path(1:npf) )
         end if
 
@@ -1062,7 +1044,8 @@ use Get_Eta_Matrix_m, only: Get_Eta_Sparse
 
         if ( h2o_ind > 0 ) then
           ! Even if we did the refractive correction we need to do this,
-          ! because the refractive correction changes phi_path.
+          ! because the refractive correction changes phi_path, which
+          ! changes sps_path.
           call refractive_index ( p_path(c_inds), &
             &  t_path_c(1:npc), n_path_c(1:npc),  &
             &  h2o_path=sps_path(c_inds, h2o_ind) )
@@ -1080,7 +1063,6 @@ use Get_Eta_Matrix_m, only: Get_Eta_Sparse
         if ( size(fwdModelConf%lineWidth) > 0 ) then
           call comp_eta_docalc_no_frq ( grids_w, z_path(1:npf), &
             & phi_path(1:npf), eta_zxp_w(1:npf,:), do_calc_w(1:npf,:) )
-          do_calc_w_c(1:npc,:) = do_calc_w(c_inds,:)
           call comp_sps_path_no_frq ( grids_w, eta_zxp_w(1:npf,:), &
             & spect_w_path(1:npf,:) )
           lineWidth_ix => beta_group%lbl(sx)%spect_der_ix(lineWidth)
@@ -3137,6 +3119,9 @@ use Get_Eta_Matrix_m, only: Get_Eta_Sparse
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.278  2007/01/19 02:38:53  vsnyder
+! Include water in phi refractive correction
+!
 ! Revision 2.277  2007/01/18 00:27:10  vsnyder
 ! Split Pure_Metrics into Tangent_Metrics and Height_Metrics, insert Earth
 ! intersection into Zeta grid.
