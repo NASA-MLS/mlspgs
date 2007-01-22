@@ -797,7 +797,15 @@ do
       numChunks=`grep -i 'nochunks:' $dir/exec_log/process.stdout | tail -1 | awk '{print $4}'`
       # numLaunched=`grep -i launched $dir/exec_log/process.stdout | wc -l`
       numLaunched=` grep -i launched $dir/exec_log/process.stdout | tail -1 | sed -n 's/.*chunk//p' | awk '{print $1}'`
-      if [ "$numLaunched" -lt "$numChunks" ]
+      if [ "$numChunks" = "" ]
+      then
+        # Not all chunks launched yet, so can't tell when last one will finish
+        chunks="(unknown)"
+      elif [ "$numLaunched" = "" ]
+      then
+        # Not all chunks launched yet, so can't tell when last one will finish
+        chunks="0 / $numChunks"
+      elif [ "$numLaunched" -lt "$numChunks" ]
       then
         # Not all chunks launched yet, so can't tell when last one will finish
         chunks="$numLaunched / $numChunks"
@@ -836,6 +844,9 @@ do
 done
 exit 0
 # $Log$
+# Revision 1.16  2007/01/18 23:30:12  pwagner
+# Added -finish option to display predicted finish time
+#
 # Revision 1.15  2006/08/21 21:56:09  pwagner
 # Works better with v2.1 versions
 #
