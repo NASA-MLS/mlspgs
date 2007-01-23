@@ -259,11 +259,10 @@ contains
           & (timeswarned(warning_index) >= MLSMessageConfig%limitWarnings)
       end if
     end if
-    call assembleFullLine( Severity, ModuleNameIn, Message, line, line_len, &
-      & nosubsequentwarnings )
     if ( (.not. MLSMessageConfig%suppressDebugs).OR. &
          & (severity /= MLSMSG_Debug) ) then
-       
+      call assembleFullLine( Severity, ModuleNameIn, Message, line, line_len, &
+        & nosubsequentwarnings )
 
        ! Log the message using the toolkit routine
        ! (or its substitute )
@@ -647,22 +646,22 @@ contains
       loggedLine = TRIM(MLSMessageConfig%prefix) // &
            & TRIM(line)
     endif
-      log_it = &
-      & (MLSMessageConfig%useToolkit .and. UseSDPToolkit) &
-      & .or. &
-      & severity >= MLSMSG_Severity_to_quit
-      if( log_it .and. loggedLength > 0 ) &
-        & ioerror = PGS_SMF_GenerateStatusReport ( loggedLine(1:loggedLength) )
+    log_it = &
+    & (MLSMessageConfig%useToolkit .and. UseSDPToolkit) &
+    & .or. &
+    & severity >= MLSMSG_Severity_to_quit
+    if( log_it .and. loggedLength > 0 ) &
+      & ioerror = PGS_SMF_GenerateStatusReport ( loggedLine(1:loggedLength) )
 
-      ! Now, if we're also logging to a file then write to that too.
+    ! Now, if we're also logging to a file then write to that too.
 
-      select case ( MLSMessageConfig%logFileUnit  )
-      case ( 0 :  )
-        write ( UNIT=max(MLSMessageConfig%logFileUnit,1), FMT=* ) TRIM(line)
-      case ( -1  )
-        write ( UNIT=*, FMT=* ) TRIM(line)
-      case default
-      end select
+    select case ( MLSMessageConfig%logFileUnit  )
+    case ( 0 :  )
+      write ( UNIT=max(MLSMessageConfig%logFileUnit,1), FMT=* ) TRIM(line)
+    case ( -1  )
+      write ( UNIT=*, FMT=* ) TRIM(line)
+    case default
+    end select
 
   end subroutine PRINTITOUT
 
@@ -681,6 +680,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.30  2007/01/23 17:12:30  pwagner
+! Restore ability to suppress Debugs
+!
 ! Revision 2.29  2007/01/13 01:47:07  pwagner
 ! Added MLSMessageInternalFile function to return what would be logged
 !
