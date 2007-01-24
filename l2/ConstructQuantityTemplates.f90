@@ -98,8 +98,10 @@ contains ! ============= Public procedures ===================================
     type (HGrid_T), dimension(:), pointer :: HGrids
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
     type (MLSChunk_T), intent(in) :: Chunk
-    type (QuantityTemplate_T), dimension(:), intent(in), optional :: &
-      & MifGeolocation
+    type (QuantityTemplate_T), dimension(:), intent(in), optional, target :: &
+      & MifGeolocation ! TARGET attribute needed so pointers to MifGeolocation
+                       ! created at lower levels in the call tree don't become
+                       ! undefined when those procedures return.
 
     ! Local variables
     logical :: LOGBASIS                 ! To place in quantity
@@ -1295,6 +1297,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.138  2007/01/24 02:17:29  vsnyder
+! Add TARGET attribute for MifGeolocation to prevent dangling pointer
+!
 ! Revision 2.137  2007/01/11 20:44:27  vsnyder
 ! Add SurfaceHeight
 !
