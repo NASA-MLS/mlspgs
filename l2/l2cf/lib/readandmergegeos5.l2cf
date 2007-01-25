@@ -29,19 +29,19 @@ begin ReadApriori
      !define(geos5PFile1,{})!define(geos5PFile2,{})!define(geos5PFile3,{})!define(geos5PFile4,{})
      !define(geos5TFileN,{})!define(geos5PFileN,{})},
     {
-    !ifdef(geos5Version,{},{!define(geos5Version,{GEOS500})})
+    !ifdef(geos5Version,{},{!define(geos5Version,{GEOS501})})
     !define(geos5Day1,!ccsdsbtodao(!day))
     !define(geos5Day2,!ccsdsbtodao(!ccsdsbadd(!day,1)))
-    !define(geos5TFile1,{, file='!inpathdao/DAS.ops.asm.tavg3d_dyn_v.!geos5Version.!geos5Day1_0000.V01'})
-    !define(geos5TFile2,{, file='!inpathdao/DAS.ops.asm.tavg3d_dyn_v.!geos5Version.!geos5Day1_0600.V01'})
-    !define(geos5TFile3,{, file='!inpathdao/DAS.ops.asm.tavg3d_dyn_v.!geos5Version.!geos5Day1_1200.V01'})
-    !define(geos5TFile4,{, file='!inpathdao/DAS.ops.asm.tavg3d_dyn_v.!geos5Version.!geos5Day1_1800.V01'})
-    !define(geos5TFileN,{, file='!inpathdao/DAS.ops.asm.tavg3d_dyn_v.!geos5Version.!geos5Day2_0000.V01'})
-    !define(geos5PFile1,{, file='!inpathdao/DAS.ops.asm.tavg3d_prs_v.!geos5Version.!geos5Day1_0000.V01'})
-    !define(geos5PFile2,{, file='!inpathdao/DAS.ops.asm.tavg3d_prs_v.!geos5Version.!geos5Day1_0600.V01'})
-    !define(geos5PFile3,{, file='!inpathdao/DAS.ops.asm.tavg3d_prs_v.!geos5Version.!geos5Day1_1200.V01'})
-    !define(geos5PFile4,{, file='!inpathdao/DAS.ops.asm.tavg3d_prs_v.!geos5Version.!geos5Day1_1800.V01'})
-    !define(geos5PFileN,{, file='!inpathdao/DAS.ops.asm.tavg3d_prs_v.!geos5Version.!geos5Day2_0000.V01'})})
+    !define(geos5TFile1,{, file='!inpathgoes5d/DAS.ops.asm.tavg3d_dyn_v.!geos5Version.!geos5Day1_0000.V01'})
+    !define(geos5TFile2,{, file='!inpathgoes5d/DAS.ops.asm.tavg3d_dyn_v.!geos5Version.!geos5Day1_0600.V01'})
+    !define(geos5TFile3,{, file='!inpathgoes5d/DAS.ops.asm.tavg3d_dyn_v.!geos5Version.!geos5Day1_1200.V01'})
+    !define(geos5TFile4,{, file='!inpathgoes5d/DAS.ops.asm.tavg3d_dyn_v.!geos5Version.!geos5Day1_1800.V01'})
+    !define(geos5TFileN,{, file='!inpathgoes5d/DAS.ops.asm.tavg3d_dyn_v.!geos5Version.!geos5Day2_0000.V01'})
+    !define(geos5PFile1,{, file='!inpathgoes5p/DAS.ops.asm.tavg3d_prs_v.!geos5Version.!geos5Day1_0000.V01'})
+    !define(geos5PFile2,{, file='!inpathgoes5p/DAS.ops.asm.tavg3d_prs_v.!geos5Version.!geos5Day1_0600.V01'})
+    !define(geos5PFile3,{, file='!inpathgoes5p/DAS.ops.asm.tavg3d_prs_v.!geos5Version.!geos5Day1_1200.V01'})
+    !define(geos5PFile4,{, file='!inpathgoes5p/DAS.ops.asm.tavg3d_prs_v.!geos5Version.!geos5Day1_1800.V01'})
+    !define(geos5PFileN,{, file='!inpathgoes5p/DAS.ops.asm.tavg3d_prs_v.!geos5Version.!geos5Day2_0000.V01'})})
 
   geos5TemperatureInput1: gridded, origin=geos5, field='T', $
     dimList='XDim,YDim,Height,Time' !geos5TFile1
