@@ -305,6 +305,8 @@ contains ! ===================================== Public Procedures =====
       & ChunkDivideConfig%DACSDeconvolved )
       call h5gclose_f ( DACSFile%fileID%grp_id, status )
     else
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      & 'Attribute DACsDeconvolved not found in probable DACS file' )
       ChunkDivideConfig%DACSDeconvolved = .false.
     endif
 
@@ -2364,6 +2366,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.77  2007/01/25 19:04:59  pwagner
+! Warns if DACsDeconvolved attribute not found
+!
 ! Revision 2.76  2006/06/20 00:12:30  pwagner
 ! Improved two printed formats
 !
