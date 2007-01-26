@@ -32,7 +32,7 @@ module L1BData
   use MLSStrings, only: CompressString, streq
   use MLSStringLists, only: NumStringElements
   use MoreTree, only: Get_Field_ID
-  use Output_M, only: Output, resumeOutput, suspendOutput
+  use Output_M, only: Output, outputnamedValue, resumeOutput, suspendOutput
   use SDPToolkit, only: max_orbits
   use String_Table, only: Get_String
   use TREE, only: NSONS, SUB_ROSA, SUBTREE, DUMP_TREE_NODE, SOURCE_REF
@@ -777,6 +777,10 @@ contains ! ============================ MODULE PROCEDURES ======================
   !  w       Wildcard * which allows 'a*' to match 'abcd'
   !  c       case insensitive which allows 'ABCD' to match 'abcd'
   
+  ! Tries to adapt to where attributes are stored in file
+  ! This means, e.g. if the attribute is attached to a ds, opening
+  ! that ds.
+  ! Afterwards we atempt to cleanup, closing the ds.
     use MLSHDF5, only: IsHDF5ItemPresent
     use MLSFiles, only: dump
     use HDF5, only: h5dclose_f, h5dopen_f, h5gclose_f, h5gopen_f
@@ -787,6 +791,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     character (len=*), optional, intent(in) :: object  ! If we need to open
     type(MLSFile_T), pointer                :: item
     logical, parameter :: TRUSTDATABASE = .true.
+    logical, parameter :: DEEBUG = .false.
 
     ! Externals
     integer, external :: SFN2INDEX
@@ -802,6 +807,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     integer :: returnStatus
 
     ! Executable code
+    ! DEEBUG = (fieldname=='DACsDeconvolved')
     nullify(item)
     myOptions = '-d' ! By default, search for sd names
     if (present(options)) myOptions = options
@@ -809,35 +815,36 @@ contains ! ============================ MODULE PROCEDURES ======================
     if (present(object)) myObject = object
     openedCode = ' '
     do i = 1, size(filedatabase)
+      returnStatus = 0
       if ( streq(filedatabase(i)%content, 'l1b*', '-w') ) then
+        if ( DEEBUG ) call dump(filedatabase(i), details=1)
         ! This is an l1b file
         alreadyOpen = filedatabase(i)%StillOpen
-        if ( .not. alreadyOpen ) then
-          call mls_openFile(filedatabase(i), returnStatus)
-          ! print *, 'Oops--must open file?'
-          if ( returnStatus /= 0 ) &
-            call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & 'unable to open L1BFile searching for ' // trim(fieldname), &
-              & MLSFile=filedatabase(i) )
-          ! Are we looking for an attribute?
-          ! (Then we may need an object name)
-          if ( index(myoptions, 'a') > 0 ) then
-            ! What object would the attribute be attached to?
-            if ( index(myOptions, 'f') > 0 ) then
-              openedCode = 'f'
-            elseif ( index(myOptions, '/') > 0 ) then
-              call h5gopen_f ( filedatabase(i)%fileID%f_id, trim(myObject), &
-                & filedatabase(i)%fileID%grp_id, returnStatus )
-              openedCode = 'g'
-            elseif ( index(myOptions, 's') > 0 ) then
-              call h5dopen_f ( filedatabase(i)%fileID%f_id, trim(myObject), &
-                & filedatabase(i)%fileID%sd_id, returnStatus )
-              openedCode = 's'
-            else
-              call h5dopen_f ( filedatabase(i)%fileID%f_id, trim(myObject), &
-                & filedatabase(i)%fileID%sd_id, returnStatus )
-              openedCode = 's'
-            endif
+        if ( .not. alreadyOpen ) &
+          & call mls_openFile(filedatabase(i), returnStatus)
+        ! print *, 'Oops--must open file?'
+        if ( returnStatus /= 0 ) &
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'unable to open L1BFile searching for ' // trim(fieldname), &
+            & MLSFile=filedatabase(i) )
+        ! Are we looking for an attribute?
+        ! (Then we may need an object name)
+        if ( index(myoptions, 'a') > 0 ) then
+          ! What object would the attribute be attached to?
+          if ( index(myOptions, 'f') > 0 ) then
+            openedCode = 'f'
+          elseif ( index(myOptions, '/') > 0 ) then
+            call h5gopen_f ( filedatabase(i)%fileID%f_id, trim(myObject), &
+              & filedatabase(i)%fileID%grp_id, returnStatus )
+            openedCode = 'g'
+          elseif ( index(myOptions, 's') > 0 ) then
+            call h5dopen_f ( filedatabase(i)%fileID%f_id, trim(myObject), &
+              & filedatabase(i)%fileID%sd_id, returnStatus )
+            openedCode = 's'
+          else
+            call h5dopen_f ( filedatabase(i)%fileID%f_id, trim(myObject), &
+              & filedatabase(i)%fileID%sd_id, returnStatus )
+            openedCode = 's'
           endif
         endif
         myHDFVersion = filedatabase(i)%HDFVersion
@@ -870,8 +877,7 @@ contains ! ============================ MODULE PROCEDURES ======================
           else
             locID = filedatabase(i)%FileID%f_id
           endif
-          ! call dump(filedatabase(i), details=1)
-          ! print *, 'locID ', locID
+          if ( DEEBUG ) call outputnamedValue('locID', locID)
           if ( IsHDF5ItemPresent( &
             & locID, trim(fieldName), myOptions ) &
             & ) then
@@ -883,6 +889,7 @@ contains ! ============================ MODULE PROCEDURES ======================
         if ( .not. alreadyOpen ) call closeEverything(filedatabase(i))
       end if
     end do
+    ! if ( DEEBUG ) stop
   contains
     subroutine closeEverything(L1BFile)
       ! Args:
@@ -894,6 +901,7 @@ contains ! ============================ MODULE PROCEDURES ======================
          call h5gclose_f ( L1BFile%fileID%sd_id, returnStatus )
        case ('g')
          call h5gclose_f ( L1BFile%fileID%grp_id, returnStatus )
+       case default
        end select
        call mls_closeFile(L1BFile, returnStatus)
     end subroutine closeEverything
@@ -3169,6 +3177,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.72  2007/01/26 23:58:02  pwagner
+! Fixed bug affecting GetL1BFile
+!
 ! Revision 2.71  2006/11/22 18:12:37  pwagner
 ! New optional args to diff l1b files with different number MAFs
 !
