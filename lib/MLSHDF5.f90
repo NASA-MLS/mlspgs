@@ -299,7 +299,6 @@ contains ! ======================= Public Procedures =========================
     logical :: my_skip
     logical :: is_present
     character (len=2000) :: value1
-    ! character (len=*), intent(in) :: VALUE ! Value of attribute
 
     ! Executable code
     my_skip = .false.
@@ -1489,14 +1488,17 @@ contains ! ======================= Public Procedures =========================
     ! Executable code
     if ( MLSFile%fileID%sd_ID > 0 ) then
       call GetHDF5Attribute ( MLSFile%fileID%sd_ID, name, iValue )
+      if ( DEEBUG ) call outputNamedValue( 'MLSFile%fileID%sd_ID', MLSFile%fileID%sd_ID )
     elseif ( MLSFile%fileID%grp_ID > 0 ) then
       call GetHDF5Attribute ( MLSFile%fileID%grp_ID, name, iValue )
+      if ( DEEBUG ) call outputNamedValue( 'MLSFile%fileID%grp_ID', MLSFile%fileID%sd_ID )
     else
       call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'no valid sd_id or grp_id to get attribute', MLSFile=MLSFile)
       return
     endif
 
+    if ( DEEBUG ) call outputNamedValue( 'ivalue', ivalue )
     value = ( iValue == 1 )
   end subroutine GetHDF5Attribute_logical
 
@@ -5452,6 +5454,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.71  2007/01/26 23:59:13  pwagner
+! Added more unused debugging
+!
 ! Revision 2.70  2007/01/12 00:29:28  pwagner
 ! Renamed routine outputNamedValue
 !
