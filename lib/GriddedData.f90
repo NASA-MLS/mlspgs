@@ -18,9 +18,9 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
   ! r4 corresponds to sing. prec. :: same as stored in files
   ! (except for dao dimensions)
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR, &
-    & MLSMSG_DEALLOCATE
+    & MLSMSG_DEALLOCATE, MLSMSG_Warning
   use MLSStrings, only: LOWERCASE
-  use Output_m, only: BLANKS, OUTPUT
+  use Output_m, only: BLANKS, OUTPUT, outputNamedValue
 
   implicit NONE
   private
@@ -316,6 +316,13 @@ contains
     call SetupNewGriddedData ( OutGrid, source=TGrid, noHeights=NGrid%noHeights )
     ! Copy the information over
     OutGrid%verticalCoordinate = NGrid%VerticalCoordinate
+    if ( size(OutGrid%heights) /= size(NGrid%heights) ) then
+      call outputNamedValue('num heights(outGrid)', size(OutGrid%heights), advance='yes' )
+      call outputNamedValue('num heights(NGrid)', size(NGrid%heights), advance='yes' )
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'Grid shapes do not conform' )
+      return
+    endif
     OutGrid%heights = NGrid%heights
     OutGrid%lats = TGrid%lats
     OutGrid%lons = TGrid%lons
@@ -1204,6 +1211,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.44  2007/01/30 21:57:44  pwagner
+! Avoids a bug with empty grids in ConvertFromEtaLevelGrids
+!
 ! Revision 2.43  2007/01/11 20:31:53  vsnyder
 ! Spiff up the dump
 !
