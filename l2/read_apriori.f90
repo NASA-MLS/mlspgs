@@ -716,6 +716,9 @@ contains ! =====     Public Procedures     =============================
         end do
         if ( returnStatus /= PGS_S_SUCCESS ) &
           & call announce_success ( description, 'no entry in PCF',  ' ' )
+      else
+        returnStatus = 0
+        PCF_Id = 0
       end if
     end subroutine Get_PCF_Id
 
@@ -926,6 +929,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.70  2007/01/30 21:59:10  pwagner
+! fixed bug where Get_PCF_Id retruned undefined values
+!
 ! Revision 2.69  2007/01/11 20:48:30  vsnyder
 ! Add SurfaceHeight to gridded data, vector quantities, allow dump in ReadApriori
 !
