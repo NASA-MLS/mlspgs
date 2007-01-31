@@ -16,6 +16,7 @@ module DUMP_0
 ! Behavior depends on optional parameters
 ! Actual output device determined by output_m module
 
+  use BitStuff, only: MAXBITNUMBER, WhichBitsAreSet
   use ieee_arithmetic, only: ieee_is_finite
   use MLSCommon, only: DEFAULTUNDEFINEDVALUE
   use MLSFillValues, only : FilterValues, IsFinite, &
@@ -41,7 +42,7 @@ module DUMP_0
 !     (subroutines and functions)
 ! DIFF                     dump diffs between pair of arrays of numeric type
 ! DUMP                     dump an array to output
-! DUMP_NAME_V_PAIRS        dump an array of paired names and values
+! dumpNamedValues          dump an array of paired names and values
 ! SELFDIFF                 dump increments between successive array values
 ! === (end of toc) ===
 
@@ -61,7 +62,7 @@ module DUMP_0
 ! dump ( strlist string, char* name, [char* fillvalue], [log clean] )
 ! dump ( log countEmpty, strlist keys, strlist values, char* name, 
 !       [char* separator] )
-! dump_name_v_pairs ( values, strlist names,
+! dumpNamedValues ( values, strlist names,
 !      [[log clean], [char* format, [int width]] ) 
 !       where values can be a 1d array of ints or reals, and
 !       names is a string list of corresponding names
@@ -69,7 +70,7 @@ module DUMP_0
 ! in the above, a string list is a string of elements (usu. comma-separated)
 ! === (end of api) ===
 
-  public :: DIFF, DUMP, DUMP_NAME_V_PAIRS, SELFDIFF
+  public :: DIFF, DUMP, dumpNamedValues, SELFDIFF
 
   interface DIFF        ! dump diffs between pair of n-d arrays of numeric type
     module procedure DIFF_1D_DOUBLE, DIFF_1D_INTEGER, DIFF_1D_REAL
@@ -77,7 +78,7 @@ module DUMP_0
     module procedure DIFF_3D_DOUBLE, DIFF_3D_REAL
   end interface
   interface DUMP        ! dump n-d arrays of homogeneous type
-    module procedure DUMP_1D_CHAR, DUMP_1D_COMPLEX, DUMP_1D_DCOMPLEX
+    module procedure DUMP_1D_BIT, DUMP_1D_CHAR, DUMP_1D_COMPLEX, DUMP_1D_DCOMPLEX
     module procedure DUMP_1D_DOUBLE, DUMP_1D_INTEGER
     module procedure DUMP_1D_LOGICAL, DUMP_1D_REAL
     module procedure DUMP_2D_CHAR, DUMP_2D_COMPLEX, DUMP_2D_DCOMPLEX
@@ -87,9 +88,9 @@ module DUMP_0
     module procedure DUMP_3D_REAL
     module procedure DUMP_HASH_LOG, DUMP_HASH_STR, DUMP_STRLIST
   end interface
-  interface DUMP_NAME_V_PAIRS   ! dump name-value pairs, names in string list
-    module procedure DUMP_NAME_V_PAIRS_DOUBLE, DUMP_NAME_V_PAIRS_INTEGER
-    module procedure DUMP_NAME_V_PAIRS_REAL
+  interface dumpNamedValues   ! dump name-value pairs, names in string list
+    module procedure dumpNamedValues_DOUBLE, dumpNamedValues_INTEGER
+    module procedure dumpNamedValues_REAL
   end interface
   interface SELFDIFF       ! dump increments between successive array values
     module procedure SELFDIFF_INTEGER
@@ -293,6 +294,62 @@ contains
     real :: refmin, refmax, refrms
     include "diff.f9h"
   end subroutine DIFF_3D_REAL
+
+  ! -----------------------------------------------  DUMP_1D_BIT  -----
+  subroutine DUMP_1D_BIT ( ARRAY, NAME, BITNAMES, FILLVALUE, CLEAN )
+    integer, intent(in) :: ARRAY(:)
+    character(len=*), intent(in) :: NAME
+    character(len=*), intent(in) :: BITNAMES
+    integer, intent(in), optional :: FILLVALUE
+    logical, intent(in), optional :: CLEAN
+
+    integer :: howMany, J, K
+    integer, dimension(MAXBITNUMBER) :: ints
+    integer :: LON
+    logical :: MyClean
+    integer :: myFillValue
+    integer :: MyWidth
+    integer :: NumBitNames
+    integer :: NumZeroRows
+    integer, dimension(MAXBITNUMBER+1) :: set
+    ! Executable
+    myFillValue = 0
+    if ( present(FillValue) ) myFillValue = FillValue
+
+    myClean = .false.
+    if ( present(clean) ) myClean = clean
+    NumBitNames = NumStringElements( bitNames, countEmpty=.true. )
+    if ( NumBitNames < 1 ) NumBitNames = MAXBITNUMBER+1
+    NumBitNames = min( numBitNames, MAXBITNUMBER+1 )
+    numZeroRows = 0
+    if ( size(array) == 0 ) then
+      call empty ( name )
+    else
+      call name_and_size ( name, myClean, size(array) )
+      call newline
+      call output( trim(BitNames), advance='yes' )
+      do j=1, size(array)
+        if ( array(j) == myFillValue ) then
+          numZeroRows = numZeroRows + 1
+        else
+          call WhichBitsAreSet( array(j), set, howMany )
+          ints = 0
+          do k=1, howMany
+            ints( 1 + set(k) ) = 1
+          enddo
+          if ( numZeroRows > 0 ) then
+            call output ( ' ' )
+            call output ( numZeroRows )
+            call output ( ' lines of ', advance='no' )
+            call output ( myFillValue )
+            call output ( ' not printed', advance='yes' )
+          endif
+          call output( ints(1:numBitNames), format='(i3)', advance='yes' )
+          numZeroRows = 0
+        endif
+      enddo
+    endif
+  end subroutine DUMP_1D_BIT
 
   ! -----------------------------------------------  DUMP_1D_CHAR  -----
   subroutine DUMP_1D_CHAR ( ARRAY, NAME, FILLVALUE, CLEAN, TRIM )
@@ -1565,11 +1622,11 @@ contains
     end if
   end subroutine DUMP_STRLIST
 
-  ! -----------------------------------  DUMP_NAME_V_PAIRS  -----
+  ! -----------------------------------  dumpNamedValues  -----
   ! Another hash-like dump:
   ! Show names and related (numerical) values
-  ! -----------------------------------  DUMP_NAME_V_PAIRS_DOUBLE  -----
-  subroutine DUMP_NAME_V_PAIRS_DOUBLE ( VALUES, NAMES, CLEAN, FORMAT, WIDTH )
+  ! -----------------------------------  dumpNamedValues_DOUBLE  -----
+  subroutine dumpNamedValues_DOUBLE ( VALUES, NAMES, CLEAN, FORMAT, WIDTH )
     double precision, intent(in)                         :: values(:)
     character(len=*), intent(in), optional :: NAMES
     logical, intent(in), optional :: CLEAN
@@ -1605,10 +1662,10 @@ contains
       call output(' ', advance='yes')
     end do
 
-  end subroutine DUMP_NAME_V_PAIRS_DOUBLE
+  end subroutine dumpNamedValues_DOUBLE
 
-  ! ----------------------------------  DUMP_NAME_V_PAIRS_INTEGER  -----
-  subroutine DUMP_NAME_V_PAIRS_INTEGER ( VALUES, NAMES, CLEAN, FORMAT, WIDTH )
+  ! ----------------------------------  dumpNamedValues_INTEGER  -----
+  subroutine dumpNamedValues_INTEGER ( VALUES, NAMES, CLEAN, FORMAT, WIDTH )
     integer, intent(in)                         :: values(:)
     character(len=*), intent(in), optional :: NAMES
     logical, intent(in), optional :: CLEAN
@@ -1644,10 +1701,10 @@ contains
       call output(' ', advance='yes')
     end do
 
-  end subroutine DUMP_NAME_V_PAIRS_INTEGER
+  end subroutine dumpNamedValues_INTEGER
 
-  ! -------------------------------------  DUMP_NAME_V_PAIRS_REAL  -----
-  subroutine DUMP_NAME_V_PAIRS_REAL ( VALUES, NAMES, CLEAN, FORMAT, WIDTH )
+  ! -------------------------------------  dumpNamedValues_REAL  -----
+  subroutine dumpNamedValues_REAL ( VALUES, NAMES, CLEAN, FORMAT, WIDTH )
     real, intent(in)                         :: values(:)
     character(len=*), intent(in), optional :: NAMES
     logical, intent(in), optional :: CLEAN
@@ -1683,7 +1740,7 @@ contains
       call output(' ', advance='yes')
     end do
 
-  end subroutine DUMP_NAME_V_PAIRS_REAL
+  end subroutine dumpNamedValues_REAL
 
  ! ---------------------------------------------  SELFDIFF_DOUBLE  -----
   subroutine SELFDIFF_DOUBLE ( ARRAY, NAME, &
@@ -2042,6 +2099,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.64  2007/01/31 00:05:43  pwagner
+! Added interface for dumping bit arrays
+!
 ! Revision 2.63  2006/08/23 20:06:25  pwagner
 ! Restored more backward-compatible arglist to DUMP_STRLIST
 !
