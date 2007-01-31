@@ -95,7 +95,7 @@ module BitStuff
   ! an integer = (MAXBITNUMBER+1)
   ! If you plan on using the software on a platform for which
   ! bit_size returns a different value, change the following
-  integer, parameter :: MAXBITNUMBER = 30 ! The 31st is the sign bit
+  integer, parameter, public :: MAXBITNUMBER = 30 ! The 31st is the sign bit
   integer, parameter, dimension(0:MAXBITNUMBER) :: BITINDX = &
     & (/ (ibitindx, ibitindx = 0, MAXBITNUMBER) /)
 
@@ -429,6 +429,9 @@ contains
 end module BitStuff
 
 ! $Log$
+! Revision 2.11  2007/01/31 00:06:23  pwagner
+! Made MAXBITNUMBER public
+!
 ! Revision 2.10  2006/02/06 22:40:11  pwagner
 ! Added Reverse function
 !
