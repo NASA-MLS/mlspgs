@@ -21,7 +21,7 @@ module MLSHDF5
   ! to finish compiling the highest modules.
 
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use DUMP_0, only: DUMP, DUMP_NAME_V_PAIRS
+  use DUMP_0, only: DUMP, dumpNamedValues
   use hdf, only: DFACC_RDONLY
   use intrinsic, only: l_hdf
   use MLSCommon, only: MLSFile_T
@@ -5307,13 +5307,13 @@ contains ! ======================= Public Procedures =========================
       end if
     else
       if ( present(ints) ) then
-        call dump_name_v_pairs ( ints, names, &
+        call dumpNamedValues ( ints, names, &
           & clean=clean, format=int_format, width=width )
       else if ( present(reals) ) then
-        call dump_name_v_pairs ( reals, names, &
+        call dumpNamedValues ( reals, names, &
           & clean=clean, format=real_format, width=width )
       else if ( present(doubles) ) then
-        call dump_name_v_pairs ( doubles, names, &
+        call dumpNamedValues ( doubles, names, &
           & clean=clean, format=dbl_format, width=width )
       end if
     end if
@@ -5454,6 +5454,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.72  2007/01/31 00:07:23  pwagner
+! Compatible with renamed dumpNamedValues
+!
 ! Revision 2.71  2007/01/26 23:59:13  pwagner
 ! Added more unused debugging
 !
