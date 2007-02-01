@@ -23,7 +23,7 @@ module Compute_GL_Grid_M
 contains
 !-----------------------------------------------  Compute_GL_Grid  -----
 
-  subroutine Compute_GL_Grid ( Z_PSIG, P_GLgrid, Z_GLgrid )
+  subroutine Compute_GL_Grid ( Z_PSIG, Z_GLgrid, P_GLgrid )
 
   ! Compute the pressure and zeta GL grids.
 
@@ -34,8 +34,8 @@ contains
     real(rp), intent(in) :: Z_psig(:)  ! recommended PSIG for
 
   ! Outputs
-    real(rp), dimension(:), intent(out) :: P_GLgrid   ! Pressure on glGrid surfs
     real(rp), dimension(:), intent(out) :: Z_GLgrid   ! Zeta on glGrid surfs
+    real(rp), dimension(:), intent(out), optional :: P_GLgrid   ! Pressure on glGrid surfs
 
   ! Local variables
     integer :: MaxVert     ! Levels in fine grid
@@ -59,7 +59,7 @@ contains
       ! New Gauss points (excludes Lobatto end points) with -1 at front:
       & spread(g_grid,2,NLm1), (/maxVert-1/))
     z_glgrid(maxVert) = z_psig(Nlvl)
-    p_glgrid(:maxVert) = 10.0_rp**(-z_glgrid(:maxVert))
+    if ( present(p_glgrid) ) p_glgrid(:maxVert) = 10.0_rp**(-z_glgrid(:maxVert))
 
   end subroutine Compute_GL_Grid
 
@@ -75,6 +75,9 @@ contains
 end module Compute_GL_Grid_M
 
 ! $Log$
+! Revision 2.18  2007/02/01 02:45:18  vsnyder
+! Exchange order of P_GLGrid, Z_GLGrid, make P_GLGrid optional
+!
 ! Revision 2.17  2006/12/04 21:17:28  vsnyder
 ! Reorganize FullForwardModel to use automatic arrays instead of allocating
 ! pointer arrays.  Requires testing for zero size instead of testing for
