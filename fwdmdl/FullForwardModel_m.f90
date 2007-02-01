@@ -22,6 +22,10 @@ module FullForwardModel_m
     & "$RCSfile$"
 !------------------------------------------------------------------------------
 
+  integer, private, parameter :: Max_New = 10 ! Maximum new points in path
+    ! in addition to ones derived from the preselected zeta grid, including
+    ! the minimum zeta point.
+
 contains
 
   ! -------------------------------------------- FullForwardModel -----
@@ -154,7 +158,7 @@ contains
     call compute_Z_PSIG ( fwdModelConf, temp, fwdModelConf%beta_group%qty, nlvl, &
       &                   no_tan_hts, surfaceTangentIndex, z_psig, tan_press )
 
-    max_c = 2*nlvl + 3 ! Maximum coarse path length
+    max_c = 2*nlvl + max_new + 1 ! Maximum coarse path length
     maxVert = (nlvl-1) * ngp1 + 1
     max_f = 2 * maxVert + ngp1 ! Maximum fine path, including minimum Zeta panel
 
@@ -237,6 +241,7 @@ contains
   ! work arrays are automatic arrays, instead of being explicitly allocated
   ! and deallocated.
 
+    use Add_Points_m, only: Add_Points
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use AntennaPatterns_m, only: ANTENNAPATTERNS
     use Comp_Eta_Docalc_No_Frq_m, only: Comp_Eta_Docalc_No_Frq
@@ -265,7 +270,8 @@ contains
     use Load_Sps_Data_m, only: DestroyGrids_t, Dump, Grids_T, &
       & Load_One_Item_Grid
     use MatrixModule_1, only: MATRIX_T
-    use Metrics_m, only: More_Metrics, Height_Metrics, Tangent_Metrics
+    use Metrics_m, only: More_Metrics, More_Points, Height_Metrics, &
+      & Tangent_Metrics
     use Min_Zeta_m, only: Get_Min_Zeta
     use MLSKinds, only: R4, R8, RP, RV
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
@@ -360,9 +366,7 @@ contains
     integer :: Min_Index          ! If > 0, P_Path(min_index) <= Min_Phi <=
                                   ! P_Path(min_index+1), else min zeta is at
                                   ! or too close to the tangent
-    integer :: Min_Index_c        ! If Min_Index > 0, P_Path(min_index_c) <=
-                                  ! Min_Phi <= P_Path(min_index_c+ng+1) and
-                                  ! min_index_c is a coarse path index.
+    integer :: N_More             ! Effective size of More_*_Path
     integer :: NCG                ! Number of panels needing GL = Size(cg_inds)
     integer :: NGLMAX             ! NGL if all panels need GL
     integer :: NGL                ! Total # of GL points = Size(gl_inds)
@@ -395,11 +399,12 @@ contains
     logical :: Any_Der            ! temp_der .or. atmos_der .or. spect_der
     logical :: cld_fine = .false.
     logical :: Clean              ! Used for dumping
+    logical :: Do_More_Points     ! Do intersections of path at zetas < zeta(tan)
     logical :: Do_Zmin            ! "Do minimum Zeta calculation"
     logical, parameter :: PFAFalse = .false.
     logical, parameter :: PFATrue = .true.
     logical :: Print_Mag          ! For debugging
-    logical :: Print_Min_Zeta     ! For debugging
+    logical :: Print_More_Points  ! Print if Do_More_Points finds more
     logical :: Print_Ptg          ! For debugging
     logical :: Print_Rad          ! For debugging
     logical :: Print_Seez         ! For debugging
@@ -463,12 +468,11 @@ contains
     real(rp) :: H_PATH_C(max_c)       ! H_PATH on coarse grid
     real(rp) :: H_PATH_F(max_f)       ! H_PATH on fine grid
     real(rp) :: INCOPTDEPTH(max_c)    ! Incremental Optical depth on coarse grid
+    real(rp) :: More_H_Path(max_new), More_Phi_Path(max_new), More_Z_Path(max_new)
     real(rp) :: N_PATH_C(max_c)       ! Refractive index - 1 on coarse path
     real(rp) :: N_PATH_F(max_f)       ! Refractive index - 1 on fine path
     real(rp) :: PATH_DSDH(max_f)      ! dS/dH on path
     real(rp) :: PHI_PATH(max_f)       ! Phi's on path, Radians
-    real(rp), target :: P_GLGRID_O(maxvert) ! Pressure on glGrid surfs, original
-    real(rp), target :: P_GLGRID_R(maxvert+nxg) ! Pressure on glGrid surfs, revised
     real(rp) :: P_PATH(max_f)         ! Pressure on path
     real(rp) :: PTG_ANGLES(no_tan_hts)
     real(rp) :: REF_CORR(max_c)       ! Refraction correction
@@ -625,7 +629,6 @@ contains
     real(rp), pointer :: DDHIDHIDTL0(:,:,:) ! Either DDHIDHIDTL0_O or DDHIDHIDTL0_R
     real(rp), pointer :: DH_DT_GLGRID(:,:,:) ! Either DH_DT_GLgrid_O or DH_DT_GLgrid_R
     real(rp), pointer :: DHDZ_GLGRID(:,:) ! Either DHDZ_GLgrid_O or DHDZ_GLgrid_R
-    real(rp), pointer :: P_GLGRID(:)     ! Either P_GLgrid_O or P_GLgrid_R
     real(rp), pointer :: H_GLGRID(:,:)   ! Either H_GLgrid_O or H_GLgrid_R
     real(rp), pointer :: T_GLGRID(:,:)   ! Either T_GLgrid_O or T_GLgrid_R
     real(rp), pointer :: Z_GLGRID(:)     ! Either Z_GLgrid_O or Z_GLgrid_R
@@ -712,8 +715,9 @@ contains
     ! Set flags from command-line switches
     clean = index(switches, 'clean') /= 0
     do_zmin = index(switches, 'nozm') == 0 ! Do minimum zeta unless told otherwise
+    print_more_points = index(switches, 'ZMOR' ) /= 1
+    do_more_points = index(switches, 'zmor') /= 1
     print_Mag = index(switches, 'mag') /= 0
-    print_Min_Zeta = index(switches, 'zmin') /= 0
     print_Ptg = index(switches,'ptg') /= 0
     print_Rad = index(switches, 'rad') /= 0
     print_Seez = index(switches, 'seez') /= 0
@@ -858,10 +862,9 @@ contains
             dh_dt_glgrid => dh_dt_glgrid_r(:nz_if,:,:)
             dhdz_glgrid => dhdz_glgrid_r(:nz_if,:)
             h_glgrid => h_glgrid_r(:nz_if,:)
-            p_glgrid => p_glgrid_r(:nz_if)
             t_glgrid => t_glgrid_r(:nz_if,:)
             z_glgrid => z_glgrid_r(:nz_if)
-            call compute_GL_grid ( z_ig(:nz_ig), p_glgrid, z_glgrid )
+            call compute_GL_grid ( z_ig(:nz_ig), z_glgrid )
             if ( temp_der ) then
               call two_d_hydrostatic ( Grids_tmp, &
                 &  (/ (refGPH%template%surfs(1,1), j=windowStart,windowFinish) /), &
@@ -885,7 +888,6 @@ contains
           dh_dt_glgrid => dh_dt_glgrid_o
           dhdz_glgrid => dhdz_glgrid_o
           h_glgrid => h_glgrid_o
-          p_glgrid => p_glgrid_o
           t_glgrid => t_glgrid_o
           z_glgrid => z_glgrid_o
         end if
@@ -897,6 +899,30 @@ contains
 
         tan_ht = h_path(tan_pt_f) ! Includes Earth radius
 
+        if ( do_more_points ) then
+          call more_points ( tan_phi(ptg_i), tan_ind_f, Grids_tmp%phi_basis, &
+            & z_glgrid, h_glgrid, req, h_surf, h_tan, phi_path(1:npf), & ! in
+            & more_z_path, more_h_path, more_phi_path, n_more )
+          if ( print_more_points .and. n_more > 0 ) then
+            call output ( 'Found more intersections', advance='yes' )
+            call output ( ptg_i, before='tan_phi(' )
+            call output ( tan_phi(ptg_i), before =') = ' )
+            call output ( tan_ind_f, before=', tan_ind_f = ' )
+            call output ( req, before=', req = ', format = '(f7.2)' )
+            call output ( h_surf, before=', h_surf = ', format = '(f7.2)' )
+            call output ( h_tan, before=', h_tan = ', advance='yes' )
+            call dump ( more_h_path(:n_more), name='more_h_path' )
+            call dump ( more_phi_path(:n_more), name='more_phi_path' )
+            call dump ( more_z_path(:n_more), name='more_z_path' )
+            call dump ( h_glgrid+req-h_surf, name='h_glgrid' )
+            call dump ( Grids_tmp%phi_basis, name='phi_basis' )
+            call dump ( h_path(1:npf), name='h_path' )
+            call dump ( phi_path(1:npf), name='phi_path' )
+          end if
+        else
+          n_more = 0
+        end if
+
         if ( do_zmin ) then
           ! Get minimum zeta on the path
           call Get_Min_Zeta ( Grids_tmp%phi_basis, h_glgrid(tan_ind_f,:), &
@@ -906,53 +932,24 @@ contains
 
           ! Add minimum zeta to the path
           if ( min_index > 0 ) then ! minimum zeta not at or near tangent point
-            min_index_c = min_index - mod(min_index-1,ngp1)
-            if ( min_index > tan_pt_f ) min_index_c = min_index_c + 1
-            if ( min(abs(min_phi-phi_path(min_index)), &
-              &      abs(min_phi-phi_path(min_index+1))) <= &
-              &  min_phi_tol * (phi_path(min_index_c+ngp1)-phi_path(min_index_c)) ) then
-              ! Min zeta very close to an existing point
-              if ( abs(min_phi-phi_path(min_index)) > abs(min_phi-phi_path(min_index+1)) ) &
-                & min_index = min_index+1
-              ! Min_index is now the index of the point
-              if ( min_index == min_index_c .or. min_index == min_index_c+ngp1 ) then
-                ! Min_index is at a coarse grid point.
-                ! All we need to do is change the zeta.
-                min_index_c = min_index
-                i = min_index / ngp1 + 1
-                if ( print_Min_Zeta ) then
-                  call output ( i, before='Replacing Z_Coarse(' )
-                  call output ( z_coarse(i), before=') = ' )
-                  call output ( min_zeta, before=' with minimum Zeta = ', advance='yes' )
-                end if
-                z_coarse(i) = min_zeta
-                min_index_c = 0 ! Indicate nothing more to do
-              end if
-            end if
-            if ( min_index_c > 0 ) then
-              ! Min zeta not near an existing coarse point: add one to the path
-              npc = npc + 1
-              npf = npf + ngp1
-              i = min_index_c / ngp1 + 1
-              z_coarse(i+1:npc) = z_coarse(i:npc-1) ! Make room
-              z_coarse(i) = min_zeta
-              if ( print_Min_Zeta ) then
-                call output ( min_zeta, before='Added minimum Zeta = ' )
-                call output ( i, before=' after ', advance='yes' )
-              end if
-              if ( min_index_c < tan_pt_f ) then
-                tan_pt_c = tan_pt_c + 1
-                tan_pt_f = tan_pt_f + ngp1
-              end if
-            end if
+            n_more = n_more + 1
+            more_z_path(n_more) = min_zeta
+            more_phi_path(n_more) = min_phi
+            more_h_path(n_more) = (h_tan+req)/cos(min_phi)
           end if
+        else
+          min_index = 0
         end if
 
+        call add_points ( more_h_path(:n_more), more_phi_path(:n_more), &
+          &               more_z_path(:n_more), min_index, &
+          &               z_coarse, h_path, phi_path, npc, npf, tan_pt_c, tan_pt_f )
+
         ! Compute Gauss Legendre (GL) grid ----------------------------------
-        call compute_GL_grid ( z_coarse(:tan_pt_c), p_path(:tan_pt_f), &
-          &                    z_path(:tan_pt_f) )
-        call compute_GL_grid ( z_coarse(tan_pt_c+1:npc), p_path(tan_pt_f+1:npf), &
-          &                    z_path(tan_pt_f+1:npf) )
+        call compute_GL_grid ( z_coarse(:tan_pt_c), z_path(:tan_pt_f), &
+          &                    p_path(:tan_pt_f) )
+        call compute_GL_grid ( z_coarse(tan_pt_c+1:npc), z_path(tan_pt_f+1:npf), &
+          &                    p_path(tan_pt_f+1:npf) )
 
         ! This is not pretty but we need some coarse path extraction indices
         c_inds => c_inds_b(:npc)
@@ -968,12 +965,9 @@ contains
           &                                     z_path(c_inds(tan_pt_c+1:npc-1)) )
 
         ! Do phi refractive correction
-        if ( h2o_ind == 0 ) then
-          call refractive_index ( p_path(1:npf), t_path(1:npf), n_path_f(1:npf) )
-          n_path_c(:npc) = n_path_f(c_inds)
-        end if
         if ( FwdModelConf%refract ) then
-          ! Get t_path (and dhdz_path, which we don't need yet)
+          ! Get t_path (and dhdz_path, which we don't need yet) so we can
+          ! calculate the refractive index
           call more_metrics ( tan_ind_f, tan_pt_f, Grids_tmp%phi_basis, &
             &  t_glgrid, dhdz_glgrid, phi_path(1:npf),        &
             &  t_path(1:npf), dhdz_path(1:npf) )
@@ -987,6 +981,9 @@ contains
             call refractive_index ( p_path(1:npf), t_path(1:npf), &
               &  n_path_f(1:npf),  &
               &  h2o_path=sps_path(1:npf, h2o_ind) )
+          else
+            call refractive_index ( p_path(1:npf), t_path(1:npf), n_path_f(1:npf) )
+            n_path_c(:npc) = n_path_f(c_inds)
           end if
           ! Do the refractive correction.  Use t_path to store the correction,
           ! since we're going to recompute t_path right away.
@@ -1049,6 +1046,11 @@ contains
           call refractive_index ( p_path(c_inds), &
             &  t_path_c(1:npc), n_path_c(1:npc),  &
             &  h2o_path=sps_path(c_inds, h2o_ind) )
+        else if ( .not. FwdModelConf%refract ) then
+          ! If we didn't do the refractive correction, we haven't yet
+          ! computed the refractive index.
+          call refractive_index ( p_path(1:npf), t_path(1:npf), n_path_f(1:npf) )
+          n_path_c(:npc) = n_path_f(c_inds)
         end if
 
         n_path_c(1:npc) = min ( n_path_c(1:npc), MaxRefraction )
@@ -1656,11 +1658,10 @@ contains
       dh_dt_glgrid => dh_dt_glgrid_o
       dhdz_glgrid => dhdz_glgrid_o
       h_glgrid => h_glgrid_o
-      p_glgrid => p_glgrid_o
       t_glgrid => t_glgrid_o
       z_glgrid => z_glgrid_o
 
-      call compute_GL_grid ( z_psig(:nlvl), p_glgrid, z_glgrid )
+      call compute_GL_grid ( z_psig(:nlvl), z_glgrid )
 
       ! estimate tan_phi and scgeocalt
       call estimate_tan_phi ( no_tan_hts, nlvl, maf, phitan, ptan, &
@@ -3119,6 +3120,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.279  2007/01/20 01:08:08  vsnyder
+! Decrufting
+!
 ! Revision 2.278  2007/01/19 02:38:53  vsnyder
 ! Include water in phi refractive correction
 !
