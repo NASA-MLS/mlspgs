@@ -13,13 +13,27 @@ module Metrics_m
 
   implicit NONE
   private
-  public :: Height_Metrics, More_Metrics, Tangent_Metrics
+  public :: Height_Metrics, More_Metrics, Solve_H_Phi, Tangent_Metrics
+  public :: More_Points
+
+  ! Values for stat argument to/from Solve_H_Phi:
+  integer, parameter, public :: No_sol = 0  ! No solution
+  integer, parameter, public :: Complex = 1 ! Complex start for Newton iteration
+  integer, parameter, public :: Good = 2    ! Newton converged, tangent point, extrapolated
+  integer, parameter, public :: Grid = 3    ! Close to a grid point
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
   private :: not_used_here 
 !---------------------------------------------------------------------------
+
+  ! Private stuff
+  ! To control debugging
+  logical, parameter :: Debug = .false.
+  logical, parameter :: NewtonDetails = .true. .and. debug
+  ! For debugging output format:
+  logical, parameter :: Clean = .false.
 
 contains
 
@@ -206,7 +220,7 @@ contains
     use Dump_0, only: Dump
     use Get_Eta_Matrix_m, only: Get_Eta_Sparse
     use MLSKinds, only: RP
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use Output_m, only: OUTPUT
     use Toggles, only: Switches
 
@@ -240,7 +254,7 @@ contains
     integer :: H_Phi_Dump  ! 0 = no dump, >0 = dump
     integer :: H_Phi_Stop  ! 0 = no dump, >0 = dump/stop
     integer :: First, Last ! Nonzeros in Eta_T
-    integer :: I, I1, I2, J, K, N
+    integer :: I, I1, I2, J, K
     integer :: NO_BAD_FITS
     integer :: NO_GRID_FITS
     integer :: N_PATH      ! Path length = 2*(size(z_ref)+1-tan_ind)
@@ -250,40 +264,21 @@ contains
 
     integer :: VERT_INDS(2*(size(z_ref)+1-tan_ind)) ! What to use in z_ref
     integer :: Stat(size(vert_inds))
-    ! Values for stat:
-    integer, parameter :: No_sol = 0 ! No solution
-    integer, parameter :: Good = 1   ! Newton converged, tangent point, extrapolated
-    integer, parameter :: Grid = 2   ! Close to a grid point
 
-    real(rp) :: A, B, C, D ! Polynomial coefficients used to solve for phi and H
+    logical :: Outside     ! Solve_H_Phi converged outside the allowed area
+    real(rp) :: A, B, C    ! Polynomial coefficients used to solve for phi and H
     real(rp) :: DP         ! p_basis(j+1) - p_basis(j)
     real(rp) :: DPJ0       ! p_basis(j  )-phi_t
     real(rp) :: DPJ1       ! p_basis(j+1)-phi_t
     real(rp) :: H          ! Tentative solution for H
     real(rp) :: HTAN_R     ! H_Tan + req
     real(rp) :: My_H_Tol   ! Tolerance in kilometers for height convergence
-    real(rp) :: P, Q       ! Tentative solutions for phi
-    real(rp) :: P2         ! P**2
+    real(rp) :: P          ! Tentative solution for phi
     real(rp) :: REQ_S      ! Req - H_Surf
-    real(rp) :: SecM1      ! Taylor series for sec(phi)-1
 
     real(rp) :: ETA_T(size(p_basis))
     real(rp) :: PHI_OFFSET(size(vert_inds)) ! PHI_T or a function of NEG_H_TAN
     real(rp) :: PHI_SIGN(size(vert_inds))   ! +/- 1.0
-
-    ! Coefficients in expansion of Sec(phi)-1 = c2*phi^2 + c4*phi^4 ...
-    real(rp), parameter :: C2 = 0.5_rp, C4 = 5.0_rp/24, C6 = 61.0_rp/720.0
-    ! Coefficients in expansion of Sec(phi)*Tan(phi) = d/dPhi(sec(phi)-1)
-    real(rp), parameter :: D1 = 2*c2, D3 = 4*c4, D5 = 6*c6 ! ... 2n * c_2n
-
-    ! To control debugging
-    logical, parameter :: Debug = .false.
-    logical, parameter :: NewtonDetails = .true. .and. debug
-    ! For debugging output format:
-    logical, parameter :: clean = .false.
-    ! For debugging output
-    real(rp) :: DD(merge(10,0,debug))
-    character(merge(10,0,debug)) :: OOPS
 
 !   It would be nice to do this the first time only, but the
 !   retrieve command in the L2CF can now change switches
@@ -311,7 +306,7 @@ contains
 
     phi_offset(:n_tan) = phi_t
     if ( h_tan < 0.0 ) then ! Earth-intersecting ray
-      phi_offset(n_tan+1:) = phi_t-2.0_rp*Acos((req+h_tan)/req)
+      phi_offset(n_tan+1:) = phi_t - 2.0_rp*Acos((req+h_tan)/req)
     else
       phi_offset(n_tan+1:) = phi_t
     end if
@@ -323,8 +318,8 @@ contains
       call dump ( p_basis, name='p_basis', format='(1pg14.6)', clean=clean )
       call output ( phi_t, before='phi_t = ', format='(1pg14.6)' )
       call output ( h_surf, format='(f7.2)', before =', h_surf = ' )
+      call output ( tan_ind, before=', tan_ind = ' )
       call output ( req, format='(f7.2)', before=', req = ', advance='yes' )
-      call output ( tan_ind, before='tan_ind = ' )
       call dump ( phi_offset, name='phi_offset', clean=clean )
       call dump ( h_ref(tan_ind:n_vert,:), name='h_ref', clean=clean )
 !     call dump ( z_ref(tan_ind:n_vert), name='z_ref', clean=clean )
@@ -424,120 +419,49 @@ phi:do j = 1, p_coeffs-1
       dpj1 = p_basis(j+1)-phi_t
       dpj0 = p_basis(j)-phi_t
 path: do i = i1, i2
-        if ( stat(i) == good ) cycle
+        if ( stat(i) == good ) cycle ! probably the tangent point
+        k = vert_inds(i)
+          if ( newtonDetails ) &
+            & write ( *, 120 ) i, j, h_ref(k,j)+req_s, h_ref(k,j+1)+req_s
+          120 format ( i4, i2, 18x, f11.3,f12.3 )
         k = vert_inds(i)
         b = -(h_ref(k,j+1) - h_ref(k,j)) ! h_surf cancels here
         c = -(h_ref(k,j)-h_surf)   * dpj1 &
           & +(h_ref(k,j+1)-h_surf) * dpj0 &
           & + dp * h_tan
-        d = b*b - 2.0 * a * c ! Actually b^2-4ac, since a is actually 2*A
-        if ( d < 0.0 ) then ! Complex solution
+        if ( stat(i) == grid ) no_grid_fits = no_grid_fits - 1
+        call Solve_H_Phi ( p_basis(j:j+1), phi_offset(i), phi_sign(i), &
+          &                h_ref(k,j:j+1), a, b, c, &
+          &                htan_r, req_s, my_h_tol, i /= i2 .or. j /= p_coeffs-1, &
+          &                h_grid(i), p_grid(i), stat(i), outside )
+        if ( stat(i) == good ) then
+          no_bad_fits = no_bad_fits - 1
+        else if ( stat(i) == grid ) then
+          no_grid_fits = no_grid_fits + 1
+          no_bad_fits = no_bad_fits - 1
+        end if
+        if ( outside ) then
+          i1 = i    ! phi is monotone; the remaining solutions are in the next
+          exit      ! column or even farther over, and not before the current row
+        end if
+        if ( stat(i) == good ) cycle ! Newton iteration ended successfully
+        if ( stat(i) == complex ) then ! Complex solution
             if ( debug ) &
               & write (*, '(i4,i2,18x,f11.3,f12.3,1x,a)' ) &
                 & i, j, h_ref(k,j)+req_s, h_ref(k,j+1)+req_s, 'Complex solution'
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & "Complex starting value for Newton iteration shouldn't happen" )
-          cycle  ! in case error level changed, and then crash somewhere else
-        end if
-        d = sqrt(d)
-        p = (-b + phi_sign(i) * d ) / a
-        !{Use P in Newton iterations with a higher-order expansion for
-        ! $\sec(\phi)$.  We don't use $\sec(\phi)-1$ because it suffers
-        ! cancellation for small $\phi$.  Rather, use more terms of its
-        ! Taylor series than we used for the quadratic approximation.
-        do n = 1, 10
-          p2 = p**2
-          secM1 = p2*((c2+p2*(c4+p2*c6))) ! ~ sec(p)-1
-          d = a*secM1 + b*p + c
-            if ( debug ) dd(n) = d
-          h = htan_r * ( 1.0_rp + secM1 ) - req_s ! ~ htan_r * sec(p) - req + h_surf
-          if ( abs(d) < my_h_tol ) then ! difference is small enough
-            q = p + phi_offset(i)
-              if ( newtonDetails ) then
-                print 110, n, q, h+req_s, h_ref(k,j)+req_s, h_ref(k,j+1)+req_s,h_ref(k,j+1)-h_ref(k,j)
-            110 format ( 4x,i2,f9.5,f9.3,f11.3,f12.3,11x,g14.6 )
-              end if
-            if ( q >= p_basis(j) .and. q <= p_basis(j+1) .and. &
-                   ! Converged within bounds?
-                    &  ( (h-h_ref(k,j))*(h-h_ref(k,j+1)) <= 0.0 .or. &
-                   ! or the difference in reference heights is within tolerance and
-                   ! the current H is outside the bounds by less than tolerance
-              &    abs(b) < 0.001 .and. &
-              &    ( abs(h-h_ref(k,j)) < my_h_tol .or. &
-              &      abs(h-h_ref(k,j+1)) < my_h_tol ) ) ) then
-              ! Not extrapolating in phi
-              h_grid(i) = h + req_s
-              p_grid(i) = q
-                if ( debug ) then
-                  oops=''
-                  if ( abs(h+req_s-htan_r/cos(p)) > 5.0e-4 ) oops='      TRIG'
-                100 format (i4,i2,f9.5,f9.3,f11.3,f12.3,f9.3, &
-                      & 1p,g14.6,i3,11g10.2)
-                  write (*, 100, advance='no') &
-                    & i, j, p_grid(i), h_grid(i), &
-                    & h_ref(k,j)+req_s, h_ref(k,j+1)+req_s, &
-                  htan_r / cos(p), &
-                  !htan_r * ( 1.0_rp + p2*((c2+p2*(c4+p2*c6))) ), & ! ~ htan_r * sec(p)
-                  !a, b, c, &
-                  d, n, dd(1:n)
-                  write (*, '(2x,a)') trim(adjustl(oops))
-                end if
-              if ( stat(i) == grid ) then
-                no_grid_fits = no_grid_fits - 1
-              else
-                no_bad_fits = no_bad_fits - 1
-              end if
-              stat(i) = good
-              cycle path ! end the Newton iteration successfully
-            end if
-            if ( q > p_basis(j+1) .and. abs(h-h_ref(k,j+1)) > abs(d) &
-              & .and. (i /= i2 .or. j /= p_coeffs-1) ) then
-              ! Phi is beyond the range, and H is outside by more than the
-              ! move.  Go on to the next columns of H_ref and P_Basis.
-              i1 = i     ! phi is monotone; the rest are in the next column
-              exit path  ! or even farther over
-            end if
-          end if
-          p = p - d / (a*p*(d1+p2*(d3+p2*d5)) + b) ! do the Newton step
-        end do ! n
-        ! Newton iteration failed to converge.  Use the break point if the
-        ! result is very near to it.  We'll probably find it in the next
-        ! panel, but just in case....
-        q = p + phi_offset(i)
-          if ( debug ) then
-            write (*,100, advance='no') i, j, q, h+req_s, h_ref(k,j)+req_s, h_ref(k,j+1)+req_s
-            if ( abs(d) < 0.001_rp ) then
-              write (*,'(a,i3,1p,3g10.2)') " Newton out of bounds  ", n, dd(1:min(n,3))
-            else
-              write (*,'(a,i3,1p,3g10.2)') " Newton didn't converge", n, dd(1:min(n,3))
-            end if
-          end if
-        if ( stat(i) /= grid ) then
-          if ( abs(h-h_ref(k,j)) <  0.1 .and. &
-            & abs(q-p_basis(j)) < abs(q-p_basis(j+1)) ) then
-            h_grid(i) = h_ref(k,j)+req_s
-            p_grid(i) = p_basis(j)
-            stat(i) = grid
-            no_grid_fits = no_grid_fits + 1
-            no_bad_fits = no_bad_fits - 1
-          else if ( abs(h-h_ref(k,j+1)) <  0.1 .and. &
-            & abs(q-p_basis(j+1)) < abs(q-p_basis(j)) ) then
-            h_grid(i) = h_ref(k,j+1)+req_s
-            p_grid(i) = p_basis(j+1)
-            stat(i) = grid
-            no_grid_fits = no_grid_fits + 1
-            no_bad_fits = no_bad_fits - 1
-          end if
-        end if
-        if ( q > p_basis(j+1) .and. (i /= i2 .or. j /= p_coeffs-1) ) then
-          i1 = i    ! phi is monotone; the remaining solutions are in the next
-          exit path ! column or even farther over, and not before the current row
+          cycle
         end if
       end do path ! i
     end do phi ! j
 
-      if ( debug .and. no_bad_fits > 0 ) &
-        & print *, 'no_bad_fits =', no_bad_fits, ', no_grid+fits =', no_grid_fits
+    if ( no_bad_fits > 0 ) then
+        if ( debug ) &
+          & print *, 'no_bad_fits =', no_bad_fits, ', no_grid+fits =', no_grid_fits
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+       &                "Height_Metrics failed to find H/Phi solution" )
+    end if
 
     ! Since we have solved for the intersection of sec(phi) with the heights
     ! on constant-zeta surfaces, it is impossible for the heights not to be
@@ -553,6 +477,161 @@ path: do i = i1, i2
     end if
 
   end subroutine Height_Metrics
+
+  ! ------------------------------------------------  Solve_H_Phi  -----
+
+  !{Solve for an intersection of $H = H_t \sec \phi$ and the line from
+  ! $(\phi_1,h_1)$ to $(\phi_2,h_2)$, where $\phi_1$ and $\phi_2$ are
+  ! {\tt p\_basis(1)} and {\tt p\_basis(2)}, $h_1$ and $h_2$ are {\tt
+  ! h\_ref(1)} and {\tt h\_ref(2)}.
+  !
+  ! The solution is only acceptable if $\phi_1 \leq \phi \leq \phi_2$ and
+  ! $(h_1 - h) (h_2-h) \leq 0$ or $|h_1 - h| \leq \tau$ or $|h_2 - h| \leq
+  ! \tau$, where $\phi$ is {\tt p\_grid}, $h$ is {\tt h\_grid}, and $\tau$
+  ! is the height tolerance.
+
+  subroutine Solve_H_Phi ( & ! inputs
+    &                      p_basis, phi_offset, phi_sign, h_ref, a, b, c, &
+    &                      htan_r, req_s, tol, inside, &
+                             ! outputs and inouts
+    &                      h_grid, p_grid, stat, outside )
+
+    use MLSKinds, only: RP
+
+    real(rp), intent(in) :: P_Basis(:) ! Coordinates for H_Ref.  Actually 1:2,
+                                       ! but we don't want to force copy-in if
+                                       ! the actual argument isn't contiguous.
+    real(rp), intent(in) :: Phi_Offset ! Offset from tangent point
+    real(rp), intent(in) :: Phi_Sign   ! Which way from tangent?
+    real(rp), intent(in) :: H_Ref(:)   ! Height reference.  Actually 1:2,
+                                       ! but we don't want to force copy-in if
+                                       ! the actual argument isn't contiguous.
+    real(rp), intent(in) :: A          ! (p_basis(2)-p_basis(1)) * Htan_r
+    real(rp), intent(in) :: B          ! -(h_ref(2) - h_ref(1))
+    real(rp), intent(in) :: C          ! -(h_ref(1)-h_surf) * (p_basis(2)-phi_t)
+                                       ! +(h_ref(2)-h_surf) * (p_basis(1)-phi_t)
+                                       ! +(p_basis(2)-p_basis(1)) * h_tan
+      ! A, B and C are coefficients of a quadratic approximation to the solution
+    real(rp), intent(in) :: Htan_r     ! H_Tan + req
+    real(rp), intent(in) :: Req_s      ! Req - H_Surf
+    real(rp), intent(in) :: Tol        ! Height tolerance for Newton convergence
+    logical, intent(in) :: Inside      ! P_Basis(2) is not the last one in the grid
+    real(rp), intent(inout) :: H_Grid  ! H solution, inout in case there is none
+    real(rp), intent(out) :: P_Grid    ! Phi solution
+    integer, intent(inout) :: Stat     ! "good" or "grid" or "complex" or unchanged
+    logical, intent(out) :: Outside    ! Newton iteration converged to a point
+                                       ! outside p_basis(1:2)
+
+    real(rp) :: D     ! B^2 - 4 a c
+    real(rp) :: H     ! htan_r * ( 1.0_rp + secM1 ) - req_s,
+                      ! ~ htan_r * sec(p) - req + h_surf
+    integer :: N      ! Newton iteration counter
+    integer, parameter :: NMax = 10 ! Maximum number of Newton iterations
+    real(rp) :: P, P2 ! Candidate solution, p^2
+    real(rp) :: Secm1 ! Sec(phi) - 1
+
+    ! Coefficients in expansion of Sec(phi)-1 = c2*phi^2 + c4*phi^4 ...
+    real(rp), parameter :: C2 = 0.5_rp, C4 = 5.0_rp/24, C6 = 61.0_rp/720.0
+    ! Coefficients in expansion of Sec(phi)*Tan(phi) = d/dPhi(sec(phi)-1)
+    real(rp), parameter :: D1 = 2*c2, D3 = 4*c4, D5 = 6*c6 ! ... 2n * c_2n
+
+    ! For debugging output
+    real(rp) :: DD(merge(10,0,debug))
+    character(merge(10,0,debug)) :: OOPS
+
+    outside = .false.
+    d = b*b - 2.0 * a * c ! Actually b^2-4ac, since a is actually 2*A
+    if ( d < 0.0 ) then ! Complex solution, use SWAG method
+      if ( -d < (10.0 * epsilon(d)) * b*b ) then
+        p = -b/a ! D is negative round-off.  Pretend it's zero
+      else ! Use the middle phi to start the Newton iteration
+        stat = complex ! In case Newton iteration doesn't converge
+        p = 0.5 * ( p_basis(1) + p_basis(2) ) - phi_offset
+      end if
+    else
+      p = (-b + phi_sign * sqrt(d) ) / a
+    end if
+    p_grid = p + phi_offset
+    !{Use P in Newton iterations with an expansion for $\sec(\phi)$ that is
+    ! higher order than two.  We don't use $\sec(\phi)-1$ because it suffers
+    ! cancellation for small $\phi$.  Rather, use more terms of its Taylor
+    ! series than we used for the quadratic approximation.
+    do n = 1, nMax
+      p2 = p**2
+      secM1 = p2*((c2+p2*(c4+p2*c6))) ! ~ sec(p)-1 to sixth order
+      d = a*secM1 + b*p + c
+        if ( debug ) dd(n) = d
+      h = htan_r * ( 1.0_rp + secM1 ) - req_s ! ~ htan_r * sec(p) - req + h_surf
+      if ( abs(d) < tol ) then ! difference is small enough
+          if ( newtonDetails ) then
+            write (*, 110) n, p_grid, h+req_s
+        110 format ( 4x,i2,f9.5,f9.3 )
+          end if
+        if ( p_grid >= p_basis(1) .and. p_grid <= p_basis(2) .and. &
+               ! Converged within bounds?
+                &  ( (h-h_ref(1))*(h-h_ref(2)) <= 0.0 .or. &
+               ! or the difference in reference heights is within tolerance and
+               ! the current H is outside the bounds by less than tolerance
+          &    abs(b) < 0.001 .and. &
+          &    ( abs(h-h_ref(1)) < tol .or. &
+          &      abs(h-h_ref(2)) < tol ) ) ) then
+          ! Not extrapolating in phi
+          h_grid = h + req_s
+          p_grid = p_grid
+            if ( debug ) then
+              oops=''
+              if ( abs(h+req_s-htan_r/cos(p)) > 5.0e-4 ) oops='      TRIG'
+            100 format (6x,f9.5,f9.3,23x,f9.3,1p,g14.6,i3,11g10.2)
+              write (*, 100, advance='no') p_grid, h_grid, &
+                & htan_r / cos(p), &
+              ! & htan_r * ( 1.0_rp + p2*((c2+p2*(c4+p2*c6))) ), & ! ~ htan_r * sec(p)
+                & d, n, dd(1:n)
+              write (*, '(2x,a)') trim(adjustl(oops))
+            end if
+          stat = good
+          return
+        end if
+        if ( p_grid > p_basis(2) .and. abs(h-h_ref(2)) > abs(d) &
+          & .and. inside ) then
+          ! Phi is beyond the range, and H is outside by more than the
+          ! move.  Go on to the next columns of H_ref and P_Basis.
+          outside = .true. ! phi is monotone; the rest are in the next column
+          return           ! or even farther over
+        end if
+      end if
+      p = p - d / (a*p*(d1+p2*(d3+p2*d5)) + b) ! do the Newton step
+      p_grid = p + phi_offset
+    end do ! n
+    ! Newton iteration failed to converge.  Use the break point if the
+    ! result is very near to it.  We'll probably find it in the next
+    ! panel, but just in case....
+      if ( debug ) then
+        write (*,100, advance='no') p_grid, h+req_s
+        if ( abs(d) < 0.001_rp ) then
+          write (*,'(a,i3,1p,3g10.2)') " Newton out of bounds  ", n, dd(1:min(n,3))
+        else
+          write (*,'(a,i3,1p,3g10.2)') " Newton didn't converge", n, dd(1:min(n,3))
+        end if
+      end if
+    if ( stat /= grid ) then
+      if ( abs(h-h_ref(1)) <  0.1 .and. &
+        & abs(p_grid-p_basis(1)) < abs(p_grid-p_basis(2)) ) then
+        h_grid = h_ref(1)+req_s
+        p_grid = p_basis(1)
+        stat = grid
+      else if ( abs(h-h_ref(2)) <  0.1 .and. &
+        & abs(p_grid-p_basis(2)) < abs(p_grid-p_basis(1)) ) then
+        h_grid = h_ref(2)+req_s
+        p_grid = p_basis(2)
+        stat = grid
+      end if
+    end if
+    if ( p_grid > p_basis(2) .and. inside ) then
+      outside = .true. ! phi is monotone; the rest are in the next column
+      return           ! or even farther over
+    end if
+
+  end subroutine Solve_H_Phi
 
   ! -----------------------------------------------  More_Metrics  -----
   subroutine More_Metrics ( &
@@ -642,9 +721,6 @@ path: do i = i1, i2
     integer :: col2(size(vert_inds))        ! Last nonzero in rows of Eta_P
 
     real(rp) :: ETA_P(size(vert_inds),size(p_basis))
-
-    ! For debugging output format:
-    logical, parameter :: clean = .false.
 
 !   It would be nice to do this the first time only, but the
 !   retrieve command in the L2CF can now change switches
@@ -757,6 +833,119 @@ path: do i = i1, i2
 
   end subroutine More_Metrics
 
+  ! ------------------------------------------------  More_Points  -----
+                         ! Inputs:
+  subroutine More_Points (  phi_t, tan_ind, p_basis, z_ref, h_ref, req,  &
+                         &  h_surf, h_tan, p_grid,                       &
+                         ! Outputs:
+                         &  z_new, h_new, p_new, n_new,                  &
+                         ! Optional inputs:
+                         &  h_tol )
+
+    ! Check for path crossings in h_ref from tan_ind down, which Height_Metrics
+    ! doesn't do.
+
+    use MLSKinds, only: RP
+    ! inputs:
+
+    real(rp), intent(in) :: phi_t      ! Orbit projected tangent geodetic angle
+    integer, intent(in) :: tan_ind     ! Tangent height index, 1 = center of
+    !                                     longest path
+    real(rp), intent(in) :: p_basis(:) ! Horizontal temperature representation
+    !                                     basis
+    real(rp), intent(in) :: z_ref(:)   ! Reference zetas
+    real(rp), intent(in) :: h_ref(:,:) ! Heights by z_ref and p_basis
+    real(rp), intent(in) :: req        ! Equivalent elliptical earth radius
+    real(rp), intent(in) :: H_Surf     ! Height at the Earth surface
+    real(rp), intent(in) :: H_Tan      ! Tangent height above H_Surf -- negative
+    !                                     for Earth-intersecting ray
+    real(rp), intent(in) :: p_grid(:)  ! From Height_Metrics
+
+    ! outputs:
+    real(rp), intent(out) :: z_new(:)  ! computed zetas
+    real(rp), intent(out) :: h_new(:)  ! computed heights, referenced to Earth center
+    real(rp), intent(out) :: p_new(:)  ! computed phis
+    integer, intent(out) :: n_new      ! How many points put into h_new, p_new
+
+    ! optional inputs
+    real(rp), optional, intent(in) :: H_Tol ! Height tolerance in kilometers
+                                       !   for convergence of phi/h iteration
+
+    ! Local variables
+    real(rp) :: A, B, C
+    real(rp) :: H1, H2    ! Height along line of sight at p_basis(j-1:j)
+    real(rp) :: Htan_r    ! H_Tan + Req
+    integer :: I, J
+    real(rp) :: My_H_Tol
+    logical :: None
+    logical :: Outside
+    integer :: P_Coeffs
+    real(rp) :: Phi_Offset
+    real(rp) :: Phi_Sign
+    real(rp) :: REQ_S      ! Req - H_Surf
+    integer :: Stat
+
+    my_h_tol = 0.001_rp ! kilometers
+    if ( present(h_tol) ) my_h_tol = h_tol ! H_Tol is in kilometers
+    hTan_r = H_Tan + Req
+    p_coeffs = size(p_basis)
+    req_s = req - h_surf
+    n_new = 0
+    h2 = 0.0 ! Just so it's defined; this value is never used
+    do i = tan_ind, 1, -1
+      none = .true. ! Assume there will be no intersections
+      do j = 1, size(h_ref,2)
+        if ( h_tan < 0.0 .and. phi_t > p_basis(j) ) then ! Earth-intersecting ray
+          phi_offset = phi_t - 2.0_rp*Acos((req+h_tan)/req)
+        else
+          phi_offset = phi_t
+        end if
+        h1 = h2
+        h2 = hTan_r / cos(p_basis(j) - phi_offset) - req_s
+        if ( j == 1 ) cycle ! It takes two to tango
+        if ( (h1-h_ref(i,j-1)) * (h2-h_ref(i,j)) < 0.0 ) then
+          ! Line of sight intersects constant-zeta surface.
+          n_new = n_new + 1
+          phi_sign = sign(1.0_rp,phi_t-p_basis(j-1))
+          a = (p_basis(j)-p_basis(j-1)) * hTan_r
+          b = -(h_ref(i,j)-h_ref(i,j-1))
+          c = -(h_ref(i,j-1)-h_surf)*(p_basis(j  )-phi_t) &
+            & +(h_ref(i,j  )-h_surf)*(p_basis(j-1)-phi_t) &
+            & +(p_basis(j)-p_basis(j-1)) * h_tan
+          stat = no_sol
+          call Solve_H_Phi ( p_basis(j-1:j), phi_offset, phi_sign, &
+          &                h_ref(i,j-1:j), a, b, c, &
+          &                htan_r, req_s, my_h_tol, i /= tan_ind .or. j /= p_coeffs, &
+          &                h_new(n_new), p_new(n_new), stat, outside )
+          if ( stat == grid ) then
+            if ( minval(abs(h_new(n_new)- h_ref(i,j-1:j))) > my_h_tol ) then
+              stat = no_sol
+              n_new = n_new - 1
+              cycle
+            end if
+          end if
+          if ( stat == no_sol .or. stat == complex .or. outside ) then
+            ! What's going on?
+            n_new = n_new - 1
+          else
+            if ( minval(abs(p_new(n_new)-p_grid)) < 1.0e-4 ) then
+              stat = no_sol
+              n_new = n_new - 1
+            else
+              none = .false. ! There is an intersection in this row of H_Ref
+              z_new(n_new) = z_ref(i)
+            end if
+          end if
+        end if
+        if ( n_new == size(z_new)-1 ) return ! No room for any more
+      end do ! j
+      if ( none ) exit ! Heights are monotone in each column of H_Ref, so if
+                       ! there aren't any intersections in this row, there
+                       ! aren't any others farther down.
+    end do ! i
+
+  end subroutine More_Points
+
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -769,6 +958,10 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.43  2007/01/20 01:07:49  vsnyder
+! Use Earth-intersection phi instead of tangent phi to compute tangent
+! temerature derivatives, do some decrufting too.
+!
 ! Revision 2.42  2007/01/19 02:38:53  vsnyder
 ! Include water in phi refractive correction
 !
