@@ -269,7 +269,7 @@ contains
     integer, intent(out) :: Status ! 0 = OK, 1 = failed to bracket root,
                                    ! 2 = too many iterations
 
-    integer(ip) :: j, j1, j2, k, m, no_ele
+    integer(ip) :: j, j1, j2, k, m, no_ele, stat
 
     real(rp) :: INTEGRAND_GL(Ng)
 
@@ -279,6 +279,7 @@ contains
     real(rp), parameter :: Tiny = 1.0e-8_rp
 
     status = 0
+    stat = 0
 
     no_ele = size(n_path)
 
@@ -333,8 +334,9 @@ jl:   do j = j1+1, j2
           q = xm + ym * gx(k)       ! Gauss abscissa
           ! Solve h*(1+n1*exp(eps*(h-h1))) = sqrt(q*q + nt2ht2) for h
           call solve_hn ( sqrt(q*q + nt2ht2) )
-          if ( h < 0.0 ) then
-            ref_corr(j) = ref_corr(j-1)
+          status = max(status,stat)
+          if ( stat == 1 ) then
+            ref_corr(j) = ref_corr(j-1+2*m)
             cycle jl
           end if
           integrand_gl(k) = 1.0_rp/(n+h*dndh) ! = 1 / d(nh)/dh
@@ -355,19 +357,20 @@ jl:   do j = j1+1, j2
   !------------------------------------------------------------------
   ! Solve the equation h*(1.0+N(h)) = N*H, where N(h) is an exponential:
   !    N(h) = n1*Exp(eps*(h-h1))
+  ! using a Newton iteration
 
     subroutine Solve_Hn ( NH )
 
       real(rp), intent(in) :: NH
 
       integer :: iter
-      real(rp) :: E ! exp(eps * (v2-h1))
-      real(rp) :: v1, v2, f1, f2, df, hpos, hneg
-
-      integer,  parameter :: Max_Iter = 20
+      real(rp) :: E ! N1 * exp(eps * (h-h1))
+      real(rp) :: h_old, f1, f2, dh, hpos, hneg
 
       character(LEN=*), parameter :: Msg1 = &
         & 'From Solve_Hn routine: Could not bracket the root'
+
+      integer,  parameter :: Max_Iter = 20
       character(LEN=*), parameter :: Msg2 = &
         & 'From Solve_Hn routine: Did not converge within 20 iterations'
 
@@ -375,59 +378,63 @@ jl:   do j = j1+1, j2
        f2 = h2 * (1.0_rp + n2) - NH
 
        if ( f1*f2 > 0.0_rp ) then
-         H = -1.0_rp
          call MLSMessage ( MLSMSG_Warning, ModuleName, Msg1)
-         status = 1
-         return 
-       end if
-
-       if ( f1 <= 0.0_rp ) then
-         hneg = h1
-         hpos = h2
+         stat = 1
+         h = 0.5 * ( h1 + h2 )
+         hneg = -huge(hneg)
+         hpos = huge(hpos)
        else
-         hpos = h1
-         hneg = h2
+         if ( f1 <= 0.0_rp ) then
+           hneg = h1
+           hpos = h2
+         else
+           hpos = h1
+           hneg = h2
+         end if
+         h = (h1 * abs(f2) + h2 * abs(f1)) / (abs(f1) + abs(f2))
        end if
 
        iter = 1
-       v2 = (h1 * abs(f2) + h2 * abs(f1)) / (abs(f1) + abs(f2))
-       e = n1 * exp(eps*(v2-h1))
-       f2 = v2 * (1.0_rp + e ) - NH
-       df = 1.0_rp + e * ( 1.0_rp + eps * v2 )
 
        do
 
-         v1 = v2
-         f1 = f2
+         h_old = h
 
-         v2 = v1 - f1 / df
+         e = n1 * exp(eps*(h-h1))
+         f2 = h * (1.0_rp + e ) - NH
+         if ( abs(f2) < tiny ) exit ! Are we near a zero?
 
-         if ( v2 < min(hpos,hneg) .OR. v2 > max(hpos,hneg) ) &
-             &  v2 = 0.5_rp * (hneg + hpos)
+         dh = f2 / ( 1.0_rp + e * ( 1.0_rp + eps * h ) ) ! f2 / (d f2 / dh)
 
-         e = n1 * exp(eps*(v2-h1))
-         f2 = v2 * (1.0_rp + e ) - NH
+         h = h_old - dh ! Take the Newton move
 
-         if ( abs(f2) < tiny .or. abs(v2-v1) < tiny ) exit
+         if ( abs(dh) < tiny ) exit ! Is the Newton move tiny?
+
+         if ( h < min(hpos,hneg) .OR. h > max(hpos,hneg) ) &
+             &  h = 0.5_rp * (hneg + hpos) ! Keep H in bounds
 
          if ( iter >= max_iter ) then
            call MLSMessage ( MLSMSG_Warning, ModuleName, Msg2 )
-           status = 2
+           stat = 2
            exit
          end if
 
          if ( f2 < 0.0_rp ) then
-           hneg = v2
+           hneg = h
          else
-           hpos = v2
+           hpos = h
          end if
 
          iter = iter + 1
-         df = 1.0_rp + e * ( 1.0_rp + eps * v2 )
 
        end do
 
-       H = v2
+       if ( stat == 1 ) then
+         ! Maybe the solution is good even though we couldn't initially
+         ! bracket it
+         if ( (h-h1)*(h-h2) <= 0.0 ) stat = 0
+       end if
+
        N = 1.0_rp + e
        dndh = eps * e
 
@@ -446,8 +453,12 @@ jl:   do j = j1+1, j2
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
 
-END module REFRACTION_M
+end module REFRACTION_M
+
 ! $Log$
+! Revision 2.26  2006/12/13 02:32:03  vsnyder
+! Drag the tangent point around instead of assuming it's the middle one
+!
 ! Revision 2.25  2006/06/29 19:31:59  vsnyder
 ! Use entire integration formula, not just interior points, in case of Lobatto
 !
