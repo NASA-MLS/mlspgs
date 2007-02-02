@@ -279,7 +279,6 @@ contains
     real(rp), parameter :: Tiny = 1.0e-8_rp
 
     status = 0
-    stat = 0
 
     no_ele = size(n_path)
 
@@ -354,9 +353,11 @@ jl:   do j = j1+1, j2
     end do ! m
 
   contains
-  !------------------------------------------------------------------
+
+  ! .................................................... Solve_Hn  .....
+
   ! Solve the equation h*(1.0+N(h)) = N*H, where N(h) is an exponential:
-  !    N(h) = n1*Exp(eps*(h-h1))
+  !    N(h) = n1*Exp(eps*(h-h1)), for h,
   ! using a Newton iteration
 
     subroutine Solve_Hn ( NH )
@@ -374,69 +375,64 @@ jl:   do j = j1+1, j2
       character(LEN=*), parameter :: Msg2 = &
         & 'From Solve_Hn routine: Did not converge within 20 iterations'
 
-       f1 = h1 * (1.0_rp + n1) - NH
-       f2 = h2 * (1.0_rp + n2) - NH
+      stat = 0 ! Assume it will work
+      f1 = h1 * (1.0_rp + n1) - NH ! residual at H = H1
+      f2 = h2 * (1.0_rp + n2) - NH ! residual at H = H2
 
-       if ( f1*f2 > 0.0_rp ) then
-         call MLSMessage ( MLSMSG_Warning, ModuleName, Msg1)
-         stat = 1
-         h = 0.5 * ( h1 + h2 )
-         hneg = -huge(hneg)
-         hpos = huge(hpos)
-       else
-         if ( f1 <= 0.0_rp ) then
-           hneg = h1
-           hpos = h2
-         else
-           hpos = h1
-           hneg = h2
-         end if
-         h = (h1 * abs(f2) + h2 * abs(f1)) / (abs(f1) + abs(f2))
-       end if
+      if ( f1*f2 > 0.0_rp ) then ! start in the middle
+        call MLSMessage ( MLSMSG_Warning, ModuleName, Msg1)
+        stat = 1
+        h = 0.5 * ( h1 + h2 )
+      else ! start at the mean of the ends weighted by the other's residuals
+        h = (h1 * abs(f2) + h2 * abs(f1)) / (abs(f1) + abs(f2))
+      end if
+      hneg = h1
+      hpos = h2
 
-       iter = 1
+      iter = 1
 
-       do
+      do
 
-         h_old = h
+        h_old = h
 
-         e = n1 * exp(eps*(h-h1))
-         f2 = h * (1.0_rp + e ) - NH
-         if ( abs(f2) < tiny ) exit ! Are we near a zero?
+        e = n1 * exp(eps*(h-h1))
+        f2 = h * (1.0_rp + e ) - NH
+        if ( abs(f2) < tiny ) exit ! Are we near a zero?
 
-         dh = f2 / ( 1.0_rp + e * ( 1.0_rp + eps * h ) ) ! f2 / (d f2 / dh)
+        dh = f2 / ( 1.0_rp + e * ( 1.0_rp + eps * h ) ) ! f2 / (d f2 / dh)
 
-         h = h_old - dh ! Take the Newton move
+        h = h_old - dh ! Take the Newton move
 
-         if ( abs(dh) < tiny ) exit ! Is the Newton move tiny?
+        if ( abs(dh) < tiny ) exit ! Is the Newton move tiny?
 
-         if ( h < min(hpos,hneg) .OR. h > max(hpos,hneg) ) &
-             &  h = 0.5_rp * (hneg + hpos) ! Keep H in bounds
+        if ( (h-hneg)*(h-hpos) > 0.01 * (hpos-hneg)**2 ) &
+!         if ( h < min(hpos,hneg) .OR. h > max(hpos,hneg) ) &
+            &  h = 0.5_rp * (hneg + hpos) ! Keep H in bounds
 
-         if ( iter >= max_iter ) then
-           call MLSMessage ( MLSMSG_Warning, ModuleName, Msg2 )
-           stat = 2
-           exit
-         end if
+        if ( iter >= max_iter ) then
+          call MLSMessage ( MLSMSG_Warning, ModuleName, Msg2 )
+          stat = 2
+          exit
+        end if
 
-         if ( f2 < 0.0_rp ) then
-           hneg = h
-         else
-           hpos = h
-         end if
+        if ( f2 < 0.0_rp ) then
+          hneg = h
+        else
+          hpos = h
+        end if
 
-         iter = iter + 1
+        iter = iter + 1
 
-       end do
+      end do
 
-       if ( stat == 1 ) then
-         ! Maybe the solution is good even though we couldn't initially
-         ! bracket it
-         if ( (h-h1)*(h-h2) <= 0.0 ) stat = 0
-       end if
+      if ( stat == 1 ) then
+        ! Maybe the solution is good even though we couldn't initially
+        ! bracket it
+        if ( (h-h1)*(h-h2) <= 0.0 ) stat = 0
+      end if
 
-       N = 1.0_rp + e
-       dndh = eps * e
+      N = 1.0_rp + e
+      dndh = eps * e
 
     end subroutine Solve_Hn
 
@@ -456,6 +452,9 @@ jl:   do j = j1+1, j2
 end module REFRACTION_M
 
 ! $Log$
+! Revision 2.27  2007/02/01 02:51:07  vsnyder
+! Improve Newton iteration in Solve_HN
+!
 ! Revision 2.26  2006/12/13 02:32:03  vsnyder
 ! Drag the tangent point around instead of assuming it's the middle one
 !
