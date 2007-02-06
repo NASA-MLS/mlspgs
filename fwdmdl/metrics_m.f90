@@ -445,19 +445,18 @@ path: do i = i1, i2
         if ( outside ) then
            ! phi is monotone; the remaining solutions are in the next
            ! column or even farther over, and not before the current row
+           ! or the oldest "bad" row in this column.
           i1 = min(i,ibad)   
           ibad = i2
           exit
         end if
         if ( stat(i) == good ) cycle ! Newton iteration ended successfully
         ibad=min(i,ibad)
-        if ( stat(i) == complex ) then ! Complex solution
+        if ( (debug .or. complexDebug) .and. stat(i) == complex ) then ! Complex solution
             if ( debug ) &
               & print '(i4,i2,18x,f11.3,f12.3,1x,a)', &
                 & i, j, h_ref(k,j)+req_s, h_ref(k,j+1)+req_s, 'Complex solution'
-          call MLSMessage ( MLSMSG_Warning, ModuleName, &
-            & "Complex starting value for Newton iteration shouldn't happen" )
-              if ( complexDebug ) then
+            if ( complexDebug ) then
               call output ( req, before='&in Req = ' )
               call output ( h_surf, before=', H_Surf = ' )
               call output ( h_tan, before=', H_Tan = ', after=',', advance='yes' )
@@ -474,7 +473,7 @@ path: do i = i1, i2
         if ( debug ) &
           & print *, 'no_bad_fits =', no_bad_fits, ', no_grid+fits =', no_grid_fits
       call MLSMessage ( MLSMSG_Error, ModuleName, &
-       &                "Height_Metrics failed to find H/Phi solution" )
+       & "Height_Metrics failed to find H/Phi solution for some path segment" )
     end if
 
     ! Since we have solved for the intersection of sec(phi) with the heights
@@ -547,8 +546,10 @@ path: do i = i1, i2
 
     ! Coefficients in expansion of Sec(phi)-1 = c2*phi^2 + c4*phi^4 ...
     real(rp), parameter :: C2 = 0.5_rp, C4 = 5.0_rp/24, C6 = 61.0_rp/720.0
+    real(rp), parameter :: C8 = 277.0_rp/8064
     ! Coefficients in expansion of Sec(phi)*Tan(phi) = d/dPhi(sec(phi)-1)
     real(rp), parameter :: D1 = 2*c2, D3 = 4*c4, D5 = 6*c6 ! ... 2n * c_2n
+    real(rp), parameter :: D7 = 8*c8
 
     ! For debugging output
     real(rp) :: DD(merge(10,0,debug))
@@ -573,7 +574,7 @@ path: do i = i1, i2
     ! series than we used for the quadratic approximation.
     do n = 1, nMax
       p2 = p**2
-      secM1 = p2*((c2+p2*(c4+p2*c6))) ! ~ sec(p)-1 to sixth order
+      secM1 = p2*(c2+p2*(c4+p2*(c6+p2*c8))) ! ~ sec(p)-1 to eighth order
       d = a*secM1 + b*p + c
         if ( debug ) dd(n) = d
       h = htan_r * ( 1.0_rp + secM1 ) - req_s ! ~ htan_r * sec(p) - req + h_surf
@@ -604,7 +605,7 @@ path: do i = i1, i2
           return           ! or even farther over
         end if
       end if
-      p = p - d / (a*p*(d1+p2*(d3+p2*d5)) + b) ! do the Newton step
+      p = p - d / (a*p*(d1+p2*(d3+p2*(d5+p2*d7))) + b) ! do the Newton step
       p_grid = p + phi_offset
     end do ! n
     if ( debug ) then
@@ -902,8 +903,7 @@ path: do i = i1, i2
     logical :: Outside
     integer :: P_Coeffs
     real(rp) :: Phi_Offset
-    real(rp) :: Phi_Sign
-    real(rp) :: REQ_S      ! Req - H_Surf
+    real(rp) :: REQ_S     ! Req - H_Surf
     integer :: Stat
 
     my_h_tol = 0.001_rp ! kilometers
@@ -925,16 +925,15 @@ path: do i = i1, i2
         h2 = hTan_r / cos(p_basis(j) - phi_offset) - req_s
         if ( j == 1 ) cycle ! It takes two to tango
         if ( (h1-h_ref(i,j-1)) * (h2-h_ref(i,j)) < 0.0 ) then
-          ! Line of sight intersects constant-zeta surface.
+          ! Line of sight intersects constant-zeta surface.  Solve for where.
           n_new = n_new + 1
-          phi_sign = sign(1.0_rp,phi_t-p_basis(j-1))
           a = (p_basis(j)-p_basis(j-1)) * hTan_r
           b = -(h_ref(i,j)-h_ref(i,j-1))
           c = -(h_ref(i,j-1)-h_surf)*(p_basis(j  )-phi_t) &
             & +(h_ref(i,j  )-h_surf)*(p_basis(j-1)-phi_t) &
             & +(p_basis(j)-p_basis(j-1)) * h_tan
           stat = no_sol
-          call Solve_H_Phi ( p_basis(j-1:j), phi_offset, phi_sign, &
+          call Solve_H_Phi ( p_basis(j-1:j), phi_offset, sign(1.0_rp,phi_t-p_basis(j-1)), &
           &                h_ref(i,j-1:j), a, b, c, &
           &                htan_r, req_s, my_h_tol, i /= tan_ind .or. j /= p_coeffs, &
           &                h_new(n_new), p_new(n_new), stat, outside )
@@ -950,6 +949,7 @@ path: do i = i1, i2
             n_new = n_new - 1
           else
             if ( minval(abs(p_new(n_new)-p_grid)) < 1.0e-4 ) then
+              ! New one is too close to a grid point -- ignore it.
               stat = no_sol
               n_new = n_new - 1
             else
@@ -979,6 +979,9 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.45  2007/02/06 21:09:29  vsnyder
+! Don't skip unsolved segments when going to next phi
+!
 ! Revision 2.44  2007/02/01 02:53:15  vsnyder
 ! Make Solve_H_Phi a subroutine, add More_Points subroutine
 !
