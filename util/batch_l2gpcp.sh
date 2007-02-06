@@ -247,17 +247,21 @@ do
     oldswaths="$oldswath1,IWP-StdProd"
     newswaths="$newswath1,IWP"
     ;;
+  O3 )
+    oldswaths="O3-StdProd column-MLS,O3-StdProd column-GEOS5,O3-StdProd"
+    newswaths="O3 column-MLS,O3 column-GEOS5,O3"
+    ;;
   Temperature )
-    oldswaths="$oldswath1,WMOTPPressure-StdProd"
-    newswaths="$newswath1,WMOTPPressure"
+    oldswaths="$oldswath1,WMOTPPressure-StdProd-MLS,WMOTPPressure-StdProd-GEOS5"
+    newswaths="$newswath1,WMOTPPressure-MLS,WMOTPPressure-GEOS5"
     ;;
   RHI )
     oldswaths="$oldswath1"
     newswaths="$newswath1"
     ;;
   * )
-    oldswaths="$oldswath1,$oldswath2"
-    newswaths="$newswath1,$newswath2"
+    oldswaths="$oldswath1"
+    newswaths="$newswath1"
     ;;
   esac
   
@@ -273,3 +277,6 @@ do
 done
 exit
 # $Log$
+# Revision 1.1  2006/09/29 00:32:41  pwagner
+# First commit
+#
