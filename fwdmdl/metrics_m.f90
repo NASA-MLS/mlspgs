@@ -32,6 +32,7 @@ module Metrics_m
   ! To control debugging
   logical, parameter :: Debug = .false.
   logical, parameter :: NewtonDetails = .true. .and. debug
+  logical, parameter :: ComplexDebug = .true. .and. debug
   ! For debugging output format:
   logical, parameter :: Clean = .false.
 
@@ -254,7 +255,7 @@ contains
     integer :: H_Phi_Dump  ! 0 = no dump, >0 = dump
     integer :: H_Phi_Stop  ! 0 = no dump, >0 = dump/stop
     integer :: First, Last ! Nonzeros in Eta_T
-    integer :: I, I1, I2, J, K
+    integer :: I, I1, I2, IBAD, J, K
     integer :: NO_BAD_FITS
     integer :: NO_GRID_FITS
     integer :: N_PATH      ! Path length = 2*(size(z_ref)+1-tan_ind)
@@ -321,7 +322,7 @@ contains
       call output ( tan_ind, before=', tan_ind = ' )
       call output ( req, format='(f7.2)', before=', req = ', advance='yes' )
       call dump ( phi_offset, name='phi_offset', clean=clean )
-      call dump ( h_ref(tan_ind:n_vert,:), name='h_ref', clean=clean )
+      call dump ( h_ref(tan_ind:n_vert,:)+req_s, name='h_ref+req_s', format='(f14.3)',clean=clean )
 !     call dump ( z_ref(tan_ind:n_vert), name='z_ref', clean=clean )
     end if
 
@@ -413,6 +414,7 @@ contains
     ! H\_ref}.  For I $<$ N\_Tan, try the minimum solution, otherwise try
     ! the maximum solution.
 
+    ibad = i2 ! Index of row of first failure in a column
 phi:do j = 1, p_coeffs-1
       dp = p_basis(j+1)-p_basis(j)
       a = dp * htan_r ! Actually 2*A
@@ -422,7 +424,7 @@ path: do i = i1, i2
         if ( stat(i) == good ) cycle ! probably the tangent point
         k = vert_inds(i)
           if ( newtonDetails ) &
-            & write ( *, 120 ) i, j, h_ref(k,j)+req_s, h_ref(k,j+1)+req_s
+            & print 120, i, j, h_ref(k,j)+req_s, h_ref(k,j+1)+req_s
           120 format ( i4, i2, 18x, f11.3,f12.3 )
         k = vert_inds(i)
         b = -(h_ref(k,j+1) - h_ref(k,j)) ! h_surf cancels here
@@ -441,17 +443,29 @@ path: do i = i1, i2
           no_bad_fits = no_bad_fits - 1
         end if
         if ( outside ) then
-          i1 = i    ! phi is monotone; the remaining solutions are in the next
-          exit      ! column or even farther over, and not before the current row
+           ! phi is monotone; the remaining solutions are in the next
+           ! column or even farther over, and not before the current row
+          i1 = min(i,ibad)   
+          ibad = i2
+          exit
         end if
         if ( stat(i) == good ) cycle ! Newton iteration ended successfully
+        ibad=min(i,ibad)
         if ( stat(i) == complex ) then ! Complex solution
             if ( debug ) &
-              & write (*, '(i4,i2,18x,f11.3,f12.3,1x,a)' ) &
+              & print '(i4,i2,18x,f11.3,f12.3,1x,a)', &
                 & i, j, h_ref(k,j)+req_s, h_ref(k,j+1)+req_s, 'Complex solution'
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & "Complex starting value for Newton iteration shouldn't happen" )
-          cycle
+              if ( complexDebug ) then
+              call output ( req, before='&in Req = ' )
+              call output ( h_surf, before=', H_Surf = ' )
+              call output ( h_tan, before=', H_Tan = ', after=',', advance='yes' )
+              call output ( phi_t, before='  Phi_T = ' )
+              call output ( tan_ind, before=', tan_ind = ', advance='yes' )
+              call dump ( h_ref, name='h_ref' )
+              call dump ( p_basis, name='p_basis' )
+            end if
         end if
       end do path ! i
     end do phi ! j
@@ -497,6 +511,7 @@ path: do i = i1, i2
     &                      h_grid, p_grid, stat, outside )
 
     use MLSKinds, only: RP
+    use Output_m, only: OUTPUT
 
     real(rp), intent(in) :: P_Basis(:) ! Coordinates for H_Ref.  Actually 1:2,
                                        ! but we don't want to force copy-in if
@@ -542,12 +557,12 @@ path: do i = i1, i2
     outside = .false.
     d = b*b - 2.0 * a * c ! Actually b^2-4ac, since a is actually 2*A
     if ( d < 0.0 ) then ! Complex solution, use SWAG method
-      if ( -d < (10.0 * epsilon(d)) * b*b ) then
-        p = -b/a ! D is negative round-off.  Pretend it's zero
-      else ! Use the middle phi to start the Newton iteration
-        stat = complex ! In case Newton iteration doesn't converge
-        p = 0.5 * ( p_basis(1) + p_basis(2) ) - phi_offset
-      end if
+      ! Pretend D is zero
+      p = -b/a
+      p = min(max(p,p_basis(1)-phi_offset),p_basis(2)-phi_offset)
+      stat = complex ! In case Newton iteration doesn't converge
+        if ( debug ) call output ( p + phi_offset, format='(f15.5)', &
+          & after='  Complex starting point', advance='yes' )
     else
       p = (-b + phi_sign * sqrt(d) ) / a
     end if
@@ -563,11 +578,7 @@ path: do i = i1, i2
         if ( debug ) dd(n) = d
       h = htan_r * ( 1.0_rp + secM1 ) - req_s ! ~ htan_r * sec(p) - req + h_surf
       if ( abs(d) < tol ) then ! difference is small enough
-          if ( newtonDetails ) then
-            write (*, 110) n, p_grid, h+req_s
-        110 format ( 4x,i2,f9.5,f9.3 )
-          end if
-        if ( p_grid >= p_basis(1) .and. p_grid <= p_basis(2) .and. &
+        if ( (p_grid-p_basis(1)) * (p_grid-p_basis(2)) <= 0.0 .and. &
                ! Converged within bounds?
                 &  ( (h-h_ref(1))*(h-h_ref(2)) <= 0.0 .or. &
                ! or the difference in reference heights is within tolerance and
@@ -577,18 +588,8 @@ path: do i = i1, i2
           &      abs(h-h_ref(2)) < tol ) ) ) then
           ! Not extrapolating in phi
           h_grid = h + req_s
-          p_grid = p_grid
-            if ( debug ) then
-              oops=''
-              if ( abs(h+req_s-htan_r/cos(p)) > 5.0e-4 ) oops='      TRIG'
-            100 format (6x,f9.5,f9.3,23x,f9.3,1p,g14.6,i3,11g10.2)
-              write (*, 100, advance='no') p_grid, h_grid, &
-                & htan_r / cos(p), &
-              ! & htan_r * ( 1.0_rp + p2*((c2+p2*(c4+p2*c6))) ), & ! ~ htan_r * sec(p)
-                & d, n, dd(1:n)
-              write (*, '(2x,a)') trim(adjustl(oops))
-            end if
           stat = good
+          if ( debug ) exit
           return
         end if
         if ( p_grid > p_basis(2) .and. abs(h-h_ref(2)) > abs(d) &
@@ -596,12 +597,32 @@ path: do i = i1, i2
           ! Phi is beyond the range, and H is outside by more than the
           ! move.  Go on to the next columns of H_ref and P_Basis.
           outside = .true. ! phi is monotone; the rest are in the next column
+          if ( debug ) then
+            h_grid = h + req_s
+            exit
+          end if
           return           ! or even farther over
         end if
       end if
       p = p - d / (a*p*(d1+p2*(d3+p2*d5)) + b) ! do the Newton step
       p_grid = p + phi_offset
     end do ! n
+    if ( debug ) then
+      if ( stat == good .or. outside ) then
+        if ( debug ) then
+          oops=''
+          if ( abs(h+req_s-htan_r/cos(p)) > 5.0e-4 ) oops='      TRIG'
+        100 format (f15.5,f9.3,f11.3,f12.3,f9.3,1p,g14.6,i3,11g10.2)
+          write (*, 100, advance='no') p_grid, h_grid, &
+            & h_ref(1)+req_s, h_ref(2)+req_s, &
+            & htan_r / cos(p), &
+          ! & htan_r * ( 1.0_rp + p2*((c2+p2*(c4+p2*c6))) ), & ! ~ htan_r * sec(p)
+            & d, n, dd(1:n)
+          write (*, '(2x,a)') trim(adjustl(oops))
+        end if
+      end if
+      return
+    end if
     ! Newton iteration failed to converge.  Use the break point if the
     ! result is very near to it.  We'll probably find it in the next
     ! panel, but just in case....
@@ -958,6 +979,9 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.44  2007/02/01 02:53:15  vsnyder
+! Make Solve_H_Phi a subroutine, add More_Points subroutine
+!
 ! Revision 2.43  2007/01/20 01:07:49  vsnyder
 ! Use Earth-intersection phi instead of tangent phi to compute tangent
 ! temerature derivatives, do some decrufting too.
