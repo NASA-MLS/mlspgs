@@ -12,7 +12,8 @@
 ! $Id$
 !   subroutine allstats*( values, &
 !        & nbins, bounds, addedData, fillValue, precision, &
-!        & count, min, max, mean, stddev, rms, median, bincount, doDump )
+!        & count, fillcount, min, max, mean, stddev, rms, median, bincount, &
+!        & doDump )
         ! Args
         real(rk), dimension(:), intent(in)             :: values
         integer, optional, intent(in)                  :: nbins
@@ -21,6 +22,7 @@
         real(rk), optional, intent(in)                 :: fillValue
         real(rk), dimension(:), optional, intent(in)   :: precision
         integer, optional, intent(inout)               :: count
+        integer, optional, intent(inout)               :: fillcount
         real(rk), optional, intent(out)                :: min
         real(rk), optional, intent(out)                :: max
         real(rk), optional, intent(out)                :: mean
@@ -68,7 +70,8 @@
           endif
         else
           stats(1) = 0  ! Reset count to start again
-          if ( DEEBUG ) call output('Resetting count to 0', advance='yes')
+          MLSStat%fillCount = 0
+          if ( DEEBUG ) call output('Resetting counts to 0', advance='yes')
         endif
         if ( present(fillValue) ) then
           call filterValues(values, XTAB, NX, fillValue=fillValue)
@@ -115,6 +118,7 @@
         MLSStat%stddev = stats(5)
         MLSStat%rms    = myRMS
         if ( present(count ) ) count  = stats(1)
+        if ( present(fillcount) ) fillcount = MLSStat%fillcount
         if ( present(min   ) ) min    = stats(2)
         if ( present(max   ) ) max    = stats(3)
         if ( present(mean  ) ) mean   = stats(4)
@@ -130,6 +134,9 @@
           call output(fillValue)
           call output(')')
         endif
+        if ( present(precision) ) then
+          call output(' (ignoring any values where supplied precision < 0')
+        endif
         call newline
         fields = ' '
         if ( present(count ) ) fields = catLists(fields, 'count')
@@ -140,6 +147,7 @@
         if ( present(rms   ) ) fields = catLists(fields, 'rms  ')
         if ( present(median) ) fields = catLists(fields, 'median')
         if ( present(bincount) ) fields = catLists(fields, 'bin')
+        if ( present(fillcount) ) fields = catLists(fields, 'fillcount')
         ! call output('fields: ' // trim(fields), advance='yes')
         call dump( MLSStat, fields )
 contains
@@ -171,6 +179,8 @@ contains
     ! (If even, would you prefer to split: median = (x1 +x2)/2?)
     ! No, because then the median value wouldn't actually be in the array
     
+    ! This method is so slow it's been superseded by method 2
+
     ! Dummy args
     real(rk), dimension(:), intent(in) :: array
     integer, intent(in)                :: N
@@ -223,6 +233,9 @@ contains
 ! end subroutine sllstats*
 
 ! $Log$
+! Revision 1.4  2006/08/22 00:04:25  pwagner
+! speedier median algorithm
+!
 ! Revision 1.3  2006/07/11 00:25:44  pwagner
 ! Show relation of ignored fill values
 !
