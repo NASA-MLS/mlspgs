@@ -185,7 +185,8 @@ contains
       ! ------------------- allstats_d1r4 -----------------------
       subroutine allstats_d1r4( values, &
         & nbins, bounds, addedData, fillValue, precision, &
-        & count, min, max, mean, stddev, rms, median, bincount, doDump )
+        & count, fillcount, min, max, mean, stddev, rms, median, bincount, &
+        & doDump )
         integer, parameter :: rk = r4
         include 'allstats_d1.f9h'
       end subroutine allstats_d1r4
@@ -193,7 +194,8 @@ contains
       ! ------------------- allstats_d1r8 -----------------------
       subroutine allstats_d1r8( values, &
         & nbins, bounds, addedData, fillValue, precision, &
-        & count, min, max, mean, stddev, rms, median, bincount, doDump )
+        & count, fillcount, min, max, mean, stddev, rms, median, bincount, &
+        & doDump )
         integer, parameter :: rk = r8
         include 'allstats_d1.f9h'
       end subroutine allstats_d1r8
@@ -201,7 +203,8 @@ contains
       ! ------------------- allstats_d2r4 -----------------------
       subroutine allstats_d2r4( values, &
         & nbins, bounds, addedData, fillValue, precision, &
-        & count, min, max, mean, stddev, rms, median, bincount, doDump )
+        & count, fillcount, min, max, mean, stddev, rms, median, bincount, &
+        & doDump )
         ! Args
         real(r4), dimension(:,:), intent(in)           :: values
         integer, optional, intent(in)                  :: nbins
@@ -210,6 +213,7 @@ contains
         real(r4), optional, intent(in)                 :: fillValue
         real(r4), dimension(:,:), optional, intent(in) :: precision
         integer, optional, intent(inout)               :: count
+        integer, optional, intent(inout)               :: fillcount
         real(r4), optional, intent(out)                :: min
         real(r4), optional, intent(out)                :: max
         real(r4), optional, intent(out)                :: mean
@@ -225,14 +229,14 @@ contains
         if ( .not. present(precision) ) then
           call allstats_d1r4(reshape(values, (/shp(1)*shp(2)/)), &
             & nbins, bounds, addedData, fillValue, &
-            & count=count, min=min, max=max, mean=mean, &
+            & count=count, fillcount=fillcount, min=min, max=max, mean=mean, &
             & stddev=stddev, rms=rms, median=median, bincount=bincount, &
             & doDump=doDump)
         else
           call allstats_d1r4(reshape(values, (/shp(1)*shp(2)/)), &
             & nbins, bounds, addedData, fillValue, &
             & reshape(precision, (/shp(1)*shp(2)/)),&
-            & count=count, min=min, max=max, mean=mean, &
+            & count=count, fillcount=fillcount, min=min, max=max, mean=mean, &
             & stddev=stddev, rms=rms, median=median, bincount=bincount, &
             & doDump=doDump)
         endif
@@ -241,7 +245,8 @@ contains
       ! ------------------- allstats_d2r8 -----------------------
       subroutine allstats_d2r8( values, &
         & nbins, bounds, addedData, fillValue, precision, &
-        & count, min, max, mean, stddev, rms, median, bincount, doDump )
+        & count, fillcount, min, max, mean, stddev, rms, median, bincount, &
+        & doDump )
         ! Args
         real(r8), dimension(:,:), intent(in)           :: values
         integer, optional, intent(in)                  :: nbins
@@ -250,6 +255,7 @@ contains
         real(r8), optional, intent(in)                 :: fillValue
         real(r8), dimension(:,:), optional, intent(in) :: precision
         integer, optional, intent(inout)               :: count
+        integer, optional, intent(inout)               :: fillcount
         real(r8), optional, intent(out)                :: min
         real(r8), optional, intent(out)                :: max
         real(r8), optional, intent(out)                :: mean
@@ -265,14 +271,14 @@ contains
         if ( .not. present(precision) ) then
           call allstats_d1r8(reshape(values, (/shp(1)*shp(2)/)), &
             & nbins, bounds, addedData, fillValue, &
-            & count=count, min=min, max=max, mean=mean, &
+            & count=count, fillcount=fillcount, min=min, max=max, mean=mean, &
             & stddev=stddev, rms=rms, median=median, bincount=bincount, &
             & doDump=doDump)
         else
           call allstats_d1r8(reshape(values, (/shp(1)*shp(2)/)), &
             & nbins, bounds, addedData, fillValue, &
             & reshape(precision, (/shp(1)*shp(2)/)),&
-            & count=count, min=min, max=max, mean=mean, &
+            & count=count, fillcount=fillcount, min=min, max=max, mean=mean, &
             & stddev=stddev, rms=rms, median=median, bincount=bincount, &
             & doDump=doDump)
         endif
@@ -281,7 +287,8 @@ contains
       ! ------------------- allstats_d3r4 -----------------------
       subroutine allstats_d3r4( values, &
         & nbins, bounds, addedData, fillValue, precision, &
-        & count, min, max, mean, stddev, rms, median, bincount, doDump )
+        & count, fillcount, min, max, mean, stddev, rms, median, bincount, &
+        & doDump )
         ! Args
         real(r4), dimension(:,:,:), intent(in)         :: values
         integer, optional, intent(in)                  :: nbins
@@ -290,6 +297,7 @@ contains
         real(r4), optional, intent(in)                 :: fillValue
         real(r4), dimension(:,:,:), optional, intent(in)   :: precision
         integer, optional, intent(inout)               :: count
+        integer, optional, intent(inout)               :: fillcount
         real(r4), optional, intent(out)                :: min
         real(r4), optional, intent(out)                :: max
         real(r4), optional, intent(out)                :: mean
@@ -305,14 +313,14 @@ contains
         if ( .not. present(precision) ) then
           call allstats_d1r4(reshape(values, (/shp(1)*shp(2)*shp(3)/)), &
             & nbins, bounds, addedData, fillValue, &
-            & count=count, min=min, max=max, mean=mean, &
+            & count=count, fillcount=fillcount, min=min, max=max, mean=mean, &
             & stddev=stddev, rms=rms, median=median, bincount=bincount, &
             & doDump=doDump)
         else
           call allstats_d1r4(reshape(values, (/shp(1)*shp(2)*shp(3)/)), &
             & nbins, bounds, addedData, fillValue, &
             & reshape(precision, (/shp(1)*shp(2)/)),&
-            & count=count, min=min, max=max, mean=mean, &
+            & count=count, fillcount=fillcount, min=min, max=max, mean=mean, &
             & stddev=stddev, rms=rms, median=median, bincount=bincount, &
             & doDump=doDump)
         endif
@@ -321,7 +329,8 @@ contains
       ! ------------------- allstats_d3r8 -----------------------
       subroutine allstats_d3r8( values, &
         & nbins, bounds, addedData, fillValue, precision, &
-        & count, min, max, mean, stddev, rms, median, bincount, doDump )
+        & count, fillcount, min, max, mean, stddev, rms, median, bincount, &
+        & doDump )
         ! Args
         real(r8), dimension(:,:,:), intent(in)         :: values
         integer, optional, intent(in)                  :: nbins
@@ -330,6 +339,7 @@ contains
         real(r8), optional, intent(in)                 :: fillValue
         real(r8), dimension(:,:,:), optional, intent(in)   :: precision
         integer, optional, intent(inout)               :: count
+        integer, optional, intent(inout)               :: fillcount
         real(r8), optional, intent(out)                :: min
         real(r8), optional, intent(out)                :: max
         real(r8), optional, intent(out)                :: mean
@@ -345,14 +355,14 @@ contains
         if ( .not. present(precision) ) then
           call allstats_d1r8(reshape(values, (/shp(1)*shp(2)*shp(3)/)), &
             & nbins, bounds, addedData, fillValue, &
-            & count=count, min=min, max=max, mean=mean, &
+            & count=count, fillcount=fillcount, min=min, max=max, mean=mean, &
             & stddev=stddev, rms=rms, median=median, bincount=bincount, &
             & doDump=doDump)
         else
           call allstats_d1r8(reshape(values, (/shp(1)*shp(2)*shp(3)/)), &
             & nbins, bounds, addedData, fillValue, &
             & reshape(precision, (/shp(1)*shp(2)/)),&
-            & count=count, min=min, max=max, mean=mean, &
+            & count=count, fillcount=fillcount, min=min, max=max, mean=mean, &
             & stddev=stddev, rms=rms, median=median, bincount=bincount, &
             & doDump=doDump)
         endif
@@ -1125,7 +1135,8 @@ contains
         if ( associated(statistic%bincount) ) then
           call allstats(values, &
             & nbins, bounds, addeddata, fillValue, precision, &
-            & statistic%count, statistic%min, statistic%max, statistic%mean, &
+            & statistic%count, statistic%fillcount, &
+            & statistic%min, statistic%max, statistic%mean, &
             & statistic%stddev, statistic%rms, statistic%median, &
             & statistic%bincount)
         else
@@ -1163,14 +1174,25 @@ contains
         call output('rms:    ')
         call output(statistic%rms)
         call newline
-        if ( statistic%nbins < 3 ) return
-        call output('x1,x2: ')
-        call output(statistic%bounds)
-        call newline
-        call output('bincounts: ')
-        call newline
-        call output(statistic%bincount)
-        call newline
+        if ( statistic%nbins > 2 ) then
+          call output('x1,x2: ')
+          call output(statistic%bounds)
+          call newline
+          call output('bincounts: ')
+          call newline
+          call output(statistic%bincount)
+          call newline
+        endif
+        if ( statistic%fillcount > 0 ) then
+          call output('bad or filtered counts: ')
+          call output(statistic%fillcount)
+          call blanks(4)
+          call output('( ')
+          call output( (100.*statistic%fillcount) / &
+            & (statistic%fillcount + statistic%count) )
+          call output(' % )')
+          call newline
+        endif
       end subroutine dump_all
       
       ! ------------------- dump_selected -----------------------
@@ -1449,6 +1471,9 @@ end module MLSStats1
 
 !
 ! $Log$
+! Revision 2.12  2007/02/06 17:54:13  pwagner
+! Correctly tracks fillcount; dumps as fillcount and as %
+!
 ! Revision 2.11  2006/08/21 23:38:41  pwagner
 ! Added pdf function; speedier median algorithm
 !
