@@ -60,7 +60,7 @@ module MLSFiles               ! Utility file routines
   & mls_io_gen_closeF, &
   & mls_io_gen_openF, &
   & mls_openFile, mls_sfstart, mls_sfend, &
-  & open_MLSFile, &
+  & open_MLSFile, transfer_MLSFile, &
   & RmFileFromDataBase, split_path_name, &
   & unMaskName, unSplitName
 
@@ -118,6 +118,7 @@ module MLSFiles               ! Utility file routines
 ! mls_sfstart        Opens an hdf file for writing metadata
 ! open_MLSFile       Opens an mls file (of any type)
 ! RmFileFromDataBase Removes a FileName, id, etc. from the database
+! transfer_MLSFile   Changes the path of an mlsFile
 ! split_path_name    splits the input path/name into path and name
 ! unmaskname         Recover file name from maskzed form
 ! unsplitname        Split File name -> catenated: '..DGG13..' -> 'DGG'
@@ -2511,6 +2512,29 @@ contains
   endif
   end function mls_exists
 
+  !-----------------------------------------  transfer_MLSFile  -----
+  integer function transfer_MLSFile ( ITEM, path, name )
+
+  ! This routine transforms an MLSFile, e.g. relocating its path
+
+    ! Dummy arguments
+    type (MLSFile_T)                       :: ITEM
+    character(len=*), optional, intent(in) :: path
+    character(len=*), optional, intent(in) :: Name
+    ! Internal variables
+    character(len=MAXFILENAMELENGTH) :: oldpath
+    character(len=MAXFILENAMELENGTH) :: oldname
+
+    transfer_MLSFile = 0
+    if ( present(Name    ) ) item%Name  = Name
+    if ( present(path) ) then
+      call split_path_name(item%name, oldpath, oldname)
+      ! Remember: split_path_name returns a path with a terminating '/'
+      ! (unless blank)
+      item%name = trim(path) // oldname
+    endif   
+  end function transfer_MLSFile
+
 ! ---------------------------------------------- unMaskName ------
 
 ! This function returns the name minus its masking portion
@@ -2630,6 +2654,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.76  2007/02/06 17:55:14  pwagner
+! Added transfer_MLSFile to change path of an MLSFile
+!
 ! Revision 2.75  2007/01/11 20:41:20  vsnyder
 ! Remove get_free_lun, use Get_Lun, handle record length for sequential files
 !
