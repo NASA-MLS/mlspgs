@@ -69,6 +69,7 @@ module ChunkDivide_m
     real(rp), dimension(2) :: scanUpperLimit ! Range for top of scan
     real(rp) :: maxOrbY = -1.0                 ! Maximum out of plane distance allowed <=0.0 default
     integer   :: criticalModules = l_none ! Which modules must be scanning
+    logical   :: chooseCriticalSignals = .true. ! Whether to use criticalModules
     character(len=160), dimension(:), pointer &
       & :: criticalSignals => null() ! Which signals must be on
     real(rp)  :: maxGap = 0.0           ! Length of time/MAFs/orbits allowed for gap
@@ -205,7 +206,8 @@ contains ! ===================================== Public Procedures =====
     use MLSNumerics, only: Hunt
     use MLSSignals_m, only: MODULES
     use MoreTree, only: GET_BOOLEAN, GET_FIELD_ID, GET_SPEC_ID
-    use Output_M, only: BLANKS, OUTPUT, revertoutput, switchOutput
+    use Output_M, only: BLANKS, OUTPUT, outputNamedValue, &
+      & revertoutput, switchOutput
     use String_table, only: GET_STRING, DISPLAY_STRING
     use Time_M, only: Time_Now
     use TOGGLES, only: GEN, TOGGLE, SWITCHES
@@ -254,7 +256,7 @@ contains ! ===================================== Public Procedures =====
     nullify ( obstructions )
     if ( ChunkDivideConfig%method /= l_fixed ) then
       call SurveyL1BData ( processingRange, filedatabase, mafRange )
-      if ( index(switches, 'chu') /= 0 ) then
+      if ( switchDetail(switches, 'chu' ) > -1 ) then
         call output ( 'Requested time range ' )          
         call output ( processingRange%startTime )              
         call output ( ' : ' )    
@@ -319,14 +321,14 @@ contains ! ===================================== Public Procedures =====
     if ( switchDetail(switches, 'chu') > -1 .or. &
       & switchDetail(switches, 'opt') > -1 ) call dump(ChunkDivideConfig)
     if ( associated(obstructions) ) then
-      if ( index(switches, 'chu') /= 0 ) call Dump_Obstructions ( obstructions )
+      if ( switchDetail(switches, 'chu' ) > -1 ) call Dump_Obstructions ( obstructions )
       if ( .not. ChunkDivideConfig%saveObstructions ) &
         & deallocate ( obstructions, stat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Deallocate//'obstructions' )
     end if
     if ( associated(ChunkDivideConfig%criticalSignals) ) then
-      if ( index(switches, 'chu') /= 0 ) &
+      if ( switchDetail(switches, 'chu' ) > -1 ) &
         & call Dump_criticalSignals(ChunkDivideConfig%criticalSignals)
       deallocate ( ChunkDivideConfig%criticalSignals, stat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -350,7 +352,7 @@ contains ! ===================================== Public Procedures =====
       chunks(chunk)%chunkNumber = chunk
     end do
 
-    if ( index(switches, 'chu') /= 0 ) call dump ( chunks )
+    if ( switchDetail(switches, 'chu' ) > -1 ) call dump ( chunks )
     if ( specialDumpFile /= ' ' ) &
       & call revertOutput
     if ( toggle(gen) ) call trace_end ( "ChunkDivide" )
@@ -704,7 +706,7 @@ contains ! ===================================== Public Procedures =====
         angleIncrement = 360.0
       end if
 
-      if ( index(switches, 'chu') /= 0 ) then    
+      if ( switchDetail(switches, 'chu' ) > -1 ) then    
         call output ( ' orbit  ', advance='no' )   
         call output ( orbit , advance='no' )      
         call output ( '    testAngle  ', advance='no' )   
@@ -745,7 +747,7 @@ contains ! ===================================== Public Procedures =====
         ! Otherwise, keep looking
         testAngle = testAngle + angleIncrement
       end do homeHuntLoop
-      if ( index(switches, 'chu') /= 0 ) then    
+      if ( switchDetail(switches, 'chu' ) > -1 ) then    
         call output ( 'Test Angle  ' )   
         call output ( testAngle , advance='yes' )      
         call output ( 'Angle(home)  ' )   
@@ -853,7 +855,7 @@ contains ! ===================================== Public Procedures =====
         boundaries = max ( boundaries, minV )
 
         ! Do some dumping
-        if ( index(switches, 'chu') /= 0 ) then
+        if ( switchDetail(switches, 'chu' ) > -1 ) then
           call output ( ' minV: ' ) 
           call output ( minV  ) 
           call output ( ' maxV: ' ) 
@@ -903,7 +905,7 @@ contains ! ===================================== Public Procedures =====
       end if
 
       ! Do some dumping
-      if ( index(switches, 'chu') /= 0 ) then                      
+      if ( switchDetail(switches, 'chu' ) > -1 ) then                      
         call dump ( chunks%lastMAFIndex , 'chunks%lastMAFIndex' )
         call dump ( chunks%firstMAFIndex , 'chunks%firstMAFIndex' )  
       end if
@@ -929,7 +931,7 @@ contains ! ===================================== Public Procedures =====
       chunks%noMAFsUpperOverlap = newLastMAFs - chunks%lastMAFIndex
       chunks%firstMAFIndex = newFirstMAFs
       chunks%lastMAFIndex = newLastMAFs
-      if ( index(switches, 'chu') /= 0 ) then
+      if ( switchDetail(switches, 'chu' ) > -1 ) then
         call dump ( newFirstMAFs , 'newFirstMAFs' ) 
         call dump ( newLastMAFs , 'newLastMAFs' ) 
         call dump ( chunks%noMAFsLowerOverlap , 'chunks%noMAFsLowerOverlap' ) 
@@ -970,7 +972,7 @@ contains ! ===================================== Public Procedures =====
         chunks(noChunks)%noMAFsUpperOverlap = mexp2 - m2
       endif
 
-      if ( index(switches, 'chu') /= 0 ) then
+      if ( switchDetail(switches, 'chu' ) > -1 ) then
         call output ( 'After dealing with obstructions', advance='no' )
         call output ( ', poss. overlaps outside proc. range', advance='yes' )
         call Dump ( chunks )
@@ -1476,10 +1478,12 @@ contains ! ===================================== Public Procedures =====
 
     ! ----------------------------------------- NoteL1BRADChanges -----
     subroutine NoteL1BRADChanges ( obstructions, mafRange, filedatabase )
-      use MLSSignals_m, only: GetSignalName, &
+      use MLSSignals_m, only: Dump, GetSignalName, &
         & SIGNALS
       use MLSStringLists, only: NumStringElements, GetStringElement
+      use MLSStrings, only: lowercase
       use Parse_signal_m, only: Parse_signal
+      use String_table, only: GET_STRING, DISPLAY_STRING
       ! This routine notes any lack of good data for one of the
       ! signals, and, depending on sensitivity,
       ! augments the database of obstructions
@@ -1496,7 +1500,10 @@ contains ! ===================================== Public Procedures =====
       ! duration of config%maxGap before we declare it an obstruction
       ! and add it to the database
       logical, parameter :: ANYCHANGEISOBSTRUCTION = .false.
+      logical :: choseCriticalSignals
       integer :: critical_index
+      character(len=40) :: critical_module_str
+      character(len=160), dimension(:), pointer :: criticalSignals ! taken from config or criticalModules
       integer :: critical_sub_index
       integer, pointer, dimension(:) :: goods_after_gap
       integer, pointer, dimension(:) :: goodness_changes
@@ -1511,6 +1518,7 @@ contains ! ===================================== Public Procedures =====
       integer :: mafset_end
       integer :: mafset_start
       integer, parameter :: MAXMAFSINSET = 250
+      character(len=40) :: module_str
       integer :: nmafs
       integer :: nmafsets
       integer :: num_goods_after_gap
@@ -1521,11 +1529,14 @@ contains ! ===================================== Public Procedures =====
       character(len=40) :: signal_str
       integer, pointer :: Signal_Indices(:)         ! Indices in the signals
       logical, dimension(:,:), pointer  :: signals_buffer
+      integer :: swLevel ! How much extra debugging info to print (-1 means none)
       logical :: this_maf_valid
       logical, dimension(:), pointer  :: valids_buffer
       ! Won't check if there are no radiances
       if ( .not. associated(filedatabase) ) return
+      swlevel = SwitchDetail(switches, 'chu')
       nmafs = mafRange%Expanded(2) - mafRange%Expanded(1) + 1
+      choseCriticalSignals = .false.
       ! Here we will loop over the signals database
       ! Searching for 
       ! (1) mafs where there is no good data for any of the signals
@@ -1545,7 +1556,30 @@ contains ! ===================================== Public Procedures =====
       call allocate_test( goodness_changes, nmafs,&
         & 'goodness_changes', ModuleName)
       good_signals_now = .false.   ! Initializing
+      signals_buffer = .false.
+      if ( associated(ChunkDivideConfig%criticalSignals) ) then
+        criticalSignals => ChunkDivideConfig%criticalSignals
+      elseif ( ChunkDivideConfig%chooseCriticalSignals ) then
+        ! We can choose as critical signals all the signals belonging
+        ! to a critical module
+        call chooseCriticalSignals( criticalSignals )
+        choseCriticalSignals = .true.
+      endif
       do signalIndex=1, size(signals)
+        if ( swLevel > -1 ) call dump( signals(signalIndex) )
+        call get_string( lit_indices(ChunkDivideConfig%criticalModules), signal_full, &
+          & strip=.true. )
+        critical_module_str = lowercase(signal_full)
+        if ( swLevel > -1 ) call outputNamedValue( 'critical module', critical_module_str )
+        call get_string( modules(signals(signalIndex)%instrumentModule)%name, signal_full, &
+          & strip=.true. )
+        module_str = lowercase(signal_full)
+        if ( swLevel > -1 ) call outputNamedValue( 'module', module_str )
+        if ( ChunkDivideConfig%criticalModules == l_none ) then
+          ! No module is critical for signal data being good
+        elseif ( module_str /= critical_module_str ) then
+          cycle
+        endif
         if ( nmafs <= MAXMAFSINSET ) then
           good_signals_now(signalIndex) = &
             & any_good_signaldata ( signalIndex, signals(signalIndex)%sideband, &
@@ -1564,7 +1598,7 @@ contains ! ===================================== Public Procedures =====
           enddo
         endif
       enddo
-      ! call dump ( signals_buffer, 'signals_buffer' )
+      if ( swlevel > 0 ) call dump ( signals_buffer, 'signals_buffer' )
 
       ! Task (1a): Find mafs where there is at least one signal which
       ! changes from either nogood to good or from good to nogood
@@ -1602,27 +1636,7 @@ contains ! ===================================== Public Procedures =====
       
       ! Task (2): Find regions where there is no signal among at least one
       ! of the critical signals
-      ! if (config%criticalSignals /= '' ) then
-      if ( associated(ChunkDivideConfig%criticalSignals) ) then
-        nullify ( valids_buffer )
-        call allocate_test( &
-          & valids_buffer, nmafs , &
-          & 'valids_buffer', ModuleName)
-        nullify ( or_valids_buffer )
-        call allocate_test( &
-          & or_valids_buffer, nmafs , &
-          & 'or_valids_buffer', ModuleName)
-        valids_buffer = .true.
-        if ( index(switches, 'chu') /= 0 ) then
-          call output ( 'Checking for critical signals: ')
-          do critical_index=1, size(ChunkDivideConfig%criticalSignals)
-            call output ( trim(ChunkDivideConfig%criticalSignals(critical_index)), &
-              & advance='yes')
-          enddo
-          call output ( &
-            & 'Which signals match the incomplete signal string ' &
-            &  // 'weve been given', advance='yes')
-        endif
+      if ( associated(criticalSignals) ) then
         ! What we're about to do is:
         ! Assume we're given an array of char strings
         ! array = [str_1, str_2, ..]
@@ -1635,18 +1649,43 @@ contains ! ===================================== Public Procedures =====
         ! and or-ing the list elements
         ! You might prefer the formula that a maf is invalid if for any of the
         ! array elements, none of its signals is turned on
-        do critical_index=1, size(ChunkDivideConfig%criticalSignals)
+        !
+        ! Unfortunately, if we chose our critical signals based on a critical module
+        ! the role the string containing comma-separated signals is played by
+        ! by the array so in that case we'll need to be or-ing the array elements,
+        ! not and-ing them
+        nullify ( valids_buffer )
+        call allocate_test( &
+          & valids_buffer, nmafs , &
+          & 'valids_buffer', ModuleName)
+        nullify ( or_valids_buffer )
+        call allocate_test( &
+          & or_valids_buffer, nmafs , &
+          & 'or_valids_buffer', ModuleName)
+        ! 
+        valids_buffer = .not. choseCriticalSignals ! .true.
+        if ( SwLevel > -1 ) then
+          call output ( 'Checking for critical signals: ')
+          do critical_index=1, size(criticalSignals)
+            call output ( trim(criticalSignals(critical_index)), &
+              & advance='yes')
+          enddo
+          call output ( &
+            & 'Which signals match the incomplete signal string ' &
+            &  // 'weve been given', advance='yes')
+        endif
+        do critical_index=1, size(criticalSignals)
           or_valids_buffer = .false.
           do critical_sub_index=1, NumStringElements( &
-            & trim(ChunkDivideConfig%criticalSignals(critical_index)), .FALSE.)
+            & trim(criticalSignals(critical_index)), .FALSE.)
             call GetStringElement( &
-              & trim(ChunkDivideConfig%criticalSignals(critical_index)), signal_str, &
+              & trim(criticalSignals(critical_index)), signal_str, &
               & critical_sub_index, .FALSE. )
             ! Which signals match the incomplete signal string we've been given?
             nullify(Signal_Indices)
             call Parse_signal(signal_str, signal_indices)
             if ( .not. associated(Signal_Indices) ) exit
-            if ( index(switches, 'chu') /= 0 ) then
+            if ( SwLevel > -1 ) then
               call output ( 'Signal_Indices: ')
               call output ( Signal_Indices, advance='yes')
               do i=1, size(Signal_Indices)
@@ -1668,13 +1707,36 @@ contains ! ===================================== Public Procedures =====
             enddo
             call deallocate_test(Signal_Indices, 'Signal_Indices', ModuleName)
           enddo
-          valids_buffer = &
-            & valids_buffer .and. or_valids_buffer
+          ! An ad-hoc filter to ignore bands that are simply switched off
+          ! if ( swLevel > -1 ) call outputNamedValue ( 'count(or_valids_buffer)', count(or_valids_buffer), advance='yes')
+          ! if ( count(or_valids_buffer) < &
+          !  & ( mafRange%Expanded(2) - mafRange%Expanded(1) ) / 50 ) cycle
+          ! call dump ( or_valids_buffer, 'or_valids_buffer' )
+          if ( choseCriticalSignals ) then
+            valids_buffer = &
+              & valids_buffer .or. or_valids_buffer
+          else
+            valids_buffer = &
+              & valids_buffer .and. or_valids_buffer
+          endif
         enddo
+        if ( swLevel > 0 ) call dump ( valids_buffer, 'valids_buffer' )
+        if ( swLevel > -1 ) then
+        call outputNamedValue ( 'count(valids_buffer)', count(valids_buffer), advance='yes')
+        call output ( 'Before converting valids to obstructions', advance='yes' )
+        call dump(obstructions)
+        endif
         call ConvertFlagsToObstructions ( valids_buffer, obstructions, &
           & mafRange%Expanded )
+        if ( swLevel > -1 ) then
+        call output ( 'After converting valids to obstructions', advance='yes' )
+        call dump(obstructions)
+        endif
         call deallocate_test(valids_buffer, 'valids_buffer', ModuleName)
         call deallocate_test(or_valids_buffer, 'or_valids_buffer', ModuleName)
+        if ( .not. associated(ChunkDivideConfig%criticalSignals) )  &
+          & call deallocate_test( criticalSignals, 'criticalSignals', &
+          & ModuleName )
       endif
       
       ! Depending on sensitivity, add these to Obstructions database
@@ -1698,6 +1760,46 @@ contains ! ===================================== Public Procedures =====
       call deallocate_test( goods_after_gap, 'goods_after_gap', ModuleName)
       call deallocate_test( goodness_changes, 'goodness_changes', ModuleName)
     end subroutine NoteL1BRADChanges
+
+    ! ----------------------------------------- ChooseCriticalSignals -----------
+    subroutine ChooseCriticalSignals ( criticalSignals )
+      use MLSSignals_m, only: GetSignalName, SIGNALS
+      use MLSStringLists, only: catLists, List2Array
+      use MLSStrings, only: lowercase
+      use String_table, only: GET_STRING, DISPLAY_STRING
+      ! Args
+      character(len=160), dimension(:), pointer :: criticalSignals
+      ! Internal variables
+      character(len=40) :: critical_module_str
+      integer, parameter :: MAXCRITICALSIGNALLENGTH = 40000
+      character(len=MAXCRITICALSIGNALLENGTH) :: criticalSignalStr
+      character(len=40) :: module_str
+      integer :: numCriticalSignals
+      character(len=40) :: signal_full
+      integer :: signalIndex
+      ! Executable
+      if ( ChunkDivideConfig%criticalModules == l_none ) return
+      call get_string( lit_indices(ChunkDivideConfig%criticalModules), signal_full, &
+        & strip=.true. )
+      critical_module_str = lowercase(signal_full)
+      if ( critical_module_str /= 'ghz' ) return
+      criticalSignalStr = ' '
+      numCriticalSignals = 0
+      do signalIndex=1, size(signals)
+        call get_string( modules(signals(signalIndex)%instrumentModule)%name, signal_full, &
+          & strip=.true. )
+        module_str = lowercase(signal_full)
+        if ( module_str /= critical_module_str ) cycle
+        numCriticalSignals = numCriticalSignals + 1
+        call GetSignalName( signalIndex, signal_full )
+        criticalSignalStr = catLists( criticalSignalStr, signal_full )
+      enddo
+      if ( numCriticalSignals < 1 ) return
+      call allocate_test( criticalSignals, numCriticalSignals, 'criticalSignals', &
+        & ModuleName )
+      call List2Array (criticalSignalStr, criticalSignals,  countEmpty=.true. )
+      if ( switchDetail(switches, 'chu') > -1 ) call dump( criticalSignals, 'critical Signals' )
+    end subroutine ChooseCriticalSignals
 
     ! ----------------------------------------- PruneChunks -----------
     subroutine PruneChunks ( chunks )
@@ -2140,6 +2242,8 @@ contains ! ===================================== Public Procedures =====
     call output ( 'critical modules ' )
     call display_string ( lit_indices(Config%criticalModules), &
       &             strip=.true., advance='yes' )
+    call output ( 'use critical modules to choose critical signals?' )
+    call output ( config%chooseCriticalSignals, advance='yes' )
     call output ( 'max gap ' )
     call output ( config%maxGap, advance='yes' )
     call output ( 'max Gap Family ' )
@@ -2366,6 +2470,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.78  2007/02/06 23:13:40  pwagner
+! Now can chooseCriticalSignals based on criticalModule
+!
 ! Revision 2.77  2007/01/25 19:04:59  pwagner
 ! Warns if DACsDeconvolved attribute not found
 !
