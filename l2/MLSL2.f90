@@ -502,7 +502,9 @@ program MLSL2
           stop
         end if
       else if ( line(3+n:9+n) == 'stdout ' ) then
-        copyArg = .false. ! else all the the slaves would try to write to the same file
+        ! copyArg = .false. ! else all the the slaves would try to write to the same file
+        copyArg = .true.
+        call AccumulateSlaveArguments ( line )
         i = i + 1
         call getarg ( i, line )
         command_line = trim(command_line) // ' ' // trim(line)
@@ -1083,6 +1085,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.161  2007/02/07 20:58:03  pwagner
+! Permit slaves to write unbuffered stdout when master does
+!
 ! Revision 2.160  2007/01/12 00:35:08  pwagner
 ! Renamed routine outputNamedValue; may set host name and unbuffered stdout
 !
