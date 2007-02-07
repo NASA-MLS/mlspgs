@@ -827,11 +827,14 @@ contains ! ============================ MODULE PROCEDURES ======================
           call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'unable to open L1BFile searching for ' // trim(fieldname), &
             & MLSFile=filedatabase(i) )
+        myHDFVersion = filedatabase(i)%HDFVersion
         ! Are we looking for an attribute?
         ! (Then we may need an object name)
         if ( index(myoptions, 'a') > 0 ) then
+          if ( myhdfVersion == HDFVERSION_4 ) then
+            openedCode = 'n' ! Because we can't read attributes from HDF4 files
           ! What object would the attribute be attached to?
-          if ( index(myOptions, 'f') > 0 ) then
+          elseif ( index(myOptions, 'f') > 0 ) then
             openedCode = 'f'
           elseif ( index(myOptions, '/') > 0 ) then
             call h5gopen_f ( filedatabase(i)%fileID%f_id, trim(myObject), &
@@ -847,7 +850,6 @@ contains ! ============================ MODULE PROCEDURES ======================
             openedCode = 's'
           endif
         endif
-        myHDFVersion = filedatabase(i)%HDFVersion
         
         if ( myhdfVersion == HDFVERSION_4 ) then
           if ( index(myOptions, 'a') > 0 ) then
@@ -3177,6 +3179,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.73  2007/02/07 20:56:38  pwagner
+! Avoid opening hdf5-type groups in hdf4 files
+!
 ! Revision 2.72  2007/01/26 23:58:02  pwagner
 ! Fixed bug affecting GetL1BFile
 !
