@@ -355,6 +355,7 @@ PRINT *, 'doing baseline...'
     USE MLSHDF5, ONLY: IsHDF5DSPresent
 
     REAL, PARAMETER :: FILLVALUE = DEFAULTUNDEFINEDVALUE
+    REAL, PARAMETER :: DC_min = -2.0     ! Minimum DC avg threshold
 
     CHARACTER(LEN=80) :: name, BaseName, BasePrecName, BaseNameAC, &
          BasePrecNameAC, BaseNameDC, BasePrecNameDC
@@ -363,6 +364,7 @@ PRINT *, 'doing baseline...'
     INTEGER :: DACS_window
     INTEGER, POINTER, DIMENSION(:,:) :: windx
     LOGICAL, POINTER, DIMENSION(:) :: rms_mask
+    LOGICAL :: read_precs, update_precs
 
     INTEGER, POINTER, DIMENSION(:) :: counterMAF => NULL()
     REAL, POINTER, DIMENSION(:,:) :: baselineAC => NULL(), &
@@ -373,7 +375,7 @@ PRINT *, 'doing baseline...'
     REAL, POINTER, DIMENSION(:,:,:) :: rad => NULL(), prec => NULL()
 
     TYPE (L1BData_T) :: L1BData
-    TYPE (DataProducts_T) :: baselineDS  
+    TYPE (DataProducts_T) :: baselineDS, dataset  
 
 PRINT *, 'Updating baselines...'
 
@@ -384,6 +386,12 @@ PRINT *, 'Updating baselines...'
     baselineDS%data_type = 'real'
     baselineDS%Dimensions(2) = 'MAF                 '
     baselineDS%Dimensions(1) = 'chanDACS'
+
+    ALLOCATE (dataset%Dimensions(3))  ! Only for precision for now
+    dataset%data_type = 'real'
+    dataset%Dimensions(1) = 'chanDACS            '
+    dataset%Dimensions(2) = 'GHz.MIF             '
+    dataset%Dimensions(3) = 'MAF                 '
 
     sd_id = L1BFileInfo%RADGid
 
@@ -405,11 +413,14 @@ PRINT *, 'Updating baselines...'
 
        ALLOCATE (baselineDC(DACSchans,noMAFs))
        ALLOCATE (baselineDCavg(DACSchans,noMAFs))
+       ALLOCATE (prec(DACSchans,MIFsGHz,noMAFs))
 
 ! Get the DACS baselines and adjust
 
        DO rno = 40, 44   ! DACS only names!
 
+          read_precs = .TRUE.
+          update_precs = .FALSE.
           name = Rad_name(rno)
           IF (.NOT. IsHDF5DSPresent (sd_id, TRIM(name))) CYCLE  ! Nothing to get
 
@@ -419,6 +430,7 @@ PRINT *, 'Updating baselines...'
           CALL ReadL1BData (sd_id, BaseNameDC, L1BData, noMAFs, Flag, &
                NeverFail=.TRUE., HDFversion=5)
           baselineDC = L1BData%DpField(1,:,:)
+          CALL DeallocateL1BData (L1BData)
 
           DO mindx = 1, noMAFs
              w1 = MAX ((mindx - DACS_window), 1)
@@ -433,12 +445,33 @@ PRINT *, 'Updating baselines...'
              CALL Build_MLSAuxData (sd_id, baselineDS, &
                   -BaselineDCavg(:,mindx), lastIndex=mindx, &
                   disable_attrib=.TRUE.)
+             update_precs = (ANY (BaselineDCavg(:,mindx) < DC_min))
+
+             IF (read_precs .AND. update_precs) THEN
+
+! Get precisions (to adjust when needed!)
+
+                CALL ReadL1BData (sd_id, TRIM(name)//' precision', L1BData, &
+                     noMAFs, Flag, NeverFail=.TRUE., HDFversion=5)
+                prec = L1BData%DpField
+                read_precs = .FALSE.
+                CALL DeallocateL1BData (L1BData)
+             ENDIF
+             IF (update_precs) THEN
+                dataset%name = TRIM(name)//' precision'
+                prec(:,:,mindx) = -1.0 * ABS (prec(:,:,mindx))  ! Negate precs
+                CALL Build_MLSAuxData (sd_id, dataset, &
+                     prec(:,:,mindx), lastIndex=mindx, &
+                     disable_attrib=.TRUE.)
+             ENDIF
+
           ENDDO
+
        ENDDO
 
-       CALL DeallocateL1BData (L1BData)
        DEALLOCATE (baselineDC)
        DEALLOCATE (baselineDCavg)
+       DEALLOCATE (prec)
 
     ENDIF
 
@@ -709,6 +742,9 @@ PRINT *, 'Updating baselines...'
 END MODULE SpectralBaseline
 !=============================================================================
 ! $Log$
+! Revision 2.9  2007/02/09 15:06:51  perun
+! Test DACS precisions again minimum DC_avg of -2.0
+!
 ! Revision 2.8  2006/09/26 16:03:28  perun
 ! Mark DC baseline values as 0.0 when not available
 !
