@@ -944,7 +944,7 @@ contains
           ! Find master's index into masters array
           mastersID = FindFirst(masters%tid, masterTid)
           numHosts = masters(mastersID)%numHosts
-          if ( numHosts > 0 .and. associated(masters(mastersID)%hosts(host)) ) then
+          if ( numHosts > 0 .and. associated(masters(mastersID)%hosts) ) then
             do host = 1, numHosts
               hostsID = masters(mastersID)%hosts(host)
               if ( hostsID > 0 .and. hostsID <= size(hosts) ) &
@@ -2271,6 +2271,9 @@ contains
 end program L2Q
 
 ! $Log$
+! Revision 1.17  2007/01/18 23:25:59  pwagner
+! Changed to use unbuffered output with -o dump_file
+!
 ! Revision 1.16  2007/01/12 00:41:16  pwagner
 ! May start a new l2q to rescue things if old one dies
 !
