@@ -101,16 +101,16 @@ CONTAINS
     IF (slimb_type) THEN
        rad = ((limb_counts - slimb_counts) / gain) / eta_TSL(3) + &
             Rho(radNum)%Limb * space_P
-       P_offset = ((limb_counts - space_counts) / gain - space_P * &
-            (eta_TSL(3) * Rho(radNum)%Limb - eta_TSL(2)) - &
-            (1.0 - eta_TSL(3)) * baffle_L + (1.0 - eta_TSL(2)) * &
-            baffle_S) / eta_TSL(2)
     ELSE
        rad = ((limb_counts - space_counts) / gain + eta_TSL(2)*space_P &
             - (1.0 - eta_TSL(3))*baffle_L + (1.0 - eta_TSL(2)) * &
             baffle_S) / eta_TSL(3)
-       P_offset = 0.0    ! Not available in this method
     ENDIF
+
+    P_offset = ((limb_counts - space_counts) / gain - space_P * &
+         (eta_TSL(3) * Rho(radNum)%Limb - eta_TSL(2)) - &
+         (1.0 - eta_TSL(3)) * baffle_L + (1.0 - eta_TSL(2)) * &
+         baffle_S) / eta_TSL(2)
 
     IF (PRESENT (dacs)) THEN
        TsysD = Tsys / 0.87
@@ -657,6 +657,9 @@ END MODULE Radiances
 !=============================================================================
 
 ! $Log$
+! Revision 2.21  2007/02/09 15:05:59  perun
+! Always calculate P_offset
+!
 ! Revision 2.20  2006/09/28 16:17:06  perun
 ! Save only one ModelOffset per MAF and calculate average slimb view Poffsets
 !
