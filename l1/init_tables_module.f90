@@ -108,10 +108,11 @@ MODULE INIT_TABLES_MODULE
   INTEGER, PARAMETER :: P_TPdigital = p_DACSWINDOW + 1
   INTEGER, PARAMETER :: P_UseAntOffsets = p_TPdigital + 1
   INTEGER, PARAMETER :: P_MinSpaceLimbs = p_UseAntOffsets + 1
+  INTEGER, PARAMETER :: P_Do_Slimb = P_MinSpaceLimbs + 1
 
   ! In Output section:
 
-  INTEGER, PARAMETER :: P_REMOVEBASELINE = P_MinSpaceLimbs + 1
+  INTEGER, PARAMETER :: P_REMOVEBASELINE = P_Do_Slimb + 1
   INTEGER, PARAMETER :: P_DECONVOLVEDACS = P_RemoveBaseline + 1
 
   INTEGER, PARAMETER :: FIRST_PARM = P_OUTPUT_VERSION_STRING
@@ -189,6 +190,7 @@ CONTAINS ! =====     Public procedures     =============================
     parm_indices(p_MoonToSpaceAngle)=       add_ident ( 'MoonToSpaceAngle' )
     parm_indices(p_dacswindow)=             add_ident ( 'DACSwindow' )
     parm_indices(p_TPdigital)=              add_ident ( 'TPdigital' )
+    parm_indices(p_Do_Slimb)=               add_ident ( 'Do_Slimb' )
     parm_indices(p_UseAntOffsets)=          add_ident ( 'UseAntOffsets' )
     parm_indices(p_DeconvolveDACS)=         add_ident ( 'DeconvolveDACS' )
 
@@ -344,6 +346,7 @@ CONTAINS ! =====     Public procedures     =============================
              begin, p+p_TPdigital, t+t_boolean, n+n_name_def, &
              begin, p+p_calibDACS, t+t_boolean, n+n_name_def, &
              begin, p+p_THzColdCal, t+t_boolean, n+n_name_def, &
+             begin, p+p_Do_Slimb, t+t_boolean, n+n_name_def, &
              s+s_spaceMIFs, s+s_targetMIFs, s+s_limbMIFS, s+s_discardMIFs, &
              s+s_markchanbad, s+s_brightobject, n+n_section, &
       begin, z+z_output, &
@@ -367,6 +370,9 @@ CONTAINS ! =====     Public procedures     =============================
 END MODULE INIT_TABLES_MODULE
   
 ! $Log$
+! Revision 2.30  2007/02/09 15:04:26  perun
+! Added Do_Slimb flag
+!
 ! Revision 2.29  2006/09/28 16:15:01  perun
 ! Remove WriteDiagOffsets
 !
