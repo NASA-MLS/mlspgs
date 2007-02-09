@@ -150,6 +150,7 @@ OTHEROPTS=ootthheerrooppttss
 PGE_BINARY=ppggeebbiinnaarryy
 JOBDIR=jjoobbddiirr
 export PGS_PC_INFO_FILE PGSMEM_USESHM
+export FLIB_DVT_BUFFER=0
 
 # The following choice puts the outputs of all the slaves into a single file
 #LOGFILE="${JOBDIR}/pvmlog/mlsl2.log"
@@ -157,6 +158,7 @@ export PGS_PC_INFO_FILE PGSMEM_USESHM
 # The next choice, in contrast, puts each slave's output into its own unique file
 temp_file_name=`get_unique_name log -reverse`
 LOGFILE="${JOBDIR}/pvmlog/$temp_file_name"
+UNBUFFERED="${LOGFILE}.u"
 
 if [ ! -w "$LOGFILE" ]
 then
@@ -182,6 +184,12 @@ while [ "$more_opts" = "yes" ] ; do
     case "$1" in
     --chunk )
        echo "Skipping chunk-setting arguments: $1 $2" >> $LOGFILE
+       shift
+       shift
+       ;;
+    --delay )
+       echo "Skipping argument to change master delay: $1 $2" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
        shift
        shift
        ;;
@@ -213,6 +221,16 @@ while [ "$more_opts" = "yes" ] ; do
        otheropts=`add_option "$otheropts" $1`
        otheropts=`add_option "$otheropts" $2`
        echo "Adding argument to fill skipped retrievals: $2" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       shift
+       shift
+       ;;
+    --stdout )
+       otheropts=`add_option "$otheropts" $1`
+       # Note that we can't have all the slaves and masters directing
+       # unbuffered stdout to $2
+       otheropts=`add_option "$otheropts" $UNBUFFERED`
+       echo "Adding argument to buffer stdout to $UNBUFFERED" >> $LOGFILE
        echo "$otheropts" >> $LOGFILE
        shift
        shift
@@ -307,6 +325,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.12  2006/10/05 23:41:32  pwagner
+# Needed for latest options, to work at scf (needs sips testing)
+#
 # Revision 1.11  2006/04/21 23:58:39  pwagner
 # Ugly LASTDITCHPGSBIN set to overcome unknown problem with some scf hosts; remove later
 #
