@@ -60,6 +60,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
      LOGICAL :: CalibDACS = .TRUE.
      LOGICAL :: TPdigital = .TRUE.
      LOGICAL :: THzColdCal = .TRUE.
+     LOGICAL :: Do_Slimb = .FALSE.
      CHARACTER(LEN=1) :: GHz_seq(0:MaxMIFs-1), THz_seq(0:MaxMIFs-1)
      CHARACTER(LEN=1) :: GHz_seq_use, THz_seq_use
   END TYPE Calib_T
@@ -367,7 +368,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
            p_mif_dead_time, p_mifspermaf, p_calibDACS, p_THzMaxBias, &
            p_thzspaceangle, f_bandno, f_chan, s_markchanbad, p_thzcoldcal, &
            p_MoonToSpaceAngle, p_DACSwindow, p_UseAntOffsets, p_MinSpaceLimbs, &
-           p_MAFexpandNum, p_TPdigital
+           p_MAFexpandNum, p_TPdigital, p_Do_Slimb
       USE BrightObjects_m, ONLY: s_BrightObject, f_angle, f_name, f_negate, &
            l_mercury, BO_Angle_GHz, BO_Angle_THz, BO_NumGHz, BO_NumTHz, &
            BO_Index_GHz, BO_Index_THz, BO_Negate_GHz, BO_Negate_THz
@@ -584,6 +585,10 @@ MODULE MLSL1Config  ! Level 1 Configuration
             CASE (p_TPdigital)
 
                L1Config%Calib%TPdigital = Get_Boolean (son)
+
+            CASE (p_Do_Slimb)
+
+               L1Config%Calib%Do_Slimb = Get_Boolean (son)
 
             END SELECT
 
@@ -806,6 +811,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
 END MODULE MLSL1Config
 
 ! $Log$
+! Revision 2.28  2007/02/09 15:05:24  perun
+! Add Do_Slimb flag
+!
 ! Revision 2.27  2006/09/28 16:15:37  perun
 ! Remove WriteDiagOffsets
 !
