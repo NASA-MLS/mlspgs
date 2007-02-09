@@ -1503,7 +1503,7 @@ contains ! ===================================== Public Procedures =====
       logical :: choseCriticalSignals
       integer :: critical_index
       character(len=40) :: critical_module_str
-      character(len=160), dimension(:), pointer :: criticalSignals ! taken from config or criticalModules
+      character(len=160), dimension(:), pointer :: criticalSignals => null() ! taken from config or criticalModules
       integer :: critical_sub_index
       integer, pointer, dimension(:) :: goods_after_gap
       integer, pointer, dimension(:) :: goodness_changes
@@ -2470,6 +2470,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.79  2007/02/09 01:10:00  pwagner
+! Fixed bug where criticalSignals not nullified
+!
 ! Revision 2.78  2007/02/06 23:13:40  pwagner
 ! Now can chooseCriticalSignals based on criticalModule
 !
