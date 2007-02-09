@@ -821,6 +821,7 @@ CONTAINS
 !=============================================================================
 
     USE MLSL1Rad, ONLY: UpdateRadSignals
+    USE MLSL1Config, ONLY: L1Config
 
 !! Calibrate the science data
 
@@ -834,6 +835,7 @@ CONTAINS
     CHARACTER (len=5) :: zone
     INTEGER :: values(8)
     TYPE (ChanInt_T), POINTER :: LimbAltIndx          ! Channel Limb indexes
+    LOGICAL :: do_slimb = .FALSE.
 
 PRINT *, 'calibrating...'
 
@@ -933,28 +935,30 @@ oldsecs = secs
 
     ENDDO
 
-! Mark good "slimb" channels:
+    slimb_type%FB = .FALSE.
+    slimb_type%MB = .FALSE.
+    slimb_type%WF = .FALSE.
+    slimb_type%DACS = .FALSE.
 
-    WHERE (LimbAltIndx%FB /= 0 .AND. CalWin%MAFdata(windex)%MinCalFlag%FB)
-       slimb_type%FB = .TRUE.
-    ELSEWHERE
-       slimb_type%FB = .FALSE.
-    ENDWHERE
-    WHERE (LimbAltIndx%MB /= 0 .AND. CalWin%MAFdata(windex)%MinCalFlag%MB)
-       slimb_type%MB = .TRUE.
-    ELSEWHERE
-       slimb_type%MB = .FALSE.
-    ENDWHERE
-    WHERE (LimbAltIndx%WF /= 0 .AND. CalWin%MAFdata(windex)%MinCalFlag%WF)
-       slimb_type%WF = .TRUE.
-    ELSEWHERE
-       slimb_type%WF = .FALSE.
-    ENDWHERE
-    WHERE (LimbAltIndx%DACS /= 0 .AND. CalWin%MAFdata(windex)%MinCalFlag%DACS)
-       slimb_type%DACS = .TRUE.
-    ELSEWHERE
-       slimb_type%DACS = .FALSE.
-    ENDWHERE
+
+! Mark good "slimb" channels (if requested):
+
+    IF (L1Config%Calib%do_slimb) THEN   ! slimb_type
+       WHERE (LimbAltIndx%FB /= 0 .AND. CalWin%MAFdata(windex)%MinCalFlag%FB)
+          slimb_type%FB = .TRUE.
+       ENDWHERE
+       WHERE (LimbAltIndx%MB /= 0 .AND. CalWin%MAFdata(windex)%MinCalFlag%MB)
+          slimb_type%MB = .TRUE.
+       ENDWHERE
+       WHERE (LimbAltIndx%WF /= 0 .AND. CalWin%MAFdata(windex)%MinCalFlag%WF)
+          slimb_type%WF = .TRUE.
+       ENDWHERE
+       WHERE (LimbAltIndx%DACS /= 0 .AND. &
+            CalWin%MAFdata(windex)%MinCalFlag%DACS)
+          slimb_type%DACS = .TRUE.
+       ENDWHERE
+
+    ENDIF
 
     CALL ChiSquare (start_index, end_index, space_cnts, &
          space_interp(0:end_index-start_index), (end_index-start_index))
@@ -977,6 +981,9 @@ END MODULE Calibration
 !=============================================================================
 
 ! $Log$
+! Revision 2.19  2007/02/09 15:02:45  perun
+! Do slimb calibration only if requested.
+!
 ! Revision 2.18  2006/09/26 16:01:05  perun
 ! Add DACS Chi2 calculation
 !
