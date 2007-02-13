@@ -1167,6 +1167,7 @@ contains ! ================================ Procedures ======================
     ! First kill any children still running (only if we got a give up message).
     do chunk = 1, noChunks
       if ( chunkTids(chunk) /= 0 ) then
+        call usleep ( 50*parallel%delay )
         if ( usingL2Q ) then
           machine = chunkMachines(chunk)
           call TellL2QMachineFinished( &
@@ -1188,7 +1189,7 @@ contains ! ================================ Procedures ======================
     end do
 
     if ( usingL2Q ) then
-      call usleep ( parallel%delay )
+      call usleep ( 100*parallel%delay )
       call TellL2QMasterFinished(L2Qtid)
       if ( switchDetail(switches,'mas') > -1 ) &
         & call TimeStamp ( 'Telling l2q we are finished', &
@@ -1923,6 +1924,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.81  2007/02/13 21:36:19  pwagner
+! Lengthen delays before telling l2q we finished so slaves may complete timings summary
+!
 ! Revision 2.80  2007/01/12 00:38:57  pwagner
 ! Switches allegiance to a replacement l2q
 !
