@@ -878,21 +878,37 @@ program MLSL2
 
   call time_now ( t0 )
   t1 = t0
+  ! Moved up here because we're having chunks die during Task (8)
+  ! (Why don't you find out why and fix it?)
+  call add_to_section_timing( 'main', t0 )
+  if ( switchDetail(switches, 'time') >= 0 ) then
+    call output('(Now for the timings summary)', advance='yes')
+    call dump_section_timings
+  endif
   !---------------- Task (8) ------------------
   call destroy_char_table
+  call output('Destroyed char table', advance='yes')
   call destroy_hash_table
+  call output('Destroyed hash table', advance='yes')
   call destroy_string_table
+  call output('Destroyed string table', advance='yes')
   call destroy_symbol_table
+  call output('Destroyed symbol table', advance='yes')
   call deallocate_decl
+  call output('Deallocated decl', advance='yes')
   call deallocate_tree
+  call output('Deallocated tree', advance='yes')
   call FreePVMArgs
+  call output('Freed PVM args', advance='yes')
   if ( parallel%slave .and. &
     & (SKIPDIRECTWRITES .or. SKIPRETRIEVAL .or. sectionsToSkip /= ' ' ) ) then
     ! call mls_h5close(error)
     ! call MLSMessageExit 
   else if ( error == 0 ) then
     call Deallocate_filedatabase(filedatabase)
+    call output('Deallocated filedatabase', advance='yes')
     call mls_h5close(error)
+    call output('Closed hdf5 library', advance='yes')
     if (error /= 0) then
        call MLSMessage ( MLSMSG_Error, moduleName, &
         & "Unable to mls_close" )
@@ -900,7 +916,6 @@ program MLSL2
   end if    
   if ( timing ) call sayTime ( 'Closing and deallocating' )
   call add_to_section_timing( 'main', t0 )
-  if ( switchDetail(switches, 'time') >= 0 ) call dump_section_timings
   if ( trackAllocates > 0 ) call ReportLeaks ( "At end of program execution..." )
   call output_date_and_time(msg='ending mlsl2')
   if( error /= 0 .or. STOPWITHERROR ) then
@@ -1085,6 +1100,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.162  2007/02/14 17:31:45  pwagner
+! Moved timing summary before statements possibly killing slaves
+!
 ! Revision 2.161  2007/02/07 20:58:03  pwagner
 ! Permit slaves to write unbuffered stdout when master does
 !
