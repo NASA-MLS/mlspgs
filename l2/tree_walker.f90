@@ -158,17 +158,11 @@ contains ! ====     Public Procedures     ==============================
     stopBeforeChunkLoop = ( stopBeforeChunkLoop .and. stopAfterSection /= ' ' )
     reducedChunks      = .false.
     depth = 0
-    ! call output( 'Sections to skip: ' // trim(sectionsToSkip), advance='yes' )
     skipSections = .false.
     do i=section_first, section_last
       call get_string ( section_indices(i), section_name, strip=.true. )
       skipSections(i) = isInList( sectionstoskip, section_name, '-fc' )
-      ! call outputNamedValue ( 'i', i, advance='no')
-      ! call outputNamedValue ( '  section_name', section_name, advance='no')
-      ! call outputNamedValue ( '  skip?', skipSections(i), advance='yes')
     enddo
-    ! call dump( skipSections, 'skipping sections' )
-    ! stop
     if ( toggle(gen) ) call trace_begin ( 'WALK_TREE_TO_DO_MLS_L2', &
       & subtree(first_section,root) )
     call time_now ( t1 )
@@ -185,7 +179,6 @@ contains ! ====     Public Procedures     ==============================
     ! ----------------------------------------------------- Loop over tree
 
     ! Now loop over the sections in the tree
-    ! call outputNamedValue( 'Output_Close index', z_output, advance='yes' )
     do while ( i <= howmany )
       son = subtree(i,root)
       section_index = decoration(subtree(1,son))
@@ -196,10 +189,6 @@ contains ! ====     Public Procedures     ==============================
         if( skipSections(section_index) ) &
           & section_index = SECTION_FIRST - 1 ! skip
       endif
-      ! call outputNamedValue( 'tree section_index', section_index, advance='yes' )
-      ! if ( section_index == z_output ) then
-      !   call output("Now is our chance to go through output", advance='yes')
-      ! endif
       ! First those involved in 'preprocessing'
       select case ( section_index )
 
@@ -314,8 +303,6 @@ contains ! ====     Public Procedures     ==============================
             call add_to_section_timing ( 'retrieve', t1, now_stop )
           case default
             ! This is one of the skipped sections
-            ! call output('Skipping ', advance='no')
-            ! call output(trim(section_name), advance='yes')
           end select
           ! print the timing for FullForwardModel, the following return
 	  ! if fmt1 or fmt2 is true
@@ -347,14 +334,12 @@ contains ! ====     Public Procedures     ==============================
               & call LaunchFWMSlaves ( chunks ( chunkNo ) )
             j = i
 subtrees:   do while ( j <= howmany )
-              ! call output( 'Now inside subtrees loop', advance='yes' )
               son = subtree(j,root)
               section_index = decoration(subtree(1,son))
               call get_string ( section_indices(section_index), section_name, &
                 & strip=.true. )
               if( skipSections(section_index) ) &
                 & section_index = SECTION_FIRST - 1 ! skip
-              ! call outputNamedValue( 'subtree section_index', section_index, advance='yes' )
               select case ( section_index ) ! section index
               case ( z_algebra )
                 call algebra ( son, vectors, matrices, chunks(chunkNo), forwardModelConfigDatabase )
@@ -391,7 +376,6 @@ subtrees:   do while ( j <= howmany )
               end select
               j = j + 1
             end do subtrees
-            ! call output( 'Now outside subtrees loop', advance='yes' )
 
             if ( switchDetail(switches,'chi') > 0 .and. chunkNo > 1 ) then
               ! Dumps nothing after 1st chunk
@@ -450,10 +434,8 @@ subtrees:   do while ( j <= howmany )
       ! And resume directwrites
       skipDirectwrites = skipDirectwritesOriginal
       case ( z_output ) ! Write out the data
-        ! call output( 'Now our chance to call Output_Close', advance='yes' )
         call resumeOutput ! In case the last phase was  silent
         if ( .not. parallel%slave ) then
-          ! call output( 'Now calling Output_Close', advance='yes' )
           call Output_Close ( son, l2gpDatabase, l2auxDatabase, DirectDatabase, &
 	         & matrices, vectors, fileDataBase, chunks, processingRange, &
             & canWriteL2PC )
@@ -532,7 +514,8 @@ subtrees:   do while ( j <= howmany )
 !        call destroy_DACS_Filter_Database
 !        call destroy_Filter_Shapes_Database
         call destroyBinSelectorDatabase
-        call destroyL2PCDatabase
+!        call destroyL2PCDatabase
+!        call output('Destroyed l2pc db', advance='yes')
         call destroy_filter_shapes_database
         call destroyFWMConfigDatabase ( forwardModelConfigDatabase )
         call destroy_line_database
@@ -583,6 +566,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.152  2007/01/12 00:34:04  pwagner
+! Renamed routine outputNamedValue
+!
 ! Revision 2.151  2006/10/09 18:39:35  pwagner
 ! Fixed bug preventing a call to Output_CLose
 !
