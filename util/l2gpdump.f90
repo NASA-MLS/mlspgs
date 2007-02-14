@@ -13,13 +13,15 @@
 PROGRAM L2GPDump ! dumps L2GPData files
 !=================================
 
+   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+   use BitStuff, only: ISBITSET
    use dump_0, only: dump
    use Hdf, only: DFACC_CREATE, DFACC_RDWR, DFACC_READ
    use HDF5, only: h5fopen_f, h5fclose_f, h5gopen_f, h5gclose_f, h5fis_hdf5_f   
    use HDFEOS5, only: HE5T_NATIVE_CHAR
    use intrinsic, only: l_swath
    use L2GPData, only: Dump, L2GPData_T, ReadL2GPData, DestroyL2GPContents, &
-     & L2GPNameLen, MAXSWATHNAMESBUFSIZE
+     & L2GPNameLen, MAXSWATHNAMESBUFSIZE, RGP
    use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
    use MLSCommon, only: R8
    use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, MLS_INQSWATH, &
@@ -29,8 +31,9 @@ PROGRAM L2GPDump ! dumps L2GPData files
      & MLSMessage
    use MLSStringLists, only: ExpandStringRange, &
      & GetStringElement, NumStringElements, &
-     & stringElementNum
-   use OUTPUT_M, only: OUTPUT, resumeOutput, suspendOutput
+     & stringElement, stringElementNum
+   use OUTPUT_M, only: blanks, OUTPUT, outputNamedValue, &
+     & resumeOutput, suspendOutput
    use PCFHdr, only: GlobalAttributes
    
    IMPLICIT NONE
@@ -66,12 +69,16 @@ PROGRAM L2GPDump ! dumps L2GPData files
      character(len=255) ::  attrInquiry = ''
      character(len=255) ::  fields = ''
      character(len=255) ::  swaths = '*' ! wildcard, meaning all swaths
+     real    ::             ConvergenceCutOff = -1. ! Show % above, below this
+     real    ::             PrecisionCutOff = -1. ! Show % above, below this
+     real    ::             QualityCutOff = -1. ! Show % above, below this
+     logical ::             StatusBits ! SHow % with various status bits set
   end type options_T
 
   type ( options_T ) :: options
   character(LEN=255) :: filename          ! filename
   integer            :: n_filenames
-  integer     ::  i, count, status, error ! Counting indices & Error flags
+  integer     ::  i, status, error ! Counting indices & Error flags
   logical     :: is_hdf5
   logical     :: is_present
   ! 
@@ -108,11 +115,12 @@ contains
 !------------------------- get_filename ---------------------
     subroutine get_filename(filename, n_filenames, options)
     ! Added for command-line processing
-     CHARACTER(LEN=255), intent(out) :: filename          ! filename
+     character(len=255), intent(out) :: filename          ! filename
      integer, intent(in) ::             n_filenames
      type ( options_T ) :: options
      integer ::                         error = 1
      integer, save ::                   i = 1
+     character(len=255) :: argstr
   ! Get inputfile name, process command-line args
   ! (which always start with -)
     do
@@ -137,6 +145,10 @@ contains
       else if ( filename(1:6) == '-chunk' ) then
         call getarg ( i+1+hp, options%chunks )
         i = i + 1
+      else if ( filename(1:5) == '-conv' ) then
+        call getarg ( i+1+hp, argstr )
+        read( argstr, * ) options%convergenceCutOff
+        i = i + 1
       else if ( filename(1:6) == '-inqat' ) then
         call getarg ( i+1+hp, options%attrInquiry )
         i = i + 1
@@ -154,9 +166,19 @@ contains
       else if ( filename(1:3) == '-l ' ) then
         call getarg ( i+1+hp, options%fields )
         i = i + 1
+      else if ( filename(1:5) == '-prec' ) then
+        call getarg ( i+1+hp, argstr )
+        read( argstr, * ) options%precisionCutOff
+        i = i + 1
+      else if ( filename(1:5) == '-qual' ) then
+        call getarg ( i+1+hp, argstr )
+        read( argstr, * ) options%qualityCutOff
+        i = i + 1
       else if ( filename(1:3) == '-s ' ) then
         call getarg ( i+1+hp, options%swaths )
         i = i + 1
+      elseif ( filename(1:5) == '-stat' ) then
+        options%statusBits = .true.
       else if ( filename(1:3) == '-f ' ) then
         call getarg ( i+1+hp, filename )
         error = 0
@@ -205,11 +227,19 @@ contains
       write (*,*) '          -0          => dump only scalars, 1-d array'
       write (*,*) '          -1          => dump only scalars'
       write (*,*) '          -2          => dump only swath names'
+
+      write (*,*) '    (The following options print only summaries)'
+      write (*,*) '          -conv x     => show % converged according to x cutoff'
+      write (*,*) '          -prec x     => show % with precision > x cutoff'
+      write (*,*) '          -qual x     => show % with quality > x cutoff'
+      write (*,*) '          -status     => show % with various status bits set'
+
       write (*,*) '    (Notes)'
       write (*,*) ' (1) by default, dumps all fields in allswaths, but not attributes'
       write (*,*) ' (2) by default, detail level is -1'
-      write (*,*) ' (2) details levels, -l options are all mutually exclusive'
+      write (*,*) ' (3) details levels, -l options are all mutually exclusive'
       write (*,*) ' (4) the list of chunks may include the range operator "-"'
+      write (*,*) ' (5) -conv, -qual, -prec, and -status all turn off detailed dumps'
       stop
   end subroutine print_help
   
@@ -294,14 +324,12 @@ contains
     character(len=*), intent(in) :: filename          ! filename
     type ( options_T ) :: options
     ! Local variables
-    integer, dimension(MAXNCHUNKS) :: chunks
     character (len=MAXSWATHNAMESBUFSIZE) :: SwathList
     integer :: File1
     integer :: listsize
     logical, parameter            :: countEmpty = .true.
     type (L2GPData_T) :: l2gp
     integer :: i
-    integer :: nChunks
     integer :: noSwaths
     character (len=L2GPNameLen) :: swath
     integer :: record_length
@@ -348,21 +376,134 @@ contains
         status = mls_io_gen_closeF(l_swath, File1, FileName=Filename, &
         & hdfVersion=HDFVERSION_5, debugOption=.false.)
       endif
-      ! Dump the actual swath
-      if ( options%verbose ) print *, 'swath: ', trim(swath)
-      if ( options%chunks == '*' ) then
-        call dump(l2gp, options%columnsOnly, options%details, options%fields)
-      else
-        call ExpandStringRange(options%chunks, chunks, nchunks)
-        if ( nchunks < 1 ) cycle
-        call dump(l2gp, chunks(1:nChunks), &
-          & options%columnsOnly, options%details, options%fields)
-      endif
+      call myDump( options, l2gp, swath )
       call DestroyL2GPContents ( l2gp )
     enddo
    end subroutine dump_one_file
+
+   subroutine myDump( options, l2gp, swath )
+     ! Args
+     type ( options_T ), intent(in)  :: options
+     type (L2GPData_T), intent(in)   :: l2gp
+     character(len=*), intent(in) :: swath
+     ! Internal variables
+     logical                         :: alreadyDumped
+     integer                         :: bitindex, i
+     integer, dimension(MAXNCHUNKS) :: chunks
+     integer :: nChunks
+     logical, dimension(:), pointer  :: negativePrec => null() ! true if all prec < 0
+     integer                         :: numGood
+     real                            :: numTest
+     integer, parameter              :: MAXNUMBITSUSED = 8
+     integer, dimension(MAXNUMBITSUSED), parameter :: bitNumber = &
+       & (/ 0, 1, 2, 4, 5, 6, 8, 9 /)
+     integer, dimension(MAXNUMBITSUSED, 2) :: bitCounts
+     character(len=*), parameter     :: bitNames = &
+       & 'dontuse, bewary,   info,  hicld,  locld, nogmao, toofew,  crash'
+     ! Executable
+     alreadyDumped = .false.
+     if ( options%verbose ) print *, 'swath: ', trim(swath)
+     call allocate_test( negativePrec, l2gp%nTimes, 'negativePrec', ModuleName )
+     do i=1, l2gp%nTimes
+       negativePrec(i) = all( l2gp%l2GPPrecision(:,:,i) < 0._rgp )
+     enddo
+     numGood = count( .not. ( negativePrec .or. &
+       & (mod(l2gp%status, 2) > 0) ) )
+     if ( options%ConvergenceCutOff > 0. ) then
+       alreadyDumped = .true.
+       numTest = count( .not. ( negativePrec .or. &
+         & (mod(l2gp%status, 2) > 0) .or. &
+         & (l2gp%Convergence > options%ConvergenceCutOff) ) )
+       call showPercentages( numTest, numGood, 'convergence', options%ConvergenceCutOff )
+     endif
+     if ( options%QualityCutOff > 0. ) then
+       alreadyDumped = .true.
+       numTest = count( .not. ( negativePrec .or. &
+         & (mod(l2gp%status, 2) > 0) .or. &
+         & (l2gp%Quality > options%QualityCutOff) ) )
+       call showPercentages( numTest, numGood, 'Quality', options%QualityCutOff )
+     endif
+     if ( options%PrecisionCutOff > 0. ) then
+       alreadyDumped = .true.
+       numGood = 0
+       numTest = 0
+       do i=1, l2gp%nTimes
+         if ( negativePrec(i) .or. &
+           & mod(l2gp%status(i), 2) > 0 ) cycle
+         numGood = numGood + &
+           & l2gp%nLevels*max(1, l2gp%nFreqs)
+         numTest = numTest + &
+           & count( l2gp%l2gpPrecision(:,:,i) > options%PrecisionCutOff )
+       enddo
+       call showPercentages( numTest, numGood, 'precision', options%PrecisionCutOff )
+     endif
+     numGood = count( .not. ( negativePrec .or. &
+       & (mod(l2gp%status, 2) > 0) ) )
+     if ( options%statusBits ) then
+       alreadyDumped = .true.
+       ! Bit 0 is special
+       bitCounts(1, 2) = count( .not. negativePrec )
+       bitCounts(1, 1) = count( .not. ( negativePrec .or. &
+         & (mod(l2gp%status, 2) == 0) ) )
+       call outputNamedValue ( 'max status', maxval(l2gp%status) )
+       call outputNamedValue ( 'min status', minval(l2gp%status) )
+       do bitindex=2, MAXNUMBITSUSED
+         call outputNamedValue ( 'bitNumber(bitindex)', bitNumber(bitindex) )
+         bitCounts(bitindex, 2) = numGood
+         bitCounts(bitindex, 1) = count( .not. ( negativePrec .or. &
+         & (mod(l2gp%status, 2) > 0) ) .and. &
+         & isBitSet( l2gp%status, bitNumber(bitindex) ) )
+       enddo
+       call output( '% valid data with bits set', advance='yes' )
+       call output( 'bit' )
+       call blanks(4)
+       call output( 'desc' )
+       call blanks(4)
+       call output( '%', advance='yes' )
+       do bitindex=1, MAXNUMBITSUSED
+         call output( bitNumber(bitIndex) )
+         call blanks(2)
+         call output( trim( stringElement( bitNames, bitIndex, &
+           & countEmpty=.true. ) ) )
+         call blanks(4)
+         call output( (100.*bitCounts(bitindex, 1)) / max(1, bitCounts(bitindex, 2) ) , advance='yes' )
+       enddo
+     endif
+     call deallocate_test( negativePrec, 'negativePrec', ModuleName )
+     if ( alreadyDumped ) return
+     ! Dump the actual swath
+     if ( options%chunks == '*' ) then
+       call dump(l2gp, options%columnsOnly, options%details, options%fields)
+     else
+       call ExpandStringRange(options%chunks, chunks, nchunks)
+       if ( nchunks < 1 ) return
+       call dump(l2gp, chunks(1:nChunks), &
+         & options%columnsOnly, options%details, options%fields)
+     endif
+   end subroutine myDump
+
+   subroutine showPercentages( numTest, numGood, name, CutOff )
+     ! output % figures derived from numTest/numGood
+     ! Args
+     real, intent(in)    ::          numTest
+     integer, intent(in) ::          numGood
+     real, intent(in) ::             cutOff
+     character(len=*), intent(in) :: name
+     ! Internal variables
+     ! Executable
+     call output( '% ' )
+     call output( trim(name) )
+     call blanks(2)
+     call output( 'falling below ' )
+     call output( cutOff )
+     call blanks(1)
+     call output( (100.*numTest)/max(1, numGood), advance='yes' )
+   end subroutine showPercentages
 !==================
-END PROGRAM L2GPDump
+end program L2GPDump
 !==================
 
 ! $Log$
+! Revision 1.1  2006/08/10 23:06:13  pwagner
+! First commit
+!

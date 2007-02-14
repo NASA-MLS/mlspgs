@@ -15,18 +15,23 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
 
    use Dump_0, only: DUMP
    use Hdf, only: DFACC_READ
-   use HDF5, only: h5fis_hdf5_f
-   use L1BData, only: NAME_LEN
+   use HDF5, only: h5fis_hdf5_f, h5gclose_f, h5gopen_f
+   use L1BData, only: l1bdata_t, NAME_LEN, PRECISIONSUFFIX, &
+     & DeallocateL1BData, ReadL1BData
    use MACHINE, only: HP, GETARG
-   use MLSFiles, only: &
-     & mls_sfstart, mls_sfend, &
-     & HDFVERSION_5
+   use MLSCommon, only: R8
+   use MLSFiles, only: FILENOTFOUND, &
+     & mls_exists, mls_sfstart, mls_sfend, &
+     & HDFVERSION_5, mls_hdf_version, WILDCARDHDFVERSION
    use MLSHDF5, only: DumpHDF5Attributes, DumpHDF5DS, &
      & GetAllHDF5AttrNames, GetAllHDF5DSNames, &
      & mls_h5open, mls_h5close
-   use MLSMessageModule, only: MLSMessageConfig, MLSMSG_Error, &
+   use MLSMessageModule, only: MLSMessageConfig, MLSMSG_Error, MLSMSG_Warning, &
      & MLSMessage
-   use MLSStats1, only: fillValueRelation
+   use MLSStats1, only: FILLVALUERELATION, Stat_T, dump, STATISTICS
+   use MLSStringLists, only: catLists, GetStringElement, NumStringElements, &
+     & StringElementNum
+   use MLSStrings, only: lowercase
    use output_m, only: output
    use Time_M, only: Time_Now, time_config
    
@@ -54,6 +59,7 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
     logical             :: la                 = .false.
     logical             :: ls                 = .false.
     logical             :: stats              = .false.
+    logical             :: radiances          = .false.
     logical             :: rms                = .false.
     logical             :: useFillValue       = .false.
     character(len=128)  :: DSName      = '' ! Extra dataset if attributes under one
@@ -134,13 +140,18 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
     if ( options%verbose ) then
       print *, 'Reading from: ', trim(filenames(i))
     endif
-    sdfid1 = mls_sfstart(filenames(i), DFACC_READ, hdfVersion=hdfVersion)
-    if (sdfid1 == -1 ) then
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-      &  'Failed to open l2aux file ' // trim(filenames(i)) )
+    if ( .not. options%radiances ) then
+      sdfid1 = mls_sfstart( filenames(i), DFACC_READ, hdfVersion=hdfVersion )
+      if ( sdfid1 == -1 ) then
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+        &  'Failed to open l2aux file ' // trim(filenames(i)) )
+      end if
     end if
     if ( options%datasets /= ' ' ) then
-      if ( options%useFillValue ) then
+      if ( options%radiances ) then
+        call dumpradiances ( filenames(i), hdfVersion, options )
+        sdfid1 = mls_sfstart( filenames(i), DFACC_READ, hdfVersion=hdfVersion )
+      elseif ( options%useFillValue ) then
         call DumpHDF5DS ( sdfid1, trim(options%root), trim(options%datasets), &
           & fillValue=options%fillValue, rms=options%rms, stats=options%stats )
       else
@@ -176,8 +187,9 @@ contains
      print *, 'list attributes  ?  ', options%la   
      print *, 'list datasets  ?    ', options%ls
      print *, 'stats  ?            ', options%stats  
+     print *, 'radiances only    ? ', options%radiances
      print *, 'rms    ?            ', options%rms    
-     print *, 'useFillValue  ?     ', options%rms    
+     print *, 'useFillValue  ?     ', options%useFillValue
      print *, 'root                ', options%root
      print *, 'fillValue           ', options%fillValue
      print *, 'fillValueRelation   ', options%fillValueRelation
@@ -257,6 +269,9 @@ contains
         options%useFillValue = .true.
         i = i + 1
         exit
+      else if ( filename(1:5) == '-radi' ) then
+        options%radiances = .true.
+        exit
       else if ( filename(1:3) == '-rd ' ) then
         call getarg ( i+1+hp, options%DSName )
         i = i + 1
@@ -314,11 +329,163 @@ contains
       write (*,*) '                              this relation with fillValue'
       write (*,*) '          -la             => just list attribute names in files'
       write (*,*) '          -ls             => just list sd names in files'
+      write (*,*) '          -radiances      => show radiances only'
       write (*,*) '          -rms            => just print mean, rms'
       write (*,*) '          -s              => just show % statistics'
       write (*,*) '          -h              => print brief help'
       stop
   end subroutine print_help
+
+  ! ---------------------- dumpradiances  ---------------------------
+  subroutine dumpradiances( file1, hdfVersion, options )
+  !------------------------------------------------------------------------
+
+    ! Given file names file1,
+    ! This routine prints the radiances based on the pattern
+    ! that if a DS named 'x' is a radiance, then
+    ! the file must also contain 'x precision'
+
+    ! Arguments
+
+    character (len=*), intent(in) :: file1 ! Name of file
+    integer, intent(in)           :: hdfVersion
+    type ( options_T )            :: options
+
+    ! Local
+    logical, parameter            :: countEmpty = .true.
+    logical :: file_exists
+    integer :: file_access
+    integer :: grpid
+    integer :: i
+    integer :: iPrec
+    logical :: isl1boa
+    type(l1bdata_t) :: L1BPrecision  ! Result
+    type(l1bdata_t) :: L1BRadiance   ! Result
+    type(Stat_T) :: L1BStat
+    character (len=MAXSDNAMESBUFSIZE) :: mySdList
+    integer :: NoMAFs
+    integer :: noSds
+    integer :: numDiffs
+    integer :: sdfid1
+    character (len=80) :: sdName
+    integer, dimension(3) :: shp
+    integer :: status
+    integer :: the_hdfVersion
+    character (len=80) :: which
+    
+    ! Executable code
+    if ( .not. ( options%rms .or. options%stats ) ) then
+      which = '*'
+    else
+      which = ' '
+      if ( options%rms ) which = 'rms'
+      if ( options%stats ) which = catLists( which, 'max,min,mean,stddev' )
+    endif 
+    the_hdfVersion = HDFVERSION_5
+    the_hdfVersion = hdfVersion
+    file_exists = ( mls_exists(trim(File1)) == 0 )
+    if ( .not. file_exists ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'File 1 not found; make sure the name and path are correct' &
+        & // trim(file1) )
+    endif
+    if ( the_hdfVersion == WILDCARDHDFVERSION ) then
+      the_hdfVersion = mls_hdf_version(File1, hdfVersion)
+      if ( the_hdfVersion == FILENOTFOUND ) &
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'File 1 not found; make sure the name and path are correct' &
+          & // trim(file1) )
+    endif
+    call GetAllHDF5DSNames (trim(File1), '/', mysdList)
+    if ( options%verbose ) then
+      call output ( '============ DS names in ', advance='no' )
+      call output ( trim(file1) //' ============', advance='yes' )
+    endif
+    if ( mysdList == ' ' ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'No way yet to find sdList in ' // trim(File1) )
+      return
+    else
+      if ( options%verbose ) call dump(mysdList, 'DS names')
+    endif
+
+    isl1boa = (index(trim(mysdList), '/GHz') > 0)
+    if ( isl1boa ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'l1boa file contains no radiances ' // trim(File1) )
+      return
+    endif
+    file_access = DFACC_READ
+    sdfid1 = mls_sfstart(File1, DFACC_READ, hdfVersion=hdfVersion)
+    if (sdfid1 == -1 ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      &  'Failed to open l1b file ' // trim(File1) )
+    end if
+	 call h5gOpen_f (sdfid1,'/', grpID, status)
+    if ( status /= 0 ) then
+	   call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          	& 'Unable to open group to read attribute in l2aux file' )
+    endif
+    noSds = NumStringElements(trim(mysdList), countEmpty)
+    if ( noSds < 1 ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'No sdNames cp to file--unable to count sdNames in ' // trim(mysdList) )
+    endif
+    ! Loop over sdNames in file 1
+    do i = 1, noSds
+      call GetStringElement (trim(mysdList), sdName, i, countEmpty )
+      if ( index( lowercase(trim(sdName)), PRECISIONSUFFIX ) > 0 ) cycle
+      iPrec = StringElementNum( mysdList, trim(sdName) // PRECISIONSUFFIX, &
+        & countEmpty )
+      if ( iPrec < 1 ) cycle
+      ! Allocate and fill l2aux
+      if ( options%verbose ) print *, 'About to read ', trim(sdName)
+      call ReadL1BData ( sdfid1, trim(sdName), L1bRadiance, NoMAFs, status, &
+        & hdfVersion=the_hdfVersion, NEVERFAIL=.true., L2AUX=.true. )
+      if ( status /= 0 ) then
+	     call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'Unable to find ' // trim(sdName) // ' in ' // trim(File1) )
+        cycle
+      endif
+      if ( options%verbose ) print *, 'About to read ', trim(sdName) // PRECISIONSUFFIX
+      call ReadL1BData ( sdfid1, trim(sdName)  // PRECISIONSUFFIX, L1bPrecision, &
+        & NoMAFs, status, &
+        & hdfVersion=the_hdfVersion, NEVERFAIL=.true., L2AUX=.true. )
+      if ( status /= 0 ) then
+	     call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'Unable to find ' // trim(sdName)  // PRECISIONSUFFIX // &
+          & ' in ' // trim(File1) )
+        cycle
+      endif
+      shp = shape(L1bRadiance%DpField)
+      if ( options%rms .or. options%stats ) then
+      elseif ( options%useFillValue ) then
+        call dump( L1bRadiance%DpField, name=trim(sdName), &
+          & stats=.true., FillValue=real(options%fillValue, r8) )
+      else
+        call dump( L1bRadiance%DpField, name=trim(sdName) )
+        call dump( L1bPrecision%DpField, name=trim(sdName) // precisionSuffix )
+      endif
+      L1BStat%count = 0
+      call statistics(&
+        & reshape( L1bRadiance%DpField, (/ product(shp) /) ), &
+        & L1BStat, &
+        & precision=reshape( L1bPrecision%DpField, (/ product(shp) /) ) )
+      call dump ( L1BStat, which )
+      call DeallocateL1BData ( l1bRadiance )
+      call DeallocateL1BData ( l1bPrecision )
+    enddo
+	 call h5gClose_f ( grpID, status )
+    if ( status /= 0 ) then
+	   call MLSMessage ( MLSMSG_Warning, ModuleName, &
+       & 'Unable to close group in l2aux file: ' // trim(File1) // ' after diffing' )
+    endif
+	 status = mls_sfend( sdfid1, hdfVersion=the_hdfVersion )
+    if ( status /= 0 ) &
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+       & "Unable to close L2aux file: " // trim(File1) // ' after diffing' )
+  end subroutine dumpradiances
+
 !------------------------- SayTime ---------------------
   subroutine SayTime ( What, startTime )
     character(len=*), intent(in) :: What
@@ -339,6 +506,9 @@ end program l2auxdump
 !==================
 
 ! $Log$
+! Revision 1.3  2006/07/13 18:11:01  pwagner
+! May set fillValue and -relation for rms, pctage
+!
 ! Revision 1.2  2006/06/29 20:39:45  pwagner
 ! Repaired a few bugs
 !

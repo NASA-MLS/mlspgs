@@ -34,8 +34,7 @@ contains ! ====     Public Procedures     ==============================
     use Algebra_M, only: Algebra
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use AntennaPatterns_m, only: Destroy_Ant_Patterns_Database
-    use ChunkDivide_m, only: ChunkDivide, DestroyChunkDatabase, &
-      & ReduceChunkDatabase
+    use ChunkDivide_m, only: ChunkDivide, DestroyChunkDatabase
     use Chunks_m, only: Dump, MLSChunk_T
     use Construct, only: MLSL2Construct, MLSL2DeConstruct, &
       & ConstructMIFGeolocation
@@ -82,7 +81,7 @@ contains ! ====     Public Procedures     ==============================
     use MLSL2Timings, only: add_to_section_timing, TOTAL_TIMES
     use Open_Init, only: OpenAndInitialize
     use OutputAndClose, only: Output_Close
-    use Output_m, only: BLANKS, getStamp, Output, output_name_v_pair, &
+    use Output_m, only: BLANKS, getStamp, Output, &
       & RESUMEOUTPUT, revertoutput, setStamp, switchOutput
     use PointingGrid_m, only: Destroy_Pointing_Grid_Database
     use QuantityTemplates, only: QuantityTemplate_T
@@ -159,17 +158,11 @@ contains ! ====     Public Procedures     ==============================
     stopBeforeChunkLoop = ( stopBeforeChunkLoop .and. stopAfterSection /= ' ' )
     reducedChunks      = .false.
     depth = 0
-    ! call output( 'Sections to skip: ' // trim(sectionsToSkip), advance='yes' )
     skipSections = .false.
     do i=section_first, section_last
       call get_string ( section_indices(i), section_name, strip=.true. )
       skipSections(i) = isInList( sectionstoskip, section_name, '-fc' )
-      ! call output_name_v_pair ( 'i', i, advance='no')
-      ! call output_name_v_pair ( '  section_name', section_name, advance='no')
-      ! call output_name_v_pair ( '  skip?', skipSections(i), advance='yes')
     enddo
-    ! call dump( skipSections, 'skipping sections' )
-    ! stop
     if ( toggle(gen) ) call trace_begin ( 'WALK_TREE_TO_DO_MLS_L2', &
       & subtree(first_section,root) )
     call time_now ( t1 )
@@ -186,7 +179,6 @@ contains ! ====     Public Procedures     ==============================
     ! ----------------------------------------------------- Loop over tree
 
     ! Now loop over the sections in the tree
-    ! call output_name_v_pair( 'Output_Close index', z_output, advance='yes' )
     do while ( i <= howmany )
       son = subtree(i,root)
       section_index = decoration(subtree(1,son))
@@ -197,10 +189,6 @@ contains ! ====     Public Procedures     ==============================
         if( skipSections(section_index) ) &
           & section_index = SECTION_FIRST - 1 ! skip
       endif
-      ! call output_name_v_pair( 'tree section_index', section_index, advance='yes' )
-      ! if ( section_index == z_output ) then
-      !   call output("Now is our chance to go through output", advance='yes')
-      ! endif
       ! First those involved in 'preprocessing'
       select case ( section_index )
 
@@ -241,7 +229,7 @@ contains ! ====     Public Procedures     ==============================
           return
         end if
       case ( z_mergeGrids )
-        if ( .not. stopBeforeChunkLoop ) &
+        if ( .not. ( stopBeforeChunkLoop .or. checkPaths ) ) &
           & call mergeGrids ( son, griddedDataBase, l2gpDatabase )
 
         ! --------------------------------------------------------- Chunk divide
@@ -315,8 +303,6 @@ contains ! ====     Public Procedures     ==============================
             call add_to_section_timing ( 'retrieve', t1, now_stop )
           case default
             ! This is one of the skipped sections
-            ! call output('Skipping ', advance='no')
-            ! call output(trim(section_name), advance='yes')
           end select
           ! print the timing for FullForwardModel, the following return
 	  ! if fmt1 or fmt2 is true
@@ -348,14 +334,12 @@ contains ! ====     Public Procedures     ==============================
               & call LaunchFWMSlaves ( chunks ( chunkNo ) )
             j = i
 subtrees:   do while ( j <= howmany )
-              ! call output( 'Now inside subtrees loop', advance='yes' )
               son = subtree(j,root)
               section_index = decoration(subtree(1,son))
               call get_string ( section_indices(section_index), section_name, &
                 & strip=.true. )
               if( skipSections(section_index) ) &
                 & section_index = SECTION_FIRST - 1 ! skip
-              ! call output_name_v_pair( 'subtree section_index', section_index, advance='yes' )
               select case ( section_index ) ! section index
               case ( z_algebra )
                 call algebra ( son, vectors, matrices, chunks(chunkNo), forwardModelConfigDatabase )
@@ -392,7 +376,6 @@ subtrees:   do while ( j <= howmany )
               end select
               j = j + 1
             end do subtrees
-            ! call output( 'Now outside subtrees loop', advance='yes' )
 
             if ( switchDetail(switches,'chi') > 0 .and. chunkNo > 1 ) then
               ! Dumps nothing after 1st chunk
@@ -451,10 +434,8 @@ subtrees:   do while ( j <= howmany )
       ! And resume directwrites
       skipDirectwrites = skipDirectwritesOriginal
       case ( z_output ) ! Write out the data
-        ! call output( 'Now our chance to call Output_Close', advance='yes' )
         call resumeOutput ! In case the last phase was  silent
         if ( .not. parallel%slave ) then
-          ! call output( 'Now calling Output_Close', advance='yes' )
           call Output_Close ( son, l2gpDatabase, l2auxDatabase, DirectDatabase, &
 	         & matrices, vectors, fileDataBase, chunks, processingRange, &
             & canWriteL2PC )
@@ -516,8 +497,7 @@ subtrees:   do while ( j <= howmany )
 
   contains
     subroutine FinishUp ( Early )
-      use FilterShapes_m, only: Destroy_DACS_Filter_Database, &
-        & Destroy_Filter_Shapes_Database
+      use FilterShapes_m, only: Destroy_Filter_Shapes_Database
       logical, intent(in), optional :: Early
       logical :: myEarly
       integer :: numChunks
@@ -534,7 +514,8 @@ subtrees:   do while ( j <= howmany )
 !        call destroy_DACS_Filter_Database
 !        call destroy_Filter_Shapes_Database
         call destroyBinSelectorDatabase
-        call destroyL2PCDatabase
+!        call destroyL2PCDatabase
+!        call output('Destroyed l2pc db', advance='yes')
         call destroy_filter_shapes_database
         call destroyFWMConfigDatabase ( forwardModelConfigDatabase )
         call destroy_line_database
@@ -585,6 +566,12 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.152  2007/01/12 00:34:04  pwagner
+! Renamed routine outputNamedValue
+!
+! Revision 2.151  2006/10/09 18:39:35  pwagner
+! Fixed bug preventing a call to Output_CLose
+!
 ! Revision 2.150  2006/10/05 23:32:43  pwagner
 ! skipSections can skip named sections
 !

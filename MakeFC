@@ -207,30 +207,34 @@ SHELL = /bin/sh
 #
 # The following targets refer to programs whose sources are in the 
 # util directory. You may or may not be interested in building and running them.
-# chunktimes     -- build and install this prog
-# checkpvmup     -- build and install this prog
-# CondenseLeakLog-- build and install this prog
-# end_stmts      -- build and install this prog
-# f90tex         -- build and install this prog
-# h5cat          -- build and install this prog
-# h5subset       -- build and install this prog
-# heconvert      -- build and install this prog
-# hl             -- build and install this prog
-# init_gen       -- build and install this prog
-# killmaster     -- build and install this prog
-# l1bdiff        -- build and install this prog
-# l1h5subset     -- build and install this prog
-# l2auxcat       -- build and install this prog
-# l2auxchi       -- build and install this prog
-# l2auxdump      -- build and install this prog
-# l2gpcat        -- build and install this prog
-# l2gpdiff       -- build and install this prog
-# l2gpdump       -- build and install this prog
-# l2q            -- build and install this prog
-# machineok      -- build and install this prog
-# MLS_h5ls       -- build and install this prog
-# utctotai       -- build and install this lib
-# WordSplit      -- build and install this prog
+# To build and install each enter "make prog-name" where prog-name is any of:
+# chunktimes     
+# checkpvmup     
+# CondenseLeakLog
+# dateconverter  
+# end_stmts      
+# f90tex         
+# h5cat          
+# h5subset       
+# heconvert      
+# hl             
+# init_gen       
+# killmaster     
+# l1bdiff        
+# l1h5subset     
+# l2auxcat       
+# l2auxchi       
+# l2auxdump      
+# l2gpcat        
+# l2gpdiff       
+# l2gpdump       
+# l2q            
+# machineok      
+# MLS_h5ls       
+# utctotai       
+# WordSplit      
+#
+# As a shortcut, to build them all, just eneter "make tools"
 #
 #    The following are useful if you stored multiple configurations
 #     besides current one
@@ -707,6 +711,11 @@ CondenseLeakLog: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/CondenseLeakLog.f90
 #	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
 #   -m lib -c $(MLSCONFG) -p $@ $(MLSBIN)/$@.f90
 
+dateconverter: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/dateconverter.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
 end_stmts: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/end_stmts.f90
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) \
@@ -1125,13 +1134,15 @@ install: $(LEVELS)
 update:
 
 # Make most the souce-file tools in the util directory
-tools: chunktimes checkpvmup compare heconvert h5subset h5cat hl killmaster \
+tools: chunktimes checkpvmup compare dateconverter heconvert h5subset h5cat hl \
+  killmaster \
   l1bdiff l1h5subset l2auxcat l2auxchi l2auxdump l2gpcat l2q l2gpdiff l2gpdump \
   machineok WordSplit
 
 .PHONY: all configure clean clean_config\
   configure_pvm configure_fopts configure_full configure_help configure_subdirs\
-  depends distclean disttar distarz distarg disthelp doc--api doc--toc \
+  dateconverter depends distclean disttar distarz distarg disthelp \
+  doc--api doc--toc \
   firsthelp  ghostbuster help--brief help--convert help--depends help--fopts\
   help help--ghostbuster help--mlsconfigure help--Makefile help--platform\
   help--pvm help--reecho help--scripts help--toolkit \
@@ -1148,6 +1159,9 @@ tools: chunktimes checkpvmup compare heconvert h5subset h5cat hl killmaster \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.104  2006/11/22 20:45:02  pwagner
+# Should tar us scxripts directory as part of EVERYTHING
+#
 # Revision 1.103  2006/10/19 18:34:04  pwagner
 # Also copies scanner script into installdir to print chunk stats
 #

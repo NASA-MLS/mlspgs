@@ -151,7 +151,6 @@ contains
     logical :: NOT_ZERO_P(size(vert_inds),size(p_basis))
 
     real(rp) :: CVF_Z_GRID(size(vert_inds)) ! z_ref(vert_inds)
-    real(rp) :: ETA_P(size(p_grid),size(p_basis))
     real(rp) :: ETA_T(size(p_basis))
     real(rp) :: H_ZMIN                      ! Height at min zeta
     real(rp) :: H_NEW(2) ! At zeta max and another tangent pressure pt
@@ -162,6 +161,8 @@ contains
     real(rp) :: PHI_CORR(size(p_grid))      ! the refractive correction
     real(rp) :: PHI_OFFSET(size(p_grid))    ! PHI_T or a function of NEG_H_TAN
     real(rp) :: PHI_SIGN(size(p_grid))      ! +/- 1.0
+
+    real(rp), target :: ETA_P(size(p_grid),size(p_basis))
 
     ! Begin program
 
@@ -318,8 +319,7 @@ contains
       end if
 
       if ( h_phi_dump > 0 ) then
-        call output ( req+h_tan, before='req+h_tan = ' )
-        call output ( iter, before=', iter = ', advance='yes' )
+        call dump ( (/ req+h_tan /), name='req+h_tan' )
         call dump ( h_grid(:n_path), name='h_grid', clean=.true. )
         call dump ( p_grid(:n_path), name='p_grid', clean=.true. )
       end if
@@ -423,12 +423,11 @@ contains
     if ( present(dhidtlm) ) call Tangent_Temperature_Derivatives
 
     if ( do_dumps > 0 ) then
-      call output ( h_tan, before='h_tan = ' )
-      call output ( req, before=', req = ', advance='yes' )
       call dump ( h_grid(:n_path), name='h_grid', clean=.true. )
       call dump ( p_grid(:n_path), name='p_grid', clean=.true. )
       call dump ( t_grid(:n_path), name='t_grid', clean=.true. )
       call dump ( dhitdzi(:n_path), name='dhitdzi', clean=.true. )
+      call output ( req, before='req \1 ', advance='yes' )
       if ( dump_stop > 0 ) stop
     end if
 
@@ -719,9 +718,6 @@ return
 end module Metrics_m
 
 ! $Log$
-! Revision 2.32  2006/09/28 19:00:22  vsnyder
-! Correct array bounds problem if no refraction
-!
 ! Revision 2.31  2006/08/25 19:39:20  vsnyder
 ! Recomitted to get correct comment into the log:  Substantial revision,
 ! and simplification, works only for one pointing now, repair ACOS bug.

@@ -17,6 +17,7 @@
 #   The following options carry an automatic restriction to running jobs
 # -r          show how many chunks running
 # -full       show full stats: running, completed, crashed, on deck, total
+# -finish     show date, time the run should complete (approximate)
 # -t          show date, time the run started
 #   The following options print one line per machine
 # -fail       show machines that jobs could not be spawned on
@@ -451,6 +452,7 @@ restrict="no"
 fail="no"
 running="no"
 full="no"
+finish="no"
 time="no"
 version=""
 more_opts="yes"
@@ -506,6 +508,11 @@ while [ "$more_opts" = "yes" ] ; do
     -fail )
 	    shift
        fail="yes"
+       restrict="yes"
+       ;;
+    -finish )
+	    shift
+       finish="yes"
        restrict="yes"
        ;;
     -full )
@@ -581,6 +588,10 @@ if [ "$time" = "yes" ]
 then
   list=`cat_args "$list" "run start (date time)" "\t"`
 fi
+if [ "$finish" = "yes" ]
+then
+  list=`cat_args "$list" "run finish (date time)" "\t"`
+fi
 if [ "$fail" = "no" ]
 then
   echo -e $list
@@ -600,6 +611,17 @@ do
     fi
   done
   theversion=`grep -i pgeversion $dir/job.PCF | awk -F"|" '{print $3}'`
+  case $theversion in
+    V01-5*)
+      computetime=24
+      ;;
+    V02-20)
+      computetime=30
+      ;;
+    *)
+      computetime=30
+      ;;
+  esac
   statbad=`tail $dir/exec_log/process.stdout | grep -i "ended badly"`
   # Some other signs that the job ended badly are that it was killed or
   # the network went down
@@ -770,6 +792,33 @@ do
         awk '{print $3, $4}'`
       list="$list \t $chunks"
     fi
+    if [ "$finish" = "yes" -a "$skipifrestricting" = "no" ]
+    then
+      numChunks=`grep -i 'nochunks:' $dir/exec_log/process.stdout | tail -1 | awk '{print $4}'`
+      # numLaunched=`grep -i launched $dir/exec_log/process.stdout | wc -l`
+      numLaunched=` grep -i launched $dir/exec_log/process.stdout | tail -1 | sed -n 's/.*chunk//p' | awk '{print $1}'`
+      if [ "$numChunks" = "" ]
+      then
+        # Not all chunks launched yet, so can't tell when last one will finish
+        chunks="(unknown)"
+      elif [ "$numLaunched" = "" ]
+      then
+        # Not all chunks launched yet, so can't tell when last one will finish
+        chunks="0 / $numChunks"
+      elif [ "$numLaunched" -lt "$numChunks" ]
+      then
+        # Not all chunks launched yet, so can't tell when last one will finish
+        chunks="$numLaunched / $numChunks"
+      else
+        # Try to find when when last chunk started
+        lastline=`grep -ih 'starting mlsl2' $dir/pvmlog/* | sort  | tail -1`
+        lastdate=`echo $lastline | awk '{print $1}'`
+        lasttime=`echo $lastline | awk '{print $2}'`
+        # And add an average compute time to it
+        chunks=`$DATECONVERTER +H $computetime -t $lasttime -o 'M dd' $lastdate`
+      fi
+      list="$list \t $chunks"
+    fi
     if [ "$fail" = "yes" -a "$skipifrestricting" = "no" ]
     then
       if [ "$afterfirst" = "yes" ]
@@ -795,6 +844,12 @@ do
 done
 exit 0
 # $Log$
+# Revision 1.16  2007/01/18 23:30:12  pwagner
+# Added -finish option to display predicted finish time
+#
+# Revision 1.15  2006/08/21 21:56:09  pwagner
+# Works better with v2.1 versions
+#
 # Revision 1.14  2006/07/13 18:12:18  pwagner
 # Accepts that certain jobs (corpses) may be legally declared dead
 #

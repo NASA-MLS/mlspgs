@@ -2837,7 +2837,7 @@ contains ! =====     Public Procedures     =============================
     character(len=*), parameter :: DEFAULTFIELDS = &
       & 'pressures, latitude, longitude, solarTime, solarZenith,' // &
       & 'losAngle, geodAngle, time, chunkNumber, frequency,'  // &
-      & 'l2gpvalue, l2gpPrecision, status, quality'
+      & 'l2gpvalue, l2gpPrecision, status, quality, convergence'
     ! logical, parameter :: DEEBUG = .true.
     integer :: instance
     type (l2gpData_T) ::          L2GP2Temp
@@ -4133,6 +4133,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.145  2006/10/11 00:16:33  pwagner
+! Added new data field to hold convergence ratio
+!
 ! Revision 2.144  2006/09/29 23:56:49  pwagner
 ! Got rid of unused GetGeolocUnits function
 !

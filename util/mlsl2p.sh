@@ -132,6 +132,8 @@ then
   PGSMEM_USESHM=NO
 fi
 
+export FLIB_DVT_BUFFER=0
+
 # Use sed to convert slavetmplt.sh into an executable script
 # The resulting script sets some toolkit-savvy environment variables
 # and then launches the regular mlsl2 binary when summoned to do so.
@@ -247,6 +249,9 @@ else
 fi
 
 # $Log$
+# Revision 1.13  2006/10/19 18:31:10  pwagner
+# Now saves chunk stats at end of output
+#
 # Revision 1.12  2006/04/03 23:10:01  pwagner
 # Fixed serious and various bugs
 #
