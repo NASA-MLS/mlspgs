@@ -907,8 +907,13 @@ program MLSL2
   else if ( error == 0 ) then
     call Deallocate_filedatabase(filedatabase)
     call output('Deallocated filedatabase', advance='yes')
-    call mls_h5close(error)
-    call output('Closed hdf5 library', advance='yes')
+    if ( .not. parallel%slave) then
+      call mls_h5close(error)
+      call output('Closed hdf5 library', advance='yes')
+    else
+      call MLSMessage ( MLSMSG_Warning, moduleName, &
+        & "We are a slave, thus unable to mls_close in this version" )
+    endif
     if (error /= 0) then
        call MLSMessage ( MLSMSG_Error, moduleName, &
         & "Unable to mls_close" )
@@ -1100,6 +1105,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.163  2007/02/14 20:48:59  pwagner
+! Slaves bypass mls_h5close to avoid another bomb
+!
 ! Revision 2.162  2007/02/14 17:31:45  pwagner
 ! Moved timing summary before statements possibly killing slaves
 !
