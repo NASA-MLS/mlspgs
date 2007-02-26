@@ -15,12 +15,18 @@ module MLSSets
 
   implicit NONE
   private
-  public :: FindAll, FindFirst, FindLast, FindNext, Intersect, Intersection, &
+  public :: FindAll, FindFirst, FindLast, FindNext, &
+    & Intersect, Intersection, FindIntersection, &
     & Union, UnionSize
 
   interface FindFirst
     module procedure FindFirstInteger, FindFirstLogical, FindFirstCharacter
-    module procedure FindFirstLogical2D
+    module procedure FindFirstReal, FindFirstDouble, FindFirstLogical2D
+  end interface
+
+  interface FindIntersection
+    module procedure FindIntersectionInteger, FindIntersectionReal, &
+      & FindIntersectionDouble
   end interface
 
   interface FindLast
@@ -52,13 +58,15 @@ module MLSSets
 ! FindAll       Find all logicals in the array that are true, or all the
 !               integers in the array equal to the probe
 ! FindFirst     Find the first logical in the array that is true, or the
-!               first integer in the array equal to the probe
+!               first [integer,real,double] in the array equal to the probe
+! FindIntersection  
+!               Compute indices of elements in intersection of two sets
 ! FindLast      Find the last instead
 ! FindNext      Find the next instead
 ! Intersect     Return true if two sets represented by arrays of integers have
 !               a common element
-! Intersection  Compute intersection of two sets, represented as arrays of integers
-! Union         Compute union of two sets, represented as arrays of integers
+! Intersection  Compute intersection of two sets
+! Union         Compute union of two sets
 ! UnionSize     Compute the size a union of two sets would have.
 ! === (end of toc) ===                                                   
 
@@ -70,18 +78,24 @@ module MLSSets
 ! FindAllLogical (log set(:), int which(:), [int how_many], &
 !                  [int which_not(:)])      
 ! int FindFirstCharacter (char* set(:), char* probe)      
-! int FindFirstInteger (int set(:), int probe)      
+! int FindFirstNumType (numtype set(:), numtype probe, [numtype tol])
+!     (where numtype can be an int, real, or dble)
 ! int FindFirstLogical (log condition(:))      
+! FindIntersection ( set1(:), set2(:), int which1(:), int which2(:),
+!      [int how_many] )
 ! int FindLastCharacter (char* set(:), char* probe)      
 ! int FindLastInteger (int set(:), int probe)      
 ! int FindLastLogical (log condition(:))      
 ! int FindNextCharacter (char* set(:), char* probe, int current, {log wrap}, {log repeat})      
 ! int FindNextInteger (int set(:), int probe, int current, {log wrap}, {log repeat})      
 ! int FindNextLogical (log condition(:), int current, {log wrap}, {log repeat})
-! logical Intersect ( int a(:), int b(:) )
-! int *Intersection ( int a(:), int b(:) )
-! int *Union ( int a(:), int b(:) )
-! int UnionSize ( int a(:), int b(:) )
+! Note:
+! In the following functions a set is represented either
+! as an array of integers or an array of characters
+! logical Intersect ( set a(:), set b(:) )
+! set *Intersection ( set a(:), set b(:) )
+! set *Union ( set a(:), set b(:) )
+! set UnionSize ( set a(:), set b(:) )
 ! === (end of api) ===
 
 !---------------------------- RCS Ident Info -------------------------------
@@ -262,18 +276,56 @@ contains ! =====     Public Procedures     =============================
     FindFirstCharacter = 0
   end function FindFirstCharacter
 
-  ! -------------------------------------------  FindFirstInteger  -----
-  integer function FindFirstInteger ( Set, Probe )
+  ! ----------------------  FindFirst[Integer,real,double]  -----
+  function FindFirstInteger ( Set, Probe, Tol ) Result( theFirst )
     ! Find the first element in the array Set that is equal to Probe
     integer, dimension(:), intent(in) :: Set
-    integer, intent(in) :: Probe
+    integer, intent(in)               :: Probe
+    integer, intent(in), optional     :: Tol  ! Ignored; purely for consistency
+    integer                           :: theFirst
 
     ! Executable code
-    do FindFirstInteger = 1, size(set)
-      if ( set(FindFirstInteger) == probe ) return
+    do theFirst = 1, size(set)
+      if ( set(theFirst) == probe ) return
     end do
-    FindFirstInteger = 0
+    theFirst = 0
   end function FindFirstInteger
+
+  function FindFirstReal ( Set, Probe, Tol ) Result( theFirst )
+    ! Find the first element in the array Set that is equal to Probe
+    ! Or whose difference < Tol
+    real, dimension(:), intent(in) :: Set
+    real, intent(in) :: Probe
+    real, intent(in), optional :: Tol
+    integer             :: theFirst
+    real                :: myTol
+
+    ! Executable code
+    myTol = 0.
+    if ( present(tol) ) myTol = abs(tol)
+    do theFirst = 1, size(set)
+      if ( abs( set(theFirst) - probe) <= myTol ) return
+    end do
+    theFirst = 0
+  end function FindFirstReal
+
+  function FindFirstDouble ( Set, Probe, Tol ) Result( theFirst )
+    ! Find the first element in the array Set that is equal to Probe
+    ! Or whose difference < Tol
+    double precision, dimension(:), intent(in) :: Set
+    double precision, intent(in) :: Probe
+    double precision, intent(in), optional :: Tol
+    integer             :: theFirst
+    double precision                :: myTol
+
+    ! Executable code
+    myTol = 0.d0
+    if ( present(tol) ) myTol = abs(tol)
+    do theFirst = 1, size(set)
+      if ( abs( set(theFirst) - probe) <= myTol ) return
+    end do
+    theFirst = 0
+  end function FindFirstDouble
 
   ! -------------------------------------------  FindFirstLogical  -----
   integer function FindFirstLogical ( condition )
@@ -655,6 +707,71 @@ contains ! =====     Public Procedures     =============================
     c = tc(:size_c)
   end function IntersectionCharacter
 
+  ! ---------------------------------------------  FindIntersection  -----
+  ! This family of routines finds the indices of the intersection between
+  ! two similarly montonic sets
+  ! e.g. given set1 = /(1, 3, 5, 7 )/, set2 = /(1, 2, 3, 4, 5)/
+  ! produces which1 = /(1, 2, 3)/, 
+  !      which2 = /(1, 3, 5)/, 
+  ! and the optional arg      how_many = 3
+  
+  ! Note that which1 and which2 are arrays of array indices
+  ! and that they will be monotonically increasing
+  subroutine FindIntersectionInteger ( set1, set2, WHICH1, which2, &
+    & HOW_MANY )
+    ! Formal arguments
+    integer, dimension(:), intent(in)     :: set1
+    integer, dimension(:), intent(in)     :: set2
+    integer, dimension(:), intent(out)    :: which1
+    integer, dimension(:), intent(out)    :: which2
+    integer, optional, intent(out)        :: how_many
+    ! Internal variables
+    integer                               :: myTol
+    integer :: i1, i2
+    integer :: my_how_many
+    ! Executable
+    myTol = 0
+    include 'FindIntersection.f9h'
+  end subroutine FindIntersectionInteger
+
+  subroutine FindIntersectionReal ( set1, set2, WHICH1, which2, &
+    & HOW_MANY, tol )
+    ! Formal arguments
+    real, dimension(:), intent(in)        :: set1
+    real, dimension(:), intent(in)        :: set2
+    integer, dimension(:), intent(out)    :: which1
+    integer, dimension(:), intent(out)    :: which2
+    integer, optional, intent(out)        :: how_many
+    real, intent(in), optional            :: Tol
+    ! Internal variables
+    real                                  :: myTol
+    integer :: i1, i2
+    integer :: my_how_many
+    ! Executable
+    myTol = 0.
+    if ( present(tol) ) myTol = tol
+    include 'FindIntersection.f9h'
+  end subroutine FindIntersectionReal
+
+  subroutine FindIntersectionDouble ( set1, set2, WHICH1, which2, &
+    & HOW_MANY, tol )
+    ! Formal arguments
+    double precision, dimension(:), intent(in)   :: set1
+    double precision, dimension(:), intent(in)   :: set2
+    integer, dimension(:), intent(out)           :: which1
+    integer, dimension(:), intent(out)           :: which2
+    integer, optional, intent(out)               :: how_many
+    double precision, intent(in), optional       :: Tol
+    ! Internal variables
+    double precision                             :: myTol
+    integer :: i1, i2
+    integer :: my_how_many
+    ! Executable
+    myTol = 0.d0
+    if ( present(tol) ) myTol = tol
+    include 'FindIntersection.f9h'
+  end subroutine FindIntersectionDouble
+
   ! ------------------------------------------------------  Union  -----
   ! Compute the union C of the sets A and B, each represented by
   ! arrays of integers, characters
@@ -781,6 +898,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSSets
 
 ! $Log$
+! Revision 2.14  2007/02/26 23:54:39  pwagner
+! Added FindIntersection; FindFirst can search through arrays of any numerical type
+!
 ! Revision 2.13  2006/08/12 00:07:43  pwagner
 ! Added 2d findFirst, Last
 !
