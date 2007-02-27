@@ -1824,7 +1824,7 @@ contains ! ================================ Procedures ======================
     if ( info /= 0 ) &
       & call PVMErrorMessage ( info, 'sending finish packet' )
     if ( switchDetail(switches, 'l2q') > -1 ) then
-      call output('Telling l2q host died ', advance='no')
+      call output('Telling l2q about death of host ', advance='no')
       call output(trim(machine%name), advance='no')
       call blanks(2)
       call TimeStamp(machine%tid, advance='yes')
@@ -1924,6 +1924,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.83  2007/02/27 00:01:46  pwagner
+! Change log message so grep -i died gives number died, not 2x
+!
 ! Revision 2.82  2007/02/14 17:29:51  pwagner
 ! Lengthened time allowed for slaves to complete final tasks
 !
