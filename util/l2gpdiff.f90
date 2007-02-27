@@ -56,6 +56,7 @@ program l2gpdiff ! show diffs between swaths in two different files
     character(len=MAXFIELDSLENGTH) :: fields = '*' ! wild card means 'all'
     logical     :: force = .false.
     logical     :: ignoreBadChunks = .false.
+    logical     :: matchTimes = .false.
     logical     :: rms = .false.
     logical     :: showMissing = .false.
     logical     :: stats = .false.
@@ -145,6 +146,7 @@ program l2gpdiff ! show diffs between swaths in two different files
       & rms=options%rms, ignoreBadChunks=options%ignoreBadChunks, &
       & showMissing=options%showMissing, fields=options%fields, &
       & force=options%force, swaths1=options%swaths1, swaths2=options%swaths2, &
+      & matchTimes=options%matchTimes, &
       & silent=options%silent, verbose=options%verbose, numDiffs=numDiffs )
     else
       call ExpandStringRange(options%chunks, chunks, nchunks)
@@ -155,6 +157,7 @@ program l2gpdiff ! show diffs between swaths in two different files
       & rms=options%rms, ignoreBadChunks=options%ignoreBadChunks, &
       & showMissing=options%showMissing, fields=options%fields, &
       & force=options%force, swaths1=options%swaths1, swaths2=options%swaths2, &
+      & matchTimes=options%matchTimes, &
       & silent=options%silent, verbose=options%verbose, numDiffs=numDiffs )
     endif
     options%numDiffs = options%numDiffs + numDiffs
@@ -218,6 +221,9 @@ contains
       else if ( filename(1:4) == '-ign' ) then
         options%ignorebadchunks = .true.
         exit
+      else if ( filename(1:4) == '-mat' ) then
+        options%matchTimes = .true.
+        exit
       else if ( filename(1:5) == '-rms ' ) then
         options%rms = .true.
         exit
@@ -274,6 +280,7 @@ contains
       write (*,*) '          -silent         => switch on silent mode'
       write (*,*) '                            (printing only if diffs found)'
       write (*,*) '          -ignore     => ignore bad chunks'
+      write (*,*) '          -matchTimes => only matching profile times'
       write (*,*) '          -rms        => just print mean, rms'
       write (*,*) '          -s          => just show statistics'
       write (*,*) '          -miss       => just show which swaths are missing'
@@ -312,6 +319,9 @@ end program l2gpdiff
 !==================
 
 ! $Log$
+! Revision 1.8  2006/03/15 19:18:37  pwagner
+! Passes verbose option to L2GPData/diff
+!
 ! Revision 1.7  2006/01/14 00:59:12  pwagner
 ! Added -silent, -chunks options
 !
