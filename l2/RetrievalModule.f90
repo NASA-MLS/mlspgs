@@ -1911,14 +1911,14 @@ NEWT: do ! Newtonian iteration
               call scaleVector ( v(reg_X_x), -1.0_r8 )   ! -R x_n
 
               if ( columnScaling /= l_none ) then ! Compute $\Sigma$
-                forall (j = 1: v(columnScaleVector)%template%noQuantities)
+                do j = 1, v(columnScaleVector)%template%noQuantities
                   where ( v(columnScaleVector)%quantities(j)%values <= 0.0 )
                     v(columnScaleVector)%quantities(j)%values = 0.0
                   elsewhere
                     v(columnScaleVector)%quantities(j)%values = &
                       & sqrt( v(columnScaleVector)%quantities(j)%values )
                   end where
-                end forall
+                end do
                 call columnScale ( tikhonov, v(columnScaleVector) )
               end if
 
@@ -1966,14 +1966,14 @@ NEWT: do ! Newtonian iteration
             call getDiagonal ( normalEquations%m, v(columnScaleVector) )
           end select
           if ( columnScaling /= l_none ) then ! Compute $\Sigma$
-            forall (j = 1: v(columnScaleVector)%template%noQuantities)
+            do j = 1, v(columnScaleVector)%template%noQuantities
               where ( v(columnScaleVector)%quantities(j)%values <= 0.0 )
                 v(columnScaleVector)%quantities(j)%values = 1.0
               elsewhere
                 v(columnScaleVector)%quantities(j)%values = 1.0 / &
                   & sqrt( v(columnScaleVector)%quantities(j)%values )
               end where
-            end forall
+            end do
               if ( d_col ) &
                 & call dump ( v(columnScaleVector), name='Column scale vector' )
             !{Scale in normal equations form: ${\bf \Sigma}^T {\bf  J}^T {\bf
@@ -2692,6 +2692,9 @@ NEWT: do ! Newtonian iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.288  2007/02/28 23:27:51  vsnyder
+! Replace FORALL by DO, since FORALL sometimes causes compilers to have trouble
+!
 ! Revision 2.287  2006/12/09 00:45:35  vsnyder
 ! Move calculation of size of Jacobian, so that ChiSqMin calculation works
 ! correctly if zero Newton iterations are allowed.
