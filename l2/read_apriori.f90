@@ -41,7 +41,8 @@ module ReadAPriori
   use MLSStringLists, only: catLists
   use MLSStrings, only: lowercase
   use MoreTree, only: Get_Spec_ID
-  use OUTPUT_M, only: BLANKS, OUTPUT, revertoutput, switchOutput
+  use OUTPUT_M, only: BLANKS, OUTPUT, outputNamedValue, &
+    & revertoutput, switchOutput
   use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS
   use String_Table, only: GET_STRING
   use Time_M, only: Time_Now
@@ -198,6 +199,9 @@ contains ! =====     Public Procedures     =============================
     lastDAOPCF = mlspcf_l2dao_start - 1
     lastNCEPPCF = mlspcf_l2ncep_start - 1
     lastGEOS5PCF = mlspcf_l2geos5_start - 1
+    LastHeightPCF = mlspcf_surfaceHeight_start - 1
+    ! call outputNamedValue ( 'mlspcf_l2geos5_start', mlspcf_l2geos5_start )
+    ! call outputNamedValue ( 'lastGEOS5PCF', lastGEOS5PCF )
 
     do i = 2, nsons(root)-1 ! Skip the section name at begin and end
       hdfVersion = DEFAULT_HDFVERSION_READ
@@ -517,6 +521,8 @@ contains ! =====     Public Procedures     =============================
                & fieldNameString, MLSFile=GriddedFile)
           endif
         case ( l_geos5 ) ! ---------------------------- GMAO Data (GEOS5)
+          ! call outputNamedValue ( 'fileNameString', trim(fileNameString) )
+          ! call outputNamedValue ( 'LastGEOS5PCF', LastGEOS5PCF )
           call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
             & mlspcf_l2geos5_start, mlspcf_l2geos5_end, 'geos5', got(f_file), &
             & LastGEOS5PCF, returnStatus )
@@ -565,6 +571,7 @@ contains ! =====     Public Procedures     =============================
             call announce_success(FilenameString, 'geos5 not found--carry on', &                    
                & fieldNameString, MLSFile=GriddedFile)
           endif
+          ! error = 1
         case ( l_gloria ) ! ------------------------- Data in Gloria's UARS format
           call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
             & mlspcf_l2clim_start, mlspcf_l2clim_end, 'gloria', got(f_file), &
@@ -641,7 +648,8 @@ contains ! =====     Public Procedures     =============================
         case ( l_surfaceHeight ) ! See Read_surface_height_file
           call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
             & mlspcf_surfaceHeight_start, mlspcf_surfaceHeight_end, &
-            & 'surfaceHeight', got(f_file), lastHeightPCF, returnStatus )
+            & 'surfaceHeight', got(f_file), &
+            & lastHeightPCF, returnStatus )
           if ( TOOLKIT .and. returnStatus /= PGS_S_SUCCESS ) then
             call announce_error ( son, &
               & 'PCF number not found to supply' // &
@@ -695,22 +703,36 @@ contains ! =====     Public Procedures     =============================
       use MLSL2Options, only: TOOLKIT
       use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS
 
+      ! Args
       character(len=*), intent(inout) :: FileNameString
       character(len=*), intent(out) :: Path, SubString
       integer, intent(inout) :: L2Apriori_Version
       integer, intent(in) :: FirstPCF, LastPCF
       character(len=*), intent(in) :: Description
       logical, intent(in) :: GotFile
-      integer, intent(out) :: PCF_Id, ReturnStatus
+      integer, intent(inout) :: PCF_Id
+      integer, intent(out) :: ReturnStatus
+      ! Local variables
+      integer :: PCFBottom
+      ! Executable
+      if ( gotFile ) then
+        PCFBottom = FirstPCF
+      else
+        PCFBottom = PCF_Id + 1 ! This must be the last PCF id we found
+      endif
 
+      ! call outputNamedValue ( 'fileNameString', trim(fileNameString) )
+      ! call outputNamedValue ( 'got file?', gotFile )
+      ! call output('PCFBottom, lastPCF: ')
+      ! call output( (/ PCFBottom, lastPCF /), advance='yes' )
       if ( TOOLKIT .and. gotFile ) then
         call split_path_name ( fileNameString, path, subString )
-        pcf_id = getPCFromRef ( subString, firstPCF, lastPCF, TOOLKIT, &
+        pcf_id = getPCFromRef ( subString, PCFBottom, lastPCF, TOOLKIT, &
           &                     returnStatus, l2Apriori_Version, DEBUG, &
           &                     exactName = fileNameString )
       else if ( TOOLKIT ) then
-        do pcf_id = firstPCF, lastPCF
-          returnStatus = Pgs_pc_getReference(pcf_indx, L2apriori_version, &
+        do pcf_id = PCFBottom, lastPCF
+          returnStatus = Pgs_pc_getReference(pcf_id, L2apriori_version, &
                 & fileNameString)
           if ( returnStatus == PGS_S_SUCCESS) exit
         end do
@@ -929,6 +951,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.71  2007/03/02 18:14:02  pwagner
+! Fixed bugs introduced 2 versions ago
+!
 ! Revision 2.70  2007/01/30 21:59:10  pwagner
 ! fixed bug where Get_PCF_Id retruned undefined values
 !
