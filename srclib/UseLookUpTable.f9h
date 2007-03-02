@@ -1,0 +1,84 @@
+! Copyright 2007, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id$
+
+! -------------------------------------------------  UseLookUpTable  -----
+
+  ! This family of routines use a LookUpTable to approximate a costly-to-evaluate
+  ! function based on its values at a set of points
+
+  ! function UseLookUpTable_r4 ( x, table, x1, x2, xtable, options ) &
+  !    & result(value)
+  !  integer, parameter :: RK = R4
+  !   ! Formal arguments
+  real(rk), intent(in)                        :: x
+  real(rk), dimension(:), intent(in)          :: table
+  real(rk), optional, intent(in)              :: x1
+  real(rk), optional, intent(in)              :: x2
+  real(rk), dimension(:), optional, intent(in):: xtable
+  character(len=*), optional, intent(in)      :: options
+  real(rk)                                    :: value
+  ! Internal variables
+  real(rk) :: eps
+  integer :: i
+  integer, dimension(2) :: indices
+  integer :: lower, upper
+  character(len=8) :: myOptions
+  real(rk), dimension(size(table))            :: myXTable
+  integer :: nSize
+  ! Executable
+  myOptions = ' '
+  if ( present(options) ) myOptions = options
+  nSize = size(table)
+  value = 0.
+  if ( nSize < 1 ) return
+  value = table(1)
+  if ( nSize < 2 ) return
+  if ( present(xtable) ) then
+    myXTable = xTable
+  elseif ( present(x1) .and. present(x2) ) then
+    do i=1, nSize
+      eps = (nSize - i) / ( nSize - 1._rk )
+      myXtable(i) = eps*x1 + (1-eps)*x2
+    enddo
+  else
+    return
+  endif
+  if ( index(myOptions, 'l') > 0 ) then
+    call ClosestElement ( x, myXTable, indices, 'l' )
+    indices(1) = max( indices(1), 1 )
+    indices(1) = min( indices(1), nSize )
+    value = table(indices(1))
+  elseif ( index(myOptions, 'u') > 0 ) then
+    call ClosestElement ( x, myXTable, indices, 'u' )
+    indices(1) = max( indices(1), 1 )
+    indices(1) = min( indices(1), nSize )
+    value = table(indices(1))
+  elseif ( index(myOptions, 'i') > 0 ) then
+    call ClosestElement ( x, myXTable, indices, 'l' )
+    lower = max(indices(1), 1)
+    call ClosestElement ( x, myXTable, indices, 'u' )
+    upper = max(indices(1), 1)
+    if ( myXtable(lower) == myXTable(upper) ) then
+      value = table(lower)
+      return
+    endif
+    eps = ( x - myXTable(lower) ) / ( myXTable(upper) - myXTable(lower) )
+    value = eps*table(upper) + (1-eps)*table(lower)
+  else
+    call ClosestElement ( x, myXTable, indices )
+    indices(1) = max( indices(1), 1 )
+    indices(1) = min( indices(1), nSize )
+    value = table(indices(1))
+  endif
+  ! end subroutine UseLookUpTable_r4
+! $Log$
