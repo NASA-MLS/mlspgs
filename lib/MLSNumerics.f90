@@ -28,6 +28,7 @@ module MLSNumerics              ! Some low level numerical stuff
   public :: ClosestElement
   public :: Dump, EssentiallyEqual, Hunt, HuntRange, InterpolateArraySetup
   public :: InterpolateArrayTeardown, InterpolateValues
+  public :: FillLookUpTable, UseLookUpTable
 
   type, public :: Coefficients_R4
     private
@@ -125,6 +126,10 @@ module MLSNumerics              ! Some low level numerical stuff
 ! InterpolateArrayTeardown Deallocate tables created by InterpolateArraySetup
 ! InterpolateValues        Interpolate for new y value(s):
 !                            given old (x,y), new (x), method
+! FillLookUpTable          Fill table with evaluations at regularly-spaced args
+!                            to be used in place of later, frequent evaluations;
+!                            reversing role of (table, xtable) => function^(-1)
+! UseLookUpTable           Use LookUpTable to approximate function
 
   interface Dump
     module procedure DumpCoefficients_r4, DumpCoefficients_r8
@@ -166,6 +171,14 @@ module MLSNumerics              ! Some low level numerical stuff
     module procedure ClosestElement_r4_1d, ClosestElement_r8_1d
     module procedure ClosestElement_r4_2d, ClosestElement_r8_2d
     module procedure ClosestElement_r4_3d, ClosestElement_r8_3d
+  end interface
+
+  interface FillLookUpTable
+    module procedure FillLookUpTable_r4, FillLookUpTable_r8
+  end interface
+
+  interface UseLookUpTable
+    module procedure UseLookUpTable_r4, UseLookUpTable_r8
   end interface
 
 contains
@@ -817,41 +830,97 @@ contains
 
   end subroutine Interp_Bilinear_2d_1d_r8
 
+! -------------------------------------------------  FillLookUpTable  -----
+
+  ! This family of routines fills a table with evaluations of a function
+  ! at regularly-spaced points
+  ! Subsequently, instead of evaluating the function you can address the
+  ! array at the index of its closest element
+  
+  ! This only makes sense if you're going to evaluate the function many more
+  ! times than takes to fill the table and you're willing 
+  ! to accept whatever error may result from using the ClosestValue
+  ! Of course that error could be large if you will evaluate the function
+  ! outside the range [x1, x2]
+
+  subroutine FillLookUpTable_r4 ( fun, table, x1, x2, N, xtable )
+    integer, parameter :: RK = R4
+    include 'FillLookUpTable.f9h'
+  end subroutine FillLookUpTable_r4 
+
+  subroutine FillLookUpTable_r8 ( fun, table, x1, x2, N, xtable )
+    integer, parameter :: RK = R8
+    include 'FillLookUpTable.f9h'
+  end subroutine FillLookUpTable_r8
+
+! -------------------------------------------------  UseLookUpTable  -----
+
+  ! This family of routines use a LookUpTable to approximate a costly-to-evaluate
+  ! function based on its values at a set of points
+  
+  ! Args: (* means optional)
+  ! x        pt at which to evaluate
+  ! table    table of function values
+  ! x1,x2    * range of equally-spaced argument values represented in table
+  ! xtable   * table of argument values
+  ! options  * none, one, or more of the following:
+  ! (none)   choose pt in xtable closest to x
+  ! l        always choose lower of two closest x's in xtable
+  ! u        always choose upper of two closest x's in xtable
+  ! i        interpolate among two closest, but never extrapolate
+  
+  function UseLookUpTable_r4 ( x, table, x1, x2, xtable, options ) result(value)
+    integer, parameter :: RK = R4
+    include 'UseLookUpTable.f9h'
+  end function UseLookUpTable_r4 
+
+  function UseLookUpTable_r8 ( x, table, x1, x2, xtable, options ) result(value)
+    integer, parameter :: RK = R8
+    include 'UseLookUpTable.f9h'
+  end function UseLookUpTable_r8 
+
 ! -------------------------------------------------  ClosestElement  -----
 
   ! This family of routines finds the element within a multidimensional
   ! array nearest a test value
   ! The array of indices locate that nearest element
+  ! options  none, one, or more of the following:
+  ! (none)   choose pt in array closest to x
+  ! l        always choose lower of two closest x's in array
+  ! u        always choose upper of two closest x's in array
 
-  subroutine ClosestElement_r4_1d ( test, array, indices )
+  subroutine ClosestElement_r4_1d ( test, array, indices, options )
     integer, parameter :: RK = R4
 
     ! Dummy arguments
     real(rk), intent(in)               :: test
     real(rk), dimension(:), intent(in) :: array
     integer, dimension(:), intent(out) :: indices ! Result
+    character(len=*), optional, intent(in)      :: options
     include "ClosestElement.f9h"
 
   end subroutine ClosestElement_r4_1d
 
-  subroutine ClosestElement_r8_1d ( test, array, indices )
+  subroutine ClosestElement_r8_1d ( test, array, indices, options )
     integer, parameter :: RK = R8
 
     ! Dummy arguments
     real(rk), intent(in)               :: test
     real(rk), dimension(:), intent(in) :: array
     integer, dimension(:), intent(out) :: indices ! Result
+    character(len=*), optional, intent(in)      :: options
     include "ClosestElement.f9h"
 
   end subroutine ClosestElement_r8_1d
 
-  subroutine ClosestElement_r4_2d ( test, array, indices )
+  subroutine ClosestElement_r4_2d ( test, array, indices, options )
     integer, parameter :: RK = R4
 
     ! Dummy arguments
     real(rk), intent(in)               :: test
     real(rk), dimension(:,:), intent(in) :: array
     integer, dimension(:), intent(out) :: indices ! Result
+    character(len=*), optional, intent(in)      :: options
     integer, dimension(1)              :: indices_1d ! Result
     call ClosestElement( test, &
       & reshape(array, (/ size(array,1)*size(array,2) /) ), &
@@ -859,13 +928,14 @@ contains
     call rerank( indices_1d(1), shape(array), indices )
   end subroutine ClosestElement_r4_2d
 
-  subroutine ClosestElement_r8_2d ( test, array, indices )
+  subroutine ClosestElement_r8_2d ( test, array, indices, options )
     integer, parameter :: RK = R8
 
     ! Dummy arguments
     real(rk), intent(in)               :: test
     real(rk), dimension(:,:), intent(in) :: array
     integer, dimension(:), intent(out) :: indices ! Result
+    character(len=*), optional, intent(in)      :: options
     integer, dimension(1)              :: indices_1d ! Result
     call ClosestElement( test, &
       & reshape(array, (/ size(array,1)*size(array,2) /) ), &
@@ -873,13 +943,14 @@ contains
     call rerank( indices_1d(1), shape(array), indices )
   end subroutine ClosestElement_r8_2d
 
-  subroutine ClosestElement_r4_3d ( test, array, indices )
+  subroutine ClosestElement_r4_3d ( test, array, indices, options )
     integer, parameter :: RK = R4
 
     ! Dummy arguments
     real(rk), intent(in)               :: test
     real(rk), dimension(:,:,:), intent(in) :: array
     integer, dimension(:), intent(out) :: indices ! Result
+    character(len=*), optional, intent(in)      :: options
     integer, dimension(1)              :: indices_1d ! Result
     call ClosestElement( test, &
       & reshape(array, (/ size(array,1)*size(array,2)*size(array,3) /) ), &
@@ -887,13 +958,14 @@ contains
     call rerank( indices_1d(1), shape(array), indices )
   end subroutine ClosestElement_r4_3d
 
-  subroutine ClosestElement_r8_3d ( test, array, indices )
+  subroutine ClosestElement_r8_3d ( test, array, indices, options )
     integer, parameter :: RK = R8
 
     ! Dummy arguments
     real(rk), intent(in)               :: test
     real(rk), dimension(:,:,:), intent(in) :: array
     integer, dimension(:), intent(out) :: indices ! Result
+    character(len=*), optional, intent(in)      :: options
     integer, dimension(1)              :: indices_1d ! Result
     call ClosestElement( test, &
       & reshape(array, (/ size(array,1)*size(array,2)*size(array,3) /) ), &
@@ -974,6 +1046,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.47  2007/03/02 18:21:14  pwagner
+! Added LookUpTable routines
+!
 ! Revision 2.46  2006/10/04 03:20:08  vsnyder
 ! Better comments for HUNT results
 !
