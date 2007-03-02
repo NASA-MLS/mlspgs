@@ -72,7 +72,13 @@ if ( field%noYear ) then
   ! Note this (temporarily!?) brushes over issues to do with leap years.
   inDate = modulo ( inDate, 60.0_r8*60.0*24.0*365.25 )
 end if
-tmpalt = -log10(field%heights)
+if ( any(field%heights <= 0._rgr) ) then
+  tmpalt = field%missingValue
+  call output( 'Warning--interpolating grid ' // trim(field%description) // &
+    & ' contains negative or 0 values', advance='yes' )
+else
+  tmpalt = -log10(field%heights)
+endif
 inalt = -log10(inpressure)
 call ilocate ( tmpdate, indate, idate1, idate2 )
 call ilocate ( tmpalt, inalt, ialt1, ialt2 )
@@ -186,6 +192,9 @@ call deallocate_test ( tmpdate, 'tmpdate', moduleName )
 call deallocate_test ( tmpalt, 'tmpalt', moduleName )
 deallocate ( hcube )
 ! $Log$
+! Revision 2.4  2007/03/02 18:16:00  pwagner
+! Dont take log if heights contains missingValues; only lf6.2 complained
+!
 ! Revision 2.3  2005/06/22 17:44:42  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
