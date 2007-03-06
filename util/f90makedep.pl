@@ -33,9 +33,6 @@
 # d1 = ../up_one/elsewhere/ 
 # and similarly for d2 in the same Makefile where you plan to paste the output
 #
-# To run this, it will be necessary to modify the first line of this script
-# to point to the actual location of Perl on your system.
-#
 # 	Variant (1)-mod: f90makedep.pl -mod case [arg1 arg2 ..]
 #   where case is one of {U[PPER], l[ower]}
 # Output:
@@ -679,6 +676,9 @@ sub MakeDependsf90 {
      }
    }
 # $Log$
+# Revision 1.14  2005/06/23 22:22:46  pwagner
+# Reworded Copyright statement
+#
 # Revision 1.13  2004/11/03 19:09:33  pwagner
 # perl scripts now get launched via perl rather than as stand-alone executables
 #

@@ -11,9 +11,6 @@
 # (printed to stdout)
 # Ghost1.o Ghost2.o .. Ghostn.o ghost1.mod ghost2.mod .. ghostn.mod
 #
-# To run this, it will be necessary to modify the first line of this script
-# to point to the actual location of Perl on your system.
-#
 # P.A. Wagner (April 25 2001)
 # Copyright 2005, by the California Institute of Technology. ALL
 # RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
@@ -271,6 +268,9 @@ print STDERR "modules: @modules \n \n" unless !($debug);
    }
   }
 # $Log$
+# Revision 1.6  2005/06/23 22:22:46  pwagner
+# Reworded Copyright statement
+#
 # Revision 1.5  2004/11/03 19:09:33  pwagner
 # perl scripts now get launched via perl rather than as stand-alone executables
 #
