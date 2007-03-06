@@ -13,6 +13,8 @@
 # If str1 is StdProd it is expanded into the current standard products
 # i.e.,  
 # BrO CH3CN ClO CO GPH H2O HCl HCN HNO3 HO2 HOCl IWC N2O O3 OH RHI SO2 Temperature
+# If str1 is APriori it is expanded into the current standard products but
+# the swaths copied from the DGG file are the a priori ones, not the std prods
 #
 #     O p t i o n s
 #    -dryrun              Merely echo the commands that would be executed
@@ -146,6 +148,7 @@ l2gpcap_opts=""
 list=""
 profile1=""
 profile2=""
+apriori="no"
 dryrun="no"
 unique="no"
 more_opts="yes"
@@ -199,10 +202,15 @@ while [ "$more_strs" = "yes" ] ; do
        ;;
     * )
        more_opts="no"
-       sptest=`echo $1 | grep -i st`
+       aptest=`echo $1 | grep -i apr`
+       sptest=`echo $1 | grep -i std`
        if [ "$sptest" != "" ]
        then
          list="$stdprods"
+       elif [ "$aptest" != "" ]
+       then
+         list="$stdprods"
+         apriori="yes"
        elif [ "$list" != "" ]
        then
          list="$list $1"
@@ -238,21 +246,27 @@ fi
 for i in $list
 do
   file1=`echo $dgg | sed -n "s/DGG/$i/ p"`
-  oldswath1=${i}-StdProd
+  if [ "$apriori" = "yes" ]
+  then
+    tail="APriori"
+  else
+    tail="StdProd"
+  fi
+  oldswath1=${i}-${tail}
+  oldswath2="${i}-${tail} column"
   newswath1=${i}
-  oldswath2="${i}-StdProd column"
   newswath2="${i} column"
   case "$i" in
   IWC )
-    oldswaths="$oldswath1,IWP-StdProd"
+    oldswaths="$oldswath1,IWP-${tail}"
     newswaths="$newswath1,IWP"
     ;;
   O3 )
-    oldswaths="O3-StdProd column-MLS,O3-StdProd column-GEOS5,O3-StdProd"
+    oldswaths="O3-${tail} column-MLS,O3-${tail} column-GEOS5,O3-${tail}"
     newswaths="O3 column-MLS,O3 column-GEOS5,O3"
     ;;
   Temperature )
-    oldswaths="$oldswath1,WMOTPPressure-StdProd-MLS,WMOTPPressure-StdProd-GEOS5"
+    oldswaths="$oldswath1,WMOTPPressure-${tail}-MLS,WMOTPPressure-${tail}-GEOS5"
     newswaths="$newswath1,WMOTPPressure-MLS,WMOTPPressure-GEOS5"
     ;;
   RHI )
@@ -277,6 +291,9 @@ do
 done
 exit
 # $Log$
+# Revision 1.2  2007/02/06 23:17:31  pwagner
+# Swath names fitted to v2.21
+#
 # Revision 1.1  2006/09/29 00:32:41  pwagner
 # First commit
 #
