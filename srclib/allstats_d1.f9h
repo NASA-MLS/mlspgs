@@ -45,6 +45,7 @@
         real(rk), dimension(:), pointer                :: xmed1 => null()
         real(rk), dimension(:), pointer                :: xmed2 => null()
         real(rk)                                       :: absMu, sigma
+        ! logical, parameter :: DEEBUG = .true.
         ! Executable
         myDump = .false.
         if ( present(doDump) ) myDump = doDump
@@ -69,13 +70,26 @@
           call output(stats, advance='yes')
           endif
         else
-          stats(1) = 0  ! Reset count to start again
+          stats = 0  ! Reset count to start again
+          MLSStat%Count = 0
           MLSStat%fillCount = 0
           if ( DEEBUG ) call output('Resetting counts to 0', advance='yes')
         endif
         if ( present(fillValue) ) then
           call filterValues(values, XTAB, NX, fillValue=fillValue)
+          if ( DEEBUG ) then
+            call outputNamedValue( 'shape(values)', shape(values) )
+            call outputNamedValue( 'shape(xtab)', shape(xtab) )
+            call outputNamedValue( 'nx', nx )
+            call outputNamedValue( 'fillvalue', fillvalue )
+            call outputNamedValue( 'fillvaluerelation', fillvaluerelation )
+            call outputNamedValue( 'max(values)', maxval(values) )
+            call outputNamedValue( 'min(values)', minval(values) )
+            call outputNamedValue( 'count(values == fillvalue)', shcount(values == fillvalue) )
+            call outputNamedValue( 'count(values /= fillvalue)', shcount(values /= fillvalue) )
+          endif
           call STAT1(XTAB, NX, STATS, bincount, NCELLS, X1, X2)
+          if ( DEEBUG ) call output('Back from stat1 with fillvalue', advance='yes')
           MLSStat%fillCount = MLSStat%fillCount + size(values) - size(XTAB)
           ! Find median (only if not adding data)
           if ( .not. myAddedData ) call FindMedian( XTAB, NX, MLSStat%median )
@@ -83,12 +97,14 @@
         elseif ( present(precision) ) then
           call filterValues(values, XTAB, NX, precision=precision)
           call STAT1(XTAB, NX, STATS, bincount, NCELLS, X1, X2)
+          if ( DEEBUG ) call output('Back from stat1 with precision', advance='yes')
           MLSStat%fillCount = MLSStat%fillCount + size(values) - size(XTAB)
           ! Find median (only if not adding data)
           if ( .not. myAddedData ) call FindMedian( XTAB, NX, MLSStat%median )
           call Deallocate_test ( XTAB, 'XTAB', ModuleName )
         else
           call STAT1(values, size(values), STATS, bincount, NCELLS, X1, X2)
+          if ( DEEBUG ) call output('Back from stat1', advance='yes')
           ! Find median (only if not adding data)
           if ( .not. myAddedData ) call FindMedian( values, size(values), MLSStat%median )
         endif
@@ -102,6 +118,10 @@
           myRMS = absMu*sqrt( ((n-1.)/n)*(sigma/absMu)**2 + 1. )
         else
           myRMS = sigma*sqrt( ((n-1.)/n) + (absMu/sigma)**2 )
+        endif
+        if ( DEEBUG ) then
+          call output( 'stats: ', advance='no' )
+          call output( stats, advance='yes' )
         endif
 !         call output('n: ')
 !         call output(n, advance='yes')
@@ -233,6 +253,9 @@ contains
 ! end subroutine sllstats*
 
 ! $Log$
+! Revision 1.5  2007/02/06 17:52:21  pwagner
+! Correctly tracks fillcount
+!
 ! Revision 1.4  2006/08/22 00:04:25  pwagner
 ! speedier median algorithm
 !
