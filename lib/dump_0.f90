@@ -25,7 +25,7 @@ module DUMP_0
   use MLSStats1, only: ALLSTATS, FILLVALUERELATION, &
     & MLSMAX, MLSMEAN, MLSMIN, MLSSTDDEV
   use MLSStringLists, only: catLists, GetStringElement, NumStringElements
-  use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
+  use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
 
   implicit none
   private
@@ -2099,6 +2099,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.65  2007/03/07 21:01:45  pwagner
+! Some small changes unrelated to real bugs elsewhere
+!
 ! Revision 2.64  2007/01/31 00:05:43  pwagner
 ! Added interface for dumping bit arrays
 !
