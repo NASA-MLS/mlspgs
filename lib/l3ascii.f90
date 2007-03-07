@@ -20,7 +20,7 @@ module L3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
   USE MLSCommon, only: R4, R8, LineLen, NameLen, DEFAULTUNDEFINEDVALUE
   USE MLSStrings, only: Capitalize, &
     & Count_words, ReadCompleteLineWithoutComments
-  USE output_m, only: output
+  USE output_m, only: output, outputNamedValue
   use TREE, only: DUMP_TREE_NODE, SOURCE_REF
 
   implicit NONE
@@ -860,6 +860,9 @@ end module L3ascii
 
 !
 ! $Log$
+! Revision 2.30  2007/03/07 01:22:46  pwagner
+! Side-step another log of non-positive args case lf6.2 caught
+!
 ! Revision 2.29  2007/01/11 20:39:50  vsnyder
 ! Use Get_Lun instead of having the code here
 !
