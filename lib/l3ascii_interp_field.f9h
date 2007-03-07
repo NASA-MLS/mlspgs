@@ -79,7 +79,14 @@ if ( any(field%heights <= 0._rgr) ) then
 else
   tmpalt = -log10(field%heights)
 endif
-inalt = -log10(inpressure)
+
+if ( inpressure <= 0._rgr ) then
+  inalt = field%missingValue
+  call outputNamedValue( 'Warning--input pressure ' // &
+    & ' is ', inPressure, advance='yes' )
+else
+  inalt = -log10(inpressure)
+endif
 call ilocate ( tmpdate, indate, idate1, idate2 )
 call ilocate ( tmpalt, inalt, ialt1, ialt2 )
 ! We now know that the desired point is inside the 6-D hypercuboid 
@@ -192,6 +199,9 @@ call deallocate_test ( tmpdate, 'tmpdate', moduleName )
 call deallocate_test ( tmpalt, 'tmpalt', moduleName )
 deallocate ( hcube )
 ! $Log$
+! Revision 2.5  2007/03/07 01:22:46  pwagner
+! Side-step another log of non-positive args case lf6.2 caught
+!
 ! Revision 2.4  2007/03/02 18:16:00  pwagner
 ! Dont take log if heights contains missingValues; only lf6.2 complained
 !
