@@ -19,7 +19,7 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
   use MLSSets, only: findAll, findFirst, findLast
   use MLSStringLists, only: catLists
   use MLSStrings, only: lowerCase
-  use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
+  use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
   use SORT_M, only: sort
 
   implicit none
@@ -1319,13 +1319,15 @@ contains
         ! call findAll(values /= fillvalue, which, how_many=NX)
         select case ( fillvaluerelation )
         case ( '=' )
-          call findAll(.not. isFillValue(values, fillvalue), which, how_many=NX)
+          ! call findAll(.not. isFillValue(values, fillvalue), which, how_many=NX)
+          call findAll(values /= fillvalue, which, how_many=NX)
         case ( '<' )
           call findAll(values >= fillValue, which, how_many=NX)
         case ( '>' )
           call findAll(values <= fillValue, which, how_many=NX)
         case default
-          call findAll(.not. isFillValue(values, fillvalue), which, how_many=NX)
+          ! call findAll(.not. isFillValue(values, fillvalue), which, how_many=NX)
+          call findAll(values /= fillvalue, which, how_many=NX)
         end select
         if ( NX < 1 ) then
           call allocate_test(XTAB, 1, 'XTAB', moduleName)
@@ -1378,13 +1380,15 @@ contains
         ! call findAll(values /= fillvalue, which, how_many=NX)
         select case ( fillvaluerelation )
         case ( '=' )
-          call findAll(.not. isFillValue(values, fillvalue), which, how_many=NX)
+          ! call findAll(.not. isFillValue(values, fillvalue), which, how_many=NX)
+          call findAll(values /= fillvalue, which, how_many=NX)
         case ( '<' )
           call findAll(values >= fillValue, which, how_many=NX)
         case ( '>' )
           call findAll(values <= fillValue, which, how_many=NX)
         case default
-          call findAll(.not. isFillValue(values, fillvalue), which, how_many=NX)
+          ! call findAll(.not. isFillValue(values, fillvalue), which, how_many=NX)
+          call findAll(values /= fillvalue, which, how_many=NX)
         end select
         if ( NX < 1 ) then
           call allocate_test(XTAB, 1, 'XTAB', moduleName)
@@ -1456,6 +1460,14 @@ contains
         include 'shrinkArray.f9h'
       end function shrinkarray_r8
 
+      function shcount ( condition ) result ( howmany )
+        ! args
+        logical, dimension(:), intent(in)  :: condition
+        integer                            :: howmany
+        howmany = count(condition)
+        
+      end function shcount
+
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -1471,6 +1483,9 @@ end module MLSStats1
 
 !
 ! $Log$
+! Revision 2.13  2007/03/07 21:03:45  pwagner
+! Avoiding isFillValue in filterValues (did not fix bug in isFillValue yet)
+!
 ! Revision 2.12  2007/02/06 17:54:13  pwagner
 ! Correctly tracks fillcount; dumps as fillcount and as %
 !
