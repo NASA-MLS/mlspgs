@@ -1292,11 +1292,15 @@ contains ! ============= Public procedures ===================================
     qty%verticalCoordinate = l_none
     nullify(qty%surfs) ! Lest we deallocate a database entry
     call Allocate_test ( qty%surfs, 1, 1, 'qty%surfs(1,1)', ModuleName )
+    qty%surfs = 0. ! We used to have impossible values for bnd. prs.
   end subroutine SetupEmptyVGridForQuantity
 
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.139  2007/03/08 01:33:33  pwagner
+! We should never use undefined values for surfs even if no vgrid
+!
 ! Revision 2.138  2007/01/24 02:17:29  vsnyder
 ! Add TARGET attribute for MifGeolocation to prevent dangling pointer
 !
