@@ -26,9 +26,10 @@
   real(rk), optional, intent(in)              :: x2
   real(rk), dimension(:), optional, intent(in):: xtable
   character(len=*), optional, intent(in)      :: options
+  real(rk), optional, intent(in)              :: missingValue
   real(rk)                                    :: value
   ! Internal variables
-  real(rk) :: eps
+  real(r8) :: eps
   integer :: i
   integer, dimension(2) :: indices
   integer :: lower, upper
@@ -53,16 +54,26 @@
   else
     return
   endif
+  if ( present(missingValue) ) then
+    if ( x < minval(myXtable) .or. x > maxval(myXtable) ) then
+      value = missingValue
+      return
+    endif
+  endif
   if ( index(myOptions, 'l') > 0 ) then
     call ClosestElement ( x, myXTable, indices, 'l' )
     indices(1) = max( indices(1), 1 )
     indices(1) = min( indices(1), nSize )
     value = table(indices(1))
+    ! call output( ' x, lower, value ', advance='no' )
+    ! call output( (/ x, myXTable(indices(1)), value /), advance='yes' )
   elseif ( index(myOptions, 'u') > 0 ) then
     call ClosestElement ( x, myXTable, indices, 'u' )
     indices(1) = max( indices(1), 1 )
     indices(1) = min( indices(1), nSize )
     value = table(indices(1))
+    ! call output( ' x, upper, value ', advance='no' )
+    ! call output( (/ x, myXTable(indices(1)), value /), advance='yes' )
   elseif ( index(myOptions, 'i') > 0 ) then
     call ClosestElement ( x, myXTable, indices, 'l' )
     lower = max(indices(1), 1)
@@ -70,10 +81,15 @@
     upper = max(indices(1), 1)
     if ( myXtable(lower) == myXTable(upper) ) then
       value = table(lower)
+      ! call output( (/ minval(myXtable), maxval(myXtable) /), advance='yes' )
+      ! call output( ' x, lower=upper, value ', advance='no' )
+      ! call output( (/ x, myXTable(lower), value /), advance='yes' )
       return
     endif
     eps = ( x - myXTable(lower) ) / ( myXTable(upper) - myXTable(lower) )
     value = eps*table(upper) + (1-eps)*table(lower)
+    ! call output( ' x, lower, upper, eps, value ', advance='no' )
+    ! call output( (/ x, myXTable(lower), myXTable(upper), eps, value /), advance='yes' )
   else
     call ClosestElement ( x, myXTable, indices )
     indices(1) = max( indices(1), 1 )
@@ -82,3 +98,6 @@
   endif
   ! end subroutine UseLookUpTable_r4
 ! $Log$
+! Revision 1.1  2007/03/02 18:17:57  pwagner
+! First commit
+!
