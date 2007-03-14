@@ -21,6 +21,7 @@ module MLSNumerics              ! Some low level numerical stuff
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use MLSSets, only: FindFirst, FindLast
   use MLSStrings, only: Capitalize
+  use Output_M, only: Output
 
   implicit none
 
@@ -530,7 +531,7 @@ contains
     real(rk), dimension(:,:), optional, intent(out) :: IntYdX ! Antiderivative
                                               ! of Y at X
 
-    type(coefficients_r4) :: Coeffs
+    type(coefficients_r8) :: Coeffs
 
     include "InterpolateArray.f9h"
 
@@ -573,7 +574,7 @@ contains
 
     real(rk), intent(in) :: OldX(:), NewX(:)
     character(len=*), intent(in) :: Method
-    type(coefficients_R4), intent(out) :: Coeffs
+    type(coefficients_R8), intent(out) :: Coeffs
     character(len=*), intent(in), optional :: Extrapolate
     integer, intent(in), optional :: Width ! Second dimension for OldY when
                                            ! interpolations get done
@@ -693,7 +694,7 @@ contains
     integer, parameter :: RK = R4
 
     ! Dummy arguments
-    type(coefficients_r4), intent(in) :: Coeffs
+    type(coefficients_r8), intent(in) :: Coeffs
     real(rk), dimension(:), intent(in) :: oldX
     real(rk), dimension(:), intent(in) :: oldY
     real(rk), dimension(:), intent(in) :: newX
@@ -745,7 +746,7 @@ contains
     integer, parameter :: RK = R4
 
     ! Dummy arguments
-    type(coefficients_r4), intent(in) :: Coeffs
+    type(coefficients_r8), intent(in) :: Coeffs
     real(rk), dimension(:), intent(in) :: oldX
     real(rk), dimension(:,:), intent(in) :: oldY
     real(rk), dimension(:), intent(in) :: newX
@@ -869,12 +870,14 @@ contains
   ! u        always choose upper of two closest x's in xtable
   ! i        interpolate among two closest, but never extrapolate
   
-  function UseLookUpTable_r4 ( x, table, x1, x2, xtable, options ) result(value)
+  function UseLookUpTable_r4 ( x, table, x1, x2, xtable, &
+    & missingValue, options ) result(value)
     integer, parameter :: RK = R4
     include 'UseLookUpTable.f9h'
   end function UseLookUpTable_r4 
 
-  function UseLookUpTable_r8 ( x, table, x1, x2, xtable, options ) result(value)
+  function UseLookUpTable_r8 ( x, table, x1, x2, xtable, &
+    & missingValue, options ) result(value)
     integer, parameter :: RK = R8
     include 'UseLookUpTable.f9h'
   end function UseLookUpTable_r8 
@@ -1046,6 +1049,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.48  2007/03/14 23:58:05  pwagner
+! Improved precision when interpolating
+!
 ! Revision 2.47  2007/03/02 18:21:14  pwagner
 ! Added LookUpTable routines
 !
