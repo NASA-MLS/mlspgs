@@ -221,7 +221,7 @@ contains
     use Dump_0, only: Dump
     use Get_Eta_Matrix_m, only: Get_Eta_Sparse
     use MLSKinds, only: RP
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use Output_m, only: OUTPUT
     use Toggles, only: Switches
 
@@ -979,6 +979,10 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.46  2007/02/06 23:50:59  vsnyder
+! Polish up some messages.  Use 8th order approximation for sec(phi)-1 since
+! sixth order doesn't give one-meter accuracy.
+!
 ! Revision 2.45  2007/02/06 21:09:29  vsnyder
 ! Don't skip unsolved segments when going to next phi
 !
