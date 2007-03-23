@@ -22,7 +22,8 @@ module QuantityTemplates         ! Quantities within vectors
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Warning
   use Intrinsic, only: L_None, LIT_INDICES, PHYQ_INDICES
-  use Output_m, only: NEWLINE, Output
+  use MLSStringLists, only: SWITCHDETAIL
+  use Output_m, only: NEWLINE, Output, outputNamedValue
   use String_Table, only: DISPLAY_STRING, Get_String
   use TOGGLES, only: SWITCHES
 
@@ -490,8 +491,14 @@ contains ! =====     Public Procedures     =============================
     type (QuantityTemplate_T), intent(inout) :: QTY
 
     character(63) :: What
+    logical :: verbose
 
     ! Executable code
+    verbose = ( switchDetail(switches, 'qtmp' ) > -1 )
+    if ( verbose ) then
+        call dump( qty )
+    call output( 'About to destroy this quantity', advance='yes' )
+    endif
     if ( qty%name == 0 ) then
       what = "qty"
     else
@@ -499,25 +506,36 @@ contains ! =====     Public Procedures     =============================
     end if
 
     if ( .not. qty%sharedVGrid ) then
+      if ( verbose ) call output( 'About to deallocate surfs', advance='yes' )
       call deallocate_test ( qty%surfs, trim(what) // "%surfs", ModuleName )
     end if
 
     if ( .not. qty%sharedHGrid ) then
+      if ( verbose ) call output( 'About to deallocate phi', advance='yes' )
       call deallocate_test ( qty%phi, trim(what) // "%phi", ModuleName )
+      if ( verbose ) call output( 'About to deallocate geosdlat', advance='yes' )
       call deallocate_test ( qty%geodLat, trim(what) // "%geodLat", ModuleName )
+      if ( verbose ) call output( 'About to deallocate lons', advance='yes' )
       call deallocate_test ( qty%lon, trim(what) // "%lon", ModuleName )
+      if ( verbose ) call output( 'About to deallocate times', advance='yes' )
       call deallocate_test ( qty%time, trim(what) // "%time", ModuleName )
+      if ( verbose ) call output( 'About to deallocate solartime', advance='yes' )
       call deallocate_test ( qty%solarTime, trim(what) // "%solarTime", ModuleName )
+      if ( verbose ) call output( 'About to deallocate solarzenits', advance='yes' )
       call deallocate_test ( qty%solarZenith, trim(what) // "%solarZenith", ModuleName )
+      if ( verbose ) call output( 'About to deallocate losangle', advance='yes' )
       call deallocate_test ( qty%losAngle, trim(what) // "%losAngle", ModuleName )
     end if
     
     if ( .not. qty%sharedFGrid ) then
+      if ( verbose ) call output( 'About to deallocate freqs', advance='yes' )
       call deallocate_test ( qty%frequencies, trim(what) // "%frequencies", ModuleName )
     end if
 
     if ( .not. qty%regular ) then
+      if ( verbose ) call output( 'About to deallocate surfindex', advance='yes' )
       call deallocate_test ( qty%surfIndex, trim(what) // "%surfIndex", ModuleName )
+      if ( verbose ) call output( 'About to deallocate chanindex', advance='yes' )
       call deallocate_test ( qty%chanIndex, trim(what) // "%chanIndex", ModuleName )
     end if
   end subroutine DestroyQuantityTemplateContents
@@ -529,8 +547,12 @@ contains ! =====     Public Procedures     =============================
 
     ! Local variables
     integer :: qtyIndex, status
+    logical :: verbose
 
+    ! Executable code
+    verbose = ( switchDetail(switches, 'qtmp' ) > -1 )
     if ( associated(database) ) then
+      if ( verbose ) call outputNamedValue( 'size(qty db)', size ( database ) )
       do qtyIndex = 1, size ( database )
         call DestroyQuantityTemplateContents ( database(qtyIndex) )
       end do
@@ -746,6 +768,9 @@ contains ! =====     Public Procedures     =============================
     ! and therefore undergoes default initialization as a consequence of
     ! argument association. Since all pointers within it have default
     ! initialization, they therefore become nullified.
+    
+    ! All non-pointer compnents of course become undefined and so must
+    ! be explicitly defined after the call
 
   end subroutine NullifyQuantityTemplate
 
@@ -928,6 +953,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.47  2006/08/04 20:54:09  pwagner
+! get_string for quantity name only if positive
+!
 ! Revision 2.46  2006/08/04 01:54:16  vsnyder
 ! Use >0 instead of ==0 to test the name string
 !
