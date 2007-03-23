@@ -503,18 +503,29 @@ contains ! =====     Public Procedures     =============================
   ! DeConstruct the Quantity and Vector template databases.
 
     use HGridsDatabase, only: DestroyHGridDatabase, HGrid_T
+    use MLSStringLists, only: SwitchDetail
+    use output_m, only: output
     use QuantityTemplates, only: DestroyQuantityTemplateDatabase, &
       & QuantityTemplate_T
+    use TOGGLES, only: SWITCHES
     use VectorsModule, only: DestroyVectorTemplateDatabase, VectorTemplate_T
 
     type (QuantityTemplate_T), dimension(:), pointer :: quantityTemplatesBase
     type (VectorTemplate_T), dimension(:), pointer :: vectorTemplates
     type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
     type (HGrid_T), dimension(:), pointer :: hGrids
+    logical :: verbose
 
+    ! Executable code
+    verbose = ( switchDetail(switches, 'destroy' ) > -1 )
+
+    if ( verbose ) call output( 'About to destroy vectortemplate db', advance='yes' )
     call destroyVectorTemplateDatabase ( vectorTemplates )
+    if ( verbose ) call output( 'About to destroy quantitytemplate db', advance='yes' )
     call destroyQuantityTemplateDatabase ( quantityTemplatesBase )
+    if ( verbose ) call output( 'About to destroy mifGeolocation db', advance='yes' )
     call destroyQuantityTemplateDatabase ( mifGeolocation )
+    if ( verbose ) call output( 'About to destroy hGrid db', advance='yes' )
     call destroyHGridDatabase ( hGrids )
   end subroutine MLSL2DeConstruct
 
@@ -533,6 +544,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.59  2007/03/23 00:24:12  pwagner
+! Switch destroy warns when destroying dbs
+!
 ! Revision 2.58  2006/06/12 16:28:56  pwagner
 ! Added ability to dump Gridded Data
 !
