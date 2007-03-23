@@ -164,7 +164,7 @@ contains ! =====     Public Procedures     =============================
     ! NOTE: If you ever want to include defined assignment for matrices, please
     ! carefully check out the code around the call to snoop.
     use MLSFiles, only: GetMLSFileByType
-    use MLSL2Options, only: SPECIALDUMPFILE
+    use MLSL2Options, only: SKIPRETRIEVAL, SPECIALDUMPFILE
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, &
       & addPhaseToPhaseNames, fillTimings, finishTimings
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
@@ -643,7 +643,8 @@ contains ! =====     Public Procedures     =============================
         call test_allocate ( status, moduleName, 'VectorTemplates', (/0/), (/0/) )
         if ( .not. associated(vectors) ) allocate ( vectors(0), stat=status )
         call test_allocate ( status, moduleName, 'Vectors', (/0/), (/0/) )
-        call dumpCommand ( key, qtyTemplates, vectorTemplates, vectors )
+        call dumpCommand ( key, qtyTemplates, vectorTemplates, vectors, &
+          & GriddedDataBase=GriddedDataBase )
 
       case ( s_matrix ) ! ===============================  Matrix  =====
         got = .false.
@@ -2043,7 +2044,7 @@ contains ! =====     Public Procedures     =============================
             & temperatureQuantity, refGPHQuantity, vGrids(internalVGridIndex) )
           else
             call FillQtyWithReichlerWMOTP ( quantity, &
-            & temperatureQuantity, refGPHQuantity )
+            & temperatureQuantity )
           end if
         case (-1)
           ! We must have decided to skip this fill
@@ -2082,8 +2083,13 @@ contains ! =====     Public Procedures     =============================
         end do
 
         call getFromMatrixDatabase ( matrices(matrixToFill), covariance )
-        call FillCovariance ( covariance, vectors, diagonal, lengthScale, fraction, &
-          & invert )
+        if ( SKIPRETRIEVAL ) then
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'Unable to fill covariance when skipping retrievals' )
+        else
+          call FillCovariance ( covariance, vectors, diagonal, lengthScale, fraction, &
+            & invert )
+        endif
 
       case ( s_FillDiagonal ) ! ===============  FillDiagonal  =====
         do j = 2, nsons(key)
@@ -2598,6 +2604,8 @@ contains ! =====     Public Procedures     =============================
 
     !=============================== FillVectorQuantityFromGrid ============
     subroutine FillVectorQuantityFromGrid(quantity, grid, allowMissing, errorCode)
+      use dump_0, only: dump
+      use Griddeddata, only: dump
       ! Dummy arguments
       type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
       type (GriddedData_T), intent(inout) :: GRID ! Grid to fill it from
@@ -2609,9 +2617,12 @@ contains ! =====     Public Procedures     =============================
       integer :: instance,surf            ! Loop counter
       integer :: instIndex,surfIndex      ! Indices
       real(rv) :: newValue
-
+      logical :: DEEBUG
       ! Executable code
       errorCode = 0
+      DEEBUG = .false.
+      ! DEEBUG = ( grid%quantityName == 'TEMPERATURE' .or. &
+      !   & grid%description == 'Temperature' )
       if ( grid%empty ) then
         if ( index(lowercase(grid%description), 'tropopause') > 0 ) then
           ! Must allow this as missing gmao files are a possibility
@@ -2638,11 +2649,23 @@ contains ! =====     Public Procedures     =============================
       ! This will skip out if it's already been done.
       call WrapGriddedData ( grid )
 
+      if ( DEEBUG ) then
+        call dump( grid )
+        call dump( quantity%template%surfs, 'zeta surfs' )
+        call outputNamedValue( '(noSurfs,noInstances)', &
+          & (/ quantity%template%noSurfs,quantity%template%noInstances /) )
+      endif
       do instance = 1, quantity%template%noInstances
         if ( .not. quantity%template%stacked) instIndex=instance
 
         do surf = 1, quantity%template%noSurfs
           if ( .not. quantity%template%coherent) surfIndex=surf
+          if ( DEEBUG ) then
+            call outputNamedValue( 'interp pressure', 10.0**(-quantity%template%surfs(surf,instIndex)) )
+            if ( 10.0**(-quantity%template%surfs(surf,instIndex)) < 1.E-6 ) then
+              call outputNamedValue( '(surf,instIndex)', (/ surf,instIndex /) )
+            endif
+          endif
           call l3ascii_interp_field(grid, newValue, &
             & pressure=10.0**(-quantity%template%surfs(surf,instIndex)), &
             & lat=quantity%template%geodLat(surfIndex,instance), &
@@ -6980,7 +7003,7 @@ contains ! =====     Public Procedures     =============================
     end subroutine FillWithReflectorTemperature
 
     ! ----------------------------------------- FillQtyWithReichlerWMOTP -------------
-    subroutine FillQtyWithReichlerWMOTP ( tpPres, temperature, refGPH )
+    subroutine FillQtyWithReichlerWMOTP ( tpPres, temperature )
       use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
       use dump_0, only: dump
       use MLSFillValues, only: IsFillValue, RemoveFillValues
@@ -6994,7 +7017,6 @@ contains ! =====     Public Procedures     =============================
       ! 
       type (VectorValue_T), intent(inout) :: TPPRES ! Result
       type (VectorValue_T), intent(in) :: TEMPERATURE
-      type (VectorValue_T), intent(in) :: REFGPH
       ! Local variables
       integer :: instance
       integer :: invert
@@ -8077,6 +8099,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.350  2007/03/23 00:26:09  pwagner
+! More unused debugging; skips filling covariance matrix if skipping retrievals
+!
 ! Revision 2.349  2007/01/12 00:34:04  pwagner
 ! Renamed routine outputNamedValue
 !
