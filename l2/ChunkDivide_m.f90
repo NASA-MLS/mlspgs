@@ -1798,7 +1798,8 @@ contains ! ===================================== Public Procedures =====
       call allocate_test( criticalSignals, numCriticalSignals, 'criticalSignals', &
         & ModuleName )
       call List2Array (criticalSignalStr, criticalSignals,  countEmpty=.true. )
-      if ( switchDetail(switches, 'chu') > -1 ) call dump( criticalSignals, 'critical Signals' )
+      if ( switchDetail(switches, 'chu') > -1 ) &
+        & call dump( criticalSignals, 'critical Signals', trim=.true. )
     end subroutine ChooseCriticalSignals
 
     ! ----------------------------------------- PruneChunks -----------
@@ -2470,6 +2471,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.80  2007/03/23 00:16:57  pwagner
+! Prevent crashing while printing extra-long signals names
+!
 ! Revision 2.79  2007/02/09 01:10:00  pwagner
 ! Fixed bug where criticalSignals not nullified
 !
