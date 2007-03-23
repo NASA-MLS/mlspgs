@@ -12,6 +12,7 @@
 module GriddedData ! Contains the derived TYPE GriddedData_T
 
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use Dump_0, only: dump
   use intrinsic, only: L_GEODALTITUDE, L_GPH, L_ETA, L_PRESSURE, &
     & L_THETA
   use MLSCommon, only: RGR=>R4, R8, LINELEN, NAMELEN, DEFAULTUNDEFINEDVALUE
@@ -295,14 +296,14 @@ contains
   subroutine ConvertFromEtaLevelGrids ( TGrid, PGrid, NGrid, OutGrid )
     ! Converts two eta-level grids, one of them pressures, 
     ! to a pressure-level Grid
-    use MLSNumerics, only: InterpolateValues
+    use MLSNumerics, only: InterpolateValues, UseLookUpTable
     use dump_0, only: dump
     type ( GriddedData_T ), intent(in)  :: TGrid  ! E.g., T on eta surfaces
     type ( GriddedData_T ), intent(in)  :: PGrid  ! Pressures on eta surfaces
     type ( GriddedData_T ), intent(in)  :: NGrid  ! What surfaces to use
     type ( GriddedData_T ), intent(out) :: OutGrid ! T on pressure level
     ! Internal variables
-    integer :: iDate, iSza, iLst, iLon, iLat
+    integer :: iDate, iSza, iLst, iLon, iLat, iHeight
     real(rgr), dimension(:), pointer    :: pEta => null()
     logical, parameter :: DEEBUG = .false.
     ! Executable code
@@ -311,11 +312,15 @@ contains
     if ( .not. DoGriddeddataMatch( PGrid, TGrid ) ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Gridded T,P data must match' )
-    call allocate_test( pEta, TGrid%noHeights, 'pEta', moduleName )
     call DestroyGriddedData ( OutGrid )
     call SetupNewGriddedData ( OutGrid, source=TGrid, noHeights=NGrid%noHeights )
     ! Copy the information over
     OutGrid%verticalCoordinate = NGrid%VerticalCoordinate
+    if ( PGrid%empty .or. TGrid%empty) then
+      call MLSMessage ( MLSMSG_Warning, moduleName, &
+        & 'Temperatures or Pressures grid was empty' )
+      return
+    endif
     if ( size(OutGrid%heights) /= size(NGrid%heights) ) then
       call outputNamedValue('num heights(outGrid)', size(OutGrid%heights), advance='yes' )
       call outputNamedValue('num heights(NGrid)', size(NGrid%heights), advance='yes' )
@@ -323,7 +328,8 @@ contains
         & 'Grid shapes do not conform' )
       return
     endif
-    OutGrid%heights = NGrid%heights
+    call allocate_test( pEta, TGrid%noHeights, 'pEta', moduleName )
+    OutGrid%heights(1:OutGrid%noHeights) = NGrid%heights(1:OutGrid%noHeights)
     OutGrid%lats = TGrid%lats
     OutGrid%lons = TGrid%lons
     OutGrid%lsts = TGrid%lsts
@@ -360,10 +366,20 @@ contains
       enddo
     enddo
     if ( DEEBUG ) then
+      call outputNamedValue( 'PGrid%units', PGrid%units )
       call dump( TGrid%field( :, 1, 1, 1, 1, 1 ), 'T' )
       call dump( PGrid%field( :, 1, 1, 1, 1, 1 ), 'P' )
       call dump( NGrid%heights, 'heights' )
       call dump( OutGrid%field( :, 1, 1, 1, 1, 1 ), 'T out' )
+      pEta = PGrid%field( :, 1, 1, 1, 1, 1 ) / 100
+      call dump( pEta, 'heights(eta)' )
+      do iHeight = 1, NGrid%noHeights
+        call outputNamedValue( 'height', NGrid%heights(iHeight) )
+        OutGrid%field( iHeight, 1, 1, 1, 1, 1 ) = &
+        & UseLookUpTable ( NGrid%heights(iHeight), TGrid%field( :, 1, 1, 1, 1, 1 ), &
+        & xtable=pEta, missingValue=TGrid%missingValue, options='i' )
+      enddo
+      call dump( OutGrid%field( :, 1, 1, 1, 1, 1 ), 'T out (2)' )
       stop
     endif
     call deallocate_test( pEta,   'pEta', moduleName )
@@ -780,6 +796,7 @@ contains
     real(rgr), optional, intent(in) :: MISSINGVALUE
 
     ! Local parameters
+    logical, parameter :: DEEBUG = .false.
     real(r8), parameter :: NOSECONDSINMEANYEAR = 9.55+60.0*(9.0+60.0*(6.0+24.0*365.0))
     ! 365 days, 6 hours, 9 minutes, 9.55 seconds
 
@@ -789,7 +806,7 @@ contains
     ! Now the number of corners
     integer :: NOCORNERS
     ! Missing value to use
-    real(rgr) :: MYMISSINGVALUE
+    real(r8) :: MYMISSINGVALUE
 
     ! Now the indcies for each corner
     integer, dimension(size(heights),2) :: HEIGHTI
@@ -800,12 +817,12 @@ contains
     integer, dimension(size(dates),2)   :: DATEI
 
     ! Now the weights for each corner
-    real(rgr), dimension(size(heights),2) :: HEIGHTW
-    real(rgr), dimension(size(lats),2)    :: LATW
-    real(rgr), dimension(size(lons),2)    :: LONW
-    real(rgr), dimension(size(lsts),2)    :: LSTW
-    real(rgr), dimension(size(szas),2)    :: SZAW
-    real(rgr), dimension(size(dates),2)   :: DATEW
+    real(r8), dimension(size(heights),2) :: HEIGHTW
+    real(r8), dimension(size(lats),2)    :: LATW
+    real(r8), dimension(size(lons),2)    :: LONW
+    real(r8), dimension(size(lsts),2)    :: LSTW
+    real(r8), dimension(size(szas),2)    :: SZAW
+    real(r8), dimension(size(dates),2)   :: DATEW
 
     ! Some extra special stuff for the dates
     real(r8), dimension(grid%noDates) :: MEANGRIDDATES
@@ -824,7 +841,8 @@ contains
     integer, dimension(:), pointer :: SZAC
     integer, dimension(:), pointer :: DATEC
     ! One result
-    real(rgr) :: VAL
+    real(r8) :: VAL
+    real(r8), dimension(size(heights)) :: subSlice
 
     ! Executable code
     myMissingValue = grid%missingValue
@@ -850,8 +868,8 @@ contains
     ! Height:
     if ( grid%noHeights == 1 ) then
       heightI = 1
-      heightW(:,1) = 1.0_rgr
-      heightW(:,2) = 0.0_rgr
+      heightW(:,1) = 1.0_r8
+      heightW(:,2) = 0.0_r8
       heightFac = 0
     else
       if ( grid%verticalCoordinate == v_is_pressure ) then
@@ -878,8 +896,8 @@ contains
     ! Latitude
     if ( grid%noLats == 1 ) then
       latI = 1
-      latW(:,1) = 1.0_rgr
-      latW(:,2) = 0.0_rgr
+      latW(:,1) = 1.0_r8
+      latW(:,2) = 0.0_r8
       latFac = 0
     else
       call Hunt ( grid%lats, lats, latI(:,1) )
@@ -895,8 +913,8 @@ contains
     ! Longitude
     if ( grid%noLons == 1 ) then
       lonI = 1
-      lonW(:,1) = 1.0_rgr
-      lonW(:,2) = 0.0_rgr
+      lonW(:,1) = 1.0_r8
+      lonW(:,2) = 0.0_r8
       lonFac = 0
     else
       call Hunt ( grid%lons, lons, lonI(:,1) )
@@ -912,8 +930,8 @@ contains
     ! Local solar time
     if ( grid%noLsts == 1 ) then
       lstI = 1
-      lstW(:,1) = 1.0_rgr
-      lstW(:,2) = 0.0_rgr
+      lstW(:,1) = 1.0_r8
+      lstW(:,2) = 0.0_r8
       lstFac = 0
     else
       call Hunt ( grid%lsts, lsts, lstI(:,1) )
@@ -929,8 +947,8 @@ contains
     ! Solar zenith angle
     if ( grid%noSzas == 1 ) then
       szaI = 1
-      szaW(:,1) = 1.0_rgr
-      szaW(:,2) = 0.0_rgr
+      szaW(:,1) = 1.0_r8
+      szaW(:,2) = 0.0_r8
       szaFac = 0
     else
       call Hunt ( grid%szas, szas, szaI(:,1) )
@@ -955,8 +973,8 @@ contains
     endif
     if ( grid%noDates == 1 ) then
       dateI = 1
-      dateW(:,1) = 1.0_rgr
-      dateW(:,2) = 0.0_rgr
+      dateW(:,1) = 1.0_r8
+      dateW(:,2) = 0.0_r8
       dateFac = 0
     else
       call Hunt ( meanGridDates, modifiedInDates, dateI(:,1) )
@@ -964,7 +982,7 @@ contains
       dateW(:,1) = max ( 0.0_r8, min ( 1.0_r8, &
         & ( meanGridDates(dateI(:,2)) - modifiedInDates ) / &
         & ( meanGridDates(dateI(:,2)) - meanGridDates(dateI(:,1)) ) ))
-      dateW(:,2) = 1.0_rgr - dateW(:,1)
+      dateW(:,2) = 1.0_r8 - dateW(:,1)
       dateFac = noCorners
       noCorners = noCorners * 2
     end if
@@ -1016,7 +1034,36 @@ contains
       end if
     end do
 
-
+    if ( DEEBUG ) then
+    call output('slicing .. ' , advance='yes' )
+    call outputNamedValue ( 'num corners', noCorners )
+    call outputNamedValue ( 'heightFac', heightFac )
+    call dump( heightC, 'heightC' )
+    call dump( heightI, 'heightI' )
+    call dump( heightW, 'heightW' )
+    call outputNamedValue ( 'latFac', latFac )
+    call dump( latC, 'latC' )
+    call dump( latI, 'latI' )
+    call dump( latW, 'latW' )
+    call outputNamedValue ( 'lonFac', lonFac )
+    call dump( lonC, 'lonC' )
+    call dump( lonI, 'lonI' )
+    call dump( lonW, 'lonW' )
+    call outputNamedValue ( 'dateFac', dateFac )
+    call dump( dateC, 'dateC' )
+    call dump( dateI, 'dateI' )
+    call dump( dateW, 'dateW' )
+    call outputNamedValue ( 'szaFac', szaFac )
+    call dump( szaC, 'szaC' )
+    call dump( szaI, 'szaI' )
+    call dump( szaW, 'szaW' )
+    call outputNamedValue ( 'lstFac', lstFac )
+    call dump( lstC, 'lstC' )
+    call dump( lstI, 'lstI' )
+    call dump( lstW, 'lstW' )
+    call outputNamedValue ( 'missing value', grid%missingValue ) 
+    call outputNamedValue ( 'any missing value?', any ( EssentiallyEqual ( grid%field, grid%missingValue ) ) )
+    endif
     ! OK, now we do the work.
     ! We have two possibilities here.  If there are no bad datapoints
     ! then we can storm through, otherwise we have to be careful
@@ -1027,22 +1074,26 @@ contains
           do lst = 1, noLsts
             do lon = 1, noLons
               do lat = 1, noLats
+                subSlice = 0._r8
                 do height = 1, noHeights
-                  slice(height,lat,lon,lst,sza,date) = 0.0
+                  ! slice(height,lat,lon,lst,sza,date) = 0.0
                   cornerLoopMissing: do c = 1, noCorners
                     val = grid%field ( &
                       & heightI(height,heightC(c)), latI(lat,latC(c)), lonI(lon,lonC(c)), &
                       & lstI(lst,lstC(c)), szaI(sza,szaC(c)), dateI(date,dateC(c)) )
-                    if ( EssentiallyEqual ( val, grid%missingValue ) ) then
-                      slice(height,lat,lon,lst,sza,date) = myMissingValue
+                    if ( EssentiallyEqual ( val, real(grid%missingValue, r8) ) ) then
+                      ! slice(height,lat,lon,lst,sza,date) = myMissingValue
+                      subSlice(height) = myMissingValue
                       exit cornerLoopMissing
                     end if
-                    slice(height,lat,lon,lst,sza,date) = &
-                      & slice(height,lat,lon,lst,sza,date) + val * &
+                    ! slice(height,lat,lon,lst,sza,date) = &
+                      ! & slice(height,lat,lon,lst,sza,date) + val * &
+                    subSlice(height) = subSlice(height) + val * &
                       & heightW(height,heightC(c)) * latW(lat,latC(c)) * lonW(lon,lonC(c)) * &
                       & lstW(lst,lstC(c)) * szaW(sza,szaC(c)) * dateW(date,dateC(c))
                   end do cornerLoopMissing
                 end do
+                slice(:,lat,lon,lst,sza,date) = subSlice
               end do
             end do
           end do
@@ -1055,18 +1106,30 @@ contains
           do lst = 1, noLsts
             do lon = 1, noLons
               do lat = 1, noLats
+                subSlice = 0._r8
                 do height = 1, noHeights
-                  slice(height,lat,lon,lst,sza,date) = 0.0
+                  ! slice(height,lat,lon,lst,sza,date) = 0.0
                   do c = 1, noCorners
                     val = grid%field ( &
                       & heightI(height,heightC(c)), latI(lat,latC(c)), lonI(lon,lonC(c)), &
                       & lstI(lst,lstC(c)), szaI(sza,szaC(c)), dateI(date,dateC(c)) )
-                    slice(height,lat,lon,lst,sza,date) = &
-                      & slice(height,lat,lon,lst,sza,date) + val * &
+                    ! slice(height,lat,lon,lst,sza,date) = &
+                    !  & slice(height,lat,lon,lst,sza,date) + val * &
+                    subSlice(height) = subSlice(height) + val * &
                       & heightW(height,heightC(c)) * latW(lat,latC(c)) * lonW(lon,lonC(c)) * &
                       & lstW(lst,lstC(c)) * szaW(sza,szaC(c)) * dateW(date,dateC(c))
+                    if ( height == 8 .and. lat == 1 .and. lon == 1 .and. &
+                      & lst == 1 .and. sza == 1 .and. date == 1 .and. DEEBUG ) &
+                      & call output ( (/ val, heightW(height,heightC(c)), &
+                        & latW(lat,latC(c)), lonW(lon,lonC(c)), &
+                        & lstW(lst,lstC(c)), szaW(sza,szaC(c)), dateW(date,dateC(c)) /), &
+                        & advance='yes' )
                   end do
                 end do
+                slice(:,lat,lon,lst,sza,date) = subSlice
+                if ( lat == 1 .and. lon == 1 .and. &
+                  & lst == 1 .and. sza == 1 .and. date == 1 .and. DEEBUG ) &
+                  & call output ( subSlice, advance='yes' )
               end do
             end do
           end do
@@ -1081,6 +1144,9 @@ contains
     call Deallocate_test ( lstC, 'lstC', ModuleName )
     call Deallocate_test ( szaC, 'szaC', ModuleName )
     call Deallocate_test ( dateC, 'dateC', ModuleName )
+    if ( DEEBUG ) call dump ( slice(:,1:10,1,:,1,1), &
+        & '    sliced field values (1st longitude) =' , &
+        & FillValue=Grid%MissingValue )
   end subroutine SliceGriddedData
 
   ! -------------------------------------------- WrapGriddedData ---
@@ -1211,6 +1277,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.45  2007/03/23 00:10:49  pwagner
+! Valiant attempts to bring two Lahey version results closer
+!
 ! Revision 2.44  2007/01/30 21:57:44  pwagner
 ! Avoids a bug with empty grids in ConvertFromEtaLevelGrids
 !
