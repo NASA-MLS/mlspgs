@@ -427,7 +427,7 @@ blas:
 	$(MAKE) -f $(MakeFName) -C $@
 
 l1--itm:
-	$(MAKE) -f $(MakeFName) l1 PROG=init_tables_module.o MARK_ALL_AS_UPTODATE=no
+	$(MAKE) -f $(MakeFName) -C l1 PROG=init_tables_module.o MARK_ALL_AS_UPTODATE=no
 
 #              (functional targets)
 #              summoned by "make command"
@@ -828,7 +828,7 @@ MLS_h5ls: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/MLS_h5ls.f90 l1--itm
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
-utctotai: $(CONFDIR)/$(MLSCFILE) $(utctotai_sources)
+utctotai: $(CONFDIR)/$(MLSCFILE) # $(utctotai_sources)
 		$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
 		-c $(MLSCONFG) -p $@ -M $(MAKE) -T lib -ni\
 		-C $(MLSCFILE) $(utctotai_sources)
@@ -1159,6 +1159,9 @@ tools: chunktimes checkpvmup compare dateconverter heconvert h5subset h5cat hl \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.105  2007/01/18 23:47:37  pwagner
+# Added build commands for new tool dateconverter
+#
 # Revision 1.104  2006/11/22 20:45:02  pwagner
 # Should tar us scxripts directory as part of EVERYTHING
 #
