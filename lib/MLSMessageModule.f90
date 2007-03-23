@@ -638,6 +638,7 @@ contains
     integer :: loggedLength
     character(len=len(line)+len(MLSMessageConfig%prefix)) :: loggedLine
     integer :: ioerror
+    integer :: maxLineLength
     loggedLength = len_trim(line)
     if ( present(line_len) ) loggedLength = line_len
     loggedLine = line
@@ -646,12 +647,13 @@ contains
       loggedLine = TRIM(MLSMessageConfig%prefix) // &
            & TRIM(line)
     endif
+    maxLineLength = min( loggedLength, len(loggedLine) )
     log_it = &
     & (MLSMessageConfig%useToolkit .and. UseSDPToolkit) &
     & .or. &
     & severity >= MLSMSG_Severity_to_quit
     if( log_it .and. loggedLength > 0 ) &
-      & ioerror = PGS_SMF_GenerateStatusReport ( loggedLine(1:loggedLength) )
+      & ioerror = PGS_SMF_GenerateStatusReport ( loggedLine(1:maxLineLength) )
 
     ! Now, if we're also logging to a file then write to that too.
 
@@ -680,6 +682,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.31  2007/03/23 00:15:34  pwagner
+! Last-ditch attempt to prevent error when outputting extra-long lines
+!
 ! Revision 2.30  2007/01/23 17:12:30  pwagner
 ! Restore ability to suppress Debugs
 !
