@@ -120,8 +120,8 @@ module DUMP_0
   logical :: myStats, myRMS, myWholeArray
   integer :: numNonFill, numFill
 
-  character(*), parameter :: MyFormatDefault = '(1pg14.6)'
-  character(*), parameter :: MyFormatDefaultCmplx = &
+  character(len=16), public, save :: sdFormatDefault = '(1pg14.6)'
+  character(*), parameter :: sdFormatDefaultCmplx = &
     & '(1x,"(",1pg13.6,",",1pg13.6,")")'
 
 contains
@@ -352,12 +352,13 @@ contains
   end subroutine DUMP_1D_BIT
 
   ! -----------------------------------------------  DUMP_1D_CHAR  -----
-  subroutine DUMP_1D_CHAR ( ARRAY, NAME, FILLVALUE, CLEAN, TRIM )
+  subroutine DUMP_1D_CHAR ( ARRAY, NAME, FILLVALUE, CLEAN, TRIM, MAXLON )
     character(len=*), intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
     character(len=*), intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
     logical, intent(in), optional :: TRIM
+    integer, intent(in), optional :: MAXLON
 
     integer :: J, K
     integer :: LON
@@ -375,6 +376,7 @@ contains
     if ( present(trim) ) myTrim = trim
     lon = len(array(1))
     if ( myTrim ) lon = maxval(len_trim(array))
+    if ( present(maxlon) ) lon = min(lon, maxlon)
 
     numZeroRows = 0
     if ( size(array) == 0 ) then
@@ -421,7 +423,7 @@ contains
     if ( present(clean) ) myClean = clean
     myWidth = 3
     if ( present(width) ) myWidth = width
-    myFormat = MyFormatDefaultCmplx
+    myFormat = sdFormatDefaultCmplx
     if ( present(format) ) myFormat = format
 
     if ( size(array) == 0 ) then
@@ -462,7 +464,7 @@ contains
     if ( present(clean) ) myClean = clean
     myWidth = 3
     if ( present(width) ) myWidth = width
-    myFormat = MyFormatDefaultCmplx
+    myFormat = sdFormatDefaultCmplx
     if ( present(format) ) myFormat = format
 
     if ( size(array) == 0 ) then
@@ -516,7 +518,7 @@ contains
     if ( present(clean) ) myClean = clean
     myWidth = defaultWidth
     if ( present(width) ) myWidth = width
-    myFormat = myFormatDefault
+    myFormat = sdFormatDefault
     if ( present(format) ) myFormat = format
     base = 0
     if ( present(lbound) ) base = lbound - 1
@@ -687,7 +689,7 @@ contains
     if ( present(clean) ) myClean = clean
     myWidth = defaultWidth
     if ( present(width) ) myWidth = width
-    myFormat = myFormatDefault
+    myFormat = sdFormatDefault
     if ( present(format) ) myFormat = format
     base = 0
     if ( present(lbound) ) base = lbound - 1
@@ -721,12 +723,13 @@ contains
   end subroutine DUMP_1D_REAL
 
   ! -----------------------------------------------  DUMP_2D_CHAR  -----
-  subroutine DUMP_2D_CHAR ( ARRAY, NAME, FILLVALUE, CLEAN, TRIM )
+  subroutine DUMP_2D_CHAR ( ARRAY, NAME, FILLVALUE, CLEAN, TRIM, MAXLON )
     character(len=*), intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
     character(len=*), intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
     logical, intent(in), optional :: TRIM
+    integer, intent(in), optional :: MAXLON
 
     integer :: I, J, K
     integer :: LON
@@ -744,6 +747,7 @@ contains
     if ( present(trim) ) myTrim = trim
     lon = len(array(1,1))
     if ( myTrim ) lon = maxval(len_trim(array))
+    if ( present(maxlon) ) lon = min(lon, maxlon)
 
     numZeroRows = 0
     if ( size(array) == 0 ) then
@@ -752,7 +756,7 @@ contains
       call name_and_size ( name, myClean, 1 )
       call output ( array(1,1)(1:lon), advance='yes' )
     else if ( size(array,2) == 1 ) then
-      call dump ( array(:,1), name, fillValue=fillValue, clean=clean, trim=trim )
+      call dump ( array(:,1), name, fillValue=fillValue, clean=clean, trim=trim, maxlon=maxlon )
     else
       call name_and_size ( name, myClean, size(array) )
       if ( present(name) ) call output ( '', advance='yes' )
@@ -801,7 +805,7 @@ contains
     myWidth = 3
     if ( present(width) ) myWidth = width
 
-    myFormat = MyFormatDefaultCmplx
+    myFormat = sdFormatDefaultCmplx
     if ( present(format) ) myFormat = format
 
     numZeroRows = 0
@@ -879,7 +883,7 @@ contains
     myWidth = 3
     if ( present(width) ) myWidth = width
 
-    myFormat = MyFormatDefaultCmplx
+    myFormat = sdFormatDefaultCmplx
     if ( present(format) ) myFormat = format
 
     numZeroRows = 0
@@ -962,7 +966,7 @@ contains
     if ( present(FillValue) ) myFillValue = FillValue
     include 'dumpstats.f9h'
 
-    myFormat = MyFormatDefault
+    myFormat = sdFormatDefault
     if ( present(format) ) myFormat = format
 
     numZeroRows = 0
@@ -1156,7 +1160,7 @@ contains
     if ( present(FillValue) ) myFillValue = FillValue
     include 'dumpstats.f9h'
 
-    myFormat = MyFormatDefault
+    myFormat = sdFormatDefault
     if ( present(format) ) myFormat = format
 
     numZeroRows = 0
@@ -1217,12 +1221,13 @@ contains
   end subroutine DUMP_2D_REAL
 
   ! -----------------------------------------------  DUMP_3D_CHAR  -----
-  subroutine DUMP_3D_CHAR ( ARRAY, NAME, FILLVALUE, CLEAN, TRIM )
+  subroutine DUMP_3D_CHAR ( ARRAY, NAME, FILLVALUE, CLEAN, TRIM, MAXLON )
     character(len=*), intent(in) :: ARRAY(:,:,:)
     character(len=*), intent(in), optional :: NAME
     character(len=*), intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
     logical, intent(in), optional :: TRIM
+    integer, intent(in), optional :: MAXLON
 
     integer :: LON
     logical :: MyClean
@@ -1242,6 +1247,7 @@ contains
     if ( present(trim) ) myTrim = trim
     lon = len(array(1,1,1))
     if ( myTrim ) lon = maxval(len_trim(array))
+    if ( present(maxlon) ) lon = min(lon, maxlon)
     call FindAll( (/ size(array, 1), size(array, 2), size(array, 3)/), &
       & 1, which, how_many, re_mainder=re_mainder)
 
@@ -1253,7 +1259,7 @@ contains
       call output ( array(1,1,1)(1:lon), advance='yes' )
     else if ( how_many == 2 ) then
       call dump ( reshape(array, (/ re_mainder(1) /)), name, fillValue=fillValue, &
-        & clean=clean, trim=trim )
+        & clean=clean, trim=trim, maxlon=maxlon )
     else if ( how_many == 1 ) then
       call dump ( reshape(array, (/ re_mainder(1), re_mainder(2) /)), &
         & name, fillValue=fillValue, clean=clean, trim=trim )
@@ -1312,7 +1318,7 @@ contains
 
     myClean = .false.
     if ( present(clean) ) myClean = clean
-    myFormat = MyFormatDefault
+    myFormat = sdFormatDefault
     if ( present(format) ) myFormat = format
 
     numZeroRows = 0
@@ -1457,7 +1463,7 @@ contains
     if ( present(clean) ) myClean = clean
     include 'dumpstats.f9h'
 
-    myFormat = MyFormatDefault
+    myFormat = sdFormatDefault
     if ( present(format) ) myFormat = format
 
     numZeroRows = 0
@@ -2099,6 +2105,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.66  2007/03/23 00:14:30  pwagner
+! new optional maxlon arg to dumping n-d chars; sdFormatDefault for numeric dumps public and changeable
+!
 ! Revision 2.65  2007/03/07 21:01:45  pwagner
 ! Some small changes unrelated to real bugs elsewhere
 !
