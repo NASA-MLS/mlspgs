@@ -20,6 +20,7 @@ Switches (set by -S option in mlsl2's command line):
   column => Extra diagnostics while integrating column abundances
   cov =>    Report details of a posteriori covariance calculation
   dacsfil => Dump DACS filter shapes after reading them
+  destroy => Warn beffore each destroy
   diag =>   diagonal of factored normal equations
   dvec =>   'DX' vector during Newton iteration
   dwreq[n] => Dump directwrite requests processed by master
@@ -82,7 +83,7 @@ Switches (set by -S option in mlsl2's command line):
   pro[n] => Proclaim each product file l2gp, l2aux, l2dgg, l2pc, meta output
               and each file l2gp, l1brad, ncep, dao input; dump filedatabase
   ptg =>    Dump full forward model pointing angles
-  qtmp =>   Quantity templates being constructed
+  qtmp =>   Quantity templates being constructed, destroyed
   rad =>    Radiances in ForwardModelInterface
   red[n] => Reduce dumpCommand details level by n (n=2 by default)
   reg =>    Dump regularization matrix
@@ -159,6 +160,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.65  2006/09/21 18:52:52  pwagner
+ red[n] switch reduces details level of some dumps (turning some off altogether)
+
  Revision 1.64  2006/08/25 19:36:52  vsnyder
  add hphi and hphI switches
 
