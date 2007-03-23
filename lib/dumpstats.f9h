@@ -59,7 +59,11 @@
     ! Avoid dumping the entire array if all its elements are equal
     if ( DONTDUMPIFALLEQUAL .and. product(shape(array)) > 5 ) then
       if ( minval(array) == maxval(array) ) then
-        call output( trim(name), advance='no' )
+        if ( present(name) ) then
+          call output( trim(name), advance='no' )
+        else
+          call output( 'array', advance='no' )
+        endif
         call output( ': all ', advance='no' )
         call output( trim(arrayShapeToString(shape(array))), advance='no' )
         call output( ' values are ', advance='no' )
@@ -68,6 +72,9 @@
       endif
     endif
 ! $Log$
+! Revision 2.11  2007/03/23 00:09:13  pwagner
+! Must never refer to optional parameter unless present
+!
 ! Revision 2.10  2006/07/11 00:23:28  pwagner
 ! use fillValue properly when computing rms etc.
 !
