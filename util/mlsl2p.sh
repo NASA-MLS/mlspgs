@@ -62,7 +62,7 @@ SAVEJOBSTATS="yes"
 # log      copy any log file messages to stdout
 # pro      announce input files at opening, output files at creation
 # time     summarize time consumed by each code  section, phase, etc.
-otheropts="$OTHEROPTS -g --wall --cat -S'slv,mas,chu,opt1,log,pro,time'"
+otheropts="$OTHEROPTS -g --wall --cat -S'mas,chu,opt1,log,pro,time'"
 
 # Check that assumptions are valid
 if [ "$PGS_PC_INFO_FILE" = "" ]
@@ -249,6 +249,9 @@ else
 fi
 
 # $Log$
+# Revision 1.14  2007/02/09 21:31:19  pwagner
+# Sets environmental variable as work-around to Lahey 6.2 bug
+#
 # Revision 1.13  2006/10/19 18:31:10  pwagner
 # Now saves chunk stats at end of output
 #
