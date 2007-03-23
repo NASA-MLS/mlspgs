@@ -139,6 +139,7 @@ contains ! ====     Public Procedures     ==============================
     real    ::                                   t1, t2, tChunk
     character(len=24) ::                         textCode
     type (Vector_T), dimension(:), pointer ::    Vectors
+    logical :: warnOnDestroy        ! Whether to warn before destroying dbs
 
     ! Arguments for Construct not declared above:
     type (QuantityTemplate_T), dimension(:), pointer :: MifGeolocation
@@ -151,6 +152,7 @@ contains ! ====     Public Procedures     ==============================
       & qtyTemplates, vectors, vectorTemplates, fGrids, vGrids )
 
     nullify(chunksSkipped)
+    warnOnDestroy = ( switchDetail(switches, 'destroy' ) > -1 )
     canWriteL2PC = .false.
     stopBeforeChunkLoop          = ( &
       & index('global_setting,chunk_divide', &
@@ -393,11 +395,15 @@ subtrees:   do while ( j <= howmany )
             ! Now, if we're dealing with more than one chunk destroy stuff
             ! Otherwise, we'll save them as we may need to output them as l2pc files.
             if ( .not. canWriteL2PC ) then
+              if ( warnOnDestroy ) call output('About to MLSL2Deconstruct', advance='yes' )
               call MLSL2DeConstruct ( qtyTemplates, vectorTemplates, &
                 & mifGeolocation, hGrids )
+              if ( warnOnDestroy ) call output('About to destroy vector db', advance='yes' )
               call DestroyVectorDatabase ( vectors )
+              if ( warnOnDestroy ) call output('About to destroy matrix db', advance='yes' )
               call DestroyMatrixDatabase ( matrices )
             end if
+            if ( warnOnDestroy ) call output('About to forget optimum Lon0', advance='yes' )
             call ForgetOptimumLon0
             ! print the timing for FullForwardModel
             ! fmt2: at each chunk, fmt1: at last chunk
@@ -408,6 +414,7 @@ subtrees:   do while ( j <= howmany )
               & chunkNo == lastChunk ) then
                   call printForwardModelTiming ( forwardModelConfigDatabase )
             end if
+            if ( warnOnDestroy ) call output('About to strip fwmconfig db', advance='yes' )
             call StripForwardModelConfigDatabase ( forwardModelConfigDatabase )
             if ( switchDetail(switches,'chu') > -1 ) then
               call sayTime('processing this chunk', tChunk)
@@ -418,6 +425,7 @@ subtrees:   do while ( j <= howmany )
             end if
           end do ! ---------------------------------- End of chunk loop
           ! Clear any locked l2pc bins out.
+          if ( warnOnDestroy ) call output('About to flushl2pc bins', advance='yes' )
           call FlushLockedBins
           ! Done with the chunksSkipped array
           call deallocate_test( chunksSkipped, 'chunksSkipped', ModuleName )
@@ -444,9 +452,12 @@ subtrees:   do while ( j <= howmany )
         ! For case where there was one chunk, destroy vectors etc.
         ! This is to guard against destroying stuff needed by l2pc writing
         if ( canWriteL2PC ) then
+          if ( warnOnDestroy ) call output('About to MLSL2Deconstruct', advance='yes' )
           call MLSL2DeConstruct ( qtyTemplates, vectorTemplates, &
             & mifGeolocation, hGrids )
+          if ( warnOnDestroy ) call output('About to destroy vector db', advance='yes' )
           call DestroyVectorDatabase ( vectors )
+          if ( warnOnDestroy ) call output('About to destroy matrix db', advance='yes' )
           call DestroyMatrixDatabase ( matrices )
         endif
 
@@ -458,17 +469,21 @@ subtrees:   do while ( j <= howmany )
          & .and. associated(griddedDataBase) ) then
           call Dump(griddedDataBase)
         end if
+        if ( warnOnDestroy ) call output('About to destroy gridded db', advance='yes' )
         call DestroyGriddedDataDatabase ( griddedDataBase )
         if ( switchDetail(switches,'l2gp') > -1 .and. .not. parallel%slave) then
           call Dump(l2gpDatabase)
         elseif ( switchDetail(switches,'cab') > -1 .and. .not. parallel%slave) then
           call Dump(l2gpDatabase, ColumnsOnly=.true.)
         end if
+        if ( warnOnDestroy ) call output('About to destroy l2gp db', advance='yes' )
         call DestroyL2GPDatabase ( l2gpDatabase )
         if ( switchDetail(switches,'l2aux') > -1 .and. .not. parallel%slave) then
           call Dump(l2auxDatabase)
         end if
+        if ( warnOnDestroy ) call output('About to destroy l2aux db', advance='yes' )
         call DestroyL2AUXDatabase ( l2auxDatabase )
+        if ( warnOnDestroy ) call output('About to destroy direct db', advance='yes' )
         call DestroyDirectDatabase ( DirectDatabase )
         ! vectors, vectorTemplates and qtyTemplates destroyed at the
         ! end of each chunk
@@ -566,6 +581,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.153  2007/02/14 17:31:00  pwagner
+! Commented-out destroyL2PCDatabase (was it killing slaves?)
+!
 ! Revision 2.152  2007/01/12 00:34:04  pwagner
 ! Renamed routine outputNamedValue
 !
