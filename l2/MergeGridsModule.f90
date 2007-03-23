@@ -332,7 +332,7 @@ contains ! =================================== Public procedures
     use MLSCommon, only: R8
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE
     use MLSNumerics, only: ESSENTIALLYEQUAL
-    use output_m, only: BLANKS, OUTPUT
+    use output_m, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE
     use Toggles, only: GEN, TOGGLE
     use Trace_M, only: TRACE_BEGIN, TRACE_END
     use Tree, only: NSONS, SUBTREE, DECORATION
@@ -381,14 +381,16 @@ contains ! =================================== Public procedures
     real (r8) :: Z                      ! One 'height'
     real (r8) :: Z1, Z2                 ! Range of transition region
 
-    real (rgr) :: CLIVAL                ! One interpolated value
-    real (rgr) :: OPVAL                 ! One interpolated value
+    real (r8) :: CLIVAL                ! One interpolated value
+    real (r8) :: OPVAL                 ! One interpolated value
     real (rgr), pointer, dimension(:,:,:,:,:,:) :: CLIMAPPED
     real (rgr), pointer, dimension(:,:,:,:,:,:) :: OPERMAPPED
     real (r8), dimension(:), pointer :: MEANDATES ! Mean dates for new grid
 
     type (griddedData_T), pointer :: OPERATIONAL
     type (griddedData_T), pointer :: CLIMATOLOGY
+    integer :: numMissingClimatology
+    integer :: numMissingOperational
 
     ! Executable code
 
@@ -433,6 +435,10 @@ contains ! =================================== Public procedures
       return
     end if
     if ( DEEBUG ) then
+    call output( 'height: ', advance='no' )
+    call output( height, advance='yes' )
+    call output( 'scale: ', advance='no' )
+    call output( scale, advance='yes' )
     call output( 'operational%verticalCoordinate: ', advance='no' )
     call output( operational%verticalCoordinate, advance='yes' )
     call dump( operational%field( :, 1, 1, 1, 1, 1 ), 'op T' )
@@ -508,13 +514,22 @@ contains ! =================================== Public procedures
     call SliceGriddedData ( climatology, cliMapped, &
       & newGrid%heights, newGrid%lats, newGrid%lons, newGrid%lsts, &
       & newGrid%szas, meanDates, missingValue=newGrid%missingValue )
-
+    if ( DEEBUG ) then
+      call dump ( operMapped(:,1:10,1,:,1,1), &
+          & '    operational field values (1st longitude) =' , &
+          & FillValue=newGrid%MissingValue )
+      call dump ( cliMapped(:,1:10,1,:,1,1), &
+          & '    climatology field values (1st longitude) =' , &
+          & FillValue=newGrid%MissingValue )
+    endif
     zTrans = scaleHeight * ( 3.0 - log10 ( height ) )
     z1 = zTrans - scale/2.0
     z2 = zTrans + scale/2.0
 
     ! Now we're going to fill in the rest of the field
     do day = 1, newGrid%noDates
+      numMissingClimatology = 0
+      numMissingOperational = 0
       do sza = 1, newGrid%noSzas
         do lst = 1, newGrid%noLsts
           do lon = 1, newGrid%noLons
@@ -534,12 +549,17 @@ contains ! =================================== Public procedures
                 opWeight = min ( max ( opWeight, 0.0_r8 ), 1.0_r8 )
 
                 ! Check for bad data in operational dataset
-                if ( EssentiallyEqual ( opVal, newGrid%missingValue ) ) opWeight = 0.0
+                if ( EssentiallyEqual ( opVal, real(newGrid%missingValue, r8) ) ) then
+                  opWeight = 0.0
+                  numMissingOperational = numMissingOperational + 1
+                endif
 
                 ! Check for bad data in the climatology
-                if ( EssentiallyEqual ( cliVal, newGrid%missingValue ) ) &
-                  & call MLSMessage ( MLSMSG_Error, ModuleName, &
+                if ( EssentiallyEqual ( cliVal, real(newGrid%missingValue, r8) ) ) then
+                  call MLSMessage ( MLSMSG_Error, ModuleName, &
                   & 'There is a bad data point in the climatology field' )
+                  numMissingClimatology = numMissingClimatology + 1
+                endif
 
                 totalWeight = cliWeight + opWeight
                 if ( totalWeight == 0.0 ) then
@@ -557,6 +577,23 @@ contains ! =================================== Public procedures
           end do
         end do
       end do
+      if ( DEEBUG ) then
+        call outputNamedValue( 'day ', day )
+        call outputNamedValue( 'numMissingClimatology ', numMissingClimatology )
+        call outputNamedValue( 'numMissingOperational ', numMissingOperational )
+        if ( day > 1 ) cycle
+        call dump ( newGrid%field(:,1:10,1:10,1,1,day), &
+          & '    gridded field values (1st solar time) =' , &
+          & FillValue=newGrid%MissingValue )
+        call dump ( newGrid%field(:,1:10,1,:,1,day), &
+          & '    gridded field values (1st longitude) =' , &
+          & FillValue=newGrid%MissingValue )
+        call dump ( newGrid%field(:,1,1:10,:,1,day), &
+          & '    gridded field values (1st latitude) =' )
+        call dump ( newGrid%field(1,1:10,1:10,:,1,day), &
+          & '    gridded field values (1st height) =' , &
+          & FillValue=newGrid%MissingValue )
+      endif
     end do
 
     ! Tidy up
@@ -722,14 +759,6 @@ contains ! =================================== Public procedures
     newGrid%verticalCoordinate = v_is_pressure
     newGrid%equivalentLatitude = Temperatures%equivalentLatitude
     newGrid%heights            = missingValue ! Temperatures%missingValue
-    newGrid%lats               = Temperatures%lats
-    newGrid%lons               = Temperatures%lons
-    newGrid%lsts               = Temperatures%lsts
-    newGrid%szas               = Temperatures%szas
-    newGrid%dateEnds           = Temperatures%dateEnds(1)
-    newGrid%dateStarts         = Temperatures%dateStarts(1)
-    newGrid%missingValue       = MISSINGVALUE / hPa2Pa
-    newGrid%field              = MISSINGVALUE
     nlev = Temperatures%noHeights
     if ( Temperatures%empty .or. Pressures%empty ) then
       newGrid%empty = .true.
@@ -738,6 +767,14 @@ contains ! =================================== Public procedures
       if ( toggle(gen) ) call trace_end ( "wmoTropFromGrid" )
       return
     endif
+    newGrid%lats               = Temperatures%lats
+    newGrid%lons               = Temperatures%lons
+    newGrid%lsts               = Temperatures%lsts
+    newGrid%szas               = Temperatures%szas
+    newGrid%dateEnds           = Temperatures%dateEnds(1)
+    newGrid%dateStarts         = Temperatures%dateStarts(1)
+    newGrid%missingValue       = MISSINGVALUE / hPa2Pa
+    newGrid%field              = MISSINGVALUE
     ! call outputNamedValue( 'Temperatures grid empty?', Temperatures%empty )
     ! call outputNamedValue( 'Pressures grid empty?   ', Pressures%empty )
     if ( nlev < 2 ) then
@@ -856,6 +893,7 @@ contains ! =================================== Public procedures
     call output(mlsmean( newGrid%field(:,:,:,1,1,1), newGrid%missingValue ), advance='yes')
       stop
     endif
+    if ( DEEBUG ) call dump( newGrid )
     if ( toggle(gen) ) call trace_end ( "wmoTropFromGrid" )
   end function wmoTropFromGrid
 
@@ -871,6 +909,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.29  2007/03/23 00:27:17  pwagner
+! Valiant attempts to bring two Lahey versions results closer
+!
 ! Revision 2.28  2007/01/12 00:34:04  pwagner
 ! Renamed routine outputNamedValue
 !
