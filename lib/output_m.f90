@@ -390,9 +390,11 @@ contains
     real, parameter :: GB = MB * 1024.0
     real, parameter :: TB = GB * 1024.0
     double precision :: Amount ! N * MyUnits
+    integer :: iAmount
     real            :: myUnits
     character(len=6) :: Suffix
     ! Make a 'nice' output
+    iAmount = 0
     if ( present(before) ) call output ( before )
     myUnits = 1.0
     if ( present(units) ) myUnits = units
@@ -402,22 +404,26 @@ contains
       return
     end if
     amount = n*myUnits
-    if ( n < kb/myUnits ) then
+    if ( abs(n) < kb/myUnits ) then
       suffix = ' bytes'
-    else if ( n < Mb/myUnits ) then
+    else if ( abs(n) < Mb/myUnits ) then
       amount = amount/kb
       suffix = ' kB'
-    else if ( n < Gb/myUnits ) then
+    else if ( abs(n) < Gb/myUnits ) then
       amount = amount/Mb
       suffix = ' MB'
-    else if ( n < Tb/myUnits ) then
+    else if ( abs(n) < Tb/myUnits ) then
       amount = amount/Gb
       suffix = ' GB'
     else
       amount = amount/Tb
       suffix = ' TB'
     end if
-    if ( amount == int(amount) ) then
+    if ( amount < -1.D0*Huge(iAmount) ) then
+      call output( '(-HUGE)' )
+    elseif ( amount > 1.D0*Huge(iAmount) ) then
+      call output( '(HUGE)' )
+    elseif ( amount == int(amount) ) then
       call output ( int(amount), format='(i6)' )
     else
       call output ( amount, format='(f6.1)' )
@@ -1482,6 +1488,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.56  2007/03/23 00:08:21  pwagner
+! Guard against negative args confusing dumpSize
+!
 ! Revision 2.55  2007/01/13 01:49:48  pwagner
 ! Repaired long-standing bug blighting logged output
 !
