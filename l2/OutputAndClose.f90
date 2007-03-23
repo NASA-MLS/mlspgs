@@ -312,9 +312,15 @@ contains ! =====     Public Procedures     =============================
         if ( ( got(f_repairGeoLocations) .and. .not. got(f_hgrid) ) ) &
           & call MLSMessage(MLSMSG_Error, ModuleName, &
           & "Cannot repair Geolocs w/o an HGrid to copy from")
-        if ( ( size(HGrids) < 1 .and. got(f_hgrid) ) ) &
+        if ( .not. associated(HGrids) ) then
+          if ( got(f_hgrid) ) &
           & call MLSMessage(MLSMSG_Error, ModuleName, &
           & "No HGrids defined yet")
+        else
+          if ( ( size(HGrids) < 1 .and. got(f_hgrid) ) ) &
+          & call MLSMessage(MLSMSG_Error, ModuleName, &
+          & "No HGrids defined yet")
+        endif
         if ( ( got(f_swath) .and. got(f_exclude) ) ) &
           & call MLSMessage(MLSMSG_Error, ModuleName, &
           & "Cannot copy specifying both swaths and excludes")
@@ -1672,6 +1678,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.128  2007/03/23 00:28:39  pwagner
+! Steps gingerly around case of disassociated HGrids
+!
 ! Revision 2.127  2007/01/18 19:39:16  pwagner
 ! Fixed bug causing Phase Names attribute to include only 1st phase
 !
