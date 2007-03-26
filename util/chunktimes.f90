@@ -65,6 +65,7 @@ program chunktimes ! Reads chunk times from l2aux file(s)
     character(len=255) :: binopts= ' '              ! 'nbins,X1,X2'
     character(len=255) :: details= ' '              ! prnt only detailed params
                                                     ! E.g., 'NumCompletedChunks'
+    character(len=255) :: phaseNames= ' '           ! E.g., 'core,core+r3,..'
     character(len=3)   :: convert= ' '              ! 's2h', 'h2s', ''
     integer            :: hdfVersion = HDFVERSION_5
     integer            :: finalPhase = 12           ! phase number ~ total
@@ -76,14 +77,10 @@ program chunktimes ! Reads chunk times from l2aux file(s)
   type(STAT_T)       :: statistic
 
   logical, parameter ::          COUNTEMPTY = .true.
-  logical, parameter ::          MODIFYPHASENAMES = .false.
   logical, parameter ::          SHOWDATEANDTIME = .false.
   integer, parameter ::          MAXFILES = 100
   integer, parameter ::          MAXPHASES = 100
   integer, parameter ::          MAXCHUNKS = 360
-  character(len=*), parameter :: NEWPHASENAMES = &
-    & 'initptan,updateptan,inituth,core,coreplusr2,highcloud,coreplusr3,' // &
-    & 'coreplusr4,coreplusr5'
   character(len=255) :: filename          ! input filename
   character(len=4096):: longChunkList = ''
   character(len=4096):: tempChunkList = ''
@@ -129,7 +126,7 @@ program chunktimes ! Reads chunk times from l2aux file(s)
   if ( showTimings .and. SHOWDATEANDTIME ) call output_date_and_time(msg='starting chunktimes', &
     & dateFormat='yyyydoy', timeFormat='HH:mm:ss')
   if ( NumStringElements(trim(options%binopts), .true. ) > 0 ) then
-    read(trim(options%binopts), *) statistic%nbins, statistic%bounds
+    read( options%binopts, *) statistic%nbins, statistic%bounds
     statistic%nbins = max(statistic%nbins, 2)
     allocate(statistic%bincount(statistic%nbins), stat=status)
   endif
@@ -174,11 +171,7 @@ program chunktimes ! Reads chunk times from l2aux file(s)
           print *, 'Reading from: ', trim(filenames(i))
         endif
       endif
-      if ( MODIFYPHASENAMES .and. i == n_filenames ) then
-        fileAccess = DFACC_RDWR
-      else
-        fileAccess = DFACC_RDONLY
-      endif
+      fileAccess = DFACC_RDONLY
       fileID = mls_sfstart ( trim(filenames(i)), fileAccess, &
            &                               hdfVersion=options%hdfVersion )
       call GetHDF5DSDims(fileID, trim(options%DSname), dims, maxDims)
@@ -217,8 +210,19 @@ program chunktimes ! Reads chunk times from l2aux file(s)
           end where
         end select
         timings = l2auxValue(1, options%finalPhase, :)
-        if ( options%tabulate ) &
-          & call tabulate(l2auxValue(1, 1:options%finalPhase, :))
+        if ( options%tabulate ) then
+          fileID = mls_sfstart ( trim(filenames(1)), fileAccess, &
+             &                               hdfVersion=options%hdfVersion )
+          call h5gopen_f(fileID, '/', fromgrpid, status)
+          if ( IsHDF5AttributePresent(fromgrpID, 'Phase Names') ) then
+           call GetHDF5Attribute (fromgrpID, 'Phase Names', options%phaseNames)
+           if ( options%verbose ) &
+             & call output(' Phase Names: ' // trim(options%phaseNames), advance='yes')
+          else
+           if ( options%verbose ) call output(' attribute not found', advance='yes')
+          endif
+          call tabulate(l2auxValue(1, 1:options%finalPhase, :), options%phaseNames)
+        endif
         if ( options%showQManager ) &
           & alltimings(1:dims(3), i) = timings
         if ( .not. options%merge ) statistic%count=0
@@ -243,19 +247,6 @@ program chunktimes ! Reads chunk times from l2aux file(s)
       endif
       if ( showTimings ) then
         deallocate(timings, stat=status)
-      endif
-      ! The following is just to test whether we can copy phase names
-      ! from one file to another
-      ! Remove it after testing, please
-      if ( MODIFYPHASENAMES  .and. i == n_filenames ) then
-        oldfileID = mls_sfstart ( trim(filenames(1)), fileAccess, &
-           &                               hdfVersion=options%hdfVersion )
-        call h5gopen_f(fileID, '/', togrpid, status)
-        call h5gopen_f(oldfileID, '/', fromgrpid, status)
-        call CpHDF5Attribute(fromgrpID, togrpID, 'Phase Names')
-        call h5gclose_f(togrpid, status)
-        call h5gclose_f(fromgrpid, status)
-        status = mls_sfend( oldfileID,hdfVersion=options%hdfVersion )
       endif
       status = mls_sfend( fileID,hdfVersion=options%hdfVersion )
       if ( options%verbose )  call sayTime('reading this file', tFile)
@@ -646,15 +637,18 @@ contains
     ! Internal variables
     integer :: chunk
     character(len=32) :: myPhase
+    character(len=255) :: myPhaseNames
     integer :: numPhases
     integer :: phase
     ! Executable
+    myPhaseNames = ' '
+    if ( present(phases) ) myPhaseNames = phases
     numPhases = size(table, 1)
     call blanks(30, fillchar='*', advance='yes')
     call output('chunk', advance='no')
     call blanks(3)
     do phase=1, numPhases
-      if ( present(phases) ) then
+      if ( myPhaseNames /= ' ' ) then
         call GetStringElement( phases, myPhase, phase, .FALSE.)
         call output(trim(myPhase), advance='no')
         call blanks(3)
@@ -680,6 +674,9 @@ end program chunktimes
 !==================
 
 ! $Log$
+! Revision 1.13  2006/08/12 00:09:43  pwagner
+! Automatically scans timings to guess how many phases
+!
 ! Revision 1.12  2005/09/23 21:01:13  pwagner
 ! use_wall_clock now a component of time_config
 !
