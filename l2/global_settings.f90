@@ -71,6 +71,7 @@ contains
       & ForwardModelGlobalSetup, CreateBinSelectorFromMLSCFInfo
     use INIT_TABLES_MODULE, only: F_FILE, F_TYPE, &
       & L_L2GP, L_L2DGG, L_L2FWM, &
+      & parm_indices, &
       & P_BRIGHTOBJECTS, &
       & P_CYCLE, P_ENDTIME, P_INSTRUMENT, &
       & P_LEAPSECFILE, P_OUTPUT_VERSION_STRING, P_PFAFILE, P_STARTTIME, &
@@ -78,7 +79,7 @@ contains
       & S_FGRID, S_FLUSHPFA, S_FORWARDMODEL, S_FORWARDMODELGLOBAL, &
       & S_L1BOA, S_L1BRAD, S_L2PARSF, S_MAKEPFA, S_PFADATA, S_READPFA, &
       & S_TGRID, S_TIME, S_VGRID, S_WRITEPFA
-    use intrinsic, only: l_hdf, l_swath
+    use intrinsic, only: l_hdf, l_swath, Spec_indices
     use L1BData, only: L1BData_T, NAME_LEN, PRECISIONSUFFIX, &
       & AssembleL1BQtyName, DeallocateL1BData, Dump, FindMaxMAF, &
       & l1bradSetup, l1boaSetup, ReadL1BAttribute, ReadL1BData 
@@ -109,7 +110,7 @@ contains
     use PCFHdr, only: GlobalAttributes, FillTAI93Attribute
     use readAPriori, only: APrioriFiles
     use SDPToolkit, only: max_orbits, mls_utctotai
-    use String_Table, only: Get_String
+    use String_Table, only: display_string, Get_String
     use Time_M, only: Time_Now
     use TOGGLES, only: GEN, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -136,6 +137,7 @@ contains
 
     ! Local variables
     character(len=BO_NAMELEN), dimension(BO_NAMEDIMS) :: BO_names
+    logical, parameter :: DEEBUG = .false.
     integer :: DetailReduction
     integer :: Details             ! How much info about l1b files to dump
     type (MLSFile_T) :: DirectFile
@@ -219,6 +221,7 @@ contains
             & just_a_warning = .true.)
           cycle
         endif
+        if ( DEEBUG ) call display_string( parm_indices(param_id), advance='yes' )
         select case ( param_id )
         ! This will allow us to use different names from the toolkit
         ! (Now why would you want to do that?)
@@ -293,6 +296,7 @@ contains
             & just_a_warning = .true.)
           cycle
         endif
+        if ( DEEBUG ) call display_string( spec_indices(spec_id), advance='yes' )
         select case ( spec_id )
         case ( s_binSelector )
           call decorate (son, AddBinSelectorToDatabase ( &
@@ -410,6 +414,8 @@ contains
       end if
     end do
 
+    if ( DEEBUG ) call output( 'done with statements', advance='yes' )
+
     L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
     if ( .not. associated(L1BFile) ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &                      
@@ -444,6 +450,7 @@ contains
 
       quantity = 'MAFStartTimeTAI'
       l1bItemName = AssembleL1BQtyName ( quantity, the_hdf_version, .false. )
+      if ( DEEBUG ) call output( 'About to read L1B file', advance='yes' )
       call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
         & l1bFlag, dontPad=.true.)
       if ( l1bFlag==-1 ) then
@@ -462,8 +469,11 @@ contains
       processingRange%startTime = start_time_from_1stMAF
     else
       if ( LeapSecFileName /= '' ) then
+        if ( DEEBUG ) call output( 'About to read leapsec file' // &
+          & trim(LeapSecFileName), advance='yes' )
         returnStatus = mls_utctotai(trim(LeapSecFileName), start_time_string, &
         & processingrange%starttime)
+        if ( DEEBUG ) call output( 'Read leapsec file', advance='yes' )
         if ( returnStatus /= 0 ) then
           call announce_error(0, &
           & 'Error converting start time in mls_utctotai; code number: ')
@@ -523,6 +533,7 @@ contains
       call MLSMessage ( MLSMSG_Warning, ModuleName, &                      
       & 'Names of Bright objects missing from l1boa file' )    
     else
+      if ( DEEBUG ) call output( 'About to read Bright Objects', advance='yes' )
       wasAlreadyOpen = L1BFile%stillOpen
       if ( .not. wasAlreadyOpen ) call mls_OpenFile(L1BFile)
       L1BFile%fileID%sd_id = 0 ! So we don't look here for the attribute
@@ -955,6 +966,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.122  2007/01/12 00:36:41  pwagner
+! New but unused option to skip check for correct month l2pc files
+!
 ! Revision 2.121  2006/10/20 16:52:26  pwagner
 ! toolkit-using runs will warn but ignore unwanted global settings
 !
