@@ -26,6 +26,7 @@ module MLSNumerics              ! Some low level numerical stuff
   implicit none
 
   private
+  public :: Battleship
   public :: ClosestElement
   public :: Dump, EssentiallyEqual, Hunt, HuntRange, InterpolateArraySetup
   public :: InterpolateArrayTeardown, InterpolateValues
@@ -127,6 +128,7 @@ module MLSNumerics              ! Some low level numerical stuff
 ! InterpolateArrayTeardown Deallocate tables created by InterpolateArraySetup
 ! InterpolateValues        Interpolate for new y value(s):
 !                            given old (x,y), new (x), method
+! Battleship               By wise-ranging evaluations find integer root
 ! FillLookUpTable          Fill table with evaluations at regularly-spaced args
 !                            to be used in place of later, frequent evaluations;
 !                            reversing role of (table, xtable) => function^(-1)
@@ -831,6 +833,159 @@ contains
 
   end subroutine Interp_Bilinear_2d_1d_r8
 
+! -------------------------------------------------  Battleship  -----
+
+  ! This family of routines finds an integer root of a function
+  ! by evaluating it. Each evaluation is a "shot". A returned value
+  ! of "0" (or the optional parameter b) is short. Any other value is long.
+  ! The root is the longest argument that is still short.
+  ! (If you instead wish the shortest argument still long just add 1
+  ! or utilize the options string)
+
+  ! Example: a direct-access read of n chars from a file where the iostatus
+  ! is 0 if we don't try to read too many chars, but non-zero if we do
+  ! Create your own function that takes the number of chars to be read
+  ! as its sole argument and that returns the iostat as its value
+  ! Battleship will then calculate the exact number characters in the file
+  ! (which NAG cares about; Lahey doesn't care)
+  
+  ! We take shots during 2 phases:
+  ! (1) outbound: ever-widening circles of radius 1 2 4 8 .. (n) (2n) ..
+  !     or else prescribed shots in array ns[:]
+  ! (2) inbound: once root is crossed, ever narowing circles around it
+  !     (until "You sank my battleship!")
+  
+  ! The options string (if supplied) modifies how this search operates
+  !  options            search goal
+  !  -------            -----------
+  !    -s (default)     largest root for which fun(root) = 0 (or b)
+  !                      (useful for io status)
+  !    -r               reverse of "-s"
+  !                       i.e., all tests return non-zero below root
+  !    -x               root where f(root) crosses 0 (or b)
+  !                      (assumes (fun(n)-b) changes sign at n=root)
+
+  subroutine Battleship( fun, root, n1, maxPhase1, ns, b, options )
+    ! Args
+    integer, external                          :: fun
+    integer, optional, intent(in)              :: n1 ! 1st circle
+    integer, optional, intent(in)              :: maxPhase1 ! max phase1 shots
+    integer, optional, dimension(:), intent(in):: ns ! array of phase1 shots
+    integer, intent(out)                       :: root ! root
+    integer, optional, intent(in)              :: b ! is short
+    character(len=*), optional, intent(in)     :: options
+    ! Internal variables
+    integer :: flast
+    integer :: fnext
+    integer :: isShort
+    character(len=8) :: myOptions
+    integer :: shot
+    integer :: x0
+    integer :: x1
+    integer :: x2
+    ! Executable
+    isShort = 0
+    if ( present(b) ) isShort = b
+    myOptions = '-s'
+    if ( present(options) ) myOptions = options
+    root = -1 ! in case we can't find root
+    ! Phase 1
+    ! Some error checks
+    if ( present(maxPhase1) ) then
+      if ( (index(myOptions, 's') > 0 .and. fun(n1) /= isShort) ) return
+      if ( (index(myOptions, 'r') > 0 .and. fun(n1) == isShort) ) return
+      if ( maxPhase1 < 1 ) return
+      if ( .not. present(n1) ) return
+      x2 = n1 ! Initialize things
+      fnext = fun(x2)
+      do shot = 1, maxPhase1
+        x1 = x2
+        x2 = 2*x1
+        flast = fnext
+        fnext = fun(x2)
+        if ( index(myOptions, 's') > 0 ) then
+          if ( fnext /= isShort ) exit
+        elseif ( index(myOptions, 'r') > 0 ) then
+          if ( fnext == isShort ) exit
+        else
+          if ( (fnext-isShort)*(flast-isShort) <= 0 ) exit
+        endif
+      enddo
+      if ( shot > maxPhase1 ) return ! No shot was long enough
+    else
+      if ( .not. present(ns) ) return
+      x2 = ns(1) ! Initialize things
+      fnext = fun(x2)
+      if ( (index(myOptions, 's') > 0 .and. fnext /= isShort) ) return
+      if ( (index(myOptions, 'r') > 0 .and. fnext == isShort) ) return
+      do shot = 2, size(ns)
+        x1 = x2
+        x2 = ns(shot)
+        flast = fnext
+        fnext = fun(x2)
+        if ( index(myOptions, 's') > 0 ) then
+          if ( fnext /= isShort ) exit
+        elseif ( index(myOptions, 'r') > 0 ) then
+          if ( fnext == isShort ) exit
+        else
+          if ( (fnext-isShort)*(flast-isShort) <= 0 ) exit
+        endif
+      enddo
+      if ( shot > size(ns) ) return ! No shot was long enough
+    endif
+    ! Phase 2
+    ! Narrow the spashes, always keeping root between x0 and x2
+    x0 = x1
+    do
+      x1 = (x0 + x2) / 2
+      ! This test should prevent us from looping endlessly
+      if ( x1 == x0 ) then
+        ! apparently x0 = x2 - 1, so we've found our root
+        if ( index(myOptions, 's') > 0 .or. index(myOptions, 'r') > 0 ) then
+          root = x1
+        else
+          if ( fun(x1) == isShort ) then
+            root = x1
+          elseif ( fun(x2) == isShort ) then
+            root = x2
+          else
+            root = -1
+          endif
+        endif
+        return
+      endif
+      if ( index(myOptions, 's') > 0 ) then
+        if ( fun(x1) == isShort ) then
+          x0 = x1
+          ! x2 = x2
+        else
+          ! x0 = x0
+          x2 = x1
+        endif
+      elseif ( index(myOptions, 'r') > 0 ) then
+        if ( fun(x1) == isShort ) then
+          ! x0 = x0
+          x2 = x1
+        else
+          x0 = x1
+          ! x2 = x2
+        endif
+      else
+        if ( (fun(x2)-isShort)*(fun(x1)-isShort) == 0 ) then
+          if ( fun(x2) == isShort ) then
+            root = x2
+          else
+            root = x1
+          endif
+          return
+        elseif ( (fun(x2)-isShort)*(fun(x1)-isShort) < 0 ) then
+          x0 = x1
+        else
+          x2 = x1
+        endif
+      endif
+    enddo
+  end subroutine Battleship
 ! -------------------------------------------------  FillLookUpTable  -----
 
   ! This family of routines fills a table with evaluations of a function
@@ -1049,6 +1204,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.49  2007/04/02 22:53:26  pwagner
+! Added Battleship integer rootfinder
+!
 ! Revision 2.48  2007/03/14 23:58:05  pwagner
 ! Improved precision when interpolating
 !
