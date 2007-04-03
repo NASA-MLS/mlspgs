@@ -57,7 +57,7 @@ contains
     ! Dummy arguments:
     integer, intent(in) :: Root         ! Of the relevant subtree of the AST
     ! Indexes an n_cf vertex
-    type(vector_T), dimension(:), pointer :: VectorDatabase
+    type(vector_T), dimension(:), target :: VectorDatabase
     type(matrix_Database_T), dimension(:), pointer :: MatrixDatabase
     type(forwardModelConfig_T), dimension(:), pointer :: configDatabase
     type(MLSChunk_T), intent(in) :: chunk
@@ -367,6 +367,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.50  2007/04/03 17:39:36  vsnyder
+! Replace pointer attribute on VectorDatabase with target attribute
+!
 ! Revision 2.49  2005/06/22 18:57:02  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
