@@ -59,7 +59,7 @@ contains ! ============= Public Procedures ==========================
     type(forwardModelIntermediate_T), intent(inout) :: IFM ! Workspace
     type(forwardModelStatus_t), intent(inout) :: FMSTAT ! Reverse comm. stuff
     type(matrix_T), intent(inout), optional :: JACOBIAN
-    type(Vector_t), dimension(:), pointer, optional :: VECTORS ! Vectors database
+    type(Vector_t), dimension(:), target, optional :: VECTORS ! Vectors database
 
     ! Local variables
     real :: time_start, time_end, deltaTime  
@@ -160,6 +160,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.26  2007/04/03 17:46:12  vsnyder
+! Replace pointer attribute on VectorDatabase with target attribute
+!
 ! Revision 2.25  2005/06/03 02:08:24  vsnyder
 ! New copyright notice, move Id to not_used_here to avoid cascades
 !
