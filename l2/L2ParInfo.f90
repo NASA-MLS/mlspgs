@@ -15,6 +15,7 @@ module L2ParInfo
 
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use dump_0, only: DUMP
+  use IO_Stuff, only: Get_Lun
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_Allocate, &
     & MLSMSG_Deallocate, MLSMSG_INFO, PVMERRORMESSAGE
   use MLSSets, only: FINDFIRST
@@ -558,7 +559,10 @@ contains ! ==================================================================
       end if
 
       ! Find a free logical unit number
-      lun = get_lun ()
+      ! lun = get_lun ()
+      call get_lun( lun, msg=.false. )
+      if ( lun < 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+        & "No logical unit numbers available" )
       open ( unit=lun, file=parallel%slaveFilename(1:firstColonPos-1),&
         & status='old', form='formatted', &
         & access='sequential', iostat=stat )
@@ -801,22 +805,6 @@ contains ! ==================================================================
     GetNiceTidString = '[t'//trim(LowerCase ( GetNiceTidString ))//']'
   end function GetNiceTidString
 
-  ! --------------------------------------- get_lun -----
-  integer function get_lun ()
-    ! Local variables
-    integer :: LUN
-    logical :: EXIST
-    logical :: OPENED
-    ! Executable code
-    do lun = 20, 99
-      inquire ( unit=lun, exist=exist, opened=opened )
-      if ( exist .and. .not. opened ) exit
-    end do
-    if ( opened .or. .not. exist ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      & "No logical unit numbers available" )
-    get_lun = lun
-  end function get_lun
-
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -829,6 +817,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.49  2007/04/03 20:55:22  pwagner
+! Uses get_lun from lib/io_stuff instead of internal function
+!
 ! Revision 2.48  2007/01/12 00:38:57  pwagner
 ! Switches allegiance to a replacement l2q
 !
