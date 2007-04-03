@@ -50,7 +50,7 @@ contains ! =====     Public Procedures     =============================
     type(forwardModelIntermediate_T), intent(inout) :: IFM ! Workspace
     type(forwardModelStatus_t), intent(inout) :: FMSTAT ! Reverse comm. stuff
     type(matrix_T), intent(inout), optional :: JACOBIAN
-    type(vector_T), dimension(:), pointer, optional :: VECTORS
+    type(vector_T), dimension(:), target, optional :: VECTORS
 
     ! Local variables
     integer :: SIDEBAND                 ! Loop counter
@@ -152,6 +152,9 @@ contains ! =====     Public Procedures     =============================
 end module HybridForwardModel_m
 
 ! $Log$
+! Revision 2.7  2007/04/03 17:43:35  vsnyder
+! Replace pointer attribute on VectorDatabase with target attribute
+!
 ! Revision 2.6  2005/06/03 01:59:43  vsnyder
 ! New copyright notice, move Id to not_used_here to avoid cascades
 !
