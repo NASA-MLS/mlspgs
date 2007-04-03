@@ -105,7 +105,7 @@ contains
     ! Dummy arguments:
     integer, intent(in) :: Root         ! Of the relevant subtree of the AST;
                                         ! It indexes an n_cf vertex
-    type(vector_T), dimension(:), pointer :: VectorDatabase
+    type(vector_T), dimension(:), target :: VectorDatabase
     type(matrix_Database_T), dimension(:), pointer :: MatrixDatabase
     type(forwardModelConfig_T), dimension(:), pointer :: ConfigDatabase
 
@@ -2692,6 +2692,9 @@ NEWT: do ! Newtonian iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.289  2007/04/03 17:47:14  vsnyder
+! Replace pointer attribute on VectorDatabase with target attribute
+!
 ! Revision 2.288  2007/02/28 23:27:51  vsnyder
 ! Replace FORALL by DO, since FORALL sometimes causes compilers to have trouble
 !
