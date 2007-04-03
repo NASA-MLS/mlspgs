@@ -977,7 +977,7 @@ contains
       call output ( array(1,1), myFormat, advance='yes' )
     else if ( size(array,2) == 1 ) then
       call dump ( array(:,1), name, clean=clean )
-    else 
+    else
       call name_and_size ( name, myClean, size(array) )
       if ( size(array,2) >= min(5,size(array,1)) .or. myClean ) then
         if ( present(name) ) call output ( '', advance='yes' )
@@ -1171,7 +1171,7 @@ contains
       call output ( array(1,1), myFormat, advance='yes' )
     else if ( size(array,2) == 1 ) then
       call dump ( array(:,1), name, clean=clean )
-    else 
+    else
       call name_and_size ( name, myClean, size(array) )
       if ( size(array,2) >= min(5,size(array,1)) .or. myClean ) then
         if ( present(name) ) call output ( '', advance='yes' )
@@ -1882,11 +1882,11 @@ contains
   ! Prints a nicely-formatted summary of equal, unequal, etc.
   ! using output
   subroutine printPercentages ( name, equal, unequal  )
-    character(len=*), intent(in) :: Name
+    character(len=*), intent(in), optional :: Name
     integer, intent(in) :: equal
     integer, intent(in) :: unequal
     if ( equal+unequal < 1 ) return
-      call output ( trim(name), advance='no' )
+      if ( present(name) ) call output ( trim(name), advance='no' )
       call blanks( 1, advance='no' )
       call output( fillvaluerelation, advance='no' )
       call output ( ', !', advance='no' )
@@ -1910,13 +1910,13 @@ contains
   ! This family of routines prints a nicely-formatted list of min, max, etc.
   ! using output
   subroutine printRMSetc_double ( Name, min, max, rms, mean  )
-    character(len=*), intent(in) :: Name
+    character(len=*), intent(in), optional :: Name
     double precision, intent(in) :: min
     double precision, intent(in) :: max
     double precision, intent(in) :: rms
     double precision, intent(in), optional :: mean
     if ( STATSONONELINE ) then
-      call output ( trim(name), advance='no' )
+      if ( present(name) ) call output ( trim(name), advance='no' )
       call output ( ' min : max, rms: ', advance='no' )
       if ( present(mean) ) call output ( ' mean: ', advance='no' )
       call output(min, advance='no')
@@ -1930,7 +1930,7 @@ contains
       end if
       call newline
     else
-      call output ( trim(name), advance='no' )
+      if ( present(name) ) call output ( trim(name), advance='no' )
       call output ( ' min      max        rms', advance='no' )
       if ( present(mean) ) call output ( '       mean ', advance='no' )
       call newline
@@ -1943,13 +1943,13 @@ contains
   end subroutine printRMSetc_double
 
   subroutine printRMSetc_real ( Name, min, max, rms, mean  )
-    character(len=*), intent(in) :: Name
+    character(len=*), intent(in), optional :: Name
     real, intent(in) :: min
     real, intent(in) :: max
     real, intent(in) :: rms
     real, intent(in), optional :: mean
     if ( STATSONONELINE ) then
-      call output ( trim(name), advance='no' )
+      if ( present(name) ) call output ( trim(name), advance='no' )
       call output ( ' min : max, rms: ', advance='no' )
       if ( present(mean) ) call output ( ' mean: ', advance='no' )
       call output(min, advance='no')
@@ -1963,7 +1963,7 @@ contains
       end if
       call newline
     else
-      call output ( trim(name), advance='no' )
+      if ( present(name) ) call output ( trim(name), advance='no' )
       call output ( ' min      max        rms', advance='no' )
       if ( present(mean) ) call output ( '       mean ', advance='no' )
       call newline
@@ -1976,13 +1976,13 @@ contains
   end subroutine printRMSetc_real
 
   subroutine printRMSetc_int ( Name, min, max, rms, mean  )
-    character(len=*), intent(in) :: Name
+    character(len=*), intent(in), optional :: Name
     integer, intent(in) :: min
     integer, intent(in) :: max
     real, intent(in) :: rms
     real, intent(in), optional :: mean
     if ( STATSONONELINE ) then
-      call output ( trim(name), advance='no' )
+      if ( present(name) ) call output ( trim(name), advance='no' )
       call output ( ' min : max, rms: ', advance='no' )
       if ( present(mean) ) call output ( ' mean: ', advance='no' )
       call output(min, advance='no')
@@ -1996,7 +1996,7 @@ contains
       end if
       call newline
     else
-      call output ( trim(name), advance='no' )
+      if ( present(name) ) call output ( trim(name), advance='no' )
       call output ( ' min      max        rms', advance='no' )
       if ( present(mean) ) call output ( '       mean ', advance='no' )
       call newline
@@ -2105,6 +2105,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.67  2007/04/03 02:49:23  vsnyder
+! Don't look at non-present dummy argument
+!
 ! Revision 2.66  2007/03/23 00:14:30  pwagner
 ! new optional maxlon arg to dumping n-d chars; sdFormatDefault for numeric dumps public and changeable
 !
