@@ -249,7 +249,7 @@ contains ! ========  Public Procedures =========================================
 
     ! Arguments
     type (SnooperInfo_T), intent(in) :: SNOOPER
-    type (Vector_T), dimension(:), optional, pointer :: VectorDatabase
+    type (Vector_T), dimension(:), optional :: VectorDatabase
     type (Vector_T), dimension(:), optional, intent(in) :: AnotherVectorDatabase
 
     ! Local variables
@@ -260,7 +260,6 @@ contains ! ========  Public Procedures =========================================
     integer :: TOTALVECTORS             ! In both databases
     
     anyVectors = present(vectorDatabase)
-    if ( anyVectors ) anyVectors = associated(vectorDatabase)
     if ( anyVectors ) anyVectors = size(vectorDatabase) > 0
     anyMoreVectors = present(anotherVectorDatabase)
     if ( anyMoreVectors ) anyMoreVectors = size(anotherVectorDatabase) > 0
@@ -453,7 +452,7 @@ contains ! ========  Public Procedures =========================================
 
     ! Arguments
     integer, intent(in), optional :: KEY ! Tree node where snoop called
-    type (Vector_T), dimension(:), optional, pointer :: VectorDatabase
+    type (Vector_T), dimension(:), optional :: VectorDatabase
     type (Vector_T), dimension(:), optional :: AnotherVectorDatabase
     character(len=*), intent(in), optional :: AnotherComment
     !    Replaces comment field of "snoop" command if present.
@@ -1014,6 +1013,10 @@ contains ! ========  Public Procedures =========================================
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.40  2007/04/03 17:38:23  vsnyder
+! Remove pointer attribute from VectorDatabase, which is allocated in
+! tree-walker, so we don't need to check whether it's associated.
+!
 ! Revision 2.39  2005/06/22 18:57:02  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
