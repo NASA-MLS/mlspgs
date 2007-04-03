@@ -80,13 +80,15 @@ contains ! =====     Public Procedures     =============================
 
     ! Dummy arguments
     type(forwardModelConfig_T), intent(inout) :: FMCONF
-    type(vector_T), intent(in) ::  FWDMODELIN
-    type(vector_T), intent(in) ::  FWDMODELEXTRA
+    ! target attribute prevents STATEQ from being undefined when
+    ! FindMatchForL2PCQ returns:
+    type(vector_T), intent(in), target ::  FWDMODELIN
+    type(vector_T), intent(in), target ::  FWDMODELEXTRA
     type(vector_T), intent(inout) :: FWDMODELOUT  ! Radiances, etc.
     type(forwardModelIntermediate_T), intent(inout) :: IFM ! Workspace
     type(forwardModelStatus_t), intent(inout) :: FMSTAT ! Reverse comm. stuff
     type(matrix_T), intent(inout), optional :: JACOBIAN
-    type(vector_t), dimension(:), pointer, optional :: VECTORS ! Vectors database
+    type(vector_t), dimension(:), target, optional :: VECTORS ! Vectors database
 
     ! Local variables
     integer :: CENTER                   ! Center instance of l2pc
@@ -774,7 +776,7 @@ contains ! =====     Public Procedures     =============================
     if ( toggle(emit) ) call trace_end ( 'LinearizedForwardModel' )
 
   contains
-    ! ======================================== Internal procudures =====
+    ! ======================================== Internal procedures =====
 
     ! ------------------------------------------ FindMatchForL2PCQ ---
     subroutine FindMatchForL2PCQ ( l2pcQ, fmConf, FwdModelIn, FwdModelExtra, &
@@ -1146,6 +1148,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.62  2006/07/19 22:33:02  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.61  2006/06/19 15:53:35  livesey
 ! My first 'bug fix' was a mistake
 !
