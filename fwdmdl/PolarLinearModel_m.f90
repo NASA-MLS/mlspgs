@@ -57,7 +57,7 @@ contains ! =====     Public Procedures     =============================
     type(forwardModelIntermediate_T), intent(inout) :: IFM ! Workspace
     type(forwardModelStatus_t), intent(inout) :: FMSTAT ! Reverse comm. stuff
     type(matrix_T), intent(inout), optional :: JACOBIAN
-    type(vector_T), dimension(:), pointer, optional :: VECTORS
+    type(vector_T), dimension(:), target, optional :: VECTORS
 
     ! Local parameters
     ! Local variables
