@@ -86,7 +86,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 
   ! --------------------------------------------------------------------------
 
-  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, Test_Deallocate
   use DUMP_0, only: DUMP
   use Intrinsic, only: LIT_INDICES, PHYQ_INVALID, L_VMR
   use MLSCommon, only: R8, RV
@@ -899,9 +899,11 @@ contains ! =====     Public Procedures     =============================
         call DestroyVectorInfo(database(l2gpIndex))
       end do
       deallocate ( database, stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & MLSMSG_deallocate // "database" )
+      call test_deallocate ( status, moduleName, 'database', 0 )
     end if
+    allocate ( database(0), stat=status )
+    if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate // 'database' )
   end subroutine DestroyVectorDatabase
 
   ! ------------------------------------------  DestroyVectorInfo  -----
@@ -926,8 +928,7 @@ contains ! =====     Public Procedures     =============================
     call destroyVectorValue ( vector )
     call destroyVectorMask ( vector )
     deallocate ( vector%quantities, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
-      & MLSMSG_deallocate // "vector%quantities" )
+    call test_deallocate ( status, moduleName, 'vector%quantities', 0 )
   end subroutine DestroyVectorInfo
 
   ! ------------------------------------------  DestroyVectorMask  -----
@@ -962,8 +963,7 @@ contains ! =====     Public Procedures     =============================
           call DestroyVectorTemplateInfo ( database(l2gpIndex) )
        end do
        deallocate ( database, stat=status )
-       if ( status /= 0 ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
-         & MLSMSG_deallocate // "database" )
+       call test_deallocate ( status, moduleName, 'database', 0 )
     end if
   end subroutine DestroyVectorTemplateDatabase
 
@@ -2492,6 +2492,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.126  2006/08/05 02:11:58  vsnyder
+! Add ForWhom argument to ConstructVectorTemplate
+!
 ! Revision 2.125  2006/08/03 01:10:06  vsnyder
 ! Put l2cf names in leak track database
 !
