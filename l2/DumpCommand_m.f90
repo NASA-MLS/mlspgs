@@ -78,7 +78,7 @@ contains
     type (quantityTemplate_t), dimension(:), pointer, optional   :: QuantityTemplatesDB
     type (forwardModelConfig_t), dimension(:), pointer, optional :: ForwardModelConfigs
     type (vectorTemplate_T), dimension(:), pointer, optional     :: VectorTemplates
-    type (vector_T), dimension(:), pointer, optional             :: Vectors
+    type (vector_T), dimension(:), optional                      :: Vectors
     type (HGrid_T), dimension(:), pointer, optional              :: HGrids
     type (GriddedData_T), dimension(:), pointer, optional        :: griddedDataBase
 
@@ -131,7 +131,7 @@ contains
     if ( haveVectorTemplates ) &
       & haveVectorTemplates = associated(vectorTemplates)
     haveVectors = present(vectors)
-    if ( haveVectors ) haveVectors = associated(Vectors)
+    if ( haveVectors ) haveVectors = size(Vectors) > 0
     haveForwardModelConfigs = present(forwardModelConfigs)
     if ( haveForwardModelConfigs ) &
       & haveForwardModelConfigs = associated(forwardModelConfigs)
@@ -547,6 +547,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.35  2007/04/03 17:37:17  vsnyder
+! Check Vectors for zero size instead of associated
+!
 ! Revision 2.34  2007/01/11 20:44:55  vsnyder
 ! Add Tracing
 !
