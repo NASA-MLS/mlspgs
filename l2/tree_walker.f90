@@ -70,7 +70,8 @@ contains ! ====     Public Procedures     ==============================
     use MLSCommon, only: TAI93_RANGE_T, MLSFile_T
     use MLSL2Options, only: CHECKPATHS, &
       & SKIPRETRIEVAL, SPECIALDUMPFILE, STOPAFTERSECTION
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Info, MLSMSG_Error
+    use MLSMessageModule, only: MLSMSG_Allocate, MLSMessage, MLSMSG_Info, &
+      & MLSMSG_Error
     use MLSSignals_M, only: Bands, DestroyBandDatabase, DestroyModuleDatabase, &
       & DestroyRadiometerDatabase, DestroySignalDatabase, &
       & DestroySpectrometerTypeDatabase, MLSSignals, Modules, Radiometers, &
@@ -149,7 +150,14 @@ contains ! ====     Public Procedures     ==============================
     ! Executable
     nullify ( chunks, forwardModelConfigDatabase, griddedDataBase, &
       & directDatabase, hGrids, l2auxDatabase, l2gpDatabase, matrices, mifGeolocation, &
-      & qtyTemplates, vectors, vectorTemplates, fGrids, vGrids )
+      & qtyTemplates, vectorTemplates, fGrids, vGrids )
+
+    ! Allocate Vectors with size zero so nobody has to check whether it's
+    ! associated.  This allows to remove the pointer attribute in several
+    ! places.
+    allocate ( vectors(0), stat=error_flag )
+    if ( error_flag /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate // 'vectors' )
 
     nullify(chunksSkipped)
     warnOnDestroy = ( switchDetail(switches, 'destroy' ) > -1 )
@@ -254,9 +262,9 @@ contains ! ====     Public Procedures     ==============================
             call ComputeAllHGridOffsets ( root, i+1, chunks, filedatabase, &
             & l2gpDatabase, processingRange )
           else
-            allocate(chunks(1), stat=error_flag)
+            allocate ( chunks(1), stat=error_flag )
             if ( error_flag /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & 'unable to allocate chunks' )
+              & MLSMSG_Allocate // 'chunks' )
           end if
           firstChunk = 1
           lastChunk = size(chunks)
@@ -581,6 +589,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.154  2007/03/23 00:29:41  pwagner
+! Switch destroy warns when destroying dbs
+!
 ! Revision 2.153  2007/02/14 17:31:00  pwagner
 ! Commented-out destroyL2PCDatabase (was it killing slaves?)
 !
