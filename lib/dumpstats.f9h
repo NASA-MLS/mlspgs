@@ -23,12 +23,12 @@
     if ( present(wholeArray) ) myWholeArray = wholeArray
     if ( myRMS ) then
       if ( .not. all(isfinite(array)) ) then
-        call output(trim(name) //'   (NaNs found in array--skipped) ', &
-          & advance='yes')
-      elseif ( filterFillsFromRMS ) then
-        call output(trim(name) //'   (NaNs found in array--skipped) ', &
-          & advance='yes')
-      elseif ( present(fillValue) ) then
+        if ( present(name) ) call output ( trim(name) //'   ' )
+        call output ('(NaNs found in array--skipped) ', advance='yes')
+      else if ( filterFillsFromRMS ) then
+        if ( present(name) ) call output ( trim(name) //'   ' )
+        call output ('(NaNs found in array--skipped) ', advance='yes')
+      else if ( present(fillValue) ) then
         call printRMSetc ( Name, mlsmin(array, fillValue), &
           & mlsmax(array, fillValue), &
           & mlsstddev(array, fillValue), &
@@ -37,8 +37,8 @@
         call printRMSetc ( Name, minval(array), maxval(array), &
           & sqrt(sum(array*array)/(size(array)+0.)), &
           & mean=sum(array)/(size(array)+0.)  )
-      endif
-    endif
+      end if
+    end if
     if ( myStats ) then
       ! Count how many meet our desired relationship w.r.t. FillValue
       select case ( fillvaluerelation )
@@ -53,25 +53,28 @@
       end select
       numFill = size(array) - numNonFill
       call printPercentages ( name, numFill, numNonFill  )
-    endif
+    end if
     if ( .not. myWholeArray ) return
 
     ! Avoid dumping the entire array if all its elements are equal
-    if ( DONTDUMPIFALLEQUAL .and. product(shape(array)) > 5 ) then
+    if ( DONTDUMPIFALLEQUAL .and. size(array) > 5 ) then
       if ( minval(array) == maxval(array) ) then
         if ( present(name) ) then
           call output( trim(name), advance='no' )
         else
           call output( 'array', advance='no' )
-        endif
+        end if
         call output( ': all ', advance='no' )
         call output( trim(arrayShapeToString(shape(array))), advance='no' )
         call output( ' values are ', advance='no' )
         call output( minval(array), advance='yes' )
         return
-      endif
-    endif
+      end if
+    end if
 ! $Log$
+! Revision 2.12  2007/04/03 02:48:47  vsnyder
+! More of not looking at non-present dummy arguments
+!
 ! Revision 2.11  2007/03/23 00:09:13  pwagner
 ! Must never refer to optional parameter unless present
 !
