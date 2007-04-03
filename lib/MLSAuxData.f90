@@ -590,7 +590,7 @@ contains ! ============================ MODULE PROCEDURES ====================
       dims, fill_value, disable_attrib)
     type( DataProducts_T ), intent(in) :: dataset
     real, dimension(:), intent(in) :: real_data
-    integer, dimension(3), intent(in), optional :: dims
+    integer, dimension(:), intent(in), optional :: dims
     integer, intent(in), optional :: lastIndex
     real, intent(in), optional :: fill_value
     integer(hid_t), intent(in) :: file_id
@@ -601,14 +601,10 @@ contains ! ============================ MODULE PROCEDURES ====================
     integer :: i,error, status
     logical :: attribenabled
 
-    if (present(dims) ) then        
-       do i=1,3
-          dim_array(i) = dims(i)
-       enddo
+    dim_array = 1
+    if (present(dims) ) then
+       dim_array(:size(dims)) = dims
     else
-       do i=1,3
-          dim_array(i) = 1
-       enddo
        do i=1,size(shape(real_data))
           dim_array(i) = size(real_data,i)
        enddo
@@ -657,7 +653,7 @@ contains ! ============================ MODULE PROCEDURES ====================
       lastIndex, dims, fill_value, disable_attrib)
     type( DataProducts_T ), intent(in) :: dataset
     real(r8), dimension(:), intent(in) :: double_data
-    integer, dimension(3), intent(in), optional :: dims
+    integer, dimension(:), intent(in), optional :: dims
     integer, intent(in), optional :: lastIndex
     integer(hid_t), intent(in) :: file_id
     real(r8), intent(in), optional :: fill_value
@@ -668,14 +664,10 @@ contains ! ============================ MODULE PROCEDURES ====================
     integer :: i,error, status
     logical :: attribenabled
 
-    if (present(dims) ) then        
-       do i=1,3
-          dim_array(i) = dims(i)
-       enddo
+    dim_array = 1
+    if (present(dims) ) then
+       dim_array(:size(dims)) = dims
     else
-       do i=1,3
-          dim_array(i) = 1
-       enddo
        do i=1,size(shape(double_data))
           dim_array(i) = size(double_data,i)
        enddo
@@ -724,7 +716,7 @@ contains ! ============================ MODULE PROCEDURES ====================
       lastIndex, dims, fill_value, disable_attrib)
     type( DataProducts_T ), intent(in) :: dataset
     integer, dimension(:), intent(in) :: integer_data
-    integer, dimension(3), intent(in), optional :: dims
+    integer, dimension(:), intent(in), optional :: dims
     integer, intent(in), optional :: lastIndex
     integer(hid_t), intent(in) :: file_id
     integer, intent(in), optional :: fill_value
@@ -735,14 +727,10 @@ contains ! ============================ MODULE PROCEDURES ====================
     integer :: i,j,error, status
     logical :: attribenabled
 
-    if (present(dims) ) then        
-       do i=1,3
-          dim_array(i) = dims(i)
-       enddo
+    dim_array = 1
+    if (present(dims) ) then
+       dim_array(:size(dims)) = dims
     else
-       do i=1,3
-          dim_array(i) = 1
-       enddo
        do i=1,size(shape(integer_data))
           dim_array(i) = size(integer_data,i)
        enddo
@@ -791,7 +779,7 @@ contains ! ============================ MODULE PROCEDURES ====================
       dims, fill_value, disable_attrib)
     type( DataProducts_T ), intent(in) :: dataset
     real, dimension(:,:), intent(in) :: real_data
-    integer, dimension(3), intent(in), optional :: dims
+    integer, dimension(:), intent(in), optional :: dims
     integer, intent(in), optional :: lastIndex
     real, intent(in), optional :: fill_value
     integer(hid_t), intent(in) :: file_id
@@ -802,14 +790,10 @@ contains ! ============================ MODULE PROCEDURES ====================
     integer :: i,j,k,error, status
     logical :: attribenabled
 
-    if (present(dims) ) then        
-       do i=1,3
-          dim_array(i) = dims(i)
-       enddo
+    dim_array = 1
+    if (present(dims) ) then
+       dim_array(:size(dims)) = dims
     else
-       do i=1,3
-          dim_array(i) = 1
-       enddo
        do i=1,size(shape(real_data))
           dim_array(i) = size(real_data,i)
        enddo
@@ -860,7 +844,7 @@ contains ! ============================ MODULE PROCEDURES ====================
       lastIndex, dims, fill_value, disable_attrib)
     type( DataProducts_T ), intent(in) :: dataset
     real(r8), dimension(:,:), intent(in) :: double_data
-    integer, dimension(3), intent(in), optional :: dims
+    integer, dimension(:), intent(in), optional :: dims
     integer, intent(in), optional :: lastIndex
     integer(hid_t), intent(in) :: file_id
     real(r8), intent(in), optional :: fill_value
@@ -871,14 +855,10 @@ contains ! ============================ MODULE PROCEDURES ====================
     integer :: i,j,error, status
     logical :: attribenabled
 
-    if (present(dims) ) then 
-       do i=1,3
-          dim_array(i) = dims(i)
-       enddo
+    dim_array = 1
+    if (present(dims) ) then
+       dim_array(:size(dims)) = dims
     else
-       do i=1,3
-          dim_array(i) = 1
-       enddo
        do i=1,size(shape(double_data))
           dim_array(i) = size(double_data,i)
        enddo
@@ -930,7 +910,7 @@ contains ! ============================ MODULE PROCEDURES ====================
       lastIndex, dims, fill_value, disable_attrib)
     type( DataProducts_T ), intent(in) :: dataset
     integer, dimension(:,:), intent(in) :: integer_data
-    integer, dimension(3), intent(in), optional :: dims
+    integer, dimension(:), intent(in), optional :: dims
     integer, intent(in), optional :: lastIndex
     integer(hid_t), intent(in) :: file_id
     integer, intent(in), optional :: fill_value
@@ -941,14 +921,10 @@ contains ! ============================ MODULE PROCEDURES ====================
     integer :: i,j,error, status
     logical :: attribenabled
 
-    if (present(dims) ) then 
-       do i=1,3
-          dim_array(i) = dims(i)
-       enddo
+    dim_array = 1
+    if (present(dims) ) then
+       dim_array(:size(dims)) = dims
     else
-       do i=1,3
-          dim_array(i) = 1
-       enddo
        do i=1,size(shape(integer_data))
           dim_array(i) = size(integer_data,i)
        enddo
@@ -999,7 +975,7 @@ contains ! ============================ MODULE PROCEDURES ====================
       dims, fill_value)
     type( DataProducts_T ), intent(in) :: dataset
     real, dimension(:,:,:), intent(in) :: real_data
-    integer, dimension(3), intent(in), optional :: dims
+    integer, dimension(:), intent(in), optional :: dims
     real, intent(in), optional :: fill_value
     integer(hid_t), intent(in) :: file_id
 
@@ -1007,14 +983,10 @@ contains ! ============================ MODULE PROCEDURES ====================
     integer, dimension(3) :: dim_array
     integer :: i,j,k,error, status
 
-    if (present(dims) ) then 
-       do i=1,3
-          dim_array(i) = dims(i)
-       enddo
+    dim_array = 1
+    if (present(dims) ) then
+       dim_array(:size(dims)) = dims
     else
-       do i=1,3
-          dim_array(i) = 1
-       enddo
        do i=1,size(shape(real_data))
           dim_array(i) = size(real_data,i)
        enddo
@@ -1049,7 +1021,7 @@ contains ! ============================ MODULE PROCEDURES ====================
       dims, fill_value)
     type( DataProducts_T ), intent(in) :: dataset
     real(r8), dimension(:,:,:), intent(in) :: double_data
-    integer, dimension(3), intent(in), optional :: dims
+    integer, dimension(:), intent(in), optional :: dims
     integer(hid_t), intent(in) :: file_id
     real(r8), intent(in), optional :: fill_value
 
@@ -1057,14 +1029,10 @@ contains ! ============================ MODULE PROCEDURES ====================
     integer, dimension(3) :: dim_array
     integer :: i,j,k,error, status
 
-    if (present(dims) ) then 
-       do i=1,3
-          dim_array(i) = dims(i)
-       enddo
+    dim_array = 1
+    if (present(dims) ) then
+       dim_array(:size(dims)) = dims
     else
-       do i=1,3
-          dim_array(i) = 1
-       enddo
        do i=1,size(shape(double_data))
           dim_array(i) = size(double_data,i)
        enddo
@@ -1098,7 +1066,7 @@ contains ! ============================ MODULE PROCEDURES ====================
       fill_value)
     type( DataProducts_T ), intent(in) :: dataset
     integer, dimension(:,:,:), intent(in) :: integer_data
-    integer, dimension(3), intent(in), optional :: dims
+    integer, dimension(:), intent(in), optional :: dims
     integer(hid_t), intent(in) :: file_id
     integer, intent(in), optional :: fill_value
 
@@ -1106,14 +1074,10 @@ contains ! ============================ MODULE PROCEDURES ====================
     integer, dimension(3) :: dim_array
     integer :: i,j,k,error, status
 
-    if (present(dims) ) then 
-       do i=1,3
-          dim_array(i) = dims(i)
-       enddo
+    dim_array = 1
+    if (present(dims) ) then
+       dim_array(:size(dims)) = dims
     else
-       do i=1,3
-          dim_array(i) = 1
-       enddo
        do i=1,size(shape(integer_data))
           dim_array(i) = size(integer_data,i)
        enddo
@@ -3174,6 +3138,9 @@ contains ! ============================ MODULE PROCEDURES ====================
 end module MLSAuxData
 
 ! $Log$
+! Revision 2.26  2007/04/03 20:51:16  pwagner
+! Made dims an assumed-shape array in Build_MLSAuxData
+!
 ! Revision 2.25  2005/06/22 17:25:49  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
