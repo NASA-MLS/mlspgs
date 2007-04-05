@@ -183,7 +183,7 @@ CONTAINS
            time_offset, eci, finalRay)
       CALL ReportTKStatus (returnStatus, ModuleName, errmsg)
 
-      startAngle = Rad2Deg * ACOS (finalRay(1))
+      startAngle = Rad2Deg * ACOS (MAX(MIN(finalRay(1), 1.0d0), -1.0d0))
 
    END SUBROUTINE Scan_start
 
@@ -200,6 +200,9 @@ END MODULE Scan
 !==============
 
 ! $Log$
+! Revision 2.4  2005/12/14 17:01:03  perun
+! Incorporate ReportTKStatus call for reporting errors
+!
 ! Revision 2.3  2005/06/23 18:41:36  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
