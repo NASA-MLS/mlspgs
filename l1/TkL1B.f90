@@ -447,7 +447,7 @@ CONTAINS
     ENDDO
     dot = nts(1,:)*unitAlt(1,:) + nts(2,:)*unitAlt(2,:) + &
          nts(3,:)*unitAlt(3,:)
-    tp%tpSolarZenith = ACOS(dot) * Rad2Deg
+    tp%tpSolarZenith = ACOS(MAX(MIN(dot, 1.0d0), -1.0d0)) * Rad2Deg
 
     ! Calculate losAngle
     DO i = 1, lenG
@@ -456,8 +456,8 @@ CONTAINS
        hECR(:,i) = vECR(:,i) / SQRT(vECR(1,i)**2 + vECR(2,i)**2 + &
             vECR(3,i)**2)
     ENDDO
-    los = ACOS(hECR(1,:)*unitLat(1,:) + hECR(2,:)*unitLat(2,:) + &
-         hECR(3,:)*unitLat(3,:))
+    los = ACOS(MAX(MIN(hECR(1,:)*unitLat(1,:) + hECR(2,:)*unitLat(2,:) + &
+         hECR(3,:)*unitLat(3,:), 1.0d0), -1.0d0))
     ecr_sign = ecr(1,:)*unitLon(1,:) + ecr(2,:)*unitLon(2,:) + &
       ecr(3,:)*unitLon(3,:)
     DO i = 1, lenG
@@ -1317,7 +1317,8 @@ CONTAINS
        orbInclineCrossProd = UNDEFINED_VALUE
        RETURN
     ENDIF
-    orbInclineCrossProd = (180/Pi) * ACOS (orbMoment(3) / OMagnitude)
+    orbInclineCrossProd = (180/Pi) * ACOS (MAX(MIN(orbMoment(3) / OMagnitude,&
+     1.0d0),-1.0d0))
 
     ! Now added contraints: 90 < beta < 180
     orbInclineCrossProd = ABS(orbInclineCrossProd)
@@ -1400,7 +1401,7 @@ CONTAINS
        s(:,i) = dotVec(:,i) / DvecSqrtSum
 
        ! Calculate the geocentric angle as a number of radians between 0 and PI
-       gamma(i) = ACOS( q(1,i)*s(1,i) + q(2,i)*s(2,i) )
+       gamma(i) = ACOS(MAX(MIN((q(1,i)*s(1,i) + q(2,i)*s(2,i)), 1.0d0),-1.0d0))
 
        ! Place angle between PI and 2*PI, if in Southern Hemisphere
        IF (dotVec(3,i) < 0.0 ) gamma(i) = 2*PI - gamma(i)
@@ -1422,7 +1423,7 @@ CONTAINS
           ! equation
           cosPhi(i) = SQRT( (cSq**2)*(COS(gamma(i))**2)/( (cSq**2)* &
                COS(gamma(i))**2 + (a**4)*(SIN(gamma(i))**2) ) )
-          phi(i) = ACOS(cosPhi(i))
+          phi(i) = ACOS(MAX(MIN(cosPhi(i), 1.0d0), -1.0d0))
        ENDIF
 
        ! Place phi in same quadrant as gamma
@@ -1610,6 +1611,9 @@ CONTAINS
 END MODULE TkL1B
 
 ! $Log$
+! Revision 2.32  2007/04/05 13:59:27  perun
+! Protect every ACOS call from crashes
+!
 ! Revision 2.31  2006/06/14 13:50:02  perun
 ! Save spacecraft Geod Angle to use for stray radiance estimations
 !
