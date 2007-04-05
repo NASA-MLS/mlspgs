@@ -1123,13 +1123,15 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------------------------------  OutputL2CF  -----
   subroutine OutputL2CF ( key, fileName, DEBUG, filedatabase )
     ! Do the work of outputting the l2cf to a named file
-    use dump_0, only: dump
-    use Intrinsic, only: l_hdf
+    ! use dump_0, only: dump
+    use Intrinsic, only: l_hdf, l_ascii
     use MLSCommon, only: MLSFile_T, FileNameLen
     use MLSL2Options, only: checkPaths, TOOLKIT
     use MLSFiles, only: AddInitializeMLSFile, Dump, &
       & GetMLSFileByName, GetMLSFileByType, GetPCFromRef, &
-      & mls_closeFile, mls_openFile, split_path_name
+      & mls_closeFile, mls_openFile, &
+      & readnchars, reserve_MLSFile, split_path_name
+    use MLSNumerics, only: Battleship
     use MLSStrings, only: Replace
     use MLSHDF5, only: SaveAsHDF5DS
     use MLSPCF2, only: mlspcf_l2dgm_start, mlspcf_l2dgm_end
@@ -1141,7 +1143,7 @@ contains ! =====     Public Procedures     =============================
     ! Internal variables
     integer, parameter                      :: MAXL2CFSIZE = 2000000
     character(LEN=MAXL2CFSIZE)              :: L2CFTEXT
-    character(len=1), dimension(MAXL2CFSIZE) :: l2cfarray
+    ! character(len=1), dimension(MAXL2CFSIZE) :: l2cfarray
     type(MLSFile_T), pointer                :: MLSL2CF
     integer                                 :: status
     integer :: FileHandle
@@ -1153,6 +1155,8 @@ contains ! =====     Public Procedures     =============================
     character (len=132) :: path
     integer :: ReturnStatus
     integer :: SON                      ! Of Root -- spec_args or named node
+    integer :: textLength
+    logical, parameter :: useExactTextLength = .true. ! NAG demands TRUE
     integer :: Version
     ! Executable
     nullify ( MLSL2CF )
@@ -1171,14 +1175,22 @@ contains ! =====     Public Procedures     =============================
     endif
     !call mls_openFile(MLSL2CF, status)
     !call dump(MLSL2CF, details=1)
-    open(UNIT=MLSL2CF%FileID%f_id, access='direct', recl=2000000, &
+    textLength = 2000000
+    l2cftext = ' '
+    if ( useExactTextLength ) then
+      call reserve_MLSFile ( MLSL2CF%name, type=l_ascii )
+      if ( readnchars(1024) /= readnchars(2000000) ) &
+        & call Battleship( readnchars, textLength, &
+        & ns = (/ 1024, 100000, 2000000 /) )
+    endif
+    open(UNIT=MLSL2CF%FileID%f_id, access='direct', recl=textLength, &
       & file=trim(MLSL2CF%name), status='old', iostat=status )
     if ( status /= 0 ) then
       call MLSMessage(MLSMSG_Warning, ModuleName, &
         & 'Unable to write dataset--failed to open l2cf' )
       return
     endif
-    read(UNIT=MLSL2CF%FileID%f_id, REC=1, IOSTAT=status) l2cftext
+    read(UNIT=MLSL2CF%FileID%f_id, REC=1, IOSTAT=status) l2cftext(:textLength)
     if ( status /= 0 ) then
       call MLSMessage(MLSMSG_Warning, ModuleName, &
         & 'Unable to read l2cf' )
@@ -1678,6 +1690,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.129  2007/04/05 22:52:01  pwagner
+! NAG, too, now able to write L2CF to L2AUX
+!
 ! Revision 2.128  2007/03/23 00:28:39  pwagner
 ! Steps gingerly around case of disassociated HGrids
 !
