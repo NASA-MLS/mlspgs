@@ -20,11 +20,12 @@ module MLSFiles               ! Utility file routines
     & HE5F_ACC_TRUNC, HE5F_ACC_RDONLY, HE5F_ACC_RDWR
   use intrinsic, only: l_ascii, l_binary, l_create, l_grid, l_hdf, l_open, &
     & l_rdonly, l_rdwrite, l_swath, l_tkgen, l_zonalavg, lit_indices
+  use IO_STUFF, only: get_lun
   use machine, only: io_error
   use MLSCommon, only: i4, BareFNLen, FileNameLen,  MLSFile_T, Range_T, &
     & inRange
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
-    & MLSMSG_DeAllocate, MLSMSG_Crash, MLSMSG_Error
+    & MLSMSG_DeAllocate, MLSMSG_Crash, MLSMSG_Error, MLSMSG_Warning
   use MLSSets, only: findFirst
   use MLSStrings, only: Capitalize, LowerCase, streq
   use MLSStringLists, only: ExtractSubString, &
@@ -60,9 +61,10 @@ module MLSFiles               ! Utility file routines
   & mls_io_gen_closeF, &
   & mls_io_gen_openF, &
   & mls_openFile, mls_sfstart, mls_sfend, &
-  & open_MLSFile, transfer_MLSFile, &
+  & open_MLSFile, &
+  & readnchars, release_MLSFile, reserve_MLSFile, &
   & RmFileFromDataBase, split_path_name, &
-  & unMaskName, unSplitName
+  & transfer_MLSFile, unMaskName, unSplitName
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -106,7 +108,7 @@ module MLSFiles               ! Utility file routines
 ! GetMLSFileByName   Returns pointer to MLSFile matching fileName
 ! GetMLSFileByType   Returns pointer to MLSFile matching fileType
 ! GetPCFromRef       Turns a FileName into the corresponding PC
-! InitializeMLSFile  Initializes and MLSFile
+! InitializeMLSFile  Initializes an MLSFile
 ! maskname           Add stuff to file_name so parser can't recognize it
 ! mls_closeFile      Closes a file opened by mls_openFile
 ! mls_hdf_version    Returns one of 'hdf4', 'hdf5', or '????'
@@ -117,6 +119,9 @@ module MLSFiles               ! Utility file routines
 ! mls_sfend          Closes a file opened by mls_sfstart
 ! mls_sfstart        Opens an hdf file for writing metadata
 ! open_MLSFile       Opens an mls file (of any type)
+! release_MLSFile    undoes what reserve_MLSFile does
+! reserve_MLSFile    initializes an mls file 
+!                      (to be operated on by single-argument functions)
 ! RmFileFromDataBase Removes a FileName, id, etc. from the database
 ! transfer_MLSFile   Changes the path of an mlsFile
 ! split_path_name    splits the input path/name into path and name
@@ -290,6 +295,8 @@ module MLSFiles               ! Utility file routines
     character (len=*), parameter :: modes = 'op,hg,sw,gd,za,bin,pg'
     character (len=*), parameter :: types = 'ascii,hdf,swath,grid,zonalavg,binary,tkgen'
 
+  type(MLSFile_T), save :: MLSFile_save
+
 contains
 
   !-----------------------------------------  accessDFACCToStr  -----
@@ -409,10 +416,8 @@ contains
 
     ! Dummy arguments
     type (MLSFile_T)                       :: ITEM
-    ! character(len=*), optional, intent(in) :: type
     integer, optional, intent(in)          :: type
     integer, optional, intent(in)          :: access
-    ! character(len=*), optional, intent(in) :: access
     character(len=*), optional, intent(in) :: content
     character(len=*), optional, intent(in) :: name
     character(len=*), optional, intent(in) :: shortName
@@ -1227,17 +1232,6 @@ contains
          & 'You must supply either a name or a PCFid to open a file' )
       end if
     end if
-!     select case (MLSFile%access)
-!     case('rdonly')
-!       FileAccessType = DFACC_RDONLY
-!     case('write')
-!       FileAccessType = DFACC_CREATE
-!     case('rdwrite')
-!       FileAccessType = DFACC_RDWR
-!     case default
-!       FileAccessType = DFACC_RDWR
-! 
-!     end select
 
     select case (MLSFile%Type)
 
@@ -1259,7 +1253,6 @@ contains
       ErrType = PGS_IO_Gen_OpenF(MLSFile%PCFId, MLSFile%access, record_length, &
           & MLSFile%FileId%f_id, version)
 
-    ! case('swath')
     case(l_swath)
       if(MLSFile%HDFVersion == HDFVERSION_5) then
         MLSFile%FileId%f_id = he5_swopen(trim(MLSFile%Name), &
@@ -1270,7 +1263,6 @@ contains
         ErrType = NOSUCHHDFVERSION
       endif
 
-    ! case('grid')
     case(l_grid)
       if(MLSFile%HDFVersion == HDFVERSION_5) then
         MLSFile%FileId%f_id = he5_gdopen(trim(MLSFile%Name), &
@@ -1281,7 +1273,6 @@ contains
         ErrType = NOSUCHHDFVERSION
       endif
 
-    ! case('hdf')
     case(l_hdf)
       if(MLSFile%HDFVersion == HDFVERSION_5) then
         MLSFile%FileId%f_id = mls_sfstart(trim(MLSFile%Name), &
@@ -1292,7 +1283,6 @@ contains
         ErrType = NOSUCHHDFVERSION
       endif
 
-    ! case('ascii', 'binary')
     case(l_ascii, l_binary)
       if(MLSFile%access == DFACC_RDONLY) then
         status = 'old'
@@ -1316,7 +1306,6 @@ contains
         ErrType = UNKNOWNFILEACCESSTYPE
       endif
       
-      ! if ( MLSFile%Type == 'binary' ) then
       if ( MLSFile%Type == l_binary ) then
         access = 'direct'
         form = 'unformatted'
@@ -1850,6 +1839,64 @@ contains
 
   end subroutine split_path_name
 
+  ! --------------------------------------------  release_MLSFile  -----
+
+  ! This routine releases an MLSFile
+  subroutine release_MLSFile
+
+    ! Internal variables
+    integer :: status
+    ! Executable
+    status = InitializeMLSFile( MLSFile_save )
+  end subroutine release_MLSFile
+
+  ! --------------------------------------------  reserve_MLSFile  -----
+
+  ! This routine initializes an MLSFile
+  ! so that it can be used by single-parameter functions
+  ! like readnchars
+  subroutine reserve_MLSFile ( full_file_name, type, access, content, &
+    & shortName, hdfVersion, recordLength, PCFIdRange, PCBottom, PCTop )
+
+    ! Arguments
+    character(len=*), intent(in)           :: full_file_name
+    integer, optional, intent(in)          :: type
+    integer, optional, intent(in)          :: access
+    character(len=*), optional, intent(in) :: content
+    character(len=*), optional, intent(in) :: shortName
+    integer, optional, intent(in)          :: HDFVersion
+    integer, optional, intent(in)          :: recordLength
+    type(Range_T), optional, intent(in)    :: PCFIdRange
+    integer, optional, intent(in)          :: PCBottom ! (Instead of range_T)
+    integer, optional, intent(in)          :: PCTop    ! (Instead of range_T)
+    ! Internal variables
+    integer :: status
+    ! Executable
+    status = InitializeMLSFile( MLSFile_save, type, access, content, full_file_name, &
+      & shortName, HDFVersion, recordLength, PCFIdRange, PCBottom, PCTop )
+  end subroutine reserve_MLSFile
+
+  ! --------------------------------------- 1-parameter family of functions --
+  ! These functions can be called to operate on MLSFile_save
+  function readnchars ( n )  result( status )
+    ! Tries to read n chars
+    ! Args
+    integer, intent(in) :: n
+    integer :: status
+    ! Internal variables
+    character(len=n) :: chars
+    ! Executable
+    if ( MLSFile_save%type /= l_ascii ) &
+      & call MLSMessage ( MLSMSG_Warning, moduleName,  &
+         & 'Trying to readnchars from a non-ascii file' )
+    call get_lun( MLSFile_save%FileID%f_id )
+    open( UNIT=MLSFile_save%FileID%f_id, access='direct', recl=n, &
+      & file=trim(MLSFile_save%name), status='old', iostat=status )
+    if ( status /= 0 ) return
+    read( UNIT=MLSFile_save%FileID%f_id, REC=1, IOSTAT=status ) chars
+    close( UNIT=MLSFile_save%FileID%f_id )
+  end function readnchars
+  
   ! ---------------------------------------------  he2he5_fileaccess  -----
 
   ! This function converts hdfeos2 file access types to
@@ -2654,6 +2701,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.77  2007/04/06 16:23:17  pwagner
+! Added 1st 1-parameter function, readnchars
+!
 ! Revision 2.76  2007/02/06 17:55:14  pwagner
 ! Added transfer_MLSFile to change path of an MLSFile
 !
