@@ -16,39 +16,39 @@ BUGGY := $(shell echo ${FOPTS} | sed 's/-O[0-9]*//')
 ifndef CASCADE
 #	l1
 
-CalibWeightsFlags.o: CALIBWEIGHTSFLAGS.mod
+CalibWeightsFlags.o: calibweightsflags.mod
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
-   -T CalibWeightsFlags.o CALIBWEIGHTSFLAGS.mod
-CALIBWEIGHTSFLAGS.mod:
-	$(UTILDIR)/newAifBdiff.sh -a CALIBWEIGHTSFLAGS.mod $(FC) -c $(BUGGY) \
+   -T CalibWeightsFlags.o calibweightsflags.mod
+calibweightsflags.mod:
+	$(UTILDIR)/newAifBdiff.sh -a calibweightsflags.mod $(FC) -c $(BUGGY) \
    $(INC_PATHS) $(S)/CalibWeightsFlags.f90 $(FAFTER)
-EngTbls.o: ENGTBLS.mod
+EngTbls.o: engtbls.mod
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
-   -T EngTbls.o ENGTBLS.mod 
-ENGTBLS.mod:
-	$(UTILDIR)/newAifBdiff.sh -a ENGTBLS.mod $(FC) -c $(DUSTY) \
+   -T EngTbls.o engtbls.mod 
+engtbls.mod:
+	$(UTILDIR)/newAifBdiff.sh -a engtbls.mod $(FC) -c $(DUSTY) \
    $(INC_PATHS) $(S)/EngTbls.f90 $(FAFTER)
-L1LogUtils.o: L1LOGUTILS.mod
+L1LogUtils.o: l1logutils.mod
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
-   -T L1LogUtils.o L1LOGUTILS.mod
-L1LOGUTILS.mod:
-	$(UTILDIR)/newAifBdiff.sh -a L1LOGUTILS.mod $(FC) -c $(BUGGY) \
+   -T L1LogUtils.o l1logutils.mod
+l1logutils.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l1logutils.mod $(FC) -c $(BUGGY) \
    $(INC_PATHS) $(S)/L1LogUtils.f90 $(FAFTER)
-OutputL1B.o: OUTPUTL1B.mod
+OutputL1B.o: outputl1b.mod
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
-   -T OutputL1B.o OUTPUTL1B.mod 
-OUTPUTL1B.mod:
-	$(UTILDIR)/newAifBdiff.sh -a OUTPUTL1B.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B.f90 $(FAFTER)
-OutputL1B_HDF4.o: OUTPUTL1B_HDF4.mod
+   -T OutputL1B.o outputl1b.mod 
+outputl1b.mod:
+	$(UTILDIR)/newAifBdiff.sh -a outputl1b.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B.f90 $(FAFTER)
+OutputL1B_HDF4.o: outputl1b_hdf4.mod
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
-   -T OutputL1B_HDF4.o OUTPUTL1B_HDF4.mod 
-OUTPUTL1B_HDF4.mod:
-	$(UTILDIR)/newAifBdiff.sh -a OUTPUTL1B_HDF4.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B_HDF4.f90 $(FAFTER)
-TREE_CHECKER.mod: INIT_TABLES_MODULE.mod tree_checker.f90
-	$(UTILDIR)/newAifBdiff.sh -a TREE_CHECKER.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/tree_checker.f90 $(FAFTER)
-tree_checker.o: TREE_CHECKER.mod tree_checker.f90
+   -T OutputL1B_HDF4.o outputl1b_hdf4.mod 
+outputl1b_hdf4.mod:
+	$(UTILDIR)/newAifBdiff.sh -a outputl1b_hdf4.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B_HDF4.f90 $(FAFTER)
+tree_checker.mod: tree_checker.f90 init_tables_module.mod
+	$(UTILDIR)/newAifBdiff.sh -a tree_checker.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/tree_checker.f90 $(FAFTER)
+tree_checker.o: tree_checker.mod tree_checker.f90
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
-   -T tree_checker.o TREE_CHECKER.mod 
+   -T tree_checker.o tree_checker.mod 
 
 # l2
 # This keeps switch_usage up-to-date with notes/switches
@@ -75,8 +75,8 @@ MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options $(S)/MLSL2.f90
 	$(FC) -c $(FOPTS) $(INC_PATHS) MLSL2.f90 $(FAFTER)
 	rm -f MLSL2.f90 part_1 part_2 part_3
 
-#TREE_CHECKER.mod: INIT_TABLES_MODULE.mod
-#	$(UTILDIR)/newAifBdiff.sh -a TREE_CHECKER.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/tree_checker.f90 $(FAFTER)
+#tree_checker.mod: init_tables_module.mod
+#	$(UTILDIR)/newAifBdiff.sh -a tree_checker.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/tree_checker.f90 $(FAFTER)
 
 ifeq ($(short_name),l2)
 # This uses the utility program init_gen to create two
@@ -99,46 +99,45 @@ $(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
           -j lit_names.txt \
           $(S)/lit_parm.f9h $(S)/lit_add.f9h lit_indices
 
-
 endif
 #	l3
 
-L2INTERFACE.mod:
-	$(UTILDIR)/newAifBdiff.sh -a L2INTERFACE.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2Interface.f90 $(FAFTER)
-L2Interface.o: L2INTERFACE.mod
+l2interface.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l2interface.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2Interface.f90 $(FAFTER)
+L2Interface.o: l2interface.mod
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
-   -T L2Interface.o L2INTERFACE.mod 
-L3DMDATA.mod:
-	$(UTILDIR)/newAifBdiff.sh -a L3DMDATA.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DMData.f90 $(FAFTER)
-L3DMData.o: L3DMDATA.mod
+   -T L2Interface.o l2interface.mod 
+l3dmdata.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l3dmdata.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DMData.f90 $(FAFTER)
+L3DMData.o: l3dmdata.mod
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
-   -T L3DMData.o L3DMDATA.mod 
-#TREE_CHECKER.mod: INIT_TABLES_MODULE.mod
-#	$(UTILDIR)/newAifBdiff.sh -a TREE_CHECKER.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/tree_checker.f90 $(FAFTER)
-GETCF_M.mod: INIT_TABLES_MODULE.mod TREE_CHECKER.mod
-	$(UTILDIR)/newAifBdiff.sh -a GETCF_M.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/getCF_m.f90 $(FAFTER)
-getCF_m.o: GETCF_M.mod
+   -T L3DMData.o l3dmdata.mod 
+#tree_checker.mod: init_tables_module.mod
+#	$(UTILDIR)/newAifBdiff.sh -a tree_checker.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/tree_checker.f90 $(FAFTER)
+getcf_m.mod: init_tables_module.mod tree_checker.mod
+	$(UTILDIR)/newAifBdiff.sh -a getcf_m.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/getCF_m.f90 $(FAFTER)
+getCF_m.o: getcf_m.mod
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
-   -T getCF_m.o GETCF_M.mod 
+   -T getCF_m.o getcf_m.mod 
 
 #  l3m
-L3DZDATA.mod:
-	$(UTILDIR)/newAifBdiff.sh -a L3DZDATA.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DZData.f90 $(FAFTER)
-L3DZData.o: L3DZDATA.mod
+l3dzdata.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l3dzdata.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DZData.f90 $(FAFTER)
+L3DZData.o: l3dzdata.mod
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
-   -T L3DZData.o L3DZDATA.mod 
+   -T L3DZData.o l3dzdata.mod 
 
-L3MZDATA.mod:
-	$(UTILDIR)/newAifBdiff.sh -a L3MZDATA.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MZData.f90 $(FAFTER)
-L3MZData.o: L3MZDATA.mod
+l3mzdata.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l3mzdata.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MZData.f90 $(FAFTER)
+L3MZData.o: l3mzdata.mod
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
-   -T L3MZData.o L3MZDATA.mod 
+   -T L3MZData.o l3mzdata.mod 
 
-L3MMDATA.mod:
-	$(UTILDIR)/newAifBdiff.sh -a L3MMDATA.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MMData.f90 $(FAFTER)
-L3MMData.o: L3MMDATA.mod
+l3mmdata.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l3mmdata.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MMData.f90 $(FAFTER)
+L3MMData.o: l3mmdata.mod
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
-   -T L3MMData.o L3MMDATA.mod 
+   -T L3MMData.o l3mmdata.mod 
 
 # lib
 
@@ -165,47 +164,54 @@ $(S)/mol_parm.f9h $(S)/mol_add.f9h: $(TABLES_DIR)/sps_cross_ref_table.txt $(INST
           -j sps_cross_ref_table.txt \
           $(S)/mol_parm.f9h $(S)/mol_add.f9h lit_indices
 
-MACHINE.mod: $(MACH_DIR)/machine.f90
+machine.mod: $(MACH_DIR)/machine.f90
 	rm -f machine.f90 ; \
 	sed '/Start $(BAD_MATCH)/,/End $(BAD_MATCH)/ d' $(MACH_DIR)/machine.f90 \
      > machine.f90
-	$(UTILDIR)/newAifBdiff.sh -a MACHINE.mod $(FC) -c $(FOPTS) $(INC_PATHS) machine.f90 $(FAFTER)
+	$(UTILDIR)/newAifBdiff.sh -a machine.mod $(FC) -c $(FOPTS) $(INC_PATHS) machine.f90 $(FAFTER)
 	rm -f machine.f90
-machine.o: MACHINE.mod $(MACH_DIR)/machine.f90
+machine.o: machine.mod $(MACH_DIR)/machine.f90
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
-   -T machine.o MACHINE.mod 
-
-ieee_arithmetic.o: IEEE_ARITHMETIC.mod ieee_arithmetic.f90 
-	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t -T ieee_arithmetic.o IEEE_ARITHMETIC.mod 
-IEEE_ARITHMETIC.mod: ieee_arithmetic.f90
-	$(UTILDIR)/newAifBdiff.sh -a IEEE_ARITHMETIC.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(MACH_DIR)/ieee_arithmetic.f90 $(FAFTER)
+   -T machine.o machine.mod 
 
 intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
 
 endif
 
 NOUNASS := $(shell echo ${FOPTS} | sed 's/\(--chk [aesx,]*\),u\([aesx,]*\)/\1\2/')
+SLOWASMOLASSES := -g --ap --pca --f95 --chk a,e,s
 
 DUSTY_NO_OPT := $(shell echo ${DUSTY} | sed 's/-O[0-9]*//')
 
-HDF.mod:
-	$(UTILDIR)/newAifBdiff.sh -a HDF.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/Hdf.f90 $(FAFTER)
-Hdf.o: HDF.mod
+hdf.mod:
+	$(UTILDIR)/newAifBdiff.sh -a hdf.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/Hdf.f90 $(FAFTER)
+Hdf.o: hdf.mod
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
-   -T Hdf.o HDF.mod 
-STRING_TABLE.mod:
-	$(UTILDIR)/newAifBdiff.sh -a STRING_TABLE.mod $(FC) -c $(BUGGY) $(INC_PATHS) $(S)/string_table.f90 $(FAFTER)
-string_table.o: STRING_TABLE.mod
+   -T Hdf.o hdf.mod 
+string_table.mod:
+	$(UTILDIR)/newAifBdiff.sh -a string_table.mod $(FC) -c $(BUGGY) $(INC_PATHS) $(S)/string_table.f90 $(FAFTER)
+string_table.o: string_table.mod
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
-   -T string_table.o STRING_TABLE.mod 
+   -T string_table.o string_table.mod 
 
 # ncep_dao module doesn't play well with the lf95 undefined variable
 # runtime checker because of endian swapping
-NCEP_DAO.mod:
-	$(UTILDIR)/newAifBdiff.sh -a NCEP_DAO.mod $(FC) -c $(NOUNASS) $(INC_PATHS) $(S)/ncep_dao.f90 $(FAFTER)
-ncep_dao.o: NCEP_DAO.mod
+ncep_dao.mod:
+	$(UTILDIR)/newAifBdiff.sh -a ncep_dao.mod $(FC) -c $(NOUNASS) $(INC_PATHS) $(S)/ncep_dao.f90 $(FAFTER)
+ncep_dao.o: ncep_dao.mod
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
-   -T ncep_dao.o NCEP_DAO.mod 
+   -T ncep_dao.o ncep_dao.mod 
+
+#ifeq ($(short_name),fwdmdl)
+# LinearizedForwardModel_m.f90 must be compiled with checks on to keep
+# resulting executable from bombing on some chunks
+# --  f i x e d  --
+#linearizedforwardmodel_m.mod:
+#	$(UTILDIR)/newAifBdiff.sh -a linearizedforwardmodel_m.mod $(FC) -c $(SLOWASMOLASSES) $(INC_PATHS) $(S)/LinearizedForwardModel_m.f90 $(FAFTER)
+#LinearizedForwardModel_m.o: linearizedforwardmodel_m.mod
+#	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+#   -T LinearizedForwardModel_m.o linearizedforwardmodel_m.mod 
+#endif
 
 else
 #	l1
@@ -213,7 +219,7 @@ else
 CalibWeightsFlags.o: $(S)/CalibWeightsFlags.f90
 	$(FC) -c $(BUGGY) $(INC_PATHS) $(S)/CalibWeightsFlags.f90 $(FAFTER)
 EngTbls.o: $(S)/EngTbls.f90
-	$(FC) -c $(DUSTY) -maxcontin=100 $(INC_PATHS) $(S)/EngTbls.f90 $(FAFTER)
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/EngTbls.f90 $(FAFTER)
 L1LogUtils.o: $(S)/L1LogUtils.f90
 	$(FC) -c $(BUGGY) $(INC_PATHS) $(S)/L1LogUtils.f90 $(FAFTER)
 OutputL1B.o: $(S)/OutputL1B.f90
@@ -332,7 +338,6 @@ intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
 
 endif
 
-BUGGY := $(shell echo ${FOPTS} | sed 's/-O[0-9]*//')
 NOUNASS := $(shell echo ${FOPTS} | sed 's/\(--chk [aesx,]*\),u\([aesx,]*\)/\1\2/')
 
 DUSTY_NO_OPT := $(shell echo ${DUSTY} | sed 's/-O[0-9]*//')
@@ -347,8 +352,19 @@ string_table.o:
 ncep_dao.o:
 	$(FC) -c $(NOUNASS) $(INC_PATHS) $(S)/ncep_dao.f90 $(FAFTER)
 
+#ifeq ($(short_name),fwdmdl)
+# LinearizedForwardModel_m.f90 must be compiled with checks on to keep
+# resulting executable from bombing on some chunks
+# --  f i x e d  --
+#LinearizedForwardModel_m.o:
+#	$(FC) -c $(SLOWASMOLASSES) $(INC_PATHS) $(S)/LinearizedForwardModel_m.f90 $(FAFTER) 
+#endif
+
 endif
 # $Log$
+# Revision 1.9  2006/04/03 22:12:40  pwagner
+# Uniform changes to accommodate buggy Lahey optimizer in l1
+#
 # Revision 1.8  2005/09/08 00:25:01  pwagner
 # Fixed bug is build command for l1/EngTbls.o
 #

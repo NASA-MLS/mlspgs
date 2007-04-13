@@ -93,11 +93,11 @@ ifndef DONTBUILDPREQS
 ifdef BLAS
    LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
    $(machine_f) \
-   $(REECHO) $(libmls_objs)
+   $(REECHO) $(libmls_objs)/Makefile
 else
    LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
    $(machine_f) \
-   $(blaslib_f) $(REECHO) $(libmls_objs)
+   $(blaslib_f) $(REECHO) $(libmls_objs)/Makefile
 endif
 endif
 
@@ -113,7 +113,7 @@ OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 #if CASCADE, use older .o dependencies, which entail cascades
 #of massive recompilation
 #These are configurations for which I have tested CASCADE-avoidance
-CAN_AVOID="NAG.Linux LF95.Linux NAG.Sun Sun.Sun"
+CAN_AVOID="NAG.Linux LF95.Linux NAG.Sun Sun.Sun IFC.Linux"
 #CAN_AVOID=""
 ifndef CASCADE
   WE_CAN := $(shell echo $(CAN_AVOID) | grep $(MLSF95).$(MLSPLAT))
@@ -262,6 +262,9 @@ targ:
 	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 2.20  2005/06/23 23:02:30  pwagner
+# Reworded Copyright statement
+#
 # Revision 2.19  2004/03/30 00:21:50  pwagner
 # Take care that lib is rebuilt after changes in machines directory
 #
