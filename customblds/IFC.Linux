@@ -174,6 +174,12 @@ machine.o: machine.mod $(MACH_DIR)/machine.f90
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
    -T machine.o machine.mod 
 
+ieee_arithmetic.o: ieee_arithmetic.mod ieee_arithmetic.f90
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t -T ieee_arithmetic.o ieee_arithmetic.mod
+ieee_arithmetic.mod: ieee_arithmetic.f90
+	$(UTILDIR)/newAifBdiff.sh -a ieee_arithmetic.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(MACH_DIR)/ieee_arithmetic.f90 $(FAFTER)
+
+
 intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
 
 endif
@@ -362,6 +368,9 @@ ncep_dao.o:
 
 endif
 # $Log$
+# Revision 1.10  2007/04/13 20:15:34  pwagner
+# Changes in line with Intel v9.1
+#
 # Revision 1.9  2006/04/03 22:12:40  pwagner
 # Uniform changes to accommodate buggy Lahey optimizer in l1
 #
