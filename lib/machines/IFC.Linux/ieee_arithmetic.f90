@@ -17,7 +17,7 @@ MODULE IEEE_ARITHMETIC              ! Common utilities for the MLSL1 program
   private
 
   ! These are the ieee functions and constants needed in MLS
-  ! that Sun fails to supply.
+  ! that ifc fails to supply.
 
   public :: IEEE_Class_Type
   public :: IEEE_Is_finite, IEEE_Is_NaN, IEEE_Quiet_NaN, IEEE_Support_NaN
@@ -29,7 +29,7 @@ MODULE IEEE_ARITHMETIC              ! Common utilities for the MLSL1 program
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
-  ! This module contains glue routines for Intel's f95 compiler
+  ! This module contains glue routines for Intel's ifc compiler
   ! since it fails to conform to ISO/IEC TR15580:1998(E).
   ! If we should ever obtain one that conforms we may cheerfully
   ! dispose of this crude hack
@@ -86,6 +86,22 @@ CONTAINS
     IEEE_IS_FINITE_D = .TRUE.
   END FUNCTION IEEE_IS_FINITE_D
   
+  elemental logical function IEEE_Is_Inf_io_D ( X ) result(res)
+    double precision, intent(in) :: X
+    character(len=80) :: reschar
+    write(reschar, *) x
+    res = ( index(reschar, 'Inf') > 0 .or. &
+      & index(reschar, 'inf') > 0 .or. index(reschar, 'INF') > 0 )
+  end function IEEE_Is_Inf_io_D
+
+  elemental logical function IEEE_Is_Inf_io_S ( X ) result(res)
+    real, intent(in) :: X
+    character(len=80) :: reschar
+    write(reschar, *) x
+    res = ( index(reschar, 'Inf') > 0 .or. &
+      & index(reschar, 'inf') > 0 .or. index(reschar, 'INF') > 0 )
+  end function IEEE_Is_Inf_io_S
+
   elemental logical function IEEE_Is_NaN_D ( X )
     double precision, intent(in) :: X
     IEEE_Is_NaN_D = .not. ( x <= 0.0 .or. x >= 0.0 )
@@ -118,7 +134,7 @@ CONTAINS
     
   ! Private
 
-  ! The following is made necessary only because Sun's own f95
+  ! The following is made necessary only because ifc
   ! fails to comply--this obviously fails if any number ever matches this
     select case ( class%what )
     case ( ieee_quiet_nan%what )     ! IEEE_Quiet_NaN
@@ -136,7 +152,7 @@ CONTAINS
     
   ! Private
 
-  ! The following is made necessary only because Sun's own f95
+  ! The following is made necessary only because ifc
   ! fails to comply--this obviously fails if any number ever matches this
     select case ( class%what )
     case ( ieee_quiet_nan%what )     ! IEEE_Quiet_NaN
@@ -160,6 +176,9 @@ END MODULE IEEE_ARITHMETIC
 
 !
 ! $Log$
+! Revision 1.3  2005/06/22 20:26:22  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 1.2  2005/05/12 20:39:11  pwagner
 ! Made ieee_is_finite elemental
 !
