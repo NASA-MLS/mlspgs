@@ -48,8 +48,10 @@ endif
 
 # Set paths for finding source files (different from .o and .mod)
 
+vpath %.mod ./
 vpath %.o ./
-vpath %.f90 ../ ../machines/$(MLSCONFG)
+vpath %.f90 ../ $(MACH_DIR)
+vpath %.F90 ../ $(MACH_DIR)
 vpath %.f9h ../ $(srclib)
 vpath %.f ../ $(PGSINC)
 vpath %.c ../
@@ -86,3 +88,6 @@ INC_PATHS = $(EXTRA_PATHS) $(PATHS_PREFXD) \
 	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
 
 # $Log$
+# Revision 1.1  2003/04/01 23:20:53  pwagner
+# First commit
+#

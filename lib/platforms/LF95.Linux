@@ -50,7 +50,8 @@ endif
 
 vpath %.mod ./
 vpath %.o ./
-vpath %.f90 ../ ../machines/$(MLSCONFG)
+vpath %.f90 ../ $(MACH_DIR)
+vpath %.F90 ../ $(MACH_DIR)
 vpath %.f9h ../ $(srclib)
 vpath %.f ../ $(PGSINC)
 vpath %.c ../
@@ -87,6 +88,9 @@ INC_PATHS = $(EXTRA_PATHS) $(PATHS_PREFXD) \
 	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
 
 # $Log$
+# Revision 1.22  2002/07/18 18:02:50  pwagner
+# Special treatments for three modules moved to customblds
+#
 # Revision 1.21  2002/07/15 17:39:28  pwagner
 # Custom builds for L2PC_m.f90 MLSFiles.f90 L2GPData.f90 so LF95 finishes in finite time
 #
