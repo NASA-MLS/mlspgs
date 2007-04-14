@@ -659,7 +659,7 @@ contains
   subroutine TrackDeallocate_C1 ( What, Where, Module )
     character(len=*), pointer :: What(:)
     character(len=*), intent(in) :: Where, Module
-    integer :: I, J
+    integer :: I
     if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_c1
       if ( associated(track_c1(i)%p, what(:)(1:1)) ) then
@@ -675,7 +675,7 @@ contains
   subroutine TrackDeallocate_C2 ( What, Where, Module )
     character(len=*), pointer :: What(:,:)
     character(len=*), intent(in) :: Where, Module
-    integer :: I, J
+    integer :: I
     if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_c2
       if ( associated(track_c2(i)%p, what(:,:)(1:1)) ) then
@@ -691,7 +691,7 @@ contains
   subroutine TrackDeallocate_C3 ( What, Where, Module )
     character(len=*), pointer :: What(:,:,:)
     character(len=*), intent(in) :: Where, Module
-    integer :: I, J
+    integer :: I
     if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_c3
       if ( associated(track_c3(i)%p, what(:,:,:)(1:1)) ) then
@@ -708,7 +708,7 @@ contains
   subroutine TrackDeallocate_X1 ( What, Where, Module )
     complex, pointer :: What(:)
     character(len=*), intent(in) :: Where, Module
-    integer :: I, J
+    integer :: I
     if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_x1
       if ( associated(track_x1(i)%p, what) ) then
@@ -724,7 +724,7 @@ contains
   subroutine TrackDeallocate_X2 ( What, Where, Module )
     complex, pointer :: What(:,:)
     character(len=*), intent(in) :: Where, Module
-    integer :: I, J
+    integer :: I
     if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_x2
       if ( associated(track_x2(i)%p, what) ) then
@@ -740,7 +740,7 @@ contains
   subroutine TrackDeallocate_X3 ( What, Where, Module )
     complex, pointer :: What(:,:,:)
     character(len=*), intent(in) :: Where, Module
-    integer :: I, J
+    integer :: I
     if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_x3
       if ( associated(track_x3(i)%p, what) ) then
@@ -757,7 +757,7 @@ contains
   subroutine TrackDeallocate_Z1 ( What, Where, Module )
     complex(kind(0.0d0)), pointer :: What(:)
     character(len=*), intent(in) :: Where, Module
-    integer :: I, J
+    integer :: I
     if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_z1
       if ( associated(track_z1(i)%p, what) ) then
@@ -773,7 +773,7 @@ contains
   subroutine TrackDeallocate_Z2 ( What, Where, Module )
     complex(kind(0.0d0)), pointer :: What(:,:)
     character(len=*), intent(in) :: Where, Module
-    integer :: I, J
+    integer :: I
     if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_z2
       if ( associated(track_z2(i)%p, what) ) then
@@ -789,7 +789,7 @@ contains
   subroutine TrackDeallocate_Z3 ( What, Where, Module )
     complex(kind(0.0d0)), pointer :: What(:,:,:)
     character(len=*), intent(in) :: Where, Module
-    integer :: I, J
+    integer :: I
     if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_z3
       if ( associated(track_z3(i)%p, what) ) then
@@ -806,7 +806,7 @@ contains
   subroutine TrackDeallocate_I1 ( What, Where, Module )
     integer, pointer :: What(:)
     character(len=*), intent(in) :: Where, Module
-    integer :: I, J
+    integer :: I
     if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_i1
       if ( associated(track_i1(i)%p, what) ) then
@@ -822,7 +822,7 @@ contains
   subroutine TrackDeallocate_I2 ( What, Where, Module )
     integer, pointer :: What(:,:)
     character(len=*), intent(in) :: Where, Module
-    integer :: I, J
+    integer :: I
     if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_i2
       if ( associated(track_i2(i)%p, what) ) then
@@ -838,7 +838,7 @@ contains
   subroutine TrackDeallocate_I3 ( What, Where, Module )
     integer, pointer :: What(:,:,:)
     character(len=*), intent(in) :: Where, Module
-    integer :: I, J
+    integer :: I
     if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_i3
       if ( associated(track_i3(i)%p, what) ) then
@@ -855,7 +855,7 @@ contains
   subroutine TrackDeallocate_R1 ( What, Where, Module )
     real, pointer :: What(:)
     character(len=*), intent(in) :: Where, Module
-    integer :: I, J
+    integer :: I
     if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_r1
       if ( associated(track_r1(i)%p, what) ) then
@@ -871,7 +871,7 @@ contains
   subroutine TrackDeallocate_R2 ( What, Where, Module )
     real, pointer :: What(:,:)
     character(len=*), intent(in) :: Where, Module
-    integer :: I, J
+    integer :: I
     if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_r2
       if ( associated(track_r2(i)%p, what) ) then
@@ -887,7 +887,7 @@ contains
   subroutine TrackDeallocate_R3 ( What, Where, Module )
     real, pointer :: What(:,:,:)
     character(len=*), intent(in) :: Where, Module
-    integer :: I, J
+    integer :: I
     if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_r3
       if ( associated(track_r3(i)%p, what) ) then
@@ -904,7 +904,7 @@ contains
   subroutine TrackDeallocate_D1 ( What, Where, Module )
     double precision, pointer :: What(:)
     character(len=*), intent(in) :: Where, Module
-    integer :: I, J
+    integer :: I
     if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_d1
       if ( associated(track_d1(i)%p, what) ) then
@@ -920,7 +920,7 @@ contains
   subroutine TrackDeallocate_D2 ( What, Where, Module )
     double precision, pointer :: What(:,:)
     character(len=*), intent(in) :: Where, Module
-    integer :: I, J
+    integer :: I
     if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_d2
       if ( associated(track_d2(i)%p, what) ) then
@@ -936,7 +936,7 @@ contains
   subroutine TrackDeallocate_D3 ( What, Where, Module )
     double precision, pointer :: What(:,:,:)
     character(len=*), intent(in) :: Where, Module
-    integer :: I, J
+    integer :: I
     if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_d3
       if ( associated(track_d3(i)%p, what) ) then
@@ -953,7 +953,7 @@ contains
   subroutine TrackDeallocate_L1 ( What, Where, Module )
     logical, pointer :: What(:)
     character(len=*), intent(in) :: Where, Module
-    integer :: I, J
+    integer :: I
     if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_l1
       if ( associated(track_l1(i)%p, what) ) then
@@ -969,7 +969,7 @@ contains
   subroutine TrackDeallocate_L2 ( What, Where, Module )
     logical, pointer :: What(:,:)
     character(len=*), intent(in) :: Where, Module
-    integer :: I, J
+    integer :: I
     if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_l2
       if ( associated(track_l2(i)%p, what) ) then
@@ -985,7 +985,7 @@ contains
   subroutine TrackDeallocate_L3 ( What, Where, Module )
     logical, pointer :: What(:,:,:)
     character(len=*), intent(in) :: Where, Module
-    integer :: I, J
+    integer :: I
     if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
     do i = 1, num_l3
       if ( associated(track_l3(i)%p, what) ) then
@@ -1294,6 +1294,9 @@ contains
 end module Track_m
 
 ! $Log$
+! Revision 2.4  2007/04/14 00:35:34  vsnyder
+! Remove declarations for unused variables
+!
 ! Revision 2.3  2006/08/04 18:14:15  vsnyder
 ! Add size tracking to ReportLeaks, simplify TrackDeallocate
 !
