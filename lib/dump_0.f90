@@ -141,9 +141,9 @@ contains
   subroutine DIFF_1D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
     & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
     double precision, intent(in) :: ARRAY1(:)
-    character(len=*), intent(in), optional :: NAME1
+    character(len=*), intent(in) :: NAME1
     double precision, intent(in) :: ARRAY2(:)
-    character(len=*), intent(in), optional :: NAME2
+    character(len=*), intent(in) :: NAME2
     double precision, intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
     integer, intent(in), optional :: WIDTH
@@ -162,9 +162,9 @@ contains
   subroutine DIFF_1D_INTEGER ( IARRAY1, NAME1, IARRAY2, NAME2, &
     & IFILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
     integer, intent(in) :: IARRAY1(:)
-    character(len=*), intent(in), optional :: NAME1
+    character(len=*), intent(in) :: NAME1
     integer, intent(in) :: IARRAY2(:)
-    character(len=*), intent(in), optional :: NAME2
+    character(len=*), intent(in) :: NAME2
     integer, intent(in), optional :: IFILLVALUE
     logical, intent(in), optional :: CLEAN
     integer, intent(in), optional :: WIDTH
@@ -193,9 +193,9 @@ contains
   subroutine DIFF_1D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
     & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
     real, intent(in) :: ARRAY1(:)
-    character(len=*), intent(in), optional :: NAME1
+    character(len=*), intent(in) :: NAME1
     real, intent(in) :: ARRAY2(:)
-    character(len=*), intent(in), optional :: NAME2
+    character(len=*), intent(in) :: NAME2
     real, intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
     integer, intent(in), optional :: WIDTH
@@ -214,9 +214,9 @@ contains
   subroutine DIFF_2D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
       & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
     double precision, intent(in) :: ARRAY1(:,:)
-    character(len=*), intent(in), optional :: NAME1
+    character(len=*), intent(in) :: NAME1
     double precision, intent(in) :: ARRAY2(:,:)
-    character(len=*), intent(in), optional :: NAME2
+    character(len=*), intent(in) :: NAME2
     double precision, intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
     integer, intent(in), optional :: WIDTH
@@ -235,9 +235,9 @@ contains
   subroutine DIFF_2D_REAL ( ARRAY1, NAME1, ARRAY2, Name2, &
       & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
     real, intent(in) :: ARRAY1(:,:)
-    character(len=*), intent(in), optional :: NAME1
+    character(len=*), intent(in) :: NAME1
     real, intent(in) :: ARRAY2(:,:)
-    character(len=*), intent(in), optional :: NAME2
+    character(len=*), intent(in) :: NAME2
     real, intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
     integer, intent(in), optional :: WIDTH
@@ -256,9 +256,9 @@ contains
   subroutine DIFF_3D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
     & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
     double precision, intent(in) :: ARRAY1(:,:,:)
-    character(len=*), intent(in), optional :: NAME1
+    character(len=*), intent(in) :: NAME1
     double precision, intent(in) :: ARRAY2(:,:,:)
-    character(len=*), intent(in), optional :: NAME2
+    character(len=*), intent(in) :: NAME2
     double precision, intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
     integer, intent(in), optional :: WIDTH
@@ -277,9 +277,9 @@ contains
   subroutine DIFF_3D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
     & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
     real, intent(in) :: ARRAY1(:,:,:)
-    character(len=*), intent(in), optional :: NAME1
+    character(len=*), intent(in) :: NAME1
     real, intent(in) :: ARRAY2(:,:,:)
-    character(len=*), intent(in), optional :: NAME2
+    character(len=*), intent(in) :: NAME2
     real, intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
     integer, intent(in), optional :: WIDTH
@@ -2105,6 +2105,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.68  2007/04/14 00:32:47  vsnyder
+! Remove OPTIONAL attribute from NAME1 and NAME args of DIFF_...
+!
 ! Revision 2.67  2007/04/03 02:49:23  vsnyder
 ! Don't look at non-present dummy argument
 !
