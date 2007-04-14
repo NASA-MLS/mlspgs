@@ -44,7 +44,7 @@ module SineTables_m
 
   integer, save :: LogSize_SineTable_r8 = -1
 
-  real(r8), pointer, save :: SineTable_R8(:) => NULL()
+  real(r8), allocatable, save :: SineTable_R8(:)
 
 contains
 
@@ -54,16 +54,23 @@ contains
     ! Initialize SineTable_r8 to be of size 2**LogSize - 1, unless it's
     ! already allocated and at least that big.
 
-    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate, E_DP
     use DFFT_M, only: InitSineTable
 
     integer, intent(in) :: LogSize
 
-    if ( logSize + 2 > logSize_SineTable_r8 ) &
-      & call deallocate_test ( sineTable_r8, 'SineTable_r8', moduleName )
+    integer :: N, Stat
 
-    if ( .not. associated(sineTable_r8) ) then
-      call allocate_test ( sineTable_r8, 2**logSize - 1, 'SineTable_r8', moduleName )
+    if ( allocated(sineTable_r8) .and. logSize + 2 > logSize_SineTable_r8 ) then
+      n = size(sineTable_r8) * E_DP
+      deallocate ( sineTable_r8, stat=stat )
+      call test_deallocate ( stat, moduleName, 'SineTable_r8', n )
+    end if
+
+    if ( .not. allocated(sineTable_r8) ) then
+      n = 2**logSize - 1
+      allocate ( sineTable_r8(n), stat=stat )
+      call test_allocate ( stat, moduleName, 'SineTable_r8', (/1/), (/n/), e_dp )
       call initSineTable ( sineTable_r8, logSize )
       logSize_SineTable_r8 = logSize + 2
     end if
@@ -74,9 +81,15 @@ contains
 
   subroutine DestroySineTable_r8
 
-    use Allocate_Deallocate, only: Deallocate_Test
+    use Allocate_Deallocate, only: Test_Deallocate, E_DP
 
-    call deallocate_test ( sineTable_r8, 'SineTable_r8', moduleName )
+    integer :: N, Stat
+
+    if ( allocated(sineTable_r8) ) then
+      n = size(sineTable_r8) * E_DP
+      deallocate ( sineTable_r8, stat=stat )
+      call test_deallocate ( stat, moduleName, 'SineTable_r8', n )
+    end if
     logSize_SineTable_r8 = -1
 
   end subroutine DestroySineTable_r8
@@ -95,6 +108,9 @@ contains
 end module SineTables_m
 
 ! $Log$
+! Revision 2.3  2007/04/14 00:38:25  vsnyder
+! Change SineTable from pointer to allocatable, improves FFT performance
+!
 ! Revision 2.2  2005/06/22 17:25:50  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
