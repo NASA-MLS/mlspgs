@@ -390,11 +390,9 @@ contains
     real, parameter :: GB = MB * 1024.0
     real, parameter :: TB = GB * 1024.0
     double precision :: Amount ! N * MyUnits
-    integer :: iAmount
-    real            :: myUnits
+    real             :: myUnits
     character(len=6) :: Suffix
     ! Make a 'nice' output
-    iAmount = 0
     if ( present(before) ) call output ( before )
     myUnits = 1.0
     if ( present(units) ) myUnits = units
@@ -419,9 +417,9 @@ contains
       amount = amount/Tb
       suffix = ' TB'
     end if
-    if ( amount < -1.D0*Huge(iAmount) ) then
+    if ( amount < -99999 ) then     ! I6 format limits this
       call output( '(-HUGE)' )
-    elseif ( amount > 1.D0*Huge(iAmount) ) then
+    elseif ( amount > 999999 ) then ! I6 format limits this
       call output( '(HUGE)' )
     elseif ( amount == int(amount) ) then
       call output ( int(amount), format='(i6)' )
@@ -1488,6 +1486,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.57  2007/04/14 00:37:16  vsnyder
+! Correction dumpSize to avoid asterisks in I6 output
+!
 ! Revision 2.56  2007/03/23 00:08:21  pwagner
 ! Guard against negative args confusing dumpSize
 !
