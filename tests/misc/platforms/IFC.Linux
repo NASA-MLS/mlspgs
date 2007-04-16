@@ -53,7 +53,7 @@ vpath %.c ../
 
 FC = ifc
 
-DUSTY = $(FOPTS) -dusty
+DUSTY = $(FOPTS)
 
 # All the paths to supply .mod and INCLUDE files used in compiling %.f90
 # Precede each path by "-I"
@@ -79,3 +79,6 @@ INC_PATHS = $(EXTRA_PATHS) -I$S -I$(PGSINC)
 l_specials =
 
 # $Log$
+# Revision 1.1  2003/04/01 23:22:03  pwagner
+# First commit
+#

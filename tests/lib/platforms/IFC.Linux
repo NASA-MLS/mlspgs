@@ -6,11 +6,9 @@
 # Path to source files:
 S = ..
 
-CONFDIR=../../..
-
 # Use the libmls.a directory, libdir, for .mod files
 # dir1 is the path prepended to its .o files in dependency lists
-libdir = $(CONFDIR)/lib/$(MLSCONFG)
+libdir = ../../../lib/$(MLSCONFG)
 
 dir1 = $(libdir)/
 
@@ -22,18 +20,18 @@ dir1 = $(libdir)/
 # therefore we will tell make to add srclib to directories searched for .f90
 # while dir2, the path prepended to its .o files in dependency lists, is empty
 # so that its object files share the current working directory with those of l2
-srclib = $(CONFDIR)/srclib
+srclib = ../../../srclib
 
 # This is the directory name from which we will get init_tables_module
 # (either l1, l2, or l3)
 init_m_dir = l1
 
-itmdir=$(CONFDIR)/$(init_m_dir)/$(MLSCONFG)
+itmdir=../../../$(init_m_dir)/$(MLSCONFG)
 
 dir2 = $(itmdir)/
 
 # Use the libmlspack.a directory, blaslib, for .mod files
-blaslib = $(CONFDIR)/blas/$(MLSCONFG)
+blaslib = ../../../blas/$(MLSCONFG)
 
 # Set paths for finding source files (different from .o and .mod)
 
@@ -72,9 +70,3 @@ INC_PATHS = $(EXTRA_PATHS) \
 l_specials =
 
 # $Log$
-# Revision 1.1  2004/12/14 23:31:51  pwagner
-# Made blas available for compiling, mlspack for linking
-#
-# Revision 1.1  2003/04/01 23:22:03  pwagner
-# First commit
-#
