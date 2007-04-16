@@ -70,10 +70,17 @@ else
    l_specials=-lz -L${gcc_libloc} -lgcc
 endif
 endif
-ifeq ($(MLSF95),IFC)
+ifeq ($(MLSF95),IFCold)
    gcc_version=$(shell ${UTILDIR}/which_fftw.sh -gcc)
    gcc_libloc=$(shell ${REECHO} -d /usr/lib/gcc*/i386-redhat-linux/${gcc_version})
+   static_object=$(shell ${UTILDIR}/which_fftw.sh -static)
+   STATIC_LINK := $(shell echo $(LDOPTS) | grep -e "-Bstatic")
+ifdef STATIC_LINK
+   l_specials=-lz -L${gcc_libloc} -lgcc \
+     ${static_object}
+else
    l_specials=-lz -L${gcc_libloc} -lgcc
+endif
 endif
 else
    hdfeos5_linker_line=
@@ -101,6 +108,9 @@ utctotai_linker_line=-L${INSTALLDIR} -lutctotai
 utctotai_message=Building program with toolkitless utc to tai conversion
 
 # $Log$
+# Revision 1.3  2005/08/17 17:45:05  pwagner
+# Moved more definitions to srclib/targets.h
+#
 # Revision 1.2  2005/03/07 17:38:17  pwagner
 # Fixed bug in linking non-static LF95
 #
