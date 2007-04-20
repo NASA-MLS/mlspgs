@@ -456,8 +456,8 @@ contains
     character (len=len(str1)+9) :: OUTSTR
 
     !----------Local vars----------!
-    character (len=1)               :: separator
-    character (len=8), dimension(1) :: str2
+    character (len=1)                :: separator
+    character (len=32), dimension(1) :: str2
     !----------executable part----------!
     if(present(inseparator)) then
       separator = inseparator
@@ -2868,6 +2868,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.24  2007/04/20 22:27:49  pwagner
+! Minor change to keep buggy Intel compiler from producing code that bombs
+!
 ! Revision 2.23  2006/07/12 20:37:44  pwagner
 ! inseparator may be any length; even 0
 !
