@@ -84,9 +84,7 @@ contains
   subroutine EXIT_WITH_STATUS ( STATUS )
   ! Exit and return STATUS to the invoking process
     integer, intent(in) :: STATUS
-    write(*,*)"Fnord. IFC exiting. Should use status ",status,&
-      " but I have not implemented it yet."
-    stop
+    call exit(status)
   end subroutine EXIT_WITH_STATUS
 
   subroutine IO_ERROR_ ( MESSAGE, IOSTAT, FILE )
@@ -97,17 +95,17 @@ contains
     character(len=*), intent(in), optional :: FILE
 
     integer :: L
-    character(len=127) :: MSG           ! From the Lahey IOSTAT_MSG intrinsic
+    integer :: io_errnumber, sys_errnumber
 
     write (*,*) message(:len_trim(message))
     if ( present(file) ) then
       l = len_trim(file)
       write (*,*) file(:l)
     end if
-!    call iostat_msg (iostat, msg)       ! Lahey intrinsic
-    write(*,*) "Fnord: IFC message handling not done yet"
-    write (*,*) msg(:len_trim(msg))     ! Print the error message
     write (*,*) 'Error status code =', iostat
+    call errsns( io_errnumber, sys_errnumber )
+    write (*,*) 'io error number =', io_errnumber
+    write (*,*) 'sys error number =', sys_errnumber
     return
   end subroutine IO_ERROR_
 
@@ -122,10 +120,10 @@ contains
                                         ! such a concept, else zero
 
     integer :: MyError, MyStatus
-    print*,"system not done yet for IFC"
-    !call system ( command, myStatus, myError)
-    !if ( present(error) ) error = myError
-    !if ( present(status) ) status = myStatus
+    ! print*,"system not done yet for IFC"
+    call system ( command, myStatus, myError)
+    if ( present(error) ) error = myError
+    if ( present(status) ) status = myStatus
   end subroutine SHELL_COMMAND
 
  ! NAG call interfaces to f90_gc
@@ -182,6 +180,9 @@ contains
 end module MACHINE
 
 ! $Log$
+! Revision 1.5  2005/06/22 20:26:22  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 1.4  2004/08/19 00:13:12  pwagner
 ! Added crash_burn to provoke crash with walkback
 !
