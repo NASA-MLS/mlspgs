@@ -1211,7 +1211,8 @@ oc:     do
     logical :: MY_NORADIOMETER, MY_NOBAND, MY_NOSWITCH
     logical :: MY_NOSPECTROMETER, MY_NOCHANNELS
     integer :: MY_SIDEBAND
-    character (len=8) :: word
+    ! character (len=8) :: word
+    character (len=16) :: word
 
     ! Executable code
     string_text       = ''
@@ -1795,6 +1796,9 @@ oc:     do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.82  2007/04/26 20:30:53  pwagner
+! Bugfix for way ifc writes ints to strings
+!
 ! Revision 2.81  2006/04/20 01:07:57  vsnyder
 ! Display a signal name given either a signal structure or an index
 !
