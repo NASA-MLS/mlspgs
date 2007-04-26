@@ -33,6 +33,7 @@ module L2PC_m
     & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE
   use MLSSets, only: FindFirst
   use MLSSignals_m, only: GETSIGNALNAME
+  use MLSStrings, only: writeIntsToChars
   use Molecules, only: L_EXTINCTION
   use MoreTree, only: GetStringIndexFromString, GetLitIndexFromString
   use Output_m, only: output
@@ -561,7 +562,8 @@ contains ! ============= Public Procedures ==========================
           ! Identify the block
           m0 => l2pc%block(blockRow, blockCol)
           ! Get a name for this group for the block
-          write ( name, * ) 'Block', rowBlockMap(blockRow), colBlockMap(blockCol)
+          ! write ( name, * ) 'Block', rowBlockMap(blockRow), colBlockMap(blockCol)
+          call CreateBlockName( rowBlockMap(blockRow), colBlockMap(blockCol), name )
           ! Create a grop for this block
           call h5gCreate_f ( blocksGroupID, trim(name), blockGroupID, status )
           if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -908,7 +910,8 @@ contains ! ============= Public Procedures ==========================
         m0 => l2pc%block ( blockRow, blockCol )
         if ( m0%kind /= m_unknown ) cycle
         ! Access this block
-        write ( name, * ) 'Block', blockRow, blockCol
+        ! write ( name, * ) 'Block', blockRow, blockCol
+        call CreateBlockName( blockRow, blockCol, name )
         call h5gOpen_f ( info%blocksId, trim(name), blockId, status )
         if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'Unable to open group for l2pc matrix block '//trim(name) )
@@ -1360,7 +1363,8 @@ contains ! ============= Public Procedures ==========================
       do blockRow = 1, l2pc%row%NB
         do blockCol = 1, l2pc%col%NB
           ! Access this block
-          write ( name, * ) 'Block', blockRow, blockCol
+          ! write ( name, * ) 'Block', blockRow, blockCol
+          call CreateBlockName( blockRow, blockCol, name )
           call h5gOpen_f ( blocksId, trim(name), blockId, status )
           if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'Unable to open group for l2pc matrix block '//trim(name) , &
@@ -1791,6 +1795,19 @@ contains ! ============= Public Procedures ==========================
 
   end subroutine WriteVectorAsHDF5L2PC
 
+  subroutine CreateBlockName ( row, column, name )
+    ! Because the Intel compiler produces a different result from
+    ! write(str, *) int
+    ! Args
+    integer, intent(in)           :: row, column
+    character(len=*), intent(out) :: name
+    ! Internal variables
+    character(len=16), dimension(2) :: strs
+    ! Executable
+    call writeIntsToChars( (/row, column/), strs )
+    name = ' Block' // ' ' // trim(adjustl(strs(1))) // ' ' // trim(adjustl(strs(2)))
+  end subroutine CreateBlockName
+
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -1803,6 +1820,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.79  2007/04/26 20:30:32  pwagner
+! Bugfix for way ifc writes ints to strings
+!
 ! Revision 2.78  2006/08/05 02:11:58  vsnyder
 ! Add ForWhom argument to ConstructVectorTemplate
 !
