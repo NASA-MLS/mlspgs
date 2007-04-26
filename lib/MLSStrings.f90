@@ -35,6 +35,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! CompressString     Removes all leading and embedded blanks
 ! Count_words        Counts the number of space-separated words in a string
 ! Depunctuate        Replaces punctuation with blanks
+! FlushArrayLeft     Flush character array left over blank elements
 ! Hhmmss_value       Converts 'hh:mm:ss' formatted string to a real r8
 !                    (See also PGS_TD_UTCtoTAI and mls_UTCtoTAI)
 ! Indexes            Indexes an array of substrings of a string into an array
@@ -51,6 +52,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! Replace            Replaces every instance of oldChar with newChar
 ! Reverse            Turns 'a string' -> 'gnirts a'
 ! Reverse_trim       (Reverses after trimming its argument)
+! size_trim          Returns len_trim of equivalent character scalar for array
 ! SplitNest          Splits 'part 1 (part 2) part 3' -> 'part 1', 'part 2', 'part 3'
 ! SplitWords         Splits 'first, the, rest, last' -> 'first', 'the, rest', 'last'
 ! streq              Generalized strings "==" (optionally ignoring case,
@@ -65,12 +67,14 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! char* CompressString (char* str)
 ! int count_words (char* str)
 ! char* depunctuate (char* str)
+! FlushArrayLeft ( char* a(:), char* b(:), [char* options] )
 ! int(:) indexes (char* string, char* substrings, [char* mode])
 ! ints2Strings (int ints(:,:), char* strs(:))
 ! int LinearSearchStringArray (char* list(:), char* string, 
 !   [log caseInsensitive, [log testSubstring], [log listInString])
 ! log IsRepeat ( char* str, [char* ssubtring] )
 ! char* LowerCase (char* str)
+! int(:) NAppearances (char* string, char* substrings)
 ! int NCopies (char* str, char* substring, [log overlap])
 ! readIntsFromChars (char* strs(:), int ints(:), char* forbiddens)
 ! ReadCompleteLineWithoutComments (int unit, char* fullLine, [log eof], &
@@ -78,6 +82,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! char* Replace (char* str, char oldChar, char newChar)
 ! char* Reverse (char* str)
 ! char* Reverse_trim (char* str)
+! int size_trim ( char* str(:) )
 ! SplitNest ( char *str, char* part1, char* part2, char* part3, [char* parens] )
 ! SplitWords (char *line, char* first, char* rest, [char* last], &
 !       & [log threeWay], [char* delimiter])
@@ -85,7 +90,6 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! log streq (char* str1(:), char* str2, [char* options])
 ! log streq (char* str1, char* str2(:), [char* options])
 ! strings2Ints (char* strs(:), int ints(:,:))
-! int(:) NAppearances (char* string, char* substrings)
 ! char* trim_safe (char* str)
 ! writeIntsToChars (int ints(:), char* strs(:))
 ! Many of these routines take optional arguments that greatly modify
@@ -134,12 +138,12 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! === (end of api) ===
 
   public :: Capitalize, CatStrings, CompressString, count_words, &
-   & depunctuate, hhmmss_value, &
+   & depunctuate, FlushArrayLeft, hhmmss_value, &
    & indexes, ints2Strings, IsRepeat, &
    & LinearSearchStringArray, LowerCase, NAppearances, NCopies, &
    & ReadCompleteLineWithoutComments, readIntsFromChars, &
    & Replace, Reverse, Reverse_trim, &
-   & SplitNest, SplitWords, streq, strings2Ints, trim_safe, &
+   & size_trim, SplitNest, SplitWords, streq, strings2Ints, trim_safe, &
    & writeIntsToChars
 
   interface readIntsFromChars
@@ -156,6 +160,8 @@ MODULE MLSStrings               ! Some low level string handling stuff
 
   ! hhmmss_value
   integer, public, parameter :: INVALIDHHMMSSSTRING = 1
+  ! readAnIntFromChars
+  integer, public, parameter :: STRINGCONTAINSFORBIDDENS=-999
   ! strings2Ints
   integer, public, parameter :: LENORSIZETOOSMALL=-999
   
@@ -253,9 +259,6 @@ contains
     END DO
   END FUNCTION count_words
 
-  ! This one converts a string to all upper case (taken from HCP routine
-  ! of same name) (Except that HCP can spell capitalise, that is. Fnord.)
-
   ! ------------------------------------------------  DEPUNCTUATE  -----
   Function Depunctuate ( str ) result ( outstr )
     ! Function that removes punctuation and replaces with blanks
@@ -279,6 +282,44 @@ contains
     end do
 
   end Function Depunctuate
+
+  ! ------------------------------------------------  FlushArrayLeft  -----
+  subroutine FlushArrayLeft ( a, b, options )
+    ! Flush array "a" over by leading blanks, returning result as "b"
+    ! according to options
+    ! options           meaning
+    ! -------           -------
+    !  a (default)     array-wise: skip over leading blank array elements
+    !  e               element-wise: skip over leading blanks in each element
+    ! thus, -ae would both skip over leading blank array elements
+    ! and also flush each element left
+    !
+    !--------Argument--------!
+    character (len=*), dimension(:), intent(in)  :: a
+    character (len=*), dimension(:), intent(out) :: b
+    character (len=*), optional, intent(in)      :: options
+    !---------local variables---------!
+    integer::i, n
+    character(len=8) :: myOptions
+    !-------Executable-code----!
+    myOptions = '-a'
+    if ( present(options) ) myOptions = options
+    if ( index( lowercase(myOptions), 'a' ) > 0 ) then
+      b = ' '
+      n = 0
+      do i=1, size(a)
+        if ( a(i) == ' ' .and. n < 1 ) cycle
+        n = n + 1
+        b(n) = a(i)
+      enddo
+    else
+      b = a
+    endif
+    if ( index( lowercase(myOptions), 'e' ) < 1 ) return
+    do i=1, size(a)
+      b(i) = adjustl(b(i))
+    enddo
+  end subroutine FlushArrayLeft
 
   ! ------------------------------------------------  HHMMSS_value  -----
   function HHMMSS_value ( str, ErrTyp, separator, strict ) result ( value )
@@ -839,13 +880,13 @@ contains
   END SUBROUTINE ReadCompleteLineWithoutComments
 
   ! --------------------------------------------------  readAnIntFromChars  -----
-  SUBROUTINE readAnIntFromChars (str, int, forbiddens, ignore)
+  subroutine readAnIntFromChars (str, int, forbiddens, ignore)
     ! takes a string and returns an integer
     ! using Fortran "read"
     ! (which could cause an io error--that's why this
-    ! subroutine exists, to filter out invalid characters)
+    ! subroutine exists)
     ! If the string is blank or contains one of forbiddens
-    ! the int is left undefined
+    ! the int is STRINGCONTAINSFORBIDDENS
     
     ! Then snip away any from the set ignore if present
     ! If ignore is '*', that means ignore all alphabetical chars
@@ -854,6 +895,7 @@ contains
     ! If the string is composed entirely of ignorable chars, int is 0
     
     ! Finally attempt to read as an int what remains
+    ! If that should fail as a last resort return STRINGCONTAINSFORBIDDENS
 
     ! Examples:
     ! (1) if str='band13a' and ignore='*', int will be 13
@@ -870,14 +912,15 @@ contains
     CHARACTER (LEN=*), INTENT(in), optional     ::   ignore
 
     !----------Local vars----------!
-    INTEGER :: j, k
+    INTEGER :: j, k, status
     LOGICAL :: leave_undef
     character(len=40)                           ::   myForbiddens
     character(len=40)                           ::   myIgnore
     character(len=len(str))                     ::   myStr
     !----------Executable part----------!
 
-   ! Check that all is well (if not returns blanks)
+   ! Check that all is well (if not returns STRINGCONTAINSFORBIDDENS)
+   int = STRINGCONTAINSFORBIDDENS
    if ( present(forbiddens) ) then
      myForbiddens = adjustl(forbiddens)
    else
@@ -903,7 +946,8 @@ contains
    if ( leave_undef ) then
      return
    elseif (  myIgnore == "" ) then
-     read(str, *) int
+     read( str, *, iostat=status, err=100 ) int
+     if ( status /= 0 ) int = STRINGCONTAINSFORBIDDENS
    ! elseif (  myIgnore == "*" ) then
    elseif (  index(myIgnore, "*") /= 0 ) then
      int = 0  ! a str made up entirely of ignorables means "0"
@@ -916,7 +960,7 @@ contains
          k = k + 1
        endif
      enddo
-     if ( myStr /= "" ) read(mystr, *) int
+     if ( myStr /= "" ) read( mystr, *, iostat=status, err=100 ) int
    else
      int = 0  ! a str made up entirely of ignorables means "0"
      k = 1
@@ -927,10 +971,13 @@ contains
          k = k + 1
        endif
      enddo
-     if ( myStr /= "" ) read(mystr, *) int
+     if ( myStr /= "" ) read( mystr, *, iostat=status, err=100 ) int
    endif
+   if ( status /= 0 ) int = STRINGCONTAINSFORBIDDENS
+   return
+100   int = STRINGCONTAINSFORBIDDENS
 
-  END SUBROUTINE readAnIntFromChars
+  end subroutine readAnIntFromChars
 
   ! --------------------------------------------------  readIntArrayFromChars  -----
   SUBROUTINE readIntArrayFromChars (strs, ints, forbiddens)
@@ -1053,6 +1100,23 @@ contains
 	ENDIF
 
   end function Reverse_trim
+
+  ! ------------------------------------------------  size_trim  -----
+  function size_trim ( strs, safe ) result (length)
+    ! This performs len_trim of character scalar equivalent to 
+    !--------Argument--------!
+    character (len=*), dimension(:), intent(in) :: strs
+    logical, optional, intent(in)               :: safe
+    !---------result---------!
+    integer::length
+    !-----local-variables------!
+    character(len=size(strs)*len(strs)) :: together, ttogether
+    !-------Executable-code----!
+    together = transfer( strs, ttogether )
+    length = len_trim( together )
+    if ( .not. present(safe) ) return
+    if ( safe ) length = max( length, 1 )
+  end function size_trim
 
   ! ---------------------------------------------  SplitNest  -----
 
@@ -1305,7 +1369,10 @@ contains
     character(len=8) :: myOptions
     integer :: nstars
     integer :: spos
-    character(len=max(len(str1), len(str2))) :: str
+    ! Intel compiler has been crashing here
+    integer, parameter :: strLengthMax = 64
+    ! character(len=max(len(str1), len(str2))) :: str
+    character(len=strLengthMax) :: str
     character(len=len(str)) :: ptrn  ! The one with '*'
     character(len=len(str)), dimension(MAXNUMWILDCARDS+1) :: substrs
     logical :: wildcard
@@ -1368,7 +1435,7 @@ contains
       str = adjustl(str)
       ptrn = adjustl(ptrn)
     endif
-    ! if ( deebug ) print *, 'str: ', trim(str), '  ptrn: ', trim(ptrn)
+    if ( deebug ) print *, 'str: ', trim(str), '  ptrn: ', trim(ptrn)
     if ( ptrn == star ) then
       relation = .true.
       return
@@ -1379,11 +1446,11 @@ contains
 
     ! 1st -- how many stars?
     nstars =     ncopies(ptrn, star)
-    ! if ( deebug ) print *, 'num of * ', nstars
+    if ( deebug ) print *, 'num of * ', nstars
     ! 2nd -- extract substrings from inbetween the wildcards
     substrs = star
     istars(1:nstars) = indexes(ptrn, substrs(1:nstars), mode='left')
-    ! if ( deebug ) print *, 'where? ', istars(1:nstars)
+    if ( deebug ) print *, 'where? ', istars(1:nstars)
     substrs = ' '
     spos = 1
     do i=1, nstars
@@ -1392,20 +1459,30 @@ contains
       spos = max(spos, istars(i)) + 1
     enddo
     substrs(nstars+1) = Reverse_trim(firstsubstr(Reverse_trim(ptrn), star))
-!     if ( deebug ) then
-!       do i=1, nstars+1
-!         print *, trim(substrs(i))
-!       enddo
-!     endif
+    if ( deebug ) then
+      do i=1, nstars+1
+        print *, trim_safe(substrs(i))
+      enddo
+    endif
     ! Deal specifically with empty elements of substrs
+    if ( deebug ) print *, 'Deal specifically with empty elements of substrs'
     relation = .true.
+    if ( deebug ) print *, 'Is substr(1) non-blank? ', substrs(1) /= ' '
     if ( substrs(1) /= ' ' ) then
+      if ( deebug ) then
+        print *, 'About to check index'
+        print *, 'str ', str
+        print *, 'trim(substrs(1)) ', trim(substrs(1))
+        print *, 'len(str) ', len(str)
+        print *, 'len(trim(substrs(1))) ', len(trim(substrs(1)))
+        print *, 'index: ', index( str, trim(substrs(1)) )
+      endif
       if ( index(str, trim(substrs(1))) /= 1 ) then
         relation = .false.
         return
       endif
     endif
-    ! if ( deebug ) print *, 'passed 1st sub-test'
+    if ( deebug ) print *, 'passed 1st sub-test'
     ! firstSSindex = 2
     if ( substrs(nstars+1) /= ' ' ) then
       if ( index(Reverse_trim(str), Reverse_trim(substrs(nstars+1))) /= 1 ) then
@@ -1415,7 +1492,7 @@ contains
       endif
     endif
     ! lastSSindex = nstars
-    ! if ( deebug ) print *, 'passed 2nd sub-test'
+    if ( deebug ) print *, 'passed 2nd sub-test'
     if ( nstars < 2 ) return
     ! Now find the indexes of these sub-patterns according to mode='wrap'
     istars(1:nstars-1) = indexes(str, substrs(2:nstars), mode='wrap')
@@ -1634,6 +1711,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.65  2007/04/26 20:32:15  pwagner
+! Coded around bug in Intel compiler causing streq to bomb
+!
 ! Revision 2.64  2007/01/03 20:40:25  pwagner
 ! Added NAppearances
 !
