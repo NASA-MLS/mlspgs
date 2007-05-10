@@ -22,11 +22,14 @@
 # foreign countries or providing access to foreign persons.
 
 # "$Id$"
+echo "We were called as $0"
+standsalone=`echo $0 | grep -i tkreset`
+echo "tkreset.sh called with $@"
 if [ "$PGSHOME" = "" ]
   then
   # No previous toolkit paths
   echo "No previous PGSHOME defined"
-  if [ -f "$1" ]
+  if [ -f "$1" -a "$standsalone" != "" ]
     then
      . $1
   fi
@@ -35,18 +38,20 @@ if [ "$PGSHOME" = "" ]
 else
   oldPATH=`echo $PATH | sed 's^:^ ^g'`
   oldhome="$PGSHOME"
+  echo "oldPath is $oldPATH"
+  echo "oldhome is $oldhome"
   usage="2"
-  if [ -f "$1" ]
+  if [ -f "$1" -a "$standsalone" != "" ]
     then
     usage="1"
      . $1
   fi
-  # echo "usage is $usage"
+  echo "usage is $usage"
   PATH=""
   checkdpths=""
   for arg in $oldPATH
   do
-    # echo "arg is $arg"
+    echo "arg is $arg"
     repl=""
     repeat=""
     match=`echo $arg | /bin/grep "$oldhome"`
@@ -120,6 +125,9 @@ else
   unset oldarg
 fi
 # $Log$
+# Revision 1.3  2005/06/23 22:20:46  pwagner
+# Reworded Copyright statement
+#
 # Revision 1.2  2003/05/08 20:09:07  pwagner
 # Removed exit commands where possible
 #
