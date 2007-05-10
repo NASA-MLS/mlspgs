@@ -122,7 +122,7 @@ get_unique_name()
 do_the_call()
 {
 
-# Not sure why this isn't done automatcially
+# Not sure why this isn't done automatically
 if [ -r "$HOME/.bashrc" ]
 then
 . $HOME/.bashrc
@@ -130,8 +130,19 @@ fi
 
 #This only works at the scf--change it when copying to the sips
 LASTDITCHPGSBIN="/software/toolkit/LF6.1/toolkit/bin/linux"
-#LASTDITCHPGSBIN="/science/pge/v0200-l2/toolkit5.2.14/bin/linux"
+#LOGFILE=${HOME}/slave.log
 PGE_ROOT=ppggeerroott
+#echo $PGE_ROOT > $LOGFILE
+if [ -r "${HOME}/mlspgs/util/tkreset.sh"  ]
+then
+#echo ${HOME}/mlspgs/util/tkreset.sh >> $LOGFILE
+#echo ". ${HOME}/mlspgs/util/tkreset.sh"  >> $LOGFILE
+#. ${HOME}/mlspgs/util/tkreset.sh  >> $LOGFILE
+. ${HOME}/mlspgs/util/tkreset.sh
+fi
+#env >> $LOGFILE
+PGSBIN=ppggssbbiinn
+#echo $PGSBIN >> $LOGFILE
 if [ -r "$PGE_ROOT/science_env.sh"  ]
 then
 . ${PGE_ROOT}/science_env.sh
@@ -157,8 +168,13 @@ export FLIB_DVT_BUFFER=0
 
 # The next choice, in contrast, puts each slave's output into its own unique file
 temp_file_name=`get_unique_name log -reverse`
+#OLDLOGFILE=$LOGFILE
 LOGFILE="${JOBDIR}/pvmlog/$temp_file_name"
 UNBUFFERED="${LOGFILE}.u"
+#ENVSETTINGS="${LOGFILE}.env"
+#echo $LOGFILE >> $OLDLOGFILE
+
+#env  2>&1 | tee "$ENVSETTINGS"
 
 if [ ! -w "$LOGFILE" ]
 then
@@ -303,6 +319,10 @@ then
   fi
 fi
 
+#env | sort > "$ENVSETTINGS"
+ulimit -s unlimited
+#ulimit -a >> "$ENVSETTINGS"
+
 echo $PGE_BINARY --tk -m --slave $masterTid $otheropts 2>&1 | tee -a "$LOGFILE"
 $PGE_BINARY --tk -m --slave $masterTid $otheropts 2>&1 | tee -a "$LOGFILE"
 
@@ -325,6 +345,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.13  2007/02/09 21:31:07  pwagner
+# Sets environmental variable as work-around to Lahey 6.2 bug; accepts --delay --stdout opts
+#
 # Revision 1.12  2006/10/05 23:41:32  pwagner
 # Needed for latest options, to work at scf (needs sips testing)
 #

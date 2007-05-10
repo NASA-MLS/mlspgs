@@ -145,12 +145,18 @@ s=ppggssmmeemmuusseesshhmm=${PGSMEM_USESHM}=;
 s=ssllaavveessccrriipptt=${slave_script}=;
 s=ootthheerrooppttss=\"${otheropts}\"=;
 s=ppggeebbiinnaarryy=${PGE_BINARY}=;
+s=ppggssbbiinn=${PGSBIN}=;
 s=jjoobbddiirr=${JOBDIR}=;
 s=ppggeerroott=${PGE_ROOT}=;" $PGE_SCRIPT_DIR/slavetmplt.sh > $slave_script
 chmod a+x $slave_script
 
 NORMAL_STATUS=2
 
+env
+#env | sort > ${JOBDIR}/mlsl2p.env
+ulimit -s unlimited
+ulimit -a
+#ulimit -a >> ${JOBDIR}/mlsl2p.env
 # First a pre-flight run to check paths
 # If a problem, disclosed by exit status, exit before starting big run
 if [ "$CHECKPATHS" = "yes" ]
@@ -249,6 +255,9 @@ else
 fi
 
 # $Log$
+# Revision 1.15  2007/03/23 00:32:00  pwagner
+# By default no longer dumps slave stdouts into masters
+#
 # Revision 1.14  2007/02/09 21:31:19  pwagner
 # Sets environmental variable as work-around to Lahey 6.2 bug
 #
