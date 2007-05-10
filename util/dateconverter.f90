@@ -298,7 +298,7 @@ contains
 !------------------------- get_date ---------------------
     subroutine get_date(date, n_dates, options)
     ! Added for command-line processing
-     character(LEN=255), intent(out) :: date          ! date
+     character(LEN=*), intent(out) :: date          ! date
      integer, intent(in)             :: n_dates
      type ( options_T ), intent(inout) :: options
      ! Local variables
@@ -395,3 +395,6 @@ END PROGRAM dateconverter
 !==================
 
 ! $Log$
+! Revision 1.1  2007/01/18 23:36:04  pwagner
+! Moved here from sandbox
+!
