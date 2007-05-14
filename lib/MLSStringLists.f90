@@ -314,7 +314,7 @@ contains
     character(len=MAXSTRLISTLENGTH) :: part2
     character(len=MAXSTRLISTLENGTH) :: part3
     logical :: pvalue
-    character(len=8) :: vChar
+    character(len=16) :: vChar
     logical, parameter :: countEmpty=.true.
     ! Executable
     BooleanValue = .FALSE.
@@ -544,7 +544,7 @@ contains
     integer :: ErrTyp
     integer :: nelem
     character(len=MAXSTRLISTLENGTH) :: expandedstr
-    character(len=8) :: iChar
+    character(len=16) :: iChar
     logical, parameter :: countEmpty=.true.
     ! Executable
     ints = 0
@@ -579,7 +579,7 @@ contains
     integer :: nfits
     integer :: hfit
     character(len=MAXSTRLISTLENGTH) :: expandedstr
-    character(len=8) :: iChar
+    character(len=16) :: iChar
     logical, parameter :: countEmpty=.true.
     logical :: mySense
     ! Executable
@@ -634,15 +634,15 @@ contains
     integer :: elem
     integer :: ErrTyp
     integer :: m
-    character (len=8) :: mChar
+    character (len=16) :: mChar
     integer :: n
-    character (len=8) :: nChar
+    character (len=16) :: nChar
     integer :: nelem
     integer :: pluspos
     integer :: s
-    character (len=8) :: sChar
+    character (len=16) :: sChar
     integer :: t
-    character (len=8) :: tChar
+    character (len=16) :: tChar
     logical, parameter :: countEmpty=.true.
     ! Executable
     outstr = instr
@@ -2868,6 +2868,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.25  2007/05/14 21:51:51  pwagner
+! Bugfix for way ifc writes ints to strings
+!
 ! Revision 2.24  2007/04/20 22:27:49  pwagner
 ! Minor change to keep buggy Intel compiler from producing code that bombs
 !
