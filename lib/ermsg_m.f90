@@ -14,7 +14,13 @@
 MODULE ERMSG_M
 
 !=======================================================================================
+! We've endeavored to make this independent of the normal "write(*,*)" idiom
+! Also we don't merely "stop", we call MLSMessageExit
+! Note that, depending on MLSMessageConfig, the program may halt after the first
+! output (probably not what you want)
+! Also each line might be prefixed by some string and/or time-stamped
 
+  use MLSMessageModule, only: MLSMessage, MLSMessageExit, MLSMSG_Warning
   IMPLICIT NONE
 
   PRIVATE
@@ -40,14 +46,20 @@ MODULE ERMSG_M
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
+  interface output
+    module procedure output_dble, output_int, output_real, output_char
+  end interface
+
 CONTAINS
   SUBROUTINE ERFIN
 !>> 1998-04-13 ERFIN  Snyder  Convert to F90
 !>> 1994-11-11 ERFIN  CLL     Typing all variables.
 !>> 1985-09-23 ERFIN  Lawson  Initial code.
  
-    WRITE (*,"(1X,72('$')/' ')")
-    IF (ialpha >= 2) STOP
+    ! WRITE (*,"(1X,72('$')/' ')")
+    ! IF (ialpha >= 2) STOP
+    call output('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$')
+    if ( ialpha > 1 ) call MLSMessageExit( 1 )
     RETURN
   END SUBROUTINE ERFIN
 !=======================================================================
@@ -188,7 +200,8 @@ CONTAINS
     CHARACTER(len=1), INTENT(in) :: FLAG
 
     IF (ialpha >= -1) THEN
-      WRITE (*,*) msg
+      ! WRITE (*,*) msg
+      call output( msg )
       IF (flag == '.') CALL erfin
     END IF
     RETURN
@@ -252,9 +265,13 @@ CONTAINS
     oldlev = level
     ialpha = level + idelta
     IF (ialpha >= -1) THEN
-      WRITE (*,"('0',72('$')/' SUBPROGRAM ',A,' REPORTS ERROR NO. ',I4)") &
-        subnam, indic
-      WRITE (*,*) msg
+      ! WRITE (*,"('0',72('$')/' SUBPROGRAM ',A,' REPORTS ERROR NO. ',I4)") &
+      !  subnam, indic
+      ! WRITE (*,*) msg
+      call newline
+      call output( '$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$' )
+      call output( ' reports error number ', subnam, advance='no' )
+      call output( indic )
       IF (flag == '.') CALL erfin
     ENDIF
     RETURN
@@ -407,13 +424,72 @@ CONTAINS
       lenidv = LEN (labels)
       number = maxcol / (lenidv+17)
       DO i = 1, SIZE(labels), number
-        WRITE(*,"(4(2x,a,'=',g14.7))") &
-          (labels(k), values(k), k = i, MIN(SIZE(labels), i+number-1) )
+        do k=i, MIN(SIZE(labels), i+number-1)
+          call output( labels(k) // ' = ', advance='no' )
+          call output( values(k), advance='no' )
+        END DO
+        call newline
+        ! WRITE(*,"(4(2x,a,'=',g14.7))") &
+        !  (labels(k), values(k), k = i, MIN(SIZE(labels), i+number-1) )
       END DO
       IF (flag == '.') CALL erfin
     ENDIF
     RETURN
   END SUBROUTINE DERVN
+
+  subroutine newline
+    call output( ' ', advance='yes' )
+  end subroutine newline
+
+  subroutine output_char( chars, subnam, advance )
+    character(len=*), intent(in) :: chars
+    character (len=*), optional, intent(in) :: subnam ! Name of module (see below)
+    character (len=*), intent(in), optional :: Advance ! Do not advance
+    !                                 if present and the first character is 'N'
+    !                                 or 'n'
+    ! Internal variables
+    character(len=32) :: name
+    ! Executable
+    name = 'Anonymous'
+    if ( present(subnam) ) name = subnam
+    call MLSMessage( MLSMSG_Warning, name, chars, advance )
+  end subroutine output_char
+
+  subroutine output_dble( x, subnam, advance )
+    double precision, intent(in) :: x
+    character (len=*), optional, intent(in) :: subnam ! Name of module (see below)
+    character (len=*), intent(in), optional :: Advance ! Do not advance
+    !                                 if present and the first character is 'N'
+    !                                 or 'n'
+    ! Internal variables
+    character(len=16) :: chars
+    write(chars, *) x
+    call output_char( chars, subnam, advance )
+  end subroutine output_dble
+
+  subroutine output_int( x, subnam, advance )
+    integer, intent(in) :: x
+    character (len=*), optional, intent(in) :: subnam ! Name of module (see below)
+    character (len=*), intent(in), optional :: Advance ! Do not advance
+    !                                 if present and the first character is 'N'
+    !                                 or 'n'
+    ! Internal variables
+    character(len=16) :: chars
+    write(chars, *) x
+    call output_char( chars, subnam, advance )
+  end subroutine output_int
+
+  subroutine output_real( x, subnam, advance )
+    real, intent(in) :: x
+    character (len=*), optional, intent(in) :: subnam ! Name of module (see below)
+    character (len=*), intent(in), optional :: Advance ! Do not advance
+    !                                 if present and the first character is 'N'
+    !                                 or 'n'
+    ! Internal variables
+    character(len=16) :: chars
+    write(chars, *) x
+    call output_char( chars, subnam, advance )
+  end subroutine output_real
 
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
@@ -427,6 +503,9 @@ CONTAINS
 END MODULE ERMSG_M
 
 ! $Log$
+! Revision 2.6  2007/05/17 17:24:04  pwagner
+! Forced to output via MLSMessage calls
+!
 ! Revision 2.5  2005/06/22 17:25:48  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
