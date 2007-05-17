@@ -43,7 +43,7 @@ vpath %.f9h ../ $(srclib)
 vpath %.f ../
 vpath %.c ../
 
-FC = ifc
+FC = ifort
 
 DUSTY = $(FOPTS)
 
@@ -72,6 +72,9 @@ INC_PATHS = $(EXTRA_PATHS) \
 l_specials =
 
 # $Log$
+# Revision 1.2  2007/04/16 23:10:17  pwagner
+# Changes in line with Intel v9.1
+#
 # Revision 1.1  2004/12/14 23:31:51  pwagner
 # Made blas available for compiling, mlspack for linking
 #

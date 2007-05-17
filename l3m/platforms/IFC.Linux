@@ -33,7 +33,7 @@ vpath %.f9h ../
 vpath %.f ../
 vpath %.c ../
 
-FC = ifc
+FC = ifort
 
 # Currently, unknown if DUSTY needs to be different yet
 DUSTY = $(FOPTS)
@@ -72,6 +72,9 @@ INC_PATHS = $(EXTRA_PATHS) $(PATHS_PREFXD) \
 l_specials = 
 
 # $Log$
+# Revision 1.2  2005/08/17 17:46:42  pwagner
+# INC_PATHS expanded to include blaslib
+#
 # Revision 1.1  2003/04/01 23:20:53  pwagner
 # First commit
 #

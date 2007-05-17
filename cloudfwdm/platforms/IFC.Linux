@@ -50,7 +50,7 @@ vpath %.f9h ../ $(srclib)
 vpath %.f ../
 vpath %.c ../
 
-FC = ifc
+FC = ifort
 
 # Compiler options:
 # Currently, unknown if DUSTY needs to be different yet
@@ -84,3 +84,6 @@ INC_PATHS = $(EXTRA_PATHS) $(PATHS_PREFXD) \
 l_specials = 
 
 # $Log$
+# Revision 1.1  2003/04/01 23:20:52  pwagner
+# First commit
+#

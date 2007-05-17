@@ -44,7 +44,7 @@ vpath %.f9h ../ $(srclib)
 vpath %.f ../
 vpath %.c ../
 
-FC = ifc
+FC = ifort
 
 # Currently, unknown if DUSTY needs to be different yet
 DUSTY = $(FOPTS)
@@ -76,6 +76,9 @@ INC_PATHS = $(EXTRA_PATHS) $(PATHS_PREFXD) \
 l_specials = 
 
 # $Log$
+# Revision 1.2  2005/05/03 21:17:32  ybj
+# Needed blaslib in inc_path
+#
 # Revision 1.1  2003/04/01 23:20:53  pwagner
 # First commit
 #

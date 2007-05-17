@@ -60,7 +60,7 @@ vpath %.f9h ../ $(srclib)
 vpath %.f ../
 vpath %.c ../
 
-FC = ifc
+FC = ifort
 
 # Currently, unknown if DUSTY needs to be different yet
 DUSTY = $(FOPTS)
@@ -92,3 +92,6 @@ INC_PATHS = $(EXTRA_PATHS) $(PATHS_PREFXD) \
 l_specials =
 
 # $Log$
+# Revision 1.1  2007/04/16 23:10:17  pwagner
+# Changes in line with Intel v9.1
+#
