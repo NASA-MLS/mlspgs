@@ -24,12 +24,13 @@ program L2Q
   use MLSL2Options, only: CURRENT_VERSION_ID
   use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMessageExit, &
     & MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Debug, MLSMSG_Error, &
-    & MLSMSG_Info, MLSMSG_Warning, PVMERRORMESSAGE
+    & MLSMSG_Info, MLSMSG_Success, MLSMSG_Warning, PVMERRORMESSAGE
   use MLSSETS, only: FINDFIRST, FINDALL
   use MLSSTRINGLISTS, only: CATLISTS, GETSTRINGELEMENT, NUMSTRINGELEMENTS, &
     & STRINGELEMENTNUM
   use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS, STREQ
-  use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUT_DATE_AND_TIME, OutputOptions, &
+  use OUTPUT_M, only: BLANKS, NEWLINE, &
+    & OUTPUT, OUTPUT_DATE_AND_TIME, outputNamedValue, OutputOptions, &
     & TIMESTAMP
   use PVM, only: PVMOK, &
     & ClearPVMArgs, FreePVMArgs, GETMACHINENAMEFROMTID, &
@@ -54,6 +55,20 @@ program L2Q
   ! where list is an ascii file which comes from one of
   ! (i)  a file named on the command line w/o the '<' redirection
   ! (ii) stdin or a file redirected as stdin using '<'
+  
+  ! For a list of options 
+  ! l2q --help
+  
+  ! Bugs and limitations:
+  ! --------------------
+  ! (1) The dump_file, if used, is buffered by default (otherwise everything
+  !       is slowed to an unacceptable pace during production)
+  ! (2) The hosts named in the file list must match the names returned
+  !       by the pvm subroutine PVMFConfig which normally takes its names
+  !       from pvm's own input file;
+  !       to be clearer, guard against the case where one file names its nodes
+  !       "c0-nnn" and the other file something like "jet-0-nnn" because
+  !       l2q won't recognize that they refer to the same machines
 
   implicit none
 
@@ -159,6 +174,7 @@ program L2Q
       &                :: HDBfile = ''            ! name of hosts DB file
     character(len=FILENAMELEN) &
       &                :: MDBfile = ''            ! name of masters DB file
+    logical :: bufferedDumpFile = .true.          ! lack of buffering slows sips
     logical :: Rescue = .false.                   ! -R option is set
     logical :: Timing = .false.                   ! -T option is set
     logical :: date_and_times = .false.
@@ -184,9 +200,6 @@ program L2Q
   parallel%slaveFilename = 'pvm' ! for later cures only
   !---------------- Task (0) ------------------
   call get_options
-  ! print *, 'dump file: ', trim(options%dump_file)
-  ! print *, 'masters file: ', trim(options%PMFile)
-  ! print *, 'hosts file: ', trim(options%PHfile)
   options%verbose = options%verbose .or. options%debug
   select case (options%timingUnits)
   case ('m')
@@ -202,7 +215,7 @@ program L2Q
   ! Do we use buffered output?
   if ( options%dump_file /= '<STDIN>' ) then
     OutputOptions%prunit = DUMPUNIT
-    OutputOptions%buffered = .false.
+    OutputOptions%buffered = options%bufferedDumpFile ! .false.
     OutputOptions%opened = .true.
     OutputOptions%name = options%dump_file
     ! print *, 'Opening ', prunit, ' as ', trim(options%dump_file)
@@ -297,7 +310,8 @@ program L2Q
 
   call InitParallel ( 0, 0 )
   call GetMachineNames ( machineNames )
-  if ( .not. associated(machineNames) ) call MLSMessage( MLSMSG_Error, ModuleName, &
+  if ( .not. associated(machineNames) ) &
+      & call MLSMessage( MLSMSG_Error, ModuleName, &
       & 'unable to get machine names' )
   if ( size(machineNames) < 1 ) call MLSMessage( MLSMSG_Error, ModuleName, &
       & 'machine names array of zero size' )
@@ -346,9 +360,7 @@ program L2Q
   end if
 
   call read_list
-  call cure_host_database(hosts, machineNames, silent=.true.)
-  if ( .not. associated(machineNames) ) call MLSMessage( MLSMSG_Error, ModuleName, &
-      & 'unable to get machine names after cure_host_database' )
+  call cure_host_database( hosts, silent=.true. )
   ! Are we rescuing an older l2q that died?
   if ( options%Rescue ) then
     ! Read Masters db
@@ -465,10 +477,10 @@ contains
     if ( .not. (host%free .and. host%OK) ) then
       call dump(host)
       call dump_master(master)
-      call MLSMessage( options%errorLevel, ModuleName, &
+      call myMLSMessage( options%errorLevel, ModuleName, &
       & 'Tried to assign an unqualified host to this master' )
     elseif( master%owes_thanks ) then
-      call MLSMessage( options%errorLevel, ModuleName, &
+      call myMLSMessage( options%errorLevel, ModuleName, &
       & 'Tried to assign host to an ungrateful master' )
     endif      
     host%master_tid = master%tid
@@ -476,7 +488,7 @@ contains
     host%tid = 0
     if ( options%debug ) then
        call output ('Number of machines free: ', advance='no')
-       call timestamp (count(hosts%free), advance='yes')
+       call timestamp (count(hosts%free .and. hosts%OK), advance='yes')
     endif
     hcid = 1
     if ( .not. associated(master%hosts) ) then
@@ -529,14 +541,14 @@ contains
   end subroutine clean_master_database
 
   ! ---------------------------------------------  cure_host_database  -----
-  subroutine cure_host_database(hosts, machineNames, silent, selectedHosts)
-    ! cure any recovered hosts in database--declare them fit for action
+  subroutine cure_host_database(hosts, silent, selectedHosts)
+    ! cure any recovered hosts in database--declare them useable ("OK")
     ! If optional selectedHosts is present, cure only them
     type(Machine_T), intent(inout), dimension(:) :: hosts
-    character(len=MachineNameLen), dimension(:), pointer :: MACHINENAMES
     logical, optional, intent(in) :: silent
     character(len=*), optional, intent(in) :: selectedHosts
     ! Internal variables
+    character(len=MachineNameLen), dimension(:), pointer :: MACHINENAMES => null()
     logical :: mySilent
     integer :: i
     integer :: status
@@ -544,8 +556,21 @@ contains
     mySilent = .not. options%verbose
     if ( present(silent) ) mySilent = silent .or. mySilent
     ! No need to cure if none have died
-    if ( all(hosts%OK) ) return
-    ! call GetMachineNames ( machineNames )
+    if ( .not. mySilent ) then
+      call outputNamedValue( 'number hosts alive', count(hosts%OK) )
+      call outputNamedValue( 'number hosts dead', count(.not. hosts%OK) )
+    endif
+    if ( all(hosts%OK) ) return    
+    if ( .not. silent .and. present(selectedHosts) ) &
+      & call dump( selectedHosts, 'selectedHosts' )
+    call GetMachineNames ( machineNames )
+    if ( .not. associated(machineNames) ) &
+        & call myMLSMessage( MLSMSG_Error, ModuleName, &
+        & 'unable to get machine names' )
+    if ( size(machineNames) < 1 ) call myMLSMessage( MLSMSG_Error, ModuleName, &
+        & 'machine names array of zero size' )
+    if ( .not. mySilent .and. DEEBUG ) &
+      & call dump( machineNames, 'machineNames' )
     do i=1, size(hosts)
       if ( hosts(i)%OK ) cycle
       ! Warning--following use of variable 'status' is non-standard
@@ -558,12 +583,14 @@ contains
       hosts(i)%OK = any( streq(hosts(i)%name, machineNames, '-f') )
       if ( hosts(i)%OK .and. .not. mySilent ) &
         & call proclaim('Host Cured', hosts(i)%Name)
+      if ( .not. hosts(i)%OK .and. .not. mySilent ) &
+        & call proclaim('Sorry--host still not useable', hosts(i)%Name)
       if ( .not. hosts(i)%OK .and. DEEBUG ) then
         call output( hosts(i)%name, advance='yes' )
         call dump( machineNames, 'machinenames' )
       endif
     enddo
-    ! call deAllocate_test(machineNames, 'machineNames', moduleName )
+    call deAllocate_test(machineNames, 'machineNames', moduleName )
   end subroutine cure_host_database
 
   ! ---------------------------------------------  dump_his_hosts  -----
@@ -701,6 +728,9 @@ contains
     call output(' Using wall clock instead of cpu time?:          ', advance='no')
     call blanks(4, advance='no')
     call output(time_config%use_wall_clock, advance='yes')
+    call output(' Using buffered output?:                         ', advance='no')
+    call blanks(4, advance='no')
+    call output(Options%bufferedDumpFile, advance='yes')
     call output(' ----------------------------------------------------------', &
       & advance='yes')
   end subroutine Dump_settings
@@ -796,7 +826,7 @@ contains
           aMaster%tid = masterTid
           call GetMachineNameFromTid ( masterTid, aMaster%Name, info )
           if ( info == -1 ) & 
-            & call MLSMessage ( options%errorLevel, ModuleName, &
+            & call myMLSMessage( options%errorLevel, ModuleName, &
             & 'Unable to get machine name from tid' )
           aMaster%NumHosts = 0
           aMaster%needs_Host = .false.
@@ -853,8 +883,11 @@ contains
         case ( sig_releaseHost ) ! ----------------- Done with this host ------
           ! Find master's index into masters array
           mastersID = FindFirst(masters%tid, masterTid)
-          call IDHostFromMaster(sig_releaseHost, tid, mastersID, hostsID)
-          if ( hostsID > 0 ) then
+          call IDHostFromMaster(sig_releaseHost, tid, hostsID)
+          if ( mastersID < 1 ) then
+            call myMLSMessage( MLSMSG_Warning, ModuleName, &
+              & 'Unknown master attempted to free a host' )
+          elseif ( hostsID > 0 ) then
             call releaseHostFromMaster( hosts(hostsID), masters(mastersID), &
               & hostsID )
             if ( options%debug ) then
@@ -866,7 +899,7 @@ contains
               call output ('Number of machines free: ', advance='no')
               call timestamp (count(hosts%free .and. hosts%OK), advance='yes')
             endif
-            mayAssignAHost = .false. ! Don't assign to a later master
+            mayAssignAHost = ( mastersID < size(masters) ) ! .false. ! Don't assign to a later master
           else
             call timestamp ( 'Unknown host freed by master', advance='yes')
           endif
@@ -892,7 +925,7 @@ contains
             call output(mastersID , advance='yes')
             call output(' machineName ', advance='no')
             call output(trim(machineName) , advance='yes')
-            call MLSMessage( options%errorLevel, ModuleName, &
+            call myMLSMessage( options%errorLevel, ModuleName, &
                & 'Master thanked us for unknown host' )
           endif
           hosts(hostsID)%tid = tid
@@ -920,7 +953,7 @@ contains
           if ( options%debug ) &
             & call proclaim('Master ' // trim(masterNameFun(masterTID)) // &
             & ' reports host died', advance='no')
-          call IDHostFromMaster(sig_HostDied, tid, mastersID, hostsID)
+          call IDHostFromMaster(sig_HostDied, tid, hostsID)
           if ( hostsID > 0 ) then
             call releaseHostFromMaster( hosts(hostsID), masters(mastersID), &
               & hostsID )
@@ -972,7 +1005,7 @@ contains
           if ( options%debug ) &
             & call proclaim( 'Unrecognized signal from Master ' // &
             & masterNameFun(masterTid) )
-          call MLSMessage( options%errorLevel, ModuleName, &
+          call myMLSMessage( options%errorLevel, ModuleName, &
              & 'Unrecognized signal from master' )
         end select
         call PVMFFreeBuf ( bufferIDRcv, info )
@@ -991,7 +1024,7 @@ contains
         ! Now this may well be a legitimate exit, 
         ! in which case, master finished normally.  
         mastersID = FindFirst(masters%tid, masterTid)
-        if ( mastersID < 1 ) call MLSMessage( options%errorLevel, ModuleName, &
+        if ( mastersID < 1 ) call myMLSMessage( options%errorLevel, ModuleName, &
            & 'Exit signal from unrecognized master' )
         if ( .not. masters(mastersID)%finished ) then
           ! Otherwise we need to tidy up.
@@ -1150,7 +1183,7 @@ contains
       if ( bufferIDRcv > 0 ) call timestamp ( &
         & 'Received an external message to check for revivals', advance='yes' )
       if ( bufferIDRcv > 0 .or. checkrevivedhosts ) then
-        call cure_host_database( hosts, machineNames )
+        call cure_host_database( hosts )
         dumpHosts = .true.
       endif
       ! Listen out for any message telling us to revive selected hosts
@@ -1163,7 +1196,7 @@ contains
         if ( info /= 0 ) call myPVMErrorMessage ( info, 'unpacking selectedHosts' )
         call timestamp ( 'Received an external message to check ' // &
           & trim(options%selectedHosts), advance='yes' )
-        call cure_host_database(hosts, machineNames, .true., options%selectedHosts)
+        call cure_host_database(hosts, .false., options%selectedHosts)
         dumpHosts = .true.
       end if
       ! Listen out for any message telling us to flush current dumpfile
@@ -1185,13 +1218,13 @@ contains
           open( OutputOptions%prunit, file=trim(options%dump_file), &
             & status='replace', form='formatted', iostat=status )
           if ( status /= 0 ) then
-            call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            call myMLSMessage ( MLSMSG_Warning, ModuleName, &
               & 'No new dumpfile; unable to open ' // &
               & trim(options%dump_file) )
             options%dump_file = tempfile
             open( OutputOptions%prunit, file=trim(options%dump_file), &
               & status='replace', form='formatted', iostat=status )
-            if ( status /= 0 ) call MLSMessage ( options%errorLevel, ModuleName, &
+            if ( status /= 0 ) call myMLSMessage( options%errorLevel, ModuleName, &
               & 'Now we cant even revert to old dumpfile; unable to open ' // &
               & trim(options%dump_file) )
           else
@@ -1233,7 +1266,7 @@ contains
           tLastHDBDump = t2
           if ( options%debug .and. DUMPDBSONDEBUG ) then
             inquire(unit=OutputOptions%prunit, opened=opened)
-            if ( .not. opened ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            if ( .not. opened ) call myMLSMessage ( MLSMSG_Warning, ModuleName, &
               & 'Miscellaneous dump file not opened ' // &
               & trim(options%dump_file) )
             call dump(hosts)
@@ -1248,7 +1281,7 @@ contains
           tLastMDBDump = t2
           if ( options%debug .and. DUMPDBSONDEBUG ) then
             inquire(unit=OutputOptions%prunit, opened=opened)
-            if ( .not. opened ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            if ( .not. opened ) call myMLSMessage ( MLSMSG_Warning, ModuleName, &
               & 'Miscellaneous dump file not opened ' // &
               & trim(options%dump_file) )
             call dump_master_database(masters)
@@ -1347,7 +1380,9 @@ contains
           switch = .false.
           n = 1
         end if
-        if ( line(3+n:7+n) == 'clean ' ) then
+        if ( line(3+n:5+n) == 'buf' ) then
+          options%bufferedDumpFile = switch
+        elseif ( line(3+n:7+n) == 'clean ' ) then
           options%cleanMasterDB = switch
         elseif ( line(3+n:7+n) == 'check ' ) then
           options%checklist = switch
@@ -1491,12 +1526,11 @@ contains
   end subroutine get_options
    
   ! ---------------------------------------------  IDHostFromMaster  -----
-  subroutine IDHostFromMaster(signal, tid, mastersID, hostsID)
+  subroutine IDHostFromMaster(signal, tid, hostsID)
     ! Figure out which master is talking about
     ! Arguments
     integer, intent(in)  :: signal
     integer, intent(out) :: tid
-    integer, intent(in)  :: mastersID
     integer, intent(out) :: hostsID
     ! Internal variables
     integer :: info
@@ -1534,9 +1568,9 @@ contains
       if ( options%verbose ) then
         if ( options%timing ) call sayTime
         if ( signal == sig_HostDied ) then
-          call output('Warning--unknown tid freed', advance='no')
-        else
           call output('Warning--unknown tid died', advance='no')
+        else
+          call output('Warning--unknown tid freed', advance='no')
         endif
         call output('  tid ', advance='no')
         call output(tid, advance='no')
@@ -1549,11 +1583,11 @@ contains
         ! if ( options%verbose ) call dump (hosts%tid, format='(i10)')
         ! We'll try again--using the machine name
         hostsID = FindFirst(hosts%name, machineName)
-        if ( hostsID < 1 ) call MLSMessage( MLSMSG_Warning, ModuleName, &
+        if ( hostsID < 1 ) call myMLSMessage( MLSMSG_Warning, ModuleName, &
           & 'Even the machine name ' // trim(machineName) // &
           & ' yields an ID outside list of hosts' )
       else
-        call MLSMessage( MLSMSG_Warning, ModuleName, &
+        call myMLSMessage( MLSMSG_Warning, ModuleName, &
           & 'machine name yields an ID outside list of hosts' )
       endif
     endif
@@ -1669,9 +1703,34 @@ contains
     name = catLists('m', mastersID, inseparator='-')
   end function masterNameFun
 
+  ! ---------------------------------------------  myMLSMessage  -----
+  subroutine myMLSMessage ( Severity, ModuleNameIn, Message )
+    ! A 'safer' substitute for MLSMessage
+    ! (in case we don't trust the toolkit)
+    integer, intent(in) :: Severity ! e.g. MLSMSG_Error
+    character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
+    character (len=*), intent(in) :: Message ! Line of text
+
+    select case ( severity )
+    case ( MLSMSG_Success )
+      call timeStamp('Success: ' // trim(Message), advance='yes')
+    case ( MLSMSG_Debug )
+      call timeStamp('Debug: ' // trim(Message), advance='yes')
+    case ( MLSMSG_Info )
+      call timeStamp('Info: ' // trim(Message), advance='yes')
+    case ( MLSMSG_Warning )
+      call timeStamp('Warning: ' // trim(Message), advance='yes')
+    case ( MLSMSG_Error )
+      call MLSMessage ( Severity, ModuleNameIn, Message )
+    case default
+      call timeStamp('Default: ' // trim(Message), advance='yes')
+    end select
+  end subroutine myMLSMessage
+
   ! ---------------------------------------------  myPVMErrorMessage  -----
   subroutine myPVMErrorMessage ( info, place )
     ! This routine is called to log a PVM error
+    ! possibly because we may not wish to exit on such an error
     integer, intent(in) :: INFO
     character (LEN=*) :: PLACE
     character (LEN=132) :: LINE
@@ -1680,23 +1739,20 @@ contains
     if ( options%exitOnError ) then
       call PVMErrorMessage ( info, place )
     else
-      call MLSMessage ( options%errorLevel, Place, &
+      call myMLSMessage ( options%errorLevel, Place, &
         & 'PVM Error:  Info='//trim(adjustl(line)))
     endif
   end subroutine myPVMErrorMessage
 
   ! ---------------------------------------------  Option_usage  -----
   ! The following offer some information on the options
-  ! available either on the command-line or via the PCF
-  ! Note the unashamed use of 'print' statements which
-  ! are officially discouraged in favor of calls to MLSMessage.
-  ! Unfortunately, we have not yet decided which method to use
-  ! until *after* processing all the options.
+  ! available on the command-line
   
   subroutine Option_usage
     call getarg ( 0+hp, line )
     print *, 'Usage: ', trim(line), ' [options] [--] [LIST-name]'
     print *, ' Options:'
+    print *, ' --[n]buf:    do [not] buffer dumpfile (if used)'
     print *, ' --check:     check LIST of hosts'
     print *, ' --[n]clean:  do [not] regularly clean db of finished masters'
     print *, ' --defer:     new masters defer to oldest (has enough hosts)'
@@ -1762,6 +1818,8 @@ contains
 
   ! ---------------------------------------------  proclaim  -----
   subroutine proclaim( Event, Name, Signal, advance )
+    ! Yet another routine to print output
+    ! This one sspecialized for signaling noteworthy events
     character(LEN=*), intent(in)   :: Event
     character(LEN=*), intent(in), optional   :: Name
     character(LEN=*), intent(in), optional   :: ADVANCE
@@ -2032,7 +2090,7 @@ contains
     if ( status == 0 ) then
       call dump(hosts)
     else
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      call myMLSMessage ( MLSMSG_Warning, ModuleName, &
         & 'Ignoring message; unable to open ' // &
         & trim(tempfile) )
     endif
@@ -2081,7 +2139,7 @@ contains
     if ( status == 0 ) then
       call dump_master_database(masters)
     else
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      call myMLSMessage ( MLSMSG_Warning, ModuleName, &
         & 'Ignoring message; unable to open ' // &
         & trim(tempfile) )
     endif
@@ -2113,20 +2171,20 @@ contains
     if ( options%debug ) &
       & call output( 'Releasing ' // trim(host%name) // '   ', advance='yes')
     if( size(master%hosts) < 1 .and. .not. master%owes_thanks ) then
-      call MLSMessage( MLSMSG_Warning, ModuleName, &
+      call myMLSMessage( MLSMSG_Warning, ModuleName, &
         & 'master lacks any hosts' )
       return
     elseif ( hostsID < 1 ) then
-      call MLSMessage( options%errorLevel, ModuleName, &
+      call myMLSMessage( options%errorLevel, ModuleName, &
         & 'Programming error--hostsID=0 in releaseHostFromMaster' )
     elseif ( hostsID > size(hosts) ) then
-      call MLSMessage( options%errorLevel, ModuleName, &
+      call myMLSMessage( options%errorLevel, ModuleName, &
         & 'Programming error--hostsID>size(hosts) in releaseHostFromMaster' )
     elseif ( master%owes_thanks ) then
-      call MLSMessage( MLSMSG_Warning, ModuleName, &
+      call myMLSMessage( MLSMSG_Warning, ModuleName, &
         & 'master still owes thanks' )
     elseif ( .not. associated(master%hosts) ) then
-      ! call MLSMessage( MLSMSG_Warning, ModuleName, &
+      ! call myMLSMessage( MLSMSG_Warning, ModuleName, &
       !  & 'master lacks any hosts' )
       call timestamp('master lacks any hosts', advance='yes' )
       return
@@ -2144,7 +2202,7 @@ contains
       call output(trim(host%name) // '   ', advance='no')
       call newline
       call dump_his_hosts(master%hosts, sortUs=.true.)
-      ! call MLSMessage( MLSMSG_Warning, ModuleName, &
+      ! call myMLSMessage( MLSMSG_Warning, ModuleName, &
       !  & 'master lacks that host' )
       call timestamp( '; master lacks that host', advance='yes' )
       return
@@ -2189,7 +2247,7 @@ contains
   
   ! ---------------------------------------------  rmMasterFromDatabase  -----
   subroutine  rmMasterFromDatabase( DATABASE, ITEM )
-    ! This function removess a master data type from a database of said types,
+    ! This function removes a master data type from a database of said types,
     ! creating a new database if it doesn't exist.  The result value is
     ! the reduced size
 
@@ -2266,11 +2324,17 @@ contains
       call output( ' Received oath of allegiance from master; needs host? ' )
       call timeStamp( master%needs_Host, advance='yes' )
     endif
+    ! In case master sent thanks after prior l2q died, we'll assume 
+    ! it does not owe thanks anymore
+    master%owes_thanks = .false.
   end subroutine SwitchMastersAllegiance
 
 end program L2Q
 
 ! $Log$
+! Revision 1.18  2007/02/09 21:24:22  pwagner
+! Fixed an error only NAG caught
+!
 ! Revision 1.17  2007/01/18 23:25:59  pwagner
 ! Changed to use unbuffered output with -o dump_file
 !
