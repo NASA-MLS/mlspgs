@@ -373,12 +373,18 @@ CONTAINS
                IF (GlobalAttributes%OrbPeriodDays(j,i) /= 0) THEN 
 		   sum = sum + GlobalAttributes%OrbPeriodDays(j,i)
                    count = count + 1
+               ELSE
+                  print *,'orb period is zero: ',i,j
 	       END IF	 
              END DO
-             avgPer(i) = sum/count 
+             IF (sum /= 0.0) THEN
+                avgPer(i) = sum/count 
+	     ELSE
+                avgPer(i) = cfDef%averageOrbitalPeriod
+	     END IF
           ELSE  
              avgPer(i) = cfDef%averageOrbitalPeriod
-          END IF
+	  END IF 
        END DO
     ELSE
        call AvgOrbPeriod(l3pcf%l2StartDay, l3pcf%l2EndDay, avgPer)
@@ -531,6 +537,9 @@ END MODULE OpenInit
 !==================
 
 ! $Log$
+! Revision 1.23  2006/09/21 16:07:02  cvuu
+! Fix the problem of crossing a year boundary
+!
 ! Revision 1.22  2006/05/04 18:18:30  cvuu
 ! Fix bug in the subroutine SetProcessingWindow
 !
