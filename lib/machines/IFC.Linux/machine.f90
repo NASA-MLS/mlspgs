@@ -120,10 +120,12 @@ contains
                                         ! such a concept, else zero
 
     integer :: MyError, MyStatus
-    ! print*,"system not done yet for IFC"
-    call system ( command, myStatus, myError)
-    if ( present(error) ) error = myError
-    if ( present(status) ) status = myStatus
+    print*,"system not done yet for IFC"
+    !call system ( command, myStatus, myError)
+    !if ( present(error) ) error = myError
+    !if ( present(status) ) status = myStatus
+    if ( present(error) ) error = 0
+    if ( present(status) ) status = 0
   end subroutine SHELL_COMMAND
 
  ! NAG call interfaces to f90_gc
@@ -180,6 +182,9 @@ contains
 end module MACHINE
 
 ! $Log$
+! Revision 1.6  2007/04/24 22:30:27  pwagner
+! Updated to include new ifc support for calls to exit, system
+!
 ! Revision 1.5  2005/06/22 20:26:22  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
