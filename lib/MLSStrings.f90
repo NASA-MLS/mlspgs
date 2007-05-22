@@ -1369,12 +1369,10 @@ contains
     character(len=8) :: myOptions
     integer :: nstars
     integer :: spos
-    ! Intel compiler has been crashing here
-    integer, parameter :: strLengthMax = 64
-    ! character(len=max(len(str1), len(str2))) :: str
-    character(len=strLengthMax) :: str
-    character(len=len(str)) :: ptrn  ! The one with '*'
-    character(len=len(str)), dimension(MAXNUMWILDCARDS+1) :: substrs
+    ! If len(str) is used for ptrn and substrs, Intel Fortran 10.0.023 crashes
+    character(len=max(len(str1), len(str2))) :: str
+    character(len=max(len(str1), len(str2))) :: ptrn  ! The one with '*'
+    character(len=max(len(str1), len(str2))), dimension(MAXNUMWILDCARDS+1) :: substrs
     logical :: wildcard
     logical, parameter :: deebug = .false.
     !----------Executable part----------!
@@ -1568,6 +1566,7 @@ contains
 
     !----------Local vars----------!
     integer :: i
+    character(len=16) :: MyStr
     !----------Executable part----------!
 
    ! Check that we don't have one of special cases
@@ -1581,8 +1580,9 @@ contains
    endif
    if ( present(fmt) ) then
      write(str, fmt=fmt) int
-   else
-     write(str, *) int
+   else ! Don't use *; RTL can legally insert any number of leading blanks
+     write ( myStr,'(i16)' ) int
+     str = adjustl(myStr)
    endif
 
   END SUBROUTINE writeAnIntToChars
@@ -1711,6 +1711,11 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.66  2007/05/22 20:57:18  vsnyder
+! Don't use the length of one automatic variable to specify the length of
+! another one: Intel ifort 10.0.023 crashes at run time on this.
+! Don't use list-directed output to internal files.
+!
 ! Revision 2.65  2007/04/26 20:32:15  pwagner
 ! Coded around bug in Intel compiler causing streq to bomb
 !
