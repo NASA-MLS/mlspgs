@@ -681,7 +681,7 @@ contains
         tempstr = ''
         if ( m >= n ) then
           do t=n, m, s
-            write(tChar, *) t
+            write(tChar, '(i16)') t
             ! print *, 'tChar: ', trim(tChar)
             tempstr = catLists(trim(tempstr), adjustl(tChar))
           enddo
@@ -2868,6 +2868,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.26  2007/05/22 20:56:02  vsnyder
+! Don't use list-directed write to internal files
+!
 ! Revision 2.25  2007/05/14 21:51:51  pwagner
 ! Bugfix for way ifc writes ints to strings
 !
