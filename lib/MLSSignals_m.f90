@@ -1211,8 +1211,7 @@ oc:     do
     logical :: MY_NORADIOMETER, MY_NOBAND, MY_NOSWITCH
     logical :: MY_NOSPECTROMETER, MY_NOCHANNELS
     integer :: MY_SIDEBAND
-    ! character (len=8) :: word
-    character (len=16) :: word
+    character (len=8) :: word
 
     ! Executable code
     string_text       = ''
@@ -1264,7 +1263,7 @@ oc:     do
       if ( present(channel) ) then
         l = len_trim(string_text)
         call addToSignalString ( '.C' )
-        write ( word, * ) channel
+        write ( word,'(I8)') channel
         call addToSignalString ( word )
       else if ( associated(signal%channels) ) then
         if ( .not. all(signal%channels) .or. &
@@ -1288,13 +1287,13 @@ oc:     do
               j = j + 1
             end do
             if ( j > i ) then
-              write ( word, * ) i
+              write ( word,'(I8)') i
               call addToSignalString ( word )
               call addToSignalString ( ':' )
-              write ( word, * ) j
+              write ( word,'(I8)') j
               call addToSignalString ( word )
             else
-              write ( word, * ) i
+              write ( word,'(I8)') i
               call addToSignalString ( word )
             end if
             i = j + 1
@@ -1796,6 +1795,11 @@ oc:     do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.83  2007/05/22 02:28:28  vsnyder
+! Don't use list-directed formatting for internal writes.  The standard
+! allows a processor to insert any number of blanks it wishes, which might
+! overflow the length of the internal file.
+!
 ! Revision 2.82  2007/04/26 20:30:53  pwagner
 ! Bugfix for way ifc writes ints to strings
 !
