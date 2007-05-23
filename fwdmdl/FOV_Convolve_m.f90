@@ -225,7 +225,10 @@ contains
 
     do i = 1, n_coeffs
       if ( present(di_df_flag) ) then
-        if ( .not. di_df_flag(i) ) cycle
+        if ( .not. di_df_flag(i) ) then
+          drad_df_out(:,i) = 0.0
+          cycle
+        end if
       end if
 
       call fov_convolve_1d ( convolve_support, di_df(:,i), MIF_Times, DeadTime, &
@@ -469,6 +472,9 @@ contains
 end module FOV_Convolve_m
 
 ! $Log$
+! Revision 2.5  2007/05/23 22:39:03  vsnyder
+! Make sure drad_df_out gets defined
+!
 ! Revision 2.4  2005/08/06 01:40:45  vsnyder
 ! ScanAverage doesn't need coeffs
 !
