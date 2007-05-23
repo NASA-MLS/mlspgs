@@ -51,9 +51,14 @@ endif
 # w/o complaining if it does nor exist yet
 -include $(CONFDIR)/$(MLSCFILE)
 
-# All the implicit pattern-matching involving suffixes
-# will be done in the uniquely-named sub-directories, not here--so
-.SUFFIXES:
+# Files to get by preprocessing
+PREPRO=$(patsubst %.F90,%.f90,$(wildcard *.F90))
+
+# Pattern-matching rules for preprocessing
+.SUFFIXES: .f90 .F90
+
+.F90.f90:
+	cpp -D$(MLSF95) $< $@
 
 # This will filter out globbed file expansions that fail
 # e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
@@ -80,11 +85,11 @@ SHELL = /bin/sh
 #
 
 #----------------------------------------------------------
-libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.f90 \
-  $(libmls_sources)/*.f9h $(srclib)/*.f9h $(libmls_sources)/*.c \
+libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.[Ff]9? \
+  $(srclib)/*.f9h $(libmls_sources)/*.c \
   $(libmls_sources)/lit_names.txt)
-blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90 \
-  $(blaslib)/*.f9h $(srclib)/*.f9h)
+blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.[Ff]9? \
+  $(srclib)/*.f9h)
 machinelib := $(libmls_sources)/machines/$(MLSCONFG)/
 machine_f := $(shell ${REECHO} $(machinelib)/*.c $(machinelib)/*.f \
   $(machinelib)/*.f90)
@@ -206,12 +211,21 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
           $(RECFG)
 
 depends:
+	if [ "$(PREPRO)" != "" ] ; then make $(PREPRO) ; fi
 ifdef CASCADE
-	$(MLSBIN)/makemakedep.sh -p Makefile.dep -nodep $(OMIT_PREFXD)
-	$(MLSBIN)/makemakedep.sh $(OMIT_PREFXD) $(libmls_sources) $(srclib) 
+	$(MLSBIN)/makemakedep.sh -p Makefile.nodep -nodep $(OMIT_PREFXD)
+	$(MLSBIN)/makemakedep.sh $(OMIT_PREFXD) \
+     ./machines/$(MLSCONFG) $(srclib) $(libblas_sources)
 else
 	$(MAKE) depends--mod
 endif
+	if [ "$(PREPRO)" != "" ] ; then \
+        temp=""; \
+        for f in $(PREPRO); do temp="$$temp -e s/$$f/`basename $$f .f90`.F90/"; \
+        done; \
+        sed -i $$temp $(PLATFORMS)/$(MLSCONFG)/Makefile.dep; \
+        rm -f $(PREPRO); \
+        fi
 
 depends--mod:
 	$(MLSBIN)/makemakedep.sh -p $(PLATFORMS)/$(MLSCONFG)/Makefile.dep \
@@ -262,6 +276,9 @@ targ:
 	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 2.21  2007/04/13 20:15:18  pwagner
+# Changes in line with Intel v9.1
+#
 # Revision 2.20  2005/06/23 23:02:30  pwagner
 # Reworded Copyright statement
 #
