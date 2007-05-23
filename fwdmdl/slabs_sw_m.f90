@@ -25,27 +25,35 @@ module SLABS_SW_M
 ! This structure contains the "slabs preps arrays."  These are the
 ! frequency-independent terms in the cross section.
 
+  type, public :: SLABS_STATE ! State stuff in Slabs_Struct
+    real(r8) :: v0
+    real(r8) :: v0s
+    real(r8) :: x1
+    real(r8) :: y
+    real(r8) :: yi
+    real(r8) :: slabs1
+    real(r8) :: dslabs1_dv0 ! / slabs1
+    logical :: polarized
+  end type
+
+  type, public :: SLABS_DERIV ! Derivative stuff in Slabs_Struct
+    ! Contribution of dx1_dv0 and dy_dv0 in d Beta / d Nu0 cancel.
+    ! See Slabs_DSpectral.
+!   real(r8) :: dx1_dv0
+!   real(r8) :: dy_dv0
+    real(r8) :: dv0s_dT    ! not * 1 / v0s
+    real(r8) :: dx1_dT     ! / x1
+    real(r8) :: dy_dT      ! / y
+    real(r8) :: dyi_dT     ! / yi
+    real(r8) :: dslabs1_dT ! / slabs1
+  end type
+
   type, public :: SLABS_STRUCT
     type(catalog_t), pointer :: Catalog ! everything else is same size
     !                                     as catalog%lines
-    real(r8), dimension(:), pointer :: v0s => NULL()
-    real(r8), dimension(:), pointer :: x1 => NULL()
-    real(r8), dimension(:), pointer :: y => NULL()
-    real(r8), dimension(:), pointer :: yi => NULL()
-    real(r8), dimension(:), pointer :: slabs1 => NULL()
-    ! Contribution of dx1_dv0 and dy_dv0 in d Beta / d Nu0 cancel.
-    ! See Slabs_DSpectral.
-!   real(r8), dimension(:), pointer :: dx1_dv0 => NULL()
-!   real(r8), dimension(:), pointer :: dy_dv0 => NULL()
-    real(r8), dimension(:), pointer :: dslabs1_dv0 => NULL() ! / slabs1
-    logical :: UseYi ! Are any yi > 0?
-    ! For temperature derivatives.  Most are logarithmic derivatives,
-    ! so dz_dT really means 1/z dz_dT.
-    real(r8), dimension(:), pointer :: dv0s_dT => NULL()    ! not * 1 / v0s
-    real(r8), dimension(:), pointer :: dx1_dT => NULL()     ! / x1
-    real(r8), dimension(:), pointer :: dy_dT => NULL()      ! / y
-    real(r8), dimension(:), pointer :: dyi_dT => NULL()     ! / yi
-    real(r8), dimension(:), pointer :: dslabs1_dT => NULL() ! / slabs1
+    logical :: UseYi ! Are any d(:)%yi > 0?
+    type(slabs_state), dimension(:), allocatable :: S ! State stuff
+    type(slabs_deriv), dimension(:), allocatable :: D ! Derivative stuff
   end type SLABS_STRUCT
 
   ! Routines to manipulate slabs structs
@@ -63,6 +71,7 @@ module SLABS_SW_M
   public :: Get_GL_Slabs_Arrays
   public :: Slabs, Slabs_dSpectral, Slabs_dAll, Slabs_dT, Slabs_Lines
   public :: Slabs_Lines_dAll, Slabs_lines_dSpectral, Slabs_Lines_dT
+  public :: Slabs_Lines_dT_path
   public :: Slabs_Prep, Slabs_Prep_Struct, Slabs_Prep_Struct_Offset, Slabs_Prep_dT
   public :: Slabswint, Slabswint_dAll, Slabswint_dT
   public :: Slabswint_Lines, Slabswint_Lines_dAll, Slabswint_Lines_dSpectral
@@ -82,16 +91,16 @@ contains
   ! -------------------------------------------  AllocateOneSlabs  -----
   subroutine AllocateOneSlabs ( Slabs, Catalog, InName, TempDer )
     ! Allocates the items in a slabs structure
-    use Allocate_Deallocate, only: ALLOCATE_TEST
+    use Allocate_Deallocate, only: Test_Allocate
     type (slabs_struct), intent(inout) :: slabs ! Slabs to allocate
     type (catalog_t), target, intent(in) :: Catalog
-    character(len=*), intent(in) :: InName
+    character(len=*), intent(in) :: InName      ! Who wants it
     logical, intent(in), optional :: TempDer    ! "Allocate temperature
                                                 !  derivative fields"
 
     ! Local variables
     logical :: MyDer
-    integer :: NL
+    integer :: NL, Stat
 
     ! Executable code
     myDer = .false.
@@ -103,32 +112,25 @@ contains
     end if
 
     slabs%catalog => catalog
-    call Allocate_test ( slabs%v0s,         nl, 'v0s',         inName )
-    call Allocate_test ( slabs%x1,          nl, 'x1',          inName )
-    call Allocate_test ( slabs%y,           nl, 'y',           inName )
-    call Allocate_test ( slabs%yi,          nl, 'yi',          inName )
-    call Allocate_test ( slabs%slabs1,      nl, 'slabs1',      inName )
-    call Allocate_test ( slabs%dslabs1_dv0, nl, 'dslabs1_dv0', inName )
+    allocate ( slabs%s(nl), stat=stat )
+    call test_allocate ( stat, inName, "Slabs%S", (/ 1 /), (/ nl /) )
     if ( myDer ) then
-      call Allocate_test ( slabs%dv0s_dT,    nl, 'dv0s_dT',    inName )
-      call Allocate_test ( slabs%dx1_dT,     nl, 'dx1_dT',     inName )
-      call Allocate_test ( slabs%dy_dT,      nl, 'dy_dT',      inName )
-      call Allocate_test ( slabs%dyi_dT,     nl, 'dyi_dT',     inName )
-      call Allocate_test ( slabs%dslabs1_dT, nl, 'dslabs1_dT', inName )
+      allocate ( slabs%d(nl), stat=stat )
+      call test_allocate ( stat, inName, "Slabs%D", (/ 1 /), (/ nl /) )
     end if
     if ( nl /= 0 ) then
-      slabs%v0s = 0.0_r8
-      slabs%x1 = 0.0_r8
-      slabs%y = 0.0_r8
-      slabs%yi = 0.0_r8
-      slabs%slabs1 = 0.0_r8
-      slabs%dslabs1_dv0 = 0.0_r8
+      slabs%s%v0s = 0.0_r8
+      slabs%s%x1 = 0.0_r8
+      slabs%s%y = 0.0_r8
+      slabs%s%yi = 0.0_r8
+      slabs%s%slabs1 = 0.0_r8
+      slabs%s%dslabs1_dv0 = 0.0_r8
       if ( myDer ) then
-        slabs%dv0s_dT = 0.0_r8
-        slabs%dx1_dT = 0.0_r8
-        slabs%dy_dT = 0.0_r8
-        slabs%dyi_dT = 0.0_r8
-        slabs%dslabs1_dT = 0.0_r8
+        slabs%d%dv0s_dT = 0.0_r8
+        slabs%d%dx1_dT = 0.0_r8
+        slabs%d%dy_dT = 0.0_r8
+        slabs%d%dyi_dT = 0.0_r8
+        slabs%d%dslabs1_dT = 0.0_r8
       end if
     end if
   end subroutine AllocateOneSlabs
@@ -178,22 +180,21 @@ contains
   ! ------------------------------------------ DeallocateOneSlabs ---------
   subroutine DeallocateOneSlabs ( slabs, inName )
     ! DeAllocates the items in a slabs structure
-    use Allocate_Deallocate, only: DEALLOCATE_TEST
+    use Allocate_Deallocate, only: Test_DeAllocate
     type (slabs_struct), intent(inout) :: slabs ! Slabs to deallocate
     character (len=*), intent(in) :: inName ! ModuleName of caller
 
+    integer :: Stat
+
     ! Executable code
-    call Deallocate_test ( slabs%v0s,         'v0s',         inName )
-    call Deallocate_test ( slabs%x1,          'x1',          inName )
-    call Deallocate_test ( slabs%y,           'y',           inName )
-    call Deallocate_test ( slabs%yi,          'yi',          inName )
-    call Deallocate_test ( slabs%slabs1,      'slabs1',      inName )
-    call Deallocate_test ( slabs%dslabs1_dv0, 'dslabs1_dv0', inName )
-    call Deallocate_test ( slabs%dv0s_dT,     'dv0s_dT',     inName )
-    call Deallocate_test ( slabs%dx1_dT,      'dx1_dT',      inName )
-    call Deallocate_test ( slabs%dy_dT,       'dy_dT',       inName )
-    call Deallocate_test ( slabs%dyi_dT,      'dyi_dT',      inName )
-    call Deallocate_test ( slabs%dslabs1_dT,  'dslabs1_dT',  inName )
+    if ( allocated(slabs%s) ) then
+      deallocate ( slabs%s, stat=stat )
+      call test_deallocate ( stat, inName, "Slabs%S" )
+    end if
+    if ( allocated(slabs%d) ) then
+      deallocate ( slabs%d, stat=stat )
+      call test_deallocate ( stat, inName, "Slabs%S" )
+    end if
   end subroutine DeallocateOneSlabs
 
   ! ------------------------------------------- DestroyCompleteSlabs -----
@@ -236,18 +237,18 @@ contains
       end if
       call output ( 'Molecule ' )
       call display_string ( lit_indices(the_slabs_struct%catalog%molecule), advance='yes' )
-      call dump ( the_slabs_struct%v0s(:nl), name='v0s' )
-      call dump ( the_slabs_struct%x1(:nl), name='x1' )
-      call dump ( the_slabs_struct%y(:nl), name='y' )
-      call dump ( the_slabs_struct%yi(:nl), name='yi' )
-      call dump ( the_slabs_struct%slabs1(:nl), name='slabs1' )
-      call dump ( the_slabs_struct%dslabs1_dv0(:nl), name='dslabs1_dv0' )
-      if ( associated (the_slabs_struct%dslabs1_dT) ) then
-        call dump ( the_slabs_struct%dv0s_dT(:nl), name='dv0s_dT' )
-        call dump ( the_slabs_struct%dx1_dT(:nl), name='dx1_dT' )
-        call dump ( the_slabs_struct%dy_dT(:nl), name='dy_dT' )
-        call dump ( the_slabs_struct%dyi_dT(:nl), name='dyi_dT' )
-        call dump ( the_slabs_struct%dslabs1_dT(:nl), name='dslabs1_dT' )
+      call dump ( the_slabs_struct%s(:nl)%v0s, name='v0s' )
+      call dump ( the_slabs_struct%s(:nl)%x1, name='x1' )
+      call dump ( the_slabs_struct%s(:nl)%y, name='y' )
+      call dump ( the_slabs_struct%s(:nl)%yi, name='yi' )
+      call dump ( the_slabs_struct%s(:nl)%slabs1, name='slabs1' )
+      call dump ( the_slabs_struct%s(:nl)%dslabs1_dv0, name='dslabs1_dv0' )
+      if ( allocated (the_slabs_struct%d) ) then
+        call dump ( the_slabs_struct%d(:nl)%dv0s_dT, name='dv0s_dT' )
+        call dump ( the_slabs_struct%d(:nl)%dx1_dT, name='dx1_dT' )
+        call dump ( the_slabs_struct%d(:nl)%dy_dT, name='dy_dT' )
+        call dump ( the_slabs_struct%d(:nl)%dyi_dT, name='dyi_dT' )
+        call dump ( the_slabs_struct%d(:nl)%dslabs1_dT, name='dslabs1_dT' )
       end if
     end if
 
@@ -394,15 +395,15 @@ contains
     dSwI_dw = 0.0_rp
     dSwI_dn = 0.0_rp
     dSwI_dNu0 = 0.0_rp     
-    do l = 1, size(slabs%catalog%lines)
+    do l = 1, size(slabs%s)
 
-      nu0 = slabs%v0s(l)
-      x1 = slabs%x1(l)
-      yi = slabs%yi(l)
-      y = slabs%y(l)
+      nu0 = slabs%s(l)%v0s
+      x1 = slabs%s(l)%x1
+      yi = slabs%s(l)%yi
+      y = slabs%s(l)%y
       w = lines(slabs%catalog%lines(l))%w
-      slabs1 = slabs%slabs1(l)
-      dslabs1_dNu0 = slabs%dslabs1_dv0(l)
+      slabs1 = slabs%s(l)%slabs1
+      dslabs1_dNu0 = slabs%s(l)%dslabs1_dv0
 
       x = x1 * dNu                                                          
       call simple_voigt ( x, y, u, v )  
@@ -725,24 +726,24 @@ contains
     dSwI_dn = 0.0_rp
     dSwI_dNu0 = 0.0_rp
 
-    do l = 1, size(slabs%catalog%lines)
+    do l = 1, size(slabs%s)
 
       if ( noPolarized .and. slabs%catalog%polarized(l) ) cycle
 
-      nu0s = slabs%v0s(l)
-      x1 = slabs%x1(l)
-      y = slabs%y(l)
+      nu0s = slabs%s(l)%v0s
+      x1 = slabs%s(l)%x1
+      y = slabs%s(l)%y
 
       x = x1 * ( nu - nu0s )
       call simple_voigt ( x, y, u, v, du, dv ) ! get w(z) and dw/dz
 
-      r = 1.0 / lines(slabs%catalog%lines(l))%v0
+      r = 1.0 / slabs%s(l)%v0
       sigmaX1 = x1 * ( nu + nu0s )
       s2 = sigmaX1**2
       y2 = y**2
       d = 1.0 / ( s2 + y2 )
       denom = oneOvSpi * d
-      g = slabs%slabs1(l) * tanh1 * nu * r
+      g = slabs%s(l)%slabs1 * tanh1 * nu * r
 
       dx_dNu0 = - r * x - x1 * velcor
       dy_dNu0 = - r * y
@@ -757,7 +758,7 @@ contains
       dSwI_dn = dSwI_dn + y_g_dHdy * 300.0 / T
 
       dSwI_dNu0 = dSwI_dNu0 + &
-        & SwI_up * slabs%dslabs1_dv0(l) - & ! remember dslabs1_dv0 is divided by slabs1
+        & SwI_up * slabs%s(l)%dslabs1_dv0 - & ! remember dslabs1_dv0 is divided by slabs1
         & g * ( r * h1 - ( du * dx_dNu0 - dv * dy_dNu0 ) - &
         &       2.0 * d * x1 * velCor * h2 * sigmaX1 )
 
@@ -774,7 +775,8 @@ contains
 
   ! Compute single-line absorption and its derivative w.r.t. temperature.
 
-    use Voigt_m, only: D_Real_Simple_Voigt
+!   use Voigt_m, only: D_Real_Simple_Voigt
+    use Voigt_m, only: Simple_Voigt
 
     real(r8), intent(in) :: Nu, v0, v0s, dv0s_dT
     real(rp), intent(in) :: x1
@@ -800,7 +802,8 @@ contains
 
     delta = Nu - v0s
     da = x1 * ( delta * dx1_dT - dv0s_dT ) ! remember, dx1_dT = 1/x1 dx1 / dT
-    call D_Real_Simple_Voigt ( x1*delta, y, da, y*dy_dT, u, du )
+    call simple_voigt ( x1*delta, y, u, du=du, dx=da, dy=y*dy_dT )
+!   call D_Real_Simple_Voigt ( x1*delta, y, da, y*dy_dT, u, du )
 
 !{ Let $V(a,y)$ be the Voigt function ({\tt u} above), $\delta = \nu-\nu_{0_s}$,
 !  $\sigma = \nu + \nu_{0_s}$, $a = x_1 \delta, b = x_1 \sigma$, and
@@ -959,7 +962,6 @@ contains
   ! ------------------------------------------------  Slabs_Lines  -----
   elemental function Slabs_Lines ( Nu, Slabs, tanh1, NoPolarized ) result ( Beta )
 
-    use SpectroscopyCatalog_m, only: Lines
     use Voigt_m, only: Real_Simple_Voigt
 
     real(r8), intent(in) :: Nu    ! Frequency
@@ -987,27 +989,27 @@ contains
 
     beta = 0.0_rp
     if ( .not. noPolarized ) then
-      do l = 1, size(slabs%catalog%lines)
-        v0s = slabs%v0s(l)
-        x1 = slabs%x1(l)
-        y = slabs%y(l)
+      do l = 1, size(slabs%s)
+        v0s = slabs%s(l)%v0s
+        x1 = slabs%s(l)%x1
+        y = slabs%s(l)%y
         call real_simple_voigt ( x1*real(nu-v0s,rp), y, u )
 
-        beta = beta + slabs%slabs1(l) * &
-          &           real(nu / lines(slabs%catalog%lines(l))%v0, rp) * tanh1 * &
+        beta = beta + slabs%s(l)%slabs1 * &
+          &           real(nu / slabs%s(l)%v0, rp) * tanh1 * &
           & (u + OneOvSPi*y/((x1*(nu+v0s))**2 + y*y))
 
       end do
     else
-      do l = 1, size(slabs%v0s)
+      do l = 1, size(slabs%s)
         if ( slabs%catalog%polarized(l) ) cycle
-        v0s = slabs%v0s(l)
-        x1 = slabs%x1(l)
-        y = slabs%y(l)
+        v0s = slabs%s(l)%v0s
+        x1 = slabs%s(l)%x1
+        y = slabs%s(l)%y
         call real_simple_voigt ( x1*real(nu-v0s,rp), y, u )
 
-        beta = beta + slabs%slabs1(l) * &
-          &           real(nu / lines(slabs%catalog%lines(l))%v0, rp) * tanh1 * &
+        beta = beta + slabs%s(l)%slabs1 * &
+          &           real(nu / slabs%s(l)%v0, rp) * tanh1 * &
           & (u + OneOvSPi*y/((x1*(nu+v0s))**2 + y*y))
 
       end do
@@ -1016,15 +1018,16 @@ contains
   end function Slabs_Lines
 
   ! ---------------------------------------------  Slabs_Lines_dT  -----
-  elemental &
+!  elemental &
+  pure &
   subroutine Slabs_Lines_dT ( Nu, Slabs, Tanh1, dTanh_dT, &
     &                         Beta, dBeta_dT, NoPolarized )
 
   ! Compute single-line absorption and its derivative w.r.t. temperature
   ! for all lines in the Slabs structure.
 
-    use SpectroscopyCatalog_m, only: Lines
     use Voigt_m, only: D_Real_Simple_Voigt
+!   use Voigt_m, only: Simple_Voigt
 
     real(r8), intent(in) :: Nu    ! Frequency
     type(slabs_struct), intent(in) :: Slabs ! Frequency-independent stuff
@@ -1046,8 +1049,7 @@ contains
     real(rp) :: Dy_dT   ! 1/y dy/dT
     integer :: L        ! Line index
     real(rp) :: Sa, Sb  ! parts of Slabs
-    real(rp) :: Sigma   ! Nu+v0s
-    real(rp) :: SigmaX1 ! sigma * x1
+    real(rp) :: SigmaX1 ! (nu + v0s) * x1
     real(rp) :: U       ! Voigt
     real(r8) :: V0S     ! Pressure-shifted line center
     real(rp) :: X1, Y   ! Doppler width, ratio Pressure to Doppler widths
@@ -1058,37 +1060,28 @@ contains
     Beta = 0.0_rp
     dBeta_dT = 0.0_rp
 
-    do l = 1, size(slabs%catalog%lines)
+    do l = 1, size(slabs%s) ! == size(slabs%d) == size(slabs%catalog%lines)
 
-      if ( noPolarized ) then
-        if ( slabs%catalog%polarized(l) ) cycle
-      end if
+      if ( noPolarized .and. slabs%s(l)%polarized ) cycle
 
-      v0s = slabs%v0s(l)
-      x1 = slabs%x1(l)
-      y = slabs%y(l)
-      dv0s_dT = slabs%dv0s_dT(l)
-      dx1_dT = slabs%dx1_dT(l)
-      dy_dT =slabs%dy_dT(l)
+      v0s = slabs%s(l)%v0s
+      x1 = slabs%s(l)%x1
+      y = slabs%s(l)%y
+      sa = slabs%s(l)%slabs1 * (nu / slabs%s(l)%v0) * tanh1
+      dv0s_dT = slabs%d(l)%dv0s_dT
+      dx1_dT = slabs%d(l)%dx1_dT
+      dy_dT = slabs%d(l)%dy_dT
+      c = slabs%d(l)%dSlabs1_dT + dtanh_dT
       delta = Nu - v0s
       da = x1 * ( delta * dx1_dT - dv0s_dT )
       call D_Real_Simple_Voigt ( x1*delta, y, da, y*dy_dT, u, du )
-      sigma = nu + v0s
-      sigmaX1 = sigma * x1
+      sigmaX1 = (nu + v0s) * x1
       y2 = y * y
       d = 1.0_rp / ( sigmaX1**2 + y2 )
-      sa = slabs%slabs1(l) * real(nu / lines(slabs%catalog%lines(l))%v0,rp) * tanh1
-!     sb = slabs%slabs1(l) * real(nu / lines(slabs%catalog%lines(l))%v0,rp) * tanh1
-!     sa = sb * u
-!     sb = sb * OneOvSPi * y * d
       sb = sa * OneOvSPi * y * d
       beta = beta + sa * u + sb
-!     beta = beta + sa + sb
-
-      c = slabs%dSlabs1_dT(l) + dtanh_dT
 
       dBeta_dT = dBeta_dT + sa * ( u * c + du ) &
-!     dBeta_dT = dBeta_dT + sa * ( c + du / u ) &
         &                 + sb * ( c + dy_dT - 2.0_rp * d * &            
         &                          ( sigmaX1 * ( x1 * dv0s_dT + &        
         &                            sigmaX1 * dx1_dT ) + y2 * dy_dT ) )
@@ -1096,6 +1089,87 @@ contains
     end do
 
   end subroutine Slabs_Lines_dT
+
+  ! ----------------------------------------  Slabs_Lines_dT_path  -----
+!  elemental &
+  pure &
+  subroutine Slabs_Lines_dT_path ( Nu, Slabs, Path_Inds, Tanh1, dTanh_dT, &
+    &                              Ratio, Beta, dBeta_dT, NoPolarized )
+
+  ! Compute single-line absorption and its derivative w.r.t. temperature
+  ! for all lines in the Slabs structure.
+
+    use Voigt_m, only: D_Real_Simple_Voigt
+!   use Voigt_m, only: Simple_Voigt
+
+    real(r8), intent(in) :: Nu          ! Frequency
+    type(slabs_struct), intent(in) :: Slabs(:) ! Frequency-independent stuff
+    integer, intent(in) :: Path_Inds(:) ! Indices for Slabs
+    real(rp), intent(in) :: Tanh1(:)    ! tanh( h nu / (2 k T) )
+    real(rp), intent(in) :: dTanh_dT(:) ! -h nu / (2 k T^2) 1/tanh(...) dTanh(...)/dT
+    real(rp), intent(in) :: Ratio       ! Isotope ratio
+
+    real(rp), intent(inout) :: Beta(:), dBeta_dT(:)
+
+    ! "Don't do line(L) if slabs%catalog%polarized(L)"
+    logical, intent(in) :: NoPolarized
+    real :: B, dB, th, dTh
+    real(rp) :: C       ! Terms common to the two parts of dSlabs_dT
+    real(rp) :: D       ! 1 / (SigmaX1**2 + y**2)
+    real(rp) :: Delta   ! Nu-v0s
+    real(rp) :: Du      ! du/dT
+    real(rp) :: Da      ! d(x1*delta)
+    real(rp) :: Dv0s_dT ! dv0s / dT
+    real(rp) :: Dx1_dT  ! 1/x1 dx1/dT
+    real(rp) :: Dy_dT   ! 1/y dy/dT
+    integer :: J, K     ! Path indices
+    integer :: L        ! Line index
+    real(rp) :: Sa, Sb  ! parts of Slabs
+    real(rp) :: SigmaX1 ! (nu + v0s) * x1
+    real(rp) :: U       ! Voigt
+    real(r8) :: V0S     ! Pressure-shifted line center
+    real(rp) :: X1, Y   ! Doppler width, ratio Pressure to Doppler widths
+    real(rp) :: Y2      ! y**2
+
+! See Slabs_dT for TeXnicalities
+    do j = 1, size(path_inds)
+      k = path_inds(j)
+      b = 0.0  ! Beta for one path slot
+      db = 0.0 ! dBeta for one path slot
+      th = tanh1(j)
+      dTh = dTanh_dT(j)
+      do l = 1, size(slabs(k)%s) ! == size(slabs(k)%d) == size(slabs(k)%catalog%lines)
+
+        if ( noPolarized .and. slabs(k)%catalog%polarized(l) ) cycle
+
+        v0s = slabs(k)%s(l)%v0s
+        x1 = slabs(k)%s(l)%x1
+        y = slabs(k)%s(l)%y
+        sa = slabs(k)%s(l)%slabs1 * (nu / slabs(k)%s(l)%v0) * th
+        dv0s_dT = slabs(k)%d(l)%dv0s_dT
+        dx1_dT = slabs(k)%d(l)%dx1_dT
+        dy_dT = slabs(k)%d(l)%dy_dT
+        c = slabs(k)%d(l)%dSlabs1_dT + dTh
+        delta = Nu - v0s
+        da = x1 * ( delta * dx1_dT - dv0s_dT )
+        call D_Real_Simple_Voigt ( x1*delta, y, da, y*dy_dT, u, du )
+        sigmaX1 = (nu + v0s) * x1
+        y2 = y * y
+        d = 1.0_rp / ( sigmaX1**2 + y2 )
+        sb = sa * OneOvSPi * y * d
+        b = b + sa * u + sb
+
+        db = db + sa * ( u * c + du ) &
+          &                 + sb * ( c + dy_dT - 2.0_rp * d * &            
+          &                          ( sigmaX1 * ( x1 * dv0s_dT + &        
+          &                            sigmaX1 * dx1_dT ) + y2 * dy_dT ) )
+
+      end do
+      beta(j) = beta(j) + ratio*b
+      dBeta_dT(j) = dBeta_dT(j) + ratio*db
+    end do
+
+  end subroutine Slabs_Lines_dT_path
 
   ! ---------------------------------------------  Slabs_Lines_dAll  -----
   elemental &
@@ -1159,18 +1233,18 @@ contains
     dBeta_dn = 0.0
     dBeta_dNu0 = 0.0
 
-    do l = 1, size(slabs%catalog%lines)
+    do l = 1, size(slabs%s)
 
       if ( noPolarized .and. slabs%catalog%polarized(l) ) cycle
 
-      dslabs1_dNu0 = slabs%dslabs1_dv0(l)
-      dv0s_dT = slabs%dv0s_dT(l)
-      dx1_dT = slabs%dx1_dT(l)
-      dy_dT = slabs%dy_dT(l)
-      v0s = slabs%v0s(l)
+      dslabs1_dNu0 = slabs%s(l)%dslabs1_dv0
+      dv0s_dT = slabs%d(l)%dv0s_dT
+      dx1_dT = slabs%d(l)%dx1_dT
+      dy_dT = slabs%d(l)%dy_dT
+      v0s = slabs%s(l)%v0s
       w = lines(slabs%catalog%lines(l))%w
-      x1 = slabs%x1(l)
-      y = slabs%y(l)
+      x1 = slabs%s(l)%x1
+      y = slabs%s(l)%y
 
       ! Absorption
 
@@ -1181,15 +1255,15 @@ contains
       y_dydT = y * dy_dT
       du = a * dx - b * y_dydT
 
-      r = 1.0 / lines(slabs%catalog%lines(l))%v0
+      r = 1.0 / slabs%s(l)%v0
       q = nu * r
       sigmaX1 = ( nu + v0s ) * x1
       s2 = sigmaX1**2
       y2 = y*y
       d = 1.0_rp / ( s2 + y2 )
       denom = OneOvSPi * d
-      g = slabs%slabs1(l) * q * tanh1
-      c = slabs%dSlabs1_dT(l) + dtanh_dT
+      g = slabs%s(l)%slabs1 * q * tanh1
+      c = slabs%d(l)%dSlabs1_dT + dtanh_dT
       h2 = y * denom
       sa = g * u
       sd = g * h2
@@ -1315,7 +1389,7 @@ contains
     delta = nu - v0s
     a = x1 * delta
     da = x1 * ( delta * dx1_dT - dv0s_dT ) ! remember, dx1_dT = 1/x1 dx1 / dT
-    call D_Simple_Voigt ( a, y, da, y*dy_dT, u, v, du, dv )
+    call D_Simple_Voigt ( a, y, u, v, du, dv, da, y*dy_dT )
 
 !  Van Vleck - Wieskopf line shape with Voigt, Added Mar/2/91, Bill
 !  Modified code to include interference: June/3/1992 (Bill + Zvi)
@@ -1518,7 +1592,6 @@ contains
   ! --------------------------------------------  Slabswint_Lines  -----
   elemental function Slabswint_Lines ( Nu, Slabs, tanh1, NoPolarized ) result ( Beta )
 
-    use SpectroscopyCatalog_m, only: Lines
     use Voigt_m, only: Real_Simple_Voigt
 
     real(r8), intent(in) :: Nu    ! Frequency
@@ -1565,24 +1638,24 @@ contains
 !  arguments because we know that $b$ is large.
 
     beta = 0.0_rp
-    do l = 1, size(slabs%v0s)
+    do l = 1, size(slabs%s)
       if ( noPolarized .and. slabs%catalog%polarized(l) ) cycle
-      v0s = slabs%v0s(l)
-      x1 = slabs%x1(l)
-      y = slabs%y(l)
-      yi = slabs%yi(l)
+      v0s = slabs%s(l)%v0s
+      x1 = slabs%s(l)%x1
+      y = slabs%s(l)%y
+      yi = slabs%s(l)%yi
       a = x1 * real(nu-v0s,rp)
       call real_simple_voigt ( a, y, u )
 
       sigmaX1 = x1 * (nu + v0s)
       y2 = y*y
       if ( abs(yi) > 1.0e-6_rp ) then ! Include interference effect
-        beta = beta + slabs%slabs1(l) * &
-          &           real(Nu / lines(slabs%catalog%lines(l))%v0, rp) * tanh1 * &
+        beta = beta + slabs%s(l)%slabs1 * &
+          &           real(Nu / slabs%s(l)%v0, rp) * tanh1 * &
           & (u + OneOvSPi*((y - sigmaX1*yi)/(sigmaX1*sigmaX1 + y2) + yi*a/(a*a+y2)))
       else
-        beta = beta + slabs%slabs1(l) * &
-          &           real(Nu / lines(slabs%catalog%lines(l))%v0, rp) * tanh1 * &
+        beta = beta + slabs%s(l)%slabs1 * &
+          &           real(Nu / slabs%s(l)%v0, rp) * tanh1 * &
           & (u + OneOvSPi*(y/(sigmaX1*sigmaX1 + y2)))
       end if
     end do
@@ -1597,7 +1670,6 @@ contains
   ! Compute single-line absorption and its derivative w.r.t. temperature,
   ! with interference, for all lines in the Slabs structure.
 
-    use SpectroscopyCatalog_m, only: Lines
     use Voigt_m, only: D_Simple_Voigt
 
     real(r8), intent(in) :: Nu    ! Frequency
@@ -1638,33 +1710,32 @@ contains
 
     beta = 0.0_rp
     dBeta_dT = 0.0_rp
-    do l = 1, size(slabs%catalog%lines)
+    do l = 1, size(slabs%s)
 
       if ( noPolarized .and. slabs%catalog%polarized(l) ) cycle
 
-      v0s = slabs%v0s(l)
-      x1 = slabs%x1(l)
-      y = slabs%y(l)
-      yi = slabs%yi(l)
-      dv0s_dT = slabs%dv0s_dT(l)
-      dx1_dT = slabs%dx1_dT(l)
-      dy_dT = slabs%dy_dT(l)
-      dyi_dT = slabs%dyi_dT(l)
+      v0s = slabs%s(l)%v0s
+      x1 = slabs%s(l)%x1
+      y = slabs%s(l)%y
+      yi = slabs%s(l)%yi
+      dv0s_dT = slabs%d(l)%dv0s_dT
+      dx1_dT = slabs%d(l)%dx1_dT
+      dy_dT = slabs%d(l)%dy_dT
+      dyi_dT = slabs%d(l)%dyi_dT
       delta = nu - v0s
       a = x1 * delta
       da = x1 * ( delta * dx1_dT - dv0s_dT )
-      call D_Simple_Voigt ( a, y, da, y*dy_dT, u, v, du, dv )
+      call D_Simple_Voigt ( a, y, u, v, du, dv, da, y*dy_dT )
 
       sigma = nu + v0s
       sigmaX1 = sigma * x1
       y2 = y * y
       d = 1.0_rp / ( sigmaX1**2 + y2 )
-      c1 = slabs%slabs1(l) * real(nu / lines(slabs%catalog%lines(l))%v0,rp) * &
-        & tanh1
+      c1 = slabs%s(l)%slabs1 * real(nu / slabs%s(l)%v0,rp) * tanh1
       c2 = c1 * d * OneOvSPi
       sa = c1 * u
       sd = c2 * y
-      c3 = slabs%dSlabs1_dT(l) + dtanh_dT
+      c3 = slabs%d(l)%dSlabs1_dT + dtanh_dT
       dd = -2.0_rp * d * ( sigmaX1 * ( x1 * dv0s_dT + sigmaX1 * dx1_dT ) + y2 * dy_dT )
       beta = beta + sa + sd
 !     dBeta_dT = dBeta_dT + sa * ( c3 + du / u ) + sd * ( c3 + dd + dy_dT )
@@ -1724,25 +1795,25 @@ contains
     dSwI_dn = 0.0_rp
     dSwI_dNu0 = 0.0_rp
 
-    do l = 1, size(slabs%catalog%lines)
+    do l = 1, size(slabs%s)
 
       if ( noPolarized .and. slabs%catalog%polarized(l) ) cycle
 
-      nu0s = slabs%v0s(l)
-      x1 = slabs%x1(l)
-      yi = slabs%yi(l)
-      y = slabs%y(l)
+      nu0s = slabs%s(l)%v0s
+      x1 = slabs%s(l)%x1
+      yi = slabs%s(l)%yi
+      y = slabs%s(l)%y
 
       x = x1 * ( nu - nu0s )
       call simple_voigt ( x, y, u, v, du, dv ) ! get w(z) and dw/dz
 
-      r = 1.0 / lines(slabs%catalog%lines(l))%v0
+      r = 1.0 / slabs%s(l)%v0
       sigmaX1 = x1 * ( nu + nu0s )
       s2 = sigmaX1**2
       y2 = y**2
       d = 1.0 / ( s2 + y2 )
       denom = oneOvSpi * d
-      g = slabs%slabs1(l) * tanh1 * nu * r
+      g = slabs%s(l)%slabs1 * tanh1 * nu * r
 
       dx_dNu0 = - r * x - x1 * velcor
       dy_dNu0 = - r * y
@@ -1760,7 +1831,7 @@ contains
 
         dH1_dNu0 = du * dx_dNu0 - dv * dy_dNu0 + yi * ( dv * dx_dNu0 + du * dy_dNu0 )
         dSwI_dNu0 = dSwI_dNu0 + &
-          & SwI_up * slabs%dslabs1_dv0(l) - & ! remember dslabs1_dv0 is divided by slabs1
+          & SwI_up * slabs%s(l)%dslabs1_dv0 - & ! remember dslabs1_dv0 is divided by slabs1
           & g * ( r * h1 - dH1_dNu0 + &
           &       d * x1 * velCor * ( yi * oneOvSpi - 2.0 * h2 * sigmaX1 ) )
 
@@ -1776,7 +1847,7 @@ contains
         dSwI_dn = dSwI_dn + y_g_dHdy * 300.0 / T
 
         dSwI_dNu0 = dSwI_dNu0 + &
-          & SwI_up * slabs%dslabs1_dv0(l) - & ! remember dslabs1_dv0 is divided by slabs1
+          & SwI_up * slabs%s(l)%dslabs1_dv0 - & ! remember dslabs1_dv0 is divided by slabs1
           & g * ( r * h1 - ( du * dx_dNu0 - dv * dy_dNu0 ) - &
           &       2.0 * d * x1 * velCor * h2 * sigmaX1 )
 
@@ -1852,20 +1923,20 @@ contains
     dBeta_dn = 0.0
     dBeta_dNu0 = 0.0
 
-    do l = 1, size(slabs%catalog%lines)
+    do l = 1, size(slabs%s)
 
       if ( noPolarized .and. slabs%catalog%polarized(l) ) cycle
 
-      dslabs1_dNu0 = slabs%dslabs1_dv0(l)
-      dv0s_dT = slabs%dv0s_dT(l)
-      dx1_dT = slabs%dx1_dT(l)
-      dy_dT = slabs%dy_dT(l)
-      dyi_dT = slabs%dyi_dT(l)
-      v0s = slabs%v0s(l)
+      dslabs1_dNu0 = slabs%s(l)%dslabs1_dv0
+      dv0s_dT = slabs%d(l)%dv0s_dT
+      dx1_dT = slabs%d(l)%dx1_dT
+      dy_dT = slabs%d(l)%dy_dT
+      dyi_dT = slabs%d(l)%dyi_dT
+      v0s = slabs%s(l)%v0s
       w = lines(slabs%catalog%lines(l))%w
-      x1 = slabs%x1(l)
-      yi = slabs%yi(l)
-      y = slabs%y(l)
+      x1 = slabs%s(l)%x1
+      yi = slabs%s(l)%yi
+      y = slabs%s(l)%y
 
       ! Absorption
 
@@ -1877,7 +1948,7 @@ contains
       du = a * dx - b * y_dydT
       dv = a * y_dydT + b * dx
 
-      r = 1.0 / lines(slabs%catalog%lines(l))%v0
+      r = 1.0 / slabs%s(l)%v0
       q = nu * r
       sigma = nu + v0s
       sigmaX1 = sigma * x1
@@ -1885,9 +1956,9 @@ contains
       y2 = y*y
       d = 1.0_rp / ( s2 + y2 )
       denom = OneOvSPi * d
-      g = slabs%slabs1(l) * q * tanh1
+      g = slabs%s(l)%slabs1 * q * tanh1
       c2 = g * denom
-      c3 = slabs%dSlabs1_dT(l) + dtanh_dT
+      c3 = slabs%d(l)%dSlabs1_dT + dtanh_dT
       dd = -2.0_rp * d * ( sigmaX1 * ( x1 * dv0s_dT + sigmaX1 * dx1_dT ) + y2 * dy_dT )
       h2 = y * denom
       sa = g * u
@@ -2227,27 +2298,29 @@ contains
     do i = 1, size(catalog%lines)
       l = catalog%lines(i)
       slabs%useYi = slabs%useYi .or. lines(l)%useYi
+      slabs%s(i)%v0 = lines(l)%v0
+      slabs%s(i)%polarized = slabs%catalog%polarized(i)
       if ( derivs ) then
         call slabs_prep_dT ( t, catalog%mass, &
           & lines(l)%v0, lines(l)%el, lines(l)%w, lines(l)%ps, p, &
           & lines(l)%n, lines(l)%ns, lines(l)%str, catalog%QLOG(1:3), &
           & lines(l)%delta, lines(l)%gamma, lines(l)%n1, lines(l)%n2, &
           & velCor, lines(l)%useYi, &
-          & slabs%v0s(i), slabs%x1(i), slabs%y(i), &
-          & slabs%yi(i), slabs%slabs1(i), &
-          & slabs%dslabs1_dv0(i), &
-          & slabs%dv0s_dT(i), slabs%dx1_dT(i), &
-          & slabs%dy_dT(i), slabs%dyi_dT(i), &
-          & slabs%dslabs1_dT(i) )
+          & slabs%s(i)%v0s, slabs%s(i)%x1, slabs%s(i)%y, &
+          & slabs%s(i)%yi, slabs%s(i)%slabs1, &
+          & slabs%s(i)%dslabs1_dv0, &
+          & slabs%d(i)%dv0s_dT, slabs%d(i)%dx1_dT, &
+          & slabs%d(i)%dy_dT, slabs%d(i)%dyi_dT, &
+          & slabs%d(i)%dslabs1_dT )
       else
         call slabs_prep ( t, catalog%mass, &
           & lines(l)%v0, lines(l)%el, lines(l)%w, lines(l)%ps, p, &
           & lines(l)%n, lines(l)%ns, lines(l)%str, catalog%QLOG(1:3), &
           & lines(l)%delta, lines(l)%gamma, lines(l)%n1, lines(l)%n2, &
           & velCor, lines(l)%useYi, &
-          & slabs%v0s(i), slabs%x1(i), slabs%y(i), &
-          & slabs%yi(i), slabs%slabs1(i), &
-          & slabs%dslabs1_dv0(i) )
+          & slabs%s(i)%v0s, slabs%s(i)%x1, slabs%s(i)%y, &
+          & slabs%s(i)%yi, slabs%s(i)%slabs1, &
+          & slabs%s(i)%dslabs1_dv0 )
       end if
     end do ! i = 1, size(catalog%lines)
 
@@ -2283,27 +2356,28 @@ contains
     do i = 1, size(catalog%lines)
       l = catalog%lines(i)
       slabs%useYi = slabs%useYi .or. lines(l)%useYi
+      slabs%s(i)%v0 = lines(l)%v0
       if ( derivs ) then
         call slabs_prep_dT ( t, catalog%mass, &
           & lines(l)%v0+dv0, lines(l)%el, lines(l)%w+dw, lines(l)%ps, p, &
           & lines(l)%n+dn, lines(l)%ns, lines(l)%str, catalog%QLOG(1:3), &
           & lines(l)%delta, lines(l)%gamma, lines(l)%n1, lines(l)%n2, &
           & velCor, lines(l)%useYi, &
-          & slabs%v0s(i), slabs%x1(i), slabs%y(i), &
-          & slabs%yi(i), slabs%slabs1(i), &
-          & slabs%dslabs1_dv0(i), &
-          & slabs%dv0s_dT(i), slabs%dx1_dT(i), &
-          & slabs%dy_dT(i), slabs%dyi_dT(i), &
-          & slabs%dslabs1_dT(i) )
+          & slabs%s(i)%v0s, slabs%s(i)%x1, slabs%s(i)%y, &
+          & slabs%s(i)%yi, slabs%s(i)%slabs1, &
+          & slabs%s(i)%dslabs1_dv0, &
+          & slabs%d(i)%dv0s_dT, slabs%d(i)%dx1_dT, &
+          & slabs%d(i)%dy_dT, slabs%d(i)%dyi_dT, &
+          & slabs%d(i)%dslabs1_dT )
       else
         call slabs_prep ( t, catalog%mass, &
           & lines(l)%v0+dv0, lines(l)%el, lines(l)%w+dw, lines(l)%ps, p, &
           & lines(l)%n+dn, lines(l)%ns, lines(l)%str, catalog%QLOG(1:3), &
           & lines(l)%delta, lines(l)%gamma, lines(l)%n1, lines(l)%n2, &
           & velCor, lines(l)%useYi, &
-          & slabs%v0s(i), slabs%x1(i), slabs%y(i), &
-          & slabs%yi(i), slabs%slabs1(i), &
-          & slabs%dslabs1_dv0(i) )
+          & slabs%s(i)%v0s, slabs%s(i)%x1, slabs%s(i)%y, &
+          & slabs%s(i)%yi, slabs%s(i)%slabs1, &
+          & slabs%s(i)%dslabs1_dv0 )
       end if
     end do ! i = 1, size(catalog%lines)
 
@@ -2636,12 +2710,12 @@ contains
         !ocl temp(k)
         do j = no_ele, no_ele/2+1, -1
           k = no_ele - j + 1
-          gl_slabs(j,i)%v0s         = gl_slabs(k,i)%v0s
-          gl_slabs(j,i)%x1          = gl_slabs(k,i)%x1
-          gl_slabs(j,i)%y           = gl_slabs(k,i)%y
-          gl_slabs(j,i)%yi          = gl_slabs(k,i)%yi 
-          gl_slabs(j,i)%slabs1      = gl_slabs(k,i)%slabs1 
-          gl_slabs(j,i)%dslabs1_dv0 = gl_slabs(k,i)%dslabs1_dv0
+          gl_slabs(j,i)%s%v0s         = gl_slabs(k,i)%s%v0s
+          gl_slabs(j,i)%s%x1          = gl_slabs(k,i)%s%x1
+          gl_slabs(j,i)%s%y           = gl_slabs(k,i)%s%y
+          gl_slabs(j,i)%s%yi          = gl_slabs(k,i)%s%yi 
+          gl_slabs(j,i)%s%slabs1      = gl_slabs(k,i)%s%slabs1 
+          gl_slabs(j,i)%s%dslabs1_dv0 = gl_slabs(k,i)%s%dslabs1_dv0
         end do ! j = no_ele, no_ele/2+1, -1
 
         if ( present(t_der_flags) ) then
@@ -2649,11 +2723,11 @@ contains
           do j = no_ele, no_ele/2+1, -1
             if ( t_der_flags(j) ) then ! do derivative stuff
               k = no_ele - j + 1
-              gl_slabs(j,i)%dv0s_dT    = gl_slabs(k,i)%dv0s_dT
-              gl_slabs(j,i)%dx1_dT     = gl_slabs(k,i)%dx1_dT
-              gl_slabs(j,i)%dy_dT      = gl_slabs(k,i)%dy_dT
-              gl_slabs(j,i)%dyi_dT     = gl_slabs(k,i)%dyi_dT
-              gl_slabs(j,i)%dslabs1_dT = gl_slabs(k,i)%dslabs1_dT
+              gl_slabs(j,i)%d%dv0s_dT    = gl_slabs(k,i)%d%dv0s_dT
+              gl_slabs(j,i)%d%dx1_dT     = gl_slabs(k,i)%d%dx1_dT
+              gl_slabs(j,i)%d%dy_dT      = gl_slabs(k,i)%d%dy_dT
+              gl_slabs(j,i)%d%dyi_dT     = gl_slabs(k,i)%d%dyi_dT
+              gl_slabs(j,i)%d%dslabs1_dT = gl_slabs(k,i)%d%dslabs1_dT
             end if
           end do ! j = no_ele, no_ele/2+1, -1
         end if
@@ -2677,6 +2751,11 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.54  2006/12/04 21:17:28  vsnyder
+! Reorganize FullForwardModel to use automatic arrays instead of allocating
+! pointer arrays.  Requires testing for zero size instead of testing for
+! associated in several subsidiary procedures.
+!
 ! Revision 2.53  2006/09/01 00:59:45  vsnyder
 ! "Catalog" argument of AllocateSlabs needs TARGET attribute so that
 ! slabs(i)%catalog does not become undefined when AllocateOneSlabs returns
