@@ -589,18 +589,18 @@ contains
           if ( catalog%polarized(ln_i) ) cycle
         end if
 
-        dNu = Fgr - slabs_0%v0s(ln_i)
+        dNu = Fgr - slabs_0%s(ln_i)%v0s
 
-        if ( abs(slabs_0%y(ln_i))+0.666666_rp*abs(slabs_0%x1(ln_i)*dNu) &
+        if ( abs(slabs_0%s(ln_i)%y)+0.666666_rp*abs(slabs_0%s(ln_i)%x1*dNu) &
         & > 100.0_rp ) then
-          call Voigt_Lorentz ( dNu, slabs_0%v0s(ln_i), slabs_0%x1(ln_i),         &
-            &  slabs_0%yi(ln_i), slabs_0%y(ln_i), lines(catalog%lines(ln_i))%w,  &
-            &  Temp, tanh1, slabs_0%slabs1(ln_i), bv, slabs_0%dslabs1_dv0(ln_i), &
+          call Voigt_Lorentz ( dNu, slabs_0%s(ln_i)%v0s, slabs_0%s(ln_i)%x1,         &
+            &  slabs_0%s(ln_i)%yi, slabs_0%s(ln_i)%y, lines(catalog%lines(ln_i))%w,  &
+            &  Temp, tanh1, slabs_0%s(ln_i)%slabs1, bv, slabs_0%s(ln_i)%dslabs1_dv0, &
             &  dw, dn, ds )
         else
-          call DVoigt_Spectral ( dNu, slabs_0%v0s(ln_i), slabs_0%x1(ln_i),       &
-            &  slabs_0%yi(ln_i), slabs_0%y(ln_i), lines(catalog%lines(ln_i))%w,  &
-            &  Temp, tanh1, slabs_0%slabs1(ln_i), bv, slabs_0%dslabs1_dv0(ln_i), &
+          call DVoigt_Spectral ( dNu, slabs_0%s(ln_i)%v0s, slabs_0%s(ln_i)%x1,       &
+            &  slabs_0%s(ln_i)%yi, slabs_0%s(ln_i)%y, lines(catalog%lines(ln_i))%w,  &
+            &  Temp, tanh1, slabs_0%s(ln_i)%slabs1, bv, slabs_0%s(ln_i)%dslabs1_dv0, &
             &  dw, dn, ds )
         end if
 
@@ -1191,6 +1191,11 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.90  2006/12/04 21:17:28  vsnyder
+! Reorganize FullForwardModel to use automatic arrays instead of allocating
+! pointer arrays.  Requires testing for zero size instead of testing for
+! associated in several subsidiary procedures.
+!
 ! Revision 2.89  2006/07/19 22:30:17  vsnyder
 ! Cannonball polishing
 !
