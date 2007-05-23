@@ -77,7 +77,7 @@ contains
   subroutine Read_Pointing_Grid_File ( Lun )
     use Machine, only: IO_Error
     use Parse_Signal_m, only: Parse_Signal
-    use Toggles, only: Gen, Switches, Toggle
+    use Toggles, only: Gen, Levels, Switches, Toggle
     use Trace_M, only: Trace_begin, Trace_end
 
     integer, intent(in) :: Lun               ! Logical unit number to read it
@@ -99,7 +99,8 @@ contains
     integer :: Status                        ! From read or allocate
     integer, pointer, dimension(:) :: Signal_Indices   ! From Parse_Signal, q.v.
 
-    if ( toggle(gen) ) call trace_begin ( "Read_Pointing_Grid_File" )
+    if ( toggle(gen) .and. levels(gen) > 0 ) &
+      & call trace_begin ( "Read_Pointing_Grid_File" )
 
     if ( associated(pointingGrids) ) call destroy_pointing_grid_database
 
@@ -221,9 +222,8 @@ outer2: do
     call deallocate_test ( howManyGrids, 'HowManyGrids', moduleName )
 
     if ( index(switches,'point') /= 0 ) call dump_pointing_grid_database
-    if ( toggle(gen) ) then
-      call trace_end ( "Read_Pointing_Grid_File" )
-    end if
+    if ( toggle(gen) .and. levels(gen) > 0 ) &
+      & call trace_end ( "Read_Pointing_Grid_File" )
 
     Return
 
@@ -310,6 +310,9 @@ outer2: do
 end module PointingGrid_m
 
 ! $Log$
+! Revision 2.8  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.7  2004/05/29 02:49:51  vsnyder
 ! Simplifications from using DisplaySignalName
 !
