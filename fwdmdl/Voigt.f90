@@ -1005,6 +1005,9 @@ contains
   ! Compute the real part of Fadeeva = Voigt (without Lorentz) and
   ! the real part of the derivative with respect to some parameter T
   ! (which isn't just the derivative of Voigt).
+  ! This is just Simple_Voigt without any optional arguments, and
+  ! with code pertaining to arguments it has but D_Real_Simple_Voigt
+  ! doesn't have removed.
 
 !{ The Fadeeva function $w(z)$, where $z = x + i y$, can be written as
 !  $V(x,y) + i L(x,y)$, where $V(x,y)$ is the Voigt function and
@@ -1019,41 +1022,369 @@ contains
 !             \frac{\partial y}{\partial T} \right]$.
 !
 !  We don't use this, however, because it has severe cancellation in the
-!  asymptotic region.  Instead, we use the derivatives that Simple\_Voigt
-!  calculates carefully -- q.v. above.
+!  asymptotic region.
 
     real(rp), intent(in) :: x, y
     real(rp), intent(in) :: dx, dy ! dx/dT, dy/dT
     real(rp), intent(out) :: u, du ! Re(w), Re(dw/dT)
 
-    real(rp) :: a, b ! Re(dw/dz), Im(dw/dz)
-    real(rp) :: v    ! Lorentz function
+! internals
 
-    call simple_voigt ( x, y, u, v, a, b )
-    du = a * dx - b * dy
+    ! For asymptotic expansion
+    real(rp), parameter :: A = OneOvSpi, B = 1.5 * a, B2 = 3.0 * a
+
+    ! For 2-pt Gauss-Hermite
+!   real(rp), parameter :: GX = 0.70710678118655_rp ! 1.0/sqrt(2.0)
+!   real(rp), parameter :: GW = 0.5_rp / sqrtPi
+
+    real(rp), parameter :: XL=5.2_rp, YL=0.05_rp, YH=0.6_rp, DYDX=(yh-yl)/xl
+    real(rp) :: P, Q, R, S, VV, XA, X2, Y2
+!   real(rp) :: DENOM1, DENOM2, XM, XP
+    complex(rp) :: UV
+
+! This is sorted in likely occurance of each case
+
+    xa = ABS(x)
+
+! I am assuming that the OR are evaluated sequentially until the first
+! true is found. Also routines are ordered according to speed
+
+    if ( y + 0.666666*xa > 100.0_rp ) then
+
+!{    CLorentz is one term of the asymptotic expansion
+!     $w(z) \sim \frac{i}{z\sqrt{\pi}}
+!       \left(1 + \sum_{m=1}^\infty \frac{1 \cdot 3 \dots (2m-1)}{(2z^2)^m}\right)$.
+!     This exactly cancels in the derivative
+!     $w^\prime(z) = \frac{2i}{\sqrt\pi} - 2 z w(z)$, and is therefore not
+!     accurate enough for derivative computations.
+
+      !{ Compute the derivative first using two terms of the asymptotic
+      ! expansion, then compute w(z) from it, to avoid cancellation
+      !%
+      ! Taking the first two terms,
+      ! $w(z) \approx \frac{i}{\sqrt{\pi}z}
+      !   \left( 1 + \frac1{2z^2}\right)$.
+      !%
+      ! Applying $w^\prime(z) = \frac{2i}{\sqrt{\pi}} - 2 z w(z)$ we have
+      ! $w^\prime(z) \approx -\frac{i}{\sqrt{\pi}z^2}$.
+      !%
+      ! Substituting $z^{-2} = x_2 + i y_2$ and using $a = \frac1{\sqrt{\pi}}$
+      ! gives
+      !%
+      ! $w^\prime(z) \approx a y_2 - i a x_2$.
+      !%
+      ! This is four multiplies and three adds cheaper than in the next
+      ! region inward.
+
+      r = 1.0_rp / ( x*x + y*y )  ! 1 / |z|^2
+      s = -y * r                  ! Im(1/z)
+      r = x * r                   ! Re(1/z)
+
+      x2 = ( s - r ) * ( s + r )  ! -Re(1/z^2)
+      y2 = 2.0 * r * s            ! Im(1/z^2)
+
+      p = a * y2                  ! Re(w') = 1/sqrt(pi) Im(a/z^2)
+      q = a * x2                  ! Im(w') = -1/sqrt(pi) Re(a/z^2)
+
+      !{ Writing $z^{-1} = r + i s$ and $w^\prime(z) = p + i q$, and using
+      ! $w(z) \approx \frac1z \left( \frac{i}{\sqrt\pi} -
+      !               \frac12 w^\prime(z)\right)$
+      ! we have
+      !
+      ! $w(z) \approx \frac12\left( s q - r p \right) - a s +
+      !       i \left[\frac12\left(a r  -( r q + s p ) \right) +  \right]$.
+
+      u = 0.5 * ( s * q - r * p ) - a * s ! Re(w)
+
+      du = p * dx - q * dy
+
+    else if ( y + 0.6875_rp * xa > 11.0_rp ) then
+
+      !{Three terms of the asymptotic expansion get seven digits correct.
+      ! Compute the derivative first, then get $w(z)$ from it, because the
+      ! first term of the asymptotic expansion cancels in the derivative:
+      !%
+      ! $w(z) \sim \frac{i}{\sqrt{\pi}z}
+      !   \left( 1 + \sum_{m=1}^\infty \frac{1 \cdot 3 \dots (2m-1)}
+      !                                      {(2 z^2)^m} \right)$.
+      !%
+      ! Taking the first three terms,
+      ! $w(z) \approx \frac{i}{\sqrt{\pi}z}
+      !   \left( 1 + \frac1{2z^2} + \frac3{4z^4} \right)$.
+      !%
+      ! Applying $w^\prime(z) = \frac{2i}{\sqrt{\pi}} - 2 z w(z)$ we have
+      ! $w^\prime(z) \approx
+      !  - \frac{i}{\sqrt{\pi}z^2} \left( 1 + \frac3{2z^2} \right)$.
+      !%
+      ! Substituting $z^{-2} = x_2 + i y_2$ and using $a = \frac1{\sqrt{\pi}}$
+      ! and $b = \frac3{2\sqrt{\pi}}$ gives
+      !
+      ! $w^\prime(z) \approx ( a + 2 b x_2 ) y_2 +
+      !             i \left( b (y_2^2 - x_2^2) - a x_2 \right)$.
+
+      r = 1.0_rp / ( x*x + y*y )  ! 1 / |z|
+      s = -y * r                  ! Im(1/z)
+      r = x * r                   ! Re(1/z)
+
+      x2 = ( r - s ) * ( r + s )  ! Re(1/z^2)
+      y2 = 2.0 * r * s            ! Im(1/z^2)
+
+      p = (a + b2 * x2) * y2           ! Re(w')
+      q = b * (y2-x2)*(y2+x2) - a * x2 ! Im(w')
+
+      !{ Writing $z^{-1} = r + i s$ and using
+      ! $w(z) = \frac1z \left( \frac{i}{\sqrt\pi} - \frac12 w^\prime(z)\right)$
+      ! we have
+      !
+      ! $w(z) \approx \frac12\left( -r u + s v \right) - a s +
+      !       i \left[\frac12\left( -r v - s u \right) + a r \right]$.
+
+      u = 0.5 * ( s * q - r * p ) - s * a ! Re(w)
+
+      du = p * dx - q * dy
+
+      ! Drayson's quick 2pt hermite integral (essentially a lorentz)
+
+      ! uv = cvoigth2(xa,y)
+!     xm = xa - gx
+!     xp = xa + gx
+!     y2 = y**2
+!     denom1 = gw/(y2 + xm**2)
+!     denom2 = gw/(y2 + xp**2)
+!     u = y*(denom1+denom2)
+!     if ( present(v) ) v = sign(xm*denom1 + xp*denom2, x)
+
+    else
+
+      if ( y > 0.6_rp .OR. y > yl + dydx*xa ) then
+
+! Intermediate region
+
+        uv = chui6(xa,y)
+
+      else if ( xa > 5.2_rp ) then
+
+! small y large x limit
+
+        uv = cvoigth6(xa,y)
+
+      else if ( x*x + y*y > 0.0036 ) then
+
+! Near line center where Doppler dominates Pressure broadening
+
+        uv = cdrayson(xa,y)
+
+      else
+
+! Very close to the line center, where cdrayson seems to have a bug
+
+        uv = taylor(xa,y)
+
+      end if
+
+      u = real(uv,kind=rp)
+      vv = sign(aimag(uv),x)
+
+      ! w' = 2*I/sqrt(pi) - 2*z*w
+      p = 2.0_rp * ( y*vv - x*u )
+      q = 2.0_rp * ( OneOvSpi - x*vv - y*u )
+      du = p * dx - q * dy
+
+    end if
 
   end subroutine D_Real_Simple_Voigt
 
   ! ---------------------------------------------  D_Simple_Voigt  -----
-  elemental subroutine D_Simple_Voigt ( x, y, dx, dy, u, v, du, dv )
+  elemental subroutine D_Simple_Voigt ( x, y, u, v, du, dv, dx, dy )
   ! Compute Fadeeva = Voigt & Lorentz and its derivative with respect
   ! to some parameter T.
+  ! This is just Simple_Voigt without any optional arguments.
 
 !{ Let $w^\prime(z) = a + i b$ and $z = x + i y$, and assume $x$ and $y$
 !  are functions of some parameter $T$.  Then $\frac{d w(z)}{d T} =
 !  \frac{d w(z)}{d z} \frac{d z}{d T} = a ^\prime - b y^\prime +
 !  i ( a y^\prime + b x^\prime)$.
 
-    real(rp), intent(in) :: x, y
-    real(rp), intent(in) :: dx, dy  ! dx/dT, dy/dT
-    real(rp), intent(out) :: u, v   ! Re(w), Im(w)
-    real(rp), intent(out) :: du, dv ! Re(dw/dT), Im(dw/dT)
+! inputs
 
-    real(rp) :: a, b ! Re(dw/dz), Im(dw/dz)
+    real(rp), intent(in) :: x ! doppler width, delta frequency ratio
+    real(rp), intent(in) :: y ! doppler width, collision width ratio
+    real(rp), intent(in), optional :: dx, dy ! dx/dt, dy/dt
 
-    call simple_voigt ( x, y, u, v, a, b )
-    du = a * dx - b * dy
-    dv = a * dy + b * dx
+! outputs
+
+    real(rp), intent(out) :: u            ! real part of Voigt
+    real(rp), optional, intent(out) :: v  ! imaginary part of Voigt
+    real(rp), optional, intent(out) :: du ! real part of Voigt derivative
+    real(rp), optional, intent(out) :: dv ! imaginary part of Voigt derivative
+
+! internals
+
+    ! For asymptotic expansion
+    real(rp), parameter :: A = OneOvSpi, B = 1.5 * a, B2 = 3.0 * a
+
+    ! For 2-pt Gauss-Hermite
+!   real(rp), parameter :: GX = 0.70710678118655_rp ! 1.0/sqrt(2.0)
+!   real(rp), parameter :: GW = 0.5_rp / sqrtPi
+
+    real(rp), parameter :: XL=5.2_rp, YL=0.05_rp, YH=0.6_rp, DYDX=(yh-yl)/xl
+    real(rp) :: P, Q, R, S, XA, X2, Y2
+!   real(rp) :: DENOM1, DENOM2, XM, XP
+    complex(rp) :: UV
+
+! This is sorted in likely occurance of each case
+
+    xa = ABS(x)
+
+! I am assuming that the OR are evaluated sequentially until the first
+! true is found. Also routines are ordered according to speed
+
+    if ( y + 0.666666*xa > 100.0_rp ) then
+
+!{    CLorentz is one term of the asymptotic expansion
+!     $w(z) \sim \frac{i}{z\sqrt{\pi}}
+!       \left(1 + \sum_{m=1}^\infty \frac{1 \cdot 3 \dots (2m-1)}{(2z^2)^m}\right)$.
+!     This exactly cancels in the derivative
+!     $w^\prime(z) = \frac{2i}{\sqrt\pi} - 2 z w(z)$, and is therefore not
+!     accurate enough for derivative computations.
+
+      !{ Compute the derivative first using two terms of the asymptotic
+      ! expansion, then compute w(z) from it, to avoid cancellation
+      !%
+      ! Taking the first two terms,
+      ! $w(z) \approx \frac{i}{\sqrt{\pi}z}
+      !   \left( 1 + \frac1{2z^2}\right)$.
+      !%
+      ! Applying $w^\prime(z) = \frac{2i}{\sqrt{\pi}} - 2 z w(z)$ we have
+      ! $w^\prime(z) \approx -\frac{i}{\sqrt{\pi}z^2}$.
+      !%
+      ! Substituting $z^{-2} = x_2 + i y_2$ and using $a = \frac1{\sqrt{\pi}}$
+      ! gives
+      !%
+      ! $w^\prime(z) \approx a y_2 - i a x_2$.
+      !%
+      ! This is four multiplies and three adds cheaper than in the next
+      ! region inward.
+
+      r = 1.0_rp / ( x*x + y*y )  ! 1 / |z|^2
+      s = -y * r                  ! Im(1/z)
+      r = x * r                   ! Re(1/z)
+
+      x2 = ( s - r ) * ( s + r )  ! -Re(1/z^2)
+      y2 = 2.0 * r * s            ! Im(1/z^2)
+
+      p = a * y2                  ! Re(w') = 1/sqrt(pi) Im(a/z^2)
+      q = a * x2                  ! Im(w') = -1/sqrt(pi) Re(a/z^2)
+
+      !{ Writing $z^{-1} = r + i s$ and $w^\prime(z) = p + i q$, and using
+      ! $w(z) \approx \frac1z \left( \frac{i}{\sqrt\pi} -
+      !               \frac12 w^\prime(z)\right)$
+      ! we have
+      !
+      ! $w(z) \approx \frac12\left( s q - r p \right) - a s +
+      !       i \left[\frac12\left(a r  -( r q + s p ) \right) +  \right]$.
+
+      u = 0.5 * ( s * q - r * p ) - a * s ! Re(w)
+      v = sign(r * a - 0.5 * ( r * q + s * p ), x) ! Im(w)
+
+      du = p * dx - q * dy
+      dv = p * dy + q * dx
+
+    else if ( y + 0.6875_rp * xa > 11.0_rp ) then
+
+      !{Three terms of the asymptotic expansion get seven digits correct.
+      ! Compute the derivative first, then get $w(z)$ from it, because the
+      ! first term of the asymptotic expansion cancels in the derivative:
+      !%
+      ! $w(z) \sim \frac{i}{\sqrt{\pi}z}
+      !   \left( 1 + \sum_{m=1}^\infty \frac{1 \cdot 3 \dots (2m-1)}
+      !                                      {(2 z^2)^m} \right)$.
+      !%
+      ! Taking the first three terms,
+      ! $w(z) \approx \frac{i}{\sqrt{\pi}z}
+      !   \left( 1 + \frac1{2z^2} + \frac3{4z^4} \right)$.
+      !%
+      ! Applying $w^\prime(z) = \frac{2i}{\sqrt{\pi}} - 2 z w(z)$ we have
+      ! $w^\prime(z) \approx
+      !  - \frac{i}{\sqrt{\pi}z^2} \left( 1 + \frac3{2z^2} \right)$.
+      !%
+      ! Substituting $z^{-2} = x_2 + i y_2$ and using $a = \frac1{\sqrt{\pi}}$
+      ! and $b = \frac3{2\sqrt{\pi}}$ gives
+      !
+      ! $w^\prime(z) \approx ( a + 2 b x_2 ) y_2 +
+      !             i \left( b (y_2^2 - x_2^2) - a x_2 \right)$.
+
+      r = 1.0_rp / ( x*x + y*y )  ! 1 / |z|
+      s = -y * r                  ! Im(1/z)
+      r = x * r                   ! Re(1/z)
+
+      x2 = ( r - s ) * ( r + s )  ! Re(1/z^2)
+      y2 = 2.0 * r * s            ! Im(1/z^2)
+
+      p = (a + b2 * x2) * y2           ! Re(w')
+      q = b * (y2-x2)*(y2+x2) - a * x2 ! Im(w')
+
+      !{ Writing $z^{-1} = r + i s$ and using
+      ! $w(z) = \frac1z \left( \frac{i}{\sqrt\pi} - \frac12 w^\prime(z)\right)$
+      ! we have
+      !
+      ! $w(z) \approx \frac12\left( -r u + s v \right) - a s +
+      !       i \left[\frac12\left( -r v - s u \right) + a r \right]$.
+
+      u = 0.5 * ( s * q - r * p ) - s * a ! Re(w)
+      v = sign(r * a - 0.5 * ( r * q + s * p ), x) ! Im(w)
+
+      du = p * dx - q * dy
+      dv = p * dy + q * dx
+
+      ! Drayson's quick 2pt hermite integral (essentially a lorentz)
+
+      ! uv = cvoigth2(xa,y)
+!     xm = xa - gx
+!     xp = xa + gx
+!     y2 = y**2
+!     denom1 = gw/(y2 + xm**2)
+!     denom2 = gw/(y2 + xp**2)
+!     u = y*(denom1+denom2)
+!     if ( present(v) ) v = sign(xm*denom1 + xp*denom2, x)
+
+    else
+
+      if ( y > 0.6_rp .OR. y > yl + dydx*xa ) then
+
+! Intermediate region
+
+        uv = chui6(xa,y)
+
+      else if ( xa > 5.2_rp ) then
+
+! small y large x limit
+
+        uv = cvoigth6(xa,y)
+
+      else if ( x*x + y*y > 0.0036 ) then
+
+! Near line center where Doppler dominates Pressure broadening
+
+        uv = cdrayson(xa,y)
+
+      else
+
+! Very close to the line center, where cdrayson seems to have a bug
+
+        uv = taylor(xa,y)
+
+      end if
+
+      u = real(uv,kind=rp)
+      v = sign(aimag(uv),x)
+
+      ! w' = 2*I/sqrt(pi) - 2*z*w
+      p = 2.0_rp * ( y*v - x*u )
+      q = 2.0_rp * ( OneOvSpi - x*v - y*u )
+      du = p * dx - q * dy
+      dv = p * dy + q * dx
+    end if
 
   end subroutine D_Simple_Voigt
 
@@ -1071,6 +1402,9 @@ contains
 end module Voigt_M
 
 ! $Log$
+! Revision 2.9  2007/05/23 22:38:01  vsnyder
+! Specialize and inline Simple_Voigt instead of calling it
+!
 ! Revision 2.8  2006/07/19 22:29:56  vsnyder
 ! Cannonball polishing
 !
