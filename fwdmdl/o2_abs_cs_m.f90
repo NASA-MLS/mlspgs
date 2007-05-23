@@ -74,8 +74,8 @@ contains
       if ( .not. polarized(j) ) cycle
 
       v0 = lines(slabs%catalog%lines(j))%v0
-      call mag_o2_abs_cs ( qn(j), freq, v0, h, slabs%x1(j), slabs%slabs1(j), &
-        &                  slabs%y(j), slabs%yi(j), slabs%v0s(j), &
+      call mag_o2_abs_cs ( qn(j), freq, v0, h, slabs%s(j)%x1, slabs%s(j)%slabs1, &
+        &                  slabs%s(j)%y, slabs%s(j)%yi, slabs%s(j)%v0s, &
         &                  sigma_p, pi, sigma_m )
 
 !{ Fill in negative frequency part of VVW lineshape for jth line
@@ -87,13 +87,13 @@ contains
 !  $z = x_1 ( \nu + \nu_{0_s} )$ and $D = \sqrt{\pi} ( z^2 + y^2 )$
 
       f_o_v0 = freq / v0
-      z = slabs%x1(j) * (slabs%v0s(j) + freq)
-      denomm = sqrtPi * (z*z + slabs%y(j)*slabs%y(j))
-      wing = wing + ( 0.5_rk * slabs%slabs1(j) * f_o_v0 ) * cmplx( &
-        &  (slabs%y(j) - slabs%yi(j)*z) / denomm, & ! Real part
-        & (z + slabs%y(j) * (slabs%y(j)/slabs%x1(j) -   & ! Imaginary part...
-        &   freq*slabs%yi(j)) / slabs%v0s(j)) / denomm -  &
-        &   2.0_rk/(slabs%x1(j) * slabs%v0s(j)) &
+      z = slabs%s(j)%x1 * (slabs%s(j)%v0s + freq)
+      denomm = sqrtPi * (z*z + slabs%s(j)%y*slabs%s(j)%y)
+      wing = wing + ( 0.5_rk * slabs%s(j)%slabs1 * f_o_v0 ) * cmplx( &
+        &  (slabs%s(j)%y - slabs%s(j)%yi*z) / denomm, & ! Real part
+        & (z + slabs%s(j)%y * (slabs%s(j)%y/slabs%s(j)%x1 -   & ! Imaginary part...
+        &   freq*slabs%s(j)%yi) / slabs%s(j)%v0s) / denomm -  &
+        &   2.0_rk/(slabs%s(j)%x1 * slabs%s(j)%v0s) &
         & )
 
     end do
@@ -169,12 +169,12 @@ contains
       if ( .not. polarized(j) ) cycle
 
       v0 = lines(slabs%catalog%lines(j))%v0
-      call d_mag_o2_abs_cs_dT ( qn(j), freq, v0, h,             &
-        &  slabs%x1(j),     slabs%slabs1(j),     slabs%y(j),    &
-        &  slabs%yi(j),     slabs%v0s(j),                       &
-        & slabs%dx1_dT(j), slabs%dslabs1_dT(j), slabs%dy_dT(j), &
-        & slabs%dyi_dT(j), slabs%dv0s_dT(j),                    &
-        &  sigma_p,     pi,     sigma_m,                        &
+      call d_mag_o2_abs_cs_dT ( qn(j), freq, v0, h,                   &
+        &  slabs%s(j)%x1,     slabs%s(j)%slabs1,     slabs%s(j)%y,    &
+        &  slabs%s(j)%yi,     slabs%s(j)%v0s,                         &
+        & slabs%d(j)%dx1_dT, slabs%d(j)%dslabs1_dT, slabs%d(j)%dy_dT, &
+        & slabs%d(j)%dyi_dT, slabs%d(j)%dv0s_dT,                      &
+        &  sigma_p,     pi,     sigma_m,                              &
         & dSigma_p_dT, dPi_dT, dSigma_m_dT )
 
 !{ Fill in negative frequency part of VVW lineshape for jth line
@@ -239,33 +239,33 @@ contains
 !                 $\frac1{S} \frac{\partial S}{\partial T}$
 !  are gotten from the {\tt slabs} structure.
 
-      s = 0.5_rk * slabs%slabs1(j) * freq / v0
-      sigma = freq + slabs%v0s(j)
-      z = slabs%x1(j) * sigma
-      r1 = slabs%y(j)
+      s = 0.5_rk * slabs%s(j)%slabs1 * freq / v0
+      sigma = freq + slabs%s(j)%v0s
+      z = slabs%s(j)%x1 * sigma
+      r1 = slabs%s(j)%y
       y2 = r1**2
-      r2 = slabs%yi(j)*z
-      i1 = 1.0_rk / slabs%v0s(j)
-      i4 = 2.0_rk * i1 / slabs%x1(j)
+      r2 = slabs%s(j)%yi*z
+      i1 = 1.0_rk / slabs%s(j)%v0s
+      i4 = 2.0_rk * i1 / slabs%s(j)%x1
       i2 = y2 * 0.5_rk * i4
-      i3 = freq * r1 * slabs%yi(j) * i1
-      dv0 = slabs%dv0s_dT(j) * i1 ! 1/v0s dv0s/dT
+      i3 = freq * r1 * slabs%s(j)%yi * i1
+      dv0 = slabs%d(j)%dv0s_dT * i1 ! 1/v0s dv0s/dT
       i1 = z
       d = oneOvSqpi / (z*z + y2)
 
       wing = wing + s * cmplx ( d * (r1 - r2), d * (i1 + i2 - i3) - i4 )
 
-      dz = slabs%dx1_dT(j) + slabs%dv0s_dT(j) / sigma
-      dD = (2.0_rk * sqrtPi) * ( z**2 * dz + y2 * slabs%dy_dT(j) ) * d
-      s1 = slabs%dslabs1_dT(j) - dD ! 1/S dS/dT - 1/D dD/dT
+      dz = slabs%d(j)%dx1_dT + slabs%d(j)%dv0s_dT / sigma
+      dD = (2.0_rk * sqrtPi) * ( z**2 * dz + y2 * slabs%d(j)%dy_dT ) * d
+      s1 = slabs%d(j)%dslabs1_dT - dD ! 1/S dS/dT - 1/D dD/dT
 
-      dr1 = s1 + slabs%dy_dT(j)
-      dr2 = s1 + slabs%dyi_dT(j) + dz
+      dr1 = s1 + slabs%d(j)%dy_dT
+      dr2 = s1 + slabs%d(j)%dyi_dT + dz
 
       di1 = s1 + dz
-      di2 = s1 - dv0 + 2.0_rk * slabs%dy_dT(j) - slabs%dx1_dT(j)
-      di3 = s1 - dv0 + slabs%dy_dT(j) + slabs%dyi_dT(j)
-      di4 = slabs%dslabs1_dT(j) - slabs%dx1_dT(j) - dv0
+      di2 = s1 - dv0 + 2.0_rk * slabs%d(j)%dy_dT - slabs%d(j)%dx1_dT
+      di3 = s1 - dv0 + slabs%d(j)%dy_dT + slabs%d(j)%dyi_dT
+      di4 = slabs%d(j)%dslabs1_dT - slabs%d(j)%dx1_dT - dv0
 
       dWing = dWing + s * &
         &             cmplx ( d * (r1 * dr1 - r2 * dr2), &
@@ -838,7 +838,7 @@ contains
 !    u \left( \frac{\partial x}{\partial T} +
 !    y_i \frac1{y_i}\frac{\partial y_i}{\partial T} \right) \right)$
 
-      call d_simple_voigt ( nu_offst, ww, dNu_offst, wdw, u, v, du, dv )
+      call d_simple_voigt ( nu_offst, ww, u, v, du, dv, dNu_offst, wdw )
       zr = u - y*v
       dZr = ds * zr + du - y*(dv + dy*v)
       z = x + y
@@ -916,6 +916,9 @@ contains
 end module O2_Abs_CS_M
 
 ! $Log$
+! Revision 2.16  2007/05/23 22:45:08  vsnyder
+! New slabs structure
+!
 ! Revision 2.15  2005/07/06 02:13:31  vsnyder
 ! Correct a comment
 !
