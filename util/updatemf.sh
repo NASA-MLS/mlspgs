@@ -183,18 +183,25 @@ else
 	made_new_dir="true"        
 fi
 
-if [ ! -f $plat_dir/platforms/$MLSF95.$MLSPLAT ] ; then
-	echo "File $MLSF95.$MLSPLAT not found in $plat_dir/platforms"
+if [ ! -f $conf_dir/srclib/$MLSF95.$MLSPLAT ] ; then
+	echo "File $MLSF95.$MLSPLAT not found in $conf_dir/srclib"
 	exit
 fi
+
+# if [ ! -f $plat_dir/platforms/common ] ; then
+# 	echo "File common not found in $plat_dir/platforms"
+# 	exit
+# fi
 
 if [ ! -f $plat_dir/platforms/targets ] ; then
-	echo "File targets not found in $plat_dir/platforms"
-	exit
+ echo "File targets not found in $plat_dir/platforms"
+ exit
 fi
 
-cat $confg_file $plat_dir/platforms/$MLSF95.$MLSPLAT \
-   $plat_dir/platforms/targets > $mcfg_dir/$MLSCONFG/Makefile
+# cat $confg_file $plat_dir/platforms/common \
+#   $plat_dir/platforms/targets > $mcfg_dir/$MLSCONFG/Makefile
+
+cat $confg_file $plat_dir/platforms/targets > $mcfg_dir/$MLSCONFG/Makefile
 
 if [ "$made_new_dir" = "true" ] ; then
 	echo "Configured mls to use $mcfg_dir/$MLSCONFG "
@@ -244,6 +251,9 @@ fi
 exit 0
 
 # $Log$
+# Revision 1.5  2005/06/23 22:20:46  pwagner
+# Reworded Copyright statement
+#
 # Revision 1.4  2004/03/26 23:31:09  pwagner
 # A quickie--but fails if we cvs remove from parent
 #

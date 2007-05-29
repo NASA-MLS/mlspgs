@@ -1,3 +1,88 @@
+# "$Id$"
+
+# Path to source files:
+S = ..
+
+# Path to root directory of l2, lib, etc.:
+CONFDIR=../..
+
+# Use the libmls.a directory, libdir, for .mod files
+# dir1 is the path prepended to its .o files in dependency lists
+libdir = $(CONFDIR)/lib/$(MLSCONFG)
+
+dir1 = $(libdir)/
+
+# sources shared by l2, l3 are in $(srclib)
+# these USE init_tables_module, which is different for l2 from the l3 version
+# while l2 and l3 use the same sources in srclib they do
+# require different objects--thus a source library instead of an object
+# library (such as libmls.a)
+# therefore we will tell make to add srclib to directories searched for .f90
+# while dir2, the path prepended to its .o files in dependency lists, is empty
+# so that its object files share the current working directory with those of l2
+srclib = $(CONFDIR)/srclib
+
+dir2 =
+
+# Use the libmlspack.a directory, blaslib, for .mod files
+blaslib = $(CONFDIR)/blas/$(MLSCONFG)
+
+# Use the fwdmdl directory, fwdmdldir, for more .mod files
+# dir3 is the path prepended to its .o files in dependency lists
+fwdmdldir = $(CONFDIR)/fwdmdl/$(MLSCONFG)
+
+dir3 = $(fwdmdldir)/
+
+# Use the cloud directory, clouddir, for more .mod files
+# dir4 is the path prepended to its .o files in dependency lists
+clouddir = $(CONFDIR)/cloudfwdm/$(MLSCONFG)
+
+dir4 = $(clouddir)/
+
+MODPATHS = $(dir1) $(dir3) $(dir4) $(blaslib)
+
+TESTSDIR=../../tests
+
+UTILDIR=$(CONFDIR)/util
+
+# reecho.sh can filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+# However we will be using it just to prefix any unprefixed preset paths
+REECHO=$(UTILDIR)/reecho.sh
+
+
+# Set paths for finding source files (different from .o and .mod)
+
+vpath %.mod ./
+vpath %.o ./
+vpath %.f90 ../ $(srclib)
+vpath %.f9h ../ $(srclib)
+vpath %.f ../
+vpath %.c ../
+
+include $(srclib)/$(MLSF95).$(MLSPLAT)
+# All the paths to supply .mod and INCLUDE files used in compiling %.f90
+# Precede each path by "-I "
+INC_PATHS := $(EXTRA_PATHS) \
+  $(shell ${REECHO} ${PATH_OPTS} \
+  $(UNPREFXDPTHS) $(MODPATHS) $(PGSINC) $(srclib) $S)
+
+# Define some suffix rules
+
+.SUFFIXES:
+.SUFFIXES: .o .dbg.o .f90 .f .c
+.f90.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.f90.dbg.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o $(FAFTER)
+
+.f.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.c.o:
+	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
+
 mlsl2: MLSL2.o
 
 short_name=l2
@@ -9,70 +94,28 @@ else
    MLSCFILE=.configure
 endif
 
-ifndef CASCADE
-the_file := $(shell ${REECHO} Makefile.dep)
-ifeq ($(strip $(the_file)),)
-CASCADE = "yes"
-endif
-endif
-
-ifndef CASCADE
 include Makefile.dep
-else
-ifdef NOCASCADE
-include ../Makefile.nodep
-else
-include ../Makefile.dep
-endif
-endif
 
 record_file=newAifBdiff.out
 
 MARKING_ARG=-f$(MARK_ALL_AS_UPTODATE) -s$(SKIP_PREREQ_DIRS)
-
-# "$Id$"
 
 # ========================================================================
 # An automatically constructed Makefile
 # This file was built by mlsconfigure
 # by catenating three files:
 # (1) .configure -- a file of mls settings: compiler, platform, etc.
-# (2) MLSCONFG   -- a file of macros specific for the compiler.platform combo
-#                   e.g., NAG.Sun
+# (2) common     -- a file of macros specific for this directory, e.g. paths
 #                   these might be compiler switches, 
 # (3) targets    -- a file of targets with instructions how to build them
 #                    (except for .f90.o rules which are still in MLSCONFG)
 
 # Other files referred to by means of "include" statements:
-#   ../Makefile.dep -- dependencies among the primary Fortran modules
+#   srclib/$(MLSF95).$(MLSPLAT) -- macros specific for the 
+#         compiler.platform combo; e.g., NAG.Sun
+#   Makefile.dep -- dependencies among the primary Fortran modules
 #   srclib/Makefile.dep -- dependencies among the shared Fortran modules
-
-# Special areas:
-# PVM
-# If it is desired to link the executable with PVM support,
-# the variables PVM_PATH, PVM_ARCH should be defined
-# e.g. in .configure
-
-# LAPACK
-# If it is desired to link the executable with external LAPACK support,
-# the variable LAPACK should be defined
-# e.g. in the make statement: make LAPACK=/my_path/to_lapack_library
-# If this is done, i.e., LAPACK is defined, then 
-
-# BLAS
-# If it is desired to link the executable with external BLAS support,
-# the variable BLAS should be defined
-# e.g. in the make statement: make BLAS=/my_path/to_BLAS_library
-# If this is done, i.e., BLAS is defined, then blas_objs will
-# be blank
-# Otherwise, i.e. if BLAS is left undefined, then blas_objs will
-# depend on LIB_BLAS:
-# if LIB_BLAS is f95, then blas will be supported by f95 intrinsics
-
-# PGSTK
-# This variable is defined only if you will use the toolkit
-# to build the level 2 software
-# otherwise it is blank
+#   srclib/targets.h -- linker lines whenever building an executable
 
 # ========================================================================
 #       The objects for the shared source files (in srclib)
@@ -165,6 +208,9 @@ tar:
 # (See also Abs.Linux, LF95.Linux, etc.)
 
 # $Log$
+# Revision 1.49  2006/06/15 19:31:35  pwagner
+# Now links szlib; comtaible with toolkit 5.2.14.A
+#
 # Revision 1.48  2005/08/17 17:45:05  pwagner
 # Moved more definitions to srclib/targets.h
 #
