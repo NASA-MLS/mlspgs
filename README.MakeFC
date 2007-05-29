@@ -36,7 +36,7 @@ SUMMARY
 To build the mls software, on many different combinations of compiler/
 platform/OS, minimizing the changes most users will need to make. Therefore
 it is mostly self-configuring. First, you will need:
- (1) f95 compiler (one of NAG, Lahey, or Sun)
+ (1) f95 compiler (Absoft, G95, Intel, NAG, Lahey, or Sun)
  (2) Installed SDP Toolkit (PGSTK, HDFEOS(5), HDF(5))
  (3) mls software directory (probably where you're reading this)
  (4) perl
@@ -137,8 +137,8 @@ README.MakeFC  f90makedep.pl      platforms/*          files)
 BUILDING THE SOFTWARE
 Then to make the mls software, including all mlslevels, from the top level of
 the mlspgs directory, enter the command "make -f MakeFC update". This should
-launch util/mlsconfigure. It will first query you for your compiler (only three
-choices available: NAG, Lahey, or Sun) and for your platform/OS (only three
+launch util/mlsconfigure. It will first query you for your compiler 
+(NAG, Lahey, G95, Intel, Absoft) and for your platform/OS (only three
 choices available: Sun, SGI, or Linux). You'll also be offered the chance to
 give your configuration a name--the default offered to you, based on the
 compiler and platform, should be accepted unless you intend to maintain
@@ -156,7 +156,7 @@ them, be prepared to enter their full path names. Usually Gctp is
 installed alongside the HDFEOS so after setting the latter, the same
 will be offered as the default path setting for the former.
 
-Note whether you have the latest version of the toolkit (currently 5.2.12.A)
+Note whether you have the latest version of the toolkit (currently 5.2.14.A)
 or an earlier one. The latest version includes version 5 of both the HDF and
 HDFEOS libraries, and so their paths need to be set.
 
@@ -392,13 +392,13 @@ will be similar to example shown at the end of this file.
 In addition, inside the mlslevels a new directory will be created with a unique
 name given by the value of MLSCONFG. As we stated above, this value is the name
 you gave when you configured make. In this directory mlsconfigure places a
-Makefile which is the catenation of .configure with two files found in the
-directory platforms: e.g., assuming the default value of MLSCONFG NAG.Linux:
-        cat .configure l2/platforms/NAG.Linux l2/platforms/targets > \
+Makefile which is the catenation of .configure with a file found in the
+directory platforms: e.g., :
+        cat .configure l2/platforms/targets > \
                 l2/NAG.Linux/Makefile
-Here platforms/NAG.Linux is a file of compiler settings specific to the NAG
-compiler. platforms/targets is a list of makefile-like targets and the commands
-to build them, independent of any particular compiler or platform/OS.
+platforms/targets is a list of makefile-like targets and the commands to build
+them, independent of any particular compiler or platform/OS. Mentioned in an
+include statement is a file of compiler settings specific to the NAG compiler. 
 
 As make proceeds to build the prerequisites of the final program, the
 binaries, .o and .mod files, and end products, e.g. libmls.a or mlsl2, are
@@ -473,11 +473,13 @@ made to link properly. Sun and SGI versions seemed correct. The solution is to
 build correct ones. See Hugh Pumphrey's page 
 http://www.met.ed.ac.uk/~hcp/hdfeos_notes.txt for instructions. Thankfully this
 bug disappeared with the next release. However, Sun and SGI installations have
-become problem-plagued with recent releases of hdf4 and hdf5.
+become problem-plagued with recent releases of hdf4 and hdf5. The toolkit
+people seem poised to drop support for SGI and older Suns.
 
 IMPERFECTIONS AND COMPLICATIONS
 The only combinations of compiler.platform/OS provided for so far are
   Unknown.None
+  Abs.Linux
   G95.(pc)Linux
   IFC.(pc)Linux
   LF95.(pc)Linux
@@ -600,13 +602,13 @@ name nor the file name duplicate names of a module already in a lineal
 directory. Two directories are lineal if one is a prerequisite of the other.
 E.g., l1 and srclib are lineal, while l3 and fwdmdl are not.
 
-Not mentioned above are two extra directories: customblds and 
-lib/machines/MLSCONFG. The first contains custom build instructions for various
-modules, i.e. modules for which the default ".f.o" rules won't work. The second
-contains at least one file, machine.f90, with compiler/platform-specific
-information about command-line  arguments and other features. Sometimes other
-files may accompany machine.f90, e.g. to compensate for missing ieee-arithmetic
-support in the case of Lahey or Sun.
+Not mentioned above are three extra directories: customblds, srclib, and 
+lib/machines/MLSCONFG. customblds contains custom build instructions for various
+modules, i.e. modules for which the default ".f.o" rules won't work. srclib
+contains some files that are INCLUDEd in the Makefiles. The third contains at
+least one file, machine.f90, with compiler/platform-specific information about
+command-line  arguments and other features. Sometimes other files may accompany
+machine.f90, e.g. to compensate for missing ieee-arithmetic support.
 
 ADVANCED SETTINGS
 These include features which are otherwise given default values which may prove
@@ -787,10 +789,13 @@ export FFTW_ROOT
 export FOPTS
 export LDOPTS
 
--pw                           2000-Oct-24 to 2005-Jun-23
+-pw                           2000-Oct-24 to 2007-May-29
 EOF
 exit
 # $Log$
+# Revision 1.39  2005/06/23 23:00:53  pwagner
+# Reworded Copyright statement
+#
 # Revision 1.38  2004/12/14 21:29:08  pwagner
 # Brought up to date with perl scripts in util
 #
