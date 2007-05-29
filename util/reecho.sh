@@ -17,7 +17,7 @@
 # Given 'reecho -prefix=-I *-dir'
 # might echo '-I a-dir -I b-dir -I c-dir ..'
 #
-# Usage:
+# Usage (1):
 # reecho.sh [opt] ..  [arg1 arg2 ..]
 #
 #    O p t i o n s
@@ -56,6 +56,17 @@
 #      write permission to (though that is a logical improvement to make)
 # (3) -dirn must stand alone--it cannot be used with any other options
 # 
+# Usage (2):
+# reecho.sh --set [opts] [--set [opts] ..] - arg1 [arg2 ..]
+# --set         separartor between sets of opts
+# opts          whatever options are to be passed to reecho
+# arg1          an arg to be reechoed for each set of opts
+# Note:
+# (1) The --set
+#     must precede each option set
+# (2) The bare "-" must precede the args
+#      (to indicate the option list has ended)
+
 # Result:
 # A filtered list of args, e.g. arg3 arg6 .. , that satisfy
 # the conditions set up by the options
@@ -76,6 +87,11 @@
 #     -ldfftw -ldrfftw
 #  69%util/reecho.sh -lib -dir /usr/lib -prefixn=lib -suffixn=.a dfftw drfftw
 #     libdfftw.a libdrfftw.a
+#
+#   Example of Usage (2)
+# Given 'reecho --set -d -prefixn=-I --set -d prefix=-p - *-dir'
+# might echo '-Ia-dir -Ib-dir -Ic-dir -p a-dir -p b-dir -p c-dir'
+
 # --------------- End reecho.sh help
 # Copyright 2005, by the California Institute of Technology. ALL
 # RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
@@ -196,6 +212,266 @@ sort_array()
       echo $sorting
 }
       
+reecho_args()
+{
+  #------------------------------- reecho_args ------------
+  me="$0"
+  my_name=reecho.sh
+  DEEBUG=off
+  if [ $DEEBUG = "on" ]
+  then
+     echo "Called me as $0"
+     echo "with args $@"
+  fi
+
+  new_dir=""
+  new_list="no"
+  as_lib="no"
+  the_opt="-f"
+  the_sense="yes"
+  the_text=""
+  more_opts="yes"
+  the_prefix=""
+  the_suffix=""
+  separate_prefix="yes"
+  separate_suffix="yes"
+  bad_args=""
+  dirs=""
+  unique="no"
+  while [ "$more_opts" = "yes" ] ; do
+
+      case "$1" in
+
+      -f )
+         the_opt="-f"
+         the_sense="yes"
+         shift
+         ;;
+      -nf )
+         the_opt="-f"
+         the_sense="no"
+         shift
+         ;;
+      -d )
+         the_opt="-d"
+         the_sense="yes"
+         shift
+         ;;
+      -nd )
+         the_opt="-d"
+         the_sense="no"
+         shift
+         ;;
+      -r )
+         the_opt="-r"
+         the_sense="yes"
+         shift
+         ;;
+      -nr )
+         the_opt="-r"
+         the_sense="no"
+         shift
+         ;;
+      -w )
+         the_opt="-w"
+         the_sense="yes"
+         shift
+         ;;
+      -nw )
+         the_opt="-w"
+         the_sense="no"
+         shift
+         ;;
+      -x )
+         the_opt="-x"
+         the_sense="yes"
+         shift
+         ;;
+      -nx )
+         the_opt="-x"
+         the_sense="no"
+         shift
+         ;;
+      -glob )
+         the_opt="-glob"
+         the_sense="yes"
+         shift
+         ;;
+      -nglob )
+         the_opt="-glob"
+         the_sense="no"
+         shift
+         ;;
+      -grep )
+         shift
+         the_text="$1"
+         the_opt="-grep"
+         the_sense="yes"
+         shift
+         ;;
+      -ngrep )
+         shift
+         the_text="$1"
+         the_opt="-grep"
+         the_sense="no"
+         shift
+         ;;
+      -prefix=* )
+         the_prefix=`echo $1 | sed 's/-prefix=//'`
+         shift
+         ;;
+      -prefixn=* )
+         the_prefix=`echo $1 | sed 's/-prefixn=//'`
+         separate_prefix="no"
+         shift
+         ;;
+      -suffix=* )
+         the_suffix=`echo $1 | sed 's/-suffix=//'`
+         shift
+         ;;
+      -suffixn=* )
+         the_suffix=`echo $1 | sed 's/-suffixn=//'`
+         separate_suffix="no"
+         shift
+         ;;
+      -h | -help )
+         sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
+             | sed -n 's/^.//p' | sed '1 d; $ d'
+         exit
+         ;;
+      -dir )
+         shift
+         new_dir="$1"
+         dirs="$1 $dirs"
+         shift
+         ;;
+      -dirn )
+         shift
+         new_dir="$1"
+         new_list="yes"
+         shift
+         ;;
+      -lib )
+         as_lib="yes"
+         shift
+         ;;
+      -excl )
+         shift
+         bad_args="$1 $bad_args"
+         shift
+         ;;
+      -uniq* )
+         unique="yes"
+         shift
+         ;;
+      * )
+         more_opts="no"
+         ;;
+      esac
+  done
+
+  if [ $DEEBUG = "on" ]
+  then
+     echo "the_opt $the_opt"
+     echo "the_sense $the_sense"
+     echo "the_prefix $the_prefix"
+     echo "separate_prefix? $separate_prefix"
+     echo "the_suffix $the_suffix"
+     echo "separate_suffix? $separate_suffix"
+     echo "as lib? $as_lib"
+     echo "new_dir $new_dir"
+     echo "remaining args $@"
+  fi
+
+  if [ "$new_dir" = "" ]
+  then
+     extant_files "$@"
+  elif [ "$new_list" = "yes" ]
+  then
+     # This is that simple -dirn option
+     old_dir=`pwd`
+     cd "$new_dir"
+     my_files=`echo *`
+     set `echo $my_files`
+     extant_files "$@"
+     cd "$old_dir"
+  else
+     if [ $DEEBUG = "on" ]
+     then
+       echo "remaining args $@:" $@
+     fi
+     # Now dirs may contain more than one directory to search
+     results=""
+     old_dir=`pwd`
+     for new_dir in $dirs
+     do
+       cd "$new_dir"
+       #  Since we changed directories, args which failed to glob
+       #  in old_dir may glob successfully in new_dir
+       #   extant_files "$@"
+       extant_files $@
+       results="$extant_files_result $results"
+       cd "$old_dir"
+     done
+     extant_files_result="$results"
+  fi
+
+  if [ "$separate_suffix" = "yes" ]   
+  then                                
+     the_suffix=" $the_suffix"        
+  fi                                  
+  if [ "$separate_prefix" = "yes" ]   
+  then                                
+     the_prefix="$the_prefix "        
+  fi                                  
+
+  if [ $DEEBUG = "on" -a "$unique" = "yes" ]          
+  then                           
+     echo "Before sorting and removing duplicates: $extant_files_result"   
+  fi                             
+
+  if [ "$unique" = "yes" ]          
+  then                           
+     extant_files_result=`sort_array "$extant_files_result"   `
+  fi                             
+
+  if [ $DEEBUG = "on" ]          
+  then                           
+     echo "Before pre-suffixing: $extant_files_result"   
+  fi                             
+
+  if [ "$the_prefix" = "" -a "$the_suffix" = "" ]
+  then
+     # No prefix--just echo filtered args
+     echo $extant_files_result
+  elif [ "$the_suffix" = "" ]
+  then
+     # prefix each filtered arg
+     prefixed_result=
+     for file in $extant_files_result
+     do
+        prefixed_result="$prefixed_result ${the_prefix}$file"
+     done
+     echo $prefixed_result
+  elif [ "$the_prefix" = "" ]
+  then
+     # suffix each filtered arg
+     prefixed_result=
+     for file in $extant_files_result
+     do
+        prefixed_result="$prefixed_result $file${the_suffix}"
+     done
+     echo $prefixed_result
+  else
+     # prefix and suffix each filtered arg
+     prefixed_result=
+     for file in $extant_files_result
+     do
+        prefixed_result="$prefixed_result ${the_prefix}$file${the_suffix}"
+     done
+     echo $prefixed_result
+fi
+}
 #------------------------------- Main Program ------------
 
 #****************************************************************
@@ -206,159 +482,65 @@ sort_array()
 #	The entry point where control is given to the script         *
 #****************************************************************
 #
-#   Notes
-#  A logical improvement would be to allow multiple options
-# among the set {[n]f [n]d [n]w [n]r [n]x}
-# which should be doable by forming a list of the_opts and
-# looping over them with calls to extant_files
-# steadily narrowing down the files that survive being refiltered
+DEEBUG="off"
 me="$0"
+I=reecho
 my_name=reecho.sh
-DEEBUG=off
+REECHO=reecho_args
+args=`echo $@ | sed 's/^.* - //'`
 if [ $DEEBUG = "on" ]
 then
    echo "Called me as $0"
-   echo "with args $@"
+   echo "with full options plus args $@"
+   echo "REECHO is $REECHO"
+   echo "args is $args"
 fi
 
-new_dir=""
-new_list="no"
-as_lib="no"
-the_opt="-f"
-the_sense="yes"
-the_text=""
-more_opts="yes"
-the_prefix=""
-the_suffix=""
-separate_prefix="yes"
-separate_suffix="yes"
-bad_args=""
-dirs=""
-unique="no"
-while [ "$more_opts" = "yes" ] ; do
+# Usage (1) or (2)?
+usage_test=`echo $@ | grep -e --set`
+if [ "$usage_test" = "" ]
+then
+  $REECHO $@
+  exit
+fi
 
+if [ "$args" = "" ]
+then
+  echo "Usage: there were no args"
+  exit 1
+fi
+
+more_opts="yes"
+first_set="yes"
+result=""
+while [ "$more_opts" = "yes" ] ; do
+    # echo "arg: $1"
     case "$1" in
 
-    -f )
-       the_opt="-f"
-       the_sense="yes"
-       shift
-       ;;
-    -nf )
-       the_opt="-f"
-       the_sense="no"
-       shift
-       ;;
-    -d )
-       the_opt="-d"
-       the_sense="yes"
-       shift
-       ;;
-    -nd )
-       the_opt="-d"
-       the_sense="no"
-       shift
-       ;;
-    -r )
-       the_opt="-r"
-       the_sense="yes"
-       shift
-       ;;
-    -nr )
-       the_opt="-r"
-       the_sense="no"
-       shift
-       ;;
-    -w )
-       the_opt="-w"
-       the_sense="yes"
-       shift
-       ;;
-    -nw )
-       the_opt="-w"
-       the_sense="no"
-       shift
-       ;;
-    -x )
-       the_opt="-x"
-       the_sense="yes"
-       shift
-       ;;
-    -nx )
-       the_opt="-x"
-       the_sense="no"
-       shift
-       ;;
-    -glob )
-       the_opt="-glob"
-       the_sense="yes"
-       shift
-       ;;
-    -nglob )
-       the_opt="-glob"
-       the_sense="no"
-       shift
-       ;;
-    -grep )
-       shift
-       the_text="$1"
-       the_opt="-grep"
-       the_sense="yes"
-       shift
-       ;;
-    -ngrep )
-       shift
-       the_text="$1"
-       the_opt="-grep"
-       the_sense="no"
-       shift
-       ;;
-    -prefix=* )
-       the_prefix=`echo $1 | sed 's/-prefix=//'`
-       shift
-       ;;
-    -prefixn=* )
-       the_prefix=`echo $1 | sed 's/-prefixn=//'`
-       separate_prefix="no"
-       shift
-       ;;
-    -suffix=* )
-       the_suffix=`echo $1 | sed 's/-suffix=//'`
-       shift
-       ;;
-    -suffixn=* )
-       the_suffix=`echo $1 | sed 's/-suffixn=//'`
-       separate_suffix="no"
-       shift
-       ;;
     -h | -help )
        sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
            | sed -n 's/^.//p' | sed '1 d; $ d'
        exit
        ;;
-    -dir )
-       shift
-       new_dir="$1"
-       dirs="$1 $dirs"
-       shift
-       ;;
-    -dirn )
-       shift
-       new_dir="$1"
-       new_list="yes"
+    --set )
+       if [ "$first_set" != "yes" ]
+       then
+         result=`$REECHO $the_opts $args`
+       fi
+       first_set="no"
+       #echo "Beginning option set"
+       the_opts=""
        shift
        ;;
-    -lib )
-       as_lib="yes"
+    - )
+       # echo $REECHO $the_opts $args
+       # $REECHO $the_opts $args
+       more_opts="no"
+       result="$result `$REECHO $the_opts $args`"
        shift
        ;;
-    -excl )
-       shift
-       bad_args="$1 $bad_args"
-       shift
-       ;;
-    -uniq* )
-       unique="yes"
+    -* )
+       the_opts="$the_opts $1"
        shift
        ;;
     * )
@@ -366,110 +548,13 @@ while [ "$more_opts" = "yes" ] ; do
        ;;
     esac
 done
-
-if [ $DEEBUG = "on" ]
-then
-   echo "the_opt $the_opt"
-   echo "the_sense $the_sense"
-   echo "the_prefix $the_prefix"
-   echo "separate_prefix? $separate_prefix"
-   echo "the_suffix $the_suffix"
-   echo "separate_suffix? $separate_suffix"
-   echo "as lib? $as_lib"
-   echo "new_dir $new_dir"
-   echo "remaining args $@"
-fi
-
-if [ "$new_dir" = "" ]
-then
-   extant_files "$@"
-elif [ "$new_list" = "yes" ]
-then
-   # This is that simple -dirn option
-   old_dir=`pwd`
-   cd "$new_dir"
-   my_files=`echo *`
-   set `echo $my_files`
-   extant_files "$@"
-   cd "$old_dir"
-else
-   if [ $DEEBUG = "on" ]
-   then
-     echo "remaining args $@:" $@
-   fi
-   # Now dirs may contain more than one directory to search
-   results=""
-   old_dir=`pwd`
-   for new_dir in $dirs
-   do
-     cd "$new_dir"
-     #  Since we changed directories, args which failed to glob
-     #  in old_dir may glob successfully in new_dir
-     #   extant_files "$@"
-     extant_files $@
-     results="$extant_files_result $results"
-     cd "$old_dir"
-   done
-   extant_files_result="$results"
-fi
-
-if [ "$separate_suffix" = "yes" ]   
-then                                
-   the_suffix=" $the_suffix"        
-fi                                  
-if [ "$separate_prefix" = "yes" ]   
-then                                
-   the_prefix="$the_prefix "        
-fi                                  
-
-if [ $DEEBUG = "on" -a "$unique" = "yes" ]          
-then                           
-   echo "Before sorting and removing duplicates: $extant_files_result"   
-fi                             
-
-if [ "$unique" = "yes" ]          
-then                           
-   extant_files_result=`sort_array "$extant_files_result"   `
-fi                             
-
-if [ $DEEBUG = "on" ]          
-then                           
-   echo "Before pre-suffixing: $extant_files_result"   
-fi                             
-
-if [ "$the_prefix" = "" -a "$the_suffix" = "" ]
-then
-   # No prefix--just echo filtered args
-   echo $extant_files_result
-elif [ "$the_suffix" = "" ]
-then
-   # prefix each filtered arg
-   prefixed_result=
-   for file in $extant_files_result
-   do
-      prefixed_result="$prefixed_result ${the_prefix}$file"
-   done
-   echo $prefixed_result
-elif [ "$the_prefix" = "" ]
-then
-   # suffix each filtered arg
-   prefixed_result=
-   for file in $extant_files_result
-   do
-      prefixed_result="$prefixed_result $file${the_suffix}"
-   done
-   echo $prefixed_result
-else
-   # prefix and suffix each filtered arg
-   prefixed_result=
-   for file in $extant_files_result
-   do
-      prefixed_result="$prefixed_result ${the_prefix}$file${the_suffix}"
-   done
-   echo $prefixed_result
-fi
+#echo "Remaining args $@"
+echo $result
 exit
 # $Log$
+# Revision 1.7  2005/06/23 22:20:46  pwagner
+# Reworded Copyright statement
+#
 # Revision 1.6  2005/04/27 23:31:04  pwagner
 # Added -[n]grep options
 #
