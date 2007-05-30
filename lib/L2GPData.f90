@@ -26,7 +26,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Warning
   use MLSNumerics, only: HuntRange
-  use MLSSets, only: FindIntersection
+  use MLSSets, only: FindFirst, FindIntersection, FindLast
   use MLSStrings, only: Capitalize, lowercase
   use MLSStringLists, only: ExtractSubString, &
     & GetHashElement, GetStringElement, GetUniqueList, &
@@ -2838,15 +2838,25 @@ contains ! =====     Public Procedures     =============================
     endif
     do i=1, size(Chunks)
       chunk = Chunks(i)
-      call HuntRange( fullL2gp1%chunkNumber, (/ chunk, chunk /), irange )
+      irange(1) = FindFirst( fullL2gp1%chunkNumber, chunk )
+      irange(2) = Findlast( fullL2gp1%chunkNumber, chunk )
+      ! HuntRange does not work correctly when any chunk Numbers are -999
+      ! (Missing Value)
+      ! call output( 'First, Last == chunk number ', advance='no' )
+      ! call output( irange, advance='yes' )
+      ! call HuntRange( fullL2gp1%chunkNumber, (/ chunk, chunk /), irange )
       if ( any( irange == 0 ) ) cycle
       if ( .not. mySilent ) then
         call output ( ' - - - Chunk number:', advance='no')
         call output ( chunk, advance='no')
         call output ( ' - - -', advance='yes')
       endif
+      call output( 'irange: ', advance='no' )
+      call output( irange, advance='yes' )
       call ExtractL2GPRecord ( fullL2gp1, l2gp1, rTimes=irange )
       call ExtractL2GPRecord ( fullL2gp2, l2gp2, rTimes=irange )
+      call output( 'nTimes: ', advance='no' )
+      call output( l2gp1%nTimes, advance='yes' )
       call Diff ( L2gp1, L2gp2, &
         & Details, wholeArray, stats, rms, ignoreBadChunks, fields, &
         & silent=silent, verbose=verbose, numDiffs=numDiffs )
@@ -3647,7 +3657,11 @@ contains
     ! Executable
     do i=1, size(Chunks)
       chunk = Chunks(i)
-      call HuntRange( fullL2gp%chunkNumber, (/ chunk, chunk /), irange )
+      irange(1) = FindFirst( fullL2gp%chunkNumber, chunk )
+      irange(2) = Findlast( fullL2gp%chunkNumber, chunk )
+      ! HuntRange does not work correctly when any chunk Numbers are -999
+      ! (Missing Value)
+      ! call HuntRange( fullL2gp%chunkNumber, (/ chunk, chunk /), irange )
       if ( any( irange == 0 ) ) cycle
       call output ( ' - - - Chunk number:', advance='no')
       call output ( chunk, advance='no')
@@ -4277,6 +4291,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.147  2007/02/26 23:58:48  pwagner
+! New optional arg diffs only at matching profile times
+!
 ! Revision 2.146  2007/02/13 21:57:08  pwagner
 ! Added convergence to defaultfields
 !
