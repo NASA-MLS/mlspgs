@@ -369,6 +369,11 @@ contains ! =====     Public Procedures     =============================
         case default
         end select
 
+        if ( .not. associated(outputFile) ) then
+          call MLSMessage(MLSMSG_Error, ModuleName, &
+            & 'Unable to Copy to ' // trim(PhysicalFilename) )
+        endif
+
         select case ( input_type )
         case ( l_l2aux ) ! --------------------- Copying l2aux files -----
           call returnFullFileName(inputfile_base, inputPhysicalFilename, &
@@ -398,7 +403,7 @@ contains ! =====     Public Procedures     =============================
             call output( ' input base ', advance='no' )
             call output( trim(inputfile_base), advance='yes' )
             call output( ' input file ', advance='no' )
-            call output( trim(inputFile%name), advance='yes' )
+            call output( '(not associated)', advance='yes' )
             call dump(filedatabase)
             call MLSMessage(MLSMSG_Error, ModuleName, &
               & 'No entry in filedatabase for ' // trim(inputPhysicalFilename) )
@@ -1690,6 +1695,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.130  2007/05/30 22:30:29  pwagner
+! Tries to avoid accessing components of unassociated pointers
+!
 ! Revision 2.129  2007/04/05 22:52:01  pwagner
 ! NAG, too, now able to write L2CF to L2AUX
 !
