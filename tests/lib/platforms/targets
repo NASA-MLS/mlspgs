@@ -33,7 +33,7 @@ dir2 = $(itmdir)/
 # Use the libmlspack.a directory, blaslib, for .mod files
 blaslib = ../../../blas/$(MLSCONFG)
 
-MODPATHS = $(dir1) $(dir2)
+MODPATHS = $(dir1) $(dir2) $(blaslib)
 
 UTILDIR=../../../util
 
@@ -117,7 +117,7 @@ include $(srclib)/Makefile.dep
 
 # Add them to L2OBJS
 ALLOBJS = $(OBJS) $(srclib_objs) $(itmdir)/init_tables_module.o
-ifeq ($(MLSF95),IFC)
+ifeq ($(init_m_dir),l1)
   ALLOBJS = $(OBJS) $(srclib_objs) $(itmdir)/init_tables_module.o $(itmdir)/BrightObjects_m.o
 endif
 
@@ -170,6 +170,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.24  2007/05/29 21:54:55  pwagner
+# Intel link needs l1/BrightObjects_m.o
+#
 # Revision 1.23  2007/05/29 17:42:19  pwagner
 # compiler-specific settings now in srclib, not platforms
 #
