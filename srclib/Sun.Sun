@@ -4,7 +4,7 @@
 # "$Id$"
 FC = f95
 
-DUSTY = $(FOPTS) -dusty
+DUSTY = $(FOPTS)
 
 GC_IN_LDOPTS := $(shell echo ${LDOPTS} | grep '\-gc')
 ifeq ($(GC_IN_LDOPTS),)
@@ -14,6 +14,9 @@ BAD_MATCH=no -gc
 endif
 
 # How to prefix search paths for include and .mod files
-PATH_OPTS=--opt -d -prefixn=-M --opt -d -prefixn=-I - 
+PATH_OPTS=--set -d -prefixn=-M --set -d -prefixn=-I - 
 
 # $Log$
+# Revision 1.1  2007/05/29 17:38:47  pwagner
+# First commit
+#
