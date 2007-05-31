@@ -136,7 +136,7 @@ OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 #if CASCADE, use older .o dependencies, which entail cascades
 #of massive recompilation
 #These are configurations for which I have tested CASCADE-avoidance
-CAN_AVOID="NAG.Linux LF95.Linux NAG.Sun Sun.Sun IFC.Linux"
+CAN_AVOID="NAG.Linux LF95.Linux NAG.Sun Sun.Sun IFC.Linux Abs.Linux"
 #CAN_AVOID=""
 ifndef CASCADE
   WE_CAN := $(shell echo $(CAN_AVOID) | grep $(MLSF95).$(MLSPLAT))
@@ -329,6 +329,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.54  2007/05/31 18:31:03  pwagner
+# Added Absoft to list of tested compilers
+#
 # Revision 2.53  2007/04/14 00:41:12  vsnyder
 # Preprocess .F90 and .F9h files
 #
