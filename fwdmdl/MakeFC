@@ -118,7 +118,7 @@ OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 #if CASCADE, use older .o dependencies, which entail cascades
 #of massive recompilation
 #These are configurations for which I have tested CASCADE-avoidance
-CAN_AVOID="NAG.Linux LF95.Linux NAG.Sun Sun.Sun IFC.Linux"
+CAN_AVOID="NAG.Linux LF95.Linux NAG.Sun Sun.Sun IFC.Linux Abs.Linux"
 #CAN_AVOID=""
 ifndef CASCADE
   WE_CAN := $(shell echo $(CAN_AVOID) | grep $(MLSF95).$(MLSPLAT))
@@ -276,6 +276,9 @@ targ:
 	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 2.22  2007/05/23 22:36:25  vsnyder
+# Stuff to compile .F90 files with preprocessing using -D<compiler>
+#
 # Revision 2.21  2007/04/13 20:15:18  pwagner
 # Changes in line with Intel v9.1
 #

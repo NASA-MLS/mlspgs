@@ -155,7 +155,7 @@ OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 #if CASCADE, use older .o dependencies, which entail cascades
 #of massive recompilation
 #These are configurations for which I have tested CASCADE-avoidance
-CAN_AVOID="NAG.Linux LF95.Linux NAG.Sun Sun.Sun IFC.Linux"
+CAN_AVOID="NAG.Linux LF95.Linux NAG.Sun Sun.Sun IFC.Linux Abs.Linux"
 #CAN_AVOID=""
 ifndef CASCADE
   WE_CAN := $(shell echo $(CAN_AVOID) | grep $(MLSF95).$(MLSPLAT))
@@ -348,6 +348,9 @@ targ:
    --exclude \*.mod --exclude $(PROG)
 
 # $Log$
+# Revision 1.31  2007/04/13 20:15:18  pwagner
+# Changes in line with Intel v9.1
+#
 # Revision 1.30  2006/04/01 01:14:03  pwagner
 # Removed obsolete references to libhe5.a
 #
