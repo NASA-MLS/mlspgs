@@ -142,7 +142,7 @@ extant_files()
 stdprods='BrO CH3CN ClO CO GPH H2O HCl HCN HNO3 HO2 HOCl IWC N2O O3 OH RHI Temperature'
 debug=0
 #     ^  -- set this to 1 if worried
-keep=1
+keep=0
 #    ^  -- set this to 1 to keep temp files (else delete)
 me="$0"
 my_name=batch_l2gpdiff.sh
@@ -160,6 +160,7 @@ cycle2=""
 profile1=""
 profile2=""
 dryrun="no"
+matchTimes="no"
 unique="no"
 more_opts="yes"
 more_strs="yes"
@@ -197,6 +198,10 @@ while [ "$more_strs" = "yes" ] ; do
 	    shift
 	    shift
        ;;
+#    -match* )
+#	    matchTimes="yes"
+#	    shift
+#       ;;
     -unique )
 	    unique="yes"
 	    shift
@@ -388,6 +393,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.7  2006/11/22 18:31:13  pwagner
+# Special cycle number 'none' for file names lacking 'cnn' string
+#
 # Revision 1.6  2006/05/24 22:22:47  pwagner
 # Added -profiles option
 #
