@@ -68,6 +68,9 @@
 #(2) Why such a lousy name?
 #(3) How about optionally using a user-supplied program instead of diff?
 #      that way we could get rid of relying on octal dump routine
+#(4) Added a crude hack in diff_fun: trim 1st four lines after octal dump
+#      if we recognize commad as the Intel compiler (ifort)
+#      to eliminate unwanted time stamp from .mod files
 
 # Copyright 2005, by the California Institute of Technology. ALL
 # RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
@@ -148,46 +151,23 @@ get_unique_name()
       echo $temp${pt}$our_host_name${pt}$$
 }
       
-#
-#------------------------------- what_diff_opt ------------
-#
-# Function to determine whether a diff_opt of "-a" is
-# warranted by the type of file passed as argument
-# i.e., if ascii, then diff_opt is ""
-# but if data, then "-a"
-# usage: what_diff_opt arg1
-# returns result as diff_opt
-# Superseded: see diff_fun
-
-what_diff_opt()
-{
-   diff_opt=
-   # Trivial case ($# = 0)
-   if [ "$1" != ""  -a -f "$1" ]
-   then
-      file_type=`file "$1" | sed 's/^.*://'`
-#      echo $file_type
-      reduced_file_type=`echo $file_type | grep -i text`
-      if [ "$reduced_file_type" = "" ]
-      then
-         diff_opt="-a"
-      fi
-   fi
-}
-
 #------------------------------- diff_fun ------------
 #
 # Function to determine whether two files are different
 # w/o relying on Gnu's diff with its handy "-a" option
 # (Inferior standard versions of diff, like Sun's, lack this option)
-# usage: extant_files arg1 [arg2] ..
+# usage: diff_fun arg1 [arg2] ..
 # returns (number) result as the_diff: 0 if none, else non-zero
 # If at least one of the files non-existent, then
 # (i) if called with a third arg and that arg is "yes", returns "-1"
 # (ii) otherwise, complains and exits with status 1
 
+# Special case: If Intel compiler, trim top 4 lines
+# (which should account for unwanted time stamp)
+
 diff_fun()
 {
+   is_ifort=`echo $the_command | grep -i ifort`
    temp1=`get_unique_name 1`
    temp2=`get_unique_name 2`
    the_diff="0"
@@ -200,6 +180,14 @@ diff_fun()
       rm -f $temp1 $temp2
       od -t c "$1" > $temp1
       od -t c "$2" > $temp2
+      if [ "$is_ifort" != "" ]
+      then
+        temp3=`get_unique_name 3`
+        sed -n '5,$ p' $temp1 > $temp3
+        mv $temp3 $temp1
+        sed -n '5,$ p' $temp2 > $temp3
+        mv $temp3 $temp2
+      fi
       the_diff=`diff $temp1 $temp2 | wc -l`
       rm -f $temp1 $temp2
 	elif [ "$3" = "yes" ]
@@ -393,10 +381,6 @@ elif [ "$ASameAsB" = "yes" ]; then
   mv "$old_A" "$old_A.1"
   "$the_command" "$@"
   return_status=`expr $?`
-#  the_diff=`diff -a $old_A $old_A.1 | wc -l`
-#  what_diff_opt $old_A
-#  echo diff $diff_opt $old_A $old_A.1 | wc -l
-#  the_diff=`diff $diff_opt $old_A $old_A.1 | wc -l`
   diff_fun $old_A $old_A.1 $RestoreIfTheCommandFails
   if [ "$the_diff" = "-1" ] ; then
     mv "$old_A.1" "$old_A"
@@ -424,10 +408,6 @@ else
   mv "$old_B" "$old_B.1"
   "$the_command" "$@"
   return_status=`expr $?`
-#  the_diff=`diff -a $old_B $old_B.1 | wc -l`
-#  what_diff_opt $old_B
-#  echo diff $diff_opt $old_B $old_B.1 | wc -l
-#  the_diff=`diff $diff_opt $old_B $old_B.1 | wc -l`
   diff_fun $old_B $old_B.1 $RestoreIfTheCommandFails
   if [ "$the_diff" = "-1" ] ; then
     mv "$old_A.1" "$old_A"
@@ -471,6 +451,9 @@ else
    exit 0
 fi
 # $Log$
+# Revision 1.12  2005/06/23 22:20:45  pwagner
+# Reworded Copyright statement
+#
 # Revision 1.11  2004/04/20 23:30:20  pwagner
 # Defaults to restoring older files if the_command fails
 #
