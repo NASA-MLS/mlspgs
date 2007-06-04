@@ -303,29 +303,37 @@ contains ! =====     Public Procedures     =============================
       case ( f_silent )
         silent = get_boolean ( fieldValue )
       case ( f_skipDirectwrites )
-        skipDirectwrites = get_boolean ( fieldValue )
+        skipDirectwrites = skipDirectWritesOriginal .or. &
+          & get_boolean ( fieldValue )
         ! toldToSkip = .true.
       case ( f_skipDirectwritesif )
         call get_string( sub_rosa(subtree(2,son)), booleanString )
-        ! call output( 'skipDirectwrites: ', advance='no' )
-        ! call output( trim(booleanString), advance='yes' )
-        skipDirectwrites = BooleanValue ( lowercase(booleanString), &
+        ! call output( 'told to skipDirectwrites: ', advance='no' )
+        ! call output( BooleanValue ( lowercase(booleanString), &
+        !   & runTimeValues%lkeys, runTimeValues%lvalues), advance='yes' )
+        skipDirectwrites = skipDirectWritesOriginal .or. &
+          & BooleanValue ( lowercase(booleanString), &
           & runTimeValues%lkeys, runTimeValues%lvalues)
+        ! call output( 'skipDirectwrites: ', advance='no' )
         ! call output( skipDirectwrites, advance='yes' )
         ! toldToSkip = .true.
       case ( f_skipRetrieval )
-        skipRetrieval = get_boolean ( fieldValue ) .or. skipRetrievalOriginal
+        skipRetrieval = skipRetrievalOriginal .or. &
+          & get_boolean ( fieldValue ) .or. skipRetrievalOriginal
         ! toldToSkip = .true.
       case ( f_skipRetrievalif )
         call get_string( sub_rosa(subtree(2,son)), booleanString )
-        ! call output( 'skipRetrieval: ', advance='no' )
-        ! call output( trim(booleanString), advance='yes' )
-        skipRetrieval = BooleanValue ( lowercase(booleanString), &
+        ! call output( 'told to skipRetrieval: ', advance='no' )
+        ! call output( BooleanValue ( lowercase(booleanString), &
+        !   & runTimeValues%lkeys, runTimeValues%lvalues), advance='yes' )
+        skipRetrieval = skipRetrievalOriginal .or. &
+          & BooleanValue ( lowercase(booleanString), &
           & runTimeValues%lkeys, runTimeValues%lvalues) .or. skipRetrievalOriginal
+        ! call output( 'skipRetrieval: ', advance='no' )
         ! call output( skipRetrieval, advance='yes' )
         ! toldToSkip = .true.
       case ( f_stamp )
-        stamp = get_boolean ( fieldValue )
+        stamp = stamp .or. get_boolean ( fieldValue )
       case default ! Can't get here if tree_checker works correctly
       end select
     end do
@@ -865,6 +873,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.36  2007/06/04 23:24:46  pwagner
+! Global TRUE skipDirectWrite, skipRetrievals not overriden by phase settings
+!
 ! Revision 2.35  2006/07/21 20:11:54  pwagner
 ! Can select what section to stop after
 !
