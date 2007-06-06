@@ -96,7 +96,7 @@ contains
       call get_eta_sparse ( grids_x%zet_basis(z_inda+1:z_indb),  &
                          &  path_zeta, eta_z, not_zero_z )
       call get_eta_sparse ( grids_x%phi_basis(p_inda+1:p_indb),  &
-                         &  path_phi, eta_p, not_zero_p )
+                         &  path_phi, eta_p, not_zero_p, sorted=.true. )
 
       sv_v = v_inda
       do sv_p = p_inda+1, p_indb
@@ -138,6 +138,9 @@ contains
 end module Eval_Spect_Path_m
 !
 ! $Log$
+! Revision 2.9  2005/06/22 18:08:18  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 2.8  2003/06/20 23:41:48  vsnyder
 ! Revise how compound etas are computed -- hopefully a faster method
 !
