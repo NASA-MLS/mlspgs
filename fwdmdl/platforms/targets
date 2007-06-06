@@ -41,6 +41,7 @@ REECHO=$(UTILDIR)/reecho.sh
 vpath %.mod ./
 vpath %.o ./
 vpath %.f90 ../ $(srclib) $(libdir)/../machines/$(MLSCONFG)
+vpath %.F90 ../ $(srclib) $(libdir)/../machines/$(MLSCONFG)
 vpath %.f9h ../ $(srclib)
 vpath %.f ../
 vpath %.c ../
@@ -175,6 +176,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 2.13  2007/05/29 17:42:18  pwagner
+# compiler-specific settings now in srclib, not platforms
+#
 # Revision 2.12  2006/06/15 19:31:35  pwagner
 # Now links szlib; comtaible with toolkit 5.2.14.A
 #
