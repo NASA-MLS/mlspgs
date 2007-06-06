@@ -13,7 +13,11 @@ module Where_M
 
   implicit NONE
   private
-  public :: Where
+  public :: Where, WhereOnly, HereAndThere
+
+  interface Where
+    module procedure WhereOnly, HereAndThere
+  end interface
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -23,7 +27,7 @@ module Where_M
 contains
 !---------------------------------------------------------------------------
 
-  subroutine Where ( Log, Int )
+  subroutine WhereOnly ( Log, Int )
 
   ! Produce a list of indices in Int that are subscripts of all of the
   ! true elements of Log.
@@ -41,7 +45,35 @@ contains
       end if
     end do
 
-  end subroutine Where
+  end subroutine WhereOnly
+
+  subroutine HereAndThere ( Log, Here, nHere, There )
+
+  ! Produce a list of indices in Here that are subscripts of all of the
+  ! true elements of Log, the number of true entries in nHere, and a list
+  ! of indices in There that are subscripts of all of the false elements
+  ! of log (the number of these is size(Log) - nHere).
+
+    logical, intent(in) :: Log(:)
+    integer, intent(out) :: Here(:)
+    integer, intent(out) :: nHere
+    integer, intent(out) :: There(:)
+
+    integer :: I, P_I
+
+    i = 0
+    nHere = 0
+    do p_i = 1, size(log)
+      if ( log(p_i) ) then
+        nHere = nHere + 1
+        here(nHere) = p_i
+      else
+        i = i + 1
+        there = p_i
+      end if
+    end do
+
+  end subroutine HereAndThere
 
 !----------------------------------------------------------------------
   logical function not_used_here()
@@ -56,6 +88,9 @@ contains
 end module Where_M
 
 ! $Log$
+! Revision 2.4  2007/06/06 00:21:51  vsnyder
+! Make Where generic for WhereOnly, HereAndThere
+!
 ! Revision 2.3  2005/06/22 17:25:51  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
