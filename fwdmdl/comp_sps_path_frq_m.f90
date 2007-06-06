@@ -68,8 +68,8 @@ module Comp_Sps_Path_Frq_m
     integer(ip) :: sps_i, sv_zp, sv_f
     integer(ip) :: v_inda, f_inda, f_indb, w_inda, w_indb
 
-    real(rp) :: eta_f(1:1,1:maxval(grids_x%l_f(1:)-grids_x%l_f(0:ubound(grids_x%l_f,1)-1)))
-    logical :: not_zero_f(1:1,1:maxval(grids_x%l_f(1:)-grids_x%l_f(0:ubound(grids_x%l_f,1)-1)))
+    real(rp) :: eta_f(1:maxval(grids_x%l_f(1:)-grids_x%l_f(0:ubound(grids_x%l_f,1)-1)))
+    logical :: not_zero_f(1:maxval(grids_x%l_f(1:)-grids_x%l_f(0:ubound(grids_x%l_f,1)-1)))
 
 ! Begin executable code:
 
@@ -108,13 +108,13 @@ module Comp_Sps_Path_Frq_m
         if ( frq > 1.0_rp ) then
           if ( sideband == -1 ) then
             call get_eta_sparse ( lo-Grids_x%frq_basis(f_indb:f_inda+1:-1), &
-              & (/Frq/), eta_f(1:1,n_f:1:-1), not_zero_f(1:1,n_f:1:-1) )
+              & Frq, eta_f(n_f:1:-1), not_zero_f(n_f:1:-1) )
           else
             call get_eta_sparse ( lo+Grids_x%frq_basis(f_inda+1:f_indb), &
-              & (/Frq/), eta_f(1:1,1:n_f), not_zero_f(1:1,1:n_f) )
+              & Frq, eta_f(1:n_f), not_zero_f(1:n_f) )
           end if
         else
-          eta_f(1,1) = 1.0
+          eta_f(1) = 1.0
         end if
 
 ! Compute Sps_Path
@@ -123,16 +123,17 @@ module Comp_Sps_Path_Frq_m
         do sv_zp = w_inda + 1, w_indb
           do sv_f = 1, n_f
             v_inda = v_inda + 1
-            if ( not_zero_f(1,sv_f) ) then
-              where ( do_calc_zp(:,sv_zp) )
-                eta_fzp(:,v_inda) = eta_f(1,sv_f) * eta_zp(:,sv_zp)
+            if ( not_zero_f(sv_f) ) then
+!               where ( do_calc_zp(:,sv_zp) )
+                eta_fzp(:,v_inda) = eta_f(sv_f) * eta_zp(:,sv_zp)
                 sps_path(:,sps_i) = sps_path(:,sps_i) +  &
                                  &  grids_x%values(v_inda) * eta_fzp(:,v_inda)
-                do_calc_fzp(:,v_inda) = Grids_x%deriv_flags(v_inda)
-              elsewhere
-                eta_fzp ( :, v_inda ) = 0.0_r8
-                do_calc_fzp ( :, v_inda ) = .false.
-              end where
+!                 do_calc_fzp(:,v_inda) = Grids_x%deriv_flags(v_inda)
+                do_calc_fzp(:,v_inda) = do_calc_zp(:,sv_zp) .and. Grids_x%deriv_flags(v_inda)
+!               elsewhere
+!                 eta_fzp ( :, v_inda ) = 0.0_r8
+!                 do_calc_fzp ( :, v_inda ) = .false.
+!               end where
             else
               eta_fzp ( :, v_inda ) = 0.0_r8
               do_calc_fzp ( :, v_inda ) = .false.
@@ -309,6 +310,9 @@ module Comp_Sps_Path_Frq_m
 end module Comp_Sps_Path_Frq_m
 !
 ! $Log$
+! Revision 2.25  2007/06/06 01:13:52  vsnyder
+! Use 1-d eta routine
+!
 ! Revision 2.24  2007/01/19 02:37:30  vsnyder
 ! In Comp_Sps_Path_No_Frq compute only for species that have no freq coordinate
 !
