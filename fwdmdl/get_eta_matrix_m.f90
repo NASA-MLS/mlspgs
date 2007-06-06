@@ -27,7 +27,8 @@ module Get_Eta_Matrix_m
 
   interface Get_Eta_Sparse
     module procedure Get_Eta_Sparse_1d, Get_Eta_Sparse_1d_fl, Get_Eta_Sparse_1d_nz
-    module procedure Get_Eta_Sparse_2d, Get_Eta_Sparse_2d_fl_nz, Get_Eta_Sparse_2d_nz
+    module procedure Get_Eta_Sparse_2d, Get_Eta_Sparse_2d_fl_nz
+    module procedure Get_Eta_Sparse_2d_nz
   end interface
 
 !---------------------------- RCS Module Info ------------------------------
@@ -102,7 +103,7 @@ contains
 
 ! Internals
 
-    integer(ip) :: I, J, N_coeffs, N_Grid, P(size(grid))
+    integer(ip) :: I, J, N_coeffs, N_Grid, P(size(grid)), PI
     real(rp) :: Del_basis
     logical :: MySorted
 
@@ -130,8 +131,9 @@ contains
 ! first basis calculation
 
     do i = 1, n_grid
-      if ( grid(p(i)) > basis(1) ) exit
-      eta(p(i),1) = 1.0_rp
+      pi = p(i)
+      if ( grid(pi) > basis(1) ) exit
+      eta(pi,1) = 1.0_rp
     end do
 
 ! Normal triangular function for j=2 to j=n_coeffs-1
@@ -139,10 +141,11 @@ contains
     do j = 2 , n_coeffs
       del_basis = 1.0 / (basis(j) - basis(j-1))
       do while ( i <= n_grid )
-        if ( grid(p(i)) > basis(j) ) exit
-        if ( basis(j-1) <= grid(p(i)) ) then
-          eta(p(i),j-1) = (basis(j) - grid(p(i))) * del_basis
-          eta(p(i),j) =   (grid(p(i)) - basis(j-1)) * del_basis
+        pi = p(i)
+        if ( grid(pi) > basis(j) ) exit
+        if ( basis(j-1) <= grid(pi) ) then
+          eta(pi,j-1) = (basis(j) - grid(pi)) * del_basis
+          eta(pi,j) =   (grid(pi) - basis(j-1)) * del_basis
         end if
         i = i + 1
       end do
@@ -150,9 +153,10 @@ contains
 
 ! last basis calculation
 
-    do j = n_grid, i, -1
-      if ( basis(n_coeffs) >= grid(p(j)) ) exit
-      eta(p(j),n_coeffs) = 1.0_rp
+    do i = n_grid, i, -1
+      pi = p(i)
+      if ( basis(n_coeffs) >= grid(pi) ) exit
+      eta(pi,n_coeffs) = 1.0_rp
     end do
 
   end function Eta_Func_2d
@@ -340,7 +344,7 @@ contains
 
 ! Internals
 
-    integer(ip) :: I, J, N_coeffs, N_Grid, P(size(grid))
+    integer(ip) :: I, J, N_coeffs, N_Grid, P(size(grid)), PI
     real(rp) :: Del_basis
     logical :: MySorted
 
@@ -396,8 +400,9 @@ contains
 ! first basis calculation
 
       do i = 1, n_grid
-        if ( grid(p(i)) > basis(1) ) exit
-        eta(p(i),1) = 1.0_rp
+        pi = p(i)
+        if ( grid(pi) > basis(1) ) exit
+        eta(pi,1) = 1.0_rp
       end do
 
 ! Normal triangular function for j=2 to j=n_coeffs-1
@@ -405,11 +410,10 @@ contains
       do j = 2 , n_coeffs
         del_basis = 1.0 / (basis(j) - basis(j-1))
         do while ( i <= n_grid )
-          if ( grid(p(i)) > basis(j) ) exit
-          if ( basis(j-1) <= grid(p(i)) ) then
-            eta(p(i),j-1) = (basis(j) - grid(p(i))) * del_basis
-            eta(p(i),j) =   (grid(p(i)) - basis(j-1)) * del_basis
-          end if
+          pi = p(i)
+          if ( grid(pi) > basis(j) ) exit
+          eta(pi,j-1) = (basis(j) - grid(pi)) * del_basis
+          eta(pi,j) =   (grid(pi) - basis(j-1)) * del_basis
           i = i + 1
         end do
       end do
@@ -417,8 +421,9 @@ contains
 ! last basis calculation
 
       do i = i, n_grid
-        if ( basis(n_coeffs) >= grid(p(i)) ) exit
-        eta(p(i),n_coeffs) = 1.0_rp
+        pi = p(i)
+        if ( basis(n_coeffs) >= grid(pi) ) exit
+        eta(pi,n_coeffs) = 1.0_rp
       end do
 
     end if
@@ -433,7 +438,9 @@ contains
 ! be sorted, but if it is, Sorted can be set .true. to suppress sorting it
 ! here.
 
+!   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use Sort_m, only: SortP
+
 ! Inputs
 
     real(rp), intent(in) :: Basis(:) ! basis break points
@@ -487,14 +494,17 @@ contains
         del_basis = 1.0_rp / ( basis(j) - basis(j-1) )
         do while ( i <= n_grid )
           if ( grid(i) > basis(j) ) exit
-          if ( basis(j-1) <= grid(i) ) then
+!         if ( basis(j-1) <= grid(i) ) then
             eta(i,j-1) = (basis(j) - grid(i)) * del_basis
             eta(i,j  ) = (grid(i) - basis(j-1)) * del_basis
             not_zero(i,j-1) = .true.
             not_zero(i,j) = .true.
             first(i) = j - 1
             last(i) = j
-          end if
+!         else
+!           call MLSMessage ( MLSMSG_Error, ModuleName, &
+!             & "Grid probably out of order" )
+!         end if
           i = i + 1
         end do
       end do
@@ -516,11 +526,12 @@ contains
 ! first basis calculation
 
       do i = 1, n_grid
-        if ( grid(p(i)) > basis(1) ) exit
-        eta(p(i),1) = 1.0_rp
-        not_zero(p(i),1) = .true.
-        first(p(i)) = 1
-        last(p(i)) = 1
+        pi = p(i)
+        if ( grid(pi) > basis(1) ) exit
+        eta(pi,1) = 1.0_rp
+        not_zero(pi,1) = .true.
+        first(pi) = 1
+        last(pi) = 1
       end do
 
 ! Normal triangular function for j=2 to j=n_coeffs-1.  Both Basis and
@@ -531,14 +542,17 @@ contains
         do while ( i <= n_grid )
           pi = p(i)
           if ( grid(pi) > basis(j) ) exit
-          if ( basis(j-1) <= grid(pi) ) then
+!         if ( basis(j-1) <= grid(pi) ) then
             eta(pi,j-1) = (basis(j) - grid(pi)) * del_basis
             eta(pi,j  ) = (grid(pi) - basis(j-1)) * del_basis
             not_zero(pi,j-1) = .true.
             not_zero(pi,j) = .true.
-            first(p(i)) = j - 1
-            last(p(i)) = j
-          end if
+            first(pi) = j - 1
+            last(pi) = j
+!         else
+!           call MLSMessage ( MLSMSG_Error, ModuleName, &
+!             & "Why does the grid appear to be out of order?" )
+!         end if
           i = i + 1
         end do
       end do
@@ -546,11 +560,12 @@ contains
 ! last basis calculation
 
       do i = i, n_grid
-        if ( basis(n_coeffs) >= grid(p(i)) ) exit
-        eta(p(i),n_coeffs) = 1.0_rp
-        not_zero(p(i),n_coeffs) = .true.
-        first(p(i)) = n_coeffs
-        last(p(i)) = n_coeffs
+        pi = p(i)
+        if ( basis(n_coeffs) >= grid(pi) ) exit
+        eta(pi,n_coeffs) = 1.0_rp
+        not_zero(pi,n_coeffs) = .true.
+        first(pi) = n_coeffs
+        last(pi) = n_coeffs
       end do
 
     end if
@@ -608,18 +623,20 @@ contains
       end do
 
 ! Normal triangular function for j=2 to j=n_coeffs-1.  Both Basis and
-! Grid(p(:)) are sorted, so we don't need to start from i=1.
+! Grid are sorted, so we don't need to start from i=1.
 
       do j = 2, n_coeffs
         del_basis = 1.0_rp / ( basis(j) - basis(j-1) )
         do while ( i <= n_grid )
           if ( grid(i) > basis(j) ) exit
-          if ( basis(j-1) <= grid(i) ) then
+!         if ( basis(j-1) <= grid(i) ) then
             eta(i,j-1) = (basis(j) - grid(i)) * del_basis
             eta(i,j  ) = (grid(i) - basis(j-1)) * del_basis
             not_zero(i,j-1) = .true.
             not_zero(i,j) = .true.
-          end if
+!         else
+!           stop "grid not sorted"
+!         end if
           i = i + 1
         end do
       end do
@@ -639,9 +656,10 @@ contains
 ! first basis calculation
 
       do i = 1, n_grid
-        if ( grid(p(i)) > basis(1) ) exit
-        eta(p(i),1) = 1.0_rp
-        not_zero(p(i),1) = .true.
+        pi = p(i)
+        if ( grid(pi) > basis(1) ) exit
+        eta(pi,1) = 1.0_rp
+        not_zero(pi,1) = .true.
       end do
 
 ! Normal triangular function for j=2 to j=n_coeffs-1.  Both Basis and
@@ -665,14 +683,17 @@ contains
 ! last basis calculation
 
       do i = i, n_grid
-        if ( basis(n_coeffs) >= grid(p(i)) ) exit
-        eta(p(i),n_coeffs) = 1.0_rp
-        not_zero(p(i),n_coeffs) = .true.
+        pi = p(i)
+        if ( basis(n_coeffs) >= grid(pi) ) exit
+        eta(pi,n_coeffs) = 1.0_rp
+        not_zero(pi,n_coeffs) = .true.
       end do
 
     end if
 
   end subroutine Get_Eta_Sparse_2d_nz
+
+!=========================================================================
 
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
@@ -686,6 +707,9 @@ contains
 end module Get_Eta_Matrix_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.15  2007/01/20 01:06:39  vsnyder
+! Add Get_Eta_Sparse_2d_fl_nz
+!
 ! Revision 2.14  2007/01/19 02:38:29  vsnyder
 ! Separate paths for sorted and unsorted grid
 !
