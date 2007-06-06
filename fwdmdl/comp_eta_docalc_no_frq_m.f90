@@ -28,7 +28,7 @@ contains
 ! ---------------------------------------  Comp_Eta_Docalc_No_Frq  -----
 
   subroutine Comp_Eta_Docalc_No_Frq ( Grids_x, path_zeta, path_phi, &
-                                  &   eta_zp, do_calc_zp, sps )
+                                  &   eta_zp, do_calc_zp, sps, tan_pt )
 
     use MLSCommon, only: RP, IP
     use Get_Eta_Matrix_m, only: Get_Eta_Sparse
@@ -43,6 +43,8 @@ contains
     real(rp), intent(in) :: path_phi(:) ! phi values along path for which
 !                           species vmr is needed.
     integer, intent(in), optional :: SPS ! Only do this species if present
+    integer, intent(in), optional :: Tan_Pt ! Tangent point; path_zeta is sorted
+!                           before and after tangent point
 ! output:
 
     real(rp), intent(out) :: eta_zp(:,:) ! Eta_z * Eta_phi for each state
@@ -94,15 +96,33 @@ contains
 ! Compute etas
 
       if ( present(do_calc_zp) ) then
-        call get_eta_sparse ( Grids_x%zet_basis(z_inda+1:z_indb), path_zeta, &
-                         &    eta_z, not_zero_z )
+        if ( present(tan_pt) ) then
+          call get_eta_sparse ( Grids_x%zet_basis(z_inda+1:z_indb), &
+                           &    path_zeta(tan_pt:1:-1), eta_z(tan_pt:1:-1,:), &
+                           &    not_zero_z(tan_pt:1:-1,:), sorted=.true. )
+          call get_eta_sparse ( Grids_x%zet_basis(z_inda+1:z_indb), &
+                           &    path_zeta(tan_pt+1:), eta_z(tan_pt+1:,:), &
+                           &    not_zero_z(tan_pt+1:,:), sorted=.true. )
+        else
+          call get_eta_sparse ( Grids_x%zet_basis(z_inda+1:z_indb), path_zeta, &
+                           &    eta_z, not_zero_z )
+        end if
         call get_eta_sparse ( Grids_x%phi_basis(p_inda+1:p_indb), path_phi,  &
-                         &    eta_p, not_zero_p )
+                         &    eta_p, not_zero_p, sorted=.true. )
       else
-        call get_eta_sparse ( Grids_x%zet_basis(z_inda+1:z_indb), path_zeta, &
-                         &    eta_z )
+        if ( present(tan_pt) ) then
+          call get_eta_sparse ( Grids_x%zet_basis(z_inda+1:z_indb), &
+                           &    path_zeta(tan_pt:1:-1), eta_z(tan_pt:1:-1,:), &
+                           &    sorted=.true. )
+          call get_eta_sparse ( Grids_x%zet_basis(z_inda+1:z_indb), &
+                           &    path_zeta(tan_pt+1:), eta_z(tan_pt+1:,:), &
+                           &    sorted=.true. )
+        else
+          call get_eta_sparse ( Grids_x%zet_basis(z_inda+1:z_indb), path_zeta, &
+                           &    eta_z )
+        end if
         call get_eta_sparse ( Grids_x%phi_basis(p_inda+1:p_indb), path_phi,  &
-                         &    eta_p )
+                         &    eta_p, sorted=.true. )
       end if
 
       do sv_p = 0, n_p - 1
@@ -134,6 +154,9 @@ contains
 end module Comp_Eta_Docalc_No_Frq_m
 
 ! $Log$
+! Revision 2.9  2007/06/06 01:12:17  vsnyder
+! Add tangent point optional argument
+!
 ! Revision 2.8  2005/12/22 20:48:55  vsnyder
 ! Add a 'this-species-only' optional argument
 !
