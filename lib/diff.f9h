@@ -29,7 +29,9 @@
 !     double precision, dimension(size(array1)) :: filtered1
 !     double precision, dimension(size(array2)) :: filtered2
     logical :: warn, NaNsIn1, NaNsIn2, alreadySbtrcted
-    character(len(name1) + len(name2) + 8) :: DiffName
+    ! This is terrible: don't use lengths of optional args
+    ! character(len(name1) + len(name2) + 8) :: DiffName
+    character(len=64) :: DiffName
     integer :: nEqual, nUnEqual
 
     ! Executable
@@ -92,8 +94,12 @@
         call allstats(filtered2(1:numNonFill), &
           & addedData=.true., min=refmin, max=refmax, rms=refrms)
         call printRMSetc ( 'Reference values', refmin, refmax, refrms )
+        ! call dump ( filtered1, 'filtered1', fillvalue=fillvalue )
+        ! call dump ( filtered2, 'filtered2', fillvalue=fillvalue )
         ! Avoid another automatic array
         filtered1 = filtered1 - filtered2
+        ! call dump ( filtered1, 'filtered1-filtered2', fillvalue=real(0.,kind(array1)) )
+        ! call outputNamedValue( 'num /= fill value', numNonFill )
         alreadySbtrcted = .true.
         if ( myWholeArray ) then
           call dump(filtered1, trim(DiffName), &
@@ -118,6 +124,9 @@
       & real(0.,kind(array1)), CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.8  2007/06/07 20:31:52  pwagner
+! Avoid using lengths of optional args
+!
 ! Revision 2.7  2006/06/24 23:07:55  pwagner
 ! Changes to reduce memory footprint computing statistics
 !
