@@ -103,7 +103,7 @@ contains ! =================================== Public procedures
     use GriddedData, only: GRIDDEDDATA_T, DUMP, NULLIFYGRIDDEDDATA, &
       & CONVERTFROMETALEVELGRIDS
     use Init_tables_module, only: F_A, F_B, F_GRID
-    use output_m, only: output
+    use output_m, only: output, outputNamedValue
     use Toggles, only: GEN, TOGGLE
     use Trace_M, only: TRACE_BEGIN, TRACE_END
     use Tree, only: NSONS, SUBTREE, DECORATION
@@ -130,9 +130,13 @@ contains ! =================================== Public procedures
 
     logical, parameter :: DEEBUG = .false.
     ! Executable code
+    nullify( a, b, v )
     call nullifyGriddedData ( newGrid ) ! for Sun's still useless compiler
     if ( toggle(gen) ) call trace_begin ( "ConvertEtaToP", root )
 
+    if ( DEEBUG ) then
+      call dump(griddedDataBase)
+    endif
     ! Get the information from the l2cf    
     ! Note that init_tables_module has insisted that we have all
     ! arguments so we don't need a 'got' type arrangement
@@ -152,6 +156,17 @@ contains ! =================================== Public procedures
 !         v => VGrids ( decoration ( decoration ( value ) ) )
       end select
     end do
+    call output( 'Have T, P grids', advance='yes' )
+    newGrid%empty = .true.
+    call outputNamedValue( 'size(griddedDataBase)', size(griddedDataBase) )
+    if ( size(griddedDataBase) < 2 ) call leaveUs
+    call output( 'About to check on a, b', advance='yes' )
+    call outputNamedValue( 'associated(a)', associated(a) )
+    call outputNamedValue( 'associated(b)', associated(b) )
+    call outputNamedValue( 'a%empty', a%empty )
+    call outputNamedValue( 'b%empty', b%empty )
+    if ( a%empty .or. b%empty ) call leaveUs
+    newGrid%empty = .false.
     if ( DEEBUG ) then
     call output( 'a grid', advance='yes' )
     call dump( a, details=0 )
@@ -160,14 +175,19 @@ contains ! =================================== Public procedures
     call output( 'v grid', advance='yes' )
     call dump( v, details=0 )
     endif
+    call output( 'about to convert from eta level grids', advance='yes' )
     call ConvertFromEtaLevelGrids ( a, b, V, newGrid )
+    call output( 'done converting from eta level grids', advance='yes' )
     newGrid%sourceFileName      = a%sourceFileName
     newGrid%quantityName        = a%quantityName
     newGrid%description         = a%description
     newGrid%units               = a%units
     newGrid%verticalCoordinate  = v%verticalCoordinate
     newGrid%missingValue        = a%missingValue
-    if ( toggle(gen) ) call trace_end ( "ConvertEtaToP" )
+    contains
+    subroutine LeaveUs
+      if ( toggle(gen) ) call trace_end ( "ConvertEtaToP" )
+    end subroutine LeaveUs
 
   end function ConvertEtaToP
 
@@ -199,7 +219,6 @@ contains ! =================================== Public procedures
     integer :: SON                    ! Tree node
     type (griddedData_T), target :: Intermediate
     integer :: VALUE                  ! Tree node
-
     ! Executable code
     call nullifyGriddedData ( newGrid ) ! for Sun's still useless compiler
     call nullifyGriddedData ( Intermediate ) ! for Sun's still useless compiler
@@ -909,6 +928,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.30  2007/06/07 21:56:00  pwagner
+! Prevents another cause of crashing; extra debugging
+!
 ! Revision 2.29  2007/03/23 00:27:17  pwagner
 ! Valiant attempts to bring two Lahey versions results closer
 !
