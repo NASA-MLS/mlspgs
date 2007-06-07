@@ -140,6 +140,7 @@ program MLSL2
   !     see the master's stdin)
   implicit none
 
+  ! Wouldn't it be better to use get_lun at the moment we open the l2cf?
   integer, parameter :: L2CF_UNIT = 20  ! Unit # if L2CF is opened by Fortran
   character(len=*), parameter :: L2CFNAMEEXTENSION = ".l2cf"
 
@@ -153,6 +154,7 @@ program MLSL2
   logical :: DO_DUMP = .false.     ! Dump declaration table
   logical :: DUMP_TREE = .false.   ! Dump tree after parsing
   integer :: ERROR                 ! Error flag from check_tree
+  logical :: EXIST
   integer :: FIRST_SECTION         ! Index of son of root of first n_cf node
   logical :: garbage_collection_by_dt = .false. ! Collect garbage after each deallocate_test?
   integer :: I                     ! counter for command line arguments
@@ -163,6 +165,7 @@ program MLSL2
   integer :: N                     ! Offset for start of --'s text
   integer :: NUMFILES
   integer :: NUMSWITCHES
+  logical :: OPENED
   integer :: RECL = 20000          ! Record length for l2cf (but see --recl opt)
 ! integer :: RECORD_LENGTH
   character(len=len(switches)) :: removeSwitches = ''
@@ -510,7 +513,16 @@ program MLSL2
         command_line = trim(command_line) // ' ' // trim(line)
         OutputOptions%name = trim(line)
         OutputOptions%buffered = .false.
+        ! outputOptions%debugUnit = 32
+        ! Make certain prUnit won't be l2cf_unit
+        open( unit=l2cf_unit, status='unknown' )
         call get_lun ( OutputOptions%prUnit, msg=.false. )
+        close( unit=l2cf_unit )
+        inquire( unit=OutputOptions%prUnit, exist=exist, opened=opened )
+        ! call outputnamedValue('l2cf unit', inunit )
+        ! call outputnamedValue('pr unit', OutputOptions%prUnit )
+        ! call outputnamedValue('exist', exist )
+        ! call outputnamedValue('opened', opened )
       else if ( lowercase(line(3+n:9+n)) ==  'stgmem ' ) then
         parallel%stageInMemory = .true.
       else if ( lowercase(line(3+n:12+n)) ==  'stopafter ' ) then
@@ -1105,6 +1117,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.164  2007/06/07 20:38:45  pwagner
+! Should prevent unit collisions (not as good as get_lun)
+!
 ! Revision 2.163  2007/02/14 20:48:59  pwagner
 ! Slaves bypass mls_h5close to avoid another bomb
 !
