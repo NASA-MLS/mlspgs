@@ -474,7 +474,10 @@ contains
     logical                         :: match
     ! local variables
     ! Executable
+    match = .true.
+    if ( a%empty .and. b%empty ) return
     match = .false.
+    if ( a%empty .or. b%empty ) return
     if ( any( shape(a%field) /= shape(b%field) ) ) return
     if ( a%verticalCoordinate /= b%verticalcoordinate ) return
     if ( a%noHeights /= b%noHeights ) return
@@ -685,6 +688,10 @@ contains
     logical :: myEmpty                  ! Copy of empty possibly
 
     ! Executable code
+    qty%sourceFileName = '(unknown)'
+    qty%quantityName   = '(unknown)'
+    qty%units          = '(unknown)'
+    qty%heightsUnits   = '(unknown)'
 
     myEmpty = .false.
     if ( present ( empty ) ) myEmpty = empty
@@ -1277,6 +1284,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.46  2007/06/07 20:26:16  pwagner
+! Prevents some crashes, writing non-ascii chars to stdout
+!
 ! Revision 2.45  2007/03/23 00:10:49  pwagner
 ! Valiant attempts to bring two Lahey version results closer
 !
