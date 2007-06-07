@@ -382,7 +382,7 @@ CONTAINS
 !=============================================================================
 
     USE MLSL1Common, ONLY: r8, DACSchans
-    USE MathUtils, ONLY: derfi
+    USE MLSSpecialFunctions, ONLY: derfi
     
     REAL, INTENT (IN) :: R2a(DACSchans)
     INTEGER, INTENT (IN) :: D(4), TP, nchans
@@ -714,6 +714,9 @@ CONTAINS
 END MODULE DACsUtils
 
 ! $Log$
+! Revision 2.15  2007/06/07 21:56:52  pwagner
+! Gets derfi from lib
+!
 ! Revision 2.14  2006/08/02 18:53:09  perun
 ! Define and make public TPz
 !
