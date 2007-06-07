@@ -231,7 +231,7 @@ contains ! ====     Public Procedures     ==============================
           return
         end if
       case ( z_readapriori )
-        if ( .not. stopBeforeChunkLoop ) call read_apriori ( son , &
+        if ( .not. ( stopBeforeChunkLoop .or. parallel%master ) ) call read_apriori ( son , &
           & l2gpDatabase, l2auxDatabase, griddedDataBase, fileDataBase )
         call add_to_section_timing ( 'read_apriori', t1, now_stop )
         if ( now_stop ) then
@@ -239,7 +239,7 @@ contains ! ====     Public Procedures     ==============================
           return
         end if
       case ( z_mergeGrids )
-        if ( .not. ( stopBeforeChunkLoop .or. checkPaths ) ) &
+        if ( .not. ( stopBeforeChunkLoop .or. checkPaths .or. parallel%master ) ) &
           & call mergeGrids ( son, griddedDataBase, l2gpDatabase )
 
         ! --------------------------------------------------------- Chunk divide
@@ -287,6 +287,13 @@ contains ! ====     Public Procedures     ==============================
       case ( z_construct, z_fill, z_join, z_retrieve )
         ! Do special stuff in some parallel cases, or where there are
         ! no chunks.
+        if ( .not. associated(chunks) ) then
+          allocate(chunks(1), stat=error_flag)
+          if ( error_flag /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'unable to allocate chunks' )
+          firstChunk = 1
+          lastChunk = size(chunks)
+        endif
         if ( ( size(chunks) < 1 ) .or. &
           & ( parallel%master .and. .not. parallel%fwmParallel ) .or. &
           & ( parallel%slave .and. parallel%fwmParallel ) ) then
@@ -331,6 +338,13 @@ contains ! ====     Public Procedures     ==============================
               & sense=.false.)
           endif  
           canWriteL2PC = ( count(.not. chunksSkipped) < 2 )
+          if ( .not. associated(chunks) ) then
+            allocate(chunks(1), stat=error_flag)
+            if ( error_flag /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'unable to allocate chunks' )
+            firstChunk = 1
+            lastChunk = size(chunks)
+          endif
           do chunkNo = firstChunk, lastChunk ! --------------------- Chunk loop
             call resumeOutput ! In case the last phase was  silent
             if ( chunksSkipped(chunkNo) ) cycle
@@ -589,6 +603,10 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.155  2007/04/03 17:36:44  vsnyder
+! Allocate Vectors with zero size so others don't need to check whether
+! it's associated; indeed, they don't need the pointer attribute.
+!
 ! Revision 2.154  2007/03/23 00:29:41  pwagner
 ! Switch destroy warns when destroying dbs
 !
