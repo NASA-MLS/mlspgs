@@ -124,6 +124,9 @@ contains
     real(rp) :: Test_Z_Min ! Candidate min_zeta
     real(rp) :: TGP   ! T_ref(i) + Gamma * P
 
+    logical, parameter :: Throw = .true. ! Throw out min zeta closer to the
+    !                                       tangent than the first GL point
+
     min_index = -1 ! Assume there are no local zeta minima
     min_zeta = huge(min_zeta)
 
@@ -183,7 +186,7 @@ contains
       min_phi = min_phi + phi_t
       min_zeta = min_zeta + zeta_t
       if ( min_phi < phi_t ) then
-        if ( min_phi >= p_grid(tan_pt-1) ) then
+        if ( min_phi >= p_grid(tan_pt-1) .and. throw ) then
           ! Too close to tangent point
           min_index = 0
           return
@@ -195,7 +198,7 @@ contains
           if ( p_grid(min_index) <= min_phi ) exit
         end do
       else
-        if ( min_phi <= p_grid(tan_pt+2) ) then
+        if ( min_phi <= p_grid(tan_pt+2) .and. throw ) then
           ! Too close to tangent point.  Remember that the tangent is duplicated
           min_index = 0
           return
@@ -226,6 +229,9 @@ contains
 end module Min_Zeta_m
 
 ! $Log$
+! Revision 2.2  2007/06/08 22:05:48  vsnyder
+! More work on min zeta
+!
 ! Revision 2.1  2006/12/21 01:33:31  vsnyder
 ! Initial commit
 !

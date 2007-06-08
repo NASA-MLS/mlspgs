@@ -26,7 +26,8 @@ module Add_Points_m
 contains
 
   subroutine Add_Points ( more_h, more_phi, more_zeta, min_z, &
-    &                     z_coarse, h_path, phi_path, &
+    &                     z_glgrid, nz_if, z_coarse,          &
+    &                     h_path, phi_path, Vert_Inds, &
     &                     npc, npf, tan_pt_c, tan_pt_f )
 
     ! Add points to z_coarse, h_path and phi_path.
@@ -41,19 +42,23 @@ contains
     real(rp), intent(in) :: More_Zeta(:)    ! Zetas to add
     integer, intent(in) :: Min_Z            ! Index of new minimum zeta in
                                             ! More_Zeta if there is one, else <= 0.
-
+    real(rp), intent(in) :: Z_GLgrid(:)     ! Reference grid
+    integer, intent(in) :: NZ_IF            ! Size(Z_GLGrid)
     real(rp), intent(inout) :: Z_Coarse(:)  ! Zeta on the coarse grid
     real(rp), intent(inout) :: H_Path(:)    ! Height on the fine grid
     real(rp), intent(inout) :: Phi_Path(:)  ! Phi on the fine grid
+    integer, intent(inout) :: Vert_Inds(:)  ! Indices of fine grid in H_Glgrid etc.
     integer, intent(inout) :: NPC, NPF      ! Number of points in coarse, fine grids
     integer, intent(inout) :: Tan_Pt_C, Tan_Pt_F ! Tangent in coarse, fine grids
 
     real(rp), parameter :: Eta(ngnew) = 0.5*(1.0+gx) ! Gauss points on 0..1
     real(rp), parameter :: Phi_Tol = 0.25 * gx(1)**2 ! First GL point
 
-    integer :: I, J
-    integer :: New, New_C
+    integer :: I, J, K
+    integer :: New   ! Point in the fine path
+    integer :: New_C ! Coarse point in the fine path
     logical :: print_more_points
+    integer :: S     ! Direction of change in vert_inds at insertion point, +/-1
 
     print_more_points = index(switches, 'ZMOR' ) /= 1
 
@@ -89,32 +94,45 @@ contains
           new_c = 0 ! Indicate nothing more to do
         end if
       end if
-      if ( new_c > 0 ) then
+      if ( new_c > 0 .and. new_c < npf ) then
         ! New point is not near an existing point: add one to the coarse path
         npc = npc + 1
         npf = npf + ngp1
-        j = new_c / ngp1 + 1
+        j = new_c / ngp1 + 1 ! Point in coarse path
         z_coarse(j+1:npc) = z_coarse(j:npc-1)               ! Make room
         h_path(new_c+ngp1:npf) = h_path(new_c:npf-ngp1)
         phi_path(new_c+ngp1:npf) = phi_path(new_c:npf-ngp1)
-        z_coarse(j) = more_zeta(i)     ! Insert the new coarse points
-        if ( print_more_points ) then
-          call output ( 'Added new ' )
-          if ( i == min_z ) call output ( 'minimum ' )
-          call output ( j, before='z_coarse(' )
-          call output ( z_coarse(j), before=') = ', advance='yes' )
-        end if
+        vert_inds(new_c+ngp1:npf) = vert_inds(new_c:npf-ngp1)
+        z_coarse(j) = more_zeta(i)     ! Insert the new coarse point
         h_path(new_c) = more_h(i)
         phi_path(new_c) = more_phi(i)
-        h_path(new_c+1:new_c+ngnew) = h_path(new_c) + & ! and fine points
+        h_path(new_c+1:new_c+ngnew) = h_path(new_c) + & ! and fine point
           & eta * (h_path(new_c+ngp1)-h_path(new_c))
         phi_path(new_c+1:new_c+ngnew) = phi_path(new_c) + &
           & eta * (phi_path(new_c+ngp1)-phi_path(new_c))
+        h_path(new_c+ngp1+1:new_c+ngp1+ngnew) = h_path(new_c+ngp1) + &
+          & eta * (h_path(new_c+2*ngp1)-h_path(new_c+ngp1))
+        phi_path(new_c+ngp1+1:new_c+ngp1+ngnew) = phi_path(new_c+ngp1) + &
+          & eta * (phi_path(new_c+2*ngp1)-phi_path(new_c+ngp1))
+!         if ( print_more_points ) then
+          call output ( 'Added new ' )
+          if ( i == min_z ) call output ( 'minimum ' )
+          call output ( j, before='z_coarse(' )
+          call output ( z_coarse(j), before=') = ' )
+          call output ( new_c, before=', new_c = ' )
+          call output ( more_phi(i), before=' at Phi = ' )
+          call output ( more_h(i), before=', H = ', advance='yes' )
+!         end if
+        j = minval(abs(more_zeta(i)-z_glgrid(:nz_if)))
+        ! For now, assume more_zeta(i) == z_glgrid(j)
+        vert_inds(new_c) = j
         if ( new_c > 1 ) then
-          h_path(new_c-ngnew:new_c-1) = h_path(new_c-ngp1) + &
-            & eta * (h_path(new_c)-h_path(new_c-ngp1))
-          phi_path(new_c-ngnew:new_c-1) = phi_path(new_c-ngp1) + &
-            & eta * (phi_path(new_c)-phi_path(new_c-ngp1))
+          s = sign(1,vert_inds(new_c-1) - vert_inds(new_c))
+          vert_inds(new_c-ngnew:new_c-1) = (/(vert_inds(new_c-ngp1)-s*k,k=1,ngnew)/)
+        end if
+        if ( new_c < npf-ngp1 ) then
+          s = sign(1,vert_inds(new_c) - vert_inds(new_c+1))
+          vert_inds(new_c+1:new_c+ngnew) = (/(vert_inds(new_c)-s*k,k=1,ngnew)/)
         end if
         if ( new_c < tan_pt_f ) then
           tan_pt_c = tan_pt_c + 1
@@ -140,6 +158,9 @@ contains
 end module Add_Points_m
 
 ! $Log$
+! Revision 2.2  2007/06/08 22:05:57  vsnyder
+! More work on min zeta
+!
 ! Revision 2.1  2007/02/01 02:44:29  vsnyder
 ! Initial commit
 !
