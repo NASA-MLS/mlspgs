@@ -504,6 +504,9 @@ contains ! ===================================== Public Procedures =====
       call get_string ( lit_indices(ChunkDivideConfig%homeModule), modNameStr, &
         & strip=.true. )
       L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
+      if ( .not. associated(L1BFile) ) &
+        & call MLSMessage  ( MLSMSG_Error, ModuleName, &
+          & "Can't make progress in ChunkDivide_PE without L1BOA files" )
       ! call dump(L1BFile)
       l1b_hdf_version = L1BFile%HDFVersion
       MAF_start = AssembleL1BQtyName ( 'MAFStartTimeTAI', l1b_hdf_version, &
@@ -648,6 +651,9 @@ contains ! ===================================== Public Procedures =====
       ! Read in the data we're going to need
       call get_string ( lit_indices(ChunkDivideConfig%homeModule), modNameStr, strip=.true. )
       L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
+      if ( .not. associated(L1BFile) ) &
+        & call MLSMessage  ( MLSMSG_Error, ModuleName, &
+          & "Can't make progress in ChunkDivide_Orbital without L1BOA files" )
       ! call dump(L1BFile)
       l1b_hdf_version = L1BFile%HDFVersion
       MAF_start = AssembleL1BQtyName ( 'MAFStartTimeTAI', l1b_hdf_version, &
@@ -2007,8 +2013,9 @@ contains ! ===================================== Public Procedures =====
     ! ---------------------------------------------- SurveyL1BData -----
     subroutine SurveyL1BData ( processingRange, filedatabase, mafRange )
       ! This goes through the L1B data files and tries to spot possible
-      use L1BData, only: DUMP
       ! obstructions.
+      use L1BData, only: DUMP
+      use MLSMessageModule, only: MLSMessage, MLSMSG_Error
       type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
       type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
       type (MAFRange_T), intent(out) :: MAFRange
@@ -2042,6 +2049,9 @@ contains ! ===================================== Public Procedures =====
       ! Executable code
 
       L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
+      if ( .not. associated(L1BFile) ) &
+        & call MLSMessage  ( MLSMSG_Error, ModuleName, &
+          & "Can't make progress in SurveyL1BData without L1BOA files" )
       ! call dump(L1BFile)
       l1b_hdf_version = L1BFile%HDFVersion
       MAF_start = AssembleL1BQtyName ( 'MAFStartTimeTAI', l1b_hdf_version, &
@@ -2471,6 +2481,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.81  2007/06/08 22:00:23  vsnyder
+! Quit gracefully if no L1BOA files
+!
 ! Revision 2.80  2007/03/23 00:16:57  pwagner
 ! Prevent crashing while printing extra-long signals names
 !
