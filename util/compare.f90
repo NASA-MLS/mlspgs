@@ -250,16 +250,23 @@ program COMPARE
   end do
 
   if ( rmaxg > 0.0 .or. zero .or. anyNan(3) ) then
-    print *, 'MaxRel =', real(rmaxg,rs), &
-      & 'epsilons =', real(rmaxg*eps,rs), &
-      & 'where MaxAbs =', real(absAtRmaxG,rs)
-    if ( doStats ) print '(1x,2(a,1p,2g10.3))', 'Avgs =', real(avgsr,rs), &
-      & ' Std. Devs. =', real(stdevr,rs)
-    print *, 'MaxAbs =', real(amaxg,rs), &
-      & 'where MaxRel =', real(relAtAmaxG,rs), 'epsilons =', &
-      & real(relAtAmaxG*eps,rs)
-    if ( doStats ) print '(1x,2(a,1p,2g10.3))', 'Avgs =', real(avgsa,rs), &
-      & ' Std. Devs. =', real(stdeva,rs)
+!     print *, 'MaxRel =', real(rmaxg,rs), &
+!       & 'epsilons =', real(rmaxg*eps,rs), &
+!       & 'where MaxAbs =', real(absAtRmaxG,rs)
+!     if ( doStats ) print '(1x,2(a,1p,2g10.3))', 'Avgs =', real(avgsr,rs), &
+!       & ' Std. Devs. =', real(stdevr,rs)
+!     print *, 'MaxAbs =', real(amaxg,rs), &
+!       & 'where MaxRel =', real(relAtAmaxG,rs), 'epsilons =', &
+!       & real(relAtAmaxG*eps,rs)
+!     if ( doStats ) print '(1x,2(a,1p,2g10.3))', 'Avgs =', real(avgsa,rs), &
+!       & ' Std. Devs. =', real(stdeva,rs)
+    print '(a/1p,6g13.6)', &
+      & " MaxRel       epsilons     where MaxAbs MaxAbs       where MaxRel epsilons", &
+      & rmaxg*eps, rmaxg, absAtRmaxG, amaxG, relAtAmaxG*eps, relAtAmaxG
+    if ( doStats ) &
+      & print '(a/1p,8g13.6)', &
+      & " Avg Rel                   Std Dev Rel               Avg Abs                   Std Dev Abs", &
+      & avgsr, stdevr, avgsa, stdeva
   else if ( same ) then
     print *, 'Identical'
   end if
@@ -312,6 +319,9 @@ contains
 end program
 
 ! $Log$
+! Revision 1.14  2006/09/11 21:06:55  vsnyder
+! In "all" format, print rel diff at max abs diff, abs diff at max rel diff
+!
 ! Revision 1.13  2005/06/22 19:27:32  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
