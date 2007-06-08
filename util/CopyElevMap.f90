@@ -31,9 +31,11 @@ program CopyElevMap
 
   implicit NONE
 
-  character(127) :: InFile, OutFile
+  character(10) :: Date ! From Date_And_Time
+  character :: Format = 'L' ! L = L3Ascii output, D = direct access output
   integer :: I, J
   integer :: IMap(2160,1080)
+  character(127) :: InFile, OutFile, TheProgram
   character(2) :: Map(2160,1080)
   real :: MapR(360,180)
   integer :: Recl
@@ -43,13 +45,32 @@ program CopyElevMap
        "$RCSfile$"
 !---------------------------------------------------------------------------
 
-  call getarg ( 1, inFile )
+  call getarg ( 0, theProgram )
+! Get options and file names
+  i = 0
+  do
+    i = i + 1
+    call getarg ( i, inFile )
+    if ( inFile(1:1) /= '-' ) exit ! No more options
+    if ( inFile(2:2) == 'd' ) then
+      format = 'D'
+    else if ( infile(2:2) == 'l' ) then
+      format = 'L'
+    else
+      print '(a,a,a)', 'Usage: ', trim(theProgram), ' [options] [[inFile] outFile]'
+      print '(a)', '  Options: -d[irect]: direct access output file'
+      print '(a)', '           -l[3ascii]: L3Ascii output file'
+      print '(a)', '           -anything else: this message'
+      stop
+    end if
+  end do
+  call getarg ( i+1, outFile )
+
   if ( inFile == '' ) then
     print *, 'Enter file name: '
     read '(a)', inFile
   end if
 
-  call getarg ( 2, outFile )
   if ( outFile == '' ) then
     print *, 'Enter output file name: '
     read '(a)', outFile
@@ -57,7 +78,7 @@ program CopyElevMap
 
   inquire ( iolength=recl ) map
   open ( 10, file=inFile, access='direct', form='unformatted', status='old', &
-    & recl=recl )
+    & action='read', recl=recl )
   read ( 10, rec=1 ) map
   close ( 10 )
 
@@ -70,12 +91,24 @@ program CopyElevMap
     end do ! j
   end do ! i
 
-! print '(10i6)', int(mapr)
-
-  inquire ( iolength=recl ) mapr
-  open ( 11, file=outFile, access='direct', form='unformatted', recl=recl )
-  write ( 11, rec=1 ) mapr
-  close ( 11 )
+  if ( format == 'D' ) then ! Direct access output
+    inquire ( iolength=recl ) mapr
+    open ( 11, file=outFile, access='direct', form='unformatted', recl=recl )
+    write ( 11, rec=1 ) mapr
+    close ( 11 )
+  else if ( format == 'L' ) then ! L3Ascii output
+    open ( 11, file=outFile, access='sequential', form='formatted' )
+    call date_and_time ( date=date )
+    date = date(1:4) // '-' // date(5:6) // '-' // date(7:8) ! yyyy-mm-dd
+    write ( 11, * ) '; Written by ' // trim(theProgram) // ' on ' // date
+    write ( 11, * ) '; Input file: ' // trim(inFile)
+    write ( 11, * ) 'Field Surface Elevation Kilometers'
+    write ( 11, * ) 'Latitude linear -89.5 180 1.0'
+    write ( 11, * ) 'Longitude linear 0.5 360 1.0'
+    write ( 11, * ) '; Data in latitude-major order'
+    write ( 11, * ) 'date CCSDSA ' // date
+    write ( 11, '(10f7.3)') transpose(mapr) / 1000.0
+  end if
 
 contains
 
@@ -91,3 +124,6 @@ contains
 end program CopyElevMap
 
 ! $Log$
+! Revision 1.1  2007/01/10 00:58:14  vsnyder
+! Initial commit
+!
