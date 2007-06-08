@@ -80,9 +80,15 @@ endif
 # w/o complaining if it does nor exist yet
 -include $(CONFDIR)/$(MLSCFILE)
 
-# All the implicit pattern-matching involving suffixes
+# Most of the implicit pattern-matching involving suffixes
 # will be done in the uniquely-named sub-directories, not here--so
 .SUFFIXES:
+
+# Pattern-matching rules for preprocessing
+.SUFFIXES: .f90 .F90
+
+.F90.f90:
+	cpp -D$(MLSF95) $< $@
 
 # This will filter out globbed file expansions that fail
 # e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
@@ -115,19 +121,21 @@ endif
 #
 
 #----------------------------------------------------------
-libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.f90 \
-  $(libmls_sources)/*.f9h $(srclib)/*.f9h $(libmls_sources)/*.c \
+libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.[Ff]9? \
+  $(srclib)/*.f9h $(libmls_sources)/*.c \
   $(libmls_sources)/lit_names.txt)
 libfwdmdl_f90 := $(shell ${REECHO} $(libfwdmdl_sources)/*.c \
-  $(libfwdmdl_sources)/*.f $(libfwdmdl_sources)/*.f90 \
-  $(libfwdmdl_sources)/*.f9h)
+  $(libfwdmdl_sources)/*.f $(libfwdmdl_sources)/*.[Ff]9?)
 libcloud_f90 := $(shell ${REECHO} $(libcloud_sources)/*.c \
-  $(libcloud_sources)/*.f $(libcloud_sources)/*.f90 $(libcloud_sources)/*.f9h)
-blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90 \
-  $(blaslib)/*.f9h $(srclib)/*.f9h)
+  $(libcloud_sources)/*.f $(libcloud_sources)/*.[Ff]9?)
+blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.[Ff]9? \
+  $(srclib)/*.f9h)
 machinelib := $(libmls_sources)/machines/$(MLSCONFG)/
 machine_f := $(shell ${REECHO} $(machinelib)/*.c $(machinelib)/*.f \
-  $(machinelib)/*.f90)
+  $(machinelib)/*.[Ff]90)
+
+# Files to get by preprocessing
+export PREPRO=$(patsubst %.F90,%.f90,$(wildcard *.F90))
 
 depends_where:=$(libmls_sources) $(srclib) \
    $(libfwdmdl_sources) $(libcloud_sources)
@@ -368,6 +376,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.68  2007/06/08 22:01:17  vsnyder
+# Stuff for .F90 files
+#
 # Revision 2.67  2007/05/31 18:31:02  pwagner
 # Added Absoft to list of tested compilers
 #
