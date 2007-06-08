@@ -437,7 +437,7 @@ sub MakeDependsf90 {
    local($value);
    local($TOUCH_PART1) = '$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t -T ';
    local($BUILD_PART1) = '$(UTILDIR)/newAifBdiff.sh -a ';
-   local($BUILD_PART2) = '$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/';
+   local($BUILD_PART2) = '$(FC) -c $(FOPTS) $(PRE) $(INC_PATHS) $(S)/';
    local($BUILD_PART3) = ' $(FAFTER)';
    #
    # Associate each module with the name of the file that contains it
@@ -676,6 +676,9 @@ sub MakeDependsf90 {
      }
    }
 # $Log$
+# Revision 1.15  2007/03/06 21:30:10  pwagner
+# Deleted outmoded lines concerning 'actua;l location of perl'
+#
 # Revision 1.14  2005/06/23 22:22:46  pwagner
 # Reworded Copyright statement
 #
