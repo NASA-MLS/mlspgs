@@ -32,11 +32,11 @@ PROGRAM L2GPDump ! dumps L2GPData files
    use MLSStringLists, only: ExpandStringRange, &
      & GetStringElement, NumStringElements, &
      & stringElement, stringElementNum
-   use OUTPUT_M, only: blanks, OUTPUT, outputNamedValue, &
+   use OUTPUT_M, only: blanks, newline, OUTPUT, outputNamedValue, &
      & resumeOutput, suspendOutput
    use PCFHdr, only: GlobalAttributes
    
-   IMPLICIT NONE
+   implicit none
 
 !------------------- RCS Ident Info -----------------------
    CHARACTER(LEN=130) :: Id = &                                                    
@@ -60,6 +60,7 @@ PROGRAM L2GPDump ! dumps L2GPData files
 
   type options_T
     character(len=255) ::   chunks = '*' ! wild card means 'all'
+     logical ::             debug = .true.
      logical ::             verbose = .false.
      logical ::             senseInquiry = .true.
      integer ::             details = 1
@@ -72,7 +73,8 @@ PROGRAM L2GPDump ! dumps L2GPData files
      real    ::             ConvergenceCutOff = -1. ! Show % above, below this
      real    ::             PrecisionCutOff = -1. ! Show % above, below this
      real    ::             QualityCutOff = -1. ! Show % above, below this
-     logical ::             StatusBits ! SHow % with various status bits set
+     logical ::             StatusBits = .false. ! Show % with various status bits set
+     logical ::             merge = .false. ! Show % after merging input files
   end type options_T
 
   type ( options_T ) :: options
@@ -81,6 +83,15 @@ PROGRAM L2GPDump ! dumps L2GPData files
   integer     ::  i, status, error ! Counting indices & Error flags
   logical     :: is_hdf5
   logical     :: is_present
+  integer, save                   :: numGood = 0
+  integer, save                   :: numGoodPrec = 0
+  real, dimension(3), save        :: numTest = 0.
+  integer, parameter              :: MAXNUMBITSUSED = 8
+  integer, dimension(MAXNUMBITSUSED), parameter :: bitNumber = &
+    & (/ 0, 1, 2, 4, 5, 6, 8, 9 /)
+  integer, dimension(MAXNUMBITSUSED, 2), save :: bitCounts = 0
+  character(len=*), parameter     :: bitNames = &
+    & 'dontuse, bewary,   info,  hicld,  locld, nogmao, toofew,  crash'
   ! 
   MLSMessageConfig%useToolkit = .false.   
   MLSMessageConfig%logFileUnit = -1       
@@ -110,6 +121,18 @@ PROGRAM L2GPDump ! dumps L2GPData files
      endif
      call resumeOutput
   enddo
+  if ( options%merge ) then
+    if ( options%ConvergenceCutOff > -1. ) &
+      & call showPercentages( numTest(1), numGood, 'convergence', &
+      & options%ConvergenceCutOff, 'above' )
+    if ( options%PrecisionCutOff > -1. ) &
+      & call showPercentages( numTest(2), numGood, 'Quality', &
+      & options%QualityCutOff, 'below' )
+    if ( options%QualityCutOff > -1. ) &
+      & call showPercentages( numTest(3), numGoodPrec, 'precision', &
+      & options%PrecisionCutOff, 'above' )
+    if ( options%statusBits ) call showStatusPct
+  endif
   call mls_h5close(error)
 contains
 !------------------------- get_filename ---------------------
@@ -152,6 +175,8 @@ contains
       else if ( filename(1:6) == '-inqat' ) then
         call getarg ( i+1+hp, options%attrInquiry )
         i = i + 1
+      elseif ( filename(1:2) == '-m' ) then
+        options%merge = .true.
       else if ( filename(1:6) == '-inqds' ) then
         call getarg ( i+1+hp, options%dsInquiry )
         i = i + 1
@@ -229,10 +254,11 @@ contains
       write (*,*) '          -2          => dump only swath names'
 
       write (*,*) '    (The following options print only summaries)'
-      write (*,*) '          -conv x     => show % converged according to x cutoff'
+      write (*,*) '          -conv x     => show % nonconverged by x cutoff'
       write (*,*) '          -prec x     => show % with precision > x cutoff'
-      write (*,*) '          -qual x     => show % with quality > x cutoff'
+      write (*,*) '          -qual x     => show % with quality < x cutoff'
       write (*,*) '          -status     => show % with various status bits set'
+      write (*,*) '          -m[erge]    => merge data from all files (dont)'
 
       write (*,*) '    (Notes)'
       write (*,*) ' (1) by default, dumps all fields in allswaths, but not attributes'
@@ -360,13 +386,6 @@ contains
       ! print *, 'Reading swath from file: ', trim(swath)
       call ReadL2GPData ( trim(filename), trim(swath), l2gp, &
            & hdfVersion=HDFVERSION_5 )
-!       call ReadL2GPData ( file1, trim(swath), l2gp, &
-!            & hdfVersion=HDFVERSION_5 )
-      ! print *, 'Dumping swath: ', trim(swath)
-      ! print *, 'l2gp%nFreqs:  ', l2gp%nFreqs
-      ! print *, 'l2gp%nLevels: ', l2gp%nLevels
-      ! print *, 'l2gp%nTimes:  ', l2gp%nTimes
-      ! print *, 'shape(l2gp%l2gpvalue):  ', shape(l2gp%l2gpvalue)
       ! Dump the swath- and file-level attributes
       if ( options%attributesToo ) then
         File1 = mls_io_gen_openF(l_swath, .TRUE., status, &
@@ -392,82 +411,78 @@ contains
      integer, dimension(MAXNCHUNKS) :: chunks
      integer :: nChunks
      logical, dimension(:), pointer  :: negativePrec => null() ! true if all prec < 0
-     integer                         :: numGood
-     real                            :: numTest
-     integer, parameter              :: MAXNUMBITSUSED = 8
-     integer, dimension(MAXNUMBITSUSED), parameter :: bitNumber = &
-       & (/ 0, 1, 2, 4, 5, 6, 8, 9 /)
-     integer, dimension(MAXNUMBITSUSED, 2) :: bitCounts
-     character(len=*), parameter     :: bitNames = &
-       & 'dontuse, bewary,   info,  hicld,  locld, nogmao, toofew,  crash'
      ! Executable
      alreadyDumped = .false.
      if ( options%verbose ) print *, 'swath: ', trim(swath)
+     if ( .not. options%merge ) then
+       bitCounts = 0
+       numGood = 0
+       numGoodPrec = 0
+       numTest = 0.
+     endif
      call allocate_test( negativePrec, l2gp%nTimes, 'negativePrec', ModuleName )
      do i=1, l2gp%nTimes
        negativePrec(i) = all( l2gp%l2GPPrecision(:,:,i) < 0._rgp )
      enddo
-     numGood = count( .not. ( negativePrec .or. &
+     numGood = numGood + count( .not. ( negativePrec .or. &
        & (mod(l2gp%status, 2) > 0) ) )
      if ( options%ConvergenceCutOff > 0. ) then
        alreadyDumped = .true.
-       numTest = count( .not. ( negativePrec .or. &
+       numTest(1) = numTest(1) + count( .not. ( negativePrec .or. &
          & (mod(l2gp%status, 2) > 0) .or. &
-         & (l2gp%Convergence > options%ConvergenceCutOff) ) )
-       call showPercentages( numTest, numGood, 'convergence', options%ConvergenceCutOff )
+         & (l2gp%Convergence < options%ConvergenceCutOff) ) )
+       if ( .not. options%merge ) &
+         & call showPercentages( numTest(1), numGood, 'convergence', &
+         & options%ConvergenceCutOff, 'above' )
      endif
      if ( options%QualityCutOff > 0. ) then
        alreadyDumped = .true.
-       numTest = count( .not. ( negativePrec .or. &
+       numTest(2) = numtest(2) + count( .not. ( negativePrec .or. &
          & (mod(l2gp%status, 2) > 0) .or. &
          & (l2gp%Quality > options%QualityCutOff) ) )
-       call showPercentages( numTest, numGood, 'Quality', options%QualityCutOff )
+       if ( .not. options%merge ) &
+         & call showPercentages( numTest(2), numGood, 'Quality', &
+         & options%QualityCutOff, 'below' )
      endif
      if ( options%PrecisionCutOff > 0. ) then
        alreadyDumped = .true.
-       numGood = 0
-       numTest = 0
+       ! numGood = 0
+       ! numTest = 0
        do i=1, l2gp%nTimes
          if ( negativePrec(i) .or. &
            & mod(l2gp%status(i), 2) > 0 ) cycle
-         numGood = numGood + &
+         numGoodPrec = numGoodPrec + &
            & l2gp%nLevels*max(1, l2gp%nFreqs)
-         numTest = numTest + &
+         numTest(3) = numTest(3) + &
            & count( l2gp%l2gpPrecision(:,:,i) > options%PrecisionCutOff )
        enddo
-       call showPercentages( numTest, numGood, 'precision', options%PrecisionCutOff )
+       if ( .not. options%merge ) &
+         & call showPercentages( numTest(3), numGoodPrec, 'precision', &
+         & options%PrecisionCutOff, 'above' )
      endif
-     numGood = count( .not. ( negativePrec .or. &
-       & (mod(l2gp%status, 2) > 0) ) )
+     ! numGood = count( .not. ( negativePrec .or. &
+     !   & (mod(l2gp%status, 2) > 0) ) )
      if ( options%statusBits ) then
        alreadyDumped = .true.
-       ! Bit 0 is special
-       bitCounts(1, 2) = count( .not. negativePrec )
-       bitCounts(1, 1) = count( .not. ( negativePrec .or. &
+       ! Bits 0 and 8 are special
+       ! For bit 0 we filter out only points with precision < 0
+       ! For bit 8 we want % of crashed chunks, so we don't filter out at all
+       bitCounts(1, 2) = bitCounts(1, 2) + count( .not. negativePrec )
+       bitCounts(1, 1) = bitCounts(1, 1) + count( .not. ( negativePrec .or. &
          & (mod(l2gp%status, 2) == 0) ) )
-       call outputNamedValue ( 'max status', maxval(l2gp%status) )
-       call outputNamedValue ( 'min status', minval(l2gp%status) )
-       do bitindex=2, MAXNUMBITSUSED
-         call outputNamedValue ( 'bitNumber(bitindex)', bitNumber(bitindex) )
+       bitCounts(MAXNUMBITSUSED, 2) = bitCounts(MAXNUMBITSUSED, 2) + l2gp%nTimes
+       bitCounts(MAXNUMBITSUSED, 1) = bitCounts(MAXNUMBITSUSED, 1) + &
+         & count(isBitSet( l2gp%status, bitNumber(MAXNUMBITSUSED) ) )
+       ! call outputNamedValue ( 'max status', maxval(l2gp%status) )
+       ! call outputNamedValue ( 'min status', minval(l2gp%status) )
+       do bitindex=2, MAXNUMBITSUSED-1
          bitCounts(bitindex, 2) = numGood
-         bitCounts(bitindex, 1) = count( .not. ( negativePrec .or. &
-         & (mod(l2gp%status, 2) > 0) ) .and. &
-         & isBitSet( l2gp%status, bitNumber(bitindex) ) )
+         bitCounts(bitindex, 1) = bitCounts(bitindex, 1) + &
+           & count( .not. ( negativePrec .or. &
+           & (mod(l2gp%status, 2) > 0) ) .and. &
+           & isBitSet( l2gp%status, bitNumber(bitindex) ) )
        enddo
-       call output( '% valid data with bits set', advance='yes' )
-       call output( 'bit' )
-       call blanks(4)
-       call output( 'desc' )
-       call blanks(4)
-       call output( '%', advance='yes' )
-       do bitindex=1, MAXNUMBITSUSED
-         call output( bitNumber(bitIndex) )
-         call blanks(2)
-         call output( trim( stringElement( bitNames, bitIndex, &
-           & countEmpty=.true. ) ) )
-         call blanks(4)
-         call output( (100.*bitCounts(bitindex, 1)) / max(1, bitCounts(bitindex, 2) ) , advance='yes' )
-       enddo
+       if ( .not. options%merge ) call showStatusPct
      endif
      call deallocate_test( negativePrec, 'negativePrec', ModuleName )
      if ( alreadyDumped ) return
@@ -482,28 +497,79 @@ contains
      endif
    end subroutine myDump
 
-   subroutine showPercentages( numTest, numGood, name, CutOff )
+   subroutine showPercentages( numTest, numGood, name, CutOff, aorb )
      ! output % figures derived from numTest/numGood
      ! Args
      real, intent(in)    ::          numTest
      integer, intent(in) ::          numGood
      real, intent(in) ::             cutOff
      character(len=*), intent(in) :: name
+     character(len=*), intent(in) :: aorb ! 'above' or 'below'
      ! Internal variables
      ! Executable
      call output( '% ' )
      call output( trim(name) )
      call blanks(2)
-     call output( 'falling below ' )
+     call output( aorb )
+     call blanks(2)
      call output( cutOff )
      call blanks(1)
-     call output( (100.*numTest)/max(1, numGood), advance='yes' )
+     call output( (100.*numTest)/max(1, numGood) )
+     if ( options%debug ) then
+       call blanks(3)
+       call output( int(numTest) )
+       call blanks(3)
+       call output( numGood )
+     endif
+     call newline
    end subroutine showPercentages
+
+   subroutine showStatusPct
+     ! output % figures derived from numTest/numGood
+     ! Internal variables
+     integer :: bitindex
+     logical, parameter :: DEEBUG = .false.
+     ! Executable
+     if ( DEEBUG ) then
+       do bitindex=2, MAXNUMBITSUSED
+         call outputNamedValue ( 'bitNumber(bitindex)', bitNumber(bitindex) )
+       enddo
+     endif
+     if ( options%debug ) then
+       call output( 'valid data counts' )
+       call blanks(4)
+       call output( bitCounts(1, 2), advance='yes' )
+     endif
+     call output( '% valid data with bits set', advance='yes' )
+     call output( 'bit' )
+     call blanks(4)
+     call output( 'desc' )
+     call blanks(4)
+     call output( '%', advance='yes' )
+     do bitindex=1, MAXNUMBITSUSED
+       call output( bitNumber(bitIndex) )
+       call blanks(2)
+       call output( trim( stringElement( bitNames, bitIndex, &
+         & countEmpty=.true. ) ) )
+       call blanks(4)
+       call output( (100.*bitCounts(bitindex, 1)) / max(1, bitCounts(bitindex, 2) ) )
+       if ( options%debug ) then
+         call blanks(4)
+         call output( bitCounts(bitindex, 1) )
+         call blanks(4)
+         call output( bitCounts(bitindex, 2) )
+       endif
+       call newline
+     enddo
+   end subroutine showStatusPct
 !==================
 end program L2GPDump
 !==================
 
 ! $Log$
+! Revision 1.2  2007/02/06 23:19:06  pwagner
+! Can show percentages with thresholds in convergence, status, prec.
+!
 ! Revision 1.1  2006/08/10 23:06:13  pwagner
 ! First commit
 !
