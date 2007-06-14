@@ -179,6 +179,7 @@ module OUTPUT_M
       &  '(- .. )         ' /)
       !   12345678901234567890
     character(len=FileNameLen) :: name = 'stdout'
+    character(len=12) :: sdFormatDefault = '*' ! * means default format spec
   end type
   
   type(outputOptions_T), public, save :: outputOptions
@@ -756,10 +757,13 @@ contains
     character(len=*), intent(in), optional :: Before, After ! text to print
     logical, intent(in), optional :: DONT_STAMP
     integer :: I, J, K
-    character(len=30) :: LINE, LOG_CHARS
+    character(len=30) :: LINE, LOG_CHARS, FormatSpec
 
     line = ' '
-    if ( .not. present(Format)  ) then
+    FormatSpec = outputOptions%sdFormatDefault
+    if ( present(Format)  ) FormatSpec = Format
+    ! if ( .not. present(Format)  ) then
+    if ( FormatSpec == '*' ) then
    ! No optional formats: use default char-by-char accretion
       write ( line, * ) value
       if ( scan(line,'123456789') == 0  ) then
@@ -783,8 +787,10 @@ contains
     ! Use one or both optional formats
     else
       line = ' '
-      write ( line, Format ) value
-      k = nCharsinFormat(Format)
+      ! write ( line, Format ) value
+      ! k = nCharsinFormat(Format)
+      write ( line, FormatSpec ) value
+      k = nCharsinFormat(FormatSpec)
       if ( k==0 ) k = len_trim(line)
     end if
 
@@ -932,10 +938,13 @@ contains
     character(len=*), intent(in), optional :: Before, After ! text to print
     logical, optional, intent(in) :: DONT_STAMP
     integer :: I, J, K
-    character(len=30) :: LINE, LOG_CHARS
+    character(len=30) :: LINE, LOG_CHARS, FormatSpec
 
     line = ' '
-    if ( .not. present(Format)  ) then
+    FormatSpec = outputOptions%sdFormatDefault
+    if ( present(Format)  ) FormatSpec = Format
+    ! if ( .not. present(Format)  ) then
+    if ( FormatSpec == '*' ) then
    ! No optional formats: use default char-by-char accretion
       write ( line, * ) value
       if ( scan(line,'123456789') == 0  ) then
@@ -959,8 +968,10 @@ contains
     ! Use one or both optional formats
     else
       line = ' '
-      write ( line, Format ) value
-      k = nCharsinFormat(Format)
+      ! write ( line, Format ) value
+      ! k = nCharsinFormat(Format)
+      write ( line, FormatSpec ) value
+      k = nCharsinFormat(FormatSpec)
       if ( k==0 ) k = len_trim(line)
     end if
 
@@ -1486,6 +1497,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.58  2007/06/14 18:40:04  pwagner
+! Allow sdFormatDefault to be set at class level
+!
 ! Revision 2.57  2007/04/14 00:37:16  vsnyder
 ! Correction dumpSize to avoid asterisks in I6 output
 !
