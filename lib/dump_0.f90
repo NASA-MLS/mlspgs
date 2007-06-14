@@ -25,7 +25,8 @@ module DUMP_0
   use MLSStats1, only: ALLSTATS, FILLVALUERELATION, &
     & MLSMAX, MLSMEAN, MLSMIN, MLSSTDDEV
   use MLSStringLists, only: catLists, GetStringElement, NumStringElements
-  use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
+  use OUTPUT_M, only: outputOptions, &
+    & BLANKS, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
 
   implicit none
   private
@@ -120,6 +121,7 @@ module DUMP_0
   logical :: myStats, myRMS, myWholeArray
   integer :: numNonFill, numFill
 
+  character(len=16), public, save :: rmsFormat = '*' ! * means default format
   character(len=16), public, save :: sdFormatDefault = '(1pg14.6)'
   character(*), parameter :: sdFormatDefaultCmplx = &
     & '(1x,"(",1pg13.6,",",1pg13.6,")")'
@@ -1915,6 +1917,11 @@ contains
     double precision, intent(in) :: max
     double precision, intent(in) :: rms
     double precision, intent(in), optional :: mean
+    !
+    character(len=16) :: originalSDFormat
+    !
+    originalSDFormat = outputOptions%sdFormatDefault
+    outputOptions%sdFormatDefault = rmsFormat
     if ( STATSONONELINE ) then
       if ( present(name) ) call output ( trim(name), advance='no' )
       call output ( ' min : max, rms: ', advance='no' )
@@ -1940,6 +1947,7 @@ contains
       if ( present(mean) ) call output ( mean, advance='no' )
       call newline
     end if
+    outputOptions%sdFormatDefault = originalSDFormat
   end subroutine printRMSetc_double
 
   subroutine printRMSetc_real ( Name, min, max, rms, mean  )
@@ -1948,6 +1956,10 @@ contains
     real, intent(in) :: max
     real, intent(in) :: rms
     real, intent(in), optional :: mean
+    character(len=16) :: originalSDFormat
+    !
+    originalSDFormat = outputOptions%sdFormatDefault
+    outputOptions%sdFormatDefault = rmsFormat
     if ( STATSONONELINE ) then
       if ( present(name) ) call output ( trim(name), advance='no' )
       call output ( ' min : max, rms: ', advance='no' )
@@ -1973,6 +1985,7 @@ contains
       if ( present(mean) ) call output ( mean, advance='no' )
       call newline
     end if
+    outputOptions%sdFormatDefault = originalSDFormat
   end subroutine printRMSetc_real
 
   subroutine printRMSetc_int ( Name, min, max, rms, mean  )
@@ -2105,6 +2118,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.69  2007/06/14 18:38:36  pwagner
+! Allow separate rmsFormat to be set at class level
+!
 ! Revision 2.68  2007/04/14 00:32:47  vsnyder
 ! Remove OPTIONAL attribute from NAME1 and NAME args of DIFF_...
 !
