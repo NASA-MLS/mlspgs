@@ -309,6 +309,7 @@ contains
       elseif ( filename(1:3) == '-n ' ) then
         call getarg ( i+1+hp, filename )
         read(filename, *) options%finalPhase
+        options%guessFinalPhase = .false.
         i = i + 1
       elseif ( filename(1:6) == '-nstat' ) then
         options%showStats = .false.
@@ -674,6 +675,9 @@ end program chunktimes
 !==================
 
 ! $Log$
+! Revision 1.14  2007/03/26 22:55:25  pwagner
+! Prints actual Phase Names as column headers when tabulating
+!
 ! Revision 1.13  2006/08/12 00:09:43  pwagner
 ! Automatically scans timings to guess how many phases
 !
