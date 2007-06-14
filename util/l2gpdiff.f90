@@ -13,6 +13,7 @@
 program l2gpdiff ! show diffs between swaths in two different files
 !=================================
 
+   use dump_0, only: rmsFormat
    use Hdf, only: DFACC_CREATE, DFACC_RDWR, DFACC_READ
    use HDF5, only: h5fopen_f, h5fclose_f, h5fis_hdf5_f   
    use HDFEOS5, only: HE5T_NATIVE_CHAR
@@ -132,6 +133,7 @@ program l2gpdiff ! show diffs between swaths in two different files
     NUMSWATHSPERFILE = 2
     swathList1 = ''
   endif
+  rmsFormat = '(1pe8.1)'
   if ( options%silent ) call suspendOutput
   call time_now ( t1 )
   do i = 2, n_filenames, 2
@@ -319,6 +321,9 @@ end program l2gpdiff
 !==================
 
 ! $Log$
+! Revision 1.9  2007/02/27 00:05:33  pwagner
+! -matchTimes option diffs only profiles with matching times
+!
 ! Revision 1.8  2006/03/15 19:18:37  pwagner
 ! Passes verbose option to L2GPData/diff
 !
