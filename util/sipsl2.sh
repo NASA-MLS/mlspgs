@@ -6,6 +6,8 @@
 #    O p t i o n s
 # -h[elp]     print brief help message; exit
 # -m cluster  show jobs only for cluster named cluster
+# -Cf file    choose clusters named in file
+# -cf file    get expected compute times from file
 # -vn version show jobs only for version (e.g., V01-51)
 # -bug        show chunks lost to level 2 bug "list out of order in hunt"
 # -debug      print lots of extra debugging inof
@@ -74,137 +76,12 @@ cat_args()
       fi
 }
       
-#---------------------------- change_nth_array_element
-#
-# Function to change the nth element in a comma-delimited list
-# where n is the first arg, the list is the second arg, 
-# and the new value is the third
-# eg given
-# change_nth_list_element 3 'a b c d' e
-# writes 'a b e d' to standard output
-
-change_nth_array_element()
-{
-
-   # Do we have enough args?
-      if [ $# -lt 3 ]
-      then
-         echo "Usage: change_nth_array_element n 'a b c ..' newvalue"
-         exit 1
-      fi
-      
-      perl -e '@parts=split(" ","$ARGV[0]"); $parts[$ARGV[1]-1]=$ARGV[2]; print join(" ",@parts)' "$2" "$1" "$3"
-}
-      
-#---------------------------- change_nth_list_element
-#
-# Function to change the nth element in a comma-delimited list
-# where n is the first arg, the list is the second arg, 
-# and the new value is the third
-# eg given
-# change_nth_list_element 3 'a,b,c,d' e
-# writes 'a,b,e,d' to standard output
-
-change_nth_list_element()
-{
-
-   # Do we have enough args?
-      if [ $# -lt 3 ]
-      then
-         echo "Usage: change_nth_list_element n 'a,b,c,..' newvalue"
-         exit 1
-      fi
-      
-      perl -e '@parts=split(",","$ARGV[0]"); $parts[$ARGV[1]-1]=$ARGV[2]; print join(",",@parts)' "$2" "$1" "$3"
-}
-      
-#---------------------------- convert_array_to_list
-#
-# Function to convert a space-separated array into a comma-delimited list
-# eg given
-# convert_array_to_list 'a b c d'
-# writes 'a,b,e,d' to standard output
-convert_array_to_list()
-{
-
-   # Do we have enough args?
-      if [ $# -lt 1 ]
-      then
-         echo "Usage: convert_array_to_list 'a b c d ..'"
-         exit 1
-      fi
-      
-      perl -e '@parts=split(" ","$ARGV[0]"); print join(",",@parts)' "$1"
-}
-      
-#---------------------------- convert_list_to_array
-#
-# Function to convert a comma-delimited list into a space-separated array
-# eg given
-# convert_list_to_array 'a,b,e,d'
-# writes 'a b c d' to standard output
-convert_list_to_array()
-{
-
-   # Do we have enough args?
-      if [ $# -lt 1 ]
-      then
-         echo "Usage: convert_list_to_array 'a,b,c,..'"
-         exit 1
-      fi
-      
-      perl -e '@parts=split(",","$ARGV[0]"); print join(" ",@parts)' "$1"
-}
-
-#---------------------------- get_unique_name
-#
-# Function returns a unique name based on arg, PID and HOSTNAME
-# e.g.,
-#           temp_file_name=`get_unique_name foo`
-#           echo $temp_file_name
-# might print foo.colossus.21455
-# if no arg, defaults to "temp" (very original name)
-# if two args present, assumes second is punctuation to
-# use in pace of "."
-
-get_unique_name()
-{
-
-   # How many args?
-      if [ $# -gt 1 ]
-      then
-        pt="$2"
-        temp="$1"
-      elif [ $# -gt 0 ]
-      then
-        pt="."
-        temp="$1"
-      else
-        pt="."
-        temp="temp"
-      fi
-   # Is $HOST defined?
-      if [ "$HOST" != "" ]
-      then
-         our_host_name="$HOST"
-      elif [ "$HOSTNAME" != "" ]
-      then
-         our_host_name="$HOSTNAME"
-      else
-         our_host_name="host"
-      fi
-   # if in form host.moon.planet.star.. extract host
-      our_host_name=`echo $our_host_name | sed 's/\./,/g'`
-      our_host_name=`perl -e '@parts=split(",","$ARGV[0]"); print $parts[0]' $our_host_name`
-      echo $temp${pt}$our_host_name${pt}$$
-}
-      
 #---------------------------- how_many_array_elements
 #
 # Function to return the number of elements in a shell array
 # where the array is the lone arg
 # eg given
-# how_many_list_elements 'a b c d'
+# how_many_array_elements 'a b c d'
 # writes '4' to standard output
 # (Note: we have thus corrected for perl's c-centric array origin)
 
@@ -219,154 +96,6 @@ how_many_array_elements()
       fi
       
       perl -e '@parts=split(" ","$ARGV[0]"); print eval($#parts + 1)' "$1"
-}
-      
-#---------------------------- how_many_list_elements
-#
-# Function to return the number of elements in a comma-delimited list
-# where the list is the lone arg
-# eg given
-# how_many_list_elements 'a,b,c,d'
-# writes '4' to standard output
-# (Note: we have thus corrected for perl's c-centric array origin)
-
-how_many_list_elements()
-{
-
-   # Do we have enough args?
-      if [ $# -lt 1 ]
-      then
-         echo "Usage: how_many_list_elements 'a,b,c,..'"
-         exit 1
-      fi
-      
-      perl -e '@parts=split(",","$ARGV[0]"); print eval($#parts + 1)' "$1"
-}
-      
-#---------------------------- lhs_eq_rhs
-#
-# Function to assign second arg to first: lhs=rhs
-# where (lhs rhs) = ($1 $2)
-# if given optional third arg "n"
-# assigns $$..$lhs = $$..$rhs
-
-lhs_eq_rhs()
-{
-
-   # Do we have write permission in ./?
-      if [ ! -w "./" ]
-      then
-         echo "Sorry--need write permission in ./ to operate"
-         exit 1
-      fi
-      
-      lhs_unique_name=`get_unique_name lhs`
-      rm -f $lhs_unique_name
-      if [ $# -lt 3 -a "$1" != "" ]
-      then
-         echo "$1"="'"$2"'" > $lhs_unique_name
-         . $lhs_unique_name
-      else
-         mega_buck $3 $1
-         lhs=$mega_buck_result
-         if [ "$lhs" != "" ] ; then
-            mega_buck $3 $2
-            rhs=$mega_buck_result
-            echo "$lhs"="'"$rhs"'" > $lhs_unique_name
-            . $lhs_unique_name
-         fi
-      fi
-     rm -f $lhs_unique_name
-}
-      
-#------------------------------- mega_buck ------------
-#
-# Function to force multiple-evaluation of its second arg
-# i.e., $$..$color (where the number of $ signs is n)
-# usage: mega_buck n color
-
-# (uses PID to generate unique name) 
-
-mega_buck()
-{
-
-   # Trivial case (n is 0)
-   if [ "$1" -lt 1 ]
-      then
-         mega_buck_result="$2"
-   elif [ "$2" = "" ]
-      then
-         mega_buck_result="$2"
-   # Do we have write permission in ./?
-   elif [ ! -w "./" ]
-      then
-         echo "Sorry--need write permission in ./ to operate"
-         exit 1
-   else
-      
-      unique_name=`get_unique_name`
-      rm -f $unique_name
-
-      number=0
-      mega_buck_result=$2
-      while [ "$number" -lt "$1" ]
-      do
-         echo "echo \$arg" | sed 's/arg/'$mega_buck_result'/' > $unique_name
-         mega_buck_result=`. $unique_name`
-         rm -f $unique_name
-         number=`expr $number + 1`
-      done
-   fi
-}
-
-#---------------------------- nth_arg
-#
-# Function to return the nth (n > 0) arg of the std args after n
-# eg given
-# nth_arg 3 a b 'c or d' d e ..
-# writes 'c or d' to standard output (w/o ' marks)
-
-nth_arg()
-{
-
-   # Do we have enough args? No error if not, just blank output
-     # echo "Entering nth_arg with args $@"
-      the_arg=
-      if [ $# -gt 1 ]
-      then
-         count_up=1
-         n=$1
-         shift
-         while [ $count_up -lt $n ]
-         do
-           shift
-           count_up=`expr $count_up + 1`
-         done
-         the_arg="$1"
-      fi
-     # echo "$the_arg"
-}
-      
-#---------------------------- nth_list_element
-#
-# Function to return the nth (n > 0) element of a comma-delimited list
-# where n is arg 1 and the list arg 2
-# eg given
-# nth_list_element 3 'a,b,c,d'
-# writes 'c' to standard output (w/o ' marks)
-# (Note: we have thus corrected for perl's c-centric array origin)
-
-nth_list_element()
-{
-
-   # Do we have enough args?
-      if [ $# -lt 2 ]
-      then
-         echo "Usage: nth_list_element n 'a,b,c,..'"
-         exit 1
-      fi
-      
-      perl -e '@parts=split(",","$ARGV[1]"); print $parts[$ARGV[0]-1]' $1 "$2"
 }
       
 #---------------------------- note_failures
@@ -403,6 +132,44 @@ note_failures()
   done
 }
 
+#---------------------------- print_nth_array_element
+#
+# Function to print the nth element in a space-delimited list
+# where n is the first arg, the list is the second arg, 
+# print_nth_array_element 3 'a b c d'
+# writes 'c' to standard output
+
+print_nth_array_element()
+{
+
+   # Do we have enough args?
+      if [ $# -lt 2 ]
+      then
+         echo "Usage: print_nth_array_element n 'a b c ..'"
+         exit 1
+      fi
+      
+      perl -e '@parts=split(" ","$ARGV[0]"); print $parts[$ARGV[1]-1]' "$2" "$1"
+}
+
+#---------------------------- print_hash_element
+#
+# Function to print value corresponding to key given two space-delimited arrays
+# where the first array are the keys and the second the values
+# print_hash_element c 'a b c d' '1 2 3 4'
+# writes '3' to standard output
+print_hash_element()
+{
+   # Do we have enough args?
+      if [ $# -lt 3 ]
+      then
+         echo "Usage: print_hash_element c 'a b c ..' '1 2 3 4 ..'"
+         exit 1
+      fi
+      arg_num=`what_array_element $1 "$2"`
+      print_nth_array_element $arg_num "$3"
+}
+
 #---------------------------- read_file_into_array
 #
 # read each line of stdin
@@ -426,36 +193,65 @@ read_file_into_array()
   echo $array_result
 }
       
+#---------------------------- what_array_element
+#
+# Function to show what element in a space-delimited list has been supplied
+# in the first arg, the list is the second arg, 
+# what_array_element c 'a b c d'
+# writes '3' to standard output
+what_array_element()
+{
+
+   # Do we have enough args?
+      if [ $# -lt 2 ]
+      then
+         echo "Usage: what_array_element c 'a b c ..'"
+         exit 1
+      fi
+      n=0
+      count_up=1
+      for i in $2
+      do
+        # echo $i $1
+        if [ "$i" = "$1" ]
+        then
+          # echo "really, $i $1"
+          n=$count_up
+        fi
+        count_up=`expr $count_up + 1`
+      done
+      echo $n
+}
+
 # ************
 # Main Program
 # ************
 # 
+bug="no"
 # This is a shell array of all cluster names
 # In our nomenclature, array elements are separated by spaces
 # List elements are separated by commas
 clusternames="lightspeed scramjet speedracer"
-shows="yes yes yes"
+computetimes=""
+convert="no"
+corpses=""
 debug="no"
+died="no"
+dirnames="no"
 dontprintemptydates="yes"
 #                      ^------ skip printing from where sips removed l1b files
+I=sipsl2
+fail="no"
+finish="no"
+full="no"
 maxobituaries="24"
 #               ^------ stop printing dead chunks, nodes past this
 me="$0"
 my_name=sipsl2
-I=sipsl2
-bug="no"
-convert="no"
-corpses=""
-dirnames="no"
-died="no"
 restrict="no"
-fail="no"
 running="no"
-full="no"
-finish="no"
 time="no"
 version=""
-more_opts="yes"
 DATECONVERTER=`which dateconverter 2>/dev/null`
 REECHO=`which reecho.sh 2>/dev/null`
 if [ ! -r "$DATECONVERTER" ]
@@ -466,6 +262,7 @@ if [ ! -r "$REECHO" ]
 then
   REECHO="/home/pwagner/bin/reecho.sh"
 fi 
+more_opts="yes"
 while [ "$more_opts" = "yes" ] ; do
 
     case "$1" in
@@ -481,6 +278,16 @@ while [ "$more_opts" = "yes" ] ; do
     -c )
 	    shift
        convert="yes"
+       ;;
+    -Cf )
+	    shift
+       clusternames=`cat $1 | uniq | read_file_into_array`
+       shift
+       ;;
+    -cf )
+	    shift
+       computetimes=`cat $1 | uniq | read_file_into_array`
+       shift
        ;;
     -d )
 	    shift
@@ -596,6 +403,15 @@ if [ "$fail" = "no" ]
 then
   echo -e $list
 fi
+
+#
+# for machine in lightspeed scramjet speedracer unknown
+# do
+# computetime=`print_hash_element $machine "$clusternames" "$computetimes"`
+# echo "$machine computetime $computetime"
+# done
+# exit
+
 afterfirst="no"
 for dir in $dirs
 do
@@ -604,7 +420,8 @@ do
   machine=""
   for name in $clusternames
   do
-    testl=`grep -i executing $dir/exec_log/process.stdout | grep -i $name`
+    # testl=`grep -i executing $dir/exec_log/process.stdout | grep -i $name`
+    testl=`head -40 $dir/exec_log/process.stdout | grep -n Executing  | grep -i $name`
     if [ "$testl" != "" ]
     then
       machine="$name"
@@ -618,8 +435,11 @@ do
     V02-20)
       computetime=30
       ;;
+    V02-21)
+      computetime=33
+      ;;
     *)
-      computetime=30
+      computetime="depends"
       ;;
   esac
   statbad=`tail $dir/exec_log/process.stdout | grep -i "ended badly"`
@@ -684,6 +504,7 @@ do
     echo "date: $date"
     echo "bugs: $bugs"
     echo "list: $list"
+    echo "computetime: $computetime"
   fi
   if [ "$dontprintemptydates" = "yes" -a "$date" = "" ]
   then
@@ -756,8 +577,8 @@ do
     # These other test are slower, so skip them if we won't print the results
     if [ "$died" = "yes" -a "$skipifrestricting" = "no" ]
     then
-	   chunks=`grep -i 'died,' $dir/exec_log/process.stdout | awk '{print $7}'`
-	   nodes=`grep -i 'died,' $dir/exec_log/process.stdout | awk '{print $9}'`
+	   chunks=`grep 'died,' $dir/exec_log/process.stdout | awk '{print $7}'`
+	   nodes=`grep 'died,' $dir/exec_log/process.stdout | awk '{print $9}'`
       ndied=`echo $chunks | wc | awk '{print $2}'`
       if [ "$ndied" -gt "$maxobituaries" ]
       then
@@ -768,7 +589,7 @@ do
     fi
     if [ "$running" = "yes" -a "$skipifrestricting" = "no" ]
     then
-	   chunks=`grep -i completed $dir/exec_log/process.stdout | tail -1 | \
+	   chunks=`grep completed $dir/exec_log/process.stdout | tail -1 | \
         awk '{print $8}'`
       if [ "$chunks" = "" ]
       then
@@ -778,7 +599,7 @@ do
     fi
     if [ "$full" = "yes" -a "$skipifrestricting" = "no" ]
     then
-	   chunks=`grep -i completed $dir/exec_log/process.stdout | tail -1 | \
+	   chunks=`grep completed $dir/exec_log/process.stdout | tail -1 | \
         awk '{print $8, $3, $10, $12, $5}'`
       if [ "$chunks" = "" ]
       then
@@ -788,7 +609,7 @@ do
     fi
     if [ "$time" = "yes" -a "$skipifrestricting" = "no" ]
     then
-	   chunks=`grep -i 'starting mlsl2' $dir/exec_log/process.stdout | head -1 | \
+	   chunks=`grep 'starting mlsl2' $dir/exec_log/process.stdout | head -1 | \
         awk '{print $3, $4}'`
       list="$list \t $chunks"
     fi
@@ -796,7 +617,7 @@ do
     then
       numChunks=`grep -i 'nochunks:' $dir/exec_log/process.stdout | tail -1 | awk '{print $4}'`
       # numLaunched=`grep -i launched $dir/exec_log/process.stdout | wc -l`
-      numLaunched=` grep -i launched $dir/exec_log/process.stdout | tail -1 | sed -n 's/.*chunk//p' | awk '{print $1}'`
+      numLaunched=` grep Launched $dir/exec_log/process.stdout | tail -1 | sed -n 's/.*chunk//p' | awk '{print $1}'`
       if [ "$numChunks" = "" ]
       then
         # Not all chunks launched yet, so can't tell when last one will finish
@@ -804,17 +625,23 @@ do
       elif [ "$numLaunched" = "" ]
       then
         # Not all chunks launched yet, so can't tell when last one will finish
-        chunks="0 / $numChunks"
+        # chunks="0 / $numChunks"
+        chunks=" "
       elif [ "$numLaunched" -lt "$numChunks" ]
       then
         # Not all chunks launched yet, so can't tell when last one will finish
-        chunks="$numLaunched / $numChunks"
+        # chunks="$numLaunched / $numChunks"
+        chunks=" "
       else
         # Try to find when when last chunk started
-        lastline=`grep -ih 'starting mlsl2' $dir/pvmlog/* | sort  | tail -1`
+        lastline=`grep -h 'starting mlsl2' $dir/pvmlog/* | sort  | tail -1`
         lastdate=`echo $lastline | awk '{print $1}'`
         lasttime=`echo $lastline | awk '{print $2}'`
         # And add an average compute time to it
+        if [ "$computetime" = "depends" ]
+        then
+          computetime=`print_hash_element $machine "$clusternames" "$computetimes"`
+        fi
         chunks=`$DATECONVERTER +H $computetime -t $lasttime -o 'M dd' $lastdate`
       fi
       list="$list \t $chunks"
@@ -844,6 +671,9 @@ do
 done
 exit 0
 # $Log$
+# Revision 1.17  2007/01/22 17:48:04  pwagner
+# Repaired bug affecting runs just starting out
+#
 # Revision 1.16  2007/01/18 23:30:12  pwagner
 # Added -finish option to display predicted finish time
 #
